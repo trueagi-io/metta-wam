@@ -1,0 +1,13 @@
+reqs/pyswip/.git
+reqs/pyswip/build
+reqs/pyswip/dist
+reqs/pyswip/pyswip.egg-info
+reqs/pyswip-notebook/.git
+reqs/pyswip-notebook/build
+reqs/pyswip-notebook/dist
+reqs/pyswip-notebook/pyswip-notebook.egg-info
+das_precomputed/*.pl
+precomputed_files/**/*.pl
+ftp.flybase.net/**
+
+
