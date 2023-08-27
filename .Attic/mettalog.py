@@ -509,7 +509,7 @@ def _response2bindings(txt):
                 new_bindings_set.push(bindings)
         return new_bindings_set
 
-class FlySpace(GroundingSpace):
+class FlyVSpace(GroundingSpace):
     def query(self, query_atom):
         tot_str = "Answer the question taking into account the following information (each fact is in brackets):\n"
         for atom in self.atoms_iter():
@@ -524,20 +524,4 @@ class FlySpace(GroundingSpace):
         #        temperature=0)
         #txt = response['choices'][0]['message']['content']
         return tot_str #_response2bindings(txt)
-
-class IntentSpace(GroundingSpace):
-    def query(self, query_atom):
-        tot_str = "Analyze the topic of the utterance: " + str(query_atom)[1:-1] + "\n"
-        tot_str += "Try to pick the most relevant topic from the following list (each topic in brackets):"
-        for atom in self.atoms_iter():
-            tot_str += str(atom) + "\n"
-        tot_str += "If neither of the listed topics seems relevant, answer (chit-chat)."
-        tot_str += "Provide the answer in the json format in curly brackets in the form { topic: your answer }.\n"
-        response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo-0613",
-                messages=[{'role': 'system', 'content': 'Reason carefully about user request'},
-                    {'role': "user", "content": tot_str}],
-                temperature=0)
-        txt = response['choices'][0]['message']['content']
-        return _response2bindings(txt)
 
