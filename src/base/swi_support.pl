@@ -1,4 +1,3 @@
-
 with_prolog_flag(Name,ArgV,Goal):-
   current_prolog_flag(Name,Was),
   setup_call_cleanup(set_prolog_flag(Name,ArgV),Goal,set_prolog_flag(Name,Was)).
@@ -33,7 +32,6 @@ call_ll(_M,Goal):- var(Goal),!,throw(var_call_ll(Goal)),!.
 call_ll(M,Goal):- var(M),!,strip_module(Goal,M,NewGoal),!,call_ll(M,NewGoal).
 call_ll(M,Goal):- M:call(Goal).
 :- endif.
-
 
 
 :- if( \+ current_predicate(if_t/2)).

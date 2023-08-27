@@ -25,7 +25,7 @@ def import_module_from_path(path):
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
-version = import_module_from_path('metta-vspace/_version.py').__version__
+version = import_module_from_path('metta_vspace/_version.py').__version__
 
 setup(
     name="metta-vspace",
@@ -40,11 +40,11 @@ setup(
         "Bug Tracker": "https://github.com/logicmoo/metta-vspace/issues",
     },
     #packages=find_packages(exclude=['ftp.vbase.org']),
-    packages=["metta-vspace"],
+    packages=["metta_vspace"],
     install_requires=[
         'pyswip'
     ],
-    package_dir={"metta-vspace": "metta-vspace"},
+    package_dir={"metta_vspace": "metta_vspace"},
     include_package_data=True,
     license="LGPL",
     classifiers=[
