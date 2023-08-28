@@ -30,28 +30,8 @@ from hyperon.ext import register_atoms
 
 import numpy as np
 
-@contextmanager
-def temp_file(temp_dir=None):
-    pltfrm = platform.system()
-    if pltfrm == "Windows":
-        # create a temporary file manually and delete it on close
-        if temp_dir is not None:
-            # convert to a raw string for windows
-            temp_dir = temp_dir.encode('unicode-escape').decode().replace('\\\\', '\\')
-        else:
-            temp_dir = ""
 
-        fname = os.path.join(temp_dir, uuid.uuid4().hex)
-        with open(fname, mode='w') as f:
-            yield f
-        # delete the file manually
-        os.remove(fname)
-    else:
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.pl') as f:
-            yield f
-
-
-class MeTTaC(MeTTa):
+class MeTTaCR(MeTTa):
 
     def copy(self):
         return self
@@ -166,7 +146,7 @@ def flyspace_atoms():
 
         (= (call_func $f $arg) ($f $arg))
     '''
-    runner = MeTTaC()
+    runner = MeTTaCR()
     runner.run(content)
     runnerAtom = G(runner, AtomType.ATOM)
     newNSpaceAtom = OperationAtom('new-fly-space', lambda: [G(SpaceRef(FlySpace()))], unwrap=False)
@@ -184,160 +164,6 @@ def flyspace_atoms():
         r"r": runnerAtom,
         r"metta_learner": runnerAtom
     }
-
-
-
-class IsolatedMettaLearner(pl.Prolog):
-    """
-    Simple wrapper around the basic Interpreter-class from pyswip for use in notebooks. This wrapper uses a dedictated
-    Mettalearner module for each of it's instances, separating them from one another.
-    """
-    
-    class _QueryWrapper(pl.Prolog._QueryWrapper):
-        def __call__(self, query, maxresult, catcherrors, normalize):
-            for t in super().__call__(query, maxresult, catcherrors, False):
-                if normalize:
-                    try:
-                        v = t.value
-                    except AttributeError:
-                        v = {}
-                        for r in [x.value for x in t]:
-                            r = self._normalize_values(r)
-                            v.update(r)
-                    yield v
-                else:
-                    yield t
-                
-        def _normalize_values(self, values):
-            from pyswip.easy import Atom, Functor
-            if isinstance(values, Atom):
-                return values.value
-            if isinstance(values, Functor):
-                normalized = values.name.value
-                if values.arity:
-                    normalized_args = ([str(self._normalize_values(arg)) for arg in values.args])
-                    normalized = normalized + '(' + ', '.join(normalized_args) + ')'
-                return normalized
-            elif isinstance(values, dict):
-                return {key: self._normalize_values(v) for key, v in values.items()}
-            elif isinstance(values, (list, tuple)):
-                return [self._normalize_values(v) for v in values]
-            return values
-    
-    def __init__(self, module=None):
-        """
-        Create a new mettalearner instance in it's own module to isolate it from other running mettalearner code.
-        
-        Parameters:
-        ---
-        module: str or None
-            The module to connect this instance to. If None (default) a new random module is created
-        """
-        if module is None:
-            module = "m" + uuid.uuid4().hex
-        self.module_name = str(module)
-        self.module = pl.newModule(self.module_name)
-        
-    def asserta(self, assertion, catcherrors=False):
-        """
-        call asserta/1 in the mettalearner instance
-        """
-        next(self.query(assertion.join(["asserta((", "))."]), catcherrors=catcherrors))
-
-    def assertz(self, assertion, catcherrors=False):
-        """
-        call assertz/1 in the mettalearner instance
-        """
-        next(self.query(assertion.join(["assertz((", "))."]), catcherrors=catcherrors))
-
-    def dynamic(self, term, catcherrors=False):
-        """
-        call dynamic/1 in the mettalearner instance
-        """
-        next(self.query(term.join(["dynamic((", "))."]), catcherrors=catcherrors))
-
-    def retract(self, term, catcherrors=False):
-        """
-        call retract/1 in the mettalearner instance
-        """
-        next(self.query(term.join(["retract((", "))."]), catcherrors=catcherrors))
-
-    def retractall(self, term, catcherrors=False):
-        """
-        call retractall/1 in the mettalearner instance
-        """
-        next(self.query(term.join(["retractall((", "))."]), catcherrors=catcherrors))
-        
-    def consult(self, knowledge_base, file=True, catcherrors=False, temp_dir=None):
-        """
-        Load the specified knowledge_base in the mettalearner interpreter. To circumvent a SWI-Mettalearner limitation,
-        a new temporary file is created on every consult.
-        
-        Parameters:
-        ---
-        knowledge_base: str
-            The knowledge base to load. This has to be a string containing either the filename (default)
-            or the facts to load (if file is False). The knowledge base will be written into a temporary
-            file before it is loaded into mettalearner.
-        file: bool
-            If True (default), the knowledge_base parameter is interpreted as a filename. If False the knowledge_base
-            is assumed to contain the facts to load.
-        catcherrors: bool
-            Catch errors that might occur.
-        temp_dir: str
-            Optional temporary directory used for writing the knowledge base to a mettalearner file. Applies only on windows systems, 
-            ignored otherwise.
-        """
-        # write all facts into a tempfile first to circumvent the mettalearner-consult limitation
-        if file:
-            with open(knowledge_base, 'r') as f:
-                knowledge_base = f.read()
-
-        pltfrm = platform.system()
-        with temp_file(temp_dir) as f:
-            f.write(knowledge_base)
-            f.flush()
-            f.seek(0)
-
-            fname = f.name
-            if pltfrm == "Windows":
-                # replace backslash with forward slash because mettalearner apparently does not like windows paths...
-                fname = fname.replace("\\", "/")
-            next(self.query(fname.join(["consult('", "')"]), catcherrors=catcherrors))
-
-    def query(self, query, maxresult=-1, catcherrors=True, normalize=True):
-        """
-        Run a mettalearner query and return a python-generator.
-        If the query is a yes/no question, returns {} for yes, and nothing for no.
-        Otherwise returns a generator of dicts with variables as keys.
-        
-        Parameters:
-        ---
-        query: str
-            The mettalearner query to process.
-        maxresult: int
-            The maximum number of results to compute (default: -1 = all results).
-        catcherrors: bool
-            Catch errors that might occur (default: True).        
-        normalize: bool
-            Convert the mettalearner result objects (Terms) back to their python representation (default: True).
-        
-        Returns:
-        ---
-        query: _QueryWrapper
-            The query result as an iterator.
-        
-        >>> mettalearner = IsolatedMettaLearner()
-        >>> mettalearner.assertz("father(michael,john)")
-        >>> mettalearner.assertz("father(michael,gina)")
-        >>> bool(list(mettalearner.query("father(michael,john)")))
-        True
-        >>> bool(list(mettalearner.query("father(michael,olivia)")))
-        False
-        >>> print sorted(mettalearner.query("father(michael,X)"))
-        [{'X': 'gina'}, {'X': 'john'}]
-        """
-        return self._QueryWrapper()(self.module_name + ":" + query, maxresult, catcherrors, normalize)
 
 
 from hyperon.base import Atom
@@ -524,4 +350,181 @@ class FlyVSpace(GroundingSpace):
         #        temperature=0)
         #txt = response['choices'][0]['message']['content']
         return tot_str #_response2bindings(txt)
+
+
+
+@contextmanager
+def temp_file(temp_dir=None):
+    pltfrm = platform.system()
+    if pltfrm == "Windows":
+        # create a temporary file manually and delete it on close
+        if temp_dir is not None:
+            # convert to a raw string for windows
+            temp_dir = temp_dir.encode('unicode-escape').decode().replace('\\\\', '\\')
+        else:
+            temp_dir = ""
+
+        fname = os.path.join(temp_dir, uuid.uuid4().hex)
+        with open(fname, mode='w') as f:
+            yield f
+        # delete the file manually
+        os.remove(fname)
+    else:
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.pl') as f:
+            yield f
+
+
+class IsolatedMettaLearner(pl.Prolog):
+    """
+    Simple wrapper around the basic Interpreter-class from pyswip for use in notebooks. This wrapper uses a dedictated
+    Mettalearner module for each of it's instances, separating them from one another.
+    """
+    
+    class _QueryWrapper(pl.Prolog._QueryWrapper):
+        def __call__(self, query, maxresult, catcherrors, normalize):
+            for t in super().__call__(query, maxresult, catcherrors, False):
+                if normalize:
+                    try:
+                        v = t.value
+                    except AttributeError:
+                        v = {}
+                        for r in [x.value for x in t]:
+                            r = self._normalize_values(r)
+                            v.update(r)
+                    yield v
+                else:
+                    yield t
+                
+        def _normalize_values(self, values):
+            from pyswip.easy import Atom, Functor
+            if isinstance(values, Atom):
+                return values.value
+            if isinstance(values, Functor):
+                normalized = values.name.value
+                if values.arity:
+                    normalized_args = ([str(self._normalize_values(arg)) for arg in values.args])
+                    normalized = normalized + '(' + ', '.join(normalized_args) + ')'
+                return normalized
+            elif isinstance(values, dict):
+                return {key: self._normalize_values(v) for key, v in values.items()}
+            elif isinstance(values, (list, tuple)):
+                return [self._normalize_values(v) for v in values]
+            return values
+    
+    def __init__(self, module=None):
+        """
+        Create a new mettalearner instance in it's own module to isolate it from other running mettalearner code.
+        
+        Parameters:
+        ---
+        module: str or None
+            The module to connect this instance to. If None (default) a new random module is created
+        """
+        if module is None:
+            module = "m" + uuid.uuid4().hex
+        self.module_name = str(module)
+        self.module = pl.newModule(self.module_name)
+        
+    def asserta(self, assertion, catcherrors=False):
+        """
+        call asserta/1 in the mettalearner instance
+        """
+        next(self.query(assertion.join(["asserta((", "))."]), catcherrors=catcherrors))
+
+    def assertz(self, assertion, catcherrors=False):
+        """
+        call assertz/1 in the mettalearner instance
+        """
+        next(self.query(assertion.join(["assertz((", "))."]), catcherrors=catcherrors))
+
+    def dynamic(self, term, catcherrors=False):
+        """
+        call dynamic/1 in the mettalearner instance
+        """
+        next(self.query(term.join(["dynamic((", "))."]), catcherrors=catcherrors))
+
+    def retract(self, term, catcherrors=False):
+        """
+        call retract/1 in the mettalearner instance
+        """
+        next(self.query(term.join(["retract((", "))."]), catcherrors=catcherrors))
+
+    def retractall(self, term, catcherrors=False):
+        """
+        call retractall/1 in the mettalearner instance
+        """
+        next(self.query(term.join(["retractall((", "))."]), catcherrors=catcherrors))
+        
+    def consult(self, knowledge_base, file=True, catcherrors=False, temp_dir=None):
+        """
+        Load the specified knowledge_base in the mettalearner interpreter. To circumvent a SWI-Mettalearner limitation,
+        a new temporary file is created on every consult.
+        
+        Parameters:
+        ---
+        knowledge_base: str
+            The knowledge base to load. This has to be a string containing either the filename (default)
+            or the facts to load (if file is False). The knowledge base will be written into a temporary
+            file before it is loaded into mettalearner.
+        file: bool
+            If True (default), the knowledge_base parameter is interpreted as a filename. If False the knowledge_base
+            is assumed to contain the facts to load.
+        catcherrors: bool
+            Catch errors that might occur.
+        temp_dir: str
+            Optional temporary directory used for writing the knowledge base to a mettalearner file. Applies only on windows systems, 
+            ignored otherwise.
+        """
+        # write all facts into a tempfile first to circumvent the mettalearner-consult limitation
+        if file:
+            with open(knowledge_base, 'r') as f:
+                knowledge_base = f.read()
+
+        pltfrm = platform.system()
+        with temp_file(temp_dir) as f:
+            f.write(knowledge_base)
+            f.flush()
+            f.seek(0)
+
+            fname = f.name
+            if pltfrm == "Windows":
+                # replace backslash with forward slash because mettalearner apparently does not like windows paths...
+                fname = fname.replace("\\", "/")
+            next(self.query(fname.join(["consult('", "')"]), catcherrors=catcherrors))
+
+    def query(self, query, maxresult=-1, catcherrors=True, normalize=True):
+        """
+        Run a mettalearner query and return a python-generator.
+        If the query is a yes/no question, returns {} for yes, and nothing for no.
+        Otherwise returns a generator of dicts with variables as keys.
+        
+        Parameters:
+        ---
+        query: str
+            The mettalearner query to process.
+        maxresult: int
+            The maximum number of results to compute (default: -1 = all results).
+        catcherrors: bool
+            Catch errors that might occur (default: True).        
+        normalize: bool
+            Convert the mettalearner result objects (Terms) back to their python representation (default: True).
+        
+        Returns:
+        ---
+        query: _QueryWrapper
+            The query result as an iterator.
+        
+        >>> mettalearner = IsolatedMettaLearner()
+        >>> mettalearner.assertz("father(michael,john)")
+        >>> mettalearner.assertz("father(michael,gina)")
+        >>> bool(list(mettalearner.query("father(michael,john)")))
+        True
+        >>> bool(list(mettalearner.query("father(michael,olivia)")))
+        False
+        >>> print sorted(mettalearner.query("father(michael,X)"))
+        [{'X': 'gina'}, {'X': 'john'}]
+        """
+        return self._QueryWrapper()(self.module_name + ":" + query, maxresult, catcherrors, normalize)
+
+
 

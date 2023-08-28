@@ -1,11 +1,9 @@
-with_prolog_flag(Name,ArgV,Goal):-
-  current_prolog_flag(Name,Was),
-  setup_call_cleanup(set_prolog_flag(Name,ArgV),Goal,set_prolog_flag(Name,Was)).
-    
-kaggle_arc:- setup_call_cleanup(
-     working_directory(X, '/opt/logicmoo_workspace/packs_sys/logicmoo_agi/prolog/kaggle_arc/'),
-     ensure_loaded(kaggle_arc),
-     working_directory(_,X)). 
+
+kaggle_arc:- \+ exists_directory('/opt/logicmoo_workspace/packs_sys/logicmoo_agi/prolog/kaggle_arc/'), !.
+%kaggle_arc:- !.
+kaggle_arc:- 
+   with_cwd('/opt/logicmoo_workspace/packs_sys/logicmoo_agi/prolog/kaggle_arc/',
+     ensure_loaded(kaggle_arc)).
 
 :- with_prolog_flag(argv,['--libonly'],kaggle_arc).
 
