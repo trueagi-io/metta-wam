@@ -14,6 +14,21 @@ skip(_).
     absolute_file_name('../../',Dir,[relative_to(File),file_type(directory)]),
     asserta(ftp_data(Dir)).
 
+:- prolog_load_context(file, File),
+    absolute_file_name('./',Dir,[relative_to(File),file_type(directory)]),
+    asserta(pyswip_dir(Dir)).
+
+with_cwd(Dir,Goal):- setup_call_cleanup(working_directory(X, Dir), Goal, working_directory(_,X)). 
+with_prolog_flag(Name,ArgV,Goal):-
+  current_prolog_flag(Name,Was),
+  setup_call_cleanup(set_prolog_flag(Name,ArgV),Goal,set_prolog_flag(Name,Was)).
+
+:- pyswip_dir(Dir),
+   with_cwd(Dir,ensure_loaded(swi_support)).
+
+:- pyswip_dir(Dir),
+   with_cwd(Dir,ensure_loaded(fb_induced_types)).
+
 
 :- multifile(is_pre_statistic/2).
 :- dynamic(is_pre_statistic/2).
@@ -98,7 +113,7 @@ mine_corisponds(Concept1,Corispondance):-
 
 mine_overlaps:-
   retractall(maybe_corisponds(_,_)),
-  once(mine_overlaps1),
+  time(once(mine_overlaps1)),
   skip(mine_overlaps2).
 
 mine_overlaps1:- 
@@ -257,13 +272,34 @@ skipped_anotations(gene_rpkm_matrix).
 skipped_anotations(dmel_gene_sequence_ontology_annotations).
 skipped_anotations(fbgn_annotation_ID).
 
+% Base case: atoms are printed as-is.
+pp_sex(S) :- atom(S),!, format('(ConceptNode "~w")',[S]).
+pp_sex(S) :- string(S),!, format('(StringValue "~w")',[S]).
+pp_sex(V) :- (number(V) ; atom_number(V,_); is_dict(V)), !, format('(ValueAtom ~w)',[V]).
+% Lists are printed with parentheses.
+pp_sex(V) :- var(V), !, format('$~p',[V]).
+pp_sex([]):-  !, write('()').
+pp_sex(V) :- \+ compound(V), !, format('~p',[V]).
+pp_sex(V) :- V = '$VAR'(_), !, format('$~p',[V]).
+pp_sex([H|T]) :- !, write('(:: '), pp_sex(H), print_list_as_sexpression(T), write(')').
+% Compound terms.
+pp_sex(Term) :- compound(Term), Term =.. [Functor|Args], write('('),write(Functor), write_args_as_sexpression(Args), write(')').
 
+% Print arguments of a compound term.
+write_args_as_sexpression([]).
+write_args_as_sexpression([H|T]) :- write(' '), pp_sex(H), write_args_as_sexpression(T).
+
+% Print the rest of the list.
+print_list_as_sexpression([]).
+print_list_as_sexpression([H|T]) :- write(' '), pp_sex(H), print_list_as_sexpression(T).
+
+call_sexpr(S):- writeln(call=S).
 
 gc_now:- set_prolog_flag(gc,true), garbage_collect,garbage_collect_atoms,garbage_collect_clauses.
 
 extreme_debug(_).
 
-pp_fb(P):- format("~N"),  \+ \+ (numbervars(P,14,_,[attvar(bind),singletons(true)]), pp_ilp(P)).
+pp_fb(P):- format("~N"),  \+ \+ (numbervars(P,14,_,[attvar(bind),singletons(true)]), pp_sex(P)).
 
 fbug(P) :- format("~N"), with_output_to(user_error,pp_fb(P)),!.
 fbug(N=V) :- nonvar(N), !, fbdebug1(N:-V).
@@ -359,7 +395,7 @@ declare -a StringArray=(\
 
 load_flybase_files:- 
    ftp_data(Dir),
-    with_working_dir(Dir,load_flybase_files_ftp).
+    with_cwd(Dir,load_flybase_files_ftp).
 
 load_flybase_files_ftp:-  % 47 tables
 
@@ -1367,11 +1403,6 @@ list_column_names:-
   forall((column_names(T,CNs),once((length(CNs,Len),Len>=2,fb_pred(T,Len)))),
   (print(column_names(T,CNs)),nl)).
 
-
-
-:- ensure_loaded(fb_induced_types).
-
-:- ensure_loaded(swi_support).
 
 %:- ensure_loaded(read_obo).
 
