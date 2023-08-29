@@ -45,34 +45,34 @@ term_number(T,N):- sub_term(N,T),number(N).
 
 
 
-flybase_identifier('FBab', 'aberration').
-flybase_identifier('FBal', 'allele').
-flybase_identifier('FBba', 'balancer').
-flybase_identifier('FBbt', 'anatomy term').
-flybase_identifier('FBch', 'chromosome arm').
-flybase_identifier('FBcl', 'clone').
-flybase_identifier('FBcv', 'controlled vocabulary').
-flybase_identifier('FBdv', 'developmental stage term').
-flybase_identifier('FBgg', 'gene group').
-flybase_identifier('FBgn', 'gene').
-flybase_identifier('FBhh', 'human disease').
-flybase_identifier('FBig', 'interaction').
-flybase_identifier('FBim', 'image').
-flybase_identifier('FBlc', 'large dataset metadata').
-flybase_identifier('FBmc', 'molecular construct').
-flybase_identifier('FBms', 'molecular segment').
-flybase_identifier('FBpl', 'probe').
-flybase_identifier('FBpp', 'polypeptide').
-flybase_identifier('FBrf', 'reference').
-flybase_identifier('FBsf', 'sequence feature').
-flybase_identifier('FBsn', 'strain').
-flybase_identifier('FBst', 'stock').
-flybase_identifier('FBtc', 'cell line').
-flybase_identifier('FBti', 'transposable element insertion').
-flybase_identifier('FBto', 'experimental tools').
-flybase_identifier('FBte', 'transgenic element').
-flybase_identifier('FBtp', 'transposon'). %flybase_identifier('FBtp', 'transgenic construct or natural transposon').
-flybase_identifier('FBtr', 'transcript').
+flybase_identifier('FBab', 'Aberration').
+flybase_identifier('FBal', 'Allele').
+flybase_identifier('FBba', 'Balancer').
+flybase_identifier('FBbt', 'AnatomyTerm').
+flybase_identifier('FBch', 'ChromosomeArm').
+flybase_identifier('FBcl', 'Clone').
+flybase_identifier('FBcv', 'ControlledVocabulary').
+flybase_identifier('FBdv', 'DevelopmentalStageTerm').
+flybase_identifier('FBgg', 'GeneGroup').
+flybase_identifier('FBgn', 'Gene').
+flybase_identifier('FBhh', 'HumanDisease').
+flybase_identifier('FBig', 'GeneInteraction').
+flybase_identifier('FBim', 'Image').
+flybase_identifier('FBlc', 'LargeDatasetMetadata').
+flybase_identifier('FBmc', 'MolecularConstruct').
+flybase_identifier('FBms', 'MolecularSegment').
+flybase_identifier('FBpl', 'Probe').
+flybase_identifier('FBpp', 'Polypeptide').
+flybase_identifier('FBrf', 'Reference').
+flybase_identifier('FBsf', 'SequenceFeature').
+flybase_identifier('FBsn', 'GeneStrain').
+flybase_identifier('FBst', 'GeneStock').
+flybase_identifier('FBtc', 'CellLine').
+flybase_identifier('FBti', 'TransposableIlementInsertion').
+flybase_identifier('FBto', 'ExperimentalTool').
+flybase_identifier('FBte', 'TransgenicElement').
+flybase_identifier('FBtp', 'Transposon'). %flybase_identifier('FBtp', 'transgenic construct or natural transposon').
+flybase_identifier('FBtr', 'Transcript').
 
 % FlyBase prefixes
 atom_prefix(Prefix, flybase, Desc):- flybase_identifier(Prefix, Desc).
@@ -196,7 +196,7 @@ try_overlaps:-
          pp_fb(grounded=Query),
          ignore(maybe_english(Query))),nl,nl,
          
-  pp_fb(ungrounded=Query),nl,nl,nl.
+  pp_fb(ungrounded='!'(Query)),nl,nl,nl.
 
 no_english(fbrf_pmid_pmcid_doi,_).
 no_english(physical_interactions_mitab,8).
@@ -284,18 +284,35 @@ skipped_anotations(fbgn_annotation_ID).
 
 % Base case: atoms are printed as-is.
 pp_as(V) :- \+ \+ pp_sex(V).
+pp_sex(V) :- var(V), !, format('$~p',[V]).
+%pp_sex('') :- format('(EmptyNode null)',[]).
+pp_sex('') :- format('()',[]).
+pp_sex([]):-  !, write('()').
+pp_sex(N=V):-  !, format("~N;; ~w == ~n",[N]),!,pp_sex(V).
 pp_sex(V) :- (number(V) ; (atom(V),atom_number(V,_)); is_dict(V)), !, format('(ValueAtom ~w)',[V]).
-pp_sex(S) :- atom(S),!, format('(ConceptNode "~w")',[S]).
+pp_sex(S) :- atom(S), pp_sax(S),!. 
 pp_sex(S) :- string(S),!, format('(StringValue "~w")',[S]).
 % Lists are printed with parentheses.
-pp_sex(V) :- var(V), !, format('$~p',[V]).
-pp_sex([]):-  !, write('()').
 pp_sex(V) :- \+ compound(V), !, format('~p',[V]).
 pp_sex(V) :- V = '$VAR'(_), !, format('$~p',[V]).
-pp_sex([H|T]) :- !, write('(:: '), pp_sex(H), print_list_as_sexpression(T), write(')').
+pp_sex(listOf(S,_)) :- !,pp_sex(listOf(S)).
+pp_sex(listOf(S)) :- !,format('(ListValue ~@)',[pp_sex(S)]).
+pp_sex('!'(S)) :- write('!'),pp_sex(S).
+pp_sex([H|T]) :- is_list(T),!, write('(:: '), pp_sex(H), print_list_as_sexpression(T), write(')').
 % Compound terms.
 %pp_sex(Term) :- compound(Term), Term =.. [Functor|Args], write('('),format('(~w ',[Functor]), write_args_as_sexpression(Args), write(')').
-pp_sex(Term) :- compound(Term), Term =.. [Functor|Args], format('(EvaluationLink (PredicateNode "~w") (ListLink ',[Functor]), write_args_as_sexpression(Args), write('))').
+pp_sex(Term) :- Term =.. [Functor|Args], format('(~w',[Functor]), write_args_as_sexpression(Args), write(')'),!.
+pp_sex(Term) :- Term =.. [Functor|Args], format('(EvaluationLink (PredicateNode "~w") (ListLink ',[Functor]), write_args_as_sexpression(Args), write('))').
+
+pp_sax(S) :- is_englishy(S),!,format('(StringValue "~w")',[S]).
+pp_sax(S) :- atom_length(S,1),atom_string(S,SS),!,format("(StringValue ~q)",[SS]).
+pp_sax(S) :- is_an_arg_type(S,T),!,format('(TypeNode "~w")',[T]).
+pp_sax(S) :- has_type(S,T),!,format('(~wValueNode "~w")',[T,S]).
+pp_sax(S) :- sub_atom(S,0,4,Aft,FB),flybase_identifier(FB,Type),!,(Aft>0->format('(~wValueNode "~w")',[Type,S]);format('(TypeNode "~w")',[Type])).
+pp_sax(S) :- format('(ConceptNode "~w")',[S]).
+
+is_an_arg_type(S,T):- flybase_identifier(S,T),!.
+has_type(S,Type):- sub_atom(S,0,4,Aft,FB),flybase_identifier(FB,Type),!,Aft>0.
 
 % Print arguments of a compound term.
 write_args_as_sexpression([]).
@@ -311,8 +328,11 @@ gc_now:- set_prolog_flag(gc,true), garbage_collect,garbage_collect_atoms,garbage
 
 extreme_debug(_).
 
+numbervars_w_singles(P):- term_singletons(P, Vars),
+  numbervars(Vars,260,_,[attvar(bind),singletons(false)]),
+  numbervars(P,14,_,[attvar(bind),singletons(true)]).
 
-pp_fb(P):- format("~N "),  \+ \+ (numbervars(P,14,_,[attvar(bind),singletons(true)]), pp_fb1(P)).
+pp_fb(P):- format("~N "),  \+ \+ (numbervars_w_singles(P), pp_fb1(P)).
 :- if(current_predicate(pp_ilp/1)).
 pp_fb1(P):- pp_ilp(P),!,format("~N "),pp_as(P),!.
 :- endif.
@@ -416,8 +436,8 @@ load_flybase_files:-
    ftp_data(Dir),
     with_cwd(Dir,load_flybase_files_ftp).
 
-load_flybase_files_ftp:-  % 47 tables
 
+load_flybase_das:-
   % DAS's 11 tsv and 1 json file
   load_flybase('./ftp.flybase.net/releases/current/precomputed_files/*/fbgn_fbtr_fbpp_expanded_fb_*.tsv'),
   load_flybase('./ftp.flybase.net/releases/current/precomputed_files/*/physical_interactions_mitab_fb_*.tsv'),
@@ -427,12 +447,15 @@ load_flybase_files_ftp:-  % 47 tables
   load_flybase('./ftp.flybase.net/releases/current/precomputed_files/*/gene_association_*.fb',tsv),
   load_flybase('./ftp.flybase.net/releases/current/precomputed_files/*/gene_genetic_interactions_fb_*.tsv'),
   load_flybase('./ftp.flybase.net/releases/current/precomputed_files/*/allele_genetic_interactions_fb_*.tsv'),
-
   % Note: this file replaces 'allele_phenotypic_data_*.tsv' from FB2023_01 onward.
   load_flybase('./ftp.flybase.net/releases/current/precomputed_files/alleles/genotype_phenotype_data_fb_*.tsv'),
   load_flybase('./ftp.flybase.net/releases/current/precomputed_files/*/allele_phenotypic_data_fb_*.tsv'),
+  !.
 
-  
+
+
+load_flybase_files_ftp:-  % 47 tables
+  load_flybase_das,
   load_flybase('./ftp.flybase.net/releases/current/precomputed_files/*/disease_model_annotations_fb_*.tsv'),
   load_flybase('./ftp.flybase.net/releases/current/precomputed_files/*/dmel_human_orthologs_disease_fb_*.tsv'),  
   load_flybase('./ftp.flybase.net/releases/current/precomputed_files/*/fbrf_pmid_pmcid_doi_fb_*.tsv'),
