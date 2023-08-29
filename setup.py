@@ -42,7 +42,8 @@ setup(
     #packages=find_packages(exclude=['ftp.vbase.org']),
     packages=["metta_vspace"],
     install_requires=[
-        'pyswip'
+        'pyswip',
+        'hyperon'
     ],
     package_dir={"metta_vspace": "metta_vspace"},
     include_package_data=True,

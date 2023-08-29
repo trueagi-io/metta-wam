@@ -312,8 +312,10 @@ gc_now:- set_prolog_flag(gc,true), garbage_collect,garbage_collect_atoms,garbage
 extreme_debug(_).
 
 
-pp_fb(P):- format("~N"),  \+ \+ (numbervars(P,14,_,[attvar(bind),singletons(true)]), pp_fb1(P)).
-pp_fb1(P):- pp_ilp(P),!.
+pp_fb(P):- format("~N "),  \+ \+ (numbervars(P,14,_,[attvar(bind),singletons(true)]), pp_fb1(P)).
+:- if(current_predicate(pp_ilp/1)).
+pp_fb1(P):- pp_ilp(P),!,format("~N "),pp_as(P),!.
+:- endif.
 pp_fb1(P):- pp_as(P),!.
 pp_fb1(P):- print(P),!,nl.
 pp_fb1(P):- fbdebug1(P),!,nl.
@@ -2162,7 +2164,7 @@ ah:- add_history(fb_stats),
   add_history(mine_overlaps),
   add_history(try_overlaps),
   add_history(load_flybase).
-:- ah,ah,ah.
+%:- ah,ah,ah.
 
 %:- initialization(load_flybase).
 :- save_pre_statistic(memory).
