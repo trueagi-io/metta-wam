@@ -18,7 +18,7 @@ skip(_).
     absolute_file_name('./',Dir,[relative_to(File),file_type(directory)]),
     asserta(pyswip_dir(Dir)).
 
-with_cwd(Dir,Goal):- setup_call_cleanup(working_directory(X, Dir), Goal, working_directory(_,X)). 
+with_cwd(Dir,Goal):- setup_call_cleanup(working_directory(X, Dir), Goal, working_directory(_,X)).
 with_prolog_flag(Name,ArgV,Goal):-
   current_prolog_flag(Name,Was),
   setup_call_cleanup(set_prolog_flag(Name,ArgV),Goal,set_prolog_flag(Name,Was)).
@@ -89,7 +89,7 @@ atom_prefix('CHEBI', obo, 'Chemical Entities of Biological Interest').
 %
 %FBbt_00051628
 
-concept_type(Arg,Type):- 
+concept_type(Arg,Type):-
    fb_arg(Arg),
    fb_arg_table_n(Arg,Fn,N),
    table_n_type(Fn,N,Type).
@@ -123,9 +123,9 @@ mine_overlaps:-
   time(once(mine_overlaps1)),
   skip(mine_overlaps2).
 
-mine_overlaps1:- 
+mine_overlaps1:-
   forall(mine_corisponds(Concept1,How), assert_progress(mine_overlaps1(Concept1),How)).
- 
+
 mine_overlaps2_slow:- 
  % forall(mine_typelevel_overlaps,true),
   forall(mine_atomspace_overlaps,true).
@@ -144,7 +144,7 @@ mine_typelevel_overlaps(Concept1,'ConceptMapFn'(Type1,Nth1,Fn1/*Arity1*/),'Conce
   Fn1@>Fn2, nth1(Nth1,Atom1,Concept1),
   good_concept(Concept1),
   once((nth1(Nth2,Atom2,Concept1),length(Atom1,Arity1),length(Atom2,Arity2))).
-  
+
 mine_atomspace_overlaps:-
   fb_two_preds(Fn1,Nth1,Arity1,Fn2,Nth2,Arity2),
   once((functor(Atom1,Fn1,Arity1),functor(Atom2,Fn2,Arity2),
@@ -167,9 +167,9 @@ table_column_type(Fn,Nth,Type):- table_n_type(Fn,Nth,TypeC,TypeB),(nonvar(TypeB)
 
 make_atom(Fn,Nth,Atom,Arg):- fb_pred_g(Fn,Arity),functor(Atom,Fn,Arity),arg(Nth,Atom,Arg).
 
-synth_conj(QV,(Atom1),(Atom2)):-  
+synth_conj(QV,(Atom1),(Atom2)):-
   maybe_corisponds('ConceptMapFn'(Type1,Nth1,Fn1),'ConceptMapFn'(Type2,Nth2,Fn2)),
-  make_atom(Fn1,Nth1,Atom1,Arg1),  
+  make_atom(Fn1,Nth1,Atom1,Arg1),
   make_atom(Fn2,Nth2,Atom2,Arg2),
   Fn1\=@=Fn2,
   skip(Type1),skip(Type2),
@@ -178,7 +178,7 @@ synth_conj(QV,(Atom1),(Atom2)):-
 synth_query(Len,Query):- synth_query(_,Len,Query).
 
 synth_query(_,1,[Atom]):- !, make_atom(Atom).
-synth_query(QV,N,[Q1,Q2|Query]):-  
+synth_query(QV,N,[Q1,Q2|Query]):-
    M is N -1,
    synth_conj(QV,Q1,Q2),
    (M>1 -> dif(QV,QV2) ; true),
@@ -190,18 +190,20 @@ make_atom(Atom):- fb_pred_g(F,A),functor(Atom,F,A).
 
 ok_if_dupped(best_gene_summary).
 
-try_overlaps:- 
-  synth_query(4,Query),
+try_overlaps:- try_overlaps(5).
+
+try_overlaps(N):-
+  synth_query(N,Query),
   \+ \+ (match(Query),
          pp_fb(grounded=Query),
          ignore(maybe_english(Query))),nl,nl,
-         
+
   pp_fb(ungrounded='!'(Query)),nl,nl,nl.
 
 no_english(fbrf_pmid_pmcid_doi,_).
 no_english(physical_interactions_mitab,8).
 
-maybe_english(Query):- 
+maybe_english(Query):-
          extract_concepts(Query,Concepts),!,
          ignore((maybe_english(Query,Concepts))),!.
 
@@ -212,8 +214,8 @@ is_englishy(C):- \+ atom(C), \+ string(C), !, fail.
 is_englishy(C):- split_string(C, ". ", " ", [_,_,_|_]).
 is_englishy(C):- atom_contains(C,". ").
 
-some_english(Term):- 
-  ignore((fb_arg_table_n(C,Fn1,Nth1), \+ no_english(Fn1,Nth1),is_englishy(C), 
+some_english(Term):-
+  ignore((fb_arg_table_n(C,Fn1,Nth1), \+ no_english(Fn1,Nth1),is_englishy(C),
   make_atom(Fn1,Nth1,Atom,English),
   arg(Nth2,Atom,Term),Nth2\==Nth1,
   call(Atom),English\=='',!,
@@ -226,7 +228,7 @@ extract_concepts(Query,Concepts):-
 longest_first(R,A,B):- into_len(A,L1),into_len(B,L2),compare(R,L2,L1).
 into_len(A,0):- var(A),!.
 into_len(A,L):- \+ string(A), !, sformat(S,"~w",[A]),into_len(S,L).
-into_len(A,0+A):- atom_contains(A," "). 
+into_len(A,0+A):- atom_contains(A," ").
 into_len(A,L+A):- atom_length(A,L1), (L1 == 11 -> L = 0 ; L is - L1).
 
 assert_progress(Concept,Atom):- Atom=..[OP,A1,A2], A1@>A2,!,AtomSwp=..[OP,A2,A1],!,assert_progress(Concept,AtomSwp).
@@ -267,8 +269,8 @@ must_det_ll_r(G):- call(G).
 % Usage: safe(+Goal, +Info).
 safe(Goal, Info) :-
     % Try to call Goal. If an exception is raised, unify Exception with the exception.
-    catch(Goal, Exception, 
-        % If an exception is raised, portray the clause (Info :- Goal) 
+    catch(Goal, Exception,
+        % If an exception is raised, portray the clause (Info :- Goal)
         % along with the exception, then rethrow the exception.
         (catch_ignore(portray_clause(exception:Exception:(Info:- Goal))), throw(Exception))
     ).
@@ -290,7 +292,7 @@ pp_sex('') :- format('()',[]).
 pp_sex([]):-  !, write('()').
 pp_sex(N=V):-  !, format("~N;; ~w == ~n",[N]),!,pp_sex(V).
 pp_sex(V) :- (number(V) ; (atom(V),atom_number(V,_)); is_dict(V)), !, format('(ValueAtom ~w)',[V]).
-pp_sex(S) :- atom(S), pp_sax(S),!. 
+pp_sex(S) :- atom(S), pp_sax(S),!.
 pp_sex(S) :- string(S),!, format('(StringValue "~w")',[S]).
 % Lists are printed with parentheses.
 pp_sex(V) :- \+ compound(V), !, format('~p',[V]).
@@ -344,7 +346,7 @@ fbug(P) :- format("~N"), with_output_to(user_error,pp_fb(P)),!.
 fbug(N=V) :- nonvar(N), !, fbdebug1(N:-V).
 fbug(V) :- compound(V),functor(V,F,_A),!,fbdebug1(F:-V).
 fbug(V) :- fbdebug1(debug:-V).
-fbdebug1(Message) :- 
+fbdebug1(Message) :-
   % ISO Standard: flush_output/1
   flush_output(user_output),
   flush_output(user_error),
@@ -365,7 +367,7 @@ is_scryer:- \+  current_prolog_flag(libswipl,_).
 option_value(N,V):- nb_current(N,VV),!,V=VV.
 option_value(N,V):- current_prolog_flag(N,VV),!,V=VV.
 option_value(_N,V):- !,V=[].
-with_option_value(N,V,G):-  option_value(N,W), 
+with_option_value(N,V,G):-  option_value(N,W),
   setup_call_cleanup(nb_setval(N,V),
      setup_call_cleanup(set_prolog_flag(N,V),G,
         set_prolog_flag(N,W)),
@@ -403,8 +405,8 @@ recount_total_loaded_atoms:- flag(total_loaded_atoms,_,0),full_atom_count(Was),f
 
 % Convert flybase data from CSV to Prolog format.
 load_flybase:- is_scryer,!,load_flybase_files.
-load_flybase:- recount_total_loaded_atoms,!,load_flybase_files,cleanup_arities,fb_stats.
-load_flybase_dirs:- 
+load_flybase:- recount_total_loaded_atoms,!,load_flybase_files,!,cleanup_arities,!,fb_stats.
+load_flybase_dirs:-
   load_flybase('./ftp.flybase.net/releases/current/das_precomputed'),
   load_flybase('./ftp.flybase.net/releases/current/precomputed_files/*'),
   load_flybase('./ftp.flybase.net/releases/current/./*sv'),!.
@@ -432,7 +434,7 @@ declare -a StringArray=(\
 "fbrf_pmid_pmcid_doi_fb_*.tsv.gz")
 */
 
-load_flybase_files:- 
+load_flybase_files:-
    ftp_data(Dir),
     with_cwd(Dir,load_flybase_files_ftp).
 
@@ -457,7 +459,7 @@ load_flybase_das:-
 load_flybase_files_ftp:-  % 47 tables
   load_flybase_das,
   load_flybase('./ftp.flybase.net/releases/current/precomputed_files/*/disease_model_annotations_fb_*.tsv'),
-  load_flybase('./ftp.flybase.net/releases/current/precomputed_files/*/dmel_human_orthologs_disease_fb_*.tsv'),  
+  load_flybase('./ftp.flybase.net/releases/current/precomputed_files/*/dmel_human_orthologs_disease_fb_*.tsv'),
   load_flybase('./ftp.flybase.net/releases/current/precomputed_files/*/fbrf_pmid_pmcid_doi_fb_*.tsv'),
   format("~n================================================================================================="),
   format("~n=====================================Das Checkpoint=============================================="),
@@ -469,7 +471,7 @@ load_flybase_files_ftp:-  % 47 tables
 
   % 36 more that DAS doesnt load
   load_flybase('./ftp.flybase.net/releases/current/precomputed_files/alleles/fbal_to_fbgn_fb_*.tsv'),
-  
+
   load_flybase('./ftp.flybase.net/releases/current/precomputed_files/clones/cDNA_clone_data_fb_*.tsv'),
   load_flybase('./ftp.flybase.net/releases/current/precomputed_files/clones/genomic_clone_data_fb_*.tsv'),
   load_flybase('./ftp.flybase.net/releases/current/precomputed_files/collaborators/fbgn_uniprot_fb_*.tsv'),
@@ -491,7 +493,7 @@ load_flybase_files_ftp:-  % 47 tables
   load_flybase('./ftp.flybase.net/releases/current/precomputed_files/genes/gene_groups_HGNC_fb_*.tsv'),
   load_flybase('./ftp.flybase.net/releases/current/precomputed_files/genes/gene_rpkm_matrix_fb_*.tsv'),
   load_flybase('./ftp.flybase.net/releases/current/precomputed_files/genes/gene_rpkm_report_fb_*.tsv'),
-  load_flybase('./ftp.flybase.net/releases/current/precomputed_files/genes/gene_snapshots_fb_*.tsv'),  
+  load_flybase('./ftp.flybase.net/releases/current/precomputed_files/genes/gene_snapshots_fb_*.tsv'),
   load_flybase('./ftp.flybase.net/releases/current/precomputed_files/genes/pathway_group_data_fb_*.tsv'),
   %load_flybase('./ftp.flybase.net/releases/current/precomputed_files/genes/scRNA-Seq_gene_expression_fb_*.tsv'),
   %load_flybase('./ftp.flybase.net/releases/current/precomputed_files/insertions/construct_maps.zip'),
@@ -509,7 +511,7 @@ load_flybase_files_ftp:-  % 47 tables
   %load_flybase('./ftp.flybase.net/releases/current/precomputed_files/transposons/transposon_sequence_set.fa'),
   load_flybase('./ftp.flybase.net/releases/current/precomputed_files/transposons/transposon_sequence_set.gff',tsv),
 
-  
+
   load_flybase('./ftp.flybase.net/releases/current/precomputed_files/ontologies/chebi_fb_*.obo'),
   load_flybase('./ftp.flybase.net/releases/current/precomputed_files/ontologies/doid.obo'),
   load_flybase('./ftp.flybase.net/releases/current/precomputed_files/ontologies/fly_anatomy.obo'),
@@ -528,7 +530,7 @@ load_flybase_files_ftp:-  % 47 tables
 
 
 % Load flybase data in Prolog format.
-load_fb_cache:- 
+load_fb_cache:-
   load_fb_mask('precomputed_files/*/*pl'),
   load_fb_mask('flybase_data/public.*.pl'),
   load_fb_mask('flybase_data/*fb_2023_01.pl').
@@ -540,8 +542,8 @@ with_wild_path(Fnicate, Dir) :-  is_scryer, atom(Dir), !, must_det_ll_r((atom_ch
 with_wild_path(Fnicate, Chars) :-  \+ is_scryer, \+ atom(Chars), !, must_det_ll_r((name(Atom,Chars), with_wild_path(Fnicate, Atom))).
 with_wild_path(Fnicate, File) :- exists_file(File), !, must_det_ll_r(( call(Fnicate, File))).
 with_wild_path(Fnicate, File) :- with_wild_path_swi(Fnicate, File).
-with_wild_path(Fnicate, Dir) :-  exists_directory(Dir), !, 
-  must_det_ll_r((directory_files(Dir, Files), 
+with_wild_path(Fnicate, Dir) :-  exists_directory(Dir), !,
+  must_det_ll_r((directory_files(Dir, Files),
   maplist(directory_file_path(Dir,Files),Paths),
   maplist(atom_chars,Paths,CharPaths),
   maplist(with_wild_path(Fnicate), CharPaths))), !.
@@ -549,24 +551,24 @@ with_wild_path(Fnicate, File) :- is_list(File), !,  must_det_ll_r((maplist(with_
 with_wild_path(Fnicate, File) :- must_det_ll_r((call(Fnicate, File))).
 
 
-with_wild_path_swi(Fnicate, File) :- 
-  compound(File), 
+with_wild_path_swi(Fnicate, File) :-
+  compound(File),
   absolute_file_name(File, Dir, [access(read), file_errors(fail), file_type(directory)]),
-  '\\=@='(Dir, File), !, 
+  '\\=@='(Dir, File), !,
   with_wild_path(Fnicate, Dir).
-with_wild_path_swi(Fnicate, File) :- 
-  compound(File), !, 
+with_wild_path_swi(Fnicate, File) :-
+  compound(File), !,
   absolute_file_name(File, Dir, [access(read), file_errors(fail), file_type(['csv', 'tsv', ''])]),
-  '\\=@='(Dir, File), !, 
+  '\\=@='(Dir, File), !,
   with_wild_path(Fnicate, Dir).
-with_wild_path_swi(Fnicate, File) :- 
-  atom_contains(File, '*'), 
-  expand_file_name(File, List), !, 
+with_wild_path_swi(Fnicate, File) :-
+  atom_contains(File, '*'),
+  expand_file_name(File, List), !,
   maplist(with_wild_path(Fnicate), List).
-with_wild_path_swi(Fnicate, File) :- 
+with_wild_path_swi(Fnicate, File) :-
   exists_directory(File),
-  directory_file_path(File, '*.*sv', Wildcard), 
-  expand_file_name(Wildcard, List), !, 
+  directory_file_path(File, '*.*sv', Wildcard),
+  expand_file_name(Wildcard, List), !,
   maplist(Fnicate, List).
 
 
@@ -603,11 +605,11 @@ load_fb_cache(_File,OutputFile,_Fn):- exists_file(OutputFile),!,ensure_loaded(Ou
 load_fb_cache(File,_OutputFile,_Fn):- load_files([File],[qcompile(large)]).
 
 load_flybase(File):- file_name_extension(_,Ext,File),!, load_flybase(File,Ext).
-load_flybase(File,Ext):-    
+load_flybase(File,Ext):-
    with_wild_path(load_flybase0(Ext),File),!.
 
 load_flybase0(Ext,_File):-  Ext=='pl',!.
-load_flybase0(Ext,File):-  
+load_flybase0(Ext,File):-
   file_name_extension(Name,_,File),
   atomic_list_concat([Name,'pl'],'.',OutputFile),
   data_pred(Name,Fn), 
@@ -640,7 +642,7 @@ load_fb_json(Ext,File,OutputFile,Fn):- fbug(load_fb_json(Ext,File,OutputFile,Fn)
 load_fb_obo(Ext,File,OutputFile,Fn):- fbug(load_fb_obo(Ext,File,OutputFile,Fn)),!.
 %load_fb_obo(Ext,File,OutputFile,Fn):- fbug(load_fb_obo(Ext,File,OutputFile,Fn)),
 %  (current_predicate(load_obo/1)->load_obo(File);true).
-  
+
 
 data_pred(X,Y):- atomic_list_concat(List,'/',X),List\==[],List\=[_],!,last(List,L),data_pred(L,Y).
 data_pred(X,Y):- atomic_list_concat(List,'_',X),once(not_trimmed_path(List,NewList)),
@@ -661,7 +663,7 @@ not_trimmed_path([],[]).
 file_to_sep(File,','):- file_name_extension(_,csv,File),!.
 file_to_sep(File,'\t'):- file_name_extension(_,tsv,File),!.
 
-  
+
 is_swipl:- \+ is_scryer.
 
 :- if(is_scryer).
@@ -674,7 +676,7 @@ read_line_to_chars(S,L):- read_line_to_string(S,Str),string_chars(Str,L).
 % Usage: fb_assert(+Term).
 fb_assert(Term) :-
     % Check if Term is a rule (Head :- Body) or a fact (just Head).
-    ( Term = (Head :- Body) 
+    ( Term = (Head :- Body)
     -> copy_term(Body, CopiedBody)
     ; (Head = Term, CopiedBody = true)
     ),
@@ -689,7 +691,7 @@ fb_assert(Term) :-
 
 :- dynamic(done_reading/1).
 
-load_flybase(Sep,File,Stream,OutputStream,Fn):- 
+load_flybase(Sep,File,Stream,OutputStream,Fn):-
  must_det_ll_r((
   ignore(swi_only(format(OutputStream,":- ~q.\n",[encoding(utf8)]))),
   atomic_list_concat([data,Fn],'_',Fn0),
@@ -700,7 +702,7 @@ load_flybase(Sep,File,Stream,OutputStream,Fn):-
 load_flybase_sv(Sep,File,Stream,OutputStream,Fn):- at_end_of_stream(Stream),!,
   once(load_fb_data(_ArgTypes,File,Stream,Fn,Sep,end_of_file,OutputStream)).
 
-load_flybase_sv(Sep,File,Stream,OutputStream,Fn):- 
+load_flybase_sv(Sep,File,Stream,OutputStream,Fn):-
  must_det_ll_r((
   flag(loaded_from_file,_,0),
   ignore(once((table_columns(File,Header);table_columns(Fn,Header)))),
@@ -726,7 +728,7 @@ load_flybase_sv(Sep,File,Stream,OutputStream,Fn):-
 is_really_header_row([H|_],_Names):- atom_concat('',_,H),!.
 
 %read_csv_stream(Sep,CharsStream,Header):- read_string(CharsStream, "\n", "\r\t ",_,)
-read_csv_stream(Sep,CharsStream,Header):- %  \+ option_value(full_canon,[]),!, 
+read_csv_stream(Sep,CharsStream,Header):- %  \+ option_value(full_canon,[]),!,
   read_line_to_string(CharsStream,Chars),
   (Chars == end_of_file -> Header= Chars ; atomic_list_concat(Header, Sep, Chars)).
 read_csv_stream(Sep,CharsStream,Header):- \+ option_value(full_canon,[]),!, read_line_to_string(CharsStream,Chars),
@@ -738,23 +740,23 @@ read_csv_stream(Sep,CharsStream,Header):-
   HeaderRow=..[_|Header],!.
 
 read_csv(Sep,Chars,Header):- \+ option_value(full_canon,[]),!, split_string(Chars, Sep, "\s\t\n", Header).
-read_csv(Sep,Chars,Header):-  
+read_csv(Sep,Chars,Header):-
   open_string(Chars,CharsStream),read_csv_stream(Sep,CharsStream,Header).
 
 
-attempt_header_row(Sep,Chars,Fn,Header,ArgTypes):- 
-  read_csv(Sep,Chars,Header),  
+attempt_header_row(Sep,Chars,Fn,Header,ArgTypes):-
+  read_csv(Sep,Chars,Header),
   fix_header_names(Fn,Header,ArgTypes),!.
 
 :- dynamic(t_h_n/3).
 
-load_flybase_chars(ArgTypes,File,_Stream,_Fn,Sep,Chars,_OutputStream):- 
+load_flybase_chars(ArgTypes,File,_Stream,_Fn,Sep,Chars,_OutputStream):-
   ( \+ member(Sep,Chars); (['#','#',' '|_]=Chars) ;  (ground(ArgTypes),['#'|_]=Chars)),
   %writeln(comment(Sep)=Chars),!,
   (format("~n ; ~s",[Chars])),
   ignore((flag(loaded_from_file,X,X),X>100,!,assert(done_reading(File)))).
 
-load_flybase_chars([N|ArgTypes],File,Stream,Fn,Sep,Chars,OutputStream):- 
+load_flybase_chars([N|ArgTypes],File,Stream,Fn,Sep,Chars,OutputStream):-
   var(ArgTypes),member(Sep,Chars),['#'|_]=Chars,
   (format("~n ; Maybe Header: ~s",[Chars])),
   attempt_header_row(Sep,Chars,Fn,Header,ArgTypes),
@@ -776,9 +778,9 @@ load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl,OutputStream):-  !, % \+ opti
   (option_value(max_per_file,Max)->true;Max=inf),
   fbug(load_fb_data(ArgTypes,File,Max,Fn,Sep)),
   add_table_n_types(Fn,1,ArgTypes),!,
-   repeat, 
+   repeat,
      once(read_csv_stream(Sep,Stream,Data)),
-     flag(loaded_from_file,X,X), 
+     flag(loaded_from_file,X,X),
       (((Data== end_of_file);(X>Max)) -> assert(done_reading(File)) ; 
        (once(write_flybase_data(ArgTypes,OutputStream,Fn,Data)),fail)),!.
 
@@ -788,9 +790,9 @@ load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl,OutputStream):- !,
   (option_value(max_per_file,Max)->true;Max=inf),
   fbug(load_fb_data(ArgTypes,File,Max,Fn,Sep)),
   add_table_n_types(Fn,1,ArgTypes),!,
-   repeat, 
+   repeat,
      once((csv_read_row(Stream, RData, CompiledOptions))),
-     flag(loaded_from_file,X,X), 
+     flag(loaded_from_file,X,X),
       (((RData== end_of_file);(X>Max)) -> assert(done_reading(File)) ; 
        (RData =..[_|Data], 
        once(write_flybase_data(ArgTypes,OutputStream,Fn,Data)),fail)),!.
@@ -822,14 +824,14 @@ heartbeat :-
     ;   get_time(CurrentTime),
         nb_setval(last_printed_time, CurrentTime)
     ),
-    
+
     % Get the current time and the last printed time
     get_time(CurrentTime),
     nb_getval(last_printed_time, LastPrintedTime),
-    
+
     % Calculate the difference
     Diff is CurrentTime - LastPrintedTime,
-    
+
     % If the difference is greater than or equal to 60 seconds (1 minute)
     (   Diff >= 60
     ->  % Print the heartbeat message and update the last printed time
@@ -858,17 +860,17 @@ fb_stats:- gc_now,
    PA is RM//(SL+1),
    APS is 60*floor(SL/(TotalSeconds+1)),
    ACS is AS//(Concepts+1),     
-   
+
    pl_stats('ConceptNodes',Concepts),
    pl_stats('Random samples',CTs),
    skip((pl_stats('Bytes Per Atom (Average)',PA), pl_stats('Bytes Per ConceptNode (Average)',ACS))),
-   skip((pl_stats('Relational Memory',RM), pl_stats('ConceptNode Memory',AS))), 
+   skip((pl_stats('Relational Memory',RM), pl_stats('ConceptNode Memory',AS))),
    %pl_stats('Queryspace Memory',StackMem),
    %CPU is CPUTime-57600,
    format_time(TotalSeconds, Formatted),
    skip((pl_stats('Atoms per minute',APS))),
    pl_stats('Total Memory Used',PM),
-   pl_stats('Runtime (days:hh:mm:ss)',Formatted), 
+   pl_stats('Runtime (days:hh:mm:ss)',Formatted),
    nl,nl,!.
 fb_stats(F):- forall(fb_pred(F,A),fb_stats(F,A)).
 fb_stats(F,A):- fb_stats(F,A,NC), pl_stats(F/A,NC).
@@ -944,11 +946,11 @@ fix_list_args(_Fn,_ArgTypes,Args,Args):-!.
 primary_term(_Fn,[N|ArgTypes],_Args,_Term,ArgTypes):-number(N),!.
 primary_term(_Fn,[N|ArgTypes],Args,Term,ArgTypes):-number(N),!,nth1(N,Args,Term).
 primary_term(_Fn,ArgTypes,_Args,_Term,ArgTypes):-!.
-primary_term(_Fn,ArgTypes,Args,Term,NewArgTypes):- 
+primary_term(_Fn,ArgTypes,Args,Term,NewArgTypes):-
    append(L,[primary(Name)|R],ArgTypes),
    append(L,[Name|R],NewArgTypes),
    length(L,N),nth0(N,Args,Term).
-primary_term( Fn,ArgTypes,Args,Term,ArgTypes):- 
+primary_term( Fn,ArgTypes,Args,Term,ArgTypes):-
    primary_column(Fn,Name),
    nth1(N,ArgTypes,Name),!,
    nth1(N,Args,Term),!.
@@ -1156,10 +1158,10 @@ fix_header_names(FL,Fn,ID,Out):- member(RF,['__',' ']),atomic_list_concat(MIDL,R
    fix_header_names(FL,Fn,MID,Out).
 fix_header_names(FL,Fn,ID,listOf(AOut)):- member(RF,['(es)','(s)','ids']),atomic_list_concat([Left,Right],RF,ID),atomic_list_concat([Left,Right],'_',MID),!,
    fix_header_names(FL,Fn,MID,AOut),!. % atom_concat('ListOf_',AOut,Out),!.
-fix_header_names(FL,Fn,TT,listOf(AOut)):- 
+fix_header_names(FL,Fn,TT,listOf(AOut)):-
    member(IDs=ID,['IDs'='ID']),
    atom_concat(Type,IDs,TT),
-   atom_concat(Type,ID,MID),   
+   atom_concat(Type,ID,MID),
    fix_header_names(FL,Fn,MID,AOut),!.
 fix_header_names(FL,Fn,ID,listOf(AOut)):- member(RFS=RF,['_IDs'='_ID','IDs'='ID']),
    atomic_list_concat([Left,Right],RFS,ID),
@@ -1177,7 +1179,7 @@ fix_header_names(_,_,Name,Name).
 pmt :-flybase_tables(FBT),forall(member(T,FBT), ( '\\+'(flybase_cols(T,_)) -> format('~N~q.~n',[get_fbt(T)]);true)).
 use_flybase_cols(Table,Columns):-
  must_det_ll_r((
-  maplist(fix_header_names(Columns,Table),Columns,ArgTypes),  
+  maplist(fix_header_names(Columns,Table),Columns,ArgTypes),
   assert(flybase_col_names(Table,Columns,ArgTypes)),
   do_arity_2_names(Table,ArgTypes))).
 
@@ -1205,11 +1207,11 @@ do_arity_2_names_dc1(Table,DataCall,N,Nth):-
   Arity2Call=..[Arity2,Arg1,Arg2],
   fbug((Arity2Call:-DataCall)),
   fb_assert((Arity2Call:-DataCall)))).
-  
+
 make_arity_2_name(Table,Nth,Arity2):-
   clip_id(Nth,NthNoID),
   (atom_concat(Table,_,Nth)
-    -> Arity2 = Nth 
+    -> Arity2 = Nth
     ; atomic_list_concat([Table,NthNoID],'_',Arity2)).
 
 
@@ -1490,32 +1492,32 @@ column_names_ext(gene_genetic_interactions, [listOf('Starting_gene_symbol', ['|'
 column_names_ext(gene_rpkm_matrix, [gene_primary_id, gene_symbol, gene_fullname, gene_type, 'BCM_1_E2-4hr_(FBlc0000061)', 'BCM_1_E14-16hr_(FBlc0000062)', 'BCM_1_E2-16hr_(FBlc0000063)', 'BCM_1_E2-16hr100_(FBlc0000064)', 'BCM_1_L3i_(FBlc0000065)', 'BCM_1_L3i100_(FBlc0000066)', 'BCM_1_P3d_(FBlc0000067)', 'BCM_1_FA3d_(FBlc0000068)', 'BCM_1_MA3d_(FBlc0000069)', 'BCM_1_P_(FBlc0000070)', 'BCM_1_L_(FBlc0000071)', 'BCM_1_A17d_(FBlc0000072)', 'mE_mRNA_em0-2hr_(FBlc0000086)', 'mE_mRNA_em2-4hr_(FBlc0000087)', 'mE_mRNA_em4-6hr_(FBlc0000088)', 'mE_mRNA_em6-8hr_(FBlc0000089)', 'mE_mRNA_em8-10hr_(FBlc0000090)', 'mE_mRNA_em10-12hr_(FBlc0000091)', 'mE_mRNA_em12-14hr_(FBlc0000092)', 'mE_mRNA_em14-16hr_(FBlc0000093)', 'mE_mRNA_em16-18hr_(FBlc0000094)', 'mE_mRNA_em18-20hr_(FBlc0000095)', 'mE_mRNA_em20-22hr_(FBlc0000096)', 'mE_mRNA_em22-24hr_(FBlc0000097)', 'mE_mRNA_L1_(FBlc0000098)', 'mE_mRNA_L2_(FBlc0000099)', 'mE_mRNA_L3_12hr_(FBlc0000100)', 'mE_mRNA_L3_PS1-2_(FBlc0000101)', 'mE_mRNA_L3_PS3-6_(FBlc0000102)', 'mE_mRNA_L3_PS7-9_(FBlc0000103)', 'mE_mRNA_WPP_(FBlc0000104)', 'mE_mRNA_P5_(FBlc0000105)', 'mE_mRNA_P6_(FBlc0000106)', 'mE_mRNA_P8_(FBlc0000107)', 'mE_mRNA_P9-10_(FBlc0000108)', 'mE_mRNA_P15_(FBlc0000109)', 'mE_mRNA_AdF_Ecl_1days_(FBlc0000110)', 'mE_mRNA_AdF_Ecl_5days_(FBlc0000111)', 'mE_mRNA_AdF_Ecl_30days_(FBlc0000112)', 'mE_mRNA_AdM_Ecl_1days_(FBlc0000113)', 'mE_mRNA_AdM_Ecl_5days_(FBlc0000114)', 'mE_mRNA_AdM_Ecl_30days_(FBlc0000115)', 'mE_mRNA_A_MateF_1d_head_(FBlc0000207)', 'mE_mRNA_A_MateF_4d_ovary_(FBlc0000208)', 'mE_mRNA_A_MateM_1d_head_(FBlc0000209)', 'mE_mRNA_A_VirF_1d_head_(FBlc0000210)', 'mE_mRNA_A_VirF_4d_head_(FBlc0000211)', 'mE_mRNA_A_MateF_20d_head_(FBlc0000212)', 'mE_mRNA_A_MateF_4d_head_(FBlc0000213)', 'mE_mRNA_A_MateM_20d_head_(FBlc0000214)', 'mE_mRNA_A_MateM_4d_acc_gland_(FBlc0000215)', 'mE_mRNA_A_MateM_4d_head_(FBlc0000216)', 'mE_mRNA_A_MateM_4d_testis_(FBlc0000217)', 'mE_mRNA_A_1d_carcass_(FBlc0000218)', 'mE_mRNA_A_1d_dig_sys_(FBlc0000219)', 'mE_mRNA_A_20d_carcass_(FBlc0000220)', 'mE_mRNA_A_20d_dig_sys_(FBlc0000221)', 'mE_mRNA_A_4d_carcass_(FBlc0000222)', 'mE_mRNA_A_4d_dig_sys_(FBlc0000223)', 'mE_mRNA_P8_CNS_(FBlc0000224)', 'mE_mRNA_L3_CNS_(FBlc0000225)', 'mE_mRNA_L3_Wand_carcass_(FBlc0000226)', 'mE_mRNA_L3_Wand_dig_sys_(FBlc0000227)', 'mE_mRNA_L3_Wand_fat_(FBlc0000228)', 'mE_mRNA_L3_Wand_imag_disc_(FBlc0000229)', 'mE_mRNA_L3_Wand_saliv_(FBlc0000230)', 'mE_mRNA_A_VirF_20d_head_(FBlc0000231)', 'mE_mRNA_A_VirF_4d_ovary_(FBlc0000232)', 'mE_mRNA_WPP_fat_(FBlc0000233)', 'mE_mRNA_WPP_saliv_(FBlc0000234)', 'mE_mRNA_P8_fat_(FBlc0000235)', 'mE_mRNA_A_4d_Cold1_(FBlc0000237)', 'mE_mRNA_A_4d_Cold2_(FBlc0000238)', 'mE_mRNA_L3_Cu_0.5mM_(FBlc0000239)', 'mE_mRNA_L3_late_Zn_5mM_(FBlc0000240)', 'mE_mRNA_A_4d_Cu_15mM_(FBlc0000241)', 'mE_mRNA_A_4d_Zn_4.5mM_(FBlc0000242)', 'mE_mRNA_A_4d_Caffeine_25mg/ml_(FBlc0000243)', 'mE_mRNA_A_4d_Caffeine_2.5mg/ml_(FBlc0000244)', 'mE_mRNA_L3_Caffeine_1.5mg/ml_(FBlc0000245)', 'mE_mRNA_A_4d_Cd_0.1M_(FBlc0000246)', 'mE_mRNA_A_4d_Cd_0.05M_(FBlc0000247)', 'mE_mRNA_L3_Cd_12h_(FBlc0000248)', 'mE_mRNA_L3_Cd_6hr_(FBlc0000249)', 'mE_mRNA_A_4d_Paraquat_5mM_(FBlc0000250)', 'mE_mRNA_A_4d_Paraquat_10mM_(FBlc0000251)', 'mE_mRNA_L3_Rotenone_8ug_(FBlc0000252)', 'mE_mRNA_L3_Rotenone_2ug_(FBlc0000253)', 'mE_mRNA_L3_EtOH_10_(FBlc0000254)', 'mE_mRNA_L3_EtOH_5_(FBlc0000255)', 'mE_mRNA_L3_EtOH_2.5_(FBlc0000256)', 'mE_mRNA_A_4d_Heatshock_(FBlc0000257)', 'mE_mRNA_A_10d_Resveratrol_100uM_(FBlc0000672)', 'mE_mRNA_A_10d_Rotenone_Starved_(FBlc0000673)', 'mE_mRNA_F_Sindbis_virus_(FBlc0000674)', 'mE_mRNA_L_Sindbis_virus_(FBlc0000675)', 'mE_mRNA_M_Sindbis_virus_(FBlc0000676)', 'mE_mRNA_P_Sindbis_virus_(FBlc0000677)', 'mE_mRNA_CME-W2_cells_(FBlc0000261)', 'mE_mRNA_GM2_cells_(FBlc0000262)', 'mE_mRNA_mbn2_cells_(FBlc0000263)', 'mE_mRNA_BG2-c2_cells_(FBlc0000264)', 'mE_mRNA_D20-c5_cells_(FBlc0000265)', 'mE_mRNA_S3_cells_(FBlc0000266)', 'mE_mRNA_1182-4H_cells_(FBlc0000267)', 'mE_mRNA_CME_L1_cells_(FBlc0000268)', 'mE_mRNA_Kc167_cells_(FBlc0000269)', 'mE_mRNA_BG1-c1_cells_(FBlc0000270)', 'mE_mRNA_D11_cells_(FBlc0000271)', 'mE_mRNA_D16-c3_cells_(FBlc0000272)', 'mE_mRNA_D17-c3_cells_(FBlc0000273)', 'mE_mRNA_D21_cells_(FBlc0000274)', 'mE_mRNA_D32_cells_(FBlc0000275)', 'mE_mRNA_D4-c1_cells_(FBlc0000276)', 'mE_mRNA_D8_cells_(FBlc0000277)', 'mE_mRNA_D9_cells_(FBlc0000278)', 'mE_mRNA_S1_cells_(FBlc0000279)', 'mE_mRNA_S2R+_cells_(FBlc0000280)', 'mE_mRNA_Sg4_cells_(FBlc0000281)', 'mE_mRNA_OSS_cells_(FBlc0000282)', 'mE_mRNA_OSC_cells_(FBlc0000283)', 'mE_mRNA_fGS_cells_(FBlc0000284)', 'Knoblich_mRNA_L3_CNS_neuroblast_(FBlc0000505)', 'Knoblich_mRNA_L3_CNS_neuron_(FBlc0000506)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Brain_(FBlc0003619)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Crop_(FBlc0003620)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Carcass_(FBlc0003621)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Eye_(FBlc0003622)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_FatBody_(FBlc0003623)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Head_(FBlc0003624)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Hindgut_(FBlc0003625)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Midgut_(FBlc0003626)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Ovary_(FBlc0003627)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_RectalPad_(FBlc0003628)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_SalivaryGland_(FBlc0003629)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_ThoracicoAbdominalGanglion_(FBlc0003630)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_MalpighianTubule_(FBlc0003631)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Mated_Spermathecum_(FBlc0003632)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Virgin_Spermathecum_(FBlc0003633)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Whole_(FBlc0003634)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Brain_(FBlc0003635)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Crop_(FBlc0003636)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Carcass_(FBlc0003637)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Eye_(FBlc0003638)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_FatBody_(FBlc0003639)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Head_(FBlc0003640)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Hindgut_(FBlc0003641)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Midgut_(FBlc0003642)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_RectalPad_(FBlc0003643)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_SalivaryGland_(FBlc0003644)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_ThoracicoAbdominalGanglion_(FBlc0003645)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_MalpighianTubule_(FBlc0003646)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Testis_(FBlc0003647)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_AccessoryGland_(FBlc0003648)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Whole_(FBlc0003649)', 'RNA-Seq_Profile_FlyAtlas2_L3_CNS_(FBlc0003650)', 'RNA-Seq_Profile_FlyAtlas2_L3_FatBody_(FBlc0003651)', 'RNA-Seq_Profile_FlyAtlas2_L3_Hindgut_(FBlc0003652)', 'RNA-Seq_Profile_FlyAtlas2_L3_MalpighianTubule_(FBlc0003653)', 'RNA-Seq_Profile_FlyAtlas2_L3_Midgut_(FBlc0003654)', 'RNA-Seq_Profile_FlyAtlas2_L3_SalivaryGland_(FBlc0003655)', 'RNA-Seq_Profile_FlyAtlas2_L3_Trachea_(FBlc0003656)', 'RNA-Seq_Profile_FlyAtlas2_L3_Carcass_(FBlc0003657)', 'RNA-Seq_Profile_FlyAtlas2_L3_Whole_(FBlc0003658)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Heart_(FBlc0003724)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Heart_(FBlc0003725)']).
 
 flybase_tables([
-analysis, analysisfeature, analysisgrp, analysisgrpmember, analysisprop, audit_chado, cell_line, cell_line_loaderm, cell_line_loadermprop, 
-cell_line_dbxref, cell_line_feature, cell_line_library, cell_line_libraryprop, cell_line_pub, cell_line_relationship, cell_line_strain, 
-cell_line_strainprop, cell_line_synonym, cell_lineprop, cell_lineprop_pub, contact, cv, loaderm, loaderm_dbxref, loaderm_relationship, 
-loadermpath, loadermprop, loadermsynonym, db, dbxref, dbxrefprop, eimage, environment, environment_loaderm, expression, expression_loaderm, 
-expression_loadermprop, expression_image, expression_pub, expressionprop, feature, feature_loaderm, feature_loaderm_dbxref, 
-feature_loadermprop, feature_dbxref, feature_expression, feature_expressionprop, feature_genotype, feature_grpmember, 
-feature_grpmember_pub, feature_humanhealth_dbxref, feature_interaction, feature_interaction_pub, feature_interactionprop, 
-feature_phenotype, feature_pub, feature_pubprop, feature_relationship, feature_relationship_pub, feature_relationshipprop, 
-feature_relationshipprop_pub, feature_synonym, featureloc, featureloc_pub, featuremap, featuremap_pub, featurepos, featureprop, 
-featureprop_pub, featurerange, genotype, genotype_loaderm, genotype_loadermprop, genotype_dbxref, genotype_pub, genotype_synonym, 
-genotypeprop, genotypeprop_pub, grp, grp_loaderm, grp_dbxref, grp_pub, grp_pubprop, grp_relationship, grp_relationship_pub, 
-grp_relationshipprop, grp_synonym, grpmember, grpmember_loaderm, grpmember_pub, grpmemberprop, grpmemberprop_pub, grpprop, 
-grpprop_pub, humanhealth, humanhealth_loaderm, humanhealth_loadermprop, humanhealth_dbxref, humanhealth_dbxrefprop, 
-humanhealth_dbxrefprop_pub, humanhealth_feature, humanhealth_featureprop, humanhealth_phenotype, humanhealth_phenotypeprop, 
-humanhealth_pub, humanhealth_pubprop, humanhealth_relationship, humanhealth_relationship_pub, humanhealth_synonym, humanhealthprop, 
-humanhealthprop_pub, interaction, interaction_cell_line, interaction_loaderm, interaction_loadermprop, interaction_expression, 
-interaction_expressionprop, interaction_group, interaction_group_feature_interaction, interaction_pub, interactionprop, 
-interactionprop_pub, library, library_loaderm, library_loadermprop, library_dbxref, library_dbxrefprop, library_expression, 
-library_expressionprop, library_feature, library_featureprop, library_grpmember, library_humanhealth, library_humanhealthprop, 
+analysis, analysisfeature, analysisgrp, analysisgrpmember, analysisprop, audit_chado, cell_line, cell_line_loaderm, cell_line_loadermprop,
+cell_line_dbxref, cell_line_feature, cell_line_library, cell_line_libraryprop, cell_line_pub, cell_line_relationship, cell_line_strain,
+cell_line_strainprop, cell_line_synonym, cell_lineprop, cell_lineprop_pub, contact, cv, loaderm, loaderm_dbxref, loaderm_relationship,
+loadermpath, loadermprop, loadermsynonym, db, dbxref, dbxrefprop, eimage, environment, environment_loaderm, expression, expression_loaderm,
+expression_loadermprop, expression_image, expression_pub, expressionprop, feature, feature_loaderm, feature_loaderm_dbxref,
+feature_loadermprop, feature_dbxref, feature_expression, feature_expressionprop, feature_genotype, feature_grpmember,
+feature_grpmember_pub, feature_humanhealth_dbxref, feature_interaction, feature_interaction_pub, feature_interactionprop,
+feature_phenotype, feature_pub, feature_pubprop, feature_relationship, feature_relationship_pub, feature_relationshipprop,
+feature_relationshipprop_pub, feature_synonym, featureloc, featureloc_pub, featuremap, featuremap_pub, featurepos, featureprop,
+featureprop_pub, featurerange, genotype, genotype_loaderm, genotype_loadermprop, genotype_dbxref, genotype_pub, genotype_synonym,
+genotypeprop, genotypeprop_pub, grp, grp_loaderm, grp_dbxref, grp_pub, grp_pubprop, grp_relationship, grp_relationship_pub,
+grp_relationshipprop, grp_synonym, grpmember, grpmember_loaderm, grpmember_pub, grpmemberprop, grpmemberprop_pub, grpprop,
+grpprop_pub, humanhealth, humanhealth_loaderm, humanhealth_loadermprop, humanhealth_dbxref, humanhealth_dbxrefprop,
+humanhealth_dbxrefprop_pub, humanhealth_feature, humanhealth_featureprop, humanhealth_phenotype, humanhealth_phenotypeprop,
+humanhealth_pub, humanhealth_pubprop, humanhealth_relationship, humanhealth_relationship_pub, humanhealth_synonym, humanhealthprop,
+humanhealthprop_pub, interaction, interaction_cell_line, interaction_loaderm, interaction_loadermprop, interaction_expression,
+interaction_expressionprop, interaction_group, interaction_group_feature_interaction, interaction_pub, interactionprop,
+interactionprop_pub, library, library_loaderm, library_loadermprop, library_dbxref, library_dbxrefprop, library_expression,
+library_expressionprop, library_feature, library_featureprop, library_grpmember, library_humanhealth, library_humanhealthprop,
 library_interaction, library_pub, library_relationship, library_relationship_pub, library_strain, library_strainprop, library_synonym,
- libraryprop, libraryprop_pub, lock, organism, organism_loaderm, organism_loadermprop, organism_dbxref, organism_grpmember, 
+ libraryprop, libraryprop_pub, lock, organism, organism_loaderm, organism_loadermprop, organism_dbxref, organism_grpmember,
  organism_library, organism_pub, organismprop, organismprop_pub, phendesc, phenotype, phenotype_comparison, phenotype_comparison_loaderm,
-  phenotype_loaderm, phenstatement, project, pub, pub_dbxref, pub_relationship, pubauthor, pubprop, sql_features, sql_implementation_info, 
-  sql_parts, sql_sizing, stock, stock_loaderm, stock_dbxref, stock_genotype, stock_pub, stock_relationship, stock_relationship_pub, 
-  stockcollection, stockcollection_stock, stockcollectionprop, stockprop, stockprop_pub, strain, strain_loaderm, strain_loadermprop, 
-  strain_dbxref, strain_feature, strain_featureprop, strain_phenotype, strain_phenotypeprop, 
+  phenotype_loaderm, phenstatement, project, pub, pub_dbxref, pub_relationship, pubauthor, pubprop, sql_features, sql_implementation_info,
+  sql_parts, sql_sizing, stock, stock_loaderm, stock_dbxref, stock_genotype, stock_pub, stock_relationship, stock_relationship_pub,
+  stockcollection, stockcollection_stock, stockcollectionprop, stockprop, stockprop_pub, strain, strain_loaderm, strain_loadermprop,
+  strain_dbxref, strain_feature, strain_featureprop, strain_phenotype, strain_phenotypeprop,
 strain_pub, strain_relationship, strain_relationship_pub, strain_synonym, strainprop, strainprop_pub, synonym, tableinfo, update_track]).
 
 

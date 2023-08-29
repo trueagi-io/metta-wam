@@ -1,1 +1,2 @@
-pyswip @ git+https://github.com/yuce/pyswip@59016e0841f56177d1b18ec08fd9b67792bd0a97
+pyswip @ git+https://github.com/yuce/pyswip@ab3a36df8f447478af559f98c70c9a47b06f0396
+# 59016e0841f56177d1b18ec08fd9b67792bd0a97
