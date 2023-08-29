@@ -262,11 +262,13 @@ class InteractiveMeTTa(LazyMeTTa):
     readline.add_history("@swip")
     readline.add_history("@metta+")
     readline.add_history("!(match &self $ $)")
-    readline.add_history("!(into-metta)")
-    readline.add_history("!(into-vspace)")
+    #readline.add_history("!(into-metta)")
+    #readline.add_history("!(into-vspace)")
+    readline.add_history("!(mine-overlaps)")
+    readline.add_history("!(try-overlaps)")
+    readline.add_history("!(load-flybase)")
+    readline.add_history("!(load-vspace)")
     readline.add_history('!(get-by-key &my-dict "A")')
-    # readline.add_history("!(get-by-key &my-dict 6)")
-    #readline.add_history("!(extend-py! vspace)")
 
     def maybe_submode(self, line):
         lastchar = line[-1]
@@ -286,12 +288,13 @@ class InteractiveMeTTa(LazyMeTTa):
                 prmpt = self.mode + " "+ self.submode + "> "
 
                 line = get_sexpr_input(prmpt)
+                if not line.startswith(" "):
+                    line = " " + line
                 if line:
                     sline = line.lstrip()
                     self.history.append(line)
                 else:
                     continue
-
 
                 if sline.rstrip() == '?':
                     expr = self.parse_single("(match &self $ $)")
@@ -350,10 +353,10 @@ class InteractiveMeTTa(LazyMeTTa):
                     print("@v ###   - Verbosity 0-3")
                     print("@h       - Display this help message.")
                     print("Ctrl-D   - Exit interpreter.")
-                    print("s        - Save session.")
-                    print("l        - Load the latest session.")
-                    print("q        - Quit the session.")
-                    print(".history - Display command history.")
+                    print(".s        - Save session.")
+                    print(".l        - Load the latest session.")
+                    print(".q        - Quit the session.")
+                    print(".h        - Display command history.")
                     continue
 
                 prefix = sline[0]
@@ -388,32 +391,29 @@ class InteractiveMeTTa(LazyMeTTa):
                     continue
 
                 elif self.mode == "metta":
-                    rest = line[1:].strip()
-
+                    rest = line[2:].strip()
                     if prefix == ";":
                         print(line) # comment
                         continue
-
-                    elif prefix == "s":
+                    elif sline.startswith(".s"):
                         name = f"session_{round(time())}.mettar" if rest == "" else (
                             rest if rest.endswith("mettar") else rest + ".mettar")
                         with open(os.sep.join(self.cwd + name), 'w') as f:
                             f.writelines(history)
                         continue
-                    elif prefix == "l":
+                    elif sline.startswith(".l"):
                         name = max(glob("session_*.mettar")) if rest == "" else (
                             rest if rest.endswith("mettar") else rest + ".mettar")
                         self.lazy_import_file(name)
                         continue
-                    elif prefix == "q":
+                    elif sline.startswith(".q"):
                         break
 
                     if "+-?!^".find(prefix)<0:
-                        prefix = self.submode;
+                        prefix = self.submode
                         rest = line
 
                     #print(f"submode={self.submode} rest={rest} ")
-
 
                     if prefix == "!":
                         expr = self.parse_single(rest)
@@ -643,7 +643,6 @@ def register_vspace_atoms(metta):
         'vspace-main': OperationAtom('vspace-main', lambda: [vspace_main()]),
         'swip-exec': OperationAtom('swip-exec', lambda s: [swipexec(s)]),
         'py-eval': OperationAtom('py-eval', lambda s: [eval(s)])
-
     }
 
 
@@ -864,7 +863,7 @@ def swip_to_atomspace(swip_obj):
     if isinstance(swip_obj, str):
         return S(swip_obj)
 
-    if isinstance(swip_obj, Atom):
+    if isinstance(swip_obj, PySwipAtom):
         return S(swip_obj.get_value())
 
     if isinstance(swip_obj, Variable):
@@ -872,7 +871,7 @@ def swip_to_atomspace(swip_obj):
 
     if isinstance(swip_obj, Functor):
         # Convert the functor to an expression in Atomspace
-        if isinstance(swip_obj.name, Atom):
+        if isinstance(swip_obj.name, PySwipAtom):
             sfn = swip_obj.name.value
         else:
             sfn = swip_obj.name
@@ -931,7 +930,7 @@ def atomspace_to_swip(atomspace_obj):
         return atomspace_obj.get_value()
 
     if isinstance(atomspace_obj, SymbolAtom):
-        return Atom(atomspace_obj.get_value())
+        return PySwipAtom(atomspace_obj.get_value())
 
 
     if isinstance(atomspace_obj, E):
@@ -940,7 +939,7 @@ def atomspace_to_swip(atomspace_obj):
             return [atomspace_to_swip(sub_expr) for sub_expr in atomspace_obj.sub_expressions]
         else:
             args = [atomspace_to_swip(sub_expr) for sub_expr in atomspace_obj.sub_expressions]
-            return Functor(Atom(atomspace_obj.get_value()), len(args), args)
+            return Functor(PySwipAtom(atomspace_obj.get_value()), len(args), args)
 
     if isinstance(atomspace_obj, V):
         return Variable(name=atomspace_obj.get_value())
@@ -969,7 +968,7 @@ def atomspace_to_swip_tests1():
     registerForeign(atomspace_to_swip_wrapper, arity=2)
 
     # Usage:
-    swip_functor = Functor(Atom("example"), 2, [Atom("sub1"), 3.14])
+    swip_functor = Functor(PySwipAtom("example"), 2, [PySwipAtom("sub1"), 3.14])
     print(f"swip_functor={swip_functor}"),
     atomspace_expr = swip_to_atomspace(swip_functor)
     print(f"atomspace_expr={atomspace_expr}"),
@@ -996,7 +995,7 @@ def atomspace_to_swip_tests2():
     swip_list = ["a", "b", 3]
     atomspace_expr = swip_to_atomspace(swip_list)
     converted_back_to_swip = atomspace_to_swip(atomspace_expr)
-    swip_functor = Functor(Atom("example"), 2, [Atom("sub1"), 3.14])
+    swip_functor = Functor(PySwipAtom("example"), 2, [PySwipAtom("sub1"), 3.14])
     atomspace_expr = swip_to_atomspace(swip_functor)
     converted_back_to_swip = atomspace_to_swip(atomspace_expr)
 
