@@ -6,6 +6,7 @@ import os
 import re
 import readline
 import sys
+import inspect
 from collections import Counter
 from glob import glob
 import hyperonpy as hp
@@ -34,6 +35,21 @@ def save(prev_h_len, histfile):
     readline.append_history_file(new_h_len - prev_h_len, histfile)
 atexit.register(save, h_len, histfile)
 
+def export_to_metta(func):
+    return func
+
+def mark_decorator(name):
+    def decorator(func):
+        if hasattr(func, "__decorators__"):
+            func.__decorators__.append(name)
+        else:
+            func.__decorators__ = [name]
+        return func
+    return decorator
+
+export_to_metta = mark_decorator("export_to_metta")
+export_to_pyswip = mark_decorator("export_to_pyswip")
+staticmethod = mark_decorator("staticmethod")
 
 import numpy as np
 class VSNumpyValue(MatchableObject):
@@ -202,6 +218,8 @@ class LazyMeTTa(ExtendedMeTTa):
                 self.space().add_atom(expr)
 
 
+@export_to_metta
+@staticmethod
 def print_enumerable(obj):
     if obj is None:
         print("None!")
@@ -244,10 +262,8 @@ class InteractiveMeTTa(LazyMeTTa):
     readline.add_history("@swip")
     readline.add_history("@metta+")
     readline.add_history("!(match &self $ $)")
-    readline.add_history("!(load-vspace)")
-    readline.add_history("!(load-flybase)")
-    readline.add_history("!(mine-overlaps)")
-    readline.add_history("!(try-overlaps)")
+    readline.add_history("!(into-metta)")
+    readline.add_history("!(into-vspace)")
     readline.add_history('!(get-by-key &my-dict "A")')
     # readline.add_history("!(get-by-key &my-dict 6)")
     #readline.add_history("!(extend-py! vspace)")
@@ -283,7 +299,7 @@ class InteractiveMeTTa(LazyMeTTa):
                     continue
 
                 # Check for history commands
-                if sline.rstrip() == '.history':
+                if sline.rstrip() == '.h':
                     for idx, item in enumerate(self.history):
                         print(f"{idx + 1}: {item}")
                     continue
@@ -613,13 +629,14 @@ def register_vspace_atoms(metta):
         r"new-fly-space": newFlySpaceAtom,
         r"new-v-space": newVSpaceAtom,
         r"new-value-atom": newValueAtom,
-        r"metta_learner": runnerAtom,
         #'&self': the_runner,
         #'&gswip': ValueAtom(gswip),
 
         '&my-dict': ValueAtom({'A': 5, 6: 'B'}),
         'get-by-key': OperationAtom('get-by-key', lambda d, k: d[k]),
         'load-vspace': OperationAtom('load-vspace', lambda: [load_vspace()]),
+        'mine-overlaps': OperationAtom('mine-overlaps', lambda: [mine_overlaps()]),
+        'try-overlaps': OperationAtom('try-overlaps', lambda: [try_overlaps()]),
         'load-flybase': OperationAtom('load-flybase', lambda: [load_flybase()]),
         r"fb.test-nondeterministic-foreign": testNDFFI,
 
@@ -628,6 +645,74 @@ def register_vspace_atoms(metta):
         'py-eval': OperationAtom('py-eval', lambda s: [eval(s)])
 
     }
+
+
+
+def breaken():
+    oper_dict = {
+        r"np\.vector": nmVectorAtom,
+        r"np\.array": nmArrayAtom,
+        r"np\.add": nmAddAtom,
+        r"np\.sub": nmSubAtom,
+        r"np\.mul": nmMulAtom,
+        r"np\.matmul": nmMMulAtom,
+        r"np\.div": nmDivAtom,
+        r"new-fly-space": newFlySpaceAtom,
+        r"new-v-space": newVSpaceAtom,
+        r"new-value-atom": newValueAtom,
+        r"metta_learner": runnerAtom,
+        #'&self': the_runner,
+        #'&gswip': ValueAtom(gswip),
+        '&my-dict': ValueAtom({'A': 5, 6: 'B'}),
+        'get-by-key': OperationAtom('get-by-key', lambda d, k: d[k]),
+        'swip-exec': OperationAtom('swip-exec', lambda s: [swipexec(s)]),
+        'py-eval': OperationAtom('py-eval', lambda s: [eval(s)])
+    }
+    # same as 'vspace-main': OperationAtom('vspace-main', lambda: [vspace_main()]),
+    add_exported_methods(oper_dict,sys.modules[__name__])
+    oper_dict['load-vspace'] = OperationAtom('load-vspace', lambda: load_vspace),
+    oper_dict['load-flybase'] = OperationAtom('load-flybase', lambda: load_flybase),
+
+    return oper_dict;
+
+def add_exported_methods(dict,module):
+    for name, obj in inspect.getmembers(module):
+        if inspect.isfunction(obj):
+            if getattr(obj, "__decorators__", None) is not None:
+                if "export_to_metta" in obj.__decorators__:
+                    sig = inspect.signature(obj)
+                    params = sig.parameters
+                    num_args = len([p for p in params.values() if p.default == p.empty and p.kind == p.POSITIONAL_OR_KEYWORD])
+                    add_pyop(dict, name, num_args)
+
+
+def add_pyop(dict, name, length):
+    hyphens = name.replace('_', '-')
+    underscores = name.replace('-', '_')
+    # len = 3 means  mettavars="$a $b $c"  pyvars = "a, b, c"
+    mettavars = (' $'.join(chr(97 + i) for i in range(length))).rstrip()
+    hist = f"!({hyphens} {mettavars})"
+    readline.add_history(hist)
+    pyvars = (', '.join(chr(97 + i) for i in range(length))).rstrip()
+    src = f'op = lambda {pyvars}: [{underscores}({pyvars})]'
+    local_vars = {}
+    exec(src, {}, local_vars)
+    op = local_vars['op']
+    print(f'metta: OperationAtom("{hyphens}",{src}, unwrap=False)')
+    dict[hyphens] = OperationAtom(hyphens, op, unwrap=False)
+
+def add_swip(dict, name):
+    add_swip(dict, name.replace('_', '-'), name.replace('-', '_'))
+
+def add_swip(dict, hyphens, underscores):
+    readline.add_history(f"!({hyphens})")
+    print(f"swip: {hyphens}/{length}")
+    src = f'op = lambda : [swipexec("{underscores}")]'
+    local_vars = {}
+    exec(src, {}, local_vars)
+    op = local_vars['op']
+    dict[hyphens] = OperationAtom(hyphens, op)
+
 
 
 @register_tokens(pass_metta=True)
@@ -689,6 +774,7 @@ def register_vspace_tokens(metta):
 
 from pyswip import registerForeign, PL_foreign_context, PL_foreign_control, PL_FIRST_CALL, PL_REDO, PL_PRUNED, PL_retry, PL_FA_NONDETERMINISTIC, Variable, Prolog as PySwip, Atom as PySwipAtom
 
+@export_to_metta
 def test_nondeterministic_foreign():
     #from metta_vspace import gswip
     swip= gswip;
@@ -771,6 +857,8 @@ def test_nondeterministic_foreign():
     print()
     print()
 
+@export_to_metta
+@staticmethod
 def swip_to_atomspace(swip_obj):
 
     if isinstance(swip_obj, str):
@@ -835,6 +923,7 @@ def swip_to_atomspace(swip_obj):
 
     raise ValueError(f"Unknown PySwip object type: {type(swip_obj)}")
 
+@export_to_metta
 @staticmethod
 def atomspace_to_swip(atomspace_obj):
 
@@ -872,6 +961,7 @@ def atomspace_to_swip_wrapper(atomspace_obj, swip_obj):
     swip_obj.unify(result)
     return True
 
+@export_to_metta
 @staticmethod
 def atomspace_to_swip_tests1():
     # Register the methods as foreign predicates
@@ -891,6 +981,7 @@ def atomspace_to_swip_tests1():
     print(list(swip.query("swip_to_atomspace_wrapper('example', X).")))
     print(list(swip.query("atomspace_to_swip_wrapper(X, 'example').")))
 
+@export_to_metta
 @staticmethod
 def atomspace_to_swip_tests2():
     # Register the methods as foreign predicates
@@ -919,12 +1010,43 @@ def swipexec(qry):
     for r in gswip.query(qry):
         print(r)
 
+
+@export_to_metta
+@staticmethod
 def load_vspace():
    swipexec(f"ensure_loaded('{os.path.dirname(__file__)}/pyswip/swi_flybase')")
 
+@export_to_metta
+@staticmethod
+def mine_overlaps():
+   load_vspace()
+   swipexec("mine_overlaps")
+
+@export_to_metta
+@staticmethod
+def try_overlaps():
+   load_vspace()
+   swipexec("try_overlaps")
+
+@export_to_metta
+@staticmethod
 def load_flybase():
    load_vspace()
    swipexec("load_flybase")
+
+@export_to_metta
+def vspace_main():
+    is_init=False
+    #os.system('clear')
+    t0 = monotonic_ns()
+    print(underline("Version-Space Main\n"))
+    #if is_init==False: load_vspace()
+    #if is_init==False: load_flybase()
+    #if is_init==False:
+
+    the_runner.repl()
+    print(f"\nmain took {(monotonic_ns() - t0)/1e9:.5} seconds")
+
 
 
 def vspace_init():
@@ -940,19 +1062,6 @@ def vspace_init():
     # @TODO fix this atomspace_to_swip_tests1()
     #load_vspace()
     print(f"\nInit took {(monotonic_ns() - t0)/1e9:.5} seconds")
-
-
-def vspace_main():
-    is_init=False
-    #os.system('clear')
-    t0 = monotonic_ns()
-    print(underline("Version-Space Main\n"))
-    #if is_init==False: load_vspace()
-    #if is_init==False: load_flybase()
-    #if is_init==False:
-
-    the_runner.repl()
-    print(f"\nmain took {(monotonic_ns() - t0)/1e9:.5} seconds")
 
 # All execution happens here
 gswip = PySwip()

@@ -3,7 +3,7 @@
 :- set_prolog_flag(max_per_file,inf+0).
 :- set_prolog_flag(max_per_file,10_000_000).
 :- set_prolog_flag(max_per_file,inf).
-%:- set_prolog_flag(max_per_file,1_000_000).
+:- set_prolog_flag(max_per_file,10_000).
 %:- set_prolog_flag(max_per_file,110).
 
 skip(_).
