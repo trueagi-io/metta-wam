@@ -2,10 +2,10 @@
 kaggle_arc:- \+ exists_directory('/opt/logicmoo_workspace/packs_sys/logicmoo_agi/prolog/kaggle_arc/'), !.
 %kaggle_arc:- !.
 kaggle_arc:- 
-   with_cwd('/opt/logicmoo_workspace/packs_sys/logicmoo_agi/prolog/kaggle_arc/',
-     ensure_loaded(kaggle_arc)).
+   with_prolog_flag(argv,['--libonly'],
+     with_cwd('/opt/logicmoo_workspace/packs_sys/logicmoo_agi/prolog/kaggle_arc/',
+       ensure_loaded(kaggle_arc))).
 
-:- with_prolog_flag(argv,['--libonly'],kaggle_arc).
 
 
 :- if( \+ current_predicate(must_det_ll/1)).

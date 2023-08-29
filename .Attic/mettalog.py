@@ -214,90 +214,88 @@ def my_resolver_atoms(metta):
 from hyperon.atoms import G, AtomType
 from hyperon.runner import MeTTa
 from hyperon.ext import register_atoms
-from pyswip import Prolog, registerForeign
-from pyswip import *
 
-    @staticmethod
-    def prolog_to_atomspace(prolog_obj):
-        if isinstance(prolog_obj, Atom):
-            return S(prolog_obj.get_value())
-        
-        if isinstance(prolog_obj, Variable):
-            return V(prolog_obj.chars if prolog_obj.chars else "Var")
-        
-        if isinstance(prolog_obj, Functor):
-            # Convert the functor to an expression in Atomspace
-            main_expr = E(prolog_obj.name.value)
-            for arg in prolog_obj.args:
-                main_expr.add_sub_expression(Converter.prolog_to_atomspace(arg))
-            return main_expr
-        
-        # Handle numbers and convert them to ValueAtom objects in Atomspace
-        if isinstance(prolog_obj, (int, float)):
-            return ValueAtom(prolog_obj)
-        
-        # Handle Prolog lists
-        if isinstance(prolog_obj, list):
-            list_expr = E("::")
-            for item in prolog_obj:
-                list_expr.add_sub_expression(Converter.prolog_to_atomspace(item))
-            return list_expr
-        
-        raise ValueError(f"Unknown Prolog object type: {type(prolog_obj)}")
+@staticmethod
+def prolog_to_atomspace(prolog_obj):
+    if isinstance(prolog_obj, Atom):
+        return S(prolog_obj.get_value())
+    
+    if isinstance(prolog_obj, Variable):
+        return V(prolog_obj.chars if prolog_obj.chars else "Var")
+    
+    if isinstance(prolog_obj, Functor):
+        # Convert the functor to an expression in Atomspace
+        main_expr = E(prolog_obj.name.value)
+        for arg in prolog_obj.args:
+            main_expr.add_sub_expression(Converter.prolog_to_atomspace(arg))
+        return main_expr
+    
+    # Handle numbers and convert them to ValueAtom objects in Atomspace
+    if isinstance(prolog_obj, (int, float)):
+        return ValueAtom(prolog_obj)
+    
+    # Handle Prolog lists
+    if isinstance(prolog_obj, list):
+        list_expr = E("::")
+        for item in prolog_obj:
+            list_expr.add_sub_expression(Converter.prolog_to_atomspace(item))
+        return list_expr
+    
+    raise ValueError(f"Unknown Prolog object type: {type(prolog_obj)}")
 
-    @staticmethod
-    def atomspace_to_prolog(atomspace_obj):
-        if isinstance(atomspace_obj, S):
-            return Atom(atomspace_obj.get_value())
-        
-        if isinstance(atomspace_obj, V):
-            return Variable(name=atomspace_obj.get_value())
-        
-        if isinstance(atomspace_obj, E):
-            # Convert the main expression and its sub-expressions to a Functor in Prolog
-            if atomspace_obj.get_value() == "::":  # Convert Atomspace list to Prolog list
-                return [Converter.atomspace_to_prolog(sub_expr) for sub_expr in atomspace_obj.sub_expressions]
-            else:
-                args = [Converter.atomspace_to_prolog(sub_expr) for sub_expr in atomspace_obj.sub_expressions]
-                return Functor(Atom(atomspace_obj.get_value()), len(args), args)
-        
-        if isinstance(atomspace_obj, ValueAtom):
-            return atomspace_obj.get_value()
-        
-        raise ValueError(f"Unknown Atomspace object type: {type(atomspace_obj)}")
+@staticmethod
+def atomspace_to_prolog(atomspace_obj):
+    if isinstance(atomspace_obj, S):
+        return Atom(atomspace_obj.get_value())
+    
+    if isinstance(atomspace_obj, V):
+        return Variable(name=atomspace_obj.get_value())
+    
+    if isinstance(atomspace_obj, E):
+        # Convert the main expression and its sub-expressions to a Functor in Prolog
+        if atomspace_obj.get_value() == "::":  # Convert Atomspace list to Prolog list
+            return [Converter.atomspace_to_prolog(sub_expr) for sub_expr in atomspace_obj.sub_expressions]
+        else:
+            args = [Converter.atomspace_to_prolog(sub_expr) for sub_expr in atomspace_obj.sub_expressions]
+            return Functor(Atom(atomspace_obj.get_value()), len(args), args)
+    
+    if isinstance(atomspace_obj, ValueAtom):
+        return atomspace_obj.get_value()
+    
+    raise ValueError(f"Unknown Atomspace object type: {type(atomspace_obj)}")
 
 
 
-    @staticmethod
-    def prolog_to_atomspace_wrapper(prolog_obj, atomspace_obj):
-        result = Converter.prolog_to_atomspace(prolog_obj)
-        atomspace_obj.unify(result)
-        return True
+@staticmethod
+def prolog_to_atomspace_wrapper(prolog_obj, atomspace_obj):
+    result = Converter.prolog_to_atomspace(prolog_obj)
+    atomspace_obj.unify(result)
+    return True
 
-    @staticmethod
-    def atomspace_to_prolog_wrapper(atomspace_obj, prolog_obj):
-        result = Converter.atomspace_to_prolog(atomspace_obj)
-        prolog_obj.unify(result)
-        return True
+@staticmethod
+def atomspace_to_prolog_wrapper(atomspace_obj, prolog_obj):
+    result = Converter.atomspace_to_prolog(atomspace_obj)
+    prolog_obj.unify(result)
+    return True
 
-    @staticmethod
-    def atomspace_to_prolog_tests():
-        # Register the methods as foreign predicates
-        registerForeign(Converter.prolog_to_atomspace_wrapper, arity=2)
-        registerForeign(Converter.atomspace_to_prolog_wrapper, arity=2)
-        
-        # Now you can use the methods in Prolog queries
-        prolog = Prolog()
-        list(prolog.query("prolog_to_atomspace('example', X)."))
-        list(prolog.query("atomspace_to_prolog(X, 'example')."))
-        
-        # Usage:
-        prolog_list = ["a", "b", 3]
-        atomspace_expr = Converter.prolog_to_atomspace(prolog_list)
-        converted_back_to_prolog = Converter.atomspace_to_prolog(atomspace_expr)
-        prolog_functor = Functor(Atom("example"), 2, [Atom("sub1"), 3.14])
-        atomspace_expr = Converter.prolog_to_atomspace(prolog_functor)
-        converted_back_to_prolog = Converter.atomspace_to_prolog(atomspace_expr)
+@staticmethod
+def atomspace_to_prolog_tests():
+    # Register the methods as foreign predicates
+    registerForeign(Converter.prolog_to_atomspace_wrapper, arity=2)
+    registerForeign(Converter.atomspace_to_prolog_wrapper, arity=2)
+    
+    # Now you can use the methods in Prolog queries
+    prolog = Prolog()
+    list(prolog.query("prolog_to_atomspace('example', X)."))
+    list(prolog.query("atomspace_to_prolog(X, 'example')."))
+    
+    # Usage:
+    prolog_list = ["a", "b", 3]
+    atomspace_expr = Converter.prolog_to_atomspace(prolog_list)
+    converted_back_to_prolog = Converter.atomspace_to_prolog(atomspace_expr)
+    prolog_functor = Functor(Atom("example"), 2, [Atom("sub1"), 3.14])
+    atomspace_expr = Converter.prolog_to_atomspace(prolog_functor)
+    converted_back_to_prolog = Converter.atomspace_to_prolog(atomspace_expr)
 
 
 from hyperon import *
