@@ -9,20 +9,16 @@ import sys
 from collections import Counter
 from glob import glob
 import hyperonpy as hp
-from hyperon.atoms import V, S, E, ValueAtom, GroundedAtom, ExpressionAtom, G, AtomType
+from hyperon.atoms import V, S, E, ValueAtom, GroundedAtom, ExpressionAtom, G, AtomType, MatchableObject, OperationAtom, OperationObject, BindingsSet, Atom
 from hyperon.runner import MeTTa
 from hyperon.ext import register_atoms, register_tokens
-from pyswip import registerForeign, PL_foreign_context, PL_foreign_control, PL_FIRST_CALL, PL_REDO, PL_PRUNED, PL_retry, PL_FA_NONDETERMINISTIC, Variable, Prolog as PySwip, Atom as PySwipAtom
-
-from hyperon.atoms import *
-from hyperon.base import *
-from hyperon.ext import *
+from hyperon.base import AbstractSpace, SpaceRef
 from hyperon import *
-
 
 histfile = os.path.join(os.path.expanduser("~"), ".metta_history")
 is_init = True
-debugLevel = 1
+
+verbose = 1
 
 try:
     readline.set_history_length(10000)
@@ -37,7 +33,6 @@ def save(prev_h_len, histfile):
     readline.set_history_length(10000)
     readline.append_history_file(new_h_len - prev_h_len, histfile)
 atexit.register(save, h_len, histfile)
-
 
 
 import numpy as np
@@ -221,8 +216,26 @@ def print_enumerable(obj):
             color_expr(item)
     except TypeError:
         # If a TypeError is raised, the object is not iterable
-        print(type(obj))
+        if verbose>0: print(type(obj))
         print(obj)
+
+def get_sexpr_input(prmpt):
+    expr, inside_quotes, prev_char = "", False, None
+
+    while True:
+        line = input(prmpt)
+        for char in line:
+            if char == '"' and prev_char != '\\':
+                inside_quotes = not inside_quotes
+            expr += char
+            prev_char = char
+
+        if not inside_quotes and expr.count("(") == expr.count(")"):
+            break
+        prmpt = "continue...>>> "
+        expr += " "
+
+    return expr
 
 
 class InteractiveMeTTa(LazyMeTTa):
@@ -245,6 +258,8 @@ class InteractiveMeTTa(LazyMeTTa):
             self.submode=lastchar
 
     def repl_loop(self):
+
+        global verbose
         self.mode = "metta"
         self.submode = "+"
         self.history = []
@@ -253,7 +268,8 @@ class InteractiveMeTTa(LazyMeTTa):
             try:
                 # Use the input function to get user input
                 prmpt = self.mode + " "+ self.submode + "> "
-                line = input(prmpt)
+
+                line = get_sexpr_input(prmpt)
                 if line:
                     sline = line.lstrip()
                     self.history.append(line)
@@ -299,6 +315,11 @@ class InteractiveMeTTa(LazyMeTTa):
                     readline.add_history("!(match &self $ $)")
                     continue
 
+                elif sline.startswith("@v"):
+                    verbose = int(sline.split()[1])
+                    print(f"Verbosity level set to {verbose}")
+                    continue
+
                 # Show help
                 elif sline.startswith("@h"):
                     print("Help:")
@@ -310,6 +331,7 @@ class InteractiveMeTTa(LazyMeTTa):
                     print("@m ^     - Interpret atoms as if there are in files (+)")
                     print("@p       - Switch to Python mode.")
                     print("@s       - Switch to Swip mode.")
+                    print("@v ###   - Verbosity 0-3")
                     print("@h       - Display this help message.")
                     print("Ctrl-D   - Exit interpreter.")
                     print("s        - Save session.")
@@ -328,10 +350,10 @@ class InteractiveMeTTa(LazyMeTTa):
                        swipexec(line)
                     else:
                        expr = self.parse_single(sline)
-                       print(f"% S-Expr {line}")
-                       print(f"% M-Expr {expr}")
+                       if verbose>1: print(f"% S-Expr {line}")
+                       if verbose>1: print(f"% M-Expr {expr}")
                        swip_obj = atomspace_to_swip(expr);
-                       print(f"% P-Expr {swip_obj}")
+                       if verbose>1: print(f"% P-Expr {swip_obj}")
                        call_sexpr = Functor("call_sexpr", 2)
                        user = newModule("user")
                        X = Variable()
@@ -375,37 +397,44 @@ class InteractiveMeTTa(LazyMeTTa):
                         rest = line
 
                     #print(f"submode={self.submode} rest={rest} ")
-                    expr = self.parse_single(rest)
+
 
                     if prefix == "!":
+                        expr = self.parse_single(rest)
                         yield expr, interpret(self.space(), expr)
                         continue
                     elif prefix == "?":
+                        expr = self.parse_single(rest)
                         yield expr, self.space().subst(expr, expr)
                         continue
                     elif prefix == "+":
+                        expr = self.parse_single(rest)
                         self.space().add_atom(expr)
                         continue
                     elif prefix == "-":
+                        expr = self.parse_single(rest)
                         self.space().remove_atom(expr)
                         continue
+                    elif prefix == "^":
+                        print_enumerable(the_runner.run(line));
+                        continue
                     else:
-                        result = the_runner.run(line)
-                        print_enumerable(result)
+                        expr = self.parse_single(rest)
+                        yield expr, interpret(self.space(), expr)
                         continue
 
             except KeyboardInterrupt:
-                print("\nCtrl+C Exiting...")
+                if verbose>0: print("\nCtrl+C Exiting...")
                 sys.exit(3)
 
             except EOFError:
                 # Handle Ctrl+D to exit
-                print("\n^D EOF...")
+                if verbose>0: print("\n^D EOF...")
                 sys.exit(0)
 
             except Exception as e:
                 # If there's an error, print it
-                print(f"Error: {e}")
+                if verbose>0: print(f"Error: {e}")
                 continue
 
     def repl(self):
@@ -448,11 +477,73 @@ def _response2bindings(txt):
         return new_bindings_set
 
 
-class FlySpace(GroundingSpace):
+class FlySpace(AbstractSpace):
+    def __init__(self, unwrap=True):
+        super().__init__()
+        self.atoms_list = []
+        self.unwrap = unwrap
+
+    # NOTE: this is a naive implementation barely good enough to pass the tests
+    # Don't take this as a guide to implementing a space query function
+    def query(self, query_atom):
+
+        # Extract only the variables from the query atom
+        query_vars = list(filter(lambda atom: atom.get_type() == AtomKind.VARIABLE, query_atom.iterate()))
+
+        # Match the query atom against every atom in the space
+        # BindingsSet() creates a binding set with the only matching result
+        # We use BindingsSet.empty() to support multiple results
+        new_bindings_set = BindingsSet.empty()
+        for space_atom in self.atoms_list:
+            match_results = space_atom.match_atom(query_atom)
+
+            # Merge in the bindings from this match, after we narrow the match_results to
+            # only include variables vars in the query atom
+            for bindings in match_results.iterator():
+                bindings.narrow_vars(query_vars)
+                if not bindings.is_empty():
+                    # new_bindings_set.merge_into(bindings) would work with BindingsSet(), but
+                    # it would return an empty result for multiple alternatives and merge bindings
+                    # for different variables from alternative branches, which would be a funny
+                    # modification of query, but with no real use case
+                    # new_bindings_set.push(bindings) adds an alternative binding to the binding set
+                    new_bindings_set.push(bindings)
+
+        return new_bindings_set
+
+    def add(self, atom):
+        self.atoms_list.append(atom)
+
+    def remove(self, atom):
+        if atom in self.atoms_list:
+            self.atoms_list.remove(atom)
+            return True
+        else:
+            return False
+
+    def replace(self, from_atom, to_atom):
+        if from_atom in self.atoms_list:
+            self.atoms_list.remove(from_atom)
+            self.atoms_list.append(to_atom)
+            return True
+        else:
+            return False
+
+    def atom_count(self):
+        return len(self.atoms_list)
+
+    def atoms_iter(self):
+        return iter(self.atoms_list)
+
     def copy(self):
         return self
 
 class VSpace(InteractiveMeTTa):
+
+
+    def __init__(self):
+        super().__init__()
+        self.parent = self
 
     def copy(self):
         return self
@@ -473,10 +564,15 @@ class VSpace(InteractiveMeTTa):
         return tot_str #_response2bindings(txt)
 
 
+
 @register_atoms(pass_metta=True)
 def register_vspace_atoms(metta):
+
     counter = 0
-    if debugLevel>0: print(f"register_vspace_atoms metta={metta} the_runner={the_runner}")
+    if verbose>0: print(f"register_vspace_atoms metta={metta} the_runner={the_runner}")
+
+    if not isinstance(metta, VSpace):
+        the_runner.parent = metta
 
     def new_value_atom_func():
         nonlocal counter
@@ -505,7 +601,7 @@ def register_vspace_atoms(metta):
     # (new-value-atom)
     # they share a counter
     # !(match &self $ $)
-
+    runnerAtom = G(the_runner, AtomType.ATOM)
     return {
         r"np\.vector": nmVectorAtom,
         r"np\.array": nmArrayAtom,
@@ -517,38 +613,48 @@ def register_vspace_atoms(metta):
         r"new-fly-space": newFlySpaceAtom,
         r"new-v-space": newVSpaceAtom,
         r"new-value-atom": newValueAtom,
-        '&self': the_runner,
-        #'&swip': G(swip),
+        r"metta_learner": runnerAtom,
+        #'&self': the_runner,
+        #'&gswip': ValueAtom(gswip),
+
         '&my-dict': ValueAtom({'A': 5, 6: 'B'}),
         'get-by-key': OperationAtom('get-by-key', lambda d, k: d[k]),
         'load-vspace': OperationAtom('load-vspace', lambda: [load_vspace()]),
         'load-flybase': OperationAtom('load-flybase', lambda: [load_flybase()]),
         r"fb.test-nondeterministic-foreign": testNDFFI,
 
-        'vspace-main': OperationAtom('vspace-main', lambda: [vspace-main()]),
+        'vspace-main': OperationAtom('vspace-main', lambda: [vspace_main()]),
         'swip-exec': OperationAtom('swip-exec', lambda s: [swipexec(s)]),
         'py-eval': OperationAtom('py-eval', lambda s: [eval(s)])
+
     }
+
 
 @register_tokens(pass_metta=True)
 def register_vspace_tokens(metta):
 
-    if debugLevel>0: print(f"register_vspace_tokens  the_runner={the_runner}")
+    if verbose>0: print(f"register_vspace_tokens metta={metta} the_runner={the_runner}")
+
+    if not isinstance(metta, VSpace):
+        the_runner.parent = metta
 
     def run_resolved_symbol_op(the_runner, atom, *args):
         expr = E(atom, *args)
-        if debugLevel>0: print(f"run_resolved_symbol_op: the_runner={the_runner}, atom={atom}, args={args}, expr={expr}")
+        if verbose>0: print(f"run_resolved_symbol_op: atom={atom}, args={args}, expr={expr} metta={metta} the_runner={the_runner}")
         result1 = hp.metta_evaluate_atom(the_runner.cmetta, expr.catom)
         result = [Atom._from_catom(catom) for catom in result1]
-        if debugLevel>0: print(f"run_resolved_symbol_op: result1={result1}, result={result}")
+        if verbose>0: print(f"run_resolved_symbol_op: result1={result1}, result={result}")
         return result
 
     def resolve_atom(metta, token):
         # TODO: nested modules...
         runner_name, atom_name = token.split('::')
+        if atom_name=="vspace-main":
+            vspace_main()
+            return
         # FIXME: using `run` for this is an overkill
         ran = metta.run('! ' + runner_name)[0][0];
-        if debugLevel>0: print(f"resolve_atom: token={token} ran={type(ran)} metta={metta}")
+        if verbose>0: print(f"resolve_atom: token={token} ran={type(ran)} metta={metta} the_runner={the_runner}")
         try:
             this_runner = ran.get_object()
         except Exception as e:
@@ -561,8 +667,6 @@ def register_vspace_tokens(metta):
         #if !isinstance(this_runner, MeTTa): this_runner = metta
 
         atom = this_runner.run('! ' + atom_name)[0][0]
-        if atom_name=="vspace-main":
-            vspace_main()
         # A hack to make the_runner::&self work
         # TODO? the problem is that we need to return an operation to make this
         # work in parent expressions, thus, it is unclear how to return pure
@@ -573,19 +677,20 @@ def register_vspace_tokens(metta):
         return OperationAtom( token, lambda *args: run_resolved_symbol_op(the_runner, atom, *args), unwrap=False)
 
     return {
+        '&flyspace': lambda _: ValueAtom(the_flyspace),
         '&vspace': lambda _: ValueAtom(the_runner),
+        '&parent': lambda _: ValueAtom(the_runner.parent),
         '&the_runner': lambda _: ValueAtom(the_runner),
+        '&runner': lambda _: ValueAtom(the_runner),
         r"[^\s]+::[^\s]+": lambda token: resolve_atom(metta, token)
     }
 
-def evalMetta(src):
-   return the_runner.run(src)
 
 
-from pyswip import registerForeign, PL_foreign_context, PL_foreign_control, PL_FIRST_CALL, PL_REDO, PL_PRUNED, PL_retry, PL_FA_NONDETERMINISTIC, Variable
+from pyswip import registerForeign, PL_foreign_context, PL_foreign_control, PL_FIRST_CALL, PL_REDO, PL_PRUNED, PL_retry, PL_FA_NONDETERMINISTIC, Variable, Prolog as PySwip, Atom as PySwipAtom
 
 def test_nondeterministic_foreign():
-    from metta_vspace import gswip
+    #from metta_vspace import gswip
     swip= gswip;
     def nondet(a, context):
         control = PL_foreign_control(context)
@@ -807,7 +912,7 @@ def atomspace_to_swip_tests2():
 
 
 def swipexec(qry):
-    from metta_vspace import gswip
+    #from metta_vspace import gswip
     #if is_init==True:
     #   print("Not running Query: ",qry)
     #   return
@@ -821,17 +926,19 @@ def load_flybase():
    load_vspace()
    swipexec("load_flybase")
 
+
 def vspace_init():
     t0 = monotonic_ns()
     #os.system('clear')
     print(underline(f"Version-Space Init: {__file__}\n"))
     #import site
     #print ("Site Packages: ",site.getsitepackages())
-    test_nondeterministic_foreign()
+    #test_nondeterministic_foreign()
+
     if os.path.isfile(f"{the_runner.cwd}autoexec.metta"):
         the_runner.lazy_import_file("autoexec.metta")
     # @TODO fix this atomspace_to_swip_tests1()
-    load_vspace()
+    #load_vspace()
     print(f"\nInit took {(monotonic_ns() - t0)/1e9:.5} seconds")
 
 
@@ -843,18 +950,26 @@ def vspace_main():
     #if is_init==False: load_vspace()
     #if is_init==False: load_flybase()
     #if is_init==False:
+
     the_runner.repl()
     print(f"\nmain took {(monotonic_ns() - t0)/1e9:.5} seconds")
 
 # All execution happens here
-the_runner = VSpace()
+gswip = PySwip()
+the_flyspace = FlySpace();
+the_runner = VSpace();
 the_runner.cwd = [os.path.dirname(os.path.dirname(__file__))]
-evalMetta("!(extend-py! pyswip)")
-evalMetta("!(extend-py! vspace)")
-evalMetta("!(extend-py! VSpace)")
-runnerAtom = G(the_runner, AtomType.ATOM)
-vspace_init()
+the_runner.run("!(extend-py! metta_learner)")
+the_runner.run("!(extend-py! VSpace)")
+the_runner.run("!(extend-py! FlySpace)")
+is_init_ran = False
+if is_init_ran == False:
+    is_init_ran = True
+    vspace_init()
+
 if __name__ == "__main__":
     vspace_main()
+
+#from . import metta_learner
 
 
