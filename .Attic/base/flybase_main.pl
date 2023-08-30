@@ -604,6 +604,7 @@ load_fb_cache0(File):- file_name_extension(Name,_E,File),
 load_fb_cache(_File,OutputFile,_Fn):- exists_file(OutputFile),!,ensure_loaded(OutputFile),!.
 load_fb_cache(File,_OutputFile,_Fn):- load_files([File],[qcompile(large)]).
 
+load_flybase(N):- (number(N)->true;N==inf),!, set_prolog_flag(max_per_file,N),!,load_flybase.
 load_flybase(File):- file_name_extension(_,Ext,File),!, load_flybase(File,Ext).
 load_flybase(File,Ext):-
    with_wild_path(load_flybase0(Ext),File),!.
