@@ -561,7 +561,7 @@ class GptIntentSpace(GroundingSpace):
 
 
 
-use_error_code = False
+use_error_code = True
 
 class FederatedSpace(AbstractSpace):
 
@@ -1142,10 +1142,9 @@ def try_overlaps():
    load_vspace()
    swip_exec("try_overlaps")
 
-@export_to_metta
 def load_flybase(size):
    load_vspace()
-   swip_exec(f"load_flybase(size)")
+   swip_exec(f"load_flybase({size})")
 
 @export_to_metta
 def vspace_main():
