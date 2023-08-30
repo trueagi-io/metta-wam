@@ -663,26 +663,29 @@ class VSpace(AbstractSpace):
             raise Exception(f"Error in VSpace.query: Implementation for query({query_atom}) is not complete.")
 
         # Extract only the variables from the query atom
-        query_vars = list(filter(lambda atom: atom.get_type() == AtomKind.VARIABLE, query_atom.iterate()))
+        #query_vars = list(filter(lambda atom: atom.get_type() == AtomKind.VARIABLE, query_atom.iterate()))
 
         # Match the query atom against every atom in the space
         # BindingsSet() creates a binding set with the only matching result
         # We use BindingsSet.empty() to support multiple results
-        new_bindings_set = BindingsSet.empty()
-        for space_atom in self.atoms_list:
-            match_results = space_atom.match_atom(query_atom)
+        #new_bindings_set = BindingsSet.empty()
 
-            # Merge in the bindings from this match, after we narrow the match_results to
-            # only include variables vars in the query atom
-            for bindings in match_results.iterator():
-                bindings.narrow_vars(query_vars)
-                if not bindings.is_empty():
-                    # new_bindings_set.merge_into(bindings) would work with BindingsSet(), but
-                    # it would return an empty result for multiple alternatives and merge bindings
-                    # for different variables from alternative branches, which would be a funny
-                    # modification of query, but with no real use case
-                    new_bindings_set.push(bindings)
-        return new_bindings_set
+        #if verbose>1: print(f"; MeTTa-Expr {query_atom}")
+        #swip_obj = metta_to_swip(query_atom)
+        #swip_vars = metta_to_swip(query_vars)
+        #if verbose>1: print(f"; P-Expr {swip_obj}")
+        #call_sexpr = Functor("query_from_metta", 2)
+        #user = newModule("user")
+        #q = Query(call_sexpr(swip_obj, swip_vars), module=user)
+        #while q.nextSolution():
+        #    whichVar = 0
+
+        #bindings= Bindings()
+        #for qv in query_vars:
+        #       bindings.add_var_binding(qv,
+        #new_bindings_set.push(bindings)
+        #q.closeQuery()
+
 
     def add(self, atom):
         if use_error_code:
