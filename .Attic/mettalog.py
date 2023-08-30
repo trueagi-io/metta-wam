@@ -1,5 +1,3 @@
-#import openai
-#openai.api_key = os.environ["OPENAI_API_KEY"]
 from time import monotonic_ns, time
 import atexit
 import os
@@ -15,6 +13,9 @@ from hyperon.runner import MeTTa
 from hyperon.ext import register_atoms, register_tokens
 from hyperon.base import AbstractSpace, SpaceRef
 from hyperon import *
+import openai
+openai.api_key = os.environ["OPENAI_API_KEY"]
+
 
 histfile = os.path.join(os.path.expanduser("~"), ".metta_history")
 is_init = True
@@ -35,21 +36,6 @@ def save(prev_h_len, histfile):
     readline.append_history_file(new_h_len - prev_h_len, histfile)
 atexit.register(save, h_len, histfile)
 
-def export_to_metta(func):
-    return func
-
-def mark_decorator(name):
-    def decorator(func):
-        if hasattr(func, "__decorators__"):
-            func.__decorators__.append(name)
-        else:
-            func.__decorators__ = [name]
-        return func
-    return decorator
-
-export_to_metta = mark_decorator("export_to_metta")
-export_to_pyswip = mark_decorator("export_to_pyswip")
-staticmethod = mark_decorator("staticmethod")
 
 import numpy as np
 class VSNumpyValue(MatchableObject):
@@ -177,14 +163,79 @@ def color_expr(expr, level=0, unif_vars=None):
         raise Exception("Unexpected sexpr type: " + str(type(expr)))
 
 
+def export_to_metta(func):
+    setattr(func, 'export_to_metta', True)
+    #print(f"{func}={getattr(func, 'export_to_metta', False)}")
+    return func
+
+def export_to_pyswip(func):
+    setattr(func, 'export_to_pyswip', True)
+    #print(func)
+    return func
+
+@export_to_metta
+def printl(obj):
+    if obj is None:
+        print("None!")
+        return obj
+
+    if isinstance(obj, str):
+        print(obj)
+        return obj
+
+    try:
+        # Attempt to iterate over the object
+        for item in obj:
+            try:
+                color_expr(item)
+            except Error:
+                print(item)
+    except TypeError:
+        # If a TypeError is raised, the object is not iterable
+        # if verbose>0: print(type(obj))
+        print(obj)
+    return obj
+
+@export_to_metta
+def printp(obj):
+    print(obj)
+    return obj
+
+
+def get_sexpr_input(prmpt):
+    expr, inside_quotes, prev_char = "", False, None
+
+    while True:
+        line = input(prmpt)
+        for char in line:
+            if char == '"' and prev_char != '\\':
+                inside_quotes = not inside_quotes
+            expr += char
+            prev_char = char
+
+        if not inside_quotes and expr.count("(") == expr.count(")"):
+            break
+        prmpt = "continue...>>> "
+        expr += " "
+
+    return expr
+
+
+def metta_space():
+    #if the_python_runner.parent!=the_python_runner:
+    #    return the_python_runner.parent.space()
+    return the_python_runner.space()
+
+# Borrowed impl from Adam Vandervorst
 class ExtendedMeTTa(MeTTa):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.register_atom("transform", OperationAtom("transform", lambda pattern, template: self.space().subst(pattern, template),
+        self.register_atom("transform", OperationAtom("transform", lambda pattern, template: metta_space().subst(pattern, template),
                                                       type_names=[AtomType.ATOM, AtomType.ATOM, AtomType.UNDEFINED], unwrap=False))
-        self.register_atom("join", OperationAtom("join", lambda a, b: interpret(self.space(), a) + interpret(self.space(), b),
+        self.register_atom("join", OperationAtom("join", lambda a, b: interpret(metta_space(), a) + interpret(metta_space(), b),
                                                  type_names=[AtomType.ATOM, AtomType.ATOM, AtomType.ATOM], unwrap=False))
 
+# Borrowed impl from Adam Vandervorst
 class LazyMeTTa(ExtendedMeTTa):
     def lazy_import_file(self, fname):
         path = fname.split(os.sep)
@@ -212,51 +263,19 @@ class LazyMeTTa(ExtendedMeTTa):
             elif expr == S('*/'):
                 commented = False
             elif interpreting and not commented:
-                yield expr, interpret(self.space(), expr)
+                yield expr, interpret(metta_space(), expr)
                 interpreting = False
             elif not commented:
-                self.space().add_atom(expr)
+                metta_space().add_atom(expr)
 
-
-@export_to_metta
-@staticmethod
-def print_enumerable(obj):
-    if obj is None:
-        print("None!")
-        return
-    if isinstance(obj, str):
-        print(obj)
-        return
-
-    try:
-        # Attempt to iterate over the object
-        for item in obj:
-            color_expr(item)
-    except TypeError:
-        # If a TypeError is raised, the object is not iterable
-        if verbose>0: print(type(obj))
-        print(obj)
-
-def get_sexpr_input(prmpt):
-    expr, inside_quotes, prev_char = "", False, None
-
-    while True:
-        line = input(prmpt)
-        for char in line:
-            if char == '"' and prev_char != '\\':
-                inside_quotes = not inside_quotes
-            expr += char
-            prev_char = char
-
-        if not inside_quotes and expr.count("(") == expr.count(")"):
-            break
-        prmpt = "continue...>>> "
-        expr += " "
-
-    return expr
-
-
+# Borrowed impl from Adam Vandervorst
 class InteractiveMeTTa(LazyMeTTa):
+
+    def __init__(self):
+        super().__init__()
+        # parent == self
+        #   means no parent MeTTa yet
+        self.parent = self
 
     # Add the string to the history
     readline.add_history("@swip")
@@ -266,7 +285,8 @@ class InteractiveMeTTa(LazyMeTTa):
     #readline.add_history("!(into-vspace)")
     readline.add_history("!(mine-overlaps)")
     readline.add_history("!(try-overlaps)")
-    readline.add_history("!(load-flybase)")
+    readline.add_history("!(load-flybase-full)")
+    readline.add_history("!(load-flybase-tiny)")
     readline.add_history("!(load-vspace)")
     readline.add_history('!(get-by-key &my-dict "A")')
 
@@ -298,7 +318,7 @@ class InteractiveMeTTa(LazyMeTTa):
 
                 if sline.rstrip() == '?':
                     expr = self.parse_single("(match &self $ $)")
-                    yield expr, interpret(self.space(), expr)
+                    yield expr, interpret(metta_space(), expr)
                     continue
 
                 # Check for history commands
@@ -366,12 +386,12 @@ class InteractiveMeTTa(LazyMeTTa):
                         print(line) # comment
                         continue
                     if not sline.startswith("("):
-                       swipexec(line)
+                       swip_exec(line)
                     else:
                        expr = self.parse_single(sline)
                        if verbose>1: print(f"% S-Expr {line}")
                        if verbose>1: print(f"% M-Expr {expr}")
-                       swip_obj = atomspace_to_swip(expr);
+                       swip_obj = metta_to_swip(expr);
                        if verbose>1: print(f"% P-Expr {swip_obj}")
                        call_sexpr = Functor("call_sexpr", 2)
                        user = newModule("user")
@@ -387,7 +407,7 @@ class InteractiveMeTTa(LazyMeTTa):
                         print(line) # comment
                         continue
                     result = eval(line)
-                    print_enumerable(result)
+                    printl(result)
                     continue
 
                 elif self.mode == "metta":
@@ -417,26 +437,26 @@ class InteractiveMeTTa(LazyMeTTa):
 
                     if prefix == "!":
                         expr = self.parse_single(rest)
-                        yield expr, interpret(self.space(), expr)
+                        yield expr, interpret(metta_space(), expr)
                         continue
                     elif prefix == "?":
                         expr = self.parse_single(rest)
-                        yield expr, self.space().subst(expr, expr)
+                        yield expr, metta_space().subst(expr, expr)
                         continue
                     elif prefix == "+":
                         expr = self.parse_single(rest)
-                        self.space().add_atom(expr)
+                        metta_space().add_atom(expr)
                         continue
                     elif prefix == "-":
                         expr = self.parse_single(rest)
-                        self.space().remove_atom(expr)
+                        metta_space().remove_atom(expr)
                         continue
                     elif prefix == "^":
-                        print_enumerable(the_runner.run(line));
+                        printl(the_python_runner.run(line));
                         continue
                     else:
                         expr = self.parse_single(rest)
-                        yield expr, interpret(self.space(), expr)
+                        yield expr, interpret(metta_space(), expr)
                         continue
 
             except KeyboardInterrupt:
@@ -460,6 +480,11 @@ class InteractiveMeTTa(LazyMeTTa):
                     print(color_expr(result))
             else:
                 print(f"/")
+
+
+    def copy(self):
+        return self
+
 
 
 
@@ -493,7 +518,53 @@ def _response2bindings(txt):
         return new_bindings_set
 
 
-class FlySpace(AbstractSpace):
+class GptSpace(GroundingSpace):
+    def query(self, query_atom):
+        tot_str = "Answer the question taking into account the following information (each fact is in brackets):\n"
+        for atom in self.atoms_iter():
+            tot_str += str(atom) + "\n"
+        tot_str += "If the question contains letters in brackets with $ sign, for example ($x), provide the answer in the json format in curly brackets, that is { $x: your answer }.\n"
+        # tot_str += "If information is not provided, return the entry to be queried in JSON {unknown value: UNKNOWN}."
+        tot_str += "The question is: " + str(query_atom)[1:-1] + "?"
+        response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo-0613",
+                messages=[{'role': 'system', 'content': 'Reason carefully about user request'},
+                    {'role': "user", "content": tot_str}],
+                temperature=0)
+        txt = response['choices'][0]['message']['content']
+        return _response2bindings(txt)
+
+    def copy(self):
+        return self
+
+class GptIntentSpace(GroundingSpace):
+    def query(self, query_atom):
+        tot_str = "Analyze the topic of the utterance: " + str(query_atom)[1:-1] + "\n"
+        tot_str += "Try to pick the most relevant topic from the following list (each topic in brackets):"
+        for atom in self.atoms_iter():
+            tot_str += str(atom) + "\n"
+        tot_str += "If neither of the listed topics seems relevant, answer (chit-chat)."
+        tot_str += "Provide the answer in the json format in curly brackets in the form { topic: your answer }.\n"
+        response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo-0613",
+                messages=[{'role': 'system', 'content': 'Reason carefully about user request'},
+                    {'role': "user", "content": tot_str}],
+                temperature=0)
+        txt = response['choices'][0]['message']['content']
+        return _response2bindings(txt)
+
+    def copy(self):
+        return self
+
+
+
+
+
+
+use_error_code = False
+
+class FederatedSpace(AbstractSpace):
+
     def __init__(self, unwrap=True):
         super().__init__()
         self.atoms_list = []
@@ -502,6 +573,9 @@ class FlySpace(AbstractSpace):
     # NOTE: this is a naive implementation barely good enough to pass the tests
     # Don't take this as a guide to implementing a space query function
     def query(self, query_atom):
+
+        if use_error_code:
+            raise Exception(f"Error in FederatedSpace.query: Implementation for query({query_atom}) is not complete.")
 
         # Extract only the variables from the query atom
         query_vars = list(filter(lambda atom: atom.get_type() == AtomKind.VARIABLE, query_atom.iterate()))
@@ -522,15 +596,17 @@ class FlySpace(AbstractSpace):
                     # it would return an empty result for multiple alternatives and merge bindings
                     # for different variables from alternative branches, which would be a funny
                     # modification of query, but with no real use case
-                    # new_bindings_set.push(bindings) adds an alternative binding to the binding set
                     new_bindings_set.push(bindings)
-
         return new_bindings_set
 
     def add(self, atom):
+        if use_error_code:
+            raise Exception(f"Error in FederatedSpace.add: Implementation for adding atom {atom} is not complete.")
         self.atoms_list.append(atom)
 
     def remove(self, atom):
+        if use_error_code:
+            raise Exception(f"Error in FederatedSpace.remove: Implementation for removing atom {atom} is not complete.")
         if atom in self.atoms_list:
             self.atoms_list.remove(atom)
             return True
@@ -538,6 +614,8 @@ class FlySpace(AbstractSpace):
             return False
 
     def replace(self, from_atom, to_atom):
+        if use_error_code:
+            raise Exception(f"Error in FederatedSpace.replace: Implementation for replacing atom {from_atom} with {to_atom} is not complete.")
         if from_atom in self.atoms_list:
             self.atoms_list.remove(from_atom)
             self.atoms_list.append(to_atom)
@@ -546,57 +624,108 @@ class FlySpace(AbstractSpace):
             return False
 
     def atom_count(self):
+        if use_error_code:
+            raise Exception("Error in FederatedSpace.atom_count: Implementation for counting atoms is not complete.")
         return len(self.atoms_list)
 
     def atoms_iter(self):
+        if use_error_code:
+            raise Exception("Error in FederatedSpace.atoms_iter: Implementation for iterating over atoms is not complete.")
         return iter(self.atoms_list)
 
     def copy(self):
         return self
 
-class VSpace(InteractiveMeTTa):
 
+class VSpace(AbstractSpace):
 
-    def __init__(self):
+    def __init__(self, unwrap=True):
         super().__init__()
-        self.parent = self
+        self.atoms_list = []
+        self.unwrap = unwrap
+
+    # NOTE: this is a naive implementation barely good enough to pass the tests
+    # Don't take this as a guide to implementing a space query function
+    def query(self, query_atom):
+
+        if use_error_code:
+            raise Exception(f"Error in VSpace.query: Implementation for query({query_atom}) is not complete.")
+
+        # Extract only the variables from the query atom
+        query_vars = list(filter(lambda atom: atom.get_type() == AtomKind.VARIABLE, query_atom.iterate()))
+
+        # Match the query atom against every atom in the space
+        # BindingsSet() creates a binding set with the only matching result
+        # We use BindingsSet.empty() to support multiple results
+        new_bindings_set = BindingsSet.empty()
+        for space_atom in self.atoms_list:
+            match_results = space_atom.match_atom(query_atom)
+
+            # Merge in the bindings from this match, after we narrow the match_results to
+            # only include variables vars in the query atom
+            for bindings in match_results.iterator():
+                bindings.narrow_vars(query_vars)
+                if not bindings.is_empty():
+                    # new_bindings_set.merge_into(bindings) would work with BindingsSet(), but
+                    # it would return an empty result for multiple alternatives and merge bindings
+                    # for different variables from alternative branches, which would be a funny
+                    # modification of query, but with no real use case
+                    new_bindings_set.push(bindings)
+        return new_bindings_set
+
+    def add(self, atom):
+        if use_error_code:
+            raise Exception(f"Error in VSpace.add: Implementation for adding atom {atom} is not complete.")
+        self.atoms_list.append(atom)
+
+    def remove(self, atom):
+        if use_error_code:
+            raise Exception(f"Error in VSpace.remove: Implementation for removing atom {atom} is not complete.")
+        if atom in self.atoms_list:
+            self.atoms_list.remove(atom)
+            return True
+        else:
+            return False
+
+    def replace(self, from_atom, to_atom):
+        if use_error_code:
+            raise Exception(f"Error in VSpace.replace: Implementation for replacing atom {from_atom} with {to_atom} is not complete.")
+        if from_atom in self.atoms_list:
+            self.atoms_list.remove(from_atom)
+            self.atoms_list.append(to_atom)
+            return True
+        else:
+            return False
+
+    def atom_count(self):
+        if use_error_code:
+            raise Exception("Error in VSpace.atom_count: Implementation for counting atoms is not complete.")
+        return len(self.atoms_list)
+
+    def atoms_iter(self):
+        if use_error_code:
+            raise Exception("Error in VSpace.atoms_iter: Implementation for iterating over atoms is not complete.")
+        return iter(self.atoms_list)
 
     def copy(self):
         return self
-
-    def query(self, query_atom):
-        tot_str = "Answer the question taking into account the following information (each fact is in brackets):\n"
-        for atom in self.atoms_iter():
-            tot_str += str(atom) + "\n"
-        tot_str += "If the question contains letters in brackets with $ sign, for example ($x), provide the answer in the json format in curly brackets, that is { $x: your answer }.\n"
-        # tot_str += "If information is not provided, return the entry to be queried in JSON {unknown value: UNKNOWN}."
-        tot_str += "The question is: " + str(query_atom)[1:-1] + "?"
-        #response = openai.ChatCompletion.create(
-        #       model="gpt-3.5-turbo-0613",
-        #       messages=[{'role': 'system', 'content': 'Reason carefully about user request'},
-        #           {'role': "user", "content": tot_str}],
-        #       temperature=0)
-        #txt = response['choices'][0]['message']['content']
-        return tot_str #_response2bindings(txt)
-
 
 
 @register_atoms(pass_metta=True)
 def register_vspace_atoms(metta):
 
     counter = 0
-    if verbose>0: print(f"register_vspace_atoms metta={metta} the_runner={the_runner}")
+    if verbose>0: print(f"register_vspace_atoms metta={metta} the_python_runner={the_python_runner}")
 
     if not isinstance(metta, VSpace):
-        the_runner.parent = metta
+        the_python_runner.parent = metta
 
     def new_value_atom_func():
         nonlocal counter
         counter += 1
         return [ValueAtom({'A': counter, 6: 'B'})]
 
-    # FIXME: we don't add types for operations, because numpy operations types
-    # are too loose
+    # We don't add types for operations, because numpy operations types are too loose
     nmVectorAtom = G(VSPatternOperation('np.vector', wrapnpop(lambda *args: np.array(args)), unwrap=False))
     nmArrayAtom = G(VSPatternOperation('np.array', wrapnpop(lambda *args: np.array(args)), unwrap=False, rec=True))
     nmAddAtom = G(VSPatternOperation('np.add', wrapnpop(np.add), unwrap=False))
@@ -604,10 +733,10 @@ def register_vspace_atoms(metta):
     nmMulAtom = G(VSPatternOperation('np.mul', wrapnpop(np.multiply), unwrap=False))
     nmDivAtom = G(VSPatternOperation('np.div', wrapnpop(np.divide), unwrap=False))
     nmMMulAtom = G(VSPatternOperation('np.matmul', wrapnpop(np.matmul), unwrap=False))
-    newFlySpaceAtom = OperationAtom('new-fly-space', lambda: [G(SpaceRef(FlySpace()))], unwrap=False)
-    newVSpaceAtom = OperationAtom('new-v-space', lambda: [G(SpaceRef(VSpace()))], unwrap=False)
+
+
+    # DMILES:  I actujally like the behaviour below.. I can hack in sall sort of cool infernce control this way
     newValueAtom = OperationAtom('new-value-atom', new_value_atom_func, unwrap=False)
-    testNDFFI = OperationAtom('test-nondeterministic-foreign', lambda: test_nondeterministic_foreign, unwrap=False)
     # (new-value-atom)
     # this was stored in the space..
     # !(match &self $ $)
@@ -617,8 +746,9 @@ def register_vspace_atoms(metta):
     # (new-value-atom)
     # they share a counter
     # !(match &self $ $)
-    runnerAtom = G(the_runner, AtomType.ATOM)
-    return {
+
+    runnerAtom = G(the_python_runner, AtomType.ATOM)
+    oper_dict.update({
         r"np\.vector": nmVectorAtom,
         r"np\.array": nmArrayAtom,
         r"np\.add": nmAddAtom,
@@ -626,106 +756,85 @@ def register_vspace_atoms(metta):
         r"np\.mul": nmMulAtom,
         r"np\.matmul": nmMMulAtom,
         r"np\.div": nmDivAtom,
-        r"new-fly-space": newFlySpaceAtom,
-        r"new-v-space": newVSpaceAtom,
+
+        r"new-gpt-space": OperationAtom('new-gpt-space', lambda: [G(SpaceRef(GptSpace()))], unwrap=False),
+        r"new-gpt-intent-space": OperationAtom('new-gpt-intent-space', lambda: [G(SpaceRef(GptIntentSpace()))], unwrap=False),
+        r"new-v-space": OperationAtom('new-v-space', lambda: [G(SpaceRef(VSpace()))], unwrap=False),
+
+        r"the-v-space": OperationAtom('new-v-space', lambda: [G(SpaceRef(the_vspace))], unwrap=False),
+
+
         r"new-value-atom": newValueAtom,
-        #'&self': the_runner,
-        #'&gswip': ValueAtom(gswip),
+        #'&self': runnerAtom,
+        #'&swip': ValueAtom(swip),
 
         '&my-dict': ValueAtom({'A': 5, 6: 'B'}),
         'get-by-key': OperationAtom('get-by-key', lambda d, k: d[k]),
+
+        # Our FFI to PySWIP
         'load-vspace': OperationAtom('load-vspace', lambda: [load_vspace()]),
         'mine-overlaps': OperationAtom('mine-overlaps', lambda: [mine_overlaps()]),
         'try-overlaps': OperationAtom('try-overlaps', lambda: [try_overlaps()]),
-        'load-flybase': OperationAtom('load-flybase', lambda: [load_flybase()]),
-        r"fb.test-nondeterministic-foreign": testNDFFI,
+        'load-flybase-full': OperationAtom('load-flybase-full', lambda: [load_flybase("inf")]),
+        'load-flybase-tiny': OperationAtom('load-flybase-tiny', lambda: [load_flybase(1000)]),
+
+        r"fb.test-nondeterministic-foreign": OperationAtom('test-nondeterministic-foreign', lambda: test_nondeterministic_foreign, unwrap=False),
 
         'vspace-main': OperationAtom('vspace-main', lambda: [vspace_main()]),
-        'swip-exec': OperationAtom('swip-exec', lambda s: [swipexec(s)]),
-        'py-eval': OperationAtom('py-eval', lambda s: [eval(s)])
-    }
-
-
-
-def breaken():
-    oper_dict = {
-        r"np\.vector": nmVectorAtom,
-        r"np\.array": nmArrayAtom,
-        r"np\.add": nmAddAtom,
-        r"np\.sub": nmSubAtom,
-        r"np\.mul": nmMulAtom,
-        r"np\.matmul": nmMMulAtom,
-        r"np\.div": nmDivAtom,
-        r"new-fly-space": newFlySpaceAtom,
-        r"new-v-space": newVSpaceAtom,
-        r"new-value-atom": newValueAtom,
-        r"metta_learner": runnerAtom,
-        #'&self': the_runner,
-        #'&gswip': ValueAtom(gswip),
-        '&my-dict': ValueAtom({'A': 5, 6: 'B'}),
-        'get-by-key': OperationAtom('get-by-key', lambda d, k: d[k]),
-        'swip-exec': OperationAtom('swip-exec', lambda s: [swipexec(s)]),
-        'py-eval': OperationAtom('py-eval', lambda s: [eval(s)])
-    }
-    # same as 'vspace-main': OperationAtom('vspace-main', lambda: [vspace_main()]),
+        'metta_learner::vspace-main': OperationAtom('vspace-main', lambda: [vspace_main()]),
+        'swip-exec': OperationAtom('swip-exec', lambda s: [swip_exec(s)]),
+        'py-eval': OperationAtom('py-eval', lambda s: [eval(s)]) })
     add_exported_methods(oper_dict,sys.modules[__name__])
-    oper_dict['load-vspace'] = OperationAtom('load-vspace', lambda: load_vspace),
-    oper_dict['load-flybase'] = OperationAtom('load-flybase', lambda: load_flybase),
+    return oper_dict
 
-    return oper_dict;
+oper_dict = {}
 
 def add_exported_methods(dict,module):
     for name, obj in inspect.getmembers(module):
         if inspect.isfunction(obj):
-            if getattr(obj, "__decorators__", None) is not None:
-                if "export_to_metta" in obj.__decorators__:
-                    sig = inspect.signature(obj)
-                    params = sig.parameters
-                    num_args = len([p for p in params.values() if p.default == p.empty and p.kind == p.POSITIONAL_OR_KEYWORD])
-                    add_pyop(dict, name, num_args)
-
+            if getattr(obj, 'export_to_metta', False):
+                sig = inspect.signature(obj)
+                params = sig.parameters
+                num_args = len([p for p in params.values() if p.default == p.empty and p.kind == p.POSITIONAL_OR_KEYWORD])
+                add_pyop(dict, name, num_args)
 
 def add_pyop(dict, name, length):
-    hyphens = name.replace('_', '-')
-    underscores = name.replace('-', '_')
-    # len = 3 means  mettavars="$a $b $c"  pyvars = "a, b, c"
-    mettavars = (' $'.join(chr(97 + i) for i in range(length))).rstrip()
-    hist = f"!({hyphens} {mettavars})"
-    readline.add_history(hist)
-    pyvars = (', '.join(chr(97 + i) for i in range(length))).rstrip()
-    src = f'op = lambda {pyvars}: [{underscores}({pyvars})]'
-    local_vars = {}
-    exec(src, {}, local_vars)
-    op = local_vars['op']
-    print(f'metta: OperationAtom("{hyphens}",{src}, unwrap=False)')
-    dict[hyphens] = OperationAtom(hyphens, op, unwrap=False)
+    hyphens, underscores = name.replace('_', '-'), name.replace('-', '_')
+    mettavars, pyvars = (' '.join(f"${chr(97 + i)}" for i in range(length))).strip(), (', '.join(chr(97 + i) for i in range(length))).strip()
+    s = f"!({hyphens})" if mettavars == "" else f"!({hyphens} {mettavars})"
+    #print(s)
+    readline.add_history(s);
+    if hyphens not in dict:
+        src, local_vars = f'op = OperationAtom( "{hyphens}", lambda {pyvars}: [{underscores}({pyvars})])', {}
+        exec(src, globals(), local_vars)
+        #print(f'metta: OperationAtom("{hyphens}",{src}, unwrap=False)')
+        dict[hyphens] = local_vars['op']
+
 
 def add_swip(dict, name):
-    add_swip(dict, name.replace('_', '-'), name.replace('-', '_'))
-
-def add_swip(dict, hyphens, underscores):
+    hyphens, underscores = name.replace('_', '-'), name.replace('-', '_')
     readline.add_history(f"!({hyphens})")
-    print(f"swip: {hyphens}/{length}")
-    src = f'op = lambda : [swipexec("{underscores}")]'
-    local_vars = {}
-    exec(src, {}, local_vars)
-    op = local_vars['op']
-    dict[hyphens] = OperationAtom(hyphens, op)
+    if hyphens not in dict:
+        src, local_vars = f'op = lambda : [swip_exec("{underscores}")]', {}
+        exec(src, {}, local_vars)
+        print(f"swip: {hyphens}")
+        dict[hyphens] = OperationAtom(hyphens, local_vars['op'], unwrap=False)
 
 
 
+# For now lets test with only  Atoms
 @register_tokens(pass_metta=True)
 def register_vspace_tokens(metta):
 
-    if verbose>0: print(f"register_vspace_tokens metta={metta} the_runner={the_runner}")
+    if verbose>0: print(f"register_vspace_tokens metta={metta} the_python_runner={the_python_runner}")
 
     if not isinstance(metta, VSpace):
-        the_runner.parent = metta
+        the_python_runner.parent = metta
 
-    def run_resolved_symbol_op(the_runner, atom, *args):
+    def run_resolved_symbol_op(the_python_runner, atom, *args):
         expr = E(atom, *args)
-        if verbose>0: print(f"run_resolved_symbol_op: atom={atom}, args={args}, expr={expr} metta={metta} the_runner={the_runner}")
-        result1 = hp.metta_evaluate_atom(the_runner.cmetta, expr.catom)
+        if verbose>0: print(f"run_resolved_symbol_op: atom={atom}, args={args}, expr={expr} metta={metta} the_python_runner={the_python_runner}")
+        result1 = hp.metta_evaluate_atom(the_python_runner.cmetta, expr.catom)
         result = [Atom._from_catom(catom) for catom in result1]
         if verbose>0: print(f"run_resolved_symbol_op: result1={result1}, result={result}")
         return result
@@ -733,16 +842,20 @@ def register_vspace_tokens(metta):
     def resolve_atom(metta, token):
         # TODO: nested modules...
         runner_name, atom_name = token.split('::')
+
+        if atom_name in oper_dict:
+            return oper_dict[atom_name]
+
         if atom_name=="vspace-main":
             vspace_main()
             return
         # FIXME: using `run` for this is an overkill
         ran = metta.run('! ' + runner_name)[0][0];
-        if verbose>0: print(f"resolve_atom: token={token} ran={type(ran)} metta={metta} the_runner={the_runner}")
+        if verbose>0: print(f"resolve_atom: token={token} ran={type(ran)} metta={metta} the_python_runner={the_python_runner}")
         try:
             this_runner = ran.get_object()
         except Exception as e:
-            this_runner = the_runner
+            this_runner = the_python_runner
             # If there's an error, print it
             #print(f"Error ran.get_object: {e}")
 
@@ -751,23 +864,33 @@ def register_vspace_tokens(metta):
         #if !isinstance(this_runner, MeTTa): this_runner = metta
 
         atom = this_runner.run('! ' + atom_name)[0][0]
-        # A hack to make the_runner::&self work
+        # A hack to make the_python_runner::&self work
         # TODO? the problem is that we need to return an operation to make this
         # work in parent expressions, thus, it is unclear how to return pure
         # symbols
         if atom.get_type() == hp.AtomKind.GROUNDED:
             return atom
-        # TODO: borrow atom type to op
-        return OperationAtom( token, lambda *args: run_resolved_symbol_op(the_runner, atom, *args), unwrap=False)
 
-    return {
-        '&flyspace': lambda _: ValueAtom(the_flyspace),
-        '&vspace': lambda _: ValueAtom(the_runner),
-        '&parent': lambda _: ValueAtom(the_runner.parent),
-        '&the_runner': lambda _: ValueAtom(the_runner),
-        '&runner': lambda _: ValueAtom(the_runner),
+        # TODO: borrow atom type to op
+        return OperationAtom( token, lambda *args: run_resolved_symbol_op(the_python_runner, atom, *args), unwrap=False)
+
+    sdict = {
+        '&gptspace': lambda _: G(SpaceRef(the_gptspace)),
+        '&flybase': lambda _: G(SpaceRef(the_flybase)),
+        '&vspace': lambda _: G(SpaceRef(the_vspace)),
+        '&vbase_class': lambda _: G((the_vspace)),
+        '&parent_ref': lambda _: G(SpaceRef(the_python_runner.parent.space())),
+        '&parent': lambda _: G(the_python_runner.parent.space()),
+        '&child': lambda _: G(the_python_runner.space()),
+        '&child_ref': lambda _: G(SpaceRef(the_python_runner.space())),
+        '&the_runner': lambda _: ValueAtom(the_python_runner),
+        '&the_metta': lambda _: ValueAtom(the_python_runner.parent),
         r"[^\s]+::[^\s]+": lambda token: resolve_atom(metta, token)
     }
+    for key in sdict:
+        if key.startswith("&"):
+            readline.add_history(f"!{key}")
+    return sdict
 
 
 
@@ -775,8 +898,8 @@ from pyswip import registerForeign, PL_foreign_context, PL_foreign_control, PL_F
 
 @export_to_metta
 def test_nondeterministic_foreign():
-    #from metta_vspace import gswip
-    swip= gswip;
+    #from metta_vspace import swip
+    swip= swip;
     def nondet(a, context):
         control = PL_foreign_control(context)
         context = PL_foreign_context(context)
@@ -857,8 +980,7 @@ def test_nondeterministic_foreign():
     print()
 
 @export_to_metta
-@staticmethod
-def swip_to_atomspace(swip_obj):
+def swip_to_metta(swip_obj):
 
     if isinstance(swip_obj, str):
         return S(swip_obj)
@@ -870,7 +992,7 @@ def swip_to_atomspace(swip_obj):
         return V(swip_obj.chars if swip_obj.chars else "Var")
 
     if isinstance(swip_obj, Functor):
-        # Convert the functor to an expression in Atomspace
+        # Convert the functor to an expression in Metta
         if isinstance(swip_obj.name, PySwipAtom):
             sfn = swip_obj.name.value
         else:
@@ -882,7 +1004,7 @@ def swip_to_atomspace(swip_obj):
         fn = S(sfn)
 
         # Create an array of arguments first
-        argz = [swip_to_atomspace(arg) for arg in swip_obj.args]
+        argz = [swip_to_metta(arg) for arg in swip_obj.args]
 
         args_len = len(argz)
 
@@ -909,7 +1031,7 @@ def swip_to_atomspace(swip_obj):
             main_expr = E(fn, argz[0], argz[1], argz[2], argz[3], argz[4], argz[5], argz[6], argz[7], argz[8], argz[9])
         return main_expr
 
-    # Handle numbers and convert them to ValueAtom objects in Atomspace
+    # Handle numbers and convert them to ValueAtom objects in Metta
     if isinstance(swip_obj, (int, float)):
         return ValueAtom(swip_obj)
 
@@ -917,121 +1039,113 @@ def swip_to_atomspace(swip_obj):
     if isinstance(swip_obj, list):
         list_expr = E("::")
         for item in swip_obj:
-            list_expr.add_sub_expression(swip_to_atomspace(item))
+            list_expr.add_sub_expression(swip_to_metta(item))
         return list_expr
 
     raise ValueError(f"Unknown PySwip object type: {type(swip_obj)}")
 
 @export_to_metta
-@staticmethod
-def atomspace_to_swip(atomspace_obj):
+def metta_to_swip(metta_obj):
 
-    if isinstance(atomspace_obj, ValueAtom):
-        return atomspace_obj.get_value()
+    if isinstance(metta_obj, ValueAtom):
+        return metta_obj.get_value()
 
-    if isinstance(atomspace_obj, SymbolAtom):
-        return PySwipAtom(atomspace_obj.get_value())
+    if isinstance(metta_obj, SymbolAtom):
+        return PySwipAtom(metta_obj.get_value())
 
 
-    if isinstance(atomspace_obj, E):
+    if isinstance(metta_obj, E):
         # Convert the main expression and its sub-expressions to a Functor in PySwip
-        if atomspace_obj.get_value() == "::":  # Convert Atomspace list to PySwip list
-            return [atomspace_to_swip(sub_expr) for sub_expr in atomspace_obj.sub_expressions]
+        if metta_obj.get_value() == "::":  # Convert Metta list to PySwip list
+            return [metta_to_swip(sub_expr) for sub_expr in metta_obj.sub_expressions]
         else:
-            args = [atomspace_to_swip(sub_expr) for sub_expr in atomspace_obj.sub_expressions]
-            return Functor(PySwipAtom(atomspace_obj.get_value()), len(args), args)
+            args = [metta_to_swip(sub_expr) for sub_expr in metta_obj.sub_expressions]
+            return Functor(PySwipAtom(metta_obj.get_value()), len(args), args)
 
-    if isinstance(atomspace_obj, V):
-        return Variable(name=atomspace_obj.get_value())
+    if isinstance(metta_obj, V):
+        return Variable(name=metta_obj.get_value())
 
-    raise ValueError(f"Unknown Atomspace object type: {type(atomspace_obj)}")
+    raise ValueError(f"Unknown Metta object type: {type(metta_obj)}")
 
 
-
-@staticmethod
-def swip_to_atomspace_wrapper(swip_obj, atomspace_obj):
-    result = swip_to_atomspace(swip_obj)
-    atomspace_obj.unify(atomspace_to_swip(result))
+@export_to_pyswip
+def swip_to_metta_wrapper(swip_obj, metta_obj):
+    result = swip_to_metta(swip_obj)
+    metta_obj.unify(metta_to_swip(result))
     return True
 
-@staticmethod
-def atomspace_to_swip_wrapper(atomspace_obj, swip_obj):
-    result = atomspace_to_swip(atomspace_obj)
+@export_to_pyswip
+def metta_to_swip_wrapper(metta_obj, swip_obj):
+    result = metta_to_swip(metta_obj)
     swip_obj.unify(result)
     return True
 
 @export_to_metta
-@staticmethod
-def atomspace_to_swip_tests1():
+def metta_to_swip_tests1():
     # Register the methods as foreign predicates
-    registerForeign(swip_to_atomspace_wrapper, arity=2)
-    registerForeign(atomspace_to_swip_wrapper, arity=2)
+    registerForeign(swip_to_metta_wrapper, arity=2)
+    registerForeign(metta_to_swip_wrapper, arity=2)
 
     # Usage:
     swip_functor = Functor(PySwipAtom("example"), 2, [PySwipAtom("sub1"), 3.14])
     print(f"swip_functor={swip_functor}"),
-    atomspace_expr = swip_to_atomspace(swip_functor)
-    print(f"atomspace_expr={atomspace_expr}"),
-    converted_back_to_swip = atomspace_to_swip(atomspace_expr)
+    metta_expr = swip_to_metta(swip_functor)
+    print(f"metta_expr={metta_expr}"),
+    converted_back_to_swip = metta_to_swip(metta_expr)
     print(f"converted_back_to_swip={converted_back_to_swip}"),
 
 
     # Now you can use the methods in PySwip queries
-    print(list(swip.query("swip_to_atomspace_wrapper('example', X).")))
-    print(list(swip.query("atomspace_to_swip_wrapper(X, 'example').")))
+    print(list(swip.query("swip_to_metta_wrapper('example', X).")))
+    print(list(swip.query("metta_to_swip_wrapper(X, 'example').")))
 
 @export_to_metta
-@staticmethod
-def atomspace_to_swip_tests2():
+def metta_to_swip_tests2():
     # Register the methods as foreign predicates
-    registerForeign(swip_to_atomspace_wrapper, arity=2)
-    registerForeign(atomspace_to_swip_wrapper, arity=2)
+    registerForeign(swip_to_metta_wrapper, arity=2)
+    registerForeign(metta_to_swip_wrapper, arity=2)
 
     # Now you can use the methods in PySwip queries
-    list(swip.query("swip_to_atomspace_wrapper('example', X)."))
-    list(swip.query("atomspace_to_swip_wrapper(X, 'example')."))
+    printl(list(swip.query("swip_to_metta_wrapper('example', X).")))
+    printl(list(swip.query("metta_to_swip_wrapper(X, 'example').")))
 
     # Usage:
     swip_list = ["a", "b", 3]
-    atomspace_expr = swip_to_atomspace(swip_list)
-    converted_back_to_swip = atomspace_to_swip(atomspace_expr)
+    metta_expr = swip_to_metta(swip_list)
+    converted_back_to_swip = metta_to_swip(metta_expr)
     swip_functor = Functor(PySwipAtom("example"), 2, [PySwipAtom("sub1"), 3.14])
-    atomspace_expr = swip_to_atomspace(swip_functor)
-    converted_back_to_swip = atomspace_to_swip(atomspace_expr)
+    metta_expr = swip_to_metta(swip_functor)
+    converted_back_to_swip = metta_to_swip(metta_expr)
 
 
-
-def swipexec(qry):
-    #from metta_vspace import gswip
+@export_to_metta
+def swip_exec(qry):
+    #from metta_vspace import swip
     #if is_init==True:
     #   print("Not running Query: ",qry)
     #   return
-    for r in gswip.query(qry):
+    for r in swip.query(qry):
         print(r)
 
 
 @export_to_metta
-@staticmethod
 def load_vspace():
-   swipexec(f"ensure_loaded('{os.path.dirname(__file__)}/pyswip/swi_flybase')")
+   swip_exec(f"ensure_loaded('{os.path.dirname(__file__)}/pyswip/swi_flybase')")
 
 @export_to_metta
-@staticmethod
 def mine_overlaps():
    load_vspace()
-   swipexec("mine_overlaps")
+   swip_exec("mine_overlaps")
 
 @export_to_metta
-@staticmethod
 def try_overlaps():
    load_vspace()
-   swipexec("try_overlaps")
+   swip_exec("try_overlaps")
 
 @export_to_metta
-@staticmethod
-def load_flybase():
+def load_flybase(size):
    load_vspace()
-   swipexec("load_flybase")
+   swip_exec(f"load_flybase(size)")
 
 @export_to_metta
 def vspace_main():
@@ -1043,10 +1157,8 @@ def vspace_main():
     #if is_init==False: load_flybase()
     #if is_init==False:
 
-    the_runner.repl()
+    the_python_runner.repl()
     print(f"\nmain took {(monotonic_ns() - t0)/1e9:.5} seconds")
-
-
 
 def vspace_init():
     t0 = monotonic_ns()
@@ -1056,20 +1168,35 @@ def vspace_init():
     #print ("Site Packages: ",site.getsitepackages())
     #test_nondeterministic_foreign()
 
-    if os.path.isfile(f"{the_runner.cwd}autoexec.metta"):
-        the_runner.lazy_import_file("autoexec.metta")
-    # @TODO fix this atomspace_to_swip_tests1()
+    if os.path.isfile(f"{the_python_runner.cwd}autoexec.metta"):
+        the_python_runner.lazy_import_file("autoexec.metta")
+    # @TODO fix this metta_to_swip_tests1()
     #load_vspace()
     print(f"\nInit took {(monotonic_ns() - t0)/1e9:.5} seconds")
 
+def mark_decorator(name):
+    def decorator(func):
+        if hasattr(func, "__decorators__"):
+            func.__decorators__.append(name)
+        else:
+            func.__decorators__ = [name]
+        return func
+    return decorator
+
 # All execution happens here
-gswip = PySwip()
-the_flyspace = FlySpace();
-the_runner = VSpace();
-the_runner.cwd = [os.path.dirname(os.path.dirname(__file__))]
-the_runner.run("!(extend-py! metta_learner)")
-the_runner.run("!(extend-py! VSpace)")
-the_runner.run("!(extend-py! FlySpace)")
+#export_to_metta = mark_decorator("export_to_metta")
+#export_to_pyswip = mark_decorator("export_to_pyswip")
+#staticmethod = mark_decorator("staticmethod")
+
+swip = PySwip()
+the_gptspace = GptSpace()
+the_vspace = VSpace()
+the_flybase = the_vspace
+the_python_runner = InteractiveMeTTa();
+the_python_runner.cwd = [os.path.dirname(os.path.dirname(__file__))]
+the_python_runner.run("!(extend-py! metta_learner)")
+#the_python_runner.run("!(extend-py! VSpace)")
+#the_python_runner.run("!(extend-py! GptSpace)")
 is_init_ran = False
 if is_init_ran == False:
     is_init_ran = True
