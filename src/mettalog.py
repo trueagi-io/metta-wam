@@ -14,8 +14,10 @@ from hyperon.ext import register_atoms, register_tokens
 from hyperon.base import AbstractSpace, SpaceRef
 from hyperon import *
 import openai
-openai.api_key = os.environ["OPENAI_API_KEY"]
-
+try:
+ openai.api_key = os.environ["OPENAI_API_KEY"]
+except KeyError:
+ ""
 
 histfile = os.path.join(os.path.expanduser("~"), ".metta_history")
 is_init = True
@@ -224,7 +226,7 @@ def get_sexpr_input(prmpt):
 def metta_space():
     #if the_python_runner.parent!=the_python_runner:
     #    return the_python_runner.parent.space()
-    return the_python_runner.space()
+    return the_runner_space
 
 # Borrowed impl from Adam Vandervorst
 class ExtendedMeTTa(MeTTa):
@@ -336,6 +338,14 @@ class InteractiveMeTTa(LazyMeTTa):
                     readline.add_history("@metta")
                     continue
 
+                elif sline.startswith("@space"):
+                    global the_runner_space
+                    named = sline.split()[1]
+                    if named in space_refs:
+                        print(f"named={named}")
+                        the_runner_space = space_refs[named]()
+                    continue
+
                 # Switch to swip mode
                 elif sline.startswith("@s"):
                     self.mode = "swip"
@@ -370,6 +380,7 @@ class InteractiveMeTTa(LazyMeTTa):
                     print("@m ^     - Interpret atoms as if there are in files (+)")
                     print("@p       - Switch to Python mode.")
                     print("@s       - Switch to Swip mode.")
+                    print("@space   - Change the &self of the_runner_space.")
                     print("@v ###   - Verbosity 0-3")
                     print("@h       - Display this help message.")
                     print("Ctrl-D   - Exit interpreter.")
@@ -748,6 +759,7 @@ def register_vspace_atoms(metta):
     # !(match &self $ $)
 
     runnerAtom = G(the_python_runner, AtomType.ATOM)
+    add_exported_methods(oper_dict,sys.modules[__name__])
     oper_dict.update({
         r"np\.vector": nmVectorAtom,
         r"np\.array": nmArrayAtom,
@@ -784,10 +796,11 @@ def register_vspace_atoms(metta):
         'metta_learner::vspace-main': OperationAtom('vspace-main', lambda: [vspace_main()]),
         'swip-exec': OperationAtom('swip-exec', lambda s: [swip_exec(s)]),
         'py-eval': OperationAtom('py-eval', lambda s: [eval(s)]) })
-    add_exported_methods(oper_dict,sys.modules[__name__])
+
     return oper_dict
 
 oper_dict = {}
+syms_dict = {}
 
 def add_exported_methods(dict,module):
     for name, obj in inspect.getmembers(module):
@@ -874,7 +887,7 @@ def register_vspace_tokens(metta):
         # TODO: borrow atom type to op
         return OperationAtom( token, lambda *args: run_resolved_symbol_op(the_python_runner, atom, *args), unwrap=False)
 
-    sdict = {
+    syms_dict.update({
         '&gptspace': lambda _: G(SpaceRef(the_gptspace)),
         '&flybase': lambda _: G(SpaceRef(the_flybase)),
         '&vspace': lambda _: G(SpaceRef(the_vspace)),
@@ -886,11 +899,18 @@ def register_vspace_tokens(metta):
         '&the_runner': lambda _: ValueAtom(the_python_runner),
         '&the_metta': lambda _: ValueAtom(the_python_runner.parent),
         r"[^\s]+::[^\s]+": lambda token: resolve_atom(metta, token)
-    }
-    for key in sdict:
+    })
+    for key in syms_dict:
         if key.startswith("&"):
             readline.add_history(f"!{key}")
-    return sdict
+    return syms_dict
+
+space_refs = {
+    '&gptspace': lambda: the_gptspace,
+    '&flybase': lambda: the_flybase,
+    '&vspace': lambda: the_vspace,
+    '&parent': lambda: the_python_runner.parent.space(),
+    '&child': lambda: the_python_runner.space()}
 
 
 
@@ -1194,6 +1214,7 @@ the_flybase = the_vspace
 the_python_runner = InteractiveMeTTa();
 the_python_runner.cwd = [os.path.dirname(os.path.dirname(__file__))]
 the_python_runner.run("!(extend-py! metta_learner)")
+the_runner_space = the_python_runner.space()
 #the_python_runner.run("!(extend-py! VSpace)")
 #the_python_runner.run("!(extend-py! GptSpace)")
 is_init_ran = False
