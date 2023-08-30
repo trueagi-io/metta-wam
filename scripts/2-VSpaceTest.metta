@@ -1,53 +1,109 @@
 !(extend-py! metta_learner)
 
-!(let $space (new-fly-space)
-  (add-atom &self (= (my-vspace) $space)))
+;! metta_vspace ; hyperon.runner.MeTTa object (`metta_vspace` is registered 'manually' now)
+;! metta_learner ; just a symbol, because `metta_learner` extension doesn't 'register itself', but it could be possible to automate this
 
-!(print (new-fly-space)  )
-!(add-atom (my-vspace) (The user name is William))
-!(add-atom (my-vspace) (William is 26 years old))
-!(add-atom (my-vspace) (William has 2 brothers))
-!(add-atom (my-vspace) (Brothers names are Mike and Nick))
-!(add-atom (my-vspace) (Nick is 3 years older than William))
-!(add-atom (my-vspace) (Mike is 5 years younger than Nick))
-
-
-; !(match (my-vspace) (What is the user name $x) $x)
-; !(match (my-vspace) (How old $x is William) $x)
-; !(match (my-vspace) (How old ($x) is Mike) $x)
-; !(match (my-vspace) (What $x is father name) $x)
-; !(match (my-vspace) (What $x is Mike age) $x)
-
-; !(match (my-vspace) (What are the names $x of William brothers?) $x)
-
-! (match (my-vspace) (What are the names $x of William brothers?) (let $query (How old $z is $x ?) (match (my-vspace) $query ($x is $z years old))))
-
-
-
-; It is a sort of negative example: intents would better work as a function,
-; because the variable name is not in the pattern
-
-!(let $space (new-fly-space)
-  (add-atom &self (= (my-ispace) $space)))
-
-!(add-atom (my-ispace) (lunch-ordering))
-!(add-atom (my-ispace) (hobby))
-!(add-atom (my-ispace) (user))
-
-; !(match (my-ispace) (I like to play tennis) $topic)
-; !(match (my-ispace) (I am a little bit hungry) $topic)
-; !(match (my-ispace) (What is my name, $x?) $topic)
-
-(= (space-by-intent user) my-vspace)
-
-(= (dispatch $query $v)
-   (let $space (space-by-intent (match (my-ispace) $query $topic))
-        (match ($space) $query $v)))
-
-; A nested matching with choosing a "space" to use
-! (dispatch (What is my name, $x ?) $x)
+!(metta_learner::fact 5) ; 120
 
 !(get-by-key &my-dict "A")
 
+(Recipe Morning-shot (With-ingredient Ginger))
+(Recipe Morning-shot (With-ingredient Orange))
+
+(In-store Apple)
+(In-store Banana)
+(In-store Orange)
+
+(Hate Apple)
+(Hate Grape)
+(Love Banana)
+(Love Orange)
+(Love Strawberry)
+
+!(transform (Love $fruit) (transform (In-store $fruit)
+    (join
+        (Buy $fruit)
+        (transform (Recipe $recipe (With-ingredient $fruit))
+            (transform (Recipe $recipe (With-ingredient $ingredient))
+                (Buy $ingredient)
+            )
+        )
+    )
+))
+
+
 
 !(metta_learner::vspace-main)
+
+
+
+!(metta_learner::self-from-self) ; content
+
+; !(match &self ($x content) $x) ; []
+
+; this returns `some` meaning that `content` from this scripts
+; is not distinguished from `content` symbol in `metta_learner`
+; !(match metta_learner::&self ($x content) $x)
+
+! metta_learner::content ; it is turned in OperationAtom, but it is not executed
+! (metta_learner::content) ; its execution results in unreduced `(content)`
+; the following doesn't work (it might be ok, but semantics of :: is weird overall)
+;!(match metta_learner::&self ($x metta_learner::content) $x)
+
+; both work, so :: doesn't separate "namespaces" precisely
+!(metta_learner::call_func fact 6)
+!(metta_learner::call_func metta_learner::fact 6)
+
+; bind a bunch of numpy objects to tokens for convenience
+!(bind! &x (np.vector 1 2 3))
+!(bind! &y (np.array (3 2 3)))
+!(bind! &m (np.array ((6 1) (7 2) (8 3))))
+!(bind! &mt (np.array ((1 0 0) (0 1 0))))
+
+; FIXME: no exception?
+!(np.vector 1 "S")
+; !(np.array (1 (1 2))) ; exception because of bad shape
+
+!(printl "HALF WAY")
+
+; wrapping into a function should work
+; also works automatically with python numbers
+; (no need to turn 1 into np.array)
+(= (np-add-1 $x) (np.add $x 1))
+
+!(printl "1 HALF WAY")
+
+!(np-add-1 (np-add-1 &x)) ; [3 4 5] ; not a pattern
+
+!(printl "2 HALF WAY")
+; could work with untyped np objects,
+; although with some problems (the resulting type would be Number),
+; but doesn't work, because + expects Number
+;!(+ &x &y)
+
+!(printl "3 HALF WAY")
+
+!(== (np.add &y &x) (np.add &x &y)) ; True
+!(== &x &y) ; False
+!(== &x (np.vector 1 2)) ; False
+
+! (np.add &m (np.vector 1 2)) ; ((7 3) (8 4) (9 5))
+! (np.matmul &mt &m) ; ((6 1) (7 2))
+
+! (np.add &m $x) ; will be turned into pattern
+
+! (case (np.array (((1 1) (2 2) (3 3)) ((2 3) (3 4) (4 5))))
+    (
+        (($a $b $c) $b)
+        (($x ($y1 $y2 $y3)) (np.add $x $y2))
+    )
+  )
+
+! (case (np.vector 1 2 3)
+    (
+        (&x "X")
+    )
+  )
+
+
+
