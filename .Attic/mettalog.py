@@ -49,22 +49,28 @@ except FileNotFoundError:
     open(histfile, 'wb').close()
     h_len = 0
 
-readline.add_history('!(get-by-key &my-dict "A")')
-readline.add_history("@metta !")
-readline.add_history("!(mine-overlaps)")
-readline.add_history("!(try-overlaps)")
-readline.add_history("!(load-flybase-full)")
-readline.add_history("!(load-flybase-tiny)")
-readline.add_history("!(load-vspace)")
-readline.add_history("!(learn-vspace)")
-readline.add_history("!(match &parent $ $)")
-readline.add_history("!(match &flybase $ $)")
-readline.add_history('!(match &flybase (gene_map_table $Dmel $abo $G  $C $D $E)  (gene_map_table $Dmel $abo $G  $C $D $E) )')
-readline.add_history('!(match &parent (gene_map_table $Dmel $abo $G  $C $D $E)  (gene_map_table $Dmel $abo $G  $C $D $E) )')
-readline.add_history('!(match &flybase (gene_map_table $Dmel $abo (GeneValueNode "FBgn0000018") $C $D $E) (gene_map_table $Dmel $abo (GeneValueNode "FBgn0000018") $C $D $E))')
-readline.add_history('!(match &parent (gene_map_table $Dmel $abo (GeneValueNode "FBgn0000018") $C $D $E) (gene_map_table $Dmel $abo (GeneValueNode "FBgn0000018") $C $D $E))')
-readline.add_history('!(add-atom &parent (gene_map_table (ConceptNode "Dmel") (ConceptNode "abo") (GeneValueNode "FBgn0000018") (ConceptNode "2-44") (ConceptNode "32C1-32C1") (StringValue "2L:10973443..10975293(-1)")))')
-readline.add_history('!(add-atom &flybase (gene_map_table (ConceptNode "Dmel") (ConceptNode "abo") (GeneValueNode "FBgn0000018") (ConceptNode "2-44") (ConceptNode "32C1-32C1") (StringValue "2L:10973443..10975293(-1)")))')
+def insert_to_history(item, position_from_last=10):
+    hist = [readline.get_history_item(i) for i in range(1, readline.get_current_history_length() + 1)]
+    hist.insert(max(0, len(hist) - position_from_last), item)
+    readline.clear_history()
+    for h in hist: readline.add_history(h)
+
+insert_to_history('!(get-by-key &my-dict "A")')
+insert_to_history("@metta !")
+insert_to_history("!(mine-overlaps)")
+insert_to_history("!(try-overlaps)")
+insert_to_history("!(load-flybase-full)")
+insert_to_history("!(load-flybase-tiny)")
+#insert_to_history("!(load-vspace)")
+insert_to_history("!(learn-vspace)")
+insert_to_history('!(match &parent (gene_map_table $Dmel $abo $G  $C $D $E)  (gene_map_table $Dmel $abo $G  $C $D $E) )')
+insert_to_history('!(match &parent (gene_map_table $Dmel $abo (GeneValueNode "FBgn0000018") $C $D $E) (gene_map_table $Dmel $abo (GeneValueNode "FBgn0000018") $C $D $E))')
+insert_to_history('!(add-atom &parent (gene_map_table (ConceptNode "Dmel") (ConceptNode "abo") (GeneValueNode "FBgn0000018") (ConceptNode "2-44") (ConceptNode "32C1-32C1") (StringValue "2L:10973443..10975293(-1)")))')
+insert_to_history("!(match &parent $ $)")
+insert_to_history("!(match &flybase $ $)")
+insert_to_history('!(match &flybase (gene_map_table $Dmel $abo $G  $C $D $E)  (gene_map_table $Dmel $abo $G  $C $D $E) )')
+insert_to_history('!(match &flybase (gene_map_table $Dmel $abo (GeneValueNode "FBgn0000018") $C $D $E) (gene_map_table $Dmel $abo (GeneValueNode "FBgn0000018") $C $D $E))')
+insert_to_history('!(add-atom &flybase (gene_map_table (ConceptNode "Dmel") (ConceptNode "abo") (GeneValueNode "FBgn0000018") (ConceptNode "2-44") (ConceptNode "32C1-32C1") (StringValue "2L:10973443..10975293(-1)")))')
 
 def save(prev_h_len, histfile):
     new_h_len = readline.get_current_history_length()
@@ -75,7 +81,7 @@ atexit.register(save, h_len, histfile)
 def add_to_history_if_unique(item):
     for i in range(1, readline.get_current_history_length() + 1):
         if readline.get_history_item(i) == item: return
-    readline.add_history(item)
+    insert_to_history(item)
 
 def export_to_metta(func):
     setattr(func, 'export_to_metta', True)
@@ -227,58 +233,29 @@ class FederatedSpace(VSpace):
 # Do not @export_to_metta
 def s2m(swip_obj):
 
+    # Handle numbers and convert them to ValueAtom objects in MeTTa
+    if isinstance(swip_obj, (int, float)):
+        return ValueAtom(swip_obj)
+
     if isinstance(swip_obj, str):
         return S(swip_obj)
 
     if isinstance(swip_obj, PySwipAtom):
-        return S(swip_obj.get_value())
+        return S(str(swip_obj))
 
     if isinstance(swip_obj, Variable):
-        return V(swip_obj.chars if swip_obj.chars else "Var")
+        n = swip_obj.chars
+        return V(sv2mv(n) if n else "$Var")
 
     if isinstance(swip_obj, Functor):
-        # Convert the functor to an expression in Metta
+        # Convert the functor to an expression in MeTTa
         if isinstance(swip_obj.name, PySwipAtom):
             sfn = swip_obj.name.value
-        else:
-            sfn = swip_obj.name
-
-        if sfn=="[|]":
-            sfn = "::";
-
+        else: sfn = swip_obj.name
+        if sfn=="[|]": sfn = "::"
         fn = S(sfn)
-
-        # Create an array of arguments first
         argz = [s2m(arg) for arg in swip_obj.args]
-
-        args_len = len(argz)
-
-        # Handle the creation of E based on the length of argz
-        if args_len == 1:
-            main_expr = E(fn, argz[0])
-        elif args_len == 2:
-            main_expr = E(fn, argz[0], argz[1])
-        elif args_len == 3:
-            main_expr = E(fn, argz[0], argz[1], argz[2])
-        elif args_len == 4:
-            main_expr = E(fn, argz[0], argz[1], argz[2], argz[3])
-        elif args_len == 5:
-            main_expr = E(fn, argz[0], argz[1], argz[2], argz[3], argz[4])
-        elif args_len == 6:
-            main_expr = E(fn, argz[0], argz[1], argz[2], argz[3], argz[4], argz[5])
-        elif args_len == 7:
-            main_expr = E(fn, argz[0], argz[1], argz[2], argz[3], argz[4], argz[5], argz[6])
-        elif args_len == 8:
-            main_expr = E(fn, argz[0], argz[1], argz[2], argz[3], argz[4], argz[5], argz[6], argz[7])
-        elif args_len == 9:
-            main_expr = E(fn, argz[0], argz[1], argz[2], argz[3], argz[4], argz[5], argz[6], argz[7], argz[8])
-        elif args_len == 10:
-            main_expr = E(fn, argz[0], argz[1], argz[2], argz[3], argz[4], argz[5], argz[6], argz[7], argz[8], argz[9])
-        return main_expr
-
-    # Handle numbers and convert them to ValueAtom objects in Metta
-    if isinstance(swip_obj, (int, float)):
-        return ValueAtom(swip_obj)
+        return E(fn, *argz)
 
     try:
         ret = []
@@ -295,7 +272,23 @@ def s2m(swip_obj):
             list_expr.add_sub_expression(s2m(item))
         return list_expr
 
-    raise ValueError(f"Unknown PySwip object type: {type(swip_obj)}")
+    raise ValueError(f"Unknown PySwip object type: {type(swip_obj)} {swip_obj}")
+
+def sv2mv(s):
+    return s.replace("_", "$", 1) if s.startswith("_") else "$" + s
+
+def pt(s):
+    print(f"{type(s)} {s}")
+
+@export_to_metta
+def test_s(metta_obj):
+    pt(metta_obj)
+    swip_obj = m2s(metta_obj)
+    pt(swip_obj)
+    new_mo = s2m(swip_obj)
+    pt(new_mo)
+    return new_mo
+
 
 # Do not @export_to_metta
 def m2s(metta_obj, depth=0):
@@ -368,7 +361,7 @@ def m2s1(metta_obj, depth=0):
     finally:
         ""
 
-    raise ValueError(f"Unknown Metta object type: {type(metta_obj)}")
+    raise ValueError(f"Unknown MeTTa object type: {type(metta_obj)}")
 
 def swiplist_to_swip(retargs, depth=0):
     v = Variable()
@@ -609,219 +602,6 @@ class LazyMeTTa(ExtendedMeTTa):
                 metta_space().add_atom(expr)
 
 
-# Borrowed impl from Adam Vandervorst
-class InteractiveMeTTa(LazyMeTTa):
-
-    def __init__(self):
-        super().__init__()
-        # parent == self
-        #   means no parent MeTTa yet
-        self.parent = self
-
-    def maybe_submode(self, line):
-        lastchar = line[-1]
-        if "+-?!^".find(lastchar)>=0:
-            self.submode=lastchar
-
-    def repl_loop(self):
-
-        global verbose
-        self.mode = "metta"
-        self.submode = "+"
-        self.history = []
-
-        while True:
-            try:
-                # Use the input function to get user input
-                prmpt = self.mode + " "+ self.submode + "> "
-
-                line = get_sexpr_input(prmpt)
-                if line:
-                    sline = line.lstrip()
-                    self.history.append(line)
-                else:
-                    continue
-
-                if not line.startswith(" "):
-                        line = " " + line
-
-                if sline.rstrip() == '?':
-                    expr = self.parse_single("(match &self $ $)")
-                    yield expr, interpret(metta_space(), expr)
-                    continue
-
-                # Check for history commands
-                if sline.rstrip() == '.h':
-                    for idx, item in enumerate(self.history):
-                        print(f"{idx + 1}: {item}")
-                    continue
-
-                # Switch to python mode
-                elif sline.startswith("@p"):
-                    self.mode = "python"
-                    print("Switched to Python mode.")
-                    self.maybe_submode(line.rstrip())
-                    add_to_history_if_unique("@swip")
-                    add_to_history_if_unique("@metta")
-                    continue
-
-                elif sline.startswith("@space"):
-                    global the_runner_space
-                    cmd_, named = split_or_none(sline, " ")
-                    if named is None:
-                        print("; @spaces:", " ".join(space_refs))
-                    elif named in space_refs:
-                        print(f"; named={named}")
-                        the_runner_space = space_refs[named]()
-
-                # Switch to swip mode
-                elif sline.startswith("@s"):
-                    self.mode = "swip"
-                    print("Switched to Swip mode.")
-                    self.maybe_submode(line.rstrip())
-                    add_to_history_if_unique("break")
-                    add_to_history_if_unique("listing(maybe_corisponds/2)")
-                    add_to_history_if_unique("synth_query(4,Query)")
-                    continue
-
-                # Switch to metta mode
-                elif sline.startswith("@m"):
-                    self.mode = "metta"
-                    print("Switched to MeTTa mode.")
-                    self.maybe_submode(line.rstrip())
-                    add_to_history_if_unique("!(match &self $ $)")
-                    continue
-
-                elif sline.startswith("@v"):
-                    verbose = int(sline.split()[1])
-                    print(f"Verbosity level set to {verbose}")
-                    continue
-
-                # Show help
-                elif sline.startswith("@h"):
-                    print("Help:")
-                    print("@m       - Switch to MeTTa mode.")
-                    print("@m +     - Default Mode: Add bare atoms.")
-                    print("@m -     -   changes to: Remove bare atoms.")
-                    print("@m ?     -               Query bare atoms.")
-                    print("@m !     -               Interpret bare atoms.")
-                    print("@m ^     - Interpret atoms as if there are in files (+)")
-                    print("@p       - Switch to Python mode.")
-                    print("@s       - Switch to Swip mode.")
-                    print("@space   - Change the &self of the_runner_space.")
-                    print("@v ###   - Verbosity 0-3")
-                    print("@h       - Display this help message.")
-                    print("Ctrl-D   - Exit interpreter.")
-                    print(".s       - Save session.")
-                    print(".l       - Load the latest session.")
-                    print(".q       - Quit the session.")
-                    print(".h       - Display command history.")
-                    continue
-
-                prefix = sline[0]
-
-                if self.mode == "swip":
-                    if prefix == "%":
-                        print(line) # comment
-                        continue
-                    if not sline.startswith("("):
-                       swip_exec(line)
-                    else:
-                       expr = self.parse_single(sline)
-                       if verbose>1: print(f"% S-Expr {line}")
-                       if verbose>1: print(f"% M-Expr {expr}")
-                       swip_obj = m2s(expr);
-                       if verbose>1: print(f"% P-Expr {swip_obj}")
-                       call_sexpr = Functor("call_sexpr", 2)
-                       user = newModule("user")
-                       X = Variable()
-                       q = Query(call_sexpr(swip_obj, X), module=self.sp_module)
-                       while q.nextSolution():
-                           print(X.value)
-                       q.closeQuery()
-                       continue
-
-                elif self.mode == "python":
-                    if prefix == "#":
-                        print(line) # comment
-                        continue
-                    result = eval(line)
-                    printl(result)
-                    continue
-
-                elif self.mode == "metta":
-                    rest = line[2:].strip()
-                    if prefix == ";":
-                        print(line) # comment
-                        continue
-                    elif sline.startswith(".s"):
-                        name = f"session_{round(time())}.mettar" if rest == "" else (
-                            rest if rest.endswith("mettar") else rest + ".mettar")
-                        with open(os.sep.join(self.cwd + name), 'w') as f:
-                            f.writelines(history)
-                        continue
-                    elif sline.startswith(".l"):
-                        name = max(glob("session_*.mettar")) if rest == "" else (
-                            rest if rest.endswith("mettar") else rest + ".mettar")
-                        self.lazy_import_file(name)
-                        continue
-                    elif sline.startswith(".q"):
-                        break
-
-                    if "+-?!^".find(prefix)<0:
-                        prefix = self.submode
-                        rest = line
-
-                    #print(f"submode={self.submode} rest={rest} ")
-
-                    if prefix == "!":
-                        expr = self.parse_single(rest)
-                        yield expr, interpret(metta_space(), expr)
-                        continue
-                    elif prefix == "?":
-                        expr = self.parse_single(rest)
-                        yield expr, metta_space().subst(expr, expr)
-                        continue
-                    elif prefix == "+":
-                        expr = self.parse_single(rest)
-                        metta_space().add_atom(expr)
-                        continue
-                    elif prefix == "-":
-                        expr = self.parse_single(rest)
-                        metta_space().remove_atom(expr)
-                        continue
-                    elif prefix == "^":
-                        printl(the_python_runner.run(line));
-                        continue
-                    else:
-                        expr = self.parse_single(rest)
-                        yield expr, interpret(metta_space(), expr)
-                        continue
-
-            except KeyboardInterrupt:
-                if verbose>0: print("\nCtrl+C Exiting...")
-                sys.exit(3)
-            except EOFError:
-                if verbose>0: print("\nCtrl^D EOF...")
-                return [] #sys.exit(0)
-            except Exception as e:
-                if verbose>0: print(f"Error: {e}")
-                if verbose>0: traceback.print_exc()
-                continue
-
-    def repl(self):
-        for i, (expr, result_set) in enumerate(self.repl_loop()):
-            if result_set:
-                for result in result_set:
-                    print(color_expr(result))
-            else:
-                print(f".")
-
-    def copy(self):
-        return self
-
-
-
 def split_or_none(s, delimiter):
     parts = s.split(delimiter, 1)  # split only at the first occurrence
     return parts[0], parts[1] if len(parts) > 1 else None
@@ -922,6 +702,7 @@ def register_vspace_atoms(metta):
     nmDivAtom = G(VSPatternOperation('np.div', wrapnpop(np.divide), unwrap=False))
     nmMMulAtom = G(VSPatternOperation('np.matmul', wrapnpop(np.matmul), unwrap=False))
 
+    testS = G(VSPatternOperation('test-s', wrapnpop(test_s), unwrap=False))
 
     # DMILES:  I actujally like the behaviour below.
     newValueAtom = OperationAtom('new-value-atom', new_value_atom_func, unwrap=False)
@@ -944,6 +725,8 @@ def register_vspace_atoms(metta):
         r"np\.sub": nmSubAtom,
         r"np\.mul": nmMulAtom,
         r"np\.matmul": nmMMulAtom,
+        r"test_s": testS,
+
         r"np\.div": nmDivAtom,
 
         r"new-gpt-space": OperationAtom('new-gpt-space', lambda: [G(SpaceRef(GptSpace()))], unwrap=False),
@@ -1198,6 +981,28 @@ def metta_to_swip_tests2():
     metta_expr = s2m(swip_functor)
     converted_back_to_swip = m2s(metta_expr)
 
+@export_to_metta
+def load_vspace():
+   swip_exec(f"ensure_loaded('{os.path.dirname(__file__)}/pyswip/swi_flybase')")
+
+@export_to_metta
+def mine_overlaps():
+   load_vspace()
+   swip_exec("mine_overlaps")
+
+@export_to_metta
+def try_overlaps():
+   load_vspace()
+   swip_exec("try_overlaps")
+
+@export_to_metta
+def learn_vspace():
+   load_vspace()
+   swip_exec("learn_vspace(60)")
+
+def load_flybase(size):
+   load_vspace()
+   swip_exec(f"load_flybase({size})")
 
 @export_to_metta
 def swip_exec(qry):
@@ -1308,28 +1113,218 @@ def test_custom_space(self):
     result = runner.run("!(match nested (A $x) $x)")
     self_assertEqual([[S("B")]], result)
 
-@export_to_metta
-def load_vspace():
-   swip_exec(f"ensure_loaded('{os.path.dirname(__file__)}/pyswip/swi_flybase')")
 
-@export_to_metta
-def mine_overlaps():
-   load_vspace()
-   swip_exec("mine_overlaps")
+# Borrowed impl from Adam Vandervorst
+class InteractiveMeTTa(LazyMeTTa):
 
-@export_to_metta
-def try_overlaps():
-   load_vspace()
-   swip_exec("try_overlaps")
+    def __init__(self):
+        super().__init__()
+        # parent == self
+        #   means no parent MeTTa yet
+        self.parent = self
 
-@export_to_metta
-def learn_vspace():
-   load_vspace()
-   swip_exec("learn_vspace(60)")
+    def maybe_submode(self, line):
+        lastchar = line[-1]
+        if "+-?!^".find(lastchar)>=0:
+            self.submode=lastchar
 
-def load_flybase(size):
-   load_vspace()
-   swip_exec(f"load_flybase({size})")
+    def repl_loop(self):
+
+        global verbose
+        self.mode = "metta"
+        self.submode = "+"
+        self.history = []
+        load_vspace()
+
+        while True:
+            try:
+                # Use the input function to get user input
+                prmpt = self.mode + " "+ self.submode + "> "
+
+                line = get_sexpr_input(prmpt)
+                if line:
+                    sline = line.lstrip()
+                    self.history.append(line)
+                else:
+                    continue
+
+                if not line.startswith(" "):
+                        line = " " + line
+
+                if sline.rstrip() == '?':
+                    expr = self.parse_single("(match &self $ $)")
+                    yield expr, interpret(metta_space(), expr)
+                    continue
+
+                # Check for history commands
+                if sline.rstrip() == '.h':
+                    for idx, item in enumerate(self.history):
+                        print(f"{idx + 1}: {item}")
+                    continue
+
+                # Switch to python mode
+                elif sline.startswith("@p"):
+                    self.mode = "python"
+                    print("Switched to Python mode.")
+                    self.maybe_submode(line.rstrip())
+                    add_to_history_if_unique("@swip")
+                    add_to_history_if_unique("@metta")
+                    continue
+
+                elif sline.startswith("@space"):
+                    global the_runner_space
+                    cmd_, named = split_or_none(sline, " ")
+                    if named is None:
+                        print("; @spaces:", " ".join(space_refs))
+                    elif named in space_refs:
+                        print(f"; named={named}")
+                        the_runner_space = space_refs[named]()
+
+                # Switch to swip mode
+                elif sline.startswith("@s"):
+                    self.mode = "swip"
+                    print("Switched to Swip mode.")
+                    self.maybe_submode(line.rstrip())
+                    add_to_history_if_unique("break")
+                    add_to_history_if_unique("listing(maybe_corisponds/2)")
+                    add_to_history_if_unique("synth_query(4,Query)")
+                    continue
+
+                # Switch to metta mode
+                elif sline.startswith("@m"):
+                    self.mode = "metta"
+                    print("Switched to MeTTa mode.")
+                    self.maybe_submode(line.rstrip())
+                    add_to_history_if_unique("!(match &self $ $)")
+                    continue
+
+                elif sline.startswith("@v"):
+                    verbose = int(sline.split()[1])
+                    print(f"Verbosity level set to {verbose}")
+                    continue
+
+                # Show help
+                elif sline.startswith("@h"):
+                    print("Help:")
+                    print("@m       - Switch to MeTTa mode.")
+                    print("@m +     - Default Mode: Add bare atoms.")
+                    print("@m -     -   changes to: Remove bare atoms.")
+                    print("@m ?     -               Query bare atoms.")
+                    print("@m !     -               Interpret bare atoms.")
+                    print("@m ^     - Interpret atoms as if there are in files (+)")
+                    print("@p       - Switch to Python mode.")
+                    print("@s       - Switch to Swip mode.")
+                    print("@space   - Change the &self of the_runner_space.")
+                    print("@v ###   - Verbosity 0-3")
+                    print("@h       - Display this help message.")
+                    print("Ctrl-D   - Exit interpreter.")
+                    print(".s       - Save session.")
+                    print(".l       - Load the latest session.")
+                    print(".q       - Quit the session.")
+                    print(".h       - Display command history.")
+                    continue
+
+                prefix = sline[0]
+
+                if self.mode == "swip":
+                    if prefix == "%":
+                        print(line) # comment
+                        continue
+                    if not sline.startswith("("):
+                       swip_exec(line)
+                    else:
+                       expr = self.parse_single(sline)
+                       if verbose>1: print(f"% S-Expr {line}")
+                       if verbose>1: print(f"% M-Expr {expr}")
+                       swip_obj = m2s(expr);
+                       if verbose>1: print(f"% P-Expr {swip_obj}")
+                       call_sexpr = Functor("call_sexpr", 2)
+                       user = newModule("user")
+                       X = Variable()
+                       q = Query(call_sexpr(swip_obj, X))
+                       while q.nextSolution():
+                           print(X.value)
+                       q.closeQuery()
+                       continue
+
+                elif self.mode == "python":
+                    if prefix == "#":
+                        print(line) # comment
+                        continue
+                    result = eval(line)
+                    printl(result)
+                    continue
+
+                elif self.mode == "metta":
+                    rest = line[2:].strip()
+                    if prefix == ";":
+                        print(line) # comment
+                        continue
+                    elif sline.startswith(".s"):
+                        name = f"session_{round(time())}.mettar" if rest == "" else (
+                            rest if rest.endswith("mettar") else rest + ".mettar")
+                        with open(os.sep.join(self.cwd + name), 'w') as f:
+                            f.writelines(history)
+                        continue
+                    elif sline.startswith(".l"):
+                        name = max(glob("session_*.mettar")) if rest == "" else (
+                            rest if rest.endswith("mettar") else rest + ".mettar")
+                        self.lazy_import_file(name)
+                        continue
+                    elif sline.startswith(".q"):
+                        break
+
+                    if "+-?!^".find(prefix)<0:
+                        prefix = self.submode
+                        rest = line
+
+                    #print(f"submode={self.submode} rest={rest} ")
+
+                    if prefix == "!":
+                        expr = self.parse_single(rest)
+                        yield expr, interpret(metta_space(), expr)
+                        continue
+                    elif prefix == "?":
+                        expr = self.parse_single(rest)
+                        yield expr, metta_space().subst(expr, expr)
+                        continue
+                    elif prefix == "+":
+                        expr = self.parse_single(rest)
+                        metta_space().add_atom(expr)
+                        continue
+                    elif prefix == "-":
+                        expr = self.parse_single(rest)
+                        metta_space().remove_atom(expr)
+                        continue
+                    elif prefix == "^":
+                        printl(the_python_runner.run(line));
+                        continue
+                    else:
+                        expr = self.parse_single(rest)
+                        yield expr, interpret(metta_space(), expr)
+                        continue
+
+            except KeyboardInterrupt:
+                if verbose>0: print("\nCtrl+C Exiting...")
+                sys.exit(3)
+            except EOFError:
+                if verbose>0: print("\nCtrl^D EOF...")
+                return [] #sys.exit(0)
+            except Exception as e:
+                if verbose>0: print(f"Error: {e}")
+                if verbose>0: traceback.print_exc()
+                continue
+
+    def repl(self):
+        for i, (expr, result_set) in enumerate(self.repl_loop()):
+            if result_set:
+                for result in result_set:
+                    print(color_expr(result))
+            else:
+                print(f"[/]")
+
+    def copy(self):
+        return self
 
 @export_to_metta
 def vspace_main():
@@ -1358,14 +1353,6 @@ def vspace_init():
     #load_vspace()
     print(f"\nInit took {(monotonic_ns() - t0)/1e9:.5} seconds")
 
-def mark_decorator(name):
-    def decorator(func):
-        if hasattr(func, "__decorators__"):
-            func.__decorators__.append(name)
-        else:
-            func.__decorators__ = [name]
-        return func
-    return decorator
 
 # All execution happens here
 #export_to_metta = mark_decorator("export_to_metta")
