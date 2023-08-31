@@ -571,7 +571,11 @@ with_wild_path_swi(Fnicate, File) :-
   expand_file_name(Wildcard, List), !,
   maplist(Fnicate, List).
 
-metta_add(KB,New):- assertz_new(for_meta(KB,New)).
+:- dynamic(for_meta/2).
+for_meta(_,T):- fb_pred(F,A),functor(T,F,A),call(T).
+metta_ls:-
+  listing(for_meta/2).
+metta_add(KB,New):- assert_new(for_meta(KB,New)),format('~N~w.~n',[for_meta(KB,New)]).
 metta_rem(KB,Old):- ignore(metta_del(KB,Old)).
 metta_del(KB,Old):- Term = for_meta(KB,Old), clause(Term,true,Ref),clause(Copy,true,Ref), Term =@= Copy, !, erase(Ref).
 metta_replace(KB,Old,New):- metta_del(KB,Old), metta_add(KB,New).
