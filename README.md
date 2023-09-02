@@ -31,8 +31,11 @@ pip install .
 # Download necessary files
 wget --no-parent -A .gz -r http://ftp.flybase.org/releases/FB2023_04/precomputed_files/
 
+
 # Unzip them
-find ftp.flybase.org -name "*.gz" -execdir gunzip {} \\;
+find ftp.flybase.org -name "*.gz" -execdir gunzip {} \;
+find ftp.flybase.org -name "*.zip" -execdir unzip -d ./ {} \;
+du -h ftp.flybase.org  # should be arround 2.0G
 ```
 
 ## :computer: Usage
