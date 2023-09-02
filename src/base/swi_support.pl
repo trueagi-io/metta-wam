@@ -1,11 +1,34 @@
 
+
+with_cwd(Dir,Goal):- setup_call_cleanup(working_directory(X, Dir), Goal, working_directory(_,X)).
+
+with_option_value(N,V,G):-   option_value(N,W), setup_call_cleanup(set_option_value(N,V),G, set_option_value(N,W)).
+option_value(N,V):- nb_current(N,VV),!,V=VV.
+option_value(N,V):- current_prolog_flag(N,VV),!,V=VV.
+option_value(N,V):- prolog_load_context(N,VV),!,V=VV.
+option_value(_N,V):- !,V=[].
+set_option_value(N,V):- nb_setval(N,V), set_prolog_flag(N,V).
+
 kaggle_arc:- \+ exists_directory('/opt/logicmoo_workspace/packs_sys/logicmoo_agi/prolog/kaggle_arc/'), !.
 %kaggle_arc:- !.
-kaggle_arc:- 
-   with_prolog_flag(argv,['--libonly'],
+kaggle_arc:-
+   with_option_value(argv,['--libonly'],
      with_cwd('/opt/logicmoo_workspace/packs_sys/logicmoo_agi/prolog/kaggle_arc/',
        ensure_loaded(kaggle_arc))).
 
+%:- ensure_loaded((read_obo2)).
+
+:- kaggle_arc.
+
+
+
+:- prolog_load_context(file, File),
+    absolute_file_name('../../',Dir,[relative_to(File),file_type(directory)]),
+    asserta(ftp_data(Dir)).
+
+:- prolog_load_context(file, File),
+    absolute_file_name('./',Dir,[relative_to(File),file_type(directory)]),
+    asserta(pyswip_dir(Dir)).
 
 
 :- if( \+ current_predicate(must_det_ll/1)).
