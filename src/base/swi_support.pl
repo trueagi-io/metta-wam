@@ -2,17 +2,33 @@
 
 with_cwd(Dir,Goal):- setup_call_cleanup(working_directory(X, Dir), Goal, working_directory(_,X)).
 
-with_option_value(N,V,G):-   option_value(N,W), setup_call_cleanup(set_option_value(N,V),G, set_option_value(N,W)).
-option_value(N,V):- nb_current(N,VV),!,V=VV.
-option_value(N,V):- current_prolog_flag(N,VV),!,V=VV.
-option_value(N,V):- prolog_load_context(N,VV),!,V=VV.
-option_value(_N,V):- !,V=[].
-set_option_value(N,V):- nb_setval(N,V), set_prolog_flag(N,V).
+with_option([],G):-!,call(G).
+with_option([H|T],G):- !, with_option(H,with_option(T,G)).
+with_option(N=V,G):-!,  with_option(N,V,G).
+with_option(NV,G):- compound(NV), NV =..[N,V],!,with_option(N,V,G).
+with_option(N,G):- with_option(N,true,G).
+
+with_option(N,V,G):-  option_value(N,W),
+  setup_call_cleanup(set_option_value(N,V),G, set_option_value(N,W)).
+
+
+was_option_value(N,V):- nb_current(N,VV), !,V=VV.
+was_option_value(N,V):- current_prolog_flag(N,VV),!,V=VV.
+was_option_value(N,V):- prolog_load_context(N,VV),!,V=VV.
+
+option_else( N,V,_Else):- was_option_value(N,VV),!,VV=V.
+option_else(_N,V, Else):- !,V=Else.
+option_value( N,V):- option_else( N,V ,[]).
+
+set_option_value(N,V):-
+   catch(nb_setval(N,V),_,true),
+   catch(create_prolog_flag(N,V,[keep(false),access(read_write), type(term)]),_,true),
+   catch(set_prolog_flag(N,V),_,true).
 
 kaggle_arc:- \+ exists_directory('/opt/logicmoo_workspace/packs_sys/logicmoo_agi/prolog/kaggle_arc/'), !.
 %kaggle_arc:- !.
 kaggle_arc:-
-   with_option_value(argv,['--libonly'],
+   with_option(argv,['--libonly'],
      with_cwd('/opt/logicmoo_workspace/packs_sys/logicmoo_agi/prolog/kaggle_arc/',
        ensure_loaded(kaggle_arc))).
 

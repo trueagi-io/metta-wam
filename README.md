@@ -29,24 +29,32 @@ cd metta-vspace
 pip install .
 
 # Download necessary files
-wget --no-parent -A .gz -r http://ftp.flybase.org/releases/FB2023_04/precomputed_files/
+wget --no-parent -A .gz -r -P ./data http://ftp.flybase.org/releases/FB2023_04/precomputed_files
 
 
 # Unzip them
-find ftp.flybase.org -name "*.gz" -execdir gunzip {} \;
-find ftp.flybase.org -name "*.zip" -execdir unzip -d ./ {} \;
-du -h ftp.flybase.org  # should be arround 2.0G
+find ./data -name "*.gz" -execdir gunzip {} \;
+find ./data -name "*.zip" -execdir unzip -d ./ {} \;
+# should be arround 2.0G
+du -h ./data
 ```
 
 ## :computer: Usage
+- Run in MeTTA:
+  ```
+  metta 1-VSpaceTest.metta
+  @advice
+  ```
 - Launch the metta-vspace Jupyter notebook:
   ```
   ./start_jupyter.sh
   ```
-- Ensure metta-vspace operates correctly within MeTTa:
+- Run long huge tests of metta-vspace
   ```
   ./test_in_metta.sh
   ```
+
+
 
 ## :bulb: Expected Features
 - **Relational Programming**: Utilize MeTTa's declarative paradigm to represent knowledge as relations and query this knowledge base.
