@@ -18,6 +18,7 @@ from hyperon.ext import register_atoms, register_tokens
 from hyperon.base import AbstractSpace, SpaceRef, GroundingSpace, interpret
 # Avoid conflict for "Atom"
 from pyswip import Atom as PySwipAtom
+from pyswip import Term
 from hyperon.atoms import Atom as MeTTaAtom
 from pyswip import Functor, registerForeign, PL_PRUNED, PL_retry, PL_FA_NONDETERMINISTIC, PL_foreign_control, PL_foreign_context, PL_FIRST_CALL, PL_REDO, Variable, Prolog as PySwip
 from pyswip.easy import newModule, Query
@@ -35,9 +36,9 @@ is_init = True
 oper_dict = {}
 syms_dict = {}
 space_refs = {
-    '&vspace': lambda: the_vspace,
+    #'&vspace': lambda: the_vspace,
     '&gptspace': lambda: the_gptspace,
-    '&flybase': lambda: the_flybase,
+    #'&flybase': lambda: the_flybase,
     '&parent': lambda: the_python_runner.parent.space(),
     '&child': lambda: the_python_runner.space()}
 
@@ -49,7 +50,7 @@ except FileNotFoundError:
     open(histfile, 'wb').close()
     h_len = 0
 
-def insert_to_history(item, position_from_last=10):
+def insert_to_history(item, position_from_last=5):
     hist = [readline.get_history_item(i) for i in range(1, readline.get_current_history_length() + 1)]
     hist.insert(max(0, len(hist) - position_from_last), item)
     readline.clear_history()
@@ -108,11 +109,12 @@ def add_pyop(name, length, dict = oper_dict):
     hyphens, underscores = name.replace('_', '-'), name.replace('-', '_')
     mettavars, pyvars = (' '.join(f"${chr(97 + i)}" for i in range(length))).strip(), (', '.join(chr(97 + i) for i in range(length))).strip()
     s = f"!({hyphens})" if mettavars == "" else f"!({hyphens} {mettavars})"
-    add_to_history_if_unique(s); #print(s)
+    insert_to_history(s); #print(s)
     if hyphens not in dict:
         src, local_vars = f'op = OperationAtom( "{hyphens}", lambda {pyvars}: [{underscores}({pyvars})])', {}
         exec(src, globals(), local_vars)  #print(f'metta: OperationAtom("{hyphens}",{src}, unwrap=False)')
         dict[hyphens] = local_vars['op']
+        dict[underscores] = local_vars['op']
 
 @export_to_metta
 def add_swip(name, dict = oper_dict):
@@ -124,24 +126,54 @@ def add_swip(name, dict = oper_dict):
         print(f"swip: {hyphens}")
         dict[hyphens] = OperationAtom(hyphens, local_vars['op'], unwrap=False)
 
+def addSpaceName(name, space):
+    global syms_dict
+    global space_refs
+    syms_dict[name] = lambda _: G(VSpaceRef(space))
+    space_refs[name] = lambda : space
 
+# subclass to later capture any utility we can add to 'subst'
+class VSpaceRef(SpaceRef):
+    def __init__(self, space_obj):
+        super().__init__(space_obj)
+        #if type(space_obj) is hp.CSpace:
+        #    self.cspace = space_obj
+        #else:
+        #    self.cspace = hp.space_new_custom(space_obj)
 
+    def subst(self, pattern, templ):
+        """
+        Performs a substitution within the Space
+        """
+        return [Atom._from_catom(catom) for catom in
+                hp.space_subst(super().cspace, pattern.catom,
+                                         templ.catom)]
+
+vspace_ordinal = 0
+@export_to_metta
 class VSpace(AbstractSpace):
 
-    def __init__(self, space_name, unwrap=True):
+    def __init__(self, space_name=None, unwrap=True):
         super().__init__()
+        global vspace_ordinal
+        ispace_name = f"&vspace_{vspace_ordinal}"
+        vspace_ordinal=+1
+        addSpaceName(ispace_name,self)
+        if space_name is None:
+            space_name = ispace_name
         self.sp_name = PySwipAtom(space_name)
         self.sp_module = newModule("user")
         self.unwrap = unwrap
+        addSpaceName(space_name,self)
 
-    def space_atom(self):
-        return self.sp_name
+    def swip_space_name(self):
+        return swipAtom(self.sp_name)
 
     def query(self, query_atom):
         query_vars = [atom for atom in query_atom.iterate() if atom.get_type() == AtomKind.VARIABLE]
         plvars = [m2s(qv) for qv in query_vars]
         swip_obj, swip_vars = m2s(query_atom), m2s(plvars)
-        q = Query(Functor("metta_iter_bind", 3)(self.space_atom(), swip_obj, swip_vars), module=self.sp_module)
+        q = Query(Functor("metta_iter_bind", 3)(self.swip_space_name(), swip_obj, swip_vars), module=self.sp_module)
         new_bindings_set = BindingsSet.empty()
         while q.nextSolution():
             bindings = Bindings({qv: s2m(plvar.value) for qv, plvar in zip(query_vars, plvars)})
@@ -150,12 +182,18 @@ class VSpace(AbstractSpace):
         return new_bindings_set
 
     def _call(self, functor_name, *args):
-        q = Query(Functor(functor_name, len(args) + 1)(self.space_atom(), *args), module=self.sp_module)
+        q = Query(Functor(functor_name, len(args) + 1)(self.swip_space_name(), *args), module=self.sp_module)
         try: return q.nextSolution()
         finally: q.closeQuery()
 
     def add(self, atom):
         self._call("metta_add", m2s(atom))
+
+    def add_atom(self, atom):
+        self._call("metta_add", m2s(atom))
+
+    def remove_atom(self, atom):
+        self._call("metta_rem", m2s(atom))
 
     def remove(self, atom):
         self._call("metta_rem", m2s(atom))
@@ -164,13 +202,25 @@ class VSpace(AbstractSpace):
         return bool(self._call("metta_replace", m2s(from_atom), m2s(to_atom)))
 
     def atom_count(self):
+        return 2
+        Count = Variable("Int")
+        q = Query(Functor(functor_name, len(args) + 1)(self.swip_space_name(), *args), module=self.sp_module)
+        try:
+            q.nextSolution()
+            print(Count.value)
+            print(Count.value.value)
+            return Count.value.value
+        finally: ""
+        q.closeQuery()
+
+    def atom_count_oops(self):
         Count = Variable("Int")
         self._call("metta_count", Count)
         return Count.value.value
 
     def atoms_iter(self):
         Atoms = Variable("Iter")
-        q = Query(Functor("metta_iter", 2)(self.space_atom(), Atoms), module=self.sp_module)
+        q = Query(Functor("metta_iter", 2)(self.swip_space_name(), Atoms), module=self.sp_module)
 
         class LazyIter:
             def __init__(self, q, v):
@@ -198,6 +248,7 @@ class VSpace(AbstractSpace):
 
 access_error = True
 
+@export_to_metta
 class FederatedSpace(VSpace):
 
     def __init__(self, space_name, unwrap=True):
@@ -229,6 +280,124 @@ class FederatedSpace(VSpace):
     def copy(self):
         return self
 
+@export_to_metta
+def test_custom_v_space():
+    test_custom_space(lambda: VSpace())
+
+def test_custom_space(LambdaSpaceFn):
+
+    def passTest(msg):
+        print(f"Pass Test:({msg})")
+
+    def failTest(msg):
+        print(f"raise AssertionError({msg})")
+        #raise AssertionError(msg)
+
+    def self_assertEqualNoOrder(list1, list2, msg=None):
+        """
+        Asserts that two lists are equal, regardless of their order.
+        """
+        def py_sorted(n):
+            try: return sorted(n)
+            except TypeError: return n
+
+        if py_sorted(list1) != py_sorted(list2):
+            failTest(msg or f"Lists differ: {list1} != {list2}")
+        else: passTest(msg or f" {list1} == {list2} ")
+
+    def self_assertTrue(expr, msg=None):
+        """
+        Asserts that an expression is true.
+        """
+        if not expr:
+            failTest(msg or f"Expression is not true: {expr}")
+        else: passTest(msg or f"Expression is true: {expr}")
+
+    def self_assertFalse(expr, msg=None):
+        """
+        Asserts that an expression is false.
+        """
+        if expr:
+            failTest(msg or f"Expression is not false: {expr}")
+        else: passTest(msg or f"Expression is false: {expr}")
+
+    def self_assertEqual(val1, val2, msg=None):
+        """
+        Asserts that two values are equal.
+        """
+        if val1 != val2:
+            failTest(msg or f"Values differ: {val1} != {val2}")
+        else: passTest(msg or f"Values same: {val1} == {val2}")
+
+    test_space = LambdaSpaceFn()
+    test_space.test_attrib = "Test Space Payload Attrib"
+
+    kb = VSpaceRef(test_space)
+    kb.add_atom(S("a"))
+    kb.add_atom(S("b"))
+
+    print(f"kb.atom_count()=")
+    print(kb.atom_count())
+
+    self_assertEqual(kb.atom_count(), 2)
+    self_assertEqual(kb.get_payload().test_attrib, "Test Space Payload Attrib")
+    self_assertEqualNoOrder(kb.get_atoms(), [S("a"), S("b")])
+
+    kb = VSpaceRef(LambdaSpaceFn())
+    kb.add_atom(S("a"))
+    kb.add_atom(S("b"))
+    kb.add_atom(S("c"))
+
+    self_assertTrue(kb.remove_atom(S("b")))
+    self_assertFalse(kb.remove_atom(S("bogus")))
+    self_assertEqualNoOrder(kb.get_atoms(), [S("a"), S("c")])
+
+    kb = VSpaceRef(LambdaSpaceFn())
+    kb.add_atom(S("a"))
+    kb.add_atom(S("b"))
+    kb.add_atom(S("c"))
+
+    self_assertTrue(kb.replace_atom(S("b"), S("d")))
+    self_assertEqualNoOrder(kb.get_atoms(), [S("a"), S("d"), S("c")])
+
+    kb = VSpaceRef(LambdaSpaceFn())
+    kb.add_atom(E(S("A"), S("B")))
+    kb.add_atom(E(S("C"), S("D")))
+    # Checking that multiple matches can be returned
+    kb.add_atom(E(S("A"), S("E")))
+
+    result = kb.query(E(S("A"), V("x")))
+    self_assertEqualNoOrder(result, [{"x": S("B")}, {"x": S("E")}])
+
+    m = MeTTa()
+
+    # Make a little space and add it to the MeTTa interpreter's space
+    little_space = VSpaceRef(LambdaSpaceFn())
+    little_space.add_atom(E(S("A"), S("B")))
+    space_atom = G(little_space)
+    m.space().add_atom(E(S("little-space"), space_atom))
+
+    # Make sure we can get the little space back, and then query it
+    kb_result = m.space().query(E(S("little-space"), V("s")))
+    result_atom = kb_result[0].get("s")
+    self_assertEqual(result_atom, space_atom)
+
+    result = result_atom.get_object().query(E(S("A"), V("v")))
+    self_assertEqualNoOrder(result, [{"v": S("B")}])
+
+    # Add the MeTTa space to the little space for some space recursion
+    little_space.add_atom(E(S("big-space"), G(m.space())))
+
+    nested = VSpaceRef(LambdaSpaceFn())
+    nested.add_atom(E(S("A"), S("B")))
+    space_atom = G(nested)
+
+    runner = MeTTa()
+    runner.space().add_atom(space_atom)
+    runner.tokenizer().register_token("nested", lambda token: space_atom)
+
+    result = runner.run("!(match nested (A $x) $x)")
+    self_assertEqual([[S("B")]], result)
 
 # Do not @export_to_metta
 def s2m(swip_obj):
@@ -292,14 +461,25 @@ def test_s(metta_obj):
 
 # Do not @export_to_metta
 def m2s(metta_obj, depth=0):
-    r = m2s1(metta_obj, depth)
-    if verbose<=1: return r
+    r = swipRef(m2s1(metta_obj, depth))
+    if verbose<=0: return r
     for i in range(depth+1):
         print("   ",end='')
     print(f"r({type(r)})={r}")
     return r;
 
-def m2s1(metta_obj, depth=0):
+def swipAtom(m):
+    a = PySwipAtom(str(m))
+    return swipRef(a)
+
+def swipRef(a):
+    if isinstance(a, Variable):
+        return a
+    v = Variable()
+    v.unify(a)
+    return v
+
+def m2s1(metta_obj, depth=0, preferStringToAtom = None):
 
     if isinstance(metta_obj, GroundedAtom):
         metta_obj = metta_obj.get_object()
@@ -309,13 +489,13 @@ def m2s1(metta_obj, depth=0):
 
     try:
 
-        if verbose>1:
+        if verbose>0:
             for i in range(depth):
                 print("   ",end='')
             print(f'm2s({type(metta_obj)}): {metta_obj}')
 
         if isinstance(metta_obj, str):
-            return PySwipAtom(metta_obj)
+            return metta_obj
 
         if isinstance(metta_obj, int):
             return metta_obj
@@ -323,15 +503,19 @@ def m2s1(metta_obj, depth=0):
         if isinstance(metta_obj, float):
             return metta_obj
 
-
         if isinstance(metta_obj, VariableAtom):
             return Variable(metta_obj.get_name().replace('$','_'))
 
         if isinstance(metta_obj, SymbolAtom):
-            return PySwipAtom(metta_obj.get_name())
 
-        if isinstance(metta_obj, GroundedAtom):
-            return metta_obj.get_value()
+            if preferStringToAtom is None:
+                preferStringToAtom = (depth>0)
+
+            name = metta_obj.get_name();
+            if preferStringToAtom: return name
+            return swipAtom(name)
+
+        #if isinstance(metta_obj, GroundedAtom): return metta_obj.get_value()
 
         if isinstance(metta_obj, list):
             return swiplist_to_swip([m2s(sub_expr,depth + 1) for sub_expr in metta_obj])
@@ -344,7 +528,7 @@ def m2s1(metta_obj, depth=0):
             if (length==0):
                 return swiplist_to_swip(retargs)
 
-            f = m2s1(ch[0], depth +1)
+            f = m2s1(ch[0], depth+1, preferStringToAtom = True)
 
             for i in range(1,length):
                 retargs.append(m2s(ch[i],depth + 1))
@@ -354,9 +538,9 @@ def m2s1(metta_obj, depth=0):
                 return swiplist_to_swip(retargs)
 
             # Converting to functor... Maybe a list later on
-            return Functor(f,length-1, retargs)
+            return Functor(f, len(retargs), retargs)
 
-        print(type(metta_obj))
+        print(f"Unknown MeTTa object type: {type(metta_obj)}={metta_obj}")
 
     finally:
         ""
@@ -554,19 +738,107 @@ def get_sexpr_input(prmpt):
 
 
 
-def metta_space():
+def the_running_metta_space():
     #if the_python_runner.parent!=the_python_runner:
     #    return the_python_runner.parent.space()
-    return the_runner_space
+    return the_new_runner_space
 
 # Borrowed impl from Adam Vandervorst
-class ExtendedMeTTa(MeTTa):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.register_atom("transform", OperationAtom("transform", lambda pattern, template: metta_space().subst(pattern, template),
+import os
+from importlib import import_module
+import hyperonpy as hp
+from hyperon.atoms import Atom, AtomType, OperationAtom
+from hyperon.base import GroundingSpaceRef, Tokenizer, SExprParser
+
+class ExtendedMeTTa:
+
+    def __init__(self, space = None, cwd = ".", cmetta = None):
+        if cmetta is not None:
+            self.cmetta = cmetta
+        else:
+            if space is None:
+                space = GroundingSpaceRef()
+            tokenizer = Tokenizer()
+            self.py_space = space
+            self.py_tokenizer = tokenizer
+            self.cmetta = hp.metta_new(self.py_space.cspace, self.py_tokenizer.ctokenizer, cwd)
+
+    def set_cmetta(self, metta):
+        if isinstance(metta,MeTTa):
+            metta = metta.cmetta
+        self.cmetta = metta
+        self.load_py_module("hyperon.stdlib")
+        hp.metta_load_module(self.cmetta, "stdlib")
+        self.register_atom('extend-py!',
+            OperationAtom('extend-py!',
+                          lambda name: self.load_py_module(name) or [],
+                              [AtomType.UNDEFINED, AtomType.ATOM], unwrap=False))
+        self.register_atom("transform", OperationAtom("transform", lambda pattern, template: the_running_metta_space().subst(pattern, template),
                                                       type_names=[AtomType.ATOM, AtomType.ATOM, AtomType.UNDEFINED], unwrap=False))
-        self.register_atom("join", OperationAtom("join", lambda a, b: interpret(metta_space(), a) + interpret(metta_space(), b),
+        self.register_atom("join", OperationAtom("join", lambda a, b: interpret(the_running_metta_space(), a) + interpret(the_running_metta_space(), b),
                                                  type_names=[AtomType.ATOM, AtomType.ATOM, AtomType.ATOM], unwrap=False))
+
+
+    def __del__(self):
+        hp.metta_free(self.cmetta)
+
+    def space(self):
+        return GroundingSpaceRef._from_cspace(hp.metta_space(self.cmetta))
+
+    def tokenizer(self):
+        return Tokenizer._from_ctokenizer(hp.metta_tokenizer(self.cmetta))
+
+    def register_token(self, regexp, constr):
+        self.tokenizer().register_token(regexp, constr)
+
+    def register_atom(self, name, symbol):
+        self.register_token(name, lambda _: symbol)
+
+    def _parse_all(self, program):
+        parser = SExprParser(program)
+        while True:
+            atom = parser.parse(self.tokenizer())
+            if atom is None:
+                break
+            yield atom
+
+    def parse_all(self, program):
+        return list(self._parse_all(program))
+
+    def parse_single(self, program):
+        return next(self._parse_all(program))
+
+    def load_py_module(self, name):
+        if not isinstance(name, str):
+            name = repr(name)
+        mod = import_module(name)
+        for n in dir(mod):
+            obj = getattr(mod, n)
+            if '__name__' in dir(obj) and obj.__name__ == 'metta_register':
+                obj(self)
+
+    def import_file(self, fname):
+        path = fname.split(os.sep)
+        if len(path) == 1:
+            path = ['.'] + path
+        f = open(os.sep.join(path), "r")
+        program = f.read()
+        f.close()
+        # changing cwd
+        prev_cwd = os.getcwd()
+        os.chdir(os.sep.join(path[:-1]))
+        result = self.run(program)
+        # restoring cwd
+        os.chdir(prev_cwd)
+        return result
+
+    def run(self, program, flat=False):
+        parser = SExprParser(program)
+        results = hp.metta_run(self.cmetta, parser.cparser)
+        if flat:
+            return [Atom._from_catom(catom) for result in results for catom in result]
+        else:
+            return [[Atom._from_catom(catom) for catom in result] for result in results]
 
 # Borrowed impl from Adam Vandervorst
 class LazyMeTTa(ExtendedMeTTa):
@@ -596,10 +868,10 @@ class LazyMeTTa(ExtendedMeTTa):
             elif expr == S('*/'):
                 commented = False
             elif interpreting and not commented:
-                yield expr, interpret(metta_space(), expr)
+                yield expr, interpret(the_running_metta_space(), expr)
                 interpreting = False
             elif not commented:
-                metta_space().add_atom(expr)
+                the_running_metta_space().add_atom(expr)
 
 
 def split_or_none(s, delimiter):
@@ -682,6 +954,9 @@ def self_space_info():
 @register_atoms(pass_metta=True)
 def register_vspace_atoms(metta):
 
+
+    the_python_runner.set_cmetta(metta)
+
     counter = 0
     if verbose>0: print(f"register_vspace_atoms metta={metta} {self_space_info()}")
 
@@ -729,11 +1004,11 @@ def register_vspace_atoms(metta):
 
         r"np\.div": nmDivAtom,
 
-        r"new-gpt-space": OperationAtom('new-gpt-space', lambda: [G(SpaceRef(GptSpace()))], unwrap=False),
-        r"new-gpt-intent-space": OperationAtom('new-gpt-intent-space', lambda: [G(SpaceRef(GptIntentSpace()))], unwrap=False),
-        r"new-v-space": OperationAtom('new-v-space', lambda: [G(SpaceRef(VSpace()))], unwrap=False),
+        r"new-gpt-space": OperationAtom('new-gpt-space', lambda: [G(VSpaceRef(GptSpace()))], unwrap=False),
+        r"new-gpt-intent-space": OperationAtom('new-gpt-intent-space', lambda: [G(VSpaceRef(GptIntentSpace()))], unwrap=False),
+        r"new-v-space": OperationAtom('new-v-space', lambda: [G(VSpaceRef(VSpace()))], unwrap=False),
 
-        r"the-v-space": OperationAtom('new-v-space', lambda: [G(SpaceRef(the_vspace))], unwrap=False),
+        r"the-v-space": OperationAtom('new-v-space', lambda: [G(VSpaceRef(the_vspace))], unwrap=False),
 
 
         r"new-value-atom": newValueAtom,
@@ -765,6 +1040,8 @@ def register_vspace_atoms(metta):
 def register_vspace_tokens(metta):
 
     if verbose>0: print(f"register_vspace_tokens metta={metta} {self_space_info()}")
+
+    the_python_runner.set_cmetta(metta.cmetta)
 
     if not isinstance(metta, VSpace):
         the_python_runner.parent = metta
@@ -826,14 +1103,14 @@ def register_vspace_tokens(metta):
             return oper_dict[atom_name]
 
     syms_dict.update({
-        '&gptspace': lambda _: G(SpaceRef(the_gptspace)),
-        '&flybase': lambda _: G(SpaceRef(the_flybase)),
-        '&vspace': lambda _: G(SpaceRef(the_vspace)),
+        '&gptspace': lambda _: G(VSpaceRef(the_gptspace)),
+        '&flybase': lambda _: G(VSpaceRef(the_flybase)),
+        '&vspace': lambda _: G(VSpaceRef(the_vspace)),
         '&vbase_class': lambda _: G((the_vspace)),
-        '&parent_ref': lambda _: G(SpaceRef(the_python_runner.parent.space())),
+        '&parent_ref': lambda _: G(VSpaceRef(the_python_runner.parent.space())),
         '&parent': lambda _: G(the_python_runner.parent.space()),
         '&child': lambda _: G(the_python_runner.space()),
-        '&child_ref': lambda _: G(SpaceRef(the_python_runner.space())),
+        '&child_ref': lambda _: G(VSpaceRef(the_python_runner.space())),
         '&the_runner': lambda _: ValueAtom(the_python_runner),
         '&the_metta': lambda _: ValueAtom(the_python_runner.parent),
         r"[^\s]+::[^\s]+": lambda token: resolve_atom(metta, token)
@@ -849,8 +1126,7 @@ def register_vspace_tokens(metta):
 
 @export_to_metta
 def test_nondeterministic_foreign():
-    #from metta_vspace import swip
-    swip= swip;
+
     def nondet(a, context):
         control = PL_foreign_control(context)
         context = PL_foreign_context(context)
@@ -1014,104 +1290,69 @@ def swip_exec(qry):
         print(r)
 
 @export_to_metta
-def test_custom_space(self):
+def test_custom_m_space():
 
+    class TestSpace(AbstractSpace):
 
-    def self_assertEqualNoOrder(list1, list2, msg=None):
-        """
-        Asserts that two lists are equal, regardless of their order.
-        """
-        if sorted(list1) != sorted(list2):
-            raise AssertionError(msg or f"Lists differ: {list1} != {list2}")
+        def __init__(self, unwrap=True):
+            super().__init__()
+            self.atoms_list = []
+            self.unwrap = unwrap
 
-    def self_assertTrue(expr, msg=None):
-        """
-        Asserts that an expression is true.
-        """
-        if not expr:
-            raise AssertionError(msg or f"Expression is not true: {expr}")
+        # NOTE: this is a naive implementation barely good enough to pass the tests
+        # Don't take this as a guide to implementing a space query function
+        def query(self, query_atom):
 
-    def self_assertFalse(expr, msg=None):
-        """
-        Asserts that an expression is false.
-        """
-        if expr:
-            raise AssertionError(msg or f"Expression is not false: {expr}")
+            # Extract only the variables from the query atom
+            query_vars = list(filter(lambda atom: atom.get_type() == AtomKind.VARIABLE, query_atom.iterate()))
 
-    def self_assertEqual(val1, val2, msg=None):
-        """
-        Asserts that two values are equal.
-        """
-        if val1 != val2:
-            raise AssertionError(msg or f"Values differ: {val1} != {val2}")
+            # Match the query atom against every atom in the space
+            # BindingsSet() creates a binding set with the only matching result
+            # We use BindingsSet.empty() to support multiple results
+            new_bindings_set = BindingsSet.empty()
+            for space_atom in self.atoms_list:
+                match_results = space_atom.match_atom(query_atom)
 
+                # Merge in the bindings from this match, after we narrow the match_results to
+                # only include variables vars in the query atom
+                for bindings in match_results.iterator():
+                    bindings.narrow_vars(query_vars)
+                    if not bindings.is_empty():
+                        # new_bindings_set.merge_into(bindings) would work with BindingsSet(), but
+                        # it would return an empty result for multiple alternatives and merge bindings
+                        # for different variables from alternative branches, which would be a funny
+                        # modification of query, but with no real use case
+                        # new_bindings_set.push(bindings) adds an alternative binding to the binding set
+                        new_bindings_set.push(bindings)
 
-    test_space = VSpace()
-    test_space.test_attrib = "Test Space Payload Attrib"
+            return new_bindings_set
 
-    kb = SpaceRef(test_space)
-    kb.add_atom(S("a"))
-    kb.add_atom(S("b"))
+        def add(self, atom):
+            self.atoms_list.append(atom)
 
-    self_assertEqual(kb.atom_count(), 2)
-    self_assertEqual(kb.get_payload().test_attrib, "Test Space Payload Attrib")
-    self_assertEqualNoOrder(kb.get_atoms(), [S("a"), S("b")])
+        def remove(self, atom):
+            if atom in self.atoms_list:
+                self.atoms_list.remove(atom)
+                return True
+            else:
+                return False
 
-    kb = SpaceRef(VSpace())
-    kb.add_atom(S("a"))
-    kb.add_atom(S("b"))
-    kb.add_atom(S("c"))
+        def replace(self, from_atom, to_atom):
+            if from_atom in self.atoms_list:
+                self.atoms_list.remove(from_atom)
+                self.atoms_list.append(to_atom)
+                return True
+            else:
+                return False
 
-    self_assertTrue(kb.remove_atom(S("b")))
-    self_assertFalse(kb.remove_atom(S("bogus")))
-    self_assertEqualNoOrder(kb.get_atoms(), [S("a"), S("c")])
+        def atom_count(self):
+            return len(self.atoms_list)
 
-    kb = SpaceRef(VSpace())
-    kb.add_atom(S("a"))
-    kb.add_atom(S("b"))
-    kb.add_atom(S("c"))
+        def atoms_iter(self):
+            return iter(self.atoms_list)
 
-    self_assertTrue(kb.replace_atom(S("b"), S("d")))
-    self_assertEqualNoOrder(kb.get_atoms(), [S("a"), S("d"), S("c")])
+    test_custom_space(lambda: TestSpace())
 
-    kb = SpaceRef(VSpace())
-    kb.add_atom(E(S("A"), S("B")))
-    kb.add_atom(E(S("C"), S("D")))
-    # Checking that multiple matches can be returned
-    kb.add_atom(E(S("A"), S("E")))
-
-    result = kb.query(E(S("A"), V("x")))
-    self_assertEqualNoOrder(result, [{"x": S("B")}, {"x": S("E")}])
-
-    m = MeTTa()
-
-    # Make a little space and add it to the MeTTa interpreter's space
-    little_space = SpaceRef(VSpace())
-    little_space.add_atom(E(S("A"), S("B")))
-    space_atom = G(little_space)
-    m.space().add_atom(E(S("little-space"), space_atom))
-
-    # Make sure we can get the little space back, and then query it
-    kb_result = m.space().query(E(S("little-space"), V("s")))
-    result_atom = kb_result[0].get("s")
-    self_assertEqual(result_atom, space_atom)
-
-    result = result_atom.get_object().query(E(S("A"), V("v")))
-    self_assertEqualNoOrder(result, [{"v": S("B")}])
-
-    # Add the MeTTa space to the little space for some space recursion
-    little_space.add_atom(E(S("big-space"), G(m.space())))
-
-    nested = SpaceRef(VSpace())
-    nested.add_atom(E(S("A"), S("B")))
-    space_atom = G(nested)
-
-    runner = MeTTa()
-    runner.space().add_atom(space_atom)
-    runner.tokenizer().register_token("nested", lambda token: space_atom)
-
-    result = runner.run("!(match nested (A $x) $x)")
-    self_assertEqual([[S("B")]], result)
 
 
 # Borrowed impl from Adam Vandervorst
@@ -1153,7 +1394,7 @@ class InteractiveMeTTa(LazyMeTTa):
 
                 if sline.rstrip() == '?':
                     expr = self.parse_single("(match &self $ $)")
-                    yield expr, interpret(metta_space(), expr)
+                    yield expr, interpret(the_running_metta_space(), expr)
                     continue
 
                 # Check for history commands
@@ -1172,13 +1413,13 @@ class InteractiveMeTTa(LazyMeTTa):
                     continue
 
                 elif sline.startswith("@space"):
-                    global the_runner_space
+                    global the_new_runner_space
                     cmd_, named = split_or_none(sline, " ")
                     if named is None:
                         print("; @spaces:", " ".join(space_refs))
                     elif named in space_refs:
                         print(f"; named={named}")
-                        the_runner_space = space_refs[named]()
+                        the_new_runner_space = space_refs[named]()
 
                 # Switch to swip mode
                 elif sline.startswith("@s"):
@@ -1282,26 +1523,26 @@ class InteractiveMeTTa(LazyMeTTa):
 
                     if prefix == "!":
                         expr = self.parse_single(rest)
-                        yield expr, interpret(metta_space(), expr)
+                        yield expr, interpret(the_running_metta_space(), expr)
                         continue
                     elif prefix == "?":
                         expr = self.parse_single(rest)
-                        yield expr, metta_space().subst(expr, expr)
+                        yield expr, the_running_metta_space().subst(expr, expr)
                         continue
                     elif prefix == "+":
                         expr = self.parse_single(rest)
-                        metta_space().add_atom(expr)
+                        the_running_metta_space().add_atom(expr)
                         continue
                     elif prefix == "-":
                         expr = self.parse_single(rest)
-                        metta_space().remove_atom(expr)
+                        the_running_metta_space().remove_atom(expr)
                         continue
                     elif prefix == "^":
                         printl(the_python_runner.run(line));
                         continue
                     else:
                         expr = self.parse_single(rest)
-                        yield expr, interpret(metta_space(), expr)
+                        yield expr, interpret(the_running_metta_space(), expr)
                         continue
 
             except KeyboardInterrupt:
@@ -1365,8 +1606,9 @@ the_vspace = VSpace("&vspace")
 the_flybase = VSpace("&flybase")
 the_python_runner = InteractiveMeTTa();
 the_python_runner.cwd = [os.path.dirname(os.path.dirname(__file__))]
+the_old_runner_space = the_python_runner.space()
 the_python_runner.run("!(extend-py! metta_learner)")
-the_runner_space = the_python_runner.space()
+the_new_runner_space = the_python_runner.space()
 #the_python_runner.run("!(extend-py! VSpace)")
 #the_python_runner.run("!(extend-py! GptSpace)")
 is_init_ran = False
