@@ -42,8 +42,9 @@ du -h ./data
 ## :computer: Usage
 - Run in MeTTA:
   ```
+  export PYTHONPATH=metta_vspace:$PYTHONPATH
   metta 1-VSpaceTest.metta
-  @advice
+  @h
   ```
 - Launch the metta-vspace Jupyter notebook:
   ```

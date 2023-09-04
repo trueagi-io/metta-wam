@@ -958,17 +958,22 @@ with_wild_path_swi(Fnicate, File) :-
   expand_file_name(Wildcard, List), !,
   maplist(Fnicate, List).
 
+% ===============================
+% MeTTa Python incoming interface
+% ===============================
 :- dynamic(for_meta/2).
 for_meta(_,T):- fb_pred(F,A),functor(T,F,A),call(T).
 metta_ls:-
   listing(for_meta/2).
-metta_add(KB,New):- assert_new(for_meta(KB,New)),listing(for_meta/2),nop(format('~N~q.~n',[for_meta(KB,New)])).
+metta_add(KB,New):- assert_new(for_meta(KB,New)),format('~N~q.~n',[for_meta(KB,New)]).
 metta_rem(KB,Old):- ignore(metta_del(KB,Old)).
 metta_del(KB,Old):- Term = for_meta(KB,Old), clause(Term,true,Ref),clause(Copy,true,Ref), Term =@= Copy, !, erase(Ref).
 metta_replace(KB,Old,New):- metta_del(KB,Old), metta_add(KB,New).
-%metta_count(KB,Count):- %predicate_property(for_meta(_,_),Count).
-metta_count(KB,Count):-
-   writeln(metta_count_in(KB,Count)), findall(Atom,for_meta(KB,Atom),AtomsL),length(AtomsL,Count),writeln(metta_count_out(KB,Count)).
+metta_count(_KB,Count):-
+  fb_stats, full_atom_count(SL1),
+  predicate_property(for_meta(_,_),SL2),
+  Count is SL1 + SL2.
+%metta_count(KB,Count):- writeln(metta_count_in(KB,Count)), findall(Atom,for_meta(KB,Atom),AtomsL),length(AtomsL,Count),writeln(metta_count_out(KB,Count)).
 metta_iter(KB,Atoms):- for_meta(KB,Atoms).
 metta_iter_bind(KB,Atoms,Vars):- term_variables(Atoms,AVars), metta_iter(KB,Atoms), ignore(AVars = Vars).
 
