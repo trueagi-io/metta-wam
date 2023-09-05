@@ -202,14 +202,15 @@ class VSpace(AbstractSpace):
 
     def swip_space_name(self):
         return swipRef(self.sp_name)
+        #return self.sp_name
 
     def query(self, query_atom):
         new_bindings_set = BindingsSet.empty()
         metta_vars = [atom for atom in query_atom.iterate() if atom.get_type() == AtomKind.VARIABLE]
         share_vars = {}
-        swip_obj = m2s(share_vars,query_atom)
+        swip_vars = list_to_termv(share_vars,metta_vars)
+        swip_obj = m2s(share_vars,query_atom,1)
         print(f"share_vars={share_vars}")
-        swip_vars = m2s(share_vars,metta_vars)
         A = Variable()
         B = Variable()
         A.unify(self.sp_name)
@@ -541,8 +542,8 @@ def swipAtom(m):
     return a
 
 def swipRef(a):
-    if isinstance(a, (Variable, Term)):
-        return a
+    if isinstance(a, (Variable, Term, Atom, str)):
+       return a
     v = Variable()
     v.unify(a)
     return v
@@ -579,14 +580,19 @@ def m2s1(circles, metta_obj, depth=0, preferStringToAtom = None, preferListToCom
 
     #if isinstance(metta_obj, GroundedAtom): return metta_obj.get_value()
     preferListToCompound = True
-    return m2s2(circles, metta_obj, depth, preferStringToAtom, preferListToCompound)
+#    return m2s2(circles, metta_obj, depth, preferStringToAtom, preferListToCompound)
 
-def m2s2(circles, metta_obj, depth, preferStringToAtom, preferListToCompound):
+#def m2s2(circles, metta_obj, depth, preferStringToAtom, preferListToCompound):
     #oid = f"{id(metta_obj)}"
-    oid = id(metta_obj)
+
     if isinstance(metta_obj, VariableAtom):
         oid = metta_obj.get_name()
+    else:
+        oid = id(metta_obj)
+
     var = circles.get(oid, None)
+
+    # We are in a circluar reference
     if var is not None:
         #print(f"{oid}={len(circles)}={type(circles)}={type(metta_obj)}")
         return var
@@ -599,7 +605,8 @@ def m2s2(circles, metta_obj, depth, preferStringToAtom, preferListToCompound):
         return V
 
     elif isinstance(metta_obj, SpaceRef):
-        L = metta_obj.atom_count() #list_to_termv(circles,metta_obj.get_atoms(),depth+1)
+        # L = metta_obj.atom_count()
+        L = list_to_termv(circles,metta_obj.get_atoms(),depth+1)
     elif isinstance(metta_obj, list):
         L = list_to_termv(circles,metta_obj,depth+1)
     elif isinstance(metta_obj, ExpressionAtom):
@@ -608,7 +615,9 @@ def m2s2(circles, metta_obj, depth, preferStringToAtom, preferListToCompound):
         raise ValueError(f"Unknown MeTTa object type: {type(metta_obj)}")
 
     V.unify(L)
-    return V
+    if depth==0:
+        return V
+    return L
 
 
 

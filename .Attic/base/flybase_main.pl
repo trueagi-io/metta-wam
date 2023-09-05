@@ -102,6 +102,7 @@ is_good_atom_name(E1):- atom(E1), atom_length(E1,L),L>=2, \+ atom_number(E1,_).
 fb_pred_g(F,A):-fb_pred(F,A), \+ skipped_anotations(F).
 
 
+
 mine_corisponds(Concept1,Corispondance):-
  fb_arg_table_n(Concept1,Fn1,Nth1),is_good_atom_name(Concept1),
  fb_arg_table_n(Concept1,Fn2,Nth2),
@@ -271,7 +272,7 @@ should_show_data:- loaded_from_file(X), once((X=<13,X>=10); (X>0,(0 is X rem 1_0
   format(user_output,'~N',[]).
 
 assert_OBO(P,X,Y):- assert_OBO(ontology_info(P,X,Y)).
-assert_OBO(Data00):- ArgTypes=[],
+assert_OBO(Data00):- %ArgTypes=[],
   heartbeat,
   functor(Data00,Fn,A), A>=2,A<700,
   decl_fb_pred(Fn,A),
@@ -279,9 +280,8 @@ assert_OBO(Data00):- ArgTypes=[],
   Data00=..[Fn|DataL0],
   make_assertion(Fn,DataL0,Data,OldData),!,
     (call(Data)->true;(assert(Data),flag(total_loaded_atoms,TA,TA+1),
-    ignore(((should_show_data,nl,nl,fbug(X=Data),ignore((OldData\==DataL0,
-      fb_argtypes(Fn,ArgTypes),
-      fbug(fb_argtypes=ArgTypes),fbug(oldData=OldData)))))))),!.
+    ignore(((should_show_data,nl,nl,fbug(newData(X)=Data),ignore((OldData\==DataL0,
+      fbug(oldData(X)=OldData)))))))),!.
 
 load_obo:- make,
   load_obo('./reqs/obonet/tests/data/*.obo'),
@@ -486,15 +486,54 @@ skipped_anotations(gene_rpkm_matrix).
 skipped_anotations(dmel_gene_sequence_ontology_annotations).
 skipped_anotations(fbgn_annotation_ID).
 
+allow_concepts:- option_else(concepts,TF,true), \+ TF = false.
+
+
+direct_mapping(!,no_more).
+direct_mapping(fail,'False').
+direct_mapping(true,'True').
+direct_mapping(prolog,meTTa).
+direct_mapping(( ';' ),or).
+direct_mapping((A->B;C),if_then_else(A,B,C)).
+direct_mapping(( ',' ),and).
+direct_mapping(( '\\+' ),missing).
+direct_mapping('=..','equals_ListMappingFn').
+
+print_pred_as_metta:- mmake,
+  forall((source_file(Pred,F),
+  atom_contains(F,flybase)),
+  print_pred_as_metta(Pred)).
+print_pred_as_metta(F/A):- !, print_pred_as_metta(F,A).
+print_pred_as_metta(Pred):- functor(Pred,F,A), print_pred_as_metta(F,A).
+
+print_pred_as_metta(F,A):- functor(Head,F,A),
+  nl,nl,nl,
+  forall(clause(Head,Body), print_hb_as_metta(Head,Body)).
+print_hb_as_metta(Head,Body):- Body == true,!,
+  print_hb_as_metta(=(Head,'True')).
+print_hb_as_metta(Head,Body):- Body == false,!,
+  print_hb_as_metta(=(Head,'False')).
+print_hb_as_metta(Head,Body):- conjuncts_to_list(Body,List), into_sequential(List,SP),!,
+  print_hb_as_metta(=(Head,SP)).
+
+
+print_hb_as_metta(P):- with_option(concepts=false,pp_fb(P)).
+
+into_sequential(Body,SP):- \+ is_list(Body), conjuncts_to_list(Body,List),into_sequential(List,SP).
+into_sequential(List,SP):- length(List,L),L>1, SP =.. [sequential|List],!.
+into_sequential(SP,SP):-!.
+
+
 % Base case: atoms are printed as-is.
 pp_as(V) :- \+ \+ pp_sex(V).
 pp_sex(V) :- var(V), !, format('$~p',[V]).
+pp_sex(V) :- direct_mapping(V,D),V\==D,!,pp_sex(D).
 %pp_sex('') :- format('(EmptyNode null)',[]).
 pp_sex('') :- format('()',[]).
 pp_sex([]):-  !, write('()').
-pp_sex(N=V):-  !, format("~N;; ~w == ~n",[N]),!,pp_sex(V).
+pp_sex(N=V):- allow_concepts, !, format("~N;; ~w == ~n",[N]),!,pp_sex(V).
 pp_sex(V) :- (number(V) ; (atom(V),atom_number(V,_)); is_dict(V)), !, format('(ValueAtom ~w)',[V]).
-pp_sex(S) :- atom(S), pp_sax(S),!.
+pp_sex(S) :- atom(S), always_dash_functor(S,D), pp_sax(D),!.
 pp_sex(S) :- string(S),!, format('(StringValue "~w")',[S]).
 % Lists are printed with parentheses.
 pp_sex(V) :- \+ compound(V), !, format('~p',[V]).
@@ -505,10 +544,28 @@ pp_sex('!'(S)) :- write('!'),pp_sex(S).
 pp_sex([H|T]) :- is_list(T),!, write('(:: '), pp_sex(H), print_list_as_sexpression(T), write(')').
 % Compound terms.
 %pp_sex(Term) :- compound(Term), Term =.. [Functor|Args], write('('),format('(~w ',[Functor]), write_args_as_sexpression(Args), write(')').
-pp_sex(Term) :- Term =.. [Functor|Args], format('(~w',[Functor]), write_args_as_sexpression(Args), write(')'),!.
-pp_sex(Term) :- Term =.. [Functor|Args], format('(EvaluationLink (PredicateNode "~w") (ListLink ',[Functor]), write_args_as_sexpression(Args), write('))').
 
+%pp_sex(Term) :- Term =.. ['=',H|Args], length(Args,L),L>2, write('(= '),  pp_sex(H), write('\n\t\t'), maplist(pp_sex(2),Args).
+pp_sex(Term) :- Term =.. [Functor|Args], always_dash_functor(Functor,DFunctor), format('(~w ',[DFunctor]), write_args_as_sexpression(Args), write(')'),!.
+pp_sex(Term) :- allow_concepts, Term =.. [Functor|Args], format('(EvaluationLink (PredicateNode "~w") (ListLink ',[Functor]), write_args_as_sexpression(Args), write('))'),!.
+pp_sex(Term) :- Term =.. [Functor|Args],
+   always_dash_functor(Functor,DFunctor), format('(~w ',[DFunctor]), write_args_as_sexpression(Args), write(')'),!.
+
+pp_sex(2,Arg):- write('\t\t'),pp_sex(Arg).
+
+always_dash_functor(A,B):- once(dash_functor(A,B)),A\=@=B,!.
+always_dash_functor(A,A).
+
+dash_functor(A,C):- \+ atom(A),!,C=A.
+dash_functor(A,C):- direct_mapping(A,B),A\==B,!,always_dash_functor(B,C).
+dash_functor(Functor,DFunctor):-
+   atom(Functor), atomic_list_concat(L,'-',Functor), L\=[_],maplist(always_dash_functor,L,LL),
+   atomic_list_concat(LL,'-',DFunctor).
+dash_functor(Functor,DFunctor):-
+   atom(Functor), atomic_list_concat(L,'_',Functor), L\=[_],maplist(always_dash_functor,L,LL),
+   atomic_list_concat(LL,'-',DFunctor).
 pp_sax(S) :- is_englishy(S),!,format('(StringValue "~w")',[S]).
+pp_sax(S) :-  \+ allow_concepts,!, write(S).
 pp_sax(S) :- atom_length(S,1),atom_string(S,SS),!,format("(StringValue ~q)",[SS]).
 pp_sax(S) :- is_an_arg_type(S,T),!,format('(TypeNode "~w")',[T]).
 pp_sax(S) :- has_type(S,T),!,format('(~wValueNode "~w")',[T,S]).
@@ -536,9 +593,10 @@ numbervars_w_singles(P):- term_singletons(P, Vars),
   numbervars(Vars,260,_,[attvar(bind),singletons(false)]),
   numbervars(P,14,_,[attvar(bind),singletons(true)]).
 
+
 pp_fb(P):- format("~N "),  \+ \+ (numbervars_w_singles(P), pp_fb1(P)).
 :- if(current_predicate(pp_ilp/1)).
-pp_fb1(P):- pp_as(P),!,format("~N"),pp_ilp(P),!.
+%pp_fb1(P):- pp_as(P),!,format("~N"),pp_ilp(P),!.
 :- endif.
 pp_fb1(P):- pp_as(P),!.
 pp_fb1(P):- print(P),!,nl.
@@ -1136,6 +1194,7 @@ load_flybase_sv(Sep,File,Stream,OutputStream,Fn):- option_value(row_1_is_header,
   length(ArgTypes,Len),
   decl_fb_pred(Fn,Len),
   set_option_value(fb_argtypes,ArgTypes),!,
+  pp_fb(fb_argtypes(Fn/Len)=ArgTypes),
   load_fb_data(File,Stream,Fn,Sep,is_swipl,OutputStream))).
 
 
@@ -1224,6 +1283,7 @@ load_fb_data(File,_Stream,_Fn,_Sep,Data,_OutputStream):-
 load_fb_data(File,Stream,Fn,Sep, is_swipl,OutputStream):-  !, % \+ option_value(full_canon,[]), !,
  (((option_value(max_per_file,Max),number(Max)),number(Max))->true;Max=inf),
   fbug(load_fb_data(File,Max,Fn,Sep)),
+  ignore((fb_argtypes(Fn,ArgTypes),pp_fb(fb_argtypes(Fn)=ArgTypes))),
    repeat,
      once(read_csv_stream(Sep,Stream,Data)),
       ( ((Data== end_of_file);reached_file_max) -> assert(done_reading(File)) ; 
@@ -1234,6 +1294,7 @@ load_fb_data(File,Stream,Fn,Sep, is_swipl,OutputStream):- !,
   csv_options(CompiledOptions,[separator(SepCode)]),
  ((option_value(max_per_file,Max),number(Max))->true;Max=inf),
   fbug(load_fb_data(File,Max,Fn,Sep)),
+    ignore((fb_argtypes(Fn,ArgTypes),pp_fb(fb_argtypes(Fn)=ArgTypes))),
    repeat,
      once((csv_read_row(Stream, RData, CompiledOptions))),
 
@@ -1361,9 +1422,9 @@ write_flybase_data(OutputStream,Fn,DataL0):-
     flag(loaded_from_file,X,X+1),
     (call(Data)->true;(assert(Data),flag(total_loaded_atoms,TA,TA+1))),
     ignore((should_show_data,nl,nl,
-      ignore((OldData\==DataL0,fbug(oldData=OldData))),
-      ignore((fb_argtypes(Fn,ArgTypes),fbug(fb_argtypes=ArgTypes))),
-      fbug(X=Data))))),
+      ignore((OldData\==DataL0,pp_fb(oldData(X)=OldData))),
+      %ignore((fb_argtypes(Fn,ArgTypes),fbug(fb_argtypes=ArgTypes))),
+      pp_fb(newData(X)=Data))))),
     catch_ignore(ignore((
        should_cache,must_det_ll((write_canonical(OutputStream,Data),writeln(OutputStream,'.')))))),!.
 
