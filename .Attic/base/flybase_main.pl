@@ -1490,7 +1490,7 @@ reprefix(['FB:FB'],'FB').
 :- discontiguous column_description/4. 
 :- discontiguous primary_column/2. 
 :- discontiguous column_names/2. 
-:- discontiguous file_location/2.
+%:- discontiguous file_location/2.
 
 
 

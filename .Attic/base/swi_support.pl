@@ -91,3 +91,11 @@ catch_ignore(G):- ignore(catch(G,E,catch_i((nl,writeq(G=E),nl)))).
 catch_i(G):- ignore(catch(G,_,true)).
 :- endif.
 
+:- if( \+ current_predicate(add_history1/1)).
+add_history1(_).
+:- endif.
+
+:- if( \+ current_predicate(add_history/1)).
+add_history(_).
+:- endif.
+

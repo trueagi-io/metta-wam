@@ -26,7 +26,8 @@ git clone https://github.com/logicmoo/metta-vspace
 cd metta-vspace
 
 # Install the package
-pip install .
+export PYTHONPATH=$PWD/metta_vspace:$PYTHONPATH
+# LAter on we might use pip install .
 
 # Download necessary files
 wget --no-parent -A .gz -r -P ./data http://ftp.flybase.org/releases/FB2023_04/precomputed_files

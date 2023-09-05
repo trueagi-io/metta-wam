@@ -4,8 +4,14 @@
 from time import monotonic_ns, time
 import atexit
 import os
+import subprocess
+import sys
+import pip
 import re
-import readline
+try:
+ import readline
+except ImportError:
+  import pyreadline3 as readline 
 import sys
 import traceback
 import inspect
@@ -145,8 +151,9 @@ class VSpaceRef(SpaceRef):
         """
         Performs a substitution within the Space
         """
+        cspace = super().cspace
         return [Atom._from_catom(catom) for catom in
-                hp.space_subst(super().cspace, pattern.catom,
+                hp.space_subst(cspace, pattern.catom,
                                          templ.catom)]
 
 vspace_ordinal = 0
@@ -167,7 +174,7 @@ class VSpace(AbstractSpace):
         addSpaceName(space_name,self)
 
     def swip_space_name(self):
-        return swipAtom(self.sp_name)
+        return swipRef(self.sp_name)
 
     def query(self, query_atom):
         query_vars = [atom for atom in query_atom.iterate() if atom.get_type() == AtomKind.VARIABLE]
@@ -184,6 +191,9 @@ class VSpace(AbstractSpace):
     def _call(self, functor_name, *args):
         q = Query(Functor(functor_name, len(args) + 1)(self.swip_space_name(), *args), module=self.sp_module)
         try: return q.nextSolution()
+        except Exception as e:
+            if verbose>0: print(f"Error: {e}")
+            if verbose>0: traceback.print_exc()
         finally: q.closeQuery()
 
     def add(self, atom):
@@ -202,16 +212,23 @@ class VSpace(AbstractSpace):
         return bool(self._call("metta_replace", m2s(from_atom), m2s(to_atom)))
 
     def atom_count(self):
-        return 2
+        #return 2
         Count = Variable("Int")
-        q = Query(Functor(functor_name, len(args) + 1)(self.swip_space_name(), *args), module=self.sp_module)
+        functor_name = "metta_count"
+        #q = Query(Functor(functor_name, 2)(self.swip_space_name(), Count))
+        q = Query(f"metta_count('{self.sp_name}',Count)")
         try:
-            q.nextSolution()
-            print(Count.value)
-            print(Count.value.value)
-            return Count.value.value
-        finally: ""
-        q.closeQuery()
+            if not q.nextSolution(): return 0
+            C = Count.value
+            if not isisntance(C,int):
+                C = C.value
+            print(C)
+            return C
+        except Exception as e:
+            if verbose>0: print(f"Error: {e}")
+            if verbose>0: traceback.print_exc()
+        finally:
+            q.closeQuery()
 
     def atom_count_oops(self):
         Count = Variable("Int")
@@ -335,6 +352,7 @@ def test_custom_space(LambdaSpaceFn):
     kb = VSpaceRef(test_space)
     kb.add_atom(S("a"))
     kb.add_atom(S("b"))
+    kb.add_atom(E(S("a"),S("b")))
 
     print(f"kb.atom_count()=")
     print(kb.atom_count())
@@ -461,25 +479,30 @@ def test_s(metta_obj):
 
 # Do not @export_to_metta
 def m2s(metta_obj, depth=0):
-    r = swipRef(m2s1(metta_obj, depth))
-    if verbose<=0: return r
+    r = m2s1(metta_obj, depth)
+    if depth==0:
+        v = swipRef(r)
+    else:
+        v = r
+    if verbose<=0: return v
     for i in range(depth+1):
         print("   ",end='')
+
     print(f"r({type(r)})={r}")
-    return r;
+    return v
 
 def swipAtom(m):
     a = PySwipAtom(str(m))
-    return swipRef(a)
+    return a
 
 def swipRef(a):
-    if isinstance(a, Variable):
+    if isinstance(a, (Variable, Term)):
         return a
     v = Variable()
     v.unify(a)
     return v
 
-def m2s1(metta_obj, depth=0, preferStringToAtom = None):
+def m2s1(metta_obj, depth=0, preferStringToAtom = None, preferListToCompound = False):
 
     if isinstance(metta_obj, GroundedAtom):
         metta_obj = metta_obj.get_object()
@@ -494,13 +517,14 @@ def m2s1(metta_obj, depth=0, preferStringToAtom = None):
                 print("   ",end='')
             print(f'm2s({type(metta_obj)}): {metta_obj}')
 
+
+        if isinstance(metta_obj, (Variable, PySwipAtom, Functor, Term)):
+            return metta_obj
+
         if isinstance(metta_obj, str):
             return metta_obj
 
-        if isinstance(metta_obj, int):
-            return metta_obj
-
-        if isinstance(metta_obj, float):
+        if isinstance(metta_obj, (int, float)):
             return metta_obj
 
         if isinstance(metta_obj, VariableAtom):
@@ -517,8 +541,10 @@ def m2s1(metta_obj, depth=0, preferStringToAtom = None):
 
         #if isinstance(metta_obj, GroundedAtom): return metta_obj.get_value()
 
+        preferListToCompound = True
+
         if isinstance(metta_obj, list):
-            return swiplist_to_swip([m2s(sub_expr,depth + 1) for sub_expr in metta_obj])
+            return swiplist_to_swip(metta_obj)
 
 
         if isinstance(metta_obj, ExpressionAtom):
@@ -527,6 +553,14 @@ def m2s1(metta_obj, depth=0, preferStringToAtom = None):
             retargs = []
             if (length==0):
                 return swiplist_to_swip(retargs)
+
+
+            # for testing
+            if preferListToCompound:
+                for i in range(0,length):
+                    retargs.append(m2s(ch[i],depth + 1))
+                return swiplist_to_swip(retargs)
+
 
             f = m2s1(ch[0], depth+1, preferStringToAtom = True)
 
@@ -538,7 +572,7 @@ def m2s1(metta_obj, depth=0, preferStringToAtom = None):
                 return swiplist_to_swip(retargs)
 
             # Converting to functor... Maybe a list later on
-            return Functor(f, len(retargs), retargs)
+            return Functor(f, len(retargs), list_to_termv(retargs))
 
         print(f"Unknown MeTTa object type: {type(metta_obj)}={metta_obj}")
 
@@ -548,9 +582,14 @@ def m2s1(metta_obj, depth=0, preferStringToAtom = None):
     raise ValueError(f"Unknown MeTTa object type: {type(metta_obj)}")
 
 def swiplist_to_swip(retargs, depth=0):
+    sv = [m2s1(item,depth) for item in retargs]
     v = Variable()
-    v.unify(retargs)
+    v.unify(sv)
     return v
+
+def list_to_termv(retargs, depth=0):
+    sv = [m2s1(item,depth) for item in retargs]
+    return sv
 
 
 import numpy as np
@@ -695,7 +734,7 @@ def printl(obj):
         for item in obj:
             try:
                 color_expr(item)
-            except Error:
+            except Exception:
                 print(item)
     except TypeError:
         # If a TypeError is raised, the object is not iterable
@@ -1210,15 +1249,19 @@ def test_nondeterministic_foreign():
 
 @export_to_pyswip
 def swip_to_metta_wrapper(swip_obj, metta_obj):
-    result = s2m(swip_obj)
-    metta_obj.unify(m2s(result))
-    return True
+    result1 = m2s(s2m(swip_obj))
+    result2 = m2s(metta_obj)
+    #metta_obj.unify(m2s(result))
+    return result2.unify(result1)
+    #return True
 
 @export_to_pyswip
 def metta_to_swip_wrapper(metta_obj, swip_obj):
-    result = m2s(metta_obj)
-    swip_obj.unify(result)
-    return True
+    result1 = m2s(metta_obj)
+    result2 = m2s(swip_obj)
+    #swip_obj.unify(result)
+    return result2.unify(result1)
+    #return True
 
 @export_to_metta
 def metta_to_swip_tests1():
