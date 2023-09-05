@@ -90,13 +90,15 @@ def add_to_history_if_unique(item):
         if readline.get_history_item(i) == item: return
     insert_to_history(item)
 
-def export_to_metta(func):
+def export_to_metta(func, name=None):
     setattr(func, 'export_to_metta', True)
+    setattr(func, 'named', name)
     if verbose>3: print(f"{func}={getattr(func, 'export_to_metta', False)}")
     return func
 
-def export_to_pyswip(func):
+def export_to_pyswip(func, name=None):
     setattr(func, 'export_to_pyswip', True)
+    setattr(func, 'named', name)
     if verbose>3: print(f"{func}={getattr(func, 'export_to_pyswip', False)}")
     return func
 
@@ -105,17 +107,21 @@ def add_exported_methods(module, dict = oper_dict):
     for name, obj in inspect.getmembers(module):
         if inspect.isfunction(obj):
             if getattr(obj, 'export_to_metta', False):
+                suggestName = getattr(func, 'named', None)
+                if suggestName is not None:
+                    use_name = suggestName
+                else: use_name = name
                 sig = inspect.signature(obj)
                 params = sig.parameters
                 num_args = len([p for p in params.values() if p.default == p.empty and p.kind == p.POSITIONAL_OR_KEYWORD])
-                add_pyop(name, num_args, dict)
+                add_pyop(use_name, num_args, dict)
 
 @export_to_metta
 def add_pyop(name, length, dict = oper_dict):
     hyphens, underscores = name.replace('_', '-'), name.replace('-', '_')
     mettavars, pyvars = (' '.join(f"${chr(97 + i)}" for i in range(length))).strip(), (', '.join(chr(97 + i) for i in range(length))).strip()
     s = f"!({hyphens})" if mettavars == "" else f"!({hyphens} {mettavars})"
-    insert_to_history(s); #print(s)
+    add_to_history_if_unique(s); #print(s)
     if hyphens not in dict:
         src, local_vars = f'op = OperationAtom( "{hyphens}", lambda {pyvars}: [{underscores}({pyvars})])', {}
         exec(src, globals(), local_vars)  #print(f'metta: OperationAtom("{hyphens}",{src}, unwrap=False)')
@@ -660,6 +666,43 @@ class VSPatternOperation(OperationObject):
                 return [G(VSPatternValue([self, args]))]
         return super().execute(*args, res_typ=res_typ)
 
+class VSpacePatternOperation(OperationObject):
+
+    def __init__(self, name, op, unwrap=False, rec=False):
+        super().__init__(name, op, unwrap)
+        self.rec = rec
+
+    def execute(self, *args, res_typ=AtomType.UNDEFINED):
+        if self.rec:
+            args = args[0].get_children()
+            args = [self.execute(arg)[0]\
+                if isinstance(arg, ExpressionAtom) else arg for arg in args]
+        # If there is a variable or VSPatternValue in arguments, create VSPatternValue
+        # instead of executing the operation
+        for arg in args:
+            if isinstance(arg, GroundedAtom) and isinstance(arg.get_object(), VSPatternValue):
+                return [G(VSPatternValue([self, args]))]
+            if isinstance(arg, VariableAtom):
+                return [G(VSPatternValue([self, args]))]
+
+        # type-check?
+        if self.unwrap:
+            for arg in args:
+                if not isinstance(arg, GroundedAtom):
+                    # REM:
+                    # Currently, applying grounded operations to pure atoms is not reduced.
+                    # If we want, we can raise an exception, or to form a error expression instead,
+                    # so a MeTTa program can catch and analyze it.
+                    # raise RuntimeError("Grounded operation " + self.name + " with unwrap=True expects only grounded arguments")
+                    raise NoReduceError()
+            args = [arg.get_object().content for arg in args]
+            return [G(ValueObject(self.op(*args)), res_typ)]
+        else:
+            result = self.op(*args)
+            if not isinstance(result, list):
+                raise RuntimeError("Grounded operation `" + self.name + "` should return list")
+            return result
+
 
 def _np_atom_type(npobj):
     return E(S('NPArray'), E(*[ValueAtom(s, 'Number') for s in npobj.shape]))
@@ -720,7 +763,7 @@ def color_expr(expr, level=0, unif_vars=None):
 
 
 @export_to_metta
-def printl(obj):
+def print_l(obj):
     if obj is None:
         print("None!")
         return obj
@@ -742,8 +785,8 @@ def printl(obj):
         print(obj)
     return obj
 
-@export_to_metta
-def printp(obj):
+@export_to_metta(name="print")
+def println(obj):
     """
     Prints the given object and returns it.
 
@@ -993,7 +1036,8 @@ def self_space_info():
 @register_atoms(pass_metta=True)
 def register_vspace_atoms(metta):
 
-
+	global oper_dict
+	
     the_python_runner.set_cmetta(metta)
 
     counter = 0
@@ -1043,11 +1087,11 @@ def register_vspace_atoms(metta):
 
         r"np\.div": nmDivAtom,
 
-        r"new-gpt-space": OperationAtom('new-gpt-space', lambda: [G(VSpaceRef(GptSpace()))], unwrap=False),
-        r"new-gpt-intent-space": OperationAtom('new-gpt-intent-space', lambda: [G(VSpaceRef(GptIntentSpace()))], unwrap=False),
-        r"new-v-space": OperationAtom('new-v-space', lambda: [G(VSpaceRef(VSpace()))], unwrap=False),
+        r"new-gpt-space": OperationAtom('new-gpt-space', lambda: [G(SpaceRef(GptSpace()))], unwrap=False),
+        r"new-gpt-intent-space": OperationAtom('new-gpt-intent-space', lambda: [G(SpaceRef(GptIntentSpace()))], unwrap=False),
 
-        r"the-v-space": OperationAtom('new-v-space', lambda: [G(VSpaceRef(the_vspace))], unwrap=False),
+        r"new-v-space": OperationAtom('new-v-space', lambda: [G(SpaceRef(VSpace()))], unwrap=False),
+        r"the-v-space": OperationAtom('new-v-space', lambda: [G(SpaceRef(the_vspace))], unwrap=False),
 
 
         r"new-value-atom": newValueAtom,
