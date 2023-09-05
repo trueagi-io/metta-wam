@@ -253,7 +253,8 @@ match(G):- call(G).
 
 937_381_148
 */
-
+:- dynamic(mod_f_a/3).
+decl_m_fb_pred(Mod,Fn,A):- mod_f_a(Mod,Fn,A)->true;(dynamic(Mod:Fn/A),assert(mod_f_a(Mod,Fn,A))).
 decl_fb_pred(Fn,A):- fb_pred(Fn,A)-> true; (dynamic(Fn/A),assert(fb_pred(Fn,A))).
 % Import necessary libraries
 :- use_module(library(readutil)).
@@ -961,22 +962,31 @@ with_wild_path_swi(Fnicate, File) :-
 % ===============================
 % MeTTa Python incoming interface
 % ===============================
-:- dynamic(for_meta/2).
-for_meta(_,T):- fb_pred(F,A),functor(T,F,A),call(T).
-metta_ls:-
-  listing(for_meta/2).
-metta_add(KB,New):- assert_new(for_meta(KB,New)),format('~N~q.~n',[for_meta(KB,New)]).
+%:- dynamic(for_metta/2).
+%for_metta(_,T):- fb_pred(F,A),functor(T,F,A),call(T).
+metta_ls(KB):-
+  listing(KB:for_metta/2).
+metta_add(KB,New):- decl_m_fb_pred(KB,for_metta,2), MP = KB:for_metta(KB,New), assert_new(MP),format('~N~q.~n',[MP]).
 metta_rem(KB,Old):- ignore(metta_del(KB,Old)).
-metta_del(KB,Old):- Term = for_meta(KB,Old), clause(Term,true,Ref),clause(Copy,true,Ref), Term =@= Copy, !, erase(Ref).
+metta_del(KB,Old):- decl_m_fb_pred(KB,for_metta,2), MP = KB:for_metta(KB,Old), clause(MP,true,Ref),clause(Copy,true,Ref), MP =@= Copy, !, erase(Ref).
 metta_replace(KB,Old,New):- metta_del(KB,Old), metta_add(KB,New).
-metta_count(_KB,Count):-
-  fb_stats, full_atom_count(SL1),
-  predicate_property(for_meta(_,_),SL2),
-  Count is SL1 + SL2.
-%metta_count(KB,Count):- writeln(metta_count_in(KB,Count)), findall(Atom,for_meta(KB,Atom),AtomsL),length(AtomsL,Count),writeln(metta_count_out(KB,Count)).
-metta_iter(KB,Atoms):- for_meta(KB,Atoms).
-metta_iter_bind(KB,Atoms,Vars):- term_variables(Atoms,AVars), metta_iter(KB,Atoms), ignore(AVars = Vars).
-
+metta_count(KB,Count):- decl_m_fb_pred(KB,for_metta,2), full_atom_count(SL1), MP = KB:for_metta(_,_),
+  predicate_property(MP,number_of_clauses(SL2)),
+  predicate_property(MP,number_of_rules(SL3)),
+  %metta_ls(KB),
+  Count is SL1 + SL2 - SL3.
+%metta_count(KB,Count):- writeln(metta_count_in(KB,Count)), findall(Atom,for_metta(KB,Atom),AtomsL),length(AtomsL,Count),writeln(metta_count_out(KB,Count)).
+metta_iter(KB,Atoms):-decl_m_fb_pred(KB,for_metta,2), KB:for_metta(KB,Atoms).
+metta_atoms(KB,AtomsL):- decl_m_fb_pred(KB,for_metta,2), findall(Atom,KB:for_metta(KB,Atom),AtomsL).
+metta_iter_bind(KB,Query,Template,AtomsL):-decl_m_fb_pred(KB,for_metta,2), findall(Template,KB:for_metta(KB,Query),AtomsL).
+metta_iter_bind(KB,Query,_Vars):- decl_m_fb_pred(KB,for_metta,2), KB:for_metta(KB,Query).
+%metta_iter_bind(KB,Atom,Template):- fb_stats, findall(Template,metta_iter(KB,Atom),VarList).
+/*
+metta_iter_bind(KB,Atoms,Vars):-
+  fb_stats,
+  term_variables(Atoms,AVars),
+  metta_iter(KB,Atoms), ignore(AVars = Vars).
+*/
 /*
 %encoding_trial('iso-8859-1').
 %encoding_trial('us-ascii').
