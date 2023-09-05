@@ -1,4 +1,5 @@
 :- encoding(octet).
+
 skip(_).
 
 :- include(swi_support).
@@ -283,8 +284,8 @@ assert_OBO(Data00):- %ArgTypes=[],
     ignore(((should_show_data,nl,nl,fbug(newData(X)=Data),ignore((OldData\==DataL0,
       fbug(oldData(X)=OldData)))))))),!.
 
-load_obo:- make,
-  load_obo('./reqs/obonet/tests/data/*.obo'),
+load_obo_files:- make,
+  %load_obo('./reqs/obonet/tests/data/*.obo'),
   load_obo('./data/ftp.flybase.net/releases/current/precomputed_files/*/*.obo').
 
 % Main entry point
@@ -623,16 +624,7 @@ is_scryer:- \+  option_value(libswipl,_).
 %:- option_value(libswipl,_)->use_module(library(logicmoo_utils)); true.
 
 
-/* mined
-; Total         Atoms (Atomspace size): .................................................. 56,354,849
-;               ConceptNodes: ............................................................. 9,472,616
-;               Bytes Per Atom (Average): ....................................................... 140
-;               Bytes Per ConceptNode (Average): ................................................ 120
-;               Relational Memory: ............................................................ 7.39G
-;               ConceptNode Memory: ........................................................... 1.07G
-;               Atoms per minute: ......................................................... 3,491,880
-;               Total Physical Memory Used: ................................................... 9.08G
-;               Runtime (days:hh:mm:ss): ................................................. 0:00:16:08
+/*
 
 
 ; Total         Atoms (Atomspace size): .................................................. 38,822,366
@@ -666,6 +658,18 @@ load_flybase_dirs:-
 
 
 /*
+
+ mined
+; Total         Atoms (Atomspace size): .................................................. 56,354,849
+;               ConceptNodes: ............................................................. 9,472,616
+;               Bytes Per Atom (Average): ....................................................... 140
+;               Bytes Per ConceptNode (Average): ................................................ 120
+;               Relational Memory: ............................................................ 7.39G
+;               ConceptNode Memory: ........................................................... 1.07G
+;               Atoms per minute: ......................................................... 3,491,880
+;               Total Physical Memory Used: ................................................... 9.08G
+;               Runtime (days:hh:mm:ss): ................................................. 0:00:16:08
+
 declare -a StringArray=(\
 "fbgn_fbtr_fbpp_expanded_*.tsv.gz" \
 "physical_interactions_mitab_fb_*.tsv.gz" \
@@ -685,22 +689,6 @@ load_flybase_files:-
    ftp_data(Dir),
     with_cwd(Dir,load_flybase_files_ftp).
 
-
-load_flybase_obo_files:-
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/*/ncRNA_genes_fb_*.json'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/chebi_fb_*.obo'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/doid.obo'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/fly_anatomy.obo'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/fly_development.obo'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/flybase_controlled_vocabulary.obo'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/flybase_stock_vocabulary.obo'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/gene_group_FB*.obo'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/go-basic.obo'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/image.obo'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/psi-mi.obo'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/slice.chebi.obo'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/so-simple.obo'),
-  !.
 
 
 load_flybase_das_11:-
@@ -772,12 +760,28 @@ load_flybase_files_ftp:-
   load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/synonyms/fb_synonym_fb_*.tsv'),
   %load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/transposons/transposon_sequence_set.fa'),
   load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/transposons/transposon_sequence_set.gff',tsv),
-
+ %% load_obo_files
  %% load_flybase_chado,
   !.
 
 load_flybase_chado:-  % 359 tables with 937,381,148 rows
   with_option([row_1_is_header=true,max_per_file=100_000],load_flybase('./data/tsv_exports/public/*.tsv')).
+load_flybase_obo_files:-
+  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/*/ncRNA_genes_fb_*.json'),
+  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/chebi_fb_*.obo'),
+  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/doid.obo'),
+  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/fly_anatomy.obo'),
+  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/fly_development.obo'),
+  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/flybase_controlled_vocabulary.obo'),
+  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/flybase_stock_vocabulary.obo'),
+  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/gene_group_FB*.obo'),
+  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/go-basic.obo'),
+  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/image.obo'),
+  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/psi-mi.obo'),
+  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/slice.chebi.obo'),
+  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/so-simple.obo'),
+  !.
+
 
 
 est_size( 248_392_754, feature_relationship).
@@ -977,7 +981,7 @@ est_size(           1, tableinfo).
 
 % Load flybase data in Prolog format.
 load_fb_cache:-
-  load_fb_mask('precomputed_files/*/*pl'),
+  load_fb_mask('./data/ftp.flybase.net/releases/current/precomputed_files/*/*pl'),
   load_fb_mask('flybase_data/public.*.pl'),
   load_fb_mask('flybase_data/*fb_2023_01.pl').
 
@@ -1074,6 +1078,156 @@ load_fb_cache0(File):- file_name_extension(Name,_E,File),
   atomic_list_concat([Table,qlf],'.',OutputFile),
   load_fb_cache(File,OutputFile,Table).
 
+
+
+data_pred0(X,Y):- atom_concat('public.',YY,X),!,data_pred0(YY,Y).
+data_pred0(X,Y):- atomic_list_concat(List,'/',X),List\==[],List\=[_],!,last(List,L),data_pred0(L,Y).
+data_pred0(X,Y):- atomic_list_concat(List,'_',X),once(not_trimmed_path(List,NewList)),
+  NewList\==[],NewList\==List,atomic_list_concat(NewList,'_',Y),!.
+data_pred0(X,Y):- atomic_list_concat([L,_|_],'_fb_',X),!,data_pred0(L,Y).
+data_pred0(X,X).
+
+data_pred(X,Y):- data_pred0(X,Y), Y\=='',!.
+data_pred(X,X).
+
+is_trimmed_path(X):- atom_contains(X,'0'),!.
+is_trimmed_path('fb').
+is_trimmed_path('public').
+is_trimmed_path('data').
+%is_trimmed_path(Atom):- atom_chars(Atom,Chars), read_term_from_chars(Chars,Term,[]),number(Term),!.
+not_trimmed_path([H|List],NewList):- is_trimmed_path(H),!,not_trimmed_path(List,NewList).
+not_trimmed_path([H|List],[H|NewList]):- !, not_trimmed_path(List,NewList).
+not_trimmed_path([],[]).
+
+
+%file_to_sep(_File,9).
+file_to_sep(File,','):- file_name_extension(_,csv,File),!.
+file_to_sep(File,'\t'):- file_name_extension(_,tsv,File),!.
+
+is_swipl:- \+ is_scryer.
+
+:- if(is_scryer).
+read_line_to_chars(S,L):- is_scryer,!,get_line_to_chars(S,L,[]).
+:- endif.
+read_line_to_chars(S,L):- read_line_to_string(S,Str),string_chars(Str,L).
+
+
+% Assert a given term if no variant of it already exists in the database.
+% Usage: fb_assert(+Term).
+fb_assert(Term) :-
+    % Check if Term is a rule (Head :- Body) or a fact (just Head).
+    ( Term = (Head :- Body)
+    -> copy_term(Body, CopiedBody)
+    ; (Head = Term, CopiedBody = true)
+    ),
+    % Copy the Head to generate a new term with fresh variables.
+    copy_term(Head, CopiedHead),
+    % If no variant of CopiedHead exists in the database with the same body,
+    % assert Term; otherwise, succeed without asserting Term.
+    ( \+ (clause(CopiedHead, CopiedBody), variant(CopiedHead, Head))
+    -> assertz(Term)
+    ; true
+    ).
+
+:- dynamic(done_reading/1).
+
+
+:- dynamic(fb_pred/2).
+
+full_atom_count(SL):- flag(total_loaded_atoms,SL,SL),SL>1,!.
+full_atom_count(SL):- findall(NC,(fb_pred(F,A),fb_stats(F,A,NC)),Each), sumlist(Each,SL).
+
+heartbeat :-
+    % Get the current time and the last printed time
+    get_time(CurrentTime),
+    % Check if the global variable is set
+    (   nb_current(last_printed_time, _)
+    ->  true
+    ;   nb_setval(last_printed_time, CurrentTime)
+    ),
+
+    nb_getval(last_printed_time, LastPrintedTime),
+
+    % Calculate the difference
+    Diff is CurrentTime - LastPrintedTime,
+
+    % If the difference is greater than or equal to 60 seconds (1 minute)
+    (   Diff >= 60
+    ->  % Print the heartbeat message and update the last printed time
+        fb_stats
+    ;   % Otherwise, do nothing
+        true
+    ).
+
+fb_stats:- gc_now,
+   writeln('\n\n\n\n\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'),
+   writeln('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'),
+   full_atom_count(SL),
+   format("~N~n; Total\t\tAtoms (Atomspace size): ~`.t ~D~108|~n",[SL]),
+   get_time(CurrentTime), nb_setval(last_printed_time, CurrentTime),
+   post_statistic(memory,Mem),
+   post_statistic(atom_space,AS),
+   post_statistic(cputime,TotalSeconds),
+   post_statistic(atoms,Concepts),
+   flag(assert_new,CTs,CTs),
+   post_statistic(stack,StackMem),
+
+
+   PM is Mem + StackMem,
+   RM is Mem-AS,
+   PA is RM//(SL+1),
+   APS is 60*floor(SL/(TotalSeconds+1)),
+   ACS is AS//(Concepts+1),     
+
+   pl_stats('ConceptNodes',Concepts),
+   pl_stats('Random samples',CTs),
+   skip((pl_stats('Bytes Per Atom (Average)',PA), pl_stats('Bytes Per ConceptNode (Average)',ACS))),
+   skip((pl_stats('Relational Memory',RM), pl_stats('ConceptNode Memory',AS))),
+   %pl_stats('Queryspace Memory',StackMem),
+   %CPU is CPUTime-57600,
+   format_time(TotalSeconds, Formatted),
+   skip((pl_stats('Atoms per minute',APS))),
+   pl_stats('Total Memory Used',PM),
+   pl_stats('Runtime (days:hh:mm:ss)',Formatted),
+   nl,nl,!.
+fb_stats(F):- forall(fb_pred(F,A),fb_stats(F,A)).
+fb_stats(F,A):- fb_stats(F,A,NC), pl_stats(F/A,NC).
+fb_stats(F,A,NC):- functor(P,F,A),predicate_property(P,number_of_clauses(NC)).
+pl_stats(Stat):- statistics(Stat,Value),pl_stats(Stat,Value).
+pl_stats(Stat,[Value|_]):- nonvar(Value),!, pl_stats(Stat,Value).
+pl_stats(Stat,Value):- format("~N;\t\t~@: ~`.t ~@~100|",[format_value(Stat),format_value(Value)]),!.
+
+
+% Predicate to print the formatted result.
+format_value(Value) :- float(Value),!,format("~2f",[Value]),!.
+format_value(Bytes) :- integer(Bytes),format_bytes(Bytes, Formatted), write(Formatted).
+format_value(Term)  :- format("~w",[Term]).
+%  Base case: If the number is 1G or more, show it in gigabytes (G).
+format_bytes(Bytes, Formatted) :-  Bytes >= 1073741824, GB is Bytes / 1073741824, format(atom(Formatted), '~2fG', [GB]).
+% If the number is less than 1G, show it in megabytes (M).
+format_bytes(Bytes, Formatted) :- Bytes >= 104857600, Bytes < 1073741824, !, MB is Bytes / 1048576, D is floor(MB), format(atom(Formatted), '~DM', [D]).
+% If the number is less than 1K, show it in bytes (B).
+format_bytes(Bytes, Formatted) :- format(atom(Formatted), '~D', [Bytes]).
+% % If the number is less than 1M, show it in kilobytes (K).
+%format_bytes(Bytes, Formatted) :- Bytes >= 1024, Bytes < 1048576, !, KB is Bytes / 1024, format(atom(Formatted), '~0fK', [KB]).
+
+% Convert total seconds to days, hours, minutes, seconds, and milliseconds.
+format_time(TotalSeconds, Formatted) :-
+    Seconds is floor(TotalSeconds),
+    % Get days, remaining seconds
+    Days is div(Seconds, 86400),
+    Remain1 is mod(Seconds, 86400)-57600,
+    format_time(atom(Out),'%T',Remain1),
+    % Format the result
+    format(atom(Formatted), '~w:~w', [Days, Out]).
+
+% Predicate to print the formatted time.
+print_formatted_time(TotalSeconds) :-
+    format_time(TotalSeconds, Formatted),
+    writeln(Formatted).
+
+
+
 load_fb_cache(_File,OutputFile,_Fn):- exists_file(OutputFile),!,ensure_loaded(OutputFile),!.
 load_fb_cache(File,_OutputFile,_Fn):- load_files([File],[qcompile(large)]).
 
@@ -1122,58 +1276,6 @@ load_fb_json(Ext,File,OutputFile,Fn):- fbug(load_fb_json(Ext,File,OutputFile,Fn)
 load_fb_obo(Ext,File,OutputFile,Fn):- fbug(load_fb_obo(Ext,File,OutputFile,Fn)),
   (current_predicate(load_obo/1)->load_obo(File);true).
 
-
-data_pred0(X,Y):- atom_concat('public.',YY,X),!,data_pred0(YY,Y).
-data_pred0(X,Y):- atomic_list_concat(List,'/',X),List\==[],List\=[_],!,last(List,L),data_pred0(L,Y).
-data_pred0(X,Y):- atomic_list_concat(List,'_',X),once(not_trimmed_path(List,NewList)),
-  NewList\==[],NewList\==List,atomic_list_concat(NewList,'_',Y),!.
-data_pred0(X,Y):- atomic_list_concat([L,_|_],'_fb_',X),!,data_pred0(L,Y).
-data_pred0(X,X).
-
-data_pred(X,Y):- data_pred0(X,Y), Y\=='',!.
-data_pred(X,X).
-
-is_trimmed_path(X):- atom_contains(X,'0'),!.
-is_trimmed_path('fb').
-is_trimmed_path('public').
-is_trimmed_path('data').
-%is_trimmed_path(Atom):- atom_chars(Atom,Chars), read_term_from_chars(Chars,Term,[]),number(Term),!.
-not_trimmed_path([H|List],NewList):- is_trimmed_path(H),!,not_trimmed_path(List,NewList).
-not_trimmed_path([H|List],[H|NewList]):- !, not_trimmed_path(List,NewList).
-not_trimmed_path([],[]).
-
-
-%file_to_sep(_File,9).
-file_to_sep(File,','):- file_name_extension(_,csv,File),!.
-file_to_sep(File,'\t'):- file_name_extension(_,tsv,File),!.
-
-
-is_swipl:- \+ is_scryer.
-
-:- if(is_scryer).
-read_line_to_chars(S,L):- is_scryer,!,get_line_to_chars(S,L,[]).
-:- endif.
-read_line_to_chars(S,L):- read_line_to_string(S,Str),string_chars(Str,L).
-
-
-% Assert a given term if no variant of it already exists in the database.
-% Usage: fb_assert(+Term).
-fb_assert(Term) :-
-    % Check if Term is a rule (Head :- Body) or a fact (just Head).
-    ( Term = (Head :- Body)
-    -> copy_term(Body, CopiedBody)
-    ; (Head = Term, CopiedBody = true)
-    ),
-    % Copy the Head to generate a new term with fresh variables.
-    copy_term(Head, CopiedHead),
-    % If no variant of CopiedHead exists in the database with the same body,
-    % assert Term; otherwise, succeed without asserting Term.
-    ( \+ (clause(CopiedHead, CopiedBody), variant(CopiedHead, Head))
-    -> assertz(Term)
-    ; true
-    ).
-
-:- dynamic(done_reading/1).
 
 load_flybase(Sep,File,Stream,OutputStream,Fn):-
  must_det_ll_r((
@@ -1317,100 +1419,6 @@ load_fb_data(File,Stream,Fn,Sep, is_swipl,OutputStream):-
 has_list(Header):- is_list(Header),member(listOf(_,_),Header).
 
 
-:- dynamic(fb_pred/2).
-
-full_atom_count(SL):- flag(total_loaded_atoms,SL,SL),SL>1,!.
-full_atom_count(SL):- findall(NC,(fb_pred(F,A),fb_stats(F,A,NC)),Each), sumlist(Each,SL).
-
-heartbeat :-
-    % Get the current time and the last printed time
-    get_time(CurrentTime),
-    % Check if the global variable is set
-    (   nb_current(last_printed_time, _)
-    ->  true
-    ;   nb_setval(last_printed_time, CurrentTime)
-    ),
-
-    nb_getval(last_printed_time, LastPrintedTime),
-
-    % Calculate the difference
-    Diff is CurrentTime - LastPrintedTime,
-
-    % If the difference is greater than or equal to 60 seconds (1 minute)
-    (   Diff >= 60
-    ->  % Print the heartbeat message and update the last printed time
-        fb_stats
-    ;   % Otherwise, do nothing
-        true
-    ).
-
-fb_stats:- gc_now,
-   writeln('\n\n\n\n\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'),
-   writeln('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'),
-   full_atom_count(SL),
-   format("~N~n; Total\t\tAtoms (Atomspace size): ~`.t ~D~108|~n",[SL]),
-   get_time(CurrentTime), nb_setval(last_printed_time, CurrentTime),
-   post_statistic(memory,Mem),
-   post_statistic(atom_space,AS),
-   post_statistic(cputime,TotalSeconds),
-   post_statistic(atoms,Concepts),
-   flag(assert_new,CTs,CTs),
-   post_statistic(stack,StackMem),
-
-
-   PM is Mem + StackMem,
-   RM is Mem-AS,
-   PA is RM//(SL+1),
-   APS is 60*floor(SL/(TotalSeconds+1)),
-   ACS is AS//(Concepts+1),     
-
-   pl_stats('ConceptNodes',Concepts),
-   pl_stats('Random samples',CTs),
-   skip((pl_stats('Bytes Per Atom (Average)',PA), pl_stats('Bytes Per ConceptNode (Average)',ACS))),
-   skip((pl_stats('Relational Memory',RM), pl_stats('ConceptNode Memory',AS))),
-   %pl_stats('Queryspace Memory',StackMem),
-   %CPU is CPUTime-57600,
-   format_time(TotalSeconds, Formatted),
-   skip((pl_stats('Atoms per minute',APS))),
-   pl_stats('Total Memory Used',PM),
-   pl_stats('Runtime (days:hh:mm:ss)',Formatted),
-   nl,nl,!.
-fb_stats(F):- forall(fb_pred(F,A),fb_stats(F,A)).
-fb_stats(F,A):- fb_stats(F,A,NC), pl_stats(F/A,NC).
-fb_stats(F,A,NC):- functor(P,F,A),predicate_property(P,number_of_clauses(NC)).
-pl_stats(Stat):- statistics(Stat,Value),pl_stats(Stat,Value).
-pl_stats(Stat,[Value|_]):- nonvar(Value),!, pl_stats(Stat,Value).
-pl_stats(Stat,Value):- format("~N;\t\t~@: ~`.t ~@~100|",[format_value(Stat),format_value(Value)]),!.
-
-
-% Fnicate to print the formatted result.
-format_value(Value) :- float(Value),!,format("~2f",[Value]),!.
-format_value(Bytes) :- integer(Bytes),format_bytes(Bytes, Formatted), write(Formatted).
-format_value(Term)  :- format("~w",[Term]).
-%  Base case: If the number is 1G or more, show it in gigabytes (G).
-format_bytes(Bytes, Formatted) :-  Bytes >= 1073741824, GB is Bytes / 1073741824, format(atom(Formatted), '~2fG', [GB]).
-% If the number is less than 1G, show it in megabytes (M).
-format_bytes(Bytes, Formatted) :- Bytes >= 104857600, Bytes < 1073741824, !, MB is Bytes / 1048576, D is floor(MB), format(atom(Formatted), '~DM', [D]).
-% If the number is less than 1K, show it in bytes (B).
-format_bytes(Bytes, Formatted) :- format(atom(Formatted), '~D', [Bytes]).
-% % If the number is less than 1M, show it in kilobytes (K).
-%format_bytes(Bytes, Formatted) :- Bytes >= 1024, Bytes < 1048576, !, KB is Bytes / 1024, format(atom(Formatted), '~0fK', [KB]).
-
-% Convert total seconds to days, hours, minutes, seconds, and milliseconds.
-format_time(TotalSeconds, Formatted) :-
-    Seconds is floor(TotalSeconds),
-    % Get days, remaining seconds
-    Days is div(Seconds, 86400),
-    Remain1 is mod(Seconds, 86400)-57600,
-    format_time(atom(Out),'%T',Remain1),
-    % Format the result
-    format(atom(Formatted), '~w:~w', [Days, Out]).
-
-% Fnicate to print the formatted time.
-print_formatted_time(TotalSeconds) :-
-    format_time(TotalSeconds, Formatted),
-    writeln(Formatted).
-
 write_flybase_data(_OutputStream,_Fn,[]):-!.
 write_flybase_data(_OutputStream,_Fn,['']):-!.
 write_flybase_data(OutputStream,Fn,DataL0):-
@@ -1443,7 +1451,7 @@ make_assertion(Fn,DataL0,Data,Data0):-
     fix_list_args(Fn,ArgTypes,Args,DataL), 
     Data=..[F|DataL])).
 
-fix_list_args(_,_,Y,Y):- option_value(full_canon,[]), \+ should_sample, \+ should_cache, !.
+fix_list_args(_,_,Y,Y):- \+ should_sample, \+ should_show_data, !.
 %fix_list_args(_Fn,_ArgTypes,[X],[X]):-!.
 fix_list_args(Fn,ArgTypes,Args,NewArgs):-
  must_det_ll_r((
@@ -1538,6 +1546,7 @@ as_list(SepL,A,ListO):-  member(Sep,SepL),catch_ignore(atomic_list_concat(List,S
 as_list(_,A,ListO):-  member(Sep,['|',',',';']),catch_ignore(atomic_list_concat(List,Sep,A)),List\=[_],!,maplist(fix_concept,List,ListO).
 as_list(_Sep,A,[AO]):- fix_concept(A,AO).
 
+fix_concept(A,A):- !.
 fix_concept(A,N):- is_list(A),maplist(fix_concept,A,N),!.
 fix_concept(A,A):- \+ atom(A), \+ string(A),!.
 fix_concept(A,N):- number(A),!,A=N.
@@ -1634,21 +1643,56 @@ column_description(listOf('Starting_gene_FBgn', ['|']), "Current FlyBase identif
 column_description(listOf('Starting_gene_symbol', ['|']), "Current FlyBase symbol of gene(s) involved in the starting genotype.", list, 'Gene Symbol').
 column_description(listOf(symbol_synonym, ['|']), "Non-current symbol(s) associated with the object.", list, 'Symbol Synonyms').
 
-primary_column(fb_synonym, primary_FBid).
-primary_column(gene_genetic_interactions, 'Starting_gene_FBgn').
-primary_column(gene_rpkm_matrix, gene_primary_id).
-primary_column(gene_rpkm_report, 'FBgn').
-primary_column(genotype_phenotype_data, genotype_FBids).
-primary_column(pmid_fbgn_uniprot, 'FBgn_id').
+column_names('fb_synonym', ['primary_FBid', 'organism_abbreviation', 'current_symbol', 'current_fullname', listOf(fullname_synonym, ['|']), listOf(symbol_synonym, ['|'])]).
+column_names('gene_genetic_interactions', [listOf('Starting_gene_symbol', ['|']), listOf('Starting_gene_FBgn', ['|']), listOf('Interacting_gene_symbol', ['|']), listOf('Interacting_gene_FBgn', ['|']), 'Interaction_type', 'Publication_FBrf']).
+column_names('gene_rpkm_matrix', ['gene_primary_id', 'gene_symbol', 'gene_fullname', 'gene_type', 'DATASAMPLE_NAME_(DATASET_ID)']).
+column_names('gene_rpkm_report', ['Release_ID', 'FBgn#', 'GeneSymbol', 'Parent_library_FBlc#', 'Parent_library_name', 'RNASource_FBlc#', 'RNASource_name', 'RPKM_value', 'Bin_value', 'Unique_exon_base_count', 'Total_exon_base_count', 'Count_used']).
+column_names('pmid_fbgn_uniprot', ['FBrf_id', 'PMID', 'FBgn_id', 'UniProt_database', 'UniProt_id']).
+column_names('scRNA-Seq_gene_expression', ['Pub_ID', 'Pub_miniref', 'Clustering_Analysis_ID', 'Clustering_Analysis_Name', 'Source_Tissue_Sex', 'Source_Tissue_Stage', 'Source_Tissue_Anatomy', 'Cluster_ID', 'Cluster_Name', 'Cluster_Cell_Type_ID', 'Cluster_Cell_Type_Name', 'Gene_ID', 'Gene_Symbol', 'Mean_Expression', 'Spread']).
+
+primary_column('fb_synonym', 'primary_FBid').
+primary_column('gene_genetic_interactions', 'Starting_gene_FBgn').
+primary_column('gene_rpkm_matrix', 'gene_primary_id').
+primary_column('gene_rpkm_report', 'FBgn#').
+primary_column('pmid_fbgn_uniprot', 'FBgn_id').
 primary_column('scRNA-Seq_gene_expression', 'Gene_ID').
 primary_column(allele_genetic_interactions, allele_FBal).
 primary_column(fbgn_exons2affy1_overlaps, 'FBgn').
 primary_column(fbgn_exons2affy2_overlaps, 'FBgn').
 primary_column(dataset_metadata, 'Item_ID').
 primary_column(dmel_paralogs, 'Paralog_FBgn').
+primary_column(fb_synonym, primary_FBid).
+primary_column(gene_genetic_interactions, 'Starting_gene_FBgn').
+primary_column(gene_rpkm_matrix, gene_primary_id).
+primary_column(gene_rpkm_report, 'FBgn').
+primary_column(genotype_phenotype_data, genotype_FBids).
+primary_column(pmid_fbgn_uniprot, 'FBgn_id').
 
 
+% For the file allele_genetic_interactions_*.tsv
+file_location('allele_genetic_interactions', "path_to_file/allele_genetic_interactions_*.tsv").
+column_names('allele_genetic_interactions', ['allele_symbol', 'allele_FBal#', 'interaction', 'FBrf#']).
+primary_column('allele_genetic_interactions', 'allele_FBal#').
 
+% Descriptions for allele_genetic_interactions columns
+column_description('allele_symbol', "Current FlyBase allele symbol.", symbol, 'Allele Symbol').
+column_description('allele_FBal#', "Current FlyBase identifier (FBal#) of allele.", identifier, 'Allele Identifier').
+column_description('interaction', "Interaction information associated with allele.", text, 'Interaction Info').
+column_description('FBrf#', "Current FlyBase identifer (FBrf#) of publication from which data came.", identifier, 'Publication Identifier').
+
+% For the file genotype_phenotype_data_*.tsv
+file_location('genotype_phenotype_data', "path_to_file/genotype_phenotype_data_*.tsv").
+column_names('genotype_phenotype_data', [listOf('genotype_symbols', ['/', ' ']), listOf('genotype_FBids', ['/', ' ']), 'phenotype_name', 'phenotype_id', listOf('qualifier_names', ['|']), listOf('qualifier_ids', ['|']), 'reference']).
+primary_column('genotype_phenotype_data', 'genotype_FBids').
+
+% Descriptions for genotype_phenotype_data columns
+column_description(listOf('genotype_symbols', ['/', ' ']), "Current FlyBase symbol(s) of the components that make up the genotype.", list, 'Genotype Symbols').
+column_description(listOf('genotype_FBids', ['/', ' ']), "Current FlyBase identifier(s) of the components that make up the genotype.", list, 'Genotype Identifiers').
+column_description('phenotype_name', "Phenotypic name associated with the genotype.", name, 'Phenotype Name').
+column_description('phenotype_id', "Phenotypic identifier associated with the genotype.", identifier, 'Phenotype Identifier').
+column_description(listOf('qualifier_names', ['|']), "Qualifier name(s) associated with phenotypic data for genotype.", list, 'Qualifier Names').
+column_description(listOf('qualifier_ids', ['|']), "Qualifier identifier(s) associated with phenotypic data for genotype.", list, 'Qualifier Identifiers').
+column_description('reference', "Current FlyBase identifer (FBrf#) of publication from which data came.", identifier, 'Publication Identifier').
 
 
 too_generic(Var):- var(Var),!,fail.
@@ -1691,7 +1735,7 @@ fix_header_names(_,_,Name,Name).
 
 pmt :-flybase_tables(FBT),forall(member(T,FBT), ( '\\+'(flybase_cols(T,_)) -> format('~N~q.~n',[get_fbt(T)]);true)).
 use_flybase_cols(Table,Columns):-
- must_det_ll_r((
+ must_det_ll((
   maplist(fix_header_names(Columns,Table),Columns,ArgTypes),
   assert(flybase_col_names(Table,Columns,ArgTypes)),
   do_arity_2_names(Table,ArgTypes))).
@@ -1710,7 +1754,7 @@ do_arity_2_names_dc(Table,DataCall,N,[Nth|ArgTypes]):-
 do_arity_2_names_dc(_Table,_DataCall,_N,[]).
 
 do_arity_2_names_dc1(Table,DataCall,N,Nth):-
- must_det_ll_r((
+ must_det_ll((
   arg(1,DataCall,Arg1Data),
   arg(N,DataCall,Arg2Data),
   make_arity_2_name(Table,Nth,Arity2),
@@ -1945,7 +1989,6 @@ flybase_cols(update_track,[ update_track_id,release,fbid,time_update,author,stat
 
 table_columns(T,List):- table_columns_tt(TT,List), eigther_contains(T,TT),!.
 
-table_columns_tt(TT,List):- column_names(TT,List).
 table_columns_tt(TT,List):- column_names(TT,List).
 table_columns_tt(TT,List):- flybase_cols(TT,List).
 table_columns_tt(TT,List):- t_h_n(TT,_,List).
