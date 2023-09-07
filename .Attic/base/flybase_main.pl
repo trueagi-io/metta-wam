@@ -490,7 +490,7 @@ skipped_anotations(gene_rpkm_matrix).
 skipped_anotations(dmel_gene_sequence_ontology_annotations).
 skipped_anotations(fbgn_annotation_ID).
 
-allow_concepts:- option_else(concepts,TF,true), \+ TF = false.
+allow_concepts:- option_else(concepts,TF,true), \+ TF == false.
 with_concepts(TF,Goal):- with_option(concepts,TF,Goal).
 
 direct_mapping(NC,NC):- var(NC),!.
@@ -535,13 +535,15 @@ into_sequential(List,SP):- length(List,L),L>1, SP =.. [sequential|List],!.
 into_sequential([SP],SP):-!.
 into_sequential([],'True').
 
+write_src(V):- allow_concepts,!,with_concepts(false,write_src1(V)),flush_output.
+%write_src(V):- write_src1(V).
 
-write_src(V):- number(V),!, writeq(V).
-write_src(V):- string(V),!, writeq(V).
-write_src(V):- var(V),!, pp_as(V).
-write_src(V):- atom(V),needs_quoted_in_metta(V,Q), write(Q),write(V),write(Q).
-write_src(V):- atom(V),!,write(V).
-write_src(V):- pp_as(V),!.
+write_src1(V):- var(V),!, ignore(pp_sex(V)).
+write_src1(V):- number(V),!, writeq(V).
+write_src1(V):- string(V),!, writeq(V).
+write_src1(V):- atom(V),needs_quoted_in_metta(V,Q), write(Q),write(V),write(Q).
+write_src1(V):- atom(V),!,write(V).
+write_src1(V):- pp_sex(V),!.
 
 needs_quoted_in_metta(V,'"'):- atom_contains(V," ").
 needs_quoted_in_metta(V,'"'):- atom_contains(V,"/").
@@ -563,7 +565,7 @@ write_val(V):- compound(V),!, write_src(V).
 write_val(V):- write('"'),write(V),write('"').
 
 % Base case: atoms are printed as-is.
-pp_as(V) :- \+ \+ pp_sex(V).
+pp_as(V) :- \+ \+ pp_sex(V),flush_output.
 pp_sex(V) :- var(V), !, format('$~p',[V]).
 pp_sex(V) :- direct_mapping(V,D),V\==D,!,pp_sex(D).
 %pp_sex('') :- format('(EmptyNode null)',[]).
@@ -580,7 +582,7 @@ pp_sex(V) :- V = '$VAR'(_), !, format('$~p',[V]).
 pp_sex(listOf(S,_)) :- !,pp_sex(listOf(S)).
 pp_sex(listOf(S)) :- !,format('(ListValue ~@)',[pp_sex(S)]).
 pp_sex('!'(S)) :- write('!'),pp_sex(S).
-pp_sex([H|T]) :- is_list(T),!, write('(:: '), pp_sex(H), print_list_as_sexpression(T), write(')').
+pp_sex([H|T]) :- is_list(T),!, write('('), pp_sex(H), print_list_as_sexpression(T), write(')').
 % Compound terms.
 %pp_sex(Term) :- compound(Term), Term =.. [Functor|Args], write('('),format('(~w ',[Functor]), write_args_as_sexpression(Args), write(')').
 
@@ -627,7 +629,7 @@ numbervars_w_singles(P):- term_singletons(P, Vars),
   numbervars(P,14,_,[attvar(bind),singletons(true)]).
 
 
-pp_fb(P):- format("~N "),  \+ \+ (numbervars_w_singles(P), pp_fb1(P)).
+pp_fb(P):- format("~N "),  \+ \+ (numbervars_w_singles(P), pp_fb1(P)),flush_output.
 :- if(current_predicate(pp_ilp/1)).
 %pp_fb1(P):- pp_as(P),!,format("~N"),pp_ilp(P),!.
 :- endif.
@@ -1057,24 +1059,38 @@ with_wild_path_swi(Fnicate, File) :-
 % ===============================
 % MeTTa Python incoming interface
 % ===============================
+%debug_metta(Call):- skip(Call).
+debug_metta(Term):- ignore((format('~N; ~@~n',[write_src(Term)]))).
+debug_metta(Msg,Term):- ignore((format('~N; ~w: ~@~n',[Msg,write_src(Term)]))),!.
+
 %:- dynamic(for_metta/2).
 %for_metta(_,T):- fb_pred(F,A),functor(T,F,A),call(T).
 metta_ls(KB):-
   listing(KB:for_metta/2).
-metta_add(KB,New):- decl_m_fb_pred(KB,for_metta,2), MP = KB:for_metta(KB,New), assert_new(MP),format('~N~q.~n',[MP]).
-metta_rem(KB,Old):- ignore(metta_del(KB,Old)).
-metta_del(KB,Old):- decl_m_fb_pred(KB,for_metta,2), MP = KB:for_metta(KB,Old), clause(MP,true,Ref),clause(Copy,true,Ref), MP =@= Copy, !, erase(Ref).
-metta_replace(KB,Old,New):- metta_del(KB,Old), metta_add(KB,New).
-metta_count(KB,Count):- decl_m_fb_pred(KB,for_metta,2), full_atom_count(SL1), MP = KB:for_metta(_,_),
+metta_add(KB,New):- decl_m_fb_pred(KB,for_metta,2), MP = KB:for_metta(KB,New), assert_new(MP), debug_metta(['add-atom',KB,New]).
+metta_rem(KB,Old):- debug_metta(['remove-atom',KB,Old]),metta_del(KB,Old).
+metta_del(KB,Old):- decl_m_fb_pred(KB,for_metta,2), MP = KB:for_metta(KB,Old),
+  copy_term(MP,Copy), clause(MP,true,Ref), MP =@= Copy, !, erase(Ref). % ,debug_metta('DEL',Old).
+metta_replace(KB,Old,New):- debug_metta(['atom-replace',KB,Old,New]),!, metta_del(KB,Old), metta_add(KB,New).
+metta_count(KB,Count):-
+ must_det_ll((
+  debug_metta(['atom-count',KB]),
+  decl_m_fb_pred(KB,for_metta,2), full_atom_count(SL1),
+  MP = KB:for_metta(_,_),
   predicate_property(MP,number_of_clauses(SL2)),
   predicate_property(MP,number_of_rules(SL3)),
   %metta_ls(KB),
-  Count is SL1 + SL2 - SL3.
+  Count is SL1 + SL2 - SL3)),!.
+metta_count(_KB,0):-!.
 %metta_count(KB,Count):- writeln(metta_count_in(KB,Count)), findall(Atom,for_metta(KB,Atom),AtomsL),length(AtomsL,Count),writeln(metta_count_out(KB,Count)).
 metta_iter(KB,Atoms):- decl_m_fb_pred(KB,for_metta,2), KB:for_metta(KB,Atoms).
-metta_atoms(KB,AtomsL):- decl_m_fb_pred(KB,for_metta,2), findall(Atom,KB:for_metta(KB,Atom),AtomsL).
-metta_iter_bind(KB,Query,Template,AtomsL):-decl_m_fb_pred(KB,for_metta,2), findall(Template,KB:for_metta(KB,Query),AtomsL).
-metta_iter_bind(KB,Query,_Vars):- decl_m_fb_pred(KB,for_metta,2), KB:for_metta(KB,Query).
+metta_atoms(KB,AtomsL):- debug_metta(['get-atoms',KB]), decl_m_fb_pred(KB,for_metta,2), findall(Atom,KB:for_metta(KB,Atom),AtomsL).
+%metta_iter_bind(KB,Query,Template,AtomsL):- decl_m_fb_pred(KB,for_metta,2), findall(Template,KB:for_metta(KB,Query),AtomsL).
+metta_iter_bind(KB,Query,Vars):-
+  term_variables(Query,Vars),
+  debug_metta(['match',KB,Vars,Query]),
+  decl_m_fb_pred(KB,for_metta,2), KB:for_metta(KB,Query),
+  debug_metta('RES',metta_iter_bind(KB,Query,Vars)).
 %metta_iter_bind(KB,Atom,Template):- fb_stats, findall(Template,metta_iter(KB,Atom),VarList).
 /*
 metta_iter_bind(KB,Atoms,Vars):-
@@ -1082,6 +1098,7 @@ metta_iter_bind(KB,Atoms,Vars):-
   term_variables(Atoms,AVars),
   metta_iter(KB,Atoms), ignore(AVars = Vars).
 */
+'&flybase':for_metta('&flybase',P):- fb_pred(F,A),length(L,A),P=[F|L],apply(F,L).
 /*
 %encoding_trial('iso-8859-1').
 %encoding_trial('us-ascii').

@@ -18,7 +18,7 @@ from hyperon.base import AbstractSpace, SpaceRef, GroundingSpace, interpret
 from pyswip import Atom as PySwipAtom
 from pyswip import Term
 from hyperon.atoms import Atom as MeTTaAtom
-from pyswip import (call, Functor, registerForeign, PL_PRUNED, PL_retry, PL_FA_NONDETERMINISTIC, PL_foreign_control, PL_foreign_context, PL_FIRST_CALL, PL_REDO, Variable, Prolog as PySwip)
+from pyswip import (call, Functor, PL_open_foreign_frame, registerForeign, PL_PRUNED, PL_retry, PL_FA_NONDETERMINISTIC, PL_foreign_control, PL_foreign_context, PL_FIRST_CALL, PL_REDO, Variable, Prolog as PySwip)
 from pyswip.easy import newModule, Query
 from hyperon.atoms import *
 import openai
@@ -27,10 +27,17 @@ try:
  openai.api_key = os.environ["OPENAI_API_KEY"]
 except KeyError:
  ""
+
+VSPACE_VERBOSE = os.environ.get("VSPACE_VERBOSE")
 # 0 = for scripts/demos
 # 1 = developer
 # 2 = debugger
-verbose = 2
+verbose = 1
+if VSPACE_VERBOSE is not None:
+    try:
+        # Convert it to an integer
+        verbose = int(VSPACE_VERBOSE)
+    except ValueError: ""
 histfile = os.path.join(os.path.expanduser("~"), ".metta_history")
 is_init = True
 oper_dict = {}
@@ -50,11 +57,23 @@ except FileNotFoundError:
     open(histfile, 'wb').close()
     h_len = 0
 
+def add_to_history_if_unique(item, position_from_last=1):
+    for i in range(1, readline.get_current_history_length() + 1):
+        if readline.get_history_item(i) == item: return
+    insert_to_history(item, position_from_last)
+
 def insert_to_history(item, position_from_last=5):
     hist = [readline.get_history_item(i) for i in range(1, readline.get_current_history_length() + 1)]
-    hist.insert(max(0, len(hist) - position_from_last), item)
+    # Remove the item from the list if it already exists before the insertion position
+    insertion_position = max(0, len(hist) - position_from_last)
+    if item in hist[:insertion_position]:
+        hist.remove(item)
+    # Insert the item at the desired position
+    hist.insert(insertion_position, item)
+    # Clear and repopulate the history
     readline.clear_history()
-    for h in hist: readline.add_history(h)
+    for h in hist:
+        readline.add_history(h)
 
 insert_to_history('!(get-by-key &my-dict "A")')
 insert_to_history("@metta !")
@@ -80,11 +99,6 @@ def save(prev_h_len, histfile):
     readline.append_history_file(new_h_len - prev_h_len, histfile)
 atexit.register(save, h_len, histfile)
 
-def add_to_history_if_unique(item):
-    for i in range(1, readline.get_current_history_length() + 1):
-        if readline.get_history_item(i) == item: return
-    insert_to_history(item)
-
 def export_to_metta(func):
     setattr(func, 'metta', True)
     if verbose>3: print(f"{func}={getattr(func, 'export_to_metta', False)}")
@@ -92,13 +106,13 @@ def export_to_metta(func):
 
 def export_flags(**kwargs):
     def decorator(func):
-        print(f"export_flags({repr(func)})", end=" ")
+        if verbose > 1: print(f"export_flags({repr(func)})", end=" ")
         for n in kwargs:
             setattr(func, n, kwargs[n])
         if verbose > 1:
             for n in kwargs:
                 print(f"{repr(n)}={repr(getattr(func, n, None))}", end=" ")
-        if verbose > 1: print()
+            print()
         return func
     return decorator
 
@@ -140,13 +154,110 @@ def add_swip(name, dict = oper_dict):
         dict[hyphens] = OperationAtom(hyphens, local_vars['op'], unwrap=False)
 
 def addSpaceName(name, space):
-    global syms_dict
-    global space_refs
+    global syms_dict, space_refs
     syms_dict[name] = lambda _: G(VSpaceRef(space))
     space_refs[name] = lambda : space
 
+def getSpaceByName(name):
+    global space_refs
+    return space_refs.get(name, None)()
+
+def getNameBySpace(target_space):
+    global space_refs, syms_dict
+    # Search in space_refs
+    for name, space_func in space_refs.items():
+        S = space_func()
+        if S:
+            if id(S) == id(target_space):
+                return name
+    # Search in syms_dict
+    for name, space_func in syms_dict.items():
+        GR = space_func(None)
+        if GR:
+            if id(GR) == id(target_space):
+                return name
+            if id(GR.get_object()) == id(target_space):
+                return name
+    return None
 
 vspace_ordinal = 0
+
+class Circles:
+    def __init__(self, initial_data=None):
+        self.data = {}
+        if initial_data:
+            for key, value in initial_data.items():
+                self.__setitem__(key, value)
+
+    def _get_key(self, key):
+        try:
+            hash_key = hash(key)
+            return ('hash', hash_key)
+        except TypeError:
+            id_key = id(key)
+            return ('id', id_key)
+
+    def __getitem__(self, key):
+        key_type, key_value = self._get_key(key)
+        return self.data[(key_type, key_value)][1]
+
+    def __setitem__(self, key, value):
+        key_type, key_value = self._get_key(key)
+        self.data[(key_type, key_value)] = (key, value)
+
+    def __delitem__(self, key):
+        key_type, key_value = self._get_key(key)
+        del self.data[(key_type, key_value)]
+
+    def __contains__(self, key):
+        key_type, key_value = self._get_key(key)
+        return (key_type, key_value) in self.data
+
+    def __len__(self):
+        return len(self.data)
+
+    def __iter__(self):
+        for key_tuple in self.data.keys():
+            yield key_tuple
+
+    def original_keys(self):
+        for key, _ in self.data.values():
+            yield key
+
+    def get(self, key, default=None):
+        key_type, key_value = self._get_key(key)
+        if (key_type, key_value) in self.data:
+            return self.data[(key_type, key_value)][1]
+        else:
+            return default
+
+    def items(self):
+        return [(key, value) for key, value in self.data.values()]
+
+    def keys(self):
+        return [key for key, _ in self.data.values()]
+
+    def values(self):
+        return [value for _, value in self.data.values()]
+
+    def clear(self):
+        self.data.clear()
+
+    def pop(self, key, default=None):
+        key_type, key_value = self._get_key(key)
+        return self.data.pop((key_type, key_value), (None, default))[1]
+
+    def popitem(self):
+        _, (key, value) = self.data.popitem()
+        return (key, value)
+
+    def setdefault(self, key, default=None):
+        key_type, key_value = self._get_key(key)
+        return self.data.setdefault((key_type, key_value), (key, default))[1]
+
+    def update(self, other):
+        for key, value in other.items():
+            self.__setitem__(key, value)
 
 
 # subclass to later capture any utility we can add to 'subst'
@@ -183,7 +294,7 @@ class VSpaceRef(SpaceRef):
             result.append(Atom._from_catom(r))
         return result
 
-@export_to_metta
+@export_flags(MeTTa=True)
 class VSpace(AbstractSpace):
 
     def __init__(self, space_name=None, unwrap=True):
@@ -204,40 +315,38 @@ class VSpace(AbstractSpace):
         #return self.sp_name
 
     def query(self, query_atom):
+        swipl_fid = PL_open_foreign_frame()
         new_bindings_set = BindingsSet.empty()
         metta_vars = [atom for atom in query_atom.iterate() if atom.get_type() == AtomKind.VARIABLE]
-        share_vars = {}
-        swip_vars = list_to_termv(share_vars,metta_vars)
-        swip_obj = m2s(share_vars,query_atom,1)
-        print(f"share_vars={share_vars}")
-        A = Variable()
-        B = Variable()
-        A.unify(self.sp_name)
-        B.unify(swip_obj)
-        q = Query(Functor('metta_iter', 2)(A, B))
-        print(f"share_vars={share_vars}")
+        circles = Circles()
+        swivars = [m2s(circles,item,1) for item in metta_vars]
+        varsList = Variable()
+        varsList.unify(swivars)
+        swip_obj = m2s(circles,query_atom)
+        if verbose>1: print(f"circles={circles}")
+        q = PySwipQ(Functor('metta_iter_bind',3)(self.swip_space_name(), swip_obj, varsList), module=self.sp_module)
 
         while q.nextSolution():
+            swivars = varsList.value
             bindings = Bindings()
+            vn = 0
             for mv in metta_vars:
-                 mname = mv.get_name()
-                 #swipvar = share_vars.get(id(mv), None)
-                 swipvar = share_vars[mname]
-                 if swipvar is None:
-                     print("Error finding name: " + mname)
-                     bindings.add_var_binding(mv, mv)
-                 else:
-                     sval = swipvar.get_value()
-                     if isinstance(sval, Variable):
-                         sval = sval.get_value()
-                     mval = s2m(sval)
-                     bindings.add_var_binding(mv, mval)
+                 swipvar = swivars[vn]
+                 if verbose>1: pt(f"swipvard({vn})=",swipvar, " ")
+                 sval = swipvar.value
+                 if isinstance(sval, Variable):
+                     sval = sval.value
+                 if verbose>1: pt(f"sval({vn})=",sval, " ")
+                 mval = s2m(circles,sval)
+                 if verbose>1: pt(f"mval({vn})=",mval, " ")
+                 bindings.add_var_binding(mv, mval)
+                 vn =+ 1
             new_bindings_set.push(bindings)
         q.closeQuery()
         return new_bindings_set
 
     def _call(self, functor_name, *args):
-        q = Query(Functor(functor_name, len(args) + 1)(self.swip_space_name(), *args), module=self.sp_module)
+        q = PySwipQ(Functor(functor_name, len(args) + 1)(self.swip_space_name(), *args), module=self.sp_module)
         try: return q.nextSolution()
         except Exception as e:
             if verbose>0: print(f"Error: {e}")
@@ -245,41 +354,50 @@ class VSpace(AbstractSpace):
         finally: q.closeQuery()
 
     def add(self, atom):
-        self._call("metta_add", m2s({},atom))
+        circles = Circles()
+        return self._call("metta_add", m2s(circles,atom))
 
     def add_atom(self, atom):
-        self._call("metta_add", m2s({},atom))
+        circles = Circles()
+        return self._call("metta_add", m2s(circles,atom))
 
     def remove_atom(self, atom):
-        self._call("metta_rem", m2s({},atom))
+        circles = Circles()
+        return self._call("metta_rem", m2s(circles,atom))
 
     def remove(self, atom):
-        self._call("metta_rem", m2s({},atom))
+        circles = Circles()
+        return self._call("metta_rem", m2s(circles,atom))
 
     def replace(self, from_atom, to_atom):
-        return bool(self._call("metta_replace", m2s({},from_atom), m2s({},to_atom)))
+        circles = Circles()
+        return bool(self._call("metta_replace", m2s(circles,from_atom), m2s(circles,to_atom)))
 
     def atom_count(self):
-        result = list(swip.query(f"metta_count('{self.sp_name}',Int)"))
-        print(result)
-        C = result[0]['Int']
+        result = list(swip.query(f"metta_count('{self.sp_name}',AtomCount)"))
+        if verbose>1: print(result)
+        C = result[0]['AtomCount']
         if not isinstance(C,int):
             C = C.value
         return C
 
     def get_atoms(self):
-        result = list(swip.query(f"metta_atoms('{self.sp_name}',AtomsL)"))
-        C = result[0]['AtomsL']
-        print(f"get_atoms={type(C)}")
-        R = s2m(C)
+        circles = Circles()
+        result = list(swip.query(f"metta_atoms('{self.sp_name}',AtomsList)"))
+        C = result[0]['AtomsList']
+        if verbose>1: print(f"get_atoms={type(C)}")
+        R = s2m(circles,C)
         return R
 
     def atoms_iter(self):
 
         Atoms = Variable("Iter")
-        q = Query(Functor("metta_iter", 2)(self.swip_space_name(), Atoms), module=self.sp_module)
+        q = PySwipQ(Functor("metta_iter", 2)(self.swip_space_name(), Atoms), module=self.sp_module)
 
         class LazyIter:
+
+            circles = Circles()
+
             def __init__(self, q, v):
                 self.q, self.v = q, v
 
@@ -288,7 +406,7 @@ class VSpace(AbstractSpace):
 
             def __next__(self):
                 if self.q.nextSolution():
-                    return s2m(self.v.value.value)
+                    return s2m(circles,self.v.value.value)
                 raise StopIteration
 
             def __enter__(self):
@@ -302,6 +420,13 @@ class VSpace(AbstractSpace):
     def copy(self):
         return self
 
+class PySwipQ(Query):
+
+    def __init__(self, *terms, **kwargs):
+        if verbose > 1:
+            for obj in terms:
+                println(obj)
+        super().__init__(*terms, **kwargs)
 
 access_error = True
 
@@ -414,8 +539,8 @@ def test_custom_space(LambdaSpaceFn):
     kb.add_atom(S("b"))
     kb.add_atom(S("c"))
 
-    self_assertTrue(kb.remove_atom(S("b")))
-    self_assertFalse(kb.remove_atom(S("bogus")))
+    self_assertTrue(kb.remove_atom(S("b")),"remove_atom on a present atom should return true")
+    self_assertFalse(kb.remove_atom(S("bogus")),"remove_atom on a missing atom should return false")
     self_assertEqualNoOrder(kb.get_atoms(), [S("a"), S("c")])
 
     kb = VSpaceRef(LambdaSpaceFn())
@@ -432,8 +557,8 @@ def test_custom_space(LambdaSpaceFn):
     # Checking that multiple matches can be returned
     kb.add_atom(E(S("A"), S("E")))
 
-    result = kb.query(E(S("A"), V("x")))
-    self_assertEqualNoOrder(result, [{"x": S("B")}, {"x": S("E")}])
+    result = kb.query(E(S("A"), V("xx")))
+    self_assertEqualNoOrder(result, [{"xx": S("B")}, {"xx": S("E")}])
 
     m = MeTTa()
 
@@ -462,18 +587,40 @@ def test_custom_space(LambdaSpaceFn):
     runner.space().add_atom(space_atom)
     runner.tokenizer().register_token("nested", lambda token: space_atom)
 
-    result = runner.run("!(match nested (A $x) $x)")
+    result = runner.run("!(match nested (A $x1) $x1)")
     self_assertEqual([[S("B")]], result)
 
 @export_flags(MeTTa=False)
-def s2m(swip_obj):
+def s2m(circles,swip_obj):
+
+    assert isinstance(circles, Circles), f"circles must be an instance of the Circles class not {type(circles)}"
 
     # Handle numbers and convert them to ValueAtom objects in MeTTa
     if isinstance(swip_obj, (int, float)):
         return ValueAtom(swip_obj)
 
-    if isinstance(swip_obj, str):
+    if isinstance(swip_obj, list):
+        metta_list = [s2m(circles,item) for item in swip_obj]
+        return metta_list
+
+    # Handle numbers and convert them to ValueAtom objects in MeTTa
+    if isinstance(swip_obj, (VariableAtom, GroundedAtom, ExpressionAtom)):
         return swip_obj
+
+    #oid = id(swip_obj)
+
+    for n in circles.original_keys():
+        v = circles[n]
+        if v is swip_obj:
+            return n
+
+    var = circles.get(swip_obj, None)
+    if var is not None:
+        return var
+
+    if isinstance(swip_obj, str):
+        return S(swip_obj)
+        #return swip_obj
 
     if isinstance(swip_obj, PySwipAtom):
         return S(str(swip_obj))
@@ -484,8 +631,12 @@ def s2m(swip_obj):
            sval = sval.get_value()
         if isinstance(sval, Variable):
            n = swip_obj.chars
-           return V(sv2mv(n) if n else "$Var")
-        return s2m(sval)
+           mname = sv2mv(n) if n else "$Var"
+           V = V(mname)
+           circles[mname] = swip_obj
+           circles[id(V)] = swip_obj
+           circles[swip_obj] = V
+        return s2m(circles,sval)
 
     if isinstance(swip_obj, Functor):
         # Convert the functor to an expression in MeTTa
@@ -494,13 +645,13 @@ def s2m(swip_obj):
         else: sfn = swip_obj.name
         if sfn=="[|]": sfn = "::"
         fn = S(sfn)
-        argz = [s2m(arg) for arg in swip_obj.args]
+        argz = [s2m(circles,arg) for arg in swip_obj.args]
         return E(fn, *argz)
 
     try:
         ret = []
         for i in swip_obj:
-           ret.append(s2m(i))
+           ret.append(s2m(circles,i))
         return ret
     except TypeError:
         ""
@@ -509,7 +660,7 @@ def s2m(swip_obj):
     if isinstance(swip_obj, list):
         list_expr = E("::")
         for item in swip_obj:
-            list_expr.add_sub_expression(s2m(item))
+            list_expr.add_sub_expression(s2m(circles,item))
         return list_expr
 
     raise ValueError(f"Unknown PySwip object type: {type(swip_obj)} {swip_obj}")
@@ -525,7 +676,7 @@ def m2s(circles,metta_obj, depth=0):
         v = swipRef(r)
     else:
         v = r
-    if verbose<=0: return v
+    if verbose<=1: return v
     for i in range(depth+1):
         print("   ",end='')
 
@@ -551,16 +702,12 @@ def unwrap_pyobjs(metta_obj):
     if isinstance(metta_obj, ValueObject):
        metta_obj = metta_obj.value
     return metta_obj
-    
+
 def m2s1(circles, metta_obj, depth=0, preferStringToAtom = None, preferListToCompound = False):
 
-    if isinstance(metta_obj, GroundedAtom):
-       metta_obj = metta_obj.get_object()
+    metta_obj = unwrap_pyobjs(metta_obj)
 
-    if isinstance(metta_obj, ValueObject):
-       metta_obj = metta_obj.value
-
-    if verbose>0:
+    if verbose>1:
         for i in range(depth):
             print("   ",end='')
         print(f'm2s({len(circles)},{type(metta_obj)}): {metta_obj}')
@@ -571,10 +718,10 @@ def m2s1(circles, metta_obj, depth=0, preferStringToAtom = None, preferListToCom
     if isinstance(metta_obj, str):
         return metta_obj
 
-    if isinstance(metta_obj, (int, float)):
+    elif isinstance(metta_obj, (int, float)):
         return metta_obj
 
-    if isinstance(metta_obj, SymbolAtom):
+    elif isinstance(metta_obj, SymbolAtom):
         if preferStringToAtom is None:
             preferStringToAtom = (depth>0)
 
@@ -582,35 +729,37 @@ def m2s1(circles, metta_obj, depth=0, preferStringToAtom = None, preferListToCom
         #if preferStringToAtom: return name
         return swipAtom(name)
 
-    #if isinstance(metta_obj, GroundedAtom): return metta_obj.get_value()
-    preferListToCompound = True
-#    return m2s2(circles, metta_obj, depth, preferStringToAtom, preferListToCompound)
-
-#def m2s2(circles, metta_obj, depth, preferStringToAtom, preferListToCompound):
-    #oid = f"{id(metta_obj)}"
-
     if isinstance(metta_obj, VariableAtom):
-        oid = metta_obj.get_name()
+        oid = mv2svn(metta_obj)
     else:
         oid = id(metta_obj)
 
     var = circles.get(oid, None)
 
-    # We are in a circluar reference
+    # We are in a circluar reference?
     if var is not None:
         #print(f"{oid}={len(circles)}={type(circles)}={type(metta_obj)}")
         return var
 
-    V = Variable()
-    circles[oid] = V
+    var = circles.get(metta_obj, None)
+    if var is not None:
+        return var
+
+    V = None
 
     if isinstance(metta_obj, VariableAtom):
-        V.chars = metta_obj.get_name().replace('$','_')
+        V = Variable()
+        V.chars = oid
+        circles[metta_obj] = V
+        circles[V] = metta_obj
         return V
 
-    elif isinstance(metta_obj, SpaceRef):
-        L = metta_obj.atom_count()
-        # L = list_to_termv(circles,metta_obj.get_atoms(),depth+1)
+    preferListToCompound = True
+    if isinstance(metta_obj, SpaceRef):
+        return swipAtom(getNameBySpace(metta_obj))
+        #L = E(S("SpaceRef"),S(getNameBySpace(metta_obj)))
+        #L = list_to_termv(L.get_children())
+        #L = list_to_termv(circles,metta_obj.get_atoms(),depth+1)
     elif isinstance(metta_obj, list):
         L = list_to_termv(circles,metta_obj,depth+1)
     elif isinstance(metta_obj, ExpressionAtom):
@@ -618,11 +767,25 @@ def m2s1(circles, metta_obj, depth=0, preferStringToAtom = None, preferListToCom
     else:
         raise ValueError(f"Unknown MeTTa object type: {type(metta_obj)}")
 
-    V.unify(L)
     if depth==0:
+        V = Variable()
+        V.unify(L)
+        circles[oid] = V
+        circles[V] = metta_obj
+        circles[metta_obj] = V
         return V
+
+    circles[L] = metta_obj
+    circles[metta_obj] = L
     return L
 
+def mv2svn(metta_obj):
+    named = metta_obj.get_name().replace('$','_')
+    s=named[0]
+    if(s == '_' or (s.isalpha() and  s.isupper())):
+        return named
+    else:
+        return "_" + named
 
 
 
@@ -664,7 +827,7 @@ def m2s3(circles, metta_obj, depth, preferStringToAtom, preferListToCompound):
     # Converting to functor... Maybe a list later on
     return Functor(f, len(retargs), list_to_termv(circles,retargs))
 
-    print(f"Unknown MeTTa object type: {type(metta_obj)}={metta_obj}")
+    if verbose>0: print(f"Unknown MeTTa object type: {type(metta_obj)}={metta_obj}")
 
     raise ValueError(f"Unknown MeTTa object type: {type(metta_obj)}")
 
@@ -752,12 +915,28 @@ class VSpacePatternOperation(OperationObject):
     def __init__(self, name, op, unwrap=False, rec=False):
         super().__init__(name, op, unwrap)
         self.rec = rec
+        self._catom = None
+
+    @property
+    def catom(self):
+        return self.get_catom()
+
+    @catom.setter
+    def catom(self, value):
+        self.set_catom(value)
+
+    def get_catom(self):
+        # Your getter logic here
+        return self._catom
+
+    def set_catom(self, value):
+        # Your setter logic here
+        self._catom = value
 
     def execute(self, *args, res_typ=AtomType.UNDEFINED):
         if self.rec:
             args = args[0].get_children()
-            args = [self.execute(arg)[0]\
-                if isinstance(arg, ExpressionAtom) else arg for arg in args]
+            args = [self.execute(arg)[0] if isinstance(arg, ExpressionAtom) else arg for arg in args]
         # If there is a variable or VSPatternValue in arguments, create VSPatternValue
         # instead of executing the operation
         for arg in args:
@@ -786,7 +965,7 @@ class VSpacePatternOperation(OperationObject):
 
 
 def _np_atom_type(npobj):
-    pt(npobj)
+    pt("npobj=",npobj)
     return E(S('NPArray'), E(*[ValueAtom(s, 'Number') for s in npobj.shape]))
 
 def dewrap(arg):
@@ -890,26 +1069,39 @@ def println(orig):
         fn = Functor("pp_ilp")
         call(fn(obj))
     return orig
-    
-    
-    
-    
+
+
+
+
 
 @export_flags(MeTTa=True)
-def pt(obj):
+def pt1(obj):
+    if isinstance(obj, str):
+        print(obj, end= "")
     if not isinstance(obj, (Term, Variable)):
-        print(f"pt: {type(obj)}={obj}")
+        print(f" pt: {type(obj)}={obj}", end= " ")
     else:
         fn = Functor("pp_ilp")
         call(fn(obj))
     return obj
 
+@export_flags(MeTTa=True)
+def pt(*objs):
+    r = objs
+    for o in objs:
+        if isinstance(o, str): print(o, end="")
+    else: r= pt1(o)
+    print()
+    return r
+
+
 @export_flags(MeTTa=True, op="VSpacePatternOperation")
 def test_s(metta_obj):
+    circles = Circles()
     pt(metta_obj)
-    swip_obj = m2s({},metta_obj)
+    swip_obj = m2s(circles,metta_obj)
     pt(swip_obj)
-    new_mo = s2m(swip_obj)
+    new_mo = s2m(circles,swip_obj)
     pt(new_mo)
     return new_mo
 
@@ -932,7 +1124,9 @@ def get_sexpr_input(prmpt):
 
     return expr
 
-
+@export_flags(MeTTa=True)
+def sync_space(named):
+    ""
 
 def the_running_metta_space():
     #if the_python_runner.parent!=the_python_runner:
@@ -1174,7 +1368,7 @@ def register_vspace_atoms(metta):
     nmDivAtom = G(VSPatternOperation('np.div', wrapnpop(np.divide), unwrap=False))
     nmMMulAtom = G(VSPatternOperation('np.matmul', wrapnpop(np.matmul), unwrap=False))
 
-    testS = G(VSpacePatternOperation('test-s', wrapnpop(test_s), unwrap=False))
+    testS = G(VSpacePatternOperation('test-s', wrapnpop(test_s), rec = True, unwrap=False))
 
     # DMILES:  I actujally like the behaviour below.
     newValueAtom = OperationAtom('new-value-atom', new_value_atom_func, unwrap=False)
@@ -1254,6 +1448,10 @@ def register_vspace_tokens(metta):
 
     def resolve_atom(metta, token):
         # TODO: nested modules...
+
+        if token is None: return token
+
+        if verbose>0: print(f"resolve_atom: token={token}/{type(token)} metta={metta}")
         runner_name, atom_name = token.split('::')
 
         if atom_name in oper_dict:
@@ -1407,16 +1605,18 @@ def test_nondeterministic_foreign():
 
 @export_flags(pyswip=True)
 def swip_to_metta_wrapper(swip_obj, metta_obj):
-    result1 = m2s({},s2m(swip_obj))
-    result2 = m2s({},metta_obj)
+    circles = Circles()
+    result1 = m2s(circles,s2m(circles,swip_obj))
+    result2 = m2s(circles,metta_obj)
     #metta_obj.unify(m2s(circles,result))
     return result2.unify(result1)
     #return True
 
 @export_flags(pyswip=True)
 def metta_to_swip_wrapper(metta_obj, swip_obj):
-    result1 = m2s({},metta_obj)
-    result2 = m2s({},swip_obj)
+    circles = Circles()
+    result1 = m2s(circles,metta_obj)
+    result2 = m2s(circles,swip_obj)
     #swip_obj.unify(result)
     return result2.unify(result1)
     #return True
@@ -1426,13 +1626,13 @@ def metta_to_swip_tests1():
     # Register the methods as foreign predicates
     registerForeign(swip_to_metta_wrapper, arity=2)
     registerForeign(metta_to_swip_wrapper, arity=2)
-
+    circles = Circles()
     # Usage:
     swip_functor = Functor(PySwipAtom("example"), 2, [PySwipAtom("sub1"), 3.14])
     print(f"swip_functor={swip_functor}"),
-    metta_expr = s2m(swip_functor)
+    metta_expr = s2m(circles,swip_functor)
     print(f"metta_expr={metta_expr}"),
-    converted_back_to_swip = m2s({},metta_expr)
+    converted_back_to_swip = m2s(circles,metta_expr)
     print(f"converted_back_to_swip={converted_back_to_swip}"),
 
 
@@ -1446,17 +1646,18 @@ def metta_to_swip_tests2():
     registerForeign(swip_to_metta_wrapper, arity=2)
     registerForeign(metta_to_swip_wrapper, arity=2)
 
+    circles = Circles()
     # Now you can use the methods in PySwip queries
     printl(list(swip.query("swip_to_metta_wrapper('example', X).")))
     printl(list(swip.query("metta_to_swip_wrapper(X, 'example').")))
 
     # Usage:
     swip_list = ["a", "b", 3]
-    metta_expr = s2m(swip_list)
-    converted_back_to_swip = m2s({},metta_expr)
+    metta_expr = s2m(circles,swip_list)
+    converted_back_to_swip = m2s(circles,metta_expr)
     swip_functor = Functor(PySwipAtom("example"), 2, [PySwipAtom("sub1"), 3.14])
-    metta_expr = s2m(swip_functor)
-    converted_back_to_swip = m2s({},metta_expr)
+    metta_expr = s2m(circles,swip_functor)
+    converted_back_to_swip = m2s(circles,metta_expr)
 
 @export_flags(MeTTa=True)
 def load_vspace():
@@ -1505,7 +1706,7 @@ def test_custom_m_space():
         def query(self, query_atom):
 
             # Extract only the variables from the query atom
-            metta_vars = list(filter(lambda atom: atom.get_type() == AtomKind.VARIABLE, query_atom.iterate()))
+            circles = list(filter(lambda atom: atom.get_type() == AtomKind.VARIABLE, query_atom.iterate()))
 
             # Match the query atom against every atom in the space
             # BindingsSet() creates a binding set with the only matching result
@@ -1517,7 +1718,7 @@ def test_custom_m_space():
                 # Merge in the bindings from this match, after we narrow the match_results to
                 # only include variables vars in the query atom
                 for bindings in match_results.iterator():
-                    bindings.narrow_vars(metta_vars)
+                    bindings.narrow_vars(circles)
                     if not bindings.is_empty():
                         # new_bindings_set.merge_into(bindings) would work with BindingsSet(), but
                         # it would return an empty result for multiple alternatives and merge bindings
@@ -1575,7 +1776,7 @@ class InteractiveMeTTa(LazyMeTTa):
         global verbose
         self.mode = "metta"
         self.submode = "+"
-        self.history = []
+        #self.history = []
         load_vspace()
 
         while True:
@@ -1586,7 +1787,7 @@ class InteractiveMeTTa(LazyMeTTa):
                 line = get_sexpr_input(prmpt)
                 if line:
                     sline = line.lstrip()
-                    self.history.append(line)
+                    add_to_history_if_unique(line, position_from_last=1)
                 else:
                     continue
 
@@ -1681,12 +1882,13 @@ class InteractiveMeTTa(LazyMeTTa):
                        expr = self.parse_single(sline)
                        if verbose>1: print(f"% S-Expr {line}")
                        if verbose>1: print(f"% M-Expr {expr}")
-                       swip_obj = m2s({},expr);
+                       circles = Circles()
+                       swip_obj = m2s(circles,expr);
                        if verbose>1: print(f"% P-Expr {swip_obj}")
                        call_sexpr = Functor("call_sexpr", 2)
                        user = newModule("user")
                        X = Variable()
-                       q = Query(call_sexpr(swip_obj, X))
+                       q = PySwipQ(call_sexpr(swip_obj, X))
                        while q.nextSolution():
                            print(X.value)
                        q.closeQuery()
