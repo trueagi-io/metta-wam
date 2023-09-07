@@ -256,6 +256,7 @@ call_match(G):- call(G).
 937_381_148
 */
 :- dynamic(mod_f_a/3).
+decl_m_fb_pred(Mod,Fn,A):- var(Mod),!,mod_f_a(Mod,Fn,A).
 decl_m_fb_pred(Mod,Fn,A):- mod_f_a(Mod,Fn,A)->true;(dynamic(Mod:Fn/A),assert(mod_f_a(Mod,Fn,A))).
 decl_fb_pred(Fn,A):- fb_pred(Fn,A)-> true; (dynamic(Fn/A),assert(fb_pred(Fn,A))).
 % Import necessary libraries
@@ -1070,7 +1071,7 @@ metta_count(KB,Count):- decl_m_fb_pred(KB,for_metta,2), full_atom_count(SL1), MP
   %metta_ls(KB),
   Count is SL1 + SL2 - SL3.
 %metta_count(KB,Count):- writeln(metta_count_in(KB,Count)), findall(Atom,for_metta(KB,Atom),AtomsL),length(AtomsL,Count),writeln(metta_count_out(KB,Count)).
-metta_iter(KB,Atoms):-decl_m_fb_pred(KB,for_metta,2), KB:for_metta(KB,Atoms).
+metta_iter(KB,Atoms):- decl_m_fb_pred(KB,for_metta,2), KB:for_metta(KB,Atoms).
 metta_atoms(KB,AtomsL):- decl_m_fb_pred(KB,for_metta,2), findall(Atom,KB:for_metta(KB,Atom),AtomsL).
 metta_iter_bind(KB,Query,Template,AtomsL):-decl_m_fb_pred(KB,for_metta,2), findall(Template,KB:for_metta(KB,Query),AtomsL).
 metta_iter_bind(KB,Query,_Vars):- decl_m_fb_pred(KB,for_metta,2), KB:for_metta(KB,Query).
