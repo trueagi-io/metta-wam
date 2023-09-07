@@ -56,7 +56,53 @@ du -h ./data
   ./test_in_metta.sh
   ```
 
+```
+metta +> !(test_custom_v_space)
 
+; (add-atom &vspace_8 a)
+; (add-atom &vspace_8 b)
+; (atom-count &vspace_8)
+Pass Test:(Values same: 2 == 2)
+Pass Test:(Values same: Test Space Payload Attrib == Test Space Payload Attrib)
+; (get-atoms &vspace_8)
+Pass Test:( [a, b] == [a, b] )
+; (add-atom &vspace_9 a)
+; (add-atom &vspace_9 b)
+; (add-atom &vspace_9 c)
+; (remove-atom &vspace_9 b)
+Pass Test:(remove_atom on a present atom should return true)
+; (remove-atom &vspace_9 bogus)
+Pass Test:(remove_atom on a missing atom should return false)
+; (get-atoms &vspace_9)
+Pass Test:( [a, c] == [a, c] )
+; (add-atom &vspace_10 a)
+; (add-atom &vspace_10 b)
+; (add-atom &vspace_10 c)
+; (atom-replace &vspace_10 b d)
+; (add-atom &vspace_10 d)
+Pass Test:(Expression is true: True)
+; (get-atoms &vspace_10)
+Pass Test:( [a, c, d] == [a, d, c] )
+; (add-atom &vspace_11 (A B))
+; (add-atom &vspace_11 (C D))
+; (add-atom &vspace_11 (A E))
+; (match &vspace_11 ($_105354) (A $_105354))
+; RES: (metta-iter-bind  &vspace_11 (A B) (B))
+; RES: (metta-iter-bind  &vspace_11 (A E) (E))
+Pass Test:( [ { $xx <- B },
+ { $xx <- E } ] == [{xx: B}, {xx: E}] )
+; (add-atom &vspace_12 (A B))
+Pass Test:(Values same: CSpace == CSpace)
+; (match &vspace_12 ($_117600) (A $_117600))
+; RES: (metta-iter-bind  &vspace_12 (A B) (B))
+Pass Test:( [ { $v <- B } ] == [{v: B}] )
+; (add-atom &vspace_12 (big-space None))
+; (add-atom &vspace_13 (A B))
+; (match &vspace_13 ($_129826) (A $_129826))
+; RES: (metta-iter-bind  &vspace_13 (A B) (B))
+; (match &vspace_13 ($_135548) (: B $_135548))
+Pass Test:(Values same: [[B]] == [[B]])
+```
 
 ## :bulb: Expected Features
 - **Relational Programming**: Utilize MeTTa's declarative paradigm to represent knowledge as relations and query this knowledge base.
