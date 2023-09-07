@@ -2,19 +2,11 @@
 # This implementation focuses on bringing this machine learning algorithm into the MeTTa relational programming environment.
 # Douglas R. Miles 2023
 from time import monotonic_ns, time
-import atexit
-import os
-import subprocess
-import sys
-import pip
-import re
+import atexit, os, subprocess, sys, pip, io, re, traceback, inspect
 try:
  import readline
 except ImportError:
   import pyreadline3 as readline
-import sys
-import traceback
-import inspect
 from collections import Counter
 from glob import glob
 import hyperonpy as hp
@@ -26,7 +18,7 @@ from hyperon.base import AbstractSpace, SpaceRef, GroundingSpace, interpret
 from pyswip import Atom as PySwipAtom
 from pyswip import Term
 from hyperon.atoms import Atom as MeTTaAtom
-from pyswip import Functor, registerForeign, PL_PRUNED, PL_retry, PL_FA_NONDETERMINISTIC, PL_foreign_control, PL_foreign_context, PL_FIRST_CALL, PL_REDO, Variable, Prolog as PySwip
+from pyswip import (call, Functor, registerForeign, PL_PRUNED, PL_retry, PL_FA_NONDETERMINISTIC, PL_foreign_control, PL_foreign_context, PL_FIRST_CALL, PL_REDO, Variable, Prolog as PySwip)
 from pyswip.easy import newModule, Query
 from hyperon.atoms import *
 import openai
@@ -35,8 +27,10 @@ try:
  openai.api_key = os.environ["OPENAI_API_KEY"]
 except KeyError:
  ""
-
-verbose = 1
+# 0 = for scripts/demos
+# 1 = developer
+# 2 = debugger
+verbose = 2
 histfile = os.path.join(os.path.expanduser("~"), ".metta_history")
 is_init = True
 oper_dict = {}
@@ -78,6 +72,7 @@ insert_to_history("!(match &flybase $ $)")
 insert_to_history('!(match &flybase (gene_map_table $Dmel $abo $G  $C $D $E)  (gene_map_table $Dmel $abo $G  $C $D $E) )')
 insert_to_history('!(match &flybase (gene_map_table $Dmel $abo (GeneValueNode "FBgn0000018") $C $D $E) (gene_map_table $Dmel $abo (GeneValueNode "FBgn0000018") $C $D $E))')
 insert_to_history('!(add-atom &flybase (gene_map_table (ConceptNode "Dmel") (ConceptNode "abo") (GeneValueNode "FBgn0000018") (ConceptNode "2-44") (ConceptNode "32C1-32C1") (StringValue "2L:10973443..10975293(-1)")))')
+insert_to_history('!(test_custom_v_space)', position_from_last=1)
 
 def save(prev_h_len, histfile):
     new_h_len = readline.get_current_history_length()
@@ -90,54 +85,58 @@ def add_to_history_if_unique(item):
         if readline.get_history_item(i) == item: return
     insert_to_history(item)
 
-def set_fn_name(func, name=None):
-    setattr(func, 'named', name)
-    return func
-
 def export_to_metta(func):
-    setattr(func, 'export_to_metta', True)
+    setattr(func, 'metta', True)
     if verbose>3: print(f"{func}={getattr(func, 'export_to_metta', False)}")
     return func
 
-def export_to_pyswip(func):
-    setattr(func, 'export_to_pyswip', True)
-    if verbose>3: print(f"{func}={getattr(func, 'export_to_pyswip', False)}")
-    return func
+def export_flags(**kwargs):
+    def decorator(func):
+        print(f"export_flags({repr(func)})", end=" ")
+        for n in kwargs:
+            setattr(func, n, kwargs[n])
+        if verbose > 1:
+            for n in kwargs:
+                print(f"{repr(n)}={repr(getattr(func, n, None))}", end=" ")
+        if verbose > 1: print()
+        return func
+    return decorator
 
-@export_to_metta
+@export_flags(MeTTa=True)
 def add_exported_methods(module, dict = oper_dict):
-    for name, obj in inspect.getmembers(module):
-        if inspect.isfunction(obj):
-            if getattr(obj, 'export_to_metta', False):
-                suggestedName = getattr(obj, 'named', None)
+    for name, func in inspect.getmembers(module):
+        if inspect.isfunction(func):
+            if getattr(func, 'MeTTa', False):
+                suggestedName = getattr(func, 'named', None)
                 if suggestedName is not None:
                     use_name = suggestedName
                 else: use_name = name
-                sig = inspect.signature(obj)
+                sig = inspect.signature(func)
                 params = sig.parameters
                 num_args = len([p for p in params.values() if p.default == p.empty and p.kind == p.POSITIONAL_OR_KEYWORD])
-                add_pyop(use_name, num_args, dict)
+                add_pyop(use_name, num_args, getattr(func, 'op', "OperationAtom"), getattr(func, 'unwrap', True), dict)
 
-@export_to_metta
-def add_pyop(name, length, dict = oper_dict):
+@export_flags(MeTTa=True)
+def add_pyop(name, length, op_kind, unwrap, dict = oper_dict):
     hyphens, underscores = name.replace('_', '-'), name.replace('-', '_')
     mettavars, pyvars = (' '.join(f"${chr(97 + i)}" for i in range(length))).strip(), (', '.join(chr(97 + i) for i in range(length))).strip()
     s = f"!({hyphens})" if mettavars == "" else f"!({hyphens} {mettavars})"
     add_to_history_if_unique(s); #print(s)
     if hyphens not in dict:
-        src, local_vars = f'op = OperationAtom( "{hyphens}", lambda {pyvars}: [{underscores}({pyvars})])', {}
-        exec(src, globals(), local_vars)  #print(f'metta: OperationAtom("{hyphens}",{src}, unwrap=False)')
+        src, local_vars = f'op = {op_kind}( "{hyphens}", lambda {pyvars}: [{underscores}({pyvars})], unwrap={unwrap})', {}
+        if verbose>1: print(f"add_pyop={src}")
+        exec(src, globals(), local_vars)
         dict[hyphens] = local_vars['op']
         dict[underscores] = local_vars['op']
 
-@export_to_metta
+@export_flags(MeTTa=True)
 def add_swip(name, dict = oper_dict):
     hyphens, underscores = name.replace('_', '-'), name.replace('-', '_')
     add_to_history_if_unique(f"!({hyphens})")
     if hyphens not in dict:
         src, local_vars = f'op = lambda : [swip_exec("{underscores}")]', {}
         exec(src, {}, local_vars)
-        print(f"swip: {hyphens}")
+        if verbose>1: print(f"swip: {hyphens}")
         dict[hyphens] = OperationAtom(hyphens, local_vars['op'], unwrap=False)
 
 def addSpaceName(name, space):
@@ -262,6 +261,7 @@ class VSpace(AbstractSpace):
 
     def atom_count(self):
         result = list(swip.query(f"metta_count('{self.sp_name}',Int)"))
+        print(result)
         C = result[0]['Int']
         if not isinstance(C,int):
             C = C.value
@@ -275,7 +275,6 @@ class VSpace(AbstractSpace):
         return R
 
     def atoms_iter(self):
-        return None
 
         Atoms = Variable("Iter")
         q = Query(Functor("metta_iter", 2)(self.swip_space_name(), Atoms), module=self.sp_module)
@@ -306,7 +305,7 @@ class VSpace(AbstractSpace):
 
 access_error = True
 
-@export_to_metta
+@export_flags(MeTTa=True)
 class FederatedSpace(VSpace):
 
     def __init__(self, space_name, unwrap=True):
@@ -338,7 +337,7 @@ class FederatedSpace(VSpace):
     def copy(self):
         return self
 
-@export_to_metta
+@export_flags(MeTTa=True)
 def test_custom_v_space():
     test_custom_space(lambda: VSpace())
 
@@ -359,7 +358,15 @@ def test_custom_space(LambdaSpaceFn):
             try:
               return sorted(n)
             except TypeError:
-              sorted(map(str, n)) #return sorted(n, key=lambda x: str(x))
+              def custom_sort(item):
+                if isinstance(item, (int, float)):
+                    return (0, item)
+                elif isinstance(item, ExpressionAtom):
+                    return item.get_children()
+                else:
+                    return (1, str(item))
+
+              return sorted(n, key=custom_sort)
 
 
         if py_sorted(list1) != py_sorted(list2):
@@ -548,6 +555,15 @@ def swipRef(a):
     v.unify(a)
     return v
 
+def unwrap_pyobjs(metta_obj):
+    if isinstance(metta_obj, ExpressionAtom):
+       return metta_obj
+    elif isinstance(metta_obj, GroundedAtom):
+       metta_obj = metta_obj.get_object()
+    if isinstance(metta_obj, ValueObject):
+       metta_obj = metta_obj.value
+    return metta_obj
+    
 def m2s1(circles, metta_obj, depth=0, preferStringToAtom = None, preferListToCompound = False):
 
     if isinstance(metta_obj, GroundedAtom):
@@ -605,8 +621,8 @@ def m2s1(circles, metta_obj, depth=0, preferStringToAtom = None, preferListToCom
         return V
 
     elif isinstance(metta_obj, SpaceRef):
-        # L = metta_obj.atom_count()
-        L = list_to_termv(circles,metta_obj.get_atoms(),depth+1)
+        L = metta_obj.atom_count()
+        # L = list_to_termv(circles,metta_obj.get_atoms(),depth+1)
     elif isinstance(metta_obj, list):
         L = list_to_termv(circles,metta_obj,depth+1)
     elif isinstance(metta_obj, ExpressionAtom):
@@ -1138,7 +1154,7 @@ def register_vspace_atoms(metta):
     nmDivAtom = G(VSPatternOperation('np.div', wrapnpop(np.divide), unwrap=False))
     nmMMulAtom = G(VSPatternOperation('np.matmul', wrapnpop(np.matmul), unwrap=False))
 
-    testS = G(VSPatternOperation('test-s', wrapnpop(test_s), unwrap=False))
+    testS = G(VSpacePatternOperation('test-s', wrapnpop(test_s), unwrap=False))
 
     # DMILES:  I actujally like the behaviour below.
     newValueAtom = OperationAtom('new-value-atom', new_value_atom_func, unwrap=False)
@@ -1155,6 +1171,7 @@ def register_vspace_atoms(metta):
     runnerAtom = G(the_python_runner, AtomType.ATOM)
     add_exported_methods(sys.modules[__name__], dict = oper_dict)
     oper_dict.update({
+        r"TupleCount": OperationAtom( 'TupleCount', lambda atom: [ValueAtom(len(atom.get_children()), 'Number')], [AtomType.ATOM, "Number"], unwrap=False),
         r"np\.vector": nmVectorAtom,
         r"np\.array": nmArrayAtom,
         r"np\.add": nmAddAtom,
@@ -1284,8 +1301,7 @@ def register_vspace_tokens(metta):
 
 
 
-
-@export_to_metta
+@export_flags(MeTTa=True)
 def test_nondeterministic_foreign():
 
     def nondet(a, context):
@@ -1369,7 +1385,7 @@ def test_nondeterministic_foreign():
 
 
 
-@export_to_pyswip
+@export_flags(pyswip=True)
 def swip_to_metta_wrapper(swip_obj, metta_obj):
     result1 = m2s({},s2m(swip_obj))
     result2 = m2s({},metta_obj)
@@ -1377,7 +1393,7 @@ def swip_to_metta_wrapper(swip_obj, metta_obj):
     return result2.unify(result1)
     #return True
 
-@export_to_pyswip
+@export_flags(pyswip=True)
 def metta_to_swip_wrapper(metta_obj, swip_obj):
     result1 = m2s({},metta_obj)
     result2 = m2s({},swip_obj)
@@ -1385,7 +1401,7 @@ def metta_to_swip_wrapper(metta_obj, swip_obj):
     return result2.unify(result1)
     #return True
 
-@export_to_metta
+@export_flags(MeTTa=True)
 def metta_to_swip_tests1():
     # Register the methods as foreign predicates
     registerForeign(swip_to_metta_wrapper, arity=2)
@@ -1404,7 +1420,7 @@ def metta_to_swip_tests1():
     print(list(swip.query("swip_to_metta_wrapper('example', X).")))
     print(list(swip.query("metta_to_swip_wrapper(X, 'example').")))
 
-@export_to_metta
+@export_flags(MeTTa=True)
 def metta_to_swip_tests2():
     # Register the methods as foreign predicates
     registerForeign(swip_to_metta_wrapper, arity=2)
@@ -1422,21 +1438,21 @@ def metta_to_swip_tests2():
     metta_expr = s2m(swip_functor)
     converted_back_to_swip = m2s({},metta_expr)
 
-@export_to_metta
+@export_flags(MeTTa=True)
 def load_vspace():
    swip_exec(f"ensure_loaded('{os.path.dirname(__file__)}/pyswip/swi_flybase')")
 
-@export_to_metta
+@export_flags(MeTTa=True)
 def mine_overlaps():
    load_vspace()
    swip_exec("mine_overlaps")
 
-@export_to_metta
+@export_flags(MeTTa=True)
 def try_overlaps():
    load_vspace()
    swip_exec("try_overlaps")
 
-@export_to_metta
+@export_flags(MeTTa=True)
 def learn_vspace():
    load_vspace()
    swip_exec("learn_vspace(60)")
@@ -1445,7 +1461,7 @@ def load_flybase(size):
    load_vspace()
    swip_exec(f"load_flybase({size})")
 
-@export_to_metta
+@export_flags(MeTTa=True)
 def swip_exec(qry):
     #from metta_vspace import swip
     #if is_init==True:
@@ -1454,7 +1470,7 @@ def swip_exec(qry):
     for r in swip.query(qry):
         print(r)
 
-@export_to_metta
+@export_flags(MeTTa=True)
 def test_custom_m_space():
 
     class TestSpace(AbstractSpace):
@@ -1632,7 +1648,10 @@ class InteractiveMeTTa(LazyMeTTa):
 
                 prefix = sline[0]
 
-                if self.mode == "swip":
+                if sline.endswith("."):
+                    swip_exec(line)
+                    continue
+                elif self.mode == "swip":
                     if prefix == "%":
                         print(line) # comment
                         continue
@@ -1718,7 +1737,12 @@ class InteractiveMeTTa(LazyMeTTa):
                 return [] #sys.exit(0)
             except Exception as e:
                 if verbose>0: print(f"Error: {e}")
-                if verbose>0: traceback.print_exc()
+                if verbose>0:
+                    buf = io.StringIO()
+                    sys.stderr = buf
+                    traceback.print_exc()
+                    sys.stderr = sys.__stderr__
+                    print(buf.getvalue().replace('rolog','ySwip'))
                 continue
 
     def repl(self):
@@ -1732,18 +1756,18 @@ class InteractiveMeTTa(LazyMeTTa):
     def copy(self):
         return self
 
-@export_to_metta
+@export_flags(MeTTa=True)
 def vspace_main():
     is_init=False
     #os.system('clear')
     t0 = monotonic_ns()
-    print(underline("Version-Space Main\n"))
+    if verbose>0: print(underline("Version-Space Main\n"))
     #if is_init==False: load_vspace()
     #if is_init==False: load_flybase()
     #if is_init==False:
 
     the_python_runner.repl()
-    print(f"\nmain took {(monotonic_ns() - t0)/1e9:.5} seconds in walltime")
+    if verbose>1: print(f"\nmain took {(monotonic_ns() - t0)/1e9:.5} seconds in walltime")
 
 def vspace_init():
     t0 = monotonic_ns()
@@ -1761,10 +1785,6 @@ def vspace_init():
 
 
 # All execution happens here
-#export_to_metta = mark_decorator("export_to_metta")
-#export_to_pyswip = mark_decorator("export_to_pyswip")
-#staticmethod = mark_decorator("staticmethod")
-
 swip = PySwip()
 the_gptspace = GptSpace()
 the_vspace = VSpace("&vspace")

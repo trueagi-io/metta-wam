@@ -84,7 +84,7 @@ nop(_).
 :- endif.
 
 :- if( \+ current_predicate(catch_ignore/1)).
-catch_ignore(G):- ignore(catch(G,E,catch_i((nl,writeq(G=E),nl)))).
+catch_ignore(G):- ignore(catch(G,E,catch_i((nl,writeq(causes(G,E)),nl)))).
 :- endif.
 
 :- if( \+ current_predicate(catch_i/1)).
