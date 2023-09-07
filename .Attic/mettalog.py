@@ -465,7 +465,7 @@ def test_custom_space(LambdaSpaceFn):
     result = runner.run("!(match nested (A $x) $x)")
     self_assertEqual([[S("B")]], result)
 
-# Do not @export_to_metta
+@export_flags(MeTTa=False)
 def s2m(swip_obj):
 
     # Handle numbers and convert them to ValueAtom objects in MeTTa
@@ -517,20 +517,8 @@ def s2m(swip_obj):
 def sv2mv(s):
     return s.replace("_", "$", 1) if s.startswith("_") else "$" + s
 
-def pt(s):
-    print(f"{type(s)} {s}")
 
-@export_to_metta
-def test_s(metta_obj):
-    pt(metta_obj)
-    swip_obj = m2s({},metta_obj)
-    pt(swip_obj)
-    new_mo = s2m(swip_obj)
-    pt(new_mo)
-    return new_mo
-
-
-# Do not @export_to_metta
+@export_flags(MeTTa=False)
 def m2s(circles,metta_obj, depth=0):
     r = m2s1(circles,metta_obj, depth)
     if depth==0:
@@ -549,7 +537,7 @@ def swipAtom(m):
     return a
 
 def swipRef(a):
-    if isinstance(a, (Variable, Term, Atom, str)):
+    if isinstance(a, (Variable, Term)):
        return a
     v = Variable()
     v.unify(a)
@@ -591,7 +579,7 @@ def m2s1(circles, metta_obj, depth=0, preferStringToAtom = None, preferListToCom
             preferStringToAtom = (depth>0)
 
         name = metta_obj.get_name();
-        if preferStringToAtom: return name
+        #if preferStringToAtom: return name
         return swipAtom(name)
 
     #if isinstance(metta_obj, GroundedAtom): return metta_obj.get_value()
@@ -798,11 +786,15 @@ class VSpacePatternOperation(OperationObject):
 
 
 def _np_atom_type(npobj):
+    pt(npobj)
     return E(S('NPArray'), E(*[ValueAtom(s, 'Number') for s in npobj.shape]))
+
+def dewrap(arg):
+    return unwrap_pyobjs(arg)
 
 def wrapnpop(func):
     def wrapper(*args):
-        a = [arg.get_object().value for arg in args]
+        a = [dewrap(arg) for arg in args]
         res = func(*a)
         typ = _np_atom_type(res)
         return [G(VSNumpyValue(res), typ)]
@@ -855,7 +847,7 @@ def color_expr(expr, level=0, unif_vars=None):
 
 
 
-@export_to_metta
+@export_flags(MeTTa=True)
 def print_l_e(obj):
     if obj is None:
         print("None!")
@@ -878,9 +870,9 @@ def print_l_e(obj):
         print(obj)
     return obj
 
-@export_to_metta
-#@set_fn_name("print")
-def println(obj):
+
+@export_flags(MeTTa=True, name="print")
+def println(orig):
     """
     Prints the given object and returns it.
 
@@ -890,8 +882,36 @@ def println(obj):
     Returns:
         The same object that was passed in.
     """
-    print(obj)
+    obj = unwrap_pyobjs(orig)
+
+    if not isinstance(obj, (Term, Variable)):
+	    print(repr(obj))
+    else:
+        fn = Functor("pp_ilp")
+        call(fn(obj))
+    return orig
+    
+    
+    
+    
+
+@export_flags(MeTTa=True)
+def pt(obj):
+    if not isinstance(obj, (Term, Variable)):
+        print(f"pt: {type(obj)}={obj}")
+    else:
+        fn = Functor("pp_ilp")
+        call(fn(obj))
     return obj
+
+@export_flags(MeTTa=True, op="VSpacePatternOperation")
+def test_s(metta_obj):
+    pt(metta_obj)
+    swip_obj = m2s({},metta_obj)
+    pt(swip_obj)
+    new_mo = s2m(swip_obj)
+    pt(new_mo)
+    return new_mo
 
 
 def get_sexpr_input(prmpt):
