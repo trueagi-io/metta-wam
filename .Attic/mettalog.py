@@ -331,11 +331,12 @@ class VSpace(AbstractSpace):
             bindings = Bindings()
             vn = 0
             for mv in metta_vars:
-                 swipvar = swivars[vn]
-                 if verbose>1: pt(f"swipvard({vn})=",swipvar, " ")
-                 sval = swipvar.value
-                 if isinstance(sval, Variable):
+                 svar = swivars[vn]
+                 sval = svar
+                 if verbose>1: pt(f"svar({vn})=",svar, " ")
+                 if isinstance(svar, Variable):
                      sval = sval.value
+                 else: sval = svar
                  if verbose>1: pt(f"sval({vn})=",sval, " ")
                  mval = s2m(circles,sval)
                  if verbose>1: pt(f"mval({vn})=",mval, " ")
@@ -481,17 +482,19 @@ def test_custom_space(LambdaSpaceFn):
         """
         def py_sorted(n):
             try:
-              return sorted(n)
+                if isinstance(n, ExpressionAtom):
+                    return py_sorted(n.get_children())
+                return sorted(n)
             except TypeError:
-              def custom_sort(item):
-                if isinstance(item, (int, float)):
-                    return (0, item)
-                elif isinstance(item, ExpressionAtom):
-                    return item.get_children()
-                else:
-                    return (1, str(item))
+                def custom_sort(item):
+                    if isinstance(item, (int, float)):
+                        return (0, item)
+                    elif isinstance(item, ExpressionAtom):
+                        return py_sorted(item.get_children())
+                    else:
+                        return (1, str(item))
 
-              return sorted(n, key=custom_sort)
+                return sorted(n, key=custom_sort)
 
 
         if py_sorted(list1) != py_sorted(list2):
@@ -593,15 +596,14 @@ def test_custom_space(LambdaSpaceFn):
 @export_flags(MeTTa=False)
 def s2m(circles,swip_obj):
 
+    if isinstance(swip_obj, str):
+        return S(swip_obj)
+
     assert isinstance(circles, Circles), f"circles must be an instance of the Circles class not {type(circles)}"
 
     # Handle numbers and convert them to ValueAtom objects in MeTTa
     if isinstance(swip_obj, (int, float)):
         return ValueAtom(swip_obj)
-
-    if isinstance(swip_obj, list):
-        metta_list = [s2m(circles,item) for item in swip_obj]
-        return metta_list
 
     # Handle numbers and convert them to ValueAtom objects in MeTTa
     if isinstance(swip_obj, (VariableAtom, GroundedAtom, ExpressionAtom)):
@@ -618,9 +620,6 @@ def s2m(circles,swip_obj):
     if var is not None:
         return var
 
-    if isinstance(swip_obj, str):
-        return S(swip_obj)
-        #return swip_obj
 
     if isinstance(swip_obj, PySwipAtom):
         return S(str(swip_obj))
@@ -648,23 +647,21 @@ def s2m(circles,swip_obj):
         argz = [s2m(circles,arg) for arg in swip_obj.args]
         return E(fn, *argz)
 
-    try:
-        ret = []
-        for i in swip_obj:
-           ret.append(s2m(circles,i))
-        return ret
-    except TypeError:
-        ""
-
     # Handle PySwip lists
-    if isinstance(swip_obj, list):
-        list_expr = E("::")
-        for item in swip_obj:
-            list_expr.add_sub_expression(s2m(circles,item))
-        return list_expr
+    #if isinstance(swip_obj, list):
+
+
+
+    mva = [s2m(circles,item) for item in swip_obj]
+    try:
+        return E(*mva)
+    except TypeError:
+        return ExpressionAtom(mva)
+
 
     raise ValueError(f"Unknown PySwip object type: {type(swip_obj)} {swip_obj}")
 
+mylist_expr = E()
 def sv2mv(s):
     return s.replace("_", "$", 1) if s.startswith("_") else "$" + s
 
@@ -781,6 +778,7 @@ def m2s1(circles, metta_obj, depth=0, preferStringToAtom = None, preferListToCom
 
 def mv2svn(metta_obj):
     named = metta_obj.get_name().replace('$','_')
+    if len(named)==0: return "_0"
     s=named[0]
     if(s == '_' or (s.isalpha() and  s.isupper())):
         return named
@@ -1077,9 +1075,12 @@ def println(orig):
 @export_flags(MeTTa=True)
 def pt1(obj):
     if isinstance(obj, str):
-        print(obj, end= "")
-    if not isinstance(obj, (Term, Variable)):
-        print(f" pt: {type(obj)}={obj}", end= " ")
+        print(f"{repr(obj)}", end= " ")
+    elif not isinstance(obj, (Term, Variable)):
+        print(f" pt: {type(obj)}={str(obj)}={repr(obj)}", end= " ")
+        if isinstance(obj, list):
+            obj = obj[0]
+            print(f" pt(0): {type(obj)}={str(obj)}={repr(obj)}", end= " ")
     else:
         fn = Functor("pp_ilp")
         call(fn(obj))
@@ -1089,8 +1090,9 @@ def pt1(obj):
 def pt(*objs):
     r = objs
     for o in objs:
-        if isinstance(o, str): print(o, end="")
-    else: r= pt1(o)
+        if isinstance(o, str):
+            print(o, end="")
+        else: r= pt1(o)
     print()
     return r
 
@@ -1843,6 +1845,7 @@ class InteractiveMeTTa(LazyMeTTa):
 
                 elif sline.startswith("@v"):
                     verbose = int(sline.split()[1])
+                    os.environ["VSPACE_VERBOSE"] = str(verbose)
                     print(f"Verbosity level set to {verbose}")
                     continue
 
