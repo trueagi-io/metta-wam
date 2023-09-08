@@ -1060,8 +1060,10 @@ with_wild_path_swi(Fnicate, File) :-
 % MeTTa Python incoming interface
 % ===============================
 %debug_metta(Call):- skip(Call).
-debug_metta(Term):- ignore((format('~N; ~@~n',[write_src(Term)]))).
-debug_metta(Msg,Term):- ignore((format('~N; ~w: ~@~n',[Msg,write_src(Term)]))),!.
+if_metta_debug(Goal):- getenv('VSPACE_VERBOSE','2'),!,ignore(call(Goal)).
+if_metta_debug(_).
+debug_metta(Term):- if_metta_debug((format('~N; ~@~n',[write_src(Term)]))).
+debug_metta(Msg,Term):- if_metta_debug((format('~N; ~w: ~@~n',[Msg,write_src(Term)]))),!.
 
 %:- dynamic(for_metta/2).
 %for_metta(_,T):- fb_pred(F,A),functor(T,F,A),call(T).
@@ -1088,7 +1090,7 @@ metta_atoms(KB,AtomsL):- debug_metta(['get-atoms',KB]), decl_m_fb_pred(KB,for_me
 %metta_iter_bind(KB,Query,Template,AtomsL):- decl_m_fb_pred(KB,for_metta,2), findall(Template,KB:for_metta(KB,Query),AtomsL).
 metta_iter_bind(KB,Query,Vars):-
   term_variables(Query,Vars),
-  debug_metta(['match',KB,Vars,Query]),
+  debug_metta(['match',KB,Query,Vars]),
   decl_m_fb_pred(KB,for_metta,2), KB:for_metta(KB,Query),
   debug_metta('RES',metta_iter_bind(KB,Query,Vars)).
 %metta_iter_bind(KB,Atom,Template):- fb_stats, findall(Template,metta_iter(KB,Atom),VarList).
