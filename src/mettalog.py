@@ -32,7 +32,7 @@ VSPACE_VERBOSE = os.environ.get("VSPACE_VERBOSE")
 # 0 = for scripts/demos
 # 1 = developer
 # 2 = debugger
-verbose = 2
+verbose = 1
 if VSPACE_VERBOSE is not None:
     try:
         # Convert it to an integer
@@ -122,7 +122,7 @@ def add_exported_methods(module, dict = oper_dict):
     for name, func in inspect.getmembers(module):
         if inspect.isfunction(func):
             if getattr(func, 'MeTTa', False):
-                suggestedName = getattr(func, 'named', None)
+                suggestedName = getattr(func, 'name', None)
                 if suggestedName is not None:
                     use_name = suggestedName
                 else: use_name = name
@@ -1088,6 +1088,8 @@ def println(orig):
     else:
         fn = Functor("pp_ilp")
         call(fn(obj))
+
+    flush_console()
     return orig
 
 
@@ -1373,7 +1375,7 @@ def register_vspace_atoms(metta):
     the_python_runner.set_cmetta(metta)
 
     counter = 0
-    if verbose>0: print(f"register_vspace_atoms metta={metta} {self_space_info()}")
+    if verbose>1: print(f"register_vspace_atoms metta={metta} {self_space_info()}")
 
     if not isinstance(metta, VSpace):
         the_python_runner.parent = metta
@@ -1455,7 +1457,7 @@ def register_vspace_atoms(metta):
 @register_tokens(pass_metta=True)
 def register_vspace_tokens(metta):
 
-    if verbose>0: print(f"register_vspace_tokens metta={metta} {self_space_info()}")
+    if verbose>1: print(f"register_vspace_tokens metta={metta} {self_space_info()}")
 
     the_python_runner.set_cmetta(metta.cmetta)
 
@@ -1464,10 +1466,10 @@ def register_vspace_tokens(metta):
 
     def run_resolved_symbol_op(the_python_runner, atom, *args):
         expr = E(atom, *args)
-        if verbose>0: print(f"run_resolved_symbol_op: atom={atom}, args={args}, expr={expr} metta={metta} {self_space_info()}")
+        if verbose>1: print(f"run_resolved_symbol_op: atom={atom}, args={args}, expr={expr} metta={metta} {self_space_info()}")
         result1 = hp.metta_evaluate_atom(the_python_runner.cmetta, expr.catom)
         result = [MeTTaAtom._from_catom(catom) for catom in result1]
-        if verbose>0: print(f"run_resolved_symbol_op: result1={result1}, result={result}")
+        if verbose>1: print(f"run_resolved_symbol_op: result1={result1}, result={result}")
         return result
 
     def resolve_atom(metta, token):
@@ -1475,11 +1477,11 @@ def register_vspace_tokens(metta):
 
         if token is None: return token
 
-        if verbose>0: print(f"resolve_atom: token={token}/{type(token)} metta={metta}")
+        if verbose>1: print(f"resolve_atom: token={token}/{type(token)} metta={metta}")
         runner_name, atom_name = token.split('::')
 
         if atom_name in oper_dict:
-            if verbose>0: print(f"resolve_atom: token={token} metta={metta}")
+            if verbose>1: print(f"resolve_atom: token={token} metta={metta}")
             return oper_dict[atom_name]
 
         atom_name2 = atom_name.replace('_', '-')
@@ -1493,7 +1495,7 @@ def register_vspace_tokens(metta):
             return
         # FIXME: using `run` for this is an overkill
         ran = metta.run('! ' + runner_name)[0][0];
-        if verbose>0: print(f"resolve_atom: token={token} ran={type(ran)} metta={metta} {self_space_info()}")
+        if verbose>1: print(f"resolve_atom: token={token} ran={type(ran)} metta={metta} {self_space_info()}")
         try:
             this_runner = ran.get_object()
         except Exception as e:
@@ -1519,7 +1521,7 @@ def register_vspace_tokens(metta):
     def resolve_underscores(metta, token):
         atom_name = token.replace('_', '-')
         if atom_name in oper_dict:
-            if verbose>0: print(f"resolve_atom: token={token} metta={metta}")
+            if verbose>1: print(f"resolve_atom: token={token} metta={metta}")
             return oper_dict[atom_name]
 
     syms_dict.update({
@@ -1890,6 +1892,9 @@ class InteractiveMeTTa(LazyMeTTa):
                     print(".l       - Load the latest session.")
                     print(".q       - Quit the session.")
                     print(".h       - Display command history.")
+                    print("\nFrom your shell you can use..")
+                    print("\texport VSPACE_VERBOSE=2")
+                    flush_console()
                     continue
 
                 prefix = sline[0]
@@ -2009,12 +2014,14 @@ def vspace_main():
     #os.system('clear')
     t0 = monotonic_ns()
     if verbose>0: print(underline("Version-Space Main\n"))
+    flush_console()
     #if is_init==False: load_vspace()
     #if is_init==False: load_flybase()
     #if is_init==False:
 
     the_python_runner.repl()
     if verbose>1: print(f"\nmain took {(monotonic_ns() - t0)/1e9:.5} seconds in walltime")
+    flush_console()
 
 def vspace_init():
     t0 = monotonic_ns()
@@ -2029,6 +2036,16 @@ def vspace_init():
     # @TODO fix this metta_to_swip_tests1()
     #load_vspace()
     print(f"\nInit took {(monotonic_ns() - t0)/1e9:.5} seconds")
+    flush_console()
+
+def flush_console():
+    try:
+      sys.stdout.flush()
+    except Exception: ""
+    try:
+      sys.stderr.flush()
+    except Exception: ""
+
 
 
 # All execution happens here

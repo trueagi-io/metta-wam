@@ -1,5 +1,7 @@
 :- encoding(octet).
 
+:- flush_output.
+
 skip(_).
 
 :- include(swi_support).
@@ -77,6 +79,32 @@ atom_prefix('DOID', obo, 'Disease Ontology').
 atom_prefix('UBERON', obo, 'Uber-anatomy ontology').
 atom_prefix('CHEBI', obo, 'Chemical Entities of Biological Interest').
 
+
+
+/*
+FBgn: FlyBase gene number - Represents a gene.
+FBal: FlyBase allele number - Represents an allele.
+FBst: FlyBase stock number - Represents a stock.
+FBtp: FlyBase transposon number - Represents a transposon.
+FBab: FlyBase aberration number - Represents a chromosomal aberration.
+FBba: FlyBase balancer number - Represents a balancer.
+FBcl: FlyBase clone number - Represents a DNA or RNA clone.
+FBim: FlyBase image number - Represents an image.
+FBpp: FlyBase polypeptide number - Represents a protein.
+FBtr: FlyBase transcript number - Represents a transcript.
+FBte: FlyBase transgenic element number - Represents a transgenic element.
+*/
+
+% FBcv_0000743 % "FBtp0000743 %CL:0000743 % WBPhenotype_0000743
+%reprefix(['GO_','GO:','GO--','FBgn','BiologicalProcess:GO:'],'GO:').
+reprefix(['GO_','GO--','BiologicalProcess:GO:'],'GO:').
+reprefix(['flybase:','FLYBASE:','comment:'],'').
+reprefix(['FBpp:'],'FBpp').
+reprefix(['FBgn:'],'FBgn').
+reprefix(['FB:FB'],'FB').
+%./KBs/SUMO-OBO/gene-merged-SUMO.kif
+%#
+%FBbt_00051628
 
 
 %./KBs/SUMO-OBO/gene-merged-SUMO.kif
@@ -536,19 +564,26 @@ into_sequential([SP],SP):-!.
 into_sequential([],'True').
 
 write_src(V):- allow_concepts,!,with_concepts(false,write_src1(V)),flush_output.
-%write_src(V):- write_src1(V).
+write_src(V):- write_src1(V),!.
 
 write_src1(V):- var(V),!, ignore(pp_sex(V)).
+write_src1(''):- !, writeq('').
 write_src1(V):- number(V),!, writeq(V).
 write_src1(V):- string(V),!, writeq(V).
-write_src1(V):- atom(V),needs_quoted_in_metta(V,Q), write(Q),write(V),write(Q).
+write_src1(V):- atom(V),needs_quoted_in_metta(V,_),!, atom_string(V,S),writeq(S).
 write_src1(V):- atom(V),!,write(V).
 write_src1(V):- pp_sex(V),!.
 
+needs_quoted_in_metta('','"').
 needs_quoted_in_metta(V,'"'):- atom_contains(V," ").
 needs_quoted_in_metta(V,'"'):- atom_contains(V,"/").
-needs_quoted_in_metta(V,"'"):- atom_length(V,L),L==1.
-needs_quoted_in_metta(V,""):- atom_contains(V,")").
+needs_quoted_in_metta(V,'"'):- atom_contains(V,'"').
+needs_quoted_in_metta(V,'"'):- atom_contains(V,'"').
+needs_quoted_in_metta(V,'"'):- atom_contains(V,',').
+%needs_quoted_in_metta(V,"'"):- atom_length(V,L),L==1.
+%needs_quoted_in_metta(V,"'"):- atom_contains(V,")").
+needs_quoted_in_metta(V,'"'):- atom_contains(V,"|").
+needs_quoted_in_metta(V,'"'):- atom_contains(V,"'").
 
 pp_sax(S) :-  \+ allow_concepts,!, write_src(S).
 pp_sax(S) :- is_englishy(S),!,print_concept("StringValue",S).
@@ -558,8 +593,8 @@ pp_sax(S) :- has_type(S,T),!,format('(~wValueNode "~w")',[T,S]).
 pp_sax(S) :- sub_atom(S,0,4,Aft,FB),flybase_identifier(FB,Type),!,(Aft>0->format('(~wValueNode "~w")',[Type,S]);format('(TypeNode "~w")',[Type])).
 pp_sax(S) :- print_concept("ConceptNode",S).
 
-print_concept( CType,V):- allow_concepts, !, write("("),write(CType),write(" "),with_concepts(false,write_src(V)),write(")").
-print_concept(_CType,V):- write_src(V).
+print_concept( CType,V):- allow_concepts, !, write("("),write(CType),write(" "),ignore(with_concepts(false,write_src(V))),write(")").
+print_concept(_CType,V):- ignore(write_src(V)).
 write_val(V):- number(V),!, write_src(V).
 write_val(V):- compound(V),!, write_src(V).
 write_val(V):- write('"'),write(V),write('"').
@@ -602,9 +637,12 @@ dash_functor(A,C):- direct_mapping(A,B),A\==B,!,always_dash_functor(B,C).
 dash_functor(Functor,DFunctor):-
    atom(Functor), atomic_list_concat(L,'-',Functor), L\=[_],maplist(always_dash_functor,L,LL),
    atomic_list_concat(LL,'-',DFunctor).
-dash_functor(Functor,DFunctor):-
+dash_functor(Functor,DFunctor):- fail,
    atom(Functor), atomic_list_concat(L,'_',Functor), L\=[_],maplist(always_dash_functor,L,LL),
    atomic_list_concat(LL,'-',DFunctor).
+dash_functor(Functor,DFunctor):-
+   atom(Functor), atomic_list_concat(L,'_',Functor), L\=[_],maplist(always_dash_functor,L,LL),
+   atomic_list_concat(LL,'_',DFunctor).
 
 
 is_an_arg_type(S,T):- flybase_identifier(S,T),!.
@@ -630,8 +668,9 @@ numbervars_w_singles(P):- term_singletons(P, Vars),
 
 
 pp_fb(P):- format("~N "),  \+ \+ (numbervars_w_singles(P), pp_fb1(P)),flush_output.
+pp_fb1(P):- write_src(P),!,nl.
 :- if(current_predicate(pp_ilp/1)).
-%pp_fb1(P):- pp_as(P),!,format("~N"),pp_ilp(P),!.
+pp_fb1(P):- pp_as(P),!,format("~N"),pp_ilp(P),!.
 :- endif.
 pp_fb1(P):- pp_as(P),!.
 pp_fb1(P):- print(P),!,nl.
@@ -1596,11 +1635,6 @@ fix_concept(S,A):- number_string(A,S),!.
 fix_concept(S,S):- !. % atom_string(A,S),!.
 
 % FBcv_0000743 % "FBtp0000743 %CL:0000743 % WBPhenotype_0000743 
-reprefix(['GO_','GO--','BiologicalProcess:GO:'],'GO:').
-reprefix(['flybase:','FLYBASE:','comment:'],'').
-reprefix(['FBpp:'],'FBpp').
-reprefix(['FBgn:'],'FBgn').
-reprefix(['FB:FB'],'FB').
 
 
 
