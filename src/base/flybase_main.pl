@@ -108,8 +108,8 @@ mine_corisponds(Concept1,Corispondance):-
  fb_arg_table_n(Concept1,Fn1,Nth1),is_good_atom_name(Concept1),
  fb_arg_table_n(Concept1,Fn2,Nth2),
  (Fn1+Nth1)@>(Fn2+Nth2),
- once((table_column_type(Fn1,Nth1,Type1),nonvar(Type1),
-       table_column_type(Fn2,Nth2,Type2),nonvar(Type2))),
+ once((table_colnum_type(Fn1,Nth1,Type1),nonvar(Type1),
+       table_colnum_type(Fn2,Nth2,Type2),nonvar(Type2))),
  (maybe_corisponds('ConceptMapFn'(Type1,Nth1,Fn1/*Arity1*/),'ConceptMapFn'(Type2,Nth2,Fn2/*Arity2*/))
   = Corispondance).
 
@@ -145,8 +145,8 @@ mine_atomspace_overlaps:-
   once((functor(Atom1,Fn1,Arity1),functor(Atom2,Fn2,Arity2),
   call(Atom1), arg(Nth1,Atom1,Concept1),good_concept(Concept1), arg(Nth2,Atom2,Concept1),call(Atom2))),
   once((
-    table_column_type(Fn1,Nth1,Type1),nonvar(Type1),
-  table_column_type(Fn2,Nth2,Type2),nonvar(Type1))),
+    table_colnum_type(Fn1,Nth1,Type1),nonvar(Type1),
+  table_colnum_type(Fn2,Nth2,Type2),nonvar(Type1))),
   assert_progress(Concept1,maybe_corisponds('ConceptMapFn'(Type1,Nth1,Fn1/*Arity1*/),'ConceptMapFn'(Type2,Nth2,Fn2/*Arity2*/))).
 
 fb_two_preds(Fn1,Nth1,Arity1,Fn2,Nth2,Arity2):- 
@@ -158,7 +158,7 @@ fb_two_preds(Fn1,Nth1,Arity1,Fn2,Nth2,Arity2):-
   fb_pred_g(Fn1,Arity1), fb_pred_g(Fn2,Arity2),Fn1@>Fn2,
   mine_typelevel_overlaps(_,'ConceptMapFn'(_Type1,Nth1,Fn1/*Arity1*/),'ConceptMapFn'(_Type2,Nth2,Fn2/*Arity2*/)).
 
-table_column_type(Fn,Nth,Type):- table_n_type(Fn,Nth,TypeC,TypeB),(nonvar(TypeB)->Type=TypeB;Type=TypeC).
+table_colnum_type(Fn,Nth,Type):- table_n_type(Fn,Nth,TypeC,TypeB),(nonvar(TypeB)->Type=TypeB;Type=TypeC).
 
 make_atom(Fn,Nth,Atom,Arg):- fb_pred_g(Fn,Arity),functor(Atom,Fn,Arity),arg(Nth,Atom,Arg).
 
@@ -264,12 +264,12 @@ decl_fb_pred(Fn,A):- fb_pred(Fn,A)-> true; (dynamic(Fn/A),assert(fb_pred(Fn,A)))
 :- dynamic(ontology_info/2).
 :- dynamic(ontology_info/3).
 
-loaded_from_file(X):- flag(loaded_from_file,X,X).
+loaded_from_file_count(X):- flag(loaded_from_file_count,X,X).
 
-should_cache:- loaded_from_file(X), option_else(max_disk_cache,Num,1000), X=<Num.
-reached_file_max:- loaded_from_file(X),option_value(max_per_file,Y), X>=Y.
-should_sample :- once(option_value(samples_per_million,Fifty);Fifty=50), loaded_from_file(X), Y is X mod 1_000_000, Y >= 0, Y =< Fifty.
-should_show_data:- loaded_from_file(X), once((X=<13,X>=10); (X>0,(0 is X rem 1_000_000))),
+should_cache:- loaded_from_file_count(X), option_else(max_disk_cache,Num,1000), X=<Num.
+reached_file_max:- loaded_from_file_count(X),option_value(max_per_file,Y), X>=Y.
+should_sample :- once(option_value(samples_per_million,Fifty);Fifty=50), loaded_from_file_count(X), Y is X mod 1_000_000, Y >= 0, Y =< Fifty.
+should_show_data:- loaded_from_file_count(X), once((X=<13,X>=10); (X>0,(0 is X rem 1_000_000))),
   format(user_error,'~N',[]),
   format(user_output,'~N',[]).
 
@@ -278,7 +278,7 @@ assert_OBO(Data00):- %ArgTypes=[],
   heartbeat,
   functor(Data00,Fn,A), A>=2,A<700,
   decl_fb_pred(Fn,A),
-  loaded_from_file(X),
+  loaded_from_file_count(X),
   Data00=..[Fn|Cols],
   make_assertion(Fn,Cols,Data,OldData),!,
     (call(Data)->true;(assert(Data),flag(total_loaded_atoms,TA,TA+1),
@@ -350,7 +350,7 @@ process_stream_chars(Stream, _, [], _):-!, process_stream(Stream, _, _).
 process_stream_chars(Stream, _, ['['|Chars], _):- !,
  must_det_ll(( append(Left,[']'],Chars), atom_chars(Type,Left),!,
   nb_setval(obo_type,Type),
-  flag(loaded_from_file,X,X+1),
+  flag(loaded_from_file_count,X,X+1),
   nop(process_stream(Stream, Type, _Id)))).
 
 process_stream_chars(Stream, Type, Chars, _):-
@@ -511,24 +511,24 @@ direct_mapping((A->B;C),O):- !, direct_mapping(if_then_else(A,B,C),O).
 direct_mapping((A->B),O):- !, direct_mapping(if_then(A,B),O).
 direct_mapping(I,O):- I=..[F|II],maplist(direct_mapping,[F|II],OO),O=..OO.
 
-print_pred_as_metta:- mmake,
+print_metta_src:- mmake,
   for_all((source_file(Pred,File),
           atom_contains(File,flybase)),
-         print_pred_as_metta(Pred)).
+         print_metta_src(Pred)).
 
-print_pred_as_metta(F/A):- !, print_pred_as_metta(F,A).
-print_pred_as_metta(Pred):- functor(Pred,F,A), print_pred_as_metta(F,A).
+print_metta_src(F/A):- !, print_metta_src(F,A).
+print_metta_src(Pred):- functor(Pred,F,A), print_metta_src(F,A).
 
-print_pred_as_metta(F,A):- functor(Head,F,A),
+print_metta_src(F,A):- functor(Head,F,A),
   nl,nl,nl,
-  for_all(clause(Head,Body), print_hb_as_metta(Head,Body)).
-print_hb_as_metta(Head,Body):- Body == true,!, print_hb_as_metta(=(Head,'True')).
-print_hb_as_metta(Head,Body):- Body == false,!, print_hb_as_metta(=(Head,'False')).
-print_hb_as_metta(Head,Body):- conjuncts_to_list(Body,List), into_sequential(List,SP),!,
-  print_hb_as_metta(=(Head,SP)).
+  for_all(clause(Head,Body), pp_metta(Head,Body)).
+pp_metta(Head,Body):- Body == true,!, pp_metta(=(Head,'True')).
+pp_metta(Head,Body):- Body == false,!, pp_metta(=(Head,'False')).
+pp_metta(Head,Body):- conjuncts_to_list(Body,List), into_sequential(List,SP),!,
+  pp_metta(=(Head,SP)).
 
 
-print_hb_as_metta(P):- pretty_numbervars(P,PP),with_option(concepts=false,pp_fb(PP)).
+pp_metta(P):- pretty_numbervars(P,PP),with_option(concepts=false,pp_fb(PP)).
 
 into_sequential(Body,SP):- \+ is_list(Body), conjuncts_to_list(Body,List),into_sequential(List,SP).
 into_sequential(List,SP):- length(List,L),L>1, SP =.. [sequential|List],!.
@@ -1303,7 +1303,7 @@ load_flybase0(Ext,File):-
 load_flybase(_Ext,File,_OutputFile,_Fn):- load_state(File,_),!.
 load_flybase(Ext,File,OutputFile,Fn):- file_to_sep(File,Sep),!,
   assert(load_state(File,loading)),
-  flag(loaded_from_file,_,0),
+  flag(loaded_from_file_count,_,0),
   fbug(load_flybase(Ext,File,OutputFile,Fn)),
   setup_call_cleanup(open(File,read,Stream),
        setup_call_cleanup(open(OutputFile,write,OutputStream,[encoding(utf8)]),
@@ -1366,7 +1366,7 @@ load_flybase_sv(Sep,File,Stream,OutputStream,Fn):-
   once(load_flybase_chars(File,Stream,Fn,Sep,Chars,OutputStream)),
   once(done_reading(File);reached_file_max;at_end_of_stream(Stream)),!,
   once(load_fb_data(File,Stream,Fn,Sep,end_of_file,OutputStream)))),
-  loaded_from_file(X),!,
+  loaded_from_file_count(X),!,
   fb_stats(Fn),
   pl_stats(File,X))).
 
@@ -1414,7 +1414,7 @@ load_flybase_chars(File,_Stream,_Fn,Sep,Chars,_OutputStream):-
    \+ member(Sep,Chars),
   %writeln(comment(Sep)=Chars),!,
   (format("~n ; ~s",[Chars])),
-  ignore((loaded_from_file(X),X>100,!,assert(done_reading(File)))).
+  ignore((loaded_from_file_count(X),X>100,!,assert(done_reading(File)))).
 
 load_flybase_chars(File,Stream,Fn,Sep,Chars,OutputStream):-
   member(Sep,Chars),['#'|_]=Chars,
@@ -1465,7 +1465,7 @@ write_flybase_data(OutputStream,Fn,Cols):-
     heartbeat,
     functor(Data,F,A), A>=2,A<700,
     catch(decl_fb_pred(F,A),E,(pp_fb(E=Cols),trace)),
-    flag(loaded_from_file,X,X+1),
+    flag(loaded_from_file_count,X,X+1),
     (call(Data)->true;(assert(Data),flag(total_loaded_atoms,TA,TA+1))),
     ignore((should_show_data,nl,nl,
       ignore((OldData\==Cols,pp_fb(oldData(X)=OldData))),

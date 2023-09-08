@@ -32,7 +32,7 @@ VSPACE_VERBOSE = os.environ.get("VSPACE_VERBOSE")
 # 0 = for scripts/demos
 # 1 = developer
 # 2 = debugger
-verbose = 1
+verbose = 2
 if VSPACE_VERBOSE is not None:
     try:
         # Convert it to an integer
@@ -91,6 +91,7 @@ insert_to_history("!(match &flybase $ $)")
 insert_to_history('!(match &flybase (gene_map_table $Dmel $abo $G  $C $D $E)  (gene_map_table $Dmel $abo $G  $C $D $E) )')
 insert_to_history('!(match &flybase (gene_map_table $Dmel $abo (GeneValueNode "FBgn0000018") $C $D $E) (gene_map_table $Dmel $abo (GeneValueNode "FBgn0000018") $C $D $E))')
 insert_to_history('!(add-atom &flybase (gene_map_table (ConceptNode "Dmel") (ConceptNode "abo") (GeneValueNode "FBgn0000018") (ConceptNode "2-44") (ConceptNode "32C1-32C1") (StringValue "2L:10973443..10975293(-1)")))')
+insert_to_history('!(match &flybase (gene_map_table $Dmel $abo FBgn0000018 $C $D $E) (gene_map_table $Dmel $abo FBgn0000018 $C $D $E))')
 insert_to_history('!(test_custom_v_space)', position_from_last=1)
 
 def save(prev_h_len, histfile):
@@ -316,6 +317,9 @@ class VSpace(AbstractSpace):
 
     def query(self, query_atom):
         swipl_fid = PL_open_foreign_frame()
+
+        #swipl_load = PL_new_term_ref()
+
         new_bindings_set = BindingsSet.empty()
         metta_vars = [atom for atom in query_atom.iterate() if atom.get_type() == AtomKind.VARIABLE]
         circles = Circles()
@@ -324,6 +328,7 @@ class VSpace(AbstractSpace):
         varsList.unify(swivars)
         swip_obj = m2s(circles,query_atom)
         if verbose>1: print(f"circles={circles}")
+        #if verbose>1: print(f"metta_vars={metta_vars}, swivars={swivars}")
         q = PySwipQ(Functor('metta_iter_bind',3)(self.swip_space_name(), swip_obj, varsList), module=self.sp_module)
 
         while q.nextSolution():
@@ -341,7 +346,8 @@ class VSpace(AbstractSpace):
                  mval = s2m(circles,sval)
                  if verbose>1: pt(f"mval({vn})=",mval, " ")
                  bindings.add_var_binding(mv, mval)
-                 vn =+ 1
+                 vn = vn + 1
+
             new_bindings_set.push(bindings)
         q.closeQuery()
         return new_bindings_set
@@ -560,8 +566,8 @@ def test_custom_space(LambdaSpaceFn):
     # Checking that multiple matches can be returned
     kb.add_atom(E(S("A"), S("E")))
 
-    result = kb.query(E(S("A"), V("xx")))
-    self_assertEqualNoOrder(result, [{"xx": S("B")}, {"xx": S("E")}])
+    result = kb.query(E(S("A"), V("XX")))
+    self_assertEqualNoOrder(result, [{"XX": S("B")}, {"XX": S("E")}])
 
     m = MeTTa()
 
@@ -594,7 +600,24 @@ def test_custom_space(LambdaSpaceFn):
     self_assertEqual([[S("B")]], result)
 
 @export_flags(MeTTa=False)
-def s2m(circles,swip_obj):
+def s2m(circles,swip_obj, depth=0):
+    r = s2m1(circles,swip_obj, depth)
+    if verbose<=1: return r
+    for i in range(depth+1):
+        print("   ",end='')
+    print(f"r({type(r)})={str(r)}/{repr(r)}")
+    return r
+
+def s2m1(circles,swip_obj, depth=0):
+
+    if verbose>1:
+        for i in range(depth):
+            print("   ",end='')
+        print(f's2m({len(circles)},{type(swip_obj)}): {str(swip_obj)}/{repr(swip_obj)}')
+
+    # Already converted
+    if isinstance(swip_obj, (VariableAtom, GroundedAtom, Atom, ExpressionAtom)):
+        return swip_obj
 
     if isinstance(swip_obj, str):
         return S(swip_obj)
@@ -604,10 +627,6 @@ def s2m(circles,swip_obj):
     # Handle numbers and convert them to ValueAtom objects in MeTTa
     if isinstance(swip_obj, (int, float)):
         return ValueAtom(swip_obj)
-
-    # Handle numbers and convert them to ValueAtom objects in MeTTa
-    if isinstance(swip_obj, (VariableAtom, GroundedAtom, ExpressionAtom)):
-        return swip_obj
 
     #oid = id(swip_obj)
 
@@ -702,7 +721,15 @@ def unwrap_pyobjs(metta_obj):
 
 def m2s1(circles, metta_obj, depth=0, preferStringToAtom = None, preferListToCompound = False):
 
+    var = circles.get(metta_obj, None)
+    if var is not None:
+        return var
+
     metta_obj = unwrap_pyobjs(metta_obj)
+
+    var = circles.get(metta_obj, None)
+    if var is not None:
+        return var
 
     if verbose>1:
         for i in range(depth):
@@ -732,21 +759,16 @@ def m2s1(circles, metta_obj, depth=0, preferStringToAtom = None, preferListToCom
         oid = id(metta_obj)
 
     var = circles.get(oid, None)
-
     # We are in a circluar reference?
     if var is not None:
         #print(f"{oid}={len(circles)}={type(circles)}={type(metta_obj)}")
         return var
 
-    var = circles.get(metta_obj, None)
-    if var is not None:
-        return var
 
     V = None
 
     if isinstance(metta_obj, VariableAtom):
-        V = Variable()
-        V.chars = oid
+        V = Variable(name = oid)
         circles[metta_obj] = V
         circles[V] = metta_obj
         return V
