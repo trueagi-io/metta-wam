@@ -32,6 +32,10 @@
 ))
 
 
+!(print "=====================================")
+!(print "Starting Shell !!!!!!!!!!!!!!!!!!!!!!")
+!(print "=====================================")
+
 
 !(metta_learner::vspace-main)
 
@@ -64,24 +68,24 @@
 !(np.vector 1 "S")
 ; !(np.array (1 (1 2))) ; exception because of bad shape
 
-!(printl "HALF WAY")
+!(print "HALF WAY")
 
 ; wrapping into a function should work
 ; also works automatically with python numbers
 ; (no need to turn 1 into np.array)
 (= (np-add-1 $x) (np.add $x 1))
 
-!(printl "1 HALF WAY")
+!(print "1 HALF WAY")
 
 !(np-add-1 (np-add-1 &x)) ; [3 4 5] ; not a pattern
 
-!(printl "2 HALF WAY")
+!(print "2 HALF WAY")
 ; could work with untyped np objects,
 ; although with some problems (the resulting type would be Number),
 ; but doesn't work, because + expects Number
 ;!(+ &x &y)
 
-!(printl "3 HALF WAY")
+!(print "3 HALF WAY")
 
 !(== (np.add &y &x) (np.add &x &y)) ; True
 !(== &x &y) ; False
@@ -106,4 +110,4 @@
   )
 
 
-
+!(metta_learner::vspace-main)
