@@ -306,26 +306,27 @@ decl_fb_pred(Fn,A):- fb_pred(Fn,A)-> true; (dynamic(Fn/A),assert(fb_pred(Fn,A)))
 :- dynamic(ontology_info/3).
 
 loaded_from_file_count(X):- flag(loaded_from_file_count,X,X).
-incr_file_count(X):- flag(loaded_from_file_count,X,X+1).
+incr_file_count(X):- flag(loaded_from_file_count,X,X+1),  flag(total_loaded_atoms,TA,TA+1).
 
 should_cache:- loaded_from_file_count(X), option_else(max_disk_cache,Num,1000), X=<Num.
 reached_file_max:- loaded_from_file_count(X),option_value(max_per_file,Y), X>=Y.
 should_fix_args :- fail, \+ should_sample.
-should_sample :- once(option_value(samples_per_million,Fifty);Fifty=50), loaded_from_file_count(X), Y is X mod 1_000_000, Y >= 0, Y =< Fifty.
-should_show_data:- loaded_from_file_count(X), once((X=<13,X>=10); (X>0,(0 is X rem 1_000_000))),
+should_sample :- once(option_value(samples_per_million,Fifty);Fifty=50), loaded_from_file_count(X), Y is X mod 1_000_000, Y >= 0, Y =< Fifty,!.
+should_sample :- should_show_data(_),!.
+should_show_data(X):- loaded_from_file_count(X), once((X=<13,X>=10); (X>0,(0 is X rem 1_000_000))),
   format(user_error,'~N',[]),
-  format(user_output,'~N',[]).
+  format(user_output,'~N',[]),
+  heartbeat.
 
 assert_OBO(P,X,Y):- assert_OBO(ontology_info(P,X,Y)).
 assert_OBO(Data00):- %ArgTypes=[],
   heartbeat,
   functor(Data00,Fn,A), A>=2,A<700,
   decl_fb_pred(Fn,A),
-  loaded_from_file_count(X),
   Data00=..[Fn|Cols],
   make_assertion(Fn,Cols,Data,OldData),!,
-    (call(Data)->true;(assert(Data),flag(total_loaded_atoms,TA,TA+1),
-    ignore(((should_show_data,nl,nl,fbug(newData(X)=Data),ignore((OldData\==Cols,
+    (call(Data)->true;(assert(Data),incr_file_count(_),
+    ignore(((should_show_data(X),nl,nl,fbug(newData(X)=Data),ignore((OldData\==Cols,
       fbug(oldData(X)=OldData)))))))),!.
 
 load_obo_files:- make,
@@ -366,7 +367,7 @@ process_stream_repeat(Stream):-
      nb_current(obo_type,Type),
      nb_current(obo_id, Id),
      once((read_line_to_string(Stream, Line),
-     (should_show_data -> writeln(Line); true),
+     (should_show_data(_) -> writeln(Line); true),
         normalize_space(chars(Chars),Line))),
         Chars\==[],
         once(process_stream_chars(Stream, Type, Chars, Id)),
@@ -1419,9 +1420,9 @@ track_load_into_file(Filename,Goal):-
 
 fa_read(In, _):- at_end_of_stream(In),!.
 fa_read(In,FBTe):- read_line_to_chars(In,Chars), fa_read_n(In,FBTe,Chars).
-fa_read_n(In,_,['>'|Chars]):- atom_chars(FBTe,Chars), !, 
-  fa_read(In,seq(FBTe,1)).
-fa_read_n(In,seq(FBTe,N),Chars):- atom_chars(FBTe,Chars), fb_decl(seq,3),
+fa_read_n(In,_,['>'|Chars]):- !, must_det_ll((atom_chars(FBTe,Chars), fa_read(In,seq(FBTe,1)))).
+fa_read_n(In,seq(FBTe,N),Chars):-
+   decl_fb_pred(seq,3),
    assert(seq(FBTe,N,Chars)),
    incr_file_count(_),
    N2 is N+1,fa_read(In,seq(FBTe,N2)).
@@ -1468,7 +1469,6 @@ load_flybase_sv(Sep,File,Stream,OutputStream,Fn):-
     once(done_reading(File);at_end_of_stream(Stream)),!,
     once(end_fb_file_data(File,Stream,Fn,OutputStream)),
     flag(loaded_from_file_count,X,X),!,
-    flag(total_atoms,TA,TA+X),!,
     fb_stats(Fn),
     pl_stats(File,X))).
 
@@ -1503,10 +1503,11 @@ load_flybase_chars(Sep,File,Stream,Chars,OutputStream,Fn):-
 
 
 load_flybase_chars(Sep,File,_Stream,Chars,_OutputStream,_Fn):-
-   \+ member(Sep,Chars),
+  \+ member(Sep,Chars),
   %writeln(comment(Sep)=Chars),!,
-  (format("~n ; ~s",[Chars])),
-  ignore((loaded_from_file_count(X),X>100,!,assert(done_reading(File)))).
+  extreme_debug(format("~n ; ~s",[Chars])),
+  ignore((flag(loaded_from_file_count,X,X),X>1000,!,assert(done_reading(File)))).
+
 load_flybase_chars(Sep,_File,_Stream,Chars,_OutputStream,Fn):-
   member(Sep,Chars),['#'|_]=Chars,
   format("~n ; Maybe Header: ~s",[Chars]),
