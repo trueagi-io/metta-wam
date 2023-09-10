@@ -1217,7 +1217,7 @@ not_trimmed_path([],[]).
 
 %file_to_sep(_File,9).
 file_to_sep(File,','):- file_name_extension(_,csv,File),!.
-file_to_sep(File,'\true'):- file_name_extension(_,tsv,File),!.
+file_to_sep(File,'\t'):- file_name_extension(_,tsv,File),!.
 
 
 is_swipl:- \+ is_scryer.
