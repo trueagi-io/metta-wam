@@ -39,34 +39,35 @@ post_statistic(N,V):- statistics(N,VV),term_number(VV,FV),pre_statistic(N,WV), V
 term_number(T,N):- sub_term(N,T),number(N).
 
 
-flybase_identifier('FBab', 'aberration').
-flybase_identifier('FBal', 'allele').
-flybase_identifier('FBba', 'balancer').
-flybase_identifier('FBbt', 'anatomy term').
-flybase_identifier('FBch', 'chromosome arm').
-flybase_identifier('FBcl', 'clone').
-flybase_identifier('FBcv', 'controlled vocabulary').
-flybase_identifier('FBdv', 'developmental stage term').
-flybase_identifier('FBgg', 'gene group').
-flybase_identifier('FBgn', 'gene').
-flybase_identifier('FBhh', 'human disease').
-flybase_identifier('FBig', 'interaction').
-flybase_identifier('FBim', 'image').
-flybase_identifier('FBlc', 'large dataset metadata').
-flybase_identifier('FBmc', 'molecular construct').
-flybase_identifier('FBms', 'molecular segment').
-flybase_identifier('FBpl', 'probe').
-flybase_identifier('FBpp', 'polypeptide').
-flybase_identifier('FBrf', 'reference').
-flybase_identifier('FBsf', 'sequence feature').
-flybase_identifier('FBsn', 'strain').
-flybase_identifier('FBst', 'stock').
-flybase_identifier('FBtc', 'cell line').
-flybase_identifier('FBti', 'transposable element insertion').
-flybase_identifier('FBto', 'experimental tools').
-flybase_identifier('FBte', 'transgenic element').
-flybase_identifier('FBtp', 'transposon'). %flybase_identifier('FBtp', 'transgenic construct or natural transposon').
-flybase_identifier('FBtr', 'transcript').
+
+flybase_identifier('FBab', 'Aberration').
+flybase_identifier('FBal', 'Allele').
+flybase_identifier('FBba', 'Balancer').
+flybase_identifier('FBbt', 'AnatomyTerm').
+flybase_identifier('FBch', 'ChromosomeArm').
+flybase_identifier('FBcl', 'Clone').
+flybase_identifier('FBcv', 'ControlledVocabulary').
+flybase_identifier('FBdv', 'DevelopmentalStageTerm').
+flybase_identifier('FBgg', 'GeneGroup').
+flybase_identifier('FBgn', 'Gene').
+flybase_identifier('FBhh', 'HumanDisease').
+flybase_identifier('FBig', 'GeneInteraction').
+flybase_identifier('FBim', 'Image').
+flybase_identifier('FBlc', 'LargeDatasetMetadata').
+flybase_identifier('FBmc', 'MolecularConstruct').
+flybase_identifier('FBms', 'MolecularSegment').
+flybase_identifier('FBpl', 'Probe').
+flybase_identifier('FBpp', 'Polypeptide').
+flybase_identifier('FBrf', 'Reference').
+flybase_identifier('FBsf', 'SequenceFeature').
+flybase_identifier('FBsn', 'GeneStrain').
+flybase_identifier('FBst', 'GeneStock').
+flybase_identifier('FBtc', 'CellLine').
+flybase_identifier('FBti', 'TransposableIlementInsertion').
+flybase_identifier('FBto', 'ExperimentalTool').
+flybase_identifier('FBte', 'TransgenicElement').
+flybase_identifier('FBtp', 'Transposon'). %flybase_identifier('FBtp', 'transgenic construct or natural transposon').
+flybase_identifier('FBtr', 'Transcript').
 
 % FlyBase prefixes
 atom_prefix(Prefix, flybase, Desc):- flybase_identifier(Prefix, Desc).
@@ -293,7 +294,7 @@ assert_OBO(OBO):-
  must_det_ll((
   heartbeat,
   OBO=..[Fn|Cols],
-  make_assertion(Fn,Cols,Data,OldData),
+  make_assertion4(Fn,Cols,Data,OldData),
   functor(Data,FF,AA),
   decl_fb_pred(FF,AA),
   (%call(Data)->true;
@@ -311,7 +312,7 @@ into_datum(Fn, [D|DataL], Data):-
     (option_value(pred_va, true) -> Data =.. [Fn,D,DataL]; Data =.. [Fn,D|DataL]).
 
 % Create a new assertion from old data
-make_assertion(Fn, Cols, NewData, OldData):-
+make_assertion4(Fn, Cols, NewData, OldData):-
     into_datum(Fn, Cols, OldData),
     OldData =.. [Fn|Args],
     % skip(if_t(var(ArgTypes), must_det_ll_r((once((length(Args,Len),length(ArgTypes,Len),once((table_columns(Fn,ArgTypes);table_columns(F,ArgTypes))))))))),
@@ -344,6 +345,7 @@ load_obo(Directory) :-
   directory_file_path(Directory, "*.obo", Filename),
   expand_file_name(Filename,List),!,maplist(load_obo,List).
 load_obo(Filename) :-
+ track_load_into_file(Filename,
  must_det_ll((
     directory_file_path(Directory, BaseName, Filename),
     file_name_extension(Id, _, BaseName),
@@ -355,7 +357,7 @@ load_obo(Filename) :-
     assert_OBO('directory',Id,Directory),!,
     setup_call_cleanup(open(Filename, read, Stream),
       process_stream_repeat(Stream),
-      close(Stream)))),
+      close(Stream))))),
  fb_stats.
 
 process_stream_repeat(Stream):-
@@ -501,6 +503,13 @@ named_like_string([H|T])-->[H],{\+member(H,['\n'])},named_like_string(T).
 named_like_string([])-->[].
 whs-->[''],!,whs. whs-->[].
 
+%load_fb_obo(Ext,File,OutputFile,Fn):- fbug(load_fb_obo(Ext,File,OutputFile,Fn)),!.
+load_fb_obo(Ext,File,OutputFile,Fn):- fbug(load_fb_obo(Ext,File,OutputFile,Fn)),
+  (current_predicate(load_obo/1)->load_obo(File);true).
+
+for_all(G1,G2):-
+  forall(G1,G2).
+
 :- discontiguous column_names_ext/2.
 :- discontiguous primary_column/2.
 
@@ -526,7 +535,6 @@ skipped_anotations(gene_rpkm_matrix).
 skipped_anotations(dmel_gene_sequence_ontology_annotations).
 skipped_anotations(fbgn_annotation_ID).
 
-
 gc_now:- set_option_value(gc,true), garbage_collect,garbage_collect_atoms,garbage_collect_clauses.
 
 extreme_debug(_).
@@ -544,9 +552,6 @@ pp_fb1(P):- pp_as(P),!,format("~N"),pp_ilp(P),!.
 pp_fb1(P):- pp_as(P),!.
 pp_fb1(P):- print(P),!,nl.
 pp_fb1(P):- fbdebug1(P),!,nl.
-
-for_all(G1,G2):-
-  forall(G1,G2).
 
 allow_concepts:- option_else(concepts,TF,true), \+ TF == false.
 with_concepts(TF,Goal):- with_option(concepts,TF,Goal).
@@ -689,6 +694,7 @@ print_list_as_sexpression([H|T]) :- write(' '), pp_sex(H), print_list_as_sexpres
 call_sexpr(S):- writeln(call=S).
 
 
+
 fbug(P) :- format("~N"), with_output_to(user_error,pp_fb(P)),!.
 fbug(N=V) :- nonvar(N), !, fbdebug1(N:-V).
 fbug(V) :- compound(V),functor(V,F,_A),!,fbdebug1(F:-V).
@@ -752,6 +758,7 @@ load_flybase_dirs:-
 
 
 /*
+
 declare -a StringArray=(\
 "fbgn_fbtr_fbpp_expanded_*.tsv.gz" \
 "physical_interactions_mitab_fb_*.tsv.gz" \
@@ -881,200 +888,217 @@ load_flybase_chado:-  % 359 tables with 937,381,148 rows
   with_option([row_1_is_header=true,max_per_file=100_000],load_flybase('./data/tsv_exports/public/*.tsv')).
 
 
-est_size( 248_392_754, feature_relationship).
-est_size( 141_933_327, dbxrefprop).
-est_size(  98_464_502, featureloc).
-est_size(  92_616_770, feature).
-est_size(  78_909_675, analysisfeature).
-est_size(  61_025_742, feature_dbxref).
-est_size(  53_031_863, library_featureprop).
-est_size(  39_950_320, dbxref).
-est_size(  27_923_222, library_feature).
-est_size(  23_805_222, feature_relationshipprop).
-est_size(  21_280_000, featureprop).
-est_size(   7_474_186, feature_synonym).
-est_size(   6_554_428, synonym).
-est_size(   5_578_281, feature_pub).
-est_size(   5_341_101, featureprop_pub).
-est_size(   4_865_119, feature_relationship_pub).
-est_size(   2_813_406, feature_interactionprop).
-est_size(   2_464_356, feature_cvterm).
-est_size(   1_950_808, feature_cvtermprop).
-est_size(   1_377_259, feature_interaction).
-est_size(   1_116_491, feature_genotype).
-est_size(     888_211, pubprop).
-est_size(     734_871, featureloc_pub).
-est_size(     688_735, pubauthor).
-est_size(     518_570, genotype_synonym).
-est_size(     495_849, genotype).
-est_size(     491_539, feature_pubprop).
-est_size(     466_210, phenstatement).
-est_size(     413_339, pub_dbxref).
-est_size(     382_055, genotype_dbxref).
-est_size(     351_943, phendesc).
-est_size(     277_993, phenotype_comparison_cvterm).
-est_size(     254_299, feature_expressionprop).
-est_size(     252_545, phenotype_comparison).
-est_size(     251_929, pub).
-est_size(     242_345, pub_relationship).
-est_size(     227_407, feature_expression).
-est_size(     213_361, cvterm_relationship).
-est_size(     212_143, cvterm_dbxref).
-est_size(     209_165, interaction_cvterm).
-est_size(     195_001, cvtermsynonym).
-est_size(     180_312, expression_cvterm).
-est_size(     167_583, update_track).
-est_size(     150_402, feature_relationshipprop_pub).
-est_size(     149_856, stockcollection_stock).
-est_size(     149_856, stock).
-est_size(     149_836, stock_genotype).
-est_size(     146_847, interactionprop).
-est_size(     122_005, interaction_group).
-est_size(     119_612, feature_interaction_pub).
-est_size(     112_785, interaction_pub).
-est_size(     112_782, interaction).
-est_size(     101_688, interaction_group_feature_interaction).
-est_size(      96_406, feature_grpmember_pub).
-est_size(      94_766, cvterm).
-est_size(      79_467, expression_cvtermprop).
-est_size(      74_874, interactionprop_pub).
-est_size(      73_829, library_interaction).
-est_size(      57_145, organism).
-est_size(      48_731, humanhealthprop).
-est_size(      41_076, feature_grpmember).
-est_size(      36_961, expression).
-est_size(      23_566, library_cvterm).
-est_size(      23_484, library_cvtermprop).
-est_size(      21_252, cvtermprop).
-est_size(      19_798, libraryprop).
-est_size(      18_397, phenotype).
-est_size(      17_872, phenotype_cvterm).
-est_size(      16_618, humanhealth_dbxrefprop).
-est_size(      16_530, interaction_expressionprop).
-est_size(      16_319, humanhealth_pub).
-est_size(      15_401, library_synonym).
-est_size(      15_356, humanhealth_dbxref).
-est_size(      15_143, cell_line_feature).
-est_size(      14_973, libraryprop_pub).
-est_size(      13_695, interaction_expression).
-est_size(      13_219, interaction_cell_line).
-est_size(      10_721, library_pub).
-est_size(       9_871, library_relationship).
-est_size(       9_852, humanhealthprop_pub).
-est_size(       9_559, library_dbxref).
-est_size(       8_340, library_relationship_pub).
-est_size(       7_096, grp_pub).
-est_size(       6_720, cell_line_pub).
-est_size(       6_658, grp_relationship).
-est_size(       6_606, strain_synonym).
-est_size(       5_991, grp_synonym).
-est_size(       5_948, humanhealth_synonym).
-est_size(       5_786, strainprop).
-est_size(       5_784, strainprop_pub).
-est_size(       5_770, library).
-est_size(       5_544, grp_cvterm).
-est_size(       5_445, cell_line_synonym).
-est_size(       5_278, library_expression).
-est_size(       5_188, grpprop).
-est_size(       5_160, grpmember).
-est_size(       4_470, humanhealth_dbxrefprop_pub).
-est_size(       4_451, library_expressionprop).
-est_size(       4_416, grpprop_pub).
-est_size(       4_320, stock_cvterm).
-est_size(       3_833, library_dbxrefprop).
-est_size(       3_830, grpmemberprop).
-est_size(       3_778, genotype_cvterm).
-est_size(       3_745, humanhealth_featureprop).
-est_size(       3_722, library_strainprop).
-est_size(       3_722, library_strain).
-est_size(       3_626, humanhealth_feature).
-est_size(       2_642, grp_dbxref).
-est_size(       2_264, humanhealth_relationship).
-est_size(       2_221, humanhealth_relationship_pub).
-est_size(       2_094, strain_pub).
-est_size(       2_011, grp_relationship_pub).
-est_size(       1_940, strain_cvtermprop).
-est_size(       1_940, strain_cvterm).
-est_size(       1_815, grp).
-est_size(       1_778, strain_dbxref).
-est_size(       1_777, strain).
-est_size(       1_740, organism_dbxref).
-est_size(       1_644, feature_humanhealth_dbxref).
-est_size(       1_541, humanhealth_cvtermprop).
-est_size(       1_541, humanhealth_cvterm).
-est_size(       1_516, humanhealth).
-est_size(       1_301, cell_lineprop_pub).
-est_size(       1_292, cell_lineprop).
-est_size(       1_216, cell_line_dbxref).
-est_size(       1_199, cell_line_libraryprop).
-est_size(       1_082, cell_line_library).
-est_size(       1_014, organism_pub).
-est_size(         822, organismprop).
-est_size(         732, organismprop_pub).
-est_size(         715, cell_line_cvterm).
-est_size(         519, db).
-est_size(         436, strain_relationship_pub).
-est_size(         436, strain_relationship).
-est_size(         321, cell_line).
-est_size(         309, analysis).
-est_size(         239, stockprop).
-est_size(         172, cell_line_relationship).
-est_size(         140, strain_featureprop).
-est_size(         140, strain_feature).
-est_size(         108, strain_phenotypeprop).
-est_size(          97, humanhealth_pubprop).
-est_size(          74, cell_line_cvtermprop).
-est_size(          72, cv).
-est_size(          55, strain_phenotype).
-est_size(          41, environment).
-est_size(          28, stockcollectionprop).
-est_size(          27, contact).
-est_size(          19, environment_cvterm).
-est_size(          12, organism_library).
-est_size(           8, stockcollection).
-est_size(           2, lock).
-est_size(           1, analysisgrp).
-est_size(           1, analysisgrpmember).
-est_size(           1, analysisprop).
-est_size(           1, audit_chado).
-est_size(           1, cell_line_strain).
-est_size(           1, cell_line_strainprop).
-est_size(           1, cvtermpath).
-est_size(           1, eimage).
-est_size(           1, expression_image).
-est_size(           1, expression_pub).
-est_size(           1, expressionprop).
-est_size(           1, feature_cvterm_dbxref).
-est_size(           1, feature_phenotype).
-est_size(           1, featuremap).
-est_size(           1, featuremap_pub).
-est_size(           1, featurepos).
-est_size(           1, featurerange).
-est_size(           1, genotype_cvtermprop).
-est_size(           1, genotype_pub).
-est_size(           1, genotypeprop).
-est_size(           1, genotypeprop_pub).
-est_size(           1, grp_pubprop).
-est_size(           1, grp_relationshipprop).
-est_size(           1, grpmember_cvterm).
-est_size(           1, grpmember_pub).
-est_size(           1, grpmemberprop_pub).
-est_size(           1, humanhealth_phenotype).
-est_size(           1, humanhealth_phenotypeprop).
-est_size(           1, interaction_cvtermprop).
-est_size(           1, library_grpmember).
-est_size(           1, library_humanhealth).
-est_size(           1, library_humanhealthprop).
-est_size(           1, organism_cvterm).
-est_size(           1, organism_cvtermprop).
-est_size(           1, organism_grpmember).
-est_size(           1, project).
-est_size(           1, stock_dbxref).
-est_size(           1, stock_pub).
-est_size(           1, stock_relationship).
-est_size(           1, stock_relationship_pub).
-est_size(           1, stockprop_pub).
-est_size(           1, tableinfo).
+est_size(    248_392_753,feature_relationship).
+est_size(    141_933_326,dbxrefprop).
+est_size(     98_464_501,featureloc).
+est_size(     92_616_769,feature).
+est_size(     78_909_674,analysisfeature).
+est_size(     61_025_741,feature_dbxref).
+est_size(     53_031_862,library_featureprop).
+est_size(     39_950_319,dbxref).
+est_size(     27_923_221,library_feature).
+est_size(     23_805_221,feature_relationshipprop).
+est_size(     21_279_999,featureprop).
+est_size(      7_474_185,feature_synonym).
+est_size(      6_554_427,synonym).
+est_size(      5_578_280,feature_pub).
+est_size(      5_341_100,featureprop_pub).
+est_size(      4_865_118,feature_relationship_pub).
+est_size(      2_813_405,feature_interactionprop).
+est_size(      2_464_355,feature_cvterm).
+est_size(      1_950_807,feature_cvtermprop).
+est_size(      1_377_258,feature_interaction).
+est_size(      1_116_490,feature_genotype).
+est_size(        888_210,pubprop).
+est_size(        734_870,featureloc_pub).
+est_size(        688_734,pubauthor).
+est_size(        518_569,genotype_synonym).
+est_size(        495_848,genotype).
+est_size(        491_538,feature_pubprop).
+est_size(        466_209,phenstatement).
+est_size(        413_338,pub_dbxref).
+est_size(        382_054,genotype_dbxref).
+est_size(        351_942,phendesc).
+est_size(        277_992,phenotype_comparison_cvterm).
+est_size(        254_298,feature_expressionprop).
+est_size(        252_544,phenotype_comparison).
+est_size(        251_928,pub).
+est_size(        242_344,pub_relationship).
+est_size(        227_406,feature_expression).
+est_size(        213_360,cvterm_relationship).
+est_size(        212_142,cvterm_dbxref).
+est_size(        209_164,interaction_cvterm).
+est_size(        195_000,cvtermsynonym).
+est_size(        180_311,expression_cvterm).
+est_size(        167_582,update_track).
+est_size(        150_401,feature_relationshipprop_pub).
+est_size(        149_855,stockcollection_stock).
+est_size(        149_855,stock).
+est_size(        149_835,stock_genotype).
+est_size(        146_846,interactionprop).
+est_size(        122_004,interaction_group).
+est_size(        119_611,feature_interaction_pub).
+est_size(        112_784,interaction_pub).
+est_size(        112_781,interaction).
+est_size(        101_687,interaction_group_feature_interaction).
+est_size(         96_405,feature_grpmember_pub).
+est_size(         94_765,cvterm).
+est_size(         79_466,expression_cvtermprop).
+est_size(         74_873,interactionprop_pub).
+est_size(         73_828,library_interaction).
+est_size(         57_144,organism).
+est_size(         48_730,humanhealthprop).
+est_size(         41_075,feature_grpmember).
+est_size(         36_960,expression).
+est_size(         23_565,library_cvterm).
+est_size(         23_483,library_cvtermprop).
+est_size(         21_251,cvtermprop).
+est_size(         19_797,libraryprop).
+est_size(         18_396,phenotype).
+est_size(         17_871,phenotype_cvterm).
+est_size(         16_617,humanhealth_dbxrefprop).
+est_size(         16_529,interaction_expressionprop).
+est_size(         16_318,humanhealth_pub).
+est_size(         15_400,library_synonym).
+est_size(         15_355,humanhealth_dbxref).
+est_size(         15_142,cell_line_feature).
+est_size(         14_972,libraryprop_pub).
+est_size(         13_694,interaction_expression).
+est_size(         13_218,interaction_cell_line).
+est_size(         10_720,library_pub).
+est_size(          9_870,library_relationship).
+est_size(          9_851,humanhealthprop_pub).
+est_size(          9_558,library_dbxref).
+est_size(          8_339,library_relationship_pub).
+est_size(          7_095,grp_pub).
+est_size(          6_719,cell_line_pub).
+est_size(          6_657,grp_relationship).
+est_size(          6_605,strain_synonym).
+est_size(          5_990,grp_synonym).
+est_size(          5_947,humanhealth_synonym).
+est_size(          5_785,strainprop).
+est_size(          5_783,strainprop_pub).
+est_size(          5_769,library).
+est_size(          5_543,grp_cvterm).
+est_size(          5_444,cell_line_synonym).
+est_size(          5_277,library_expression).
+est_size(          5_187,grpprop).
+est_size(          5_159,grpmember).
+est_size(          4_469,humanhealth_dbxrefprop_pub).
+est_size(          4_450,library_expressionprop).
+est_size(          4_415,grpprop_pub).
+est_size(          4_319,stock_cvterm).
+est_size(          3_832,library_dbxrefprop).
+est_size(          3_829,grpmemberprop).
+est_size(          3_777,genotype_cvterm).
+est_size(          3_744,humanhealth_featureprop).
+est_size(          3_721,library_strainprop).
+est_size(          3_721,library_strain).
+est_size(          3_625,humanhealth_feature).
+est_size(          2_641,grp_dbxref).
+est_size(          2_263,humanhealth_relationship).
+est_size(          2_220,humanhealth_relationship_pub).
+est_size(          2_093,strain_pub).
+est_size(          2_010,grp_relationship_pub).
+est_size(          1_939,strain_cvtermprop).
+est_size(          1_939,strain_cvterm).
+est_size(          1_814,grp).
+est_size(          1_777,strain_dbxref).
+est_size(          1_776,strain).
+est_size(          1_739,organism_dbxref).
+est_size(          1_643,feature_humanhealth_dbxref).
+est_size(          1_540,humanhealth_cvtermprop).
+est_size(          1_540,humanhealth_cvterm).
+est_size(          1_515,humanhealth).
+est_size(          1_300,cell_lineprop_pub).
+est_size(          1_291,cell_lineprop).
+est_size(          1_215,cell_line_dbxref).
+est_size(          1_198,cell_line_libraryprop).
+est_size(          1_081,cell_line_library).
+est_size(          1_013,organism_pub).
+est_size(            821,organismprop).
+est_size(            731,organismprop_pub).
+est_size(            714,cell_line_cvterm).
+est_size(            518,db).
+est_size(            435,strain_relationship_pub).
+est_size(            435,strain_relationship).
+est_size(            320,cell_line).
+est_size(            308,analysis).
+est_size(            238,stockprop).
+est_size(            171,cell_line_relationship).
+est_size(            139,strain_featureprop).
+est_size(            139,strain_feature).
+est_size(            107,strain_phenotypeprop).
+est_size(             96,humanhealth_pubprop).
+est_size(             73,cell_line_cvtermprop).
+est_size(             71,cv).
+est_size(             54,strain_phenotype).
+est_size(             40,environment).
+est_size(             27,stockcollectionprop).
+est_size(             26,contact).
+est_size(             18,environment_cvterm).
+est_size(             11,organism_library).
+est_size(              7,stockcollection).
+est_size(              1,lock).
+est_size(              0,analysisgrp).
+est_size(              0,analysisgrpmember).
+est_size(              0,analysisprop).
+est_size(              0,audit_chado).
+est_size(              0,cell_line_strain).
+est_size(              0,cell_line_strainprop).
+est_size(              0,cvtermpath).
+est_size(              0,eimage).
+est_size(              0,expression_image).
+est_size(              0,expression_pub).
+est_size(              0,expressionprop).
+est_size(              0,feature_cvterm_dbxref).
+est_size(              0,feature_phenotype).
+est_size(              0,featuremap).
+est_size(              0,featuremap_pub).
+est_size(              0,featurepos).
+est_size(              0,featurerange).
+est_size(              0,genotype_cvtermprop).
+est_size(              0,genotype_pub).
+est_size(              0,genotypeprop).
+est_size(              0,genotypeprop_pub).
+est_size(              0,grp_pubprop).
+est_size(              0,grp_relationshipprop).
+est_size(              0,grpmember_cvterm).
+est_size(              0,grpmember_pub).
+est_size(              0,grpmemberprop_pub).
+est_size(              0,humanhealth_phenotype).
+est_size(              0,humanhealth_phenotypeprop).
+est_size(              0,interaction_cvtermprop).
+est_size(              0,library_grpmember).
+est_size(              0,library_humanhealth).
+est_size(              0,library_humanhealthprop).
+est_size(              0,organism_cvterm).
+est_size(              0,organism_cvtermprop).
+est_size(              0,organism_grpmember).
+est_size(              0,project).
+est_size(              0,stock_dbxref).
+est_size(              0,stock_pub).
+est_size(              0,stock_relationship).
+est_size(              0,stock_relationship_pub).
+est_size(              0,stockprop_pub).
+est_size(              0,tableinfo).
+
+est_size_loaded(              N,F):- fb_pred(F,A),
+  \+ (fb_pred(F,A2),A2>A), fb_pred_count(F,A,N).
+
+fb_pred_count(F,A,N):- functor(P,F,A),predicate_property(P,number_of_clauses(N)).
+
+
+print_est_sizes:- findall(print_est_size(N,F),est_size_loaded(N,F),L),
+  sort(L,S),reverse(S,R),maplist(call,R).
+
+print_est_size(N1,S):- format('~Nest_size(~@, ~q).',[pad_number(N1,15),S]).
+
+% pad_number(Number, N) pads Number with spaces to occupy N spaces in total
+% and includes underscores as the thousand separator.
+pad_number(Number, N) :-
+  sformat(S,"~t~D~*|", [Number,N]),atomic_list_concat(L,',',S),
+  atomic_list_concat(L,'_',SS),write(SS).
 
 % Load flybase data in Prolog format.
 load_fb_cache:-
@@ -1177,6 +1201,98 @@ encoding_trial(unicode_le).
 encoding_trial(utf8).
 encoding_trial(wchar_t).
 
+
+:- dynamic(fix_columns_nth/2).
+needs_fixed(X,Y):- (var(X)->fb_arg(X);true),fix_concept(X,L),(L\=@=[X],L\=@=X),(L=[Y]->true;Y=L).
+mine_args_that_need_reduced:-
+  writeln('\n\n\n=====\n\n\n'),
+  forall(needs_fixed(X,Y),(pp_ilp(needs_fixed(X->Y)),fix_columns_with_arg(X))),
+  listing(fix_columns_nth).
+
+mine_primary_columns:-
+  writeln('\n\n\n=====\n\n\n'),
+  forall(needs_fixed(X,Y),(pp_ilp(needs_fixed(X->Y)),fix_columns_with_arg(X))),
+  listing(fix_columns_nth).
+
+/*
+
+128 ?- mine_no_repeats_columns.
+%~ mine_no_repeats_columns(seq,[])
+%~ mine_no_repeats_columns(ontology_info,[2])
+%~ mine_no_repeats_columns(fbgn_fbtr_fbpp_expanded,[1,2,3,4,5,6,7])
+%~ mine_no_repeats_columns( physical_interactions_mitab, [
+%~   1, 2,3,4,5,6,7,8,9,
+%~   10,11,12,13,15,16,17,
+%~   18,19,20,21,22,23,24,
+%~   25,26,27,28,29,30,31,
+%~   32,33,34,35,36,37,38,
+%~   39,40,41,42])
+%~ mine_no_repeats_columns(dmel_gene_sequence_ontology_annotations,[1,2,3,4])
+%~ mine_no_repeats_columns(gene_map_table,[1,4,5,6])
+%~ mine_no_repeats_columns(gene_genetic_interactions,[1,2,3,4,5,6])
+%~ mine_no_repeats_columns(allele_genetic_interactions,[1,2,3,4])
+%~ mine_no_repeats_columns(genotype_phenotype,[1,2,3,4,5,6,7])
+%~ mine_no_repeats_columns( disease_model_annotations, [
+%~   1, 2,3,4,5,6,7,8,9,
+%~   10,11,12])
+%~ mine_no_repeats_columns( dmel_human_orthologs_disease, [
+%~   1, 2,3,4,5,6,7,8])
+%~ mine_no_repeats_columns(fbrf_pmid_pmcid_doi,[3,5,7])
+%~ mine_no_repeats_columns(fbal_to_fbgn,[3,4])
+%~ mine_no_repeats_columns(cDNA_clone,[2,4,5,6])
+%~ mine_no_repeats_columns(genomic_clone,[2])
+%~ mine_no_repeats_columns(fbgn_uniprot,[1,2,3])
+%~ mine_no_repeats_columns(pmid_fbgn_uniprot,[1,2,3,4,5])
+%~ mine_no_repeats_columns(automated_gene_summaries,[1,2])
+%~ mine_no_repeats_columns(best_gene_summary,[3,4])
+%~ mine_no_repeats_columns( 'Dmel_enzyme', [
+%~   1, 2,3,4,5,6,9,10,11])
+%~ mine_no_repeats_columns(dmel_unique_protein_isoforms,[1,2,4])
+%~ mine_no_repeats_columns(fbgn_annotation_ID,[2,4,6])
+%~ mine_no_repeats_columns(fbgn_exons2affy1_overlaps,[2])
+%~ mine_no_repeats_columns(fbgn_exons2affy2_overlaps,[2])
+%~ mine_no_repeats_columns(fbgn_fbtr_fbpp,[1])
+%~ mine_no_repeats_columns(fbgn_gleanr,[1,2,3])
+%~ mine_no_repeats_columns( fbgn_NAseq_Uniprot, [
+%~   1, 2,3,4,5,6,7,8,9])
+%~ mine_no_repeats_columns(gene_functional_complementation,[1,2,3,4,5])
+%~ mine_no_repeats_columns(gene_group,[1,2,3,4,5,6,7])
+%~ mine_no_repeats_columns(gene_groups_HGNC,[1,2,3,4])
+%~ mine_no_repeats_columns(gene_rpkm_matrix,[3,4,5,....(168>99)])
+%~ mine_no_repeats_columns( gene_rpkm_report, [
+%~   1, 2,3,4,5,8,9,10,11,
+%~   12])
+%~ mine_no_repeats_columns(gene_snapshots,[3,4,5])
+%~ mine_no_repeats_columns(pathway_group,[1,2,3,4,5,6,7])
+%~ mine_no_repeats_columns( 'scRNA-Seq_gene_expression', [
+%~   1, 2,3,4,5,6,7,8,9,
+%~   10,11,15])
+%~ mine_no_repeats_columns(insertion_mapping,[3,4,5,6,7])
+%~ mine_no_repeats_columns('cyto-genetic-seq',[2,4])
+%~ mine_no_repeats_columns(dataset_metadata,[1,2])
+%~ mine_no_repeats_columns(dmel_paralogs,[1,2,3,4,5,8,10,11])
+%~ mine_no_repeats_columns(entity_publication,[1,2,3,4])
+%~ mine_no_repeats_columns(organism_list,[1,2,3,4,5,6])
+%~ mine_no_repeats_columns(stocks,[2,3,4])
+%~ mine_no_repeats_columns(synonym,[2,4,5,6])
+
+*/
+mine_no_repeats_columns:-
+  forall(mine_no_repeats_columns(Fn,NthL),dmsg(mine_no_repeats_columns(Fn,NthL))).
+mine_no_repeats_columns(Fn,NthL):-
+    fb_pred(Fn,A),
+    findall(Nth,
+      ((between(1,A,Nth),
+      once((not_repeats(fb_arg_table_n(_, Fn, Nth)),
+      repeats(fb_arg_table_n(_, Fn, Nth)))))),NthL).
+
+fix_columns_with_arg(Arg):-
+  forall(fb_arg_table_n(Arg,Fn,N),
+    fix_columns_n(Fn,N)).
+fix_columns_n(Fn,N):-
+  assert_new(fix_columns_nth(Fn,N)).
+
+
 try_encoding:- 'allele_genetic_interactions'('14-3-3epsilon[18A2]',X,Y,Z),
   encoding_trial(ET),set_stream(current_output,encoding(ET)),catch(write(ET=[X,Y,Z]),_,fail),fail.
 */
@@ -1193,21 +1309,74 @@ load_fb_cache0(File):- file_name_extension(Name,_E,File),
   atomic_list_concat([Table,qlf],'.',OutputFile),
   load_fb_cache(File,OutputFile,Table).
 
+% ============================================================================
+%  LOAD FB Files
+% ============================================================================
+track_load_into_file(Filename,Goal):-
+ must_det_ll((
+  fbug(track_load_into_file(Filename)),
+  flag(loaded_from_file_count,Was,0),
+  time(Goal),!,
+  flag(loaded_from_file_count,New,Was),
+  fbug(Filename=New))).
 
-load_fb_json(Ext,File,OutputFile,Fn):- fbug(load_fb_json(Ext,File,OutputFile,Fn)).
-load_fb_obo(Ext,File,OutputFile,Fn):- fbug(load_fb_obo(Ext,File,OutputFile,Fn)),!.
-%load_fb_obo(Ext,File,OutputFile,Fn):- fbug(load_fb_obo(Ext,File,OutputFile,Fn)),
-%  (current_predicate(load_obo/1)->load_obo(File);true).
+
+:- use_module(library(http/json)).
+load_fb_json(Ext,File,OutputFile,Fn):- fbug(load_fb_json(Ext,File,OutputFile,Fn)),
+ setup_call_cleanup(open(File,read,In), json:json_read(In,Term,[]), close(In)),
+    time(assert(saved_fb_json(Ext,File,Term,Fn))).
 
 
-data_pred(X,Y):- atomic_list_concat(List,'/',X),List\==[],List\=[_],!,last(List,L),data_pred(L,Y).
-data_pred(X,Y):- atomic_list_concat(List,'_',X),once(not_trimmed_path(List,NewList)),
+load_fb_fa(Ext,Filename,OutputFile,Fn):-
+ track_load_into_file(Filename,
+  must_det_ll((
+    fbug(load_fb_fa(Ext,Filename,OutputFile,Fn)),
+    directory_file_path(Directory, BaseName, Filename),
+    file_name_extension(Id, _, BaseName),
+    decl_fb_pred(seq,3),
+    Type = 'SequenceFile',
+    assert_OBO(id_type,Id,Type),
+    nb_setval(obo_id,Id),nb_setval(obo_type,Type),
+    assert_OBO('pathname',Id,Filename),!,
+    assert_OBO('basename',Id,BaseName),!,
+    assert_OBO('directory',Id,Directory),!,
+    setup_call_cleanup(open(Filename,read,In), load_fb_fa_read(In,_), close(In))))).
+load_fb_fa_read(In, _):- (at_end_of_stream(In);reached_file_max),!.
+load_fb_fa_read(In,FBTe):- read_line_to_chars(In,Chars), load_fb_fa_read_n(In,FBTe,Chars).
+load_fb_fa_read_n(In,_,['>'|Chars]):- !, must_det_ll((atom_chars(FBTe,Chars), load_fb_fa_read(In,seq(FBTe,1)))).
+load_fb_fa_read_n(In,seq(FBTe,N),Chars):-
+   assert_OBO(seq(FBTe,N,Chars)),!,
+   N2 is N+1,load_fb_fa_read(In,seq(FBTe,N2)).
+
+maybe_sample(_Fn,_Args):- \+ should_sample,!.
+maybe_sample( Fn, Args):- assert_arg_samples(Fn,1,Args).
+
+:- dynamic(fb_arg/1).
+:- dynamic(fb_arg_table_n/3).
+assert_arg_table_n(A,Fn,N):-    assert_new(fb_arg(A)), assert_new(fb_arg_table_n(A,Fn,N)).
+
+assert_arg_samples(Fn,N,[A|Args]):-
+   (dont_sample(A)->true;assert_arg_table_n(A,Fn,N)),
+   N2 is N+1, assert_arg_samples(Fn,N2,Args).
+assert_arg_samples(_,_,_).
+
+dont_sample(N):- \+ atom(N).  dont_sample(''). dont_sample('-').
+
+
+
+data_pred0(X,Y):- atom_concat('public.',YY,X),!,data_pred0(YY,Y).
+data_pred0(X,Y):- atomic_list_concat(List,'/',X),List\==[],List\=[_],!,last(List,L),data_pred0(L,Y).
+data_pred0(X,Y):- atomic_list_concat(List,'_',X),once(not_trimmed_path(List,NewList)),
   NewList\==[],NewList\==List,atomic_list_concat(NewList,'_',Y),!.
-data_pred(X,Y):- atomic_list_concat([L,_|_],'_fb_',X),!,data_pred(L,Y).
+data_pred0(X,Y):- atomic_list_concat([L,_|_],'_fb_',X),!,data_pred0(L,Y).
+data_pred0(X,X).
+
+data_pred(X,Y):- data_pred0(X,Y), Y\=='',!.
 data_pred(X,X).
 
 is_trimmed_path(X):- atom_contains(X,'0'),!.
 is_trimmed_path('fb').
+is_trimmed_path('public').
 is_trimmed_path('data').
 %is_trimmed_path(Atom):- atom_chars(Atom,Chars), read_term_from_chars(Chars,Term,[]),number(Term),!.
 not_trimmed_path([H|List],NewList):- is_trimmed_path(H),!,not_trimmed_path(List,NewList).
@@ -1247,125 +1416,6 @@ fb_assert(Term) :-
 
 :- dynamic(done_reading/1).
 
-load_flybase(Sep,File,Stream,OutputStream,Fn):-
- must_det_ll_r((
-  ignore(swi_only(format(OutputStream,":- ~q.\n",[encoding(utf8)]))),
-  atomic_list_concat([data,Fn],'_',Fn0),
-  data_pred(Fn0,Fn),
-  load_flybase_sv(Sep,File,Stream,OutputStream,Fn))).
-
-% Sep,File,Stream,OutputStream,Fn
-load_flybase_sv(Sep,File,Stream,OutputStream,Fn):- at_end_of_stream(Stream),!,
-  once(load_fb_data(_ArgTypes,File,Stream,Fn,Sep,end_of_file,OutputStream)).
-
-load_flybase_sv(Sep,File,Stream,OutputStream,Fn):-
- must_det_ll_r((
-  flag(loaded_from_file_count,_,0),
-  ignore(once((table_columns(File,Header);table_columns(Fn,Header)))),
-  fix_header_names(Fn,Header,ArgTypes),
-  forall((table_columns(File,ColInfo),ArgTypes\==ColInfo),pp_fb(odd_table_columns(File,ColInfo))),
-  forall((table_columns(Fn,ColInfo),ArgTypes\==ColInfo),pp_fb(odd_table_columns(Fn,ColInfo))),
-  ((primary_column(Fn,Name),nth1(N,ArgTypes,Name))->NArgTypes=[N|ArgTypes];NArgTypes=[1|ArgTypes]),
-  if_t(is_list(ArgTypes),add_table_n_types(Fn,1,ArgTypes)),
-  ground(NArgTypes),
-
-  time((repeat,
-  read_line_to_chars(Stream, Chars),
-  once(load_flybase_chars(NArgTypes,File,Stream,Fn,Sep,Chars,OutputStream)),
-  once(done_reading(File);at_end_of_stream(Stream)),!,
-  once(load_fb_data(NArgTypes,File,Stream,Fn,Sep,end_of_file,OutputStream)))),
-  flag(loaded_from_file_count,X,X),!,
-  fb_stats(Fn),
-  pl_stats(File,X))).
-
-
-%save_conversion_data(ArgTypes,Fn,OutputStream,Data):- maplist(write_flybase_data(ArgTypes,ArgTypes,Fn,OutputStream),Data).
-
-is_really_header_row([H|_],_Names):- atom_concat('',_,H),!.
-
-%read_csv_stream(Sep,CharsStream,Header):- read_string(CharsStream, "\n", "\r\true ",_,)
-read_csv_stream(Sep,CharsStream,Header):- %  \+ option_value(full_canon,[]),!,
-  read_line_to_string(CharsStream,Chars),
-  (Chars == end_of_file -> Header= Chars ; atomic_list_concat(Header, Sep, Chars)).
-read_csv_stream(Sep,CharsStream,Header):- \+ option_value(full_canon,[]),!, read_line_to_string(CharsStream,Chars),
-  (Chars == end_of_file -> Header= Chars ; split_string(Chars, Sep, "\s\true\n", Header)).
-read_csv_stream(Sep,CharsStream,Header):-
-  name(Sep,[SepCode]),
-  csv_options(CompiledHeaderOptions,[separator(SepCode)]),
-  csv_read_row(CharsStream, HeaderRow, CompiledHeaderOptions),
-  HeaderRow=..[_|Header],!.
-
-read_csv(Sep,Chars,Header):- \+ option_value(full_canon,[]),!, split_string(Chars, Sep, "\s\true\n", Header).
-read_csv(Sep,Chars,Header):-
-  open_string(Chars,CharsStream),read_csv_stream(Sep,CharsStream,Header).
-
-
-attempt_header_row(Sep,Chars,Fn,Header,ArgTypes):-
-  read_csv(Sep,Chars,Header),
-  fix_header_names(Fn,Header,ArgTypes),!.
-
-:- dynamic(t_h_n/3).
-
-load_flybase_chars(ArgTypes,File,_Stream,_Fn,Sep,Chars,_OutputStream):-
-  ( \+ member(Sep,Chars); (['#','#',' '|_]=Chars) ;  (ground(ArgTypes),['#'|_]=Chars)),
-  %writeln(comment(Sep)=Chars),!,
-  (format("~n ; ~s",[Chars])),
-  ignore((flag(loaded_from_file_count,X,X),X>100,!,assert(done_reading(File)))).
-
-load_flybase_chars([N|ArgTypes],File,Stream,Fn,Sep,Chars,OutputStream):-
-  var(ArgTypes),member(Sep,Chars),['#'|_]=Chars,
-  (format("~n ; Maybe Header: ~s",[Chars])),
-  attempt_header_row(Sep,Chars,Fn,Header,ArgTypes),
-  is_really_header_row(Header,ArgTypes),
-  (fbug(t_h_n(Fn,Header,ArgTypes)),fb_assert(t_h_n(Fn,Header,ArgTypes))),!,
-  load_fb_data([N|ArgTypes],File,Stream,Fn,Sep,is_swipl,OutputStream).
-
-load_flybase_chars([N|ArgTypes],File,Stream,Fn,Sep,Chars,OutputStream):- is_swipl,
-  attempt_header_row(Sep,Chars,Fn,Header,_),
-  write_flybase_data([N|ArgTypes],OutputStream,Fn,Header),!,
-  load_fb_data([N|ArgTypes],File,Stream,Fn,Sep,is_swipl,OutputStream).
- 
-
-
-load_fb_data(_ArgTypes,File,_Stream,_Fn,_Sep,Data,_OutputStream):-  
-  (Data == end_of_file;done_reading(File)),!.
-
-load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl,OutputStream):-  !, % \+ option_value(full_canon,[]), !,
-  (option_value(max_per_file,Max)->true;Max=inf),
-  fbug(load_fb_data(ArgTypes,File,Max,Fn,Sep)),
-  add_table_n_types(Fn,1,ArgTypes),!,
-   repeat,
-     once(read_csv_stream(Sep,Stream,Data)),
-     flag(loaded_from_file_count,X,X),
-      (((Data== end_of_file);(X>Max)) -> assert(done_reading(File)) ; 
-       (once(write_flybase_data(ArgTypes,OutputStream,Fn,Data)),fail)),!.
-
-load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl,OutputStream):- !,
-   name(Sep,[SepCode]),
-  csv_options(CompiledOptions,[separator(SepCode)]),
-  (option_value(max_per_file,Max)->true;Max=inf),
-  fbug(load_fb_data(ArgTypes,File,Max,Fn,Sep)),
-  add_table_n_types(Fn,1,ArgTypes),!,
-   repeat,
-     once((csv_read_row(Stream, RData, CompiledOptions))),
-     flag(loaded_from_file_count,X,X),
-      (((RData== end_of_file);(X>Max)) -> assert(done_reading(File)) ; 
-       (RData =..[_|Data], 
-       once(write_flybase_data(ArgTypes,OutputStream,Fn,Data)),fail)),!.
-
-% recursion depth 16 million rows
-load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl,OutputStream):- 
-  name(Sep,[SepCode]),
-  csv_options(CompiledOptions,[strip(true),convert(true),separator(SepCode)]),
-   (option_value(max_per_file,Max)->true;Max=inf),
-     once((csv_read_row(Stream, RData, CompiledOptions))),
-     flag(loaded_from_file_count,X,X), 
-      (((RData== end_of_file);(X>Max)) -> assert(done_reading(File)) ; 
-       (RData =..[_|Data], once(write_flybase_data(ArgTypes,OutputStream,Fn,Data)),
-         load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl,OutputStream))),!.
-
-
-has_list(Header):- is_list(Header),member(listOf(_,_),Header).
 
 
 :- dynamic(fb_pred/2).
@@ -1465,6 +1515,8 @@ print_formatted_time(TotalSeconds) :-
 load_fb_cache(_File,OutputFile,_Fn):- exists_file(OutputFile),!,ensure_loaded(OutputFile),!.
 load_fb_cache(File,_OutputFile,_Fn):- load_files([File],[qcompile(large)]).
 
+
+load_flybase(N):- (number(N)->true;N==inf),!, set_option_value(max_per_file,N),!,load_flybase.
 load_flybase(File):- file_name_extension(_,Ext,File),!, load_flybase(File,Ext).
 load_flybase(File,Ext):-
    with_wild_path(load_flybase0(Ext),File),!.
@@ -1476,14 +1528,13 @@ load_flybase0(Ext,File):-
   data_pred(Name,Fn), 
   load_flybase(Ext,File,OutputFile,Fn).
 
-%load_flybase2:- load_flybase('./data/ftp.flybase.net/releases/current/allele_genetic_interactions_fb_2023_01.tsv','allele_genetic_interactions_fb_2023_01.pl',allele_genetic_interactions).
-%load_flybase(_Ext,_File,OutputFile,_Fn):- exists_file(OutputFile),size_file(OutputFile,N),N>100,!.
-
 :- dynamic(load_state/2).
+%load_flybase(_Ext,_File,OutputFile,_Fn):- exists_file(OutputFile),size_file(OutputFile,N),N>100,!.
 load_flybase(_Ext,File,_OutputFile,_Fn):- load_state(File,_),!.
 load_flybase(Ext,File,OutputFile,Fn):- file_to_sep(File,Sep),!,
   assert(load_state(File,loading)),
-  extreme_debug(fbug(load_flybase(Ext,File,OutputFile,Fn))),
+  flag(loaded_from_file_count,_,0),
+  fbug(load_flybase(Ext,File,OutputFile,Fn)),
   setup_call_cleanup(open(File,read,Stream),
        setup_call_cleanup(open(OutputFile,write,OutputStream,[encoding(utf8)]),
            %load_flybase_sv(Sep,File,Stream,OutputStream,Fn),
@@ -1493,38 +1544,16 @@ load_flybase(Ext,File,OutputFile,Fn):- file_to_sep(File,Sep),!,
   retract(load_state(File,loading)),
   assert(load_state(File,loaded)),fb_stats.
 
-
-%load_flybase(Ext,File,OutputFile,Fn):-  Ext==obo,!,load_fb_obo(Ext,File,OutputFile,Fn).
-%load_flybase(Ext,File,OutputFile,Fn):-  Ext==json,!,load_fb_json(Ext,File,OutputFile,Fn).
+load_flybase(Ext,File,OutputFile,Fn):-  Ext==json,!,load_fb_json(Ext,File,OutputFile,Fn).
+load_flybase(Ext,File,OutputFile,Fn):-  Ext==fa,!,load_fb_fa(Ext,File,OutputFile,Fn).
+load_flybase(Ext,File,OutputFile,Fn):-  Ext==obo,!,load_fb_obo(Ext,File,OutputFile,Fn).
 load_flybase(Ext,File,OutputFile,Fn):- fbug(load_flybase(Ext,File,OutputFile,Fn)),!.
 
 
 
-write_flybase_data(_ArgTypes,_OutputStream,_Fn,[]):-!.
-write_flybase_data(_ArgTypes,_OutputStream,_Fn,['']):-!.
-write_flybase_data(ArgTypes,OutputStream,Fn,DataL0):-
-  make_assertion(ArgTypes,Fn,DataL0,Data,OldData),
-  ignore((
-    heartbeat,
-    functor(Data,F,A), A>=2,
-   (fb_pred(F,A)-> true; (dynamic(F/A),assert(fb_pred(F,A)))),
-    flag(loaded_from_file_count,X,X+1),    
-    flag(total_loaded_atoms,TA,TA+1),
-    assert(Data),
-    ignore((((has_list(ArgTypes)->(X<23,X>20); (X<13,X>10)); (X>0,(0 is X rem 1_000_000),fb_stats)),nl,nl,fbug(X=Data),ignore((OldData\==DataL0,fbug(oldData=OldData))))),
-    catch_ignore(ignore((X<1000,must_det_ll_r((write_canonical(OutputStream,Data),writeln(OutputStream,'.')))))))),!.
-
-make_assertion(ArgTypes,Fn,DataL0,Data,DataL0):-
- must_det_ll_r((
-    into_datum(Fn,DataL0,Data0),
-    Data0=..[F|Args],
-    skip(if_t(var(ArgTypes),must_det_ll_r((once((length(Args,Len),length(ArgTypes,Len),once((table_columns(Fn,ArgTypes);table_columns(F,ArgTypes))))))))),
-    fix_list_args(Fn,ArgTypes,Args,DataL), 
-    Data=..[F|DataL])).
-
 
 fix_list_args(_,_,Y,Y):- option_value(early_canon,[]), \+ should_sample,!.
-%fix_list_args(_Fn,_ArgTypes,[X],[X]):-!.
+%fix_list_args(_Fn,_ArgTypes,[X],[X]):- !.
 fix_list_args(Fn,ArgTypes,Args,NewArgs):-
  must_det_ll_r((
   primary_term(Fn,ArgTypes,Args,Term,NewArgTypes),
@@ -1556,9 +1585,13 @@ adjust_type(Term,Fn,N,listOf(Type),Arg,NewL):- must_det_ll((nonvar(Type),as_list
 adjust_type(Term,Fn,N,listOf(Type,Seps),Arg,NewL):- must_det_ll((nonvar(Type),as_list(Seps,Arg,New),is_list(New),
    maplist(adjust_type(Term,Fn,N,Type),New,NewL))).
 adjust_type(Term,Fn,N,Type,Concept,Arg):- numeric_value_p_n(Fn,N,_),!,
-   must_det_ll(((atom_number(Concept,Arg)->true;(Concept=Arg)),assert_type_of(Term,Fn,N,Type,Arg))).
+   must_det_ll(((into_number(Concept,Arg)->true;(Concept=Arg)),assert_type_of(Term,Fn,N,Type,Arg))).
 adjust_type(Term,Fn,N,Type,Concept,Arg):- must_det_ll((fix_concept(Concept,Arg), assert_type_of(Term,Fn,N,Type,Arg))).
 adjust_type(_Term,_Fn,_N,_,X,X).
+
+into_number(Concept,Arg):- number(Concept),!,Arg = Concept.
+into_number(Concept,Arg):- atom_number(Concept,Arg),!.
+into_number(Concept,Arg):- Concept=Arg,!.
 
 :- dynamic(fb_arg/1).
 :- dynamic(fb_arg_table_n/3).
@@ -1592,20 +1625,107 @@ is_valueatom(Fn,N,Type):- arg_table_n_type(Arg,Fn,N,Type),atom_number(Arg,_).
 :- dynamic(numeric_value_p_n/3).
 fis_valueatom(PNList,Len):- findall(P-N,is_valueatom(P,N,_Type),PNList),length(PNList,Len).
 
-save_value_atom_cols:- forall(is_valueatom(Fn,N,Type),assert_new(numeric_value_p_n(Fn,N,Type))),
+save_value_atom_cols:- for_all(is_valueatom(Fn,N,Type),assert_new(numeric_value_p_n(Fn,N,Type))),
   listing(numeric_value_p_n/3).
 
+
+/*
+load_flybase_chars(Sep,File,Stream,Chars,OutputStream,Fn):-
+  flag(loaded_from_file_count,_,0),
+  ignore(once((table_columns(File,Header);table_columns(Fn,Header)))),
+  fix_header_names(Fn,Header,ArgTypes),
+  for_all((table_columns(File,ColInfo),ArgTypes\==ColInfo),pp_fb(odd_table_columns(File,ColInfo))),
+  for_all((table_columns(Fn,ColInfo),ArgTypes\==ColInfo),pp_fb(odd_table_columns(Fn,ColInfo))),
+  if_t(is_list(ArgTypes),set_option_value(fb_argtypes,ArgTypes)),
+  time((repeat,
+  read_line_to_chars(Stream, Chars),
+    once(load_flybase_chars(Sep,File,Stream,Chars,OutputStream,Fn)),
+  once(done_reading(File);reached_file_max;at_end_of_stream(Stream)),!,
+    once(end_fb_file_data(File,Stream,Fn,OutputStream)),
+  loaded_from_file_count(X),!,
+  fb_stats(Fn),
+  pl_stats(File,X))).
+
+write_flybase_data(_OutputStream,_Fn,[]):-!.
+write_flybase_data(_OutputStream,_Fn,['']):-!.
+write_flybase_data(_OutputStream,Fn,DataL):- assert_OBO(Fn,DataL).
+
+FBgn: FlyBase gene number - Represents a gene.
+FBal: FlyBase allele number - Represents an allele.
+FBst: FlyBase stock number - Represents a stock.
+FBtp: FlyBase transposon number - Represents a transposon.
+FBab: FlyBase aberration number - Represents a chromosomal aberration.
+FBba: FlyBase balancer number - Represents a balancer.
+FBcl: FlyBase clone number - Represents a DNA or RNA clone.
+FBim: FlyBase image number - Represents an image.
+FBpp: FlyBase polypeptide number - Represents a protein.
+FBtr: FlyBase transcript number - Represents a transcript.
+FBte: FlyBase transgenic element number - Represents a transgenic element.
+*/
+
+write_flybase_data(_ArgTypes,_OutputStream,_Fn,[]):-!.
+write_flybase_data(_ArgTypes,_OutputStream,_Fn,['']):-!.
+write_flybase_data(_ArgTypes,_OutputStream,Fn,DataL):- fail, !,Data=..[Fn|DataL],assert_OBO(Data).
+write_flybase_data(_ArgTypes,_OutputStream,Fn,DataL):- Data=..[Fn|DataL],assert_fb_data(Data).
+
+
+assert_fb_data(Data):- Data=..[Fn|DataL],assert_fb_data(Fn,DataL),!.
+
+assert_fb_data(Fn,DataL0):-
+  make_assertion(Fn,DataL0,Data,OldData),
+  ignore((
+    heartbeat,
+    functor(Data,F,A), A>=2,
+   (fb_pred(F,A)-> true; (dynamic(F/A),assert(fb_pred(F,A)))),
+    flag(loaded_from_file_count,X,X+1),    
+    flag(total_loaded_atoms,TA,TA+1),
+    assert(Data),
+    ignore((((has_list(_ArgTypes)->(X<23,X>20); (X<13,X>10)); (X>0,(0 is X rem 1_000_000),fb_stats)),nl,nl,fbug(X=Data),ignore((OldData\==DataL0,fbug(oldData=OldData))))),
+    ignore((fail,catch_ignore(ignore((X<1000,must_det_ll_r((write_canonical(OutputStream,Data),writeln(OutputStream,'.')))))))))),!.
+
+
+make_assertion(Fn,DataL0,Data,DataL0):-
+ must_det_ll_r((
+    into_datum(Fn,DataL0,Data0),
+    Data0=..[F|Args],
+    Args=DataL, 
+    Data=..[F|DataL])).
+
+make_assertion(ArgTypes,Fn,DataL0,Data,DataL0):-
+ must_det_ll_r((
+    into_datum(Fn,DataL0,Data0),
+    Data0=..[F|Args],
+    skip(if_t(var(ArgTypes),must_det_ll_r((once((length(Args,Len),length(ArgTypes,Len),once((table_columns(Fn,ArgTypes);table_columns(F,ArgTypes))))))))),
+    fix_list_args(Fn,ArgTypes,Args,DataL), 
+    Data=..[F|DataL])).
+
+
+% FBcv_0000743 % "FBtp0000743 %CL:0000743 % WBPhenotype_0000743 
+reprefix(['GO_','GO--','BiologicalProcess:GO:'],'GO:').
+reprefix(['flybase:','FLYBASE:','comment:'],'').
 as_list(A,New):- is_list(A),!,New = A.
 as_list(A,New):- var(A),!,New = [].
 as_list('-',[]). as_list("-",[]). as_list('',[]).
 as_list(N,[N]):- number(N),!.
 as_list("",[]). as_list(' ',[]). as_list(" ",[]).
-
+has_list(Header):- is_list(Header),member(listOf(_,_),Header).
 as_list(_,S,O):- as_list(S,O),!.
 as_list(SepL,A,ListO):-  member(Sep,SepL),catch_ignore(atomic_list_concat(List,Sep,A)),List\=[_],!,maplist(fix_concept,List,ListO).
 as_list(_,A,ListO):-  member(Sep,['|',',',';']),catch_ignore(atomic_list_concat(List,Sep,A)),List\=[_],!,maplist(fix_concept,List,ListO).
 as_list(_Sep,A,[AO]):- fix_concept(A,AO).
 
+
+% =======================================
+% Fix Concept1
+% =======================================
+
+
+
+
+
+% =======================================
+% Fix Concept
+% =======================================
 fix_concept(A,A):- \+ atom(A), \+ string(A),!.
 fix_concept(A,AO):- reprefix(List,To),member(E,List),atom_concat(E,AM,A),atom_concat(To,AM,AO).
 fix_concept(A,N):- atom(A),!,N=A.
@@ -1613,9 +1733,7 @@ fix_concept(A,N):- atom(A),!,N=A.
 fix_concept(S,A):- number_string(A,S),!.
 fix_concept(S,A):- atom_string(A,S),!.
 
-% FBcv_0000743 % "FBtp0000743 %CL:0000743 % WBPhenotype_0000743 
-reprefix(['GO_','GO--','BiologicalProcess:GO:'],'GO:').
-reprefix(['flybase:','FLYBASE:','comment:'],'').
+
 
 
 
@@ -1634,8 +1752,127 @@ reprefix(['flybase:','FLYBASE:','comment:'],'').
 
 
 
-column_description(allele_FBal, "Current FlyBase identifier (FBal) of allele.", identifier, 'Allele Identifier').
-column_description(allele_symbol, "Current FlyBase allele symbol.", symbol, 'Allele Symbol').
+load_flybase(Sep,File,Stream,OutputStream,Fn):-
+ must_det_ll_r((
+  ignore(swi_only(format(OutputStream,":- ~q.\n",[encoding(utf8)]))),
+  atomic_list_concat([data,Fn],'_',Fn0),
+  data_pred(Fn0,Fn),
+  load_flybase_sv(Sep,File,Stream,OutputStream,Fn))).
+
+% Sep,File,Stream,OutputStream,Fn
+load_flybase_sv(Sep,File,Stream,OutputStream,Fn):- at_end_of_stream(Stream),!,
+  once(load_fb_data(_ArgTypes,File,Stream,Fn,Sep,end_of_file,OutputStream)).
+
+load_flybase_sv(Sep,File,Stream,OutputStream,Fn):-
+ must_det_ll_r((
+  flag(loaded_from_file_count,_,0),
+  ignore(once((table_columns(File,Header);table_columns(Fn,Header)))),
+  fix_header_names(Fn,Header,ArgTypes),
+  forall((table_columns(File,ColInfo),ArgTypes\==ColInfo),pp_fb(odd_table_columns(File,ColInfo))),
+  forall((table_columns(Fn,ColInfo),ArgTypes\==ColInfo),pp_fb(odd_table_columns(Fn,ColInfo))),
+  ((primary_column(Fn,Name),nth1(N,ArgTypes,Name))->NArgTypes=[N|ArgTypes];NArgTypes=[1|ArgTypes]),
+  if_t(is_list(ArgTypes),add_table_n_types(Fn,1,ArgTypes)),
+  ground(NArgTypes),
+
+  time((repeat,
+  read_line_to_chars(Stream, Chars),
+  once(load_flybase_chars(NArgTypes,File,Stream,Fn,Sep,Chars,OutputStream)),
+  once(done_reading(File);at_end_of_stream(Stream)),!,
+  once(load_fb_data(NArgTypes,File,Stream,Fn,Sep,end_of_file,OutputStream)))),
+  loaded_from_file_count(X),!,
+  fb_stats(Fn),
+  pl_stats(File,X))).
+
+
+%save_conversion_data(ArgTypes,Fn,OutputStream,Data):- maplist(write_flybase_data(ArgTypes,ArgTypes,Fn,OutputStream),Data).
+
+is_really_header_row([H|_],_Names):- atom_concat('',_,H),!.
+
+%read_csv_stream(Sep,CharsStream,Header):- read_string(CharsStream, "\n", "\r\true ",_,)
+read_csv_stream(Sep,CharsStream,Header):- %  \+ option_value(full_canon,[]),!,
+  read_line_to_string(CharsStream,Chars),
+  (Chars == end_of_file -> Header= Chars ; atomic_list_concat(Header, Sep, Chars)).
+read_csv_stream(Sep,CharsStream,Header):- \+ option_value(full_canon,[]),!, read_line_to_string(CharsStream,Chars),
+  (Chars == end_of_file -> Header= Chars ; split_string(Chars, Sep, "\s\true\n", Header)).
+read_csv_stream(Sep,CharsStream,Header):-
+  name(Sep,[SepCode]),
+  csv_options(CompiledHeaderOptions,[separator(SepCode)]),
+  csv_read_row(CharsStream, HeaderRow, CompiledHeaderOptions),
+  HeaderRow=..[_|Header],!.
+
+read_csv(Sep,Chars,Header):- \+ option_value(full_canon,[]),!, split_string(Chars, Sep, "\s\true\n", Header).
+read_csv(Sep,Chars,Header):-
+  open_string(Chars,CharsStream),read_csv_stream(Sep,CharsStream,Header).
+
+
+attempt_header_row(Sep,Chars,Fn,Header,ArgTypes):-
+  read_csv(Sep,Chars,Header),
+  fix_header_names(Fn,Header,ArgTypes),!.
+
+:- dynamic(t_h_n/3).
+
+load_flybase_chars(ArgTypes,File,_Stream,_Fn,Sep,Chars,_OutputStream):-
+  ( \+ member(Sep,Chars); (['#','#',' '|_]=Chars) ;  (ground(ArgTypes),['#'|_]=Chars)),
+  %writeln(comment(Sep)=Chars),!,
+  (format("~n ; ~s",[Chars])),
+  ignore((loaded_from_file_count(X),X>2000,!,assert(done_reading(File)))).
+
+load_flybase_chars([N|ArgTypes],File,Stream,Fn,Sep,Chars,OutputStream):-
+  var(ArgTypes),member(Sep,Chars),['#'|_]=Chars,
+  (format("~n ; Maybe Header: ~s",[Chars])),
+  attempt_header_row(Sep,Chars,Fn,Header,ArgTypes),
+  is_really_header_row(Header,ArgTypes),
+  (fbug(t_h_n(Fn,Header,ArgTypes)),fb_assert(t_h_n(Fn,Header,ArgTypes))),!,
+  load_fb_data([N|ArgTypes],File,Stream,Fn,Sep,is_swipl,OutputStream).
+
+load_flybase_chars([N|ArgTypes],File,Stream,Fn,Sep,Chars,OutputStream):- is_swipl,
+  attempt_header_row(Sep,Chars,Fn,Header,_),
+  write_flybase_data([N|ArgTypes],OutputStream,Fn,Header),!,
+  load_fb_data([N|ArgTypes],File,Stream,Fn,Sep,is_swipl,OutputStream).
+ 
+
+
+load_fb_data(_ArgTypes,File,_Stream,_Fn,_Sep,Data,_OutputStream):-  
+  (Data == end_of_file;done_reading(File)),!.
+
+load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl,OutputStream):-  !, % \+ option_value(full_canon,[]), !,
+  (option_value(max_per_file,Max)->true;Max=inf),
+  fbug(load_fb_data(ArgTypes,File,Max,Fn,Sep)),
+  add_table_n_types(Fn,1,ArgTypes),!,
+   repeat,
+     once(read_csv_stream(Sep,Stream,Data)),
+     loaded_from_file_count(X),
+      (((Data== end_of_file);(X>Max)) -> assert(done_reading(File)) ; 
+       (once(write_flybase_data(ArgTypes,OutputStream,Fn,Data)),fail)),!.
+
+load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl,OutputStream):- !,
+   name(Sep,[SepCode]),
+  csv_options(CompiledOptions,[separator(SepCode)]),
+  (option_value(max_per_file,Max)->true;Max=inf),
+  fbug(load_fb_data(ArgTypes,File,Max,Fn,Sep)),
+  add_table_n_types(Fn,1,ArgTypes),!,
+   repeat,
+     once((csv_read_row(Stream, RData, CompiledOptions))),
+     loaded_from_file_count(X),
+      (((RData== end_of_file);(X>Max)) -> assert(done_reading(File)) ; 
+       (RData =..[_|Data], 
+       once(write_flybase_data(ArgTypes,OutputStream,Fn,Data)),fail)),!.
+
+% recursion depth 16 million rows
+load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl,OutputStream):- 
+  name(Sep,[SepCode]),
+  csv_options(CompiledOptions,[strip(true),convert(true),separator(SepCode)]),
+   (option_value(max_per_file,Max)->true;Max=inf),
+     once((csv_read_row(Stream, RData, CompiledOptions))),
+     loaded_from_file_count(X), 
+      (((RData== end_of_file);(X>Max)) -> assert(done_reading(File)) ; 
+       (RData =..[_|Data], once(write_flybase_data(ArgTypes,OutputStream,Fn,Data)),
+         load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl,OutputStream))),!.
+
+
+
+column_description('allele_FBal#', "Current FlyBase identifier (FBal#) of allele.", identifier, 'Allele Identifier').
+column_description('allele_symbol', "Current FlyBase allele symbol.", symbol, 'Allele Symbol').
 column_description('Bin_value', "The expression bin classification of this gene in this RNA-Seq experiment, based on RPKM value.", numeric, 'Expression Bin').
 column_description('Cluster_Cell_Type_ID', "The FlyBase FBbt ID for the cell type represented by the cell cluster.", identifier, 'Cell Type').
 column_description('Cluster_Cell_Type_Name', "The FlyBase name for the cell type represented by the cell cluster.", name, 'Cell Type Name').
@@ -1644,34 +1881,27 @@ column_description('Cluster_Name', "The FlyBase name for the dataset representin
 column_description('Clustering_Analysis_ID', "The FlyBase FBlc ID for the dataset representing the clustering analysis.", identifier, 'Dataset').
 column_description('Clustering_Analysis_Name', "The FlyBase name for the dataset representing the clustering analysis.", name, 'Dataset Name').
 column_description('Count_used', "Indicates if the RPKM expression value was calculated using only the exonic regions unique to the gene and not overlapping exons of other genes (Unique), or, if the RPKM expression value was calculated based on all exons of the gene regardless of overlap with other genes (Total).", category, 'Count Type').
-column_description(current_fullname, "Current full name used in FlyBase for the object.", name, 'Name').
-column_description(current_symbol, "Current symbol used in FlyBase for the object.", symbol, 'Symbol').
 column_description('DATASAMPLE_NAME_(DATASET_ID)', "Each subsequent column reports the gene RPKM values for the sample listed in the header.", matrix, 'Expression Matrix').
 column_description('FBgn', "The unique FlyBase gene ID for this gene.", identifier, 'Gene').
 column_description('FBgn_id', "Unique FlyBase gene ID.", identifier, 'Gene').
+column_description('FBrf#', "Current FlyBase identifer (FBrf#) of publication from which data came.", identifier, 'Publication Identifier').
 column_description('FBrf', "Current FlyBase identifer (FBrf) of publication from which data came.", identifier, 'Publication Identifier').
 column_description('FBrf_id', "FlyBase reference ID for the publication.", identifier, 'Reference').
-column_description(gene_fullname, "The official full name for this gene.", name, 'Gene Name').
 column_description('Gene_ID', "The FlyBase FBgn ID for the expressed gene.", identifier, 'Gene').
-column_description(gene_primary_id, "The unique FlyBase gene ID for this gene.", identifier, 'Gene').
 column_description('Gene_Symbol', "The FlyBase symbol for the expressed gene.", symbol, 'Gene Symbol').
-column_description(gene_symbol, "The official FlyBase symbol for this gene.", symbol, 'Gene Symbol').
-column_description(gene_type, "The type of gene.", category, 'Gene Type').
 column_description('GeneSymbol', "The official FlyBase symbol for this gene.", symbol, 'Gene Symbol').
-column_description(interaction, "Interaction information associated with allele.", text, 'Interaction Info').
+column_description('interaction', "Interaction information associated with allele.", text, 'Interaction Info').
 column_description('Interaction_type', "Type of interaction observed, either 'suppressible' or 'enhanceable'.", category, 'Interaction Type').
 column_description('Mean_Expression', "The average level of expression of the gene across all cells of the cluster.", numeric, 'Expression Level').
-column_description(organism_abbreviation, "Abbreviation indicating the species of origin.", abbreviation, 'Organism').
 column_description('Parent_library_FBlc', "The unique FlyBase ID for the dataset project to which the RNA-Seq experiment belongs.", identifier, 'Dataset Project').
 column_description('Parent_library_name', "The official FlyBase symbol for the dataset project to which the RNA-Seq experiment belongs.", name, 'Dataset Project Name').
-column_description(phenotype_id, "Phenotypic identifier associated with the genotype.", identifier, 'Phenotype Identifier').
-column_description(phenotype_name, "Phenotypic name associated with the genotype.", name, 'Phenotype Name').
+column_description('phenotype_id', "Phenotypic identifier associated with the genotype.", identifier, 'Phenotype Identifier').
+column_description('phenotype_name', "Phenotypic name associated with the genotype.", name, 'Phenotype Name').
 column_description('PMID', "PubMed ID for the publication.", identifier, 'Publication').
-column_description(primary_FBid, "Primary FlyBase identifier for the object.", identifier, 'Object').
 column_description('Pub_ID', "The FlyBase FBrf ID for the reference in which the expression was reported.", identifier, 'Publication').
 column_description('Pub_miniref', "The FlyBase citation for the publication in which the expression was reported.", citation, 'Publication Citation').
 column_description('Publication_FBrf', "Current FlyBase identifier (FBrf) of publication from which the data came.", identifier, 'Publication Reference').
-column_description(reference, "Current FlyBase identifer (FBrf) of publication from which data came.", identifier, 'Publication Identifier').
+column_description('reference', "Current FlyBase identifer (FBrf#) of publication from which data came.", identifier, 'Publication Identifier').
 column_description('Release_ID', "The D. melanogaster annotation set version from which the gene model used in the analysis derives.", version, 'Annotation Version').
 column_description('RNASource_FBlc', "The unique FlyBase ID for the RNA-Seq experiment used for RPKM expression calculation.", identifier, 'RNA-Seq Experiment').
 column_description('RNASource_name', "The official FlyBase symbol for the RNA-Seq experiment used for RPKM expression calculation.", name, 'RNA-Seq Experiment Name').
@@ -1684,33 +1914,66 @@ column_description('Total_exon_base_count', "The number of bases in all exons of
 column_description('UniProt_database', "Database in UniProt where the protein is listed (either UniProt/TrEMBL or UniProt/Swiss-Prot).", category, 'Protein Database').
 column_description('UniProt_id', "Unique identifier for the protein in UniProt.", identifier, 'Protein').
 column_description('Unique_exon_base_count', "The number of exonic bases unique to the gene (not overlapping exons of other genes).", numeric, 'Exonic Base Count').
+column_description(allele_FBal, "Current FlyBase identifier (FBal) of allele.", identifier, 'Allele Identifier').
+column_description(allele_symbol, "Current FlyBase allele symbol.", symbol, 'Allele Symbol').
+column_description(current_fullname, "Current full name used in FlyBase for the object.", name, 'Name').
+column_description(current_symbol, "Current symbol used in FlyBase for the object.", symbol, 'Symbol').
+column_description(gene_fullname, "The official full name for this gene.", name, 'Gene Name').
+column_description(gene_primary_id, "The unique FlyBase gene ID for this gene.", identifier, 'Gene').
+column_description(gene_symbol, "The official FlyBase symbol for this gene.", symbol, 'Gene Symbol').
+column_description(gene_type, "The type of gene.", category, 'Gene Type').
+column_description(interaction, "Interaction information associated with allele.", text, 'Interaction Info').
+column_description(listOf('genotype_FBids', ['/', ' ']), "Current FlyBase identifier(s) of the components that make up the genotype.", list, 'Genotype Identifiers').
+column_description(listOf('genotype_symbols', ['/', ' ']), "Current FlyBase symbol(s) of the components that make up the genotype.", list, 'Genotype Symbols').
+column_description(listOf('Interacting_gene_FBgn', ['|']), "Current FlyBase identifier (FBgn) of gene(s) involved in the interacting genotype.", list, 'Gene Identifier').
+column_description(listOf('Interacting_gene_symbol', ['|']), "Current FlyBase symbol of gene(s) involved in the interacting genotype.", list, 'Gene Symbol').
+column_description(listOf('qualifier_ids', ['|']), "Qualifier identifier(s) associated with phenotypic data for genotype.", list, 'Qualifier Identifiers').
+column_description(listOf('qualifier_names', ['|']), "Qualifier name(s) associated with phenotypic data for genotype.", list, 'Qualifier Names').
+column_description(listOf('Starting_gene_FBgn', ['|']), "Current FlyBase identifier (FBgn) of gene(s) involved in the starting genotype.", list, 'Gene Identifier').
+column_description(listOf('Starting_gene_symbol', ['|']), "Current FlyBase symbol of gene(s) involved in the starting genotype.", list, 'Gene Symbol').
 column_description(listOf(fullname_synonym, ['|']), "Non-current full name(s) associated with the object.", list, 'Name Synonyms').
 column_description(listOf(genotype_FBids, [/, ' ']), "Current FlyBase identifier(s) of the components that make up the genotype.", list, 'Genotype Identifiers').
 column_description(listOf(genotype_symbols, [/, ' ']), "Current FlyBase symbol(s) of the components that make up the genotype.", list, 'Genotype Symbols').
-column_description(listOf('Interacting_gene_FBgn', ['|']), "Current FlyBase identifier (FBgn) of gene(s) involved in the interacting genotype.", list, 'Gene Identifier').
-column_description(listOf('Interacting_gene_symbol', ['|']), "Current FlyBase symbol of gene(s) involved in the interacting genotype.", list, 'Gene Symbol').
 column_description(listOf(qualifier_ids, ['|']), "Qualifier identifier(s) associated with phenotypic data for genotype.", list, 'Qualifier Identifiers').
 column_description(listOf(qualifier_names, ['|']), "Qualifier name(s) associated with phenotypic data for genotype.", list, 'Qualifier Names').
-column_description(listOf('Starting_gene_FBgn', ['|']), "Current FlyBase identifier (FBgn) of gene(s) involved in the starting genotype.", list, 'Gene Identifier').
-column_description(listOf('Starting_gene_symbol', ['|']), "Current FlyBase symbol of gene(s) involved in the starting genotype.", list, 'Gene Symbol').
 column_description(listOf(symbol_synonym, ['|']), "Non-current symbol(s) associated with the object.", list, 'Symbol Synonyms').
+column_description(organism_abbreviation, "Abbreviation indicating the species of origin.", abbreviation, 'Organism').
+column_description(phenotype_id, "Phenotypic identifier associated with the genotype.", identifier, 'Phenotype Identifier').
+column_description(phenotype_name, "Phenotypic name associated with the genotype.", name, 'Phenotype Name').
+column_description(primary_FBid, "Primary FlyBase identifier for the object.", identifier, 'Object').
+column_description(reference, "Current FlyBase identifer (FBrf) of publication from which data came.", identifier, 'Publication Identifier').
 
+column_names('allele_genetic_interactions', ['allele_symbol', 'allele_FBal#', 'interaction', 'FBrf#']).
+column_names('fb_synonym', ['primary_FBid', 'organism_abbreviation', 'current_symbol', 'current_fullname', listOf(fullname_synonym, ['|']), listOf(symbol_synonym, ['|'])]).
+column_names('gene_genetic_interactions', [listOf('Starting_gene_symbol', ['|']), listOf('Starting_gene_FBgn', ['|']), listOf('Interacting_gene_symbol', ['|']), listOf('Interacting_gene_FBgn', ['|']), 'Interaction_type', 'Publication_FBrf']).
+column_names('gene_rpkm_matrix', ['gene_primary_id', 'gene_symbol', 'gene_fullname', 'gene_type', 'DATASAMPLE_NAME_(DATASET_ID)']).
+column_names('gene_rpkm_report', ['Release_ID', 'FBgn#', 'GeneSymbol', 'Parent_library_FBlc#', 'Parent_library_name', 'RNASource_FBlc#', 'RNASource_name', 'RPKM_value', 'Bin_value', 'Unique_exon_base_count', 'Total_exon_base_count', 'Count_used']).
+column_names('genotype_phenotype_data', [listOf('genotype_symbols', ['/', ' ']), listOf('genotype_FBids', ['/', ' ']), 'phenotype_name', 'phenotype_id', listOf('qualifier_names', ['|']), listOf('qualifier_ids', ['|']), 'reference']).
+column_names('pmid_fbgn_uniprot', ['FBrf_id', 'PMID', 'FBgn_id', 'UniProt_database', 'UniProt_id']).
+column_names('scRNA-Seq_gene_expression', ['Pub_ID', 'Pub_miniref', 'Clustering_Analysis_ID', 'Clustering_Analysis_Name', 'Source_Tissue_Sex', 'Source_Tissue_Stage', 'Source_Tissue_Anatomy', 'Cluster_ID', 'Cluster_Name', 'Cluster_Cell_Type_ID', 'Cluster_Cell_Type_Name', 'Gene_ID', 'Gene_Symbol', 'Mean_Expression', 'Spread']).
+
+file_location('allele_genetic_interactions', "path_to_file/allele_genetic_interactions_*.tsv").
+file_location('genotype_phenotype_data', "path_to_file/genotype_phenotype_data_*.tsv").
+
+primary_column('allele_genetic_interactions', 'allele_FBal#').
+primary_column('fb_synonym', 'primary_FBid').
+primary_column('gene_genetic_interactions', 'Starting_gene_FBgn').
+primary_column('gene_rpkm_matrix', 'gene_primary_id').
+primary_column('gene_rpkm_report', 'FBgn#').
+primary_column('genotype_phenotype_data', 'genotype_FBids').
+primary_column('pmid_fbgn_uniprot', 'FBgn_id').
+primary_column('scRNA-Seq_gene_expression', 'Gene_ID').
+primary_column(allele_genetic_interactions, allele_FBal).
+primary_column(dataset_metadata, 'Item_ID').
+primary_column(dmel_paralogs, 'Paralog_FBgn').
 primary_column(fb_synonym, primary_FBid).
+primary_column(fbgn_exons2affy1_overlaps, 'FBgn').
+primary_column(fbgn_exons2affy2_overlaps, 'FBgn').
 primary_column(gene_genetic_interactions, 'Starting_gene_FBgn').
 primary_column(gene_rpkm_matrix, gene_primary_id).
 primary_column(gene_rpkm_report, 'FBgn').
 primary_column(genotype_phenotype_data, genotype_FBids).
 primary_column(pmid_fbgn_uniprot, 'FBgn_id').
-primary_column('scRNA-Seq_gene_expression', 'Gene_ID').
-primary_column(allele_genetic_interactions, allele_FBal).
-primary_column(fbgn_exons2affy1_overlaps, 'FBgn').
-primary_column(fbgn_exons2affy2_overlaps, 'FBgn').
-primary_column(dataset_metadata, 'Item_ID').
-primary_column(dmel_paralogs, 'Paralog_FBgn').
-
-
-
-
 
 too_generic(Var):- var(Var),!,fail.
 too_generic(pub_id).
@@ -1794,7 +2057,8 @@ clip_id(Nth,ID):- (atom_concat(ID,'_id',Nth)->true;Nth=ID),!.
 
 
 
-setup_flybase_cols:- forall(flybase_cols(Table,Columns),
+setup_flybase_cols:-
+ for_all(flybase_cols(Table,Columns),
   use_flybase_cols(Table,Columns)).
 
 %:- load_flybase("das_precomputed/allele_genetic_interactions_fb_2022_06.tsv").
@@ -2004,7 +2268,6 @@ flybase_cols(update_track,[ update_track_id,release,fbid,time_update,author,stat
 table_columns(T,List):- table_columns_tt(TT,List), eigther_contains(T,TT),!.
 
 table_columns_tt(TT,List):- column_names(TT,List).
-table_columns_tt(TT,List):- column_names(TT,List).
 table_columns_tt(TT,List):- flybase_cols(TT,List).
 table_columns_tt(TT,List):- t_h_n(TT,_,List).
 
@@ -2016,15 +2279,744 @@ eigther_contains(TT,T):- atom_contains(T,TT),!.
 
 
 
+column_names('cyto-genetic-seq', ['Cytogenetic_map_position', 'Genetic_map_position', 'Sequence_coordinates_(release_6)', 'R6_conversion_notes']).
+column_names('Dmel_enzyme', [gene_group_id, gene_group_name, listOf(gene_group_GO_id), listOf(gene_group_GO_name), listOf(gene_group_EC_number), listOf(gene_group_EC_name), gene_id, gene_symbol, gene_name, listOf(gene_EC_number), listOf(gene_EC_name)]).
+column_names('scRNA-Seq_gene_expression', ['Pub_ID', 'Pub_miniref', 'Clustering_Analysis_ID', 'Clustering_Analysis_Name', 'Source_Tissue_Sex', 'Source_Tissue_Stage', 'Source_Tissue_Anatomy', 'Cluster_ID', 'Cluster_Name', 'Cluster_Cell_Type_ID', 'Cluster_Cell_Type_Name', 'Gene_ID', 'Gene_Symbol', 'Mean_Expression', 'Spread']).
+column_names(allele_genetic_interactions, [allele_symbol, allele_FBal, interaction, 'FBrf']).
+column_names(allele_phenotypic,           [allele_symbol, allele_FBal, phenotype, 'FBrf']).
+column_names(fbal_to_fbgn,             ['AlleleID', 'AlleleSymbol', 'GeneID', 'GeneSymbol']).
+column_names(genotype_phenotype_data, [listOf(genotype_symbols, [/, ' ']), listOf(genotype_FBids, [/, ' ']), phenotype_name, phenotype_id, listOf(qualifier_names, ['|']), listOf(qualifier_ids, ['|']), reference]).
+%                                        #genotype_symbols           	genotype_FBids	phenotype_name	phenotype_id	qualifier_names	qualifier_ids	reference
+column_names(automated_gene_summaries, [primary_FBgn, summary_text]).
+column_names(best_gene_summary, ['FBgn', 'Gene_Symbol', 'Summary_Source', 'Summary']).
+column_names(cDNA_clone, ['FBcl', organism_abbreviation, clone_name, dataset_metadata_name, listOf(cDNA_accession), listOf('EST_accession')]).
+column_names(dataset_metadata, ['Dataset_Metadata_ID', 'Dataset_Metadata_Name', 'Item_ID', 'Item_Name']).
+column_names(disease_model_annotations, ['FBgn', 'Gene_symbol', 'HGNC', 'DO_qualifier', 'DO', 'DO_term', 'Allele_used_in_model_(FBal)', 'Allele_used_in_model_(symbol)', 'Based_on_orthology_with_(HGNC_ID)', 'Based_on_orthology_with_(symbol)', 'Evidence/interacting_alleles', 'Reference_(FBrf)']).
+column_names(dmel_gene_sequence_ontology_annotations, [gene_primary_id, gene_symbol, so_term_name, so_term_id]).
+column_names(dmel_human_orthologs_disease, ['Dmel_gene', 'Dmel_gene_symbol', 'Human_gene_HGNC', 'Human_gene_OMIM', 'Human_gene_symbol', 'DIOPT_score', 'OMIM_Phenotype_IDs', 'OMIM_Phenotype_IDs[name]']).
+column_names(dmel_paralogs, ['FBgn', 'GeneSymbol', 'Arm/Scaffold', 'Location', 'Strand', 'Paralog_FBgn', 'Paralog_GeneSymbol', 'Paralog_Arm/Scaffold', 'Paralog_Location', 'Paralog_Strand', 'DIOPT_score']).
+column_names(dmel_unique_protein_isoforms, ['FBgn', 'FB_gene_symbol', representative_protein, listOf(identical_protein)]).
+column_names(entity_publication, [entity_id, entity_name, 'FlyBase_publication', 'PubMed']).
+column_names(fb_synonym, [primary_FBid, organism_abbreviation, current_symbol, current_fullname, listOf(fullname_synonym, ['|']), listOf(symbol_synonym, ['|'])]).
+column_names(fbgn_annotation_ID, [gene_symbol, organism_abbreviation, primary_FBgn, listOf(secondary_FBgn), annotation_ID, listOf(secondary_annotation_ID)]).
+column_names(fbgn_exons2affy1_overlaps, ['FBgn', listOf(affy)]).
+column_names(fbgn_exons2affy2_overlaps, ['FBgn', listOf(affy)]).
+column_names(fbgn_fbtr_fbpp, ['FBgn', 'FBtr', 'FBpp']).
+column_names(fbgn_fbtr_fbpp_expanded, [organism, gene_type, gene_ID, gene_symbol, gene_fullname, annotation_ID, transcript_type, transcript_ID, transcript_symbol, polypeptide_ID, polypeptide_symbol]).
+column_names(fbgn_gleanr, [organism_abbreviation, gene_symbol, primary_FBgn, 'GLEANR']).
+column_names(fbgn_NAseq_Uniprot, [gene_symbol, organism_abbreviation, primary_FBgn, nucleotide_accession, na_based_protein_accession, 'UniprotKB/Swiss-Prot/TrEMBL_accession', 'EntrezGene', 'RefSeq_transcripts', 'RefSeq_proteins']).
+column_names(fbgn_uniprot, [primary_FBgn, gene_symbol, 'CG', 'UniprotKB/Swiss-Prot/TrEMBL_accession']).
+column_names(fbrf_pmid_pmcid_doi, ['FBrf', 'PMID', 'PMCID', 'DOI', pub_type, miniref, pmid_added]).
+column_names(gene_functional_complementation, ['Dmel_gene_symbol', 'Dmel_gene_FBgn', ortholog_gene_symbol, ortholog_gene_FBgn_ID, reference_FBrf]).
+column_names(gene_genetic_interactions, [listOf('Starting_gene_symbol'), listOf('Starting_gene_FBgn'), listOf('Interacting_gene_symbol'), listOf('Interacting_gene_FBgn'), 'Interaction_type', 'Publication_FBrf']).
+column_names(gene_group, ['FB_group', 'FB_group_symbol', 'FB_group_name', 'Parent_FB_group', 'Parent_FB_group_symbol', 'Group_member_FB_gene', 'Group_member_FB_gene_symbol']).
+column_names(gene_groups_HGNC, ['FB_group', 'FB_group_symbol', 'FB_group_name', 'HGNC_family']).
+column_names(gene_map_table, [organism_abbreviation, current_symbol, primary_FBid, recombination_loc, cytogenetic_loc, sequence_loc]).
+column_names(gene_rpkm_matrix, [gene_primary_id, gene_symbol, gene_fullname, gene_type, 'DATASAMPLE_NAME_(DATASET_ID)']).
+column_names(gene_rpkm_report, ['Release_ID', 'FBgn', 'GeneSymbol', 'Parent_library_FBlc', 'Parent_library_name', 'RNASource_FBlc', 'RNASource_name', 'RPKM_value', 'Bin_value', 'Unique_exon_base_count', 'Total_exon_base_count', 'Count_used']).
+column_names(gene_snapshots, ['FBgn', 'GeneSymbol', 'GeneName', datestamp, gene_snapshot_text]).
+column_names(genomic_clone, ['FBcl', organism_abbreviation, clone_name, accession]).
+
+column_names(insertion_mapping, [insertion_symbol, 'FBti', genomic_location, range, orientation, estimated_cytogenetic_location, observed_cytogenetic_location]).
+column_names(organism_list, [genus, species, abbreviation, common_name, 'NCBI_taxon', 'drosophilid?']).
+column_names(pathway_group, ['FB_group', 'FB_group_symbol', 'FB_group_name', 'Parent_FB_group', 'Parent_FB_group_symbol', 'Group_member_FB_gene', 'Group_member_FB_gene_symbol']).
+column_names(physical_interactions_mitab, [listOf('ID_Interactor_A'), listOf('ID_Interactor_B'), listOf('Alt_ID_Interactor_A'), listOf('Alt_ID_Interactor_B'), listOf('Alias_Interactor_A'), listOf('Alias_Interactor_B'), listOf('Interaction_Detection_Method'), listOf('Publication_1st_Author'), listOf('Publication'), 'Taxid_Interactor_A', 'Taxid_Interactor_B', listOf('Interaction_Type'), listOf('Source_Database'), listOf('Interaction_Identifier'), listOf('Confidence_Value'), listOf('Expansion_Method'), listOf('Biological_Role_Interactor_A'), listOf('Biological_Role_Interactor_B'), listOf('Experimental_Role_Interactor_A'), listOf('Experimental_Role_Interactor_B'), listOf('Type_Interactor_A'), listOf('Type_Interactor_B'), listOf('Xref_Interactor_A'), listOf('Xref_Interactor_B'), listOf('Interaction_Xref'), listOf('Annotation_Interactor_A'), listOf('Annotation_Interactor_B'), listOf('Interaction_Annotation'), listOf('Host_Organism'), 'Interaction_Parameters', 'Creation_Date', 'Update_Date', 'Checksum_Interactor_A', 'Checksum_Interactor_B', 'Interaction_Checksum', 'Negative', listOf('Feature_Interactor_A'), listOf('Feature_Interactor_B'), 'Stoichiometry_Interactor_A', 'Stoichiometry_Interactor_B', listOf('Identification_Method_Participant_A'), listOf('Identification_Method_Participant_B')]).
+column_names(pmid_fbgn_uniprot, ['FBrf', 'PMID', 'FBgn', 'UniProt_database', 'UniProt_id']).
+column_names(synonym, [primary_FBid, organism_abbreviation, current_symbol, current_fullname, listOf(fullname_synonym), listOf(symbol_synonym)]).
+
+column_names_ext(pmid_fbgn_uniprot, ['FBrf_id', 'PMID', 'FBgn_id', 'UniProt_database', 'UniProt_id']).
+column_names_ext(gene_genetic_interactions, [listOf('Starting_gene_symbol', ['|']), listOf('Starting_gene_FBgn', ['|']), listOf('Interacting_gene_symbol', ['|']), listOf('Interacting_gene_FBgn', ['|']), 'Interaction_type', 'Publication_FBrf']).
+column_names_ext(gene_rpkm_matrix, [gene_primary_id, gene_symbol, gene_fullname, gene_type, 'BCM_1_E2-4hr_(FBlc0000061)', 'BCM_1_E14-16hr_(FBlc0000062)', 'BCM_1_E2-16hr_(FBlc0000063)', 'BCM_1_E2-16hr100_(FBlc0000064)', 'BCM_1_L3i_(FBlc0000065)', 'BCM_1_L3i100_(FBlc0000066)', 'BCM_1_P3d_(FBlc0000067)', 'BCM_1_FA3d_(FBlc0000068)', 'BCM_1_MA3d_(FBlc0000069)', 'BCM_1_P_(FBlc0000070)', 'BCM_1_L_(FBlc0000071)', 'BCM_1_A17d_(FBlc0000072)', 'mE_mRNA_em0-2hr_(FBlc0000086)', 'mE_mRNA_em2-4hr_(FBlc0000087)', 'mE_mRNA_em4-6hr_(FBlc0000088)', 'mE_mRNA_em6-8hr_(FBlc0000089)', 'mE_mRNA_em8-10hr_(FBlc0000090)', 'mE_mRNA_em10-12hr_(FBlc0000091)', 'mE_mRNA_em12-14hr_(FBlc0000092)', 'mE_mRNA_em14-16hr_(FBlc0000093)', 'mE_mRNA_em16-18hr_(FBlc0000094)', 'mE_mRNA_em18-20hr_(FBlc0000095)', 'mE_mRNA_em20-22hr_(FBlc0000096)', 'mE_mRNA_em22-24hr_(FBlc0000097)', 'mE_mRNA_L1_(FBlc0000098)', 'mE_mRNA_L2_(FBlc0000099)', 'mE_mRNA_L3_12hr_(FBlc0000100)', 'mE_mRNA_L3_PS1-2_(FBlc0000101)', 'mE_mRNA_L3_PS3-6_(FBlc0000102)', 'mE_mRNA_L3_PS7-9_(FBlc0000103)', 'mE_mRNA_WPP_(FBlc0000104)', 'mE_mRNA_P5_(FBlc0000105)', 'mE_mRNA_P6_(FBlc0000106)', 'mE_mRNA_P8_(FBlc0000107)', 'mE_mRNA_P9-10_(FBlc0000108)', 'mE_mRNA_P15_(FBlc0000109)', 'mE_mRNA_AdF_Ecl_1days_(FBlc0000110)', 'mE_mRNA_AdF_Ecl_5days_(FBlc0000111)', 'mE_mRNA_AdF_Ecl_30days_(FBlc0000112)', 'mE_mRNA_AdM_Ecl_1days_(FBlc0000113)', 'mE_mRNA_AdM_Ecl_5days_(FBlc0000114)', 'mE_mRNA_AdM_Ecl_30days_(FBlc0000115)', 'mE_mRNA_A_MateF_1d_head_(FBlc0000207)', 'mE_mRNA_A_MateF_4d_ovary_(FBlc0000208)', 'mE_mRNA_A_MateM_1d_head_(FBlc0000209)', 'mE_mRNA_A_VirF_1d_head_(FBlc0000210)', 'mE_mRNA_A_VirF_4d_head_(FBlc0000211)', 'mE_mRNA_A_MateF_20d_head_(FBlc0000212)', 'mE_mRNA_A_MateF_4d_head_(FBlc0000213)', 'mE_mRNA_A_MateM_20d_head_(FBlc0000214)', 'mE_mRNA_A_MateM_4d_acc_gland_(FBlc0000215)', 'mE_mRNA_A_MateM_4d_head_(FBlc0000216)', 'mE_mRNA_A_MateM_4d_testis_(FBlc0000217)', 'mE_mRNA_A_1d_carcass_(FBlc0000218)', 'mE_mRNA_A_1d_dig_sys_(FBlc0000219)', 'mE_mRNA_A_20d_carcass_(FBlc0000220)', 'mE_mRNA_A_20d_dig_sys_(FBlc0000221)', 'mE_mRNA_A_4d_carcass_(FBlc0000222)', 'mE_mRNA_A_4d_dig_sys_(FBlc0000223)', 'mE_mRNA_P8_CNS_(FBlc0000224)', 'mE_mRNA_L3_CNS_(FBlc0000225)', 'mE_mRNA_L3_Wand_carcass_(FBlc0000226)', 'mE_mRNA_L3_Wand_dig_sys_(FBlc0000227)', 'mE_mRNA_L3_Wand_fat_(FBlc0000228)', 'mE_mRNA_L3_Wand_imag_disc_(FBlc0000229)', 'mE_mRNA_L3_Wand_saliv_(FBlc0000230)', 'mE_mRNA_A_VirF_20d_head_(FBlc0000231)', 'mE_mRNA_A_VirF_4d_ovary_(FBlc0000232)', 'mE_mRNA_WPP_fat_(FBlc0000233)', 'mE_mRNA_WPP_saliv_(FBlc0000234)', 'mE_mRNA_P8_fat_(FBlc0000235)', 'mE_mRNA_A_4d_Cold1_(FBlc0000237)', 'mE_mRNA_A_4d_Cold2_(FBlc0000238)', 'mE_mRNA_L3_Cu_0.5mM_(FBlc0000239)', 'mE_mRNA_L3_late_Zn_5mM_(FBlc0000240)', 'mE_mRNA_A_4d_Cu_15mM_(FBlc0000241)', 'mE_mRNA_A_4d_Zn_4.5mM_(FBlc0000242)', 'mE_mRNA_A_4d_Caffeine_25mg/ml_(FBlc0000243)', 'mE_mRNA_A_4d_Caffeine_2.5mg/ml_(FBlc0000244)', 'mE_mRNA_L3_Caffeine_1.5mg/ml_(FBlc0000245)', 'mE_mRNA_A_4d_Cd_0.1M_(FBlc0000246)', 'mE_mRNA_A_4d_Cd_0.05M_(FBlc0000247)', 'mE_mRNA_L3_Cd_12h_(FBlc0000248)', 'mE_mRNA_L3_Cd_6hr_(FBlc0000249)', 'mE_mRNA_A_4d_Paraquat_5mM_(FBlc0000250)', 'mE_mRNA_A_4d_Paraquat_10mM_(FBlc0000251)', 'mE_mRNA_L3_Rotenone_8ug_(FBlc0000252)', 'mE_mRNA_L3_Rotenone_2ug_(FBlc0000253)', 'mE_mRNA_L3_EtOH_10_(FBlc0000254)', 'mE_mRNA_L3_EtOH_5_(FBlc0000255)', 'mE_mRNA_L3_EtOH_2.5_(FBlc0000256)', 'mE_mRNA_A_4d_Heatshock_(FBlc0000257)', 'mE_mRNA_A_10d_Resveratrol_100uM_(FBlc0000672)', 'mE_mRNA_A_10d_Rotenone_Starved_(FBlc0000673)', 'mE_mRNA_F_Sindbis_virus_(FBlc0000674)', 'mE_mRNA_L_Sindbis_virus_(FBlc0000675)', 'mE_mRNA_M_Sindbis_virus_(FBlc0000676)', 'mE_mRNA_P_Sindbis_virus_(FBlc0000677)', 'mE_mRNA_CME-W2_cells_(FBlc0000261)', 'mE_mRNA_GM2_cells_(FBlc0000262)', 'mE_mRNA_mbn2_cells_(FBlc0000263)', 'mE_mRNA_BG2-c2_cells_(FBlc0000264)', 'mE_mRNA_D20-c5_cells_(FBlc0000265)', 'mE_mRNA_S3_cells_(FBlc0000266)', 'mE_mRNA_1182-4H_cells_(FBlc0000267)', 'mE_mRNA_CME_L1_cells_(FBlc0000268)', 'mE_mRNA_Kc167_cells_(FBlc0000269)', 'mE_mRNA_BG1-c1_cells_(FBlc0000270)', 'mE_mRNA_D11_cells_(FBlc0000271)', 'mE_mRNA_D16-c3_cells_(FBlc0000272)', 'mE_mRNA_D17-c3_cells_(FBlc0000273)', 'mE_mRNA_D21_cells_(FBlc0000274)', 'mE_mRNA_D32_cells_(FBlc0000275)', 'mE_mRNA_D4-c1_cells_(FBlc0000276)', 'mE_mRNA_D8_cells_(FBlc0000277)', 'mE_mRNA_D9_cells_(FBlc0000278)', 'mE_mRNA_S1_cells_(FBlc0000279)', 'mE_mRNA_S2R+_cells_(FBlc0000280)', 'mE_mRNA_Sg4_cells_(FBlc0000281)', 'mE_mRNA_OSS_cells_(FBlc0000282)', 'mE_mRNA_OSC_cells_(FBlc0000283)', 'mE_mRNA_fGS_cells_(FBlc0000284)', 'Knoblich_mRNA_L3_CNS_neuroblast_(FBlc0000505)', 'Knoblich_mRNA_L3_CNS_neuron_(FBlc0000506)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Brain_(FBlc0003619)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Crop_(FBlc0003620)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Carcass_(FBlc0003621)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Eye_(FBlc0003622)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_FatBody_(FBlc0003623)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Head_(FBlc0003624)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Hindgut_(FBlc0003625)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Midgut_(FBlc0003626)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Ovary_(FBlc0003627)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_RectalPad_(FBlc0003628)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_SalivaryGland_(FBlc0003629)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_ThoracicoAbdominalGanglion_(FBlc0003630)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_MalpighianTubule_(FBlc0003631)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Mated_Spermathecum_(FBlc0003632)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Virgin_Spermathecum_(FBlc0003633)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Whole_(FBlc0003634)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Brain_(FBlc0003635)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Crop_(FBlc0003636)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Carcass_(FBlc0003637)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Eye_(FBlc0003638)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_FatBody_(FBlc0003639)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Head_(FBlc0003640)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Hindgut_(FBlc0003641)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Midgut_(FBlc0003642)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_RectalPad_(FBlc0003643)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_SalivaryGland_(FBlc0003644)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_ThoracicoAbdominalGanglion_(FBlc0003645)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_MalpighianTubule_(FBlc0003646)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Testis_(FBlc0003647)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_AccessoryGland_(FBlc0003648)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Whole_(FBlc0003649)', 'RNA-Seq_Profile_FlyAtlas2_L3_CNS_(FBlc0003650)', 'RNA-Seq_Profile_FlyAtlas2_L3_FatBody_(FBlc0003651)', 'RNA-Seq_Profile_FlyAtlas2_L3_Hindgut_(FBlc0003652)', 'RNA-Seq_Profile_FlyAtlas2_L3_MalpighianTubule_(FBlc0003653)', 'RNA-Seq_Profile_FlyAtlas2_L3_Midgut_(FBlc0003654)', 'RNA-Seq_Profile_FlyAtlas2_L3_SalivaryGland_(FBlc0003655)', 'RNA-Seq_Profile_FlyAtlas2_L3_Trachea_(FBlc0003656)', 'RNA-Seq_Profile_FlyAtlas2_L3_Carcass_(FBlc0003657)', 'RNA-Seq_Profile_FlyAtlas2_L3_Whole_(FBlc0003658)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Heart_(FBlc0003724)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Heart_(FBlc0003725)']).
+
+flybase_tables([
+analysis, analysisfeature, analysisgrp, analysisgrpmember, analysisprop, audit_chado, cell_line, cell_line_loaderm, cell_line_loadermprop,
+cell_line_dbxref, cell_line_feature, cell_line_library, cell_line_libraryprop, cell_line_pub, cell_line_relationship, cell_line_strain,
+cell_line_strainprop, cell_line_synonym, cell_lineprop, cell_lineprop_pub, contact, cv, loaderm, loaderm_dbxref, loaderm_relationship,
+loadermpath, loadermprop, loadermsynonym, db, dbxref, dbxrefprop, eimage, environment, environment_loaderm, expression, expression_loaderm,
+expression_loadermprop, expression_image, expression_pub, expressionprop, feature, feature_loaderm, feature_loaderm_dbxref,
+feature_loadermprop, feature_dbxref, feature_expression, feature_expressionprop, feature_genotype, feature_grpmember,
+feature_grpmember_pub, feature_humanhealth_dbxref, feature_interaction, feature_interaction_pub, feature_interactionprop,
+feature_phenotype, feature_pub, feature_pubprop, feature_relationship, feature_relationship_pub, feature_relationshipprop,
+feature_relationshipprop_pub, feature_synonym, featureloc, featureloc_pub, featuremap, featuremap_pub, featurepos, featureprop,
+featureprop_pub, featurerange, genotype, genotype_loaderm, genotype_loadermprop, genotype_dbxref, genotype_pub, genotype_synonym,
+genotypeprop, genotypeprop_pub, grp, grp_loaderm, grp_dbxref, grp_pub, grp_pubprop, grp_relationship, grp_relationship_pub,
+grp_relationshipprop, grp_synonym, grpmember, grpmember_loaderm, grpmember_pub, grpmemberprop, grpmemberprop_pub, grpprop,
+grpprop_pub, humanhealth, humanhealth_loaderm, humanhealth_loadermprop, humanhealth_dbxref, humanhealth_dbxrefprop,
+humanhealth_dbxrefprop_pub, humanhealth_feature, humanhealth_featureprop, humanhealth_phenotype, humanhealth_phenotypeprop,
+humanhealth_pub, humanhealth_pubprop, humanhealth_relationship, humanhealth_relationship_pub, humanhealth_synonym, humanhealthprop,
+humanhealthprop_pub, interaction, interaction_cell_line, interaction_loaderm, interaction_loadermprop, interaction_expression,
+interaction_expressionprop, interaction_group, interaction_group_feature_interaction, interaction_pub, interactionprop,
+interactionprop_pub, library, library_loaderm, library_loadermprop, library_dbxref, library_dbxrefprop, library_expression,
+library_expressionprop, library_feature, library_featureprop, library_grpmember, library_humanhealth, library_humanhealthprop,
+library_interaction, library_pub, library_relationship, library_relationship_pub, library_strain, library_strainprop, library_synonym,
+ libraryprop, libraryprop_pub, lock, organism, organism_loaderm, organism_loadermprop, organism_dbxref, organism_grpmember,
+ organism_library, organism_pub, organismprop, organismprop_pub, phendesc, phenotype, phenotype_comparison, phenotype_comparison_loaderm,
+  phenotype_loaderm, phenstatement, project, pub, pub_dbxref, pub_relationship, pubauthor, pubprop, sql_features, sql_implementation_info,
+  sql_parts, sql_sizing, stock, stock_loaderm, stock_dbxref, stock_genotype, stock_pub, stock_relationship, stock_relationship_pub,
+  stockcollection, stockcollection_stock, stockcollectionprop, stockprop, stockprop_pub, strain, strain_loaderm, strain_loadermprop,
+  strain_dbxref, strain_feature, strain_featureprop, strain_phenotype, strain_phenotypeprop,
+strain_pub, strain_relationship, strain_relationship_pub, strain_synonym, strainprop, strainprop_pub, synonym, tableinfo, update_track]).
+
+
+
+table_n_type(allele_genetic_interactions, 1, allele_symbol, _).
+table_n_type(allele_genetic_interactions, 2, allele_FBal, 'FBal').
+table_n_type(allele_genetic_interactions, 3, interaction, _).
+table_n_type(allele_genetic_interactions, 4, 'FBrf', 'FBrf').
+table_n_type(disease_model_annotations, 1, 'FBgn', 'FBgn').
+table_n_type(disease_model_annotations, 2, 'Gene_symbol', _).
+table_n_type(disease_model_annotations, 3, 'HGNC', 'HGNC').
+table_n_type(disease_model_annotations, 4, 'DO_qualifier', _).
+table_n_type(disease_model_annotations, 5, 'DO', _).
+table_n_type(disease_model_annotations, 6, 'DO_term', _).
+table_n_type(disease_model_annotations, 7, 'Allele_used_in_model_(FBal)', 'FBal').
+table_n_type(disease_model_annotations, 8, 'Allele_used_in_model_(symbol)', _).
+table_n_type(disease_model_annotations, 9, 'Based_on_orthology_with_(HGNC_ID)', 'HGNC').
+table_n_type(disease_model_annotations, 10, 'Based_on_orthology_with_(symbol)', _).
+table_n_type(disease_model_annotations, 11, 'Evidence/interacting_alleles', _).
+table_n_type(disease_model_annotations, 12, 'Reference_(FBrf)', 'FBrf').
+table_n_type(dmel_gene_sequence_ontology_annotations, 1, gene_primary_id, _).
+table_n_type(dmel_gene_sequence_ontology_annotations, 2, gene_symbol, _).
+table_n_type(dmel_gene_sequence_ontology_annotations, 3, so_term_name, _).
+table_n_type(dmel_gene_sequence_ontology_annotations, 4, so_term_id, _).
+table_n_type(dmel_human_orthologs_disease, 1, 'Dmel_gene', _).
+table_n_type(dmel_human_orthologs_disease, 2, 'Dmel_gene_symbol', _).
+table_n_type(dmel_human_orthologs_disease, 3, 'Human_gene_HGNC', 'HGNC').
+table_n_type(dmel_human_orthologs_disease, 4, 'Human_gene_OMIM', 'OMIM').
+table_n_type(dmel_human_orthologs_disease, 5, 'Human_gene_symbol', _).
+table_n_type(dmel_human_orthologs_disease, 6, 'DIOPT_score', _).
+table_n_type(dmel_human_orthologs_disease, 7, listOf('OMIM_Phenotype_IDs',[',']), 'OMIM').
+table_n_type(dmel_human_orthologs_disease, 8, 'OMIM_Phenotype_IDs[name]', 'OMIM').
+table_n_type(fbgn_fbtr_fbpp_expanded, 1, organism, _).
+table_n_type(fbgn_fbtr_fbpp_expanded, 2, gene_type, _).
+table_n_type(fbgn_fbtr_fbpp_expanded, 3, gene_ID, 'FBgn').
+table_n_type(fbgn_fbtr_fbpp_expanded, 4, gene_symbol, _).
+table_n_type(fbgn_fbtr_fbpp_expanded, 5, gene_fullname, _).
+table_n_type(fbgn_fbtr_fbpp_expanded, 6, annotation_ID, _).
+table_n_type(fbgn_fbtr_fbpp_expanded, 7, transcript_type, _).
+table_n_type(fbgn_fbtr_fbpp_expanded, 8, transcript_ID, 'FBtr').
+table_n_type(fbgn_fbtr_fbpp_expanded, 9, transcript_symbol, _).
+table_n_type(fbgn_fbtr_fbpp_expanded, 10, polypeptide_ID, 'FBpp').
+table_n_type(fbgn_fbtr_fbpp_expanded, 11, polypeptide_symbol, _).
+table_n_type(fbrf_pmid_pmcid_doi, 1, 'FBrf', 'FBrf').
+table_n_type(fbrf_pmid_pmcid_doi, 2, 'PMID', 'PMID').
+table_n_type(fbrf_pmid_pmcid_doi, 3, 'PMCID', 'PMCID').
+table_n_type(fbrf_pmid_pmcid_doi, 4, 'DOI', 'DOI').
+table_n_type(fbrf_pmid_pmcid_doi, 5, pub_type, _).
+table_n_type(fbrf_pmid_pmcid_doi, 6, miniref, _).
+table_n_type(fbrf_pmid_pmcid_doi, 7, pmid_added, _).
+table_n_type(gene_genetic_interactions, 1, 'Starting_gene_symbol', _).
+table_n_type(gene_genetic_interactions, 2, 'Starting_gene_FBgn', 'FBgn').
+table_n_type(gene_genetic_interactions, 3, 'Interacting_gene_symbol', _).
+table_n_type(gene_genetic_interactions, 4, 'Interacting_gene_FBgn', 'FBgn').
+table_n_type(gene_genetic_interactions, 5, 'Interaction_type', _).
+table_n_type(gene_genetic_interactions, 6, 'Publication_FBrf', 'FBrf').
+table_n_type(gene_map_table, 1, organism_abbreviation, _).
+table_n_type(gene_map_table, 2, current_symbol, _).
+table_n_type(gene_map_table, 3, primary_FBid, 'FBgn').
+table_n_type(gene_map_table, 4, recombination_loc, _).
+table_n_type(gene_map_table, 5, cytogenetic_loc, _).
+table_n_type(gene_map_table, 6, sequence_loc, _).
+table_n_type(physical_interactions_mitab, 1, 'ID_Interactor_A', _).
+table_n_type(physical_interactions_mitab, 2, 'ID_Interactor_B', _).
+table_n_type(physical_interactions_mitab, 3, 'Alt_ID_Interactor_A', _).
+table_n_type(physical_interactions_mitab, 4, 'Alt_ID_Interactor_B', _).
+table_n_type(physical_interactions_mitab, 5, 'Alias_Interactor_A', _).
+table_n_type(physical_interactions_mitab, 6, 'Alias_Interactor_B', _).
+table_n_type(physical_interactions_mitab, 7, 'Interaction_Detection_Method', _).
+table_n_type(physical_interactions_mitab, 8, 'Publication_1st_Author', _).
+table_n_type(physical_interactions_mitab, 9, 'Publication', _).
+table_n_type(physical_interactions_mitab, 10, 'Taxid_Interactor_A', _).
+table_n_type(physical_interactions_mitab, 11, 'Taxid_Interactor_B', _).
+table_n_type(physical_interactions_mitab, 12, 'Interaction_Type', _).
+table_n_type(physical_interactions_mitab, 13, 'Source_Database', _).
+table_n_type(physical_interactions_mitab, 14, 'Interaction_Identifier', _).
+table_n_type(physical_interactions_mitab, 15, 'Confidence_Value', _).
+table_n_type(physical_interactions_mitab, 16, 'Expansion_Method', _).
+table_n_type(physical_interactions_mitab, 17, 'Biological_Role_Interactor_A', _).
+table_n_type(physical_interactions_mitab, 18, 'Biological_Role_Interactor_B', _).
+table_n_type(physical_interactions_mitab, 19, 'Experimental_Role_Interactor_A', _).
+table_n_type(physical_interactions_mitab, 20, 'Experimental_Role_Interactor_B', _).
+table_n_type(physical_interactions_mitab, 21, 'Type_Interactor_A', _).
+table_n_type(physical_interactions_mitab, 22, 'Type_Interactor_B', _).
+table_n_type(physical_interactions_mitab, 23, 'Xref_Interactor_A', _).
+table_n_type(physical_interactions_mitab, 24, 'Xref_Interactor_B', _).
+table_n_type(physical_interactions_mitab, 25, 'Interaction_Xref', _).
+table_n_type(physical_interactions_mitab, 26, 'Annotation_Interactor_A', _).
+table_n_type(physical_interactions_mitab, 27, 'Annotation_Interactor_B', _).
+table_n_type(physical_interactions_mitab, 28, 'Interaction_Annotation', _).
+table_n_type(physical_interactions_mitab, 29, 'Host_Organism', _).
+table_n_type(physical_interactions_mitab, 30, 'Interaction_Parameters', _).
+table_n_type(physical_interactions_mitab, 31, 'Creation_Date', _).
+table_n_type(physical_interactions_mitab, 32, 'Update_Date', _).
+table_n_type(physical_interactions_mitab, 33, 'Checksum_Interactor_A', _).
+table_n_type(physical_interactions_mitab, 34, 'Checksum_Interactor_B', _).
+table_n_type(physical_interactions_mitab, 35, 'Interaction_Checksum', _).
+table_n_type(physical_interactions_mitab, 36, 'Negative', _).
+table_n_type(physical_interactions_mitab, 37, 'Feature_Interactor_A', _).
+table_n_type(physical_interactions_mitab, 38, 'Feature_Interactor_B', _).
+table_n_type(physical_interactions_mitab, 39, 'Stoichiometry_Interactor_A', _).
+table_n_type(physical_interactions_mitab, 40, 'Stoichiometry_Interactor_B', _).
+table_n_type(physical_interactions_mitab, 41, 'Identification_Method_Participant_A', _).
+table_n_type(physical_interactions_mitab, 42, 'Identification_Method_Participant_B', _).
+table_n_type(fbal_to_fbgn, 1, 'AlleleID', 'FBal').
+table_n_type(fbal_to_fbgn, 2, 'AlleleSymbol', _).
+table_n_type(fbal_to_fbgn, 3, 'GeneID', 'FBgn').
+table_n_type(fbal_to_fbgn, 4, 'GeneSymbol', _).
+table_n_type(cDNA_clone, 1, 'FBcl', 'FBcl').
+table_n_type(cDNA_clone, 2, organism_abbreviation, _).
+table_n_type(cDNA_clone, 3, clone_name, _).
+table_n_type(cDNA_clone, 4, dataset_metadata_name, _).
+table_n_type(cDNA_clone, 5, cDNA_accession, _).
+table_n_type(cDNA_clone, 6, 'EST_accession', _).
+table_n_type(genomic_clone, 1, 'FBcl', 'FBcl').
+table_n_type(genomic_clone, 2, organism_abbreviation, _).
+table_n_type(genomic_clone, 3, clone_name, _).
+table_n_type(genomic_clone, 4, accession, _).
+/*
+table_n_type(fbgn_uniprot, 1, primary_FBgn, 'FBgn').
+table_n_type(fbgn_uniprot, 2, gene_symbol, _).
+table_n_type(fbgn_uniprot, 3, 'CG', _).
+table_n_type(fbgn_uniprot, 4, 'UniprotKB/Swiss-Prot/TrEMBL_accession', _).
+table_n_type(pmid_fbgn_uniprot, 1, primary_FBgn, 'FBgn').
+table_n_type(pmid_fbgn_uniprot, 2, gene_symbol, _).
+table_n_type(pmid_fbgn_uniprot, 3, 'CG', _).
+table_n_type(pmid_fbgn_uniprot, 4, 'UniprotKB/Swiss-Prot/TrEMBL_accession', _).
+*/
+table_n_type(automated_gene_summaries, 1, primary_FBgn, 'FBgn').
+table_n_type(automated_gene_summaries, 2, summary_text, _).
+
+table_n_type(best_gene_summary, 1, 'FBgn', 'FBgn').
+table_n_type(best_gene_summary, 2, 'Gene_Symbol', _).
+table_n_type(best_gene_summary, 3, 'Summary_Source', _).
+table_n_type(best_gene_summary, 4, 'Summary', _).
+table_n_type('Dmel_enzyme', 1, gene_group_id, _).
+table_n_type('Dmel_enzyme', 2, gene_group_name, _).
+table_n_type('Dmel_enzyme', 3, gene_group_GO_id, _).
+table_n_type('Dmel_enzyme', 4, gene_group_GO_name, _).
+table_n_type('Dmel_enzyme', 5, gene_group_EC_number, _).
+table_n_type('Dmel_enzyme', 6, gene_group_EC_name, _).
+table_n_type('Dmel_enzyme', 7, gene_id, 'FBgn').
+table_n_type('Dmel_enzyme', 8, gene_symbol, _).
+table_n_type('Dmel_enzyme', 9, gene_name, _).
+table_n_type('Dmel_enzyme', 10, gene_EC_number, _).
+table_n_type('Dmel_enzyme', 11, gene_EC_name, _).
+table_n_type(dmel_unique_protein_isoforms, 1, 'FBgn', 'FBgn').
+table_n_type(dmel_unique_protein_isoforms, 2, 'FB_gene_symbol', _).
+table_n_type(dmel_unique_protein_isoforms, 3, representative_protein, _).
+table_n_type(dmel_unique_protein_isoforms, 4, identical_protein, _).
+table_n_type(fbgn_annotation_ID, 1, gene_symbol, _).
+table_n_type(fbgn_annotation_ID, 2, organism_abbreviation, _).
+table_n_type(fbgn_annotation_ID, 3, primary_FBgn, 'FBgn').
+table_n_type(fbgn_annotation_ID, 4, secondary_FBgn, 'FBgn').
+table_n_type(fbgn_annotation_ID, 5, annotation_ID, 'FBan').
+table_n_type(fbgn_annotation_ID, 6, secondary_annotation_ID, 'FBan').
+table_n_type(fbgn_exons2affy1_overlaps, 1, 'FBgn', 'FBgn').
+table_n_type(fbgn_exons2affy1_overlaps, 2, affy, _).
+table_n_type(fbgn_exons2affy2_overlaps, 1, 'FBgn', 'FBgn').
+table_n_type(fbgn_exons2affy2_overlaps, 2, affy, _).
+table_n_type(fbgn_fbtr_fbpp, 1, 'FBgn', 'FBgn').
+table_n_type(fbgn_fbtr_fbpp, 2, 'FBtr', 'FBtr').
+table_n_type(fbgn_fbtr_fbpp, 3, 'FBpp', 'FBpp').
+table_n_type(fbgn_gleanr, 1, organism_abbreviation, _).
+table_n_type(fbgn_gleanr, 2, gene_symbol, _).
+table_n_type(fbgn_gleanr, 3, primary_FBgn, 'FBgn').
+table_n_type(fbgn_gleanr, 4, 'GLEANR', _).
+/*
+table_n_type(fbgn_NAseq_Uniprot, 1, gene_symbol, _).
+table_n_type(fbgn_NAseq_Uniprot, 2, organism_abbreviation, _).
+table_n_type(fbgn_NAseq_Uniprot, 3, primary_FBgn, 'FBgn').
+table_n_type(fbgn_NAseq_Uniprot, 4, nucleotide_accession, _).
+table_n_type(fbgn_NAseq_Uniprot, 5, na_based_protein_accession, _).
+table_n_type(fbgn_NAseq_Uniprot, 6, 'UniprotKB/Swiss-Prot/TrEMBL_accession', _).
+table_n_type(fbgn_NAseq_Uniprot, 7, 'EntrezGene', _).
+table_n_type(fbgn_NAseq_Uniprot, 8, 'RefSeq_transcripts', _).
+table_n_type(fbgn_NAseq_Uniprot, 9, 'RefSeq_proteins', _).
+*/
+table_n_type(gene_functional_complementation, 1, 'Dmel_gene_symbol', _).
+table_n_type(gene_functional_complementation, 2, 'Dmel_gene_FBgn', 'FBgn').
+table_n_type(gene_functional_complementation, 3, ortholog_gene_symbol, _).
+table_n_type(gene_functional_complementation, 4, ortholog_gene_FBgn_ID, 'FBgn').
+table_n_type(gene_functional_complementation, 5, reference_FBrf, 'FBrf').
+table_n_type(gene_group, 1, 'FB_group', 'FBgg').
+table_n_type(gene_group, 2, 'FB_group_symbol', _).
+table_n_type(gene_group, 3, 'FB_group_name', _).
+table_n_type(gene_group, 4, 'Parent_FB_group', 'FBgg').
+table_n_type(gene_group, 5, 'Parent_FB_group_symbol', _).
+table_n_type(gene_group, 6, 'Group_member_FB_gene', 'FBgn').
+table_n_type(gene_group, 7, 'Group_member_FB_gene_symbol', _).
+table_n_type(gene_groups_HGNC, 1, 'FB_group', 'FBgg').
+table_n_type(gene_groups_HGNC, 2, 'FB_group_symbol', _).
+table_n_type(gene_groups_HGNC, 3, 'FB_group_name', _).
+table_n_type(gene_groups_HGNC, 4, 'Parent_FB_group', 'FBgg').
+table_n_type(gene_groups_HGNC, 5, 'Parent_FB_group_symbol', _).
+table_n_type(gene_groups_HGNC, 6, 'Group_member_FB_gene', 'FBgn').
+table_n_type(gene_groups_HGNC, 7, 'Group_member_FB_gene_symbol', _).
+table_n_type(gene_rpkm_matrix, 1, gene_primary_id, 'FBgn').
+table_n_type(gene_rpkm_matrix, 2, gene_symbol, _).
+table_n_type(gene_rpkm_matrix, 3, gene_fullname, _).
+table_n_type(gene_rpkm_matrix, 4, gene_type, _).
+table_n_type(gene_rpkm_matrix, 5, 'BCM_1_E2-4hr_(FBlc0000061)', 'FBlc').
+table_n_type(gene_rpkm_matrix, 6, 'BCM_1_E14-16hr_(FBlc0000062)', 'FBlc').
+table_n_type(gene_rpkm_matrix, 7, 'BCM_1_E2-16hr_(FBlc0000063)', 'FBlc').
+table_n_type(gene_rpkm_matrix, 8, 'BCM_1_E2-16hr100_(FBlc0000064)', 'FBlc').
+table_n_type(gene_rpkm_matrix, 9, 'BCM_1_L3i_(FBlc0000065)', 'FBlc').
+table_n_type(gene_rpkm_matrix, 10, 'BCM_1_L3i100_(FBlc0000066)', 'FBlc').
+table_n_type(gene_rpkm_matrix, 11, 'BCM_1_P3d_(FBlc0000067)', 'FBlc').
+table_n_type(gene_rpkm_matrix, 12, 'BCM_1_FA3d_(FBlc0000068)', 'FBlc').
+table_n_type(gene_rpkm_matrix, 13, 'BCM_1_MA3d_(FBlc0000069)', 'FBlc').
+table_n_type(gene_rpkm_matrix, 14, 'BCM_1_P_(FBlc0000070)', 'FBlc').
+table_n_type(gene_rpkm_matrix, 15, 'BCM_1_L_(FBlc0000071)', 'FBlc').
+table_n_type(gene_rpkm_matrix, 16, 'BCM_1_A17d_(FBlc0000072)', 'FBlc').
+table_n_type(gene_rpkm_report, 1, 'Release_ID', _).
+table_n_type(gene_rpkm_report, 2, 'FBgn', 'FBgn').
+table_n_type(gene_rpkm_report, 3, 'GeneSymbol', _).
+table_n_type(gene_rpkm_report, 4, 'Parent_library_FBlc', 'FBlc').
+table_n_type(gene_rpkm_report, 5, 'Parent_library_name', _).
+table_n_type(gene_rpkm_report, 6, 'RNASource_FBlc', 'FBlc').
+table_n_type(gene_rpkm_report, 7, 'RNASource_name', _).
+table_n_type(gene_rpkm_report, 8, 'RPKM_value', _).
+table_n_type(gene_rpkm_report, 9, 'Bin_value', _).
+table_n_type(gene_rpkm_report, 10, 'Unique_exon_base_count', _).
+table_n_type(gene_rpkm_report, 11, 'Total_exon_base_count', _).
+table_n_type(gene_rpkm_report, 12, 'Count_used', _).
+table_n_type(gene_snapshots, 1, 'FBgn', 'FBgn').
+table_n_type(gene_snapshots, 2, 'GeneSymbol', _).
+table_n_type(gene_snapshots, 3, 'GeneName', _).
+table_n_type(gene_snapshots, 4, datestamp, _).
+table_n_type(gene_snapshots, 5, gene_snapshot_text, _).
+table_n_type(pathway_group, 1, 'FB_group', 'FBgg').
+table_n_type(pathway_group, 2, 'FB_group_symbol', _).
+table_n_type(pathway_group, 3, 'FB_group_name', _).
+table_n_type(pathway_group, 4, 'Parent_FB_group', 'FBgg').
+table_n_type(pathway_group, 5, 'Parent_FB_group_symbol', _).
+table_n_type(pathway_group, 6, 'Group_member_FB_gene', 'FBgn').
+table_n_type(pathway_group, 7, 'Group_member_FB_gene_symbol', _).
+table_n_type(insertion_mapping, 1, insertion_symbol, _).
+table_n_type(insertion_mapping, 2, 'FBti', 'FBti').
+table_n_type(insertion_mapping, 3, genomic_location, _).
+table_n_type(insertion_mapping, 4, range, _).
+table_n_type(insertion_mapping, 5, orientation, _).
+table_n_type(insertion_mapping, 6, estimated_cytogenetic_location, _).
+table_n_type(insertion_mapping, 7, observed_cytogenetic_location, _).
+table_n_type('cyto-genetic-seq', 1, 'Cytogenetic_map_position', _).
+table_n_type('cyto-genetic-seq', 2, 'Genetic_map_position', _).
+table_n_type('cyto-genetic-seq', 3, 'Sequence_coordinates_(release_6)', _).
+table_n_type('cyto-genetic-seq', 4, 'R6_conversion_notes', _).
+table_n_type(dataset_metadata, 1, 'Dataset_Metadata_ID', _).
+table_n_type(dataset_metadata, 2, 'Dataset_Metadata_Name', _).
+table_n_type(dataset_metadata, 3, 'Item_ID', _).
+table_n_type(dataset_metadata, 4, 'Item_Name', _).
+table_n_type(dmel_paralogs, 1, 'FBgn', 'FBgn').
+table_n_type(dmel_paralogs, 2, 'GeneSymbol', _).
+table_n_type(dmel_paralogs, 3, 'Arm/Scaffold', _).
+table_n_type(dmel_paralogs, 4, 'Location', _).
+table_n_type(dmel_paralogs, 5, 'Strand', _).
+table_n_type(dmel_paralogs, 6, 'Paralog_FBgn', 'FBgn').
+table_n_type(dmel_paralogs, 7, 'Paralog_GeneSymbol', _).
+table_n_type(dmel_paralogs, 8, 'Paralog_Arm/Scaffold', _).
+table_n_type(dmel_paralogs, 9, 'Paralog_Location', _).
+table_n_type(dmel_paralogs, 10, 'Paralog_Strand', _).
+table_n_type(dmel_paralogs, 11, 'DIOPT_score', _).
+table_n_type(entity_publication, 1, entity_id, _).
+table_n_type(entity_publication, 2, entity_name, _).
+table_n_type(entity_publication, 3, 'FlyBase_publication', 'FBrf').
+table_n_type(entity_publication, 4, 'PubMed', _).
+table_n_type(organism_list, 1, genus, _).
+table_n_type(organism_list, 2, species, _).
+table_n_type(organism_list, 3, abbreviation, _).
+table_n_type(organism_list, 4, common_name, _).
+table_n_type(organism_list, 5, 'NCBI_taxon', _).
+table_n_type(organism_list, 6, 'drosophilid?', _).
+table_n_type(stocks, 1, stock_id, 'FBst').
+table_n_type(stocks, 2, dbxref_id, _).
+table_n_type(stocks, 3, organism_id, _).
+table_n_type(stocks, 4, name, _).
+table_n_type(stocks, 5, uniquename, _).
+table_n_type(stocks, 6, description, _).
+table_n_type(stocks, 7, type_id, _).
+table_n_type(stocks, 8, is_obsolete, _).
+table_n_type(synonym, 1, primary_FBid, 'FBgn').
+table_n_type(synonym, 2, organism_abbreviation, _).
+table_n_type(synonym, 3, current_symbol, _).
+table_n_type(synonym, 4, current_fullname, _).
+table_n_type(synonym, 5, fullname_synonym, _).
+table_n_type(synonym, 6, symbol_synonym, _).
+
+
+guess_rest(P,N,T,Guess):- table_n_type(P,N,T,Guess),var(Guess),fb_pred(P,A),functor(C,P,A),arg(N,C,Guess),once(call(C)).
+
+:- dynamic numeric_value_p_n/3.
+:- module_transparent numeric_value_p_n/3.
+
+numeric_value_p_n(dmel_human_orthologs_disease, 6, 'DIOPT_score').
+numeric_value_p_n(dmel_human_orthologs_disease, 7, 'OMIM_Phenotype_IDs').
+numeric_value_p_n(fbrf_pmid_pmcid_doi, 2, 'PMID').
+numeric_value_p_n(pmid_fbgn_uniprot, 2, gene_symbol).
+numeric_value_p_n(fbgn_NAseq_Uniprot, 7, 'EntrezGene').
+numeric_value_p_n(gene_groups_HGNC, 4, 'Parent_FB_group').
+numeric_value_p_n(gene_rpkm_matrix, 5, 'BCM_1_E2-4hr_(FBlc0000061)').
+numeric_value_p_n(gene_rpkm_matrix, 6, 'BCM_1_E14-16hr_(FBlc0000062)').
+numeric_value_p_n(gene_rpkm_matrix, 7, 'BCM_1_E2-16hr_(FBlc0000063)').
+numeric_value_p_n(gene_rpkm_matrix, 8, 'BCM_1_E2-16hr100_(FBlc0000064)').
+numeric_value_p_n(gene_rpkm_matrix, 9, 'BCM_1_L3i_(FBlc0000065)').
+numeric_value_p_n(gene_rpkm_matrix, 10, 'BCM_1_L3i100_(FBlc0000066)').
+numeric_value_p_n(gene_rpkm_matrix, 11, 'BCM_1_P3d_(FBlc0000067)').
+numeric_value_p_n(gene_rpkm_matrix, 12, 'BCM_1_FA3d_(FBlc0000068)').
+numeric_value_p_n(gene_rpkm_matrix, 13, 'BCM_1_MA3d_(FBlc0000069)').
+numeric_value_p_n(gene_rpkm_matrix, 14, 'BCM_1_P_(FBlc0000070)').
+numeric_value_p_n(gene_rpkm_matrix, 15, 'BCM_1_L_(FBlc0000071)').
+numeric_value_p_n(gene_rpkm_matrix, 16, 'BCM_1_A17d_(FBlc0000072)').
+numeric_value_p_n(gene_rpkm_matrix, 17, 'mE_mRNA_em0-2hr_(FBlc0000086)').
+numeric_value_p_n(gene_rpkm_matrix, 18, 'mE_mRNA_em2-4hr_(FBlc0000087)').
+numeric_value_p_n(gene_rpkm_matrix, 19, 'mE_mRNA_em4-6hr_(FBlc0000088)').
+numeric_value_p_n(gene_rpkm_matrix, 20, 'mE_mRNA_em6-8hr_(FBlc0000089)').
+numeric_value_p_n(gene_rpkm_matrix, 21, 'mE_mRNA_em8-10hr_(FBlc0000090)').
+numeric_value_p_n(gene_rpkm_matrix, 22, 'mE_mRNA_em10-12hr_(FBlc0000091)').
+numeric_value_p_n(gene_rpkm_matrix, 23, 'mE_mRNA_em12-14hr_(FBlc0000092)').
+numeric_value_p_n(gene_rpkm_matrix, 24, 'mE_mRNA_em14-16hr_(FBlc0000093)').
+numeric_value_p_n(gene_rpkm_matrix, 25, 'mE_mRNA_em16-18hr_(FBlc0000094)').
+numeric_value_p_n(gene_rpkm_matrix, 26, 'mE_mRNA_em18-20hr_(FBlc0000095)').
+numeric_value_p_n(gene_rpkm_matrix, 27, 'mE_mRNA_em20-22hr_(FBlc0000096)').
+numeric_value_p_n(gene_rpkm_matrix, 28, 'mE_mRNA_em22-24hr_(FBlc0000097)').
+numeric_value_p_n(gene_rpkm_matrix, 29, 'mE_mRNA_L1_(FBlc0000098)').
+numeric_value_p_n(gene_rpkm_matrix, 30, 'mE_mRNA_L2_(FBlc0000099)').
+numeric_value_p_n(gene_rpkm_matrix, 31, 'mE_mRNA_L3_12hr_(FBlc0000100)').
+numeric_value_p_n(gene_rpkm_matrix, 32, 'mE_mRNA_L3_PS1-2_(FBlc0000101)').
+numeric_value_p_n(gene_rpkm_matrix, 33, 'mE_mRNA_L3_PS3-6_(FBlc0000102)').
+numeric_value_p_n(gene_rpkm_matrix, 34, 'mE_mRNA_L3_PS7-9_(FBlc0000103)').
+numeric_value_p_n(gene_rpkm_matrix, 35, 'mE_mRNA_WPP_(FBlc0000104)').
+numeric_value_p_n(gene_rpkm_matrix, 36, 'mE_mRNA_P5_(FBlc0000105)').
+numeric_value_p_n(gene_rpkm_matrix, 37, 'mE_mRNA_P6_(FBlc0000106)').
+numeric_value_p_n(gene_rpkm_matrix, 38, 'mE_mRNA_P8_(FBlc0000107)').
+numeric_value_p_n(gene_rpkm_matrix, 39, 'mE_mRNA_P9-10_(FBlc0000108)').
+numeric_value_p_n(gene_rpkm_matrix, 40, 'mE_mRNA_P15_(FBlc0000109)').
+numeric_value_p_n(gene_rpkm_matrix, 41, 'mE_mRNA_AdF_Ecl_1days_(FBlc0000110)').
+numeric_value_p_n(gene_rpkm_matrix, 42, 'mE_mRNA_AdF_Ecl_5days_(FBlc0000111)').
+numeric_value_p_n(gene_rpkm_matrix, 43, 'mE_mRNA_AdF_Ecl_30days_(FBlc0000112)').
+numeric_value_p_n(gene_rpkm_matrix, 44, 'mE_mRNA_AdM_Ecl_1days_(FBlc0000113)').
+numeric_value_p_n(gene_rpkm_matrix, 45, 'mE_mRNA_AdM_Ecl_5days_(FBlc0000114)').
+numeric_value_p_n(gene_rpkm_matrix, 46, 'mE_mRNA_AdM_Ecl_30days_(FBlc0000115)').
+numeric_value_p_n(gene_rpkm_matrix, 47, 'mE_mRNA_A_MateF_1d_head_(FBlc0000207)').
+numeric_value_p_n(gene_rpkm_matrix, 48, 'mE_mRNA_A_MateF_4d_ovary_(FBlc0000208)').
+numeric_value_p_n(gene_rpkm_matrix, 49, 'mE_mRNA_A_MateM_1d_head_(FBlc0000209)').
+numeric_value_p_n(gene_rpkm_matrix, 50, 'mE_mRNA_A_VirF_1d_head_(FBlc0000210)').
+numeric_value_p_n(gene_rpkm_matrix, 51, 'mE_mRNA_A_VirF_4d_head_(FBlc0000211)').
+numeric_value_p_n(gene_rpkm_matrix, 52, 'mE_mRNA_A_MateF_20d_head_(FBlc0000212)').
+numeric_value_p_n(gene_rpkm_matrix, 53, 'mE_mRNA_A_MateF_4d_head_(FBlc0000213)').
+numeric_value_p_n(gene_rpkm_matrix, 54, 'mE_mRNA_A_MateM_20d_head_(FBlc0000214)').
+numeric_value_p_n(gene_rpkm_matrix, 55, 'mE_mRNA_A_MateM_4d_acc_gland_(FBlc0000215)').
+numeric_value_p_n(gene_rpkm_matrix, 56, 'mE_mRNA_A_MateM_4d_head_(FBlc0000216)').
+numeric_value_p_n(gene_rpkm_matrix, 57, 'mE_mRNA_A_MateM_4d_testis_(FBlc0000217)').
+numeric_value_p_n(gene_rpkm_matrix, 58, 'mE_mRNA_A_1d_carcass_(FBlc0000218)').
+numeric_value_p_n(gene_rpkm_matrix, 59, 'mE_mRNA_A_1d_dig_sys_(FBlc0000219)').
+numeric_value_p_n(gene_rpkm_matrix, 60, 'mE_mRNA_A_20d_carcass_(FBlc0000220)').
+numeric_value_p_n(gene_rpkm_matrix, 61, 'mE_mRNA_A_20d_dig_sys_(FBlc0000221)').
+numeric_value_p_n(gene_rpkm_matrix, 62, 'mE_mRNA_A_4d_carcass_(FBlc0000222)').
+numeric_value_p_n(gene_rpkm_matrix, 63, 'mE_mRNA_A_4d_dig_sys_(FBlc0000223)').
+numeric_value_p_n(gene_rpkm_matrix, 64, 'mE_mRNA_P8_CNS_(FBlc0000224)').
+numeric_value_p_n(gene_rpkm_matrix, 65, 'mE_mRNA_L3_CNS_(FBlc0000225)').
+numeric_value_p_n(gene_rpkm_matrix, 66, 'mE_mRNA_L3_Wand_carcass_(FBlc0000226)').
+numeric_value_p_n(gene_rpkm_matrix, 67, 'mE_mRNA_L3_Wand_dig_sys_(FBlc0000227)').
+numeric_value_p_n(gene_rpkm_matrix, 68, 'mE_mRNA_L3_Wand_fat_(FBlc0000228)').
+numeric_value_p_n(gene_rpkm_matrix, 69, 'mE_mRNA_L3_Wand_imag_disc_(FBlc0000229)').
+numeric_value_p_n(gene_rpkm_matrix, 70, 'mE_mRNA_L3_Wand_saliv_(FBlc0000230)').
+numeric_value_p_n(gene_rpkm_matrix, 71, 'mE_mRNA_A_VirF_20d_head_(FBlc0000231)').
+numeric_value_p_n(gene_rpkm_matrix, 72, 'mE_mRNA_A_VirF_4d_ovary_(FBlc0000232)').
+numeric_value_p_n(gene_rpkm_matrix, 73, 'mE_mRNA_WPP_fat_(FBlc0000233)').
+numeric_value_p_n(gene_rpkm_matrix, 74, 'mE_mRNA_WPP_saliv_(FBlc0000234)').
+numeric_value_p_n(gene_rpkm_matrix, 75, 'mE_mRNA_P8_fat_(FBlc0000235)').
+numeric_value_p_n(gene_rpkm_matrix, 76, 'mE_mRNA_A_4d_Cold1_(FBlc0000237)').
+numeric_value_p_n(gene_rpkm_matrix, 77, 'mE_mRNA_A_4d_Cold2_(FBlc0000238)').
+numeric_value_p_n(gene_rpkm_matrix, 78, 'mE_mRNA_L3_Cu_0.5mM_(FBlc0000239)').
+numeric_value_p_n(gene_rpkm_matrix, 79, 'mE_mRNA_L3_late_Zn_5mM_(FBlc0000240)').
+numeric_value_p_n(gene_rpkm_matrix, 80, 'mE_mRNA_A_4d_Cu_15mM_(FBlc0000241)').
+numeric_value_p_n(gene_rpkm_matrix, 81, 'mE_mRNA_A_4d_Zn_4.5mM_(FBlc0000242)').
+numeric_value_p_n(gene_rpkm_matrix, 82, 'mE_mRNA_A_4d_Caffeine_25mg/ml_(FBlc0000243)').
+numeric_value_p_n(gene_rpkm_matrix, 83, 'mE_mRNA_A_4d_Caffeine_2.5mg/ml_(FBlc0000244)').
+numeric_value_p_n(gene_rpkm_matrix, 84, 'mE_mRNA_L3_Caffeine_1.5mg/ml_(FBlc0000245)').
+numeric_value_p_n(gene_rpkm_matrix, 85, 'mE_mRNA_A_4d_Cd_0.1M_(FBlc0000246)').
+numeric_value_p_n(gene_rpkm_matrix, 86, 'mE_mRNA_A_4d_Cd_0.05M_(FBlc0000247)').
+numeric_value_p_n(gene_rpkm_matrix, 87, 'mE_mRNA_L3_Cd_12h_(FBlc0000248)').
+numeric_value_p_n(gene_rpkm_matrix, 88, 'mE_mRNA_L3_Cd_6hr_(FBlc0000249)').
+numeric_value_p_n(gene_rpkm_matrix, 89, 'mE_mRNA_A_4d_Paraquat_5mM_(FBlc0000250)').
+numeric_value_p_n(gene_rpkm_matrix, 90, 'mE_mRNA_A_4d_Paraquat_10mM_(FBlc0000251)').
+numeric_value_p_n(gene_rpkm_matrix, 91, 'mE_mRNA_L3_Rotenone_8ug_(FBlc0000252)').
+numeric_value_p_n(gene_rpkm_matrix, 92, 'mE_mRNA_L3_Rotenone_2ug_(FBlc0000253)').
+numeric_value_p_n(gene_rpkm_matrix, 93, 'mE_mRNA_L3_EtOH_10_(FBlc0000254)').
+numeric_value_p_n(gene_rpkm_matrix, 94, 'mE_mRNA_L3_EtOH_5_(FBlc0000255)').
+numeric_value_p_n(gene_rpkm_matrix, 95, 'mE_mRNA_L3_EtOH_2.5_(FBlc0000256)').
+numeric_value_p_n(gene_rpkm_matrix, 96, 'mE_mRNA_A_4d_Heatshock_(FBlc0000257)').
+numeric_value_p_n(gene_rpkm_matrix, 97, 'mE_mRNA_A_10d_Resveratrol_100uM_(FBlc0000672)').
+numeric_value_p_n(gene_rpkm_matrix, 98, 'mE_mRNA_A_10d_Rotenone_Starved_(FBlc0000673)').
+numeric_value_p_n(gene_rpkm_matrix, 99, 'mE_mRNA_F_Sindbis_virus_(FBlc0000674)').
+numeric_value_p_n(gene_rpkm_matrix, 100, 'mE_mRNA_L_Sindbis_virus_(FBlc0000675)').
+numeric_value_p_n(gene_rpkm_matrix, 101, 'mE_mRNA_M_Sindbis_virus_(FBlc0000676)').
+numeric_value_p_n(gene_rpkm_matrix, 102, 'mE_mRNA_P_Sindbis_virus_(FBlc0000677)').
+numeric_value_p_n(gene_rpkm_matrix, 103, 'mE_mRNA_CME-W2_cells_(FBlc0000261)').
+numeric_value_p_n(gene_rpkm_matrix, 104, 'mE_mRNA_GM2_cells_(FBlc0000262)').
+numeric_value_p_n(gene_rpkm_matrix, 105, 'mE_mRNA_mbn2_cells_(FBlc0000263)').
+numeric_value_p_n(gene_rpkm_matrix, 106, 'mE_mRNA_BG2-c2_cells_(FBlc0000264)').
+numeric_value_p_n(gene_rpkm_matrix, 107, 'mE_mRNA_D20-c5_cells_(FBlc0000265)').
+numeric_value_p_n(gene_rpkm_matrix, 108, 'mE_mRNA_S3_cells_(FBlc0000266)').
+numeric_value_p_n(gene_rpkm_matrix, 109, 'mE_mRNA_1182-4H_cells_(FBlc0000267)').
+numeric_value_p_n(gene_rpkm_matrix, 110, 'mE_mRNA_CME_L1_cells_(FBlc0000268)').
+numeric_value_p_n(gene_rpkm_matrix, 111, 'mE_mRNA_Kc167_cells_(FBlc0000269)').
+numeric_value_p_n(gene_rpkm_matrix, 112, 'mE_mRNA_BG1-c1_cells_(FBlc0000270)').
+numeric_value_p_n(gene_rpkm_matrix, 113, 'mE_mRNA_D11_cells_(FBlc0000271)').
+numeric_value_p_n(gene_rpkm_matrix, 114, 'mE_mRNA_D16-c3_cells_(FBlc0000272)').
+numeric_value_p_n(gene_rpkm_matrix, 115, 'mE_mRNA_D17-c3_cells_(FBlc0000273)').
+numeric_value_p_n(gene_rpkm_matrix, 116, 'mE_mRNA_D21_cells_(FBlc0000274)').
+numeric_value_p_n(gene_rpkm_matrix, 117, 'mE_mRNA_D32_cells_(FBlc0000275)').
+numeric_value_p_n(gene_rpkm_matrix, 118, 'mE_mRNA_D4-c1_cells_(FBlc0000276)').
+numeric_value_p_n(gene_rpkm_matrix, 119, 'mE_mRNA_D8_cells_(FBlc0000277)').
+numeric_value_p_n(gene_rpkm_matrix, 120, 'mE_mRNA_D9_cells_(FBlc0000278)').
+numeric_value_p_n(gene_rpkm_matrix, 121, 'mE_mRNA_S1_cells_(FBlc0000279)').
+numeric_value_p_n(gene_rpkm_matrix, 122, 'mE_mRNA_S2R+_cells_(FBlc0000280)').
+numeric_value_p_n(gene_rpkm_matrix, 123, 'mE_mRNA_Sg4_cells_(FBlc0000281)').
+numeric_value_p_n(gene_rpkm_matrix, 124, 'mE_mRNA_OSS_cells_(FBlc0000282)').
+numeric_value_p_n(gene_rpkm_matrix, 125, 'mE_mRNA_OSC_cells_(FBlc0000283)').
+numeric_value_p_n(gene_rpkm_matrix, 126, 'mE_mRNA_fGS_cells_(FBlc0000284)').
+numeric_value_p_n(gene_rpkm_matrix, 127, 'Knoblich_mRNA_L3_CNS_neuroblast_(FBlc0000505)').
+numeric_value_p_n(gene_rpkm_matrix, 128, 'Knoblich_mRNA_L3_CNS_neuron_(FBlc0000506)').
+numeric_value_p_n(gene_rpkm_matrix, 129, 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Brain_(FBlc0003619)').
+numeric_value_p_n(gene_rpkm_matrix, 130, 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Crop_(FBlc0003620)').
+numeric_value_p_n(gene_rpkm_matrix, 131, 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Carcass_(FBlc0003621)').
+numeric_value_p_n(gene_rpkm_matrix, 132, 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Eye_(FBlc0003622)').
+numeric_value_p_n(gene_rpkm_matrix, 133, 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_FatBody_(FBlc0003623)').
+numeric_value_p_n(gene_rpkm_matrix, 134, 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Head_(FBlc0003624)').
+numeric_value_p_n(gene_rpkm_matrix, 135, 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Hindgut_(FBlc0003625)').
+numeric_value_p_n(gene_rpkm_matrix, 136, 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Midgut_(FBlc0003626)').
+numeric_value_p_n(gene_rpkm_matrix, 137, 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Ovary_(FBlc0003627)').
+numeric_value_p_n(gene_rpkm_matrix, 138, 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_RectalPad_(FBlc0003628)').
+numeric_value_p_n(gene_rpkm_matrix, 139, 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_SalivaryGland_(FBlc0003629)').
+numeric_value_p_n(gene_rpkm_matrix, 140, 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_ThoracicoAbdominalGanglion_(FBlc0003630)').
+numeric_value_p_n(gene_rpkm_matrix, 141, 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_MalpighianTubule_(FBlc0003631)').
+numeric_value_p_n(gene_rpkm_matrix, 142, 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Mated_Spermathecum_(FBlc0003632)').
+numeric_value_p_n(gene_rpkm_matrix, 143, 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Virgin_Spermathecum_(FBlc0003633)').
+numeric_value_p_n(gene_rpkm_matrix, 144, 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Whole_(FBlc0003634)').
+numeric_value_p_n(gene_rpkm_matrix, 145, 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Brain_(FBlc0003635)').
+numeric_value_p_n(gene_rpkm_matrix, 146, 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Crop_(FBlc0003636)').
+numeric_value_p_n(gene_rpkm_matrix, 147, 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Carcass_(FBlc0003637)').
+numeric_value_p_n(gene_rpkm_matrix, 148, 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Eye_(FBlc0003638)').
+numeric_value_p_n(gene_rpkm_matrix, 149, 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_FatBody_(FBlc0003639)').
+numeric_value_p_n(gene_rpkm_matrix, 150, 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Head_(FBlc0003640)').
+numeric_value_p_n(gene_rpkm_matrix, 151, 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Hindgut_(FBlc0003641)').
+numeric_value_p_n(gene_rpkm_matrix, 152, 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Midgut_(FBlc0003642)').
+numeric_value_p_n(gene_rpkm_matrix, 153, 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_RectalPad_(FBlc0003643)').
+numeric_value_p_n(gene_rpkm_matrix, 154, 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_SalivaryGland_(FBlc0003644)').
+numeric_value_p_n(gene_rpkm_matrix, 155, 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_ThoracicoAbdominalGanglion_(FBlc0003645)').
+numeric_value_p_n(gene_rpkm_matrix, 156, 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_MalpighianTubule_(FBlc0003646)').
+numeric_value_p_n(gene_rpkm_matrix, 157, 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Testis_(FBlc0003647)').
+numeric_value_p_n(gene_rpkm_matrix, 158, 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_AccessoryGland_(FBlc0003648)').
+numeric_value_p_n(gene_rpkm_matrix, 159, 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Whole_(FBlc0003649)').
+numeric_value_p_n(gene_rpkm_matrix, 160, 'RNA-Seq_Profile_FlyAtlas2_L3_CNS_(FBlc0003650)').
+numeric_value_p_n(gene_rpkm_matrix, 161, 'RNA-Seq_Profile_FlyAtlas2_L3_FatBody_(FBlc0003651)').
+numeric_value_p_n(gene_rpkm_matrix, 162, 'RNA-Seq_Profile_FlyAtlas2_L3_Hindgut_(FBlc0003652)').
+numeric_value_p_n(gene_rpkm_matrix, 163, 'RNA-Seq_Profile_FlyAtlas2_L3_MalpighianTubule_(FBlc0003653)').
+numeric_value_p_n(gene_rpkm_matrix, 164, 'RNA-Seq_Profile_FlyAtlas2_L3_Midgut_(FBlc0003654)').
+numeric_value_p_n(gene_rpkm_matrix, 165, 'RNA-Seq_Profile_FlyAtlas2_L3_SalivaryGland_(FBlc0003655)').
+numeric_value_p_n(gene_rpkm_matrix, 166, 'RNA-Seq_Profile_FlyAtlas2_L3_Trachea_(FBlc0003656)').
+numeric_value_p_n(gene_rpkm_matrix, 167, 'RNA-Seq_Profile_FlyAtlas2_L3_Carcass_(FBlc0003657)').
+numeric_value_p_n(gene_rpkm_matrix, 168, 'RNA-Seq_Profile_FlyAtlas2_L3_Whole_(FBlc0003658)').
+numeric_value_p_n(gene_rpkm_matrix, 169, 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Heart_(FBlc0003724)').
+numeric_value_p_n(gene_rpkm_matrix, 170, 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Heart_(FBlc0003725)').
+numeric_value_p_n(gene_rpkm_report, 8, 'RPKM_value').
+numeric_value_p_n(gene_rpkm_report, 9, 'Bin_value').
+numeric_value_p_n(gene_rpkm_report, 10, 'Unique_exon_base_count').
+numeric_value_p_n(gene_rpkm_report, 11, 'Total_exon_base_count').
+numeric_value_p_n(gene_snapshots, 4, datestamp).
+numeric_value_p_n(insertion_mapping, 5, orientation).
+numeric_value_p_n(dmel_paralogs, 5, 'Strand').
+numeric_value_p_n(dmel_paralogs, 10, 'Paralog_Strand').
+numeric_value_p_n(dmel_paralogs, 11, 'DIOPT_score').
+numeric_value_p_n(entity_publication, 4, 'PubMed').
+numeric_value_p_n(organism_list, 5, 'NCBI_taxon').
+
+
+ncRNA_genes_fb_scheme(
+'
+{
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "RNAcentral ncRNA object",
+        "description": "A sequence to import to RNAcentral. These entries must not be pseudogenes or coding RNA transcripts.",
+        "id": "ncrna.json#",
+        "type": "object",
+        "required": ["primaryId", "taxonId", "soTermId", "sequence", "url"],
+        "additionalProperties": false,
+        "properties": {
+                "primaryId": {
+                        "$ref" : "global-id.json#/properties/globalId",
+                        "description": "The prefixed primary (MOD) ID for an entity. For internal use, e.g. FLYBASE:FBgn0003301, MGI:87917."
+                },
+                "taxonId": {
+                        "$ref" : "global-id.json#/properties/globalId",
+                        "description" : "The NCBI taxonId for the species of the gene entity."
+                },
+                "soTermId": {
+                        "$ref" : "global-id.json#/properties/globalId",
+                        "description": "The SO Term that represents as best we can, the bioType, or featureType of the object in the file."
+                },
+                "ecoTermId": {
+                        "$ref" : "global-id.json#/properties/globalId",
+                        "description": "The ECO Term that represents the evidence for this sequence having the given SO term."
+                },
+                "sequence": {
+                        "$ref": "sequence.json#properties/sequence",
+                        "description": "The DNA sequence of this entry."
+                },
+                "name": {
+                        "type": "string",
+                        "description": "The name of this sequence."
+                },
+                "description": {
+                        "type": "string",
+                        "description": "An informative human readable description. If not provided then it will be generated using the name and species information."
+                },
+                "symbol": {
+                        "type": "string",
+                        "description": "The symbol for this ncRNA"
+                },
+                "symbolSynonyms": {
+                        "type": "array",
+                        "items": {
+                                "type": "string"
+                        },
+                        "uniqueItems": true,
+                        "description": "A list of other symbols for the ncRNA"
+                },
+                "version": {
+                        "description": "The version of this sequence, if any"
+                },
+                "gene": {
+                        "$ref": "gene.json#"
+                },
+                "crossReferenceIds": {
+                        "description":"Collection holding a limited set (for now) of database cross references for each gene.  That set is defined in geneCrossReferences.json dataSoruce enumeration.  NCBI GENE means just the NCBI Gene reference.  UniProtKB is swissprot and trembl.  Ensembl is just the GENE id for now (not transcript nor protein).",
+                        "type": "array",
+                        "items": {
+                                "$ref" : "global-id.json#/properties/globalId"
+                        },
+                        "uniqueItems": true
+                },
+                "genomeLocations": {
+                        "description":"Collection holding the set of locations for this sequence. This should include the exon/intron structure of the sequence.",
+                        "type": "array",
+                        "items": {
+                                "$ref" : "location.json#"
+                        },
+                        "uniqueItems": true
+                },
+                "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "URL to the page for this entry in the database"
+                },
+                "externalUrl": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "URL to a synopsis outside the database, like wikipedia."
+                },
+                "secondaryStructure": {
+                        "description": "The secondary structure in dot-bracket notation for this sequence",
+                        "$ref": "secondary-structure.json#/properties/dot_bracket"
+                },
+                "publications": {
+                        "description": "List of references to associate with this sequence.",
+                        "type": "array",
+                        "items": {
+                                "anyOf": [
+                                        { "$ref": "publications.json#/properties/pubMedId" },
+                                        { "$ref": "publications.json#/properties/doi" }
+                                ]
+                        },
+                        "uniqueItems": true
+                },
+                "localization": {
+                        "description": "Name of the organelle or plasmid this sequence is found in",
+                        "enum": [
+                                "mitochondria",
+                                "plastid",
+                                "chloroplast",
+                                "plasmid"
+                        ]
+                },
+                "sequenceFeatures": {
+                        "anticodon": {
+                                "description": "Information about the anticodon",
+                                "$ref": "anticodon.json#"
+                        },
+                        "modifications": {
+                                "description": "List of the modifications in this sequence",
+                                "type": "array",
+                                "items": {
+                                        "$ref": "modification.json#"
+                                },
+                                "uniqueItems": true
+                        }
+                },
+                "sourceModel": {
+                        "description": "Information about the model used to find this sequence",
+                        "$ref" : "global-id.json#/properties/globalId"
+                },
+                "product": {
+                        "description": "The name of the product, this should be more specific than the name of the SO term that was provided",
+                        "type": "string"
+                },
+                "additionalAnnotations": {
+                        "isoType": {
+                                "description": "The isoType of this tRNA",
+                                "enum": [
+                                        "Ala",
+                                        "Cys",
+                                        "Asp",
+                                        "Glu",
+                                        "Phe",
+                                        "Gly",
+                                        "His",
+                                        "Ile",
+                                        "Lys",
+                                        "Leu",
+                                        "iMet",
+                                        "Met",
+                                        "Asn",
+                                        "Pro",
+                                        "Gln",
+                                        "Arg",
+                                        "Ser",
+                                        "Thr",
+                                        "Val",
+                                        "Trp",
+                                        "Tyr"
+                                ]
+                        }
+                },
+                "relatedSequences": {
+                        "description": "Information about related sequences, like precursors or targets",
+                        "type": "array",
+                        "items": {
+                                "$ref": "related-sequence.json#"
+                        },
+                        "uniqueItems": true
+                },
+                "inferredPhylogeny": {
+                        "description": "A phylogeny that has been inferred for this sequence",
+                        "$ref": "inferred-phylogeny.json#"
+                }
+        }
+}').
+
+
+
 
 list_column_names:-
-  forall((column_names(T,CNs),once((length(CNs,Len),Len>=2,fb_pred(T,Len)))),
+  for_all((column_names(T,CNs),once((length(CNs,Len),Len>=2,fb_pred(T,Len)))),
   (print(column_names(T,CNs)),nl)).
 
 
 %:- ensure_loaded(read_obo).
 
-%:- prolog_load_context(source,This),forall((source_file(P0,This),functor(P0,F,0)),writeln(add_history1(F))).
+%:- prolog_load_context(source,This),for_all((source_file(P0,This),functor(P0,F,0)),writeln(add_history1(F))).
 %add_history1(setup_flybase_cols)
 %add_history1(pmt)
 ah:- add_history1(fb_stats),
@@ -2034,7 +3026,7 @@ ah:- add_history(fb_stats),
   add_history(mine_overlaps),
   add_history(try_overlaps),
   add_history(load_flybase).
-:- ah,ah,ah.
+%:- ah,ah,ah.
 
 %:- initialization(load_flybase).
 :- save_pre_statistic(memory).
@@ -2042,6 +3034,5 @@ ah:- add_history(fb_stats),
 :- save_pre_statistic(atom_space).
 
 :- fb_stats.
-
 
 
