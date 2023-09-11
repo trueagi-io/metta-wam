@@ -354,14 +354,90 @@ maybe_fix_args(_Fn,Args,Args).
 
 */
 
+/*
+?- xinfo('SO:0000797').
+ontology_info(id_type,'SO:0000797','Term').
+def('SO:0000797',"TE that exists (or existed) in nature.",['FB:mc']).
+has_quality('SO:0000797','SO:0000782',' natural').
+intersection_of('SO:0000797','SO:0000101',' transposable_element').
+intersection_of('SO:0000797',has_quality,'SO:0000782',' natural').
+ontology_info(is_a,'SO:0000797','SO:0000101').
+ontology_info(is_a,'SO:0000797','SO:0001038').
+ontology_info(name,'SO:0000797',"natural_transposable_element").
+synonym('SO:0000797',"natural transposable element",'EXACT',[]).
+*/
 
 load_obo_files:-
   %load_obo('./reqs/obonet/tests/data/?*.obo'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/*/*.obo'),
   load_flybase('./data/SO-Ontologies/Ontology_Files/*.obo'),
+  % Total         Atoms (Atomspace size): ...................................................... 20,069
+  %               ConceptNodes: ................................................................. 4,200
+  %               Random samples: ................................................................. 159
+  %               Total Memory Used: ........................................................ 1,089,408
+  %               Runtime (days:hh:mm:ss): ................................................. 0:00:00:29
+
   load_flybase('./data/SO-Ontologies/Ontology_Files/subsets/*.obo'),
-  %load_flybase('./data/Legacy/Cross_Products/*.obo'),
+  % Total         Atoms (Atomspace size): ...................................................... 20,551
+  %               ConceptNodes: ................................................................. 4,270
+  %               Random samples: ............................................................... 2,928
+  %               Total Memory Used: ........................................................ 1,154,944
+  %               Runtime (days:hh:mm:ss): ................................................. 0:00:00:40
+
+  load_flybase('./data/Legacy/Cross_Products/*.obo'),
+  % Total         Atoms (Atomspace size): ...................................................... 20,968
+  %               ConceptNodes: ................................................................. 4,306
+  %               Random samples: .............................................................. 14,418
+  %               Total Memory Used: ........................................................ 9,828,592
+  %               Runtime (days:hh:mm:ss): ................................................. 0:00:01:14
+  print_loaded_from_files,
+     %loaded_from_file(         19_515, './data/SO-Ontologies/Ontology_Files/so-simple.obo').
+     %         only reflects new entries ... thus full OBO adds 481 entries to the simple one
+     %loaded_from_file(            481, './data/SO-Ontologies/Ontology_Files/so.obo').
+
+     %loaded_from_file(            336, './data/SO-Ontologies/Legacy/Cross_Products/so-xp-dec.obo').
+     %loaded_from_file(            310, './data/SO-Ontologies/Ontology_Files/subsets/SOFA.obo').
+     %loaded_from_file(            141, './data/SO-Ontologies/Ontology_Files/subsets/biosapiens.obo').
+     %loaded_from_file(             73, './data/SO-Ontologies/Ontology_Files/subsets/Alliance_of_Genome_Resources.obo').
+     %loaded_from_file(             35, './data/SO-Ontologies/Legacy/Cross_Products/so-xp-non-classified.obo').
+     %loaded_from_file(             31, './data/SO-Ontologies/Ontology_Files/subsets/DBVAR.obo').
+     %loaded_from_file(             23, './data/SO-Ontologies/Legacy/Cross_Products/so-xp.obo').
+     %loaded_from_file(             23, './data/SO-Ontologies/Legacy/Cross_Products/so-xp-simple.obo').
+
+  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/*/*.obo'),
+  % Total         Atoms (Atomspace size): ................................................... 3,489,211
+  %               ConceptNodes: ............................................................... 688,541
+  %               Random samples: .............................................................. 26,006
+  %               Total Memory Used: ............................................................ 1.19G
+  %               Runtime (days:hh:mm:ss): ................................................. 0:00:34:35
+print_loaded_from_files,
+%loaded_from_file(2_637_502, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/chebi_fb_2023_04.obo').
+%loaded_from_file(  451_168, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/go-basic.obo').
+%loaded_from_file(  221_705, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/fly_anatomy.obo').
+%loaded_from_file(  128_798, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/doid.obo').
+%loaded_from_file(   19_515, './data/SO-Ontologies/Ontology_Files/so-simple.obo').
+%loaded_from_file(    9_852, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/psi-mi.obo').
+%loaded_from_file(    8_644, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/gene_group_FB2023_04.obo').
+%loaded_from_file(    7_605, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/flybase_controlled_vocabulary.obo').
+%loaded_from_file(    1_598, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/fly_development.obo').
+%loaded_from_file(      834, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/image.obo').
+%loaded_from_file(      491, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/flybase_stock_vocabulary.obo').
+%loaded_from_file(      481, './data/SO-Ontologies/Ontology_Files/so.obo').
+%loaded_from_file(      336, './data/SO-Ontologies/Legacy/Cross_Products/so-xp-dec.obo').
+%loaded_from_file(      310, './data/SO-Ontologies/Ontology_Files/subsets/SOFA.obo').
+%loaded_from_file(      141, './data/SO-Ontologies/Ontology_Files/subsets/biosapiens.obo').
+%loaded_from_file(       73, './data/SO-Ontologies/Ontology_Files/subsets/Alliance_of_Genome_Resources.obo').
+%loaded_from_file(       35, './data/SO-Ontologies/Legacy/Cross_Products/so-xp-non-classified.obo').
+%loaded_from_file(       31, './data/SO-Ontologies/Ontology_Files/subsets/DBVAR.obo').
+%loaded_from_file(       25, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/so-simple.obo').
+%loaded_from_file(       23, './data/SO-Ontologies/Legacy/Cross_Products/so-xp.obo').
+%loaded_from_file(       23, './data/SO-Ontologies/Legacy/Cross_Products/so-xp-simple.obo').
+%loaded_from_file(       21, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/slice.chebi.obo').
   !.
+
+% ===========================================
+% BEGIN OBO Loader
+%   - Douglas R. Miles 2023
+% ===========================================
 
 % Main entry point
 load_obo(Filename) :- \+ atomic(Filename),
@@ -540,6 +616,11 @@ whs-->[''],!,whs. whs-->[].
 %load_fb_obo(Ext,File,OutputFile,Fn):- fbug(load_fb_obo(Ext,File,OutputFile,Fn)),!.
 load_fb_obo(Ext,File,OutputFile,Fn):- fbug(load_fb_obo(Ext,File,OutputFile,Fn)),
   (current_predicate(load_obo/1)->load_obo(File);true).
+
+% ===========================================
+% END OBO Loader
+% ===========================================
+
 
 for_all(G1,G2):-
   forall(G1,G2).
