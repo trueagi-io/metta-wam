@@ -336,8 +336,8 @@ maybe_fix_args(_Fn,Args,Args).
 
 load_obo_files:-
   %load_obo('./reqs/obonet/tests/data/*.obo'),
-  load_obo('./data/ftp.flybase.net/releases/current/precomputed_files/*/*.obo').
-  load_obo('./data/ontologies/*.obo').
+  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/*/*.obo'),
+  load_flybase('data/ontologies/so.obo').
 
 % Main entry point
 load_obo(Filename) :- \+ atomic(Filename),
