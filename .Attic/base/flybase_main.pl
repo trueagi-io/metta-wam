@@ -305,7 +305,7 @@ assert_OBO(OBO):-
   make_assertion4(Fn,Cols,Data,OldData),
   functor(Data,FF,AA),
   decl_fb_pred(FF,AA),
-  (%call(Data)->true;
+  (call(Data)->true;(
    must_det_ll((assert(Data),incr_file_count(_),
      ignore((((should_show_data(X),
        ignore((OldData\==Data,write(oldData(X)),write(=),write_src(OldData))),
@@ -313,7 +313,7 @@ assert_OBO(OBO):-
      ignore((
        fail, option_value(output_stream,OutputStream),
        is_stream(OutputStream),
-       should_show_data(X1),X1<1000,must_det_ll((display(OutputStream,Data),writeln(OutputStream,'.')))))))))))),!.
+       should_show_data(X1),X1<1000,must_det_ll((display(OutputStream,Data),writeln(OutputStream,'.'))))))))))))),!.
 
 % Convert a function and its arguments into a compound term
 into_datum(Fn, [D|DataL], Data):-
@@ -332,10 +332,31 @@ maybe_fix_args( Fn,Args,NewArgs):- should_fix_args,
   fb_argtypes(Fn,ArgTypes), fix_list_args(Fn,ArgTypes,Args,NewArgs),!.
 maybe_fix_args(_Fn,Args,Args).
 
+/*
+(load_fb_obo "data/ontologies/so.obo")
+
+; Total         Atoms (Atomspace size): ...................................................... 19,967
+;               ConceptNodes: ................................................................. 4,258
+;               Random samples: ................................................................. 158
+;               Total Memory Used: ........................................................ 1,089,408
+;               Runtime (days:hh:mm:ss): ................................................. 0:00:00:29
+
+
+
+(load_fb_obo "./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/so-simple.obo" )
+
+; Total         Atoms (Atomspace size): ...................................................... 19,484
+;               ConceptNodes: ................................................................. 4,194
+;               Random samples: ................................................................. 160
+;               Total Memory Used: ........................................................ 1,089,408
+;               Runtime (days:hh:mm:ss): ................................................. 0:00:00:29
+
+
+*/
 
 
 load_obo_files:-
-  %load_obo('./reqs/obonet/tests/data/*.obo'),
+  %load_obo('./reqs/obonet/tests/data/?*.obo'),
   load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/*/*.obo'),
   load_flybase('data/ontologies/so.obo').
 
@@ -368,6 +389,7 @@ load_obo(Filename) :-
       process_stream_repeat(Stream),
       close(Stream))))),
  fb_stats.
+
 
 process_stream_repeat(Stream):-
   repeat,
