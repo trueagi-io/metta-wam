@@ -38,6 +38,11 @@ find ./data -name "*.gz" -execdir gunzip {} \;
 find ./data -name "*.zip" -execdir unzip -d ./ {} \;
 # should be arround 2.0G
 du -h ./data
+
+# For all files instead of using FBte:0000666  we will use FBte0000666  (since tha tis how it is used in the TSV files)
+# For all files instead of using flybase:FBte0000666  we will use FBte0000666 (mostly it only happens in strings)
+find ./data/ftp.flybase.net/releases/current/precomputed_files/ -type f -exec sed -i -e 's/\(FB[a-z]\{2\}\):\([0-9]\)/\1\2/g' -e 's/flybase:\([A-Za-z]\)/\1/g' {} +
+
 ```
 
 ## :computer: Usage
