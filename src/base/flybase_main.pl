@@ -266,7 +266,11 @@ assert_new1(P):- assert(P).
 :- dynamic(mod_f_a/3).
 decl_m_fb_pred(Mod,Fn,A):- var(Mod),!,mod_f_a(Mod,Fn,A).
 decl_m_fb_pred(Mod,Fn,A):- mod_f_a(Mod,Fn,A)->true;(dynamic(Mod:Fn/A),assert(mod_f_a(Mod,Fn,A))).
-decl_fb_pred(Fn,A):- fb_pred(Fn,A)-> true; (dynamic(Fn/A),assert(fb_pred(Fn,A))).
+:- dynamic(fb_pred_file/3).
+decl_fb_pred(Fn,A):-
+   (fb_pred(Fn,A)-> true; (dynamic(Fn/A),assert(fb_pred(Fn,A)))),
+   ignore((nb_current(loading_file,File),
+    (fb_pred_file(Fn,A,File)-> true; assert(fb_pred_file(Fn,A,File))))).
 % Import necessary libraries
 :- use_module(library(readutil)).
 :- dynamic(ontology_info/2).
@@ -281,10 +285,14 @@ should_fix_args :- fail, \+ should_sample.
 should_sample :- should_show_data(_),!.
 should_sample :- 
   once(option_value(samples_per_million,Fifty);Fifty=50), loaded_from_file_count(X), Y is X mod 1_000_000,!, Y >= 0, Y =< Fifty,!.
-should_show_data(X):- loaded_from_file_count(X), once((X=<13,X>=10); (X>0,(0 is X rem 1_000_000))),
+should_show_data(X):- loaded_from_file_count(X),
+  once((X=<13,X>=10); (X>0,(0 is X rem 1_000_000))),
   format(user_error,'~N',[]),
-  format(user_output,'~N',[]),
+  format(user_output,'~N',[]),!,
   heartbeat.
+should_show_data(X):- nb_current(loading_file,F),atom_concat(_,'.obo',F),
+  loaded_from_file_count(X),Y is X mod 100_000, Y=<15,Y>=10.
+
 
 assert_OBO(P,X,Y):- assert_OBO(ontology_info(P,X,Y)).
 assert_OBO(Fn,Cols):- OBO=..[Fn|Cols], assert_OBO(OBO).
@@ -301,7 +309,7 @@ assert_OBO(OBO):-
    must_det_ll((assert(Data),incr_file_count(_),
      ignore((((should_show_data(X),
        ignore((OldData\==Data,write(oldData(X)),write(=),write_src(OldData))),
-       write(newData(X)),write(=),write_src(Data))))),
+       write(newData(X)),write(=),write_src(Data),nl)))),
      ignore((
        fail, option_value(output_stream,OutputStream),
        is_stream(OutputStream),
@@ -817,7 +825,7 @@ load_flybase_files_ftp:-
   load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/clones/cDNA_clone_data_fb_*.tsv'),
   load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/clones/genomic_clone_data_fb_*.tsv'),
   load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/collaborators/fbgn_uniprot_fb_*.tsv'),
-  %load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/collaborators/gp_information.fb'),
+  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/collaborators/gp_information.fb'),
   load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/collaborators/pmid_fbgn_uniprot_fb_*.tsv'),
   load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/genes/automated_gene_summaries.tsv'),
   load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/genes/automated_gene_summaries_fb_*.tsv'),
@@ -863,12 +871,12 @@ load_fbase_after_17:-
   %load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/genes/scRNA-Seq_gene_expression_fb_*.tsv'),
   must_det_ll(load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/transposons/transposon_sequence_set.gff',tsv)),
   load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/transposons/transposon_sequence_set.fa'),
+  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/*/ncRNA_genes_fb_*.json'),
   load_obo_files,
  %% load_flybase_chado,
   !.
 
 load_flybase_obo_files:-
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/*/ncRNA_genes_fb_*.json'),
   load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/chebi_fb_*.obo'),
   load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/doid.obo'),
   load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/fly_anatomy.obo'),
@@ -888,6 +896,107 @@ load_flybase_chado:-  % 359 tables with 937,381,148 rows
   with_option([row_1_is_header=true,max_per_file=100_000],load_flybase('./data/tsv_exports/public/*.tsv')).
 
 
+est_size(     22_220_267, dataset_metadata).
+est_size(      5_580_889, entity_publication).
+est_size(      2_928_712, gene_rpkm_report).
+est_size(      2_262_949, pmid_fbgn_uniprot).
+est_size(      1_611_349, ontology_info).
+est_size(      1_316_132, fbgn_NAseq_Uniprot).
+est_size(      1_045_549, property_value).
+est_size(      1_001_254, synonym).
+est_size(        722_570, cDNA_clone).
+est_size(        384_206, genotype_phenotype).
+est_size(        363_453, allele_genetic_interactions).
+est_size(        288_469, fbal_to_fbgn).
+est_size(        245_829, gene_map_table).
+est_size(        223_056, dmel_paralogs).
+est_size(        212_010, insertion_mapping).
+est_size(        174_894, fbgn_gleanr).
+est_size(        147_155, stocks).
+est_size(         99_294, fbrf_pmid_pmcid_doi).
+est_size(         57_986, organism_list).
+est_size(         51_248, physical_interactions_mitab).
+est_size(         50_401, genomic_clone).
+est_size(         38_591, dmel_gene_sequence_ontology_annotations).
+est_size(         35_732, fbgn_fbtr_fbpp_expanded).
+est_size(         35_732, fbgn_fbtr_fbpp).
+est_size(         35_107, dmel_human_orthologs_disease).
+est_size(         32_530, fbgn_uniprot).
+est_size(         32_143, best_gene_summary).
+est_size(         27_827, receives_synaptic_input_in_region).
+est_size(         27_370, automated_gene_summaries).
+est_size(         26_750, disease_model_annotations).
+est_size(         22_453, dmel_unique_protein_isoforms).
+est_size(         20_392, sends_synaptic_output_to_region).
+est_size(         20_322, gene_genetic_interactions).
+est_size(         17_901, fbgn_annotation_ID).
+est_size(         17_748, gene_rpkm_matrix).
+est_size(         14_139, part_of).
+est_size(         13_986, gene_snapshots).
+est_size(         13_394, seq).
+est_size(         12_497, fbgn_exons2affy1_overlaps).
+est_size(         13_746, fbgn_exons2affy2_overlaps).
+est_size(         10_958, gene_group).
+est_size(          5_680, has_synaptic_IO_in).
+est_size(          3_969, 'Dmel_enzyme').
+est_size(          3_120, regulates).
+est_size(          2_704, negatively_regulates).
+est_size(          2_692, positively_regulates).
+est_size(          2_126, has_soma_location).
+est_size(          1_941, overlaps).
+est_size(          1_744, develops_from).
+est_size(          1_711, gene_groups_HGNC).
+est_size(          1_149, sends_synaptic_output_to_cell).
+est_size(            993, pathway_group).
+est_size(            738, receives_synaptic_input_from_neuron).
+est_size(            706, fasciculates_with).
+est_size(            601, 'cyto-genetic-seq').
+est_size(            572, has_sensory_dendrite_in).
+est_size(            526, continuous_with).
+est_size(            464, gene_functional_complementation).
+est_size(            311, synapsed_via_type_Ib_bouton_to).
+est_size(            287, innervates).
+est_size(            239, immediately_preceded_by).
+est_size(            229, has_fasciculating_neuron_projection).
+est_size(            200, synapsed_via_type_II_bouton_to).
+est_size(            186, receives_synaptic_input_throughout).
+est_size(            185, substage_of).
+est_size(            165, has_quality).
+est_size(            156, has_part).
+est_size(            151, def).
+est_size(            148, synapsed_via_type_Is_bouton_to).
+est_size(            126, attached_to).
+est_size(            100, subsetdef).
+est_size(             89, receives_input_from).
+est_size(             88, disjoint_from).
+est_size(             74, sends_synaptic_output_throughout).
+est_size(             68, develops_into).
+est_size(             64, derives_from).
+est_size(             30, has_origin).
+est_size(             30, electrically_synapsed_to).
+est_size(             23, develops_directly_from).
+est_size(             20, attached_to_part_of).
+est_size(             18, synonymtypedef).
+est_size(             17, innervated_by).
+est_size(             14, synapsed_via_type_III_bouton_to).
+est_size(             11, has_synaptic_IO_throughout).
+est_size(              9, transitive_over).
+est_size(              8, composed_primarily_of).
+est_size(              7, transcribed_to).
+est_size(              7, inverse_of).
+est_size(              6, conditionality).
+est_size(              6, adjacent_to).
+est_size(              4, non_functional_homolog_of).
+est_size(              3, xref).
+est_size(              3, variant_of).
+est_size(              3, member_of).
+est_size(              3, develops_from_part_of).
+est_size(              3, contains).
+est_size(              3, 'RO').
+est_size(              2, connected_to).
+est_size(              1, transcribed_from).
+est_size(              1, guided_by).
+% SQL
 est_size(    248_392_753,feature_relationship).
 est_size(    141_933_326,dbxrefprop).
 est_size(     98_464_501,featureloc).
@@ -1083,16 +1192,27 @@ est_size(              0,stock_relationship_pub).
 est_size(              0,stockprop_pub).
 est_size(              0,tableinfo).
 
-est_size_loaded(              N,F):- fb_pred(F,A),
-  \+ (fb_pred(F,A2),A2>A), fb_pred_count(F,A,N).
+est_size_loaded(N,F):- fb_pred_major(F,A),fb_stats(F,A,N).
 
-fb_pred_count(F,A,N):- functor(P,F,A),predicate_property(P,number_of_clauses(N)).
+fb_pred_major(F,A):- fb_pred_m(F,A).
+fb_pred_major(F,A):- fb_pred(F,A),
+  \+ fb_pred_m(F,A), \+ (fb_pred(F,A2),A2>A).
 
+fb_pred_m(fbgn_exons2affy1_overlaps,2).
+fb_pred_m(fbgn_exons2affy2_overlaps,2).
 
-print_est_sizes:- findall(print_est_size(N,F),est_size_loaded(N,F),L),
+print_loaded_from_files:-
+  findall(print_est_size(loaded_from_file,N,F),
+     is_loaded_from_file_count(F,N),L),
   sort(L,S),reverse(S,R),maplist(call,R).
 
-print_est_size(N1,S):- format('~Nest_size(~@, ~q).',[pad_number(N1,15),S]).
+print_est_sizes:-
+  findall(print_est_size(est_size_loaded,N,F),
+     est_size_loaded(N,F),L),
+  sort(L,S),reverse(S,R),maplist(call,R).
+
+print_est_size(F,N1,S):- number(S), \+ number(N1),!,print_est_size(F,S,N1).
+print_est_size(F,N1,S):- format('~N ~q(~@, ~q).',[F,pad_number(N1,15),S]),!.
 
 % pad_number(Number, N) pads Number with spaces to occupy N spaces in total
 % and includes underscores as the thousand separator.
@@ -1316,10 +1436,11 @@ track_load_into_file(Filename,Goal):-
  must_det_ll((
   fbug(track_load_into_file(Filename)),
   flag(loaded_from_file_count,Was,0),
-  time(Goal),!,
+  with_option(loading_file,Filename,time(Goal)),!,
   flag(loaded_from_file_count,New,Was),
+  assert(is_loaded_from_file_count(Filename,New)),
   fbug(Filename=New))).
-
+:- dynamic(is_loaded_from_file_count/2).
 
 :- use_module(library(http/json)).
 load_fb_json(Ext,File,OutputFile,Fn):- fbug(load_fb_json(Ext,File,OutputFile,Fn)),
@@ -1340,13 +1461,14 @@ load_fb_fa(Ext,Filename,OutputFile,Fn):-
     assert_OBO('pathname',Id,Filename),!,
     assert_OBO('basename',Id,BaseName),!,
     assert_OBO('directory',Id,Directory),!,
-    setup_call_cleanup(open(Filename,read,In), load_fb_fa_read(In,_), close(In))))).
-load_fb_fa_read(In, _):- (at_end_of_stream(In);reached_file_max),!.
-load_fb_fa_read(In,FBTe):- read_line_to_chars(In,Chars), load_fb_fa_read_n(In,FBTe,Chars).
-load_fb_fa_read_n(In,_,['>'|Chars]):- !, must_det_ll((atom_chars(FBTe,Chars), load_fb_fa_read(In,seq(FBTe,1)))).
-load_fb_fa_read_n(In,seq(FBTe,N),Chars):-
-   assert_OBO(seq(FBTe,N,Chars)),!,
-   N2 is N+1,load_fb_fa_read(In,seq(FBTe,N2)).
+    setup_call_cleanup(open(Filename,read,In), load_fb_fa_read(Id,In,_), close(In))))).
+load_fb_fa_read(_Fn,In, _):- (at_end_of_stream(In);reached_file_max),!.
+load_fb_fa_read(Fn,In,FBTe):- read_line_to_chars(In,Chars), load_fb_fa_read_n(Fn,In,FBTe,Chars).
+load_fb_fa_read_n(Fn,In,_,['>'|Chars]):- !, must_det_ll((atom_chars(FBTe,Chars), load_fb_fa_read(Fn,In,seq(FBTe,1)))).
+load_fb_fa_read_n(Fn,In,seq(FBTe,N),Chars):-
+   Data =..[Fn,FBTe,N|Chars],
+   assert_OBO(Data),!,
+   N2 is N+1,load_fb_fa_read(Fn,In,seq(FBTe,N2)).
 
 maybe_sample(_Fn,_Args):- \+ should_sample,!.
 maybe_sample( Fn, Args):- assert_arg_samples(Fn,1,Args).
@@ -1361,8 +1483,6 @@ assert_arg_samples(Fn,N,[A|Args]):-
 assert_arg_samples(_,_,_).
 
 dont_sample(N):- \+ atom(N).  dont_sample(''). dont_sample('-').
-
-
 
 data_pred0(X,Y):- atom_concat('public.',YY,X),!,data_pred0(YY,Y).
 data_pred0(X,Y):- atomic_list_concat(List,'/',X),List\==[],List\=[_],!,last(List,L),data_pred0(L,Y).
@@ -1533,14 +1653,14 @@ load_flybase0(Ext,File):-
 load_flybase(_Ext,File,_OutputFile,_Fn):- load_state(File,_),!.
 load_flybase(Ext,File,OutputFile,Fn):- file_to_sep(File,Sep),!,
   assert(load_state(File,loading)),
-  flag(loaded_from_file_count,_,0),
   fbug(load_flybase(Ext,File,OutputFile,Fn)),
+  track_load_into_file(File,
   setup_call_cleanup(open(File,read,Stream),
        setup_call_cleanup(open(OutputFile,write,OutputStream,[encoding(utf8)]),
            %load_flybase_sv(Sep,File,Stream,OutputStream,Fn),
            load_flybase(Sep,File,Stream,OutputStream,Fn),
     close(OutputStream)),
-  close(Stream)),!,
+  close(Stream))),!,
   retract(load_state(File,loading)),
   assert(load_state(File,loaded)),fb_stats.
 
@@ -1665,9 +1785,18 @@ FBte: FlyBase transgenic element number - Represents a transgenic element.
 
 write_flybase_data(_ArgTypes,_OutputStream,_Fn,[]):-!.
 write_flybase_data(_ArgTypes,_OutputStream,_Fn,['']):-!.
-write_flybase_data(_ArgTypes,_OutputStream,Fn,DataL):- fail, !,Data=..[Fn|DataL],assert_OBO(Data).
-write_flybase_data(_ArgTypes,_OutputStream,Fn,DataL):- Data=..[Fn|DataL],assert_fb_data(Data).
+write_flybase_data(_ArgTypes,_OutputStream,Fn,DataL):- fail, !, Data=..[Fn|DataL], assert_OBO(Data).
+write_flybase_data(_ArgTypes,_OutputStream,Fn,DataL):- into_datum(Fn,DataL,Data),
+   assert_fb_data(Data).
 
+
+assert_fb_data(Data):- !, heartbeat, functor(Data,F,A), A>=2,
+   decl_fb_pred(F,A),
+   incr_file_count(_),
+   ignore((((should_show_data(X),
+       write(newData(X)),write(=),write_src(Data))))),
+   assert(Data),!.
+/*
 
 assert_fb_data(Data):- Data=..[Fn|DataL],assert_fb_data(Fn,DataL),!.
 
@@ -1676,13 +1805,13 @@ assert_fb_data(Fn,DataL0):-
   ignore((
     heartbeat,
     functor(Data,F,A), A>=2,
-   (fb_pred(F,A)-> true; (dynamic(F/A),assert(fb_pred(F,A)))),
+   decl_fb_pred(F,A),
     flag(loaded_from_file_count,X,X+1),    
     flag(total_loaded_atoms,TA,TA+1),
     assert(Data),
     ignore((((has_list(_ArgTypes)->(X<23,X>20); (X<13,X>10)); (X>0,(0 is X rem 1_000_000),fb_stats)),nl,nl,fbug(X=Data),ignore((OldData\==DataL0,fbug(oldData=OldData))))),
     ignore((fail,catch_ignore(ignore((X<1000,must_det_ll_r((write_canonical(OutputStream,Data),writeln(OutputStream,'.')))))))))),!.
-
+*/
 
 make_assertion(Fn,DataL0,Data,DataL0):-
  must_det_ll_r((
@@ -1701,37 +1830,53 @@ make_assertion(ArgTypes,Fn,DataL0,Data,DataL0):-
 
 
 % FBcv_0000743 % "FBtp0000743 %CL:0000743 % WBPhenotype_0000743 
+%reprefix(['GO_','GO--','FBgn','BiologicalProcess:GO:'],'GO:').
 reprefix(['GO_','GO--','BiologicalProcess:GO:'],'GO:').
 reprefix(['flybase:','FLYBASE:','comment:'],'').
-as_list(A,New):- is_list(A),!,New = A.
-as_list(A,New):- var(A),!,New = [].
-as_list('-',[]). as_list("-",[]). as_list('',[]).
-as_list(N,[N]):- number(N),!.
-as_list("",[]). as_list(' ',[]). as_list(" ",[]).
-has_list(Header):- is_list(Header),member(listOf(_,_),Header).
-as_list(_,S,O):- as_list(S,O),!.
-as_list(SepL,A,ListO):-  member(Sep,SepL),catch_ignore(atomic_list_concat(List,Sep,A)),List\=[_],!,maplist(fix_concept,List,ListO).
-as_list(_,A,ListO):-  member(Sep,['|',',',';']),catch_ignore(atomic_list_concat(List,Sep,A)),List\=[_],!,maplist(fix_concept,List,ListO).
-as_list(_Sep,A,[AO]):- fix_concept(A,AO).
+reprefix(['FBpp:'],'FBpp').
+reprefix(['FBgn:'],'FBgn').
+reprefix(['FB:FB'],'FB').
+%./KBs/SUMO-OBO/gene-merged-SUMO.kif
+%#
+%FBbt_00051628=
 
+as_list(A,New):- is_list(A),!,A=New.
+as_list(N,[N]):- \+ atom(N), \+ string(N),!.
+%as_list(A,New):- var(A),!,New = [A].
+as_list('-',[]). as_list("-",[]). as_list('',[]).
+as_list("",[]). as_list(' ',[]). as_list(" ",[]).
+%as_list(N,[N]):- !.
+as_list(_,S,O):- as_list(S,O),!.
+as_list(SepL,A,List):-  member(Sep,SepL),catch_ignore(atomic_list_concat(List,Sep,A)),List\=[_],!.
+%as_list(_,A,ListO):-  member(Sep,['|',',',';']),catch_ignore(atomic_list_concat(List,Sep,A)),List\=[_],!,maplist(fix_concept,List,ListO).
+as_list(_Sep,A,[A]).
+has_list(Header):- is_list(Header),member(listOf(_),Header).
+
+% FBcv_0000743 % "FBtp0000743 %CL:0000743 % WBPhenotype_0000743 
 
 % =======================================
 % Fix Concept1
 % =======================================
 
+fix_concept1(A,L):- as_list(['|'],A,L),(L\=@=[A],A\=@=L).
+fix_concept1(A,N):-  atom_number(A,N),!.
+fix_concept1(A,AO):- reprefix(List,To),member(E,List),atom_concat(E,AM,A),atom_concat(To,AM,AO).
+%fix_concept1(A,AO):- atom_concat('FB',_,A),atomic_list_concat([Type,Number],':',A),!,atom_concat(Type,Number,AO).
+fix_concept1(A,AO):- atom_concat('"',Mid,A),atom_concat(AS,'"',Mid),atom_string(AS,AO).
+fix_concept1(A,AO):- atom_concat(AO,'(gene name)',A),AO\==''.
 
-
+fix_concept1(A,N):- atom(A),!,N=A.
+%fix_concept(S,A):- number_string(A,S),!.
 
 
 % =======================================
 % Fix Concept
 % =======================================
-fix_concept(A,A):- \+ atom(A), \+ string(A),!.
-fix_concept(A,AO):- reprefix(List,To),member(E,List),atom_concat(E,AM,A),atom_concat(To,AM,AO).
-fix_concept(A,N):- atom(A),!,N=A.
-%fix_concept(A,N):- atom(A),!,(atom_number(A,N)->true;N=A).
-fix_concept(S,A):- number_string(A,S),!.
-fix_concept(S,A):- atom_string(A,S),!.
+
+fix_concept(A,New):- is_list(A),!,maplist(fix_concept,A,L),!,New=L.
+fix_concept(A,New):- \+ atom(A), !,New=A.
+fix_concept(S,O):- once(fix_concept1(S,M)),S\=@=M,!,fix_concept(M,O).
+fix_concept(A,New):- =(A,New),!.
 
 
 
