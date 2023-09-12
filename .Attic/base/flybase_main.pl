@@ -1,49 +1,38 @@
 :- encoding(octet).
-
 :- flush_output.
+:- setenv('RUST_BACKTRACE',full).
 
-skip(_).
+% ==============
+% METTA COMPILER
+% ==============
+:- ensure_loaded(metta_compiler).
+fb_stats:- metta_stats.
+'&flybase':for_metta('&flybase',P):- fb_pred(F,A),length(L,A),P=[F|L],apply(F,L).
 
-:- include(swi_support).
-
+% ==============
+% OBO LOADER
+% ==============
 :- set_option_value(encoding,octet).
+:- ensure_loaded(read_obo).
+
+
+% ==============
+% VSPACE LOADER
+% ==============
 %:- set_option_value(max_per_file,10_000_000).
 %:- set_option_value(max_per_file,1_000).
 %:- set_option_value(max_per_file,300).
 :- set_option_value(max_per_file,inf).
-
-
+:- set_option_value(max_per_file,1_000).
 :- set_option_value(max_disk_cache,1000).
-:- set_option_value(samples_per_million,100).
+:- set_option_value(samples_per_million,30).
 :- set_option_value(full_canon,true).
-:- setenv('RUST_BACKTRACE',full).
-
-%:- pyswip_dir(Dir),with_cwd(Dir,ensure_loaded(swi_support)).
-
-/*
-:- mutifile  column_names/2.
-:- mutifile  column_names_ext/2.
-:- mutifile  flybase_tables/1.
-:- mutifile  guess_rest/4.
-:- mutifile  ncRNA_genes_fb_scheme/1.
-:- mutifile  numeric_value_p_n/3.
-:- mutifile  table_n_type/4.
-%:- pyswip_dir(Dir),with_cwd(Dir,ensure_loaded(fb_induced_types)).
-*/
-
-:- multifile(is_pre_statistic/2).
-:- dynamic(is_pre_statistic/2).
-save_pre_statistic(Name):- is_pre_statistic(Name,_)-> true; (statistics(Name,AS),term_number(AS,FN),assert(is_pre_statistic(Name,FN))).
-pre_statistic(N,V):- is_pre_statistic(N,V)-> true ; V = 0.
-post_statistic(N,V):- statistics(N,VV),term_number(VV,FV),pre_statistic(N,WV), V0 is FV-WV, (V0<0 -> V = 0 ; V0=V).
-term_number(T,N):- sub_term(N,T),number(N).
-
 
 
 flybase_identifier('FBab', 'Aberration').
 flybase_identifier('FBal', 'Allele').
 flybase_identifier('FBba', 'Balancer').
-flybase_identifier('FBbt', 'AnatomyTerm').
+flybase_identifier('FBbt', 'AnsymbolyTerm').
 flybase_identifier('FBch', 'ChromosomeArm').
 flybase_identifier('FBcl', 'Clone').
 flybase_identifier('FBcv', 'ControlledVocabulary').
@@ -70,13 +59,13 @@ flybase_identifier('FBtp', 'Transposon'). %flybase_identifier('FBtp', 'transgeni
 flybase_identifier('FBtr', 'Transcript').
 
 % FlyBase prefixes
-atom_prefix(Prefix, flybase, Desc):- flybase_identifier(Prefix, Desc).
+symbol_prefix(Prefix, flybase, Desc):- flybase_identifier(Prefix, Desc).
 % Some common OBO prefixes (Note: these are more generalized and not specific to FlyBase)
-atom_prefix('GO', obo, 'Gene Ontology').
-atom_prefix('PO', obo, 'Plant Ontology').
-atom_prefix('DOID', obo, 'Disease Ontology').
-atom_prefix('UBERON', obo, 'Uber-anatomy ontology').
-atom_prefix('CHEBI', obo, 'Chemical Entities of Biological Interest').
+symbol_prefix('GO', obo, 'Gene Ontology').
+symbol_prefix('PO', obo, 'Plant Ontology').
+symbol_prefix('DOID', obo, 'Disease Ontology').
+symbol_prefix('UBERON', obo, 'Uber-ansymboly ontology').
+symbol_prefix('CHEBI', obo, 'Chemical Entities of Biological Interest').
 
 
 
@@ -90,24 +79,25 @@ concept_type(Arg,Type):-
    table_n_type(Fn,N,Type).
 
 good_concept(E1):- var(E1),!,table_columns(F1,P1),nth1(N1,P1,E2),(E1=E2;E1=nth(N1,F1)).
-good_concept(E1):- atom(E1),!, is_good_atom_name(E1).
+good_concept(E1):- symbol(E1),!, is_good_symbol_name(E1).
 good_concept(E1):- number(E1),!, E1>300.
-good_concept(listOf(E1,_)):- good_concept(E1),atom(E1).
-good_concept(listOf(E1)):- good_concept(E1),atom(E1).
+good_concept(listOf(E1,_)):- good_concept(E1),symbol(E1).
+good_concept(listOf(E1)):- good_concept(E1),symbol(E1).
 
 %:- abolish(maybe_corisponds/2).
 :- dynamic(maybe_corisponds/2).
 
 
-is_good_atom_name(E1):- atom(E1), atom_length(E1,L),L>=2, \+ atom_number(E1,_).
+is_good_symbol_name(E1):- symbol(E1), symbol_length(E1,L),L>=2, \+ symbol_number(E1,_).
 
 fb_pred_g(F,A):-fb_pred(F,A), \+ skipped_anotations(F).
 
 
 mine_corisponds(Concept1,Corispondance):-
- fb_arg_table_n(Concept1,Fn1,Nth1),is_good_atom_name(Concept1),
+ fb_arg_table_n(Concept1,Fn1,Nth1),is_good_symbol_name(Concept1),
  fb_arg_table_n(Concept1,Fn2,Nth2),
  (Fn1+Nth1)@>(Fn2+Nth2),
+ tables_can_join(Fn1,Fn2),
  once((table_colnum_type(Fn1,Nth1,Type1),nonvar(Type1),
        table_colnum_type(Fn2,Nth2,Type2),nonvar(Type2))),
  (maybe_corisponds('ConceptMapFn'(Type1,Nth1,Fn1/*Arity1*/),'ConceptMapFn'(Type2,Nth2,Fn2/*Arity2*/))
@@ -123,11 +113,18 @@ mine_overlaps1:-
 
 mine_overlaps2_slow:- 
  % for_all(mine_typelevel_overlaps,true),
-  for_all(mine_atomspace_overlaps,true).
+  for_all(mine_symbolspace_overlaps,true).
 
 mine_typelevel_overlaps:-
   for_all(mine_typelevel_overlaps(Concept1,SC1,SC2),
     assert_progress(mine_typelevel_overlaps(Concept1),maybe_corisponds(SC1,SC2))).
+
+tables_can_join(Fn1,Fn2):- Fn1@>Fn2, can_join_using(Fn1),can_join_using(Fn2).
+
+can_join_using(V):- var(V),!.
+can_join_using(fbgn_exons2affy1_overlaps):- !, fail.
+can_join_using(fbgn_exons2affy2_overlaps):- !, fail.
+can_join_using(_).
 
 mine_typelevel_overlaps(Concept1,'ConceptMapFn'(Type1,Nth1,Fn1/*Arity1*/),'ConceptMapFn'(Type2,Nth2,Fn2/*Arity2*/)):-
 
@@ -140,18 +137,34 @@ mine_typelevel_overlaps(Concept1,'ConceptMapFn'(Type1,Nth1,Fn1/*Arity1*/),'Conce
   good_concept(Concept1),
   once((nth1(Nth2,Atom2,Concept1),length(Atom1,Arity1),length(Atom2,Arity2))).
 
-mine_atomspace_overlaps:-
+mine_symbolspace_overlaps:-
   fb_two_preds(Fn1,Nth1,Arity1,Fn2,Nth2,Arity2),
   once((functor(Atom1,Fn1,Arity1),functor(Atom2,Fn2,Arity2),
+  tables_can_join(Fn1,Fn2),
   call(Atom1), arg(Nth1,Atom1,Concept1),good_concept(Concept1), arg(Nth2,Atom2,Concept1),call(Atom2))),
   once((
     table_colnum_type(Fn1,Nth1,Type1),nonvar(Type1),
   table_colnum_type(Fn2,Nth2,Type2),nonvar(Type1))),
   assert_progress(Concept1,maybe_corisponds('ConceptMapFn'(Type1,Nth1,Fn1/*Arity1*/),'ConceptMapFn'(Type2,Nth2,Fn2/*Arity2*/))).
 
-fb_two_preds(Fn1,Nth1,Arity1,Fn2,Nth2,Arity2):- 
-  fb_pred_g(Fn1,Arity1), fb_pred_g(Fn2,Arity2), Fn1@>=Fn2,
-  between(1,Arity1,Nth1),between(1,Arity2,Nth2),
+mine_unif_overlap:-
+  forall((fb_two_preds(Fn1,Nth1,Arity1,Fn2,Nth2,Arity2),
+  once((functor(Atom1,Fn1,Arity1),functor(Atom2,Fn2,Arity2),
+  arg(Nth1,Atom1,Concept1), arg(Nth2,Atom2,Concept1),
+  call(Atom1),call(Atom2),
+  interesting_to_unify(Concept1)))),
+
+  assert_progress(Concept1,maybe_corisponds('ConceptMapFn'(Nth1,Fn1/*Arity1*/),'ConceptMapFn'(Nth2,Fn2/*Arity2*/)))).
+
+interesting_to_unify(Concept1):- string(Concept1),!,symbol_length(Concept1,L),L>3.
+interesting_to_unify(Concept1):- good_concept(Concept1).
+interesting_to_unify(Number):- number(Number),Number>1000.
+
+
+fb_two_preds(Fn1,Nth1,Arity1,Fn2,Nth2,Arity2):- !,
+  fb_pred_g(Fn1,Arity1), fb_pred_g(Fn2,Arity2),
+  tables_can_join(Fn1,Fn2),
+  between(1,Arity1,Nth1),Nth1<20,between(1,Arity2,Nth2),Nth2<20,
   (Fn1==Fn2-> (Nth1>Nth2); true).
   
 fb_two_preds(Fn1,Nth1,Arity1,Fn2,Nth2,Arity2):- 
@@ -160,19 +173,17 @@ fb_two_preds(Fn1,Nth1,Arity1,Fn2,Nth2,Arity2):-
 
 table_colnum_type(Fn,Nth,Type):- table_n_type(Fn,Nth,TypeC,TypeB),(nonvar(TypeB)->Type=TypeB;Type=TypeC).
 
-make_atom(Fn,Nth,Atom,Arg):- fb_pred_g(Fn,Arity),functor(Atom,Fn,Arity),arg(Nth,Atom,Arg).
-
 synth_conj(QV,(Atom1),(Atom2)):-
   maybe_corisponds('ConceptMapFn'(Type1,Nth1,Fn1),'ConceptMapFn'(Type2,Nth2,Fn2)),
-  make_atom(Fn1,Nth1,Atom1,Arg1),
-  make_atom(Fn2,Nth2,Atom2,Arg2),
+  make_symbol(Fn1,Nth1,Atom1,Arg1),
+  make_symbol(Fn2,Nth2,Atom2,Arg2),
   Fn1\=@=Fn2,
   skip(Type1),skip(Type2),
   Arg1=Arg2,QV=Arg1.
 
 synth_query(Len,Query):- synth_query(_,Len,Query).
 
-synth_query(_,1,[Atom]):- !, make_atom(Atom).
+synth_query(_,1,[Atom]):- !, make_symbol(Atom).
 synth_query(QV,N,[Q1,Q2|Query]):-
    M is N -1,
    synth_conj(QV,Q1,Q2),
@@ -181,7 +192,9 @@ synth_query(QV,N,[Q1,Q2|Query]):-
    all_dif_functors([Q1,Q2|Query]).
 
 all_dif_functors(List):- \+ (select(Q1,List,Rest),member(Q2,Rest),functor(Q1,F1,_),functor(Q2,F2,_), F1==F2, \+ (ok_if_dupped(F1))).
-make_atom(Atom):- fb_pred_g(F,A),functor(Atom,F,A).
+
+make_symbol(Atom):- fb_pred_g(F,A),functor(Atom,F,A).
+make_symbol(Fn,Nth,Atom,Arg):- fb_pred_g(Fn,Arity),functor(Atom,Fn,Arity),arg(Nth,Atom,Arg).
 
 ok_if_dupped(best_gene_summary).
 
@@ -193,7 +206,7 @@ try_overlaps(N):-
          pp_fb(grounded=Query),
          ignore(maybe_english(Query))),nl,nl,
 
-  pp_fb(ungrounded='!'(Query)),nl,nl,nl.
+  pp_fb('!'(match('&flybase',Query,Query))),nl,nl,nl.
 
 no_english(fbrf_pmid_pmcid_doi,_).
 no_english(physical_interactions_mitab,8).
@@ -205,79 +218,35 @@ maybe_english(Query):-
 maybe_english(_Query,Concepts):- select(C,Concepts,Rest),is_englishy(C),member(C2,Rest),is_englishy(C2),!, pp_fb(english=[C,C2]).
 maybe_english(_Query,Concepts):- pp_fb(concepts=Concepts), maplist(some_english,Concepts).
 
-is_englishy(C):- \+ atom(C), \+ string(C), !, fail.
+is_englishy(C):- \+ symbol(C), \+ string(C), !, fail.
 is_englishy(C):- split_string(C, ". ", " ", [_,_,_|_]).
-is_englishy(C):- atom_contains(C,". ").
+is_englishy(C):- symbol_contains(C,". ").
 
 some_english(Term):-
   ignore((fb_arg_table_n(C,Fn1,Nth1), \+ no_english(Fn1,Nth1),is_englishy(C),
-  make_atom(Fn1,Nth1,Atom,English),
+  make_symbol(Fn1,Nth1,Atom,English),
   arg(Nth2,Atom,Term),Nth2\==Nth1,
   call(Atom),English\=='',!,
   pp_fb(Term=English))).
 
 extract_concepts(Query,Concepts):-
-   findall(C,(sub_term(C,Query),atomic(C),good_concept(C)),L),
+   findall(C,(sub_term(C,Query),symbolic(C),good_concept(C)),L),
    predsort(longest_first,L,Concepts).
 
 longest_first(R,A,B):- into_len(A,L1),into_len(B,L2),compare(R,L2,L1).
 into_len(A,0):- var(A),!.
 into_len(A,L):- \+ string(A), !, sformat(S,"~w",[A]),into_len(S,L).
-into_len(A,0+A):- atom_contains(A," ").
-into_len(A,L+A):- atom_length(A,L1), (L1 == 11 -> L = 0 ; L is - L1).
+into_len(A,0+A):- symbol_contains(A," ").
+into_len(A,L+A):- symbol_length(A,L1), (L1 == 11 -> L = 0 ; L is - L1).
 
 assert_progress(Concept,Atom):- Atom=..[OP,A1,A2], A1@>A2,!,AtomSwp=..[OP,A2,A1],!,assert_progress(Concept,AtomSwp).
 assert_progress(Concept,Atom):- call(Atom),!,pp_fb(already(Concept)=Atom).
 assert_progress(Concept,Atom):- pp_fb(assert_progress(Concept)=Atom),assert(Atom).
 
-cleanup_arities:- for_all((fb_pred(F,2),fb_pred(F,N),N>2),retract(fb_pred(F,2))).
 
-call_match([G]):-!, call(G).
-call_match([G|GG]):- !, call(G), call_match(GG).
-call_match(G):- call(G).
-
-
-:- dynamic(repeats/1).
-:- dynamic(not_repeats/1).
-assert_new(P):- call(P),!,assert_new1(repeats(P)).
-assert_new(P):- assert(P), flag(assert_new,TA,TA+1),assert_new1(not_repeats(P)),!.
-
-retract1(P):- \+ call(P),!.
-retract1(P):- ignore(\+ retract(P)).
-
-assert_new1(P):- \+ \+ call(P),!.
-assert_new1(P):- assert(P).
-
-
-/*
-:- ensure_loaded('./reqs/obo_core/prolog/obo_core/goslim.pl').
-:- ensure_loaded('./reqs/obo_metadata/prolog/obo_metadata.pl').
-:- ensure_loaded('./reqs/obo_metadata/prolog/obo_metadata/iao_metadata.pl').
-:- ensure_loaded('./reqs/obo_metadata/prolog/obo_metadata/oio.pl').
-:- ensure_loaded('./reqs/obo_ro/prolog/obo_ro/ro.pl').
-
-:- attach_packs('./reqs',[]).
-:- ensure_loaded(library(obo_metadata)).
-:- goslim:ensure_loaded(library(obo_core/goslim)).
-:- ensure_loaded(library(obo_ro/ro)).
-
-937_381_148
-*/
-:- dynamic(mod_f_a/3).
-decl_m_fb_pred(Mod,Fn,A):- var(Mod),!,mod_f_a(Mod,Fn,A).
-decl_m_fb_pred(Mod,Fn,A):- mod_f_a(Mod,Fn,A)->true;(dynamic(Mod:Fn/A),assert(mod_f_a(Mod,Fn,A))).
-:- dynamic(fb_pred_file/3).
-decl_fb_pred(Fn,A):-
-   (fb_pred(Fn,A)-> true; (dynamic(Fn/A),assert(fb_pred(Fn,A)))),
-   ignore((nb_current(loading_file,File),
-    (fb_pred_file(Fn,A,File)-> true; assert(fb_pred_file(Fn,A,File))))).
-% Import necessary libraries
-:- use_module(library(readutil)).
-:- dynamic(ontology_info/2).
-:- dynamic(ontology_info/3).
 
 loaded_from_file_count(X):- flag(loaded_from_file_count,X,X).
-incr_file_count(X):- flag(loaded_from_file_count,X,X+1),  flag(total_loaded_atoms,TA,TA+1).
+incr_file_count(X):- flag(loaded_from_file_count,X,X+1),  flag(total_loaded_symbols,TA,TA+1).
 
 should_cache:- loaded_from_file_count(X), option_else(max_disk_cache,Num,1000), X=<Num.
 reached_file_max:- option_value(max_per_file,Y),Y\==inf,loaded_from_file_count(X),X>=Y.
@@ -290,13 +259,11 @@ should_show_data(X):- loaded_from_file_count(X),
   format(user_error,'~N',[]),
   format(user_output,'~N',[]),!,
   heartbeat.
-should_show_data(X):- nb_current(loading_file,F),atom_concat(_,'.obo',F),
+should_show_data(X):- nb_current(loading_file,F),symbol_concat(_,'.obo',F),
   loaded_from_file_count(X),Y is X mod 100_000, Y=<15,Y>=10.
 
 
-assert_OBO(P,X,Y):- assert_OBO(ontology_info(P,X,Y)).
-assert_OBO(Fn,Cols):- OBO=..[Fn|Cols], assert_OBO(OBO).
-assert_OBO(OBO):-
+assert_to_metta(OBO):-
  functor(OBO,Fn,A),
  ignore(( A>=2,A<700,
  must_det_ll((
@@ -305,7 +272,7 @@ assert_OBO(OBO):-
   make_assertion4(Fn,Cols,Data,OldData),
   functor(Data,FF,AA),
   decl_fb_pred(FF,AA),
-  (call(Data)->true;(
+  ((fail,call(Data))->true;(
    must_det_ll((assert(Data),incr_file_count(_),
      ignore((((should_show_data(X),
        ignore((OldData\==Data,write(oldData(X)),write(=),write_src(OldData))),
@@ -314,6 +281,16 @@ assert_OBO(OBO):-
        fail, option_value(output_stream,OutputStream),
        is_stream(OutputStream),
        should_show_data(X1),X1<1000,must_det_ll((display(OutputStream,Data),writeln(OutputStream,'.'))))))))))))),!.
+
+
+assert_MeTTa(OBO):- assert_to_metta(OBO),!.
+assert_MeTTa(Data):- !, heartbeat, functor(Data,F,A), A>=2,
+   decl_fb_pred(F,A),
+   incr_file_count(_),
+   ignore((((should_show_data(X),
+       write(newData(X)),write(=),write_src(Data))))),
+   assert(Data),!.
+
 
 % Convert a function and its arguments into a compound term
 into_datum(Fn, [D|DataL], Data):-
@@ -328,298 +305,21 @@ make_assertion4(Fn, Cols, NewData, OldData):-
     maybe_sample(Fn, NewArgs),
     NewData =.. [Fn|NewArgs], !.
 
+maybe_fix_args( Fn,Args,NewArgs):- do_fix_fast_args( Fn,1,Args,NewArgs),!.
 maybe_fix_args( Fn,Args,NewArgs):- should_fix_args, 
-  fb_argtypes(Fn,ArgTypes), fix_list_args(Fn,ArgTypes,Args,NewArgs),!.
+  nb_current(fb_argtypes,ArgTypes), fix_list_args(Fn,ArgTypes,Args,NewArgs),!.
 maybe_fix_args(_Fn,Args,Args).
 
-/*
-(load_fb_obo "data/ontologies/so.obo")
+do_fix_fast_args( Fn,Nth,[A|Args],[New|NewArgs]):- maybe_fix_columns_nth(Fn,Nth,A,New),
+  Nth2 is Nth+1, !, do_fix_fast_args( Fn,Nth2,Args,NewArgs).
+do_fix_fast_args(_,_,A,A).
 
-; Total         Atoms (Atomspace size): ...................................................... 19,967
-;               ConceptNodes: ................................................................. 4,258
-;               Random samples: ................................................................. 158
-;               Total Memory Used: ........................................................ 1,089,408
-;               Runtime (days:hh:mm:ss): ................................................. 0:00:00:29
+maybe_fix_columns_nth(Fn,Nth,A,New):- fix_columns_nth(Fn,Nth), fix_concept(A,New),!.
+maybe_fix_columns_nth(_,_,A,A).
 
 
+cleanup_arities:- for_all((fb_pred(F,2),fb_pred(F,N),N>2),retract(fb_pred(F,2))).
 
-(load_fb_obo "./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/so-simple.obo" )
-
-; Total         Atoms (Atomspace size): ...................................................... 19,484
-;               ConceptNodes: ................................................................. 4,194
-;               Random samples: ................................................................. 160
-;               Total Memory Used: ........................................................ 1,089,408
-;               Runtime (days:hh:mm:ss): ................................................. 0:00:00:29
-
-
-*/
-
-/*
-?- xinfo('SO:0000797').
-ontology_info(id_type,'SO:0000797','Term').
-def('SO:0000797',"TE that exists (or existed) in nature.",['FB:mc']).
-has_quality('SO:0000797','SO:0000782',' natural').
-intersection_of('SO:0000797','SO:0000101',' transposable_element').
-intersection_of('SO:0000797',has_quality,'SO:0000782',' natural').
-ontology_info(is_a,'SO:0000797','SO:0000101').
-ontology_info(is_a,'SO:0000797','SO:0001038').
-ontology_info(name,'SO:0000797',"natural_transposable_element").
-synonym('SO:0000797',"natural transposable element",'EXACT',[]).
-*/
-
-load_obo_files:-
-  %load_obo('./reqs/obonet/tests/data/?*.obo'),
-  load_flybase('./data/SO-Ontologies/Ontology_Files/*.obo'),
-  % Total         Atoms (Atomspace size): ...................................................... 20,069
-  %               ConceptNodes: ................................................................. 4,200
-  %               Random samples: ................................................................. 159
-  %               Total Memory Used: ........................................................ 1,089,408
-  %               Runtime (days:hh:mm:ss): ................................................. 0:00:00:29
-
-  load_flybase('./data/SO-Ontologies/Ontology_Files/subsets/*.obo'),
-  % Total         Atoms (Atomspace size): ...................................................... 20,551
-  %               ConceptNodes: ................................................................. 4,270
-  %               Random samples: ............................................................... 2,928
-  %               Total Memory Used: ........................................................ 1,154,944
-  %               Runtime (days:hh:mm:ss): ................................................. 0:00:00:40
-
-  load_flybase('./data/Legacy/Cross_Products/*.obo'),
-  % Total         Atoms (Atomspace size): ...................................................... 20,968
-  %               ConceptNodes: ................................................................. 4,306
-  %               Random samples: .............................................................. 14,418
-  %               Total Memory Used: ........................................................ 9,828,592
-  %               Runtime (days:hh:mm:ss): ................................................. 0:00:01:14
-  print_loaded_from_files,
-     %loaded_from_file(         19_515, './data/SO-Ontologies/Ontology_Files/so-simple.obo').
-     %         only reflects new entries ... thus full OBO adds 481 entries to the simple one
-     %loaded_from_file(            481, './data/SO-Ontologies/Ontology_Files/so.obo').
-
-     %loaded_from_file(            336, './data/SO-Ontologies/Legacy/Cross_Products/so-xp-dec.obo').
-     %loaded_from_file(            310, './data/SO-Ontologies/Ontology_Files/subsets/SOFA.obo').
-     %loaded_from_file(            141, './data/SO-Ontologies/Ontology_Files/subsets/biosapiens.obo').
-     %loaded_from_file(             73, './data/SO-Ontologies/Ontology_Files/subsets/Alliance_of_Genome_Resources.obo').
-     %loaded_from_file(             35, './data/SO-Ontologies/Legacy/Cross_Products/so-xp-non-classified.obo').
-     %loaded_from_file(             31, './data/SO-Ontologies/Ontology_Files/subsets/DBVAR.obo').
-     %loaded_from_file(             23, './data/SO-Ontologies/Legacy/Cross_Products/so-xp.obo').
-     %loaded_from_file(             23, './data/SO-Ontologies/Legacy/Cross_Products/so-xp-simple.obo').
-
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/*/*.obo'),
-  % Total         Atoms (Atomspace size): ................................................... 3,489,211
-  %               ConceptNodes: ............................................................... 688,541
-  %               Random samples: .............................................................. 26,006
-  %               Total Memory Used: ............................................................ 1.19G
-  %               Runtime (days:hh:mm:ss): ................................................. 0:00:34:35
-print_loaded_from_files,
-%loaded_from_file(2_637_502, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/chebi_fb_2023_04.obo').
-%loaded_from_file(  451_168, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/go-basic.obo').
-%loaded_from_file(  221_705, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/fly_anatomy.obo').
-%loaded_from_file(  128_798, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/doid.obo').
-%loaded_from_file(   19_515, './data/SO-Ontologies/Ontology_Files/so-simple.obo').
-%loaded_from_file(    9_852, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/psi-mi.obo').
-%loaded_from_file(    8_644, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/gene_group_FB2023_04.obo').
-%loaded_from_file(    7_605, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/flybase_controlled_vocabulary.obo').
-%loaded_from_file(    1_598, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/fly_development.obo').
-%loaded_from_file(      834, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/image.obo').
-%loaded_from_file(      491, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/flybase_stock_vocabulary.obo').
-%loaded_from_file(      481, './data/SO-Ontologies/Ontology_Files/so.obo').
-%loaded_from_file(      336, './data/SO-Ontologies/Legacy/Cross_Products/so-xp-dec.obo').
-%loaded_from_file(      310, './data/SO-Ontologies/Ontology_Files/subsets/SOFA.obo').
-%loaded_from_file(      141, './data/SO-Ontologies/Ontology_Files/subsets/biosapiens.obo').
-%loaded_from_file(       73, './data/SO-Ontologies/Ontology_Files/subsets/Alliance_of_Genome_Resources.obo').
-%loaded_from_file(       35, './data/SO-Ontologies/Legacy/Cross_Products/so-xp-non-classified.obo').
-%loaded_from_file(       31, './data/SO-Ontologies/Ontology_Files/subsets/DBVAR.obo').
-%loaded_from_file(       25, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/so-simple.obo').
-%loaded_from_file(       23, './data/SO-Ontologies/Legacy/Cross_Products/so-xp.obo').
-%loaded_from_file(       23, './data/SO-Ontologies/Legacy/Cross_Products/so-xp-simple.obo').
-%loaded_from_file(       21, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/slice.chebi.obo').
-  !.
-
-% ===========================================
-% BEGIN OBO Loader
-%   - Douglas R. Miles 2023
-% ===========================================
-
-% Main entry point
-load_obo(Filename) :- \+ atomic(Filename),
-  absolute_file_name(Filename,X,[read(exists),extension(['']),file_type(directory),
-     file_errors(fail),solutions(first)]), !, load_obo(X).
-load_obo(Filename) :- \+ atomic(Filename), !,
-  absolute_file_name(Filename,X,[read(exists),extension(['']), file_errors(fail),solutions(first)]), !, load_obo(X).
-load_obo(Filename) :-
-  atomic(Filename), \+ exists_file(Filename), expand_file_name(Filename,List),
-  List\==[], List\==[Filename],
-  maplist(load_obo,List).
-load_obo(Directory) :-
-  atomic(Directory), exists_directory(Directory),
-  directory_file_path(Directory, "*.obo", Filename),
-  expand_file_name(Filename,List),!,maplist(load_obo,List).
-load_obo(Filename) :-
- track_load_into_file(Filename,
- must_det_ll((
-    directory_file_path(Directory, BaseName, Filename),
-    file_name_extension(Id, _, BaseName),
-    Type = 'OntologyFile',
-    assert_OBO(id_type,Id,Type),
-    nb_setval(obo_id,Id),nb_setval(obo_type,Type),
-    assert_OBO('pathname',Id,Filename),!,
-    assert_OBO('basename',Id,BaseName),!,
-    assert_OBO('directory',Id,Directory),!,
-    setup_call_cleanup(open(Filename, read, Stream),
-      process_stream_repeat(Stream),
-      close(Stream))))),
- fb_stats.
-
-
-process_stream_repeat(Stream):-
-  repeat,
-     nb_current(obo_type,Type),
-     nb_current(obo_id, Id),
-     once((read_line_to_string(Stream, Line),
-     (should_show_data(_) -> writeln(Line); true),
-        normalize_space(chars(Chars),Line))),
-        Chars\==[],
-        once(process_stream_chars(Stream, Type, Chars, Id)),
-     ((at_end_of_stream(Stream);reached_file_max) -> ! ; fail).
-
-
-process_stream(Stream,_Type,_Id) :- (at_end_of_stream(Stream);reached_file_max),!.
-process_stream(Stream, Type, Id) :-
-  must_det_ll((
-    read_line_to_string(Stream, Line), %writeln(Line),
-    normalize_space(chars(Chars),Line),
-    process_stream_chars(Stream, Type, Chars, Id))).
-
-
-into_rest(Rest,RestChars,RestStr):-
-  string_chars(Str,Rest),
-  normalize_space(chars(RestChars),Str),
-  string_chars(RestStr,RestChars).
-
-
-process_stream_chars(_Stream, _, [e,n,d,'_',o,f,'_',f,i,l,e], _):-!.
-process_stream_chars(Stream, _, [], _):-!, process_stream(Stream, _, _).
-
-process_stream_chars(Stream, _, ['['|Chars], _):- !,
- must_det_ll(( append(Left,[']'],Chars), atom_chars(Type,Left),!,
-  nb_setval(obo_type,Type),
-  nop(process_stream(Stream, Type, _Id)))).
-
-process_stream_chars(Stream, Type, Chars, _):-
-  get_key(Key,Chars,Rest),Key == id,
-  into_rest(Rest,RestChars,_RestStr),
-  atom_chars(Id,RestChars), assert_OBO(id_type,Id,Type),
-  nb_setval(obo_id,Id),nb_setval(obo_type,Type),
-  nop(process_stream(Stream, Type, Id)).
-
-process_stream_chars(Stream, Type, Chars, Id):-
- must_det_ll((
-    get_key(Key,Chars,Rest),
-    into_rest(Rest,RestChars,RestStr),
-    process_rest_line(Type,Id,Key,RestChars,RestStr))),
-    nop(process_stream(Stream, Type, Id)).
-
-process_rest_line(Type,Id,Reln,Rest,_):- Reln = id,
-   get_some_items([item(Id)],Rest,[]),!, assert_OBO(id_type,Id,Type),!.
-process_rest_line(_Type,Id,Ref,_Chars,S):-
-   member(Ref,[name,comment]),
-   assert_OBO(Ref,Id,S),!.
-
-process_rest_line(Type,Id,Reln,Chars,_):-  Reln = relationship,!,
-  must_det_ll((
-   key_like_string(KeyLike,Chars,Rest),
-    atom_chars(Key,KeyLike),
-    into_rest(Rest,RestChars,RestStr),
-    process_rest_line(Type,Id,Key,RestChars,RestStr))).
-
-process_rest_line(_Type,Id,Ref,Chars,_):-
-    \+ (member(C,Chars),member(C,['!','[','"'])),
-    ( \+ member(' ',Chars)-> atom_chars(S,Chars);string_chars(S,Chars)),
-    assert_OBO(Ref,Id,S),!.
-
-process_rest_line(_Type,Id,is_a,Chars,Str):-
-    member('!',Chars), atomic_list_concat([L,R],'!',Str),
-    normalize_space(atom(T),L),normalize_space(string(N),R),
-    assert_OBO(is_a,Id,T), assert_OBO(name,T,N),!.
-
-process_rest_line(_Type,Id,Reln,Chars,_):-
-  %  member(Reln,[synonym]),
-    get_some_items(List,Chars,[]),
-    maplist(arg(1),List,Args),
-    Assert=..[Reln,Id|Args],
-    assert_OBO(Assert),!.
-
-%process_rest_line(_Type,Id,Reln,Chars,_):- get_some_items(List,Chars,[]), maplist(arg(1),List,Args), assert_OBO(Reln,Id,Args).
-process_rest_line(Type,Id,Miss,Rest,Str):-
-  pp_fb(process_rest_line(Type,Id,Miss,Rest,Str)),!.
-
-/*
-Given the DCG rules we've defined, the input
-
-``` OBO
-
-[Term]
-id: FBcv:0000391
-name: bang sensitive
-namespace: phenotypic_class
-def: "A phenotype exhibited following mechanical shock and consisting of a brief period of intense, uncoordinated motor activity (legs and wings flailing, abdomen coiling) followed by a prolonged period of paralysis." [FlyBase:FBrf0022877]
-synonym: "easily shocked" RELATED [FlyBase:FBrf0022877]
-is_a: FBcv:0000389 ! paralytic
-
-```
-Would be parsed into the following Prolog terms:
-```
-[
-    bracketed(['Term']),
-    key('id'), item('FBcv:0000391'),
-    key('name'), item('bang sensitive'),
-    key('namespace'), item('phenotypic_class'),
-    key('def'), quoted("A phenotype exhibited following mechanical shock and consisting of a brief period of intense, uncoordinated motor activity (legs and wings flailing, abdomen coiling) followed by a prolonged period of paralysis."), bracketed(['FlyBase:FBrf0022877']),
-    key('synonym'), quoted("easily shocked"), keyword('RELATED'), bracketed(['FlyBase:FBrf0022877']),
-    key('is_a'), item('FBcv:0000389'), named('paralytic')
-]
-```
-
-*/
-
-
-get_key(Key)-->key_like_string(Chars),[':'],{atom_chars(Key,Chars)},!.
-get_some_items(I)--> [' '],!,get_some_items(I).
-get_some_items(_,[],[]):-!.
-get_some_items([H|T])-->get_one_item(H),get_some_items(T). get_some_items([])-->[].
-get_one_item(I)--> [' '],!,get_one_item(I).
-get_one_item(quoted(Item))-->[x,s,d,':'],symbol_or_url(Chars),{atom_chars(Item,[x,s,d,':'|Chars])}.
-get_one_item(quoted(Item))-->[h,t,t,p],symbol_or_url(Chars),{string_chars(Item,[h,t,t,p|Chars])}.
-get_one_item(quoted(Item))-->[f,t,p],symbol_or_url(Chars),{string_chars(Item,[f,t,p|Chars])}.
-get_one_item(quoted(Item))-->['"'],string_until_end_quote(Chars),{string_chars(Item,Chars)}.
-get_one_item(named(Item))-->['!'],whs,named_like_string(Chars),{atom_chars(Item,Chars)}.
-get_one_item(bracketed(Items))-->['['],whs,items(Items),whs,[']'].
-get_one_item(bracketed(Items))-->['{'],whs,items(Items),whs,['}'].
-%get_one_item(item(Item))--> whs,key_like_string(Chars),whs,{Chars \==[], atom_chars(Item,Chars)}.
-get_one_item(keyword(Keyword))-->whs,id_like_string(Chars),{Chars\==[]},whs,{atom_chars(Keyword,Chars)}.
-get_one_item(text(Text))-->named_like_string(Chars),{string_chars(Text,Chars)}.
-get_one_item(text(Text),[H|T],[]):- ground([H|T]),string_chars(Text,[H|T]),!.
-items([Item|Rest])-->item(Item),whs,[','],whs,items(Rest).
-items([Item])-->item(Item),!.
-item(Item)-->symbol_or_url(Chars),{Chars\==[],atom_chars(Item,Chars)}.
-key_like_string([H|T])-->[H],{\+member(H,[':',' ','\t','\n'])},key_like_string(T).
-key_like_string([])-->[].
-id_like_string([H|T])-->[H],{\+member(H,['!',' ','\t','\n',',','[',']','{','}','"'])},id_like_string(T).
-id_like_string([])-->[].
-symbol_or_url([H|T])-->[H],{\+member(H,[',','[',']','"',' '])},symbol_or_url(T).
-symbol_or_url([])-->[].
-string_until_end_quote([])-->['"'],!.
-string_until_end_quote([H|T])-->(['\\',H];[H]),!,string_until_end_quote(T).
-named_like_string([H|T])-->[H],{\+member(H,['\n'])},named_like_string(T).
-named_like_string([])-->[].
-whs-->[''],!,whs. whs-->[].
-
-%load_fb_obo(Ext,File,OutputFile,Fn):- fbug(load_fb_obo(Ext,File,OutputFile,Fn)),!.
-load_fb_obo(Ext,File,OutputFile,Fn):- fbug(load_fb_obo(Ext,File,OutputFile,Fn)),
-  (current_predicate(load_obo/1)->load_obo(File);true).
-
-% ===========================================
-% END OBO Loader
-% ===========================================
 
 
 for_all(G1,G2):-
@@ -668,164 +368,9 @@ pp_fb1(P):- pp_as(P),!.
 pp_fb1(P):- print(P),!,nl.
 pp_fb1(P):- fbdebug1(P),!,nl.
 
-allow_concepts:- option_else(concepts,TF,true), \+ TF == false.
-with_concepts(TF,Goal):- with_option(concepts,TF,Goal).
-
-direct_mapping(NC,NC):- var(NC),!.
-direct_mapping(NC,OO):- is_list(NC),!,maplist(direct_mapping,NC,OO).
-direct_mapping(!,no_more).
-direct_mapping(fail,'False').
-direct_mapping(true,'True').
-direct_mapping(prolog,meTTa).
-direct_mapping('[|]','Cons').
-direct_mapping(( ';' ),or).
-direct_mapping(( ',' ),and).
-direct_mapping(( '\\+' ),if_not).
-direct_mapping(( ':-' ),entailed_by).
-direct_mapping('=..','term_2_list').
-direct_mapping(NC,NC):- \+ compound(NC),!.
-direct_mapping((G,E),O):- conjuncts_to_list((G,E),List), into_sequential(List,O),!.
-direct_mapping((A->B;C),O):- !, direct_mapping(if_then_else(A,B,C),O).
-direct_mapping((A->B),O):- !, direct_mapping(if_then(A,B),O).
-direct_mapping(I,O):- I=..[F|II],maplist(direct_mapping,[F|II],OO),O=..OO.
-
-print_metta_src:- mmake,
-  for_all((source_file(Pred,File),
-          atom_contains(File,flybase)),
-         print_metta_src(Pred)).
-
-print_metta_src(F/A):- !, print_metta_src(F,A).
-print_metta_src(Pred):- functor(Pred,F,A), print_metta_src(F,A).
-
-print_metta_src(F,A):- functor(Head,F,A),
-  nl,nl,nl,
-  for_all(clause(Head,Body), pp_metta(Head,Body)).
-pp_metta(Head,Body):- Body == true,!, pp_metta(=(Head,'True')).
-pp_metta(Head,Body):- Body == false,!, pp_metta(=(Head,'False')).
-pp_metta(Head,Body):- conjuncts_to_list(Body,List), into_sequential(List,SP),!,
-  pp_metta(=(Head,SP)).
-
-
-pp_metta(P):- pretty_numbervars(P,PP),with_option(concepts=false,pp_fb(PP)).
-
-into_sequential(Body,SP):- \+ is_list(Body), conjuncts_to_list(Body,List),into_sequential(List,SP).
-into_sequential(List,SP):- length(List,L),L>1, SP =.. [sequential|List],!.
-into_sequential([SP],SP):-!.
-into_sequential([],'True').
-
-write_src(V):- allow_concepts,!,with_concepts(false,write_src1(V)),flush_output.
-write_src(V):- write_src1(V),!.
-
-write_src1(V):- var(V),!, ignore(pp_sex(V)).
-write_src1(''):- !, writeq('').
-write_src1(V):- number(V),!, writeq(V).
-write_src1(V):- string(V),!, writeq(V).
-write_src1(V):- atom(V),needs_quoted_in_metta(V,_),!, atom_string(V,S),writeq(S).
-write_src1(V):- atom(V),!,write(V).
-write_src1(V):- pp_sex(V),!.
-
-needs_quoted_in_metta('','"').
-needs_quoted_in_metta(V,'"'):- atom_contains(V," ").
-needs_quoted_in_metta(V,'"'):- atom_contains(V,"/").
-needs_quoted_in_metta(V,'"'):- atom_contains(V,'"').
-needs_quoted_in_metta(V,'"'):- atom_contains(V,'"').
-needs_quoted_in_metta(V,'"'):- atom_contains(V,',').
-%needs_quoted_in_metta(V,"'"):- atom_length(V,L),L==1.
-%needs_quoted_in_metta(V,"'"):- atom_contains(V,")").
-needs_quoted_in_metta(V,'"'):- atom_contains(V,"|").
-needs_quoted_in_metta(V,'"'):- atom_contains(V,"'").
-
-pp_sax(S) :-  \+ allow_concepts,!, write_src(S).
-pp_sax(S) :- is_englishy(S),!,print_concept("StringValue",S).
-pp_sax(S) :- atom_length(S,1),atom_string(S,SS),!,print_concept("StringValue",SS).
-pp_sax(S) :- is_an_arg_type(S,T),!,print_concept("TypeNode",T).
-pp_sax(S) :- has_type(S,T),!,format('(~wValueNode "~w")',[T,S]).
-pp_sax(S) :- sub_atom(S,0,4,Aft,FB),flybase_identifier(FB,Type),!,(Aft>0->format('(~wValueNode "~w")',[Type,S]);format('(TypeNode "~w")',[Type])).
-pp_sax(S) :- print_concept("ConceptNode",S).
-
-print_concept( CType,V):- allow_concepts, !, write("("),write(CType),write(" "),ignore(with_concepts(false,write_src(V))),write(")").
-print_concept(_CType,V):- ignore(write_src(V)).
-write_val(V):- number(V),!, write_src(V).
-write_val(V):- compound(V),!, write_src(V).
-write_val(V):- write('"'),write(V),write('"').
-
-% Base case: atoms are printed as-is.
-pp_as(V) :- \+ \+ pp_sex(V),flush_output.
-pp_sex(V) :- var(V), !, format('$~p',[V]).
-pp_sex(V) :- direct_mapping(V,D),V\==D,!,pp_sex(D).
-%pp_sex('') :- format('(EmptyNode null)',[]).
-pp_sex('') :- format('()',[]).
-pp_sex([]):-  !, write('()').
-pp_sex('='(N,V)):- allow_concepts, !, format("~N;; ~w == ~n",[N]),!,pp_sex(V).
-pp_sex(V) :- (number(V) ; is_dict(V)), !, print_concept('ValueAtom',V).
-pp_sex(V) :- (atom(V),atom_number(V,N)), !, print_concept('ValueAtom',N).
-pp_sex(S) :- atom(S), always_dash_functor(S,D), pp_sax(D),!.
-pp_sex(S) :- string(S),!, print_concept('StringValue',S).
-% Lists are printed with parentheses.
-pp_sex(V) :- \+ compound(V), !, format('~p',[V]).
-pp_sex(V) :- V = '$VAR'(_), !, format('$~p',[V]).
-pp_sex(listOf(S,_)) :- !,pp_sex(listOf(S)).
-pp_sex(listOf(S)) :- !,format('(ListValue ~@)',[pp_sex(S)]).
-pp_sex('!'(S)) :- write('!'),pp_sex(S).
-pp_sex([H|T]) :- is_list(T),!, write('('), pp_sex(H), print_list_as_sexpression(T), write(')').
-% Compound terms.
-%pp_sex(Term) :- compound(Term), Term =.. [Functor|Args], write('('),format('(~w ',[Functor]), write_args_as_sexpression(Args), write(')').
-
-%pp_sex(Term) :- Term =.. ['=',H|Args], length(Args,L),L>2, write('(= '),  pp_sex(H), write('\n\t\t'), maplist(pp_sex(2),Args).
-pp_sex(Term) :- Term =.. [Functor|Args], always_dash_functor(Functor,DFunctor), format('(~w ',[DFunctor]), write_args_as_sexpression(Args), write(')'),!.
-pp_sex(Term) :- allow_concepts, Term =.. [Functor|Args], format('(EvaluationLink (PredicateNode "~w") (ListLink ',[Functor]), write_args_as_sexpression(Args), write('))'),!.
-pp_sex(Term) :- Term =.. [Functor|Args],
-   always_dash_functor(Functor,DFunctor), format('(~w ',[DFunctor]), write_args_as_sexpression(Args), write(')'),!.
-
-pp_sex(2,Arg):- write('\t\t'),pp_sex(Arg).
-
-always_dash_functor(A,B):- once(dash_functor(A,B)),A\=@=B,!.
-always_dash_functor(A,A).
-
-dash_functor(A,C):- \+ atom(A),!,C=A.
-dash_functor(A,C):- direct_mapping(A,B),A\==B,!,always_dash_functor(B,C).
-dash_functor(Functor,DFunctor):-
-   atom(Functor), atomic_list_concat(L,'-',Functor), L\=[_],maplist(always_dash_functor,L,LL),
-   atomic_list_concat(LL,'-',DFunctor).
-dash_functor(Functor,DFunctor):- fail,
-   atom(Functor), atomic_list_concat(L,'_',Functor), L\=[_],maplist(always_dash_functor,L,LL),
-   atomic_list_concat(LL,'-',DFunctor).
-dash_functor(Functor,DFunctor):-
-   atom(Functor), atomic_list_concat(L,'_',Functor), L\=[_],maplist(always_dash_functor,L,LL),
-   atomic_list_concat(LL,'_',DFunctor).
-
-
-is_an_arg_type(S,T):- flybase_identifier(S,T),!.
-has_type(S,Type):- sub_atom(S,0,4,Aft,FB),flybase_identifier(FB,Type),!,Aft>0.
-
-% Print arguments of a compound term.
-write_args_as_sexpression([]).
-write_args_as_sexpression([H|T]) :- write(' '), pp_sex(H), write_args_as_sexpression(T).
-
-% Print the rest of the list.
-print_list_as_sexpression([]).
-print_list_as_sexpression([H|T]) :- write(' '), pp_sex(H), print_list_as_sexpression(T).
-
-call_sexpr(S):- writeln(call=S).
 
 
 
-fbug(P) :- format("~N"), with_output_to(user_error,pp_fb(P)),!.
-fbug(N=V) :- nonvar(N), !, fbdebug1(N:-V).
-fbug(V) :- compound(V),functor(V,F,_A),!,fbdebug1(F:-V).
-fbug(V) :- fbdebug1(debug:-V).
-fbdebug1(Message) :-
-  % ISO Standard: flush_output/1
-  flush_output(user_output),
-  flush_output(user_error),
-  catch(portray_clause(user_error,Message,[]),_,catch_ignore(format(user_error, "~n/* ~q. */~n", [Message]))),
-  %format(user_error, "~n/* ~p. */~n", [Message]),
-  flush_output(user_error).
-
-
-swi_only(_):- is_scryer,!,fail.
-swi_only(G):- call(G).
-is_scryer:- \+  current_prolog_flag(libswipl,_).
 :- use_module(library(csv)).
 
 %:- current_prolog_flag(libswipl,_)->use_module(library(logicmoo_utils)); true.
@@ -860,11 +405,11 @@ is_scryer:- \+  current_prolog_flag(libswipl,_).
 
 */
 
-recount_total_loaded_atoms:- flag(total_loaded_atoms,_,0),full_atom_count(Was),flag(total_loaded_atoms,_,Was).
+recount_total_loaded_symbols:- flag(total_loaded_symbols,_,0),full_symbol_count(Was),flag(total_loaded_symbols,_,Was).
 
 % Convert flybase data from CSV to Prolog format.
 load_flybase:- is_scryer,!,load_flybase_files.
-load_flybase:- make,recount_total_loaded_atoms,!,load_flybase_files,!,cleanup_arities,!,fb_stats.
+load_flybase:- make,recount_total_loaded_symbols,!,load_flybase_files,!,cleanup_arities,!,fb_stats.
 load_flybase_dirs:-
   load_flybase('./data/ftp.flybase.net/releases/current/das_precomputed'),
   load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/*'),
@@ -986,7 +531,7 @@ load_fbase_after_17:-
 load_flybase_obo_files:-
   load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/chebi_fb_*.obo'),
   load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/doid.obo'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/fly_anatomy.obo'),
+  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/fly_ansymboly.obo'),
   load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/fly_development.obo'),
   load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/flybase_controlled_vocabulary.obo'),
   load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/flybase_stock_vocabulary.obo'),
@@ -997,6 +542,134 @@ load_flybase_obo_files:-
   load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/slice.chebi.obo'),
   load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/so-simple.obo'),
   !.
+
+
+
+/*
+:- ensure_loaded('./reqs/obo_core/prolog/obo_core/goslim.pl').
+:- ensure_loaded('./reqs/obo_metadata/prolog/obo_metadata.pl').
+:- ensure_loaded('./reqs/obo_metadata/prolog/obo_metadata/iao_metadata.pl').
+:- ensure_loaded('./reqs/obo_metadata/prolog/obo_metadata/oio.pl').
+:- ensure_loaded('./reqs/obo_ro/prolog/obo_ro/ro.pl').
+
+:- attach_packs('./reqs',[]).
+:- ensure_loaded(library(obo_metadata)).
+:- goslim:ensure_loaded(library(obo_core/goslim)).
+:- ensure_loaded(library(obo_ro/ro)).
+
+937_381_148
+*/
+
+
+/*
+(load_fb_obo "data/ontologies/so.obo")
+
+; Total         Atoms (Atomspace size): ...................................................... 19,967
+;               ConceptNodes: ................................................................. 4,258
+;               Random samples: ................................................................. 158
+;               Total Memory Used: ........................................................ 1,089,408
+;               Runtime (days:hh:mm:ss): ................................................. 0:00:00:29
+
+
+
+(load_fb_obo "./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/so-simple.obo" )
+
+; Total         Atoms (Atomspace size): ...................................................... 19,484
+;               ConceptNodes: ................................................................. 4,194
+;               Random samples: ................................................................. 160
+;               Total Memory Used: ........................................................ 1,089,408
+;               Runtime (days:hh:mm:ss): ................................................. 0:00:00:29
+
+
+*/
+
+/*
+?- xinfo('SO:0000797').
+ontology_info(id_type,'SO:0000797','Term').
+def('SO:0000797',"TE that exists (or existed) in nature.",['FB:mc']).
+has_quality('SO:0000797','SO:0000782',' natural').
+intersection_of('SO:0000797','SO:0000101',' transposable_element').
+intersection_of('SO:0000797',has_quality,'SO:0000782',' natural').
+ontology_info(is_a,'SO:0000797','SO:0000101').
+ontology_info(is_a,'SO:0000797','SO:0001038').
+ontology_info(name,'SO:0000797',"natural_transposable_element").
+synonym('SO:0000797',"natural transposable element",'EXACT',[]).
+*/
+
+load_obo_files:-
+  %load_obo('./reqs/obonet/tests/data/?*.obo'),
+
+  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/*/so*.obo'),
+  fb_stats,
+  load_flybase('./data/SO-Ontologies/Ontology_Files/*.obo'),
+  % Total         Atoms (Atomspace size): ...................................................... 20,069
+  %               ConceptNodes: ................................................................. 4,200
+  %               Random samples: ................................................................. 159
+  %               Total Memory Used: ........................................................ 1,089,408
+  %               Runtime (days:hh:mm:ss): ................................................. 0:00:00:29
+
+  load_flybase('./data/SO-Ontologies/Ontology_Files/subsets/*.obo'),
+  % Total         Atoms (Atomspace size): ...................................................... 20,551
+  %               ConceptNodes: ................................................................. 4,270
+  %               Random samples: ............................................................... 2,928
+  %               Total Memory Used: ........................................................ 1,154,944
+  %               Runtime (days:hh:mm:ss): ................................................. 0:00:00:40
+
+  load_flybase('./data/Legacy/Cross_Products/*.obo'),
+  % Total         Atoms (Atomspace size): ...................................................... 20,968
+  %               ConceptNodes: ................................................................. 4,306
+  %               Random samples: .............................................................. 14,418
+  %               Total Memory Used: ........................................................ 9,828,592
+  %               Runtime (days:hh:mm:ss): ................................................. 0:00:01:14
+  print_loaded_from_files,
+     %loaded_from_file(         19_515, './data/SO-Ontologies/Ontology_Files/so-simple.obo').
+     %         only reflects new entries ... thus full OBO adds 481 entries to the simple one
+     %loaded_from_file(            481, './data/SO-Ontologies/Ontology_Files/so.obo').
+
+     %loaded_from_file(            336, './data/SO-Ontologies/Legacy/Cross_Products/so-xp-dec.obo').
+     %loaded_from_file(            310, './data/SO-Ontologies/Ontology_Files/subsets/SOFA.obo').
+     %loaded_from_file(            141, './data/SO-Ontologies/Ontology_Files/subsets/biosapiens.obo').
+     %loaded_from_file(             73, './data/SO-Ontologies/Ontology_Files/subsets/Alliance_of_Genome_Resources.obo').
+     %loaded_from_file(             35, './data/SO-Ontologies/Legacy/Cross_Products/so-xp-non-classified.obo').
+     %loaded_from_file(             31, './data/SO-Ontologies/Ontology_Files/subsets/DBVAR.obo').
+     %loaded_from_file(             23, './data/SO-Ontologies/Legacy/Cross_Products/so-xp.obo').
+     %loaded_from_file(             23, './data/SO-Ontologies/Legacy/Cross_Products/so-xp-simple.obo').
+
+  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/*/*.obo'),
+  % Total         Atoms (Atomspace size): ................................................... 3,489,211
+  %               ConceptNodes: ............................................................... 688,541
+  %               Random samples: .............................................................. 26,006
+  %               Total Memory Used: ............................................................ 1.19G
+  %               Runtime (days:hh:mm:ss): ................................................. 0:00:34:35
+print_loaded_from_files,
+%loaded_from_file(2_637_502, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/chebi_fb_2023_04.obo').
+%loaded_from_file(  451_168, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/go-basic.obo').
+%loaded_from_file(  221_705, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/fly_ansymboly.obo').
+%loaded_from_file(  128_798, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/doid.obo').
+%loaded_from_file(   19_515, './data/SO-Ontologies/Ontology_Files/so-simple.obo').
+%loaded_from_file(    9_852, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/psi-mi.obo').
+%loaded_from_file(    8_644, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/gene_group_FB2023_04.obo').
+%loaded_from_file(    7_605, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/flybase_controlled_vocabulary.obo').
+%loaded_from_file(    1_598, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/fly_development.obo').
+%loaded_from_file(      834, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/image.obo').
+%loaded_from_file(      491, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/flybase_stock_vocabulary.obo').
+%loaded_from_file(      481, './data/SO-Ontologies/Ontology_Files/so.obo').
+%loaded_from_file(      336, './data/SO-Ontologies/Legacy/Cross_Products/so-xp-dec.obo').
+%loaded_from_file(      310, './data/SO-Ontologies/Ontology_Files/subsets/SOFA.obo').
+%loaded_from_file(      141, './data/SO-Ontologies/Ontology_Files/subsets/biosapiens.obo').
+%loaded_from_file(       73, './data/SO-Ontologies/Ontology_Files/subsets/Alliance_of_Genome_Resources.obo').
+%loaded_from_file(       35, './data/SO-Ontologies/Legacy/Cross_Products/so-xp-non-classified.obo').
+%loaded_from_file(       31, './data/SO-Ontologies/Ontology_Files/subsets/DBVAR.obo').
+%loaded_from_file(       25, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/so-simple.obo').
+%loaded_from_file(       23, './data/SO-Ontologies/Legacy/Cross_Products/so-xp.obo').
+%loaded_from_file(       23, './data/SO-Ontologies/Legacy/Cross_Products/so-xp-simple.obo').
+%loaded_from_file(       21, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/slice.chebi.obo').
+  !.
+
+
+
+
+
 
 load_flybase_chado:-  % 359 tables with 937,381,148 rows
 
@@ -1299,7 +972,7 @@ est_size(              0,stock_relationship_pub).
 est_size(              0,stockprop_pub).
 est_size(              0,tableinfo).
 
-est_size_loaded(N,F):- fb_pred_major(F,A),fb_stats(F,A,N).
+est_size_loaded(N,F):- fb_pred_major(F,A),metta_stats(F,A,N).
 
 fb_pred_major(F,A):- fb_pred_m(F,A).
 fb_pred_major(F,A):- fb_pred(F,A),
@@ -1319,35 +992,31 @@ print_est_sizes:-
   sort(L,S),reverse(S,R),maplist(call,R).
 
 print_est_size(F,N1,S):- number(S), \+ number(N1),!,print_est_size(F,S,N1).
-print_est_size(F,N1,S):- format('~N ~q(~@, ~q).',[F,pad_number(N1,15),S]),!.
+print_est_size(F,N1,S):- format('~N (~q ~@ ~q) ',[F,pad_number(N1,15),S]),!.
 
 % pad_number(Number, N) pads Number with spaces to occupy N spaces in total
 % and includes underscores as the thousand separator.
 pad_number(Number, N) :-
-  sformat(S,"~t~D~*|", [Number,N]),atomic_list_concat(L,',',S),
-  atomic_list_concat(L,'_',SS),write(SS).
+  sformat(S,"~t~D~*|", [Number,N]),symbolic_list_concat(L,',',S),
+  symbolic_list_concat(L,'_',SS),write(SS).
 
-% Load flybase data in Prolog format.
-load_fb_cache:-
-  load_fb_mask('./data/ftp.flybase.net/releases/current/precomputed_files/*/*pl'),
-  load_fb_mask('flybase_data/public.*.pl'),
-  load_fb_mask('flybase_data/*fb_2023_01.pl').
 
 % Process a file or directory path with a given predicate.
 with_wild_path(Fnicate, Dir) :- extreme_debug(fbug(with_wild_path(Fnicate, Dir))),fail.
 with_wild_path(_Fnicate, []) :- !.
-with_wild_path(Fnicate, Dir) :-  is_scryer, atom(Dir), !, must_det_ll_r((atom_chars(Dir,Chars), with_wild_path(Fnicate, Chars))).
-with_wild_path(Fnicate, Chars) :-  \+ is_scryer, \+ atom(Chars), !, must_det_ll_r((name(Atom,Chars), with_wild_path(Fnicate, Atom))).
+with_wild_path(Fnicate, Dir) :-  is_scryer, symbol(Dir), !, must_det_ll_r((path_chars(Dir,Chars), with_wild_path(Fnicate, Chars))).
+with_wild_path(Fnicate, Chars) :-  \+ is_scryer, \+ symbol(Chars), !, must_det_ll_r((name(Atom,Chars), with_wild_path(Fnicate, Atom))).
 with_wild_path(Fnicate, File) :- exists_file(File), !, must_det_ll_r(( call(Fnicate, File))).
 with_wild_path(Fnicate, File) :- with_wild_path_swi(Fnicate, File).
 with_wild_path(Fnicate, Dir) :-  exists_directory(Dir), !,
   must_det_ll_r((directory_files(Dir, Files),
   maplist(directory_file_path(Dir,Files),Paths),
-  maplist(atom_chars,Paths,CharPaths),
+  maplist(path_chars,Paths,CharPaths),
   maplist(with_wild_path(Fnicate), CharPaths))), !.
 with_wild_path(Fnicate, File) :- is_list(File), !,  must_det_ll_r((maplist(with_wild_path(Fnicate), File))).
 with_wild_path(Fnicate, File) :- must_det_ll_r((call(Fnicate, File))).
 
+path_chars(A,C):- symbol_chars(A,C).
 
 with_wild_path_swi(Fnicate, File) :-
   compound(File),
@@ -1360,7 +1029,7 @@ with_wild_path_swi(Fnicate, File) :-
   '\\=@='(Dir, File), !,
   with_wild_path(Fnicate, Dir).
 with_wild_path_swi(Fnicate, File) :-
-  atom_contains(File, '*'),
+  symbol_contains(File, '*'),
   expand_file_name(File, List), !,
   maplist(with_wild_path(Fnicate), List).
 with_wild_path_swi(Fnicate, File) :-
@@ -1368,65 +1037,6 @@ with_wild_path_swi(Fnicate, File) :-
   directory_file_path(File, '*.*sv', Wildcard),
   expand_file_name(Wildcard, List), !,
   maplist(Fnicate, List).
-
-% ===============================
-% MeTTa Python incoming interface
-% ===============================
-%debug_metta(Call):- skip(Call).
-if_metta_debug(Goal):- getenv('VSPACE_VERBOSE','2'),!,ignore(call(Goal)).
-if_metta_debug(_).
-debug_metta(Term):- if_metta_debug((format('~N; ~@~n',[write_src(Term)]))).
-debug_metta(Msg,Term):- if_metta_debug((format('~N; ~w: ~@~n',[Msg,write_src(Term)]))),!.
-
-%:- dynamic(for_metta/2).
-%for_metta(_,T):- fb_pred(F,A),functor(T,F,A),call(T).
-metta_ls(KB):-
-  listing(KB:for_metta/2).
-metta_add(KB,New):- decl_m_fb_pred(KB,for_metta,2), MP = KB:for_metta(KB,New), assert_new(MP), debug_metta(['add-atom',KB,New]).
-metta_rem(KB,Old):- debug_metta(['remove-atom',KB,Old]),metta_del(KB,Old).
-metta_del(KB,Old):- decl_m_fb_pred(KB,for_metta,2), MP = KB:for_metta(KB,Old),
-  copy_term(MP,Copy), clause(MP,true,Ref), MP =@= Copy, !, erase(Ref). % ,debug_metta('DEL',Old).
-metta_replace(KB,Old,New):- debug_metta(['atom-replace',KB,Old,New]),!, metta_del(KB,Old), metta_add(KB,New).
-metta_count(KB,Count):-
- must_det_ll((
-  debug_metta(['atom-count',KB]),
-  decl_m_fb_pred(KB,for_metta,2), full_atom_count(SL1),
-  MP = KB:for_metta(_,_),
-  predicate_property(MP,number_of_clauses(SL2)),
-  predicate_property(MP,number_of_rules(SL3)),
-  %metta_ls(KB),
-  Count is SL1 + SL2 - SL3)),!.
-metta_count(_KB,0):-!.
-%metta_count(KB,Count):- writeln(metta_count_in(KB,Count)), findall(Atom,for_metta(KB,Atom),AtomsL),length(AtomsL,Count),writeln(metta_count_out(KB,Count)).
-metta_iter(KB,Atoms):- decl_m_fb_pred(KB,for_metta,2), KB:for_metta(KB,Atoms).
-metta_atoms(KB,AtomsL):- debug_metta(['get-atoms',KB]), decl_m_fb_pred(KB,for_metta,2), findall(Atom,KB:for_metta(KB,Atom),AtomsL).
-%metta_iter_bind(KB,Query,Template,AtomsL):- decl_m_fb_pred(KB,for_metta,2), findall(Template,KB:for_metta(KB,Query),AtomsL).
-metta_iter_bind(KB,Query,Vars):-
-  term_variables(Query,Vars),
-  debug_metta(['match',KB,Query,Vars]),
-  decl_m_fb_pred(KB,for_metta,2), KB:for_metta(KB,Query),
-  debug_metta('RES',metta_iter_bind(KB,Query,Vars)).
-%metta_iter_bind(KB,Atom,Template):- fb_stats, findall(Template,metta_iter(KB,Atom),VarList).
-/*
-metta_iter_bind(KB,Atoms,Vars):-
-  fb_stats,
-  term_variables(Atoms,AVars),
-  metta_iter(KB,Atoms), ignore(AVars = Vars).
-*/
-
-'&flybase':for_metta('&flybase',P):- fb_pred(F,A),length(L,A),P=[F|L],apply(F,L).
-/*
-%encoding_trial('iso-8859-1').
-%encoding_trial('us-ascii').
-%encoding_trial('utf-8').
-encoding_trial(ascii).
-encoding_trial(iso_latin_1).
-encoding_trial(octet).
-encoding_trial(text).
-encoding_trial(unicode_be).
-encoding_trial(unicode_le).
-encoding_trial(utf8).
-encoding_trial(wchar_t).
 
 
 :- dynamic(fix_columns_nth/2).
@@ -1436,83 +1046,6 @@ mine_args_that_need_reduced:-
   forall(needs_fixed(X,Y),(pp_ilp(needs_fixed(X->Y)),fix_columns_with_arg(X))),
   listing(fix_columns_nth).
 
-mine_primary_columns:-
-  writeln('\n\n\n=====\n\n\n'),
-  forall(needs_fixed(X,Y),(pp_ilp(needs_fixed(X->Y)),fix_columns_with_arg(X))),
-  listing(fix_columns_nth).
-
-/*
-
-128 ?- mine_no_repeats_columns.
-%~ mine_no_repeats_columns(seq,[])
-%~ mine_no_repeats_columns(ontology_info,[2])
-%~ mine_no_repeats_columns(fbgn_fbtr_fbpp_expanded,[1,2,3,4,5,6,7])
-%~ mine_no_repeats_columns( physical_interactions_mitab, [
-%~   1, 2,3,4,5,6,7,8,9,
-%~   10,11,12,13,15,16,17,
-%~   18,19,20,21,22,23,24,
-%~   25,26,27,28,29,30,31,
-%~   32,33,34,35,36,37,38,
-%~   39,40,41,42])
-%~ mine_no_repeats_columns(dmel_gene_sequence_ontology_annotations,[1,2,3,4])
-%~ mine_no_repeats_columns(gene_map_table,[1,4,5,6])
-%~ mine_no_repeats_columns(gene_genetic_interactions,[1,2,3,4,5,6])
-%~ mine_no_repeats_columns(allele_genetic_interactions,[1,2,3,4])
-%~ mine_no_repeats_columns(genotype_phenotype,[1,2,3,4,5,6,7])
-%~ mine_no_repeats_columns( disease_model_annotations, [
-%~   1, 2,3,4,5,6,7,8,9,
-%~   10,11,12])
-%~ mine_no_repeats_columns( dmel_human_orthologs_disease, [
-%~   1, 2,3,4,5,6,7,8])
-%~ mine_no_repeats_columns(fbrf_pmid_pmcid_doi,[3,5,7])
-%~ mine_no_repeats_columns(fbal_to_fbgn,[3,4])
-%~ mine_no_repeats_columns(cDNA_clone,[2,4,5,6])
-%~ mine_no_repeats_columns(genomic_clone,[2])
-%~ mine_no_repeats_columns(fbgn_uniprot,[1,2,3])
-%~ mine_no_repeats_columns(pmid_fbgn_uniprot,[1,2,3,4,5])
-%~ mine_no_repeats_columns(automated_gene_summaries,[1,2])
-%~ mine_no_repeats_columns(best_gene_summary,[3,4])
-%~ mine_no_repeats_columns( 'Dmel_enzyme', [
-%~   1, 2,3,4,5,6,9,10,11])
-%~ mine_no_repeats_columns(dmel_unique_protein_isoforms,[1,2,4])
-%~ mine_no_repeats_columns(fbgn_annotation_ID,[2,4,6])
-%~ mine_no_repeats_columns(fbgn_exons2affy1_overlaps,[2])
-%~ mine_no_repeats_columns(fbgn_exons2affy2_overlaps,[2])
-%~ mine_no_repeats_columns(fbgn_fbtr_fbpp,[1])
-%~ mine_no_repeats_columns(fbgn_gleanr,[1,2,3])
-%~ mine_no_repeats_columns( fbgn_NAseq_Uniprot, [
-%~   1, 2,3,4,5,6,7,8,9])
-%~ mine_no_repeats_columns(gene_functional_complementation,[1,2,3,4,5])
-%~ mine_no_repeats_columns(gene_group,[1,2,3,4,5,6,7])
-%~ mine_no_repeats_columns(gene_groups_HGNC,[1,2,3,4])
-%~ mine_no_repeats_columns(gene_rpkm_matrix,[3,4,5,....(168>99)])
-%~ mine_no_repeats_columns( gene_rpkm_report, [
-%~   1, 2,3,4,5,8,9,10,11,
-%~   12])
-%~ mine_no_repeats_columns(gene_snapshots,[3,4,5])
-%~ mine_no_repeats_columns(pathway_group,[1,2,3,4,5,6,7])
-%~ mine_no_repeats_columns( 'scRNA-Seq_gene_expression', [
-%~   1, 2,3,4,5,6,7,8,9,
-%~   10,11,15])
-%~ mine_no_repeats_columns(insertion_mapping,[3,4,5,6,7])
-%~ mine_no_repeats_columns('cyto-genetic-seq',[2,4])
-%~ mine_no_repeats_columns(dataset_metadata,[1,2])
-%~ mine_no_repeats_columns(dmel_paralogs,[1,2,3,4,5,8,10,11])
-%~ mine_no_repeats_columns(entity_publication,[1,2,3,4])
-%~ mine_no_repeats_columns(organism_list,[1,2,3,4,5,6])
-%~ mine_no_repeats_columns(stocks,[2,3,4])
-%~ mine_no_repeats_columns(synonym,[2,4,5,6])
-
-*/
-mine_no_repeats_columns:-
-  forall(mine_no_repeats_columns(Fn,NthL),dmsg(mine_no_repeats_columns(Fn,NthL))).
-mine_no_repeats_columns(Fn,NthL):-
-    fb_pred(Fn,A),
-    findall(Nth,
-      ((between(1,A,Nth),
-      once((not_repeats(fb_arg_table_n(_, Fn, Nth)),
-      repeats(fb_arg_table_n(_, Fn, Nth)))))),NthL).
-
 fix_columns_with_arg(Arg):-
   forall(fb_arg_table_n(Arg,Fn,N),
     fix_columns_n(Fn,N)).
@@ -1520,20 +1053,16 @@ fix_columns_n(Fn,N):-
   assert_new(fix_columns_nth(Fn,N)).
 
 
-try_encoding:- 'allele_genetic_interactions'('14-3-3epsilon[18A2]',X,Y,Z),
-  encoding_trial(ET),set_stream(current_output,encoding(ET)),catch(write(ET=[X,Y,Z]),_,fail),fail.
-*/
-
-load_fb_mask(Filename):- is_scryer,atom(Filename),name(Filename,Chars),!,load_fb_mask(Chars).
+load_fb_mask(Filename):- is_scryer,symbol(Filename),name(Filename,Chars),!,load_fb_mask(Chars).
 load_fb_mask(Filename):- expand_file_name(Filename,Files1),maplist(load_fb_cache,Files1).
 load_fb_cache(File):- with_wild_path(load_fb_cache0,File).
 load_fb_cache0(File):- file_name_extension(Name,_E,File),
-  atomic_list_concat([Pub,Table],'.',Name),
-  atomic_list_concat([Pub,Table,qlf],'.',OutputFile),!,
+  symbolic_list_concat([Pub,Table],'.',Name),
+  symbolic_list_concat([Pub,Table,qlf],'.',OutputFile),!,
   load_fb_cache(File,OutputFile,Table).
 load_fb_cache0(File):- file_name_extension(Name,_E,File),
-  atomic_list_concat([Table],'.',Name),
-  atomic_list_concat([Table,qlf],'.',OutputFile),
+  symbolic_list_concat([Table],'.',Name),
+  symbolic_list_concat([Table,qlf],'.',OutputFile),
   load_fb_cache(File,OutputFile,Table).
 
 % ============================================================================
@@ -1545,36 +1074,34 @@ track_load_into_file(Filename,Goal):-
   flag(loaded_from_file_count,Was,0),
   with_option(loading_file,Filename,time(Goal)),!,
   flag(loaded_from_file_count,New,Was),
-  assert(is_loaded_from_file_count(Filename,New)),
+  ((New>0 ; \+ is_loaded_from_file_count(Filename,_))->assert(is_loaded_from_file_count(Filename,New));true),
   fbug(Filename=New))).
 :- dynamic(is_loaded_from_file_count/2).
 
 :- use_module(library(http/json)).
-load_fb_json(Ext,File,OutputFile,Fn):- fbug(load_fb_json(Ext,File,OutputFile,Fn)),
+load_fb_json(Fn,File):- fbug(load_fb_json(Fn,File)),
  setup_call_cleanup(open(File,read,In), json:json_read(In,Term,[]), close(In)),
-    time(assert(saved_fb_json(Ext,File,Term,Fn))).
+    time(assert(saved_fb_json(File,Term,Fn))).
 
 
-load_fb_fa(Ext,Filename,OutputFile,Fn):-
+load_fb_fa(Fn,Filename):-
  track_load_into_file(Filename,
   must_det_ll((
-    fbug(load_fb_fa(Ext,Filename,OutputFile,Fn)),
+    fbug(load_fb_fa(Fn,Filename)),
     directory_file_path(Directory, BaseName, Filename),
     file_name_extension(Id, _, BaseName),
-    decl_fb_pred(seq,3),
     Type = 'SequenceFile',
-    assert_OBO(id_type,Id,Type),
-    nb_setval(obo_id,Id),nb_setval(obo_type,Type),
-    assert_OBO('pathname',Id,Filename),!,
-    assert_OBO('basename',Id,BaseName),!,
-    assert_OBO('directory',Id,Directory),!,
+    assert_MeTTa(id_type(Id,Type)),
+    assert_MeTTa(pathname(Id,Filename)),!,
+    assert_MeTTa(basename(Id,BaseName)),!,
+    assert_MeTTa(directory(Id,Directory)),!,
     setup_call_cleanup(open(Filename,read,In), load_fb_fa_read(Id,In,_), close(In))))).
 load_fb_fa_read(_Fn,In, _):- (at_end_of_stream(In);reached_file_max),!.
 load_fb_fa_read(Fn,In,FBTe):- read_line_to_chars(In,Chars), load_fb_fa_read_n(Fn,In,FBTe,Chars).
-load_fb_fa_read_n(Fn,In,_,['>'|Chars]):- !, must_det_ll((atom_chars(FBTe,Chars), load_fb_fa_read(Fn,In,seq(FBTe,1)))).
+load_fb_fa_read_n(Fn,In,_,['>'|Chars]):- !, must_det_ll((path_chars(FBTe,Chars), load_fb_fa_read(Fn,In,seq(FBTe,1)))).
 load_fb_fa_read_n(Fn,In,seq(FBTe,N),Chars):-
    Data =..[Fn,FBTe,N|Chars],
-   assert_OBO(Data),!,
+   assert_MeTTa(Data),!,
    N2 is N+1,load_fb_fa_read(Fn,In,seq(FBTe,N2)).
 
 maybe_sample(_Fn,_Args):- \+ should_sample,!.
@@ -1589,23 +1116,23 @@ assert_arg_samples(Fn,N,[A|Args]):-
    N2 is N+1, assert_arg_samples(Fn,N2,Args).
 assert_arg_samples(_,_,_).
 
-dont_sample(N):- \+ atom(N).  dont_sample(''). dont_sample('-').
+dont_sample(N):- \+ symbol(N).  dont_sample(''). dont_sample('-').
 
-data_pred0(X,Y):- atom_concat('public.',YY,X),!,data_pred0(YY,Y).
-data_pred0(X,Y):- atomic_list_concat(List,'/',X),List\==[],List\=[_],!,last(List,L),data_pred0(L,Y).
-data_pred0(X,Y):- atomic_list_concat(List,'_',X),once(not_trimmed_path(List,NewList)),
-  NewList\==[],NewList\==List,atomic_list_concat(NewList,'_',Y),!.
-data_pred0(X,Y):- atomic_list_concat([L,_|_],'_fb_',X),!,data_pred0(L,Y).
+data_pred0(X,Y):- symbol_concat('public.',YY,X),!,data_pred0(YY,Y).
+data_pred0(X,Y):- symbolic_list_concat(List,'/',X),List\==[],List\=[_],!,last(List,L),data_pred0(L,Y).
+data_pred0(X,Y):- symbolic_list_concat(List,'_',X),once(not_trimmed_path(List,NewList)),
+  NewList\==[],NewList\==List,symbolic_list_concat(NewList,'_',Y),!.
+data_pred0(X,Y):- symbolic_list_concat([L,_|_],'_fb_',X),!,data_pred0(L,Y).
 data_pred0(X,X).
 
 data_pred(X,Y):- data_pred0(X,Y), Y\=='',!.
 data_pred(X,X).
 
-is_trimmed_path(X):- atom_contains(X,'0'),!.
+is_trimmed_path(X):- symbol_contains(X,'0'),!.
 is_trimmed_path('fb').
 is_trimmed_path('public').
 is_trimmed_path('data').
-%is_trimmed_path(Atom):- atom_chars(Atom,Chars), read_term_from_chars(Chars,Term,[]),number(Term),!.
+%is_trimmed_path(Atom):- path_chars(Atom,Chars), read_term_from_chars(Chars,Term,[]),number(Term),!.
 not_trimmed_path([H|List],NewList):- is_trimmed_path(H),!,not_trimmed_path(List,NewList).
 not_trimmed_path([H|List],[H|NewList]):- !, not_trimmed_path(List,NewList).
 not_trimmed_path([],[]).
@@ -1614,7 +1141,9 @@ not_trimmed_path([],[]).
 %file_to_sep(_File,9).
 file_to_sep(File,','):- file_name_extension(_,csv,File),!.
 file_to_sep(File,'\t'):- file_name_extension(_,tsv,File),!.
-
+file_to_sep(csv,',').
+file_to_sep(tsv,'\t').
+file_to_sep(_,'\t').
 
 is_swipl:- \+ is_scryer.
 
@@ -1644,100 +1173,6 @@ fb_assert(Term) :-
 :- dynamic(done_reading/1).
 
 
-
-:- dynamic(fb_pred/2).
-
-full_atom_count(SL):- flag(total_loaded_atoms,SL,SL),SL>1,!.
-full_atom_count(SL):- findall(NC,(fb_pred(F,A),fb_stats(F,A,NC)),Each), sumlist(Each,SL).
-
-heartbeat :-
-    % Get the current time and the last printed time
-    get_time(CurrentTime),
-    % Check if the global variable is set
-    (   nb_current(last_printed_time, _)
-    ->  true
-    ;   nb_setval(last_printed_time, CurrentTime)
-    ),
-
-    nb_getval(last_printed_time, LastPrintedTime),
-
-    % Calculate the difference
-    Diff is CurrentTime - LastPrintedTime,
-
-    % If the difference is greater than or equal to 60 seconds (1 minute)
-    (   Diff >= 60
-    ->  % Print the heartbeat message and update the last printed time
-        fb_stats
-    ;   % Otherwise, do nothing
-        true
-    ).
-
-fb_stats:- gc_now,
-   writeln('\n\n\n\n\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'),
-   writeln('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'),
-   full_atom_count(SL),
-   format("~N~n; Total\t\tAtoms (Atomspace size): ~`.t ~D~108|~n",[SL]),
-   get_time(CurrentTime), nb_setval(last_printed_time, CurrentTime),
-   post_statistic(memory,Mem),
-   post_statistic(atom_space,AS),
-   post_statistic(cputime,TotalSeconds),
-   post_statistic(atoms,Concepts),
-   flag(assert_new,CTs,CTs),
-   post_statistic(stack,StackMem),
-
-
-   PM is Mem + StackMem,
-   RM is Mem-AS,
-   PA is RM//(SL+1),
-   APS is 60*floor(SL/(TotalSeconds+1)),
-   ACS is AS//(Concepts+1),     
-
-   pl_stats('ConceptNodes',Concepts),
-   pl_stats('Random samples',CTs),
-   skip((pl_stats('Bytes Per Atom (Average)',PA), pl_stats('Bytes Per ConceptNode (Average)',ACS))),
-   skip((pl_stats('Relational Memory',RM), pl_stats('ConceptNode Memory',AS))),
-   %pl_stats('Queryspace Memory',StackMem),
-   %CPU is CPUTime-57600,
-   format_time(TotalSeconds, Formatted),
-   skip((pl_stats('Atoms per minute',APS))),
-   pl_stats('Total Memory Used',PM),
-   pl_stats('Runtime (days:hh:mm:ss)',Formatted),
-   nl,nl,!.
-fb_stats(F):- for_all(fb_pred(F,A),fb_stats(F,A)).
-fb_stats(F,A):- fb_stats(F,A,NC), pl_stats(F/A,NC).
-fb_stats(F,A,NC):- functor(P,F,A),predicate_property(P,number_of_clauses(NC)).
-pl_stats(Stat):- statistics(Stat,Value),pl_stats(Stat,Value).
-pl_stats(Stat,[Value|_]):- nonvar(Value),!, pl_stats(Stat,Value).
-pl_stats(Stat,Value):- format("~N;\t\t~@: ~`.t ~@~100|",[format_value(Stat),format_value(Value)]),!.
-
-
-% Predicate to print the formatted result.
-format_value(Value) :- float(Value),!,format("~2f",[Value]),!.
-format_value(Bytes) :- integer(Bytes),format_bytes(Bytes, Formatted), write(Formatted).
-format_value(Term)  :- format("~w",[Term]).
-%  Base case: If the number is 1G or more, show it in gigabytes (G).
-format_bytes(Bytes, Formatted) :-  Bytes >= 1073741824, GB is Bytes / 1073741824, format(atom(Formatted), '~2fG', [GB]).
-% If the number is less than 1G, show it in megabytes (M).
-format_bytes(Bytes, Formatted) :- Bytes >= 104857600, Bytes < 1073741824, !, MB is Bytes / 1048576, D is floor(MB), format(atom(Formatted), '~DM', [D]).
-% If the number is less than 1K, show it in bytes (B).
-format_bytes(Bytes, Formatted) :- format(atom(Formatted), '~D', [Bytes]).
-% % If the number is less than 1M, show it in kilobytes (K).
-%format_bytes(Bytes, Formatted) :- Bytes >= 1024, Bytes < 1048576, !, KB is Bytes / 1024, format(atom(Formatted), '~0fK', [KB]).
-
-% Convert total seconds to days, hours, minutes, seconds, and milliseconds.
-format_time(TotalSeconds, Formatted) :-
-    Seconds is floor(TotalSeconds),
-    % Get days, remaining seconds
-    Days is div(Seconds, 86400),
-    Remain1 is mod(Seconds, 86400)-57600,
-    format_time(atom(Out),'%T',Remain1),
-    % Format the result
-    format(atom(Formatted), '~w:~w', [Days, Out]).
-
-% Predicate to print the formatted time.
-print_formatted_time(TotalSeconds) :-
-    format_time(TotalSeconds, Formatted),
-    writeln(Formatted).
     
 load_fb_cache(_File,OutputFile,_Fn):- exists_file(OutputFile),!,ensure_loaded(OutputFile),!.
 load_fb_cache(File,_OutputFile,_Fn):- load_files([File],[qcompile(large)]).
@@ -1751,31 +1186,25 @@ load_flybase(File,Ext):-
 load_flybase0(Ext,_File):-  Ext=='pl',!.
 load_flybase0(Ext,File):-
   file_name_extension(Name,_,File),
-  atomic_list_concat([Name,'pl'],'.',OutputFile),
-  data_pred(Name,Fn), 
-  load_flybase(Ext,File,OutputFile,Fn).
+  data_pred(Name,Fn),load_flybase(Ext,File,Fn).
 
 :- dynamic(load_state/2).
 %load_flybase(_Ext,_File,OutputFile,_Fn):- exists_file(OutputFile),size_file(OutputFile,N),N>100,!.
-load_flybase(_Ext,File,_OutputFile,_Fn):- load_state(File,_),!.
-load_flybase(Ext,File,OutputFile,Fn):- file_to_sep(File,Sep),!,
+load_flybase(_Ext,File,_Fn):- load_state(File,_),!.
+load_flybase(Ext,File,Fn):-
   assert(load_state(File,loading)),
-  fbug(load_flybase(Ext,File,OutputFile,Fn)),
-  track_load_into_file(File,
-  setup_call_cleanup(open(File,read,Stream),
-       setup_call_cleanup(open(OutputFile,write,OutputStream,[encoding(utf8)]),
-           %load_flybase_sv(Sep,File,Stream,OutputStream,Fn),
-           load_flybase(Sep,File,Stream,OutputStream,Fn),
-    close(OutputStream)),
-  close(Stream))),!,
+  fbug(load_flybase(Ext,File,Fn)),
+  load_flybase_ext(Ext,File,Fn),
   retract(load_state(File,loading)),
   assert(load_state(File,loaded)),fb_stats.
 
-load_flybase(Ext,File,OutputFile,Fn):-  Ext==json,!,load_fb_json(Ext,File,OutputFile,Fn).
-load_flybase(Ext,File,OutputFile,Fn):-  Ext==fa,!,load_fb_fa(Ext,File,OutputFile,Fn).
-load_flybase(Ext,File,OutputFile,Fn):-  Ext==obo,!,load_fb_obo(Ext,File,OutputFile,Fn).
-load_flybase(Ext,File,OutputFile,Fn):- fbug(load_flybase(Ext,File,OutputFile,Fn)),!.
-
+load_flybase_ext(Ext,File, Fn):-  Ext==json,!,load_fb_json(Fn,File),!.
+load_flybase_ext(Ext,File, Fn):-  Ext==fa,!,load_fb_fa(Fn,File),!.
+load_flybase_ext(Ext,File,_Fn):-  Ext==obo,current_predicate(load_obo/1),!,load_obo(File).
+load_flybase_ext(Ext,File, Fn):-  file_to_sep(Ext,Sep),!,
+  track_load_into_file(File,
+   setup_call_cleanup(open(File,read,Stream), load_flybase_sv(Sep,File,Stream,Fn), close(Stream))),!.
+load_flybase_ext(Ext,File, Fn):-  fbug(missed_loading_flybase(Ext,File,Fn)),!.
 
 
 
@@ -1817,7 +1246,7 @@ adjust_type(Term,Fn,N,Type,Concept,Arg):- must_det_ll((fix_concept(Concept,Arg),
 adjust_type(_Term,_Fn,_N,_,X,X).
 
 into_number(Concept,Arg):- number(Concept),!,Arg = Concept.
-into_number(Concept,Arg):- atom_number(Concept,Arg),!.
+into_number(Concept,Arg):- symbol_number(Concept,Arg),!.
 into_number(Concept,Arg):- Concept=Arg,!.
 
 :- dynamic(fb_arg/1).
@@ -1835,7 +1264,7 @@ add_table_n_types(_Fn,_,ArgTypes):- \+ is_list(ArgTypes),!.
 add_table_n_types(Fn,1,[N|ArgTypes]):- number(N),!,
    add_table_n_types(Fn,1,ArgTypes).
 add_table_n_types(Fn,N,[Type|ArgTypes]):-!,
-  sub_term(Sub,Type),atom(Sub),!,
+  sub_term(Sub,Type),symbol(Sub),!,
   assert_new(fb_arg_type(Sub)),
   assert_new(table_n_type(Fn,N,Sub)),
   N2 is N+1, add_table_n_types(Fn,N2,ArgTypes),!.
@@ -1847,12 +1276,12 @@ is_concept_type(Type):- fb_arg_type(Type).
 arg_table_n_type(Arg,Fn,N,Type):- table_n_type(Fn,N,Type),once((fb_pred(Fn,A),functor(G,Fn,A), arg(N,G,Arg),call(G),
   \+ is_list(Arg), \+ as_list(Arg,[]))).
 
-is_valueatom(Fn,N,Type):- arg_table_n_type(Arg,Fn,N,Type),atom_number(Arg,_).
+is_valuesymbol(Fn,N,Type):- arg_table_n_type(Arg,Fn,N,Type),symbol_number(Arg,_).
 
 :- dynamic(numeric_value_p_n/3).
-fis_valueatom(PNList,Len):- findall(P-N,is_valueatom(P,N,_Type),PNList),length(PNList,Len).
+fis_valuesymbol(PNList,Len):- findall(P-N,is_valuesymbol(P,N,_Type),PNList),length(PNList,Len).
 
-save_value_atom_cols:- for_all(is_valueatom(Fn,N,Type),assert_new(numeric_value_p_n(Fn,N,Type))),
+save_value_symbol_cols:- for_all(is_valuesymbol(Fn,N,Type),assert_new(numeric_value_p_n(Fn,N,Type))),
   listing(numeric_value_p_n/3).
 
 
@@ -1875,7 +1304,7 @@ load_flybase_chars(Sep,File,Stream,Chars,OutputStream,Fn):-
 
 write_flybase_data(_OutputStream,_Fn,[]):-!.
 write_flybase_data(_OutputStream,_Fn,['']):-!.
-write_flybase_data(_OutputStream,Fn,DataL):- assert_OBO(Fn,DataL).
+write_flybase_data(_OutputStream,Fn,DataL):- assert_MeTTa(Fn,DataL).
 
 FBgn: FlyBase gene number - Represents a gene.
 FBal: FlyBase allele number - Represents an allele.
@@ -1890,31 +1319,25 @@ FBtr: FlyBase transcript number - Represents a transcript.
 FBte: FlyBase transgenic element number - Represents a transgenic element.
 */
 
-write_flybase_data(_ArgTypes,_OutputStream,_Fn,[]):-!.
-write_flybase_data(_ArgTypes,_OutputStream,_Fn,['']):-!.
-write_flybase_data(_ArgTypes,_OutputStream,Fn,DataL):- fail, !, Data=..[Fn|DataL], assert_OBO(Data).
-write_flybase_data(_ArgTypes,_OutputStream,Fn,DataL):- into_datum(Fn,DataL,Data),
-   assert_fb_data(Data).
+write_flybase_data(_ArgTypes,_Fn,[]):-!.
+write_flybase_data(_ArgTypes,_Fn,['']):-!.
+write_flybase_data(_ArgTypes,Fn,DataL):- fail, !, Data=..[Fn|DataL], assert_MeTTa(Data).
+write_flybase_data(_ArgTypes,Fn,DataL):- into_datum(Fn,DataL,Data),
+   assert_MeTTa(Data).
 
 
-assert_fb_data(Data):- !, heartbeat, functor(Data,F,A), A>=2,
-   decl_fb_pred(F,A),
-   incr_file_count(_),
-   ignore((((should_show_data(X),
-       write(newData(X)),write(=),write_src(Data))))),
-   assert(Data),!.
 /*
 
-assert_fb_data(Data):- Data=..[Fn|DataL],assert_fb_data(Fn,DataL),!.
+assert_MeTTa(Data):- Data=..[Fn|DataL],assert_MeTTa(Fn,DataL),!.
 
-assert_fb_data(Fn,DataL0):-
+assert_MeTTa(Fn,DataL0):-
   make_assertion(Fn,DataL0,Data,OldData),
   ignore((
     heartbeat,
     functor(Data,F,A), A>=2,
    decl_fb_pred(F,A),
     flag(loaded_from_file_count,X,X+1),    
-    flag(total_loaded_atoms,TA,TA+1),
+    flag(total_loaded_symbols,TA,TA+1),
     assert(Data),
     ignore((((has_list(_ArgTypes)->(X<23,X>20); (X<13,X>10)); (X>0,(0 is X rem 1_000_000),fb_stats)),nl,nl,fbug(X=Data),ignore((OldData\==DataL0,fbug(oldData=OldData))))),
     ignore((fail,catch_ignore(ignore((X<1000,must_det_ll_r((write_canonical(OutputStream,Data),writeln(OutputStream,'.')))))))))),!.
@@ -1948,14 +1371,14 @@ reprefix(['FB:FB'],'FB').
 %FBbt_00051628=
 
 as_list(A,New):- is_list(A),!,A=New.
-as_list(N,[N]):- \+ atom(N), \+ string(N),!.
+as_list(N,[N]):- \+ symbol(N), \+ string(N),!.
 %as_list(A,New):- var(A),!,New = [A].
 as_list('-',[]). as_list("-",[]). as_list('',[]).
 as_list("",[]). as_list(' ',[]). as_list(" ",[]).
 %as_list(N,[N]):- !.
 as_list(_,S,O):- as_list(S,O),!.
-as_list(SepL,A,List):-  member(Sep,SepL),catch_ignore(atomic_list_concat(List,Sep,A)),List\=[_],!.
-%as_list(_,A,ListO):-  member(Sep,['|',',',';']),catch_ignore(atomic_list_concat(List,Sep,A)),List\=[_],!,maplist(fix_concept,List,ListO).
+as_list(SepL,A,List):-  member(Sep,SepL),catch_ignore(symbolic_list_concat(List,Sep,A)),List\=[_],!.
+%as_list(_,A,ListO):-  member(Sep,['|',',',';']),catch_ignore(symbolic_list_concat(List,Sep,A)),List\=[_],!,maplist(fix_concept,List,ListO).
 as_list(_Sep,A,[A]).
 has_list(Header):- is_list(Header),member(listOf(_),Header).
 
@@ -1966,13 +1389,13 @@ has_list(Header):- is_list(Header),member(listOf(_),Header).
 % =======================================
 
 fix_concept1(A,L):- as_list(['|'],A,L),(L\=@=[A],A\=@=L).
-fix_concept1(A,N):-  atom_number(A,N),!.
-fix_concept1(A,AO):- reprefix(List,To),member(E,List),atom_concat(E,AM,A),atom_concat(To,AM,AO).
-%fix_concept1(A,AO):- atom_concat('FB',_,A),atomic_list_concat([Type,Number],':',A),!,atom_concat(Type,Number,AO).
-fix_concept1(A,AO):- atom_concat('"',Mid,A),atom_concat(AS,'"',Mid),atom_string(AS,AO).
-fix_concept1(A,AO):- atom_concat(AO,'(gene name)',A),AO\==''.
+fix_concept1(A,N):-  symbol_number(A,N),!.
+%fix_concept1(A,AO):- reprefix(List,To),member(E,List),symbol_concat(E,AM,A),symbol_concat(To,AM,AO).
+%fix_concept1(A,AO):- symbol_concat('FB',_,A),symbolic_list_concat([Type,Number],':',A),!,symbol_concat(Type,Number,AO).
+fix_concept1(A,AO):- symbol_concat('"',Mid,A),symbol_concat(AS,'"',Mid),symbol_string(AS,AO).
+fix_concept1(A,AO):- symbol_concat(AO,'(gene name)',A),AO\==''.
 
-fix_concept1(A,N):- atom(A),!,N=A.
+fix_concept1(A,N):- symbol(A),!,N=A.
 %fix_concept(S,A):- number_string(A,S),!.
 
 
@@ -1981,11 +1404,48 @@ fix_concept1(A,N):- atom(A),!,N=A.
 % =======================================
 
 fix_concept(A,New):- is_list(A),!,maplist(fix_concept,A,L),!,New=L.
-fix_concept(A,New):- \+ atom(A), !,New=A.
+fix_concept(A,New):- \+ symbol(A), !,New=A.
 fix_concept(S,O):- once(fix_concept1(S,M)),S\=@=M,!,fix_concept(M,O).
 fix_concept(A,New):- =(A,New),!.
 
 
+fix_columns_nth('genome-cyto-seq', 1).
+fix_columns_nth('genome-cyto-seq', 2).
+fix_columns_nth('genome-cyto-seq', 3).
+fix_columns_nth(allele_genetic_interactions, 3).
+fix_columns_nth(dmel_human_orthologs_disease, 6).
+fix_columns_nth(dmel_human_orthologs_disease, 7).
+fix_columns_nth(dmel_paralogs, 10).
+fix_columns_nth(dmel_paralogs, 11).
+fix_columns_nth(dmel_paralogs, 5).
+fix_columns_nth(dmel_paralogs, 8).
+fix_columns_nth(entity_publication, 4).
+fix_columns_nth(fbgn_NAseq_Uniprot, 7).
+fix_columns_nth(fbrf_pmid_pmcid_doi, 2).
+fix_columns_nth(gene_genetic_interactions, 1).
+fix_columns_nth(gene_genetic_interactions, 2).
+fix_columns_nth(gene_genetic_interactions, 3).
+fix_columns_nth(gene_genetic_interactions, 4).
+fix_columns_nth(gene_groups_HGNC, 4).
+fix_columns_nth(gene_rpkm_matrix, _).
+fix_columns_nth(gene_rpkm_report, 10).
+fix_columns_nth(gene_rpkm_report, 11).
+fix_columns_nth(gene_rpkm_report, 8).
+fix_columns_nth(gene_rpkm_report, 9).
+fix_columns_nth(gene_snapshots, 4).
+fix_columns_nth(genotype_phenotype, 5).
+fix_columns_nth(genotype_phenotype, 6).
+fix_columns_nth(gp_information, 9).
+fix_columns_nth(insertion_mapping, 5).
+fix_columns_nth(insertion_mapping, 6).
+fix_columns_nth(physical_interactions_mitab, _).
+fix_columns_nth(pmid_fbgn_uniprot, 2).
+fix_columns_nth(stocks, 7).
+fix_columns_nth(synonym, 5).
+fix_columns_nth(synonym, 6).
+fix_columns_nth(transposon_sequence_set, 4).
+fix_columns_nth(transposon_sequence_set, 5).
+fix_columns_nth(transposon_sequence_set, 8).
 
 
 
@@ -2007,15 +1467,15 @@ fix_concept(A,New):- =(A,New),!.
 load_flybase(Sep,File,Stream,OutputStream,Fn):-
  must_det_ll_r((
   ignore(swi_only(format(OutputStream,":- ~q.\n",[encoding(utf8)]))),
-  atomic_list_concat([data,Fn],'_',Fn0),
+  symbolic_list_concat([data,Fn],'_',Fn0),
   data_pred(Fn0,Fn),
   load_flybase_sv(Sep,File,Stream,OutputStream,Fn))).
 
 % Sep,File,Stream,OutputStream,Fn
-load_flybase_sv(Sep,File,Stream,OutputStream,Fn):- at_end_of_stream(Stream),!,
-  once(load_fb_data(_ArgTypes,File,Stream,Fn,Sep,end_of_file,OutputStream)).
+load_flybase_sv(Sep,File,Stream,Fn):- at_end_of_stream(Stream),!,
+  once(load_fb_data(_ArgTypes,File,Stream,Fn,Sep,end_of_file)).
 
-load_flybase_sv(Sep,File,Stream,OutputStream,Fn):-
+load_flybase_sv(Sep,File,Stream,Fn):-
  must_det_ll_r((
   flag(loaded_from_file_count,_,0),
   ignore(once((table_columns(File,Header);table_columns(Fn,Header)))),
@@ -2025,25 +1485,24 @@ load_flybase_sv(Sep,File,Stream,OutputStream,Fn):-
   ((primary_column(Fn,Name),nth1(N,ArgTypes,Name))->NArgTypes=[N|ArgTypes];NArgTypes=[1|ArgTypes]),
   if_t(is_list(ArgTypes),add_table_n_types(Fn,1,ArgTypes)),
   ground(NArgTypes),
-
   time((repeat,
   read_line_to_chars(Stream, Chars),
-  once(load_flybase_chars(NArgTypes,File,Stream,Fn,Sep,Chars,OutputStream)),
+  once(load_flybase_chars(NArgTypes,File,Stream,Fn,Sep,Chars)),
   once(done_reading(File);at_end_of_stream(Stream)),!,
-  once(load_fb_data(NArgTypes,File,Stream,Fn,Sep,end_of_file,OutputStream)))),
+  once(load_fb_data(NArgTypes,File,Stream,Fn,Sep,end_of_file)))),
   loaded_from_file_count(X),!,
-  fb_stats(Fn),
+  metta_stats(Fn),
   pl_stats(File,X))).
 
 
 %save_conversion_data(ArgTypes,Fn,OutputStream,Data):- maplist(write_flybase_data(ArgTypes,ArgTypes,Fn,OutputStream),Data).
 
-is_really_header_row([H|_],_Names):- atom_concat('',_,H),!.
+is_really_header_row([H|_],_Names):- symbol_concat('',_,H),!.
 
 %read_csv_stream(Sep,CharsStream,Header):- read_string(CharsStream, "\n", "\r\true ",_,)
 read_csv_stream(Sep,CharsStream,Header):- %  \+ option_value(full_canon,[]),!,
   read_line_to_string(CharsStream,Chars),
-  (Chars == end_of_file -> Header= Chars ; atomic_list_concat(Header, Sep, Chars)).
+  (Chars == end_of_file -> Header= Chars ; symbolic_list_concat(Header, Sep, Chars)).
 read_csv_stream(Sep,CharsStream,Header):- \+ option_value(full_canon,[]),!, read_line_to_string(CharsStream,Chars),
   (Chars == end_of_file -> Header= Chars ; split_string(Chars, Sep, "\s\true\n", Header)).
 read_csv_stream(Sep,CharsStream,Header):-
@@ -2063,31 +1522,30 @@ attempt_header_row(Sep,Chars,Fn,Header,ArgTypes):-
 
 :- dynamic(t_h_n/3).
 
-load_flybase_chars(ArgTypes,File,_Stream,_Fn,Sep,Chars,_OutputStream):-
+load_flybase_chars(ArgTypes,File,_Stream,_Fn,Sep,Chars):-
   ( \+ member(Sep,Chars); (['#','#',' '|_]=Chars) ;  (ground(ArgTypes),['#'|_]=Chars)),
   %writeln(comment(Sep)=Chars),!,
   (format("~n ; ~s",[Chars])),
   ignore((loaded_from_file_count(X),X>2000,!,assert(done_reading(File)))).
 
-load_flybase_chars([N|ArgTypes],File,Stream,Fn,Sep,Chars,OutputStream):-
+load_flybase_chars([N|ArgTypes],File,Stream,Fn,Sep,Chars):-
   var(ArgTypes),member(Sep,Chars),['#'|_]=Chars,
   (format("~n ; Maybe Header: ~s",[Chars])),
   attempt_header_row(Sep,Chars,Fn,Header,ArgTypes),
   is_really_header_row(Header,ArgTypes),
   (fbug(t_h_n(Fn,Header,ArgTypes)),fb_assert(t_h_n(Fn,Header,ArgTypes))),!,
-  load_fb_data([N|ArgTypes],File,Stream,Fn,Sep,is_swipl,OutputStream).
+  load_fb_data([N|ArgTypes],File,Stream,Fn,Sep,is_swipl).
 
-load_flybase_chars([N|ArgTypes],File,Stream,Fn,Sep,Chars,OutputStream):- is_swipl,
+load_flybase_chars([N|ArgTypes],File,Stream,Fn,Sep,Chars):- is_swipl,
   attempt_header_row(Sep,Chars,Fn,Header,_),
-  write_flybase_data([N|ArgTypes],OutputStream,Fn,Header),!,
-  load_fb_data([N|ArgTypes],File,Stream,Fn,Sep,is_swipl,OutputStream).
- 
+  write_flybase_data([N|ArgTypes],Fn,Header),!,
+  load_fb_data([N|ArgTypes],File,Stream,Fn,Sep,is_swipl).
 
 
-load_fb_data(_ArgTypes,File,_Stream,_Fn,_Sep,Data,_OutputStream):-  
+load_fb_data(_ArgTypes,File,_Stream,_Fn,_Sep,Data):-  
   (Data == end_of_file;done_reading(File)),!.
 
-load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl,OutputStream):-  !, % \+ option_value(full_canon,[]), !,
+load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl):-  % \+ option_value(full_canon,[]), !,
   (option_value(max_per_file,Max)->true;Max=inf),
   fbug(load_fb_data(ArgTypes,File,Max,Fn,Sep)),
   add_table_n_types(Fn,1,ArgTypes),!,
@@ -2095,9 +1553,9 @@ load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl,OutputStream):-  !, % \+ opti
      once(read_csv_stream(Sep,Stream,Data)),
      loaded_from_file_count(X),
       (((Data== end_of_file);(X>Max)) -> assert(done_reading(File)) ; 
-       (once(write_flybase_data(ArgTypes,OutputStream,Fn,Data)),fail)),!.
+       (once(write_flybase_data(ArgTypes,Fn,Data)),fail)),!.
 
-load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl,OutputStream):- !,
+load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl):- !,
    name(Sep,[SepCode]),
   csv_options(CompiledOptions,[separator(SepCode)]),
   (option_value(max_per_file,Max)->true;Max=inf),
@@ -2108,18 +1566,18 @@ load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl,OutputStream):- !,
      loaded_from_file_count(X),
       (((RData== end_of_file);(X>Max)) -> assert(done_reading(File)) ; 
        (RData =..[_|Data], 
-       once(write_flybase_data(ArgTypes,OutputStream,Fn,Data)),fail)),!.
+       once(write_flybase_data(ArgTypes,Fn,Data)),fail)),!.
 
 % recursion depth 16 million rows
-load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl,OutputStream):- 
+load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl):- 
   name(Sep,[SepCode]),
   csv_options(CompiledOptions,[strip(true),convert(true),separator(SepCode)]),
    (option_value(max_per_file,Max)->true;Max=inf),
      once((csv_read_row(Stream, RData, CompiledOptions))),
      loaded_from_file_count(X), 
       (((RData== end_of_file);(X>Max)) -> assert(done_reading(File)) ; 
-       (RData =..[_|Data], once(write_flybase_data(ArgTypes,OutputStream,Fn,Data)),
-         load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl,OutputStream))),!.
+       (RData =..[_|Data], once(write_flybase_data(ArgTypes,Fn,Data)),
+         load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl))),!.
 
 
 
@@ -2158,7 +1616,7 @@ column_description('Release_ID', "The D. melanogaster annotation set version fro
 column_description('RNASource_FBlc', "The unique FlyBase ID for the RNA-Seq experiment used for RPKM expression calculation.", identifier, 'RNA-Seq Experiment').
 column_description('RNASource_name', "The official FlyBase symbol for the RNA-Seq experiment used for RPKM expression calculation.", name, 'RNA-Seq Experiment Name').
 column_description('RPKM_value', "The RPKM expression value for the gene in the specified RNA-Seq experiment.", numeric, 'Expression Value').
-column_description('Source_Tissue_Anatomy', "The anatomical region of the source tissue used for the experiment.", category, 'Tissue Anatomy').
+column_description('Source_Tissue_Ansymboly', "The ansymbolical region of the source tissue used for the experiment.", category, 'Tissue Ansymboly').
 column_description('Source_Tissue_Sex', "The sex of the source tissue used for the experiment.", category, 'Tissue Sex').
 column_description('Source_Tissue_Stage', "The life stage of the source tissue used for the experiment.", category, 'Tissue Stage').
 column_description('Spread', "The proportion of cells in the cluster in which the gene is detected.", proportion, 'Expression Spread').
@@ -2202,7 +1660,7 @@ column_names('gene_rpkm_matrix', ['gene_primary_id', 'gene_symbol', 'gene_fullna
 column_names('gene_rpkm_report', ['Release_ID', 'FBgn#', 'GeneSymbol', 'Parent_library_FBlc#', 'Parent_library_name', 'RNASource_FBlc#', 'RNASource_name', 'RPKM_value', 'Bin_value', 'Unique_exon_base_count', 'Total_exon_base_count', 'Count_used']).
 column_names('genotype_phenotype_data', [listOf('genotype_symbols', ['/', ' ']), listOf('genotype_FBids', ['/', ' ']), 'phenotype_name', 'phenotype_id', listOf('qualifier_names', ['|']), listOf('qualifier_ids', ['|']), 'reference']).
 column_names('pmid_fbgn_uniprot', ['FBrf_id', 'PMID', 'FBgn_id', 'UniProt_database', 'UniProt_id']).
-column_names('scRNA-Seq_gene_expression', ['Pub_ID', 'Pub_miniref', 'Clustering_Analysis_ID', 'Clustering_Analysis_Name', 'Source_Tissue_Sex', 'Source_Tissue_Stage', 'Source_Tissue_Anatomy', 'Cluster_ID', 'Cluster_Name', 'Cluster_Cell_Type_ID', 'Cluster_Cell_Type_Name', 'Gene_ID', 'Gene_Symbol', 'Mean_Expression', 'Spread']).
+column_names('scRNA-Seq_gene_expression', ['Pub_ID', 'Pub_miniref', 'Clustering_Analysis_ID', 'Clustering_Analysis_Name', 'Source_Tissue_Sex', 'Source_Tissue_Stage', 'Source_Tissue_Ansymboly', 'Cluster_ID', 'Cluster_Name', 'Cluster_Cell_Type_ID', 'Cluster_Cell_Type_Name', 'Gene_ID', 'Gene_Symbol', 'Mean_Expression', 'Spread']).
 
 file_location('allele_genetic_interactions', "path_to_file/allele_genetic_interactions_*.tsv").
 file_location('genotype_phenotype_data', "path_to_file/genotype_phenotype_data_*.tsv").
@@ -2229,7 +1687,7 @@ primary_column(pmid_fbgn_uniprot, 'FBgn_id').
 
 too_generic(Var):- var(Var),!,fail.
 too_generic(pub_id).
-too_generic(X):- \+ atomic_list_concat([_,_,_|_],'_',X).
+too_generic(X):- \+ symbolic_list_concat([_,_,_|_],'_',X).
 
 
 fix_header_names(Fn,Header,GNames):- 
@@ -2237,31 +1695,31 @@ fix_header_names(Fn,Header,GNames):-
    include( \=(''),ArgTypes,GNames).
 
 
-%fix_header_names(FL,Fn,ID,Out):- member(RF,['#',' ','_','_id','_ID']),atom_concat(MID,RF,ID),!,fix_header_names(FL,Fn,MID,Out).
+%fix_header_names(FL,Fn,ID,Out):- member(RF,['#',' ','_','_id','_ID']),symbol_concat(MID,RF,ID),!,fix_header_names(FL,Fn,MID,Out).
 fix_header_names(_FL,_Fn,ID,Out):- number(ID),!,Out=ID.
 fix_header_names(FL,Fn,listOf(ID),listOf(Out)):- fix_header_names(FL,Fn,ID,Out),!.
 fix_header_names(FL,Fn,listOf(ID,Sep),listOf(Out,Sep)):- fix_header_names(FL,Fn,ID,Out),!.
-fix_header_names(FL,Fn,ID,Out):- member(RF,['#',' ','_']),atom_concat(MID,RF,ID),!,fix_header_names(FL,Fn,MID,Out).
-fix_header_names(FL,Fn,ID,Out):- member(RF,['#',' ','_']),atom_concat(RF,MID,ID),!,fix_header_names(FL,Fn,MID,Out).
-fix_header_names(FL,Fn,ID,Out):- member(RF,['__',' ']),atomic_list_concat(MIDL,RF,ID),MIDL\=[_],atomic_list_concat(MIDL,'_',MID),!,
+fix_header_names(FL,Fn,ID,Out):- member(RF,['#',' ','_']),symbol_concat(MID,RF,ID),!,fix_header_names(FL,Fn,MID,Out).
+fix_header_names(FL,Fn,ID,Out):- member(RF,['#',' ','_']),symbol_concat(RF,MID,ID),!,fix_header_names(FL,Fn,MID,Out).
+fix_header_names(FL,Fn,ID,Out):- member(RF,['__',' ']),symbolic_list_concat(MIDL,RF,ID),MIDL\=[_],symbolic_list_concat(MIDL,'_',MID),!,
    fix_header_names(FL,Fn,MID,Out).
-fix_header_names(FL,Fn,ID,listOf(AOut)):- member(RF,['(es)','(s)','ids']),atomic_list_concat([Left,Right],RF,ID),atomic_list_concat([Left,Right],'_',MID),!,
-   fix_header_names(FL,Fn,MID,AOut),!. % atom_concat('ListOf_',AOut,Out),!.
+fix_header_names(FL,Fn,ID,listOf(AOut)):- member(RF,['(es)','(s)','ids']),symbolic_list_concat([Left,Right],RF,ID),symbolic_list_concat([Left,Right],'_',MID),!,
+   fix_header_names(FL,Fn,MID,AOut),!. % symbol_concat('ListOf_',AOut,Out),!.
 fix_header_names(FL,Fn,TT,listOf(AOut)):-
    member(IDs=ID,['IDs'='ID']),
-   atom_concat(Type,IDs,TT),
-   atom_concat(Type,ID,MID),
+   symbol_concat(Type,IDs,TT),
+   symbol_concat(Type,ID,MID),
    fix_header_names(FL,Fn,MID,AOut),!.
 fix_header_names(FL,Fn,ID,listOf(AOut)):- member(RFS=RF,['_IDs'='_ID','IDs'='ID']),
-   atomic_list_concat([Left,Right],RFS,ID),
-   atomic_list_concat([Left,Right],RF,MID),!,
-   fix_header_names(FL,Fn,MID,AOut),!. % atom_concat('ListOf_',AOut,Out),!.
+   symbolic_list_concat([Left,Right],RFS,ID),
+   symbolic_list_concat([Left,Right],RF,MID),!,
+   fix_header_names(FL,Fn,MID,AOut),!. % symbol_concat('ListOf_',AOut,Out),!.
 
 
 fix_header_names(_,_,Name,Name):- \+ too_generic(Name),!.
-fix_header_names(_,_,Name,Name):- atomic_list_concat([_,_|_],'_',Name),!.
-%fix_header_names(_,Fn,ID,Out):- atomic_list_concat([Fn,ID],'_column_',Out).
-%fix_header_names(FieldList,Fn,ID,Out):- atomic_list_concat([Fn,ID],'_',Out), \+ member(Out,FieldList).
+fix_header_names(_,_,Name,Name):- symbolic_list_concat([_,_|_],'_',Name),!.
+%fix_header_names(_,Fn,ID,Out):- symbolic_list_concat([Fn,ID],'_column_',Out).
+%fix_header_names(FieldList,Fn,ID,Out):- symbolic_list_concat([Fn,ID],'_',Out), \+ member(Out,FieldList).
 fix_header_names(_,_,Name,Name).
 
 
@@ -2274,7 +1732,7 @@ use_flybase_cols(Table,Columns):-
 
 do_arity_2_names(Table,[ID|ArgTypes]):-
   must_det_ll_r((
-  atom_concat('data_',Table,F),
+  symbol_concat('data_',Table,F),
   length([ID|ArgTypes],Arity),
   length(Args,Arity),
   DataCall=..[F|Args],
@@ -2299,12 +1757,12 @@ do_arity_2_names_dc1(Table,DataCall,N,Nth):-
 
 make_arity_2_name(Table,Nth,Arity2):-
   clip_id(Nth,NthNoID),
-  (atom_concat(Table,_,Nth)
+  (symbol_concat(Table,_,Nth)
     -> Arity2 = Nth
-    ; atomic_list_concat([Table,NthNoID],'_',Arity2)).
+    ; symbolic_list_concat([Table,NthNoID],'_',Arity2)).
 
 
-clip_id(Nth,ID):- (atom_concat(ID,'_id',Nth)->true;Nth=ID),!.
+clip_id(Nth,ID):- (symbol_concat(ID,'_id',Nth)->true;Nth=ID),!.
 
 
 
@@ -2524,8 +1982,8 @@ table_columns_tt(TT,List):- flybase_cols(TT,List).
 table_columns_tt(TT,List):- t_h_n(TT,_,List).
 
 eigther_contains(TT,T):- TT=T,!.
-eigther_contains(T,TT):- atom_contains(T,TT),!.
-eigther_contains(TT,T):- atom_contains(T,TT),!.
+eigther_contains(T,TT):- symbol_contains(T,TT),!.
+eigther_contains(TT,T):- symbol_contains(T,TT),!.
 
 
 
@@ -2533,7 +1991,7 @@ eigther_contains(TT,T):- atom_contains(T,TT),!.
 
 column_names('cyto-genetic-seq', ['Cytogenetic_map_position', 'Genetic_map_position', 'Sequence_coordinates_(release_6)', 'R6_conversion_notes']).
 column_names('Dmel_enzyme', [gene_group_id, gene_group_name, listOf(gene_group_GO_id), listOf(gene_group_GO_name), listOf(gene_group_EC_number), listOf(gene_group_EC_name), gene_id, gene_symbol, gene_name, listOf(gene_EC_number), listOf(gene_EC_name)]).
-column_names('scRNA-Seq_gene_expression', ['Pub_ID', 'Pub_miniref', 'Clustering_Analysis_ID', 'Clustering_Analysis_Name', 'Source_Tissue_Sex', 'Source_Tissue_Stage', 'Source_Tissue_Anatomy', 'Cluster_ID', 'Cluster_Name', 'Cluster_Cell_Type_ID', 'Cluster_Cell_Type_Name', 'Gene_ID', 'Gene_Symbol', 'Mean_Expression', 'Spread']).
+column_names('scRNA-Seq_gene_expression', ['Pub_ID', 'Pub_miniref', 'Clustering_Analysis_ID', 'Clustering_Analysis_Name', 'Source_Tissue_Sex', 'Source_Tissue_Stage', 'Source_Tissue_Ansymboly', 'Cluster_ID', 'Cluster_Name', 'Cluster_Cell_Type_ID', 'Cluster_Cell_Type_Name', 'Gene_ID', 'Gene_Symbol', 'Mean_Expression', 'Spread']).
 column_names(allele_genetic_interactions, [allele_symbol, allele_FBal, interaction, 'FBrf']).
 column_names(allele_phenotypic,           [allele_symbol, allele_FBal, phenotype, 'FBrf']).
 column_names(fbal_to_fbgn,             ['AlleleID', 'AlleleSymbol', 'GeneID', 'GeneSymbol']).
@@ -3260,31 +2718,75 @@ ncRNA_genes_fb_scheme(
 
 
 
+ucn(allele_genetic_interactions,[]).
+ucn(dataset_metadata,[]).
+ucn(disease_model_annotations,[]).
+ucn('Dmel_enzyme',[]).
+ucn(dmel_gene_sequence_ontology_annotations,[]).
+ucn(dmel_human_orthologs_disease,[]).
+ucn(dmel_paralogs,[]).
+ucn(entity_publication,[]).
+ucn(fbgn_gleanr,[]).
+ucn(fbgn_NAseq_Uniprot,[]).
+ucn(fbgn_uniprot,[]).
+ucn(gene_functional_complementation,[]).
+ucn(gene_genetic_interactions,[]).
+ucn(gene_group,[]).
+ucn(gene_groups_HGNC,[]).
+ucn(genotype_phenotype,[]).
+ucn(insertion_mapping,[]).
+ucn(organism_list,[]).
+ucn(pathway_group,[]).
+ucn(pmid_fbgn_uniprot,[]).
+ucn('scRNA-Seq_gene_expression',[]).
+
+ucn(dmel_unique_protein_isoforms, 3). % ,a-PA,))
+ucn(best_gene_summary, 1). % ,FBgn0031081,) (2 ,Nep3,))
+ucn(cDNA_clone, 1). % ,FBcl0000001,) (3 ,UUGC0315,))
+ucn(fb_synonym, 1). % ,FBal0000001,))
+ucn(fbal_to_fbgn, 1). % ,FBal0137236,))
+ucn(fbgn_annotation_ID.tsv, 1). % ,7SLRNA:CR32864,) (3 ,FBgn0000003,) (5 ,CR32864,))
+ucn(fbgn_annotation_ID, 1). % ,7SLRNA:CR32864,) (3 ,FBgn0000003,) (5 ,CR32864,))
+ucn(fbgn_fbtr_fbpp_expanded, 8). % ,FBtr0081624,) (9 ,7SLRNA:CR32864-RA,))
+ucn(fbgn_fbtr_fbpp, 2). % ,FBtr0081624,))
+ucn(fbrf_pmid_pmcid_doi, 1). % ,FBrf0026179,) (2 ,37280885,))
+ucn(gene_map_table, 2). % ,snRNA:4.5S,) (3 ,FBgn0000001,))
+ucn(gene_rpkm_matrix, 1). % ,FBgn0031081,) (2 ,Nep3,))
+ucn(gene_rpkm_report,[]).
+ucn(gene_snapshots, 1). % ,FBgn0052532,) (2 ,CG32532,))
+ucn('genome-cyto-seq', 1). % ,21B2,) (2 ,98620,) (3 ,134010,))
+ucn('cyto-genetic-seq', 1). % ,1A,))
+ucn(genomic_clone, 1). % ,FBcl0297251,) (3 ,BACR13J02,))
+ucn(stocks ,1). % ,FBst,))
+ucn(physical_interactions_mitab, 14). %,flybase:FBrf0218395-7641.DPiM,))
+
 
 list_column_names:-
   for_all((column_names(T,CNs),once((length(CNs,Len),Len>=2,fb_pred(T,Len)))),
   (print(column_names(T,CNs)),nl)).
 
 
+xinfo(X,P):- fb_pred(F,A),functor(P,F,A),arg(_,P,X), call(P).
+xinfo(X):- forall(xinfo(X,P),write_src(P)).
+
 %:- ensure_loaded(read_obo).
 
-%:- prolog_load_context(source,This),for_all((source_file(P0,This),functor(P0,F,0)),writeln(add_history1(F))).
+:- prolog_load_context(source,This),for_all((source_file(P0,This),functor(P0,F,0)),writeln(add_history1(F))).
 %add_history1(setup_flybase_cols)
 %add_history1(pmt)
 ah:- add_history1(fb_stats),
   add_history1(mine_overlaps),
-  add_history1(load_flybase).
-ah:- add_history(fb_stats),
+  add_history1(load_flybase),
+  add_history(fb_stats),
   add_history(mine_overlaps),
   add_history(try_overlaps),
   add_history(load_flybase).
 %:- ah,ah,ah.
 
 %:- initialization(load_flybase).
-:- save_pre_statistic(memory).
-:- save_pre_statistic(atoms).
-:- save_pre_statistic(atom_space).
 
-:- fb_stats.
+:- metta_final.
+
+
 
 
