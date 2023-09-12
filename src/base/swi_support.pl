@@ -1,4 +1,22 @@
 
+fbug(P) :- format("~N"), with_output_to(user_error,pp_fb(P)),!.
+fbug(N=V) :- nonvar(N), !, fbdebug1(N:-V).
+fbug(V) :- compound(V),functor(V,F,_A),!,fbdebug1(F:-V).
+fbug(V) :- fbdebug1(debug:-V).
+fbdebug1(Message) :-
+  % ISO Standard: flush_output/1
+  flush_output(user_output),
+  flush_output(user_error),
+  catch(portray_clause(user_error,Message,[]),_,catch_ignore(format(user_error, "~n/* ~q. */~n", [Message]))),
+  %format(user_error, "~n/* ~p. */~n", [Message]),
+  flush_output(user_error).
+
+
+swi_only(_):- is_scryer,!,fail.
+swi_only(G):- call(G).
+is_scryer:- \+  current_prolog_flag(libswipl,_).
+
+
 
 with_cwd(Dir,Goal):- setup_call_cleanup(working_directory(X, Dir), Goal, working_directory(_,X)).
 
@@ -37,6 +55,15 @@ kaggle_arc:-
 :- kaggle_arc.
 
 
+symbol(X):- atom(X).
+symbolic(X):- atomic(X).
+symbol_number(S,N):- atom_number(S,N).
+symbol_string(S,N):- atom_string(S,N).
+symbol_chars(S,N):- atom_chars(S,N).
+symbol_length(S,N):- atom_length(S,N).
+symbol_concat(A,B,C):- atom_concat(A,B,C).
+symbolic_list_concat(A,B,C):- atomic_list_concat(A,B,C).
+symbol_contains(T,TT):- atom_contains(T,TT).
 
 :- prolog_load_context(file, File),
     absolute_file_name('../../',Dir,[relative_to(File),file_type(directory)]),

@@ -1,415 +1,208 @@
+% ===========================================
+% BEGIN OBO Loader
+%   - Douglas R. Miles 2023
+% ===========================================
 
-get_key_and_rest(Line, Key, RestOfLine) :-
-    atomic_list_concat([KeyPart|RestParts], ":", Line),
-    normalize_space(atom(Key), KeyPart),
-    atomic_list_concat(RestParts, ":", RestString),
-    normalize_space(atom(RestOfLine), RestString).
+% requires:  assert_OBO/1, track_load_into_file/2
 
+assert_OBO(P,X,Y):- assert_OBO(ontology_info(P,X,Y)).
 
-
-get_some_items([H|T]) -->  get_one_item(H), get_some_items(T).
-get_some_items([]).
-
-get_one_item(bracketed(Items)) -->
-    "[", whitespaces, items(Items), whitespaces, "]".
-
-get_one_item(quoted(Item)) -->
-    "\"", string_without_quotes(Chars), "\"",
-    { string_chars(Item, Chars) }.
-
-items([Item]) -->
-    item(Item), !.
-
-items([Item|Rest]) -->
-    item(Item), whitespaces, ",", whitespaces, items(Rest).
-
-item(Item) -->
-    string_without_comma_or_bracket(Chars),
-    { string_chars(Item, Chars) }.
-
-string_without_comma_or_bracket([]) --> [].
-string_without_comma_or_bracket([H|T]) -->
-    [H],
-    { \+ member(H, [',', '[', ']', '\"']) },
-    string_without_comma_or_bracket(T).
-
-string_without_quotes([]) --> [].
-string_without_quotes([H|T]) -->
-    [H],
-    { H \= '\"' },
-    string_without_quotes(T).
-
-whitespaces --> [].
-whitespaces --> [' '], whitespaces.
+% Main entry point
+load_obo(Filename) :- \+ atomic(Filename),
+  absolute_file_name(Filename,X,[read(exists),extension(['']),file_type(directory),
+     file_errors(fail),solutions(first)]), !, load_obo(X).
+load_obo(Filename) :- \+ atomic(Filename), !,
+  absolute_file_name(Filename,X,[read(exists),extension(['']), file_errors(fail),solutions(first)]), !, load_obo(X).
+load_obo(Filename) :-
+  atomic(Filename), \+ exists_file(Filename), expand_file_name(Filename,List),
+  List\==[], List\==[Filename],
+  maplist(load_obo,List).
+load_obo(Directory) :-
+  atomic(Directory), exists_directory(Directory),
+  directory_file_path(Directory, "*.obo", Filename),
+  expand_file_name(Filename,List),!,maplist(load_obo,List).
+load_obo(Filename) :-
+ track_load_into_file(Filename,
+ must_det_ll((
+    directory_file_path(Directory, BaseName, Filename),
+    file_name_extension(Id, _, BaseName),
+    Type = 'OntologyFile',
+    assert_OBO(id_type,Id,Type),
+    nb_setval(obo_id,Id),nb_setval(obo_type,Type),
+    assert_OBO('pathname',Id,Filename),!,
+    assert_OBO('basename',Id,BaseName),!,
+    assert_OBO('directory',Id,Directory),!,
+    setup_call_cleanup(open(Filename, read, Stream),
+      process_obo_stream_repeat(Stream),
+      close(Stream))))),
+ fb_stats.
 
 
-whitespaces --> [' '],!,whitespaces.
-whitespaces --> [].
+process_obo_stream_repeat(Stream):-
+  repeat,
+     nb_current(obo_type,Type),
+     nb_current(obo_id, Id),
+     once((read_line_to_string(Stream, Line),
+     (should_show_data(_) -> writeln(Line); true),
+        normalize_space(chars(Chars),Line))),
+        Chars\==[],
+        once(process_obo_chars( Type, Chars, Id)),
+     ((at_end_of_stream(Stream);reached_file_max) -> ! ; fail).
 
 
-end_of_file.
+process_obo_stream(Stream,_Type,_Id) :- (at_end_of_stream(Stream);reached_file_max),!.
+process_obo_stream(Stream, Type, Id) :-
+  must_det_ll((
+    read_line_to_string(Stream, Line), %writeln(Line),
+    normalize_space(chars(Chars),Line),
+    process_obo_chars( Type, Chars, Id))).
 
 
-:- dynamic term/2.
-:- dynamic relationship/3.
-:- dynamic obo_subset/2.
-:- dynamic namespace/2.
-:- dynamic comment/2.
-:- dynamic alt_id/2.
-:- dynamic is_obsolete/1.
-:- dynamic intersection_of/3.
-:- dynamic union_of/3.
-:- dynamic consider/2.
-:- dynamic replaced_by/2.
-:- dynamic property_value/3.
-:- dynamic dbxref/2.
-:- dynamic ontology/1.
-:- dynamic typedef/2.
-:- dynamic instance/3.
-:- dynamic complex_synonym/4.
-
-load_obo(File) :-
-    open(File, read, Stream),
-    read_terms(Stream),
-    close(Stream).
+into_rest(Rest,RestChars,RestStr):-
+  string_chars(Str,Rest),
+  normalize_space(chars(RestChars),Str),
+  string_chars(RestStr,RestChars).
 
 
-% Base case: If the string is empty, the trimmed version is also empty.
-trim("", "").
-% If the string starts with a whitespace character, remove it and recurse.
-trim(String, Trimmed) :-
-    atom_string(Atom, String),
-    atom_concat(' ', Rest, Atom),
-    atom_string(Rest, RestString),
-    trim(RestString, Trimmed), !.
-trim(String, Trimmed) :-
-    atom_string(Atom, String),
-    atom_concat('\t', Rest, Atom),
-    atom_string(Rest, RestString),
-    trim(RestString, Trimmed), !.
+process_obo_chars( _, [e,n,d,'_',o,f,'_',f,i,l,e], _):-!.
+process_obo_chars( _, [], _) :- !.
 
-trim(String, Trimmed) :-
-    atom_string(Atom, String),
-    atom_concat('\n', Rest, Atom),
-    atom_string(Rest, RestString),
-    trim(RestString, Trimmed), !.
+process_obo_chars( _, ['['|Chars], _):- append(Left,[']'],Chars),!,
+  must_det_ll(( atom_chars(Type,Left),!, nb_setval(obo_type,Type))).
 
-% If the string ends with a whitespace character, remove it and recurse.
-trim(String, Trimmed) :-
-    atom_string(Atom, String),
-    atom_concat(Rest, ' ', Atom),
-    atom_string(Rest, RestString),
-    trim(RestString, Trimmed), !.
+process_obo_chars( Type, Chars, _):-
+  get_key(Key,Chars,Rest),Key == id,
+  into_rest(Rest,RestChars,_RestStr),
+  atom_chars(Id,RestChars), assert_OBO(id_type,Id,Type),
+  nb_setval(obo_id,Id),nb_setval(obo_type,Type).
 
-trim(String, Trimmed) :-
-    atom_string(Atom, String),
-    atom_concat(Rest, '\t', Atom),
-    atom_string(Rest, RestString),
-    trim(RestString, Trimmed), !.
+process_obo_chars( Type, Chars, Id):-
+ must_det_ll((
+    get_key(Key,Chars,Rest),
+    into_rest(Rest,RestChars,RestStr),
+    process_obo_rest_line(Type,Id,Key,RestChars,RestStr))),!.
 
-trim(String, Trimmed) :-
-    atom_string(Atom, String),
-    atom_concat(Rest, '\n', Atom),
-    atom_string(Rest, RestString),
-    trim(RestString, Trimmed), !.
-% If the string doesn't start or end with whitespace, it's already trimmed.
-trim(String, String).
+process_obo_rest_line(Type,Id,Reln,Rest,_):- Reln = id,
+   get_some_items([item(Id)],Rest,[]),!, assert_OBO(id_type,Id,Type),!.
+process_obo_rest_line(_Type,Id,Ref,_Chars,S):-
+   member(Ref,[name,comment]),
+   assert_OBO(Ref,Id,S),!.
 
+process_obo_rest_line(Type,Id,Reln,Chars,_):-  Reln = relationship,!,
+  must_det_ll((
+   key_like_string(KeyLike,Chars,Rest),
+    atom_chars(Key,KeyLike),
+    into_rest(Rest,RestChars,RestStr),
+    process_obo_rest_line(Type,Id,Key,RestChars,RestStr))).
 
-load_obo(File) :-
-    open(File, read, Stream),
-    read_terms(Stream),
-    close(Stream).
+process_obo_rest_line(_Type,Id,Ref,Chars,_):-
+    \+ (member(C,Chars),member(C,['!','[','"'])),
+    ( \+ member(' ',Chars)-> atom_chars(S,Chars);string_chars(S,Chars)),
+    assert_OBO(Ref,Id,S),!.
 
-read_terms(Stream) :-
-    read_line_to_string(Stream, Line),
-    ( Line = "[Term]" -> read_term(Stream); read_terms(Stream) ).
+process_obo_rest_line(_Type,Id,is_a,Chars,Str):-
+    member('!',Chars), atomic_list_concat([L,R],'!',Str),
+    normalize_space(atom(T),L),normalize_space(string(N),R),
+    assert_OBO(is_a,Id,T), assert_OBO(name,T,N),!.
 
-get_key_and_rest(Line, Key, Parts) :-
-    atomic_list_concat([KeyPart|RestParts], ":", Line),
-    normalize_space(atom(Key), KeyPart),
-    atomic_list_concat(RestParts, ":", RestString),
-    normalize_space(string(RestOfLine), RestString),
-    read_parts(RestOfLine,Parts).
+process_obo_rest_line(_Type,Id,Reln,Chars,_):-
+  %  member(Reln,[synonym]),
+    get_some_items(List,Chars,[]),
+    maplist(arg(1),List,Args),
+    Assert=..[Reln,Id|Args],
+    assert_OBO(Assert),!.
 
-read_parts(RestOfLine,Parts):-
-   r
+%process_obo_rest_line(_Type,Id,Reln,Chars,_):- get_some_items(List,Chars,[]), maplist(arg(1),List,Args), assert_OBO(Reln,Id,Args).
+process_obo_rest_line(Type,Id,Miss,Rest,Str):-
+  pp_fb(process_obo_rest_line(Type,Id,Miss,Rest,Str)),!.
 
-read_term(Stream) :-
-    read_term_details(Stream, _).
+/*
+Given the DCG rules we've defined, the input
 
-begin_read_header_details(Stream,Type):-
-  read_line("id", IdString, Line),
-  atom_string(Id, IdString),
-  assert_isa(Id, Type),
-  continue_id_details(Stream,Id).
+``` OBO
 
+[Term]
+id: FBcv:0000391
+name: bang sensitive
+namespace: phenotypic_class
+def: "A phenotype exhibited following mechanical shock and consisting of a brief period of intense, uncoordinated motor activity (legs and wings flailing, abdomen coiling) followed by a prolonged period of paralysis." [FlyBase:FBrf0022877]
+synonym: "easily shocked" RELATED [FlyBase:FBrf0022877]
+is_a: FBcv:0000389 ! paralytic
 
-continue_id_details(Stream,Id) :-
-    read_line_to_string(Stream, Line),
-    ( Line = "" -> read_term_details(Stream, Id)
-    ; atomic_list_concat(['[',Term,']'],Line),
-        begin_read_header_details(Stream,Type)
-    ; split_line('id', IdString, Line) ->
-        atom_string(Id, IdString),
-        assert_relationship(Id, id_type, Term)
-        continue_id_details(Stream,Id),
-    ; split_line(Key, ValueString, Line) ->
-        add_key_details(Id,Key,ValueString),
-        continue_id_details(Stream,Id)).
+```
+Would be parsed into the following Prolog terms:
+```
+[
+    bracketed(['Term']),
+    key('id'), item('FBcv:0000391'),
+    key('name'), item('bang sensitive'),
+    key('namespace'), item('phenotypic_class'),
+    key('def'), quoted("A phenotype exhibited following mechanical shock and consisting of a brief period of intense, uncoordinated motor activity (legs and wings flailing, abdomen coiling) followed by a prolonged period of paralysis."), bracketed(['FlyBase:FBrf0022877']),
+    key('synonym'), quoted("easily shocked"), keyword('RELATED'), bracketed(['FlyBase:FBrf0022877']),
+    key('is_a'), item('FBcv:0000389'), named('paralytic')
+]
+```
 
-split_line(Key, Value, Line) :-
-    atomic_list_concat([Key, ':'' ValueC ], Line),
-
-    sub_string(Line, Before, _, After, KeyWithColon),
-    sub_string(Line, _, After, 0, ValueString),
-    string_strip(ValueString, Value).
-
-load_obo(File) :-
-    open(File, read, Stream),
-    read_terms(Stream),
-    close(Stream).
-
-read_terms(Stream) :-
-    read_line_to_string(Stream, Line),
-    ( Line = "[Term]" -> read_term(Stream); read_terms(Stream) ).
-
-read_term(Stream) :-
-    read_term_details(Stream, _, _).
-
-read_term_details(Stream, Id, Name) :-
-    read_line_to_string(Stream, Line),
-   ( Line = "" -> read_term_details(Stream, Id, Name)
-    ;Line = "[Term]" ->
-        read_term(Stream) % start of new term
-    ; split_line("id", IdString, Line) ->
-        atom_string(IdNew, IdString),
-        read_term_details(Stream, New, Name)
-    ; split_line("name", NameString, Line) ->
-        atom_string(Name, NameString),
-        assert(term_id_name(Id, Name)),
-        read_term_details(Stream, Id, Name)
-    ; split_line("relationship", RelationshipString, Line) ->
-        split_string(RelationshipString, " ", "", [Type, Target]),
-        assert(relationship(Id, Type, Target)),
-        read_term_details(Stream, Id, Name)
-    ; obo_prefix(Line, "subset: ") ->
-        atom_concat("subset: ", SubsetString, Line),
-        assert(obo_subset(Id, SubsetString)),
-        read_term_details(Stream, Id, Name)
-    ; obo_prefix(Line, "namespace: ") ->
-        atom_concat("namespace: ", NamespaceString, Line),
-        assert(namespace(Id, NamespaceString)),
-        read_term_details(Stream, Id, Name)
-    ; obo_prefix(Line, "comment: ") ->
-        atom_concat("comment: ", CommentString, Line),
-        assert(comment(Id, CommentString)),
-        read_term_details(Stream, Id, Name)
-    ; obo_prefix(Line, "alt_id: ") ->
-        atom_concat("alt_id: ", AltIdString, Line),
-        assert(alt_id(Id, AltIdString)),
-        read_term_details(Stream, Id, Name)
-    ; obo_prefix(Line, "is_obsolete: ") ->
-        atom_concat("is_obsolete: ", IsObsoleteString, Line),
-        (IsObsoleteString = "true" -> assert(is_obsolete(Id)); true),
-        read_term_details(Stream, Id, Name)
-    ; obo_prefix(Line, "intersection_of: ") ->
-        atom_concat("intersection_of: ", IntersectionString, Line),
-        split_string(IntersectionString, " ", "", [Relation, Target]),
-        assert(intersection_of(Id, Relation, Target)),
-        read_term_details(Stream, Id, Name)
-    ; obo_prefix(Line, "union_of: ") ->
-        atom_concat("union_of: ", UnionString, Line),
-        split_string(UnionString, " ", "", [Relation, Target]),
-        assert(union_of(Id, Relation, Target)),
-        read_term_details(Stream, Id, Name)
-    ; obo_prefix(Line, "consider: ") ->
-        atom_concat("consider: ", ConsiderString, Line),
-        assert(consider(Id, ConsiderString)),
-        read_term_details(Stream, Id, Name)
-    ; obo_prefix(Line, "replaced_by: ") ->
-        atom_concat("replaced_by: ", ReplacedByString, Line),
-        assert(replaced_by(Id, ReplacedByString)),
-        read_term_details(Stream, Id, Name)
-    ; obo_prefix(Line, "property_value: ") ->
-        atom_concat("property_value: ", PropertyValueString, Line),
-        split_string(PropertyValueString, " ", "", [Property, Value]),
-        assert(property_value(Id, Property, Value)),
-        read_term_details(Stream, Id, Name)
-    ; obo_prefix(Line, "dbxref: ") ->
-        atom_concat("dbxref: ", DbxrefString, Line),
-        assert(dbxref(Id, DbxrefString)),
-        read_term_details(Stream, Id, Name)
-    ; Line = '[Ontology]' ->
-        read_line_to_string(Stream, NextLine),
-        assert(ontology(NextLine)),
-        read_term_details(Stream, Id, Name)
-    ; Line = '[Typedef]' ->
-        read_typedef(Stream)
-    ; Line = '[Instance]' ->
-        read_instance(Stream)
-    ; obo_prefix(Line, "synonym: ") ->
-        parse_complex_synonym(Line, Synonym, Scope, Type, Dbxrefs),
-        assert(complex_synonym(Id, Synonym, Scope, Dbxrefs)),
-        read_term_details(Stream, Id, Name)
-    ; Line = '[Term]' ->
-        true
-    ; read_term_details2(Stream, Id, Name)
-    ).
+*/
 
 
-read_term_details2(Stream, Id, Name) :-
-    read_line_to_string(Stream, Line),
-    ( obo_prefix(Line, "id: ") ->
-        atom_concat("id: ", IdString, Line),
-        atom_string(Id, IdString),
-        read_term_details(Stream, _, Name)
-    ; obo_prefix(Line, "name: ") ->
-        atom_concat("name: ", NameString, Line),
-        atom_string(Name, NameString),
-        assert(term(Id, Name)),
-        read_term_details(Stream, Id, _)
-    ; obo_prefix(Line, "relationship: ") ->
-        atom_concat("relationship: ", RelationshipString, Line),
-        split_string(RelationshipString, " ", "", [Type, Target]),
-        assert(relationship(Id, Type, Target)),
-        read_term_details(Stream, Id, Name)
-    ; obo_prefix(Line, "subset: ") ->
-        atom_concat("subset: ", SubsetString, Line),
-        assert(obo_subset(Id, SubsetString)),
-        read_term_details(Stream, Id, Name)
-    ; obo_prefix(Line, "namespace: ") ->
-        atom_concat("namespace: ", NamespaceString, Line),
-        assert(namespace(Id, NamespaceString)),
-        read_term_details(Stream, Id, Name)
-    ; obo_prefix(Line, "comment: ") ->
-        atom_concat("comment: ", CommentString, Line),
-        assert(comment(Id, CommentString)),
-        read_term_details(Stream, Id, Name)
-    ; obo_prefix(Line, "alt_id: ") ->
-        atom_concat("alt_id: ", AltIdString, Line),
-        assert(alt_id(Id, AltIdString)),
-        read_term_details(Stream, Id, Name)
-    ; obo_prefix(Line, "is_obsolete: ") ->
-        atom_concat("is_obsolete: ", IsObsoleteString, Line),
-        (IsObsoleteString = "true" -> assert(is_obsolete(Id)); true),
-        read_term_details(Stream, Id, Name)
-    ; obo_prefix(Line, "intersection_of: ") ->
-        atom_concat("intersection_of: ", IntersectionString, Line),
-        split_string(IntersectionString, " ", "", [Relation, Target]),
-        assert(intersection_of(Id, Relation, Target)),
-        read_term_details(Stream, Id, Name)
-    ; obo_prefix(Line, "union_of: ") ->
-        atom_concat("union_of: ", UnionString, Line),
-        split_string(UnionString, " ", "", [Relation, Target]),
-        assert(union_of(Id, Relation, Target)),
-        read_term_details(Stream, Id, Name)
-    ; obo_prefix(Line, "consider: ") ->
-        atom_concat("consider: ", ConsiderString, Line),
-        assert(consider(Id, ConsiderString)),
-        read_term_details(Stream, Id, Name)
-    ; obo_prefix(Line, "replaced_by: ") ->
-        atom_concat("replaced_by: ", ReplacedByString, Line),
-        assert(replaced_by(Id, ReplacedByString)),
-        read_term_details(Stream, Id, Name)
-    ; obo_prefix(Line, "property_value: ") ->
-        atom_concat("property_value: ", PropertyValueString, Line),
-        split_string(PropertyValueString, " ", "", [Property, Value]),
-        assert(property_value(Id, Property, Value)),
-        read_term_details(Stream, Id, Name)
-    ; obo_prefix(Line, "dbxref: ") ->
-        atom_concat("dbxref: ", DbxrefString, Line),
-        assert(dbxref(Id, DbxrefString)),
-        read_term_details(Stream, Id, Name)
-    ; obo_prefix(Line, "synonym: ") ->
-        parse_complex_synonym(Line, Synonym, Scope, Type, Dbxrefs),
-        assert(complex_synonym(Id, Synonym, Scope, Dbxrefs)),
-        read_term_details(Stream, Id, Name)
-    ; Line = '[Term]' ->
-        true
-    ; read_term_details(Stream, Id, Name)
-    ).
+get_key(Key)-->key_like_string(Chars),[':'],{atom_chars(Key,Chars)},!.
+get_some_items(I)--> [' '],!,get_some_items(I).
+get_some_items(_,[],[]):-!.
+get_some_items([H|T])-->get_one_item(H),get_some_items(T). get_some_items([])-->[].
+get_one_item(I)--> [' '],!,get_one_item(I).
+get_one_item(quoted(Item))-->[x,s,d,':'],symbol_or_url(Chars),{atom_chars(Item,[x,s,d,':'|Chars])}.
+get_one_item(quoted(Item))-->[h,t,t,p],symbol_or_url(Chars),{string_chars(Item,[h,t,t,p|Chars])}.
+get_one_item(quoted(Item))-->[f,t,p],symbol_or_url(Chars),{string_chars(Item,[f,t,p|Chars])}.
+get_one_item(quoted(Item))-->['"'],string_until_end_quote(Chars),{string_chars(Item,Chars)}.
+get_one_item(named(Item))-->['!'],whs,named_like_string(Chars),{atom_chars(Item,Chars)}.
+get_one_item(bracketed(Items))-->['['],whs,items(Items),whs,[']'].
+get_one_item(bracketed(Items))-->['{'],whs,items(Items),whs,['}'].
+%get_one_item(item(Item))--> whs,key_like_string(Chars),whs,{Chars \==[], atom_chars(Item,Chars)}.
+get_one_item(keyword(Keyword))-->whs,id_like_string(Chars),{Chars\==[]},whs,{atom_chars(Keyword,Chars)}.
+get_one_item(text(Text))-->named_like_string(Chars),{string_chars(Text,Chars)}.
+get_one_item(text(Text),[H|T],[]):- ground([H|T]),string_chars(Text,[H|T]),!.
+items([Item|Rest])-->item(Item),whs,[','],whs,items(Rest).
+items([Item])-->item(Item),!.
+item(Item)-->symbol_or_url(Chars),{Chars\==[],atom_chars(Item,Chars)}.
+key_like_string([H|T])-->[H],{\+member(H,[':',' ','\t','\n'])},key_like_string(T).
+key_like_string([])-->[].
+id_like_string([H|T])-->[H],{\+member(H,['!',' ','\t','\n',',','[',']','{','}','"'])},id_like_string(T).
+id_like_string([])-->[].
+symbol_or_url([H|T])-->[H],{\+member(H,[',','[',']','"',' '])},symbol_or_url(T).
+symbol_or_url([])-->[].
+string_until_end_quote([])-->['"'],!.
+string_until_end_quote([H|T])-->(['\\',H];[H]),!,string_until_end_quote(T).
+named_like_string([H|T])-->[H],{\+member(H,['\n'])},named_like_string(T).
+named_like_string([])-->[].
+whs-->[''],!,whs. whs-->[].
+
+% ===========================================
+% END OBO Loader
+% ===========================================
+
+assert_OBO(property_value(Term, URI, V, 'xsd:string')):- assert_OBO(property_value(Term, URI, V)).
+assert_OBO(property_value(Term, URI, V)):- simplify_obo_arg(URI,Pred),!,assert_OBO(property_value(Term, Pred, V)).
+assert_OBO(property_value(Term, Pred, V)):- simplify_obo_arg(V,VV),!,assert_OBO(property_value(Term, Pred, VV)).
+assert_OBO(property_value(Term, Pred, V)):- atom(Pred),!,OBO=..[Pred,Term,V],assert_OBO(OBO).
+assert_OBO(synonym(Pred,A,Term,V)):- simplify_obo_arg(V,VV),!,assert_OBO(synonym(Pred,A,Term,VV)).
+assert_OBO(ontology_info(Pred,Term,V)):- assert_OBO(property_value(Term, Pred, V)).
+assert_OBO(OBO):-
+  OBO=..[Fn|Cols],
+  into_obofn(Fn,OboFn),
+  OBO1=..[OboFn|Cols],
+  assert_MeTTa(OBO1),!.
+
+into_obofn(Fn,OboFn):- atom_concat(obo_,_,Fn),!,Fn=OboFn,!.
+into_obofn(Fn,OboFn):- atom_concat(obo_,Fn,OboFn),!.
 
 
-replace_substring(Original, Search, Replace, Result) :-
-    atomic_list_concat(Split, Search, Original),
-    atomic_list_concat(Split, Replace, Result).
-
-parse_complex_synonym(Line, Synonym, Scope, Type, Dbxrefs) :-
-    atomic_list_concat([_, Temp, Rest], '"', Line),
-    atomic_list_concat([ScopeAndType | DbxrefsList], "[", Rest),
-    atomic_list_concat([ScopeStr, Type], " ", ScopeAndType),
-    atomic_list_concat(FinalDbxrefs, "]", DbxrefsList),
-    atom_string(Synonym, Temp),
-    string_lower(ScopeStr, LowerScope),
-    atom_string(Scope, LowerScope),
-    Dbxrefs = FinalDbxrefs.
-
-read_typedef(Stream) :-
-    read_line_to_string(Stream, Line),
-    ( obo_prefix(Line, "id: ") ->
-        atom_concat("id: ", IdString, Line),
-        atom_string(Id, IdString),
-        read_typedef(Stream)
-    ; obo_prefix(Line, "name: ") ->
-        atom_concat("name: ", NameString, Line),
-        atom_string(Name, NameString),
-        assert(typedef(Id, Name)),
-        read_typedef(Stream)
-    ; Line = '[Typedef]' ->
-        true
-    ; read_typedef(Stream)
-    ).
-
-read_instance(Stream) :-
-    read_line_to_string(Stream, Line),
-    ( obo_prefix(Line, "id: ") ->
-        atom_concat("id: ", IdString, Line),
-        atom_string(Id, IdString),
-        read_term_details(Stream, Id, _)
-    ; obo_prefix(Line, "name: ") ->
-        atom_concat("name: ", NameString, Line),
-        atom_string(Name, NameString),
-        assert(instance(Id, Name, _)),
-        read_term_details(Stream, Id, Name)
-    ; Line = '[Instance]' ->
-        true
-    ; read_term_details(Stream, Id, Name)
-    ).
-
-obo_prefix(Line, Prefix) :-
-    sub_atom(Line, 0, _, _, Prefix).
-
-
-% Additional predicates and helper functions
-
-% This utility is used to check the next line without consuming it.
-peek_line(Stream, Line) :-
-    at_end_of_stream(Stream), !, fail;
-    stream_property(Stream, position(Pos)),
-    read_line_to_string(Stream, Line),
-    set_stream_position(Stream, Pos).
-
-% This predicate reads through the OBO file until it finds the next term or the end.
-skip_until_next_term(Stream) :-
-    peek_line(Stream, Line),
-    ( Line = "[Term]" -> true;
-      at_end_of_stream(Stream) -> true;
-      read_line_to_string(Stream, _),
-      skip_until_next_term(Stream) ).
-
-% We'll also need a way to handle other stanzas we've not coded for.
-% For now, it will just skip through the file until it finds the next [Term].
-% This way, we won't crash if we encounter an unexpected stanza.
-read_unknown_stanza(Stream) :-
-    write('Encountered unknown stanza, skipping...'), nl,
-    skip_until_next_term(Stream).
-
-% Predicate to split string based on the delimiter and convert to atoms
-split_string_to_atoms(String, Delimiter, Atoms) :-
-    split_string(String, Delimiter, "", ListOfStrings),
-    maplist(atom_string, Atoms, ListOfStrings).
-
-% Add any additional utility predicates or refinements you think are necessary below this comment.
+simplify_obo_arg(I,_O):- \+ string(I), \+ atom(I),!,fail.
+simplify_obo_arg([],_O):- !, fail.
+simplify_obo_arg("[]",[]):-!.
+simplify_obo_arg(I,O):- atom_concat('http://purl.obolibrary.org/obo/chebi/',O,I),!.
+simplify_obo_arg(I,O):- atom_concat(' ',O,I),!.
+simplify_obo_arg(I,O):- atom_concat(O,' ',I),!.
+simplify_obo_arg(I,O):- atom_number(I,O),!.
 
 

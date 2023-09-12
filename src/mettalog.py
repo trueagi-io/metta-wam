@@ -1544,6 +1544,14 @@ def register_vspace_tokens(metta):
     return syms_dict
 
 
+def reg_pyswip_foreign():
+
+    def py_eval(e, result):
+        return result.unify(eval(str(e)))
+
+    py_eval.arity = 2
+    registerForeign(py_eval)
+
 
 @export_flags(MeTTa=True)
 def test_nondeterministic_foreign():
@@ -1983,7 +1991,8 @@ class InteractiveMeTTa(LazyMeTTa):
 
             except KeyboardInterrupt:
                 if verbose>0: print("\nCtrl+C Exiting...")
-                sys.exit(3)
+                #sys.exit(3)
+                continue
             except EOFError:
                 if verbose>0: print("\nCtrl^D EOF...")
                 return [] #sys.exit(0)
@@ -2035,6 +2044,7 @@ def vspace_init():
         the_python_runner.lazy_import_file("autoexec.metta")
     # @TODO fix this metta_to_swip_tests1()
     #load_vspace()
+    reg_pyswip_foreign()
     print(f"\nInit took {(monotonic_ns() - t0)/1e9:.5} seconds")
     flush_console()
 
