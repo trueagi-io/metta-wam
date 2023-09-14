@@ -1,4 +1,6 @@
 
+
+
 fbug(P) :- format("~N"), with_output_to(user_error,pp_fb(P)),!.
 fbug(N=V) :- nonvar(N), !, fbdebug1(N:-V).
 fbug(V) :- compound(V),functor(V,F,_A),!,fbdebug1(F:-V).
