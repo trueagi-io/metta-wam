@@ -57,7 +57,7 @@ kaggle_arc:-
 
 %:- ensure_loaded((read_obo2)).
 
-%:- kaggle_arc.
+:- kaggle_arc.
 
 
 symbol(X):- atom(X).
