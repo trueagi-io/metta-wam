@@ -18,7 +18,7 @@ from hyperon.base import AbstractSpace, SpaceRef, GroundingSpace, interpret
 from pyswip import Atom as PySwipAtom
 from pyswip import Term
 from hyperon.atoms import Atom as MeTTaAtom
-from pyswip import (call, Functor, PL_open_foreign_frame, registerForeign, PL_PRUNED, PL_retry, PL_FA_NONDETERMINISTIC, PL_foreign_control, PL_foreign_context, PL_FIRST_CALL, PL_REDO, Variable, Prolog as PySwip)
+from pyswip import (call, Functor, PL_discard_foreign_frame, PL_new_term_ref, PL_open_foreign_frame, registerForeign, PL_PRUNED, PL_retry, PL_FA_NONDETERMINISTIC, PL_foreign_control, PL_foreign_context, PL_FIRST_CALL, PL_REDO, Variable, Prolog as PySwip)
 from pyswip.easy import newModule, Query
 from hyperon.atoms import *
 import openai
@@ -295,6 +295,22 @@ class VSpaceRef(SpaceRef):
             result.append(Atom._from_catom(r))
         return result
 
+
+def foriegn_framed(func):
+    def wrapper(*args, **kwargs):
+        swipl_fid = PL_open_foreign_frame()
+        result = None
+        try:
+            result = func(*args, **kwargs)
+        except Exception as e:
+            if verbose>0: print(f"Error: {e}")
+            if verbose>0: traceback.print_exc()
+        finally:
+            PL_discard_foreign_frame(swipl_fid)
+        return result
+    return wrapper
+
+
 @export_flags(MeTTa=True)
 class VSpace(AbstractSpace):
 
@@ -315,12 +331,10 @@ class VSpace(AbstractSpace):
         return swipRef(self.sp_name)
         #return self.sp_name
 
+    @foriegn_framed
     def query(self, query_atom):
-        swipl_fid = PL_open_foreign_frame()
-
-        #swipl_load = PL_new_term_ref()
-
         new_bindings_set = BindingsSet.empty()
+        #swipl_load = PL_new_term_ref()
         metta_vars = [atom for atom in query_atom.iterate() if atom.get_type() == AtomKind.VARIABLE]
         circles = Circles()
         swivars = [m2s(circles,item,1) for item in metta_vars]
@@ -360,26 +374,32 @@ class VSpace(AbstractSpace):
             if verbose>0: traceback.print_exc()
         finally: q.closeQuery()
 
+    @foriegn_framed
     def add(self, atom):
         circles = Circles()
         return self._call("metta_add", m2s(circles,atom))
 
+    @foriegn_framed
     def add_atom(self, atom):
         circles = Circles()
         return self._call("metta_add", m2s(circles,atom))
 
+    @foriegn_framed
     def remove_atom(self, atom):
         circles = Circles()
         return self._call("metta_rem", m2s(circles,atom))
 
+    @foriegn_framed
     def remove(self, atom):
         circles = Circles()
         return self._call("metta_rem", m2s(circles,atom))
 
+    @foriegn_framed
     def replace(self, from_atom, to_atom):
         circles = Circles()
-        return bool(self._call("metta_replace", m2s(circles,from_atom), m2s(circles,to_atom)))
+        return self._call("metta_replace", m2s(circles,from_atom), m2s(circles,to_atom))
 
+    @foriegn_framed
     def atom_count(self):
         result = list(swip.query(f"metta_count('{self.sp_name}',AtomCount)"))
         if verbose>1: print(result)
@@ -388,6 +408,7 @@ class VSpace(AbstractSpace):
             C = C.value
         return C
 
+    @foriegn_framed
     def get_atoms(self):
         circles = Circles()
         result = list(swip.query(f"metta_atoms('{self.sp_name}',AtomsList)"))
@@ -398,8 +419,17 @@ class VSpace(AbstractSpace):
 
     def atoms_iter(self):
 
+        swipl_fid = PL_open_foreign_frame()
         Atoms = Variable("Iter")
         q = PySwipQ(Functor("metta_iter", 2)(self.swip_space_name(), Atoms), module=self.sp_module)
+
+        def closeff():
+            nonlocal swipl_fid
+            ff = swipl_fid
+            swipl_fid = None
+            if ff is not None:
+                PL_discard_foreign_frame(ff)
+
 
         class LazyIter:
 
@@ -414,6 +444,7 @@ class VSpace(AbstractSpace):
             def __next__(self):
                 if self.q.nextSolution():
                     return s2m(circles,self.v.value.value)
+                closeff()
                 raise StopIteration
 
             def __enter__(self):
@@ -421,6 +452,7 @@ class VSpace(AbstractSpace):
 
             def __exit__(self, exc_type, exc_value, traceback):
                 self.q.closeQuery()
+                closeff()
 
         return LazyIter(q, Atoms)
 
@@ -586,8 +618,13 @@ def test_custom_space(LambdaSpaceFn):
     self_assertEqualNoOrder(result, [{"v": S("B")}])
 
     # Add the MeTTa space to the little space for some space recursion
-    little_space.add_atom(E(S("big-space"), G(m.space())))
-
+    if verbose>1: print("mspace")
+    mspace = m.space()
+    gmspace = G(mspace)
+    A = E(S("big-space"), gmspace)
+    if verbose>1: print("little_space.add_atom")
+    little_space.add_atom(A)
+    if verbose>1: print("Next Space")
     nested = VSpaceRef(LambdaSpaceFn())
     nested.add_atom(E(S("A"), S("B")))
     space_atom = G(nested)
@@ -742,8 +779,17 @@ def m2s1(circles, metta_obj, depth=0, preferStringToAtom = None, preferListToCom
     if isinstance(metta_obj, str):
         return metta_obj
 
+    if isinstance(metta_obj, bool):
+        if metta_obj is True:
+            return swipAtom("True")
+        else:
+            return swipAtom("False")
+
     elif isinstance(metta_obj, (int, float)):
         return metta_obj
+
+    elif isinstance(metta_obj, OperationObject):
+        return m2s1(circles, metta_obj.id, depth+1)
 
     elif isinstance(metta_obj, SymbolAtom):
         if preferStringToAtom is None:
@@ -1137,6 +1183,7 @@ def get_sexpr_input(prmpt):
 
     while True:
         line = input(prmpt)
+        flush_console()
         for char in line:
             if char == '"' and prev_char != '\\':
                 inside_quotes = not inside_quotes
@@ -1717,6 +1764,7 @@ def load_flybase(size):
    swip_exec(f"load_flybase({size})")
 
 @export_flags(MeTTa=True)
+@foriegn_framed
 def swip_exec(qry):
     #from metta_vspace import swip
     #if is_init==True:
@@ -1815,6 +1863,7 @@ class InteractiveMeTTa(LazyMeTTa):
 
         while True:
             try:
+                flush_console()
                 # Use the input function to get user input
                 prmpt = self.mode + " "+ self.submode + "> "
 
@@ -1989,13 +2038,23 @@ class InteractiveMeTTa(LazyMeTTa):
                         yield expr, interpret(the_running_metta_space(), expr)
                         continue
 
-            except KeyboardInterrupt:
-                if verbose>0: print("\nCtrl+C Exiting...")
+            except EOFError:
+                    sys.stderr = sys.__stderr__
+                    if verbose>0: print("\nCtrl^D EOF...")
+                    flush_console()
+                    return [True] #sys.exit(0)
+
+            except KeyboardInterrupt as e:
+                if verbose>0: print(f"\nCtrl+C: {e}")
+                if verbose>0:
+                    buf = io.StringIO()
+                    sys.stderr = buf
+                    traceback.print_exc()
+                    sys.stderr = sys.__stderr__
+                    print(buf.getvalue().replace('rolog','ySwip'))
                 #sys.exit(3)
                 continue
-            except EOFError:
-                if verbose>0: print("\nCtrl^D EOF...")
-                return [] #sys.exit(0)
+
             except Exception as e:
                 if verbose>0: print(f"Error: {e}")
                 if verbose>0:
@@ -2011,8 +2070,10 @@ class InteractiveMeTTa(LazyMeTTa):
             if result_set:
                 for result in result_set:
                     print(color_expr(result))
+                    flush_console()
             else:
                 print(f"[/]")
+                flush_console()
 
     def copy(self):
         return self
@@ -2028,7 +2089,9 @@ def vspace_main():
     #if is_init==False: load_flybase()
     #if is_init==False:
 
+    flush_console()
     the_python_runner.repl()
+    flush_console()
     if verbose>1: print(f"\nmain took {(monotonic_ns() - t0)/1e9:.5} seconds in walltime")
     flush_console()
 

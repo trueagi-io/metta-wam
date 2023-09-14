@@ -22,10 +22,12 @@ load_obo(Directory) :-
   directory_file_path(Directory, "*.obo", Filename),
   expand_file_name(Filename,List),!,maplist(load_obo,List).
 load_obo(Filename) :-
- track_load_into_file(Filename,
- must_det_ll((
     directory_file_path(Directory, BaseName, Filename),
     file_name_extension(Id, _, BaseName),
+ symbol_concat(Id,'.metta',OutputFile),
+ tell(OutputFile),
+ track_load_into_file(Filename,
+ must_det_ll((
     Type = 'OntologyFile',
     assert_OBO(id_type,Id,Type),
     nb_setval(obo_id,Id),nb_setval(obo_type,Type),
@@ -35,7 +37,7 @@ load_obo(Filename) :-
     setup_call_cleanup(open(Filename, read, Stream),
       process_obo_stream_repeat(Stream),
       close(Stream))))),
- fb_stats.
+ told.
 
 
 process_obo_stream_repeat(Stream):-
@@ -103,20 +105,29 @@ process_obo_rest_line(_Type,Id,Ref,Chars,_):-
     assert_OBO(Ref,Id,S),!.
 
 process_obo_rest_line(_Type,Id,is_a,Chars,Str):-
-    member('!',Chars), atomic_list_concat([L,R],'!',Str),
+    member('!',Chars), atomic_list_concat([L,R],' ! ',Str),
     normalize_space(atom(T),L),normalize_space(string(N),R),
     assert_OBO(is_a,Id,T), assert_OBO(name,T,N),!.
 
 process_obo_rest_line(_Type,Id,Reln,Chars,_):-
   %  member(Reln,[synonym]),
     get_some_items(List,Chars,[]),
-    maplist(arg(1),List,Args),
+    maplist(fix_obo_arg,List,Args),
     Assert=..[Reln,Id|Args],
     assert_OBO(Assert),!.
 
 %process_obo_rest_line(_Type,Id,Reln,Chars,_):- get_some_items(List,Chars,[]), maplist(arg(1),List,Args), assert_OBO(Reln,Id,Args).
 process_obo_rest_line(Type,Id,Miss,Rest,Str):-
-  pp_fb(process_obo_rest_line(Type,Id,Miss,Rest,Str)),!.
+  pp_fb('ERROR'(process_obo_rest_line(Type,Id,Miss,Rest,Str))),!.
+
+fix_obo_arg(Var,Var):- var(Var),!.
+fix_obo_arg("[]",[]):- !.
+fix_obo_arg('[]',[]):- !.
+fix_obo_arg(X,Y):- string(X),!,normalize_space(string(Y),X).
+fix_obo_arg(X,Y):- atom(X),!,normalize_space(atom(Y),X).
+fix_obo_arg(X,Y):- compound(X),arg(1,X,XX),!,fix_obo_arg(XX,Y).
+
+fix_obo_arg(X,X).
 
 /*
 Given the DCG rules we've defined, the input
@@ -193,7 +204,9 @@ assert_OBO(OBO):-
   OBO=..[Fn|Cols],
   into_obofn(Fn,OboFn),
   OBO1=..[OboFn|Cols],
-  assert_MeTTa(OBO1),!.
+  assert_MeTTa(OBO1),
+%  format('~N'), write_src(OBO1),nl.
+  !.
 
 into_obofn(Fn,OboFn):- atom_concat(obo_,_,Fn),!,Fn=OboFn,!.
 into_obofn(Fn,OboFn):- atom_concat(obo_,Fn,OboFn),!.

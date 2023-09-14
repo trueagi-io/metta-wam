@@ -83,9 +83,9 @@ metta_iter(KB,Atoms):- decl_m_fb_pred(KB,for_metta,2), KB:for_metta(KB,Atoms).
 metta_atoms(KB,AtomsL):- debug_metta(['get-atoms',KB]), decl_m_fb_pred(KB,for_metta,2), findall(Atom,KB:for_metta(KB,Atom),AtomsL).
 %metta_iter_bind(KB,Query,Template,AtomsL):- decl_m_fb_pred(KB,for_metta,2), findall(Template,KB:for_metta(KB,Query),AtomsL).
 metta_iter_bind(KB,Query,Vars):-
-  term_variables(Query,Vars),
-  debug_metta(['match',KB,Query,Vars]),
-  decl_m_fb_pred(KB,for_metta,2), KB:for_metta(KB,Query),
+  ignore(term_variables(Query,Vars)),
+  print(debug_metta(['match',KB,Query,Vars])),nl,
+  decl_m_fb_pred(KB,for_metta,2), (KB:for_metta(KB,Query)*->true;call_metta(KB,Query,Vars)),
   debug_metta('RES',metta_iter_bind(KB,Query,Vars)).
 %metta_iter_bind(KB,Atom,Template):- metta_stats, findall(Template,metta_iter(KB,Atom),VarList).
 /*
@@ -94,6 +94,17 @@ metta_iter_bind(KB,Atoms,Vars):-
   term_variables(Atoms,AVars),
   metta_iter(KB,Atoms), ignore(AVars = Vars).
 */
+
+call_metta(_KB,Query,_Vars):- metta_to_pyswip([],Query,Call),!,
+  print(user:Call),nl,user:call(Call).
+
+metta_to_pyswip(_PS,Query,Call):- var(Query),!,Call=Query.
+metta_to_pyswip(_PS,Query,Call):- \+ compound(Query),!,Call=Query,!.
+metta_to_pyswip(PS,Query,Call):- is_list(Query),Query=[Q|Uery],!,cmpd_to_pyswip(PS,Q,Uery,Call).
+metta_to_pyswip(PS,Query,Call):- Query=..[Q|Uery], cmpd_to_pyswip(PS,Q,Uery,Call).
+
+cmpd_to_pyswip(PS,Q,Uery,Call):- atom(Q),maplist(metta_to_pyswip([Q|PS]),Uery,Cery),Call=..[Q|Cery].
+cmpd_to_pyswip(PS,"and",Uery,Call):- maplist(metta_to_pyswip(PS),Uery,Args),list_to_conjuncts(Args,Call).
 
 /*
 symbol(X):- atom(X).
