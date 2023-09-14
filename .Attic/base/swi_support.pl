@@ -17,6 +17,9 @@ swi_only(G):- call(G).
 is_scryer:- \+  current_prolog_flag(libswipl,_).
 
 
+:- create_prolog_flag(max_per_file,inf,[keep(true),access(read_write),type(term)]).
+:- create_prolog_flag(max_disk_cache,inf,[keep(true),access(read_write),type(term)]).
+:- create_prolog_flag(samples_per_million,inf,[keep(true),access(read_write),type(term)]).
 
 with_cwd(Dir,Goal):- setup_call_cleanup(working_directory(X, Dir), Goal, working_directory(_,X)).
 
@@ -39,9 +42,9 @@ option_else(_N,V, Else):- !,V=Else.
 option_value( N,V):- option_else( N,V ,[]).
 
 set_option_value(N,V):-
-   catch(nb_setval(N,V),_,true),
-   catch(create_prolog_flag(N,V,[keep(false),access(read_write), type(term)]),_,true),
-   catch(set_prolog_flag(N,V),_,true).
+   catch(nb_setval(N,V),E,fbug(E)),
+   catch(create_prolog_flag(N,V,[keep(false),access(read_write), type(term)]),E,fbug(E)),
+   catch(set_prolog_flag(N,V),E,fbug(E)).
 
 kaggle_arc:- \+ exists_directory('/opt/logicmoo_workspace/packs_sys/logicmoo_agi/prolog/kaggle_arc/'), !.
 %kaggle_arc:- !.
@@ -52,7 +55,7 @@ kaggle_arc:-
 
 %:- ensure_loaded((read_obo2)).
 
-:- kaggle_arc.
+%:- kaggle_arc.
 
 
 symbol(X):- atom(X).

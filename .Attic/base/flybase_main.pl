@@ -22,8 +22,9 @@ fb_stats:- metta_stats.
 %:- set_option_value(max_per_file,10_000_000).
 %:- set_option_value(max_per_file,1_000).
 %:- set_option_value(max_per_file,300).
-:- set_option_value(max_per_file,inf).
+:- set_option_value(max_per_file,inf+1).
 :- set_option_value(max_per_file,1_000).
+:- set_option_value(max_per_file,inf).
 :- set_option_value(max_disk_cache,1000).
 :- set_option_value(samples_per_million,30).
 :- set_option_value(full_canon,true).
@@ -32,7 +33,7 @@ fb_stats:- metta_stats.
 flybase_identifier('FBab', 'Aberration').
 flybase_identifier('FBal', 'Allele').
 flybase_identifier('FBba', 'Balancer').
-flybase_identifier('FBbt', 'AnsymbolyTerm').
+flybase_identifier('FBbt', 'AnatomyTerm').
 flybase_identifier('FBch', 'ChromosomeArm').
 flybase_identifier('FBcl', 'Clone').
 flybase_identifier('FBcv', 'ControlledVocabulary').
@@ -64,7 +65,7 @@ symbol_prefix(Prefix, flybase, Desc):- flybase_identifier(Prefix, Desc).
 symbol_prefix('GO', obo, 'Gene Ontology').
 symbol_prefix('PO', obo, 'Plant Ontology').
 symbol_prefix('DOID', obo, 'Disease Ontology').
-symbol_prefix('UBERON', obo, 'Uber-ansymboly ontology').
+symbol_prefix('UBERON', obo, 'Uber-anatomy ontology').
 symbol_prefix('CHEBI', obo, 'Chemical Entities of Biological Interest').
 
 
@@ -205,8 +206,8 @@ try_overlaps(N):-
   \+ \+ (call_match(Query),
          pp_fb(grounded=Query),
          ignore(maybe_english(Query))),nl,nl,
-
-  pp_fb('!'(match('&flybase',Query,Query))),nl,nl,nl.
+  AQ = [and|Query],
+  pp_fb('!'(match('&flybase',AQ,AQ))),nl,nl,nl.
 
 no_english(fbrf_pmid_pmcid_doi,_).
 no_english(physical_interactions_mitab,8).
@@ -275,8 +276,8 @@ assert_to_metta(OBO):-
   ((fail,call(Data))->true;(
    must_det_ll((assert(Data),incr_file_count(_),
      ignore((((should_show_data(X),
-       ignore((OldData\==Data,write(oldData(X)),write(=),write_src(OldData))),
-       write(newData(X)),write(=),write_src(Data),nl)))),
+       ignore((OldData\==Data,write('; oldData '),write_src(OldData),format('  ; ~w ~n',[X]))),
+       write_src(Data),format('  ; ~w ~n',[X]))))),
      ignore((
        fail, option_value(output_stream,OutputStream),
        is_stream(OutputStream),
@@ -529,9 +530,8 @@ load_fbase_after_17:-
   !.
 
 load_flybase_obo_files:-
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/chebi_fb_*.obo'),
   load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/doid.obo'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/fly_ansymboly.obo'),
+  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/fly_anatomy.obo'),
   load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/fly_development.obo'),
   load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/flybase_controlled_vocabulary.obo'),
   load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/flybase_stock_vocabulary.obo'),
@@ -541,6 +541,7 @@ load_flybase_obo_files:-
   load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/psi-mi.obo'),
   load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/slice.chebi.obo'),
   load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/so-simple.obo'),
+  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/chebi_fb_*.obo'),
   !.
 
 
@@ -594,6 +595,20 @@ ontology_info(is_a,'SO:0000797','SO:0000101').
 ontology_info(is_a,'SO:0000797','SO:0001038').
 ontology_info(name,'SO:0000797',"natural_transposable_element").
 synonym('SO:0000797',"natural transposable element",'EXACT',[]).
+
+
+
+xinfo('SO:0000797').
+ontology_info(id_type,'SO:0000797','Term').
+def('SO:0000797',"TE that exists (or existed) in nature.",['FB:mc']).
+has_quality('SO:0000797','SO:0000782',' natural').
+intersection_of('SO:0000797','SO:0000101',' transposable_element').
+intersection_of('SO:0000797',has_quality,'SO:0000782',' natural').
+ontology_info(is_a,'SO:0000797','SO:0000101').
+ontology_info(is_a,'SO:0000797','SO:0001038').
+ontology_info(name,'SO:0000797',"natural_transposable_element").
+synonym('SO:0000797',"natural transposable element",'EXACT',[]).
+
 */
 
 load_obo_files:-
@@ -621,7 +636,7 @@ load_obo_files:-
   %               Random samples: .............................................................. 14,418
   %               Total Memory Used: ........................................................ 9,828,592
   %               Runtime (days:hh:mm:ss): ................................................. 0:00:01:14
-  print_loaded_from_files,
+  %print_loaded_from_files,
      %loaded_from_file(         19_515, './data/SO-Ontologies/Ontology_Files/so-simple.obo').
      %         only reflects new entries ... thus full OBO adds 481 entries to the simple one
      %loaded_from_file(            481, './data/SO-Ontologies/Ontology_Files/so.obo').
@@ -644,7 +659,7 @@ load_obo_files:-
 print_loaded_from_files,
 %loaded_from_file(2_637_502, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/chebi_fb_2023_04.obo').
 %loaded_from_file(  451_168, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/go-basic.obo').
-%loaded_from_file(  221_705, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/fly_ansymboly.obo').
+%loaded_from_file(  221_705, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/fly_anatomy.obo').
 %loaded_from_file(  128_798, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/doid.obo').
 %loaded_from_file(   19_515, './data/SO-Ontologies/Ontology_Files/so-simple.obo').
 %loaded_from_file(    9_852, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/psi-mi.obo').
@@ -1616,7 +1631,7 @@ column_description('Release_ID', "The D. melanogaster annotation set version fro
 column_description('RNASource_FBlc', "The unique FlyBase ID for the RNA-Seq experiment used for RPKM expression calculation.", identifier, 'RNA-Seq Experiment').
 column_description('RNASource_name', "The official FlyBase symbol for the RNA-Seq experiment used for RPKM expression calculation.", name, 'RNA-Seq Experiment Name').
 column_description('RPKM_value', "The RPKM expression value for the gene in the specified RNA-Seq experiment.", numeric, 'Expression Value').
-column_description('Source_Tissue_Ansymboly', "The ansymbolical region of the source tissue used for the experiment.", category, 'Tissue Ansymboly').
+column_description('Source_Tissue_Anatomy', "The ansymbolical region of the source tissue used for the experiment.", category, 'Tissue Anatomy').
 column_description('Source_Tissue_Sex', "The sex of the source tissue used for the experiment.", category, 'Tissue Sex').
 column_description('Source_Tissue_Stage', "The life stage of the source tissue used for the experiment.", category, 'Tissue Stage').
 column_description('Spread', "The proportion of cells in the cluster in which the gene is detected.", proportion, 'Expression Spread').
@@ -1660,7 +1675,7 @@ column_names('gene_rpkm_matrix', ['gene_primary_id', 'gene_symbol', 'gene_fullna
 column_names('gene_rpkm_report', ['Release_ID', 'FBgn#', 'GeneSymbol', 'Parent_library_FBlc#', 'Parent_library_name', 'RNASource_FBlc#', 'RNASource_name', 'RPKM_value', 'Bin_value', 'Unique_exon_base_count', 'Total_exon_base_count', 'Count_used']).
 column_names('genotype_phenotype_data', [listOf('genotype_symbols', ['/', ' ']), listOf('genotype_FBids', ['/', ' ']), 'phenotype_name', 'phenotype_id', listOf('qualifier_names', ['|']), listOf('qualifier_ids', ['|']), 'reference']).
 column_names('pmid_fbgn_uniprot', ['FBrf_id', 'PMID', 'FBgn_id', 'UniProt_database', 'UniProt_id']).
-column_names('scRNA-Seq_gene_expression', ['Pub_ID', 'Pub_miniref', 'Clustering_Analysis_ID', 'Clustering_Analysis_Name', 'Source_Tissue_Sex', 'Source_Tissue_Stage', 'Source_Tissue_Ansymboly', 'Cluster_ID', 'Cluster_Name', 'Cluster_Cell_Type_ID', 'Cluster_Cell_Type_Name', 'Gene_ID', 'Gene_Symbol', 'Mean_Expression', 'Spread']).
+column_names('scRNA-Seq_gene_expression', ['Pub_ID', 'Pub_miniref', 'Clustering_Analysis_ID', 'Clustering_Analysis_Name', 'Source_Tissue_Sex', 'Source_Tissue_Stage', 'Source_Tissue_Anatomy', 'Cluster_ID', 'Cluster_Name', 'Cluster_Cell_Type_ID', 'Cluster_Cell_Type_Name', 'Gene_ID', 'Gene_Symbol', 'Mean_Expression', 'Spread']).
 
 file_location('allele_genetic_interactions', "path_to_file/allele_genetic_interactions_*.tsv").
 file_location('genotype_phenotype_data', "path_to_file/genotype_phenotype_data_*.tsv").
@@ -1991,7 +2006,7 @@ eigther_contains(TT,T):- symbol_contains(T,TT),!.
 
 column_names('cyto-genetic-seq', ['Cytogenetic_map_position', 'Genetic_map_position', 'Sequence_coordinates_(release_6)', 'R6_conversion_notes']).
 column_names('Dmel_enzyme', [gene_group_id, gene_group_name, listOf(gene_group_GO_id), listOf(gene_group_GO_name), listOf(gene_group_EC_number), listOf(gene_group_EC_name), gene_id, gene_symbol, gene_name, listOf(gene_EC_number), listOf(gene_EC_name)]).
-column_names('scRNA-Seq_gene_expression', ['Pub_ID', 'Pub_miniref', 'Clustering_Analysis_ID', 'Clustering_Analysis_Name', 'Source_Tissue_Sex', 'Source_Tissue_Stage', 'Source_Tissue_Ansymboly', 'Cluster_ID', 'Cluster_Name', 'Cluster_Cell_Type_ID', 'Cluster_Cell_Type_Name', 'Gene_ID', 'Gene_Symbol', 'Mean_Expression', 'Spread']).
+column_names('scRNA-Seq_gene_expression', ['Pub_ID', 'Pub_miniref', 'Clustering_Analysis_ID', 'Clustering_Analysis_Name', 'Source_Tissue_Sex', 'Source_Tissue_Stage', 'Source_Tissue_Anatomy', 'Cluster_ID', 'Cluster_Name', 'Cluster_Cell_Type_ID', 'Cluster_Cell_Type_Name', 'Gene_ID', 'Gene_Symbol', 'Mean_Expression', 'Spread']).
 column_names(allele_genetic_interactions, [allele_symbol, allele_FBal, interaction, 'FBrf']).
 column_names(allele_phenotypic,           [allele_symbol, allele_FBal, phenotype, 'FBrf']).
 column_names(fbal_to_fbgn,             ['AlleleID', 'AlleleSymbol', 'GeneID', 'GeneSymbol']).
@@ -2766,8 +2781,8 @@ list_column_names:-
   (print(column_names(T,CNs)),nl)).
 
 
-xinfo(X,P):- fb_pred(F,A),functor(P,F,A),arg(_,P,X), call(P).
-xinfo(X):- forall(xinfo(X,P),write_src(P)).
+xinfo(X,P):- fb_pred(F,A),functor(P,F,A),arg(_,P,X), no_repeats(P,call(P)).
+xinfo(X):- forall(xinfo(X,P),(format('~N'),write_src(P))),format('~N').
 
 %:- ensure_loaded(read_obo).
 
