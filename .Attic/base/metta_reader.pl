@@ -1,3 +1,6 @@
+:- encoding(octet).
+:- if(flush_output). :- endif.
+:- if(setenv('RUST_BACKTRACE',full)). :- endif.
 %:- if(\+ current_module(sxpr_reader)).
 :- if( \+ current_prolog_flag(wamcl_modules,false)).
 :- module(s3xpr,[
@@ -29,11 +32,15 @@
   parse_sexpr/2]).
 :- endif.
 
-:- use_module(library(logicmoo/dcg_must)).
-:- use_module(library(logicmoo/dcg_meta)).
-:- use_module(library(logicmoo_common)).
+:- set_prolog_flag(encoding,octet).
+is_wam_cl:- fail.
+
 :- use_module(library(backcomp)).
 :- use_module(library(rbtrees)).
+
+:- use_module(library(logicmoo_common)).
+:- use_module(library(logicmoo/dcg_must)).
+:- use_module(library(logicmoo/dcg_meta)).
 
 %:- meta_predicate always_b(//,?,?).
 %:- meta_predicate bx(0).
@@ -52,8 +59,11 @@
 :- meta_predicate with_lisp_translation_stream(*,1).
 :- meta_predicate write_trans(+,*,2,?).
 
-
-
+%:- assert((s3xpr:'$exported_op'(_,_,_):- fail)).
+%:- assert((xlisting:'$exported_op'(_,_,_):- fail)).
+:- assert((user:'$exported_op'(_,_,_):- fail)).
+:- abolish((system:'$exported_op'/3)).
+:- assert((system:'$exported_op'(_,_,_):- fail)).
 
 def_is_characterp(CH):- current_predicate(is_characterp/1),!,call(call,is_characterp,CH).
 def_is_characterp_def('#\\'(_)).
@@ -432,7 +442,9 @@ sexpr0('#\\'(C))                 --> `#\\`,!,zalwayz(rsymbol(``,C)), swhite.
 sexpr0(['#-',K,O]) --> `#-`,!,sexpr(C),swhite,sexpr(O),!,{as_keyword(C,K)},!.
 sexpr0(['#+',K,O]) --> `#+`,!,sexpr(C),swhite,sexpr(O),!,{as_keyword(C,K)},!.
 
-sexpr0(P) --> `#`,ci(`p`),!,zalwayz((sexpr(C),{f_pathname(C,P)})),!.
+:- if(is_wam_cl).
+ sexpr0(P) --> `#`,ci(`p`),!,zalwayz((sexpr(C),{f_pathname(C,P)})),!.
+:- endif.
 sexpr0('$S'(C)) -->                  (`#`, ci(`s`),`(`),!,zalwayz(sexpr_list(C)),swhite,!.
 %sexpr('$COMPLEX'(R,I)) --> `#`,ci(`c`),`(`,!,  lnumber(R),lnumber(I),`)`.
 sexpr0('$COMPLEX'(R,I)) -->         (`#`, ci(`c`),`(`),!,zalwayz(sexpr_list([R,I])),swhite,!.
