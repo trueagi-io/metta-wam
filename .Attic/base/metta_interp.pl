@@ -349,12 +349,11 @@ do_metta(Self,load,':'(Fn,TypeDecl)):- assert_if_new(metta_type(Self,Fn,TypeDecl
 do_metta(Self,load,'='(Fn,PredDecl)):- assert_if_new(metta_defn(Self,Fn,PredDecl)).
 do_metta(Self,Exec,Term):- fbug((unknown_do_metta(Self,Exec,Term))),!.
 
-read_metta(In,Read):- peek_char(In,Char),
-  (Char ==';' -> ( read_line_to_string(In,Str),write_comment(Str),!,read_metta(In,Read)) ;
-   (char_type(Char,white),get_char(In,_),put(Char),read_metta(In,Read))).
 read_metta(In,Read):- read_metta1(In,Read1),
   (Read1=='!' -> (read_metta1(In,Read2), Read=exec(Read2)) ; Read = Read1).
-
+read_metta1(In,Read):- peek_char(In,Char),
+   (Char ==';' -> ( read_line_to_string(In,Str),write_comment(Str),!,read_metta(In,Read)) ;
+   (char_type(Char,white),get_char(In,_),put(Char),read_metta(In,Read))).
 read_metta1(In,Read1):- once(parse_sexpr_untyped(In,Read1)),!.
 
 
