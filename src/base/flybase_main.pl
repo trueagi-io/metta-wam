@@ -1058,7 +1058,7 @@ with_wild_path_swi(Fnicate, File) :-
 needs_fixed(X,Y):- (var(X)->fb_arg(X);true),fix_concept(X,L),(L\=@=[X],L\=@=X),(L=[Y]->true;Y=L).
 mine_args_that_need_reduced:-
   writeln('\n\n\n=====\n\n\n'),
-  forall(needs_fixed(X,Y),(pp_ilp(needs_fixed(X->Y)),fix_columns_with_arg(X))),
+  forall(needs_fixed(X,Y),(pp_as(needs_fixed(X->Y)),fix_columns_with_arg(X))),
   listing(fix_columns_nth).
 
 fix_columns_with_arg(Arg):-
@@ -1216,6 +1216,7 @@ load_flybase(Ext,File,Fn):-
 load_flybase_ext(Ext,File, Fn):-  Ext==json,!,load_fb_json(Fn,File),!.
 load_flybase_ext(Ext,File, Fn):-  Ext==fa,!,load_fb_fa(Fn,File),!.
 load_flybase_ext(Ext,File,_Fn):-  Ext==obo,current_predicate(load_obo/1),!,load_obo(File).
+load_flybase_ext(Ext,File,_Fn):-  Ext==metta,current_predicate(load_metta/2),!,load_metta('&self',File).
 load_flybase_ext(Ext,File, Fn):-  file_to_sep(Ext,Sep),!,
   track_load_into_file(File,
    setup_call_cleanup(open(File,read,Stream), load_flybase_sv(Sep,File,Stream,Fn), close(Stream))),!.
@@ -1479,12 +1480,12 @@ fix_columns_nth(transposon_sequence_set, 8).
 
 
 
-load_flybase(Sep,File,Stream,OutputStream,Fn):-
+load_flybase(Sep,File,Stream,Fn):-
  must_det_ll_r((
-  ignore(swi_only(format(OutputStream,":- ~q.\n",[encoding(utf8)]))),
+  %ignore(swi_only(format(":- ~q.\n",[encoding(utf8)]))),
   symbolic_list_concat([data,Fn],'_',Fn0),
   data_pred(Fn0,Fn),
-  load_flybase_sv(Sep,File,Stream,OutputStream,Fn))).
+  load_flybase_sv(Sep,File,Stream,Fn))).
 
 % Sep,File,Stream,OutputStream,Fn
 load_flybase_sv(Sep,File,Stream,Fn):- at_end_of_stream(Stream),!,
