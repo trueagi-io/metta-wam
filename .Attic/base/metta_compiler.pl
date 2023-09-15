@@ -1,4 +1,4 @@
-:- encoding(octet).
+:- encoding(iso_latin_1).
 :- flush_output.
 :- setenv('RUST_BACKTRACE',full).
 % =======================================
@@ -7,7 +7,7 @@
 % PySWIP is 222 times faster per join
 % =======================================
 :- ensure_loaded(swi_support).
-:- set_option_value(encoding,octet).
+:- set_option_value(encoding,iso_latin_1).
 
 
 :- multifile(is_pre_statistic/2).
