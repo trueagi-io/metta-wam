@@ -418,7 +418,8 @@ sexpr0(['#BQ-COMMA-ELIPSE',E])     --> `,@`, !, sexpr(E).
 sexpr0(['#COMMA',E])               --> `,`, !, sexpr(E).
 sexpr0(['#HCOMMA',E])               --> {is_scm}, `#,`, !, sexpr(E).
 sexpr0('$OBJ'(claz_bracket_vector,V))                 --> `[`, sexpr_vector(V,`]`),!, swhite.
-sexpr0('#'(A))              --> `|`, !, read_string_until(S,`|`), swhite,{quietly_sreader(((atom_string(A,S))))}.
+
+% MeTTA/NARS % sexpr0('#'(A))              --> `|`, !, read_string_until(S,`|`), swhite,{quietly_sreader(((atom_string(A,S))))}.
 
 % maybe this is KIF
 sexpr0('?'(E))              --> {kif_ok}, `?`, dcg_peek(([C],{sym_char(C)})),!, rsymbol(``,E), swhite.
@@ -470,9 +471,12 @@ sexpr0(OBJ)--> `#<`,!,zalwayz(ugly_sexpr_cont(OBJ)),!.
 
 sexpr0(E)                      --> !,zalwayz(sym_or_num(E)), swhite,!.
 
-is_scm.
+is_scm:- fail.
 
 % c:/opt/logicmoo_workspace/packs_sys/logicmoo_opencog/guile/module/ice-9/and-let-star.scm
+
+priority_symbol((`|-`)).
+priority_symbol((`#=`)).
 priority_symbol((`#+`)).
 priority_symbol((`#-`)).
 priority_symbol((`#false`)).

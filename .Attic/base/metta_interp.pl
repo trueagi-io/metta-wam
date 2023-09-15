@@ -31,6 +31,7 @@ expressions([E|Es]) -->
     expressions(Es).
 expressions([]) --> [].
 
+% ws --> ";",until_eol,
 ws --> [W], { code_type(W, space) }, ws.
 ws --> [].
 
@@ -38,7 +39,7 @@ ws --> [].
 
 expression(s(A))         --> symbol(Cs), { atom_codes(A, Cs) }.
 expression(n(N))         --> number(Cs), { number_codes(N, Cs) }.
-expression(List)         --> "(", expressions(List), ")".
+expression(List)         --> [L],{is_bracket_lr(L,R)},expressions(List), [R].
 expression([s(quote),Q]) --> "'", expression(Q).
 
 number([D|Ds]) --> digit(D), number(Ds).
@@ -48,14 +49,17 @@ digit(D) --> [D], { code_type(D, digit) }.
 
 symbol([A|As]) -->
     [A],
-    { memberchk(A, "+/-*><=") ; code_type(A, alpha) },
+    { is_ok_symbolchar(A) },
     symbolr(As).
 
 symbolr([A|As]) -->
     [A],
-    { memberchk(A, "+/-*><=") ; code_type(A, alnum) },
+    { is_ok_symbolchar(A) ; code_type(A, alnum) },
     symbolr(As).
 symbolr([]) --> [].
+
+is_bracket_lr(L,R):- member(LR,["()","{}","[]","\"\""]), nth0(0,LR,L),nth0(1,LR,R).
+is_ok_symbolchar(A):- \+ code_type(A, space), \+ code_type(A, white), \+ is_bracket_lr(A,_), \+ is_bracket_lr(_,A).
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
    Interpretation
@@ -311,6 +315,22 @@ read_metta(In,Read):- read_metta1(In,Read1),
      -> (read_metta1(In,Read2), Read=exec(Read2))
      ; Read = Read1).
 
+repl:-
+   repeat, make,
+   ((nb_current(self_space,Self),Self\==[])->true;Self='&self'),
+   format('~N'), format(atom(P),'metta@~w: ',[Self]),
+   setup_call_cleanup(prompt(Was,P),
+      once((current_input_to_forms(Read,_),do_repl(Self,Read))),
+       prompt(_,Was)).
+do_repl(_Self,end_of_file):- writeln('\n\n% To restart, use: ?- repl.').
+do_repl(Self,!):- !, current_input_to_forms(Exec,_), !,
+  (with_output_to(string(H),(write('!'),write_src(Exec))),add_history1(H)),
+  do_metta_exec(Self,Exec),!,fail.
+do_repl(Self,Read):-
+  (with_output_to(string(H),write_src(Read)),add_history1(H)),
+  do_metta(Self,load,Read),!,fail.
+
+read_metta1(In,Read):- current_input(In0),In==In0,!,current_input_to_forms(Read,_Vars).
 read_metta1(_,O2):- clause(t_l:s_reader_info(O2),_,Ref),erase(Ref).
 read_metta1(In,Read):- peek_char(In,Char), read_metta1(In,Char,Read).
 read_metta1(In,Char,Read):- char_type(Char,white),get_char(In,Char),put(Char),!,read_metta1(In,Read).
@@ -341,6 +361,7 @@ cons_to_l(I,O):- I=='Nil',!,O=[].
 cons_to_l(C,O):- \+ compound(C),!,O=C.
 %cons_to_l(N,NO):- cons_to_l3('Cons',N,NO),!.
 cons_to_l([Cons,H|T],[HH|TT]):- Cons=='Cons',!, cons_to_l(H,HH),cons_to_l(T,TT).
+cons_to_l([Cons|List],List):- Cons=='::',!.
 cons_to_l([H|T],[HH|TT]):- !, cons_to_l(H,HH),cons_to_l(T,TT).
 cons_to_l(I,I).
 
@@ -361,7 +382,7 @@ subst_vars(M,M).
 metta_anew(load,Cl):- assert_if_new(Cl),ppm(Cl).
 metta_anew(unload,Cl):- ignore((clause(Cl,_,Ref),clause(Cl2,_,Ref),Cl=@=Cl2,erase(Ref),ppm(Cl))).
 
-ppm(Cl):- format('~N'), ignore(( \+ ((numbervars(Cl,0,_,[singletons(true)]), print(Cl))), nl )).
+ppm(Cl):- format('~N'), ignore(( \+ ((numbervars(Cl,0,_,[singletons(true)]), writeq(Cl))), nl )).
 
 :- dynamic((metta_type/3,metta_defn/3,metta_atom/2)).
 
@@ -419,9 +440,7 @@ eval_args(Self,X,Y):- nonvar(Y),Y=='True',!,eval_args(Self,X,XX),XX\=='False'.
 eval_args(_Slf,X,Y):- self_eval(X),!,Y=X.
 eval_args(Self,[V|VL],[V|VL]):- var(V),!.
 eval_args(Self,[X|Nil],[Y]):- Nil ==[],!,eval_args(Self,X,Y).
-eval_args(Self,[superpose|List],Res):- maplist(eval_args(Self),List,Res).
-eval_args(Self,[colapse|List],Flat):- maplist(eval_args(Self),List,Res),flatten(Res,Flat).
-eval_args(Self,[assertEqualToResult,X,Y],TF):- findall(E,eval_args(Self,X,E),L),!,trace, ( L \== Y ->TF='False';TF='True').
+eval_args(Self,[assertEqualToResult,X,Y],TF):- !, findall(E,eval_args(Self,X,E),L),!,trace,as_f_t(L\==Y,TF).
 eval_args(Self,X,Y):- is_list(X),!,eval_args1(Self,X,M),(M\==X->eval_args(Self,M,Y);Y=X).
 
 %eval_args1(Self,[H|T],_):- \+ is_list(T),!,fail.
@@ -435,22 +454,29 @@ do_metta(Self,LoadExec,Term):- once(maybe_fix_vars(Term,NewTerm)),Term\=@=NewTer
 do_metta(Self,LoadExec,Term):- do_metta1(Self,LoadExec,Term),!.
 do_metta(Self,LoadExec,Term):- ppm(unknown_do_metta(Self,LoadExec,Term)).
 
-do_metta1(Self,_,exec(Exec)):- !,do_metta1(Self,exec,Exec),!.
-do_metta1(Self,_,Term):- do_metta_cmt(Self,Term),!.
-do_metta1(Self,_,['import!',Other,File]):- into_space(Self,Other,Space),!, load_metta(Space,File).
-
-do_metta1(Self,exec,Term):-!, ppm(eval(Term)),forall(eval_args(Self,Term,X),ppm(X)),!.
+do_metta1(Self,_,Cmt):- nonvar(Cmt),do_metta_cmt(Self,Cmt),!.
+do_metta1(Self,_,exec(Exec)):- !,do_metta_exec(Self,Exec),!.
+do_metta1(Self,exec,Exec):- !,do_metta_exec(Self,Exec),!.
 
 do_metta1(Self,Load,[':',Fn,TypeDecl]):- metta_anew(Load,metta_type(Self,Fn,TypeDecl)),!.
 do_metta1(Self,Load,['=',PredDecl,True]):- True == 'True',!, metta_anew(Load,metta_atom(Self,PredDecl)).
 do_metta1(Self,Load,['=',HeadFn,PredDecl]):- metta_anew(Load,metta_defn(Self,HeadFn,PredDecl)), nop((fn_append(HeadFn,X,Head), fn_append(PredDecl,X,Body), metta_anew((Head:- Body)))),!.
 do_metta1(Self,Load,PredDecl):- metta_anew(Load,metta_atom(Self,PredDecl)).
 
+do_metta_exec(Self,['import!',Other,File]):- into_space(Self,Other,Space),!, load_metta(Space,File).
+do_metta_exec(Self,Var):- var(Var), !, ppm(eval(Var)), freeze(Var,wdmsg(laterVar(Self,Var))).
+do_metta_exec(Self,Term):-!, ppm(eval(Term)),forall(eval_args(Self,Term,X),ppm(X)),!.
+
 eval_args2(Self,[ift,CR,Then],RO):- trace,
    metta_defn(Self,[ift,R,Then],Become),eval_args(Self,CR,R),eval_args(Self,Then,_True),eval_args(Self,Become,RO).
-eval_args2(Self,X,Y):- metta_defn(Self,X,W),ppm(metta_defn(Self,X,W)), trace,eval_args(Self,W,Y).
-eval_args2(Self,[let,A,A5,AA],AAO):- !,eval_args(Self,A5,A),eval_args(Self,AA,AAO).
-eval_args2(Self,[let,A,A5,B,B5,AA],AAO):- !, eval_args(Self,A5,A),eval_args(Self,B5,B),eval_args(Self,AA,AAO).
+eval_args2(Self,X,Y):- metta_defn(Self,X,W),ppm(metta_defn(Self,X,W)), eval_args(Self,W,Y).
+eval_args2(Self,['superpose'|List],Res):- !, maplist(eval_args(Self),List,Res).
+eval_args2(Self,['colapse'|List],Flat):- !, maplist(eval_args(Self),List,Res),flatten(Res,Flat).
+eval_args2(Self,['let',A,A5,AA],AAO):- !,eval_args(Self,A5,A),eval_args(Self,AA,AAO).
+eval_args2(Self,['let*',[Let0|LetRest],Body],RetVal):-
+    findall('let'(Var,Val), member([Var,Val],[Let0|LetRest]),LetStars),
+    eval_args(Self,[progn,[progn|LetStars],Body],RetVal).
+
 eval_args2(Self,[X1|[F2|X2]],[Y1|Y2]):- is_function(F2),!,eval_args(Self,[F2|X2],Y2),eval_args(Self,X1,Y1).
 eval_args2(Self,[F|X],[F|Y]):- is_function(F),is_list(X),maplist(eval_args(Self),X,Y),X\=@=Y.
 eval_args2(Self,LIS,Y):-  notrace((catch((LIS\=[_], s2p(LIS,IS), Y is IS),_,fail))),!.
@@ -464,6 +490,12 @@ eval_args2(Self,['atom-replace',Other,Rem,Add],PredDecl):- !, copy_term(Rem,RCop
   RCopy=@=Rem,erase(Ref), do_metta(Other,load,Add).
 eval_args2(Self,['get-atoms',Other],PredDecl):- !, metta_atom_iter(Other,PredDecl).
 eval_args2(Self,['match',Other,Goal,Template],Template):- !, metta_atom_iter(Other,Goal).
+eval_args2(Self,['case',A,[Case1|CaseN]],Res):-
+          eval_args(Self,A,AR),
+          member(Case,[Case1|CaseN]),
+          Case=[A|More],
+          eval_args2(Self,More,AR).
+
 eval_args2(Self,[==,X,Y],TF):-!,as_f_t(X\=Y,TF).
 eval_args2(Self,['>',X,Y],TF):-!,as_f_t(X@=<Y,TF).
 eval_args2(Self,['<',X,Y],TF):-!,as_f_t(X@>=Y,TF).
@@ -510,12 +542,14 @@ fn_append1(eval_args(Self,Term,X),X,eval_args(Self,Term,X)):-!.
 fn_append1(Term,X,eval_args(Self,Term,X)).
 do:- cls, make, current_prolog_flag(argv,P),append(_,['--args'|Rest],P),maplist(load_metta('&self'),Rest).
 
+
 quick_test:-
   set_prolog_flag(encoding,iso_latin_1),
    forall(quick_test(Test),
                   forall(open_string(Test,Stream),
                     load_metta_stream('&self',Stream))).
 
+end_of_file. % comment this out once to get these files in your readline history
 mf('./1-VSpaceTest.metta').
 mf('./2-VSpaceTest.metta').
 mf('./3-Learn-Rules.metta').
