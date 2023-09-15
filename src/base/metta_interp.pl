@@ -338,7 +338,7 @@ read_metta1(In,';',Read):- read_line_to_string(In,Str),write_comment(Str),!,read
 read_metta1(In,_,Read1):- once(parse_sexpr_untyped(In,Read1)),!.
 
 
-write_comment(Cmt):- format('~N;~w~n',[Cmt]).
+write_comment(Cmt):- format('~N%;~w~n',[Cmt]).
 do_metta_cmt(_,'$COMMENT'(Cmt,_,_)):- write_comment(Cmt),!.
 do_metta_cmt(_,'$STRING'(Cmt)):- write_comment(Cmt),!.
 do_metta_cmt(Self,[Cmt]):- !, do_metta_cmt(Self, Cmt),!.
@@ -382,7 +382,7 @@ subst_vars(M,M).
 metta_anew(load,Cl):- assert_if_new(Cl),ppm(Cl).
 metta_anew(unload,Cl):- ignore((clause(Cl,_,Ref),clause(Cl2,_,Ref),Cl=@=Cl2,erase(Ref),ppm(Cl))).
 
-ppm(Cl):- format('~N'), ignore(( \+ ((numbervars(Cl,0,_,[singletons(true)]), writeq(Cl))), nl )).
+ppm(Cl):- format('~N'), ignore(( \+ ((numbervars(Cl,0,_,[singletons(true)]), print(Cl),writeln('.'))))).
 
 :- dynamic((metta_type/3,metta_defn/3,metta_atom/2)).
 
@@ -465,7 +465,7 @@ do_metta1(Self,Load,PredDecl):- metta_anew(Load,metta_atom(Self,PredDecl)).
 
 do_metta_exec(Self,['import!',Other,File]):- into_space(Self,Other,Space),!, load_metta(Space,File).
 do_metta_exec(Self,Var):- var(Var), !, ppm(eval(Var)), freeze(Var,wdmsg(laterVar(Self,Var))).
-do_metta_exec(Self,Term):-!, ppm(eval(Term)),forall(eval_args(Self,Term,X),ppm(X)),!.
+do_metta_exec(Self,Term):-!, ppm(:- metta_eval(Term)),forall(eval_args(Self,Term,X),(format('%'),writeln(X))),!.
 
 eval_args2(Self,[ift,CR,Then],RO):- trace,
    metta_defn(Self,[ift,R,Then],Become),eval_args(Self,CR,R),eval_args(Self,Then,_True),eval_args(Self,Become,RO).
@@ -687,4 +687,4 @@ mf('./metta_vspace/nm_test.metta').
 mf('./metta_vspace/r.metta').
 mf('./metta_vspace/test_nspace.metta').
 :- forall(mf(H),add_history1(load_metta(H))).
-
+:- load_metta

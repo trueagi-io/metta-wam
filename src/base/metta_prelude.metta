@@ -36,7 +36,7 @@
 (= (car $atom)
   (eval (if-decons $atom $head $_
     $head
-    (Error (car $atom) \"car expects a non-empty expression as an argument\") )))
+    (Error (car $atom) "car expects a non-empty expression as an argument") )))
 
 (= (switch $atom $cases)
   (chain (decons $cases) $list (eval (switch-internal $atom $list))))
@@ -47,7 +47,7 @@
 (= (subst $atom $var $templ)
   (match $atom $var $templ
     (Error (subst $atom $var $templ)
-      \"subst expects a variable as a second argument\") ))
+      "subst expects a variable as a second argument") ))
 
 (= (reduce $atom $var $templ)
   (chain (eval $atom) $res
@@ -105,8 +105,8 @@
           (chain (eval (interpret-args $expr $args $arg-types $space)) $reduced-args
             (eval (return-on-error $reduced-args
               (cons $reduced-op $reduced-args) )))
-          (Error $type \"Function type expected\") )))))
-    (Error $expr \"Non-empty expression atom is expected\") )))
+          (Error $type "Function type expected") )))))
+    (Error $expr "Non-empty expression atom is expected") )))
 
 (= (interpret-args $atom $args $arg-types $space)
   (match $args ()
@@ -122,7 +122,7 @@
               (eval (interpret-args-tail $atom $reduced-head $tail $tail-types $space)) )))))
         (Error $atom BadType) ))
       (Error (interpret-atom $atom $args $arg-types $space)
-        \"Non-empty expression atom is expected\") ))))
+        "Non-empty expression atom is expected") ))))
 
 (= (interpret-args-tail $atom $head $args-tail $args-tail-types $space)
   (chain (eval (interpret-args $atom $args-tail $args-tail-types $space)) $reduced-tail
@@ -136,7 +136,7 @@
       (chain (eval (interpret $head %Undefined% $space)) $rhead
         (chain (eval (interpret-tuple $tail $space)) $rtail
           (cons $rhead $rtail) ))
-      (Error (interpret-tuple $atom $space) \"Non-empty expression atom is expected as an argument\") ))))
+      (Error (interpret-tuple $atom $space) "Non-empty expression atom is expected as an argument") ))))
 
 (= (call $atom $type $space)
   (chain (eval $atom) $result
