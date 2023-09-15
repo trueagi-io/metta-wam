@@ -1,4 +1,4 @@
-:- encoding(octet).
+:- encoding(iso_latin_1).
 :- if(flush_output). :- endif.
 :- if(setenv('RUST_BACKTRACE',full)). :- endif.
 %:- if(\+ current_module(sxpr_reader)).
@@ -32,7 +32,7 @@
   parse_sexpr/2]).
 :- endif.
 
-:- set_prolog_flag(encoding,octet).
+:- set_prolog_flag(encoding,iso_latin_1).
 is_wam_cl:- fail.
 
 :- use_module(library(backcomp)).

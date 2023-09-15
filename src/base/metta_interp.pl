@@ -299,10 +299,11 @@ load_metta(Self,Filename):-
       with_cwd(Directory,once(load_metta_stream(Self,In))))), close(In))).
 load_metta(Self,Filename):- with_wild_path(load_metta(Self),Filename),!.
 
+load_metta_stream(Fn,String):- string(String),!,open_string(String,Stream),load_metta_stream(Fn,Stream).
 load_metta_stream(_Fn,In):- (at_end_of_stream(In);reached_file_max),!.
 load_metta_stream(Self,In):- repeat,
   once(read_metta(In,Read)),
-  once((Read==end_of_file->true;do_metta_once(Self,load,Read))),
+  once((Read==end_of_file->true;do_metta(Self,load,Read))),
   (at_end_of_stream(In);reached_file_max),!.
 
 read_metta(In,Read):- read_metta1(In,Read1),
@@ -322,50 +323,35 @@ do_metta_cmt(_,_,'$COMMENT'(Cmt,_,_)):- write_comment(Cmt),!.
 do_metta_cmt(_,_,'$STRING'(Cmt)):- write_comment(Cmt),!.
 do_metta_cmt(Self,Exec,[Cmt]):- !, do_metta_cmt(Self,Exec, Cmt),!.
 
-dont_prexfix(F):- \+ atom(F),!.
-dont_prexfix(F):- upcase_atom(F,U),downcase_atom(F,D),U==D,!.
-dont_prexfix(call).
-dont_prexfix(exec).
 
-%dont_prexfix(if).
-dont_prexfix(Bang):- atom_concat(_,'!',Bang).
-convert_functor(V,_,V):- \+ atom(V).
-convert_functor('Cons',2,'[|]').
-convert_functor('cons',2,'[|]').
-convert_functor('::',2,'[|]').
-convert_functor('Nil',0,[]).
-convert_functor('NIL',0,[]).
-convert_functor('nil',0,[]).
-convert_functor(F,_,F):- dont_prexfix(F),!.
-convert_functor(A,_,A):- atom_chars(A,[C|_]),upcase_atom(C,C),!.
-%convert_functor(F,N,FN):- N>0, atom_concat(metta_,_,F),!,FN=F.
-%convert_functor(F,N,FN):- N>0, atom_concat(metta_,F,FN).
-convert_functor(F,_,F).
-
-mfix_vars1(I,O):- compound(I), !,
-  compound_name_arguments(I,F,A),
-  functor(I,F,N),
-  (convert_functor(F,N,C)->true;C=F),
-  maplist(mfix_vars1,A,B),
-  compound_name_arguments(O,C,B).
+mfix_vars1(I,O):- var(I),!,I=O.
+mfix_vars1([H|T],[HH|TT]):- !, mfix_vars1(H,HH),mfix_vars1(T,TT).
 mfix_vars1(I,O):- \+ atom(I),!,I=O.
 mfix_vars1('$_','$VAR'('_')).
 mfix_vars1('$','$VAR'('_1')).
 mfix_vars1(I,'$VAR'(O)):- atom_concat('$',M,I),!,svar_fixvarname(M,O).
-mfix_vars1(I,O):- convert_functor(I,0,O),!.
 mfix_vars1(I,I).
+
+cons_to_l3(Cons,[Cons0,H,T],[H|TT]):- !, Cons0==Cons,!, cons_to_l3(Cons,T,TT).
+cons_to_l3(Cons,Nil0,T):- is_cf_nil(Cons,Nil),Nil0==Nil,!,T=[].
+cons_to_l3(_Cons,A,A).
+
+cons_to_l(I,O):- I=='Nil',!,O=[].
+cons_to_l(C,O):- \+ compound(C),!,O=C.
+%cons_to_l(N,NO):- cons_to_l3('Cons',N,NO),!.
+cons_to_l([Cons,H|T],[HH|TT]):- Cons=='Cons',!, cons_to_l(H,HH),cons_to_l(T,TT).
+cons_to_l([H|T],[HH|TT]):- !, cons_to_l(H,HH),cons_to_l(T,TT).
+cons_to_l(I,I).
+
+is_cons_f(Cons):- is_cf_nil(Cons,_).
+is_cf_nil('Cons','Nil').
 
 maybe_fix_vars(I,exec(O)):- compound(I),I=exec(M),!,maybe_fix_vars(M,O).
 maybe_fix_vars(I,O):-
  must_det_ll((
-  once(mfix_vars1(I,M)),
+  mfix_vars1(I,M),
   subst_vars(M,N),
-  sexpr_sterm_to_pterm(N,NO),
-  once(mfix_vars1(NO,O)))).
-
-'metta_=='(X,Y,XY):- (X==Y->XY=true;XY=false).
-'metta_if'(If,Then,Else,Result):- metta_call(If,TF),
-  (\+ metta_not(TF)->metta_call(Then,Result);metta_call(Else,Result)).
+  cons_to_l(N,O))).
 
 subst_vars(M,N):- sub_term(V,M),compound(V),V='$VAR'(_),!,
   substM(M,V,_NewVar,MM),!,subst_vars(MM,N).
@@ -375,23 +361,12 @@ metta_anew(Cl):- assert_if_new(Cl),ppm(Cl).
 
 ppm(Cl):- format('~N'), ignore(( \+ ((numbervars(Cl,0,_,[singletons(true)]), print(Cl))), nl )).
 
-do_metta_once(Self,LoadExec,Term):- once(maybe_fix_vars(Term,NewTerm)),Term\=@=NewTerm,!,
-  do_metta_once(Self,LoadExec,NewTerm),!.
-do_metta_once(Self,Exec,Term):- do_metta(Self,Exec,Term),!.
-do_metta_once(Self,LoadExec,Term):- ppm(unknown_do_metta(Self,LoadExec,Term)).
-%do_metta_once(Self,Exec,Term):- fbug((unknown_do_metta(Self,Exec,Term))),!.
-
+:- dynamic((metta_type/3,metta_defn/3,metta_atom/2)).
 
 into_space(Self,'&self',Self):-!.
 into_space(_,Other,Other).
 
-do_metta(Self,Exec,Term):- do_metta_cmt(Self,Exec,Term),!.
-do_metta(Self,load,':'(Fn,TypeDecl)):- metta_anew(metta_type(Self,Fn,TypeDecl)),!.
-do_metta(Self,load,'='(Fn,PredDecl)):- metta_anew(metta_defn(Self,Fn,PredDecl)), nop((fn_append(Fn,X,Head), fn_append(PredDecl,X,Body), metta_anew((Head:- Body)))),!.
-do_metta(Self,_,exec(Exec)):- !,do_metta(Self,exec,Exec),!.
-do_metta(Self,_,'import!'(Other,File)):- into_space(Self,Other,Space),!, load_metta(Space,File).
-do_metta(Self,load,PredDecl):- metta_anew(metta_decl(Self,PredDecl)).
-do_metta(Self,exec,Term):-!,eval_args(Term,X),ppm(X).
+
 
 substM(T, F, R, R):- T==F,!.
 substM(T, _, _, R):- \+ compound(T),!,R=T.
@@ -400,30 +375,90 @@ substM(C1, F, R, C2) :- C1 =.. [Fn|A1], substM_l(A1,F,R,A2),!, C2 =.. [Fn|A2].
 substM_l([], _, _, []).  substM_l([H1|T1], F, R, [H2|T2]) :- substM(H1, F, R, H2), substM_l(T1, F, R, T2).
 
 
-eval_f_args(F,ARGS,XX):- maplist(eval_args,ARGS,EARGS), compound_name_arguments(XX,F,EARGS).
+eval_f_args(Self,F,ARGS,[F|EARGS]):- maplist(eval_args(Self),ARGS,EARGS).
 
+s2p(I,O):- sexpr_sterm_to_pterm(I,O),!.
 
+self_eval(X):- var(X),!.
+self_eval(X):- number(X),!.
+self_eval([]). self_eval('True'). self_eval('False').
 
-eval_args(X,Y):- number(X),Y=X,!.
-eval_args(X,Y):- var(X),Y=X,!.
-eval_args(X,Y):- eval_args1(X,M),(M\==X->eval_args(M,Y);Y=X),!.
-eval_args(X,X).
+combine_result(TF,_,TF):-!.
+/*
+; Bind &kb to a new empty Space
+!(bind! &kb (new-space))
 
-eval_args1([X1|X2],[Y1|Y2]):- compound(X2),eval_args(X1,Y1),eval_args(X2,Y2),!.
-eval_args1(IS,Y):- catch(Y is IS,_,fail),!.
-eval_args1(if(TF,Then,Else),Res):- !, ( \+ eval_args(TF,'False') -> eval_args(Then,Res);eval_args(Then,Res) ).
-eval_args1(==(X,Y),TF):- !, ( X \= Y ->TF='False';TF='True').
-eval_args1((X>Y),TF):- !, ( X @=< Y ->TF='False';TF='True').
-eval_args1((X<Y),TF):- !, ( X @>= Y ->TF='False';TF='True').
-eval_args1(=>(X,Y),TF):- !, ( X @< Y ->TF='False';TF='True').
-eval_args1(<=(X,Y),TF):- !, ( X @> Y ->TF='False';TF='True').
-eval_args1(assertEqual(X,Y),TF):- !, ( X \= Y ->TF='False';TF='True').
-eval_args1(or(X,Y),TF):- !, ( (is_false(X), is_false(Y)) ->TF='False';TF='True').
-eval_args1(X,Y):- is_list(X),!,maplist(eval_args,X,Y).
-eval_args1(X,Y):- compound(X),compound_name_arguments(X,F,ARGS), once((eval_f_args(F,ARGS,XX), XX\==X,Y=XX)).
-eval_args1(X,Y):- metta_defn('&self',X,W),pp(X->W),eval_args(W,Y).
+; Some knowledge
+(= (frog $x)
+   (and (croaks $x)
+        (eat_flies $x)))
+(= (croaks Fritz) True)
+(= (eat_flies Fritz) True)
+(= (croaks Sam) True)
+(= (eat_flies Sam) True)
+(= (green $x)
+   (frog $x))
 
-is_false(X):- eval_args(X,Y), (Y=0;Y='False'),!.
+; Define conditional
+(: ift (-> Bool Atom Atom))
+(= (ift True $then) $then)
+
+; For anything that is green, assert it is Green in &kb
+!(ift (green $x)
+      (add-atom &kb (Green $x)))
+
+; Retrieve the inferred Green things: Fritz and Sam.
+!(assertEqualToResult
+  (match &kb (Green $x) $x)
+  (Fritz Sam))
+*/
+
+eval_args(Self,X,Y):- nonvar(Y),Y=='True',!,eval_args(Self,X,XX),XX\=='False'.
+eval_args(_Slf,X,Y):- self_eval(X),!,Y=X.
+eval_args(Self,[X|Nil],[Y]):- Nil ==[],!,eval_args(Self,X,Y).
+eval_args(Self,[assertEqualToResult,X,Y],TF):- findall(E,eval_args(Self,X,E),L),!,trace, ( L \== Y ->TF='False';TF='True').
+eval_args(Self,X,Y):- is_list(X),!,eval_args1(Self,X,M),(M\==X->eval_args(Self,M,Y);Y=X).
+
+%eval_args1(Self,[H|T],_):- \+ is_list(T),!,fail.
+eval_args1(Self,PredDecl,Res):- term_variables(PredDecl,Vars),
+  (metta_atom(Self,PredDecl) *-> (Vars ==[]->Res='True';Var=Res);
+   (eval_args2(Self,PredDecl,Res),ignore(Vars ==[]->Res='True';Var=Res))).
+%eval_args1(Self,PredDecl,Res):- eval_args2(Self,PredDecl,Res).
+
+do_metta(Self,LoadExec,Term):- once(maybe_fix_vars(Term,NewTerm)),Term\=@=NewTerm,!,
+  do_metta(Self,LoadExec,NewTerm),!.
+do_metta(Self,LoadExec,Term):- do_metta1(Self,LoadExec,Term),!.
+do_metta(Self,LoadExec,Term):- ppm(unknown_do_metta(Self,LoadExec,Term)).
+do_metta1(Self,_,exec(Exec)):- !,do_metta1(Self,exec,Exec),!.
+do_metta1(Self,Exec,Term):- do_metta_cmt(Self,Exec,Term),!.
+do_metta1(Self,load,[':',Fn,TypeDecl]):- metta_anew(metta_type(Self,Fn,TypeDecl)),!.
+do_metta1(Self,load,['=',PredDecl,True]):- True == 'True',!, metta_anew(metta_atom(Self,PredDecl)).
+do_metta1(Self,load,['=',HeadFn,PredDecl]):- metta_anew(metta_defn(Self,HeadFn,PredDecl)), nop((fn_append(HeadFn,X,Head), fn_append(PredDecl,X,Body), metta_anew((Head:- Body)))),!.
+do_metta1(Self,load,PredDecl):- metta_anew(metta_atom(Self,PredDecl)).
+do_metta1(Self,_,['import!',Other,File]):- into_space(Self,Other,Space),!, load_metta(Space,File).
+do_metta1(Self,exec,Term):-!,forall(eval_args(Self,Term,X),ppm(X)),!.
+
+eval_args2(Self,[ift,CR,Then],RO):- trace,
+   metta_defn(Self,[ift,R,Then],Become),eval_args(Self,CR,R),eval_args(Self,Then,_True),eval_args(Self,Become,RO).
+eval_args2(Self,X,Y):- metta_defn(Self,X,W),ppm(metta_defn(Self,X,W)), trace,eval_args(Self,W,Y).
+eval_args2(Self,[let,A,A5,AA],AAO):- !,eval_args(Self,A5,A),eval_args(Self,AA,AAO).
+eval_args2(Self,[let,A,A5,B,B5,AA],AAO):- !, eval_args(Self,A5,A),eval_args(Self,B5,B),eval_args(Self,AA,AAO).
+eval_args2(Self,[X1|[F2|X2]],[Y1|Y2]):- is_function(F2),!,eval_args(Self,[F2|X2],Y2),eval_args(Self,X1,Y1).
+eval_args2(Self,[F|X],[F|Y]):- is_function(F),is_list(X),maplist(eval_args(Self),X,Y),X\=@=Y.
+eval_args2(Self,LIS,Y):-  notrace((catch((LIS\=[_], s2p(LIS,IS), Y is IS),_,fail))),!.
+eval_args2(Self,[or,X,Y],TF):- !, (eval_args(Self,X,TF);eval_args(Self,Y,TF)).
+eval_args2(Self,[and,X|Y],TF):- eval_args(Self,X,TF1),eval_args2(Self,[and|Y],TF2),combine_result(TF1,TF2,TF).
+eval_args2(Self,[if,TF,Then,Else],Res):- !, ( \+ eval_args(Self,TF,'False') -> eval_args(Self,Then,Res);eval_args(Self,Then,Res) ).
+eval_args2(Self,[==,X,Y],TF):-!,as_f_t(X\=Y,TF).
+eval_args2(Self,['>',X,Y],TF):-!,as_f_t(X@=<Y,TF).
+eval_args2(Self,['<',X,Y],TF):-!,as_f_t(X@>=Y,TF).
+eval_args2(Self,['=>',X,Y],TF):-!,as_f_t(X@<Y,TF).
+eval_args2(Self,['<=',X,Y],TF):-!,as_f_t(X@>Y,TF).
+eval_args2(Self,[assertEqual,X,Y],TF):-!,as_f_t(X\=Y,TF).
+as_f_t(G,'False'):- call(G),!. as_f_t(_, 'True').
+is_function(F):- atom(F).
+
+is_false(X):- eval_args(Self,X,Y), (Y=0;Y='False'),!.
 
 fn_append(List,X,Call):-
   fn_append1(List,X,ListX),
@@ -431,8 +466,8 @@ fn_append(List,X,Call):-
 
 is_conz(S):- compound(S), S=[_|_].
 
-%dont_x(eval_args(metta_if(A<B,L1,L2),R)).
-dont_x(eval_args(A<B,R)).
+%dont_x(eval_args(Self,metta_if(A<B,L1,L2),R)).
+dont_x(eval_args(Self,A<B,R)).
 
 into_fp(D,D):- \+ \+ dont_x(D),!.
 into_fp(ListX,CallAB):-
@@ -444,12 +479,20 @@ into_fp(ListX,CallAB):-
 into_fp(A,A).
 
 needs_expand(Expand):- compound(Expand),functor(Expand,F,N),N>=1,atom_concat(metta_,_,F).
-needs_expanded(eval_args(Term,_),Expand):- !,sub_term(Expand,Term),compound(Expand),Expand\=@=Term,
+needs_expanded(eval_args(Self,Term,_),Expand):- !,sub_term(Expand,Term),compound(Expand),Expand\=@=Term,
    compound(Expand), \+ is_conz(Expand), \+ is_ftVar(Expand), needs_expand(Expand).
 needs_expanded([A|B],Expand):- sub_term(Expand,[A|B]), compound(Expand), \+ is_conz(Expand), \+ is_ftVar(Expand), needs_expand(Expand).
 
-fn_append1(eval_args(Term,X),X,eval_args(Term,X)):-!.
-fn_append1(Term,X,eval_args(Term,X)).
+fn_append1(eval_args(Self,Term,X),X,eval_args(Self,Term,X)):-!.
+fn_append1(Term,X,eval_args(Self,Term,X)).
 do:- cls, make, current_prolog_flag(argv,P),append(_,['--args'|Rest],P),maplist(load_metta('&self'),Rest).
 
 %metta_defn(Self,Fn,X,List):- fbug(metta_defn(Self,Fn,X,List)).
+
+
+quick_test:-
+  set_prolog_flag(encoding,iso_latin_1),
+   forall(quick_test(Test),
+                  forall(open_string(Test,Stream),
+                    load_metta_stream('&self',Stream))).
+
