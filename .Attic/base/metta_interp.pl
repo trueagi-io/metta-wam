@@ -372,17 +372,16 @@ maybe_fix_vars(I,exec(O)):- compound(I),I=exec(M),!,maybe_fix_vars(M,O).
 maybe_fix_vars(I,O):-
  must_det_ll((
   mfix_vars1(I,M),
-  subst_vars(M,N),
-  cons_to_l(N,O))).
+  cons_to_l(M,O))).
 
 subst_vars(M,N):- sub_term(V,M),compound(V),V='$VAR'(_),!,
   substM(M,V,_NewVar,MM),!,subst_vars(MM,N).
 subst_vars(M,M).
 
-metta_anew(load,Cl):- assert_if_new(Cl),ppm(Cl).
-metta_anew(unload,Cl):- ignore((clause(Cl,_,Ref),clause(Cl2,_,Ref),Cl=@=Cl2,erase(Ref),ppm(Cl))).
+metta_anew(load,NV):- subst_vars(NV,Cl),assert_if_new(Cl),ppm(NV).
+metta_anew(unload,NV):- subst_vars(NV,Cl),ignore((clause(Cl,_,Ref),clause(Cl2,_,Ref),Cl=@=Cl2,erase(Ref),ppm(Cl))).
 
-ppm(Cl):- format('~N'), ignore(( \+ ((numbervars(Cl,0,_,[singletons(true)]), print(Cl),writeln('.'))))).
+ppm(Cl):- format('~N'), ignore(( \+ ((numbervars(Cl,0,_,[singletons(true)]), pp(Cl),writeln('.'))))).
 
 :- dynamic((metta_type/3,metta_defn/3,metta_atom/2)).
 
