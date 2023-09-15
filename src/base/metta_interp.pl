@@ -318,10 +318,10 @@ read_metta1(In,';',Read):- read_line_to_string(In,Str),write_comment(Str),!,read
 read_metta1(In,_,Read1):- once(parse_sexpr_untyped(In,Read1)),!.
 
 
-write_comment(Cmt):- format('~N~w~n',[Cmt]).
-do_metta_cmt(_,_,'$COMMENT'(Cmt,_,_)):- write_comment(Cmt),!.
-do_metta_cmt(_,_,'$STRING'(Cmt)):- write_comment(Cmt),!.
-do_metta_cmt(Self,Exec,[Cmt]):- !, do_metta_cmt(Self,Exec, Cmt),!.
+write_comment(Cmt):- format('~N;~w~n',[Cmt]).
+do_metta_cmt(_,'$COMMENT'(Cmt,_,_)):- write_comment(Cmt),!.
+do_metta_cmt(_,'$STRING'(Cmt)):- write_comment(Cmt),!.
+do_metta_cmt(Self,[Cmt]):- !, do_metta_cmt(Self, Cmt),!.
 
 
 mfix_vars1(I,O):- var(I),!,I=O.
@@ -329,6 +329,7 @@ mfix_vars1([H|T],[HH|TT]):- !, mfix_vars1(H,HH),mfix_vars1(T,TT).
 mfix_vars1(I,O):- \+ atom(I),!,I=O.
 mfix_vars1('$_','$VAR'('_')).
 mfix_vars1('$','$VAR'('_1')).
+mfix_vars1(I,'$VAR'(O)):- atom_concat('$',N,I),atom_number(N,Num),atom_concat('Num',Num,M),!,svar_fixvarname(M,O).
 mfix_vars1(I,'$VAR'(O)):- atom_concat('$',M,I),!,svar_fixvarname(M,O).
 mfix_vars1(I,I).
 
@@ -357,7 +358,8 @@ subst_vars(M,N):- sub_term(V,M),compound(V),V='$VAR'(_),!,
   substM(M,V,_NewVar,MM),!,subst_vars(MM,N).
 subst_vars(M,M).
 
-metta_anew(Cl):- assert_if_new(Cl),ppm(Cl).
+metta_anew(load,Cl):- assert_if_new(Cl),ppm(Cl).
+metta_anew(unload,Cl):- ignore((clause(Cl,_,Ref),clause(Cl2,_,Ref),Cl=@=Cl2,erase(Ref),ppm(Cl))).
 
 ppm(Cl):- format('~N'), ignore(( \+ ((numbervars(Cl,0,_,[singletons(true)]), print(Cl))), nl )).
 
@@ -415,7 +417,10 @@ combine_result(TF,_,TF):-!.
 
 eval_args(Self,X,Y):- nonvar(Y),Y=='True',!,eval_args(Self,X,XX),XX\=='False'.
 eval_args(_Slf,X,Y):- self_eval(X),!,Y=X.
+eval_args(Self,[V|VL],[V|VL]):- var(V),!.
 eval_args(Self,[X|Nil],[Y]):- Nil ==[],!,eval_args(Self,X,Y).
+eval_args(Self,[superpose|List],Res):- maplist(eval_args(Self),List,Res).
+eval_args(Self,[colapse|List],Flat):- maplist(eval_args(Self),List,Res),flatten(Res,Flat).
 eval_args(Self,[assertEqualToResult,X,Y],TF):- findall(E,eval_args(Self,X,E),L),!,trace, ( L \== Y ->TF='False';TF='True').
 eval_args(Self,X,Y):- is_list(X),!,eval_args1(Self,X,M),(M\==X->eval_args(Self,M,Y);Y=X).
 
@@ -429,14 +434,17 @@ do_metta(Self,LoadExec,Term):- once(maybe_fix_vars(Term,NewTerm)),Term\=@=NewTer
   do_metta(Self,LoadExec,NewTerm),!.
 do_metta(Self,LoadExec,Term):- do_metta1(Self,LoadExec,Term),!.
 do_metta(Self,LoadExec,Term):- ppm(unknown_do_metta(Self,LoadExec,Term)).
+
 do_metta1(Self,_,exec(Exec)):- !,do_metta1(Self,exec,Exec),!.
-do_metta1(Self,Exec,Term):- do_metta_cmt(Self,Exec,Term),!.
-do_metta1(Self,load,[':',Fn,TypeDecl]):- metta_anew(metta_type(Self,Fn,TypeDecl)),!.
-do_metta1(Self,load,['=',PredDecl,True]):- True == 'True',!, metta_anew(metta_atom(Self,PredDecl)).
-do_metta1(Self,load,['=',HeadFn,PredDecl]):- metta_anew(metta_defn(Self,HeadFn,PredDecl)), nop((fn_append(HeadFn,X,Head), fn_append(PredDecl,X,Body), metta_anew((Head:- Body)))),!.
-do_metta1(Self,load,PredDecl):- metta_anew(metta_atom(Self,PredDecl)).
+do_metta1(Self,_,Term):- do_metta_cmt(Self,Term),!.
 do_metta1(Self,_,['import!',Other,File]):- into_space(Self,Other,Space),!, load_metta(Space,File).
-do_metta1(Self,exec,Term):-!,forall(eval_args(Self,Term,X),ppm(X)),!.
+
+do_metta1(Self,exec,Term):-!, ppm(eval(Term)),forall(eval_args(Self,Term,X),ppm(X)),!.
+
+do_metta1(Self,Load,[':',Fn,TypeDecl]):- metta_anew(Load,metta_type(Self,Fn,TypeDecl)),!.
+do_metta1(Self,Load,['=',PredDecl,True]):- True == 'True',!, metta_anew(Load,metta_atom(Self,PredDecl)).
+do_metta1(Self,Load,['=',HeadFn,PredDecl]):- metta_anew(Load,metta_defn(Self,HeadFn,PredDecl)), nop((fn_append(HeadFn,X,Head), fn_append(PredDecl,X,Body), metta_anew((Head:- Body)))),!.
+do_metta1(Self,Load,PredDecl):- metta_anew(Load,metta_atom(Self,PredDecl)).
 
 eval_args2(Self,[ift,CR,Then],RO):- trace,
    metta_defn(Self,[ift,R,Then],Become),eval_args(Self,CR,R),eval_args(Self,Then,_True),eval_args(Self,Become,RO).
@@ -449,6 +457,13 @@ eval_args2(Self,LIS,Y):-  notrace((catch((LIS\=[_], s2p(LIS,IS), Y is IS),_,fail
 eval_args2(Self,[or,X,Y],TF):- !, (eval_args(Self,X,TF);eval_args(Self,Y,TF)).
 eval_args2(Self,[and,X|Y],TF):- eval_args(Self,X,TF1),eval_args2(Self,[and|Y],TF2),combine_result(TF1,TF2,TF).
 eval_args2(Self,[if,TF,Then,Else],Res):- !, ( \+ eval_args(Self,TF,'False') -> eval_args(Self,Then,Res);eval_args(Self,Then,Res) ).
+eval_args2(Self,['add-atom',Other,PredDecl],PredDecl):- !, do_metta(Other,load,PredDecl).
+eval_args2(Self,['remove-atom',Other,PredDecl],PredDecl):- !, do_metta(Other,unload,PredDecl).
+eval_args2(Self,['atom-count',Other],Count):- !, findall(_,metta_defn(Other,_,_),L1),length(L1,C1),findall(_,metta_atom(Other,_),L2),length(L2,C2),Count is C1+C2.
+eval_args2(Self,['atom-replace',Other,Rem,Add],PredDecl):- !, copy_term(Rem,RCopy),metta_atom_iter_ref(Other,RCopy,Ref),
+  RCopy=@=Rem,erase(Ref), do_metta(Other,load,Add).
+eval_args2(Self,['get-atoms',Other],PredDecl):- !, metta_atom_iter(Other,PredDecl).
+eval_args2(Self,['match',Other,Goal,Template],Template):- !, metta_atom_iter(Other,Goal).
 eval_args2(Self,[==,X,Y],TF):-!,as_f_t(X\=Y,TF).
 eval_args2(Self,['>',X,Y],TF):-!,as_f_t(X@=<Y,TF).
 eval_args2(Self,['<',X,Y],TF):-!,as_f_t(X@>=Y,TF).
@@ -456,14 +471,22 @@ eval_args2(Self,['=>',X,Y],TF):-!,as_f_t(X@<Y,TF).
 eval_args2(Self,['<=',X,Y],TF):-!,as_f_t(X@>Y,TF).
 eval_args2(Self,[assertEqual,X,Y],TF):-!,as_f_t(X\=Y,TF).
 as_f_t(G,'False'):- call(G),!. as_f_t(_, 'True').
-is_function(F):- atom(F).
 
-is_false(X):- eval_args(Self,X,Y), (Y=0;Y='False'),!.
+%metta_atom_iter(Other,H):- metta_atom(Other,H).
+metta_atom_iter(Other,H):- eval_args(Other,H,_).
+
+
+metta_atom_iter(Other,[=,H,B]):-metta_defn(Other,H,B).
+metta_atom_iter(Other,H):-metta_atom(Other,H).
+metta_atom_iter_ref(Other,[=,H,B],Ref):-clause(metta_defn(Other,H,B),true,Ref).
+metta_atom_iter_ref(Other,H,Ref):-clause(metta_atom(Other,H),true,Ref).
 
 fn_append(List,X,Call):-
   fn_append1(List,X,ListX),
   into_fp(ListX,Call).
 
+is_function(F):- atom(F).
+is_false(X):- eval_args(Self,X,Y), (Y=0;Y='False'),!.
 is_conz(S):- compound(S), S=[_|_].
 
 %dont_x(eval_args(Self,metta_if(A<B,L1,L2),R)).
@@ -487,12 +510,147 @@ fn_append1(eval_args(Self,Term,X),X,eval_args(Self,Term,X)):-!.
 fn_append1(Term,X,eval_args(Self,Term,X)).
 do:- cls, make, current_prolog_flag(argv,P),append(_,['--args'|Rest],P),maplist(load_metta('&self'),Rest).
 
-%metta_defn(Self,Fn,X,List):- fbug(metta_defn(Self,Fn,X,List)).
-
-
 quick_test:-
   set_prolog_flag(encoding,iso_latin_1),
    forall(quick_test(Test),
                   forall(open_string(Test,Stream),
                     load_metta_stream('&self',Stream))).
+
+mf('./1-VSpaceTest.metta').
+mf('./2-VSpaceTest.metta').
+mf('./3-Learn-Rules.metta').
+mf('./4-VSpaceTest.metta').
+mf('./5-Learn-Flybase.metta').
+mf('./6-Learn-Flybase-Full.metta').
+mf('./8-VSpaceTest.metta').
+mf('./autoexec.metta').
+mf('./data/OBO-Metta/export/Alliance_of_Genome_Resources.metta').
+mf('./data/OBO-Metta/export/biosapiens.metta').
+mf('./data/OBO-Metta/export/chebi_fb_2023_04.metta').
+mf('./data/OBO-Metta/export/DBVAR.metta').
+mf('./data/OBO-Metta/export/doid.metta').
+mf('./data/OBO-Metta/export/flybase_controlled_vocabulary.metta').
+mf('./data/OBO-Metta/export/flybase_stock_vocabulary.metta').
+mf('./data/OBO-Metta/export/fly_anatomy.metta').
+mf('./data/OBO-Metta/export/fly_development.metta').
+mf('./data/OBO-Metta/export/gene_group_FB2023_04.metta').
+mf('./data/OBO-Metta/export/go-basic.metta').
+mf('./data/OBO-Metta/export/image.metta').
+mf('./data/OBO-Metta/export/psi-mi.metta').
+mf('./data/OBO-Metta/export/slice.chebi.metta').
+mf('./data/OBO-Metta/export/so-simple.metta').
+mf('./data/OBO-Metta/export/so.metta').
+mf('./data/OBO-Metta/export/SOFA.metta').
+mf('./examples/compat/common/BelieveMe.metta').
+mf('./examples/compat/common/EqualityType.metta').
+mf('./examples/compat/common/EqualityTypeTest.metta').
+mf('./examples/compat/common/formula/DeductionFormula.metta').
+mf('./examples/compat/common/formula/DeductionFormulaTest.metta').
+mf('./examples/compat/common/formula/ImplicationDirectIntroductionFormula.metta').
+mf('./examples/compat/common/formula/ModusPonensFormula.metta').
+mf('./examples/compat/common/In.metta').
+mf('./examples/compat/common/InTest.metta').
+mf('./examples/compat/common/List.metta').
+mf('./examples/compat/common/ListTest.metta').
+mf('./examples/compat/common/Maybe.metta').
+mf('./examples/compat/common/MaybeTest.metta').
+mf('./examples/compat/common/Num.metta').
+mf('./examples/compat/common/NumTest.metta').
+mf('./examples/compat/common/OrderedSet.metta').
+mf('./examples/compat/common/OrderedSetTest.metta').
+mf('./examples/compat/common/Record.metta').
+mf('./examples/compat/common/truthvalue/EvidentialTruthValue.metta').
+mf('./examples/compat/common/truthvalue/EvidentialTruthValueTest.metta').
+mf('./examples/compat/common/truthvalue/MeasEq.metta').
+mf('./examples/compat/common/truthvalue/TemporalTruthValue.metta').
+mf('./examples/compat/common/truthvalue/TruthValue.metta').
+mf('./examples/compat/common/truthvalue/TruthValueTest.metta').
+mf('./examples/compat/dependent-types/DeductionDTL.metta').
+mf('./examples/compat/dependent-types/DeductionDTLTest.metta').
+mf('./examples/compat/dependent-types/DeductionImplicationDirectIntroductionDTLTest.metta').
+mf('./examples/compat/dependent-types/ImplicationDirectIntroductionDTL.metta').
+mf('./examples/compat/dependent-types/ImplicationDirectIntroductionDTLTest.metta').
+mf('./examples/compat/dependent-types/ModusPonensDTL.metta').
+mf('./examples/compat/dependent-types/ModusPonensDTLTest.metta').
+mf('./examples/compat/entail/DeductionEntail.metta').
+mf('./examples/compat/entail/DeductionEntailTest.metta').
+mf('./examples/compat/entail/ImplicationDirectIntroductionEntail.metta').
+mf('./examples/compat/entail/ImplicationDirectIntroductionEntailTest.metta').
+mf('./examples/compat/equal/DeductionEqual.metta').
+mf('./examples/compat/equal/DeductionEqualTest.metta').
+mf('./examples/compat/equal/ImplicationDirectIntroductionEqual.metta').
+mf('./examples/compat/equal/ImplicationDirectIntroductionEqualTest.metta').
+mf('./examples/compat/match/DeductionImplicationDirectIntroductionMatchTest.metta').
+mf('./examples/compat/match/DeductionMatch.metta').
+mf('./examples/compat/match/DeductionMatchTest.metta').
+mf('./examples/compat/match/ImplicationDirectIntroductionMatch.metta').
+mf('./examples/compat/match/ImplicationDirectIntroductionMatchTest.metta').
+mf('./examples/compat/prob-dep-types/inf_order_probs.metta').
+mf('./examples/compat/prob-dep-types/prob_dep_types.metta').
+mf('./examples/compat/recursion-schemes/src/base.metta').
+mf('./examples/compat/recursion-schemes/src/examples/benchmark.metta').
+mf('./examples/compat/recursion-schemes/src/examples/expression.metta').
+mf('./examples/compat/recursion-schemes/src/schemes.metta').
+mf('./examples/compat/synthesis/experiments/non-determinism.metta').
+mf('./examples/compat/synthesis/experiments/self-contained-synthesize.metta').
+mf('./examples/compat/synthesis/experiments/synthesize-via-case-test.metta').
+mf('./examples/compat/synthesis/experiments/synthesize-via-case.metta').
+mf('./examples/compat/synthesis/experiments/synthesize-via-let-test.metta').
+mf('./examples/compat/synthesis/experiments/synthesize-via-let.metta').
+mf('./examples/compat/synthesis/experiments/synthesize-via-superpose.metta').
+mf('./examples/compat/synthesis/experiments/synthesize-via-type-checking.metta').
+mf('./examples/compat/synthesis/experiments/synthesize-via-unify-test.metta').
+mf('./examples/compat/synthesis/experiments/synthesize-via-unify.metta').
+mf('./examples/compat/synthesis/experiments/unify-via-case.metta').
+mf('./examples/compat/synthesis/experiments/unify-via-let.metta').
+mf('./examples/compat/synthesis/Synthesize.metta').
+mf('./examples/compat/synthesis/SynthesizeTest.metta').
+mf('./examples/compat/synthesis/Unify.metta').
+mf('./examples/compat/synthesis/UnifyTest.metta').
+mf('./examples/compat/test_scripts/a1_symbols.metta').
+mf('./examples/compat/test_scripts/a2_opencoggy.metta').
+mf('./examples/compat/test_scripts/a3_twoside.metta').
+mf('./examples/compat/test_scripts/b0_chaining_prelim.metta').
+mf('./examples/compat/test_scripts/b1_equal_chain.metta').
+mf('./examples/compat/test_scripts/b2_backchain.metta').
+mf('./examples/compat/test_scripts/b3_direct.metta').
+mf('./examples/compat/test_scripts/b4_nondeterm.metta').
+mf('./examples/compat/test_scripts/b5_types_prelim.metta').
+mf('./examples/compat/test_scripts/c1_grounded_basic.metta').
+mf('./examples/compat/test_scripts/c2_spaces.metta').
+mf('./examples/compat/test_scripts/c2_spaces_kb.metta').
+mf('./examples/compat/test_scripts/c3_pln_stv.metta').
+mf('./examples/compat/test_scripts/d1_gadt.metta').
+mf('./examples/compat/test_scripts/d2_higherfunc.metta').
+mf('./examples/compat/test_scripts/d3_deptypes.metta').
+mf('./examples/compat/test_scripts/d4_type_prop.metta').
+mf('./examples/compat/test_scripts/d5_auto_types.metta').
+mf('./examples/compat/test_scripts/e1_kb_write.metta').
+mf('./examples/compat/test_scripts/e2_states.metta').
+mf('./examples/compat/test_scripts/e3_match_states.metta').
+mf('./examples/compat/test_scripts/f1_imports.metta').
+mf('./examples/compat/test_scripts/f1_moduleA.metta').
+mf('./examples/compat/test_scripts/f1_moduleB.metta').
+mf('./examples/compat/test_scripts/f1_moduleC.metta').
+mf('./examples/compat/test_scripts/_e2_states_dia.metta').
+mf('./examples/fibo.metta').
+mf('./examples/fwgc.metta').
+mf('./examples/httpclient.metta').
+mf('./examples/NARS.metta').
+mf('./examples/NARS_listing.metta').
+mf('./examples/RUN_minnars.metta').
+mf('./examples/RUN_tests0.metta').
+mf('./examples/RUN_tests1.metta').
+mf('./examples/RUN_tests2.metta').
+mf('./examples/RUN_tests3.metta').
+mf('./examples/send-more.metta').
+mf('./examples/talk80.metta').
+mf('./examples/VRUN_tests0.metta').
+mf('./examples/VRUN_tests1.metta').
+mf('./examples/VRUN_tests2.metta').
+mf('./examples/VRUN_tests3.metta').
+mf('./metta_vspace/nm_test.metta').
+mf('./metta_vspace/r.metta').
+mf('./metta_vspace/test_nspace.metta').
+:- forall(mf(H),add_history1(load_metta(H))).
 
