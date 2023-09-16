@@ -1,3 +1,5 @@
+
+:- ensure_loaded(metta_testing).
 :- ensure_loaded(swi_support).
 :- ensure_loaded(swi_flybase).
 % TODO move non flybase specific code between here and the compiler
@@ -34,14 +36,16 @@ eval_args(Self,X,Y):- nonvar(Y),!,eval_args(Self,X,XX),evals_to(XX,Y).
 eval_args(Self,X,Y):- eval_args0(Self,X,Y).
 %eval_args(Self,X,Y):- eval_args0(Self,X,Y)*->true;Y=[].
 
+
+
 eval_args0(_Slf,X,Y):- self_eval(X),!,Y=X.
 eval_args0(Self,[V|VI],[V|VO]):- var(V),is_list(VI),!,maplist(eval_args(Self),VI,VO).
 eval_args0(Self,[V|VI],VVO):-  \+ is_list(VI),eval_args(Self,VI,VM),
   ( VM\==VI -> eval_args(Self,[V|VM],VVO) ;
     (eval_args(Self,V,VV), (V\==VV -> eval_args(Self,[VV|VI],VVO) ; VVO = [V|VI]))).
 
-eval_args0(Self,['assertEqual',X,Y],TF):- !, fa_eval_args(Self,X,XX),fa_eval_args(Self,Y,YY),!,trace,as_tf(XX=@=YY,TF).
-eval_args0(Self,['assertEqualToResult',X,Y],TF):- !,fa_eval_args(Self,X,L),!,trace,as_tf(L=@=Y,TF).
+eval_args0(Self,['assertEqual',X,Y],TF):- !, fa_eval_args(Self,X,XX),fa_eval_args(Self,Y,YY),!,loonit_asserts(XX=@=YY),as_tf(XX=@=YY,TF).
+eval_args0(Self,['assertEqualToResult',X,Y],TF):- !,fa_eval_args(Self,X,L),!,loonit_asserts(L=@=Y),as_tf(L=@=Y,TF).
 eval_args0(Self,[X|Nil],[Y]):- Nil ==[],!,eval_args(Self,X,Y).
 eval_args0(Self,X,Y):- eval_args1(Self,X,M),(M\==X->eval_args(Self,M,Y);Y=X).
 
@@ -65,7 +69,7 @@ eval_args1(Self,['match',Other,Goal,Template],Template):- into_space(Self,Other,
 
 %[superpose,[1,2,3]]
 eval_args1(Self,['superpose',List],Res):- !, member(E,List),eval_args(Self,E,Res).
-eval_args1(Self, [F|Term], Res):-
+eval_args1(Self, [F|Term], Res):- fail,
    member(ATerm,Term), get_sa_p1(setarg,ST,ATerm,P1),
    %compound(ST), %is_list(ST),
    ST = [SF,List],
@@ -216,8 +220,11 @@ needs_expanded([A|B],Expand):- sub_term(Expand,[A|B]), compound(Expand), \+ is_c
 fn_append1(eval_arg(Term,X),X,eval_arg(Term,X)):-!.
 fn_append1(Term,X,eval_arg(Term,X)).
 
-do:- cls, make, current_prolog_flag(argv,P),append(_,['--args'|Rest],P),Rest\==[],!,maplist(load_metta('&self'),Rest).
-do:- repl.
+
+run_file_arg:- current_prolog_flag(argv,P),append(_,['--args'|Rest],P),Rest\==[],!,maplist(load_metta('&self'),Rest).
+
+loon:- loonit_reset, cls, make, run_file_arg, !, loonit_report.
+loon:- repl.
 
 
 % Check if parentheses are balanced in a list of characters
@@ -320,21 +327,12 @@ subst_vars(M,M).
 metta_anew(load,NV):- subst_vars(NV,Cl),assert_if_new(Cl),ppm(NV).
 metta_anew(unload,NV):- subst_vars(NV,Cl),ignore((clause(Cl,_,Ref),clause(Cl2,_,Ref),Cl=@=Cl2,erase(Ref),ppm(Cl))).
 
-ppm(Cl):-
-  notrace((format('~N'), ignore(( \+ ((numbervars(Cl,0,_,[singletons(true)]), print_tree_with_final(Cl,"."))))))).
+
 
 :- dynamic((metta_type/3,metta_defn/3,metta_atom/2)).
 
 into_space(Self,'&self',Self):-!.
 into_space(_,Other,Other).
-
-
-substM(T, F, R, R):- T==F,!.
-substM(T, _, _, R):- \+ compound(T),!,R=T.
-substM([H1|T1], F, R, [H2|T2]) :- !, substM(H1, F, R, H2), substM(T1, F, R, T2).
-substM(C1, F, R, C2) :- C1 =.. [Fn|A1], substM_l(A1,F,R,A2),!, C2 =.. [Fn|A2].
-substM_l([], _, _, []).  substM_l([H1|T1], F, R, [H2|T2]) :- substM(H1, F, R, H2), substM_l(T1, F, R, T2).
-
 
 eval_f_args(Self,F,ARGS,[F|EARGS]):- maplist(eval_args(Self),ARGS,EARGS).
 self_eval(X):- var(X),!.
@@ -369,4 +367,4 @@ do_metta_exec(Self,TermV):-!, ppm(:- metta_eval(TermV)),
 
 s2p(I,O):- sexpr_sterm_to_pterm(I,O),!.
 
-:- ensure_loaded(metta_testing).
+

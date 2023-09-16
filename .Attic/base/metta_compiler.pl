@@ -7,6 +7,7 @@
 % PySWIP is 222 times faster per join
 % =======================================
 :- ensure_loaded(swi_support).
+:- ensure_loaded(metta_testing).
 :- set_option_value(encoding,iso_latin_1).
 
 

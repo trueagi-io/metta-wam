@@ -20,10 +20,11 @@ The Candidate Elimination algorithm is a conceptual learning algorithm that incr
 ### :toolbox: Installation
 ```
 # Clone the repository
-git clone https://github.com/logicmoo/metta-vspace
+git clone https://github.com/logicmoo/vspace-metta
+
 
 # Change to the cloned directory
-cd metta-vspace
+cd vspace-metta
 
 # Install the package
 export PYTHONPATH=$PWD/metta_vspace:$PYTHONPATH
@@ -59,11 +60,11 @@ git clone https://github.com/The-Sequence-Ontology/SO-Ontologies data/SO-Ontolog
   metta 1-VSpaceTest.metta
   @h
   ```
-- Launch the metta-vspace Jupyter notebook:
+- Launch the vspace-metta Jupyter notebook:
   ```
   ./start_jupyter.sh
   ```
-- Run long huge tests of metta-vspace
+- Run long huge tests of vspace-metta
   ```
   ./test_in_metta.sh
   ```
@@ -130,8 +131,24 @@ Pass Test:(Values same: [[B]] == [[B]])
 - Appreciation to [Flybase](https://flybase.org) for their genetic data that aids in learning and testing.
 
 ## :phone: Support
-- For support, queries, or feature suggestions, kindly open an issue on our [GitHub repository](https://github.com/logicmoo/metta-vspace/issues).
+- For support, queries, or feature suggestions, kindly open an issue on our [GitHub repository](https://github.com/logicmoo/vspace-metta/issues).
 
 ## :scroll: License
-- metta-vspace is distributed under the LGPL License.
+- vspace-metta is distributed under the LGPL License.
+
+## metta_interp.PL
+
+```
+space-metta# swipl
+Welcome to SWI-Prolog (threaded, 64 bits, version 9.1.15-49-g93d0c9ac6)
+SWI-Prolog comes with ABSOLUTELY NO WARRANTY. This is free software.
+Please run ?- license. for legal details.
+
+For online help and background, visit https://www.swi-prolog.org
+For built-in help, use ?- help(Topic). or ?- apropos(Word).
+
+?- pack_install(logicmoo_utils).
+% Contacting server at https://www.swi-prolog.org/pack/query ... ok
+% Pack `logicmoo_utils' is already installed @3.1.3
+```
 
