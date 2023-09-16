@@ -5,7 +5,7 @@
 :- if(flush_output). :- endif.
 :- if(setenv('RUST_BACKTRACE',full)). :- endif.
 %:- if(\+ current_module(sxpr_reader)).
-:- if( \+ current_prolog_flag(wamcl_modules,false)).
+:- if( (false, \+ current_prolog_flag(wamcl_modules,false))).
 :- module(s3xpr,[
   parse_sexpr/2,
   codelist_to_forms/2,
@@ -35,15 +35,20 @@
   parse_sexpr/2]).
 :- endif.
 
+:- ensure_loaded(swi_support).
+:- ensure_loaded(library(logicmoo_utils)).
+:- ensure_loaded(metta_testing).
 :- set_prolog_flag(encoding,iso_latin_1).
 is_wam_cl:- fail.
 
 :- use_module(library(backcomp)).
 :- use_module(library(rbtrees)).
 
+/*
 :- use_module(library(logicmoo_common)).
 :- use_module(library(logicmoo/dcg_must)).
 :- use_module(library(logicmoo/dcg_meta)).
+*/
 
 %:- meta_predicate always_b(//,?,?).
 %:- meta_predicate bx(0).
@@ -1189,8 +1194,8 @@ fixvars(P,_,[],P):-!.
 fixvars(P,N,[V|VARS],PO):-
      quietly_sreader((atom_string(Name,V))),
      svar_fixvarname(Name,NB),Var = '$VAR'(NB),
-     subst(P,'$VAR'(N),Var,PM0),
-     subst(PM0,'$VAR'(Name),Var,PM),
+     substM(P,'$VAR'(N),Var,PM0),
+     substM(PM0,'$VAR'(Name),Var,PM),
    %  (get_varname_list(Vs)->true;Vs=[]),
   %   append(Vs,[Name=Var],NVs),
   %   nput_variable_names( NVs),
@@ -1522,6 +1527,6 @@ writeqnl(O):-writeq(O),nl.
 
 
 
-:- fixup_exports.
+%:- fixup_exports.
 %:- endif.
 

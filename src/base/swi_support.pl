@@ -2,7 +2,6 @@
 :- set_prolog_flag(verbose_autoload, false).
 :- set_prolog_flag(verbose, silent).
 :- set_prolog_flag(verbose_load, silent).
-:- ensure_loaded(library(logicmoo_utils)).
 :- assert((user:'$exported_op'(_,_,_):- fail)).
 :- abolish((system:'$exported_op'/3)).
 :- assert((system:'$exported_op'(_,_,_):- fail)).
@@ -63,7 +62,7 @@ kaggle_arc:-
 
 %:- ensure_loaded((read_obo2)).
 
-:- kaggle_arc.
+%:- kaggle_arc.
 
 symbol(X):- atom(X).
 symbolic(X):- atomic(X).
