@@ -36,7 +36,7 @@
 :- endif.
 
 :- ensure_loaded(swi_support).
-:- ensure_loaded(library(logicmoo_utils)).
+:- ensure_loaded(metta_utils).
 :- ensure_loaded(metta_testing).
 :- set_prolog_flag(encoding,iso_latin_1).
 is_wam_cl:- fail.
