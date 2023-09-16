@@ -21,6 +21,7 @@ from hyperon.atoms import Atom as MeTTaAtom
 from pyswip import (call, Functor, PL_discard_foreign_frame, PL_new_term_ref, PL_open_foreign_frame, registerForeign, PL_PRUNED, PL_retry, PL_FA_NONDETERMINISTIC, PL_foreign_control, PL_foreign_context, PL_FIRST_CALL, PL_REDO, Variable, Prolog as PySwip)
 from pyswip.easy import newModule, Query
 from hyperon.atoms import *
+from janus import *
 import openai
 import hyperon
 try:
@@ -296,7 +297,7 @@ class VSpaceRef(SpaceRef):
         return result
 
 
-def foriegn_framed(func):
+def foreign_framed(func):
     def wrapper(*args, **kwargs):
         swipl_fid = PL_open_foreign_frame()
         result = None
@@ -331,7 +332,7 @@ class VSpace(AbstractSpace):
         return swipRef(self.sp_name)
         #return self.sp_name
 
-    @foriegn_framed
+    @foreign_framed
     def query(self, query_atom):
         new_bindings_set = BindingsSet.empty()
         #swipl_load = PL_new_term_ref()
@@ -374,32 +375,32 @@ class VSpace(AbstractSpace):
             if verbose>0: traceback.print_exc()
         finally: q.closeQuery()
 
-    @foriegn_framed
+    @foreign_framed
     def add(self, atom):
         circles = Circles()
         return self._call("metta_add", m2s(circles,atom))
 
-    @foriegn_framed
+    @foreign_framed
     def add_atom(self, atom):
         circles = Circles()
         return self._call("metta_add", m2s(circles,atom))
 
-    @foriegn_framed
+    @foreign_framed
     def remove_atom(self, atom):
         circles = Circles()
         return self._call("metta_rem", m2s(circles,atom))
 
-    @foriegn_framed
+    @foreign_framed
     def remove(self, atom):
         circles = Circles()
         return self._call("metta_rem", m2s(circles,atom))
 
-    @foriegn_framed
+    @foreign_framed
     def replace(self, from_atom, to_atom):
         circles = Circles()
         return self._call("metta_replace", m2s(circles,from_atom), m2s(circles,to_atom))
 
-    @foriegn_framed
+    @foreign_framed
     def atom_count(self):
         result = list(swip.query(f"metta_count('{self.sp_name}',AtomCount)"))
         if verbose>1: print(result)
@@ -408,7 +409,7 @@ class VSpace(AbstractSpace):
             C = C.value
         return C
 
-    @foriegn_framed
+    @foreign_framed
     def get_atoms(self):
         circles = Circles()
         result = list(swip.query(f"metta_atoms('{self.sp_name}',AtomsList)"))
@@ -500,6 +501,7 @@ class FederatedSpace(VSpace):
 
     def copy(self):
         return self
+
 
 @export_flags(MeTTa=True)
 def test_custom_v_space():
@@ -1591,6 +1593,54 @@ def register_vspace_tokens(metta):
     return syms_dict
 
 
+# Define the foreign functions
+@export_flags(Janus=True)
+def query_from_space(space_name, query_atom, result):
+    space = getNameBySpace(space_name)
+    if space:
+        atoms = space.query(query_atom)
+        result.unify(atoms)
+        return True
+    return False
+
+@export_flags(Janus=True)
+def add_from_space(space_name, atom):
+    space = getNameBySpace(space_name)
+    if space:
+        return space.add(atom)
+    return False
+
+@export_flags(Janus=True)
+def remove_from_space(space_name, atom):
+    space = getNameBySpace(space_name)
+    if space:
+        return space.remove(atom)
+    return False
+
+@export_flags(Janus=True)
+def replace_from_space(space_name, from_atom, to_atom):
+    space = getNameBySpace(space_name)
+    if space:
+        return space.replace(from_atom, to_atom)
+    return False
+
+@export_flags(Janus=True)
+def atom_count_from_space(space_name, count):
+    space = getNameBySpace(space_name)
+    if space:
+        count.unify(space.atom_count())
+        return True
+    return False
+
+@export_flags(Janus=True)
+def atoms_iter_from_space(space_name, result):
+    space = getNameBySpace(space_name)
+    if space:
+        atoms = list(space.atoms_iter())
+        result.unify(atoms)
+        return True
+    return False
+
 def reg_pyswip_foreign():
 
     def py_eval(e, result):
@@ -1598,6 +1648,19 @@ def reg_pyswip_foreign():
 
     py_eval.arity = 2
     registerForeign(py_eval)
+    # Register the foreign functions in PySwip
+    registerForeign(query_from_space, arity=3)
+    registerForeign(add_from_space, arity=2)
+    registerForeign(remove_from_space, arity=2)
+    registerForeign(replace_from_space, arity=3)
+    registerForeign(atom_count_from_space, arity=2)
+    registerForeign(atoms_iter_from_space, arity=2)
+    #?- query_from_space('example', 'my_atom', Result).
+    #?- add_from_space('example', 'new_atom').
+    #?- remove_from_space('example', 'some_atom').
+    #?- replace_from_space('example', 'old_atom', 'new_atom').
+    #?- atom_count_from_space('example', Count).
+    #?- atoms_iter_from_space('example', Atoms).
 
 
 @export_flags(MeTTa=True)
@@ -1684,7 +1747,7 @@ def test_nondeterministic_foreign():
 
 
 
-@export_flags(pyswip=True)
+@export_flags(Janus=True)
 def swip_to_metta_wrapper(swip_obj, metta_obj):
     circles = Circles()
     result1 = m2s(circles,s2m(circles,swip_obj))
@@ -1693,7 +1756,7 @@ def swip_to_metta_wrapper(swip_obj, metta_obj):
     return result2.unify(result1)
     #return True
 
-@export_flags(pyswip=True)
+@export_flags(Janus=True)
 def metta_to_swip_wrapper(metta_obj, swip_obj):
     circles = Circles()
     result1 = m2s(circles,metta_obj)
@@ -1764,7 +1827,7 @@ def load_flybase(size):
    swip_exec(f"load_flybase({size})")
 
 @export_flags(MeTTa=True)
-@foriegn_framed
+@foreign_framed
 def swip_exec(qry):
     #from metta_vspace import swip
     #if is_init==True:

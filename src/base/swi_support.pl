@@ -1,5 +1,11 @@
 
-
+:- set_prolog_flag(verbose_autoload, false).
+:- set_prolog_flag(verbose, silent).
+:- set_prolog_flag(verbose_load, silent).
+:- ensure_loaded(library(logicmoo_utils)).
+:- assert((user:'$exported_op'(_,_,_):- fail)).
+:- abolish((system:'$exported_op'/3)).
+:- assert((system:'$exported_op'(_,_,_):- fail)).
 
 fbug(P) :- format("~N"), with_output_to(user_error,pp_fb(P)),!.
 fbug(N=V) :- nonvar(N), !, fbdebug1(N:-V).
@@ -58,7 +64,6 @@ kaggle_arc:-
 %:- ensure_loaded((read_obo2)).
 
 :- kaggle_arc.
-
 
 symbol(X):- atom(X).
 symbolic(X):- atomic(X).
