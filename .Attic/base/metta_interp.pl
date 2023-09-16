@@ -55,11 +55,28 @@ into_values(List,Many):- List==[],!,Many=[].
 into_values([X|List],Many):- List==[],is_list(X),!,Many=X.
 into_values(Many,Many).
 
+
+get_sa_p1(P3,E,Cmpd,SA):-  compound(Cmpd), get_sa_p2(P3,E,Cmpd,SA).
+get_sa_p2(P3,E,Cmpd,call(P3,N1,Cmpd)):- arg(N1,Cmpd,E).
+get_sa_p2(P3,E,Cmpd,SA):- arg(_,Cmpd,Arg),get_sa_p1(P3,E,Arg,SA).
+
+
 eval_args1(Self,['match',Other,Goal,Template],Template):- into_space(Self,Other,Space),!, metta_atom_iter(Space,Goal).
+
 %[superpose,[1,2,3]]
 eval_args1(Self,['superpose',List],Res):- !, member(E,List),eval_args(Self,E,Res).
+eval_args1(Self, [F|Term], Res):-
+   member(ATerm,Term), get_sa_p1(setarg,ST,ATerm,P1),
+   %compound(ST), %is_list(ST),
+   ST = [SF,List],
+  SF=='superpose',% List\==[],
+    is_list(List), %maplist(atomic,List),
+   call(P1,Var),!,
+   member(Var,List),
+   eval_args1(Self, [F|Term], Res).
+
 eval_args1(Self, Term, Res):-
-   get_setarg_p1(setarg,ST,Term,P1), % ST\==Term,
+   get_sa_p1(setarg,ST,Term,P1), % ST\==Term,
    compound(ST), is_list(ST),ST = [F,List],F=='superpose', %maplist(atomic,List),
    call(P1,Var),!,
    member(Var,List),
