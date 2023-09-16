@@ -1,4 +1,12 @@
+
+:- set_prolog_flag(verbose_autoload, false).
+:- set_prolog_flag(verbose, silent).
+:- set_prolog_flag(verbose_load, silent).
 :- ensure_loaded(library(logicmoo_utils)).
+:- assert((user:'$exported_op'(_,_,_):- fail)).
+:- abolish((system:'$exported_op'/3)).
+:- assert((system:'$exported_op'(_,_,_):- fail)).
+
 :- ensure_loaded(library(dictoo)).
 :- export(plain_var/1).
 plain_var(V):- notrace((var(V), \+ attvar(V), \+ get_attr(V,ci,_))).
