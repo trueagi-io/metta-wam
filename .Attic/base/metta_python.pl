@@ -23,9 +23,20 @@ ensure_space(Space,GSpace):- py_is_object(Space),!,GSpace=Space.
 ensure_space(Space,GSpace):-
    var(Space),init_metta_space(GSpace), Space=GSpace.
 
-% Initialize the hyperon.base.GroundingSpace and get a reference
+:- dynamic(is_metta/1).
+init_metta(MeTTa):- is_metta(MeTTa),!.
+init_metta(MeTTa):-
+   py_call(hyperon:'MeTTa'(),MeTTa),
+   asserta(is_metta(MeTTa)).
+
+:- dynamic(is_metta_space/1).
+% Initialize a new hyperon.base.GroundingSpace and get a reference
+init_metta_space(GSpace) :- is_metta_space(GSpace),!.
+init_metta_space(GSpace) :- init_metta(MeTTa), py_call(MeTTa:space(),GSpace),
+    asserta(is_metta_space(GSpace)).
 init_metta_space(GSpace) :-
-    py_call('hyperon.base.GroundingSpace'(), GSpace).
+    py_call(hyperon:base:'GroundingSpace'(), GSpace),
+    asserta(is_metta_space(GSpace)).
 
 % Query from hyperon.base.GroundingSpace
 query_from_space(Space, QueryAtom, Result) :-
