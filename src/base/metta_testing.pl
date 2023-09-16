@@ -15,31 +15,33 @@ loonit_reset :-
     flag(loonit_success, _, 0).
 
 % Increment loonit counters based on goal evaluation
-loonit_asserts(G) :-
-    call(G), !,
+
+loonit_asserts(Pre,G):- once(Pre),loonit_asserts1(Pre,G).
+loonit_asserts1(_Pre,G) :-
+    call(G), !, ansi_format([fg(cyan)], '~N~p~n', [loonit_success(G)]),
     flag(loonit_success, X, X+1).
-
-loonit_asserts(G) :-
-    flag(loonit_failure, X, X+1),
-    itrace, G.
-
-% ANSI escape codes for colors
-ansi_green(Fmt, Args) :-
-    format('\e[32m~w\e[0m', [Fmt]),
-    format(Fmt, Args).
-
-ansi_red(Fmt, Args) :-
-    format('\e[31m~w\e[0m', [Fmt]),
-    format(Fmt, Args).
+loonit_asserts1(Pre,G) :-
+    ansi_format([fg(red)], '~N~p~n~p~n', [Pre,loonit_failure(G)]),
+    flag(loonit_failure, X, X+1), !. %itrace, G.
+    %(thread_self(main)->trace;sleep(0.3))
 
 % Generate loonit report with colorized output
 loonit_report :-
-    flag(loonit_success, Successes, 0),
-    flag(loonit_failure, Failures, 0),
+    flag(loonit_success, Successes, Successes),
+    flag(loonit_failure, Failures, Failures),
     ansi_format([bold], 'LoonIt Report~n',[]),
     format('------------~n'),
     ansi_format([fg(green)], 'Successes: ~w~n', [Successes]),
     ansi_format([fg(red)], 'Failures: ~w~n', [Failures]).
+
+% Resets loonit counters, consults the given file, and prints the status report.
+loon_metta(File) :-
+    flag(loonit_success, WasSuccesses, 0),
+    flag(loonit_failure, WasFailures, 0),
+    load_metta(File),
+    loonit_report,
+    flag(loonit_success, _, WasSuccesses),
+    flag(loonit_failure, _, WasFailures),!.
 
 
 quick_test:-
