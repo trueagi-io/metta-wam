@@ -7,6 +7,8 @@
 :- ensure_loaded(metta_reader).
 :- ensure_loaded(metta_python).
 
+:- set_prolog_flag(occurs_check,true).
+
 load_metta(Filename):-
  atom(Filename),exists_file(Filename),!,
  clear_spaces,
@@ -14,6 +16,7 @@ load_metta(Filename):-
 load_metta(Filename):- with_wild_path(load_metta,Filename),!,loonit_report.
 
 load_metta(Self,Filename):-
+ notrace, nortrace,
  atom(Filename),exists_file(Filename),!,
  track_load_into_file(Filename,
    setup_call_cleanup(open(Filename,read,In),
@@ -33,7 +36,8 @@ load_metta_stream(Fn,String):- string(String),!,open_string(String,Stream),load_
 load_metta_stream(_Fn,In):- (at_end_of_stream(In);reached_file_max),!.
 load_metta_stream(Self,In):- repeat,
   once(read_metta(In,Read)),
-  once((Read==end_of_file->true;do_metta(Self,load,Read))),
+  once((Read==end_of_file->true;
+   cwdl(800,do_metta(Self,load,Read)))),
   (at_end_of_stream(In);reached_file_max),!.
 
 
@@ -51,17 +55,16 @@ eval_arg(A,AA):-
 eval_args0(Depth,Self,X,Y):- nonvar(Y),!,eval_args0(Depth,Self,X,XX),evals_to(XX,Y).
 eval_args0(Depth,Self,X,Y):-
   no_repeats_var(Y),
-  D1 is Depth-1,D2 is D1-1,
-  eval_args1(D1,Self,X,M),
-  eval_args1(D2,Self,M,Y).
+  D1 is Depth-1, eval_args1(D1,Self,X,Y).
 %eval_args0(Depth,Self,X,Y):- eval_args1(Depth,Self,X,Y)*->true;Y=[].
 
 eval_args1(Depth,Self,[V|VI],[V|VO]):- var(V),is_list(VI),!,maplist(eval_args0(Depth,Self),VI,VO).
 eval_args1(Depth,Self,['assertEqual',X,Y],TF):- !, ((loonit_asserts((fa_eval_args0(Depth,Self,X,XX),fa_eval_args0(Depth,Self,Y,YY)),XX=@=YY))),as_tf(XX=@=YY,TF).
 eval_args1(Depth,Self,['assertEqualToResult',X,Y],TF):- !, (( loonit_asserts((fa_eval_args0(Depth,Self,X,L)),L=@=Y))),as_tf(L=@=Y,TF).
 eval_args1(_Dpth,_Slf,Name,Value):- atom(Name), nb_current(Name,Value),!.
+eval_args1(Depth,_,_,_):- Depth<1,!,fail.
+eval_args1(Depth,_,X,Y):- Depth<3, !, ground(X), (Y=X).
 eval_args1(_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
-eval_args1(Depth,_Slf,X,Y):- Depth<1,!,fail,Y=X.
 eval_args1(Depth,Self,[V|VI],VVO):-  \+ is_list(VI),eval_args0(Depth,Self,VI,VM),
   ( VM\==VI -> eval_args0(Depth,Self,[V|VM],VVO) ;
     (eval_args0(Depth,Self,V,VV), (V\==VV -> eval_args0(Depth,Self,[VV|VI],VVO) ; VVO = [V|VI]))).
@@ -79,8 +82,7 @@ into_values([X|List],Many):- List==[],is_list(X),!,Many=X.
 into_values(Many,Many).
 
 
-
-eval_args2(Depth,_Slf,Name,Value):- atom(Name),!, nb_current(Name,Value).
+eval_args2(_Dpth,_Slf,Name,Value):- atom(Name), nb_current(Name,Value),!.
 eval_args2(Depth,Self,['match',Other,Goal,Template],Template):- into_space(Self,Other,Space),!, metta_atom_iter(Depth,Space,Goal).
 % Macro Functions
 eval_args2(Depth,Self,['case',A,[Case1|CaseN]|NonCases],Res):- !,
@@ -183,12 +185,13 @@ eval_selfless(LIS,Y):-  notrace((
 
 % less Macro-ey Functions
 
-metta_atom_iter(Depth,_Slf,[]):-!.
-metta_atom_iter(Depth,Other,[Equal,H,B]):- '=' == Equal,!, metta_defn(Other,H,B).
-metta_atom_iter(Depth,_Slf,[And]):- is_and(And),!.
-metta_atom_iter(Depth,Self,[And,X|Y]):- is_and(And),!,metta_atom_iter(Depth,Self,X),metta_atom_iter(Depth,Self,[And|Y]).
-metta_atom_iter(Depth,Other,H):- metta_atom(Other,H).
-metta_atom_iter(Depth,Other,H):- Depth>0, D2 is Depth -1, metta_defn(Other,H,B),metta_atom_iter(D2,Other,B).
+metta_atom_iter(Depth,_,_):- Depth<3,!,fail.
+metta_atom_iter(_Dpth,_Slf,[]):-!.
+metta_atom_iter(_Dpth,Other,H):- metta_atom(Other,H).
+metta_atom_iter(Depth,Other,H):- D2 is Depth -1, metta_defn(Other,H,B),metta_atom_iter(D2,Other,B).
+metta_atom_iter(_Dpth,Other,[Equal,H,B]):- '=' == Equal,!, metta_defn(Other,H,B).
+metta_atom_iter(_Dpth,_Slf,[And]):- is_and(And),!.
+metta_atom_iter(Depth,Self,[And,X|Y]):- is_and(And),!,D2 is Depth -1, metta_atom_iter(D2,Self,X),metta_atom_iter(D2,Self,[And|Y]).
 
 /*
 ; Bind &kb to a new empty Space
@@ -324,7 +327,7 @@ do_repl(_Slf,call(Term)):- add_history1(Term), !, call(Term),!, fail.
 do_repl(Self,Read):-
   (with_output_to(string(H),write_src(Read)),add_history01(H)), do_metta(Self,load,Read),!,fail.
 
-read_metta1(_,O2):- clause(t_l:s_reader_info(O2),_,Ref),erase(Ref).
+read_metta1(_,O2):- notrace, nortrace,clause(t_l:s_reader_info(O2),_,Ref),erase(Ref).
 read_metta1(In,Read):- current_input(In0),In==In0,!, repl_read(Read).
 read_metta1(In,Read):- peek_char(In,Char), read_metta1(In,Char,Read).
 read_metta1(In,Char,Read):- char_type(Char,white),get_char(In,Char),put(Char),!,read_metta1(In,Read).
@@ -387,7 +390,7 @@ into_space(Self,'&self',Self):-!.
 into_space(_,Other,Other).
 into_name(_,Other,Other).
 
-eval_f_args(Self,F,ARGS,[F|EARGS]):- maplist(eval_args0(Depth,Self),ARGS,EARGS).
+%eval_f_args(Depth,Self,F,ARGS,[F|EARGS]):- maplist(eval_args0(Depth,Self),ARGS,EARGS).
 self_eval(X):- var(X),!.
 self_eval(X):- number(X),!.
 self_eval([]).
@@ -416,7 +419,7 @@ do_metta1(Self,Load,PredDecl):- metta_anew(Load,metta_atom(Self,PredDecl)).
 do_metta_exec(Self,Var):- var(Var), !, ppm(eval(Var)), freeze(Var,wdmsg(laterVar(Self,Var))).
 do_metta_exec(Self,TermV):-!, ppm(:- metta_eval(TermV)),
   subst_vars(TermV,Term),
-  forall(eval_args0(10,Self,Term,X),(format('%'),writeln(X))),!.
+  forall(eval_args0(13,Self,Term,X),(format('%'),writeln(X))),!.
 
 s2p(I,O):- sexpr_sterm_to_pterm(I,O),!.
 
