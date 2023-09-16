@@ -16,12 +16,12 @@ loonit_reset :-
 
 % Increment loonit counters based on goal evaluation
 
-loonit_asserts(Pre,G):- once(Pre),loonit_asserts1(Pre,G).
-loonit_asserts1(_Pre,G) :-
-    call(G), !, ansi_format([fg(cyan)], '~N~p~n', [loonit_success(G)]),
-    flag(loonit_success, X, X+1).
+loonit_asserts(Pre,G):- once(Pre),once(loonit_asserts1(Pre,G)).
+loonit_asserts1(Pre,G) :- nop(Pre),
+    call(G), !, ansi_format([fg(cyan)], '~N~p~n', [loonit_success(G)]),!,
+    flag(loonit_success, X, X+1),!.
 loonit_asserts1(Pre,G) :-
-    ansi_format([fg(red)], '~N~p~n~p~n', [Pre,loonit_failure(G)]),
+    ansi_format([fg(red)], '~N~p~n', [loonit_failure(G)]),
     flag(loonit_failure, X, X+1), !. %itrace, G.
     %(thread_self(main)->trace;sleep(0.3))
 
