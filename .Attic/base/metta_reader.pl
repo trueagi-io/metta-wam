@@ -44,11 +44,11 @@ is_wam_cl:- fail.
 :- use_module(library(backcomp)).
 :- use_module(library(rbtrees)).
 
-/*
+
 :- use_module(library(logicmoo_common)).
 :- use_module(library(logicmoo/dcg_must)).
 :- use_module(library(logicmoo/dcg_meta)).
-*/
+
 
 %:- meta_predicate always_b(//,?,?).
 %:- meta_predicate bx(0).
@@ -412,6 +412,7 @@ ugly_sexpr_cont('$OBJ'(sugly,S))                 -->  read_string_until(S,`>`), 
 %sexpr(_) --> `)`,!,{trace,break,throw_reader_error(": an object cannot start with #\\)")}.
 sexpr(X,H,T):- zalwayz(sexpr0(X),H,M),zalwayz(swhite,M,T), nop(if_debugging(sreader,(wdmsg(sexpr(X))))),!.
 %sexpr(X,H,T):- zalwayz(sexpr0(X,H,T)),!,swhite.
+is_common_lisp:- fail.
 
 sexpr0(L)                      --> sblank,!,sexpr(L),!.
 sexpr0(L)                      --> `(`, !, swhite, zalwayz(sexpr_list(L)),!, swhite.
@@ -423,7 +424,7 @@ sexpr0(['#'(quote),E])             --> `'`, !, sexpr(E).
 sexpr0(['#'(hbackquote),E])         --> {is_scm}, `#```, !, sexpr(E).
 sexpr0(['#'(backquote),E])         --> ````, !, sexpr(E).
 sexpr0(['#BQ-COMMA-ELIPSE',E])     --> `,@`, !, sexpr(E).
-sexpr0(['#COMMA',E])               --> `,`, !, sexpr(E).
+sexpr0(['#COMMA',E])               --> { is_common_lisp }, `,`, !, sexpr(E).
 sexpr0(['#HCOMMA',E])               --> {is_scm}, `#,`, !, sexpr(E).
 sexpr0('$OBJ'(claz_bracket_vector,V))                 --> `[`, sexpr_vector(V,`]`),!, swhite.
 
@@ -788,7 +789,7 @@ to_untyped(with_text(I,Txt),with_text(O,Txt)):-to_untyped(I,O),!.
 % to_untyped([[]],[]):-!.
 to_untyped('$STR'(Expr),Forms):- (text_to_string_safe(Expr,Forms);to_untyped(Expr,Forms)),!.
 to_untyped('$STRING'(Expr),'$STRING'(Forms)):- (text_to_string_safe(Expr,Forms);to_untyped(Expr,Forms)),!.
-to_untyped(['#'(Backquote),Rest],Out):- Backquote == backquote, !,to_untyped(['#'('#BQ'),Rest],Out).
+to_untyped(['#'(Backquote),Rest],Out):- is_common_lisp, Backquote == backquote, !,to_untyped(['#'('#BQ'),Rest],Out).
 to_untyped(['#'(S)|Rest],OOut):- nonvar(S), is_list(Rest),must_maplist(to_untyped,[S|Rest],[F|Mid]),
           ((atom(F),t_l:s2p(F))-> Out=..[F|Mid];Out=[F|Mid]),
           to_untyped(Out,OOut).
@@ -1276,8 +1277,8 @@ sexpr_sterm_to_pterm(TD,STERM0,PTERM):- TD1 is TD+1,sexpr_sterm_to_pterm_pre_lis
   is_list(STERM),!, sexpr_sterm_to_pterm_list(TD1,STERM,PLIST),s_univ(TD,PTERM,PLIST),!.
 sexpr_sterm_to_pterm(_TD,VAR,VAR).
 
-is_quoter('#BQ').
-is_quoter('#COMMA').
+is_quoter('#BQ'):- is_common_lisp.
+is_quoter('#COMMA'):- is_common_lisp.
 is_quoter('quote').
 
 next_args_are_lists_unless_string(defmacro,1).
@@ -1307,7 +1308,7 @@ s_univ(_TD,P,S):-P=S.
 l_arity(F,A):- clause_b(arity(F,A)).
 l_arity(function,1).
 l_arity(quote,1).
-l_arity('#BQ',1).
+l_arity('#BQ',1):- is_common_lisp.
 l_arity(F,A):-current_predicate(F/A).
 l_arity(_,1).
 
