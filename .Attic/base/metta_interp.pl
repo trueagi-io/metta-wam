@@ -24,7 +24,7 @@ load_metta(Self,Filename):-
       with_cwd(Directory,once(load_metta_stream(Self,In))))), close(In))).
 load_metta(Self,Filename):- with_wild_path(load_metta(Self),Filename),!,loonit_report.
 
-
+writeqln(Q):- write(' '),writeq(Q),nl.
 
 clear_spaces:- clear_space(_).
 clear_space(S):-
@@ -53,6 +53,7 @@ eval_arg(A,AA):-
 :- discontiguous eval_args2/4.
 
 
+eval_arg(Depth,_Self,X,_Y):- forall(between(6,Depth,_),write(' ')),writeqln(eval_args(X)),fail.
 eval_arg(Depth,_,_,_):- Depth<1,!,fail.
 eval_arg(Depth,Self,X,Y):- nonvar(Y),!,eval_arg(Depth,Self,X,XX),evals_to(XX,Y).
 eval_arg(Depth,Self,[AE,X,Y],TF):- AE=='assertEqual',!,
@@ -90,39 +91,42 @@ eval_args2(_Dpth,_Slf,Name,Value):- atom(Name), nb_current(Name,Value),!.
 */
 eval_args2(Depth,Self,['match',Other,Goal,Template|Else],Template):- into_space(Self,Other,Space),!,
   (metta_atom_iter(Depth,Space,Goal)*->true;Else=Template).
-  
-% Macro Functions
+
+% Macro: case
 eval_args2(Depth,Self,X,Res):-
    X= [CaseSym,A,CL],CaseSym == 'case', !,
    into_case_list(CL,CASES),
-
    findall(Key-Value,
      (nth0(Nth,CASES,Case0),
        (is_case(Key,Case0,Value),
-        format('~N'),writeln(c(Nth,Key)=Value))),KVs),!,
-   eval_arg(Depth,Self,A,AA),
-   select_case(Depth,Self,AA,KVs,Value),
-   eval_arg(Depth,Self,Value,Res).
+        format('~N'),writeqln(c(Nth,Key)=Value))),KVs),!,
+   ((eval_arg(Depth,Self,A,AA),writeqln(switch=AA),
+    (select_case(Depth,Self,AA,KVs,Value)->true;(member(Void -Value,KVs),Void=='%void%')))
+     *->true;(member(Void -Value,KVs),Void=='%void%')),
+    eval_arg(Depth,Self,Value,Res).
 
   select_case(Depth,Self,AA,Cases,Value):-
-     (
-      (member(Match-Value,Cases),AA ==Match)->true;
-      (member(Match-Value,Cases),AA=@=Match)->true;
-      (member(Match-Value,Cases),AA = Match)->true;
-      (maplist(eval_argkey(Depth,Self),Cases,CasES),
-       ((member(Match-Value,CasES),AA ==Match)->true;
-        (member(Match-Value,CasES),AA=@=Match)->true;
-        (member(Match-Value,CasES),AA = Match)->true;
-        (member(Void -Value,Cases),Void=='%void%')))).
+     (best_key(AA,Cases,Value) -> true ;
+      (maybe_special_keys(Depth,Self,Cases,CasES),
+       (best_key(AA,CasES,Value) -> true ;
+        (member(Void -Value,CasES),Void=='%void%')))).
 
-
+  best_key(AA,Cases,Value):-
+     ((member(Match-Value,Cases),AA ==Match)->true;
+      ((member(Match-Value,Cases),AA=@=Match)->true;
+        (member(Match-Value,Cases),AA = Match))).
 
 		%into_case_list([[C|ASES0]],CASES):-  is_list(C),!, into_case_list([C|ASES0],CASES),!.
-		into_case_list(CASES,CASES):- is_list(CASES),!.
+	into_case_list(CASES,CASES):- is_list(CASES),!.
 		is_case(AA,[AA,Value],Value):-!.
 		is_case(AA,[AA|Value],Value).
 
-   eval_argkey(Depth,Self,K-V,AK-V):- eval_arg(Depth,Self,K,AK).
+   maybe_special_keys(Depth,Self,[K-V|KVI],[AK-V|KVO]):-
+     eval_arg(Depth,Self,K,AK), K\=@=AK,!,
+     maybe_special_keys(Depth,Self,KVI,KVO).
+   maybe_special_keys(Depth,Self,[_|KVI],KVO):-
+     maybe_special_keys(Depth,Self,KVI,KVO).
+   maybe_special_keys(_Depth,_Self,[],[]).
 
 
 /*
@@ -139,6 +143,13 @@ eval_args2(Depth,Self,[F,A1|AArgs],Res):- fail, member(F,['+']),
    eval_arg(Depth,Self,A,AA),AA\==A,!,
    append(L,[AA|R],NewArgs), eval_arg(Depth,Self,[F,A1|NewArgs],Res)))).
 */
+
+% !(assertEqualToResult ((inc) 2) (3))
+eval_args2(Depth,Self,[F|Args],Res):- is_list(F),
+  metta_atom_iter(Depth,Self,['=',F,R]), eval_arg(Depth,Self,[R|Args],Res).
+
+eval_args2(Depth,Self,[F|Args],Res):- is_list(F), Args\==[],
+  append(F,Args,FArgs),!,eval_arg(Depth,Self,FArgs,Res).
 
 eval_args2(Depth,Self,['import!',Other,File],Space):- into_space(Self,Other,Space),!, load_metta(Space,File).
 eval_args2(Depth,Self,['bind!',Other,Expr],Value):- into_name(Self,Other,Name),!,eval_arg(Depth,Self,Expr,Value),nb_setval(Name,Value).
@@ -218,17 +229,17 @@ eval_selfless(LIS,Y):-  notrace((
 
 % less Macro-ey Functions
 
-%eval_args2(Depth,Self,X,Y):- metta_defn(Self,X,Y). %, Y\=='True'.
-eval_args2(Depth,Self,X,Y):- metta_atom(Self,X=Y). %, Y\=='True'.
-
-metta_atom_iter(Depth,_,_):- Depth<3,!,fail.
+%metta_atom_iter(Depth,_,_):- Depth<3,!,fail.
+metta_atom_iter(_Dpth,_Slf,[And]):- is_and(And),!.
+metta_atom_iter(Depth,Self,[And,X|Y]):- is_and(And),!,D2 is Depth -1, metta_atom_iter(D2,Self,X),metta_atom_iter(D2,Self,[And|Y]).
 metta_atom_iter(_Dpth,_Slf,[]):-!.
 metta_atom_iter(_Dpth,Other,H):- metta_atom(Other,H).
 metta_atom_iter(Depth,Other,H):- D2 is Depth -1, metta_defn(Other,H,B),metta_atom_iter(D2,Other,B).
 metta_atom_iter(_Dpth,Other,[Equal,H,B]):- '=' == Equal,!, metta_defn(Other,H,B).
-metta_atom_iter(_Dpth,_Slf,[And]):- is_and(And),!.
-metta_atom_iter(Depth,Self,[And,X|Y]):- is_and(And),!,D2 is Depth -1, metta_atom_iter(D2,Self,X),metta_atom_iter(D2,Self,[And|Y]).
+%metta_atom_iter(Depth,Self,X,Y):- metta_defn(Self,X,Y). %, Y\=='True'.
+metta_atom_iter(Depth,Self,X,Y):- metta_atom(Self,[=,X,Y]). %, Y\=='True'.
 
+metta_atom(Self,[=,X,Y]):- metta_defn(Self,X,Y).
 /*
 ; Bind &kb to a new empty Space
 !(bind! &kb (new-space))
@@ -289,7 +300,7 @@ is_false(X):- eval_arg(X,Y), (Y=0;Y='False'),!.
 is_conz(Self):- compound(Self), Self=[_|_].
 
 %dont_x(eval_arg(Depth,Self,metta_if(A<B,L1,L2),R)).
-dont_x(eval_arg(Depth,_Self,_<_,_)).
+dont_x(eval_arg(_<_,_)).
 
 into_fp(D,D):- \+ \+ dont_x(D),!.
 into_fp(ListX,CallAB):-
@@ -326,7 +337,7 @@ balanced_parentheses([H|T], N) :- H \= '(', H \= ')', balanced_parentheses(T, N)
 repl_read(NewAccumulated, Read):-
     atom_concat(Atom, '.', NewAccumulated),
     catch((read_term_from_atom(Atom, Term, []), Read=call(Term)), E,
-       (write('Syntax error: '), write(E), nl, repl_read(Read))),!.
+       (write('Syntax error: '), writeq(E), nl, repl_read(Read))),!.
 repl_read(NewAccumulated, Read):-
     normalize_space(string(Renew),NewAccumulated), Renew \== NewAccumulated, !,
     repl_read(Renew, Read).
@@ -451,7 +462,7 @@ do_metta1(Self,Load,PredDecl):- metta_anew(Load,metta_atom(Self,PredDecl)).
 do_metta_exec(Self,Var):- var(Var), !, ppm(eval(Var)), freeze(Var,wdmsg(laterVar(Self,Var))).
 do_metta_exec(Self,TermV):-!, ppm(:- metta_eval(TermV)),
   subst_vars(TermV,Term),
-  forall(eval_arg(13,Self,Term,X),(format('%'),writeln(X))),!.
+  forall(eval_arg(13,Self,Term,X),(format(' % '),writeqln(X))),!.
 
 s2p(I,O):- sexpr_sterm_to_pterm(I,O),!.
 
