@@ -9,5 +9,20 @@ reqs/pyswip-notebook/pyswip-notebook.egg-info
 das_precomputed/*.pl
 precomputed_files/**/*.pl
 ftp.flybase.net/**
-
+.?*~/
+ImplicitQuantification.tex
+data/ftp.flybase.net/
+data/SO-Ontologies/
+data/tsv_exports/
+git-mv-with-history-wildcards
+metta_vspace/__pycache__/
+metta_vspace/metta_learner-20230913205939.py.bak
+metta_vspace/metta_learner.new
+#        metta_vspace/pyswip/extra_pytests/
+metta_vspace/pyswip/metta_interp.new
+metta_vspace/pyswip/metta_interp.old
+metta_vspace/pyswip/swi_flybase.ahead
+metta_vspace/pyswip/swi_flybase_fast.new
+metta_vspace/pyswip/swi_flybase_fast_good.pl
+reqs/
 
