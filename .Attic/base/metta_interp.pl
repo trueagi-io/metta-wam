@@ -258,7 +258,8 @@ load_metta(Self,Filename):-
       with_cwd(Directory,once(load_metta_stream(Self,In))))), close(In))).
 load_metta(Self,Filename):- with_wild_path(load_metta(Self),Filename),!,loonit_report.
 
-writeqln(Q):- write(' '),writeq(Q),nl.
+%writeqln(Q):- write(' '),writeq(Q),nl.
+writeqln(Q):- format('~N'),write(' '),writeq(Q),nl.
 
 clear_spaces:- clear_space(_).
 clear_space(S):-
@@ -539,6 +540,7 @@ eval_args2(Depth,Self,PredDecl,Res):- eval_args4(Depth,Self,PredDecl,Res).
 eval_args4(Depth,Self,[X1|[F2|X2]],[Y1|Y2]):- is_function(F2),!,eval_arg(Depth,Self,[F2|X2],Y2),eval_arg(Depth,Self,X1,Y1).
 eval_args4(_Dpth,_Slf,L1,Res):- is_list(L1),maplist(self_eval,L1),!,Res=L1.
 eval_args4(Depth,Self,[F|X],[F|Y]):- is_function(F),is_list(X),maplist(eval_arg(Depth,Self),X,Y),X\=@=Y.
+eval_args4(_Depth,_Self,X,X).
 
 
 
@@ -579,7 +581,7 @@ fn_append1(Term,X,eval_arg(Term,X)).
 
 run_file_arg:- current_prolog_flag(argv,P),append(_,['--args'|Rest],P),Rest\==[],!,maplist(load_metta('&self'),Rest).
 
-loon:- loonit_reset, cls, make, run_file_arg, !, loonit_report.
+loon:- loonit_reset, make, run_file_arg, !, loonit_report.
 loon:- time(loon_metta('./examples/compat/test_scripts/*.metta')),fail.
 loon:- repl.
 
@@ -723,26 +725,64 @@ do_metta1(Self,_,Cmt):- nonvar(Cmt),do_metta_cmt(Self,Cmt),!.
 do_metta1(Self,_,exec(Exec)):- !,do_metta_exec(Self,Exec),!.
 do_metta1(Self,exec,Exec):- !,do_metta_exec(Self,Exec),!.
 
-do_metta1(Self,Load,[':',Fn,TypeDecl]):- metta_anew(Load,metta_type(Self,Fn,TypeDecl)),!.
+do_metta1(Self,Load,[':',Fn,TypeDecL]):- decl_length(TypeDecL,Len),LenM1 is Len - 1, last_element(TypeDecL,LE),
+  metta_anew(Load,metta_arity(Self,Fn,LenM1)),
+  arg_types(TypeDecL,[],EachArg),
+  metta_anew(Load,metta_params(Self,Fn,EachArg)),!,
+  metta_anew(Load,metta_last(Self,Fn,LE)).
+
+do_metta1(Self,Load,[':',Fn,TypeDecL,RetType]):- decl_length(TypeDecL,Len),
+  metta_anew(Load,metta_arity(Self,Fn,Len)),
+  arg_types(TypeDecL,[RetType],EachArg),
+  metta_anew(Load,metta_params(Self,Fn,EachArg)),
+  metta_anew(Load,metta_return(Self,Fn,RetType)).
+
 do_metta1(Self,Load,PredDecl):- fail,
    metta_anew(Load,metta_atom(Self,PredDecl)),
    ignore((PredDecl=['=',Head,Body], metta_anew(Load,metta_defn(Self,Head,Body)))),
    ignore((Body == 'True',!,do_metta1(Self,Load,Head))),
    nop((fn_append(Head,X,Head), fn_append(PredDecl,X,Body), metta_anew((Head:- Body)))),!.
 
-do_metta1(Self,Load,['=',PredDecl,True]):- True == 'True',!, metta_anew(Load,metta_atom(Self,PredDecl)).
+do_metta1(Self,Load,['=',PredDecl,True]):- True == 'True',!,
+  discover_head(Self,Load,PredDecl),
+  metta_anew(Load,metta_atom(Self,PredDecl)).
+
+do_metta1(Self,Load,['=',PredDecl,False]):- False == 'False',
+  discover_head(Self,Load,PredDecl),fail.
+  %metta_anew(Load,metta_atom(Self,PredDecl)).
 
 
-do_metta1(Self,Load,['=',HeadFn,PredDecl]):- !,metta_anew(Load,metta_defn(Self,HeadFn,PredDecl)), nop((fn_append(HeadFn,X,Head), fn_append(PredDecl,X,Body), metta_anew((Head:- Body)))),!.
-do_metta1(Self,Load,PredDecl):- metta_anew(Load,metta_atom(Self,PredDecl)).
+do_metta1(Self,Load,['=',Head,PredDecl]):- !,
+    discover_head(Self,Load,Head),
+    metta_anew(Load,metta_defn(Self,Head,PredDecl)),
+    discover_body(Self,Load,PredDecl),
+    nop((fn_append(Head,X,Head),fn_append(PredDecl,X,Body), metta_anew((Head:- Body)))),!.
+
+do_metta1(Self,Load,PredDecl):-
+   discover_head(Self,Load,PredDecl),
+   metta_anew(Load,metta_atom(Self,PredDecl)).
 
 do_metta_exec(Self,Var):- var(Var), !, ppm(eval(Var)), freeze(Var,wdmsg(laterVar(Self,Var))).
 do_metta_exec(Self,TermV):-!, ppm(:- metta_eval(TermV)),
   subst_vars(TermV,Term),
-  forall(eval_arg(13,Self,Term,X),(format(' % '),writeqln(X))),!.
+  forall(eval_arg(13,Self,Term,X),(color_g_mesg(yellow,(format(' % '),writeq(X),nl)))),!.
 
 s2p(I,O):- sexpr_sterm_to_pterm(I,O),!.
 
+
+discover_head(Self,Load,[Fn|PredDecl]):-
+  arg_types(PredDecl,[],EachArg),
+  metta_anew(Load,metta_head(Self,Fn,EachArg)).
+
+discover_body(Self,Load,[Fn|PredDecl]):-
+  arg_types(PredDecl,[],EachArg),
+  metta_anew(Load,metta_body(Self,Fn,EachArg)).
+decl_length(TypeDecL,Len):- is_list(TypeDecL),!,length(TypeDecL,Len).
+decl_length(_TypeDecl,1).
+arg_types([['->'|L]],R,LR):-!, arg_types(L,R,LR).
+arg_types(['->'|L],R,LR):-!, arg_types(L,R,LR).
+arg_types(L,R,LR):- append(L,R,LR).
 :- loonit_reset.
 
-%:- loon.
+
+:- loon.
