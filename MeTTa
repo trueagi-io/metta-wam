@@ -24,6 +24,8 @@ else
     SWIPL_OPTIONS="-- ${SWIPL_OPTIONS}"
 fi
 
+cat /dev/null > ${TEE_FILE}
+
 export BCMD="export TEE_FILE='${TEE_FILE}' ; cd ${METTA_DIR} ; exec swipl -l metta_vspace/pyswip/metta_interp.pl -- ${SWIPL_OPTIONS} --args $@"
 
 echo BCMD="${BCMD}"
