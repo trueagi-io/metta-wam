@@ -1,0 +1,56 @@
+#!/bin/bash
+
+SCRIPT=$(readlink -f $0)
+export METTA_DIR=$(dirname $SCRIPT)
+cd $METTA_DIR
+
+if [ "${1}" == "--tee" ] ; then
+shift 1
+[ -z "$TEE_FILE" ] && export TEE_FILE="${METTA_DIR}/tee.ansi"
+touch $TEE_FILE
+chmod 777 $TEE_FILE
+[ -z "$TYPESCRIPT" ] && TYPESCRIPT=1 exec /usr/bin/script -f -e -a ${TEE_FILE} -c "TYPESCRIPT=1 $0 --tee $@"
+echo start $0 $@
+fi
+
+echo METTA_DIR=$METTA_DIR
+cd $METTA_DIR
+
+export SWIPL_OPTIONS="${@}"
+if [[ $SWIPL_OPTIONS == *" -- "* ]];
+then
+    echo "$SWIPL_OPTIONS"
+else
+    SWIPL_OPTIONS="-- ${SWIPL_OPTIONS}"
+fi
+
+export BCMD="export TEE_FILE='${TEE_FILE}' ; cd ${METTA_DIR} ; exec swipl -l metta_vspace/pyswip/metta_interp.pl -- ${SWIPL_OPTIONS} --args $@"
+
+echo BCMD="${BCMD}"
+
+bash -c "${BCMD}"
+
+
+
+export FILE=${1}
+
+# Check if FILE variable is provided
+if [ -z "$FILE" ]; then
+    echo "Please provide the FILE variable."
+    exit 1
+fi
+
+# Extract directory and base name from FILE
+DIRNAME=$(dirname "$FILE")
+BASENAME=$(basename "$FILE" .metta)
+
+# Execute the command
+cat $FILE $TEE_FILE | ansi2html > "$DIRNAME/$BASENAME.html"
+
+echo "Output saved to $DIRNAME/$BASENAME.html"
+
+
+stty sane
+
+
+
