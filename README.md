@@ -136,19 +136,4 @@ Pass Test:(Values same: [[B]] == [[B]])
 ## :scroll: License
 - vspace-metta is distributed under the LGPL License.
 
-## metta_interp.PL
-
-```
-space-metta# swipl
-Welcome to SWI-Prolog (threaded, 64 bits, version 9.1.15-49-g93d0c9ac6)
-SWI-Prolog comes with ABSOLUTELY NO WARRANTY. This is free software.
-Please run ?- license. for legal details.
-
-For online help and background, visit https://www.swi-prolog.org
-For built-in help, use ?- help(Topic). or ?- apropos(Word).
-
-?- pack_install(logicmoo_utils).
-% Contacting server at https://www.swi-prolog.org/pack/query ... ok
-% Pack `logicmoo_utils' is already installed @3.1.3
-```
-
+## [metta_interp.PL] (https://github.com/logicmoo/vspace-metta/blob/main/MeTTaLog.md)
