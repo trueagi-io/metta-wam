@@ -136,4 +136,5 @@ Pass Test:(Values same: [[B]] == [[B]])
 ## :scroll: License
 - vspace-metta is distributed under the LGPL License.
 
-## [metta_interp.PL] (https://github.com/logicmoo/vspace-metta/blob/main/MeTTaLog.md)
+## metta_interp.PL
+[MeTTaLog (In Prolog)](https://github.com/logicmoo/vspace-metta/blob/main/MeTTaLog.md)
