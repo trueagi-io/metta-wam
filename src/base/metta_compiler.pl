@@ -131,7 +131,7 @@ direct_mapping('[|]','Cons').
 direct_mapping(( ';' ),or).
 direct_mapping(( ',' ),and).
 direct_mapping(( '\\+' ),if_not).
-direct_mapping(( ':-' ),entailed_by).
+%direct_mapping(( ':-' ),entailed_by).
 direct_mapping('=..','atom_2_list').
 direct_mapping(NC,NC):- \+ compound(NC),!.
 direct_mapping((G,E),O):- conjuncts_to_list((G,E),List), into_sequential(List,O),!.
