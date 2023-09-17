@@ -581,7 +581,7 @@ fn_append1(Term,X,eval_arg(Term,X)).
 
 run_file_arg:- current_prolog_flag(argv,P),append(_,['--args'|Rest],P),Rest\==[],!,maplist(load_metta('&self'),Rest).
 
-loon:- loonit_reset, make, run_file_arg, !, loonit_report.
+loon:- loonit_reset, make, run_file_arg, !, loonit_report, halt(7).
 loon:- time(loon_metta('./examples/compat/test_scripts/*.metta')),fail.
 loon:- repl.
 
