@@ -1,4 +1,238 @@
 
+:- dynamic registered_space/1.
+
+% Function to check if an atom is registered as a space name
+is_registered(Name) :-
+    clause(registered_space(Name), true).
+
+% Function to confirm if a term represents a space
+is_valid_space(['new-space' | _]).
+
+% Clear all atoms from a space
+'clear-atoms'(SpaceNameOrInstance) :-
+    fetch_or_create_space(SpaceNameOrInstance, Space),
+    nb_setarg(2, Space, []).
+
+% Find the original name of a given space
+space_original_name(Space, Name) :-
+    is_registered(Name),
+    nb_current(Name, Space).
+
+% Register and initialize a new space
+init_space(Name) :-
+    Space = ['new-space'],
+    asserta(registered_space(Name)),
+    nb_setval(Name, Space),
+    'clear-atoms'(Space).
+
+fetch_or_create_space(Name):- fetch_or_create_space(Name,_).
+% Fetch an existing space or create a new one
+fetch_or_create_space(NameOrInstance, Space) :-
+    (   atom(NameOrInstance)
+    ->  (is_registered(NameOrInstance)
+        ->  nb_current(NameOrInstance, Space)
+        ;   init_space(NameOrInstance),
+            nb_current(NameOrInstance, Space))
+    ;   is_valid_space(NameOrInstance)
+    ->  Space = NameOrInstance
+    ;   writeln('Error: Invalid input.')
+    ),
+    is_valid_space(Space).
+
+% Add an atom to the space
+'add-atom'(SpaceNameOrInstance, Atom) :-
+    fetch_or_create_space(SpaceNameOrInstance, Space),
+    arg(2, Space, Atoms),
+    NewAtoms = [Atom | Atoms],
+    nb_setarg(2, Space, NewAtoms).
+
+% Count atoms in a space
+'atom-count'(SpaceNameOrInstance, Count) :-
+    fetch_or_create_space(SpaceNameOrInstance, Space),
+    arg(2, Space, Atoms),
+    length(Atoms, Count).
+
+% Remove an atom from a space
+'remove-atom'(SpaceNameOrInstance, Atom) :-
+    fetch_or_create_space(SpaceNameOrInstance, Space),
+    arg(2, Space, Atoms),
+    select(Atom, Atoms, UpdatedAtoms),
+    nb_setarg(2, Space, UpdatedAtoms).
+
+% Fetch all atoms from a space
+'get-atoms'(SpaceNameOrInstance, Atoms) :-
+    fetch_or_create_space(SpaceNameOrInstance, Space),
+    arg(2, Space, Atoms).
+
+% Replace an atom in the space
+'replace-atom'(SpaceNameOrInstance, OldAtom, NewAtom) :-
+    fetch_or_create_space(SpaceNameOrInstance, Space),
+    arg(2, Space, Atoms),
+    ( select(OldAtom, Atoms, TempAtoms)
+    ->  NewAtoms = [NewAtom | TempAtoms],
+        nb_setarg(2, Space, NewAtoms)
+    ;   false
+    ).
+
+% Test case for clearing a space
+test_clear_space :-
+    writeln('Test: Clearing a space'),
+    init_space('&kb1'),
+    'add-atom'('&kb1', a),
+    'add-atom'('&kb1', b),
+    writeln('Expected Count Before Clearing: 2'),
+    'atom-count'('&kb1', CountBefore), writeln('Actual Count:'), writeln(CountBefore),
+    writeln('Expected Atoms Before Clearing: [b, a]'),
+    'get-atoms'('&kb1', AtomsBefore), writeln('Actual Atoms:'), writeln(AtomsBefore),
+    'clear-atoms'('&kb1'),
+    writeln('Expected Count After Clearing: 0'),
+    'atom-count'('&kb1', CountAfter), writeln('Actual Count:'), writeln(CountAfter),
+    writeln('Expected Atoms After Clearing: []'),
+    'get-atoms'('&kb1', AtomsAfter), writeln('Actual Atoms:'), writeln(AtomsAfter).
+
+% Test case for various operations on a space
+test_operations :-
+    writeln('Test: Various Operations on a Space'),
+    init_space('&kb2'),
+    'add-atom'('&kb2', a),
+    'add-atom'('&kb2', b),
+    writeln('Expected Count After Adding: 2'),
+    'atom-count'('&kb2', Count1), writeln('Actual Count:'), writeln(Count1),
+    writeln('Expected Atoms After Adding: [b, a]'),
+    'get-atoms'('&kb2', Atoms1), writeln('Actual Atoms:'), writeln(Atoms1),
+    'remove-atom'('&kb2', a),
+    writeln('Expected Atoms After Removing a: [b]'),
+    'get-atoms'('&kb2', Atoms2), writeln('Actual Atoms:'), writeln(Atoms2),
+    'replace-atom'('&kb2', b, c),
+    writeln('Expected Atoms After Replacing b with c: [c]'),
+    'get-atoms'('&kb2', Atoms3), writeln('Actual Atoms:'), writeln(Atoms3).
+
+% Run the test cases
+run_tests :-
+    writeln('Running test_clear_space:'),
+    test_clear_space,
+    writeln('---'),
+    writeln('Running test_operations:'),
+    test_operations.
+
+
+% Test case for various operations on a space
+test_my_space :-
+    fetch_or_create_space('&KB', InstanceOfKB),
+    'clear-atoms'('&KB'),
+    'add-atom'(InstanceOfKB, a),
+    'add-atom'(InstanceOfKB, b),
+    'atom-count'(InstanceOfKB, Count1),
+    writeln('Should print 2: ' : Count1),
+
+    'get-atoms'(InstanceOfKB, Atoms1),
+    writeln('Should print [b, a]: ' : Atoms1),
+
+    'remove-atom'(InstanceOfKB, a),
+    'get-atoms'(InstanceOfKB, Atoms2),
+    writeln('Should print [b]: ' : Atoms2),
+
+    'replace-atom'(InstanceOfKB, b, c),
+    'get-atoms'(InstanceOfKB, Atoms3),
+    writeln('Should print [c]: ' : Atoms3),
+
+    space_original_name(InstanceOfKB, OriginalName),
+    writeln('Should print &KB':OriginalName),
+
+    fetch_or_create_space('&KB'),
+    'add-atom'('&KB', x),
+    'add-atom'('&KB', y),
+    'atom-count'('&KB', Count2),
+    writeln('Should print 3: ' : Count2),
+
+    'get-atoms'('&KB', Atoms4),
+    writeln('Should print [c, y, x]: ' : Atoms4),
+
+    'remove-atom'('&KB', x),
+    'get-atoms'('&KB', Atoms5),
+    writeln('Should print [c,y]: ' : Atoms5),
+
+    'replace-atom'('&KB', y, z),
+    'get-atoms'(InstanceOfKB, Atoms6),
+    writeln('Should print [c,z]: ' : Atoms6).
+
+
+% Test the code
+test_clr_my_kb22 :-
+    fetch_or_create_space('&kb22'),
+    'add-atom'('&kb22', a),
+    'add-atom'('&kb22', b),
+    'atom-count'('&kb22', Count1), writeln(Count1),
+    'get-atoms'('&kb22', Atoms1), writeln(Atoms1),
+    'clear-atoms'('&kb22'),
+    'atom-count'('&kb22', Count2), writeln(Count2),
+    'get-atoms'('&kb22', Atoms2), writeln(Atoms2).
+
+% Test the code
+test_my_kb2:-
+   fetch_or_create_space('&kb1', InstanceOfKB),
+   \+ \+ ('add-atom'('&kb1', a)),
+   \+ \+ ('add-atom'('&kb1', b)),
+   \+ \+ ('atom-count'('&kb1', Count), writeln(Count)),
+   \+ \+ ('get-atoms'('&kb1', Atoms), writeln(Atoms)),
+   \+ \+ ('remove-atom'(InstanceOfKB, a)),
+   \+ \+ ('get-atoms'('&kb1', NewAtoms), writeln(NewAtoms)),
+   \+ \+ ('replace-atom'('&kb1', b, c)),
+   \+ \+ ('get-atoms'('&kb1', FinalAtoms), writeln(FinalAtoms)),
+   \+ \+ (space_original_name(InstanceOfKB, OriginalName), writeln(OriginalName)),
+   \+ \+ (fetch_or_create_space('&kb2',_)),  % Creating a new space with a different name
+   \+ \+ ('add-atom'('&kb2', a)),
+   \+ \+ ('add-atom'('&kb2', b)),
+   \+ \+ ('atom-count'('&kb2', Count), writeln(Count)),
+   \+ \+ ('get-atoms'('&kb2', Atoms), writeln(Atoms)),
+   \+ \+ ('remove-atom'('&kb2', a)),
+   \+ \+ ('get-atoms'('&kb2', NewAtoms), writeln(NewAtoms)),
+   \+ \+ ('replace-atom'('&kb2', b, c)),
+   \+ \+ ('get-atoms'('&kb2', FinalAtoms), writeln(FinalAtoms)).
+
+
+
+% Match Pattern in Space and produce Template
+'match'(Space, Pattern, Template) :-
+    is_valid_space(Space),
+    'get-atoms'(Space, Atoms),
+    'match-pattern'(Atoms, Pattern, Template).
+
+% Simple pattern match
+'match-pattern'([], _, []).
+'match-pattern'([H |_T], H, H) :- !.
+'match-pattern'([_H| T], Pattern, Template) :- 'match-pattern'(T, Pattern, Template).
+
+% Example-usage
+example_usages :-
+    fetch_or_create_space(newSpace,Space),  % Assuming fetch_or_create_space/1 is defined to initialize a space
+    'add-atom'(Space, a),
+    'add-atom'(Space, b),
+    'add-atom'(Space, c),
+    'match'(Space, a, Template),
+    write('Matched template: '), writeln(Template),
+
+
+    write('Initial space: '), writeln(Space),
+
+    'add-atom'(Space, a),
+    write('Space after adding "a": '), writeln(Space),
+
+    'add-atom'(Space, b),
+    write('Space after adding "b": '), writeln(Space),
+
+    'replace-atom'(Space, a, c),
+    write('Space after replacing "a" with "c": '), writeln(Space),
+
+    'get-atoms'(Space, Atoms),
+    write('Atoms in space: '), writeln(Atoms),
+
+    'atom-count'(Space, Count),
+    write('Number of atoms in space: '), writeln(Count).
+
+
+
+
 :- ensure_loaded(metta_testing).
 :- ensure_loaded(swi_support).
 :- ensure_loaded(swi_flybase).
@@ -90,7 +324,6 @@ setof_eval(Depth,Self,X,L):- findall(E,eval_arg(Depth,Self,X,E),L).
 setof_eval(Depth,Self,X,S):- setof(E,eval_arg(Depth,Self,X,E),S)*->true;S=[].
 
 
-
 /*
 into_values(List,Many):- List==[],!,Many=[].
 into_values([X|List],Many):- List==[],is_list(X),!,Many=X.
@@ -169,33 +402,35 @@ eval_args2(Depth,Self,[F|Args],Res):- is_list(F),
 eval_args2(Depth,Self,[F|Args],Res):- is_list(F), Args\==[],
   append(F,Args,FArgs),!,eval_arg(Depth,Self,FArgs,Res).
 */
-eval_args2(Depth,Self,['import!',Other,File],Space):- into_space(Self,Other,Space),!, load_metta(Space,File).
-eval_args2(Depth,Self,['bind!',Other,Expr],Value):- into_name(Self,Other,Name),!,eval_arg(Depth,Self,Expr,Value),nb_setval(Name,Value).
+eval_args2(_Dpth,Self,['import!',Other,File],Space):- into_space(Self,Other,Space),!, load_metta(Space,File).
+eval_args2(Depth,Self,['bind!',Other,Expr],Value):- into_name(Self,Other,Name),!,eval_arg(Depth,Self,Expr,Value),
+  nb_setval(Name,Value).
 
 
 is_and(S):- \+ atom(S),!,fail.
 is_and('#COMMA'). is_and(','). is_and('and').
-eval_args2(Depth,_Slf,[And],'True'):- is_and(And),!.
+eval_args2(_Dpth,_Slf,[And],'True'):- is_and(And),!.
 eval_args2(Depth,Self,[And,X|Y],TF):- is_and(And),!,eval_arg(Depth,Self,X,TF1),is_true(TF1), eval_args2(Depth,Self,[And|Y],TF).
 
 eval_args2(Depth,Self,['if',TF,Then,Else],Res):- !, ( \+ eval_arg(Depth,Self,TF,'False') -> eval_arg(Depth,Self,Then,Res);eval_arg(Depth,Self,Else,Res) ).
-eval_args2(Depth,_Slf,[_,Nothing],Nothing):- 'Nothing'==Nothing,!.
+eval_args2(_Dpth,_Slf,[_,Nothing],Nothing):- 'Nothing'==Nothing,!.
 
 
 eval_args2(Depth,Self,['let',A,A5,AA],AAO):- !,eval_arg(Depth,Self,A5,A),eval_arg(Depth,Self,AA,AAO).
-eval_args2(Depth,Self,['let*',[Let0|LetRest],Body],RetVal):-
-    findall('let'(Var,Val), member([Var,Val],[Let0|LetRest]),LetStars),
-    eval_arg(Depth,Self,[progn,[progn|LetStars],Body],RetVal).
+eval_args2(Depth,Self,['let*',[],Body],RetVal):- !, eval_args2(Depth,Self,Body,RetVal).
+eval_args2(Depth,Self,['let*',[[Var,Val]|LetRest],Body],RetVal):- !,
+    eval_args2(Depth,Self,['let',Var,Val,['let*',LetRest,Body]],RetVal).
+
 eval_args2(Depth,Self,['colapse'|List], Flat):- !, maplist(eval_arg(Depth,Self),List,Res),flatten(Res,Flat).
 
-eval_args2(Depth,Self,['add-atom',Other,PredDecl],TF):- !, into_space(Self,Other,Space), as_tf(do_metta(Space,load,PredDecl),TF).
-eval_args2(Depth,Self,['remove-atom',Other,PredDecl],TF):- !, into_space(Self,Other,Space), as_tf(do_metta(Space,unload,PredDecl),TF).
-eval_args2(Depth,Self,['atom-count',Other],Count):- !, into_space(Self,Other,Space), findall(_,metta_defn(Other,_,_),L1),length(L1,C1),findall(_,metta_atom(Space,_),L2),length(L2,C2),Count is C1+C2.
-eval_args2(Depth,Self,['atom-replace',Other,Rem,Add],TF):- !, into_space(Self,Other,Space), copy_term(Rem,RCopy),
+eval_args2(_Dpth,Self,['add-atom',Other,PredDecl],TF):- !, into_space(Self,Other,Space), as_tf(do_metta(Space,load,PredDecl),TF).
+eval_args2(_Dpth,Self,['remove-atom',Other,PredDecl],TF):- !, into_space(Self,Other,Space), as_tf(do_metta(Space,unload,PredDecl),TF).
+eval_args2(_Dpth,Self,['atom-count',Other],Count):- !, into_space(Self,Other,Space), findall(_,metta_defn(Other,_,_),L1),length(L1,C1),findall(_,metta_atom(Space,_),L2),length(L2,C2),Count is C1+C2.
+eval_args2(_Dpth,Self,['atom-replace',Other,Rem,Add],TF):- !, into_space(Self,Other,Space), copy_term(Rem,RCopy),
   as_tf((metta_atom_iter_ref(Space,RCopy,Ref), RCopy=@=Rem,erase(Ref), do_metta(Other,load,Add)),TF).
 eval_args2(Depth,Self,['get-atoms',Other],PredDecl):- !,into_space(Self,Other,Space), metta_atom_iter(Depth,Space,PredDecl).
 
-eval_args2(Depth,Self,['get-type',Fn],Type):-!,metta_type(Self,Fn,List),last_element(List,Type).
+eval_args2(_Dpth,Self,['get-type',Fn],Type):-!,metta_type(Self,Fn,List),last_element(List,Type).
 last_element(T,E):- \+ compound(T),!,E=T.
 last_element(T,E):- is_list(T),last(T,L),last_element(L,E),!.
 last_element(T,E):- compound_name_arguments(T,_,List),last_element(List,E),!.
@@ -230,7 +465,7 @@ max_counting(F,Max):- flag(F,X,X+1),  X<Max ->  true; (flag(F,_,10),!,fail).
 %eval_args2(Depth,Self,[H|T],_):- \+ is_list(T),!,fail.
 eval_args2(Depth,Self,['or',X,Y],TF):- !, (eval_arg(Depth,Self,X,TF);eval_arg(Depth,Self,Y,TF)).
 
-eval_args2(Depth,_Slf,LESS,Res):- once(eval_selfless(LESS,Res)),LESS\==Res,!.
+eval_args2(_Dpth,_Slf,LESS,Res):- once(eval_selfless(LESS,Res)),LESS\==Res,!.
 
 as_tf(G,'True'):- call(G),!. as_tf(_,'False').
 eval_selfless(['==',X,Y],TF):-!,as_tf(X=@=Y,TF).
@@ -254,9 +489,16 @@ metta_atom_iter(_Dpth,Other,[Equal,H,B]):- '=' == Equal,!, metta_defn(Other,H,B)
 metta_atom_iter(_Dpth,_Slf,[And]):- is_and(And),!.
 metta_atom_iter(Depth,Self,[And,X|Y]):- is_and(And),!,D2 is Depth -1, metta_atom_iter(D2,Self,X),metta_atom_iter(D2,Self,[And|Y]).
 
+metta_atom_iter2(_,Self,[=,X,Y]):- metta_defn(Self,X,Y).
+metta_atom_iter2(_Dpth,Other,[Equal,H,B]):- '=' == Equal,!, metta_defn(Other,H,B).
+metta_atom_iter2(_Dpth,Self,X,Y):- metta_defn(Self,X,Y). %, Y\=='True'.
+metta_atom_iter2(_Dpth,Self,X,Y):- metta_atom(Self,[=,X,Y]). %, Y\=='True'.
+
+
+
 /*
-; Bind &kb to a new empty Space
-!(bind! &kb (new-space))
+; Bind &kb22 to a new empty Space
+!(bind! &kb22 (new-space))
 
 ; Some knowledge
 (= (frog $x)
@@ -273,13 +515,13 @@ metta_atom_iter(Depth,Self,[And,X|Y]):- is_and(And),!,D2 is Depth -1, metta_atom
 (: ift (-> Bool Atom Atom))
 (= (ift True $then) $then)
 
-; For anything that is green, assert it is Green in &kb
+; For anything that is green, assert it is Green in &kb22
 !(ift (green $x)
-      (add-atom &kb (Green $x)))
+      (add-atom &kb22 (Green $x)))
 
 ; Retrieve the inferred Green things: Fritz and Sam.
 !(assertEqualToResult
-  (match &kb (Green $x) $x)
+  (match &kb22 (Green $x) $x)
   (Fritz Sam))
 */
 :- discontiguous eval_args3/4.
@@ -289,13 +531,13 @@ eval_args3(Depth,Self,X,Y):- metta_atom_iter(Depth,Self,[=,X,Y]).
 eval_args3(Depth,Self,PredDecl,Res):- term_variables(PredDecl,Vars),
   (metta_atom(Self,PredDecl) *-> (Vars ==[]->Res='True';Vars=Res);
    (eval_arg(Depth,Self,PredDecl,Res),ignore(Vars ==[]->Res='True';Vars=Res))).
-eval_args3(Depth,Self,['ift',CR,Then],RO):- trace,
+eval_args3(Depth,Self,['ift',CR,Then],RO):- fail, !, %fail, % trace,
    metta_defn(Self,['ift',R,Then],Become),eval_arg(Depth,Self,CR,R),eval_arg(Depth,Self,Then,_True),eval_arg(Depth,Self,Become,RO).
 
 
 eval_args2(Depth,Self,PredDecl,Res):- eval_args4(Depth,Self,PredDecl,Res).
 eval_args4(Depth,Self,[X1|[F2|X2]],[Y1|Y2]):- is_function(F2),!,eval_arg(Depth,Self,[F2|X2],Y2),eval_arg(Depth,Self,X1,Y1).
-eval_args4(Depth,_Slf,L1,Res):- is_list(L1),maplist(self_eval,L1),!,Res=L1.
+eval_args4(_Dpth,_Slf,L1,Res):- is_list(L1),maplist(self_eval,L1),!,Res=L1.
 eval_args4(Depth,Self,[F|X],[F|Y]):- is_function(F),is_list(X),maplist(eval_arg(Depth,Self),X,Y),X\=@=Y.
 
 
@@ -411,16 +653,28 @@ mfix_vars1(I,'$VAR'(O)):- atom_concat('$',N,I),atom_number(N,Num),atom_concat('N
 mfix_vars1(I,'$VAR'(O)):- atom_concat('$',M,I),!,svar_fixvarname(M,O).
 mfix_vars1(I,I).
 
+
 cons_to_l3(Cons,[Cons0,H,T],[H|TT]):- !, Cons0==Cons,!, cons_to_l3(Cons,T,TT).
 cons_to_l3(Cons,Nil0,T):- is_cf_nil(Cons,Nil),Nil0==Nil,!,T=[].
 cons_to_l3(_Cons,A,A).
 
+simplify_cons(I,O):- I=['=', O, 'True'].
+simplify_cons(I,O):- I=['match','&self',O,'True'].
+simplify_cons(I,O):- I=['And', 'True', O].
+simplify_cons(I,O):- I=['And', O, 'True'].
+
+
 cons_to_l(I,O):- I=='Nil',!,O=[].
 cons_to_l(I,O):- I=='T',!,O='True'.
+cons_to_l(I,O):- I=='F',!,O='False'.
+cons_to_l(I,O):- I==':=',!,O='='.
+cons_to_l(I,O):- I==[quote, s],!, O=is.
+
 cons_to_l(C,O):- \+ compound(C),!,O=C.
+cons_to_l(I,O):- term_variables(I,IV), simplify_cons(I,O), maplist(var,IV),!.
 %cons_to_l(N,NO):- cons_to_l3('Cons',N,NO),!.
-cons_to_l([Cons,H|T],[HH|TT]):- Cons=='Cons',!, cons_to_l(H,HH),cons_to_l(T,TT).
-cons_to_l([Cons|List],List):- Cons=='::',!.
+cons_to_l([Cons,H,T],[HH|TT]):- Cons=='Cons',!, cons_to_l(H,HH),cons_to_l(T,TT).
+cons_to_l([Cons|List],ListO):- Cons=='::',!,cons_to_l(List,ListO).
 cons_to_l([H|T],[HH|TT]):- !, cons_to_l(H,HH),cons_to_l(T,TT).
 cons_to_l(I,I).
 
@@ -475,8 +729,11 @@ do_metta1(Self,Load,PredDecl):- fail,
    ignore((PredDecl=['=',Head,Body], metta_anew(Load,metta_defn(Self,Head,Body)))),
    ignore((Body == 'True',!,do_metta1(Self,Load,Head))),
    nop((fn_append(Head,X,Head), fn_append(PredDecl,X,Body), metta_anew((Head:- Body)))),!.
+
 do_metta1(Self,Load,['=',PredDecl,True]):- True == 'True',!, metta_anew(Load,metta_atom(Self,PredDecl)).
-do_metta1(Self,Load,['=',HeadFn,PredDecl]):- metta_anew(Load,metta_defn(Self,HeadFn,PredDecl)), nop((fn_append(HeadFn,X,Head), fn_append(PredDecl,X,Body), metta_anew((Head:- Body)))),!.
+
+
+do_metta1(Self,Load,['=',HeadFn,PredDecl]):- !,metta_anew(Load,metta_defn(Self,HeadFn,PredDecl)), nop((fn_append(HeadFn,X,Head), fn_append(PredDecl,X,Body), metta_anew((Head:- Body)))),!.
 do_metta1(Self,Load,PredDecl):- metta_anew(Load,metta_atom(Self,PredDecl)).
 
 do_metta_exec(Self,Var):- var(Var), !, ppm(eval(Var)), freeze(Var,wdmsg(laterVar(Self,Var))).
@@ -488,4 +745,4 @@ s2p(I,O):- sexpr_sterm_to_pterm(I,O),!.
 
 :- loonit_reset.
 
-:- loon.
+%:- loon.

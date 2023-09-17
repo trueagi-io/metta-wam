@@ -1100,6 +1100,49 @@ pred_intersection(P2, [A|APoints],BPoints,IntersectedA,IntersectedB,[A|LeftOverA
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+pp(PP):-ppm(PP).
+pp(Color,PP):- ansi_format([fg(Color)],'~@',[pp(PP)]).
+
+
+warn_skip(P):- pp(warn_skip(P)).
+
+with_set_stream(_,_,G):- call(G).
+
+fake_impl(M:F/A):- functor(P,F,A), asserta((M:P :- !, fail)).
+fake_impl(F/A):- functor(P,F,A), asserta((P :- !, fail)).
+
+
+:- fake_impl(arc_setval/3).
+:- fake_impl(cast_to_grid/3).
+:- fake_impl(dot_cfg:dictoo_decl/8).
+:- fake_impl(get_param_sess/2).
+:- fake_impl(into_list/2).
+:- fake_impl(into_type/3).
+:- fake_impl(is_grid/1).
+:- fake_impl(is_hooked_obj/1).
+:- fake_impl(is_vm_map/1).
+:- fake_impl(ld_logicmoo_webui/0).
+:- fake_impl(must_grid_call/3).
+:- fake_impl(o_m_v/3).
+:- fake_impl(quick_test/1).
+:- fake_impl(url_decode_term/2).
+:- fake_impl(xlisting_web:find_http_session/1).
+:- fake_impl(xlisting_web:is_cgi_stream/0).
+
+
 end_of_file.
 
 
