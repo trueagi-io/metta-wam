@@ -16,12 +16,16 @@ loonit_reset :-
 
 % Increment loonit counters based on goal evaluation
 
+
+color_g_mesg(C,G):-
+  wots(S,user:call(G)), ansi_format([fg(C)], '~N~w~n', [S]),!.
+
 loonit_asserts(Pre,G):- once(Pre),once(loonit_asserts1(Pre,G)).
 loonit_asserts1(Pre,G) :- nop(Pre),
-    call(G), !, ansi_format([fg(cyan)], '~N~p~n', [loonit_success(G)]),!,
+    call(G), !, color_g_mesg(cyan,write_src(loonit_success(G))),!,
     flag(loonit_success, X, X+1),!.
 loonit_asserts1(_Pre,G) :-
-    ansi_format([fg(red)], '~N~p~n', [loonit_failure(G)]),
+    color_g_mesg(red,write_src(loonit_failure(G))),!,
     flag(loonit_failure, X, X+1), !. %itrace, G.
     %(thread_self(main)->trace;sleep(0.3))
 

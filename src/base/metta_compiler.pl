@@ -218,18 +218,34 @@ pp_sex(V) :- V = '$VAR'(_), !, format('$~p',[V]).
 pp_sex('!'(V)) :- write('!'),!,pp_sex(V).
 pp_sex(listOf(S,_)) :- !,pp_sex(listOf(S)).
 pp_sex(listOf(S)) :- !,format('(ListValue ~@)',[pp_sex(S)]).
-pp_sex('!'(S)) :- write('!'),pp_sex(S).
-pp_sex([H|T]) :- is_list(T),!, write('('), pp_sex(H), print_list_as_sexpression(T), write(')').
+
+pp_sex(V) :- w_proper_indent(0,w_in_p(pp_sexi(V))).
+
+pp_sexi([H|T]) :- is_list(T),!,
+   write('('), pp_sex(H), print_list_as_sexpression(T), write(')').
 % Compound terms.
 %pp_sex(Term) :- compound(Term), Term =.. [Functor|Args], write('('),format('(~w ',[Functor]), write_args_as_sexpression(Args), write(')').
-
 %pp_sex(Term) :- Term =.. ['=',H|Args], length(Args,L),L>2, write('(= '),  pp_sex(H), write('\n\t\t'), maplist(pp_sex(2),Args).
-pp_sex(Term) :- Term =.. [Functor|Args], always_dash_functor(Functor,DFunctor), format('(~w ',[DFunctor]), write_args_as_sexpression(Args), write(')'),!.
-pp_sex(Term) :- allow_concepts, Term =.. [Functor|Args], format('(EvaluationLink (PredicateNode "~w") (ListLink ',[Functor]), write_args_as_sexpression(Args), write('))'),!.
-pp_sex(Term) :- Term =.. [Functor|Args],
+pp_sexi(Term) :- Term =.. [Functor|Args], always_dash_functor(Functor,DFunctor), format('(~w ',[DFunctor]), write_args_as_sexpression(Args), write(')'),!.
+pp_sexi(Term) :- allow_concepts, Term =.. [Functor|Args], format('(EvaluationLink (PredicateNode "~w") (ListLink ',[Functor]), write_args_as_sexpression(Args), write('))'),!.
+pp_sexi(Term) :- Term =.. [Functor|Args],
    always_dash_functor(Functor,DFunctor), format('(~w ',[DFunctor]), write_args_as_sexpression(Args), write(')'),!.
 
 pp_sex(2,Arg):- write('\t\t'),pp_sex(Arg).
+
+
+current_column(Column) :- current_output(Stream), line_position(Stream, Column),!.
+current_column(Column) :- stream_property(current_output, position(Position)), stream_position_data(column, Position, Column).
+min_indent(Sz):- current_column(Col),Col>Sz,nl,indent_len(Sz).
+min_indent(Sz):- current_column(Col),Need is Sz-Col,indent_len(Need),!.
+min_indent(Sz):- nl, indent_len(Sz).
+indent_len(Need):- forall(between(1,Need,_),write(' ')).
+
+w_proper_indent(N,G):-
+  flag(w_in_p,X,X), (X==0->nl;true),
+  XX is X+N,setup_call_cleanup(min_indent(XX),G,true).
+w_in_p(G):- setup_call_cleanup(flag(w_in_p,X,X+1),G,flag(w_in_p,_,X)).
+
 
 always_dash_functor(A,B):- once(dash_functor(A,B)),A\=@=B,!.
 always_dash_functor(A,A).
@@ -256,7 +272,8 @@ write_args_as_sexpression([H|T]) :- write(' '), pp_sex(H), write_args_as_sexpres
 
 % Print the rest of the list.
 print_list_as_sexpression([]).
-print_list_as_sexpression([H|T]) :- write(' '), pp_sex(H), print_list_as_sexpression(T).
+%print_list_as_sexpression([H]):- w_proper_indent(pp_sex(H)),!.
+print_list_as_sexpression([H|T]):- write(' '), pp_sex(H), print_list_as_sexpression(T).
 
 call_sexpr(S):- writeln(call=S).
 

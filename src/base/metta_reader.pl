@@ -1524,7 +1524,7 @@ tstl:- tstl('./ontologyportal_sumo/Merge.kif'),
          tstl('./ontologyportal_sumo/Mid-level-ontology.kif'),
          !.
 
-writeqnl(O):-writeq(O),nl.
+writeqnl(O):- writeq(O),nl.
 
 
 
