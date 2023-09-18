@@ -1,14 +1,23 @@
 :- encoding(iso_latin_1).
 :- flush_output.
 :- setenv('RUST_BACKTRACE',full).
+:- ensure_loaded(swi_support).
+:- ensure_loaded(metta_testing).
+:- ensure_loaded(metta_utils).
+:- ensure_loaded(metta_reader).
+:- ensure_loaded(metta_interp).
+%:- ensure_loaded(metta_compiler).
+% TODO move non flybase specific code between here and the compiler
+:- ensure_loaded(swi_flybase).
 % =======================================
 % Scryer Rust Compiler vs PySWIP ASM Compiler
 %
 % PySWIP is 222 times faster per join
 % =======================================
-:- ensure_loaded(swi_support).
-:- ensure_loaded(metta_testing).
 :- set_option_value(encoding,iso_latin_1).
+
+:- meta_predicate(for_all(0,0)).
+for_all(G1,G2):- forall(G1,G2).
 
 
 :- multifile(is_pre_statistic/2).

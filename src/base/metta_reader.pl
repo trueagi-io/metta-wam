@@ -45,7 +45,6 @@ is_wam_cl:- fail.
 :- use_module(library(rbtrees)).
 
 
-:- use_module(library(logicmoo_common)).
 :- use_module(library(logicmoo/dcg_must)).
 :- use_module(library(logicmoo/dcg_meta)).
 

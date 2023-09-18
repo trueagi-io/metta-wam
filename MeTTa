@@ -12,36 +12,26 @@ touch $TEE_FILE
 chmod 777 $TEE_FILE
 [ -z "$TYPESCRIPT" ] && TYPESCRIPT=1 exec /usr/bin/script -f -e -a ${TEE_FILE} -c "TYPESCRIPT=1 $0 $@"
 
-export SWIPL_OPTIONS="${@}"
-if [[ $SWIPL_OPTIONS == *" -- "* ]];
-then
-    echo "$SWIPL_OPTIONS"
-else
-    SWIPL_OPTIONS="${SWIPL_OPTIONS} --"
-fi
-
 cat /dev/null > ${TEE_FILE}
 
-export BCMD="export TEE_FILE='${TEE_FILE}' ; cd ${METTA_DIR} ; exec swipl -l metta_vspace/pyswip/metta_interp.pl ${SWIPL_OPTIONS} -- --args $@"
+export BCMD="export TEE_FILE='${TEE_FILE}' ; cd ${METTA_DIR} ; exec swipl -l metta_vspace/pyswip/metta_interp.pl -- --args $@"
 
 echo BCMD="${BCMD}"
 
 bash -c "${BCMD}"
 
 # Check if FILE variable is provided
-if [ -z "$FILE" ]; then
-    echo "Please provide the FILE variable."
-    exit 1
+if [ -f "$FILE" ]; then
+	# Extract directory and base name from FILE
+	DIRNAME=$(dirname "$FILE")
+	BASENAME=$(basename "$FILE" .metta)
+
+	# Execute the command
+	cat $FILE $TEE_FILE | ansi2html > "$DIRNAME/$BASENAME.html"
+
+	echo "Output saved to $DIRNAME/$BASENAME.html"
 fi
 
-# Extract directory and base name from FILE
-DIRNAME=$(dirname "$FILE")
-BASENAME=$(basename "$FILE" .metta)
-
-# Execute the command
-cat $FILE $TEE_FILE | ansi2html > "$DIRNAME/$BASENAME.html"
-
-echo "Output saved to $DIRNAME/$BASENAME.html"
 
 
 stty sane

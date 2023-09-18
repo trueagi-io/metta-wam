@@ -1,4 +1,5 @@
 
+:- ensure_loaded(metta_compiler).
 :- dynamic registered_space/1.
 
 % Function to check if an atom is registered as a space name
@@ -231,24 +232,10 @@ example_usages :-
     write('Number of atoms in space: '), writeln(Count).
 
 
-
-
-:- ensure_loaded(metta_testing).
-:- ensure_loaded(swi_support).
-:- ensure_loaded(swi_flybase).
-% TODO move non flybase specific code between here and the compiler
-:- ensure_loaded(metta_compiler).
-:- ensure_loaded(metta_reader).
-:- ensure_loaded(metta_python).
-
 :- set_prolog_flag(occurs_check,true).
 
 load_metta(Filename):-
- atom(Filename),exists_file(Filename),!,
- clear_spaces,
- load_metta('&self',Filename).
-load_metta(Filename):- with_wild_path(load_metta,Filename),!,loonit_report.
-
+ clear_spaces, load_metta('&self',Filename).
 load_metta(Self,Filename):-
  notrace, nortrace,
  atom(Filename),exists_file(Filename),!,
@@ -256,6 +243,8 @@ load_metta(Self,Filename):-
    setup_call_cleanup(open(Filename,read,In),
     ((directory_file_path(Directory, _BaseName, Filename),
       with_cwd(Directory,once(load_metta_stream(Self,In))))), close(In))).
+
+load_metta(_Self,Filename):- Filename=='--repl',!,repl.
 load_metta(Self,Filename):- with_wild_path(load_metta(Self),Filename),!,loonit_report.
 
 %writeqln(Q):- write(' '),writeq(Q),nl.
@@ -268,12 +257,12 @@ clear_space(S):-
    retractall(metta_atom(S,_)).
 
 load_metta_stream(Fn,String):- string(String),!,open_string(String,Stream),load_metta_stream(Fn,Stream).
-load_metta_stream(_Fn,In):- (at_end_of_stream(In);reached_file_max),!.
+load_metta_stream(_Fn,In):- (at_end_of_stream(In)/*;reached_file_max*/),!.
 load_metta_stream(Self,In):- repeat,
   once(read_metta(In,Read)),
   once((Read==end_of_file->true;
    cwdl(800,do_metta(Self,load,Read)))),
-  (at_end_of_stream(In);reached_file_max),!.
+  (at_end_of_stream(In)/*;reached_file_max*/),!.
 
 
 :- nb_setval(self_space, '&self').
@@ -582,7 +571,7 @@ fn_append1(Term,X,eval_arg(Term,X)).
 run_file_arg:- current_prolog_flag(argv,P),append(_,['--args'|Rest],P),Rest\==[],!,maplist(load_metta('&self'),Rest).
 
 loon:- loonit_reset, make, run_file_arg, !, loonit_report, halt(7).
-loon:- time(loon_metta('./examples/compat/test_scripts/*.metta')),fail.
+%loon:- time(loon_metta('./examples/compat/test_scripts/*.metta')),fail.
 loon:- repl.
 
 
@@ -626,8 +615,11 @@ do_repl(_Slf,call(Term)):- add_history1(Term), !, call(Term),!, fail.
 
 do_repl(Self,!):- !, repl_read(Exec),do_repl(Self,exec(Exec)).
 do_repl(Self,Read):- string(Read),!,add_history01(Read),repl_read(Read,Term), do_metta(Self,load,Term),!,fail.
-do_repl(Self,exec(Exec)):- !, (with_output_to(string(H),(write('!'),write_src(Exec))),add_history01(H)),do_metta_exec(Self,Exec),!,fail.
+do_repl(Self,exec(Exec)):- !, save_exec_history(Exec),!, do_metta_exec(Self,Exec),!,fail.
 do_repl(Self,Read):- (with_output_to(string(H),write_src(Read)),add_history01(H)), do_metta(Self,load,Read),!,fail.
+
+save_exec_history(exec(Exec)):- !, save_exec_history(Exec).
+save_exec_history(Exec):- with_output_to(string(H),(write('!'),write_src(Exec))),add_history01(H).
 
 read_metta1(_,O2):- notrace, nortrace,clause(t_l:s_reader_info(O2),_,Ref),erase(Ref).
 read_metta1(In,Read):- current_input(In0),In==In0,!, repl_read(Read).
@@ -635,10 +627,10 @@ read_metta1(In,Read):- peek_char(In,Char), read_metta1(In,Char,Read).
 read_metta1(In,Char,Read):- char_type(Char,white),get_char(In,Char),put(Char),!,read_metta1(In,Read).
 read_metta1(In,';',Read):- read_line_to_string(In,Str),write_comment(Str),!,read_metta1(In,Read).
 read_metta1(In,_,Read1):- once(parse_sexpr_untyped(In,Read1)),!.
-read_metta(In,Read):- read_metta1(In,Read1),
+read_metta(In,Read):-
+ read_metta1(In,Read1),
   (Read1=='!'
-     -> (read_metta1(In,Read2), Read=exec(Read2))
-     ; Read = Read1).
+     -> (read_metta1(In,Read2), (Read=exec(Read2), save_exec_history(Read))) ; Read = Read1).
 
 write_comment(Cmt):- format('~N%;~w~n',[Cmt]).
 do_metta_cmt(_,'$COMMENT'(Cmt,_,_)):- write_comment(Cmt),!.
@@ -782,7 +774,9 @@ decl_length(_TypeDecl,1).
 arg_types([['->'|L]],R,LR):-!, arg_types(L,R,LR).
 arg_types(['->'|L],R,LR):-!, arg_types(L,R,LR).
 arg_types(L,R,LR):- append(L,R,LR).
-:- loonit_reset.
 
-
+:- metta_final.
+:- if(\+ current_prolog_flag(argv,[])).
 :- loon.
+:- endif.
+

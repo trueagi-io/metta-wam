@@ -1416,12 +1416,15 @@ class GptIntentSpace(GroundingSpace):
 def self_space_info():
     return ""
 
-@register_atoms(pass_metta=True)
-def register_vspace_atoms(metta):
+#pass_metta=True
+@register_atoms
+#@register_atoms(pass_metta=True)
+def register_vspace_atoms():
 
+    metta = None
     global oper_dict
 
-    the_python_runner.set_cmetta(metta)
+    if not metta is None: the_python_runner.set_cmetta(metta)
 
     counter = 0
     if verbose>1: print(f"register_vspace_atoms metta={metta} {self_space_info()}")
