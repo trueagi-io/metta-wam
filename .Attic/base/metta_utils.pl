@@ -149,13 +149,20 @@ mcatch(G,E,F):- catch(G,E,F).
 %ncatch(G,E,(F)).
 
 
-
+:- if( \+ current_predicate(if_t/2)).
 :- meta_predicate(if_t(0,0)).
 if_t(IF, THEN) :- call(call,ignore((((IF,THEN))))).
+:- endif.
+
+:- if( \+ current_predicate(must_ll/1)).
 :- meta_predicate(must_ll(0)).
 must_ll(G):- md(call,G)*->true;throw(not_at_least_once(G)).
+:- endif.
+
+:- if( \+ current_predicate(at_least_once/1)).
 :- meta_predicate(at_least_once(0)).
 at_least_once(G):- call(G)*->true;throw(not_at_least_once(G)).
+:- endif.
 
 %wraps_each(must_ll,call).
 wraps_each(must_det_ll,once).
@@ -223,8 +230,9 @@ md_maplist(MD,P3,[HA|TA],[HB|TB],[HC|TC]):- call(MD,call(P3,HA,HB,HC)), md_mapli
 
 %must_det_ll(G):- !, once((/*notrace*/(G)*->true;md_failed(P1,G))).
 
+:- if( \+ current_predicate(must_det_ll/1)).
 must_det_ll(X):- md(once,X).
-
+:- endif.
 
 md(P1,G):- remove_must_det(MD), wraps_each(MD,P1),!,call(G).
 md(P1,G):- never_rrtrace,!, call(P1,G).

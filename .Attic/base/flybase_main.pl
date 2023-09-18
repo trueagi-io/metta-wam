@@ -2,10 +2,10 @@
 :- flush_output.
 :- setenv('RUST_BACKTRACE',full).
 
-% ==============
-% METTA COMPILER
-% ==============
-:- ensure_loaded(metta_compiler).
+
+:- ensure_loaded(swi_support).
+
+
 fb_stats:- metta_stats.
 '&flybase':for_metta('&flybase',P):- fb_pred(F,A),length(L,A),P=[F|L],apply(F,L).
 
@@ -92,7 +92,6 @@ good_concept(listOf(E1)):- good_concept(E1),symbol(E1).
 is_good_symbol_name(E1):- symbol(E1), symbol_length(E1,L),L>=2, \+ symbol_number(E1,_).
 
 fb_pred_g(F,A):-fb_pred(F,A), \+ skipped_anotations(F).
-
 
 mine_corisponds(Concept1,Corispondance):-
  fb_arg_table_n(Concept1,Fn1,Nth1),is_good_symbol_name(Concept1),
@@ -323,8 +322,6 @@ cleanup_arities:- for_all((fb_pred(F,2),fb_pred(F,N),N>2),retract(fb_pred(F,2)))
 
 
 
-for_all(G1,G2):-
-  forall(G1,G2).
 
 :- discontiguous column_names_ext/2.
 :- discontiguous primary_column/2.
@@ -358,6 +355,7 @@ extreme_debug(_).
 numbervars_w_singles(P):- term_singletons(P, Vars),
   numbervars(Vars,260,_,[attvar(bind),singletons(false)]),
   numbervars(P,14,_,[attvar(bind),singletons(true)]).
+
 
 
 pp_fb(P):- format("~N "),  \+ \+ (numbervars_w_singles(P), pp_fb1(P)),flush_output.
@@ -987,7 +985,7 @@ est_size(              0,stock_relationship_pub).
 est_size(              0,stockprop_pub).
 est_size(              0,tableinfo).
 
-est_size_loaded(N,F):- fb_pred_major(F,A),metta_stats(F,A,N).
+est_size_loaded(N,F/A):- fb_pred_major(F,A),metta_stats(F,A,N).
 
 fb_pred_major(F,A):- fb_pred_m(F,A).
 fb_pred_major(F,A):- fb_pred(F,A),
@@ -1022,7 +1020,7 @@ with_wild_path(_Fnicate, []) :- !.
 with_wild_path(Fnicate, Dir) :-  is_scryer, symbol(Dir), !, must_det_ll_r((path_chars(Dir,Chars), with_wild_path(Fnicate, Chars))).
 with_wild_path(Fnicate, Chars) :-  \+ is_scryer, \+ symbol(Chars), !, must_det_ll_r((name(Atom,Chars), with_wild_path(Fnicate, Atom))).
 with_wild_path(Fnicate, File) :- exists_file(File), !, must_det_ll_r(( call(Fnicate, File))).
-with_wild_path(Fnicate, File) :- with_wild_path_swi(Fnicate, File).
+with_wild_path(Fnicate, File) :- !, with_wild_path_swi(Fnicate, File).
 with_wild_path(Fnicate, Dir) :-  exists_directory(Dir), !,
   must_det_ll_r((directory_files(Dir, Files),
   maplist(directory_file_path(Dir,Files),Paths),
@@ -2787,7 +2785,7 @@ xinfo(X):- forall(xinfo(X,P),(format('~N'),write_src(P))),format('~N').
 
 %:- ensure_loaded(read_obo).
 
-:- prolog_load_context(source,This),for_all((source_file(P0,This),functor(P0,F,0)),writeln(add_history1(F))).
+show_cmds:- prolog_load_context(source,This),for_all((source_file(P0,This),functor(P0,F,0)),writeln(add_history1(F))).
 %add_history1(setup_flybase_cols)
 %add_history1(pmt)
 ah:- add_history1(fb_stats),
@@ -2801,8 +2799,14 @@ ah:- add_history1(fb_stats),
 
 %:- initialization(load_flybase).
 
-:- metta_final.
 
 
+
+% ==============
+% METTA COMPILER
+% ==============
+%:- ensure_loaded(metta_compiler).
+:- ensure_loaded(metta_interp).
+%:- ensure_loaded(metta_python).
 
 
