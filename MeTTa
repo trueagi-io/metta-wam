@@ -1,40 +1,210 @@
 #!/bin/bash
 
-SCRIPT=$(readlink -f $0)
-export METTA_DIR=$(dirname $SCRIPT)
-echo METTA_DIR=$METTA_DIR
-cd $METTA_DIR
+export RPWD=$PWD
+IS_SOURCED=$( [[ "${BASH_SOURCE[0]}" != "${0}" ]] && echo 1 || echo 0)
+# Function to exit the script properly
+exit_script() { [[ "$IS_SOURCED" == "1" ]] && return $1 || exit $1; }
+if [ "$IS_SOURCED" -eq "0" ]; then SCRIPT=$(readlink -f "$0"); else SCRIPT=$(readlink -f "${BASH_SOURCE[0]}"); fi
+export MeTTa=$(basename "$SCRIPT")
+export METTA_DIR=$(dirname "$SCRIPT")
+#echo "METTA_DIR=$METTA_DIR"
+cd "$METTA_DIR" || { echo "Failed to navigate to $METTA_DIR"; exit_script 1; }
+export TEE_FILE=${TEE_FILE:-"$METTA_DIR/tee.ansi"}
 
-export FILE=${1}
+set -e
+python_flag=enable
 
-[ -z "$TEE_FILE" ] && export TEE_FILE="${METTA_DIR}/tee.ansi"
-touch $TEE_FILE
-chmod 777 $TEE_FILE
-[ -z "$TYPESCRIPT" ] && TYPESCRIPT=1 exec /usr/bin/script -f -e -a ${TEE_FILE} -c "TYPESCRIPT=1 $0 $@"
+# Function to read ~/.mettalogrc
+function load_mettalogrc {
+    METTALOG_OPTIONS=()
+    if [[ -f "$HOME/.mettalogrc" ]]; then
+        while IFS= read -r line; do
+            [[ -z "$line" ]] && continue # Skip empty lines
+            [[ $line =~ ^# ]] && continue # Skip lines that start with a comment
+            METTALOG_OPTIONS+=("$line")
+        done < "$HOME/.mettalogrc"
+    fi
+}
 
-cat /dev/null > ${TEE_FILE}
+function print_help {
+    echo " CMD: $0"
+    echo " Usage: $MeTTa [options] <metta-files|directories> ... [-- arg ...passed to your program...]"
+    echo "        $MeTTa [options] [-o executable] -c metta-file1 -c metta-file2 ... to compile into executable ..."
+    echo "        $MeTTa --help         Display this message"
+    echo "        $MeTTa --version      Display version information"
+    echo "        $MeTTa --abi-version  Display ABI version key"
+    echo "        $MeTTa --arch         Display architecture"
+    echo "        $MeTTa --dump-runtime-variables[=format]"
+    echo "                        Dump link info in sh(1) format"
+    echo ""
+    echo "    -x state                 Start from state (must be first)"
+    echo "    -g goal                  Run goal (may be repeated)"
+    echo "    -t toplevel              Toplevel goal"
+    echo "    -f file                  User initialisation file"
+    echo "    -F file                  Site initialisation file"
+    echo "    -l file                  Script source file"
+    echo "    -s file                  Script source file"
+    echo "    -p alias=path            Define file search path 'alias'"
+    echo "    -O                       Optimised compilation"
+    echo "    --python[=bool]          Enable or disable Python support (default: $python_flag)"
+    echo "    --on-error=style         One of print, halt or status"
+    echo "    --on-warning=style       One of print, halt or status"
+    echo "    --tty[=bool]             (Dis)allow tty control"
+    echo "    --packs[=bool]           Do (not) attach add-ons"
+    echo "    --signals[=bool]         Do (not) modify signal handling"
+    echo "    --threads[=bool]         Do (not) allow for threads"
+    echo "    --debug[=bool]           Do (not) generate debug info"
+    echo "    --debug-on-interrupt[=bool] Trap the debugger on interrupt"
+    echo "    --quiet[=bool] (-q)      Do (not) suppress informational messages"
+    echo "    --traditional            Disable extensions of version 7"
+    echo "    --home[=DIR]             Print home or use DIR as SWI-Prolog home"
+    echo "    --stack-limit=size[BKMG] Specify maximum size of Prolog stacks"
+    echo "    --table-space=size[BKMG] Specify maximum size of SLG tables"
+    echo "    --shared-table-space=size[BKMG] Maximum size of shared SLG tables"
+    echo "    --pce[=bool]             Make the xpce gui available"
+    echo "    --pldoc[=port]           Start PlDoc server [at port]"
+    echo "    --repl                   Start the REPL (Read-Eval-Print Loop) after processing metta files."
+    echo "                             If no metta files are provided, this is the default behavior."
+    echo "    --html[=bool]            Save an HTML file containing terminal output in the same"
+    echo "                             directory as the input file or directory."
+    echo "                             Defaults to true if exactly one metta file or directory argument was provided"
+    echo ""
+    echo " Boolean options may be written as --name=bool, --name, --no-name or --noname."
+    echo " Both '-' or '_' are accepted as word-separator for long options."
+    echo ""
+    echo " Configuration File:"
+    echo "    This script reads options from the ~/.mettalogrc file, one option per line."
+    echo "    Options specified in ~/.mettalogrc are processed before command-line arguments."
+    echo ""
+    exit_script 0
+}
 
-export BCMD="export TEE_FILE='${TEE_FILE}' ; cd ${METTA_DIR} ; exec swipl -l metta_vspace/pyswip/metta_interp.pl -- --args $@"
+# Load settings from ~/.mettalogrc
+load_mettalogrc
 
-echo BCMD="${BCMD}"
+# Initialize variables
+SWI_OPTIONS=()
+OTHER_OPTIONS=()
+FLAG_WITH_ARG=false
+LIST_OF_FILE_ARGS=()
 
-bash -c "${BCMD}"
 
-# Check if FILE variable is provided
-if [ -f "$FILE" ]; then
-	# Extract directory and base name from FILE
-	DIRNAME=$(dirname "$FILE")
-	BASENAME=$(basename "$FILE" .metta)
+function handle_args {
+    FLAG_WITH_ARG=false
+    for arg in "$@"; do
+        [[ "$arg" == "--help" || "$arg" == "-h" ]] && { print_help; exit_script 0; }
+        [[ "$arg" =~ ^--dump-runtime-variables.*$ || "$arg" == "--abi-version" || "$arg" == "--version" || "$arg" == "--arch" ]] && { swipl $@; exit_script 0; }
 
-	# Execute the command
-	cat $FILE $TEE_FILE | ansi2html > "$DIRNAME/$BASENAME.html"
+        if [[ "$arg" =~ ^--python=(enable|false)$ ]]; then
+            python_flag="${BASH_REMATCH[1]}"
+        elif [[ "$arg" == "--python" ]]; then
+            python_flag=enable
+        elif [[ "$arg" == "--no-python" ]]; then
+            python_flag=false
+        elif [[ "$arg" == "--repl" ]]; then
+            repl_flag=enable
+        elif [[ "$arg" == "--no-repl" ]]; then
+            repl_flag=false
+        elif [[ "$arg" == "--html" ]]; then
+            html_flag=enable
+        elif [[ "$arg" == "--no-html" ]]; then
+            html_flag=false
+        fi
 
-	echo "Output saved to $DIRNAME/$BASENAME.html"
+        if [[ -f "$arg" || -d "$arg" ]]; then
+	    rpath=("$(realpath "$arg")")
+	    if [[ -f "$rpath" || -d "$rpath" ]]; then
+		arg="$rpath"
+	    fi
+        fi
+
+        [[ "$FLAG_WITH_ARG" == true ]] && { SWI_OPTIONS+=("$arg"); FLAG_WITH_ARG=false; continue; }
+
+        # These options require an argument (like a filename)
+        case $arg in
+            -x|-g|-t|-f|-F|-l|-s|-p|--on-error|--on-warning|--home|--stack-limit|--table-space|--shared-table-space|--pldoc)
+                SWI_OPTIONS+=("$arg")
+                FLAG_WITH_ARG=true
+                continue
+                ;;
+            # These options don't require an argument
+            -O|--traditional|--tty*|--packs*|--signals*|--threads*|--debug*|--debug-on-interrupt*|--quiet*|--pce*)
+                SWI_OPTIONS+=("$arg")
+                continue
+                ;;
+            *)
+                if [[ -f "$arg" || -d "$arg" ]]; then
+                    # LIST_OF_FILE_ARGS+=("$(realpath --relative-to="$METTA_DIR" "$arg")")
+		    LIST_OF_FILE_ARGS+=("$(realpath "$arg")")
+                else
+                    OTHER_OPTIONS+=("$arg")
+                fi
+                ;;
+        esac
+    done
+}
+
+
+
+# First process arguments from ~/.mettalogrc
+handle_args "${METTALOG_OPTIONS[@]}"
+# Then process actual command-line arguments
+handle_args "$@"
+
+#echo "Debug: SWI_OPTIONS: ${SWI_OPTIONS[@]}"
+#echo "Debug: LIST_OF_FILE_ARGS: ${LIST_OF_FILE_ARGS[@]}"
+#echo "Debug: OTHER_OPTIONS: ${OTHER_OPTIONS[@]}"
+
+# Decide on enabling the REPL
+if [[ -z "$repl_flag" ]]; then
+  [[ ${#LIST_OF_FILE_ARGS[@]} -eq 0 ]] && repl_flag=enable || repl_flag=false
+fi
+
+
+# Create or reset the TEE_FILE if only one file or directory is provided
+if [[ -z "$html_flag" ]]; then
+    if [[${#LIST_OF_FILE_ARGS[@]} -eq 1]]; then
+	if [[ -f "${LIST_OF_FILE_ARGS[0]}" ]] || [[ -d "${LIST_OF_FILE_ARGS[0]}" ]]; then
+	    export TEE_FILE=${TEE_FILE:-"$METTA_DIR/tee.ansi"}
+	    touch "$TEE_FILE"
+	    chmod 777 "$TEE_FILE"
+	fi
+    fi
 fi
 
 
 
+# Add metta_vspace to PYTHONPATH if not already present
+[[ ":$PYTHONPATH:" != *":./metta_vspace:"* ]] && export PYTHONPATH="${PYTHONPATH:+${PYTHONPATH}:}./metta_vspace"
+export RUST_BACKTRACE=full
+
+BCMD="cd '$METTA_DIR'; exec swipl ${SWI_OPTIONS[*]} -l metta_vspace/pyswip/metta_interp.pl -- --python=$python_flag ${LIST_OF_FILE_ARGS[*]} --repl=$repl_flag  --args ${OTHER_OPTIONS[*]}"
+
+echo "BCMD=\"$BCMD\""
+# Conditional to check if html_flag is enabled
+if [[ "$html_flag" == "enable" ]]; then
+    [ -z "$TYPESCRIPT" ] && TYPESCRIPT=1 exec /usr/bin/script -f --force -e -a "$TEE_FILE" -c "TYPESCRIPT=1 $BCMD"
+else
+    eval "$BCMD"
+fi
+# Reset terminal settings
 stty sane
+
+# Output to HTML based on the first file or directory provided
+if [[ "$html_flag" == "enable" ]]; then
+    DIRNAME=$(dirname "${LIST_OF_FILE_ARGS[0]}")
+    BASENAME=$(basename "${LIST_OF_FILE_ARGS[0]}")
+
+    # Remove extension if it's a file
+    [[ -f "${LIST_OF_FILE_ARGS[0]}" ]] && BASENAME=${BASENAME%.*}
+
+    if command -v ansi2html >/dev/null 2>&1; then
+	ansi2html < "$TEE_FILE" > "$DIRNAME/$BASENAME.html"
+	echo "Output saved to $DIRNAME/$BASENAME.html"
+    else
+	echo "ansi2html command not found. HTML output will not be generated."
+    fi
+fi
 
 
 
