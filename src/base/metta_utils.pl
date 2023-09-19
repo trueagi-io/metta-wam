@@ -137,6 +137,7 @@ substM_l([], _, _, []).  substM_l([H1|T1], F, R, [H2|T2]) :- substM(H1, F, R, H2
 
 
 pp_m(Cl):- write_src(Cl),!.
+pp_m(C,Cl):- color_g_mesg(C,write_src(Cl)),!.
 %  notrace((format('~N'), ignore(( \+ ((numbervars(Cl,0,_,[singletons(true)]), print_tree_with_final(Cl,"."))))))).
 pp_q(Cl):-
   notrace((format('~N'), ignore(( \+ ((numbervars(Cl,0,_,[singletons(true)]), print_tree_with_final(Cl,"."))))))).
@@ -230,9 +231,9 @@ md_maplist(MD,P3,[HA|TA],[HB|TB],[HC|TC]):- call(MD,call(P3,HA,HB,HC)), md_mapli
 
 %must_det_ll(G):- !, once((/*notrace*/(G)*->true;md_failed(P1,G))).
 
-:- if( \+ current_predicate(must_det_ll/1)).
+%:- if( \+ current_predicate(must_det_ll/1)).
 must_det_ll(X):- md(once,X).
-:- endif.
+%:- endif.
 
 md(P1,G):- remove_must_det(MD), wraps_each(MD,P1),!,call(G).
 md(P1,G):- never_rrtrace,!, call(P1,G).

@@ -83,7 +83,7 @@ symbol_contains(T,TT):- atom_contains(T,TT).
     asserta(pyswip_dir(Dir)).
 
 
-:- if( \+ current_predicate(must_det_ll/1)).
+:- if( (fail, \+ current_predicate(must_det_ll/1))).
 % Calls the given Goal and throws an exception if Goal fails.
 % Usage: must_det_ll(+Goal).
 must_det_ll(M:Goal) :- !, must_det_ll(M,Goal).

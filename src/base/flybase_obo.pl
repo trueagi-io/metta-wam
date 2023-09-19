@@ -25,7 +25,7 @@ load_obo(Filename) :-
     directory_file_path(Directory, BaseName, Filename),
     file_name_extension(Id, _, BaseName),
  symbol_concat(Id,'.metta',OutputFile),
- tell(OutputFile),
+ nop(tell(OutputFile)),
  track_load_into_file(Filename,
  must_det_ll((
     Type = 'OntologyFile',
@@ -37,7 +37,7 @@ load_obo(Filename) :-
     setup_call_cleanup(open(Filename, read, Stream),
       process_obo_stream_repeat(Stream),
       close(Stream))))),
- told.
+ nop(told).
 
 
 process_obo_stream_repeat(Stream):-

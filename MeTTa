@@ -163,19 +163,17 @@ fi
 
 # Create or reset the TEE_FILE if only one file or directory is provided
 if [[ -z "$html_flag" ]]; then
-    if [[${#LIST_OF_FILE_ARGS[@]} -eq 1]]; then
-	if [[ -f "${LIST_OF_FILE_ARGS[0]}" ]] || [[ -d "${LIST_OF_FILE_ARGS[0]}" ]]; then
-	    export TEE_FILE=${TEE_FILE:-"$METTA_DIR/tee.ansi"}
-	    touch "$TEE_FILE"
-	    chmod 777 "$TEE_FILE"
-	fi
+    if [[ ${#LIST_OF_FILE_ARGS[@]} -eq 1 ]]; then
+        if [[ -f "${LIST_OF_FILE_ARGS[0]}" ]] || [[ -d "${LIST_OF_FILE_ARGS[0]}" ]]; then
+            export TEE_FILE=${TEE_FILE:-"$METTA_DIR/tee.ansi"}
+            touch "$TEE_FILE"
+            chmod 777 "$TEE_FILE"
+        fi
     fi
 fi
 
-
-
 # Add metta_vspace to PYTHONPATH if not already present
-[[ ":$PYTHONPATH:" != *":./metta_vspace:"* ]] && export PYTHONPATH="${PYTHONPATH:+${PYTHONPATH}:}./metta_vspace"
+[[ ":$PYTHONPATH:" != *":$METTA_DIR/metta_vspace:"* ]] && export PYTHONPATH="${PYTHONPATH:+${PYTHONPATH}:}$METTA_DIR/metta_vspace"
 export RUST_BACKTRACE=full
 
 BCMD="cd '$METTA_DIR'; exec swipl ${SWI_OPTIONS[*]} -l metta_vspace/pyswip/metta_interp.pl -- --python=$python_flag ${LIST_OF_FILE_ARGS[*]} --repl=$repl_flag  --args ${OTHER_OPTIONS[*]}"

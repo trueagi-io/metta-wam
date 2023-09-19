@@ -232,20 +232,43 @@ example_usages :-
     write('Number of atoms in space: '), writeln(Count).
 
 
+metta_cmd_args(Rest):- current_prolog_flag(argv,P),append(_,['--'|Rest],P),!.
+metta_cmd_args(Rest):- current_prolog_flag(os_argv,P),append(_,['--'|Rest],P),!.
+metta_cmd_args(Rest):- current_prolog_flag(argv,Rest).
+run_file_arg:- metta_cmd_args(Rest), !,  do_cmdline_load_metta('&self',Rest).
+loon:- run_file_arg, !, loonit_report, halt(7).
+%loon:- time(loon_metta('./examples/compat/test_scripts/*.metta')),fail.
+loon:- repl, halt(7).
+
+
+do_cmdline_load_metta(Self,Rest):-
+  ((select('--repl',Rest,Files);select('--repl=enable',Rest,Files))->After=repl;(Files=Rest,After=halt(7))),!,
+  cmdline_load_metta(Self,Files),!,catch_red(After).
+
+cmdline_load_metta(Self,[Filemask|Rest]):- atom(Filemask), \+ atom_concat('-',_,Filemask),
+  must_det_ll((Src=load_metta(Self,Filemask),nl,write_src(Src),nl,catch_red(Src),!,flush_output,
+  cmdline_load_metta(Self,Rest))).
+cmdline_load_metta(Self,[M|Rest]):-
+  write(' '), write_src(M), nl, !,
+  cmdline_load_metta(Self,Rest).
+cmdline_load_metta(_,Nil):- Nil==[],!.
+
 :- set_prolog_flag(occurs_check,true).
 
 load_metta(Filename):-
  clear_spaces, load_metta('&self',Filename).
 load_metta(Self,Filename):-
- notrace, nortrace,
  atom(Filename),exists_file(Filename),!,
  track_load_into_file(Filename,
    setup_call_cleanup(open(Filename,read,In),
     ((directory_file_path(Directory, _BaseName, Filename),
-      with_cwd(Directory,once(load_metta_stream(Self,In))))), close(In))).
+      with_cwd(Directory,
+         load_metta_stream(Self,In)))),close(In))).
 
 load_metta(_Self,Filename):- Filename=='--repl',!,repl.
-load_metta(Self,Filename):- with_wild_path(load_metta(Self),Filename),!,loonit_report.
+load_metta(Self,Filename):-
+  (\+ atom(Filename); \+ exists_file(Filename)),!,
+  with_wild_path(load_metta(Self),Filename),!,loonit_report.
 
 %writeqln(Q):- write(' '),writeq(Q),nl.
 writeqln(Q):- format('~N'),write(' '),writeq(Q),nl.
@@ -258,11 +281,12 @@ clear_space(S):-
 
 load_metta_stream(Fn,String):- string(String),!,open_string(String,Stream),load_metta_stream(Fn,Stream).
 load_metta_stream(_Fn,In):- (at_end_of_stream(In)/*;reached_file_max*/),!.
-load_metta_stream(Self,In):- repeat,
-  once(read_metta(In,Read)),
-  once((Read==end_of_file->true;
-   cwdl(800,do_metta(Self,load,Read)))),
-  (at_end_of_stream(In)/*;reached_file_max*/),!.
+load_metta_stream(Self,In):-
+ repeat,
+  once(read_metta(In,Read)), %write_src(read_metta=Read),nl,
+  once(do_metta(Self,load,Read)),
+  flush_output,
+  at_end_of_stream(In),!.
 
 
 :- nb_setval(self_space, '&self').
@@ -276,6 +300,10 @@ eval_arg(A,AA):-
 :- discontiguous eval_args1/4.
 :- discontiguous eval_args2/4.
 
+into_underscores(D,U):- atomic_list_concat(L,'-',D),atomic_list_concat(L,'_',U).
+
+is_predicate(AE,Len,Pred):- atom(AE),current_predicate(AE/Len),!,Pred=AE.
+is_predicate(AE,Len,Pred):- atom(AE),into_underscores(AE,Pred),current_predicate(Pred/Len),!.
 
 %eval_arg(Depth,_Self,X,_Y):- forall(between(6,Depth,_),write(' ')),writeqln(eval_args(X)),fail.
 eval_arg(Depth,_,_,_):- Depth<1,!,fail.
@@ -286,6 +314,12 @@ eval_arg(Depth,Self,[AE,X,Y],TF):- AE=='assertEqual',!,
    setof_eval(Depth,Self,Y,YY),
    !),XX=@=YY))),
     as_tf(XX=@=YY,TF).
+
+eval_arg(_Dpth,_Slf,[AE|More],TF):- length(More,Len),
+  is_predicate(AE,Len,Pred),!,as_tf(apply(Pred,More),TF).
+eval_arg(_Dpth,_Slf,[AE|More],TF):- length([AE|More],Len),
+  is_predicate(AE,Len,Pred),append(More,[TF],Args),!,apply(Pred,Args).
+
 eval_arg(Depth,Self,[AE,X,Y],TF):- AE=='assertEqualToResult',!,
    loonit_asserts(setof_eval(Depth,Self,X,L),L=@=Y), !, as_tf(L=@=Y,TF).
 eval_arg(_Dpth,_Slf,Name,Value):- atom(Name), nb_current(Name,Value),!.
@@ -457,7 +491,7 @@ eval_args2(Depth,Self,['or',X,Y],TF):- !, (eval_arg(Depth,Self,X,TF);eval_arg(De
 
 eval_args2(_Dpth,_Slf,LESS,Res):- once(eval_selfless(LESS,Res)),LESS\==Res,!.
 
-as_tf(G,'True'):- call(G),!. as_tf(_,'False').
+as_tf(G,TF):- call(G)*->TF='True';TF='False'.
 eval_selfless(['==',X,Y],TF):-!,as_tf(X=@=Y,TF).
 eval_selfless(['=',X,Y],TF):-!,as_tf(X=Y,TF).
 eval_selfless(['>',X,Y],TF):-!,as_tf(X@>Y,TF).
@@ -568,18 +602,6 @@ fn_append1(eval_arg(Term,X),X,eval_arg(Term,X)):-!.
 fn_append1(Term,X,eval_arg(Term,X)).
 
 
-run_file_arg:- current_prolog_flag(argv,P),append(_,['--args'|Rest],P),
- Rest\==[],!, (select('--repl',Rest,Files)->After=repl;(Files=Rest,After=halt(7))),
- write_src(maplist(load_metta('&self'),Files)),write_src(After),
- maplist(load_metta('&self'),Files),!,
- call(After).
-
-loon:- loonit_reset, make, run_file_arg, !, loonit_report, halt(7).
-%loon:- time(loon_metta('./examples/compat/test_scripts/*.metta')),fail.
-loon:- repl.
-
-
-
 % Check if parentheses are balanced in a list of characters
 balanced_parentheses(Chars) :- balanced_parentheses(Chars, 0).
 balanced_parentheses([], 0).
@@ -617,26 +639,33 @@ repl:-
       (once(read_metta(In,Read)),once(do_repl(Self,Read))),
        prompt(_,Was)).
 do_repl(_Self,end_of_file):- writeln('\n\n% To restart, use: ?- repl.').
-do_repl(_Slf,call(Term)):- add_history1(Term), !, call(Term),!, fail.
+do_repl(_Slf,call(Term)):- add_history1(Term), !, repl_call(Term),!, fail.
 
 do_repl(Self,!):- !, repl_read(Exec),do_repl(Self,exec(Exec)).
-do_repl(Self,Read):- string(Read),!,add_history01(Read),repl_read(Read,Term), do_metta(Self,load,Term),!,fail.
-do_repl(Self,exec(Exec)):- !, save_exec_history(Exec),!, do_metta_exec(Self,Exec),!,fail.
-do_repl(Self,Read):- (with_output_to(string(H),write_src(Read)),add_history01(H)), do_metta(Self,load,Read),!,fail.
+do_repl(Self,Read):- string(Read),!,add_history_string(Read),repl_read(Read,Term), do_metta(Self,load,Term),!,fail.
+do_repl(Self,exec(Exec)):- !, save_exec_history(Exec),!, time(do_metta_exec(Self,Exec)),!,fail.
+do_repl(Self,Read):- (with_output_to(string(H),write_src(Read)),add_history_string(H)), do_metta(Self,load,Read),!,fail.
+
+add_history_string(Str):- ignore(catch_i(add_history01(Str))),!.
 
 save_exec_history(exec(Exec)):- !, save_exec_history(Exec).
-save_exec_history(Exec):- with_output_to(string(H),(write('!'),write_src(Exec))),add_history01(H).
+save_exec_history(Exec):- with_output_to(string(H),(write('!'),write_src(Exec))),add_history_string(H).
 
-read_metta1(_,O2):- notrace, nortrace,clause(t_l:s_reader_info(O2),_,Ref),erase(Ref).
+read_metta1(_,O2):- clause(t_l:s_reader_info(O2),_,Ref),erase(Ref).
 read_metta1(In,Read):- current_input(In0),In==In0,!, repl_read(Read).
 read_metta1(In,Read):- peek_char(In,Char), read_metta1(In,Char,Read).
+
 read_metta1(In,Char,Read):- char_type(Char,white),get_char(In,Char),put(Char),!,read_metta1(In,Read).
 read_metta1(In,';',Read):- read_line_to_string(In,Str),write_comment(Str),!,read_metta1(In,Read).
-read_metta1(In,_,Read1):- once(parse_sexpr_untyped(In,Read1)),!.
+read_metta1(In,_,Read1):- parse_sexpr_untyped(In,Read),!,must_det_ll(Read=Read1).
+
+
+
 read_metta(In,Read):-
  read_metta1(In,Read1),
   (Read1=='!'
-     -> (read_metta1(In,Read2), (Read=exec(Read2), save_exec_history(Read))) ; Read = Read1).
+     -> (read_metta1(In,Read2), Read=exec(Read2), save_exec_history(Read))
+     ; Read = Read1),!.
 
 write_comment(Cmt):- format('~N%;~w~n',[Cmt]).
 do_metta_cmt(_,'$COMMENT'(Cmt,_,_)):- write_comment(Cmt),!.
@@ -694,6 +723,7 @@ subst_vars(M,M).
 metta_anew(load,OBO):- subst_vars(OBO,Cl),pp_m(OBO),assert_to_metta(Cl).
 metta_anew(unload,OBO):- subst_vars(OBO,Cl),ignore((clause(Cl,_,Ref),clause(Cl2,_,Ref),Cl=@=Cl2,erase(Ref),pp_m(Cl))).
 
+assert_to_metta(_):- reached_file_max,!.
 assert_to_metta(OBO):-
  functor(OBO,Fn,A),
  ignore(( A>=2,A<700,
@@ -713,7 +743,7 @@ assert_to_metta(OBO):-
        is_stream(OutputStream),
        should_show_data(X1),X1<1000,must_det_ll((display(OutputStream,Data),writeln(OutputStream,'.'))))))))))))),!.
 
-
+assert_MeTTa(_):- reached_file_max,!.
 assert_MeTTa(OBO):- assert_to_metta(OBO),!.
 assert_MeTTa(Data):- !, heartbeat, functor(Data,F,A), A>=2,
    decl_fb_pred(F,A),
@@ -798,6 +828,10 @@ do_metta_exec(Self,TermV):-!, pp_m(:- metta_eval(TermV)),
   subst_vars(TermV,Term),
   forall(eval_arg(13,Self,Term,X),(color_g_mesg(yellow,(format(' % '),writeq(X),nl)))),!.
 
+repl_call(Term):- catch_red(Term).
+
+catch_red(Term):- catch(Term,E,pp_m(red,in(Term,E))).
+
 s2p(I,O):- sexpr_sterm_to_pterm(I,O),!.
 
 
@@ -817,8 +851,17 @@ arg_types(['->'|L],R,LR):-!, arg_types(L,R,LR).
 arg_types(L,R,LR):- append(L,R,LR).
 
 :- metta_final.
+
+
 :- load_history.
+
+
 :- if(\+ current_prolog_flag(argv,[])).
+
+
+
   :- loon.
+
+
 :- endif.
 
