@@ -23,8 +23,9 @@ fb_stats:- metta_stats.
 %:- set_option_value(max_per_file,1_000).
 %:- set_option_value(max_per_file,300).
 :- set_option_value(max_per_file,inf+1).
-:- set_option_value(max_per_file,1_000).
 :- set_option_value(max_per_file,inf).
+:- set_option_value(max_per_file,20_000).
+
 :- set_option_value(max_disk_cache,1000).
 :- set_option_value(samples_per_million,30).
 :- set_option_value(full_canon,true).
@@ -67,7 +68,6 @@ symbol_prefix('PO', obo, 'Plant Ontology').
 symbol_prefix('DOID', obo, 'Disease Ontology').
 symbol_prefix('UBERON', obo, 'Uber-anatomy ontology').
 symbol_prefix('CHEBI', obo, 'Chemical Entities of Biological Interest').
-
 
 
 %./KBs/SUMO-OBO/gene-merged-SUMO.kif
@@ -969,7 +969,8 @@ fb_pred_m(fbgn_exons2affy2_overlaps,2).
 print_loaded_from_files:-
   findall(print_est_size(loaded_from_file,N,F),
      is_loaded_from_file_count(F,N),L),
-  sort(L,S),reverse(S,R),maplist(call,R).
+  sort(L,S),reverse(S,R),maplist(call,R),
+  print_est_sizes.
 
 print_est_sizes:-
   findall(print_est_size(est_size_loaded,N,F),
@@ -1163,7 +1164,12 @@ load_fb_cache(_File,OutputFile,_Fn):- exists_file(OutputFile),!,ensure_loaded(Ou
 load_fb_cache(File,_OutputFile,_Fn):- load_files([File],[qcompile(large)]).
 
 
-load_flybase(N):- (number(N)->true;N==inf),!, set_option_value(max_per_file,N),!,load_flybase.
+'load_flybase_tiny':- load_flybase(20_000).
+'load_flybase_full':- load_flybase(1_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000).
+
+load_flybase(N):- (number(N)->true;N==inf),!,
+ with_option([max_per_file=N],
+  (option_value(max_per_file,Max),write(max_per_file=Max),load_flybase)).
 load_flybase(File):- file_name_extension(_,Ext,File),!, load_flybase(File,Ext).
 load_flybase(File,Ext):-
    with_wild_path(load_flybase0(Ext),File),!.
@@ -1474,7 +1480,7 @@ load_flybase_sv(Sep,File,Stream,Fn):-
   time((repeat,
   read_line_to_chars(Stream, Chars),
   once(load_flybase_chars(NArgTypes,File,Stream,Fn,Sep,Chars)),
-  once(done_reading(File);at_end_of_stream(Stream)),!,
+  once(reached_file_max;done_reading(File);at_end_of_stream(Stream)),!,
   once(load_fb_data(NArgTypes,File,Stream,Fn,Sep,end_of_file)))),
   loaded_from_file_count(X),!,
   metta_stats(Fn),
@@ -1538,7 +1544,7 @@ load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl):-  % \+ option_value(full_ca
    repeat,
      once(read_csv_stream(Sep,Stream,Data)),
      loaded_from_file_count(X),
-      (((Data== end_of_file);(X>Max)) -> assert(done_reading(File)) ; 
+      (((Data== end_of_file);reached_file_max;(X>Max)) -> assert(done_reading(File)) ; 
        (once(write_flybase_data(ArgTypes,Fn,Data)),fail)),!.
 
 load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl):- !,
@@ -1550,7 +1556,7 @@ load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl):- !,
    repeat,
      once((csv_read_row(Stream, RData, CompiledOptions))),
      loaded_from_file_count(X),
-      (((RData== end_of_file);(X>Max)) -> assert(done_reading(File)) ; 
+      (((RData== end_of_file);reached_file_max;(X>Max)) -> assert(done_reading(File)) ; 
        (RData =..[_|Data], 
        once(write_flybase_data(ArgTypes,Fn,Data)),fail)),!.
 

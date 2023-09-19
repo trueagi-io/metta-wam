@@ -239,7 +239,7 @@ pp_sex('!'(V)) :- write('!'),!,pp_sex(V).
 pp_sex(listOf(S,_)) :- !,pp_sex(listOf(S)).
 pp_sex(listOf(S)) :- !,format('(ListValue ~@)',[pp_sex(S)]).
 
-pp_sex(V) :- w_proper_indent(0,w_in_p(pp_sexi(V))).
+pp_sex(V) :- w_proper_indent(1,w_in_p(pp_sexi(V))).
 
 pp_sexi([H|T]) :- is_list(T),!,
    write('('), pp_sex(H), print_list_as_sexpression(T), write(')').
@@ -345,7 +345,7 @@ metta_stats:- gc_now,
    APS is 60*floor(SL/(TotalSeconds+1)),
    ACS is AS//(Concepts+1),     
 
-   pl_stats('ConceptNodes',Concepts),
+   pl_stats('SymbolAtoms',Concepts),
    pl_stats('Random samples',CTs),
    skip((pl_stats('Bytes Per Atom (Average)',PA), pl_stats('Bytes Per ConceptNode (Average)',ACS))),
    skip((pl_stats('Relational Memory',RM), pl_stats('ConceptNode Memory',AS))),
