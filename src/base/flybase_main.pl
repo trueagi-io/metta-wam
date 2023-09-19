@@ -263,34 +263,6 @@ should_show_data(X):- nb_current(loading_file,F),symbol_concat(_,'.obo',F),
   loaded_from_file_count(X),Y is X mod 100_000, Y=<15,Y>=10.
 
 
-assert_to_metta(OBO):-
- functor(OBO,Fn,A),
- ignore(( A>=2,A<700,
- must_det_ll((
-  heartbeat,
-  OBO=..[Fn|Cols],
-  make_assertion4(Fn,Cols,Data,OldData),
-  functor(Data,FF,AA),
-  decl_fb_pred(FF,AA),
-  ((fail,call(Data))->true;(
-   must_det_ll((assert(Data),incr_file_count(_),
-     ignore((((should_show_data(X),
-       ignore((OldData\==Data,write('; oldData '),write_src(OldData),format('  ; ~w ~n',[X]))),
-       write_src(Data),format('  ; ~w ~n',[X]))))),
-     ignore((
-       fail, option_value(output_stream,OutputStream),
-       is_stream(OutputStream),
-       should_show_data(X1),X1<1000,must_det_ll((display(OutputStream,Data),writeln(OutputStream,'.'))))))))))))),!.
-
-
-assert_MeTTa(OBO):- assert_to_metta(OBO),!.
-assert_MeTTa(Data):- !, heartbeat, functor(Data,F,A), A>=2,
-   decl_fb_pred(F,A),
-   incr_file_count(_),
-   ignore((((should_show_data(X),
-       write(newData(X)),write(=),write_src(Data))))),
-   assert(Data),!.
-
 
 % Convert a function and its arguments into a compound term
 into_datum(Fn, [D|DataL], Data):-

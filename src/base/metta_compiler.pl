@@ -132,21 +132,32 @@ with_concepts(TF,Goal):- with_option(concepts,TF,Goal).
 
 direct_mapping(NC,NC):- var(NC),!.
 direct_mapping(NC,OO):- is_list(NC),!,maplist(direct_mapping,NC,OO).
-direct_mapping(!,no_more).
+direct_mapping(!,'!').
 direct_mapping(fail,'False').
 direct_mapping(true,'True').
 direct_mapping(prolog,meTTa).
 direct_mapping('[|]','Cons').
-direct_mapping(( ';' ),or).
-direct_mapping(( ',' ),and).
-direct_mapping(( '\\+' ),if_not).
+%direct_mapping(( ';' ),or).
+%direct_mapping(( ',' ),and).
+direct_mapping(( '\\+' ),unless).
 %direct_mapping(( ':-' ),entailed_by).
 direct_mapping('=..','atom_2_list').
 direct_mapping(NC,NC):- \+ compound(NC),!.
 direct_mapping((G,E),O):- conjuncts_to_list((G,E),List), into_sequential(List,O),!.
 direct_mapping((A->B;C),O):- !, direct_mapping(if_then_else(A,B,C),O).
+direct_mapping((A*->B;C),O):- !, direct_mapping(each_then_otherwise(A,B,C),O).
 direct_mapping((A->B),O):- !, direct_mapping(if_then(A,B),O).
+direct_mapping((A*->B),O):- !, direct_mapping(each_then(A,B),O).
 direct_mapping(I,O):- I=..[F|II],maplist(direct_mapping,[F|II],OO),O=..OO.
+direct_mapping(retract(X),'remove-atom'('&self',X)).
+direct_mapping(metta_defn(Self,H,B),'add-atom'(Self,[=,H,B])).
+direct_mapping(metta_type,'add-atom').
+direct_mapping(metta_atom,'add-atom').
+direct_mapping(assert(X),'add-atom'('&self',X)).
+direct_mapping(retractall(X),'remove-all-atoms'('&self',X)).
+direct_mapping(clause(H,B),'get-atoms'('&self',[=,H,B])).
+
+
 
 print_metta_src:- mmake,
   for_all((source_file(Pred,File),
@@ -168,7 +179,7 @@ pp_metta(Head,Body):- conjuncts_to_list(Body,List), into_sequential(List,SP),!,
 pp_metta(P):- pretty_numbervars(P,PP),with_option(concepts=false,pp_fb(PP)).
 
 into_sequential(Body,SP):- \+ is_list(Body), conjuncts_to_list(Body,List),into_sequential(List,SP).
-into_sequential(List,SP):- length(List,L),L>1, SP =.. [sequential|List],!.
+into_sequential(List,SP):- length(List,L),L>1, SP =.. [','|List],!.
 into_sequential([SP],SP):-!.
 into_sequential([],'True').
 
