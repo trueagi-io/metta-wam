@@ -568,11 +568,16 @@ fn_append1(eval_arg(Term,X),X,eval_arg(Term,X)):-!.
 fn_append1(Term,X,eval_arg(Term,X)).
 
 
-run_file_arg:- current_prolog_flag(argv,P),append(_,['--args'|Rest],P),Rest\==[],!,maplist(load_metta('&self'),Rest).
+run_file_arg:- current_prolog_flag(argv,P),append(_,['--args'|Rest],P),
+ Rest\==[],!, (select('--repl',Rest,Files)->After=repl;(Files=Rest,After=halt(7))),
+ write_src(maplist(load_metta('&self'),Files)),write_src(After),
+ maplist(load_metta('&self'),Files),!,
+ call(After).
 
 loon:- loonit_reset, make, run_file_arg, !, loonit_report, halt(7).
 %loon:- time(loon_metta('./examples/compat/test_scripts/*.metta')),fail.
 loon:- repl.
+
 
 
 % Check if parentheses are balanced in a list of characters
@@ -604,6 +609,7 @@ repl_read(Read) :- repl_read("", Read).
 
 repl:-
    current_input(In),
+   ignore(catch(load_history,_,true)),
    repeat, make,
    ((nb_current(self_space,Self),Self\==[])->true;Self='&self'),
    format('~N~n'), format(atom(P),'metta@~w: ',[Self]),
@@ -685,8 +691,36 @@ subst_vars(M,N):- sub_term(V,M),compound(V),V='$VAR'(_),!,
   substM(M,V,_NewVar,MM),!,subst_vars(MM,N).
 subst_vars(M,M).
 
-metta_anew(load,NV):- subst_vars(NV,Cl),assert_if_new(Cl),ppm(NV).
-metta_anew(unload,NV):- subst_vars(NV,Cl),ignore((clause(Cl,_,Ref),clause(Cl2,_,Ref),Cl=@=Cl2,erase(Ref),ppm(Cl))).
+metta_anew(load,OBO):- subst_vars(OBO,Cl),pp_m(OBO),assert_to_metta(Cl).
+metta_anew(unload,OBO):- subst_vars(OBO,Cl),ignore((clause(Cl,_,Ref),clause(Cl2,_,Ref),Cl=@=Cl2,erase(Ref),pp_m(Cl))).
+
+assert_to_metta(OBO):-
+ functor(OBO,Fn,A),
+ ignore(( A>=2,A<700,
+ must_det_ll((
+  heartbeat,
+  OBO=..[Fn|Cols],
+  make_assertion4(Fn,Cols,Data,OldData),
+  functor(Data,FF,AA),
+  decl_fb_pred(FF,AA),
+  ((fail,call(Data))->true;(
+   must_det_ll((assert(Data),incr_file_count(_),
+     ignore((((should_show_data(X),
+       ignore((OldData\==Data,write('; oldData '),write_src(OldData),format('  ; ~w ~n',[X]))),
+       write_src(Data),format('  ; ~w ~n',[X]))))),
+     ignore((
+       fail, option_value(output_stream,OutputStream),
+       is_stream(OutputStream),
+       should_show_data(X1),X1<1000,must_det_ll((display(OutputStream,Data),writeln(OutputStream,'.'))))))))))))),!.
+
+
+assert_MeTTa(OBO):- assert_to_metta(OBO),!.
+assert_MeTTa(Data):- !, heartbeat, functor(Data,F,A), A>=2,
+   decl_fb_pred(F,A),
+   incr_file_count(_),
+   ignore((((should_show_data(X),
+       write(newData(X)),write(=),write_src(Data))))),
+   assert(Data),!.
 
 
 
@@ -711,19 +745,23 @@ combine_result(TF,_,TF):-!.
 do_metta(Self,LoadExec,Term):- once(maybe_fix_vars(Term,NewTerm)),Term\=@=NewTerm,!,
   do_metta(Self,LoadExec,NewTerm),!.
 do_metta(Self,LoadExec,Term):- do_metta1(Self,LoadExec,Term),!.
-do_metta(Self,LoadExec,Term):- ppm(unknown_do_metta(Self,LoadExec,Term)).
+do_metta(Self,LoadExec,Term):- pp_m(unknown_do_metta(Self,LoadExec,Term)).
 
 do_metta1(Self,_,Cmt):- nonvar(Cmt),do_metta_cmt(Self,Cmt),!.
 do_metta1(Self,_,exec(Exec)):- !,do_metta_exec(Self,Exec),!.
 do_metta1(Self,exec,Exec):- !,do_metta_exec(Self,Exec),!.
 
 do_metta1(Self,Load,[':',Fn,TypeDecL]):- decl_length(TypeDecL,Len),LenM1 is Len - 1, last_element(TypeDecL,LE),
+  color_g_mesg('#ffa500',metta_anew(Load,metta_type(Self,Fn,TypeDecL))),
   metta_anew(Load,metta_arity(Self,Fn,LenM1)),
   arg_types(TypeDecL,[],EachArg),
   metta_anew(Load,metta_params(Self,Fn,EachArg)),!,
   metta_anew(Load,metta_last(Self,Fn,LE)).
 
-do_metta1(Self,Load,[':',Fn,TypeDecL,RetType]):- decl_length(TypeDecL,Len),
+do_metta1(Self,Load,[':',Fn,TypeDecL,RetType]):-
+  decl_length(TypeDecL,Len),
+  append(TypeDecL,[RetType],TypeDecLRet),
+  color_g_mesg('#ffa500',metta_anew(Load,metta_type(Self,Fn,TypeDecLRet))),
   metta_anew(Load,metta_arity(Self,Fn,Len)),
   arg_types(TypeDecL,[RetType],EachArg),
   metta_anew(Load,metta_params(Self,Fn,EachArg)),
@@ -737,25 +775,26 @@ do_metta1(Self,Load,PredDecl):- fail,
 
 do_metta1(Self,Load,['=',PredDecl,True]):- True == 'True',!,
   discover_head(Self,Load,PredDecl),
-  metta_anew(Load,metta_atom(Self,PredDecl)).
+  color_g_mesg('#ffa500',metta_anew(Load,metta_atom(Self,PredDecl))).
 
-do_metta1(Self,Load,['=',PredDecl,False]):- False == 'False',
-  discover_head(Self,Load,PredDecl),fail.
+do_metta1(Self,Load,['=',PredDecl,False]):- (False == 'False';False == [];False == 'Nil';False == 'F'),!,
+  discover_head(Self,Load,PredDecl),
+  color_g_mesg('#ffa500',metta_anew(Load,metta_atom(Self,[=,PredDecl,'False']))).
   %metta_anew(Load,metta_atom(Self,PredDecl)).
 
 
 do_metta1(Self,Load,['=',Head,PredDecl]):- !,
     discover_head(Self,Load,Head),
-    metta_anew(Load,metta_defn(Self,Head,PredDecl)),
+    color_g_mesg('#ffa500',metta_anew(Load,metta_defn(Self,Head,PredDecl))),
     discover_body(Self,Load,PredDecl),
     nop((fn_append(Head,X,Head),fn_append(PredDecl,X,Body), metta_anew((Head:- Body)))),!.
 
 do_metta1(Self,Load,PredDecl):-
    discover_head(Self,Load,PredDecl),
-   metta_anew(Load,metta_atom(Self,PredDecl)).
+   color_g_mesg('#ffa500',metta_anew(Load,metta_atom(Self,PredDecl))).
 
-do_metta_exec(Self,Var):- var(Var), !, ppm(eval(Var)), freeze(Var,wdmsg(laterVar(Self,Var))).
-do_metta_exec(Self,TermV):-!, ppm(:- metta_eval(TermV)),
+do_metta_exec(Self,Var):- var(Var), !, pp_m(eval(Var)), freeze(Var,wdmsg(laterVar(Self,Var))).
+do_metta_exec(Self,TermV):-!, pp_m(:- metta_eval(TermV)),
   subst_vars(TermV,Term),
   forall(eval_arg(13,Self,Term,X),(color_g_mesg(yellow,(format(' % '),writeq(X),nl)))),!.
 
@@ -769,14 +808,17 @@ discover_head(Self,Load,[Fn|PredDecl]):-
 discover_body(Self,Load,[Fn|PredDecl]):-
   arg_types(PredDecl,[],EachArg),
   metta_anew(Load,metta_body(Self,Fn,EachArg)).
+
 decl_length(TypeDecL,Len):- is_list(TypeDecL),!,length(TypeDecL,Len).
-decl_length(_TypeDecl,1).
+decl_length(_TypeDecL,1).
+
 arg_types([['->'|L]],R,LR):-!, arg_types(L,R,LR).
 arg_types(['->'|L],R,LR):-!, arg_types(L,R,LR).
 arg_types(L,R,LR):- append(L,R,LR).
 
 :- metta_final.
+:- load_history.
 :- if(\+ current_prolog_flag(argv,[])).
-:- loon.
+  :- loon.
 :- endif.
 
