@@ -315,6 +315,9 @@ def foreign_framed(func):
 @export_flags(MeTTa=True)
 class VSpace(AbstractSpace):
 
+    def from_space(self, cspace):
+        self.gspace = GroundingSpaceRef(cspace)
+
     def __init__(self, space_name=None, unwrap=True):
         super().__init__()
         global vspace_ordinal
@@ -337,14 +340,18 @@ class VSpace(AbstractSpace):
         new_bindings_set = BindingsSet.empty()
         #swipl_load = PL_new_term_ref()
         metta_vars = [atom for atom in query_atom.iterate() if atom.get_type() == AtomKind.VARIABLE]
+        metaVarNames = [str(atom) for atom in metta_vars]
         circles = Circles()
         swivars = [m2s(circles,item,1) for item in metta_vars]
         varsList = Variable()
         varsList.unify(swivars)
+        varNames = Variable()
+        varNames.unify(metaVarNames)
         swip_obj = m2s(circles,query_atom)
         if verbose>1: print(f"circles={circles}")
         #if verbose>1: print(f"metta_vars={metta_vars}, swivars={swivars}")
-        q = PySwipQ(Functor('metta_iter_bind',3)(self.swip_space_name(), swip_obj, varsList), module=self.sp_module)
+        q = PySwipQ(Functor('metta_iter_bind',4)
+          (self.swip_space_name(), swip_obj, varsList, varNames), module=self.sp_module)
 
         while q.nextSolution():
             swivars = varsList.value
@@ -378,33 +385,37 @@ class VSpace(AbstractSpace):
     @foreign_framed
     def add(self, atom):
         circles = Circles()
-        return self._call("metta_add", m2s(circles,atom))
+        return self._call("add-atom", m2s(circles,atom))
 
     @foreign_framed
     def add_atom(self, atom):
         circles = Circles()
-        return self._call("metta_add", m2s(circles,atom))
+        return self._call("add-atom", m2s(circles,atom))
 
     @foreign_framed
     def remove_atom(self, atom):
         circles = Circles()
-        return self._call("metta_rem", m2s(circles,atom))
+        return self._call("remove-atom", m2s(circles,atom))
 
     @foreign_framed
     def remove(self, atom):
         circles = Circles()
-        return self._call("metta_rem", m2s(circles,atom))
+        return self._call("remove-atom", m2s(circles,atom))
 
     @foreign_framed
     def replace(self, from_atom, to_atom):
         circles = Circles()
-        return self._call("metta_replace", m2s(circles,from_atom), m2s(circles,to_atom))
+        return self._call("replace-atom", m2s(circles,from_atom), m2s(circles,to_atom))
 
     @foreign_framed
     def atom_count(self):
-        result = list(swip.query(f"metta_count('{self.sp_name}',AtomCount)"))
+        result = list(swip.query(f"'atom-count'('{self.sp_name}',AtomCount)"))
         if verbose>1: print(result)
-        C = result[0]['AtomCount']
+        if result is None: return 0
+        if len(result)==0: return 0
+        CB = result[0]
+        if CB is None: return 0
+        C = CB['AtomCount']
         if not isinstance(C,int):
             C = C.value
         return C
@@ -412,8 +423,12 @@ class VSpace(AbstractSpace):
     @foreign_framed
     def get_atoms(self):
         circles = Circles()
-        result = list(swip.query(f"metta_atoms('{self.sp_name}',AtomsList)"))
-        C = result[0]['AtomsList']
+        result = list(swip.query(f"'get-atoms'('{self.sp_name}',AtomsList)"))
+        if result is None: return []
+        if len(result)==0: return []
+        CB = result[0]
+        if CB is None: return []
+        C = CB['AtomsList']
         if verbose>1: print(f"get_atoms={type(C)}")
         R = s2m(circles,C)
         return R
@@ -422,7 +437,7 @@ class VSpace(AbstractSpace):
 
         swipl_fid = PL_open_foreign_frame()
         Atoms = Variable("Iter")
-        q = PySwipQ(Functor("metta_iter", 2)(self.swip_space_name(), Atoms), module=self.sp_module)
+        q = PySwipQ(Functor("atoms_iter", 2)(self.swip_space_name(), Atoms), module=self.sp_module)
 
         def closeff():
             nonlocal swipl_fid
@@ -459,6 +474,12 @@ class VSpace(AbstractSpace):
 
     def copy(self):
         return self
+
+class VSpaceCallRust(VSpace):
+    def __init__(self, space_name=None, unwrap=True):
+        super().__init__()
+
+
 
 class PySwipQ(Query):
 
@@ -503,9 +524,26 @@ class FederatedSpace(VSpace):
         return self
 
 
+def is_iterable(obj):
+    try:
+        iter(obj)
+        return True
+    except TypeError:
+        return False
+
 @export_flags(MeTTa=True)
 def test_custom_v_space():
+    #test_custom_space(lambda: (lambda vs: vs.incrHome() and vs)(VSpace()))
     test_custom_space(lambda: VSpace())
+
+@export_flags(MeTTa=True)
+def test_custom_v_space2():
+    test_custom_space(lambda: the_other_space)
+
+@export_flags(MeTTa=True)
+def test_custom_v_space2():
+    test_custom_space(lambda: the_nb_space)
+    #test_custom_space(lambda: the_new_runner_space)
 
 def test_custom_space(LambdaSpaceFn):
 
@@ -521,20 +559,40 @@ def test_custom_space(LambdaSpaceFn):
         Asserts that two lists are equal, regardless of their order.
         """
         def py_sorted(n):
+
+            class MyIterable:
+                def __init__(self, data):
+                    self.data = data
+                    self.index = 0
+
+                def __iter__(self):
+                    return self
+
+                def __next__(self):
+                    if self.index < len(self.data):
+                        result = self.data[self.index]
+                        self.index += 1
+                        return result
+                    raise StopIteration
+
             try:
                 if isinstance(n, ExpressionAtom):
                     return py_sorted(n.get_children())
                 return sorted(n)
             except TypeError:
                 def custom_sort(item):
-                    if isinstance(item, (int, float)):
-                        return (0, item)
-                    elif isinstance(item, ExpressionAtom):
-                        return py_sorted(item.get_children())
-                    else:
+                    try:
+                        if isinstance(item, (int, float)):
+                            return (0, item)
+                        elif isinstance(item, ExpressionAtom):
+                            return py_sorted(item.get_children())
+                        else:
+                            return (1, str(item))
+                    except TypeError:
                         return (1, str(item))
 
-                return sorted(n, key=custom_sort)
+            try: return sorted(n, key=custom_sort)
+            except TypeError: n # return sorted(MyIterable(n), key=custom_sort)
 
 
         if py_sorted(list1) != py_sorted(list2):
@@ -565,10 +623,17 @@ def test_custom_space(LambdaSpaceFn):
             failTest(msg or f"Values differ: {val1} != {val2}")
         else: passTest(msg or f"Values same: {val1} == {val2}")
 
+
+    print(f"test_custom_space--------------------------------------------:({LambdaSpaceFn})------------------------------------------")
+
+
+
     test_space = LambdaSpaceFn()
     test_space.test_attrib = "Test Space Payload Attrib"
 
     kb = VSpaceRef(test_space)
+
+
     kb.add_atom(S("a"))
     kb.add_atom(S("b"))
     #kb.add_atom(E(S("a"),S("b")))
@@ -637,6 +702,8 @@ def test_custom_space(LambdaSpaceFn):
 
     result = runner.run("!(match nested (A $x1) $x1)")
     self_assertEqual([[S("B")]], result)
+    print(f"test_custom_space--------------------------------------------:({LambdaSpaceFn})------------------------------------------")
+
 
 @export_flags(MeTTa=False)
 def s2m(circles,swip_obj, depth=0):
@@ -1416,6 +1483,26 @@ class GptIntentSpace(GroundingSpace):
 def self_space_info():
     return ""
 
+def wrapsqlop(func):
+    def wrapper(*args):
+        if len(args) > 0 and isinstance(args[0], GroundedAtom) and isinstance(args[0].get_object(), SpaceRef):
+            space = args[0].get_object()
+            args = args[1:]
+            a = [repr(arg) if isinstance(arg, SymbolAtom) else arg.get_object().value for arg in args]
+            res = func(space, *a)
+            return [ValueAtom(val) for val in res]
+        return []
+
+    return wrapper
+
+def pl_select(*args):
+    print(args)
+    flush_console()
+
+def pl_insert(*args):
+    print(args)
+    flush_console()
+
 #pass_metta=True
 @register_atoms
 #@register_atoms(pass_metta=True)
@@ -1485,6 +1572,12 @@ def register_vspace_atoms():
         #'&self': runnerAtom,
         #'&swip': ValueAtom(swip),
 
+
+
+       'pl_select': G(OperationObject('pl_select', wrapsqlop(pl_select), unwrap=False)),
+       'pl_insert': G(OperationObject('pl_insert', wrapsqlop(pl_insert), unwrap=False)),
+
+
         '&my-dict': ValueAtom({'A': 5, 6: 'B'}),
         'get-by-key': OperationAtom('get-by-key', lambda d, k: d[k]),
 
@@ -1493,7 +1586,7 @@ def register_vspace_atoms():
         'mine-overlaps': OperationAtom('mine-overlaps', lambda: [mine_overlaps()]),
         'try-overlaps': OperationAtom('try-overlaps', lambda: [try_overlaps()]),
         'load-flybase-full': OperationAtom('load-flybase-full', lambda: [load_flybase("inf")]),
-        'load-flybase-tiny': OperationAtom('load-flybase-tiny', lambda: [load_flybase(1000)]),
+        'load-flybase-tiny': OperationAtom('load-flybase-tiny', lambda: [load_flybase(20000)]),
 
         r"fb.test-nondeterministic-foreign": OperationAtom('test-nondeterministic-foreign', lambda: test_nondeterministic_foreign, unwrap=False),
 
@@ -1644,6 +1737,15 @@ def atoms_iter_from_space(space_name, result):
         return True
     return False
 
+@export_flags(Janus=True)
+def get_atoms_from_space(space_name, result):
+    space = getNameBySpace(space_name)
+    if space:
+        atoms = list(space.atoms_iter())
+        result.unify(atoms)
+        return True
+    return False
+
 def reg_pyswip_foreign():
 
     def py_eval(e, result):
@@ -1658,6 +1760,7 @@ def reg_pyswip_foreign():
     registerForeign(replace_from_space, arity=3)
     registerForeign(atom_count_from_space, arity=2)
     registerForeign(atoms_iter_from_space, arity=2)
+    registerForeign(get_atoms_from_space, arity=2)
     #?- query_from_space('example', 'my_atom', Result).
     #?- add_from_space('example', 'new_atom').
     #?- remove_from_space('example', 'some_atom').
@@ -2192,6 +2295,8 @@ swip = PySwip()
 the_gptspace = GptSpace()
 the_vspace = VSpace("&vspace")
 the_flybase = VSpace("&flybase")
+the_nb_space = VSpace("&nb")
+the_other_space = VSpace("&self")
 the_python_runner = InteractiveMeTTa();
 the_python_runner.cwd = [os.path.dirname(os.path.dirname(__file__))]
 the_old_runner_space = the_python_runner.space()
