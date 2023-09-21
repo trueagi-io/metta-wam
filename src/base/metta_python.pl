@@ -19,6 +19,8 @@ Just like the Rust core allowed for Python extensions, the Prolog code also perm
    py_add_lib_dir(ParentDir).
 
 
+is_metta_space(GSpace):- is_python_space(GSpace).
+
 ensure_space(Space,GSpace):- py_is_object(Space),!,GSpace=Space.
 ensure_space(Space,GSpace):-
    var(Space),init_metta_space(GSpace), Space=GSpace.
@@ -29,14 +31,26 @@ init_metta(MeTTa):-
    py_call(hyperon:'MeTTa'(),MeTTa),
    asserta(is_metta(MeTTa)).
 
-:- dynamic(is_metta_space/1).
 % Initialize a new hyperon.base.GroundingSpace and get a reference
 init_metta_space(GSpace) :- is_metta_space(GSpace),!.
 init_metta_space(GSpace) :- init_metta(MeTTa), py_call(MeTTa:space(),GSpace),
-    asserta(is_metta_space(GSpace)).
+    asserta(is_python_space(GSpace)).
 init_metta_space(GSpace) :-
     py_call(hyperon:base:'GroundingSpace'(), GSpace),
-    asserta(is_metta_space(GSpace)).
+    asserta(is_python_space(GSpace)).
+
+
+:- multifile(space_type_method/3).
+:- dynamic(space_type_method/3).
+space_type_method(is_python_space_not_prolog,new_space,init_metta_space).
+space_type_method(is_python_space_not_prolog,add_atom,add_to_space).
+space_type_method(is_python_space_not_prolog,remove_atom,remove_from_space).
+space_type_method(is_python_space_not_prolog,replace_atom,replace_in_space).
+space_type_method(is_python_space_not_prolog,atom_count,atom_count_in_space).
+space_type_method(is_python_space_not_prolog,get_atoms,query_from_space).
+space_type_method(is_python_space_not_prolog,atom_iter,atoms_iter_in_space).
+space_type_method(is_python_space_not_prolog,query,query_from_space).
+
 
 % Query from hyperon.base.GroundingSpace
 query_from_space(Space, QueryAtom, Result) :-
@@ -62,11 +76,19 @@ replace_in_space(Space, FromAtom, ToAtom) :-
 atom_count_in_space(Space, Count) :-
     ensure_space(Space,GSpace),
     py_call(GSpace:'atom_count'(), Count).
+    
+% Get the atom count from hyperon.base.GroundingSpace
+atom_count_in_space(Space, Count) :-
+    ensure_space(Space,GSpace),
+    py_call(GSpace:'get_atoms'(), Count).    
 
 % Get the atom iterator from hyperon.base.GroundingSpace
 atoms_iter_in_space(Space, Atoms) :-
     ensure_space(Space,GSpace),
     py_call(GSpace:'atoms_iter'(), Atoms).
+
+
+
 
 % Example usage
 example_usage :-
