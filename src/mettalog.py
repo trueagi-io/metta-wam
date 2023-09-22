@@ -10,7 +10,7 @@ except ImportError:
 from collections import Counter
 from glob import glob
 import hyperonpy as hp
-from hyperon.atoms import V, S, E, ValueAtom, GroundedAtom, ExpressionAtom, G, AtomType, MatchableObject, OperationAtom, OperationObject, BindingsSet, Atom
+from hyperon.atoms import V, S, E, ValueAtom, GroundedAtom, ExpressionAtom, G, AtomType, MatchableObject, OperationAtom, OperationObject, BindingsSet
 from hyperon.runner import MeTTa
 from hyperon.ext import register_atoms, register_tokens
 from hyperon.base import AbstractSpace, SpaceRef, GroundingSpace, interpret
@@ -75,6 +75,10 @@ def insert_to_history(item, position_from_last=5):
     readline.clear_history()
     for h in hist:
         readline.add_history(h)
+
+def readline_add_history(t):
+    readline.add_history(t)
+
 
 insert_to_history('!(get-by-key &my-dict "A")')
 insert_to_history("@metta !")
@@ -277,7 +281,7 @@ class VSpaceRef(SpaceRef):
         Performs a substitution within the Space
         """
         cspace = super().cspace
-        return [Atom._from_catom(catom) for catom in
+        return [MeTTaAtom._from_catom(catom) for catom in
                 hp.space_subst(cspace, pattern.catom,
                                          templ.catom)]
 
@@ -293,7 +297,7 @@ class VSpaceRef(SpaceRef):
             return None
         result = []
         for r in res:
-            result.append(Atom._from_catom(r))
+            result.append(MeTTaAtom._from_catom(r))
         return result
 
 
@@ -722,7 +726,7 @@ def s2m1(circles,swip_obj, depth=0):
         print(f's2m({len(circles)},{type(swip_obj)}): {str(swip_obj)}/{repr(swip_obj)}')
 
     # Already converted
-    if isinstance(swip_obj, (VariableAtom, GroundedAtom, Atom, ExpressionAtom)):
+    if isinstance(swip_obj, (VariableAtom, GroundedAtom, MeTTaAtom, ExpressionAtom)):
         return swip_obj
 
     if isinstance(swip_obj, str):
@@ -1368,9 +1372,9 @@ class ExtendedMeTTa:
         parser = SExprParser(program)
         results = hp.metta_run(self.cmetta, parser.cparser)
         if flat:
-            return [Atom._from_catom(catom) for result in results for catom in result]
+            return [MeTTaAtom._from_catom(catom) for result in results for catom in result]
         else:
-            return [[Atom._from_catom(catom) for catom in result] for result in results]
+            return [[MeTTaAtom._from_catom(catom) for catom in result] for result in results]
 
 # Borrowed impl from Adam Vandervorst
 class LazyMeTTa(ExtendedMeTTa):
@@ -1748,11 +1752,14 @@ def get_atoms_from_space(space_name, result):
 
 def reg_pyswip_foreign():
 
+    test_nondeterministic_foreign()
+
+
     def py_eval(e, result):
         return result.unify(eval(str(e)))
-
     py_eval.arity = 2
     registerForeign(py_eval)
+
     # Register the foreign functions in PySwip
     registerForeign(query_from_space, arity=3)
     registerForeign(add_from_space, arity=2)
@@ -1761,6 +1768,10 @@ def reg_pyswip_foreign():
     registerForeign(atom_count_from_space, arity=2)
     registerForeign(atoms_iter_from_space, arity=2)
     registerForeign(get_atoms_from_space, arity=2)
+    registerForeign(get_atoms_from_space, arity=2)
+    add_to_history_if_unique.arity=1
+    registerForeign(add_to_history_if_unique)
+
     #?- query_from_space('example', 'my_atom', Result).
     #?- add_from_space('example', 'new_atom').
     #?- remove_from_space('example', 'some_atom').
@@ -1809,7 +1820,20 @@ def test_nondeterministic_foreign():
 
     hello.arity = 1
 
-    registerForeign(hello)
+    registerForeign(hello, arity=1)
+
+
+    def hello1(t):
+        readline.replace_history_item(0, t)
+        print("Hello1,", t)
+
+
+    hello1.arity = 1
+
+    registerForeign(hello1, arity=1)
+
+
+
 
     swip.assertz("father(michael,john)")
     swip.assertz("father(michael,gina)")
@@ -1917,6 +1941,8 @@ def load_vspace():
 def mine_overlaps():
    load_vspace()
    swip_exec("mine_overlaps")
+   #readline_add_history("!(try-overlaps)")
+
 
 @export_flags(MeTTa=True)
 def try_overlaps():
@@ -1931,6 +1957,7 @@ def learn_vspace():
 def load_flybase(size):
    load_vspace()
    swip_exec(f"load_flybase({size})")
+   #readline_add_history("!(mine-overlaps)")
 
 @export_flags(MeTTa=True)
 @foreign_framed
