@@ -260,75 +260,155 @@ metta_to_pyswip(PS,Query,Call):- Query=..[Q|Uery], cmpd_to_pyswip(PS,Q,Uery,Call
 cmpd_to_pyswip(PS,Q,Uery,Call):- atom(Q),maplist(metta_to_pyswip([Q|PS]),Uery,Cery),Call=..[Q|Cery].
 cmpd_to_pyswip(PS,"and",Uery,Call):- maplist(metta_to_pyswip(PS),Uery,Args),list_to_conjuncts(Args,Call).
 
-/*
-symbol(X):- atom(X).
-symbol_number(S,N):- atom_number(S,N).
-symbol_string(S,N):- atom_string(S,N).
-symbol_chars(S,N):- atom_chars(S,N).
-symbol_length(S,N):- atom_length(S,N).
-symbol_concat(A,B,C):- atom_concat(A,B,C).
-symbolic_list_concat(A,B,C):- atomic_list_concat(A,B,C).
-symbol_contains(T,TT):- atom_contains(T,TT).
-*/
+
+
+
+
+
+
+:- dynamic functional_predicate_arg/3.
+
+% Converion is possible between a function and a predicate of arity A when the result is at the nth arg
+functional_predicate_arg(append, 3, 3).  %  eval(append(L1,L2),Reslt) == append(L1,L2,Reslt)
+functional_predicate_arg(is, 2, 1). %  eval(is(+(1,2)),Reslt) == is(Reslt,+(1,2)).
+functional_predicate_arg(+, 3, 3).  %  eval(+(1,2),Reslt) == +(1,2,Reslt).
+functional_predicate_arg(pi, 1, 1). %  eval(pi,Reslt) == pi(Reslt)
+
+% Checks if Term is a function and retrieves the position
+% in the pred that the function Result is stored/retreived
+is_function(AsFunction, Nth) :-
+    nonvar(AsFunction),
+    functor(AsFunction, Functor, A),
+    AA is A + 1,
+    functional_predicate_arg(Functor, AA, Nth).
+
+
+% Converts functions to predicates
+% Example:
+% ?- functs_to_preds(is(pi+pi),Converted),write_src(Converted).
+% Converted = (pi(_A), +(_A, _A, _B), _C is _B, eval(_C, _)).
+functs_to_preds(Convert, Converted) :-
+    var(Convert), !,
+    Converted = eval(Convert, _).
+functs_to_preds(Convert, Converted) :-
+    sub_term(AsFunction, Convert),
+    is_function(AsFunction, Nth), !,
+    funct_with_result_is_nth_of_pred(AsFunction, Nth, Result, AsPred),
+    subst(Convert, AsFunction, Result, Converting),
+    functs_to_preds((AsPred, Converting), Converted).
+functs_to_preds((AsPred, Convert), (AsPred, Converted)) :- !,
+    functs_to_preds(Convert, Converted).
+functs_to_preds(Convert, Convert).
+
+% Converion is possible between a function and a predicate of arity when the result is at the nth arg
+funct_with_result_is_nth_of_pred(AsFunction, Result, Nth, AsPred) :-
+    AsFunction =.. [F | FuncArgs],
+    nth1(Nth,PredArgs,Result,FuncArgs),
+    AsPred =.. [F | PredArgs].
+
+
+% Converts predicates back to functions
+% Example:
+% preds_to_functs((pi(_A), +(_A, _A, _B), _C is _B, eval(_C, _)), Converted).
+% Converted = is(pi+pi)
+preds_to_functs(Convert, Converted) :-
+    var(Convert), !,
+    Converted = Convert.
+preds_to_functs((AsPred, Convert), Converted) :-
+    pred_to_funct(AsPred, AsFunction, Result),
+    sub_var(Result, Convert), !,
+    subst(Convert, Result, AsFunction, Converting),
+    preds_to_functs(Converting, Converted).
+preds_to_functs(eval(AsFunction, _Result), AsFunction) :- !.
+preds_to_functs((AsPred, Converting), (AsPred, Converted)) :- !,
+    preds_to_functs(Converting, Converted).
+preds_to_functs(AsPred, eval(AsFunction, Result)) :-
+    pred_to_funct(AsPred, AsFunction, Result), !.
+preds_to_functs(X, X).
+
+% Converts a predicate to its equivalent function term
+pred_to_funct(AsPred, AsFunction, Result) :-
+    compound(AsPred), !,
+    functor(AsPred, F, A),
+    functional_predicate_arg(F, A, Nth),
+    arg(Nth, AsPred, Result),
+    remove_funct_arg(AsPred, Nth, AsFunction).
+
+% Removes the Nth argument from the predicate term
+remove_funct_arg(AsPred, Nth, AsFunction) :-
+    AsPred =.. [F | PredArgs],
+    nth1(Nth,PredArgs,_Result,FuncArgs),
+    AsFunction =.. [F | FuncArgs].
+
+
+% print_metta_src(funct).
 
 allow_concepts:- option_else(concepts,TF,true), \+ TF == false.
 with_concepts(TF,Goal):- with_option(concepts,TF,Goal).
 
-direct_mapping(NC,NC):- var(NC),!.
-direct_mapping(NC,OO):- is_list(NC),!,maplist(direct_mapping,NC,OO).
-direct_mapping(!,'!').
-direct_mapping(fail,'False').
-direct_mapping(true,'True').
-direct_mapping(prolog,meTTa).
-direct_mapping('[|]','Cons').
-%direct_mapping(( ';' ),or).
-%direct_mapping(( ',' ),and).
-direct_mapping(( '\\+' ),unless).
-%direct_mapping(( ':-' ),entailed_by).
-direct_mapping('=..','atom_2_list').
-direct_mapping(NC,NC):- \+ compound(NC),!.
-direct_mapping(is(V,Expr),let(V,Expr,'True')).
-direct_mapping((G,E),O):- conjuncts_to_list((G,E),List), into_sequential(List,O),!.
-direct_mapping((A->B;C),O):- !, direct_mapping(if_then_else(A,B,C),O).
-direct_mapping((A*->B;C),O):- !, direct_mapping(each_then_otherwise(A,B,C),O).
-direct_mapping((A->B),O):- !, direct_mapping(if_then(A,B),O).
-direct_mapping((A*->B),O):- !, direct_mapping(each_then(A,B),O).
-direct_mapping(I,O):- I=..[F|II],maplist(direct_mapping,[F|II],OO),O=..OO.
-direct_mapping(metta_defn(Self,H,B),'add-atom'(Self,[=,H,B])).
-direct_mapping(metta_type,'add-atom').
-direct_mapping(metta_atom,'add-atom').
-direct_mapping(retractall(X),'remove-all-atoms'('&self',X)).
-direct_mapping(clause(H,B),'get-atoms'('&self',[=,H,B])).
-direct_mapping(retract(X),'remove-atom'('&self',X)).
-direct_mapping(assert(X),'add-atom'('&self',X)).
+p2m(NC,NC):- var(NC),!.
+p2m(NC,OO):- is_list(NC),!,maplist(p2m,NC,OO).
+p2m(!,'!').
+p2m(fail,'False').
+p2m(true,'True').
+p2m(prolog,meTTa).
+p2m('[|]','Cons').
+p2m(( ';' ),or).
+p2m(( ',' ),and).
+p2m(( '\\+' ),unless).
+%p2m(( ':-' ),entailed_by).
+p2m('=..','atom_2_list').
+p2m(NC,NC):- \+ compound(NC),!.
+p2m(NC,[NC]):- compound_name_arity(NC,_,0),!.
+p2m(is(V,Expr),let(V,Expr,'True')).
+p2m((Head:-Body),O):- Body == true,!, O = (=(Head,'True')).
+p2m((Head:-Body),O):- Body == fail,!, O = (=(Head,'False')).
+p2m((Head:-Body),O):- conjuncts_to_list(Body,List),into_sequential(List,SP),!,O=(=(Head,SP)).
 
+p2m((G,E),O):- conjuncts_to_list((G,E),List),into_sequential(List,O),!.
+p2m((A->B;C),O):- !, p2m(if_then_else(A,B,C),O).
+p2m((A*->B;C),O):- !, p2m(each_then_otherwise(A,B,C),O).
+p2m((A->B),O):- !, p2m(if_then(A,B),O).
+p2m((A*->B),O):- !, p2m(each_then(A,B),O).
+p2m(metta_defn(Self,H,B),'add-atom'(Self,[=,H,B])).
+p2m(metta_type,'add-atom').
+p2m(metta_atom,'add-atom').
+p2m(retractall(X),'remove-all-atoms'('&self',X)).
+p2m(clause(H,B),'get-atoms'('&self',[=,H,B])).
+p2m(retract(X),'remove-atom'('&self',X)).
+p2m(assert(X),'add-atom'('&self',X)).
+p2m(I,O):- I=..[F|II],maplist(p2m,[F|II],OO),O=..OO.
+
+prolog_to_metta(V,D) :- p2m(V,D),!.
+
+%into_sequential(Body,SP):- \+ is_list(Body), conjuncts_to_list(Body,List), maplist(p2m,List,MList), into_sequential(MList,SP).
+into_sequential(List,SP):- length(List,L),L>1,   maplist(prolog_to_metta,List,MList), SP =.. ['and'|MList],!.
+into_sequential([SP],O):- prolog_to_metta(SP,O).
+into_sequential([],'True').
 
 
 print_metta_src:- mmake,
-  for_all((source_file(Pred,File),
-          symbol_contains(File,flybase)),
-         print_metta_src(Pred)).
+  for_all((source_file(AsPred,File),
+          symbol_contains(File,metta)),
+         print_metta_src(AsPred)).
 
 print_metta_src(F/A):- !, forall(current_predicate(F/A), print_metta_src(F,A)).
-print_metta_src(Pred):- functor(Pred,F,A), \+ \+ current_predicate(F/A), !, forall(current_predicate(F/A), print_metta_src(F,A)).
+print_metta_src(AsPred):- functor(AsPred,F,A), \+ \+ current_predicate(F/A), !, forall(current_predicate(F/A), print_metta_src(F,A)).
 print_metta_src(F):-  \+ \+ current_predicate(F/_),!, forall(current_predicate(F/A), print_metta_src(F,A)).
-print_metta_src(C):-  forall((current_predicate(F/A),atom_contains(F,C)), print_metta_src(F,A)).
+print_metta_src(C):-  forall((current_predicate(F/A),once(atom_contains(F,C))), print_metta_src(F,A)).
 
 print_metta_src(F,A):- functor(Head,F,A),
-  nl,nl,nl,
-  for_all(clause(Head,Body), pp_metta(Head,Body)).
-pp_metta(Head,Body):- Body == true,!, pp_metta(=(Head,'True')).
-pp_metta(Head,Body):- Body == false,!, pp_metta(=(Head,'False')).
-pp_metta(Head,Body):- conjuncts_to_list(Body,List), into_sequential(List,SP),!,
-  pp_metta(=(Head,SP)).
+  ignore((predicate_property(Head,number_of_clauses(_)),
+    source_file(Head,File),atom_contains(File,metta),!,
+    nl,forall(clause(Head,Body), print_metta_clause(Head,Body)))).
+
+print_metta_clause(Head,Body):- Body == true,!, pp_metta(=(Head,'True')).
+print_metta_clause(Head,Body):- Body == false,!, pp_metta(=(Head,'False')).
+print_metta_clause(Head,Body):- conjuncts_to_list(Body,List), into_sequential(List,SP), pp_metta(=(Head,SP)).
 
 
 pp_metta(P):- pretty_numbervars(P,PP),with_option(concepts=false,pp_fb(PP)).
 
-into_sequential(Body,SP):- \+ is_list(Body), conjuncts_to_list(Body,List),into_sequential(List,SP).
-into_sequential(List,SP):- length(List,L),L>1, SP =.. [','|List],!.
-into_sequential([SP],SP):-!.
-into_sequential([],'True').
 
 write_src(V):- allow_concepts,!,with_concepts(false,write_src1(V)),flush_output.
 write_src(V):- compound(V),pp_sexi(V).
@@ -371,7 +451,6 @@ write_val(V):- write('"'),write(V),write('"').
 pp_as(V) :- \+ \+ pp_sex(V),flush_output.
 pp_sex(V) :- var(V), !, format('$~p',[V]).
 pp_sex('!'(V)) :- write('!'),!,pp_sex(V).
-pp_sex(V) :- direct_mapping(V,D),V\==D,!,pp_sex(D).
 %pp_sex('') :- format('(EmptyNode null)',[]).
 pp_sex('') :- format('()',[]).
 pp_sex([]):-  !, write('()').
@@ -394,12 +473,13 @@ pp_sexi([H|T]) :- is_list(T),!,
 % Compound terms.
 %pp_sex(Term) :- compound(Term), Term =.. [Functor|Args], write('('),format('(~w ',[Functor]), write_args_as_sexpression(Args), write(')').
 %pp_sex(Term) :- Term =.. ['=',H|Args], length(Args,L),L>2, write('(= '),  pp_sex(H), write('\n\t\t'), maplist(pp_sex(2),Args).
+pp_sexi(Term) :- compound_name_arity(Term,F,0),!,pp_sexi([F]).
 pp_sexi(Term) :- Term =.. [Functor|Args], always_dash_functor(Functor,DFunctor), format('(~w ',[DFunctor]), write_args_as_sexpression(Args), write(')'),!.
 pp_sexi(Term) :- allow_concepts, Term =.. [Functor|Args], format('(EvaluationLink (PredicateNode "~w") (ListLink ',[Functor]), write_args_as_sexpression(Args), write('))'),!.
 pp_sexi(Term) :- Term =.. [Functor|Args],
    always_dash_functor(Functor,DFunctor), format('(~w ',[DFunctor]), write_args_as_sexpression(Args), write(')'),!.
 
-pp_sex(2,Arg):- write('\t\t'),pp_sex(Arg).
+pp_sex(2,Result):- write('\t\t'),pp_sex(Result).
 
 
 current_column(Column) :- current_output(Stream), line_position(Stream, Column),!.
@@ -411,7 +491,7 @@ indent_len(Need):- forall(between(1,Need,_),write(' ')).
 
 w_proper_indent(N,G):-
   flag(w_in_p,X,X), %(X==0->nl;true),
-  XX is ((X+1)*2)+N,setup_call_cleanup(min_indent(XX),G,true).
+  XX is (X*2)+N,setup_call_cleanup(min_indent(XX),G,true).
 w_in_p(G):- setup_call_cleanup(flag(w_in_p,X,X+1),G,flag(w_in_p,_,X)).
 
 
@@ -419,7 +499,7 @@ always_dash_functor(A,B):- once(dash_functor(A,B)),A\=@=B,!.
 always_dash_functor(A,A).
 
 dash_functor(A,C):- \+ symbol(A),!,C=A.
-dash_functor(A,C):- direct_mapping(A,B),A\==B,!,always_dash_functor(B,C).
+dash_functor(A,C):- p2m(A,B),A\==B,!,always_dash_functor(B,C).
 dash_functor(Functor,DFunctor):-
    symbol(Functor), atomic_list_concat(L,'-',Functor), L\=[_],maplist(always_dash_functor,L,LL),
    atomic_list_concat(LL,'-',DFunctor).
@@ -535,7 +615,7 @@ pl_stats(Stat,[Value|_]):- nonvar(Value),!, pl_stats(Stat,Value).
 pl_stats(Stat,Value):- format("~N;\t\t~@: ~`.t ~@~100|",[format_value(Stat),format_value(Value)]),!.
 
 
-% Predicate to print the formatted result.
+% AsPred to print the formatted result.
 format_value(Value) :- float(Value),!,format("~2f",[Value]),!.
 format_value(Bytes) :- integer(Bytes),format_bytes(Bytes, Formatted), write(Formatted).
 format_value(Term)  :- format("~w",[Term]).
@@ -558,7 +638,7 @@ format_time(TotalSeconds, Formatted) :-
     % Format the result
     format(string(Formatted), '~w:~w', [Days, Out]).
 
-% Predicate to print the formatted time.
+% AsPred to print the formatted time.
 print_formatted_time(TotalSeconds) :-
     format_time(TotalSeconds, Formatted),
     writeln(Formatted).
@@ -567,4 +647,14 @@ metta_final:-
     save_pre_statistic(memory),
     save_pre_statistic(atoms),
     save_pre_statistic(atom_space).
+/*
+symbol(X):- atom(X).
+symbol_number(S,N):- atom_number(S,N).
+symbol_string(S,N):- atom_string(S,N).
+symbol_chars(S,N):- atom_chars(S,N).
+symbol_length(S,N):- atom_length(S,N).
+symbol_concat(A,B,C):- atom_concat(A,B,C).
+symbolic_list_concat(A,B,C):- atomic_list_concat(A,B,C).
+symbol_contains(T,TT):- atom_contains(T,TT).
+*/
 
