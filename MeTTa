@@ -46,7 +46,6 @@ function print_help {
     echo "    -s file                  Script source file"
     echo "    -p alias=path            Define file search path 'alias'"
     echo "    -O                       Optimised compilation"
-    echo "    --python[=bool]          Enable or disable Python support (default: $python_flag)"
     echo "    --on-error=style         One of print, halt or status"
     echo "    --on-warning=style       One of print, halt or status"
     echo "    --tty[=bool]             (Dis)allow tty control"
@@ -63,8 +62,10 @@ function print_help {
     echo "    --shared-table-space=size[BKMG] Maximum size of shared SLG tables"
     echo "    --pce[=bool]             Make the xpce gui available"
     echo "    --pldoc[=port]           Start PlDoc server [at port]"
+    echo "    --python[=bool]          Enable or disable Python support (default: $python_flag)"
     echo "    --repl                   Start the REPL (Read-Eval-Print Loop) after processing metta files."
     echo "                             If no metta files are provided, this is the default behavior."
+    echo "    --timeout=seconds        Kill the script after so many seconds."
     echo "    --html[=bool]            Save an HTML file containing terminal output in the same"
     echo "                             directory as the input file or directory."
     echo "                             Defaults to true if exactly one metta file or directory argument was provided"
@@ -95,7 +96,9 @@ function handle_args {
         [[ "$arg" == "--help" || "$arg" == "-h" ]] && { print_help; exit_script 0; }
         [[ "$arg" =~ ^--dump-runtime-variables.*$ || "$arg" == "--abi-version" || "$arg" == "--version" || "$arg" == "--arch" ]] && { swipl $@; exit_script 0; }
 
-        if [[ "$arg" =~ ^--python=(enable|false)$ ]]; then
+        if [[ "$arg" =~ ^--timeout=([0-9]+)$ ]]; then
+            TIMEOUT="${BASH_REMATCH[1]}"
+	elif [[ "$arg" =~ ^--python=(enable|false)$ ]]; then
             python_flag="${BASH_REMATCH[1]}"
         elif [[ "$arg" == "--python" ]]; then
             python_flag=enable
@@ -161,35 +164,33 @@ if [[ -z "$repl_flag" ]]; then
 fi
 
 
-# Create or reset the TEE_FILE if only one file or directory is provided
-if [[ -z "$html_flag" ]]; then
-    if [[ ${#LIST_OF_FILE_ARGS[@]} -eq 1 ]]; then
-        if [[ -f "${LIST_OF_FILE_ARGS[0]}" ]] || [[ -d "${LIST_OF_FILE_ARGS[0]}" ]]; then
-            export TEE_FILE=${TEE_FILE:-"$METTA_DIR/tee.ansi"}
-            touch "$TEE_FILE"
-            chmod 777 "$TEE_FILE"
-        fi
-    fi
-fi
-
 # Add metta_vspace to PYTHONPATH if not already present
 [[ ":$PYTHONPATH:" != *":$METTA_DIR/metta_vspace:"* ]] && export PYTHONPATH="${PYTHONPATH:+${PYTHONPATH}:}$METTA_DIR/metta_vspace"
 export RUST_BACKTRACE=full
 
-BCMD="cd '$METTA_DIR'; exec swipl ${SWI_OPTIONS[*]} -l metta_vspace/pyswip/metta_interp.pl -- --python=$python_flag ${LIST_OF_FILE_ARGS[*]} --repl=$repl_flag  --args ${OTHER_OPTIONS[*]}"
+METTA_CMD="swipl ${SWI_OPTIONS[*]} -l $METTA_DIR/metta_vspace/pyswip/metta_interp.pl -- --python=$python_flag ${LIST_OF_FILE_ARGS[*]} --repl=$repl_flag --args ${OTHER_OPTIONS[*]}"
 
-echo "BCMD=\"$BCMD\""
+if [[ -n "$TIMEOUT" && "$TIMEOUT" -gt 0 ]]; then
+    METTA_CMD="timeout --foreground --preserve-status $TIMEOUT ${METTA_CMD}"
+fi
+
+
+#echo "METTA_CMD=\"$METTA_CMD\""
+
 # Conditional to check if html_flag is enabled
 if [[ "$html_flag" == "enable" ]]; then
-    [ -z "$TYPESCRIPT" ] && TYPESCRIPT=1 exec /usr/bin/script -f --force -e -a "$TEE_FILE" -c "TYPESCRIPT=1 $BCMD"
-else
-    eval "$BCMD"
-fi
-# Reset terminal settings
-stty sane
 
-# Output to HTML based on the first file or directory provided
-if [[ "$html_flag" == "enable" ]]; then
+    export TEE_FILE=${TEE_FILE:-"$METTA_DIR/tee.ansi"}
+    touch "$TEE_FILE"
+    chmod 777 "$TEE_FILE"
+    cat /dev/null > "$TEE_FILE"
+
+    #[ -z "$TYPESCRIPT" ] && TYPESCRIPT=1 /usr/bin/script -f --force -e -a "$TEE_FILE" -c "TYPESCRIPT=1 $METTA_CMD"
+
+    ( export TYPESCRIPT=1
+      /usr/bin/script -q -f --force -e -a "$TEE_FILE" -c "$METTA_CMD" ) || true
+    stty sane
+
     DIRNAME=$(dirname "${LIST_OF_FILE_ARGS[0]}")
     BASENAME=$(basename "${LIST_OF_FILE_ARGS[0]}")
 
@@ -198,11 +199,20 @@ if [[ "$html_flag" == "enable" ]]; then
 
     if command -v ansi2html >/dev/null 2>&1; then
 	ansi2html < "$TEE_FILE" > "$DIRNAME/$BASENAME.html"
-	echo "Output saved to $DIRNAME/$BASENAME.html"
+	#echo "Output saved to $DIRNAME/$BASENAME.html"
     else
+        echo ""
 	echo "ansi2html command not found. HTML output will not be generated."
     fi
+    exit_script 0
 fi
+
+(eval $METTA_CMD) || true
+stty sane
+
+
+
+
 
 
 
