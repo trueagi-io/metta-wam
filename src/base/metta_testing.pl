@@ -35,6 +35,10 @@ loonit_report :-
     flag(loonit_failure, Failures, Failures),
     ansi_format([bold], 'LoonIt Report~n',[]),
     format('------------~n'),
+    loonit_report(Successes,Failures).
+
+loonit_report(0,0):-!, ansi_format([fg(yellow)], 'Nothing to report~n', []).
+loonit_report(Successes,Failures):-
     ansi_format([fg(green)], 'Successes: ~w~n', [Successes]),
     ansi_format([fg(red)], 'Failures: ~w~n', [Failures]).
 

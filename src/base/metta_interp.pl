@@ -54,7 +54,7 @@ get_nb_atoms(SpaceNameOrInstance, Atoms) :-
 replace_nb_atom(SpaceNameOrInstance, OldAtom, NewAtom) :-
     fetch_or_create_space(SpaceNameOrInstance, Space),
     arg(2, Space, Atoms),
-    ( select(OldAtom, Atoms, TempAtoms)
+    ( (select(Found, Atoms, TempAtoms),OldAtom=@=Found)
     ->  NewAtoms = [NewAtom | TempAtoms],
         nb_setarg(2, Space, NewAtoms)
     ;   false
@@ -115,15 +115,26 @@ loon:- run_file_arg, !, loonit_report, halt(7).
 loon:- repl, halt(7).
 
 
+is_cmd_option(Opt,M):- atom(M),
+   atom_concat('-',Opt,Flag),
+   atom_contains(M,Flag),
+   \+ atom_contains(M,'-no'),
+   \+ atom_contains(M,'=false').
+
 do_cmdline_load_metta(Self,Rest):-
-  ((select('--repl',Rest,Files);select('--repl=enable',Rest,Files))->After=repl;(Files=Rest,After=halt(7))),!,
+  ((select(M,Rest,Files),is_cmd_option('repl',M))->After=repl;(Files=Rest,After=halt(7))),!,
+  do_cmdline_load_metta1(Self,Files),!,catch_red(After).
+
+do_cmdline_load_metta1(Self,Rest):-
+  ((select(M,Rest,Files),is_cmd_option('html',M))->After=loonit_report;(Files=Rest,After=true)),!,
   cmdline_load_metta(Self,Files),!,catch_red(After).
+
 
 cmdline_load_metta(Self,[Filemask|Rest]):- atom(Filemask), \+ atom_concat('-',_,Filemask),
   must_det_ll((Src=load_metta(Self,Filemask),nl,write_src(Src),nl,catch_red(Src),!,flush_output,
   cmdline_load_metta(Self,Rest))).
-cmdline_load_metta(Self,[M|Rest]):- fail, (M == '--python';M == '--python=enable'),!,
-  write(' '), write_src(M), nl, !, ensure_loaded(metta_python),
+cmdline_load_metta(Self,[M|Rest]):- is_cmd_option('python',M),!,
+  write(' '), write_src(M), nl, !, nop(ensure_loaded(metta_python)),
   cmdline_load_metta(Self,Rest).
 cmdline_load_metta(Self,[M|Rest]):-
   write(' '), write_src(M), nl, !,
@@ -165,6 +176,7 @@ load_metta_stream(Self,In):-
   flush_output,
   at_end_of_stream(In),!.
 
+'metta_learner::vspace-main':- repl.
 
 :- nb_setval(self_space, '&self').
 evals_to(XX,Y):- Y==XX,!.   evals_to(XX,Y):- Y=='True',!, XX\=='False'.
@@ -185,17 +197,13 @@ is_predicate(AE,Len,Pred):- atom(AE),into_underscores(AE,Pred),current_predicate
 %eval_arg(Depth,_Self,X,_Y):- forall(between(6,Depth,_),write(' ')),writeqln(eval_args(X)),fail.
 eval_arg(Depth,_,_,_):- Depth<1,!,fail.
 eval_arg(Depth,Self,X,Y):- nonvar(Y),!,eval_arg(Depth,Self,X,XX),evals_to(XX,Y).
+eval_arg(Depth,Self,[AE,X],TF):- AE=='assertTrue',!,eval_arg(Depth,Self,['assertEqual',X,'True'],TF).
 eval_arg(Depth,Self,[AE,X,Y],TF):- AE=='assertEqual',!,
  ((loonit_asserts(
   (setof_eval(Depth,Self,X,XX),
    setof_eval(Depth,Self,Y,YY),
    !),XX=@=YY))),
     as_tf(XX=@=YY,TF).
-
-eval_arg(_Dpth,_Slf,[AE|More],TF):- length(More,Len),
-  is_predicate(AE,Len,Pred),!,as_tf(apply(Pred,More),TF).
-eval_arg(_Dpth,_Slf,[AE|More],TF):- length([AE|More],Len),
-  is_predicate(AE,Len,Pred),append(More,[TF],Args),!,apply(Pred,Args).
 
 eval_arg(Depth,Self,[AE,X,Y],TF):- AE=='assertEqualToResult',!,
    loonit_asserts(setof_eval(Depth,Self,X,L),L=@=Y), !, as_tf(L=@=Y,TF).
@@ -308,6 +316,13 @@ eval_args2(Depth,Self,['bind!',Other,Expr],Value):- into_name(Self,Other,Name),!
   nb_setval(Name,Value).
 
 
+eval_args2(Depth,Self,['new-state',Expr],Value):- !, 'new-state'(Expr,Value),!.
+eval_args2(Depth,Self,['new-state'],Value):- !, 'new-state'(Value),!.
+eval_args2(Depth,Self,['new-state'|Expr],['new-state'|Expr]):- !.
+
+eval_args2(Depth,Self,['nop',Expr],[]):- !,  eval_args2(Depth,Self,Expr,_).
+
+
 is_and(S):- \+ atom(S),!,fail.
 is_and('#COMMA'). is_and(','). is_and('and').
 eval_args2(_Dpth,_Slf,[And],'True'):- is_and(And),!.
@@ -315,6 +330,7 @@ eval_args2(Depth,Self,[And,X|Y],TF):- is_and(And),!,eval_arg(Depth,Self,X,TF1),i
 
 eval_args2(Depth,Self,['if',TF,Then,Else],Res):- !, ( \+ eval_arg(Depth,Self,TF,'False') -> eval_arg(Depth,Self,Then,Res);eval_arg(Depth,Self,Else,Res) ).
 eval_args2(_Dpth,_Slf,[_,Nothing],Nothing):- 'Nothing'==Nothing,!.
+
 
 
 eval_args2(Depth,Self,['let',A,A5,AA],AAO):- !,eval_arg(Depth,Self,A5,A),eval_arg(Depth,Self,AA,AAO).
@@ -366,9 +382,10 @@ max_counting(F,Max):- flag(F,X,X+1),  X<Max ->  true; (flag(F,_,10),!,fail).
 %eval_args2(Depth,Self,[H|T],_):- \+ is_list(T),!,fail.
 eval_args2(Depth,Self,['or',X,Y],TF):- !, (eval_arg(Depth,Self,X,TF);eval_arg(Depth,Self,Y,TF)).
 
-eval_args2(_Dpth,_Slf,LESS,Res):- once(eval_selfless(LESS,Res)),LESS\==Res,!.
 
-as_tf(G,TF):- call(G)*->TF='True';TF='False'.
+catch_warn(G):- catch(G,E,(wdmsg(catch_warn(G)-->E),fail)).
+
+as_tf(G,TF):- catch_warn((call(G)*->TF='True';TF='False')).
 eval_selfless(['==',X,Y],TF):-!,as_tf(X=@=Y,TF).
 eval_selfless(['=',X,Y],TF):-!,as_tf(X=Y,TF).
 eval_selfless(['>',X,Y],TF):-!,as_tf(X@>Y,TF).
@@ -377,23 +394,11 @@ eval_selfless(['<',X,Y],TF):-!,as_tf(X@<Y,TF).
 eval_selfless(['=>',X,Y],TF):-!,as_tf(X@>=Y,TF).
 eval_selfless(['<=',X,Y],TF):-!,as_tf(X@=<Y,TF).
 eval_selfless(LIS,Y):-  notrace((
-   LIS=[F,_,_], atom(F), current_op(_,yfx,F),
+   LIS=[F,_,_], atom(F), catch_warn(current_op(_,yfx,F)),
    catch((LIS\=[_], s2p(LIS,IS), Y is IS),_,fail))),!.
 
 % less Macro-ey Functions
 
-metta_atom_iter(Depth,_,_):- Depth<3,!,fail.
-metta_atom_iter(_Dpth,_Slf,[]):-!.
-metta_atom_iter(_Dpth,Other,H):- metta_atom(Other,H).
-metta_atom_iter(Depth,Other,H):- D2 is Depth -1, metta_defn(Other,H,B),metta_atom_iter(D2,Other,B).
-metta_atom_iter(_Dpth,Other,[Equal,H,B]):- '=' == Equal,!, metta_defn(Other,H,B).
-metta_atom_iter(_Dpth,_Slf,[And]):- is_and(And),!.
-metta_atom_iter(Depth,Self,[And,X|Y]):- is_and(And),!,D2 is Depth -1, metta_atom_iter(D2,Self,X),metta_atom_iter(D2,Self,[And|Y]).
-
-metta_atom_iter2(_,Self,[=,X,Y]):- metta_defn(Self,X,Y).
-metta_atom_iter2(_Dpth,Other,[Equal,H,B]):- '=' == Equal,!, metta_defn(Other,H,B).
-metta_atom_iter2(_Dpth,Self,X,Y):- metta_defn(Self,X,Y). %, Y\=='True'.
-metta_atom_iter2(_Dpth,Self,X,Y):- metta_atom(Self,[=,X,Y]). %, Y\=='True'.
 
 
 
@@ -426,29 +431,79 @@ metta_atom_iter2(_Dpth,Self,X,Y):- metta_atom(Self,[=,X,Y]). %, Y\=='True'.
   (Fritz Sam))
 */
 :- discontiguous eval_args3/4.
-eval_args2(Depth,Self,PredDecl,Res):- eval_args3(Depth,Self,PredDecl,Res).
+%eval_args2(Depth,Self,PredDecl,Res):- eval_args3(Depth,Self,PredDecl,Res).
+
+eval_args2(Depth,Self,PredDecl,Res):- eval_args34(Depth,Self,PredDecl,Res)*->true;PredDecl=Res.
+%eval_args2(_Dpth,_Slf,L1,Res):- is_list(L1),maplist(self_eval,L1),!,Res=L1.
+%eval_args2(_Depth,_Self,X,X).
+
+
+eval_args34(Depth,Self,PredDecl,Res):- is_defined_head(Self,PredDecl),!,eval_args3(Depth,Self,PredDecl,Res).
+eval_args34(Depth,Self,PredDecl,Res):- eval_args4(Depth,Self,PredDecl,Res), PredDecl\==Res,!.
+
+is_defined_head(Other,[H|_]):- !, nonvar(H),!, \+ \+ is_defined_head_f(Other,H).
+is_defined_head(Other,H):- callable(H),!,functor(H,F,_), \+ \+ is_defined_head_f(Other,F).
+is_defined_head(Other,H):- is_defined_head_f(Other,H).
+
+is_defined_head_f(Other,H):- metta_type(Other,H,_).
+is_defined_head_f(Other,H):- metta_atom(Other,[H|_]).
+is_defined_head_f(Other,H):- metta_defn(Other,[H|_],_).
+is_defined_head_f(_,H):- metta_builtin(H).
+
+metta_builtin(Special):- is_special_op(Special).
+metta_builtin('==').
+metta_builtin(F):- once(atom(F);var(F)), current_op(_,yfx,F).
+
+is_special_op(F):- \+ atom(F), \+ var(F), !, fail.
+is_special_op('case').
+is_special_op(':').
+is_special_op('=').
+is_special_op('->').
+is_special_op('let').
+is_special_op('let*').
+is_special_op('if').
+
+%metta_atom_iter(Depth,Other,H):- metta_atom(Other,H).
+%metta_atom_iter(Depth,Other,H):- eval_arg(Depth,Other,H,_).
+metta_atom_iter(Depth,_,_):- Depth<3,!,fail.
+metta_atom_iter(_Dpth,_Slf,[]):-!.
+metta_atom_iter(_Dpth,Other,H):- metta_atom(Other,H).
+metta_atom_iter(Depth,Other,H):- D2 is Depth -1, metta_defn(Other,H,B),metta_atom_iter(D2,Other,B).
+metta_atom_iter(_Dpth,Other,[Equal,H,B]):- '=' == Equal,!, metta_defn(Other,H,B).
+metta_atom_iter(_Dpth,_Slf,[And]):- is_and(And),!.
+metta_atom_iter(Depth,Self,[And,X|Y]):- is_and(And),!,D2 is Depth -1, metta_atom_iter(D2,Self,X),metta_atom_iter(D2,Self,[And|Y]).
+
+metta_atom_iter2(_,Self,[=,X,Y]):- metta_defn(Self,X,Y).
+metta_atom_iter2(_Dpth,Other,[Equal,H,B]):- '=' == Equal,!, metta_defn(Other,H,B).
+metta_atom_iter2(_Dpth,Self,X,Y):- metta_defn(Self,X,Y). %, Y\=='True'.
+metta_atom_iter2(_Dpth,Self,X,Y):- metta_atom(Self,[=,X,Y]). %, Y\=='True'.
+
+metta_atom_iter_ref(Other,['=',H,B],Ref):-clause(metta_defn(Other,H,B),true,Ref).
+metta_atom_iter_ref(Other,H,Ref):-clause(metta_atom(Other,H),true,Ref).
+
 
 eval_args3(Depth,Self,X,Y):- metta_atom_iter(Depth,Self,[=,X,Y]).
 eval_args3(Depth,Self,PredDecl,Res):- term_variables(PredDecl,Vars),
   (metta_atom(Self,PredDecl) *-> (Vars ==[]->Res='True';Vars=Res);
    (eval_arg(Depth,Self,PredDecl,Res),ignore(Vars ==[]->Res='True';Vars=Res))).
-eval_args3(Depth,Self,['ift',CR,Then],RO):- fail, !, %fail, % trace,
-   metta_defn(Self,['ift',R,Then],Become),eval_arg(Depth,Self,CR,R),eval_arg(Depth,Self,Then,_True),eval_arg(Depth,Self,Become,RO).
+%eval_args3(Depth,Self,['ift',CR,Then],RO):- fail, !, %fail, % trace,
+%   metta_defn(Self,['ift',R,Then],Become),eval_arg(Depth,Self,CR,R),eval_arg(Depth,Self,Then,_True),eval_arg(Depth,Self,Become,RO).
+
+eval_args4(Depth,Self,[F|X],FY):- is_function(F), \+ is_special_op(F), is_list(X),!,
+  maplist(eval_arg(Depth,Self),X,Y), eval_args5(Depth,Self,[F|Y],FY).
+eval_args4(Depth,Self,FX,FY):- eval_args5(Depth,Self,FX,FY).
+
+eval_args5(_Dpth,_Slf,[F|LESS],Res):- once(eval_selfless([F|LESS],Res)),LESS\==Res,!.
+eval_args5(_Dpth,_Slf,[AE|More],TF):- length(More,Len), is_predicate(AE,Len,Pred),!,
+  catch_warn(as_tf(apply(Pred,More),TF)).
+eval_args5(_Dpth,_Slf,[AE|More],TF):- length([AE|More],Len), is_predicate(AE,Len,Pred),
+  append(More,[TF],Args),!,catch_warn(apply(Pred,Args)).
+
+%eval_args4(Depth,Self,[X1|[F2|X2]],[Y1|Y2]):- is_function(F2),!,eval_arg(Depth,Self,[F2|X2],Y2),eval_arg(Depth,Self,X1,Y1).
 
 
-eval_args2(Depth,Self,PredDecl,Res):- eval_args4(Depth,Self,PredDecl,Res).
-eval_args4(Depth,Self,[X1|[F2|X2]],[Y1|Y2]):- is_function(F2),!,eval_arg(Depth,Self,[F2|X2],Y2),eval_arg(Depth,Self,X1,Y1).
-eval_args4(_Dpth,_Slf,L1,Res):- is_list(L1),maplist(self_eval,L1),!,Res=L1.
-eval_args4(Depth,Self,[F|X],[F|Y]):- is_function(F),is_list(X),maplist(eval_arg(Depth,Self),X,Y),X\=@=Y.
-eval_args4(_Depth,_Self,X,X).
 
 
-
-%metta_atom_iter(Depth,Other,H):- metta_atom(Other,H).
-%metta_atom_iter(Depth,Other,H):- eval_arg(Depth,Other,H,_).
-
-metta_atom_iter_ref(Other,['=',H,B],Ref):-clause(metta_defn(Other,H,B),true,Ref).
-metta_atom_iter_ref(Other,H,Ref):-clause(metta_atom(Other,H),true,Ref).
 
 fn_append(List,X,Call):-
   fn_append1(List,X,ListX),
@@ -544,7 +599,7 @@ read_metta(In,Read):-
      -> (read_metta1(In,Read2), Read=exec(Read2), save_exec_history(Read))
      ; Read = Read1),!.
 
-write_comment(Cmt):- format('~N%;~w~n',[Cmt]).
+write_comment(Cmt):- format('~N;~w~n',[Cmt]).
 do_metta_cmt(_,'$COMMENT'(Cmt,_,_)):- write_comment(Cmt),!.
 do_metta_cmt(_,'$STRING'(Cmt)):- write_comment(Cmt),!.
 do_metta_cmt(Self,[Cmt]):- !, do_metta_cmt(Self, Cmt),!.
@@ -573,14 +628,16 @@ simplify_cons(I,O):- I=['And', O, 'True'].
 cons_to_l(I,O):- I=='Nil',!,O=[].
 cons_to_l(I,O):- I=='T',!,O='True'.
 cons_to_l(I,O):- I=='F',!,O='False'.
-cons_to_l(I,O):- I==':=',!,O='='.
+%cons_to_l(I,O):- I==':=',!,O='='.
 cons_to_l(I,O):- I==[quote, s],!, O=is.
 
 cons_to_l(C,O):- \+ compound(C),!,O=C.
 cons_to_l(I,O):- term_variables(I,IV), simplify_cons(I,O), maplist(var,IV),!.
+cons_to_l('$OBJ'(claz_bracket_vector,List),Res):- !, append(['['|List],[']'],Res),!.
+
 %cons_to_l(N,NO):- cons_to_l3('Cons',N,NO),!.
 cons_to_l([Cons,H,T],[HH|TT]):- Cons=='Cons',!, cons_to_l(H,HH),cons_to_l(T,TT).
-cons_to_l([Cons|List],ListO):- Cons=='::',!,cons_to_l(List,ListO).
+% dmiles % cons_to_l([Cons|List],ListO):- Cons=='::',!,cons_to_l(List,ListO).
 cons_to_l([H|T],[HH|TT]):- !, cons_to_l(H,HH),cons_to_l(T,TT).
 cons_to_l(I,I).
 
@@ -649,6 +706,14 @@ self_eval('True'). self_eval('False').
 combine_result(TF,R2,R2):- TF == [], !.
 combine_result(TF,_,TF):-!.
 
+
+do_metta1_e(_Self,_,exec(Exec)):- !,write(!),with_indents(false,write_src(Exec)),nl,!.
+do_metta1_e(_Self,_,[=,A,B]):- !, with_concepts(false,
+  (write('(= '), with_indents(false,write_src(A)), (is_list(B) -> nl ; true),write(' '),with_indents(true,write_src(B)),write(')'))),nl.
+do_metta1_e(_Self,_LoadExec,Term):- write_src(Term),nl.
+
+
+
 do_metta(Self,LoadExec,Term):- once(maybe_fix_vars(Term,NewTerm)),Term\=@=NewTerm,!,
   do_metta(Self,LoadExec,NewTerm),!.
 do_metta(Self,LoadExec,Term):- do_metta1(Self,LoadExec,Term),!.
@@ -701,7 +766,8 @@ do_metta1(Self,Load,PredDecl):-
    color_g_mesg('#ffa500',metta_anew(Load,metta_atom(Self,PredDecl))).
 
 do_metta_exec(Self,Var):- var(Var), !, pp_m(eval(Var)), freeze(Var,wdmsg(laterVar(Self,Var))).
-do_metta_exec(Self,TermV):-!, pp_m(:- metta_eval(TermV)),
+do_metta_exec(Self,TermV):-!,
+  color_g_mesg('#004400',(write('!'),write_src((TermV)))),
   subst_vars(TermV,Term),
   forall(eval_arg(13,Self,Term,X),(color_g_mesg(yellow,(format(' % '),writeq(X),nl)))),!.
 
@@ -713,12 +779,12 @@ s2p(I,O):- sexpr_sterm_to_pterm(I,O),!.
 
 
 discover_head(Self,Load,[Fn|PredDecl]):-
-  arg_types(PredDecl,[],EachArg),
-  metta_anew(Load,metta_head(Self,Fn,EachArg)).
+ nop(( arg_types(PredDecl,[],EachArg),
+  metta_anew(Load,metta_head(Self,Fn,EachArg)))).
 
 discover_body(Self,Load,[Fn|PredDecl]):-
-  arg_types(PredDecl,[],EachArg),
-  metta_anew(Load,metta_body(Self,Fn,EachArg)).
+  nop(( arg_types(PredDecl,[],EachArg),
+  metta_anew(Load,metta_body(Self,Fn,EachArg)))).
 
 decl_length(TypeDecL,Len):- is_list(TypeDecL),!,length(TypeDecL,Len).
 decl_length(_TypeDecL,1).
@@ -726,6 +792,22 @@ decl_length(_TypeDecL,1).
 arg_types([['->'|L]],R,LR):-!, arg_types(L,R,LR).
 arg_types(['->'|L],R,LR):-!, arg_types(L,R,LR).
 arg_types(L,R,LR):- append(L,R,LR).
+
+
+
+fetch_or_create_state(Name):- fetch_or_create_state(Name,_).
+% Fetch an existing state or create a new one
+fetch_or_create_state(NameOrInstance, State) :-
+    (   atom(NameOrInstance)
+    ->  (is_registered_state(NameOrInstance)
+        ->  nb_current(NameOrInstance, State)
+        ;   init_state(NameOrInstance),
+            nb_current(NameOrInstance, State))
+    ;   is_valid_nb_state(NameOrInstance)
+    ->  State = NameOrInstance
+    ;   writeln('Error: Invalid input.')
+    ),
+    is_valid_nb_state(State).
 
 :- metta_final.
 
@@ -735,10 +817,7 @@ arg_types(L,R,LR):- append(L,R,LR).
 
 :- if(\+ current_prolog_flag(argv,[])).
 
-
-
   :- loon.
-
 
 :- endif.
 

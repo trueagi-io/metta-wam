@@ -129,7 +129,9 @@ skip(_).
     debug_metta(['type-method-result',Type,Method,Result]).
     
 
-
+subst_pattern_template(SpaceNameOrInstance, Pattern, Template) :-
+    debug_metta([subst_pattern_template,SpaceNameOrInstance, Pattern, Template]),
+    'atoms_match'(SpaceNameOrInstance, Pattern, Template, []).
     
 /*
 space_query_vars(SpaceNameOrInstance, Query, Vars) :- is_as_nb_space(SpaceNameOrInstance),!,
@@ -138,8 +140,11 @@ space_query_vars(SpaceNameOrInstance, Query, Vars) :- is_as_nb_space(SpaceNameOr
 */
 
 
-is_asserted_space('&flybase').
+was_asserted_space('&flybase').
+
+is_asserted_space(X):- was_asserted_space(X).
 is_asserted_space(X):-          \+ is_as_nb_space(X), \+ py_named_space(X),!.
+
 is_python_space_not_prolog(X):- \+ is_as_nb_space(X), \+ is_asserted_space(X).
 
 :- dynamic(is_python_space/1).
@@ -345,6 +350,7 @@ remove_funct_arg(AsPred, Nth, AsFunction) :-
 
 allow_concepts:- option_else(concepts,TF,true), \+ TF == false.
 with_concepts(TF,Goal):- with_option(concepts,TF,Goal).
+with_indents(TF,Goal):- with_option(src_indents,TF,Goal).
 
 p2m(NC,NC):- var(NC),!.
 p2m(NC,OO):- is_list(NC),!,maplist(p2m,NC,OO).
@@ -465,6 +471,23 @@ pp_sex(V) :- V = '$VAR'(_), !, format('$~p',[V]).
 pp_sex('!'(V)) :- write('!'),!,pp_sex(V).
 pp_sex(listOf(S,_)) :- !,pp_sex(listOf(S)).
 pp_sex(listOf(S)) :- !,format('(ListValue ~@)',[pp_sex(S)]).
+
+pp_sex([H|T]) :- atom(H),member(H,['If','cond','let','let*']),!,
+  with_indents(true,w_proper_indent(2,w_in_p(pp_sexi([H|T])))).
+
+pp_sex([H|T]) :- is_list(T), length(T,Args),Args =< 2, fail,
+   wots(SS,((with_indents(false,(write('('), pp_sex(H), print_list_as_sexpression(T), write(')')))))),
+   ((atom_length(SS,Len),Len < 20) ->write(SS);
+      with_indents(true,w_proper_indent(2,w_in_p(pp_sexi([H|T]))))),!.
+/*
+
+pp_sex([H|T]) :- is_list(T),atom(H),upcase_atom(H,U),downcase_atom(H,U),!,
+   with_indents(false,(write('('), pp_sex(H), print_list_as_sexpression(T), write(')'))).
+
+%pp_sex([H,B,C|T]) :- T==[],!,
+%  with_indents(false,(write('('), pp_sex(H), print_list_as_sexpression([B,C]), write(')'))).
+*/
+pp_sex(V) :- option_else(src_indents,TF,true),TF==false,!,pp_sexi(V).
 
 pp_sex(V) :- w_proper_indent(2,w_in_p(pp_sexi(V))).
 
@@ -643,6 +666,118 @@ print_formatted_time(TotalSeconds) :-
     format_time(TotalSeconds, Formatted),
     writeln(Formatted).
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+is_nb_state(G):- is_valid_nb_state(G) -> true ;
+                 is_registered(G),nb_current(G,S),is_valid_nb_state(S).
+
+
+:- multifile(state_type_method/3).
+:- dynamic(state_type_method/3).
+space_type_method(is_nb_state,new_space,init_state).
+space_type_method(is_nb_state,clear_space,clear_nb_values).
+space_type_method(is_nb_state,add_atom,add_nb_value).
+space_type_method(is_nb_state,remove_atom,remove_nb_value).
+space_type_method(is_nb_state,replace_atom,replace_nb_value).
+space_type_method(is_nb_state,atom_count,value_nb_count).
+space_type_method(is_nb_state,get_atoms,'get-state').
+space_type_method(is_nb_state,atom_iter,value_nb_iter).
+
+state_type_method(is_nb_state,new_state,init_state).
+state_type_method(is_nb_state,clear_state,clear_nb_values).
+state_type_method(is_nb_state,add_value,add_nb_value).
+state_type_method(is_nb_state,remove_value,remove_nb_value).
+state_type_method(is_nb_state,replace_value,replace_nb_value).
+state_type_method(is_nb_state,value_count,value_nb_count).
+state_type_method(is_nb_state,'get-state','get-state').
+state_type_method(is_nb_state,value_iter,value_nb_iter).
+%state_type_method(is_nb_state,query,state_nb_query).
+
+% Clear all values from a state
+clear_nb_values(StateNameOrInstance) :-
+    fetch_or_create_state(StateNameOrInstance, State),
+    nb_setarg(2, State, []).
+
+% Add an value to the state
+add_nb_value(StateNameOrInstance, Value) :-
+    fetch_or_create_state(StateNameOrInstance, State),
+    arg(2, State, Values),
+    NewValues = [Value | Values],
+    nb_setarg(2, State, NewValues).
+
+% Count values in a state
+value_nb_count(StateNameOrInstance, Count) :-
+    fetch_or_create_state(StateNameOrInstance, State),
+    arg(2, State, Values),
+    length(Values, Count).
+
+% Remove an value from a state
+remove_nb_value(StateNameOrInstance, Value) :-
+    fetch_or_create_state(StateNameOrInstance, State),
+    arg(2, State, Values),
+    select(Value, Values, UpdatedValues),
+    nb_setarg(2, State, UpdatedValues).
+
+% Fetch all values from a state
+'get-state'(StateNameOrInstance, Values) :-
+    fetch_or_create_state(StateNameOrInstance, State),
+    arg(2, State, Values).
+
+% Replace an value in the state
+replace_nb_value(StateNameOrInstance, OldValue, NewValue) :-
+    fetch_or_create_state(StateNameOrInstance, State),
+    arg(2, State, Values),
+    ( (select(Found, Values, TempValues),OldValue=@=Found)
+    ->  NewValues = [NewValue | TempValues],
+        nb_setarg(2, State, NewValues)
+    ;   false
+    ).
+
+
+'new-state'(State):-
+   'new-state'([],State).
+
+'new-state'(Init,['new-state'|Init]).
+
+
+% Function to check if an value is registered as a state name
+is_registered_state(Name) :-
+    clause(registered_state(Name), true).
+
+% Function to confirm if a term represents a state
+is_valid_nb_state(['new-state' | NV]):- nonvar(NV).
+
+% Find the original name of a given state
+state_original_name(State, Name) :-
+    is_registered_state(Name),
+    nb_current(Name, State).
+
+% Register and initialize a new state
+init_state(Name) :-
+    State = ['new-state'],
+    asserta(registered_state(Name)),
+    nb_setval(Name, State).
+
+
+
+:- ensure_loaded('../../examples/factorial').
+:- ensure_loaded('../../examples/fibonacci').
 metta_final:-
     save_pre_statistic(memory),
     save_pre_statistic(atoms),

@@ -268,7 +268,17 @@ class Circles:
 
 # subclass to later capture any utility we can add to 'subst'
 class VSpaceRef(SpaceRef):
+
+    """
+    A reference to a Space, which may be accessed directly, wrapped in a grounded atom,
+    or passed to a MeTTa interpreter.
+    """
+
     def __init__(self, space_obj):
+        """
+        Initialize a new SpaceRef based on the given space object, either a CSpace
+        or a custom Python object.
+        """
         super().__init__(space_obj)
         self.py_space_obj = space_obj
         #if type(space_obj) is hp.CSpace:
@@ -276,20 +286,14 @@ class VSpaceRef(SpaceRef):
         #else:
         #    self.cspace = hp.space_new_custom(space_obj)
 
-    def subst(self, pattern, templ):
-        """
-        Performs a substitution within the Space
-        """
-        cspace = super().cspace
-        return [MeTTaAtom._from_catom(catom) for catom in
-                hp.space_subst(cspace, pattern.catom,
-                                         templ.catom)]
+    def is_VSpace(self):
+        return isinstance(self.py_space_obj,VSpace)
 
     def get_atoms(self):
         """
         Returns a list of all Atoms in the Space, or None if that is impossible
         """
-        if isinstance(self.py_space_obj,VSpace):
+        if self.is_VSpace():
             return self.py_space_obj.get_atoms()
 
         res = hp.space_list(self.cspace)
@@ -299,6 +303,103 @@ class VSpaceRef(SpaceRef):
         for r in res:
             result.append(MeTTaAtom._from_catom(r))
         return result
+
+
+    def __del__(self):
+        """Free the underlying CSpace object """
+        if self.is_VSpace(): self.py_space_obj.__del__()
+        else: hp.space_free(self.cspace)
+
+    def __eq__(self, other):
+        """Compare two SpaceRef objects for equality, based on their underlying spaces."""
+        if not isinstance(other,SpaceRef): return False
+        if self.is_VSpace(): return get_payload(self) is other.get_payload(self)
+        else: return hp.space_eq(self.cspace, other.cspace)
+
+
+    @staticmethod
+    def _from_cspace(cspace):
+        """
+        Create a new SpaceRef based on the given CSpace object.
+        """
+        return VSpaceRef(cspace)
+
+    def copy(self):
+        """
+        Returns a new copy of the SpaceRef, referencing the same underlying Space.
+        """
+        return self
+
+    def add_atom(self, atom):
+        """
+        Add an Atom to the Space.
+        """
+        if self.is_VSpace():
+            return self.py_space_obj.add(atom)
+
+        hp.space_add(self.cspace, atom.catom)
+
+    def remove_atom(self, atom):
+        """
+        Delete the specified Atom from the Space.
+        """
+        if self.is_VSpace():
+            return self.py_space_obj.remove(atom)
+
+        return hp.space_remove(self.cspace, atom.catom)
+
+    def replace_atom(self, atom, replacement):
+        """
+        Replaces the specified Atom, if it exists in the Space, with the supplied replacement.
+        """
+        if self.is_VSpace():
+            return self.py_space_obj.replace(atom, replacement)
+
+        return hp.space_replace(self.cspace, atom.catom, replacement.catom)
+
+    def atom_count(self):
+        """
+        Returns the number of Atoms in the Space, or -1 if it cannot be readily computed.
+        """
+
+        if self.is_VSpace():
+            return self.py_space_obj.atom_count()
+
+        return hp.space_atom_count(self.cspace)
+
+
+    def get_payload(self):
+        """
+        Returns the Space object referenced by the SpaceRef, or None if the object does not have a
+        direct Python interface.
+        """
+        if self.is_VSpace():
+            return self.py_space_obj;
+
+        return hp.space_get_payload(self.cspace)
+
+    def query(self, pattern):
+        """
+        Performs the specified query on the Space, and returns the result as a BindingsSet.
+        """
+        if self.is_VSpace():
+            return self.py_space_obj.query(pattern);
+
+        result = hp.space_query(self.cspace, pattern.catom)
+        return BindingsSet(result)
+
+    def subst(self, pattern, templ):
+        """
+        Performs a substitution within the Space
+        """
+
+        if self.is_VSpace():
+            return self.py_space_obj.subst(pattern, templ);
+
+        cspace = super().cspace
+        return [MeTTaAtom._from_catom(catom) for catom in
+                hp.space_subst(cspace, pattern.catom,
+                                         templ.catom)]
 
 
 def foreign_framed(func):
@@ -334,6 +435,9 @@ class VSpace(AbstractSpace):
         self.sp_module = newModule("user")
         self.unwrap = unwrap
         addSpaceName(space_name,self)
+
+    def __del__(self):
+        pass
 
     def swip_space_name(self):
         return swipRef(self.sp_name)
@@ -410,6 +514,14 @@ class VSpace(AbstractSpace):
     def replace(self, from_atom, to_atom):
         circles = Circles()
         return self._call("replace-atom", m2s(circles,from_atom), m2s(circles,to_atom))
+
+    @foreign_framed
+    def subst(self, pattern, templ):
+        """
+        Performs a substitution within the Space
+        """
+        circles = Circles()
+        return self._call("subst_pattern_template", m2s(circles,pattern), m2s(circles,templ))
 
     @foreign_framed
     def atom_count(self):
