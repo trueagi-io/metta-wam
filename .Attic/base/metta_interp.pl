@@ -1,10 +1,11 @@
 
 :- ensure_loaded(metta_compiler).
-:- dynamic registered_space/1.
 
 
+% Function to check if an atom is registered as a space name
+:- dynamic is_registered_space_name/1.
 is_nb_space(G):- is_valid_nb_space(G) -> true ;
-                 is_registered(G),nb_current(G,S),is_valid_nb_space(S).
+                 is_registered_space_name(G),nb_current(G,S),is_valid_nb_space(S).
 
 :- dynamic(is_python_space/1).
 
@@ -23,68 +24,65 @@ space_type_method(is_as_nb_space,atom_iter,atom_nb_iter).
 % Clear all atoms from a space
 clear_nb_atoms(SpaceNameOrInstance) :-
     fetch_or_create_space(SpaceNameOrInstance, Space),
-    nb_setarg(2, Space, []).
+    nb_setarg(1, Space, []).
 
 % Add an atom to the space
 add_nb_atom(SpaceNameOrInstance, Atom) :-
     fetch_or_create_space(SpaceNameOrInstance, Space),
-    arg(2, Space, Atoms),
+    arg(1, Space, Atoms),
     NewAtoms = [Atom | Atoms],
-    nb_setarg(2, Space, NewAtoms).
+    nb_setarg(1, Space, NewAtoms).
 
 % Count atoms in a space
 atom_nb_count(SpaceNameOrInstance, Count) :-
     fetch_or_create_space(SpaceNameOrInstance, Space),
-    arg(2, Space, Atoms),
+    arg(1, Space, Atoms),
     length(Atoms, Count).
 
 % Remove an atom from a space
 remove_nb_atom(SpaceNameOrInstance, Atom) :-
     fetch_or_create_space(SpaceNameOrInstance, Space),
-    arg(2, Space, Atoms),
+    arg(1, Space, Atoms),
     select(Atom, Atoms, UpdatedAtoms),
-    nb_setarg(2, Space, UpdatedAtoms).
+    nb_setarg(1, Space, UpdatedAtoms).
 
 % Fetch all atoms from a space
 get_nb_atoms(SpaceNameOrInstance, Atoms) :-
     fetch_or_create_space(SpaceNameOrInstance, Space),
-    arg(2, Space, Atoms).
+    arg(1, Space, Atoms).
 
 % Replace an atom in the space
 replace_nb_atom(SpaceNameOrInstance, OldAtom, NewAtom) :-
     fetch_or_create_space(SpaceNameOrInstance, Space),
-    arg(2, Space, Atoms),
+    arg(1, Space, Atoms),
     ( (select(Found, Atoms, TempAtoms),OldAtom=@=Found)
     ->  NewAtoms = [NewAtom | TempAtoms],
-        nb_setarg(2, Space, NewAtoms)
+        nb_setarg(1, Space, NewAtoms)
     ;   false
     ).
 
 
-% Function to check if an atom is registered as a space name
-is_registered(Name) :-
-    clause(registered_space(Name), true).
+
 
 % Function to confirm if a term represents a space
-is_valid_nb_space(['new-space' | NV]):- nonvar(NV).
+is_valid_nb_space(Space):- compound(Space),functor(Space,'Space',_).
 
 % Find the original name of a given space
 space_original_name(Space, Name) :-
-    is_registered(Name),
+    is_registered_space_name(Name),
     nb_current(Name, Space).
 
 % Register and initialize a new space
 init_space(Name) :-
-    Space = ['new-space'],
-    asserta(registered_space(Name)),
-    nb_setval(Name, Space),
-    'clear-atoms'(Space).
+    Space = 'Space'([]),
+    asserta(is_registered_space_name(Name)),
+    nb_setval(Name, Space).
 
 fetch_or_create_space(Name):- fetch_or_create_space(Name,_).
 % Fetch an existing space or create a new one
 fetch_or_create_space(NameOrInstance, Space) :-
     (   atom(NameOrInstance)
-    ->  (is_registered(NameOrInstance)
+    ->  (is_registered_space_name(NameOrInstance)
         ->  nb_current(NameOrInstance, Space)
         ;   init_space(NameOrInstance),
             nb_current(NameOrInstance, Space))
@@ -115,27 +113,35 @@ loon:- run_file_arg, !, loonit_report, halt(7).
 loon:- repl, halt(7).
 
 
-is_cmd_option(Opt,M):- atom(M),
+is_cmd_option(Opt,M, TF):- atom(M),
    atom_concat('-',Opt,Flag),
-   atom_contains(M,Flag),
-   \+ atom_contains(M,'-no'),
-   \+ atom_contains(M,'=false').
+   atom_contains(M,Flag),!,
+   get_flag_value(M,FV),
+   TF=FV.
+
+get_flag_value(M,V):- atomic_list_concat([_,V],'=',M),!.
+get_flag_value(M,false):- atom_contains(M,'-no'),!.
+get_flag_value(_,true).
 
 do_cmdline_load_metta(Self,Rest):-
-  ((select(M,Rest,Files),is_cmd_option('repl',M))->After=repl;(Files=Rest,After=halt(7))),!,
+  ((select(M,Rest,Files),is_cmd_option('repl',M,true))->After=repl;(Files=Rest,After=halt(7))),!,
   do_cmdline_load_metta1(Self,Files),!,catch_red(After).
 
 do_cmdline_load_metta1(Self,Rest):-
-  ((select(M,Rest,Files),is_cmd_option('html',M))->After=loonit_report;(Files=Rest,After=true)),!,
+  ((select(M,Rest,Files),is_cmd_option('html',M,true))->After=loonit_report;(Files=Rest,After=true)),!,
   cmdline_load_metta(Self,Files),!,catch_red(After).
 
 
+cmdline_load_metta(Self,[M|Rest]):- is_cmd_option('python',M, _TF),!,
+  write(' '), write_src(M), nl, !, nop(ensure_loaded(metta_python)),
+  cmdline_load_metta(Self,Rest).
+cmdline_load_metta(Self,List):-
+  select(M,List,Rest), is_cmd_option('exec',M, TF),!,
+  write(' '), write_src(M), nl, !, set_option_value('exec',TF),
+  cmdline_load_metta(Self,Rest).
 cmdline_load_metta(Self,[Filemask|Rest]):- atom(Filemask), \+ atom_concat('-',_,Filemask),
   must_det_ll((Src=load_metta(Self,Filemask),nl,write_src(Src),nl,catch_red(Src),!,flush_output,
   cmdline_load_metta(Self,Rest))).
-cmdline_load_metta(Self,[M|Rest]):- is_cmd_option('python',M),!,
-  write(' '), write_src(M), nl, !, nop(ensure_loaded(metta_python)),
-  cmdline_load_metta(Self,Rest).
 cmdline_load_metta(Self,[M|Rest]):-
   write(' '), write_src(M), nl, !,
   cmdline_load_metta(Self,Rest).
@@ -757,20 +763,25 @@ combine_result(TF,R2,R2):- TF == [], !.
 combine_result(TF,_,TF):-!.
 
 
-do_metta1_e(_Self,_,exec(Exec)):- !,write(!),with_indents(false,write_src(Exec)),nl,!.
+do_metta1_e(_Self,_,exec(Exec)):- !,write_exec(Exec),!.
 do_metta1_e(_Self,_,[=,A,B]):- !, with_concepts(false,
   (write('(= '), with_indents(false,write_src(A)), (is_list(B) -> nl ; true),write(' '),with_indents(true,write_src(B)),write(')'))),nl.
 do_metta1_e(_Self,_LoadExec,Term):- write_src(Term),nl.
 
+write_exec(Exec):-
+  ignore((format('~N'),notrace((color_g_mesg('#004400',(write('!'),with_indents(false,write_src((Exec))))))),nl)).
 
-
-do_metta(Self,LoadExec,Term):- once(maybe_fix_vars(Term,NewTerm)),Term\=@=NewTerm,!,
+do_metta(Self,LoadExec,Term):-
+  once(maybe_fix_vars(Term,NewTerm)),Term\=@=NewTerm,!,
   do_metta(Self,LoadExec,NewTerm),!.
-do_metta(Self,LoadExec,Term):- do_metta1(Self,LoadExec,Term),!.
-do_metta(Self,LoadExec,Term):- pp_m(unknown_do_metta(Self,LoadExec,Term)).
+do_metta(Self,LoadExec,Term):- do_metta1(Self,LoadExec,Term)*->true;
+                               pp_m(unknown_do_metta(Self,LoadExec,Term)).
 
 do_metta1(Self,_,Cmt):- nonvar(Cmt),do_metta_cmt(Self,Cmt),!.
+
+do_metta1(_Slf,load,exec(Exec)):- option_value('exec',skip),!,write_exec(Exec),!.
 do_metta1(Self,_,exec(Exec)):- !,do_metta_exec(Self,Exec),!.
+do_metta1(_Slf,exec,Exec):- option_value('exec',skip),!,write_exec(Exec),!.
 do_metta1(Self,exec,Exec):- !,do_metta_exec(Self,Exec),!.
 
 do_metta1(Self,Load,[':',Fn,TypeDecL]):- decl_length(TypeDecL,Len),LenM1 is Len - 1, last_element(TypeDecL,LE),
@@ -817,9 +828,25 @@ do_metta1(Self,Load,PredDecl):-
 
 do_metta_exec(Self,Var):- var(Var), !, pp_m(eval(Var)), freeze(Var,wdmsg(laterVar(Self,Var))).
 do_metta_exec(Self,TermV):-!,
-  color_g_mesg('#004400',(write('!'),write_src((TermV)))),
+  must_det_ll((
+  \+ \+ write_exec(TermV),
   subst_vars(TermV,Term),
-  forall(eval_arg(13,Self,Term,X),(color_g_mesg(yellow,(format(' % '),writeq(X),nl)))),!.
+  writeq(subst_vars(TermV,Term)),
+  term_variables(Term,Vars),
+  nop(maplist(verbose_unify,Vars)),
+  forall(may_rtrace(eval_arg(13,Self,Term,X)),
+     ignore(notrace(((color_g_mesg(yellow,(format(' % '),writeq(X),nl))))))))),!.
+
+verbose_unify(Var):- put_attr(Var,verbose_unify,true).
+verbose_unify:attr_unify_hook(Attr, Value) :-
+    %format('~N~q~n',[verbose_unify:attr_unify_hook(Attr, Value)]),
+    (ground(Value)->true;trace).
+
+:- nodebug(metta(eval)).
+may_rtrace(Goal):- option_value('exec',rtrace),!,
+  rtrace(Goal).
+may_rtrace(Goal):- call(Goal).
+
 
 repl_call(Term):- catch_red(Term).
 
@@ -844,20 +871,6 @@ arg_types(['->'|L],R,LR):-!, arg_types(L,R,LR).
 arg_types(L,R,LR):- append(L,R,LR).
 
 
-
-fetch_or_create_state(Name):- fetch_or_create_state(Name,_).
-% Fetch an existing state or create a new one
-fetch_or_create_state(NameOrInstance, State) :-
-    (   atom(NameOrInstance)
-    ->  (is_registered_state(NameOrInstance)
-        ->  nb_current(NameOrInstance, State)
-        ;   init_state(NameOrInstance),
-            nb_current(NameOrInstance, State))
-    ;   is_valid_nb_state(NameOrInstance)
-    ->  State = NameOrInstance
-    ;   writeln('Error: Invalid input.')
-    ),
-    is_valid_nb_state(State).
 
 :- metta_final.
 
