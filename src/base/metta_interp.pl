@@ -322,11 +322,14 @@ eval_args2(_Dpth,_Slf,['new-state'|Expr],['new-state'|Expr]):- !.
 
 eval_args2(Depth,Self,['nop',Expr],[]):- !,  eval_args2(Depth,Self,Expr,_).
 
+is_True(T):- T\=='False',T\==[].
 
 is_and(S):- \+ atom(S),!,fail.
 is_and('#COMMA'). is_and(','). is_and('and').
+
 eval_args2(_Dpth,_Slf,[And],'True'):- is_and(And),!.
-eval_args2(Depth,Self,[And,X|Y],TF):- is_and(And),!,eval_arg(Depth,Self,X,TF1),is_true(TF1), eval_args2(Depth,Self,[And|Y],TF).
+eval_args2(Depth,Self,[And,X|Y],TF):- is_and(And),!,eval_arg(Depth,Self,X,TF1),
+  is_True(TF1),eval_args2(Depth,Self,[And|Y],TF).
 
 eval_args2(Depth,Self,['if',TF,Then,Else],Res):- !, ( \+ eval_arg(Depth,Self,TF,'False') -> eval_arg(Depth,Self,Then,Res);eval_arg(Depth,Self,Else,Res) ).
 eval_args2(_Dpth,_Slf,[_,Nothing],Nothing):- 'Nothing'==Nothing,!.
@@ -389,10 +392,12 @@ as_tf(G,TF):- catch_warn((call(G)*->TF='True';TF='False')).
 eval_selfless(['==',X,Y],TF):-!,as_tf(X=@=Y,TF).
 eval_selfless(['=',X,Y],TF):-!,as_tf(X=Y,TF).
 eval_selfless(['>',X,Y],TF):-!,as_tf(X@>Y,TF).
-eval_selfless(['%',X,Y],TF):-!,as_tf(X@>Y,TF).
 eval_selfless(['<',X,Y],TF):-!,as_tf(X@<Y,TF).
 eval_selfless(['=>',X,Y],TF):-!,as_tf(X@>=Y,TF).
 eval_selfless(['<=',X,Y],TF):-!,as_tf(X@=<Y,TF).
+
+eval_selfless(['%',X,Y],TF):-!,eval_selfless(['mod',X,Y],TF).
+
 eval_selfless(LIS,Y):-  notrace((
    LIS=[F,_,_], atom(F), catch_warn(current_op(_,yfx,F)),
    catch((LIS\=[_], s2p(LIS,IS), Y is IS),_,fail))),!.
@@ -445,11 +450,8 @@ is_user_defined_head(Other,H):- is_user_defined_head_f(Other,H).
 is_user_defined_head_f(Other,H):- metta_type(Other,H,_).
 is_user_defined_head_f(Other,H):- metta_atom(Other,[H|_]).
 is_user_defined_head_f(Other,H):- metta_defn(Other,[H|_],_).
-%is_user_defined_head_f(_,H):- metta_builtin(H).
+%is_user_defined_head_f(_,H):- is_metta_builtin(H).
 
-metta_builtin(Special):- is_special_op(Special).
-metta_builtin('==').
-metta_builtin(F):- once(atom(F);var(F)), current_op(_,yfx,F).
 
 is_special_op(F):- \+ atom(F), \+ var(F), !, fail.
 is_special_op('case').
@@ -459,6 +461,36 @@ is_special_op('->').
 is_special_op('let').
 is_special_op('let*').
 is_special_op('if').
+is_special_op('or').
+is_special_op('and').
+is_special_op('not').
+is_special_op('match').
+is_special_op('call').
+is_special_op('let').
+is_special_op('let*').
+is_special_op('nop').
+is_special_op('assertEqual').
+is_special_op('assertEqualToResult').
+
+is_metta_builtin(Special):- is_special_op(Special).
+is_metta_builtin('==').
+is_metta_builtin(F):- once(atom(F);var(F)), current_op(_,yfx,F).
+is_metta_builtin('println!').
+is_metta_builtin('transfer!').
+is_metta_builtin('collapse').
+is_metta_builtin('superpose').
+is_metta_builtin('+').
+is_metta_builtin('-').
+is_metta_builtin('*').
+is_metta_builtin('/').
+is_metta_builtin('%').
+is_metta_builtin('==').
+is_metta_builtin('<').
+is_metta_builtin('>').
+is_metta_builtin('all').
+is_metta_builtin('import!').
+is_metta_builtin('pragma!').
+
 
 %metta_atom_iter(Depth,Other,H):- metta_atom(Other,H).
 %metta_atom_iter(Depth,Other,H):- eval_arg(Depth,Other,H,_).
