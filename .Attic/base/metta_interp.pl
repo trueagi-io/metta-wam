@@ -316,9 +316,9 @@ eval_args2(Depth,Self,['bind!',Other,Expr],Value):- into_name(Self,Other,Name),!
   nb_setval(Name,Value).
 
 
-eval_args2(Depth,Self,['new-state',Expr],Value):- !, 'new-state'(Expr,Value),!.
-eval_args2(Depth,Self,['new-state'],Value):- !, 'new-state'(Value),!.
-eval_args2(Depth,Self,['new-state'|Expr],['new-state'|Expr]):- !.
+eval_args2(_Dpth,_Slf,['new-state',Expr],Value):- !, 'new-state'(Expr,Value),!.
+eval_args2(_Dpth,_Slf,['new-state'],Value):- !, 'new-state'(Value),!.
+eval_args2(_Dpth,_Slf,['new-state'|Expr],['new-state'|Expr]):- !.
 
 eval_args2(Depth,Self,['nop',Expr],[]):- !,  eval_args2(Depth,Self,Expr,_).
 
@@ -438,17 +438,17 @@ eval_args2(Depth,Self,PredDecl,Res):- eval_args34(Depth,Self,PredDecl,Res)*->tru
 %eval_args2(_Depth,_Self,X,X).
 
 
-eval_args34(Depth,Self,PredDecl,Res):- is_defined_head(Self,PredDecl),!,eval_args3(Depth,Self,PredDecl,Res).
+eval_args34(Depth,Self,PredDecl,Res):- is_user_defined_head(Self,PredDecl),!,eval_args3(Depth,Self,PredDecl,Res).
 eval_args34(Depth,Self,PredDecl,Res):- eval_args4(Depth,Self,PredDecl,Res), PredDecl\==Res,!.
 
-is_defined_head(Other,[H|_]):- !, nonvar(H),!, \+ \+ is_defined_head_f(Other,H).
-is_defined_head(Other,H):- callable(H),!,functor(H,F,_), \+ \+ is_defined_head_f(Other,F).
-is_defined_head(Other,H):- is_defined_head_f(Other,H).
+is_user_defined_head(Other,[H|_]):- !, nonvar(H),!, \+ \+ is_user_defined_head_f(Other,H).
+is_user_defined_head(Other,H):- callable(H),!,functor(H,F,_), \+ \+ is_user_defined_head_f(Other,F).
+is_user_defined_head(Other,H):- is_user_defined_head_f(Other,H).
 
-is_defined_head_f(Other,H):- metta_type(Other,H,_).
-is_defined_head_f(Other,H):- metta_atom(Other,[H|_]).
-is_defined_head_f(Other,H):- metta_defn(Other,[H|_],_).
-is_defined_head_f(_,H):- metta_builtin(H).
+is_user_defined_head_f(Other,H):- metta_type(Other,H,_).
+is_user_defined_head_f(Other,H):- metta_atom(Other,[H|_]).
+is_user_defined_head_f(Other,H):- metta_defn(Other,[H|_],_).
+%is_user_defined_head_f(_,H):- metta_builtin(H).
 
 metta_builtin(Special):- is_special_op(Special).
 metta_builtin('==').
