@@ -162,10 +162,10 @@ ensure_space(_N,_V):- fail.
 % ===============================
 %debug_metta(Call):- skip(Call).
 if_metta_debug(Goal):- getenv('VSPACE_VERBOSE','2'),!,ignore(call(Goal)).
-%if_metta_debug(_).
+if_metta_debug(_):-!.
 if_metta_debug(Goal):- !,ignore(call(Goal)).
-debug_metta(Term):- if_metta_debug((format('~N; ~@~n',[write_src(Term)]))).
-debug_metta(Msg,Term):- if_metta_debug((format('~N; ~w: ~@~n',[Msg,write_src(Term)]))),!.
+debug_metta(Term):- notrace(if_metta_debug((format('~N; ~@~n',[write_src(Term)])))).
+debug_metta(Msg,Term):- notrace(if_metta_debug((format('~N; ~w: ~@~n',[Msg,write_src(Term)])))),!.
 
 :- multifile(space_type_method/3).
 :- dynamic(space_type_method/3).
@@ -415,10 +415,10 @@ print_metta_clause(Head,Body):- conjuncts_to_list(Body,List), into_sequential(Li
 
 pp_metta(P):- pretty_numbervars(P,PP),with_option(concepts=false,pp_fb(PP)).
 
-
-write_src(V):- allow_concepts,!,with_concepts(false,write_src1(V)),flush_output.
-write_src(V):- compound(V),pp_sexi(V).
-write_src(V):- write_src1(V),!.
+write_src(V):- notrace(write_src0(V)).
+write_src0(V):- allow_concepts,!,with_concepts(false,write_src1(V)),flush_output.
+write_src0(V):- compound(V),pp_sexi(V).
+write_src0(V):- write_src1(V),!.
 
 write_src1(V):- var(V),!, ignore(pp_sex(V)).
 write_src1(''):- !, writeq('').
@@ -683,9 +683,10 @@ print_formatted_time(TotalSeconds) :-
 
 
 
-
+% Function to check if an value is registered as a state name
+:- dynamic(is_registered_state_name/1).
 is_nb_state(G):- is_valid_nb_state(G) -> true ;
-                 is_registered(G),nb_current(G,S),is_valid_nb_state(S).
+                 is_registered_state_name(G),nb_current(G,S),is_valid_nb_state(S).
 
 
 :- multifile(state_type_method/3).
@@ -693,7 +694,7 @@ is_nb_state(G):- is_valid_nb_state(G) -> true ;
 space_type_method(is_nb_state,new_space,init_state).
 space_type_method(is_nb_state,clear_space,clear_nb_values).
 space_type_method(is_nb_state,add_atom,add_nb_value).
-space_type_method(is_nb_state,remove_atom,remove_nb_value).
+space_type_method(is_nb_state,remove_atom,'change-state!').
 space_type_method(is_nb_state,replace_atom,replace_nb_value).
 space_type_method(is_nb_state,atom_count,value_nb_count).
 space_type_method(is_nb_state,get_atoms,'get-state').
@@ -702,7 +703,7 @@ space_type_method(is_nb_state,atom_iter,value_nb_iter).
 state_type_method(is_nb_state,new_state,init_state).
 state_type_method(is_nb_state,clear_state,clear_nb_values).
 state_type_method(is_nb_state,add_value,add_nb_value).
-state_type_method(is_nb_state,remove_value,remove_nb_value).
+state_type_method(is_nb_state,remove_value,'change-state!').
 state_type_method(is_nb_state,replace_value,replace_nb_value).
 state_type_method(is_nb_state,value_count,value_nb_count).
 state_type_method(is_nb_state,'get-state','get-state').
@@ -712,67 +713,56 @@ state_type_method(is_nb_state,value_iter,value_nb_iter).
 % Clear all values from a state
 clear_nb_values(StateNameOrInstance) :-
     fetch_or_create_state(StateNameOrInstance, State),
-    nb_setarg(2, State, []).
+    nb_setarg(1, State, []).
 
-% Add an value to the state
-add_nb_value(StateNameOrInstance, Value) :-
+% Change a value in a state
+'change-state!'(StateNameOrInstance, UpdatedValue, UpdatedValue) :-
     fetch_or_create_state(StateNameOrInstance, State),
-    arg(2, State, Values),
-    NewValues = [Value | Values],
-    nb_setarg(2, State, NewValues).
-
-% Count values in a state
-value_nb_count(StateNameOrInstance, Count) :-
-    fetch_or_create_state(StateNameOrInstance, State),
-    arg(2, State, Values),
-    length(Values, Count).
-
-% Remove an value from a state
-remove_nb_value(StateNameOrInstance, Value) :-
-    fetch_or_create_state(StateNameOrInstance, State),
-    arg(2, State, Values),
-    select(Value, Values, UpdatedValues),
-    nb_setarg(2, State, UpdatedValues).
+    nb_setarg(1, State, UpdatedValue).
 
 % Fetch all values from a state
 'get-state'(StateNameOrInstance, Values) :-
     fetch_or_create_state(StateNameOrInstance, State),
-    arg(2, State, Values).
+    arg(1, State, Values).
 
-% Replace an value in the state
-replace_nb_value(StateNameOrInstance, OldValue, NewValue) :-
-    fetch_or_create_state(StateNameOrInstance, State),
-    arg(2, State, Values),
-    ( (select(Found, Values, TempValues),OldValue=@=Found)
-    ->  NewValues = [NewValue | TempValues],
-        nb_setarg(2, State, NewValues)
-    ;   false
-    ).
+'new-state'(State):- 'new-state'(_,State).
+
+'new-state'(Init,'State'(Init)).
 
 
-'new-state'(State):-
-   'new-state'([],State).
-
-'new-state'(Init,['new-state'|Init]).
-
-
-% Function to check if an value is registered as a state name
-is_registered_state(Name) :-
-    clause(registered_state(Name), true).
 
 % Function to confirm if a term represents a state
-is_valid_nb_state(['new-state' | NV]):- nonvar(NV).
+is_valid_nb_state(State):- compound(State),functor(State,'State',_).
 
 % Find the original name of a given state
 state_original_name(State, Name) :-
-    is_registered_state(Name),
+    is_registered_state_name(Name),
     nb_current(Name, State).
 
 % Register and initialize a new state
 init_state(Name) :-
-    State = ['new-state'],
-    asserta(registered_state(Name)),
+    State = 'State'(_),
+    asserta(is_registered_state_name(Name)),
     nb_setval(Name, State).
+
+
+fetch_or_create_state(Name):- fetch_or_create_state(Name,_).
+% Fetch an existing state or create a new one
+
+fetch_or_create_state(NameOrInstance, State) :-
+    (   atom(NameOrInstance)
+    ->  (is_registered_state_name(NameOrInstance)
+        ->  nb_current(NameOrInstance, State)
+        ;   init_state(NameOrInstance),
+            nb_current(NameOrInstance, State))
+    ;   is_valid_nb_state(NameOrInstance)
+    ->  State = NameOrInstance
+    ;   writeln('Error: Invalid input.')
+    ),
+    is_valid_nb_state(State).
+
+
+
 
 
 
