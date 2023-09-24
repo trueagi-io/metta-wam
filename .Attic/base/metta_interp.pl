@@ -205,7 +205,15 @@ eval_arg(Depth,Self,X,Y):- nonvar(Y),!,eval_arg(Depth,Self,X,XX),evals_to(XX,Y).
 
 eval_arg(Depth,Self,X,Y):-
   no_repeats_var(YY), 
-  D1 is Depth-1, eval_args0(D1,Self,X,Y), \+ (Y\=YY).
+  D1 is Depth-1,
+  eval_args0(D1,Self,X,Y), \+ (Y\=YY).
+
+
+debugging_metta(G):-debugging(metta(eval))->ignore(G);true.
+
+
+:- nodebug(metta(eval)).
+
 
 eval_args0(Depth,_Slf,X,Y):- Depth<1,!,X=Y.
 eval_args0(Depth,Self,X,Y):-
@@ -214,7 +222,7 @@ eval_args0(Depth,Self,X,Y):-
   (M\=@=X ->eval_args0(Depth2,Self,M,Y);Y=X).
 
 
-eval_args1(_Dpth,_Slf, V, V):- var(V),!.
+eval_args1(_Dpth,_Slf, V, V):- var(V),!.
 eval_args1(_Dpth,_Slf,Name,Value):- atom(Name), nb_current(Name,Value),!.
 eval_args1(_Dpth,_Slf,Name,Value):- atomic(Name), !, Name=Value.
 eval_args1(_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
@@ -550,7 +558,8 @@ metta_atom_iter(Depth,_,_):- Depth<3,!,fail.
 metta_atom_iter(_Dpth,_Slf,[]):-!.
 metta_atom_iter(_Dpth,Other,H):- metta_atom(Other,H).
 metta_atom_iter(Depth,Other,H):- D2 is Depth -1, metta_defn(Other,H,B),metta_atom_iter(D2,Other,B).
-metta_atom_iter(_Dpth,Other,[Equal,H,B]):- '=' == Equal,!, metta_defn(Other,H,B).
+metta_atom_iter(_Dpth,Other,[Equal,H,B]):- '=' == Equal,!,
+  (metta_defn(Other,H,B)*->true;(metta_atom(Other,H),B='True')).
 metta_atom_iter(_Dpth,_Slf,[And]):- is_and(And),!.
 metta_atom_iter(Depth,Self,[And,X|Y]):- is_and(And),!,D2 is Depth -1, metta_atom_iter(D2,Self,X),metta_atom_iter(D2,Self,[And|Y]).
 
@@ -581,9 +590,10 @@ eval_args34(Depth,Self,PredDecl,Res):-
 
 
 
+%eval_args3(Depth,Self,X,Y):- show_call(metta(eval),metta_atom_iter(Depth,Self,[=,X,Y])).
 eval_args3(Depth,Self,X,Y):- metta_atom_iter(Depth,Self,[=,X,Y]).
 
-eval_args3(Depth,Self,PredDecl,Res):-
+eval_args3(Depth,Self,PredDecl,Res):- fail,
  ((term_variables(PredDecl,Vars),
   (metta_atom(Self,PredDecl) *-> (Vars ==[]->Res='True';Vars=Res);
    (eval_arg(Depth,Self,PredDecl,Res),ignore(Vars ==[]->Res='True';Vars=Res))))),
@@ -889,15 +899,18 @@ do_metta_exec(Self,TermV):-!,
   term_variables(Term,Vars),
   nop(maplist(verbose_unify,Vars)),
   forall(may_rtrace(eval_arg(13,Self,Term,X)),
-     ignore(notrace(((color_g_mesg(yellow,(format(' % '),writeq(X),nl))))))))),!.
+     ignore(notrace(((color_g_mesg(yellow,
+     ((write(' '),write_src(X),nl,
+        ignore(( \+ is_list(X),compound(X),format(' % '),writeq(X),nl)))))))))))).
 
 verbose_unify(Var):- put_attr(Var,verbose_unify,true).
 verbose_unify:attr_unify_hook(Attr, Value) :-
     format('~N~q~n',[verbose_unify:attr_unify_hook(Attr, Value)]),
     (ground(Value)->true;trace).
 
-:- nodebug(metta(eval)).
-may_rtrace(Goal):- option_value('exec',rtrace),!,
+:- nodebug(metta(exec)).
+may_rtrace(Goal):-
+(option_value('exec',rtrace);debugging(metta(exec))),!,
   rtrace(Goal).
 may_rtrace(Goal):- call(Goal).
 
