@@ -20,13 +20,22 @@ loonit_reset :-
 color_g_mesg(C,G):-
   wots(S,user:call(G)), ansi_format([fg(C)], '~N~w~n', [S]),!.
 
-loonit_asserts(Pre,G):- once(Pre),once(loonit_asserts1(Pre,G)).
+loonit_asserts(Pre,G):-
+  copy_term(Pre,Pro),
+  once(Pre),
+  once(loonit_asserts1(Pro,G)).
+
+
+
 loonit_asserts1(Pre,G) :- nop(Pre),
     call(G), !, color_g_mesg(cyan,write_src(loonit_success(G))),!,
     flag(loonit_success, X, X+1),!.
-loonit_asserts1(_Pre,G) :-
-    color_g_mesg(red,write_src(loonit_failure(G))),!,
-    flag(loonit_failure, X, X+1), !. %itrace, G.
+loonit_asserts1(Pre,G) :-
+    color_g_mesg(red,write_src(loonit_failureR(G))),!,
+    flag(loonit_failure, X, X+1), !, %itrace, G.
+    ignore(((
+       option_value('on-fail','trace'),
+       setup_call_cleanup(debug(metta(eval)),call((Pre,G)),nodebug(metta(eval)))))).
     %(thread_self(main)->trace;sleep(0.3))
 
 % Generate loonit report with colorized output
