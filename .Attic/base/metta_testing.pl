@@ -17,25 +17,76 @@ loonit_reset :-
     flag(loonit_failure, _, 0),
     flag(loonit_success, _, 0).
 
-% Increment loonit counters based on goal evaluation
+has_loonit_results :- loonit_number(FS),FS>1.
+
+loonit_number(FS) :-
+    flag(loonit_success, Successes, Successes),
+    flag(loonit_failure, Failures, Failures),
+    FS is Successes+Failures+1.
+
+
+string_replace(Original, Search, Replace, Replaced) :-
+    atomic_list_concat(Split, Search, Original),
+    atomic_list_concat(Split, Replace, Replaced),!.
+
+get_test_name(TestName) :-
+   ((nb_current(loading_file,FilePath),FilePath\==[])->true; FilePath='SOME/UNIT-TEST'),
+   loonit_number(Number),
+   make_test_name(FilePath, Number, TestName).
+
+
+make_test_name(FilePath, Number, TestName) :-
+    % Extract the file name and its parent directory from the file path
+    file_base_name(FilePath, FileName),
+    directory_file_path(ParentDir, FileName, FilePath),
+    file_base_name(ParentDir, ParentDirBase),
+    % Remove file extension
+    file_name_extension(Base, _, FileName),
+    % Convert to uppercase
+    string_upper(ParentDirBase, UpperParentDirBase),
+    string_upper(Base, UpperBase),
+    % Replace "_" with "-"
+    string_replace(UpperBase, "_", "-", NoUnderscore),
+    string_replace(UpperParentDirBase, "_", "-", NoUnderscoreParent),
+    % Format the test name
+    wots(NS,format('~`0t~d~2|',[Number])),
+    format(string(TestName), "~w.~w.~w", [NoUnderscoreParent, NoUnderscore, NS]).
 
 
 color_g_mesg(C,G):-
   wots(S,user:call(G)), ansi_format([fg(C)], '~N~w~n', [S]),!.
 
-loonit_asserts(Pre,G):-
+% Increment loonit counters based on goal evaluation
+loonit_asserts(S,Pre,G):-
   copy_term(Pre,Pro),
   once(Pre),
-  once(loonit_asserts1(Pro,G)).
+  ((nb_current(exec_src,Exec),Exec\==[])->true;S=Exec),
+ % wots(S,((((nb_current(exec_src,WS),WS\==[])->writeln(WS);write_src(exec(TestSrc)))))),
+  once(loonit_asserts1(Exec,Pro,G)).
+
+write_pass_fail([P,C,_],PASS_FAIL,G):-
+    arg(1,G,G1),arg(2,G,G2),
+    ignore((((nb_current(loading_file,FilePath),FilePath\==[])->true; FilePath='SOME/UNIT-TEST'),
+    atomic_list_concat([_,R],'examples/',FilePath),
+    file_name_extension(Base, _, R))),
+    get_test_name(TestName),
+      format('<h2 id="~w">~w</h2>',[TestName,TestName]),
+      format('~N'),format('; UNIT-TEST: | ~w | [~w](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/vspace-metta/main/reports/~w.html#~w) | ~@ | ~@ | ~@~n',
+      [PASS_FAIL,TestName,Base,TestName,with_indents(false,write_src([P,C])),
+        with_indents(false,write_src(G1)),with_indents(false,write_src(G2))]),!.
 
 
+loonit_asserts1(TestSrc,Pre,G) :- nop(Pre),
+    call(G), !,
+    write_pass_fail(TestSrc,'PASS',G),
+    flag(loonit_success, X, X+1),!,
+    color_g_mesg(cyan,write_src(loonit_success(G))),!.
 
-loonit_asserts1(Pre,G) :- nop(Pre),
-    call(G), !, color_g_mesg(cyan,write_src(loonit_success(G))),!,
-    flag(loonit_success, X, X+1),!.
-loonit_asserts1(Pre,G) :-
+loonit_asserts1(TestSrc,Pre,G) :-
+    write_pass_fail(TestSrc,'FAIL',G),
+    flag(loonit_failure, X, X+1), !,
     color_g_mesg(red,write_src(loonit_failureR(G))),!,
-    flag(loonit_failure, X, X+1), !, %itrace, G.
+     %itrace, G.
     ignore(((
        option_value('on-fail','trace'),
        setup_call_cleanup(debug(metta(eval)),call((Pre,G)),nodebug(metta(eval)))))).
@@ -44,7 +95,7 @@ loonit_asserts1(Pre,G) :-
 % Generate loonit report with colorized output
 loonit_report :-
     flag(loonit_success, Successes, Successes),
-    flag(loonit_failure, Failures, Successes),
+    flag(loonit_failure, Failures, Failures),
     loonit_report(Successes,Failures).
 
 :- at_halt(loonit_report).

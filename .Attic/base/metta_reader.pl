@@ -615,6 +615,7 @@ maybe_string(E,ES):- nb_current('$maybe_string',t),!,text_to_string_safe(E,ES),!
 maybe_string(E,E).
 
 sym_continue([H|T]) --> [H], {sym_char(H)},!, sym_continue(T).
+sym_continue([39]) --> `'`, peek_symbol_breaker,!.
 sym_continue([]) --> peek_symbol_breaker,!.
 sym_continue([]) --> [].
 

@@ -430,8 +430,10 @@ write_src1(V):- compound(V), \+ is_list(V),!,write_mobj(V).
 write_src1(V):- pp_sex(V),!.
 
 write_mobj(V):- ( \+ compound(V) ; is_list(V)),!, write_src0(V).
+
 write_mobj(V):- compound_name_arguments(V,F,Args),write_mobj(F,Args),!.
 write_mobj(V):- writeq(V).
+write_mobj(exec,[V]):- !, write('!'),with_indents(false,write_src(V)).
 write_mobj('$STRING',[S]):- !, writeq(S).
 write_mobj(F,Args):- mlog_sym(K),pp_sexi([K,F|Args]).
 
@@ -479,7 +481,7 @@ pp_sex('!'(V)) :- write('!'),!,pp_sex(V).
 pp_sex(listOf(S,_)) :- !,pp_sex(listOf(S)).
 pp_sex(listOf(S)) :- !,format('(ListValue ~@)',[pp_sex(S)]).
 
-pp_sex([H|T]) :- atom(H),member(H,['If','cond','let','let*']),!,
+pp_sex([H|T]) :- \+ no_src_indents, atom(H),member(H,['If','cond','let','let*']),!,
   with_indents(true,w_proper_indent(2,w_in_p(pp_sexi([H|T])))).
 
 pp_sex([H|T]) :- is_list(T), length(T,Args),Args =< 2, fail,
@@ -494,9 +496,11 @@ pp_sex([H|T]) :- is_list(T),atom(H),upcase_atom(H,U),downcase_atom(H,U),!,
 %pp_sex([H,B,C|T]) :- T==[],!,
 %  with_indents(false,(write('('), pp_sex(H), print_list_as_sexpression([B,C]), write(')'))).
 */
-pp_sex(V) :- option_else(src_indents,TF,true),TF==false,!,pp_sexi(V).
+pp_sex(V) :- no_src_indents,!,pp_sexi(V).
 
 pp_sex(V) :- w_proper_indent(2,w_in_p(pp_sexi(V))).
+
+no_src_indents:- option_else(src_indents,TF,true),!,TF==false.
 
 pp_sexi([H|T]) :- is_list(T),!,
    write('('), pp_sex(H), print_list_as_sexpression(T), write(')').
