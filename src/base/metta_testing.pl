@@ -72,12 +72,12 @@ write_pass_fail([P,C,_],PASS_FAIL,G):-
     get_test_name(TestName),
       format('<h3 id="~w">~w</h3>',[TestName,TestName]),
       format('~N'),format('; UNIT-TEST: | ~w | [~w](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/vspace-metta/main/reports/~w.html#~w) | ~@ | ~@ | ~@~n',
-      [PASS_FAIL,TestName,Base,TestName,trim_string(with_indents(false,write_src([P,C])),200),
-        trim_string(with_indents(false,write_src(G1)),100),with_indents(false,write_src(G2))]),!.
+      [PASS_FAIL,TestName,Base,TestName,trim_gstring(with_indents(false,write_src([P,C])),200),
+        trim_gstring(with_indents(false,write_src(G1)),100),with_indents(false,write_src(G2))]),!.
 
-trim_string(Goal, MaxLen) :-
+trim_gstring(Goal, MaxLen) :-
     wots(String,Goal),
-    string_length(String, Len),
+    atom_length(String, Len),
     (   Len =< MaxLen
     ->  Trimmed = String
     ;   SubLen is MaxLen,

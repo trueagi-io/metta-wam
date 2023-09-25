@@ -191,7 +191,7 @@ save_html_of(Filename):-
   file_name_extension(Base,html,HtmlFilename),
   loonit_reset,
   tee_file(TEE_FILE),
-  sformat(S,'ansi2html -u -l < "~w" > "~w" ',[TEE_FILE,HtmlFilename]),
+  sformat(S,'ansi2html -u < "~w" > "~w" ',[TEE_FILE,HtmlFilename]),
   writeln(doing(S)),
   shell(S))).
 
