@@ -259,7 +259,7 @@ should_show_data(X):- loaded_from_file_count(X),
   format(user_error,'~N',[]),
   format(user_output,'~N',[]),!,
   heartbeat.
-should_show_data(X):- nb_current(loading_file,F),symbol_concat(_,'.obo',F),
+should_show_data(X):- nb_current(loading_file,F),F\==[],symbol_concat(_,'.obo',F),
   loaded_from_file_count(X),Y is X mod 100_000, Y=<15,Y>=10.
 
 
