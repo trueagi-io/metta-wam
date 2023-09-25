@@ -1056,12 +1056,15 @@ load_fb_cache0(File):- file_name_extension(Name,_E,File),
 % ============================================================================
 track_load_into_file(Filename,Goal):-
  must_det_ll((
+  start_html_of(Filename),
   fbug(track_load_into_file(Filename)),
   flag(loaded_from_file_count,Was,0),
   with_option(loading_file,Filename,time(Goal)),!,
   flag(loaded_from_file_count,New,Was),
   ((New>0 ; \+ is_loaded_from_file_count(Filename,_))->assert(is_loaded_from_file_count(Filename,New));true),
-  fbug(Filename=New))).
+  fbug(Filename=New),
+  save_html_of(Filename))).
+
 :- dynamic(is_loaded_from_file_count/2).
 
 :- use_module(library(http/json)).

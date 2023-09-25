@@ -135,11 +135,14 @@ get_flag_value(_,true).
 
 early_opts('repl').
 early_opts('exec').
+early_opts('html').
 early_opts('python').
 
 process_early_opts:- \+ option_value('python',false), skip(ensure_loaded(metta_python)).
 process_early_opts.
 
+
+process_late_opts:- option_value('html',true), shell('./total_loonits.sh').
 process_late_opts:- \+ option_value('repl',false), repl.
 process_late_opts:- halt(7).
 
@@ -167,6 +170,32 @@ cmdline_load_metta(Self,[M|Rest]):-
 cmdline_load_metta(_,Nil):- Nil==[],!.
 
 :- set_prolog_flag(occurs_check,true).
+
+start_html_of(_Filename):-
+ must_det_ll((
+  S = _,
+  retractall(metta_defn(S,_,_)),
+  retractall(metta_type(S,_,_)),
+  retractall(metta_atom(S,_)),
+  loonit_reset,
+  tee_file(TEE_FILE),
+  sformat(S,'cat /dev/null > "~w"',[TEE_FILE]),
+
+  writeln(doing(S)),
+  shell(S))).
+save_html_of(Filename):-
+ must_det_ll((
+  file_name_extension(Base,_,Filename),
+  file_name_extension(Base,html,HtmlFilename),
+  loonit_reset,
+  tee_file(TEE_FILE),
+  sformat(S,'ansi2html < "~w" > "~w" ',[TEE_FILE,HtmlFilename]),
+  writeln(doing(S)),
+  shell(S))).
+
+tee_file(TEE_FILE):- getenv('TEE_FILE',TEE_FILE),!.
+tee_file(TEE_FILE):- metta_dir(Dir),directory_file_path(Dir,'TEE.ansi',TEE_FILE),!.
+metta_dir(Dir):- getenv('METTA_DIR',Dir),!.
 
 load_metta(Filename):-
  clear_spaces, load_metta('&self',Filename).
@@ -374,19 +403,31 @@ eval_args1(Depth,Self,['let*',[[Var,Val]|LetRest],Body],RetVal):- !,
 
 eval_args1(Depth,Self,['colapse'|List], Flat):- !, maplist(eval_arg(Depth,Self),List,Res),flatten(Res,Flat).
 eval_args1(Depth,Self,['get-atoms',Other],PredDecl):- !,into_space(Self,Other,Space), metta_atom_iter(Depth,Space,PredDecl).
-eval_args1(Depth,Self,['get-type',Fn],Type):-!, ((eval_args1(Depth,Self,Fn,Val),get_type(Self,Val,Type))*->Type\==[];(fail,Type=[])).
 eval_args1(_Dpth,_Slf,['car-atom',Atom],CAR):- !, Atom=[CAR|_],!.
 eval_args1(_Dpth,_Slf,['cdr-atom',Atom],CDR):- !, Atom=[_|CDR],!.
 eval_args1(Depth,Self,['get-state',Expr],Value):- !, eval_arg(Depth,Self,Expr,State), arg(1,State,Value).
 
+eval_args1(Depth,Self,['get-type',Val],Type):-!, get_type(Depth,Self,Val,Type),ground(Type),Type\==[], Type\==Val.
 
-get_type(Self,Fn,Type):- nonvar(Fn),metta_type(Self,Fn,Type),!. %,!,last_element(List,Type).
-get_type(_Slf,Cmpd,Type):- \+ ground(Cmpd),!,Type=[].
-get_type(Self,[T|List],['List',Type]):- is_list(List),get_type(Self,T,Type),!, forall((member(Ele,List),nonvar(Ele)),get_type(Self,Ele,Type)),!.
-get_type(_Slf,Num,'Number'):- number(Num),!.
-get_type(_Slf,Cmpd,Type):- compound(Cmpd), functor(Cmpd,Type,1),!.
-get_type(Self,List,Types):- List\==[], is_list(List),!,fail,maplist(get_type(Self),List,Types).
-get_type(_Slf,_,'%Undefined%'):- fail.
+get_type(_Dpth,_Slf,Var,'%Undefined%'):- var(Var),!.
+get_type(_Dpth,_Slf,Val,'Number'):- number(Val),!.
+get_type(Depth,Self,Expr,['MonadicState',Type]):- compound(Expr), Expr=..['State',Val],!,get_type(Depth,Self,Val,Type).
+get_type(_Dpth,Self,[Fn|_],Type):- nonvar(Fn),metta_type(Self,Fn,List),!,last_element(List,Type).
+get_type(_Dpth,Self,List,Type):- is_list(List),metta_type(Self,Type,['->'|List]).
+get_type(_Dpth,Self,List,Type):- is_list(List),metta_type(Self,List,LType),!,last_element(LType,Type).
+
+get_type(Depth,_Slf,Type,Type):- Depth<1,!.
+get_type(Depth,Self,List,Types):- List\==[], is_list(List),Depth2 is Depth-1,maplist(get_type(Depth2,Self),List,Types).
+get_type(_Dpth,Self,Fn,Type):- nonvar(Fn),metta_type(Self,Fn,Type).
+%get_type(Depth,Self,Fn,Type):- nonvar(Fn),metta_type(Self,Fn,Type2),Depth2 is Depth-1,get_type(Depth2,Self,Type2,Type).
+%get_type(Depth,Self,Fn,Type):- Depth>0,nonvar(Fn),metta_type(Self,Type,Fn),!. %,!,last_element(List,Type).
+get_type(Depth,Self,Expr,Type):-Depth2 is Depth-1, eval_arg(Depth2,Self,Expr,Val),Expr\=@=Val,get_type(Depth2,Self,Val,Type).
+get_type(_Dpth,_Slf,Val,'Symbol'):- symbol(Val),!.
+get_type(Depth,Self,[T|List],['List',Type]):- Depth2 is Depth-1,  is_list(List),get_type(Depth2,Self,T,Type),!,
+  forall((member(Ele,List),nonvar(Ele)),get_type(Depth2,Self,Ele,Type)),!.
+%get_type(Depth,_Slf,Cmpd,Type):- compound(Cmpd), functor(Cmpd,Type,1),!.
+get_type(_Dpth,_Slf,Cmpd,Type):- \+ ground(Cmpd),!,Type=[].
+get_type(_Dpth,_Slf,_,'%Undefined%'):- fail.
 eval_args1(Depth,Self,X,Y):-
   (eval_args2(Depth,Self,X,Y)*->true;
     (eval_args_l(Depth,Self,X,Y)*->true;X=Y)).
@@ -792,8 +833,8 @@ cons_to_l3(Cons,[Cons0,H,T],[H|TT]):- !, Cons0==Cons,!, cons_to_l3(Cons,T,TT).
 cons_to_l3(Cons,Nil0,T):- is_cf_nil(Cons,Nil),Nil0==Nil,!,T=[].
 cons_to_l3(_Cons,A,A).
 
-simplify_cons(I,O):- I=['=', O, 'True'].
-simplify_cons(I,O):- I=['match','&self',O,'True'].
+%simplify_cons(I,O):- I=['=', O, 'True'].
+%simplify_cons(I,O):- I=['match','&self',O,'True'].
 simplify_cons(I,O):- I=['And', 'True', O].
 simplify_cons(I,O):- I=['And', O, 'True'].
 
