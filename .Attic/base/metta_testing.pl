@@ -65,15 +65,20 @@ loonit_asserts(S,Pre,G):-
   once(loonit_asserts1(Exec,Pro,G)).
 
 write_pass_fail([P,C,_],PASS_FAIL,G):-
+ must_det_ll((
     arg(1,G,G1),arg(2,G,G2),
     ignore((((nb_current(loading_file,FilePath),FilePath\==[])->true; FilePath='SOME/UNIT-TEST'),
     atomic_list_concat([_,R],'examples/',FilePath),
     file_name_extension(Base, _, R))),
     get_test_name(TestName),
       format('<h3 id="~w">~w</h3>',[TestName,TestName]),
-      format('~N'),format('; UNIT-TEST: | ~w | [~w](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/vspace-metta/main/reports/~w.html#~w) | ~@ | ~@ | ~@~n',
+
+      tee_file(TEE_FILE),atom_concat(TEE_FILE,'.UNITS',UNITS),
+      open(UNITS, append, Stream),
+      format(Stream,'| ~w | [~w](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/vspace-metta/main/reports/~w.html#~w) | ~@ | ~@ | ~@ |~n',
       [PASS_FAIL,TestName,Base,TestName,trim_gstring(with_indents(false,write_src([P,C])),200),
-        trim_gstring(with_indents(false,write_src(G1)),100),with_indents(false,write_src(G2))]),!.
+        trim_gstring(with_indents(false,write_src(G1)),100),with_indents(false,write_src(G2))]),!,
+      close(Stream))).
 
 trim_gstring(Goal, MaxLen) :-
     wots(String,Goal),
