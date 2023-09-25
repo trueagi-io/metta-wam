@@ -415,7 +415,7 @@ eval_args1(Depth,Self,['get-type',Val],Type):-!, get_type(Depth,Self,Val,Type),g
 
 get_type(_Dpth,_Slf,Var,'%Undefined%'):- var(Var),!.
 get_type(_Dpth,_Slf,Val,'Number'):- number(Val),!.
-get_type(Depth,Self,Expr,['MonadicState',Type]):- compound(Expr), Expr=..['State',Val],!,get_type(Depth,Self,Val,Type).
+get_type(Depth,Self,Expr,['StateMonad',Type]):- compound(Expr), Expr=..['State',Val],!,get_type(Depth,Self,Val,Type).
 get_type(_Dpth,Self,[Fn|_],Type):- nonvar(Fn),metta_type(Self,Fn,List),!,last_element(List,Type).
 get_type(_Dpth,Self,List,Type):- is_list(List),metta_type(Self,Type,['->'|List]).
 get_type(_Dpth,Self,List,Type):- is_list(List),metta_type(Self,List,LType),!,last_element(LType,Type).
