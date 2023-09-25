@@ -183,13 +183,15 @@ start_html_of(_Filename):-
 
   writeln(doing(S)),
   shell(S))).
+
+save_html_of(_):- \+ has_loonit_results,!.
 save_html_of(Filename):-
  must_det_ll((
   file_name_extension(Base,_,Filename),
   file_name_extension(Base,html,HtmlFilename),
   loonit_reset,
   tee_file(TEE_FILE),
-  sformat(S,'ansi2html < "~w" > "~w" ',[TEE_FILE,HtmlFilename]),
+  sformat(S,'ansi2html -u -l -W < "~w" > "~w" ',[TEE_FILE,HtmlFilename]),
   writeln(doing(S)),
   shell(S))).
 
@@ -310,13 +312,13 @@ eval_args1(Depth,Self,[V|VI],VVO):-  \+ is_list(VI),!,
 eval_args1(Depth,Self,['assertTrue',X],TF):- !, eval_arg(Depth,Self,['assertEqual',X,'True'],TF).
 eval_args1(Depth,Self,['assertFalse',X],TF):- !, eval_arg(Depth,Self,['assertEqual',X,'False'],TF).
 eval_args1(Depth,Self,['assertEqual',X,Y],TF):- !,
-     ((loonit_asserts(
+     ((loonit_asserts(['assertEqual',X,Y],
         (setof_eval(Depth,Self,X,XX),
          setof_eval(Depth,Self,Y,YY),!),
        XX=@=YY))),!,
     as_tf(XX=@=YY,TF),!.
 eval_args1(Depth,Self,['assertEqualToResult',X,Y],TF):- !,
-   loonit_asserts((setof_eval(Depth,Self,X,L),sort(Y,YY)), L=@=YY),
+   loonit_asserts(['assertEqualToResult',X,Y],(setof_eval(Depth,Self,X,L),sort(Y,YY)), L=@=YY),
    !, as_tf(L=@=YY,TF).
 
 eval_args1(Depth,Self,['match',Other,Goal,Template],Template):- into_space(Self,Other,Space),!, metta_atom_iter(Depth,Space,Goal).
@@ -662,7 +664,9 @@ is_metta_builtin('pragma!').
 %eval_args3(Depth,Self,X,Y):- show_call(metta(eval),metta_atom_iter(Depth,Self,[=,X,Y])).
 
 eval_args30(Depth,Self,[[H|Start]|T1],Y):- is_user_defined_head_f(Self,H),
-   is_list(Start),!,append([H|Start],T1,HST),!,eval_args3(Depth,Self,HST,Y).
+   is_list(Start),metta_defn(Self,[H|Start],Left),!,
+    eval_arg(Depth,Self,[Left|T1],Y).
+
 eval_args30(_Dpth,Self,[H|_],_):- \+ is_user_defined_head_f(Self,H),!,fail.
 eval_args30(_Dpth,Self,CALL,Y):- append(Left,[Y],CALL),metta_defn(Self,Left,Y).
 eval_args30(_Dpth,Self,[H|T1],Y):- metta_defn(Self,[H|T1],Y).
@@ -990,7 +994,9 @@ do_metta1_e(_Self,_,[=,A,B]):- !, with_concepts(false,
 do_metta1_e(_Self,_LoadExec,Term):- write_src(Term),nl.
 
 write_exec(Exec):-
-  ignore((format('~N'),notrace((color_g_mesg('#004400',(write('!'),with_indents(false,write_src((Exec))))))),nl)).
+  wots(S,write_src(exec(Exec))),
+  nb_setval(exec_src,Exec),
+  ignore((format('~N'),notrace((color_g_mesg('#004400',(writeln(S))))))).
 
 do_metta(Self,LoadExec,Term):-
   once(maybe_fix_vars(Term,NewTerm)),Term\=@=NewTerm,!,

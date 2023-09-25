@@ -171,7 +171,7 @@ export RUST_BACKTRACE=full
 METTA_CMD="swipl ${SWI_OPTIONS[*]} -l $METTA_DIR/metta_vspace/pyswip/metta_interp.pl -- --python=$python_flag ${LIST_OF_FILE_ARGS[*]} --repl=$repl_flag --args ${OTHER_OPTIONS[*]}"
 
 if [[ -n "$TIMEOUT" && "$TIMEOUT" -gt 0 ]]; then
-    METTA_CMD="timeout --foreground --preserve-status -s 5 -k 15 $TIMEOUT ${METTA_CMD}"
+    METTA_CMD="timeout --foreground --preserve-status --signal=SIGTERM --kill-after=5s $TIMEOUT ${METTA_CMD}"
 fi
 
 
@@ -191,18 +191,23 @@ if [[ "enable" == "enable" ]]; then
       /usr/bin/script -q -f --force -e -a "$TEE_FILE" -c "$METTA_CMD" ) || true
     stty sane
 
-    DIRNAME=$(dirname "${LIST_OF_FILE_ARGS[0]}")
-    BASENAME=$(basename "${LIST_OF_FILE_ARGS[0]}")
+    # MeTTa write the html file now
+    if [[ "notenable" == "enable" ]]; then
 
-    # Remove extension if it's a file
-    [[ -f "${LIST_OF_FILE_ARGS[0]}" ]] && BASENAME=${BASENAME%.*}
+	DIRNAME=$(dirname "${LIST_OF_FILE_ARGS[0]}")
+	BASENAME=$(basename "${LIST_OF_FILE_ARGS[0]}")
 
-    if command -v ansi2html >/dev/null 2>&1; then
-	ansi2html < "$TEE_FILE" > "$DIRNAME/$BASENAME.html"
-	#echo "Output saved to $DIRNAME/$BASENAME.html"
-    else
-        echo ""
-	echo "ansi2html command not found. HTML output will not be generated."
+	# Remove extension if it's a file
+	[[ -f "${LIST_OF_FILE_ARGS[0]}" ]] && BASENAME=${BASENAME%.*}
+
+	if command -v ansi2html >/dev/null 2>&1; then
+	    ansi2html < "$TEE_FILE" > "$DIRNAME/$BASENAME.html"
+	    #echo "Output saved to $DIRNAME/$BASENAME.html"
+	else
+	    echo ""
+	    echo "ansi2html command not found. HTML output will not be generated."
+	fi
+
     fi
     exit_script 0
 fi
