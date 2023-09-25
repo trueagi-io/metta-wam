@@ -11,7 +11,9 @@
 
 % Reset loonit counters
 loonit_reset :-
+    flush_output,
     loonit_report,
+    flush_output,
     flag(loonit_failure, _, 0),
     flag(loonit_success, _, 0).
 

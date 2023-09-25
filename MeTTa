@@ -9,7 +9,7 @@ export MeTTa=$(basename "$SCRIPT")
 export METTA_DIR=$(dirname "$SCRIPT")
 #echo "METTA_DIR=$METTA_DIR"
 cd "$METTA_DIR" || { echo "Failed to navigate to $METTA_DIR"; exit_script 1; }
-export TEE_FILE=${TEE_FILE:-"$METTA_DIR/tee.ansi"}
+export TEE_FILE=${TEE_FILE:-"$METTA_DIR/TEE.ansi"}
 
 set -e
 python_flag=enable
@@ -178,9 +178,9 @@ fi
 #echo "METTA_CMD=\"$METTA_CMD\""
 
 # Conditional to check if html_flag is enabled
-if [[ "$html_flag" == "enable" ]]; then
+if [[ "enable" == "enable" ]]; then
 
-    export TEE_FILE=${TEE_FILE:-"$METTA_DIR/tee.ansi"}
+    export TEE_FILE=${TEE_FILE:-"$METTA_DIR/TEE.ansi"}
     touch "$TEE_FILE"
     chmod 777 "$TEE_FILE"
     cat /dev/null > "$TEE_FILE"
