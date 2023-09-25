@@ -71,7 +71,7 @@ write_pass_fail([P,C,_],PASS_FAIL,G):-
     atomic_list_concat([_,R],'examples/',FilePath),
     file_name_extension(Base, _, R))),
     get_test_name(TestName),
-      format('<h3 id="~w">~w</h3>',[TestName,TestName]),
+      format(';; <h3 id="~w">~w</h3>',[TestName,TestName]),
 
       tee_file(TEE_FILE),atom_concat(TEE_FILE,'.UNITS',UNITS),
       open(UNITS, append, Stream),
