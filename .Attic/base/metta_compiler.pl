@@ -417,7 +417,7 @@ pp_metta(P):- pretty_numbervars(P,PP),with_option(concepts=false,pp_fb(PP)).
 
 write_src(V):- notrace(write_src0(V)).
 write_src0(V):- allow_concepts,!,with_concepts(false,write_src1(V)),flush_output.
-write_src0(V):- compound(V),pp_sexi(V).
+write_src0(V):- is_list(V),!,pp_sexi(V).
 write_src0(V):- write_src1(V),!.
 
 write_src1(V):- var(V),!, ignore(pp_sex(V)).
@@ -426,7 +426,14 @@ write_src1(V):- number(V),!, writeq(V).
 write_src1(V):- string(V),!, writeq(V).
 write_src1(V):- symbol(V),needs_quoted_in_metta(V,_),!, symbol_string(V,S),writeq(S).
 write_src1(V):- symbol(V),!,write(V).
+write_src1(V):- compound(V), \+ is_list(V),!,write_mobj(V).
 write_src1(V):- pp_sex(V),!.
+
+write_mobj(V):- ( \+ compound(V) ; is_list(V)),!, write_src0(V).
+write_mobj(V):- compound_name_arguments(V,F,Args),write_mobj(F,Args),!.
+write_mobj(V):- writeq(V).
+write_mobj('$STRING',[S]):- !, writeq(S).
+write_mobj(F,Args):- mlog_sym(K),pp_sexi([K,F|Args]).
 
 needs_quoted_in_metta('','"').
 needs_quoted_in_metta(V,'"'):- symbol_contains(V," ").
@@ -496,6 +503,7 @@ pp_sexi([H|T]) :- is_list(T),!,
 % Compound terms.
 %pp_sex(Term) :- compound(Term), Term =.. [Functor|Args], write('('),format('(~w ',[Functor]), write_args_as_sexpression(Args), write(')').
 %pp_sex(Term) :- Term =.. ['=',H|Args], length(Args,L),L>2, write('(= '),  pp_sex(H), write('\n\t\t'), maplist(pp_sex(2),Args).
+pp_sexi(Term) :- Term==[],!,write('()').
 pp_sexi(Term) :- compound_name_arity(Term,F,0),!,pp_sexi([F]).
 pp_sexi(Term) :- Term =.. [Functor|Args], always_dash_functor(Functor,DFunctor), format('(~w ',[DFunctor]), write_args_as_sexpression(Args), write(')'),!.
 pp_sexi(Term) :- allow_concepts, Term =.. [Functor|Args], format('(EvaluationLink (PredicateNode "~w") (ListLink ',[Functor]), write_args_as_sexpression(Args), write('))'),!.
