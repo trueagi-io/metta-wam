@@ -292,6 +292,7 @@ debugging_metta(G):-debugging(metta(eval))->ignore(G);true.
 
 
 eval_args0(Depth,_Slf,X,Y):- Depth<1,!,X=Y.
+eval_args0(_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
 eval_args0(Depth,Self,X,Y):-
   Depth2 is Depth-1,
   eval_args1(Depth,Self,X,M),
@@ -299,7 +300,6 @@ eval_args0(Depth,Self,X,Y):-
 
 
 eval_args1(_Dpth,_Slf,Name,Value):- atom(Name), nb_current(Name,Value),!.
-eval_args1(_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
 eval_args1(_Dpth,_Slf,X,Y):- \+ is_list(X),!,Y=X.
 
 eval_args1(Depth,Self,[V|VI],[V|VO]):- var(V),is_list(VI),!,maplist(eval_arg(Depth,Self),VI,VO).
@@ -374,7 +374,7 @@ eval_args1(Depth,Self, Term, Res):-
    call(P1,Var))), !,
    %max_counting(F,20),
    member(Var,List),
-   eval_args1(Depth,Self, Term, Res).
+   eval_arg(Depth,Self, Term, Res).
 
 %[collapse,[1,2,3]]
 eval_args1(Depth,Self,['collapse',List],Res):-!, setof_eval(Depth,Self,List,Res).
@@ -382,7 +382,7 @@ eval_args1(Depth,Self, Term, Res):-
    notrace(( get_sa_p1(setarg,ST,Term,P1),
    compound(ST), ST = [F,List],F=='collapse',nonvar(List), %maplist(atomic,List),
    call(P1,Var))), !, setof_eval(Depth,Self,List,Var),
-   eval_args1(Depth,Self, Term, Res).
+   eval_arg(Depth,Self, Term, Res).
 
 
 max_counting(F,Max):- flag(F,X,X+1),  X<Max ->  true; (flag(F,_,10),!,fail).
@@ -404,7 +404,7 @@ eval_args1(Depth,Self,['let',A,A5,AA],OO):- !,
   ((eval_arg(Depth,Self,A5,AE), AE=A)),
   eval_arg(Depth,Self,AA,OO).
 %eval_args1(Depth,Self,['let',A,A5,AA],AAO):- !,eval_arg(Depth,Self,A5,A),eval_arg(Depth,Self,AA,AAO).
-eval_args1(Depth,Self,['let*',[],Body],RetVal):- !, eval_args1(Depth,Self,Body,RetVal).
+eval_args1(Depth,Self,['let*',[],Body],RetVal):- !, eval_arg(Depth,Self,Body,RetVal).
 eval_args1(Depth,Self,['let*',[[Var,Val]|LetRest],Body],RetVal):- !,
     eval_args1(Depth,Self,['let',Var,Val,['let*',LetRest,Body]],RetVal).
 
@@ -484,12 +484,10 @@ eval_args2(_Dpth,_Slf,Name,Value):- atom(Name), nb_current(Name,Value),!.
 eval_args2(Depth,_,X,Y):- Depth<3, !, fail, ground(X), (Y=X).
 eval_args2(Depth,Self,[F|PredDecl],Res):-
    Depth>1,
-   notrace((sub_sterm1(SSub,PredDecl), ground(SSub),SSub=[_|Sub], is_list(Sub),
-   maplist(atomic,SSub),
+   notrace((sub_sterm1(SSub,PredDecl), ground(SSub),SSub=[_|Sub], is_list(Sub), maplist(atomic,SSub))),
    eval_arg(Depth,Self,SSub,Repl),
-   SSub\=Repl,
-   subst(PredDecl,SSub,Repl,Temp))),!,
-   eval_args1(Depth,Self,[F|Temp],Res).
+   notrace((SSub\=Repl, subst(PredDecl,SSub,Repl,Temp))),
+   eval_arg(Depth,Self,[F|Temp],Res).
 
 
 
@@ -518,15 +516,13 @@ eval_args2(Depth,Self,[F|Args],Res):- is_list(F), Args\==[],
   append(F,Args,FArgs),!,eval_arg(Depth,Self,FArgs,Res).
 */
 eval_args2(_Dpth,Self,['import!',Other,File],Space):- into_space(Self,Other,Space),!, load_metta(Space,File).
-eval_args2(Depth,Self,['bind!',Other,Expr],Value):- bind_var(Depth,Self,Other,Expr,Value).
+eval_args2(Depth,Self,['bind!',Other,Expr],Value):-
+   into_name(Self,Other,Name),!,eval_arg(Depth,Self,Expr,Value),nb_setval(Name,Value).
+eval_args2(Depth,Self,['pragma!',Other,Expr],Value):-
+   into_name(Self,Other,Name),!,eval_arg(Depth,Self,Expr,Value),set_option_value(Name,Value).
 
-bind_var(Depth,Self,Other,Expr,Value):- into_name(Self,Other,Name),!,bind_nvar(Depth,Self,Name,Expr,Value).
 
-bind_nvar(Depth,Self,Name,Expr,Value):- eval_arg(Depth,Self,Expr,Value),
-  nb_set_name_value(Name,Value).
 
-nb_set_name_value(Name,Value):- atom(Name),atom_concat('&env.',Var,Name),!,set_option_value(Var,Value).
-nb_set_name_value(Name,Value):- set_option_value(Name,Value).
 
 eval_args2(_Dpth,_Slf,['new-state',Expr],Value):- !, 'new-state'(Expr,Value),!.
 eval_args2(_Dpth,_Slf,['new-state'],Value):- !, 'new-state'(Value),!.
@@ -684,27 +680,27 @@ is_metta_builtin('pragma!').
 
 eval_args30(Depth,Self,H,B):-  (eval_args34(Depth,Self,H,B)*->true;eval_args37(Depth,Self,H,B)).
 
-eval_args34(_Dpth,Self,H,B):-   (metta_defn(Self,H,B)*->true;(metta_atom(Self,H),B='True')).
+eval_args34(_Dpth,Self,H,B):-  (metta_defn(Self,H,B)*->true;(metta_atom(Self,H),B='True')).
 
 % Has argument that is headed by the same function
-eval_args37(Depth,Self,[H1|Args],Res):- append(Left,[[H2|H2Args]|Rest],Args),
-   H2==H1,!,
+eval_args37(Depth,Self,[H1|Args],Res):-
+   notrace((append(Left,[[H2|H2Args]|Rest],Args), H2==H1)),!,
    eval_arg(Depth,Self,[H2|H2Args],ArgRes),
    notrace((ArgRes\==[H2|H2Args], append(Left,[ArgRes|Rest],NewArgs))),
    eval_args30(Depth,Self,[H1|NewArgs],Res).
 
-eval_args37(Depth,Self,[[H|Start]|T1],Y):- notrace(is_user_defined_head_f(Self,H)),
-   is_list(Start),metta_defn(Self,[H|Start],Left),!,
-    eval_arg(Depth,Self,[Left|T1],Y).
+eval_args37(Depth,Self,[[H|Start]|T1],Y):-
+   notrace((is_user_defined_head_f(Self,H),is_list(Start))),
+   metta_defn(Self,[H|Start],Left),
+   eval_arg(Depth,Self,[Left|T1],Y).
 
 % Has subterm to eval
 eval_args37(Depth,Self,[F|PredDecl],Res):-
    Depth>1,
-   notrace((sub_sterm1(SSub,PredDecl), ground(SSub),SSub=[_|Sub], is_list(Sub),
-       maplist(atomic,SSub),
-       eval_arg(Depth,Self,SSub,Repl),
-       SSub\=Repl,
-       subst(PredDecl,SSub,Repl,Temp))),!,
+   sub_sterm1(SSub,PredDecl),
+   notrace((ground(SSub),SSub=[_|Sub], is_list(Sub),maplist(atomic,SSub))),
+   eval_arg(Depth,Self,SSub,Repl),
+   notrace((SSub\=Repl,subst(PredDecl,SSub,Repl,Temp))),
    eval_args30(Depth,Self,[F|Temp],Res).
 
 %eval_args37(Depth,Self,X,Y):- (eval_args38(Depth,Self,X,Y)*->true;metta_atom_iter(Depth,Self,[=,X,Y])).
@@ -832,27 +828,32 @@ repl_read(Read) :- notrace(repl_read("", Read)).
 
 
 repl:-
-   current_input(In),
-   ignore(catch(load_history,_,true)),
-   repeat, with_option(not_a_reload,true,make),
-   ((nb_current(self_space,Self),Self\==[])->true;Self='&self'),
-   format('~N~n'), format(atom(P),'metta@~w: ',[Self]),
-   write(P),
-   setup_call_cleanup(prompt(Was,''),
-      (once(read_metta(In,Read)),once(do_repl(Self,Read))),
-       prompt(_,Was)).
-do_repl(_Self,end_of_file):- writeln('\n\n% To restart, use: ?- repl.').
-do_repl(_Slf,call(Term)):- add_history1(Term), !, repl_call(Term),!, fail.
+   notrace((current_input(In),ignore(catch(load_history,_,true)))),
+   repeat,
+   notrace((with_option(not_a_reload,true,make),
+     ((nb_current(self_space,Self),Self\==[])->true;Self='&self'),
+     format('~N~n'), format(atom(P),'metta@~w: ',[Self]),
+     write(P))),
+   setup_call_cleanup(notrace(prompt(Was,'')),
+      (notrace(read_metta(In,Read)),
+        once(do_repl(Self,Read)),notrace(fail)),
+       notrace(prompt(_,Was))).
 
-do_repl(Self,!):- !, repl_read(Exec),do_repl(Self,exec(Exec)).
-do_repl(Self,Read):- string(Read),!,add_history_string(Read),repl_read(Read,Term), do_metta(Self,load,Term),!,fail.
-do_repl(Self,exec(Exec)):- !, save_exec_history(Exec),!, time(do_metta_exec(Self,Exec)),!,fail.
-do_repl(Self,Read):- (with_output_to(string(H),write_src(Read)),add_history_string(H)), do_metta(Self,load,Read),!,fail.
+do_repl(_Self,end_of_file):- !, writeln('\n\n% To restart, use: ?- repl.').
+do_repl(_Slf,call(Term)):- add_history1(Term), !, repl_call(Term).
+
+do_repl(Self,!):- !, notrace(repl_read(Exec)),do_repl(Self,exec(Exec)).
+
+do_repl(Self,Read):- notrace((string(Read),add_history_string(Read))),!,notrace(repl_read(Read,Term)),!, do_metta(Self,load,Term).
+
+do_repl(Self,exec(Exec)):- !, notrace(save_exec_history(Exec)), do_metta_exec(Self,Exec).
+do_repl(Self,Read):-
+  notrace(((with_output_to(string(H),write_src(Read)),add_history_string(H)))), do_metta(Self,load,Read).
 
 add_history_string(Str):- ignore(catch_i(add_history01(Str))),!.
 
 save_exec_history(exec(Exec)):- !, notrace((save_exec_history(Exec))).
-save_exec_history(Exec):- with_output_to(string(H),(write('!'),write_src(Exec))),add_history_string(H).
+save_exec_history(Exec):- notrace((with_output_to(string(H),(write('!'),write_src(Exec))),add_history_string(H))).
 
 read_metta1(_,O2):- clause(t_l:s_reader_info(O2),_,Ref),erase(Ref).
 read_metta1(In,Read):- current_input(In0),In==In0,!, repl_read(Read).
@@ -1051,7 +1052,7 @@ write_exec(Exec):-
 %  once(untyped_to_metta(Term,NewTerm)),Term\=@=NewTerm,!,
 %  do_metta(Self,LoadExec,NewTerm),!.
 do_metta(Self,LoadExec,Term):- must_det_ll(do_metta1(Self,LoadExec,Term))*->true;
-                                nop(pp_m(unknown_do_metta(Self,LoadExec,Term))).
+                                pp_m(unknown_do_metta(Self,LoadExec,Term)).
 
 do_metta1(Self,_,Cmt):- nonvar(Cmt),do_metta_cmt(Self,Cmt),!.
 
@@ -1060,9 +1061,9 @@ do_metta1(Self,_,exec(Exec)):- !,do_metta_exec(Self,Exec),!.
 do_metta1(_Slf,exec,Exec):- option_value('exec',skip),!,write_exec(Exec),!.
 do_metta1(Self,exec,Exec):- !,do_metta_exec(Self,Exec),!.
 
-do_metta1(Self,Load,Src):- do_metta1(Self,Load,Src,Src).
+do_metta1(Self,Load,Src):- do_metta1(Self,Load,Src,Src),!.
 
-do_metta1(Self,Load,[':',Fn,Type], Src):- \+ is_list(Type),
+do_metta1(Self,Load,[':',Fn,Type], Src):- \+ is_list(Type),!,
  must_det_ll((
   color_g_mesg('#ffa500',metta_anew(Load,Src,metta_type(Self,Fn,Type))))),!.
 
@@ -1108,7 +1109,7 @@ do_metta1(Self,Load,PredDecl, Src):-
 
 do_metta_exec(Self,Var):- var(Var), !, pp_m(eval(Var)), freeze(Var,wdmsg(laterVar(Self,Var))).
 do_metta_exec(Self,TermV):-!,
-  must_det_ll((
+ notrace(( must_det_ll((
   \+ \+ write_exec(TermV),
   subst_vars(TermV,Term,NamedVarsList),
   copy_term(NamedVarsList,Was),
@@ -1118,13 +1119,13 @@ do_metta_exec(Self,TermV):-!,
   ((numbervars(v(TermV,Term,NamedVarsList,Vars),999,_,[]),
   %nb_current(variable_names,NamedVarsList),
   nl,print(subst_vars(TermV,Term,NamedVarsList,Vars)),nl)))),
-  nop(maplist(verbose_unify,Vars)),
+  nop(maplist(verbose_unify,Vars)))))),
   forall(may_rtrace(eval_arg(13,Self,Term,X)),
      ignore(notrace(((color_g_mesg(yellow,
      ((write(' '),
         write_src(X),nl,
         (NamedVarsList\=@=Was-> (color_g_mesg(green,writeq(NamedVarsList)),nl); true),
-        ignore(( \+ is_list(X),compound(X),format(' % '),writeq(X),nl)))))))))))).
+        ignore(( \+ is_list(X),compound(X),format(' % '),writeq(X),nl)))))))))).
 
 verbose_unify(Var):- put_attr(Var,verbose_unify,true).
 verbose_unify:attr_unify_hook(Attr, Value) :-
@@ -1133,8 +1134,7 @@ verbose_unify:attr_unify_hook(Attr, Value) :-
 
 :- nodebug(metta(exec)).
 may_rtrace(Goal):-
-(option_value('exec',rtrace);debugging(metta(exec))),!,
-  rtrace(Goal).
+(option_value('exec',rtrace);debugging(metta(exec))),!,  rtrace(Goal).
 may_rtrace(Goal):- call(Goal).
 
 
