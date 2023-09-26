@@ -1062,21 +1062,29 @@ do_metta1(Self,exec,Exec):- !,do_metta_exec(Self,Exec),!.
 
 do_metta1(Self,Load,Src):- do_metta1(Self,Load,Src,Src).
 
-do_metta1(Self,Load,[':',Fn,TypeDecL], Src):-decl_length(TypeDecL,Len),LenM1 is Len - 1, last_element(TypeDecL,LE),
+do_metta1(Self,Load,[':',Fn,Type], Src):- \+ is_list(Type),
+ must_det_ll((
+  color_g_mesg('#ffa500',metta_anew(Load,Src,metta_type(Self,Fn,Type))))),!.
+
+do_metta1(Self,Load,[':',Fn,TypeDecL], Src):-
+ must_det_ll((
+  decl_length(TypeDecL,Len),LenM1 is Len - 1, last_element(TypeDecL,LE),
   color_g_mesg('#ffa500',metta_anew(Load,Src,metta_type(Self,Fn,TypeDecL))),
   metta_anew1(Load,metta_arity(Self,Fn,LenM1)),
   arg_types(TypeDecL,[],EachArg),
   metta_anew1(Load,metta_params(Self,Fn,EachArg)),!,
-  metta_anew1(Load,metta_last(Self,Fn,LE)).
+  metta_anew1(Load,metta_last(Self,Fn,LE)))).
+
 
 do_metta1(Self,Load,[':',Fn,TypeDecL,RetType], Src):-
+ must_det_ll((
   decl_length(TypeDecL,Len),
   append(TypeDecL,[RetType],TypeDecLRet),
   color_g_mesg('#ffa500',metta_anew(Load,Src,metta_type(Self,Fn,TypeDecLRet))),
   metta_anew1(Load,metta_arity(Self,Fn,Len)),
   arg_types(TypeDecL,[RetType],EachArg),
   metta_anew1(Load,metta_params(Self,Fn,EachArg)),
-  metta_anew1(Load,metta_return(Self,Fn,RetType)).
+  metta_anew1(Load,metta_return(Self,Fn,RetType)))),!.
 
 /*do_metta1(Self,Load,PredDecl, Src):-fail,
    metta_anew(Load,Src,metta_atom(Self,PredDecl)),
@@ -1084,15 +1092,8 @@ do_metta1(Self,Load,[':',Fn,TypeDecL,RetType], Src):-
    ignore((Body == 'True',!,do_metta1(Self,Load,Head))),
    nop((fn_append(Head,X,Head), fn_append(PredDecl,X,Body), metta_anew((Head:- Body)))),!.*/
 
-do_metta1(Self,Load,['=',PredDecl,True], Src):-True == 'True',!,
-  ignore(discover_head(Self,Load,PredDecl)),
-  color_g_mesg('#ffa500',metta_anew(Load,Src,metta_atom(Self,PredDecl))).
-
-do_metta1(Self,Load,['=',PredDecl,False], Src):-(False == 'False';False == [];False == 'Nil';False == 'F'),!,
-  ignore(discover_head(Self,Load,PredDecl)),
-  color_g_mesg('#ffa500',metta_anew(Load,Src,metta_atom(Self,[=,PredDecl,'False']))).
-  %metta_anew(Load,Src,metta_atom(Self,PredDecl)).
-
+do_metta1(Self,Load,['=',PredDecl,False], Src):- (False == [];False == 'Nil';False == 'F'),!,
+  do_metta1(Self,Load,['=',PredDecl,'False'], Src).
 
 do_metta1(Self,Load,['=',Head,PredDecl], Src):-!,
  must_det_ll((
