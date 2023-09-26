@@ -175,7 +175,7 @@ start_html_of(_Filename):-
  must_det_ll((
   S = _,
   retractall(metta_defn(S,_,_)),
-  retractall(metta_type(S,_,_)),
+  nop(retractall(metta_type(S,_,_))),
   retractall(metta_atom(S,_)),
   loonit_reset,
   tee_file(TEE_FILE),
@@ -220,8 +220,10 @@ writeqln(Q):- format('~N'),write(' '),writeq(Q),nl.
 clear_spaces:- clear_space(_).
 clear_space(S):-
    retractall(metta_defn(S,_,_)),
-   retractall(metta_type(S,_,_)),
+   nop(retractall(metta_type(S,_,_))),
    retractall(metta_atom(S,_)).
+
+metta_type(S,H,B):- metta_atom(S,[':',H,B]).
 
 load_metta_stream(Fn,String):- string(String),!,open_string(String,Stream),load_metta_stream(Fn,Stream).
 load_metta_stream(_Fn,In):- (at_end_of_stream(In)/*;reached_file_max*/),!.
@@ -680,7 +682,7 @@ is_metta_builtin('pragma!').
 
 eval_args30(Depth,Self,H,B):-  (eval_args34(Depth,Self,H,B)*->true;eval_args37(Depth,Self,H,B)).
 
-eval_args34(_Dpth,Self,H,B):-  (metta_defn(Self,H,B)*->true;(metta_atom(Self,H),B='True')).
+eval_args34(_Dpth,Self,H,B):-  (metta_defn(Self,H,B);(metta_atom(Self,H),B='True')).
 
 % Has argument that is headed by the same function
 eval_args37(Depth,Self,[H1|Args],Res):-
@@ -1065,12 +1067,12 @@ do_metta1(Self,Load,Src):- do_metta1(Self,Load,Src,Src),!.
 
 do_metta1(Self,Load,[':',Fn,Type], Src):- \+ is_list(Type),!,
  must_det_ll((
-  color_g_mesg('#ffa500',metta_anew(Load,Src,metta_type(Self,Fn,Type))))),!.
+  color_g_mesg('#ffa500',metta_anew(Load,Src,metta_atom(Self,[':',Fn,Type]))))),!.
 
 do_metta1(Self,Load,[':',Fn,TypeDecL], Src):-
  must_det_ll((
   decl_length(TypeDecL,Len),LenM1 is Len - 1, last_element(TypeDecL,LE),
-  color_g_mesg('#ffa500',metta_anew(Load,Src,metta_type(Self,Fn,TypeDecL))),
+  color_g_mesg('#ffa500',metta_anew(Load,Src,metta_atom(Self,[':',Fn,TypeDecL]))),
   metta_anew1(Load,metta_arity(Self,Fn,LenM1)),
   arg_types(TypeDecL,[],EachArg),
   metta_anew1(Load,metta_params(Self,Fn,EachArg)),!,
@@ -1081,7 +1083,7 @@ do_metta1(Self,Load,[':',Fn,TypeDecL,RetType], Src):-
  must_det_ll((
   decl_length(TypeDecL,Len),
   append(TypeDecL,[RetType],TypeDecLRet),
-  color_g_mesg('#ffa500',metta_anew(Load,Src,metta_type(Self,Fn,TypeDecLRet))),
+  color_g_mesg('#ffa500',metta_anew(Load,Src,metta_atom(Self,[':',Fn,TypeDecLRet]))),
   metta_anew1(Load,metta_arity(Self,Fn,Len)),
   arg_types(TypeDecL,[RetType],EachArg),
   metta_anew1(Load,metta_params(Self,Fn,EachArg)),
