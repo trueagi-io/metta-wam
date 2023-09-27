@@ -376,7 +376,7 @@ p2m((A->B;C),O):- !, p2m(if_then_else(A,B,C),O).
 p2m((A*->B;C),O):- !, p2m(each_then_otherwise(A,B,C),O).
 p2m((A->B),O):- !, p2m(if_then(A,B),O).
 p2m((A*->B),O):- !, p2m(each_then(A,B),O).
-p2m(metta_defn(Self,H,B),'add-atom'(Self,[=,H,B])).
+p2m(metta_defn(Self,Eq,H,B),'add-atom'(Self,[Eq,H,B])).
 p2m(metta_type,'add-atom').
 p2m(metta_atom,'add-atom').
 p2m(retractall(X),'remove-all-atoms'('&self',X)).
