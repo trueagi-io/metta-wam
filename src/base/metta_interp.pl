@@ -310,7 +310,7 @@ eval_args1(Depth,Self,[V|VI],VVO):-  \+ is_list(VI),!,
   ( VM\==VI -> eval_arg(Depth,Self,[V|VM],VVO) ;
     (eval_arg(Depth,Self,V,VV), (V\==VV -> eval_arg(Depth,Self,[VV|VI],VVO) ; VVO = [V|VI]))).
 
-eval_args1(Depth,Self,['assertTrue',X],TF):- !, eval_arg(Depth,Self,['assertEqual',X,'True'],TF).
+eval_args1(Depth,Self,['assertTrue', X],TF):- !, eval_arg(Depth,Self,['assertEqual',X,'True'],TF).
 eval_args1(Depth,Self,['assertFalse',X],TF):- !, eval_arg(Depth,Self,['assertEqual',X,'False'],TF).
 eval_args1(Depth,Self,['assertEqual',X,Y],TF):- !,
      ((loonit_asserts(['assertEqual',X,Y],
@@ -319,8 +319,10 @@ eval_args1(Depth,Self,['assertEqual',X,Y],TF):- !,
        equal_enough(XX,YY)))),!,
     as_tf(equal_enough(XX,YY),TF),!.
 eval_args1(Depth,Self,['assertEqualToResult',X,Y],TF):- !,
-   loonit_asserts(['assertEqualToResult',X,Y],(setof_eval(Depth,Self,X,L),sort(Y,YY)), L=@=YY),
-   !, as_tf(equal_enough(L,YY),TF).
+   loonit_asserts(['assertEqualToResult',X,Y],
+      (setof_eval(Depth,Self,X,L),sort(Y,YY)),
+       equal_enough(L,YY)), !,
+   as_tf(equal_enough(L,YY),TF).
 
 
 equal_enough(R,V):- R=@=V, !.
