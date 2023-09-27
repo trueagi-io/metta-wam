@@ -542,8 +542,10 @@ eval_args2(Depth,Self,['pragma!',Other,Expr],Value):-
 eval_args2(_Dpth,_Slf,['new-state',Expr],Value):- !, 'new-state'(Expr,Value),!.
 eval_args2(_Dpth,_Slf,['new-state'],Value):- !, 'new-state'(Value),!.
 %eval_args2(_Dpth,_Slf,['new-state'|Expr],['new-state'|Expr]):- !.
+eval_args2(_Dpth,_Slf,['get-state',StateNameOrInstance],Value):- !, fetch_or_create_state(StateNameOrInstance,State),arg(1,State,Value).
+eval_args2(_Dpth,_Slf,['change-state!',StateNameOrInstance, UpdatedValue], Res):-
+  'change-state!'(StateNameOrInstance, UpdatedValue, Res).
 
-eval_args2(_Dpth,_Slf,['get-state',Expr],Value):- !, arg(1,Expr,Value).
 
 eval_args2(Depth,Self,['nop',Expr],[]):- !,  eval_arg(Depth,Self,Expr,_).
 

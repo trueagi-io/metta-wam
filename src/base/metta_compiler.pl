@@ -763,7 +763,7 @@ fetch_or_create_state(Name):- fetch_or_create_state(Name,_).
 
 fetch_or_create_state(NameOrInstance, State) :-
     (   atom(NameOrInstance)
-    ->  (is_registered_state_name(NameOrInstance)
+    ->  ((is_registered_state_name(NameOrInstance);true)
         ->  nb_current(NameOrInstance, State)
         ;   init_state(NameOrInstance),
             nb_current(NameOrInstance, State))
