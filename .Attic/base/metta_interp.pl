@@ -316,11 +316,24 @@ eval_args1(Depth,Self,['assertEqual',X,Y],TF):- !,
      ((loonit_asserts(['assertEqual',X,Y],
         (setof_eval(Depth,Self,X,XX),
          setof_eval(Depth,Self,Y,YY),!),
-       XX=@=YY))),!,
-    as_tf(XX=@=YY,TF),!.
+       equal_enough(XX,YY)))),!,
+    as_tf(equal_enough(XX,YY),TF),!.
 eval_args1(Depth,Self,['assertEqualToResult',X,Y],TF):- !,
    loonit_asserts(['assertEqualToResult',X,Y],(setof_eval(Depth,Self,X,L),sort(Y,YY)), L=@=YY),
-   !, as_tf(L=@=YY,TF).
+   !, as_tf(equal_enough(L,YY),TF).
+
+
+equal_enough(R,V):- R=@=V, !.
+equal_enough(R,V):- number(R),number(V),!, RV is abs(R-V), RV < 0.03 .
+equal_enough(R,V):- (\+ compound(R) ; \+ compound(V)),!, R==V.
+equal_enough([R|RT],[V|VT]):- !, equal_enough(R,V),equal_enough(RT,VT).
+equal_enough(R,V):-
+  compound_name_arguments(R,F,RA),
+  compound_name_arguments(V,F,VA), !,
+  maplist(equal_enough,RA,VA).
+
+
+
 
 eval_args1(Depth,Self,['match',Other,Goal,Template],Template):- into_space(Self,Other,Space),!, metta_atom_iter(Depth,Space,Goal).
 eval_args1(Depth,Self,['match',Other,Goal,Template,Else],Template):- into_space(Self,Other,Space),!,  (metta_atom_iter(Depth,Space,Goal)*->true;Else=Template).
