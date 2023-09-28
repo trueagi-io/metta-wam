@@ -67,7 +67,8 @@ loonit_asserts(S,Pre,G):-
 write_pass_fail([P,C,_],PASS_FAIL,G):-
  must_det_ll((
     arg(1,G,G1),arg(2,G,G2),
-    ignore((((nb_current(loading_file,FilePath),FilePath\==[])->true; FilePath='SOME/UNIT-TEST'),
+    ignore(((
+   (nb_current(loading_file,FilePath),FilePath\==[])->true; FilePath='SOME/UNIT-TEST.metta'),
     atomic_list_concat([_,R],'examples/',FilePath),
     file_name_extension(Base, _, R))),
     get_test_name(TestName),
