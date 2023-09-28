@@ -607,7 +607,7 @@ fetch_or_create_state(NameOrInstance, State) :-
     is_valid_nb_state(State).
 
 
-eval_args1(Depth,Self,['get-type',Val],Type):-!, get_type(Depth,Self,Val,Type),ground(Type),Type\==[], Type\==Val.
+eval_args1(Depth,Self,['get-type',Val],Type):-!, get_type(Depth,Self,Val,Type),ground(Type),Type\==[], Type\==Val,!.
 
 
 mnotrace(G):- once(G).
@@ -805,7 +805,7 @@ eval_args2(Depth,Self,[F|Args],Res):- is_list(F),
 eval_args2(Depth,Self,[F|Args],Res):- is_list(F), Args\==[],
   append(F,Args,FArgs),!,eval_args(Depth,Self,FArgs,Res).
 */
-eval_args2(_Dpth,Self,['import!',Other,File],Space):- into_space(Self,Other,Space),!, import_metta(Space,File).
+eval_args2(_Dpth,Self,['import!',Other,File],Space):- into_space(Self,Other,Space),!, include_metta(Space,File).
 eval_args2(Depth,Self,['bind!',Other,Expr],Value):-
    into_name(Self,Other,Name),!,eval_args(Depth,Self,Expr,Value),nb_setval(Name,Value).
 eval_args2(Depth,Self,['pragma!',Other,Expr],Value):-
