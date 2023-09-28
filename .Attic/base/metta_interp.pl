@@ -234,7 +234,6 @@ load_metta_stream(Self,In):-
   flush_output,
   at_end_of_stream(In),!.
 
-%eval_args(Depth,_Self,X,_Y):- forall(between(6,Depth,_),write(' ')),writeqln(eval_args(X)),fail.
 self_eval(X):- var(X),!.
 self_eval(X):- number(X),!.
 self_eval([]).
@@ -252,6 +251,7 @@ eval_args(A,AA):-
   nb_current(self_space,Space),
   eval_args(11,Space,A,AA).
 
+%eval_args(Depth,_Self,X,_Y):- forall(between(6,Depth,_),write(' ')),writeqln(eval_args(X)),fail.
 
 eval_args(_Dpth,_Slf,X,Y):- nonvar(Y),X=Y,!.
 eval_args(Depth,Self,X,Y):- nonvar(Y),!,eval_args(Depth,Self,X,XX),evals_to(XX,Y).
@@ -269,12 +269,51 @@ debugging_metta(G):-debugging(metta(eval))->ignore(G);true.
 :- nodebug(metta(eval)).
 
 
-eval_args0(Depth,_Slf,X,Y):- Depth<1,!,X=Y.
+w_indent(Depth,Goal):-
+  \+ \+ mnotrace(ignore(((
+    format('~N'),
+    setup_call_cleanup(forall(between(Depth,101,_),write('  ')),Goal, format('~N')))))).
+indentq(Depth,Term):-
+  \+ \+ mnotrace(ignore(((
+    format('~N'),
+    setup_call_cleanup(forall(between(Depth,101,_),write('  ')),format('~q',[Term]),
+    format('~N')))))).
+
+
+with_debug(Flag,Goal):- debugging(Flag),!, call(Goal).
+with_debug(Flag,Goal):- flag(eval_num,_,0),
+  setup_call_cleanup(debug(Flag),call(Goal), nodebug(Flag)).
+
+if_trace(Flag,Goal):- catch(ignore((debugging(Flag),Goal)),_,true).
+
+
+
+
+eval_args0(Depth,_Slf,X,Y):- Depth<1,!,X=Y,flag(eval_num,_,0),debug(metta(eval)).
 eval_args0(_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
 eval_args0(Depth,Self,X,Y):-
   Depth2 is Depth-1,
-  eval_args1(Depth,Self,X,M),
+  eval_args11(Depth,Self,X,M),
   (M\=@=X ->eval_args0(Depth2,Self,M,Y);Y=X).
+
+
+
+eval_args11(_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
+
+eval_args11(Depth,Self,X,Y):- \+ debugging(metta(eval)),!, eval_args1(Depth,Self,X,Y).
+eval_args11(Depth,Self,X,Y):- flag(eval_num,EX,EX+1),
+  option_else(traclen,Max,100),
+  (EX>Max->(nodebug(metta(eval)),write('Switched off tracing. For a longer trace !(pragma! tracelen 101))'));true),
+  mnotrace((no_repeats_var(YY), D1 is Depth-1)),
+  DR is 99-D1,
+  if_trace(metta(eval),indentq(Depth,'-->'(EX,Self,X,depth(DR)))),
+  Ret=retval(fail),
+  call_cleanup((
+    eval_args1(D1,Self,X,Y),
+    mnotrace(( \+ (Y\=YY), nb_setarg(1,Ret,Y)))),
+    mnotrace(ignore(((Y\=@=X,if_trace(metta(eval),indentq(Depth,'<--'(EX,Ret)))))))),
+  (Ret\=@=retval(fail)->true;(rtrace(eval_args0(D1,Self,X,Y)),fail)).
+
 
 :- discontiguous eval_args1/4.
 :- discontiguous eval_args2/4.
@@ -299,14 +338,21 @@ eval_args1(Depth,Self,['assertFalse',X],TF):- !, eval_args(Depth,Self,['assertEq
 eval_args1(Depth,Self,['assertEqual',X,Y],TF):- !,
      ((loonit_asserts(['assertEqual',X,Y],
         (setof_eval(Depth,Self,X,XX),
-         setof_eval(Depth,Self,Y,YY),!),
-       equal_enough(XX,YY)))),!,
-    as_tf(equal_enough(XX,YY),TF),!.
+         setof_eval(Depth,Self,Y,YY),!),
+       equal_enough(XX,YY)))),
+    as_tf(equal_enough(XX,YY),TF),!,
+    ignore(((TF='True', fail)-> true; with_debug(metta(eval),
+     (((setof_eval(Depth,Self,X,_),
+         setof_eval(Depth,Self,Y,_),!)))))).
+
+
 eval_args1(Depth,Self,['assertEqualToResult',X,Y],TF):- !,
    loonit_asserts(['assertEqualToResult',X,Y],
       (setof_eval(Depth,Self,X,L),sort(Y,YY)),
-       equal_enough(L,YY)), !,
-   as_tf(equal_enough(L,YY),TF).
+       equal_enough(L,YY)),
+   as_tf(equal_enough(L,YY),TF),!,
+   ignore(((TF='True', fail)-> true; with_debug(metta(eval),
+    ((setof_eval(Depth,Self,X,_)))))).
 
 
 equal_enough(R,V):- R=@=V, !.
@@ -1231,7 +1277,7 @@ do_metta_exec(Self,TermV):-!,
   %nb_current(variable_names,NamedVarsList),
   nl,print(subst_vars(TermV,Term,NamedVarsList,Vars)),nl)))),
   nop(maplist(verbose_unify,Vars)))))),
-  forall(may_rtrace(eval_args(13,Self,Term,X)),
+  forall(may_rtrace(eval_args(100,Self,Term,X)),
      ignore(mnotrace(((color_g_mesg(yellow,
      ((write(' '),
         write_src(X),nl,
