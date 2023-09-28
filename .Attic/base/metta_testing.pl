@@ -19,6 +19,7 @@ loonit_reset :-
 
 has_loonit_results :- loonit_number(FS),FS>1.
 
+loonit_number(FS) :- flag(loonit_test_number,FS,FS),FS>0,!.
 loonit_number(FS) :-
     flag(loonit_success, Successes, Successes),
     flag(loonit_failure, Failures, Failures),
@@ -58,6 +59,7 @@ color_g_mesg(C,G):-
 
 % Increment loonit counters based on goal evaluation
 loonit_asserts(S,Pre,G):-
+  flag(loonit_test_number,X,X+1),
   copy_term(Pre,Pro),
   once(Pre),
   ((nb_current(exec_src,Exec),Exec\==[])->true;S=Exec),
@@ -102,7 +104,7 @@ loonit_asserts1(TestSrc,Pre,G) :- nop(Pre),
 
 loonit_asserts1(TestSrc,Pre,G) :-
     write_pass_fail(TestSrc,'FAIL',G),
-    flag(loonit_failure, X, X+1), !,
+    ((sub_var('BadType',TestSrc), \+ check_type) -> write('\n!check_type (not considering this a failure)\n') ; flag(loonit_failure, X, X+1)), !,
     color_g_mesg(red,write_src(loonit_failureR(G))),!,
      %itrace, G.
     ignore(((
