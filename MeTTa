@@ -14,17 +14,22 @@ export TEE_FILE=${TEE_FILE:-"$METTA_DIR/TEE.ansi"}
 set -e
 python_flag=enable
 
-# Function to read ~/.mettalogrc
 function load_mettalogrc {
-    METTALOG_OPTIONS=()
-    if [[ -f "$HOME/.mettalogrc" ]]; then
+    local file="${1:-$HOME/.mettalogrc}"  # Use the argument if supplied, else use the default file
+    local METTALOG_OPTIONS=()
+
+    if [[ -f "$file" ]]; then
         while IFS= read -r line; do
             [[ -z "$line" ]] && continue # Skip empty lines
             [[ $line =~ ^# ]] && continue # Skip lines that start with a comment
             METTALOG_OPTIONS+=("$line")
-        done < "$HOME/.mettalogrc"
+        done < "$file"
     fi
+
+    # Return the array (in bash, arrays are typically returned by echoing their elements)
+    echo "${METTALOG_OPTIONS[@]}"
 }
+
 
 function print_help {
     echo " CMD: $0"
@@ -80,8 +85,6 @@ function print_help {
     exit_script 0
 }
 
-# Load settings from ~/.mettalogrc
-load_mettalogrc
 
 # Initialize variables
 SWI_OPTIONS=()
@@ -93,6 +96,16 @@ LIST_OF_FILE_ARGS=()
 function handle_args {
     FLAG_WITH_ARG=false
     for arg in "$@"; do
+
+
+	if [[ -e "$arg" ]]; then
+	    rpath=("$(realpath "$arg")")
+	    if [[ -f "$rpath" || -d "$rpath" ]]; then
+		#arg="$rpath"
+		echo -e "file="$rpath""
+	    fi
+        fi
+
         [[ "$arg" == "--help" || "$arg" == "-h" ]] && { print_help; exit_script 0; }
         [[ "$arg" =~ ^--dump-runtime-variables.*$ || "$arg" == "--abi-version" || "$arg" == "--version" || "$arg" == "--arch" ]] && { swipl $@; exit_script 0; }
 
@@ -114,12 +127,6 @@ function handle_args {
             html_flag=false
         fi
 
-        if [[ -f "$arg" || -d "$arg" ]]; then
-	    rpath=("$(realpath "$arg")")
-	    if [[ -f "$rpath" || -d "$rpath" ]]; then
-		arg="$rpath"
-	    fi
-        fi
 
         [[ "$FLAG_WITH_ARG" == true ]] && { SWI_OPTIONS+=("$arg"); FLAG_WITH_ARG=false; continue; }
 
@@ -136,26 +143,31 @@ function handle_args {
                 continue
                 ;;
             *)
-                if [[ -f "$arg" || -d "$arg" ]]; then
-                    # LIST_OF_FILE_ARGS+=("$(realpath --relative-to="$METTA_DIR" "$arg")")
-		    LIST_OF_FILE_ARGS+=("$(realpath "$arg")")
-                else
-                    OTHER_OPTIONS+=("$arg")
-                fi
+	    if [[ -f "$arg" || -d "$arg" ]]; then
+		arg_realpath="$(realpath "$arg")"
+		if ! [[ "${LIST_OF_FILE_ARGS[@]}" =~ "$arg_realpath" ]]; then
+		    LIST_OF_FILE_ARGS+=("$arg_realpath")
+		fi
+	    else
+		OTHER_OPTIONS+=("$arg")
+	    fi
                 ;;
         esac
     done
 }
 
-
-
 # First process arguments from ~/.mettalogrc
-handle_args "${METTALOG_OPTIONS[@]}"
+handle_args $(load_mettalogrc)
 # Then process actual command-line arguments
 handle_args "$@"
+echo "LIST_OF_FILE_ARGS[0]=${LIST_OF_FILE_ARGS[0]}"
+DIRNAME=$(dirname "${LIST_OF_FILE_ARGS[0]}")
+DIR_OPTS=$(load_mettalogrc "$DIRNAME/.mettalogrc")
+echo "DIR_OPTS=$DIR_OPTS"
+handle_args $DIR_OPTS
 
 #echo "Debug: SWI_OPTIONS: ${SWI_OPTIONS[@]}"
-#echo "Debug: LIST_OF_FILE_ARGS: ${LIST_OF_FILE_ARGS[@]}"
+echo "Debug: LIST_OF_FILE_ARGS: ${LIST_OF_FILE_ARGS[@]}"
 #echo "Debug: OTHER_OPTIONS: ${OTHER_OPTIONS[@]}"
 
 # Decide on enabling the REPL
@@ -194,7 +206,7 @@ if [[ "enable" == "enable" ]]; then
     # MeTTa write the html file now
     if [[ "notenable" == "enable" ]]; then
 
-	DIRNAME=$(dirname "${LIST_OF_FILE_ARGS[0]}")
+
 	BASENAME=$(basename "${LIST_OF_FILE_ARGS[0]}")
 
 	# Remove extension if it's a file
