@@ -1,5 +1,9 @@
 :- encoding(iso_latin_1).
-
+:- set_stream(user_input,tty(true)).
+:- use_module(library(readline)).
+:- use_module(library(editline)).
+:- use_module(library(filesex)).
+:- use_module(library(shell)).
 :- ensure_loaded(metta_compiler).
 /*
 Now PASSING NARS.TESTS1.01)
@@ -376,28 +380,33 @@ eval_args1(Depth,Self,['time',Cond],Res):- !, time(eval_args(Depth,Self,Cond,Res
 eval_args1(Depth,Self,['print',Cond],Res):- !, eval_args(Depth,Self,Cond,Res),format('~N'),print(Res),format('~N').
 eval_args1(Depth,Self,['assertTrue', X],TF):- !, eval_args(Depth,Self,['assertEqual',X,'True'],TF).
 eval_args1(Depth,Self,['assertFalse',X],TF):- !, eval_args(Depth,Self,['assertEqual',X,'False'],TF).
-eval_args1(Depth,Self,['assertEqual',X,Y],TF):- !,
-     ((loonit_asserts(['assertEqual',X,Y],
-        (setof_eval(Depth,Self,X,XX),
-         setof_eval(Depth,Self,Y,YY),!),
-       equal_enough(XX,YY)))),
-    as_tf(equal_enough(XX,YY),TF),!,
-  ignore((
-          once((TF='True', trace_on_pass);(TF='False', trace_on_fail)),
-     with_debug(metta(eval),
-      (((setof_eval(Depth,Self,X,_),
-         setof_eval(Depth,Self,Y,_),!)))))).
 
+eval_args1(Depth,Self,['assertEqual',X,Y],TF):- !,
+   loonit_assert_source_tf(
+        ['assertEqual',X,Y],
+        (setof_eval(Depth,Self,X,XX), setof_eval(Depth,Self,Y,YY)),
+         equal_enough(XX,YY), TF).
+
+eval_args1(Depth,Self,['assertNotEqual',X,Y],TF):- !,
+   loonit_assert_source_tf(
+        ['assertEqual',X,Y],
+        (setof_eval(Depth,Self,X,XX), setof_eval(Depth,Self,Y,YY)),
+         \+ equal_enough(XX,YY), TF).
 
 eval_args1(Depth,Self,['assertEqualToResult',X,Y],TF):- !,
-   loonit_asserts(['assertEqualToResult',X,Y],
-      (setof_eval(Depth,Self,X,L),sort(Y,YY)),
-       equal_enough(L,YY)),
-   as_tf(equal_enough(L,YY),TF),!,
+   loonit_assert_source_tf(
+        ['assertEqualToResult',X,Y],
+        (setof_eval(Depth,Self,X,XX), sort(Y,YY)),
+         equal_enough(XX,YY), TF).
+
+
+loonit_assert_source_tf(Src,Goal,Check,TF):-
+   copy_term(Goal,OrigGoal),
+   loonit_asserts(Src, Goal, Check),
+   as_tf(Check,TF),!,
   ignore((
           once((TF='True', trace_on_pass);(TF='False', trace_on_fail)),
-     with_debug(metta(eval),
-     setof_eval(Depth,Self,X,_)))).
+     with_debug(metta(eval),OrigGoal))).
 
 
 equal_enough(R,V):- R=@=V, !.
@@ -607,19 +616,28 @@ fetch_or_create_state(NameOrInstance, State) :-
     is_valid_nb_state(State).
 
 
-eval_args1(Depth,Self,['get-type',Val],Type):-!, get_type(Depth,Self,Val,Type),ground(Type),Type\==[], Type\==Val,!.
+eval_args1(Depth,Self,['get-type',Val],Type):- !, get_type(Depth,Self,Val,Type),ground(Type),Type\==[], Type\==Val,!.
 
 
 mnotrace(G):- once(G).
 
+is_decl_type(ST):- metta_type(_,_,Type),(ST=Type;(sub_term(ST,Type),atom(ST))), \+ nontype(ST).
+is_type(Type):- nontype(Type),!,fail.
+is_type(Type):- is_decl_type(Type).
+is_type(Type):- atom(Type).
+
+nontype(Type):- var(Type),!.
+nontype('->').
+nontype(N):- number(N).
+
 get_type(_Dpth,_Slf,Var,'%Undefined%'):- var(Var),!.
 get_type(_Dpth,_Slf,Val,'Number'):- number(Val),!.
 get_type(Depth,Self,Expr,['StateMonad',Type]):- is_valid_nb_state(Expr),'get-state'(Expr,Val),!,get_type(Depth,Self,Val,Type).
-get_type(_Dpth,Self,[Fn|_],Type):- nonvar(Fn),metta_type(Self,Fn,List),!,last_element(List,Type).
-get_type(_Dpth,Self,List,Type):- is_list(List),metta_type(Self,Type,['->'|List]).
-get_type(_Dpth,Self,List,Type):- is_list(List),metta_type(Self,List,LType),!,last_element(LType,Type).
+get_type(_Dpth,Self,[Fn|_],Type):- symbol(Fn),metta_type(Self,Fn,List),last_element(List,Type), nonvar(Type),is_type(Type).
+get_type(_Dpth,Self,List,Type):- is_list(List),metta_type(Self,List,LType),last_element(LType,Type), nonvar(Type),is_type(Type).
 
 get_type(Depth,_Slf,Type,Type):- Depth<1,!.
+get_type(_Dpth,Self,List,Type):- is_list(List),metta_type(Self,Type,['->'|List]).
 get_type(Depth,Self,List,Types):- List\==[], is_list(List),Depth2 is Depth-1,maplist(get_type(Depth2,Self),List,Types).
 get_type(_Dpth,Self,Fn,Type):- symbol(Fn),metta_type(Self,Fn,Type),!.
 %get_type(Depth,Self,Fn,Type):- nonvar(Fn),metta_type(Self,Fn,Type2),Depth2 is Depth-1,get_type(Depth2,Self,Type2,Type).
@@ -638,86 +656,6 @@ get_type(_Dpth,_Slf,Cmpd,Type):- \+ ground(Cmpd),!,Type=[].
 get_type(_Dpth,_Slf,_,'%Undefined%'):- fail.
 eval_args1(Depth,Self,['length',L],Res):- !, eval_args(Depth,Self,L,LL), !, (is_list(LL)->length(LL,Res);Res=1).
 eval_args1(Depth,Self,['CountElement',L],Res):- !, eval_args(Depth,Self,L,LL), !, (is_list(LL)->length(LL,Res);Res=1).
-% Arithmetic Functions
-is_math_func('*', 2, exists).         % Multiplication
-is_math_func('+', 2, exists).         % Addition
-is_math_func('-', 2, exists).         % Subtraction
-is_math_func('/', 2, exists).         % Division
-is_math_func('abs', 1, exists).       % Absolute value
-is_math_func('acos', 1, maybe).       % Arc cosine
-is_math_func('asin', 1, maybe).       % Arc sine
-is_math_func('atan', 1, maybe).       % Arc tangent
-is_math_func('atan2', 2, maybe).      % Two-argument arc tangent
-is_math_func('cbrt', 1, maybe).       % Cube root
-is_math_func('ceil', 1, maybe).       % Ceiling function
-is_math_func('ceiling', 1, exists).   % Ceiling value
-is_math_func('copysign', 2, maybe).   % Copy the sign of a number
-is_math_func('cos', 1, exists).       % Cosine function
-is_math_func('cosh', 1, maybe).       % Hyperbolic cosine
-is_math_func('degrees', 1, maybe).    % Convert radians to degrees
-is_math_func('div', 2, exists).       % Integer Division
-is_math_func('erf', 1, maybe).        % Error function
-is_math_func('erfc', 1, maybe).       % Complementary error function
-is_math_func('exp', 1, exists).       % Exponential function
-is_math_func('expm1', 1, maybe).      % exp(x) - 1
-is_math_func('fabs', 1, maybe).       % Absolute value (floating-point)
-is_math_func('float', 1, exists).     % Convert rational to float
-is_math_func('float_fractional_part', 1, exists). % Fractional part of float
-is_math_func('float_integer_part', 1, exists).    % Integer part of float
-is_math_func('floor', 1, exists).     % Floor value
-is_math_func('fmod', 2, maybe).       % Floating-point modulo operation
-is_math_func('frexp', 2, maybe).      % Get mantissa and exponent
-is_math_func('fsum', 1, maybe).       % Accurate floating point sum
-is_math_func('gamma', 1, maybe).      % Gamma function
-is_math_func('gcd', 2, exists).       % Greatest Common Divisor
-is_math_func('hypot', 2, maybe).      % Euclidean norm, square root of sum of squares
-is_math_func('integer', 1, exists).   % Convert float to integer
-is_math_func('isinf', 1, maybe).      % Check for infinity
-is_math_func('isnan', 1, maybe).      % Check for Not a Number
-is_math_func('lcm', 2, exists).       % Least Common Multiple
-is_math_func('ldexp', 2, maybe).      % Load exponent of a floating point number
-is_math_func('lgamma', 1, maybe).     % Log gamma
-is_math_func('log', 1, exists).       % Logarithm base e
-is_math_func('log10', 1, maybe).      % Base 10 logarithm
-is_math_func('log1p', 1, maybe).      % log(1 + x)
-is_math_func('log2', 1, maybe).       % Base 2 logarithm
-is_math_func('max', 2, exists).       % Maximum of two values
-is_math_func('min', 2, exists).       % Minimum of two values
-is_math_func('mod', 2, exists).       % Modulo operation
-is_math_func('modf', 1, maybe).       % Return fractional and integer parts
-is_math_func('pow', 2, maybe).        % Exponentiation
-is_math_func('radians', 1, maybe).    % Convert degrees to radians
-is_math_func('random', 1, exists).    % Random number generator
-is_math_func('rational', 1, exists).  % Convert float to rational
-is_math_func('rem', 2, exists).       % Remainder
-is_math_func('remainder', 2, maybe).  % Remainder of the division
-is_math_func('round', 1, exists).     % Round to nearest integer
-is_math_func('sign', 1, exists).      % Sign of the number (-1,0,1)
-is_math_func('sin', 1, exists).       % Sine function
-is_math_func('sinh', 1, maybe).       % Hyperbolic sine
-is_math_func('sqrt', 1, maybe).       % Square root
-is_math_func('sqrt', 1, exists).      % Square Root
-is_math_func('tan', 1, exists).       % Tangent function
-is_math_func('tanh', 1, maybe).       % Hyperbolic tangent
-is_math_func('trunc', 1, maybe).      % Truncate to an integral value
-is_math_func('truncate', 1, exists).  % Truncate float to integer
-
-% Comparison Operators in Prolog
-is_comp_op('=', 2).          % Unification
-is_comp_op('\\=', 2).        % Not unifiable
-is_comp_op('==', 2).         % Strict equality
-is_comp_op('\\==', 2).       % Strict inequality
-is_comp_op('@<', 2).         % Term is before
-is_comp_op('@=<', 2).        % Term is before or equal
-is_comp_op('@>', 2).         % Term is after
-is_comp_op('@>=', 2).        % Term is after or equal
-is_comp_op('=<', 2).         % Less than or equal
-is_comp_op('<', 2).          % Less than
-is_comp_op('>=', 2).         % Greater than or equal
-is_comp_op('>', 2).          % Greater than
-is_comp_op('is', 2).         % Arithmetic equality
-is_comp_op('=:=', 2).        % Arithmetic exact equality
-is_comp_op('=\\=', 2).       % Arithmetic inequality
 
 
 is_feo_f('Cons').
@@ -1036,13 +974,14 @@ sub_sterm1(Sub,Term):- arg(_,Term,SL),sub_sterm(Sub,SL).
 
 
 % function inherited by system
-eval_args40(Depth,Self,[F|X],FY):- is_function(F), \+ is_special_op(F), is_list(X),!,
-  maplist(eval_args(Depth,Self),X,Y), eval_args5(Depth,Self,[F|Y],FY).
+eval_args40(Depth,Self,[F|X],FY):- is_function(F), \+ is_special_op(F), is_list(X),
+  maplist(eval_args(Depth,Self),X,Y),!,eval_args5(Depth,Self,[F|Y],FY).
 eval_args40(Depth,Self,FX,FY):- eval_args5(Depth,Self,FX,FY).
 
 eval_args5(_Dpth,_Slf,[F|LESS],Res):- once(eval_selfless([F|LESS],Res)),mnotrace(([F|LESS]\==Res)),!.
-eval_args5(_Dpth,_Slf,[AE|More],TF):- length(More,Len), is_predicate(AE,Len,Pred),!,catch_warn(as_tf(apply(Pred,More),TF)).
-eval_args5(_Dpth,_Slf,[AE|More],TF):- length([AE|More],Len), is_predicate(AE,Len,Pred),append(More,[TF],Args),!,catch_warn(apply(Pred,Args)).
+eval_args5(Depth,Self,[AE|More],TF):- length(More,Len),
+  (is_syspred(AE,Len,Pred),catch_warn(as_tf(apply(Pred,More),TF)))*->true;eval_args6(Depth,Self,[AE|More],TF).
+eval_args6(_Dpth,_Slf,[AE|More],TF):- length([AE|More],Len), is_syspred(AE,Len,Pred),append(More,[TF],Args),!,catch_warn(apply(Pred,Args)).
 
 %eval_args40(Depth,Self,[X1|[F2|X2]],[Y1|Y2]):- is_function(F2),!,eval_args(Depth,Self,[F2|X2],Y2),eval_args(Depth,Self,X1,Y1).
 
@@ -1079,11 +1018,12 @@ descend_and_transform(P2, Input, Transformed) :-
     ;   Transformed = Input  % Keep other non-compound terms as they are
     ).
 
-is_predicate(H,Len,Pred):- mnotrace(is_predicate0(H,Len,Pred)).
-is_predicate0(H,_Ln,_Prd):- \+ atom(H),!,fail.
-is_predicate0(H,_Ln,_Prd):- upcase_atom(H,U),downcase_atom(H,U),!,fail.
-is_predicate0(H,Len,Pred):- current_predicate(H/Len),!,Pred=H.
-is_predicate0(H,Len,Pred):- into_underscores(H,Pred), H\==Pred, current_predicate(Pred/Len),!.
+is_syspred(H,Len,Pred):- notrace(is_syspred0(H,Len,Pred)).
+is_syspred0(H,_Ln,_Prd):- \+ atom(H),!,fail.
+is_syspred0(H,_Ln,_Prd):- upcase_atom(H,U),downcase_atom(H,U),!,fail.
+is_syspred0(H,Len,Pred):- current_predicate(H/Len),!,Pred=H.
+is_syspred0(H,Len,Pred):- atom_concat(Mid,'!',H), H\==Mid, is_syspred0(Mid,Len,Pred),!.
+is_syspred0(H,Len,Pred):- into_underscores(H,Mid), H\==Mid, is_syspred0(Mid,Len,Pred),!.
 
 fn_append(List,X,Call):-
   fn_append1(List,X,ListX),
@@ -1440,10 +1380,16 @@ do_metta_exec(Self,TermV):-!,
         (NamedVarsList\=@=Was-> (color_g_mesg(green,writeq(NamedVarsList)),nl); true),
         ignore(( \+ is_list(X),compound(X),format(' % '),writeq(X),nl)))))))))).
 
-verbose_unify(Var):- put_attr(Var,verbose_unify,true).
+verbose_unify(Term):- verbose_unify(trace,Term).
+verbose_unify(What,Term):- term_variables(Term,Vars),maplist(verbose_unify0(What),Vars),!.
+verbose_unify0(What,Var):- put_attr(Var,verbose_unify,What).
 verbose_unify:attr_unify_hook(Attr, Value) :-
     format('~N~q~n',[verbose_unify:attr_unify_hook(Attr, Value)]),
-    (ground(Value)->true;trace).
+    vu(Attr,Value).
+vu(_Attr,Value):- is_ftVar(Value),!.
+vu(fail,_Value):- !, fail.
+vu(true,_Value):- !.
+vu(trace,_Value):- trace.
 
 :- nodebug(metta(exec)).
 may_rtrace(Goal):-
@@ -1473,7 +1419,10 @@ arg_types([['->'|L]],R,LR):-!, arg_types(L,R,LR).
 arg_types(['->'|L],R,LR):-!, arg_types(L,R,LR).
 arg_types(L,R,LR):- append(L,R,LR).
 
+:- ensure_loaded('../../examples/factorial').
+:- ensure_loaded('../../examples/fibonacci').
 
+%print_preds_to_functs:-preds_to_functs_src(factorial_tail_basic)
 
 
 :- ignore(((
