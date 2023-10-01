@@ -636,7 +636,7 @@ is_metta_builtin('pragma!').
 
 eval_args30(Depth,Self,H,B):-  (eval_args34(Depth,Self,H,B)*->true;eval_args37(Depth,Self,H,B)).
 
-eval_args34(_Dpth,Self,H,B):-  (metta_defn(Self,H,B);(metta_atom(Self,H),B='True')).
+eval_args34(_Dpth,Self,H,B):-  (metta_defn(Self,H,B);(metta_atom(Self,H),B=H)).
 
 % Has argument that is headed by the same function
 eval_args37(Depth,Self,[H1|Args],Res):-
