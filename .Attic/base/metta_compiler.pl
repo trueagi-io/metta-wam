@@ -244,15 +244,15 @@ compile_flow_control(HeadIs,RetResult,Convert, Converted) :- dif_functors(HeadIs
 compile_flow_control(HeadIs,RetResult,Convert, Converted) :- dif_functors(HeadIs,Convert),
   Convert=..['case',Value,Options],!,
    must_det_ll((
-    f2p(HeadIs,AtomResult,Atom,AtomCode),
-    maplist(compile_case_bodies(AtomResult),Options,Cases),
-    Converted = ((
-            (member(caseStruct(MatchVar,MatchCode,BodyResult,BodyCode),Cases),
-                   (MatchCode,equal_enough(MatchVar, AtomResult),!,BodyResult=RetResult)))))).
+    f2p(HeadIs,ValueResult,Value,ValueCode),
+    maplist(compile_case_bodies(HeadIs,ValueResult),Options,Cases),
+    Converted =
+        ((member(caseStruct(MatchVar,MatchCode,BodyResult,BodyCode),Cases),
+         (MatchCode,equal_enough(MatchVar, AtomResult),!,BodyCode,BodyResult=RetResult))))).
 
-compile_case_bodies(AtomResult,[Match,Body],caseStruct(_,true,BodyResult,BodyCode)):- Match == '%void%',
+compile_case_bodies(HeadIs,AtomResult,[Match,Body],caseStruct(_,true,BodyResult,BodyCode)):- Match == '%void%',
       f2p(HeadIs,BodyResult,Body,BodyCode).
-compile_case_bodies(AtomResult,[Match,Body],caseStruct(MatchVar,MatchCode,BodyResult,BodyCode)):-
+compile_case_bodies(HeadIs,AtomResult,[Match,Body],caseStruct(MatchVar,MatchCode,BodyResult,BodyCode)):-
       f2p(HeadIs,MatchResult,Match,MatchCode),
       f2p(HeadIs,BodyResult,Body,BodyCode).
 
