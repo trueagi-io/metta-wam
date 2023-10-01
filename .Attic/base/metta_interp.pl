@@ -4,7 +4,11 @@
 :- use_module(library(editline)).
 :- use_module(library(filesex)).
 :- use_module(library(shell)).
+%:- use_module(library(tabling)).
+:- use_module(library(system)).
 :- ensure_loaded(metta_compiler).
+:- ensure_loaded(metta_data).
+:- ensure_loaded(metta_space).
 /*
 Now PASSING NARS.TESTS1.01)
 Now PASSING TEST-SCRIPTS.B5-TYPES-PRELIM.08)
@@ -165,6 +169,10 @@ early_opts('exec').
 early_opts('html').
 early_opts('python').
 
+:- ignore(((
+   \+ prolog_load_context(reloading,true),
+   forall(early_opts(Opt),set_option_value(Opt,false))))).
+
 process_early_opts:- \+ option_value('python',false), skip(ensure_loaded(metta_python)).
 process_early_opts.
 
@@ -198,6 +206,7 @@ cmdline_load_metta(_,Nil):- Nil==[],!.
 
 :- set_prolog_flag(occurs_check,true).
 
+
 start_html_of(_Filename):-
  must_det_ll((
   S = _,
@@ -211,7 +220,7 @@ start_html_of(_Filename):-
   writeln(doing(S)),
   shell(S))).
 
-save_html_of(_):- \+ has_loonit_results,!.
+save_html_of(_):- \+ has_loonit_results, \+ option_value('html',true).
 save_html_of(Filename):-
  must_det_ll((
   file_name_extension(Base,_,Filename),
@@ -525,13 +534,29 @@ subst_vars(Term, Term, NamedVarsList, NamedVarsList).
 
 :- nb_setval(variable_names,[]).
 
-assert_preds(Self,Load,Preds):-
-  color_g_mesg('#005288',(format('~N Compiled(~w): ~@',[Self,portray_clause(Preds)]))),
+
+assert_preds(_Self,_Load,_Preds):- \+ preview_compiler,!.
+assert_preds(_Self,Load,Preds):-
+  expand_to_hb(Preds,H,_B),functor(H,F,A),
+  color_g_mesg('#005288',(
+   ignore((
+    \+ predicate_property(H,defined),
+    if_t(use_metta_compiler,catch_i(dynamic(F,A))),
+    format('  :- ~q.',[dynamic(F,A)]),
+    format('  :- ~q.',[table(F,A)]))),
+    format('~N~n  ~@',[portray_clause(Preds)]))),
+  if_t(use_metta_compiler,if_t(\+ predicate_property(H,static),add_assertion(Preds))),
   nop(metta_anew1(Load,Preds)).
+
+use_metta_compiler:- option_value('compile','full').
+preview_compiler:- use_metta_compiler,!.
+preview_compiler:- \+ option_value('compile',false).
 
 %load_hook(_Load,_Hooked):- !.
 load_hook(Load,Hooked):- ignore(( \+ ((forall(load_hook0(Load,Hooked),true))))),!.
 
+
+load_hook0(_,_):- \+ preview_compiler,!.
 load_hook0(Load,metta_defn(Self,H,B)):-
        functs_to_preds([=,H,B],Preds),
        assert_preds(Self,Load,Preds).
@@ -542,7 +567,7 @@ load_hook0(Load,metta_atom(Self,H)):- B = 'True',
 
 metta_anew1(load,OBO):- subst_vars(OBO,Cl),load_hook(load,OBO),assert_if_new(Cl). %to_metta(Cl).
 metta_anew1(unload,OBO):- subst_vars(OBO,Cl),load_hook(unload,OBO),
-  into_hb(Cl,Head,Body),
+  expand_into_hb(Cl,Head,Body),
   predicate_property(Head,number_of_clauses(_)),
   ignore((clause(Head,Body,Ref),clause(Head2,Body2,Ref),(Head+Body)=@=(Head2+Body2),erase(Ref),pp_m(Cl))).
 
@@ -593,17 +618,16 @@ combine_result(TF,R2,R2):- TF == [], !.
 combine_result(TF,_,TF):-!.
 
 
-do_metta1_e(_Self,_,exec(Exec)):- !,write_exec(Exec),!.
+do_metta1_e(_Self,_,exec(Exec)):- !,write_exec(Exec,_),!.
 do_metta1_e(_Self,_,[=,A,B]):- !, with_concepts(false,
   (write('(= '), with_indents(false,write_src(A)), (is_list(B) -> nl ; true),write(' '),with_indents(true,write_src(B)),write(')'))),nl.
 do_metta1_e(_Self,_LoadExec,Term):- write_src(Term),nl.
 
-write_exec(Exec):-
+write_exec(Exec,Goal):-
   wots(S,write_src(exec(Exec))),
   nb_setval(exec_src,Exec),
-  ignore((format('~N'),mnotrace((color_g_mesg('#004400',(writeln(S))))))),
-  compile_for_exec(Res,Exec,Goal),
-  mnotrace((color_g_mesg('#114411',portray_clause(exec(Res):-Goal)))).
+  ignore((format('~N'),mnotrace((color_g_mesg('#004400',(writeln(S))))))),!,
+  if_t(preview_compiler,write_compiled_exec(Exec,Goal)).
 
 %do_metta(Self,LoadExec,Term):-
 %  once(untyped_to_metta(Term,NewTerm)),Term\=@=NewTerm,!,
@@ -613,9 +637,9 @@ do_metta(Self,LoadExec,Term):- must_det_ll(do_metta1(Self,LoadExec,Term))*->true
 
 do_metta1(Self,_,Cmt):- nonvar(Cmt),do_metta_cmt(Self,Cmt),!.
 
-do_metta1(_Slf,load,exec(Exec)):- option_value('exec',skip),!,write_exec(Exec),!.
+do_metta1(_Slf,load,exec(Exec)):- option_value('exec',skip),!,write_exec(Exec,_),!.
 do_metta1(Self,_,exec(Exec)):- !,do_metta_exec(Self,Exec),!.
-do_metta1(_Slf,exec,Exec):- option_value('exec',skip),!,write_exec(Exec),!.
+do_metta1(_Slf,exec,Exec):- option_value('exec',skip),!,write_exec(Exec,_),!.
 do_metta1(Self,exec,Exec):- !,do_metta_exec(Self,Exec),!.
 
 do_metta1(Self,Load,Src):- do_metta1(Self,Load,Src,Src),!.
@@ -650,7 +674,6 @@ do_metta1(Self,Load,[':',Fn,TypeDecL,RetType], Src):-
    ignore((Body == 'True',!,do_metta1(Self,Load,Head))),
    nop((fn_append(Head,X,Head), fn_append(PredDecl,X,Body), metta_anew((Head:- Body)))),!.*/
 
-
 do_metta1(Self,Load,['=',PredDecl,False], Src):- (False == [];False == 'Nil';False == 'F'),!,
   do_metta1(Self,Load,['=',PredDecl,'False'], Src).
 
@@ -666,9 +689,36 @@ do_metta1(Self,Load,PredDecl, Src):-
    color_g_mesg('#ffa500',metta_anew(Load,Src,metta_atom(Self,PredDecl))).
 
 do_metta_exec(Self,Var):- var(Var), !, pp_m(eval(Var)), freeze(Var,wdmsg(laterVar(Self,Var))).
+
+do_metta_exec(_Self,TermV):- preview_compiler, use_metta_compiler, !,
+ (( /*must_det_ll*/((
+  %write_exec(TermV),
+ % ignore(Res = '$VAR'('ExecRes')),
+  RealRes = Res,
+  compile_for_exec(Res,TermV,ExecGoal),!,
+  subst_vars(Res+ExecGoal,Res+Term,NamedVarsList),
+  copy_term(NamedVarsList,Was),
+  term_variables(Term,Vars),
+  %nl,writeq(Term),nl,
+  ((\+ \+
+  ((numbervars(v(TermV,Term,NamedVarsList,Vars),999,_,[]),
+  %nb_current(variable_names,NamedVarsList),
+  nl,print(subst_vars(Term,NamedVarsList,Vars)),nl)))),
+  nop(maplist(verbose_unify,Vars)))))),
+  %NamedVarsList=[_=RealRealRes|_],
+  var(RealRes),
+  X = RealRes,
+  forall(may_rtrace(Term),
+     ignore(mnotrace(((color_g_mesg(yellow,
+     ((write(' '),
+
+        write_src(X),nl,
+        (NamedVarsList\=@=Was-> (color_g_mesg(green,writeq(NamedVarsList)),nl); true),
+        ignore(( \+ is_list(X),compound(X),format(' % '),writeq(X),nl)))))))))).
+
 do_metta_exec(Self,TermV):-!,
  mnotrace(( must_det_ll((
-  \+ \+ write_exec(TermV),
+  \+ \+ write_exec(TermV,_),
   subst_vars(TermV,Term,NamedVarsList),
   copy_term(NamedVarsList,Was),
   term_variables(Term,Vars),
@@ -685,6 +735,11 @@ do_metta_exec(Self,TermV):-!,
         (NamedVarsList\=@=Was-> (color_g_mesg(green,writeq(NamedVarsList)),nl); true),
         ignore(( \+ is_list(X),compound(X),format(' % '),writeq(X),nl)))))))))).
 
+write_compiled_exec(Exec,Goal):-
+%  ignore(Res = '$VAR'('ExecRes')),
+  compile_for_exec(Res,Exec,Goal),
+  mnotrace((color_g_mesg('#114411',portray_clause(exec(Res):-Goal)))).
+
 verbose_unify(Term):- verbose_unify(trace,Term).
 verbose_unify(What,Term):- term_variables(Term,Vars),maplist(verbose_unify0(What),Vars),!.
 verbose_unify0(What,Var):- put_attr(Var,verbose_unify,What).
@@ -699,6 +754,7 @@ vu(trace,_Value):- trace.
 :- nodebug(metta(exec)).
 may_rtrace(Goal):-
 (option_value('exec',rtrace);debugging(metta(exec))),!,  rtrace(Goal).
+may_rtrace(Goal):- use_metta_compiler,!, (call(Goal)*->true;rtrace(call(Goal))).
 may_rtrace(Goal):- call(Goal).
 
 
@@ -706,7 +762,7 @@ repl_call(Term):- catch_red(Term).
 
 catch_red(Term):- catch(Term,E,pp_m(red,in(Term,E))).
 
-s2p(I,O):- sexpr_sterm_to_pterm(I,O),!.
+s2p(I,O):- sexpr_s2p(I,O),!.
 
 
 discover_head(Self,Load,[Fn|PredDecl]):-

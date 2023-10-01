@@ -64,13 +64,17 @@ skip(_).
     space_type_method(Type,add_atom,Method), call(Type,SpaceNameOrInstance),!,
     debug_metta(['type-method',Type,Method]),
     call(Method,SpaceNameOrInstance,Atom).
-
+% Add Atom
+'add-atom'(Environment, AtomDeclaration, Result):- eval_args(['add-atom', Environment, AtomDeclaration], Result).
+
 % remove an atom from the space
 'remove-atom'(SpaceNameOrInstance, Atom) :- 
     debug_metta(['remove-atom',SpaceNameOrInstance, Atom]),
     space_type_method(Type,remove_atom,Method), call(Type,SpaceNameOrInstance),!,
     debug_metta(['type-method',Type,Method]),
     call(Method,SpaceNameOrInstance,Atom).
+% Remove Atom
+'remove-atom'(Environment, AtomDeclaration, Result):- eval_args(['remove-atom', Environment, AtomDeclaration], Result).
 
 % Add an atom to the space
 'replace-atom'(SpaceNameOrInstance, Atom, New) :- 
@@ -78,6 +82,8 @@ skip(_).
     space_type_method(Type,replace_atom,Method), call(Type,SpaceNameOrInstance),!,
     debug_metta(['type-method',Type,Method]),
     call(Method,SpaceNameOrInstance,Atom, New).
+% Replace Atom
+'atom-replace'(Environment, OldAtom, NewAtom, Result):- eval_args(['atom-replace', Environment, OldAtom, NewAtom], Result).
 
 % Count atoms in a space
 'atom-count'(SpaceNameOrInstance, Count) :-
@@ -85,6 +91,8 @@ skip(_).
     space_type_method(Type,atom_count,Method), call(Type,SpaceNameOrInstance),!,
     call(Method,SpaceNameOrInstance,Count),
     debug_metta(['type-method-result',Type,Method,Count]).
+% Count Atoms
+'atom-count'(Environment, Count):- eval_args(['atom-count', Environment], Count).
 
 % Fetch all atoms from a space
 'get-atoms'(SpaceNameOrInstance, AtomsL) :-
@@ -93,6 +101,8 @@ skip(_).
     call(Method,SpaceNameOrInstance, AtomsL),
     length(AtomsL,Count),
     debug_metta(['type-method-result',Type,Method,Count]).
+% Get Atoms
+'get-atoms'(Environment, Atoms):- eval_args(['get-atoms', Environment], Atoms).
 
 % Iterate all atoms from a space
 'atoms_iter'(SpaceNameOrInstance, Iter) :-
