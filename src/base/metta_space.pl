@@ -46,10 +46,10 @@ decl_fb_pred(Fn,A):-
 
 skip(_).
 
-% ===============================
-% MeTTa Python incoming interface
-% ===============================
 
+% ============================
+% %%%% Atom Manipulations
+% ============================
   
 % Clear all atoms from a space
 'clear-atoms'(SpaceNameOrInstance) :- 

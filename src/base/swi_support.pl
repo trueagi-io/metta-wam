@@ -46,6 +46,8 @@ was_option_value(N,V):- prolog_load_context(N,VV),!,V=VV.
 
 option_else( N,V,_Else):- was_option_value(N,VV),!,VV=V.
 option_else(_N,V, Else):- !,V=Else.
+
+option_value( N,V):- nonvar(V), option_value( N,VV), p2m(VV,V1),p2m(V,V2),!,equal_enough(V1,V2).
 option_value( N,V):- option_else( N,V ,[]).
 
 set_option_value(N,V):-
