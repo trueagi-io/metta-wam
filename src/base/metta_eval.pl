@@ -1,4 +1,150 @@
-                                                                                                                                                                    self_eval(X):- var(X),!.
+
+% ============================
+% %%%% Arithmetic Operations
+% ============================
+% Addition
+'+'(Addend1, Addend2, Sum):- eval_args(['+', Addend1, Addend2], Sum).
+% Subtraction
+'-'(Minuend, Subtrahend, Difference):- eval_args(['-', Minuend, Subtrahend], Difference).
+% Multiplication
+'*'(Factor1, Factor2, Product):- eval_args(['*', Factor1, Factor2], Product).
+% Division
+'/'(Dividend, Divisor, Quotient):- eval_args(['/', Dividend, Divisor], Quotient).
+% Modulus
+'mod'(Dividend, Divisor, Remainder):- eval_args(['mod', Dividend, Divisor], Remainder).
+% Exponentiation
+'exp'(Base, Exponent, Result):- eval_args(['exp', Base, Exponent], Result).
+% Square Root
+'sqrt'(Number, Root):- eval_args(['sqrt', Number], Root).
+
+% ============================
+% %%%% List Operations
+% ============================
+% Retrieve Head of the List
+'car-atom'(List, Head):- eval_args(['car-atom', List], Head).
+% Retrieve Tail of the List
+'cdr-atom'(List, Tail):- eval_args(['cdr-atom', List], Tail).
+% Construct a List
+'Cons'(Element, List, 'Cons'(Element, List)):- !.
+% Collapse List
+'collapse'(List, CollapsedList):- eval_args(['collapse', List], CollapsedList).
+% Count Elements in List
+'CountElement'(List, Count):- eval_args(['CountElement', List], Count).
+% Find Length of List
+%'length'(List, Length):- eval_args(['length', List], Length).
+
+% ============================
+% %%%% Nondet Opteration
+% ============================
+% Superpose a List
+'superpose'(List, SuperposedList):- eval_args(['superpose', List], SuperposedList).
+
+% ============================
+% %%%% Testing
+% ============================
+
+% `assertEqual` Predicate
+% This predicate is used for asserting that the Expected value is equal to the Actual value.
+% Expected: The value that is expected.
+% Actual: The value that is being checked against the Expected value.
+% Result: The result of the evaluation of the equality.
+% Example: `assertEqual(5, 5, Result).` would succeed, setting Result to true (or some success indicator).
+'assertEqual'(Expected, Actual, Result):- eval_args(['assertEqual', Expected, Actual], Result).
+
+% `assertEqualToResult` Predicate
+% This predicate asserts that the Expected value is equal to the Result of evaluating Actual.
+% Expected: The value that is expected.
+% Actual: The expression whose evaluation is being checked against the Expected value.
+% Result: The result of the evaluation of the equality.
+% Example: If Actual evaluates to the Expected value, this would succeed, setting Result to true (or some success indicator).
+'assertEqualToResult'(Expected, Actual, Result):- eval_args(['assertEqualToResult', Expected, Actual], Result).
+
+% `assertFalse` Predicate
+% This predicate is used to assert that the evaluation of EvalThis is false.
+% EvalThis: The expression that is being evaluated and checked for falsehood.
+% Result: The result of the evaluation.
+% Example: `assertFalse((1 > 2), Result).` would succeed, setting Result to true (or some success indicator), as 1 > 2 is false.
+'assertFalse'(EvalThis, Result):- eval_args(['assertFalse', EvalThis], Result).
+
+% `assertNotEqual` Predicate
+% This predicate asserts that the Expected value is not equal to the Actual value.
+% Expected: The value that is expected not to match the Actual value.
+% Actual: The value that is being checked against the Expected value.
+% Result: The result of the evaluation of the inequality.
+% Example: `assertNotEqual(5, 6, Result).` would succeed, setting Result to true (or some success indicator).
+'assertNotEqual'(Expected, Actual, Result):- eval_args(['assertNotEqual', Expected, Actual], Result).
+
+% `assertTrue` Predicate
+% This predicate is used to assert that the evaluation of EvalThis is true.
+% EvalThis: The expression that is being evaluated and checked for truth.
+% Result: The result of the evaluation.
+% Example: `assertTrue((2 > 1), Result).` would succeed, setting Result to true (or some success indicator), as 2 > 1 is true.
+'assertTrue'(EvalThis, Result):- eval_args(['assertTrue', EvalThis], Result).
+
+% `rtrace` Predicate
+% This predicate is likely used for debugging; possibly for tracing the evaluation of Condition.
+% Condition: The condition/expression being traced.
+% EvalResult: The result of the evaluation of Condition.
+% Example: `rtrace((2 + 2), EvalResult).` would trace the evaluation of 2 + 2 and store its result in EvalResult.
+'rtrace'(Condition, EvalResult):- eval_args(['rtrace', Condition], EvalResult).
+
+% `time` Predicate
+% This predicate is used to measure the time taken to evaluate EvalThis.
+% EvalThis: The expression whose evaluation time is being measured.
+% EvalResult: The result of the evaluation of EvalThis.
+% Example: `time((factorial(5)), EvalResult).` would measure the time taken to evaluate factorial(5) and store its result in EvalResult.
+'time'(EvalThis, EvalResult):- eval_args(['time', EvalThis], EvalResult).
+
+% ============================
+% %%%% Debugging, Printing and Utility Operations
+% ============================
+% REPL Evaluation
+'repl!'(EvalResult):- eval_args(['repl!'], EvalResult).
+% Condition Evaluation
+'!'(Condition, EvalResult):- eval_args(['!', Condition], EvalResult).
+% Import File into Environment
+'import!'(Environment, FileName, Namespace):- eval_args(['import!', Environment, FileName], Namespace).
+% Evaluate Expression with Pragma
+'pragma!'(Environment, Expression, EvalValue):- eval_args(['pragma!', Environment, Expression], EvalValue).
+% Print Message to Console
+'print'(Message, EvalResult):- eval_args(['print', Message], EvalResult).
+% No Operation, Returns EvalResult unchanged
+'nop'(Expression, EvalResult):- eval_args(['nop', Expression], EvalResult).
+
+% ============================
+% %%%% Variable Bindings
+% ============================
+% Bind Variables
+'bind!'(Environment, Variable, Value):- eval_args(['bind!', Environment, Variable], Value).
+% Let binding for single variable
+'let'(Variable, Expression, Body, Result):- eval_args(['let', Variable, Expression, Body], Result).
+% Sequential let binding
+'let*'(Bindings, Body, Result):- eval_args(['let*', Bindings, Body], Result).
+
+% ============================
+% %%%% Pattern Matching
+% ============================
+% Pattern Matching with an else branch
+'match'(Environment, Pattern, Template, ElseBranch, Result):- eval_args(['match', Environment, Pattern, Template, ElseBranch], Result).
+% Pattern Matching without an else branch
+'match'(Environment, Pattern, Template, Result):- eval_args(['match', Environment, Pattern, Template], Result).
+
+% ============================
+% %%%% Atom Manipulations
+% ============================
+
+% ============================
+% %%%% Reflection
+% ============================
+% Get Type of Value
+'get-type'(Value, Type):- eval_args(['get-type', Value], Type).
+
+
+
+
+
+
+self_eval(X):- var(X),!.
 self_eval(X):- is_valid_nb_state(X),!.
 self_eval(X):- string(X),!.
 self_eval(X):- number(X),!.
@@ -520,8 +666,8 @@ last_element(T,E):- compound_name_arguments(T,_,List),last_element(List,E),!.
 
 
 
-catch_warn(G):- catch(G,E,(wdmsg(catch_warn(G)-->E),fail)).
-catch_nowarn(G):- catch(G,error(_,_),fail).
+catch_warn(G):- notrace(catch(G,E,(wdmsg(catch_warn(G)-->E),fail))).
+catch_nowarn(G):- notrace(catch(G,error(_,_),fail)).
 
 as_tf(G,TF):- catch_nowarn((call(G)*->TF='True';TF='False')).
 eval_selfless(['==',X,Y],TF):- as_tf(X=:=Y,TF),!.
@@ -534,7 +680,7 @@ eval_selfless(['<=',X,Y],TF):-!,as_tf(X=<Y,TF).
 
 eval_selfless(['%',X,Y],TF):-!,eval_selfless(['mod',X,Y],TF).
 
-eval_selfless(LIS,Y):-  mnotrace((
+eval_selfless(LIS,Y):-  notrace((
    LIS=[F,_,_], atom(F), catch_warn(current_op(_,yfx,F)),
    catch((LIS\=[_], s2p(LIS,IS), Y is IS),_,fail))),!.
 
