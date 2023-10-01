@@ -250,6 +250,8 @@ compile_flow_control(HeadIs,RetResult,Convert, Converted) :- dif_functors(HeadIs
             (member(caseStruct(MatchVar,MatchCode,BodyResult,BodyCode),Cases),
                    (MatchCode,equal_enough(MatchVar, AtomResult),!,BodyResult=RetResult)))))).
 
+compile_case_bodies(AtomResult,[Match,Body],caseStruct(_,true,BodyResult,BodyCode)):- Match == '%void%',
+      f2p(HeadIs,BodyResult,Body,BodyCode).
 compile_case_bodies(AtomResult,[Match,Body],caseStruct(MatchVar,MatchCode,BodyResult,BodyCode)):-
       f2p(HeadIs,MatchResult,Match,MatchCode),
       f2p(HeadIs,BodyResult,Body,BodyCode).
