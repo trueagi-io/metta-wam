@@ -1263,6 +1263,7 @@ sexpr_sterm_to_pterm(TD,[S,Vars|TERM],PTERM):- nonvar(S),
 
 sexpr_sterm_to_pterm(TD,[S|STERM0],PTERM):- var(S),  TD1 is TD + 1, sexpr_sterm_to_pterm_pre_list(TD1,STERM0,STERM), sexpr_sterm_to_pterm_list(TD1,STERM,PLIST),s_univ(TD,PTERM,[S|PLIST]),!.
 sexpr_sterm_to_pterm(_,[S,STERM0],PTERM):- is_quoter(S),sexpr_sterm_to_pterm_pre_list(0,STERM0,STERM), !,PTERM=..[S,STERM],!.
+sexpr_sterm_to_pterm(_,[S|STERM0],PTERM):- is_quoter(S),sexpr_sterm_to_pterm_pre_list(0,STERM0,STERM), !,PTERM=..[S,STERM],!.
 sexpr_sterm_to_pterm(TD,[S|STERM0],PTERM):- sexpr_sterm_to_pterm_pre_list(TD,STERM0,STERM), is_list(STERM),
   next_args_are_lists_unless_string(S,NonList),
   length(LEFT,NonList),append(LEFT,[List|RIGHT],STERM),is_list(List),

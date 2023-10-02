@@ -46,6 +46,9 @@ decl_fb_pred(Fn,A):-
 
 skip(_).
 
+% ===============================
+% MeTTa Python incoming interface
+% ===============================
 
 % ============================
 % %%%% Atom Manipulations
