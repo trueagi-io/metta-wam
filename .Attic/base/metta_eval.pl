@@ -1,6 +1,3 @@
-
-
-
 self_eval(X):- var(X),!.
 self_eval(X):- is_valid_nb_state(X),!.
 self_eval(X):- string(X),!.
@@ -72,10 +69,8 @@ eval_args11(_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
 
 eval_args11(Depth,Self,X,Y):- \+ debugging(metta(eval)),!, eval_args1(Depth,Self,X,Y).
 eval_args11(Depth,Self,X,Y):- flag(eval_num,EX,EX+1),
-  option_else('trace-length',Max,100),
-  (EX>Max->(nodebug(metta(eval)),
-     Bigger is Max+1,
-     format('~N~n ;;;; Switched off tracing. For a longer trace !(pragma! trace-length ~w))',[Bigger]));true),
+  option_else(traclen,Max,100),
+  (EX>Max->(nodebug(metta(eval)),write('Switched off tracing. For a longer trace !(pragma! tracelen 101))'));true),
   mnotrace((no_repeats_var(YY), D1 is Depth-1)),
   DR is 99-D1,
   if_trace(metta(eval),indentq(Depth,'-->'(EX,Self,X,depth(DR)))),
@@ -132,12 +127,11 @@ eval_args1(Depth,Self,['assertEqualToResult',X,Y],TF):- !,
 
 loonit_assert_source_tf(Src,Goal,Check,TF):-
    copy_term(Goal,OrigGoal),
-   loonit_asserts(Src, time_eval(Goal), Check),
+   loonit_asserts(Src, Goal, Check),
    as_tf(Check,TF),!,
   ignore((
-          once((TF='True', trace_on_pass);
-               (TF='False', trace_on_fail)),
-     with_debug(metta(eval),may_rtrace(OrigGoal)))).
+          once((TF='True', trace_on_pass);(TF='False', trace_on_fail)),
+     with_debug(metta(eval),OrigGoal))).
 
 
 equal_enough(R,V):- R=@=V, !.
@@ -219,7 +213,7 @@ max_counting(F,Max):- flag(F,X,X+1),  X<Max ->  true; (flag(F,_,10),!,fail).
 
 eval_args1(Depth,Self,['if',Cond,Then],Res):- !,
    eval_args(Depth,Self,Cond,TF),
-   (is_True(TF) -> eval_args(Depth,Self,Then,Res) ; (fail, Res = [])).
+   (is_True(TF) -> eval_args(Depth,Self,Then,Res) ; Res = []).
 
 eval_args1(Depth,Self,['if',Cond,Then,Else],Res):- !,
    eval_args(Depth,Self,Cond,TF),
@@ -329,8 +323,6 @@ init_state(Name) :-
     arg(1, State, Values).
 
 'new-state'(Depth,Self,Init,'State'(Init, Type)):- check_type->get_type(Depth,Self,Init,Type);true.
-
-'new-state'(Init,'State'(Init, Type)):- check_type->get_type(10,'&self',Init,Type);true.
 
 fetch_or_create_state(Name):- fetch_or_create_state(Name,_).
 % Fetch an existing state or create a new one
@@ -484,8 +476,6 @@ eval_args2(Depth,Self,['pragma!',Other,Expr],Value):-
 
 
 
-
-
 eval_args2(Depth,Self,['nop',Expr],[]):- !,  eval_args(Depth,Self,Expr,_).
 
 is_True(T):- T\=='False',T\==[].
@@ -524,8 +514,8 @@ last_element(T,E):- compound_name_arguments(T,_,List),last_element(List,E),!.
 
 
 
-catch_warn(G):- notrace(catch(G,E,(wdmsg(catch_warn(G)-->E),fail))).
-catch_nowarn(G):- notrace(catch(G,error(_,_),fail)).
+catch_warn(G):- catch(G,E,(wdmsg(catch_warn(G)-->E),fail)).
+catch_nowarn(G):- catch(G,error(_,_),fail).
 
 as_tf(G,TF):- catch_nowarn((call(G)*->TF='True';TF='False')).
 eval_selfless(['==',X,Y],TF):- as_tf(X=:=Y,TF),!.
@@ -538,7 +528,7 @@ eval_selfless(['<=',X,Y],TF):-!,as_tf(X=<Y,TF).
 
 eval_selfless(['%',X,Y],TF):-!,eval_selfless(['mod',X,Y],TF).
 
-eval_selfless(LIS,Y):-  notrace((
+eval_selfless(LIS,Y):-  mnotrace((
    LIS=[F,_,_], atom(F), catch_warn(current_op(_,yfx,F)),
    catch((LIS\=[_], s2p(LIS,IS), Y is IS),_,fail))),!.
 
@@ -636,7 +626,7 @@ is_metta_builtin('pragma!').
 
 eval_args30(Depth,Self,H,B):-  (eval_args34(Depth,Self,H,B)*->true;eval_args37(Depth,Self,H,B)).
 
-eval_args34(_Dpth,Self,H,B):-  (metta_defn(Self,H,B);(metta_atom(Self,H),B=H)).
+eval_args34(_Dpth,Self,H,B):-  (metta_defn(Self,H,B);(metta_atom(Self,H),B='True')).
 
 % Has argument that is headed by the same function
 eval_args37(Depth,Self,[H1|Args],Res):-
