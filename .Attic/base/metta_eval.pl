@@ -324,6 +324,8 @@ init_state(Name) :-
 
 'new-state'(Depth,Self,Init,'State'(Init, Type)):- check_type->get_type(Depth,Self,Init,Type);true.
 
+'new-state'(Init,'State'(Init, Type)):- check_type->get_type(10,'&self',Init,Type);true.
+
 fetch_or_create_state(Name):- fetch_or_create_state(Name,_).
 % Fetch an existing state or create a new one
 
@@ -514,8 +516,8 @@ last_element(T,E):- compound_name_arguments(T,_,List),last_element(List,E),!.
 
 
 
-catch_warn(G):- catch(G,E,(wdmsg(catch_warn(G)-->E),fail)).
-catch_nowarn(G):- catch(G,error(_,_),fail).
+catch_warn(G):- notrace(catch(G,E,(wdmsg(catch_warn(G)-->E),fail))).
+catch_nowarn(G):- notrace(catch(G,error(_,_),fail)).
 
 as_tf(G,TF):- catch_nowarn((call(G)*->TF='True';TF='False')).
 eval_selfless(['==',X,Y],TF):- as_tf(X=:=Y,TF),!.

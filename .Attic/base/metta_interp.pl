@@ -39,6 +39,7 @@ early_opts('time',true).
 early_opts('exec',true).
 early_opts('html',false).
 early_opts('python',false).
+early_opts('prolog',false).
 
 early_opts('trace-on-fail',true).
 early_opts('trace-on-pass',true).
@@ -51,6 +52,151 @@ early_opts('stack-max',100).
 trace_on_fail:-     option_value('trace-on-fail',true).
 trace_on_overflow:- option_value('trace-on-overflow',true).
 trace_on_pass:-     option_value('trace-on-pass',true).
+
+
+% ============================
+% %%%% Arithmetic Operations
+% ============================
+% Addition
+'+'(Addend1, Addend2, Sum):- plus(Addend1, Addend2, Sum).
+% Subtraction
+'-'(Sum, Addend1, Addend2):- plus(Addend1, Addend2, Sum).
+
+:- use_module(library(clpq)).
+% Multiplication
+'*'(Factor1, Factor2, Product):- {Product = Factor1*Factor2}.
+% Division
+'/'(Dividend, Divisor, Quotient):- {Dividend = Quotient * Divisor}.
+% Modulus
+'mod'(Dividend, Divisor, Remainder):- {Remainder = Dividend mod Divisor}.
+% Exponentiation
+'exp'(Base, Exponent, Result):- eval_args(['exp', Base, Exponent], Result).
+% Square Root
+'sqrt'(Number, Root):- eval_args(['sqrt', Number], Root).
+
+% ============================
+% %%%% List Operations
+% ============================
+% Retrieve Head of the List
+'car-atom'(List, Head):- eval_args(['car-atom', List], Head).
+% Retrieve Tail of the List
+'cdr-atom'(List, Tail):- eval_args(['cdr-atom', List], Tail).
+% Construct a List
+'Cons'(Element, List, 'Cons'(Element, List)):- !.
+% Collapse List
+'collapse'(List, CollapsedList):- eval_args(['collapse', List], CollapsedList).
+% Count Elements in List
+'CountElement'(List, Count):- eval_args(['CountElement', List], Count).
+% Find Length of List
+%'length'(List, Length):- eval_args(['length', List], Length).
+
+% ============================
+% %%%% Nondet Opteration
+% ============================
+% Superpose a List
+'superpose'(List, SuperposedList):- eval_args(['superpose', List], SuperposedList).
+
+% ============================
+% %%%% Testing
+% ============================
+
+% `assertEqual` Predicate
+% This predicate is used for asserting that the Expected value is equal to the Actual value.
+% Expected: The value that is expected.
+% Actual: The value that is being checked against the Expected value.
+% Result: The result of the evaluation of the equality.
+% Example: `assertEqual(5, 5, Result).` would succeed, setting Result to true (or some success indicator).
+%'assertEqual'(Expected, Actual, Result):- use_metta_compiler,!,as_tf((Expected=Actual),Result).
+'assertEqual'(Expected, Actual, Result):- ignore(Expected=Actual), eval_args(['assertEqual', Expected, Actual], Result).
+
+% `assertEqualToResult` Predicate
+% This predicate asserts that the Expected value is equal to the Result of evaluating Actual.
+% Expected: The value that is expected.
+% Actual: The expression whose evaluation is being checked against the Expected value.
+% Result: The result of the evaluation of the equality.
+% Example: If Actual evaluates to the Expected value, this would succeed, setting Result to true (or some success indicator).
+'assertEqualToResult'(Expected, Actual, Result):- eval_args(['assertEqualToResult', Expected, Actual], Result).
+
+% `assertFalse` Predicate
+% This predicate is used to assert that the evaluation of EvalThis is false.
+% EvalThis: The expression that is being evaluated and checked for falsehood.
+% Result: The result of the evaluation.
+% Example: `assertFalse((1 > 2), Result).` would succeed, setting Result to true (or some success indicator), as 1 > 2 is false.
+'assertFalse'(EvalThis, Result):- eval_args(['assertFalse', EvalThis], Result).
+
+% `assertNotEqual` Predicate
+% This predicate asserts that the Expected value is not equal to the Actual value.
+% Expected: The value that is expected not to match the Actual value.
+% Actual: The value that is being checked against the Expected value.
+% Result: The result of the evaluation of the inequality.
+% Example: `assertNotEqual(5, 6, Result).` would succeed, setting Result to true (or some success indicator).
+'assertNotEqual'(Expected, Actual, Result):- eval_args(['assertNotEqual', Expected, Actual], Result).
+
+% `assertTrue` Predicate
+% This predicate is used to assert that the evaluation of EvalThis is true.
+% EvalThis: The expression that is being evaluated and checked for truth.
+% Result: The result of the evaluation.
+% Example: `assertTrue((2 > 1), Result).` would succeed, setting Result to true (or some success indicator), as 2 > 1 is true.
+'assertTrue'(EvalThis, Result):- eval_args(['assertTrue', EvalThis], Result).
+
+% `rtrace` Predicate
+% This predicate is likely used for debugging; possibly for tracing the evaluation of Condition.
+% Condition: The condition/expression being traced.
+% EvalResult: The result of the evaluation of Condition.
+% Example: `rtrace((2 + 2), EvalResult).` would trace the evaluation of 2 + 2 and store its result in EvalResult.
+'rtrace'(Condition, EvalResult):- eval_args(['rtrace', Condition], EvalResult).
+
+% `time` Predicate
+% This predicate is used to measure the time taken to evaluate EvalThis.
+% EvalThis: The expression whose evaluation time is being measured.
+% EvalResult: The result of the evaluation of EvalThis.
+% Example: `time((factorial(5)), EvalResult).` would measure the time taken to evaluate factorial(5) and store its result in EvalResult.
+'time'(EvalThis, EvalResult):- eval_args(['time', EvalThis], EvalResult).
+
+% ============================
+% %%%% Debugging, Printing and Utility Operations
+% ============================
+% REPL Evaluation
+'repl!'(EvalResult):- eval_args(['repl!'], EvalResult).
+% Condition Evaluation
+'!'(Condition, EvalResult):- eval_args(['!', Condition], EvalResult).
+% Import File into Environment
+'import!'(Environment, FileName, Namespace):- eval_args(['import!', Environment, FileName], Namespace).
+% Evaluate Expression with Pragma
+'pragma!'(Environment, Expression, EvalValue):- eval_args(['pragma!', Environment, Expression], EvalValue).
+% Print Message to Console
+'print'(Message, EvalResult):- eval_args(['print', Message], EvalResult).
+% No Operation, Returns EvalResult unchanged
+'nop'(Expression, EvalResult):- eval_args(['nop', Expression], EvalResult).
+
+% ============================
+% %%%% Variable Bindings
+% ============================
+% Bind Variables
+'bind!'(Environment, Variable, Value):- eval_args(['bind!', Environment, Variable], Value).
+% Let binding for single variable
+'let'(Variable, Expression, Body, Result):- eval_args(['let', Variable, Expression, Body], Result).
+% Sequential let binding
+'let*'(Bindings, Body, Result):- eval_args(['let*', Bindings, Body], Result).
+
+% ============================
+% %%%% Pattern Matching
+% ============================
+% Pattern Matching with an else branch
+'match'(Environment, Pattern, Template, ElseBranch, Result):- eval_args(['match', Environment, Pattern, Template, ElseBranch], Result).
+% Pattern Matching without an else branch
+'match'(_Environment, Pattern, Template, Result):- callable(Pattern),!, call(Pattern),Result=Template.
+'match'(_Environment, Pattern, Template, Result):- !, is_True(Pattern),Result=Template.
+'match'(Environment, Pattern, Template, Result):- eval_args(['match', Environment, Pattern, Template], Result).
+
+% ============================
+% %%%% Reflection
+% ============================
+% Get Type of Value
+'get-type'(Value, Type):- eval_args(['get-type', Value], Type).
+
+
+'new-space'(Space):- gensym(new_space_,Name), fetch_or_create_space(Name, Space).
 
 % Function to check if an atom is registered as a space name
 :- dynamic is_registered_space_name/1.
@@ -394,6 +540,7 @@ repl_read(Read) :- mnotrace(repl_read("", Read)).
 
 
 
+repl:- option_value('repl',prolog),!,prolog.
 repl:-
    mnotrace((current_input(In),ignore(catch(load_history,_,true)))),
    repeat,
@@ -706,24 +853,58 @@ do_metta1(Self,Load,PredDecl, Src):-
    color_g_mesg('#ffa500',metta_anew(Load,Src,metta_atom(Self,PredDecl))).
 
 do_metta_exec(Self,Var):- var(Var), !, pp_m(eval(Var)), freeze(Var,wdmsg(laterVar(Self,Var))).
+
+do_metta_exec(_Self,TermV):- use_metta_compiler, !,
+ (( /*must_det_ll*/((
+  write_exec(TermV),
+ % ignore(Res = '$VAR'('ExecRes')),
+  RealRes = Res,
+  compile_for_exec(Res,TermV,ExecGoal),!,
+  subst_vars(Res+ExecGoal,Res+Term,NamedVarsList),
+  copy_term(NamedVarsList,Was),
+  term_variables(Term,Vars),
+  %nl,writeq(Term),nl,
+  ((\+ \+
+  ((numbervars(v(TermV,Term,NamedVarsList,Vars),999,_,[attvar(bind)]),
+  %nb_current(variable_names,NamedVarsList),
+  nl,print(subst_vars(Term,NamedVarsList,Vars)),nl)))),
+  nop(maplist(verbose_unify,Vars)))))),
+  %NamedVarsList=[_=RealRealRes|_],
+  var(RealRes),
+  X = RealRes,
+  forall(may_rtrace(Term),
+     ignore(mnotrace(((color_g_mesg(yellow,
+     ((write(' '),
+
+        write_src(X),nl,
+        (NamedVarsList\=@=Was-> (color_g_mesg(green,writeq(NamedVarsList)),nl); true),
+        ignore(( \+ is_list(X),compound(X),format(' % '),writeq(X),nl)))))))))).
+
 do_metta_exec(Self,TermV):-!,
  mnotrace(( must_det_ll((
+  if_t(preview_compiler,write_compiled_exec(TermV,_Goal)),
   \+ \+ write_exec(TermV),
   subst_vars(TermV,Term,NamedVarsList),
   copy_term(NamedVarsList,Was),
   term_variables(Term,Vars),
   %nl,writeq(Term),nl,
   skip((\+ \+
-  ((numbervars(v(TermV,Term,NamedVarsList,Vars),999,_,[]),
+  ((numbervars(v(TermV,Term,NamedVarsList,Vars),999,_,[attvar(bind)]),
   %nb_current(variable_names,NamedVarsList),
   nl,print(subst_vars(TermV,Term,NamedVarsList,Vars)),nl)))),
+  option_else('stack-max',StackMax,100),
   nop(maplist(verbose_unify,Vars)))))),
-  forall(may_rtrace(eval_args(100,Self,Term,X)),
+  forall(may_rtrace(eval_args(StackMax,Self,Term,X)),
      ignore(mnotrace(((color_g_mesg(yellow,
      ((write(' '),
         write_src(X),nl,
         (NamedVarsList\=@=Was-> (color_g_mesg(green,writeq(NamedVarsList)),nl); true),
         ignore(( \+ is_list(X),compound(X),format(' % '),writeq(X),nl)))))))))).
+
+write_compiled_exec(Exec,Goal):-
+%  ignore(Res = '$VAR'('ExecRes')),
+  compile_for_exec(Res,Exec,Goal),
+  mnotrace((color_g_mesg('#114411',portray_clause(exec(Res):-Goal)))).
 
 verbose_unify(Term):- verbose_unify(trace,Term).
 verbose_unify(What,Term):- term_variables(Term,Vars),maplist(verbose_unify0(What),Vars),!.
@@ -789,7 +970,7 @@ repl_call(Term):- catch_red(Term).
 
 catch_red(Term):- catch(Term,E,pp_m(red,in(Term,E))).
 
-s2p(I,O):- sexpr_sterm_to_pterm(I,O),!.
+s2p(I,O):- sexpr_s2p(I,O),!.
 
 
 discover_head(Self,Load,[Fn|PredDecl]):-
