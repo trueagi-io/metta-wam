@@ -389,6 +389,7 @@ save_html_of(Filename):-
   file_name_extension(Base,html,HtmlFilename),
   loonit_reset,
   tee_file(TEE_FILE),
+  writeln('<br/><a href="https://github.com/logicmoo/vspace-metta/blob/main/MeTTaLog.md">Return to Summaries</a><br/>'),
   sformat(S,'ansi2html -u < "~w" > "~w" ',[TEE_FILE,HtmlFilename]),
   writeln(doing(S)),
   shell(S))).
