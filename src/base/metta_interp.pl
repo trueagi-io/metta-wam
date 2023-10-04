@@ -309,7 +309,10 @@ metta_cmd_args(Rest):- current_prolog_flag(argv,P),append(_,['--'|Rest],P),!.
 metta_cmd_args(Rest):- current_prolog_flag(os_argv,P),append(_,['--'|Rest],P),!.
 metta_cmd_args(Rest):- current_prolog_flag(argv,Rest).
 run_file_arg:- metta_cmd_args(Rest), !,  do_cmdline_load_metta('&self',Rest).
-loon:- run_file_arg, !, loonit_report, !, (option_value('halt',false)->true;halt(7)).
+loon:- catch_red(run_file_arg), loonit_report,
+  (option_value('prolog',true)->true;
+  ( (option_value('repl',false)->true;repl),
+    (option_value('halt',false)->true;halt(7)))).
 %loon:- time(loon_metta('./examples/compat/test_scripts/*.metta')),fail.
 loon:- repl, (option_value('halt',false)->true;halt(7)).
 
@@ -546,7 +549,7 @@ repl_read(Read) :- mnotrace(repl_read("", Read)).
 
 
 
-repl:- option_value('repl',prolog),!,prolog.
+%repl:- option_value('repl',prolog),!,prolog.
 repl:-
    mnotrace((current_input(In),ignore(catch(load_history,_,true)))),
    repeat,
@@ -557,11 +560,11 @@ repl:-
    setup_call_cleanup(mnotrace(prompt(Was,'')),
       (mnotrace(read_metta(In,Read))),
        mnotrace(prompt(_,Was))),
-   once(do_repl(Self,Read)),
+   catch_red(once(do_repl(Self,Read))),
    mnotrace(Read==end_of_file),!.
 
 do_repl(_Self,end_of_file):- !, writeln('\n\n% To restart, use: ?- repl.').
-do_repl(_Slf,call(Term)):- add_history1(Term), !, repl_call(Term).
+do_repl(_Slf,call(Term)):- nop(add_history1(Term)), !, repl_call(Term).
 
 do_repl(Self,!):- !, mnotrace(repl_read(Exec)),do_repl(Self,exec(Exec)).
 
@@ -572,7 +575,7 @@ do_repl(Self,Read):-
   mnotrace(((with_output_to(string(H),write_src(Read)),add_history_string(H)))), do_metta(Self,load,Read).
 
 
-add_history_string(Str):- ignore(catch_i(add_history01(Str))),!.
+add_history_string(Str):- nop( ignore(catch_i(add_history01(Str)))),!.
 
 save_exec_history(exec(Exec)):- !, mnotrace((save_exec_history(Exec))).
 save_exec_history(Exec):- mnotrace((with_output_to(string(H),(write('!'),write_src(Exec))),add_history_string(H))).
