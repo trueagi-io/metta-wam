@@ -26,4 +26,12 @@ metta_vspace/pyswip/swi_flybase.ahead
 metta_vspace/pyswip/swi_flybase_fast.new
 metta_vspace/pyswip/swi_flybase_fast_good.pl
 reqs/
+# temp files
+FOUND_UNITS.sortme
+PASS_FAIL.md
+Results.md
+TEE.ansi
+TEE.ansi.UNITS
+TEST_LINKS.md
+final_MeTTaLog.md
 
