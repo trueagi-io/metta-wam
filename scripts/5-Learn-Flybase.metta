@@ -1,7 +1,5 @@
 !(extend-py! metta_learner)
 
-
-
 !(load-flybase-tiny)
 
 

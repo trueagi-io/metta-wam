@@ -53,7 +53,7 @@ make_test_name(FilePath, Number, TestName) :-
     wots(NS,format('~`0t~d~2|',[Number])),
     format(string(TestName), "~w.~w.~w", [NoUnderscoreParent, NoUnderscore, NS]).
 
-
+%color_g_mesg(_,G):-!,call(G).
 color_g_mesg(C,G):-
   wots(S,user:call(G)), ansi_format([fg(C)], '~N~w~n', [S]),!.
 

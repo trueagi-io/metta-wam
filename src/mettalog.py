@@ -53,6 +53,7 @@ space_refs = {
 try:
     readline.set_history_length(300)
     readline.read_history_file(histfile)
+    readline.set_history_length(300)
     h_len = readline.get_current_history_length()
 except FileNotFoundError:
     open(histfile, 'wb').close()
@@ -657,7 +658,7 @@ def test_custom_v_space2():
     test_custom_space(lambda: the_other_space)
 
 @export_flags(MeTTa=True)
-def test_custom_v_space2():
+def test_custom_v_space3():
     test_custom_space(lambda: the_nb_space)
     #test_custom_space(lambda: the_new_runner_space)
 
@@ -926,7 +927,7 @@ def swipAtom(m):
     return a
 
 def swipRef(a):
-    if isinstance(a, (Variable, Term)):
+    if isinstance(a, (Term)):
        return a
     v = Variable()
     v.unify(a)
@@ -984,25 +985,23 @@ def m2s1(circles, metta_obj, depth=0, preferStringToAtom = None, preferListToCom
         #if preferStringToAtom: return name
         return swipAtom(name)
 
-    if isinstance(metta_obj, VariableAtom):
-        oid = mv2svn(metta_obj)
-    else:
-        oid = id(metta_obj)
-
-    var = circles.get(oid, None)
-    # We are in a circluar reference?
-    if var is not None:
-        #print(f"{oid}={len(circles)}={type(circles)}={type(metta_obj)}")
-        return var
-
-
     V = None
 
     if isinstance(metta_obj, VariableAtom):
+        oid = mv2svn(metta_obj)
+        var = circles.get("$" + oid, None)
+        # We are in a circluar reference?
+        if var is not None:
+            #print(f"{oid}={len(circles)}={type(circles)}={type(metta_obj)}")
+            return var
+
         V = Variable(name = oid)
+        circles["$" + oid] = V
         circles[metta_obj] = V
         circles[V] = metta_obj
         return V
+
+    oid = id(metta_obj)
 
     preferListToCompound = True
     if isinstance(metta_obj, SpaceRef):
@@ -2207,12 +2206,20 @@ class InteractiveMeTTa(LazyMeTTa):
 
                 elif sline.startswith("@space"):
                     global the_new_runner_space
+                    global selected_space_name
                     cmd_, named = split_or_none(sline, " ")
                     if named is None:
                         print("; @spaces:", " ".join(space_refs))
                     elif named in space_refs:
                         print(f"; named={named}")
+                        selected_space_name = named
                         the_new_runner_space = space_refs[named]()
+
+                # Switch to MeTTaLog mode
+                elif sline.startswith("@sm") or sline.startswith("@mettalog") or sline.startswith("@ml"):
+                    self.mode = "mettalog"
+                    print("Switched to MettaLog mode.")
+                    continue
 
                 # Switch to swip mode
                 elif sline.startswith("@s"):
@@ -2249,6 +2256,7 @@ class InteractiveMeTTa(LazyMeTTa):
                     print("@m ^     - Interpret atoms as if there are in files (+)")
                     print("@p       - Switch to Python mode.")
                     print("@s       - Switch to Swip mode.")
+                    print("@sm      - Switch to MeTTaLog mode.")
                     print("@space   - Change the &self of the_runner_space.")
                     print("@v ###   - Verbosity 0-3")
                     print("@h       - Display this help message.")
@@ -2267,27 +2275,49 @@ class InteractiveMeTTa(LazyMeTTa):
                 if sline.endswith("."):
                     swip_exec(line)
                     continue
+
                 elif self.mode == "swip":
                     if prefix == "%":
                         print(line) # comment
                         continue
-                    if not sline.startswith("("):
-                       swip_exec(line)
                     else:
-                       expr = self.parse_single(sline)
-                       if verbose>1: print(f"% S-Expr {line}")
-                       if verbose>1: print(f"% M-Expr {expr}")
-                       circles = Circles()
-                       swip_obj = m2s(circles,expr);
-                       if verbose>1: print(f"% P-Expr {swip_obj}")
-                       call_sexpr = Functor("call_sexpr", 2)
-                       user = newModule("user")
-                       X = Variable()
-                       q = PySwipQ(call_sexpr(swip_obj, X))
-                       while q.nextSolution():
-                           print(X.value)
-                       q.closeQuery()
-                       continue
+                        swip_exec(line)
+                        continue
+
+                elif self.mode == "mettalog":
+                   if prefix == ";":
+                        print(line) # comment
+                        continue
+                   else:
+                        if sline.startswith("!"):
+                            rest = line[2:].strip()
+                            expr = self.parse_single(rest)
+                            expr = E(S("!"),expr)
+                        else:
+                            expr = self.parse_single(sline)
+
+                        if verbose>1: print(f"% S-Expr {line}")
+                        if verbose>1: print(f"% M-Expr {expr}")
+                        circles = Circles()
+                        swipl_fid = PL_open_foreign_frame()
+                        try:
+                            swip_obj = m2s(circles,expr);
+                            if verbose>1: print(f"% P-Expr {swip_obj}")
+                            call_sexpr = Functor("call_sexpr", 4)
+                            user = newModule("user")
+                            X = Variable()
+                            try:
+                                q = PySwipQ(call_sexpr(selected_space_name, line, swip_obj, X))
+                                while q.nextSolution():
+                                  flush_console()
+                                  yield expr, s2m1(circles, X.value)
+                            finally:
+                                q.closeQuery()
+                                flush_console()
+                                continue
+                        finally:
+                            PL_discard_foreign_frame(swipl_fid)
+                   continue
 
                 elif self.mode == "python":
                     if prefix == "#":
@@ -2376,8 +2406,12 @@ class InteractiveMeTTa(LazyMeTTa):
     def repl(self):
         for i, (expr, result_set) in enumerate(self.repl_loop()):
             if result_set:
-                for result in result_set:
-                    print(color_expr(result))
+                try:
+                    for result in result_set:
+                        print(color_expr(result))
+                        flush_console()
+                except TypeError:
+                    print(color_expr(result_set))
                     flush_console()
             else:
                 print(f"[/]")
@@ -2385,6 +2419,29 @@ class InteractiveMeTTa(LazyMeTTa):
 
     def copy(self):
         return self
+
+def call_mettalog(line, parseWithRust = False):
+
+    if parseWithRust:
+        expr = self.parse_single(sline)
+        if verbose>1: print(f"% S-Expr {line}")
+        if verbose>1: print(f"% M-Expr {expr}")
+        circles = Circles()
+        swip_obj = m2s(circles,expr);
+        if verbose>1: print(f"% P-Expr {swip_obj}")
+    else:
+        swip_obj = line
+
+    flush_console()
+    call_sexpr = Functor("call_sexpr", 3)
+    user = newModule("user")
+    X = Variable()
+    q = PySwipQ(call_sexpr(selected_space_name, swip_obj, X))
+    while q.nextSolution():
+      flush_console()
+      yield X.value
+    q.closeQuery()
+    flush_console()
 
 @export_flags(MeTTa=True)
 def vspace_main():
@@ -2435,12 +2492,13 @@ the_gptspace = GptSpace()
 the_vspace = VSpace("&vspace")
 the_flybase = VSpace("&flybase")
 the_nb_space = VSpace("&nb")
-the_other_space = VSpace("&self")
+the_other_space = VSpace("&self2")
 the_python_runner = InteractiveMeTTa();
 the_python_runner.cwd = [os.path.dirname(os.path.dirname(__file__))]
 the_old_runner_space = the_python_runner.space()
 the_python_runner.run("!(extend-py! metta_learner)")
 the_new_runner_space = the_python_runner.space()
+selected_space_name = "&self"
 #the_python_runner.run("!(extend-py! VSpace)")
 #the_python_runner.run("!(extend-py! GptSpace)")
 is_init_ran = False
