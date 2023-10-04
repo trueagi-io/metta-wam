@@ -167,12 +167,12 @@ compile_pred_for_assert(HeadIs, (NewHeadIs:-Converted)) :-
 
 
 as_functor_args(AsPred,F,A,ArgsL):- nonvar(AsPred),!,into_list_args(AsPred,[F|ArgsL]),length(ArgsL,A).
-as_functor_args(AsPred,F,A,ArgsL):- length(ArgsL,A),AsPred=..[F|ArgsL].
+as_functor_args(AsPred,F,A,ArgsL):- novar(F),length(ArgsL,A),AsPred=..[F|ArgsL].
 
 compile_for_assert(HeadIs, AsBodyFn, Converted) :- (AsBodyFn =@= HeadIs ; AsBodyFn == []), !,
      compile_pred_for_assert(HeadIs,Converted).
 % If Convert is of the form (AsFunction=AsBodyFn), we perform conversion to obtain the equivalent predicate.
-compile_for_assert(HeadIs, AsBodyFn, Converted) :-
+compile_for_assert(HeadIs, AsBodyFn, Converted) :- false,
    AsFunction = HeadIs, Converted = (HeadC :- BodyC),
    funct_with_result_is_nth_of_pred(HeadIs,AsFunction, Result, _Nth, Head),
    as_functor_args(Head,F,A,ArgsL),

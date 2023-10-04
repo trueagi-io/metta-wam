@@ -33,7 +33,7 @@ Now FAILING TEST-SCRIPTS.C1-GROUNDED-BASIC.20)
 
 
 option_value_def('repl',false).
-option_value_def('compile',full).
+option_value_def('compile',preview).
 option_value_def('table',false).
 option_value_def('time',true).
 option_value_def('exec',true).
@@ -311,7 +311,7 @@ metta_cmd_args(Rest):- current_prolog_flag(argv,Rest).
 run_file_arg:- metta_cmd_args(Rest), !,  do_cmdline_load_metta('&self',Rest).
 loon:- run_file_arg, !, loonit_report, !, (option_value('halt',false)->true;halt(7)).
 %loon:- time(loon_metta('./examples/compat/test_scripts/*.metta')),fail.
-%loon:- repl, halt(7).
+loon:- repl, (option_value('halt',false)->true;halt(7)).
 
 
 metta_make_hook:-  loonit_reset, option_value(not_a_reload,true),!.
