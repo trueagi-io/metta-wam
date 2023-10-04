@@ -17,19 +17,52 @@ python_flag=enable
 function load_mettalogrc {
     local file="${1:-$HOME/.mettalogrc}"  # Use the argument if supplied, else use the default file
     local METTALOG_OPTIONS=()
+    local multiline_accumulator=""
+    local verbose="${VERBOSE:-0}"  # Use the VERBOSE environment variable or default to '0' (not verbose)
 
     if [[ -f "$file" ]]; then
-        while IFS= read -r line; do
+        while IFS= read -r line || [[ -n "$line" ]]; do
+            # Trim leading and trailing whitespace
+            line="${line#"${line%%[![:space:]]*}"}"
+            line="${line%"${line##*[![:space:]]}"}"
+
             [[ -z "$line" ]] && continue # Skip empty lines
+
+            # Check for line continuation (trailing '\')
+            if [[ "$line" =~ \\$ ]]; then
+                multiline_accumulator+="${line%\\} "
+                continue
+            else
+                line="$multiline_accumulator$line"
+                multiline_accumulator=""
+            fi
+
             [[ $line =~ ^# ]] && continue # Skip lines that start with a comment
+
             METTALOG_OPTIONS+=("$line")
+
+            # Verbose logging
+            [[ "$verbose" == "1" ]] && echo "Loaded option: $line"
         done < "$file"
+    else
+        [[ "$verbose" == "1" ]] && echo "File $file does not exist."
+        return 1
     fi
 
     # Return the array (in bash, arrays are typically returned by echoing their elements)
     echo "${METTALOG_OPTIONS[@]}"
+    return 0
 }
 
+
+
+add_to_list() {
+    local item="$1"
+    local -n list_ref="$2"
+    if [[ ! " ${list_ref[*]} " =~ " $item " ]]; then
+        list_ref+=("$item")
+    fi
+}
 
 function print_help {
     echo " CMD: $0"
@@ -92,25 +125,32 @@ OTHER_OPTIONS=()
 FLAG_WITH_ARG=false
 LIST_OF_FILE_ARGS=()
 
+remove_quotes() {
+  local value="$1"
+  echo "${value//\"/}"
+}
 
 function handle_args {
     FLAG_WITH_ARG=false
     for arg in "$@"; do
 
+	arg=$(remove_quotes "$arg")  # Remove the quotes
 
-	if [[ -e "$arg" ]]; then
-	    rpath=("$(realpath "$arg")")
-	    if [[ -f "$rpath" || -d "$rpath" ]]; then
-		#arg="$rpath"
-		echo -e "file="$rpath""
+	if [[ -f "$arg" || -d "$arg" ]]; then
+	    arg_realpath="$(realpath "$arg")"
+	    if [[ -f "$arg_realpath" || -d "$arg_realpath" ]]; then
+	       add_to_list "$arg_realpath" LIST_OF_FILE_ARGS
 	    fi
-        fi
+	fi
 
         [[ "$arg" == "--help" || "$arg" == "-h" ]] && { print_help; exit_script 0; }
         [[ "$arg" =~ ^--dump-runtime-variables.*$ || "$arg" == "--abi-version" || "$arg" == "--version" || "$arg" == "--arch" ]] && { swipl $@; exit_script 0; }
 
         if [[ "$arg" =~ ^--timeout=([0-9]+)$ ]]; then
             TIMEOUT="${BASH_REMATCH[1]}"
+	    echo "$0 TIMEOUT=$TIMEOUT"
+	    export TIMEOUT
+	    continue
 	elif [[ "$arg" =~ ^--python=(enable|false)$ ]]; then
             python_flag="${BASH_REMATCH[1]}"
         elif [[ "$arg" == "--python" ]]; then
@@ -143,14 +183,14 @@ function handle_args {
                 continue
                 ;;
             *)
-	    if [[ -f "$arg" || -d "$arg" ]]; then
-		arg_realpath="$(realpath "$arg")"
-		if ! [[ "${LIST_OF_FILE_ARGS[@]}" =~ "$arg_realpath" ]]; then
-		    LIST_OF_FILE_ARGS+=("$arg_realpath")
+		if [[ -f "$arg" || -d "$arg" ]]; then
+		    arg_realpath="$(realpath "$arg")"
+		    if [[ -f "$arg_realpath" || -d "$arg_realpath" ]]; then
+		       add_to_list "$arg_realpath" LIST_OF_FILE_ARGS
+		    fi
+		else
+		    add_to_list "$arg" OTHER_OPTIONS
 		fi
-	    else
-		OTHER_OPTIONS+=("$arg")
-	    fi
                 ;;
         esac
     done
@@ -160,14 +200,25 @@ function handle_args {
 handle_args $(load_mettalogrc)
 # Then process actual command-line arguments
 handle_args "$@"
-echo "LIST_OF_FILE_ARGS[0]=${LIST_OF_FILE_ARGS[0]}"
+#echo "LIST_OF_FILE_ARGS[0]=${LIST_OF_FILE_ARGS[0]}"
 DIRNAME=$(dirname "${LIST_OF_FILE_ARGS[0]}")
-DIR_OPTS=$(load_mettalogrc "$DIRNAME/.mettalogrc")
-echo "DIR_OPTS=$DIR_OPTS"
-handle_args $DIR_OPTS
+DIR_RC="$DIRNAME/.mettalogrc"
+#echo "DIR_RC=$DIR_RC"
+if [[ -f "$DIR_RC" ]]; then
+    DIR_OPTS=$(load_mettalogrc "$DIR_RC")
+    echo "DIR_RC($DIR_RC)='$DIR_OPTS'"
+    # Assuming DIR_OPTS contains options and not filenames.
+    # So we directly handle them as arguments.
+    if [[ ! -z "$DIR_OPTS" ]]; then
+	handle_args $DIR_OPTS
+    fi
+else
+    echo "No RC file (.mettalogrc) for directory: $DIRNAME"
+fi
+
 
 #echo "Debug: SWI_OPTIONS: ${SWI_OPTIONS[@]}"
-echo "Debug: LIST_OF_FILE_ARGS: ${LIST_OF_FILE_ARGS[@]}"
+#echo "Debug: LIST_OF_FILE_ARGS: ${LIST_OF_FILE_ARGS[@]}"
 #echo "Debug: OTHER_OPTIONS: ${OTHER_OPTIONS[@]}"
 
 # Decide on enabling the REPL
