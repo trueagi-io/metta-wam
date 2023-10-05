@@ -31,184 +31,12 @@ Now FAILING TEST-SCRIPTS.C1-GROUNDED-BASIC.20)
 
 */
 
-
-option_value_def('repl',false).
-option_value_def('compile',preview).
-option_value_def('table',false).
-option_value_def('time',true).
-option_value_def('exec',true).
-option_value_def('html',false).
-option_value_def('python',false).
-option_value_def('halt',false).
-option_value_def('prolog',false).
-
-option_value_def('trace-on-fail',true).
-option_value_def('trace-on-pass',true).
-option_value_def('trace-on-overflow',true).
-option_value_def('trace-on-error',true).
-option_value_def('trace-length',100).
-
-option_value_def('stack-max',100).
-
-
-trace_on_fail:-     option_value('trace-on-fail',true).
-trace_on_overflow:- option_value('trace-on-overflow',true).
-trace_on_pass:-     option_value('trace-on-pass',true).
-
-
-% ============================
-% %%%% Arithmetic Operations
-% ============================
-% Addition
-'+'(Addend1, Addend2, Sum):- plus(Addend1, Addend2, Sum).
-% Subtraction
-'-'(Sum, Addend1, Addend2):- plus(Addend1, Addend2, Sum).
-
-:- use_module(library(clpq)).
-% Multiplication
-'*'(Factor1, Factor2, Product):- {Product = Factor1*Factor2}.
-% Division
-'/'(Dividend, Divisor, Quotient):- {Dividend = Quotient * Divisor}.
-% Modulus
-'mod'(Dividend, Divisor, Remainder):- {Remainder = Dividend mod Divisor}.
-% Exponentiation
-'exp'(Base, Exponent, Result):- eval_args(['exp', Base, Exponent], Result).
-% Square Root
-'sqrt'(Number, Root):- eval_args(['sqrt', Number], Root).
-
-% ============================
-% %%%% List Operations
-% ============================
-% Retrieve Head of the List
-'car-atom'(List, Head):- eval_args(['car-atom', List], Head).
-% Retrieve Tail of the List
-'cdr-atom'(List, Tail):- eval_args(['cdr-atom', List], Tail).
-% Construct a List
-'Cons'(Element, List, 'Cons'(Element, List)):- !.
-% Collapse List
-'collapse'(List, CollapsedList):- eval_args(['collapse', List], CollapsedList).
-% Count Elements in List
-'CountElement'(List, Count):- eval_args(['CountElement', List], Count).
-% Find Length of List
-%'length'(List, Length):- eval_args(['length', List], Length).
-
-% ============================
-% %%%% Nondet Opteration
-% ============================
-% Superpose a List
-'superpose'(List, SuperposedList):- eval_args(['superpose', List], SuperposedList).
-
-% ============================
-% %%%% Testing
-% ============================
-
-% `assertEqual` Predicate
-% This predicate is used for asserting that the Expected value is equal to the Actual value.
-% Expected: The value that is expected.
-% Actual: The value that is being checked against the Expected value.
-% Result: The result of the evaluation of the equality.
-% Example: `assertEqual(5, 5, Result).` would succeed, setting Result to true (or some success indicator).
-%'assertEqual'(Expected, Actual, Result):- use_metta_compiler,!,as_tf((Expected=Actual),Result).
-'assertEqual'(Expected, Actual, Result):- ignore(Expected=Actual), eval_args(['assertEqual', Expected, Actual], Result).
-
-% `assertEqualToResult` Predicate
-% This predicate asserts that the Expected value is equal to the Result of evaluating Actual.
-% Expected: The value that is expected.
-% Actual: The expression whose evaluation is being checked against the Expected value.
-% Result: The result of the evaluation of the equality.
-% Example: If Actual evaluates to the Expected value, this would succeed, setting Result to true (or some success indicator).
-'assertEqualToResult'(Expected, Actual, Result):- eval_args(['assertEqualToResult', Expected, Actual], Result).
-
-% `assertFalse` Predicate
-% This predicate is used to assert that the evaluation of EvalThis is false.
-% EvalThis: The expression that is being evaluated and checked for falsehood.
-% Result: The result of the evaluation.
-% Example: `assertFalse((1 > 2), Result).` would succeed, setting Result to true (or some success indicator), as 1 > 2 is false.
-'assertFalse'(EvalThis, Result):- eval_args(['assertFalse', EvalThis], Result).
-
-% `assertNotEqual` Predicate
-% This predicate asserts that the Expected value is not equal to the Actual value.
-% Expected: The value that is expected not to match the Actual value.
-% Actual: The value that is being checked against the Expected value.
-% Result: The result of the evaluation of the inequality.
-% Example: `assertNotEqual(5, 6, Result).` would succeed, setting Result to true (or some success indicator).
-'assertNotEqual'(Expected, Actual, Result):- eval_args(['assertNotEqual', Expected, Actual], Result).
-
-% `assertTrue` Predicate
-% This predicate is used to assert that the evaluation of EvalThis is true.
-% EvalThis: The expression that is being evaluated and checked for truth.
-% Result: The result of the evaluation.
-% Example: `assertTrue((2 > 1), Result).` would succeed, setting Result to true (or some success indicator), as 2 > 1 is true.
-'assertTrue'(EvalThis, Result):- eval_args(['assertTrue', EvalThis], Result).
-
-% `rtrace` Predicate
-% This predicate is likely used for debugging; possibly for tracing the evaluation of Condition.
-% Condition: The condition/expression being traced.
-% EvalResult: The result of the evaluation of Condition.
-% Example: `rtrace((2 + 2), EvalResult).` would trace the evaluation of 2 + 2 and store its result in EvalResult.
-'rtrace'(Condition, EvalResult):- eval_args(['rtrace', Condition], EvalResult).
-
-% `time` Predicate
-% This predicate is used to measure the time taken to evaluate EvalThis.
-% EvalThis: The expression whose evaluation time is being measured.
-% EvalResult: The result of the evaluation of EvalThis.
-% Example: `time((factorial(5)), EvalResult).` would measure the time taken to evaluate factorial(5) and store its result in EvalResult.
-'time'(EvalThis, EvalResult):- eval_args(['time', EvalThis], EvalResult).
-
-% ============================
-% %%%% Debugging, Printing and Utility Operations
-% ============================
-% REPL Evaluation
-'repl!'(EvalResult):- eval_args(['repl!'], EvalResult).
-% Condition Evaluation
-'!'(Condition, EvalResult):- eval_args(['!', Condition], EvalResult).
-% Import File into Environment
-'import!'(Environment, FileName, Namespace):- eval_args(['import!', Environment, FileName], Namespace).
-% Evaluate Expression with Pragma
-'pragma!'(Environment, Expression, EvalValue):- eval_args(['pragma!', Environment, Expression], EvalValue).
-% Print Message to Console
-'print'(Message, EvalResult):- eval_args(['print', Message], EvalResult).
-% No Operation, Returns EvalResult unchanged
-'nop'(Expression, EvalResult):- eval_args(['nop', Expression], EvalResult).
-
-% ============================
-% %%%% Variable Bindings
-% ============================
-% Bind Variables
-'bind!'(Environment, Variable, Value):- eval_args(['bind!', Environment, Variable], Value).
-% Let binding for single variable
-'let'(Variable, Expression, Body, Result):- eval_args(['let', Variable, Expression, Body], Result).
-% Sequential let binding
-'let*'(Bindings, Body, Result):- eval_args(['let*', Bindings, Body], Result).
-
-% ============================
-% %%%% Pattern Matching
-% ============================
-% Pattern Matching with an else branch
-'match'(Environment, Pattern, Template, ElseBranch, Result):- eval_args(['match', Environment, Pattern, Template, ElseBranch], Result).
-% Pattern Matching without an else branch
-%'match'(_Environment, Pattern, Template, Result):- callable(Pattern), \+ is_list(Pattern),!, call(Pattern),Result=Template.
-%'match'(_Environment, Pattern, Template, Result):- !, is_True(Pattern), Result=Template.
-'match'(Environment, Pattern, Template, Result):- eval_args(['match', Environment, Pattern, Template], Result).
-
-% ============================
-% %%%% Reflection
-% ============================
-% Get Type of Value
-'get-type'(Value, Type):- eval_args(['get-type', Value], Type).
-
-
-'new-space'(Space):- gensym(new_space_,Name), fetch_or_create_space(Name, Space).
-
 % Function to check if an atom is registered as a space name
 :- dynamic is_registered_space_name/1.
 is_nb_space(G):- is_valid_nb_space(G) -> true ;
                  is_registered_space_name(G),nb_current(G,S),is_valid_nb_space(S).
 
 :- dynamic(is_python_space/1).
-% ===============================
-% MeTTa Python incoming interface
-% ===============================
 
 :- multifile(space_type_method/3).
 :- dynamic(space_type_method/3).
@@ -309,13 +137,9 @@ metta_cmd_args(Rest):- current_prolog_flag(argv,P),append(_,['--'|Rest],P),!.
 metta_cmd_args(Rest):- current_prolog_flag(os_argv,P),append(_,['--'|Rest],P),!.
 metta_cmd_args(Rest):- current_prolog_flag(argv,Rest).
 run_file_arg:- metta_cmd_args(Rest), !,  do_cmdline_load_metta('&self',Rest).
-loon:- catch_red(run_file_arg), loonit_report,
-  (option_value('prolog',true)->true;
-  ( (option_value('repl',false)->true;repl),
-    (option_value('halt',false)->true;halt(7)))).
+loon:- run_file_arg, !, loonit_report, halt(7).
 %loon:- time(loon_metta('./examples/compat/test_scripts/*.metta')),fail.
-loon:- repl, (option_value('halt',false)->true;halt(7)).
-
+loon:- repl, halt(7).
 
 metta_make_hook:-  loonit_reset, option_value(not_a_reload,true),!.
 metta_make_hook:-
@@ -338,22 +162,23 @@ get_flag_value(M,false):- atom_contains(M,'-no'),!.
 get_flag_value(_,true).
 
 
-:- ignore(((
-   \+ prolog_load_context(reloading,true),
-   forall(option_value_def(Opt,Default),set_option_value(Opt,Default))))).
+process_option_value_def('repl').
+process_option_value_def('exec').
+process_option_value_def('html').
+process_option_value_def('python').
 
 process_option_value_def:- \+ option_value('python',false), skip(ensure_loaded(metta_python)).
 process_option_value_def.
 
 
 process_late_opts:- option_value('html',true), shell('./total_loonits.sh').
-process_late_opts:- option_value('repl',true), repl.
+process_late_opts:- \+ option_value('repl',false), repl.
 %process_late_opts:- halt(7).
 
 do_cmdline_load_metta(Self,List):-
   select(M,List,Rest),
   atom_concat('-',_,M),
-  option_value_def(Opt,_),
+  process_option_value_def(Opt),
   is_cmd_option(Opt,M, TF),!,
   write(' '), write_src(M), nl, !, set_option_value(Opt,TF),
   do_cmdline_load_metta(Self,Rest).
@@ -453,12 +278,6 @@ load_metta_stream(Self,In):-
   at_end_of_stream(In),!.
 
 
-
-
-debug_only(G):- ignore(mnotrace(catch_warn(G))).
-debug_only(_What,G):- ignore((fail,mnotrace(catch_warn(G)))).
-
-
 'True':- true.
 'False':- fail.
 
@@ -549,7 +368,6 @@ repl_read(Read) :- mnotrace(repl_read("", Read)).
 
 
 
-%repl:- option_value('repl',prolog),!,prolog.
 repl:-
    mnotrace((current_input(In),ignore(catch(load_history,_,true)))),
    repeat,
@@ -560,11 +378,11 @@ repl:-
    setup_call_cleanup(mnotrace(prompt(Was,'')),
       (mnotrace(read_metta(In,Read))),
        mnotrace(prompt(_,Was))),
-   catch_red(once(do_repl(Self,Read))),
+   once(do_repl(Self,Read)),
    mnotrace(Read==end_of_file),!.
 
 do_repl(_Self,end_of_file):- !, writeln('\n\n% To restart, use: ?- repl.').
-do_repl(_Slf,call(Term)):- nop(add_history1(Term)), !, repl_call(Term).
+do_repl(_Slf,call(Term)):- add_history1(Term), !, repl_call(Term).
 
 do_repl(Self,!):- !, mnotrace(repl_read(Exec)),do_repl(Self,exec(Exec)).
 
@@ -574,29 +392,20 @@ do_repl(Self,exec(Exec)):- !, mnotrace(save_exec_history(Exec)), do_metta_exec(S
 do_repl(Self,Read):-
   mnotrace(((with_output_to(string(H),write_src(Read)),add_history_string(H)))), do_metta(Self,load,Read).
 
-
-add_history_string(Str):- nop( ignore(catch_i(add_history01(Str)))),!.
+add_history_string(Str):- ignore(catch_i(add_history01(Str))),!.
 
 save_exec_history(exec(Exec)):- !, mnotrace((save_exec_history(Exec))).
 save_exec_history(Exec):- mnotrace((with_output_to(string(H),(write('!'),write_src(Exec))),add_history_string(H))).
 
 read_metta1(_,O2):- clause(t_l:s_reader_info(O2),_,Ref),erase(Ref).
 read_metta1(In,Read):- current_input(In0),In==In0,!, repl_read(Read).
-read_metta1(In,Read):- string(In),parse_sexpr_metta(In,Read),!.
 read_metta1(In,Read):- peek_char(In,Char), read_metta1(In,Char,Read).
 
 read_metta1(In,Char,Read):- char_type(Char,white),get_char(In,Char),put(Char),!,read_metta1(In,Read).
-read_metta1(In,';',Read):- get_char(In,_), !, (maybe_read_pl(In,Read)-> true ; (read_line_to_string(In,Str),write_comment(Str),!,read_metta(In,Read))),!.
-read_metta1(In,_,Read):-  maybe_read_pl(In,Read),!.
+read_metta1(In,';',Read):- read_line_to_string(In,Str),write_comment(Str),!,read_metta1(In,Read).
 read_metta1(In,_,Read1):- parse_sexpr_metta(In,Read),!,must_det_ll(Read=Read1).
 
 
-maybe_read_pl(In,Read):-
-  peek_line(In,Line1), Line1\=='', atom_contains(Line1, '.'),atom_contains(Line1, ':-'),
-  notrace(((catch((read_term_from_atom(Line1, Term, []), Term\==end_of_file, Read=call(Term)),_, fail),!,
-  read_term(In, Term, [])))).
-peek_line(In,Line1):- peek_string(In, 1024, Str), split_string(Str, "\r\n", "\s", [Line1,_|_]),!.
-peek_line(In,Line1):- peek_string(In, 4096, Str), split_string(Str, "\r\n", "\s", [Line1,_|_]),!.
 
 read_metta(In,Read):-
  read_metta1(In,Read1),
@@ -610,11 +419,8 @@ do_metta_cmt(_,'$STRING'(Cmt)):- write_comment(Cmt),!.
 do_metta_cmt(Self,[Cmt]):- !, do_metta_cmt(Self, Cmt),!.
 
 
-parse_sexpr_metta(I,O):- string(I),normalize_space(string(M),I),!,parse_sexpr_metta1(M,O).
-parse_sexpr_metta(I,O):- parse_sexpr_untyped(I,U),trly(untyped_to_metta,U,O).
 
-parse_sexpr_metta1(M,exec(O)):- string_concat('!',I,M),!,parse_sexpr_metta1(I,O).
-parse_sexpr_metta1(I,O):- parse_sexpr_untyped(I,U),trly(untyped_to_metta,U,O).
+parse_sexpr_metta(I,O):- parse_sexpr_untyped(I,U),trly(untyped_to_metta,U,O).
 
 mlog_sym('@').
 
@@ -719,46 +525,9 @@ subst_vars(Term, Term, NamedVarsList, NamedVarsList).
 :- nb_setval(variable_names,[]).
 
 
-assert_preds(_Self,_Load,_Preds):- \+ preview_compiler,!.
-assert_preds(_Self,Load,Preds):-
-  expand_to_hb(Preds,H,_B),functor(H,F,A),
-  color_g_mesg('#005288',(
-   ignore((
-    \+ predicate_property(H,defined),
-    if_t(use_metta_compiler,catch_i(dynamic(F,A))),
-    format('  :- ~q.~n',[dynamic(F,A)]),
-    if_t(option_value('tabling',true), format('  :- ~q.~n',[table(F/A)])))),
-   if_t((preview_compiler),
-     format('~N~n  ~@',[portray_clause(Preds)])),
-   if_t(use_metta_compiler,if_t(\+ predicate_property(H,static),add_assertion(Preds))))),
-   nop(metta_anew1(Load,Preds)).
+metta_anew1(load,OBO):- subst_vars(OBO,Cl),assert_if_new(Cl). %to_metta(Cl).
+metta_anew1(unload,OBO):- subst_vars(OBO,Cl),ignore((clause(Cl,_,Ref),clause(Cl2,_,Ref),Cl=@=Cl2,erase(Ref),pp_m(Cl))).
 
-
-%load_hook(_Load,_Hooked):- !.
-load_hook(Load,Hooked):- ignore(( \+ ((forall(load_hook0(Load,Hooked),true))))),!.
-
-
-load_hook0(_,_):- \+ preview_compiler,!.
-load_hook0(Load,metta_defn(Self,H,B)):-
-       compile_for_assert(H,B,Preds),
-       assert_preds(Self,Load,Preds).
-load_hook0(Load,metta_atom(Self,H)):- B = 'True',
-       H\=[':'|_], compile_for_assert(H,B,Preds),
-       assert_preds(Self,Load,Preds).
-
-
-use_metta_compiler:- option_value('compile','full'), !.
-preview_compiler:- \+ option_value('compile',false), !.
-%preview_compiler:- use_metta_compiler,!.
-
-metta_anew1(Load,_OBO):- var(Load),trace,!.
-metta_anew1(load,OBO):- load_hook(load,OBO),subst_vars(OBO,Cl),assert_if_new(Cl). %to_metta(Cl).
-metta_anew1(unload,OBO):- subst_vars(OBO,Cl),load_hook(unload,OBO),
-  expand_to_hb(Cl,Head,Body),
-  predicate_property(Head,number_of_clauses(_)),
-  ignore((clause(Head,Body,Ref),clause(Head2,Body2,Ref),(Head+Body)=@=(Head2+Body2),erase(Ref),pp_m(Cl))).
-
-metta_anew(Load,_Src,OBO):- silent_loading,!,metta_anew1(Load,OBO).
 metta_anew(Load,Src,OBO):- format('~N'), color_g_mesg('#0f0f0f',(write('  ; Action: '),writeq(Load=OBO))),
    color_g_mesg('#ffa500', write_src(Src)),metta_anew1(Load,OBO),format('~n').
 
@@ -776,7 +545,7 @@ assert_to_metta(OBO):-
   decl_fb_pred(FF,AA),
   ((fail,call(Data))->true;(
    must_det_ll((assert(Data),incr_file_count(_),
-     ignore((((fail,should_show_data(X),
+     ignore((((should_show_data(X),
        ignore((OldData\==Data,write('; oldData '),write_src(OldData),format('  ; ~w ~n',[X]))),
        write_src(Data),format('  ; ~w ~n',[X]))))),
      ignore((
@@ -866,113 +635,44 @@ do_metta1(Self,Load,[':',Fn,TypeDecL,RetType], Src):-
    ignore((Body == 'True',!,do_metta1(Self,Load,Head))),
    nop((fn_append(Head,X,Head), fn_append(PredDecl,X,Body), metta_anew((Head:- Body)))),!.*/
 
-do_metta1(Self,Load,['=',Head,False], Src):- (False == [];False == 'Nil';False == 'F'),!,
-  do_metta1(Self,Load,['=',Head,'False'], Src).
+do_metta1(Self,Load,['=',PredDecl,False], Src):- (False == [];False == 'Nil';False == 'F'),!,
+  do_metta1(Self,Load,['=',PredDecl,'False'], Src).
 
-do_metta1(Self,Load,['=',Head,Body], Src):-!,
+do_metta1(Self,Load,['=',Head,PredDecl], Src):-!,
  must_det_ll((
     discover_head(Self,Load,Head),
-    color_g_mesg('#ffa500',metta_anew(Load,Src,metta_defn(Self,Head,Body))),
-    discover_body(Self,Load,Body),
-    %ignore((Body == 'True',!,do_metta1(Self,Load,Head))),
-    nop((fn_append(Head,X,HeadF),fn_append(Body,X,BodyF), metta_anew((HeadF:- BodyF)))))),!.
+    color_g_mesg('#ffa500',metta_anew(Load,Src,metta_defn(Self,Head,PredDecl))),
+    discover_body(Self,Load,PredDecl),
+    nop((fn_append(Head,X,Head),fn_append(PredDecl,X,Body), metta_anew((Head:- Body)))))),!.
 
-do_metta1(Self,Load,Head, Src):-
-   ignore(discover_head(Self,Load,Head)),
-   %color_g_mesg('#ffa500',metta_anew(Load,Src,metta_defn(Self,Head,Head))),
-   %color_g_mesg('#ffa500',metta_anew(Load,Src,metta_defn(Self,Head,'True'))),
-   color_g_mesg('#ffa500',metta_anew(Load,Src,metta_atom(Self,Head))),
-   !.
+do_metta1(Self,Load,PredDecl, Src):-
+   ignore(discover_head(Self,Load,PredDecl)),
+   color_g_mesg('#ffa500',metta_anew(Load,Src,metta_atom(Self,PredDecl))).
 
 do_metta_exec(Self,Var):- var(Var), !, pp_m(eval(Var)), freeze(Var,wdmsg(laterVar(Self,Var))).
-do_metta_exec(Self,TermV):-
+do_metta_exec(Self,TermV):-!,
+ mnotrace(( must_det_ll((
   \+ \+ write_exec(TermV),
-  into_metta_callable(Self,TermV,Term,X,NamedVarsList,Was),
-  forall(may_rtrace(Term),
+  subst_vars(TermV,Term,NamedVarsList),
+  copy_term(NamedVarsList,Was),
+  term_variables(Term,Vars),
+  %nl,writeq(Term),nl,
+  skip((\+ \+
+  ((numbervars(v(TermV,Term,NamedVarsList,Vars),999,_,[]),
+  %nb_current(variable_names,NamedVarsList),
+  nl,print(subst_vars(TermV,Term,NamedVarsList,Vars)),nl)))),
+  nop(maplist(verbose_unify,Vars)))))),
+  forall(may_rtrace(eval_args(100,Self,Term,X)),
      ignore(mnotrace(((color_g_mesg(yellow,
      ((write(' '),
         write_src(X),nl,
         (NamedVarsList\=@=Was-> (color_g_mesg(green,writeq(NamedVarsList)),nl); true),
         ignore(( \+ is_list(X),compound(X),format(' % '),writeq(X),nl)))))))))).
 
-
-
-
-
-
-call_sexpr(Self,S,Swip,Out):- (atom(S);string(S)), once(atom_contains(S,')');atom_contains(S,'!');atom_contains(S,'&')),
-     wdmsg(swip=Swip),
-     once((atom_string(S,In), read_metta(In,Read))),!,call_sexpr1(Self,Read,Out).
-call_sexpr(Self,S,_,Out):- call_sexpr1(Self,S,Out).
-
-
-call_sexpr1(Self,exec(S),Out):-
-  into_metta_callable(Self,S,Term,X,NamedVarsList,Was),!,
- ((((
-   (may_rtrace(Term),
-     ignore(mnotrace(((
-     color_g_mesg(yellow,
-     ((write(' '),
-        write_src(X),
-        (NamedVarsList\=@=Was-> (color_g_mesg(green,writeq(NamedVarsList)),nl); true),
-        ignore(( \+ is_list(X),compound(X),format(' % '),writeq(X),nl)))))))))))))*->Out=X;
-   (writeq(no_result(Self)=Term),nl,!,S=Out)).
-
-call_sexpr1(Self,S,Out):-
- (do_metta(Self,load,S), Out='True')*->true;(writeq(not_evaluated(Self)=S),nl,!,S=Out).
-
-into_metta_callable(_Self,TermV,Term,X,NamedVarsList,Was):- use_metta_compiler, !,
- must_det_ll((((
-
- % ignore(Res = '$VAR'('ExecRes')),
-  RealRes = Res,
-  compile_for_exec(Res,TermV,ExecGoal),!,
-  subst_vars(Res+ExecGoal,Res+Term,NamedVarsList),
-  copy_term(NamedVarsList,Was),
-  term_variables(Term,Vars),
-  mnotrace((color_g_mesg('#114411',print_tree(exec(Res):-ExecGoal)))),
-  %nl,writeq(Term),nl,
-  ((\+ \+
-  ((numbervars(v(TermV,Term,NamedVarsList,Vars),999,_,[attvar(bind)]),
-  %nb_current(variable_names,NamedVarsList),
-  %nl,print(subst_vars(Term,NamedVarsList,Vars)),
-  nl)))),
-  nop(maplist(verbose_unify,Vars)),
-  %NamedVarsList=[_=RealRealRes|_],
-  var(RealRes), X = RealRes)))),!.
-
-
-into_metta_callable(Self,TermV,eval_args(StackMax,Self,Term,X),X,NamedVarsList,Was):-!,
- mnotrace(( must_det_ll((
-  if_t(preview_compiler,write_compiled_exec(TermV,_Goal)),
-  subst_vars(TermV,Term,NamedVarsList),
-  copy_term(NamedVarsList,Was),
-  term_variables(Term,Vars),
-  %nl,writeq(Term),nl,
-  skip((\+ \+
-  ((numbervars(v(TermV,Term,NamedVarsList,Vars),999,_,[attvar(bind)]),
-  %nb_current(variable_names,NamedVarsList),
-  nl,print(subst_vars(TermV,Term,NamedVarsList,Vars)),nl)))),
-  option_else('stack-max',StackMax,100),
-  nop(maplist(verbose_unify,Vars)))))),!.
-
-
-write_compiled_exec(Exec,Goal):-
-%  ignore(Res = '$VAR'('ExecRes')),
-  compile_for_exec(Res,Exec,Goal),
-  mnotrace((color_g_mesg('#114411',portray_clause(exec(Res):-Goal)))).
-
-verbose_unify(Term):- verbose_unify(trace,Term).
-verbose_unify(What,Term):- term_variables(Term,Vars),maplist(verbose_unify0(What),Vars),!.
-verbose_unify0(What,Var):- put_attr(Var,verbose_unify,What).
+verbose_unify(Var):- put_attr(Var,verbose_unify,true).
 verbose_unify:attr_unify_hook(Attr, Value) :-
     format('~N~q~n',[verbose_unify:attr_unify_hook(Attr, Value)]),
-    vu(Attr,Value).
-vu(_Attr,Value):- is_ftVar(Value),!.
-vu(fail,_Value):- !, fail.
-vu(true,_Value):- !.
-vu(trace,_Value):- trace.
-:- nodebug(metta(eval)).
+    (ground(Value)->true;trace).
 :- nodebug(metta(exec)).
 
 may_rtrace(Goal):- debugging(metta(eval)),use_metta_compiler,!,rtrace(call(Goal)).
@@ -1026,7 +726,7 @@ repl_call(Term):- catch_red(Term).
 
 catch_red(Term):- catch(Term,E,pp_m(red,in(Term,E))).
 
-s2p(I,O):- sexpr_s2p(I,O),!.
+s2p(I,O):- sexpr_sterm_to_pterm(I,O),!.
 
 
 discover_head(Self,Load,Head):-
@@ -1045,10 +745,7 @@ arg_types([['->'|L]],R,LR):-!, arg_types(L,R,LR).
 arg_types(['->'|L],R,LR):-!, arg_types(L,R,LR).
 arg_types(L,R,LR):- append(L,R,LR).
 
-:- ensure_loaded('../../examples/factorial').
-:- ensure_loaded('../../examples/fibonacci').
 
-%print_preds_to_functs:-preds_to_functs_src(factorial_tail_basic)
 
 
 :- ignore(((
