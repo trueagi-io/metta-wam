@@ -1064,4 +1064,4 @@ qcompile_mettalog:-
     %pack_install(predicate_streams, [upgrade(true),global(true)]),
     %pack_install(logicmoo_utils, [upgrade(true),global(true)]),
     %pack_install(dictoo, [upgrade(true),global(true)]),
-    qsave_program('MeTTaLog', [goal(loon), toplevel(halt), stand_alone(true)]).
+    qsave_program('MeTTaLog', [goal(loon), toplevel(loon), stand_alone(true)]).
