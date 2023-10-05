@@ -132,16 +132,14 @@ remove_funct_arg(AsPred, Nth, AsFunction) :-
 
 % print_metta_src(funct).
 
-allow_concepts:- option_else(concepts,TF,true), \+ TF == false.
-with_concepts(TF,Goal):- with_option(concepts,TF,Goal).
-with_indents(TF,Goal):- with_option(src_indents,TF,Goal).
-
 p2m(NC,NC):- var(NC),!.
 p2m(NC,OO):- is_list(NC),!,maplist(p2m,NC,OO).
-p2m(!,'!').
-p2m(fail,'False').
-p2m(true,'True').
-p2m(prolog,meTTa).
+p2m(!, '!').  % Translate the cut operation directly.
+p2m(false, 'False').
+p2m(fail, 'False').  % Translate Prolog’s fail to MeTTa’s False.
+p2m(true, 'True').  % Translate Prolog’s true to MeTTa’s True.
+p2m(prolog, meTTa).  % Translate the atom prolog to meTTa.
+
 p2m('[|]','Cons').
 p2m(( ';' ),or).
 p2m(( ',' ),and).
