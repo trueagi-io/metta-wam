@@ -1061,7 +1061,7 @@ restore_state:- ignore(((
 :- initialization(metta_final).
 
 qcompile_mettalog:-
-    pack_install(predicate_streams, [upgrade(true),global(true)]),
-    pack_install(logicmoo_utils, [upgrade(true),global(true)]),
-    pack_install(dictoo, [upgrade(true),global(true)]),
+    %pack_install(predicate_streams, [upgrade(true),global(true)]),
+    %pack_install(logicmoo_utils, [upgrade(true),global(true)]),
+    %pack_install(dictoo, [upgrade(true),global(true)]),
     qsave_program('MeTTaLog', [goal(loon), toplevel(halt), stand_alone(true)]).

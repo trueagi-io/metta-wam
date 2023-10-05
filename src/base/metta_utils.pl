@@ -2,12 +2,19 @@
 :- set_prolog_flag(verbose_autoload, false).
 :- set_prolog_flag(verbose, silent).
 :- set_prolog_flag(verbose_load, silent).
-:- ensure_loaded(library(logicmoo_utils)).
+:
 :- assert((user:'$exported_op'(_,_,_):- fail)).
 :- abolish((system:'$exported_op'/3)).
 :- assert((system:'$exported_op'(_,_,_):- fail)).
 
+:- if(exists_source(library(logicmoo_utils))).
+:- ensure_loaded(library(logicmoo_utils)).
+:- endif.
+:- if(exists_source(library(dictoo))).
 :- ensure_loaded(library(dictoo)).
+:- endif.
+
+
 :- export(plain_var/1).
 plain_var(V):- notrace((var(V), \+ attvar(V), \+ get_attr(V,ci,_))).
 catch_nolog(G):- ignore(catch(notrace(G),E,once(true;nop(u_dmsg(E=G))))).
