@@ -56,10 +56,6 @@ with_debug(Flag,Goal):- flag(eval_num,_,0),
 if_trace(Flag,Goal):- catch(ignore((debugging(Flag),Goal)),_,true).
 
 
-trace_on_fail:- option_else('trace-on-fail',TF,'True'), TF=='True'.
-trace_on_overflow:- option_else('trace-on-overflow',TF,'True'), TF=='True'.
-trace_on_pass:- option_else('trace-on-overflow',TF,'True'), TF=='True'.
-
 eval_args0(Depth,_Slf,X,Y):- Depth<1,!,X=Y, (\+ trace_on_overflow-> true; flag(eval_num,_,0),debug(metta(eval))).
 eval_args0(_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
 eval_args0(Depth,Self,X,Y):-
