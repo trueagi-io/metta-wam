@@ -124,6 +124,7 @@ SWI_OPTIONS=()
 OTHER_OPTIONS=()
 FLAG_WITH_ARG=false
 LIST_OF_FILE_ARGS=()
+PYSWIP_VERSION="pyswip2"
 
 remove_quotes() {
   local value="$1"
@@ -172,6 +173,14 @@ function handle_args {
 
         # These options require an argument (like a filename)
         case $arg in
+            --v1)
+                PYSWIP_VERSION="pyswip"
+                continue
+                ;;
+            --v2)
+                PYSWIP_VERSION="pyswip2"
+                continue
+                ;;
             -x|-g|-t|-f|-F|-l|-s|-p|--on-error|--on-warning|--home|--stack-limit|--table-space|--shared-table-space|--pldoc)
                 SWI_OPTIONS+=("$arg")
                 FLAG_WITH_ARG=true
@@ -231,7 +240,7 @@ fi
 [[ ":$PYTHONPATH:" != *":$METTA_DIR/metta_vspace:"* ]] && export PYTHONPATH="${PYTHONPATH:+${PYTHONPATH}:}$METTA_DIR/metta_vspace"
 export RUST_BACKTRACE=full
 
-METTA_CMD="swipl ${SWI_OPTIONS[*]} -l $METTA_DIR/metta_vspace/pyswip/metta_interp.pl -- --python=$python_flag ${LIST_OF_FILE_ARGS[*]} --repl=$repl_flag --args ${OTHER_OPTIONS[*]}"
+METTA_CMD="swipl ${SWI_OPTIONS[*]} -l $METTA_DIR/metta_vspace/$PYSWIP_VERSION/metta_interp.pl -- --python=$python_flag ${LIST_OF_FILE_ARGS[*]} --repl=$repl_flag --args ${OTHER_OPTIONS[*]}"
 
 if [[ -n "$TIMEOUT" && "$TIMEOUT" -gt 0 ]]; then
     METTA_CMD="timeout --foreground --preserve-status --signal=SIGTERM --kill-after=5s $TIMEOUT ${METTA_CMD}"
