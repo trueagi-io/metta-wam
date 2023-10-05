@@ -195,7 +195,7 @@ as_functor_args(AsPred,F,A,ArgsL):- nonvar(AsPred),!,into_list_args(AsPred,[F|Ar
 as_functor_args(AsPred,F,A,ArgsL):- nonvar(F),length(ArgsL,A),AsPred =~ [F|ArgsL].
 
 compile_for_assert(HeadIs, AsBodyFn, Converted) :- (AsBodyFn =@= HeadIs ; AsBodyFn == []), !,
-     compile_pred_for_assert(HeadIs,Converted).
+     compile_head_for_assert(HeadIs,Converted).
 
 compile_for_assert(HeadIs,AsBodyFn, Converted) :-
      AsFunction = HeadIs,

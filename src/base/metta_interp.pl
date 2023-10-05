@@ -33,7 +33,7 @@ Now FAILING TEST-SCRIPTS.C1-GROUNDED-BASIC.20)
 
 
 option_value_def('repl',false).
-option_value_def('compile',preview).
+option_value_def('compile',false).
 option_value_def('table',false).
 option_value_def('time',true).
 option_value_def('exec',true).
@@ -314,7 +314,7 @@ loon:- catch_red(run_file_arg), loonit_report,
   ( (option_value('repl',false)->true;repl),
     (option_value('halt',false)->true;halt(7)))).
 %loon:- time(loon_metta('./examples/compat/test_scripts/*.metta')),fail.
-loon:- repl, (option_value('halt',false)->true;halt(7)).
+%loon:- repl, (option_value('halt',false)->true;halt(7)).
 
 
 metta_make_hook:-  loonit_reset, option_value(not_a_reload,true),!.
@@ -563,7 +563,7 @@ repl:-
    catch_red(once(do_repl(Self,Read))),
    mnotrace(Read==end_of_file),!.
 
-do_repl(_Self,end_of_file):- !, writeln('\n\n% To restart, use: ?- repl.').
+do_repl(_Self,end_of_file):- !, halt(7), writeln('\n\n% To restart, use: ?- repl.').
 do_repl(_Slf,call(Term)):- nop(add_history1(Term)), !, repl_call(Term).
 
 do_repl(Self,!):- !, mnotrace(repl_read(Exec)),do_repl(Self,exec(Exec)).
@@ -1051,9 +1051,17 @@ arg_types(L,R,LR):- append(L,R,LR).
 %print_preds_to_functs:-preds_to_functs_src(factorial_tail_basic)
 
 
-:- ignore(((
+restore_state:- ignore(((
    \+ prolog_load_context(reloading,true),
    metta_final,
    load_history,
    loon))).
 
+%:- initialization(restore_state,[restore]).
+:- initialization(metta_final).
+
+qcompile_mettalog:-
+    pack_install(predicate_streams, [upgrade(true),global(true)]),
+    pack_install(logicmoo_utils, [upgrade(true),global(true)]),
+    pack_install(dictoo, [upgrade(true),global(true)]),
+    qsave_program('MeTTaLog', [goal(loon), toplevel(halt), stand_alone(true)]).
