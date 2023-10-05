@@ -31,12 +31,184 @@ Now FAILING TEST-SCRIPTS.C1-GROUNDED-BASIC.20)
 
 */
 
+
+option_value_def('repl',false).
+option_value_def('compile',preview).
+option_value_def('table',false).
+option_value_def('time',true).
+option_value_def('exec',true).
+option_value_def('html',false).
+option_value_def('python',false).
+option_value_def('halt',false).
+option_value_def('prolog',false).
+
+option_value_def('trace-on-fail',true).
+option_value_def('trace-on-pass',true).
+option_value_def('trace-on-overflow',true).
+option_value_def('trace-on-error',true).
+option_value_def('trace-length',100).
+
+option_value_def('stack-max',100).
+
+
+trace_on_fail:-     option_value('trace-on-fail',true).
+trace_on_overflow:- option_value('trace-on-overflow',true).
+trace_on_pass:-     option_value('trace-on-pass',true).
+
+
+% ============================
+% %%%% Arithmetic Operations
+% ============================
+% Addition
+'+'(Addend1, Addend2, Sum):- plus(Addend1, Addend2, Sum).
+% Subtraction
+'-'(Sum, Addend1, Addend2):- plus(Addend1, Addend2, Sum).
+
+:- use_module(library(clpq)).
+% Multiplication
+'*'(Factor1, Factor2, Product):- {Product = Factor1*Factor2}.
+% Division
+'/'(Dividend, Divisor, Quotient):- {Dividend = Quotient * Divisor}.
+% Modulus
+'mod'(Dividend, Divisor, Remainder):- {Remainder = Dividend mod Divisor}.
+% Exponentiation
+'exp'(Base, Exponent, Result):- eval_args(['exp', Base, Exponent], Result).
+% Square Root
+'sqrt'(Number, Root):- eval_args(['sqrt', Number], Root).
+
+% ============================
+% %%%% List Operations
+% ============================
+% Retrieve Head of the List
+'car-atom'(List, Head):- eval_args(['car-atom', List], Head).
+% Retrieve Tail of the List
+'cdr-atom'(List, Tail):- eval_args(['cdr-atom', List], Tail).
+% Construct a List
+'Cons'(Element, List, 'Cons'(Element, List)):- !.
+% Collapse List
+'collapse'(List, CollapsedList):- eval_args(['collapse', List], CollapsedList).
+% Count Elements in List
+'CountElement'(List, Count):- eval_args(['CountElement', List], Count).
+% Find Length of List
+%'length'(List, Length):- eval_args(['length', List], Length).
+
+% ============================
+% %%%% Nondet Opteration
+% ============================
+% Superpose a List
+'superpose'(List, SuperposedList):- eval_args(['superpose', List], SuperposedList).
+
+% ============================
+% %%%% Testing
+% ============================
+
+% `assertEqual` Predicate
+% This predicate is used for asserting that the Expected value is equal to the Actual value.
+% Expected: The value that is expected.
+% Actual: The value that is being checked against the Expected value.
+% Result: The result of the evaluation of the equality.
+% Example: `assertEqual(5, 5, Result).` would succeed, setting Result to true (or some success indicator).
+%'assertEqual'(Expected, Actual, Result):- use_metta_compiler,!,as_tf((Expected=Actual),Result).
+'assertEqual'(Expected, Actual, Result):- ignore(Expected=Actual), eval_args(['assertEqual', Expected, Actual], Result).
+
+% `assertEqualToResult` Predicate
+% This predicate asserts that the Expected value is equal to the Result of evaluating Actual.
+% Expected: The value that is expected.
+% Actual: The expression whose evaluation is being checked against the Expected value.
+% Result: The result of the evaluation of the equality.
+% Example: If Actual evaluates to the Expected value, this would succeed, setting Result to true (or some success indicator).
+'assertEqualToResult'(Expected, Actual, Result):- eval_args(['assertEqualToResult', Expected, Actual], Result).
+
+% `assertFalse` Predicate
+% This predicate is used to assert that the evaluation of EvalThis is false.
+% EvalThis: The expression that is being evaluated and checked for falsehood.
+% Result: The result of the evaluation.
+% Example: `assertFalse((1 > 2), Result).` would succeed, setting Result to true (or some success indicator), as 1 > 2 is false.
+'assertFalse'(EvalThis, Result):- eval_args(['assertFalse', EvalThis], Result).
+
+% `assertNotEqual` Predicate
+% This predicate asserts that the Expected value is not equal to the Actual value.
+% Expected: The value that is expected not to match the Actual value.
+% Actual: The value that is being checked against the Expected value.
+% Result: The result of the evaluation of the inequality.
+% Example: `assertNotEqual(5, 6, Result).` would succeed, setting Result to true (or some success indicator).
+'assertNotEqual'(Expected, Actual, Result):- eval_args(['assertNotEqual', Expected, Actual], Result).
+
+% `assertTrue` Predicate
+% This predicate is used to assert that the evaluation of EvalThis is true.
+% EvalThis: The expression that is being evaluated and checked for truth.
+% Result: The result of the evaluation.
+% Example: `assertTrue((2 > 1), Result).` would succeed, setting Result to true (or some success indicator), as 2 > 1 is true.
+'assertTrue'(EvalThis, Result):- eval_args(['assertTrue', EvalThis], Result).
+
+% `rtrace` Predicate
+% This predicate is likely used for debugging; possibly for tracing the evaluation of Condition.
+% Condition: The condition/expression being traced.
+% EvalResult: The result of the evaluation of Condition.
+% Example: `rtrace((2 + 2), EvalResult).` would trace the evaluation of 2 + 2 and store its result in EvalResult.
+'rtrace'(Condition, EvalResult):- eval_args(['rtrace', Condition], EvalResult).
+
+% `time` Predicate
+% This predicate is used to measure the time taken to evaluate EvalThis.
+% EvalThis: The expression whose evaluation time is being measured.
+% EvalResult: The result of the evaluation of EvalThis.
+% Example: `time((factorial(5)), EvalResult).` would measure the time taken to evaluate factorial(5) and store its result in EvalResult.
+'time'(EvalThis, EvalResult):- eval_args(['time', EvalThis], EvalResult).
+
+% ============================
+% %%%% Debugging, Printing and Utility Operations
+% ============================
+% REPL Evaluation
+'repl!'(EvalResult):- eval_args(['repl!'], EvalResult).
+% Condition Evaluation
+'!'(Condition, EvalResult):- eval_args(['!', Condition], EvalResult).
+% Import File into Environment
+'import!'(Environment, FileName, Namespace):- eval_args(['import!', Environment, FileName], Namespace).
+% Evaluate Expression with Pragma
+'pragma!'(Environment, Expression, EvalValue):- eval_args(['pragma!', Environment, Expression], EvalValue).
+% Print Message to Console
+'print'(Message, EvalResult):- eval_args(['print', Message], EvalResult).
+% No Operation, Returns EvalResult unchanged
+'nop'(Expression, EvalResult):- eval_args(['nop', Expression], EvalResult).
+
+% ============================
+% %%%% Variable Bindings
+% ============================
+% Bind Variables
+'bind!'(Environment, Variable, Value):- eval_args(['bind!', Environment, Variable], Value).
+% Let binding for single variable
+'let'(Variable, Expression, Body, Result):- eval_args(['let', Variable, Expression, Body], Result).
+% Sequential let binding
+'let*'(Bindings, Body, Result):- eval_args(['let*', Bindings, Body], Result).
+
+% ============================
+% %%%% Pattern Matching
+% ============================
+% Pattern Matching with an else branch
+'match'(Environment, Pattern, Template, ElseBranch, Result):- eval_args(['match', Environment, Pattern, Template, ElseBranch], Result).
+% Pattern Matching without an else branch
+%'match'(_Environment, Pattern, Template, Result):- callable(Pattern), \+ is_list(Pattern),!, call(Pattern),Result=Template.
+%'match'(_Environment, Pattern, Template, Result):- !, is_True(Pattern), Result=Template.
+'match'(Environment, Pattern, Template, Result):- eval_args(['match', Environment, Pattern, Template], Result).
+
+% ============================
+% %%%% Reflection
+% ============================
+% Get Type of Value
+'get-type'(Value, Type):- eval_args(['get-type', Value], Type).
+
+
+'new-space'(Space):- gensym(new_space_,Name), fetch_or_create_space(Name, Space).
+
 % Function to check if an atom is registered as a space name
 :- dynamic is_registered_space_name/1.
 is_nb_space(G):- is_valid_nb_space(G) -> true ;
                  is_registered_space_name(G),nb_current(G,S),is_valid_nb_space(S).
 
 :- dynamic(is_python_space/1).
+% ===============================
+% MeTTa Python incoming interface
+% ===============================
 
 :- multifile(space_type_method/3).
 :- dynamic(space_type_method/3).
@@ -137,9 +309,13 @@ metta_cmd_args(Rest):- current_prolog_flag(argv,P),append(_,['--'|Rest],P),!.
 metta_cmd_args(Rest):- current_prolog_flag(os_argv,P),append(_,['--'|Rest],P),!.
 metta_cmd_args(Rest):- current_prolog_flag(argv,Rest).
 run_file_arg:- metta_cmd_args(Rest), !,  do_cmdline_load_metta('&self',Rest).
-loon:- run_file_arg, !, loonit_report, halt(7).
+loon:- catch_red(run_file_arg), loonit_report,
+  (option_value('prolog',true)->true;
+  ( (option_value('repl',false)->true;repl),
+    (option_value('halt',false)->true;halt(7)))).
 %loon:- time(loon_metta('./examples/compat/test_scripts/*.metta')),fail.
-loon:- repl, halt(7).
+loon:- repl, (option_value('halt',false)->true;halt(7)).
+
 
 metta_make_hook:-  loonit_reset, option_value(not_a_reload,true),!.
 metta_make_hook:-
@@ -162,23 +338,22 @@ get_flag_value(M,false):- atom_contains(M,'-no'),!.
 get_flag_value(_,true).
 
 
-process_option_value_def('repl').
-process_option_value_def('exec').
-process_option_value_def('html').
-process_option_value_def('python').
+:- ignore(((
+   \+ prolog_load_context(reloading,true),
+   forall(option_value_def(Opt,Default),set_option_value(Opt,Default))))).
 
 process_option_value_def:- \+ option_value('python',false), skip(ensure_loaded(metta_python)).
 process_option_value_def.
 
 
 process_late_opts:- option_value('html',true), shell('./total_loonits.sh').
-process_late_opts:- \+ option_value('repl',false), repl.
+process_late_opts:- option_value('repl',true), repl.
 %process_late_opts:- halt(7).
 
 do_cmdline_load_metta(Self,List):-
   select(M,List,Rest),
   atom_concat('-',_,M),
-  process_option_value_def(Opt),
+  option_value_def(Opt,_),
   is_cmd_option(Opt,M, TF),!,
   write(' '), write_src(M), nl, !, set_option_value(Opt,TF),
   do_cmdline_load_metta(Self,Rest).
