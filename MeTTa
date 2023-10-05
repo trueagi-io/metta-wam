@@ -124,7 +124,7 @@ SWI_OPTIONS=()
 OTHER_OPTIONS=()
 FLAG_WITH_ARG=false
 LIST_OF_FILE_ARGS=()
-PYSWIP_VERSION="pyswip2"
+PYSWIP_VERSION="pyswip"
 
 remove_quotes() {
   local value="$1"
@@ -174,11 +174,11 @@ function handle_args {
         # These options require an argument (like a filename)
         case $arg in
             --v1)
-                PYSWIP_VERSION="pyswip"
+                PYSWIP_VERSION="pyswip1"
                 continue
                 ;;
             --v2)
-                PYSWIP_VERSION="pyswip2"
+                PYSWIP_VERSION="pyswip"
                 continue
                 ;;
             -x|-g|-t|-f|-F|-l|-s|-p|--on-error|--on-warning|--home|--stack-limit|--table-space|--shared-table-space|--pldoc)
