@@ -567,13 +567,15 @@ do_repl(Self,exec(Exec)):- !, mnotrace(save_exec_history(Exec)), do_metta_exec(S
 do_repl(Self,Read):-
   mnotrace(((with_output_to(string(H),write_src(Read)),add_history_string(H)))), do_metta(Self,load,Read).
 
-add_history_string(Str):- ignore(catch_i(add_history01(Str))),!.
+
+add_history_string(Str):- nop( ignore(catch_i(add_history01(Str)))),!.
 
 save_exec_history(exec(Exec)):- !, mnotrace((save_exec_history(Exec))).
 save_exec_history(Exec):- mnotrace((with_output_to(string(H),(write('!'),write_src(Exec))),add_history_string(H))).
 
 read_metta1(_,O2):- clause(t_l:s_reader_info(O2),_,Ref),erase(Ref).
 read_metta1(In,Read):- current_input(In0),In==In0,!, repl_read(Read).
+read_metta1(In,Read):- string(In),parse_sexpr_metta(In,Read),!.
 read_metta1(In,Read):- peek_char(In,Char), read_metta1(In,Char,Read).
 
 read_metta1(In,Char,Read):- char_type(Char,white),get_char(In,Char),put(Char),!,read_metta1(In,Read).
@@ -581,6 +583,12 @@ read_metta1(In,';',Read):- read_line_to_string(In,Str),write_comment(Str),!,read
 read_metta1(In,_,Read1):- parse_sexpr_metta(In,Read),!,must_det_ll(Read=Read1).
 
 
+maybe_read_pl(In,Read):-
+  peek_line(In,Line1), Line1\=='', atom_contains(Line1, '.'),atom_contains(Line1, ':-'),
+  notrace(((catch((read_term_from_atom(Line1, Term, []), Term\==end_of_file, Read=call(Term)),_, fail),!,
+  read_term(In, Term, [])))).
+peek_line(In,Line1):- peek_string(In, 1024, Str), split_string(Str, "\r\n", "\s", [Line1,_|_]),!.
+peek_line(In,Line1):- peek_string(In, 4096, Str), split_string(Str, "\r\n", "\s", [Line1,_|_]),!.
 
 read_metta(In,Read):-
  read_metta1(In,Read1),
@@ -594,8 +602,11 @@ do_metta_cmt(_,'$STRING'(Cmt)):- write_comment(Cmt),!.
 do_metta_cmt(Self,[Cmt]):- !, do_metta_cmt(Self, Cmt),!.
 
 
-
+parse_sexpr_metta(I,O):- string(I),normalize_space(string(M),I),!,parse_sexpr_metta1(M,O).
 parse_sexpr_metta(I,O):- parse_sexpr_untyped(I,U),trly(untyped_to_metta,U,O).
+
+parse_sexpr_metta1(M,exec(O)):- string_concat('!',I,M),!,parse_sexpr_metta1(I,O).
+parse_sexpr_metta1(I,O):- parse_sexpr_untyped(I,U),trly(untyped_to_metta,U,O).
 
 mlog_sym('@').
 
@@ -702,7 +713,12 @@ subst_vars(Term, Term, NamedVarsList, NamedVarsList).
 
 metta_anew1(load,OBO):- subst_vars(OBO,Cl),assert_if_new(Cl). %to_metta(Cl).
 metta_anew1(unload,OBO):- subst_vars(OBO,Cl),ignore((clause(Cl,_,Ref),clause(Cl2,_,Ref),Cl=@=Cl2,erase(Ref),pp_m(Cl))).
+use_metta_compiler:- option_value('compile','full'), !.
+preview_compiler:- \+ option_value('compile',false), !.
+%preview_compiler:- use_metta_compiler,!.
 
+
+metta_anew(Load,_Src,OBO):- silent_loading,!,metta_anew1(Load,OBO).
 metta_anew(Load,Src,OBO):- format('~N'), color_g_mesg('#0f0f0f',(write('  ; Action: '),writeq(Load=OBO))),
    color_g_mesg('#ffa500', write_src(Src)),metta_anew1(Load,OBO),format('~n').
 
@@ -823,6 +839,12 @@ do_metta1(Self,Load,['=',Head,PredDecl], Src):-!,
 do_metta1(Self,Load,PredDecl, Src):-
    ignore(discover_head(Self,Load,PredDecl)),
    color_g_mesg('#ffa500',metta_anew(Load,Src,metta_atom(Self,PredDecl))).
+
+
+
+
+
+
 
 do_metta_exec(Self,Var):- var(Var), !, pp_m(eval(Var)), freeze(Var,wdmsg(laterVar(Self,Var))).
 do_metta_exec(Self,TermV):-!,

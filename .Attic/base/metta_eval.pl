@@ -692,8 +692,8 @@ eval_args40(Depth,Self,[F|X],FY):- is_function(F), \+ is_special_op(F), is_list(
 eval_args40(Depth,Self,FX,FY):- eval_args5(Depth,Self,FX,FY).
 
 eval_args5(_Dpth,_Slf,[F|LESS],Res):- once(eval_selfless([F|LESS],Res)),mnotrace(([F|LESS]\==Res)),!.
-eval_args5(_Dpth,_Slf,[AE|More],TF):- length(More,Len), is_predicate(AE,Len,Pred),!,catch_warn(as_tf(apply(Pred,More),TF)).
-eval_args5(_Dpth,_Slf,[AE|More],TF):- length([AE|More],Len), is_predicate(AE,Len,Pred),append(More,[TF],Args),!,catch_warn(apply(Pred,Args)).
+eval_args5(_Dpth,_Slf,[AE|More],TF):- length(More,Len), is_syspred(AE,Len,Pred),!,catch_warn(as_tf(apply(Pred,More),TF)).
+eval_args5(_Dpth,_Slf,[AE|More],TF):- length([AE|More],Len), is_syspred(AE,Len,Pred),append(More,[TF],Args),!,catch_warn(apply(Pred,Args)).
 
 %eval_args40(Depth,Self,[X1|[F2|X2]],[Y1|Y2]):- is_function(F2),!,eval_args(Depth,Self,[F2|X2],Y2),eval_args(Depth,Self,X1,Y1).
 
