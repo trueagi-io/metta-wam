@@ -6,10 +6,10 @@ IS_SOURCED=$( [[ "${BASH_SOURCE[0]}" != "${0}" ]] && echo 1 || echo 0)
 exit_script() { [[ "$IS_SOURCED" == "1" ]] && return $1 || exit $1; }
 if [ "$IS_SOURCED" -eq "0" ]; then SCRIPT=$(readlink -f "$0"); else SCRIPT=$(readlink -f "${BASH_SOURCE[0]}"); fi
 export MeTTa=$(basename "$SCRIPT")
-export METTA_DIR=$(dirname "$SCRIPT")
-#echo "METTA_DIR=$METTA_DIR"
-cd "$METTA_DIR" || { echo "Failed to navigate to $METTA_DIR"; exit_script 1; }
-export TEE_FILE=${TEE_FILE:-"$METTA_DIR/TEE.ansi"}
+export METTALOG_DIR=$(dirname "$SCRIPT")
+#echo "METTALOG_DIR=$METTALOG_DIR"
+cd "$METTALOG_DIR" || { echo "Failed to navigate to $METTALOG_DIR"; exit_script 1; }
+export TEE_FILE=${TEE_FILE:-"$METTALOG_DIR/TEE.ansi"}
 
 set -e
 python_flag=enable
@@ -237,13 +237,13 @@ fi
 
 
 # Add metta_vspace to PYTHONPATH if not already present
-[[ ":$PYTHONPATH:" != *":$METTA_DIR/metta_vspace:"* ]] && export PYTHONPATH="${PYTHONPATH:+${PYTHONPATH}:}$METTA_DIR/metta_vspace"
+[[ ":$PYTHONPATH:" != *":$METTALOG_DIR/metta_vspace:"* ]] && export PYTHONPATH="${PYTHONPATH:+${PYTHONPATH}:}$METTALOG_DIR/metta_vspace"
 export RUST_BACKTRACE=full
 
-if [[ -f "MettaLog" ]]; then
-  MLOG="MettaLog"
+if [[ -f "$METTALOG_DIR/MeTTaLog" ]]; then
+  MLOG="$METTALOG_DIR/MeTTaLog"
 else
-  MLOG="swipl ${SWI_OPTIONS[*]} -l $METTA_DIR/metta_vspace/$PYSWIP_VERSION/metta_interp.pl"
+  MLOG="swipl ${SWI_OPTIONS[*]} -l $METTALOG_DIR/metta_vspace/$PYSWIP_VERSION/metta_interp.pl"
 fi
 
 METTA_CMD="$MLOG -- --python=$python_flag ${LIST_OF_FILE_ARGS[*]} --repl=$repl_flag --args ${OTHER_OPTIONS[*]}"
@@ -258,7 +258,7 @@ fi
 # Conditional to check if html_flag is enabled
 if [[ "enable" == "enable" ]]; then
 
-    export TEE_FILE=${TEE_FILE:-"$METTA_DIR/TEE.ansi"}
+    export TEE_FILE=${TEE_FILE:-"$METTALOG_DIR/TEE.ansi"}
     touch "$TEE_FILE"
     chmod 777 "$TEE_FILE"
     cat /dev/null > "$TEE_FILE"
