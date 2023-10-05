@@ -240,7 +240,13 @@ fi
 [[ ":$PYTHONPATH:" != *":$METTA_DIR/metta_vspace:"* ]] && export PYTHONPATH="${PYTHONPATH:+${PYTHONPATH}:}$METTA_DIR/metta_vspace"
 export RUST_BACKTRACE=full
 
-METTA_CMD="swipl ${SWI_OPTIONS[*]} -l $METTA_DIR/metta_vspace/$PYSWIP_VERSION/metta_interp.pl -- --python=$python_flag ${LIST_OF_FILE_ARGS[*]} --repl=$repl_flag --args ${OTHER_OPTIONS[*]}"
+if [[ -f "MettaLog" ]]; then
+  MLOG="MettaLog"
+else
+  MLOG="swipl ${SWI_OPTIONS[*]} -l $METTA_DIR/metta_vspace/$PYSWIP_VERSION/metta_interp.pl"
+fi
+
+METTA_CMD="$MLOG -- --python=$python_flag ${LIST_OF_FILE_ARGS[*]} --repl=$repl_flag --args ${OTHER_OPTIONS[*]}"
 
 if [[ -n "$TIMEOUT" && "$TIMEOUT" -gt 0 ]]; then
     METTA_CMD="timeout --foreground --preserve-status --signal=SIGTERM --kill-after=5s $TIMEOUT ${METTA_CMD}"
