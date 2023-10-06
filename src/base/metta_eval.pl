@@ -186,6 +186,8 @@ eval_args1(Depth,Self,X,Res):-
    maybe_special_keys(_Depth,_Self,[],[]).
 
 
+%[collapse,[1,2,3]]
+eval_args1(Depth,Self,['collapse',List],Res):-!, bagof_eval(Depth,Self,List,Res).
 %[superpose,[1,2,3]]
 eval_args1(Depth,Self,['superpose',List],Res):- !, member(E,List),eval_args(Depth,Self,E,Res).
 get_sa_p1(P3,E,Cmpd,SA):-  compound(Cmpd), get_sa_p2(P3,E,Cmpd,SA).
@@ -199,8 +201,6 @@ eval_args1(Depth,Self, Term, Res):-
    member(Var,List),
    eval_args(Depth,Self, Term, Res).
 
-%[collapse,[1,2,3]]
-eval_args1(Depth,Self,['collapse',List],Res):-!, setof_eval(Depth,Self,List,Res).
 eval_args1(Depth,Self, Term, Res):-
    mnotrace(( get_sa_p1(setarg,ST,Term,P1),
    compound(ST), ST = [F,List],F=='collapse',nonvar(List), %maplist(atomic,List),
@@ -712,6 +712,7 @@ eval_args6(_Dpth,_Slf,[AE|More],TF):- length([AE|More],Len), is_syspred(AE,Len,P
 
 
 cwdl(DL,Goal):- call_with_depth_limit(Goal,DL,R), (R==depth_limit_exceeded->(!,fail);true).
+bagof_eval(Depth,Self,X,L):- !,findall(E,eval_args(Depth,Self,X,E),L).
 setof_eval(Depth,Self,X,S):- !,findall(E,eval_args(Depth,Self,X,E),L),sort(L,S).
 %setof_eval(Depth,Self,X,S):- setof(E,eval_args(Depth,Self,X,E),S)*->true;S=[].
 
