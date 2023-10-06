@@ -1,4 +1,8 @@
 
+
+% Arithmetic Functions
+
+
 % Comparison Operators in Prolog
 is_comp_op('=', 2).          % Unification
 is_comp_op('\\=', 2).        % Not unifiable
