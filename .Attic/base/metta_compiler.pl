@@ -1461,22 +1461,13 @@ maybe_varz(S,Name,'$VAR'(Name)):- S=='?',atom(Name),!.
 %
 % S-expression Sterm Converted To Pterm.
 %
-sexpr_s2p(HB,P):- fail, compound(HB), HB=~ (H=B), compile_for_assert(H,B,Cl),
-   clause_to_code(Cl,P),!.
 sexpr_s2p(S,P):- sexpr_s2p(progn,1,S,P).
-
-
-clause_to_code(P,P):- is_ftVar(P),!.
-%clause_to_code(P:-True,P):- True == true,!.
-clause_to_code((H:-B),P):- B==true, !, combine_code(B,H,P).
-clause_to_code(P,P).
 
 sexpr_s2p(_Fn,_Nth,VAR,VAR):-is_ftVar(VAR),!.
 sexpr_s2p(_Fn,_Nth,S,P):- iz_exact_symbol(S,P),!.
 sexpr_s2p(_Fn,_Nth,'#'(S),P):- iz_exact_symbol(S,P),!.
 sexpr_s2p(_Fn,_Nth,VAR,'$VAR'(Name)):- atom(VAR),svar(VAR,Name),!.
-sexpr_s2p(Fn,Nth,S,P):- S==[], iz_fun_argz(Fn,Nth),!,P=S.
-sexpr_s2p(Fn,Nth,[S|SList],[P|PList]):- iz_fun_argz(Fn,Nth),!,sexpr_s2p(S,P), sexpr_s2p(Fn,Nth,SList,PList).
+sexpr_s2p(Fn,Nth,[S|SList],[P|PList]):- iz_fun_argz(Fn,Nth),!,sexpr_s2p(Fn,Nth,S,P), sexpr_s2p(Fn,Nth,SList,PList).
 sexpr_s2p(Fn,Nth,[S|SList],[P|PList]):- ( \+ atom(S) ; \+ is_list(SList)), !,sexpr_s2p(list(Fn),Nth,S,P), sexpr_s2p(list(Fn),Nth,SList,PList).
 sexpr_s2p(_Fn,_Nth,[S,STERM0],PTERM):- iz_quoter(S),sexpr_s2p_pre_list(S,0,STERM0,STERM), !,PTERM=..[S,STERM],!.
 sexpr_s2p(_Fn,_Nth,[S|SList],P):- atom(S), SList == [], compound_name_arity(P,S,0).
@@ -1487,7 +1478,7 @@ sexpr_s2p(_Fn,_Nth,[S|SList],P):- atom(S), SList == [], compound_name_arity(P,S,
 sexpr_s2p(Fn,Nth,[S,Vars|TERM],PTERM):- nonvar(S),
    call_if_defined(common_logic_snark:iz_quantifier(S)),
    zalwayz((sexpr_s2p_arglist(Fn,Nth,TERM,PLIST),
-   PTERM =~ [S,Vars|PLIST])),!.
+   PTERM=..[S,Vars|PLIST])),!.
 */
 % sexpr_s2p(progn,_,[S|TERM],PTERM):- S=='and',!,zalwayz((maplist(sexpr_s2p,TERM,PLIST),list_to_conjuncts(',',PLIST,PTERM))).
 %sexpr_s2p(Fn,Nth,[S|TERM],PTERM):- (number(S);  (atom(S),fail,atom_concat_or_rtrace(_,'Fn',S))),sexpr_s2p_arglist(Fn,Nth,[S|TERM],PTERM),!.
@@ -1495,8 +1486,8 @@ sexpr_s2p(Fn,Nth,[S,Vars|TERM],PTERM):- nonvar(S),
 %sexpr_s2p(Fn,Nth,[S],O):- nonvar(S),sexpr_s2p(Fn,Nth,S,Y),!,z_univ(Fn,Nth,O,[Y]),!.
 %sexpr_s2p(Fn,Nth,[S|TERM],PTERM):- S==and,!,zalwayz((maplist(sexpr_s2p,TERM,PLIST),list_to_conjuncts(',',PLIST,PTERM))).
 % sexpr_s2p(Fn,Nth,[S|TERM],PTERM):- iz_va_relation(S),!,zalwayz((maplist(sexpr_s2p,TERM,PLIST),list_to_conjuncts(S,PLIST,PTERM))).
-%sexpr_s2p(Fn,Nth,[S|TERM],PTERM):- iz_relation_sexpr(S),zalwayz((sexpr_s2p_arglist(Fn,Nth,TERM,PLIST),PTERM =~ [S|PLIST])),!.
-%sexpr_s2p(Fn,Nth,STERM,PTERM):- STERM =~ [S|TERM],sexpr_s2p_arglist(Fn,Nth,TERM,PLIST),z_univ(Fn,Nth,PTERM,[S|PLIST]),!.
+%sexpr_s2p(Fn,Nth,[S|TERM],PTERM):- iz_relation_sexpr(S),zalwayz((sexpr_s2p_arglist(Fn,Nth,TERM,PLIST),PTERM=..[S|PLIST])),!.
+%sexpr_s2p(Fn,Nth,STERM,PTERM):- STERM=..[S|TERM],sexpr_s2p_arglist(Fn,Nth,TERM,PLIST),z_univ(Fn,Nth,PTERM,[S|PLIST]),!.
 sexpr_s2p(Fn,Nth,[S|STERM0],PTERM):-
   sexpr_s2p_pre_list(Fn,Nth,STERM0,STERM),
   sexpr_s2p_arglist(S,1,STERM,PLIST), z_univ(Fn,Nth,PTERM,[S|PLIST]),!.
@@ -1512,26 +1503,24 @@ iz_fun_argz(defmacro,2).
 iz_fun_argz(defun,2).
 iz_fun_argz(let,1).
 iz_fun_argz('let*',1).
-%iz_fun_argz('let*',2).
+iz_fun_argz('let*',2).
 iz_fun_argz(F,1):- iz_quoter(F).
 
 z_functor(F):- \+ atom(F), !,fail.
-%z_functor(F):- atom_concat('?',_,F),!,fail.
-z_functor(F):- atom_concat('$',_,F),!,fail.
-z_functor(_).
+z_functor(F):- \+ atom_concat('?',_,F).
+z_functor(F):- \+ atom_concat('$',_,F).
 
 %z_univ(_Fn,1,S,S):-!.
-z_univ(_Fn,_,P,[F|ARGS]):- z_functor(F),is_list(ARGS),length(ARGS,A),l_arity_l(F,A),compound_name_list(P,F,ARGS),!.
-z_univ(_Fn,0,P,[F|ARGS]):- z_functor(F),is_list(ARGS),compound_name_list(P,F,ARGS),!.
-z_univ(_Fn,_Nth,P,[F|ARGS]):- z_functor(F),is_list(ARGS),compound_name_list(P,F,ARGS),!.
+z_univ(_Fn,_,P,[F|ARGS]):- z_functor(F),is_list(ARGS),length(ARGS,A),l_arity_l(F,A),compound_name_arguments(P,F,ARGS),!.
+z_univ(_Fn,0,P,[F|ARGS]):- z_functor(F),is_list(ARGS),compound_name_arguments(P,F,ARGS),!.
+z_univ(_Fn,_Nth,P,[F|ARGS]):- z_functor(F),is_list(ARGS),compound_name_arguments(P,F,ARGS),!.
 z_univ(_Fn,_Nth,P,S):-P=S.
 
 l_arity_l(F,A):- clause_b(arity(F,A)).
 l_arity_l(function,1).
 l_arity_l(quote,1).
 l_arity_l('#BQ',1):- iz_common_lisp.
-l_arity_l(F,A):- integer(A), AA is A+1, current_predicate(F/AA).
-l_arity_l(F,A):- integer(A), current_predicate(F/A).
+l_arity_l(F,A):-current_predicate(F/A).
 l_arity_l(_,1).
 
 sexpr_s2p_arglist(_Fn,_,VAR,VAR):-is_ftVar(VAR),!.
