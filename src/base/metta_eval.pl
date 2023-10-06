@@ -134,15 +134,28 @@ loonit_assert_source_tf(Src,Goal,Check,TF):-
      with_debug(metta(eval),OrigGoal))).
 
 
-equal_enough(R,V):- R=@=V, !.
-equal_enough(R,V):- number(R),number(V),!, RV is abs(R-V), RV < 0.03 .
-equal_enough(R,V):- (\+ compound(R) ; \+ compound(V)),!, R==V.
-equal_enough([R|RT],[V|VT]):- !, equal_enough(R,V),equal_enough(RT,VT).
-equal_enough(R,V):-
+unify_enough(L,L):-!.
+unify_enough(L,C):- is_list(L),into_list_args(C,CC),!,unify_lists(CC,L).
+unify_enough(C,L):- is_list(L),into_list_args(C,CC),!,unify_lists(CC,L).
+unify_enough(C,L):- \+ compound(C),!,L=C.
+unify_enough(L,C):- \+ compound(C),!,L=C.
+unify_enough(L,C):- into_list_args(L,LL),into_list_args(C,CC),!,unify_lists(CC,LL).
+
+unify_lists(C,L):- \+ compound(C),!,L=C.
+unify_lists(L,C):- \+ compound(C),!,L=C.
+unify_lists([C|CC],[L|LL]):- equal_enouf(L,C),!,unify_lists(CC,LL).
+
+equal_enough(R,V):- is_list(R),is_list(V),sort(R,RR),sort(V,VV),!,equal_enouf(RR,VV).
+equal_enough(R,V):- equal_enouf(R,V),!.
+equal_enouf(R,V):- R=@=V, !.
+equal_enouf(R,V):- number(R),number(V),!, RV is abs(R-V), RV < 0.03 .
+equal_enouf(R,V):- (\+ compound(R) ; \+ compound(V)),!, R==V.
+equal_enouf([R|RT],[V|VT]):- !, equal_enouf(R,V),equal_enouf(RT,VT).
+equal_enouf(R,V):- unify_enough(R,V),!.
+equal_enouf(R,V):-
   compound_name_arguments(R,F,RA),
   compound_name_arguments(V,F,VA), !,
-  maplist(equal_enough,RA,VA).
-
+  maplist(equal_enouf,RA,VA).
 
 
 
@@ -523,10 +536,10 @@ as_tf(G,TF):- catch_nowarn((call(G)*->TF='True';TF='False')).
 eval_selfless(['==',X,Y],TF):- as_tf(X=:=Y,TF),!.
 eval_selfless(['==',X,Y],TF):- as_tf(X=@=Y,TF),!.
 eval_selfless(['=',X,Y],TF):-!,as_tf(X=Y,TF).
-eval_selfless(['>',X,Y],TF):-!,as_tf(X>Y,TF).
-eval_selfless(['<',X,Y],TF):-!,as_tf(X<Y,TF).
-eval_selfless(['=>',X,Y],TF):-!,as_tf(X>=Y,TF).
-eval_selfless(['<=',X,Y],TF):-!,as_tf(X=<Y,TF).
+eval_selfless(['>',X,Y],TF):-!,as_tf(X>@Y,TF).
+eval_selfless(['<',X,Y],TF):-!,as_tf(X@<Y,TF).
+eval_selfless(['=>',X,Y],TF):-!,as_tf(X@>=Y,TF).
+eval_selfless(['<=',X,Y],TF):-!,as_tf(X@=<Y,TF).
 
 eval_selfless(['%',X,Y],TF):-!,eval_selfless(['mod',X,Y],TF).
 
