@@ -3,16 +3,14 @@
 export RPWD=$PWD
 IS_SOURCED=$( [[ "${BASH_SOURCE[0]}" != "${0}" ]] && echo 1 || echo 0)
 # Function to exit the script properly
-exit_script() { [[ "$IS_SOURCED" == "1" ]] && return $1 || exit $1; }
 if [ "$IS_SOURCED" -eq "0" ]; then SCRIPT=$(readlink -f "$0"); else SCRIPT=$(readlink -f "${BASH_SOURCE[0]}"); fi
 export MeTTa=$(basename "$SCRIPT")
 export METTALOG_DIR=$(dirname "$SCRIPT")
 #echo "METTALOG_DIR=$METTALOG_DIR"
-cd "$METTALOG_DIR" || { echo "Failed to navigate to $METTALOG_DIR"; exit_script 1; }
+cd "$METTALOG_DIR" || { echo "Failed to navigate to $METTALOG_DIR"; [[ "$IS_SOURCED" == "1" ]] && return 1 || exit 1; }
 export TEE_FILE=${TEE_FILE:-"$METTALOG_DIR/TEE.ansi"}
 
 set -e
-python_flag=enable
 
 function load_mettalogrc {
     local file="${1:-$HOME/.mettalogrc}"  # Use the argument if supplied, else use the default file
@@ -115,7 +113,6 @@ function print_help {
     echo "    This script reads options from the ~/.mettalogrc file, one option per line."
     echo "    Options specified in ~/.mettalogrc are processed before command-line arguments."
     echo ""
-    exit_script 0
 }
 
 
@@ -123,6 +120,7 @@ function print_help {
 SWI_OPTIONS=()
 OTHER_OPTIONS=()
 FLAG_WITH_ARG=false
+python_flag=enable
 LIST_OF_FILE_ARGS=()
 PYSWIP_VERSION="pyswip"
 
@@ -133,19 +131,30 @@ remove_quotes() {
 
 function handle_args {
     FLAG_WITH_ARG=false
+    SKIP_TO_OTHER_OPTIONS=false
+
     for arg in "$@"; do
+        arg=$(remove_quotes "$arg")  # Remove the quotes
 
-	arg=$(remove_quotes "$arg")  # Remove the quotes
+        if [[ -f "$arg" || -d "$arg" ]]; then
+            arg_realpath="$(realpath "$arg")"
+            if [[ -f "$arg_realpath" || -d "$arg_realpath" ]]; then
+                add_to_list "$arg_realpath" LIST_OF_FILE_ARGS
+            fi
+        fi
 
-	if [[ -f "$arg" || -d "$arg" ]]; then
-	    arg_realpath="$(realpath "$arg")"
-	    if [[ -f "$arg_realpath" || -d "$arg_realpath" ]]; then
-	       add_to_list "$arg_realpath" LIST_OF_FILE_ARGS
-	    fi
-	fi
+        if [[ $SKIP_TO_OTHER_OPTIONS == true ]]; then
+            add_to_list "$arg" OTHER_OPTIONS
+            continue
+        fi
 
-        [[ "$arg" == "--help" || "$arg" == "-h" ]] && { print_help; exit_script 0; }
-        [[ "$arg" =~ ^--dump-runtime-variables.*$ || "$arg" == "--abi-version" || "$arg" == "--version" || "$arg" == "--arch" ]] && { swipl $@; exit_script 0; }
+        if [[ "$arg" == "--" ]]; then
+            SKIP_TO_OTHER_OPTIONS=true
+            continue
+        fi
+
+        [[ "$arg" == "--help" || "$arg" == "-h" ]] && { print_help; EXIT_SCRIPT=0; }
+        [[ "$arg" =~ ^--dump-runtime-variables.*$ || "$arg" == "--abi-version" || "$arg" == "--version" || "$arg" == "--arch" ]] && { swipl $@; EXIT_SCRIPT=0; }
 
         if [[ "$arg" =~ ^--timeout=([0-9]+)$ ]]; then
             TIMEOUT="${BASH_REMATCH[1]}"
@@ -174,7 +183,7 @@ function handle_args {
         # These options require an argument (like a filename)
         case $arg in
             --v1)
-                PYSWIP_VERSION="pyswip1"
+                PYSWIP_VERSION="pyswip"
                 continue
                 ;;
             --v2)
@@ -197,6 +206,7 @@ function handle_args {
 		    if [[ -f "$arg_realpath" || -d "$arg_realpath" ]]; then
 		       add_to_list "$arg_realpath" LIST_OF_FILE_ARGS
 		    fi
+		    add_to_list "$arg" OTHER_OPTIONS
 		else
 		    add_to_list "$arg" OTHER_OPTIONS
 		fi
@@ -225,6 +235,15 @@ else
     echo "No RC file (.mettalogrc) for directory: $DIRNAME"
 fi
 
+# Then process actual command-line arguments
+handle_args "$@"
+
+if [ -z "${EXIT_SCRIPT+x}" ]; then
+    :
+else
+    [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"
+fi
+
 
 #echo "Debug: SWI_OPTIONS: ${SWI_OPTIONS[@]}"
 #echo "Debug: LIST_OF_FILE_ARGS: ${LIST_OF_FILE_ARGS[@]}"
@@ -246,56 +265,47 @@ else
   MLOG="swipl ${SWI_OPTIONS[*]} -l $METTALOG_DIR/metta_vspace/$PYSWIP_VERSION/metta_interp.pl"
 fi
 
-METTA_CMD="$MLOG -- --python=$python_flag ${LIST_OF_FILE_ARGS[*]} --repl=$repl_flag --args ${OTHER_OPTIONS[*]}"
+METTA_CMD="$MLOG -- --python=$python_flag ${OTHER_OPTIONS[*]}"
 
-if [[ -n "$TIMEOUT" && "$TIMEOUT" -gt 0 ]]; then
-    METTA_CMD="timeout --foreground --preserve-status --signal=SIGTERM --kill-after=5s $TIMEOUT ${METTA_CMD}"
+OS=$(uname)
+TIMEOUT_CMD="timeout"
+
+if [[ "$OS" == "Darwin" ]]; then
+    # macOS
+    if command -v gtimeout >/dev/null 2>&1; then
+        TIMEOUT_CMD="gtimeout"
+    else
+        echo "Please install coreutils using Homebrew to get the gtimeout command."
+        [[ "$IS_SOURCED" == "1" ]] && return 1 || exit 1
+    fi
 fi
 
-
-#echo "METTA_CMD=\"$METTA_CMD\""
+if [[ -n "$TIMEOUT" && "$TIMEOUT" -gt 0 ]]; then
+    METTA_CMD="$TIMEOUT_CMD --foreground --preserve-status --signal=SIGTERM --kill-after=5s $TIMEOUT ${METTA_CMD}"
+fi
 
 # Conditional to check if html_flag is enabled
-if [[ "enable" == "enable" ]]; then
-
+if [[ "$html_flag" == "enable" ]]; then
     export TEE_FILE=${TEE_FILE:-"$METTALOG_DIR/TEE.ansi"}
     touch "$TEE_FILE"
     chmod 777 "$TEE_FILE"
     cat /dev/null > "$TEE_FILE"
 
-    #[ -z "$TYPESCRIPT" ] && TYPESCRIPT=1 /usr/bin/script -f --force -e -a "$TEE_FILE" -c "TYPESCRIPT=1 $METTA_CMD"
-
     ( export TYPESCRIPT=1
-      /usr/bin/script -q -f --force -e -a "$TEE_FILE" -c "$METTA_CMD" ) || true
-    stty sane
 
-    # MeTTa write the html file now
-    if [[ "notenable" == "enable" ]]; then
-
-
-	BASENAME=$(basename "${LIST_OF_FILE_ARGS[0]}")
-
-	# Remove extension if it's a file
-	[[ -f "${LIST_OF_FILE_ARGS[0]}" ]] && BASENAME=${BASENAME%.*}
-
-	if command -v ansi2html >/dev/null 2>&1; then
-	    ansi2html < "$TEE_FILE" > "$DIRNAME/$BASENAME.html"
-	    #echo "Output saved to $DIRNAME/$BASENAME.html"
+	if [[ "$OS" == "Darwin" ]]; then
+	    # macOS
+	    /usr/bin/script -q -f -a "$TEE_FILE" "$METTA_CMD"
 	else
-	    echo ""
-	    echo "ansi2html command not found. HTML output will not be generated."
+	    # Assume Linux
+	    /usr/bin/script -q -f --force -e -a "$TEE_FILE" -c "$METTA_CMD"
 	fi
 
-    fi
-    exit_script 0
+    ) || true
+    stty sane
+else
+  (eval $METTA_CMD) || true
+   stty sane
 fi
-
-(eval $METTA_CMD) || true
-stty sane
-
-
-
-
-
 
 
