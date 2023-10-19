@@ -1054,7 +1054,8 @@ load_fb_cache0(File):- file_name_extension(Name,_E,File),
 % ============================================================================
 %  LOAD FB Files
 % ============================================================================
-track_load_into_file(Filename,Goal):-
+track_load_into_file(RelFilename,Goal):-
+ absolute_file_name(RelFilename,Filename),
  must_det_ll((
   start_html_of(Filename),
   fbug(track_load_into_file(Filename)),
