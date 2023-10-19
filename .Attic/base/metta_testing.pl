@@ -76,12 +76,13 @@ write_pass_fail([P,C,_],PASS_FAIL,G):-
     get_test_name(TestName),
       format('<h3 id="~w">;; ~w</h3>',[TestName,TestName]),
 
-      tee_file(TEE_FILE),atom_concat(TEE_FILE,'.UNITS',UNITS),
+      if_t(tee_file(TEE_FILE),
+      (atom_concat(TEE_FILE,'.UNITS',UNITS),
       open(UNITS, append, Stream),
       format(Stream,'| ~w | [~w](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/vspace-metta/main/reports/~w.html#~w) | ~@ | ~@ | ~@ |~n',
       [PASS_FAIL,TestName,Base,TestName,trim_gstring(with_indents(false,write_src([P,C])),200),
         trim_gstring(with_indents(false,write_src(G1)),100),with_indents(false,write_src(G2))]),!,
-      close(Stream))).
+      close(Stream))))).
 
 trim_gstring(Goal, MaxLen) :-
     wots(String,Goal),
