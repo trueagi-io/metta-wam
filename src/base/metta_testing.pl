@@ -30,9 +30,8 @@ string_replace(Original, Search, Replace, Replaced) :-
     atomic_list_concat(Split, Search, Original),
     atomic_list_concat(Split, Replace, Replaced),!.
 
-get_test_name(TestName) :-
+get_test_name(Number,TestName) :-
    ((nb_current(loading_file,FilePath),FilePath\==[])->true; FilePath='SOME/UNIT-TEST'),
-   loonit_number(Number),
    make_test_name(FilePath, Number, TestName).
 
 
@@ -53,7 +52,7 @@ make_test_name(FilePath, Number, TestName) :-
     wots(NS,format('~`0t~d~2|',[Number])),
     format(string(TestName), "~w.~w.~w", [NoUnderscoreParent, NoUnderscore, NS]).
 
-%color_g_mesg(_,G):-!,call(G).
+
 color_g_mesg(C,G):-
   wots(S,user:call(G)), ansi_format([fg(C)], '~N~w~n', [S]),!.
 
@@ -68,15 +67,19 @@ loonit_asserts(S,Pre,G):-
 
 write_pass_fail([P,C,_],PASS_FAIL,G):-
  must_det_ll((
-    arg(1,G,G1),arg(2,G,G2),
+    loonit_number(Number),
+    get_test_name(Number,TestName),
+    arg(1,G,G1),arg(2,G,G2), write_pass_fail(TestName,P,C,PASS_FAIL,G1,G2))).
+
+write_pass_fail(TestName,P,C,PASS_FAIL,G1,G2):-
     ignore(((
    (nb_current(loading_file,FilePath),FilePath\==[])->true; FilePath='SOME/UNIT-TEST.metta'),
     atomic_list_concat([_,R],'examples/',FilePath),
     file_name_extension(Base, _, R))),
-    get_test_name(TestName),
       format('<h3 id="~w">;; ~w</h3>',[TestName,TestName]),
 
-      tee_file(TEE_FILE),atom_concat(TEE_FILE,'.UNITS',UNITS),
+      if_t( (tee_file(TEE_FILE)->true;'TEE.ansi'=TEE_FILE),
+      (atom_concat(TEE_FILE,'.UNITS',UNITS),
       open(UNITS, append, Stream),
       format(Stream,'| ~w | [~w](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/vspace-metta/main/reports/~w.html#~w) | ~@ | ~@ | ~@ |~n',
       [PASS_FAIL,TestName,Base,TestName,trim_gstring(with_indents(false,write_src([P,C])),200),
@@ -103,8 +106,18 @@ loonit_asserts1(TestSrc,Pre,G) :- nop(Pre),
     color_g_mesg(cyan,write_src(loonit_success(G))),!.
 
 loonit_asserts1(TestSrc,Pre,G) :-
+    sub_var('BadType',TestSrc), \+ check_type,!,
+    write('\n!check_type (not considering this a failure)\n'),
+    color_g_mesg('#D8BFD8',write_src(loonit_failureR(G))),!,
+    ignore(((
+       option_value('on-fail','trace'),
+       setup_call_cleanup(debug(metta(eval)),call((Pre,G)),nodebug(metta(eval)))))).
+
+
+loonit_asserts1(TestSrc,Pre,G) :-
     write_pass_fail(TestSrc,'FAIL',G),
-    ((sub_var('BadType',TestSrc), \+ check_type) -> write('\n!check_type (not considering this a failure)\n') ; flag(loonit_failure, X, X+1)), !,
+    ((sub_var('BadType',TestSrc), \+ check_type) -> write('\n!check_type (not considering this a failure)\n') ;
+      flag(loonit_failure, X, X+1)), !,
     color_g_mesg(red,write_src(loonit_failureR(G))),!,
      %itrace, G.
     ignore(((
@@ -125,7 +138,7 @@ loonit_report(Successes,Failures):-
     ansi_format([bold], 'LoonIt Report~n',[]),
     format('------------~n'),
     ansi_format([fg(green)], 'Successes: ~w~n', [Successes]),
-    ansi_format([fg(red)], 'Failures: ~w~n', [Failures]).
+    ((integer(Failures),Failures>0) -> ansi_format([fg(red)], 'Failures: ~w~n', [Failures]);ansi_format([fg(green)], 'Failures: ~w~n', [Failures])).
 
 % Resets loonit counters, consults the given file, and prints the status report.
 loon_metta(File) :-
@@ -135,6 +148,140 @@ loon_metta(File) :-
     loonit_report,
     flag(loonit_success, _, WasSuccesses),
     flag(loonit_failure, _, WasFailures),!.
+
+
+:- dynamic(file_answers/3).
+:- dynamic(file_exec_num/2).
+
+% set_exec_num/2
+% Update or assert the execution number for the given file.
+
+set_exec_num(FileName, Val) :-
+    (   retract(file_exec_num(FileName, _)) % If an entry exists, retract it
+    ->  true
+    ;   true                               % Otherwise, do nothing
+    ),
+    asserta(file_exec_num(FileName, Val)).  % Assert the new value
+
+% get_exec_num/2
+% Retrieve the execution number for the given file. If none exists, it returns 0.
+get_exec_num(Val):-
+    current_exec_file(FileName),
+    file_exec_num(FileName, Val),!.
+get_exec_num(FileName, Val) :-
+    (   file_exec_num(FileName, CurrentVal)
+    ->  Val = CurrentVal
+    ;   Val = 0
+    ).
+
+
+get_expected_result(Ans):-
+ ignore((
+  current_exec_file(FileName),
+  file_exec_num(FileName, Nth),
+  file_answers(FileName, Nth, Ans))),!.
+
+
+
+got_exec_result(Val):-
+ ignore((
+  current_exec_file(FileName),
+  file_exec_num(FileName, Nth),
+  file_answers(FileName, Nth, Ans),
+  got_exec_result(Val,Ans))).
+
+
+got_exec_result(Val,Ans):-
+ must_det_ll((
+  current_exec_file(FileName),
+  file_exec_num(FileName, Nth),
+  Nth100 is Nth+100,
+  get_test_name(Nth100,TestName),
+  nb_current(exec_src,Exec),
+  (equal_enough(Val,Ans)
+     -> write_pass_fail_result(TestName,exec,Exec,'PASS',Ans,Val)
+      ; write_pass_fail_result(TestName,exec,Exec,'FAIL',Ans,Val)))).
+
+write_pass_fail_result(TestName,exec,Exec,PASS_FAIL,Ans,Val):-
+  nl,writeq(write_pass_fail_result(TestName,exec,Exec,PASS_FAIL,Ans,Val)),nl,
+  write_pass_fail(TestName,exec,Exec,PASS_FAIL,Ans,Val).
+
+
+current_exec_file(FileName):- nb_current(loading_file,FileName).
+
+% inc_exec_num/1
+% Increment the execution number for the given file. If no entry exists, initialize it to 1.
+inc_exec_num :- current_exec_file(FileName),!,inc_exec_num(FileName).
+inc_exec_num(FileName) :-
+    (   retract(file_exec_num(FileName, CurrentVal))
+    ->  NewVal is CurrentVal + 1
+    ;   NewVal = 1
+    ),
+    asserta(file_exec_num(FileName, NewVal)).
+
+
+load_answer_file(File) :-
+    ignore((
+    ensure_extension(File, answers, AnsFile),
+    remove_specific_extension(AnsFile, answers, StoredAs),
+    wdmsg(load_answer_file(AnsFile,StoredAs)),
+    load_answer_file(AnsFile,StoredAs))).
+
+load_answer_file(AnsFile,StoredAs):-
+    (   file_answers(StoredAs,_, _) ->  true
+    ;   (   \+ exists_file(AnsFile) ->  true
+        ;   (setup_call_cleanup(
+                open(AnsFile, read, Stream, [encoding(utf8)]),
+                (load_answer_stream(1,StoredAs, Stream)),
+                close(Stream))))).
+
+:- debug(metta(answers)).
+load_answer_stream(_Nth, StoredAs, Stream):- at_end_of_stream(Stream),!,
+  if_trace(metta(answers),listing(file_answers(StoredAs,_,_))).
+load_answer_stream(Nth, StoredAs, Stream):- read_line_to_string(Stream,String),
+    load_answer_stream(Nth, StoredAs, String, Stream).
+
+load_answer_stream(Nth, StoredAs, String, Stream):- string_concat("[",_,String),!,
+    parse_answer_string(String,Metta),!,
+    assert(file_answers(StoredAs,Nth,Metta)),
+    Nth2 is Nth+1,load_answer_stream(Nth2, StoredAs, Stream).
+load_answer_stream(Nth, StoredAs, _, Stream):- load_answer_stream(Nth, StoredAs, Stream).
+
+parse_answer_string("[]",[]):- !.
+parse_answer_string(String,Metta):- string_concat("(",_,String),!,parse_sexpr_metta(String,Metta),!.
+parse_answer_string(String,Metta):- string_concat("[",Mid,String),string_concat(Inner,"]",Mid),
+  atomics_to_string(["(",Inner,")"],Str),!,parse_answer_string(Str,Metta),!.
+parse_answer_string(String,Metta):- String=Metta,!.
+
+
+
+% Example usage:
+% ?- change_extension('path/to/myfile.txt', 'pdf', NewFileName).
+% NewFileName = 'path/to/myfile.pdf'.
+change_extension(OriginalFileName, NewExtension, NewBaseName) :-
+    %file_base_name(OriginalFileName, BaseName),          % Extract base name
+    file_name_extension(BaseWithoutExt, _, OriginalFileName),    % Split extension
+    file_name_extension(BaseWithoutExt, NewExtension, NewBaseName),!. % Create new base name with new extension
+    %directory_file_path(Directory, NewBaseName, NewFileName). % Join with directory path
+% Example usage:
+% ?- ensure_extension('path/to/myfile.txt', 'txt', NewFileName).
+% NewFileName = 'path/to/myfile.txt'.
+ensure_extension(OriginalFileName, Extension, NewFileName) :-
+    file_name_extension(_, CurrentExt, OriginalFileName),
+    (   CurrentExt = Extension
+    ->  NewFileName = OriginalFileName
+    ;   atom_concat(OriginalFileName, '.', TempFileName),
+        atom_concat(TempFileName, Extension, NewFileName)
+    ).
+% Example usage:
+% ?- remove_specific_extension('path/to/myfile.txt', 'txt', NewFileName).
+% NewFileName = 'path/to/myfile'.
+
+% ?- remove_specific_extension('path/to/myfile.txt', 'pdf', NewFileName).
+% NewFileName = 'path/to/myfile.txt'.
+remove_specific_extension(OriginalFileName, Extension, FileNameWithoutExtension) :-
+    file_name_extension(FileNameWithoutExtension, Ext, OriginalFileName),
+    ( Ext = Extension -> true ; FileNameWithoutExtension = OriginalFileName ).
 
 
 quick_test:-
