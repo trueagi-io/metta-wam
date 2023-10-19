@@ -408,9 +408,6 @@ print_list_as_sexpression([]).
 %print_list_as_sexpression([H]):- w_proper_indent(pp_sex(H)),!.
 print_list_as_sexpression([H|T]):- write(' '), pp_sex(H), print_list_as_sexpression(T).
 
-call_sexpr(S):- writeln(call=S).
-
-
 :- dynamic(fb_pred/2).
 
 full_symbol_count(SL):- flag(total_loaded_atoms,SL,SL),SL>1,!.
