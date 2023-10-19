@@ -7,14 +7,16 @@ self_eval(X):- is_list(X),!,fail.
 %self_eval(X):- compound(X),!.
 %self_eval(X):- is_ref(X),!,fail.
 self_eval(X):- atom(X),!, \+ nb_current(X,_),!.
-self_eval('True'). self_eval('False').
+self_eval('True'). self_eval('False'). self_eval('F').
 
 
 :- nb_setval(self_space, '&self').
-evals_to(XX,Y):- Y==XX,!.   evals_to(XX,Y):- Y=='True',!, XX\=='False'.
+evals_to(XX,Y):- Y==XX,!.
+evals_to(XX,Y):- Y=='True',!, is_True(XX),!.
 
+current_self(Space):- nb_current(self_space,Space).
 eval_args(A,AA):-
-  nb_current(self_space,Space),
+  current_self(Space),
   eval_args(11,Space,A,AA).
 
 %eval_args(Depth,_Self,X,_Y):- forall(between(6,Depth,_),write(' ')),writeqln(eval_args(X)),fail.
@@ -57,7 +59,6 @@ if_trace(Flag,Goal):- catch(ignore((debugging(Flag),Goal)),_,true).
 
 
 eval_args0(Depth,_Slf,X,Y):- Depth<1,!,X=Y, (\+ trace_on_overflow-> true; flag(eval_num,_,0),debug(metta(eval))).
-eval_args0(_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
 eval_args0(Depth,Self,X,Y):-
   Depth2 is Depth-1,
   eval_args11(Depth,Self,X,M),
@@ -96,7 +97,7 @@ eval_args1(_Dpth,_Slf,X,Y):- \+ is_list(X),!,Y=X.
 eval_args1(_Dpth,_Slf,List,Y):- maplist(self_eval,List),List=[H|_], \+ atom(H), !,Y=List.
 
 eval_args1(Depth,Self,[V|VI],[V|VO]):- var(V),is_list(VI),!,maplist(eval_args(Depth,Self),VI,VO).
-
+eval_args1(Depth,Self,[V|VI],[V|VO]):- nonvar(V),is_metta_data_functor(V),is_list(VI),!,maplist(eval_args(Depth,Self),VI,VO).
 
 eval_args1(_Dpth,_Slf,['repl!'],'True'):- !, repl.
 eval_args1(Depth,Self,['!',Cond],Res):- !, call(eval_args(Depth,Self,Cond,Res)).
@@ -493,7 +494,7 @@ eval_args2(Depth,Self,['pragma!',Other,Expr],Value):-
 
 eval_args2(Depth,Self,['nop',Expr],[]):- !,  eval_args(Depth,Self,Expr,_).
 
-is_True(T):- T\=='False',T\==[].
+is_True(T):- T\=='False',T\=='F',T\==[].
 
 is_and(S):- \+ atom(S),!,fail.
 is_and('#COMMA'). is_and(','). is_and('and'). is_and('And').
@@ -536,11 +537,10 @@ as_tf(G,TF):- catch_nowarn((call(G)*->TF='True';TF='False')).
 eval_selfless(['==',X,Y],TF):- as_tf(X=:=Y,TF),!.
 eval_selfless(['==',X,Y],TF):- as_tf(X=@=Y,TF),!.
 eval_selfless(['=',X,Y],TF):-!,as_tf(X=Y,TF).
-eval_selfless(['>',X,Y],TF):-!,as_tf(X>@Y,TF).
-eval_selfless(['<',X,Y],TF):-!,as_tf(X@<Y,TF).
-eval_selfless(['=>',X,Y],TF):-!,as_tf(X@>=Y,TF).
-eval_selfless(['<=',X,Y],TF):-!,as_tf(X@=<Y,TF).
-
+eval_selfless(['>',X,Y],TF):-!,as_tf(X>Y,TF).
+eval_selfless(['<',X,Y],TF):-!,as_tf(X<Y,TF).
+eval_selfless(['=>',X,Y],TF):-!,as_tf(X>=Y,TF).
+eval_selfless(['<=',X,Y],TF):-!,as_tf(X=<Y,TF).
 eval_selfless(['%',X,Y],TF):-!,eval_selfless(['mod',X,Y],TF).
 
 eval_selfless(LIS,Y):-  mnotrace((

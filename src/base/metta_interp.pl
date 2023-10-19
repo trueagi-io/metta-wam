@@ -32,37 +32,44 @@ Now FAILING TEST-SCRIPTS.C1-GROUNDED-BASIC.20)
 */
 
 
-early_opts('repl',false).
-early_opts('compile',false).
-early_opts('table',false).
-early_opts('time',true).
-early_opts('exec',true).
-early_opts('html',false).
-early_opts('python',false).
-early_opts('prolog',false).
+option_value_def('repl',false).
+option_value_def('compile',show).
+option_value_def('table',false).
+option_value_def('time',true).
+option_value_def('exec',true).
+option_value_def('html',false).
+option_value_def('python',false).
+option_value_def('halt',false).
+option_value_def('prolog',false).
 
-early_opts('trace-on-fail',true).
-early_opts('trace-on-pass',true).
-early_opts('trace-on-overflow',true).
-early_opts('trace-on-error',true).
-early_opts('trace-length',100).
-early_opts('stack-max',100).
+option_value_def('trace-on-fail',true).
+option_value_def('trace-on-pass',true).
+option_value_def('trace-on-overflow',true).
+option_value_def('trace-on-error',true).
+option_value_def('trace-length',100).
+option_value_def('stack-max',100).
 
 
 trace_on_fail:-     option_value('trace-on-fail',true).
 trace_on_overflow:- option_value('trace-on-overflow',true).
 trace_on_pass:-     option_value('trace-on-pass',true).
 
+any_floats(S):- member(E,S),float(E),!.
 
 % ============================
 % %%%% Arithmetic Operations
 % ============================
-% Addition
-'+'(Addend1, Addend2, Sum):- plus(Addend1, Addend2, Sum).
-% Subtraction
-'-'(Sum, Addend1, Addend2):- plus(Addend1, Addend2, Sum).
-
+%:- use_module(library(clpfd)).
 :- use_module(library(clpq)).
+%:- use_module(library(clpr)).
+
+% Addition
+%'+'(Addend1, Addend2, Sum):- \+ any_floats([Addend1, Addend2, Sum]),!,Sum #= Addend1+Addend2 .
+'+'(Addend1, Addend2, Sum):- catch(plus(Addend1, Addend2, Sum),_,fail),!.
+'+'(Addend1, Addend2, Sum):- {Sum = Addend1+Addend2}.
+% Subtraction
+'-'(Sum, Addend1, Addend2):- '+'(Addend1, Addend2, Sum).
+
 % Multiplication
 '*'(Factor1, Factor2, Product):- {Product = Factor1*Factor2}.
 % Division
@@ -302,14 +309,21 @@ fetch_or_create_space(NameOrInstance, Space) :-
 'match-pattern'([H |_T], H, H) :- !.
 'match-pattern'([_H| T], Pattern, Template) :- 'match-pattern'(T, Pattern, Template).
 
-
+metta_cmd_args(Rest):- current_prolog_flag(late_metta_opts,Rest),!.
 metta_cmd_args(Rest):- current_prolog_flag(argv,P),append(_,['--'|Rest],P),!.
 metta_cmd_args(Rest):- current_prolog_flag(os_argv,P),append(_,['--'|Rest],P),!.
 metta_cmd_args(Rest):- current_prolog_flag(argv,Rest).
-run_file_arg:- metta_cmd_args(Rest), !,  do_cmdline_load_metta('&self',Rest).
-loon:- run_file_arg, !, loonit_report, halt(7).
-%loon:- time(loon_metta('./examples/compat/test_scripts/*.metta')),fail.
-loon:- repl, halt(7).
+run_cmd_args:- metta_cmd_args(Rest), !,  do_cmdline_load_metta('&self',Rest).
+
+is_metta_data_functor(F):-
+  current_self(Self),is_metta_data_functor(Self,F).
+
+is_metta_data_functor(Other,H):-
+  metta_type(Other,H,_),
+  \+ metta_atom(Other,[H|_]),
+  \+ metta_defn(Other,[H|_],_).
+
+
 
 metta_make_hook:-  loonit_reset, option_value(not_a_reload,true),!.
 metta_make_hook:-
@@ -317,7 +331,7 @@ metta_make_hook:-
 
 :- multifile(prolog:make_hook/2).
 :- dynamic(prolog:make_hook/2).
-prolog:make_hook(after, _Some):- metta_make_hook.
+prolog:make_hook(after, _Some):- nop( metta_make_hook).
 
 into_reload_options(Reload,Reload).
 
@@ -334,27 +348,20 @@ get_flag_value(_,true).
 
 :- ignore(((
    \+ prolog_load_context(reloading,true),
-   forall(early_opts(Opt,Default),set_option_value(Opt,Default))))).
+   forall(option_value_def(Opt,Default),set_option_value(Opt,Default))))).
 
-process_early_opts:- \+ option_value('python',false), skip(ensure_loaded(metta_python)).
-process_early_opts.
+process_option_value_def:- \+ option_value('python',false), skip(ensure_loaded(metta_python)).
+process_option_value_def.
 
 
 process_late_opts:- option_value('html',true), shell('./total_loonits.sh').
-process_late_opts:- \+ option_value('repl',false), repl.
-process_late_opts:- halt(7).
+process_late_opts:- !. %option_value('repl',true), repl.
+%process_late_opts:- halt(7).
 
-do_cmdline_load_metta(Self,List):-
-  select(M,List,Rest),
-  atom_concat('-',_,M),
-  early_opts(Opt,_),
-  is_cmd_option(Opt,M, TF),!,
-  write(' '), write_src(M), nl, !, set_option_value(Opt,TF),
-  do_cmdline_load_metta(Self,Rest).
-
+do_cmdline_load_metta(_Slf,Rest):- select('--prolog',Rest,RRest),!,set_prolog_flag(late_metta_opts,RRest).
 do_cmdline_load_metta(Self,Rest):-
   set_prolog_flag(late_metta_opts,Rest),
-  forall(process_early_opts,true),
+  forall(process_option_value_def,true),
   cmdline_load_metta(Self,Rest),
   forall(process_late_opts,true).
 
@@ -362,13 +369,36 @@ do_cmdline_load_metta(Self,Rest):-
 cmdline_load_metta(Self,[Filemask|Rest]):- atom(Filemask), \+ atom_concat('-',_,Filemask),
   must_det_ll((Src=load_metta(Self,Filemask),nl,write_src(Src),nl,catch_red(Src),!,flush_output,
   cmdline_load_metta(Self,Rest))).
+
+cmdline_load_metta(Self,['-g',M|Rest]):-
+  read_term_from_atom(M, Term, []), call(Term),
+  do_cmdline_load_metta(Self,Rest).
+
 cmdline_load_metta(Self,[M|Rest]):-
-  write(' '), write_src(M), nl, !,
+  m_opt(M,Opt),!,
+  is_cmd_option(Opt,M,TF),!,
+  write(' '), writeq(is_cmd_option(Opt,M,TF)), nl, !, set_option_value(Opt,TF),
+  do_cmdline_load_metta(Self,Rest).
+
+cmdline_load_metta(Self,[M|Rest]):-
+  write(' unused '), write_src(M), nl, !,
   cmdline_load_metta(Self,Rest).
 cmdline_load_metta(_,Nil):- Nil==[],!.
 
+
+m_opt(M,Opt):-
+  m_opt0(M,Opt1),
+  m_opt1(Opt1,Opt).
+
+m_opt1(Opt1,Opt):- atomic_list_concat([Opt|_],'=',Opt1).
+
+m_opt0(M,Opt):- atom_concat('--no-',Opt,M),!.
+m_opt0(M,Opt):- atom_concat('--',Opt,M),!.
+m_opt0(M,Opt):- atom_concat('-',Opt,M),!.
+
 :- set_prolog_flag(occurs_check,true).
 
+start_html_of(_Filename):- \+ tee_file(_TEE_FILE),!.
 start_html_of(_Filename):-
  must_det_ll((
   S = _,
@@ -382,6 +412,7 @@ start_html_of(_Filename):-
   writeln(doing(S)),
   shell(S))).
 
+save_html_of(_Filename):- \+ tee_file(_TEE_FILE),!.
 save_html_of(_):- \+ has_loonit_results, \+ option_value('html',true).
 save_html_of(Filename):-
  must_det_ll((
@@ -540,22 +571,26 @@ repl_read(Read) :- mnotrace(repl_read("", Read)).
 
 
 
-repl:- option_value('repl',prolog),!,prolog.
-repl:-
+%repl:- option_value('repl',prolog),!,prolog.
+
+repl:- setup_call_cleanup(flag(repl_level,Was,Was+1),repl0,
+  (flag(repl_level,_,Was),(Was==0 -> maybe_halt(7) ; true))).
+repl0:-
    mnotrace((current_input(In),ignore(catch(load_history,_,true)))),
    repeat,
+   flag(eval_num,_,0),
    mnotrace((with_option(not_a_reload,true,make),
      ((nb_current(self_space,Self),Self\==[])->true;Self='&self'),
      format('~N~n'), format(atom(P),'metta@~w: ',[Self]),
      write(P))),
-   setup_call_cleanup(mnotrace(prompt(Was,'')),
+   setup_call_cleanup(mnotrace(prompt(_,P)),
       (mnotrace(read_metta(In,Read))),
-       mnotrace(prompt(_,Was))),
-   once(do_repl(Self,Read)),
+       nop(mnotrace(prompt(_,_Was)))),
+   catch_red(once(do_repl(Self,Read))),
    mnotrace(Read==end_of_file),!.
 
-do_repl(_Self,end_of_file):- !, writeln('\n\n% To restart, use: ?- repl.').
-do_repl(_Slf,call(Term)):- add_history1(Term), !, repl_call(Term).
+do_repl(_Self,end_of_file):- !. %, halt(7), writeln('\n\n% To restart, use: ?- repl.').
+do_repl(_Slf,call(Term)):- nop(add_history1(Term)), !, repl_call(Term).
 
 do_repl(Self,!):- !, mnotrace(repl_read(Exec)),do_repl(Self,exec(Exec)).
 
@@ -565,7 +600,7 @@ do_repl(Self,exec(Exec)):- !, mnotrace(save_exec_history(Exec)), do_metta_exec(S
 do_repl(Self,Read):-
   mnotrace(((with_output_to(string(H),write_src(Read)),add_history_string(H)))), do_metta(Self,load,Read).
 
-add_history_string(Str):- ignore(catch_i(add_history01(Str))),!.
+add_history_string(Str):- nop(ignore(catch_i(add_history01(Str)))),!.
 
 save_exec_history(exec(Exec)):- !, mnotrace((save_exec_history(Exec))).
 save_exec_history(Exec):- mnotrace((with_output_to(string(H),(write('!'),write_src(Exec))),add_history_string(H))).
@@ -705,7 +740,7 @@ assert_preds(_Self,Load,Preds):-
    ignore((
     \+ predicate_property(H,defined),
     if_t(use_metta_compiler,catch_i(dynamic(F,A))),
-    format('  :- ~q.~n',[dynamic(F,A)]),
+    format('  :- ~q.~n',[dynamic(F/A)]),
     if_t(option_value('tabling',true), format('  :- ~q.~n',[table(F/A)])))),
    if_t((preview_compiler),
      format('~N~n  ~@',[portray_clause(Preds)])),
@@ -716,7 +751,7 @@ assert_preds(_Self,Load,Preds):-
 %load_hook(_Load,_Hooked):- !.
 load_hook(Load,Hooked):- ignore(( \+ ((forall(load_hook0(Load,Hooked),true))))),!.
 
-
+load_hook0(_,_):- \+ current_prolog_flag(metta_interp,ready),!.
 load_hook0(_,_):- \+ preview_compiler,!.
 load_hook0(Load,metta_defn(Self,H,B)):-
        functs_to_preds([=,H,B],Preds),
@@ -730,11 +765,31 @@ use_metta_compiler:- option_value('compile','full'), !.
 preview_compiler:- \+ option_value('compile',false), !.
 %preview_compiler:- use_metta_compiler,!.
 
-metta_anew1(load,OBO):- subst_vars(OBO,Cl),assert_if_new(Cl). %to_metta(Cl).
-metta_anew1(unload,OBO):- subst_vars(OBO,Cl),ignore((clause(Cl,_,Ref),clause(Cl2,_,Ref),Cl=@=Cl2,erase(Ref),pp_m(Cl))).
+metta_anew1(Load,_OBO):- var(Load),trace,!.
+metta_anew1(load,OBO):- must_det_ll((load_hook(load,OBO),subst_vars(OBO,Cl),assertz_if_new(Cl))). %to_metta(Cl).
+metta_anew1(unload,OBO):- subst_vars(OBO,Cl),load_hook(unload,OBO),
+  expand_to_hb(Cl,Head,Body),
+  predicate_property(Head,number_of_clauses(_)),
+  ignore((clause(Head,Body,Ref),clause(Head2,Body2,Ref),(Head+Body)=@=(Head2+Body2),erase(Ref),pp_m(Cl))).
 
+metta_anew2(Load,_OBO):- var(Load),trace,!.
+metta_anew2(load,OBO):- must_det_ll((load_hook(load,OBO),subst_vars_not_last(OBO,Cl),assertz_if_new(Cl))). %to_metta(Cl).
+metta_anew2(unload,OBO):- subst_vars_not_last(OBO,Cl),load_hook(unload,OBO),
+  expand_to_hb(Cl,Head,Body),
+  predicate_property(Head,number_of_clauses(_)),
+  ignore((clause(Head,Body,Ref),clause(Head2,Body2,Ref),(Head+Body)=@=(Head2+Body2),erase(Ref),pp_m(Cl))).
+
+
+metta_anew(Load,_Src,OBO):- silent_loading,!,metta_anew1(Load,OBO).
 metta_anew(Load,Src,OBO):- format('~N'), color_g_mesg('#0f0f0f',(write('  ; Action: '),writeq(Load=OBO))),
    color_g_mesg('#ffa500', write_src(Src)),metta_anew1(Load,OBO),format('~n').
+
+subst_vars_not_last(A,B):-
+  functor(A,_F,N),arg(N,A,E),
+  subst_vars(A,B),
+  nb_setarg(N,B,E),!.
+
+silent_loading:- false.
 
 assert_to_metta(_):- reached_file_max,!.
 assert_to_metta(OBO):-
@@ -748,7 +803,7 @@ assert_to_metta(OBO):-
   decl_fb_pred(FF,AA),
   ((fail,call(Data))->true;(
    must_det_ll((assert(Data),incr_file_count(_),
-     ignore((((should_show_data(X),
+     ignore((((fail,should_show_data(X),
        ignore((OldData\==Data,write('; oldData '),write_src(OldData),format('  ; ~w ~n',[X]))),
        write_src(Data),format('  ; ~w ~n',[X]))))),
      ignore((
@@ -798,13 +853,11 @@ do_metta(Self,LoadExec,Term):- must_det_ll(do_metta1(Self,LoadExec,Term))*->true
 
 do_metta1(Self,_,Cmt):- nonvar(Cmt),do_metta_cmt(Self,Cmt),!.
 
-do_metta1(_Slf,load,exec(Exec)):- option_value('exec',skip),!,write_exec(Exec),!.
 do_metta1(_Slf,load,call(:- Term)):- !, repl_call(Term).
 do_metta1(_Slf,load,call(Term)):- !, repl_call(Term).
 
-do_metta1(Self,_,exec(Exec)):- !,do_metta_exec(Self,Exec),!.
-do_metta1(_Slf,exec,Exec):- option_value('exec',skip),!,write_exec(Exec),!.
-do_metta1(Self,exec,Exec):- !,do_metta_exec(Self,Exec),!.
+do_metta1(Self,_,exec(Exec)):- !,do_metta_file_exec(Self,Exec),!.
+do_metta1(Self,exec,Exec):- !,do_metta_file_exec(Self,Exec),!.
 
 do_metta1(Self,Load,Src):- do_metta1(Self,Load,Src,Src),!.
 
@@ -838,22 +891,33 @@ do_metta1(Self,Load,[':',Fn,TypeDecL,RetType], Src):-
    ignore((Body == 'True',!,do_metta1(Self,Load,Head))),
    nop((fn_append(Head,X,Head), fn_append(PredDecl,X,Body), metta_anew((Head:- Body)))),!.*/
 
-do_metta1(Self,Load,['=',PredDecl,False], Src):- (False == [];False == 'Nil';False == 'F'),!,
+do_metta1(Self,Load,['=',PredDecl,False], Src):- (False == [];False == 'Nil';False == 'F'), fail,!,
   do_metta1(Self,Load,['=',PredDecl,'False'], Src).
 
-do_metta1(Self,Load,['=',Head,PredDecl], Src):-!,
+do_metta1(Self,Load,[EQ,Head,Result], Src):- EQ=='=', !,
  must_det_ll((
     discover_head(Self,Load,Head),
-    color_g_mesg('#ffa500',metta_anew(Load,Src,metta_defn(Self,Head,PredDecl))),
-    discover_body(Self,Load,PredDecl),
-    nop((fn_append(Head,X,Head),fn_append(PredDecl,X,Body), metta_anew((Head:- Body)))))),!.
+    color_g_mesg('#ffa500',metta_anew(Load,Src,metta_defn(Self,Head,Result))),
+    discover_body(Self,Load,Result))).
 
 do_metta1(Self,Load,PredDecl, Src):-
    ignore(discover_head(Self,Load,PredDecl)),
    color_g_mesg('#ffa500',metta_anew(Load,Src,metta_atom(Self,PredDecl))).
 
-do_metta_exec(Self,Var):- var(Var), !, pp_m(eval(Var)), freeze(Var,wdmsg(laterVar(Self,Var))).
 
+always_exec(List):- \+ is_list(List),!,fail.
+always_exec([Var|_]):- var(Var),!,fail.
+always_exec(['import!'|_]).
+always_exec(['assertEqualToResult'|_]):-!,fail.
+always_exec(['assertEqual'|_]):-!,fail.
+always_exec(_):-!. % everything else
+
+
+do_metta_file_exec(Self,Exec):- always_exec(Exec), !, do_metta_exec(Self,Exec).
+do_metta_file_exec(_Slf,Exec):- option_value('exec',skip),!,nl,writeq(Exec),nl,write_exec(Exec),!.
+do_metta_file_exec(Self,Exec):- do_metta_exec(Self,Exec).
+
+do_metta_exec(Self,Var):- var(Var), !, pp_m(eval(Var)), freeze(Var,wdmsg(laterVar(Self,Var))).
 do_metta_exec(_Self,TermV):- use_metta_compiler, !,
  (( /*must_det_ll*/((
   write_exec(TermV),
@@ -892,7 +956,7 @@ do_metta_exec(Self,TermV):-!,
   ((numbervars(v(TermV,Term,NamedVarsList,Vars),999,_,[attvar(bind)]),
   %nb_current(variable_names,NamedVarsList),
   nl,print(subst_vars(TermV,Term,NamedVarsList,Vars)),nl)))),
-  option_else('stack-max',StackMax,100),
+  option_else('stack-max',StackMax,300),
   nop(maplist(verbose_unify,Vars)))))),
   forall(may_rtrace(eval_args(StackMax,Self,Term,X)),
      ignore(mnotrace(((color_g_mesg(yellow,
@@ -919,11 +983,13 @@ vu(trace,_Value):- trace.
 :- nodebug(metta(eval)).
 :- nodebug(metta(exec)).
 
-may_rtrace(Goal):- debugging(metta(eval)),use_metta_compiler,!,rtrace(call(Goal)).
-may_rtrace(Goal):-
-(option_value('exec',rtrace);debugging(metta(exec))),!,  rtrace(Goal).
-may_rtrace(Goal):- use_metta_compiler,!, (time_eval(Goal)*->true;(trace_on_fail,rtrace(call(Goal)))).
-may_rtrace(Goal):- time_eval(Goal).
+really_trace:- (option_value('exec',rtrace);debugging(metta(exec));debugging(metta(exec))).
+% !(pragma! exec rtrace)
+may_rtrace(Goal):- really_trace,!,  really_rtrace(Goal).
+may_rtrace(Goal):- time_eval(Goal)*->true;really_rtrace(Goal).
+really_rtrace(Goal):- really_trace,use_metta_compiler,!,rtrace(call(Goal)).
+really_rtrace(Goal):- really_trace,!,with_debug(metta(eval),with_debug(metta(exec),Goal)).
+really_rtrace(Goal):- use_metta_compiler,!, (time_eval(Goal)*->true;(trace_on_fail,rtrace(call(Goal)))).
 
 % Measures the execution time of a Prolog goal and displays the duration in seconds,
 % milliseconds, or microseconds, depending on the execution time.
@@ -973,9 +1039,10 @@ catch_red(Term):- catch(Term,E,pp_m(red,in(Term,E))).
 s2p(I,O):- sexpr_s2p(I,O),!.
 
 
-discover_head(Self,Load,[Fn|PredDecl]):-
+discover_head(Self,Load,Head):-
+ ignore(([Fn|PredDecl]=Head,
  nop(( arg_types(PredDecl,[],EachArg),
-  metta_anew1(Load,metta_head(Self,Fn,EachArg)))).
+  metta_anew1(Load,metta_head(Self,Fn,EachArg)))))).
 
 discover_body(Self,Load,Body):-
   nop(( [Fn|PredDecl] = Body, arg_types(PredDecl,[],EachArg),
@@ -988,15 +1055,47 @@ arg_types([['->'|L]],R,LR):-!, arg_types(L,R,LR).
 arg_types(['->'|L],R,LR):-!, arg_types(L,R,LR).
 arg_types(L,R,LR):- append(L,R,LR).
 
-:- ensure_loaded('../../examples/factorial').
-:- ensure_loaded('../../examples/fibonacci').
+%:- ensure_loaded('../../examples/factorial').
+%:- ensure_loaded('../../examples/fibonacci').
 
 %print_preds_to_functs:-preds_to_functs_src(factorial_tail_basic)
+
+:- dynamic(began_loon/1).
+loon:- loon(typein).
+
+catch_red_ignore(G):- ignore(catch_red(G)).
+loon(Why):- began_loon(_),!,assert(began_loon(Why)),wdmsg(skip_loon(Why)).
+loon(Why):-
+  assert(began_loon(Why)),
+  wdmsg(began_loon(Why)),
+  maplist(catch_red_ignore,[
+  % \+ prolog_load_context(reloading,true),
+   metta_final,
+   load_history,
+  (option_value('prolog',true)->true;
+    (run_cmd_args,(option_value('repl',false)->true;repl), loonit_report, maybe_halt(7)))]),!.
+
+:- export(loon/1).
+:- public(loon/1).
+%loon:- time(loon_metta('./examples/compat/test_scripts/*.metta')),fail.
+%loon:- repl, (option_value('halt',false)->true;halt(7)).
+maybe_halt(Seven):- option_value('repl',true),!,halt(Seven).
+maybe_halt(Seven):- option_value('halt',true),!,halt(Seven).
+maybe_halt(Seven):- wdmsg(maybe_halt(Seven)).
+
+:- initialization(loon(restore),restore).
+:- initialization(loon(program),program).
+:- initialization(loon(default)).
+
+qcompile_mettalog:-
+    %pack_install(predicate_streams, [upgrade(true),global(true)]),
+    %pack_install(logicmoo_utils, [upgrade(true),global(true)]),
+    %pack_install(dictoo, [upgrade(true),global(true)]),
+    catch(qsave_program('MeTTaLog', [goal(loon(goal)), toplevel(loon(toplevel)), stand_alone(true)]),E,writeln(E)).
 
 
 :- ignore(((
    \+ prolog_load_context(reloading,true),
-   metta_final,
-   load_history,
-   loon))).
+   metta_final))).
 
+:- set_prolog_flag(metta_interp,ready).
