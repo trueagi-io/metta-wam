@@ -25,7 +25,14 @@ eval_args(_Dpth,_Slf,X,Y):- nonvar(Y),X=Y,!.
 
 eval_args(Depth,Self,X,Y):- nonvar(Y),!,eval_args(Depth,Self,X,XX),evals_to(XX,Y).
 
+eval_args(_Dpth,_Slf,X,Y):- var(X),!,Y=X.
+
 eval_args(_Dpth,_Slf,[X|T],Y):- T==[], number(X),!,Y=[X].
+
+eval_args(Depth,Self,[F|X],Y):-
+  (F=='superpose' ; ( option_value(no_repeats,false))),
+  mnotrace((D1 is Depth-1)),!,
+  eval_args0(D1,Self,[F|X],Y).
 
 eval_args(Depth,Self,X,Y):-
   mnotrace((no_repeats_var(YY),
@@ -94,7 +101,6 @@ eval_args1(Depth,Self,[V|VI],VVO):-  \+ is_list(VI),!,
     (eval_args(Depth,Self,V,VV), (V\==VV -> eval_args(Depth,Self,[VV|VI],VVO) ; VVO = [V|VI]))).
 
 eval_args1(_Dpth,_Slf,X,Y):- \+ is_list(X),!,Y=X.
-eval_args1(_Dpth,_Slf,List,Y):- maplist(self_eval,List),List=[H|_], \+ atom(H), !,Y=List.
 
 eval_args1(Depth,Self,[V|VI],[V|VO]):- var(V),is_list(VI),!,maplist(eval_args(Depth,Self),VI,VO).
 
@@ -103,6 +109,11 @@ eval_args1(Depth,Self,['!',Cond],Res):- !, call(eval_args(Depth,Self,Cond,Res)).
 eval_args1(Depth,Self,['rtrace',Cond],Res):- !, rtrace(eval_args(Depth,Self,Cond,Res)).
 eval_args1(Depth,Self,['time',Cond],Res):- !, time(eval_args(Depth,Self,Cond,Res)).
 eval_args1(Depth,Self,['print',Cond],Res):- !, eval_args(Depth,Self,Cond,Res),format('~N'),print(Res),format('~N').
+% !(println! $1)
+eval_args1(Depth,Self,['println!',Cond],Res):- !, eval_args(Depth,Self,Cond,Res),format('~N'),print(Res),format('~N').
+
+eval_args1(_Dpth,_Slf,List,Y):- is_list(List),maplist(self_eval,List),List=[H|_], \+ atom(H), !,Y=List.
+
 eval_args1(Depth,Self,['assertTrue', X],TF):- !, eval_args(Depth,Self,['assertEqual',X,'True'],TF).
 eval_args1(Depth,Self,['assertFalse',X],TF):- !, eval_args(Depth,Self,['assertEqual',X,'False'],TF).
 
@@ -110,7 +121,7 @@ eval_args1(Depth,Self,['assertEqual',X,Y],RetVal):- !,
    loonit_assert_source_tf(
         ['assertEqual',X,Y],
         (setof_eval(Depth,Self,X,XX), setof_eval(Depth,Self,Y,YY)),
-         equal_enough(XX,YY), TF),
+         equal_enough_for_test(XX,YY), TF),
   (TF=='True'->return_empty(RetVal);RetVal=[got,XX,expected,YY]).
 
 eval_args1(Depth,Self,['assertNotEqual',X,Y],RetVal):- !,
@@ -124,17 +135,17 @@ eval_args1(Depth,Self,['assertEqualToResult',X,Y],RetVal):- !,
    loonit_assert_source_tf(
         ['assertEqualToResult',X,Y],
         (setof_eval(Depth,Self,X,XX), sort(Y,YY)),
-         equal_enough(XX,YY), TF),
+         equal_enough_for_test(XX,YY), TF),
   (TF=='True'->return_empty(RetVal);RetVal=[got,XX,expected,YY]).
 
 
 loonit_assert_source_tf(Src,Goal,Check,TF):-
    copy_term(Goal,OrigGoal),
-   loonit_asserts(Src, Goal, Check),
+   loonit_asserts(Src, time_eval('\n; EVAL TEST\n;',Goal), Check),
    as_tf(Check,TF),!,
   ignore((
           once((TF='True', trace_on_pass);(TF='False', trace_on_fail)),
-     with_debug(metta(eval),OrigGoal))).
+     with_debug(metta(eval),time_eval('Trace',OrigGoal)))).
 
 
 unify_enough(L,L):-!.
@@ -149,8 +160,14 @@ unify_lists(L,C):- \+ compound(C),!,L=C.
 unify_lists([C|CC],[L|LL]):- equal_enouf(L,C),!,unify_lists(CC,LL).
 
 equal_enough(R,V):- is_list(R),is_list(V),sort(R,RR),sort(V,VV),!,equal_enouf(RR,VV).
-equal_enough(R,V):- equal_enouf(R,V),!.
+equal_enough(R,V):- copy_term(R,RR),copy_term(V,VV),equal_enouf(R,V),!,R=@=RR,V=@=VV.
+
+equal_enough_for_test(X,Y):- equal_enough(X,Y),!.
+equal_enough_for_test(X,Y):- subst_vars(X,XX),subst_vars(Y,YY),!,equal_enouf(XX,YY).
+
 equal_enouf(R,V):- R=@=V, !.
+equal_enouf(R,V):- (var(R),var(V)),!, R=V.
+equal_enouf(R,V):- (var(R);var(V)),!, R==V.
 equal_enouf(R,V):- number(R),number(V),!, RV is abs(R-V), RV < 0.03 .
 equal_enouf(R,V):- (\+ compound(R) ; \+ compound(V)),!, R==V.
 equal_enouf([R|RT],[V|VT]):- !, equal_enouf(R,V),equal_enouf(RT,VT).
@@ -366,7 +383,7 @@ eval_args1(Depth,Self,['get-type',Val],Type):- !, get_type(Depth,Self,Val,Type),
 
 mnotrace(G):- once(G).
 
-is_decl_type(ST):- metta_type(_,_,Type),(ST=Type;(sub_term(ST,Type),atom(ST))), \+ nontype(ST).
+is_decl_type(ST):- metta_type(_,_,Type),sub_term(T,Type),T=@=ST, \+ nontype(ST).
 is_type(Type):- nontype(Type),!,fail.
 is_type(Type):- is_decl_type(Type).
 is_type(Type):- atom(Type).
@@ -379,14 +396,17 @@ needs_eval(EvalMe):- is_list(EvalMe),!.
 
 get_type(_Dpth,_Slf,Var,'%Undefined%'):- var(Var),!.
 get_type(_Dpth,_Slf,Val,'Number'):- number(Val),!.
-get_type(Depth,Self,Expr,['StateMonad',Type]):- is_valid_nb_state(Expr),'get-state'(Expr,Val),!,get_type(Depth,Self,Val,Type).
+get_type(Depth,Self,Expr,['StateMonad',Type]):- is_valid_nb_state(Expr),'get-state'(Expr,Val),!,
+   get_type(Depth,Self,Val,Type).
 
 
 get_type(Depth,Self,EvalMe,Type):- needs_eval(EvalMe),eval_args(Depth,Self,EvalMe,Val), \+ needs_eval(Val),!,
    get_type(Depth,Self,Val,Type).
 
-get_type(_Dpth,Self,[Fn|_],Type):- symbol(Fn),metta_type(Self,Fn,List),last_element(List,Type), nonvar(Type),is_type(Type).
-get_type(_Dpth,Self,List,Type):- is_list(List),metta_type(Self,List,LType),last_element(LType,Type), nonvar(Type),is_type(Type).
+get_type(_Dpth,Self,[Fn|_],Type):- symbol(Fn),metta_type(Self,Fn,List),last_element(List,Type), nonvar(Type),
+   is_type(Type).
+get_type(_Dpth,Self,List,Type):- is_list(List),metta_type(Self,List,LType),last_element(LType,Type), nonvar(Type),
+   is_type(Type).
 
 get_type(Depth,_Slf,Type,Type):- Depth<1,!.
 get_type(_Dpth,Self,List,Type):- is_list(List),metta_type(Self,Type,['->'|List]).
@@ -399,9 +419,9 @@ get_type(Depth,Self,Expr,Type):-Depth2 is Depth-1, eval_args(Depth2,Self,Expr,Va
 
 
 get_type(_Dpth,_Slf,Val,'String'):- string(Val),!.
-get_type(_Dpth,_Slf,Val,Type):- is_type(Val),Type=Val.
-get_type(_Dpth,_Slf,Val,'Symbol'):- symbol(Val).
+get_type(_Dpth,_Slf,Val,Type):- is_decl_type(Val),Type=Val.
 get_type(_Dpth,_Slf,Val,'Bool'):- (Val=='False';Val=='True'),!.
+get_type(_Dpth,_Slf,Val,'Symbol'):- symbol(Val).
 %get_type(Depth,Self,[T|List],['List',Type]):- Depth2 is Depth-1,  is_list(List),get_type(Depth2,Self,T,Type),!,
 %  forall((member(Ele,List),nonvar(Ele)),get_type(Depth2,Self,Ele,Type)),!.
 %get_type(Depth,_Slf,Cmpd,Type):- compound(Cmpd), functor(Cmpd,Type,1),!.
@@ -449,9 +469,9 @@ eval_args1(Depth,Self,[F|Args],Res):- is_list(F), Args\==[],
 eval_args1(_Dpth,Self,['import!',Other,File],RetVal):- into_space(Self,Other,Space),!, include_metta(Space,File),!,return_empty(Space,RetVal). %RetVal=[].
 eval_args1(Depth,Self,['bind!',Other,Expr],RetVal):-
    into_name(Self,Other,Name),!,eval_args(Depth,Self,Expr,Value),nb_setval(Name,Value),  return_empty(Value,RetVal).
-eval_args1(Depth,Self,['pragma!',Other,Expr],Value):-
-   into_name(Self,Other,Name),!,eval_args(Depth,Self,Expr,Value),set_option_value(Name,Value).
-eval_args1(_Dpth,Self,['transfer!',File],Self):- !, include_metta(Self,File).
+eval_args1(Depth,Self,['pragma!',Other,Expr],RetVal):-
+   into_name(Self,Other,Name),!,eval_args(Depth,Self,Expr,Value),set_option_value(Name,Value),  return_empty(Value,RetVal).
+eval_args1(_Dpth,Self,['transfer!',File],RetVal):- !, include_metta(Self,File),  return_empty(Self,RetVal).
 
 
 

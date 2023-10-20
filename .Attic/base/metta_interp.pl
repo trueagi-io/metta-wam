@@ -10,8 +10,14 @@
 :- ensure_loaded(metta_data).
 :- ensure_loaded(metta_space).
 :- ensure_loaded(metta_eval).
+:- set_stream(user_input,tty(true)).
+:- set_prolog_flag(encoding,iso_latin_1).
+:- set_prolog_flag(encoding,utf8).
+%:- set_prolog_flag(encoding,octet).
 /*
-Now PASSING NARS.TESTS1.01)
+Now PASSING NARS.TEC:\opt\logicmoo_workspace\packs_sys\logicmoo_opencog\MeTTa\vspace-metta\metta_vspace\pyswip\metta_interp.pl
+C:\opt\logicmoo_workspace\packs_sys\logicmoo_opencog\MeTTa\vspace-metta\metta_vspace\pyswip1\metta_interp.pl
+STS1.01)
 Now PASSING TEST-SCRIPTS.B5-TYPES-PRELIM.08)
 Now PASSING TEST-SCRIPTS.B5-TYPES-PRELIM.14)
 Now PASSING TEST-SCRIPTS.B5-TYPES-PRELIM.15)
@@ -35,6 +41,7 @@ Now FAILING TEST-SCRIPTS.C1-GROUNDED-BASIC.20)
 option_value_def('repl',false).
 option_value_def('compile',false).
 option_value_def('table',false).
+option_value_def(no_repeats,false).
 option_value_def('time',true).
 option_value_def('exec',true).
 option_value_def('html',false).
@@ -654,7 +661,7 @@ mfix_vars1(I,O):- I=='Nil',!,O=[].
 mfix_vars1(I,O):- I=='true',!,O='True'.
 mfix_vars1(I,O):- I=='false',!,O='False'.
 mfix_vars1('$STRING'(I),O):- !, text_to_string(I,O).
-mfix_vars1(I,O):-  I = ['[', X, ']'], nonvar(X), !, O = ['[]',X].
+mfix_vars1(I,O):-  I = ['[', X, ']'], nonvar(X), !, O = ['[$OBJ]',X].
 mfix_vars1(I,O):-  I = ['{', X, '}'], nonvar(X), !, O = ['{}',X].
 mfix_vars1('$OBJ'(claz_bracket_vector,List),Res):- is_list(List),!, append(['['|List],[']'],Res),!.
 mfix_vars1(I,O):- I==[Quote, S], Quote==quote,S==s,!, O=is.
@@ -671,9 +678,14 @@ no_cons_reduce.
 
 dvar_name(N,O):- atom(N),atom_number(N,Num),atom_concat('Num',Num,M),!,svar_fixvarname(M,O).
 dvar_name(N,O):- number(N),atom_concat('Num',N,M),!,svar_fixvarname(M,O).
+dvar_name(N,O):- \+ atom(N),!,format(atom(A),'~w',[N]),dvar_name(A,O).
 dvar_name('','__'):-!. % "$"
 dvar_name('_','_'):-!. % "$_"
 dvar_name(N,O):- svar_fixvarname(N,O),!.
+dvar_name(N,O):- must_det_ll((atom_chars(N,Lst),maplist(c2vn,Lst,NList),atomic_list_concat(NList,S),svar_fixvarname(S,O))),!.
+c2vn(A,A):- char_type(A,prolog_identifier_continue),!.
+c2vn(A,A):- char_type(A,prolog_var_start),!.
+c2vn(A,AA):- char_code(A,C),atomic_list_concat(['_C',C,'_'],AA).
 
 cons_to_l(I,I):- no_cons_reduce,!.
 cons_to_l(I,O):- var(I),!,O=I.
@@ -937,8 +949,10 @@ do_metta_file_exec0(Self,TermV):-
          ((write(' '), write_src(X),nl,
             (NamedVarsList\=@=Was-> (color_g_mesg(green,writeq(NamedVarsList)),nl); true),
             ignore(( \+ is_list(X),compound(X),format(' % '),writeq(X),nl)))))))))), X \== Empty))),XL),
-  if_t(option_value('test-retval',true), if_t(nonvar(Ans),got_exec_result2(XL,Nth,Ans))))).
+  if_t(option_value('test-retval',true), if_t(nonvar(Ans),got_exec_result2(XL,Nth,Ans))))),!.
 
+got_exec_result2(Val,Nth,Ans):- is_list(Ans), exclude(==(','),Ans,Ans2), Ans\==Ans2,!,
+  got_exec_result2(Val,Nth,Ans2).
 got_exec_result2(Val,Nth,Ans):-
  must_det_ll((
   Nth100 is Nth+100,
@@ -952,11 +966,16 @@ got_exec_result2(Val,Nth,Ans):-
 write_pass_fail_result_now(TestName,exec,Exec,PASS_FAIL,Ans,Val):-
    (PASS_FAIL=='PASS'->flag(loonit_success, X, X+1);flag(loonit_failure, X, X+1)),
    (PASS_FAIL=='PASS'->Color=cyan;Color=red),
-   color_g_mesg(Color,write_pass_fail_result(TestName,exec,Exec,PASS_FAIL,Ans,Val)),!,nl,
+   color_g_mesg(Color,write_pass_fail_result_c(TestName,exec,Exec,PASS_FAIL,Ans,Val)),!,nl,
    nl,writeln('--------------------------------------------------------------------------'),!.
 
+write_pass_fail_result_c(TestName,exec,Exec,PASS_FAIL,Ans,Val):-
+  nl,write_mobj(exec,[(['assertEqualToResult',Exec,Ans])]),
+  nl,write_src('!'(['assertEqual',Val,Ans])),
+  write_pass_fail_result(TestName,exec,Exec,PASS_FAIL,Ans,Val).
 
 is_unit_test_exec(Exec):- sformat(S,'~w',[Exec]),sub_atom(S,_,_,_,'assert').
+is_unit_test_exec(Exec):- sformat(S,'~q',[Exec]),sub_atom(S,_,_,_,"!',").
 
 return_empty('Empty').
 return_empty(_,Empty):- return_empty(Empty).
@@ -1060,18 +1079,20 @@ really_rtrace(Goal):- use_metta_compiler,!, (time_eval(Goal)*->true;(trace_on_fa
 %   ; Evaluation took 123.45 ms.
 %   ; Evaluation took 0.012 ms. (12.33 microseconds)
 %
-time_eval(Goal) :-
+time_eval(Goal):-
+  time_eval('Evaluation',Goal).
+time_eval(What,Goal) :-
     statistics(cputime, Start),
     call(Goal),
     statistics(cputime, End),
     Seconds is End - Start,
     Milliseconds is Seconds * 1_000,
     (Seconds > 2
-        -> format('; Evaluation took ~2f seconds.~n', [Seconds])
+        -> format('; ~w took ~2f seconds.~n', [What, Seconds])
         ; (Milliseconds >= 1
-            -> format('; Evaluation took ~2f ms.~n', [Milliseconds])
+            -> format('; ~w took ~2f ms.~n', [What, Milliseconds])
             ;( Micro is Milliseconds * 1_000,
-              format('; Evaluation took ~3f ms. (~2f microseconds) ~n', [Milliseconds, Micro])))).
+              format('; ~w took ~3f ms. (~2f microseconds) ~n', [What, Milliseconds, Micro])))).
 
 
 
