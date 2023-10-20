@@ -56,10 +56,15 @@ make_test_name(FilePath, Number, TestName) :-
 color_g_mesg(C,G):-
   wots(S,user:call(G)), ansi_format([fg(C)], '~N~w~n', [S]),!.
 
+print_current_test:-
+   loonit_number(Number),
+   get_test_name(Number,TestName),format('<h3 id="~w">;; ~w</h3>~n',[TestName,TestName]).
+
 % Increment loonit counters based on goal evaluation
 loonit_asserts(S,Pre,G):-
   flag(loonit_test_number,X,X+1),
   copy_term(Pre,Pro),
+  print_current_test,
   once(Pre),
   ((nb_current(exec_src,Exec),Exec\==[])->true;S=Exec),
  % wots(S,((((nb_current(exec_src,WS),WS\==[])->writeln(WS);write_src(exec(TestSrc)))))),
@@ -76,7 +81,7 @@ write_pass_fail(TestName,P,C,PASS_FAIL,G1,G2):-
    (nb_current(loading_file,FilePath),FilePath\==[])->true; FilePath='SOME/UNIT-TEST.metta'),
     atomic_list_concat([_,R],'examples/',FilePath),
     file_name_extension(Base, _, R))),
-      format('<h3 id="~w">;; ~w</h3>',[TestName,TestName]),
+      nop(format('<h3 id="~w">;; ~w</h3>',[TestName,TestName])),
 
       if_t( (tee_file(TEE_FILE)->true;'TEE.ansi'=TEE_FILE),
       (atom_concat(TEE_FILE,'.UNITS',UNITS),
@@ -198,7 +203,7 @@ got_exec_result(Val,Ans):-
   Nth100 is Nth+100,
   get_test_name(Nth100,TestName),
   nb_current(exec_src,Exec),
-  (equal_enough(Val,Ans)
+  (equal_enough_for_test(Val,Ans)
      -> write_pass_fail_result(TestName,exec,Exec,'PASS',Ans,Val)
       ; write_pass_fail_result(TestName,exec,Exec,'FAIL',Ans,Val)))).
 
@@ -239,6 +244,7 @@ load_answer_file(AnsFile,StoredAs):-
 load_answer_stream(_Nth, StoredAs, Stream):- at_end_of_stream(Stream),!,
   if_trace(metta(answers),listing(file_answers(StoredAs,_,_))).
 load_answer_stream(Nth, StoredAs, Stream):- read_line_to_string(Stream,String),
+    writeln(Nth = String),
     load_answer_stream(Nth, StoredAs, String, Stream).
 
 load_answer_stream(Nth, StoredAs, String, Stream):- string_concat("[",_,String),!,

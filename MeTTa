@@ -254,9 +254,22 @@ if [[ -z "$repl_flag" ]]; then
   [[ ${#LIST_OF_FILE_ARGS[@]} -eq 0 ]] && repl_flag=enable || repl_flag=false
 fi
 
+# Store the initial PYTHONPATH for later comparison
+initial_pythonpath="$PYTHONPATH"
+
+# Add DIRNAME to PYTHONPATH if it's a valid path and not already present
+if [[ -d "$DIRNAME" && ":$PYTHONPATH:" != *":$DIRNAME:"* ]]; then
+    export PYTHONPATH="${PYTHONPATH:+${PYTHONPATH}:}$DIRNAME"
+fi
 
 # Add metta_vspace to PYTHONPATH if not already present
 [[ ":$PYTHONPATH:" != *":$METTALOG_DIR/metta_vspace:"* ]] && export PYTHONPATH="${PYTHONPATH:+${PYTHONPATH}:}$METTALOG_DIR/metta_vspace"
+
+# If PYTHONPATH has changed, echo the new value
+if [[ "$PYTHONPATH" != "$initial_pythonpath" ]]; then
+    echo ";; Updated PYTHONPATH: $PYTHONPATH"
+fi
+
 export RUST_BACKTRACE=full
 
 if [[ -f "$METTALOG_DIR/MeTTaLog" ]]; then

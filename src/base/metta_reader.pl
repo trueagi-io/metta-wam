@@ -275,13 +275,13 @@ prolog_expr_next--> dcg_peek(`.{`).
 
 prolog_readable_term(Expr) -->  `.`,prolog_readable_term(Read), {arg(1,Read,Expr),!}.
 prolog_readable_term(Expr,S,E):-
-  catch((read_term_from_codes(S,Expr,[subterm_positions(FromTo),cycles(true), module( baseKB),
+  notrace(catch((read_term_from_codes(S,Expr,[subterm_positions(FromTo),cycles(true), module( baseKB),
    double_quotes(string),
    comments(CMT), variable_names(Vars)]),implode_threse_vars(Vars),
    arg(2,FromTo,To), length(TermCodes,To),
    append(TermCodes,Remaining,S),
    `.`=[Dot],(Remaining=[Dot|E]/*;Remaining=E*/),!,
-    must(record_plterm_comments(CMT))),_,fail).
+    must(record_plterm_comments(CMT))),_,fail)).
 record_plterm_comments(L):- is_list(L),!,maplist(record_plterm_comments,L).
 record_plterm_comments(_-CMT):- assert(t_l:s_reader_info(CMT)).
 
@@ -301,8 +301,8 @@ file_sexpr(end_of_file) --> file_eof,!.
 % WANT?
 file_sexpr(O) --> sblank,!,file_sexpr(O),!.
 % file_sexpr(planStepLPG(Name,Expr,Value)) --> swhite,sym_or_num(Name),`:`,swhite, sexpr(Expr),swhite, `[`,sym_or_num(Value),`]`,swhite.  %   0.0003:   (PICK-UP ANDY IBM-R30 CS-LOUNGE) [0.1000]
-% file_sexpr(Term,Left,Right):- eoln(EOL),append(LLeft,[46,EOL|Right],Left),read_term_from_codes(LLeft,Term,[double_quotes(string),syntax_errors(fail)]),!.
-% file_sexpr(Term,Left,Right):- append(LLeft,[46|Right],Left), ( \+ member(46,Right)),read_term_from_codes(LLeft,Term,[double_quotes(string),syntax_errors(fail)]),!.
+% file_sexpr(Term,Left,Right):- eoln(EOL),append(LLeft,[46,EOL|Right],Left),read_term_from_codes(LLeft,Term,[double_quotes(string)]),!.
+% file_sexpr(Term,Left,Right):- append(LLeft,[46|Right],Left), ( \+ member(46,Right)),read_term_from_codes(LLeft,Term,[double_quotes(string)]),!.
 file_sexpr(Expr) --> sexpr(Expr),!.
 % file_sexpr(Expr,H,T):- lisp_dump_break,rtrace(phrase(file_sexpr(Expr), H,T)).
 /*
@@ -440,6 +440,7 @@ sexpr0('$STRING'(S))             --> s_string(S),!.
 sexpr0('#\\'(35))                 --> `#\\#`,!, swhite.
 sexpr0(E)                      --> `#`,read_dispatch(E),!.
 
+
 %sexpr('#\\'(C))                 --> `#\\`,ci(`u`),!,remove_optional_char(`+`),dcg_basics:xinteger(C),!.
 %sexpr('#\\'(C))                 --> `#\\`,dcg_basics:digit(S0), swhite,!,{atom_codes(C,[S0])}.
 sexpr0('#\\'(32))                 --> `#\\ `,!.
@@ -477,6 +478,7 @@ sexpr0(OBJ)--> `#<`,!,zalwayz(ugly_sexpr_cont(OBJ)),!.
 
 /*********END HASH ***********/
 
+sexpr0(Sym) --> `#`,integer(N123), swhite,!, {atom_concat('#',N123,Sym)}.
 sexpr0(E)                      --> !,zalwayz(sym_or_num(E)), swhite,!.
 
 is_scm:- fail.
@@ -709,7 +711,7 @@ sexpr(E,C,X,Z) :- swhite([C|X],Y), sexpr(E,Y,Z),!.
 
 sym_char(C):- bx(C =<  32),!,fail.
 %sym_char(44). % allow comma in middle of symbol
-sym_char(C):- memberchk(C,`";()#'```),!,fail.  % maybe 44 ? comma
+sym_char(C):- memberchk(C,`"()```),!,fail.  % maybe 44 ? comma maybe not # or ; ? '
 %sym_char(C):- nb_current('$maybe_string',t),memberchk(C,`,.:;!%`),!,fail.
 sym_char(_):- !.
 
@@ -1031,7 +1033,8 @@ ok_varname_or_int(Name):- number(Name).
 ok_var_name(Name):-
  notrace((
   quietly_sreader(( atom(Name),atom_codes(Name,[C|_List]),char_type(C,prolog_var_start),
-      notrace(catch(read_term_from_atom(Name,Term,[syntax_errors(fail),variable_names(Vs)]),_,fail)),!,var(Term),Vs=[RName=RVAR],!,RVAR==Term,RName==Name)))).
+      notrace(catch(read_term_from_atom(Name,Term,[variable_names(Vs)]),_,fail)),
+      !,var(Term),Vs=[RName=RVAR],!,RVAR==Term,RName==Name)))).
 
 %:- export(ok_codes_in_varname/1).
 %ok_codes_in_varname([]).

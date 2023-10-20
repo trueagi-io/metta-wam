@@ -1463,7 +1463,7 @@ write_mobj(V):- ( \+ compound(V) ; is_list(V)),!, write_src0(V).
 
 write_mobj(V):- compound_name_list(V,F,Args),write_mobj(F,Args),!.
 write_mobj(V):- writeq(V).
-write_mobj(exec,[V]):- !, write('!'),with_indents(false,write_src(V)).
+write_mobj(exec,[V]):- !, write('!'),with_indents(true,write_src(V)).
 write_mobj('$STRING',[S]):- !, writeq(S).
 write_mobj(F,Args):- mlog_sym(K),pp_sexi([K,F|Args]).
 
