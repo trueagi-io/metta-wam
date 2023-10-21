@@ -361,7 +361,7 @@ process_option_value_def:- \+ option_value('python',false), skip(ensure_loaded(m
 process_option_value_def.
 
 
-process_late_opts:- option_value('html',true), shell('./total_loonits.sh').
+process_late_opts:- option_value('html',true), shell('./total_loonits.sh'), !.
 process_late_opts:- !. %option_value('repl',true), repl.
 %process_late_opts:- halt(7).
 
@@ -369,8 +369,8 @@ do_cmdline_load_metta(_Slf,Rest):- select('--prolog',Rest,RRest),!,set_prolog_fl
 do_cmdline_load_metta(Self,Rest):-
   set_prolog_flag(late_metta_opts,Rest),
   forall(process_option_value_def,true),
-  cmdline_load_metta(Self,Rest),
-  forall(process_late_opts,true).
+  cmdline_load_metta(Self,Rest),!,
+  nop(forall(process_late_opts,true)).
 
 
 cmdline_load_metta(Self,[Filemask|Rest]):- atom(Filemask), \+ atom_concat('-',_,Filemask),
@@ -949,7 +949,16 @@ do_metta_file_exec0(Self,TermV):-
          ((write(' '), write_src(X),nl,
             (NamedVarsList\=@=Was-> (color_g_mesg(green,writeq(NamedVarsList)),nl); true),
             ignore(( \+ is_list(X),compound(X),format(' % '),writeq(X),nl)))))))))), X \== Empty))),XL),
-  if_t(option_value('test-retval',true), if_t(nonvar(Ans),got_exec_result2(XL,Nth,Ans))))),!.
+
+  if_t(check_answers_for(TermV,Ans),
+  if_t(option_value('test-retval',true),
+     if_t(nonvar(Ans),got_exec_result2(XL,Nth,Ans)))))),!.
+
+check_answers_for(TermV,Ans):- (string(TermV);var(Ans);var(TermV)),!,fail.
+check_answers_for(_,Ans):- contains_var('BadType',Ans),fail.
+check_answers_for([TermV],Ans):- !, check_answers_for(TermV,Ans).
+check_answers_for(TermV,[Ans]):- !, check_answers_for(TermV,Ans).
+check_answers_for(_,_).
 
 got_exec_result2(Val,Nth,Ans):- is_list(Ans), exclude(==(','),Ans,Ans2), Ans\==Ans2,!,
   got_exec_result2(Val,Nth,Ans2).
