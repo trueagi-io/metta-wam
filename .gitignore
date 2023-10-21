@@ -1,3 +1,7 @@
+metta_vspace?*/
+metta_vspace/pyswi??/
+metta_vspace/pyswi???/
+metta_vspace/pyswi????*/
 tee.ansi
 reqs/pyswip/.git
 reqs/pyswip/build
@@ -11,6 +15,7 @@ das_precomputed/*.pl
 precomputed_files/**/*.pl
 ftp.flybase.net/**
 .?*~/
+*.bak
 ImplicitQuantification.tex
 data/ftp.flybase.net/
 data/SO-Ontologies/
