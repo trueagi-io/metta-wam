@@ -66,7 +66,7 @@ if_trace(Flag,Goal):- catch(ignore((debugging(Flag),Goal)),_,true).
 
 
 eval_args0(Depth,_Slf,X,Y):- Depth<1,!,X=Y, (\+ trace_on_overflow-> true; flag(eval_num,_,0),debug(metta(eval))).
-%eval_args0(_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
+eval_args0(_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
 eval_args0(Depth,Self,X,Y):-
   Depth2 is Depth-1,
   eval_args11(Depth,Self,X,M),
@@ -134,9 +134,9 @@ eval_args1(Depth,Self,['assertNotEqual',X,Y],RetVal):- !,
 eval_args1(Depth,Self,['assertEqualToResult',X,Y],RetVal):- !,
    loonit_assert_source_tf(
         ['assertEqualToResult',X,Y],
-        (setof_eval(Depth,Self,X,XX), sort(Y,YY)),
+        (setof_eval(Depth,Self,X,XX), sort_result(Y,YY)),
          equal_enough_for_test(XX,YY), TF),
-  (TF=='True'->return_empty(RetVal);RetVal=[got,XX,expected,YY]).
+  (TF=='True'->return_empty(RetVal);RetVal=[got,XX,expected,YY]),!.
 
 
 loonit_assert_source_tf(Src,Goal,Check,TF):-
@@ -147,6 +147,11 @@ loonit_assert_source_tf(Src,Goal,Check,TF):-
           once((TF='True', trace_on_pass);(TF='False', trace_on_fail)),
      with_debug(metta(eval),time_eval('Trace',OrigGoal)))).
 
+sort_result(Res,Res):- \+ compound(Res),!.
+sort_result([And|Res1],Res):- is_and(And),!,sort_result(Res1,Res).
+sort_result([T,And|Res1],Res):- is_and(And),!,sort_result([T|Res1],Res).
+sort_result([H|T],[HH|TT]):- !, sort_result(H,HH),sort_result(T,TT).
+sort_result(Res,Res).
 
 unify_enough(L,L):-!.
 unify_enough(L,C):- is_list(L),into_list_args(C,CC),!,unify_lists(CC,L).
@@ -159,30 +164,33 @@ unify_lists(C,L):- \+ compound(C),!,L=C.
 unify_lists(L,C):- \+ compound(C),!,L=C.
 unify_lists([C|CC],[L|LL]):- equal_enouf(L,C),!,unify_lists(CC,LL).
 
-equal_enough(R,V):- is_list(R),is_list(V),sort(R,RR),sort(V,VV),!,equal_enouf(RR,VV).
+equal_enough(R,V):- is_list(R),is_list(V),sort(R,RR),sort(V,VV),!,equal_enouf(RR,VV),!.
 equal_enough(R,V):- copy_term(R,RR),copy_term(V,VV),equal_enouf(R,V),!,R=@=RR,V=@=VV.
 
-equal_enough_for_test(X,Y):- equal_enough(X,Y),!.
-equal_enough_for_test(X,Y):- subst_vars(X,XX),subst_vars(Y,YY),!,equal_enouf(XX,YY).
+equal_enough_for_test(X,Y):- must_det_ll((subst_vars(X,XX),subst_vars(Y,YY))),!,equal_enough(XX,YY),!.
 
 equal_enouf(R,V):- R=@=V, !.
-equal_enouf(R,V):- (var(R),var(V)),!, R=V.
+equal_enouf(L,C):- is_list(L),into_list_args(C,CC),!,equal_enouf_l(CC,L).
+equal_enouf(C,L):- is_list(L),into_list_args(C,CC),!,equal_enouf_l(CC,L).
+%equal_enouf(R,V):- (var(R),var(V)),!, R=V.
 equal_enouf(R,V):- (var(R);var(V)),!, R==V.
 equal_enouf(R,V):- number(R),number(V),!, RV is abs(R-V), RV < 0.03 .
+equal_enouf(R,V):- atom(R),!,atom(V), has_unicode(R),has_unicode(V).
 equal_enouf(R,V):- (\+ compound(R) ; \+ compound(V)),!, R==V.
-equal_enouf([R|RT],[V|VT]):- !, equal_enouf(R,V),equal_enouf(RT,VT).
-equal_enouf(R,V):- unify_enough(R,V),!.
-equal_enouf(R,V):-
-  compound_name_arguments(R,F,RA),
-  compound_name_arguments(V,F,VA), !,
-  maplist(equal_enouf,RA,VA).
+equal_enouf(L,C):- into_list_args(L,LL),into_list_args(C,CC),!,equal_enouf_l(CC,LL).
+
+equal_enouf_l(C,L):- \+ compound(C),!,L=@=C.
+equal_enouf_l(L,C):- \+ compound(C),!,L=@=C.
+equal_enouf_l([C|CC],[L|LL]):- !, equal_enouf(L,C),!,equal_enouf_l(CC,LL).
 
 
+has_unicode(A):- atom_codes(A,Cs),member(N,Cs),N>127,!.
 set_last_error(_).
 
 
 eval_args1(Depth,Self,['match',Other,Goal,Template],Template):- into_space(Self,Other,Space),!, metta_atom_iter(Depth,Space,Goal).
-eval_args1(Depth,Self,['match',Other,Goal,Template,Else],Template):- into_space(Self,Other,Space),!,  (metta_atom_iter(Depth,Space,Goal)*->true;Else=Template).
+eval_args1(Depth,Self,['match',Other,Goal,Template,Else],Template):-
+  (eval_args1(Depth,Self,['match',Other,Goal,Template],Template)*->true;Template=Else).
 
 % Macro: case
 eval_args1(Depth,Self,X,Res):-
@@ -204,9 +212,10 @@ eval_args1(Depth,Self,X,Res):-
         (member(Void -Value,CasES),Void=='%void%')))).
 
   best_key(AA,Cases,Value):-
+    ((member(Match-Value,Cases),unify_enough(AA,Match))->true;
      ((member(Match-Value,Cases),AA ==Match)->true;
       ((member(Match-Value,Cases),AA=@=Match)->true;
-        (member(Match-Value,Cases),AA = Match))).
+        (member(Match-Value,Cases),AA = Match)))).
 
 		%into_case_list([[C|ASES0]],CASES):-  is_list(C),!, into_case_list([C|ASES0],CASES),!.
 	into_case_list(CASES,CASES):- is_list(CASES),!.
