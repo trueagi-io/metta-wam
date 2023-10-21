@@ -237,6 +237,9 @@ fi
 
 # Then process actual command-line arguments
 handle_args "$@"
+if [[ ! -z "$DIR_OPTS" ]]; then
+    handle_args $DIR_OPTS
+fi
 
 if [ -z "${EXIT_SCRIPT+x}" ]; then
     :
