@@ -1,8 +1,12 @@
-self_eval(X):- var(X),!.
+
+
+
+%self_eval(X):- var(X),!.
+%self_eval(X):- string(X),!.
+%self_eval(X):- number(X),!.
+%self_eval([]).
+self_eval(X):- \+ callable(X),!.
 self_eval(X):- is_valid_nb_state(X),!.
-self_eval(X):- string(X),!.
-self_eval(X):- number(X),!.
-self_eval([]).
 self_eval(X):- is_list(X),!,fail.
 %self_eval(X):- compound(X),!.
 %self_eval(X):- is_ref(X),!,fail.
@@ -22,12 +26,9 @@ eval_args(A,AA):-
 %eval_args(Depth,_Self,X,_Y):- forall(between(6,Depth,_),write(' ')),writeqln(eval_args(X)),fail.
 
 eval_args(_Dpth,_Slf,X,Y):- nonvar(Y),X=Y,!.
-
 eval_args(Depth,Self,X,Y):- nonvar(Y),!,eval_args(Depth,Self,X,XX),evals_to(XX,Y).
-
-eval_args(_Dpth,_Slf,X,Y):- var(X),!,Y=X.
-
-eval_args(_Dpth,_Slf,[X|T],Y):- T==[], number(X),!,Y=[X].
+eval_args(_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
+eval_args(_Dpth,_Slf,[X|T],Y):- T==[], \+ callable(X),!,Y=[X].
 
 eval_args(Depth,Self,[F|X],Y):-
   (F=='superpose' ; ( option_value(no_repeats,false))),
