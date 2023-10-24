@@ -42,13 +42,24 @@ if VSPACE_VERBOSE is not None:
 histfile = os.path.join(os.path.expanduser("~"), ".metta_history")
 is_init = True
 oper_dict = {}
+janus_dict = {}
 syms_dict = {}
 space_refs = {
     #'&vspace': lambda: the_vspace,
     '&gptspace': lambda: the_gptspace,
     #'&flybase': lambda: the_flybase,
-    '&parent': lambda: the_python_runner.parent.space(),
-    '&child': lambda: the_python_runner.space()}
+    '&parent': lambda: parent_space(),
+    '&child': lambda: child_space(),
+    '&self': lambda: self_space()}
+
+def  parent_space():
+    return the_python_runner.parent.space()
+
+def  child_space():
+    return the_python_runner.space()
+
+def  self_space():
+    return the_new_runner_space
 
 try:
     readline.set_history_length(300)
@@ -137,6 +148,33 @@ def add_exported_methods(module, dict = oper_dict):
                 num_args = len([p for p in params.values() if p.default == p.empty and p.kind == p.POSITIONAL_OR_KEYWORD])
                 add_pyop(use_name, num_args, getattr(func, 'op', "OperationAtom"), getattr(func, 'unwrap', True), dict)
 
+def add_janus_methods(module, dict = janus_dict):
+    for name, func in inspect.getmembers(module):
+        if inspect.isfunction(func):
+            if getattr(func, 'Janus', False):
+                suggestedName = getattr(func, 'name', None)
+                if suggestedName is not None:
+                    use_name = suggestedName
+                else: use_name = name
+                for key, item in dict.items():
+                    if key==use_name:
+                        return
+                dict[use_name]=func
+
+                suggestedFlags = getattr(func, 'flags', None)
+                if suggestedFlags is None:
+                    suggestedFlags = 0
+
+                suggestedArity = getattr(func, 'arity', None)
+                if suggestedArity is None:
+                    sig = inspect.signature(func)
+                    params = sig.parameters
+                    num_args = len([p for p in params.values() if p.default == p.empty and p.kind == p.POSITIONAL_OR_KEYWORD])
+                    suggestedArity = num_args
+                    func.arity = suggestedArity
+
+                registerForeign(func, arity = suggestedArity, flags = suggestedFlags )
+
 @export_flags(MeTTa=True)
 def add_pyop(name, length, op_kind, unwrap, dict = oper_dict):
     hyphens, underscores = name.replace('_', '-'), name.replace('-', '_')
@@ -151,7 +189,7 @@ def add_pyop(name, length, op_kind, unwrap, dict = oper_dict):
         dict[underscores] = local_vars['op']
 
 @export_flags(MeTTa=True)
-def add_swip(name, dict = oper_dict):
+def add_from_swip(name, dict = oper_dict):
     hyphens, underscores = name.replace('_', '-'), name.replace('-', '_')
     add_to_history_if_unique(f"!({hyphens})")
     if hyphens not in dict:
@@ -162,18 +200,29 @@ def add_swip(name, dict = oper_dict):
 
 def addSpaceName(name, space):
     global syms_dict, space_refs
+    name = str(name)
     syms_dict[name] = lambda _: G(VSpaceRef(space))
     space_refs[name] = lambda : space
 
 def getSpaceByName(name):
+    if name is ValueAtom:
+        name = name.get_value()
+    if name is GroundingSpace:
+        return name
     global space_refs
-    return space_refs.get(name, None)()
+    found = space_refs.get(str(name), None)
+    if found is None: return None
+    return found()
 
 def getNameBySpace(target_space):
+    if target_space is None:
+        return None
     global space_refs, syms_dict
     # Search in space_refs
     for name, space_func in space_refs.items():
         S = space_func()
+        if S is target_space:
+            return name
         if S:
             if id(S) == id(target_space):
                 return name
@@ -1399,16 +1448,29 @@ from hyperon.base import GroundingSpaceRef, Tokenizer, SExprParser
 
 class ExtendedMeTTa:
 
-    def __init__(self, space = None, cwd = ".", cmetta = None):
+    def __init__(self, cmetta = None, space = None, env_builder = None):
+        self.pymods = {}
+
         if cmetta is not None:
             self.cmetta = cmetta
         else:
             if space is None:
                 space = GroundingSpaceRef()
-            tokenizer = Tokenizer()
-            self.py_space = space
-            self.py_tokenizer = tokenizer
-            self.cmetta = hp.metta_new(self.py_space.cspace, self.py_tokenizer.ctokenizer, cwd)
+            if env_builder is None:
+                env_builder = hp.env_builder_use_default()
+            self.cmetta = hp.metta_new(space.cspace, env_builder)
+
+    #def __init__(self, space = None, cwd = ".", cmetta = None):
+    #    if cmetta is not None:
+    #        self.cmetta = cmetta
+    #    else:
+    #        #self.cmetta = None
+     #       if space is None:
+     #           space = GroundingSpaceRef()
+     #       tokenizer = Tokenizer()
+     #       self.py_space = space
+     #       self.py_tokenizer = tokenizer
+     #       self.cmetta = hp.metta_new(self.py_space.cspace, self.py_tokenizer.ctokenizer, cwd)
 
     def set_cmetta(self, metta):
         if isinstance(metta,MeTTa):
@@ -1426,8 +1488,8 @@ class ExtendedMeTTa:
                                                  type_names=[AtomType.ATOM, AtomType.ATOM, AtomType.ATOM], unwrap=False))
 
 
-    def __del__(self):
-        hp.metta_free(self.cmetta)
+    #def __del__(self):
+        #hp.metta_free(self.cmetta)
 
     def space(self):
         return GroundingSpaceRef._from_cspace(hp.metta_space(self.cmetta))
@@ -1489,6 +1551,10 @@ class ExtendedMeTTa:
 
 # Borrowed impl from Adam Vandervorst
 class LazyMeTTa(ExtendedMeTTa):
+
+    #def __init__(self, space = None, cwd = ".", cmetta = None):
+    #    super.__init__(space, cwd, cmetta)
+
     def lazy_import_file(self, fname):
         path = fname.split(os.sep)
         with open(os.sep.join(self.cwd + path), "r") as f:
@@ -1609,6 +1675,249 @@ def wrapsqlop(func):
         return []
 
     return wrapper
+
+
+from hyperon.atoms import *
+from hyperon.ext import register_atoms
+
+import psycopg2
+from hyperon import *
+from hyperon.ext import register_atoms
+import re
+
+
+def results2bindings(vars, values):
+    new_bindings_set = BindingsSet.empty()
+    if len(values) == 0 or len(vars) != len(values[0]):
+        return new_bindings_set
+
+    for value in values:
+        bindings = Bindings()
+        for i in range(len(vars)):
+            bindings.add_var_binding(vars[i], ValueAtom(str(value[i])))
+        new_bindings_set.push(bindings)
+
+    return new_bindings_set
+
+
+class SqlHelper:
+    colums_word = "ColumnNames"
+    insert_command_sql = "INSERT INTO"
+
+    @staticmethod
+    def get_query_atoms(query_atom):
+        children = query_atom.get_children()
+        new_query_atoms = []
+        for ch in children:
+            if 'limit' not in repr(ch).lower():
+                new_query_atoms.append(ch)
+        return new_query_atoms
+
+    @staticmethod
+    def get_fields_and_conditions(query_atom):
+        ''' parse sql query and get columns to select and conditions for filtering '''
+        atoms = query_atom.get_children()
+        fields = {}
+        conditions = {}
+        limit = ""
+        vars_map = {}
+        for atom in atoms:
+            if isinstance(atom, ExpressionAtom):
+                items = atom.get_children()
+                if len(items) == 3:
+                    id_fields = items[1].get_children()
+                    current_field_info = items[2].get_children()
+                    if len(id_fields) != 2 or len(current_field_info) != 2:
+                        raise SyntaxError("Incorrect number of arguments")
+                    # (musicbrainz.artist (id $id) (name $name))
+                    # identification field
+                    id_name = repr(id_fields[0])
+                    vars_map[id_name] = repr(id_fields[1])
+                    # field to select
+                    field_name = repr(current_field_info[0])
+                    vars_map[field_name] = repr(current_field_info[1])
+                    # table
+                    table = repr(items[0])
+                    if table not in fields:
+                        fields[table] = set()
+                    if table not in conditions:
+                        conditions[table] = set()
+                    # add id field to corresponding category (filed/condition)
+                    if isinstance(id_fields[1], VariableAtom):
+                        fields[table].add(id_name)
+                    else:
+                        conditions[table].add(id_name)
+                    # add selected field to corresponding category (filed/condition)
+                    if isinstance(current_field_info[1], VariableAtom):
+                        fields[table].add(field_name)
+                    else:
+                        conditions[table].add(field_name)
+
+                if len(items) == 2 and ("limit" in repr(items[0]).lower()):
+                    limit = repr(items[1])
+        return fields, conditions, limit, vars_map
+
+    @staticmethod
+    def get_fields_and_values(query_atom):
+        ''' parse sql query and get columns to select and conditions for filtering '''
+        atoms = query_atom.get_children()
+        fields_map = {}
+        for atom in atoms:
+            if isinstance(atom, ExpressionAtom):
+                items = atom.get_children()
+                if len(items) != 2:
+                    raise SyntaxError("Incorrect number of arguments")
+                # (musicbrainz.artist (id $id) (name $name)
+                # field to select
+                field_name = repr(items[0])
+                fields_map[field_name] = repr(items[1])
+        return fields_map
+
+    def save_query_result(self, sql_space, space, query_atom):
+        # if no fields provided get them from information_schema.columns
+        res = sql_space.query(query_atom)
+        variables = []
+        for val in res:
+            temp_dict = {}
+            for k, v in val.items():
+                temp_dict['$' + str(k)] = str(v)
+            variables.append(temp_dict)
+        atoms = self.get_query_atoms(query_atom)
+        new_atoms = []
+        for var in variables:
+            for atom in atoms:
+                if isinstance(atom, ExpressionAtom):
+                    temp = repr(atom)
+                    for k, v in var.items():
+                        temp = temp.replace(k, v)
+                    new_atoms.append(temp)
+        for atom in new_atoms:
+            space.add_atom(E(S(atom)))
+        return res
+
+    def insert(self, space, query_atom):
+        fields_map = SqlHelper.get_fields_and_values(query_atom)
+        res = []
+        table = fields_map.pop("table")
+        values = []
+        for field_name, field_value in fields_map.items():
+            values.append(field_value.replace('"', "") if "(" in field_value and field_value[-2] == ')'
+                          else field_value.replace('"', "'"))
+        fields_str = ", ".join(list(fields_map.keys()))
+        values_str = ", ".join(list(values))
+        query = f'''{self.insert_command_sql} {table} ({fields_str}) VALUES ({values_str}) RETURNING 0;'''
+        res.extend(space.query(E(S(query))))
+        return res
+
+
+class SqlSpace(GroundingSpace):
+    def __init__(self, database, host, user, password, port):
+        super().__init__()
+        self.conn = psycopg2.connect(database=database,
+                                     host=host,
+                                     user=user,
+                                     password=password,
+                                     port=port)
+        self.cursor = self.conn.cursor()
+
+    def from_space(self, cspace):
+        self.gspace = GroundingSpaceRef(cspace)
+
+    def construct_query(self, query_atom):
+        fields, conditions, limit, vars_map = SqlHelper.get_fields_and_conditions(query_atom)
+        sql_query = "SELECT"
+
+        vars_names = []
+        for k, values in fields.items():
+            for val in values:
+                sql_query = sql_query + f" {k}.{val},"
+                vars_names.append(vars_map[val])
+        sql_query = sql_query[:-1] + " FROM "
+        for k in fields.keys():
+            sql_query = sql_query + f"{k},"
+
+        sql_condition = " WHERE"
+        for k, values in conditions.items():
+            for val in values:
+                if val in vars_map:
+                    sql_condition = sql_condition + f" {k}.{val} = {vars_map[val]} AND"
+        if len(sql_condition) > 6:
+            sql_query = sql_query[:-1] + sql_condition[:-4]
+        else:
+            sql_query = sql_query[:-1]
+        if len(limit) > 0:
+            sql_query = sql_query + f" LIMIT {limit}"
+        return sql_query, vars_names
+
+    def insert(self, sql_query):
+        try:
+            if len(sql_query) > 6:
+                self.cursor.execute(sql_query)
+                self.conn.commit()
+        except (Exception, psycopg2.DatabaseError) as error:
+            bindings_set = BindingsSet.empty()
+            bindings = Bindings()
+            bindings.add_var_binding("error on insert: ", ValueAtom(error))
+            bindings_set.push(bindings)
+            return bindings_set
+        return BindingsSet.empty()
+
+    def query(self, query_atom):
+        try:
+            atoms = query_atom.get_children()
+            if len(atoms) > 0 and SqlHelper.insert_command_sql in repr(atoms[0]):
+                return self.insert(repr(atoms[0]))
+            else:
+                new_bindings_set = BindingsSet.empty()
+                sql_query, vars_names = self.construct_query(query_atom)
+                if len(sql_query) > 6:
+                    self.cursor.execute(sql_query)
+                    values = self.cursor.fetchall()
+                    if len(vars_names) == 0 and len(values) > 0:
+                        vars = [f"var{i + 1}" for i in range(len(values[0]))]
+                    else:
+                        vars = [v[1:] for v in vars_names]
+                    if len(vars) > 0 and len(values) > 0:
+                        return results2bindings(vars, values)
+                return new_bindings_set
+        except (Exception, psycopg2.DatabaseError) as error:
+            print(error)
+
+
+def wrapsqlop(func):
+    def wrapper(*args):
+        if len(args) > 1:
+            if isinstance(args[0], GroundedAtom):
+                space1 = args[0].get_object()
+                if isinstance(space1, SpaceRef):
+                    if isinstance(args[1], GroundedAtom):
+                        space2 = args[1].get_object()
+                        if isinstance(space2, SpaceRef):
+                            args = args[2:]
+                            res = func(space1, space2, *args)
+                            return [ValueAtom(val) for val in res]
+                    else:
+                        args = args[1:]
+                        res = func(space1, *args)
+                        return [ValueAtom(val) for val in res]
+        return []
+
+    return wrapper
+
+
+@register_atoms
+def sql_space_atoms():
+    helper = SqlHelper()
+    newSQLSpaceAtom = OperationAtom('new-sql-space', lambda database, host, user, password, port: [
+        G(SpaceRef(SqlSpace(database, host, user, password, port)))], unwrap=False)
+    saveQueryResult = G(OperationObject('sql.save-query-result', wrapsqlop(helper.save_query_result), unwrap=False))
+    sqlInsert = G(OperationObject('sql.insert', wrapsqlop(helper.insert), unwrap=False))
+    return {
+        r"new-sql-space": newSQLSpaceAtom,
+        r"sql.save-query-result": saveQueryResult,
+        r"sql.insert": sqlInsert
+    }
+
 
 def pl_select(*args):
     print(args)
@@ -1803,63 +2112,108 @@ def register_vspace_tokens(metta):
             add_to_history_if_unique(f"!{key}")
     return syms_dict
 
+def res_unify(s,v):
+  if isinstance(v, str):
+      if isinstance(s, str):
+          return s == v
+      return s.unify(swipAtom(v))
+  return s.unify(v)
 
 # Define the foreign functions
 @export_flags(Janus=True)
 def query_from_space(space_name, query_atom, result):
-    space = getNameBySpace(space_name)
+    space = getSpaceByName(space_name)
     if space:
         atoms = space.query(query_atom)
-        result.unify(atoms)
-        return True
+        return res_unify(result,atoms)
     return False
 
 @export_flags(Janus=True)
 def add_from_space(space_name, atom):
-    space = getNameBySpace(space_name)
+    space = getSpaceByName(space_name)
     if space:
+        atom = s2m(circles,atom)
         return space.add(atom)
     return False
 
 @export_flags(Janus=True)
 def remove_from_space(space_name, atom):
-    space = getNameBySpace(space_name)
+    space = getSpaceByName(space_name)
     if space:
+        circles = Circles()
+        atom = s2m(circles,atom)
         return space.remove(atom)
     return False
 
 @export_flags(Janus=True)
 def replace_from_space(space_name, from_atom, to_atom):
-    space = getNameBySpace(space_name)
+    space = getSpaceByName(space_name)
     if space:
+        circles = Circles()
+        to_atom = s2m(circles,to_atom)
+        from_atom = s2m(circles,from_atom)
         return space.replace(from_atom, to_atom)
     return False
 
 @export_flags(Janus=True)
-def atom_count_from_space(space_name, count):
-    space = getNameBySpace(space_name)
+def atom_count_from_space(space_name, result):
+    space = getSpaceByName(space_name)
     if space:
-        count.unify(space.atom_count())
-        return True
-    return False
-
-@export_flags(Janus=True)
-def atoms_iter_from_space(space_name, result):
-    space = getNameBySpace(space_name)
-    if space:
-        atoms = list(space.atoms_iter())
-        result.unify(atoms)
-        return True
+        return res_unify(result,space.atom_count())
     return False
 
 @export_flags(Janus=True)
 def get_atoms_from_space(space_name, result):
-    space = getNameBySpace(space_name)
+    space = getSpaceByName(space_name)
     if space:
-        atoms = list(space.atoms_iter())
-        result.unify(atoms)
-        return True
+        circles = Circles()
+        atoms = list(space.get_atoms())
+        satoms = [m2s(circles, atom) for atom in atoms]
+        return res_unify(result,satoms)
     return False
+
+context_atom_iters = {}
+@export_flags(Janus=True, arity=2, flags=PL_FA_NONDETERMINISTIC)
+def atoms_iter_from_space(space_name, result, context):
+    global idKey, context_atom_iters
+    control = PL_foreign_control(context)
+    context = PL_foreign_context(context)
+    id = context
+
+    if control == PL_FIRST_CALL:
+        id = idKey
+        idKey= idKey+1
+        space = getSpaceByName(space_name)
+        if space:
+            iterator =  getattr(space,"") # Create a new iterator
+            context_atom_iters[id] = iterator  # Store it in the dictionary
+            try:
+                value = next(iterator)
+                a.unify((value))
+                context = id
+                return PL_retry(context)
+            except StopIteration:
+                del context_atom_iters[id]  # Clean up
+        return False
+
+    elif control == PL_REDO:
+        iterator = context_atom_iters.get(id)
+        if iterator is not None:
+            try:
+                value = next(iterator)
+                a.unify((value))
+                return PL_retry(context)
+            except StopIteration:
+                del context_atom_iters[id]  # Clean up
+                return False
+        pass
+
+    elif control == PL_PRUNED:
+        # Clean up the iterator when we're done
+        if id in context_atom_iters:
+            del context_atom_iters[id]
+        pass
+
 
 def reg_pyswip_foreign():
 
@@ -1867,21 +2221,23 @@ def reg_pyswip_foreign():
 
 
     def py_eval(e, result):
-        return result.unify(eval(str(e)))
+        return res_unify(result,eval(str(e)))
     py_eval.arity = 2
     registerForeign(py_eval)
 
     # Register the foreign functions in PySwip
-    registerForeign(query_from_space, arity=3)
-    registerForeign(add_from_space, arity=2)
-    registerForeign(remove_from_space, arity=2)
-    registerForeign(replace_from_space, arity=3)
-    registerForeign(atom_count_from_space, arity=2)
-    registerForeign(atoms_iter_from_space, arity=2)
-    registerForeign(get_atoms_from_space, arity=2)
-    registerForeign(get_atoms_from_space, arity=2)
+    #registerForeign(new_rust_space, arity=1)
+    #registerForeign(query_from_space, arity=3)
+    #registerForeign(add_from_space, arity=2)
+    #registerForeign(remove_from_space, arity=2)
+    #registerForeign(replace_from_space, arity=3)
+    #registerForeign(atom_count_from_space, arity=2)
+    #registerForeign(atoms_iter_from_space, arity=2)
+    #registerForeign(get_atoms_from_space, arity=2)
     add_to_history_if_unique.arity=1
     registerForeign(add_to_history_if_unique)
+
+    add_janus_methods(sys.modules[__name__], dict = oper_dict)
 
     #?- query_from_space('example', 'my_atom', Result).
     #?- add_from_space('example', 'new_atom').
@@ -1891,8 +2247,26 @@ def reg_pyswip_foreign():
     #?- atoms_iter_from_space('example', Atoms).
 
 
-@export_flags(MeTTa=True)
-def test_nondeterministic_foreign():
+@export_flags(Janus=True)
+def find_rust_space(space_name, result):
+    space = getSpaceByName(space_name)
+    named = getNameBySpace(space)
+    if space:
+        return res_unify(result,named)
+    return False
+
+@export_flags(Janus=True)
+def new_rust_space(result):
+    space = VSpace()
+    named = getNameBySpace(space)
+    if space:
+        res_unify(result,swipAtom(named))
+        return True
+    return False
+
+
+@export_flags(MeTTa=True, Janus=True)
+def test_nondeterministic_foreign1():
 
     def nondet(a, context):
         control = PL_foreign_control(context)
@@ -1924,6 +2298,112 @@ def test_nondeterministic_foreign():
     for i in range(10):
         if {'X': i} not in result:
             print('Expected result X:{} not present'.format(i))
+
+
+@export_flags(MeTTa=True, Janus=True)
+def test_nondeterministic_foreign2():
+
+    def number_generator():
+        for i in range(10):
+            yield i
+
+    iterator = number_generator()
+
+    def nondet2(a, context):
+        control = PL_foreign_control(context)
+        context = PL_foreign_context(context)
+        #global iterator  # Use the global iterator object
+
+        if control == PL_FIRST_CALL:
+            try:
+                value = next(iterator)  # Start the iterator
+                a.unify(int(value) + 1)  # Add 1 to yield numbers from 1 to 10
+                return PL_retry(context)
+            except StopIteration:
+                return False
+        elif control == PL_REDO:
+            try:
+                value = next(iterator)
+                a.unify(int(value) + 1)  # Add 1 to yield numbers from 1 to 10
+                return PL_retry(context)
+            except StopIteration:
+                return False
+        elif control == PL_PRUNED:
+            pass
+
+    nondet2.arity = 1
+    registerForeign(nondet2, flags=PL_FA_NONDETERMINISTIC)
+    result = list(swip.query("nondet2(X)"))
+
+    print(result)
+
+    if len(result) != 10:
+        print('Query should return 10 results')
+
+idKey = 1
+@export_flags(MeTTa=True, Janus=True)
+def test_nondeterministic_foreign3():
+
+    def number_generator(size):
+        for i in range(size):
+            yield i
+
+    context_iterators = {}  # Dictionary to store iterators by context
+
+    def nondet3(sz, a, context):
+        global idKey
+        control = PL_foreign_control(context)
+        context = PL_foreign_context(context)
+        id = context
+
+        if control == PL_FIRST_CALL:
+            id = idKey
+            idKey= idKey+1
+            iterator = number_generator(sz)  # Create a new iterator
+            context_iterators[id] = iterator  # Store it in the dictionary
+            try:
+                value = next(iterator)
+                a.unify(int(value) + 1)
+                context = id
+                return PL_retry(context)
+            except StopIteration:
+                del context_iterators[id]  # Clean up
+                return False
+
+        elif control == PL_REDO:
+            iterator = context_iterators.get(id)
+            if iterator is not None:
+                try:
+                    value = next(iterator)
+                    a.unify(int(value) + 1)
+                    return PL_retry(context)
+                except StopIteration:
+                    del context_iterators[id]  # Clean up
+                    return False
+            pass
+
+        elif control == PL_PRUNED:
+            # Clean up the iterator when we're done
+            if id in context_iterators:
+                del context_iterators[id]
+            pass
+
+    nondet3.arity = 2
+    registerForeign(nondet3, arity=2, flags=PL_FA_NONDETERMINISTIC)
+    result = list(swip.query("nondet3(4,X)"))
+
+    print(result)
+
+    if len(result) != 4:
+        print('nondet3 should return 4 results')
+
+
+@export_flags(MeTTa=True, Janus=True)
+def test_nondeterministic_foreign():
+
+    test_nondeterministic_foreign1()
+    test_nondeterministic_foreign2()
+    test_nondeterministic_foreign3()
 
 
     def hello(t):
@@ -1985,6 +2465,7 @@ def test_nondeterministic_foreign():
     print()
     print()
     print()
+    flush_console()
 
 
 
@@ -2064,6 +2545,16 @@ def try_overlaps():
 def learn_vspace():
    load_vspace()
    swip_exec("learn_vspace(60)")
+
+@export_flags(MeTTa=True)
+def mettalog():
+   load_vspace()
+   swip_exec("repl")
+
+@export_flags(MeTTa=True)
+def mettalog_pl():
+   load_vspace()
+   swip_exec("break")
 
 def load_flybase(size):
    load_vspace()
@@ -2164,7 +2655,7 @@ class InteractiveMeTTa(LazyMeTTa):
 
         global verbose
         self.mode = "metta"
-        self.submode = "+"
+        self.submode = "!"
         #self.history = []
         load_vspace()
 
@@ -2213,10 +2704,15 @@ class InteractiveMeTTa(LazyMeTTa):
                     elif named in space_refs:
                         print(f"; named={named}")
                         selected_space_name = named
-                        the_new_runner_space = space_refs[named]()
+                        found = getSpaceByName(named)
+                        if found is not None:
+                            selected_space_name = named
+                            the_new_runner_space = found
+                        else: print("Space not found {named}")
+                    continue
 
                 # Switch to MeTTaLog mode
-                elif sline.startswith("@sm") or sline.startswith("@mettalog") or sline.startswith("@ml"):
+                elif sline.startswith("@sm") or sline.startswith("@mettal") or sline.startswith("@ml"):
                     self.mode = "mettalog"
                     print("Switched to MettaLog mode.")
                     continue
@@ -2248,23 +2744,23 @@ class InteractiveMeTTa(LazyMeTTa):
                 # Show help
                 elif sline.startswith("@h"):
                     print("Help:")
-                    print("@m       - Switch to MeTTa mode.")
-                    print("@m +     - Default Mode: Add bare atoms.")
-                    print("@m -     -   changes to: Remove bare atoms.")
-                    print("@m ?     -               Query bare atoms.")
-                    print("@m !     -               Interpret bare atoms.")
+                    print("@m       - Switch to MeTTa mode")
+                    print("@m +     -   changes to: Add bare atoms (default)")
+                    print("@m !     -               Interpret bare atoms")
+                    print("@m -     -               Remove bare atoms")
+                    #print("@m ?     -               Query bare atoms")
                     print("@m ^     - Interpret atoms as if there are in files (+)")
-                    print("@p       - Switch to Python mode.")
-                    print("@s       - Switch to Swip mode.")
-                    print("@sm      - Switch to MeTTaLog mode.")
-                    print("@space   - Change the &self of the_runner_space.")
+                    print("@p       - Switch to Python mode")
+                    print("@s       - Switch to Swip mode")
+                    print("@sm      - Switch to MeTTaLog mode")
+                    print("@space   - Change the &self of the_runner_space")
                     print("@v ###   - Verbosity 0-3")
-                    print("@h       - Display this help message.")
-                    print("Ctrl-D   - Exit interpreter.")
-                    print(".s       - Save session.")
-                    print(".l       - Load the latest session.")
-                    print(".q       - Quit the session.")
-                    print(".h       - Display command history.")
+                    print("@h       - Display this help message")
+                    print("Ctrl-D   - Exit interpreter")
+                    print(".s       - Save session")
+                    print(".l       - Load the latest session")
+                    print(".q       - Quit the session")
+                    print(".h       - Display command history")
                     print("\nFrom your shell you can use..")
                     print("\texport VSPACE_VERBOSE=2")
                     flush_console()
@@ -2467,9 +2963,9 @@ def vspace_init():
     #import site
     #print ("Site Packages: ",site.getsitepackages())
     #test_nondeterministic_foreign()
-
-    if os.path.isfile(f"{the_python_runner.cwd}autoexec.metta"):
-        the_python_runner.lazy_import_file("autoexec.metta")
+    swip.assertz("py_named_space('&self')");
+    #if os.path.isfile(f"{the_python_runner.cwd}autoexec.metta"):
+    #    the_python_runner.lazy_import_file("autoexec.metta")
     # @TODO fix this metta_to_swip_tests1()
     #load_vspace()
     reg_pyswip_foreign()

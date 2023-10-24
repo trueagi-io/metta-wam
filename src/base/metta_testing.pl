@@ -53,8 +53,11 @@ make_test_name(FilePath, Number, TestName) :-
     format(string(TestName), "~w.~w.~w", [NoUnderscoreParent, NoUnderscore, NS]).
 
 
-color_g_mesg(C,G):-
-  wots(S,user:call(G)), ansi_format([fg(C)], '~N~w~n', [S]),!.
+%color_g_mesg(C,G):- silent_loading,!.
+color_g_mesg(C,G):- check_silent_loading,color_g_mesg_ok(C,G).
+color_g_mesg_ok(C,G):-
+  wots(S,user:call(G)),
+  (S == "" -> true ; ansi_format([fg(C)], '~N~w~n', [S])),!.
 
 print_current_test:-
    loonit_number(Number),
@@ -225,10 +228,14 @@ inc_exec_num(FileName) :-
     asserta(file_exec_num(FileName, NewVal)).
 
 
-load_answer_file(File) :-
+load_answer_file(File):-  ( \+ atom(File); \+ is_absolute_file_name(File); \+ exists_file(File)),
+    absolute_file_name(File,AbsFile), File\=@=AbsFile, load_answer_file_now(AbsFile),!.
+load_answer_file(File):- load_answer_file_now(File),!.
+load_answer_file_now(File) :-
     ignore((
     ensure_extension(File, answers, AnsFile),
     remove_specific_extension(AnsFile, answers, StoredAs),
+    set_exec_num(StoredAs,1),
     wdmsg(load_answer_file(AnsFile,StoredAs)),
     load_answer_file(AnsFile,StoredAs))).
 
@@ -238,7 +245,8 @@ load_answer_file(AnsFile,StoredAs):-
         ;   (setup_call_cleanup(
                 open(AnsFile, read, Stream, [encoding(utf8)]),
                 (load_answer_stream(1,StoredAs, Stream)),
-                close(Stream))))).
+                close(Stream))))),
+  set_exec_num(StoredAs,1),!.
 
 :- debug(metta(answers)).
 load_answer_stream(_Nth, StoredAs, Stream):- at_end_of_stream(Stream),!,
@@ -247,17 +255,20 @@ load_answer_stream(Nth, StoredAs, Stream):- read_line_to_string(Stream,String),
     writeln(Nth = String),
     load_answer_stream(Nth, StoredAs, String, Stream).
 
-load_answer_stream(Nth, StoredAs, String, Stream):- string_concat("[",_,String),!,
+load_answer_stream(Nth, StoredAs, String, Stream):- % string_concat("[",_,String),!,
     parse_answer_string(String,Metta),!,
     assert(file_answers(StoredAs,Nth,Metta)),
     Nth2 is Nth+1,load_answer_stream(Nth2, StoredAs, Stream).
 load_answer_stream(Nth, StoredAs, _, Stream):- load_answer_stream(Nth, StoredAs, Stream).
 
 parse_answer_string("[]",[]):- !.
-parse_answer_string(String,Metta):- string_concat("(",_,String),!,parse_sexpr_metta(String,Metta),!.
+%parse_answer_string(String,Metta):- string_concat("(",_,String),!,parse_sexpr_metta(String,Metta),!.
+parse_answer_string(String,_Metta):- string_concat("[(Error (assert",_,String),!,fail.
+parse_answer_string(String,Metta):- string_concat("Got: [",Mid,String),string_concat(Inner,"]",Mid),
+  atomics_to_string(["(",Inner,")"],Str),!,parse_sexpr_metta(Str,Metta),!.
 parse_answer_string(String,Metta):- string_concat("[",Mid,String),string_concat(Inner,"]",Mid),
-  atomics_to_string(["(",Inner,")"],Str),!,parse_answer_string(Str,Metta),!.
-parse_answer_string(String,Metta):- String=Metta,!.
+  atomics_to_string(["(",Inner,")"],Str),!,parse_sexpr_metta(Str,Metta),!.
+%parse_answer_string(String,Metta):- String=Metta,!,fail.
 
 
 
