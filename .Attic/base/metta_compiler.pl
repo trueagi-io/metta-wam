@@ -745,7 +745,7 @@ f2p(HeadIs,RetResult,Convert, Converted) :-
     subst(Convert, ConvertFunction, Result, Converting),  % Substitute AsFunction by Result in Convert
     f2p(HeadIs,RetResult, (AsPred, Converting), Converted).  % Proceed with the conversion of the remaining terms
 
-/* MAYBE USE ?*/
+/* MAYBE USE ?
 % If Convert is a compound term, we need to recursively convert its arguments.
 f2p(HeadIs,RetResult, Convert, Converted) :- fail,
     compound(Convert), !,
@@ -753,14 +753,15 @@ f2p(HeadIs,RetResult, Convert, Converted) :- fail,
     maplist(convert_argument, Args, ConvertedArgs),  % Recursively convert each argument
     Converted =~ [Functor|ConvertedArgs],  % Reconstruct Converted with the converted arguments
     (callable(Converted) -> f2p(HeadIs,RetResult, Converted, _); true).  % If Converted is callable, proceed with its conversion
+% Helper predicate to convert an argument of a compound term
+convert_argument(Arg, ConvertedArg) :-
+    (callable(Arg) -> ftp(_, _, Arg, ConvertedArg); ConvertedArg = Arg).
+*/
 
 % The catch-all If no specific case is matched, consider Convert as already converted.
 f2p(_HeadIs,_RetResult,u_assign(Convert,Res), u_assign(Convert,Res)):-!.
 f2p(_HeadIs,RetResult,Convert, Code):- into_u_assign(Convert,RetResult,Code).
 
-% Helper predicate to convert an argument of a compound term
-convert_argument(Arg, ConvertedArg) :-
-    (callable(Arg) -> functs_to_preds(_, Arg, ConvertedArg); ConvertedArg = Arg).
 
 
 data_term(Convert):- self_eval(Convert),!.
@@ -1338,12 +1339,12 @@ show_cvts(Term):-
 
 % 'show_cvts' continues processing, performing conversions between predicates and functions,
 % and pretty-printing original terms, function forms, and Prolog forms.
-show_cvts(Term):- compound(Term),Term=(_=_),!, ppc(orig,Term),Term = FunctForm,
-  functs_to_preds(_RetResult,FunctForm,Prolog), ppc(preds,Prolog),
+show_cvts(Term):- iz_conz(Term),!, ppc(orig,Term),Term = FunctForm,
+  functs_to_preds(FunctForm,Prolog), ppc(preds,Prolog),
   preds_to_functs(Prolog,NFunctForm), ppc(functs,NFunctForm).
 show_cvts(Term):- ppc(orig,Term),
   preds_to_functs(Term,FunctForm), ppc(functs,FunctForm),
-  functs_to_preds(_RetResult,FunctForm,Prolog), ppc(preds,Prolog).
+  functs_to_preds(FunctForm,Prolog), ppc(preds,Prolog).
 
 % 'show_mettalog_src' for specific predicate, prints metta clauses if they exist in the source file containing 'metta'.
 show_mettalog_src(F,A):- functor(Head,F,A),
@@ -1464,6 +1465,9 @@ write_mobj(V):- ( \+ compound(V) ; is_list(V)),!, write_src0(V).
 write_mobj(V):- compound_name_list(V,F,Args),write_mobj(F,Args),!.
 write_mobj(V):- writeq(V).
 write_mobj(exec,[V]):- !, write('!'),with_indents(true,write_src(V)).
+write_mobj('$OBJ',[_,S]):- write('['),write_src(S),write(' ]').
+write_mobj('{...}',[S]):- write('{'),write_src(S),write(' }').
+write_mobj('[...]',[S]):- write('['),write_src(S),write(' ]').
 write_mobj('$STRING',[S]):- !, writeq(S).
 write_mobj(F,Args):- mlog_sym(K),pp_sexi([K,F|Args]).
 
