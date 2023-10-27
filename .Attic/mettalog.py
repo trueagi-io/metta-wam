@@ -1,6 +1,7 @@
 # Version Space Candidate Elimination inside of MeTTa
 # This implementation focuses on bringing this machine learning algorithm into the MeTTa relational programming environment.
 # Douglas R. Miles 2023
+import json
 from time import monotonic_ns, time
 import atexit, os, subprocess, sys, pip, io, re, traceback, inspect
 try:
@@ -1324,6 +1325,9 @@ def color_expr(expr, level=0, unif_vars=None):
         raise Exception("Unexpected sexpr type: " + str(type(expr)))
 
 
+def print_cmt(*args):
+   for arg in args:
+       print("\n;; "+ "\n;; ".join(str(arg).splitlines()))
 
 @export_flags(MeTTa=True)
 def print_l_e(obj):
@@ -2173,6 +2177,24 @@ def get_atoms_from_space(space_name, result):
     return False
 
 context_atom_iters = {}
+
+class IteratorAndConversionDict:
+    def __init__(self, iterator=None, conversion_dict=None):
+        self.iterator = iterator
+        self.conversion_dict = conversion_dict if conversion_dict is not None else {}
+
+    def set_iterator(self, iterator):
+        self.iterator = iterator
+
+    def set_conversion_dict(self, conversion_dict):
+        self.conversion_dict = conversion_dict
+
+    def get_iterator(self):
+        return self.iterator
+
+    def get_conversion_dict(self):
+        return self.conversion_dict
+
 @export_flags(Janus=True, arity=2, flags=PL_FA_NONDETERMINISTIC)
 def atoms_iter_from_space(space_name, result, context):
     global idKey, context_atom_iters
@@ -2185,11 +2207,17 @@ def atoms_iter_from_space(space_name, result, context):
         idKey= idKey+1
         space = getSpaceByName(space_name)
         if space:
-            iterator =  getattr(space,"") # Create a new iterator
-            context_atom_iters[id] = iterator  # Store it in the dictionary
+            get_iterator =  getattr(space,"atoms_iter", None) # Create a new iterator
+            if get_iterator is not None:
+                iterator = get_iterator(space)
+            else:
+                got_atoms =  space.get_atoms()
+                iterator = iter(got_atoms)
+            circles = Circles()
+            context_atom_iters[id] = IteratorAndConversionDict(iterator,circles)  # Store it in the dictionary
             try:
-                value = next(iterator)
-                a.unify((value))
+                value = m2s(circles,next(iterator))
+                result.unify(value)
                 context = id
                 return PL_retry(context)
             except StopIteration:
@@ -2197,11 +2225,13 @@ def atoms_iter_from_space(space_name, result, context):
         return False
 
     elif control == PL_REDO:
-        iterator = context_atom_iters.get(id)
-        if iterator is not None:
+        iteratorAndCircs = context_atom_iters.get(id)
+        if iteratorAndCircs is not None:
             try:
+                iterator = iteratorAndCircs.get_iterator()
+                circles = iteratorAndCircs.get_conversion_dict()
                 value = next(iterator)
-                a.unify((value))
+                result.unify(m2s(circles,value))
                 return PL_retry(context)
             except StopIteration:
                 del context_atom_iters[id]  # Clean up
@@ -2290,14 +2320,14 @@ def test_nondeterministic_foreign1():
     registerForeign(nondet, flags=PL_FA_NONDETERMINISTIC)
     result = list(swip.query("nondet(X)"))
 
-    print(result)
+    print_cmt(result)
 
     if len(result) != 10:
-        print('Query should return 10 results')
+        print_cmt('Query should return 10 results')
 
     for i in range(10):
         if {'X': i} not in result:
-            print('Expected result X:{} not present'.format(i))
+            print_cmt('Expected result X:{} not present'.format(i))
 
 
 @export_flags(MeTTa=True, Janus=True)
@@ -2335,10 +2365,10 @@ def test_nondeterministic_foreign2():
     registerForeign(nondet2, flags=PL_FA_NONDETERMINISTIC)
     result = list(swip.query("nondet2(X)"))
 
-    print(result)
+    print_cmt(result)
 
     if len(result) != 10:
-        print('Query should return 10 results')
+        print_cmt('Query should return 10 results')
 
 idKey = 1
 @export_flags(MeTTa=True, Janus=True)
@@ -2392,10 +2422,10 @@ def test_nondeterministic_foreign3():
     registerForeign(nondet3, arity=2, flags=PL_FA_NONDETERMINISTIC)
     result = list(swip.query("nondet3(4,X)"))
 
-    print(result)
+    print_cmt(result)
 
     if len(result) != 4:
-        print('nondet3 should return 4 results')
+        print_cmt('nondet3 should return 4 results')
 
 
 @export_flags(MeTTa=True, Janus=True)
@@ -2407,7 +2437,7 @@ def test_nondeterministic_foreign():
 
 
     def hello(t):
-        print("Hello,", t)
+        print_cmt("Hello,", t)
 
     hello.arity = 1
 
@@ -2416,7 +2446,7 @@ def test_nondeterministic_foreign():
 
     def hello1(t):
         readline.replace_history_item(0, t)
-        print("Hello1,", t)
+        print_cmt("Hello1,", t)
 
 
     hello1.arity = 1
@@ -2431,13 +2461,13 @@ def test_nondeterministic_foreign():
 
     result = list(swip.query("father(michael,X), hello(X)"))
 
-    print(result)
+    print_cmt(result)
 
     if len(result) != 2:
-        print('Query should return two results')
+        print_cmt('Query should return two results')
     for name in ('john', 'gina'):
         if {'X': name} not in result:
-            print('Expected result X:{} not present'.format(name))
+            print_cmt('Expected result X:{} not present'.format(name))
 
 
     #def test_atoms_and_strings_distinction(self):
@@ -2457,14 +2487,14 @@ def test_nondeterministic_foreign():
 
     result = list(swip.query("get_str(String), test_for_string(String, Result)"))
 
-    print(result)
+    print_cmt(result)
 
     if result[0]['Result'] != 'true':
-          print('A string return value should not be converted to an atom.')
+          print_cmt('A string return value should not be converted to an atom.')
 
-    print()
-    print()
-    print()
+    print_cmt()
+    print_cmt()
+    print_cmt()
     flush_console()
 
 
@@ -2495,16 +2525,16 @@ def metta_to_swip_tests1():
     circles = Circles()
     # Usage:
     swip_functor = Functor(PySwipAtom("example"), 2, [PySwipAtom("sub1"), 3.14])
-    print(f"swip_functor={swip_functor}"),
+    print_cmt(f"swip_functor={swip_functor}"),
     metta_expr = s2m(circles,swip_functor)
-    print(f"metta_expr={metta_expr}"),
+    print_cmt(f"metta_expr={metta_expr}"),
     converted_back_to_swip = m2s(circles,metta_expr)
-    print(f"converted_back_to_swip={converted_back_to_swip}"),
+    print_cmt(f"converted_back_to_swip={converted_back_to_swip}"),
 
 
     # Now you can use the methods in PySwip queries
-    print(list(swip.query("swip_to_metta_wrapper('example', X).")))
-    print(list(swip.query("metta_to_swip_wrapper(X, 'example').")))
+    print_cmt(list(swip.query("swip_to_metta_wrapper('example', X).")))
+    print_cmt(list(swip.query("metta_to_swip_wrapper(X, 'example').")))
 
 @export_flags(MeTTa=True)
 def metta_to_swip_tests2():
@@ -2566,10 +2596,10 @@ def load_flybase(size):
 def swip_exec(qry):
     #from metta_vspace import swip
     #if is_init==True:
-    #   print("Not running Query: ",qry)
+    #   print_cmt("Not running Query: ",qry)
     #   return
     for r in swip.query(qry):
-        print(r)
+        print_cmt(r)
 
 @export_flags(MeTTa=True)
 def test_custom_m_space():
@@ -2683,13 +2713,13 @@ class InteractiveMeTTa(LazyMeTTa):
                 # Check for history commands
                 if sline.rstrip() == '.h':
                     for idx, item in enumerate(self.history):
-                        print(f"{idx + 1}: {item}")
+                        print_cmt(f"{idx + 1}: {item}")
                     continue
 
                 # Switch to python mode
                 elif sline.startswith("@p"):
                     self.mode = "python"
-                    print("Switched to Python mode.")
+                    print_cmt("Switched to Python mode.")
                     self.maybe_submode(line.rstrip())
                     add_to_history_if_unique("@swip")
                     add_to_history_if_unique("@metta")
@@ -2700,27 +2730,27 @@ class InteractiveMeTTa(LazyMeTTa):
                     global selected_space_name
                     cmd_, named = split_or_none(sline, " ")
                     if named is None:
-                        print("; @spaces:", " ".join(space_refs))
+                        print_cmt("; @spaces:", " ".join(space_refs))
                     elif named in space_refs:
-                        print(f"; named={named}")
+                        print_cmt(f"; named={named}")
                         selected_space_name = named
                         found = getSpaceByName(named)
                         if found is not None:
                             selected_space_name = named
                             the_new_runner_space = found
-                        else: print("Space not found {named}")
+                        else: print_cmt("Space not found {named}")
                     continue
 
                 # Switch to MeTTaLog mode
                 elif sline.startswith("@sm") or sline.startswith("@mettal") or sline.startswith("@ml"):
                     self.mode = "mettalog"
-                    print("Switched to MettaLog mode.")
+                    print_cmt("Switched to MettaLog mode.")
                     continue
 
                 # Switch to swip mode
                 elif sline.startswith("@s"):
                     self.mode = "swip"
-                    print("Switched to Swip mode.")
+                    print_cmt("Switched to Swip mode.")
                     self.maybe_submode(line.rstrip())
                     add_to_history_if_unique("break")
                     add_to_history_if_unique("listing(maybe_corisponds/2)")
@@ -2730,7 +2760,7 @@ class InteractiveMeTTa(LazyMeTTa):
                 # Switch to metta mode
                 elif sline.startswith("@m"):
                     self.mode = "metta"
-                    print("Switched to MeTTa mode.")
+                    print_cmt("Switched to MeTTa mode.")
                     self.maybe_submode(line.rstrip())
                     add_to_history_if_unique("!(match &self $ $)")
                     continue
@@ -2738,31 +2768,31 @@ class InteractiveMeTTa(LazyMeTTa):
                 elif sline.startswith("@v"):
                     verbose = int(sline.split()[1])
                     os.environ["VSPACE_VERBOSE"] = str(verbose)
-                    print(f"Verbosity level set to {verbose}")
+                    print_cmt(f"Verbosity level set to {verbose}")
                     continue
 
                 # Show help
                 elif sline.startswith("@h"):
-                    print("Help:")
-                    print("@m       - Switch to MeTTa mode")
-                    print("@m +     -   changes to: Add bare atoms (default)")
-                    print("@m !     -               Interpret bare atoms")
-                    print("@m -     -               Remove bare atoms")
-                    #print("@m ?     -               Query bare atoms")
-                    print("@m ^     - Interpret atoms as if there are in files (+)")
-                    print("@p       - Switch to Python mode")
-                    print("@s       - Switch to Swip mode")
-                    print("@sm      - Switch to MeTTaLog mode")
-                    print("@space   - Change the &self of the_runner_space")
-                    print("@v ###   - Verbosity 0-3")
-                    print("@h       - Display this help message")
-                    print("Ctrl-D   - Exit interpreter")
-                    print(".s       - Save session")
-                    print(".l       - Load the latest session")
-                    print(".q       - Quit the session")
-                    print(".h       - Display command history")
-                    print("\nFrom your shell you can use..")
-                    print("\texport VSPACE_VERBOSE=2")
+                    print_cmt("Help:")
+                    print_cmt("@m       - Switch to MeTTa mode")
+                    print_cmt("@m +     -   changes to: Add bare atoms (default)")
+                    print_cmt("@m !     -               Interpret bare atoms")
+                    print_cmt("@m -     -               Remove bare atoms")
+                    #print_cmt("@m ?     -               Query bare atoms")
+                    print_cmt("@m ^     - Interpret atoms as if there are in files (+)")
+                    print_cmt("@p       - Switch to Python mode")
+                    print_cmt("@s       - Switch to Swip mode")
+                    print_cmt("@sm      - Switch to MeTTaLog mode")
+                    print_cmt("@space   - Change the &self of the_runner_space")
+                    print_cmt("@v ###   - Verbosity 0-3")
+                    print_cmt("@h       - Display this help message")
+                    print_cmt("Ctrl-D   - Exit interpreter")
+                    print_cmt(".s       - Save session")
+                    print_cmt(".l       - Load the latest session")
+                    print_cmt(".q       - Quit the session")
+                    print_cmt(".h       - Display command history")
+                    print_cmt("\nFrom your shell you can use..")
+                    print_cmt("\texport VSPACE_VERBOSE=2")
                     flush_console()
                     continue
 
@@ -2774,7 +2804,7 @@ class InteractiveMeTTa(LazyMeTTa):
 
                 elif self.mode == "swip":
                     if prefix == "%":
-                        print(line) # comment
+                        print_cmt(line) # comment
                         continue
                     else:
                         swip_exec(line)
@@ -2782,7 +2812,7 @@ class InteractiveMeTTa(LazyMeTTa):
 
                 elif self.mode == "mettalog":
                    if prefix == ";":
-                        print(line) # comment
+                        print_cmt(line) # comment
                         continue
                    else:
                         if sline.startswith("!"):
@@ -2792,13 +2822,13 @@ class InteractiveMeTTa(LazyMeTTa):
                         else:
                             expr = self.parse_single(sline)
 
-                        if verbose>1: print(f"% S-Expr {line}")
-                        if verbose>1: print(f"% M-Expr {expr}")
+                        if verbose>1: print_cmt(f"% S-Expr {line}")
+                        if verbose>1: print_cmt(f"% M-Expr {expr}")
                         circles = Circles()
                         swipl_fid = PL_open_foreign_frame()
                         try:
                             swip_obj = m2s(circles,expr);
-                            if verbose>1: print(f"% P-Expr {swip_obj}")
+                            if verbose>1: print_cmt(f"% P-Expr {swip_obj}")
                             call_sexpr = Functor("call_sexpr", 4)
                             user = newModule("user")
                             X = Variable()
@@ -2817,7 +2847,7 @@ class InteractiveMeTTa(LazyMeTTa):
 
                 elif self.mode == "python":
                     if prefix == "#":
-                        print(line) # comment
+                        print_cmt(line) # comment
                         continue
                     result = eval(line)
                     printl(result)
@@ -2826,7 +2856,7 @@ class InteractiveMeTTa(LazyMeTTa):
                 elif self.mode == "metta":
                     rest = line[2:].strip()
                     if prefix == ";":
-                        print(line) # comment
+                        print_cmt(line) # comment
                         continue
                     elif sline.startswith(".s"):
                         name = f"session_{round(time())}.mettar" if rest == "" else (
@@ -2846,7 +2876,7 @@ class InteractiveMeTTa(LazyMeTTa):
                         prefix = self.submode
                         rest = line
 
-                    #print(f"submode={self.submode} rest={rest} ")
+                    #print_cmt(f"submode={self.submode} rest={rest} ")
 
                     if prefix == "!":
                         expr = self.parse_single(rest)
@@ -2874,29 +2904,29 @@ class InteractiveMeTTa(LazyMeTTa):
 
             except EOFError:
                     sys.stderr = sys.__stderr__
-                    if verbose>0: print("\nCtrl^D EOF...")
+                    if verbose>0: print_cmt("\nCtrl^D EOF...")
                     flush_console()
                     return [True] #sys.exit(0)
 
             except KeyboardInterrupt as e:
-                if verbose>0: print(f"\nCtrl+C: {e}")
+                if verbose>0: print_cmt(f"\nCtrl+C: {e}")
                 if verbose>0:
                     buf = io.StringIO()
                     sys.stderr = buf
                     traceback.print_exc()
                     sys.stderr = sys.__stderr__
-                    print(buf.getvalue().replace('rolog','ySwip'))
+                    print_cmt(buf.getvalue().replace('rolog','ySwip'))
                 #sys.exit(3)
                 continue
 
             except Exception as e:
-                if verbose>0: print(f"Error: {e}")
+                if verbose>0: print_cmt(f"Error: {e}")
                 if verbose>0:
                     buf = io.StringIO()
                     sys.stderr = buf
                     traceback.print_exc()
                     sys.stderr = sys.__stderr__
-                    print(buf.getvalue().replace('rolog','ySwip'))
+                    print_cmt(buf.getvalue().replace('rolog','ySwip'))
                 continue
 
     def repl(self):
@@ -2904,13 +2934,13 @@ class InteractiveMeTTa(LazyMeTTa):
             if result_set:
                 try:
                     for result in result_set:
-                        print(color_expr(result))
+                        print_cmt(color_expr(result))
                         flush_console()
                 except TypeError:
-                    print(color_expr(result_set))
+                    print_cmt(color_expr(result_set))
                     flush_console()
             else:
-                print(f"[/]")
+                print_cmt(f"[/]")
                 flush_console()
 
     def copy(self):
@@ -2920,11 +2950,11 @@ def call_mettalog(line, parseWithRust = False):
 
     if parseWithRust:
         expr = self.parse_single(sline)
-        if verbose>1: print(f"% S-Expr {line}")
-        if verbose>1: print(f"% M-Expr {expr}")
+        if verbose>1: print_cmt(f"% S-Expr {line}")
+        if verbose>1: print_cmt(f"% M-Expr {expr}")
         circles = Circles()
         swip_obj = m2s(circles,expr);
-        if verbose>1: print(f"% P-Expr {swip_obj}")
+        if verbose>1: print_cmt(f"% P-Expr {swip_obj}")
     else:
         swip_obj = line
 
@@ -2944,7 +2974,7 @@ def vspace_main():
     is_init=False
     #os.system('clear')
     t0 = monotonic_ns()
-    if verbose>0: print(underline("Version-Space Main\n"))
+    if verbose>0: print_cmt(underline("Version-Space Main\n"))
     flush_console()
     #if is_init==False: load_vspace()
     #if is_init==False: load_flybase()
@@ -2953,57 +2983,275 @@ def vspace_main():
     flush_console()
     the_python_runner.repl()
     flush_console()
-    if verbose>1: print(f"\nmain took {(monotonic_ns() - t0)/1e9:.5} seconds in walltime")
+    if verbose>1: print_cmt(f"\nmain took {(monotonic_ns() - t0)/1e9:.5} seconds in walltime")
     flush_console()
 
+@staticmethod
 def vspace_init():
+    if getattr(vspace_init,"is_init_ran", False) == True:
+        return
+    vspace_init.is_init_ran = True
+
     t0 = monotonic_ns()
     #os.system('clear')
-    print(underline(f"Version-Space Init: {__file__}\n"))
+    print_cmt(underline(f"Version-Space Init: {__file__}\n"))
     #import site
-    #print ("Site Packages: ",site.getsitepackages())
+    #print_cmt ("Site Packages: ",site.getsitepackages())
     #test_nondeterministic_foreign()
     swip.assertz("py_named_space('&self')");
     #if os.path.isfile(f"{the_python_runner.cwd}autoexec.metta"):
     #    the_python_runner.lazy_import_file("autoexec.metta")
     # @TODO fix this metta_to_swip_tests1()
     #load_vspace()
+    old_stdout = sys.stdout
+    sys.stdout = mystdout = io.StringIO()
     reg_pyswip_foreign()
-    print(f"\nInit took {(monotonic_ns() - t0)/1e9:.5} seconds")
+    sys.stdout = old_stdout
+    print_cmt(f"\nInit took {(monotonic_ns() - t0)/1e9:.5} seconds")
     flush_console()
 
 def flush_console():
     try:
-      sys.stdout.flush()
+      if sys.__stdout__ is not None: sys.__stdout__.flush()
     except Exception: ""
     try:
-      sys.stderr.flush()
+      if sys.__stderr__ is not None: sys.__stderr__.flush()
+    except Exception: ""
+    try:
+      if sys.stderr is not None and not (sys.stderr is sys.__stderr__): sys.sys.stderr.flush()
+    except Exception: ""
+    try:
+      if sys.stdout is not None and not (sys.stdout is sys.__stdout__): sys.sys.stdout.flush()
     except Exception: ""
 
+
+# Exporting to another CSV (for demonstration)
+#df.to_csv("exported.csv", index=False)
+#print_cmt("\n### Data Exported to 'exported.csv' ###")
+
+
+import os
+import pandas as pd
+import re
+import sys
+import chardet
+
+def detect_encoding(file_path, sample_size=20000):
+    with open(file_path, 'rb') as f:
+        raw = f.read(sample_size)
+    return chardet.detect(raw)['encoding']
+
+from collections.abc import Iterable
+
+def is_lisp_dashed(s):
+    pattern = re.compile('^[A-Za-z0-9-_:]+$')
+    return bool(pattern.match(s))
+
+def item_string(lst, functor=""):
+    if isinstance(lst, str):
+        if len(lst) == 0:
+            return '""'
+        if any(char in lst for char in [' ', '"', "'", "(", ")", ".", "\\"]):
+            return json.dumps(lst)
+        if isinstance(lst, (int, float)):
+            return repr(lst)
+        if is_float_string(lst):
+            return repr(float(lst))
+        if lst.isdigit():
+            return repr(int(lst))
+        if lst.isalnum():
+            if lst[0].isdigit(): return json.dumps(lst)
+            return lst
+        if lst=="#":
+            return lst
+        if is_lisp_dashed(lst):
+            return lst
+        return json.dumps(lst)
+
+    try:
+        if isinstance(lst, Iterable):
+            return '(' + functor + ' '.join([item_string(vv) for vv in lst]) + ')'
+        else:
+            return str(lst)
+    except TypeError:
+        return str(lst)
+
+def list_string(lst, functor="# "):
+    try:
+        if isinstance(lst, Iterable) and not isinstance(lst, str):
+            if len(lst) == 0:
+                return '()'
+            return '(' + functor + ' '.join([item_string(vv) for vv in lst]) + ')'
+        else:
+            return item_string(lst)
+    except TypeError:
+        return item_string(lst)
+
+def is_float_string(s):
+    return bool(re.fullmatch(r'[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?', s))
+
+
+def analyze_csv(file_path, sep=None):
+    print_cmt(";;------------------------------------------------------------------------------------------------------------------")
+    print_cmt(f"Analyzing file: {file_path}")
+    missing_values_list = ["","-"," ","|",",","#",  "*",  "\"\"",  "+", "NULL", "N/A", "--",
+                         "NaN","EMPTY","None","n/a","(none)",
+                         # "0","Dmel","-1",
+                          "MISSING", "?", "undefined", "unknown", "none", "[]", "."]
+    def read_csv(enc):
+        false_values_list = ["F", "f", "False", "false", "N",  "No", "no", "FALSE"]
+        true_values_list =  ["T", "t", "True", "true", "Y", "Yes", "yes", "TRUE"]
+
+        if sep is None:
+            engine = 'python'
+        else: engine = 'c'
+        return pd.read_csv(file_path, sep=sep, encoding=enc, comment='#',
+                     compression = 'infer',true_values=true_values_list,
+                     false_values=false_values_list,
+                     engine=engine,
+                     #delim_whitespace = True,
+                     #na_values=missing_values_list,
+                     keep_default_na=False, #na_filter=True,
+                     skip_blank_lines=True, #index_col=False,
+                     on_bad_lines='skip')
+    try:
+        df = read_csv('utf-8')
+    except UnicodeDecodeError:
+        encoding = detect_encoding(file_path)
+        if encoding=='uft-8':
+            print_cmt(";; Trying '{encoding}' encoding...")
+            try:
+                df = read_csv(encoding)
+            except Exception as e:
+                print_cmt(f";; Error reading the file with 'utf-8' encoding: {e}")
+                return
+    except Exception as e:
+        print_cmt(f";; Error reading the file: {e}")
+        return
+
+    base_name = os.path.basename(file_path)
+    base_name = base_name[:-4]
+
+    if "_fb_202" in base_name:
+        base_name = base_name[:-len("_fb_2023_04")]
+
+    need_anon_columns = False
+    for col in df.columns:
+        if not re.match('^[a-zA-Z]+$', col):
+            need_anon_columns = True
+            break
+
+    new_columns = [f'{i+1}' for i in range(df.shape[1])] if need_anon_columns else df.columns.tolist()
+    if need_anon_columns:
+        df.columns = new_columns
+
+    col_names = ' '.join([f"{col}" for col in new_columns])
+
+    numerical_columns = df.select_dtypes(include=['number']).columns.tolist()
+
+    def metta_read(str):
+        print(str)
+        res = the_python_runner.run(json.dumps(str))
+        if len(res) != 0: print_cmt(";;;="+ repr(res))
+
+    metta_read(f"!(file-name {base_name}  {file_path})")
+    metta_read(f"(num-columns {base_name} {df.shape[1]})")
+    #metta_read(f"(column-names {base_name} {list_string(new_columns)})")
+    metta_read(f"(duplicated-rows {base_name} {df.duplicated().sum()})")
+    metta_read(f"(total-rows {base_name} {len(df)})")
+    for col in new_columns:
+        metta_read(f"(unique-values {base_name} {col} {df[col].nunique()} {df[col].dtype})")
+
+    # Print the unique NA values and their frequencies for each column
+    for col in df.columns:
+        missing_count = 0
+        unique_na_values = []
+        frequency_of_unique_na = []
+        for na_val in missing_values_list:
+            count = df[df[col] == na_val].shape[0]
+            if count > 0:
+                missing_count += count
+                metta_read(f"(null-value-count {base_name} {col} \"{na_val}\" {count})")
+                unique_na_values.append(na_val)
+                frequency_of_unique_na.append(count)
+
+        metta_read(f"(missing-values {base_name} {col} {missing_count} {list_string(unique_na_values)} {list_string(frequency_of_unique_na)})")
+
+    hl =7
+    for col in df.columns:
+        if len(df) != df[col].nunique():
+
+            isfrequents = [["#", val, cnt] for val, cnt in df[col].value_counts(ascending=False).head(hl).items() if val not in missing_values_list or len(val)>3]
+            isfrequents.reverse()
+            metta_read(f"(most-frequent {base_name} {col} {list_string(isfrequents)})\n")
+            infrequents = [["#", val, cnt] for val, cnt in df[col].value_counts(ascending=True).head(hl).items() if val not in missing_values_list or len(val)>3]
+            #infrequents.reverse()
+            #infrequents.reverse()  # Since we can't use slicing on a generator, we reverse it here
+            metta_read(f"(less-frequent {base_name} {col} {list_string(infrequents)})\n")
+
+
+    #metta_read(f"(data-types {base_name} {col} {col.dtype} )")
+
+
+import os
+import sys
+
+def cat_files(strings, skip_filetypes=['.metta','.md','.pl', '.png', '.jpg']):
+    for string in strings:
+        # Check if the file extension is in the list of file types to skip
+        if any(string.lower().endswith(ext) for ext in skip_filetypes):
+            print_cmt(f"Skipping file: {string}")
+            continue
+
+        if os.path.isdir(string):
+            # If it's a directory, traverse it
+            for root, _, files in os.walk(string):
+                for file in files:
+                    try:
+                        cat_files([os.path.join(root, file)], skip_filetypes)
+                    except Exception as e:
+                        print_cmt(f"An error occurred while processing {string}: {e}")
+            sys.exit(0)
+        elif os.path.isfile(string):
+            if string.lower().endswith('.csv'):
+                analyze_csv(string, sep=',')
+            elif string.lower().endswith('.tsv'):
+                analyze_csv(string, sep='\t')
+            else:
+                # Read only the first few lines
+                try:
+                    analyze_csv(string)
+                except UnicodeDecodeError:
+                    print_cmt(f"Passing in file: {string}")
+                    with open(string, 'r') as file:
+                        for i, line in enumerate(file):
+                            if i >= 10:
+                                break
+                            print_cmt(line.strip())
 
 
 # All execution happens here
-swip = PySwip()
-the_gptspace = GptSpace()
-the_vspace = VSpace("&vspace")
-the_flybase = VSpace("&flybase")
-the_nb_space = VSpace("&nb")
-the_other_space = VSpace("&self2")
-the_python_runner = InteractiveMeTTa();
-the_python_runner.cwd = [os.path.dirname(os.path.dirname(__file__))]
-the_old_runner_space = the_python_runner.space()
-the_python_runner.run("!(extend-py! metta_learner)")
-the_new_runner_space = the_python_runner.space()
-selected_space_name = "&self"
-#the_python_runner.run("!(extend-py! VSpace)")
-#the_python_runner.run("!(extend-py! GptSpace)")
-is_init_ran = False
-if is_init_ran == False:
-    is_init_ran = True
-    vspace_init()
+swip = globals().get('swip') or PySwip()
+the_gptspace = globals().get('the_gptspace') or GptSpace()
+the_vspace = globals().get('the_vspace') or VSpace("&vspace")
+the_flybase = globals().get('the_flybase') or VSpace("&flybase")
+the_nb_space = globals().get('the_nb_space') or VSpace("&nb")
+the_other_space = globals().get('the_other_space') or VSpace("&self2")
+the_python_runner = globals().get('the_python_runner') or InteractiveMeTTa()
+
+if the_python_runner is InteractiveMeTTa():
+    the_python_runner.cwd = [os.path.dirname(os.path.dirname(__file__))]
+    the_old_runner_space = the_python_runner.space()
+    the_python_runner.run("!(extend-py! metta_learner)")
+    the_new_runner_space = the_python_runner.space()
+
+selected_space_name = globals().get('selected_space_name') or "&self"
+sys_argv_length = len(sys.argv)
+
+print_cmt("The sys.argv list is:", sys.argv)
+cat_files(sys.argv[1:])
+vspace_init()
 
 if __name__ == "__main__":
     vspace_main()
-
-#from . import metta_learner
 
