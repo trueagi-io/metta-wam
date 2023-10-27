@@ -864,13 +864,13 @@ combine_result(TF,_,TF):-!.
 
 do_metta1_e(_Self,_,exec(Exec)):- !,write_exec(Exec),!.
 do_metta1_e(_Self,_,[=,A,B]):- !, with_concepts(false,
-  (write('(= '), with_indents(false,write_src(A)), (is_list(B) -> nl ; true),write(' '),with_indents(true,write_src(B)),write(')'))),nl.
-do_metta1_e(_Self,_LoadExec,Term):- write_src(Term),nl.
+  (con_write('(= '), with_indents(false,write_src(A)), (is_list(B) -> connl ; true),con_write(' '),with_indents(true,write_src(B)),con_write(')'))),connl.
+do_metta1_e(_Self,_LoadExec,Term):- write_src(Term),connl.
 
 write_exec(Exec):-
   wots(S,write_src(exec(Exec))),
   nb_setval(exec_src,Exec),
-  ignore((format('~N'),mnotrace((color_g_mesg('#004400',(writeln(S))))))).
+  ignore((mnotrace((color_g_mesg_ok('#004400',(format('~N'),writeln(S))))))).
 
 %do_metta(Self,LoadExec,Term):-
 %  once(untyped_to_metta(Term,NewTerm)),Term\=@=NewTerm,!,
@@ -887,26 +887,29 @@ do_metta1(Self,_,exec(Exec)):- !,do_metta_file_exec(Self,Exec),!.
 do_metta1(Self,exec,Exec):- !,do_metta_file_exec(Self,Exec),!.
 
 do_metta1(Self,Load,Src):- do_metta1(Self,Load,Src,Src),!.
+do_metta1(Self,Load,Src,Src2):- asserted_do_metta1(Self,Load,Src,Src2),!.
 
-do_metta1(Self,Load,[':',Fn,Type], Src):- \+ is_list(Type),!,
+asserted_do_metta1(Space,Load,Src):- asserted_do_metta1(Space,Load,Src,Src).
+
+asserted_do_metta1(Self,Load,[':',Fn,Type], Src):- \+ is_list(Type),!,
  must_det_ll((
-  color_g_mesg('#ffa500',metta_anew(Load,Src,metta_atom(Self,[':',Fn,Type]))))),!.
+  color_g_mesg_ok('#ffa500',metta_anew(Load,Src,metta_atom(Self,[':',Fn,Type]))))),!.
 
-do_metta1(Self,Load,[':',Fn,TypeDecL], Src):-
+asserted_do_metta1(Self,Load,[':',Fn,TypeDecL], Src):-
  must_det_ll((
   decl_length(TypeDecL,Len),LenM1 is Len - 1, last_element(TypeDecL,LE),
-  color_g_mesg('#ffa500',metta_anew(Load,Src,metta_atom(Self,[':',Fn,TypeDecL]))),
+  color_g_mesg_ok('#ffa500',metta_anew(Load,Src,metta_atom(Self,[':',Fn,TypeDecL]))),
   metta_anew1(Load,metta_arity(Self,Fn,LenM1)),
   arg_types(TypeDecL,[],EachArg),
   metta_anew1(Load,metta_params(Self,Fn,EachArg)),!,
   metta_anew1(Load,metta_last(Self,Fn,LE)))).
 
 
-do_metta1(Self,Load,[':',Fn,TypeDecL,RetType], Src):-
+asserted_do_metta1(Self,Load,[':',Fn,TypeDecL,RetType], Src):-
  must_det_ll((
   decl_length(TypeDecL,Len),
   append(TypeDecL,[RetType],TypeDecLRet),
-  color_g_mesg('#ffa500',metta_anew(Load,Src,metta_atom(Self,[':',Fn,TypeDecLRet]))),
+  color_g_mesg_ok('#ffa500',metta_anew(Load,Src,metta_atom(Self,[':',Fn,TypeDecLRet]))),
   metta_anew1(Load,metta_arity(Self,Fn,Len)),
   arg_types(TypeDecL,[RetType],EachArg),
   metta_anew1(Load,metta_params(Self,Fn,EachArg)),
@@ -918,18 +921,18 @@ do_metta1(Self,Load,[':',Fn,TypeDecL,RetType], Src):-
    ignore((Body == 'True',!,do_metta1(Self,Load,Head))),
    nop((fn_append(Head,X,Head), fn_append(PredDecl,X,Body), metta_anew((Head:- Body)))),!.*/
 
-do_metta1(Self,Load,['=',PredDecl,False], Src):- (False == [];False == 'Nil';False == 'F'), fail,!,
+asserted_do_metta1(Self,Load,['=',PredDecl,False], Src):- (False == [];False == 'Nil';False == 'F'), fail,!,
   do_metta1(Self,Load,['=',PredDecl,'False'], Src).
 
-do_metta1(Self,Load,[EQ,Head,Result], Src):- EQ=='=', !,
+asserted_do_metta1(Self,Load,[EQ,Head,Result], Src):- EQ=='=', !,
  must_det_ll((
     discover_head(Self,Load,Head),
-    color_g_mesg('#ffa500',metta_anew(Load,Src,metta_defn(Self,Head,Result))),
+    color_g_mesg_ok('#ffa500',metta_anew(Load,Src,metta_defn(Self,Head,Result))),
     discover_body(Self,Load,Result))).
 
-do_metta1(Self,Load,PredDecl, Src):-
+asserted_do_metta1(Self,Load,PredDecl, Src):-
    ignore(discover_head(Self,Load,PredDecl)),
-   color_g_mesg('#ffa500',metta_anew(Load,Src,metta_atom(Self,PredDecl))).
+   color_g_mesg_ok('#ffa500',metta_anew(Load,Src,metta_atom(Self,PredDecl))).
 
 
 always_exec(List):- \+ is_list(List),!,fail.

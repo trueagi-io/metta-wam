@@ -471,11 +471,14 @@ eval_args1(Depth,Self,['CountElement',L],Res):- !, eval_args(Depth,Self,L,LL), !
 
 is_feo_f('Cons').
 
+is_seo_f('{...}').
+is_seo_f('[...]').
 is_seo_f('{}').
 is_seo_f('[]').
 is_seo_f('StateMonad').
 is_seo_f('State').
 is_seo_f('Event').
+is_seo_f('Concept').
 is_seo_f(N):- number(N),!.
 
 

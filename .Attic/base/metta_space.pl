@@ -140,6 +140,12 @@ space_query_vars(SpaceNameOrInstance, Query, Vars) :- is_as_nb_space(SpaceNameOr
 
 
 was_asserted_space('&flybase').
+was_asserted_space('&attentional_focus').
+was_asserted_space('&belief_events').
+was_asserted_space('&goal_events').
+was_asserted_space('&tempset').
+was_asserted_space('&concepts').
+was_asserted_space('&belief_events').
 
 is_asserted_space(X):- was_asserted_space(X).
 is_asserted_space(X):-          \+ is_as_nb_space(X), \+ py_named_space(X),!.
@@ -328,9 +334,15 @@ pp_sex(V) :- w_proper_indent(2,w_in_p(pp_sexi(V))).
 
 no_src_indents:- option_else(src_indents,TF,true),!,TF==false.
 
+pp_sexi_l([H,S]):-H=='[...]', write('['),print_items_list(S),write(' ]').
+pp_sexi_l([H,S]):-H=='{...}', write('{'),print_items_list(S),write(' }').
+pp_sexi_l([H|T]):-write('('), pp_sex(H), print_list_as_sexpression(T), write(')').
+
+print_items_list(X):- is_list(X),!,print_list_as_sexpression(X).
+print_items_list(X):- write_src(X).
+
 pp_sexi(V) :- is_final_write(V),!.
-pp_sexi([H|T]) :- is_list(T),!,
-   write('('), pp_sex(H), print_list_as_sexpression(T), write(')').
+pp_sexi([H|T]) :- is_list(T),!,pp_sexi_l([H|T]).
 % Compound terms.
 %pp_sex(Term) :- compound(Term), Term =.. [Functor|Args], write('('),format('(~w ',[Functor]), write_args_as_sexpression(Args), write(')').
 %pp_sex(Term) :- Term =.. ['=',H|Args], length(Args,L),L>2, write('(= '),  pp_sex(H), write('\n\t\t'), maplist(pp_sex(2),Args).
