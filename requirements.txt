@@ -1,7 +1,32 @@
+#notebook==6.4.12
+#jupyterlab==3.6.3
+jupyter_server>=1.6,<3
+traitlets >=4.2.1,<5.10.0a0
+coq-jupyter
+nbconvert==5.6.1
+#jupyterlab-lsp==4.0.0
+#jupyterlab==4.0.0
+
+rise
+jupyter_nbextensions_configurator
+jupyter_contrib_nbextensions
+
+
+sos
+sos-notebook
+sos-r
+
 openai
 numpy
+pandas
 #readline
 pyreadline3
 #pyswip @ git+https://github.com/logicmoo/pyswip
 -e reqs/pyswip
 -e reqs/hyperon-experimental/python[dev]
+-e reqs/metta_kernel
+-e .
+metakernel
+#calysto
+yasi
+
