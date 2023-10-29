@@ -214,7 +214,7 @@ any_floats(S):- member(E,S),float(E),!.
 'get-type'(Value, Type):- eval_args(['get-type', Value], Type).
 
 
-'new-space'(Space):- gensym(new_space_,Name), fetch_or_create_space(Name, Space).
+'new-space'(Space):- gensym(new_space_,Name), fetch_or_create_nb_space(Name, Space).
 
 % Function to check if an atom is registered as a space name
 :- dynamic is_registered_space_name/1.
@@ -240,37 +240,37 @@ space_type_method(is_as_nb_space,atom_iter,atom_nb_iter).
 
 % Clear all atoms from a space
 clear_nb_atoms(SpaceNameOrInstance) :-
-    fetch_or_create_space(SpaceNameOrInstance, Space),
+    fetch_or_create_nb_space(SpaceNameOrInstance, Space),
     nb_setarg(1, Space, []).
 
 % Add an atom to the space
 add_nb_atom(SpaceNameOrInstance, Atom) :-
-    fetch_or_create_space(SpaceNameOrInstance, Space),
+    fetch_or_create_nb_space(SpaceNameOrInstance, Space),
     arg(1, Space, Atoms),
     NewAtoms = [Atom | Atoms],
     nb_setarg(1, Space, NewAtoms).
 
 % Count atoms in a space
 atom_nb_count(SpaceNameOrInstance, Count) :-
-    fetch_or_create_space(SpaceNameOrInstance, Space),
+    fetch_or_create_nb_space(SpaceNameOrInstance, Space),
     arg(1, Space, Atoms),
     length(Atoms, Count).
 
 % Remove an atom from a space
 remove_nb_atom(SpaceNameOrInstance, Atom) :-
-    fetch_or_create_space(SpaceNameOrInstance, Space),
+    fetch_or_create_nb_space(SpaceNameOrInstance, Space),
     arg(1, Space, Atoms),
     select(Atom, Atoms, UpdatedAtoms),
     nb_setarg(1, Space, UpdatedAtoms).
 
 % Fetch all atoms from a space
 get_nb_atoms(SpaceNameOrInstance, Atoms) :-
-    fetch_or_create_space(SpaceNameOrInstance, Space),
+    fetch_or_create_nb_space(SpaceNameOrInstance, Space),
     arg(1, Space, Atoms).
 
 % Replace an atom in the space
 replace_nb_atom(SpaceNameOrInstance, OldAtom, NewAtom) :-
-    fetch_or_create_space(SpaceNameOrInstance, Space),
+    fetch_or_create_nb_space(SpaceNameOrInstance, Space),
     arg(1, Space, Atoms),
     ( (select(Found, Atoms, TempAtoms),OldAtom=@=Found)
     ->  NewAtoms = [NewAtom | TempAtoms],
@@ -295,9 +295,11 @@ init_space(Name) :-
     asserta(is_registered_space_name(Name)),
     nb_setval(Name, Space).
 
-fetch_or_create_space(Name):- fetch_or_create_space(Name,_).
+fetch_or_create_nb_space(Name):- fetch_or_create_nb_space(Name,_).
 % Fetch an existing space or create a new one
-fetch_or_create_space(NameOrInstance, Space) :-
+
+fetch_or_create_nb_space(Name,Space):- var(Name),var(Space), space_original_name(Space, Name),!.
+fetch_or_create_nb_space(NameOrInstance, Space) :-
     (   atom(NameOrInstance)
     ->  (is_registered_space_name(NameOrInstance)
         ->  nb_current(NameOrInstance, Space)
@@ -888,6 +890,42 @@ do_metta1(Self,exec,Exec):- !,do_metta_file_exec(Self,Exec),!.
 
 do_metta1(Self,Load,Src):- do_metta1(Self,Load,Src,Src),!.
 do_metta1(Self,Load,Src,Src2):- asserted_do_metta1(Self,Load,Src,Src2),!.
+
+% ===============================
+% Asserted/Compiled Database interface
+% ===============================
+space_type_method(is_compiled_space,new_space,asserted_init_space).
+space_type_method(is_compiled_space,clear_space,asserted_clear_atoms).
+space_type_method(is_compiled_space,add_atom,asserted_atom_add).
+space_type_method(is_compiled_space,remove_atom,asserted_remove_atom).
+space_type_method(is_compiled_space,replace_atom,asserted_replace_atom).
+space_type_method(is_compiled_space,atom_count,asserted_atom_count).
+space_type_method(is_compiled_space,get_atoms,asserted_get_atoms).
+space_type_method(is_compiled_space,atom_iter,asserted_atom_iter).
+:- dynamic(is_compiled_space/1).
+
+/*
+
+%metta_assertdb_iter_bind(KB,Query,Template,AtomsL):- decl_m_fb_pred(KB,metta_atom,2), findall(Template,metta_atom(KB,Query),AtomsL).
+metta_assertdb_iter_bind(KB,Query,Vars):-
+  ignore(term_variables(Query,Vars)),
+  print(metta_assertdb(['match',KB,Query,Vars])),nl,
+  decl_m_fb_pred(KB,metta_atom,2), (metta_atom(KB,Query)*->true;call_metta_assertdb(KB,Query,Vars)),
+  metta_assertdb('RES',metta_assertdb_iter_bind(KB,Query,Vars)).
+%metta_assertdb_iter_bind(KB,Atom,Template):- metta_assertdb_stats, findall(Template,metta_assertdb_iter(KB,Atom),VarList).
+
+metta_assertdb_iter_bind(KB,Atoms,Vars):-
+  metta_assertdb_stats,
+  term_variables(Atoms,AVars),
+  metta_assertdb_iter(KB,Atoms), ignore(AVars = Vars).
+*/
+asserted_atom_add(Space,PredDecl):- asserted_do_metta1(Space,load,PredDecl).
+asserted_atom_remove(Space,Rem):-  copy_term(Rem,RCopy),
+  metta_atom_iter_ref(Space,RCopy,Ref), RCopy=@=Rem,erase(Ref), asserted_do_metta1(Space,unload,Rem).
+asserted_atom_replace(Space,Rem,Add):-  asserted_atom_remove(Space,Rem), asserted_do_metta1(Space,load,Add).
+asserted_atom_count(Space,Count):-
+ findall(_,metta_defn(Space,_,_),L1),length(L1,C1),findall(_,metta_atom(Space,_),L2),length(L2,C2),Count is C1+C2.
+
 
 asserted_do_metta1(Space,Load,Src):- asserted_do_metta1(Space,Load,Src,Src).
 
