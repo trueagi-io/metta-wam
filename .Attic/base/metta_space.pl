@@ -49,83 +49,87 @@ skip(_).
 % ===============================
 % MeTTa Python incoming interface
 % ===============================
-
+% Add Atom
+'add-atom'(Environment, AtomDeclaration, Result):- eval_args(['add-atom', Environment, AtomDeclaration], Result).
+% Remove Atom
+'remove-atom'(Environment, AtomDeclaration, Result):- eval_args(['remove-atom', Environment, AtomDeclaration], Result).
+% Replace Atom
+'atom-replace'(Environment, OldAtom, NewAtom, Result):- eval_args(['atom-replace', Environment, OldAtom, NewAtom], Result).
+% Count Atoms
+'atom-count'(Environment, Count):- eval_args(['atom-count', Environment], Count).
+% Get Atoms
+'get-atoms'(Environment, Atoms):- eval_args(['get-atoms', Environment], Atoms).
+
 % ============================
 % %%%% Atom Manipulations
 % ============================
-  
+
+find_space_type_method(SpaceNameOrInstance,IFace,Method):-
+  space_type_method(Type,IFace,Method),
+  call(Type,SpaceNameOrInstance),!,
+  debug_metta(['type-method',Type,SpaceNameOrInstance,Method]).
+find_space_type_method(SpaceNameOrInstance,IFace,Method):-
+   throw(cant_find_space_type_method(SpaceNameOrInstance,IFace,Method)).
+
 % Clear all atoms from a space
 'clear-atoms'(SpaceNameOrInstance) :- 
   debug_metta(['clear-atoms',SpaceNameOrInstance]),
-  space_type_method(Type,clear_space,Method), call(Type,SpaceNameOrInstance),!,
-  debug_metta(['type-method',Type,Method]),
+  find_space_type_method(SpaceNameOrInstance,clear_space,Method),
+
   call(Method,SpaceNameOrInstance).
 
 % Add an atom to the space
-'add-atom'(SpaceNameOrInstance, Atom) :- 
+add_atom(SpaceNameOrInstance, Atom) :- 
     debug_metta(['add-atom',SpaceNameOrInstance, Atom]),
-    space_type_method(Type,add_atom,Method), call(Type,SpaceNameOrInstance),!,
-    debug_metta(['type-method',Type,Method]),
+    find_space_type_method(SpaceNameOrInstance,add_atom,Method),
     call(Method,SpaceNameOrInstance,Atom).
-% Add Atom
-'add-atom'(Environment, AtomDeclaration, Result):- eval_args(['add-atom', Environment, AtomDeclaration], Result).
 
 % remove an atom from the space
-'remove-atom'(SpaceNameOrInstance, Atom) :- 
+remove_atom(SpaceNameOrInstance, Atom) :- 
     debug_metta(['remove-atom',SpaceNameOrInstance, Atom]),
-    space_type_method(Type,remove_atom,Method), call(Type,SpaceNameOrInstance),!,
-    debug_metta(['type-method',Type,Method]),
+    find_space_type_method(SpaceNameOrInstance,remove_atom,Method),
     call(Method,SpaceNameOrInstance,Atom).
-% Remove Atom
-'remove-atom'(Environment, AtomDeclaration, Result):- eval_args(['remove-atom', Environment, AtomDeclaration], Result).
 
 % Add an atom to the space
-'replace-atom'(SpaceNameOrInstance, Atom, New) :- 
+replace_atom(SpaceNameOrInstance, Atom, New) :- 
     debug_metta(['replace-atom',SpaceNameOrInstance, Atom, New]),
-    space_type_method(Type,replace_atom,Method), call(Type,SpaceNameOrInstance),!,
-    debug_metta(['type-method',Type,Method]),
+    find_space_type_method(SpaceNameOrInstance,replace_atom,Method),
     call(Method,SpaceNameOrInstance,Atom, New).
-% Replace Atom
-'atom-replace'(Environment, OldAtom, NewAtom, Result):- eval_args(['atom-replace', Environment, OldAtom, NewAtom], Result).
 
 % Count atoms in a space
-'atom-count'(SpaceNameOrInstance, Count) :-
+atom_count(SpaceNameOrInstance, Count) :-
     debug_metta(['atom-count',SpaceNameOrInstance]),
-    space_type_method(Type,atom_count,Method), call(Type,SpaceNameOrInstance),!,
+    find_space_type_method(SpaceNameOrInstance,atom_count,Method),
     call(Method,SpaceNameOrInstance,Count),
-    debug_metta(['type-method-result',Type,Method,Count]).
-% Count Atoms
-'atom-count'(Environment, Count):- eval_args(['atom-count', Environment], Count).
+    debug_metta(['type-method-result',Method,Count]).
 
 % Fetch all atoms from a space
-'get-atoms'(SpaceNameOrInstance, AtomsL) :-
+get_atoms(SpaceNameOrInstance, AtomsL) :-
     debug_metta(['get-atoms',SpaceNameOrInstance]),
-    space_type_method(Type,get_atoms,Method), call(Type,SpaceNameOrInstance),!,
+    find_space_type_method(SpaceNameOrInstance,get_atoms,Method),
     call(Method,SpaceNameOrInstance, AtomsL),
     length(AtomsL,Count),
-    debug_metta(['type-method-result',Type,Method,Count]).
-% Get Atoms
-'get-atoms'(Environment, Atoms):- eval_args(['get-atoms', Environment], Atoms).
+    debug_metta(['type-method-result',Method,Count]).
 
 % Iterate all atoms from a space
 'atoms_iter'(SpaceNameOrInstance, Iter) :-
     debug_metta(['atoms_iter',SpaceNameOrInstance]),
-    space_type_method(Type,atoms_iter,Method), call(Type,SpaceNameOrInstance),!,
+    find_space_type_method(SpaceNameOrInstance,atoms_iter,Method),
     call(Method,SpaceNameOrInstance, Iter),
-    debug_metta(['type-method-result',Type,Method,Iter]).
+    debug_metta(['type-method-result',Method,Iter]).
 
 % Match all atoms from a space
 'atoms_match'(SpaceNameOrInstance, Atoms, Template, Else) :-
-    space_type_method(Type,atoms_match,Method), call(Type,SpaceNameOrInstance),!,
+    find_space_type_method(SpaceNameOrInstance,atoms_match,Method),
     call(Method,SpaceNameOrInstance, Atoms, Template, Else),
-    debug_metta(['type-method-result',Type,Method,Atoms, Template, Else]).
+    debug_metta(['type-method-result',Method,Atoms, Template, Else]).
 
 
 % Query all atoms from a space
 'space_query'(SpaceNameOrInstance, QueryAtom, Result) :-
-    space_type_method(Type,query,Method), call(Type,SpaceNameOrInstance),!,
+    find_space_type_method(SpaceNameOrInstance,query,Method),
     call(Method,SpaceNameOrInstance, QueryAtom, Result),
-    debug_metta(['type-method-result',Type,Method,Result]).
+    debug_metta(['type-method-result',Method,Result]).
     
 
 subst_pattern_template(SpaceNameOrInstance, Pattern, Template) :-
@@ -138,7 +142,7 @@ space_query_vars(SpaceNameOrInstance, Query, Vars) :- is_as_nb_space(SpaceNameOr
     call_metta(Space,Query,Vars).
 */
 
-
+:- dynamic(was_asserted_space/1).
 was_asserted_space('&flybase').
 was_asserted_space('&attentional_focus').
 was_asserted_space('&belief_events').
@@ -147,15 +151,34 @@ was_asserted_space('&tempset').
 was_asserted_space('&concepts').
 was_asserted_space('&belief_events').
 
-is_asserted_space(X):- was_asserted_space(X).
-is_asserted_space(X):-          \+ is_as_nb_space(X), \+ py_named_space(X),!.
+is_asserted_space(X):- was_asserted_space(X),  \+ is_as_nb_space(X).
+is_asserted_space(X):- \+ is_not_prolog_space(X), \+ is_as_nb_space(X).
 
-is_python_space_not_prolog(X):- \+ is_as_nb_space(X), \+ is_asserted_space(X).
+is_not_prolog_space(X):- py_named_space(X).
+is_not_prolog_space(X):- \+ is_as_nb_space(X), \+ was_asserted_space(X), \+ is_compiled_space(X).
+
+space_types(is_as_nb_space).
+space_types(was_asserted_space).
+space_types(py_named_space).
+%is_python_space_not_prolog(X):- \+ is_not_prolog_space(X).
+
+:- multifile(space_type_method/3).
+:- dynamic(space_type_method/3).
+space_type_method(is_not_prolog_space,new_space,new_rust_space).
+space_type_method(is_not_prolog_space,add_atom,add_to_space).
+space_type_method(is_not_prolog_space,remove_atom,remove_from_space).
+space_type_method(is_not_prolog_space,replace_atom,replace_from_space).
+space_type_method(is_not_prolog_space,atom_count,atom_count_from_space).
+space_type_method(is_not_prolog_space,get_atoms,get_atoms_from_space).
+space_type_method(is_not_prolog_space,atom_iter,atoms_iter_from_space).
+space_type_method(is_not_prolog_space,query,query_from_space).
 
 :- dynamic(is_python_space/1).
 
-py_named_space('&self').
-py_named_space('&vspace').
+:- dynamic(py_named_space/1).
+%py_named_space('&self').
+%py_named_space('&verspace').
+ 
 is_as_nb_space('&nb').
 is_as_nb_space(N):- is_nb_space(N).
 %is_python_space(X):- python_object(X).

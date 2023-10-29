@@ -33,12 +33,12 @@ eval_args(_Dpth,_Slf,[X|T],Y):- T==[], \+ callable(X),!,Y=[X].
 eval_args(Depth,Self,[F|X],Y):-
   (F=='superpose' ; ( option_value(no_repeats,false))),
   mnotrace((D1 is Depth-1)),!,
-  eval_args0(D1,Self,[F|X],Y).
+  eval_args0000(D1,Self,[F|X],Y).
 
 eval_args(Depth,Self,X,Y):-
   mnotrace((no_repeats_var(YY),
   D1 is Depth-1)),
-  eval_args0(D1,Self,X,Y),
+  eval_args0000(D1,Self,X,Y),
    mnotrace(( \+ (Y\=YY))).
 
 
@@ -79,12 +79,18 @@ is_debugging(Flag):- debugging(metta(Flag)),!.
 is_debugging(Flag):- flag_to_var(Flag,Var),!,option_value(Var,true).
 
 
-eval_args0(Depth,_Slf,X,Y):- Depth<1,!,X=Y, (\+ trace_on_overflow-> true; flag(eval_num,_,0),debug(metta(eval))).
-eval_args0(_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
-eval_args0(Depth,Self,X,Y):-
+eval_args0000(Depth,_Slf,X,Y):- Depth<1,!,X=Y, (\+ is_debugging(overflow)-> true; flag(eval_num,_,0),set_debug((eval),true)).
+eval_args0000(_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
+
+eval_args0000(Depth,Self,X,Y):-
   Depth2 is Depth-1,
-  eval_args11(Depth,Self,X,M),
-  (M\=@=X ->eval_args0(Depth2,Self,M,Y);Y=X).
+  call_nth(eval_args11(Depth,Self,X,M),Nth),
+  % if `True` is not commented, we fail two tests in examples/compat/test_scripts/b4_nondeterm.metta
+  ((is_bool_or_same(X,M)) -> (!, (Nth=1->Y=M;fail) ) ; eval_args0000(Depth2,Self,M,Y)).
+
+is_bool_or_same(_X,M):- M=='False',!.
+is_bool_or_same(_X,M):- M==[],!.
+is_bool_or_same( X,M):- X=@=M,!.
 
 
 
@@ -95,13 +101,13 @@ eval_args11(Depth,Self,X,Y):- flag(eval_num,EX,EX+1),
   (EX>Max->(nodebug(metta(eval)),write('Switched off tracing. For a longer trace !(pragma! tracelen 101))'));true),
   mnotrace((no_repeats_var(YY), D1 is Depth-1)),
   DR is 99-D1,
-  if_trace(metta(eval),indentq(Depth,'-->'(EX,Self,X,depth(DR)))),
+  if_trace((eval),indentq(Depth,'-->'(EX,Self,X,depth(DR)))),
   Ret=retval(fail),
   call_cleanup((
     eval_args1(D1,Self,X,Y),
     mnotrace(( \+ (Y\=YY), nb_setarg(1,Ret,Y)))),
     mnotrace(ignore(((Y\=@=X,if_trace(metta(eval),indentq(Depth,'<--'(EX,Ret)))))))),
-  (Ret\=@=retval(fail)->true;(rtrace(eval_args0(D1,Self,X,Y)),fail)).
+  (Ret\=@=retval(fail)->true;(rtrace(eval_args0000(D1,Self,X,Y)),fail)).
 
 
 :- discontiguous eval_args1/4.
@@ -124,7 +130,13 @@ eval_args1(Depth,Self,['rtrace',Cond],Res):- !, rtrace(eval_args(Depth,Self,Cond
 eval_args1(Depth,Self,['time',Cond],Res):- !, time(eval_args(Depth,Self,Cond,Res)).
 eval_args1(Depth,Self,['print',Cond],Res):- !, eval_args(Depth,Self,Cond,Res),format('~N'),print(Res),format('~N').
 % !(println! $1)
-eval_args1(Depth,Self,['println!',Cond],Res):- !, eval_args(Depth,Self,Cond,Res),format('~N'),print(Res),format('~N').
+eval_args1(Depth,Self,['println!'|Cond],Res):- !, maplist(eval_args(Depth,Self),Cond,[Res|Out]),
+   format('~N'),maplist(write_src,[Res|Out]),format('~N').
+eval_args1(Depth,Self,['trace!',A|Cond],Res):- !, maplist(eval_args(Depth,Self),[A|Cond],[AA|Result]),
+   last(Result,Res), format('~N'),maplist(write_src,[AA]),format('~N').
+
+%eval_args1(Depth,Self,['trace!',A,B],C):- !,eval_args(Depth,Self,B,C),format('~N'),wdmsg(['trace!',A,B]=C),format('~N').
+%eval_args1(_Dpth,_Slf,['trace!',A],A):- !, format('~N'),wdmsg(A),format('~N').
 
 eval_args1(_Dpth,_Slf,List,Y):- is_list(List),maplist(self_eval,List),List=[H|_], \+ atom(H), !,Y=List.
 
@@ -264,7 +276,7 @@ eval_args1(Depth,Self, Term, Res):-
    %max_counting(F,20),
    member(Var,List),
    eval_args(Depth,Self, Term, Res).
-   
+
 
 sub_sterm(Sub,Sub).
 sub_sterm(Sub,Term):- sub_sterm1(Sub,Term).
@@ -272,8 +284,9 @@ sub_sterm1(_  ,List):- \+ compound(List),!,fail.
 sub_sterm1(Sub,List):- is_list(List),!,member(SL,List),sub_sterm(Sub,SL).
 sub_sterm1(_  ,[_|_]):-!,fail.
 sub_sterm1(Sub,Term):- arg(_,Term,SL),sub_sterm(Sub,SL).
-   
 
+
+eval_args1(_Dpth,_Slf, ['new-space'], Res):- !, 'new-space'(Res).
 eval_args1(Depth,Self, Term, Res):-
    mnotrace(( get_sa_p1(setarg,ST,Term,P1),
    compound(ST), ST = [F,List],F=='collapse',nonvar(List), %maplist(atomic,List),
@@ -289,6 +302,10 @@ eval_args1(Depth,Self,['if',Cond,Then],Res):- !,
    (is_True(TF) -> eval_args(Depth,Self,Then,Res) ; Res = []).
 
 eval_args1(Depth,Self,['if',Cond,Then,Else],Res):- !,
+   eval_args(Depth,Self,Cond,TF),
+   (is_True(TF) -> eval_args(Depth,Self,Then,Res);eval_args(Depth,Self,Else,Res)).
+
+eval_args1(Depth,Self,['If',Cond,Then,Else],Res):- !,
    eval_args(Depth,Self,Cond,TF),
    (is_True(TF) -> eval_args(Depth,Self,Then,Res);eval_args(Depth,Self,Else,Res)).
 
@@ -511,12 +528,13 @@ eval_args1(_Dpth,Self,['import!',Other,File],RetVal):- into_space(Self,Other,Spa
 eval_args1(Depth,Self,['bind!',Other,Expr],RetVal):-
    into_name(Self,Other,Name),!,eval_args(Depth,Self,Expr,Value),nb_setval(Name,Value),  return_empty(Value,RetVal).
 eval_args1(Depth,Self,['pragma!',Other,Expr],RetVal):-
-   into_name(Self,Other,Name),!,eval_args(Depth,Self,Expr,Value),set_option_value(Name,Value),  return_empty(Value,RetVal).
+   into_name(Self,Other,Name),!,nd_ignore((eval_args(Depth,Self,Expr,Value),set_option_value(Name,Value))),  return_empty(Value,RetVal).
 eval_args1(_Dpth,Self,['transfer!',File],RetVal):- !, include_metta(Self,File),  return_empty(Self,RetVal).
 
-
+nd_ignore(Goal):- call(Goal)*->true;true.
 
 eval_args1(Depth,Self,['nop',Expr],Empty):- !,  eval_args(Depth,Self,Expr,_), return_empty([],Empty).
+eval_args1(Depth,Self,['do',Expr],Empty):- !,  eval_args(Depth,Self,Expr,_), return_empty([],Empty).
 
 is_True(T):- T\=='False',T\=='F',T\==[].
 
@@ -530,21 +548,17 @@ eval_args1(Depth,Self,[And,X|Y],TF):- is_and(And),!,eval_args(Depth,Self,X,TF1),
 %eval_args2(Depth,Self,[H|T],_):- \+ is_list(T),!,fail.
 eval_args1(Depth,Self,['or',X,Y],TF):- !, as_tf((eval_args(Depth,Self,X,'True');eval_args(Depth,Self,Y,'True')),TF).
 
-
-
-eval_args1(_Dpth,Self,['add-atom',Other,PredDecl],TF):- !, into_space(Self,Other,Space), as_tf(do_metta(Space,load,PredDecl),TF).
-eval_args1(_Dpth,Self,['remove-atom',Other,PredDecl],TF):- !, into_space(Self,Other,Space), as_tf(do_metta(Space,unload,PredDecl),TF).
-eval_args1(_Dpth,Self,['atom-count',Other],Count):- !, into_space(Self,Other,Space), findall(_,metta_defn(Other,_,_),L1),length(L1,C1),findall(_,metta_atom(Space,_),L2),length(L2,C2),Count is C1+C2.
-eval_args1(_Dpth,Self,['atom-replace',Other,Rem,Add],TF):- !, into_space(Self,Other,Space), copy_term(Rem,RCopy),
-  as_tf((metta_atom_iter_ref(Space,RCopy,Ref), RCopy=@=Rem,erase(Ref), do_metta(Other,load,Add)),TF).
-
+eval_args1(_Dpth,Self,['add-atom',Other,PredDecl],TF):- !, into_space(Self,Other,Space), as_tf(add_atom(Space,PredDecl),TF).
+eval_args1(_Dpth,Self,['remove-atom',Other,PredDecl],TF):- !, into_space(Self,Other,Space), as_tf(remove_atom(Space,PredDecl),TF).
+eval_args1(_Dpth,Self,['atom-replace',Other,Rem,Add],TF):- !, into_space(Self,Other,Space), as_tf(atom_replace(Space,Rem,Add),TF).
+eval_args1(_Dpth,Self,['atom-count',Other],Count):- !, into_space(Self,Other,Space),atom_count(Space,Count).
 
 eval_args1(Depth,Self,['+',N1,N2],N):- number(N1),!,
    eval_args(Depth,Self,N2,N2Res), catch(N is N1+N2Res,_E,(set_last_error(['Error',N2Res,'Number']),fail)).
 eval_args1(Depth,Self,['-',N1,N2],N):- number(N1),!,
    eval_args(Depth,Self,N2,N2Res), catch(N is N1-N2Res,_E,(set_last_error(['Error',N2Res,'Number']),fail)).
 
-eval_args1(Depth,Self,[V|VI],[V|VO]):- nonvar(V),is_metta_data_functor(V),is_list(VI),!,maplist(eval_args(Depth,Self),VI,VO).
+eval_args1(Depth,Self,[V|VI],[V|VO]):- nonvar(V),is_metta_data_functor(V),!,maplist(eval_args(Depth,Self),VI,VO).
 
 eval_args1(Depth,Self,X,Y):-
   (eval_args2(Depth,Self,X,Y)*->true;
@@ -794,7 +808,8 @@ eval_args6(_Dpth,_Slf,[AE|More],TF):- length([AE|More],Len), is_syspred(AE,Len,P
 
 
 cwdl(DL,Goal):- call_with_depth_limit(Goal,DL,R), (R==depth_limit_exceeded->(!,fail);true).
-bagof_eval(Depth,Self,X,L):- !,findall(E,eval_args(Depth,Self,X,E),L).
-setof_eval(Depth,Self,X,S):- !,findall(E,eval_args(Depth,Self,X,E),L),sort(L,S).
+bagof_eval(Depth,Self,X,L):- !,bagof_or_nil(E,eval_args(Depth,Self,X,E),L).
+setof_eval(Depth,Self,X,S):- !,bagof_or_nil(E,eval_args(Depth,Self,X,E),L),sort(L,S).
 %setof_eval(Depth,Self,X,S):- setof(E,eval_args(Depth,Self,X,E),S)*->true;S=[].
-
+bagof_or_nil(T,G,L):- findall(T,G,L).
+%bagof_or_nil(T,G,L):- bagof(T,G,L)*->true;L=[].

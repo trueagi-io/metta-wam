@@ -45,22 +45,23 @@ is_init = True
 oper_dict = {}
 janus_dict = {}
 syms_dict = {}
-space_refs = {
-    #'&vspace': lambda: the_vspace,
-    '&gptspace': lambda: the_gptspace,
-    #'&flybase': lambda: the_flybase,
-    '&parent': lambda: parent_space(),
-    '&child': lambda: child_space(),
-    '&self': lambda: self_space()}
 
-def  parent_space():
+def parent_space():
     return the_python_runner.parent.space()
 
 def  child_space():
     return the_python_runner.space()
 
-def  self_space():
+def   self_space():
     return the_new_runner_space
+space_refs = {
+    #'&vspace': lambda: the_verspace,
+    '&gptspace': lambda: the_gptspace,
+    #'&flybase': lambda: the_flybase,
+    '&parent': lambda: parent_space(),
+    '&child': lambda: child_space(),
+    '&self': self_space}
+
 
 try:
     readline.set_history_length(300)
@@ -201,17 +202,24 @@ def add_from_swip(name, dict = oper_dict):
 
 def addSpaceName(name, space):
     global syms_dict, space_refs
+    prev = getSpaceByName(name)
     name = str(name)
-    syms_dict[name] = lambda _: G(VSpaceRef(space))
-    space_refs[name] = lambda : space
+    if not name.startswith("&"):
+        name = "&" + name
+    syms_dict[name] = lambda _: G(asSpaceRef(space))
+    if prev is None:
+        space_refs[name] = lambda : space
 
 def getSpaceByName(name):
+    global space_refs
     if name is ValueAtom:
         name = name.get_value()
     if name is GroundingSpace:
         return name
-    global space_refs
-    found = space_refs.get(str(name), None)
+    name = str(name)
+    if not name.startswith("&"):
+        name = "&" + name
+    found = space_refs.get(name, None)
     if found is None: return None
     return found()
 
@@ -318,6 +326,11 @@ class Circles:
 
 
 # subclass to later capture any utility we can add to 'subst'
+def asSpaceRef(obj):
+    if isinstance(obj, (VSpaceRef, SpaceRef)):
+        return obj
+    return VSpaceRef(obj)
+
 class VSpaceRef(SpaceRef):
 
     """
@@ -373,7 +386,7 @@ class VSpaceRef(SpaceRef):
         """
         Create a new SpaceRef based on the given CSpace object.
         """
-        return VSpaceRef(cspace)
+        return asSpaceRef(cspace)
 
     def copy(self):
         """
@@ -476,13 +489,15 @@ class VSpace(AbstractSpace):
 
     def __init__(self, space_name=None, unwrap=True):
         super().__init__()
-        global vspace_ordinal
-        ispace_name = f"&vspace_{vspace_ordinal}"
-        vspace_ordinal=vspace_ordinal+1
-        addSpaceName(ispace_name,self)
+        #addSpaceName(ispace_name,self)
         if space_name is None:
+            global vspace_ordinal
+            ispace_name = f"&vspace_{vspace_ordinal}"
+            vspace_ordinal=vspace_ordinal+1
             space_name = ispace_name
         self.sp_name = PySwipAtom(space_name)
+        swip.assertz(f"was_asserted_space('{space_name}')")
+        swip.assertz(f"is_space_type('{space_name}',asserted_space)")
         self.sp_module = newModule("user")
         self.unwrap = unwrap
         addSpaceName(space_name,self)
@@ -656,6 +671,23 @@ class PySwipQ(Query):
                 println(obj)
         super().__init__(*terms, **kwargs)
 
+    def nextSolution(self):
+        return Query.nextSolution()
+        #return PL_next_solution(Query.qid)
+    #nextSolution = staticmethod(nextSolution)
+
+    def cutQuery(self):
+        Query.cutQuery()
+        #PL_cut_query(Query.qid)
+    #cutQuery = staticmethod(cutQuery)
+
+    def closeQuery(self):
+        Query.closeQuery()
+    #    if Query.qid is not None:
+    #        PL_close_query(Query.qid)
+    #        Query.qid = None
+    #closeQuery = staticmethod(closeQuery)
+
 access_error = True
 
 @export_flags(MeTTa=True)
@@ -701,15 +733,17 @@ def is_iterable(obj):
 @export_flags(MeTTa=True)
 def test_custom_v_space():
     #test_custom_space(lambda: (lambda vs: vs.incrHome() and vs)(VSpace()))
+    test_custom_v_space1()
+    test_custom_v_space2()
+
+@export_flags(MeTTa=True)
+def test_custom_v_space1():
     test_custom_space(lambda: VSpace())
 
 @export_flags(MeTTa=True)
 def test_custom_v_space2():
-    test_custom_space(lambda: the_other_space)
-
-@export_flags(MeTTa=True)
-def test_custom_v_space3():
     test_custom_space(lambda: the_nb_space)
+
     #test_custom_space(lambda: the_new_runner_space)
 
 def test_custom_space(LambdaSpaceFn):
@@ -798,7 +832,7 @@ def test_custom_space(LambdaSpaceFn):
     test_space = LambdaSpaceFn()
     test_space.test_attrib = "Test Space Payload Attrib"
 
-    kb = VSpaceRef(test_space)
+    kb = asSpaceRef(test_space)
 
 
     kb.add_atom(S("a"))
@@ -809,7 +843,7 @@ def test_custom_space(LambdaSpaceFn):
     self_assertEqual(kb.get_payload().test_attrib, "Test Space Payload Attrib")
     self_assertEqualNoOrder(kb.get_atoms(), [S("a"), S("b")])
 
-    kb = VSpaceRef(LambdaSpaceFn())
+    kb = asSpaceRef(LambdaSpaceFn())
     kb.add_atom(S("a"))
     kb.add_atom(S("b"))
     kb.add_atom(S("c"))
@@ -818,7 +852,7 @@ def test_custom_space(LambdaSpaceFn):
     self_assertFalse(kb.remove_atom(S("bogus")),"remove_atom on a missing atom should return false")
     self_assertEqualNoOrder(kb.get_atoms(), [S("a"), S("c")])
 
-    kb = VSpaceRef(LambdaSpaceFn())
+    kb = asSpaceRef(LambdaSpaceFn())
     kb.add_atom(S("a"))
     kb.add_atom(S("b"))
     kb.add_atom(S("c"))
@@ -826,7 +860,7 @@ def test_custom_space(LambdaSpaceFn):
     self_assertTrue(kb.replace_atom(S("b"), S("d")))
     self_assertEqualNoOrder(kb.get_atoms(), [S("a"), S("d"), S("c")])
 
-    kb = VSpaceRef(LambdaSpaceFn())
+    kb = asSpaceRef(LambdaSpaceFn())
     kb.add_atom(E(S("A"), S("B")))
     kb.add_atom(E(S("C"), S("D")))
     # Checking that multiple matches can be returned
@@ -838,7 +872,7 @@ def test_custom_space(LambdaSpaceFn):
     m = MeTTa()
 
     # Make a little space and add it to the MeTTa interpreter's space
-    little_space = VSpaceRef(LambdaSpaceFn())
+    little_space = asSpaceRef(LambdaSpaceFn())
     little_space.add_atom(E(S("A"), S("B")))
     space_atom = G(little_space)
     m.space().add_atom(E(S("little-space"), space_atom))
@@ -859,7 +893,7 @@ def test_custom_space(LambdaSpaceFn):
     if verbose>1: print("little_space.add_atom")
     little_space.add_atom(A)
     if verbose>1: print("Next Space")
-    nested = VSpaceRef(LambdaSpaceFn())
+    nested = asSpaceRef(LambdaSpaceFn())
     nested.add_atom(E(S("A"), S("B")))
     space_atom = G(nested)
 
@@ -1325,9 +1359,6 @@ def color_expr(expr, level=0, unif_vars=None):
         raise Exception("Unexpected sexpr type: " + str(type(expr)))
 
 
-def print_cmt(*args):
-   for arg in args:
-       print("\n;; "+ "\n;; ".join(str(arg).splitlines()))
 
 @export_flags(MeTTa=True)
 def print_l_e(obj):
@@ -1352,28 +1383,93 @@ def print_l_e(obj):
         print(obj)
     return obj
 
+@export_flags(MeTTa=True)
+def print_cmt(*args):
+   for arg in args:
+       println(arg, prefix=";; ")
 
 @export_flags(MeTTa=True, name="print")
-def println(orig):
+def println(orig, prefix=""):
     """
     Prints the given object and returns it.
 
     Args:
-        obj: The object to be printed.
+        orig: The object to be printed.
 
     Returns:
         The same object that was passed in.
     """
-    obj = unwrap_pyobjs(orig)
-
-    if not isinstance(obj, (Term, Variable)):
-	    print(repr(obj))
-    else:
-        fn = Functor("pp_ilp")
-        call(fn(obj))
-
+    try:
+      prefix_print(prefix, orig)
+    except Exception as e:
+      if verbose>0: print(f"println-Error: {e}")
     flush_console()
     return orig
+
+def prefix_print(prefix, orig):
+
+    obj = unwrap_pyobjs(orig)
+
+    if isinstance(obj, str):
+        objlns = obj.splitlines()
+        for r in objlns:
+            print(prefix, r)
+        return
+
+    if isinstance(obj, (AbstractSpace, GroundingSpaceRef, SpaceRef)):
+        s = obj
+        f = getattr(s,"atom_count", None)
+        if f is not None: prefix_print(prefix+" atom-count:", f())
+        f = getattr(s,"get_atoms", None)
+        if f is not None:
+            prefix_print(prefix+" ", f())
+            return
+        f = getattr(s,"atoms_iter", None)
+        if f is not None:
+            prefix_print(prefix+" ", f())
+            return
+        f = getattr(s,"query", None)
+        if f is not None:
+            prefix_print(prefix+" ", f(V("_")))
+            return
+
+    if isinstance(obj, (int, float)):
+        prefix_print(prefix+" ",repr(obj))
+        return
+
+    try:
+        if hasattr(obj, '__next__'):  # Check if obj is an iterator
+            while True:
+                try:
+                    prefix_print(prefix+" ", next(obj))
+                except StopIteration:
+                    break
+        else:
+            for r in obj:             # Check if obj is an iteratable
+                prefix_print(prefix+" ", r)
+
+        return
+
+    except TypeError: ""
+
+
+    if isinstance(obj, (Term, Variable)):
+        fn = Functor("writeln")
+        print(prefix, end=' tv:')
+        call(fn(obj))
+        return
+
+    if hasattr(obj, '__str__'):
+        prefix_print(prefix+" s:",str(obj))
+        return
+
+    if isinstance(obj, (Functor, PySwipAtom)):
+        fn = Functor("writeq")
+        print(prefix, end=' q')
+        call(fn(obj))
+        return
+
+    prefix_print(prefix+" ",repr(obj))
 
 
 
@@ -1389,7 +1485,7 @@ def pt1(obj):
             obj = obj[0]
             print(f" pt(0): {type(obj)}={str(obj)}={repr(obj)}", end= " ")
     else:
-        fn = Functor("pp_ilp")
+        fn = Functor("pp")
         call(fn(obj))
     return obj
 
@@ -1439,9 +1535,12 @@ def sync_space(named):
     ""
 
 def the_running_metta_space():
+    global the_new_runner_space
+    global the_python_runner
     #if the_python_runner.parent!=the_python_runner:
     #    return the_python_runner.parent.space()
-    return the_new_runner_space
+    if the_new_runner_space is not None: return the_new_runner_space
+    return the_python_runner.parent.space()
 
 # Borrowed impl from Adam Vandervorst
 import os
@@ -1993,7 +2092,7 @@ def register_vspace_atoms():
         r"new-gpt-intent-space": OperationAtom('new-gpt-intent-space', lambda: [G(SpaceRef(GptIntentSpace()))], unwrap=False),
 
         r"new-v-space": OperationAtom('new-v-space', lambda: [G(SpaceRef(VSpace()))], unwrap=False),
-        r"the-v-space": OperationAtom('new-v-space', lambda: [G(SpaceRef(the_vspace))], unwrap=False),
+        r"the-v-space": OperationAtom('new-v-space', lambda: [G(SpaceRef(the_verspace))], unwrap=False),
 
 
         r"new-value-atom": newValueAtom,
@@ -2098,14 +2197,13 @@ def register_vspace_tokens(metta):
             return oper_dict[atom_name]
 
     syms_dict.update({
-        '&gptspace': lambda _: G(VSpaceRef(the_gptspace)),
-        '&flybase': lambda _: G(VSpaceRef(the_flybase)),
-        '&vspace': lambda _: G(VSpaceRef(the_vspace)),
-        '&vbase_class': lambda _: G((the_vspace)),
-        '&parent_ref': lambda _: G(VSpaceRef(the_python_runner.parent.space())),
-        '&parent': lambda _: G(the_python_runner.parent.space()),
-        '&child': lambda _: G(the_python_runner.space()),
-        '&child_ref': lambda _: G(VSpaceRef(the_python_runner.space())),
+        '&gptspace': lambda _: G(asSpaceRef(getSpaceByName('&gptspace'))),
+        '&flybase': lambda _: G(asSpaceRef(getSpaceByName('&flybase'))),
+        #'&vspace': lambda _: G(getSpaceByName('&vspace')),
+        #'&vbase_class': lambda _: G((the_verspace)),
+        '&parent_ref': lambda _: G(asSpaceRef(getSpaceByName("&parent"))),
+        '&parent': lambda _: G((getSpaceByName("&parent"))),
+        '&child': lambda _: G((getSpaceByName("&child"))),
         '&the_runner': lambda _: ValueAtom(the_python_runner),
         '&the_metta': lambda _: ValueAtom(the_python_runner.parent),
         r"[^\s]+::[^\s]+": lambda token: resolve_atom(metta, token)
@@ -2209,17 +2307,18 @@ def atoms_iter_from_space(space_name, result, context):
         if space:
             get_iterator =  getattr(space,"atoms_iter", None) # Create a new iterator
             if get_iterator is not None:
-                iterator = get_iterator(space)
+                iterator = get_iterator()
             else:
                 got_atoms =  space.get_atoms()
                 iterator = iter(got_atoms)
-            circles = Circles()
-            context_atom_iters[id] = IteratorAndConversionDict(iterator,circles)  # Store it in the dictionary
             try:
-                value = m2s(circles,next(iterator))
-                result.unify(value)
-                context = id
-                return PL_retry(context)
+                circles = Circles()
+                while True:
+                    value = next(iterator)
+                    if res_unify(result,m2s(circles,value)):
+                        context_atom_iters[id] = IteratorAndConversionDict(iterator,circles)  # Store it in the dictionary
+                        return PL_retry(context)
+                    return PL_retry(context)
             except StopIteration:
                 del context_atom_iters[id]  # Clean up
         return False
@@ -2230,9 +2329,12 @@ def atoms_iter_from_space(space_name, result, context):
             try:
                 iterator = iteratorAndCircs.get_iterator()
                 circles = iteratorAndCircs.get_conversion_dict()
-                value = next(iterator)
-                result.unify(m2s(circles,value))
-                return PL_retry(context)
+                while True:
+                    value = next(iterator)
+                    if res_unify(result,m2s(circles,value)):
+                        return PL_retry(context)
+                del context_atom_iters[id]  # Clean up
+                return False
             except StopIteration:
                 del context_atom_iters[id]  # Clean up
                 return False
@@ -2285,14 +2387,14 @@ def find_rust_space(space_name, result):
         return res_unify(result,named)
     return False
 
+rustspace_ordinal = 0
 @export_flags(Janus=True)
 def new_rust_space(result):
-    space = VSpace()
-    named = getNameBySpace(space)
-    if space:
-        res_unify(result,swipAtom(named))
-        return True
-    return False
+    rustspace_ordinal=rustspace_ordinal+1
+    name = f"&vspace_{rustspace_ordinal}"
+    space = GroundingSpace()
+    addSpaceName(name,space)
+    return res_unify(result,swipAtom(name))
 
 
 @export_flags(MeTTa=True, Janus=True)
@@ -2544,8 +2646,8 @@ def metta_to_swip_tests2():
 
     circles = Circles()
     # Now you can use the methods in PySwip queries
-    printl(list(swip.query("swip_to_metta_wrapper('example', X).")))
-    printl(list(swip.query("metta_to_swip_wrapper(X, 'example').")))
+    println(list(swip.query("swip_to_metta_wrapper('example', X).")))
+    println(list(swip.query("metta_to_swip_wrapper(X, 'example').")))
 
     # Usage:
     swip_list = ["a", "b", 3]
@@ -2683,6 +2785,8 @@ class InteractiveMeTTa(LazyMeTTa):
 
     def repl_loop(self):
 
+        global the_new_runner_space
+        global selected_space_name
         global verbose
         self.mode = "metta"
         self.submode = "!"
@@ -2693,7 +2797,7 @@ class InteractiveMeTTa(LazyMeTTa):
             try:
                 flush_console()
                 # Use the input function to get user input
-                prmpt = self.mode + " "+ self.submode + "> "
+                prmpt = "; "+self.mode + "@" + selected_space_name+ " " + self.submode + "> "
 
                 line = get_sexpr_input(prmpt)
                 if line:
@@ -2726,19 +2830,36 @@ class InteractiveMeTTa(LazyMeTTa):
                     continue
 
                 elif sline.startswith("@space"):
-                    global the_new_runner_space
-                    global selected_space_name
                     cmd_, named = split_or_none(sline, " ")
                     if named is None:
-                        print_cmt("; @spaces:", " ".join(space_refs))
-                    elif named in space_refs:
-                        print_cmt(f"; named={named}")
-                        selected_space_name = named
+                        print_cmt("@spaces: " + " ".join(space_refs))
+                        shownAlready = {}
+                        for n in space_refs:
+                            v = space_refs[n]
+                            if v:
+                                s=v()
+                                if s:
+                                    print_cmt(f"==============================================================")
+                                    was = shownAlready.get(id(s))
+                                    if was:
+                                        print_cmt(f"ALREADY {n} SHOWN as {was}")
+                                        continue
+                                    n= f"Name: {n}"
+                                    shownAlready[id(s)]=n
+                                    print_cmt(n)
+                                    print_cmt(s)
+
+                        print_cmt(f"==============================================================")
+
+                    else:
                         found = getSpaceByName(named)
                         if found is not None:
                             selected_space_name = named
                             the_new_runner_space = found
-                        else: print_cmt("Space not found {named}")
+                            print_cmt(f"switching to {named}")
+                        else:
+                            print_cmt(f"Space not found: '{named}'")
+                            print_cmt("try:" + " ".join(space_refs))
                     continue
 
                 # Switch to MeTTaLog mode
@@ -2850,7 +2971,7 @@ class InteractiveMeTTa(LazyMeTTa):
                         print_cmt(line) # comment
                         continue
                     result = eval(line)
-                    printl(result)
+                    println(result)
                     continue
 
                 elif self.mode == "metta":
@@ -2888,14 +3009,14 @@ class InteractiveMeTTa(LazyMeTTa):
                         continue
                     elif prefix == "+":
                         expr = self.parse_single(rest)
-                        the_running_metta_space().add_atom(expr)
+                        println(the_running_metta_space().add_atom(expr))
                         continue
                     elif prefix == "-":
                         expr = self.parse_single(rest)
-                        the_running_metta_space().remove_atom(expr)
+                        println(the_running_metta_space().remove_atom(expr))
                         continue
                     elif prefix == "^":
-                        printl(the_python_runner.run(line));
+                        println(the_python_runner.run(line));
                         continue
                     else:
                         expr = self.parse_single(rest)
@@ -2986,6 +3107,19 @@ def vspace_main():
     if verbose>1: print_cmt(f"\nmain took {(monotonic_ns() - t0)/1e9:.5} seconds in walltime")
     flush_console()
 
+
+def redirect_stdout(inner_function):
+    old_stdout = sys.stdout # Save the current stdout stream
+    new_stdout = io.StringIO() # Create a new StringIO buffer
+    sys.stdout = new_stdout # Redirect stdout to the new buffer
+    try:
+        inner_function() # Execute the inner function
+    finally:
+        sys.stdout = old_stdout # Restore the original stdout stream
+    output = new_stdout.getvalue() # Retrieve the output from the new buffer
+    new_stdout.close() # Close the new buffer
+    return output
+
 @staticmethod
 def vspace_init():
     if getattr(vspace_init,"is_init_ran", False) == True:
@@ -2998,16 +3132,14 @@ def vspace_init():
     #import site
     #print_cmt ("Site Packages: ",site.getsitepackages())
     #test_nondeterministic_foreign()
-    swip.assertz("py_named_space('&self')");
+    swip.assertz("py_named_space('&self')")
+    swip.retract("was_asserted_space('&self')")
     #if os.path.isfile(f"{the_python_runner.cwd}autoexec.metta"):
     #    the_python_runner.lazy_import_file("autoexec.metta")
     # @TODO fix this metta_to_swip_tests1()
     #load_vspace()
-    old_stdout = sys.stdout
-    sys.stdout = mystdout = io.StringIO()
-    reg_pyswip_foreign()
-    sys.stdout = old_stdout
-    print_cmt(f"\nInit took {(monotonic_ns() - t0)/1e9:.5} seconds")
+    redirect_stdout(reg_pyswip_foreign)
+    if verbose>0: print_cmt(f"\nInit took {(monotonic_ns() - t0)/1e9:.5} seconds")
     flush_console()
 
 def flush_console():
@@ -3232,25 +3364,30 @@ def cat_files(strings, skip_filetypes=['.metta','.md','.pl', '.png', '.jpg']):
 
 # All execution happens here
 swip = globals().get('swip') or PySwip()
-the_gptspace = globals().get('the_gptspace') or GptSpace()
-the_vspace = globals().get('the_vspace') or VSpace("&vspace")
+the_verspace = globals().get('the_verspace') or VSpace("&verspace")
 the_flybase = globals().get('the_flybase') or VSpace("&flybase")
 the_nb_space = globals().get('the_nb_space') or VSpace("&nb")
-the_other_space = globals().get('the_other_space') or VSpace("&self2")
-the_python_runner = globals().get('the_python_runner') or InteractiveMeTTa()
+the_gptspace = globals().get('the_gptspace') or GptSpace()
+the_python_runner = globals().get('the_python_runner') or None
+selected_space_name = globals().get('selected_space_name') or "&self"
+sys_argv_length = len(sys.argv)
 
-if the_python_runner is InteractiveMeTTa():
+def MakeInteractiveMeTTa():
+    global the_python_runner,the_old_runner_space,the_new_runner_space,sys_argv_length
+
+    the_python_runner = InteractiveMeTTa()
     the_python_runner.cwd = [os.path.dirname(os.path.dirname(__file__))]
     the_old_runner_space = the_python_runner.space()
     the_python_runner.run("!(extend-py! metta_learner)")
     the_new_runner_space = the_python_runner.space()
 
-selected_space_name = globals().get('selected_space_name') or "&self"
-sys_argv_length = len(sys.argv)
+    print_cmt("The sys.argv list is:", sys.argv)
+    cat_files(sys.argv[1:])
+    vspace_init()
 
-print_cmt("The sys.argv list is:", sys.argv)
-cat_files(sys.argv[1:])
-vspace_init()
+if the_python_runner is None: MakeInteractiveMeTTa()
+
+is_init=False
 
 if __name__ == "__main__":
     vspace_main()
