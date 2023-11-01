@@ -1,45 +1,56 @@
+#!/usr/bin/env python3
+
 # Version Space Candidate Elimination inside of MeTTa
 # This implementation focuses on bringing this machine learning algorithm into the MeTTa relational programming environment.
 # Douglas R. Miles 2023
-import json
-from time import monotonic_ns, time
-import atexit, os, subprocess, sys, pip, io, re, traceback, inspect
-try:
- import readline
-except ImportError:
-  import pyreadline3 as readline
+
+# Standard Library Imports
+import atexit, io, inspect, json, os, re, subprocess, sys, traceback
 from collections import Counter
 from glob import glob
-import hyperonpy as hp
-from hyperon.atoms import V, S, E, ValueAtom, GroundedAtom, ExpressionAtom, G, AtomType, MatchableObject, OperationAtom, OperationObject, BindingsSet
-from hyperon.runner import MeTTa
-from hyperon.ext import register_atoms, register_tokens
-from hyperon.base import AbstractSpace, SpaceRef, GroundingSpace, interpret
-# Avoid conflict for "Atom"
-from pyswip import Atom as PySwipAtom
-from pyswip import Term
-from hyperon.atoms import Atom as MeTTaAtom
-from pyswip import (call, Functor, PL_discard_foreign_frame, PL_new_term_ref, PL_open_foreign_frame, registerForeign, PL_PRUNED, PL_retry, PL_FA_NONDETERMINISTIC, PL_foreign_control, PL_foreign_context, PL_FIRST_CALL, PL_REDO, Variable, Prolog as PySwip)
-from pyswip.easy import newModule, Query
-from hyperon.atoms import *
-from janus import *
-import openai
-import hyperon
-try:
- openai.api_key = os.environ["OPENAI_API_KEY"]
-except KeyError:
- ""
+from time import monotonic_ns, time
 
+# Third-Party Imports
+from pyswip import (Atom as PySwipAtom, Term, call, Functor, PL_discard_foreign_frame, PL_new_term_ref, PL_open_foreign_frame,
+                    registerForeign, PL_PRUNED, PL_retry, PL_FA_NONDETERMINISTIC, PL_foreign_control, PL_foreign_context, PL_FIRST_CALL, PL_REDO, Variable, Prolog as PySwip)
+from pyswip.easy import newModule, Query
+
+import hyperonpy as hp
+from hyperon.atoms import *
+from hyperon.base import AbstractSpace, SpaceRef, GroundingSpace, interpret
+from hyperon.base import *
+from hyperon.ext import register_atoms, register_tokens
+from hyperon.runner import MeTTa
+
+# Readline Imports (Platform Specific)
+try: import readline
+except ImportError: import pyreadline3 as readline
+
+# Global Variables
 VSPACE_VERBOSE = os.environ.get("VSPACE_VERBOSE")
 # 0 = for scripts/demos
 # 1 = developer
 # 2 = debugger
 verbose = 1
 if VSPACE_VERBOSE is not None:
-    try:
-        # Convert it to an integer
-        verbose = int(VSPACE_VERBOSE)
-    except ValueError: ""
+ try: verbose = int(VSPACE_VERBOSE) # Convert it to an integer
+ except ValueError: ""
+
+# Error Handling for Janus
+try: from janus import *
+except Exception as e:
+ if verbose>0: print(f"Error: {e}")
+
+# Error Handling for OpenAI
+try:
+ import openai
+ try: openai.api_key = os.environ["OPENAI_API_KEY"]
+ except KeyError: ""
+except Exception as e:
+ if verbose>0: print(f"Error: {e}")
+
+
+
 histfile = os.path.join(os.path.expanduser("~"), ".metta_history")
 is_init = True
 oper_dict = {}
@@ -113,6 +124,22 @@ insert_to_history('!(add-atom &flybase (gene_map_table (ConceptNode "Dmel") (Con
 insert_to_history('!(match &flybase (gene_map_table $Dmel $abo FBgn0000018 $C $D $E) (gene_map_table $Dmel $abo FBgn0000018 $C $D $E))')
 insert_to_history('!(test_custom_v_space)', position_from_last=1)
 
+OPTIONS = ['apple', 'banana', 'cherry', 'date', 'elderberry']
+
+# The completer function
+def completer(text, state):
+    options = [i for i in OPTIONS if i.startswith(text)]
+    if state < len(options):
+        return options[state]
+    else:
+        return None
+
+# Register the completer function
+readline.set_completer(completer)
+
+# Use the tab key for completion
+readline.parse_and_bind('tab: complete')
+
 def save(prev_h_len, histfile):
     new_h_len = readline.get_current_history_length()
     readline.set_history_length(300)
@@ -148,7 +175,7 @@ def add_exported_methods(module, dict = oper_dict):
                 sig = inspect.signature(func)
                 params = sig.parameters
                 num_args = len([p for p in params.values() if p.default == p.empty and p.kind == p.POSITIONAL_OR_KEYWORD])
-                add_pyop(use_name, num_args, getattr(func, 'op', "OperationAtom"), getattr(func, 'unwrap', True), dict)
+                add_pyop(use_name, num_args, getattr(func, 'op', "OperationAtom"), getattr(func, 'unwrap', False), dict)
 
 def add_janus_methods(module, dict = janus_dict):
     for name, func in inspect.getmembers(module):
@@ -365,7 +392,7 @@ class VSpaceRef(SpaceRef):
             return None
         result = []
         for r in res:
-            result.append(MeTTaAtom._from_catom(r))
+            result.append(Atom._from_catom(r))
         return result
 
 
@@ -461,7 +488,7 @@ class VSpaceRef(SpaceRef):
             return self.py_space_obj.subst(pattern, templ);
 
         cspace = super().cspace
-        return [MeTTaAtom._from_catom(catom) for catom in
+        return [Atom._from_catom(catom) for catom in
                 hp.space_subst(cspace, pattern.catom,
                                          templ.catom)]
 
@@ -487,7 +514,7 @@ class VSpace(AbstractSpace):
     def from_space(self, cspace):
         self.gspace = GroundingSpaceRef(cspace)
 
-    def __init__(self, space_name=None, unwrap=True):
+    def __init__(self, space_name=None, unwrap=False):
         super().__init__()
         #addSpaceName(ispace_name,self)
         if space_name is None:
@@ -658,7 +685,7 @@ class VSpace(AbstractSpace):
         return self
 
 class VSpaceCallRust(VSpace):
-    def __init__(self, space_name=None, unwrap=True):
+    def __init__(self, space_name=None, unwrap=False):
         super().__init__()
 
 
@@ -693,7 +720,7 @@ access_error = True
 @export_flags(MeTTa=True)
 class FederatedSpace(VSpace):
 
-    def __init__(self, space_name, unwrap=True):
+    def __init__(self, space_name, unwrap=False):
         super().__init__(space_name, unwrap)
 
     def _checked_impl(self, method_name, *args):
@@ -923,7 +950,7 @@ def s2m1(circles,swip_obj, depth=0):
         print(f's2m({len(circles)},{type(swip_obj)}): {str(swip_obj)}/{repr(swip_obj)}')
 
     # Already converted
-    if isinstance(swip_obj, (VariableAtom, GroundedAtom, MeTTaAtom, ExpressionAtom)):
+    if isinstance(swip_obj, (VariableAtom, GroundedAtom, Atom, ExpressionAtom)):
         return swip_obj
 
     if isinstance(swip_obj, str):
@@ -1215,14 +1242,40 @@ class VSNumpyValue(MatchableObject):
 
 class VSPatternValue(MatchableObject):
 
-    def match_(self, metta_obj):
+    def match_(self, orig_metta_obj):
+        metta_obj = orig_metta_obj
         if isinstance(metta_obj, GroundedAtom):
             metta_obj = metta_obj.get_object().content
-        if not isinstance(metta_obj, VSPatternValue):
-            return metta_obj.match_(self)
+        #if not isinstance(metta_obj, VSPatternValue):
+        #    return metta_obj.match_(self)
         # TODO: match to patterns
-        return []
-
+        #return []
+        metta_obj = orig_metta_obj
+        bindings = {}
+        if isinstance(metta_obj, GroundedAtom):
+            metta_obj = metta_obj.get_object()
+        # Match by equality with another VSNumpyValue
+        if isinstance(metta_obj, VSNumpyValue):
+            return [{}] if metta_obj == self else []
+        # if isinstance(metta_obj, VSPatternValue):
+        #     metta_obj = metta_obj.to_expr()
+        if isinstance(metta_obj, ExpressionAtom):
+            ch = metta_obj.get_children()
+            # TODO: constructors and operations
+            if len(ch) != sh[0]:
+                return []
+            for i in range(len(ch)):
+                res = self.content[i]
+                typ = _np_atom_type(res)
+                res = VSNumpyValue(res)
+                if isinstance(ch[i], VariableAtom):
+                    bindings[ch[i].get_name()] = G(res, typ)
+                elif isinstance(ch[i], ExpressionAtom):
+                    bind_add = res.match_(ch[i])
+                    if bind_add == []:
+                        return []
+                    bindings.update(bind_add[0])
+        return [] if len(bindings) == 0 else [bindings]
 
 class VSPatternOperation(OperationObject):
 
@@ -1231,7 +1284,8 @@ class VSPatternOperation(OperationObject):
         self.rec = rec
 
     def execute(self, *args, res_typ=AtomType.UNDEFINED):
-        if self.rec:
+        print(f"args={args}")
+        if self.rec and isinstance(args[0], ExpressionAtom):
             args = args[0].get_children()
             args = [self.execute(arg)[0]\
                 if isinstance(arg, ExpressionAtom) else arg for arg in args]
@@ -1268,7 +1322,8 @@ class VSpacePatternOperation(OperationObject):
         self._catom = value
 
     def execute(self, *args, res_typ=AtomType.UNDEFINED):
-        if self.rec:
+        print(f"args={args}")
+        if self.rec and isinstance(args[0], ExpressionAtom):
             args = args[0].get_children()
             args = [self.execute(arg)[0] if isinstance(arg, ExpressionAtom) else arg for arg in args]
         # If there is a variable or VSPatternValue in arguments, create VSPatternValue
@@ -1278,9 +1333,9 @@ class VSpacePatternOperation(OperationObject):
                 return [G(VSPatternValue([self, args]))]
             if isinstance(arg, VariableAtom):
                 return [G(VSPatternValue([self, args]))]
-
+        # from super()
         # type-check?
-        if self.unwrap:
+        if False and self.unwrap:
             for arg in args:
                 if not isinstance(arg, GroundedAtom):
                     # REM:
@@ -1303,7 +1358,9 @@ def _np_atom_type(npobj):
     return E(S('NPArray'), E(*[ValueAtom(s, 'Number') for s in npobj.shape]))
 
 def dewrap(arg):
-    return unwrap_pyobjs(arg)
+    r = unwrap_pyobjs(arg)
+    print(f"dw({type(arg)})={type(r)}")
+    return r
 
 def wrapnpop(func):
     def wrapper(*args):
@@ -1648,9 +1705,9 @@ class ExtendedMeTTa:
         parser = SExprParser(program)
         results = hp.metta_run(self.cmetta, parser.cparser)
         if flat:
-            return [MeTTaAtom._from_catom(catom) for result in results for catom in result]
+            return [Atom._from_catom(catom) for result in results for catom in result]
         else:
-            return [[MeTTaAtom._from_catom(catom) for catom in result] for result in results]
+            return [[Atom._from_catom(catom) for catom in result] for result in results]
 
 # Borrowed impl from Adam Vandervorst
 class LazyMeTTa(ExtendedMeTTa):
@@ -2030,6 +2087,14 @@ def pl_insert(*args):
     print(args)
     flush_console()
 
+def np_array(args):
+    print("np_array=",args)
+    return np.array(args)
+
+def np_vector(*args):
+    print("np_vector=",args)
+    return np.array(args)
+
 #pass_metta=True
 @register_atoms
 #@register_atoms(pass_metta=True)
@@ -2052,8 +2117,10 @@ def register_vspace_atoms():
         return [ValueAtom({'A': counter, 6: 'B'})]
 
     # We don't add types for operations, because numpy operations types are too loose
-    nmVectorAtom = G(VSPatternOperation('np.vector', wrapnpop(lambda *args: np.array(args)), unwrap=False))
-    nmArrayAtom = G(VSPatternOperation('np.array', wrapnpop(lambda *args: np.array(args)), unwrap=False, rec=True))
+    nmVectorAtom = G(VSPatternOperation('np.array', wrapnpop(lambda *args: np_array(args)), unwrap=False))
+    nmArrayAtom = G(VSPatternOperation('np.vector', wrapnpop(lambda *args: np_vector(*args)), unwrap=False, rec=True))
+    nmUVectorAtom = G(VSPatternOperation('np.uarray', wrapnpop(lambda *args: np_array(args)), unwrap=False))
+    nmUArrayAtom = G(VSPatternOperation('np.uvector', wrapnpop(lambda *args: np_vector(*args)), unwrap=False, rec=True))
     nmAddAtom = G(VSPatternOperation('np.add', wrapnpop(np.add), unwrap=False))
     nmSubAtom = G(VSPatternOperation('np.sub', wrapnpop(np.subtract), unwrap=False))
     nmMulAtom = G(VSPatternOperation('np.mul', wrapnpop(np.multiply), unwrap=False))
@@ -2080,6 +2147,8 @@ def register_vspace_atoms():
         r"TupleCount": OperationAtom( 'TupleCount', lambda atom: [ValueAtom(len(atom.get_children()), 'Number')], [AtomType.ATOM, "Number"], unwrap=False),
         r"np\.vector": nmVectorAtom,
         r"np\.array": nmArrayAtom,
+        r"np\.uvector": nmUVectorAtom,
+        r"np\.uarray": nmUArrayAtom,
         r"np\.add": nmAddAtom,
         r"np\.sub": nmSubAtom,
         r"np\.mul": nmMulAtom,
@@ -2117,8 +2186,8 @@ def register_vspace_atoms():
 
         r"fb.test-nondeterministic-foreign": OperationAtom('test-nondeterministic-foreign', lambda: test_nondeterministic_foreign, unwrap=False),
 
-        'vspace-main': OperationAtom('vspace-main', lambda: [vspace_main()]),
-        'metta_learner::vspace-main': OperationAtom('vspace-main', lambda: [vspace_main()]),
+        'vspace-main': OperationAtom('vspace-main', vspace_main),
+        'metta_learner::vspace-main': OperationAtom('vspace-main', lambda *args: [vspace_main(*args)]),
         'swip-exec': OperationAtom('swip-exec', lambda s: [swip_exec(s)]),
         'py-eval': OperationAtom('py-eval', lambda s: [eval(s)]) })
 
@@ -2140,7 +2209,7 @@ def register_vspace_tokens(metta):
         expr = E(atom, *args)
         if verbose>1: print(f"run_resolved_symbol_op: atom={atom}, args={args}, expr={expr} metta={metta} {self_space_info()}")
         result1 = hp.metta_evaluate_atom(the_python_runner.cmetta, expr.catom)
-        result = [MeTTaAtom._from_catom(catom) for catom in result1]
+        result = [Atom._from_catom(catom) for catom in result1]
         if verbose>1: print(f"run_resolved_symbol_op: result1={result1}, result={result}")
         return result
 
@@ -2657,9 +2726,15 @@ def metta_to_swip_tests2():
     metta_expr = s2m(circles,swip_functor)
     converted_back_to_swip = m2s(circles,metta_expr)
 
+NeedNameSpaceInSWIP = True
 @export_flags(MeTTa=True)
 def load_vspace():
+   global NeedNameSpaceInSWIP
    swip_exec(f"ensure_loaded('{os.path.dirname(__file__)}/pyswip/swi_flybase')")
+   if NeedNameSpaceInSWIP:
+       NeedNameSpaceInSWIP = False
+       swip.retractall("was_asserted_space('&self')")
+       swip.assertz("py_named_space('&self')")
 
 @export_flags(MeTTa=True)
 def mine_overlaps():
@@ -2708,7 +2783,7 @@ def test_custom_m_space():
 
     class TestSpace(AbstractSpace):
 
-        def __init__(self, unwrap=True):
+        def __init__(self, unwrap=False):
             super().__init__()
             self.atoms_list = []
             self.unwrap = unwrap
@@ -2768,6 +2843,95 @@ def test_custom_m_space():
     test_custom_space(lambda: TestSpace())
 
 
+import telnetlib
+import threading
+import socket
+
+class TelnetREPLThread(threading.Thread):
+    def __init__(self, host, port):
+        super().__init__()
+        self.host = host
+        self.port = port
+        self.banner = "Welcome to the Flybase MeTTa Telnet Server\n"
+        self.user_input=""
+
+    def read_input(self, tn, prmpt):
+        self.user_input = ""
+        input_buffer = b""
+        tn.write(f"{prmpt}".encode('ascii'))
+        while True:
+            chunk = tn.read_some()
+            if chunk == b'\x7f':  # ASCII DEL (Backspace)
+                input_buffer = input_buffer[:-1]
+                tn.write(b'\b \b')  # Move cursor back, overwrite with space, move cursor back again
+            elif chunk == b'\x04' or chunk == b'\n':  # Ctrl-D or Enter
+                break
+            else:
+                input_buffer += chunk
+                tn.write(chunk)  # Echo the character back to the client
+        self.user_input = input_buffer.decode('ascii').strip()
+        return self.user_input
+
+    def write_output(self, tn, prmpt):
+        tn.write(f"{prmpt}\n".encode('ascii'))
+
+
+    def run(self):
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server.bind((self.host, self.port))
+        self.server.listen(1)
+        print(f"Listening on {self.host}:{self.port}")
+
+        while True:
+            client, address = self.server.accept()
+            print(f"Accepted connection from {address}")
+            tn = telnetlib.Telnet()
+            tn.sock = client
+            tn.write(self.banner.encode('ascii'))
+
+            inP = lambda prmpt1: self.read_input(tn, prmpt1)
+            outP = lambda prmpt1: self.write_output(tn, prmpt1)  # Removed extra self
+            im = InteractiveMeTTa()
+            while True:
+
+                if True and im:
+                    im.repl(get_sexpr_input=inP, print_cmt=outP)
+                else:
+                    get_sexpr_input=inP
+                    print_cmt=outP
+                    # Use the input function to get user input
+                    prmpt = "; > "
+                    line = get_sexpr_input(prmpt)
+                    print_cmt(f"You entered: {line}\n")
+
+                if '\x04' in self.user_input:  # Check for Ctrl-D (EOF)
+                    tn.write("Exiting...\n".encode('ascii'))
+                    break
+
+            tn.close()
+
+class TelnetREPLServer:
+    def __init__(self, host, initial_port):
+        self.host = host
+        self.port = initial_port
+
+    def start(self):
+        while True:
+            try:
+                repl_thread = TelnetREPLThread(self.host, self.port)
+                repl_thread.start()
+                print(f"Successfully started on {self.host}:{self.port}")
+                break
+            except OSError as e:
+                if e.errno == 98:  # Address already in use
+                    print(f"Port {self.port} already in use. Trying next port.")
+                    self.port += 100
+
+if __name__ == '__main__':
+    server = TelnetREPLServer('0.0.0.0', 11776)
+    server.start()
+
+
 
 # Borrowed impl from Adam Vandervorst
 class InteractiveMeTTa(LazyMeTTa):
@@ -2777,21 +2941,22 @@ class InteractiveMeTTa(LazyMeTTa):
         # parent == self
         #   means no parent MeTTa yet
         self.parent = self
+        self.mode = "metta"
 
     def maybe_submode(self, line):
         lastchar = line[-1]
         if "+-?!^".find(lastchar)>=0:
             self.submode=lastchar
 
-    def repl_loop(self):
-
+    def repl_loop(self, get_sexpr_input=get_sexpr_input, print_cmt=print_cmt, mode=None):
         global the_new_runner_space
         global selected_space_name
         global verbose
-        self.mode = "metta"
+        if mode:
+            self.mode = mode
         self.submode = "!"
         #self.history = []
-        load_vspace()
+        #load_vspace()
 
         while True:
             try:
@@ -2800,6 +2965,9 @@ class InteractiveMeTTa(LazyMeTTa):
                 prmpt = "; "+self.mode + "@" + selected_space_name+ " " + self.submode + "> "
 
                 line = get_sexpr_input(prmpt)
+
+                #print_cmt(f"You entered: {line}\n")
+
                 if line:
                     sline = line.lstrip()
                     add_to_history_if_unique(line, position_from_last=1)
@@ -2865,7 +3033,7 @@ class InteractiveMeTTa(LazyMeTTa):
                 # Switch to MeTTaLog mode
                 elif sline.startswith("@sm") or sline.startswith("@mettal") or sline.startswith("@ml"):
                     self.mode = "mettalog"
-                    print_cmt("Switched to MettaLog mode.")
+                    print_cmt("Switched to MeTTaLog mode.")
                     continue
 
                 # Switch to swip mode
@@ -2903,7 +3071,7 @@ class InteractiveMeTTa(LazyMeTTa):
                     print_cmt("@m ^     - Interpret atoms as if there are in files (+)")
                     print_cmt("@p       - Switch to Python mode")
                     print_cmt("@s       - Switch to Swip mode")
-                    print_cmt("@sm      - Switch to MeTTaLog mode")
+                    print_cmt("@sm,ml   - Switch to MeTTaLog mode")
                     print_cmt("@space   - Change the &self of the_runner_space")
                     print_cmt("@v ###   - Verbosity 0-3")
                     print_cmt("@h       - Display this help message")
@@ -2947,6 +3115,7 @@ class InteractiveMeTTa(LazyMeTTa):
                         if verbose>1: print_cmt(f"% M-Expr {expr}")
                         circles = Circles()
                         swipl_fid = PL_open_foreign_frame()
+                        t0 = monotonic_ns()
                         try:
                             swip_obj = m2s(circles,expr);
                             if verbose>1: print_cmt(f"% P-Expr {swip_obj}")
@@ -2963,6 +3132,7 @@ class InteractiveMeTTa(LazyMeTTa):
                                 flush_console()
                                 continue
                         finally:
+                            if verbose>0: timeFrom("MeTTaLog",t0)
                             PL_discard_foreign_frame(swipl_fid)
                    continue
 
@@ -2970,11 +3140,16 @@ class InteractiveMeTTa(LazyMeTTa):
                     if prefix == "#":
                         print_cmt(line) # comment
                         continue
-                    result = eval(line)
-                    println(result)
-                    continue
-
+                    try:
+                     t0 = monotonic_ns()
+                     result = eval(line)
+                     println(result)
+                     continue
+                    finally:
+                     if verbose>0: timeFrom("python",t0)
                 elif self.mode == "metta":
+                   try:
+                    t0 = monotonic_ns()
                     rest = line[2:].strip()
                     if prefix == ";":
                         print_cmt(line) # comment
@@ -3022,6 +3197,8 @@ class InteractiveMeTTa(LazyMeTTa):
                         expr = self.parse_single(rest)
                         yield expr, interpret(the_running_metta_space(), expr)
                         continue
+                   finally:
+                    if verbose>0: timeFrom("MeTTa",t0)
 
             except EOFError:
                     sys.stderr = sys.__stderr__
@@ -3050,8 +3227,8 @@ class InteractiveMeTTa(LazyMeTTa):
                     print_cmt(buf.getvalue().replace('rolog','ySwip'))
                 continue
 
-    def repl(self):
-        for i, (expr, result_set) in enumerate(self.repl_loop()):
+    def repl(self, get_sexpr_input=get_sexpr_input, print_cmt=print_cmt, mode=None):
+        for i, (expr, result_set) in enumerate(self.repl_loop(get_sexpr_input=get_sexpr_input, print_cmt=print_cmt, mode=mode)):
             if result_set:
                 try:
                     for result in result_set:
@@ -3066,6 +3243,19 @@ class InteractiveMeTTa(LazyMeTTa):
 
     def copy(self):
         return self
+
+def timeFrom(w, t0):
+    elapsed_ns = monotonic_ns() - t0
+    elapsed_s = elapsed_ns / 1e9
+    elapsed_ms = elapsed_ns / 1e6
+    elapsed_us = elapsed_ns / 1e3
+
+    if elapsed_s >= 1:
+        print_cmt(f"{w} took {elapsed_s:.5f} seconds")
+    elif elapsed_ms >= 1:
+        print_cmt(f"{w} took {elapsed_ms:.5f} milliseconds")
+    else:
+        print_cmt(f"{w} took {elapsed_us:.5f} microseconds")
 
 def call_mettalog(line, parseWithRust = False):
 
@@ -3091,7 +3281,7 @@ def call_mettalog(line, parseWithRust = False):
     flush_console()
 
 @export_flags(MeTTa=True)
-def vspace_main():
+def vspace_main(*args):
     is_init=False
     #os.system('clear')
     t0 = monotonic_ns()
@@ -3100,11 +3290,16 @@ def vspace_main():
     #if is_init==False: load_vspace()
     #if is_init==False: load_flybase()
     #if is_init==False:
-
+    argmode = None
+    for arg in args:
+        if arg in ["metta","mettalog","python"]:
+            argmode = arg
+        else:
+            handle_arg(arg)
     flush_console()
-    the_python_runner.repl()
+    the_python_runner.repl(mode=argmode)
     flush_console()
-    if verbose>1: print_cmt(f"\nmain took {(monotonic_ns() - t0)/1e9:.5} seconds in walltime")
+    if verbose>1: timeFrom("main", t0)
     flush_console()
 
 
@@ -3132,14 +3327,12 @@ def vspace_init():
     #import site
     #print_cmt ("Site Packages: ",site.getsitepackages())
     #test_nondeterministic_foreign()
-    swip.assertz("py_named_space('&self')")
-    swip.retract("was_asserted_space('&self')")
     #if os.path.isfile(f"{the_python_runner.cwd}autoexec.metta"):
     #    the_python_runner.lazy_import_file("autoexec.metta")
     # @TODO fix this metta_to_swip_tests1()
     #load_vspace()
     redirect_stdout(reg_pyswip_foreign)
-    if verbose>0: print_cmt(f"\nInit took {(monotonic_ns() - t0)/1e9:.5} seconds")
+    if verbose>0: timeFrom("init", t0)
     flush_console()
 
 def flush_console():
@@ -3262,7 +3455,7 @@ def analyze_csv(file_path, sep=None):
         return
 
     base_name = os.path.basename(file_path)
-    base_name = base_name[:-4]
+    base_name, _  = os.path.splitext(base_name)
 
     if "_fb_202" in base_name:
         base_name = base_name[:-len("_fb_2023_04")]
@@ -3328,10 +3521,11 @@ def analyze_csv(file_path, sep=None):
 import os
 import sys
 
-def cat_files(strings, skip_filetypes=['.metta','.md','.pl', '.png', '.jpg']):
+def cat_files(strings, skip_filetypes=['.metta','.md','.pl', '.png', '.jpg', '.obo']):
     for string in strings:
+        lower = string.lower()
         # Check if the file extension is in the list of file types to skip
-        if any(string.lower().endswith(ext) for ext in skip_filetypes):
+        if any(lower.endswith(ext) for ext in skip_filetypes):
             print_cmt(f"Skipping file: {string}")
             continue
 
@@ -3345,9 +3539,9 @@ def cat_files(strings, skip_filetypes=['.metta','.md','.pl', '.png', '.jpg']):
                         print_cmt(f"An error occurred while processing {string}: {e}")
             sys.exit(0)
         elif os.path.isfile(string):
-            if string.lower().endswith('.csv'):
+            if lower.endswith('.csv'):
                 analyze_csv(string, sep=',')
-            elif string.lower().endswith('.tsv'):
+            elif lower.endswith('.tsv'):
                 analyze_csv(string, sep='\t')
             else:
                 # Read only the first few lines
@@ -3361,6 +3555,30 @@ def cat_files(strings, skip_filetypes=['.metta','.md','.pl', '.png', '.jpg']):
                                 break
                             print_cmt(line.strip())
 
+def handle_arg(string, skip_filetypes=['.md','.pl', '.png', '.jpg']):
+        lower = string.lower()
+        # Check if the file extension is in the list of file types to skip
+        if any(lower.endswith(ext) for ext in skip_filetypes):
+            print_cmt(f"Skipping: {string}")
+            return
+
+        elif os.path.isdir(string):
+            # If it's a directory, traverse it
+            for root, _, files in os.walk(string):
+                for file in files:
+                    try:
+                        handle_arg([os.path.join(root, file)], skip_filetypes)
+                    except Exception as e:
+                        print_cmt(f"An error occurred while processing {string}: {e}")
+
+            return
+
+        elif os.path.isfile(string):
+            if lower.endswith('.metta'):
+                the_python_runner.import_file(string)
+                return
+
+        print_cmt(f"Skipping: {string}")
 
 # All execution happens here
 swip = globals().get('swip') or PySwip()
@@ -3372,9 +3590,7 @@ the_python_runner = globals().get('the_python_runner') or None
 selected_space_name = globals().get('selected_space_name') or "&self"
 sys_argv_length = len(sys.argv)
 
-def MakeInteractiveMeTTa():
-    global the_python_runner,the_old_runner_space,the_new_runner_space,sys_argv_length
-
+if the_python_runner is None:  #MakeInteractiveMeTTa() #def MakeInteractiveMeTTa(): #global the_python_runner,the_old_runner_space,the_new_runner_space,sys_argv_length
     the_python_runner = InteractiveMeTTa()
     the_python_runner.cwd = [os.path.dirname(os.path.dirname(__file__))]
     the_old_runner_space = the_python_runner.space()
@@ -3385,7 +3601,6 @@ def MakeInteractiveMeTTa():
     cat_files(sys.argv[1:])
     vspace_init()
 
-if the_python_runner is None: MakeInteractiveMeTTa()
 
 is_init=False
 

@@ -1,9 +1,463 @@
-!(extend-py! metta_learner)
 
-;; The sys.argv list is:
-;; ['metta_vspace', 'data/ftp.flybase.net/releases/current/precomputed_files/']
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/md5sum.txt
+(flybase-cols  allele-genetic-interactions (# ##allele-symbol allele-FBal# interaction FBrf#))
+(flybase-cols  analysis (# analysis-id name description program programversion algorithm sourcename sourceversion sourceuri timeexecuted))
+(flybase-cols  analysisfeature (# analysisfeature-id feature-id analysis-id rawscore normscore significance identity))
+(flybase-cols  analysisgrp (# analysisgrp-id rawscore normscore significance identity analysis-id grp-id))
+(flybase-cols  analysisgrpmember (# analysisgrpmember-id rawscore normscore significance identity analysis-id grpmember-id))
+(flybase-cols  analysisprop (# analysisprop-id analysis-id type-id value))
+(flybase-cols  audit-chado (# audit-transaction transaction-timestamp userid audited-table record-pkey record-ukey-cols record-ukey-vals audited-cols audited-vals))
+(flybase-cols  cell-line (# cell-line-id name uniquename organism-id timeaccessioned timelastmodified))
+(flybase-cols  cell-line-loaderm (# cell-line-loaderm-id cell-line-id loaderm-id pub-id rank))
+(flybase-cols  cell-line-loadermprop (# cell-line-loadermprop-id cell-line-loaderm-id type-id value rank))
+(flybase-cols  cell-line-dbxref (# cell-line-dbxref-id cell-line-id dbxref-id is-current))
+(flybase-cols  cell-line-feature (# cell-line-feature-id cell-line-id feature-id pub-id))
+(flybase-cols  cell-line-library (# cell-line-library-id cell-line-id library-id pub-id))
+(flybase-cols  cell-line-libraryprop (# cell-line-libraryprop-id cell-line-library-id type-id value rank))
+(flybase-cols  cell-line-relationship (# cell-line-relationship-id subject-id object-id type-id))
+(flybase-cols  cell-line-strain (# cell-line-strain-id strain-id cell-line-id pub-id))
+(flybase-cols  cell-line-strainprop (# cell-line-strainprop-id cell-line-strain-id type-id value rank))
+(flybase-cols  cell-line-synonym (# cell-line-synonym-id cell-line-id synonym-id pub-id is-current is-internal))
+(flybase-cols  cell-lineprop (# cell-lineprop-id cell-line-id type-id value rank))
+(flybase-cols  cell-lineprop-pub (# cell-lineprop-pub-id cell-lineprop-id pub-id))
+(flybase-cols  cell-line-pub (# cell-line-pub-id cell-line-id pub-id))
+(flybase-cols  contact (# contact-id description name))
+(flybase-cols  cv (# cv-id name definition))
+(flybase-cols  loaderm (# loaderm-id cv-id definition dbxref-id is-obsolete is-relationshiptype name))
+(flybase-cols  loaderm-dbxref (# loaderm-dbxref-id loaderm-id dbxref-id is-for-definition))
+(flybase-cols  loaderm-relationship (# loaderm-relationship-id type-id subject-id object-id))
+(flybase-cols  loadermpath (# loadermpath-id type-id subject-id object-id cv-id pathdistance))
+(flybase-cols  loadermprop (# loadermprop-id loaderm-id type-id value rank))
+(flybase-cols  loadermsynonym (# loadermsynonym-id loaderm-id name type-id))
+(flybase-cols  db (# db-id name contact-id description urlprefix url))
+(flybase-cols  dbxref (# dbxref-id db-id accession version description url))
+(flybase-cols  dbxrefprop (# dbxrefprop-id dbxref-id type-id value rank))
+(flybase-cols  eimage (# eimage-id eimage-data eimage-type image-uri))
+(flybase-cols  environment (# environment-id uniquename description))
+(flybase-cols  environment-loaderm (# environment-loaderm-id environment-id loaderm-id))
+(flybase-cols  expression (# expression-id uniquename md5checksum description))
+(flybase-cols  expression-loaderm (# expression-loaderm-id expression-id loaderm-id rank loaderm-type-id))
+(flybase-cols  expression-loadermprop (# expression-loadermprop-id expression-loaderm-id type-id value rank))
+(flybase-cols  expression-image (# expression-image-id expression-id eimage-id))
+(flybase-cols  expressionprop (# expressionprop-id expression-id type-id value rank))
+(flybase-cols  expression-pub (# expression-pub-id expression-id pub-id))
+(flybase-cols  feature (# feature-id dbxref-id organism-id name uniquename residues seqlen md5checksum type-id is-analysis timeaccessioned timelastmodified is-obsolete))
+(flybase-cols  feature-loaderm (# feature-loaderm-id feature-id loaderm-id pub-id is-not))
+(flybase-cols  feature-loaderm-dbxref (# feature-loaderm-dbxref-id feature-loaderm-id dbxref-id))
+(flybase-cols  feature-loadermprop (# feature-loadermprop-id feature-loaderm-id type-id value rank))
+(flybase-cols  feature-dbxref (# feature-dbxref-id feature-id dbxref-id is-current))
+(flybase-cols  feature-expression (# feature-expression-id expression-id feature-id pub-id))
+(flybase-cols  feature-expressionprop (# feature-expressionprop-id feature-expression-id type-id value rank))
+(flybase-cols  feature-genotype (# feature-genotype-id feature-id genotype-id chromosome-id rank cgroup loaderm-id))
+(flybase-cols  feature-grpmember (# feature-grpmember-id grpmember-id feature-id))
+(flybase-cols  feature-grpmember-pub (# feature-grpmember-pub-id pub-id feature-grpmember-id))
+(flybase-cols  feature-humanhealth-dbxref (# feature-humanhealth-dbxref-id humanhealth-dbxref-id feature-id pub-id))
+(flybase-cols  feature-interaction (# feature-interaction-id feature-id interaction-id role-id rank))
+(flybase-cols  feature-interactionprop (# feature-interactionprop-id feature-interaction-id type-id value rank))
+(flybase-cols  feature-interaction-pub (# feature-interaction-pub-id feature-interaction-id pub-id))
+(flybase-cols  feature-phenotype (# feature-phenotype-id feature-id phenotype-id))
+(flybase-cols  feature-pubprop (# feature-pubprop-id feature-pub-id type-id value rank))
+(flybase-cols  feature-relationship (# feature-relationship-id subject-id object-id type-id rank value))
+(flybase-cols  feature-relationshipprop (# feature-relationshipprop-id feature-relationship-id type-id value rank))
+(flybase-cols  feature-relationshipprop-pub (# feature-relationshipprop-pub-id feature-relationshipprop-id pub-id))
+(flybase-cols  feature-relationship-pub (# feature-relationship-pub-id feature-relationship-id pub-id))
+(flybase-cols  feature-synonym (# feature-synonym-id synonym-id feature-id pub-id is-current is-internal))
+(flybase-cols  featureloc (# featureloc-id feature-id srcfeature-id fmin is-fmin-partial fmax is-fmax-partial strand phase residue-info locgroup rank))
+(flybase-cols  featureloc-pub (# featureloc-pub-id featureloc-id pub-id))
+(flybase-cols  featuremap (# featuremap-id name description unittype-id))
+(flybase-cols  featuremap-pub (# featuremap-pub-id featuremap-id pub-id))
+(flybase-cols  featurepos (# featurepos-id featuremap-id feature-id map-feature-id mappos))
+(flybase-cols  featureprop (# featureprop-id feature-id type-id value rank))
+(flybase-cols  featureprop-pub (# featureprop-pub-id featureprop-id pub-id))
+(flybase-cols  feature-pub (# feature-pub-id feature-id pub-id))
+(flybase-cols  featurerange (# featurerange-id featuremap-id feature-id leftstartf-id leftendf-id rightstartf-id rightendf-id rangestr))
+(flybase-cols  genotype (# genotype-id uniquename description name is-obsolete))
+(flybase-cols  genotype-loaderm (# genotype-loaderm-id genotype-id loaderm-id pub-id is-not rank))
+(flybase-cols  genotype-loadermprop (# genotype-loadermprop-id genotype-loaderm-id type-id value rank))
+(flybase-cols  genotype-dbxref (# genotype-dbxref-id genotype-id dbxref-id is-current))
+(flybase-cols  genotype-synonym (# genotype-synonym-id genotype-id synonym-id pub-id is-current is-internal))
+(flybase-cols  genotypeprop (# genotypeprop-id genotype-id type-id value rank cvalue-id))
+(flybase-cols  genotypeprop-pub (# genotypeprop-pub-id genotypeprop-id pub-id))
+(flybase-cols  genotype-pub (# genotype-pub-id genotype-id pub-id))
+(flybase-cols  grp (# grp-id name uniquename type-id is-analysis is-obsolete))
+(flybase-cols  grp-loaderm (# grp-loaderm-id is-not loaderm-id grp-id pub-id))
+(flybase-cols  grp-dbxref (# grp-dbxref-id is-current dbxref-id grp-id))
+(flybase-cols  grp-pubprop (# grp-pubprop-id value rank type-id grp-pub-id))
+(flybase-cols  grp-relationship (# grp-relationship-id value rank type-id subject-id object-id))
+(flybase-cols  grp-relationshipprop (# grp-relationshipprop-id value rank type-id grp-relationship-id))
+(flybase-cols  grp-relationship-pub (# grp-relationship-pub-id pub-id grp-relationship-id))
+(flybase-cols  grp-synonym (# grp-synonym-id synonym-id grp-id pub-id is-current is-internal))
+(flybase-cols  grpmember (# grpmember-id rank type-id grp-id))
+(flybase-cols  grpmember-loaderm (# grpmember-loaderm-id is-not loaderm-id grpmember-id pub-id))
+(flybase-cols  grpmemberprop (# grpmemberprop-id value rank type-id grpmember-id))
+(flybase-cols  grpmemberprop-pub (# grpmemberprop-pub-id pub-id grpmemberprop-id))
+(flybase-cols  grpmember-pub (# grpmember-pub-id pub-id grpmember-id))
+(flybase-cols  grpprop (# grpprop-id value rank type-id grp-id))
+(flybase-cols  grpprop-pub (# grpprop-pub-id pub-id grpprop-id))
+(flybase-cols  grp-pub (# grp-pub-id pub-id grp-id))
+(flybase-cols  humanhealth (# humanhealth-id name uniquename organism-id dbxref-id is-obsolete))
+(flybase-cols  humanhealth-loaderm (# humanhealth-loaderm-id humanhealth-id loaderm-id pub-id))
+(flybase-cols  humanhealth-loadermprop (# humanhealth-loadermprop-id humanhealth-loaderm-id type-id value rank))
+(flybase-cols  humanhealth-dbxref (# humanhealth-dbxref-id humanhealth-id dbxref-id is-current))
+(flybase-cols  humanhealth-dbxrefprop (# humanhealth-dbxrefprop-id humanhealth-dbxref-id type-id value rank))
+(flybase-cols  humanhealth-dbxrefprop-pub (# humanhealth-dbxrefprop-pub-id humanhealth-dbxrefprop-id pub-id))
+(flybase-cols  humanhealth-feature (# humanhealth-feature-id humanhealth-id feature-id pub-id))
+(flybase-cols  humanhealth-featureprop (# humanhealth-featureprop-id humanhealth-feature-id type-id value rank))
+(flybase-cols  humanhealth-phenotype (# humanhealth-phenotype-id humanhealth-id phenotype-id pub-id))
+(flybase-cols  humanhealth-phenotypeprop (# humanhealth-phenotypeprop-id humanhealth-phenotype-id type-id value rank))
+(flybase-cols  humanhealth-pubprop (# humanhealth-pubprop-id value rank type-id humanhealth-pub-id))
+(flybase-cols  humanhealth-relationship (# humanhealth-relationship-id subject-id object-id type-id value rank))
+(flybase-cols  humanhealth-relationship-pub (# humanhealth-relationship-pub-id humanhealth-relationship-id pub-id))
+(flybase-cols  humanhealth-synonym (# humanhealth-synonym-id humanhealth-id synonym-id pub-id is-current is-internal))
+(flybase-cols  humanhealthprop (# humanhealthprop-id humanhealth-id type-id value rank))
+(flybase-cols  humanhealthprop-pub (# humanhealthprop-pub-id humanhealthprop-id pub-id))
+(flybase-cols  humanhealth-pub (# humanhealth-pub-id humanhealth-id pub-id))
+(flybase-cols  interaction (# interaction-id uniquename type-id description is-obsolete))
+(flybase-cols  interaction-cell-line (# interaction-cell-line-id cell-line-id interaction-id pub-id))
+(flybase-cols  interaction-loaderm (# interaction-loaderm-id interaction-id loaderm-id))
+(flybase-cols  interaction-loadermprop (# interaction-loadermprop-id interaction-loaderm-id type-id value rank))
+(flybase-cols  interaction-expression (# interaction-expression-id expression-id interaction-id pub-id))
+(flybase-cols  interaction-expressionprop (# interaction-expressionprop-id interaction-expression-id type-id value rank))
+(flybase-cols  interaction-group (# interaction-group-id uniquename is-obsolete description))
+(flybase-cols  interaction-group-feature-interaction (# interaction-group-feature-interaction-id interaction-group-id feature-interaction-id rank ftype))
+(flybase-cols  interactionprop (# interactionprop-id interaction-id type-id value rank))
+(flybase-cols  interactionprop-pub (# interactionprop-pub-id interactionprop-id pub-id))
+(flybase-cols  interaction-pub (# interaction-pub-id interaction-id pub-id))
+(flybase-cols  library (# library-id organism-id name uniquename type-id is-obsolete timeaccessioned timelastmodified))
+(flybase-cols  library-loaderm (# library-loaderm-id library-id loaderm-id pub-id))
+(flybase-cols  library-loadermprop (# library-loadermprop-id library-loaderm-id type-id value rank))
+(flybase-cols  library-dbxref (# library-dbxref-id library-id dbxref-id is-current))
+(flybase-cols  library-dbxrefprop (# library-dbxrefprop-id library-dbxref-id type-id value rank))
+(flybase-cols  library-expression (# library-expression-id expression-id library-id pub-id))
+(flybase-cols  library-expressionprop (# library-expressionprop-id library-expression-id type-id value rank))
+(flybase-cols  library-feature (# library-feature-id library-id feature-id))
+(flybase-cols  library-featureprop (# library-featureprop-id library-feature-id type-id value rank))
+(flybase-cols  library-grpmember (# library-grpmember-id grpmember-id library-id))
+(flybase-cols  library-humanhealth (# library-humanhealth-id humanhealth-id library-id pub-id))
+(flybase-cols  library-humanhealthprop (# library-humanhealthprop-id library-humanhealth-id type-id value rank))
+(flybase-cols  library-interaction (# library-interaction-id interaction-id library-id pub-id))
+(flybase-cols  library-relationship (# library-relationship-id subject-id object-id type-id))
+(flybase-cols  library-relationship-pub (# library-relationship-pub-id library-relationship-id pub-id))
+(flybase-cols  library-strain (# library-strain-id strain-id library-id pub-id))
+(flybase-cols  library-strainprop (# library-strainprop-id library-strain-id type-id value rank))
+(flybase-cols  library-synonym (# library-synonym-id synonym-id library-id pub-id is-current is-internal))
+(flybase-cols  libraryprop (# libraryprop-id library-id type-id value rank))
+(flybase-cols  libraryprop-pub (# libraryprop-pub-id libraryprop-id pub-id))
+(flybase-cols  library-pub (# library-pub-id library-id pub-id))
+(flybase-cols  lock (# lock-id username locktype lockname lockrank lockstatus timeaccessioend timelastmodified chadoxmlfile comment task))
+(flybase-cols  organism (# organism-id abbreviation genus species common-name comment))
+(flybase-cols  organism-loaderm (# organism-loaderm-id organism-id loaderm-id rank pub-id))
+(flybase-cols  organism-loadermprop (# organism-loadermprop-id organism-loaderm-id type-id value rank))
+(flybase-cols  organism-dbxref (# organism-dbxref-id organism-id dbxref-id is-current))
+(flybase-cols  organism-grpmember (# organism-grpmember-id grpmember-id organism-id))
+(flybase-cols  organism-library (# organism-library-id organism-id library-id))
+(flybase-cols  organismprop (# organismprop-id organism-id type-id value rank))
+(flybase-cols  organismprop-pub (# organismprop-pub-id organismprop-id pub-id))
+(flybase-cols  organism-pub (# organism-pub-id organism-id pub-id))
+(flybase-cols  phendesc (# phendesc-id genotype-id environment-id description type-id pub-id))
+(flybase-cols  phenotype (# phenotype-id uniquename observable-id attr-id value cvalue-id assay-id))
+(flybase-cols  phenotype-comparison (# phenotype-comparison-id genotype1-id environment1-id genotype2-id environment2-id phenotype1-id phenotype2-id pub-id organism-id))
+(flybase-cols  phenotype-comparison-loaderm (# phenotype-comparison-loaderm-id phenotype-comparison-id loaderm-id rank))
+(flybase-cols  phenotype-loaderm (# phenotype-loaderm-id phenotype-id loaderm-id rank))
+(flybase-cols  phenstatement (# phenstatement-id genotype-id environment-id phenotype-id type-id pub-id))
+(flybase-cols  project (# project-id name description))
+(flybase-cols  pub (# pub-id title volumetitle volume series-name issue pyear pages miniref type-id is-obsolete publisher pubplace uniquename))
+(flybase-cols  pub-dbxref (# pub-dbxref-id pub-id dbxref-id is-current))
+(flybase-cols  pub-relationship (# pub-relationship-id type-id subject-id object-id))
+(flybase-cols  pubauthor (# pubauthor-id pub-id rank editor surname givennames suffix))
+(flybase-cols  pubprop (# pubprop-id pub-id type-id value rank))
+(flybase-cols  stock (# stock-id dbxref-id organism-id name uniquename description type-id is-obsolete))
+(flybase-cols  stock-loaderm (# stock-loaderm-id stock-id loaderm-id pub-id))
+(flybase-cols  stock-dbxref (# stock-dbxref-id stock-id dbxref-id is-current))
+(flybase-cols  stock-genotype (# stock-genotype-id stock-id genotype-id))
+(flybase-cols  stock-relationship (# stock-relationship-id subject-id object-id type-id value rank))
+(flybase-cols  stock-relationship-pub (# stock-relationship-pub-id stock-relationship-id pub-id))
+(flybase-cols  stockcollection (# stockcollection-id type-id contact-id name uniquename))
+(flybase-cols  stockcollection-stock (# stockcollection-stock-id stockcollection-id stock-id))
+(flybase-cols  stockcollectionprop (# stockcollectionprop-id stockcollection-id type-id value rank))
+(flybase-cols  stockprop (# stockprop-id stock-id type-id value rank))
+(flybase-cols  stockprop-pub (# stockprop-pub-id stockprop-id pub-id))
+(flybase-cols  stock-pub (# stock-pub-id stock-id pub-id))
+(flybase-cols  strain (# strain-id name uniquename organism-id dbxref-id is-obsolete))
+(flybase-cols  strain-loaderm (# strain-loaderm-id strain-id loaderm-id pub-id))
+(flybase-cols  strain-loadermprop (# strain-loadermprop-id strain-loaderm-id type-id value rank))
+(flybase-cols  strain-dbxref (# strain-dbxref-id strain-id dbxref-id is-current))
+(flybase-cols  strain-feature (# strain-feature-id strain-id feature-id pub-id))
+(flybase-cols  strain-featureprop (# strain-featureprop-id strain-feature-id type-id value rank))
+(flybase-cols  strain-phenotype (# strain-phenotype-id strain-id phenotype-id pub-id))
+(flybase-cols  strain-phenotypeprop (# strain-phenotypeprop-id strain-phenotype-id type-id value rank))
+(flybase-cols  strain-relationship (# strain-relationship-id subject-id object-id type-id value rank))
+(flybase-cols  strain-relationship-pub (# strain-relationship-pub-id strain-relationship-id pub-id))
+(flybase-cols  strain-synonym (# strain-synonym-id strain-id synonym-id pub-id is-current is-internal))
+(flybase-cols  strainprop (# strainprop-id strain-id type-id value rank))
+(flybase-cols  strainprop-pub (# strainprop-pub-id strainprop-id pub-id))
+(flybase-cols  strain-pub (# strain-pub-id strain-id pub-id))
+(flybase-cols  synonym (# synonym-id name type-id synonym-sgml))
+(flybase-cols  tableinfo (# tableinfo-id name primary-key-column is-view view-on-table-id superclass-table-id is-updateable modification-date))
+(flybase-cols  update-track (# update-track-id release fbid time-update author statement comment annotation-id))
+(table-n-type  allele-genetic-interactions 1 allele-symbol $_)
+(table-n-type  allele-genetic-interactions 2 allele-FBal FBal)
+(table-n-type  allele-genetic-interactions 3 interaction $_)
+(table-n-type  allele-genetic-interactions 4 FBrf FBrf)
+(table-n-type  disease-model-annotations 1 FBgn FBgn)
+(table-n-type  disease-model-annotations 2 Gene-symbol $_)
+(table-n-type  disease-model-annotations 3 HGNC HGNC)
+(table-n-type  disease-model-annotations 4 DO-qualifier $_)
+(table-n-type  disease-model-annotations 5 DO $_)
+(table-n-type  disease-model-annotations 6 DO-term $_)
+(table-n-type  disease-model-annotations 7 Allele-used-in-model-(FBal) FBal)
+(table-n-type  disease-model-annotations 8 Allele-used-in-model-(symbol) $_)
+(table-n-type  disease-model-annotations 9 Based-on-orthology-with-(HGNC-ID) HGNC)
+(table-n-type  disease-model-annotations 10 Based-on-orthology-with-(symbol) $_)
+(table-n-type  disease-model-annotations 11 Evidence/interacting-alleles $_)
+(table-n-type  disease-model-annotations 12 Reference-(FBrf) FBrf)
+(table-n-type  dmel-gene-sequence-ontology-annotations 1 gene-primary-id $_)
+(table-n-type  dmel-gene-sequence-ontology-annotations 2 gene-symbol $_)
+(table-n-type  dmel-gene-sequence-ontology-annotations 3 so-term-name $_)
+(table-n-type  dmel-gene-sequence-ontology-annotations 4 so-term-id $_)
+(table-n-type  dmel-human-orthologs-disease 1 Dmel-gene $_)
+(table-n-type  dmel-human-orthologs-disease 2 Dmel-gene-symbol $_)
+(table-n-type  dmel-human-orthologs-disease 3 Human-gene-HGNC HGNC)
+(table-n-type  dmel-human-orthologs-disease 4 Human-gene-OMIM OMIM)
+(table-n-type  dmel-human-orthologs-disease 5 Human-gene-symbol $_)
+(table-n-type  dmel-human-orthologs-disease 6 DIOPT-score $_)
+(table-n-type  dmel-human-orthologs-disease 7 (ListValue OMIM-Phenotype-IDs) OMIM)
+(table-n-type  dmel-human-orthologs-disease 8 OMIM-Phenotype-IDs[name] OMIM)
+(table-n-type  fbgn-fbtr-fbpp-expanded 1 organism $_)
+(table-n-type  fbgn-fbtr-fbpp-expanded 2 gene-type $_)
+(table-n-type  fbgn-fbtr-fbpp-expanded 3 gene-ID FBgn)
+(table-n-type  fbgn-fbtr-fbpp-expanded 4 gene-symbol $_)
+(table-n-type  fbgn-fbtr-fbpp-expanded 5 gene-fullname $_)
+(table-n-type  fbgn-fbtr-fbpp-expanded 6 annotation-ID $_)
+(table-n-type  fbgn-fbtr-fbpp-expanded 7 transcript-type $_)
+(table-n-type  fbgn-fbtr-fbpp-expanded 8 transcript-ID FBtr)
+(table-n-type  fbgn-fbtr-fbpp-expanded 9 transcript-symbol $_)
+(table-n-type  fbgn-fbtr-fbpp-expanded 10 polypeptide-ID FBpp)
+(table-n-type  fbgn-fbtr-fbpp-expanded 11 polypeptide-symbol $_)
+(table-n-type  fbrf-pmid-pmcid-doi 1 FBrf FBrf)
+(table-n-type  fbrf-pmid-pmcid-doi 2 PMID PMID)
+(table-n-type  fbrf-pmid-pmcid-doi 3 PMCID PMCID)
+(table-n-type  fbrf-pmid-pmcid-doi 4 DOI DOI)
+(table-n-type  fbrf-pmid-pmcid-doi 5 pub-type $_)
+(table-n-type  fbrf-pmid-pmcid-doi 6 miniref $_)
+(table-n-type  fbrf-pmid-pmcid-doi 7 pmid-added $_)
+(table-n-type  gene-genetic-interactions 1 Starting-gene-symbol $_)
+(table-n-type  gene-genetic-interactions 2 Starting-gene-FBgn FBgn)
+(table-n-type  gene-genetic-interactions 3 Interacting-gene-symbol $_)
+(table-n-type  gene-genetic-interactions 4 Interacting-gene-FBgn FBgn)
+(table-n-type  gene-genetic-interactions 5 Interaction-type $_)
+(table-n-type  gene-genetic-interactions 6 Publication-FBrf FBrf)
+(table-n-type  gene-map-table 1 organism-abbreviation $_)
+(table-n-type  gene-map-table 2 current-symbol $_)
+(table-n-type  gene-map-table 3 primary-FBid FBgn)
+(table-n-type  gene-map-table 4 recombination-loc $_)
+(table-n-type  gene-map-table 5 cytogenetic-loc $_)
+(table-n-type  gene-map-table 6 sequence-loc $_)
+(table-n-type  physical-interactions-mitab 1 ID-Interactor-A $_)
+(table-n-type  physical-interactions-mitab 2 ID-Interactor-B $_)
+(table-n-type  physical-interactions-mitab 3 Alt-ID-Interactor-A $_)
+(table-n-type  physical-interactions-mitab 4 Alt-ID-Interactor-B $_)
+(table-n-type  physical-interactions-mitab 5 Alias-Interactor-A $_)
+(table-n-type  physical-interactions-mitab 6 Alias-Interactor-B $_)
+(table-n-type  physical-interactions-mitab 7 Interaction-Detection-Method $_)
+(table-n-type  physical-interactions-mitab 8 Publication-1st-Author $_)
+(table-n-type  physical-interactions-mitab 9 Publication $_)
+(table-n-type  physical-interactions-mitab 10 Taxid-Interactor-A $_)
+(table-n-type  physical-interactions-mitab 11 Taxid-Interactor-B $_)
+(table-n-type  physical-interactions-mitab 12 Interaction-Type $_)
+(table-n-type  physical-interactions-mitab 13 Source-Database $_)
+(table-n-type  physical-interactions-mitab 14 Interaction-Identifier $_)
+(table-n-type  physical-interactions-mitab 15 Confidence-Value $_)
+(table-n-type  physical-interactions-mitab 16 Expansion-Method $_)
+(table-n-type  physical-interactions-mitab 17 Biological-Role-Interactor-A $_)
+(table-n-type  physical-interactions-mitab 18 Biological-Role-Interactor-B $_)
+(table-n-type  physical-interactions-mitab 19 Experimental-Role-Interactor-A $_)
+(table-n-type  physical-interactions-mitab 20 Experimental-Role-Interactor-B $_)
+(table-n-type  physical-interactions-mitab 21 Type-Interactor-A $_)
+(table-n-type  physical-interactions-mitab 22 Type-Interactor-B $_)
+(table-n-type  physical-interactions-mitab 23 Xref-Interactor-A $_)
+(table-n-type  physical-interactions-mitab 24 Xref-Interactor-B $_)
+(table-n-type  physical-interactions-mitab 25 Interaction-Xref $_)
+(table-n-type  physical-interactions-mitab 26 Annotation-Interactor-A $_)
+(table-n-type  physical-interactions-mitab 27 Annotation-Interactor-B $_)
+(table-n-type  physical-interactions-mitab 28 Interaction-Annotation $_)
+(table-n-type  physical-interactions-mitab 29 Host-Organism $_)
+(table-n-type  physical-interactions-mitab 30 Interaction-Parameters $_)
+(table-n-type  physical-interactions-mitab 31 Creation-Date $_)
+(table-n-type  physical-interactions-mitab 32 Update-Date $_)
+(table-n-type  physical-interactions-mitab 33 Checksum-Interactor-A $_)
+(table-n-type  physical-interactions-mitab 34 Checksum-Interactor-B $_)
+(table-n-type  physical-interactions-mitab 35 Interaction-Checksum $_)
+(table-n-type  physical-interactions-mitab 36 Negative $_)
+(table-n-type  physical-interactions-mitab 37 Feature-Interactor-A $_)
+(table-n-type  physical-interactions-mitab 38 Feature-Interactor-B $_)
+(table-n-type  physical-interactions-mitab 39 Stoichiometry-Interactor-A $_)
+(table-n-type  physical-interactions-mitab 40 Stoichiometry-Interactor-B $_)
+(table-n-type  physical-interactions-mitab 41 Identification-Method-Participant-A $_)
+(table-n-type  physical-interactions-mitab 42 Identification-Method-Participant-B $_)
+(table-n-type  fbal-to-fbgn 1 AlleleID FBal)
+(table-n-type  fbal-to-fbgn 2 AlleleSymbol $_)
+(table-n-type  fbal-to-fbgn 3 GeneID FBgn)
+(table-n-type  fbal-to-fbgn 4 GeneSymbol $_)
+(table-n-type  cDNA-clone 1 FBcl FBcl)
+(table-n-type  cDNA-clone 2 organism-abbreviation $_)
+(table-n-type  cDNA-clone 3 clone-name $_)
+(table-n-type  cDNA-clone 4 dataset-metadata-name $_)
+(table-n-type  cDNA-clone 5 cDNA-accession $_)
+(table-n-type  cDNA-clone 6 EST-accession $_)
+(table-n-type  genomic-clone 1 FBcl FBcl)
+(table-n-type  genomic-clone 2 organism-abbreviation $_)
+(table-n-type  genomic-clone 3 clone-name $_)
+(table-n-type  genomic-clone 4 accession $_)
+(table-n-type  automated-gene-summaries 1 primary-FBgn FBgn)
+(table-n-type  automated-gene-summaries 2 summary-text $_)
+(table-n-type  best-gene-summary 1 FBgn FBgn)
+(table-n-type  best-gene-summary 2 Gene-Symbol $_)
+(table-n-type  best-gene-summary 3 Summary-Source $_)
+(table-n-type  best-gene-summary 4 Summary $_)
+(table-n-type  Dmel-enzyme 1 gene-group-id $_)
+(table-n-type  Dmel-enzyme 2 gene-group-name $_)
+(table-n-type  Dmel-enzyme 3 gene-group-GO-id $_)
+(table-n-type  Dmel-enzyme 4 gene-group-GO-name $_)
+(table-n-type  Dmel-enzyme 5 gene-group-EC-number $_)
+(table-n-type  Dmel-enzyme 6 gene-group-EC-name $_)
+(table-n-type  Dmel-enzyme 7 gene-id FBgn)
+(table-n-type  Dmel-enzyme 8 gene-symbol $_)
+(table-n-type  Dmel-enzyme 9 gene-name $_)
+(table-n-type  Dmel-enzyme 10 gene-EC-number $_)
+(table-n-type  Dmel-enzyme 11 gene-EC-name $_)
+(table-n-type  dmel-unique-protein-isoforms 1 FBgn FBgn)
+(table-n-type  dmel-unique-protein-isoforms 2 FB-gene-symbol $_)
+(table-n-type  dmel-unique-protein-isoforms 3 representative-protein $_)
+(table-n-type  dmel-unique-protein-isoforms 4 identical-protein $_)
+(table-n-type  fbgn-annotation-ID 1 gene-symbol $_)
+(table-n-type  fbgn-annotation-ID 2 organism-abbreviation $_)
+(table-n-type  fbgn-annotation-ID 3 primary-FBgn FBgn)
+(table-n-type  fbgn-annotation-ID 4 secondary-FBgn FBgn)
+(table-n-type  fbgn-annotation-ID 5 annotation-ID FBan)
+(table-n-type  fbgn-annotation-ID 6 secondary-annotation-ID FBan)
+(table-n-type  fbgn-exons2affy1-overlaps 1 FBgn FBgn)
+(table-n-type  fbgn-exons2affy1-overlaps 2 affy $_)
+(table-n-type  fbgn-exons2affy2-overlaps 1 FBgn FBgn)
+(table-n-type  fbgn-exons2affy2-overlaps 2 affy $_)
+(table-n-type  fbgn-fbtr-fbpp 1 FBgn FBgn)
+(table-n-type  fbgn-fbtr-fbpp 2 FBtr FBtr)
+(table-n-type  fbgn-fbtr-fbpp 3 FBpp FBpp)
+(table-n-type  fbgn-gleanr 1 organism-abbreviation $_)
+(table-n-type  fbgn-gleanr 2 gene-symbol $_)
+(table-n-type  fbgn-gleanr 3 primary-FBgn FBgn)
+(table-n-type  fbgn-gleanr 4 GLEANR $_)
+(table-n-type  gene-functional-complementation 1 Dmel-gene-symbol $_)
+(table-n-type  gene-functional-complementation 2 Dmel-gene-FBgn FBgn)
+(table-n-type  gene-functional-complementation 3 ortholog-gene-symbol $_)
+(table-n-type  gene-functional-complementation 4 ortholog-gene-FBgn-ID FBgn)
+(table-n-type  gene-functional-complementation 5 reference-FBrf FBrf)
+(table-n-type  gene-group 1 FB-group FBgg)
+(table-n-type  gene-group 2 FB-group-symbol $_)
+(table-n-type  gene-group 3 FB-group-name $_)
+(table-n-type  gene-group 4 Parent-FB-group FBgg)
+(table-n-type  gene-group 5 Parent-FB-group-symbol $_)
+(table-n-type  gene-group 6 Group-member-FB-gene FBgn)
+(table-n-type  gene-group 7 Group-member-FB-gene-symbol $_)
+(table-n-type  gene-groups-HGNC 1 FB-group FBgg)
+(table-n-type  gene-groups-HGNC 2 FB-group-symbol $_)
+(table-n-type  gene-groups-HGNC 3 FB-group-name $_)
+(table-n-type  gene-groups-HGNC 4 Parent-FB-group FBgg)
+(table-n-type  gene-groups-HGNC 5 Parent-FB-group-symbol $_)
+(table-n-type  gene-groups-HGNC 6 Group-member-FB-gene FBgn)
+(table-n-type  gene-groups-HGNC 7 Group-member-FB-gene-symbol $_)
+(table-n-type  gene-rpkm-matrix 1 gene-primary-id FBgn)
+(table-n-type  gene-rpkm-matrix 2 gene-symbol $_)
+(table-n-type  gene-rpkm-matrix 3 gene-fullname $_)
+(table-n-type  gene-rpkm-matrix 4 gene-type $_)
+(table-n-type  gene-rpkm-matrix 5 BCM-1-E2-4hr-(FBlc0000061) FBlc)
+(table-n-type  gene-rpkm-matrix 6 BCM-1-E14-16hr-(FBlc0000062) FBlc)
+(table-n-type  gene-rpkm-matrix 7 BCM-1-E2-16hr-(FBlc0000063) FBlc)
+(table-n-type  gene-rpkm-matrix 8 BCM-1-E2-16hr100-(FBlc0000064) FBlc)
+(table-n-type  gene-rpkm-matrix 9 BCM-1-L3i-(FBlc0000065) FBlc)
+(table-n-type  gene-rpkm-matrix 10 BCM-1-L3i100-(FBlc0000066) FBlc)
+(table-n-type  gene-rpkm-matrix 11 BCM-1-P3d-(FBlc0000067) FBlc)
+(table-n-type  gene-rpkm-matrix 12 BCM-1-FA3d-(FBlc0000068) FBlc)
+(table-n-type  gene-rpkm-matrix 13 BCM-1-MA3d-(FBlc0000069) FBlc)
+(table-n-type  gene-rpkm-matrix 14 BCM-1-P-(FBlc0000070) FBlc)
+(table-n-type  gene-rpkm-matrix 15 BCM-1-L-(FBlc0000071) FBlc)
+(table-n-type  gene-rpkm-matrix 16 BCM-1-A17d-(FBlc0000072) FBlc)
+(table-n-type  gene-rpkm-report 1 Release-ID $_)
+(table-n-type  gene-rpkm-report 2 FBgn FBgn)
+(table-n-type  gene-rpkm-report 3 GeneSymbol $_)
+(table-n-type  gene-rpkm-report 4 Parent-library-FBlc FBlc)
+(table-n-type  gene-rpkm-report 5 Parent-library-name $_)
+(table-n-type  gene-rpkm-report 6 RNASource-FBlc FBlc)
+(table-n-type  gene-rpkm-report 7 RNASource-name $_)
+(table-n-type  gene-rpkm-report 8 RPKM-value $_)
+(table-n-type  gene-rpkm-report 9 Bin-value $_)
+(table-n-type  gene-rpkm-report 10 Unique-exon-base-count $_)
+(table-n-type  gene-rpkm-report 11 Total-exon-base-count $_)
+(table-n-type  gene-rpkm-report 12 Count-used $_)
+(table-n-type  gene-snapshots 1 FBgn FBgn)
+(table-n-type  gene-snapshots 2 GeneSymbol $_)
+(table-n-type  gene-snapshots 3 GeneName $_)
+(table-n-type  gene-snapshots 4 datestamp $_)
+(table-n-type  gene-snapshots 5 gene-snapshot-text $_)
+(table-n-type  pathway-group 1 FB-group FBgg)
+(table-n-type  pathway-group 2 FB-group-symbol $_)
+(table-n-type  pathway-group 3 FB-group-name $_)
+(table-n-type  pathway-group 4 Parent-FB-group FBgg)
+(table-n-type  pathway-group 5 Parent-FB-group-symbol $_)
+(table-n-type  pathway-group 6 Group-member-FB-gene FBgn)
+(table-n-type  pathway-group 7 Group-member-FB-gene-symbol $_)
+(table-n-type  insertion-mapping 1 insertion-symbol $_)
+(table-n-type  insertion-mapping 2 FBti FBti)
+(table-n-type  insertion-mapping 3 genomic-location $_)
+(table-n-type  insertion-mapping 4 range $_)
+(table-n-type  insertion-mapping 5 orientation $_)
+(table-n-type  insertion-mapping 6 estimated-cytogenetic-location $_)
+(table-n-type  insertion-mapping 7 observed-cytogenetic-location $_)
+(table-n-type  cyto-genetic-seq 1 Cytogenetic-map-position $_)
+(table-n-type  cyto-genetic-seq 2 Genetic-map-position $_)
+(table-n-type  cyto-genetic-seq 3 Sequence-coordinates-(release-6) $_)
+(table-n-type  cyto-genetic-seq 4 R6-conversion-notes $_)
+(table-n-type  dataset-metadata 1 Dataset-Metadata-ID $_)
+(table-n-type  dataset-metadata 2 Dataset-Metadata-Name $_)
+(table-n-type  dataset-metadata 3 Item-ID $_)
+(table-n-type  dataset-metadata 4 Item-Name $_)
+(table-n-type  dmel-paralogs 1 FBgn FBgn)
+(table-n-type  dmel-paralogs 2 GeneSymbol $_)
+(table-n-type  dmel-paralogs 3 Arm/Scaffold $_)
+(table-n-type  dmel-paralogs 4 Location $_)
+(table-n-type  dmel-paralogs 5 Strand $_)
+(table-n-type  dmel-paralogs 6 Paralog-FBgn FBgn)
+(table-n-type  dmel-paralogs 7 Paralog-GeneSymbol $_)
+(table-n-type  dmel-paralogs 8 Paralog-Arm/Scaffold $_)
+(table-n-type  dmel-paralogs 9 Paralog-Location $_)
+(table-n-type  dmel-paralogs 10 Paralog-Strand $_)
+(table-n-type  dmel-paralogs 11 DIOPT-score $_)
+(table-n-type  entity-publication 1 entity-id $_)
+(table-n-type  entity-publication 2 entity-name $_)
+(table-n-type  entity-publication 3 FlyBase-publication FBrf)
+(table-n-type  entity-publication 4 PubMed $_)
+(table-n-type  organism-list 1 genus $_)
+(table-n-type  organism-list 2 species $_)
+(table-n-type  organism-list 3 abbreviation $_)
+(table-n-type  organism-list 4 common-name $_)
+(table-n-type  organism-list 5 NCBI-taxon $_)
+(table-n-type  organism-list 6 drosophilid? $_)
+(table-n-type  stocks 1 stock-id FBst)
+(table-n-type  stocks 2 dbxref-id $_)
+(table-n-type  stocks 3 organism-id $_)
+(table-n-type  stocks 4 name $_)
+(table-n-type  stocks 5 uniquename $_)
+(table-n-type  stocks 6 description $_)
+(table-n-type  stocks 7 type-id $_)
+(table-n-type  stocks 8 is-obsolete $_)
+(table-n-type  synonym 1 primary-FBid FBgn)
+(table-n-type  synonym 2 organism-abbreviation $_)
+(table-n-type  synonym 3 current-symbol $_)
+(table-n-type  synonym 4 current-fullname $_)
+(table-n-type  synonym 5 fullname-synonym $_)
+(table-n-type  synonym 6 symbol-synonym $_)
+
+
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/md5sum.txt
 !(file-name md5sum  data/ftp.flybase.net/releases/current/precomputed_files/md5sum.txt)
 (num-columns md5sum 3)
 (duplicated-rows md5sum 0)
@@ -17,10 +471,9 @@
 (missing-values md5sum 3 0 () ())
 (most-frequent md5sum 2 ())
 (less-frequent md5sum 2 ())
-
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/alleles/allele_genetic_interactions_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/alleles/allele_genetic_interactions_fb_2023_04.tsv
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/alleles/allele_genetic_interactions_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/alleles/allele_genetic_interactions_fb_2023_04.tsv
 !(file-name allele_genetic_interactions  data/ftp.flybase.net/releases/current/precomputed_files/alleles/allele_genetic_interactions_fb_2023_04.tsv)
 (num-columns allele_genetic_interactions 4)
 (duplicated-rows allele_genetic_interactions 21)
@@ -44,10 +497,9 @@
 (less-frequent allele_genetic_interactions 3 (# (# "1038[1038] is an enhancer of visible phenotype of vg[83b27]/vg[1]" 1) (# "bas[1] is an enhancer of paralytic phenotype of para[bss1]" 1) (# "baz[4] has abnormal cell polarity phenotype, enhanceable by Dhc64C[6-6]/Dhc64C[6-8]" 1) (# "baz[4] has abnormal neuroanatomy phenotype, non-enhanceable by aPKC[Exc55]" 1) (# "baz[4] has abnormal neuroanatomy phenotype, non-suppressible by aPKC[Exc55]" 1) (# "baz[4] has bouton phenotype, non-enhanceable by aPKC[Exc55]" 1) (# "baz[4] has bouton phenotype, non-suppressible by aPKC[Exc55]" 1)))
 (most-frequent allele_genetic_interactions 4 (# (# FBrf0179402 1369) (# FBrf0237532 1506) (# FBrf0147055 1723) (# FBrf0246190 1852) (# FBrf0190765 1868) (# FBrf0199094 1940) (# FBrf0187664 2514)))
 (less-frequent allele_genetic_interactions 4 (# (# FBrf0158937 1) (# FBrf0159209 1) (# FBrf0192307 1) (# FBrf0226217 1) (# FBrf0160985 1) (# FBrf0134563 1) (# FBrf0235180 1)))
-
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/alleles/fbal_to_fbgn_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/alleles/fbal_to_fbgn_fb_2023_04.tsv
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/alleles/fbal_to_fbgn_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/alleles/fbal_to_fbgn_fb_2023_04.tsv
 !(file-name fbal_to_fbgn  data/ftp.flybase.net/releases/current/precomputed_files/alleles/fbal_to_fbgn_fb_2023_04.tsv)
 (num-columns fbal_to_fbgn 4)
 (duplicated-rows fbal_to_fbgn 0)
@@ -67,11 +519,10 @@
 (most-frequent fbal_to_fbgn 3 (# (# FBgn0004034 989) (# FBgn0003996 1474) (# FBgn0015250 2466) (# FBgn0262639 3340) (# FBgn0014446 4731) (# FBgn0014447 12710) (# FBgn0014445 30381)))
 (less-frequent fbal_to_fbgn 3 (# (# FBgn0267024 1) (# FBgn0044109 1) (# FBgn0018700 1) (# FBgn0014164 1) (# FBgn0003537 1) (# FBgn0002275 1) (# FBgn0001163 1)))
 (most-frequent fbal_to_fbgn 4 (# (# y 989) (# w 1474) (# "Ecol\\lexA" 2466) (# "Hsap\\RELA" 3340) (# "Avic\\GFP" 4731) (# "Ecol\\lacZ" 12710) (# "Scer\\GAL4" 30381)))
-(less-frequent fbal_to_fbgn 4 (# (# asRNA:CR45468 1) (# "E(rst)C383" 1) (# "Dpau\\v" 1) (# fez 1) (# Stp-1 1) (# "l(3)70Ac" 1) (# GustR 1)))
-
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/alleles/genotype_phenotype_data_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/alleles/genotype_phenotype_data_fb_2023_04.tsv
+(less-frequent fbal_to_fbgn 4 (# (# "asRNA:CR45468" 1) (# "E(rst)C383" 1) (# "Dpau\\v" 1) (# fez 1) (# "Stp-1" 1) (# "l(3)70Ac" 1) (# GustR 1)))
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/alleles/genotype_phenotype_data_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/alleles/genotype_phenotype_data_fb_2023_04.tsv
 !(file-name genotype_phenotype_data  data/ftp.flybase.net/releases/current/precomputed_files/alleles/genotype_phenotype_data_fb_2023_04.tsv)
 (num-columns genotype_phenotype_data 7)
 (duplicated-rows genotype_phenotype_data 1032)
@@ -110,10 +561,9 @@
 (less-frequent genotype_phenotype_data 6 (# (# FBcv0000732 1) (# "FBcv0000333|FBdv00005369|FBcv0000793" 1) (# "FBcv0000153|FBcv0000068" 1) (# "FBcv0000058|FBcv0000061" 1) (# "FBcv0000336|FBdv00005339|FBcv0000061" 1) (# "FBcv0007050|FBdv00007001|FBcv0000068" 1) (# "FBcv0007048|FBdv00005338" 1)))
 (most-frequent genotype_phenotype_data 7 (# (# FBrf0132177 2452) (# FBrf0179797 2682) (# FBrf0210524 7345) (# FBrf0212295 11407) (# FBrf0210226 11838) (# unattributed 15059) (# FBrf0214518 19955)))
 (less-frequent genotype_phenotype_data 7 (# (# FBrf0189827 1) (# FBrf0179942 1) (# FBrf0206908 1) (# FBrf0183397 1) (# FBrf0023153 1) (# FBrf0221688 1) (# FBrf0237982 1)))
-
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/clones/cDNA_clone_data_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/clones/cDNA_clone_data_fb_2023_04.tsv
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/clones/cDNA_clone_data_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/clones/cDNA_clone_data_fb_2023_04.tsv
 !(file-name cDNA_clone_data  data/ftp.flybase.net/releases/current/precomputed_files/clones/cDNA_clone_data_fb_2023_04.tsv)
 (num-columns cDNA_clone_data 6)
 (duplicated-rows cDNA_clone_data 0)
@@ -136,16 +586,15 @@
 (missing-values cDNA_clone_data 6 26168 (# "") (# 26168))
 (most-frequent cDNA_clone_data 2 (# (# Dsim 239) (# Dyak 426) (# Dpse 13648) (# Dmel 708257)))
 (less-frequent cDNA_clone_data 2 (# (# Dsim 239) (# Dyak 426) (# Dpse 13648) (# Dmel 708257)))
-(most-frequent cDNA_clone_data 4 (# (# SD_cDNA 18885) (# GH_cDNA 20768) (# AT_cDNA 22564) (# RH_cDNA 52475) (# RE_cDNA 58036) (# EK_EP_cDNA 161904) (# RP_cDNA 220083)))
-(less-frequent cDNA_clone_data 4 (# (# TB_cDNA 3) (# TA_cDNA 36) (# DE-ORESTES_cDNA 61) (# CB_cDNA 61) (# AM_cDNA 84) (# ST_cDNA 85) (# RT_pCR8_cDNA 156)))
+(most-frequent cDNA_clone_data 4 (# (# "SD_cDNA" 18885) (# "GH_cDNA" 20768) (# "AT_cDNA" 22564) (# "RH_cDNA" 52475) (# "RE_cDNA" 58036) (# "EK_EP_cDNA" 161904) (# "RP_cDNA" 220083)))
+(less-frequent cDNA_clone_data 4 (# (# "TB_cDNA" 3) (# "TA_cDNA" 36) (# "DE-ORESTES_cDNA" 61) (# "CB_cDNA" 61) (# "AM_cDNA" 84) (# "ST_cDNA" 85) (# "RT_pCR8_cDNA" 156)))
 (most-frequent cDNA_clone_data 5 (# (# AY069671 2) (# AY051957 2) (# AY061414 2) (# AY069707 2) (# AY051914 2) (# AY231748 3)))
 (less-frequent cDNA_clone_data 5 (# (# BT150453 1) (# BT050556 1) (# BT010219 1) (# BT125004 1) (# BT006005 1) (# BT099857 1) (# BT100119 1)))
 (most-frequent cDNA_clone_data 6 (# (# GH897620 1) (# GH934971 1) (# CA807794 1) (# AI256966 2) (# BI636404 2) (# BI633401 2)))
 (less-frequent cDNA_clone_data 6 (# (# CA807794 1) (# GH872553 1) (# GH881842 1) (# GH911192 1) (# GH817175 1) (# GH899993 1) (# GH918491 1)))
-
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/clones/genomic_clone_data_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/clones/genomic_clone_data_fb_2023_04.tsv
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/clones/genomic_clone_data_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/clones/genomic_clone_data_fb_2023_04.tsv
 !(file-name genomic_clone_data  data/ftp.flybase.net/releases/current/precomputed_files/clones/genomic_clone_data_fb_2023_04.tsv)
 (num-columns genomic_clone_data 4)
 (duplicated-rows genomic_clone_data 0)
@@ -163,10 +612,9 @@
 (less-frequent genomic_clone_data 2 (# (# Dmel 50400)))
 (most-frequent genomic_clone_data 4 (# (# AC104703 1) (# AC010031 1) (# AC069405 1) (# AC011662 2) (# AC098575 2) (# AC009888 2)))
 (less-frequent genomic_clone_data 4 (# (# AC105774 1) (# AC091226 1) (# AC069405 1) (# AC154046 1) (# AC010031 1) (# AC104703 1) (# AC010573 1)))
-
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/collaborators/fbgn_uniprot_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/collaborators/fbgn_uniprot_fb_2023_04.tsv
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/collaborators/fbgn_uniprot_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/collaborators/fbgn_uniprot_fb_2023_04.tsv
 !(file-name fbgn_uniprot  data/ftp.flybase.net/releases/current/precomputed_files/collaborators/fbgn_uniprot_fb_2023_04.tsv)
 (num-columns fbgn_uniprot 4)
 (duplicated-rows fbgn_uniprot 0)
@@ -182,15 +630,14 @@
 (missing-values fbgn_uniprot 4 0 () ())
 (most-frequent fbgn_uniprot 1 (# (# FBgn0265045 40) (# FBgn0013885 49) (# FBgn0002022 50) (# FBgn0285944 56) (# FBgn0033159 79) (# FBgn0082496 101) (# FBgn0003731 267)))
 (less-frequent fbgn_uniprot 1 (# (# FBgn0000008 1) (# FBgn0040211 1) (# FBgn0040235 1) (# FBgn0040239 1) (# FBgn0040250 1) (# FBgn0040251 1) (# FBgn0040252 1)))
-(most-frequent fbgn_uniprot 2 (# (# Strn-Mlck 40) (# "Dsub\\Acph-1" 49) (# Catsup 50) (# para 56) (# Dscam1 79) (# "Dpmo\\bi" 101) (# Egfr 267)))
+(most-frequent fbgn_uniprot 2 (# (# "Strn-Mlck" 40) (# "Dsub\\Acph-1" 49) (# Catsup 50) (# para 56) (# Dscam1 79) (# "Dpmo\\bi" 101) (# Egfr 267)))
 (less-frequent fbgn_uniprot 2 (# (# a 1) (# hgo 1) (# "c12.1" 1) (# bc10 1) (# Ugt304A1 1) (# Ugt302K1 1) (# Ugt303A1 1)))
 (most-frequent fbgn_uniprot 3 (# (# CG33950 32) (# CG44162 40) (# CG10449 50) (# CG9907 56) (# CG17800 79) (# CG10079 267)))
 (less-frequent fbgn_uniprot 3 (# (# CG6741 1) (# CG9913 1) (# CG3172 1) (# CG14356 1) (# CG14355 1) (# CG9722 1) (# CG9649 1)))
 (most-frequent fbgn_uniprot 4 (# (# Q7KV12 5) (# Q5F4J7 6) (# P02255 18) (# P84051 18) (# P02299 24) (# P02283 24) (# P84040 24)))
 (less-frequent fbgn_uniprot 4 (# (# A0A0B4LG21 1) (# Q9GST6 1) (# Q9GST1 1) (# Q9GN59 1) (# Q9GNH0 1) (# Q9GPD9 1) (# Q9GNH4 1)))
-
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/collaborators/gp_information.fb
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/collaborators/gp_information.fb
 !(file-name gp_informatio  data/ftp.flybase.net/releases/current/precomputed_files/collaborators/gp_information.fb)
 (num-columns gp_informatio 2)
 (duplicated-rows gp_informatio 8413)
@@ -203,10 +650,9 @@
 (less-frequent gp_informatio 1 (# (# "07/24/2023" 1) (# "receptor\tCG30106\tprotein\ttaxon:7227\t\tUniProtKB:A1ZAX0\t" 1) (# "1b\tCG6446\tprotein\ttaxon:7227\t\tUniProtKB:O44253|UniProtKB:Q7KK54\t" 1) (# "55B\tCG5765\tprotein\ttaxon:7227\t\tUniProtKB:Q8SXS5|UniProtKB:A1ZB24\t" 1) (# "K[+]" 1) (# shock 1) (# MCU 1)))
 (most-frequent gp_informatio 2 (# (# "1\tCG17725\tprotein\ttaxon:7227\t\tUniProtKB:P20007\t" 1) (# "6\tCG15068\tprotein\ttaxon:7227\t\tUniProtKB:A1ZB64\t" 1) (# "2\tCG15067\tprotein\ttaxon:7227\t\tUniProtKB:Q8SYA7|UniProtKB:A1ZB61\t" 1) (# "1\tCG15066\tprotein\ttaxon:7227\t\tUniProtKB:Q9V8F5\t" 1) (# "regulator\tCG17680\tprotein\ttaxon:7227\t\tUniProtKB:Q7JX57\t" 1) (# "channel\tCG5076\tprotein\ttaxon:7227\t\tUniProtKB:Q23974|UniProtKB:A1ZB14|UniProtKB:A0A0B4LGW2\t" 1) (# "$" 1)))
 (less-frequent gp_informatio 2 (# (# "$" 1) (# "1\tCG15066\tprotein\ttaxon:7227\t\tUniProtKB:Q9V8F5\t" 1) (# "2\tCG15067\tprotein\ttaxon:7227\t\tUniProtKB:Q8SYA7|UniProtKB:A1ZB61\t" 1) (# "6\tCG15068\tprotein\ttaxon:7227\t\tUniProtKB:A1ZB64\t" 1) (# "1\tCG17725\tprotein\ttaxon:7227\t\tUniProtKB:P20007\t" 1) (# "2\tCG10924\tprotein\ttaxon:7227\t\tUniProtKB:Q7JXB5|UniProtKB:A8DYI3\t" 1) (# "1\tCG5170\tprotein\ttaxon:7227\t\tUniProtKB:Q7KN84|UniProtKB:Q95T04|UniProtKB:Q9U982|UniProtKB:Q7KN75\t" 1)))
-
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/collaborators/pmid_fbgn_uniprot_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/collaborators/pmid_fbgn_uniprot_fb_2023_04.tsv
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/collaborators/pmid_fbgn_uniprot_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/collaborators/pmid_fbgn_uniprot_fb_2023_04.tsv
 !(file-name pmid_fbgn_uniprot  data/ftp.flybase.net/releases/current/precomputed_files/collaborators/pmid_fbgn_uniprot_fb_2023_04.tsv)
 (num-columns pmid_fbgn_uniprot 5)
 (duplicated-rows pmid_fbgn_uniprot 0)
@@ -231,10 +677,9 @@
 (less-frequent pmid_fbgn_uniprot 4 (# (# "UniProt/Swiss-Prot" 394838) (# "UniProt/TrEMBL" 1868110)))
 (most-frequent pmid_fbgn_uniprot 5 (# (# Q7YSQ1 2584) (# Q7Z1J1 2584) (# Q7YSR5 2584) (# Q7YSU6 2584) (# M9NE67 2584) (# P10090 3804) (# P09615 4838)))
 (less-frequent pmid_fbgn_uniprot 5 (# (# B4QI97 1) (# B4IFF0 1) (# B3MJC2 1) (# B4NVB3 1) (# A0A0Q9WJA5 1) (# B4H241 1) (# B3NEU8 1)))
-
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/automated_gene_summaries.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/automated_gene_summaries.tsv
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/automated_gene_summaries.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/automated_gene_summaries.tsv
 !(file-name automated_gene_summaries  data/ftp.flybase.net/releases/current/precomputed_files/genes/automated_gene_summaries.tsv)
 (num-columns automated_gene_summaries 2)
 (duplicated-rows automated_gene_summaries 0)
@@ -243,9 +688,9 @@
 (unique-values automated_gene_summaries 2 237237 object)
 (missing-values automated_gene_summaries 1 0 () ())
 (missing-values automated_gene_summaries 2 0 () ())
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/automated_gene_summaries_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/automated_gene_summaries_fb_2023_04.tsv
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/automated_gene_summaries_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/automated_gene_summaries_fb_2023_04.tsv
 !(file-name automated_gene_summaries  data/ftp.flybase.net/releases/current/precomputed_files/genes/automated_gene_summaries_fb_2023_04.tsv)
 (num-columns automated_gene_summaries 2)
 (duplicated-rows automated_gene_summaries 0)
@@ -254,9 +699,9 @@
 (unique-values automated_gene_summaries 2 237237 object)
 (missing-values automated_gene_summaries 1 0 () ())
 (missing-values automated_gene_summaries 2 0 () ())
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/best_gene_summary_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/best_gene_summary_fb_2023_04.tsv
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/best_gene_summary_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/best_gene_summary_fb_2023_04.tsv
 !(file-name best_gene_summary  data/ftp.flybase.net/releases/current/precomputed_files/genes/best_gene_summary_fb_2023_04.tsv)
 (num-columns best_gene_summary 4)
 (duplicated-rows best_gene_summary 0)
@@ -274,10 +719,9 @@
 (less-frequent best_gene_summary 3 (# (# "Interactive Fly" 64) (# UniProtKB 1737) (# "FlyBase Gene Snapshot" 3655) (# Alliance 8284) (# "FlyBase Auto Summary" 18402)))
 (most-frequent best_gene_summary 4 (# (# "Predicted to enable chitin binding activity. Predicted to be located in extracellular region." 48) (# "Predicted to enable serine-type endopeptidase activity. Predicted to be involved in proteolysis." 56) (# "Is expressed in spermatozoon." 63) (# "Predicted to be involved in RNA processing. Predicted to be located in nucleolus." 72) (# "Predicted to be a structural constituent of ribosome. Predicted to be involved in translation. Predicted to be located in cytosolic ribosome." 96) (# "Is expressed in organism." 107) (# "Is expressed in adult head." 114)))
 (less-frequent best_gene_summary 4 (# (# "The gene lethal (1) 291-68 is referred to in FlyBase by the symbol Dmel\\l(1)291-68 (FBgn0011177). It is a gene from Dmel. Gene has not been localized to the genome sequence. Its molecular function is unknown. The biological processes in which it is involved are not known. One allele is reported. No phenotypic data is available. The phenotypic class of allele includes: lethal." 1) (# "The gene E(csw)3B is referred to in FlyBase by the symbol Dmel\\E(csw)3B (FBgn0041256). It is a gene from Dmel. Gene has not been localized to the genome sequence. Its molecular function is described by: . The biological processes in which it is involved are not known. No alleles are reported." 1) (# "The gene E3 is referred to in FlyBase by the symbol Dmel\\E3 (FBgn0041255). It is a gene from Dmel. Gene has not been localized to the genome sequence. Its molecular function is unknown. The biological processes in which it is involved are not known. No alleles are reported." 1) (# "The gene H23-14 is referred to in FlyBase by the symbol Dmel\\H23-14 (FBgn0041211). It is a gene from Dmel. Gene has not been localized to the genome sequence. Its molecular function is unknown. The biological processes in which it is involved are not known. One allele is reported. No phenotypic data is available. The phenotypic class of allele includes: auxotroph." 1) (# "The gene Lipocalin is referred to in FlyBase by the symbol Dmel\\Lipocalin (FBgn0041202). It is a gene from Dmel. Gene has not been localized to the genome sequence. Its molecular function is unknown. The biological processes in which it is involved are not known. No alleles are reported." 1) (# "The gene prolyl-4-hydroxylase-a related protein is referred to in FlyBase by the symbol Dmel\\PH4\u03b1-RP (FBgn0041197). It is a gene from Dmel. Gene has not been localized to the genome sequence. Its molecular function is unknown. The biological processes in which it is involved are not known. No alleles are reported." 1) (# "The gene SSP6107 is referred to in FlyBase by the symbol Dmel\\SSP6107 (FBgn0041189). It is a gene from Dmel. Gene has not been localized to the genome sequence. Its molecular function is unknown. The biological processes in which it is involved are not known. No alleles are reported." 1)))
-
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/Dmel_enzyme_data_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/Dmel_enzyme_data_fb_2023_04.tsv
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/Dmel_enzyme_data_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/Dmel_enzyme_data_fb_2023_04.tsv
 !(file-name Dmel_enzyme_data  data/ftp.flybase.net/releases/current/precomputed_files/genes/Dmel_enzyme_data_fb_2023_04.tsv)
 (num-columns Dmel_enzyme_data 11)
 (duplicated-rows Dmel_enzyme_data 0)
@@ -312,9 +756,9 @@
 (most-frequent Dmel_enzyme_data 1 (# (# FBgg0001478 36) (# FBgg0001695 36) (# FBgg0001207 45) (# FBgg0001618 51) (# FBgg0001079 61) (# FBgg0000128 98) (# FBgg0001078 114)))
 (less-frequent Dmel_enzyme_data 1 (# (# FBgg0001510 1) (# FBgg0001617 1) (# FBgg0001419 1) (# FBgg0001420 1) (# FBgg0001622 1) (# FBgg0001246 1) (# FBgg0000869 1)))
 (most-frequent Dmel_enzyme_data 2 (# (# "UNCLASSIFIED RNA ENDONUCLEASES" 36) (# "CYTOCHROME P450 - CYP3 CLAN" 36) (# "UNCLASSIFIED NON-AMINOACYL ACYLTRANSFERASES" 45) (# "ECDYSTEROID KINASE-LIKE" 51) (# "S1A SERINE PROTEASES - CHYMOTRYPSIN-LIKE" 61) (# "UNCLASSIFIED RING DOMAIN UBIQUITIN LIGASES" 98) (# "S1A SERINE PROTEASES - TRYPSIN-LIKE" 114)))
-(less-frequent Dmel_enzyme_data 2 (# (# TRANSGLUTAMINASES 1) (# "BETA-ALANYL-DOPAMINE/HISTAMINE HYDROLASES" 1) (# "SITE 2 PEPTIDASES" 1) (# "M76 METALLOENDOPEPTIDASES" 1) (# "EYA FAMILY PROTEIN TYROSINE PHOSPHATASES" 1) (# DEOXYCYTIDYLTRANSFERASES 1) (# OXO-ACID-LYASES 1)))
-(most-frequent Dmel_enzyme_data 3 (# (# GO:0004806 55) (# GO:0003724 59) (# GO:0004674 90) (# GO:0004497 93) (# GO:0003924 146) (# GO:0061630 150) (# GO:0004252 205)))
-(less-frequent Dmel_enzyme_data 3 (# (# GO:0071566 1) (# GO:0003810 1) (# GO:0003923 1) (# GO:0016642 1) (# GO:0061863 1) (# GO:0008970 1) (# GO:0016872 1)))
+(less-frequent Dmel_enzyme_data 2 (# (# TRANSGLUTAMINASES 1) (# "BETA-ALANYL-DOPAMINE/HISTAMINE HYDROLASES" 1) (# "SITE 2 PEPTIDASES" 1) (# "M76 METALLOENDOPEPTIDASES" 1) (# "EYA FAMILY PROTEIN TYROSINE PHOSPHATASES" 1) (# DEOXYCYTIDYLTRANSFERASES 1) (# "OXO-ACID-LYASES" 1)))
+(most-frequent Dmel_enzyme_data 3 (# (# "GO:0004806" 55) (# "GO:0003724" 59) (# "GO:0004674" 90) (# "GO:0004497" 93) (# "GO:0003924" 146) (# "GO:0061630" 150) (# "GO:0004252" 205)))
+(less-frequent Dmel_enzyme_data 3 (# (# "GO:0071566" 1) (# "GO:0003810" 1) (# "GO:0003923" 1) (# "GO:0016642" 1) (# "GO:0061863" 1) (# "GO:0008970" 1) (# "GO:0016872" 1)))
 (most-frequent Dmel_enzyme_data 4 (# (# "triglyceride lipase activity" 55) (# "RNA helicase activity" 59) (# "protein serine/threonine kinase activity" 90) (# "monooxygenase activity" 93) (# "GTPase activity" 146) (# "ubiquitin protein ligase activity" 150) (# "serine-type endopeptidase activity" 205)))
 (less-frequent Dmel_enzyme_data 4 (# (# "UFM1 activating enzyme activity" 1) (# "protein-glutamine gamma-glutamyltransferase activity" 1) (# "GPI-anchor transamidase activity" 1) (# "oxidoreductase activity, acting on the CH-NH2 group of donors, disulfide as acceptor" 1) (# "microtubule plus end polymerase" 1) (# "phospholipase A1 activity" 1) (# "intramolecular lyase activity" 1)))
 (most-frequent Dmel_enzyme_data 5 (# (# "3.1.3.16" 47) (# "3.4.24.-" 47) (# "3.1.1.3" 55) (# "3.6.4.13" 59) (# "2.7.11.1" 90) (# "3.4.21.-" 209)))
@@ -323,18 +767,17 @@
 (less-frequent Dmel_enzyme_data 6 (# (# "ribonuclease T2" 1) (# "tripeptidyl-peptidase I|tripeptidyl-peptidase II" 1) (# "phospholipase A1" 1) (# "deoxyribonuclease II" 1) (# "N-acetylglucosamine-6-phosphate deacetylase" 1) (# "molybdopterin molybdotransferase" 1) (# "protoporphyrin ferrochelatase" 1)))
 (most-frequent Dmel_enzyme_data 7 (# (# FBgn0028916 3) (# FBgn0002905 3) (# FBgn0030731 3) (# FBgn0011768 3) (# FBgn0034246 3) (# FBgn0263831 4) (# FBgn0010355 4)))
 (less-frequent Dmel_enzyme_data 7 (# (# FBgn0025186 1) (# FBgn0043576 1) (# FBgn0043577 1) (# FBgn0043578 1) (# FBgn0029689 1) (# FBgn0037759 1) (# FBgn0027538 1)))
-(most-frequent Dmel_enzyme_data 8 (# (# CG33090 3) (# PolQ 3) (# Mfe2 3) (# Fdh 3) (# Dcr-2 3) (# Gen 4) (# Taf1 4)))
-(less-frequent Dmel_enzyme_data 8 (# (# ari-2 1) (# PGRP-SC1a 1) (# PGRP-SB2 1) (# PGRP-SB1 1) (# CG6428 1) (# CG8526 1) (# beta4GalNAcTA 1)))
+(most-frequent Dmel_enzyme_data 8 (# (# CG33090 3) (# PolQ 3) (# Mfe2 3) (# Fdh 3) (# "Dcr-2" 3) (# Gen 4) (# Taf1 4)))
+(less-frequent Dmel_enzyme_data 8 (# (# "ari-2" 1) (# "PGRP-SC1a" 1) (# "PGRP-SB2" 1) (# "PGRP-SB1" 1) (# CG6428 1) (# CG8526 1) (# beta4GalNAcTA 1)))
 (most-frequent Dmel_enzyme_data 9 (# (# rudimentary 3) (# "Trehalose-6-phosphate synthase 1" 3) (# "peroxisomal Multifunctional enzyme type 2" 3) (# sepia 3) (# "XPG-like endonuclease" 4) (# "TBP-associated factor 1" 4)))
 (less-frequent Dmel_enzyme_data 9 (# (# "ariadne 2" 1) (# "Cardiolipin synthase" 1) (# "Sphingomyelin synthase related" 1) (# "Phosphatidylserine synthase" 1) (# "Pyruvate kinase" 1) (# "easily shocked" 1) (# fumble 1)))
 (most-frequent Dmel_enzyme_data 10 (# (# "5.2.1.8" 33) (# "3.4.19.12" 36) (# "3.1.3.16" 38) (# "3.1.1.3" 51) (# "3.6.4.13" 54) (# "2.7.11.1" 104)))
 (less-frequent Dmel_enzyme_data 10 (# (# "2.5.1.16" 1) (# "2.1.1.62" 1) (# "2.1.1.56" 1) (# "2.1.1.386" 1) (# "2.3.3.10" 1) (# "2.3.3.8" 1) (# "2.3.1.168" 1)))
 (most-frequent Dmel_enzyme_data 11 (# (# "peptidylprolyl isomerase" 33) (# "ubiquitinyl hydrolase 1" 36) (# "protein-serine/threonine phosphatase" 38) (# "triacylglycerol lipase" 51) (# "RNA helicase" 54) (# "non-specific serine/threonine protein kinase" 104)))
 (less-frequent Dmel_enzyme_data 11 (# (# "spermidine synthase" 1) (# "mRNA (2'-O-methyladenosine-N(6)-)-methyltransferase" 1) (# "mRNA (guanine-N(7))-methyltransferase" 1) (# "small RNA 2'-O-methyltransferase" 1) (# "hydroxymethylglutaryl-CoA synthase" 1) (# "ATP citrate synthase" 1) (# "dihydrolipoyllysine-residue (2-methylpropanoyl)transferase" 1)))
-
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/dmel_gene_sequence_ontology_annotations_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/dmel_gene_sequence_ontology_annotations_fb_2023_04.tsv
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/dmel_gene_sequence_ontology_annotations_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/dmel_gene_sequence_ontology_annotations_fb_2023_04.tsv
 !(file-name dmel_gene_sequence_ontology_annotations  data/ftp.flybase.net/releases/current/precomputed_files/genes/dmel_gene_sequence_ontology_annotations_fb_2023_04.tsv)
 (num-columns dmel_gene_sequence_ontology_annotations 4)
 (duplicated-rows dmel_gene_sequence_ontology_annotations 0)
@@ -350,15 +793,14 @@
 (most-frequent dmel_gene_sequence_ontology_annotations 1 (# (# FBgn0263102 5) (# FBgn0264308 5) (# FBgn0285944 5) (# FBgn0000448 5) (# FBgn0266019 5) (# FBgn0260866 5) (# FBgn0283521 5)))
 (less-frequent dmel_gene_sequence_ontology_annotations 1 (# (# FBgn0000003 1) (# FBgn0085282 1) (# FBgn0085280 1) (# FBgn0085279 1) (# FBgn0085277 1) (# FBgn0085276 1) (# FBgn0085274 1)))
 (most-frequent dmel_gene_sequence_ontology_annotations 2 (# (# psq 5) (# hbt 5) (# para 5) (# Hr3 5) (# rudhira 5) (# dnr1 5) (# lola 5)))
-(less-frequent dmel_gene_sequence_ontology_annotations 2 (# (# 7SLRNA:CR32864 1) (# CG34253 1) (# CG34251 1) (# CG34250 1) (# CG34248 1) (# CG34247 1) (# CG34245 1)))
-(most-frequent dmel_gene_sequence_ontology_annotations 3 (# (# gene_with_stop_codon_read_through 402) (# antisense_lncRNA_gene 507) (# gene 767) (# gene_with_edited_transcript 810) (# lncRNA_gene 1996) (# protein_coding_gene 13986) (# nuclear_gene 17707)))
-(less-frequent dmel_gene_sequence_ontology_annotations 3 (# (# sbRNA_gene 1) (# SRP_RNA_gene 1) (# RNase_MRP_RNA_gene 1) (# RNase_P_RNA_gene 1) (# mt_SSU_rRNA_gene 1) (# mt_LSU_rRNA_gene 1) (# gene_with_recoded_mRNA 2)))
-(most-frequent dmel_gene_sequence_ontology_annotations 4 (# (# SO:0000697 402) (# SO:0002182 507) (# SO:0000704 767) (# SO:0000548 810) (# SO:0002127 1996) (# SO:0001217 13986) (# SO:0000087 17707)))
-(less-frequent dmel_gene_sequence_ontology_annotations 4 (# (# SO:0002353 1) (# SO:0001269 1) (# SO:0001640 1) (# SO:0001639 1) (# SO:0002365 1) (# SO:0002364 1) (# SO:0000693 2)))
-
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/dmel_unique_protein_isoforms_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/dmel_unique_protein_isoforms_fb_2023_04.tsv
+(less-frequent dmel_gene_sequence_ontology_annotations 2 (# (# "7SLRNA:CR32864" 1) (# CG34253 1) (# CG34251 1) (# CG34250 1) (# CG34248 1) (# CG34247 1) (# CG34245 1)))
+(most-frequent dmel_gene_sequence_ontology_annotations 3 (# (# "gene_with_stop_codon_read_through" 402) (# "antisense_lncRNA_gene" 507) (# gene 767) (# "gene_with_edited_transcript" 810) (# "lncRNA_gene" 1996) (# "protein_coding_gene" 13986) (# "nuclear_gene" 17707)))
+(less-frequent dmel_gene_sequence_ontology_annotations 3 (# (# "sbRNA_gene" 1) (# "SRP_RNA_gene" 1) (# "RNase_MRP_RNA_gene" 1) (# "RNase_P_RNA_gene" 1) (# "mt_SSU_rRNA_gene" 1) (# "mt_LSU_rRNA_gene" 1) (# "gene_with_recoded_mRNA" 2)))
+(most-frequent dmel_gene_sequence_ontology_annotations 4 (# (# "SO:0000697" 402) (# "SO:0002182" 507) (# "SO:0000704" 767) (# "SO:0000548" 810) (# "SO:0002127" 1996) (# "SO:0001217" 13986) (# "SO:0000087" 17707)))
+(less-frequent dmel_gene_sequence_ontology_annotations 4 (# (# "SO:0002353" 1) (# "SO:0001269" 1) (# "SO:0001640" 1) (# "SO:0001639" 1) (# "SO:0002365" 1) (# "SO:0002364" 1) (# "SO:0000693" 2)))
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/dmel_unique_protein_isoforms_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/dmel_unique_protein_isoforms_fb_2023_04.tsv
 !(file-name dmel_unique_protein_isoforms  data/ftp.flybase.net/releases/current/precomputed_files/genes/dmel_unique_protein_isoforms_fb_2023_04.tsv)
 (num-columns dmel_unique_protein_isoforms 4)
 (duplicated-rows dmel_unique_protein_isoforms 0)
@@ -376,11 +818,10 @@
 (less-frequent dmel_unique_protein_isoforms 1 (# (# FBgn0000008 1) (# FBgn0038579 1) (# FBgn0038581 1) (# FBgn0038582 1) (# FBgn0038583 1) (# FBgn0038584 1) (# FBgn0038585 1)))
 (most-frequent dmel_unique_protein_isoforms 2 (# (# slo 23) (# CAP 25) (# Svil 25) (# trol 25) (# "mod(mdg4)" 31) (# para 57) (# Dscam1 75)))
 (less-frequent dmel_unique_protein_isoforms 2 (# (# a 1) (# CG14313 1) (# CG14314 1) (# CG7988 1) (# CG7183 1) (# mTerf5 1) (# Non3 1)))
-(most-frequent dmel_unique_protein_isoforms 4 (# (# Saf-B-PF 1) (# sosie-PC 1) (# Nct-PC 1) (# CG3744-PG 1) (# CG3744-PF 1) (# Not11-PC 1)))
-(less-frequent dmel_unique_protein_isoforms 4 (# (# "MAN1-PB,MAN1-PC" 1) (# Nct-PC 1) (# sosie-PC 1) (# Saf-B-PF 1) (# "Ude-PC,Ude-PD" 1) (# CG5805-PB 1) (# "atl-PB,atl-PC" 1)))
-
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_annotation_ID.tsv
+(most-frequent dmel_unique_protein_isoforms 4 (# (# "Saf-B-PF" 1) (# "sosie-PC" 1) (# "Nct-PC" 1) (# "CG3744-PG" 1) (# "CG3744-PF" 1) (# "Not11-PC" 1)))
+(less-frequent dmel_unique_protein_isoforms 4 (# (# "MAN1-PB,MAN1-PC" 1) (# "Nct-PC" 1) (# "sosie-PC" 1) (# "Saf-B-PF" 1) (# "Ude-PC,Ude-PD" 1) (# "CG5805-PB" 1) (# "atl-PB,atl-PC" 1)))
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_annotation_ID.tsv
 !(file-name fbgn_annotation_ID  data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_annotation_ID.tsv)
 (num-columns fbgn_annotation_ID 6)
 (duplicated-rows fbgn_annotation_ID 0)
@@ -405,10 +846,9 @@
 (less-frequent fbgn_annotation_ID 4 (# (# "FBgn0034701,FBgn0034702" 1) (# "FBgn0036269,FBgn0036270" 1) (# FBgn0062499 1) (# "FBgn0045834,FBgn0046807" 1) (# FBgn0060100 1) (# "FBgn0036185,FBgn0040818" 1) (# FBgn0036175 1)))
 (most-frequent fbgn_annotation_ID 6 (# (# CG14398 4) (# CG15675 4) (# CG10450 4) (# CG14458 6) (# CG2149 6) (# CG32605 12)))
 (less-frequent fbgn_annotation_ID 6 (# (# CG13505 1) (# "CG15275,CG15276,CG15277,CG33515" 1) (# "CG31537,CG2534" 1) (# "CG30111,CG5058" 1) (# "CG30164,CG30165,CG30166,CG4556" 1) (# "CG30179,CG30174,CG33149,CG3220" 1) (# CG14428 1)))
-
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_annotation_ID_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_annotation_ID_fb_2023_04.tsv
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_annotation_ID_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_annotation_ID_fb_2023_04.tsv
 !(file-name fbgn_annotation_ID  data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_annotation_ID_fb_2023_04.tsv)
 (num-columns fbgn_annotation_ID 6)
 (duplicated-rows fbgn_annotation_ID 0)
@@ -433,10 +873,9 @@
 (less-frequent fbgn_annotation_ID 4 (# (# "FBgn0034701,FBgn0034702" 1) (# "FBgn0036269,FBgn0036270" 1) (# FBgn0062499 1) (# "FBgn0045834,FBgn0046807" 1) (# FBgn0060100 1) (# "FBgn0036185,FBgn0040818" 1) (# FBgn0036175 1)))
 (most-frequent fbgn_annotation_ID 6 (# (# CG14398 4) (# CG15675 4) (# CG10450 4) (# CG14458 6) (# CG2149 6) (# CG32605 12)))
 (less-frequent fbgn_annotation_ID 6 (# (# CG13505 1) (# "CG15275,CG15276,CG15277,CG33515" 1) (# "CG31537,CG2534" 1) (# "CG30111,CG5058" 1) (# "CG30164,CG30165,CG30166,CG4556" 1) (# "CG30179,CG30174,CG33149,CG3220" 1) (# CG14428 1)))
-
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_exons2affy1_overlaps.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_exons2affy1_overlaps.tsv
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_exons2affy1_overlaps.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_exons2affy1_overlaps.tsv
 !(file-name fbgn_exons2affy1_overlaps  data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_exons2affy1_overlaps.tsv)
 (num-columns fbgn_exons2affy1_overlaps 30)
 (duplicated-rows fbgn_exons2affy1_overlaps 0)
@@ -529,68 +968,67 @@
 (missing-values fbgn_exons2affy1_overlaps 29 11305 (# "") (# 11305))
 (null-value-count fbgn_exons2affy1_overlaps 30 "" 12047)
 (missing-values fbgn_exons2affy1_overlaps 30 12047 (# "") (# 12047))
-(most-frequent fbgn_exons2affy1_overlaps 2 (# (# 151241_f_at_37 4) (# 152093_at_1981 4) (# 150941_f_at_119 5) (# 151193_f_at_78 6) (# 151224_f_at_40 6) (# 150311_at_95 7) (# 150941_f_at_115 13)))
-(less-frequent fbgn_exons2affy1_overlaps 2 (# (# 143052_at_1832 1) (# 154468_at_260 1) (# 152374_at_1177 1) (# 151894_at_1465 1) (# 154463_at_1950 1) (# 154463_at_2378 1) (# 154482_at_2296 1)))
-(most-frequent fbgn_exons2affy1_overlaps 3 (# (# 141538_at_2427 3) (# 147260_at_95 3) (# 155060_at_1425 3) (# 152093_at_2013 4) (# 151873_at_2152 4) (# 150311_at_124 7)))
-(less-frequent fbgn_exons2affy1_overlaps 3 (# (# 143052_at_1816 1) (# 149464_at_1100 1) (# 142785_at_1174 1) (# 142029_at_45 1) (# 149466_at_2832 1) (# 149467_at_1882 1) (# 149468_at_757 1)))
-(most-frequent fbgn_exons2affy1_overlaps 4 (# (# 147260_at_80 3) (# 147730_at_550 3) (# 155060_at_1472 3) (# 151873_at_2043 4) (# 152093_at_2053 4) (# 150311_at_247 7)))
-(less-frequent fbgn_exons2affy1_overlaps 4 (# (# 143052_at_1742 1) (# 152622_at_824 1) (# 149458_at_1158 1) (# 149459_at_906 1) (# 154507_at_1873 1) (# 149463_at_2017 1) (# 149464_at_1134 1)))
-(most-frequent fbgn_exons2affy1_overlaps 5 (# (# 147260_at_76 3) (# 155060_at_1504 3) (# 148466_at_864 3) (# 151873_at_2023 4) (# 152093_at_2081 4) (# 150311_at_271 7)))
-(less-frequent fbgn_exons2affy1_overlaps 5 (# (# 143052_at_1727 1) (# 154719_at_2453 1) (# 141210_at_404 1) (# 153896_at_1100 1) (# 149435_at_300 1) (# 149436_at_386 1) (# 149441_at_1003 1)))
-(most-frequent fbgn_exons2affy1_overlaps 6 (# (# 142689_at_2404 3) (# 151429_at_230 3) (# 147260_at_69 3) (# 152093_at_2097 4) (# 151873_at_2014 4) (# 150311_at_292 7)))
-(less-frequent fbgn_exons2affy1_overlaps 6 (# (# 143052_at_1717 1) (# 151951_at_2428 1) (# 154803_at_2317 1) (# 149420_at_517 1) (# 149421_at_366 1) (# 154555_at_1035 1) (# 154555_at_1375 1)))
-(most-frequent fbgn_exons2affy1_overlaps 7 (# (# 151429_at_248 3) (# 141538_at_2265 3) (# 155060_at_1543 3) (# 151873_at_1834 4) (# 152093_at_2142 4) (# 150311_at_321 7)))
-(less-frequent fbgn_exons2affy1_overlaps 7 (# (# 143052_at_1703 1) (# 154319_at_927 1) (# 154993_at_1959 1) (# 149402_at_2878 1) (# 149403_at_625 1) (# 149408_at_1010 1) (# 149409_at_619 1)))
-(most-frequent fbgn_exons2affy1_overlaps 8 (# (# 151429_at_270 3) (# 155060_at_1574 3) (# 142689_at_2342 3) (# 151873_at_1804 4) (# 152093_at_2177 4) (# 150311_at_350 7)))
-(less-frequent fbgn_exons2affy1_overlaps 8 (# (# 150941_f_at_115 1) (# 142317_at_420 1) (# 141883_at_323 1) (# 149397_at_943 1) (# 149398_at_568 1) (# 152411_at_1798 1) (# 149399_at_1928 1)))
-(most-frequent fbgn_exons2affy1_overlaps 9 (# (# 155060_at_1631 3) (# 151429_at_293 3) (# 147260_at_36 3) (# 152093_at_2220 4) (# 151873_at_1786 4) (# 150311_at_358 7)))
-(less-frequent fbgn_exons2affy1_overlaps 9 (# (# 150941_f_at_113 1) (# 149380_at_1052 1) (# 149381_at_595 1) (# 149382_at_343 1) (# 149384_at_626 1) (# 149385_at_909 1) (# 149386_at_153 1)))
-(most-frequent fbgn_exons2affy1_overlaps 10 (# (# 142689_at_2195 3) (# 147260_at_34 3) (# 141538_at_2111 3) (# 152093_at_2221 4) (# 151873_at_1747 4) (# 150311_at_405 7)))
-(less-frequent fbgn_exons2affy1_overlaps 10 (# (# 150941_f_at_111 1) (# 149364_at_1814 1) (# 149365_at_276 1) (# 149368_at_173 1) (# 149371_at_1969 1) (# 149372_at_632 1) (# 149374_at_1908 1)))
-(most-frequent fbgn_exons2affy1_overlaps 11 (# (# 151429_at_351 3) (# 142689_at_2154 3) (# 141538_at_2086 3) (# 152093_at_2253 4) (# 151873_at_1723 4) (# 150311_at_406 7)))
-(less-frequent fbgn_exons2affy1_overlaps 11 (# (# 151224_f_at_40 1) (# 149352_at_2845 1) (# 155039_at_1822 1) (# 149354_at_228 1) (# 153107_at_1501 1) (# 149355_at_446 1) (# 152216_at_1907 1)))
-(most-frequent fbgn_exons2affy1_overlaps 12 (# (# 141538_at_2050 3) (# 147260_at_29 3) (# 151429_at_444 3) (# 151873_at_1696 4) (# 152093_at_2286 4) (# 150311_at_428 7)))
-(less-frequent fbgn_exons2affy1_overlaps 12 (# (# 143052_at_1570 1) (# 153297_at_1146 1) (# 141292_at_956 1) (# 155136_at_3280 1) (# 151994_at_924 1) (# 154820_at_469 1) (# 152906_at_2090 1)))
-(most-frequent fbgn_exons2affy1_overlaps 13 (# (# 155060_at_1834 3) (# 147260_at_27 3) (# 142689_at_2057 3) (# 151873_at_1681 4) (# 152093_at_2365 4) (# 150311_at_513 7)))
-(less-frequent fbgn_exons2affy1_overlaps 13 (# (# 143052_at_1561 1) (# 149339_at_461 1) (# 142566_at_6907 1) (# 149340_at_389 1) (# 149341_at_1305 1) (# 149343_at_547 1) (# 153316_at_970 1)))
-(most-frequent fbgn_exons2affy1_overlaps 14 (# (# 141538_at_1972 3) (# 155060_at_1844 3) (# 147260_at_21 3) (# 152093_at_2369 4) (# 151873_at_1656 4) (# 150311_at_569 7)))
-(less-frequent fbgn_exons2affy1_overlaps 14 (# (# 143052_at_1547 1) (# 153677_at_593 1) (# 142725_at_3484 1) (# 154418_at_2357 1) (# 149337_at_1771 1) (# 149338_at_114 1) (# 153664_at_1123 1)))
-(most-frequent fbgn_exons2affy1_overlaps 15 (# (# 155060_at_1866 3) (# 147260_at_19 3) (# 141538_at_1905 3) (# 151873_at_1630 4) (# 152093_at_2425 4) (# 150311_at_588 7)))
-(less-frequent fbgn_exons2affy1_overlaps 15 (# (# 143052_at_1488 1) (# 142725_at_3437 1) (# 154418_at_2421 1) (# 149337_at_1722 1) (# 149338_at_101 1) (# 153664_at_1167 1) (# 149339_at_383 1)))
-(most-frequent fbgn_exons2affy1_overlaps 16 (# (# 151193_f_at_66 3) (# 151241_f_at_31 5) (# 151193_f_at_70 6) (# 151224_f_at_40 7) (# 150941_f_at_119 7) (# 150941_f_at_115 7)))
-(less-frequent fbgn_exons2affy1_overlaps 16 (# (# 143052_at_1399 1) (# 154464_at_2230 1) (# 152047_at_1146 1) (# 150835_at_1439 1) (# 154168_at_1052 1) (# 153210_at_1520 1) (# 150817_at_565 1)))
-(most-frequent fbgn_exons2affy1_overlaps 17 (# (# 142169_at_450 2) (# 146155_at_129 2) (# 152590_at_972 2) (# 142115_at_370 2) (# 143730_at_1670 2) (# 150941_f_at_115 9)))
-(less-frequent fbgn_exons2affy1_overlaps 17 (# (# 143052_at_1395 1) (# 151270_r_at_25 1) (# 151257_at_31 1) (# 151250_at_222 1) (# 151229_at_145 1) (# 151212_i_at_63 1) (# 151207_r_at_79 1)))
-(most-frequent fbgn_exons2affy1_overlaps 18 (# (# 142667_at_1666 2) (# 142844_at_1801 2) (# 143730_at_1655 2) (# 146200_at_740 2) (# 145665_at_260 2) (# 150941_f_at_113 3)))
-(less-frequent fbgn_exons2affy1_overlaps 18 (# (# 143052_at_1376 1) (# 146970_at_795 1) (# 142323_at_349 1) (# 152548_at_1257 1) (# 142085_at_360 1) (# 151839_at_572 1) (# 147900_at_1316 1)))
-(most-frequent fbgn_exons2affy1_overlaps 19 (# (# 141971_at_425 2) (# 152590_at_890 2) (# 150643_at_593 2) (# 150117_at_272 2) (# 146155_at_95 2) (# 141331_at_764 2)))
-(less-frequent fbgn_exons2affy1_overlaps 19 (# (# 143052_at_1311 1) (# 146844_at_45 1) (# 152619_at_980 1) (# 147717_at_296 1) (# 141654_at_949 1) (# 147704_at_309 1) (# 151140_at_34 1)))
-(most-frequent fbgn_exons2affy1_overlaps 20 (# (# 152322_at_1081 2) (# 150574_at_674 2) (# 142012_at_515 2) (# 150611_at_681 2) (# 146094_at_3507 2) (# 143040_at_1502 2)))
-(less-frequent fbgn_exons2affy1_overlaps 20 (# (# 141890_at_423 1) (# 146741_at_332 1) (# 146978_s_at_613 1) (# 142001_r_at_17 1) (# 152057_at_746 1) (# 153061_at_3626 1) (# 147846_at_517 1)))
-(most-frequent fbgn_exons2affy1_overlaps 21 (# (# 143730_at_1571 2) (# 143071_at_199 2) (# 153690_at_1496 2) (# 146572_at_1248 2) (# 151196_r_at_69 2) (# 142734_at_582 2)))
-(less-frequent fbgn_exons2affy1_overlaps 21 (# (# 154290_at_1576 1) (# 150536_at_1846 1) (# 142057_at_306 1) (# 149536_at_287 1) (# 142647_at_483 1) (# 152342_at_1443 1) (# 150858_at_1203 1)))
-(most-frequent fbgn_exons2affy1_overlaps 22 (# (# 152828_at_1192 2) (# 145513_at_1169 2) (# 142641_at_1007 2) (# 145665_at_185 2) (# 145804_at_113 2) (# 144663_at_167 2)))
-(less-frequent fbgn_exons2affy1_overlaps 22 (# (# 152590_at_807 1) (# 150536_at_1823 1) (# 142057_at_329 1) (# 149536_at_257 1) (# 142647_at_451 1) (# 152342_at_1508 1) (# 150858_at_1226 1)))
-(most-frequent fbgn_exons2affy1_overlaps 23 (# (# 145121_at_953 2) (# 152828_at_1286 2) (# 145513_at_1144 2) (# 145665_at_164 2) (# 145804_at_98 2) (# 146744_at_188 2)))
-(less-frequent fbgn_exons2affy1_overlaps 23 (# (# 153298_at_1470 1) (# 150321_at_1006 1) (# 150383_at_2084 1) (# 149454_at_1935 1) (# 150142_at_1363 1) (# 150536_at_1771 1) (# 142057_at_344 1)))
-(most-frequent fbgn_exons2affy1_overlaps 24 (# (# 152828_at_1322 2) (# 145513_at_1132 2) (# 145665_at_155 2) (# 145804_at_94 2) (# 146094_at_3402 2) (# 151831_at_920 2)))
-(less-frequent fbgn_exons2affy1_overlaps 24 (# (# 152253_at_1253 1) (# 151549_i_at_495 1) (# 142287_at_5287 1) (# 150858_at_1274 1) (# 152342_at_1587 1) (# 142647_at_365 1) (# 149536_at_82 1)))
-(most-frequent fbgn_exons2affy1_overlaps 25 (# (# 145121_at_1044 2) (# 152828_at_1374 2) (# 145513_at_1115 2) (# 145665_at_112 2) (# 145804_at_88 2) (# 143367_at_1268 2)))
-(less-frequent fbgn_exons2affy1_overlaps 25 (# (# 152253_at_1277 1) (# 152342_at_1612 1) (# 142647_at_311 1) (# 149536_at_79 1) (# 142057_at_440 1) (# 150536_at_1708 1) (# 150142_at_1308 1)))
-(most-frequent fbgn_exons2affy1_overlaps 26 (# (# 142968_at_1016 2) (# 147307_at_1054 2) (# 152828_at_1410 2) (# 145513_at_1081 2) (# 145804_at_83 2) (# 152030_at_2454 2)))
-(less-frequent fbgn_exons2affy1_overlaps 26 (# (# 151555_at_452 1) (# 150321_at_786 1) (# 149984_at_574 1) (# 150288_at_440 1) (# 154729_at_1256 1) (# 150235_at_482 1) (# 153559_at_1188 1)))
-(most-frequent fbgn_exons2affy1_overlaps 27 (# (# 142051_at_710 2) (# 143071_at_395 2) (# 153690_at_1701 2) (# 152030_at_2472 2) (# 148950_at_1101 2) (# 146572_at_1489 2)))
-(less-frequent fbgn_exons2affy1_overlaps 27 (# (# 151555_at_477 1) (# 143703_at_549 1) (# 150198_at_145 1) (# 153568_at_2595 1) (# 153408_at_895 1) (# 154631_at_2296 1) (# 149802_at_35 1)))
-(most-frequent fbgn_exons2affy1_overlaps 28 (# (# 151831_at_1098 2) (# 143071_at_435 2) (# 142051_at_734 2) (# 153690_at_1718 2) (# 142946_at_186 2) (# 148950_at_1027 2)))
-(less-frequent fbgn_exons2affy1_overlaps 28 (# (# 154840_at_235 1) (# 149689_at_838 1) (# 152285_at_955 1) (# 151626_at_139 1) (# 151157_at_129 1) (# 151986_at_1676 1) (# 149373_at_477 1)))
-(most-frequent fbgn_exons2affy1_overlaps 29 (# (# 143040_at_1070 2) (# 148950_at_1005 2) (# 152322_at_1333 2) (# 142209_at_639 2) (# 143367_at_1495 2) (# 153005_at_1202 2)))
-(less-frequent fbgn_exons2affy1_overlaps 29 (# (# 154840_at_217 1) (# 151546_i_at_74 1) (# 145929_at_1640 1) (# 151417_at_35 1) (# 145917_at_142 1) (# 154703_at_1319 1) (# 145904_at_869 1)))
-(most-frequent fbgn_exons2affy1_overlaps 30 (# (# 151241_f_at_37 1) (# 145456_at_322 1) (# 142630_at_415 1) (# 148015_at_1581 1) (# 153230_at_2930 2) (# 154681_at_1547 2)))
-(less-frequent fbgn_exons2affy1_overlaps 30 (# (# 153483_at_641 1) (# 150941_f_at_90 1) (# 144004_at_5787 1) (# 144775_at_57 1) (# 144816_at_1278 1) (# 143155_at_2478 1) (# 148015_at_1581 1)))
-
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_exons2affy2_overlaps.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_exons2affy2_overlaps.tsv
+(most-frequent fbgn_exons2affy1_overlaps 2 (# (# "151241_f_at_37" 4) (# "152093_at_1981" 4) (# "150941_f_at_119" 5) (# "151193_f_at_78" 6) (# "151224_f_at_40" 6) (# "150311_at_95" 7) (# "150941_f_at_115" 13)))
+(less-frequent fbgn_exons2affy1_overlaps 2 (# (# "143052_at_1832" 1) (# "154468_at_260" 1) (# "152374_at_1177" 1) (# "151894_at_1465" 1) (# "154463_at_1950" 1) (# "154463_at_2378" 1) (# "154482_at_2296" 1)))
+(most-frequent fbgn_exons2affy1_overlaps 3 (# (# "141538_at_2427" 3) (# "147260_at_95" 3) (# "155060_at_1425" 3) (# "152093_at_2013" 4) (# "151873_at_2152" 4) (# "150311_at_124" 7)))
+(less-frequent fbgn_exons2affy1_overlaps 3 (# (# "143052_at_1816" 1) (# "149464_at_1100" 1) (# "142785_at_1174" 1) (# "142029_at_45" 1) (# "149466_at_2832" 1) (# "149467_at_1882" 1) (# "149468_at_757" 1)))
+(most-frequent fbgn_exons2affy1_overlaps 4 (# (# "147260_at_80" 3) (# "147730_at_550" 3) (# "155060_at_1472" 3) (# "151873_at_2043" 4) (# "152093_at_2053" 4) (# "150311_at_247" 7)))
+(less-frequent fbgn_exons2affy1_overlaps 4 (# (# "143052_at_1742" 1) (# "152622_at_824" 1) (# "149458_at_1158" 1) (# "149459_at_906" 1) (# "154507_at_1873" 1) (# "149463_at_2017" 1) (# "149464_at_1134" 1)))
+(most-frequent fbgn_exons2affy1_overlaps 5 (# (# "147260_at_76" 3) (# "155060_at_1504" 3) (# "148466_at_864" 3) (# "151873_at_2023" 4) (# "152093_at_2081" 4) (# "150311_at_271" 7)))
+(less-frequent fbgn_exons2affy1_overlaps 5 (# (# "143052_at_1727" 1) (# "154719_at_2453" 1) (# "141210_at_404" 1) (# "153896_at_1100" 1) (# "149435_at_300" 1) (# "149436_at_386" 1) (# "149441_at_1003" 1)))
+(most-frequent fbgn_exons2affy1_overlaps 6 (# (# "142689_at_2404" 3) (# "151429_at_230" 3) (# "147260_at_69" 3) (# "152093_at_2097" 4) (# "151873_at_2014" 4) (# "150311_at_292" 7)))
+(less-frequent fbgn_exons2affy1_overlaps 6 (# (# "143052_at_1717" 1) (# "151951_at_2428" 1) (# "154803_at_2317" 1) (# "149420_at_517" 1) (# "149421_at_366" 1) (# "154555_at_1035" 1) (# "154555_at_1375" 1)))
+(most-frequent fbgn_exons2affy1_overlaps 7 (# (# "151429_at_248" 3) (# "141538_at_2265" 3) (# "155060_at_1543" 3) (# "151873_at_1834" 4) (# "152093_at_2142" 4) (# "150311_at_321" 7)))
+(less-frequent fbgn_exons2affy1_overlaps 7 (# (# "143052_at_1703" 1) (# "154319_at_927" 1) (# "154993_at_1959" 1) (# "149402_at_2878" 1) (# "149403_at_625" 1) (# "149408_at_1010" 1) (# "149409_at_619" 1)))
+(most-frequent fbgn_exons2affy1_overlaps 8 (# (# "151429_at_270" 3) (# "155060_at_1574" 3) (# "142689_at_2342" 3) (# "151873_at_1804" 4) (# "152093_at_2177" 4) (# "150311_at_350" 7)))
+(less-frequent fbgn_exons2affy1_overlaps 8 (# (# "150941_f_at_115" 1) (# "142317_at_420" 1) (# "141883_at_323" 1) (# "149397_at_943" 1) (# "149398_at_568" 1) (# "152411_at_1798" 1) (# "149399_at_1928" 1)))
+(most-frequent fbgn_exons2affy1_overlaps 9 (# (# "155060_at_1631" 3) (# "151429_at_293" 3) (# "147260_at_36" 3) (# "152093_at_2220" 4) (# "151873_at_1786" 4) (# "150311_at_358" 7)))
+(less-frequent fbgn_exons2affy1_overlaps 9 (# (# "150941_f_at_113" 1) (# "149380_at_1052" 1) (# "149381_at_595" 1) (# "149382_at_343" 1) (# "149384_at_626" 1) (# "149385_at_909" 1) (# "149386_at_153" 1)))
+(most-frequent fbgn_exons2affy1_overlaps 10 (# (# "142689_at_2195" 3) (# "147260_at_34" 3) (# "141538_at_2111" 3) (# "152093_at_2221" 4) (# "151873_at_1747" 4) (# "150311_at_405" 7)))
+(less-frequent fbgn_exons2affy1_overlaps 10 (# (# "150941_f_at_111" 1) (# "149364_at_1814" 1) (# "149365_at_276" 1) (# "149368_at_173" 1) (# "149371_at_1969" 1) (# "149372_at_632" 1) (# "149374_at_1908" 1)))
+(most-frequent fbgn_exons2affy1_overlaps 11 (# (# "151429_at_351" 3) (# "142689_at_2154" 3) (# "141538_at_2086" 3) (# "152093_at_2253" 4) (# "151873_at_1723" 4) (# "150311_at_406" 7)))
+(less-frequent fbgn_exons2affy1_overlaps 11 (# (# "151224_f_at_40" 1) (# "149352_at_2845" 1) (# "155039_at_1822" 1) (# "149354_at_228" 1) (# "153107_at_1501" 1) (# "149355_at_446" 1) (# "152216_at_1907" 1)))
+(most-frequent fbgn_exons2affy1_overlaps 12 (# (# "141538_at_2050" 3) (# "147260_at_29" 3) (# "151429_at_444" 3) (# "151873_at_1696" 4) (# "152093_at_2286" 4) (# "150311_at_428" 7)))
+(less-frequent fbgn_exons2affy1_overlaps 12 (# (# "143052_at_1570" 1) (# "153297_at_1146" 1) (# "141292_at_956" 1) (# "155136_at_3280" 1) (# "151994_at_924" 1) (# "154820_at_469" 1) (# "152906_at_2090" 1)))
+(most-frequent fbgn_exons2affy1_overlaps 13 (# (# "155060_at_1834" 3) (# "147260_at_27" 3) (# "142689_at_2057" 3) (# "151873_at_1681" 4) (# "152093_at_2365" 4) (# "150311_at_513" 7)))
+(less-frequent fbgn_exons2affy1_overlaps 13 (# (# "143052_at_1561" 1) (# "149339_at_461" 1) (# "142566_at_6907" 1) (# "149340_at_389" 1) (# "149341_at_1305" 1) (# "149343_at_547" 1) (# "153316_at_970" 1)))
+(most-frequent fbgn_exons2affy1_overlaps 14 (# (# "141538_at_1972" 3) (# "155060_at_1844" 3) (# "147260_at_21" 3) (# "152093_at_2369" 4) (# "151873_at_1656" 4) (# "150311_at_569" 7)))
+(less-frequent fbgn_exons2affy1_overlaps 14 (# (# "143052_at_1547" 1) (# "153677_at_593" 1) (# "142725_at_3484" 1) (# "154418_at_2357" 1) (# "149337_at_1771" 1) (# "149338_at_114" 1) (# "153664_at_1123" 1)))
+(most-frequent fbgn_exons2affy1_overlaps 15 (# (# "155060_at_1866" 3) (# "147260_at_19" 3) (# "141538_at_1905" 3) (# "151873_at_1630" 4) (# "152093_at_2425" 4) (# "150311_at_588" 7)))
+(less-frequent fbgn_exons2affy1_overlaps 15 (# (# "143052_at_1488" 1) (# "142725_at_3437" 1) (# "154418_at_2421" 1) (# "149337_at_1722" 1) (# "149338_at_101" 1) (# "153664_at_1167" 1) (# "149339_at_383" 1)))
+(most-frequent fbgn_exons2affy1_overlaps 16 (# (# "151193_f_at_66" 3) (# "151241_f_at_31" 5) (# "151193_f_at_70" 6) (# "151224_f_at_40" 7) (# "150941_f_at_119" 7) (# "150941_f_at_115" 7)))
+(less-frequent fbgn_exons2affy1_overlaps 16 (# (# "143052_at_1399" 1) (# "154464_at_2230" 1) (# "152047_at_1146" 1) (# "150835_at_1439" 1) (# "154168_at_1052" 1) (# "153210_at_1520" 1) (# "150817_at_565" 1)))
+(most-frequent fbgn_exons2affy1_overlaps 17 (# (# "142169_at_450" 2) (# "146155_at_129" 2) (# "152590_at_972" 2) (# "142115_at_370" 2) (# "143730_at_1670" 2) (# "150941_f_at_115" 9)))
+(less-frequent fbgn_exons2affy1_overlaps 17 (# (# "143052_at_1395" 1) (# "151270_r_at_25" 1) (# "151257_at_31" 1) (# "151250_at_222" 1) (# "151229_at_145" 1) (# "151212_i_at_63" 1) (# "151207_r_at_79" 1)))
+(most-frequent fbgn_exons2affy1_overlaps 18 (# (# "142667_at_1666" 2) (# "142844_at_1801" 2) (# "143730_at_1655" 2) (# "146200_at_740" 2) (# "145665_at_260" 2) (# "150941_f_at_113" 3)))
+(less-frequent fbgn_exons2affy1_overlaps 18 (# (# "143052_at_1376" 1) (# "146970_at_795" 1) (# "142323_at_349" 1) (# "152548_at_1257" 1) (# "142085_at_360" 1) (# "151839_at_572" 1) (# "147900_at_1316" 1)))
+(most-frequent fbgn_exons2affy1_overlaps 19 (# (# "141971_at_425" 2) (# "152590_at_890" 2) (# "150643_at_593" 2) (# "150117_at_272" 2) (# "146155_at_95" 2) (# "141331_at_764" 2)))
+(less-frequent fbgn_exons2affy1_overlaps 19 (# (# "143052_at_1311" 1) (# "146844_at_45" 1) (# "152619_at_980" 1) (# "147717_at_296" 1) (# "141654_at_949" 1) (# "147704_at_309" 1) (# "151140_at_34" 1)))
+(most-frequent fbgn_exons2affy1_overlaps 20 (# (# "152322_at_1081" 2) (# "150574_at_674" 2) (# "142012_at_515" 2) (# "150611_at_681" 2) (# "146094_at_3507" 2) (# "143040_at_1502" 2)))
+(less-frequent fbgn_exons2affy1_overlaps 20 (# (# "141890_at_423" 1) (# "146741_at_332" 1) (# "146978_s_at_613" 1) (# "142001_r_at_17" 1) (# "152057_at_746" 1) (# "153061_at_3626" 1) (# "147846_at_517" 1)))
+(most-frequent fbgn_exons2affy1_overlaps 21 (# (# "143730_at_1571" 2) (# "143071_at_199" 2) (# "153690_at_1496" 2) (# "146572_at_1248" 2) (# "151196_r_at_69" 2) (# "142734_at_582" 2)))
+(less-frequent fbgn_exons2affy1_overlaps 21 (# (# "154290_at_1576" 1) (# "150536_at_1846" 1) (# "142057_at_306" 1) (# "149536_at_287" 1) (# "142647_at_483" 1) (# "152342_at_1443" 1) (# "150858_at_1203" 1)))
+(most-frequent fbgn_exons2affy1_overlaps 22 (# (# "152828_at_1192" 2) (# "145513_at_1169" 2) (# "142641_at_1007" 2) (# "145665_at_185" 2) (# "145804_at_113" 2) (# "144663_at_167" 2)))
+(less-frequent fbgn_exons2affy1_overlaps 22 (# (# "152590_at_807" 1) (# "150536_at_1823" 1) (# "142057_at_329" 1) (# "149536_at_257" 1) (# "142647_at_451" 1) (# "152342_at_1508" 1) (# "150858_at_1226" 1)))
+(most-frequent fbgn_exons2affy1_overlaps 23 (# (# "145121_at_953" 2) (# "152828_at_1286" 2) (# "145513_at_1144" 2) (# "145665_at_164" 2) (# "145804_at_98" 2) (# "146744_at_188" 2)))
+(less-frequent fbgn_exons2affy1_overlaps 23 (# (# "153298_at_1470" 1) (# "150321_at_1006" 1) (# "150383_at_2084" 1) (# "149454_at_1935" 1) (# "150142_at_1363" 1) (# "150536_at_1771" 1) (# "142057_at_344" 1)))
+(most-frequent fbgn_exons2affy1_overlaps 24 (# (# "152828_at_1322" 2) (# "145513_at_1132" 2) (# "145665_at_155" 2) (# "145804_at_94" 2) (# "146094_at_3402" 2) (# "151831_at_920" 2)))
+(less-frequent fbgn_exons2affy1_overlaps 24 (# (# "152253_at_1253" 1) (# "151549_i_at_495" 1) (# "142287_at_5287" 1) (# "150858_at_1274" 1) (# "152342_at_1587" 1) (# "142647_at_365" 1) (# "149536_at_82" 1)))
+(most-frequent fbgn_exons2affy1_overlaps 25 (# (# "145121_at_1044" 2) (# "152828_at_1374" 2) (# "145513_at_1115" 2) (# "145665_at_112" 2) (# "145804_at_88" 2) (# "143367_at_1268" 2)))
+(less-frequent fbgn_exons2affy1_overlaps 25 (# (# "152253_at_1277" 1) (# "152342_at_1612" 1) (# "142647_at_311" 1) (# "149536_at_79" 1) (# "142057_at_440" 1) (# "150536_at_1708" 1) (# "150142_at_1308" 1)))
+(most-frequent fbgn_exons2affy1_overlaps 26 (# (# "142968_at_1016" 2) (# "147307_at_1054" 2) (# "152828_at_1410" 2) (# "145513_at_1081" 2) (# "145804_at_83" 2) (# "152030_at_2454" 2)))
+(less-frequent fbgn_exons2affy1_overlaps 26 (# (# "151555_at_452" 1) (# "150321_at_786" 1) (# "149984_at_574" 1) (# "150288_at_440" 1) (# "154729_at_1256" 1) (# "150235_at_482" 1) (# "153559_at_1188" 1)))
+(most-frequent fbgn_exons2affy1_overlaps 27 (# (# "142051_at_710" 2) (# "143071_at_395" 2) (# "153690_at_1701" 2) (# "152030_at_2472" 2) (# "148950_at_1101" 2) (# "146572_at_1489" 2)))
+(less-frequent fbgn_exons2affy1_overlaps 27 (# (# "151555_at_477" 1) (# "143703_at_549" 1) (# "150198_at_145" 1) (# "153568_at_2595" 1) (# "153408_at_895" 1) (# "154631_at_2296" 1) (# "149802_at_35" 1)))
+(most-frequent fbgn_exons2affy1_overlaps 28 (# (# "151831_at_1098" 2) (# "143071_at_435" 2) (# "142051_at_734" 2) (# "153690_at_1718" 2) (# "142946_at_186" 2) (# "148950_at_1027" 2)))
+(less-frequent fbgn_exons2affy1_overlaps 28 (# (# "154840_at_235" 1) (# "149689_at_838" 1) (# "152285_at_955" 1) (# "151626_at_139" 1) (# "151157_at_129" 1) (# "151986_at_1676" 1) (# "149373_at_477" 1)))
+(most-frequent fbgn_exons2affy1_overlaps 29 (# (# "143040_at_1070" 2) (# "148950_at_1005" 2) (# "152322_at_1333" 2) (# "142209_at_639" 2) (# "143367_at_1495" 2) (# "153005_at_1202" 2)))
+(less-frequent fbgn_exons2affy1_overlaps 29 (# (# "154840_at_217" 1) (# "151546_i_at_74" 1) (# "145929_at_1640" 1) (# "151417_at_35" 1) (# "145917_at_142" 1) (# "154703_at_1319" 1) (# "145904_at_869" 1)))
+(most-frequent fbgn_exons2affy1_overlaps 30 (# (# "151241_f_at_37" 1) (# "145456_at_322" 1) (# "142630_at_415" 1) (# "148015_at_1581" 1) (# "153230_at_2930" 2) (# "154681_at_1547" 2)))
+(less-frequent fbgn_exons2affy1_overlaps 30 (# (# "153483_at_641" 1) (# "150941_f_at_90" 1) (# "144004_at_5787" 1) (# "144775_at_57" 1) (# "144816_at_1278" 1) (# "143155_at_2478" 1) (# "148015_at_1581" 1)))
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_exons2affy2_overlaps.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_exons2affy2_overlaps.tsv
 !(file-name fbgn_exons2affy2_overlaps  data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_exons2affy2_overlaps.tsv)
 (num-columns fbgn_exons2affy2_overlaps 14)
 (duplicated-rows fbgn_exons2affy2_overlaps 4149)
@@ -637,38 +1075,37 @@
 (missing-values fbgn_exons2affy2_overlaps 13 12525 (# "") (# 12525))
 (null-value-count fbgn_exons2affy2_overlaps 14 "" 12686)
 (missing-values fbgn_exons2affy2_overlaps 14 12686 (# "") (# 12686))
-(most-frequent fbgn_exons2affy2_overlaps 1 (# (# 1630536_at_1664 3) (# 1633941_a_at_2332 3) (# 1632394_s_at_2089 3) (# 1625692_s_at_1888 4) (# 1627164_at_3410 4) (# 1625897_s_at_1066 4)))
-(less-frequent fbgn_exons2affy2_overlaps 1 (# (# 1637813_at_4186 1) (# 1638283_at_2407 1) (# 1639086_s_at_1819 1) (# 1631434_at_334 1) (# 1634855_s_at_1654 1) (# 1636657_at_473 1) (# 1641712_at_1957 1)))
-(most-frequent fbgn_exons2affy2_overlaps 2 (# (# 1635578_at_1116 2) (# 1633941_a_at_2295 3) (# 1631833_at_1721 3) (# 1625692_s_at_1832 4) (# 1635572_at_641 4) (# 1625897_s_at_1127 4)))
-(less-frequent fbgn_exons2affy2_overlaps 2 (# (# 1636558_a_at_1881 1) (# 1628490_at_857 1) (# 1641656_at_713 1) (# 1630618_at_2197 1) (# 1625101_at_335 1) (# 1635901_at_939 1) (# 1631798_s_at_1021 1)))
-(most-frequent fbgn_exons2affy2_overlaps 3 (# (# 1631351_s_at_1022 2) (# 1626491_at_1540 2) (# 1635572_at_608 3) (# 1633941_a_at_2232 3) (# 1631833_at_1705 3) (# 1625897_s_at_1142 4)))
-(less-frequent fbgn_exons2affy2_overlaps 3 (# (# 1636558_a_at_1850 1) (# 1631522_x_at_66 1) (# 1632440_at_286 1) (# 1625460_s_at_89 1) (# 1625783_at_502 1) (# 1626735_at_200 1) (# 1628502_at_164 1)))
-(most-frequent fbgn_exons2affy2_overlaps 4 (# (# 1632950_at_1094 2) (# 1629590_at_807 2) (# 1635578_at_1046 2) (# 1635572_at_529 3) (# 1631833_at_1657 3) (# 1625897_s_at_1160 4)))
-(less-frequent fbgn_exons2affy2_overlaps 4 (# (# 1636558_a_at_1823 1) (# 1629951_at_775 1) (# 1627721_at_1681 1) (# 1632946_at_1358 1) (# 1630788_at_1473 1) (# 1629262_at_502 1) (# 1628625_at_1245 1)))
-(most-frequent fbgn_exons2affy2_overlaps 5 (# (# 1636445_at_196 2) (# 1635578_at_1031 2) (# 1634667_at_2047 2) (# 1631833_at_1617 3) (# 1635572_at_481 3) (# 1625897_s_at_1229 4)))
-(less-frequent fbgn_exons2affy2_overlaps 5 (# (# 1636558_a_at_1742 1) (# 1636314_at_387 1) (# 1625214_at_592 1) (# 1633462_at_1757 1) (# 1638793_at_441 1) (# 1630993_at_814 1) (# 1637693_at_840 1)))
-(most-frequent fbgn_exons2affy2_overlaps 6 (# (# 1636445_at_205 2) (# 1628766_at_1592 2) (# 1627958_at_364 2) (# 1631833_at_1553 3) (# 1635572_at_448 3) (# 1625897_s_at_1282 4)))
-(less-frequent fbgn_exons2affy2_overlaps 6 (# (# 1636558_a_at_1725 1) (# 1629127_at_687 1) (# 1632948_x_at_741 1) (# 1631596_at_2406 1) (# 1623590_s_at_2676 1) (# 1638445_a_at_4372 1) (# 1632739_at_505 1)))
-(most-frequent fbgn_exons2affy2_overlaps 7 (# (# 1627427_s_at_1090 2) (# 1626491_at_1395 2) (# 1634933_s_at_300 2) (# 1635572_at_432 3) (# 1631833_at_1528 3) (# 1625897_s_at_1292 4)))
-(less-frequent fbgn_exons2affy2_overlaps 7 (# (# 1636558_a_at_1709 1) (# 1625051_at_611 1) (# 1634488_s_at_341 1) (# 1630421_at_597 1) (# 1628563_at_1739 1) (# 1636412_at_2651 1) (# 1634418_at_1457 1)))
-(most-frequent fbgn_exons2affy2_overlaps 8 (# (# 1627958_at_416 2) (# 1626732_at_695 2) (# 1626038_at_1253 2) (# 1635572_at_393 3) (# 1631833_at_1513 3) (# 1625897_s_at_1337 4)))
-(less-frequent fbgn_exons2affy2_overlaps 8 (# (# 1636558_a_at_1571 1) (# 1632338_a_at_1205 1) (# 1641119_at_364 1) (# 1627824_at_101 1) (# 1632926_at_75 1) (# 1631364_at_518 1) (# 1639058_at_120 1)))
-(most-frequent fbgn_exons2affy2_overlaps 9 (# (# 1630406_at_385 2) (# 1631351_s_at_947 2) (# 1628766_at_1690 2) (# 1631833_at_1487 3) (# 1635572_at_378 3) (# 1625897_s_at_1362 4)))
-(less-frequent fbgn_exons2affy2_overlaps 9 (# (# 1636558_a_at_1561 1) (# 1632926_at_17 1) (# 1631364_at_547 1) (# 1639058_at_103 1) (# 1628447_at_492 1) (# 1626455_s_at_399 1) (# 1638766_at_109 1)))
-(most-frequent fbgn_exons2affy2_overlaps 10 (# (# 1630406_at_337 2) (# 1629590_at_1045 2) (# 1633270_at_394 2) (# 1631833_at_1469 3) (# 1635572_at_297 3) (# 1625897_s_at_1444 4)))
-(less-frequent fbgn_exons2affy2_overlaps 10 (# (# 1636558_a_at_1482 1) (# 1635345_at_50 1) (# 1634677_at_643 1) (# 1635112_at_279 1) (# 1641708_at_3032 1) (# 1629586_at_1283 1) (# 1640473_at_4678 1)))
-(most-frequent fbgn_exons2affy2_overlaps 11 (# (# 1632147_at_448 2) (# 1629590_at_1085 2) (# 1634176_a_at_438 2) (# 1635572_at_234 3) (# 1631833_at_1450 3) (# 1625897_s_at_1488 4)))
-(less-frequent fbgn_exons2affy2_overlaps 11 (# (# 1636558_a_at_1425 1) (# 1638214_at_467 1) (# 1637070_at_754 1) (# 1636893_at_55 1) (# 1639804_at_1221 1) (# 1628992_at_20 1) (# 1627697_at_763 1)))
-(most-frequent fbgn_exons2affy2_overlaps 12 (# (# 1634933_s_at_139 2) (# 1627958_at_512 2) (# 1627427_s_at_891 2) (# 1627339_at_219 2) (# 1631833_at_1435 3) (# 1635572_at_209 3)))
-(less-frequent fbgn_exons2affy2_overlaps 12 (# (# 1636558_a_at_1397 1) (# 1638214_at_453 1) (# 1637070_at_778 1) (# 1636893_at_43 1) (# 1639804_at_1258 1) (# 1628992_at_17 1) (# 1627697_at_738 1)))
-(most-frequent fbgn_exons2affy2_overlaps 13 (# (# 1634933_s_at_106 2) (# 1632147_at_514 2) (# 1633837_at_546 2) (# 1627339_at_124 2) (# 1631833_at_1404 3) (# 1635572_at_157 3)))
-(less-frequent fbgn_exons2affy2_overlaps 13 (# (# 1636558_a_at_1379 1) (# 1638214_at_432 1) (# 1636893_at_32 1) (# 1639804_at_1271 1) (# 1628992_at_15 1) (# 1627697_at_714 1) (# 1635345_at_43 1)))
-(most-frequent fbgn_exons2affy2_overlaps 14 (# (# 1627339_at_73 2) (# 1626491_at_1063 2) (# 1634159_s_at_35 2) (# 1626732_at_641 2) (# 1631833_at_1383 3) (# 1635572_at_129 3)))
-(less-frequent fbgn_exons2affy2_overlaps 14 (# (# 1636558_a_at_1365 1) (# 1628563_at_1922 1) (# 1636412_at_2551 1) (# 1634418_at_1571 1) (# 1632338_a_at_1456 1) (# 1641119_at_581 1) (# 1626455_s_at_584 1)))
-
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_fbtr_fbpp_expanded_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_fbtr_fbpp_expanded_fb_2023_04.tsv
+(most-frequent fbgn_exons2affy2_overlaps 1 (# (# "1630536_at_1664" 3) (# "1633941_a_at_2332" 3) (# "1632394_s_at_2089" 3) (# "1625692_s_at_1888" 4) (# "1627164_at_3410" 4) (# "1625897_s_at_1066" 4)))
+(less-frequent fbgn_exons2affy2_overlaps 1 (# (# "1637813_at_4186" 1) (# "1638283_at_2407" 1) (# "1639086_s_at_1819" 1) (# "1631434_at_334" 1) (# "1634855_s_at_1654" 1) (# "1636657_at_473" 1) (# "1641712_at_1957" 1)))
+(most-frequent fbgn_exons2affy2_overlaps 2 (# (# "1635578_at_1116" 2) (# "1633941_a_at_2295" 3) (# "1631833_at_1721" 3) (# "1625692_s_at_1832" 4) (# "1635572_at_641" 4) (# "1625897_s_at_1127" 4)))
+(less-frequent fbgn_exons2affy2_overlaps 2 (# (# "1636558_a_at_1881" 1) (# "1628490_at_857" 1) (# "1641656_at_713" 1) (# "1630618_at_2197" 1) (# "1625101_at_335" 1) (# "1635901_at_939" 1) (# "1631798_s_at_1021" 1)))
+(most-frequent fbgn_exons2affy2_overlaps 3 (# (# "1631351_s_at_1022" 2) (# "1626491_at_1540" 2) (# "1635572_at_608" 3) (# "1633941_a_at_2232" 3) (# "1631833_at_1705" 3) (# "1625897_s_at_1142" 4)))
+(less-frequent fbgn_exons2affy2_overlaps 3 (# (# "1636558_a_at_1850" 1) (# "1631522_x_at_66" 1) (# "1632440_at_286" 1) (# "1625460_s_at_89" 1) (# "1625783_at_502" 1) (# "1626735_at_200" 1) (# "1628502_at_164" 1)))
+(most-frequent fbgn_exons2affy2_overlaps 4 (# (# "1632950_at_1094" 2) (# "1629590_at_807" 2) (# "1635578_at_1046" 2) (# "1635572_at_529" 3) (# "1631833_at_1657" 3) (# "1625897_s_at_1160" 4)))
+(less-frequent fbgn_exons2affy2_overlaps 4 (# (# "1636558_a_at_1823" 1) (# "1629951_at_775" 1) (# "1627721_at_1681" 1) (# "1632946_at_1358" 1) (# "1630788_at_1473" 1) (# "1629262_at_502" 1) (# "1628625_at_1245" 1)))
+(most-frequent fbgn_exons2affy2_overlaps 5 (# (# "1636445_at_196" 2) (# "1635578_at_1031" 2) (# "1634667_at_2047" 2) (# "1631833_at_1617" 3) (# "1635572_at_481" 3) (# "1625897_s_at_1229" 4)))
+(less-frequent fbgn_exons2affy2_overlaps 5 (# (# "1636558_a_at_1742" 1) (# "1636314_at_387" 1) (# "1625214_at_592" 1) (# "1633462_at_1757" 1) (# "1638793_at_441" 1) (# "1630993_at_814" 1) (# "1637693_at_840" 1)))
+(most-frequent fbgn_exons2affy2_overlaps 6 (# (# "1636445_at_205" 2) (# "1628766_at_1592" 2) (# "1627958_at_364" 2) (# "1631833_at_1553" 3) (# "1635572_at_448" 3) (# "1625897_s_at_1282" 4)))
+(less-frequent fbgn_exons2affy2_overlaps 6 (# (# "1636558_a_at_1725" 1) (# "1629127_at_687" 1) (# "1632948_x_at_741" 1) (# "1631596_at_2406" 1) (# "1623590_s_at_2676" 1) (# "1638445_a_at_4372" 1) (# "1632739_at_505" 1)))
+(most-frequent fbgn_exons2affy2_overlaps 7 (# (# "1627427_s_at_1090" 2) (# "1626491_at_1395" 2) (# "1634933_s_at_300" 2) (# "1635572_at_432" 3) (# "1631833_at_1528" 3) (# "1625897_s_at_1292" 4)))
+(less-frequent fbgn_exons2affy2_overlaps 7 (# (# "1636558_a_at_1709" 1) (# "1625051_at_611" 1) (# "1634488_s_at_341" 1) (# "1630421_at_597" 1) (# "1628563_at_1739" 1) (# "1636412_at_2651" 1) (# "1634418_at_1457" 1)))
+(most-frequent fbgn_exons2affy2_overlaps 8 (# (# "1627958_at_416" 2) (# "1626732_at_695" 2) (# "1626038_at_1253" 2) (# "1635572_at_393" 3) (# "1631833_at_1513" 3) (# "1625897_s_at_1337" 4)))
+(less-frequent fbgn_exons2affy2_overlaps 8 (# (# "1636558_a_at_1571" 1) (# "1632338_a_at_1205" 1) (# "1641119_at_364" 1) (# "1627824_at_101" 1) (# "1632926_at_75" 1) (# "1631364_at_518" 1) (# "1639058_at_120" 1)))
+(most-frequent fbgn_exons2affy2_overlaps 9 (# (# "1630406_at_385" 2) (# "1631351_s_at_947" 2) (# "1628766_at_1690" 2) (# "1631833_at_1487" 3) (# "1635572_at_378" 3) (# "1625897_s_at_1362" 4)))
+(less-frequent fbgn_exons2affy2_overlaps 9 (# (# "1636558_a_at_1561" 1) (# "1632926_at_17" 1) (# "1631364_at_547" 1) (# "1639058_at_103" 1) (# "1628447_at_492" 1) (# "1626455_s_at_399" 1) (# "1638766_at_109" 1)))
+(most-frequent fbgn_exons2affy2_overlaps 10 (# (# "1630406_at_337" 2) (# "1629590_at_1045" 2) (# "1633270_at_394" 2) (# "1631833_at_1469" 3) (# "1635572_at_297" 3) (# "1625897_s_at_1444" 4)))
+(less-frequent fbgn_exons2affy2_overlaps 10 (# (# "1636558_a_at_1482" 1) (# "1635345_at_50" 1) (# "1634677_at_643" 1) (# "1635112_at_279" 1) (# "1641708_at_3032" 1) (# "1629586_at_1283" 1) (# "1640473_at_4678" 1)))
+(most-frequent fbgn_exons2affy2_overlaps 11 (# (# "1632147_at_448" 2) (# "1629590_at_1085" 2) (# "1634176_a_at_438" 2) (# "1635572_at_234" 3) (# "1631833_at_1450" 3) (# "1625897_s_at_1488" 4)))
+(less-frequent fbgn_exons2affy2_overlaps 11 (# (# "1636558_a_at_1425" 1) (# "1638214_at_467" 1) (# "1637070_at_754" 1) (# "1636893_at_55" 1) (# "1639804_at_1221" 1) (# "1628992_at_20" 1) (# "1627697_at_763" 1)))
+(most-frequent fbgn_exons2affy2_overlaps 12 (# (# "1634933_s_at_139" 2) (# "1627958_at_512" 2) (# "1627427_s_at_891" 2) (# "1627339_at_219" 2) (# "1631833_at_1435" 3) (# "1635572_at_209" 3)))
+(less-frequent fbgn_exons2affy2_overlaps 12 (# (# "1636558_a_at_1397" 1) (# "1638214_at_453" 1) (# "1637070_at_778" 1) (# "1636893_at_43" 1) (# "1639804_at_1258" 1) (# "1628992_at_17" 1) (# "1627697_at_738" 1)))
+(most-frequent fbgn_exons2affy2_overlaps 13 (# (# "1634933_s_at_106" 2) (# "1632147_at_514" 2) (# "1633837_at_546" 2) (# "1627339_at_124" 2) (# "1631833_at_1404" 3) (# "1635572_at_157" 3)))
+(less-frequent fbgn_exons2affy2_overlaps 13 (# (# "1636558_a_at_1379" 1) (# "1638214_at_432" 1) (# "1636893_at_32" 1) (# "1639804_at_1271" 1) (# "1628992_at_15" 1) (# "1627697_at_714" 1) (# "1635345_at_43" 1)))
+(most-frequent fbgn_exons2affy2_overlaps 14 (# (# "1627339_at_73" 2) (# "1626491_at_1063" 2) (# "1634159_s_at_35" 2) (# "1626732_at_641" 2) (# "1631833_at_1383" 3) (# "1635572_at_129" 3)))
+(less-frequent fbgn_exons2affy2_overlaps 14 (# (# "1636558_a_at_1365" 1) (# "1628563_at_1922" 1) (# "1636412_at_2551" 1) (# "1634418_at_1571" 1) (# "1632338_a_at_1456" 1) (# "1641119_at_581" 1) (# "1626455_s_at_584" 1)))
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_fbtr_fbpp_expanded_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_fbtr_fbpp_expanded_fb_2023_04.tsv
 !(file-name fbgn_fbtr_fbpp_expanded  data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_fbtr_fbpp_expanded_fb_2023_04.tsv)
 (num-columns fbgn_fbtr_fbpp_expanded 11)
 (duplicated-rows fbgn_fbtr_fbpp_expanded 0)
@@ -700,8 +1137,8 @@
 (missing-values fbgn_fbtr_fbpp_expanded 11 4930 (# "") (# 4930))
 (most-frequent fbgn_fbtr_fbpp_expanded 1 (# (# Dmel 35732)))
 (less-frequent fbgn_fbtr_fbpp_expanded 1 (# (# Dmel 35732)))
-(most-frequent fbgn_fbtr_fbpp_expanded 2 (# (# C_D_box_snoRNA_gene 145) (# tRNA_gene 312) (# pseudogene 365) (# antisense_lncRNA_gene 621) (# miRNA_gene 747) (# lncRNA_gene 2374) (# protein_coding_gene 30802)))
-(less-frequent fbgn_fbtr_fbpp_expanded 2 (# (# sbRNA_gene 1) (# SRP_RNA_gene 1) (# mt_LSU_rRNA_gene 1) (# mt_SSU_rRNA_gene 1) (# RNase_MRP_RNA_gene 1) (# cytosolic_rRNA_28S_gene 2) (# RNA_7SK_gene 2)))
+(most-frequent fbgn_fbtr_fbpp_expanded 2 (# (# "C_D_box_snoRNA_gene" 145) (# "tRNA_gene" 312) (# pseudogene 365) (# "antisense_lncRNA_gene" 621) (# "miRNA_gene" 747) (# "lncRNA_gene" 2374) (# "protein_coding_gene" 30802)))
+(less-frequent fbgn_fbtr_fbpp_expanded 2 (# (# "sbRNA_gene" 1) (# "SRP_RNA_gene" 1) (# "mt_LSU_rRNA_gene" 1) (# "mt_SSU_rRNA_gene" 1) (# "RNase_MRP_RNA_gene" 1) (# "cytosolic_rRNA_28S_gene" 2) (# "RNA_7SK_gene" 2)))
 (most-frequent fbgn_fbtr_fbpp_expanded 3 (# (# FBgn0011224 25) (# FBgn0284408 25) (# FBgn0033504 28) (# FBgn0266696 31) (# FBgn0002781 31) (# FBgn0285944 60) (# FBgn0033159 75)))
 (less-frequent fbgn_fbtr_fbpp_expanded 3 (# (# FBgn0038809 1) (# FBgn0051812 1) (# FBgn0051815 1) (# FBgn0051816 1) (# FBgn0051822 1) (# FBgn0051823 1) (# FBgn0051824 1)))
 (most-frequent fbgn_fbtr_fbpp_expanded 4 (# (# heph 25) (# trol 25) (# CAP 28) (# Svil 31) (# "mod(mdg4)" 31) (# para 60) (# Dscam1 75)))
@@ -710,16 +1147,15 @@
 (less-frequent fbgn_fbtr_fbpp_expanded 5 (# (# "long non-coding RNA:CR46535" 1) (# "Gustatory receptor 22e" 1) (# "long non-coding RNA:CR45471" 1) (# "Gustatory receptor 36a" 1) (# "Gustatory receptor 36b" 1) (# "Gustatory receptor 36c" 1) (# "Gustatory receptor 59a" 1)))
 (most-frequent fbgn_fbtr_fbpp_expanded 6 (# (# CG31000 25) (# CG33950 25) (# CG18408 28) (# CG45186 31) (# CG32491 31) (# CG9907 60) (# CG17800 75)))
 (less-frequent fbgn_fbtr_fbpp_expanded 6 (# (# CG16953 1) (# CG31812 1) (# CG31815 1) (# CG31816 1) (# CR31822 1) (# CG31823 1) (# CR31824 1)))
-(most-frequent fbgn_fbtr_fbpp_expanded 7 (# (# pre_miRNA 262) (# snoRNA 300) (# tRNA 312) (# pseudogene 365) (# miRNA 485) (# ncRNA 3059) (# mRNA 30802)))
-(less-frequent fbgn_fbtr_fbpp_expanded 7 (# (# snRNA 32) (# rRNA 115) (# pre_miRNA 262) (# snoRNA 300) (# tRNA 312) (# pseudogene 365) (# miRNA 485)))
+(most-frequent fbgn_fbtr_fbpp_expanded 7 (# (# "pre_miRNA" 262) (# snoRNA 300) (# tRNA 312) (# pseudogene 365) (# miRNA 485) (# ncRNA 3059) (# mRNA 30802)))
+(less-frequent fbgn_fbtr_fbpp_expanded 7 (# (# snRNA 32) (# rRNA 115) (# "pre_miRNA" 262) (# snoRNA 300) (# tRNA 312) (# pseudogene 365) (# miRNA 485)))
 (most-frequent fbgn_fbtr_fbpp_expanded 10 (# (# FBpp0309148 1) (# FBpp0074581 1) (# FBpp0290917 1) (# FBpp0308522 1) (# FBpp0304236 1) (# FBpp0071677 1)))
 (less-frequent fbgn_fbtr_fbpp_expanded 10 (# (# FBpp0071677 1) (# FBpp0308522 1) (# FBpp0290917 1) (# FBpp0074581 1) (# FBpp0309148 1) (# FBpp0071045 1) (# FBpp0084559 1)))
-(most-frequent fbgn_fbtr_fbpp_expanded 11 (# (# p115-PB 1) (# meso18E-PA 1) (# meso18E-PB 1) (# meso18E-PC 1) (# rept-PB 1) (# a-PA 1)))
-(less-frequent fbgn_fbtr_fbpp_expanded 11 (# (# a-PA 1) (# meso18E-PC 1) (# meso18E-PB 1) (# meso18E-PA 1) (# p115-PB 1) (# p115-PA 1) (# pins-PA 1)))
-
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_fbtr_fbpp_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_fbtr_fbpp_fb_2023_04.tsv
+(most-frequent fbgn_fbtr_fbpp_expanded 11 (# (# "p115-PB" 1) (# "meso18E-PA" 1) (# "meso18E-PB" 1) (# "meso18E-PC" 1) (# "rept-PB" 1) (# "a-PA" 1)))
+(less-frequent fbgn_fbtr_fbpp_expanded 11 (# (# "a-PA" 1) (# "meso18E-PC" 1) (# "meso18E-PB" 1) (# "meso18E-PA" 1) (# "p115-PB" 1) (# "p115-PA" 1) (# "pins-PA" 1)))
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_fbtr_fbpp_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_fbtr_fbpp_fb_2023_04.tsv
 !(file-name fbgn_fbtr_fbpp  data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_fbtr_fbpp_fb_2023_04.tsv)
 (num-columns fbgn_fbtr_fbpp 3)
 (duplicated-rows fbgn_fbtr_fbpp 0)
@@ -735,10 +1171,9 @@
 (less-frequent fbgn_fbtr_fbpp 1 (# (# FBgn0038809 1) (# FBgn0051812 1) (# FBgn0051815 1) (# FBgn0051816 1) (# FBgn0051822 1) (# FBgn0051823 1) (# FBgn0051824 1)))
 (most-frequent fbgn_fbtr_fbpp 3 (# (# FBpp0309148 1) (# FBpp0074581 1) (# FBpp0290917 1) (# FBpp0308522 1) (# FBpp0304236 1) (# FBpp0071677 1)))
 (less-frequent fbgn_fbtr_fbpp 3 (# (# FBpp0071677 1) (# FBpp0308522 1) (# FBpp0290917 1) (# FBpp0074581 1) (# FBpp0309148 1) (# FBpp0071045 1) (# FBpp0084559 1)))
-
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_gleanr_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_gleanr_fb_2023_04.tsv
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_gleanr_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_gleanr_fb_2023_04.tsv
 !(file-name fbgn_gleanr  data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_gleanr_fb_2023_04.tsv)
 (num-columns fbgn_gleanr 4)
 (duplicated-rows fbgn_gleanr 535)
@@ -757,12 +1192,11 @@
 (less-frequent fbgn_gleanr 2 (# (# "Dper\\GL22947" 1) (# "Dwil\\GK16453" 1) (# "Dwil\\GK11213" 1) (# "Dwil\\GK16551" 1) (# "Dwil\\GK11264" 1) (# "Dwil\\GK11214" 1) (# "Dwil\\GK11265" 1)))
 (most-frequent fbgn_gleanr 3 (# (# FBgn0263057 4) (# FBgn0263238 4) (# FBgn0265036 4) (# FBgn0264756 4) (# FBgn0262499 5) (# FBgn0264773 5) (# FBgn0264579 11)))
 (less-frequent fbgn_gleanr 3 (# (# FBgn0160537 1) (# FBgn0218455 1) (# FBgn0213224 1) (# FBgn0218553 1) (# FBgn0213275 1) (# FBgn0213225 1) (# FBgn0213276 1)))
-(most-frequent fbgn_gleanr 4 (# (# dgri_GLEANR_4274 2) (# dana_GLEANR_19894 2) (# dgri_GLEANR_7321 2) (# dgri_GLEANR_14174 2) (# dpse_GLEANR_5123 3) (# dpse_GLEANR_4701 4) (# dpse_GLEANR_8878 4)))
-(less-frequent fbgn_gleanr 4 (# (# dsim_GLEANR_6342 1) (# dwil_GLEANR_16628 1) (# dwil_GLEANR_11555 1) (# dwil_GLEANR_11556 1) (# dwil_GLEANR_11460 1) (# dwil_GLEANR_11461 1) (# dwil_GLEANR_11557 1)))
-
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_NAseq_Uniprot_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_NAseq_Uniprot_fb_2023_04.tsv
+(most-frequent fbgn_gleanr 4 (# (# "dgri_GLEANR_4274" 2) (# "dana_GLEANR_19894" 2) (# "dgri_GLEANR_7321" 2) (# "dgri_GLEANR_14174" 2) (# "dpse_GLEANR_5123" 3) (# "dpse_GLEANR_4701" 4) (# "dpse_GLEANR_8878" 4)))
+(less-frequent fbgn_gleanr 4 (# (# "dsim_GLEANR_6342" 1) (# "dwil_GLEANR_16628" 1) (# "dwil_GLEANR_11555" 1) (# "dwil_GLEANR_11556" 1) (# "dwil_GLEANR_11460" 1) (# "dwil_GLEANR_11461" 1) (# "dwil_GLEANR_11557" 1)))
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_NAseq_Uniprot_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_NAseq_Uniprot_fb_2023_04.tsv
 !(file-name fbgn_NAseq_Uniprot  data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_NAseq_Uniprot_fb_2023_04.tsv)
 (num-columns fbgn_NAseq_Uniprot 9)
 (duplicated-rows fbgn_NAseq_Uniprot 0)
@@ -791,7 +1225,7 @@
 (missing-values fbgn_NAseq_Uniprot 8 1281783 (# "") (# 1281783))
 (null-value-count fbgn_NAseq_Uniprot 9 "" 1285892)
 (missing-values fbgn_NAseq_Uniprot 9 1285892 (# "") (# 1285892))
-(most-frequent fbgn_NAseq_Uniprot 1 (# (# sta 1332) (# RpL5 1362) (# alphaTub84B 1442) (# Hsc70-4 1611) (# ninaE 1699) (# eEF2 2370) (# eEF1alpha1 2383)))
+(most-frequent fbgn_NAseq_Uniprot 1 (# (# sta 1332) (# RpL5 1362) (# alphaTub84B 1442) (# "Hsc70-4" 1611) (# ninaE 1699) (# eEF2 2370) (# eEF1alpha1 2383)))
 (less-frequent fbgn_NAseq_Uniprot 1 (# (# "Hsap\\FSBP" 1) (# "Dyak\\GE14653" 1) (# "Dyak\\GE14652" 1) (# "Dere\\GG16178" 1) (# "Dyak\\GE14651" 1) (# "Dyak\\GE14650" 1) (# "Dyak\\GE14649" 1)))
 (most-frequent fbgn_NAseq_Uniprot 2 (# (# Dper 34397) (# Dmoj 34929) (# Dvir 35196) (# Dsim 37463) (# Dana 38929) (# Dyak 39546) (# Dmel 938032)))
 (less-frequent fbgn_NAseq_Uniprot 2 (# (# Cpac 1) (# Hvul 1) (# Zghe 1) (# Dhye 1) (# Dabu 1) (# Xlae 1) (# Cfum 1)))
@@ -805,14 +1239,13 @@
 (less-frequent fbgn_NAseq_Uniprot 6 (# (# A1ZAK1 1) (# B4R037 1) (# B4R038 1) (# B4R040 1) (# B4R043 1) (# B4R044 1) (# B4R047 1)))
 (most-frequent fbgn_NAseq_Uniprot 7 (# (# 6632090.0 1) (# 6627682.0 1) (# 6631334.0 1) (# 6631316.0 1) (# 6634144.0 1) (# 6624472.0 1)))
 (less-frequent fbgn_NAseq_Uniprot 7 (# (# 6611558.0 1) (# 6634144.0 1) (# 6631316.0 1) (# 6631334.0 1) (# 6627682.0 1) (# 6632090.0 1) (# 6632175.0 1)))
-(most-frequent fbgn_NAseq_Uniprot 8 (# (# NM_168111 1) (# NM_168136 1) (# NM_168145 1) (# NM_168144 1) (# NM_001169879 1) (# NM_134950 2)))
-(less-frequent fbgn_NAseq_Uniprot 8 (# (# NM_141332 1) (# NM_001274510 1) (# NM_001274509 1) (# NM_001259707 1) (# NM_001169879 1) (# NM_168112 1) (# NM_168113 1)))
-(most-frequent fbgn_NAseq_Uniprot 9 (# (# NP_001137539 1) (# NP_001287647 1) (# NP_001287648 1) (# NP_001104474 1) (# NP_001188370 1) (# NP_001287646 1)))
-(less-frequent fbgn_NAseq_Uniprot 9 (# (# NP_648102 1) (# NP_001287648 1) (# NP_001287647 1) (# NP_001137539 1) (# NP_001104473 1) (# NP_001104472 1) (# NP_001104471 1)))
-
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_functional_complementation_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_functional_complementation_fb_2023_04.tsv
+(most-frequent fbgn_NAseq_Uniprot 8 (# (# "NM_168111" 1) (# "NM_168136" 1) (# "NM_168145" 1) (# "NM_168144" 1) (# "NM_001169879" 1) (# "NM_134950" 2)))
+(less-frequent fbgn_NAseq_Uniprot 8 (# (# "NM_141332" 1) (# "NM_001274510" 1) (# "NM_001274509" 1) (# "NM_001259707" 1) (# "NM_001169879" 1) (# "NM_168112" 1) (# "NM_168113" 1)))
+(most-frequent fbgn_NAseq_Uniprot 9 (# (# "NP_001137539" 1) (# "NP_001287647" 1) (# "NP_001287648" 1) (# "NP_001104474" 1) (# "NP_001188370" 1) (# "NP_001287646" 1)))
+(less-frequent fbgn_NAseq_Uniprot 9 (# (# "NP_648102" 1) (# "NP_001287648" 1) (# "NP_001287647" 1) (# "NP_001137539" 1) (# "NP_001104473" 1) (# "NP_001104472" 1) (# "NP_001104471" 1)))
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_functional_complementation_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_functional_complementation_fb_2023_04.tsv
 !(file-name gene_functional_complementation  data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_functional_complementation_fb_2023_04.tsv)
 (num-columns gene_functional_complementation 5)
 (duplicated-rows gene_functional_complementation 0)
@@ -837,10 +1270,9 @@
 (less-frequent gene_functional_complementation 4 (# (# FBgn0262153 1) (# FBgn0289163 1) (# FBgn0289120 1) (# FBgn0286886 1) (# FBgn0289345 1) (# FBgn0283711 1) (# FBgn0288530 1)))
 (most-frequent gene_functional_complementation 5 (# (# FBrf0216943 3) (# FBrf0210782 3) (# FBrf0146918 3) (# FBrf0242427 3) (# FBrf0184161 4) (# FBrf0252066 4) (# FBrf0212111 4)))
 (less-frequent gene_functional_complementation 5 (# (# FBrf0211368 1) (# FBrf0101988 1) (# FBrf0193931 1) (# FBrf0227402 1) (# FBrf0230449 1) (# FBrf0188025 1) (# FBrf0174932 1)))
-
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_genetic_interactions_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_genetic_interactions_fb_2023_04.tsv
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_genetic_interactions_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_genetic_interactions_fb_2023_04.tsv
 !(file-name gene_genetic_interactions  data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_genetic_interactions_fb_2023_04.tsv)
 (num-columns gene_genetic_interactions 6)
 (duplicated-rows gene_genetic_interactions 0)
@@ -858,21 +1290,20 @@
 (missing-values gene_genetic_interactions 5 0 () ())
 (missing-values gene_genetic_interactions 6 0 () ())
 (most-frequent gene_genetic_interactions 1 (# (# Egfr 168) (# pbl 173) (# H 173) (# pnr 174) (# w 181) (# Ras85D 365) (# N 384)))
-(less-frequent gene_genetic_interactions 1 (# (# Fit1 1) (# Gtpx 1) (# kat-60L1 1) (# "Abl|fax" 1) (# "rpr|hid" 1) (# Gfrl 1) (# "mod(mdg4)|sc" 1)))
+(less-frequent gene_genetic_interactions 1 (# (# Fit1 1) (# Gtpx 1) (# "kat-60L1" 1) (# "Abl|fax" 1) (# "rpr|hid" 1) (# Gfrl 1) (# "mod(mdg4)|sc" 1)))
 (most-frequent gene_genetic_interactions 2 (# (# FBgn0003731 168) (# FBgn0003041 173) (# FBgn0001169 173) (# FBgn0003117 174) (# FBgn0003996 181) (# FBgn0003205 365) (# FBgn0004647 384)))
 (less-frequent gene_genetic_interactions 2 (# (# FBgn0035498 1) (# FBgn0035438 1) (# FBgn0037375 1) (# "FBgn0000017|FBgn0014163" 1) (# "FBgn0011706|FBgn0003997" 1) (# FBgn0262869 1) (# "FBgn0002781|FBgn0004170" 1)))
 (most-frequent gene_genetic_interactions 3 (# (# wg 110) (# puc 117) (# Ras85D 141) (# Egfr 158) (# Diap1 163) (# N 174) (# bsk 181)))
-(less-frequent gene_genetic_interactions 3 (# (# "Su(tor)278-22" 1) (# CG32982 1) (# CG15599 1) (# "Su(E1)-A" 1) (# mir-13b-2 1) (# EP1095 1) (# "S(Sev-CycE)D28" 1)))
+(less-frequent gene_genetic_interactions 3 (# (# "Su(tor)278-22" 1) (# CG32982 1) (# CG15599 1) (# "Su(E1)-A" 1) (# "mir-13b-2" 1) (# EP1095 1) (# "S(Sev-CycE)D28" 1)))
 (most-frequent gene_genetic_interactions 4 (# (# FBgn0284084 110) (# FBgn0243512 117) (# FBgn0003205 141) (# FBgn0003731 158) (# FBgn0260635 163) (# FBgn0004647 174) (# FBgn0000229 181)))
 (less-frequent gene_genetic_interactions 4 (# (# FBgn0026335 1) (# FBgn0052982 1) (# FBgn0030667 1) (# FBgn0262767 1) (# FBgn0262421 1) (# FBgn0062701 1) (# FBgn0041783 1)))
 (most-frequent gene_genetic_interactions 5 (# (# enhanceable 7874) (# suppressible 12447)))
 (less-frequent gene_genetic_interactions 5 (# (# enhanceable 7874) (# suppressible 12447)))
 (most-frequent gene_genetic_interactions 6 (# (# FBrf0190765 83) (# FBrf0188528 88) (# FBrf0190751 89) (# FBrf0187664 105) (# FBrf0147055 149) (# FBrf0199094 151) (# FBrf0241270 160)))
 (less-frequent gene_genetic_interactions 6 (# (# FBrf0221584 1) (# FBrf0231072 1) (# FBrf0102734 1) (# FBrf0190193 1) (# FBrf0229219 1) (# FBrf0226148 1) (# FBrf0208690 1)))
-
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_groups_HGNC_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_groups_HGNC_fb_2023_04.tsv
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_groups_HGNC_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_groups_HGNC_fb_2023_04.tsv
 !(file-name gene_groups_HGNC  data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_groups_HGNC_fb_2023_04.tsv)
 (num-columns gene_groups_HGNC 4)
 (duplicated-rows gene_groups_HGNC 0)
@@ -888,16 +1319,15 @@
 (missing-values gene_groups_HGNC 4 1192 (# "") (# 1192))
 (most-frequent gene_groups_HGNC 1 (# (# FBgg0000526 2) (# FBgg0000112 2) (# FBgg0000738 2) (# FBgg0000588 2) (# FBgg0000792 2) (# FBgg0000083 3) (# FBgg0000279 3)))
 (less-frequent gene_groups_HGNC 1 (# (# FBgg0000451 1) (# FBgg0000651 1) (# FBgg0001307 1) (# FBgg0000697 1) (# FBgg0000072 1) (# FBgg0000437 1) (# FBgg0001352 1)))
-(most-frequent gene_groups_HGNC 2 (# (# SM 2) (# INX 2) (# PRDTF 2) (# CAC-U 2) (# E2FTF 2) (# SYT 3) (# RPD3-HDA1 3)))
-(less-frequent gene_groups_HGNC 2 (# (# TRNA-C-THR-CGT 1) (# NAT 1) (# APAS 1) (# SLC33 1) (# ADAM 1) (# TRNA-C-LEU-TAA 1) (# N-GH 1)))
+(most-frequent gene_groups_HGNC 2 (# (# SM 2) (# INX 2) (# PRDTF 2) (# "CAC-U" 2) (# E2FTF 2) (# SYT 3) (# "RPD3-HDA1" 3)))
+(less-frequent gene_groups_HGNC 2 (# (# "TRNA-C-THR-CGT" 1) (# NAT 1) (# APAS 1) (# SLC33 1) (# ADAM 1) (# "TRNA-C-LEU-TAA" 1) (# "N-GH" 1)))
 (most-frequent gene_groups_HGNC 3 (# (# "SPLICEOSOMAL SM PROTEINS" 2) (# INNEXINS 2) (# "PAIRED TRANSCRIPTION FACTORS" 2) (# "UNCLASSIFIED CALCIUM CHANNEL-FORMING SUBUNITS" 2) (# "E2F TRANSCRIPTION FACTORS" 2) (# "SYNAPTOTAGMINS & SYNAPTOTAGMIN-LIKE PROTEINS" 3) (# "RPD3/HDA1 LYSINE DEACETYLASES" 3)))
 (less-frequent gene_groups_HGNC 3 (# (# "CYTOSOLIC THREONINE-CGT TRANSFER RNAS" 1) (# "N-TERMINAL ACETYLTRANSFERASE CATALYTIC SUBUNITS" 1) (# ASPARAGINASES 1) (# "SLC33 ACETYL-COA TRANSPORTERS" 1) (# "ADAM METALLOPROTEASES" 1) (# "CYTOSOLIC LEUCINE-TAA TRANSFER RNAS" 1) (# "N-GLYCOSYL HYDROLASES" 1)))
 (most-frequent gene_groups_HGNC 4 (# (# 1281.0 2) (# 363.0 2) (# 434.0 2) (# 816.0 2) (# 1254.0 2) (# 669.0 2)))
 (less-frequent gene_groups_HGNC 4 (# (# 346.0 1) (# 1654.0 1) (# 1585.0 1) (# 1419.0 1) (# 2154.0 1) (# 262.0 1) (# 1027.0 1)))
-
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_group_data_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_group_data_fb_2023_04.tsv
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_group_data_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_group_data_fb_2023_04.tsv
 !(file-name gene_group_data  data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_group_data_fb_2023_04.tsv)
 (num-columns gene_group_data 7)
 (duplicated-rows gene_group_data 0)
@@ -922,22 +1352,34 @@
 (missing-values gene_group_data 7 405 (# "") (# 405))
 (most-frequent gene_group_data 1 (# (# FBgg0000128 98) (# FBgg0001176 105) (# FBgg0001186 106) (# FBgg0001078 114) (# FBgg0000097 120) (# FBgg0001077 136) (# FBgg0000732 272)))
 (less-frequent gene_group_data 1 (# (# FBgg0001756 1) (# FBgg0000834 1) (# FBgg0001677 1) (# FBgg0000396 1) (# FBgg0000921 1) (# FBgg0000512 1) (# FBgg0000662 1)))
-(most-frequent gene_group_data 2 (# (# E3-RING-U 98) (# CPR 105) (# CBD 106) (# SP-T 114) (# OR 120) (# S1A-NPH 136) (# ZF-C2H2 272)))
-(less-frequent gene_group_data 2 (# (# UFM1 1) (# GH47 1) (# GH99 1) (# TRNA-C-ASP 1) (# MDH 1) (# KCN 1) (# SLC7 1)))
+(most-frequent gene_group_data 2 (# (# "E3-RING-U" 98) (# CPR 105) (# CBD 106) (# "SP-T" 114) (# OR 120) (# "S1A-NPH" 136) (# "ZF-C2H2" 272)))
+(less-frequent gene_group_data 2 (# (# UFM1 1) (# GH47 1) (# GH99 1) (# "TRNA-C-ASP" 1) (# MDH 1) (# KCN 1) (# SLC7 1)))
 (most-frequent gene_group_data 3 (# (# "UNCLASSIFIED RING DOMAIN UBIQUITIN LIGASES" 98) (# "CPR CUTICLE PROTEIN FAMILY" 105) (# "CHITIN BINDING DOMAIN-CONTAINING PROTEINS" 106) (# "S1A SERINE PROTEASES - TRYPSIN-LIKE" 114) (# "ODORANT RECEPTORS" 120) (# "S1A NON-PEPTIDASE HOMOLOGS" 136) (# "C2H2 ZINC FINGER TRANSCRIPTION FACTORS" 272)))
 (less-frequent gene_group_data 3 (# (# "UFM1 PROTEINS" 1) (# "CLASS I ALPHA-MANNOSIDASES" 1) (# "ENDO-ALPHA MANNOSIDASES" 1) (# "CYTOSOLIC ASPARTIC ACID TRANSFER RNAS" 1) (# "MALATE DEHYDROGENASES" 1) (# "POTASSIUM CHANNEL SUBUNITS" 1) (# "SLC7 FAMILY OF AMINO ACID TRANSPORTERS" 1)))
 (most-frequent gene_group_data 4 (# (# FBgg0001178 162) (# FBgg0001841 178) (# FBgg0001076 190) (# FBgg0000729 277) (# FBgg0000537 318) (# FBgg0000686 392)))
 (less-frequent gene_group_data 4 (# (# FBgg0001357 1) (# FBgg0000408 1) (# FBgg0001039 1) (# FBgg0001844 2) (# FBgg0001637 2) (# FBgg0000582 2) (# FBgg0000130 2)))
-(most-frequent gene_group_data 5 (# (# CP 162) (# OXPHOS-V 178) (# S1AP 190) (# ZN-TF 277) (# SPL-INT 318) (# SLC 392)))
-(less-frequent gene_group_data 5 (# (# ETH 1) (# TRNA-C-SEC 1) (# OXRPX 1) (# PSM-G 2) (# LADAC 2) (# IC 2) (# RP 2)))
+(most-frequent gene_group_data 5 (# (# CP 162) (# "OXPHOS-V" 178) (# S1AP 190) (# "ZN-TF" 277) (# "SPL-INT" 318) (# SLC 392)))
+(less-frequent gene_group_data 5 (# (# ETH 1) (# "TRNA-C-SEC" 1) (# OXRPX 1) (# "PSM-G" 2) (# LADAC 2) (# IC 2) (# RP 2)))
 (most-frequent gene_group_data 6 (# (# FBgn0261933 10) (# FBgn0000426 13) (# FBgn0261790 13) (# FBgn0261791 13) (# FBgn0023167 13) (# FBgn0262601 13)))
 (less-frequent gene_group_data 6 (# (# FBgn0002565 1) (# FBgn0052671 1) (# FBgn0262518 1) (# FBgn0037364 1) (# FBgn0005586 1) (# FBgn0015791 1) (# FBgn0015795 1)))
 (most-frequent gene_group_data 7 (# (# SmD1 10) (# SmF 13) (# SmE 13) (# SNRPG 13) (# SmD3 13) (# SmB 13)))
 (less-frequent gene_group_data 7 (# (# Lsp2 1) (# Rab9Fa 1) (# Rab8 1) (# Rab23 1) (# Rab3 1) (# Rab14 1) (# Rab7 1)))
 
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_map_table_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_map_table_fb_2023_04.tsv
+
+
+
+
+
+
+
+
+
+
+
+
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_map_table_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_map_table_fb_2023_04.tsv
 !(file-name gene_map_table  data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_map_table_fb_2023_04.tsv)
 (num-columns gene_map_table 6)
 (duplicated-rows gene_map_table 0)
@@ -955,23 +1397,24 @@
 (missing-values gene_map_table 4 208914 (# "") (# 208914))
 (null-value-count gene_map_table 5 "" 222613)
 (null-value-count gene_map_table 5 "-" 105)
-(missing-values gene_map_table 5 222718 (# "" -) (# 222613 105))
+(missing-values gene_map_table 5 222718 (# "" "-") (# 222613 105))
 (null-value-count gene_map_table 6 "" 227926)
 (missing-values gene_map_table 6 227926 (# "") (# 227926))
 (most-frequent gene_map_table 1 (# (# Dper 18137) (# Dana 18521) (# Dwil 18542) (# Dyak 19506) (# Dsim 20501) (# Dpse 22460) (# Dmel 31755)))
 (less-frequent gene_map_table 1 (# (# Dmos 1) (# Dsch 1) (# Dprg 1) (# Dpme 1) (# Dmds 1) (# Dbis 1) (# Dsut 1)))
-(most-frequent gene_map_table 4 (# (# 1- 1161) (# XL- 1883) (# 4- 2182) (# XR- 2261) (# 3- 3567) (# 2- 4139)))
-(less-frequent gene_map_table 4 (# (# "2-[90]" 1) (# 3-50-62 1) (# "1-38.4" 1) (# "3-[76]" 1) (# "3-[25]" 1) (# "1-[61]" 1) (# "2-[24]" 1)))
-(most-frequent gene_map_table 5 (# (# 61-100 47) (# 39D5-39D5 47) (# 21E2-21E2 73) (# 56E2-56E2 123) (# 21-60 132)))
-(less-frequent gene_map_table 5 (# (# 92A2-92A3 1) (# 18E5-18F1 1) (# 78A2-78B1 1) (# 95C5-95C8 1) (# 18B8-18B8 1) (# 61F2-61F3 1) (# 53A2-53A3 1)))
+(most-frequent gene_map_table 4 (# (# "1-" 1161) (# "XL-" 1883) (# "4-" 2182) (# "XR-" 2261) (# "3-" 3567) (# "2-" 4139)))
+(less-frequent gene_map_table 4 (# (# "2-[90]" 1) (# "3-50-62" 1) (# "1-38.4" 1) (# "3-[76]" 1) (# "3-[25]" 1) (# "1-[61]" 1) (# "2-[24]" 1)))
+(most-frequent gene_map_table 5 (# (# "61-100" 47) (# "39D5-39D5" 47) (# "21E2-21E2" 73) (# "56E2-56E2" 123) (# "21-60" 132)))
+(less-frequent gene_map_table 5 (# (# "92A2-92A3" 1) (# "18E5-18F1" 1) (# "78A2-78B1" 1) (# "95C5-95C8" 1) (# "18B8-18B8" 1) (# "61F2-61F3" 1) (# "53A2-53A3" 1)))
 (most-frequent gene_map_table 6 (# (# "2R:10351533..10352161(-1)" 3) (# "2R:13209809..13212237(-1)" 3) (# "3R:21365609..21368279(1)" 3) (# "2R:21667541..21669916(-1)" 4) (# "3R:13813109..13814648(1)" 4) (# "3R:21355692..21359768(-1)" 5)))
 (less-frequent gene_map_table 6 (# (# "3R:19373757..19374789(-1)" 1) (# "3L:11574764..11577044(-1)" 1) (# "3L:11572797..11574663(-1)" 1) (# "X:20178755..20179729(-1)" 1) (# "3L:10692530..10693167(-1)" 1) (# "3R:25493481..25495161(-1)" 1) (# "X:20186630..20187604(-1)" 1)))
 
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_rpkm_matrix_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_rpkm_matrix_fb_2023_04.tsv
-/opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta/metta_vspace/metta_learner.py:3108: DtypeWarning: Columns (46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127) have mixed types. Specify dtype option on import or set low_memory=False.
-  return pd.read_csv(file_path, sep=sep, encoding=enc, comment='#',
+
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_rpkm_matrix_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_rpkm_matrix_fb_2023_04.tsv
+;; /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta/metta_vspace/metta_learner.py:3098: DtypeWarning: Columns (46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127) have mixed types. Specify dtype option on import or set low_memory=False.
+;;   return pd.read_csv(file_path, sep=sep, encoding=enc, comment='#',
 !(file-name gene_rpkm_matrix  data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_rpkm_matrix_fb_2023_04.tsv)
 (num-columns gene_rpkm_matrix 170)
 (duplicated-rows gene_rpkm_matrix 0)
@@ -1319,8 +1762,8 @@
 (missing-values gene_rpkm_matrix 170 0 () ())
 (most-frequent gene_rpkm_matrix 3 (# (# steppke 1) (# "nicotinic Acetylcholine Receptor \u03b17" 1) (# "Protein-L-isoaspartate (D-aspartate) O-methyltransferase" 1) (# "Chronologically inappropriate morphogenesis" 1) (# "Golgin 97" 1) (# peanuts 1)))
 (less-frequent gene_rpkm_matrix 3 (# (# "transfer RNA:Proline-CGG 1-1" 1) (# Enigma 1) (# "Golgin 97" 1) (# "Chronologically inappropriate morphogenesis" 1) (# "Protein-L-isoaspartate (D-aspartate) O-methyltransferase" 1) (# "nicotinic Acetylcholine Receptor \u03b17" 1) (# steppke 1)))
-(most-frequent gene_rpkm_matrix 4 (# (# C_D_box_snoRNA_gene 130) (# miRNA_gene 203) (# tRNA_gene 311) (# pseudogene 337) (# antisense_lncRNA_gene 501) (# lncRNA_gene 1976) (# protein_coding_gene 13981)))
-(less-frequent gene_rpkm_matrix 4 (# (# RNase_P_RNA_gene 1) (# cytosolic_rRNA_5_8S_gene 1) (# cytosolic_rRNA_18S_gene 1) (# mt_SSU_rRNA_gene 1) (# mt_LSU_rRNA_gene 1) (# RNase_MRP_RNA_gene 1) (# cytosolic_rRNA_2S_gene 1)))
+(most-frequent gene_rpkm_matrix 4 (# (# "C_D_box_snoRNA_gene" 130) (# "miRNA_gene" 203) (# "tRNA_gene" 311) (# pseudogene 337) (# "antisense_lncRNA_gene" 501) (# "lncRNA_gene" 1976) (# "protein_coding_gene" 13981)))
+(less-frequent gene_rpkm_matrix 4 (# (# "RNase_P_RNA_gene" 1) (# "cytosolic_rRNA_5_8S_gene" 1) (# "cytosolic_rRNA_18S_gene" 1) (# "mt_SSU_rRNA_gene" 1) (# "mt_LSU_rRNA_gene" 1) (# "RNase_MRP_RNA_gene" 1) (# "cytosolic_rRNA_2S_gene" 1)))
 (most-frequent gene_rpkm_matrix 5 (# (# 12.0 152) (# 5.0 168) (# 4.0 205) (# 3.0 228) (# 2.0 385) (# 1.0 919) (# 0.0 9499)))
 (less-frequent gene_rpkm_matrix 5 (# (# 1665.0 1) (# 623.0 1) (# 1251.0 1) (# 887.0 1) (# 482.0 1) (# 480.0 1) (# 382.0 1)))
 (most-frequent gene_rpkm_matrix 6 (# (# 6.0 467) (# 5.0 531) (# 4.0 582) (# 3.0 691) (# 2.0 842) (# 1.0 1493) (# 0.0 6538)))
@@ -1574,6 +2017,17 @@
 (most-frequent gene_rpkm_matrix 130 (# (# 5.0 455) (# 6.0 489) (# 4.0 577) (# 3.0 590) (# 2.0 780) (# 1.0 1631) (# 0.0 7367)))
 (less-frequent gene_rpkm_matrix 130 (# (# 740.0 1) (# 6523.0 1) (# 620.0 1) (# 198.0 1) (# 779.0 1) (# 330.0 1) (# 1125.0 1)))
 (most-frequent gene_rpkm_matrix 131 (# (# 6.0 537) (# 5.0 593) (# 4.0 663) (# 3.0 706) (# 2.0 853) (# 1.0 1616) (# 0.0 7069)))
+
+
+
+
+
+
+
+
+
+
+
 (less-frequent gene_rpkm_matrix 131 (# (# 222.0 1) (# 491.0 1) (# 628.0 1) (# 984.0 1) (# 855.0 1) (# 435.0 1) (# 264.0 1)))
 (most-frequent gene_rpkm_matrix 132 (# (# 6.0 501) (# 5.0 513) (# 4.0 577) (# 3.0 662) (# 2.0 825) (# 1.0 1671) (# 0.0 6840)))
 (less-frequent gene_rpkm_matrix 132 (# (# 4972.0 1) (# 360.0 1) (# 5006.0 1) (# 1103.0 1) (# 536.0 1) (# 716.0 1) (# 206.0 1)))
@@ -1653,12 +2107,11 @@
 (less-frequent gene_rpkm_matrix 169 (# (# 201.0 1) (# 205.0 1) (# 161.0 1) (# 261.0 1) (# 494.0 1) (# 192.0 1) (# 168.0 1)))
 (most-frequent gene_rpkm_matrix 170 (# (# 6.0 287) (# 5.0 355) (# 4.0 540) (# 3.0 829) (# 2.0 1394) (# 1.0 2694) (# 0.0 9547)))
 (less-frequent gene_rpkm_matrix 170 (# (# 2170.0 1) (# 961.0 1) (# 147.0 1) (# 281.0 1) (# 208.0 1) (# 491.0 1) (# 249.0 1)))
-
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_rpkm_report_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_rpkm_report_fb_2023_04.tsv
-/opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta/metta_vspace/metta_learner.py:3108: DtypeWarning: Columns (9) have mixed types. Specify dtype option on import or set low_memory=False.
-  return pd.read_csv(file_path, sep=sep, encoding=enc, comment='#',
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_rpkm_report_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_rpkm_report_fb_2023_04.tsv
+;; /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta/metta_vspace/metta_learner.py:3098: DtypeWarning: Columns (9) have mixed types. Specify dtype option on import or set low_memory=False.
+;;   return pd.read_csv(file_path, sep=sep, encoding=enc, comment='#',
 !(file-name gene_rpkm_report  data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_rpkm_report_fb_2023_04.tsv)
 (num-columns gene_rpkm_report 12)
 (duplicated-rows gene_rpkm_report 0)
@@ -1692,16 +2145,16 @@
 (less-frequent gene_rpkm_report 1 (# (# "Dmel_R6.53" 2928711)))
 (most-frequent gene_rpkm_report 2 (# (# FBgn0053410 166) (# FBgn0053411 166) (# FBgn0053412 166) (# FBgn0053413 166) (# FBgn0053414 166) (# FBgn0053408 166) (# FBgn0038694 166)))
 (less-frequent gene_rpkm_report 2 (# (# FBgn0267595 40) (# FBgn0013691 42) (# FBgn0013673 42) (# FBgn0013701 42) (# FBgn0013700 42) (# FBgn0013674 42) (# FBgn0013675 42)))
-(most-frequent gene_rpkm_report 3 (# (# 5SrRNA:CR33410 166) (# 5SrRNA:CR33411 166) (# 5SrRNA:CR33412 166) (# 5SrRNA:CR33413 166) (# 5SrRNA:CR33414 166) (# 5SrRNA:CR33408 166) (# CG5217 166)))
-(less-frequent gene_rpkm_report 3 (# (# CR45933 40) (# mt:tRNA:Asp-GTC 42) (# mt:ATPase8 42) (# mt:tRNA:Asn-GTT 42) (# mt:tRNA:Met-CAT 42) (# mt:CoI 42) (# mt:CoII 42)))
+(most-frequent gene_rpkm_report 3 (# (# "5SrRNA:CR33410" 166) (# "5SrRNA:CR33411" 166) (# "5SrRNA:CR33412" 166) (# "5SrRNA:CR33413" 166) (# "5SrRNA:CR33414" 166) (# "5SrRNA:CR33408" 166) (# CG5217 166)))
+(less-frequent gene_rpkm_report 3 (# (# CR45933 40) (# "mt:tRNA:Asp-GTC" 42) (# "mt:ATPase8" 42) (# "mt:tRNA:Asn-GTT" 42) (# "mt:tRNA:Met-CAT" 42) (# "mt:CoI" 42) (# "mt:CoII" 42)))
 (most-frequent gene_rpkm_report 4 (# (# FBlc0003342 35368) (# FBlc0000060 211421) (# FBlc0000260 424996) (# FBlc0000236 477917) (# FBlc0000206 513566) (# FBlc0000085 528553) (# FBlc0003498 736890)))
 (less-frequent gene_rpkm_report 4 (# (# FBlc0003342 35368) (# FBlc0000060 211421) (# FBlc0000260 424996) (# FBlc0000236 477917) (# FBlc0000206 513566) (# FBlc0000085 528553) (# FBlc0003498 736890)))
-(most-frequent gene_rpkm_report 5 (# (# Knoblich_Neural_Cell_RNA-Seq 35368) (# BCM_1_RNAseq 211421) (# "modENCODE_mRNA-Seq_cell.B" 424996) (# modENCODE_mRNA-Seq_treatments 477917) (# modENCODE_mRNA-Seq_tissues 513566) (# modENCODE_mRNA-Seq_development 528553) (# FlyAtlas2 736890)))
-(less-frequent gene_rpkm_report 5 (# (# Knoblich_Neural_Cell_RNA-Seq 35368) (# BCM_1_RNAseq 211421) (# "modENCODE_mRNA-Seq_cell.B" 424996) (# modENCODE_mRNA-Seq_treatments 477917) (# modENCODE_mRNA-Seq_tissues 513566) (# modENCODE_mRNA-Seq_development 528553) (# FlyAtlas2 736890)))
+(most-frequent gene_rpkm_report 5 (# (# "Knoblich_Neural_Cell_RNA-Seq" 35368) (# "BCM_1_RNAseq" 211421) (# "modENCODE_mRNA-Seq_cell.B" 424996) (# "modENCODE_mRNA-Seq_treatments" 477917) (# "modENCODE_mRNA-Seq_tissues" 513566) (# "modENCODE_mRNA-Seq_development" 528553) (# FlyAtlas2 736890)))
+(less-frequent gene_rpkm_report 5 (# (# "Knoblich_Neural_Cell_RNA-Seq" 35368) (# "BCM_1_RNAseq" 211421) (# "modENCODE_mRNA-Seq_cell.B" 424996) (# "modENCODE_mRNA-Seq_treatments" 477917) (# "modENCODE_mRNA-Seq_tissues" 513566) (# "modENCODE_mRNA-Seq_development" 528553) (# FlyAtlas2 736890)))
 (most-frequent gene_rpkm_report 6 (# (# FBlc0000235 17711) (# FBlc0000234 17711) (# FBlc0000233 17711) (# FBlc0000229 17711) (# FBlc0000217 17711) (# FBlc0000251 17711) (# FBlc0000250 17711)))
 (less-frequent gene_rpkm_report 6 (# (# FBlc0003639 17545) (# FBlc0003637 17545) (# FBlc0003636 17545) (# FBlc0003635 17545) (# FBlc0003634 17545) (# FBlc0003633 17545) (# FBlc0003632 17545)))
-(most-frequent gene_rpkm_report 7 (# (# mE_mRNA_P8_fat 17711) (# mE_mRNA_WPP_saliv 17711) (# mE_mRNA_WPP_fat 17711) (# mE_mRNA_L3_Wand_imag_disc 17711) (# mE_mRNA_A_MateM_4d_testis 17711) (# mE_mRNA_A_4d_Paraquat_10mM 17711) (# mE_mRNA_A_4d_Paraquat_5mM 17711)))
-(less-frequent gene_rpkm_report 7 (# (# RNA-Seq_Profile_FlyAtlas2_Adult_Male_FatBody 17545) (# RNA-Seq_Profile_FlyAtlas2_Adult_Male_Carcass 17545) (# RNA-Seq_Profile_FlyAtlas2_Adult_Male_Crop 17545) (# RNA-Seq_Profile_FlyAtlas2_Adult_Male_Brain 17545) (# RNA-Seq_Profile_FlyAtlas2_Adult_Female_Whole 17545) (# RNA-Seq_Profile_FlyAtlas2_Adult_Female_Virgin_Spermathecum 17545) (# RNA-Seq_Profile_FlyAtlas2_Adult_Female_Mated_Spermathecum 17545)))
+(most-frequent gene_rpkm_report 7 (# (# "mE_mRNA_P8_fat" 17711) (# "mE_mRNA_WPP_saliv" 17711) (# "mE_mRNA_WPP_fat" 17711) (# "mE_mRNA_L3_Wand_imag_disc" 17711) (# "mE_mRNA_A_MateM_4d_testis" 17711) (# "mE_mRNA_A_4d_Paraquat_10mM" 17711) (# "mE_mRNA_A_4d_Paraquat_5mM" 17711)))
+(less-frequent gene_rpkm_report 7 (# (# "RNA-Seq_Profile_FlyAtlas2_Adult_Male_FatBody" 17545) (# "RNA-Seq_Profile_FlyAtlas2_Adult_Male_Carcass" 17545) (# "RNA-Seq_Profile_FlyAtlas2_Adult_Male_Crop" 17545) (# "RNA-Seq_Profile_FlyAtlas2_Adult_Male_Brain" 17545) (# "RNA-Seq_Profile_FlyAtlas2_Adult_Female_Whole" 17545) (# "RNA-Seq_Profile_FlyAtlas2_Adult_Female_Virgin_Spermathecum" 17545) (# "RNA-Seq_Profile_FlyAtlas2_Adult_Female_Mated_Spermathecum" 17545)))
 (most-frequent gene_rpkm_report 8 (# (# 6 67267) (# 5 76452) (# 4 89006) (# 3 106255) (# 2 139559) (# 1 256023) (# 0 1229976)))
 (less-frequent gene_rpkm_report 8 (# (# 4755 1) (# 3974 1) (# 2566 1) (# 3991 1) (# 10214 1) (# 15694 1) (# 3308 1)))
 (most-frequent gene_rpkm_report 9 (# (# 6 94410) (# 5 101416) (# 4 187170) (# 3 362858) (# 2 439025) (# 1 501837) (# 0 1229976)))
@@ -1712,10 +2165,9 @@
 (less-frequent gene_rpkm_report 11 (# (# 62 42) (# 63 42) (# 16924 82) (# 230 82) (# 3528 82) (# 193 82) (# 16779 84)))
 (most-frequent gene_rpkm_report 12 (# (# Total 73206) (# Unique 2855505)))
 (less-frequent gene_rpkm_report 12 (# (# Total 73206) (# Unique 2855505)))
-
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_snapshots_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_snapshots_fb_2023_04.tsv
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_snapshots_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_snapshots_fb_2023_04.tsv
 !(file-name gene_snapshots  data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_snapshots_fb_2023_04.tsv)
 (num-columns gene_snapshots 5)
 (duplicated-rows gene_snapshots 0)
@@ -1728,9 +2180,9 @@
 (missing-values gene_snapshots 1 0 () ())
 (missing-values gene_snapshots 2 0 () ())
 (null-value-count gene_snapshots 3 "-" 6153)
-(missing-values gene_snapshots 3 6153 (# -) (# 6153))
+(missing-values gene_snapshots 3 6153 (# "-") (# 6153))
 (null-value-count gene_snapshots 4 "-" 10334)
-(missing-values gene_snapshots 4 10334 (# -) (# 10334))
+(missing-values gene_snapshots 4 10334 (# "-") (# 10334))
 (missing-values gene_snapshots 5 0 () ())
 (most-frequent gene_snapshots 3 (# (# "Carbonic anhydrase 2" 1) (# "PRL-1 phosphatase" 1) (# tricornered 1) (# kurz 1) (# "beaten path IV" 1) (# "male sterile (2) 35Ci" 1)))
 (less-frequent gene_snapshots 3 (# (# "Receptor expression enhancing protein A" 1) (# tricornered 1) (# "PRL-1 phosphatase" 1) (# "Carbonic anhydrase 2" 1) (# "sugar transporter 3" 1) (# spt4 1) (# "Imitation SWI" 1)))
@@ -1738,9 +2190,8 @@
 (less-frequent gene_snapshots 4 (# (# 20220901.0 1) (# 20200924.0 1) (# 20200730.0 1) (# 20200709.0 1) (# 20190725.0 1) (# 20210204.0 1) (# 20160630.0 1)))
 (most-frequent gene_snapshots 5 (# (# "stumps (stumps) encodes a fibroblast growth factor (FGF) scaffolding protein. Upon FGF receptor activation, it mediates the recruitment of the phosphatase encoded by csw, which is essential for the activation of the MAPK pathway." 1) (# "lectin-24Db (lectin-24Db) encodes a protein that interacts specifically with fucose and mannose." 1) (# "Apoptosis inducing factor (AIF) encodes a phylogenetically conserved redox-active flavoprotein that contributes to cell death and oxidative phosphorylation in mitochondria." 1) (# "Lsm10 (Lsm10) encodes a core component of the U7 snRNP complex, which functions in 3' end processing of the non-polyadenylated, replication-dependent histone mRNAs. The product of Lsm10 is part of the heptameric Sm ring complex that binds directly to U7 snRNA. It replaces the protein encoded by SmD1 in the canonical heptameric Sm protein ring that binds spliceosomal snRNAs." 1) (# "prenyl protease type I (ste24a) encodes a protein that, along with the products of ste24b and ste24c, are paralogous (tandemly duplicated) type I prenyl proteases." 1) (# "dachshund (dac) encodes a transcriptional cofactor that physically interacts with several other retinal determination proteins, including those encoded by eya and so, and regulates eye, leg, gonad, and brain development." 1) (# "Contributions welcome." 10334)))
 (less-frequent gene_snapshots 5 (# (# "Down syndrome cell adhesion molecule 2 (Dscam2) encodes a transmembrane protein. Its alternative splicing produces two biochemically distinct homophilic binding proteins expressed in different cells. It can mediate both repulsion and adhesion between neurons and contributes to boundary formation, neurite targeting and synapse formation in the brain." 1) (# "prenyl protease type I (ste24a) encodes a protein that, along with the products of ste24b and ste24c, are paralogous (tandemly duplicated) type I prenyl proteases." 1) (# "Lsm10 (Lsm10) encodes a core component of the U7 snRNP complex, which functions in 3' end processing of the non-polyadenylated, replication-dependent histone mRNAs. The product of Lsm10 is part of the heptameric Sm ring complex that binds directly to U7 snRNA. It replaces the protein encoded by SmD1 in the canonical heptameric Sm protein ring that binds spliceosomal snRNAs." 1) (# "Apoptosis inducing factor (AIF) encodes a phylogenetically conserved redox-active flavoprotein that contributes to cell death and oxidative phosphorylation in mitochondria." 1) (# "lectin-24Db (lectin-24Db) encodes a protein that interacts specifically with fucose and mannose." 1) (# "stumps (stumps) encodes a fibroblast growth factor (FGF) scaffolding protein. Upon FGF receptor activation, it mediates the recruitment of the phosphatase encoded by csw, which is essential for the activation of the MAPK pathway." 1) (# "expanded (ex) encodes a FERM-domain containing protein that localizes to apical cell-cell junctions, where it promotes Hippo signaling by physically interacting with multiple Hippo pathway components. Through its regulation of Hippo signaling, the product of ex functions as an inhibitor of growth." 1)))
-
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/ncRNA_genes_fb_2023_04.json
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/ncRNA_genes_fb_2023_04.json
 !(file-name ncRNA_genes_  data/ftp.flybase.net/releases/current/precomputed_files/genes/ncRNA_genes_fb_2023_04.json)
 (num-columns ncRNA_genes_ 2)
 (duplicated-rows ncRNA_genes_ 145327)
@@ -1754,10 +2205,9 @@
 (less-frequent ncRNA_genes_ 1 (# (# "     \"metaData\": " 1) (# "                                   \"endPosition\": 23114377" 1) (# "                                   \"startPosition\": 23113577, " 1) (# "                                   \"endPosition\": 23114049" 1) (# "                    \"geneId\": \"FLYBASE:FBgn0266009\", " 1) (# "                    \"symbol\": \"lncRNA:CR44782\", " 1) (# "                    \"url\": \"http://flybase.org/reports/FBgn0266009.html\", " 1)))
 (most-frequent ncRNA_genes_ 2 (# (# "}RR42320\"" 1) (# "}RR42263\"" 1)))
 (less-frequent ncRNA_genes_ 2 (# (# "}RR42263\"" 1) (# "}RR42320\"" 1)))
-
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/pathway_group_data_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/pathway_group_data_fb_2023_04.tsv
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/pathway_group_data_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/pathway_group_data_fb_2023_04.tsv
 !(file-name pathway_group_data  data/ftp.flybase.net/releases/current/precomputed_files/genes/pathway_group_data_fb_2023_04.tsv)
 (num-columns pathway_group_data 7)
 (duplicated-rows pathway_group_data 0)
@@ -1782,24 +2232,23 @@
 (missing-values pathway_group_data 7 17 (# "") (# 17))
 (most-frequent pathway_group_data 1 (# (# FBgg0001196 38) (# FBgg0001069 42) (# FBgg0000891 42) (# FBgg0000981 43) (# FBgg0000916 44) (# FBgg0000892 45) (# FBgg0000980 56)))
 (less-frequent pathway_group_data 1 (# (# FBgg0000941 1) (# FBgg0001093 1) (# FBgg0000917 1) (# FBgg0000910 1) (# FBgg0000975 1) (# FBgg0000958 1) (# FBgg0000889 1)))
-(most-frequent pathway_group_data 2 (# (# IMD-N 38) (# NTCH-P 42) (# WNT-TCFN 42) (# HH-SMOP 43) (# SWH-N 44) (# WNT-TCFP 45) (# HH-SMON 56)))
-(less-frequent pathway_group_data 2 (# (# SEVL 1) (# ACT-SMAD2 1) (# SWH 1) (# INS 1) (# PVR-P 1) (# EGFR-RTK 1) (# WNT-TCF 1)))
+(most-frequent pathway_group_data 2 (# (# "IMD-N" 38) (# "NTCH-P" 42) (# "WNT-TCFN" 42) (# "HH-SMOP" 43) (# "SWH-N" 44) (# "WNT-TCFP" 45) (# "HH-SMON" 56)))
+(less-frequent pathway_group_data 2 (# (# SEVL 1) (# "ACT-SMAD2" 1) (# SWH 1) (# INS 1) (# "PVR-P" 1) (# "EGFR-RTK" 1) (# "WNT-TCF" 1)))
 (most-frequent pathway_group_data 3 (# (# "Negative Regulators of Imd Signaling Pathway" 38) (# "Positive Regulators of Notch Signaling Pathway" 42) (# "Negative Regulators of Wnt-TCF Signaling Pathway" 42) (# "Positive Regulators of Hedgehog Signaling Pathway" 43) (# "Negative Regulators of Hippo Signaling Pathway" 44) (# "Positive Regulators of Wnt-TCF Signaling Pathway" 45) (# "Negative Regulators of Hedgehog Signaling Pathway" 56)))
 (less-frequent pathway_group_data 3 (# (# "Sevenless Signaling Pathway" 1) (# "Activin Signaling Pathway" 1) (# "Hippo Signaling Pathway" 1) (# "Insulin-like Receptor Signaling Pathway" 1) (# "Positive Regulators of Pvr Signaling Pathway" 1) (# "EGFR Signaling Pathway" 1) (# "Wnt-TCF Signaling Pathway" 1)))
 (most-frequent pathway_group_data 4 (# (# FBgg0000910 77) (# FBgg0001059 79) (# FBgg0000958 83) (# FBgg0000917 87) (# FBgg0001068 89) (# FBgg0000889 100) (# FBgg0000978 108)))
 (less-frequent pathway_group_data 4 (# (# FBgg0001792 6) (# FBgg0001093 14) (# FBgg0001560 23) (# FBgg0000941 30) (# FBgg0000934 31) (# FBgg0000967 35)))
-(most-frequent pathway_group_data 5 (# (# INS 77) (# TL-CAN 79) (# EGFR-RTK 83) (# SWH 87) (# NTCH 89) (# WNT-TCF 100) (# HH-SMO 108)))
-(less-frequent pathway_group_data 5 (# (# CGAS-STING 6) (# ACT-SMAD2 14) (# TNF 23) (# SEVL 30) (# TORS 31) (# FGFR 35)))
+(most-frequent pathway_group_data 5 (# (# INS 77) (# "TL-CAN" 79) (# "EGFR-RTK" 83) (# SWH 87) (# NTCH 89) (# "WNT-TCF" 100) (# "HH-SMO" 108)))
+(less-frequent pathway_group_data 5 (# (# "CGAS-STING" 6) (# "ACT-SMAD2" 14) (# TNF 23) (# SEVL 30) (# TORS 31) (# FGFR 35)))
 (most-frequent pathway_group_data 6 (# (# FBgn0010269 6) (# FBgn0004177 6) (# FBgn0262432 6) (# FBgn0283468 6) (# FBgn0003256 6) (# FBgn0004638 6)))
 (less-frequent pathway_group_data 6 (# (# FBgn0262408 1) (# FBgn0027539 1) (# FBgn0001987 1) (# FBgn0005632 1) (# FBgn0043364 1) (# FBgn0000395 1) (# FBgn0261952 1)))
-(most-frequent pathway_group_data 7 (# (# Dsor1 6) (# mts 6) (# mir-8 6) (# slmb 6) (# rl 6) (# drk 6)))
-(less-frequent pathway_group_data 7 (# (# mir-5 1) (# lili 1) (# Gli 1) (# faf 1) (# cbt 1) (# cv-2 1) (# srw 1)))
-
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/physical_interactions_mitab_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/physical_interactions_mitab_fb_2023_04.tsv
-/opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta/metta_vspace/metta_learner.py:3108: DtypeWarning: Columns (35) have mixed types. Specify dtype option on import or set low_memory=False.
-  return pd.read_csv(file_path, sep=sep, encoding=enc, comment='#',
+(most-frequent pathway_group_data 7 (# (# Dsor1 6) (# mts 6) (# "mir-8" 6) (# slmb 6) (# rl 6) (# drk 6)))
+(less-frequent pathway_group_data 7 (# (# "mir-5" 1) (# lili 1) (# Gli 1) (# faf 1) (# cbt 1) (# "cv-2" 1) (# srw 1)))
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/genes/physical_interactions_mitab_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/physical_interactions_mitab_fb_2023_04.tsv
+;; /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta/metta_vspace/metta_learner.py:3098: DtypeWarning: Columns (35) have mixed types. Specify dtype option on import or set low_memory=False.
+;;   return pd.read_csv(file_path, sep=sep, encoding=enc, comment='#',
 !(file-name physical_interactions_mitab  data/ftp.flybase.net/releases/current/precomputed_files/genes/physical_interactions_mitab_fb_2023_04.tsv)
 (num-columns physical_interactions_mitab 42)
 (duplicated-rows physical_interactions_mitab 0)
@@ -1849,13 +2298,13 @@
 (missing-values physical_interactions_mitab 1 0 () ())
 (missing-values physical_interactions_mitab 2 0 () ())
 (null-value-count physical_interactions_mitab 3 "-" 23)
-(missing-values physical_interactions_mitab 3 23 (# -) (# 23))
+(missing-values physical_interactions_mitab 3 23 (# "-") (# 23))
 (null-value-count physical_interactions_mitab 4 "-" 59)
-(missing-values physical_interactions_mitab 4 59 (# -) (# 59))
+(missing-values physical_interactions_mitab 4 59 (# "-") (# 59))
 (missing-values physical_interactions_mitab 5 0 () ())
 (missing-values physical_interactions_mitab 6 0 () ())
 (null-value-count physical_interactions_mitab 7 "-" 231)
-(missing-values physical_interactions_mitab 7 231 (# -) (# 231))
+(missing-values physical_interactions_mitab 7 231 (# "-") (# 231))
 (missing-values physical_interactions_mitab 8 0 () ())
 (missing-values physical_interactions_mitab 9 0 () ())
 (missing-values physical_interactions_mitab 10 0 () ())
@@ -1864,69 +2313,69 @@
 (missing-values physical_interactions_mitab 13 0 () ())
 (missing-values physical_interactions_mitab 14 0 () ())
 (null-value-count physical_interactions_mitab 15 "-" 51247)
-(missing-values physical_interactions_mitab 15 51247 (# -) (# 51247))
+(missing-values physical_interactions_mitab 15 51247 (# "-") (# 51247))
 (null-value-count physical_interactions_mitab 16 "-" 51247)
-(missing-values physical_interactions_mitab 16 51247 (# -) (# 51247))
+(missing-values physical_interactions_mitab 16 51247 (# "-") (# 51247))
 (null-value-count physical_interactions_mitab 17 "-" 50635)
-(missing-values physical_interactions_mitab 17 50635 (# -) (# 50635))
+(missing-values physical_interactions_mitab 17 50635 (# "-") (# 50635))
 (null-value-count physical_interactions_mitab 18 "-" 50634)
-(missing-values physical_interactions_mitab 18 50634 (# -) (# 50634))
+(missing-values physical_interactions_mitab 18 50634 (# "-") (# 50634))
 (missing-values physical_interactions_mitab 19 0 () ())
 (missing-values physical_interactions_mitab 20 0 () ())
 (missing-values physical_interactions_mitab 21 0 () ())
 (missing-values physical_interactions_mitab 22 0 () ())
 (null-value-count physical_interactions_mitab 23 "-" 51247)
-(missing-values physical_interactions_mitab 23 51247 (# -) (# 51247))
+(missing-values physical_interactions_mitab 23 51247 (# "-") (# 51247))
 (null-value-count physical_interactions_mitab 24 "-" 51247)
-(missing-values physical_interactions_mitab 24 51247 (# -) (# 51247))
+(missing-values physical_interactions_mitab 24 51247 (# "-") (# 51247))
 (missing-values physical_interactions_mitab 25 0 () ())
 (null-value-count physical_interactions_mitab 26 "-" 27320)
-(missing-values physical_interactions_mitab 26 27320 (# -) (# 27320))
+(missing-values physical_interactions_mitab 26 27320 (# "-") (# 27320))
 (null-value-count physical_interactions_mitab 27 "-" 27569)
-(missing-values physical_interactions_mitab 27 27569 (# -) (# 27569))
+(missing-values physical_interactions_mitab 27 27569 (# "-") (# 27569))
 (null-value-count physical_interactions_mitab 28 "-" 180)
-(missing-values physical_interactions_mitab 28 180 (# -) (# 180))
+(missing-values physical_interactions_mitab 28 180 (# "-") (# 180))
 (null-value-count physical_interactions_mitab 29 "" 1)
 (null-value-count physical_interactions_mitab 29 "-" 51246)
-(missing-values physical_interactions_mitab 29 51247 (# "" -) (# 1 51246))
+(missing-values physical_interactions_mitab 29 51247 (# "" "-") (# 1 51246))
 (null-value-count physical_interactions_mitab 30 "" 1)
 (null-value-count physical_interactions_mitab 30 "-" 51246)
-(missing-values physical_interactions_mitab 30 51247 (# "" -) (# 1 51246))
+(missing-values physical_interactions_mitab 30 51247 (# "" "-") (# 1 51246))
 (null-value-count physical_interactions_mitab 31 "" 1)
 (null-value-count physical_interactions_mitab 31 "-" 51246)
-(missing-values physical_interactions_mitab 31 51247 (# "" -) (# 1 51246))
+(missing-values physical_interactions_mitab 31 51247 (# "" "-") (# 1 51246))
 (null-value-count physical_interactions_mitab 32 "" 1)
 (null-value-count physical_interactions_mitab 32 "-" 51246)
-(missing-values physical_interactions_mitab 32 51247 (# "" -) (# 1 51246))
+(missing-values physical_interactions_mitab 32 51247 (# "" "-") (# 1 51246))
 (null-value-count physical_interactions_mitab 33 "" 1)
 (null-value-count physical_interactions_mitab 33 "-" 51246)
-(missing-values physical_interactions_mitab 33 51247 (# "" -) (# 1 51246))
+(missing-values physical_interactions_mitab 33 51247 (# "" "-") (# 1 51246))
 (null-value-count physical_interactions_mitab 34 "" 1)
 (null-value-count physical_interactions_mitab 34 "-" 51246)
-(missing-values physical_interactions_mitab 34 51247 (# "" -) (# 1 51246))
+(missing-values physical_interactions_mitab 34 51247 (# "" "-") (# 1 51246))
 (null-value-count physical_interactions_mitab 35 "" 1)
 (null-value-count physical_interactions_mitab 35 "-" 51246)
-(missing-values physical_interactions_mitab 35 51247 (# "" -) (# 1 51246))
+(missing-values physical_interactions_mitab 35 51247 (# "" "-") (# 1 51246))
 (null-value-count physical_interactions_mitab 36 "" 1)
 (missing-values physical_interactions_mitab 36 1 (# "") (# 1))
 (null-value-count physical_interactions_mitab 37 "" 1)
 (null-value-count physical_interactions_mitab 37 "-" 51246)
-(missing-values physical_interactions_mitab 37 51247 (# "" -) (# 1 51246))
+(missing-values physical_interactions_mitab 37 51247 (# "" "-") (# 1 51246))
 (null-value-count physical_interactions_mitab 38 "" 1)
 (null-value-count physical_interactions_mitab 38 "-" 51246)
-(missing-values physical_interactions_mitab 38 51247 (# "" -) (# 1 51246))
+(missing-values physical_interactions_mitab 38 51247 (# "" "-") (# 1 51246))
 (null-value-count physical_interactions_mitab 39 "" 1)
 (null-value-count physical_interactions_mitab 39 "-" 51246)
-(missing-values physical_interactions_mitab 39 51247 (# "" -) (# 1 51246))
+(missing-values physical_interactions_mitab 39 51247 (# "" "-") (# 1 51246))
 (null-value-count physical_interactions_mitab 40 "" 1)
 (null-value-count physical_interactions_mitab 40 "-" 51246)
-(missing-values physical_interactions_mitab 40 51247 (# "" -) (# 1 51246))
+(missing-values physical_interactions_mitab 40 51247 (# "" "-") (# 1 51246))
 (null-value-count physical_interactions_mitab 41 "" 1)
 (null-value-count physical_interactions_mitab 41 "-" 51246)
-(missing-values physical_interactions_mitab 41 51247 (# "" -) (# 1 51246))
+(missing-values physical_interactions_mitab 41 51247 (# "" "-") (# 1 51246))
 (null-value-count physical_interactions_mitab 42 "" 1)
 (null-value-count physical_interactions_mitab 42 "-" 51246)
-(missing-values physical_interactions_mitab 42 51247 (# "" -) (# 1 51246))
+(missing-values physical_interactions_mitab 42 51247 (# "" "-") (# 1 51246))
 (most-frequent physical_interactions_mitab 1 (# (# FBgn0001199 188) (# FBgn0000212 204) (# FBgn0015239 209) (# FBgn0003944 220) (# FBgn0000014 237) (# FBgn0000283 259) (# FBgn0003607 275)))
 (less-frequent physical_interactions_mitab 1 (# (# FBgn0028412 1) (# FBgn0003312 1) (# FBgn0015773 1) (# FBgn0032644 1) (# FBgn0033685 1) (# FBgn0028847 1) (# FBgn0038880 1)))
 (most-frequent physical_interactions_mitab 2 (# (# FBgn0264922 155) (# FBgn0034970 159) (# FBgn0037555 168) (# FBgn0263979 175) (# FBgn0262866 178) (# FBgn0262739 185) (# FBgn0266411 188)))
@@ -2009,9 +2458,8 @@
 (less-frequent physical_interactions_mitab 41 ())
 (most-frequent physical_interactions_mitab 42 ())
 (less-frequent physical_interactions_mitab 42 ())
-
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/scRNA-Seq_gene_expression_fb_2023_04.tsv
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/scRNA-Seq_gene_expression_fb_2023_04.tsv
 !(file-name scRNA-Seq_gene_expression  data/ftp.flybase.net/releases/current/precomputed_files/genes/scRNA-Seq_gene_expression_fb_2023_04.tsv)
 (num-columns scRNA-Seq_gene_expression 15)
 (duplicated-rows scRNA-Seq_gene_expression 0)
@@ -2053,8 +2501,8 @@
 (less-frequent scRNA-Seq_gene_expression 2 (# (# "Shi et al., 2021, Curr. Biol. 31(4): 840--852.e5" 24480) (# "Cattenoz et al., 2020, EMBO J. 39(12): e104486" 38144) (# "Jevitt et al., 2020, PLoS Biol. 18(4): e3000538" 100103) (# "Tauc et al., 2021, eLife 10: e62250" 114659) (# "Zappia et al., 2020, EMBO Rep. 21(10): e49555" 116094) (# "Rust et al., 2020, Nat. Commun. 11(1): 5628" 122132) (# "Brunet Avalos et al., 2019, eLife 8: e50354" 177088)))
 (most-frequent scRNA-Seq_gene_expression 3 (# (# FBlc0005662 424264) (# FBlc0004310 462839) (# FBlc0003849 485904) (# FBlc0004788 587089) (# FBlc0004142 1324076) (# FBlc0004624 1374828) (# FBlc0005151 1787268)))
 (less-frequent scRNA-Seq_gene_expression 3 (# (# FBlc0004140 11271) (# FBlc0004136 11650) (# FBlc0004622 12336) (# FBlc0004618 12504) (# FBlc0005149 13127) (# FBlc0005145 13237) (# FBlc0003731 16857)))
-(most-frequent scRNA-Seq_gene_expression 4 (# (# scRNAseq_2021_Ozel_ADM1_seq_clustering 424264) (# scRNAseq_2022_FCA_MALE_HEAD_seq_clustering 462839) (# scRNAseq_2022_FCA_FEMALE_HEAD_seq_clustering 485904) (# scRNAseq_2022_FCA_MIXED_HEAD_seq_clustering 587089) (# scRNAseq_2022_FCA_FEMALE_FULL_seq_clustering 1324076) (# scRNAseq_2022_FCA_MALE_FULL_seq_clustering 1374828) (# scRNAseq_2022_FCA_MIXED_FULL_seq_clustering 1787268)))
-(less-frequent scRNA-Seq_gene_expression 4 (# (# scRNAseq_2022_FCA_FEMALE_IPC_seq_clustering 11271) (# scRNAseq_2022_FCA_FEMALE_CC_seq_clustering 11650) (# scRNAseq_2022_FCA_MALE_IPC_seq_clustering 12336) (# scRNAseq_2022_FCA_MALE_CC_seq_clustering 12504) (# scRNAseq_2022_FCA_MIXED_IPC_seq_clustering 13127) (# scRNAseq_2022_FCA_MIXED_CC_seq_clustering 13237) (# scRNAseq_2020_Cattenoz_NI_seq_clustering 16857)))
+(most-frequent scRNA-Seq_gene_expression 4 (# (# "scRNAseq_2021_Ozel_ADM1_seq_clustering" 424264) (# "scRNAseq_2022_FCA_MALE_HEAD_seq_clustering" 462839) (# "scRNAseq_2022_FCA_FEMALE_HEAD_seq_clustering" 485904) (# "scRNAseq_2022_FCA_MIXED_HEAD_seq_clustering" 587089) (# "scRNAseq_2022_FCA_FEMALE_FULL_seq_clustering" 1324076) (# "scRNAseq_2022_FCA_MALE_FULL_seq_clustering" 1374828) (# "scRNAseq_2022_FCA_MIXED_FULL_seq_clustering" 1787268)))
+(less-frequent scRNA-Seq_gene_expression 4 (# (# "scRNAseq_2022_FCA_FEMALE_IPC_seq_clustering" 11271) (# "scRNAseq_2022_FCA_FEMALE_CC_seq_clustering" 11650) (# "scRNAseq_2022_FCA_MALE_IPC_seq_clustering" 12336) (# "scRNAseq_2022_FCA_MALE_CC_seq_clustering" 12504) (# "scRNAseq_2022_FCA_MIXED_IPC_seq_clustering" 13127) (# "scRNAseq_2022_FCA_MIXED_CC_seq_clustering" 13237) (# "scRNAseq_2020_Cattenoz_NI_seq_clustering" 16857)))
 (most-frequent scRNA-Seq_gene_expression 5 (# (# mixed 445126) (# female 3955616) (# male 4019616)))
 (less-frequent scRNA-Seq_gene_expression 5 (# (# mixed 445126) (# female 3955616) (# male 4019616)))
 (most-frequent scRNA-Seq_gene_expression 6 (# (# "larval stage" 522815) (# "adult stage" 13796345)))
@@ -2063,23 +2511,29 @@
 (less-frequent scRNA-Seq_gene_expression 7 (# (# "adult pars intercerebralis" 36734) (# "adult corpus cardiacum" 37391) (# "embryonic/larval hemolymph" 101153) (# "adult midgut" 114659) (# "wing disc" 116094) (# "adult abdomen" 120557) (# "primary lobe of embryonic/larval lymph gland" 128480)))
 (most-frequent scRNA-Seq_gene_expression 8 (# (# FBlc0004677 13868) (# FBlc0005192 13876) (# FBlc0004567 13941) (# FBlc0005094 13941) (# FBlc0004713 13953) (# FBlc0005247 13956) (# FBlc0005205 13958)))
 (less-frequent scRNA-Seq_gene_expression 8 (# (# FBlc0003842 762) (# FBlc0003779 765) (# FBlc0003749 872) (# FBlc0003748 1065) (# FBlc0003833 1100) (# FBlc0003843 2232) (# FBlc0003733 2255)))
-(most-frequent scRNA-Seq_gene_expression 9 (# (# scRNAseq_2022_FCA_MALE_FULL_seq_clustering_fat_cells 13868) (# scRNAseq_2022_FCA_MIXED_FULL_seq_clustering_neurons 13876) (# scRNAseq_2022_FCA_MALE_TESTIS_seq_clustering_spermatocytes 13941) (# scRNAseq_2022_FCA_MIXED_TESTIS_seq_clustering_spermatocytes 13941) (# scRNAseq_2022_FCA_MALE_FULL_seq_clustering_spermatocytes 13953) (# scRNAseq_2022_FCA_MIXED_FULL_seq_clustering_spermatocytes 13956) (# scRNAseq_2022_FCA_MIXED_FULL_seq_clustering_fat_cells 13958)))
-(less-frequent scRNA-Seq_gene_expression 9 (# (# scRNAseq_2020_Zappia_AmaRNAi_seq_clustering_imaginal_tracheoblasts 762) (# scRNAseq_2020_Cho_NI96HL_seq_clustering_lamellocytes 765) (# scRNAseq_2020_Cho_NI72LG_seq_clustering_lamellocytes 872) (# scRNAseq_2020_Cho_NI72LG_seq_clustering_adipohemocytes 1065) (# scRNAseq_2020_Zappia_mCherryRNAi_seq_clustering_imaginal_tracheoblasts 1100) (# scRNAseq_2020_Zappia_AmaRNAi_seq_clustering_SOP_cells 2232) (# scRNAseq_2020_Cattenoz_NI_seq_clustering_lamellocytes 2255)))
+(most-frequent scRNA-Seq_gene_expression 9 (# (# "scRNAseq_2022_FCA_MALE_FULL_seq_clustering_fat_cells" 13868) (# "scRNAseq_2022_FCA_MIXED_FULL_seq_clustering_neurons" 13876) (# "scRNAseq_2022_FCA_MALE_TESTIS_seq_clustering_spermatocytes" 13941) (# "scRNAseq_2022_FCA_MIXED_TESTIS_seq_clustering_spermatocytes" 13941) (# "scRNAseq_2022_FCA_MALE_FULL_seq_clustering_spermatocytes" 13953) (# "scRNAseq_2022_FCA_MIXED_FULL_seq_clustering_spermatocytes" 13956) (# "scRNAseq_2022_FCA_MIXED_FULL_seq_clustering_fat_cells" 13958)))
+(less-frequent scRNA-Seq_gene_expression 9 (# (# "scRNAseq_2020_Zappia_AmaRNAi_seq_clustering_imaginal_tracheoblasts" 762) (# "scRNAseq_2020_Cho_NI96HL_seq_clustering_lamellocytes" 765) (# "scRNAseq_2020_Cho_NI72LG_seq_clustering_lamellocytes" 872) (# "scRNAseq_2020_Cho_NI72LG_seq_clustering_adipohemocytes" 1065) (# "scRNAseq_2020_Zappia_mCherryRNAi_seq_clustering_imaginal_tracheoblasts" 1100) (# "scRNAseq_2020_Zappia_AmaRNAi_seq_clustering_SOP_cells" 2232) (# "scRNAseq_2020_Cattenoz_NI_seq_clustering_lamellocytes" 2255)))
 (most-frequent scRNA-Seq_gene_expression 10 (# (# FBbt00003185 202803) (# FBbt00005040 281977) (# FBbt00047095 365976) (# FBbt00058143 371275) (# FBbt00058238 373508) (# FBbt00049949 395912) (# FBbt00058230 396390)))
 (less-frequent scRNA-Seq_gene_expression 10 (# (# FBbt00003844 3363) (# FBbt00004868 4017) (# FBbt00003874 4103) (# FBbt00111746 4323) (# FBbt00004873 4476) (# FBbt00004905 4559) (# FBbt00003876 4893)))
 (most-frequent scRNA-Seq_gene_expression 11 (# (# "adult oenocyte" 202803) (# "adult tracheocyte" 281977) (# "adult neuron" 365976) (# "adult hemocyte" 371275) (# "adult epithelial cell" 373508) (# "adult fat cell" 395912) (# "adult muscle cell" 396390)))
 (less-frequent scRNA-Seq_gene_expression 11 (# (# "medullary tangential neuron Mt8" 3363) (# "germarium cap cell" 4017) (# "lobula columnar neuron LC4" 4103) (# "lobula columnar neuron LC10c" 4323) (# "female germline stem cell" 4476) (# "border follicle cell" 4559) (# "lobula columnar neuron LC6" 4893)))
 (most-frequent scRNA-Seq_gene_expression 12 (# (# FBgn0267521 1690) (# FBgn0086472 1690) (# FBgn0002626 1690) (# FBgn0285947 1690) (# FBgn0003279 1690) (# FBgn0017579 1690) (# FBgn0016726 1690)))
 (less-frequent scRNA-Seq_gene_expression 12 (# (# FBgn0284232 2) (# FBgn0267889 4) (# FBgn0045478 4) (# FBgn0039374 4) (# FBgn0028537 4) (# FBgn0267886 4) (# FBgn0085252 4)))
-(most-frequent scRNA-Seq_gene_expression 13 (# (# 18SrRNA-Psi:CR45861 1690) (# RpS25 1690) (# RpL32 1690) (# RpS10b 1690) (# RpL4 1690) (# RpL14 1690) (# RpL29 1690)))
+(most-frequent scRNA-Seq_gene_expression 13 (# (# "18SrRNA-Psi:CR45861" 1690) (# RpS25 1690) (# RpL32 1690) (# RpS10b 1690) (# RpL4 1690) (# RpL14 1690) (# RpL29 1690)))
 (less-frequent scRNA-Seq_gene_expression 13 (# (# CG46316 2) (# CR46177 4) (# Gr64b 4) (# CG17770 4) (# CG31775 4) (# CR46174 4) (# CG34223 4)))
 (most-frequent scRNA-Seq_gene_expression 14 (# (# 1272.2646 2315) (# 1218.0267 2325) (# 1287.0013 2439) (# 1298.7013 2444) (# 1095.2902 2445) (# 24.43136 2546) (# 1191.8951 2690)))
 (less-frequent scRNA-Seq_gene_expression 14 (# (# 269.05170000000004 1) (# 480.440107 1) (# 990.35309 1) (# 370.235704 1) (# 272.274411 1) (# 234.056368 1) (# 320.438443 1)))
 (most-frequent scRNA-Seq_gene_expression 15 (# (# 0.076923 41235) (# 0.0625 43249) (# 0.1 44120) (# 0.025 44512) (# 0.04 47158) (# 0.083333 47452) (# 0.05 59787)))
 (less-frequent scRNA-Seq_gene_expression 15 (# (# 0.366282 1) (# 0.774026 1) (# 0.318802 1) (# 0.173431 1) (# 0.334605 1) (# 0.770109 1) (# 0.517905 1)))
 
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/sed5CWUTK
+
+
+
+
+
+
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/sed5CWUTK
 !(file-name sed5C  data/ftp.flybase.net/releases/current/precomputed_files/genes/sed5CWUTK)
 (num-columns sed5C 11)
 (duplicated-rows sed5C 0)
@@ -2115,8 +2569,8 @@
 (less-frequent sed5C 1 (# (# FBgg0000117 1) (# FBgg0000104 2) (# FBgg0000062 3) (# FBgg0000114 3) (# FBgg0000072 4) (# FBgg0000040 5) (# FBgg0000081 6)))
 (most-frequent sed5C 2 (# (# "ROC UBIQUITIN LIGASES" 3) (# "ADAM METALLOPROTEASES" 4) (# "RING-BETWEEN-RING UBIQUITIN LIGASES" 5) (# "STRUCTURAL MAINTENANCE OF CHROMOSOMES GENE FAMILY" 6) (# CASPASES 7) (# "HECT UBIQUITIN LIGASES" 14) (# "UNCLASSIFIED RING DOMAIN UBIQUITIN LIGASES" 75)))
 (less-frequent sed5C 2 (# (# "JOSEPHIN DEUBIQUITINASES" 1) (# "GOLIATH UBIQUITIN LIGASES" 2) (# "ROC UBIQUITIN LIGASES" 3) (# "N-ETHYLMALEIMIDE-SENSITIVE FACTORS" 3) (# "ADAM METALLOPROTEASES" 4) (# "RING-BETWEEN-RING UBIQUITIN LIGASES" 5) (# "STRUCTURAL MAINTENANCE OF CHROMOSOMES GENE FAMILY" 6)))
-(most-frequent sed5C 3 (# (# GO:0004843 1) (# GO:0004222 4) (# GO:0097153 7) (# GO:0016887 9) (# GO:0061630 99)))
-(less-frequent sed5C 3 (# (# GO:0004843 1) (# GO:0004222 4) (# GO:0097153 7) (# GO:0016887 9) (# GO:0061630 99)))
+(most-frequent sed5C 3 (# (# "GO:0004843" 1) (# "GO:0004222" 4) (# "GO:0097153" 7) (# "GO:0016887" 9) (# "GO:0061630" 99)))
+(less-frequent sed5C 3 (# (# "GO:0004843" 1) (# "GO:0004222" 4) (# "GO:0097153" 7) (# "GO:0016887" 9) (# "GO:0061630" 99)))
 (most-frequent sed5C 4 (# (# ubiquit 1) (# "cysteine-type deubiquitinase activity" 1) (# "metalloendopeptidase activity" 4) (# "cysteine-type endopeptidase activity involved in apoptotic process" 7) (# "ATP hydrolysis activity" 9) (# "ubiquitin protein ligase activity" 98)))
 (less-frequent sed5C 4 (# (# "cysteine-type deubiquitinase activity" 1) (# ubiquit 1) (# "metalloendopeptidase activity" 4) (# "cysteine-type endopeptidase activity involved in apoptotic process" 7) (# "ATP hydrolysis activity" 9) (# "ubiquitin protein ligase activity" 98)))
 (most-frequent sed5C 5 (# (# "3.4.19.12" 1) (# "3.4.24.-" 4)))
@@ -2125,17 +2579,16 @@
 (less-frequent sed5C 6 (# (# "ubiquitinyl hydrolase 1" 1)))
 (most-frequent sed5C 7 (# (# FBgn0034546 1) (# FBgn0034573 1) (# FBgn0035024 1) (# FBgn0035232 1) (# FBgn0035233 1) (# FBgn0032635 1) (# FBgn0025186 1)))
 (less-frequent sed5C 7 (# (# FBgn0025186 1) (# FBgn0035232 1) (# FBgn0035024 1) (# FBgn0034573 1) (# FBgn0034546 1) (# FBgn0034314 1) (# FBgn0034312 1)))
-(most-frequent sed5C 8 (# (# CG13442 1) (# Sou 1) (# CG11414 1) (# CG12099 1) (# Pex10 1) (# CG15141 1) (# ari-2 1)))
-(less-frequent sed5C 8 (# (# ari-2 1) (# CG12099 1) (# CG11414 1) (# Sou 1) (# CG13442 1) (# nopo 1) (# CG10916 1)))
+(most-frequent sed5C 8 (# (# CG13442 1) (# Sou 1) (# CG11414 1) (# CG12099 1) (# Pex10 1) (# CG15141 1) (# "ari-2" 1)))
+(less-frequent sed5C 8 (# (# "ari-2" 1) (# CG12099 1) (# CG11414 1) (# Sou 1) (# CG13442 1) (# nopo 1) (# CG10916 1)))
 (most-frequent sed5C 9 (# (# "Ubr1 ubiquitin ligase" 1) (# "Peroxin 12" 1) (# "Ring finger and CHY zinc finger domain containing 1" 1) (# "Non-SMC element 1" 1) (# "Protein interacting with Ttk69 and Sin3A" 1) (# "ariadne 2" 1)))
 (less-frequent sed5C 9 (# (# "ariadne 2" 1) (# "Ring finger and CHY zinc finger domain containing 1" 1) (# "Peroxin 12" 1) (# "Ubr1 ubiquitin ligase" 1) (# "suppression of retinal degeneration disease 1 upon overexpression 1" 1) (# highwire 1) (# "Mahogunin ring finger 1" 1)))
 (most-frequent sed5C 10 (# (# "3.4.19.12" 1)))
 (less-frequent sed5C 10 (# (# "3.4.19.12" 1)))
 (most-frequent sed5C 11 (# (# "ubiquitinyl hydrolase 1" 1)))
 (less-frequent sed5C 11 (# (# "ubiquitinyl hydrolase 1" 1)))
-
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/sednJUylZ
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/genes/sednJUylZ
 !(file-name sednJ  data/ftp.flybase.net/releases/current/precomputed_files/genes/sednJUylZ)
 (num-columns sednJ 2)
 (duplicated-rows sednJ 0)
@@ -2144,8 +2597,8 @@
 (unique-values sednJ 2 76447 object)
 (missing-values sednJ 1 0 () ())
 (missing-values sednJ 2 0 () ())
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/go/gene_association.fb
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/go/gene_association.fb
 !(file-name gene_associatio  data/ftp.flybase.net/releases/current/precomputed_files/go/gene_association.fb)
 (num-columns gene_associatio 2)
 (duplicated-rows gene_associatio 69)
@@ -2158,10 +2611,9 @@
 (less-frequent gene_associatio 1 (# (# "!generated-by:" 1) (# "FB\tFBgn0027508\tTnks\tinvolved_in\tGO:1904355\tFB:FBrf0239784|PMID:21873635\tIBA\tPANTHER:PTN000652929\tP\ttankyrase\tBcDNA:LD22548|CG17487|CG4719|DTNKS|Dm.pARTb|TNKS|Tankyrase|TkrsIR|dARTD5|dTANK|dTNKS|dTankyrase\tprotein\ttaxon:7227\t20170420\tGO_Central\t\t" 1) (# "FB\tFBgn0027508\tTnks\tinvolved_in\tGO:0070198\tFB:FBrf0239784|PMID:21873635\tIBA\tPANTHER:PTN000652929\tP\ttankyrase\tBcDNA:LD22548|CG17487|CG4719|DTNKS|Dm.pARTb|TNKS|Tankyrase|TkrsIR|dARTD5|dTANK|dTNKS|dTankyrase\tprotein\ttaxon:7227\t20170420\tGO_Central\t\t" 1) (# "FB\tFBgn0027508\tTnks\tenables\tGO:0003950\tFB:FBrf0241717|PMID:30593492\tIMP\t\tF\ttankyrase\tBcDNA:LD22548|CG17487|CG4719|DTNKS|Dm.pARTb|TNKS|Tankyrase|TkrsIR|dARTD5|dTANK|dTNKS|dTankyrase\tprotein\ttaxon:7227\t20190806\tFlyBase\t\t" 1) (# "FB\tFBgn0027508\tTnks\tinvolved_in\tGO:0090263\tFB:FBrf0241717|PMID:30593492\tIMP\t\tP\ttankyrase\tBcDNA:LD22548|CG17487|CG4719|DTNKS|Dm.pARTb|TNKS|Tankyrase|TkrsIR|dARTD5|dTANK|dTNKS|dTankyrase\tprotein\ttaxon:7227\t20190806\tFlyBase\t\t" 1) (# "FB\tFBgn0027508\tTnks\tinvolved_in\tGO:0032436\tFB:FBrf0241717|PMID:30593492\tIMP\t\tP\ttankyrase\tBcDNA:LD22548|CG17487|CG4719|DTNKS|Dm.pARTb|TNKS|Tankyrase|TkrsIR|dARTD5|dTANK|dTNKS|dTankyrase\tprotein\ttaxon:7227\t20190806\tFlyBase\t\t" 1) (# "FB\tFBgn0027508\tTnks\tinvolved_in\tGO:0046330\tFB:FBrf0254888|PMID:36222503\tIDA\t\tP\ttankyrase\tBcDNA:LD22548|CG17487|CG4719|DTNKS|Dm.pARTb|TNKS|Tankyrase|TkrsIR|dARTD5|dTANK|dTNKS|dTankyrase\tprotein\ttaxon:7227\t20230307\tFlyBase\t\t" 1)))
 (most-frequent gene_associatio 2 (# (# "sex|dsxF|dsxM|intersex-62c|ix-62c\tprotein\ttaxon:7227\t20060803\tFlyBase\t\t" 19) (# "lipase\tprotein\ttaxon:7227\t20230703\tInterPro\t\t" 19) (# "factor|A7.1|ABF|Abf|CG3992|DmGATAb|GATA|GATAb|SERPENT|SRP|Serpent|Srp|abf|dGATAb|l(3)01549|l(3)89B2|l(3)neo45|serpentD|spt|srpD\tprotein\ttaxon:7227\t20060803\tFlyBase\t\t" 21) (# "protein\tprotein\ttaxon:7227\t20151015\tFlyBase\t\t" 21) (# "sterile(2)ltoRJ36|fs(2)ltoRJ36|no-relish\tprotein\ttaxon:7227\t20060803\tFlyBase\t\t" 23) (# "1|Rhomboid-1|Rhomboid-I|Ve|Veinlet|iks|rho-1|rho1|rhom|rhomboid-1|rhomboid/veinlet|rhomboid1|ve|veinlet\tprotein\ttaxon:7227\t20200406\tFlyBase\t\t" 26) (# "1.12|co|dNotch|fa|facet|l(1)3Cb|l(1)Ax|l(1)N|n[fah]|nd|notch|notchoid|shd|spl|split|strawberry|swb\tprotein\ttaxon:7227\t20060803\tFlyBase\t\t" 44)))
 (less-frequent gene_associatio 2 (# (# FlyBase 1) (# "B2-3|Sox21|SoxB2.3|sox21a\tprotein\ttaxon:7227\t20221006\tGO_Central\t\t" 1) (# "B2-2|Sox21B|SoxB2.2|sox-like\tprotein\ttaxon:7227\t20200725\tGO_Central\t\t" 1) (# "B2-2|Sox21B|SoxB2.2|sox-like\tprotein\ttaxon:7227\t20200311\tGO_Central\t\t" 1) (# "B2-2|Sox21B|SoxB2.2|sox-like\tprotein\ttaxon:7227\t20221006\tGO_Central\t\t" 1) (# "212\tCG33329|ORE-5|SP212\tprotein\ttaxon:7227\t20060803\tFlyBase\t\t" 1) (# "212\tCG33329|ORE-5|SP212\tprotein\ttaxon:7227\t20190311\tFlyBase\t\t" 1)))
-
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/human_disease/disease_model_annotations_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/human_disease/disease_model_annotations_fb_2023_04.tsv
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/human_disease/disease_model_annotations_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/human_disease/disease_model_annotations_fb_2023_04.tsv
 !(file-name disease_model_annotations  data/ftp.flybase.net/releases/current/precomputed_files/human_disease/disease_model_annotations_fb_2023_04.tsv)
 (num-columns disease_model_annotations 12)
 (duplicated-rows disease_model_annotations 0)
@@ -2199,20 +2651,20 @@
 (less-frequent disease_model_annotations 1 (# (# FBgn0033093 1) (# FBgn0031951 1) (# FBgn0031971 1) (# FBgn0031973 1) (# FBgn0266724 1) (# FBgn0050273 1) (# FBgn0031981 1)))
 (most-frequent disease_model_annotations 2 (# (# "Hsap\\SNCA" 300) (# Pink1 301) (# "Hsap\\TARDBP" 371) (# "Hsap\\ATXN3" 448) (# "Hsap\\APP" 630) (# "Hsap\\HTT" 680) (# "Hsap\\MAPT" 948)))
 (less-frequent disease_model_annotations 2 (# (# CG3270 1) (# r2d2 1) (# Sirup 1) (# Spn28Dc 1) (# Trs20 1) (# CG30273 1) (# Megf8 1)))
-(most-frequent disease_model_annotations 3 (# (# HGNC:11138 300) (# HGNC:11571 371) (# HGNC:7106 448) (# HGNC:620 630) (# HGNC:4851 680) (# HGNC:6893 948)))
-(less-frequent disease_model_annotations 3 (# (# HGNC:6239 1) (# HGNC:16854 1) (# HGNC:11118 1) (# HGNC:12013 1) (# HGNC:18222 1) (# HGNC:14973 1) (# HGNC:19245 1)))
+(most-frequent disease_model_annotations 3 (# (# "HGNC:11138" 300) (# "HGNC:11571" 371) (# "HGNC:7106" 448) (# "HGNC:620" 630) (# "HGNC:4851" 680) (# "HGNC:6893" 948)))
+(less-frequent disease_model_annotations 3 (# (# "HGNC:6239" 1) (# "HGNC:16854" 1) (# "HGNC:11118" 1) (# "HGNC:12013" 1) (# "HGNC:18222" 1) (# "HGNC:14973" 1) (# "HGNC:19245" 1)))
 (most-frequent disease_model_annotations 4 (# (# "DOES NOT exacerbate" 21) (# "DOES NOT ameliorate" 106) (# "DOES NOT model" 135) (# exacerbates 2650) (# ameliorates 4360) (# "model of" 19478)))
 (less-frequent disease_model_annotations 4 (# (# "DOES NOT exacerbate" 21) (# "DOES NOT ameliorate" 106) (# "DOES NOT model" 135) (# exacerbates 2650) (# ameliorates 4360) (# "model of" 19478)))
-(most-frequent disease_model_annotations 5 (# (# DOID:10652 652) (# DOID:0060213 692) (# DOID:14330 992) (# DOID:1289 1045) (# DOID:12858 1091) (# DOID:162 1305) (# DOID:680 1474)))
-(less-frequent disease_model_annotations 5 (# (# DOID:0111040 1) (# DOID:0080232 1) (# DOID:0110441 1) (# DOID:0111706 1) (# DOID:0080698 1) (# DOID:0080465 1) (# DOID:0060730 1)))
+(most-frequent disease_model_annotations 5 (# (# "DOID:10652" 652) (# "DOID:0060213" 692) (# "DOID:14330" 992) (# "DOID:1289" 1045) (# "DOID:12858" 1091) (# "DOID:162" 1305) (# "DOID:680" 1474)))
+(less-frequent disease_model_annotations 5 (# (# "DOID:0111040" 1) (# "DOID:0080232" 1) (# "DOID:0110441" 1) (# "DOID:0111706" 1) (# "DOID:0080698" 1) (# "DOID:0080465" 1) (# "DOID:0060730" 1)))
 (most-frequent disease_model_annotations 6 (# (# "Alzheimer's disease" 652) (# "frontotemporal dementia and/or amyotrophic lateral sclerosis-1" 692) (# "Parkinson's disease" 992) (# "neurodegenerative disease" 1045) (# "Huntington's disease" 1091) (# cancer 1305) (# tauopathy 1474)))
 (less-frequent disease_model_annotations 6 (# (# "glycogen storage disease IXd" 1) (# "autosomal dominant intellectual developmental disorder 51" 1) (# "dilated cardiomyopathy 2B" 1) (# "oblique facial clefting 1" 1) (# "Teebi hypertelorism syndrome 1" 1) (# "developmental and epileptic encephalopathy 30" 1) (# "torsion dystonia 1" 1)))
 (most-frequent disease_model_annotations 7 (# (# FBal0060587 153) (# FBal0127292 173) (# FBal0193144 193) (# FBal0126526 233) (# FBal0126527 239) (# FBal0090630 296)))
 (less-frequent disease_model_annotations 7 (# (# FBal0341584 1) (# FBal0265787 1) (# FBal0324663 1) (# FBal0262510 1) (# FBal0257944 1) (# FBal0235732 1) (# FBal0206026 1)))
 (most-frequent disease_model_annotations 8 (# (# "Ras85D[V12.UAS]" 153) (# "Hsap\\HTT[Q93.ex1.UAS]" 173) (# "Pink1[B9]" 193) (# "Hsap\\MAPT[UAS.cWa]" 233) (# "Hsap\\MAPT[R406W.UAS]" 239) (# "Hsap\\ATXN3[tr.Q78.UAS.Tag:HA]" 296)))
 (less-frequent disease_model_annotations 8 (# (# "Tom7[HMC06597]" 1) (# "Lkb1[UAS.cWa]" 1) (# "Lkb1[VSH330167]" 1) (# "Lkb1[GL00019]" 1) (# "Lkb1[HMS01351]" 1) (# "Lkb1[KK108675]" 1) (# "Droj2[GD14050]" 1)))
-(most-frequent disease_model_annotations 9 (# (# HGNC:6677 34) (# HGNC:2638 35) (# HGNC:9475 36) (# HGNC:59 44) (# HGNC:10024 45) (# HGNC:12530 48)))
-(less-frequent disease_model_annotations 9 (# (# HGNC:26013 1) (# HGNC:7703 1) (# HGNC:24846 1) (# HGNC:5201 1) (# HGNC:8966 1) (# HGNC:12756 1) (# HGNC:12974 1)))
+(most-frequent disease_model_annotations 9 (# (# "HGNC:6677" 34) (# "HGNC:2638" 35) (# "HGNC:9475" 36) (# "HGNC:59" 44) (# "HGNC:10024" 45) (# "HGNC:12530" 48)))
+(less-frequent disease_model_annotations 9 (# (# "HGNC:26013" 1) (# "HGNC:7703" 1) (# "HGNC:24846" 1) (# "HGNC:5201" 1) (# "HGNC:8966" 1) (# "HGNC:12756" 1) (# "HGNC:12974" 1)))
 (most-frequent disease_model_annotations 10 (# (# LPL 34) (# CYP3A5 35) (# PRSS1 36) (# ABCC8 44) (# RLBP1 45) (# UGT1A1 48)))
 (less-frequent disease_model_annotations 10 (# (# DNAAF5 1) (# NDUFB8 1) (# GAS2L2 1) (# HS6ST1 1) (# PIGL 1) (# WDR4 1) (# RNF113A 1)))
 (most-frequent disease_model_annotations 11 (# (# "modeled by FLYBASE:Hsap\\HTT[128Q.1-336.UAS]; FB:FBal0294194" 129) (# "modeled by FLYBASE:Hsap\\MAPT[UAS.cWa]; FB:FBal0126526" 181) (# "modeled by FLYBASE:Hsap\\MAPT[R406W.UAS]; FB:FBal0126527" 189) (# "modeled by FLYBASE:Hsap\\ATXN3[tr.Q78.UAS.Tag:HA]; FB:FBal0090630" 241) (# CEC 361) (# CEA 4981) (# IEA 6240)))
@@ -2220,11 +2672,12 @@
 (most-frequent disease_model_annotations 12 (# (# FBrf0228684 158) (# FBrf0241270 174) (# FBrf0248245 176) (# FBrf0244983 239) (# FBrf0227999 245) (# FBrf0218446 303) (# FBrf0241599 6240)))
 (less-frequent disease_model_annotations 12 (# (# FBrf0217529 1) (# FBrf0230073 1) (# FBrf0205420 1) (# FBrf0190823 1) (# FBrf0221444 1) (# FBrf0211611 1) (# FBrf0194165 1)))
 
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/insertions/construct_maps.zip
-;; ;;Error reading the file: Multiple files found in ZIP file. Only one file per ZIP: ['construct_maps/', 'construct_maps/FBmc0000107.png', 'construct_maps/FBmc0000117.png', 'construct_maps/FBmc0000133.png', 'construct_maps/FBmc0000135.png', 'construct_maps/FBmc0000136.png', 'construct_maps/FBmc0000137.png', 'construct_maps/FBmc0000138.png', 'construct_maps/FBmc0000166.png', 'construct_maps/FBmc0000167.png', 'construct_maps/FBmc0000168.png', 'construct_maps/FBmc0000169.png', 'construct_maps/FBmc0000170.png', 'construct_maps/FBmc0000171.png', 'construct_maps/FBmc0000172.png', 'construct_maps/FBmc0000175.png', 'construct_maps/FBmc0000176.png', 'construct_maps/FBmc0000177.png', 'construct_maps/FBmc0000178.png', 'construct_maps/FBmc0000179.png', 'construct_maps/FBmc0000180.png', 'construct_maps/FBmc0000187.png', 'construct_maps/FBmc0000192.png', 'construct_maps/FBmc0000214.png', 'construct_maps/FBmc0000215.png', 'construct_maps/FBmc0000216.png', 'construct_maps/FBmc0000217.png', 'construct_maps/FBmc0000218.png', 'construct_maps/FBmc0000223.png', 'construct_maps/FBmc0000224.png', 'construct_maps/FBmc0000225.png', 'construct_maps/FBmc0000226.png', 'construct_maps/FBmc0000227.png', 'construct_maps/FBmc0000228.png', 'construct_maps/FBmc0000230.png', 'construct_maps/FBmc0000231.png', 'construct_maps/FBmc0000232.png', 'construct_maps/FBmc0000234.png', 'construct_maps/FBmc0000271.png', 'construct_maps/FBmc0000278.png', 'construct_maps/FBmc0000279.png', 'construct_maps/FBmc0000286.png', 'construct_maps/FBmc0000294.png', 'construct_maps/FBmc0000331.png', 'construct_maps/FBmc0000334.png', 'construct_maps/FBmc0000352.png', 'construct_maps/FBmc0000353.png', 'construct_maps/FBmc0000354.png', 'construct_maps/FBmc0000355.png', 'construct_maps/FBmc0000373.png', 'construct_maps/FBmc0000376.png', 'construct_maps/FBmc0000380.png', 'construct_maps/FBmc0000381.png', 'construct_maps/FBmc0000383.png', 'construct_maps/FBmc0000384.png', 'construct_maps/FBmc0000461.png', 'construct_maps/FBmc0000600.png', 'construct_maps/FBmc0000727.png', 'construct_maps/FBmc0000728.png', 'construct_maps/FBmc0000913.png', 'construct_maps/FBmc0000938.png', 'construct_maps/FBmc0000960.png', 'construct_maps/FBmc0000961.png', 'construct_maps/FBmc0000965.png', 'construct_maps/FBmc0000970.png', 'construct_maps/FBmc0001073.png', 'construct_maps/FBmc0001075.png', 'construct_maps/FBmc0001078.png', 'construct_maps/FBmc0001079.png', 'construct_maps/FBmc0001083.png', 'construct_maps/FBmc0001086.png', 'construct_maps/FBmc0001087.png', 'construct_maps/FBmc0001179.png', 'construct_maps/FBmc0001367.png', 'construct_maps/FBmc0001376.png', 'construct_maps/FBmc0001379.png', 'construct_maps/FBmc0001382.png', 'construct_maps/FBmc0001383.png', 'construct_maps/FBmc0001433.png', 'construct_maps/FBms0003205.png', 'construct_maps/FBtp0000039.png', 'construct_maps/FBtp0000047.png', 'construct_maps/FBtp0000078.png', 'construct_maps/FBtp0000081.png', 'construct_maps/FBtp0000082.png', 'construct_maps/FBtp0000153.png', 'construct_maps/FBtp0000154.png', 'construct_maps/FBtp0000155.png', 'construct_maps/FBtp0000156.png', 'construct_maps/FBtp0000157.png', 'construct_maps/FBtp0000160.png', 'construct_maps/FBtp0000161.png', 'construct_maps/FBtp0000162.png', 'construct_maps/FBtp0000163.png', 'construct_maps/FBtp0000164.png', 'construct_maps/FBtp0000165.png', 'construct_maps/FBtp0000177.png', 'construct_maps/FBtp0000190.png', 'construct_maps/FBtp0000191.png', 'construct_maps/FBtp0000192.png', 'construct_maps/FBtp0000193.png', 'construct_maps/FBtp0000194.png', 'construct_maps/FBtp0000195.png', 'construct_maps/FBtp0000196.png', 'construct_maps/FBtp0000197.png', 'construct_maps/FBtp0000198.png', 'construct_maps/FBtp0000199.png', 'construct_maps/FBtp0000200.png', 'construct_maps/FBtp0000201.png', 'construct_maps/FBtp0000203.png', 'construct_maps/FBtp0000204.png', 'construct_maps/FBtp0000206.png', 'construct_maps/FBtp0000207.png', 'construct_maps/FBtp0000208.png', 'construct_maps/FBtp0000209.png', 'construct_maps/FBtp0000210.png', 'construct_maps/FBtp0000242.png', 'construct_maps/FBtp0000249.png', 'construct_maps/FBtp0000250.png', 'construct_maps/FBtp0000261.png', 'construct_maps/FBtp0000267.png', 'construct_maps/FBtp0000307.png', 'construct_maps/FBtp0000310.png', 'construct_maps/FBtp0000345.png', 'construct_maps/FBtp0000348.png', 'construct_maps/FBtp0000352.png', 'construct_maps/FBtp0000354.png', 'construct_maps/FBtp0000355.png', 'construct_maps/FBtp0000423.png', 'construct_maps/FBtp0000488.png', 'construct_maps/FBtp0000549.png', 'construct_maps/FBtp0000729.png', 'construct_maps/FBtp0000905.png', 'construct_maps/FBtp0000906.png', 'construct_maps/FBtp0000910.png', 'construct_maps/FBtp0000913.png', 'construct_maps/FBtp0000928.png', 'construct_maps/FBtp0000929.png', 'construct_maps/FBtp0001056.png', 'construct_maps/FBtp0001057.png', 'construct_maps/FBtp0001058.png', 'construct_maps/FBtp0001059.png', 'construct_maps/FBtp0001061.png', 'construct_maps/FBtp0001062.png', 'construct_maps/FBtp0001067.png', 'construct_maps/FBtp0001070.png', 'construct_maps/FBtp0001071.png', 'construct_maps/FBtp0001075.png', 'construct_maps/FBtp0001080.png', 'construct_maps/FBtp0001082.png', 'construct_maps/FBtp0001083.png', 'construct_maps/FBtp0001084.png', 'construct_maps/FBtp0001089.png', 'construct_maps/FBtp0001092.png', 'construct_maps/FBtp0001094.png', 'construct_maps/FBtp0001097.png', 'construct_maps/FBtp0001403.png', 'construct_maps/FBtp0001435.png']
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/insertions/fu_gal4_table_fb_2023_04.json
+
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/insertions/construct_maps.zip
+;; Error reading the file: Multiple files found in ZIP file. Only one file per ZIP: ['construct_maps/', 'construct_maps/FBmc0000107.png', 'construct_maps/FBmc0000117.png', 'construct_maps/FBmc0000133.png', 'construct_maps/FBmc0000135.png', 'construct_maps/FBmc0000136.png', 'construct_maps/FBmc0000137.png', 'construct_maps/FBmc0000138.png', 'construct_maps/FBmc0000166.png', 'construct_maps/FBmc0000167.png', 'construct_maps/FBmc0000168.png', 'construct_maps/FBmc0000169.png', 'construct_maps/FBmc0000170.png', 'construct_maps/FBmc0000171.png', 'construct_maps/FBmc0000172.png', 'construct_maps/FBmc0000175.png', 'construct_maps/FBmc0000176.png', 'construct_maps/FBmc0000177.png', 'construct_maps/FBmc0000178.png', 'construct_maps/FBmc0000179.png', 'construct_maps/FBmc0000180.png', 'construct_maps/FBmc0000187.png', 'construct_maps/FBmc0000192.png', 'construct_maps/FBmc0000214.png', 'construct_maps/FBmc0000215.png', 'construct_maps/FBmc0000216.png', 'construct_maps/FBmc0000217.png', 'construct_maps/FBmc0000218.png', 'construct_maps/FBmc0000223.png', 'construct_maps/FBmc0000224.png', 'construct_maps/FBmc0000225.png', 'construct_maps/FBmc0000226.png', 'construct_maps/FBmc0000227.png', 'construct_maps/FBmc0000228.png', 'construct_maps/FBmc0000230.png', 'construct_maps/FBmc0000231.png', 'construct_maps/FBmc0000232.png', 'construct_maps/FBmc0000234.png', 'construct_maps/FBmc0000271.png', 'construct_maps/FBmc0000278.png', 'construct_maps/FBmc0000279.png', 'construct_maps/FBmc0000286.png', 'construct_maps/FBmc0000294.png', 'construct_maps/FBmc0000331.png', 'construct_maps/FBmc0000334.png', 'construct_maps/FBmc0000352.png', 'construct_maps/FBmc0000353.png', 'construct_maps/FBmc0000354.png', 'construct_maps/FBmc0000355.png', 'construct_maps/FBmc0000373.png', 'construct_maps/FBmc0000376.png', 'construct_maps/FBmc0000380.png', 'construct_maps/FBmc0000381.png', 'construct_maps/FBmc0000383.png', 'construct_maps/FBmc0000384.png', 'construct_maps/FBmc0000461.png', 'construct_maps/FBmc0000600.png', 'construct_maps/FBmc0000727.png', 'construct_maps/FBmc0000728.png', 'construct_maps/FBmc0000913.png', 'construct_maps/FBmc0000938.png', 'construct_maps/FBmc0000960.png', 'construct_maps/FBmc0000961.png', 'construct_maps/FBmc0000965.png', 'construct_maps/FBmc0000970.png', 'construct_maps/FBmc0001073.png', 'construct_maps/FBmc0001075.png', 'construct_maps/FBmc0001078.png', 'construct_maps/FBmc0001079.png', 'construct_maps/FBmc0001083.png', 'construct_maps/FBmc0001086.png', 'construct_maps/FBmc0001087.png', 'construct_maps/FBmc0001179.png', 'construct_maps/FBmc0001367.png', 'construct_maps/FBmc0001376.png', 'construct_maps/FBmc0001379.png', 'construct_maps/FBmc0001382.png', 'construct_maps/FBmc0001383.png', 'construct_maps/FBmc0001433.png', 'construct_maps/FBms0003205.png', 'construct_maps/FBtp0000039.png', 'construct_maps/FBtp0000047.png', 'construct_maps/FBtp0000078.png', 'construct_maps/FBtp0000081.png', 'construct_maps/FBtp0000082.png', 'construct_maps/FBtp0000153.png', 'construct_maps/FBtp0000154.png', 'construct_maps/FBtp0000155.png', 'construct_maps/FBtp0000156.png', 'construct_maps/FBtp0000157.png', 'construct_maps/FBtp0000160.png', 'construct_maps/FBtp0000161.png', 'construct_maps/FBtp0000162.png', 'construct_maps/FBtp0000163.png', 'construct_maps/FBtp0000164.png', 'construct_maps/FBtp0000165.png', 'construct_maps/FBtp0000177.png', 'construct_maps/FBtp0000190.png', 'construct_maps/FBtp0000191.png', 'construct_maps/FBtp0000192.png', 'construct_maps/FBtp0000193.png', 'construct_maps/FBtp0000194.png', 'construct_maps/FBtp0000195.png', 'construct_maps/FBtp0000196.png', 'construct_maps/FBtp0000197.png', 'construct_maps/FBtp0000198.png', 'construct_maps/FBtp0000199.png', 'construct_maps/FBtp0000200.png', 'construct_maps/FBtp0000201.png', 'construct_maps/FBtp0000203.png', 'construct_maps/FBtp0000204.png', 'construct_maps/FBtp0000206.png', 'construct_maps/FBtp0000207.png', 'construct_maps/FBtp0000208.png', 'construct_maps/FBtp0000209.png', 'construct_maps/FBtp0000210.png', 'construct_maps/FBtp0000242.png', 'construct_maps/FBtp0000249.png', 'construct_maps/FBtp0000250.png', 'construct_maps/FBtp0000261.png', 'construct_maps/FBtp0000267.png', 'construct_maps/FBtp0000307.png', 'construct_maps/FBtp0000310.png', 'construct_maps/FBtp0000345.png', 'construct_maps/FBtp0000348.png', 'construct_maps/FBtp0000352.png', 'construct_maps/FBtp0000354.png', 'construct_maps/FBtp0000355.png', 'construct_maps/FBtp0000423.png', 'construct_maps/FBtp0000488.png', 'construct_maps/FBtp0000549.png', 'construct_maps/FBtp0000729.png', 'construct_maps/FBtp0000905.png', 'construct_maps/FBtp0000906.png', 'construct_maps/FBtp0000910.png', 'construct_maps/FBtp0000913.png', 'construct_maps/FBtp0000928.png', 'construct_maps/FBtp0000929.png', 'construct_maps/FBtp0001056.png', 'construct_maps/FBtp0001057.png', 'construct_maps/FBtp0001058.png', 'construct_maps/FBtp0001059.png', 'construct_maps/FBtp0001061.png', 'construct_maps/FBtp0001062.png', 'construct_maps/FBtp0001067.png', 'construct_maps/FBtp0001070.png', 'construct_maps/FBtp0001071.png', 'construct_maps/FBtp0001075.png', 'construct_maps/FBtp0001080.png', 'construct_maps/FBtp0001082.png', 'construct_maps/FBtp0001083.png', 'construct_maps/FBtp0001084.png', 'construct_maps/FBtp0001089.png', 'construct_maps/FBtp0001092.png', 'construct_maps/FBtp0001094.png', 'construct_maps/FBtp0001097.png', 'construct_maps/FBtp0001403.png', 'construct_maps/FBtp0001435.png']
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/insertions/fu_gal4_table_fb_2023_04.json
 !(file-name fu_gal4_table_  data/ftp.flybase.net/releases/current/precomputed_files/insertions/fu_gal4_table_fb_2023_04.json)
 (num-columns fu_gal4_table_ 2)
 (duplicated-rows fu_gal4_table_ 25810)
@@ -2238,10 +2691,9 @@
 (less-frequent fu_gal4_table_ 1 (# (# "  \"metaData\": " 1) (# "          \"FBst0067166\": \"67166\"," 1) (# "          \"FBst0067167\": \"67167\"," 1) (# "          \"FBst0067168\": \"67168\"," 1) (# "          \"FBst0067175\": \"67175\"," 1) (# "          \"FBst0067177\": \"67177\"," 1) (# "          \"FBst0067178\": \"67178\"," 1)))
 (most-frequent fu_gal4_table_ 2 (# (# "GawB}fru<up>NP0021</up>\"" 1) (# "Or47b-GAL4.7.467}\"" 1) (# "ato-GAL4.3.6}\"" 1) (# "GAL4}pnt<up>14-94</up>\"" 1) (# "en2.4-GAL4}\"" 3) (# "}," 154)))
 (less-frequent fu_gal4_table_ 2 (# (# "GawB}C587\"" 1) (# "GawB}fru<up>NP0021</up>\"" 1) (# "GMR9D11-GAL4}\"" 1) (# "alrm-GAL4.D}\"" 1) (# "GAL4-lacZ-Ubx(-FRT).dC}@; see @Scer\\\\GAL4[Ubx.PdC]@ elsewhere in this table.\"," 1) (# "GAL4-lacZ-Ubx(FRT.f<up>+</up>).dC}\"" 1) (# "GAL4-\u03b1Tub84B(-FRT).P}@; see @Scer\\\\GAL4[\u03b1Tub84B.PP]@ elsewhere in this table.\"" 1)))
-
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/insertions/insertion_mapping_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/insertions/insertion_mapping_fb_2023_04.tsv
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/insertions/insertion_mapping_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/insertions/insertion_mapping_fb_2023_04.tsv
 !(file-name insertion_mapping  data/ftp.flybase.net/releases/current/precomputed_files/insertions/insertion_mapping_fb_2023_04.tsv)
 (num-columns insertion_mapping 7)
 (duplicated-rows insertion_mapping 92)
@@ -2258,6 +2710,18 @@
 (missing-values insertion_mapping 2 127 (# "") (# 127))
 (null-value-count insertion_mapping 3 "" 139921)
 (missing-values insertion_mapping 3 139921 (# "") (# 139921))
+
+
+
+
+
+
+
+
+
+
+
+
 (null-value-count insertion_mapping 4 "" 139921)
 (missing-values insertion_mapping 4 139921 (# "") (# 139921))
 (null-value-count insertion_mapping 5 "" 139921)
@@ -2266,6 +2730,8 @@
 (missing-values insertion_mapping 6 129488 (# "") (# 129488))
 (null-value-count insertion_mapping 7 "" 203698)
 (null-value-count insertion_mapping 7 "?" 70)
+
+
 (missing-values insertion_mapping 7 203768 (# "" "?") (# 203698 70))
 (most-frequent insertion_mapping 1 (# (# "P{Roc1b.+t1.17}" 4) (# "P{Mcp-wy" 4) (# "P{Fab7-w" 6) (# "P{SUPor-P.PRE" 9) (# "P{ush-lacZ.-2190.-1421}" 9) (# "P{Mcp-ff" 13) (# "P{Mcp-w" 44)))
 (less-frequent insertion_mapping 1 (# (# "P{UASp-GAP43.mEos}1" 1) (# "P{KK106851}VIE-260B" 1) (# "P{KK106853}VIE-260B" 1) (# "P{KK106855}VIE-260B" 1) (# "P{KK106857}VIE-260B" 1) (# "P{KK106859}VIE-260B" 1) (# "P{KK106861}VIE-260B" 1)))
@@ -2273,18 +2739,42 @@
 (less-frequent insertion_mapping 2 (# (# FBti0129988 1) (# FBti0120115 1) (# FBti0120116 1) (# FBti0120117 1) (# FBti0120118 1) (# FBti0120119 1) (# FBti0120120 1)))
 (most-frequent insertion_mapping 3 (# (# "3L:4692761..4692761" 19) (# "3L:3250542..3250542" 20) (# "X:246305..246305" 21) (# "3R:31883471..31883471" 21) (# "2L:22237519..22237519" 37) (# "X:6861890..6861890" 53)))
 (less-frequent insertion_mapping 3 (# (# "3R:5508394..5508394" 1) (# "3R:9353290..9353290" 1) (# "3R:8033496..8033496" 1) (# "2L:17260772..17260772" 1) (# "3L:540584..540584" 1) (# "3L:8360935..8360935" 1) (# "3L:11819914..11819914" 1)))
+
 (most-frequent insertion_mapping 4 (# (# t 7054) (# f 65035)))
 (less-frequent insertion_mapping 4 (# (# t 7054) (# f 65035)))
 (most-frequent insertion_mapping 5 (# (# 0.0 10777) (# -1.0 26604) (# 1.0 34708)))
 (less-frequent insertion_mapping 5 (# (# 0.0 10777) (# -1.0 26604) (# 1.0 34708)))
-(most-frequent insertion_mapping 6 (# (# "100D2" 154) (# "47A11" 156) (# "53F8" 159) (# "35F1" 186) (# "35D1" 204) (# 2100.0 208)))
-(less-frequent insertion_mapping 6 (# (# 53B2-53B4 1) (# 45C7-45C9 1) (# 75B1-75B4 1) (# 22E3-22E4 1) (# 45C7-45C8 1) (# 55F1-55F3 1) (# "77F3" 1)))
-(most-frequent insertion_mapping 7 (# (# "75B" 30) (# 12C1-12C2 41) (# 35D1-35D2 44) (# 21B4-21B6 48) (# 47A11-47A14 55)))
-(less-frequent insertion_mapping 7 (# (# 59B4-59B5 1) (# 79D1-79D4 1) (# 50C4-50C5 1) (# 60D5-60D6 1) (# 47E4-47E5 1) (# 47A1-47B14 1) (# 46B13--46E4 1)))
 
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/map_conversion/cyto-genetic-seq.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/map_conversion/cyto-genetic-seq.tsv
+;; TODO
+;;(most-frequent insertion_mapping 6 (# (# "100D2" 154) (# "47A11" 156) (# "53F8" 159) (# "35F1" 186) (# "35D1" 204) (# "2100.0" 208)))
+;;(less-frequent insertion_mapping 6 (# (# "53B2-53B4" 1) (# "45C7-45C9" 1) (# "75B1-75B4" 1) (# "22E3-22E4" 1) (# "45C7-45C8" 1) (# "55F1-55F3" 1) (# 77F3 1)))
+(most-frequent insertion_mapping 7 (# (# 75B 30) (# "12C1-12C2" 41) (# "35D1-35D2" 44) (# "21B4-21B6" 48) (# "47A11-47A14" 55)))
+(less-frequent insertion_mapping 7 (# (# "59B4-59B5" 1) (# "79D1-79D4" 1) (# "50C4-50C5" 1) (# "60D5-60D6" 1) (# "47E4-47E5" 1) (# "47A1-47B14" 1) (# "46B13--46E4" 1)))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/map_conversion/cyto-genetic-seq.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/map_conversion/cyto-genetic-seq.tsv
 !(file-name cyto-genetic-seq  data/ftp.flybase.net/releases/current/precomputed_files/map_conversion/cyto-genetic-seq.tsv)
 (num-columns cyto-genetic-seq 4)
 (duplicated-rows cyto-genetic-seq 0)
@@ -2305,9 +2795,8 @@
 (less-frequent cyto-genetic-seq 3 (# (# "X:408583..660483" 1) (# "3L:8981731..9125749" 1) (# "3L:9125750..9333837" 1) (# "3L:9333838..9547269" 1) (# "3L:9547270..9865310" 1) (# "3L:9865311..10316395" 1) (# "3L:10316396..10769950" 1)))
 (most-frequent cyto-genetic-seq 4 (# (# "includes 16 area(s) of non-identity" 1) (# "includes 24 area(s) of non-identity" 1) (# "failed to convert" 3) (# "in area of non-identity" 5) (# inversion 6) (# "includes 1 area of non-identity" 6)))
 (less-frequent cyto-genetic-seq 4 (# (# "includes 24 area(s) of non-identity" 1) (# "includes 16 area(s) of non-identity" 1) (# "includes 6 area(s) of non-identity" 1) (# "failed to convert" 3) (# "in area of non-identity" 5) (# "includes 1 area of non-identity" 6) (# inversion 6)))
-
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/map_conversion/cytotable.txt
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/map_conversion/cytotable.txt
 !(file-name cytotable  data/ftp.flybase.net/releases/current/precomputed_files/map_conversion/cytotable.txt)
 (num-columns cytotable 43)
 (duplicated-rows cytotable 0)
@@ -2489,9 +2978,8 @@
 (less-frequent cytotable 42 ())
 (most-frequent cytotable 43 ())
 (less-frequent cytotable 43 ())
-
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/map_conversion/genome-cyto-seq.txt
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/map_conversion/genome-cyto-seq.txt
 !(file-name genome-cyto-seq  data/ftp.flybase.net/releases/current/precomputed_files/map_conversion/genome-cyto-seq.txt)
 (num-columns genome-cyto-seq 3)
 (duplicated-rows genome-cyto-seq 0)
@@ -2502,9 +2990,10 @@
 (missing-values genome-cyto-seq 1 0 () ())
 (missing-values genome-cyto-seq 2 0 () ())
 (missing-values genome-cyto-seq 3 0 () ())
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/metadata/dataset_metadata_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/metadata/dataset_metadata_fb_2023_04.tsv
+
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/metadata/dataset_metadata_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/metadata/dataset_metadata_fb_2023_04.tsv
 !(file-name dataset_metadata  data/ftp.flybase.net/releases/current/precomputed_files/metadata/dataset_metadata_fb_2023_04.tsv)
 (num-columns dataset_metadata 4)
 (duplicated-rows dataset_metadata 0)
@@ -2520,15 +3009,14 @@
 (missing-values dataset_metadata 4 1 (# unknown) (# 1))
 (most-frequent dataset_metadata 1 (# (# FBlc0000146 67302) (# FBlc0000142 67302) (# FBlc0000143 67302) (# FBlc0000137 67302) (# FBlc0000005 161905) (# FBlc0000049 220083) (# FBlc0000029 241818)))
 (less-frequent dataset_metadata 1 (# (# FBlc0002175 1) (# FBlc0001943 1) (# FBlc0002094 1) (# FBlc0002095 1) (# FBlc0002096 1) (# FBlc0002097 1) (# FBlc0002098 1)))
-(most-frequent dataset_metadata 2 (# (# mE_mRNA_P15_junctions 67302) (# mE_mRNA_P5_junctions 67302) (# mE_mRNA_P6_junctions 67302) (# mE_mRNA_L3_12hr_junctions 67302) (# EK_EP_cDNA 161905) (# RP_cDNA 220083) (# Affymetrix_GeneChip_v2 241818)))
-(less-frequent dataset_metadata 2 (# (# ChIP-Seq_mE5125_HDAC1_E16 1) (# "ChIP-chip_mE3893_Su(var)205_RNAi_Su(var)205_S2-DRSC" 1) (# "ChIP-chip_mE2667_Su(var)205_CME-W1-Cl.8+" 1) (# "ChIP-chip_mE2666_Su(var)205_ML-DmBG3-c2" 1) (# "ChIP-chip_mE4126_Su(var)205_ML-DmBG3-c2" 1) (# "ChIP-chip_mE6074_Su(var)205_S2-DRSC" 1) (# "ChIP-chip_mE3707_Su(var)205_S2-DRSC" 1)))
+(most-frequent dataset_metadata 2 (# (# "mE_mRNA_P15_junctions" 67302) (# "mE_mRNA_P5_junctions" 67302) (# "mE_mRNA_P6_junctions" 67302) (# "mE_mRNA_L3_12hr_junctions" 67302) (# "EK_EP_cDNA" 161905) (# "RP_cDNA" 220083) (# "Affymetrix_GeneChip_v2" 241818)))
+(less-frequent dataset_metadata 2 (# (# "ChIP-Seq_mE5125_HDAC1_E16" 1) (# "ChIP-chip_mE3893_Su(var)205_RNAi_Su(var)205_S2-DRSC" 1) (# "ChIP-chip_mE2667_Su(var)205_CME-W1-Cl.8+" 1) (# "ChIP-chip_mE2666_Su(var)205_ML-DmBG3-c2" 1) (# "ChIP-chip_mE4126_Su(var)205_ML-DmBG3-c2" 1) (# "ChIP-chip_mE6074_Su(var)205_S2-DRSC" 1) (# "ChIP-chip_mE3707_Su(var)205_S2-DRSC" 1)))
 (most-frequent dataset_metadata 3 (# (# FBgn0011217 1890) (# FBgn0015790 1890) (# FBgn0040372 1891) (# FBgn0002781 1892) (# FBgn0013263 1896) (# FBgn0020412 1909) (# FBgn0261617 1911)))
-(less-frequent dataset_metadata 3 (# (# 1616608_a_at_1350 1) (# FBsf0000240631 1) (# FBsf0000240630 1) (# FBsf0000240629 1) (# FBsf0000240628 1) (# FBsf0000240627 1) (# FBsf0000240626 1)))
-(most-frequent dataset_metadata 4 (# (# Rab11 1890) (# eff 1890) (# G9a 1891) (# "mod(mdg4)" 1892) (# Trl 1896) (# JIL-1 1909) (# nej 1911)))
-(less-frequent dataset_metadata 4 (# (# 1616608_a_at_1350 1) (# TFBS_D_002907 1) (# TFBS_D_002906 1) (# TFBS_D_002905 1) (# TFBS_D_002904 1) (# TFBS_D_002903 1) (# TFBS_D_002902 1)))
-
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/ontologies/chebi_fb_2023_04.obo
+(less-frequent dataset_metadata 3 (# (# "1616608_a_at_1350" 1) (# FBsf0000240631 1) (# FBsf0000240630 1) (# FBsf0000240629 1) (# FBsf0000240628 1) (# FBsf0000240627 1) (# FBsf0000240626 1)))
+(most-frequent dataset_metadata 4 (# (# Rab11 1890) (# eff 1890) (# G9a 1891) (# "mod(mdg4)" 1892) (# Trl 1896) (# "JIL-1" 1909) (# nej 1911)))
+(less-frequent dataset_metadata 4 (# (# "1616608_a_at_1350" 1) (# "TFBS_D_002907" 1) (# "TFBS_D_002906" 1) (# "TFBS_D_002905" 1) (# "TFBS_D_002904" 1) (# "TFBS_D_002903" 1) (# "TFBS_D_002902" 1)))
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/ontologies/chebi_fb_2023_04.obo
 !(file-name chebi  data/ftp.flybase.net/releases/current/precomputed_files/ontologies/chebi_fb_2023_04.obo)
 (num-columns chebi 2)
 (duplicated-rows chebi 555801)
@@ -2537,13 +3025,12 @@
 (unique-values chebi 2 295017 object)
 (missing-values chebi 1 0 () ())
 (missing-values chebi 2 0 () ())
-(most-frequent chebi 1 (# (# def: 500) (# alt_id: 18543) (# name: 112234) (# subset: 164636) (# "[Term]" 164704) (# id: 164714) (# is_a: 238189)))
-(less-frequent chebi 1 (# (# data-version: 1) (# saved-by: 1) (# default-namespace: 1) (# ontology: 1) (# inverse_of: 2) (# is_transitive: 10) (# "[Typedef]" 10)))
-(most-frequent chebi 2 (# (# CHEBI:35358 2948) (# 1_STAR 2957) (# CHEBI:16670 6354) (# CHEBI:52898 7264) (# CHEBI:24995 7346) (# 3_STAR 60604) (# 2_STAR 101075)))
-(less-frequent chebi 2 (# (# 223.0 1) (# CHEBI:68046 1) (# CHEBI:68051 1) (# 12a-hydroxyrotenone 1) (# CHEBI:747 1) (# CHEBI:68063 1) (# CHEBI:43477 1)))
-
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/ontologies/doid.obo
+(most-frequent chebi 1 (# (# "def:" 500) (# "alt_id:" 18543) (# "name:" 112234) (# "subset:" 164636) (# "[Term]" 164704) (# "id:" 164714) (# "is_a:" 238189)))
+(less-frequent chebi 1 (# (# "data-version:" 1) (# "saved-by:" 1) (# "default-namespace:" 1) (# "ontology:" 1) (# "inverse_of:" 2) (# "is_transitive:" 10) (# "[Typedef]" 10)))
+(most-frequent chebi 2 (# (# "CHEBI:35358" 2948) (# "1_STAR" 2957) (# "CHEBI:16670" 6354) (# "CHEBI:52898" 7264) (# "CHEBI:24995" 7346) (# "3_STAR" 60604) (# "2_STAR" 101075)))
+(less-frequent chebi 2 (# (# 223.0 1) (# "CHEBI:68046" 1) (# "CHEBI:68051" 1) (# "12a-hydroxyrotenone" 1) (# "CHEBI:747" 1) (# "CHEBI:68063" 1) (# "CHEBI:43477" 1)))
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/ontologies/doid.obo
 !(file-name doid  data/ftp.flybase.net/releases/current/precomputed_files/ontologies/doid.obo)
 (num-columns doid 2)
 (duplicated-rows doid 29231)
@@ -2552,13 +3039,12 @@
 (unique-values doid 2 52359 object)
 (missing-values doid 1 0 () ())
 (missing-values doid 2 0 () ())
-(most-frequent doid 1 (# (# name: 885) (# alt_id: 1713) (# is_obsolete: 2477) (# subset: 10005) (# "[Term]" 13791) (# id: 13793) (# xref: 37482)))
-(less-frequent doid 1 (# (# data-version: 1) (# saved-by: 1) (# default-namespace: 1) (# ontology: 1) (# "[Typedef]" 2) (# replaced_by: 6) (# comment: 14)))
-(most-frequent doid 2 (# (# gram-negative_bacterial_infectious_disease 305) (# lschriml 455) (# DO_infectious_disease_slim 512) (# DO_cancer_slim 706) (# true 2477) (# DO_rare_slim 3125) (# NCIthesaurus 4251)))
-(less-frequent doid 2 (# (# "releases/2023-05-31/doid.obo" 1) (# "ICDO:9380/3" 1) (# KEGG:05214 1) (# NCI:C3059 1) (# NCI:C4822 1) (# OMIM:PS137800 1) (# ORDO:182067 1)))
-
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/ontologies/flybase_controlled_vocabulary.obo
+(most-frequent doid 1 (# (# "name:" 885) (# "alt_id:" 1713) (# "is_obsolete:" 2477) (# "subset:" 10005) (# "[Term]" 13791) (# "id:" 13793) (# "xref:" 37482)))
+(less-frequent doid 1 (# (# "data-version:" 1) (# "saved-by:" 1) (# "default-namespace:" 1) (# "ontology:" 1) (# "[Typedef]" 2) (# "replaced_by:" 6) (# "comment:" 14)))
+(most-frequent doid 2 (# (# "gram-negative_bacterial_infectious_disease" 305) (# lschriml 455) (# "DO_infectious_disease_slim" 512) (# "DO_cancer_slim" 706) (# true 2477) (# "DO_rare_slim" 3125) (# NCIthesaurus 4251)))
+(less-frequent doid 2 (# (# "releases/2023-05-31/doid.obo" 1) (# "ICDO:9380/3" 1) (# "KEGG:05214" 1) (# "NCI:C3059" 1) (# "NCI:C4822" 1) (# "OMIM:PS137800" 1) (# "ORDO:182067" 1)))
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/ontologies/flybase_controlled_vocabulary.obo
 !(file-name flybase_controlled_vocabulary  data/ftp.flybase.net/releases/current/precomputed_files/ontologies/flybase_controlled_vocabulary.obo)
 (num-columns flybase_controlled_vocabulary 2)
 (duplicated-rows flybase_controlled_vocabulary 2876)
@@ -2567,13 +3053,12 @@
 (unique-values flybase_controlled_vocabulary 2 1736 object)
 (missing-values flybase_controlled_vocabulary 1 0 () ())
 (missing-values flybase_controlled_vocabulary 2 0 () ())
-(most-frequent flybase_controlled_vocabulary 1 (# (# xref: 64) (# subset: 144) (# is_obsolete: 181) (# name: 274) (# namespace: 1208) (# "[Term]" 1354) (# id: 1355)))
-(less-frequent flybase_controlled_vocabulary 1 (# (# data-version: 1) (# ontology: 1) (# "[Typedef]" 1) (# alt_id: 2) (# replaced_by: 6) (# consider: 36) (# xref: 64)))
-(most-frequent flybase_controlled_vocabulary 2 (# (# pub_type 62) (# allele_class 71) (# spatial_qualifier 108) (# experimental_tool_descriptor 141) (# origin_of_mutation 166) (# true 181) (# phenotypic_class 255)))
-(less-frequent flybase_controlled_vocabulary 2 (# (# 2023-05-04 1) (# FBcv0003013 1) (# FBcv0003012 1) (# FBcv0003011 1) (# FBcv0003010 1) (# TALEN 1) (# FBcv0003009 1)))
-
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/ontologies/flybase_stock_vocabulary.obo
+(most-frequent flybase_controlled_vocabulary 1 (# (# "xref:" 64) (# "subset:" 144) (# "is_obsolete:" 181) (# "name:" 274) (# "namespace:" 1208) (# "[Term]" 1354) (# "id:" 1355)))
+(less-frequent flybase_controlled_vocabulary 1 (# (# "data-version:" 1) (# "ontology:" 1) (# "[Typedef]" 1) (# "alt_id:" 2) (# "replaced_by:" 6) (# "consider:" 36) (# "xref:" 64)))
+(most-frequent flybase_controlled_vocabulary 2 (# (# "pub_type" 62) (# "allele_class" 71) (# "spatial_qualifier" 108) (# "experimental_tool_descriptor" 141) (# "origin_of_mutation" 166) (# true 181) (# "phenotypic_class" 255)))
+(less-frequent flybase_controlled_vocabulary 2 (# (# "2023-05-04" 1) (# FBcv0003013 1) (# FBcv0003012 1) (# FBcv0003011 1) (# FBcv0003010 1) (# TALEN 1) (# FBcv0003009 1)))
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/ontologies/flybase_stock_vocabulary.obo
 !(file-name flybase_stock_vocabulary  data/ftp.flybase.net/releases/current/precomputed_files/ontologies/flybase_stock_vocabulary.obo)
 (num-columns flybase_stock_vocabulary 2)
 (duplicated-rows flybase_stock_vocabulary 218)
@@ -2582,13 +3067,12 @@
 (unique-values flybase_stock_vocabulary 2 136 object)
 (missing-values flybase_stock_vocabulary 1 0 () ())
 (missing-values flybase_stock_vocabulary 2 0 () ())
-(most-frequent flybase_stock_vocabulary 1 (# (# is_obsolete: 5) (# xref: 44) (# namespace: 59) (# creation_date: 60) (# created_by: 60) (# id: 60) (# "[Term]" 60)))
-(less-frequent flybase_stock_vocabulary 1 (# (# data-version: 1) (# saved-by: 1) (# default-namespace: 1) (# is_obsolete: 5) (# name: 5) (# xref: 44) (# namespace: 59)))
-(most-frequent flybase_stock_vocabulary 2 (# (# stock_breeding_history 5) (# stock_predefined_set 6) (# stock_state 8) (# stock_collection 15) (# stock_feature 25) (# 2009-09-08T12:00:00Z 44) (# Administrator 59)))
-(less-frequent flybase_stock_vocabulary 2 (# (# 2018-05-03 1) (# FBcv0010010 1) (# FBsv0001011 1) (# FBcv0010009 1) (# FBsv0001010 1) (# FBcv0000598 1) (# FBsv0001009 1)))
-
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/ontologies/fly_anatomy.obo
+(most-frequent flybase_stock_vocabulary 1 (# (# "is_obsolete:" 5) (# "xref:" 44) (# "namespace:" 59) (# "creation_date:" 60) (# "created_by:" 60) (# "id:" 60) (# "[Term]" 60)))
+(less-frequent flybase_stock_vocabulary 1 (# (# "data-version:" 1) (# "saved-by:" 1) (# "default-namespace:" 1) (# "is_obsolete:" 5) (# "name:" 5) (# "xref:" 44) (# "namespace:" 59)))
+(most-frequent flybase_stock_vocabulary 2 (# (# "stock_breeding_history" 5) (# "stock_predefined_set" 6) (# "stock_state" 8) (# "stock_collection" 15) (# "stock_feature" 25) (# "2009-09-08T12:00:00Z" 44) (# Administrator 59)))
+(less-frequent flybase_stock_vocabulary 2 (# (# "2018-05-03" 1) (# FBcv0010010 1) (# FBsv0001011 1) (# FBcv0010009 1) (# FBsv0001010 1) (# FBcv0000598 1) (# FBsv0001009 1)))
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/ontologies/fly_anatomy.obo
 !(file-name fly_anatomy  data/ftp.flybase.net/releases/current/precomputed_files/ontologies/fly_anatomy.obo)
 (num-columns fly_anatomy 2)
 (duplicated-rows fly_anatomy 29981)
@@ -2597,13 +3081,12 @@
 (unique-values fly_anatomy 2 31204 object)
 (missing-values fly_anatomy 1 0 () ())
 (missing-values fly_anatomy 2 0 () ())
-(most-frequent fly_anatomy 1 (# (# replaced_by: 370) (# consider: 380) (# is_obsolete: 838) (# subset: 9079) (# xref: 10922) (# "[Term]" 19704) (# id: 19745)))
-(less-frequent fly_anatomy 1 (# (# data-version: 1) (# ontology: 1) (# is_inverse_functional: 1) (# is_functional: 1) (# xref_analog: 2) (# namespace: 2) (# is_symmetric: 3)))
-(most-frequent fly_anatomy 2 (# (# olfactory_system_draft 130) (# larval_OF 131) (# FB_gloss 145) (# EmbDevSlim 284) (# TL_lineage_clone 296) (# true 848) (# cur 7657)))
-(less-frequent fly_anatomy 2 (# (# 2023-07-05 1) (# FBbt00052590 1) (# FBbt00052589 1) (# FBbt00052588 1) (# FBbt00052587 1) (# FBbt00052586 1) (# FBbt00052585 1)))
-
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/ontologies/fly_development.obo
+(most-frequent fly_anatomy 1 (# (# "replaced_by:" 370) (# "consider:" 380) (# "is_obsolete:" 838) (# "subset:" 9079) (# "xref:" 10922) (# "[Term]" 19704) (# "id:" 19745)))
+(less-frequent fly_anatomy 1 (# (# "data-version:" 1) (# "ontology:" 1) (# "is_inverse_functional:" 1) (# "is_functional:" 1) (# "xref_analog:" 2) (# "namespace:" 2) (# "is_symmetric:" 3)))
+(most-frequent fly_anatomy 2 (# (# "olfactory_system_draft" 130) (# "larval_OF" 131) (# "FB_gloss" 145) (# EmbDevSlim 284) (# "TL_lineage_clone" 296) (# true 848) (# cur 7657)))
+(less-frequent fly_anatomy 2 (# (# "2023-07-05" 1) (# FBbt00052590 1) (# FBbt00052589 1) (# FBbt00052588 1) (# FBbt00052587 1) (# FBbt00052586 1) (# FBbt00052585 1)))
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/ontologies/fly_development.obo
 !(file-name fly_development  data/ftp.flybase.net/releases/current/precomputed_files/ontologies/fly_development.obo)
 (num-columns fly_development 2)
 (duplicated-rows fly_development 240)
@@ -2612,13 +3095,12 @@
 (unique-values fly_development 2 264 object)
 (missing-values fly_development 1 0 () ())
 (missing-values fly_development 2 0 () ())
-(most-frequent fly_development 1 (# (# "[Typedef]" 8) (# xref: 12) (# name: 14) (# creation_date: 18) (# created_by: 18) (# "[Term]" 207) (# id: 215)))
-(less-frequent fly_development 1 (# (# data-version: 1) (# ontology: 1) (# replaced_by: 1) (# xref_analog: 2) (# namespace: 3) (# is_transitive: 4) (# alt_id: 5)))
-(most-frequent fly_development 2 (# (# happens_during 2) (# occurent_part_of 2) (# ends_at_start_of 2) (# relationship 3) (# david 6) (# true 11) (# djs93 12)))
-(less-frequent fly_development 2 (# (# 2019-10-21 1) (# FBdv00007014 1) (# 2010-09-29T12:28:05Z 1) (# FBdv00007015 1) (# 2011-04-26T11:57:15Z 1) (# FBdv00007016 1) (# 2011-04-26T12:00:15Z 1)))
-
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/ontologies/gene_group_FB2023_04.obo
+(most-frequent fly_development 1 (# (# "[Typedef]" 8) (# "xref:" 12) (# "name:" 14) (# "creation_date:" 18) (# "created_by:" 18) (# "[Term]" 207) (# "id:" 215)))
+(less-frequent fly_development 1 (# (# "data-version:" 1) (# "ontology:" 1) (# "replaced_by:" 1) (# "xref_analog:" 2) (# "namespace:" 3) (# "is_transitive:" 4) (# "alt_id:" 5)))
+(most-frequent fly_development 2 (# (# "happens_during" 2) (# "occurent_part_of" 2) (# "ends_at_start_of" 2) (# relationship 3) (# david 6) (# true 11) (# djs93 12)))
+(less-frequent fly_development 2 (# (# "2019-10-21" 1) (# FBdv00007014 1) (# "2010-09-29T12:28:05Z" 1) (# FBdv00007015 1) (# "2011-04-26T11:57:15Z" 1) (# FBdv00007016 1) (# "2011-04-26T12:00:15Z" 1)))
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/ontologies/gene_group_FB2023_04.obo
 !(file-name gene_group_FB2023_04  data/ftp.flybase.net/releases/current/precomputed_files/ontologies/gene_group_FB2023_04.obo)
 (num-columns gene_group_FB2023_04 2)
 (duplicated-rows gene_group_FB2023_04 2142)
@@ -2627,13 +3109,12 @@
 (unique-values gene_group_FB2023_04 2 1902 object)
 (missing-values gene_group_FB2023_04 1 0 () ())
 (missing-values gene_group_FB2023_04 2 0 () ())
-(most-frequent gene_group_FB2023_04 1 (# (# saved-by: 1) (# data-version: 1) (# name: 211) (# id: 1916) (# "[Term]" 1916)))
-(less-frequent gene_group_FB2023_04 1 (# (# data-version: 1) (# saved-by: 1) (# name: 211) (# "[Term]" 1916) (# id: 1916)))
+(most-frequent gene_group_FB2023_04 1 (# (# "saved-by:" 1) (# "data-version:" 1) (# "name:" 211) (# "id:" 1916) (# "[Term]" 1916)))
+(less-frequent gene_group_FB2023_04 1 (# (# "data-version:" 1) (# "saved-by:" 1) (# "name:" 211) (# "[Term]" 1916) (# "id:" 1916)))
 (most-frequent gene_group_FB2023_04 2 (# (# FBgg0001442 3) (# FBgg0000170 3) (# FBgg0000275 3) (# FBgg0001443 3) (# DESUMOYLASES 3) (# FBgg0000202 4) (# FBgg0000097 4)))
-(less-frequent gene_group_FB2023_04 2 (# (# 2023-07-21 1) (# FBgg0001786 1) (# FBgg0000656 1) (# FBgg0000655 1) (# FBgg0001827 1) (# FBgg0000653 1) (# FBgg0000648 1)))
-
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/ontologies/go-basic.obo
+(less-frequent gene_group_FB2023_04 2 (# (# "2023-07-21" 1) (# FBgg0001786 1) (# FBgg0000656 1) (# FBgg0000655 1) (# FBgg0001827 1) (# FBgg0000653 1) (# FBgg0000648 1)))
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/ontologies/go-basic.obo
 !(file-name go-basic  data/ftp.flybase.net/releases/current/precomputed_files/ontologies/go-basic.obo)
 (num-columns go-basic 2)
 (duplicated-rows go-basic 106079)
@@ -2642,13 +3123,12 @@
 (unique-values go-basic 2 70558 object)
 (missing-values go-basic 1 0 () ())
 (missing-values go-basic 2 0 () ())
-(most-frequent go-basic 1 (# (# alt_id: 3646) (# subset: 4002) (# is_obsolete: 4608) (# xref: 19735) (# "[Term]" 47558) (# namespace: 47563) (# id: 47563)))
-(less-frequent go-basic 1 (# (# data-version: 1) (# is_metadata_tag: 1) (# is_class_level: 1) (# default-namespace: 1) (# ontology: 1) (# is_transitive: 2) (# "[Typedef]" 5)))
-(most-frequent go-basic 2 (# (# goslim_synapse 360) (# goslim_pir 447) (# gocheck_do_not_annotate 1749) (# cellular_component 4486) (# true 4612) (# molecular_function 12503) (# biological_process 30572)))
-(less-frequent go-basic 2 (# (# "releases/2023-06-11" 1) (# GO:0051675 1) (# "EC:3.2.1.57" 1) (# "MetaCyc:3.2.1.57-RXN" 1) (# GO:0051676 1) (# GO:0051677 1) (# GO:0051678 1)))
-
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/ontologies/image.obo
+(most-frequent go-basic 1 (# (# "alt_id:" 3646) (# "subset:" 4002) (# "is_obsolete:" 4608) (# "xref:" 19735) (# "[Term]" 47558) (# "namespace:" 47563) (# "id:" 47563)))
+(less-frequent go-basic 1 (# (# "data-version:" 1) (# "is_metadata_tag:" 1) (# "is_class_level:" 1) (# "default-namespace:" 1) (# "ontology:" 1) (# "is_transitive:" 2) (# "[Typedef]" 5)))
+(most-frequent go-basic 2 (# (# "goslim_synapse" 360) (# "goslim_pir" 447) (# "gocheck_do_not_annotate" 1749) (# "cellular_component" 4486) (# true 4612) (# "molecular_function" 12503) (# "biological_process" 30572)))
+(less-frequent go-basic 2 (# (# "releases/2023-06-11" 1) (# "GO:0051675" 1) (# "EC:3.2.1.57" 1) (# "MetaCyc:3.2.1.57-RXN" 1) (# "GO:0051676" 1) (# "GO:0051677" 1) (# "GO:0051678" 1)))
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/ontologies/image.obo
 !(file-name image  data/ftp.flybase.net/releases/current/precomputed_files/ontologies/image.obo)
 (num-columns image 2)
 (duplicated-rows image 267)
@@ -2659,12 +3139,11 @@
 (null-value-count image 2 "[]" 39)
 (missing-values image 2 39 (# "[]") (# 39))
 (most-frequent image 1 (# (# Cy5 2) (# Cy3 2) (# FITC 2) (# AMCA 2) (# TR 2) (# TRITC 2) (# primary 3)))
-(less-frequent image 1 (# (# 10:08:2005 1) (# FBbi00000178 1) (# FBbi00000177 1) (# FBbi00000176 1) (# FBbi00000175 1) (# FBbi00000174 1) (# FBbi00000173 1)))
+(less-frequent image 1 (# (# "10:08:2005" 1) (# FBbi00000178 1) (# FBbi00000177 1) (# FBbi00000176 1) (# FBbi00000175 1) (# FBbi00000174 1) (# FBbi00000173 1)))
 (most-frequent image 2 (# (# photograph 2) (# label 2) (# micrograph 3) (# graphic 3) (# fill 3) (# tissue 10)))
-(less-frequent image 2 (# (# 09:30 1) (# methods 1) (# X-gal 1) (# X-gluc 1) (# antibody-cyanine 1) (# antibody-indocarbocyanine 1) (# antibody-indodicarbocyanine 1)))
-
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/ontologies/psi-mi.obo
+(less-frequent image 2 (# (# "09:30" 1) (# methods 1) (# "X-gal" 1) (# "X-gluc" 1) (# "antibody-cyanine" 1) (# "antibody-indocarbocyanine" 1) (# "antibody-indodicarbocyanine" 1)))
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/ontologies/psi-mi.obo
 !(file-name psi-mi  data/ftp.flybase.net/releases/current/precomputed_files/ontologies/psi-mi.obo)
 (num-columns psi-mi 2)
 (duplicated-rows psi-mi 3347)
@@ -2675,13 +3154,13 @@
 (missing-values psi-mi 1 1 (# unknown) (# 1))
 (null-value-count psi-mi 2 "[]" 20)
 (missing-values psi-mi 2 20 (# "[]") (# 20))
-(most-frequent psi-mi 1 (# (# "id-validation-regexp:\\\"[0-9\\]+\\\"" 14) (# ppm 38) (# search-url: 51) (# Drugable 128) (# true 171) (# orchard 396) (# PSI-MI_slim 1167)))
-(less-frequent psi-mi 1 (# (# 11:08:2015 1) (# 2011-07-05T11:24:37Z 1) (# MI:1089 1) (# "Method to detect interaction by inducing nuclear localization of one participant, which would then pull an interacting participant along with it into the nucleus. As both participants are labeled, the difference in nuclear localization between the induced and non-induced states provides an indication of the interaction between the two molecules." 1) (# 2011-07-05T11:27:16Z 1) (# MI:1090 1) (# bimane 1)))
+(most-frequent psi-mi 1 (# (# "id-validation-regexp:\\\"[0-9\\]+\\\"" 14) (# ppm 38) (# "search-url:" 51) (# Drugable 128) (# true 171) (# orchard 396) (# "PSI-MI_slim" 1167)))
+(less-frequent psi-mi 1 (# (# "11:08:2015" 1) (# "2011-07-05T11:24:37Z" 1) (# "MI:1089" 1) (# "Method to detect interaction by inducing nuclear localization of one participant, which would then pull an interacting participant along with it into the nucleus. As both participants are labeled, the difference in nuclear localization between the induced and non-induced states provides an indication of the interaction between the two molecules." 1) (# "2011-07-05T11:27:16Z" 1) (# "MI:1090" 1) (# bimane 1)))
 (most-frequent psi-mi 2 (# (# label 24) (# "[PMID:15833125]" 26) (# tag 27) (# "[PMID:14760721]" 37) (# reaction 43) (# assay 51) (# "[PMID:14755292]" 678)))
-(less-frequent psi-mi 2 (# (# 17:29 1) (# "[PMID:12519941]" 1) (# central 1) (# "[PMID:20080536]" 1) (# 550.0 1) (# 488.0 1) (# "[PMID:19940245]" 1)))
+(less-frequent psi-mi 2 (# (# "17:29" 1) (# "[PMID:12519941]" 1) (# central 1) (# "[PMID:20080536]" 1) (# 550.0 1) (# 488.0 1) (# "[PMID:19940245]" 1)))
 
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/ontologies/slice.chebi.obo
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/ontologies/slice.chebi.obo
 !(file-name slice.chebi  data/ftp.flybase.net/releases/current/precomputed_files/ontologies/slice.chebi.obo)
 (num-columns slice.chebi 2)
 (duplicated-rows slice.chebi 4300)
@@ -2690,13 +3169,12 @@
 (unique-values slice.chebi 2 1779 object)
 (missing-values slice.chebi 1 0 () ())
 (missing-values slice.chebi 2 0 () ())
-(most-frequent slice.chebi 1 (# (# data-version: 1) (# alt_id: 70) (# name: 174) (# subset: 1516) (# id: 1516) (# "[Term]" 1516) (# is_a: 1714)))
-(less-frequent slice.chebi 1 (# (# data-version: 1) (# saved-by: 1) (# default-namespace: 1) (# ontology: 1) (# xref: 1) (# alt_id: 70) (# name: 174)))
-(most-frequent slice.chebi 2 (# (# CHEBI:52206 58) (# 1_STAR 60) (# CHEBI:48706 62) (# CHEBI:48705 64) (# CHEBI:35222 67) (# CHEBI:23888 68) (# 3_STAR 1451)))
-(less-frequent slice.chebi 2 (# (# 223.0 1) (# CHEBI:86966 1) (# CHEBI:49159 1) (# CHEBI:73267 1) (# antidote 1) (# CHEBI:91139 1) (# CHEBI:78728 1)))
-
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/ontologies/so-simple.obo
+(most-frequent slice.chebi 1 (# (# "data-version:" 1) (# "alt_id:" 70) (# "name:" 174) (# "subset:" 1516) (# "id:" 1516) (# "[Term]" 1516) (# "is_a:" 1714)))
+(less-frequent slice.chebi 1 (# (# "data-version:" 1) (# "saved-by:" 1) (# "default-namespace:" 1) (# "ontology:" 1) (# "xref:" 1) (# "alt_id:" 70) (# "name:" 174)))
+(most-frequent slice.chebi 2 (# (# "CHEBI:52206" 58) (# "1_STAR" 60) (# "CHEBI:48706" 62) (# "CHEBI:48705" 64) (# "CHEBI:35222" 67) (# "CHEBI:23888" 68) (# "3_STAR" 1451)))
+(less-frequent slice.chebi 2 (# (# 223.0 1) (# "CHEBI:86966" 1) (# "CHEBI:49159" 1) (# "CHEBI:73267" 1) (# antidote 1) (# "CHEBI:91139" 1) (# "CHEBI:78728" 1)))
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/ontologies/so-simple.obo
 !(file-name so-simple  data/ftp.flybase.net/releases/current/precomputed_files/ontologies/so-simple.obo)
 (num-columns so-simple 2)
 (duplicated-rows so-simple 4394)
@@ -2705,14 +3183,13 @@
 (unique-values so-simple 2 6376 object)
 (missing-values so-simple 1 0 () ())
 (missing-values so-simple 2 0 () ())
-(most-frequent so-simple 1 (# (# xref: 244) (# subset: 395) (# created_by: 926) (# creation_date: 926) (# "[Term]" 2596) (# name: 2644) (# id: 2646)))
-(less-frequent so-simple 1 (# (# data-version: 1) (# default-namespace: 1) (# ontology: 1) (# is_symmetric: 4) (# is_transitive: 7) (# consider: 12) (# comment: 37)))
+(most-frequent so-simple 1 (# (# "xref:" 244) (# "subset:" 395) (# "created_by:" 926) (# "creation_date:" 926) (# "[Term]" 2596) (# "name:" 2644) (# "id:" 2646)))
+(less-frequent so-simple 1 (# (# "data-version:" 1) (# "default-namespace:" 1) (# "ontology:" 1) (# "is_symmetric:" 4) (# "is_transitive:" 7) (# "consider:" 12) (# "comment:" 37)))
 (most-frequent so-simple 2 (# (# "http://snpeff.sourceforge.net/SnpEff_manual.html" 36) (# nicole 99) (# biosapiens 122) (# david 131) (# true 221) (# SOFA 260) (# kareneilbeck 662)))
-(less-frequent so-simple 2 (# (# 2021-11-22 1) (# 2011-06-17T12:39:46Z 1) (# transmembrane_helix 1) (# SO:0001812 1) (# 2011-06-17T12:36:20Z 1) (# phosphorylation_site 1) (# SO:0001811 1)))
-
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/orthologs/dmel_human_orthologs_disease_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/orthologs/dmel_human_orthologs_disease_fb_2023_04.tsv
+(less-frequent so-simple 2 (# (# "2021-11-22" 1) (# "2011-06-17T12:39:46Z" 1) (# "transmembrane_helix" 1) (# "SO:0001812" 1) (# "2011-06-17T12:36:20Z" 1) (# "phosphorylation_site" 1) (# "SO:0001811" 1)))
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/orthologs/dmel_human_orthologs_disease_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/orthologs/dmel_human_orthologs_disease_fb_2023_04.tsv
 !(file-name dmel_human_orthologs_disease  data/ftp.flybase.net/releases/current/precomputed_files/orthologs/dmel_human_orthologs_disease_fb_2023_04.tsv)
 (num-columns dmel_human_orthologs_disease 8)
 (duplicated-rows dmel_human_orthologs_disease 0)
@@ -2740,11 +3217,11 @@
 (less-frequent dmel_human_orthologs_disease 1 (# (# FBgn0289323 1) (# FBgn0261599 1) (# FBgn0261609 1) (# FBgn0023090 1) (# FBgn0261610 1) (# FBgn0032922 1) (# FBgn0032924 1)))
 (most-frequent dmel_human_orthologs_disease 2 (# (# kel 39) (# KLHL18 39) (# dbo 39) (# CG17754 39) (# MAGE 39) (# CG5245 45) (# crol 116)))
 (less-frequent dmel_human_orthologs_disease 2 (# (# IntS8 1) (# RpS29 1) (# eIF2alpha 1) (# dtr 1) (# CG42699 1) (# Coq3 1) (# Nbr 1)))
-(most-frequent dmel_human_orthologs_disease 3 (# (# HGNC:12545 35) (# HGNC:17450 37) (# HGNC:2638 37) (# HGNC:51504 37) (# HGNC:9486 43) (# HGNC:9475 43) (# HGNC:0 78)))
-(less-frequent dmel_human_orthologs_disease 3 (# (# HGNC:26048 1) (# HGNC:9711 1) (# HGNC:26505 1) (# HGNC:23729 1) (# HGNC:9192 1) (# HGNC:7690 1) (# HGNC:14523 1)))
-(most-frequent dmel_human_orthologs_disease 4 (# (# OMIM:619809 35) (# OMIM:604716 35) (# OMIM:605325 37) (# OMIM:606534 37) (# OMIM:613578 43) (# OMIM:276000 43)))
-(less-frequent dmel_human_orthologs_disease 4 (# (# OMIM:603760 1) (# OMIM:606974 1) (# OMIM:611035 1) (# OMIM:610101 1) (# OMIM:607931 1) (# OMIM:601517 1) (# OMIM:609118 1)))
-(most-frequent dmel_human_orthologs_disease 5 (# (# UGT2B15 35) (# UGT1A8 35) (# CYP3A5 37) (# CYP3A43 37) (# CYP3A7-CYP3A51P 37) (# PRSS3 43) (# PRSS1 43)))
+(most-frequent dmel_human_orthologs_disease 3 (# (# "HGNC:12545" 35) (# "HGNC:17450" 37) (# "HGNC:2638" 37) (# "HGNC:51504" 37) (# "HGNC:9486" 43) (# "HGNC:9475" 43) (# "HGNC:0" 78)))
+(less-frequent dmel_human_orthologs_disease 3 (# (# "HGNC:26048" 1) (# "HGNC:9711" 1) (# "HGNC:26505" 1) (# "HGNC:23729" 1) (# "HGNC:9192" 1) (# "HGNC:7690" 1) (# "HGNC:14523" 1)))
+(most-frequent dmel_human_orthologs_disease 4 (# (# "OMIM:619809" 35) (# "OMIM:604716" 35) (# "OMIM:605325" 37) (# "OMIM:606534" 37) (# "OMIM:613578" 43) (# "OMIM:276000" 43)))
+(less-frequent dmel_human_orthologs_disease 4 (# (# "OMIM:603760" 1) (# "OMIM:606974" 1) (# "OMIM:611035" 1) (# "OMIM:610101" 1) (# "OMIM:607931" 1) (# "OMIM:601517" 1) (# "OMIM:609118" 1)))
+(most-frequent dmel_human_orthologs_disease 5 (# (# UGT2B15 35) (# UGT1A8 35) (# CYP3A5 37) (# CYP3A43 37) (# "CYP3A7-CYP3A51P" 37) (# PRSS3 43) (# PRSS1 43)))
 (less-frequent dmel_human_orthologs_disease 5 (# (# NFILZ 1) (# TSPY4 1) (# TSPY10 1) (# TSPY8 1) (# SETSIP 1) (# TSPY26P 1) (# TSPY9P 1)))
 (most-frequent dmel_human_orthologs_disease 6 (# (# 13 1915) (# 7 1952) (# 14 2226) (# 6 2608) (# 5 3492) (# 4 5253) (# 3 10010)))
 (less-frequent dmel_human_orthologs_disease 6 (# (# 9 1260) (# 10 1341) (# 8 1473) (# 12 1677) (# 11 1899) (# 13 1915) (# 7 1952)))
@@ -2752,10 +3229,9 @@
 (less-frequent dmel_human_orthologs_disease 7 (# (# 162350.0 1) (# 618251.0 1) (# 616629.0 1) (# 613660.0 1) (# 617236.0 1) (# "133239,610168,614331" 1) (# "610297,617248" 1)))
 (most-frequent dmel_human_orthologs_disease 8 (# (# "619073[VITAMIN D-DEPENDENT RICKETS, TYPE 3; VDDR3]" 35) (# "231095[GHOSAL HEMATODIAPHYSEAL DYSPLASIA; GHDD]" 35) (# "612560[BONE MINERAL DENSITY QUANTITATIVE TRAIT LOCUS 12; BMND12]" 35) (# "143500[GILBERT SYNDROME],218800[CRIGLER-NAJJAR SYNDROME, TYPE I],237900[HYPERBILIRUBINEMIA, TRANSIENT FAMILIAL NEONATAL; HBLRTFN],601816[BILIRUBIN, SERUM LEVEL OF, QUANTITATIVE TRAIT LOCUS 1; BILIQTL1],606785[CRIGLER-NAJJAR SYNDROME, TYPE II]" 35) (# "145500[HYPERTENSION, ESSENTIAL]" 44) (# "167800[PANCREATITIS, HEREDITARY; PCTT]" 93)))
 (less-frequent dmel_human_orthologs_disease 8 (# (# "162350[CEROID LIPOFUSCINOSIS, NEURONAL, 4 (KUFS TYPE); CLN4]" 1) (# "618251[MITOCHONDRIAL COMPLEX I DEFICIENCY, NUCLEAR TYPE 31; MC1DN31]" 1) (# "616629[SENIOR-LOKEN SYNDROME 9; SLSN9]" 1) (# "613660[CONE-ROD DYSTROPHY 15; CORD15]" 1) (# "617236[CONE-ROD DYSTROPHY AND HEARING LOSS 1; CRDHL1]" 1) (# "133239[ESOPHAGEAL CANCER],610168[LOEYS-DIETZ SYNDROME 2; LDS2],614331[COLORECTAL CANCER, HEREDITARY NONPOLYPOSIS, TYPE 6; HNPCC6]" 1) (# "610297[PARKINSON DISEASE 13, AUTOSOMAL DOMINANT, SUSCEPTIBILITY TO; PARK13],617248[3-METHYLGLUTACONIC ACIDURIA, TYPE VIII; MGCA8]" 1)))
-
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/orthologs/dmel_paralogs_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/orthologs/dmel_paralogs_fb_2023_04.tsv
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/orthologs/dmel_paralogs_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/orthologs/dmel_paralogs_fb_2023_04.tsv
 !(file-name dmel_paralogs  data/ftp.flybase.net/releases/current/precomputed_files/orthologs/dmel_paralogs_fb_2023_04.tsv)
 (num-columns dmel_paralogs 11)
 (duplicated-rows dmel_paralogs 0)
@@ -2785,9 +3261,9 @@
 (most-frequent dmel_paralogs 1 (# (# FBgn0036891 247) (# FBgn0033362 247) (# FBgn0042098 248) (# FBgn0034661 249) (# FBgn0039272 249) (# FBgn0031619 250) (# FBgn0023479 279)))
 (less-frequent dmel_paralogs 1 (# (# FBgn0040606 1) (# FBgn0030608 1) (# FBgn0263086 1) (# FBgn0263094 1) (# FBgn0030613 1) (# FBgn0037719 1) (# FBgn0013949 1)))
 (most-frequent dmel_paralogs 2 (# (# CG9372 247) (# CG8172 247) (# CG18735 248) (# tpr 249) (# CG11836 249) (# CG3355 250) (# teq 279)))
-(less-frequent dmel_paralogs 2 (# (# CG6503 1) (# Lsd-2 1) (# CG43354 1) (# CG43362 1) (# Rab3-GEF 1) (# bocks 1) (# Elal 1)))
-(most-frequent dmel_paralogs 3 (# (# Y 220) (# 4.0 1269) (# X 27590) (# "2L" 38491) (# "3L" 43684) (# "2R" 52635) (# "3R" 59090)))
-(less-frequent dmel_paralogs 3 (# (# 211000022280494.0 1) (# 211000022278760.0 17) (# 211000022279188.0 17) (# Unmapped_Scaffold_8_D1580_D1567 18) (# rDNA 23) (# Y 220) (# 4.0 1269)))
+(less-frequent dmel_paralogs 2 (# (# CG6503 1) (# "Lsd-2" 1) (# CG43354 1) (# CG43362 1) (# "Rab3-GEF" 1) (# bocks 1) (# Elal 1)))
+(most-frequent dmel_paralogs 3 (# (# Y 220) (# 4.0 1269) (# X 27590) (# 2L 38491) (# 3L 43684) (# 2R 52635) (# 3R 59090)))
+(less-frequent dmel_paralogs 3 (# (# 211000022280494.0 1) (# 211000022278760.0 17) (# 211000022279188.0 17) (# "Unmapped_Scaffold_8_D1580_D1567" 18) (# rDNA 23) (# Y 220) (# 4.0 1269)))
 (most-frequent dmel_paralogs 4 (# (# "9007234..9013526" 247) (# "21798017..21799195" 248) (# "21799330..21800904" 249) (# "25071126..25072712" 249) (# "4651403..4652892" 250) (# "9074643..9092131" 279) (# "3206949..3208985" 384)))
 (less-frequent dmel_paralogs 4 (# (# "7918517..7920131" 1) (# "770363..770462" 1) (# "11993989..11995432" 1) (# "11997900..11999340" 1) (# "22608670..22613656" 1) (# "9839776..9841163" 1) (# "5563977..5564815" 1)))
 (most-frequent dmel_paralogs 5 (# (# 1 107829) (# -1 115226)))
@@ -2796,18 +3272,17 @@
 (less-frequent dmel_paralogs 6 (# (# FBgn0004867 1) (# FBgn0031971 1) (# FBgn0046247 1) (# FBgn0026702 1) (# FBgn0032699 1) (# FBgn0039454 1) (# FBgn0031077 1)))
 (most-frequent dmel_paralogs 7 (# (# CG9372 247) (# CG8172 247) (# CG18735 248) (# tpr 249) (# CG11836 249) (# CG3355 250) (# teq 279)))
 (less-frequent dmel_paralogs 7 (# (# RpS2 1) (# Sirup 1) (# CG5938 1) (# Pop1 1) (# CG10383 1) (# CG14247 1) (# THADA 1)))
-(most-frequent dmel_paralogs 8 (# (# Y 220) (# 4.0 1269) (# X 27590) (# "2L" 38491) (# "3L" 43684) (# "2R" 52635) (# "3R" 59090)))
-(less-frequent dmel_paralogs 8 (# (# 211000022280494.0 1) (# 211000022278760.0 17) (# 211000022279188.0 17) (# Unmapped_Scaffold_8_D1580_D1567 18) (# rDNA 23) (# Y 220) (# 4.0 1269)))
+(most-frequent dmel_paralogs 8 (# (# Y 220) (# 4.0 1269) (# X 27590) (# 2L 38491) (# 3L 43684) (# 2R 52635) (# 3R 59090)))
+(less-frequent dmel_paralogs 8 (# (# 211000022280494.0 1) (# 211000022278760.0 17) (# 211000022279188.0 17) (# "Unmapped_Scaffold_8_D1580_D1567" 18) (# rDNA 23) (# Y 220) (# 4.0 1269)))
 (most-frequent dmel_paralogs 9 (# (# "9007234..9013526" 247) (# "21798017..21799195" 248) (# "25071126..25072712" 249) (# "21799330..21800904" 249) (# "4651403..4652892" 250) (# "9074643..9092131" 279) (# "3206949..3208985" 384)))
 (less-frequent dmel_paralogs 9 (# (# "9896265..9897552" 1) (# "11126877..11129087" 1) (# "2079919..2081286" 1) (# "22080382..22083473" 1) (# "17849727..17852453" 1) (# "17830828..17841705" 1) (# "5093976..5095910" 1)))
 (most-frequent dmel_paralogs 10 (# (# 1 107830) (# -1 115225)))
 (less-frequent dmel_paralogs 10 (# (# 1 107830) (# -1 115225)))
 (most-frequent dmel_paralogs 11 (# (# 7 4614) (# 6 6222) (# 5 8946) (# 4 14762) (# 3 27362) (# 2 39938) (# 1 105517)))
 (less-frequent dmel_paralogs 11 (# (# 13 230) (# 12 1190) (# 11 2910) (# 9 3614) (# 8 3650) (# 10 4100) (# 7 4614)))
-
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/references/entity_publication_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/references/entity_publication_fb_2023_04.tsv
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/references/entity_publication_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/references/entity_publication_fb_2023_04.tsv
 !(file-name entity_publication  data/ftp.flybase.net/releases/current/precomputed_files/references/entity_publication_fb_2023_04.tsv)
 (num-columns entity_publication 4)
 (duplicated-rows entity_publication 344)
@@ -2824,16 +3299,15 @@
 (missing-values entity_publication 4 3444472 (# "") (# 3444472))
 (most-frequent entity_publication 1 (# (# FBgn0003996 4465) (# FBgn0014446 4694) (# FBto0000342 4872) (# FBgn0014447 5750) (# FBto0000180 5793) (# FBte0000037 11131) (# FBgn0014445 17375)))
 (less-frequent entity_publication 1 (# (# FBtr0334316 1) (# FBig0000117350 1) (# FBig0000117351 1) (# FBig0000117352 1) (# FBig0000117353 1) (# FBig0000117354 1) (# FBig0000117355 1)))
-(most-frequent entity_publication 2 (# (# w 4465) (# "Avic\\GFP" 4694) (# UASt 4872) (# "Ecol\\lacZ" 5750) (# UAS 5793) (# P-element 11131) (# "Scer\\GAL4" 17375)))
-(less-frequent entity_publication 2 (# (# lncRNA:Hsromega-RG 1) (# FBgn0037913-FBgn0286818 1) (# FBgn0025885-FBgn0286818 1) (# pA_site_034101 1) (# FBgn0003944-FBgn0013263 1) (# FBgn0003545-FBgn0260639 1) (# FBgn0014189-FBgn0035110 1)))
+(most-frequent entity_publication 2 (# (# w 4465) (# "Avic\\GFP" 4694) (# UASt 4872) (# "Ecol\\lacZ" 5750) (# UAS 5793) (# "P-element" 11131) (# "Scer\\GAL4" 17375)))
+(less-frequent entity_publication 2 (# (# "lncRNA:Hsromega-RG" 1) (# "FBgn0037913-FBgn0286818" 1) (# "FBgn0025885-FBgn0286818" 1) (# "pA_site_034101" 1) (# "FBgn0003944-FBgn0013263" 1) (# "FBgn0003545-FBgn0260639" 1) (# "FBgn0014189-FBgn0035110" 1)))
 (most-frequent entity_publication 3 (# (# FBrf0104946 130692) (# FBrf0213603 147340) (# FBrf0239962 162644) (# FBrf0241309 162865) (# FBrf0200326 176400) (# FBrf0202436 182332) (# FBrf0105495 545468)))
 (less-frequent entity_publication 3 (# (# FBrf0201074 1) (# FBrf0126212 1) (# FBrf0134967 1) (# FBrf0144507 1) (# FBrf0125535 1) (# FBrf0155006 1) (# FBrf0086185 1)))
 (most-frequent entity_publication 4 (# (# 15238527.0 40234) (# 22936248.0 43755) (# 19465919.0 49687) (# 28851752.0 57661) (# 29191225.0 75081) (# 17994087.0 176400)))
 (less-frequent entity_publication 4 (# (# 17435764.0 1) (# 9345112.0 1) (# 29709602.0 1) (# 9013669.0 1) (# 12921737.0 1) (# 27591190.0 1) (# 25713358.0 1)))
-
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/references/fbrf_pmid_pmcid_doi_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/references/fbrf_pmid_pmcid_doi_fb_2023_04.tsv
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/references/fbrf_pmid_pmcid_doi_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/references/fbrf_pmid_pmcid_doi_fb_2023_04.tsv
 !(file-name fbrf_pmid_pmcid_doi  data/ftp.flybase.net/releases/current/precomputed_files/references/fbrf_pmid_pmcid_doi_fb_2023_04.tsv)
 (num-columns fbrf_pmid_pmcid_doi 7)
 (duplicated-rows fbrf_pmid_pmcid_doi 0)
@@ -2865,12 +3339,11 @@
 (less-frequent fbrf_pmid_pmcid_doi 5 (# (# book 1) (# "bibliographic list" 1) (# poster 1) (# website 1) (# lecture 1) (# preprint 1) (# thesis 1)))
 (most-frequent fbrf_pmid_pmcid_doi 6 (# (# "Dernburg, 2011, Cold Spring Harb. Protoc. 2011(12): " 3) (# "Shen, 2012, Cold Spring Harb. Protoc. 2012(5): " 3) (# "Marley and Baines, 2011, Cold Spring Harb. Protoc. 2011(9): " 3) (# "Sweeney et al., 2012, Cold Spring Harb. Protoc. 2012(2): " 3) (# "Andlauer and Sigrist, 2012, Cold Spring Harb. Protoc. 2012(4): " 4) (# "Macleod, 2012, Cold Spring Harb. Protoc. 2012(7): " 5)))
 (less-frequent fbrf_pmid_pmcid_doi 6 (# (# "Rizki et al., 1977, Dev. Growth Differ. 19(4): 345--356" 1) (# "Kutskova and Mamon, 1996, Genetika, Moscow 32(10): 1406--1416" 1) (# "Kuromi et al., 1997, Neurosci. Res. 27(2): 101--113" 1) (# "Kuhl and Wedlich, 1997, BioEssays 19(2): 101--104" 1) (# "Kosuda, 1996, Zool. Sci., Tokyo 13(6): 821--824" 1) (# "Kosman and Small, 1997, Development 124(7): 1343--1354" 1) (# "Kidd and Raff, 1997, J. Cell Sci. 110(2): 209--219" 1)))
-(most-frequent fbrf_pmid_pmcid_doi 7 (# (# fb_2019_01 667) (# fb_2015_01 799) (# fb_2017_04 959) (# fb_2016_05 1908) (# fb_2021_05 2210) (# fb_2018_03 6651) (# fb_2011_10 53869)))
-(less-frequent fbrf_pmid_pmcid_doi 7 (# (# fb_2018_02 363) (# fb_2012_06 375) (# fb_2019_02 394) (# fb_2018_06 402) (# fb_2012_01 407) (# fb_2013_03 410)))
-
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/species/organism_list_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/species/organism_list_fb_2023_04.tsv
+(most-frequent fbrf_pmid_pmcid_doi 7 (# (# "fb_2019_01" 667) (# "fb_2015_01" 799) (# "fb_2017_04" 959) (# "fb_2016_05" 1908) (# "fb_2021_05" 2210) (# "fb_2018_03" 6651) (# "fb_2011_10" 53869)))
+(less-frequent fbrf_pmid_pmcid_doi 7 (# (# "fb_2018_02" 363) (# "fb_2012_06" 375) (# "fb_2019_02" 394) (# "fb_2018_06" 402) (# "fb_2012_01" 407) (# "fb_2013_03" 410)))
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/species/organism_list_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/species/organism_list_fb_2023_04.tsv
 !(file-name organism_list  data/ftp.flybase.net/releases/current/precomputed_files/species/organism_list_fb_2023_04.tsv)
 (num-columns organism_list 6)
 (duplicated-rows organism_list 0)
@@ -2907,10 +3380,9 @@
 (less-frequent organism_list 5 (# (# 103846.0 1) (# 30050.0 1) (# 95458.0 1) (# 306030.0 1) (# 7244.0 1) (# 132243.0 1) (# 252922.0 1)))
 (most-frequent organism_list 6 (# (# y 633)))
 (less-frequent organism_list 6 (# (# y 633)))
-
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/stocks/stocks_FB2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/stocks/stocks_FB2023_04.tsv
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/stocks/stocks_FB2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/stocks/stocks_FB2023_04.tsv
 !(file-name stocks_FB2023_04  data/ftp.flybase.net/releases/current/precomputed_files/stocks/stocks_FB2023_04.tsv)
 (num-columns stocks_FB2023_04 7)
 (duplicated-rows stocks_FB2023_04 0)
@@ -2942,16 +3414,15 @@
 (less-frequent stocks_FB2023_04 3 (# (# "ethanol-preserved specimen ; FBsv0000007" 265) (# "living stock ; FBsv0000002" 146740)))
 (most-frequent stocks_FB2023_04 4 (# (# Dwil 40) (# Dmer 46) (# Dmau 52) (# Dvir 77) (# Dpse 188) (# Dsim 225) (# Dmel 145074)))
 (less-frequent stocks_FB2023_04 4 (# (# Dora 1) (# Dgrs 1) (# Dgun 1) (# Dnec 1) (# Dprc 1) (# Dcai 1)))
-(most-frequent stocks_FB2023_04 5 (# (# "st[1]" 6) (# "w[1118]" 7) (# "y[1]" 10) (# "v[1]" 11) (# "w[1]" 21) (# wild-type 1649)))
+(most-frequent stocks_FB2023_04 5 (# (# "st[1]" 6) (# "w[1118]" 7) (# "y[1]" 10) (# "v[1]" 11) (# "w[1]" 21) (# "wild-type" 1649)))
 (less-frequent stocks_FB2023_04 5 (# (# "y[1]; M{v[+t1.8]=WKO.1-B11}ZH-86Fb" 1) (# "y[1] w[67c23]; P{w[+mC]=GSV7}GS23035/SM1" 1) (# "y[1] w[67c23]; P{w[+mC]=GSV7}GS23034/TM3, Sb[1] Ser[1]" 1) (# "y[1] w[67c23]; P{w[+mC]=GSV7}GS23027/SM1" 1) (# "y[1] w[*]; P{w[+mC]=GSV7}GS23024" 1) (# "y[1] w[67c23]; P{w[+mC]=GSV7}GS23023/SM1" 1) (# "y[1] w[67c23]; P{w[+mC]=GSV7}GS23022/TM3, Sb[1] Ser[1]" 1)))
-(most-frequent stocks_FB2023_04 6 (# (# "Dana\\wild-type" 29) (# "Dari\\wild-type" 31) (# "Dwil\\wild-type" 32) (# "Dsim\\wild-type" 71) (# "Dpse\\wild-type" 95) (# "Dmel\\wild-type" 96) (# wild-type 235)))
+(most-frequent stocks_FB2023_04 6 (# (# "Dana\\wild-type" 29) (# "Dari\\wild-type" 31) (# "Dwil\\wild-type" 32) (# "Dsim\\wild-type" 71) (# "Dpse\\wild-type" 95) (# "Dmel\\wild-type" 96) (# "wild-type" 235)))
 (less-frequent stocks_FB2023_04 6 (# (# "y[1] v[1]; P{y[+t7.7] v[+t1.8]=TKO.GS03376}attP40" 1) (# "y[1]w[67c23];P{w[+mC]=GSV7}GS22586/SM1" 1) (# "y[1]w[67c23];P{w[+mC]=GSV7}GS22584/SM1" 1) (# "y[1] w[67c23] P{w[+mC]=GSV7}GS22580 / Binsinscy" 1) (# "y[1] w[67c23] P{w[+mC]=GSV7}GS22579 / Binsinscy" 1) (# "y[1] w[67c23] P{w[+mC]=GSV7}GS22578 / Binsinscy" 1) (# "y[1] w[67c23] P{w[+mC]=GSV7}GS22577 / Binsinscy" 1)))
 (most-frequent stocks_FB2023_04 7 (# (# 201049.0 1) (# 201043.0 1) (# 201040.0 1) (# 201037.0 1) (# 201059.0 1) (# 2.0 1)))
 (less-frequent stocks_FB2023_04 7 (# (# 2.0 1) (# 201073.0 1) (# 201072.0 1) (# 201070.0 1) (# 201063.0 1) (# 201062.0 1) (# 201059.0 1)))
-
-;; Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/synonyms/fb_synonym_fb_2023_04.pl
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/synonyms/fb_synonym_fb_2023_04.tsv
+;;;Skipping file: data/ftp.flybase.net/releases/current/precomputed_files/synonyms/fb_synonym_fb_2023_04.pl
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/synonyms/fb_synonym_fb_2023_04.tsv
 !(file-name fb_synonym  data/ftp.flybase.net/releases/current/precomputed_files/synonyms/fb_synonym_fb_2023_04.tsv)
 (num-columns fb_synonym 6)
 (duplicated-rows fb_synonym 0)
@@ -2976,15 +3447,14 @@
 (less-frequent fb_synonym 2 (# (# Ppla 1) (# Dsch 1) (# Dmar 1) (# Dlev 1) (# Dalo 1) (# Abelson 1) (# Amag 1)))
 (most-frequent fb_synonym 3 (# (# "P{eve-lacZ" 8) (# "P{ush-lacZ.-2190.-1421}" 10) (# "T(2;3)ul10" 11) (# "P{SUPor-P.PRE" 11) (# "P{Fab7-w" 17) (# "P{Mcp-ff" 18) (# "P{Mcp-w" 55)))
 (less-frequent fb_synonym 3 (# (# "\u03b1-Spec[2]" 1) (# "Dmoj\\GI20484" 1) (# "Dmoj\\GI20485" 1) (# "Dmoj\\GI20486" 1) (# "Dmoj\\GI20487" 1) (# "Dmoj\\GI20488" 1) (# "Dmoj\\GI20489" 1)))
-(most-frequent fb_synonym 4 (# (# Amyrel 174) (# "Saccharomyces cerevisiae UAS construct a of Schertel" 180) (# mt:CoII 208) (# "Saccharomyces cerevisiae UAS construct a of Unknown" 215) (# "UAS construct a of Unknown" 235) (# "Deficiency (1) yellow Terminal" 251)))
+(most-frequent fb_synonym 4 (# (# Amyrel 174) (# "Saccharomyces cerevisiae UAS construct a of Schertel" 180) (# "mt:CoII" 208) (# "Saccharomyces cerevisiae UAS construct a of Unknown" 215) (# "UAS construct a of Unknown" 235) (# "Deficiency (1) yellow Terminal" 251)))
 (less-frequent fb_synonym 4 (# (# "lethal (3) rI327" 1) (# "Secretory Pathway Calcium atpase" 1) (# "transfer RNA:Cysteine-GCA 4-1" 1) (# "Antioxidant 1 copper chaperone" 1) (# "ACAT-related protein required for viability 1" 1) (# "ER membrane protein complex subunit 10" 1) (# "Structural maintenance of chromosomes 5" 1)))
 (most-frequent fb_synonym 5 (# (# "cytochrome oxidase II" 33) (# microsatellite 39) (# "yolk protein 1" 43) (# "faint little ball" 43) (# "28S ribosomal RNA" 75) (# "alcohol dehydrogenase" 89)))
 (less-frequent fb_synonym 5 (# (# "Golgin-84 ortholog|Golgin84" 1) (# "INACTIVE|Inactive|inactive" 1) (# "lethal (3) 01640" 1) (# "female sterile(3)272-9|humpty dumpty|lethal (3) 82Ff|lethal (3) 82Fk" 1) (# fritz 1) (# Or46a 1) (# Gr36a 1)))
-(most-frequent fb_synonym 6 (# (# mt:CoII 159) (# Amyrel 164) (# 1360.0 208) (# Adh 232) (# unspecified 259) (# INE-1 2235)))
+(most-frequent fb_synonym 6 (# (# "mt:CoII" 159) (# Amyrel 164) (# 1360.0 208) (# Adh 232) (# unspecified 259) (# "INE-1" 2235)))
 (less-frequent fb_synonym 6 (# (# "GA15920|dpse_GLEANR_14759" 1) (# "GM24315|dsec_GLEANR_7324" 1) (# "GM24316|dsec_GLEANR_7325" 1) (# "GM24317|dsec_GLEANR_7326" 1) (# "GM24318|dsec_GLEANR_7327" 1) (# "GM24319|dsec_GLEANR_7328" 1) (# "GM24320|dsec_GLEANR_7329" 1)))
-
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/transposons/transposon_sequence_set.fa
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/transposons/transposon_sequence_set.fa
 !(file-name transposon_sequence_se  data/ftp.flybase.net/releases/current/precomputed_files/transposons/transposon_sequence_set.fa)
 (num-columns transposon_sequence_se 6)
 (duplicated-rows transposon_sequence_se 13)
@@ -3018,9 +3488,8 @@
 (less-frequent transposon_sequence_se 5 (# (# 958.0 1) (# 158.0 1) (# 536.0 1) (# 19.0 1) (# 284.0 1) (# 588.0 1) (# 647.0 1)))
 (most-frequent transposon_sequence_se 6 (# (# 23.0 1) (# 88.0 1) (# 8.0 2) (# 2.0 2) (# 3.0 2) (# 9.0 2)))
 (less-frequent transposon_sequence_se 6 (# (# 7.0 1) (# 39.0 1) (# 4.0 1) (# 6.0 1) (# 17.0 1) (# 44.0 1) (# 5.0 1)))
-
-;; ;;------------------------------------------------------------------------------------------------------------------
-;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/transposons/transposon_sequence_set.gff
+;;------------------------------------------------------------------------------------------------------------------
+;;; Analyzing file: data/ftp.flybase.net/releases/current/precomputed_files/transposons/transposon_sequence_set.gff
 !(file-name transposon_sequence_set  data/ftp.flybase.net/releases/current/precomputed_files/transposons/transposon_sequence_set.gff)
 (num-columns transposon_sequence_set 9)
 (duplicated-rows transposon_sequence_set 1)
@@ -3045,7 +3514,7 @@
 (null-value-count transposon_sequence_set 7 "-" 2)
 (null-value-count transposon_sequence_set 7 "+" 576)
 (null-value-count transposon_sequence_set 7 "." 171)
-(missing-values transposon_sequence_set 7 749 (# - "+" ".") (# 2 576 171))
+(missing-values transposon_sequence_set 7 749 (# "-" "+" ".") (# 2 576 171))
 (null-value-count transposon_sequence_set 8 "." 171)
 (missing-values transposon_sequence_set 8 171 (# ".") (# 171))
 (missing-values transposon_sequence_set 9 0 () ())
@@ -3053,8 +3522,8 @@
 (less-frequent transposon_sequence_set 1 (# (# FBte0000948 1) (# FBte0001188 1) (# FBte0000890 1) (# FBte0000599 1) (# FBte0000793 1) (# FBte0000139 1) (# FBte0000407 1)))
 (most-frequent transposon_sequence_set 2 ())
 (less-frequent transposon_sequence_set 2 ())
-(most-frequent transposon_sequence_set 3 (# (# start_codon 50) (# non_LTR_retrotransposon 53) (# terminal_inverted_repeat 56) (# three_prime_LTR 66) (# LTR_retrotransposon 67) (# five_prime_LTR 67) (# CDS 227)))
-(less-frequent transposon_sequence_set 3 (# (# region 1) (# dinucleotide_repeat_microsatellite_feature 1) (# retrotransposon 1) (# pseudogene 1) (# tetranucleotide_repeat_microsatellite_feature 1) (# transposable_element 1) (# "SINE-like elements" 1)))
+(most-frequent transposon_sequence_set 3 (# (# "start_codon" 50) (# "non_LTR_retrotransposon" 53) (# "terminal_inverted_repeat" 56) (# "three_prime_LTR" 66) (# "LTR_retrotransposon" 67) (# "five_prime_LTR" 67) (# CDS 227)))
+(less-frequent transposon_sequence_set 3 (# (# region 1) (# "dinucleotide_repeat_microsatellite_feature" 1) (# retrotransposon 1) (# pseudogene 1) (# "tetranucleotide_repeat_microsatellite_feature" 1) (# "transposable_element" 1) (# "SINE-like elements" 1)))
 (most-frequent transposon_sequence_set 4 (# (# 1074 3) (# 8236 3) (# 172 3) (# 2 3) (# 5145 4) (# 331 4) (# 1 285)))
 (less-frequent transposon_sequence_set 4 (# (# 1919 1) (# 282 1) (# 946 1) (# 7248 1) (# 6957 1) (# 5953 1) (# 3811 1)))
 (most-frequent transposon_sequence_set 5 (# (# 1286 3) (# 1728 3) (# 452 3) (# 12 3) (# 5034 3) (# 9092 3) (# 5519 3)))
@@ -3067,8 +3536,10 @@
 (less-frequent transposon_sequence_set 8 (# (# 1.0 578)))
 (most-frequent transposon_sequence_set 9 (# (# "Ontology_term=SO:0000205" 12) (# "Ontology_term=SO:0000551" 24) (# "Ontology_term=SO:0000318" 50) (# "Ontology_term=SO:0000481" 56) (# "Ontology_term=SO:0000316" 62) (# "Ontology_term=SO:0000426" 67) (# "Ontology_term=SO:0000425" 68)))
 (less-frequent transposon_sequence_set 9 (# (# "ID=FBte0001033;name=Dmel\\mariner2;source=?;type=DNA;subtype=Tc1-Mariner" 1) (# "ID=FBte0000773;name=Dana\\Tom;source=Z24451;type=?;subtype=?" 1) (# "ID=FBte0000591;name=Dmel\\invader6;source=NT_033778;type=LTR;subtype=Gypsy" 1) (# "Ontology_term=SO:0000316;db_xref=FLYBASE:FBgnXXXXXXX;name=Dmel\\gypsy12\\pol;translation=KKCKASLDYISSIPTGPRDPRPFLPMRLLNCLVYGLLDSGASISCIGGGVVQAAMENEKFKSLIGEAATADGNSQRIVGLLKIEVEYGDIKKLLKLYVVPSLKQDLYLGIDFWKLYDLLPANLKIAEILSPEPNQQTVVDQHELCEGDKAKLANVINCFPSFSQEGLGKTNLVSHSIDVGTARPVKQRHFPVSPAVEKAMYAEIDRMLRLGVIGESESAWSSPIVMVTKPGKVRICLECRKVNSFTEMDAYPLPQINGILSRLPRAEYISSLDLKDAYWQVPLDPKSRDKTAFTVPGRPLYQFKVMPFGLCNATSTMSRLMDKVVPAHLRNEVFIYLDDLLIVSSCFESHLNVLRELALQIKRAGLTLNVAKSHFCMRRVRYLGHIIGDGGIRTDPEKVSAITDFPLPKSLKSLRSFMGLCGWYRKFVANFATLSAPLTDLMTTKRKFLLTKEAIEAFSKLKECLSKAPVLCSPDFAKPFAIHCDASKSGVGAVLVQVSEEGDERPIAFVSKKLNKAQRNYTVTEQECLAAIVALKNFRAYVEGLPFKIITDHASLKWLMSNHDLNSRLARWALALQRFKFEIEHRKGSLNVVPDTLSRVNEEIVAAMDLQEDLIVDFDSEFFQSGDYVKLVETVKENTSNFSDLKVESGFLYRKAEHLTGERMHDEYAWKLWVPKELVSKILARAHDSPLAAHGGIHKTLERIRRYYFWPGLVSDVRAYISACEVCKSTKSQNFTLRPPLGKAPESQRFFQRLFIDFLGPYPRSRSGNIGIFIVLDHFSKYVFLKPVKKIDSSVVIKYLEDELFMTFGVPEVILSDNGSQFRARTFQRLIRYGVKHTLTAVHSPQANASERVNRSVIAAIRAYLRLDQKDWDEFLSRICCALRSAVHSSIGTSPYYMVFGQHMITSGSTYSLIRRLNLLDDRSLKFDRHESFEIMRKQAVDQMRNKHNENEKRCNIRSRVVSFVEGQEVYREISSQAVSKPVTTPSLDRRS" 1) (# "Ontology_term=SO:0000316;db_xref=FLYBASE:FBgnXXXXXXX;name=Dmel\\gypsy12\\gag;translation=MGLDRSPTRKSPSVSNPVCKLCAAEISTQDLYVTTCHHEFYRECIGNHFKKSEICSRCKLTCRPPAEATERVGRETRSKTKNRRNSRRGSFDISQRCGEKLAVKLKIAATVDGGPSTSASGANANEASSSAVSANAALLAMERRLLATLSEKMADLVQNAITSSMQRIMPTPSPAVVVTASEMSADHPNAYERQYLASPNPVPSPRSASSDLFDRPDKVVHILNGWKIKYSGVGVSVDNFIYRVEAVTRQTLNGNFNLLCRNISVLFEGKANDFFWRYHKFDRVATMGTERFCTALRLQFRQSRDDGDIEELIRNTKQKPNETFDSFYDTVSELVDQLEQPWTANKLVRVLRNNLRPEIRHEILNLDVRTVSELREICKRREAFLADVRRCSSYAKDTPFKREISEVCHESEDEVRSTYEAENDIESFSLVCWNCRIEGHRYQECIAERRVFCYGCGAANTYKPSCRKCSKNFKVGMSKLPVKPKTSNAARNQSTMTDQ" 1) (# "ID=FBte0001136;name=Dmel\\gypsy12;source=AE003789;type=LTR;subtype=Gypsy" 1) (# "ID=FBte0001041;name=Dmel\\gypsy11;source=?;type=LTR;subtype=Gypsy" 1)))
-
-!(load-flybase)
+;;;
+(vspace test 1)
+!(extend-py! metta_learner)
+!(load-flybase-full)
 
 !(print "=====================================")
 !(print "Starting Shell !!!!!!!!!!!!!!!!!!!!!!")
