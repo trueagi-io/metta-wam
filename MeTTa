@@ -124,6 +124,8 @@ python_flag=enable
 LIST_OF_FILE_ARGS=()
 PYSWIP_VERSION="pyswip"
 
+
+
 remove_quotes() {
   local value="$1"
   echo "${value//\"/}"
@@ -274,6 +276,45 @@ if [[ "$PYTHONPATH" != "$initial_pythonpath" ]]; then
 fi
 
 export RUST_BACKTRACE=full
+
+
+# Reference file
+reference_file="MeTTaLog"
+
+# Directory containing the .pl files
+pl_directory="metta_vspace/pyswip"
+
+# Initialize a flag to check if any file is newer or if reference file is missing
+should_compile=0
+
+# Check if MeTTaLog exists
+if [[ ! -e "$reference_file" ]]; then
+    echo "Reference file $reference_file does not exist. Compiler will be called."
+    should_compile=1
+else
+    # Iterate over each .pl file to check if it's newer
+    for pl_file in "$pl_directory"/metta_*.pl; do
+        if [[ ! -e "$pl_file" ]]; then
+            echo "No matching .pl files found in $pl_directory."
+            #exit 1
+        fi
+
+        # Check if this .pl file is newer than the reference file
+        if [[ "$pl_file" -nt "$reference_file" ]]; then
+            echo "$pl_file is newer than $reference_file."
+            should_compile=1
+            break  # No need to check further, exit loop
+        fi
+    done
+fi
+
+# If any newer file found or reference file missing, call the compiler
+if [[ $should_compile -eq 1 ]]; then
+    echo "Calling compiler..."
+    # Call your compiler command here
+    swipl -l metta_vspace/pyswip/metta_interp.pl -g qcompile_mettalog
+fi
+
 
 if [[ -f "$METTALOG_DIR/MeTTaLog" ]]; then
   MLOG="$METTALOG_DIR/MeTTaLog"

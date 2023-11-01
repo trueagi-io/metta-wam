@@ -1,0 +1,9 @@
+{
+    "argv": ["python3",
+	     "-m", "metta_jupyter_kernel",
+	     "-f", "{connection_file}"],
+    "codemirror_mode": "scheme",
+    "display_name": "MeTTa VSpace Kernel",
+    "language": "metta",
+    "name": "metta_jupyter_kernel"
+}
