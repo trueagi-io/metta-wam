@@ -87,6 +87,67 @@ zalwayzz(G):- call(G)*->true;throw(fail_zalwayzz(G)).
 zalwayzz(G,I,O):- phrase(G,I,O)*->true;ignore(((ignore((append(I,[],Txt),name(Str,Txt))),throw(fail_zalwayzz(Str,G))))).
 
 
+% DCG rules for S-expressions metta_with metta_whitespace and comments
+s_expr_metta(List) --> metta_wspace,!, s_expr_metta(List).
+s_expr_metta(List) --> `(`, !, items_metta(List, `)`).
+s_expr_metta(['[...]',List]) --> `[`, !, items_metta(List, `]`).
+s_expr_metta(['{...}',List]) --> `{`, !, items_metta(List, `}`).
+
+
+items_metta([], Until) --> Until,!.
+items_metta([Item|Rest], Until) --> s_item_metta(Item, dcg_peek(Until)), !, items_metta(Rest, Until).
+
+%s_line_metta(end_of_file) --> file_eof,!.
+s_line_metta(Expr) --> metta_wspace, !, s_line_metta(Expr).
+s_line_metta(exec(Expr)) --> `!`, !, s_item_metta(Expr, e_o_s).
+s_line_metta(Expr) --> s_item_metta(Expr, e_o_s).
+
+%s_item_metta(end_of_file, _) --> file_eof,!.
+s_item_metta(Expr, Until) --> metta_wspace, !, s_item_metta(Expr, Until).
+%s_item_metta('Expr', Until) --> Until,!.
+s_item_metta(List,_Until)   --> s_expr_metta(List),!.
+s_item_metta(String,_Until) --> string_metta(String),!.
+s_item_metta(Symbol, Until) --> symbol_metta(Symbol, Until).
+
+%string_metta(S) --> `"`, !, string_until_metta(S, `"`), {atomics_to_string_metta(A,S)}.
+%string_metta(Text)                 --> `"`, !, zalmetta_wayzz_metta(string_until_metta(Text,`"`)),!.
+%string_metta(Text)                 --> `“`, !, zalmetta_wayzz_metta(string_until_metta(Text,(`”`;`“`))),!.
+string_metta(Text)                 --> (`”`;`“`;`"`), !, string_until_metta(L,(`“`;`”`;`"`)),
+  {atomics_to_string(L,Text)}.
+%string_metta(Text)                 --> `#|`, !, zalmetta_wayzz_metta(string_until_metta(Text,`|#`)),!.
+
+% string_until_metta([], _) --> e_o_s, !.
+%string_until_metta([], _) --> file_eof,!.
+string_until_metta([], Until) --> Until, !.
+string_until_metta([C|Cs], Until) --> escape_sequence_metta(C), !, string_until_metta(Cs, Until).
+string_until_metta([C|Cs], Until) --> [R], { name(C, [R]) }, string_until_metta(Cs, Until).
+
+escape_sequence_metta(Char) --> `\\`,[Esc], { escape_char_metta([Esc], Char) }.
+escape_char_metta(`"`, "\"").
+escape_char_metta(`\\`, "\\").
+escape_char_metta(`n`, "\n").
+escape_char_metta(`r`, "\r").
+escape_char_metta(`t`,"\t").
+escape_char_metta(C,S):- sformat(S,'~s',[[C]]).
+
+symbol_metta(S, Until) --> metta_wspace,!,symbol_metta(S, Until).
+symbol_metta(S, Until) --> string_until_metta(SChars,(dcg_peek(metta_white); Until)), { atomic_list_concat(SChars, S) }.
+
+%comment --> `;`,!,comment_chars_metta(S).
+comment_chars_metta(S) --> string_until_metta(SChars,`\n`), { atomic_list_concat(SChars, S) }.
+
+%e_o_s --> file_eof,!.
+e_o_s --> \+ [_|_].
+
+%metta_ws --> e_o_s,!.
+metta_ws --> metta_wspace, !, metta_ws.
+metta_ws --> [].
+metta_wspace --> `;`,!, comment_chars_metta(S), {assert(comment_metta(S))}.
+metta_wspace --> metta_white.
+metta_white --> [W], { char_type(W, white) }, !.
+
+
+
 %:- meta_predicate(always(0)).
 %always(G):- must(G).
 
@@ -262,13 +323,16 @@ intern_and_eval(UTC,'$intern_and_eval'(UTC)).
 
 % Use DCG for parser.
 
-
 %file_sexpr_with_comments(O) --> [], {clause(t_l:s_reader_info(O),_,Ref),erase(Ref)},!.
+%file_sexpr_with_comments(C) --> !, zalwayzz(s_line_metta(C)), !.
+
 file_sexpr_with_comments(end_of_file) --> file_eof,!.
 file_sexpr_with_comments(O) --> one_blank,!,file_sexpr_with_comments(O),!.  % WANT?
 file_sexpr_with_comments(end_of_file) --> `:EOF`,!.
 file_sexpr_with_comments(C)                 --> dcg_peek(`#|`),!,zalwayzz(comment_expr(C)),swhite,!.
 file_sexpr_with_comments(C)                 --> dcg_peek(`;`),!, zalwayzz(comment_expr(C)),swhite,!.
+
+
 file_sexpr_with_comments(Out) --> {kif_ok}, prolog_expr_next, prolog_readable_term(Out), !.
 file_sexpr_with_comments(Out,S,E):- \+ t_l:sreader_options(with_text,true),!,phrase(file_sexpr(Out),S,E),!.
 file_sexpr_with_comments(Out,S,E):- expr_with_text(Out,file_sexpr(O),O,S,E),!.
@@ -307,6 +371,8 @@ file_sexpr(O) --> sblank,!,file_sexpr(O),!.
 % file_sexpr(planStepLPG(Name,Expr,Value)) --> swhite,sym_or_num(Name),`:`,swhite, sexpr(Expr),swhite, `[`,sym_or_num(Value),`]`,swhite.  %   0.0003:   (PICK-UP ANDY IBM-R30 CS-LOUNGE) [0.1000]
 % file_sexpr(Term,Left,Right):- eoln(EOL),append(LLeft,[46,EOL|Right],Left),read_term_from_codes(LLeft,Term,[double_quotes(string)]),!.
 % file_sexpr(Term,Left,Right):- append(LLeft,[46|Right],Left), ( \+ member(46,Right)),read_term_from_codes(LLeft,Term,[double_quotes(string)]),!.
+
+%file_sexpr(C) --> !, s_line_metta(C), !.
 file_sexpr(Expr) --> sexpr(Expr),!.
 % file_sexpr(Expr,H,T):- lisp_dump_break,rtrace(phrase(file_sexpr(Expr), H,T)).
 /*

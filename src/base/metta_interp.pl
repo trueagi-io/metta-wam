@@ -374,9 +374,11 @@ do_cmdline_load_metta(Self,Rest):-
   cmdline_load_metta(Self,Rest),!,
   forall(process_late_opts,true).
 
+load_metta_file(Self,Filemask):- atom_concat(_,'.metta',Filemask),!, load_metta(Self,Filemask).
+load_metta_file(_Slf,Filemask):- load_flybase(Filemask).
 
 cmdline_load_metta(Self,[Filemask|Rest]):- atom(Filemask), \+ atom_concat('-',_,Filemask),
-  must_det_ll((Src=load_metta(Self,Filemask),nl,write_src(Src),nl,catch_red(Src),!,flush_output,
+  must_det_ll((Src=load_metta_file(Self,Filemask),nl,write_src(Src),nl,catch_red(Src),!,flush_output,
   cmdline_load_metta(Self,Rest))).
 
 cmdline_load_metta(Self,['-g',M|Rest]):-
@@ -386,7 +388,7 @@ cmdline_load_metta(Self,['-g',M|Rest]):-
 cmdline_load_metta(Self,[M|Rest]):-
   m_opt(M,Opt),!,
   is_cmd_option(Opt,M,TF),!,
-  write(' '), writeq(is_cmd_option(Opt,M,TF)), nl, !, set_option_value(Opt,TF),
+  write(' ; '), writeq(is_cmd_option(Opt,M,TF)), nl, !, set_option_value(Opt,TF),
   do_cmdline_load_metta(Self,Rest).
 
 cmdline_load_metta(Self,[M|Rest]):-
@@ -411,9 +413,9 @@ start_html_of(_Filename):- \+ tee_file(_TEE_FILE),!.
 start_html_of(_Filename):-
  must_det_ll((
   S = _,
-  retractall(metta_defn(S,_,_)),
+  %retractall(metta_defn(S,_,_)),
   nop(retractall(metta_type(S,_,_))),
-  retractall(metta_atom(S,_)),
+  retractall(metta_atom(S,_,_,_)),
   loonit_reset,
   tee_file(TEE_FILE),
   sformat(S,'cat /dev/null > "~w"',[TEE_FILE]),
@@ -710,7 +712,7 @@ mfix_vars1([K,H|T],Cmpd):- atom(K),mlog_sym(K),is_list(T),mfix_vars1([H|T],[HH|T
 %mfix_vars1([H|T],[HH|TT]):- !, mfix_vars1(H,HH),mfix_vars1(T,TT).
 mfix_vars1(List,ListO):- is_list(List),!,maplist(mfix_vars1,List,ListO).
 mfix_vars1(I,O):- compound(I),!,compound_name_arguments(I,F,II),maplist(mfix_vars1,II,OO),!,compound_name_arguments(O,F,OO).
-mfix_vars1(I,O):- string(I),!,atom_string(O,I).
+mfix_vars1(I,O):- string(I),option_value('string-are-atoms',true),!,atom_string(O,I).
 mfix_vars1(I,O):- \+ atom(I),!,I=O.
 mfix_vars1(I,'$VAR'(O)):- atom_concat('$',N,I),dvar_name(N,O),!.
 mfix_vars1(I,I).
@@ -822,7 +824,17 @@ use_metta_compiler:- option_value('compile','full'), !.
 preview_compiler:- \+ option_value('compile',false), !.
 %preview_compiler:- use_metta_compiler,!.
 
+:- dynamic(metta_atom/4).
+
+metta_atom(KB,[F,A|List]):- metta_atom(KB,F,A,List), F \== '='.
+metta_defn(KB,Head,Body):- metta_atom(KB,'=',Head,Body).
+
+maybe_xform(metta_atom(KB,[F,A|List]),metta_atom(KB,F,A,List)):- is_list(List),!.
+maybe_xform(metta_defn(KB,Head,Body),metta_atom(KB,'=',Head,Body)).
+maybe_xform(_OBO,_XForm):- !, fail.
+
 metta_anew1(Load,_OBO):- var(Load),trace,!.
+metta_anew1(Load,OBO):- maybe_xform(OBO,XForm),!,metta_anew1(Load,XForm).
 metta_anew1(load,OBO):- must_det_ll((load_hook(load,OBO),subst_vars(OBO,Cl),assertz_if_new(Cl))). %to_metta(Cl).
 metta_anew1(unload,OBO):- subst_vars(OBO,Cl),load_hook(unload,OBO),
   expand_to_hb(Cl,Head,Body),
@@ -830,6 +842,7 @@ metta_anew1(unload,OBO):- subst_vars(OBO,Cl),load_hook(unload,OBO),
   ignore((clause(Head,Body,Ref),clause(Head2,Body2,Ref),(Head+Body)=@=(Head2+Body2),erase(Ref),pp_m(Cl))).
 
 metta_anew2(Load,_OBO):- var(Load),trace,!.
+metta_anew2(Load,OBO):- maybe_xform(OBO,XForm),!,metta_anew2(Load,XForm).
 metta_anew2(load,OBO):- must_det_ll((load_hook(load,OBO),subst_vars_not_last(OBO,Cl),assertz_if_new(Cl))). %to_metta(Cl).
 metta_anew2(unload,OBO):- subst_vars_not_last(OBO,Cl),load_hook(unload,OBO),
   expand_to_hb(Cl,Head,Body),
@@ -838,6 +851,7 @@ metta_anew2(unload,OBO):- subst_vars_not_last(OBO,Cl),load_hook(unload,OBO),
 
 
 metta_anew(Load,_Src,OBO):- silent_loading,!,metta_anew1(Load,OBO).
+metta_anew(Load,Src,OBO):- maybe_xform(OBO,XForm),!,metta_anew(Load,Src,XForm).
 metta_anew(Load,Src,OBO):- format('~N'), color_g_mesg('#0f0f0f',(write('  ; Action: '),writeq(Load=OBO))),
    color_g_mesg('#ffa500', write_src(Src)),metta_anew1(Load,OBO),format('~n').
 
@@ -856,7 +870,19 @@ connl:- check_silent_loading,nl.
 check_silent_loading.
 silent_loading:- option_value('trace-on-load',false).
 
+uncompound(OBO,Src):- \+ compound(OBO),!, Src = OBO.
+uncompound('$VAR'(OBO),'$VAR'(OBO)):-!.
+uncompound(IsList,Src):- is_list(IsList),!,maplist(uncompound,IsList,Src).
+uncompound([Is|NotList],[SrcH|SrcT]):-!, uncompound(Is,SrcH),uncompound(NotList,SrcT).
+uncompound(Compound,Src):- compound_name_arguments(Compound,Name,Args),maplist(uncompound,[Name|Args],Src).
+
+real_assert(OBO):- is_converting,!,print_src(OBO).
+real_assert(OBO):- assert(OBO).
+
+print_src(OBO):- format('~N'), uncompound(OBO,Src),!, write_src(Src).
+
 assert_to_metta(_):- reached_file_max,!.
+%assert_to_metta(OBO):- is_converting,!, print_src(OBO),!.
 assert_to_metta(OBO):-
  functor(OBO,Fn,A),
  ignore(( A>=2,A<700,
@@ -867,7 +893,7 @@ assert_to_metta(OBO):-
   functor(Data,FF,AA),
   decl_fb_pred(FF,AA),
   ((fail,call(Data))->true;(
-   must_det_ll((assert(Data),incr_file_count(_),
+   must_det_ll((real_assert(Data),incr_file_count(_),
      ignore((((should_show_data(X),
        ignore((OldData\==Data,write('; oldData '),write_src(OldData),format('  ; ~w ~n',[X]))),
        write_src(Data),format('  ; ~w ~n',[X]))))),
@@ -1262,6 +1288,7 @@ catch_red_ignore(G):- ignore(catch_red(G)).
 
 %loon(Why):- began_loon(Why),!,wdmsg(begun_loon(Why)).
 loon(Why):- is_compiling,!,wdmsg(compiling_loon(Why)),!.
+%loon( _Y):- current_prolog_flag(os_argv,ArgV),member('-s',ArgV),!.
 loon(Why):- is_compiled, Why\==toplevel, Why\==program,!,wdmsg(compiled_loon(Why)),!.
 loon(Why):- began_loon(_),!,wdmsg(skip_loon(Why)).
 loon(Why):- wdmsg(began_loon(Why)), assert(began_loon(Why)),
@@ -1280,6 +1307,18 @@ do_loon:-
 maybe_halt(Seven):- option_value('repl',true),!,halt(Seven).
 maybe_halt(Seven):- option_value('halt',true),!,halt(Seven).
 maybe_halt(Seven):- wdmsg(maybe_halt(Seven)).
+
+is_compiling:- current_prolog_flag(os_argv,ArgV),member(E,ArgV),E==qcompile_mettalog,!.
+is_compiled:- current_prolog_flag(os_argv,ArgV),\+ member('swipl',ArgV),!.
+is_converting:- current_prolog_flag(os_argv,ArgV), member('--convert',ArgV),!.
+show_os_argv:- current_prolog_flag(os_argv,ArgV),write('; '),writeln(ArgV).
+
+:- initialization(show_os_argv).
+
+:- initialization(loon(restore),restore).
+:- initialization(loon(program),program).
+:- initialization(loon(default)).
+
 
 qcompile_mettalog:-
     abolish(began_loon/1),
@@ -1304,22 +1343,40 @@ qcompile_mettalog:-
     %pack_install(predicate_streams, [upgrade(true),global(true)]),
     %pack_install(logicmoo_utils, [upgrade(true),global(true)]),
     %pack_install(dictoo, [upgrade(true),global(true)]),
-    catch(qsave_program('MeTTaLog', [goal(loon(goal)), toplevel(loon(toplevel)), stand_alone(true)]),E,writeln(E)),
+    catch(qsave_program('MeTTaLog', [class(development),autoload(true),goal(loon(goal)), toplevel(loon(toplevel)), stand_alone(true)]),E,writeln(E)),
     halt(0).
 
-is_compiling:- current_prolog_flag(os_argv,ArgV),member(E,ArgV),E==qcompile_mettalog,!.
-is_compiled:- current_prolog_flag(os_argv,ArgV),\+ member('swipl',ArgV),!.
-show_os_argv:- current_prolog_flag(os_argv,ArgV),writeln(ArgV).
+qsave_program:-
+      abolish(began_loon/1),
+      dynamic(began_loon/1),
+      system:use_module(library(quasi_quotations)),
+      system:use_module(library(hashtable)),
+      system:use_module(library(gensym)),
+      system:use_module(library(sort)),
+      system:use_module(library(writef)),
+      system:use_module(library(rbtrees)),
+      system:use_module(library(dicts)),
+      system:use_module(library(shell)),
+      system:use_module(library(edinburgh)),
+    %  system:use_module(library(lists)),
+      system:use_module(library(statistics)),
+      system:use_module(library(nb_set)),
+      system:use_module(library(assoc)),
+      system:use_module(library(pairs)),
+      autoload_all,
+      make,
+      autoload_all,
+      %pack_install(predicate_streams, [upgrade(true),global(true)]),
+      %pack_install(logicmoo_utils, [upgrade(true),global(true)]),
+      %pack_install(dictoo, [upgrade(true),global(true)]),
+      catch(qsave_program('Sav.MeTTaLog', [class(development),autoload(true),goal(loon(goal)), toplevel(loon(toplevel)), stand_alone(true)]),E,writeln(E)),
+      !.
 
 :- ignore(((
    \+ prolog_load_context(reloading,true),
    metta_final))).
 
-:- initialization(show_os_argv).
 
-:- initialization(loon(restore),restore).
-:- initialization(loon(program),program).
-:- initialization(loon(default)).
 
 :- set_prolog_flag(metta_interp,ready).
  

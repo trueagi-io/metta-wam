@@ -3,7 +3,9 @@
 %   - Douglas R. Miles 2023
 % ===========================================
 
-% requires:  assert_OBO/1, track_load_into_file/2
+% requires:  assert_MeTTa/1, track_load_into_file/2
+
+:- ensure_loaded(swi_flybase).
 
 assert_OBO(P,X,Y):- assert_OBO(ontology_info(P,X,Y)).
 
@@ -45,7 +47,7 @@ process_obo_stream_repeat(Stream):-
      nb_current(obo_type,Type),
      nb_current(obo_id, Id),
      once((read_line_to_string(Stream, Line),
-     (should_show_data(_) -> writeln(Line); true),
+     ((should_show_data(_),fail) -> writeln(Line); true),
         normalize_space(chars(Chars),Line))),
         Chars\==[],
         once(process_obo_chars( Type, Chars, Id)),
@@ -201,12 +203,16 @@ assert_OBO(property_value(Term, Pred, V)):- atom(Pred),!,OBO=..[Pred,Term,V],ass
 assert_OBO(synonym(Pred,A,Term,V)):- simplify_obo_arg(V,VV),!,assert_OBO(synonym(Pred,A,Term,VV)).
 assert_OBO(ontology_info(Pred,Term,V)):- assert_OBO(property_value(Term, Pred, V)).
 assert_OBO(OBO):-
+  must_det_ll((
   OBO=..[Fn|Cols],
   into_obofn(Fn,OboFn),
   OBO1=..[OboFn|Cols],
-  assert_MeTTa(OBO1),
-%  format('~N'), write_src(OBO1),nl.
+  assert_MeTTa(OBO1))).
+/*
+  OBOW=..[OboFn|Cols],
+  (is_converting -> (format('~N'), write_src(OBOW));(OBO1=..OBOW,assert_MeTTa(OBO1))))),
   !.
+*/
 
 into_obofn(Fn,OboFn):- atom_concat(obo_,_,Fn),!,Fn=OboFn,!.
 into_obofn(Fn,OboFn):- atom_concat(obo_,Fn,OboFn),!.

@@ -222,7 +222,13 @@ handle_args $(load_mettalogrc)
 # Then process actual command-line arguments
 handle_args "$@"
 #echo "LIST_OF_FILE_ARGS[0]=${LIST_OF_FILE_ARGS[0]}"
-DIRNAME=$(dirname "${LIST_OF_FILE_ARGS[0]}")
+DIRNAME="${LIST_OF_FILE_ARGS[0]}"
+if [[ -f "$DIRNAME" ]]; then
+  DIRNAME=$(dirname "${DIRNAME}")
+elif [[ -d "$DIRNAME" ]]; then
+  exec ./scripts/test_in_metta.sh -y $@
+  [[ "$IS_SOURCED" == "1" ]] && return $RVAL || exit $RVAL
+fi
 DIR_RC="$DIRNAME/.mettalogrc"
 #echo "DIR_RC=$DIR_RC"
 if [[ -f "$DIR_RC" ]]; then

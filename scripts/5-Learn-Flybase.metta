@@ -27,7 +27,7 @@
 
 ; Includes the file responsible for loading data into Flybase.
 ; This includes both mined and deduced data.
-!(import! &self examples/flybase/flybase-loader.metta)
+; !(import! &self examples/flybase/flybase-loader.metta)
 
 ; The following files are commented out:
 
@@ -49,5 +49,7 @@
 !(print "=====================================")
 
 !(msetta_learner::vspace-main)
+
+
 
 

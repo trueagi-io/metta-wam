@@ -22,51 +22,76 @@ The Candidate Elimination algorithm is a conceptual learning algorithm that incr
 # Clone the repository
 git clone https://github.com/logicmoo/vspace-metta
 
-
 # Change to the cloned directory
 cd vspace-metta
 
-# Install the package
+# Add our python scripts PYTHONPATH  ( Later on we might use pip install . )
 export PYTHONPATH=$PWD/metta_vspace:$PYTHONPATH
-# LAter on we might use pip install .
+
+# set our precomputed url
+export PRECOMPUTED_URL=ftp.flybase.org/releases/FB2023_04/precomputed_files/
 
 # Download necessary files
-wget --no-parent -A .gz -r -P ./data http://ftp.flybase.org/releases/FB2023_04/precomputed_files
+wget --no-parent -A .gz -r -P ./data/ http://$PRECOMPUTED_URL
+
+# set our precomputed loc
+export PRECOMPUTED_LOC=./data/$PRECOMPUTED_URL
+
+# see if the server gave us duplicated files
+find $PRECOMPUTED_LOC -type f -name '*_fb_*' -exec bash -c 'if [[ -f ${1/_fb_????_??/} ]]; then ls -l ${1}; ls -l ${1/_fb_????_??/};  echo "Will delete:" ${1/_fb_????_??/}; fi' _ {} \;
+
+# delete the more ambiguous duplicated files
+find $PRECOMPUTED_LOC -type f -name '*_fb_*' -exec bash -c 'if [[ -f ${1/_fb_????_??/} ]]; then rm -f ${1/_fb_????_??/}; fi' _ {} \;
+
+# Should be arround 587M
+du -hs $PRECOMPUTED_LOC
+
+# Decompress the downloaded files
+find $PRECOMPUTED_LOC -type f -name "*.gz" -execdir gunzip {} \;
+
+# Check that it should be arround 7.2G now
+du -hs $PRECOMPUTED_LOC
+
+# For all files instead of using FBte:0000666  we will use FBte0000666  (since that is how it is used in the TSV files)
+# Also flybase:FBte0000666  will become FBte0000666 (mostly it only happens in strings)
+find $PRECOMPUTED_LOC -type f -exec sed -i -e 's/\(FB[a-z]\{2\}\):\([0-9]\)/\1\2/g' -e 's/flybase:\([A-Za-z]\)/\1/g' {} \;
+find $PRECOMPUTED_LOC -name "*.fb" -exec sed -i -e 's/FB:FB/FB/g' {} \;
+find $PRECOMPUTED_LOC -name "*.json" -exec sed -i -e 's/FLYBASE:FB/FB/g' {} \;
 
 
-# Unzip them
-find ./data -name "*.gz" -execdir gunzip {} \;
-find ./data -name "*.zip" -execdir unzip -d ./ {} \;
-# should be arround 2.0G
-du -h ./data
-
-wget https://raw.githubusercontent.com/The-Sequence-Ontology/SO-Ontologies/master/Ontology_Files/so.obo -o data/ontologies/so.obo
-
-# For all files instead of using FBte:0000666  we will use FBte0000666  (since tha tis how it is used in the TSV files)
-# For all files instead of using flybase:FBte0000666  we will use FBte0000666 (mostly it only happens in strings)
-find ./data/ftp.flybase.net/releases/current/precomputed_files/ -type f -exec sed -i -e 's/\(FB[a-z]\{2\}\):\([0-9]\)/\1\2/g' -e 's/flybase:\([A-Za-z]\)/\1/g' {} +
-
-find ./data/ontologies/ -type f -exec sed -i -e 's/\(FB[a-z]\{2\}\):\([0-9]\)/\1\2/g' -e 's/flybase:\([A-Za-z]\)/\1/g' {} +
-
-rm -rf data/SO-Ontologies/
-git clone https://github.com/The-Sequence-Ontology/SO-Ontologies data/SO-Ontologies
 
 ```
 
-## :computer: Usage
+#### Completely Optional
+
+For testing/viewing to see how we see the flybase as MeTTa or loading it into Rust Space instead of VSpace.
+
+```
+
+# takes around 8 minutes
+./scripts/cvt_to_metta.sh ./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/
+
+# to get an atoms count (should be at least 56 million)
+find ./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/ -type f -name "*.metta" -exec wc -l {} +
+
+```
+
+
+
+## :computer: Various Usages and Demos
 - Run in MeTTA:
   ```
   export PYTHONPATH=metta_vspace:$PYTHONPATH
   metta 1-VSpaceTest.metta
   @h
   ```
-- Launch the vspace-metta Jupyter notebook:
+- Launch vspace-metta Jupyter notebook:
   ```
-  ./start_jupyter.sh
+  ./scripts/start_jupyter.sh
   ```
 - Run long huge tests of vspace-metta
   ```
-  ./test_in_metta.sh
+  ./scripts/test_in_metta.sh
   ```
 
 ```
