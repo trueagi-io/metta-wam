@@ -2843,7 +2843,6 @@ def test_custom_m_space():
     test_custom_space(lambda: TestSpace())
 
 
-import telnetlib
 import threading
 import socket
 
@@ -2885,6 +2884,7 @@ class TelnetREPLThread(threading.Thread):
         while True:
             client, address = self.server.accept()
             print(f"Accepted connection from {address}")
+            import telnetlib
             tn = telnetlib.Telnet()
             tn.sock = client
             tn.write(self.banner.encode('ascii'))
@@ -2928,8 +2928,9 @@ class TelnetREPLServer:
                     self.port += 100
 
 if __name__ == '__main__':
-    server = TelnetREPLServer('0.0.0.0', 11776)
-    server.start()
+    #server = TelnetREPLServer('0.0.0.0', 11776)
+    #server.start()
+    ""
 
 
 
@@ -3415,58 +3416,130 @@ def list_string(lst, functor="# "):
 def is_float_string(s):
     return bool(re.fullmatch(r'[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?', s))
 
+import pandas as pd
 
-def analyze_csv(file_path, sep=None):
+def update_dataframe_skipping_first_row(df):
+    """
+    Takes a DataFrame, skips the first row, recalculates unique counts and value counts,
+    and infers the most appropriate datatypes for each column.
+
+    Parameters:
+    df (pandas.DataFrame): The original DataFrame.
+
+    Returns:
+    pandas.DataFrame: A DataFrame with the first row removed, updated with recalculated
+    uniqueness and value counts, and with inferred datatypes.
+    """
+    # Check if the DataFrame is empty or has only one row
+    if df.empty or df.shape[0] == 1:
+        raise ValueError("DataFrame is empty or has only one row, which cannot be skipped.")
+
+    # Skip the first row and reset the index
+    updated_df = df.iloc[1:].reset_index(drop=True)
+
+    # Attempt to infer better dtypes for object columns
+    updated_df = updated_df.infer_objects()
+    updated_df = updated_df.convert_dtypes()
+
+    # Update DataFrame with uniqueness and value counts for each column
+    for col in updated_df.columns:
+        updated_df[f'{col}_unique_count'] = updated_df[col].nunique()
+        updated_df[f'{col}_value_counts'] = updated_df[col].value_counts().to_dict().__str__()
+
+    return updated_df
+
+
+
+def analyze_csv_basename(file_path, sep=None):
+    base_name = os.path.basename(file_path)
+    base_name = base_name.replace('.tsv', '')
+    base_name = base_name.replace('.fb', '')
+    # Remove a sequence like _fb_####_## (where # represents a digit)
+    base_name = re.sub(r'_fb_\d{4}_\d{2}', '', base_name)
+    # Remove a sequence like ####_## at any place
+    base_name = re.sub(r'\d{4}_\d{2}', '', base_name)
+    # Replace periods with underscores, if not part of a file extension
+    base_name = re.sub(r'\.(?=.*\.)', '_', base_name)
+    analyze_csv(base_name, file_path, sep=sep)
+
+needed_Skip = 0
+
+def analyze_csv(base_name, file_path, sep=None):
     print_cmt(";;------------------------------------------------------------------------------------------------------------------")
     print_cmt(f"Analyzing file: {file_path}")
     missing_values_list = ["","-"," ","|",",","#",  "*",  "\"\"",  "+", "NULL", "N/A", "--",
                          "NaN","EMPTY","None","n/a","(none)",
                          # "0","Dmel","-1",
                           "MISSING", "?", "undefined", "unknown", "none", "[]", "."]
-    def read_csv(enc):
-        false_values_list = ["F", "f", "False", "false", "N",  "No", "no", "FALSE"]
-        true_values_list =  ["T", "t", "True", "true", "Y", "Yes", "yes", "TRUE"]
 
-        if sep is None:
-            engine = 'python'
-        else: engine = 'c'
-        return pd.read_csv(file_path, sep=sep, encoding=enc, comment='#',
-                     compression = 'infer',true_values=true_values_list,
-                     false_values=false_values_list,
-                     engine=engine,
-                     #delim_whitespace = True,
-                     #na_values=missing_values_list,
-                     keep_default_na=False, #na_filter=True,
-                     skip_blank_lines=True, #index_col=False,
-                     on_bad_lines='skip')
-    try:
-        df = read_csv('utf-8')
-    except UnicodeDecodeError:
-        encoding = detect_encoding(file_path)
-        if encoding=='uft-8':
-            print_cmt(";; Trying '{encoding}' encoding...")
-            try:
-                df = read_csv(encoding)
-            except Exception as e:
-                print_cmt(f";; Error reading the file with 'utf-8' encoding: {e}")
-                return
-    except Exception as e:
-        print_cmt(f";; Error reading the file: {e}")
-        return
+    def read_csv(enc, skip_rows, header_option):
+            false_values_list = ["F", "f", "False", "false", "N", "No", "no", "FALSE"]
+            true_values_list = ["T", "t", "True", "true", "Y", "Yes", "yes", "TRUE"]
 
-    base_name = os.path.basename(file_path)
-    base_name, _  = os.path.splitext(base_name)
+            engine = 'python' if sep is None else 'c'
+            return pd.read_csv(
+                file_path,
+                sep=sep,
+                encoding=enc,
+                comment='#',
+                compression='infer',
+                true_values=true_values_list,
+                false_values=false_values_list,
+                engine=engine,
+                header=header_option,
+                skiprows=skip_rows,
+                #names=header_names,
+                keep_default_na=False,
+                skip_blank_lines=True,
+                on_bad_lines='skip'
+            )
 
-    if "_fb_202" in base_name:
-        base_name = base_name[:-len("_fb_2023_04")]
+    def read_csv_both_encodings(skip_rows=None, header_option=None):
+        try:
+            return read_csv('utf-8', skip_rows, header_option)
+        except UnicodeDecodeError:
+            encoding = detect_encoding(file_path)
+            if encoding=='uft-8':
+                print_cmt(";; Trying '{encoding}' encoding...")
+                try:
+                    return read_csv(encoding, skip_rows)
+                except Exception as e:
+                    print_cmt(f";; Error reading the file with 'utf-8' encoding: {e}")
+                    return None
+        except Exception as e:
+            print_cmt(f";; Error reading the file: {e}")
+            return None
+
+    df = read_csv_both_encodings()
+
+    # Function to check if a string contains any digits
+    def contains_digit(s):
+        return any(char.isdigit() for char in s)
+
+    # Read the first few rows to check for digits
+    header_candidates = df.head(3)
+    first_row_has_no_digits = all(not contains_digit(str(value)) for value in header_candidates.iloc[0])
+    second_third_row_has_digits = any(contains_digit(str(value)) for value in header_candidates.iloc[1]) and any(contains_digit(str(value)) for value in header_candidates.iloc[2])
+    global needed_Skip
+    # If the first row has no digits but the second and third do, treat the first row as a header
+    if first_row_has_no_digits and second_third_row_has_digits:
+        print_cmt("First row is set as header based on the digit check.")
+        df = read_csv_both_encodings(skip_rows=1, header_option=None)
+        needed_Skip = 1
+        old_columns = header_candidates.iloc[0]
+    else:
+        print_cmt("Digit check is inconclusive for determining a header row. No header set.")
+        old_columns = df.columns
+        # If the columns should be anonymized or kept as is, handle that here
+
 
     need_anon_columns = False
-    for col in df.columns:
-        if not re.match('^[a-zA-Z]+$', col):
+    for col in old_columns:
+        if not re.match("^[a-zA-Z]+$", str(col)):
             need_anon_columns = True
             break
 
-    new_columns = [f'{i+1}' for i in range(df.shape[1])] if need_anon_columns else df.columns.tolist()
+    new_columns = [f'{i+1}' for i in range(df.shape[1])] if need_anon_columns else old_columns.tolist()
     if need_anon_columns:
         df.columns = new_columns
 
@@ -3481,7 +3554,8 @@ def analyze_csv(file_path, sep=None):
 
     metta_read(f"!(file-name {base_name}  {file_path})")
     metta_read(f"(num-columns {base_name} {df.shape[1]})")
-    #metta_read(f"(column-names {base_name} {list_string(new_columns)})")
+    metta_read(f"(column-names {base_name} {list_string(old_columns)})")
+    metta_read(f"(column-names-maybe {base_name} {list_string(df.columns)})")
     metta_read(f"(duplicated-rows {base_name} {df.duplicated().sum()})")
     metta_read(f"(total-rows {base_name} {len(df)})")
     for col in new_columns:
@@ -3514,7 +3588,6 @@ def analyze_csv(file_path, sep=None):
             #infrequents.reverse()  # Since we can't use slicing on a generator, we reverse it here
             metta_read(f"(less-frequent {base_name} {col} {list_string(infrequents)})\n")
 
-
     #metta_read(f"(data-types {base_name} {col} {col.dtype} )")
 
 
@@ -3524,6 +3597,10 @@ import sys
 def cat_files(strings, skip_filetypes=['.metta','.md','.pl', '.png', '.jpg', '.obo']):
     for string in strings:
         lower = string.lower()
+
+        global needed_Skip
+        if string=="--analyze": sys.exit(needed_Skip)
+
         # Check if the file extension is in the list of file types to skip
         if any(lower.endswith(ext) for ext in skip_filetypes):
             print_cmt(f"Skipping file: {string}")
@@ -3540,13 +3617,13 @@ def cat_files(strings, skip_filetypes=['.metta','.md','.pl', '.png', '.jpg', '.o
             sys.exit(0)
         elif os.path.isfile(string):
             if lower.endswith('.csv'):
-                analyze_csv(string, sep=',')
+                analyze_csv_basename(string, sep=',')
             elif lower.endswith('.tsv'):
-                analyze_csv(string, sep='\t')
+                analyze_csv_basename(string, sep='\t')
             else:
                 # Read only the first few lines
                 try:
-                    analyze_csv(string)
+                    analyze_csv_basename(string)
                 except UnicodeDecodeError:
                     print_cmt(f"Passing in file: {string}")
                     with open(string, 'r') as file:
@@ -3580,6 +3657,8 @@ def handle_arg(string, skip_filetypes=['.md','.pl', '.png', '.jpg']):
 
         print_cmt(f"Skipping: {string}")
 
+        if string=="--analyze": sys.exit(needed_Skip)
+
 # All execution happens here
 swip = globals().get('swip') or PySwip()
 the_verspace = globals().get('the_verspace') or VSpace("&verspace")
@@ -3596,14 +3675,13 @@ if the_python_runner is None:  #MakeInteractiveMeTTa() #def MakeInteractiveMeTTa
     the_old_runner_space = the_python_runner.space()
     the_python_runner.run("!(extend-py! metta_learner)")
     the_new_runner_space = the_python_runner.space()
-
     print_cmt("The sys.argv list is:", sys.argv)
-    cat_files(sys.argv[1:])
     vspace_init()
 
 
 is_init=False
 
 if __name__ == "__main__":
+    cat_files(sys.argv[1:])
     vspace_main()
 
