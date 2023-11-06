@@ -29,7 +29,7 @@ eval_args(_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
 eval_args(_Dpth,_Slf,[X|T],Y):- T==[], \+ callable(X),!,Y=[X].
 
 eval_args(Depth,Self,X,Y):-
-  %allow_repeats_eval(X),
+  allow_repeats_eval(X),
   !,
   eval_args0000(Depth,Self,X,Y).
 eval_args(Depth,Self,X,Y):-
@@ -84,7 +84,7 @@ is_debugging(Flag):- flag_to_var(Flag,Var),!,option_value(Var,true).
 
 
 eval_args0000(Depth,_Slf,X,Y):- Depth<1,!,X=Y, (\+ is_debugging(overflow)-> true; flag(eval_num,_,0),set_debug((eval),true)).
-eval_args0000(_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
+%eval_args0000(_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
 eval_args0000(Depth,Self,X,Y):-
   copy_term(X,XX),
   Depth2 is Depth-1,
@@ -95,6 +95,8 @@ eval_args0000(Depth,Self,X,Y):-
   nonvar(Y).
 
 is_bool_or_same( X,M):- X=@=M,!.
+is_bool_or_same( _,_):- !, fail.
+is_bool_or_same( _,_):- !, fail.
 is_bool_or_same( X,_):- \+ ground(X),!,fail.
 is_bool_or_same(_X,M):- \+ atomic(M),!,fail.
 %is_bool_or_same( X,'True'):- ground(X),!.
@@ -279,11 +281,12 @@ eval_args1(Depth,Self,X,Res):-
 %[collapse,[1,2,3]]
 eval_args1(Depth,Self,['collapse',List],Res):-!, bagof_eval(Depth,Self,List,Res).
 %[superpose,[1,2,3]]
-eval_args1(Depth,Self,['superpose',List],Res):- !, member(E,List),eval_args(Depth,Self,E,Res).
+eval_args1(Depth,Self,['superpose',List],Res):- !, member(E,List),
+  eval_args(Depth,Self,E,Res).
 get_sa_p1(P3,E,Cmpd,SA):-  compound(Cmpd), get_sa_p2(P3,E,Cmpd,SA).
 get_sa_p2(P3,E,Cmpd,call(P3,N1,Cmpd)):- arg(N1,Cmpd,E).
 get_sa_p2(P3,E,Cmpd,SA):- arg(_,Cmpd,Arg),get_sa_p1(P3,E,Arg,SA).
-eval_args1(Depth,Self, Term, Res):-
+eval_args1(Depth,Self, Term, Res):- fail,
   mnotrace(( get_sa_p1(setarg,ST,Term,P1), % ST\==Term,
    compound(ST), ST = [F,List],F=='superpose',nonvar(List), %maplist(atomic,List),
    call(P1,Var))), !,
@@ -291,7 +294,7 @@ eval_args1(Depth,Self, Term, Res):-
    member(Var,List),
    eval_args(Depth,Self, Term, Res).
 
-eval_args1(Depth,Self, Term, Res):-
+eval_args1(Depth,Self, Term, Res):- fail,
    mnotrace(( get_sa_p1(setarg,ST,Term,P1),
    compound(ST), ST = [F,List],F=='collapse',nonvar(List), %maplist(atomic,List),
    call(P1,Var))), !, setof_eval(Depth,Self,List,Var),
@@ -320,7 +323,7 @@ eval_args1(Depth,Self,['let*',[],Body],RetVal):- !, eval_args(Depth,Self,Body,Re
 eval_args1(Depth,Self,['let*',[[Var,Val]|LetRest],Body],RetVal):- !,
     eval_args1(Depth,Self,['let',Var,Val,['let*',LetRest,Body]],RetVal).
 
-eval_args1(Depth,Self,['colapse'|List], Flat):- !, maplist(eval_args(Depth,Self),List,Res),flatten(Res,Flat).
+%eval_args1(Depth,Self,['colapse'|List], Flat):- !, maplist(eval_args(Depth,Self),List,Res),flatten(Res,Flat).
 eval_args1(Depth,Self,['get-atoms',Other],PredDecl):- !,into_space(Self,Other,Space), metta_atom_iter(Depth,Space,PredDecl).
 eval_args1(_Dpth,_Slf,['car-atom',Atom],CAR):- !, Atom=[CAR|_],!.
 eval_args1(_Dpth,_Slf,['cdr-atom',Atom],CDR):- !, Atom=[_|CDR],!.
@@ -578,6 +581,7 @@ eval_args1(Depth,Self,X,Y):-
   (eval_args2(Depth,Self,X,Y)*->true;
     (eval_args2_failed(Depth,Self,X,Y)*->true;X=Y)).
 
+eval_args2_failed(Depth,Self,[X|XX],[Y]):- XX == [],!, eval_args1(Depth,Self,X,Y).
 
 eval_args2_failed(_Dpth,_Slf,T,TT):- T==[],!,TT=[].
 eval_args2_failed(_Dpth,_Slf,T,TT):- var(T),!,TT=T.

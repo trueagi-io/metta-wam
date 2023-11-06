@@ -5,7 +5,8 @@
 
 % requires:  assert_MeTTa/1, track_load_into_file/2
 
-:- ensure_loaded(swi_flybase).
+:- use_module(library(logicmoo_utils)).
+:- ensure_loaded(flybase_main).
 
 assert_OBO(P,X,Y):- assert_OBO(ontology_info(P,X,Y)).
 
@@ -202,6 +203,7 @@ assert_OBO(property_value(Term, Pred, V)):- simplify_obo_arg(V,VV),!,assert_OBO(
 assert_OBO(property_value(Term, Pred, V)):- atom(Pred),!,OBO=..[Pred,Term,V],assert_OBO(OBO).
 assert_OBO(synonym(Pred,A,Term,V)):- simplify_obo_arg(V,VV),!,assert_OBO(synonym(Pred,A,Term,VV)).
 assert_OBO(ontology_info(Pred,Term,V)):- assert_OBO(property_value(Term, Pred, V)).
+assert_OBO([F|List]):- is_list([F|List]),atom(F),OBO=..[F|List],!,assert_OBO(OBO).
 assert_OBO(OBO):-
   must_det_ll((
   OBO=..[Fn|Cols],
