@@ -299,7 +299,7 @@ if [[ ! -e "$reference_file" ]]; then
     should_compile=1
 else
     # Iterate over each .pl file to check if it's newer
-    for pl_file in "$pl_directory"/metta_*.pl; do
+    for pl_file in "$pl_directory"/*_*.pl; do
         if [[ ! -e "$pl_file" ]]; then
             echo "No matching .pl files found in $pl_directory."
             #exit 1
