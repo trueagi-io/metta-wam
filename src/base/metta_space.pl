@@ -4,7 +4,7 @@
 :- ensure_loaded(metta_compiler).
 %:- ensure_loaded(metta_compiler).
 % TODO move non flybase specific code between here and the compiler
-:- ensure_loaded(swi_flybase).
+:- ensure_loaded(flybase_main).
 
 :- multifile(is_pre_statistic/2).
 :- dynamic(is_pre_statistic/2).

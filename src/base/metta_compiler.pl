@@ -21,7 +21,7 @@
 :- ensure_loaded(metta_space).
 % =======================================
 % TODO move non flybase specific code between here and the compiler
-:- ensure_loaded(swi_flybase).
+:- ensure_loaded(flybase_main).
 % =======================================
 :- set_option_value(encoding,iso_latin_1).
 

@@ -13,7 +13,7 @@ fb_stats:- metta_stats.
 % OBO LOADER
 % ==============
 :- set_option_value(encoding,iso_latin_1).
-:- ensure_loaded(read_obo).
+:- ensure_loaded(flybase_obo).
 
 
 % ==============
@@ -383,7 +383,7 @@ load_flybase:- is_scryer,!,load_flybase_files.
 load_flybase:- make,recount_total_loaded_symbols,!,load_flybase_files,!,cleanup_arities,!,fb_stats.
 load_flybase_dirs:-
   load_flybase('./data/ftp.flybase.net/releases/current/das_precomputed'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/*'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/*'),
   load_flybase('./data/ftp.flybase.net/releases/current/./*sv'),!.
 
 
@@ -413,22 +413,22 @@ load_flybase_files:-
 
 load_flybase_das_11:-
   % DAS's 11 tsv and 1 json file
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/*/fbgn_fbtr_fbpp_expanded_fb_*.tsv'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/*/physical_interactions_mitab_fb_*.tsv'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/*/dmel_gene_sequence_ontology_annotations_fb_*.tsv'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/*/gene_map_table_fb_*.tsv'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/*/ncRNA_genes_fb_*.json'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/*/gene_association_*.fb',tsv),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/*/gene_genetic_interactions_fb_*.tsv'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/*/allele_genetic_interactions_fb_*.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/*/fbgn_fbtr_fbpp_expanded_fb_*.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/*/physical_interactions_mitab_fb_*.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/*/dmel_gene_sequence_ontology_annotations_fb_*.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/*/gene_map_table_fb_*.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/*/ncRNA_genes_fb_*.json'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/*/gene_association_*.fb',tsv),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/*/gene_genetic_interactions_fb_*.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/*/allele_genetic_interactions_fb_*.tsv'),
   % Note: this file replaces 'allele_phenotypic_data_*.tsv' from FB2023_01 onward.
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/alleles/genotype_phenotype_data_fb_*.tsv'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/*/allele_phenotypic_data_fb_*.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/alleles/genotype_phenotype_data_fb_*.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/*/allele_phenotypic_data_fb_*.tsv'),
 
 
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/*/disease_model_annotations_fb_*.tsv'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/*/dmel_human_orthologs_disease_fb_*.tsv'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/*/fbrf_pmid_pmcid_doi_fb_*.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/*/disease_model_annotations_fb_*.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/*/dmel_human_orthologs_disease_fb_*.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/*/fbrf_pmid_pmcid_doi_fb_*.tsv'),
   format("~n================================================================================================="),
   format("~n=====================================Das Checkpoint=============================================="),
   format("~n================================================================================================="),
@@ -443,41 +443,41 @@ load_flybase_files_ftp:-
  %% load_flybase_obo_files,
   load_flybase_das_11,
   % 36 more that DAS doesnt load
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/alleles/fbal_to_fbgn_fb_*.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/alleles/fbal_to_fbgn_fb_*.tsv'),
 
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/clones/cDNA_clone_data_fb_*.tsv'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/clones/genomic_clone_data_fb_*.tsv'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/collaborators/fbgn_uniprot_fb_*.tsv'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/collaborators/gp_information.fb'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/collaborators/pmid_fbgn_uniprot_fb_*.tsv'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/genes/automated_gene_summaries.tsv'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/genes/automated_gene_summaries_fb_*.tsv'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/genes/best_gene_summary_fb_*.tsv'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/genes/Dmel_enzyme_data_fb_*.tsv'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/genes/dmel_unique_protein_isoforms_fb_*.tsv'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_annotation_ID_fb_*.tsv'),
-  with_option([pred_va=true],load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_exons2affy1_overlaps.tsv')),
-  with_option([pred_va=true],load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_exons2affy2_overlaps.tsv')),
-  with_option([pred_va=false],load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_fbtr_fbpp_fb_*.tsv')),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_gleanr_fb_*.tsv'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/genes/fbgn_NAseq_Uniprot_fb_*.tsv'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_functional_complementation_fb_*.tsv'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_group_data_fb_*.tsv'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_groups_HGNC_fb_*.tsv'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_rpkm_matrix_fb_*.tsv'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_rpkm_report_fb_*.tsv'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/genes/gene_snapshots_fb_*.tsv'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/genes/pathway_group_data_fb_*.tsv'),
-  %load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/insertions/construct_maps.zip'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/insertions/fu_gal4_table_fb_*.json'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/insertions/insertion_mapping_fb_*.tsv'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/map_conversion/cyto-genetic-seq.tsv'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/metadata/dataset_metadata_fb_*.tsv'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/orthologs/dmel_paralogs_fb_*.tsv'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/references/entity_publication_fb_*.tsv'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/species/organism_list_fb_*.tsv'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/stocks/stocks_FB*.tsv'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/synonyms/fb_synonym_fb_*.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/clones/cDNA_clone_data_fb_*.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/clones/genomic_clone_data_fb_*.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/collaborators/fbgn_uniprot_fb_*.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/collaborators/gp_information.fb'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/collaborators/pmid_fbgn_uniprot_fb_*.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/genes/automated_gene_summaries.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/genes/automated_gene_summaries_fb_*.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/genes/best_gene_summary_fb_*.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/genes/Dmel_enzyme_data_fb_*.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/genes/dmel_unique_protein_isoforms_fb_*.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/genes/fbgn_annotation_ID_fb_*.tsv'),
+  with_option([pred_va=true],load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/genes/fbgn_exons2affy1_overlaps.tsv')),
+  with_option([pred_va=true],load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/genes/fbgn_exons2affy2_overlaps.tsv')),
+  with_option([pred_va=false],load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/genes/fbgn_fbtr_fbpp_fb_*.tsv')),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/genes/fbgn_gleanr_fb_*.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/genes/fbgn_NAseq_Uniprot_fb_*.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/genes/gene_functional_complementation_fb_*.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/genes/gene_group_data_fb_*.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/genes/gene_groups_HGNC_fb_*.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/genes/gene_rpkm_matrix_fb_*.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/genes/gene_rpkm_report_fb_*.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/genes/gene_snapshots_fb_*.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/genes/pathway_group_data_fb_*.tsv'),
+  %load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/insertions/construct_maps.zip'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/insertions/fu_gal4_table_fb_*.json'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/insertions/insertion_mapping_fb_*.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/map_conversion/cyto-genetic-seq.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/metadata/dataset_metadata_fb_*.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/orthologs/dmel_paralogs_fb_*.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/references/entity_publication_fb_*.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/species/organism_list_fb_*.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/stocks/stocks_FB*.tsv'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/synonyms/fb_synonym_fb_*.tsv'),
   format("~n================================================================================================="),
   format("~n==========================Should be 18 minute Checkpoint========================================="),
   format("~n================================================================================================="),
@@ -485,33 +485,33 @@ load_flybase_files_ftp:-
   format("~n================================================================================================="),
   format("~n================================================================================================="),
   format("~n=================================================================================================~n"),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/map_conversion/cytotable.txt',tsv),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/map_conversion/genome-cyto-seq.txt',tsv),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/map_conversion/cytotable.txt',tsv),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/map_conversion/genome-cyto-seq.txt',tsv),
   load_fbase_after_17,
   !.
 
 load_fbase_after_17:-
-  %load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/genes/scRNA-Seq_gene_expression_fb_*.tsv'),
-  must_det_ll(load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/transposons/transposon_sequence_set.gff',tsv)),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/transposons/transposon_sequence_set.fa'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/*/ncRNA_genes_fb_*.json'),
+  %load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/genes/scRNA-Seq_gene_expression_fb_*.tsv'),
+  must_det_ll(load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/transposons/transposon_sequence_set.gff',tsv)),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/transposons/transposon_sequence_set.fa'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/*/ncRNA_genes_fb_*.json'),
   load_obo_files,
  %% load_flybase_chado,
   !.
 
 load_flybase_obo_files:-
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/doid.obo'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/fly_anatomy.obo'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/fly_development.obo'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/flybase_controlled_vocabulary.obo'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/flybase_stock_vocabulary.obo'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/gene_group_FB*.obo'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/go-basic.obo'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/image.obo'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/psi-mi.obo'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/slice.chebi.obo'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/so-simple.obo'),
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/chebi_fb_*.obo'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/ontologies/doid.obo'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/ontologies/fly_anatomy.obo'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/ontologies/fly_development.obo'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/ontologies/flybase_controlled_vocabulary.obo'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/ontologies/flybase_stock_vocabulary.obo'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/ontologies/gene_group_FB*.obo'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/ontologies/go-basic.obo'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/ontologies/image.obo'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/ontologies/psi-mi.obo'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/ontologies/slice.chebi.obo'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/ontologies/so-simple.obo'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/ontologies/chebi_fb_*.obo'),
   !.
 
 
@@ -543,7 +543,7 @@ load_flybase_obo_files:-
 
 
 
-(load_fb_obo "./data/ftp.flybase.net/releases/current/precomputed_files/ontologies/so-simple.obo" )
+(load_fb_obo "./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/ontologies/so-simple.obo" )
 
 ; Total         Atoms (Atomspace size): ...................................................... 19,484
 ;               ConceptNodes: ................................................................. 4,194
@@ -584,7 +584,7 @@ synonym('SO:0000797',"natural transposable element",'EXACT',[]).
 load_obo_files:-
   %load_obo('./reqs/obonet/tests/data/?*.obo'),
 
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/*/so*.obo'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/*/so*.obo'),
   fb_stats,
   load_flybase('./data/SO-Ontologies/Ontology_Files/*.obo'),
   % Total         Atoms (Atomspace size): ...................................................... 20,069
@@ -620,24 +620,24 @@ load_obo_files:-
      %loaded_from_file(             23, './data/SO-Ontologies/Legacy/Cross_Products/so-xp.obo').
      %loaded_from_file(             23, './data/SO-Ontologies/Legacy/Cross_Products/so-xp-simple.obo').
 
-  load_flybase('./data/ftp.flybase.net/releases/current/precomputed_files/*/*.obo'),
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/*/*.obo'),
   % Total         Atoms (Atomspace size): ................................................... 3,489,211
   %               ConceptNodes: ............................................................... 688,541
   %               Random samples: .............................................................. 26,006
   %               Total Memory Used: ............................................................ 1.19G
   %               Runtime (days:hh:mm:ss): ................................................. 0:00:34:35
 print_loaded_from_files,
-%loaded_from_file(2_637_502, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/chebi_fb_2023_04.obo').
-%loaded_from_file(  451_168, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/go-basic.obo').
-%loaded_from_file(  221_705, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/fly_anatomy.obo').
-%loaded_from_file(  128_798, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/doid.obo').
+%loaded_from_file(2_637_502, './data/ftp.flybase.org/releases/FB2023_04/precomputed_files/ontologies/chebi_fb_2023_04.obo').
+%loaded_from_file(  451_168, './data/ftp.flybase.org/releases/FB2023_04/precomputed_files/ontologies/go-basic.obo').
+%loaded_from_file(  221_705, './data/ftp.flybase.org/releases/FB2023_04/precomputed_files/ontologies/fly_anatomy.obo').
+%loaded_from_file(  128_798, './data/ftp.flybase.org/releases/FB2023_04/precomputed_files/ontologies/doid.obo').
 %loaded_from_file(   19_515, './data/SO-Ontologies/Ontology_Files/so-simple.obo').
-%loaded_from_file(    9_852, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/psi-mi.obo').
-%loaded_from_file(    8_644, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/gene_group_FB2023_04.obo').
-%loaded_from_file(    7_605, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/flybase_controlled_vocabulary.obo').
-%loaded_from_file(    1_598, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/fly_development.obo').
-%loaded_from_file(      834, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/image.obo').
-%loaded_from_file(      491, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/flybase_stock_vocabulary.obo').
+%loaded_from_file(    9_852, './data/ftp.flybase.org/releases/FB2023_04/precomputed_files/ontologies/psi-mi.obo').
+%loaded_from_file(    8_644, './data/ftp.flybase.org/releases/FB2023_04/precomputed_files/ontologies/gene_group_FB2023_04.obo').
+%loaded_from_file(    7_605, './data/ftp.flybase.org/releases/FB2023_04/precomputed_files/ontologies/flybase_controlled_vocabulary.obo').
+%loaded_from_file(    1_598, './data/ftp.flybase.org/releases/FB2023_04/precomputed_files/ontologies/fly_development.obo').
+%loaded_from_file(      834, './data/ftp.flybase.org/releases/FB2023_04/precomputed_files/ontologies/image.obo').
+%loaded_from_file(      491, './data/ftp.flybase.org/releases/FB2023_04/precomputed_files/ontologies/flybase_stock_vocabulary.obo').
 %loaded_from_file(      481, './data/SO-Ontologies/Ontology_Files/so.obo').
 %loaded_from_file(      336, './data/SO-Ontologies/Legacy/Cross_Products/so-xp-dec.obo').
 %loaded_from_file(      310, './data/SO-Ontologies/Ontology_Files/subsets/SOFA.obo').
@@ -645,10 +645,10 @@ print_loaded_from_files,
 %loaded_from_file(       73, './data/SO-Ontologies/Ontology_Files/subsets/Alliance_of_Genome_Resources.obo').
 %loaded_from_file(       35, './data/SO-Ontologies/Legacy/Cross_Products/so-xp-non-classified.obo').
 %loaded_from_file(       31, './data/SO-Ontologies/Ontology_Files/subsets/DBVAR.obo').
-%loaded_from_file(       25, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/so-simple.obo').
+%loaded_from_file(       25, './data/ftp.flybase.org/releases/FB2023_04/precomputed_files/ontologies/so-simple.obo').
 %loaded_from_file(       23, './data/SO-Ontologies/Legacy/Cross_Products/so-xp.obo').
 %loaded_from_file(       23, './data/SO-Ontologies/Legacy/Cross_Products/so-xp-simple.obo').
-%loaded_from_file(       21, './data/ftp.flybase.net/releases/current/precomputed_files/ontologies/slice.chebi.obo').
+%loaded_from_file(       21, './data/ftp.flybase.org/releases/FB2023_04/precomputed_files/ontologies/slice.chebi.obo').
   !.
 
 
@@ -1069,6 +1069,9 @@ track_load_into_file(RelFilename,Goal):-
 :- dynamic(is_loaded_from_file_count/2).
 
 :- use_module(library(http/json)).
+:- ensure_loaded(flybase_json).
+load_fb_json(Fn,File):- fbug(load_fb_json(Fn,File)),
+  current_predicate(load_flybase_json/2),load_flybase_json(Fn,File).
 load_fb_json(Fn,File):- fbug(load_fb_json(Fn,File)),
  setup_call_cleanup(open(File,read,In), json:json_read(In,Term,[]), close(In)),
     time(assert(saved_fb_json(File,Term,Fn))).
@@ -1193,6 +1196,34 @@ load_flybase(Ext,File,Fn):-
   retract(load_state(File,loading)),
   assert(load_state(File,loaded)),fb_stats.
 
+load_metta_fast(_Self,_File,Stream):-
+   repeat,
+    read_sform(Stream,Forms),
+    (Forms == end_of_file -> true;
+      (writeq(Forms),nl,fail)).
+
+%read_line_to_sexpr(Stream,UnTyped),
+read_sform(S,F):-
+  read_sform1(S,F1),
+  ( F1\=='!' -> F=F1 ;
+    (read_sform1(S,F2), F = exec(F2))).
+
+read_sform1(S,F):- read_line_to_string(S,L),!,read_sform_cont(L,S,F).
+read_sform1(S,F):- profile(parse_sexpr_metta(S,F)).
+
+
+
+read_sform_cont(L,_S,F):- input_to_forms(L,F),!.
+read_sform_cont(L,S,F):- read_line_to_string(S,L2),
+  atomic_to_string([L,' ',L2],L3),read_sform_cont(L3,S,F),!.
+
+load_metta_fast(File):-
+  setup_call_cleanup(open(File,read,Stream,[]),
+     load_metta_fast('&self',File,Stream),
+     close(Stream)).
+
+load_flybase_ext(_Ext,File,_Fn):-  atom_concat(File,'.metta',MFile),
+   exists_file(MFile),!,current_predicate(load_metta/2),!,load_metta_fast(MFile).
 load_flybase_ext(Ext,File, Fn):-  Ext==json,!,load_fb_json(Fn,File),!.
 load_flybase_ext(Ext,File, Fn):-  Ext==fa,!,load_fb_fa(Fn,File),!.
 load_flybase_ext(Ext,File,_Fn):-  Ext==obo,current_predicate(load_obo/1),!,load_obo(File).

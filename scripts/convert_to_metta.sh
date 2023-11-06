@@ -44,7 +44,8 @@ process_file() {
   case "$INPUT_FILE" in
     *.obo | *.json | *.fa)
       echo -ne ".."
-      swipl -s metta_vspace/pyswip/read_obo.pl -- --convert "$INPUT_FILE" --halt > "$OUTPUT_FILE" 2>/dev/null || true
+      swipl -s metta_vspace/pyswip/flybase_convert.pl -- --convert "$INPUT_FILE" --halt > "$OUTPUT_FILE" 2>/dev/null || true
+      #swipl -l metta_vspace/pyswip/flybase_convert.pl -- --convert "$INPUT_FILE"
       ;;
     *)
 
@@ -119,7 +120,7 @@ for INPUT_PATH in "${ARGS[@]}"; do
     # Start timing for directory processing
     dir_start_time=$(date +%s.%N)
     echo "Processing directory: $INPUT_PATH"
-     find "$INPUT_PATH" -type f -not -name "*.json" -print0 | while IFS= read -r -d $'\0' file; do
+     find "$INPUT_PATH" -type f -name "*.*" -not -name "*.metta" -print0 | while IFS= read -r -d $'\0' file; do
        process_file "$file" "$FORCE"
      done
     # End timing for directory processing
