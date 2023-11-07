@@ -39,7 +39,7 @@ if VSPACE_VERBOSE is not None:
 # Error Handling for Janus
 try: from janus import *
 except Exception as e:
- if verbose>0: print(f"Error: {e}")
+ if verbose>0: print_cmt(f"Error: {e}")
 
 # Error Handling for OpenAI
 try:
@@ -47,7 +47,7 @@ try:
  try: openai.api_key = os.environ["OPENAI_API_KEY"]
  except KeyError: ""
 except Exception as e:
- if verbose>0: print(f"Error: {e}")
+ if verbose>0: print_cmt(f"Error: {e}")
 
 
 
@@ -148,7 +148,7 @@ atexit.register(save, h_len, histfile)
 
 def export_to_metta(func):
     setattr(func, 'metta', True)
-    if verbose>3: print(f"{func}={getattr(func, 'export_to_metta', False)}")
+    if verbose>3: print_cmt(f"{func}={getattr(func, 'export_to_metta', False)}")
     return func
 
 def export_flags(**kwargs):
@@ -212,7 +212,7 @@ def add_pyop(name, length, op_kind, unwrap, dict = oper_dict):
     add_to_history_if_unique(s); #print(s)
     if hyphens not in dict:
         src, local_vars = f'op = {op_kind}( "{hyphens}", lambda {pyvars}: [{underscores}({pyvars})], unwrap={unwrap})', {}
-        if verbose>1: print(f"add_pyop={src}")
+        if verbose>1: print_cmt(f"add_pyop={src}")
         exec(src, globals(), local_vars)
         dict[hyphens] = local_vars['op']
         dict[underscores] = local_vars['op']
@@ -224,7 +224,7 @@ def add_from_swip(name, dict = oper_dict):
     if hyphens not in dict:
         src, local_vars = f'op = lambda : [swip_exec("{underscores}")]', {}
         exec(src, {}, local_vars)
-        if verbose>1: print(f"swip: {hyphens}")
+        if verbose>1: print_cmt(f"swip: {hyphens}")
         dict[hyphens] = OperationAtom(hyphens, local_vars['op'], unwrap=False)
 
 def addSpaceName(name, space):
@@ -500,7 +500,7 @@ def foreign_framed(func):
         try:
             result = func(*args, **kwargs)
         except Exception as e:
-            if verbose>0: print(f"Error: {e}")
+            if verbose>0: print_cmt(f"Error: {e}")
             if verbose>0: traceback.print_exc()
         finally:
             PL_discard_foreign_frame(swipl_fid)
@@ -549,8 +549,8 @@ class VSpace(AbstractSpace):
         varNames = Variable()
         varNames.unify(metaVarNames)
         swip_obj = m2s(circles,query_atom)
-        if verbose>1: print(f"circles={circles}")
-        #if verbose>1: print(f"metta_vars={metta_vars}, swivars={swivars}")
+        if verbose>1: print_cmt(f"circles={circles}")
+        #if verbose>1: print_cmt(f"metta_vars={metta_vars}, swivars={swivars}")
         q = PySwipQ(Functor('metta_iter_bind',4)
           (self.swip_space_name(), swip_obj, varsList, varNames), module=self.sp_module)
 
@@ -579,7 +579,7 @@ class VSpace(AbstractSpace):
         q = PySwipQ(Functor(functor_name, len(args) + 1)(self.swip_space_name(), *args), module=self.sp_module)
         try: return q.nextSolution()
         except Exception as e:
-            if verbose>0: print(f"Error: {e}")
+            if verbose>0: print_cmt(f"Error: {e}")
             if verbose>0: traceback.print_exc()
         finally: q.closeQuery()
 
@@ -619,7 +619,7 @@ class VSpace(AbstractSpace):
     @foreign_framed
     def atom_count(self):
         result = list(swip.query(f"'atom-count'('{self.sp_name}',AtomCount)"))
-        if verbose>1: print(result)
+        if verbose>1: print_cmt(result)
         if result is None: return 0
         if len(result)==0: return 0
         CB = result[0]
@@ -638,7 +638,7 @@ class VSpace(AbstractSpace):
         CB = result[0]
         if CB is None: return []
         C = CB['AtomsList']
-        if verbose>1: print(f"get_atoms={type(C)}")
+        if verbose>1: print_cmt(f"get_atoms={type(C)}")
         R = s2m(circles,C)
         return R
 
@@ -913,13 +913,13 @@ def test_custom_space(LambdaSpaceFn):
     self_assertEqualNoOrder(result, [{"v": S("B")}])
 
     # Add the MeTTa space to the little space for some space recursion
-    if verbose>1: print("mspace")
+    if verbose>1: print_cmt("mspace")
     mspace = m.space()
     gmspace = G(mspace)
     A = E(S("big-space"), gmspace)
-    if verbose>1: print("little_space.add_atom")
+    if verbose>1: print_cmt("little_space.add_atom")
     little_space.add_atom(A)
-    if verbose>1: print("Next Space")
+    if verbose>1: print_cmt("Next Space")
     nested = asSpaceRef(LambdaSpaceFn())
     nested.add_atom(E(S("A"), S("B")))
     space_atom = G(nested)
@@ -939,7 +939,7 @@ def s2m(circles,swip_obj, depth=0):
     if verbose<=1: return r
     for i in range(depth+1):
         print("   ",end='')
-    print(f"r({type(r)})={str(r)}/{repr(r)}")
+    print_cmt(f"r({type(r)})={str(r)}/{repr(r)}")
     return r
 
 def s2m1(circles,swip_obj, depth=0):
@@ -947,7 +947,7 @@ def s2m1(circles,swip_obj, depth=0):
     if verbose>1:
         for i in range(depth):
             print("   ",end='')
-        print(f's2m({len(circles)},{type(swip_obj)}): {str(swip_obj)}/{repr(swip_obj)}')
+        print_cmt(f's2m({len(circles)},{type(swip_obj)}): {str(swip_obj)}/{repr(swip_obj)}')
 
     # Already converted
     if isinstance(swip_obj, (VariableAtom, GroundedAtom, Atom, ExpressionAtom)):
@@ -1124,8 +1124,10 @@ def m2s1(circles, metta_obj, depth=0, preferStringToAtom = None, preferListToCom
         L = list_to_termv(circles,metta_obj,depth+1)
     elif isinstance(metta_obj, ExpressionAtom):
         L = list_to_termv(circles,metta_obj.get_children(),depth+1)
+    elif isinstance(metta_obj, tuple):
+        L = list_to_termv(circles,metta_obj,depth+1)
     else:
-        raise ValueError(f"Unknown MeTTa object type: {type(metta_obj)}")
+        raise ValueError(f"Unknown MeTTa object type_1: {metta_obj} {type(metta_obj)} {dir(metta_obj)}")
 
     if depth==0:
         V = Variable()
@@ -1188,9 +1190,9 @@ def m2s3(circles, metta_obj, depth, preferStringToAtom, preferListToCompound):
     # Converting to functor... Maybe a list later on
     return Functor(f, len(retargs), list_to_termv(circles,retargs))
 
-    if verbose>0: print(f"Unknown MeTTa object type: {type(metta_obj)}={metta_obj}")
+    if verbose>0: print_cmt(f"Unknown MeTTa object type: {type(metta_obj)}={metta_obj}")
 
-    raise ValueError(f"Unknown MeTTa object type: {type(metta_obj)}")
+    raise ValueError(f"Unknown MeTTa object type_3: {type(metta_obj)}")
 
 def swiplist_to_swip(circles,retargs, depth=0):
     sv = [m2s1(circles,item,depth) for item in retargs]
@@ -1436,16 +1438,17 @@ def print_l_e(obj):
                 print(item)
     except TypeError:
         # If a TypeError is raised, the object is not iterable
-        # if verbose>0: print(type(obj))
+        # if verbose>0: print_cmt(type(obj))
         print(obj)
     return obj
 
 @export_flags(MeTTa=True)
-def print_cmt(*args):
+def print_cmt(*args, prefix=";; "):
    for arg in args:
-       println(arg, prefix=";; ")
+       println(arg, prefix=prefix)
+       flush_console()
 
-@export_flags(MeTTa=True, name="print")
+@export_flags(MeTTa=True, name="print", unwrap=True)
 def println(orig, prefix=""):
     """
     Prints the given object and returns it.
@@ -1459,7 +1462,7 @@ def println(orig, prefix=""):
     try:
       prefix_print(prefix, orig)
     except Exception as e:
-      if verbose>0: print(f"println-Error: {e}")
+      if verbose>0: print_cmt(f"println-Error: {e}")
     flush_console()
     return orig
 
@@ -1606,7 +1609,7 @@ import hyperonpy as hp
 from hyperon.atoms import Atom, AtomType, OperationAtom
 from hyperon.base import GroundingSpaceRef, Tokenizer, SExprParser
 
-class ExtendedMeTTa:
+class ExtendedMeTTa(MeTTa):
 
     def __init__(self, cmetta = None, space = None, env_builder = None):
         self.pymods = {}
@@ -1625,12 +1628,12 @@ class ExtendedMeTTa:
     #        self.cmetta = cmetta
     #    else:
     #        #self.cmetta = None
-     #       if space is None:
-     #           space = GroundingSpaceRef()
-     #       tokenizer = Tokenizer()
-     #       self.py_space = space
-     #       self.py_tokenizer = tokenizer
-     #       self.cmetta = hp.metta_new(self.py_space.cspace, self.py_tokenizer.ctokenizer, cwd)
+    #       if space is None:
+    #           space = GroundingSpaceRef()
+    #       tokenizer = Tokenizer()
+    #       self.py_space = space
+    #       self.py_tokenizer = tokenizer
+    #       self.cmetta = hp.metta_new(self.py_space.cspace, self.py_tokenizer.ctokenizer, cwd)
 
     def set_cmetta(self, metta):
         if isinstance(metta,MeTTa):
@@ -1648,66 +1651,75 @@ class ExtendedMeTTa:
                                                  type_names=[AtomType.ATOM, AtomType.ATOM, AtomType.ATOM], unwrap=False))
 
 
-    #def __del__(self):
-        #hp.metta_free(self.cmetta)
 
-    def space(self):
-        return GroundingSpaceRef._from_cspace(hp.metta_space(self.cmetta))
+        #def __del__(self):
+            #hp.metta_free(self.cmetta)
 
-    def tokenizer(self):
-        return Tokenizer._from_ctokenizer(hp.metta_tokenizer(self.cmetta))
+        def space(self):
+            return GroundingSpaceRef._from_cspace(hp.metta_space(self.cmetta))
 
-    def register_token(self, regexp, constr):
-        self.tokenizer().register_token(regexp, constr)
+        def tokenizer(self):
+            return Tokenizer._from_ctokenizer(hp.metta_tokenizer(self.cmetta))
 
-    def register_atom(self, name, symbol):
-        self.register_token(name, lambda _: symbol)
+        #def register_token(self, regexp, constr):
+        #    self.tokenizer().register_token(regexp, constr)
 
-    def _parse_all(self, program):
-        parser = SExprParser(program)
-        while True:
-            atom = parser.parse(self.tokenizer())
-            if atom is None:
-                break
-            yield atom
+        #def register_atom(self, name, symbol):
+        #    self.register_token(name, lambda _: symbol)
 
-    def parse_all(self, program):
-        return list(self._parse_all(program))
+        def _parse_all(self, program):
+            parser = SExprParser(program)
+            while True:
+                atom = parser.parse(self.tokenizer())
+                if atom is None:
+                    break
+                yield atom
 
-    def parse_single(self, program):
-        return next(self._parse_all(program))
+        def parse_all(self, program):
+            return list(self._parse_all(program))
 
-    def load_py_module(self, name):
-        if not isinstance(name, str):
-            name = repr(name)
-        mod = import_module(name)
-        for n in dir(mod):
-            obj = getattr(mod, n)
-            if '__name__' in dir(obj) and obj.__name__ == 'metta_register':
-                obj(self)
+        def parse_single(self, program):
+            return next(self._parse_all(program))
 
-    def import_file(self, fname):
-        path = fname.split(os.sep)
-        if len(path) == 1:
-            path = ['.'] + path
-        f = open(os.sep.join(path), "r")
-        program = f.read()
-        f.close()
-        # changing cwd
-        prev_cwd = os.getcwd()
-        os.chdir(os.sep.join(path[:-1]))
-        result = self.run(program)
-        # restoring cwd
-        os.chdir(prev_cwd)
-        return result
+        def load_py_module(self, name):
+            if not isinstance(name, str):
+                name = repr(name)
+            mod = import_module(name)
+            for n in dir(mod):
+                obj = getattr(mod, n)
+                if '__name__' in dir(obj) and obj.__name__ == 'metta_register':
+                    obj(self)
 
-    def run(self, program, flat=False):
-        parser = SExprParser(program)
-        results = hp.metta_run(self.cmetta, parser.cparser)
-        if flat:
-            return [Atom._from_catom(catom) for result in results for catom in result]
-        else:
-            return [[Atom._from_catom(catom) for catom in result] for result in results]
+        def import_file(self, fname):
+            """Loads the program file and runs it"""
+            path = fname.split(os.sep)
+            if len(path) == 1:
+                path = ['.'] + path
+            f = open(os.sep.join(path), "r")
+            program = f.read()
+            f.close()
+            # changing cwd
+            # TODO: Changing the working dir will not be necessary when the stdlib ops can access the correct runner context.  See https://github.com/trueagi-io/hyperon-experimental/issues/410
+            prev_cwd = os.getcwd()
+            os.chdir(os.sep.join(path[:-1]))
+            result = self.run(program)
+            # restoring cwd
+            os.chdir(prev_cwd)
+            return result
+
+
+        def run(self, program, flat=False):
+            """Runs the program"""
+            parser = SExprParser(program)
+            results = hp.metta_run(self.cmetta, parser.cparser)
+            err_str = hp.metta_err_str(self.cmetta)
+            if (err_str is not None):
+                raise RuntimeError(err_str)
+            if flat:
+                return [Atom._from_catom(catom) for result in results for catom in result]
+            else:
+                return [[Atom._from_catom(catom) for catom in result] for result in results]
+
 
 # Borrowed impl from Adam Vandervorst
 class LazyMeTTa(ExtendedMeTTa):
@@ -2080,19 +2092,19 @@ def sql_space_atoms():
 
 
 def pl_select(*args):
-    print(args)
+    print_cmt("pl_select: ",args)
     flush_console()
 
 def pl_insert(*args):
-    print(args)
+    print_cmt("pl_insert: ",args)
     flush_console()
 
 def np_array(args):
-    print("np_array=",args)
+    print_cmt("np_array=",args)
     return np.array(args)
 
 def np_vector(*args):
-    print("np_vector=",args)
+    print_cmt("np_vector=",args)
     return np.array(args)
 
 #pass_metta=True
@@ -2106,7 +2118,7 @@ def register_vspace_atoms():
     if not metta is None: the_python_runner.set_cmetta(metta)
 
     counter = 0
-    if verbose>1: print(f"register_vspace_atoms metta={metta} {self_space_info()}")
+    if verbose>1: print_cmt(f"register_vspace_atoms metta={metta} {self_space_info()}")
 
     if not isinstance(metta, VSpace):
         the_python_runner.parent = metta
@@ -2161,7 +2173,7 @@ def register_vspace_atoms():
         r"new-gpt-intent-space": OperationAtom('new-gpt-intent-space', lambda: [G(SpaceRef(GptIntentSpace()))], unwrap=False),
 
         r"new-v-space": OperationAtom('new-v-space', lambda: [G(SpaceRef(VSpace()))], unwrap=False),
-        r"the-v-space": OperationAtom('new-v-space', lambda: [G(SpaceRef(the_verspace))], unwrap=False),
+        r"the-v-space": OperationAtom('the-v-space', lambda: [G(SpaceRef(the_verspace))], unwrap=False),
 
 
         r"new-value-atom": newValueAtom,
@@ -2178,7 +2190,7 @@ def register_vspace_atoms():
         'get-by-key': OperationAtom('get-by-key', lambda d, k: d[k]),
 
         # Our FFI to PySWIP
-        'load-vspace': OperationAtom('load-vspace', lambda: [load_vspace()]),
+        #'load-vspace': OperationAtom('load-vspace', lambda: [load_vspace()]),
         'mine-overlaps': OperationAtom('mine-overlaps', lambda: [mine_overlaps()]),
         'try-overlaps': OperationAtom('try-overlaps', lambda: [try_overlaps()]),
         'load-flybase-full': OperationAtom('load-flybase-full', lambda: [load_flybase("inf")]),
@@ -2198,37 +2210,51 @@ def register_vspace_atoms():
 @register_tokens(pass_metta=True)
 def register_vspace_tokens(metta):
 
-    if verbose>1: print(f"register_vspace_tokens metta={metta} {self_space_info()}")
+    if verbose>1: print_cmt(f"register_vspace_tokens metta={metta} {self_space_info()}")
 
-    the_python_runner.set_cmetta(metta.cmetta)
+    if hasattr(the_python_runner,"set_cmetta"):
+        the_python_runner.set_cmetta(metta.cmetta)
+
+    if hasattr(the_python_runner,"cmetta"):
+        the_python_runner.cmetta = metta.cmetta
+
 
     if not isinstance(metta, VSpace):
         the_python_runner.parent = metta
 
     def run_resolved_symbol_op(the_python_runner, atom, *args):
         expr = E(atom, *args)
-        if verbose>1: print(f"run_resolved_symbol_op: atom={atom}, args={args}, expr={expr} metta={metta} {self_space_info()}")
+        if verbose>1: print_cmt(f"run_resolved_symbol_op: atom={atom}, args={args}, expr={expr} metta={metta} {self_space_info()}")
         result1 = hp.metta_evaluate_atom(the_python_runner.cmetta, expr.catom)
         result = [Atom._from_catom(catom) for catom in result1]
-        if verbose>1: print(f"run_resolved_symbol_op: result1={result1}, result={result}")
+        if verbose>1: print_cmt(f"run_resolved_symbol_op: result1={result1}, result={result}")
         return result
 
     def resolve_atom(metta, token):
+        return _resolve_atom(metta, token, verbose)
+
+    def _resolve_atom(metta, token, verbose):
         # TODO: nested modules...
+        verbose = verbose +1
 
         if token is None: return token
 
-        if verbose>1: print(f"resolve_atom: token={token}/{type(token)} metta={metta}")
-        runner_name, atom_name = token.split('::')
+        if verbose>1: print_cmt(f"resolve_atom: token={token}/{type(token)} metta={metta}")
+
+        if "::" in token:
+            runner_name, atom_name = token.split('::')
+        else:
+            atom_name = token
+            runner_name = ""
 
         if atom_name in oper_dict:
-            if verbose>1: print(f"resolve_atom: token={token} metta={metta}")
+            if verbose>1: print_cmt(f"resolve_atom: token={token} metta={metta}")
             return oper_dict[atom_name]
 
         atom_name2 = atom_name.replace('_', '-')
 
         if atom_name2 in oper_dict:
-            if verbose>0: print(f"resolve_atom: token={token} metta={metta}")
+            if verbose>0: print_cmt(f"resolve_atom: token={token} metta={metta}")
             return oper_dict[atom_name2]
 
         if atom_name=="vspace-main":
@@ -2236,7 +2262,7 @@ def register_vspace_tokens(metta):
             return
         # FIXME: using `run` for this is an overkill
         ran = metta.run('! ' + runner_name)[0][0];
-        if verbose>1: print(f"resolve_atom: token={token} ran={type(ran)} metta={metta} {self_space_info()}")
+        if verbose>1: print_cmt(f"resolve_atom: token={token} ran={type(ran)} metta={metta} {self_space_info()}")
         try:
             this_runner = ran.get_object()
         except Exception as e:
@@ -2247,6 +2273,7 @@ def register_vspace_tokens(metta):
         #if !isinstance(this_runner, MeTTa):
 
         #if !isinstance(this_runner, MeTTa): this_runner = metta
+
 
         atom = this_runner.run('! ' + atom_name)[0][0]
         # A hack to make the_python_runner::&self work
@@ -2262,7 +2289,7 @@ def register_vspace_tokens(metta):
     def resolve_underscores(metta, token):
         atom_name = token.replace('_', '-')
         if atom_name in oper_dict:
-            if verbose>1: print(f"resolve_atom: token={token} metta={metta}")
+            if verbose>1: print_cmt(f"resolve_atom: token={token} metta={metta}")
             return oper_dict[atom_name]
 
     syms_dict.update({
@@ -2276,6 +2303,7 @@ def register_vspace_tokens(metta):
         '&the_runner': lambda _: ValueAtom(the_python_runner),
         '&the_metta': lambda _: ValueAtom(the_python_runner.parent),
         r"[^\s]+::[^\s]+": lambda token: resolve_atom(metta, token)
+        #r"[^\s][^\s]+[^!]": lambda token: resolve_atom(metta, token)
         #r"[^\s]+_[^\s]+": lambda token: resolve_underscores(metta, token)
     })
     for key in syms_dict:
@@ -2727,10 +2755,10 @@ def metta_to_swip_tests2():
     converted_back_to_swip = m2s(circles,metta_expr)
 
 NeedNameSpaceInSWIP = True
-@export_flags(MeTTa=True)
+@export_flags(MeTTa=True, unwrap=True)
 def load_vspace():
    global NeedNameSpaceInSWIP
-   swip_exec(f"ensure_loaded('{os.path.dirname(__file__)}/pyswip/swi_flybase')")
+   swip_exec(f"ensure_loaded('{os.path.dirname(__file__)}/pyswip/flybase_main')")
    if NeedNameSpaceInSWIP:
        NeedNameSpaceInSWIP = False
        swip.retractall("was_asserted_space('&self')")
@@ -2757,6 +2785,62 @@ def learn_vspace():
 def mettalog():
    load_vspace()
    swip_exec("repl")
+
+
+@export_flags(MeTTa=True)
+def register_mettalog_op_new(fn, n):
+   arg_types = [AtomType.ATOM] * (n) + [AtomType.UNDEFINED]
+   op = OperationAtom(fn, lambda *args:
+                  print_cmt(f"eval_mettalog('{fn}', {args})") +
+                  eval_mettalog(fn, *args),
+                              type_names=arg_types,
+                              unwrap=True)
+   the_python_runner.register_atom(fn, op)
+   return op
+
+
+@export_flags(MeTTa=True)
+def use_mettalog():
+   load_vspace()
+   register_mettalog_op("pragma!",2)
+   register_mettalog_op("match",3)
+   return register_mettalog_op("import!",2)
+
+@export_flags(MeTTa=True)
+def register_mettalog_op(fn, n):
+    arg_types = [AtomType.ATOM] * (n) + [AtomType.UNDEFINED]
+    n_args = ', '.join(['arg' + str(i) for i in range(n)])
+    local_vars = {}
+    src = f'lop = lambda {n_args}: eval_mettalog("{fn}", {n_args})'
+    exec(src, globals(), local_vars)
+    lop = local_vars['lop']
+    #print_cmt(src) print_cmt(type(the_python_runner))
+    op = OperationAtom(fn, lop, type_names=arg_types, unwrap=False)
+    oper_dict[fn]=op
+    the_python_runner.register_atom(fn, op)
+
+    return op
+
+def eval_mettalog(fn, *args):
+    print_cmt(f"eval_mettalog('{fn}', {args})")
+    return list(_eval_mettalog(fn,args))
+
+def _eval_mettalog(fn, *args):
+    circles = Circles()
+    expr = [fn] + list(args) # Prepend fn to args list
+    swip_obj = m2s(circles,expr)
+    flush_console()
+    call_sexpr = Functor("call_sexpr", 4)
+    #user = newModule("user")
+    X = Variable()
+    q = PySwipQ(call_sexpr(selected_space_name, str(expr), swip_obj, X))
+    while q.nextSolution():
+      flush_console()
+      r = X.value
+      println(r)
+      yield s2m(circles,r)
+    q.closeQuery()
+    flush_console()
 
 @export_flags(MeTTa=True)
 def mettalog_pl():
@@ -2843,99 +2927,9 @@ def test_custom_m_space():
     test_custom_space(lambda: TestSpace())
 
 
-import threading
-import socket
-
-class TelnetREPLThread(threading.Thread):
-    def __init__(self, host, port):
-        super().__init__()
-        self.host = host
-        self.port = port
-        self.banner = "Welcome to the Flybase MeTTa Telnet Server\n"
-        self.user_input=""
-
-    def read_input(self, tn, prmpt):
-        self.user_input = ""
-        input_buffer = b""
-        tn.write(f"{prmpt}".encode('ascii'))
-        while True:
-            chunk = tn.read_some()
-            if chunk == b'\x7f':  # ASCII DEL (Backspace)
-                input_buffer = input_buffer[:-1]
-                tn.write(b'\b \b')  # Move cursor back, overwrite with space, move cursor back again
-            elif chunk == b'\x04' or chunk == b'\n':  # Ctrl-D or Enter
-                break
-            else:
-                input_buffer += chunk
-                tn.write(chunk)  # Echo the character back to the client
-        self.user_input = input_buffer.decode('ascii').strip()
-        return self.user_input
-
-    def write_output(self, tn, prmpt):
-        tn.write(f"{prmpt}\n".encode('ascii'))
-
-
-    def run(self):
-        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server.bind((self.host, self.port))
-        self.server.listen(1)
-        print(f"Listening on {self.host}:{self.port}")
-
-        while True:
-            client, address = self.server.accept()
-            print(f"Accepted connection from {address}")
-            import telnetlib
-            tn = telnetlib.Telnet()
-            tn.sock = client
-            tn.write(self.banner.encode('ascii'))
-
-            inP = lambda prmpt1: self.read_input(tn, prmpt1)
-            outP = lambda prmpt1: self.write_output(tn, prmpt1)  # Removed extra self
-            im = InteractiveMeTTa()
-            while True:
-
-                if True and im:
-                    im.repl(get_sexpr_input=inP, print_cmt=outP)
-                else:
-                    get_sexpr_input=inP
-                    print_cmt=outP
-                    # Use the input function to get user input
-                    prmpt = "; > "
-                    line = get_sexpr_input(prmpt)
-                    print_cmt(f"You entered: {line}\n")
-
-                if '\x04' in self.user_input:  # Check for Ctrl-D (EOF)
-                    tn.write("Exiting...\n".encode('ascii'))
-                    break
-
-            tn.close()
-
-class TelnetREPLServer:
-    def __init__(self, host, initial_port):
-        self.host = host
-        self.port = initial_port
-
-    def start(self):
-        while True:
-            try:
-                repl_thread = TelnetREPLThread(self.host, self.port)
-                repl_thread.start()
-                print(f"Successfully started on {self.host}:{self.port}")
-                break
-            except OSError as e:
-                if e.errno == 98:  # Address already in use
-                    print(f"Port {self.port} already in use. Trying next port.")
-                    self.port += 100
-
-if __name__ == '__main__':
-    #server = TelnetREPLServer('0.0.0.0', 11776)
-    #server.start()
-    ""
-
-
 
 # Borrowed impl from Adam Vandervorst
-class InteractiveMeTTa(LazyMeTTa):
+class InteractiveMeTTa(ExtendedMeTTa): # LazyMeTTa ExtendedMeTTa
 
     def __init__(self):
         super().__init__()
@@ -3671,12 +3665,13 @@ sys_argv_length = len(sys.argv)
 
 if the_python_runner is None:  #MakeInteractiveMeTTa() #def MakeInteractiveMeTTa(): #global the_python_runner,the_old_runner_space,the_new_runner_space,sys_argv_length
     the_python_runner = InteractiveMeTTa()
+    #the_python_runner = MeTTa()
     the_python_runner.cwd = [os.path.dirname(os.path.dirname(__file__))]
     the_old_runner_space = the_python_runner.space()
-    the_python_runner.run("!(extend-py! metta_learner)")
     the_new_runner_space = the_python_runner.space()
     print_cmt("The sys.argv list is:", sys.argv)
     vspace_init()
+    the_python_runner.run("!(extend-py! metta_space/metta_learner)")
 
 
 is_init=False

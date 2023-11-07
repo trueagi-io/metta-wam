@@ -216,8 +216,13 @@ assert_OBO(OBO):-
   !.
 */
 
-into_obofn(Fn,OboFn):- atom_concat(obo_,_,Fn),!,Fn=OboFn,!.
-into_obofn(Fn,OboFn):- atom_concat(obo_,Fn,OboFn),!.
+into_obofn(Fn,OboFn):- atom_concat('obo-',_,Fn),!,Fn=OboFn,!.
+into_obofn(Fn,OboFn):- atom_concat('obo-',Fn,OboF_),!,use_dashes(OboF_,OboFn).
+
+
+use_dashes(OboF_,OboFn):-
+  atomic_list_concat(List,'_',OboF_),
+  atomic_list_concat(List,'-',OboFn),!.
 
 
 simplify_obo_arg(I,_O):- \+ string(I), \+ atom(I),!,fail.
