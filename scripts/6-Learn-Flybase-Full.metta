@@ -1,4 +1,12 @@
-!(pragma! trace-on-load False)
+
+!(extend-py! metta_vspace/metta_learner)
+!(print "; =====================================")
+!(print "; Starting 6 - Flybase Full")
+!(print "; =====================================")
+!(load_vspace)
+!(use-mettalog)
+;!(pragma! trace-on-load False)
+
 
 
 ; Includes the file that houses queries that have been deduced from available data.
@@ -37,14 +45,20 @@
 
 ; Would include the file containing mined data.
 ; Forms the basis for further deductions and queries.
-;!(import! &self examples/flybase/flybase-mined.metta);;;
+;!(import! &self examples/flybase/flybase-mined.metta)
+
+;;;
 (vspace test 1)
-!(extend-py! metta_learner)
+;!(extend-py! metta_learner)
 !(load-flybase-full)
 
-!(print "=====================================")
-!(print "Starting Shell !!!!!!!!!!!!!!!!!!!!!!")
-!(print "=====================================")
+!(print "; =====================================")
+!(print "; Starting Shell !!!!!!!!!!!!!!!!!!!!!!")
+!(print ";=====================================")
 
+(: my-match (-> Atom Atom Atom Atom))
+(= (my-match $a $b $c) (match $a $b $c))
+!(match &self $s $s)
+!(my-match &self $s $s)
 !(metta_learner::vspace-main)
 

@@ -1,4 +1,20 @@
+
+!(extend-py! metta_vspace/metta_learner)
+!(print "; =====================================")
+!(print "; Starting 5")
+!(print "; =====================================")
+!(load_vspace)
+
+!("; doing pragma")
 !(pragma! trace-on-load False)
+!("; did pragma")
+!(use-mettalog)
+!("; used mettalog")
+!("; doing pragma")
+!(pragma! trace-on-load False)
+!("; did pragma again")
+!(pragmat trace-on-load False)
+!("; did pragmat again")
 
 
 ; Includes the file that houses queries that have been deduced from available data.
@@ -44,11 +60,15 @@
 ; !(extend-py! metta_learner)
 ; !(load-flybase)
 
-!(print "=====================================")
-!(print "Starting Shell !!!!!!!!!!!!!!!!!!!!!!")
-!(print "=====================================")
+!(print "; =====================================")
+!(print "; Starting Shell !!!!!!!!!!!!!!!!!!!!!!")
+!(print "; =====================================")
 
-!(msetta_learner::vspace-main)
+(: my-match (-> Atom Atom Atom Atom))
+(= (my-match $a $b $c) (match $a $b $c))
+!(match &self $s $s)
+!(my-match &self $s $s)
+!(metta_learner::vspace-main)
 
 
 

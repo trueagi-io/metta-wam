@@ -43,30 +43,69 @@ process_file() {
   # Process based on the file extension
   case "$INPUT_FILE" in
     *.obo | *.json | *.fa)
-      echo -ne ".."
-      swipl -s metta_vspace/pyswip/flybase_convert.pl -- --convert "$INPUT_FILE" --halt > "$OUTPUT_FILE" 2>/dev/null || true
-      #swipl -l metta_vspace/pyswip/flybase_convert.pl -- --convert "$INPUT_FILE"
+      rm -f "$OUTPUT_FILE"
+      echo -ne "."
+      ###########swipl -l metta_vspace/pyswip/flybase_convert.pl -- --convert "$INPUT_FILE" --halt | tee -p "$OUTPUT_FILE"
+      #echo "" ; echo ""
+      #echo "swipl -l metta_vspace/pyswip/flybase_convert.pl -- --context=$HEAD --convert \"$INPUT_FILE\" --halt > \"$OUTPUT_FILE\""
+      #echo "" ; echo ""
+      swipl -l metta_vspace/pyswip/flybase_convert.pl -- --context=$HEAD --convert "$INPUT_FILE" --halt > "$OUTPUT_FILE" 2>/dev/null
+
+      echo -ne "."
+      # Create a temporary file
+      temp_file=$(mktemp)
+      echo -ne "."
+      # Make sure temporary file will be deleted on script exit
+      trap 'rm -f "$temp_file"' EXIT
+      # Remove duplicates with awk and save to temporary file
+      awk '!seen[$0]++' "$OUTPUT_FILE" > "$temp_file"
+      # Overwrite the original file with the temporary file
+      mv "$temp_file" "$OUTPUT_FILE"
+      echo -ne "."
       ;;
     *)
-
+      echo -ne "."
       python metta_vspace/metta_learner.py "$INPUT_FILE" --analyze > "$OUTPUT_FILE"
       skip_lines=$?
+      echo -ne "."
       awk -v head="$HEAD" -v skip="$skip_lines" '
+      function should_quote(field) {
+        if (field ~ /[" ]|'\''|\/|,|\|/) {
+          return 1  # Quote if field contains ", space, , /, , or |
+        }
+        if (field ~ /^[0-9]/ && field !~ /^[0-9]+$/) {
+          return 1  # Quote if field starts with a number and contains non-numeric characters
+        }
+        return 0  # No need to quote
+      }
+
       BEGIN {FS="\t"; OFS=" "}
       {
-        non_blank_found = 0
+        # Skip lines that start with whitespace (if any) followed by # or ;
+        if (/^[[:space:]]*[#;]/) {
+          next
+        }
+
+        # Skip lines that does not contain a tab character (thus having less than 2 fields)
+        if (NF < 2) {
+          next
+        }
+
+        # Construct the line to check for uniqueness
         line_output = "(" head
+        non_blank_found = 0
         for (i = 1; i <= NF; i++) {
           # Remove all control characters except newline
           gsub(/[[:cntrl:]]/, "", $i)
           # Escape double quotes to avoid breaking the output syntax
           gsub(/"/, "\\\"", $i)
-          # Represent fields that are only whitespace as ()
+
           if ($i == "" || $i ~ /^[[:space:]]*$/) {
+            # Represent fields that are only whitespace as ()
             line_output = line_output " ()"
           } else {
-            # Quote the field if it contains whitespace, parens, or quotation marks
-            if ($i ~ /[[:space:]"()]/) {
+            # Determine if we should quote this field
+            if (should_quote($i)) {
               line_output = line_output " \"" $i "\""
             } else {
               line_output = line_output " " $i
@@ -74,14 +113,18 @@ process_file() {
             non_blank_found = 1
           }
         }
-        if (non_blank_found) {
-          if (skip>0) {
-             skip--
+
+        # Skip this line if it is a duplicate
+        if (non_blank_found && !(line_output in printed_lines)) {
+          if (skip > 0) {
+            skip--
           } else {
-             print line_output ")"
+            print line_output ")"
+            printed_lines[line_output] = 1
           }
         }
-      }' "$INPUT_FILE" >> "$OUTPUT_FILE"
+      }
+      ' "$INPUT_FILE" >> "$OUTPUT_FILE"
 
       ;;
   esac
@@ -119,10 +162,14 @@ for INPUT_PATH in "${ARGS[@]}"; do
   if [ -d "$INPUT_PATH" ]; then
     # Start timing for directory processing
     dir_start_time=$(date +%s.%N)
-    echo "Processing directory: $INPUT_PATH"
-     find "$INPUT_PATH" -type f -name "*.*" -not -name "*.metta" -print0 | while IFS= read -r -d $'\0' file; do
+    echo "Processing TSV files: $INPUT_PATH"
+    find "$INPUT_PATH" -type f -name "*.*" -not -name "*.metta" -not -name "*.obo" -not -name "*.json" -not -name "*.fa" -print0 | while IFS= read -r -d $'\0' file; do
        process_file "$file" "$FORCE"
-     done
+    done
+    echo "Processing Special files: $INPUT_PATH"
+    find "$INPUT_PATH" -type f \( -name "*.obo" -or -name "*.json" -or -name "*.fa" \) -print0 | while IFS= read -r -d $'\0' file; do
+       process_file "$file" "$FORCE"
+    done
     # End timing for directory processing
     dir_end_time=$(date +%s.%N)
     dir_elapsed_time=$(echo "$dir_end_time - $dir_start_time" | bc)
