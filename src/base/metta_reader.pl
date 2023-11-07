@@ -583,6 +583,9 @@ sym_or_num(E) --> rsymbol_maybe(``,E),!.
 %sym_or_num('#'(E)) --> [C],{atom_codes(E,[C])}.
 
 sym_or_num(E) --> dcg_xor(rsymbol(``,E),lnumber(E)),!.
+
+
+sym_or_num(E) --> dcg_xor(rsymbol(``,E),lnumber(E)),!.
 % sym_or_num('#'(E)) --> [C],{atom_codes(E,[C])}.
 
 

@@ -1454,7 +1454,7 @@ write_src1(V):- string(V),!, writeq(V).
 
 % Continuing with 'write_src1', 'write_mobj', and related rules,
 % handling different cases based on the value’s type and structure, and performing the appropriate writing action.
-write_src1(V):- symbol(V),needs_quoted_in_metta(V,_),!, symbol_string(V,S),writeq(S).
+write_src1(V):- symbol(V), should_quote(V),!, symbol_string(V,S),writeq(S).
 write_src1(V):- symbol(V),!,write(V).
 write_src1(V):- compound(V), \+ is_list(V),!,write_mobj(V).
 write_src1(V):- pp_sex(V),!.
@@ -1472,17 +1472,34 @@ write_mobj('$STRING',[S]):- !, writeq(S).
 write_mobj(F,Args):- mlog_sym(K),pp_sexi([K,F|Args]).
 
 % Rules for determining when a symbol needs to be quoted in metta.
-needs_quoted_in_metta(H,_):- upcase_atom(H,U),downcase_atom(H,U),!,fail.
-needs_quoted_in_metta('','"').
-needs_quoted_in_metta(V,'"'):- symbol_contains(V," ").
-needs_quoted_in_metta(V,'"'):- symbol_contains(V,"/").
-needs_quoted_in_metta(V,'"'):- symbol_contains(V,'"').
-needs_quoted_in_metta(V,'"'):- symbol_contains(V,'"').
-needs_quoted_in_metta(V,'"'):- symbol_contains(V,',').
-%needs_quoted_in_metta(V,"'"):- symbol_length(V,L),L==1.
-%needs_quoted_in_metta(V,"'"):- symbol_contains(V,")").
-needs_quoted_in_metta(V,'"'):- symbol_contains(V,"|").
-needs_quoted_in_metta(V,'"'):- symbol_contains(V,"'").
+should_quote(Atom) :-
+    atom(Atom),  % Ensure that the input is an atom
+    atom_chars(Atom, Chars),
+    once(should_quote_chars(Chars);should_quote_atom_chars(Atom,Chars)).
+
+contains_unescaped_quote(['"']):- !, fail. % End with a quote
+contains_unescaped_quote(['"'|_]) :- !.
+contains_unescaped_quote(['\\', '"'|T]) :- !, contains_unescaped_quote(T).
+contains_unescaped_quote([_|T]) :- contains_unescaped_quote(T).
+
+% Check if the list of characters should be quoted based on various conditions
+should_quote_chars([]).
+should_quote_chars(['"'|Chars]):- !, contains_unescaped_quote(Chars).
+should_quote_chars(Chars) :-
+      member('"', Chars);         % Contains quote not captured with above clause
+      member(' ', Chars);         % Contains space
+      member('''', Chars);        % Contains single quote
+      member('/', Chars);         % Contains slash
+      member(',', Chars);         % Contains comma
+      member('|', Chars).         % Contains pipe
+should_quote_atom_chars(Atom,[Digit|_]) :- char_type(Digit, digit), \+ atom_number(Atom,_).
+
+% Example usage:
+% ?- should_quote('123abc').
+% true.
+% ?- should_quote('123.456').
+% false.
+
 
 % =========================================
 %  STERM -> PTERM

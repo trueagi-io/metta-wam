@@ -37,7 +37,7 @@ wget --no-parent -A .gz -r -P ./data/ http://$PRECOMPUTED_URL
 # set our precomputed loc
 export PRECOMPUTED_LOC=./data/$PRECOMPUTED_URL
 
-# see if the server gave us duplicated files
+# see if the server gave us duplicated files (usually two files!)
 find $PRECOMPUTED_LOC -type f -name '*_fb_*' -exec bash -c 'if [[ -f ${1/_fb_????_??/} ]]; then ls -l ${1}; ls -l ${1/_fb_????_??/};  echo "Will delete:" ${1/_fb_????_??/}; fi' _ {} \;
 
 # delete the more ambiguous duplicated files
@@ -59,17 +59,17 @@ find $PRECOMPUTED_LOC -name "*.fb" -exec sed -i -e 's/FB:FB/FB/g' {} \;
 find $PRECOMPUTED_LOC -name "*.json" -exec sed -i -e 's/FLYBASE:FB/FB/g' {} \;
 
 
-
 ```
 
 #### Completely Optional
 
-For testing/viewing to see how we see the flybase as MeTTa or loading it into Rust Space instead of VSpace.
+For testing/viewing to see how we see the flybase as MeTTa.
+Or to load it into a Rust Space instead of VSpace.
 
 ```
 
 # takes around 8 minutes
-./scripts/cvt_to_metta.sh ./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/
+./scripts/convert_to_metta.sh ./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/
 
 # to get an atoms count (should be at least 56 million)
 find ./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/ -type f -name "*.metta" -exec wc -l {} +

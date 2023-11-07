@@ -77,11 +77,12 @@ set_debug(Flag,false):- nodebug(metta(Flag)),flag_to_var(Flag,Var),set_option_va
 if_trace(Flag,Goal):- catch(ignore((is_debugging(Flag),Goal)),E,wdmsg(E-->if_trace(Flag,Goal))).
 
 is_debugging(Flag):- var(Flag),!,fail.
-is_debugging(Flag):- \+ atom(Flag), flag_to_var(Flag,Var), atom(Var),!,is_debugging(Var).
-is_debugging(Flag):- debugging(Flag),!.
-is_debugging(Flag):- debugging(metta(Flag)),!.
-is_debugging(Flag):- flag_to_var(Flag,Var),!,option_value(Var,true).
+is_debugging(Flag):- debugging(metta(Flag),TF),!,TF==true.
+is_debugging(Flag):- debugging(Flag,TF),!,TF==true.
+is_debugging(Flag):- flag_to_var(Flag,Var),
+   (option_value(Var,true)->true;(Flag\==Var -> is_debugging(Var))).
 
+:- nodebug(metta(overflow)).
 
 eval_args0000(Depth,_Slf,X,Y):- Depth<1,!,X=Y, (\+ is_debugging(overflow)-> true; flag(eval_num,_,0),set_debug((eval),true)).
 %eval_args0000(_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
@@ -89,17 +90,16 @@ eval_args0000(Depth,Self,X,Y):-
   copy_term(X,XX),
   Depth2 is Depth-1,
   call_nth(eval_args11(Depth,Self,X,M),Nth),
-  ((is_bool_or_same(XX,M))
+  (is_bool_or_same(XX,M)
           -> (!, (Nth=1->Y=M;fail) )
             ;  eval_args0000(Depth2,Self,M,Y)),
   nonvar(Y).
 
 is_bool_or_same( X,M):- X=@=M,!.
-is_bool_or_same( _,_):- !, fail.
-is_bool_or_same( _,_):- !, fail.
+%is_bool_or_same( _,_):- !, fail.
 is_bool_or_same( X,_):- \+ ground(X),!,fail.
 is_bool_or_same(_X,M):- \+ atomic(M),!,fail.
-%is_bool_or_same( X,'True'):- ground(X),!.
+is_bool_or_same( X,'True'):- !, ground(X).
 is_bool_or_same(_X,M):- is_bool_or(M).
 % if `True` is not commented, we fail two tests in examples/compat/test_scripts/b4_nondeterm.metta
 %is_bool_or('True').

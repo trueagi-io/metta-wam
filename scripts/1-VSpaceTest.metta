@@ -1,5 +1,5 @@
 ﻿
-!(extend-py! metta_learner)
+!(extend-py! metta_vspace/metta_learner)
 
 
 

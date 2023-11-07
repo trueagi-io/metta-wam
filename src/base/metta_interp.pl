@@ -378,7 +378,7 @@ load_metta_file(Self,Filemask):- atom_concat(_,'.metta',Filemask),!, load_metta(
 load_metta_file(_Slf,Filemask):- load_flybase(Filemask).
 
 cmdline_load_metta(Self,[Filemask|Rest]):- atom(Filemask), \+ atom_concat('-',_,Filemask),
-  must_det_ll((Src=load_metta_file(Self,Filemask),nl,write_src(Src),nl,catch_red(Src),!,flush_output,
+  must_det_ll((Src=load_metta_file(Self,Filemask),nl,write('; '),write_src(Src),nl,catch_red(Src),!,flush_output,
   cmdline_load_metta(Self,Rest))).
 
 cmdline_load_metta(Self,['-g',M|Rest]):-
@@ -389,6 +389,7 @@ cmdline_load_metta(Self,[M|Rest]):-
   m_opt(M,Opt),!,
   is_cmd_option(Opt,M,TF),!,
   write(' ; '), writeq(is_cmd_option(Opt,M,TF)), nl, !, set_option_value(Opt,TF),
+  set_tty_color_term(true),
   do_cmdline_load_metta(Self,Rest).
 
 cmdline_load_metta(Self,[M|Rest]):-
@@ -396,6 +397,10 @@ cmdline_load_metta(Self,[M|Rest]):-
   cmdline_load_metta(Self,Rest).
 cmdline_load_metta(_,Nil):- Nil==[],!.
 
+set_tty_color_term(TF):-
+  current_output(X),set_stream(X,tty(TF)),
+  set_stream(current_output,tty(TF)),
+  set_prolog_flag(color_term ,TF).
 
 m_opt(M,Opt):-
   m_opt0(M,Opt1),
@@ -441,7 +446,9 @@ tee_file(TEE_FILE):- metta_dir(Dir),directory_file_path(Dir,'TEE.ansi',TEE_FILE)
 metta_dir(Dir):- getenv('METTA_DIR',Dir),!.
 
 load_metta(Filename):-
- clear_spaces, load_metta('&self',Filename).
+ %clear_spaces,
+ load_metta('&self',Filename).
+
 
 load_metta(Self,Filename):-
  atom(Filename),exists_file(Filename),!,
@@ -661,6 +668,32 @@ maybe_read_pl(In,Read):-
 peek_line(In,Line1):- peek_string(In, 1024, Str), split_string(Str, "\r\n", "\s", [Line1,_|_]),!.
 peek_line(In,Line1):- peek_string(In, 4096, Str), split_string(Str, "\r\n", "\s", [Line1,_|_]),!.
 
+
+
+
+
+%read_line_to_sexpr(Stream,UnTyped),
+read_sform(S,F):-
+  read_sform1(S,F1),
+  ( F1\=='!' -> F=F1 ;
+    (read_sform1(S,F2), F = exec(F2))).
+
+read_sform1(S,F):- at_end_of_stream(S),!,F=end_of_file.
+read_sform1(S,M):- peek_char(S,C),read_sform3(C,S,F), untyped_to_metta(F,M).
+%read_sform1(S,F):- profile(parse_sexpr_metta(S,F)).
+
+read_sform3(C,S,F):- char_type(C,white),get_char(S,_),!,read_sform1(S,F).
+read_sform3(';',S,'$COMMENT'(F,0,0)):- !, read_line_to_string(S,F).
+read_sform3(';',S,F):- read_line_to_string(S,_),!,read_sform1(S,F).
+read_sform3('!',S,exec(F)):- !,get_char(S,_),read_sform1(S,F).
+read_sform3(_,S,F):- read_line_to_string(S,L),!,read_sform_cont(L,S,F).
+
+read_sform_cont(L,S,F):- L=="", !, read_sform1(S,F).
+read_sform_cont(L,_S,F):- input_to_forms(L,F),!.
+read_sform_cont(L,S,F):- read_line_to_string(S,L2),
+  atomic_to_string([L,' ',L2],L3),read_sform_cont(L3,S,F),!.
+
+read_metta(In,Read):- !, read_sform(In,Read).
 read_metta(In,Read):-
  read_metta1(In,Read1),
   (Read1=='!'
@@ -699,7 +732,9 @@ mfix_vars1(I,O):- I=='F',!,O='False'.
 mfix_vars1(I,O):- I=='Nil',!,O=[].
 mfix_vars1(I,O):- I=='true',!,O='True'.
 mfix_vars1(I,O):- I=='false',!,O='False'.
-mfix_vars1('$STRING'(I),O):- !, text_to_string(I,O).
+mfix_vars1('$STRING'(I),O):- option_value(strings,true),!, mfix_vars1(I,O).
+mfix_vars1('$STRING'(I),O):- !, mfix_vars1(I,M),name(O,M),!.
+%mfix_vars1('$STRING'(I),O):- !, mfix_vars1(I,M),name(O,M),!.
 mfix_vars1([H|T],O):-   H=='[', is_list(T), last(T,L),L==']',append(List,[L],T), !, O = ['[...]',List].
 mfix_vars1([H|T],O):-   H=='{', is_list(T), last(T,L),L=='}',append(List,[L],T), !, O = ['{...}',List].
 mfix_vars1('$OBJ'(claz_bracket_vector,List),O):- is_list(List),!, O = ['[...]',List].
@@ -868,7 +903,10 @@ connlf:- check_silent_loading, format('~N').
 connl:- check_silent_loading,nl.
 % check_silent_loading:- silent_loading,!,trace,break.
 check_silent_loading.
-silent_loading:- option_value('trace-on-load',false).
+silent_loading:- is_converting,!.
+silent_loading:- \+ option_value('trace-on-load',true), !.
+
+
 
 uncompound(OBO,Src):- \+ compound(OBO),!, Src = OBO.
 uncompound('$VAR'(OBO),'$VAR'(OBO)):-!.
@@ -1310,6 +1348,7 @@ maybe_halt(Seven):- wdmsg(maybe_halt(Seven)).
 
 is_compiling:- current_prolog_flag(os_argv,ArgV),member(E,ArgV),E==qcompile_mettalog,!.
 is_compiled:- current_prolog_flag(os_argv,ArgV),\+ member('swipl',ArgV),!.
+is_converting:- option_value('convert',true),!.
 is_converting:- current_prolog_flag(os_argv,ArgV), member('--convert',ArgV),!.
 show_os_argv:- current_prolog_flag(os_argv,ArgV),write('; '),writeln(ArgV).
 

@@ -413,11 +413,11 @@ load_flybase_files:-
 
 load_flybase_das_11:-
   % DAS's 11 tsv and 1 json file
+  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/*/ncRNA_genes_fb_*.json'),
   load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/*/fbgn_fbtr_fbpp_expanded_fb_*.tsv'),
   load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/*/physical_interactions_mitab_fb_*.tsv'),
   load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/*/dmel_gene_sequence_ontology_annotations_fb_*.tsv'),
   load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/*/gene_map_table_fb_*.tsv'),
-  load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/*/ncRNA_genes_fb_*.json'),
   load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/*/gene_association_*.fb',tsv),
   load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/*/gene_genetic_interactions_fb_*.tsv'),
   load_flybase('./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/*/allele_genetic_interactions_fb_*.tsv'),
@@ -1196,43 +1196,25 @@ load_flybase(Ext,File,Fn):-
   retract(load_state(File,loading)),
   assert(load_state(File,loaded)),fb_stats.
 
-load_metta_fast(_Self,_File,Stream):-
-   repeat,
-    read_sform(Stream,Forms),
-    (Forms == end_of_file -> true;
-      (writeq(Forms),nl,fail)).
 
-%read_line_to_sexpr(Stream,UnTyped),
-read_sform(S,F):-
-  read_sform1(S,F1),
-  ( F1\=='!' -> F=F1 ;
-    (read_sform1(S,F2), F = exec(F2))).
-
-read_sform1(S,F):- read_line_to_string(S,L),!,read_sform_cont(L,S,F).
-read_sform1(S,F):- profile(parse_sexpr_metta(S,F)).
-
-
-
-read_sform_cont(L,_S,F):- input_to_forms(L,F),!.
-read_sform_cont(L,S,F):- read_line_to_string(S,L2),
-  atomic_to_string([L,' ',L2],L3),read_sform_cont(L3,S,F),!.
-
-load_metta_fast(File):-
-  setup_call_cleanup(open(File,read,Stream,[]),
-     load_metta_fast('&self',File,Stream),
-     close(Stream)).
 
 load_flybase_ext(_Ext,File,_Fn):-  atom_concat(File,'.metta',MFile),
-   exists_file(MFile),!,current_predicate(load_metta/2),!,load_metta_fast(MFile).
+   exists_file(MFile), \+ is_converting, !,load_flybase_metta(MFile).
 load_flybase_ext(Ext,File, Fn):-  Ext==json,!,load_fb_json(Fn,File),!.
 load_flybase_ext(Ext,File, Fn):-  Ext==fa,!,load_fb_fa(Fn,File),!.
 load_flybase_ext(Ext,File,_Fn):-  Ext==obo,current_predicate(load_obo/1),!,load_obo(File).
-load_flybase_ext(Ext,File,_Fn):-  Ext==metta,current_predicate(load_metta/2),!,load_metta('&self',File).
+load_flybase_ext(Ext,File,_Fn):-  Ext==metta,current_predicate(load_metta/2),!,load_flybase_metta(File).
 load_flybase_ext(Ext,File, Fn):-  file_to_sep(Ext,Sep),!,
   track_load_into_file(File,
    setup_call_cleanup(open(File,read,Stream), load_flybase_sv(Sep,File,Stream,Fn), close(Stream))),!.
 load_flybase_ext(Ext,File, Fn):-  fbug(missed_loading_flybase(Ext,File,Fn)),!.
 
+load_flybase_metta(File):- !,
+     load_metta('&flybase',File).
+
+load_flybase_metta(File):-
+   with_option('trace-on-load',false,
+                  load_metta('&flybase',File)).
 
 
 fix_list_args(_,_,Y,Y):- option_value(early_canon,[]), \+ should_sample,!.
