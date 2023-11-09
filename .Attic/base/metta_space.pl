@@ -337,7 +337,7 @@ pp_sex(V) :- no_src_indents,!,pp_sexi(V).
 
 pp_sex(V) :- w_proper_indent(2,w_in_p(pp_sexi(V))).
 
-no_src_indents:- option_else(src_indents,TF,true),!,TF==false.
+no_src_indents:- option_else(src_indents,TF,true),!,TF=='False'.
 
 pp_sexi_l([H,S]):-H=='[...]', write('['),print_items_list(S),write(' ]').
 pp_sexi_l([H,S]):-H=='{...}', write('{'),print_items_list(S),write(' }').

@@ -54,7 +54,7 @@ du -hs $PRECOMPUTED_LOC
 
 # For all files instead of using FBte:0000666  we will use FBte0000666  (since that is how it is used in the TSV files)
 # Also flybase:FBte0000666  will become FBte0000666 (mostly it only happens in strings)
-find $PRECOMPUTED_LOC -type f -exec sed -i -e 's/\(FB[a-z]\{2\}\):\([0-9]\)/\1\2/g' -e 's/flybase:\([A-Za-z]\)/\1/g' {} \;
+find $PRECOMPUTED_LOC -type f -exec sed -i -e 's/\(FB[a-z]\{2\}\):\([0-9]\)/\1\2/g' -e 's/[Ff][Ll][Yy][Bb][Aa][Ss][Ee]:\([A-Za-z]\)/\1/g' {} \;
 find $PRECOMPUTED_LOC -name "*.fb" -exec sed -i -e 's/FB:FB/FB/g' {} \;
 find $PRECOMPUTED_LOC -name "*.json" -exec sed -i -e 's/FLYBASE:FB/FB/g' {} \;
 

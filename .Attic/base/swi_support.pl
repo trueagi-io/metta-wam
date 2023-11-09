@@ -28,6 +28,7 @@ is_scryer:- \+  current_prolog_flag(libswipl,_).
 :- create_prolog_flag(max_disk_cache,inf,[keep(true),access(read_write),type(term)]).
 :- create_prolog_flag(samples_per_million,inf,[keep(true),access(read_write),type(term)]).
 
+with_cwd(Dir,Goal):- Dir == '.',!,setup_call_cleanup(working_directory(X, X), Goal, working_directory(_,X)).
 with_cwd(Dir,Goal):- setup_call_cleanup(working_directory(X, Dir), Goal, working_directory(_,X)).
 
 with_option([],G):-!,call(G).
@@ -44,14 +45,23 @@ was_option_value(N,V):- nb_current(N,VV),VV\==[],!,V=VV.
 was_option_value(N,V):- current_prolog_flag(N,VV),!,V=VV.
 was_option_value(N,V):- prolog_load_context(N,VV),!,V=VV.
 
-option_else( N,V,_Else):- was_option_value(N,VV),!,VV=V.
-option_else(_N,V, Else):- !,V=Else.
+option_else(N,V,Else):- notrace(option_else0(N,V,Else)).
+option_else0( N,V,_Else):- was_option_value(N,VV),!,VV=V.
+option_else0(_N,V, Else):- !,V=Else.
 
-option_value( N,V):- nonvar(V), option_value( N,VV), p2m(VV,V1),p2m(V,V2),!,equal_enough(V1,V2).
-option_value( N,V):- option_else( N,V ,[]).
+option_value(N,V):- notrace(option_value0(N,V)).
+option_value0( N,V):- nonvar(V), option_value0( N,VV), !, p2m(VV,V1),p2m(V,V2),!,V1=V2.%equal_enough(V1,V2).
+option_value0( N,V):- option_else0( N,V ,[]).
 
+p2mE(NA,NA):- \+ atom(NA),!.
+p2mE(false,'False').
+p2mE(true,'True').
+p2mE(E,E).
 set_option_value(N,V):-
-   catch(nb_setval(N,V),E,fbug(E)),
+  set_option_value0(N,V).
+set_option_value0(N,V):-
+   p2mE(V,VV),!,
+   catch(nb_setval(N,VV),E,fbug(E)),
    catch(create_prolog_flag(N,V,[keep(false),access(read_write), type(term)]),E,fbug(E)),
    catch(set_prolog_flag(N,V),E,fbug(E)),!.
 

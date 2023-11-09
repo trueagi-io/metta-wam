@@ -93,7 +93,7 @@ eval_args0000(Depth,Self,X,Y):-
   (is_bool_or_same(XX,M)
           -> (!, (Nth=1->Y=M;fail) )
             ;  eval_args0000(Depth2,Self,M,Y)),
-  nonvar(Y).
+  nop(nonvar(Y)).
 
 is_bool_or_same( X,M):- X=@=M,!.
 %is_bool_or_same( _,_):- !, fail.
@@ -532,15 +532,17 @@ eval_args1(Depth,Self,[F|Args],Res):- is_list(F),
 eval_args1(Depth,Self,[F|Args],Res):- is_list(F), Args\==[],
   append(F,Args,FArgs),!,eval_args(Depth,Self,FArgs,Res).
 */
-eval_args1(_Dpth,Self,['import!',Other,File],RetVal):- into_space(Self,Other,Space),!, include_metta(Space,File),!,return_empty(Space,RetVal). %RetVal=[].
+eval_args1(_Dpth,Self,['import!',Other,File],RetVal):-
+  must_det_ll(( into_space(Self,Other,Space),!, include_metta(Space,File),!,return_empty(Space,RetVal))). %RetVal=[].
 eval_args1(Depth,Self,['bind!',Other,Expr],RetVal):-
-   into_name(Self,Other,Name),!,eval_args(Depth,Self,Expr,Value),nb_setval(Name,Value),  return_empty(Value,RetVal).
+   must_det_ll((into_name(Self,Other,Name),!,eval_args(Depth,Self,Expr,Value),nb_setval(Name,Value),  return_empty(Value,RetVal))).
 eval_args1(Depth,Self,['pragma!',Other,Expr],RetVal):-
-   into_name(Self,Other,Name),!,nd_ignore((eval_args(Depth,Self,Expr,Value),set_option_value(Name,Value))),  return_empty(Value,RetVal).
-eval_args1(_Dpth,Self,['transfer!',File],RetVal):- !, include_metta(Self,File),  return_empty(Self,RetVal).
+   must_det_ll((into_name(Self,Other,Name),!,nd_ignore((eval_args(Depth,Self,Expr,Value),set_option_value(Name,Value))),  return_empty(Value,RetVal))).
+eval_args1(_Dpth,Self,['transfer!',File],RetVal):- !, must_det_ll((include_metta(Self,File),  return_empty(Self,RetVal))).
 
 nd_ignore(Goal):- call(Goal)*->true;true.
 
+eval_args1(Depth,Self,['::'|Expr],Expr):- !.
 eval_args1(Depth,Self,['nop',Expr],Empty):- !,  eval_args(Depth,Self,Expr,_), return_empty([],Empty).
 eval_args1(_Dpth,_Slf,['nop'],Empty):- !, return_empty([],Empty).
 eval_args1(Depth,Self,['do',Expr],Empty):- !,  eval_args(Depth,Self,Expr,_), return_empty([],Empty).
@@ -563,11 +565,11 @@ eval_args1(Depth,Self,['or',X,Y],TF):- !, as_tf((eval_args(Depth,Self,X,'True');
 
 
 
-eval_args1(_Dpth,Self,['add-atom',Other,PredDecl],TF):- !, into_space(Self,Other,Space), as_tf(do_metta(Space,load,PredDecl),TF).
-eval_args1(_Dpth,Self,['remove-atom',Other,PredDecl],TF):- !, into_space(Self,Other,Space), as_tf(do_metta(Space,unload,PredDecl),TF).
-eval_args1(_Dpth,Self,['atom-count',Other],Count):- !, into_space(Self,Other,Space), findall(_,metta_defn(Other,_,_),L1),length(L1,C1),findall(_,metta_atom(Space,_),L2),length(L2,C2),Count is C1+C2.
-eval_args1(_Dpth,Self,['atom-replace',Other,Rem,Add],TF):- !, into_space(Self,Other,Space), copy_term(Rem,RCopy),
-  as_tf((metta_atom_iter_ref(Space,RCopy,Ref), RCopy=@=Rem,erase(Ref), do_metta(Other,load,Add)),TF).
+eval_args1(_Dpth,Self,['add-atom',Other,PredDecl],TF):- !,must_det_ll(( into_space(Self,Other,Space), as_tf(do_metta(Space,load,PredDecl),TF))).
+eval_args1(_Dpth,Self,['remove-atom',Other,PredDecl],TF):- !,must_det_ll(( into_space(Self,Other,Space), as_tf(do_metta(Space,unload,PredDecl),TF))).
+eval_args1(_Dpth,Self,['atom-count',Other],Count):- !,must_det_ll(( into_space(Self,Other,Space), findall(_,metta_defn(Other,_,_),L1),length(L1,C1),findall(_,metta_atom(Space,_),L2),length(L2,C2),Count is C1+C2)).
+eval_args1(_Dpth,Self,['atom-replace',Other,Rem,Add],TF):- !, must_det_ll((into_space(Self,Other,Space), copy_term(Rem,RCopy),
+  as_tf((metta_atom_iter_ref(Space,RCopy,Ref), RCopy=@=Rem,erase(Ref), do_metta(Other,load,Add)),TF))).
 
 
 eval_args1(Depth,Self,['+',N1,N2],N):- number(N1),!,
@@ -626,7 +628,7 @@ eval_args2(Depth,Self,[H|PredDecl],Res):-
    eval_args30(Depth,Self,[H|PredDecl],Res).
 
 % function inherited by system
-eval_args2(Depth,Self,PredDecl,Res):- eval_args40(Depth,Self,PredDecl,Res).
+eval_args2(Depth,Self,PredDecl,Res):- show_call(eval_args40(Depth,Self,PredDecl,Res)).
 
 
 last_element(T,E):- \+ compound(T),!,E=T.
@@ -636,8 +638,8 @@ last_element(T,E):- compound_name_arguments(T,_,List),last_element(List,E),!.
 
 
 
-catch_warn(G):- notrace(catch(G,E,(wdmsg(catch_warn(G)-->E),fail))).
-catch_nowarn(G):- notrace(catch(G,error(_,_),fail)).
+catch_warn(G):- quietly(catch(G,E,(wdmsg(catch_warn(G)-->E),fail))).
+catch_nowarn(G):- quietly(catch(G,error(_,_),fail)).
 
 as_tf(G,TF):- catch_nowarn((call(G)*->TF='True';TF='False')).
 eval_selfless(['==',X,Y],TF):- as_tf(X=:=Y,TF),!.
@@ -820,16 +822,29 @@ sub_sterm1(Sub,Term):- arg(_,Term,SL),sub_sterm(Sub,SL).
 %not_compound(Term):- \+ is_list(Term),!.
 %eval_args2(Depth,Self,Term,Res):- maplist(not_compound,Term),!,eval_args345(Depth,Self,Term,Res).
 
-
+eval_args40(Depth,Self,FX,FY):- eval_args44(Depth,Self,FX,FY).
 % function inherited by system
-eval_args40(Depth,Self,[F|X],FY):- is_function(F), \+ is_special_op(F), is_list(X),
-  maplist(eval_args(Depth,Self),X,Y),!,eval_args5(Depth,Self,[F|Y],FY).
-eval_args40(Depth,Self,FX,FY):- eval_args5(Depth,Self,FX,FY).
+eval_args40(Depth,Self,[F|X],FY):-
+  adjust_args(Depth,Self,F,X,Eval),
+  eval_args45(Depth,Self,Eval,FY).
 
-eval_args5(_Dpth,_Slf,[F|LESS],Res):- once(eval_selfless([F|LESS],Res)),mnotrace(([F|LESS]\==Res)),!.
-eval_args5(Depth,Self,[AE|More],TF):- length(More,Len),
-  (is_syspred(AE,Len,Pred),catch_warn(as_tf(apply(Pred,More),TF)))*->true;eval_args6(Depth,Self,[AE|More],TF).
-eval_args6(_Dpth,_Slf,[AE|More],TF):- length([AE|More],Len), is_syspred(AE,Len,Pred),append(More,[TF],Args),!,catch_warn(apply(Pred,Args)).
+adjust_args(Depth,Self,F,X,[F|Y]):-
+  is_function(F), \+ is_special_op(F), is_list(X),
+  maplist(eval_args(Depth,Self),X,Y),!.
+adjust_args(Depth,Self,F,X,[F|Y]):-
+  maplist(as_prolog(Depth,Self),X,Y),!.
+
+as_prolog(_Dpth,_Slf,I,O):- \+ iz_conz(I),!,I=O.
+as_prolog(Depth,Self,[H|T],O):- H=='::',!,as_prolog(Depth,Self,T,O).
+as_prolog(Depth,Self,[H|T],[HH|TT]):- as_prolog(Depth,Self,H,HH),as_prolog(Depth,Self,T,TT).
+
+
+
+eval_args44(_Dpth,_Slf,[F|LESS],Res):- once(eval_selfless([F|LESS],Res)),mnotrace(([F|LESS]\==Res)),!.
+eval_args45(Depth,Self,[AE|More],TF):- length(More,Len),
+  (is_syspred(AE,Len,Pred),catch_warn(as_tf(apply(Pred,More),TF)))*->true;eval_args46(Depth,Self,[AE|More],TF).
+eval_args46(_Dpth,_Slf,[AE|More],TF):- length([AE|More],Len), is_syspred(AE,Len,Pred),append(More,[TF],Args),!,
+  catch_warn(apply(Pred,Args)).
 
 %eval_args40(Depth,Self,[X1|[F2|X2]],[Y1|Y2]):- is_function(F2),!,eval_args(Depth,Self,[F2|X2],Y2),eval_args(Depth,Self,X1,Y1).
 
