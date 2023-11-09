@@ -324,7 +324,7 @@ intern_and_eval(UTC,'$intern_and_eval'(UTC)).
 % Use DCG for parser.
 
 %file_sexpr_with_comments(O) --> [], {clause(t_l:s_reader_info(O),_,Ref),erase(Ref)},!.
-%file_sexpr_with_comments(C) --> !, zalwayzz(s_line_metta(C)), !.
+
 
 file_sexpr_with_comments(end_of_file) --> file_eof,!.
 file_sexpr_with_comments(O) --> one_blank,!,file_sexpr_with_comments(O),!.  % WANT?
@@ -507,6 +507,7 @@ sexpr0('$STRING'(S))             --> s_string(S),!.
 
 /******** BEGIN HASH ************/
 
+sexpr0('#')                 --> `#`, swhite,!.
 sexpr0('#\\'(35))                 --> `#\\#`,!, swhite.
 sexpr0(E)                      --> `#`,read_dispatch(E),!.
 
@@ -549,6 +550,8 @@ sexpr0(OBJ)--> `#<`,!,zalwayzz(ugly_sexpr_cont(OBJ)),!.
 /*********END HASH ***********/
 
 sexpr0(Sym) --> `#`,integer(N123), swhite,!, {atom_concat('#',N123,Sym)}.
+sexpr0(E)                      --> sym_or_num(E), swhite,!.
+sexpr0(C) --> s_item_metta(C, e_o_s). %s_line_metta(C), !.
 sexpr0(E)                      --> !,zalwayzz(sym_or_num(E)), swhite,!.
 
 is_scm:- fail.

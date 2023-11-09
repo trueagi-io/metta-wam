@@ -984,10 +984,10 @@ def s2m1(circles,swip_obj, depth=0):
         if isinstance(sval, Variable):
            n = swip_obj.chars
            mname = sv2mv(n) if n else "$Var"
-           V = V(mname)
+           mV = V(mname)
            circles[mname] = swip_obj
-           circles[id(V)] = swip_obj
-           circles[swip_obj] = V
+           circles[id(mV)] = swip_obj
+           circles[swip_obj] = mV
         return s2m(circles,sval)
 
     if isinstance(swip_obj, Functor):
@@ -1096,7 +1096,7 @@ def m2s1(circles, metta_obj, depth=0, preferStringToAtom = None, preferListToCom
         #if preferStringToAtom: return name
         return swipAtom(name)
 
-    V = None
+    sV = None
 
     if isinstance(metta_obj, VariableAtom):
         oid = mv2svn(metta_obj)
@@ -1106,11 +1106,11 @@ def m2s1(circles, metta_obj, depth=0, preferStringToAtom = None, preferListToCom
             #print(f"{oid}={len(circles)}={type(circles)}={type(metta_obj)}")
             return var
 
-        V = Variable(name = oid)
-        circles["$" + oid] = V
-        circles[metta_obj] = V
-        circles[V] = metta_obj
-        return V
+        sV = Variable(name = oid)
+        circles["$" + oid] = sV
+        circles[metta_obj] = sV
+        circles[sV] = metta_obj
+        return sV
 
     oid = id(metta_obj)
 
@@ -1125,21 +1125,29 @@ def m2s1(circles, metta_obj, depth=0, preferStringToAtom = None, preferListToCom
     elif isinstance(metta_obj, ExpressionAtom):
         L = list_to_termv(circles,metta_obj.get_children(),depth+1)
     elif isinstance(metta_obj, tuple):
-        L = list_to_termv(circles,metta_obj,depth+1)
+        L = list_to_termv(circles,tuple_to_list(metta_obj),depth+1)
     else:
         raise ValueError(f"Unknown MeTTa object type_1: {metta_obj} {type(metta_obj)} {dir(metta_obj)}")
 
     if depth==0:
-        V = Variable()
-        V.unify(L)
-        circles[oid] = V
-        circles[V] = metta_obj
-        circles[metta_obj] = V
-        return V
+        sV = Variable()
+        sV.unify(L)
+        circles[oid] = sV
+        circles[sV] = metta_obj
+        circles[metta_obj] = sV
+        return sV
 
     circles[L] = metta_obj
     circles[metta_obj] = L
     return L
+
+def tuple_to_list(t):
+    return list(map(tuple_to_list, t)) if isinstance(t, (tuple, list)) else t
+
+# Example usage:
+#nested_tuple = (1, 2, (3, 4, (5, 6)), 7)
+#converted_list = tuple_to_list(nested_tuple)
+#print(converted_list)  # Output will be [1, 2, [3, 4, [5, 6]], 7]
 
 def mv2svn(metta_obj):
     named = metta_obj.get_name().replace('$','_')

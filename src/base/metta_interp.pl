@@ -457,7 +457,7 @@ load_metta(Self,Filename):-
     ((directory_file_path(Directory, BaseName, Filename),
       assert(metta_file(Self,Filename,Directory)),
       with_cwd(Directory,
-         load_metta_stream(BaseName,Self,In)))),close(In))).
+         load_metta_file_stream(BaseName,Self,In)))),close(In))).
 
 load_metta(_Self,Filename):- Filename=='--repl',!,repl.
 load_metta(Self,Filename):-
@@ -465,15 +465,16 @@ load_metta(Self,Filename):-
   with_wild_path(load_metta(Self),Filename),!,loonit_report.
 
 include_metta(Self,Filename):-
- atom(Filename),exists_file(Filename),!,
-   setup_call_cleanup(open(Filename,read,In),
+  (\+ atom(Filename); \+ exists_file(Filename)),!,
+  must_det_ll(with_wild_path(include_metta(Self),Filename)),!.
+include_metta(Self,Filename):-
+ must_det_ll((
+ atom(Filename),exists_file(Filename))),!,
+   must_det_ll((setup_call_cleanup(open(Filename,read,In),
     ((directory_file_path(Directory, BaseName, Filename),
       assert(metta_file(Self,Filename,Directory)),
       with_cwd(Directory,
-         load_metta_stream(BaseName,Self,In)))),close(In)).
-include_metta(Self,Filename):-
-  (\+ atom(Filename); \+ exists_file(Filename)),!,
-  with_wild_path(include_metta(Self),Filename),!.
+        must_det_ll( load_metta_file_stream(BaseName,Self,In))))),close(In)))).
 
 
 clear_spaces:- clear_space(_).
@@ -504,24 +505,25 @@ write_f_src(HB):-
   (CST == ST -> true ; (nl,nl,nl,set_option_value(current_def,ST))),
   write_src(HB).
 
-load_metta_stream(_Base,Self,In):-
+load_metta_file_stream(FileName,Self,In):-
+  with_option(loading_file,FileName,
    %current_exec_file(BaseName),
-   current_exec_file(BaseName),
-   set_exec_num(BaseName,1), load_answer_file(BaseName), !, set_exec_num(BaseName,1), load_metta_stream(Self,In).
-load_metta_stream(Fn,String):- string(String),!,open_string(String,Stream),load_metta_stream(Fn,Stream).
+   must_det_ll((current_exec_file(BaseName),
+   set_exec_num(BaseName,1), load_answer_file(BaseName), !, set_exec_num(BaseName,1), load_metta_stream(Self,In)))).
+load_metta_stream(Fn,String):- string(String),!,open_string(String,Stream),must_det_ll(load_metta_stream(Fn,Stream)).
 load_metta_stream(_Fn,In):- (at_end_of_stream(In)/*;reached_file_max*/),!.
 load_metta_stream(Self,In):-
  repeat,
-  once(read_metta(In,Read)), %write_src(read_metta=Read),nl,
+  must_det_ll((once(read_metta(In,Read)), %write_src(read_metta=Read),nl,
   once(do_metta(Self,load,Read)),
-  flush_output,
+  flush_output)),
   at_end_of_stream(In),!.
 
 
 
 
-debug_only(G):- ignore(mnotrace(catch_warn(G))).
-debug_only(_What,G):- ignore((fail,mnotrace(catch_warn(G)))).
+debug_only(G):- notrace(ignore(catch_warn(G))).
+debug_only(_What,G):- ignore((fail,notrace(catch_warn(G)))).
 
 
 'True':- true.
@@ -611,43 +613,11 @@ repl_read(_Accumulated, Line, Read):- Line == end_of_file, !, Read = Line.
 repl_read(Accumulated, Line, Read) :- atomics_to_string([Accumulated," ",Line], NewAccumulated), !,
     repl_read(NewAccumulated, Read).
 
-repl_read(Read) :- mnotrace(repl_read("", Read)).
+repl_read(Read) :- notrace(repl_read("", Read)).
 
+add_history_string(Str):- ignore((add_history01(Str))),!.
 
-
-%repl:- option_value('repl',prolog),!,prolog.
-
-repl:- setup_call_cleanup(flag(repl_level,Was,Was+1),repl0,
-  (flag(repl_level,_,Was),(Was==0 -> maybe_halt(7) ; true))).
-repl0:-
-   mnotrace((current_input(In),ignore(catch(load_history,_,true)))),
-   repeat,
-   flag(eval_num,_,0),
-   mnotrace((with_option(not_a_reload,true,make),
-     ((nb_current(self_space,Self),Self\==[])->true;Self='&self'),
-     format('~N~n'), format(atom(P),'metta@~w: ',[Self]),
-     write(P))),
-   setup_call_cleanup(mnotrace(prompt(_,P)),
-      (mnotrace(read_metta(In,Read))),
-       nop(mnotrace(prompt(_,_Was)))),
-   catch_red(once(do_repl(Self,Read))),
-   mnotrace(Read==end_of_file),!.
-
-do_repl(_Self,end_of_file):- !. %, halt(7), writeln('\n\n% To restart, use: ?- repl.').
-do_repl(_Slf,call(Term)):- nop(add_history1(Term)), !, repl_call(Term).
-
-do_repl(Self,!):- !, mnotrace(repl_read(Exec)),do_repl(Self,exec(Exec)).
-
-do_repl(Self,Read):- mnotrace((string(Read),add_history_string(Read))),!,mnotrace(repl_read(Read,Term)),!, do_metta(Self,load,Term).
-
-do_repl(Self,exec(Exec)):- !, notrace(save_exec_history(Exec)), do_metta_exec(Self,Exec).
-do_repl(Self,Read):-
-  mnotrace(((with_output_to(string(H),write_src(Read)),add_history_string(H)))), do_metta(Self,load,Read).
-
-add_history_string(Str):- nop(ignore(catch_i(add_history01(Str)))),!.
-
-save_exec_history(exec(Exec)):- !, mnotrace((save_exec_history(Exec))).
-save_exec_history(Exec):- mnotrace((with_output_to(string(H),(write('!'),write_src(Exec))),add_history_string(H))).
+add_history_src(Exec):- notrace((with_output_to(string(H),with_indents(false,write_src(Exec))),add_history_string(H))).
 
 read_metta1(_,O2):- clause(t_l:s_reader_info(O2),_,Ref),erase(Ref).
 read_metta1(In,Read):- current_input(In0),In==In0,!, repl_read(Read).
@@ -673,11 +643,13 @@ peek_line(In,Line1):- peek_string(In, 4096, Str), split_string(Str, "\r\n", "\s"
 
 
 %read_line_to_sexpr(Stream,UnTyped),
+read_sform(Str,F):- trace, string(Str),open_string(Str,S),!,read_sform(S,F).
 read_sform(S,F):-
   read_sform1(S,F1),
   ( F1\=='!' -> F=F1 ;
     (read_sform1(S,F2), F = exec(F2))).
 
+read_sform1(Str,F):- string(Str),open_string(Str,S),!,read_sform1(S,F).
 read_sform1(S,F):- at_end_of_stream(S),!,F=end_of_file.
 read_sform1(S,M):- peek_char(S,C),read_sform3(C,S,F), untyped_to_metta(F,M).
 %read_sform1(S,F):- profile(parse_sexpr_metta(S,F)).
@@ -693,11 +665,17 @@ read_sform_cont(L,_S,F):- input_to_forms(L,F),!.
 read_sform_cont(L,S,F):- read_line_to_string(S,L2),
   atomic_to_string([L,' ',L2],L3),read_sform_cont(L3,S,F),!.
 
-read_metta(In,Read):- !, read_sform(In,Read).
+in2_stream(N1,S1):- integer(N1),!,stream_property(S1,file_no(N1)),!.
+in2_stream(N1,S1):- atom(N1),stream_property(S1,alias(N1)),!.
+in2_stream(N1,S1):- is_stream(N1),S1=N1,!.
+in2_stream(N1,S1):- atom(N1),stream_property(S1,file_name(N1)),!.
+is_same_streams(N1,N2):- in2_stream(N1,S1),in2_stream(N2,S2),!,S1==S2.
+
+%read_metta(In,Read):- current_input(CI), \+ is_same_streams(CI,In), !, read_sform(In,Read).
 read_metta(In,Read):-
  read_metta1(In,Read1),
   (Read1=='!'
-     -> (read_metta1(In,Read2), Read=exec(Read2), save_exec_history(Read))
+     -> (read_metta1(In,Read2), Read=exec(Read2), add_history_src(Read))
      ; Read = Read1),!.
 
 write_comment(_):- silent_loading,!.
@@ -861,6 +839,8 @@ preview_compiler:- \+ option_value('compile',false), !.
 
 :- dynamic(metta_atom/4).
 
+
+metta_atom(_, [F|List]):- fb_pred(F, Len), length(List,Len),apply(F,List).
 metta_atom(KB,[F,A|List]):- metta_atom(KB,F,A,List), F \== '='.
 metta_defn(KB,Head,Body):- metta_atom(KB,'=',Head,Body).
 
@@ -914,46 +894,51 @@ uncompound(IsList,Src):- is_list(IsList),!,maplist(uncompound,IsList,Src).
 uncompound([Is|NotList],[SrcH|SrcT]):-!, uncompound(Is,SrcH),uncompound(NotList,SrcT).
 uncompound(Compound,Src):- compound_name_arguments(Compound,Name,Args),maplist(uncompound,[Name|Args],Src).
 
-real_assert(OBO):- is_converting,!,print_src(OBO).
-real_assert(OBO):- assert(OBO).
+%real_assert(OBO):- is_converting,!,print_src(OBO).
+real_assert(OBO):- call(OBO),!.
+real_assert(OBO):- assert(OBO),
+  (is_converting->print_src(OBO);true).
 
 print_src(OBO):- format('~N'), uncompound(OBO,Src),!, write_src(Src).
 
 assert_to_metta(_):- reached_file_max,!.
-%assert_to_metta(OBO):- is_converting,!, print_src(OBO),!.
+assert_to_metta(OBO):- !, functor(OBO,Fn,A),decl_fb_pred(Fn,A), !,real_assert(OBO),!,incr_file_count(_),heartbeat.
+
 assert_to_metta(OBO):-
- functor(OBO,Fn,A),
  ignore(( A>=2,A<700,
- must_det_ll((
-  heartbeat,
   OBO=..[Fn|Cols],
+ must_det_ll((
   make_assertion4(Fn,Cols,Data,OldData),
   functor(Data,FF,AA),
   decl_fb_pred(FF,AA),
   ((fail,call(Data))->true;(
-   must_det_ll((real_assert(Data),incr_file_count(_),
+   must_det_ll((
+     real_assert(Data),
+     incr_file_count(_),
      ignore((((should_show_data(X),
-       ignore((OldData\==Data,write('; oldData '),write_src(OldData),format('  ; ~w ~n',[X]))),
+       ignore((fail,OldData\==Data,write('; oldData '),write_src(OldData),format('  ; ~w ~n',[X]))),
        write_src(Data),format('  ; ~w ~n',[X]))))),
      ignore((
        fail, option_value(output_stream,OutputStream),
        is_stream(OutputStream),
        should_show_data(X1),X1<1000,must_det_ll((display(OutputStream,Data),writeln(OutputStream,'.'))))))))))))),!.
 
-assert_MeTTa(_):- reached_file_max,!.
-assert_MeTTa(OBO):- assert_to_metta(OBO),!.
+assert_MeTTa(OBO):- !, assert_to_metta(OBO).
+%assert_MeTTa(OBO):- !, assert_to_metta(OBO),!,heartbeat.
+/*
 assert_MeTTa(Data):- !, heartbeat, functor(Data,F,A), A>=2,
    decl_fb_pred(F,A),
    incr_file_count(_),
    ignore((((should_show_data(X),
        write(newData(X)),write(=),write_src(Data))))),
    assert(Data),!.
-
+*/
 
 
 :- dynamic((metta_type/3,metta_defn/3,metta_atom/2)).
 
 into_space(Self,'&self',Self):-!.
+into_space(Self,None,Self):- 'None' == None,!.
 into_space(_,Other,Other).
 into_name(_,Other,Other).
 
@@ -969,10 +954,11 @@ do_metta1_e(_Self,_,[=,A,B]):- !, with_concepts(false,
   (con_write('(= '), with_indents(false,write_src(A)), (is_list(B) -> connl ; true),con_write(' '),with_indents(true,write_src(B)),con_write(')'))),connl.
 do_metta1_e(_Self,_LoadExec,Term):- write_src(Term),connl.
 
-write_exec(Exec):-
+write_exec(Exec):- notrace(write_exec0(Exec)).
+write_exec0(Exec):-
   wots(S,write_src(exec(Exec))),
   nb_setval(exec_src,Exec),
-  ignore((mnotrace((color_g_mesg_ok('#004400',(format('~N'),writeln(S))))))).
+  ignore((notrace((color_g_mesg_ok('#004400',(format('~N'),writeln(S))))))).
 
 %do_metta(Self,LoadExec,Term):-
 %  once(untyped_to_metta(Term,NewTerm)),Term\=@=NewTerm,!,
@@ -1062,7 +1048,7 @@ do_metta_file_exec0(Self,TermV):-
   ignore((file_answers(FileName, Nth, Ans))),
 
   findall(X,(do_metta_exec(Self,TermV,X,NamedVarsList,Was),
-         once((must_det_ll((mnotrace(((color_g_mesg(yellow,
+         once((must_det_ll((notrace(((color_g_mesg(yellow,
          ((write(' '), write_src(X),nl,
             (NamedVarsList\=@=Was-> (color_g_mesg(green,writeq(NamedVarsList)),nl); true),
             ignore(( \+ is_list(X),compound(X),format(' % '),writeq(X),nl)))))))))), X \== Empty))),XL),
@@ -1106,27 +1092,18 @@ is_unit_test_exec(Exec):- sformat(S,'~q',[Exec]),sub_atom(S,_,_,_,"!',").
 return_empty('Empty').
 return_empty(_,Empty):- return_empty(Empty).
 
-
+call_sexpr(Self,Tax,[S|Wip],Out):- string(S),atom_string(A,S),  !, call_sexpr(Self,Tax,[A|Wip],Out).
+call_sexpr(Self,Tax,[S,Wip],Out):- \+ is_list(S), is_list(Wip), !, call_sexpr(Self,Tax,[S|Wip],Out).
+call_sexpr(Self,Tax,[A,S|Wip],Out):- S=='None',!, call_sexpr(Self,Tax,[A,Self|Wip],Out).
+call_sexpr(Self,Tax,S,Out):- is_list(S),!, call_sexpr(Self,Tax,exec(S),Out).
+call_sexpr(Self,_, Swip, _Out):- wdmsg(will_CALL_sexpr(Self,Swip)),fail.
+call_sexpr(Self,_,exec(S),Out):- is_list(S),!, call_sexpr1(Self,exec(S),Out).
 call_sexpr(Self,S,_Swip,Out):- (atom(S);string(S)), once(atom_contains(S,')');atom_contains(S,'!');atom_contains(S,'&')),
      once((atom_string(S,In), read_metta(In,Read))),!,
      wdmsg([r=Read]),call_sexpr1(Self,Read,Out).
-call_sexpr(Self,S,_,Out):- call_sexpr1(Self,S,Out).
+call_sexpr(Self,_,S,Out):- call_sexpr1(Self,S,Out).
 
 
-call_sexpr1(Self,exec(S),Out):-
-  into_metta_callable(Self,S,Term,X,NamedVarsList,Was),!,
- ((((
-   (may_rtrace(Term),
-     ignore(mnotrace(((
-     color_g_mesg(yellow,
-     ((write(' '),
-        write_src(X),
-        (NamedVarsList\=@=Was-> (color_g_mesg(green,writeq(NamedVarsList)),nl); true),
-        ignore(( \+ is_list(X),compound(X),format(' % '),writeq(X),nl)))))))))))))*->Out=X;
-   (writeq(no_result(Self)=Term),nl,!,S=Out)).
-
-call_sexpr1(Self,S,Out):-
- (do_metta(Self,load,S), Out='True')*->true;(writeq(not_evaluated(Self)=S),nl,!,S=Out).
 
 into_metta_callable(_Self,TermV,Term,X,NamedVarsList,Was):- use_metta_compiler, !,
  must_det_ll((((
@@ -1137,7 +1114,7 @@ into_metta_callable(_Self,TermV,Term,X,NamedVarsList,Was):- use_metta_compiler, 
   subst_vars(Res+ExecGoal,Res+Term,NamedVarsList),
   copy_term(NamedVarsList,Was),
   term_variables(Term,Vars),
-  mnotrace((color_g_mesg('#114411',print_tree(exec(Res):-ExecGoal)))),
+  notrace((color_g_mesg('#114411',print_tree(exec(Res):-ExecGoal)))),
   %nl,writeq(Term),nl,
   ((\+ \+
   ((numbervars(v(TermV,Term,NamedVarsList,Vars),999,_,[attvar(bind)]),
@@ -1150,7 +1127,7 @@ into_metta_callable(_Self,TermV,Term,X,NamedVarsList,Was):- use_metta_compiler, 
 
 
 into_metta_callable(Self,TermV,eval_args(StackMax,Self,Term,X),X,NamedVarsList,Was):-!,
- mnotrace(( must_det_ll((
+ notrace(( must_det_ll((
   if_t(preview_compiler,write_compiled_exec(TermV,_Goal)),
   subst_vars(TermV,Term,NamedVarsList),
   copy_term(NamedVarsList,Was),
@@ -1164,25 +1141,277 @@ into_metta_callable(Self,TermV,eval_args(StackMax,Self,Term,X),X,NamedVarsList,W
   nop(maplist(verbose_unify,Vars)))))),!.
 
 
-do_metta_exec(Self,Var):- var(Var), !, pp_m(eval(Var)), freeze(Var,wdmsg(laterVar(Self,Var))).
-do_metta_exec(Self,TermV):-
+print_goals(TermV):- write_src(TermV).
+
+
+/*do_metta_exec(Self,TermV):- fail,
   return_empty(Empty),
   nb_setval(exec_src,TermV),
   findall(X,(do_metta_exec(Self,TermV,X,NamedVarsList,Was),
-         ignore((must_det_ll((mnotrace(((color_g_mesg(yellow,
+         ignore((must_det_ll((notrace(((color_g_mesg(yellow,
          ((write(' '), write_src(X),nl,
             (NamedVarsList\=@=Was-> (color_g_mesg(green,writeq(NamedVarsList)),nl); true),
-            ignore(( \+ is_list(X),compound(X),format(' % '),writeq(X),nl,X\==Empty))))))))))))),_XL),!.
+            ignore(( \+ is_list(X),compound(X),format(' % '),writeq(X),nl,X\==Empty))))))))))))),_XL),!.*/
+
+
+%repl:- option_value('repl',prolog),!,prolog.
+%:- ensure_loaded(metta_toplevel).
+
+:- discontiguous do_metta_exec/2.
+call_sexpr1(Self,exec(S),Out):-
+  into_metta_callable(Self,S,Term,X,NamedVarsList,Was),!,
+ ((((
+   (may_rtrace((Term)),
+     notrace(ignore(((
+     color_g_mesg(yellow,
+     ((write(' '),
+        write_src(X),
+        (NamedVarsList\=@=Was-> (color_g_mesg(green,writeq(NamedVarsList)),nl); true),
+        ignore(( \+ is_list(X),compound(X),format(' % '),writeq(X),nl)))))))))))))*->Out=X;
+   (writeq(no_result(Self)=Term),nl,!,S=Out)).
+
+call_sexpr1(Self,S,Out):-
+ (do_metta(Self,load,S), Out='True')*->true;(writeq(not_evaluated(Self)=S),nl,!,S=Out).
+
+
+repl:- setup_call_cleanup(flag(repl_level,Was,Was+1),repl0,
+  (flag(repl_level,_,Was),(Was==0 -> maybe_halt(7) ; true))).
+repl0:-
+   notrace((current_input(In),nop(catch(load_history,_,true)))),
+  % ignore(install_readline(In)),
+   repeat,
+     flag(eval_num,_,0),
+     notrace((%with_option(not_a_reload,true,make),
+      ((nb_current(self_space,Self),Self\==[])->true;Self='&self'),
+      ((nb_current(repl_mode,Mode),Mode\==[])->true;Mode='!'),
+      format(atom(P),'metta ~w> ',[Self]))),
+      setup_call_cleanup(
+         notrace(prompt(Was,P)),
+         notrace(read_metta(In,Read)),
+         notrace(prompt(_,Was))),
+    (notrace(Read==end_of_file)
+       -> true ; (once(do_repl(Self,Read)),fail)).
+
+read_pending_white_codes(In):-
+  read_pending_codes(In,[10],[]),!.
+read_pending_white_codes(_).
+
+do_repl(_Self,end_of_file):- !. %, halt(7), writeln('\n\n% To restart, use: ?- repl.').
+do_repl(_Slf,call(Term)):- nop(add_history1(Term)), !, repl_call(Term).
+do_repl(Self,!):- !, notrace(repl_read(Exec)),do_repl(Self,exec(Exec)).
+do_repl(Self,Read):- notrace((string(Read),add_history_string(Read))),!,
+    notrace(repl_read(Read,Term)),!, do_repl(Self,Term).
+
+do_repl(Self,exec(Exec)):- !, notrace(add_history_src(exec(Exec))), do_metta_exec(Self,Exec).
+do_repl(Self,Read):- add_history_src(Read), do_metta(Self,load,Read).
+
+
+
+do_metta_exec(Self,Var):- var(Var), !, pp_m(eval(Var)), freeze(Var,wdmsg(laterVar(Self,Var))).
+do_metta_exec(Self, TermV):- !,
+  notrace((\+ \+ write_exec(TermV),
+  into_metta_callable(Self,TermV,Term,X,NamedVarsList,Was),
+    % NamedVarsList,
+    % Initialize Control as a compound term with 'each' as its argument.
+    Control = contrl(each),
+    %GG = interact(['Result'=X|NamedVarsList],Term,trace_off),
+    GG = (Term,deterministic(Complete)),
+    !, % metta_toplevel
+    flag(result_num,_,1))),
+  catch(forall( may_rtrace(GG),
+     notrace(( notrace(ignore(((color_g_mesg(yellow,
+       ((
+           (flag(result_num,R,R+1),
+                ((R==1,Complete==true)->format('~NDeterministic: ',[]);          %or Nondet
+                    (Complete==true -> format('~NLast Result(~w): ',[R]) ; format('~NNDet Result(~w): ',[R])))),
+               (NamedVarsList \=@= Was -> (color_g_mesg(green, write_src(NamedVarsList)), nl) ; true),
+               (with_indents(true,write_src(X)),nl)))))))),
+            % Use the current state of Control to determine whether to prompt for input.
+            (Complete == true -> (! , fail) ; true),
+            (( Control == contrl(leap) -> true;
+              % If not in leap state, prompt for input.
+
+              ((repeat,
+                write("More Solutions? "), get_single_char(C), nl),
+              (C == 108 -> % 'l' for leap
+                   nb_setarg(1, Control, leap); % Set Control to leap and stop prompting.
+              (C == 103 -> % 'g' for print_goals
+                   print_goals(Term), fail; % Execute print_goals and re-prompt.
+              (C == 59 -> % ';' for next
+                   true; % No action needed, move to next solution.
+              (C == 10 -> % 'enter' to exit
+                   (!, fail); % Cut and fail to stop the forall.
+               (command(C, Command) ->
+                  handle_command(Command, Variables, Goal, Tracing)
+              ;   format('Unknown command. ~s',[[C]]),fail) % handle unknown commands
+                        ))))))),
+              (Control == contrl(leap) -> true; true) % If leap, proceed without re-prompting.
+            ))),
+                E,wdmsg(E)),
+        (flag(result_num,1,1) -> format('~Nno results') ; true).
+
+
+% Entry point for the user to call with tracing enabled
+toplevel_goal(Goal) :-
+   term_variables(Goal,Vars),
+    trace_goal(Vars, Goal, trace_off).
+
+% Entry point for the user to call with tracing enabled
+trace_goal(Goal) :-
+    trace_goal(Goal, trace_on).
+
+% Handle tracing
+trace_goal(Goal, Tracing) :-
+    (Tracing == trace_on -> writeln('Entering goal:'), writeln(Goal) ; true),
+    term_variables(Goal, Variables),
+    ( call(Goal) ->
+        (Tracing == trace_on -> writeln('Goal succeeded with:'), writeln(Variables) ; true),
+        interact(Variables, Goal, Tracing)
+    ;   (Tracing == trace_on -> writeln('Goal failed.') ; true),
+        false
+    ).
+
+% Interaction with the user
+interact(Variables, Goal, Tracing) :-
+    call(Goal),write('Solution: '), write_src(Variables),
+    write(' [;next]?'),
+    get_single_char(Code),
+    (command(Code, Command) ->
+        handle_command(Command, Variables, Goal, Tracing)
+    ;   writeln('Unknown command.'), interact(Variables, Goal, Tracing) % handle unknown commands
+    ).
+
+install_readline(Input):-
+    add_history_string("!(pfb3)"),
+    add_history_string("!(load-flybase-full)"),
+    add_history_string("!(obo-alt-id $X BS:00063)"),
+    add_history_string("!(and (total-rows $T TR$) (unique-values $T2 $Col $TR))"),
+    ignore(editline:el_wrap),
+    ignore(editline:add_prolog_commands(Input)).
+
+
+
+
+% Command descriptions
+command(59, retry).    % ';' to retry
+command(115, skip).    % 's' to skip to the next solution
+command(108, leap).    % 'l' to leap (end the debugging session)
+command(103, goals).   % 'g' to show current goals
+command(102, fail).    % 'f' to force fail
+command(116, trace).   % 't' to toggle tracing
+command(117, up).      % 'u' to continue without interruption
+command(101, exit).    % 'e' to exit the debugger
+command(97, abort).    % 'a' to abort
+command(98, break).    % 'b' to set a breakpoint
+command(99, creep).    % 'c' to proceed step by step
+command(104, help).    % 'h' for help
+command(65, alternatives).    % 'A' for alternatives
+command(109, make).       % 'm' for make (recompile)
+command(67, compile).     % 'C' for Compile (compile new executable)
+
+% Command implementations
+handle_command(make, Variables, Goal, Tracing) :-
+    writeln('Recompiling...'),
+    % Insert the logic to recompile the code.
+    % This might involve calling `make/0` or similar.
+    make,  % This is assuming your Prolog environment has a `make` predicate.
+    fail. % interact(Variables, Goal, Tracing).
+
+handle_command(compile, Variables, Goal, Tracing) :-
+    writeln('Compiling new executable...'),
+    % Insert the logic to compile a new executable.
+    % This will depend on how you compile Prolog programs in your environment.
+    % For example, you might use `qsave_program/2` to create an executable.
+    % Pseudocode: compile_executable(ExecutableName)
+    fail. % interact(Variables, Goal, Tracing).
+handle_command(alternatives, Variables, Goal, Tracing) :-
+    writeln('Showing alternatives...'),
+    % Here you would include the logic for displaying the alternatives.
+    % For example, showing other clauses that could be tried for the current goal.
+    writeln('Alternatives for current goal:'),
+    writeln(Goal),
+    % Pseudocode: find_alternatives(Goal, Alternatives)
+    % Pseudocode: print_alternatives(Alternatives)
+    fail. % interact(Variables, Goal, Tracing).
+% Extend the command handling with the 'help' command implementation
+handle_command(help, Variables, Goal, Tracing) :-
+    print_help,
+    fail. % interact(Variables, Goal, Tracing).
+handle_command(abort, _, _, _) :-
+    writeln('Aborting...'), abort.
+handle_command(break, Variables, Goal, Tracing) :-
+    writeln('Breakpoint set.'), % Here you should define what 'setting a breakpoint' means in your context
+    fail. % interact(Variables, Goal, Tracing).
+handle_command(creep, Variables, Goal, Tracing) :-
+    writeln('Creeping...'), % Here you should define how to 'creep' (step by step execution) through the code
+    trace. % interact(Variables, Goal, Tracing).
+handle_command(retry, Variables, Goal, Tracing) :-
+    writeln('Continuing...'),!.
+    %trace_goal(Goal, Tracing).
+handle_command(skip, Variables, Goal, Tracing) :-
+    writeln('Skipping...').
+handle_command(leap, _, _, _) :-
+    writeln('Leaping...'), nontrace. % Cut to ensure we stop the debugger
+handle_command(goals, Variables, Goal, Tracing) :-
+    writeln('Current goal:'), writeln(Goal),
+    writeln('Current variables:'), writeln(Variables),
+    bt,fail. % interact(Variables, Goal, Tracing).
+handle_command(fail, _, _, _) :-
+    writeln('Forcing failure...'), fail.
+handle_command(trace, Variables, Goal, Tracing) :-
+    (Tracing == trace_on ->
+        NewTracing = trace_off, writeln('Tracing disabled.')
+    ;   NewTracing = trace_on, writeln('Tracing enabled.')
+    ),
+    interact(Variables, Goal, NewTracing).
+handle_command(up, Variables, Goal, Tracing) :-
+    writeln('Continuing up...'),
+    repeat,
+    ( trace_goal(Goal, Tracing) -> true ; !, fail ).
+handle_command(exit, _, _, _) :-
+    writeln('Exiting debugger...'), !. % Cut to ensure we exit the debugger
+
+% Help description
+print_help :-
+    writeln('Debugger commands:'),
+    writeln('(;)  next             - Retry with next solution.'),
+    writeln('(g)  goal             - Show the current goal.'),
+    writeln('(u)  up               - Finish this goal without interruption.'),
+    writeln('(s)  skip             - Skip to the next solution.'),
+    writeln('(c)  creep or <space> - Proceed step by step.'),
+    writeln('(l)  leap             - Leap over (the debugging).'),
+    writeln('(f)  fail             - Force the current goal to fail.'),
+    writeln('(B)  back             - Go back to the previous step.'),
+    writeln('(t)  trace            - Toggle tracing on or off.'),
+    writeln('(e)  exit             - Exit the debugger.'),
+    writeln('(a)  abort            - Abort the current operation.'),
+    writeln('(b)  break            - Break to a new sub-REPL.'),
+    writeln('(h)  help             - Display this help message.'),
+    writeln('(A)  alternatives     - Show alternative solutions.'),
+    writeln('(m)  make             - Recompile/Update the current running code.'),
+    writeln('(C)  compile          - Compile a fresh executable (based on the running state).'),
+    writeln('(E)  error msg        - Show the latest error messages.'),
+    writeln('(r)  retry            - Retry the previous command.'),
+    writeln('(I)  info             - Show information about the current state.'),
+    !.
+
+
 do_metta_exec(Self,TermV):-
   \+ \+ write_exec(TermV),
   into_metta_callable(Self,TermV,Term,X,NamedVarsList,Was),
+  Control = contrl(each),
   forall(may_rtrace(Term),
-     ignore(mnotrace(((color_g_mesg(yellow,
+    (( notrace(ignore(((color_g_mesg(yellow,
      ((write(' '),
         write_src(X),nl,
-        (NamedVarsList\=@=Was-> (color_g_mesg(green,writeq(NamedVarsList)),nl); true),
-        ignore(( \+ is_list(X),compound(X),format(' % '),writeq(X),nl)))))))))).
-
+        (NamedVarsList\=@=Was-> (color_g_mesg(green,write_src(NamedVarsList)),nl); true),
+        ignore(( \+ is_list(X),compound(X),format(' % '),write_src(X),nl))))))))),
+       Control \= contrl(leap),
+       (read_pending_input(current_input,_,[]),
+        ((Control = contrl(leap))-> fail ;
+         (
+          (write("press ';', '<enter>' or 'l': "),get_single_char(C)),
+           (C==108->nb_setarg(1,Control,leap);(C==103->print_goals(Term);(C==59->true;(C==13->(!,fail))))))))))).
 
 do_metta_exec(_Self,TermV,X,NamedVarsList,Was):- use_metta_compiler, !,
  (( /*must_det_ll*/((
@@ -1205,7 +1434,7 @@ do_metta_exec(_Self,TermV,X,NamedVarsList,Was):- use_metta_compiler, !,
   may_rtrace(Term).
 
 do_metta_exec(Self,TermV,X,NamedVarsList,Was):-!,
- mnotrace(( must_det_ll((
+ notrace(( must_det_ll((
   if_t(preview_compiler,write_compiled_exec(TermV,_Goal)),
   \+ \+ write_exec(TermV),
   subst_vars(TermV,Term,NamedVarsList),
@@ -1223,7 +1452,7 @@ do_metta_exec(Self,TermV,X,NamedVarsList,Was):-!,
 write_compiled_exec(Exec,Goal):-
 %  ignore(Res = '$VAR'('ExecRes')),
   compile_for_exec(Res,Exec,Goal),
-  mnotrace((color_g_mesg('#114411',portray_clause(exec(Res):-Goal)))).
+  notrace((color_g_mesg('#114411',portray_clause(exec(Res):-Goal)))).
 
 verbose_unify(Term):- verbose_unify(trace,Term).
 verbose_unify(What,Term):- term_variables(Term,Vars),maplist(verbose_unify0(What),Vars),!.
@@ -1327,18 +1556,20 @@ catch_red_ignore(G):- ignore(catch_red(G)).
 %loon(Why):- began_loon(Why),!,wdmsg(begun_loon(Why)).
 loon(Why):- is_compiling,!,wdmsg(compiling_loon(Why)),!.
 %loon( _Y):- current_prolog_flag(os_argv,ArgV),member('-s',ArgV),!.
-loon(Why):- is_compiled, Why\==toplevel, Why\==program,!,wdmsg(compiled_loon(Why)),!.
+loon(Why):- is_compiled, Why\==toplevel,Why\==default, Why\==program,!,wdmsg(compiled_loon(Why)),!.
 loon(Why):- began_loon(_),!,wdmsg(skip_loon(Why)).
 loon(Why):- wdmsg(began_loon(Why)), assert(began_loon(Why)),
   do_loon.
 
 do_loon:-
+ ignore((
+  \+ prolog_load_context(reloading,true),
   maplist(catch_red_ignore,[
-  % \+ prolog_load_context(reloading,true),
+
    metta_final,
    load_history,
   (option_value('prolog',true)->true;
-    (run_cmd_args,(option_value('repl',false)->true;repl), loonit_report, maybe_halt(7)))]),!.
+    (run_cmd_args,(option_value('repl',false)->true;repl), loonit_report, maybe_halt(7)))]))),!.
 
 %loon:- time(loon_metta('./examples/compat/test_scripts/*.metta')),fail.
 %loon:- repl, (option_value('halt',false)->true;halt(7)).
@@ -1348,8 +1579,8 @@ maybe_halt(Seven):- wdmsg(maybe_halt(Seven)).
 
 is_compiling:- current_prolog_flag(os_argv,ArgV),member(E,ArgV),E==qcompile_mettalog,!.
 is_compiled:- current_prolog_flag(os_argv,ArgV),\+ member('swipl',ArgV),!.
-is_converting:- option_value('convert',true),!.
-is_converting:- current_prolog_flag(os_argv,ArgV), member('--convert',ArgV),!.
+is_converting:- nb_current('convert','True'),!.
+%is_converting:- current_prolog_flag(os_argv,ArgV), member('--convert',ArgV),!.
 show_os_argv:- current_prolog_flag(os_argv,ArgV),write('; '),writeln(ArgV).
 
 :- initialization(show_os_argv).
@@ -1358,8 +1589,7 @@ show_os_argv:- current_prolog_flag(os_argv,ArgV),write('; '),writeln(ArgV).
 :- initialization(loon(program),program).
 :- initialization(loon(default)).
 
-
-qcompile_mettalog:-
+ensure_mettalog_system:-
     abolish(began_loon/1),
     dynamic(began_loon/1),
     system:use_module(library(quasi_quotations)),
@@ -1386,40 +1616,27 @@ qcompile_mettalog:-
     %pack_install(predicate_streams, [upgrade(true),global(true)]),
     %pack_install(logicmoo_utils, [upgrade(true),global(true)]),
     %pack_install(dictoo, [upgrade(true),global(true)]),
+    !.
+
+qcompile_mettalog:-
+    ensure_mettalog_system,
     catch(qsave_program('MeTTaLog', [class(development),autoload(true),goal(loon(goal)), toplevel(loon(toplevel)), stand_alone(true)]),E,writeln(E)),
     halt(0).
 
 qsave_program:-
-      abolish(began_loon/1),
-      dynamic(began_loon/1),
-      system:use_module(library(quasi_quotations)),
-      system:use_module(library(hashtable)),
-      system:use_module(library(gensym)),
-      system:use_module(library(sort)),
-      system:use_module(library(writef)),
-      system:use_module(library(rbtrees)),
-      system:use_module(library(dicts)),
-      system:use_module(library(shell)),
-      system:use_module(library(edinburgh)),
-    %  system:use_module(library(lists)),
-      system:use_module(library(statistics)),
-      system:use_module(library(nb_set)),
-      system:use_module(library(assoc)),
-      system:use_module(library(pairs)),
-      autoload_all,
-      make,
-      autoload_all,
-      %pack_install(predicate_streams, [upgrade(true),global(true)]),
-      %pack_install(logicmoo_utils, [upgrade(true),global(true)]),
-      %pack_install(dictoo, [upgrade(true),global(true)]),
-      catch(qsave_program('Sav.MeTTaLog', [class(development),autoload(true),goal(loon(goal)), toplevel(loon(toplevel)), stand_alone(true)]),E,writeln(E)),
-      !.
+    ensure_mettalog_system,
+    gensym('MeTTaLog_',Name),
+    catch(qsave_program(Name, [class(development),autoload(true),goal(loon(goal)), toplevel(loon(toplevel)), stand_alone(true)]),E,writeln(E)),
+    !.
+
+
+:- initialization(update_changed_files,restore).
 
 :- ignore(((
    \+ prolog_load_context(reloading,true),
-   metta_final))).
+   metta_final
+   ))).
 
 
 
 :- set_prolog_flag(metta_interp,ready).
- 

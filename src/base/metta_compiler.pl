@@ -1423,8 +1423,8 @@ with_indents(TF, Goal) :-
 % It does this by checking the value of the concepts option and ensuring it is not false.
 allow_concepts :-
     % Check if the option `concepts` is not set to false
-    option_else(concepts, TF, true),
-    \+ TF == false.
+    option_else(concepts, TF, 'False'),
+    \+ TF == 'False'.
 
 % The predicate with_concepts/2 enables or disables the use of concepts during the execution of a given goal.
 % The first argument is a Boolean indicating whether to enable (true) or disable (false) concepts.
@@ -1437,7 +1437,7 @@ with_concepts(TF, Goal) :-
 % Various 'write_src' and 'write_src0' rules are handling the writing of the source,
 % dealing with different types of values, whether they are lists, atoms, numbers, strings, compounds, or symbols.
 write_src(V):- notrace(write_src0(V)).
-write_src0(V):- allow_concepts,!,with_concepts(false,write_src1(V)),flush_output.
+write_src0(V):- allow_concepts,!,with_concepts('False',write_src1(V)),flush_output.
 write_src0(V):- is_list(V),!,pp_sexi(V).
 write_src0(V):- write_src1(V),!.
 
@@ -1464,12 +1464,13 @@ write_mobj(V):- ( \+ compound(V) ; is_list(V)),!, write_src0(V).
 
 write_mobj(V):- compound_name_list(V,F,Args),write_mobj(F,Args),!.
 write_mobj(V):- writeq(V).
-write_mobj(exec,[V]):- !, write('!'),with_indents(true,write_src(V)).
+write_mobj(exec,[V]):- !, write('!'),write_src(V).
 write_mobj('$OBJ',[_,S]):- write('['),write_src(S),write(' ]').
 write_mobj('{...}',[S]):- write('{'),write_src(S),write(' }').
 write_mobj('[...]',[S]):- write('['),write_src(S),write(' ]').
 write_mobj('$STRING',[S]):- !, writeq(S).
-write_mobj(F,Args):- mlog_sym(K),pp_sexi([K,F|Args]).
+write_mobj(F,Args):- fail, mlog_sym(K),!,pp_sexi([K,F|Args]).
+write_mobj(F,Args):- pp_sexi([F|Args]).
 
 % Rules for determining when a symbol needs to be quoted in metta.
 should_quote(Atom) :-

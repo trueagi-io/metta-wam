@@ -82,8 +82,27 @@ prefix_key(_,Key,Key).
 
 :- use_module(library(http/json)).
 
-load_flybase_json(_Fn,File):- process_json(File).
-process_json(File):- atom(File),exists_file(File),!,
+load_flybase_json(_Fn,File):-
+  process_json_file(File).
+
+process_json_file(File):- atom_concat(File,'.metta_x',MXFile),process_json_file(File,MXFile).
+process_json_file(_File,MXFile):- fail, exists_file(MXFile),!,process_metta_x_file(MXFile).
+process_json_file(File, MXFile):- fail, exists_file(File),!,
+          setup_call_cleanup(
+             open(MXFile,write,Strm,[]),
+             setup_call_cleanup(
+                    set_stream(Strm,alias(metta_x_output)),
+                    with_option(make_metta_x,'True',process_json_file_direct(File)),
+                    set_stream(current_output,alias(metta_x_output))),
+             close(Strm)),
+       remove_duplicates(MXFile),
+       process_metta_x_file(MXFile).
+process_json_file(File, _):- process_json_file_direct(File),!.
+process_json_file(File, MXFile):-
+    throw(process_json_file(File, MXFile)).
+
+
+process_json_file_direct(File):-
     setup_call_cleanup(
                open(File, read, Stream),
                json_read(Stream, JSONDict),
