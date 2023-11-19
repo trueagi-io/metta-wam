@@ -303,8 +303,9 @@ write_val(V):- write('"'),write(V),write('"').
 pp_as(V) :- \+ \+ pp_sex(V),flush_output.
 pp_sex(V) :- is_final_write(V),!.
 pp_sex('!'(V)) :- write('!'),!,pp_sex(V).
+pp_sex('exec'(V)) :- write('!'),!,pp_sex(V).
 %pp_sex('') :- format('(EmptyNode null)',[]).
-pp_sex('') :- format('()',[]).
+pp_sex('') :- !, format('()',[]).
 pp_sex([]):-  !, write('()').
 pp_sex('='(N,V)):- allow_concepts, !, format("~N;; ~w == ~n",[N]),!,pp_sex(V).
 pp_sex(V) :- (number(V) ; is_dict(V)), !, print_concept('ValueAtom',V).
