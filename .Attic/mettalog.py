@@ -165,87 +165,212 @@ def export_flags(**kwargs):
         return func
     return decorator
 
-@export_flags(MeTTa=True)
-def add_exported_methods(module, dict = oper_dict):
-    for name, func in inspect.getmembers(module):
-        if inspect.isfunction(func):
-            if getattr(func, 'MeTTa', False):
-                suggestedName = getattr(func, 'name', None)
-                if suggestedName is not None:
-                    use_name = suggestedName
-                else: use_name = name
-                suggestedArity = getattr(func, 'arity', None)
-                is_varargs = getattr(func, 'varargs', None)
-                sig = inspect.signature(func)
-                params = sig.parameters
+def get_call_parts(func):
+    sig = inspect.signature(func)
+    params = sig.parameters
+    # Constructing full parameter strings
+    param_parts = []
+    params_call_parts = []
+    var_args = var_kwargs = None
 
-                num_args = len([p for p in params.values() if p.default == p.empty and p.kind == p.POSITIONAL_OR_KEYWORD])
-                # Check for varargs
-                has_varargs = any(p.kind == p.VAR_POSITIONAL for p in params.values())
-                if suggestedArity is None: suggestedArity = num_args
+    for param_name, param in params.items():
+        part = param_name
+        call_part = param_name
+        if param.kind == inspect.Parameter.VAR_POSITIONAL:
+            var_args = f'*{param_name}'
+            part =  var_args
+            call_part = var_args
+        elif param.kind == inspect.Parameter.VAR_KEYWORD:
+            var_kwargs = f'**{param_name}'
+            part =  var_kwargs
+            call_part = var_kwargs
+        elif param.default != inspect.Parameter.empty and isinstance(param.default, (int, str)):
+            part += f'={repr(param.default)}'
+        param_parts.append(part)
+        params_call_parts.append(call_part)
 
-                keyword_arg_names = []
-                # Iterate through parameters
-                for name, param in params.items():
-                    # Check if the parameter is either VAR_KEYWORD or has a default value
-                    if param.kind == inspect.Parameter.VAR_KEYWORD or param.default != inspect.Parameter.empty:
-                        keyword_arg_names.append(name)
+    return param_parts, params_call_parts
 
-                if is_varargs==True or has_varargs:
-                    suggestedArity = -1
-                add_pyop(use_name, suggestedArity,
-                   getattr(func, 'op', "OperationAtom"),
-                   getattr(func, 'unwrap', False), func, dict)
 
-@export_flags(MeTTa=True)
 def add_janus_methods(module, dict = janus_dict):
     for name, func in inspect.getmembers(module):
         if inspect.isfunction(func):
-            if getattr(func, 'Janus', False):
-                suggestedName = getattr(func, 'name', None)
-                if suggestedName is not None:
-                    use_name = suggestedName
-                else: use_name = name
-                for key, item in dict.items():
-                    if key==use_name:
-                        return
-                dict[use_name]=func
+            if getattr(func, "Janus", False) or getattr(func, "MeTTa", False):
+                use_name = getattr(func, 'name', name)
+                non_underscore_attrs = {attr: getattr(func, attr) for attr in dir(func) if not attr.startswith('_')}
+                if len(non_underscore_attrs)==0: continue
+                param_parts, params_call_parts = get_call_parts(func)
+                add_to_janus(use_name, param_parts, params_call_parts, func,non_underscore_attrs, janus_dict)
 
-                suggestedFlags = getattr(func, 'flags', None)
-                if suggestedFlags is None:
-                    suggestedFlags = 0
+@export_flags(MeTTa=True)
+def add_python_module(module, dict=oper_dict):
+    for name, func in inspect.getmembers(module):
+        if inspect.isfunction(func):
+           add_python_function(name, func, dict)
 
-                suggestedArity = getattr(func, 'arity', None)
-                if suggestedArity is None:
-                    sig = inspect.signature(func)
-                    params = sig.parameters
-                    num_args = len([p for p in params.values() if p.default == p.empty and p.kind == p.POSITIONAL_OR_KEYWORD])
-                    suggestedArity = num_args
-                    func.arity = suggestedArity
+def add_python_function(name, func, dict):
+    use_name = getattr(func, 'name', name)
+    non_underscore_attrs = {attr: getattr(func, attr) for attr in dir(func) if not attr.startswith('_')}
+    if len(non_underscore_attrs)==0: return False
+    param_parts, params_call_parts = get_call_parts(func)
 
-                registerForeign(func, arity = suggestedArity, flags = suggestedFlags )
+    added = False
 
+    if getattr(func, "Janus", False):
+        added = add_to_janus(use_name, param_parts, params_call_parts,
+            func, non_underscore_attrs, janus_dict) or added
+
+    if getattr(func, 'MeTTa', False):
+        added = add_to_metta(use_name, param_parts, params_call_parts,
+            getattr(func, 'op', "OperationAtom"), getattr(func, 'unwrap', False),
+            func, non_underscore_attrs, dict) or added
+
+    if not added and verbose > 3:
+        print_cmt(f"unused({name}({param_parts})) attributes: {non_underscore_attrs}")
+
+    return added
 
 
 @export_flags(MeTTa=True)
-def add_pyop(name, length, op_kind, unwrap, funct, dict = oper_dict):
+def add_to_metta(name, param_parts, params_call_parts, op_kind, unwrap, func, non_underscore_attrs, dict=oper_dict):
     hyphens, underscores = name.replace('_', '-'), name.replace('-', '_')
-    mettavars = ' '.join(f"${chr(97 + i)}" for i in range(length)).strip()
-    pyvars = ', '.join(chr(97 + i) for i in range(length)).strip()
 
-    if length == -1: #varargs
-        pyvars = "*args"
-        mettavars = "..."
+    # Construct the param_str from param_parts
+    metta_params_str = ' '.join(param_parts)
 
-    s = f"!({hyphens})" if mettavars == "" else f"!({hyphens} {mettavars})"
-    add_to_history_if_unique(s); #print(s)
-    if hyphens not in dict:
-        src, local_vars = f'op = {op_kind}( "{hyphens}", lambda {pyvars}: [{underscores}({pyvars})], unwrap={unwrap})', {}
-        if verbose>1: print_cmt(f"add_pyop={src}")
-        if verbose>8: print_cmt(f"funct={dir(funct)}")
+    s = f"!({hyphens})" if metta_params_str == "" else f"!({hyphens} {metta_params_str})"
+    add_to_history_if_unique(s)
+
+    if hyphens in dict:
+        return True
+
+    # Construct the param_str from param_parts
+    param_str = ', '.join(param_parts)
+    # Using params_call_parts in the function call inside lambda
+    params_for_call = ', '.join(params_call_parts)
+
+    # Constructing the source code to execute
+    src = f'op = {op_kind}("{hyphens}", lambda {param_str}: [{underscores}({params_for_call})], unwrap={unwrap})'
+    local_vars = {}
+
+    if verbose > 1:
+        print_cmt(f"{src} # {non_underscore_attrs}"[5:])
+
+    try:
         exec(src, globals(), local_vars)
         dict[hyphens] = local_vars['op']
         dict[underscores] = local_vars['op']
+        return True
+    except SyntaxError as e:
+        print_cmt(f"Syntax error in executing: {src}")
+        print_cmt(f"Error details: {e}")
+        return False
+
+
+def add_to_janus(name, param_parts, params_call_parts, func, non_underscore_attrs, dict = janus_dict):
+
+    if getattr(func, 'CallsVSpace', False): return False
+    #if not getattr(func, "Janus", False): return False
+
+    suggestedName = getattr(func, 'name', name)
+
+    if suggestedName is not None:
+        use_name = suggestedName
+    else: use_name = name
+
+    for key, item in dict.items():
+        if key==use_name:
+            return True
+
+    suggestedFlags = getattr(func, 'flags', None)
+    if suggestedFlags is None:
+        suggestedFlags = 0
+
+    suggestedArity = getattr(func, 'arity', None)
+    if suggestedArity is None:
+        num_args = len(param_parts)
+        suggestedArity = num_args
+        func.arity = suggestedArity
+
+    #if verbose > 1:
+    print_cmt(f"registerForeign({use_name}, arity = {param_parts}/{suggestedArity}, flags = {suggestedFlags} ) {non_underscore_attrs}")
+
+    #if not getattr(func, "Janus", False): return False
+    dict[use_name]=func
+    registerForeign(func, arity = suggestedArity, flags = suggestedFlags )
+    return True
+
+
+
+
+#############################################################################################################################
+# @export_flags(MeTTa=True)
+# def add_python_module(module, dict = oper_dict):
+#
+#     for name, func in inspect.getmembers(module):
+#         if inspect.isfunction(func):
+#             if getattr(func, 'MeTTa', False):
+#                 suggestedName = getattr(func, 'name', None)
+#                 if suggestedName is not None:
+#                     use_name = suggestedName
+#                 else: use_name = name
+#                 suggestedArity = getattr(func, 'arity', None)
+#                 sig = inspect.signature(func)
+#                 params = sig.parameters
+#
+#                 num_args = len([p for p in params.values() if p.default == p.empty and p.kind == p.POSITIONAL_OR_KEYWORD])
+#                 # Check for varargs
+#                 has_varargs = any(p.kind == p.VAR_POSITIONAL for p in params.values())
+#                 if suggestedArity is None: suggestedArity = num_args
+#
+#                 keyword_arg_names = []
+#                 # Iterate through parameters
+#                 for name, param in params.items():
+#                     # Check if the parameter is either VAR_KEYWORD or has a default value
+#                     if param.kind == inspect.Parameter.VAR_KEYWORD or param.default != inspect.Parameter.empty:
+#                         keyword_arg_names.append(name)
+#
+#                 if is_varargs==True or has_varargs:
+#                     suggestedArity = -1
+#                 add_to_metta(use_name, suggestedArity,
+#                    getattr(func, 'op', "OperationAtom"),
+#                    getattr(func, 'unwrap', False), func, dict)
+#
+# @export_flags(MeTTa=True)
+# def add_to_metta(name, length, op_kind, unwrap, funct, dict = oper_dict):
+#     hyphens, underscores = name.replace('_', '-'), name.replace('-', '_')
+#     mettavars = ' '.join(f"${chr(97 + i)}" for i in range(length)).strip()
+#     pyvars = ', '.join(chr(97 + i) for i in range(length)).strip()
+#
+#     if length == -1: #varargs
+#         pyvars = "*args"
+#         mettavars = "..."
+#
+#     s = f"!({hyphens})" if mettavars == "" else f"!({hyphens} {mettavars})"
+#     add_to_history_if_unique(s); #print(s)
+#     if hyphens not in dict:
+#         src, local_vars = f'op = {op_kind}( "{hyphens}", lambda {pyvars}: [{underscores}({pyvars})], unwrap={unwrap})', {}
+#         if verbose>1: print_cmt(f"add_to_metta={src}")
+#         if verbose>8: print_cmt(f"funct={dir(funct)}")
+#         exec(src, globals(), local_vars)
+#         dict[hyphens] = local_vars['op']
+#         dict[underscores] = local_vars['op']
+#
+#############################################################################################################################
+
+
+# Function to find subclasses of clazz in a module
+def find_subclasses_of(module, clazz):
+    subclasses = {}
+    for name, obj in inspect.getmembers(module):
+        if inspect.isclass(obj) and issubclass(obj, clazz) and obj is not clazz:
+            subclasses[name]=obj
+    return subclasses.items()
+
+    for name, claz in find_subclasses_of(module,AbstractSpace):
+        print(f"found class {claz} with name {name}")
+        # inspect the constructor and syntesize a function that will create an object
+
 
 @export_flags(MeTTa=True)
 def add_from_swip(name, dict = oper_dict):
@@ -307,6 +432,8 @@ vspace_ordinal = 0
 # Mainly a sanity loading test class
 class MettaLearner:
     ""
+
+
 class Circles:
     def __init__(self, initial_data=None):
         self.data = {}
@@ -431,6 +558,7 @@ class VSpaceRef(SpaceRef):
 
     def __del__(self):
         """Free the underlying CSpace object """
+        return
         if self.is_VSpace(): self.py_space_obj.__del__()
         else: hp.space_free(self.cspace)
 
@@ -563,6 +691,7 @@ class VSpace(AbstractSpace):
         addSpaceName(space_name,self)
 
     def __del__(self):
+        return
         pass
 
     def swip_space_name(self):
@@ -1693,74 +1822,79 @@ class ExtendedMeTTa(MeTTa):
 
 
 
-        #def __del__(self):
-            #hp.metta_free(self.cmetta)
+    #def __del__(self): hp.metta_free(self.cmetta)
 
-        def space(self):
-            return GroundingSpaceRef._from_cspace(hp.metta_space(self.cmetta))
+    def space(self):
+        return GroundingSpaceRef._from_cspace(hp.metta_space(self.cmetta))
 
-        def tokenizer(self):
-            return Tokenizer._from_ctokenizer(hp.metta_tokenizer(self.cmetta))
+    def tokenizer(self):
+        return Tokenizer._from_ctokenizer(hp.metta_tokenizer(self.cmetta))
 
-        #def register_token(self, regexp, constr):
-        #    self.tokenizer().register_token(regexp, constr)
+    #def register_token(self, regexp, constr):
+    #    self.tokenizer().register_token(regexp, constr)
 
-        #def register_atom(self, name, symbol):
-        #    self.register_token(name, lambda _: symbol)
+    #def register_atom(self, name, symbol):
+    #    self.register_token(name, lambda _: symbol)
 
-        def _parse_all(self, program):
-            parser = SExprParser(program)
-            while True:
-                atom = parser.parse(self.tokenizer())
-                if atom is None:
-                    break
-                yield atom
+    def _parse_all(self, program):
+        parser = SExprParser(program)
+        while True:
+            atom = parser.parse(self.tokenizer())
+            if atom is None:
+                break
+            yield atom
 
-        def parse_all(self, program):
-            return list(self._parse_all(program))
+    def parse_all(self, program):
+        return list(self._parse_all(program))
 
-        def parse_single(self, program):
-            return next(self._parse_all(program))
-
-    #def load_py_module(self, name):
-    #    if not isinstance(name, str):
-    #        name = repr(name)
-    #
-    #    mod = import_module(name)
-    #   for n in dir(mod):
-    #        obj = getattr(mod, n)
-    #        if '__name__' in dir(obj) and obj.__name__ == 'metta_register':
-    #            obj(self)
-
-        def import_file(self, fname):
-            """Loads the program file and runs it"""
-            path = fname.split(os.sep)
-            if len(path) == 1:
-                path = ['.'] + path
-            f = open(os.sep.join(path), "r")
-            program = f.read()
-            f.close()
-            # changing cwd
-            # TODO: Changing the working dir will not be necessary when the stdlib ops can access the correct runner context.  See https://github.com/trueagi-io/hyperon-experimental/issues/410
-            prev_cwd = os.getcwd()
-            os.chdir(os.sep.join(path[:-1]))
-            result = self.run(program)
-            # restoring cwd
-            os.chdir(prev_cwd)
-            return result
+    def parse_single(self, program):
+        return next(self._parse_all(program))
 
 
-        def run(self, program, flat=False):
-            """Runs the program"""
-            parser = SExprParser(program)
-            results = hp.metta_run(self.cmetta, parser.cparser)
-            err_str = hp.metta_err_str(self.cmetta)
-            if (err_str is not None):
-                raise RuntimeError(err_str)
-            if flat:
-                return [Atom._from_catom(catom) for result in results for catom in result]
-            else:
-                return [[Atom._from_catom(catom) for catom in result] for result in results]
+    def load_py_module(self, name):
+        """Loads the given python module"""
+        if not isinstance(name, str):
+            name = repr(name)
+        try:
+            mod = import_module(name)
+            self.pymods[name] = mod
+            for n in dir(mod):
+                obj = getattr(mod, n)
+                if '__name__' in dir(obj) and obj.__name__ == 'metta_register':
+                    obj(self)
+            return mod
+        except:
+            return None
+
+    def import_file(self, fname):
+        """Loads the program file and runs it"""
+        path = fname.split(os.sep)
+        if len(path) == 1:
+            path = ['.'] + path
+        f = open(os.sep.join(path), "r")
+        program = f.read()
+        f.close()
+        # changing cwd
+        # TODO: Changing the working dir will not be necessary when the stdlib ops can access the correct runner context.  See https://github.com/trueagi-io/hyperon-experimental/issues/410
+        prev_cwd = os.getcwd()
+        os.chdir(os.sep.join(path[:-1]))
+        result = self.run(program)
+        # restoring cwd
+        os.chdir(prev_cwd)
+        return result
+
+
+    def run(self, program, flat=False):
+        """Runs the program"""
+        parser = SExprParser(program)
+        results = hp.metta_run(self.cmetta, parser.cparser)
+        err_str = hp.metta_err_str(self.cmetta)
+        if (err_str is not None):
+            raise RuntimeError(err_str)
+        if flat:
+            return [Atom._from_catom(catom) for result in results for catom in result]
+        else:
+            return [[Atom._from_catom(catom) for catom in result] for result in results]
 
 
 # Borrowed impl from Adam Vandervorst
@@ -1803,7 +1937,7 @@ class LazyMeTTa(ExtendedMeTTa):
 
 def split_or_none(s, delimiter):
     parts = s.split(delimiter, 1)  # split only at the first occurrence
-    return parts[0], parts[1] if len(parts) > 1 else None
+    return parts[0], (parts[1] if len(parts) > 1 else None)
 
 # from awakening health
 def _response2bindings(txt):
@@ -2023,7 +2157,7 @@ class SqlHelper:
         res.extend(space.query(E(S(query))))
         return res
 
-
+#@ MeTTa
 class SqlSpace(GroundingSpace):
     def __init__(self, database, host, user, password, port):
         super().__init__()
@@ -2153,10 +2287,11 @@ realMetta = None
 
 def metta_register(metta):
     print(f";; metta_register={the_python_runner}/{metta}")
-    #global realMetta
+    global realMetta
     try:
         if not metta is None:
-            realMetta = metta
+            if not isinstance(metta,ExtendedMeTTa):
+                realMetta = metta
             register_vspace_atoms_pm(metta)
     #the_python_runner.set_cmetta(metta)
     #print(";;", metta.pymods)
@@ -2222,7 +2357,7 @@ def register_vspace_atoms_pm(mettaIn):
     # !(match &self $ $)
 
     runnerAtom = G(the_python_runner, AtomType.ATOM)
-    add_exported_methods(sys.modules[__name__], dict = oper_dict)
+    add_python_module(sys.modules[__name__], dict = oper_dict)
     oper_dict.update({
         r"TupleCount": OperationAtom( 'TupleCount', lambda atom: [ValueAtom(len(atom.get_children()), 'Number')], [AtomType.ATOM, "Number"], unwrap=False),
         r"np\.vector": nmVectorAtom,
@@ -2271,7 +2406,7 @@ def register_vspace_atoms_pm(mettaIn):
         'swip-exec': OperationAtom('swip-exec', lambda s: [swip_exec(s)]),
         'py-eval': OperationAtom('py-eval', lambda s: [eval(s)]) })
 
-    add_exported_methods(sys.modules[__name__], dict = oper_dict)
+    add_python_module(sys.modules[__name__], dict = oper_dict)
     return oper_dict
 
 
@@ -2512,9 +2647,16 @@ def atoms_iter_from_space(space_name, result, context):
             del context_atom_iters[id]
         pass
 
+@export_flags(Janus=True)
+def add_to_history_if_unique_pl(item, position_from_last=1):
+    for i in range(1, readline.get_current_history_length() + 1):
+        if readline.get_history_item(i) == item: return
+    insert_to_history(item, position_from_last)
+
 
 def reg_pyswip_foreign():
 
+    add_janus_methods(sys.modules[__name__], dict = oper_dict)
     test_nondeterministic_foreign()
 
 
@@ -2535,7 +2677,7 @@ def reg_pyswip_foreign():
     add_to_history_if_unique.arity=1
     registerForeign(add_to_history_if_unique)
 
-    add_janus_methods(sys.modules[__name__], dict = oper_dict)
+
 
     #?- query_from_space('example', 'my_atom', Result).
     #?- add_from_space('example', 'new_atom').
@@ -3386,7 +3528,10 @@ def vspace_init():
     #    the_python_runner.lazy_import_file("autoexec.metta")
     # @TODO fix this metta_to_swip_tests1()
     #load_vspace()
-    redirect_stdout(reg_pyswip_foreign)
+    add_janus_methods(sys.modules[__name__], dict = oper_dict)
+    f = reg_pyswip_foreign
+    redirect_stdout(f)
+    #f()
     if verbose>0: timeFrom("init", t0)
     flush_console()
 
@@ -3659,7 +3804,7 @@ import os
 import sys
 
 @export_flags(MeTTa=True)
-def vspace_main(args):
+def vspace_main(*args):
     is_init=False
     #os.system('clear')
     t0 = monotonic_ns()
@@ -3669,8 +3814,13 @@ def vspace_main(args):
     #if is_init==False: load_flybase()
     #if is_init==False:
 
-    for arg in args:
-       handle_arg(arg)
+    if isinstance(args, str):
+        handle_arg(args)
+    elif isinstance(args, list):
+        for arg in args:
+            if isinstance(arg, str):
+                if len(arg) > 1: handle_arg(arg)
+
     flush_console()
     global argmode
     the_python_runner.repl(mode=argmode)
