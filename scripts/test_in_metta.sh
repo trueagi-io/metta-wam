@@ -138,9 +138,20 @@ function run_tests() {
     # Make the collection unique to avoid processing the same file more than once
     readarray -t unique_files < <(printf "%s\n" "${all_files[@]}" | sort -u)
 
+    find_override_file() {
+      local filename=$1
+      local override_filename="${filename/\/compat\//\/override-compat\/}"
+
+      if [[ -f "$override_filename" ]]; then
+         echo "$override_filename"
+      else
+         echo "$filename"
+      fi
+    }
+
     # Shared logic across both file types
     process_file() {
-       local file=$1
+       local file=$(find_override_file "$1")
        shift
        local extra_args="$@"
 
