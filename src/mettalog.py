@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+print(";; ...doing...",__name__)
+
 # Version Space Candidate Elimination inside of MeTTa
 # This implementation focuses on bringing this machine learning algorithm into the MeTTa relational programming environment.
 # Douglas R. Miles 2023
@@ -39,7 +41,7 @@ if VSPACE_VERBOSE is not None:
 # Error Handling for Janus
 try: from janus import *
 except Exception as e:
- if verbose>0: print_cmt(f"Error: {e}")
+ if verbose>0: print(f"; Error: {e}")
 
 # Error Handling for OpenAI
 try:
@@ -47,7 +49,7 @@ try:
  try: openai.api_key = os.environ["OPENAI_API_KEY"]
  except KeyError: ""
 except Exception as e:
- if verbose>0: print_cmt(f"Error: {e}")
+ if verbose>0: print(f"; Error: {e}")
 
 
 
@@ -142,7 +144,7 @@ readline.parse_and_bind('tab: complete')
 
 def save(prev_h_len, histfile):
     new_h_len = readline.get_current_history_length()
-    readline.set_history_length(300)
+    readline.set_history_length(400)
     readline.append_history_file(new_h_len - prev_h_len, histfile)
 atexit.register(save, h_len, histfile)
 
@@ -153,7 +155,7 @@ def export_to_metta(func):
 
 def export_flags(**kwargs):
     def decorator(func):
-        if verbose > 1: print(f"export_flags({repr(func)})", end=" ")
+        if verbose > 1: print(f";   export_flags({repr(func)})", end=" ")
         for n in kwargs:
             setattr(func, n, kwargs[n])
         if verbose > 1:
@@ -172,11 +174,30 @@ def add_exported_methods(module, dict = oper_dict):
                 if suggestedName is not None:
                     use_name = suggestedName
                 else: use_name = name
+                suggestedArity = getattr(func, 'arity', None)
+                is_varargs = getattr(func, 'varargs', None)
                 sig = inspect.signature(func)
                 params = sig.parameters
-                num_args = len([p for p in params.values() if p.default == p.empty and p.kind == p.POSITIONAL_OR_KEYWORD])
-                add_pyop(use_name, num_args, getattr(func, 'op', "OperationAtom"), getattr(func, 'unwrap', False), dict)
 
+                num_args = len([p for p in params.values() if p.default == p.empty and p.kind == p.POSITIONAL_OR_KEYWORD])
+                # Check for varargs
+                has_varargs = any(p.kind == p.VAR_POSITIONAL for p in params.values())
+                if suggestedArity is None: suggestedArity = num_args
+
+                keyword_arg_names = []
+                # Iterate through parameters
+                for name, param in params.items():
+                    # Check if the parameter is either VAR_KEYWORD or has a default value
+                    if param.kind == inspect.Parameter.VAR_KEYWORD or param.default != inspect.Parameter.empty:
+                        keyword_arg_names.append(name)
+
+                if is_varargs==True or has_varargs:
+                    suggestedArity = -1
+                add_pyop(use_name, suggestedArity,
+                   getattr(func, 'op', "OperationAtom"),
+                   getattr(func, 'unwrap', False), func, dict)
+
+@export_flags(MeTTa=True)
 def add_janus_methods(module, dict = janus_dict):
     for name, func in inspect.getmembers(module):
         if inspect.isfunction(func):
@@ -204,15 +225,24 @@ def add_janus_methods(module, dict = janus_dict):
 
                 registerForeign(func, arity = suggestedArity, flags = suggestedFlags )
 
+
+
 @export_flags(MeTTa=True)
-def add_pyop(name, length, op_kind, unwrap, dict = oper_dict):
+def add_pyop(name, length, op_kind, unwrap, funct, dict = oper_dict):
     hyphens, underscores = name.replace('_', '-'), name.replace('-', '_')
-    mettavars, pyvars = (' '.join(f"${chr(97 + i)}" for i in range(length))).strip(), (', '.join(chr(97 + i) for i in range(length))).strip()
+    mettavars = ' '.join(f"${chr(97 + i)}" for i in range(length)).strip()
+    pyvars = ', '.join(chr(97 + i) for i in range(length)).strip()
+
+    if length == -1: #varargs
+        pyvars = "*args"
+        mettavars = "..."
+
     s = f"!({hyphens})" if mettavars == "" else f"!({hyphens} {mettavars})"
     add_to_history_if_unique(s); #print(s)
     if hyphens not in dict:
         src, local_vars = f'op = {op_kind}( "{hyphens}", lambda {pyvars}: [{underscores}({pyvars})], unwrap={unwrap})', {}
         if verbose>1: print_cmt(f"add_pyop={src}")
+        if verbose>8: print_cmt(f"funct={dir(funct)}")
         exec(src, globals(), local_vars)
         dict[hyphens] = local_vars['op']
         dict[underscores] = local_vars['op']
@@ -274,6 +304,9 @@ def getNameBySpace(target_space):
 
 vspace_ordinal = 0
 
+# Mainly a sanity loading test class
+class MettaLearner:
+    ""
 class Circles:
     def __init__(self, initial_data=None):
         self.data = {}
@@ -1689,14 +1722,15 @@ class ExtendedMeTTa(MeTTa):
         def parse_single(self, program):
             return next(self._parse_all(program))
 
-        def load_py_module(self, name):
-            if not isinstance(name, str):
-                name = repr(name)
-            mod = import_module(name)
-            for n in dir(mod):
-                obj = getattr(mod, n)
-                if '__name__' in dir(obj) and obj.__name__ == 'metta_register':
-                    obj(self)
+    #def load_py_module(self, name):
+    #    if not isinstance(name, str):
+    #        name = repr(name)
+    #
+    #    mod = import_module(name)
+    #   for n in dir(mod):
+    #        obj = getattr(mod, n)
+    #        if '__name__' in dir(obj) and obj.__name__ == 'metta_register':
+    #            obj(self)
 
         def import_file(self, fname):
             """Loads the program file and runs it"""
@@ -2115,21 +2149,47 @@ def np_vector(*args):
     print_cmt("np_vector=",args)
     return np.array(args)
 
-#pass_metta=True
+realMetta = None
+
+def metta_register(metta):
+    print(f";; metta_register={the_python_runner}/{metta}")
+    #global realMetta
+    try:
+        if not metta is None:
+            realMetta = metta
+            register_vspace_atoms_pm(metta)
+    #the_python_runner.set_cmetta(metta)
+    #print(";;", metta.pymods)
+        print(";;", the_python_runner.pymods)
+
+    except Exception as e:
+        if verbose>0: print(f"; Error: {e}")
+
+
 @register_atoms
-#@register_atoms(pass_metta=True)
 def register_vspace_atoms():
+    register_vspace_atoms_pm(None)
 
-    metta = None
+@export_flags(MeTTa=True)
+@register_atoms(pass_metta=True)
+def register_vspace_atoms_pm(mettaIn):
+
+    global realMetta
+
+    if mettaIn is None:
+         mettaIn = realMetta
+
+    metta = mettaIn
+
     global oper_dict
-
-    if not metta is None: the_python_runner.set_cmetta(metta)
+    if verbose>1: print_cmt(f"register_vspace_atoms metta={metta} the_python_runner = {the_python_runner} {self_space_info()}")
 
     counter = 0
-    if verbose>1: print_cmt(f"register_vspace_atoms metta={metta} {self_space_info()}")
+    #if not metta is None: the_python_runner.set_cmetta(metta)
 
     if not isinstance(metta, VSpace):
-        the_python_runner.parent = metta
+        if not metta is None:
+        	the_python_runner.parent = metta
 
     def new_value_atom_func():
         nonlocal counter
@@ -2211,6 +2271,7 @@ def register_vspace_atoms():
         'swip-exec': OperationAtom('swip-exec', lambda s: [swip_exec(s)]),
         'py-eval': OperationAtom('py-eval', lambda s: [eval(s)]) })
 
+    add_exported_methods(sys.modules[__name__], dict = oper_dict)
     return oper_dict
 
 
@@ -2772,24 +2833,24 @@ def load_vspace():
        swip.retractall("was_asserted_space('&self')")
        swip.assertz("py_named_space('&self')")
 
-@export_flags(MeTTa=True)
+@export_flags(MeTTa=True, CallsVSpace=True)
 def mine_overlaps():
    load_vspace()
    swip_exec("mine_overlaps")
    #readline_add_history("!(try-overlaps)")
 
 
-@export_flags(MeTTa=True)
+@export_flags(MeTTa=True, CallsVSpace=True)
 def try_overlaps():
    load_vspace()
    swip_exec("try_overlaps")
 
-@export_flags(MeTTa=True)
+@export_flags(MeTTa=True, CallsVSpace=True)
 def learn_vspace():
    load_vspace()
    swip_exec("learn_vspace(60)")
 
-@export_flags(MeTTa=True)
+@export_flags(MeTTa=True, CallsVSpace=True)
 def mettalog():
    load_vspace()
    swip_exec("repl")
@@ -2807,7 +2868,7 @@ def register_mettalog_op_new(fn, n):
    return op
 
 
-@export_flags(MeTTa=True)
+@export_flags(MeTTa=True, CallsVSpace=True)
 def use_mettalog():
    load_vspace()
    register_mettalog_op("pragma!",2)
@@ -2850,19 +2911,23 @@ def _eval_mettalog(fn, *args):
     q.closeQuery()
     flush_console()
 
-@export_flags(MeTTa=True)
+@export_flags(MeTTa=True, CallsVSpace=True)
 def mettalog_pl():
    load_vspace()
    swip_exec("break")
 
+@export_flags(CallsVSpace=True)
 def load_flybase(size):
    load_vspace()
    swip_exec(f"load_flybase({size})")
    #readline_add_history("!(mine-overlaps)")
 
 @export_flags(MeTTa=True)
-@foreign_framed
 def swip_exec(qry):
+    swip_exec_ff(qry)
+
+@foreign_framed
+def swip_exec_ff(qry):
     #from metta_vspace import swip
     #if is_init==True:
     #   print_cmt("Not running Query: ",qry)
@@ -3063,6 +3128,14 @@ class InteractiveMeTTa(ExtendedMeTTa): # LazyMeTTa ExtendedMeTTa
                     print_cmt(f"Verbosity level set to {verbose}")
                     continue
 
+                elif sline.startswith("@a"): # @arg
+                    global argmode
+                    argmode = self.mode
+                    arg = sline.split()[1]
+                    handle_arg(arg)
+                    self.mode = argmode
+                    continue
+
                 # Show help
                 elif sline.startswith("@h"):
                     print_cmt("Help:")
@@ -3078,6 +3151,8 @@ class InteractiveMeTTa(ExtendedMeTTa): # LazyMeTTa ExtendedMeTTa
                     print_cmt("@space   - Change the &self of the_runner_space")
                     print_cmt("@v ###   - Verbosity 0-3")
                     print_cmt("@h       - Display this help message")
+                    print_cmt("@arg     - Act as if this arg was passed to the command")
+                    print_cmt("           example: '@arg 1-VSpaceTest.metta'  loads and runs this metta file")
                     print_cmt("Ctrl-D   - Exit interpreter")
                     print_cmt(".s       - Save session")
                     print_cmt(".l       - Load the latest session")
@@ -3282,29 +3357,6 @@ def call_mettalog(line, parseWithRust = False):
       yield X.value
     q.closeQuery()
     flush_console()
-
-@export_flags(MeTTa=True)
-def vspace_main(*args):
-    is_init=False
-    #os.system('clear')
-    t0 = monotonic_ns()
-    if verbose>0: print_cmt(underline("Version-Space Main\n"))
-    flush_console()
-    #if is_init==False: load_vspace()
-    #if is_init==False: load_flybase()
-    #if is_init==False:
-    argmode = None
-    for arg in args:
-        if arg in ["metta","mettalog","python"]:
-            argmode = arg
-        else:
-            handle_arg(arg)
-    flush_console()
-    the_python_runner.repl(mode=argmode)
-    flush_console()
-    if verbose>1: timeFrom("main", t0)
-    flush_console()
-
 
 def redirect_stdout(inner_function):
     old_stdout = sys.stdout # Save the current stdout stream
@@ -3593,35 +3645,81 @@ def analyze_csv(base_name, file_path, sep=None):
     #metta_read(f"(data-types {base_name} {col} {col.dtype} )")
 
 
+
+def import_metta_file(string):
+    global argmode
+    if argmode=="mettalog":
+        load_vspace()
+        swip_exec(f"load_metta_file('{selected_space_name}','{string}')")
+    else: the_python_runner.import_file(string)
+
+
+
 import os
 import sys
 
-def cat_files(strings, skip_filetypes=['.metta','.md','.pl', '.png', '.jpg', '.obo']):
-    for string in strings:
+@export_flags(MeTTa=True)
+def vspace_main(args):
+    is_init=False
+    #os.system('clear')
+    t0 = monotonic_ns()
+    if verbose>0: print_cmt(underline("Version-Space Main\n"))
+    flush_console()
+    #if is_init==False: load_vspace()
+    #if is_init==False: load_flybase()
+    #if is_init==False:
+
+    for arg in args:
+       handle_arg(arg)
+    flush_console()
+    global argmode
+    the_python_runner.repl(mode=argmode)
+    flush_console()
+    if verbose>1: timeFrom("main", t0)
+    flush_console()
+
+def vspace_main_from_python(sysargv1toN):
+    vspace_main(sysargv1toN)
+
+def handle_arg(string, skip_filetypes=['.metta', '.md','.pl', '.png', '.jpg', '.obo']):
+
         lower = string.lower()
+
+        if lower in ["--metta","--mettalog","--python"]:
+            global argmode
+            argmode = lower.lstrip('-')
+            if verbose>0: print("; argmode=", argmode)
+            return
+
+        if os.path.isfile(string):
+            if lower.endswith('.metta'):
+                if verbose>0: print("; import_metta_file=", string)
+                import_metta_file(string)
+                return
 
         global needed_Skip
         if string=="--analyze": sys.exit(needed_Skip)
-
-        # Check if the file extension is in the list of file types to skip
-        if any(lower.endswith(ext) for ext in skip_filetypes):
-            print_cmt(f"Skipping file: {string}")
-            continue
 
         if os.path.isdir(string):
             # If it's a directory, traverse it
             for root, _, files in os.walk(string):
                 for file in files:
                     try:
-                        cat_files([os.path.join(root, file)], skip_filetypes)
+                        if any(file.endswith(ext) for ext in skip_filetypes):
+                            if verbose>0: print_cmt(f"Skipping file: {file}")
+                            continue
+                        handle_arg([os.path.join(root, file)], skip_filetypes)
                     except Exception as e:
                         print_cmt(f"An error occurred while processing {string}: {e}")
-            sys.exit(0)
+            return
+
         elif os.path.isfile(string):
             if lower.endswith('.csv'):
                 analyze_csv_basename(string, sep=',')
+                return
             elif lower.endswith('.tsv'):
                 analyze_csv_basename(string, sep='\t')
+                return
             else:
                 # Read only the first few lines
                 try:
@@ -3633,33 +3731,11 @@ def cat_files(strings, skip_filetypes=['.metta','.md','.pl', '.png', '.jpg', '.o
                             if i >= 10:
                                 break
                             print_cmt(line.strip())
-
-def handle_arg(string, skip_filetypes=['.md','.pl', '.png', '.jpg']):
-        lower = string.lower()
-        # Check if the file extension is in the list of file types to skip
-        if any(lower.endswith(ext) for ext in skip_filetypes):
-            print_cmt(f"Skipping: {string}")
-            return
-
-        elif os.path.isdir(string):
-            # If it's a directory, traverse it
-            for root, _, files in os.walk(string):
-                for file in files:
-                    try:
-                        handle_arg([os.path.join(root, file)], skip_filetypes)
-                    except Exception as e:
-                        print_cmt(f"An error occurred while processing {string}: {e}")
-
-            return
-
-        elif os.path.isfile(string):
-            if lower.endswith('.metta'):
-                the_python_runner.import_file(string)
                 return
 
         print_cmt(f"Skipping: {string}")
 
-        if string=="--analyze": sys.exit(needed_Skip)
+
 
 # All execution happens here
 swip = globals().get('swip') or PySwip()
@@ -3669,6 +3745,7 @@ the_nb_space = globals().get('the_nb_space') or VSpace("&nb")
 the_gptspace = globals().get('the_gptspace') or GptSpace()
 the_python_runner = globals().get('the_python_runner') or None
 selected_space_name = globals().get('selected_space_name') or "&self"
+argmode = None
 sys_argv_length = len(sys.argv)
 
 if the_python_runner is None:  #MakeInteractiveMeTTa() #def MakeInteractiveMeTTa(): #global the_python_runner,the_old_runner_space,the_new_runner_space,sys_argv_length
@@ -3685,6 +3762,5 @@ if the_python_runner is None:  #MakeInteractiveMeTTa() #def MakeInteractiveMeTTa
 is_init=False
 
 if __name__ == "__main__":
-    cat_files(sys.argv[1:])
-    vspace_main()
+    vspace_main_from_python(sys.argv[1:])
 

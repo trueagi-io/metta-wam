@@ -1437,6 +1437,7 @@ with_concepts(TF, Goal) :-
 % Various 'write_src' and 'write_src0' rules are handling the writing of the source,
 % dealing with different types of values, whether they are lists, atoms, numbers, strings, compounds, or symbols.
 write_src(V):- notrace(write_src0(V)).
+write_src0(V):- V ==[],!,write('()').
 write_src0(V):- allow_concepts,!,with_concepts('False',write_src1(V)),flush_output.
 write_src0(V):- is_list(V),!,pp_sexi(V).
 write_src0(V):- write_src1(V),!.

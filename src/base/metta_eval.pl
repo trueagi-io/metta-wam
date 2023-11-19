@@ -542,7 +542,7 @@ eval_args1(_Dpth,Self,['transfer!',File],RetVal):- !, must_det_ll((include_metta
 
 nd_ignore(Goal):- call(Goal)*->true;true.
 
-eval_args1(Depth,Self,['::'|Expr],Expr):- !.
+eval_args1(_Dpth,_Slf,['::'|Expr],Expr):- !.
 eval_args1(Depth,Self,['nop',Expr],Empty):- !,  eval_args(Depth,Self,Expr,_), return_empty([],Empty).
 eval_args1(_Dpth,_Slf,['nop'],Empty):- !, return_empty([],Empty).
 eval_args1(Depth,Self,['do',Expr],Empty):- !,  eval_args(Depth,Self,Expr,_), return_empty([],Empty).
@@ -564,6 +564,7 @@ eval_args1(Depth,Self,[And,X|Y],TF):- is_and(And),!,
 eval_args1(Depth,Self,['or',X,Y],TF):- !, as_tf((eval_args(Depth,Self,X,'True');eval_args(Depth,Self,Y,'True')),TF).
 
 
+eval_args1(_Dpth,_Slf,['arity',F,A],TF):- !,as_tf(current_predicate(F/A),TF).
 
 eval_args1(_Dpth,Self,['add-atom',Other,PredDecl],TF):- !,must_det_ll(( into_space(Self,Other,Space), as_tf(do_metta(Space,load,PredDecl),TF))).
 eval_args1(_Dpth,Self,['remove-atom',Other,PredDecl],TF):- !,must_det_ll(( into_space(Self,Other,Space), as_tf(do_metta(Space,unload,PredDecl),TF))).
