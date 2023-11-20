@@ -1264,7 +1264,7 @@ do_metta_file_exec0(Self,TermV):-
   current_exec_file(FileName),
   ignore((file_answers(FileName, Nth, Ans))),
   into_metta_callable(Self,TermV,Term,X,NamedVarsList,Was),
-  findall(X,(do_metta_exec(Self,TermV,Term,X,NamedVarsList,Was),
+  findall(X,(do_metta_exec(false,Self,TermV,Term,X,NamedVarsList,Was),
          once((must_det_ll((notrace(((color_g_mesg(yellow,
          ((write(' '), write_src(X),nl,
             (NamedVarsList\=@=Was-> (color_g_mesg(green,writeq(NamedVarsList)),nl); true),
@@ -1278,10 +1278,10 @@ do_metta_exec(Self,Var):- var(Var), !, pp_m(eval(Var)), freeze(Var,wdmsg(laterVa
 do_metta_exec(Self, TermV):- !,
   ((\+ \+ write_exec(TermV),
   into_metta_callable(Self,TermV,Term,X,NamedVarsList,Was),
-        user:do_metta_exec(Self,TermV,Term,X,NamedVarsList,Was))).
+        user:do_metta_exec(true,Self,TermV,Term,X,NamedVarsList,Was))).
 
 
-do_metta_exec(_Self,_TermV,Term,X,NamedVarsList,Was):-
+do_metta_exec(Interactive,_Self,_TermV,Term,X,NamedVarsList,Was):-
   ((
     % NamedVarsList,
     % Initialize Control as a compound term with 'each' as its argument.
@@ -1304,7 +1304,7 @@ do_metta_exec(_Self,_TermV,Term,X,NamedVarsList,Was):-
               % If not in leap state, prompt for input.
 
               ((repeat,
-                write("More Solutions? "), get_single_char(C), nl),
+                write("More Solutions? "), (Interactive->get_single_char(C);C=108), nl),
               (C == 108 -> % 'l' for leap
                    nb_setarg(1, Control, leap); % Set Control to leap and stop prompting.
               (C == 103 -> % 'g' for print_goals
