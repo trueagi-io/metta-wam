@@ -16,6 +16,9 @@ fb_stats:- metta_stats.
 :- ensure_loaded(flybase_obo).
 
 
+:- ensure_loaded(metta_interp).
+
+
 % ==============
 % VSPACE LOADER
 % ==============
@@ -360,7 +363,155 @@ pp_fb1(P):- print(P),!,nl.
 pp_fb1(P):- fbdebug1(P),!,nl.
 
 
+fbgn_exons2affy1_overlaps_each(Gene,At):-
+   fb_pred(fbgn_exons2affy1_overlaps, Arity),
+   functor(Pred,fbgn_exons2affy1_overlaps, Arity),
+   arg(1,Pred,Gene),
+   call(Pred),
+   arg(N,Pred,At),N>1.
 
+fbgn_exons2affy1_overlaps_start_end(Gene,Start,End):-
+   fbgn_exons2affy1_overlaps_each(Gene,At),into_start_end(At,Start,End).
+
+
+into_start_end(s_e(S,E),S,E):- nonvar(S),!.
+into_start_end('..'(S,E),S,E):- nonvar(S),!.
+into_start_end(at(S,E),S,E):- nonvar(S),!.
+into_start_end(At,S,E):- atomic_list_concat([SS,EE],'..',At),
+   into_number_or_symbol(SS,S), into_number_or_symbol(EE,E).
+into_start_end(At,S,E):- atomic_list_concat([SS,EE],'_at_',At),
+   into_number_or_symbol(SS,S), into_number_or_symbol(EE,E).
+
+
+%into_fb_term(Atom,Term):- compound(Atom),!,Term=Atom.
+into_fb_term(Atom,Term):- \+ atom(Atom), \+ string(Atom),!,Term=Atom.
+into_fb_term(Atom,'..'(S,E)):- into_start_end(Atom,S,E),!.
+into_fb_term(Atom,Term):- into_number_or_symbol(Atom,Term),!.
+
+into_number_or_symbol(Atom,Term):- atomic_list_concat(List,'|',Atom),List\=[_],!,maplist(into_fb_term,List,Term).
+%into_number_or_symbol(Atom,Term):- atom_number(Atom, Term),!,Term= Term.
+into_number_or_symbol(Atom,Term):- catch(atom_to_term(Atom,Term,Vars),_,fail),maplist(a2t_assign_var,Vars).
+into_number_or_symbol(Atom,Term):- Term=Atom.
+
+a2t_assign_var(N=V):- N=V.
+
+fbgn_exons2affy2_overlaps_each(Gene,At):-
+   fb_pred(fbgn_exons2affy2_overlaps, Arity),
+   functor(Pred,fbgn_exons2affy2_overlaps, Arity),
+   arg(1,Pred,Gene),
+   call(Pred),
+   arg(N,Pred,At),N>1.
+
+fbgn_exons2affy2_overlaps_start_end(Gene,Start,End):-
+   fbgn_exons2affy2_overlaps_each(Gene,At),into_start_end(At,Start,End).
+
+some_xref_ids(Id):- member(Id,['FBgn0001301']).
+
+findall_flat_set(Arg,Goal,FlatSet):-
+  findall(Arg,Goal,List),flatten(List,Flat),list_to_set(Flat,FlatSet),!.
+
+expand_xref(Id,N,SetOfArgs):-
+  expand_xref_excpt([[]],Id,N,SetOfArgs).
+
+expand_xref_excpt(_Xcept,Id,_N,SetOfArgs):- compound(Id),!,SetOfArgs=[].
+expand_xref_excpt(Except,Id,N,SetOfArgs):- var(N),!,between(0,5,N),expand_xref_excpt(Except,Id,N,SetOfArgs).
+expand_xref_excpt(Except,Id,N,SetOfArgs):- N=<1,!,
+  findall_flat_set(SoFar,expand_xref_once_except(Except,Id,N,SoFar),SetOfArgs).
+expand_xref_excpt(Except,Id,N,SetOfArgs):- Nm1 is N -1,
+  expand_xref_once_except(Except,Id,1,SetOfArgs1),
+  findall_flat_set(EArgs,(member(E,SetOfArgs1),expand_xref_excpt([Id|Except],E,Nm1,EArgs)),SetOfArgs).
+
+gather_args(Except,F,Pred,Args):- findall_flat_set(Arg,gather_args(Except,F,Pred,Arg),Args).
+gather_each_args(Except,F,Pred,Ele):- arg(N,Pred,Arg), \+ member(Arg,Except),
+   (number(Arg)-> Ele = is_nthOf(Arg,F,N) ; Ele = Arg).
+
+%   findall_flat_set([Pred|Args],
+%    (call(Pred),
+%     (N=0 -> Args = [] ; gather_args([Id|Except],F,Pred,Args))),SetOfArgs).
+
+
+expand_xref_once_except(Except,Id,P1):- nonvar(P1), \+ is_list(P1),
+  forall(between(1,6,N),
+     expand_xref_once_except_each(Except,Id,N,P1)).
+
+expand_xref_once_except(Except,Id,Set):-
+  ((between(1,6,N),expand_xref_once_except_each(Except,Id,N,nop),fail)
+    ->true;Set=Except).
+
+expand_xref_once_except_each(Except,Id,N,P1):-
+  fb_pred(F, Arity),
+  xgc,
+  \+ member(argNOf(N,F/Arity),Except),   \+ member(F/Arity,Except),
+  Arity>=N,
+  expand_xref_once_except_each_fa(Except,F,Arity,Id,N,P1).
+
+
+expand_xref_once_except_each_fa(Except,F,Arity,Id,N,P1):-
+  functor(Pred,F, Arity),
+  arg(N,Pred,Id),
+  call(Pred),
+  add_to_except(argNOf(N,F/Arity),Except),
+  % \+ member(Pred,Except),
+  % add_to_except(Pred,Except),
+  call(P1,Pred),
+  xgc.
+
+xgc:-
+  garbage_collect,
+  garbage_collect_atoms,
+  garbage_collect_clauses,
+  sleep(0.033).
+
+add_to_except(Pred,Except):- arg(2,Except,T), nb_setarg(2,Except,[Pred|T]).
+
+sx1:- xinfo(_Id).
+
+xinfo(Id):- var(Id),!,some_xref_ids(Id), xinfo(Id).
+xinfo(Id):- Id=='',!.
+xinfo(Id):- number(Id),!.
+xinfo(Id):- expand_xref_once_except([Id],Id,my_write_src_nl).
+
+my_write_src_nl(X):-!, write_src_nl(X).
+my_write_src_nl(X):-
+  must_det_ll((X=..[F|L], maplist(fast_column,L,LL),!,write_src_nl([F|LL]))).
+
+/*
+
+xinfo(Id, N):- var(Id),!,some_xref_ids(Id), xinfo(Id,N).
+xinfo(Id,N):-
+   expand_xref(Id,N,Args),
+   maplist(write_src_nl,Args).
+
+
+xinfo(Id):-
+  expand_xref_once_except(
+       [argNOf(1,entity_publication/4),
+        'obo-is-a'/2,
+        'obo-synonym'/4,
+        'obo-charge'/2,
+        fbal_to_fbgn/4,
+        gene_genetic_interactions/6,
+        fbgn_gleanr/4],Id,Set),
+  nop(maplist(write_src_nl,Set)),fail.
+xinfo(Id):-
+   N=1,
+   forall(member(F/A,
+       [entity_publication/4,
+        'obo-is-a'/2,
+        'obo-charge'/2,
+        gene_genetic_interactions/6,
+        fbgn_gleanr/4]),
+   expand_xref_once_except_each_fa([[]],F,A,Id,N,_Pred)).
+*/
+
+
+%:- abolish(gp_information/0).
+:- forall(retract(fb_pred(F,0)),abolish(F/0)).
+
+%fbd(X,P):- fb_pred(F,A),functor(P,F,A),arg(_,P,X), no_repeats(P,call(P)).
+fbdead:- fb_pred(F,A),functor(P,F,A),arg(_,P,xxxxxxxxxxxxxxxxx),no_repeats(P,call(P)),
+ writeln(fbdead=P),fail.
+fbdead.
 
 :- use_module(library(csv)).
 
@@ -434,7 +585,7 @@ load_flybase_files:-
 
 
 load_flybase_das_11:-
-  % DAS's 11 tsv and 1 json file
+  % DAS''s 11 tsv and 1 json file
   load_flybase('./precomputed_files/*/ncRNA_genes_fb_*.json'),
   load_flybase('./precomputed_files/*/fbgn_fbtr_fbpp_expanded*.tsv'),
   load_flybase('./precomputed_files/*/physical_interactions_mitab*.tsv'),
@@ -786,200 +937,200 @@ est_size(              2, connected_to).
 est_size(              1, transcribed_from).
 est_size(              1, guided_by).
 % SQL
-est_size(    248_392_753,feature_relationship).
-est_size(    141_933_326,dbxrefprop).
-est_size(     98_464_501,featureloc).
-est_size(     92_616_769,feature).
-est_size(     78_909_674,analysisfeature).
-est_size(     61_025_741,feature_dbxref).
-est_size(     53_031_862,library_featureprop).
-est_size(     39_950_319,dbxref).
-est_size(     27_923_221,library_feature).
-est_size(     23_805_221,feature_relationshipprop).
-est_size(     21_279_999,featureprop).
-est_size(      7_474_185,feature_synonym).
-est_size(      6_554_427,synonym).
-est_size(      5_578_280,feature_pub).
-est_size(      5_341_100,featureprop_pub).
-est_size(      4_865_118,feature_relationship_pub).
-est_size(      2_813_405,feature_interactionprop).
-est_size(      2_464_355,feature_cvterm).
-est_size(      1_950_807,feature_cvtermprop).
-est_size(      1_377_258,feature_interaction).
-est_size(      1_116_490,feature_genotype).
-est_size(        888_210,pubprop).
-est_size(        734_870,featureloc_pub).
-est_size(        688_734,pubauthor).
-est_size(        518_569,genotype_synonym).
-est_size(        495_848,genotype).
-est_size(        491_538,feature_pubprop).
-est_size(        466_209,phenstatement).
-est_size(        413_338,pub_dbxref).
-est_size(        382_054,genotype_dbxref).
-est_size(        351_942,phendesc).
-est_size(        277_992,phenotype_comparison_cvterm).
-est_size(        254_298,feature_expressionprop).
-est_size(        252_544,phenotype_comparison).
-est_size(        251_928,pub).
-est_size(        242_344,pub_relationship).
-est_size(        227_406,feature_expression).
-est_size(        213_360,cvterm_relationship).
-est_size(        212_142,cvterm_dbxref).
-est_size(        209_164,interaction_cvterm).
-est_size(        195_000,cvtermsynonym).
-est_size(        180_311,expression_cvterm).
-est_size(        167_582,update_track).
-est_size(        150_401,feature_relationshipprop_pub).
-est_size(        149_855,stockcollection_stock).
-est_size(        149_855,stock).
-est_size(        149_835,stock_genotype).
-est_size(        146_846,interactionprop).
-est_size(        122_004,interaction_group).
-est_size(        119_611,feature_interaction_pub).
-est_size(        112_784,interaction_pub).
-est_size(        112_781,interaction).
-est_size(        101_687,interaction_group_feature_interaction).
-est_size(         96_405,feature_grpmember_pub).
-est_size(         94_765,cvterm).
-est_size(         79_466,expression_cvtermprop).
-est_size(         74_873,interactionprop_pub).
-est_size(         73_828,library_interaction).
-est_size(         57_144,organism).
-est_size(         48_730,humanhealthprop).
-est_size(         41_075,feature_grpmember).
-est_size(         36_960,expression).
-est_size(         23_565,library_cvterm).
-est_size(         23_483,library_cvtermprop).
-est_size(         21_251,cvtermprop).
-est_size(         19_797,libraryprop).
-est_size(         18_396,phenotype).
-est_size(         17_871,phenotype_cvterm).
-est_size(         16_617,humanhealth_dbxrefprop).
-est_size(         16_529,interaction_expressionprop).
-est_size(         16_318,humanhealth_pub).
-est_size(         15_400,library_synonym).
-est_size(         15_355,humanhealth_dbxref).
-est_size(         15_142,cell_line_feature).
-est_size(         14_972,libraryprop_pub).
-est_size(         13_694,interaction_expression).
-est_size(         13_218,interaction_cell_line).
-est_size(         10_720,library_pub).
-est_size(          9_870,library_relationship).
-est_size(          9_851,humanhealthprop_pub).
-est_size(          9_558,library_dbxref).
-est_size(          8_339,library_relationship_pub).
-est_size(          7_095,grp_pub).
-est_size(          6_719,cell_line_pub).
-est_size(          6_657,grp_relationship).
-est_size(          6_605,strain_synonym).
-est_size(          5_990,grp_synonym).
-est_size(          5_947,humanhealth_synonym).
-est_size(          5_785,strainprop).
-est_size(          5_783,strainprop_pub).
-est_size(          5_769,library).
-est_size(          5_543,grp_cvterm).
-est_size(          5_444,cell_line_synonym).
-est_size(          5_277,library_expression).
-est_size(          5_187,grpprop).
-est_size(          5_159,grpmember).
-est_size(          4_469,humanhealth_dbxrefprop_pub).
-est_size(          4_450,library_expressionprop).
-est_size(          4_415,grpprop_pub).
-est_size(          4_319,stock_cvterm).
-est_size(          3_832,library_dbxrefprop).
-est_size(          3_829,grpmemberprop).
-est_size(          3_777,genotype_cvterm).
-est_size(          3_744,humanhealth_featureprop).
-est_size(          3_721,library_strainprop).
-est_size(          3_721,library_strain).
-est_size(          3_625,humanhealth_feature).
-est_size(          2_641,grp_dbxref).
-est_size(          2_263,humanhealth_relationship).
-est_size(          2_220,humanhealth_relationship_pub).
-est_size(          2_093,strain_pub).
-est_size(          2_010,grp_relationship_pub).
-est_size(          1_939,strain_cvtermprop).
-est_size(          1_939,strain_cvterm).
-est_size(          1_814,grp).
-est_size(          1_777,strain_dbxref).
-est_size(          1_776,strain).
-est_size(          1_739,organism_dbxref).
-est_size(          1_643,feature_humanhealth_dbxref).
-est_size(          1_540,humanhealth_cvtermprop).
-est_size(          1_540,humanhealth_cvterm).
-est_size(          1_515,humanhealth).
-est_size(          1_300,cell_lineprop_pub).
-est_size(          1_291,cell_lineprop).
-est_size(          1_215,cell_line_dbxref).
-est_size(          1_198,cell_line_libraryprop).
-est_size(          1_081,cell_line_library).
-est_size(          1_013,organism_pub).
-est_size(            821,organismprop).
-est_size(            731,organismprop_pub).
-est_size(            714,cell_line_cvterm).
-est_size(            518,db).
-est_size(            435,strain_relationship_pub).
-est_size(            435,strain_relationship).
-est_size(            320,cell_line).
-est_size(            308,analysis).
-est_size(            238,stockprop).
-est_size(            171,cell_line_relationship).
-est_size(            139,strain_featureprop).
-est_size(            139,strain_feature).
-est_size(            107,strain_phenotypeprop).
-est_size(             96,humanhealth_pubprop).
-est_size(             73,cell_line_cvtermprop).
-est_size(             71,cv).
-est_size(             54,strain_phenotype).
-est_size(             40,environment).
-est_size(             27,stockcollectionprop).
-est_size(             26,contact).
-est_size(             18,environment_cvterm).
-est_size(             11,organism_library).
-est_size(              7,stockcollection).
-est_size(              1,lock).
-est_size(              0,analysisgrp).
-est_size(              0,analysisgrpmember).
-est_size(              0,analysisprop).
-est_size(              0,audit_chado).
-est_size(              0,cell_line_strain).
-est_size(              0,cell_line_strainprop).
-est_size(              0,cvtermpath).
-est_size(              0,eimage).
-est_size(              0,expression_image).
-est_size(              0,expression_pub).
-est_size(              0,expressionprop).
-est_size(              0,feature_cvterm_dbxref).
-est_size(              0,feature_phenotype).
-est_size(              0,featuremap).
-est_size(              0,featuremap_pub).
-est_size(              0,featurepos).
-est_size(              0,featurerange).
-est_size(              0,genotype_cvtermprop).
-est_size(              0,genotype_pub).
-est_size(              0,genotypeprop).
-est_size(              0,genotypeprop_pub).
-est_size(              0,grp_pubprop).
-est_size(              0,grp_relationshipprop).
-est_size(              0,grpmember_cvterm).
-est_size(              0,grpmember_pub).
-est_size(              0,grpmemberprop_pub).
-est_size(              0,humanhealth_phenotype).
-est_size(              0,humanhealth_phenotypeprop).
-est_size(              0,interaction_cvtermprop).
-est_size(              0,library_grpmember).
-est_size(              0,library_humanhealth).
-est_size(              0,library_humanhealthprop).
-est_size(              0,organism_cvterm).
-est_size(              0,organism_cvtermprop).
-est_size(              0,organism_grpmember).
-est_size(              0,project).
-est_size(              0,stock_dbxref).
-est_size(              0,stock_pub).
-est_size(              0,stock_relationship).
-est_size(              0,stock_relationship_pub).
-est_size(              0,stockprop_pub).
-est_size(              0,tableinfo).
+sql_est_size(    248_392_753,feature_relationship).
+sql_est_size(    141_933_326,dbxrefprop).
+sql_est_size(     98_464_501,featureloc).
+sql_est_size(     92_616_769,feature).
+sql_est_size(     78_909_674,analysisfeature).
+sql_est_size(     61_025_741,feature_dbxref).
+sql_est_size(     53_031_862,library_featureprop).
+sql_est_size(     39_950_319,dbxref).
+sql_est_size(     27_923_221,library_feature).
+sql_est_size(     23_805_221,feature_relationshipprop).
+sql_est_size(     21_279_999,featureprop).
+sql_est_size(      7_474_185,feature_synonym).
+sql_est_size(      6_554_427,synonym).
+sql_est_size(      5_578_280,feature_pub).
+sql_est_size(      5_341_100,featureprop_pub).
+sql_est_size(      4_865_118,feature_relationship_pub).
+sql_est_size(      2_813_405,feature_interactionprop).
+sql_est_size(      2_464_355,feature_cvterm).
+sql_est_size(      1_950_807,feature_cvtermprop).
+sql_est_size(      1_377_258,feature_interaction).
+sql_est_size(      1_116_490,feature_genotype).
+sql_est_size(        888_210,pubprop).
+sql_est_size(        734_870,featureloc_pub).
+sql_est_size(        688_734,pubauthor).
+sql_est_size(        518_569,genotype_synonym).
+sql_est_size(        495_848,genotype).
+sql_est_size(        491_538,feature_pubprop).
+sql_est_size(        466_209,phenstatement).
+sql_est_size(        413_338,pub_dbxref).
+sql_est_size(        382_054,genotype_dbxref).
+sql_est_size(        351_942,phendesc).
+sql_est_size(        277_992,phenotype_comparison_cvterm).
+sql_est_size(        254_298,feature_expressionprop).
+sql_est_size(        252_544,phenotype_comparison).
+sql_est_size(        251_928,pub).
+sql_est_size(        242_344,pub_relationship).
+sql_est_size(        227_406,feature_expression).
+sql_est_size(        213_360,cvterm_relationship).
+sql_est_size(        212_142,cvterm_dbxref).
+sql_est_size(        209_164,interaction_cvterm).
+sql_est_size(        195_000,cvtermsynonym).
+sql_est_size(        180_311,expression_cvterm).
+sql_est_size(        167_582,update_track).
+sql_est_size(        150_401,feature_relationshipprop_pub).
+sql_est_size(        149_855,stockcollection_stock).
+sql_est_size(        149_855,stock).
+sql_est_size(        149_835,stock_genotype).
+sql_est_size(        146_846,interactionprop).
+sql_est_size(        122_004,interaction_group).
+sql_est_size(        119_611,feature_interaction_pub).
+sql_est_size(        112_784,interaction_pub).
+sql_est_size(        112_781,interaction).
+sql_est_size(        101_687,interaction_group_feature_interaction).
+sql_est_size(         96_405,feature_grpmember_pub).
+sql_est_size(         94_765,cvterm).
+sql_est_size(         79_466,expression_cvtermprop).
+sql_est_size(         74_873,interactionprop_pub).
+sql_est_size(         73_828,library_interaction).
+sql_est_size(         57_144,organism).
+sql_est_size(         48_730,humanhealthprop).
+sql_est_size(         41_075,feature_grpmember).
+sql_est_size(         36_960,expression).
+sql_est_size(         23_565,library_cvterm).
+sql_est_size(         23_483,library_cvtermprop).
+sql_est_size(         21_251,cvtermprop).
+sql_est_size(         19_797,libraryprop).
+sql_est_size(         18_396,phenotype).
+sql_est_size(         17_871,phenotype_cvterm).
+sql_est_size(         16_617,humanhealth_dbxrefprop).
+sql_est_size(         16_529,interaction_expressionprop).
+sql_est_size(         16_318,humanhealth_pub).
+sql_est_size(         15_400,library_synonym).
+sql_est_size(         15_355,humanhealth_dbxref).
+sql_est_size(         15_142,cell_line_feature).
+sql_est_size(         14_972,libraryprop_pub).
+sql_est_size(         13_694,interaction_expression).
+sql_est_size(         13_218,interaction_cell_line).
+sql_est_size(         10_720,library_pub).
+sql_est_size(          9_870,library_relationship).
+sql_est_size(          9_851,humanhealthprop_pub).
+sql_est_size(          9_558,library_dbxref).
+sql_est_size(          8_339,library_relationship_pub).
+sql_est_size(          7_095,grp_pub).
+sql_est_size(          6_719,cell_line_pub).
+sql_est_size(          6_657,grp_relationship).
+sql_est_size(          6_605,strain_synonym).
+sql_est_size(          5_990,grp_synonym).
+sql_est_size(          5_947,humanhealth_synonym).
+sql_est_size(          5_785,strainprop).
+sql_est_size(          5_783,strainprop_pub).
+sql_est_size(          5_769,library).
+sql_est_size(          5_543,grp_cvterm).
+sql_est_size(          5_444,cell_line_synonym).
+sql_est_size(          5_277,library_expression).
+sql_est_size(          5_187,grpprop).
+sql_est_size(          5_159,grpmember).
+sql_est_size(          4_469,humanhealth_dbxrefprop_pub).
+sql_est_size(          4_450,library_expressionprop).
+sql_est_size(          4_415,grpprop_pub).
+sql_est_size(          4_319,stock_cvterm).
+sql_est_size(          3_832,library_dbxrefprop).
+sql_est_size(          3_829,grpmemberprop).
+sql_est_size(          3_777,genotype_cvterm).
+sql_est_size(          3_744,humanhealth_featureprop).
+sql_est_size(          3_721,library_strainprop).
+sql_est_size(          3_721,library_strain).
+sql_est_size(          3_625,humanhealth_feature).
+sql_est_size(          2_641,grp_dbxref).
+sql_est_size(          2_263,humanhealth_relationship).
+sql_est_size(          2_220,humanhealth_relationship_pub).
+sql_est_size(          2_093,strain_pub).
+sql_est_size(          2_010,grp_relationship_pub).
+sql_est_size(          1_939,strain_cvtermprop).
+sql_est_size(          1_939,strain_cvterm).
+sql_est_size(          1_814,grp).
+sql_est_size(          1_777,strain_dbxref).
+sql_est_size(          1_776,strain).
+sql_est_size(          1_739,organism_dbxref).
+sql_est_size(          1_643,feature_humanhealth_dbxref).
+sql_est_size(          1_540,humanhealth_cvtermprop).
+sql_est_size(          1_540,humanhealth_cvterm).
+sql_est_size(          1_515,humanhealth).
+sql_est_size(          1_300,cell_lineprop_pub).
+sql_est_size(          1_291,cell_lineprop).
+sql_est_size(          1_215,cell_line_dbxref).
+sql_est_size(          1_198,cell_line_libraryprop).
+sql_est_size(          1_081,cell_line_library).
+sql_est_size(          1_013,organism_pub).
+sql_est_size(            821,organismprop).
+sql_est_size(            731,organismprop_pub).
+sql_est_size(            714,cell_line_cvterm).
+sql_est_size(            518,db).
+sql_est_size(            435,strain_relationship_pub).
+sql_est_size(            435,strain_relationship).
+sql_est_size(            320,cell_line).
+sql_est_size(            308,analysis).
+sql_est_size(            238,stockprop).
+sql_est_size(            171,cell_line_relationship).
+sql_est_size(            139,strain_featureprop).
+sql_est_size(            139,strain_feature).
+sql_est_size(            107,strain_phenotypeprop).
+sql_est_size(             96,humanhealth_pubprop).
+sql_est_size(             73,cell_line_cvtermprop).
+sql_est_size(             71,cv).
+sql_est_size(             54,strain_phenotype).
+sql_est_size(             40,environment).
+sql_est_size(             27,stockcollectionprop).
+sql_est_size(             26,contact).
+sql_est_size(             18,environment_cvterm).
+sql_est_size(             11,organism_library).
+sql_est_size(              7,stockcollection).
+sql_est_size(              1,lock).
+sql_est_size(              0,analysisgrp).
+sql_est_size(              0,analysisgrpmember).
+sql_est_size(              0,analysisprop).
+sql_est_size(              0,audit_chado).
+sql_est_size(              0,cell_line_strain).
+sql_est_size(              0,cell_line_strainprop).
+sql_est_size(              0,cvtermpath).
+sql_est_size(              0,eimage).
+sql_est_size(              0,expression_image).
+sql_est_size(              0,expression_pub).
+sql_est_size(              0,expressionprop).
+sql_est_size(              0,feature_cvterm_dbxref).
+sql_est_size(              0,feature_phenotype).
+sql_est_size(              0,featuremap).
+sql_est_size(              0,featuremap_pub).
+sql_est_size(              0,featurepos).
+sql_est_size(              0,featurerange).
+sql_est_size(              0,genotype_cvtermprop).
+sql_est_size(              0,genotype_pub).
+sql_est_size(              0,genotypeprop).
+sql_est_size(              0,genotypeprop_pub).
+sql_est_size(              0,grp_pubprop).
+sql_est_size(              0,grp_relationshipprop).
+sql_est_size(              0,grpmember_cvterm).
+sql_est_size(              0,grpmember_pub).
+sql_est_size(              0,grpmemberprop_pub).
+sql_est_size(              0,humanhealth_phenotype).
+sql_est_size(              0,humanhealth_phenotypeprop).
+sql_est_size(              0,interaction_cvtermprop).
+sql_est_size(              0,library_grpmember).
+sql_est_size(              0,library_humanhealth).
+sql_est_size(              0,library_humanhealthprop).
+sql_est_size(              0,organism_cvterm).
+sql_est_size(              0,organism_cvtermprop).
+sql_est_size(              0,organism_grpmember).
+sql_est_size(              0,project).
+sql_est_size(              0,stock_dbxref).
+sql_est_size(              0,stock_pub).
+sql_est_size(              0,stock_relationship).
+sql_est_size(              0,stock_relationship_pub).
+sql_est_size(              0,stockprop_pub).
+sql_est_size(              0,tableinfo).
 
 est_size_loaded(N,F/A):- fb_pred_major(F,A),metta_stats(F,A,N).
 
@@ -1365,7 +1516,8 @@ FBte: FlyBase transgenic element number - Represents a transgenic element.
 write_flybase_data(_ArgTypes,_Fn,[]):-!.
 write_flybase_data(_ArgTypes,_Fn,['']):-!.
 write_flybase_data(_ArgTypes,_Fn,[_]):-!.
-write_flybase_data(_ArgTypes,Fn,DataL):- !, Data=..[Fn|DataL], assert_MeTTa(Data).
+write_flybase_data(_ArgTypes,Fn,DataL0):-
+ maplist(fast_column,DataL0,DataL), !, Data=..[Fn|DataL], assert_MeTTa(Data).
 %write_flybase_data(_ArgTypes,Fn,DataL):- into_datum(Fn,DataL,Data), assert_MeTTa(Data).
 
 
@@ -1551,9 +1703,14 @@ process_metta_x_file(MXFile):-
     ((repeat,
        read_line_to_string(In,Chars),
        (In == end_of_file -> ! ;
-        once((atomic_list_concat(Row,'\t', Chars),  assert_MeTTa([Fn|Row])))))),
+        once((atomic_list_concat(Row0,'\t', Chars),
+          maplist(fast_column,Row0,Row),
+          assert_MeTTa([Fn|Row])))))),
      close(In)).
 
+fast_column(X,X):- !.
+fast_column(X,Y):- into_fb_term(X,Y),!.
+fast_column(X,X).
 
 %read_csv_stream(Sep,CharsStream,Header):- read_string(CharsStream, "\n", "\r\t ",_,)
 read_csv_stream(Sep,CharsStream,Header):- %  \+ option_value(full_canon,[]),!,
@@ -2821,9 +2978,6 @@ list_column_names:-
   for_all((column_names(T,CNs),once((length(CNs,Len),Len>=2,fb_pred(T,Len)))),
   (print(column_names(T,CNs)),nl)).
 
-
-xinfo(X,P):- fb_pred(F,A),functor(P,F,A),arg(_,P,X), no_repeats(P,call(P)).
-xinfo(X):- forall(xinfo(X,P),(format('~N'),write_src(P))),format('~N').
 
 %:- ensure_loaded(read_obo).
 
