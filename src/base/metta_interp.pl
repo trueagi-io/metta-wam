@@ -1,4 +1,5 @@
 :- encoding(iso_latin_1).
+%:- '$set_source_module'('user').
 :- set_stream(user_input,tty(true)).
 :- use_module(library(readline)).
 :- use_module(library(editline)).
@@ -975,6 +976,7 @@ write_exec0(Exec):-
 do_metta(Self,LoadExec,Term):- must_det_ll(do_metta1(Self,LoadExec,Term))*->true;
                                 pp_m(unknown_do_metta(Self,LoadExec,Term)).
 
+do_metta1(_Self,load,Cmt):- Cmt==[],!.
 do_metta1(Self,_,Cmt):- nonvar(Cmt),do_metta_cmt(Self,Cmt),!.
 
 do_metta1(_Slf,load,call(:- Term)):- !, repl_call(Term).
@@ -1018,7 +1020,8 @@ asserted_do_metta1(Self,Load,[TypeOp,Fn,TypeDecL,RetType], Src):- TypeOp = ':',!
    ignore((Body == 'True',!,do_metta1(Self,Load,Head))),
    nop((fn_append(Head,X,Head), fn_append(PredDecl,X,Body), metta_anew((Head:- Body)))),!.*/
 
-asserted_do_metta1(Self,Load,['=',PredDecl,False], Src):- (False == [];False == 'Nil';False == 'F'), fail,!,
+asserted_do_metta1(Self,Load,['=',PredDecl,False], Src):-
+ (False == []; is_i_nil(False);False == 'F'), fail,!,
   do_metta1(Self,Load,['=',PredDecl,'False'], Src).
 
 asserted_do_metta1(Self,Load,[EQ,Head,Result], Src):- EQ=='=', !,
@@ -1041,30 +1044,6 @@ always_exec(_):-!. % everything else
 
 if_t(A,B,C):- trace,if_t((A,B),C).
 
-do_metta_file_exec(Self,Exec):-
-  nb_setval(exec_src,Exec),!,
-  do_metta_file_exec0(Self,Exec),
-  inc_exec_num,!.
-
-do_metta_file_exec0(_Slf,Exec):- option_value('exec',skip),\+ always_exec(Exec),!,connl,con_writeq(Exec),connl,write_exec(Exec),!.
-do_metta_file_exec0(Self,TermV):-
-  must_det_ll((
-
-  return_empty(Empty),
-  get_exec_num(Nth),
-  Nth>0,
-  current_exec_file(FileName),
-  ignore((file_answers(FileName, Nth, Ans))),
-
-  findall(X,(do_metta_exec(Self,TermV,X,NamedVarsList,Was),
-         once((must_det_ll((notrace(((color_g_mesg(yellow,
-         ((write(' '), write_src(X),nl,
-            (NamedVarsList\=@=Was-> (color_g_mesg(green,writeq(NamedVarsList)),nl); true),
-            ignore(( \+ is_list(X),compound(X),format(' % '),writeq(X),nl)))))))))), X \== Empty))),XL),
-
-  if_t(check_answers_for(TermV,Ans),
-  if_t(option_value('test-retval',true),
-     if_t(nonvar(Ans),got_exec_result2(XL,Nth,Ans)))))),!.
 
 check_answers_for(TermV,Ans):- (string(TermV);var(Ans);var(TermV)),!,fail.
 check_answers_for(_,Ans):- contains_var('BadType',Ans),fail.
@@ -1160,7 +1139,61 @@ print_goals(TermV):- write_src(TermV).
          ignore((must_det_ll((notrace(((color_g_mesg(yellow,
          ((write(' '), write_src(X),nl,
             (NamedVarsList\=@=Was-> (color_g_mesg(green,writeq(NamedVarsList)),nl); true),
-            ignore(( \+ is_list(X),compound(X),format(' % '),writeq(X),nl,X\==Empty))))))))))))),_XL),!.*/
+            ignore(( \+ is_list(X),compound(X),format(' % '),writeq(X),nl,X\==Empty))))))))))))),_XL),!.
+do_metta_exec(Self,TermV):-
+  \+ \+ write_exec(TermV),
+  into_metta_callable(Self,TermV,Term,X,NamedVarsList,Was),
+  Control = contrl(each),
+  forall(may_rtrace(Term),
+    (( notrace(ignore(((color_g_mesg(yellow,
+     ((write(' '),
+        write_src(X),nl,
+        (NamedVarsList\=@=Was-> (color_g_mesg(green,write_src(NamedVarsList)),nl); true),
+        ignore(( \+ is_list(X),compound(X),format(' % '),write_src(X),nl))))))))),
+       Control \= contrl(leap),
+       (read_pending_input(current_input,_,[]),
+        ((Control = contrl(leap))-> fail ;
+         (
+          (write("press ';', '<enter>' or 'l': "),get_single_char(C)),
+           (C==108->nb_setarg(1,Control,leap);(C==103->print_goals(Term);(C==59->true;(C==13->(!,fail))))))))))).
+
+do_metta_exec(_Self,TermV,X,NamedVarsList,Was):- use_metta_compiler, !,
+ (( /*must_det_ll*/((
+  write_exec(TermV),
+ % ignore(Res = '$VAR'('ExecRes')),
+  RealRes = Res,
+  compile_for_exec(Res,TermV,ExecGoal),!,
+  subst_vars(Res+ExecGoal,Res+Term,NamedVarsList),
+  copy_term(NamedVarsList,Was),
+  term_variables(Term,Vars),
+  %nl,writeq(Term),nl,
+  ((\+ \+
+  ((numbervars(v(TermV,Term,NamedVarsList,Vars),999,_,[attvar(bind)]),
+  %nb_current(variable_names,NamedVarsList),
+  nl,print(subst_vars(Term,NamedVarsList,Vars)),nl)))),
+  nop(maplist(verbose_unify,Vars)))))),
+  %NamedVarsList=[_=RealRealRes|_],
+  var(RealRes),
+  X = RealRes,
+  may_rtrace(Term).
+
+do_metta_exec(Self,TermV,X,NamedVarsList,Was):-!,
+ notrace(( must_det_ll((
+  if_t(preview_compiler,write_compiled_exec(TermV,_Goal)),
+  \+ \+ write_exec(TermV),
+  subst_vars(TermV,Term,NamedVarsList),
+  copy_term(NamedVarsList,Was),
+  term_variables(Term,Vars),
+  %nl,writeq(Term),nl,
+  skip((\+ \+
+  ((numbervars(v(TermV,Term,NamedVarsList,Vars),999,_,[attvar(bind)]),
+  %nb_current(variable_names,NamedVarsList),
+  nl,print(subst_vars(TermV,Term,NamedVarsList,Vars)),nl)))),
+  option_else('stack-max',StackMax,100),
+  nop(maplist(verbose_unify,Vars)))))),
+  may_rtrace(eval_args(StackMax,Self,Term,X)).
+*/
+
 
 
 %repl:- option_value('repl',prolog),!,prolog.
@@ -1216,11 +1249,42 @@ do_repl(Self,exec(Exec)):- !, notrace(add_history_src(exec(Exec))),!,
 do_repl(Self,Read):- add_history_src(Read), do_metta(Self,load,Read).
 
 
+do_metta_file_exec(Self,Exec):-
+  nb_setval(exec_src,Exec),!,
+  user:do_metta_file_exec0(Self,Exec),
+  inc_exec_num,!.
+
+do_metta_file_exec0(_Slf,Exec):- option_value('exec',skip),\+ always_exec(Exec),!,connl,con_writeq(Exec),connl,write_exec(Exec),!.
+
+%do_metta_file_exec0(Self,Exec):- !, do_metta_exec(Self, Exec),!.
+do_metta_file_exec0(Self,TermV):-
+  must_det_ll((
+
+  return_empty(Empty),
+  get_exec_num(Nth),
+  Nth>0,
+  current_exec_file(FileName),
+  ignore((file_answers(FileName, Nth, Ans))),
+  into_metta_callable(Self,TermV,Term,X,NamedVarsList,Was),
+  findall(X,(do_metta_exec(false,Self,TermV,Term,X,NamedVarsList,Was),
+         once((must_det_ll((notrace(((color_g_mesg(yellow,
+         ((write(' '), write_src(X),nl,
+            (NamedVarsList\=@=Was-> (color_g_mesg(green,writeq(NamedVarsList)),nl); true),
+            ignore(( \+ is_list(X),compound(X),format(' % '),writeq(X),nl)))))))))), X \== Empty))),XL),
+
+  if_t(check_answers_for(TermV,Ans),
+  if_t(option_value('test-retval',true),
+     if_t(nonvar(Ans),got_exec_result2(XL,Nth,Ans)))))),!.
 
 do_metta_exec(Self,Var):- var(Var), !, pp_m(eval(Var)), freeze(Var,wdmsg(laterVar(Self,Var))).
 do_metta_exec(Self, TermV):- !,
-  notrace((\+ \+ write_exec(TermV),
+  ((\+ \+ write_exec(TermV),
   into_metta_callable(Self,TermV,Term,X,NamedVarsList,Was),
+        user:do_metta_exec(true,Self,TermV,Term,X,NamedVarsList,Was))).
+
+
+do_metta_exec(Interactive,_Self,_TermV,Term,X,NamedVarsList,Was):-
+  ((
     % NamedVarsList,
     % Initialize Control as a compound term with 'each' as its argument.
     Control = contrl(each),
@@ -1229,7 +1293,7 @@ do_metta_exec(Self, TermV):- !,
     !, % metta_toplevel
     flag(result_num,_,1))),
   catch(forall( may_rtrace(GG),
-     notrace(( notrace(ignore(((color_g_mesg(yellow,
+     (( (ignore(((color_g_mesg(yellow,
        ((
            (flag(result_num,R,R+1),
                 ((R==1,Complete==true)->format('~NDeterministic: ',[]);          %or Nondet
@@ -1242,23 +1306,23 @@ do_metta_exec(Self, TermV):- !,
               % If not in leap state, prompt for input.
 
               ((repeat,
-                write("More Solutions? "), get_single_char(C), nl),
+                write("More Solutions? "), (Interactive->get_single_char(C);C=108), nl),
               (C == 108 -> % 'l' for leap
                    nb_setarg(1, Control, leap); % Set Control to leap and stop prompting.
               (C == 103 -> % 'g' for print_goals
                    print_goals(Term), fail; % Execute print_goals and re-prompt.
               (C == 59 -> % ';' for next
                    true; % No action needed, move to next solution.
-              (C == 10 -> % 'enter' to exit
+              ((C == 10;C == 13) -> % 'enter' to exit
                    (!, fail); % Cut and fail to stop the forall.
-               (command(C, Command) ->
-                  handle_command(Command, Variables, Goal, Tracing)
+               ((fail, command(C, Command)) ->
+                  handle_command(Command, _Variables, _Goal, _Tracing)
               ;   format('Unknown command. ~s',[[C]]),fail) % handle unknown commands
                         ))))))),
               (Control == contrl(leap) -> true; true) % If leap, proceed without re-prompting.
             ))),
                 E,wdmsg(E)),
-        (flag(result_num,1,1) -> format('~Nno results') ; true).
+        (flag(result_num,1,1) -> format('~Nno results') ; true),!.
 
 
 % Entry point for the user to call with tracing enabled
@@ -1411,58 +1475,6 @@ print_help :-
     !.
 
 
-do_metta_exec(Self,TermV):-
-  \+ \+ write_exec(TermV),
-  into_metta_callable(Self,TermV,Term,X,NamedVarsList,Was),
-  Control = contrl(each),
-  forall(may_rtrace(Term),
-    (( notrace(ignore(((color_g_mesg(yellow,
-     ((write(' '),
-        write_src(X),nl,
-        (NamedVarsList\=@=Was-> (color_g_mesg(green,write_src(NamedVarsList)),nl); true),
-        ignore(( \+ is_list(X),compound(X),format(' % '),write_src(X),nl))))))))),
-       Control \= contrl(leap),
-       (read_pending_input(current_input,_,[]),
-        ((Control = contrl(leap))-> fail ;
-         (
-          (write("press ';', '<enter>' or 'l': "),get_single_char(C)),
-           (C==108->nb_setarg(1,Control,leap);(C==103->print_goals(Term);(C==59->true;(C==13->(!,fail))))))))))).
-
-do_metta_exec(_Self,TermV,X,NamedVarsList,Was):- use_metta_compiler, !,
- (( /*must_det_ll*/((
-  write_exec(TermV),
- % ignore(Res = '$VAR'('ExecRes')),
-  RealRes = Res,
-  compile_for_exec(Res,TermV,ExecGoal),!,
-  subst_vars(Res+ExecGoal,Res+Term,NamedVarsList),
-  copy_term(NamedVarsList,Was),
-  term_variables(Term,Vars),
-  %nl,writeq(Term),nl,
-  ((\+ \+
-  ((numbervars(v(TermV,Term,NamedVarsList,Vars),999,_,[attvar(bind)]),
-  %nb_current(variable_names,NamedVarsList),
-  nl,print(subst_vars(Term,NamedVarsList,Vars)),nl)))),
-  nop(maplist(verbose_unify,Vars)))))),
-  %NamedVarsList=[_=RealRealRes|_],
-  var(RealRes),
-  X = RealRes,
-  may_rtrace(Term).
-
-do_metta_exec(Self,TermV,X,NamedVarsList,Was):-!,
- notrace(( must_det_ll((
-  if_t(preview_compiler,write_compiled_exec(TermV,_Goal)),
-  \+ \+ write_exec(TermV),
-  subst_vars(TermV,Term,NamedVarsList),
-  copy_term(NamedVarsList,Was),
-  term_variables(Term,Vars),
-  %nl,writeq(Term),nl,
-  skip((\+ \+
-  ((numbervars(v(TermV,Term,NamedVarsList,Vars),999,_,[attvar(bind)]),
-  %nb_current(variable_names,NamedVarsList),
-  nl,print(subst_vars(TermV,Term,NamedVarsList,Vars)),nl)))),
-  option_else('stack-max',StackMax,100),
-  nop(maplist(verbose_unify,Vars)))))),
-  may_rtrace(eval_args(StackMax,Self,Term,X)).
 
 write_compiled_exec(Exec,Goal):-
 %  ignore(Res = '$VAR'('ExecRes')),
@@ -1597,7 +1609,7 @@ is_compiling:- current_prolog_flag(os_argv,ArgV),member(E,ArgV),
   (E==qcompile_mettalog;E==qsave_program),!.
 is_compiled:- current_prolog_flag(os_argv,ArgV),\+ member('swipl',ArgV),!.
 is_converting:- nb_current('convert','True'),!.
-%is_converting:- current_prolog_flag(os_argv,ArgV), member('--convert',ArgV),!.
+is_converting:- current_prolog_flag(os_argv,ArgV), member('--convert',ArgV),!.
 show_os_argv:- current_prolog_flag(os_argv,ArgV),write('; libswipl: '),writeln(ArgV).
 
 :- initialization(show_os_argv).
