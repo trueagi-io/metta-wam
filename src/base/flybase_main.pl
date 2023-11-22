@@ -2,6 +2,7 @@
 :- flush_output.
 :- setenv('RUST_BACKTRACE',full).
 
+
 :- ensure_loaded(swi_support).
 
 
@@ -13,9 +14,6 @@ fb_stats:- metta_stats.
 % ==============
 :- set_option_value(encoding,iso_latin_1).
 :- ensure_loaded(flybase_obo).
-
-
-:- ensure_loaded(metta_interp).
 
 
 % ==============

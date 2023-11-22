@@ -276,20 +276,8 @@ cmpd_to_pyswip(PS,Q,Uery,Call):- atom(Q),maplist(metta_to_pyswip([Q|PS]),Uery,Ce
 cmpd_to_pyswip(PS,"and",Uery,Call):- maplist(metta_to_pyswip(PS),Uery,Args),list_to_conjuncts(Args,Call).
 
 
-'show-metta-def'(Pred, []):-
-  'get-metta-src'(Pred,[_|SrcL]),
-  maplist(write_src_nl,SrcL).
 
-write_src_nl(Src):- write_src(Src),nl.
 
-%'get-metta-src'(Pred,[Len|SrcL]):- findall(['AtomDef',Src],'get-metta-src1'(Pred,Src),SrcL), length(SrcL,Len).
-'get-metta-src'(Pred,[Len|SrcL]):- findall(Src,'get-metta-src1'(Pred,Src),SrcL), length(SrcL,Len).
-'get-metta-src1'(Pred,Src):-
-  metta_atom(KB,F,A,List),
-  once((sub_var(Pred,A)->Src = [F,A,List];sub_var(Pred,F)->Src = [F,A|List])).
-
-% is a quine
-'AtomDef'(X,['AtomDef',X]).
 
 % ===============================
 %       PRINTERS
@@ -315,9 +303,8 @@ write_val(V):- write('"'),write(V),write('"').
 pp_as(V) :- \+ \+ pp_sex(V),flush_output.
 pp_sex(V) :- is_final_write(V),!.
 pp_sex('!'(V)) :- write('!'),!,pp_sex(V).
-pp_sex('exec'(V)) :- write('!'),!,pp_sex(V).
 %pp_sex('') :- format('(EmptyNode null)',[]).
-pp_sex('') :- !, format('()',[]).
+pp_sex('') :- format('()',[]).
 pp_sex([]):-  !, write('()').
 pp_sex('='(N,V)):- allow_concepts, !, format("~N;; ~w == ~n",[N]),!,pp_sex(V).
 pp_sex(V) :- (number(V) ; is_dict(V)), !, print_concept('ValueAtom',V).
