@@ -1455,7 +1455,8 @@ write_src1(V):- string(V),!, writeq(V).
 
 % Continuing with 'write_src1', 'write_mobj', and related rules,
 % handling different cases based on the value’s type and structure, and performing the appropriate writing action.
-write_src1(V):- symbol(V), should_quote(V),!, symbol_string(V,S),writeq(S).
+write_src1(V):- symbol(V), should_quote(V),!,
+  symbol_string(V,S),writeq(S).
 write_src1(V):- symbol(V),!,write(V).
 write_src1(V):- compound(V), \+ is_list(V),!,write_mobj(V).
 write_src1(V):- pp_sex(V),!.
@@ -1474,8 +1475,10 @@ write_mobj(F,Args):- fail, mlog_sym(K),!,pp_sexi([K,F|Args]).
 write_mobj(F,Args):- pp_sexi([F|Args]).
 
 % Rules for determining when a symbol needs to be quoted in metta.
+
+should_quote(Atom) :- \+ atom(Atom), \+ string(Atom),!,fail.
 should_quote(Atom) :-
-    atom(Atom),  % Ensure that the input is an atom
+   % atom(Atom),  % Ensure that the input is an atom
     atom_chars(Atom, Chars),
     once(should_quote_chars(Chars);should_quote_atom_chars(Atom,Chars)).
 
@@ -1494,6 +1497,7 @@ should_quote_chars(Chars) :-
       member('/', Chars);         % Contains slash
       member(',', Chars);         % Contains comma
       member('|', Chars).         % Contains pipe
+should_quote_atom_chars(Atom,_) :- atom_number(Atom,_),!.
 should_quote_atom_chars(Atom,[Digit|_]) :- char_type(Digit, digit), \+ atom_number(Atom,_).
 
 % Example usage:

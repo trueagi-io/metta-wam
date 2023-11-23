@@ -3,6 +3,7 @@
 %self_eval(X):- number(X),!.
 %self_eval([]).
 self_eval(X):- \+ callable(X),!.
+self_eval(X):- is_metta_declaration(X),!.
 self_eval(X):- is_valid_nb_state(X),!.
 self_eval(X):- is_list(X),!,fail.
 %self_eval(X):- compound(X),!.
@@ -10,6 +11,8 @@ self_eval(X):- is_list(X),!,fail.
 self_eval(X):- atom(X),!, \+ nb_current(X,_),!.
 self_eval('True'). self_eval('False'). self_eval('F').
 
+is_metta_declaration([F,_,_|T]):- T ==[], (F=='=';F==':'),!.
+% is_metta_declaration([F|T]):- is_list(T), is_user_defined_head([F]),!.
 
 :- nb_setval(self_space, '&self').
 evals_to(XX,Y):- Y==XX,!.
@@ -109,7 +112,8 @@ is_bool_or([]).
 
 
 %eval_args11(_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
-%eval_args11(Depth,Self,X,Y):- \+ debugging(metta(eval)),!, eval_args1(Depth,Self,X,Y).
+%eval_args11(Depth,Self,X,Y):- \+ debugging(metta(eval)),!, eval_args20(Depth,Self,X,Y).
+
 eval_args11(Depth,Self,X,Y):- flag(eval_num,EX,EX+1),
   option_else(traclen,Max,100),
   (EX>Max->(set_debug(eval,false),set_debug(exec,false),set_debug(overflow,false),
@@ -119,47 +123,79 @@ eval_args11(Depth,Self,X,Y):- flag(eval_num,EX,EX+1),
   if_trace((eval),indentq(Depth,'-->'(EX,Self,X,depth(DR)))),
   Ret=retval(fail),
   call_cleanup(
-   (eval_args1(D1,Self,X,Y),
+   (eval_args20(D1,Self,X,Y),
     notrace(( nb_setarg(1,Ret,Y)))),
    notrace(ignore(((Y\=@=X,flag(eval_num,_,EX),EXm1 is EX -1, if_trace((eval),indentq(Depth,'<--'(EXm1,Ret)))))))),
-  (Ret\=@=retval(fail)->true;(rtrace(eval_args1(D1,Self,X,Y)),fail)).
+  (Ret\=@=retval(fail)->true;(rtrace(eval_args20(D1,Self,X,Y)),fail)).
 
 
-:- discontiguous eval_args1/4.
-:- discontiguous eval_args2/4.
+%:- discontiguous eval_args20/4.
+:- discontiguous eval_args30/4.
+:- discontiguous eval_args40/4.
+% eval_args20 is "1 step"
+eval_args20(_Dpth,_Slf,Name,Value):- atom(Name), !, (nb_current(Name,Value) -> true ; Value=Name).
+eval_args20(_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
 
-eval_args1(_Dpth,_Slf,Name,Value):- atom(Name), !, (nb_current(Name,Value) -> true ; Value=Name).
-eval_args1(_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
-eval_args1(Depth,Self,[V|VI],VVO):-  \+ is_list(VI),!,
+eval_args20(Depth,_,_,_):- Depth<1,!,fail.
+eval_args20(Depth,_,X,Y):- Depth<3, !, ground(X), (Y=X).
+
+eval_args20(Depth,Self,[V|VI],VVO):-  \+ is_list(VI),!,
  eval_args(Depth,Self,VI,VM),
   ( VM\==VI -> eval_args(Depth,Self,[V|VM],VVO) ;
     (eval_args(Depth,Self,V,VV), (V\==VV -> eval_args(Depth,Self,[VV|VI],VVO) ; VVO = [V|VI]))).
 
-eval_args1(_Dpth,_Slf,X,Y):- \+ is_list(X),!,Y=X.
+eval_args20(_Dpth,_Slf,X,Y):- \+ is_list(X),!,Y=X.
+eval_args20(_Dpth,_Slf,List,Y):- List=[H|_], \+ atom(H), maplist(self_eval,List), !,Y=List.
+eval_args20(Depth,Self,[V|VI],[V|VO]):- var(V),!,maplist(eval_args(Depth,Self),VI,VO).
+eval_args20(_Dpth,_Slf,[V,H,B|T],[V,H,B|T]):- T==[], V=='=',!.
 
-eval_args1(Depth,Self,[V|VI],[V|VO]):- var(V),is_list(VI),!,maplist(eval_args(Depth,Self),VI,VO).
 
-eval_args1(_Dpth,_Slf,['repl!'],'True'):- !, repl.
-eval_args1(Depth,Self,['!',Cond],Res):- !, call(eval_args(Depth,Self,Cond,Res)).
-eval_args1(Depth,Self,['rtrace',Cond],Res):- !, rtrace(eval_args(Depth,Self,Cond,Res)).
-eval_args1(Depth,Self,['trace',Cond],Res):- !, with_debug(eval,eval_args(Depth,Self,Cond,Res)).
-eval_args1(Depth,Self,['time',Cond],Res):- !, time_eval(eval(Cond),eval_args(Depth,Self,Cond,Res)).
-eval_args1(Depth,Self,['print',Cond],Res):- !, eval_args(Depth,Self,Cond,Res),format('~N'),print(Res),format('~N').
+/*
+eval_args20(Depth,Self,[F,A|Args],Res):-
+   \+ self_eval(A),
+   eval_args(Depth,Self,A,AA),AA\==A,
+   eval_args(Depth,Self,[F,AA|Args],Res).
+
+
+eval_args20(Depth,Self,[F,A1|AArgs],Res):- fail, member(F,['+']),
+ cwdl(40,((
+   append(L,[A|R],AArgs),
+   \+ self_eval(A),
+   eval_args(Depth,Self,A,AA),AA\==A,!,
+   append(L,[AA|R],NewArgs), eval_args(Depth,Self,[F,A1|NewArgs],Res)))).
+*/
+
+/* %%
+
+% !(assertEqualToResult ((inc) 2) (3))
+eval_args20(Depth,Self,[F|Args],Res):- is_list(F),
+  metta_atom_iter(Depth,Self,['=',F,R]), eval_args(Depth,Self,[R|Args],Res).
+
+eval_args20(Depth,Self,[F|Args],Res):- is_list(F), Args\==[],
+  append(F,Args,FArgs),!,eval_args(Depth,Self,FArgs,Res).
+*/
+
+eval_args20(Depth,Self,X,Y):- eval_args30(Depth,Self,X,Y).
+
+eval_args30(_Dpth,_Slf,['repl!'],'True'):- !, repl.
+eval_args30(Depth,Self,['!',Cond],Res):- !, call(eval_args(Depth,Self,Cond,Res)).
+eval_args30(Depth,Self,['rtrace',Cond],Res):- !, rtrace(eval_args(Depth,Self,Cond,Res)).
+eval_args30(Depth,Self,['trace',Cond],Res):- !, with_debug(eval,eval_args(Depth,Self,Cond,Res)).
+eval_args30(Depth,Self,['time',Cond],Res):- !, time_eval(eval(Cond),eval_args(Depth,Self,Cond,Res)).
+eval_args30(Depth,Self,['print',Cond],Res):- !, eval_args(Depth,Self,Cond,Res),format('~N'),print(Res),format('~N').
 % !(println! $1)
-eval_args1(Depth,Self,['println!'|Cond],Res):- !, maplist(eval_args(Depth,Self),Cond,[Res|Out]),
+eval_args30(Depth,Self,['println!'|Cond],Res):- !, maplist(eval_args(Depth,Self),Cond,[Res|Out]),
    format('~N'),maplist(write_src,[Res|Out]),format('~N').
-eval_args1(Depth,Self,['trace!',A|Cond],Res):- !, maplist(eval_args(Depth,Self),[A|Cond],[AA|Result]),
+eval_args30(Depth,Self,['trace!',A|Cond],Res):- !, maplist(eval_args(Depth,Self),[A|Cond],[AA|Result]),
    last(Result,Res), format('~N'),maplist(write_src,[AA]),format('~N').
 
-%eval_args1(Depth,Self,['trace!',A,B],C):- !,eval_args(Depth,Self,B,C),format('~N'),wdmsg(['trace!',A,B]=C),format('~N').
-%eval_args1(_Dpth,_Slf,['trace!',A],A):- !, format('~N'),wdmsg(A),format('~N').
+%eval_args30(Depth,Self,['trace!',A,B],C):- !,eval_args(Depth,Self,B,C),format('~N'),wdmsg(['trace!',A,B]=C),format('~N').
+%eval_args30(_Dpth,_Slf,['trace!',A],A):- !, format('~N'),wdmsg(A),format('~N').
 
-eval_args1(_Dpth,_Slf,List,Y):- is_list(List),maplist(self_eval,List),List=[H|_], \+ atom(H), !,Y=List.
+eval_args30(Depth,Self,['assertTrue', X],TF):- !, eval_args(Depth,Self,['assertEqual',X,'True'],TF).
+eval_args30(Depth,Self,['assertFalse',X],TF):- !, eval_args(Depth,Self,['assertEqual',X,'False'],TF).
 
-eval_args1(Depth,Self,['assertTrue', X],TF):- !, eval_args(Depth,Self,['assertEqual',X,'True'],TF).
-eval_args1(Depth,Self,['assertFalse',X],TF):- !, eval_args(Depth,Self,['assertEqual',X,'False'],TF).
-
-eval_args1(Depth,Self,['assertEqual',X0,Y0],RetVal):- !,
+eval_args30(Depth,Self,['assertEqual',X0,Y0],RetVal):- !,
   subst_vars(X0,X),subst_vars(Y0,Y),
    loonit_assert_source_tf(
         ['assertEqual',X0,Y0],
@@ -168,7 +204,7 @@ eval_args1(Depth,Self,['assertEqual',X0,Y0],RetVal):- !,
          equal_enough_for_test(XX,YY), TF),
   (TF=='True'->return_empty(RetVal);RetVal=[got,XX,expected,YY]).
 
-eval_args1(Depth,Self,['assertNotEqual',X0,Y0],RetVal):- !,
+eval_args30(Depth,Self,['assertNotEqual',X0,Y0],RetVal):- !,
   subst_vars(X0,X),subst_vars(Y0,Y),
    loonit_assert_source_tf(
         ['assertNotEqual',X0,Y0],
@@ -176,7 +212,7 @@ eval_args1(Depth,Self,['assertNotEqual',X0,Y0],RetVal):- !,
          \+ equal_enough(XX,YY), TF),
   (TF=='True'->return_empty(RetVal);RetVal=[got,XX,expected,not,YY]).
 
-eval_args1(Depth,Self,['assertEqualToResult',X0,Y0],RetVal):- !,
+eval_args30(Depth,Self,['assertEqualToResult',X0,Y0],RetVal):- !,
   subst_vars(X0,X),subst_vars(Y0,Y),
    loonit_assert_source_tf(
         ['assertEqualToResult',X0,Y0],
@@ -187,6 +223,7 @@ eval_args1(Depth,Self,['assertEqualToResult',X0,Y0],RetVal):- !,
 
 loonit_assert_source_tf(Src,Goal,Check,TF):-
    copy_term(Goal,OrigGoal),
+   color_g_mesg('#114411',(write_src_nl(Src),writeq(Src))),
    loonit_asserts(Src, time_eval('\n; EVAL TEST\n;',Goal), Check),
    as_tf(Check,TF),!,
   ignore((
@@ -235,13 +272,12 @@ has_unicode(A):- atom_codes(A,Cs),member(N,Cs),N>127,!.
 set_last_error(_).
 
 
-eval_args1(Depth,Self,['match',Other,Goal,Template],Template):- into_space(Self,Other,Space),!, metta_atom_iter(Depth,Space,Goal).
-eval_args1(Depth,Self,['match',Other,Goal,Template,Else],Template):-
-  (eval_args1(Depth,Self,['match',Other,Goal,Template],Template)*->true;Template=Else).
+eval_args30(Depth,Self,['match',Other,Goal,Template],Template):- into_space(Self,Other,Space),!, metta_atom_iter(Depth,Space,Goal).
+eval_args30(Depth,Self,['match',Other,Goal,Template,Else],Template):-
+  (eval_args30(Depth,Self,['match',Other,Goal,Template],Template)*->true;Template=Else).
 
 % Macro: case
-eval_args1(Depth,Self,X,Res):-
-   X= [CaseSym,A,CL],CaseSym == 'case', !,
+eval_args30(Depth,Self,['case',A,CL],Res):-
    into_case_list(CL,CASES),
    findall(Key-Value,
      (nth0(Nth,CASES,Case0),
@@ -277,24 +313,54 @@ eval_args1(Depth,Self,X,Res):-
      maybe_special_keys(Depth,Self,KVI,KVO).
    maybe_special_keys(_Depth,_Self,[],[]).
 
+into_pl_list(Var,Var):- var(Var),!.
+into_pl_list(Nil,[]):- Nil == 'Nil',!.
+into_pl_list([Cons,H,T],[HH|TT]):- Cons == 'Cons', !, into_pl_list(H,HH),into_pl_list(T,TT),!.
+into_pl_list(X,X).
+
+into_metta_cons(Var,Var):- var(Var),!.
+into_metta_cons([],'Nil'):-!.
+into_metta_cons([Cons, A, B ],['Cons', AA, BB]):- 'Cons'==Cons, no_cons_reduce, !,
+  into_metta_cons(A,AA), into_metta_cons(B,BB).
+into_metta_cons([H|T],['Cons',HH,TT]):- into_metta_cons(H,HH),into_metta_cons(T,TT),!.
+into_metta_cons(X,X).
+
+eval_args30(_Dpth,_Slf,['car-atom',Atom],CAR):- !, Atom=[CAR|_],!.
+eval_args30(_Dpth,_Slf,['cdr-atom',Atom],CDR):- !, Atom=[_|CDR],!.
+eval_args30(Depth,Self,['Cons', A, B ],['Cons', AA, BB]):- no_cons_reduce, !,
+  eval_args(Depth,Self,A,AA), eval_args(Depth,Self,B,BB).
+eval_args30(Depth,Self,['Cons', A, B ],[AA|BB]):- \+ no_cons_reduce, !,
+   eval_args(Depth,Self,A,AA), eval_args(Depth,Self,B,BB).
+
+eval_until_eq(Depth,Self,X,Y):- var(Y),!,eval_args(Depth,Self,X,Y).
+eval_until_eq(Depth,Self,Y,X):- var(Y),!,eval_args(Depth,Self,X,Y).
+eval_until_eq(Depth,Self,Y,X):- eval_until_eq1(Depth,Self,Y,X).
+eval_until_eq1(_Dpth,_Slf,X,Y):- X=Y,!.
+eval_until_eq1(Depth,Self,X,Y):- eval_args20(Depth,Self,X,XX),X\=@=XX,!,eval_until_eq1(Depth,Self,Y,XX).
+
+
+eval_args30(Depth,Self,['eq',X,Y],Res):- !, as_tf(eval_until_eq(Depth,Self,X,Y),Res).
+eval_args30(_Dpth,_Slf,['memb',E,List],Res):- !, into_pl_list(List,PLList),as_tf(member(E,PLList), Res).
+eval_args30(_Dpth,_Slf,['make_list',List],MettaList):- !, into_metta_cons(List,MettaList).
 
 %[collapse,[1,2,3]]
-eval_args1(Depth,Self,['collapse',List],Res):-!, bagof_eval(Depth,Self,List,Res).
+eval_args30(Depth,Self,['collapse',List],Res):-!, bagof_eval(Depth,Self,List,Res).
 %[superpose,[1,2,3]]
-eval_args1(Depth,Self,['superpose',List],Res):- !, member(E,List),
+eval_args30(Depth,Self,['superpose',List],Res):- !, member(E,List),
   eval_args(Depth,Self,E,Res).
 get_sa_p1(P3,E,Cmpd,SA):-  compound(Cmpd), get_sa_p2(P3,E,Cmpd,SA).
 get_sa_p2(P3,E,Cmpd,call(P3,N1,Cmpd)):- arg(N1,Cmpd,E).
 get_sa_p2(P3,E,Cmpd,SA):- arg(_,Cmpd,Arg),get_sa_p1(P3,E,Arg,SA).
-eval_args1(Depth,Self, Term, Res):- fail,
+
+eval_args30(Depth,Self, Term, Res):- fail,
   mnotrace(( get_sa_p1(setarg,ST,Term,P1), % ST\==Term,
    compound(ST), ST = [F,List],F=='superpose',nonvar(List), %maplist(atomic,List),
    call(P1,Var))), !,
-   %max_counting(F,20),
+   %max_counting(F,30),
    member(Var,List),
    eval_args(Depth,Self, Term, Res).
 
-eval_args1(Depth,Self, Term, Res):- fail,
+eval_args30(Depth,Self, Term, Res):- fail,
    mnotrace(( get_sa_p1(setarg,ST,Term,P1),
    compound(ST), ST = [F,List],F=='collapse',nonvar(List), %maplist(atomic,List),
    call(P1,Var))), !, setof_eval(Depth,Self,List,Var),
@@ -304,47 +370,47 @@ eval_args1(Depth,Self, Term, Res):- fail,
 max_counting(F,Max):- flag(F,X,X+1),  X<Max ->  true; (flag(F,_,10),!,fail).
 
 
-eval_args1(Depth,Self,['if',Cond,Then],Res):- !,
+eval_args30(Depth,Self,['If',Cond,Then],Res):- !,
    eval_args(Depth,Self,Cond,TF),
    (is_True(TF) -> eval_args(Depth,Self,Then,Res) ; Res = []).
 
-eval_args1(Depth,Self,['if',Cond,Then,Else],Res):- !,
+eval_args30(Depth,Self,['If',Cond,Then,Else],Res):- !,
    eval_args(Depth,Self,Cond,TF),
    (is_True(TF) -> eval_args(Depth,Self,Then,Res);eval_args(Depth,Self,Else,Res)).
 
-eval_args1(_Dpth,_Slf,[_,Nothing],Nothing):- 'Nothing'==Nothing,!.
+eval_args30(Depth,Self,['if',Cond,Then],Res):- !,
+   eval_args(Depth,Self,Cond,TF),
+   (is_True(TF) -> eval_args(Depth,Self,Then,Res) ; Res = []).
 
-eval_args1(Depth,Self,['let',A,A5,AA],OO):- !,
+eval_args30(Depth,Self,['if',Cond,Then,Else],Res):- !,
+   eval_args(Depth,Self,Cond,TF),
+   (is_True(TF) -> eval_args(Depth,Self,Then,Res);eval_args(Depth,Self,Else,Res)).
+
+eval_args30(_Dpth,_Slf,[_,Nothing],Nothing):- 'Nothing'==Nothing,!.
+
+eval_args30(Depth,Self,['let',A,A5,AA],OO):- !,
   %(var(A)->true;trace),
   ((eval_args(Depth,Self,A5,AE), AE=A)),
   eval_args(Depth,Self,AA,OO).
-%eval_args1(Depth,Self,['let',A,A5,AA],AAO):- !,eval_args(Depth,Self,A5,A),eval_args(Depth,Self,AA,AAO).
-eval_args1(Depth,Self,['let*',[],Body],RetVal):- !, eval_args(Depth,Self,Body,RetVal).
-eval_args1(Depth,Self,['let*',[[Var,Val]|LetRest],Body],RetVal):- !,
-    eval_args1(Depth,Self,['let',Var,Val,['let*',LetRest,Body]],RetVal).
+%eval_args30(Depth,Self,['let',A,A5,AA],AAO):- !,eval_args(Depth,Self,A5,A),eval_args(Depth,Self,AA,AAO).
+eval_args30(Depth,Self,['let*',[],Body],RetVal):- !, eval_args(Depth,Self,Body,RetVal).
+eval_args30(Depth,Self,['let*',[[Var,Val]|LetRest],Body],RetVal):- !,
+    eval_args30(Depth,Self,['let',Var,Val,['let*',LetRest,Body]],RetVal).
 
-%eval_args1(Depth,Self,['colapse'|List], Flat):- !, maplist(eval_args(Depth,Self),List,Res),flatten(Res,Flat).
-eval_args1(Depth,Self,['get-atoms',Other],PredDecl):- !,into_space(Self,Other,Space), metta_atom_iter(Depth,Space,PredDecl).
-eval_args1(_Dpth,_Slf,['car-atom',Atom],CAR):- !, Atom=[CAR|_],!.
-eval_args1(_Dpth,_Slf,['cdr-atom',Atom],CDR):- !, Atom=[_|CDR],!.
-
-eval_args1(Depth,Self,['Cons', A, B ],['Cons', AA, BB]):- no_cons_reduce, !,
-  eval_args(Depth,Self,A,AA), eval_args(Depth,Self,B,BB).
-
-eval_args1(Depth,Self,['Cons', A, B ],[AA|BB]):- \+ no_cons_reduce, !,
-   eval_args(Depth,Self,A,AA), eval_args(Depth,Self,B,BB).
+%eval_args30(Depth,Self,['colapse'|List], Flat):- !, maplist(eval_args(Depth,Self),List,Res),flatten(Res,Flat).
+eval_args30(Depth,Self,['get-atoms',Other],PredDecl):- !,into_space(Self,Other,Space), metta_atom_iter(Depth,Space,PredDecl).
 
 
-eval_args1(Depth,Self,['change-state!',StateExpr, UpdatedValue], Ret):- !, eval_args(Depth,Self,StateExpr,StateMonad),
+eval_args30(Depth,Self,['change-state!',StateExpr, UpdatedValue], Ret):- !, eval_args(Depth,Self,StateExpr,StateMonad),
   eval_args(Depth,Self,UpdatedValue,Value),  'change-state!'(Depth,Self,StateMonad, Value, Ret).
-eval_args1(Depth,Self,['new-state',UpdatedValue],StateMonad):- !,
+eval_args30(Depth,Self,['new-state',UpdatedValue],StateMonad):- !,
   eval_args(Depth,Self,UpdatedValue,Value),  'new-state'(Depth,Self,Value,StateMonad).
-eval_args1(Depth,Self,['get-state',StateExpr],Value):- !,
+eval_args30(Depth,Self,['get-state',StateExpr],Value):- !,
   eval_args(Depth,Self,StateExpr,StateMonad), 'get-state'(StateMonad,Value).
 
 
 
-% eval_args1(Depth,Self,['get-state',Expr],Value):- !, eval_args(Depth,Self,Expr,State), arg(1,State,Value).
+% eval_args30(Depth,Self,['get-state',Expr],Value):- !, eval_args(Depth,Self,Expr,State), arg(1,State,Value).
 
 
 
@@ -435,8 +501,10 @@ fetch_or_create_state(NameOrInstance, State) :-
     ),
     is_valid_nb_state(State).
 
-
-eval_args1(Depth,Self,['get-type',Val],Type):- !, get_type(Depth,Self,Val,Type),ground(Type),Type\==[], Type\==Val,!.
+eval_args30(Depth,Self,['length',L],Res):- !, eval_args(Depth,Self,L,LL), !, (is_list(LL)->length(LL,Res);Res=1).
+eval_args30(Depth,Self,['CountElement',L],Res):- !, eval_args(Depth,Self,L,LL), !, (is_list(LL)->length(LL,Res);Res=1).
+eval_args30(Depth,Self,['get-type',Val],Type):- !,
+   get_type(Depth,Self,Val,Type),ground(Type),Type\==[], Type\==Val,!.
 
 
 mnotrace(G):- once(G).
@@ -463,36 +531,91 @@ nontype(N):- number(N).
 
 needs_eval(EvalMe):- is_list(EvalMe),!.
 
-get_type(_Dpth,_Slf,Var,'%Undefined%'):- var(Var),!.
-get_type(_Dpth,_Slf,Val,'Number'):- number(Val),!.
-get_type(Depth,Self,Expr,['StateMonad',Type]):- is_valid_nb_state(Expr),'get-state'(Expr,Val),!,
-   get_type(Depth,Self,Val,Type).
-get_type(Depth,Self,EvalMe,Type):- needs_eval(EvalMe),eval_args(Depth,Self,EvalMe,Val), \+ needs_eval(Val),!,
-   get_type(Depth,Self,Val,Type).
-get_type(_Dpth,Self,[Fn|_],Type):- symbol(Fn),metta_type(Self,Fn,List),last_element(List,Type), nonvar(Type),
-   is_type(Type).
-get_type(_Dpth,Self,List,Type):- is_list(List),metta_type(Self,List,LType),last_element(LType,Type), nonvar(Type),
-   is_type(Type).
-get_type(Depth,_Slf,Type,Type):- Depth<1,!.
-get_type(_Dpth,Self,List,Type):- is_list(List),metta_type(Self,Type,['->'|List]).
-get_type(Depth,Self,List,Types):- List\==[], is_list(List),Depth2 is Depth-1,maplist(get_type(Depth2,Self),List,Types).
-get_type(_Dpth,Self,Fn,Type):- symbol(Fn),metta_type(Self,Fn,Type),!.
-%get_type(Depth,Self,Fn,Type):- nonvar(Fn),metta_type(Self,Fn,Type2),Depth2 is Depth-1,get_type(Depth2,Self,Type2,Type).
-%get_type(Depth,Self,Fn,Type):- Depth>0,nonvar(Fn),metta_type(Self,Type,Fn),!. %,!,last_element(List,Type).
 
-get_type(Depth,Self,Expr,Type):-Depth2 is Depth-1, eval_args(Depth2,Self,Expr,Val),Expr\=@=Val,get_type(Depth2,Self,Val,Type).
-get_type(_Dpth,_Slf,Val,'String'):- string(Val),!.
-get_type(_Dpth,_Slf,Val,Type):- is_decl_type(Val),Type=Val.
-get_type(_Dpth,_Slf,Val,'Bool'):- (Val=='False';Val=='True'),!.
-get_type(_Dpth,_Slf,Val,'Symbol'):- symbol(Val).
+args_violation(_Dpth,_Slf,Args,List):- ( \+ iz_conz(Args); \+ iz_conz(List)), !, fail.
+args_violation(Depth,Self,[A|Args],[L|List]):- once(arg_violation(Depth,Self,A,L) ; args_violation(Depth,Self,Args,List)).
+arg_violation(Depth,Self,A,L):- \+ (get_type0(Depth,Self,A,T), \+ type_violation(T,L)).
+%arg_violation(Depth,Self,A,_):- get_type(Depth,Self,A,_),!.
+
+type_violation(T,L):- \+ \+ (is_nonspecific_type(T);is_nonspecific_type(L)),!,fail.
+type_violation(T,L):- T\=L.
+
+
+
+args_conform(_Dpth,_Slf,Args,List):- ( \+ iz_conz(Args); \+ iz_conz(List)), !.
+args_conform(Depth,Self,[A|Args],[L|List]):- arg_conform(Depth,Self,A,L) , args_conform(Depth,Self,Args,List).
+arg_conform(Depth,Self,A,L):- get_type0(Depth,Self,A,T), type_conform(T,L),!.
+arg_conform(_Dpth,_Slf,_,_).
+%arg_conform(Depth,Self,A,_):- get_type(Depth,Self,A,_),!.
+
+type_conform(T,L):- T=L,!.
+type_conform(T,L):- \+ \+ (is_nonspecific_type(T);is_nonspecific_type(L)),!.
+
+is_nonspecific_type(Var):- var(Var),!.
+is_nonspecific_type('%Undefined%').
+is_nonspecific_type([]).
+is_nonspecific_type('Atom').
+
+get_type(Depth,_Slf,Type,Type):- Depth<1,!.
+get_type(Depth,Self,Val,Type):- is_debugging(eval), !,
+ rtrace(get_type0(Depth,Self,Val,Type)).
+get_type(Depth,Self,Val,Type):-
+  show_call(get_type0(Depth,Self,Val,Type)).
+
+
+get_operator_type(Self,Op,Params,RetType):-
+   metta_type(Self,Op,['->'|List]),
+   append(Params,[RetType],List).
+
+
+
+get_type0(_Dpth,_Slf,Var,'%Undefined%'):- var(Var),!.
+
+/*
+(: Left
+  (-> %Undefined% Either))
+
+(: (Left %Undefined%) Either)
+
+*/
+
+get_type0(Depth,Self,[Op|Args],Type):- symbol(Op),
+  get_operator_type(Self,Op,Params,RetType),
+  % Fills in type variables when possible
+  ignore(args_conform(Depth,Self,Args,Params)),
+  % unitests:  arg violations should return ()
+  (\+ args_violation(Depth,Self,Args,Params) -> Type=RetType ; (Type=[],!)).
+
+get_type0(_Dpth,Self,List,Type):- % is_list(List),
+  metta_type(Self,Params,Type), List == Params.
+  %last(LType,Type), nonvar(Type), is_type(Type).
+
+get_type0(Depth,Self,EvalMe,Type):- needs_eval(EvalMe),eval_args(Depth,Self,EvalMe,Val), \+ needs_eval(Val),!,
+   get_type(Depth,Self,Val,Type).
+
+%get_type0(_Dpth,Self,List,Type):- is_list(List),metta_type(Self,Type,['->'|List]).
+get_type0(Depth,Self,List,Types):- List\==[], is_list(List),Depth2 is Depth-1,maplist(get_type(Depth2,Self),List,Types).
+%get_type(Depth,Self,Op,Type):- nonvar(Op),metta_type(Self,Op,Type2),Depth2 is Depth-1,get_type(Depth2,Self,Type2,Type).
+%get_type(Depth,Self,Op,Type):- Depth>0,nonvar(Op),metta_type(Self,Type,Op),!. %,!,last_element(List,Type).
+
+get_type0(Depth,Self,Expr,Type):-Depth2 is Depth-1, eval_args(Depth2,Self,Expr,Val),Expr\=@=Val,get_type(Depth2,Self,Val,Type).
+
+
+get_type0(Depth,Self,Expr,['StateMonad',Type]):- is_valid_nb_state(Expr),'get-state'(Expr,Val),!,
+   ((state_decltype(Expr,Type),nonvar(Type)); get_type(Depth,Self,Val,Type)).
+get_type0(_Dpth,_Slf,Val,Type):- is_decl_type(Val),(Type=Val;Type='Type').
+get_type0(_Dpth,_Slf,Val,'Number'):- number(Val),!.
+get_type0(_Dpth,Self,Op,Type):- symbol(Op), metta_type(Self,Op,Type).
+get_type0(_Dpth,_Slf,Val,'Symbol'):- symbol(Val).
+get_type0(_Dpth,_Slf,Val,'String'):- string(Val),!.
+get_type0(_Dpth,_Slf,Val,'Bool'):- (Val=='False';Val=='True'),!.
 %get_type(Depth,Self,[T|List],['List',Type]):- Depth2 is Depth-1,  is_list(List),get_type(Depth2,Self,T,Type),!,
 %  forall((member(Ele,List),nonvar(Ele)),get_type(Depth2,Self,Ele,Type)),!.
 %get_type(Depth,_Slf,Cmpd,Type):- compound(Cmpd), functor(Cmpd,Type,1),!.
-get_type(_Dpth,_Slf,Cmpd,Type):- \+ ground(Cmpd),!,Type=[].
-get_type(_Dpth,_Slf,_,'%Undefined%'):- fail.
-eval_args1(Depth,Self,['length',L],Res):- !, eval_args(Depth,Self,L,LL), !, (is_list(LL)->length(LL,Res);Res=1).
-eval_args1(Depth,Self,['CountElement',L],Res):- !, eval_args(Depth,Self,L,LL), !, (is_list(LL)->length(LL,Res);Res=1).
+get_type0(_Dpth,_Slf,Cmpd,Type):- \+ ground(Cmpd),!,Type=[].
+%get_type0(_Dpth,_Slf,_,'%Undefined%'):- fail.
 
+state_decltype(Expr,Type):- functor(Expr,_,A),arg(A,Expr,Type),once(var(Type);is_decl_type(Type)).
 
 is_feo_f('Cons').
 
@@ -508,112 +631,106 @@ is_seo_f(N):- number(N),!.
 
 
 
-/*
-eval_args1(Depth,Self,[F,A|Args],Res):-
-   \+ self_eval(A),
-   eval_args(Depth,Self,A,AA),AA\==A,
-   eval_args(Depth,Self,[F,AA|Args],Res).
+eval_args30(_Dpth,Self,['import!',Other,File],RetVal):-
 
-
-eval_args1(Depth,Self,[F,A1|AArgs],Res):- fail, member(F,['+']),
- cwdl(40,((
-   append(L,[A|R],AArgs),
-   \+ self_eval(A),
-   eval_args(Depth,Self,A,AA),AA\==A,!,
-   append(L,[AA|R],NewArgs), eval_args(Depth,Self,[F,A1|NewArgs],Res)))).
-*/
-
-/* %%
-
-% !(assertEqualToResult ((inc) 2) (3))
-eval_args1(Depth,Self,[F|Args],Res):- is_list(F),
-  metta_atom_iter(Depth,Self,['=',F,R]), eval_args(Depth,Self,[R|Args],Res).
-
-eval_args1(Depth,Self,[F|Args],Res):- is_list(F), Args\==[],
-  append(F,Args,FArgs),!,eval_args(Depth,Self,FArgs,Res).
-*/
-eval_args1(_Dpth,Self,['import!',Other,File],RetVal):-
   must_det_ll(( into_space(Self,Other,Space),!, include_metta(Space,File),!,return_empty(Space,RetVal))). %RetVal=[].
-eval_args1(Depth,Self,['bind!',Other,Expr],RetVal):-
+eval_args30(Depth,Self,['bind!',Other,Expr],RetVal):-
    must_det_ll((into_name(Self,Other,Name),!,eval_args(Depth,Self,Expr,Value),nb_setval(Name,Value),  return_empty(Value,RetVal))).
-eval_args1(Depth,Self,['pragma!',Other,Expr],RetVal):-
+eval_args30(Depth,Self,['pragma!',Other,Expr],RetVal):-
    must_det_ll((into_name(Self,Other,Name),!,nd_ignore((eval_args(Depth,Self,Expr,Value),set_option_value(Name,Value))),  return_empty(Value,RetVal))).
-eval_args1(_Dpth,Self,['transfer!',File],RetVal):- !, must_det_ll((include_metta(Self,File),  return_empty(Self,RetVal))).
+eval_args30(_Dpth,Self,['transfer!',File],RetVal):- !, must_det_ll((include_metta(Self,File),  return_empty(Self,RetVal))).
 
 nd_ignore(Goal):- call(Goal)*->true;true.
 
-eval_args1(Depth,Self,['::'|Expr],Expr):- !.
-eval_args1(Depth,Self,['nop',Expr],Empty):- !,  eval_args(Depth,Self,Expr,_), return_empty([],Empty).
-eval_args1(_Dpth,_Slf,['nop'],Empty):- !, return_empty([],Empty).
-eval_args1(Depth,Self,['do',Expr],Empty):- !,  eval_args(Depth,Self,Expr,_), return_empty([],Empty).
+eval_args30(_Dpth,_Slf,['::'|Expr],Expr):- !.
+eval_args30(Depth,Self,['nop',Expr],Empty):- !,  eval_args(Depth,Self,Expr,_), return_empty([],Empty).
+eval_args30(_Dpth,_Slf,['nop'],Empty):- !, return_empty([],Empty).
+eval_args30(Depth,Self,['do',Expr],Empty):- !,  eval_args(Depth,Self,Expr,_), return_empty([],Empty).
 
 is_True(T):- T\=='False',T\=='F',T\==[].
+
+is_andbig(And):- And=='And'.
+is_andbig(And):- And=='and2'.
+eval_args30(_Dpth,_Slf,[Andbig],'True'):- is_andbig(Andbig),!.
+eval_args30(Depth,Self,[Andbig,X,Y],TF):-  is_andbig(Andbig),!,
+ as_tf((eval_args(Depth,Self,X,'True'),eval_args(Depth,Self,Y,'True')),TF).
+eval_args30(Depth,Self,[Andbig,X],TF):- is_andbig(Andbig),!,
+ eval_args(Depth,Self,X,TF).
+eval_args30(Depth,Self,[Andbig,X|Y],TF):- is_andbig(Andbig),!,
+  eval_args(Depth,Self,X,TF1), \+ \+ is_True(TF1),
+  eval_args(Depth,Self,[Andbig|Y],TF).
 
 is_and(S):- \+ atom(S),!,fail.
 is_and('#COMMA'). is_and(','). is_and('and'). % is_and('And').
 
-eval_args1(_Dpth,_Slf,[And],'True'):- is_and(And),!.
-eval_args1(Depth,Self,[And,X,Y],TF):-  is_and(And),!, as_tf((
+eval_args30(_Dpth,_Slf,[And],'True'):- is_and(And),!.
+eval_args30(Depth,Self,[And,X,Y],TF):-  is_and(And),!, as_tf((
    eval_args(Depth,Self,X,'True'),eval_args(Depth,Self,Y,'True')),TF).
-eval_args1(Depth,Self,[And,X],TF):- is_and(And),!,
+eval_args30(Depth,Self,[And,X],TF):- is_and(And),!,
  eval_args(Depth,Self,X,TF).
-eval_args1(Depth,Self,[And,X|Y],TF):- is_and(And),!,
+eval_args30(Depth,Self,[And,X|Y],TF):- is_and(And),!,
   eval_args(Depth,Self,X,TF1), \+ \+ is_True(TF1),
   eval_args(Depth,Self,[And|Y],TF).
-%eval_args2(Depth,Self,[H|T],_):- \+ is_list(T),!,fail.
-eval_args1(Depth,Self,['or',X,Y],TF):- !, as_tf((eval_args(Depth,Self,X,'True');eval_args(Depth,Self,Y,'True')),TF).
+%eval_args40(Depth,Self,[H|T],_):- \+ is_list(T),!,fail.
+eval_args30(Depth,Self,['or',X,Y],TF):- !, as_tf((eval_args(Depth,Self,X,'True');eval_args(Depth,Self,Y,'True')),TF).
 
 
+eval_args30(_Dpth,_Slf,['arity',F,A],TF):- !,as_tf(current_predicate(F/A),TF).
 
-eval_args1(_Dpth,Self,['add-atom',Other,PredDecl],TF):- !,must_det_ll(( into_space(Self,Other,Space), as_tf(do_metta(Space,load,PredDecl),TF))).
-eval_args1(_Dpth,Self,['remove-atom',Other,PredDecl],TF):- !,must_det_ll(( into_space(Self,Other,Space), as_tf(do_metta(Space,unload,PredDecl),TF))).
-eval_args1(_Dpth,Self,['atom-count',Other],Count):- !,must_det_ll(( into_space(Self,Other,Space), findall(_,metta_defn(Other,_,_),L1),length(L1,C1),findall(_,metta_atom(Space,_),L2),length(L2,C2),Count is C1+C2)).
-eval_args1(_Dpth,Self,['atom-replace',Other,Rem,Add],TF):- !, must_det_ll((into_space(Self,Other,Space), copy_term(Rem,RCopy),
+eval_args30(_Dpth,Self,['add-atom',Other,PredDecl],TF):- !,must_det_ll(( into_space(Self,Other,Space), as_tf(do_metta(Space,load,PredDecl),TF))).
+eval_args30(_Dpth,Self,['remove-atom',Other,PredDecl],TF):- !,must_det_ll(( into_space(Self,Other,Space), as_tf(do_metta(Space,unload,PredDecl),TF))).
+eval_args30(_Dpth,Self,['atom-count',Other],Count):- !,must_det_ll(( into_space(Self,Other,Space), findall(_,metta_defn(Other,_,_),L1),length(L1,C1),findall(_,metta_atom(Space,_),L2),length(L2,C2),Count is C1+C2)).
+eval_args30(_Dpth,Self,['atom-replace',Other,Rem,Add],TF):- !, must_det_ll((into_space(Self,Other,Space), copy_term(Rem,RCopy),
   as_tf((metta_atom_iter_ref(Space,RCopy,Ref), RCopy=@=Rem,erase(Ref), do_metta(Other,load,Add)),TF))).
 
 
-eval_args1(Depth,Self,['+',N1,N2],N):- number(N1),!,
+eval_args30(Depth,Self,['+',N1,N2],N):- number(N1),!,
    eval_args(Depth,Self,N2,N2Res), catch(N is N1+N2Res,_E,(set_last_error(['Error',N2Res,'Number']),fail)).
-eval_args1(Depth,Self,['-',N1,N2],N):- number(N1),!,
+eval_args30(Depth,Self,['-',N1,N2],N):- number(N1),!,
    eval_args(Depth,Self,N2,N2Res), catch(N is N1-N2Res,_E,(set_last_error(['Error',N2Res,'Number']),fail)).
 
-eval_args1(Depth,Self,[V|VI],[V|VO]):- nonvar(V),is_metta_data_functor(V),is_list(VI),!,maplist(eval_args(Depth,Self),VI,VO).
+eval_args30(Depth,Self,[V|VI],[V|VO]):- nonvar(V),is_metta_data_functor(V), !,
+  adjust_args(Depth,Self,V,VI,VO).
 
-eval_args1(Depth,Self,X,Y):-
-  (eval_args2(Depth,Self,X,Y)*->true;
-    (eval_args2_failed(Depth,Self,X,Y)*->true;X=Y)).
+eval_args30(Depth,Self,X,Y):-
+  (efbug(show_success,eval_args40(Depth,Self,X,Y))*->true;
+    (efbug(show_failure,eval_args40_failed(Depth,Self,X,Y)*->true;X=Y))).
 
-eval_args2_failed(Depth,Self,[X|XX],[Y]):- XX == [],!, eval_args1(Depth,Self,X,Y).
+%maybe_efbug(SS,G):- efbug(SS,G)*-> if_trace(eval,wdmsg(SS=G)) ; fail.
+maybe_efbug(_,G):- call(G).
+%efbug(P1,G):- call(P1,G).
+efbug(_,G):- call(G).
 
-eval_args2_failed(_Dpth,_Slf,T,TT):- T==[],!,TT=[].
-eval_args2_failed(_Dpth,_Slf,T,TT):- var(T),!,TT=T.
-eval_args2_failed(_Dpth,_Slf,[F|LESS],Res):- once(eval_selfless([F|LESS],Res)),mnotrace([F|LESS]\==Res),!.
-%eval_args2_failed(Depth,Self,[V|Nil],[O]):- Nil==[], once(eval_args(Depth,Self,V,O)),V\=@=O,!.
-eval_args2_failed(Depth,Self,[H|T],[HH|TT]):- !,
+eval_args40_failed(Depth,Self,[X|XX],[Y]):- XX == [],!, eval_args20(Depth,Self,X,Y).
+
+eval_args40_failed(_Dpth,_Slf,T,TT):- T==[],!,TT=[].
+eval_args40_failed(_Dpth,_Slf,T,TT):- var(T),!,TT=T.
+eval_args40_failed(_Dpth,_Slf,[F|LESS],Res):- once(eval_selfless([F|LESS],Res)),mnotrace([F|LESS]\==Res),!.
+%eval_args40_failed(Depth,Self,[V|Nil],[O]):- Nil==[], once(eval_args(Depth,Self,V,O)),V\=@=O,!.
+eval_args40_failed(Depth,Self,[H|T],[HH|TT]):- !,
   eval_args(Depth,Self,H,HH),
-  eval_args2_failed(Depth,Self,T,TT).
+  eval_args40_failed(Depth,Self,T,TT).
 
-eval_args2_failed(Depth,Self,T,TT):- eval_args(Depth,Self,T,TT).
+eval_args40_failed(Depth,Self,T,TT):- eval_args(Depth,Self,T,TT).
 
-   %eval_args(Depth,Self,X,Y):- eval_args1(Depth,Self,X,Y)*->true;Y=[].
+   %eval_args(Depth,Self,X,Y):- eval_args20(Depth,Self,X,Y)*->true;Y=[].
 
-%eval_args1(Depth,_,_,_):- Depth<1,!,fail.
-%eval_args1(Depth,_,X,Y):- Depth<3, !, ground(X), (Y=X).
-%eval_args1(_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
+%eval_args20(Depth,_,_,_):- Depth<1,!,fail.
+%eval_args20(Depth,_,X,Y):- Depth<3, !, ground(X), (Y=X).
+%eval_args20(_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
 
-% Kills zero arity functions eval_args1(Depth,Self,[X|Nil],[Y]):- Nil ==[],!,eval_args(Depth,Self,X,Y).
+% Kills zero arity functions
+% eval_args20(Depth,Self,[X|Nil],[Y]):- Nil ==[],!,eval_args(Depth,Self,X,Y).
 
 
 /*
 into_values(List,Many):- List==[],!,Many=[].
 into_values([X|List],Many):- List==[],is_list(X),!,Many=X.
 into_values(Many,Many).
-eval_args2(_Dpth,_Slf,Name,Value):- atom(Name), nb_current(Name,Value),!.
+eval_args40(_Dpth,_Slf,Name,Value):- atom(Name), nb_current(Name,Value),!.
 */
 % Macro Functions
-%eval_args1(Depth,_,_,_):- Depth<1,!,fail.
-eval_args2(Depth,_,X,Y):- Depth<3, !, fail, ground(X), (Y=X).
-eval_args2(Depth,Self,[F|PredDecl],Res):-
+eval_args40(Depth,Self,[F|PredDecl],Res):-
    Depth>1,
    mnotrace((sub_sterm1(SSub,PredDecl), ground(SSub),SSub=[_|Sub], is_list(Sub), maplist(atomic,SSub))),
    eval_args(Depth,Self,SSub,Repl),
@@ -623,12 +740,13 @@ eval_args2(Depth,Self,[F|PredDecl],Res):-
 
 
 % user defined function
-eval_args2(Depth,Self,[H|PredDecl],Res):- 
+eval_args40(Depth,Self,[H|PredDecl],Res):- 
    mnotrace(is_user_defined_head(Self,H)),!,
-   eval_args30(Depth,Self,[H|PredDecl],Res).
+   eval_args60(Depth,Self,[H|PredDecl],Res).
 
 % function inherited by system
-eval_args2(Depth,Self,PredDecl,Res):- show_call(eval_args40(Depth,Self,PredDecl,Res)).
+eval_args40(Depth,Self,PredDecl,Res):-
+  eval_args80(Depth,Self,PredDecl,Res).
 
 
 last_element(T,E):- \+ compound(T),!,E=T.
@@ -644,7 +762,7 @@ catch_nowarn(G):- quietly(catch(G,error(_,_),fail)).
 as_tf(G,TF):- catch_nowarn((call(G)*->TF='True';TF='False')).
 eval_selfless(['==',X,Y],TF):- as_tf(X=:=Y,TF),!.
 eval_selfless(['==',X,Y],TF):- as_tf(X=@=Y,TF),!.
-eval_selfless(['=',X,Y],TF):-!,as_tf(X=Y,TF).
+%eval_selfless(['=',X,Y],TF):-!,as_tf(X #= Y,TF).
 eval_selfless(['>',X,Y],TF):-!,as_tf(X>Y,TF).
 eval_selfless(['<',X,Y],TF):-!,as_tf(X<Y,TF).
 eval_selfless(['=>',X,Y],TF):-!,as_tf(X>=Y,TF).
@@ -688,11 +806,11 @@ eval_selfless(LIS,Y):-  mnotrace((
   (match &kb22 (Green $x) $x)
   (Fritz Sam))
 */
-:- discontiguous eval_args3/4.
-%eval_args2(Depth,Self,PredDecl,Res):- eval_args3(Depth,Self,PredDecl,Res).
+:- discontiguous eval_args6/4.
+%eval_args40(Depth,Self,PredDecl,Res):- eval_args6(Depth,Self,PredDecl,Res).
 
-%eval_args2(_Dpth,_Slf,L1,Res):- is_list(L1),maplist(self_eval,L1),!,Res=L1.
-%eval_args2(_Depth,_Self,X,X).
+%eval_args40(_Dpth,_Slf,L1,Res):- is_list(L1),maplist(self_eval,L1),!,Res=L1.
+%eval_args40(_Depth,_Self,X,X).
 
 
 is_user_defined_head(Other,H):- mnotrace(is_user_defined_head0(Other,H)).
@@ -710,32 +828,37 @@ is_user_defined_head_f1(Other,H):- metta_defn(Other,[H|_],_).
 
 
 is_special_op(F):- \+ atom(F), \+ var(F), !, fail.
-is_special_op('case').
-is_special_op(':').
-is_special_op('=').
-is_special_op('->').
-is_special_op('let').
-is_special_op('let*').
-is_special_op('if').
-is_special_op('rtrace').
-is_special_op('or').
-is_special_op('and').
-is_special_op('not').
-is_special_op('match').
-is_special_op('call').
-is_special_op('let').
-is_special_op('let*').
-%is_special_op('nop').
-is_special_op('assertEqual').
-is_special_op('assertEqualToResult').
+is_special_op(Op):- metta_type(_,Op,['->','Atom'|_]),!.
+is_special_op(Op):- is_special_builtin(Op).
 
-is_metta_builtin(Special):- is_special_op(Special).
+
+is_special_builtin('case').
+is_special_builtin(':').
+
+is_special_builtin('=').
+is_special_builtin('->').
+is_special_builtin('let').
+is_special_builtin('let*').
+is_special_builtin('if').
+is_special_builtin('rtrace').
+is_special_builtin('or').
+is_special_builtin('and').
+is_special_builtin('not').
+is_special_builtin('match').
+is_special_builtin('call').
+is_special_builtin('let').
+is_special_builtin('let*').
+%is_special_builtin('nop').
+is_special_builtin('assertEqual').
+is_special_builtin('assertEqualToResult').
+is_special_builtin('collapse').
+is_special_builtin('superpose').
+
+is_metta_builtin(Special):- is_special_builtin(Special).
 is_metta_builtin('==').
 is_metta_builtin(F):- once(atom(F);var(F)), current_op(_,yfx,F).
 is_metta_builtin('println!').
 is_metta_builtin('transfer!').
-is_metta_builtin('collapse').
-is_metta_builtin('superpose').
 is_metta_builtin('+').
 is_metta_builtin('-').
 is_metta_builtin('*').
@@ -750,47 +873,47 @@ is_metta_builtin('pragma!').
 
 
 
-eval_args30(Depth,Self,H,B):-  ( no_repeats(H+B,eval_args34(Depth,Self,H,B))*->true;eval_args37(Depth,Self,H,B)).
+eval_args60(Depth,Self,H,B):-  ( no_repeats(H+B,eval_args64(Depth,Self,H,B))*->true;eval_args67(Depth,Self,H,B)).
 
-eval_args34(_Dpth,Self,H,B):- metta_defn(Self,H,B).
-eval_args34(_Dpth,Self,H,B):- metta_atom(Self,H),B=H.
+eval_args64(_Dpth,Self,H,B):- metta_defn(Self,H,B).
+eval_args64(_Dpth,Self,H,B):- metta_atom(Self,H),B=H.
 
 % Has argument that is headed by the same function
-eval_args37(Depth,Self,[H1|Args],Res):-
+eval_args67(Depth,Self,[H1|Args],Res):-
    mnotrace((append(Left,[[H2|H2Args]|Rest],Args), H2==H1)),!,
    eval_args(Depth,Self,[H2|H2Args],ArgRes),
    mnotrace((ArgRes\==[H2|H2Args], append(Left,[ArgRes|Rest],NewArgs))),
-   eval_args30(Depth,Self,[H1|NewArgs],Res).
+   eval_args60(Depth,Self,[H1|NewArgs],Res).
 
-eval_args37(Depth,Self,[[H|Start]|T1],Y):-
+eval_args67(Depth,Self,[[H|Start]|T1],Y):-
    mnotrace((is_user_defined_head_f(Self,H),is_list(Start))),
    metta_defn(Self,[H|Start],Left),
    eval_args(Depth,Self,[Left|T1],Y).
 
 % Has subterm to eval
-eval_args37(Depth,Self,[F|PredDecl],Res):-
+eval_args67(Depth,Self,[F|PredDecl],Res):-
    Depth>1,
    quietly(sub_sterm1(SSub,PredDecl)),
    mnotrace((ground(SSub),SSub=[_|Sub], is_list(Sub),maplist(atomic,SSub))),
    eval_args(Depth,Self,SSub,Repl),
    mnotrace((SSub\=Repl,subst(PredDecl,SSub,Repl,Temp))),
-   eval_args30(Depth,Self,[F|Temp],Res).
+   eval_args60(Depth,Self,[F|Temp],Res).
 
-%eval_args37(Depth,Self,X,Y):- (eval_args38(Depth,Self,X,Y)*->true;metta_atom_iter(Depth,Self,[=,X,Y])).
+%eval_args67(Depth,Self,X,Y):- (eval_args68(Depth,Self,X,Y)*->true;metta_atom_iter(Depth,Self,[=,X,Y])).
 
-eval_args37(Depth,Self,PredDecl,Res):- fail,
+eval_args67(Depth,Self,PredDecl,Res):- fail,
  ((term_variables(PredDecl,Vars),
   (metta_atom(Self,PredDecl) *-> (Vars ==[]->Res='True';Vars=Res);
    (eval_args(Depth,Self,PredDecl,Res),ignore(Vars ==[]->Res='True';Vars=Res))))),
  PredDecl\=@=Res.
 
-eval_args38(_Dpth,Self,[H|_],_):- mnotrace( \+ is_user_defined_head_f(Self,H) ), !,fail.
-eval_args38(_Dpth,Self,[H|T1],Y):- metta_defn(Self,[H|T1],Y).
-eval_args38(_Dpth,Self,[H|T1],'True'):- metta_atom(Self,[H|T1]).
-eval_args38(_Dpth,Self,CALL,Y):- fail,append(Left,[Y],CALL),metta_defn(Self,Left,Y).
+eval_args68(_Dpth,Self,[H|_],_):- mnotrace( \+ is_user_defined_head_f(Self,H) ), !,fail.
+eval_args68(_Dpth,Self,[H|T1],Y):- metta_defn(Self,[H|T1],Y).
+eval_args68(_Dpth,Self,[H|T1],'True'):- metta_atom(Self,[H|T1]).
+eval_args68(_Dpth,Self,CALL,Y):- fail,append(Left,[Y],CALL),metta_defn(Self,Left,Y).
 
 
-%eval_args3(Depth,Self,['ift',CR,Then],RO):- fail, !, %fail, % trace,
+%eval_args6(Depth,Self,['ift',CR,Then],RO):- fail, !, %fail, % trace,
 %   metta_defn(Self,['ift',R,Then],Become),eval_args(Depth,Self,CR,R),eval_args(Depth,Self,Then,_True),eval_args(Depth,Self,Become,RO).
 
 metta_atom_iter(_Dpth,Other,[Equal,H,B]):- '=' == Equal,!,
@@ -820,19 +943,22 @@ sub_sterm1(_  ,[_|_]):-!,fail.
 sub_sterm1(Sub,Term):- arg(_,Term,SL),sub_sterm(Sub,SL).
 
 %not_compound(Term):- \+ is_list(Term),!.
-%eval_args2(Depth,Self,Term,Res):- maplist(not_compound,Term),!,eval_args345(Depth,Self,Term,Res).
+%eval_args40(Depth,Self,Term,Res):- maplist(not_compound,Term),!,eval_args645(Depth,Self,Term,Res).
 
-eval_args40(Depth,Self,FX,FY):- eval_args44(Depth,Self,FX,FY).
+eval_args80(Depth,Self,FX,FY):- eval_args84(Depth,Self,FX,FY).
 % function inherited by system
-eval_args40(Depth,Self,[F|X],FY):-
+eval_args80(Depth,Self,[F|X],FY):-
   adjust_args(Depth,Self,F,X,Eval),
-  eval_args45(Depth,Self,Eval,FY).
+  eval_args85(Depth,Self,[F|Eval],FY).
 
-adjust_args(Depth,Self,F,X,[F|Y]):-
-  is_function(F), \+ is_special_op(F), is_list(X),
-  maplist(eval_args(Depth,Self),X,Y),!.
-adjust_args(Depth,Self,F,X,[F|Y]):-
-  maplist(as_prolog(Depth,Self),X,Y),!.
+
+eval_args30(Depth,Self,[V|VI],[V|VO]):- nonvar(V),is_metta_data_functor(V),
+  is_list(VI),!,maplist(eval_args(Depth,Self),VI,VO).
+
+adjust_args(_Dpth,_Slf,F,X,X):- (is_special_op(F); \+ iz_conz(X)),!.
+adjust_args(Depth,Self,F,X,Y):- is_list(X), is_function(F), !, maplist(eval_args(Depth,Self),X,Y).
+%adjust_args(Depth,Self,F,X,Y):- is_list(X), !, maplist(as_prolog(Depth,Self),X,Y),!.
+adjust_args(Depth,Self,_,X,Y):- as_prolog(Depth,Self,X,Y).
 
 as_prolog(_Dpth,_Slf,I,O):- \+ iz_conz(I),!,I=O.
 as_prolog(Depth,Self,[H|T],O):- H=='::',!,as_prolog(Depth,Self,T,O).
@@ -840,13 +966,13 @@ as_prolog(Depth,Self,[H|T],[HH|TT]):- as_prolog(Depth,Self,H,HH),as_prolog(Depth
 
 
 
-eval_args44(_Dpth,_Slf,[F|LESS],Res):- once(eval_selfless([F|LESS],Res)),mnotrace(([F|LESS]\==Res)),!.
-eval_args45(Depth,Self,[AE|More],TF):- length(More,Len),
-  (is_syspred(AE,Len,Pred),catch_warn(as_tf(apply(Pred,More),TF)))*->true;eval_args46(Depth,Self,[AE|More],TF).
-eval_args46(_Dpth,_Slf,[AE|More],TF):- length([AE|More],Len), is_syspred(AE,Len,Pred),append(More,[TF],Args),!,
-  catch_warn(apply(Pred,Args)).
+eval_args84(_Dpth,_Slf,[F|LESS],Res):- once(maybe_efbug(show_success,eval_selfless([F|LESS],Res))),mnotrace(([F|LESS]\==Res)),!.
+eval_args85(Depth,Self,[AE|More],TF):- length(More,Len),
+  (is_syspred(AE,Len,Pred),catch_warn(efbug(show_call,as_tf(apply(Pred,More),TF))))*->true;eval_args86(Depth,Self,[AE|More],TF).
+eval_args86(_Dpth,_Slf,[AE|More],TF):- length([AE|More],Len), is_syspred(AE,Len,Pred),append(More,[TF],Args),!,
+  efbug(show_call,catch_warn(apply(Pred,Args))).
 
-%eval_args40(Depth,Self,[X1|[F2|X2]],[Y1|Y2]):- is_function(F2),!,eval_args(Depth,Self,[F2|X2],Y2),eval_args(Depth,Self,X1,Y1).
+%eval_args80(Depth,Self,[X1|[F2|X2]],[Y1|Y2]):- is_function(F2),!,eval_args(Depth,Self,[F2|X2],Y2),eval_args(Depth,Self,X1,Y1).
 
 
 cwdl(DL,Goal):- call_with_depth_limit(Goal,DL,R), (R==depth_limit_exceeded->(!,fail);true).

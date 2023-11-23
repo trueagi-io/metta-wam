@@ -322,7 +322,7 @@ pp_sex('') :- !, format('""',[]).
 pp_sex([]):-  !, write('()').
 pp_sex('='(N,V)):- allow_concepts, !, format("~N;; ~w == ~n",[N]),!,pp_sex(V).
 pp_sex(V) :- (number(V) ; is_dict(V)), !, print_concept('ValueAtom',V).
-pp_sex(V) :- (symbol(V),symbol_number(V,N)), !, print_concept('ValueAtom',N).
+%pp_sex(V) :- (symbol(V),symbol_number(V,N)), !, print_concept('ValueAtom',N).
 pp_sex(S) :- symbol(S), always_dash_functor(S,D), pp_sax(D),!.
 pp_sex(S) :- string(S),!, print_concept('StringValue',S).
 % Lists are printed with parentheses.
