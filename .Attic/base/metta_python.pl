@@ -1,3 +1,7 @@
+:- encoding(iso_latin_1).
+:- flush_output.
+:- setenv('RUST_BACKTRACE',full).
+%:- '$set_source_module'('user').
 /*
 # Core in Rust
 In the original version, the core logic and functionalities of the MeTTa system are implemented in Rust. Rust is known for its performance and safety features, making it a suitable choice for building robust, high-performance systems.
@@ -14,22 +18,23 @@ Just like the Rust core allowed for Python extensions, the Prolog code also perm
 :- use_module(library(janus)).
 :- use_module(library(filesex)).
 
-:- prolog_load_context(directory, ChildDir),
-   file_directory_name(ChildDir, ParentDir),
-   py_add_lib_dir(ParentDir).
-
 
 is_rust_space(GSpace):- is_python_space(GSpace).
 
-ensure_space(Space,GSpace):- py_is_object(Space),!,GSpace=Space.
-ensure_space(Space,GSpace):-
-   var(Space),init_primary_metta_space(GSpace), Space=GSpace.
+ensure_space_py(Space,GSpace):- py_is_object(Space),!,GSpace=Space.
+ensure_space_py(Space,GSpace):- var(Space),init_primary_metta_space(GSpace), Space=GSpace.
 
 :- dynamic(is_metta/1).
-init_metta(MeTTa):- is_metta(MeTTa),!.
-init_metta(MeTTa):-
+ensure_rust_metta(MeTTa):- is_metta(MeTTa),!.
+ensure_rust_metta(MeTTa):-
    py_call(hyperon:'MeTTa'(),MeTTa),
    asserta(is_metta(MeTTa)).
+
+:- dynamic(is_metta_learner/1).
+ensure_metta_learner(Metta_Learner):- is_metta_learner(Metta_Learner),!.
+ensure_metta_learner(Metta_Learner):-
+   py_call(metta_vspace:'metta_learner':'MettaLearner'(),Metta_Learner),
+   asserta(is_metta_learner(Metta_Learner)).
 
 :- multifile(space_type_method/3).
 :- dynamic(space_type_method/3).
@@ -45,7 +50,7 @@ space_type_method(is_not_prolog_space,query,query_from_space).
 
 % Initialize a new hyperon.base.GroundingSpace and get a reference
 init_primary_metta_space(GSpace) :- is_rust_space(GSpace),!.
-init_primary_metta_space(GSpace) :- init_metta(MeTTa), py_call(MeTTa:space(),GSpace),
+init_primary_metta_space(GSpace) :- ensure_rust_metta(MeTTa), py_call(MeTTa:space(),GSpace),
     asserta(is_python_space(GSpace)).
 init_primary_metta_space(GSpace) :- new_rust_space(GSpace).
 
@@ -91,13 +96,25 @@ atoms_iter_from_space(Space, Atoms) :-
     py_call(GSpace:'atoms_iter'(), Atoms).
 
 
+'extend-py!'(Module,Result):-
+  %listing(ensure_rust_metta/1),
+  %ensure_metta_learner,
+  wdmsg('extend-py!'(Module)),
+  ensure_rust_metta(MeTTa),
+  replace_in_string(["/"="."],Module,ToPython),
+  py_call(MeTTa:load_py_module(ToPython),Result),
+  wdmsg(result(MeTTa->Result)).
+
+ensure_metta_learner:-
+  ensure_metta_learner(Learner),
+  wdmsg(ensure_metta_learner(Learner)).
 
 
 % Example usage
 example_usage :-
     init_primary_metta_space(GSpace),
     query_from_space(GSpace, some_query, Result),
-    write(Result).
+    writeln(Result).
 
 
 /*
@@ -114,3 +131,11 @@ To integrate VSpace with the existing Python and Rust components, similar interf
 
 
 */
+
+%:- ensure_loaded(metta_interp).
+
+%:- prolog_load_context(directory, ChildDir),
+%   file_directory_name(ChildDir, ParentDir),
+%   py_add_lib_dir(ParentDir).
+
+
