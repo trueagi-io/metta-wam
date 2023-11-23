@@ -294,12 +294,12 @@ pl_directory="metta_vspace/pyswip"
 should_compile=0
 
 # Reference file
-reference_file=$(find . -maxdepth 1 -type f -name "MeTTaLog*" -not -name "*.*" -printf "%T@ %p\n" | sort -k1,1nr | head -n 1 | cut -f2- -d" ")
+reference_file=$(find . -maxdepth 1 -type f -name "Sav.MeTTaLog*" -not -name "*.*" -printf "%T@ %p\n" | sort -k1,1nr | head -n 1 | cut -f2- -d" ")
 if [[ -z "$reference_file" ]]; then
-  reference_file="MeTTaLog"
+  reference_file="Sav.MeTTaLog"
 fi
 
-# Check if MeTTaLog exists
+# Check if Sav.MeTTaLog exists
 if [[ ! -e "$reference_file" ]]; then
     echo "Reference file $reference_file does not exist. Compiler will be called."
     should_compile=1
@@ -332,9 +332,9 @@ if [[ $should_compile -eq 1 ]]; then
     fi
 fi
 
-reference_file=$(find . -maxdepth 1 -type f -name "MeTTaLog*" -not -name "*.*" -printf "%T@ %p\n" | sort -k1,1nr | head -n 1 | cut -f2- -d" ")
+reference_file=$(find . -maxdepth 1 -type f -name "Sav.MeTTaLog*" -not -name "*.*" -printf "%T@ %p\n" | sort -k1,1nr | head -n 1 | cut -f2- -d" ")
 if [[ -z "$reference_file" ]]; then
-  reference_file="MeTTaLog"
+  reference_file="Sav.MeTTaLog"
 fi
 
 if [[ -f "$reference_file" ]]; then
@@ -343,6 +343,8 @@ if [[ -f "$reference_file" ]]; then
 else
   MLOG="swipl ${SWI_OPTIONS[*]} -l $METTALOG_DIR/metta_vspace/$PYSWIP_VERSION/metta_interp.pl --"
 fi
+
+MLOG="swipl ${SWI_OPTIONS[*]} -l $METTALOG_DIR/metta_vspace/$PYSWIP_VERSION/metta_interp.pl --"
 
 METTA_CMD="$MLOG --python=$python_flag ${OTHER_OPTIONS[*]}"
 
