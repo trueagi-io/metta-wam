@@ -32,11 +32,16 @@ string_replace(Original, Search, Replace, Replaced) :-
 
 get_test_name(Number,TestName) :-
    ((nb_current(loading_file,FilePath),FilePath\==[])->true; FilePath='SOME/UNIT-TEST'),
-   make_test_name(FilePath, Number, TestName).
+   show_call(make_test_name(FilePath, Number, TestName)).
 
+ensure_basename(FilePath,FilePath):- \+ directory_file_path(('.'), _, FilePath),!.
+ensure_basename(FilePath0,FilePath):-
+  absolute_file_name(FilePath0,FilePath),!.
+ensure_basename(FilePath,FilePath).
 
-make_test_name(FilePath, Number, TestName) :-
+make_test_name(FilePath0, Number, TestName) :-
     % Extract the file name and its parent directory from the file path
+    ensure_basename(FilePath0,FilePath),
     file_base_name(FilePath, FileName),
     directory_file_path(ParentDir, FileName, FilePath),
     file_base_name(ParentDir, ParentDirBase),
@@ -57,7 +62,10 @@ make_test_name(FilePath, Number, TestName) :-
 color_g_mesg(C,G):- check_silent_loading,color_g_mesg_ok(C,G).
 color_g_mesg_ok(C,G):-
   wots(S,user:call(G)),
-  (S == "" -> true ; ansi_format([fg(C)], '~N~w~n', [S])),!.
+  (S == "" -> true ; our_ansi_format(C, '~w~n', [S])),!.
+
+our_ansi_format(C, Fmt,Args):- atom(C), !, ansi_format([fg(C)], Fmt,Args).
+our_ansi_format(C, Fmt,Args):- ansi_format(C, Fmt,Args).
 
 print_current_test:-
    loonit_number(Number),
