@@ -8,7 +8,7 @@
 %:- use_module(library(tabling)).
 :- use_module(library(system)).
 :- ensure_loaded(metta_compiler).
-:- ensure_loaded(metta_data).
+:- ensure_loaded(metta_types).
 :- ensure_loaded(metta_space).
 :- ensure_loaded(metta_eval).
 :- set_stream(user_input,tty(true)).
