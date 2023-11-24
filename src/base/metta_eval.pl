@@ -77,6 +77,7 @@ flag_to_var(Flag,Var):- Flag=Var.
 set_debug(Flag,Val):- \+ atom(Flag), flag_to_var(Flag,Var), atom(Var),!,set_debug(Var,Val).
 set_debug(Flag,true):- !, debug(metta(Flag)),flag_to_var(Flag,Var),set_option_value(Var,true).
 set_debug(Flag,false):- nodebug(metta(Flag)),flag_to_var(Flag,Var),set_option_value(Var,false).
+if_trace((Flag;true),Goal):- !, catch(ignore((Goal)),E,wdmsg(E-->if_trace((Flag;true),Goal))).
 if_trace(Flag,Goal):- catch(ignore((is_debugging(Flag),Goal)),E,wdmsg(E-->if_trace(Flag,Goal))).
 
 is_debugging(Flag):- var(Flag),!,fail.
@@ -120,12 +121,12 @@ eval_args11(Depth,Self,X,Y):- flag(eval_num,EX,EX+1),
     skip(write('Switched off tracing. For a longer trace !(pragma! tracelen 101))')));true),
   notrace((D1 is Depth-1)),
   DR is 99-D1,
-  if_trace((eval),indentq(Depth,'-->'(EX,Self,X,depth(DR)))),
+  if_trace((eval;true),indentq(Depth,'-->'(EX,Self,X,depth(DR)))),
   Ret=retval(fail),
   call_cleanup(
    (eval_args20(D1,Self,X,Y),
     notrace(( nb_setarg(1,Ret,Y)))),
-   notrace(ignore(((Y\=@=X,flag(eval_num,_,EX),EXm1 is EX -1, if_trace((eval),indentq(Depth,'<--'(EXm1,Ret)))))))),
+   notrace(ignore(((Y\=@=X,flag(eval_num,_,EX),if_trace((eval;true),indentq(Depth,'<--'(EX,Ret)))))))),
   (Ret\=@=retval(fail)->true;(rtrace(eval_args20(D1,Self,X,Y)),fail)).
 
 
@@ -339,7 +340,7 @@ eval_until_eq1(_Dpth,_Slf,X,Y):- X=Y,!.
 eval_until_eq1(Depth,Self,X,Y):- eval_args20(Depth,Self,X,XX),X\=@=XX,!,eval_until_eq1(Depth,Self,Y,XX).
 
 
-eval_args30(Depth,Self,['eq',X,Y],Res):- !, as_tf(eval_until_eq(Depth,Self,X,Y),Res).
+%eval_args30(Depth,Self,['eq',X,Y],Res):- !, as_tf(eval_until_eq(Depth,Self,X,Y),Res).
 eval_args30(_Dpth,_Slf,['memb',E,List],Res):- !, into_pl_list(List,PLList),as_tf(member(E,PLList), Res).
 eval_args30(_Dpth,_Slf,['make_list',List],MettaList):- !, into_metta_cons(List,MettaList).
 
@@ -370,11 +371,11 @@ eval_args30(Depth,Self, Term, Res):- fail,
 max_counting(F,Max):- flag(F,X,X+1),  X<Max ->  true; (flag(F,_,10),!,fail).
 
 
-eval_args30(Depth,Self,['If',Cond,Then],Res):- !,
+eval_args30(Depth,Self,['If',Cond,Then],Res):- is_user_defined_head_f(Self,'If'), !,
    eval_args(Depth,Self,Cond,TF),
    (is_True(TF) -> eval_args(Depth,Self,Then,Res) ; Res = []).
 
-eval_args30(Depth,Self,['If',Cond,Then,Else],Res):- !,
+eval_args30(Depth,Self,['If',Cond,Then,Else],Res):- is_user_defined_head_f(Self,'If'), !,
    eval_args(Depth,Self,Cond,TF),
    (is_True(TF) -> eval_args(Depth,Self,Then,Res);eval_args(Depth,Self,Else,Res)).
 
@@ -385,6 +386,9 @@ eval_args30(Depth,Self,['if',Cond,Then],Res):- !,
 eval_args30(Depth,Self,['if',Cond,Then,Else],Res):- !,
    eval_args(Depth,Self,Cond,TF),
    (is_True(TF) -> eval_args(Depth,Self,Then,Res);eval_args(Depth,Self,Else,Res)).
+
+% @TODO: This should not be here
+eval_args30(_Dpth,_Slf,['ift',Cond,Then],Then):- Cond == 'True', !.
 
 eval_args30(_Dpth,_Slf,[_,Nothing],Nothing):- 'Nothing'==Nothing,!.
 
@@ -407,6 +411,49 @@ eval_args30(Depth,Self,['new-state',UpdatedValue],StateMonad):- !,
   eval_args(Depth,Self,UpdatedValue,Value),  'new-state'(Depth,Self,Value,StateMonad).
 eval_args30(Depth,Self,['get-state',StateExpr],Value):- !,
   eval_args(Depth,Self,StateExpr,StateMonad), 'get-state'(StateMonad,Value).
+
+
+eval_args30(Depth,Self,[V|VI],[V|VO]):- nonvar(V),is_metta_data_functor(V),
+  is_list(VI),!,maplist(eval_args(Depth,Self),VI,VO).
+
+adjust_args(_Dpth,Self,F,X,X):- (is_special_op(Self,F); \+ iz_conz(X)),!.
+adjust_args(Depth,Self,Op,X,Y):-
+  get_operator_typedef(Self,Op,Params,_RetType),
+  as_prolog(Depth,Self,X,M),
+  args_conform(Depth,Self,M,Params),!,
+  into_typed_args(Depth,Self,Params,M,Y).
+adjust_args(Depth,Self,F,X,Y):- is_list(X), is_function(F), !, maplist(eval_args(Depth,Self),X,Y).
+adjust_args(Depth,Self,_,X,Y):- is_list(X), !, maplist(as_prolog(Depth,Self),X,Y),!.
+adjust_args(Depth,Self,_,X,Y):- as_prolog(Depth,Self,X,Y).
+
+into_typed_args(_Dpth,_Slf,T,M,Y):- (\+ iz_conz(T); \+ iz_conz(M)),!, M=Y.
+into_typed_args(Depth,Self,[T|TT],[M|MM],[Y|YY]):-
+  into_typed_arg(Depth,Self,T,M,Y),
+  into_typed_args(Depth,Self,TT,MM,YY).
+
+into_typed_arg(_Dpth,_Slf,T,M,Y):- var(M),!, add_argtype(T,M),Y=M.
+into_typed_arg(Depth,Self,T,M,Y):- into_typed_arg0(Depth,Self,T,M,Y)*->true;M=Y.
+
+into_typed_arg0(Depth,Self,T,M,Y):- var(T), !, get_type(Depth,Self,M,T),
+ (wants_eval_kind(T)->eval_args(Depth,Self,M,Y);Y=M).
+
+into_typed_arg0(Depth,Self,T,M,Y):- is_pro_eval_kind(T),!,eval_args(Depth,Self,M,Y).
+into_typed_arg0(Depth,Self,T,M,Y):- ground(M),!, \+ arg_violation(Depth,Self,M,T),Y=M.
+into_typed_arg0(_Dpth,_Slf,T,M,Y):- is_non_eval_kind(T),!,M=Y.
+into_typed_arg0(Depth,Self,_,M,Y):- eval_args(Depth,Self,M,Y).
+add_argtype(_,_).
+
+is_non_eval_kind(Type):- is_nonspecific_type(Type),!.
+is_non_eval_kind('Atom').
+
+is_pro_eval_kind('Number').
+is_pro_eval_kind('Symbol').
+is_pro_eval_kind('Bool').
+
+
+as_prolog(_Dpth,_Slf,I,O):- \+ iz_conz(I),!,I=O.
+as_prolog(Depth,Self,[H|T],O):- H=='::',!,as_prolog(Depth,Self,T,O).
+as_prolog(Depth,Self,[H|T],[HH|TT]):- as_prolog(Depth,Self,H,HH),as_prolog(Depth,Self,T,TT).
 
 
 
@@ -504,8 +551,17 @@ fetch_or_create_state(NameOrInstance, State) :-
 eval_args30(Depth,Self,['length',L],Res):- !, eval_args(Depth,Self,L,LL), !, (is_list(LL)->length(LL,Res);Res=1).
 eval_args30(Depth,Self,['CountElement',L],Res):- !, eval_args(Depth,Self,L,LL), !, (is_list(LL)->length(LL,Res);Res=1).
 eval_args30(Depth,Self,['get-type',Val],Type):- !,
-   get_type(Depth,Self,Val,Type),ground(Type),Type\==[], Type\==Val,!.
-
+   get_type12(Depth,Self,Val,Type).
+   
+   
+   
+%get_type12(Depth,Self,Val,Type):- 
+%  get_type1(Depth,Self,Val,Type), ground(Type),Type\==[], Type\==Val,!.
+%get_type12(Depth,Self,Val,Type):- 
+%  get_type2(Depth,Self,Val,Type), ground(Type),Type\==[], Type\==Val,!.
+get_type12(Depth,Self,Val,Type):- 
+  get_type(Depth,Self,Val,Type),nonvar(Type),!.
+get_type12(_Dpth,_Slf,_Vl,[]).
 
 mnotrace(G):- once(G).
 
@@ -515,8 +571,10 @@ is_decl_type(ST):- \+ atom(ST),!,fail.
 is_decl_type('%Undefined%').  is_decl_type('Number').
 is_decl_type('String').       is_decl_type('Bool').
 is_decl_type('Type').         is_decl_type('Symbol').
+is_decl_type('Any').          is_decl_type('Atom').
 is_decl_type(Type):-          is_decl_type_l(Type).
 is_decl_type_l('StateMonad'). is_decl_type_l('List').
+
 
 last_type(List,Type):- is_list(List),last(List,Type),is_type(Type).
 last_type(Type,Type):- is_type(Type),!.
@@ -555,18 +613,15 @@ is_nonspecific_type(Var):- var(Var),!.
 is_nonspecific_type('%Undefined%').
 is_nonspecific_type([]).
 is_nonspecific_type('Atom').
+is_nonspecific_type('Any').
 
 get_type(Depth,_Slf,Type,Type):- Depth<1,!.
-get_type(Depth,Self,Val,Type):- is_debugging(eval), !,
- rtrace(get_type0(Depth,Self,Val,Type)).
+%get_type(Depth,Self,Val,Type):- is_debugging(eval), !,
+% ftrace(get_type0(Depth,Self,Val,Type)).
 get_type(Depth,Self,Val,Type):-
   show_call(get_type0(Depth,Self,Val,Type)).
-
-
-get_operator_type(Self,Op,Params,RetType):-
-   metta_type(Self,Op,['->'|List]),
-   append(Params,[RetType],List).
-
+get_type(Depth,Self,Val,Type):-
+  show_call(get_type1(Depth,Self,Val,Type)).
 
 
 get_type0(_Dpth,_Slf,Var,'%Undefined%'):- var(Var),!.
@@ -580,7 +635,7 @@ get_type0(_Dpth,_Slf,Var,'%Undefined%'):- var(Var),!.
 */
 
 get_type0(Depth,Self,[Op|Args],Type):- symbol(Op),
-  get_operator_type(Self,Op,Params,RetType),
+  get_operator_typedef(Self,Op,Params,RetType),
   % Fills in type variables when possible
   ignore(args_conform(Depth,Self,Args,Params)),
   % unitests:  arg violations should return ()
@@ -604,18 +659,53 @@ get_type0(Depth,Self,Expr,Type):-Depth2 is Depth-1, eval_args(Depth2,Self,Expr,V
 get_type0(Depth,Self,Expr,['StateMonad',Type]):- is_valid_nb_state(Expr),'get-state'(Expr,Val),!,
    ((state_decltype(Expr,Type),nonvar(Type)); get_type(Depth,Self,Val,Type)).
 get_type0(_Dpth,_Slf,Val,Type):- is_decl_type(Val),(Type=Val;Type='Type').
-get_type0(_Dpth,_Slf,Val,'Number'):- number(Val),!.
+
+get_type0(_Dpth,_Slf,Cmpd,Type):- compound(Cmpd),!, \+ ground(Cmpd),!,Type=[].
+
+
+get_type0(_Dpth,_Slf,Val,'Number'):- number(Val).
+get_type0(_Dpth,_Slf,Val,'Integer'):- integer(Val).
+get_type0(_Dpth,_Slf,Val,'Decimal'):- float(Val).
+get_type0(_Dpth,_Slf,Val,'Rational'):- rational(Val).
+get_type0(_Dpth,_Slf,Val,'Bool'):- (Val=='False';Val=='True'),!.
 get_type0(_Dpth,Self,Op,Type):- symbol(Op), metta_type(Self,Op,Type).
 get_type0(_Dpth,_Slf,Val,'Symbol'):- symbol(Val).
-get_type0(_Dpth,_Slf,Val,'String'):- string(Val),!.
-get_type0(_Dpth,_Slf,Val,'Bool'):- (Val=='False';Val=='True'),!.
+get_type0(_Dpth,_Slf,Val,Type):- string(Val),!,(Type='String';Type='Symbol').
 %get_type(Depth,Self,[T|List],['List',Type]):- Depth2 is Depth-1,  is_list(List),get_type(Depth2,Self,T,Type),!,
 %  forall((member(Ele,List),nonvar(Ele)),get_type(Depth2,Self,Ele,Type)),!.
 %get_type(Depth,_Slf,Cmpd,Type):- compound(Cmpd), functor(Cmpd,Type,1),!.
-get_type0(_Dpth,_Slf,Cmpd,Type):- \+ ground(Cmpd),!,Type=[].
 %get_type0(_Dpth,_Slf,_,'%Undefined%'):- fail.
 
 state_decltype(Expr,Type):- functor(Expr,_,A),arg(A,Expr,Type),once(var(Type);is_decl_type(Type)).
+
+get_type1(_Dpth,_Slf,Var,'%Undefined%'):- var(Var),!.
+get_type1(_Dpth,_Slf,Val,'Number'):- number(Val),!.
+get_type1(Depth,Self,Expr,['StateMonad',Type]):- is_valid_nb_state(Expr),'get-state'(Expr,Val),!,
+   get_type1(Depth,Self,Val,Type).
+get_type1(Depth,Self,EvalMe,Type):- needs_eval(EvalMe),eval_args(Depth,Self,EvalMe,Val), \+ needs_eval(Val),!,
+   get_type1(Depth,Self,Val,Type).
+get_type1(_Dpth,Self,[Fn|_],Type):- symbol(Fn),metta_type(Self,Fn,List),last_element(List,Type), nonvar(Type),
+   is_type(Type).
+get_type1(_Dpth,Self,List,Type):- is_list(List),metta_type(Self,List,LType),last_element(LType,Type), nonvar(Type),
+   is_type(Type).
+get_type1(Depth,_Slf,Type,Type):- Depth<1,!.
+get_type1(_Dpth,Self,List,Type):- is_list(List),metta_type(Self,Type,['->'|List]).
+get_type1(Depth,Self,List,Types):- List\==[], is_list(List),Depth2 is Depth-1,maplist(get_type1(Depth2,Self),List,Types).
+get_type1(_Dpth,Self,Fn,Type):- symbol(Fn),metta_type(Self,Fn,Type),!.
+%get_type1(Depth,Self,Fn,Type):- nonvar(Fn),metta_type(Self,Fn,Type2),Depth2 is Depth-1,get_type1(Depth2,Self,Type2,Type).
+%get_type1(Depth,Self,Fn,Type):- Depth>0,nonvar(Fn),metta_type(Self,Type,Fn),!. %,!,last_element(List,Type).
+
+get_type1(Depth,Self,Expr,Type):-Depth2 is Depth-1, eval_args(Depth2,Self,Expr,Val),Expr\=@=Val,get_type1(Depth2,Self,Val,Type).
+get_type1(_Dpth,_Slf,Val,'String'):- string(Val),!.
+get_type1(_Dpth,_Slf,Val,Type):- is_decl_type(Val),Type=Val.
+get_type1(_Dpth,_Slf,Val,'Bool'):- (Val=='False';Val=='True'),!.
+get_type1(_Dpth,_Slf,Val,'Symbol'):- symbol(Val).
+%get_type1(Depth,Self,[T|List],['List',Type]):- Depth2 is Depth-1,  is_list(List),get_type1(Depth2,Self,T,Type),!,
+%  forall((member(Ele,List),nonvar(Ele)),get_type1(Depth2,Self,Ele,Type)),!.
+%get_type1(Depth,_Slf,Cmpd,Type):- compound(Cmpd), functor(Cmpd,Type,1),!.
+get_type1(_Dpth,_Slf,Cmpd,Type):- \+ ground(Cmpd),!,Type=[].
+get_type1(_Dpth,_Slf,_,'%Undefined%'):- fail.
+get_type1(Depth,Self,Val,Type):- Depth2 is Depth-1, get_type0(Depth2,Self,Val,Type).
 
 is_feo_f('Cons').
 
@@ -649,26 +739,16 @@ eval_args30(Depth,Self,['do',Expr],Empty):- !,  eval_args(Depth,Self,Expr,_), re
 
 is_True(T):- T\=='False',T\=='F',T\==[].
 
-is_andbig(And):- And=='And'.
-is_andbig(And):- And=='and2'.
-eval_args30(_Dpth,_Slf,[Andbig],'True'):- is_andbig(Andbig),!.
-eval_args30(Depth,Self,[Andbig,X,Y],TF):-  is_andbig(Andbig),!,
- as_tf((eval_args(Depth,Self,X,'True'),eval_args(Depth,Self,Y,'True')),TF).
-eval_args30(Depth,Self,[Andbig,X],TF):- is_andbig(Andbig),!,
- eval_args(Depth,Self,X,TF).
-eval_args30(Depth,Self,[Andbig,X|Y],TF):- is_andbig(Andbig),!,
-  eval_args(Depth,Self,X,TF1), \+ \+ is_True(TF1),
-  eval_args(Depth,Self,[Andbig|Y],TF).
-
 is_and(S):- \+ atom(S),!,fail.
-is_and('#COMMA'). is_and(','). is_and('and'). % is_and('And').
+is_and('and2','True').
+is_and('#COMMA','True'). is_and(',','True'). is_and('and','True'). % is_and('And').
 
-eval_args30(_Dpth,_Slf,[And],'True'):- is_and(And),!.
-eval_args30(Depth,Self,[And,X,Y],TF):-  is_and(And),!, as_tf((
-   eval_args(Depth,Self,X,'True'),eval_args(Depth,Self,Y,'True')),TF).
-eval_args30(Depth,Self,[And,X],TF):- is_and(And),!,
- eval_args(Depth,Self,X,TF).
-eval_args30(Depth,Self,[And,X|Y],TF):- is_and(And),!,
+eval_args30(_Dpth,_Slf,[And],True):- is_and(And,True),!.
+eval_args30(Depth,Self,[And,X,Y],TF):-  is_and(And,True),!, as_tf((
+   eval_args(Depth,Self,X,True),eval_args(Depth,Self,Y,True)),TF).
+eval_args30(Depth,Self,[And,X],True):- is_and(And,True),!,
+ eval_args(Depth,Self,X,True).
+eval_args30(Depth,Self,[And,X|Y],TF):- is_and(And,_True),!,
   eval_args(Depth,Self,X,TF1), \+ \+ is_True(TF1),
   eval_args(Depth,Self,[And|Y],TF).
 %eval_args40(Depth,Self,[H|T],_):- \+ is_list(T),!,fail.
@@ -689,8 +769,17 @@ eval_args30(Depth,Self,['+',N1,N2],N):- number(N1),!,
 eval_args30(Depth,Self,['-',N1,N2],N):- number(N1),!,
    eval_args(Depth,Self,N2,N2Res), catch(N is N1-N2Res,_E,(set_last_error(['Error',N2Res,'Number']),fail)).
 
+%
+%
+%
+%
+%
+%
+%
+%
 eval_args30(Depth,Self,[V|VI],[V|VO]):- nonvar(V),is_metta_data_functor(V), !,
   adjust_args(Depth,Self,V,VI,VO).
+
 
 eval_args30(Depth,Self,X,Y):-
   (efbug(show_success,eval_args40(Depth,Self,X,Y))*->true;
@@ -701,11 +790,15 @@ maybe_efbug(_,G):- call(G).
 %efbug(P1,G):- call(P1,G).
 efbug(_,G):- call(G).
 
+
+eval_args40_failed(_Dpth,_Slf,T,T).
+/*
+
 eval_args40_failed(Depth,Self,[X|XX],[Y]):- XX == [],!, eval_args20(Depth,Self,X,Y).
 
-eval_args40_failed(_Dpth,_Slf,T,TT):- T==[],!,TT=[].
-eval_args40_failed(_Dpth,_Slf,T,TT):- var(T),!,TT=T.
-eval_args40_failed(_Dpth,_Slf,[F|LESS],Res):- once(eval_selfless([F|LESS],Res)),mnotrace([F|LESS]\==Res),!.
+%eval_args40_failed(_Dpth,_Slf,T,TT):- T==[],!,TT=[].
+%eval_args40_failed(_Dpth,_Slf,T,TT):- var(T),!,TT=T.
+%eval_args40_failed(_Dpth,_Slf,[F|LESS],Res):- once(eval_selfless([F|LESS],Res)),mnotrace([F|LESS]\==Res),!.
 %eval_args40_failed(Depth,Self,[V|Nil],[O]):- Nil==[], once(eval_args(Depth,Self,V,O)),V\=@=O,!.
 eval_args40_failed(Depth,Self,[H|T],[HH|TT]):- !,
   eval_args(Depth,Self,H,HH),
@@ -714,7 +807,7 @@ eval_args40_failed(Depth,Self,[H|T],[HH|TT]):- !,
 eval_args40_failed(Depth,Self,T,TT):- eval_args(Depth,Self,T,TT).
 
    %eval_args(Depth,Self,X,Y):- eval_args20(Depth,Self,X,Y)*->true;Y=[].
-
+*/
 %eval_args20(Depth,_,_,_):- Depth<1,!,fail.
 %eval_args20(Depth,_,X,Y):- Depth<3, !, ground(X), (Y=X).
 %eval_args20(_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
@@ -813,65 +906,6 @@ eval_selfless(LIS,Y):-  mnotrace((
 %eval_args40(_Depth,_Self,X,X).
 
 
-is_user_defined_head(Other,H):- mnotrace(is_user_defined_head0(Other,H)).
-is_user_defined_head0(Other,[H|_]):- !, nonvar(H),!, is_user_defined_head_f(Other,H).
-is_user_defined_head0(Other,H):- callable(H),!,functor(H,F,_), is_user_defined_head_f(Other,F).
-is_user_defined_head0(Other,H):- is_user_defined_head_f(Other,H).
-
-is_user_defined_head_f(Other,H):- is_user_defined_head_f1(Other,H).
-is_user_defined_head_f(Other,H):- is_user_defined_head_f1(Other,[H|_]).
-
-%is_user_defined_head_f1(Other,H):- metta_type(Other,H,_).
-is_user_defined_head_f1(Other,H):- metta_atom(Other,[H|_]).
-is_user_defined_head_f1(Other,H):- metta_defn(Other,[H|_],_).
-%is_user_defined_head_f(_,H):- is_metta_builtin(H).
-
-
-is_special_op(F):- \+ atom(F), \+ var(F), !, fail.
-is_special_op(Op):- metta_type(_,Op,['->','Atom'|_]),!.
-is_special_op(Op):- is_special_builtin(Op).
-
-
-is_special_builtin('case').
-is_special_builtin(':').
-
-is_special_builtin('=').
-is_special_builtin('->').
-is_special_builtin('let').
-is_special_builtin('let*').
-is_special_builtin('if').
-is_special_builtin('rtrace').
-is_special_builtin('or').
-is_special_builtin('and').
-is_special_builtin('not').
-is_special_builtin('match').
-is_special_builtin('call').
-is_special_builtin('let').
-is_special_builtin('let*').
-%is_special_builtin('nop').
-is_special_builtin('assertEqual').
-is_special_builtin('assertEqualToResult').
-is_special_builtin('collapse').
-is_special_builtin('superpose').
-
-is_metta_builtin(Special):- is_special_builtin(Special).
-is_metta_builtin('==').
-is_metta_builtin(F):- once(atom(F);var(F)), current_op(_,yfx,F).
-is_metta_builtin('println!').
-is_metta_builtin('transfer!').
-is_metta_builtin('+').
-is_metta_builtin('-').
-is_metta_builtin('*').
-is_metta_builtin('/').
-is_metta_builtin('%').
-is_metta_builtin('==').
-is_metta_builtin('<').
-is_metta_builtin('>').
-is_metta_builtin('all').
-is_metta_builtin('import!').
-is_metta_builtin('pragma!').
-
-
 
 eval_args60(Depth,Self,H,B):-  ( no_repeats(H+B,eval_args64(Depth,Self,H,B))*->true;eval_args67(Depth,Self,H,B)).
 
@@ -947,23 +981,8 @@ sub_sterm1(Sub,Term):- arg(_,Term,SL),sub_sterm(Sub,SL).
 
 eval_args80(Depth,Self,FX,FY):- eval_args84(Depth,Self,FX,FY).
 % function inherited by system
-eval_args80(Depth,Self,[F|X],FY):-
-  adjust_args(Depth,Self,F,X,Eval),
-  eval_args85(Depth,Self,[F|Eval],FY).
-
-
-eval_args30(Depth,Self,[V|VI],[V|VO]):- nonvar(V),is_metta_data_functor(V),
-  is_list(VI),!,maplist(eval_args(Depth,Self),VI,VO).
-
-adjust_args(_Dpth,_Slf,F,X,X):- (is_special_op(F); \+ iz_conz(X)),!.
-adjust_args(Depth,Self,F,X,Y):- is_list(X), is_function(F), !, maplist(eval_args(Depth,Self),X,Y).
-%adjust_args(Depth,Self,F,X,Y):- is_list(X), !, maplist(as_prolog(Depth,Self),X,Y),!.
-adjust_args(Depth,Self,_,X,Y):- as_prolog(Depth,Self,X,Y).
-
-as_prolog(_Dpth,_Slf,I,O):- \+ iz_conz(I),!,I=O.
-as_prolog(Depth,Self,[H|T],O):- H=='::',!,as_prolog(Depth,Self,T,O).
-as_prolog(Depth,Self,[H|T],[HH|TT]):- as_prolog(Depth,Self,H,HH),as_prolog(Depth,Self,T,TT).
-
+eval_args80(Depth,Self,[F|X],FY):- % adjust_args(Depth,Self,F,X,Eval),
+  eval_args85(Depth,Self,[F|X],FY).
 
 
 eval_args84(_Dpth,_Slf,[F|LESS],Res):- once(maybe_efbug(show_success,eval_selfless([F|LESS],Res))),mnotrace(([F|LESS]\==Res)),!.
@@ -982,3 +1001,4 @@ setof_eval(Depth,Self,X,S):- !,bagof_or_nil(E,eval_args(Depth,Self,X,E),L),sort(
 %setof_eval(Depth,Self,X,S):- setof(E,eval_args(Depth,Self,X,E),S)*->true;S=[].
 bagof_or_nil(T,G,L):- findall(T,G,L).
 %bagof_or_nil(T,G,L):- bagof(T,G,L)*->true;L=[].
+

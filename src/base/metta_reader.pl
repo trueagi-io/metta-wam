@@ -111,9 +111,10 @@ s_item_metta(Symbol, Until) --> symbol_metta(Symbol, Until).
 
 %string_metta(S) --> `"`, !, string_until_metta(S, `"`), {atomics_to_string_metta(A,S)}.
 %string_metta(Text)                 --> `"`, !, zalmetta_wayzz_metta(string_until_metta(Text,`"`)),!.
-%string_metta(Text)                 --> `“`, !, zalmetta_wayzz_metta(string_until_metta(Text,(`”`;`“`))),!.
-string_metta(Text)                 --> (`”`;`“`;`"`), !, string_until_metta(L,(`“`;`”`;`"`)),
+string_metta(Text)                 --> (`"`), !, string_until_metta(L,(`"`)),
   {atomics_to_string(L,Text)}.
+
+
 %string_metta(Text)                 --> `#|`, !, zalmetta_wayzz_metta(string_until_metta(Text,`|#`)),!.
 
 % string_until_metta([], _) --> e_o_s, !.
@@ -180,8 +181,8 @@ with_kif_not_ok(G):-
 :- thread_local(t_l:s_reader_info/1).
 
 :- meta_predicate(quietly_sreader(0)).
-%quietly_sreader(G):- quietly(G).
 quietly_sreader(G):- !, call(G).
+%quietly_sreader(G):- quietly(G).
 
 %% with_lisp_translation( +FileOrStream, :Pred1) is det.
 %
@@ -207,7 +208,8 @@ with_all_rest_info(Pred1):-
  forall(clause(t_l:s_reader_info(O2),_,Ref),
   (zalwayzz(once(call(Pred1,O2))),erase(Ref))),!.
 
-parse_sexpr_untyped(I,O):- quietly((parse_sexpr(I,M))),!,quietly_sreader((to_untyped(M,O))),!.
+parse_sexpr_untyped(I,O):- quietly_sreader((parse_sexpr(I,M))),
+  quietly_sreader((to_untyped(M,O))).
 
 read_pending_whitespace(In):- repeat, peek_char(In,Code),
    (( \+ char_type(Code,space), \+ char_type(Code,white))-> ! ; (get_char(In,_),fail)).
@@ -286,13 +288,13 @@ with_kifvars(Goal):-
 % Parse S-expression.
 %
 
-parse_sexpr(S, Expr) :- quietly(parse_meta_term(file_sexpr_with_comments, S, Expr)),!.
+parse_sexpr(S, Expr) :- quietly_sreader(parse_meta_term(file_sexpr_with_comments, S, Expr)).
 
 %% parse_sexpr_ascii( +Codes, -Expr) is det.
 %
 % Parse S-expression Codes.
 %
-parse_sexpr_ascii(S, Expr) :- quietly(parse_meta_ascii(file_sexpr_with_comments, S,Expr)),!.
+parse_sexpr_ascii(S, Expr) :- quietly_sreader(parse_meta_ascii(file_sexpr_with_comments, S,Expr)),!.
 
 
 parse_sexpr_ascii_as_list(Text, Expr) :- txt_to_codes(Text,DCodes),
@@ -311,7 +313,7 @@ parse_sexpr_string(S,Expr):-
 %
 % Parse S-expression from a Stream
 %
-parse_sexpr_stream(S,Expr):- quietly(parse_meta_stream(file_sexpr_with_comments,S,Expr)),!.
+parse_sexpr_stream(S,Expr):- quietly_sreader(parse_meta_stream(file_sexpr_with_comments,S,Expr)),!.
 
 :- export('//'(file_sexpr,1)).
 :- export('//'(sexpr,1)).
@@ -921,7 +923,7 @@ find_from_name(Str,Code):-string_codes(Str,Chars),lisp_code_name_extra(Code,Char
 find_from_name(Str,Code):-lisp_code_name(Code,Str).
 find_from_name(Str,Code):-string_chars(Str,Chars),lisp_code_name(Code,Chars).
 
-make_lisp_character(I,O):-quietly(to_char(I,O)).
+make_lisp_character(I,O):-quietly_sreader(to_char(I,O)).
 
 f_code_char(CH,CC):- zalwayzz(to_char(CH,CC)),!.
 f_name_char(Name,CC):- zalwayzz((def_to_prolog_string(Name,CH),name_to_charcode(CH,Code),to_char(Code,CC))).
