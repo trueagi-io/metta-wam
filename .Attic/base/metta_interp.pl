@@ -683,8 +683,15 @@ read_metta(In,Read):-
      -> (read_metta1(In,Read2), Read=exec(Read2), add_history_src(Read))
      ; Read = Read1),!.
 
+write_comment(Cmt):- atomic_list_concat([_,Code],'MeTTaLog only: ',Cmt),!,
+   ((nb_current(self_space,Self),Self\==[])->true;Self='&self'),
+   repl_read(Code,Read),!,
+   do_metta_load_file(Self,load,Read).
 write_comment(_):- silent_loading,!.
 write_comment(Cmt):- connlf,format(';;~w~n',[Cmt]).
+
+
+
 do_metta_cmt(_,'$COMMENT'(Cmt,_,_)):- write_comment(Cmt),!.
 do_metta_cmt(_,'$STRING'(Cmt)):- write_comment(Cmt),!.
 do_metta_cmt(Self,[Cmt]):- !, do_metta_cmt(Self, Cmt),!.
