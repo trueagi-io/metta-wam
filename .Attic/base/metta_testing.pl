@@ -4,7 +4,7 @@
   This work may not be copied and used by anyone other than the author Douglas Miles
   unless permission or license is granted (contact at business@logicmoo.org)
 */
-:- encoding(iso_latin_1).
+%:- encoding(iso_latin_1).
 
 :- ensure_loaded(library(occurs)).
 :- ensure_loaded(metta_utils).
@@ -32,7 +32,7 @@ string_replace(Original, Search, Replace, Replaced) :-
 
 get_test_name(Number,TestName) :-
    ((nb_current(loading_file,FilePath),FilePath\==[])->true; FilePath='SOME/UNIT-TEST'),
-   show_call(make_test_name(FilePath, Number, TestName)).
+     make_test_name(FilePath, Number, TestName).
 
 ensure_basename(FilePath,FilePath):- \+ directory_file_path(('.'), _, FilePath),!.
 ensure_basename(FilePath0,FilePath):-
@@ -64,8 +64,9 @@ color_g_mesg_ok(C,G):-
   wots(S,user:call(G)),
   (S == "" -> true ; our_ansi_format(C, '~w~n', [S])),!.
 
-our_ansi_format(C, Fmt,Args):- atom(C), !, ansi_format([fg(C)], Fmt,Args).
-our_ansi_format(C, Fmt,Args):- ansi_format(C, Fmt,Args).
+our_ansi_format(C, Fmt,Args):- \+ atom(C), % set_stream(current_output,encoding(utf8)),
+    ansi_format(C, Fmt,Args).
+our_ansi_format(C, Fmt,Args):- our_ansi_format([fg(C)], Fmt,Args).
 
 print_current_test:-
    loonit_number(Number),
@@ -96,7 +97,7 @@ write_pass_fail(TestName,P,C,PASS_FAIL,G1,G2):-
 
       if_t( (tee_file(TEE_FILE)->true;'TEE.ansi'=TEE_FILE),
       (atom_concat(TEE_FILE,'.UNITS',UNITS),
-      open(UNITS, append, Stream),
+      open(UNITS, append, Stream,[encoding(utf8)]),
       format(Stream,'| ~w | [~w](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/vspace-metta/main/reports/~w.html#~w) | ~@ | ~@ | ~@ |~n',
       [PASS_FAIL,TestName,Base,TestName,trim_gstring(with_indents(false,write_src([P,C])),200),
         trim_gstring(with_indents(false,write_src(G1)),100),with_indents(false,write_src(G2))]),!,
@@ -310,7 +311,7 @@ remove_specific_extension(OriginalFileName, Extension, FileNameWithoutExtension)
 
 
 quick_test:-
-  set_prolog_flag(encoding,iso_latin_1),
+  %set_prolog_flag(encoding,iso_latin_1),
    forall(quick_test(Test),
                   forall(open_string(Test,Stream),
                     load_metta_stream('&self',Stream))).

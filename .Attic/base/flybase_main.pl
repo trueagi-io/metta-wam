@@ -12,7 +12,7 @@ fb_stats:- metta_stats.
 % ==============
 % OBO LOADER
 % ==============
-:- set_option_value(encoding,iso_latin_1).
+:- set_option_value(encoding,utf8).
 :- ensure_loaded(flybase_obo).
 
 
@@ -114,7 +114,7 @@ mine_overlaps:-
 mine_overlaps1:-
   for_all(mine_corisponds(Concept1,How), assert_progress(mine_overlaps1(Concept1),How)).
 
-mine_overlaps2_slow:- 
+mine_overlaps2_slow:-
  % for_all(mine_typelevel_overlaps,true),
   for_all(mine_symbolspace_overlaps,true).
 
@@ -164,13 +164,13 @@ interesting_to_unify(Concept1):- good_concept(Concept1).
 interesting_to_unify(Number):- number(Number),Number>1000.
 
 
-fb_two_preds(Fn1,Nth1,Arity1,Fn2,Nth2,Arity2):- !,
+fb_two_preds(Fn1,Nth1,Arity1,Fn2,Nth2,Arity2):- !,
   fb_pred_g(Fn1,Arity1), fb_pred_g(Fn2,Arity2),
   tables_can_join(Fn1,Fn2),
   between(1,Arity1,Nth1),Nth1<20,between(1,Arity2,Nth2),Nth2<20,
   (Fn1==Fn2-> (Nth1>Nth2); true).
-  
-fb_two_preds(Fn1,Nth1,Arity1,Fn2,Nth2,Arity2):- 
+
+fb_two_preds(Fn1,Nth1,Arity1,Fn2,Nth2,Arity2):-
   fb_pred_g(Fn1,Arity1), fb_pred_g(Fn2,Arity2),Fn1@>Fn2,
   mine_typelevel_overlaps(_,'ConceptMapFn'(_Type1,Nth1,Fn1/*Arity1*/),'ConceptMapFn'(_Type2,Nth2,Fn2/*Arity2*/)).
 
@@ -256,7 +256,7 @@ reached_file_max:- option_value(max_per_file,Y),Y\==inf,loaded_from_file_count(X
 should_fix_args :- fail, \+ should_sample.
 should_sample :- !, fail.
 should_sample :- should_show_data(_),!.
-should_sample :- 
+should_sample :-
   once(option_value(samples_per_million,Fifty);Fifty=50), loaded_from_file_count(X), Y is X mod 1_000_000,!, Y >= 0, Y =< Fifty,!.
 should_show_data(X):- loaded_from_file_count(X),!,
   once((X=<13,X>=10); (X>0,(0 is X rem 1_000_000))),
@@ -301,7 +301,7 @@ make_assertion4(Fn, Cols, NewData, OldData):-
     NewData =.. [Fn|NewArgs], !.
 
 maybe_fix_args( Fn,Args,NewArgs):- do_fix_fast_args( Fn,1,Args,NewArgs),!.
-maybe_fix_args( Fn,Args,NewArgs):- should_fix_args, 
+maybe_fix_args( Fn,Args,NewArgs):- should_fix_args,
   nb_current(fb_argtypes,ArgTypes), fix_list_args(Fn,ArgTypes,Args,NewArgs),!.
 maybe_fix_args(_Fn,Args,Args).
 
@@ -1248,7 +1248,7 @@ track_load_into_file(RelFilename,Goal):-
 load_fb_json(Fn,File):- fbug(load_fb_json(Fn,File)),
   current_predicate(load_flybase_json/2),load_flybase_json(Fn,File).
 load_fb_json(Fn,File):- fbug(load_fb_json(Fn,File)),
- setup_call_cleanup(open(File,read,In), json:json_read(In,Term,[]), close(In)),
+ setup_call_cleanup(open(File,read,In,[encoding(utf8)]),  json:json_read(In,Term,[]), close(In)),
     time(assert(saved_fb_json(File,Term,Fn))).
 
 
@@ -1277,7 +1277,7 @@ maybe_sample( Fn, Args):- assert_arg_samples(Fn,1,Args).
 
 :- dynamic(fb_arg/1).
 :- dynamic(fb_arg_table_n/3).
-assert_arg_table_n(A,Fn,N):-    assert_new(fb_arg(A)), assert_new(fb_arg_table_n(A,Fn,N)).
+assert_arg_table_n(A,Fn,N):-    assert_new(fb_arg(A)), assert_new(fb_arg_table_n(A,Fn,N)).
 
 assert_arg_samples(Fn,N,[A|Args]):-
    (dont_sample(A)->true;assert_arg_table_n(A,Fn,N)),
@@ -1348,7 +1348,7 @@ fb_assert(Term) :-
 :- dynamic(done_reading/1).
 
 use_metta_x:- fail.
-    
+
 load_fb_cache(_File,OutputFile,_Fn):- exists_file(OutputFile),!,ensure_loaded(OutputFile),!.
 load_fb_cache(File,_OutputFile,_Fn):- load_files([File],[qcompile(large)]).
 
@@ -1393,7 +1393,7 @@ load_flybase_ext(Ext,File, Fn):-  Ext==fa,!,load_fb_fa(Fn,File),!.
 load_flybase_ext(Ext,File,_Fn):-  Ext==metta,current_predicate(load_metta/2),!,load_flybase_metta(File).
 load_flybase_ext(Ext,File, Fn):-  file_to_sep(Ext,Sep),!,
   track_load_into_file(File,
-   setup_call_cleanup(open(File,read,Stream), load_flybase_sv(Sep,File,Stream,Fn), close(Stream))),!.
+   setup_call_cleanup(open(File,read,Stream), load_flybase_sv(Sep,File,Stream,Fn), close(Stream))),!.
 load_flybase_ext(Ext,File, Fn):-  fbug(missed_loading_flybase(Ext,File,Fn)),!.
 
 %load_flybase_metta(File):- !, load_metta('&flybase',File).
@@ -1447,7 +1447,7 @@ into_number(Concept,Arg):- Concept=Arg,!.
 :- dynamic(fb_arg_table_n/3).
 assert_type_of(_Term,_Fn,_N,_Type,_Arg):- \+ should_sample,!.
 assert_type_of(Term,Fn,N,Type,Arg):- is_list(Arg),!,maplist(assert_type_of(Term,Fn,N,Type),Arg).
-assert_type_of(_Term,Fn,N,_Type,Arg):- 
+assert_type_of(_Term,Fn,N,_Type,Arg):-
  must_det_ll_r((
    assert_new(fb_arg(Arg)),
    assert_new(fb_arg_table_n(Arg,Fn,N)))).
@@ -1531,12 +1531,12 @@ assert_MeTTa(Fn,DataL0):-
     heartbeat,
     functor(Data,F,A), A>=2,
    decl_fb_pred(F,A),
-    flag(loaded_from_file_count,X,X+1),    
+    flag(loaded_from_file_count,X,X+1),
     flag(total_loaded_symbols,TA,TA+1),
     assert(Data),
     ignore((((has_list(_ArgTypes)->(X<23,X>20); (X<13,X>10)); (X>0,(0 is X rem 1_000_000),fb_stats)),nl,nl,fbug(X=Data),ignore((OldData\==DataL0,fbug(oldData=OldData))))),
     ignore((fail,catch_ignore(ignore((X<1000,must_det_ll_r((write_canonical(OutputStream,Data),writeln(OutputStream,'.')))))))))),!.
-*/
+*/
 
 make_assertion(Fn, Cols, NewData, OldData):- !, make_assertion4(Fn, Cols, NewData, OldData).
 
@@ -1544,7 +1544,7 @@ make_assertion(Fn,DataL0,Data,DataL0):-
  must_det_ll_r((
     into_datum(Fn,DataL0,Data0),
     Data0=..[F|Args],
-    Args=DataL, 
+    Args=DataL,
     Data=..[F|DataL])).
 
 make_assertion(ArgTypes,Fn,DataL0,Data,DataL0):-
@@ -1552,11 +1552,11 @@ make_assertion(ArgTypes,Fn,DataL0,Data,DataL0):-
     into_datum(Fn,DataL0,Data0),
     Data0=..[F|Args],
     skip(if_t(var(ArgTypes),must_det_ll_r((once((length(Args,Len),length(ArgTypes,Len),once((table_columns(Fn,ArgTypes);table_columns(F,ArgTypes))))))))),
-    fix_list_args(Fn,ArgTypes,Args,DataL), 
+    fix_list_args(Fn,ArgTypes,Args,DataL),
     Data=..[F|DataL])).
 
 
-% FBcv_0000743 % "FBtp0000743 %CL:0000743 % WBPhenotype_0000743 
+% FBcv_0000743 % "FBtp0000743 %CL:0000743 % WBPhenotype_0000743
 %reprefix(['GO_','GO--','FBgn','BiologicalProcess:GO:'],'GO:').
 reprefix(['GO_','GO--','BiologicalProcess:GO:'],'GO:').
 reprefix(['flybase:','FLYBASE:','comment:'],'').
@@ -1579,7 +1579,7 @@ as_list(SepL,A,List):-  member(Sep,SepL),catch_ignore(symbolic_list_concat(List,
 as_list(_Sep,A,[A]).
 has_list(Header):- is_list(Header),member(listOf(_),Header).
 
-% FBcv_0000743 % "FBtp0000743 %CL:0000743 % WBPhenotype_0000743 
+% FBcv_0000743 % "FBtp0000743 %CL:0000743 % WBPhenotype_0000743
 
 % =======================================
 % Fix Concept1
@@ -1646,9 +1646,9 @@ fix_columns_nth(transposon_sequence_set, 8).
 
 
 
-:- discontiguous column_description/4. 
-:- discontiguous primary_column/2. 
-:- discontiguous column_names/2. 
+:- discontiguous column_description/4.
+:- discontiguous primary_column/2.
+:- discontiguous column_names/2.
 :- discontiguous file_location/2.
 
 
@@ -1699,7 +1699,7 @@ is_really_header_row([H|_],_Names):- symbol_concat('',_,H),!.
 
 process_metta_x_file(MXFile):-
   data_pred(MXFile,Fn),
-  setup_call_cleanup(open(MXFile,read,In,[]),
+  setup_call_cleanup(open(MXFile,read,In,[encoding(utf8)]),
     ((repeat,
        read_line_to_string(In,Chars),
        (In == end_of_file -> ! ;
@@ -1755,7 +1755,7 @@ load_flybase_chars([N|ArgTypes],File,Stream,Fn,Sep,Chars):- is_swipl,
   load_fb_data([N|ArgTypes],File,Stream,Fn,Sep,is_swipl).
 
 
-load_fb_data(_ArgTypes,File,_Stream,_Fn,_Sep,Data):-  
+load_fb_data(_ArgTypes,File,_Stream,_Fn,_Sep,Data):-
   (Data == end_of_file;done_reading(File)),!.
 
 load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl):-  % \+ option_value(full_canon,[]), !,
@@ -1765,7 +1765,7 @@ load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl):-  % \+ option_value(full_ca
    repeat,
      once(read_csv_stream(Sep,Stream,Data)),
      loaded_from_file_count(X),
-      (((Data== end_of_file);reached_file_max;(X>Max)) -> assert(done_reading(File)) ; 
+      (((Data== end_of_file);reached_file_max;(X>Max)) -> assert(done_reading(File)) ;
        (once(write_flybase_data(ArgTypes,Fn,Data)),fail)),!.
 
 load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl):- !,
@@ -1777,18 +1777,18 @@ load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl):- !,
    repeat,
      once((csv_read_row(Stream, RData, CompiledOptions))),
      loaded_from_file_count(X),
-      (((RData== end_of_file);reached_file_max;(X>Max)) -> assert(done_reading(File)) ; 
-       (RData =..[_|Data], 
+      (((RData== end_of_file);reached_file_max;(X>Max)) -> assert(done_reading(File)) ;
+       (RData =..[_|Data],
        once(write_flybase_data(ArgTypes,Fn,Data)),fail)),!.
 
 % recursion depth 16 million rows
-load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl):- 
+load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl):-
   name(Sep,[SepCode]),
   csv_options(CompiledOptions,[strip(true),convert(true),separator(SepCode)]),
    (option_value(max_per_file,Max)->true;Max=inf),
      once((csv_read_row(Stream, RData, CompiledOptions))),
-     loaded_from_file_count(X), 
-      (((RData== end_of_file);(X>Max)) -> assert(done_reading(File)) ; 
+     loaded_from_file_count(X),
+      (((RData== end_of_file);(X>Max)) -> assert(done_reading(File)) ;
        (RData =..[_|Data], once(write_flybase_data(ArgTypes,Fn,Data)),
          load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl))),!.
 
@@ -1903,7 +1903,7 @@ too_generic(pub_id).
 too_generic(X):- \+ symbolic_list_concat([_,_,_|_],'_',X).
 
 
-fix_header_names(Fn,Header,GNames):- 
+fix_header_names(Fn,Header,GNames):-
    maplist(fix_header_names(Header,Fn),Header,ArgTypes),
    include( \=(''),ArgTypes,GNames).
 
