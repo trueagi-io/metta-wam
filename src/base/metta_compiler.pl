@@ -23,7 +23,7 @@
 % TODO move non flybase specific code between here and the compiler
 :- ensure_loaded(flybase_main).
 % =======================================
-:- set_option_value(encoding,iso_latin_1).
+:- set_option_value(encoding,utf8).
 
 % Meta-predicate that ensures that for every instance where G1 holds, G2 also holds.
 :- meta_predicate(for_all(0,0)).
@@ -216,7 +216,7 @@ compile_head_for_assert(HeadIs, NewHeadIs,Converted) :- /*trace,*/
 as_functor_args(AsPred,F,A,ArgsL):- nonvar(AsPred),!,into_list_args(AsPred,[F|ArgsL]),length(ArgsL,A).
 as_functor_args(AsPred,F,A,ArgsL):- nonvar(F),length(ArgsL,A),AsPred =~ [F|ArgsL].
 
-compile_for_assert(HeadIs, AsBodyFn, Converted) :- 
+compile_for_assert(HeadIs, AsBodyFn, Converted) :-
      (AsBodyFn =@= HeadIs ; AsBodyFn == []), !,/*trace,*/
      compile_head_for_assert(HeadIs,Converted).
 
@@ -540,33 +540,34 @@ compile_flow_control(HeadIs,RetResult,Convert, Converted) :- dif_functors(HeadIs
 
 
 
-compile_flow_control(_HeadIs,RetResult,Convert,is_True(RetResult)) :-
-   Convert =~ ['and'],!.
+compile_flow_control(_HeadIs,RetResult,Convert,is_True(RetResult)) :- is_compiled_and(AND),
+   Convert =~ [AND],!.
 
-compile_flow_control(HeadIs,RetResult,Convert, Converted) :-
-   Convert =~ ['and',Body],!,
+compile_flow_control(HeadIs,RetResult,Convert, Converted) :- is_compiled_and(AND),
+   Convert =~ [AND,Body],!,
    f2p(HeadIs,RetResult,Body,BodyCode),
     compile_test_then_else(RetResult,BodyCode,'True','False',Converted).
 
-compile_flow_control(HeadIs,RetResult,Convert, Converted) :-
-   Convert =~ ['and',Body1,Body2],!,
+compile_flow_control(HeadIs,RetResult,Convert, Converted) :- is_compiled_and(AND),
+   Convert =~ [AND,Body1,Body2],!,
    f2p(HeadIs,B1Res,Body1,Body1Code),
    f2p(HeadIs,RetResult,Body2,Body2Code),
    into_equals(B1Res,'True',AE),
    Converted = (Body1Code,AE,Body2Code),!.
 
 
-compile_flow_control(HeadIs,RetResult,Convert, Converted) :-
-   Convert =~ ['and',Body1,Body2],!,
+compile_flow_control(HeadIs,RetResult,Convert, Converted) :- is_compiled_and(AND),
+   Convert =~ [AND,Body1,Body2],!,
    f2p(HeadIs,B1Res,Body1,Body1Code),
    f2p(HeadIs,_,Body2,Body2Code),
    into_equals(B1Res,'True',AE),
    compile_test_then_else(RetResult,(Body1Code,AE,Body2Code),'True','False',Converted).
 
-compile_flow_control(HeadIs,RetResult,Convert, Converted) :-
-   Convert =~ ['and',Body1,Body2|BodyMore],!,
-   And2 =~ ['and',Body2|BodyMore],
-   compile_flow_control(HeadIs,RetResult,'and'(Body1,And2), Converted).
+compile_flow_control(HeadIs,RetResult,Convert, Converted) :- is_compiled_and(AND),
+   Convert =~ [AND,Body1,Body2|BodyMore],!,
+   And2 =~ [AND,Body2|BodyMore],
+   Next =~ [AND,Body1,And2],
+   compile_flow_control(HeadIs,RetResult, Next, Converted).
 
 compile_flow_control(HeadIs,RetResult,sequential(Convert), Converted) :- !,
    compile_flow_control(HeadIs,RetResult,transpose(Convert), Converted).
@@ -603,6 +604,8 @@ dif_functors(HeadIs,_):- var(HeadIs),!,fail.
 dif_functors(HeadIs,_):- \+ compound(HeadIs),!.
 dif_functors(HeadIs,Convert):- compound(HeadIs),compound(Convert),
   compound_name_arity(HeadIs,F,A),compound_name_arity(Convert,F,A).
+
+is_compiled_and(AND):- member(AND,[ (','), ('and')]).
 
 flowc.
 
@@ -1109,14 +1112,14 @@ prolog_to_metta(V, D) :-
 % Handle the case where the body is a conjunction of terms
 into_sequential(Body, SP) :-
     % Check if Body is not a list and convert conjunctions in Body to a list of conjuncts.
-    \+ is_list(Body), 
+    \+ is_list(Body),
     conjuncts_to_list(Body, List), % Converts a list of conjunctions into a sequential representation in MeTTa
     into_sequential(List, SP), !.
 into_sequential(Nothing,'True'):- Nothing ==[],!.
  % If there's only one element
 into_sequential([SP],O):- prolog_to_metta(SP,O).
-% Otherwise, construct sequential representation using 'and'.
-into_sequential(List, ['and'|SPList]) :- maplist(prolog_to_metta, List, SPList),!.
+% Otherwise, construct sequential representation using AND.
+into_sequential(List, [AND|SPList]) :- is_compiled_and(CAND),CAND==AND, maplist(prolog_to_metta, List, SPList),!.
 
 
 
@@ -1553,7 +1556,7 @@ sexpr_s2p(Fn,Nth,[S,Vars|TERM],PTERM):- nonvar(S),
    zalwayz((sexpr_s2p_arglist(Fn,Nth,TERM,PLIST),
    PTERM =~ [S,Vars|PLIST])),!.
 */
-% sexpr_s2p(progn,_,[S|TERM],PTERM):- S=='and',!,zalwayz((maplist(sexpr_s2p,TERM,PLIST),list_to_conjuncts(',',PLIST,PTERM))).
+% sexpr_s2p(progn,_,[S|TERM],PTERM):- S==AND,!,zalwayz((maplist(sexpr_s2p,TERM,PLIST),list_to_conjuncts(',',PLIST,PTERM))).
 %sexpr_s2p(Fn,Nth,[S|TERM],PTERM):- (number(S);  (atom(S),fail,atom_concat_or_rtrace(_,'Fn',S))),sexpr_s2p_arglist(Fn,Nth,[S|TERM],PTERM),!.
 %sexpr_s2p(Fn,Nth,[S],O):- is_ftVar(S),sexpr_s2p(Fn,Nth,S,Y),!,z_univ(Fn,Nth,O,[Y]),!.
 %sexpr_s2p(Fn,Nth,[S],O):- nonvar(S),sexpr_s2p(Fn,Nth,S,Y),!,z_univ(Fn,Nth,O,[Y]),!.

@@ -1,7 +1,7 @@
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
    Parsing
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-:- encoding(iso_latin_1).
+%:- encoding(iso_latin_1).
 :- if(flush_output). :- endif.
 :- if(setenv('RUST_BACKTRACE',full)). :- endif.
 %:- if(\+ current_module(sxpr_reader)).
@@ -109,12 +109,13 @@ s_item_metta(List,_Until)   --> s_expr_metta(List),!.
 s_item_metta(String,_Until) --> string_metta(String),!.
 s_item_metta(Symbol, Until) --> symbol_metta(Symbol, Until).
 
+:- encoding(iso_latin_1).
 %string_metta(S) --> `"`, !, string_until_metta(S, `"`), {atomics_to_string_metta(A,S)}.
 %string_metta(Text)                 --> `"`, !, zalmetta_wayzz_metta(string_until_metta(Text,`"`)),!.
-string_metta(Text)                 --> (`"`), !, string_until_metta(L,(`"`)),
-  {atomics_to_string(L,Text)}.
-
-
+%string_metta(Text)                 --> `“`, !, zalmetta_wayzz_metta(string_until_metta(Text,(`”`;`“`))),!.
+string_metta(Text)                 --> (`"`), string_until_metta(L,(`"`)), {atomics_to_string(L,Text)}, !.
+string_metta(Text)                 --> (`”`;`“`;`"`), !, string_until_metta(L,(`“`;`”`;`"`)),  {atomics_to_string(L,Text)}.
+:- encoding(utf8).
 %string_metta(Text)                 --> `#|`, !, zalmetta_wayzz_metta(string_until_metta(Text,`|#`)),!.
 
 % string_until_metta([], _) --> e_o_s, !.
@@ -181,8 +182,8 @@ with_kif_not_ok(G):-
 :- thread_local(t_l:s_reader_info/1).
 
 :- meta_predicate(quietly_sreader(0)).
-quietly_sreader(G):- !, call(G).
 %quietly_sreader(G):- quietly(G).
+quietly_sreader(G):- !, call(G).
 
 %% with_lisp_translation( +FileOrStream, :Pred1) is det.
 %
@@ -245,7 +246,7 @@ finish_lisp_translation_cached(M,File,Temp,WithPart1):-
 maybe_cache_lisp_translation(File,Temp,_):- \+ file_needs_rebuilt(Temp,File),!.
 maybe_cache_lisp_translation(File,Temp,WithPart2):-
  file_base_name(File,BaseName),
- setup_call_cleanup(open(Temp,write,Outs),
+ setup_call_cleanup(open(Temp,write,Outs,[encoding(utf8)]),
   must_det((format(Outs,'~N~q.~n',[:- multifile(lisp_trans/2)]),
             format(Outs,'~N~q.~n',[:- dynamic(lisp_trans/2)]),
             format(Outs,'~N~q.~n',[:- style_check(-singleton)]),
@@ -678,6 +679,7 @@ sexpr_string(Text)                 --> `"`, !, zalwayzz(read_string_until(Text,`
 sexpr_string(Text)                 --> `“`, !, zalwayzz(read_string_until(Text,(`”`;`“`))),!.
 sexpr_string(Text)                 --> (`”`;`“`), !, zalwayzz(read_string_until(Text,(`”`;`“`))),!.
 sexpr_string(Text)                 --> `#|`, !, zalwayzz(read_string_until(Text,`|#`)),!.
+:- encoding(utf8).
 %sexpr_string([C|S],End) --> `\\`,!, zalwayzz(escaped_char(C)),!, sexpr_string(S,End).
 %sexpr_string([],End) --> End, !.
 % sexpr_string([32|S]) --> [C],{eoln(C)}, sexpr_string(S).
@@ -923,7 +925,7 @@ find_from_name(Str,Code):-string_codes(Str,Chars),lisp_code_name_extra(Code,Char
 find_from_name(Str,Code):-lisp_code_name(Code,Str).
 find_from_name(Str,Code):-string_chars(Str,Chars),lisp_code_name(Code,Chars).
 
-make_lisp_character(I,O):-quietly_sreader(to_char(I,O)).
+make_lisp_character(I,O):-quietly(to_char(I,O)).
 
 f_code_char(CH,CC):- zalwayzz(to_char(CH,CC)),!.
 f_name_char(Name,CC):- zalwayzz((def_to_prolog_string(Name,CH),name_to_charcode(CH,Code),to_char(Code,CC))).

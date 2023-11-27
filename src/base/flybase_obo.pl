@@ -79,7 +79,7 @@ process_obo_direct(Filename):-
     assert_OBO('pathname',Id,Filename),!,
     assert_OBO('basename',Id,BaseName),!,
     assert_OBO('directory',Id,Directory),!,
-    setup_call_cleanup(open(Filename, read, Stream),
+    setup_call_cleanup(open(Filename, read, Stream, [encoding(utf8)]),
       process_obo_stream_repeat(Stream),
       close(Stream))))),
  nop(told).

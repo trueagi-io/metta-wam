@@ -104,7 +104,7 @@ process_json_file(File, MXFile):-
 
 process_json_file_direct(File):-
     setup_call_cleanup(
-               open(File, read, Stream),
+               open(File, read, Stream,[encoding(utf8)]),
                json_read(Stream, JSONDict),
                close(Stream)),
     process_json([],JSONDict).

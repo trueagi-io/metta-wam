@@ -48,55 +48,55 @@ skip(_).
 
 % ===============================
 % MeTTa Python incoming interface
-% ===============================
-
+% ===============================
+
 % ============================
 % %%%% Atom Manipulations
 % ============================
-  
+
 % Clear all atoms from a space
-'clear-atoms'(SpaceNameOrInstance) :- 
+'clear-atoms'(SpaceNameOrInstance) :-
   debug_metta(['clear-atoms',SpaceNameOrInstance]),
-  space_type_method(Type,clear_space,Method), call(Type,SpaceNameOrInstance),!,
+  space_type_method(Type,clear_space,Method), call(Type,SpaceNameOrInstance),!,
   debug_metta(['type-method',Type,Method]),
   call(Method,SpaceNameOrInstance).
 
-% Add an atom to the space
-'add-atom'(SpaceNameOrInstance, Atom) :- 
+% Add an atom to the space
+'add-atom'(SpaceNameOrInstance, Atom) :-
     debug_metta(['add-atom',SpaceNameOrInstance, Atom]),
     space_type_method(Type,add_atom,Method), call(Type,SpaceNameOrInstance),!,
     debug_metta(['type-method',Type,Method]),
-    call(Method,SpaceNameOrInstance,Atom).
+    call(Method,SpaceNameOrInstance,Atom).
 % Add Atom
 'add-atom'(Environment, AtomDeclaration, Result):- eval_args(['add-atom', Environment, AtomDeclaration], Result).
 
-% remove an atom from the space
-'remove-atom'(SpaceNameOrInstance, Atom) :- 
+% remove an atom from the space
+'remove-atom'(SpaceNameOrInstance, Atom) :-
     debug_metta(['remove-atom',SpaceNameOrInstance, Atom]),
     space_type_method(Type,remove_atom,Method), call(Type,SpaceNameOrInstance),!,
     debug_metta(['type-method',Type,Method]),
-    call(Method,SpaceNameOrInstance,Atom).
+    call(Method,SpaceNameOrInstance,Atom).
 % Remove Atom
 'remove-atom'(Environment, AtomDeclaration, Result):- eval_args(['remove-atom', Environment, AtomDeclaration], Result).
-
-% Add an atom to the space
-'replace-atom'(SpaceNameOrInstance, Atom, New) :- 
+
+% Add an atom to the space
+'replace-atom'(SpaceNameOrInstance, Atom, New) :-
     debug_metta(['replace-atom',SpaceNameOrInstance, Atom, New]),
     space_type_method(Type,replace_atom,Method), call(Type,SpaceNameOrInstance),!,
     debug_metta(['type-method',Type,Method]),
-    call(Method,SpaceNameOrInstance,Atom, New).
+    call(Method,SpaceNameOrInstance,Atom, New).
 % Replace Atom
 'atom-replace'(Environment, OldAtom, NewAtom, Result):- eval_args(['atom-replace', Environment, OldAtom, NewAtom], Result).
-
+
 % Count atoms in a space
-'atom-count'(SpaceNameOrInstance, Count) :-
+'atom-count'(SpaceNameOrInstance, Count) :-
     debug_metta(['atom-count',SpaceNameOrInstance]),
     space_type_method(Type,atom_count,Method), call(Type,SpaceNameOrInstance),!,
     call(Method,SpaceNameOrInstance,Count),
     debug_metta(['type-method-result',Type,Method,Count]).
 % Count Atoms
 'atom-count'(Environment, Count):- eval_args(['atom-count', Environment], Count).
-
+
 % Fetch all atoms from a space
 'get-atoms'(SpaceNameOrInstance, AtomsL) :-
     debug_metta(['get-atoms',SpaceNameOrInstance]),
@@ -106,41 +106,41 @@ skip(_).
     debug_metta(['type-method-result',Type,Method,Count]).
 % Get Atoms
 'get-atoms'(Environment, Atoms):- eval_args(['get-atoms', Environment], Atoms).
-
+
 % Iterate all atoms from a space
 'atoms_iter'(SpaceNameOrInstance, Iter) :-
     debug_metta(['atoms_iter',SpaceNameOrInstance]),
     space_type_method(Type,atoms_iter,Method), call(Type,SpaceNameOrInstance),!,
     call(Method,SpaceNameOrInstance, Iter),
     debug_metta(['type-method-result',Type,Method,Iter]).
-
+
 % Match all atoms from a space
 'atoms_match'(SpaceNameOrInstance, Atoms, Template, Else) :-
     space_type_method(Type,atoms_match,Method), call(Type,SpaceNameOrInstance),!,
     call(Method,SpaceNameOrInstance, Atoms, Template, Else),
     debug_metta(['type-method-result',Type,Method,Atoms, Template, Else]).
-
+
 
 % Query all atoms from a space
 'space_query'(SpaceNameOrInstance, QueryAtom, Result) :-
     space_type_method(Type,query,Method), call(Type,SpaceNameOrInstance),!,
     call(Method,SpaceNameOrInstance, QueryAtom, Result),
     debug_metta(['type-method-result',Type,Method,Result]).
-    
+
 
 subst_pattern_template(SpaceNameOrInstance, Pattern, Template) :-
     debug_metta([subst_pattern_template,SpaceNameOrInstance, Pattern, Template]),
     'atoms_match'(SpaceNameOrInstance, Pattern, Template, []).
-    
+
 /*
 space_query_vars(SpaceNameOrInstance, Query, Vars) :- is_as_nb_space(SpaceNameOrInstance),!,
     fetch_or_create_space(SpaceNameOrInstance, Space),
     call_metta(Space,Query,Vars).
-*/
+*/
 
 :- dynamic(was_asserted_space/1).
 
-
+
 was_asserted_space('&flybase').
 was_asserted_space('&self').
 was_asserted_space('&attentional_focus').
@@ -187,11 +187,11 @@ space_type_method(is_asserted_space,replace_atom,metta_assertdb_replace).
 space_type_method(is_asserted_space,atom_count,metta_assertdb_count).
 space_type_method(is_asserted_space,get_atoms,metta_assertdb_get_atoms).
 space_type_method(is_asserted_space,atom_iter,metta_assertdb_iter).
-%space_type_method(is_asserted_space,query,space_nb_query).
+%space_type_method(is_asserted_space,query,space_nb_query).
 
 %:- dynamic(for_metta/2).
 %for_metta(_,T):- fb_pred(F,A),functor(T,F,A),call(T).
-metta_assertdb_ls(KB):-listing(metta_atom(KB,_)).
+metta_assertdb_ls(KB):-listing(metta_atom(KB,_)).
 metta_assertdb_add(KB,New):- decl_m_fb_pred(user,metta_atom,2), MP = metta_atom(KB,New), assert_new(MP).
 metta_assertdb_rem(KB,Old):- metta_assertdb_del(KB,Old).
 metta_assertdb_del(KB,Old):- decl_m_fb_pred(user,metta_atom,2), MP = metta_atom(KB,Old),
@@ -225,7 +225,7 @@ metta_iter_bind(KB,Query,Vars,VarNames):-
 
 % Query from hyperon.base.GroundingSpace
 space_query_vars(KB,Query,Vars):- is_asserted_space(KB),!,
-    decl_m_fb_pred(user,metta_atom,2), 
+    decl_m_fb_pred(user,metta_atom,2),
     call_metta(KB,Query,Vars),
     debug_metta('RES',space_query_vars(KB,Query,Vars)).
 
@@ -487,7 +487,7 @@ metta_stats:- gc_now,
    RM is Mem-AS,
    PA is RM//(SL+1),
    APS is 60*floor(SL/(TotalSeconds+1)),
-   ACS is AS//(Concepts+1),     
+   ACS is AS//(Concepts+1),
 
    pl_stats('SymbolAtoms',Concepts),
    pl_stats('Random samples',CTs),

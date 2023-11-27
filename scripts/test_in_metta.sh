@@ -89,10 +89,10 @@ export METTALOG_MAX_TIME
 
 function delete_html_files() {
     cd "$SCRIPT_DIR"
-    find "${UNITS_DIR}" -name "*.html" -type f -delete
+    find "${UNITS_DIR}" -name "*.html" -type f -delete -print
 }
 
-if [ "$clean" -eq 1 ]; then
+if [ $clean -eq 1 ]; then
   delete_html_files
 fi
 
@@ -117,9 +117,9 @@ function run_tests() {
     cat /dev/null > TEE.ansi.UNITS
 
     # Get files
-    mapfile -t assert_files < <(grep -rl 'assert' "${UNITS_DIR}" --include="*.metta" $GREP_ARGS )
-    mapfile -t test_files < <(find "${UNITS_DIR}" -type f -iname "*test*.metta" $GREP_ARGS)
-    mapfile -t has_tests < <(grep -rl '^!\([^!]*\)$' "${UNITS_DIR}" --include="*.metta" $GREP_ARGS)
+    mapfile -t assert_files < <(find "${UNITS_DIR}" -type d -name '*~*' -prune -o -type f -name '*.metta' -print0 | xargs -0 grep -rl 'assert' -- $GREP_ARGS)
+    mapfile -t test_files < <(find "${UNITS_DIR}" -type d -name '*~*' -prune -o -type f -iname "*test*.metta" $GREP_ARGS)
+    mapfile -t has_tests < <(find "${UNITS_DIR}" -type d -name '*~*' -prune -o -type f -name '*.metta' -print0 | xargs -0 grep -rl '^!\([^!]*\)$' -- $GREP_ARGS)
 
     # Filtering out the has_tests from assert_files and test_files
     for htest in "${has_tests[@]}"; do
@@ -155,7 +155,18 @@ function run_tests() {
        shift
        local extra_args="$@"
 
-       echo ""
+       file_html="${file%.metta}.html"
+
+       if [[ -f "$file_html" ]]; then
+          echo "$file_html exists"
+          if [ $clean -eq 0 ]; then
+             return
+          fi
+       fi
+
+       touch "$file_html"
+
+        echo ""
        echo ""
        echo "Testing:  $file"
 
@@ -166,6 +177,11 @@ function run_tests() {
 
            # Check if the .answers file doesn't exist, or if $file is newer than the .answers file.
            if [ ! -f "${file}.answers" ] || [ "${file}" -nt "${file}.answers" ]; then
+              cat /dev/null > "${file}.answers"
+              pp1=$(dirname "${file}")
+              pp2=$(dirname "${pp1}")
+              export PYTHONPATH=$pp1:$pp2:$PYTHONPATH
+              export OPENAI_API_KEY=freeve
                set +e
                set -x
                ( timeout --foreground --kill-after=5 --signal=SIGKILL $(($RUST_METTA_MAX_TIME + 10)) timeout --foreground --kill-after=5 --signal=SIGINT $(($RUST_METTA_MAX_TIME + 1)) time metta "$file" 2>&1 | tee "${file}.answers"
@@ -207,6 +223,17 @@ function run_tests() {
    sorted_array=($(for i in "${all_files[@]}"; do
        echo "$i"
    done | sort | uniq | awk 'NF'))
+
+   # Create an empty array for the reversed elements
+   reversed_array=()
+
+   # Loop through the original array in reverse order
+   for (( i=${#sorted_array[@]}-1; i>=0; i-- )); do
+      reversed_array+=("${sorted_array[i]}")
+   done
+
+    sorted_array=( "${reversed_array[@]}" )
+
 
    # Process test_files
    for file in "${sorted_array[@]}"; do
@@ -286,7 +313,7 @@ function PreCommitReports() {
     rsync -avm --include='*.html' -f 'hide,! */' examples/ reports/ \
     && echo "1) Synced HTML files from examples/ to reports/ and deleted the original HTML files in examples/"
 
-    find examples/ -name '*.html' -delete
+    #find examples/ -name '*.html' -delete
 
     mv final_MeTTaLog.md MeTTaLog.md \
     && echo "2) Renamed final_MeTTaLog.md to MeTTaLog.md"
@@ -394,7 +421,7 @@ function compare_test_files() {
    # If auto_reply is empty, then ask the user
    if [ -z "$auto_reply" ]; then
      read -p "Rerun all tests? (y/N): " -n 1 -r
-     echo
+     echo ""
    else
      REPLY=$auto_reply
    fi
