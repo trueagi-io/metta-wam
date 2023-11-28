@@ -54,7 +54,7 @@ option_value_def('test-retval',false).
 option_value_def('trace-length',100).
 option_value_def('stack-max',100).
 option_value_def('trace-on-overtime',20.0).
-option_value_def('trace-on-overflow',true).
+option_value_def('trace-on-overflow',false).
 option_value_def('trace-on-error',true).
 option_value_def('trace-on-load',true).
 option_value_def('trace-on-fail',true).
@@ -210,127 +210,11 @@ any_floats(S):- member(E,S),float(E),!.
 'let*'(Bindings, Body, Result):- eval_args(['let*', Bindings, Body], Result).
 
 % ============================
-% %%%% Pattern Matching
-% ============================
-% Pattern Matching with an else branch
-'match'(Environment, Pattern, Template, ElseBranch, Result):- eval_args(['match', Environment, Pattern, Template, ElseBranch], Result).
-% Pattern Matching without an else branch
-'match'(_Environment, Pattern, Template, Result):- callable(Pattern),!, call(Pattern),Result=Template.
-'match'(_Environment, Pattern, Template, Result):- !, is_True(Pattern),Result=Template.
-'match'(Environment, Pattern, Template, Result):- eval_args(['match', Environment, Pattern, Template], Result).
-
-% ============================
 % %%%% Reflection
 % ============================
 % Get Type of Value
 'get-type'(Value, Type):- eval_args(['get-type', Value], Type).
 
-
-'new-space'(Space):- gensym(new_space_,Name), fetch_or_create_space(Name, Space).
-
-% Function to check if an atom is registered as a space name
-:- dynamic is_registered_space_name/1.
-is_nb_space(G):- is_valid_nb_space(G) -> true ;
-                 is_registered_space_name(G),nb_current(G,S),is_valid_nb_space(S).
-
-:- dynamic(is_python_space/1).
-% ===============================
-% MeTTa Python incoming interface
-% ===============================
-
-:- multifile(space_type_method/3).
-:- dynamic(space_type_method/3).
-space_type_method(is_as_nb_space,new_space,init_space).
-space_type_method(is_as_nb_space,clear_space,clear_nb_atoms).
-space_type_method(is_as_nb_space,add_atom,add_nb_atom).
-space_type_method(is_as_nb_space,remove_atom,remove_nb_atom).
-space_type_method(is_as_nb_space,replace_atom,replace_nb_atom).
-space_type_method(is_as_nb_space,atom_count,atom_nb_count).
-space_type_method(is_as_nb_space,get_atoms,get_nb_atoms).
-space_type_method(is_as_nb_space,atom_iter,atom_nb_iter).
-%space_type_method(is_as_nb_space,query,space_nb_query).
-
-% Clear all atoms from a space
-clear_nb_atoms(SpaceNameOrInstance) :-
-    fetch_or_create_space(SpaceNameOrInstance, Space),
-    nb_setarg(1, Space, []).
-
-% Add an atom to the space
-add_nb_atom(SpaceNameOrInstance, Atom) :-
-    fetch_or_create_space(SpaceNameOrInstance, Space),
-    arg(1, Space, Atoms),
-    NewAtoms = [Atom | Atoms],
-    nb_setarg(1, Space, NewAtoms).
-
-% Count atoms in a space
-atom_nb_count(SpaceNameOrInstance, Count) :-
-    fetch_or_create_space(SpaceNameOrInstance, Space),
-    arg(1, Space, Atoms),
-    length(Atoms, Count).
-
-% Remove an atom from a space
-remove_nb_atom(SpaceNameOrInstance, Atom) :-
-    fetch_or_create_space(SpaceNameOrInstance, Space),
-    arg(1, Space, Atoms),
-    select(Atom, Atoms, UpdatedAtoms),
-    nb_setarg(1, Space, UpdatedAtoms).
-
-% Fetch all atoms from a space
-get_nb_atoms(SpaceNameOrInstance, Atoms) :-
-    fetch_or_create_space(SpaceNameOrInstance, Space),
-    arg(1, Space, Atoms).
-
-% Replace an atom in the space
-replace_nb_atom(SpaceNameOrInstance, OldAtom, NewAtom) :-
-    fetch_or_create_space(SpaceNameOrInstance, Space),
-    arg(1, Space, Atoms),
-    ( (select(Found, Atoms, TempAtoms),OldAtom=@=Found)
-    ->  NewAtoms = [NewAtom | TempAtoms],
-        nb_setarg(1, Space, NewAtoms)
-    ;   false
-    ).
-
-
-
-
-% Function to confirm if a term represents a space
-is_valid_nb_space(Space):- compound(Space),functor(Space,'Space',_).
-
-% Find the original name of a given space
-space_original_name(Space, Name) :-
-    is_registered_space_name(Name),
-    nb_current(Name, Space).
-
-% Register and initialize a new space
-init_space(Name) :-
-    Space = 'Space'([]),
-    asserta(is_registered_space_name(Name)),
-    nb_setval(Name, Space).
-
-fetch_or_create_space(Name):- fetch_or_create_space(Name,_).
-% Fetch an existing space or create a new one
-fetch_or_create_space(NameOrInstance, Space) :-
-    (   atom(NameOrInstance)
-    ->  (is_registered_space_name(NameOrInstance)
-        ->  nb_current(NameOrInstance, Space)
-        ;   init_space(NameOrInstance),
-            nb_current(NameOrInstance, Space))
-    ;   is_valid_nb_space(NameOrInstance)
-    ->  Space = NameOrInstance
-    ;   writeln('Error: Invalid input.')
-    ),
-    is_valid_nb_space(Space).
-
-
-% Match Pattern in Space and produce Template
-'match'(Space, Pattern, Template) :-
-    'get-atoms'(Space, Atoms),
-    'match-pattern'(Atoms, Pattern, Template).
-
-% Simple pattern match
-'match-pattern'([], _, []).
-'match-pattern'([H |_T], H, H) :- !.
-'match-pattern'([_H| T], Pattern, Template) :- 'match-pattern'(T, Pattern, Template).
 
 metta_cmd_args(Rest):- current_prolog_flag(late_metta_opts,Rest),!.
 metta_cmd_args(Rest):- current_prolog_flag(argv,P),append(_,['--'|Rest],P),!.
@@ -435,7 +319,7 @@ start_html_of(_Filename):-
   S = _,
   %retractall(metta_defn(S,_,_)),
   nop(retractall(metta_type(S,_,_))),
-  retractall(metta_atom(S,_,_,_)),
+  %retractall(metta_atom(S,_,_,_)),
   loonit_reset,
   tee_file(TEE_FILE),
   sformat(S,'cat /dev/null > "~w"',[TEE_FILE]),
@@ -874,6 +758,11 @@ maybe_xform(_OBO,_XForm):- !, fail.
 
 metta_anew1(Load,_OBO):- var(Load),trace,!.
 metta_anew1(Load,OBO):- maybe_xform(OBO,XForm),!,metta_anew1(Load,XForm).
+
+
+metta_anew1(load,OBO):- OBO= metta_atom(Space,Atom),!,'add-atom'(Space, Atom).
+metta_anew1(unload,OBO):- OBO= metta_atom(Space,Atom),!,'remove-atom'(Space, Atom).
+
 metta_anew1(load,OBO):- must_det_ll((load_hook(load,OBO),subst_vars(OBO,Cl),assertz_if_new(Cl))). %to_metta(Cl).
 metta_anew1(unload,OBO):- subst_vars(OBO,Cl),load_hook(unload,OBO),
   expand_to_hb(Cl,Head,Body),
@@ -887,6 +776,7 @@ metta_anew2(unload,OBO):- subst_vars_not_last(OBO,Cl),load_hook(unload,OBO),
   expand_to_hb(Cl,Head,Body),
   predicate_property(Head,number_of_clauses(_)),
   ignore((clause(Head,Body,Ref),clause(Head2,Body2,Ref),(Head+Body)=@=(Head2+Body2),erase(Ref),pp_m(Cl))).
+
 
 
 metta_anew(Load,_Src,OBO):- silent_loading,!,metta_anew1(Load,OBO).
@@ -1058,9 +948,10 @@ if_t(A,B,C):- trace,if_t((A,B),C).
 
 
 check_answers_for(TermV,Ans):- (string(TermV);var(Ans);var(TermV)),!,fail.
-check_answers_for(_,Ans):- contains_var('BadType',Ans),fail.
-check_answers_for([TermV],Ans):- !, check_answers_for(TermV,Ans).
-check_answers_for(TermV,[Ans]):- !, check_answers_for(TermV,Ans).
+check_answers_for(TermV,_):-  sformat(S,'~q',[TermV]),atom_contains(S,"[assert"),!,fail.
+check_answers_for(_,Ans):- contains_var('BadType',Ans),!,fail.
+%check_answers_for([TermV],Ans):- !, check_answers_for(TermV,Ans).
+%check_answers_for(TermV,[Ans]):- !, check_answers_for(TermV,Ans).
 check_answers_for(_,_).
 
 got_exec_result2(Val,Nth,Ans):- is_list(Ans), exclude(==(','),Ans,Ans2), Ans\==Ans2,!,
@@ -1105,7 +996,7 @@ call_sexpr(Self,_,S,Out):- call_sexpr1(Self,S,Out).
 
 
 
-into_metta_callable(_Self,TermV,exec(Res),Term,X,NamedVarsList,Was):- use_metta_compiler, !,
+into_metta_callable(_Self,TermV,Term,X,NamedVarsList,Was):- use_metta_compiler, !,
  must_det_ll((((
 
  % ignore(Res = '$VAR'('ExecRes')),
@@ -1126,7 +1017,7 @@ into_metta_callable(_Self,TermV,exec(Res),Term,X,NamedVarsList,Was):- use_metta_
   var(RealRes), X = RealRes)))),!.
 
 
-into_metta_callable(Self,TermV,Term,CALL,X,NamedVarsList,Was):-!,
+into_metta_callable(Self,TermV,CALL,X,NamedVarsList,Was):-!,
  CALL = eval_args(StackMax,Self,Term,X),
  notrace(( must_det_ll((
   if_t(preview_compiler,write_compiled_exec(TermV,_Goal)),
@@ -1214,9 +1105,9 @@ do_metta_ exec(Interactive,Self,TermV,X,NamedVarsList,Was):-!,
 
 %:- discontiguous do_metta_exec/3.
 call_sexpr1(Self,exec(S),Out):-
-  into_metta_callable(Self,S,Src,Term,X,NamedVarsList,Was),!,
+  into_metta_callable(Self,S,Term,X,NamedVarsList,Was),!,
  ((((
-   (may_rtrace(Src,(Term)),
+   (may_rtrace((Term)),
      notrace(ignore(((
      color_g_mesg(yellow,
      ((write(' '),
@@ -1235,8 +1126,8 @@ repl0:-
    notrace((current_input(In),nop(catch(load_history,_,true)))),
   % ignore(install_readline(In)),
    repeat,
-     flag(eval_num,_,0),
      notrace((%with_option(not_a_reload,true,make),
+      flag(eval_num,_,0),
       ((nb_current(self_space,Self),Self\==[])->true;Self='&self'),
       ((nb_current(repl_mode,Mode),Mode\==[])->true;Mode='!'),
       format(atom(P),'metta ~w> ',[Self]))),
@@ -1270,49 +1161,43 @@ do_metta_file_load_exec(Self,Exec):-
 
 do_metta_file_exec(_Slf,Exec):- option_value('exec',skip),\+ always_exec(Exec),!,connl,con_writeq(Exec),connl,write_exec(Exec),!.
 %do_metta_file_exec(Self,Exec):- !, do_metta_exec(false,Self, Exec),!.
+
 do_metta_file_exec(Self,TermV):-
-  must_det_ll((
+  notrace((current_exec_file_abs(FileName), get_exec_num(Nth),
+  Nth>0,  file_answers(FileName, Nth, Ans),
+  check_answers_for(TermV,Ans),!,
+  color_g_mesg_ok('#ffa500',
+   (writeln(';; In file as:  '),
+    write_src(exec(TermV)),nl,nl,
+    write(';; To unit test case:'))))),
+  do_metta_exec(false,Self,['assertEqualToResult',TermV,Ans]).
+do_metta_file_exec(Self,TermV):-
+  do_metta_exec(false,Self,TermV).
 
-  return_empty(Empty),
-  get_exec_num(Nth),
-  Nth>0,
-  current_exec_file(FileName),
-  ignore((file_answers(FileName, Nth, Ans))),
-  into_metta_callable(Self,TermV,Src,Term,X,NamedVarsList,Was),
-  findall(X,
-    (interactively_do_metta_exec(false,Self,TermV,Src,Term,X,NamedVarsList,Was),
-         once((must_det_ll((notrace(((color_g_mesg(yellow,
-         ((write(' '), write_src(X),nl,
-            (NamedVarsList\=@=Was-> (color_g_mesg(green,writeq(NamedVarsList)),nl); true),
-            ignore(( \+ is_list(X),compound(X),format(' % '),writeq(X),nl)))))))))), X \== Empty))),XL),
-
-  if_t(check_answers_for(TermV,Ans),
-  if_t(option_value('test-retval',true),
-     if_t(nonvar(Ans),got_exec_result2(XL,Nth,Ans)))))),!.
-
-do_metta_exec(_Interactive,Self,Var):- var(Var), !, pp_m(eval(Var)), freeze(Var,wdmsg(laterVar(Self,Var))).
+do_metta_exec(_Interactive,Self,Var):-  notrace(var(Var)), !, pp_m(eval(Var)), freeze(Var,wdmsg(laterVar(Self,Var))).
 do_metta_exec(Interactive,Self,TermV):- !,
-  must_det_ll((into_metta_callable(Self,TermV,Src,Term,X,NamedVarsList,Was),
-        ignore(user:interactively_do_metta_exec(Interactive,Self,TermV,Src,Term,X,NamedVarsList,Was)))).
+  must_det_ll((notrace(into_metta_callable(Self,TermV,Term,X,NamedVarsList,Was)),
+        ignore(user:interactively_do_metta_exec(Interactive,Self,TermV,Term,X,NamedVarsList,Was)))).
 
 %do_metta_call(Interactive,Term):- catch_red(Term).
 do_metta_call(Interactive,Self,(:- Term)):- nonvar(Term),!, do_metta_call(Interactive,Self,Term).
 do_metta_call(Interactive,Self,call(Term)):- nonvar(Term), !, do_metta_call(Interactive,Self,Term).
 do_metta_call(Interactive,Self,TermV):-
-   call_for_term_variables(TermV,Term,NamedVarsList,X),
+   call_for_term_variables(TermV,Term,NamedVarsList,X), must_be(nonvar,Term),
    copy_term(NamedVarsList,Was),
-   Src = Term,
-   user:interactively_do_metta_exec(Interactive,Self,TermV,Src,Term,X,NamedVarsList,Was).
+   user:interactively_do_metta_exec(Interactive,Self,TermV,Term,X,NamedVarsList,Was).
 
 
 call_for_term_variables(TermV,catch_red(show_failure(Term)),NamedVarsList,X):-
- term_variables(TermV, AllVars), call_for_term_variables4v(TermV,AllVars,Term,NamedVarsList,X),!.
+ term_variables(TermV, AllVars), call_for_term_variables4v(TermV,AllVars,Term,NamedVarsList,X),!,
+ must_be(callable,Term).
 call_for_term_variables(TermV,catch_red(show_failure(Term)),NamedVarsList,X):-
   get_term_variables(TermV, DCAllVars, Singletons, NonSingletons),
-  call_for_term_variables5(TermV, DCAllVars, Singletons, NonSingletons, Term,NamedVarsList,X),!.
+  call_for_term_variables5(TermV, DCAllVars, Singletons, NonSingletons, Term,NamedVarsList,X),!,
+  must_be(callable,Term).
 
-call_for_term_variables4v(Term,[],as_tf(Term,TF),NamedVarsList,TF):- get_global_varnames(NamedVarsList),!.
-call_for_term_variables4v(Term,[X],Term,NamedVarsList,X):- get_global_varnames(NamedVarsList).
+call_for_term_variables4v(Term,[]  ,as_tf(Term,TF),NamedVarsList,TF):- get_global_varnames(NamedVarsList),!.
+call_for_term_variables4v(Term,[X]  ,       Term,      NamedVarsList,X):- get_global_varnames(NamedVarsList).
 
 
 not_in_eq(List, Element) :-
@@ -1377,9 +1262,10 @@ is_interactive0(Interactive):- atomic(Interactive),is_stream(Interactive),!, \+ 
 is_interactive0(Interactive):- Interactive = repl_true,!.
 is_interactive0(Interactive):- Interactive = true,!.
 
-interactively_do_metta_exec(Interactive,_Self,TermV,Src,Term,X,NamedVarsList,Was):-
-  ((
-   \+ \+ write_exec(TermV),
+interactively_do_metta_exec(Interactive,_Self,TermV,Term,X,NamedVarsList,Was):-
+
+  notrace((
+    \+ \+ write_exec(TermV),
     % NamedVarsList,
     % Initialize Control as a compound term with 'each' as its argument.
     Control = contrl(each),
@@ -1387,8 +1273,10 @@ interactively_do_metta_exec(Interactive,_Self,TermV,Src,Term,X,NamedVarsList,Was
     GG = (Term,deterministic(Complete)),
     !, % metta_toplevel
     flag(result_num,_,1))),
-  catch(forall( may_rtrace(Src,GG),
-     (( (ignore(((color_g_mesg(yellow,
+
+  catch(forall( may_rtrace(GG),
+    notrace((
+      once((ignore(((color_g_mesg(yellow,
        ((
            (flag(result_num,R,R+1),
                 ((R==1,Complete==true)->format('~NDeterministic: ',  []);          %or Nondet
@@ -1396,33 +1284,36 @@ interactively_do_metta_exec(Interactive,_Self,TermV,Src,Term,X,NamedVarsList,Was
                                         format('~NNDet Result(~w): ',[R])))),
               (color_g_mesg(yellow, write_src(X))),
                (NamedVarsList \=@= Was -> (color_g_mesg(green, (nl,write_src(NamedVarsList))), nl) ; true),
-               true))))))),
+               true)))))))),
             % Use the current state of Control to determine whether to prompt for input.
             (Complete == true -> (! , fail) ; true),
             (( Control == contrl(leap) -> true;
               % If not in leap state, prompt for input.
 
               ((repeat,
-                !, write("More Solutions? "),
-                  (is_interactive(Interactive)->get_single_char(C);(C=108)),
-                     color_g_mesg([fg(magenta)],(write(' '), put(C), nl))),
-              (C == 108 -> % 'l' for leap
+                !,
+                  (is_interactive(Interactive)->(write("More Solutions? "),get_single_char_key(C));(C='l')),
+                     color_g_mesg([fg(magenta)],(write(' '), write(key=C), nl))),
+              (C == 'l' -> % 'l' for leap
                    nb_setarg(1, Control, leap); % Set Control to leap and stop prompting.
-              (C == 103 -> % 'g' for print_goals
+              (C == 'g' -> % 'g' for print_goals
                    print_goals(Term), fail; % Execute print_goals and re-prompt.
-              (C == 59 -> % ';' for next
+              (C == ';' -> % ';' for next
                    true; % No action needed, move to next solution.
-              ((C == 10;C == 13) -> % 'enter' to exit
+              ((C == '\n';C == '\r') -> % 'enter' to exit
                    (!, fail); % Cut and fail to stop the forall.
                ((fail, command(C, Command)) ->
                   handle_command(Command, _Variables, _Goal, _Tracing)
-              ;   format('Unknown command. ~s',[[C]]),fail) % handle unknown commands
+              ;  fail, format('Unknown command. ~s',[[C]]),fail) % handle unknown commands
                         ))))))),
               (Control == contrl(leap) -> true; true) % If leap, proceed without re-prompting.
-            ))),
+            ))  ),
                 E,wdmsg(E)),
         (flag(result_num,1,1) -> format('~Nno results') ; true),!.
 
+get_single_char_key(O):- get_single_char(C),get_single_char_key(C,O).
+get_single_char_key(27,A):- !,read_pending_codes(user_input,O,[]),name(A,O).
+get_single_char_key(C,A):- name(A,[C]).
 
 % Entry point for the user to call with tracing enabled
 toplevel_goal(Goal) :-
@@ -1595,18 +1486,19 @@ vu(trace,_Value):- trace.
 
 really_trace:- once(option_value('exec',rtrace);is_debugging((exec));is_debugging((eval))).
 % !(pragma! exec rtrace)
-may_rtrace(Src,Goal):- really_trace,!,  really_rtrace(Src,Goal).
-may_rtrace(Src,Goal):- time_eval(cut_on_ground(Src,Goal))*->true;really_rtrace(Src,Goal).
-really_rtrace(_Src,Goal):- use_metta_compiler,!,rtrace(call(Goal)).
-really_rtrace(_Src,Goal):- with_debug((eval),with_debug((exec),Goal)).
+may_rtrace(Goal):- really_trace,!,  really_rtrace(Goal).
+may_rtrace(Goal):- time_eval(cut_on_ground(Goal))*->true;really_rtrace(Goal).
+really_rtrace(Goal):- use_metta_compiler,!,rtrace(call(Goal)).
+really_rtrace(Goal):- with_debug((eval),with_debug((exec),Goal)).
 
 
 
 
-cut_on_ground(Src,Goal):- ground(Src), !, once(Goal).
-cut_on_ground(_Src,Goal):- option_value('test-retval',true),!,once(Goal).
-cut_on_ground(_Src,Goal):- call_nth(Goal,Nth), !, (Nth< 3-> true ; (!,fail)).
-cut_on_ground(_Src,Goal):-
+cut_on_ground(Goal):- !, call(Goal).
+%cut_on_ground(Goal):- ground(Goal), !, once(Goal).
+%cut_on_ground(Goal):- option_value('test-retval',true),!,once(Goal).
+cut_on_ground(Goal):- !, call_nth(Goal,Nth), (Nth< 3-> true ; (!,fail)).
+cut_on_ground(Goal):-
   if_t(flag(result_num,1,1),set_debug(eval,false)),
   call(Goal),
   % trace the second result
