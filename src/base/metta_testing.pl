@@ -59,10 +59,10 @@ make_test_name(FilePath0, Number, TestName) :-
 
 
 %color_g_mesg(C,G):- silent_loading,!.
-color_g_mesg(C,G):- check_silent_loading,color_g_mesg_ok(C,G).
+color_g_mesg(C,G):- notrace((check_silent_loading,color_g_mesg_ok(C,G))).
 color_g_mesg_ok(C,G):-
-  wots(S,user:call(G)),
-  (S == "" -> true ; our_ansi_format(C, '~w~n', [S])),!.
+ notrace((  wots(S,user:call(G)),
+  (S == "" -> true ; our_ansi_format(C, '~w~n', [S])))),!.
 
 our_ansi_format(C, Fmt,Args):- \+ atom(C), % set_stream(current_output,encoding(utf8)),
     ansi_format(C, Fmt,Args).
@@ -173,7 +173,8 @@ loon_metta(File) :-
 % set_exec_num/2
 % Update or assert the execution number for the given file.
 
-set_exec_num(FileName, Val) :-
+set_exec_num(SFileName, Val) :-
+  absolute_file_name(SFileName,FileName),
     (   retract(file_exec_num(FileName, _)) % If an entry exists, retract it
     ->  true
     ;   true                               % Otherwise, do nothing
@@ -183,18 +184,22 @@ set_exec_num(FileName, Val) :-
 % get_exec_num/2
 % Retrieve the execution number for the given file. If none exists, it returns 0.
 get_exec_num(Val):-
-    current_exec_file(FileName),
-    file_exec_num(FileName, Val),!.
+  current_exec_file_abs(FileName),
+  file_exec_num(FileName, Val),!.
 get_exec_num(FileName, Val) :-
     (   file_exec_num(FileName, CurrentVal)
     ->  Val = CurrentVal
     ;   Val = 0
     ).
 
+ current_exec_file_abs(FileName):-
+        current_exec_file(SFileName),
+        absolute_file_name(SFileName,FileName),!.
+
 
 get_expected_result(Ans):-
  ignore((
-  current_exec_file(FileName),
+  current_exec_file_abs(FileName),
   file_exec_num(FileName, Nth),
   file_answers(FileName, Nth, Ans))),!.
 
@@ -202,7 +207,7 @@ get_expected_result(Ans):-
 
 got_exec_result(Val):-
  ignore((
-  current_exec_file(FileName),
+  current_exec_file_abs(FileName),
   file_exec_num(FileName, Nth),
   file_answers(FileName, Nth, Ans),
   got_exec_result(Val,Ans))).
@@ -210,7 +215,7 @@ got_exec_result(Val):-
 
 got_exec_result(Val,Ans):-
  must_det_ll((
-  current_exec_file(FileName),
+  current_exec_file_abs(FileName),
   file_exec_num(FileName, Nth),
   Nth100 is Nth+100,
   get_test_name(Nth100,TestName),
@@ -228,7 +233,7 @@ current_exec_file(FileName):- nb_current(loading_file,FileName).
 
 % inc_exec_num/1
 % Increment the execution number for the given file. If no entry exists, initialize it to 1.
-inc_exec_num :- current_exec_file(FileName),!,inc_exec_num(FileName).
+inc_exec_num :- current_exec_file_abs(FileName),!,inc_exec_num(FileName).
 inc_exec_num(FileName) :-
     (   retract(file_exec_num(FileName, CurrentVal))
     ->  NewVal is CurrentVal + 1
@@ -274,11 +279,20 @@ parse_answer_string("[]",[]):- !.
 %parse_answer_string(String,Metta):- string_concat("(",_,String),!,parse_sexpr_metta(String,Metta),!.
 parse_answer_string(String,_Metta):- string_concat("[(Error (assert",_,String),!,fail.
 parse_answer_string(String,Metta):- string_concat("Got: [",Mid,String),string_concat(Inner,"]",Mid),
-  atomics_to_string(["(",Inner,")"],Str),!,parse_sexpr_metta(Str,Metta),!.
-parse_answer_string(String,Metta):- string_concat("[",Mid,String),string_concat(Inner,"]",Mid),
-  atomics_to_string(["(",Inner,")"],Str),!,parse_sexpr_metta(Str,Metta),!.
+  atomics_to_string(["(",Inner,")"],Str),parse_sexpr_metta(Str,Metta),!.
+
+parse_answer_string(String,Metta):- string_concat("[",Mid,String),string_concat(Inner0,"]",Mid),
+  replace_in_string([', '=' , '],Inner0,Inner),parse_answer_str(Inner,Metta),!.
+
+parse_answer_str(Inner,Metta):- atomics_to_string(["(",Inner,")"],Str),parse_sexpr_metta(Str,MettaC),remove_m_commas(MettaC,Metta),!.
+parse_answer_str(Inner0,Metta):- atomic_list_concat(InnerL,' , ',Inner0), maplist(atom_string,InnerL,Inner), maplist(parse_sexpr_metta,Inner,Metta),!.
+parse_answer_str(Inner0,Metta):- replace_in_string([' , '=' '],Inner0,Inner), atomics_to_string(["(",Inner,")"],Str),!,parse_sexpr_metta(Str,Metta),!.
+
 %parse_answer_string(String,Metta):- String=Metta,!,fail.
 
+remove_m_commas(Metta,Metta):- \+ sub_var(',',Metta),!.
+remove_m_commas([C,H|T],[H|TT]):- C==',',!, remove_m_commas(T,TT).
+remove_m_commas([H|T],[H|TT]):- !, remove_m_commas(T,TT).
 
 
 % Example usage:
