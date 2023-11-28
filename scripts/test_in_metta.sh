@@ -13,6 +13,11 @@ export RUST_BACKTRACE=full
 export SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd .. && pwd )"
 
 # Initialize default values
+# export variables for later use
+export UNITS_DIR
+export outer_extra_args
+export METTALOG_MAX_TIME
+export all_test_args="${@}"
 auto_reply=""
 UNITS_DIR="examples/"
 outer_extra_args=""
@@ -34,15 +39,18 @@ while [ "$#" -gt 0 ]; do
       ;;
     --timeout=*)
       METTALOG_MAX_TIME="${1#*=}"
+      outer_extra_args+=" $1"
       shift
       ;;
     --*clud*=*)
+      outer_extra_args+=" $1"
       GREP_ARGS="${GREP_ARGS} ${1}"
       shift
       ;;
 
     --clean)
       clean=1
+      outer_extra_args+=" $1"
       shift
       ;;
     -h|--help)
@@ -50,6 +58,7 @@ while [ "$#" -gt 0 ]; do
       echo "Options:"
       echo "  -y                 Automatically choose 'y' for rerunning all tests"
       echo "  -n                 Automatically choose 'n'"
+      echo "  --fresh             Clean up by deleting any .answers files under directory"
       echo "  --clean            Clean up by deleting all .html files under directory"
       echo "  -h|--help          Display this help message"
       echo " "
@@ -81,10 +90,6 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
-# export variables for later use
-export UNITS_DIR
-export outer_extra_args
-export METTALOG_MAX_TIME
 
 
 function delete_html_files() {
@@ -152,8 +157,11 @@ function run_tests() {
     # Shared logic across both file types
     process_file() {
        local file=$(find_override_file "$1")
+
+       local absfile=$(readlink -f "$file")
+
+       local extra_args="${@:1}"
        shift
-       local extra_args="$@"
 
        file_html="${file%.metta}.html"
 
@@ -164,27 +172,26 @@ function run_tests() {
           fi
        fi
 
-       touch "$file_html"
 
-        echo ""
        echo ""
        echo "Testing:  $file"
 
         cd "$SCRIPT_DIR"
         echo ""
-           echo ""
-           echo "Checking for answers:  $file.answers"
+
 
            # Check if the .answers file doesn't exist, or if $file is newer than the .answers file.
-           if [ ! -f "${file}.answers" ] || [ "${file}" -nt "${file}.answers" ]; then
+           if [[ "$all_test_args" =~ "--fresh" ]] || [ ! -f "${file}.answers" ] || [ "${file}" -nt "${file}.answers" ]; then
               cat /dev/null > "${file}.answers"
               pp1=$(dirname "${file}")
               pp2=$(dirname "${pp1}")
+             echo "Regenerating answers:  $file.answers"
               export PYTHONPATH=$pp1:$pp2:$PYTHONPATH
               export OPENAI_API_KEY=freeve
                set +e
                set -x
-               ( timeout --foreground --kill-after=5 --signal=SIGKILL $(($RUST_METTA_MAX_TIME + 10)) timeout --foreground --kill-after=5 --signal=SIGINT $(($RUST_METTA_MAX_TIME + 1)) time metta "$file" 2>&1 | tee "${file}.answers"
+               ( cd $(dirname "${file}") || true
+                 timeout --foreground --kill-after=5 --signal=SIGKILL $(($RUST_METTA_MAX_TIME + 10)) timeout --foreground --kill-after=5 --signal=SIGINT $(($RUST_METTA_MAX_TIME + 1)) time metta "$absfile" 2>&1 | tee "${absfile}.answers"
                  ) || true
                set +x
                set -e
@@ -192,10 +199,11 @@ function run_tests() {
                touch "${file}.answers"
            else
                cat "${file}.answers"
+              echo "Checked for answers:  $file.answers"
            fi
 
-        sleep 1
-
+        sleep 0.1
+        touch "$file_html"
         local TEST_CMD="./MeTTa --timeout=$METTALOG_MAX_TIME --repl=false  $extra_args $outer_extra_args --html \"$file\" --halt=true"
         echo "Running command: $TEST_CMD"
 
