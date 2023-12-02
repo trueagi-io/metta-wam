@@ -43,8 +43,10 @@ iz_conz(B):- compound(B), B=[_|_].
 '=~'(A,B):- compound_non_cons(B),!,A=B.
 '=~'(A,B):- '=..'(A,B).
 
+%into_list_args(A,AA):- is_ftVar(A),AA=A.
+%into_list_args(C,[C]):- \+ compound(C),!.
+into_list_args(C,C):- \+ compound(C),!.
 into_list_args(A,AA):- is_ftVar(A),AA=A.
-into_list_args(C,[C]):- \+ compound(C),!.
 into_list_args([H|T],[H|T]):- \+ is_list(T),!.
 into_list_args([H,List,A],HT):- H == u_assign,!,append(List,[A],HT),!.
 into_list_args([H|T],[H|T]):- is_list(T),!.
@@ -1051,8 +1053,8 @@ p2m(prolog, meTTa).  % Translate the atom prolog to meTTa.
 
 p2m('[|]','Cons').
 p2m(( ';' ),or).
-p2m(( ',' ),and).
-p2m(( '\\+' ),unless).
+%p2m(( ',' ),and).
+%p2m(( '\\+' ),unless).
 %p2m(( ':-' ),entailed_by).
 p2m('=..','atom_2_list').
 
@@ -1479,8 +1481,11 @@ write_mobj(F,Args):- pp_sexi([F|Args]).
 
 % Rules for determining when a symbol needs to be quoted in metta.
 
+dont_quote(Atom):- atom(Atom),upcase_atom(Atom,Atom),downcase_atom(Atom,Atom).
+
 should_quote(Atom) :- \+ atom(Atom), \+ string(Atom),!,fail.
 should_quote(Atom) :-
+   \+ dont_quote(Atom),
    % atom(Atom),  % Ensure that the input is an atom
     atom_chars(Atom, Chars),
     once(should_quote_chars(Chars);should_quote_atom_chars(Atom,Chars)).

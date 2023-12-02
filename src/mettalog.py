@@ -373,7 +373,7 @@ def find_subclasses_of(module, clazz):
 
 
 @export_flags(MeTTa=True)
-def add_from_swip(name, dict = oper_dict):
+def add_to_swip(name, dict = oper_dict):
     hyphens, underscores = name.replace('_', '-'), name.replace('-', '_')
     add_to_history_if_unique(f"!({hyphens})")
     if hyphens not in dict:
@@ -685,7 +685,7 @@ class VSpace(AbstractSpace):
             space_name = ispace_name
         self.sp_name = PySwipAtom(space_name)
         swip.assertz(f"was_asserted_space('{space_name}')")
-        swip.assertz(f"is_space_type('{space_name}',asserted_space)")
+        #swip.assertz(f"was_space_type('{space_name}',asserted_space)")
         self.sp_module = newModule("user")
         self.unwrap = unwrap
         addSpaceName(space_name,self)
@@ -849,6 +849,8 @@ class VSpace(AbstractSpace):
 class VSpaceCallRust(VSpace):
     def __init__(self, space_name=None, unwrap=False):
         super().__init__()
+
+    #def eval_in_rust_mettaf():
 
 
 
@@ -2532,10 +2534,13 @@ def query_from_space(space_name, query_atom, result):
     return False
 
 @export_flags(Janus=True)
-def add_from_space(space_name, atom):
+def add_to_space(space_name, atom):
     space = getSpaceByName(space_name)
     if space:
+        circles = Circles()
         atom = s2m(circles,atom)
+        if isinstance(space, SpaceRef):
+            return space.add_atom(atom)
         return space.add(atom)
     return False
 
@@ -2549,7 +2554,7 @@ def remove_from_space(space_name, atom):
     return False
 
 @export_flags(Janus=True)
-def replace_from_space(space_name, from_atom, to_atom):
+def replace_in_space(space_name, from_atom, to_atom):
     space = getSpaceByName(space_name)
     if space:
         circles = Circles()
@@ -2668,9 +2673,9 @@ def reg_pyswip_foreign():
     # Register the foreign functions in PySwip
     #registerForeign(new_rust_space, arity=1)
     #registerForeign(query_from_space, arity=3)
-    #registerForeign(add_from_space, arity=2)
+    #registerForeign(add_to_space, arity=2)
     #registerForeign(remove_from_space, arity=2)
-    #registerForeign(replace_from_space, arity=3)
+    #registerForeign(replace_in_space, arity=3)
     #registerForeign(atom_count_from_space, arity=2)
     #registerForeign(atoms_iter_from_space, arity=2)
     #registerForeign(get_atoms_from_space, arity=2)
@@ -2680,9 +2685,9 @@ def reg_pyswip_foreign():
 
 
     #?- query_from_space('example', 'my_atom', Result).
-    #?- add_from_space('example', 'new_atom').
+    #?- add_to_space('example', 'new_atom').
     #?- remove_from_space('example', 'some_atom').
-    #?- replace_from_space('example', 'old_atom', 'new_atom').
+    #?- replace_in_space('example', 'old_atom', 'new_atom').
     #?- atom_count_from_space('example', Count).
     #?- atoms_iter_from_space('example', Atoms).
 
@@ -3041,10 +3046,10 @@ def _eval_mettalog(fn, *args):
     expr = [fn] + list(args) # Prepend fn to args list
     swip_obj = m2s(circles,expr)
     flush_console()
-    call_sexpr = Functor("call_sexpr", 4)
+    call_sexpr = Functor("call_sexpr", 5)
     #user = newModule("user")
     X = Variable()
-    q = PySwipQ(call_sexpr(selected_space_name, str(expr), swip_obj, X))
+    q = PySwipQ(call_sexpr(argmode,selected_space_name, str(expr), swip_obj, X))
     while q.nextSolution():
       flush_console()
       r = X.value
@@ -3159,9 +3164,12 @@ class InteractiveMeTTa(ExtendedMeTTa): # LazyMeTTa ExtendedMeTTa
             self.submode=lastchar
 
     def repl_loop(self, get_sexpr_input=get_sexpr_input, print_cmt=print_cmt, mode=None):
+
         global the_new_runner_space
         global selected_space_name
         global verbose
+        global argmode
+
         if mode:
             self.mode = mode
         self.submode = "!"
@@ -3179,10 +3187,20 @@ class InteractiveMeTTa(ExtendedMeTTa): # LazyMeTTa ExtendedMeTTa
                 #print_cmt(f"You entered: {line}\n")
 
                 if line:
-                    sline = line.lstrip()
+                    sline = line.lstrip().rstrip()
                     add_to_history_if_unique(line, position_from_last=1)
                 else:
                     continue
+
+                if len(sline)==1:
+                    if "+-?!^".find(sline)>=0:
+                        self.maybe_submode(sline)
+                        continue
+
+                if sline.endswith(".") and not sline.startswith(";") and not sline.startswith("%"):
+                    swip_exec(line)
+                    continue
+
 
                 if not line.startswith(" "):
                         line = " " + line
@@ -3271,7 +3289,13 @@ class InteractiveMeTTa(ExtendedMeTTa): # LazyMeTTa ExtendedMeTTa
                     continue
 
                 elif sline.startswith("@a"): # @arg
-                    global argmode
+                    argmode = self.mode
+                    arg = sline.split()[1]
+                    handle_arg(arg)
+                    self.mode = argmode
+                    continue
+
+                elif sline.startswith("@l"): # @load
                     argmode = self.mode
                     arg = sline.split()[1]
                     handle_arg(arg)
@@ -3307,11 +3331,7 @@ class InteractiveMeTTa(ExtendedMeTTa): # LazyMeTTa ExtendedMeTTa
 
                 prefix = sline[0]
 
-                if sline.endswith("."):
-                    swip_exec(line)
-                    continue
-
-                elif self.mode == "swip":
+                if self.mode == "swip":
                     if prefix == "%":
                         print_cmt(line) # comment
                         continue
@@ -3324,12 +3344,18 @@ class InteractiveMeTTa(ExtendedMeTTa): # LazyMeTTa ExtendedMeTTa
                         print_cmt(line) # comment
                         continue
                    else:
-                        if sline.startswith("!"):
-                            rest = line[2:].strip()
-                            expr = self.parse_single(rest)
+
+                        if "+-?!^".find(prefix)<0:
+                           prefix = self.submode
+                           line = sline
+                        else:
+                           line = line[2:].strip()
+
+                        if prefix=='!':
+                            expr = self.parse_single(line)
                             expr = E(S("!"),expr)
                         else:
-                            expr = self.parse_single(sline)
+                            expr = self.parse_single(line)
 
                         if verbose>1: print_cmt(f"% S-Expr {line}")
                         if verbose>1: print_cmt(f"% M-Expr {expr}")
@@ -3339,12 +3365,14 @@ class InteractiveMeTTa(ExtendedMeTTa): # LazyMeTTa ExtendedMeTTa
                         try:
                             swip_obj = m2s(circles,expr);
                             if verbose>1: print_cmt(f"% P-Expr {swip_obj}")
-                            call_sexpr = Functor("call_sexpr", 4)
+                            call_sexpr = Functor("call_sexpr", 5)
                             user = newModule("user")
                             X = Variable()
                             try:
-                                q = PySwipQ(call_sexpr(selected_space_name, line, swip_obj, X))
+                                print("mettalog...")
+                                q = PySwipQ(call_sexpr(prefix,selected_space_name, str(line), swip_obj, X))
                                 while q.nextSolution():
+                                  print("mettalog...sol")
                                   flush_console()
                                   yield expr, s2m1(circles, X.value)
                             finally:
@@ -3448,6 +3476,7 @@ class InteractiveMeTTa(ExtendedMeTTa): # LazyMeTTa ExtendedMeTTa
                 continue
 
     def repl(self, get_sexpr_input=get_sexpr_input, print_cmt=print_cmt, mode=None):
+        load_vspace()
         for i, (expr, result_set) in enumerate(self.repl_loop(get_sexpr_input=get_sexpr_input, print_cmt=print_cmt, mode=mode)):
             if result_set:
                 try:
@@ -3477,6 +3506,8 @@ def timeFrom(w, t0):
     else:
         print_cmt(f"{w} took {elapsed_us:.5f} microseconds")
 
+
+
 def call_mettalog(line, parseWithRust = False):
 
     if parseWithRust:
@@ -3490,10 +3521,10 @@ def call_mettalog(line, parseWithRust = False):
         swip_obj = line
 
     flush_console()
-    call_sexpr = Functor("call_sexpr", 3)
+    call_sexpr = Functor("call_sexpr", 5)
     user = newModule("user")
     X = Variable()
-    q = PySwipQ(call_sexpr(selected_space_name, swip_obj, X))
+    q = PySwipQ(call_sexpr(argmode,selected_space_name, str(line), swip_obj, X))
     while q.nextSolution():
       flush_console()
       yield X.value

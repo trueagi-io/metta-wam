@@ -46,7 +46,7 @@ option_value_def(no_repeats,false).
 option_value_def('time',true).
 option_value_def('exec',true).
 option_value_def('html',false).
-option_value_def('python',false).
+option_value_def('python',load).
 option_value_def('halt',false).
 option_value_def('prolog',false).
 option_value_def('doing_repl',false).
@@ -191,7 +191,7 @@ any_floats(S):- member(E,S),float(E),!.
 % Condition Evaluation
 '!'(Condition, EvalResult):- eval_args(['!', Condition], EvalResult).
 % Import File into Environment
-'import!'(Environment, FileName, Namespace):- eval_args(['import!', Environment, FileName], Namespace).
+'import!'(Environment, Filename, Namespace):- eval_args(['import!', Environment, Filename], Namespace).
 % Evaluate Expression with Pragma
 'pragma!'(Environment, Expression, EvalValue):- eval_args(['pragma!', Environment, Expression], EvalValue).
 % Print Message to Console
@@ -250,8 +250,8 @@ get_flag_value(_,true).
    \+ prolog_load_context(reloading,true),
    forall(option_value_def(Opt,Default),set_option_value(Opt,Default))))).
 
-process_option_value_def:- \+ option_value('python',false), skip(ensure_loaded(metta_python)).
-process_option_value_def:- option_value('python',load), ls, ensure_loaded(metta_vspace/pyswip/metta_python).
+%process_option_value_def:- \+ option_value('python',false), skip(ensure_loaded(metta_python)).
+process_option_value_def:- option_value('python',load), ensure_loaded(metta_vspace/pyswip/metta_python).
 process_option_value_def.
 
 
@@ -325,7 +325,7 @@ start_html_of(_Filename):-
   sformat(S,'cat /dev/null > "~w"',[TEE_FILE]),
 
   writeln(doing(S)),
-  shell(S))).
+  ignore(shell(S)))).
 
 save_html_of(_Filename):- \+ tee_file(_TEE_FILE),!.
 save_html_of(_):- \+ has_loonit_results, \+ option_value('html',true).
@@ -338,7 +338,7 @@ save_html_of(Filename):-
   writeln('<br/><a href="https://github.com/logicmoo/vspace-metta/blob/main/MeTTaLog.md">Return to Summaries</a><br/>'),
   sformat(S,'ansi2html -u < "~w" > "~w" ',[TEE_FILE,HtmlFilename]),
   writeln(doing(S)),
-  shell(S))).
+  ignore(shell(S)))).
 
 tee_file(TEE_FILE):- getenv('TEE_FILE',TEE_FILE),!.
 tee_file(TEE_FILE):- metta_dir(Dir),directory_file_path(Dir,'TEE.ansi',TEE_FILE),!.
@@ -349,15 +349,12 @@ load_metta(Filename):-
  load_metta('&self',Filename).
 
 
-load_metta(Self,Filename):-
- atom(Filename),exists_file(Filename),!,
+load_metta(Self,RelFilename):-
+ atom(RelFilename),
+ exists_file(RelFilename),!,
+ absolute_file_name(RelFilename,Filename),
  track_load_into_file(Filename,
-   setup_call_cleanup(open(Filename,read,In, [encoding(utf8)]),
-    ((directory_file_path(Directory, BaseName, Filename),
-      assert(metta_file(Self,Filename,Directory)),
-      with_cwd(Directory,
-         load_metta_file_stream(BaseName,Self,In)))),close(In))).
-
+   include_metta(Self,RelFilename)).
 load_metta(_Self,Filename):- Filename=='--repl',!,repl.
 load_metta(Self,Filename):-
   (\+ atom(Filename); \+ exists_file(Filename)),!,
@@ -366,14 +363,33 @@ load_metta(Self,Filename):-
 include_metta(Self,Filename):-
   (\+ atom(Filename); \+ exists_file(Filename)),!,
   must_det_ll(with_wild_path(include_metta(Self),Filename)),!.
-include_metta(Self,Filename):-
+
+include_metta(Self,RelFilename):-
  must_det_ll((
- atom(Filename),exists_file(Filename))),!,
+  atom(RelFilename),
+  exists_file(RelFilename),!,
+  absolute_file_name(RelFilename,Filename),
    must_det_ll((setup_call_cleanup(open(Filename,read,In, [encoding(utf8)]),
-    ((directory_file_path(Directory, BaseName, Filename),
+    ((directory_file_path(Directory, _, Filename),
       assert(metta_file(Self,Filename,Directory)),
       with_cwd(Directory,
-        must_det_ll( load_metta_file_stream(BaseName,Self,In))))),close(In)))).
+        must_det_ll( load_metta_file_stream(Filename,Self,In))))),close(In)))))).
+
+load_metta_file_stream(Filename,Self,In):-
+  with_option(loading_file,Filename,
+   %current_exec_file(Filename),
+   ((must_det_ll((
+       set_exec_num(Filename,1),
+       load_answer_file(Filename),
+       set_exec_num(Filename,0))),
+     ((repeat,
+        must_det_ll((
+          ((nb_current(read_mode,Mode),Mode\==[])->true;Mode=load),
+            once(read_metta(In,Expr)), %write_src(read_metta=Expr),nl,
+            once((do_metta(file(Filename),Mode,Self,Expr,_O)->true;
+                 pp_m(unknown_do_metta(file(Filename),Mode,Self,Expr)))),
+           flush_output)),
+          at_end_of_stream(In)))))),!.
 
 
 clear_spaces:- clear_space(_).
@@ -403,21 +419,6 @@ write_f_src(HB):-
   option_else(current_def,CST,[]),!,
   (CST == ST -> true ; (nl,nl,nl,set_option_value(current_def,ST))),
   write_src(HB).
-
-load_metta_file_stream(FileName,Self,In):-
-  with_option(loading_file,FileName,
-   %current_exec_file(BaseName),
-   must_det_ll((current_exec_file(BaseName),
-   set_exec_num(BaseName,1), load_answer_file(BaseName), !, set_exec_num(BaseName,1), load_metta_stream(Self,In)))).
-load_metta_stream(Fn,String):- string(String),!,open_string(String,Stream),must_det_ll(load_metta_stream(Fn,Stream)).
-load_metta_stream(_Fn,In):- (at_end_of_stream(In)/*;reached_file_max*/),!.
-load_metta_stream(Self,In):-
- repeat,
-  must_det_ll((once(read_metta(In,Read)), %write_src(read_metta=Read),nl,
-  once(do_metta(Self,load,Read)),
-  flush_output)),
-  at_end_of_stream(In),!.
-
 
 
 
@@ -486,44 +487,44 @@ balanced_parentheses(['('|T], N) :- N1 is N + 1, balanced_parentheses(T, N1).
 balanced_parentheses([')'|T], N) :- N > 0, N1 is N - 1, balanced_parentheses(T, N1).
 balanced_parentheses([H|T], N) :- H \= '(', H \= ')', balanced_parentheses(T, N).
 % Recursive function to read lines until parentheses are balanced.
-repl_read(NewAccumulated, Read):-
+repl_read(NewAccumulated, Expr):-
     atom_concat(Atom, '.', NewAccumulated),
-    catch((read_term_from_atom(Atom, Term, []), Read=call(Term)), E,
-       (write('Syntax error: '), writeq(E), nl, repl_read(Read))),!.
-repl_read(NewAccumulated, Read):-
+    catch((read_term_from_atom(Atom, Term, []), Expr=call(Term)), E,
+       (write('Syntax error: '), writeq(E), nl, repl_read(Expr))),!.
+repl_read(NewAccumulated, Expr):-
     normalize_space(string(Renew),NewAccumulated), Renew \== NewAccumulated, !,
-    repl_read(Renew, Read).
-repl_read(NewAccumulated,exec(Read)):- string_concat("!",Renew,NewAccumulated), !,
-    repl_read(Renew, Read).
-repl_read(NewAccumulated, Read):- string_chars(NewAccumulated, Chars),
-    balanced_parentheses(Chars), length(Chars, Len), Len > 0, parse_sexpr_metta(NewAccumulated, Read), !.
-repl_read(Accumulated, Read) :- read_line_to_string(current_input, Line), repl_read(Accumulated, Line, Read).
-repl_read(Accumulated, "", Read):- !, repl_read(Accumulated, Read).
-repl_read(_Accumulated, Line, Read):- Line == end_of_file, !, Read = Line.
-repl_read(Accumulated, Line, Read) :- atomics_to_string([Accumulated," ",Line], NewAccumulated), !,
-    repl_read(NewAccumulated, Read).
+    repl_read(Renew, Expr).
+repl_read(NewAccumulated,exec(Expr)):- string_concat("!",Renew,NewAccumulated), !,
+    repl_read(Renew, Expr).
+repl_read(NewAccumulated, Expr):- string_chars(NewAccumulated, Chars),
+    balanced_parentheses(Chars), length(Chars, Len), Len > 0, parse_sexpr_metta(NewAccumulated, Expr), !.
+repl_read(Accumulated, Expr) :- read_line_to_string(current_input, Line), repl_read(Accumulated, Line, Expr).
+repl_read(Accumulated, "", Expr):- !, repl_read(Accumulated, Expr).
+repl_read(_Accumulated, Line, Expr):- Line == end_of_file, !, Expr = Line.
+repl_read(Accumulated, Line, Expr) :- atomics_to_string([Accumulated," ",Line], NewAccumulated), !,
+    repl_read(NewAccumulated, Expr).
 
-repl_read(Read) :- notrace(repl_read("", Read)).
+repl_read(Expr) :- notrace(repl_read("", Expr)).
 
 add_history_string(Str):- notrace(ignore(add_history01(Str))),!.
 
 add_history_src(Exec):- notrace(ignore((Exec\=[],with_output_to(string(H),with_indents(false,write_src(Exec))),add_history_string(H)))).
 
 read_metta1(_,O2):- clause(t_l:s_reader_info(O2),_,Ref),erase(Ref).
-read_metta1(In,Read):- current_input(In0),In==In0,!, repl_read(Read).
-read_metta1(In,Read):- string(In),!,parse_sexpr_metta(In,Read),!.
-read_metta1(In,Read):- peek_char(In,Char), read_metta1(In,Char,Read).
+read_metta1(In,Expr):- current_input(In0),In==In0,!, repl_read(Expr).
+read_metta1(In,Expr):- string(In),!,parse_sexpr_metta(In,Expr),!.
+read_metta1(In,Expr):- peek_char(In,Char), read_metta1(In,Char,Expr).
 
-read_metta1(In,Char,Read):- char_type(Char,white),get_char(In,Char),put(Char),!,read_metta1(In,Read).
-read_metta1(In,'!',Read):- get_char(In,_), !, read_metta(In,Read1),!,Read=exec(Read1).
-read_metta1(In,';',Read):- get_char(In,_), !, (maybe_read_pl(In,Read)-> true ; (read_line_to_string(In,Str),write_comment(Str),!,read_metta(In,Read))),!.
-read_metta1(In,_,Read):-  maybe_read_pl(In,Read),!.
-read_metta1(In,_,Read1):- parse_sexpr_metta(In,Read),!,must_det_ll(Read=Read1).
+read_metta1(In,Char,Expr):- char_type(Char,white),get_char(In,Char),put(Char),!,read_metta1(In,Expr).
+read_metta1(In,'!',Expr):- get_char(In,_), !, read_metta(In,Read1),!,Expr=exec(Read1).
+read_metta1(In,';',Expr):- get_char(In,_), !, (maybe_read_pl(In,Expr)-> true ; (read_line_to_string(In,Str),write_comment(Str),!,read_metta(In,Expr))),!.
+read_metta1(In,_,Expr):-  maybe_read_pl(In,Expr),!.
+read_metta1(In,_,Read1):- parse_sexpr_metta(In,Expr),!,must_det_ll(Expr=Read1).
 
 
-maybe_read_pl(In,Read):-
+maybe_read_pl(In,Expr):-
   peek_line(In,Line1), Line1\=='', atom_contains(Line1, '.'),atom_contains(Line1, ':-'),
-  notrace(((catch((read_term_from_atom(Line1, Term, []), Term\==end_of_file, Read=call(Term)),_, fail),!,
+  notrace(((catch((read_term_from_atom(Line1, Term, []), Term\==end_of_file, Expr=call(Term)),_, fail),!,
   read_term(In, Term, [])))).
 peek_line(In,Line1):- peek_string(In, 1024, Str), split_string(Str, "\r\n", "\s", [Line1,_|_]),!.
 peek_line(In,Line1):- peek_string(In, 4096, Str), split_string(Str, "\r\n", "\s", [Line1,_|_]),!.
@@ -560,31 +561,18 @@ in2_stream(N1,S1):- is_stream(N1),S1=N1,!.
 in2_stream(N1,S1):- atom(N1),stream_property(S1,file_name(N1)),!.
 is_same_streams(N1,N2):- in2_stream(N1,S1),in2_stream(N2,S2),!,S1==S2.
 
-%read_metta(In,Read):- current_input(CI), \+ is_same_streams(CI,In), !, read_sform(In,Read).
-read_metta(In,Read):-
+%read_metta(In,Expr):- current_input(CI), \+ is_same_streams(CI,In), !, read_sform(In,Expr).
+read_metta(In,Expr):-
  read_metta1(In,Read1),
   (Read1=='!'
-     -> (read_metta1(In,Read2), Read=exec(Read2), add_history_src(Read))
-     ; Read = Read1),!.
-
-write_comment(Cmt):- atomic_list_concat([_,Code],'MeTTaLog only: ',Cmt),!,
-   ((nb_current(self_space,Self),Self\==[])->true;Self='&self'),
-   repl_read(Code,Read),!,
-   do_metta_load_file(Self,load,Read).
-write_comment(_):- silent_loading,!.
-write_comment(Cmt):- connlf,format(';;~w~n',[Cmt]).
-
-
-
-do_metta_cmt(_,'$COMMENT'(Cmt,_,_)):- write_comment(Cmt),!.
-do_metta_cmt(_,'$STRING'(Cmt)):- write_comment(Cmt),!.
-do_metta_cmt(Self,[Cmt]):- !, do_metta_cmt(Self, Cmt),!.
-
+     -> (read_metta1(In,Read2), Expr=exec(Read2), add_history_src(Expr))
+     ; Expr = Read1),!.
 
 parse_sexpr_metta(I,O):- string(I),normalize_space(string(M),I),parse_sexpr_metta1(M,O),!.
 parse_sexpr_metta(I,O):- parse_sexpr_untyped(I,U),trly(untyped_to_metta,U,O).
 
 parse_sexpr_metta1(M,exec(O)):- string_concat('!',I,M),!,parse_sexpr_metta1(I,O).
+parse_sexpr_metta1(M,(O)):- string_concat('+',I,M),!,parse_sexpr_metta1(I,O).
 parse_sexpr_metta1(I,O):- parse_sexpr_untyped(I,U),trly(untyped_to_metta,U,O).
 
 mlog_sym('@').
@@ -747,10 +735,11 @@ metta_atom('&self',:,'-',[[->,'Number','Number','Number']]).
 metta_atom('&self',:,'*',[[->,'Number','Number','Number']]).
 metta_atom('&self',:,'%',[[->,'Number','Number','Number']]).
 metta_atom('&self',:,if,[[->,'Bool','Atom','Atom',_T]]).
+%metta_atom(KB, F, A, List):- nonvar(F), KB=='&flybase',fb_pred(F, Len), length([A|List],Len),apply(F,[A|List]).
 
-metta_atom(_, [F|List]):- fb_pred(F, Len), length(List,Len),apply(F,List).
+%metta_atom(KB, [F|List]):- KB=='&flybase',fb_pred(F, Len), length(List,Len),apply(F,List).
 metta_atom(KB,[F,A|List]):- metta_atom(KB,F,A,List), F \== '='.
-metta_defn(KB,Head,Body):- metta_atom(KB,'=',Head,Body).
+   metta_defn(KB,Head,Body):- metta_atom(KB,'=',Head,Body).
 
 maybe_xform(metta_atom(KB,[F,A|List]),metta_atom(KB,F,A,List)):- is_list(List),!.
 maybe_xform(metta_defn(KB,Head,Body),metta_atom(KB,'=',Head,Body)).
@@ -808,7 +797,35 @@ uncompound(IsList,Src):- is_list(IsList),!,maplist(uncompound,IsList,Src).
 uncompound([Is|NotList],[SrcH|SrcT]):-!, uncompound(Is,SrcH),uncompound(NotList,SrcT).
 uncompound(Compound,Src):- compound_name_arguments(Compound,Name,Args),maplist(uncompound,[Name|Args],Src).
 
+:- dynamic(all_data_to/1).
+all_data_once:- all_data_to(_),!.
+all_data_once:- open(all_data,write,Out,[alias(all_data),encoding(utf8),lock(write)]),
+  assert(all_data_to(Out)),
+  writeln(Out,':- encoding(utf8).'),
+  writeln(Out,':- style_check(-discontiguous).'),
+  all_data_preds.
+
+all_data_preds:-
+ all_data_to(Out),
+ with_output_to(Out,
+((listing(table_n_type/3),
+  listing(load_state/2),
+  listing(is_loaded_from_file_count/2),
+  listing(fb_pred/2),
+  listing(fb_arg_type/1),
+  listing(fb_arg_table_n/3),
+  listing(fb_arg/1),
+  listing(done_reading/1)))),!.
+
+all_data_done:-
+  all_data_preds,
+  retract(all_data_to(Out)),
+  close(Out).
+
+
+
 %real_assert(OBO):- is_converting,!,print_src(OBO).
+real_assert(OBO):- all_data_to(Out),!,write_canonical(Out,OBO),!,writeln(Out,'.').
 real_assert(OBO):- call(OBO),!.
 real_assert(OBO):- assert(OBO),
   (is_converting->print_src(OBO);true).
@@ -816,7 +833,8 @@ real_assert(OBO):- assert(OBO),
 print_src(OBO):- format('~N'), uncompound(OBO,Src),!, write_src(Src).
 
 assert_to_metta(_):- reached_file_max,!.
-assert_to_metta(OBO):- !, functor(OBO,Fn,A),decl_fb_pred(Fn,A), !,real_assert(OBO),!,incr_file_count(_),heartbeat.
+assert_to_metta(OBO):- !, functor(OBO,Fn,A),decl_fb_pred(Fn,A), !,real_assert(OBO),!,
+   incr_file_count(_),heartbeat.
 
 assert_to_metta(OBO):-
  ignore(( A>=2,A<700,
@@ -869,26 +887,14 @@ do_metta1_e(_Self,_,[=,A,B]):- !, with_concepts(false,
 do_metta1_e(_Self,_LoadExec,Term):- write_src(Term),connl.
 
 write_exec(Exec):- notrace(write_exec0(Exec)).
+write_exec0(Exec):- atom(Exec),!,write_exec0([Exec]).
 write_exec0(Exec):-
   wots(S,write_src(exec(Exec))),
   nb_setval(exec_src,Exec),
   ignore((notrace((color_g_mesg_ok('#004400',(format('~N'),writeln(S))))))).
 
-%do_metta_load_file(Self,LoadExec,Term):-
-%  once(untyped_to_metta(Term,NewTerm)),Term\=@=NewTerm,!,
-%  do_metta_load_file(Self,LoadExec,NewTerm),!.
-do_metta_load_file(Self,LoadExec,Term):-
-  must_det_ll(do_metta_file_load(Self,LoadExec,Term))*->true;
-                                pp_m(unknown_do_metta(Self,LoadExec,Term)).
 
-do_metta_file_load(_Self,load,Cmt):- Cmt==[],!.
-do_metta_file_load(Self,_,Cmt):- nonvar(Cmt),do_metta_cmt(Self,Cmt),!.
-do_metta_file_load(Self, _, call(Term)):- !, do_metta_call(repl_false,Self,Term).
-do_metta_file_load(Self, _, exec(Exec)):- !, do_metta_file_load_exec(Self,Exec),!.
-do_metta_file_load(Self,exec,Exec):- !,do_metta_file_load_exec(Self,Exec),!.
-do_metta_file_load(Self,Load,Src):- asserted_do_metta(Self,Load,Src),!.
 
-do_metta(Self,Load,Src):- do_metta_file_load(Self,Load,Src).
 
 asserted_do_metta(Space,Load,Src):- asserted_do_metta2(Space,Load,Src,Src).
 
@@ -905,7 +911,6 @@ asserted_do_metta2(Self,Load,[TypeOp,Fn,TypeDecL], Src):- TypeOp = ':',!,
   metta_anew1(Load,metta_params(Self,Fn,EachArg)),!,
   metta_anew1(Load,metta_last(Self,Fn,LE)))).
 
-
 asserted_do_metta2(Self,Load,[TypeOp,Fn,TypeDecL,RetType], Src):- TypeOp = ':',!,
  must_det_ll((
   decl_length(TypeDecL,Len),
@@ -916,15 +921,11 @@ asserted_do_metta2(Self,Load,[TypeOp,Fn,TypeDecL,RetType], Src):- TypeOp = ':',!
   metta_anew1(Load,metta_params(Self,Fn,EachArg)),
   metta_anew1(Load,metta_return(Self,Fn,RetType)))),!.
 
-/*do_metta_file_load(Self,Load,PredDecl, Src):-fail,
+/*do_metta(File,Self,Load,PredDecl, Src):-fail,
    metta_anew(Load,Src,metta_atom(Self,PredDecl)),
    ignore((PredDecl=['=',Head,Body], metta_anew(Load,Src,metta_defn(Self,Head,Body)))),
-   ignore((Body == 'True',!,do_metta_file_load(Self,Load,Head))),
+   ignore((Body == 'True',!,do_metta(File,Self,Load,Head))),
    nop((fn_append(Head,X,Head), fn_append(PredDecl,X,Body), metta_anew((Head:- Body)))),!.*/
-
-asserted_do_metta2(Self,Load,['=',PredDecl,False], Src):-
- (False == []; is_i_nil(False);False == 'F'), fail,!,
-  do_metta_file_load(Self,Load,['=',PredDecl,'False'], Src).
 
 asserted_do_metta2(Self,Load,[EQ,Head,Result], Src):- EQ=='=', !,
  must_det_ll((
@@ -942,7 +943,7 @@ always_exec([Var|_]):- var(Var),!,fail.
 always_exec(['import!'|_]).
 always_exec(['assertEqualToResult'|_]):-!,fail.
 always_exec(['assertEqual'|_]):-!,fail.
-always_exec(_):-!. % everything else
+always_exec(_):-!,fail. % everything else
 
 if_t(A,B,C):- trace,if_t((A,B),C).
 
@@ -983,18 +984,112 @@ is_unit_test_exec(Exec):- sformat(S,'~q',[Exec]),sub_atom(S,_,_,_,"!',").
 return_empty('Empty').
 return_empty(_,Empty):- return_empty(Empty).
 
-call_sexpr(Self,Tax,[S|Wip],Out):- string(S),atom_string(A,S),  !, call_sexpr(Self,Tax,[A|Wip],Out).
-call_sexpr(Self,Tax,[S,Wip],Out):- \+ is_list(S), is_list(Wip), !, call_sexpr(Self,Tax,[S|Wip],Out).
-call_sexpr(Self,Tax,[A,S|Wip],Out):- S=='None',!, call_sexpr(Self,Tax,[A,Self|Wip],Out).
-call_sexpr(Self,Tax,S,Out):- is_list(S),!, call_sexpr(Self,Tax,exec(S),Out).
-call_sexpr(Self,_, Swip, _Out):- wdmsg(will_CALL_sexpr(Self,Swip)),fail.
-call_sexpr(Self,_,exec(S),Out):- is_list(S),!, call_sexpr1(Self,exec(S),Out).
-call_sexpr(Self,S,_Swip,Out):- (atom(S);string(S)), once(atom_contains(S,')');atom_contains(S,'!');atom_contains(S,'&')),
-     once((atom_string(S,In), read_metta(In,Read))),!,
-     wdmsg([r=Read]),call_sexpr1(Self,Read,Out).
-call_sexpr(Self,_,S,Out):- call_sexpr1(Self,S,Out).
+convert_tax(_How,Self,Tax,Expr,NewHow):-
+  string_concat('+',TaxM,Tax),!,
+  normalize_space(string(NewTax),TaxM),
+  convert_tax(load,Self,NewTax,Expr,NewHow).
+convert_tax(_How,Self,Tax,Expr,NewHow):-
+  string_concat('?',TaxM,Tax),!,
+  normalize_space(string(NewTax),TaxM),
+  convert_tax(call,Self,NewTax,Expr,NewHow).
+convert_tax(_How,Self,Tax,Expr,NewHow):-
+  string_concat('^',TaxM,Tax),!,
+  normalize_space(string(NewTax),TaxM),
+  convert_tax(load,Self,NewTax,Expr,NewHow).
+convert_tax(_How,Self,Tax,Expr,NewHow):-
+  string_concat('-',TaxM,Tax),!,
+  normalize_space(string(NewTax),TaxM),
+  convert_tax(unload,Self,NewTax,Expr,NewHow).
+convert_tax(_How,Self,Tax,Expr,NewHow):-
+  string_concat('!',TaxM,Tax),!,
+  normalize_space(string(NewTax),TaxM),
+  convert_tax(exec,Self,NewTax,Expr,NewHow).
+convert_tax(How,_Self,Tax,Expr,How):-
+  %parse_sexpr_metta(Tax,Expr).
+  normalize_space(string(NewTax),Tax),
+  read_metta(NewTax,Expr).
 
 
+metta_interp_mode('+',load).
+metta_interp_mode('-',unload).
+metta_interp_mode('!',exec).
+metta_interp_mode('?',call).
+metta_interp_mode('^',load_like_file).
+
+
+call_sexpr(Mode,Self,Tax,_S,Out):-
+  metta_interp_mode(Mode,How),
+  (atom(Tax);string(Tax)),
+    normalize_space(string(TaxM),Tax),
+    convert_tax(How,Self,TaxM,Expr,NewHow),!,
+    show_call(do_metta(python,NewHow,Self,Expr,Out)).
+
+
+write_comment(_):- silent_loading,!.
+write_comment(Cmt):- connlf,format(';;~w~n',[Cmt]).
+
+do_metta(_File,_Load,_Self,In,Out):-  var(In),!,In=Out.
+do_metta(_From,_Mode,_Self,end_of_file,'Empty'):- !. %, halt(7), writeln('\n\n% To restart, use: ?- repl.').
+do_metta(_File,_Load,_Self,Cmt,Out):- Cmt==[],!, Out=[].
+
+do_metta(From,Load,Self,'$COMMENT'(Expr,_,_),Out):- !, do_metta(From,comment(Load),Self,Expr,Out).
+do_metta(From,Load,Self,'$STRING'(Expr),Out):- !, do_metta(From,comment(Load),Self,Expr,Out).
+do_metta(From,comment(Load),Self,[Expr],Out):-  !, do_metta(From,comment(Load),Self,Expr,Out).
+do_metta(From,comment(Load),Self,Cmt,Out):- write_comment(Cmt),  !,
+   ignore(( atomic(Cmt),atomic_list_concat([_,Src],'MeTTaLog only: ',Cmt),!,atom_string(Src,SrcCode),do_metta(From,Load,Self,SrcCode,Out))),
+   ignore(( atomic(Cmt),atomic_list_concat([_,Src],'MeTTaLog: ',Cmt),!,atom_string(Src,SrcCode),do_metta(From,Load,Self,SrcCode,Out))),!.
+
+do_metta(From,How,Self,Src,Out):- string(Src),!,
+    normalize_space(string(TaxM),Src),
+    convert_tax(How,Self,TaxM,Expr,NewHow),!,
+    do_metta(From,NewHow,Self,Expr,Out).
+
+do_metta(From,_,Self,exec(Expr),Out):- !, do_metta(From,exec,Self,Expr,Out).
+do_metta(From,_,Self,  call(Expr),Out):- !, do_metta(From,call,Self,Expr,Out).
+do_metta(From,_,Self,     ':-'(Expr),Out):- !, do_metta(From,call,Self,Expr,Out).
+do_metta(From,call,Self,TermV,FOut):- !,
+   call_for_term_variables(TermV,Term,NamedVarsList,X), must_be(nonvar,Term),
+   copy_term(NamedVarsList,Was),
+   Output = NamedVarsList,
+   user:interactively_do_metta_exec(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut).
+do_metta(_File,Load,Self,Src,Out):- Load\==exec, !, as_tf(asserted_do_metta(Self,Load,Src),Out).
+
+do_metta(file(Filename),exec,_Slf,Exec,Exec):-
+    inc_exec_num(Filename),
+    option_value('exec',skip),  \+ always_exec(Exec),
+    add_history_src(exec(Exec)),
+    must_det_ll((connl,con_writeq(Exec),connl,write_exec(Exec))),!.
+
+do_metta(file(Filename),exec,Self,TermV,Out):-
+  notrace((
+    must_det_ll((
+     get_exec_num(Filename,Nth),
+     Nth>0)),
+     file_answers(Filename, Nth, Ans),
+     check_answers_for(TermV,Ans),!,
+     must_det_ll((
+      color_g_mesg_ok('#ffa500',
+       (writeln(';; In file as:  '),
+        write_src(exec(TermV)),nl,nl,
+        write(';; To unit test case:'))))),!,
+        do_metta_exec(file(Filename),Self,['assertEqualToResult',TermV,Ans],Out))).
+
+do_metta(From,exec,Self,TermV,Out):- !, do_metta_exec(From,Self,TermV,Out).
+
+do_metta_exec(From,Self,TermV,FOut):-
+  Output = X,
+  must_det_ll((
+       notrace(into_metta_callable(Self,TermV,Term,X,NamedVarsList,Was)),
+       (user:interactively_do_metta_exec(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut)))).
+
+
+call_for_term_variables(TermV,catch_red(show_failure(Term)),NamedVarsList,X):-
+ term_variables(TermV, AllVars), call_for_term_variables4v(TermV,AllVars,Term,NamedVarsList,X),!,
+ must_be(callable,Term).
+call_for_term_variables(TermV,catch_red(show_failure(Term)),NamedVarsList,X):-
+  get_term_variables(TermV, DCAllVars, Singletons, NonSingletons),
+  call_for_term_variables5(TermV, DCAllVars, Singletons, NonSingletons, Term,NamedVarsList,X),!,
+  must_be(callable,Term).
 
 into_metta_callable(_Self,TermV,Term,X,NamedVarsList,Was):- use_metta_compiler, !,
  must_det_ll((((
@@ -1018,33 +1113,34 @@ into_metta_callable(_Self,TermV,Term,X,NamedVarsList,Was):- use_metta_compiler, 
 
 
 into_metta_callable(Self,TermV,CALL,X,NamedVarsList,Was):-!,
+ option_else('stack-max',StackMax,100),
  CALL = eval_args(StackMax,Self,Term,X),
  notrace(( must_det_ll((
-  if_t(preview_compiler,write_compiled_exec(TermV,_Goal)),
+ if_t(preview_compiler,write_compiled_exec(TermV,_Goal)),
   subst_vars(TermV,Term,NamedVarsList),
-  copy_term(NamedVarsList,Was),
-  term_variables(Term,Vars),
+  copy_term(NamedVarsList,Was)
+  %term_variables(Term,Vars),
   %nl,writeq(Term),nl,
-  skip((\+ \+
-  ((numbervars(v(TermV,Term,NamedVarsList,Vars),999,_,[attvar(bind)]),
-  %nb_current(variable_names,NamedVarsList),
-  nl,print(subst_vars(TermV,Term,NamedVarsList,Vars)),nl)))),
-  option_else('stack-max',StackMax,100),
-  nop(maplist(verbose_unify,Vars)))))),!.
+  %skip((\+ \+
+  %((numbervars(v(TermV,Term,NamedVarsList,Vars),999,_,[attvar(bind)]),  %nb_current(variable_names,NamedVarsList),
+  %nl,print(subst_vars(TermV,Term,NamedVarsList,Vars)),nl)))),
+  %nop(maplist(verbose_unify,Vars)))))),!.
+  )))).
+
 
 
 print_goals(TermV):- write_src(TermV).
 
 
-/*do_metta_ exec(Interactive,Self,TermV):- fail,
+/*do_metta_ exec(From,Mode,Self,TermV):- fail,
   return_empty(Empty),
   nb_setval(exec_src,TermV),
-  findall(X,(interactively_do_metta_exec(Interactive,Self,TermV,X,NamedVarsList,Was),
+  findall(X,(interactively_do_metta_exec(From,Mode,Self,TermV,X,NamedVarsList,Was),
          ignore((must_det_ll((notrace(((color_g_mesg(yellow,
          ((write(' '), write_src(X),nl,
             (NamedVarsList\=@=Was-> (color_g_mesg(green,writeq(NamedVarsList)),nl); true),
             ignore(( \+ is_list(X),compound(X),format(' % '),writeq(X),nl,X\==Empty))))))))))))),_XL),!.
-do_metta_ exec(Interactive,Self,TermV):-
+do_metta_ exec(From,Mode,Self,TermV):-
   \+ \+ write_exec(TermV),
   into_metta_callable(Self,TermV,Term,X,NamedVarsList,Was),
   Control = contrl(each),
@@ -1061,7 +1157,7 @@ do_metta_ exec(Interactive,Self,TermV):-
           (write("press ';', '<enter>' or 'l': "),get_single_char(C)),
            (C==108->nb_setarg(1,Control,leap);(C==103->print_goals(Term);(C==59->true;(C==13->(!,fail))))))))))).
 
-do_metta_ exec(Interactive,_Self,TermV,X,NamedVarsList,Was):- use_metta_compiler, !,
+do_metta_ exec(From,Mode,_Self,TermV,X,NamedVarsList,Was):- use_metta_compiler, !,
  (( /*must_det_ll*/((
   write_exec(TermV),
  % ignore(Res = '$VAR'('ExecRes')),
@@ -1081,7 +1177,7 @@ do_metta_ exec(Interactive,_Self,TermV,X,NamedVarsList,Was):- use_metta_compiler
   X = RealRes,
   may_rtrace(Term).
 
-do_metta_ exec(Interactive,Self,TermV,X,NamedVarsList,Was):-!,
+do_metta_ exec(From,Mode,Self,TermV,X,NamedVarsList,Was):-!,
  notrace(( must_det_ll((
   if_t(preview_compiler,write_compiled_exec(TermV,_Goal)),
   \+ \+ write_exec(TermV),
@@ -1104,21 +1200,6 @@ do_metta_ exec(Interactive,Self,TermV,X,NamedVarsList,Was):-!,
 %:- ensure_loaded(metta_toplevel).
 
 %:- discontiguous do_metta_exec/3.
-call_sexpr1(Self,exec(S),Out):-
-  into_metta_callable(Self,S,Term,X,NamedVarsList,Was),!,
- ((((
-   (may_rtrace((Term)),
-     notrace(ignore(((
-     color_g_mesg(yellow,
-     ((write(' '),
-        write_src(X),
-        (NamedVarsList\=@=Was-> (color_g_mesg(green,writeq(NamedVarsList)),nl); true),
-        ignore(( \+ is_list(X),compound(X),format(' % '),writeq(X),nl)))))))))))))*->Out=X;
-   (writeq(no_result(Self)=Term),nl,!,S=Out)).
-
-call_sexpr1(Self,S,Out):-
- (do_metta_load_file(Self,load,S), Out='True')*->true;(writeq(not_evaluated(Self)=S),nl,!,S=Out).
-
 
 repl:- setup_call_cleanup(flag(repl_level,Was,Was+1),repl0,
   (flag(repl_level,_,Was),(Was==0 -> maybe_halt(7) ; true))).
@@ -1129,72 +1210,18 @@ repl0:-
      notrace((%with_option(not_a_reload,true,make),
       flag(eval_num,_,0),
       ((nb_current(self_space,Self),Self\==[])->true;Self='&self'),
-      ((nb_current(repl_mode,Mode),Mode\==[])->true;Mode='!'),
-      format(atom(P),'metta ~w> ',[Self]))),
+      ((nb_current(read_mode,Mode),Mode\==[])->true;Mode='!'),
+      format(atom(P),'metta ~w ~w> ',[Self, Mode]))),
       setup_call_cleanup(
          notrace(prompt(Was,P)),
-         notrace(read_metta(In,Read)),
+         notrace(read_metta(In,Expr)),
          notrace(prompt(_,Was))),
-    (notrace(Read==end_of_file)
-       -> true ; (once(do_repl(Self,Read)),fail)).
+    (notrace(Expr==end_of_file)
+       -> true ; (once(do_metta(repl_true,Mode,Self,Expr,_)),fail)).
 
 read_pending_white_codes(In):-
   read_pending_codes(In,[10],[]),!.
 read_pending_white_codes(_).
-
-
-do_repl(_Self,end_of_file):- !. %, halt(7), writeln('\n\n% To restart, use: ?- repl.').
-do_repl(Self,call(Term)):- nop(add_history1(Term)), !, do_metta_call(repl_true,Self,Term).
-do_repl(Self,!):- !, notrace(repl_read(Exec)),do_repl(Self,exec(Exec)).
-do_repl(Self,Read):- notrace((string(Read),add_history_string(Read))),!,
-    notrace(repl_read(Read,Term)),!, do_repl(Self,Term).
-
-do_repl(Self,exec(Exec)):- !, notrace(add_history_src(exec(Exec))),!,
-   do_metta_exec(repl_true,Self,Exec).
-do_repl(Self,Read):- add_history_src(Read), do_metta_load_file(Self,load,Read).
-
-
-do_metta_file_load_exec(Self,Exec):-
-  nb_setval(exec_src,Exec),!,
-  user:do_metta_file_exec(Self,Exec),
-  inc_exec_num,!.
-
-do_metta_file_exec(_Slf,Exec):- option_value('exec',skip),\+ always_exec(Exec),!,connl,con_writeq(Exec),connl,write_exec(Exec),!.
-%do_metta_file_exec(Self,Exec):- !, do_metta_exec(false,Self, Exec),!.
-
-do_metta_file_exec(Self,TermV):-
-  notrace((current_exec_file_abs(FileName), get_exec_num(Nth),
-  Nth>0,  file_answers(FileName, Nth, Ans),
-  check_answers_for(TermV,Ans),!,
-  color_g_mesg_ok('#ffa500',
-   (writeln(';; In file as:  '),
-    write_src(exec(TermV)),nl,nl,
-    write(';; To unit test case:'))))),
-  do_metta_exec(false,Self,['assertEqualToResult',TermV,Ans]).
-do_metta_file_exec(Self,TermV):-
-  do_metta_exec(false,Self,TermV).
-
-do_metta_exec(_Interactive,Self,Var):-  notrace(var(Var)), !, pp_m(eval(Var)), freeze(Var,wdmsg(laterVar(Self,Var))).
-do_metta_exec(Interactive,Self,TermV):- !,
-  must_det_ll((notrace(into_metta_callable(Self,TermV,Term,X,NamedVarsList,Was)),
-        ignore(user:interactively_do_metta_exec(Interactive,Self,TermV,Term,X,NamedVarsList,Was)))).
-
-%do_metta_call(Interactive,Term):- catch_red(Term).
-do_metta_call(Interactive,Self,(:- Term)):- nonvar(Term),!, do_metta_call(Interactive,Self,Term).
-do_metta_call(Interactive,Self,call(Term)):- nonvar(Term), !, do_metta_call(Interactive,Self,Term).
-do_metta_call(Interactive,Self,TermV):-
-   call_for_term_variables(TermV,Term,NamedVarsList,X), must_be(nonvar,Term),
-   copy_term(NamedVarsList,Was),
-   user:interactively_do_metta_exec(Interactive,Self,TermV,Term,X,NamedVarsList,Was).
-
-
-call_for_term_variables(TermV,catch_red(show_failure(Term)),NamedVarsList,X):-
- term_variables(TermV, AllVars), call_for_term_variables4v(TermV,AllVars,Term,NamedVarsList,X),!,
- must_be(callable,Term).
-call_for_term_variables(TermV,catch_red(show_failure(Term)),NamedVarsList,X):-
-  get_term_variables(TermV, DCAllVars, Singletons, NonSingletons),
-  call_for_term_variables5(TermV, DCAllVars, Singletons, NonSingletons, Term,NamedVarsList,X),!,
-  must_be(callable,Term).
 
 call_for_term_variables4v(Term,[]  ,as_tf(Term,TF),NamedVarsList,TF):- get_global_varnames(NamedVarsList),!.
 call_for_term_variables4v(Term,[X]  ,       Term,      NamedVarsList,X):- get_global_varnames(NamedVarsList).
@@ -1256,16 +1283,21 @@ call_for_term_variables5(Term,_,SVars,Vars,call_nth(Term,Count),[Vars,SVars],Cou
 
 
 
-is_interactive(Interactive):- notrace(is_interactive0(Interactive)).
-is_interactive0(Interactive):- Interactive==false,!,fail.
-is_interactive0(Interactive):- atomic(Interactive),is_stream(Interactive),!, \+ stream_property(Interactive,filename(_)).
-is_interactive0(Interactive):- Interactive = repl_true,!.
-is_interactive0(Interactive):- Interactive = true,!.
+is_interactive(From):- notrace(is_interactive0(From)).
+is_interactive0(From):- From==false,!,fail.
+is_interactive0(From):- atomic(From),is_stream(From),!, \+ stream_property(From,filename(_)).
+is_interactive0(From):- From = repl_true,!.
+is_interactive0(From):- From = true,!.
 
-interactively_do_metta_exec(Interactive,_Self,TermV,Term,X,NamedVarsList,Was):-
 
+
+
+
+interactively_do_metta_exec(From,_Self,TermV,Term,X,NamedVarsList,Was,Output,FOut):-
+  (is_interactive(From) -> WasInteractive = true ; WasInteractive = false),
   notrace((
     \+ \+ write_exec(TermV),
+    add_history_src(exec(TermV)),
     % NamedVarsList,
     % Initialize Control as a compound term with 'each' as its argument.
     Control = contrl(each),
@@ -1274,9 +1306,9 @@ interactively_do_metta_exec(Interactive,_Self,TermV,Term,X,NamedVarsList,Was):-
     !, % metta_toplevel
     flag(result_num,_,1))),
 
-  catch(forall( may_rtrace(GG),
-    notrace((
-      once((ignore(((color_g_mesg(yellow,
+  catch(forall_interactive(Control,WasInteractive,Output, FOut,may_rtrace(GG),
+    ignore((notrace((
+      once(((color_g_mesg(yellow,
        ((
            (flag(result_num,R,R+1),
                 ((R==1,Complete==true)->format('~NDeterministic: ',  []);          %or Nondet
@@ -1286,30 +1318,39 @@ interactively_do_metta_exec(Interactive,_Self,TermV,Term,X,NamedVarsList,Was):-
                (NamedVarsList \=@= Was -> (color_g_mesg(green, (nl,write_src(NamedVarsList))), nl) ; true),
                true)))))))),
             % Use the current state of Control to determine whether to prompt for input.
-            (Complete == true -> (! , fail) ; true),
+            (( Complete == true) -> (!) ; true),
             (( Control == contrl(leap) -> true;
               % If not in leap state, prompt for input.
 
-              ((repeat,
-                !,
-                  (is_interactive(Interactive)->(write("More Solutions? "),get_single_char_key(C));(C='l')),
-                     color_g_mesg([fg(magenta)],(write(' '), write(key=C), nl))),
+          ((repeat,
+                % If leap, proceed without re-prompting.
+                  ((is_interactive(From),Control \== contrl(leap))->(write("More Solutions? "),get_single_char_key(C),
+                     color_g_mesg([fg(magenta)],(write(' '), write(key=C), nl)));(C='l')),
               (C == 'l' -> % 'l' for leap
                    nb_setarg(1, Control, leap); % Set Control to leap and stop prompting.
               (C == 'g' -> % 'g' for print_goals
                    print_goals(Term), fail; % Execute print_goals and re-prompt.
               (C == ';' -> % ';' for next
                    true; % No action needed, move to next solution.
-              ((C == '\n';C == '\r') -> % 'enter' to exit
+              ((C == '\n'; C == '\r') -> % 'enter' to exit
                    (!, fail); % Cut and fail to stop the forall.
                ((fail, command(C, Command)) ->
                   handle_command(Command, _Variables, _Goal, _Tracing)
-              ;  fail, format('Unknown command. ~s',[[C]]),fail) % handle unknown commands
-                        ))))))),
-              (Control == contrl(leap) -> true; true) % If leap, proceed without re-prompting.
-            ))  ),
+              ;  fail, format('Unknown command. ~s',[[C]]),fail)))))))))))),% handle unknown commands
+
                 E,wdmsg(E)),
         (flag(result_num,1,1) -> format('~Nno results') ; true),!.
+
+
+forall_interactive(_Control,WasInteractive,Output,FOut,Goal,Afterwards):- WasInteractive == false,!,
+  Store_output = so([]),
+  forall(Goal,(nb_setarg(1,Store_output,Output),Afterwards)),
+  arg(1,Store_output,FOut).
+forall_interactive(_Control,WasInteractive,Output,FOut,Goal,Afterwards):- WasInteractive == true,!,
+  Store_output = so([]),
+  (Goal,(nb_setarg(1,Store_output,Output),Afterwards)),
+  arg(1,Store_output,FOut).
+
 
 get_single_char_key(O):- get_single_char(C),get_single_char_key(C,O).
 get_single_char_key(27,A):- !,read_pending_codes(user_input,O,[]),name(A,O).
@@ -1613,6 +1654,8 @@ is_compiled:- current_prolog_flag(os_argv,ArgV),\+ member('swipl',ArgV),!.
 is_converting:- nb_current('convert','True'),!.
 is_converting:- current_prolog_flag(os_argv,ArgV), member('--convert',ArgV),!.
 show_os_argv:- current_prolog_flag(os_argv,ArgV),write('; libswipl: '),writeln(ArgV).
+is_pyswip:- current_prolog_flag(os_argv,ArgV),member( './',ArgV).
+%  libswipl: ['./','-q',--home=/usr/local/lib/swipl]
 
 :- initialization(show_os_argv).
 
@@ -1648,15 +1691,27 @@ ensure_mettalog_system:-
     %pack_install(dictoo, [upgrade(true),global(true)]),
     !.
 
+file_save_name(E,_):- \+ atom(E),!,fail.
+file_save_name(E,Name):- file_base_name(E,BN),BN\==E,!,file_save_name(BN,Name).
+file_save_name(E,E):- atom_concat('Sav.',_,E),!.
+file_save_name(E,E):- atom_concat('Bin.',_,E),!.
+before_underscore(E,N):-atomic_list_concat([N|_],'_',E),!.
+save_name(Name):- current_prolog_flag(os_argv,ArgV),member(E,ArgV),file_save_name(E,Name),!.
+next_save_name(Name):- save_name(E),
+  before_underscore(E,N),
+  atom_concat(N,'_',Stem),
+  gensym(Stem,Name),
+  \+ exists_file(Name),
+  Name\==E,!.
+next_save_name('Sav.MeTTaLog').
 qcompile_mettalog:-
     ensure_mettalog_system,
-    catch(qsave_program('Sav.MeTTaLog', [class(development),autoload(true),goal(loon(goal)), toplevel(loon(toplevel)), stand_alone(true)]),E,writeln(E)),
+    catch(qsave_program('Sav.MeTTaLog',
+        [class(development),autoload(true),goal(loon(goal)), toplevel(loon(toplevel)), stand_alone(true)]),E,writeln(E)),
     halt(0).
-
-qsave_program:-
-    ensure_mettalog_system,
-    gensym('Sav.MeTTaLog_',Name),
-    catch(qsave_program(Name, [class(development),autoload(true),goal(loon(goal)), toplevel(loon(toplevel)), stand_alone(true)]),E,writeln(E)),
+qsave_program:-  ensure_mettalog_system, next_save_name(Name),
+    catch(qsave_program(Name,
+        [class(development),autoload(true),goal(loon(goal)), toplevel(loon(toplevel)), stand_alone(false)]),E,writeln(E)),
     !.
 
 

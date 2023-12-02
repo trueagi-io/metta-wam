@@ -289,7 +289,8 @@ with_kifvars(Goal):-
 % Parse S-expression.
 %
 
-parse_sexpr(S, Expr) :- quietly_sreader(parse_meta_term(file_sexpr_with_comments, S, Expr)).
+parse_sexpr(S, Expr) :- quietly_sreader(parse_meta_term(
+      file_sexpr_with_comments, S, Expr)).
 
 %% parse_sexpr_ascii( +Codes, -Expr) is det.
 %
@@ -326,16 +327,13 @@ intern_and_eval(UTC,'$intern_and_eval'(UTC)).
 
 % Use DCG for parser.
 
+
 %file_sexpr_with_comments(O) --> [], {clause(t_l:s_reader_info(O),_,Ref),erase(Ref)},!.
-
-
 file_sexpr_with_comments(end_of_file) --> file_eof,!.
 file_sexpr_with_comments(O) --> one_blank,!,file_sexpr_with_comments(O),!.  % WANT?
 file_sexpr_with_comments(end_of_file) --> `:EOF`,!.
 file_sexpr_with_comments(C)                 --> dcg_peek(`#|`),!,zalwayzz(comment_expr(C)),swhite,!.
 file_sexpr_with_comments(C)                 --> dcg_peek(`;`),!, zalwayzz(comment_expr(C)),swhite,!.
-
-
 file_sexpr_with_comments(Out) --> {kif_ok}, prolog_expr_next, prolog_readable_term(Out), !.
 file_sexpr_with_comments(Out,S,E):- \+ t_l:sreader_options(with_text,true),!,phrase(file_sexpr(Out),S,E),!.
 file_sexpr_with_comments(Out,S,E):- expr_with_text(Out,file_sexpr(O),O,S,E),!.
@@ -372,10 +370,8 @@ file_sexpr(end_of_file) --> file_eof,!.
 % WANT?
 file_sexpr(O) --> sblank,!,file_sexpr(O),!.
 % file_sexpr(planStepLPG(Name,Expr,Value)) --> swhite,sym_or_num(Name),`:`,swhite, sexpr(Expr),swhite, `[`,sym_or_num(Value),`]`,swhite.  %   0.0003:   (PICK-UP ANDY IBM-R30 CS-LOUNGE) [0.1000]
-% file_sexpr(Term,Left,Right):- eoln(EOL),append(LLeft,[46,EOL|Right],Left),read_term_from_codes(LLeft,Term,[double_quotes(string)]),!.
-% file_sexpr(Term,Left,Right):- append(LLeft,[46|Right],Left), ( \+ member(46,Right)),read_term_from_codes(LLeft,Term,[double_quotes(string)]),!.
-
-%file_sexpr(C) --> !, s_line_metta(C), !.
+% file_sexpr(Term,Left,Right):- eoln(EOL),append(LLeft,[46,EOL|Right],Left),read_term_from_codes(LLeft,Term,[double_quotes(string),syntax_errors(fail)]),!.
+% file_sexpr(Term,Left,Right):- append(LLeft,[46|Right],Left), ( \+ member(46,Right)),read_term_from_codes(LLeft,Term,[double_quotes(string),syntax_errors(fail)]),!.
 file_sexpr(Expr) --> sexpr(Expr),!.
 % file_sexpr(Expr,H,T):- lisp_dump_break,rtrace(phrase(file_sexpr(Expr), H,T)).
 /*
@@ -514,7 +510,6 @@ sexpr0('#')                 --> `#`, swhite,!.
 sexpr0('#\\'(35))                 --> `#\\#`,!, swhite.
 sexpr0(E)                      --> `#`,read_dispatch(E),!.
 
-
 %sexpr('#\\'(C))                 --> `#\\`,ci(`u`),!,remove_optional_char(`+`),dcg_basics:xinteger(C),!.
 %sexpr('#\\'(C))                 --> `#\\`,dcg_basics:digit(S0), swhite,!,{atom_codes(C,[S0])}.
 sexpr0('#\\'(32))                 --> `#\\ `,!.
@@ -552,9 +547,10 @@ sexpr0(OBJ)--> `#<`,!,zalwayzz(ugly_sexpr_cont(OBJ)),!.
 
 /*********END HASH ***********/
 
+sexpr0(E)    --> sym_or_num(E), swhite,!.
 sexpr0(Sym) --> `#`,integer(N123), swhite,!, {atom_concat('#',N123,Sym)}.
-sexpr0(E)                      --> sym_or_num(E), swhite,!.
-sexpr0(C) --> s_item_metta(C, e_o_s). %s_line_metta(C), !.
+sexpr0(C) -->  s_line_metta(C) ,swhite, !. %s_line_metta(C), !.
+sexpr0(C) -->  s_item_metta(C, e_o_s), swhite. %s_line_metta(C), !.
 sexpr0(E)                      --> !,zalwayzz(sym_or_num(E)), swhite,!.
 
 is_scm:- fail.
@@ -663,7 +659,8 @@ sexpr_list([]) --> `)`, !.
 sexpr_list([Car|Cdr]) --> sexpr(Car), !, sexpr_rest(Cdr),!.
 
 sexpr_rest([]) --> `)`, !.
-sexpr_rest(E) --> `.`, [C], {\+ sym_char(C)}, !, sexpr(E,C), !, `)`.
+% allow dotcons/improper lists.. but also allow dot in the middle of the list (non-CL)
+sexpr_rest(E) --> `.`, [C], {\+ sym_char(C)}, sexpr(E,C), `)` , ! .
 sexpr_rest(E) --> {kif_ok}, `@`, rsymbol(`?`,E), `)`.
 sexpr_rest([Car|Cdr]) --> sexpr(Car), !, sexpr_rest(Cdr),!.
 
