@@ -271,27 +271,32 @@ load_answer_stream(Nth, StoredAs, Stream):- read_line_to_string(Stream,String),
 
 load_answer_stream(Nth, StoredAs, String, Stream):- % string_concat("[",_,String),!,
     parse_answer_string(String,Metta),!,
+    if_t(sub_var(',',Metta),rtrace(parse_answer_string(String,_Metta2))),
     assert(file_answers(StoredAs,Nth,Metta)),
+    must_det_ll(\+ sub_var(',',Metta)),
     Nth2 is Nth+1,load_answer_stream(Nth2, StoredAs, Stream).
 load_answer_stream(Nth, StoredAs, _, Stream):- load_answer_stream(Nth, StoredAs, Stream).
 
 parse_answer_string("[]",[]):- !.
 %parse_answer_string(String,Metta):- string_concat("(",_,String),!,parse_sexpr_metta(String,Metta),!.
 parse_answer_string(String,_Metta):- string_concat("[(Error (assert",_,String),!,fail.
-parse_answer_string(String,Metta):- string_concat("Got: [",Mid,String),string_concat(Inner,"]",Mid),
-  atomics_to_string(["(",Inner,")"],Str),parse_sexpr_metta(Str,Metta),!.
+parse_answer_string(String,_Metta):- string_concat("Expected: [",Mid,String),string_concat(_Expected_Inner,"]",Mid),!,fail.
+parse_answer_string(String,Metta):- string_concat("Got: [",Mid,String),string_concat(Got_Inner,"]",Mid),!,parse_answer_inner(Got_Inner,Metta).
+parse_answer_string(String,Metta):- string_concat("[",Mid,String),string_concat(Inner0,"]",Mid),!,parse_answer_inner(Inner0,Metta).
 
-parse_answer_string(String,Metta):- string_concat("[",Mid,String),string_concat(Inner0,"]",Mid),
-  replace_in_string([', '=' , '],Inner0,Inner),parse_answer_str(Inner,Metta),!.
 
-parse_answer_str(Inner,Metta):- atomics_to_string(["(",Inner,")"],Str),parse_sexpr_metta(Str,MettaC),remove_m_commas(MettaC,Metta),!.
-parse_answer_str(Inner0,Metta):- atomic_list_concat(InnerL,' , ',Inner0), maplist(atom_string,InnerL,Inner), maplist(parse_sexpr_metta,Inner,Metta),!.
-parse_answer_str(Inner0,Metta):- replace_in_string([' , '=' '],Inner0,Inner), atomics_to_string(["(",Inner,")"],Str),!,parse_sexpr_metta(Str,Metta),!.
+parse_answer_inner(Inner0,Metta):- must_det_ll(( replace_in_string([', '=' , '],Inner0,Inner), parse_answer_str(Inner,Metta),  \+ sub_var(',',rc(Metta)))).
+
+parse_answer_str(Inner,[C|Metta]):- atomics_to_string(["(",Inner,")"],Str),parse_sexpr_metta(Str,CMettaC), CMettaC=[C|MettaC],
+   must_det_ll((remove_m_commas(MettaC,Metta), \+ sub_var(',',rc(Metta)))).
+parse_answer_str(Inner0,Metta):- atomic_list_concat(InnerL,' , ',Inner0), maplist(atom_string,InnerL,Inner), maplist(parse_sexpr_metta,Inner,Metta),must_det_ll(( \+ sub_var(',',rc2(Metta)))),!.
+parse_answer_str(Inner0,Metta):- must_det_ll(( replace_in_string([' , '=' '],Inner0,Inner), atomics_to_string(["(",Inner,")"],Str),!,parse_sexpr_metta(Str,Metta),!,must_det_ll(\+ sub_var(',',rc3(Metta))), \+ sub_var(',',rc(Metta)))).
 
 %parse_answer_string(String,Metta):- String=Metta,!,fail.
 
 remove_m_commas(Metta,Metta):- \+ sub_var(',',Metta),!.
-remove_m_commas([C,H|T],[H|TT]):- C==',',!, remove_m_commas(T,TT).
+remove_m_commas([C,H|T],[H|TT]):- C=='and', !, remove_m_commas(T,TT).
+remove_m_commas([C,H|T],[H|TT]):- C==',', !, remove_m_commas(T,TT).
 remove_m_commas([H|T],[H|TT]):- !, remove_m_commas(T,TT).
 
 

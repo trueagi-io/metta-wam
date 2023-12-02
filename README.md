@@ -14,7 +14,7 @@ The Candidate Elimination algorithm is a conceptual learning algorithm that incr
 - Build [Hyperon Experimental](https://github.com/trueagi-io/hyperon-experimental).
 - Install PySWIP using:
   ```
-  pip install pyswip
+  pip install git+https://github.com/logicmoo/pyswip.git
   ```
 
 ### :toolbox: Installation

@@ -38,6 +38,10 @@ type_violation(T,L):- \+ \+ (is_nonspecific_type(T);is_nonspecific_type(L)),!,fa
 type_violation(T,L):- T\=L.
 
 
+not_arg_violation(Depth,Self,Arg,Type):-
+   \+ arg_violation(Depth,Self,Arg,Type),
+   arg_conform(Depth,Self,Arg,Type).
+
 
 args_conform(_Dpth,_Slf,Args,List):- ( \+ iz_conz(Args); \+ iz_conz(List)), !.
 args_conform(Depth,Self,[A|Args],[L|List]):- arg_conform(Depth,Self,A,L) , args_conform(Depth,Self,Args,List).
@@ -55,7 +59,9 @@ is_nonspecific_type('Atom').
 is_nonspecific_type('Any').
 
 %get_type(Depth,Self,Val,Type):- get_type01(Depth,Self,Val,Type).
-get_type(Depth,Self,Val,Type):- no_repeats(Type,get_type9(Depth,Self,Val,Type)).
+get_type(Depth,Self,Val,TypeO):- no_repeats(TypeT,(get_type9(Depth,Self,Val,Type),TypeT=Type)),Type=TypeO.
+
+get_type9(_Dpth,_Slf,Expr,'hyperon::space::DynSpace'):- is_dynaspace(Expr),!.
 get_type9(Depth,Self,Val,Type):- get_type0(Depth,Self,Val,Type).
 get_type9(Depth,Self,Val,Type):- get_type1(Depth,Self,Val,Type), ground(Type),Type\==[], Type\==Val,!.
 get_type9(Depth,Self,Val,Type):- get_type2(Depth,Self,Val,Type), ( is_list(Type)->! ; true).
@@ -68,20 +74,24 @@ get_type2(Depth,Self,Val,Type):- get_type0(Depth,Self,Val,Type).
 get_type2(Depth,Self,Val,Type):- get_type1(Depth,Self,Val,Type).
 
 
-
+is_space_type(Space,is_asserted_space):- was_asserted_space(Space),!.
 is_space_type(Space,Test):- no_repeats(Test,space_type_method(Test,_,_)),call(Test,Space),!.
 
 is_state_type(State,Test):- no_repeats(Test,state_type_method(Test,_,_)),call(Test,State),!.
 
-
+%is_dynaspace(Expr):- \+ is_list(Expr), callable(Expr), is_space_type(Expr,_).
+is_dynaspace(S):- var(S),!,fail.
+is_dynaspace(S):- was_asserted_space(S).
+is_dynaspace(S):- py_named_space(S).
+is_dynaspace(S):- typed_list(S,'hyperon::space::DynSpace',_).
 %  notrace( is_space_type(Expr,_)),!.
+get_type0(_Dpth,_Slf,Expr,'hyperon::space::DynSpace'):- is_dynaspace(Expr),!.
 get_type0(Depth,Self,Expr,['StateMonad',Type]):-  notrace( is_valid_nb_state(Expr)),!, 'get-state'(Expr,Val),!,
   ((state_decltype(Expr,Type),nonvar(Type)); (Depth2 is Depth-1, get_type(Depth2,Self,Val,Type))).
 get_type0(Depth,Self,Val,Type):- \+ compound(Val),!,get_type01(Depth,Self,Val,Type),!.
-%get_type0(_Dpth,_Slf,Expr,'hyperon::space::DynSpace'):- \+ is_list(Expr), callable(Expr), is_space_type(Expr,_).
 get_type0(Depth,Self,Val,Type):- get_type03(Depth,Self,Val,Type),!.
 
-
+typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_arguments(Cmpd,Type,[List|_]),is_list(List).
 /*
 (: Left
   (-> %Undefined% Either))
@@ -121,6 +131,7 @@ get_type03(Depth,Self,[[Op|Args]|Arg],Type):- symbol(Op),
  ignore(sub_var(ArgType,Type1)->true;(sub_term(ST,Type1),var(ST),ST=ArgType)),
  last(Type1,Type).
 
+get_type03(_Dpth,_Slf,Cmpd,Type):-typed_list(Cmpd,Type,_List).
 get_type03(Depth,Self,[Op|Args],Type):- symbol(Op),
   get_operator_typedef(Self,Op,Params,RetType),
   % Fills in type variables when possible

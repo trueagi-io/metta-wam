@@ -10,7 +10,7 @@ In the original version, the core logic and functionalities of the MeTTa system 
 Python is used to extend or customize MeTTa. Typically, Python interacts with the Rust core through a Foreign Function Interface (FFI) or similar bridging mechanisms. This allows Python programmers to write code that can interact with the lower-level Rust code, while taking advantage of Python's ease of use and rich ecosystem.
 
 # Prolog Allows Python Extensions
-Just like the Rust core allowed for Python extensions, the Prolog code also permits Python and Rust developers (thru python right now) to extend or customize parts of MeTTa. This maintains the system’s extensibility and allows users who are more comfortable with Python to continue working with the system effectively.
+Just like the Rust core allowed for Python extensions, the Prolog code also permits Python and Rust developers (thru python right now) to extend or customize parts of MeTTa. This maintains the system?s extensibility and allows users who are more comfortable with Python to continue working with the system effectively.
 
 */
 
@@ -20,6 +20,9 @@ Just like the Rust core allowed for Python extensions, the Prolog code also perm
 
 
 is_rust_space(GSpace):- is_python_space(GSpace).
+
+is_not_prolog_space(GSpace):- is_rust_space(GSpace).
+is_not_prolog_space(GSpace):- \+ is_asserted_space(GSpace).
 
 ensure_space_py(Space,GSpace):- py_is_object(Space),!,GSpace=Space.
 ensure_space_py(Space,GSpace):- var(Space),init_primary_metta_space(GSpace), Space=GSpace.
@@ -41,7 +44,7 @@ ensure_metta_learner(Metta_Learner):-
 space_type_method(is_not_prolog_space,new_space,new_rust_space).
 space_type_method(is_not_prolog_space,add_atom,add_to_space).
 space_type_method(is_not_prolog_space,remove_atom,remove_from_space).
-space_type_method(is_not_prolog_space,replace_atom,replace_from_space).
+space_type_method(is_not_prolog_space,replace_atom,replace_in_space).
 space_type_method(is_not_prolog_space,atom_count,atom_count_from_space).
 space_type_method(is_not_prolog_space,get_atoms,query_from_space).
 space_type_method(is_not_prolog_space,atom_iter,atoms_iter_from_space).
@@ -54,29 +57,21 @@ init_primary_metta_space(GSpace) :- ensure_rust_metta(MeTTa), py_call(MeTTa:spac
     asserta(is_python_space(GSpace)).
 init_primary_metta_space(GSpace) :- new_rust_space(GSpace).
 
-
+:- if( \+ current_predicate(new_rust_space/1 )).
 % Initialize a new hyperon.base.GroundingSpace and get a reference
 new_rust_space(GSpace) :-
     py_call(hyperon:base:'GroundingSpace'(), GSpace),
     asserta(is_python_space(GSpace)).
+:- endif.
 
+:- if( \+ current_predicate(query_from_space/3 )).
 % Query from hyperon.base.GroundingSpace
 query_from_space(Space, QueryAtom, Result) :-
     ensure_space(Space,GSpace),
     py_call(GSpace:'query'(QueryAtom), Result).
 
-% Add an atom to hyperon.base.GroundingSpace
-add_to_space(Space, Atom) :-
-    ensure_space(Space,GSpace),
-    py_call(GSpace:'add'(Atom), _).
-
-% Remove an atom from hyperon.base.GroundingSpace
-remove_from_space(Space, Atom) :-
-    ensure_space(Space,GSpace),
-    py_call(GSpace:'remove'(Atom), _).
-
 % Replace an atom in hyperon.base.GroundingSpace
-replace_from_space(Space, FromAtom, ToAtom) :-
+replace_in_space(Space, FromAtom, ToAtom) :-
     ensure_space(Space,GSpace),
     py_call(GSpace:'replace'(FromAtom, ToAtom), _).
 
@@ -94,16 +89,33 @@ atom_count_from_space(Space, Count) :-
 atoms_iter_from_space(Space, Atoms) :-
     ensure_space(Space,GSpace),
     py_call(GSpace:'atoms_iter'(), Atoms).
+:- endif.
 
 
-'extend-py!'(Module,Result):-
+% Remove an atom from hyperon.base.GroundingSpace
+:- if( \+ current_predicate(remove_from_space/2 )).
+remove_from_space(Space, Atom) :-
+    ensure_space(Space,GSpace),
+    py_call(GSpace:'remove'(Atom), _).
+:- endif.
+
+% Add an atom to hyperon.base.GroundingSpace
+:- if( \+ current_predicate(add_to_space/2 )).
+add_to_space(Space, Atom) :-
+    ensure_space(Space,GSpace),
+    py_call(GSpace:'add'(Atom), _).
+:- endif.
+
+
+'extend-py!'(Module,_):-
+  set_prolog_flag(argv,[]),
   %listing(ensure_rust_metta/1),
-  %ensure_metta_learner,
+  ensure_metta_learner,
   wdmsg('extend-py!'(Module)),
   ensure_rust_metta(MeTTa),
   replace_in_string(["/"="."],Module,ToPython),
   py_call(MeTTa:load_py_module(ToPython),Result),
-  wdmsg(result(MeTTa->Result)).
+  wdmsg(result(MeTTa->Result)),!.
 
 ensure_metta_learner:-
   ensure_metta_learner(Learner),
