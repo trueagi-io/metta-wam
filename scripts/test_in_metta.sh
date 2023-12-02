@@ -12,6 +12,14 @@ export RUST_BACKTRACE=full
 # Save the directory one above where this script resides
 export SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd .. && pwd )"
 
+add_to_list() {
+    local item="$1"
+    local -n list_ref="$2"
+    if [[ ! " ${list_ref[*]} " =~ " $item " ]]; then
+        list_ref+=("$item")
+    fi
+}
+
 # Initialize default values
 # export variables for later use
 export UNITS_DIR
@@ -19,10 +27,12 @@ export outer_extra_args
 export METTALOG_MAX_TIME
 export all_test_args="${@}"
 auto_reply=""
+generate_report=""
 UNITS_DIR="examples/"
-outer_extra_args=""
+outer_extra_args=()
 METTALOG_MAX_TIME=120
-clean=0  # 0 means don't clean, 1 means do clean
+clean=0  # 0 means don't clean, 1 means do clean':+
+fresh=0
 export RUST_METTA_MAX_TIME=120
 GREP_ARGS=""
 
@@ -37,22 +47,37 @@ while [ "$#" -gt 0 ]; do
       auto_reply="n"
       shift
       ;;
-    --timeout=*)
-      METTALOG_MAX_TIME="${1#*=}"
-      outer_extra_args+=" $1"
-      shift
-      ;;
+      --timeout=*)
+        METTALOG_MAX_TIME="${1#*=}"
+        add_to_list "$1" outer_extra_args
+        shift
+        ;;
+     --report=*)
+          generate_report="${1#*=}"
+          shift
+          ;;
     --*clud*=*)
-      outer_extra_args+=" $1"
+      add_to_list "$1" outer_extra_args
       GREP_ARGS="${GREP_ARGS} ${1}"
       shift
       ;;
 
-    --clean)
-      clean=1
-      outer_extra_args+=" $1"
-      shift
-      ;;
+
+      --clean)
+        clean=1
+        # add_to_list "$1" outer_extra_args
+        shift
+        ;;
+
+     --fresh)
+       fresh=1
+       clean=1
+       # add_to_list "$1" outer_extra_args
+       shift
+     ;;
+
+
+
     -h|--help)
       echo "Usage: $0 [options] [directory] [extra args]"
       echo "Options:"
@@ -83,7 +108,7 @@ while [ "$#" -gt 0 ]; do
       if [ -d "$1" ] || [ -f "$1" ]; then
         UNITS_DIR="$1"
       else
-        outer_extra_args+=" $1"
+        add_to_list "$1" outer_extra_args
       fi
       shift
       ;;
@@ -156,22 +181,15 @@ function run_tests() {
 
     # Shared logic across both file types
     process_file() {
-       local file=$(find_override_file "$1")
+       #local file=$(find_override_file "$1")
+       local file="$1"
 
        local absfile=$(readlink -f "$file")
 
-       local extra_args="${@:1}"
+       local extra_args="${@:2}"
        shift
 
        file_html="${file%.metta}.html"
-
-       if [[ -f "$file_html" ]]; then
-          echo "$file_html exists"
-          if [ $clean -eq 0 ]; then
-             return
-          fi
-       fi
-
 
        echo ""
        echo "Testing:  $file"
@@ -180,31 +198,61 @@ function run_tests() {
         echo ""
 
 
-           # Check if the .answers file doesn't exist, or if $file is newer than the .answers file.
-           if [[ "$all_test_args" =~ "--fresh" ]] || [ ! -f "${file}.answers" ] || [ "${file}" -nt "${file}.answers" ]; then
-              cat /dev/null > "${file}.answers"
-              pp1=$(dirname "${file}")
-              pp2=$(dirname "${pp1}")
+
+         # Add unique absolute paths to PYTHONPATH
+         pp1=$(realpath "$(dirname "${file}")")
+         pp2=$(realpath "$(dirname "${pp1}")")
+         for pp in $pp1 $pp2; do
+             if [[ ":$PYTHONPATH:" != *":$pp:"* ]]; then
+                 export PYTHONPATH="${PYTHONPATH:+"$PYTHONPATH:"}$pp"
+             fi
+         done
+
+         # Set OPENAI_API_KEY only if it's not already set
+         if [ -z "$OPENAI_API_KEY" ]; then
+             export OPENAI_API_KEY=freeve
+         fi
+
+         # Combined condition check
+         if [[ "$fresh" -eq 1 ]] || [ ! -f "${file}.answers" ] || ([ "${file}" -nt "${file}.answers" ] && [ -s "${file}.answers" ]); then
              echo "Regenerating answers:  $file.answers"
-              export PYTHONPATH=$pp1:$pp2:$PYTHONPATH
-              export OPENAI_API_KEY=freeve
-               set +e
-               set -x
-               ( cd $(dirname "${file}") || true
-                 timeout --foreground --kill-after=5 --signal=SIGKILL $(($RUST_METTA_MAX_TIME + 10)) timeout --foreground --kill-after=5 --signal=SIGINT $(($RUST_METTA_MAX_TIME + 1)) time metta "$absfile" 2>&1 | tee "${absfile}.answers"
-                 ) || true
-               set +x
-               set -e
-               echo ""
-               touch "${file}.answers"
-           else
-               cat "${file}.answers"
-              echo "Checked for answers:  $file.answers"
+             cat /dev/null > "${file}.answers"
+
+             set +e -x
+
+             # Function to handle SIGINT
+             handle_sigint() {
+                 echo "SIGINT received, stopping metta but continuing script..."
+             }
+
+             # Trap SIGINT
+             trap 'handle_sigint' SIGINT
+
+             ( cd "$(dirname "${file}")" || true
+               timeout --foreground --kill-after=5 --signal=SIGINT $(($RUST_METTA_MAX_TIME + 1)) time metta "$absfile" 2>&1 | tee "${absfile}.answers"
+             ) || true
+
+             trap - SIGINT
+
+             set +x -e
+
+         else
+             echo "Checked for answers:  $file.answers"
+             cat "${file}.answers"
+             echo "Using for answers:  $file.answers"
+         fi
+
+
+        if [[ -f "$file_html" ]]; then
+           echo "$file_html exists"
+           if [ $clean -eq 0 ]; then
+              return
            fi
+        fi
 
         sleep 0.1
         touch "$file_html"
-        local TEST_CMD="./MeTTa --timeout=$METTALOG_MAX_TIME --repl=false  $extra_args $outer_extra_args --html \"$file\" --halt=true"
+        local TEST_CMD="./MeTTa --timeout=$METTALOG_MAX_TIME  --html --repl=false  $extra_args $outer_extra_args \"$file\" --halt=true"
         echo "Running command: $TEST_CMD"
 
         set +e
@@ -445,7 +493,13 @@ time (
    generate_final_MeTTaLog
    compare_test_files ./MeTTaLog.md ./final_MeTTaLog.md   )
 
-   read -p "Are you ready to commit your code and generate unit reports? (y/N): " -n 1 -r
+   if [ -z "$generate_report" ]; then
+      read -p "Are you ready to commit your code and generate unit reports? (y/N): " -n 1 -r
+     echo ""
+   else
+     REPLY=$generate_report
+   fi
+
    echo
 
    if [[ $REPLY =~ ^[Y]$ ]]; then
