@@ -750,15 +750,74 @@ use_metta_compiler:- notrace(option_value('compile','full')), !.
 preview_compiler:- \+ option_value('compile',false), !.
 %preview_compiler:- use_metta_compiler,!.
 
-:- dynamic(metta_atom/4).
 
-metta_atom('&self',[:,'+',[->,'Number','Number','Number']]).
-metta_atom('&self',[:,'+',[->,X,X,X]]).
-metta_atom('&self',[:,'-',[->,'Number','Number','Number']]).
-metta_atom('&self',[:,'*',[->,'Number','Number','Number']]).
-metta_atom('&self',[:,'%',[->,'Number','Number','Number']]).
-metta_atom('&self',[:,if,[->,'Bool','Atom','Atom',_T]]).
 
+op_decl(match, [ 'Space', 'Atom', 'Atom'], '%Undefined%').
+op_decl('remove-atom', [ 'Space', 'Atom'], 'EmptyType').
+op_decl('add-atom', [ 'Space', 'Atom'], 'EmptyType').
+op_decl('get-atoms', [ 'Space' ], 'Atom').
+
+op_decl('car-atom', [ 'Expression' ], 'Atom').
+op_decl('cdr-atom', [ 'Expression' ], 'Expression').
+
+op_decl(let, [ 'Atom', '%Undefined%', 'Atom' ], 'Atom').
+op_decl('let*', [ 'Expression', 'Atom' ], 'Atom').
+
+op_decl(and, [ 'Bool', 'Bool' ], 'Bool').
+op_decl(or, [ 'Bool', 'Bool' ], 'Bool').
+op_decl(apply, [ 'Atom', 'Variable', 'Atom' ], 'Atom').
+op_decl(case, [ '%Undefined%', 'Expression' ], 'Atom').
+op_decl(chain, [ 'Atom', 'Variable', 'Atom' ], 'Atom').
+op_decl(cons, [ 'Atom', 'Atom' ], 'Atom').
+op_decl(decons, [ 'Atom' ], 'Atom').
+op_decl(empty, [], '%Undefined%').
+op_decl('Error', [ 'Atom', 'Atom' ], 'ErrorType').
+op_decl(eval, [ 'Atom' ], 'Atom').
+op_decl('filter-atom', [ 'Expression', 'Variable', 'Atom' ], 'Expression').
+op_decl('foldl-atom', [ 'Expression', 'Atom', 'Variable', 'Variable', 'Atom' ], 'Atom').
+op_decl(function, [ 'Atom' ], 'Atom').
+op_decl(id, [ 'Atom' ], 'Atom').
+op_decl(if, [ 'Bool', 'Atom', 'Atom'], _T).
+op_decl('if-decons', [ 'Atom', 'Variable', 'Variable', 'Atom', 'Atom' ], 'Atom').
+op_decl('if-empty', [ 'Atom', 'Atom', 'Atom' ], 'Atom').
+op_decl('if-error', [ 'Atom', 'Atom', 'Atom' ], 'Atom').
+op_decl('if-non-empty-expression', [ 'Atom', 'Atom', 'Atom' ], 'Atom').
+op_decl('if-not-reducible', [ 'Atom', 'Atom', 'Atom' ], 'Atom').
+op_decl('map-atom', [ 'Expression', 'Variable', 'Atom' ], 'Expression').
+op_decl(quote, [ 'Atom' ], 'Atom').
+op_decl(return, [ 'Atom' ], 'ReturnType').
+op_decl('return-on-error', [ 'Atom', 'Atom'], 'Atom').
+op_decl(unquote, [ '%Undefined%'], '%Undefined%').
+op_decl(unify, [ 'Atom', 'Atom', 'Atom', 'Atom'], '%Undefined%').
+op_decl(unify, [ 'Atom', 'Atom', 'Atom', 'Atom' ], 'Atom').
+op_decl('%', [ 'Number', 'Number' ], 'Number').
+op_decl('*', [ 'Number', 'Number' ], 'Number').
+op_decl('-', [ 'Number', 'Number' ], 'Number').
+op_decl('+', [ 'Number', 'Number' ], 'Number').
+op_decl(combine, [ X, X], X).
+
+op_decl('bind!', ['Symbol','%Undefined%'], 'EmptyType').
+op_decl('import!', ['Space','Atom'], 'EmptyType').
+op_decl('get-type', ['Atom'], 'Atom').
+
+type_decl('Any').
+type_decl('Atom').
+type_decl('Bool').
+type_decl('ErrorType').
+type_decl('Expression').
+type_decl('Number').
+type_decl('ReturnType').
+type_decl('Space').
+type_decl('Symbol').
+type_decl('MemoizedState').
+type_decl('Type').
+type_decl('%Undefined%').
+type_decl('Variable').
+
+:- dynamic(metta_atom/2).
+metta_atom('&stdlib', [:, Type, 'Type']):- type_decl(Type).
+metta_atom('&stdlib', [:, Op, [->|List]]):- op_decl(Op,Params,ReturnType),append(Params,[ReturnType],List).
+metta_atom(KB,Atom):- KB =='&self', metta_atom('&stdlib',Atom).
 metta_atom(KB, [F, A| List]):- nonvar(F), KB=='&flybase',fb_pred(F, Len), length([A|List],Len),apply(F,[A|List]).
 metta_atom(Space, Atom):- typed_list(Space,_,L),!, member(Atom,L).
 
