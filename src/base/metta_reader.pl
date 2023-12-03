@@ -330,6 +330,8 @@ intern_and_eval(UTC,'$intern_and_eval'(UTC)).
 
 %file_sexpr_with_comments(O) --> [], {clause(t_l:s_reader_info(O),_,Ref),erase(Ref)},!.
 file_sexpr_with_comments(end_of_file) --> file_eof,!.
+file_sexpr_with_comments('+')                 --> `+`, swhite,!.
+
 file_sexpr_with_comments(O) --> one_blank,!,file_sexpr_with_comments(O),!.  % WANT?
 file_sexpr_with_comments(end_of_file) --> `:EOF`,!.
 file_sexpr_with_comments(C)                 --> dcg_peek(`#|`),!,zalwayzz(comment_expr(C)),swhite,!.
