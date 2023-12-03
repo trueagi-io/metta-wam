@@ -352,7 +352,7 @@ if [[ $should_compile -eq 1 ]]; then
     #else
         rm -f $reference_file
         echo "Calling compiler..."
-	swipl -l metta_vspace/pyswip/metta_interp.pl -g qcompile_mettalog
+	echo swipl -l metta_vspace/pyswip/metta_interp.pl -g qcompile_mettalog
     #fi
 fi
 
