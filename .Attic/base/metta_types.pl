@@ -306,10 +306,9 @@ get_operator_typedef(Self,Op,Params,RetType):-
   get_operator_typedef1(Self,Op,Params,RetType)*->true;
   get_operator_typedef2(Self,Op,Params,RetType).
 get_operator_typedef1(Self,Op,Params,RetType):-
-   metta_type(Self,Op,['->'|List]),
-   append(Params,[RetType],List).
+   metta_type(Self,Op,['->'|List]), once(append(Params,[RetType],List)).
 get_operator_typedef2(Self,Op,Params,RetType):- fail,
-  wdmsg(get_operator_typedef2(Self,Op,Params,RetType)),!,fail.
+  wdmsg(missing(get_operator_typedef2(Self,Op,Params,RetType))),!,fail.
 
 is_metta_data_functor(F):-
   current_self(Self),is_metta_data_functor(Self,F).

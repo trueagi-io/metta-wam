@@ -189,7 +189,7 @@ function run_tests() {
        local extra_args="${@:2}"
        shift
 
-       file_html="${file%.metta}.html"
+       file_html="${file}.html"
 
        echo ""
        echo "Testing:  $file"
