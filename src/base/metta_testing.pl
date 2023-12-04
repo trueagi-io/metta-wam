@@ -271,9 +271,9 @@ load_answer_stream(Nth, StoredAs, Stream):- read_line_to_string(Stream,String),
 
 load_answer_stream(Nth, StoredAs, String, Stream):- % string_concat("[",_,String),!,
     parse_answer_string(String,Metta),!,
-    if_t(sub_var(',',Metta),rtrace(parse_answer_string(String,_Metta2))),
+    %if_t(sub_var(',',Metta),rtrace(parse_answer_string(String,_Metta2))),
     assert(file_answers(StoredAs,Nth,Metta)),
-    must_det_ll(\+ sub_var(',',Metta)),
+    nop(must_det_ll(\+ sub_var(',',Metta))),
     Nth2 is Nth+1,load_answer_stream(Nth2, StoredAs, Stream).
 load_answer_stream(Nth, StoredAs, _, Stream):- load_answer_stream(Nth, StoredAs, Stream).
 
