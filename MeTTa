@@ -214,6 +214,12 @@ function handle_args {
                 PYSWIP_VERSION="pyswip2"
                 continue
                 ;;
+
+           --v*)
+                PYSWIP_VERSION="pyswip${arg#*v}"
+                continue
+                ;;
+
             -x|-g|-t|-f|-F|-l|-s|-p|--on-error|--on-warning|--home|--stack-limit|--table-space|--shared-table-space|--pldoc)
                 SWI_OPTIONS+=("$arg")
                 FLAG_WITH_ARG=true
@@ -242,7 +248,19 @@ function handle_args {
 # First process arguments from ~/.mettalogrc
 handle_args $(load_mettalogrc)
 # Then process actual command-line arguments
-handle_args "$@"
+#handle_args "$@"
+
+for arg in "$@"; do
+    arg=$(remove_quotes "$arg")  # Remove the quotes
+
+    if [[ -f "$arg" || -d "$arg" ]]; then
+	arg_realpath="$(realpath "$arg")"
+	if [[ -f "$arg_realpath" || -d "$arg_realpath" ]]; then
+	    add_to_list "$arg_realpath" LIST_OF_FILE_ARGS
+	fi
+    fi
+done
+
 #echo "LIST_OF_FILE_ARGS[0]=${LIST_OF_FILE_ARGS[0]}"
 DIRNAME="${LIST_OF_FILE_ARGS[0]}"
 if [[ -f "$DIRNAME" ]]; then
@@ -309,7 +327,7 @@ export RUST_BACKTRACE=full
 
 
 # Directory containing the .pl files
-pl_directory="metta_vspace/pyswip"
+pl_directory="metta_vspace/$PYSWIP_VERSION"
 
 # Initialize a flag to check if any file is newer or if reference file is missing
 should_compile=0
@@ -352,7 +370,7 @@ if [[ $should_compile -eq 1 ]]; then
     #else
         rm -f $reference_file
         echo "Calling compiler..."
-	echo swipl -l metta_vspace/pyswip/metta_interp.pl -g qcompile_mettalog
+	echo swipl -l metta_vspace/$PYSWIP_VERSION/metta_interp.pl -g qcompile_mettalog
     #fi
 fi
 
