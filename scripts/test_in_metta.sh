@@ -366,8 +366,8 @@ function PreCommitReports() {
 
     cd "$SCRIPT_DIR"
     echo "Executing Tasks..."
-    rsync -avm --include='*.html' -f 'hide,! */' examples/ reports/ \
-    && echo "1) Synced HTML files from examples/ to reports/ and deleted the original HTML files in examples/"
+    rsync -avm --include='*.html' -f 'hide,! */' examples/ reports/cuRRent/ \
+    && echo "1) Synced HTML files from examples/ to reports/cuRRent/ and deleted the original HTML files in examples/"
 
     #find examples/ -name '*.html' -delete
 
