@@ -644,7 +644,7 @@ eval_args30(RetType,Depth,Self,['If',Cond,Then,Else],Res):- !,
     (is_True(TF) -> eval_args(RetType,Depth,Self,Then,Res);eval_args(RetType,Depth,Self,Else,Res)).
 
 eval_args30(RetType,Depth,Self,['if',Cond,Then],Res):- !,
-   eval_args('Bool',RetType,Depth,Self,Cond,TF),
+   eval_args('Bool',Depth,Self,Cond,TF),
    (is_True(TF) -> eval_args(RetType,Depth,Self,Then,Res) ; (!, fail,Res = [],!)).
 
 

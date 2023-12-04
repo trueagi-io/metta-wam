@@ -922,7 +922,7 @@ fb_assert(Term) :-
 :- dynamic(done_reading/1).
 
 use_metta_x:- fail.
-
+    
 load_fb_cache(_File,OutputFile,_Fn):- exists_file(OutputFile),!,ensure_loaded(OutputFile),!.
 load_fb_cache(File,_OutputFile,_Fn):- load_files([File],[qcompile(large)]).
 
@@ -968,7 +968,7 @@ load_flybase_ext(Ext,File, Fn):-  Ext==fa,!,load_fb_fa(Fn,File),!.
 load_flybase_ext(Ext,File,_Fn):-  Ext==metta,current_predicate(load_metta/2),!,load_flybase_metta(File).
 load_flybase_ext(Ext,File, Fn):-  file_to_sep(Ext,Sep),!,
   track_load_into_file(File,
-   setup_call_cleanup(open(File,read,Stream), load_flybase_sv(Sep,File,Stream,Fn), close(Stream))),!.
+setup_call_cleanup(open(File,read,Stream), load_flybase_sv(Sep,File,Stream,Fn), close(Stream))),!.
 load_flybase_ext(Ext,File, Fn):-  fbug(missed_loading_flybase(Ext,File,Fn)),!.
 
 %load_flybase_metta(File):- !, load_metta('&flybase',File).
@@ -1022,7 +1022,7 @@ into_number(Concept,Arg):- Concept=Arg,!.
 :- dynamic(fb_arg_table_n/3).
 assert_type_of(_Term,_Fn,_N,_Type,_Arg):- \+ should_sample,!.
 assert_type_of(Term,Fn,N,Type,Arg):- is_list(Arg),!,maplist(assert_type_of(Term,Fn,N,Type),Arg).
-assert_type_of(_Term,Fn,N,_Type,Arg):-
+assert_type_of(_Term,Fn,N,_Type,Arg):- 
  must_det_ll_r((
    assert_new(fb_arg(Arg)),
    assert_new(fb_arg_table_n(Arg,Fn,N)))).
@@ -1106,20 +1106,19 @@ assert_MeTTa(Fn,DataL0):-
     heartbeat,
     functor(Data,F,A), A>=2,
    decl_fb_pred(F,A),
-    flag(loaded_from_file_count,X,X+1),
+    flag(loaded_from_file_count,X,X+1),    
     flag(total_loaded_symbols,TA,TA+1),
     assert(Data),
     ignore((((has_list(_ArgTypes)->(X<23,X>20); (X<13,X>10)); (X>0,(0 is X rem 1_000_000),fb_stats)),nl,nl,fbug(X=Data),ignore((OldData\==DataL0,fbug(oldData=OldData))))),
     ignore((fail,catch_ignore(ignore((X<1000,must_det_ll_r((write_canonical(OutputStream,Data),writeln(OutputStream,'.')))))))))),!.
 */
-
-make_assertion(Fn, Cols, NewData, OldData):- !, make_assertion4(Fn, Cols, NewData, OldData).
+make_assertion(Fn, Cols, NewData, OldData):- !, make_assertion4(Fn, Cols, NewData, OldData).
 
 make_assertion(Fn,DataL0,Data,DataL0):-
  must_det_ll_r((
     into_datum(Fn,DataL0,Data0),
     Data0=..[F|Args],
-    Args=DataL,
+    Args=DataL, 
     Data=..[F|DataL])).
 
 make_assertion(ArgTypes,Fn,DataL0,Data,DataL0):-
@@ -1127,11 +1126,11 @@ make_assertion(ArgTypes,Fn,DataL0,Data,DataL0):-
     into_datum(Fn,DataL0,Data0),
     Data0=..[F|Args],
     skip(if_t(var(ArgTypes),must_det_ll_r((once((length(Args,Len),length(ArgTypes,Len),once((table_columns(Fn,ArgTypes);table_columns(F,ArgTypes))))))))),
-    fix_list_args(Fn,ArgTypes,Args,DataL),
+    fix_list_args(Fn,ArgTypes,Args,DataL), 
     Data=..[F|DataL])).
 
 
-% FBcv_0000743 % "FBtp0000743 %CL:0000743 % WBPhenotype_0000743
+% FBcv_0000743 % "FBtp0000743 %CL:0000743 % WBPhenotype_0000743 
 %reprefix(['GO_','GO--','FBgn','BiologicalProcess:GO:'],'GO:').
 reprefix(['GO_','GO--','BiologicalProcess:GO:'],'GO:').
 reprefix(['flybase:','FLYBASE:','comment:'],'').
@@ -1154,7 +1153,7 @@ as_list(SepL,A,List):-  member(Sep,SepL),catch_ignore(symbolic_list_concat(List,
 as_list(_Sep,A,[A]).
 has_list(Header):- is_list(Header),member(listOf(_),Header).
 
-% FBcv_0000743 % "FBtp0000743 %CL:0000743 % WBPhenotype_0000743
+% FBcv_0000743 % "FBtp0000743 %CL:0000743 % WBPhenotype_0000743 
 
 % =======================================
 % Fix Concept1
@@ -1221,9 +1220,9 @@ fix_columns_nth(transposon_sequence_set, 8).
 
 
 
-:- discontiguous column_description/4.
-:- discontiguous primary_column/2.
-:- discontiguous column_names/2.
+:- discontiguous column_description/4. 
+:- discontiguous primary_column/2. 
+:- discontiguous column_names/2. 
 :- discontiguous file_location/2.
 
 
@@ -1330,7 +1329,7 @@ load_flybase_chars([N|ArgTypes],File,Stream,Fn,Sep,Chars):- is_swipl,
   load_fb_data([N|ArgTypes],File,Stream,Fn,Sep,is_swipl).
 
 
-load_fb_data(_ArgTypes,File,_Stream,_Fn,_Sep,Data):-
+load_fb_data(_ArgTypes,File,_Stream,_Fn,_Sep,Data):-  
   (Data == end_of_file;done_reading(File)),!.
 
 load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl):-  % \+ option_value(full_canon,[]), !,
@@ -1340,7 +1339,7 @@ load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl):-  % \+ option_value(full_ca
    repeat,
      once(read_csv_stream(Sep,Stream,Data)),
      loaded_from_file_count(X),
-      (((Data== end_of_file);reached_file_max;(X>Max)) -> assert(done_reading(File)) ;
+      (((Data== end_of_file);reached_file_max;(X>Max)) -> assert(done_reading(File)) ; 
        (once(write_flybase_data(ArgTypes,Fn,Data)),fail)),!.
 
 load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl):- !,
@@ -1352,18 +1351,18 @@ load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl):- !,
    repeat,
      once((csv_read_row(Stream, RData, CompiledOptions))),
      loaded_from_file_count(X),
-      (((RData== end_of_file);reached_file_max;(X>Max)) -> assert(done_reading(File)) ;
-       (RData =..[_|Data],
+      (((RData== end_of_file);reached_file_max;(X>Max)) -> assert(done_reading(File)) ; 
+       (RData =..[_|Data], 
        once(write_flybase_data(ArgTypes,Fn,Data)),fail)),!.
 
 % recursion depth 16 million rows
-load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl):-
+load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl):- 
   name(Sep,[SepCode]),
   csv_options(CompiledOptions,[strip(true),convert(true),separator(SepCode)]),
    (option_value(max_per_file,Max)->true;Max=inf),
      once((csv_read_row(Stream, RData, CompiledOptions))),
-     loaded_from_file_count(X),
-      (((RData== end_of_file);(X>Max)) -> assert(done_reading(File)) ;
+     loaded_from_file_count(X), 
+      (((RData== end_of_file);(X>Max)) -> assert(done_reading(File)) ; 
        (RData =..[_|Data], once(write_flybase_data(ArgTypes,Fn,Data)),
          load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl))),!.
 
@@ -1478,7 +1477,7 @@ too_generic(pub_id).
 too_generic(X):- \+ symbolic_list_concat([_,_,_|_],'_',X).
 
 
-fix_header_names(Fn,Header,GNames):-
+fix_header_names(Fn,Header,GNames):- 
    maplist(fix_header_names(Header,Fn),Header,ArgTypes),
    include( \=(''),ArgTypes,GNames).
 
@@ -1560,6 +1559,7 @@ setup_flybase_cols:-
   use_flybase_cols(Table,Columns)).
 
 %:- load_flybase("das_precomputed/allele_genetic_interactions_fb_2022_06.tsv").
+
 
 
 
