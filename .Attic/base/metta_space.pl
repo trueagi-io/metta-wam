@@ -4,7 +4,7 @@
 :- ensure_loaded(metta_compiler).
 %:- ensure_loaded(metta_compiler).
 % TODO move non flybase specific code between here and the compiler
-:- ensure_loaded(swi_flybase).
+:- ensure_loaded(flybase_main).
 
 :- multifile(is_pre_statistic/2).
 :- dynamic(is_pre_statistic/2).
@@ -48,55 +48,55 @@ skip(_).
 
 % ===============================
 % MeTTa Python incoming interface
-% ===============================
-
+% ===============================
+
 % ============================
 % %%%% Atom Manipulations
 % ============================
-  
+
 % Clear all atoms from a space
-'clear-atoms'(SpaceNameOrInstance) :- 
+'clear-atoms'(SpaceNameOrInstance) :-
   debug_metta(['clear-atoms',SpaceNameOrInstance]),
-  space_type_method(Type,clear_space,Method), call(Type,SpaceNameOrInstance),!,
+  space_type_method(Type,clear_space,Method), call(Type,SpaceNameOrInstance),!,
   debug_metta(['type-method',Type,Method]),
   call(Method,SpaceNameOrInstance).
 
-% Add an atom to the space
-'add-atom'(SpaceNameOrInstance, Atom) :- 
+% Add an atom to the space
+'add-atom'(SpaceNameOrInstance, Atom) :-
     debug_metta(['add-atom',SpaceNameOrInstance, Atom]),
     space_type_method(Type,add_atom,Method), call(Type,SpaceNameOrInstance),!,
     debug_metta(['type-method',Type,Method]),
-    call(Method,SpaceNameOrInstance,Atom).
+    call(Method,SpaceNameOrInstance,Atom).
 % Add Atom
 'add-atom'(Environment, AtomDeclaration, Result):- eval_args(['add-atom', Environment, AtomDeclaration], Result).
 
-% remove an atom from the space
-'remove-atom'(SpaceNameOrInstance, Atom) :- 
+% remove an atom from the space
+'remove-atom'(SpaceNameOrInstance, Atom) :-
     debug_metta(['remove-atom',SpaceNameOrInstance, Atom]),
     space_type_method(Type,remove_atom,Method), call(Type,SpaceNameOrInstance),!,
     debug_metta(['type-method',Type,Method]),
-    call(Method,SpaceNameOrInstance,Atom).
+    call(Method,SpaceNameOrInstance,Atom).
 % Remove Atom
 'remove-atom'(Environment, AtomDeclaration, Result):- eval_args(['remove-atom', Environment, AtomDeclaration], Result).
-
-% Add an atom to the space
-'replace-atom'(SpaceNameOrInstance, Atom, New) :- 
+
+% Add an atom to the space
+'replace-atom'(SpaceNameOrInstance, Atom, New) :-
     debug_metta(['replace-atom',SpaceNameOrInstance, Atom, New]),
     space_type_method(Type,replace_atom,Method), call(Type,SpaceNameOrInstance),!,
     debug_metta(['type-method',Type,Method]),
-    call(Method,SpaceNameOrInstance,Atom, New).
+    call(Method,SpaceNameOrInstance,Atom, New).
 % Replace Atom
 'atom-replace'(Environment, OldAtom, NewAtom, Result):- eval_args(['atom-replace', Environment, OldAtom, NewAtom], Result).
-
+
 % Count atoms in a space
-'atom-count'(SpaceNameOrInstance, Count) :-
+'atom-count'(SpaceNameOrInstance, Count) :-
     debug_metta(['atom-count',SpaceNameOrInstance]),
     space_type_method(Type,atom_count,Method), call(Type,SpaceNameOrInstance),!,
     call(Method,SpaceNameOrInstance,Count),
     debug_metta(['type-method-result',Type,Method,Count]).
 % Count Atoms
 'atom-count'(Environment, Count):- eval_args(['atom-count', Environment], Count).
-
+
 % Fetch all atoms from a space
 'get-atoms'(SpaceNameOrInstance, AtomsL) :-
     debug_metta(['get-atoms',SpaceNameOrInstance]),
@@ -106,40 +106,60 @@ skip(_).
     debug_metta(['type-method-result',Type,Method,Count]).
 % Get Atoms
 'get-atoms'(Environment, Atoms):- eval_args(['get-atoms', Environment], Atoms).
-
+
 % Iterate all atoms from a space
 'atoms_iter'(SpaceNameOrInstance, Iter) :-
     debug_metta(['atoms_iter',SpaceNameOrInstance]),
     space_type_method(Type,atoms_iter,Method), call(Type,SpaceNameOrInstance),!,
     call(Method,SpaceNameOrInstance, Iter),
     debug_metta(['type-method-result',Type,Method,Iter]).
-
+
 % Match all atoms from a space
 'atoms_match'(SpaceNameOrInstance, Atoms, Template, Else) :-
     space_type_method(Type,atoms_match,Method), call(Type,SpaceNameOrInstance),!,
     call(Method,SpaceNameOrInstance, Atoms, Template, Else),
     debug_metta(['type-method-result',Type,Method,Atoms, Template, Else]).
-
+
+
+% ============================
+% %%%% Pattern Matching
+% ============================
+% Pattern Matching with an else branch
+'match'(Environment, Pattern, Template, ElseBranch, Result):- eval_args(['match', Environment, Pattern, Template, ElseBranch], Result).
+% Pattern Matching without an else branch
+'match'(Environment, Pattern, Template, Result):- eval_args(['match', Environment, Pattern, Template], Result).
+%'match'(_Environment, Pattern, Template, Result):- callable(Pattern),!, call(Pattern),Result=Template.
+%'match'(_Environment, Pattern, Template, Result):- !, is_True(Pattern),Result=Template.
+
+
 
 % Query all atoms from a space
 'space_query'(SpaceNameOrInstance, QueryAtom, Result) :-
     space_type_method(Type,query,Method), call(Type,SpaceNameOrInstance),!,
     call(Method,SpaceNameOrInstance, QueryAtom, Result),
     debug_metta(['type-method-result',Type,Method,Result]).
-    
+
 
 subst_pattern_template(SpaceNameOrInstance, Pattern, Template) :-
     debug_metta([subst_pattern_template,SpaceNameOrInstance, Pattern, Template]),
     'atoms_match'(SpaceNameOrInstance, Pattern, Template, []).
-    
+
 /*
 space_query_vars(SpaceNameOrInstance, Query, Vars) :- is_as_nb_space(SpaceNameOrInstance),!,
     fetch_or_create_space(SpaceNameOrInstance, Space),
     call_metta(Space,Query,Vars).
-*/
+*/
 
-
+:- dynamic(was_asserted_space/1).
+
 was_asserted_space('&flybase').
+was_asserted_space('&self').
+was_asserted_space('&attentional_focus').
+was_asserted_space('&belief_events').
+was_asserted_space('&goal_events').
+was_asserted_space('&tempset').
+was_asserted_space('&concepts').
+was_asserted_space('&belief_events').
 
 is_asserted_space(X):- was_asserted_space(X).
 is_asserted_space(X):-          \+ is_as_nb_space(X), \+ py_named_space(X),!.
@@ -148,10 +168,119 @@ is_python_space_not_prolog(X):- \+ is_as_nb_space(X), \+ is_asserted_space(X).
 
 :- dynamic(is_python_space/1).
 
-py_named_space('&self').
-py_named_space('&vspace').
+:- dynamic(py_named_space/1).
+
+%py_named_space('&self').
+%py_named_space('&vspace').
+% Function to check if an atom is registered as a space name
+:- dynamic is_registered_space_name/1.
 is_as_nb_space('&nb').
-is_as_nb_space(N):- is_nb_space(N).
+is_as_nb_space(G):- is_valid_nb_space(G) -> true ;
+                 is_registered_space_name(G),nb_current(G,S),is_valid_nb_space(S).
+
+is_nb_space(G):- nonvar(G), is_as_nb_space(G).
+'new-space'(Space):- gensym('hyperon::space::DynSpace@_',Name), fetch_or_create_space(Name, Space).
+
+:- dynamic(is_python_space/1).
+% ===============================
+% MeTTa Python incoming interface
+% ===============================
+
+:- multifile(space_type_method/3).
+:- dynamic(space_type_method/3).
+space_type_method(is_as_nb_space,new_space,init_space).
+space_type_method(is_as_nb_space,clear_space,clear_nb_atoms).
+space_type_method(is_as_nb_space,add_atom,add_nb_atom).
+space_type_method(is_as_nb_space,remove_atom,remove_nb_atom).
+space_type_method(is_as_nb_space,replace_atom,replace_nb_atom).
+space_type_method(is_as_nb_space,atom_count,atom_nb_count).
+space_type_method(is_as_nb_space,get_atoms,get_nb_atoms).
+space_type_method(is_as_nb_space,get_atoms,arg(1)).
+space_type_method(is_as_nb_space,atom_iter,atom_nb_iter).
+%space_type_method(is_as_nb_space,query,space_nb_query).
+
+
+% Clear all atoms from a space
+clear_nb_atoms(SpaceNameOrInstance) :-
+    fetch_or_create_space(SpaceNameOrInstance, Space),
+    nb_setarg(1, Space, []).
+
+% Add an atom to the space
+add_nb_atom(SpaceNameOrInstance, Atom) :-
+    fetch_or_create_space(SpaceNameOrInstance, Space),
+    arg(1, Space, Atoms),
+    NewAtoms = [Atom | Atoms],
+    nb_setarg(1, Space, NewAtoms).
+
+% Count atoms in a space
+atom_nb_count(SpaceNameOrInstance, Count) :-
+    fetch_or_create_space(SpaceNameOrInstance, Space),
+    arg(1, Space, Atoms),
+    length(Atoms, Count).
+
+% Remove an atom from a space
+remove_nb_atom(SpaceNameOrInstance, Atom) :-
+    fetch_or_create_space(SpaceNameOrInstance, Space),
+    arg(1, Space, Atoms),
+    select(Atom, Atoms, UpdatedAtoms),
+    nb_setarg(1, Space, UpdatedAtoms).
+
+% Fetch all atoms from a space
+get_nb_atoms(SpaceNameOrInstance, Atoms) :-
+    fetch_or_create_space(SpaceNameOrInstance, Space),
+    arg(1, Space, Atoms).
+
+% Replace an atom in the space
+replace_nb_atom(SpaceNameOrInstance, OldAtom, NewAtom) :-
+    fetch_or_create_space(SpaceNameOrInstance, Space),
+    arg(1, Space, Atoms),
+    ( (select(Found, Atoms, TempAtoms),OldAtom=@=Found)
+    ->  NewAtoms = [NewAtom | TempAtoms],
+        nb_setarg(1, Space, NewAtoms)
+    ;   false
+    ).
+
+
+
+% Function to confirm if a term represents a space
+is_valid_nb_space(Space):- compound(Space),functor(Space,'Space',_).
+
+% Find the original name of a given space
+space_original_name(Space, Name) :-
+    is_registered_space_name(Name),
+    nb_current(Name, Space).
+
+% Register and initialize a new space
+init_space(Name) :-
+    Space = 'Space'([]),
+    asserta(is_registered_space_name(Name)),
+    nb_setval(Name, Space).
+
+fetch_or_create_space(Name):- fetch_or_create_space(Name,_).
+% Fetch an existing space or create a new one
+fetch_or_create_space(NameOrInstance, Space) :-
+    (   atom(NameOrInstance)
+    ->  (is_registered_space_name(NameOrInstance)
+        ->  nb_current(NameOrInstance, Space)
+        ;   init_space(NameOrInstance),
+            nb_current(NameOrInstance, Space))
+    ;   is_valid_nb_space(NameOrInstance)
+    ->  Space = NameOrInstance
+    ;   writeln('Error: Invalid input.')
+    ),
+    is_valid_nb_space(Space).
+
+
+% Match Pattern in Space and produce Template
+'match'(Space, Pattern, Template) :-
+    'get-atoms'(Space, Atoms),
+    'match-pattern'(Atoms, Pattern, Template).
+
+% Simple pattern match
+'match-pattern'([], _, []).
+'match-pattern'([H |_T], H, H) :- !.
+'match-pattern'([_H| T], Pattern, Template) :- 'match-pattern'(T, Pattern, Template).
+
 %is_python_space(X):- python_object(X).
 
 ensure_space(_N,_V):- fail.
@@ -161,7 +290,7 @@ ensure_space(_N,_V):- fail.
 % ===============================
 %debug_metta(Call):- skip(Call).
 if_metta_debug(Goal):- getenv('VSPACE_VERBOSE','2'),!,ignore(call(Goal)).
-if_metta_debug(_):-!.
+%if_metta_debug(_):-!.
 if_metta_debug(Goal):- !,ignore(call(Goal)).
 debug_metta(Term):- notrace(if_metta_debug((format('~N; ~@~n',[write_src(Term)])))).
 debug_metta(Msg,Term):- notrace(if_metta_debug((format('~N; ~w: ~@~n',[Msg,write_src(Term)])))),!.
@@ -176,27 +305,27 @@ space_type_method(is_asserted_space,replace_atom,metta_assertdb_replace).
 space_type_method(is_asserted_space,atom_count,metta_assertdb_count).
 space_type_method(is_asserted_space,get_atoms,metta_assertdb_get_atoms).
 space_type_method(is_asserted_space,atom_iter,metta_assertdb_iter).
-%space_type_method(is_asserted_space,query,space_nb_query).
+%space_type_method(is_asserted_space,query,space_nb_query).
 
 %:- dynamic(for_metta/2).
 %for_metta(_,T):- fb_pred(F,A),functor(T,F,A),call(T).
-metta_assertdb_ls(KB):-listing(KB:for_metta/2).
-metta_assertdb_add(KB,New):- decl_m_fb_pred(KB,for_metta,2), MP = KB:for_metta(KB,New), assert_new(MP).
+metta_assertdb_ls(KB):-listing(metta_atom(KB,_)).
+metta_assertdb_add(KB,New):- decl_m_fb_pred(user,metta_atom,2), MP = metta_atom(KB,New), assert_new(MP).
 metta_assertdb_rem(KB,Old):- metta_assertdb_del(KB,Old).
-metta_assertdb_del(KB,Old):- decl_m_fb_pred(KB,for_metta,2), MP = KB:for_metta(KB,Old),
+metta_assertdb_del(KB,Old):- decl_m_fb_pred(user,metta_atom,2), MP = metta_atom(KB,Old),
   copy_term(MP,Copy), clause(MP,true,Ref), MP=@= Copy, !, erase(Ref). % ,metta_assertdb('DEL',Old).
 metta_assertdb_replace(KB,Old,New):- metta_assertdb_del(KB,Old), metta_assertdb_add(KB,New).
 metta_assertdb_count(KB,Count):-
  must_det_ll((
-  decl_m_fb_pred(KB,for_metta,2), full_symbol_count(SL1),
-  MP = KB:for_metta(_,_),
+  decl_m_fb_pred(user,metta_atom,2), full_symbol_count(SL1),
+  MP = metta_atom(KB,_),
   predicate_property(MP,number_of_clauses(SL2)),
   predicate_property(MP,number_of_rules(SL3)),
   %metta_assertdb_ls(KB),
   Count is SL1 + SL2 - SL3)),!.
 metta_assertdb_count(_KB,0):-!.
 %metta_assertdb_count(KB,Count):- writeln(metta_assertdb_count_in(KB,Count)), findall(Atom,for_metta(KB,Atom),AtomsL),length(AtomsL,Count),writeln(metta_assertdb_count_out(KB,Count)).
-metta_assertdb_iter(KB,Atoms):- decl_m_fb_pred(KB,for_metta,2), KB:for_metta(KB,Atoms).
+metta_assertdb_iter(KB,Atoms):- decl_m_fb_pred(user,metta_atom,2), metta_atom(KB,Atoms).
 
 
 
@@ -214,19 +343,19 @@ metta_iter_bind(KB,Query,Vars,VarNames):-
 
 % Query from hyperon.base.GroundingSpace
 space_query_vars(KB,Query,Vars):- is_asserted_space(KB),!,
-    decl_m_fb_pred(KB,for_metta,2), 
+    decl_m_fb_pred(user,metta_atom,2),
     call_metta(KB,Query,Vars),
     debug_metta('RES',space_query_vars(KB,Query,Vars)).
 
 
-metta_assertdb_get_atoms(KB,AtomsL):- decl_m_fb_pred(KB,for_metta,2), findall(Atom,KB:for_metta(KB,Atom),AtomsL).
+metta_assertdb_get_atoms(KB,AtomsL):- decl_m_fb_pred(user,metta_atom,2), findall(Atom,metta_atom(KB,Atom),AtomsL).
 /*
 
-%metta_assertdb_iter_bind(KB,Query,Template,AtomsL):- decl_m_fb_pred(KB,for_metta,2), findall(Template,KB:for_metta(KB,Query),AtomsL).
+%metta_assertdb_iter_bind(KB,Query,Template,AtomsL):- decl_m_fb_pred(user,metta_atom,2), findall(Template,metta_atom(KB,Query),AtomsL).
 metta_assertdb_iter_bind(KB,Query,Vars):-
   ignore(term_variables(Query,Vars)),
   print(metta_assertdb(['match',KB,Query,Vars])),nl,
-  decl_m_fb_pred(KB,for_metta,2), (KB:for_metta(KB,Query)*->true;call_metta_assertdb(KB,Query,Vars)),
+  decl_m_fb_pred(user,metta_atom,2), (metta_atom(KB,Query)*->true;call_metta_assertdb(KB,Query,Vars)),
   metta_assertdb('RES',metta_assertdb_iter_bind(KB,Query,Vars)).
 %metta_assertdb_iter_bind(KB,Atom,Template):- metta_assertdb_stats, findall(Template,metta_assertdb_iter(KB,Atom),VarList).
 
@@ -252,7 +381,7 @@ merge_named(N,V,[N|VarNames],[V|Vars]):-
   merge_named(N,V,VarNames,Vars).
 
 
-call_metta( KB,Query,_Vars):- KB:for_metta(KB,Query).
+call_metta( KB,Query,_Vars):- metta_atom(KB,Query).
 call_metta(_KB,Query,_Vars):- metta_to_pyswip([],Query,Call),!,
   print(user:Call),nl,user:call(Call).
 
@@ -265,8 +394,21 @@ cmpd_to_pyswip(PS,Q,Uery,Call):- atom(Q),maplist(metta_to_pyswip([Q|PS]),Uery,Ce
 cmpd_to_pyswip(PS,"and",Uery,Call):- maplist(metta_to_pyswip(PS),Uery,Args),list_to_conjuncts(Args,Call).
 
 
+'show-metta-def'(Pred, []):-
+  'get-metta-src'(Pred,[_|SrcL]),
+  maplist(write_src_nl,SrcL).
 
+write_src_nl(Src):- format('~N'),write_src(Src),format('~N').
 
+%'get-metta-src'(Pred,[Len|SrcL]):- findall(['AtomDef',Src],'get-metta-src1'(Pred,Src),SrcL), length(SrcL,Len).
+'get-metta-src'(Pred,[Len|SrcL]):- findall(Src,'get-metta-src1'(Pred,Src),SrcL), length(SrcL,Len).
+'get-metta-src1'(Pred,Src):-
+  current_self(Space),
+  metta_atom(Space,F,A,List),
+  once((sub_var(Pred,A)->Src = [F,A,List];sub_var(Pred,F)->Src = [F,A|List])).
+
+% is a quine
+'AtomDef'(X,['AtomDef',X]).
 
 % ===============================
 %       PRINTERS
@@ -292,12 +434,13 @@ write_val(V):- write('"'),write(V),write('"').
 pp_as(V) :- \+ \+ pp_sex(V),flush_output.
 pp_sex(V) :- is_final_write(V),!.
 pp_sex('!'(V)) :- write('!'),!,pp_sex(V).
+pp_sex('exec'(V)) :- write('!'),!,pp_sex(V).
 %pp_sex('') :- format('(EmptyNode null)',[]).
-pp_sex('') :- format('()',[]).
+pp_sex('') :- !, format('""',[]).
 pp_sex([]):-  !, write('()').
 pp_sex('='(N,V)):- allow_concepts, !, format("~N;; ~w == ~n",[N]),!,pp_sex(V).
 pp_sex(V) :- (number(V) ; is_dict(V)), !, print_concept('ValueAtom',V).
-pp_sex(V) :- (symbol(V),symbol_number(V,N)), !, print_concept('ValueAtom',N).
+%pp_sex(V) :- (symbol(V),symbol_number(V,N)), !, print_concept('ValueAtom',N).
 pp_sex(S) :- symbol(S), always_dash_functor(S,D), pp_sax(D),!.
 pp_sex(S) :- string(S),!, print_concept('StringValue',S).
 % Lists are printed with parentheses.
@@ -326,11 +469,17 @@ pp_sex(V) :- no_src_indents,!,pp_sexi(V).
 
 pp_sex(V) :- w_proper_indent(2,w_in_p(pp_sexi(V))).
 
-no_src_indents:- option_else(src_indents,TF,true),!,TF==false.
+no_src_indents:- option_else(src_indents,TF,true),!,TF=='False'.
+
+pp_sexi_l([H,S]):-H=='[...]', write('['),print_items_list(S),write(' ]').
+pp_sexi_l([H,S]):-H=='{...}', write('{'),print_items_list(S),write(' }').
+pp_sexi_l([H|T]):-write('('), pp_sex(H), print_list_as_sexpression(T), write(')').
+
+print_items_list(X):- is_list(X),!,print_list_as_sexpression(X).
+print_items_list(X):- write_src(X).
 
 pp_sexi(V) :- is_final_write(V),!.
-pp_sexi([H|T]) :- is_list(T),!,
-   write('('), pp_sex(H), print_list_as_sexpression(T), write(')').
+pp_sexi([H|T]) :- is_list(T),!,pp_sexi_l([H|T]).
 % Compound terms.
 %pp_sex(Term) :- compound(Term), Term =.. [Functor|Args], write('('),format('(~w ',[Functor]), write_args_as_sexpression(Args), write(')').
 %pp_sex(Term) :- Term =.. ['=',H|Args], length(Args,L),L>2, write('(= '),  pp_sex(H), write('\n\t\t'), maplist(pp_sex(2),Args).
@@ -409,7 +558,7 @@ print_list_as_sexpression([]).
 print_list_as_sexpression([H|T]):- write(' '), pp_sex(H), print_list_as_sexpression(T).
 
 call_sexpr(S):- writeln(call=S).
-
+%call_sexpr(Space,Expr,Result):-
 
 :- dynamic(fb_pred/2).
 
@@ -439,8 +588,8 @@ heartbeat :-
     ).
 
 metta_stats:- gc_now,
-   writeln('\n\n\n\n\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'),
-   writeln('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'),
+   writeln('\n\n\n\n\n\n;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'),
+   writeln(';~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'),
    full_symbol_count(SL),
    format("~N~n; Total\t\tAtoms (Atomspace size): ~`.t ~D~108|~n",[SL]),
    get_time(CurrentTime), nb_setval(last_printed_time, CurrentTime),
@@ -456,7 +605,7 @@ metta_stats:- gc_now,
    RM is Mem-AS,
    PA is RM//(SL+1),
    APS is 60*floor(SL/(TotalSeconds+1)),
-   ACS is AS//(Concepts+1),     
+   ACS is AS//(Concepts+1),
 
    pl_stats('SymbolAtoms',Concepts),
    pl_stats('Random samples',CTs),
