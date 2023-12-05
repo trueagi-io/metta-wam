@@ -152,7 +152,7 @@ function print_report() {
                     "$success" "$failure" "$percent%" " $directory - "
             fi
         done
-    ) | sort -t'|' -k5,5r  >> PASS_FAIL.md
+    ) | sort -t'_' -k3,3r -k2,2  >> PASS_FAIL.md
 
     echo "" >> PASS_FAIL.md
 
