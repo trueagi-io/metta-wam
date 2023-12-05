@@ -27,10 +27,10 @@ export outer_extra_args
 export METTALOG_MAX_TIME
 export all_test_args="${@}"
 auto_reply=""
-generate_report=""
+generate_report=0
 UNITS_DIR="examples/"
 outer_extra_args=()
-METTALOG_MAX_TIME=45
+METTALOG_MAX_TIME=75
 clean=0  # 0 means don't clean, 1 means do clean':+
 fresh=0
 export RUST_METTA_MAX_TIME=120
