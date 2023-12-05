@@ -268,7 +268,7 @@ function run_tests() {
         else
             echo "Completed (EXITCODE=$TEST_EXIT_CODE) under $METTALOG_MAX_TIME seconds: ${TEST_CMD}"
         fi
-        ./scripts/total_loonits.sh
+        #/scripts/total_loonits.sh
     }
 
     # Process assert_files

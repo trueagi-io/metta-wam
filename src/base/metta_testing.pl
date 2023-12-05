@@ -4,7 +4,7 @@
   This work may not be copied and used by anyone other than the author Douglas Miles
   unless permission or license is granted (contact at business@logicmoo.org)
 */
-:- encoding(iso_latin_1).
+%:- encoding(iso_latin_1).
 
 :- ensure_loaded(library(occurs)).
 :- ensure_loaded(metta_utils).
@@ -34,9 +34,14 @@ get_test_name(Number,TestName) :-
    ((nb_current(loading_file,FilePath),FilePath\==[])->true; FilePath='SOME/UNIT-TEST'),
    make_test_name(FilePath, Number, TestName).
 
+ensure_basename(FilePath,FilePath):- \+ directory_file_path(('.'), _, FilePath),!.
+ensure_basename(FilePath0,FilePath):-
+  absolute_file_name(FilePath0,FilePath),!.
+ensure_basename(FilePath,FilePath).
 
-make_test_name(FilePath, Number, TestName) :-
+make_test_name(FilePath0, Number, TestName) :-
     % Extract the file name and its parent directory from the file path
+    ensure_basename(FilePath0,FilePath),
     file_base_name(FilePath, FileName),
     directory_file_path(ParentDir, FileName, FilePath),
     file_base_name(ParentDir, ParentDirBase),
@@ -54,10 +59,14 @@ make_test_name(FilePath, Number, TestName) :-
 
 
 %color_g_mesg(C,G):- silent_loading,!.
-color_g_mesg(C,G):- color_g_mesg_ok(C,G).
+color_g_mesg(C,G):- notrace((check_silent_loading,color_g_mesg_ok(C,G))).
 color_g_mesg_ok(C,G):-
-  wots(S,user:call(G)),
-  (S == "" -> true ; ansi_format([fg(C)], '~N~w~n', [S])),!.
+ notrace((  wots(S,user:call(G)),
+  (S == "" -> true ; our_ansi_format(C, '~w~n', [S])))),!.
+
+our_ansi_format(C, Fmt,Args):- \+ atom(C), % set_stream(current_output,encoding(utf8)),
+    ansi_format(C, Fmt,Args).
+our_ansi_format(C, Fmt,Args):- our_ansi_format([fg(C)], Fmt,Args).
 
 print_current_test:-
    loonit_number(Number),
@@ -164,7 +173,8 @@ loon_metta(File) :-
 % set_exec_num/2
 % Update or assert the execution number for the given file.
 
-set_exec_num(FileName, Val) :-
+set_exec_num(SFileName, Val) :-
+  absolute_file_name(SFileName,FileName),
     (   retract(file_exec_num(FileName, _)) % If an entry exists, retract it
     ->  true
     ;   true                               % Otherwise, do nothing
@@ -174,7 +184,7 @@ set_exec_num(FileName, Val) :-
 % get_exec_num/2
 % Retrieve the execution number for the given file. If none exists, it returns 0.
 get_exec_num(Val):-
-    current_exec_file(FileName),
+  current_exec_file_abs(FileName),
     file_exec_num(FileName, Val),!.
 get_exec_num(FileName, Val) :-
     (   file_exec_num(FileName, CurrentVal)
@@ -182,10 +192,14 @@ get_exec_num(FileName, Val) :-
     ;   Val = 0
     ).
 
+ current_exec_file_abs(FileName):-
+        current_exec_file(SFileName),
+        absolute_file_name(SFileName,FileName),!.
+
 
 get_expected_result(Ans):-
  ignore((
-  current_exec_file(FileName),
+  current_exec_file_abs(FileName),
   file_exec_num(FileName, Nth),
   file_answers(FileName, Nth, Ans))),!.
 
@@ -193,7 +207,7 @@ get_expected_result(Ans):-
 
 got_exec_result(Val):-
  ignore((
-  current_exec_file(FileName),
+  current_exec_file_abs(FileName),
   file_exec_num(FileName, Nth),
   file_answers(FileName, Nth, Ans),
   got_exec_result(Val,Ans))).
@@ -201,7 +215,7 @@ got_exec_result(Val):-
 
 got_exec_result(Val,Ans):-
  must_det_ll((
-  current_exec_file(FileName),
+  current_exec_file_abs(FileName),
   file_exec_num(FileName, Nth),
   Nth100 is Nth+100,
   get_test_name(Nth100,TestName),
@@ -219,7 +233,7 @@ current_exec_file(FileName):- nb_current(loading_file,FileName).
 
 % inc_exec_num/1
 % Increment the execution number for the given file. If no entry exists, initialize it to 1.
-inc_exec_num :- current_exec_file(FileName),!,inc_exec_num(FileName).
+inc_exec_num :- current_exec_file_abs(FileName),!,inc_exec_num(FileName).
 inc_exec_num(FileName) :-
     (   retract(file_exec_num(FileName, CurrentVal))
     ->  NewVal is CurrentVal + 1
@@ -228,10 +242,14 @@ inc_exec_num(FileName) :-
     asserta(file_exec_num(FileName, NewVal)).
 
 
-load_answer_file(File) :-
+load_answer_file(File):-  ( \+ atom(File); \+ is_absolute_file_name(File); \+ exists_file(File)),
+    absolute_file_name(File,AbsFile), File\=@=AbsFile, load_answer_file_now(AbsFile),!.
+load_answer_file(File):- load_answer_file_now(File),!.
+load_answer_file_now(File) :-
     ignore((
     ensure_extension(File, answers, AnsFile),
     remove_specific_extension(AnsFile, answers, StoredAs),
+    set_exec_num(StoredAs,1),
     wdmsg(load_answer_file(AnsFile,StoredAs)),
     load_answer_file(AnsFile,StoredAs))).
 
@@ -241,7 +259,8 @@ load_answer_file(AnsFile,StoredAs):-
         ;   (setup_call_cleanup(
                 open(AnsFile, read, Stream, [encoding(utf8)]),
                 (load_answer_stream(1,StoredAs, Stream)),
-                close(Stream))))).
+                close(Stream))))),
+  set_exec_num(StoredAs,1),!.
 
 :- debug(metta(answers)).
 load_answer_stream(_Nth, StoredAs, Stream):- at_end_of_stream(Stream),!,
@@ -250,18 +269,44 @@ load_answer_stream(Nth, StoredAs, Stream):- read_line_to_string(Stream,String),
     writeln(Nth = String),
     load_answer_stream(Nth, StoredAs, String, Stream).
 
-load_answer_stream(Nth, StoredAs, String, Stream):- string_concat("[",_,String),!,
+load_answer_stream(Nth, StoredAs, String, Stream):- % string_concat("[",_,String),!,
     parse_answer_string(String,Metta),!,
+    %if_t(sub_var(',',Metta),rtrace(parse_answer_string(String,_Metta2))),
     assert(file_answers(StoredAs,Nth,Metta)),
+    skip(must_det_ll(\+ sub_var(',',Metta))),
     Nth2 is Nth+1,load_answer_stream(Nth2, StoredAs, Stream).
 load_answer_stream(Nth, StoredAs, _, Stream):- load_answer_stream(Nth, StoredAs, Stream).
 
 parse_answer_string("[]",[]):- !.
-parse_answer_string(String,Metta):- string_concat("(",_,String),!,parse_sexpr_metta(String,Metta),!.
-parse_answer_string(String,Metta):- string_concat("[",Mid,String),string_concat(Inner,"]",Mid),
-  atomics_to_string(["(",Inner,")"],Str),!,parse_answer_string(Str,Metta),!.
-parse_answer_string(String,Metta):- String=Metta,!.
+%parse_answer_string(String,Metta):- string_concat("(",_,String),!,parse_sexpr_metta(String,Metta),!.
+parse_answer_string(String,_Metta):- string_concat("[(Error (assert",_,String),!,fail.
+parse_answer_string(String,_Metta):- string_concat("Expected: [",Mid,String),string_concat(_Expected_Inner,"]",Mid),!,fail.
+parse_answer_string(String,Metta):- string_concat("Got: [",Mid,String),string_concat(Got_Inner,"]",Mid),!,parse_answer_inner(Got_Inner,Metta).
+parse_answer_string(String,Metta):- string_concat("[",Mid,String),string_concat(Inner0,"]",Mid),!,parse_answer_inner(Inner0,Metta).
 
+
+parse_answer_inner(Inner0,Metta):- must_det_ll(( replace_in_string([', '=' , '],Inner0,Inner), parse_answer_str(Inner,Metta),  
+     skip((\+ sub_var(',',rc(Metta)))))).
+
+parse_answer_str(Inner,[C|Metta]):- 
+    atomics_to_string(["(",Inner,")"],Str),
+    parse_sexpr_metta(Str,CMettaC), CMettaC=[C|MettaC],
+   ((remove_m_commas(MettaC,Metta),
+     \+ sub_var(',',rc(Metta)))).
+parse_answer_str(Inner0,Metta):- atomic_list_concat(InnerL,' , ',Inner0), maplist(atom_string,InnerL,Inner), maplist(parse_sexpr_metta,Inner,Metta),skip((must_det_ll(( \+ sub_var(',',rc2(Metta)))))),!.
+parse_answer_str(Inner0,Metta):- 
+   (( replace_in_string([' , '=' '],Inner0,Inner),
+   atomics_to_string(["(",Inner,")"],Str),!,
+   parse_sexpr_metta(Str,Metta),!, 
+   skip((must_det_ll(\+ sub_var(',',rc3(Metta))))), 
+   skip((\+ sub_var(',',rc(Metta)))))).
+
+%parse_answer_string(String,Metta):- String=Metta,!,fail.
+
+remove_m_commas(Metta,Metta):- \+ sub_var(',',Metta),!.
+remove_m_commas([C,H|T],[H|TT]):- C=='and', !, remove_m_commas(T,TT).
+remove_m_commas([C,H|T],[H|TT]):- C==',', !, remove_m_commas(T,TT).
+remove_m_commas([H|T],[H|TT]):- !, remove_m_commas(T,TT).
 
 
 % Example usage:
@@ -294,7 +339,7 @@ remove_specific_extension(OriginalFileName, Extension, FileNameWithoutExtension)
 
 
 quick_test:-
-  set_prolog_flag(encoding,iso_latin_1),
+  %set_prolog_flag(encoding,iso_latin_1),
    forall(quick_test(Test),
                   forall(open_string(Test,Stream),
                     load_metta_stream('&self',Stream))).
