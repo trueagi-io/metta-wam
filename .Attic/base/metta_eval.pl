@@ -1182,7 +1182,7 @@ catch_warn(G):- quietly(catch(G,E,(wdmsg(catch_warn(G)-->E),fail))).
 catch_nowarn(G):- quietly(catch(G,error(_,_),fail)).
 
 
-as_tf(G,TF):- catch_nowarn((call(G)*->TF='True';TF='False')).
+as_tf(G,TF):-  G\=[_|_], catch_nowarn((call(G)*->TF='True';TF='False')).
 %eval_selfless(['==',X,Y],TF):- as_tf(X=:=Y,TF),!.
 %eval_selfless(['==',X,Y],TF):- as_tf(X=@=Y,TF),!.
 %eval_selfless(['=',X,Y],TF):-!, as_tf(X #= Y,TF).
