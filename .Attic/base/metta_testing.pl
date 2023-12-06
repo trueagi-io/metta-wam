@@ -61,8 +61,9 @@ make_test_name(FilePath0, Number, TestName) :-
 %color_g_mesg(C,G):- silent_loading,!.
 color_g_mesg(C,G):- notrace((check_silent_loading,color_g_mesg_ok(C,G))).
 color_g_mesg_ok(C,G):-
- notrace((  wots(S,user:call(G)),
-  (S == "" -> true ; our_ansi_format(C, '~w~n', [S])))),!.
+ notrace((
+   wots(S,user:call(G)),
+     (S == "" -> true ; our_ansi_format(C, '~w~n', [S])))),!.
 
 our_ansi_format(C, Fmt,Args):- \+ atom(C), % set_stream(current_output,encoding(utf8)),
     ansi_format(C, Fmt,Args).
@@ -285,20 +286,20 @@ parse_answer_string(String,Metta):- string_concat("Got: [",Mid,String),string_co
 parse_answer_string(String,Metta):- string_concat("[",Mid,String),string_concat(Inner0,"]",Mid),!,parse_answer_inner(Inner0,Metta).
 
 
-parse_answer_inner(Inner0,Metta):- must_det_ll(( replace_in_string([', '=' , '],Inner0,Inner), parse_answer_str(Inner,Metta),  
+parse_answer_inner(Inner0,Metta):- must_det_ll(( replace_in_string([', '=' , '],Inner0,Inner), parse_answer_str(Inner,Metta),
      skip((\+ sub_var(',',rc(Metta)))))).
 
-parse_answer_str(Inner,[C|Metta]):- 
+parse_answer_str(Inner,[C|Metta]):-
     atomics_to_string(["(",Inner,")"],Str),
     parse_sexpr_metta(Str,CMettaC), CMettaC=[C|MettaC],
    ((remove_m_commas(MettaC,Metta),
      \+ sub_var(',',rc(Metta)))).
 parse_answer_str(Inner0,Metta):- atomic_list_concat(InnerL,' , ',Inner0), maplist(atom_string,InnerL,Inner), maplist(parse_sexpr_metta,Inner,Metta),skip((must_det_ll(( \+ sub_var(',',rc2(Metta)))))),!.
-parse_answer_str(Inner0,Metta):- 
+parse_answer_str(Inner0,Metta):-
    (( replace_in_string([' , '=' '],Inner0,Inner),
    atomics_to_string(["(",Inner,")"],Str),!,
-   parse_sexpr_metta(Str,Metta),!, 
-   skip((must_det_ll(\+ sub_var(',',rc3(Metta))))), 
+   parse_sexpr_metta(Str,Metta),!,
+   skip((must_det_ll(\+ sub_var(',',rc3(Metta))))),
    skip((\+ sub_var(',',rc(Metta)))))).
 
 %parse_answer_string(String,Metta):- String=Metta,!,fail.

@@ -328,7 +328,7 @@ is_metta_data_functor(F):-
 is_special_builtin('case').
 is_special_builtin(':').
 
-is_special_builtin('=').
+%is_special_builtin('=').
 is_special_builtin('->').
 is_special_builtin('bind!').
 %is_special_builtin('new-space').
@@ -343,12 +343,12 @@ is_special_builtin('match').
 is_special_builtin('call').
 is_special_builtin('let').
 is_special_builtin('let*').
-%is_special_builtin('nop').
+is_special_builtin('nop').
 is_special_builtin('assertEqual').
 is_special_builtin('assertEqualToResult').
 is_special_builtin('collapse').
 is_special_builtin('superpose').
-is_special_builtin('==').
+%is_special_builtin('==').
 
 is_metta_builtin(Special):- is_special_builtin(Special).
 
