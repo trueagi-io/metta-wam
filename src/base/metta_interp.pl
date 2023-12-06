@@ -72,6 +72,8 @@ set_is_unit_test(TF):-
   set_option_value('trace-on-eval',TF),
   set_option_value('trace-on-pass',false),
   set_option_value('trace-on-fail',false),
+  set_option_value('exec',rtrace),
+  set_option_value('eval',rtrace),
   !.
 
 :- set_is_unit_test(true).
@@ -1436,8 +1438,12 @@ eval(Form):-
   current_space(Self),
    do_metta(true,exec,Self,Form,_Out).
 
+
 eval(Form,Out):-
   current_space(Self),
+  eval(Self,Form,Out).
+
+eval(Self,Form,Out):-
    do_metta(prolog,exec,Self,Form,Out).
 
 name_vars(X='$VAR'(X)).
@@ -1465,7 +1471,7 @@ interactively_do_metta_exec(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut
 
    (forall_interactive(
     From, WasInteractive,may_rtrace(GG),
-     ( (Complete==true->!;true),
+     ((Complete==true->!;true),
        %repeat,
        nb_setarg(1,Result,Output),
        read_pending_codes(user_input,_,[]),
@@ -1481,12 +1487,13 @@ interactively_do_metta_exec(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut
          (write("More Solutions? "),get_single_char_key(C), writeq(key=C),nl,
          (C=='b' -> (once(repl),fail) ;
          (C=='m' -> make ;
-         (C=='t' -> set_debug(eval,true) ;
+         (C=='t' -> (nop(set_debug(eval,true)),rtrace) ;
+         (C=='T' -> (set_debug(eval,true));
          (C==';' -> true ;
          (C==esc('[A',[27,91,65]) -> nb_setarg(1, Control, leap) ;
          (C=='l' -> nb_setarg(1, Control, leap) ;
          (((C=='\n');(C=='\r')) -> (!,fail);
-         (!,fail))))))))));((Complete==true) ->! ; true)))
+         (!,fail)))))))))));((Complete==true) ->! ; true)))
                     *-> (Result = res(FOut))
                     ; (flag(result_num,ResNum,ResNum),(ResNum==0->(format('~N<no-results>~n~n'),!,fail);true))).
 
@@ -1496,10 +1503,10 @@ get_single_char_key(27,esc(A,[27|O])):- !,read_pending_codes(user_input,O,[]),na
 get_single_char_key(C,A):- name(A,[C]).
 
 forall_interactive(file(_),false,Goal,After):- !, forall(Goal,After).
-forall_interactive(prolog,false,Goal,After):- !, Goal,ignore(After).
+forall_interactive(prolog,false,Goal,After):- !, Goal,quietly(After).
 forall_interactive(From,WasInteractive,Goal,After):-
    (is_interactive(From) -> WasInteractive = true ; WasInteractive = false),!,
-    forall(Goal,After).
+    forall(Goal,quietly(After)).
 
 print_var(Name=Var) :- print_var(Name,Var).
 print_var(Name,Var):-  write('$'),write(Name), write(' = '), write_src(Var), nl.
@@ -1676,12 +1683,12 @@ vu(trace,_Value):- trace.
 really_trace:- once(option_value('exec',rtrace);option_value('eval',rtrace);is_debugging((exec));is_debugging((eval))).
 % !(pragma! exec rtrace)
 may_rtrace(Goal):- really_trace,!,  really_rtrace(Goal).
-may_rtrace(Goal):- time_eval((Goal))*->true;really_rtrace(Goal).
+may_rtrace(Goal):- rtrace_on_existence_error(time_eval(dcall(Goal)))*->true;really_rtrace(Goal).
 really_rtrace(Goal):- use_metta_compiler,!,rtrace(call(Goal)).
 really_rtrace(Goal):- with_debug((eval),with_debug((exec),Goal)).
 
-
-
+rtrace_on_existence_error(G):- !, catch(G,E,(wdmsg(E),rtrace(G))).
+%rtrace_on_existence_error(G):- catch(G,error(existence_error(procedure,W),Where),rtrace(G)).
 
 % Measures the execution time of a Prolog goal and displays the duration in seconds,
 % milliseconds, or microseconds, depending on the execution time.
@@ -1724,13 +1731,32 @@ time_eval(What,Goal) :-
             ;( Micro is Milliseconds * 1_000,
               format('; ~w took ~6f secs. (~2f microseconds) ~n', [What, Seconds, Micro])))).
 
+example0(_):- fail.
+example1(a). example1(_):- fail.
+example2(a). example2(b). example2(_):- fail.
+example3(a). example3(b). example3(c). example3(_):- fail.
 
+%dcall(X):- (call(X),deterministic(YN)),trace,((YN==true)->!;true).
+ dcall(XX):-
+   USol = sol(dead),
+   copy_term(XX,X),
+   call_nth(USol,X,Nth,Det,Prev),
+   %wdmsg(call_nth(USol,X,Nth,Det,Prev)),
+   XX=Prev,
+   (Det==yes -> (!, (XX=Prev;XX=X)) ;
+   (((var(Nth) -> ( ! , Prev\==dead) ;
+      true),
+   (Nth==1 -> ! ; true)))).
 
+call_nth(USol,XX,Nth,Det,Prev):-
+  repeat,
+   ((call_nth(XX,Nth),deterministic(Det),arg(1,USol,Prev))*->
+         ( nb_setarg(1,USol,XX))
+         ; (!, arg(1,USol,Prev))).
 
 catch_red(Term):- catch(Term,E,pp_m(red,in(Term,E))).
 
 s2p(I,O):- sexpr_s2p(I,O),!.
-
 
 discover_head(Self,Load,Head):-
  ignore(([Fn|PredDecl]=Head,
