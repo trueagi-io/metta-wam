@@ -355,16 +355,16 @@ load_metta(Filename):-
  load_metta('&self',Filename).
 
 
+load_metta(_Self,Filename):- Filename=='--repl',!,repl.
+load_metta(Self,Filename):-
+  (\+ atom(Filename); \+ exists_file(Filename)),!,
+  with_wild_path(load_metta(Self),Filename),!,loonit_report.
 load_metta(Self,RelFilename):-
  atom(RelFilename),
  exists_file(RelFilename),!,
  absolute_file_name(RelFilename,Filename),
  track_load_into_file(Filename,
    include_metta(Self,RelFilename)).
-load_metta(_Self,Filename):- Filename=='--repl',!,repl.
-load_metta(Self,Filename):-
-  (\+ atom(Filename); \+ exists_file(Filename)),!,
-  with_wild_path(load_metta(Self),Filename),!,loonit_report.
 
 include_metta(Self,Filename):-
   (\+ atom(Filename); \+ exists_file(Filename)),!,
@@ -388,11 +388,10 @@ load_metta_file_stream(Filename,Self,In):-
        set_exec_num(Filename,1),
        load_answer_file(Filename),
        set_exec_num(Filename,0))),
-     ((repeat,
-        must_det_ll((
+       once((repeat, ((
           ((nb_current(read_mode,Mode),Mode\==[])->true;Mode=load),
             once(read_metta(In,Expr)), %write_src(read_metta=Expr),nl,
-            once((do_metta(file(Filename),Mode,Self,Expr,_O)->true;
+            must_det_ll((do_metta(file(Filename),Mode,Self,Expr,_O)->true;
                  pp_m(unknown_do_metta(file(Filename),Mode,Self,Expr)))),
            flush_output)),
           at_end_of_stream(In)))))),!.
@@ -844,7 +843,8 @@ type_decl('Variable').
 metta_atom_stdlib([:, Type, 'Type']):- type_decl(Type).
 metta_atom_stdlib([:, Op, [->|List]]):- op_decl(Op,Params,ReturnType),append(Params,[ReturnType],List).
 
-metta_atom(KB, [F, A| List]):- nonvar(F), KB=='&flybase',fb_pred(F, Len), length([A|List],Len),apply(F,[A|List]).
+metta_atom(KB, [F, A| List]):- KB=='&flybase',fb_pred(F, Len), length([A|List],Len),apply(F,[A|List]).
+%metta_atom(KB, [F|List]):- KB=='&flybase',fb_pred(F, Len), length(List,Len),apply(F,List).
 metta_atom(Space, Atom):- typed_list(Space,_,L),!, member(Atom,L).
 metta_atom(KB,Atom):- nonvar(KB), nonvar(Atom), metta_atom_stdlib(Atom).
 
@@ -853,7 +853,6 @@ metta_atom(KB,Atom):- nonvar(KB), nonvar(Atom), metta_atom_stdlib(Atom).
 
 
 
-%metta_atom(KB, [F|List]):- KB=='&flybase',fb_pred(F, Len), length(List,Len),apply(F,List).
 %metta_atom(KB,[F,A|List]):- metta_atom(KB,F,A,List), F \== '=',!.
 metta_defn(KB,Head,Body):- metta_atom(KB,['=',Head,Body]).
 
@@ -865,7 +864,7 @@ maybe_xform(_OBO,_XForm):- !, fail.
 metta_anew1(Load,_OBO):- var(Load),trace,!.
 metta_anew1(Load,OBO):- maybe_xform(OBO,XForm),!,metta_anew1(Load,XForm).
 
-
+metta_anew1(Ch,OBO):-  metta_interp_mode(Ch,Mode), !, metta_anew1(Mode,OBO).
 metta_anew1(load,OBO):- OBO= metta_atom(Space,Atom),!,'add-atom'(Space, Atom).
 metta_anew1(unload,OBO):- OBO= metta_atom(Space,Atom),!,'remove-atom'(Space, Atom).
 
@@ -878,6 +877,7 @@ metta_anew1(unload,OBO):- subst_vars(OBO,Cl),load_hook(unload,OBO),
 
 metta_anew2(Load,_OBO):- var(Load),trace,!.
 metta_anew2(Load,OBO):- maybe_xform(OBO,XForm),!,metta_anew2(Load,XForm).
+metta_anew2(Ch,OBO):-  metta_interp_mode(Ch,Mode), !, metta_anew2(Mode,OBO).
 metta_anew2(load,OBO):- must_det_ll((load_hook(load,OBO),subst_vars_not_last(OBO,Cl),assertz_if_new(Cl))). %to_metta(Cl).
 metta_anew2(unload,OBO):- subst_vars_not_last(OBO,Cl),load_hook(unload,OBO),
   expand_to_hb(Cl,Head,Body),
@@ -1249,7 +1249,7 @@ do_metta_ exec(From,Mode,Self,TermV):-
   \+ \+ write_exec(TermV),
   into_metta_callable(Self,TermV,Term,X,NamedVarsList,Was),
   Control = contrl(each),
-  forall(may_rtrace(Term),
+  forall(may_rt race(rtrace(Term)),
     (( notrace(ignore(((color_g_mesg(yellow,
      ((write(' '),
         write_src(X),nl,
@@ -1280,7 +1280,7 @@ do_metta_ exec(From,Mode,_Self,TermV,X,NamedVarsList,Was):- use_metta_compiler, 
   %NamedVarsList=[_=RealRealRes|_],
   var(RealRes),
   X = RealRes,
-  may_rtrace(Term).
+  may_ rtrace(Term).
 
 do_metta_ exec(From,Mode,Self,TermV,X,NamedVarsList,Was):-!,
  notrace(( must_det_ll((
@@ -1296,7 +1296,7 @@ do_metta_ exec(From,Mode,Self,TermV,X,NamedVarsList,Was):-!,
   nl,print(subst_vars(TermV,Term,NamedVarsList,Vars)),nl)))),
   option_else('stack-max',StackMax,100),
   nop(maplist(verbose_unify,Vars)))))),
-  may_rtrace(eval_args(StackMax,Self,Term,X)).
+  may_r trace(eval_args(StackMax,Self,Term,X)).
 */
 
 
@@ -1458,16 +1458,18 @@ interactively_do_metta_exec(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut
     %GG = interact(['Result'=X|NamedVarsList],Term,trace_off),
     (((From = file(_Filename), option_value('exec',skip),  \+ always_exec(BaseEval)))
      -> GG = (skip(Term),deterministic(Complete))
-        ; GG =          (Term,deterministic(Complete))),
+        ; GG =          (dcall(Term),deterministic(Complete))),
     Result = res(FOut),
     !, % metta_toplevel
    flag(result_num,_,0),
+  with_indents(false,
   \+ \+ (
     maplist(name_vars,NamedVarsList),
     name_vars('OUT'=X),
     %add_history_src(exec(BaseEval)),
   color_g_mesg('#fa90f6', (write('; '), with_indents(false,write_src(exec(BaseEval))))),
-  color_g_mesg('#da70d6', (write('% DEBUG: '), writeq(eval_args(100,Self,BaseEval,X)),writeln('.')))))),
+  if_t(is_interactive(From),if_t(is_list(BaseEval),add_history_src(exec(TermV)))),
+  color_g_mesg('#da70d6', (write('% DEBUG: '), writeq(eval_args(100,Self,BaseEval,X)),writeln('.'))))))),
 
    (forall_interactive(
     From, WasInteractive,may_rtrace(GG),

@@ -1,4 +1,334 @@
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+Finding Publications That Link Multiple Mutations
+SQL Version:
+
+SELECT P1.title AS Publication1, M1.name AS Mutation1, P2.title AS Publication2, M2.name AS Mutation2
+FROM Mutation AS M1
+INNER JOIN MutationPublication AS MP1 ON M1.id = MP1.mutation_id
+INNER JOIN Publication AS P1 ON MP1.publication_id = P1.id
+INNER JOIN MutationPublication AS MP2 ON M1.id != MP2.mutation_id
+INNER JOIN Mutation AS M2 ON MP2.mutation_id = M2.id
+INNER JOIN Publication AS P2 ON MP2.publication_id = P2.id AND P1.id = P2.id
+WHERE M1.name != M2.name
+*/
+
+
+
+linked_mutations(Publication1, Mutation1, Publication2, Mutation2) :-
+    mutation(M1_id, Mutation1),
+    mutation_publication(M1_id, MP1_id),
+    publication(MP1_id, Publication1),
+    mutation_publication(M2_id, MP2_id),
+    mutation(M2_id, Mutation2),
+    publication(MP2_id, Publication2),
+    M1_id \= M2_id,
+    Mutation1 \= Mutation2,
+    MP1_id = MP2_id.
+
+/*
+ Publications Discussing Mutations in Related Genes
+SQL Version:
+
+SELECT G1.name AS Gene1, M1.name AS Mutation1, G2.name AS Gene2, M2.name AS Mutation2, P.title
+FROM Gene AS G1
+INNER JOIN Mutation AS M1 ON G1.id = M1.gene_id
+INNER JOIN MutationPublication AS MP1 ON M1.id = MP1.mutation_id
+INNER JOIN Publication AS P ON MP1.publication_id = P.id
+INNER JOIN Mutation AS M2 ON P.id IN (SELECT publication_id FROM MutationPublication WHERE mutation_id = M2.id)
+INNER JOIN Gene AS G2 ON M2.gene_id = G2.id AND G1.id != G2.id
+WHERE G1.function = G2.function OR G1.pathway = G2.pathway
+*/
+
+
+
+related_genes_publication(Gene1, Mutation1, Gene2, Mutation2, Title) :-
+    gene(G1_id, Gene1, Function1, Pathway1),
+    mutation(M1_id, Mutation1),
+    mutation_gene(M1_id, G1_id),
+    mutation_publication(M1_id, MP1_id),
+    publication(MP1_id, Title),
+    gene(G2_id, Gene2, Function2, Pathway2),
+    mutation(M2_id, Mutation2),
+    mutation_gene(M2_id, G2_id),
+    mutation_publication(M2_id, MP2_id),
+    publication(MP2_id, Title),
+    G1_id \= G2_id,
+    (Function1 = Function2; Pathway1 = Pathway2).
+
+/*
+
+ Publications Linking Phenotypic Effects of Different Mutations
+SQL Version:
+
+SELECT M1.name AS Mutation1, P1.description AS Phenotype1, M2.name AS Mutation2, P2.description AS Phenotype2, Pub.title
+FROM Mutation AS M1
+INNER JOIN Phenotype AS P1 ON M1.phenotype_id = P1.id
+INNER JOIN MutationPublication AS MP1 ON M1.id = MP1.mutation_id
+INNER JOIN Publication AS Pub ON MP1.publication_id = Pub.id
+INNER JOIN MutationPublication AS MP2 ON Pub.id = MP2.publication_id AND MP1.mutation_id != MP2.mutation_id
+INNER JOIN Mutation AS M2 ON MP2.mutation_id = M2.id
+INNER JOIN Phenotype AS P2 ON M2.phenotype_id = P2.id
+*/
+
+
+
+linked_phenotypes(Publication, Mutation1, Phenotype1, Mutation2, Phenotype2) :-
+    mutation(M1_id, Mutation1),
+    mutation_phenotype(M1_id, P1_id),
+    phenotype(P1_id, Phenotype1),
+    mutation_publication(M1_id, MP1_id),
+    publication(MP1_id, Publication),
+    mutation_publication(M2_id, MP2_id),
+    mutation(M2_id, Mutation2),
+    mutation_phenotype(M2_id, P2_id),
+    phenotype(P2_id, Phenotype2),
+    publication(MP2_id, Publication),
+    M1_id \= M2_id.
+
+
+
+
+/*
+
+ Gene Expression and Phenotypes
+SQL Version:
+
+
+SELECT Gene.name, Expression.tissue, Phenotype.description
+FROM Gene
+INNER JOIN Expression ON Gene.id = Expression.gene_id
+INNER JOIN Phenotype ON Gene.id = Phenotype.gene_id
+WHERE Expression.tissue = 'wing disc' AND Phenotype.description LIKE '%wing defects%'
+*/
+
+
+
+gene_expression_phenotype(GeneName, Tissue, PhenotypeDescription) :-
+    gene(GeneId, GeneName),
+    expression(GeneId, Tissue),
+    Tissue = 'wing disc',
+    phenotype(GeneId, PhenotypeDescription),
+    sub_string(PhenotypeDescription, _, _, _, 'wing defects').
+
+/*
+ Protein-Protein Interactions
+SQL Version:
+
+SELECT Protein1.name, Protein2.name
+FROM Protein AS Protein1
+INNER JOIN Interaction ON Protein1.id = Interaction.protein1_id
+INNER JOIN Protein AS Protein2 ON Interaction.protein2_id = Protein2.id
+WHERE Protein1.name = 'protein_of_interest'
+*/
+
+
+
+protein_interaction(ProteinName1, ProteinName2) :-
+    protein(Protein1Id, ProteinName1),
+    ProteinName1 = 'protein_of_interest',
+    interaction(Protein1Id, Protein2Id),
+    protein(Protein2Id, ProteinName2).
+
+/*
+ Genetic Modifiers of a Mutation
+SQL Version:
+
+SELECT ModifierGene.name, Mutation.name, ModifiedPhenotype.description
+FROM Gene AS ModifierGene
+INNER JOIN GeneticInteraction ON ModifierGene.id = GeneticInteraction.modifier_gene_id
+INNER JOIN Mutation ON GeneticInteraction.mutation_id = Mutation.id
+INNER JOIN Phenotype AS ModifiedPhenotype ON Mutation.phenotype_id = ModifiedPhenotype.id
+WHERE Mutation.name = 'specific_mutation'
+*/
+
+
+
+genetic_modifier(ModifierGeneName, MutationName, PhenotypeDescription) :-
+    gene(ModifierGeneId, ModifierGeneName),
+    genetic_interaction(ModifierGeneId, MutationId),
+    mutation(MutationId, MutationName),
+    MutationName = 'specific_mutation',
+    phenotype(MutationId, PhenotypeDescription).
+
+/*
+4. Gene Ontology (GO) Annotations
+SQL Version:
+
+SELECT Gene.name, GOAnnotation.GO_term, GOAnnotation.description
+FROM Gene
+INNER JOIN GOAnnotation ON Gene.id = GOAnnotation.gene_id
+WHERE Gene.name IN ('gene1', 'gene2', 'gene3')
+*/
+
+
+
+gene_go_annotation(GeneName, GOTerm, GODescription) :-
+    gene(GeneId, GeneName),
+    member(GeneName, ['gene1', 'gene2', 'gene3']),
+    go_annotation(GeneId, GOTerm, GODescription).
+
+
+/*
+
+SELECT Strain.name, StockCenter.name, StockCenter.location
+FROM Strain
+INNER JOIN StockCenter ON Strain.stock_center_id = StockCenter.id
+WHERE Strain.name LIKE '%desired_trait%'
+ChatGPT
+Translating these SQL queries to Prolog predicates involves creating a set of Prolog facts and rules that mimic the structure and logic of the SQL database and queries. Here's how each of these queries can be represented in Prolog:
+
+ Gene Alleles and Associated Diseases
+
+SELECT Gene.name, Allele.name, Disease.human_disease
+FROM Gene
+INNER JOIN Allele ON Gene.id = Allele.gene_id
+LEFT JOIN Disease ON Allele.disease_id = Disease.id
+WHERE Gene.name = 'target_gene_name'
+*/
+
+
+
+gene_allele_disease(GeneName, AlleleName, HumanDisease) :-
+    gene(GeneId, GeneName),
+    GeneName = 'target_gene_name',
+    allele(GeneId, AlleleId, AlleleName),
+    (   disease(AlleleId, HumanDisease)
+    ;   HumanDisease = 'No associated disease').
+
+/*
+
+ Transcription Factors Regulating a Gene
+SQL Version:
+SELECT TranscriptionFactor.name, TargetGene.name, Regulation.type
+FROM Gene AS TranscriptionFactor
+INNER JOIN GeneRegulation AS Regulation ON TranscriptionFactor.id = Regulation.transcription_factor_id
+INNER JOIN Gene AS TargetGene ON Regulation.target_gene_id = TargetGene.id
+WHERE TargetGene.name = 'specific_target_gene'
+*/
+
+
+
+transcription_factor_regulation(TranscriptionFactorName, TargetGeneName, RegulationType) :-
+    gene(TranscriptionFactorId, TranscriptionFactorName),
+    gene_regulation(TranscriptionFactorId, TargetGeneId, RegulationType),
+    gene(TargetGeneId, TargetGeneName),
+    TargetGeneName = 'specific_target_gene'.
+
+/*
+
+ Publications Related to a Gene Mutation
+SQL Version:
+
+SELECT Mutation.name, Publication.title, Publication.authors
+FROM Mutation
+INNER JOIN MutationPublication ON Mutation.id = MutationPublication.mutation_id
+INNER JOIN Publication ON MutationPublication.publication_id = Publication.id
+WHERE Mutation.name = 'specific_mutation_name'
+*/
+
+
+
+mutation_publication_info(MutationName, Title, Authors) :-
+    mutation(MutationId, MutationName),
+    MutationName = 'specific_mutation_name',
+    mutation_publication(MutationId, PublicationId),
+    publication(PublicationId, Title, Authors).
+
+/*
+
+4. RNAi Knockdown Effects on Phenotype
+SQL Version:
+
+SELECT Gene.name, RNAiExperiment.description, Phenotype.description
+FROM Gene
+INNER JOIN RNAiExperiment ON Gene.id = RNAiExperiment.gene_id
+INNER JOIN Phenotype ON RNAiExperiment.phenotype_id = Phenotype.id
+WHERE Gene.name = 'gene_of_interest'
+*/
+
+
+
+rnai_knockdown_phenotype(GeneName, RNAiDescription, PhenotypeDescription) :-
+    gene(GeneId, GeneName),
+    GeneName = 'gene_of_interest',
+    rnai_experiment(GeneId, RNAiId, RNAiDescription),
+    phenotype(RNAiId, PhenotypeDescription).
+
+
+
+/*
+5. Stock Center Information for Specific Strains
+
+SELECT Strain.name, StockCenter.name, StockCenter.location
+FROM Strain
+INNER JOIN StockCenter ON Strain.stock_center_id = StockCenter.id
+WHERE Strain.name LIKE '%desired_trait%'
+*/
+stock_center_info(StrainName, StockCenterName, Location) :-
+    strain(StrainId, StrainName),
+    sub_string(StrainName, _, _, _, 'desired_trait'),
+    stock_center(StrainId, StockCenterId, StockCenterName, Location).
+
+
+
+
+
+
+
 flybase_tables([
 analysis, analysisfeature, analysisgrp, analysisgrpmember, analysisprop, audit_chado, cell_line, cell_line_loaderm, cell_line_loadermprop,
 cell_line_dbxref, cell_line_feature, cell_line_library, cell_line_libraryprop, cell_line_pub, cell_line_relationship, cell_line_strain,

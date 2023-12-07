@@ -171,16 +171,22 @@ get_type03(_Dpth,_Slf,Cmpd,Type):- compound(Cmpd),!, \+ ground(Cmpd),!,Type=[].
 
 state_decltype(Expr,Type):- functor(Expr,_,A),arg(A,Expr,Type),once(var(Type);is_decl_type(Type)).
 
+
 get_type1(_Dpth,_Slf,Var,'%Undefined%'):- var(Var),!.
 get_type1(_Dpth,_Slf,Val,'Number'):- number(Val),!.
 get_type1(Depth,Self,Expr,['StateMonad',Type]):- is_valid_nb_state(Expr),'get-state'(Expr,Val),!,
    get_type1(Depth,Self,Val,Type).
-get_type1(Depth,Self,EvalMe,Type):- needs_eval(EvalMe),eval_args(Depth,Self,EvalMe,Val), \+ needs_eval(Val),!,
+
+
+get_type1(Depth,Self,EvalMe,Type):- needs_eval(EvalMe),
+     eval_args(Depth,Self,EvalMe,Val), \+ needs_eval(Val),!,
    get_type1(Depth,Self,Val,Type).
+
 get_type1(_Dpth,Self,[Fn|_],Type):- symbol(Fn),metta_type(Self,Fn,List),last_element(List,Type), nonvar(Type),
    is_type(Type).
 get_type1(_Dpth,Self,List,Type):- is_list(List),metta_type(Self,List,LType),last_element(LType,Type), nonvar(Type),
    is_type(Type).
+
 get_type1(Depth,_Slf,Type,Type):- Depth<1,!.
 get_type1(_Dpth,Self,List,Type):- is_list(List),metta_type(Self,Type,['->'|List]).
 get_type1(Depth,Self,List,Types):- List\==[], is_list(List),Depth2 is Depth-1,maplist(get_type1(Depth2,Self),List,Types).
@@ -188,7 +194,11 @@ get_type1(_Dpth,Self,Fn,Type):- symbol(Fn),metta_type(Self,Fn,Type),!.
 %get_type1(Depth,Self,Fn,Type):- nonvar(Fn),metta_type(Self,Fn,Type2),Depth2 is Depth-1,get_type1(Depth2,Self,Type2,Type).
 %get_type1(Depth,Self,Fn,Type):- Depth>0,nonvar(Fn),metta_type(Self,Type,Fn),!. %,!,last_element(List,Type).
 
-get_type1(Depth,Self,Expr,Type):-Depth2 is Depth-1, eval_args(Depth2,Self,Expr,Val),Expr\=@=Val,get_type1(Depth2,Self,Val,Type).
+get_type1(Depth,Self,Expr,Type):-Depth2 is Depth-1, 
+ eval_args(Depth2,Self,Expr,Val),
+  Expr\=@=Val,get_type1(Depth2,Self,Val,Type).
+
+
 get_type1(_Dpth,_Slf,Val,'String'):- string(Val),!.
 get_type1(_Dpth,_Slf,Val,Type):- is_decl_type(Val),Type=Val.
 get_type1(_Dpth,_Slf,Val,'Bool'):- (Val=='False';Val=='True'),!.
@@ -211,6 +221,9 @@ as_prolog(Depth,Self,[H|T],[HH|TT]):- as_prolog(Depth,Self,H,HH),as_prolog(Depth
 adjust_args(_Dpth,Self,F,X,X):- (is_special_op(Self,F); \+ iz_conz(X)),!.
 adjust_args(Depth,Self,Op,X,Y):-
   get_operator_typedef(Self,Op,Params,RetType),
+  try_adjust_arg_types(RetType,Depth,Self,Params,X,Y).
+
+try_adjust_arg_types(RetType,Depth,Self,Params,X,Y):-
   as_prolog(Depth,Self,X,M),
   args_conform(Depth,Self,M,Params),!,
   set_type(Depth,Self,Y,RetType),
@@ -255,9 +268,6 @@ is_pro_eval_kind('Number').
 is_pro_eval_kind('Symbol').
 is_pro_eval_kind('Bool').
 
-
-
-
 is_feo_f('Cons').
 
 is_seo_f('{...}').
@@ -269,7 +279,6 @@ is_seo_f('State').
 is_seo_f('Event').
 is_seo_f('Concept').
 is_seo_f(N):- number(N),!.
-
 
 %is_user_defined_goal(Self,[H|_]):- is_user_defined_head(Self,H).
 
