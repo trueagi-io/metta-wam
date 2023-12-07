@@ -83,11 +83,21 @@ eval(Expander,RetType,Depth,Self,[F|X],Y):-
   eval_00(Expander,RetType,D1,Self,[F|X],Y).
 
 eval(Expander,RetType,Depth,Self,X,Y):-
-  mnotrace((no_repeats_var(YY),
+  notrace(allow_repeats_eval_(X)),
+  !,
+  eval_00(Expander,RetType,Depth,Self,X,Y).
+eval(Expander,RetType,Depth,Self,X,Y):-
+  notrace((no_repeats_var(YY),
   D1 is Depth-1)),
   eval_00(Expander,RetType,D1,Self,X,Y),
-   mnotrace(( \+ (Y\=YY))).
+   notrace(( \+ (Y\=YY))).
 
+allow_repeats_eval_(_):- !.
+allow_repeats_eval_(_):- option_value(no_repeats,false),!.
+allow_repeats_eval_(X):- \+ is_list(X),!,fail.
+allow_repeats_eval_([F|_]):- atom(F),allow_repeats_eval_f(F).
+allow_repeats_eval_f('superpose').
+allow_repeats_eval_f('collapse').
 
 debugging_metta(G):- notrace((is_debugging((eval))->ignore(G);true)).
 
@@ -142,23 +152,24 @@ is_debugging(Flag):- flag_to_var(Flag,Var),
 :- nodebug(metta(overflow)).
 
 
-eval_99(Expander,RetType,Depth,Self,X,Y):- eval(Expander,RetType,Depth,Self,X,Y)*->true;eval_args_failed(Depth,Self,X,Y).
+eval_99(Expander,RetType,Depth,Self,X,Y):- 
+  eval(Expander,RetType,Depth,Self,X,Y)*->true;eval_failed(Depth,Self,X,Y).
 
 eval_00(_Expander,_RetType,Depth,_Slf,X,Y):- Depth<1,!,X=Y, (\+ trace_on_overflow-> true; flag(eval_num,_,0),debug(metta(eval))).
-%eval_00(Expander,RetType,_Dpth,_Slf,X,Y):- self_eval0(X),!,Y=X.
+%eval_00(Expander,RetType,_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
 eval_00(Expander,RetType,Depth,Self,X,YO):-
 ( Depth2 is Depth-1,
-  eval_args11(Expander,RetType,Depth,Self,X,M),
+  eval_11(Expander,RetType,Depth,Self,X,M),
   (M\=@=X ->eval_00(Expander,RetType,Depth2,Self,M,Y);Y=X)),
-  eval_args_finish(Depth2,Self,Y,YO).
+  finish_eval(Depth2,Self,Y,YO).
 
 
 
-eval_args11(Expander,RetType,_Dpth,_Slf,X,Y):- self_eval(X),!,do_expander(Expander,RetType,X,Y).
-eval_args11(Expander,RetType,Depth,Self,X,Y):- \+ is_debugging((eval)),!,
+eval_11(Expander,RetType,_Dpth,_Slf,X,Y):- self_eval(X),!,do_expander(Expander,RetType,X,Y).
+eval_11(Expander,RetType,Depth,Self,X,Y):- \+ is_debugging((eval)),!,
   D1 is Depth-1,
   eval_20(Expander,RetType,D1,Self,X,Y).
-eval_args11(Expander,RetType,Depth,Self,X,Y):-
+eval_11(Expander,RetType,Depth,Self,X,Y):-
  notrace((
 
   flag(eval_num,EX,EX+1),
@@ -1029,7 +1040,7 @@ eval_20(Expander,RetType,Depth,Self,['*',N1,N2],N):- number(N1),!,
 % =================================================================
 % =================================================================
 % =================================================================
-eval_20(Expander,RetType,Depth,Self,[V|VI],[V|VO]):-
+eval20_failked(Expander,RetType,Depth,Self,[V|VI],[V|VO]):-
     nonvar(V),is_metta_data_functor(V),is_list(VI),!,
     maplist(eval(Expander,RetType,Depth,Self),VI,VO).
 
@@ -1044,20 +1055,20 @@ eval_20(Expander,RetType,Depth,Self,[V|VI],[V|VO]):-
 eval_20(Expander,RetType,Depth,Self,X,Y):-
   (eval_40(Expander,RetType,Depth,Self,X,M)*->
      M=Y ;
-     % eval_args_finish(Depth,Self,M,Y);
-    (eval_args_failed(Depth,Self,X,Y)*->true;X=Y)).
+     % finish_eval(Depth,Self,M,Y);
+    (eval_failed(Depth,Self,X,Y)*->true;X=Y)).
 
-eval_args_failed(Depth,Self,T,TT):-
-  eval_args_finish(Depth,Self,T,TT).
+eval_failed(Depth,Self,T,TT):-
+  finish_eval(Depth,Self,T,TT).
 
-eval_args_finish(_Dpth,_Slf,T,TT):- var(T),!,TT=T.
-eval_args_finish(_Dpth,_Slf,[],[]):-!.
-%eval_args_finish(_Dpth,_Slf,[F|LESS],Res):- once(eval_selfless([F|LESS],Res)),mnotrace([F|LESS]\==Res),!.
-%eval_args_finish(Depth,Self,[V|Nil],[O]):- Nil==[], once(eval(Expander,RetType,Depth,Self,V,O)),V\=@=O,!.
-eval_args_finish(Depth,Self,[H|T],[HH|TT]):- !,
+finish_eval(_Dpth,_Slf,T,TT):- var(T),!,TT=T.
+finish_eval(_Dpth,_Slf,[],[]):-!.
+%finish_eval(_Dpth,_Slf,[F|LESS],Res):- once(eval_selfless([F|LESS],Res)),mnotrace([F|LESS]\==Res),!.
+%finish_eval(Depth,Self,[V|Nil],[O]):- Nil==[], once(eval(Expander,RetType,Depth,Self,V,O)),V\=@=O,!.
+finish_eval(Depth,Self,[H|T],[HH|TT]):- !,
   eval(Depth,Self,H,HH),
-  eval_args_finish(Depth,Self,T,TT).
-eval_args_finish(Depth,Self,T,TT):- eval(Depth,Self,T,TT).
+  finish_eval(Depth,Self,T,TT).
+finish_eval(Depth,Self,T,TT):- eval(Depth,Self,T,TT).
 
    %eval(Expander,RetType,Depth,Self,X,Y):- eval_20(Expander,RetType,Depth,Self,X,Y)*->true;Y=[].
 
