@@ -1,3 +1,7 @@
+:- encoding(iso_latin_1).
+:- flush_output.
+:- setenv('RUST_BACKTRACE',full).
+%:- '$set_source_module'('user').
 /*
 # Core in Rust
 In the original version, the core logic and functionalities of the MeTTa system are implemented in Rust. Rust is known for its performance and safety features, making it a suitable choice for building robust, high-performance systems.
@@ -6,7 +10,7 @@ In the original version, the core logic and functionalities of the MeTTa system 
 Python is used to extend or customize MeTTa. Typically, Python interacts with the Rust core through a Foreign Function Interface (FFI) or similar bridging mechanisms. This allows Python programmers to write code that can interact with the lower-level Rust code, while taking advantage of Python's ease of use and rich ecosystem.
 
 # Prolog Allows Python Extensions
-Just like the Rust core allowed for Python extensions, the Prolog code also permits Python and Rust developers (thru python right now) to extend or customize parts of MeTTa. This maintains the system’s extensibility and allows users who are more comfortable with Python to continue working with the system effectively.
+Just like the Rust core allowed for Python extensions, the Prolog code also permits Python and Rust developers (thru python right now) to extend or customize parts of MeTTa. This maintains the system?s extensibility and allows users who are more comfortable with Python to continue working with the system effectively.
 
 */
 
@@ -14,58 +18,59 @@ Just like the Rust core allowed for Python extensions, the Prolog code also perm
 :- use_module(library(janus)).
 :- use_module(library(filesex)).
 
-:- prolog_load_context(directory, ChildDir),
-   file_directory_name(ChildDir, ParentDir),
-   py_add_lib_dir(ParentDir).
 
+is_rust_space(GSpace):- is_python_space(GSpace).
 
-is_metta_space(GSpace):- is_python_space(GSpace).
+is_not_prolog_space(GSpace):- is_rust_space(GSpace).
+is_not_prolog_space(GSpace):- \+ is_asserted_space(GSpace).
 
-ensure_space(Space,GSpace):- py_is_object(Space),!,GSpace=Space.
-ensure_space(Space,GSpace):-
-   var(Space),init_metta_space(GSpace), Space=GSpace.
+ensure_space_py(Space,GSpace):- py_is_object(Space),!,GSpace=Space.
+ensure_space_py(Space,GSpace):- var(Space),init_primary_metta_space(GSpace), Space=GSpace.
 
 :- dynamic(is_metta/1).
-init_metta(MeTTa):- is_metta(MeTTa),!.
-init_metta(MeTTa):-
+ensure_rust_metta(MeTTa):- is_metta(MeTTa),!.
+ensure_rust_metta(MeTTa):-
    py_call(hyperon:'MeTTa'(),MeTTa),
    asserta(is_metta(MeTTa)).
 
-% Initialize a new hyperon.base.GroundingSpace and get a reference
-init_metta_space(GSpace) :- is_metta_space(GSpace),!.
-init_metta_space(GSpace) :- init_metta(MeTTa), py_call(MeTTa:space(),GSpace),
-    asserta(is_python_space(GSpace)).
-init_metta_space(GSpace) :-
-    py_call(hyperon:base:'GroundingSpace'(), GSpace),
-    asserta(is_python_space(GSpace)).
+:- dynamic(is_metta_learner/1).
+ensure_metta_learner(Metta_Learner):- is_metta_learner(Metta_Learner),!.
+ensure_metta_learner(Metta_Learner):-
+   py_call(metta_vspace:'metta_learner':'MettaLearner'(),Metta_Learner),
+   asserta(is_metta_learner(Metta_Learner)).
 
 
 :- multifile(space_type_method/3).
 :- dynamic(space_type_method/3).
-space_type_method(is_python_space_not_prolog,new_space,init_metta_space).
-space_type_method(is_python_space_not_prolog,add_atom,add_to_space).
-space_type_method(is_python_space_not_prolog,remove_atom,remove_from_space).
-space_type_method(is_python_space_not_prolog,replace_atom,replace_in_space).
-space_type_method(is_python_space_not_prolog,atom_count,atom_count_in_space).
-space_type_method(is_python_space_not_prolog,get_atoms,query_from_space).
-space_type_method(is_python_space_not_prolog,atom_iter,atoms_iter_in_space).
-space_type_method(is_python_space_not_prolog,query,query_from_space).
+space_type_method(is_not_prolog_space,new_space,new_rust_space).
+space_type_method(is_not_prolog_space,add_atom,add_to_space).
+space_type_method(is_not_prolog_space,remove_atom,remove_from_space).
+space_type_method(is_not_prolog_space,replace_atom,replace_in_space).
+space_type_method(is_not_prolog_space,atom_count,atom_count_from_space).
+space_type_method(is_not_prolog_space,get_atoms,query_from_space).
+space_type_method(is_not_prolog_space,atom_iter,atoms_iter_from_space).
+space_type_method(is_not_prolog_space,query,query_from_space).
 
 
+% Initialize a new hyperon.base.GroundingSpace and get a reference
+init_primary_metta_space(GSpace) :- is_rust_space(GSpace),!.
+init_primary_metta_space(GSpace) :- ensure_rust_metta(MeTTa), py_call(MeTTa:space(),GSpace),
+    asserta(is_python_space(GSpace)).
+init_primary_metta_space(GSpace) :- new_rust_space(GSpace).
+
+:- if( \+ current_predicate(new_rust_space/1 )).
+% Initialize a new hyperon.base.GroundingSpace and get a reference
+new_rust_space(GSpace) :-
+    py_call(hyperon:base:'GroundingSpace'(), GSpace),
+    asserta(is_python_space(GSpace)).
+:- endif.
+
+:- if( \+ current_predicate(query_from_space/3 )).
 % Query from hyperon.base.GroundingSpace
 query_from_space(Space, QueryAtom, Result) :-
     ensure_space(Space,GSpace),
     py_call(GSpace:'query'(QueryAtom), Result).
 
-% Add an atom to hyperon.base.GroundingSpace
-add_to_space(Space, Atom) :-
-    ensure_space(Space,GSpace),
-    py_call(GSpace:'add'(Atom), _).
-
-% Remove an atom from hyperon.base.GroundingSpace
-remove_from_space(Space, Atom) :-
-    ensure_space(Space,GSpace),
-    py_call(GSpace:'remove'(Atom), _).
 
 % Replace an atom in hyperon.base.GroundingSpace
 replace_in_space(Space, FromAtom, ToAtom) :-
@@ -73,28 +78,57 @@ replace_in_space(Space, FromAtom, ToAtom) :-
     py_call(GSpace:'replace'(FromAtom, ToAtom), _).
 
 % Get the atom count from hyperon.base.GroundingSpace
-atom_count_in_space(Space, Count) :-
+atom_count_from_space(Space, Count) :-
     ensure_space(Space,GSpace),
     py_call(GSpace:'atom_count'(), Count).
     
 % Get the atom count from hyperon.base.GroundingSpace
-atom_count_in_space(Space, Count) :-
+atom_count_from_space(Space, Count) :-
     ensure_space(Space,GSpace),
     py_call(GSpace:'get_atoms'(), Count).    
 
 % Get the atom iterator from hyperon.base.GroundingSpace
-atoms_iter_in_space(Space, Atoms) :-
+atoms_iter_from_space(Space, Atoms) :-
     ensure_space(Space,GSpace),
     py_call(GSpace:'atoms_iter'(), Atoms).
+:- endif.
 
 
+% Remove an atom from hyperon.base.GroundingSpace
+:- if( \+ current_predicate(remove_from_space/2 )).
+remove_from_space(Space, Atom) :-
+    ensure_space(Space,GSpace),
+    py_call(GSpace:'remove'(Atom), _).
+:- endif.
+
+% Add an atom to hyperon.base.GroundingSpace
+:- if( \+ current_predicate(add_to_space/2 )).
+add_to_space(Space, Atom) :-
+    ensure_space(Space,GSpace),
+    py_call(GSpace:'add'(Atom), _).
+:- endif.
+
+
+'extend-py!'(Module,_):-
+  set_prolog_flag(argv,[]),
+  %listing(ensure_rust_metta/1),
+  ensure_metta_learner,
+  wdmsg('extend-py!'(Module)),
+  ensure_rust_metta(MeTTa),
+  replace_in_string(["/"="."],Module,ToPython),
+  py_call(MeTTa:load_py_module(ToPython),Result),
+  wdmsg(result(MeTTa->Result)),!.
+
+ensure_metta_learner:-
+  ensure_metta_learner(Learner),
+  wdmsg(ensure_metta_learner(Learner)).
 
 
 % Example usage
 example_usage :-
-    init_metta_space(GSpace),
+    init_primary_metta_space(GSpace),
     query_from_space(GSpace, some_query, Result),
-    write(Result).
+    writeln(Result).
 
 
 /*
@@ -111,3 +145,11 @@ To integrate VSpace with the existing Python and Rust components, similar interf
 
 
 */
+
+%:- ensure_loaded(metta_interp).
+
+%:- prolog_load_context(directory, ChildDir),
+%   file_directory_name(ChildDir, ParentDir),
+%   py_add_lib_dir(ParentDir).
+
+

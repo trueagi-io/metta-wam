@@ -3,7 +3,10 @@
 %   - Douglas R. Miles 2023
 % ===========================================
 
-% requires:  assert_OBO/1, track_load_into_file/2
+% requires:  assert_MeTTa/1, track_load_into_file/2
+
+:- use_module(library(logicmoo_utils)).
+:- ensure_loaded(flybase_main).
 
 assert_OBO(P,X,Y):- assert_OBO(ontology_info(P,X,Y)).
 
@@ -21,7 +24,49 @@ load_obo(Directory) :-
   atomic(Directory), exists_directory(Directory),
   directory_file_path(Directory, "*.obo", Filename),
   expand_file_name(Filename,List),!,maplist(load_obo,List).
+load_obo(Filename) :- fail,
+  process_obo_file(Filename),!.
 load_obo(Filename) :-
+  process_obo_direct(Filename),!.
+
+
+process_obo_file(File):- atom_concat(File,'.metta_x',MXFile),process_obo_file(File,MXFile).
+process_obo_file(_File,MXFile):- exists_file(MXFile),!,process_metta_x_file(MXFile).
+process_obo_file(File, MXFile):- exists_file(File),!,
+          setup_call_cleanup(
+             open(MXFile,write,Strm,[]),
+             setup_call_cleanup(
+                    set_stream(Strm,alias(metta_x_output)),
+                    with_option(make_metta_x,'True',
+                       process_obo_direct(File)),
+                    set_stream(current_output,alias(metta_x_output))),
+             close(Strm)),
+          remove_duplicates(MXFile),
+          process_metta_x_file(MXFile).
+process_obo_file(File, MXFile):- throw(process_obo_file(File, MXFile)).
+
+
+
+% remove_duplicates(+InputFile) - removes duplicate lines from a file in place.
+remove_duplicates(InputFile) :-
+    % Create a temporary output file
+    format(atom(OutputFile), '~w.tmp', [InputFile]),
+    % Build the command to remove duplicates and output to the temporary file
+    format(atom(Command), 'sort ~w | uniq > ~w', [InputFile, OutputFile]),
+    % Execute the command
+    shell(Command, ExitStatus),
+    % Check the exit status
+    ExitStatus =:= 0,
+    % Move the temporary output file to the original input file
+    format(atom(Command2), 'mv ~w ~w', [OutputFile, InputFile]),
+    shell(Command2, ExitStatus2),
+    ExitStatus2 =:= 0,!.
+
+% rename_file(+Source, +Destination) - renames or moves a file.
+rename_file(Source, Destination) :-
+    rename(Source, Destination).
+
+process_obo_direct(Filename):-
     directory_file_path(Directory, BaseName, Filename),
     file_name_extension(Id, _, BaseName),
  symbol_concat(Id,'.metta',OutputFile),
@@ -34,7 +79,7 @@ load_obo(Filename) :-
     assert_OBO('pathname',Id,Filename),!,
     assert_OBO('basename',Id,BaseName),!,
     assert_OBO('directory',Id,Directory),!,
-    setup_call_cleanup(open(Filename, read, Stream),
+    setup_call_cleanup(open(Filename, read, Stream, [encoding(utf8)]),
       process_obo_stream_repeat(Stream),
       close(Stream))))),
  nop(told).
@@ -45,7 +90,7 @@ process_obo_stream_repeat(Stream):-
      nb_current(obo_type,Type),
      nb_current(obo_id, Id),
      once((read_line_to_string(Stream, Line),
-     (should_show_data(_) -> writeln(Line); true),
+     ((should_show_data(_),fail) -> writeln(Line); true),
         normalize_space(chars(Chars),Line))),
         Chars\==[],
         once(process_obo_chars( Type, Chars, Id)),
@@ -200,16 +245,42 @@ assert_OBO(property_value(Term, Pred, V)):- simplify_obo_arg(V,VV),!,assert_OBO(
 assert_OBO(property_value(Term, Pred, V)):- atom(Pred),!,OBO=..[Pred,Term,V],assert_OBO(OBO).
 assert_OBO(synonym(Pred,A,Term,V)):- simplify_obo_arg(V,VV),!,assert_OBO(synonym(Pred,A,Term,VV)).
 assert_OBO(ontology_info(Pred,Term,V)):- assert_OBO(property_value(Term, Pred, V)).
+assert_OBO([F|List]):- is_list([F|List]),atom(F),OBO=..[F|List],!,assert_OBO(OBO).
 assert_OBO(OBO):-
+  must_det_ll((
   OBO=..[Fn|Cols],
   into_obofn(Fn,OboFn),
-  OBO1=..[OboFn|Cols],
-  assert_MeTTa(OBO1),
-%  format('~N'), write_src(OBO1),nl.
-  !.
+  assert_OB1([OboFn|Cols]))).
 
-into_obofn(Fn,OboFn):- atom_concat(obo_,_,Fn),!,Fn=OboFn,!.
-into_obofn(Fn,OboFn):- atom_concat(obo_,Fn,OboFn),!.
+assert_OB1(List):- nb_current(make_metta_x,'True'),!, assert_OB2(List).
+assert_OB1([OboFn|Cols]):-
+  OBO1=..[OboFn|Cols],
+  assert_MeTTa(OBO1).
+
+assert_OB2(List):- maplist(to_metta_x_args,List,ListO),
+ atomics_to_string(ListO,'\t',Str),
+  writeln(metta_x_output,Str).
+
+to_metta_x_args(X,O):- X==[],!,O='[]'.
+to_metta_x_args(X,O):- atomic(X),!,O=X.
+to_metta_x_args(X,O):- term_to_atom(X,O).
+
+args_x_metta(X,O):- X=='[]',!,O=[].
+args_x_metta(X,O):- atomic(X),atom_concat('?-',Read,X),!,atom_to_term(Read,O,_).
+args_x_metta(X,O):- X=O.
+/*
+  OBOW=..[OboFn|Cols],
+  (is_converting -> (format('~N'), write_src(OBOW));(OBO1=..OBOW,assert_MeTTa(OBO1))))),
+  !.
+*/
+
+into_obofn(Fn,OboFn):- atom_concat('obo-',_,Fn),!,Fn=OboFn,!.
+into_obofn(Fn,OboFn):- atom_concat('obo-',Fn,OboF_),!,use_dashes(OboF_,OboFn).
+
+
+use_dashes(OboF_,OboFn):-
+  atomic_list_concat(List,'_',OboF_),
+  atomic_list_concat(List,'-',OboFn),!.
 
 
 simplify_obo_arg(I,_O):- \+ string(I), \+ atom(I),!,fail.

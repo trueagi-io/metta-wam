@@ -171,16 +171,22 @@ get_type03(_Dpth,_Slf,Cmpd,Type):- compound(Cmpd),!, \+ ground(Cmpd),!,Type=[].
 
 state_decltype(Expr,Type):- functor(Expr,_,A),arg(A,Expr,Type),once(var(Type);is_decl_type(Type)).
 
+
 get_type1(_Dpth,_Slf,Var,'%Undefined%'):- var(Var),!.
 get_type1(_Dpth,_Slf,Val,'Number'):- number(Val),!.
 get_type1(Depth,Self,Expr,['StateMonad',Type]):- is_valid_nb_state(Expr),'get-state'(Expr,Val),!,
    get_type1(Depth,Self,Val,Type).
-get_type1(Depth,Self,EvalMe,Type):- needs_eval(EvalMe),eval_args(Depth,Self,EvalMe,Val), \+ needs_eval(Val),!,
+
+
+get_type1(Depth,Self,EvalMe,Type):- needs_eval(EvalMe),
+     eval_args(Depth,Self,EvalMe,Val), \+ needs_eval(Val),!,
    get_type1(Depth,Self,Val,Type).
+
 get_type1(_Dpth,Self,[Fn|_],Type):- symbol(Fn),metta_type(Self,Fn,List),last_element(List,Type), nonvar(Type),
    is_type(Type).
 get_type1(_Dpth,Self,List,Type):- is_list(List),metta_type(Self,List,LType),last_element(LType,Type), nonvar(Type),
    is_type(Type).
+
 get_type1(Depth,_Slf,Type,Type):- Depth<1,!.
 get_type1(_Dpth,Self,List,Type):- is_list(List),metta_type(Self,Type,['->'|List]).
 get_type1(Depth,Self,List,Types):- List\==[], is_list(List),Depth2 is Depth-1,maplist(get_type1(Depth2,Self),List,Types).
@@ -188,7 +194,11 @@ get_type1(_Dpth,Self,Fn,Type):- symbol(Fn),metta_type(Self,Fn,Type),!.
 %get_type1(Depth,Self,Fn,Type):- nonvar(Fn),metta_type(Self,Fn,Type2),Depth2 is Depth-1,get_type1(Depth2,Self,Type2,Type).
 %get_type1(Depth,Self,Fn,Type):- Depth>0,nonvar(Fn),metta_type(Self,Type,Fn),!. %,!,last_element(List,Type).
 
-get_type1(Depth,Self,Expr,Type):-Depth2 is Depth-1, eval_args(Depth2,Self,Expr,Val),Expr\=@=Val,get_type1(Depth2,Self,Val,Type).
+get_type1(Depth,Self,Expr,Type):-Depth2 is Depth-1, 
+ eval_args(Depth2,Self,Expr,Val),
+  Expr\=@=Val,get_type1(Depth2,Self,Val,Type).
+
+
 get_type1(_Dpth,_Slf,Val,'String'):- string(Val),!.
 get_type1(_Dpth,_Slf,Val,Type):- is_decl_type(Val),Type=Val.
 get_type1(_Dpth,_Slf,Val,'Bool'):- (Val=='False';Val=='True'),!.
@@ -201,9 +211,19 @@ get_type1(_Dpth,_Slf,_,'%Undefined%'):- fail.
 %get_type1(Depth,Self,Val,Type):- Depth2 is Depth-1, get_type0(Depth2,Self,Val,Type).
 
 
+
+as_prolog(_Dpth,_Slf,I,O):- \+ iz_conz(I),!,I=O.
+as_prolog(Depth,Self,[H|T],O):- H=='::',!,as_prolog(Depth,Self,T,O).
+as_prolog(Depth,Self,[H|T],[HH|TT]):- as_prolog(Depth,Self,H,HH),as_prolog(Depth,Self,T,TT).
+
+
+
 adjust_args(_Dpth,Self,F,X,X):- (is_special_op(Self,F); \+ iz_conz(X)),!.
 adjust_args(Depth,Self,Op,X,Y):-
   get_operator_typedef(Self,Op,Params,RetType),
+  try_adjust_arg_types(RetType,Depth,Self,Params,X,Y).
+
+try_adjust_arg_types(RetType,Depth,Self,Params,X,Y):-
   as_prolog(Depth,Self,X,M),
   args_conform(Depth,Self,M,Params),!,
   set_type(Depth,Self,Y,RetType),
@@ -248,9 +268,6 @@ is_pro_eval_kind('Number').
 is_pro_eval_kind('Symbol').
 is_pro_eval_kind('Bool').
 
-
-
-
 is_feo_f('Cons').
 
 is_seo_f('{...}').
@@ -263,8 +280,7 @@ is_seo_f('Event').
 is_seo_f('Concept').
 is_seo_f(N):- number(N),!.
 
-
-is_user_defined_goal(Self,[H|_]):- is_user_defined_head(Self,H).
+%is_user_defined_goal(Self,[H|_]):- is_user_defined_head(Self,H).
 
 is_user_defined_head(Other,H):- mnotrace(is_user_defined_head0(Other,H)).
 is_user_defined_head0(Other,[H|_]):- !, nonvar(H),!, is_user_defined_head_f(Other,H).
@@ -275,13 +291,17 @@ is_user_defined_head_f(Other,H):- is_user_defined_head_f1(Other,H).
 is_user_defined_head_f(Other,H):- is_user_defined_head_f1(Other,[H|_]).
 
 %is_user_defined_head_f1(Other,H):- metta_type(Other,H,_).
-is_user_defined_head_f1(Other,H):- metta_atom(Other,[H|_]).
+%s_user_defined_head_f1(Other,H):- metta_atom(Other,[H|_]).
 is_user_defined_head_f1(Other,H):- metta_defn(Other,[H|_],_).
 %is_user_defined_head_f(_,H):- is_metta_builtin(H).
 
 
+
+is_special_op(Op):-  current_self(Self),is_special_op(Self,Op).
+
 is_special_op(_Slf,F):- \+ atom(F), \+ var(F), !, fail.
-is_special_op(Self,Op):- get_operator_typedef(Self,Op,Params,_RetType), maplist(=('Atom'),Params).
+is_special_op(Self,Op):- get_operator_typedef(Self,Op,Params,_RetType),
+   maplist(is_non_eval_kind,Params).
 is_special_op(_Slf,Op):- is_special_builtin(Op).
 
 is_syspred(H,Len,Pred):- notrace(is_syspred0(H,Len,Pred)).
@@ -290,11 +310,10 @@ is_syspred0(H,_Ln,_Prd):- upcase_atom(H,U),downcase_atom(H,U),!,fail.
 is_syspred0(H,Len,Pred):- current_predicate(H/Len),!,Pred=H.
 is_syspred0(H,Len,Pred):- atom_concat(Mid,'!',H), H\==Mid, is_syspred0(Mid,Len,Pred),!.
 is_syspred0(H,Len,Pred):- into_underscores(H,Mid), H\==Mid, is_syspred0(Mid,Len,Pred),!.
-
 %is_function(F):- atom(F).
 is_metta_data_functor(_Othr,H):- clause(is_data_functor(H),_).
 is_metta_data_functor(Other,H):- H\=='Right', H\=='Something',
-  metta_type(Other,H,_), % fail,
+ % metta_type(Other,H,_), % fail,
   \+ metta_atom(Other,[H|_]),
   \+ metta_defn(Other,[H|_],_),
   \+ is_metta_builtin(H),
@@ -306,9 +325,10 @@ get_operator_typedef(Self,Op,Params,RetType):-
   get_operator_typedef1(Self,Op,Params,RetType)*->true;
   get_operator_typedef2(Self,Op,Params,RetType).
 get_operator_typedef1(Self,Op,Params,RetType):-
-   metta_type(Self,Op,['->'|List]), once(append(Params,[RetType],List)).
-get_operator_typedef2(Self,Op,Params,RetType):- fail,
-  wdmsg(missing(get_operator_typedef2(Self,Op,Params,RetType))),!,fail.
+   metta_type(Self,Op,['->'|List]),
+   append(Params,[RetType],List).
+get_operator_typedef2(Self,Op,Params,RetType):-
+  nop(wdmsg(missing(get_operator_typedef2(Self,Op,Params,RetType)))),!,fail.
 
 is_metta_data_functor(F):-
   current_self(Self),is_metta_data_functor(Self,F).
@@ -317,7 +337,7 @@ is_metta_data_functor(F):-
 is_special_builtin('case').
 is_special_builtin(':').
 
-is_special_builtin('=').
+%is_special_builtin('=').
 is_special_builtin('->').
 is_special_builtin('bind!').
 %is_special_builtin('new-space').
@@ -332,12 +352,12 @@ is_special_builtin('match').
 is_special_builtin('call').
 is_special_builtin('let').
 is_special_builtin('let*').
-%is_special_builtin('nop').
+is_special_builtin('nop').
 is_special_builtin('assertEqual').
 is_special_builtin('assertEqualToResult').
 is_special_builtin('collapse').
 is_special_builtin('superpose').
-is_special_builtin('==').
+%is_special_builtin('==').
 
 is_metta_builtin(Special):- is_special_builtin(Special).
 
@@ -1131,5 +1151,6 @@ longest_string_acc([H|T], Acc, Longest) :-
     length(Acc, LenAcc),
     (LenH > LenAcc -> longest_string_acc(T, H, Longest); longest_string_acc(T, Acc, Longest)).
 %
+
 
 

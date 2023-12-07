@@ -21,9 +21,9 @@
 :- ensure_loaded(metta_space).
 % =======================================
 % TODO move non flybase specific code between here and the compiler
-:- ensure_loaded(swi_flybase).
+:- ensure_loaded(flybase_main).
 % =======================================
-:- set_option_value(encoding,iso_latin_1).
+:- set_option_value(encoding,utf8).
 
 % Meta-predicate that ensures that for every instance where G1 holds, G2 also holds.
 :- meta_predicate(for_all(0,0)).
@@ -43,8 +43,10 @@ iz_conz(B):- compound(B), B=[_|_].
 '=~'(A,B):- compound_non_cons(B),!,A=B.
 '=~'(A,B):- '=..'(A,B).
 
+%into_list_args(A,AA):- is_ftVar(A),AA=A.
+%into_list_args(C,[C]):- \+ compound(C),!.
+into_list_args(C,C):- \+ compound(C),!.
 into_list_args(A,AA):- is_ftVar(A),AA=A.
-into_list_args(C,[C]):- \+ compound(C),!.
 into_list_args([H|T],[H|T]):- \+ is_list(T),!.
 into_list_args([H,List,A],HT):- H == u_assign,!,append(List,[A],HT),!.
 into_list_args([H|T],[H|T]):- is_list(T),!.
@@ -216,7 +218,7 @@ compile_head_for_assert(HeadIs, NewHeadIs,Converted) :- /*trace,*/
 as_functor_args(AsPred,F,A,ArgsL):- nonvar(AsPred),!,into_list_args(AsPred,[F|ArgsL]),length(ArgsL,A).
 as_functor_args(AsPred,F,A,ArgsL):- nonvar(F),length(ArgsL,A),AsPred =~ [F|ArgsL].
 
-compile_for_assert(HeadIs, AsBodyFn, Converted) :- 
+compile_for_assert(HeadIs, AsBodyFn, Converted) :-
      (AsBodyFn =@= HeadIs ; AsBodyFn == []), !,/*trace,*/
      compile_head_for_assert(HeadIs,Converted).
 
@@ -540,33 +542,34 @@ compile_flow_control(HeadIs,RetResult,Convert, Converted) :- dif_functors(HeadIs
 
 
 
-compile_flow_control(_HeadIs,RetResult,Convert,is_True(RetResult)) :-
-   Convert =~ ['and'],!.
+compile_flow_control(_HeadIs,RetResult,Convert,is_True(RetResult)) :- is_compiled_and(AND),
+   Convert =~ [AND],!.
 
-compile_flow_control(HeadIs,RetResult,Convert, Converted) :-
-   Convert =~ ['and',Body],!,
+compile_flow_control(HeadIs,RetResult,Convert, Converted) :- is_compiled_and(AND),
+   Convert =~ [AND,Body],!,
    f2p(HeadIs,RetResult,Body,BodyCode),
     compile_test_then_else(RetResult,BodyCode,'True','False',Converted).
 
-compile_flow_control(HeadIs,RetResult,Convert, Converted) :-
-   Convert =~ ['and',Body1,Body2],!,
+compile_flow_control(HeadIs,RetResult,Convert, Converted) :- is_compiled_and(AND),
+   Convert =~ [AND,Body1,Body2],!,
    f2p(HeadIs,B1Res,Body1,Body1Code),
    f2p(HeadIs,RetResult,Body2,Body2Code),
    into_equals(B1Res,'True',AE),
    Converted = (Body1Code,AE,Body2Code),!.
 
 
-compile_flow_control(HeadIs,RetResult,Convert, Converted) :-
-   Convert =~ ['and',Body1,Body2],!,
+compile_flow_control(HeadIs,RetResult,Convert, Converted) :- is_compiled_and(AND),
+   Convert =~ [AND,Body1,Body2],!,
    f2p(HeadIs,B1Res,Body1,Body1Code),
    f2p(HeadIs,_,Body2,Body2Code),
    into_equals(B1Res,'True',AE),
    compile_test_then_else(RetResult,(Body1Code,AE,Body2Code),'True','False',Converted).
 
-compile_flow_control(HeadIs,RetResult,Convert, Converted) :-
-   Convert =~ ['and',Body1,Body2|BodyMore],!,
-   And2 =~ ['and',Body2|BodyMore],
-   compile_flow_control(HeadIs,RetResult,'and'(Body1,And2), Converted).
+compile_flow_control(HeadIs,RetResult,Convert, Converted) :- is_compiled_and(AND),
+   Convert =~ [AND,Body1,Body2|BodyMore],!,
+   And2 =~ [AND,Body2|BodyMore],
+   Next =~ [AND,Body1,And2],
+   compile_flow_control(HeadIs,RetResult, Next, Converted).
 
 compile_flow_control(HeadIs,RetResult,sequential(Convert), Converted) :- !,
    compile_flow_control(HeadIs,RetResult,transpose(Convert), Converted).
@@ -603,6 +606,8 @@ dif_functors(HeadIs,_):- var(HeadIs),!,fail.
 dif_functors(HeadIs,_):- \+ compound(HeadIs),!.
 dif_functors(HeadIs,Convert):- compound(HeadIs),compound(Convert),
   compound_name_arity(HeadIs,F,A),compound_name_arity(Convert,F,A).
+
+is_compiled_and(AND):- member(AND,[ (','), ('and')]).
 
 flowc.
 
@@ -745,7 +750,7 @@ f2p(HeadIs,RetResult,Convert, Converted) :-
     subst(Convert, ConvertFunction, Result, Converting),  % Substitute AsFunction by Result in Convert
     f2p(HeadIs,RetResult, (AsPred, Converting), Converted).  % Proceed with the conversion of the remaining terms
 
-/* MAYBE USE ?*/
+/* MAYBE USE ?
 % If Convert is a compound term, we need to recursively convert its arguments.
 f2p(HeadIs,RetResult, Convert, Converted) :- fail,
     compound(Convert), !,
@@ -753,14 +758,15 @@ f2p(HeadIs,RetResult, Convert, Converted) :- fail,
     maplist(convert_argument, Args, ConvertedArgs),  % Recursively convert each argument
     Converted =~ [Functor|ConvertedArgs],  % Reconstruct Converted with the converted arguments
     (callable(Converted) -> f2p(HeadIs,RetResult, Converted, _); true).  % If Converted is callable, proceed with its conversion
+% Helper predicate to convert an argument of a compound term
+convert_argument(Arg, ConvertedArg) :-
+    (callable(Arg) -> ftp(_, _, Arg, ConvertedArg); ConvertedArg = Arg).
+*/
 
 % The catch-all If no specific case is matched, consider Convert as already converted.
 f2p(_HeadIs,_RetResult,u_assign(Convert,Res), u_assign(Convert,Res)):-!.
 f2p(_HeadIs,RetResult,Convert, Code):- into_u_assign(Convert,RetResult,Code).
 
-% Helper predicate to convert an argument of a compound term
-convert_argument(Arg, ConvertedArg) :-
-    (callable(Arg) -> functs_to_preds(_, Arg, ConvertedArg); ConvertedArg = Arg).
 
 
 data_term(Convert):- self_eval(Convert),!.
@@ -1047,8 +1053,8 @@ p2m(prolog, meTTa).  % Translate the atom prolog to meTTa.
 
 p2m('[|]','Cons').
 p2m(( ';' ),or).
-p2m(( ',' ),and).
-p2m(( '\\+' ),unless).
+%p2m(( ',' ),and).
+%p2m(( '\\+' ),unless).
 %p2m(( ':-' ),entailed_by).
 p2m('=..','atom_2_list').
 
@@ -1108,14 +1114,14 @@ prolog_to_metta(V, D) :-
 % Handle the case where the body is a conjunction of terms
 into_sequential(Body, SP) :-
     % Check if Body is not a list and convert conjunctions in Body to a list of conjuncts.
-    \+ is_list(Body), 
+    \+ is_list(Body),
     conjuncts_to_list(Body, List), % Converts a list of conjunctions into a sequential representation in MeTTa
     into_sequential(List, SP), !.
 into_sequential(Nothing,'True'):- Nothing ==[],!.
  % If there's only one element
 into_sequential([SP],O):- prolog_to_metta(SP,O).
-% Otherwise, construct sequential representation using 'and'.
-into_sequential(List, ['and'|SPList]) :- maplist(prolog_to_metta, List, SPList),!.
+% Otherwise, construct sequential representation using AND.
+into_sequential(List, [AND|SPList]) :- is_compiled_and(CAND),CAND==AND, maplist(prolog_to_metta, List, SPList),!.
 
 
 
@@ -1338,12 +1344,12 @@ show_cvts(Term):-
 
 % 'show_cvts' continues processing, performing conversions between predicates and functions,
 % and pretty-printing original terms, function forms, and Prolog forms.
-show_cvts(Term):- compound(Term),Term=(_=_),!, ppc(orig,Term),Term = FunctForm,
-  functs_to_preds(_RetResult,FunctForm,Prolog), ppc(preds,Prolog),
+show_cvts(Term):- iz_conz(Term),!, ppc(orig,Term),Term = FunctForm,
+  functs_to_preds(FunctForm,Prolog), ppc(preds,Prolog),
   preds_to_functs(Prolog,NFunctForm), ppc(functs,NFunctForm).
 show_cvts(Term):- ppc(orig,Term),
   preds_to_functs(Term,FunctForm), ppc(functs,FunctForm),
-  functs_to_preds(_RetResult,FunctForm,Prolog), ppc(preds,Prolog).
+  functs_to_preds(FunctForm,Prolog), ppc(preds,Prolog).
 
 % 'show_mettalog_src' for specific predicate, prints metta clauses if they exist in the source file containing 'metta'.
 show_mettalog_src(F,A):- functor(Head,F,A),
@@ -1422,8 +1428,8 @@ with_indents(TF, Goal) :-
 % It does this by checking the value of the concepts option and ensuring it is not false.
 allow_concepts :-
     % Check if the option `concepts` is not set to false
-    option_else(concepts, TF, true),
-    \+ TF == false.
+    option_else(concepts, TF, 'False'),
+    \+ TF == 'False'.
 
 % The predicate with_concepts/2 enables or disables the use of concepts during the execution of a given goal.
 % The first argument is a Boolean indicating whether to enable (true) or disable (false) concepts.
@@ -1436,7 +1442,8 @@ with_concepts(TF, Goal) :-
 % Various 'write_src' and 'write_src0' rules are handling the writing of the source,
 % dealing with different types of values, whether they are lists, atoms, numbers, strings, compounds, or symbols.
 write_src(V):- notrace(write_src0(V)).
-write_src0(V):- allow_concepts,!,with_concepts(false,write_src1(V)),flush_output.
+write_src0(V):- V ==[],!,write('()').
+write_src0(V):- allow_concepts,!,with_concepts('False',write_src1(V)),flush_output.
 write_src0(V):- is_list(V),!,pp_sexi(V).
 write_src0(V):- write_src1(V),!.
 
@@ -1453,7 +1460,8 @@ write_src1(V):- string(V),!, writeq(V).
 
 % Continuing with 'write_src1', 'write_mobj', and related rules,
 % handling different cases based on the value’s type and structure, and performing the appropriate writing action.
-write_src1(V):- symbol(V),needs_quoted_in_metta(V,_),!, symbol_string(V,S),writeq(S).
+write_src1(V):- symbol(V), should_quote(V),!,
+  symbol_string(V,S),writeq(S).
 write_src1(V):- symbol(V),!,write(V).
 write_src1(V):- compound(V), \+ is_list(V),!,write_mobj(V).
 write_src1(V):- pp_sex(V),!.
@@ -1463,22 +1471,49 @@ write_mobj(V):- ( \+ compound(V) ; is_list(V)),!, write_src0(V).
 
 write_mobj(V):- compound_name_list(V,F,Args),write_mobj(F,Args),!.
 write_mobj(V):- writeq(V).
-write_mobj(exec,[V]):- !, write('!'),with_indents(true,write_src(V)).
+write_mobj(exec,[V]):- !, write('!'),write_src(V).
+write_mobj('$OBJ',[_,S]):- write('['),write_src(S),write(' ]').
+write_mobj('{...}',[S]):- write('{'),write_src(S),write(' }').
+write_mobj('[...]',[S]):- write('['),write_src(S),write(' ]').
 write_mobj('$STRING',[S]):- !, writeq(S).
-write_mobj(F,Args):- mlog_sym(K),pp_sexi([K,F|Args]).
+write_mobj(F,Args):- fail, mlog_sym(K),!,pp_sexi([K,F|Args]).
+write_mobj(F,Args):- pp_sexi([F|Args]).
 
 % Rules for determining when a symbol needs to be quoted in metta.
-needs_quoted_in_metta(H,_):- upcase_atom(H,U),downcase_atom(H,U),!,fail.
-needs_quoted_in_metta('','"').
-needs_quoted_in_metta(V,'"'):- symbol_contains(V," ").
-needs_quoted_in_metta(V,'"'):- symbol_contains(V,"/").
-needs_quoted_in_metta(V,'"'):- symbol_contains(V,'"').
-needs_quoted_in_metta(V,'"'):- symbol_contains(V,'"').
-needs_quoted_in_metta(V,'"'):- symbol_contains(V,',').
-%needs_quoted_in_metta(V,"'"):- symbol_length(V,L),L==1.
-%needs_quoted_in_metta(V,"'"):- symbol_contains(V,")").
-needs_quoted_in_metta(V,'"'):- symbol_contains(V,"|").
-needs_quoted_in_metta(V,'"'):- symbol_contains(V,"'").
+
+dont_quote(Atom):- atom(Atom),upcase_atom(Atom,Atom),downcase_atom(Atom,Atom).
+
+should_quote(Atom) :- \+ atom(Atom), \+ string(Atom),!,fail.
+should_quote(Atom) :-
+   \+ dont_quote(Atom),
+   % atom(Atom),  % Ensure that the input is an atom
+    atom_chars(Atom, Chars),
+    once(should_quote_chars(Chars);should_quote_atom_chars(Atom,Chars)).
+
+contains_unescaped_quote(['"']):- !, fail. % End with a quote
+contains_unescaped_quote(['"'|_]) :- !.
+contains_unescaped_quote(['\\', '"'|T]) :- !, contains_unescaped_quote(T).
+contains_unescaped_quote([_|T]) :- contains_unescaped_quote(T).
+
+% Check if the list of characters should be quoted based on various conditions
+should_quote_chars([]).
+should_quote_chars(['"'|Chars]):- !, contains_unescaped_quote(Chars).
+should_quote_chars(Chars) :-
+      member('"', Chars);         % Contains quote not captured with above clause
+      member(' ', Chars);         % Contains space
+      member('''', Chars);        % Contains single quote
+      member('/', Chars);         % Contains slash
+      member(',', Chars);         % Contains comma
+      member('|', Chars).         % Contains pipe
+should_quote_atom_chars(Atom,_) :- atom_number(Atom,_),!.
+should_quote_atom_chars(Atom,[Digit|_]) :- char_type(Digit, digit), \+ atom_number(Atom,_).
+
+% Example usage:
+% ?- should_quote('123abc').
+% true.
+% ?- should_quote('123.456').
+% false.
+
 
 % =========================================
 %  STERM -> PTERM
@@ -1513,6 +1548,11 @@ sexpr_s2p(_Fn,_Nth,S,P):- iz_exact_symbol(S,P),!.
 sexpr_s2p(_Fn,_Nth,'#'(S),P):- iz_exact_symbol(S,P),!.
 sexpr_s2p(_Fn,_Nth,VAR,'$VAR'(Name)):- atom(VAR),svar(VAR,Name),!.
 sexpr_s2p(Fn,Nth,S,P):- S==[], iz_fun_argz(Fn,Nth),!,P=S.
+
+sexpr_s2p(Fn,Nth,S,P):- expects_type(Fn,Nth,Type),will_become_type(Type,S,P),!.
+
+sexpr_s2p(Fn,Nth,[F|SList],P):- is_list(SList), length(SList,Len),is_syspred(F,Len,Pred), sexpr_s2p_arglist(F,1,SList,PList), !, P=..[Pred|PList].
+
 sexpr_s2p(Fn,Nth,[S|SList],[P|PList]):- iz_fun_argz(Fn,Nth),!,sexpr_s2p(S,P), sexpr_s2p(Fn,Nth,SList,PList).
 sexpr_s2p(Fn,Nth,[S|SList],[P|PList]):- ( \+ atom(S) ; \+ is_list(SList)), !,sexpr_s2p(list(Fn),Nth,S,P), sexpr_s2p(list(Fn),Nth,SList,PList).
 sexpr_s2p(_Fn,_Nth,[S,STERM0],PTERM):- iz_quoter(S),sexpr_s2p_pre_list(S,0,STERM0,STERM), !,PTERM=..[S,STERM],!.
@@ -1526,7 +1566,7 @@ sexpr_s2p(Fn,Nth,[S,Vars|TERM],PTERM):- nonvar(S),
    zalwayz((sexpr_s2p_arglist(Fn,Nth,TERM,PLIST),
    PTERM =~ [S,Vars|PLIST])),!.
 */
-% sexpr_s2p(progn,_,[S|TERM],PTERM):- S=='and',!,zalwayz((maplist(sexpr_s2p,TERM,PLIST),list_to_conjuncts(',',PLIST,PTERM))).
+% sexpr_s2p(progn,_,[S|TERM],PTERM):- S==AND,!,zalwayz((maplist(sexpr_s2p,TERM,PLIST),list_to_conjuncts(',',PLIST,PTERM))).
 %sexpr_s2p(Fn,Nth,[S|TERM],PTERM):- (number(S);  (atom(S),fail,atom_concat_or_rtrace(_,'Fn',S))),sexpr_s2p_arglist(Fn,Nth,[S|TERM],PTERM),!.
 %sexpr_s2p(Fn,Nth,[S],O):- is_ftVar(S),sexpr_s2p(Fn,Nth,S,Y),!,z_univ(Fn,Nth,O,[Y]),!.
 %sexpr_s2p(Fn,Nth,[S],O):- nonvar(S),sexpr_s2p(Fn,Nth,S,Y),!,z_univ(Fn,Nth,O,[Y]),!.
@@ -1539,6 +1579,21 @@ sexpr_s2p(Fn,Nth,[S|STERM0],PTERM):-
   sexpr_s2p_arglist(S,1,STERM,PLIST), z_univ(Fn,Nth,PTERM,[S|PLIST]),!.
 sexpr_s2p(_Fn,_Nth,VAR,VAR).
 
+
+expects_type(Fn,Nth,Type):-
+  get_operator_typedef(Self,Fn,Params,RetType),
+  nth0(Nth,[RetType|Params],Type),nonvar(Type).
+
+will_become_type(Type,S,P):- try_adjust_arg_types(_RetType,88,_Self,[Type],[S],[PS]),PS=P,!.
+will_become_type(Type,S,P):- is_ftVar(S),!,P=S.
+will_become_type(Type,S,P):-
+   get_type(S,T),!,
+     (is_subtype(T,Type)->S=P; P=coerce(Type,S)).
+will_become_type(_Type,S,P):-!,S=P.
+
+is_subtype(T,TT):- T=@=TT,!,T=TT.
+is_subtype(T,TT):- T=TT,!.
+
 iz_quoter('#BQ'):- iz_common_lisp.
 iz_quoter('#COMMA'):- iz_common_lisp.
 iz_quoter('quote').
@@ -1549,6 +1604,7 @@ iz_fun_argz(defmacro,2).
 iz_fun_argz(defun,2).
 iz_fun_argz(let,1).
 iz_fun_argz('let*',1).
+iz_fun_argz('member',2).
 %iz_fun_argz('let*',2).
 iz_fun_argz(F,1):- iz_quoter(F).
 
