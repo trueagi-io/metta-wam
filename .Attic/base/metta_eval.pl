@@ -58,11 +58,11 @@ do_expander(':',_,X,Y):- !, get_type(X,Y)*->X=Y.
 
 
 
-eval_args(X,Y):- current_self(Space), eval_args(100,Space,X,Y).
-eval_args(Depth,Self,X,Y):- 
-    eval(Depth,Self,X,Y).
+eval_args(X,Y):- current_self(Space), 
+  rtrace_on_existence_error(eval(100,Space,X,Y)).
+eval_args(Depth,Self,X,Y):- rtrace_on_existence_error(eval(Depth,Self,X,Y)).
 eval_args(Expander,RetType,Depth,Self,X,Y):- 
-    eval(Expander,RetType,Depth,Self,X,Y).
+     rtrace_on_existence_error(eval(Expander,RetType,Depth,Self,X,Y)).
 
 %eval(Expander,RetType,Depth,_Self,X,_Y):- forall(between(6,Depth,_),write(' ')),writeqln(eval(Expander,RetType,X)),fail.
 eval(Depth,Self,X,Y):- eval('=',_RetType,Depth,Self,X,Y).
@@ -209,8 +209,8 @@ eval_11(Expander,RetType,Depth,Self,X,Y):-
 
 :- discontiguous eval_20/6.
 %:- discontiguous eval_40/6.
-%:- discontiguous eval_args30fz/5.
-%:- discontiguous eval_args31/5.
+%:- discontiguous eval_30fz/5.
+%:- discontiguous eval_31/5.
 %:- discontiguous eval_60/5.
 
 eval_20(Expander,RetType,_Dpth,_Slf,Name,Y):-
@@ -236,6 +236,9 @@ eval_20(Expander,RetType,_Dpth,_Slf,Name,Y):-
 % =================================================================
 
 eval_20(Expander,RetType,_Dpth,_Slf,[X|T],Y):- T==[], \+ callable(X),!, do_expander(Expander,RetType,X,YY),Y=[YY].
+eval_20(Expander,RetType,_Dpth,Self,[X|T],Y):- T==[],  atom(X), 
+   \+ is_user_defined_head_f(Self,X), 
+   do_expander(Expander,RetType,X,YY),!,Y=[YY].
 
 eval_20(Expander,RetType,Depth,Self,[V|VI],VVO):-  \+ is_list(VI),!,
  eval(Expander,RetType,Depth,Self,VI,VM),
