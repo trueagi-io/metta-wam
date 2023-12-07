@@ -582,7 +582,7 @@ eval_20(Expander,RetType,Depth,Self,['sequential',List],Res):- !,
 get_sa_p1(P3,E,Cmpd,SA):-  compound(Cmpd), get_sa_p2(P3,E,Cmpd,SA).
 get_sa_p2(P3,E,Cmpd,call(P3,N1,Cmpd)):- arg(N1,Cmpd,E).
 get_sa_p2(P3,E,Cmpd,SA):- arg(_,Cmpd,Arg),get_sa_p1(P3,E,Arg,SA).
-eval_args20_failed(Expander,RetType,Depth,Self, Term, Res):-
+eval20_failed(Expander,RetType,Depth,Self, Term, Res):-
   mnotrace(( get_sa_p1(setarg,ST,Term,P1), % ST\==Term,
    compound(ST), ST = [F,List],F=='superpose',nonvar(List), %maplist(atomic,List),
    call(P1,Var))), !,
@@ -597,7 +597,7 @@ sub_sterm1(_  ,List):- \+ compound(List),!,fail.
 sub_sterm1(Sub,List):- is_list(List),!,member(SL,List),sub_sterm(Sub,SL).
 sub_sterm1(_  ,[_|_]):-!,fail.
 sub_sterm1(Sub,Term):- arg(_,Term,SL),sub_sterm(Sub,SL).
-eval_args20_failed_2(Expander,RetType,Depth,Self, Term, Res):-
+eval20_failed_2(Expander,RetType,Depth,Self, Term, Res):-
    mnotrace(( get_sa_p1(setarg,ST,Term,P1),
    compound(ST), ST = [F,List],F=='collapse',nonvar(List), %maplist(atomic,List),
    call(P1,Var))), !, bagof_eval(Expander,RetType,Depth,Self,List,Var),
@@ -638,12 +638,8 @@ eval_20(Expander,RetType,Depth,Self,['if',Cond,Then],Res):- !,
       (!, fail,Res = [],!)).
 
 
-eval_20(Expander,RetType,_Dpth,_Slf,[_,Nothing],NothingO):- 'Nothing'==Nothing,!,do_expander(Expander,RetType,Nothing,NothingO).
-
-
-
-
-
+eval_20(Expander,RetType,_Dpth,_Slf,[_,Nothing],NothingO):- 
+   'Nothing'==Nothing,!,do_expander(Expander,RetType,Nothing,NothingO).
 
 % =================================================================
 % =================================================================
@@ -653,6 +649,45 @@ eval_20(Expander,RetType,_Dpth,_Slf,[_,Nothing],NothingO):- 'Nothing'==Nothing,!
 % =================================================================
 % =================================================================
 
+
+
+eval_until_unify(_Dpth,_Slf,X,X):- !.
+eval_until_unify(Depth,Self,X,Y):- eval_until_eq(Expander,_RetType,Depth,Self,X,Y).
+
+eval_until_eq(Expander,RetType,_Dpth,_Slf,X,Y):-  X=Y,check_returnval(Expander,RetType,Y).
+%eval_until_eq(Expander,RetType,Depth,Self,X,Y):- var(Y),!,eval_in_steps_or_same(Expander,RetType,Depth,Self,X,XX),Y=XX.
+%eval_until_eq(Expander,RetType,Depth,Self,Y,X):- var(Y),!,eval_in_steps_or_same(Expander,RetType,Depth,Self,X,XX),Y=XX.
+eval_until_eq(Expander,RetType,Depth,Self,X,Y):- \+is_list(Y),!,eval_in_steps_some_change(Expander,RetType,Depth,Self,X,XX),Y=XX.
+eval_until_eq(Expander,RetType,Depth,Self,Y,X):- \+is_list(Y),!,eval_in_steps_some_change(Expander,RetType,Depth,Self,X,XX),Y=XX.
+eval_until_eq(Expander,RetType,Depth,Self,X,Y):- eval_in_steps_some_change(Expander,RetType,Depth,Self,X,XX),eval_until_eq(Expander,RetType,Depth,Self,Y,XX).
+eval_until_eq(Expander,_RetType,_Dpth,_Slf,X,Y):- length(X,Len), \+ length(Y,Len),!,fail.
+eval_until_eq(Expander,RetType,Depth,Self,X,Y):-  nth1(N,X,EX,RX), nth1(N,Y,EY,RY),
+  EX=EY,!, maplist(eval_until_eq(Expander,RetType,Depth,Self),RX,RY).
+eval_until_eq(Expander,RetType,Depth,Self,X,Y):-  nth1(N,X,EX,RX), nth1(N,Y,EY,RY),
+  ((var(EX);var(EY)),eval_until_eq(Expander,RetType,Depth,Self,EX,EY)),
+  maplist(eval_until_eq(Expander,RetType,Depth,Self),RX,RY).
+eval_until_eq(Expander,RetType,Depth,Self,X,Y):-  nth1(N,X,EX,RX), nth1(N,Y,EY,RY),
+  h((is_list(EX);is_list(EY)),eval_until_eq(Expander,RetType,Depth,Self,EX,EY)),
+  maplist(eval_until_eq(Expander,RetType,Depth,Self),RX,RY).
+
+ eval_1change(Expander,RetType,Depth,Self,EX,EXX):-
+    eval_20(Expander,RetType,Depth,Self,EX,EXX),  EX \=@= EXX.
+
+eval_complete_change(Expander,RetType,Depth,Self,EX,EXX):-
+   eval(Expander,RetType,Depth,Self,EX,EXX),  EX \=@= EXX.
+
+eval_in_steps_some_change(Expander,_RetType,_Dpth,_Slf,EX,_):- \+ is_list(EX),!,fail.
+eval_in_steps_some_change(Expander,RetType,Depth,Self,EX,EXX):- eval_1change(Expander,RetType,Depth,Self,EX,EXX).
+eval_in_steps_some_change(Expander,RetType,Depth,Self,X,Y):- append(L,[EX|R],X),is_list(EX),
+    eval_in_steps_some_change(Expander,RetType,Depth,Self,EX,EXX), EX\=@=EXX,
+    append(L,[EXX|R],XX),eval_in_steps_or_same(Expander,RetType,Depth,Self,XX,Y).
+
+eval_in_steps_or_same(Expander,RetType,Depth,Self,X,Y):-eval_in_steps_some_change(Expander,RetType,Depth,Self,X,Y).
+eval_in_steps_or_same(Expander,RetType,_Dpth,_Slf,X,Y):- X=Y,check_returnval(Expander,RetType,Y).
+
+  % (fail,return_empty([],Template))).
+  
+  
 eval_20(Expander,RetType,Depth,Self,['let',A,A5,AA],OO):- !,
   %(var(A)->true;trace),
   ((eval(Expander,RetType,Depth,Self,A5,AE), AE=A)),
@@ -841,94 +876,6 @@ eval_20(Expander,RetType,Depth,Self,['CountElement',L],Res):- !, eval(Expander,R
 
 
 
-/*
-
-mnotrace(G):- quietly(once(G)).
-
-is_decl_type(ST):- metta_type(_,_,Type),sub_term(T,Type),T=@=ST, \+ nontype(ST).
-is_type(Type):- nontype(Type),!,fail.
-is_type(Type):- is_decl_type(Type).
-is_type(Type):- atom(Type).
-
-nontype(Type):- var(Type),!.
-nontype('->').
-nontype(N):- number(N).
-
-needs_eval(EvalMe):- is_list(EvalMe),!.
-get_type(_Dpth,_Slf,Var,'%Undefined%'):- var(Var),!.
-get_type(_Dpth,_Slf,Val,'Number'):- number(Val),!.
-get_type(Depth,Self,Expr,['StateMonad',Type]):- is_valid_nb_state(Expr),'get-state'(Expr,Val),!,
-   get_type(Depth,Self,Val,Type).
-
-
-get_type(Depth,Self,EvalMe,Type):- needs_eval(EvalMe),
-   eval(Depth,Self,EvalMe,Val), \+ needs_eval(Val),!,
-   get_type(Depth,Self,Val,Type).
-
-get_type(_Dpth,Self,[Fn|_],Type):- symbol(Fn),metta_type(Self,Fn,List),last_element(List,Type), nonvar(Type),
-   is_type(Type).
-get_type(_Dpth,Self,List,Type):- is_list(List),metta_type(Self,List,LType),last_element(LType,Type), nonvar(Type),
-   is_type(Type).
-
-get_type(Depth,_Slf,Type,Type):- Depth<1,!.
-get_type(_Dpth,Self,List,Type):- is_list(List),metta_type(Self,Type,['->'|List]).
-get_type(Depth,Self,List,Types):- List\==[], is_list(List),Depth2 is Depth-1,maplist(get_type(Depth2,Self),List,Types).
-get_type(_Dpth,Self,Fn,Type):- symbol(Fn),metta_type(Self,Fn,Type),!.
-%get_type(Depth,Self,Fn,Type):- nonvar(Fn),metta_type(Self,Fn,Type2),Depth2 is Depth-1,get_type(Depth2,Self,Type2,Type).
-%get_type(Depth,Self,Fn,Type):- Depth>0,nonvar(Fn),metta_type(Self,Type,Fn),!. %,!,last_element(List,Type).
-
-get_type(Depth,Self,Expr,Type):-Depth2 is Depth-1, eval(Depth2,Self,Expr,Val),Expr\=@=Val,get_type(Depth2,Self,Val,Type).
-
-
-get_type(_Dpth,_Slf,Val,'String'):- string(Val),!.
-get_type(_Dpth,_Slf,Val,Type):- is_decl_type(Val),Type=Val.
-get_type(_Dpth,_Slf,Val,'Bool'):- (Val=='False';Val=='True'),!.
-get_type(_Dpth,_Slf,Val,'Symbol'):- symbol(Val).
-%get_type(Depth,Self,[T|List],['List',Type]):- Depth2 is Depth-1,  is_list(List),get_type(Depth2,Self,T,Type),!,
-%  forall((member(Ele,List),nonvar(Ele)),get_type(Depth2,Self,Ele,Type)),!.
-%get_type(Depth,_Slf,Cmpd,Type):- compound(Cmpd), functor(Cmpd,Type,1),!.
-get_type(_Dpth,_Slf,Cmpd,Type):- \+ ground(Cmpd),!,Type=[].
-get_type(_Dpth,_Slf,_,'%Undefined%'):- fail.
-
-
-is_feo_f('Cons').
-
-is_seo_f('{...}').
-is_seo_f('[...]').
-is_seo_f('{}').
-is_seo_f('[]').
-is_seo_f('StateMonad').
-is_seo_f('State').
-is_seo_f('Event').
-is_seo_f('Concept').
-is_seo_f(N):- number(N),!.
-
-
-eval_20(Expander,RetType,Depth,Self,[F,A|Args],Res):-
-   \+ self_eval(A),
-   eval(Expander,RetType,Depth,Self,A,AA),AA\==A,
-   eval(Expander,RetType,Depth,Self,[F,AA|Args],Res).
-
-
-eval_20(Expander,RetType,Depth,Self,[F,A1|AArgs],Res):- fail, member(F,['+']),
- cwdl(40,((
-   append(L,[A|R],AArgs),
-   \+ self_eval(A),
-   eval(Expander,RetType,Depth,Self,A,AA),AA\==A,!,
-   append(L,[AA|R],NewArgs), eval(Expander,RetType,Depth,Self,[F,A1|NewArgs],Res)))).
-*/
-
-/* %%
-
-% !(assertEqualToResult ((inc) 2) (3))
-eval_20(Expander,RetType,Depth,Self,[F|Args],Res):- is_list(F),
-  metta_atom_iter(Depth,Self,['=',F,R]), eval(Expander,RetType,Depth,Self,[R|Args],Res).
-
-eval_20(Expander,RetType,Depth,Self,[F|Args],Res):- is_list(F), Args\==[],
-  append(F,Args,FArgs),!,eval(Expander,RetType,Depth,Self,FArgs,Res).
-*/
-
-
 % =================================================================
 % =================================================================
 % =================================================================
@@ -981,13 +928,7 @@ eval_20(Expander,_RetType1,Depth,Self,['do',Expr], Empty):- !,
 */
 eval_20(_Expander,_RetType,_Depth,_Self,['nop'],_ ):- !, fail.
 
-
-
-
-
-
-
-
+eval_20(_Expander,_RetType1,_Depth,_Self,['call',S], TF):- !, eval_call(S,TF).
 
 % =================================================================
 % =================================================================
@@ -1095,6 +1036,21 @@ eval_40(Expander,RetType,Depth,Self,[F|PredDecl],Res):- fail,
    mnotrace((SSub\=Repl, subst(PredDecl,SSub,Repl,Temp))),
    eval(Expander,RetType,Depth,Self,[F|Temp],Res).
 
+% =================================================================
+% =================================================================
+% =================================================================
+%  METTLOG PREDEFS
+% =================================================================
+% =================================================================
+% =================================================================
+
+eval_40(Expander,RetType,Depth,Self,['length',L],Res):- !, eval(Depth,Self,L,LL),
+   (is_list(LL)->length(LL,Res);Res=1),
+   check_returnval(Expander,RetType,Res).
+
+eval_40(Expander,RetType,_Dpth,_Slf,['arity',F,A],TF):- !,as_tf(current_predicate(F/A),TF),check_returnval(Expander,RetType,TF).
+eval_40(Expander,RetType,Depth,Self,['CountElement',L],Res):- !, eval(Expander,RetType,Depth,Self,L,LL), !, (is_list(LL)->length(LL,Res);Res=1),check_returnval(Expander,RetType,Res).
+eval_40(Expander,RetType,_Dpth,_Slf,['make_list',List],MettaList):- !, into_metta_cons(List,MettaList),check_returnval(Expander,RetType,MettaList).
 
 % user defined function
 eval_40(Expander,RetType,Depth,Self,[H|PredDecl],Res):-
@@ -1132,7 +1088,7 @@ eval_70(Expander,RetType,Depth,Self,PredDecl,Res):-
 % =================================================================
 % =================================================================
 % =================================================================
-% function inherited by system
+% inherited by system
 % =================================================================
 % =================================================================
 % =================================================================
