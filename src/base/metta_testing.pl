@@ -266,18 +266,42 @@ load_answer_file(AnsFile,StoredAs):-
 :- debug(metta(answers)).
 load_answer_stream(_Nth, StoredAs, Stream):- at_end_of_stream(Stream),!,
   if_trace(metta(answers),listing(file_answers(StoredAs,_,_))).
-load_answer_stream(Nth, StoredAs, Stream):- read_line_to_string(Stream,String),
-    writeln(Nth = String),
+load_answer_stream(Nth, StoredAs, Stream):-
+    read_line_to_string(Stream, String),
     load_answer_stream(Nth, StoredAs, String, Stream).
-
+/*
+load_answer_stream(Nth, StoredAs, String, Stream) :- fail,
+    atom_chars(String,Chars),
+    count_brackets(Chars, 0, 0, Balance),
+    (   Balance =< 0
+    ->  StoredAs = String
+    ;   read_line_to_string(Stream, NextString),
+        string_concat(String, "\n", StringWithNewLine),
+        string_concat(StringWithNewLine, NextString, CombinedString),
+        load_answer_stream(Nth, StoredAs, CombinedString, Stream)
+    ).
+*/
 load_answer_stream(Nth, StoredAs, String, Stream):- % string_concat("[",_,String),!,
+    writeln(Nth = String),
     parse_answer_string(String,Metta),!,
     %if_t(sub_var(',',Metta),rtrace(parse_answer_string(String,_Metta2))),
     assert(file_answers(StoredAs,Nth,Metta)),
     skip(must_det_ll(\+ sub_var(',',Metta))),
     Nth2 is Nth+1,load_answer_stream(Nth2, StoredAs, Stream).
-load_answer_stream(Nth, StoredAs, _, Stream):- load_answer_stream(Nth, StoredAs, Stream).
 
+load_answer_stream(Nth, StoredAs, _, Stream):- load_answer_stream(Nth, StoredAs, Stream).
+/*
+count_brackets([], Open, Close, Balance) :- !,
+    Balance is Open - Close.
+count_brackets([Char|Rest], Open, Close, Balance) :-
+    ((((   Char == '['
+    ->  NewOpen is Open + 1
+       ;   (Char == ']'
+    ->  NewClose is Close + 1
+      ;   (NewOpen = Open,
+          NewClose = Close)))))),
+      count_brackets(Rest, NewOpen, NewClose, Balance).
+*/
 parse_answer_string("[]",[]):- !.
 %parse_answer_string(String,Metta):- string_concat("(",_,String),!,parse_sexpr_metta(String,Metta),!.
 parse_answer_string(String,_Metta):- string_concat("[(Error (assert",_,String),!,fail.

@@ -194,7 +194,7 @@ get_type1(_Dpth,Self,Fn,Type):- symbol(Fn),metta_type(Self,Fn,Type),!.
 %get_type1(Depth,Self,Fn,Type):- nonvar(Fn),metta_type(Self,Fn,Type2),Depth2 is Depth-1,get_type1(Depth2,Self,Type2,Type).
 %get_type1(Depth,Self,Fn,Type):- Depth>0,nonvar(Fn),metta_type(Self,Type,Fn),!. %,!,last_element(List,Type).
 
-get_type1(Depth,Self,Expr,Type):-Depth2 is Depth-1, 
+get_type1(Depth,Self,Expr,Type):-Depth2 is Depth-1,
  eval_args(Depth2,Self,Expr,Val),
   Expr\=@=Val,get_type1(Depth2,Self,Val,Type).
 
@@ -218,11 +218,6 @@ as_prolog(Depth,Self,[H|T],[HH|TT]):- as_prolog(Depth,Self,H,HH),as_prolog(Depth
 
 
 
-adjust_args(_Dpth,Self,F,X,X):- (is_special_op(Self,F); \+ iz_conz(X)),!.
-adjust_args(Depth,Self,Op,X,Y):-
-  get_operator_typedef(Self,Op,Params,RetType),
-  try_adjust_arg_types(RetType,Depth,Self,Params,X,Y).
-
 try_adjust_arg_types(RetType,Depth,Self,Params,X,Y):-
   as_prolog(Depth,Self,X,M),
   args_conform(Depth,Self,M,Params),!,
@@ -230,6 +225,10 @@ try_adjust_arg_types(RetType,Depth,Self,Params,X,Y):-
   into_typed_args(Depth,Self,Params,M,Y).
 %adjust_args(Depth,Self,_,X,Y):- is_list(X), !, maplist(eval_args(Depth,Self),X,Y).
 %adjust_args(Depth,Self,_,X,Y):- is_list(X), !, maplist(as_prolog(Depth,Self),X,Y),!.
+adjust_args(_Dpth,Self,F,X,X):- (is_special_op(Self,F); \+ iz_conz(X)),!.
+adjust_args(Depth,Self,Op,X,Y):-
+  get_operator_typedef(Self,Op,Params,RetType),
+  try_adjust_arg_types(RetType,Depth,Self,Params,X,Y).
 adjust_args(Depth,Self,_,X,Y):- as_prolog(Depth,Self,X,Y).
 
 into_typed_args(_Dpth,_Slf,T,M,Y):- (\+ iz_conz(T); \+ iz_conz(M)),!, M=Y.
