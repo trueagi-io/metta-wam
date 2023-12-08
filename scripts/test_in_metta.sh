@@ -31,8 +31,9 @@ generate_report=0
 UNITS_DIR="examples/"
 outer_extra_args=()
 METTALOG_MAX_TIME=75
-clean=0  # 0 means don't clean, 1 means do clean':+
+clean=0  # 0 means dont clean, 1 means do clean
 fresh=0
+if_failures=1
 export RUST_METTA_MAX_TIME=120
 GREP_ARGS=""
 
@@ -62,16 +63,34 @@ while [ "$#" -gt 0 ]; do
       shift
       ;;
 
-
       --clean)
         clean=1
+        if_failures=0
         # add_to_list "$1" outer_extra_args
         shift
         ;;
 
-     --fresh)
+     --cont*)
+             clean=0
+             if_failures=0
+             # add_to_list "$1" outer_extra_args
+             shift
+             ;;
+
+     --fail*)
+            clean=0
+            if_failures=1
+            # add_to_list "$1" outer_extra_args
+            shift
+            ;;
+
+     --test)
+          # add_to_list "$1" outer_extra_args
+          shift
+          ;;
+
+     --fresh*)
        fresh=1
-       clean=1
        # add_to_list "$1" outer_extra_args
        shift
      ;;
@@ -223,6 +242,7 @@ function run_tests() {
              # Function to handle SIGINT
              handle_sigint() {
                  echo "SIGINT received, stopping metta but continuing script..."
+                 stty sane
              }
 
              # Trap SIGINT
@@ -231,6 +251,7 @@ function run_tests() {
              ( cd "$(dirname "${file}")" || true
                timeout --foreground --kill-after=5 --signal=SIGINT $(($RUST_METTA_MAX_TIME + 1)) time metta "$absfile" 2>&1 | tee "${absfile}.answers"
              ) || true
+             stty sane
 
              trap - SIGINT
 
@@ -242,33 +263,73 @@ function run_tests() {
              echo "Using for answers:  $file.answers"
          fi
 
+         local take_test=0
 
-        if [[ -f "$file_html" ]]; then
-           echo "$file_html exists"
-           if [ $clean -eq 0 ]; then
-              return
-           fi
-        fi
+         if [[ ! -f "$file_html" ]]; then
+             take_test=1
+             echo "Taking test since HTML file does not exist."
+         else
+             if [ "$clean" -eq 1 ]; then
+                 take_test=1
+                 echo "Taking test since --clean."
+             elif [ "$if_failures" -eq 1 ]; then
+               failures_not_zero=$(grep -h -c "Failures: [^0]" "$file_html")
+               if [ "$failures_not_zero" -eq 0 ]; then
+                     success_missing=0  # Default to 0 (false)
 
-        sleep 0.1
-        touch "$file_html"
-        local TEST_CMD="./MeTTa --timeout=$METTALOG_MAX_TIME  --html --repl=false  $extra_args $outer_extra_args \"$file\" --halt=true"
-        echo "Running command: $TEST_CMD"
+                     # Check if the word "success" is in the file
+                     if ! grep -q "Successes: " "$file_html"; then
+                         # Set variable if "success" is missing
+                         success_missing=1
+                     fi
 
-        set +e
-        time $TEST_CMD
-        local TEST_EXIT_CODE=$?
-        set -e
-        echo ""
+                     # Now you can use success_missing as needed
+                     if [ "$success_missing" -eq 1 ]; then
+                         echo "The word 'Success' is missing from $file_html."
+                        failures_not_zero=1
+                     else
+                         echo "The word 'Success' is present in $file_html."
+                     fi
+               fi
+               if [ "$failures_not_zero" -eq 1 ]; then
+                   take_test=1
+                   echo "Retaking test since failures are present."
+                   rm -f "$file_html"
+               else
+                   echo "Not retaking since Failures: 0."
+               fi
+             else
+                 echo "Results present, not taking test."
+             fi
+         fi
 
-        if [ $TEST_EXIT_CODE -eq 0 ]; then
-            echo "Killed possibly due to timeout (EXITCODE=0) after $METTALOG_MAX_TIME seconds: ${TEST_CMD}"
-        elif [ $TEST_EXIT_CODE -eq 124 ]; then
-            echo "Killed (definitely due to timeout) after $METTALOG_MAX_TIME seconds: ${TEST_CMD}"
-        else
-            echo "Completed (EXITCODE=$TEST_EXIT_CODE) under $METTALOG_MAX_TIME seconds: ${TEST_CMD}"
-        fi
-        #/scripts/total_loonits.sh
+         if [ "$take_test" -eq 1 ]; then
+             sleep 0.1
+             touch "$file_html"
+
+             TEST_CMD="./MeTTa --timeout=$METTALOG_MAX_TIME --html --repl=false $extra_args $outer_extra_args \"$file\" --halt=true"
+             echo "Running command with timeout: $TEST_CMD"
+
+             set +e
+
+             # Using timeout outside the subshell
+             time    timeout --foreground --kill-after=5 --signal=SIGINT  "$METTALOG_MAX_TIME" $TEST_CMD
+             TEST_EXIT_CODE=$?
+             stty sane
+            # set -e
+             echo ""
+
+              if [ $TEST_EXIT_CODE -eq 124 ]; then
+                  echo "Killed (definitely due to timeout) after $METTALOG_MAX_TIME seconds: ${TEST_CMD}"
+                  [ "$if_failures" -eq 1 ] && rm -f "$file_html"
+              elif [ $TEST_EXIT_CODE -ne 0 ]; then
+                  echo "Completed with error (EXITCODE=$TEST_EXIT_CODE) under $METTALOG_MAX_TIME seconds: ${TEST_CMD}"
+              else
+                  echo "Completed successfully (EXITCODE=0) under $METTALOG_MAX_TIME seconds: ${TEST_CMD}"
+              fi
+              #/scripts/total_loonits.sh
+         fi
+
     }
 
     # Process assert_files
@@ -302,7 +363,6 @@ function run_tests() {
            fi
        fi
    done
-
 
 
 }
