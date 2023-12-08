@@ -1737,8 +1737,9 @@ example0(_):- fail.
 example1(a). example1(_):- fail.
 example2(a). example2(b). example2(_):- fail.
 example3(a). example3(b). example3(c). example3(_):- fail.
-
+%eval_args(100,'&self',['change-state!','&var',[+,1,['get-state','&var']]],OUT)
 %dcall(X):- (call(X),deterministic(YN)),trace,((YN==true)->!;true).
+dcall(XX):- !, call(XX).
  dcall(XX):-
    USol = sol(dead),
    copy_term(XX,X),

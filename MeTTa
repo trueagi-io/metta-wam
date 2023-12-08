@@ -18,9 +18,13 @@ for arg in "$@"; do
     # Check if the argument is a directory
     if [ -d "$arg" ]; then
         use_test_script=1
-    # Check for specific flags
-    elif [[ "$arg" == "--fresh" ]] || [[ "$arg" == "--clean" ]]; then
-        use_test_script=1
+    else
+         # Check for specific flags
+         case "$arg" in
+             --fres*|--fail*|--contin*|--clean)
+                 use_test_script=1
+                 ;;
+         esac
     fi
 done
 
@@ -406,10 +410,11 @@ if [[ "$OS" == "Darwin" ]]; then
 fi
 
 if [[ -n "$TIMEOUT" && "$TIMEOUT" -gt 0 ]]; then
-    METTA_CMD="$TIMEOUT_CMD --foreground --preserve-status --signal=SIGTERM --kill-after=5s $TIMEOUT ${METTA_CMD}"
+  : #  METTA_CMD="$TIMEOUT_CMD --foreground --preserve-status --signal=SIGTERM --kill-after=5s $TIMEOUT ${METTA_CMD}"
 fi
 
 # Conditional to check if html_flag is enabled
+(
 if [[ "$html_flag" == "enable" ]]; then
     export TEE_FILE=${TEE_FILE:-"$METTALOG_DIR/TEE.ansi"}
     touch "$TEE_FILE"
@@ -421,16 +426,19 @@ if [[ "$html_flag" == "enable" ]]; then
 	if [[ "$OS" == "Darwin" ]]; then
 	    # macOS
 	    /usr/bin/script -q -f -a "$TEE_FILE" "$METTA_CMD"
+	    stty sane
 	else
 	    # Assume Linux
 	    /usr/bin/script -q -f --force -e -a "$TEE_FILE" -c "$METTA_CMD"
+	    stty sane
 	fi
 
     ) || true
     stty sane
 else
-  (eval $METTA_CMD) || true
-   stty sane
+  ((eval $METTA_CMD) || true)
 fi
+) || true
+stty sane
 
 
