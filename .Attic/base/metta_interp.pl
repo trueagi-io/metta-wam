@@ -1,4 +1,8 @@
 :- encoding(iso_latin_1).
+:- multifile(is_metta_data_functor/1).
+:- dynamic(is_metta_data_functor/1).
+:- multifile(is_nb_space/1).
+:- dynamic(is_nb_space/1).
 %:- '$set_source_module'('user').
 :- set_stream(user_input,tty(true)).
 :- use_module(library(readline)).
@@ -403,7 +407,6 @@ clear_space(S):-
    nop(retractall(metta_type(S,_,_))),
    retractall(metta_atom(S,_)).
 
-metta_type(S,H,B):- metta_atom(S,[':',H,B]).
 
 lsm:- lsm(_).
 lsm(S):-
@@ -456,7 +459,7 @@ descend_and_transform(P2, Input, Transformed) :-
     ).
 
 /*
-_syspred(H,Len,Pred):- notrace(is_syspred0(H,Len,Pred)).
+is_syspred(H,Len,Pred):- notrace(is_syspred0(H,Len,Pred)).
 is_syspred0(H,_Ln,_Prd):- \+ atom(H),!,fail.
 is_syspred0(H,_Ln,_Prd):- upcase_atom(H,U),downcase_atom(H,U),!,fail.
 is_syspred0(H,Len,Pred):- current_predicate(H/Len),!,Pred=H.
@@ -553,6 +556,9 @@ add_history_string(Str):- notrace(ignore(add_history01(Str))),!.
 
 add_history_src(Exec):- notrace(ignore((Exec\=[],with_output_to(string(H),with_indents(false,write_src(Exec))),add_history_string(H)))).
 
+
+add_history_pl(Exec):- notrace(ignore((Exec\=[],with_output_to(string(H),with_indents(false,(writeq(Exec),writeln('.')))),add_history_string(H)))).
+
 read_metta1(_,O2):- clause(t_l:s_reader_info(O2),_,Ref),erase(Ref).
 read_metta1(In,Expr):- current_input(In0),In==In0,!, repl_read(Expr).
 read_metta1(In,Expr):- string(In),!,parse_sexpr_metta(In,Expr),!.
@@ -619,6 +625,13 @@ parse_sexpr_metta(I,O):- parse_sexpr_untyped(I,U),trly(untyped_to_metta,U,O).
 parse_sexpr_metta1(M,exec(O)):- string_concat('!',I,M),!,parse_sexpr_metta1(I,O).
 parse_sexpr_metta1(M,(O)):- string_concat('+',I,M),!,parse_sexpr_metta1(I,O).
 parse_sexpr_metta1(I,O):- parse_sexpr_untyped(I,U),trly(untyped_to_metta,U,O).
+
+
+write_comment(Cmt):- format('~N;~w~n',[Cmt]).
+do_metta_cmt(_,'$COMMENT'(Cmt,_,_)):- write_comment(Cmt),!.
+do_metta_cmt(_,'$STRING'(Cmt)):- write_comment(Cmt),!.
+do_metta_cmt(Self,[Cmt]):- !, do_metta_cmt(Self, Cmt),!.
+
 
 mlog_sym('@').
 
@@ -840,25 +853,30 @@ type_decl('%Undefined%').
 type_decl('Variable').
 
 :- dynamic(metta_atom/2).
+:- dynamic(asserted_metta_atom/2).
 metta_atom_stdlib([:, Type, 'Type']):- type_decl(Type).
 metta_atom_stdlib([:, Op, [->|List]]):- op_decl(Op,Params,ReturnType),append(Params,[ReturnType],List).
 
-metta_atom(KB, [F, A| List]):- KB=='&flybase',fb_pred(F, Len), length([A|List],Len),apply(F,[A|List]).
-%metta_atom(KB, [F|List]):- KB=='&flybase',fb_pred(F, Len), length(List,Len),apply(F,List).
+%metta_atom(KB, [F|List]):- KB='&flybase',fb_pred(F, Len), length(List,Len),apply(F,List).
+
+metta_atom(KB, [F, A| List]):- KB='&flybase',fb_pred(F, Len), length([A|List],Len),apply(F,[A|List]).
+metta_atom([Superpose,ListOf], Atom):- Superpose == 'superpose',is_list(ListOf),!,member(KB,ListOf),metta_atom(KB,Atom).
 metta_atom(Space, Atom):- typed_list(Space,_,L),!, member(Atom,L).
-metta_atom(KB,Atom):- nonvar(KB), nonvar(Atom), metta_atom_stdlib(Atom).
-
+metta_atom(KB,Atom):- (KB=='&self'; KB='&stdlib'), metta_atom_stdlib(Atom).
 %atom1_atom_4(Space,F,A,List):- nonvar(Space), metta_atom(Space, F, A, List).
-
+metta_atom(KB,Atom):- asserted_metta_atom( KB,Atom),  \+ (Atom =[EQ,_,_], EQ=='=').
+metta_type(S,H,B):- metta_atom(S,[':',H,B]).
+typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_arguments(Cmpd,Type,[List|_]),is_list(List).
 
 
 
 %metta_atom(KB,[F,A|List]):- metta_atom(KB,F,A,List), F \== '=',!.
-metta_defn(KB,Head,Body):- metta_atom(KB,['=',Head,Body]).
+metta_defn(KB,Head,Body):- asserted_metta_atom(KB,['=',Head,Body]).
 
 %maybe_xform(metta_atom(KB,[F,A|List]),metta_atom(KB,F,A,List)):- is_list(List),!.
 maybe_xform(metta_defn(KB,Head,Body),metta_atom(KB,['=',Head,Body])).
 maybe_xform(metta_type(KB,Head,Body),metta_atom(KB,[':',Head,Body])).
+maybe_xform(metta_atom(KB,HeadBody),asserted_metta_atom(KB,HeadBody)).
 maybe_xform(_OBO,_XForm):- !, fail.
 
 metta_anew1(Load,_OBO):- var(Load),trace,!.
@@ -885,10 +903,12 @@ metta_anew2(unload,OBO):- subst_vars_not_last(OBO,Cl),load_hook(unload,OBO),
   ignore((clause(Head,Body,Ref),clause(Head2,Body2,Ref),(Head+Body)=@=(Head2+Body2),erase(Ref),pp_m(Cl))).
 
 
+metta_anew(Ch,Src,OBO):-  metta_interp_mode(Ch,Mode), !, metta_anew(Mode,Src,OBO).
 metta_anew(Load,_Src,OBO):- silent_loading,!,metta_anew1(Load,OBO).
 metta_anew(Load,Src,OBO):- maybe_xform(OBO,XForm),!,metta_anew(Load,Src,XForm).
 metta_anew(Load,Src,OBO):- format('~N'), color_g_mesg('#0f0f0f',(write('  ; Action: '),writeq(Load=OBO))),
-   color_g_mesg('#ffa500', write_src(Src)),metta_anew1(Load,OBO),format('~n').
+   color_g_mesg('#ffa500', write_src(Src)),
+   metta_anew1(Load,OBO),format('~n').
 
 subst_vars_not_last(A,B):-
   functor(A,_F,N),arg(N,A,E),
@@ -1237,68 +1257,6 @@ into_metta_callable(Self,TermV,CALL,X,NamedVarsList,Was):-!,
 print_goals(TermV):- write_src(TermV).
 
 
-/*do_metta_ exec(From,Mode,Self,TermV):- fail,
-  return_empty(Empty),
-  nb_setval(exec_src,TermV),
-  findall(X,(interactively_do_metta_exec(From,Mode,Self,TermV,X,NamedVarsList,Was),
-         ignore((must_det_ll((notrace(((color_g_mesg(yellow,
-         ((write(' '), write_src(X),nl,
-            (NamedVarsList\=@=Was-> (color_g_mesg(green,writeq(NamedVarsList)),nl); true),
-            ignore(( \+ is_list(X),compound(X),format(' % '),writeq(X),nl,X\==Empty))))))))))))),_XL),!.
-do_metta_ exec(From,Mode,Self,TermV):-
-  \+ \+ write_exec(TermV),
-  into_metta_callable(Self,TermV,Term,X,NamedVarsList,Was),
-  Control = contrl(each),
-  forall(may_rt race(rtrace(Term)),
-    (( notrace(ignore(((color_g_mesg(yellow,
-     ((write(' '),
-        write_src(X),nl,
-        (NamedVarsList\=@=Was-> (color_g_mesg(green,write_src(NamedVarsList)),nl); true),
-        ignore(( \+ is_list(X),compound(X),format(' % '),write_src(X),nl))))))))),
-       Control \= contrl(leap),
-       (read_pending_input(current_input,_,[]),
-        ((Control = contrl(leap))-> fail ;
-         (
-          (write("press ';', '<enter>' or 'l': "),get_single_char(C)),
-           (C==108->nb_setarg(1,Control,leap);(C==103->print_goals(Term);(C==59->true;(C==13->(!,fail))))))))))).
-
-do_metta_ exec(From,Mode,_Self,TermV,X,NamedVarsList,Was):- use_metta_compiler, !,
- (( /*must_det_ll*/((
-  write_exec(TermV),
- % ignore(Res = '$VAR'('ExecRes')),
-  RealRes = Res,
-  compile_for_exec(Res,TermV,ExecGoal),!,
-  subst_vars(Res+ExecGoal,Res+Term,NamedVarsList),
-  copy_term(NamedVarsList,Was),
-  term_variables(Term,Vars),
-  %nl,writeq(Term),nl,
-  ((\+ \+
-  ((numbervars(v(TermV,Term,NamedVarsList,Vars),999,_,[attvar(bind)]),
-  %nb_current(variable_names,NamedVarsList),
-  nl,print(subst_vars(Term,NamedVarsList,Vars)),nl)))),
-  nop(maplist(verbose_unify,Vars)))))),
-  %NamedVarsList=[_=RealRealRes|_],
-  var(RealRes),
-  X = RealRes,
-  may_ rtrace(Term).
-
-do_metta_ exec(From,Mode,Self,TermV,X,NamedVarsList,Was):-!,
- notrace(( must_det_ll((
-  if_t(preview_compiler,write_compiled_exec(TermV,_Goal)),
-  \+ \+ write_exec(TermV),
-  subst_vars(TermV,Term,NamedVarsList),
-  copy_term(NamedVarsList,Was),
-  term_variables(Term,Vars),
-  %nl,writeq(Term),nl,
-  skip((\+ \+
-  ((numbervars(v(TermV,Term,NamedVarsList,Vars),999,_,[attvar(bind)]),
-  %nb_current(variable_names,NamedVarsList),
-  nl,print(subst_vars(TermV,Term,NamedVarsList,Vars)),nl)))),
-  option_else('stack-max',StackMax,100),
-  nop(maplist(verbose_unify,Vars)))))),
-  may_r trace(eval_args(StackMax,Self,Term,X)).
-*/
-
 
 
 %repl:- option_value('repl',prolog),!,prolog.
@@ -1451,25 +1409,41 @@ name_vars(X='$VAR'(X)).
 interactively_do_metta_exec(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut):-
   notrace((
     inside_assert(Term,BaseEval),
-    \+ \+ write_exec(TermV),
     option_else(answer,Leap,each),
     Control = contrl(Leap),
+    Skipping = _,
     % Initialize Control as a compound term with 'each' as its argument.
     %GG = interact(['Result'=X|NamedVarsList],Term,trace_off),
     (((From = file(_Filename), option_value('exec',skip),  \+ always_exec(BaseEval)))
-     -> GG = (skip(Term),deterministic(Complete))
-        ; GG =          (dcall(Term),deterministic(Complete))),
+     -> (GG = (skip(Term),deterministic(Complete)),
+               %Output =
+                %FOut = "Skipped",
+                Skipping = 1,!,
+                %color_g_mesg('#da70d6', (write('% SKIPPING: '), writeq(eval_args(100,Self,BaseEval,X)),writeln('.'))),
+                % color_g_mesg('#fa90f6', (writeln('; SKIPPING'), with_indents(true,write_src(exec(BaseEval))))),
+               %  if_t(is_list(BaseEval),add_history_src(exec(TermV))),
+                 true
+             )
+        ; GG =       locally(set_prolog_flag(gc,false),
+                             ( (dcall(Term),deterministic(Complete))))),
     Result = res(FOut),
     !, % metta_toplevel
    flag(result_num,_,0),
-  with_indents(false,
+   PL=eval_args(100,Self,BaseEval,X),
+ ( % with_indents(true,
   \+ \+ (
     maplist(name_vars,NamedVarsList),
     name_vars('OUT'=X),
     %add_history_src(exec(BaseEval)),
-  color_g_mesg('#fa90f6', (write('; '), with_indents(false,write_src(exec(BaseEval))))),
-  if_t(is_interactive(From),if_t(is_list(BaseEval),add_history_src(exec(TermV)))),
-  color_g_mesg('#da70d6', (write('% DEBUG: '), writeq(eval_args(100,Self,BaseEval,X)),writeln('.'))))))),
+      write_exec(TermV),
+      if_t(Skipping==1,writeln(' ; SKIPPING')),
+      if_t(TermV\=BaseEval,color_g_mesg('#fa90f6', (write('; '), with_indents(false,write_src(exec(BaseEval)))))),
+      if_t((is_interactive(From);Skipping==1),
+          ( if_t((option_value('repl',prolog);option_value(prolog,true)),
+              add_history_pl(PL)),
+            if_t(is_list(BaseEval),add_history_src(exec(TermV))))),
+      color_g_mesg('#da70d6', (write('% DEBUG: '), writeq(PL),writeln('.'))),
+      true)))),
 
    (forall_interactive(
     From, WasInteractive,may_rtrace(GG),
@@ -1664,6 +1638,19 @@ print_help :-
 
 
 
+
+really_trace:- once(option_value('exec',rtrace);option_value('eval',rtrace);is_debugging((exec));is_debugging((eval))).
+% !(pragma! exec rtrace)
+may_rtrace(Goal):- really_trace,!,  really_rtrace(Goal).
+may_rtrace(Goal):- rtrace_on_existence_error(time_eval(dcall(Goal)))*->true;really_rtrace(Goal).
+really_rtrace(Goal):- use_metta_compiler,!,rtrace(call(Goal)).
+really_rtrace(Goal):- with_debug((eval),with_debug((exec),Goal)).
+
+rtrace_on_existence_error(G):- !, catch(G,E,(wdmsg(E),rtrace(G))).
+%rtrace_on_existence_error(G):- catch(G,error(existence_error(procedure,W),Where),rtrace(G)).
+
+
+
 write_compiled_exec(Exec,Goal):-
 %  ignore(Res = '$VAR'('ExecRes')),
   compile_for_exec(Res,Exec,Goal),
@@ -1681,17 +1668,6 @@ vu(true,_Value):- !.
 vu(trace,_Value):- trace.
 :- nodebug(metta(eval)).
 :- nodebug(metta(exec)).
-
-really_trace:- once(option_value('exec',rtrace);option_value('eval',rtrace);is_debugging((exec));is_debugging((eval))).
-% !(pragma! exec rtrace)
-may_rtrace(Goal):- really_trace,!,  really_rtrace(Goal).
-may_rtrace(Goal):- rtrace_on_existence_error(time_eval(dcall(Goal)))*->true;really_rtrace(Goal).
-really_rtrace(Goal):- use_metta_compiler,!,rtrace(call(Goal)).
-really_rtrace(Goal):- with_debug((eval),with_debug((exec),Goal)).
-
-rtrace_on_existence_error(G):- !, catch(G,E,(wdmsg(E),rtrace(G))).
-%rtrace_on_existence_error(G):- catch(G,error(existence_error(procedure,W),Where),rtrace(G)).
-
 % Measures the execution time of a Prolog goal and displays the duration in seconds,
 % milliseconds, or microseconds, depending on the execution time.
 %
@@ -1811,7 +1787,9 @@ do_loon:-
 
 %loon:- time(loon_metta('./examples/compat/test_scripts/*.metta')),fail.
 %loon:- repl, (option_value('halt',false)->true;halt(7)).
-maybe_halt(Seven):- option_value('repl',true),!,halt(Seven).
+maybe_halt(Seven):- option_value('prolog',true),!,call_cleanup(prolog,(set_option_value('prolog',false),maybe_halt(Seven))).
+maybe_halt(Seven):- option_value('repl',true),!,call_cleanup(repl,(set_option_value('repl',false),maybe_halt(Seven))).
+%maybe_halt(Seven):- option_value('repl',true),!,halt(Seven).
 maybe_halt(Seven):- option_value('halt',true),!,halt(Seven).
 maybe_halt(Seven):- wdmsg(maybe_halt(Seven)).
 

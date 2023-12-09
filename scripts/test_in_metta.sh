@@ -1,17 +1,17 @@
 #!/bin/bash
 
-#set -xv
-#set -e
+# This script performs various testing operations for MeTTaLog.
+# It handles command-line arguments to customize its behavior.
 
-# One-liner to check if the script is being sourced or run
+# Check if the script is being sourced or run directly
 export IS_SOURCED=$( [[ "${BASH_SOURCE[0]}" != "${0}" ]] && echo 1 || echo 0)
 
-export RUST_BACKTRACE=full
-#export PYTHONPATH=./metta_vspace
+export RUST_BACKTRACE=full  # Enable full Rust backtrace for debugging
 
-# Save the directory one above where this script resides
+# Save the directory one level above where this script resides
 export SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd .. && pwd )"
 
+# Function to add an item to a list if it's not already present
 add_to_list() {
     local item="$1"
     local -n list_ref="$2"
@@ -20,114 +20,62 @@ add_to_list() {
     fi
 }
 
-# Initialize default values
-# export variables for later use
+# Initialize default values and export variables for later use
 export UNITS_DIR
-export outer_extra_args
+export passed_along_to_mettalog
 export METTALOG_MAX_TIME
 export all_test_args="${@}"
-auto_reply=""
-generate_report=0
+run_tests_auto_reply=""
+generate_report_auto_reply=""
 UNITS_DIR="examples/"
-outer_extra_args=()
+passed_along_to_mettalog=()
 METTALOG_MAX_TIME=75
-clean=0  # 0 means dont clean, 1 means do clean
+clean=0  # 0 means don't clean, 1 means do clean
 fresh=0
 if_failures=1
+show_help=0
 export RUST_METTA_MAX_TIME=120
-GREP_ARGS=""
+EXTRA_FIND_ARGS=""
+EXTRA_GREP_ARGS=""
+explain_only=1
 
-# Loop through all arguments
+# command-line argument parsing
 while [ "$#" -gt 0 ]; do
   case "$1" in
-    -y)
-      auto_reply="y"
+    -y|-n|--timeout=*|--report=*|--clean|--cont*|--fail*|--test|--fresh*)
+      [[ "$1" == --timeout=* ]] && METTALOG_MAX_TIME="${1#*=}"
+      [[ "$1" == --report=* ]] && generate_report_auto_reply="${1#*=}"
+      [[ "$1" == --clean ]] && clean=1 && if_failures=0
+      [[ "$1" == --cont* ]] && clean=0 && if_failures=0
+      [[ "$1" == --fail* ]] && clean=0 && if_failures=1
+      [[ "$1" == --expain ]] && explain_only=1
+      [[ "$1" == --test ]] && explain_only=0
+      [[ "$1" == --fresh* ]] && fresh=1
+      [[ "$1" == -y ]] && run_tests_auto_reply="y"
+      [[ "$1" == -n ]] && run_tests_auto_reply="n"
       shift
       ;;
-    -n)
-      auto_reply="n"
-      shift
-      ;;
-      --timeout=*)
-        METTALOG_MAX_TIME="${1#*=}"
-        add_to_list "$1" outer_extra_args
+      --exclude*=*)
+        EXTRA_FIND_ARGS+=" ! -path ${1#*=}"
+        CANT_HAVE="${1#*=}"
         shift
         ;;
-     --report=*)
-          generate_report="${1#*=}"
+    --include*=*)
+       EXTRA_FIND_ARGS+=" -path ${1#*=}"
+       MUST_HAVE="${1#*=}"
           shift
           ;;
-    --*clud*=*)
-      add_to_list "$1" outer_extra_args
-      GREP_ARGS="${GREP_ARGS} ${1}"
-      shift
-      ;;
-
-      --clean)
-        clean=1
-        if_failures=0
-        # add_to_list "$1" outer_extra_args
-        shift
-        ;;
-
-     --cont*)
-             clean=0
-             if_failures=0
-             # add_to_list "$1" outer_extra_args
-             shift
-             ;;
-
-     --fail*)
-            clean=0
-            if_failures=1
-            # add_to_list "$1" outer_extra_args
-            shift
-            ;;
-
-     --test)
-          # add_to_list "$1" outer_extra_args
-          shift
-          ;;
-
-     --fresh*)
-       fresh=1
-       # add_to_list "$1" outer_extra_args
-       shift
-     ;;
-
-
-
     -h|--help)
       echo "Usage: $0 [options] [directory] [extra args]"
-      echo "Options:"
-      echo "  -y                 Automatically choose 'y' for rerunning all tests"
-      echo "  -n                 Automatically choose 'n'"
-      echo "  --fresh             Clean up by deleting any .answers files under directory"
-      echo "  --clean            Clean up by deleting all .html files under directory"
-      echo "  -h|--help          Display this help message"
-      echo " "
-      echo "Arguments:"
-      echo "  directory          Directory to find tests (current: ${SCRIPT_DIR}/${UNITS_DIR})"
-      echo "  extra args         Optional command-line arguments passed to MeTTaLog like:"
-      echo "                       --compile=full|true|false   Enable or disable compilation (current: false)"
-      echo "                       --timeout=SECONDS           Specify a timeout value in seconds (current: $METTALOG_MAX_TIME)"
-      echo " "
-      echo "Examples:"
-      echo "  # Run under '${SCRIPT_DIR}/examples/compat/sumo' with a 180 second timeout per test"
-      echo "  $0 examples/compat/sumo --timeout=60   "
-      echo " "
-      echo "  # Automatically (chooses 'y') cleans up and runs all tests in default '${SCRIPT_DIR}/examples' directory with a 180 second timeout per test"
-      echo "  $0 -y --clean --timeout=180 "
-      echo " "
-      echo "Note: Arguments can be in any order."
-      [[ $IS_SOURCED -eq 1 ]] && return 0 || exit 0
+      # we delay showing help so variables can be filled in
+      show_help=1
+      explain_only=1
       ;;
-
     *)
       if [ -d "$1" ] || [ -f "$1" ]; then
         UNITS_DIR="$1"
       else
-        add_to_list "$1" outer_extra_args
+        add_to_list "$1" passed_along_to_mettalog
       fi
       shift
       ;;
@@ -136,15 +84,81 @@ done
 
 
 
-function delete_html_files() {
-    cd "$SCRIPT_DIR"
-    find "${UNITS_DIR}" -name "*.html" -type f -delete -print
+if [  "$show_help" -eq 1 ]; then
+      # Help section with detailed usage instructions
+      echo "Options:"
+      echo "  -y |--yes                Automatically choose 'y' for rerunning all tests"
+      echo "  -n|--no                 Automatically choose 'n'"
+      echo "  --fresh            Clean up by deleting any .answers files under directory"
+      echo "  --clean           Clean up by deleting all .html files under directory"
+      echo "  --continue     Continue running tests (Generating any missing html files)"
+      echo "  --failures        Rerun unsuccessfull tests only"
+      echo "  --timeout=SECONDS  Specify a timeout value in seconds (current: $METTALOG_MAX_TIME)"
+      echo "  --report=(Y/N)  Generate a report (if not supplied, will be asked at the end)"
+      echo "  --*clud*=PATTERN   Include or exclude tests based on pattern"
+      echo "  -h|--help          Display this help message"
+      echo ""
+      echo "Arguments:"
+      echo "  directory          Directory to find .metta file tests (current: ${SCRIPT_DIR}/${UNITS_DIR})"
+      echo "  extra args         Optional command-line arguments passed to MeTTaLog"
+      echo ""
+      echo "Examples:"
+      echo "  # Run under '${SCRIPT_DIR}/examples/baseline_compat/hyperon-pln_metta/sumo' with a 60 second timeout per test"
+      echo "  $0 examples/ --include \"*sumo/\" --timeout=60"
+      echo ""
+      echo "  # Automatically (chooses 'y') cleans up and runs all tests in default '${SCRIPT_DIR}/examples' directory with a 180 second timeout per test"
+      echo "  $0 -y --clean --timeout=180"
+      echo ""
+      echo "Note: Arguments can be in any order."
+fi
+
+IF_REALLY_DO() {
+    if [ "$explain_only" -eq 1 ]; then
+        echo "Would be doing: $*"
+    else
+        echo "Doing: $*"
+        eval "$*"
+    fi
 }
 
+
+function delete_html_files() {
+    if [ -n "${UNITS_DIR}" ]; then  # Check if UNITS_DIR is not empty
+        echo "Deleting .html files in $UNITS_DIR"
+
+        local include_pattern=""
+        local exclude_pattern=""
+
+        # Extract include and exclude patterns from EXTRA_FIND_ARGS
+        for arg in $MUST_HAVE; do
+            case "$arg" in
+            esac
+        done
+
+        # Construct the find command
+        local find_cmd="find \"${UNITS_DIR}\" -type f -name \"*.metta.html\""
+
+        # Append include and exclude patterns
+        find_cmd+=$EXTRA_FIND_ARGS
+
+        if [ "$explain_only" -eq 1 ]; then
+            echo "would be deleting these files: "
+            find_cmd+=" -print"
+        else
+           find_cmd+=" -delete -print"
+        fi
+
+        eval $find_cmd
+    fi
+}
+
+
+# Delete HTML files if the clean flag is set
 if [ $clean -eq 1 ]; then
   delete_html_files
 fi
 
+# Function to check if a file is in an array
 file_in_array() {
     local file="$1"
     shift
@@ -155,51 +169,119 @@ file_in_array() {
     return 1
 }
 
+# Function to run tests
 function run_tests() {
+    # Process test files
+   BASE_DIR="${UNITS_DIR}"
+    echo "Running tests in $BASE_DIR"
 
-    #delete_html_files
-    #rsync -avm --include='*.html' -f 'hide,! */' reports/ examples/
+      set +v
+         echo "Finding files with 'test' in their name and apply $EXTRA_FIND_ARGS ..."
+         mapfile -t test_files < <(find "${UNITS_DIR}" $EXTRA_FIND_ARGS -type f -iname "*test*.metta")
+         echo "'Test' files found: ${#test_files[@]}"
 
-    # Initial setup
-    cd "$SCRIPT_DIR"
-    #find -name "*.answers" -size 0 -delete
-    cat /dev/null > TEE.ansi.UNITS
+         echo "Finding files containing 'assert' keyword and apply $MUST_HAVE ..."
+         mapfile -t assert_files < <(find "${UNITS_DIR}" $EXTRA_FIND_ARGS -type f -name '*.metta' -print0 | xargs -0 grep -rl 'assert' -- $GREP_ARGS)
+         echo "Assert<*> files found: ${#assert_files[@]} "
 
-    # Get files
-    mapfile -t assert_files < <(find "${UNITS_DIR}" -type d -name '*~*' -prune -o -type f -name '*.metta' -print0 | xargs -0 grep -rl 'assert' -- $GREP_ARGS)
-    mapfile -t test_files < <(find "${UNITS_DIR}" -type d -name '*~*' -prune -o -type f -iname "*test*.metta" $GREP_ARGS)
-    mapfile -t has_tests < <(find "${UNITS_DIR}" -type d -name '*~*' -prune -o -type f -name '*.metta' -print0 | xargs -0 grep -rl '^!\([^!]*\)$' -- $GREP_ARGS)
+         echo "Finding files containing execution directive (lines starting with '!') and apply $MUST_HAVE ..."
+         mapfile -t has_tests < <(find "${UNITS_DIR}" $EXTRA_FIND_ARGS -type f -name '*.metta' -print0 | xargs -0 grep -rl '^!\([^!]*\)$' -- $GREP_ARGS)
+        echo "Test directive files found: ${#has_tests[@]}"
 
-    # Filtering out the has_tests from assert_files and test_files
-    for htest in "${has_tests[@]}"; do
-        assert_files=("${assert_files[@]/$htest}")
-        test_files=("${test_files[@]/$htest}")
-    done
 
-    # Filtering test_files
-    for afile in "${assert_files[@]}"; do
-        test_files=("${test_files[@]/$afile}")
-    done
+      # Remove empty elements from arrays
+      assert_files=("${assert_files[@]}" )
+      test_files=("${test_files[@]}" )
+      has_tests=("${has_tests[@]}" )
 
-    # Concatenate all three collections into a unified collection
+      # Function to filter out elements of array1 that are present in array2
+      filter_arrays() {
+          local -n array1=$1
+          local -n array2=$2
+          local temp_array=()
+          local skip
+
+          for item1 in "${array1[@]}"; do
+              skip=0
+              for item2 in "${array2[@]}"; do
+                  if [[ "$item1" == "$item2" ]]; then
+                      skip=1
+                      break
+                  fi
+              done
+              if [[ skip -eq 0 ]]; then
+                  temp_array+=("$item1")
+              fi
+          done
+
+          array1=("${temp_array[@]}")
+      }
+
+      # Filter out assert_files from has_tests
+      filter_arrays has_tests assert_files
+      # Filter out assert_files from test_files
+      filter_arrays test_files assert_files
+      # Filter out has_tests from test_files
+      filter_arrays test_files has_tests
+      # Remove empty elements from arrays
+      assert_files=("${assert_files[@]}" )
+      test_files=("${test_files[@]}" )
+      has_tests=("${has_tests[@]}" )
+
+      # for file in "${assert_files[@]}"; do [ -f "${file}" ] && echo assert_files "$file"; done
+      # for file in "${test_files[@]}"; do [ -f "${file}" ] && echo test_files "$file"; done
+      # for file in "${has_tests[@]}"; do [ -f "${file}" ] && echo has_tests "$file"; done
+
+
+    # Combine all files and make the collection unique
     all_files=( "${assert_files[@]}" "${test_files[@]}" "${has_tests[@]}" )
-
-    # Make the collection unique to avoid processing the same file more than once
     readarray -t unique_files < <(printf "%s\n" "${all_files[@]}" | sort -u)
 
-    find_override_file() {
-      local filename=$1
-      local override_filename="${filename/\/compat\//\/override-compat\/}"
+    # Process each unique file
+    for file in "${unique_files[@]}"; do
+        if [ -f "${file}" ]; then
+          process_file "$file"
+        fi
+    done
+}
 
-      if [[ -f "$override_filename" ]]; then
-         echo "$override_filename"
-      else
-         echo "$filename"
-      fi
-    }
+# Main execution block
+function main() {
+    cd "$SCRIPT_DIR"
 
-    # Shared logic across both file types
-    process_file() {
+    # Prompt user to rerun all tests if run_tests_auto_reply is not set
+    if [ -z "$run_tests_auto_reply" ]; then
+        read -p "Rerun all tests? (y/N): " -n 1 -r
+        echo ""
+    else
+        REPLY=$run_tests_auto_reply
+    fi
+
+    # Run tests and generate MeTTaLog report
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+       # run our selected tests
+        run_tests
+        IF_REALLY_DO generate_final_MeTTaLog
+    else
+        echo "Skipping test run."
+    fi
+
+    # Prompt for code commit and unit report generation
+    if [ -z "$generate_report_auto_reply" ]; then
+        read -p "Commit code and generate unit reports? (y/N): " -n 1 -r
+        echo ""
+    else
+        REPLY=$generate_report_auto_reply
+    fi
+
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        IF_REALLY_DO PreCommitReports
+    else
+        echo "Skipping report generation."
+    fi
+}
+
+process_file() {
        #local file=$(find_override_file "$1")
        local file="$1"
 
@@ -215,8 +297,6 @@ function run_tests() {
 
         cd "$SCRIPT_DIR"
         echo ""
-
-
 
          # Add unique absolute paths to PYTHONPATH
          pp1=$(realpath "$(dirname "${file}")")
@@ -235,9 +315,9 @@ function run_tests() {
          # Combined condition check
          if [[ "$fresh" -eq 1 ]] || [ ! -f "${file}.answers" ] || ([ "${file}" -nt "${file}.answers" ] && [ -s "${file}.answers" ]); then
              echo "Regenerating answers:  $file.answers"
-             cat /dev/null > "${file}.answers"
+             IF_REALLY_DO cat /dev/null > "${file}.answers"
 
-             set +e -x
+             set +e
 
              # Function to handle SIGINT
              handle_sigint() {
@@ -249,17 +329,30 @@ function run_tests() {
              trap 'handle_sigint' SIGINT
 
              ( cd "$(dirname "${file}")" || true
-               timeout --foreground --kill-after=5 --signal=SIGINT $(($RUST_METTA_MAX_TIME + 1)) time metta "$absfile" 2>&1 | tee "${absfile}.answers"
+
+                set -x
+               IF_REALLY_DO timeout --foreground --kill-after=5 --signal=SIGINT $(($RUST_METTA_MAX_TIME + 1)) time metta "$absfile" 2>&1 | tee "${absfile}.answers"
+               TEST_EXIT_CODE=$?
+                #set +x
+              if [ $TEST_EXIT_CODE -eq 124 ]; then
+                  echo "Rust MeTTa  Killed (definitely due to timeout) after $RUST_METTA_MAX_TIME seconds: ${TEST_CMD}"
+                  [ "$if_failures" -eq 1 ] && rm -f "$file_html"
+              elif [ $TEST_EXIT_CODE -ne 0 ]; then
+                  echo "Rust MeTTa  Completed with error (EXITCODE=$TEST_EXIT_CODE) under $RUST_METTA_MAX_TIME seconds"
+              else
+                  echo "Rust MeTTa  Completed successfully (EXITCODE=0) under $RUST_METTA_MAX_TIME seconds"
+              fi
+
              ) || true
-             stty sane
+            stty sane
 
              trap - SIGINT
 
-             set +x -e
+             set -e
 
          else
              echo "Checked for answers:  $file.answers"
-             cat "${file}.answers"
+             IF_REALLY_DO cat "${file}.answers"
              echo "Using for answers:  $file.answers"
          fi
 
@@ -294,7 +387,7 @@ function run_tests() {
                if [ "$failures_not_zero" -eq 1 ]; then
                    take_test=1
                    echo "Retaking test since failures are present."
-                   rm -f "$file_html"
+                   IF_REALLY_DO rm -f "$file_html"
                else
                    echo "Not retaking since Failures: 0."
                fi
@@ -305,23 +398,20 @@ function run_tests() {
 
          if [ "$take_test" -eq 1 ]; then
              sleep 0.1
-             touch "$file_html"
+             IF_REALLY_DO  touch "$file_html"
 
-             TEST_CMD="./MeTTa --timeout=$METTALOG_MAX_TIME --html --repl=false $extra_args $outer_extra_args \"$file\" --halt=true"
+             TEST_CMD="./MeTTa --timeout=$METTALOG_MAX_TIME --html --repl=false $extra_args $passed_along_to_mettalog \"$file\" --halt=true"
              echo "Running command with timeout: $TEST_CMD"
 
              set +e
-
-             # Using timeout outside the subshell
-             time    timeout --foreground --kill-after=5 --signal=SIGINT  "$METTALOG_MAX_TIME" $TEST_CMD
-             TEST_EXIT_CODE=$?
-             stty sane
+             IF_REALLY_DO time  $TEST_CMD
+            TEST_EXIT_CODE=$?
             # set -e
              echo ""
 
               if [ $TEST_EXIT_CODE -eq 124 ]; then
                   echo "Killed (definitely due to timeout) after $METTALOG_MAX_TIME seconds: ${TEST_CMD}"
-                  [ "$if_failures" -eq 1 ] && rm -f "$file_html"
+                  IF_REALLY_DO [ "$if_failures" -eq 1 ] && rm -f "$file_html"
               elif [ $TEST_EXIT_CODE -ne 0 ]; then
                   echo "Completed with error (EXITCODE=$TEST_EXIT_CODE) under $METTALOG_MAX_TIME seconds: ${TEST_CMD}"
               else
@@ -329,96 +419,65 @@ function run_tests() {
               fi
               #/scripts/total_loonits.sh
          fi
-
-    }
-
-    # Process assert_files
-    #for file in "${assert_files[@]}"; do
-    #   [ -f "${file}" ] && process_file "$file"
-    #done
-
-   sorted_array=($(for i in "${all_files[@]}"; do
-       echo "$i"
-   done | sort | uniq | awk 'NF'))
-
-   # Create an empty array for the reversed elements
-   reversed_array=()
-
-   # Loop through the original array in reverse order
-   for (( i=${#sorted_array[@]}-1; i>=0; i-- )); do
-      reversed_array+=("${sorted_array[i]}")
-   done
-
-    sorted_array=( "${reversed_array[@]}" )
-
-
-   # Process test_files
-   for file in "${sorted_array[@]}"; do
-       if [ -f "${file}" ]; then
-           echo ""
-           if file_in_array "$file" "${assert_files[@]}"; then
-               [ -f "${file}" ] && process_file "$file"
-           else
-               [ -f "${file}" ] && process_file "$file" "--test-retval=true"
-           fi
-       fi
-   done
-
-
 }
 
 
 function generate_final_MeTTaLog() {
+    # Change to the script directory
+    cd "$SCRIPT_DIR" || exit 1
 
-    cd "$SCRIPT_DIR"
-
+    # Calculate the number of passed and failed tests
     passed=$(grep -c "| PASS |" TEE.ansi.UNITS)
     failed=$(grep -c "| FAIL |" TEE.ansi.UNITS)
     total=$((passed + failed))
     percent_passed=$(awk -v passed="$passed" -v total="$total" 'BEGIN { printf "%.2f", (passed/total)*100 }')
 
+    # Create a markdown file with test links and headers
     {
-    echo " "
-    echo "| STATUS | TEST NAME | TEST CONDITION | ACTUAL RESULT | EXPECTED RESULT |"
-    echo "|--------|-----------|----------------|---------------|-----------------|"
+        echo " "
+        echo "| STATUS | TEST NAME | TEST CONDITION | ACTUAL RESULT | EXPECTED RESULT |"
+        echo "|--------|-----------|----------------|---------------|-----------------|"
     } > TEST_LINKS.md
-
     sort -t'|' -k3 TEE.ansi.UNITS | sed 's/^[ \t]*//' | \
     awk -F '|' -v OFS='|' '{ $4 = substr($4, 1, 200); print }' | \
     awk -F '|' -v OFS='|' '{ $5 = substr($5, 1, 200); print }' | \
     awk -F '|' -v OFS='|' '{ $6 = substr($6, 1, 200); print }' >> TEST_LINKS.md
 
+    # Append extra newlines to the test links markdown file
     echo -e "\n\n\n" >> TEST_LINKS.md
 
+    # Create a summary of the test results
     {
-    echo "Test Results:"
-    echo "$passed Passed,"
-    echo "$failed Failed,"
-    echo "$total Total,"
-    echo "$percent_passed% Passed"
+        echo "Test Results:"
+        echo "$passed Passed,"
+        echo "$failed Failed,"
+        echo "$total Total,"
+        echo "$percent_passed% Passed"
     } > summary.md
 
-    (
-    cat PASS_FAIL.md
-    echo " "
-    cat TEST_LINKS.md
-    cat summary.md
-    echo " "
-    ) > temp && mv temp TEST_LINKS.md
+    # Combine different markdown sections into one
+    {
+        cat PASS_FAIL.md
+        echo " "
+        cat TEST_LINKS.md
+        cat summary.md
+        echo " "
+    } > temp && mv temp TEST_LINKS.md
 
+    # Clean up the summary markdown file
     rm summary.md
 
+    # Assemble the final MeTTaLog report
     awk '/# Bugs in MeTTaLog/{exit} 1' MeTTaLog.md > temp1.txt
     awk 'BEGIN{flag=0} /# Installation Guide/{flag=1} flag' MeTTaLog.md > temp2.txt
-
     cat temp1.txt TEST_LINKS.md temp2.txt > final_MeTTaLog.md
-
-    #cat final_MeTTaLog.md
 
     # Clean up temporary files
     rm temp1.txt temp2.txt
-}
 
+    # Optionally, display the final MeTTaLog report
+    # cat final_MeTTaLog.md
+}
 
 
 
@@ -530,44 +589,7 @@ function compare_test_files() {
     rm -f "$sorted1" "$sorted2" new_tests.md missing_tests.md
 }
 
-
-(
-   cd "$SCRIPT_DIR"
-
-   # If auto_reply is empty, then ask the user
-   if [ -z "$auto_reply" ]; then
-     read -p "Rerun all tests? (y/N): " -n 1 -r
-     echo ""
-   else
-     REPLY=$auto_reply
-   fi
+main
 
 
-time (
-   if [[ $REPLY =~ ^[Yy]$ ]]; then
-     run_tests
-   else
-     echo "You chose not to run all tests."
-   fi
-
-   generate_final_MeTTaLog
-   compare_test_files ./MeTTaLog.md ./final_MeTTaLog.md   )
-
-   if [ -z "$generate_report" ]; then
-      read -p "Are you ready to commit your code and generate unit reports? (y/N): " -n 1 -r
-     echo ""
-   else
-     REPLY=$generate_report
-   fi
-
-   echo
-
-   if [[ $REPLY =~ ^[Y]$ ]]; then
-     PreCommitReports
-   else
-     echo "You chose not to commit your code and generate unit reports."
-   fi
-)
-
-[[ $IS_SOURCED -eq 1 ]] && return 0 || exit 0
 
