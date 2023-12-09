@@ -1,7 +1,25 @@
+typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_arguments(Cmpd,Type,[List|_]),is_list(List).
+is_syspred(H,Len,Pred):- notrace(is_syspred0(H,Len,Pred)).
+is_syspred0(H,_Ln,_Prd):- \+ atom(H),!,fail.
+is_syspred0(H,_Ln,_Prd):- upcase_atom(H,U),downcase_atom(H,U),!,fail.
+is_syspred0(H,Len,Pred):- current_predicate(H/Len),!,Pred=H.
+is_syspred0(H,Len,Pred):- atom_concat(Mid,'!',H), H\==Mid, is_syspred0(Mid,Len,Pred),!.
+is_syspred0(H,Len,Pred):- into_underscores(H,Mid), H\==Mid, is_syspred0(Mid,Len,Pred),!.
+%is_function(F):- atom(F).
+is_metta_data_functor(_Othr,H):- clause(is_data_functor(H),_).
+is_metta_data_functor(Other,H):- H\=='Right', H\=='Something',
+ % metta_type(Other,H,_), % fail,
+  \+ metta_atom(Other,[H|_]),
+  \+ metta_defn(Other,[H|_],_),
+  \+ is_metta_builtin(H),
+  \+ is_comp_op(H,_),
+  \+ is_math_op(H,_,_).
 
 
 
 mnotrace(G):- once(G).
+
+
 
 is_decl_type(ST):- metta_type(_,_,Type),sub_sterm(T,Type),T=@=ST, \+ nontype(ST).
 is_decl_type([ST|_]):- !, atom(ST),is_decl_type_l(ST).
@@ -91,14 +109,6 @@ get_type0(Depth,Self,Expr,['StateMonad',Type]):-  notrace( is_valid_nb_state(Exp
 get_type0(Depth,Self,Val,Type):- \+ compound(Val),!,get_type01(Depth,Self,Val,Type),!.
 get_type0(Depth,Self,Val,Type):- get_type03(Depth,Self,Val,Type),!.
 
-typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_arguments(Cmpd,Type,[List|_]),is_list(List).
-/*
-(: Left
-  (-> %Undefined% Either))
-
-(: (Left %Undefined%) Either)
-
-*/
 get_type01(_Dpth,_Slf,Var,'%Undefined%'):- var(Var),!.
 get_type01(_Dpth,_Slf, [],'%Undefined%'):- !.
 get_type01(_Dpth,_Slf,Val,'Number'):- number(Val).
@@ -303,21 +313,6 @@ is_special_op(Self,Op):- get_operator_typedef(Self,Op,Params,_RetType),
    maplist(is_non_eval_kind,Params).
 is_special_op(_Slf,Op):- is_special_builtin(Op).
 
-is_syspred(H,Len,Pred):- notrace(is_syspred0(H,Len,Pred)).
-is_syspred0(H,_Ln,_Prd):- \+ atom(H),!,fail.
-is_syspred0(H,_Ln,_Prd):- upcase_atom(H,U),downcase_atom(H,U),!,fail.
-is_syspred0(H,Len,Pred):- current_predicate(H/Len),!,Pred=H.
-is_syspred0(H,Len,Pred):- atom_concat(Mid,'!',H), H\==Mid, is_syspred0(Mid,Len,Pred),!.
-is_syspred0(H,Len,Pred):- into_underscores(H,Mid), H\==Mid, is_syspred0(Mid,Len,Pred),!.
-%is_function(F):- atom(F).
-is_metta_data_functor(_Othr,H):- clause(is_data_functor(H),_).
-is_metta_data_functor(Other,H):- H\=='Right', H\=='Something',
- % metta_type(Other,H,_), % fail,
-  \+ metta_atom(Other,[H|_]),
-  \+ metta_defn(Other,[H|_],_),
-  \+ is_metta_builtin(H),
-  \+ is_comp_op(H,_),
-  \+ is_math_op(H,_,_).
 
 
 get_operator_typedef(Self,Op,Params,RetType):-
@@ -376,7 +371,6 @@ is_metta_builtin('>').
 is_metta_builtin('all').
 is_metta_builtin('import!').
 is_metta_builtin('pragma!').
-
 
 % Comparison Operators in Prolog
 % is_comp_op('=', 2).          % Unification
@@ -1150,6 +1144,5 @@ longest_string_acc([H|T], Acc, Longest) :-
     length(Acc, LenAcc),
     (LenH > LenAcc -> longest_string_acc(T, H, Longest); longest_string_acc(T, Acc, Longest)).
 %
-
 
 

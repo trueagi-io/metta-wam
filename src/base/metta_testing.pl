@@ -59,10 +59,10 @@ make_test_name(FilePath0, Number, TestName) :-
 
 
 %color_g_mesg(C,G):- silent_loading,!.
-color_g_mesg(C,G):- notrace((check_silent_loading,color_g_mesg_ok(C,G))).
+color_g_mesg(C,G):- notrace((nop(check_silent_loading),color_g_mesg_ok(C,G))).
 color_g_mesg_ok(C,G):-
- notrace((
-   wots(S,user:call(G)),
+ quietly((
+   wots(S,must_det_ll(user:G)),
      (S == "" -> true ; our_ansi_format(C, '~w~n', [S])))),!.
 
 our_ansi_format(C, Fmt,Args):- \+ atom(C), % set_stream(current_output,encoding(utf8)),
