@@ -4,34 +4,34 @@
 %;; stdlib extension
 metta_type('&self','If',[->,'Bool','Atom','Atom']).
 
-metta_defn('&self',['If','True',Then],Then).
+metta_defn_ES(['If','True',Then],Then).
 
-metta_defn('&self',['If','False',Then],[]).
+metta_defn_ES(['If','False',Then],[]).
 
 metta_type('&self','If',[->,'Bool','Atom','Atom','Atom']).
 
-metta_defn( '&self',
+metta_defn_ES(
   ['If',Cond,Then,Else],
   [if,Cond,Then,Else]).
 
-metta_defn( '&self',
+metta_defn_ES(
   ['TupleConcat',Ev1,Ev2],
   [ collapse,
     [ superpose,
       [ [ superpose,   Ev1   ],
         [ superpose,   Ev2   ]]]]).
 
-metta_defn( '&self',
+metta_defn_ES(
   [max,Num1,Num2],
   [ 'If',
     [>,Num1,Num2], Num1,Num2]).
 
-metta_defn( '&self',
+metta_defn_ES(
   [min,Num1,Num2],
   [ 'If',
     [<,Num1,Num2], Num1,Num2]).
 
-metta_defn( '&self',
+metta_defn_ES(
   [abs,X],
   [ 'If',
     [<,X,0],
@@ -40,17 +40,17 @@ metta_defn( '&self',
 
 metta_type('&self',sequential,[->,'Expression','%Undefined%']).
 
-metta_defn('&self',[sequential,Num1],[superpose,Num1]).
+metta_defn_ES([sequential,Num1],[superpose,Num1]).
 
 metta_type('&self',do,[->,'Expression','%Undefined%']).
 
-metta_defn('&self',[do,Num1],[case,Num1,[]]).
+metta_defn_ES([do,Num1],[case,Num1,[]]).
 
-metta_defn('&self',['TupleCount',[]],0).
+metta_defn_ES(['TupleCount',[]],0).
 
-metta_defn('&self',['TupleCount',[1]],1).
+metta_defn_ES(['TupleCount',[1]],1).
 
-metta_defn( '&self',
+metta_defn_ES(
   ['BuildTupleCounts',TOld,C,N],
   [ let,
     T,
@@ -73,7 +73,7 @@ metta_defn( '&self',
 
 metta_type('&self','CountElement',[->,'Expression','Number']).
 
-metta_defn( '&self',
+metta_defn_ES(
   ['CountElement',X],
   [ case,
     X,
@@ -82,7 +82,7 @@ metta_defn( '&self',
 %;;Build for count up to 100 (takes a few sec but it is worth it if space or generally collapse counts are often needed)
 :-metta_eval(['BuildTupleCounts',[1],0,100]).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'BuildTupleCounts',
     [1], 0,100],
   [ let,
@@ -107,26 +107,26 @@ metta_defn( '&self',
 
 metta_type('&self','CollapseCardinality',[->,'Expression','Number']).
 
-metta_defn( '&self',
+metta_defn_ES(
   ['CollapseCardinality',Expression],
   [ 'TupleCount',
     [ collapse,
       ['CountElement',Expression]]]).
 
 %;; Truth functions
-metta_defn( '&self',
+metta_defn_ES(
   ['Truth_c2w',C],
   [ /,
     C,
     [-,1,C]]).
 
-metta_defn( '&self',
+metta_defn_ES(
   ['Truth_w2c',W],
   [ /,
     W,
     [+,W,1]]).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'Truth_Deduction',
     [F1,C1],
     [F2,C2]],
@@ -135,7 +135,7 @@ metta_defn( '&self',
       [*,F1,F2],
       [*,C1,C2]]]).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'Truth_Abduction',
     [F1,C1],
     [F2,C2]],
@@ -145,11 +145,11 @@ metta_defn( '&self',
         [*,F1,C1],
         C2]]]).
 
-metta_defn( '&self',
+metta_defn_ES(
   ['Truth_Induction',T1,T2],
   ['Truth_Abduction',T2,T1]).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'Truth_Exemplification',
     [F1,C1],
     [F2,C2]],
@@ -159,37 +159,37 @@ metta_defn( '&self',
         [*,F1,F2],
         [*,C1,C2]]]]).
 
-metta_defn( '&self',
+metta_defn_ES(
   ['Truth_StructuralDeduction',T],
   [ 'Truth_Deduction',
     T,
     [1.0,0.9]]).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'Truth_Negation',
     [F,C]],
   [ [-,1,F],
     C]).
 
-metta_defn( '&self',
+metta_defn_ES(
   ['Truth','StructuralDeductionNegated',T],
   [ 'Truth_Negation',
     ['Truth_StructuralDeduction',T]]).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'Truth_Intersection',
     [F1,C1],
     [F2,C2]],
   [ [ * ,F1,F2],
     [ * ,C1,C2]]).
 
-metta_defn( '&self',
+metta_defn_ES(
   ['Truth_StructuralIntersection',T],
   [ 'Truth_Intersection',
     T,
     [1.0,0.9]]).
 
-metta_defn( '&self',
+metta_defn_ES(
   ['Truth_or',A,B],
   [ -,
     1,
@@ -197,7 +197,7 @@ metta_defn( '&self',
       [-,1,A],
       [-,1,B]]]).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'Truth_Comparison',
     [F1,C1],
     [F2,C2]],
@@ -215,7 +215,7 @@ metta_defn( '&self',
           F0,
           [*,C1,C2]]]]]).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'Truth_Analogy',
     [F1,C1],
     [F2,C2]],
@@ -224,7 +224,7 @@ metta_defn( '&self',
       [*,C1,C2],
       F2]]).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'Truth_Resemblance',
     [F1,C1],
     [F2,C2]],
@@ -233,14 +233,14 @@ metta_defn( '&self',
       [*,C1,C2],
       ['Truth_or',F1,F2]]]).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'Truth_Union',
     [F1,C1],
     [F2,C2]],
   [ [ 'Truth_or',    F1    ,    F2    ],
     [     *     ,    C1    ,    C2    ]]).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'Truth_Difference',
     [F1,C1],
     [F2,C2]],
@@ -249,7 +249,7 @@ metta_defn( '&self',
       [-,1,F2]],
     [*,C1,C2]]).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'Truth_DecomposePNN',
     [F1,C1],
     [F2,C2]],
@@ -263,7 +263,7 @@ metta_defn( '&self',
         Fn,
         [*,C1,C2]]]]).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'Truth_DecomposeNPP',
     [F1,C1],
     [F2,C2]],
@@ -277,7 +277,7 @@ metta_defn( '&self',
         F,
         [*,C1,C2]]]]).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'Truth_DecomposePNP',
     [F1,C1],
     [F2,C2]],
@@ -291,13 +291,13 @@ metta_defn( '&self',
         F,
         [*,C1,C2]]]]).
 
-metta_defn( '&self',
+metta_defn_ES(
   ['Truth_DecomposePPP',V1,V2],
   [ 'Truth_DecomposeNPP',
     ['Truth_Negation',V1],
     V2]).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'Truth_DecomposeNNN',
     [F1,C1],
     [F2,C2]],
@@ -311,13 +311,13 @@ metta_defn( '&self',
         Fn,
         [*,C1,C2]]]]).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'Truth_Eternalize',
     [F,C]],
   [ F,
     ['Truth_w2c',C]]).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'Truth_Revision',
     [F1,C1],
     [F2,C2]],
@@ -343,7 +343,7 @@ metta_defn( '&self',
           [max,C,C1],
           C2]]]]).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'Truth_Expectation',
     [F,C]],
   [ +,
@@ -353,158 +353,158 @@ metta_defn( '&self',
     0.5]).
 % ;;NAL-1
 % ;;!Syllogistic rules for Inheritance:
-metta_defn('&self',['|-',[[A,-->,B],C],[[B,-->,D],E]] ,  [[A,-->,D],['Truth_Deduction',C,E]]).
-metta_defn('&self',['|-',[[A,-->,B],C],[[A,-->,D],E]] ,  [[D,-->,B],['Truth_Induction',C,E]]).
-metta_defn('&self',['|-',[[A,-->,B],C],[[D,-->,B],E]] ,  [[D,-->,A],['Truth_Abduction',C,E]]).
-metta_defn('&self',['|-',[[A,-->,B],C],[[B,-->,D],E]] ,  [[D,-->,A],['Truth_Exemplification',C,E]]).
+metta_defn_ES(['|-',[[A,-->,B],C],[[B,-->,D],E]] ,  [[A,-->,D],['Truth_Deduction',C,E]]).
+metta_defn_ES(['|-',[[A,-->,B],C],[[A,-->,D],E]] ,  [[D,-->,B],['Truth_Induction',C,E]]).
+metta_defn_ES(['|-',[[A,-->,B],C],[[D,-->,B],E]] ,  [[D,-->,A],['Truth_Abduction',C,E]]).
+metta_defn_ES(['|-',[[A,-->,B],C],[[B,-->,D],E]] ,  [[D,-->,A],['Truth_Exemplification',C,E]]).
 % ;;NAL-2
 % ;;!Rules for Similarity:
-metta_defn('&self',['|-',[[A,<->,B],C]] ,  [[B,<->,A],['Truth_StructuralIntersection',C]]).
-metta_defn('&self',['|-',[[A,<->,B],C],[[D,<->,A],E]] ,  [[D,<->,B],['Truth_Resemblance',C,E]]).
-metta_defn('&self',['|-',[[A,-->,B],C],[[D,-->,B],E]] ,  [[D,<->,A],['Truth_Comparison',C,E]]).
-metta_defn('&self',['|-',[[A,-->,B],C],[[A,-->,D],E]] ,  [[D,<->,B],['Truth_Comparison',C,E]]).
-metta_defn('&self',['|-',[[A,-->,B],C],[[D,<->,A],E]] ,  [[D,-->,B],['Truth_Analogy',C,E]]).
-metta_defn('&self',['|-',[[A,-->,B],C],[[D,<->,B],E]] ,  [[A,-->,D],['Truth_Analogy',C,E]]).
+metta_defn_ES(['|-',[[A,<->,B],C]] ,  [[B,<->,A],['Truth_StructuralIntersection',C]]).
+metta_defn_ES(['|-',[[A,<->,B],C],[[D,<->,A],E]] ,  [[D,<->,B],['Truth_Resemblance',C,E]]).
+metta_defn_ES(['|-',[[A,-->,B],C],[[D,-->,B],E]] ,  [[D,<->,A],['Truth_Comparison',C,E]]).
+metta_defn_ES(['|-',[[A,-->,B],C],[[A,-->,D],E]] ,  [[D,<->,B],['Truth_Comparison',C,E]]).
+metta_defn_ES(['|-',[[A,-->,B],C],[[D,<->,A],E]] ,  [[D,-->,B],['Truth_Analogy',C,E]]).
+metta_defn_ES(['|-',[[A,-->,B],C],[[D,<->,B],E]] ,  [[A,-->,D],['Truth_Analogy',C,E]]).
 % ;;!Dealing with properties and instances:
-metta_defn('&self',['|-',[[A,-->,['{',B,'}']],C]] ,  [[A,<->,['{',B,'}']],['Truth_StructuralIntersection',C]]).
-metta_defn('&self',['|-',[[['$OBJ'(claz_bracket_vector,['$S'])],-->,A],B]] ,  [[['$OBJ'(claz_bracket_vector,['$S'])],<->,A],['Truth_StructuralIntersection',B]]).
-metta_defn('&self',['|-',[[['{',A,'}'],-->,B],C],[[D,<->,A],E]] ,  [[['{',D,'}'],-->,B],['Truth_Analogy',C,E]]).
-metta_defn('&self',['|-',[[A,-->,['$OBJ'(claz_bracket_vector,['$M'])]],B],[[_,<->,_],C]] ,  [[A,-->,['$OBJ'(claz_bracket_vector,['$S'])]],['Truth_Analogy',B,C]]).
-metta_atom('&self',[=,['|-',[[['{',A,'}'],<->,['{',B,'}']]],[A,<->,B],['Truth_StructuralIntersection',_]]]).
-metta_atom('&self',[=,['|-',[[['$OBJ'(claz_bracket_vector,[A])],<->,['$OBJ'(claz_bracket_vector,[B])]]],[_,<->,_],['Truth_StructuralIntersection',_]]]).
+metta_defn_ES(['|-',[[A,-->,['{',B,'}']],C]] ,  [[A,<->,['{',B,'}']],['Truth_StructuralIntersection',C]]).
+metta_defn_ES(['|-',[[['$OBJ'(claz_bracket_vector,['$S'])],-->,A],B]] ,  [[['$OBJ'(claz_bracket_vector,['$S'])],<->,A],['Truth_StructuralIntersection',B]]).
+metta_defn_ES(['|-',[[['{',A,'}'],-->,B],C],[[D,<->,A],E]] ,  [[['{',D,'}'],-->,B],['Truth_Analogy',C,E]]).
+metta_defn_ES(['|-',[[A,-->,['$OBJ'(claz_bracket_vector,['$M'])]],B],[[_,<->,_],C]] ,  [[A,-->,['$OBJ'(claz_bracket_vector,['$S'])]],['Truth_Analogy',B,C]]).
+get_metta_atom(Eq,'&self',[=,['|-',[[['{',A,'}'],<->,['{',B,'}']]],[A,<->,B],['Truth_StructuralIntersection',_]]]).
+get_metta_atom(Eq,'&self',[=,['|-',[[['$OBJ'(claz_bracket_vector,[A])],<->,['$OBJ'(claz_bracket_vector,[B])]]],[_,<->,_],['Truth_StructuralIntersection',_]]]).
 % ;;NAL-3
 % ;;!Set decomposition:
-metta_defn('&self',['|-',[[['{',A,_,'}'],-->,B],C]] ,  [[['{',A,'}'],-->,B],['Truth_StructuralDeduction',C]]).
-metta_defn('&self',['|-',[[['{',_,A,'}'],-->,B],C]] ,  [[['{',A,'}'],-->,B],['Truth_StructuralDeduction',C]]).
-metta_defn('&self',['|-',[['M',-->,['$OBJ'(claz_bracket_vector,[A,B])]],A]] ,  [['M',-->,['$OBJ'(claz_bracket_vector,[A])]],['Truth_StructuralDeduction',A]]).
-metta_defn('&self',['|-',[['M',-->,['$OBJ'(claz_bracket_vector,[A,B])]],A]] ,  [['M',-->,['$OBJ'(claz_bracket_vector,[B])]],['Truth_StructuralDeduction',A]]).
+metta_defn_ES(['|-',[[['{',A,_,'}'],-->,B],C]] ,  [[['{',A,'}'],-->,B],['Truth_StructuralDeduction',C]]).
+metta_defn_ES(['|-',[[['{',_,A,'}'],-->,B],C]] ,  [[['{',A,'}'],-->,B],['Truth_StructuralDeduction',C]]).
+metta_defn_ES(['|-',[['M',-->,['$OBJ'(claz_bracket_vector,[A,B])]],A]] ,  [['M',-->,['$OBJ'(claz_bracket_vector,[A])]],['Truth_StructuralDeduction',A]]).
+metta_defn_ES(['|-',[['M',-->,['$OBJ'(claz_bracket_vector,[A,B])]],A]] ,  [['M',-->,['$OBJ'(claz_bracket_vector,[B])]],['Truth_StructuralDeduction',A]]).
 % ;;!Extensional and intensional intersection decomposition:
-metta_defn('&self',['|-',[[[A,'|',_],-->,B],C]] ,  [[A,-->,B],['Truth_StructuralDeduction',C]]).
-metta_defn('&self',['|-',[[A,-->,[B,&,_]],C]] ,  [[A,-->,B],['Truth_StructuralDeduction',C]]).
-metta_defn('&self',['|-',[[[_,'|',A],-->,B],C]] ,  [[A,-->,B],['Truth_StructuralDeduction',C]]).
-metta_defn('&self',['|-',[[A,-->,[_,&,B]],C]] ,  [[A,-->,B],['Truth_StructuralDeduction',C]]).
-metta_defn('&self',['|-',[[[A,~,_],-->,B],C]] ,  [[A,-->,B],['Truth_StructuralDeduction',C]]).
-metta_defn('&self',['|-',[[A,-->,[B,-,_]],C]] ,  [[A,-->,B],['Truth_StructuralDeduction',C]]).
-metta_defn('&self',['|-',[[[_,~,A],-->,B],C]] ,  [[A,-->,B],['Truth_StructuralDeductionNegated',C]]).
-metta_defn('&self',['|-',[[A,-->,[_,-,B]],C]] ,  [[A,-->,B],['Truth_StructuralDeductionNegated',C]]).
+metta_defn_ES(['|-',[[[A,'|',_],-->,B],C]] ,  [[A,-->,B],['Truth_StructuralDeduction',C]]).
+metta_defn_ES(['|-',[[A,-->,[B,&,_]],C]] ,  [[A,-->,B],['Truth_StructuralDeduction',C]]).
+metta_defn_ES(['|-',[[[_,'|',A],-->,B],C]] ,  [[A,-->,B],['Truth_StructuralDeduction',C]]).
+metta_defn_ES(['|-',[[A,-->,[_,&,B]],C]] ,  [[A,-->,B],['Truth_StructuralDeduction',C]]).
+metta_defn_ES(['|-',[[[A,~,_],-->,B],C]] ,  [[A,-->,B],['Truth_StructuralDeduction',C]]).
+metta_defn_ES(['|-',[[A,-->,[B,-,_]],C]] ,  [[A,-->,B],['Truth_StructuralDeduction',C]]).
+metta_defn_ES(['|-',[[[_,~,A],-->,B],C]] ,  [[A,-->,B],['Truth_StructuralDeductionNegated',C]]).
+metta_defn_ES(['|-',[[A,-->,[_,-,B]],C]] ,  [[A,-->,B],['Truth_StructuralDeductionNegated',C]]).
 % ;;!Extensional and intensional intersection composition: (sets via reductions).
-metta_defn('&self',['|-',[[A,-->,B],C],[[D,-->,B],E]] ,  [[[A,'|',D],-->,B],['Truth_Intersection',C,E]]).
-metta_defn('&self',['|-',[[A,-->,B],C],[[D,-->,B],E]] ,  [[[A,&,D],-->,B],['Truth_Union',C,E]]).
-metta_defn('&self',['|-',[[A,-->,B],C],[[D,-->,B],E]] ,  [[[A,~,D],-->,B],['Truth_Difference',C,E]]).
-metta_defn('&self',['|-',[[A,-->,B],C],[[A,-->,D],E]] ,  [[A,-->,[B,&,D]],['Truth_Intersection',C,E]]).
-metta_defn('&self',['|-',[[A,-->,B],C],[[A,-->,D],E]] ,  [[A,-->,[B,'|',D]],['Truth_Union',C,E]]).
-metta_defn('&self',['|-',[[A,-->,B],C],[[A,-->,D],E]] ,  [[A,-->,[B,-,D]],['Truth_Difference',C,E]]).
+metta_defn_ES(['|-',[[A,-->,B],C],[[D,-->,B],E]] ,  [[[A,'|',D],-->,B],['Truth_Intersection',C,E]]).
+metta_defn_ES(['|-',[[A,-->,B],C],[[D,-->,B],E]] ,  [[[A,&,D],-->,B],['Truth_Union',C,E]]).
+metta_defn_ES(['|-',[[A,-->,B],C],[[D,-->,B],E]] ,  [[[A,~,D],-->,B],['Truth_Difference',C,E]]).
+metta_defn_ES(['|-',[[A,-->,B],C],[[A,-->,D],E]] ,  [[A,-->,[B,&,D]],['Truth_Intersection',C,E]]).
+metta_defn_ES(['|-',[[A,-->,B],C],[[A,-->,D],E]] ,  [[A,-->,[B,'|',D]],['Truth_Union',C,E]]).
+metta_defn_ES(['|-',[[A,-->,B],C],[[A,-->,D],E]] ,  [[A,-->,[B,-,D]],['Truth_Difference',C,E]]).
 % ;;!Extensional and intensional intersection decomposition:
-metta_defn('&self',['|-',[[A,-->,B],C],[[[A,'|',D],-->,B],E]] ,  [[D,-->,B],['Truth_DecomposePNN',C,E]]).
-metta_defn('&self',['|-',[[A,-->,B],C],[[[D,'|',A],-->,B],E]] ,  [[D,-->,B],['Truth_DecomposePNN',C,E]]).
-metta_defn('&self',['|-',[[A,-->,B],C],[[[A,&,D],-->,B],E]] ,  [[D,-->,B],['Truth_DecomposeNPP',C,E]]).
-metta_defn('&self',['|-',[[A,-->,B],C],[[[D,&,A],-->,B],E]] ,  [[D,-->,B],['Truth_DecomposeNPP',C,E]]).
-metta_defn('&self',['|-',[[A,-->,B],C],[[[A,~,D],-->,B],E]] ,  [[D,-->,B],['Truth_DecomposePNP',C,E]]).
-metta_defn('&self',['|-',[[A,-->,B],C],[[[D,~,A],-->,B],E]] ,  [[D,-->,B],['Truth_DecomposeNNN',C,E]]).
-metta_defn('&self',['|-',[[A,-->,B],C],[[A,-->,[B,&,D]],E]] ,  [[A,-->,D],['Truth_DecomposePNN',C,E]]).
-metta_defn('&self',['|-',[[A,-->,B],C],[[A,-->,[D,&,B]],E]] ,  [[A,-->,D],['Truth_DecomposePNN',C,E]]).
-metta_defn('&self',['|-',[[A,-->,B],C],[[A,-->,[B,'|',D]],E]] ,  [[A,-->,D],['Truth_DecomposeNPP',C,E]]).
-metta_defn('&self',['|-',[[A,-->,B],C],[[A,-->,[D,'|',B]],E]] ,  [[A,-->,D],['Truth_DecomposeNPP',C,E]]).
-metta_defn('&self',['|-',[[A,-->,B],C],[[A,-->,[B,-,D]],E]] ,  [[A,-->,D],['Truth_DecomposePNP',C,E]]).
-metta_defn('&self',['|-',[[A,-->,B],C],[[A,-->,[D,-,B]],E]] ,  [[A,-->,D],['Truth_DecomposeNNN',C,E]]).
+metta_defn_ES(['|-',[[A,-->,B],C],[[[A,'|',D],-->,B],E]] ,  [[D,-->,B],['Truth_DecomposePNN',C,E]]).
+metta_defn_ES(['|-',[[A,-->,B],C],[[[D,'|',A],-->,B],E]] ,  [[D,-->,B],['Truth_DecomposePNN',C,E]]).
+metta_defn_ES(['|-',[[A,-->,B],C],[[[A,&,D],-->,B],E]] ,  [[D,-->,B],['Truth_DecomposeNPP',C,E]]).
+metta_defn_ES(['|-',[[A,-->,B],C],[[[D,&,A],-->,B],E]] ,  [[D,-->,B],['Truth_DecomposeNPP',C,E]]).
+metta_defn_ES(['|-',[[A,-->,B],C],[[[A,~,D],-->,B],E]] ,  [[D,-->,B],['Truth_DecomposePNP',C,E]]).
+metta_defn_ES(['|-',[[A,-->,B],C],[[[D,~,A],-->,B],E]] ,  [[D,-->,B],['Truth_DecomposeNNN',C,E]]).
+metta_defn_ES(['|-',[[A,-->,B],C],[[A,-->,[B,&,D]],E]] ,  [[A,-->,D],['Truth_DecomposePNN',C,E]]).
+metta_defn_ES(['|-',[[A,-->,B],C],[[A,-->,[D,&,B]],E]] ,  [[A,-->,D],['Truth_DecomposePNN',C,E]]).
+metta_defn_ES(['|-',[[A,-->,B],C],[[A,-->,[B,'|',D]],E]] ,  [[A,-->,D],['Truth_DecomposeNPP',C,E]]).
+metta_defn_ES(['|-',[[A,-->,B],C],[[A,-->,[D,'|',B]],E]] ,  [[A,-->,D],['Truth_DecomposeNPP',C,E]]).
+metta_defn_ES(['|-',[[A,-->,B],C],[[A,-->,[B,-,D]],E]] ,  [[A,-->,D],['Truth_DecomposePNP',C,E]]).
+metta_defn_ES(['|-',[[A,-->,B],C],[[A,-->,[D,-,B]],E]] ,  [[A,-->,D],['Truth_DecomposeNNN',C,E]]).
 % ;; NAL-4
 % ;;!Transformation rules between product and image:
-metta_defn('&self',['|-',[[[A,*,B],-->,C],D]] ,  [[A,-->,[C,'/1',B]],['Truth_StructuralIntersection',D]]).
-metta_defn('&self',['|-',[[[A,*,B],-->,C],D]] ,  [[B,-->,[C,'/2',A]],['Truth_StructuralIntersection',D]]).
-metta_defn('&self',['|-',[[A,-->,[B,*,C]],D]] ,  [[[A,'\\1',C],-->,B],['Truth_StructuralIntersection',D]]).
-metta_defn('&self',['|-',[[A,-->,[B,*,C]],D]] ,  [[[A,'\\2',B],-->,C],['Truth_StructuralIntersection',D]]).
+metta_defn_ES(['|-',[[[A,*,B],-->,C],D]] ,  [[A,-->,[C,'/1',B]],['Truth_StructuralIntersection',D]]).
+metta_defn_ES(['|-',[[[A,*,B],-->,C],D]] ,  [[B,-->,[C,'/2',A]],['Truth_StructuralIntersection',D]]).
+metta_defn_ES(['|-',[[A,-->,[B,*,C]],D]] ,  [[[A,'\\1',C],-->,B],['Truth_StructuralIntersection',D]]).
+metta_defn_ES(['|-',[[A,-->,[B,*,C]],D]] ,  [[[A,'\\2',B],-->,C],['Truth_StructuralIntersection',D]]).
 % ;;other direction of same rules (as these are bi-directional).
-metta_defn('&self',['|-',[[A,-->,[B,'/1',C]],D]] ,  [[[A,*,C],-->,B],['Truth_StructuralIntersection',D]]).
-metta_defn('&self',['|-',[[A,-->,[B,'/2',C]],D]] ,  [[[C,*,A],-->,B],['Truth_StructuralIntersection',D]]).
-metta_defn('&self',['|-',[[[A,'\\1',B],-->,C],D]] ,  [[A,-->,[C,*,B]],['Truth_StructuralIntersection',D]]).
-metta_defn('&self',['|-',[[[A,'\\2',B],-->,C],D]] ,  [[A,-->,[B,*,C]],['Truth_StructuralIntersection',D]]).
+metta_defn_ES(['|-',[[A,-->,[B,'/1',C]],D]] ,  [[[A,*,C],-->,B],['Truth_StructuralIntersection',D]]).
+metta_defn_ES(['|-',[[A,-->,[B,'/2',C]],D]] ,  [[[C,*,A],-->,B],['Truth_StructuralIntersection',D]]).
+metta_defn_ES(['|-',[[[A,'\\1',B],-->,C],D]] ,  [[A,-->,[C,*,B]],['Truth_StructuralIntersection',D]]).
+metta_defn_ES(['|-',[[[A,'\\2',B],-->,C],D]] ,  [[A,-->,[B,*,C]],['Truth_StructuralIntersection',D]]).
 % ;;!Comparative relations
-metta_defn('&self',['|-',[[['{',A,'}'],'|-',>,['$OBJ'(claz_bracket_vector,['$P'])]],B],[[['{',C,'}'],'|-',>,['$OBJ'(claz_bracket_vector,['$P'])]],D]] ,  [[[['{',A,'}'],*,['{',C,'}']],-->,[>>>,_]],['Truth_FrequencyGreater',B,D]]).
-metta_defn('&self',['|-',[[[A,*,B],-->,[>>>,C]],D],[[[B,*,E],-->,[>>>,C]],F]] ,  [[[A,*,E],-->,[>>>,C]],['Truth_Deduction',D,F]]).
-metta_defn('&self',['|-',[[['{',A,'}'],'|-',>,['$OBJ'(claz_bracket_vector,['$P'])]],B],[[['{',C,'}'],'|-',>,['$OBJ'(claz_bracket_vector,['$P'])]],D]] ,  [[[['{',A,'}'],*,['{',C,'}']],-->,[===,_]],['Truth_FrequencyEqual',B,D]]).
-metta_defn('&self',['|-',[[[A,*,B],-->,[===,C]],D],[[[B,*,E],-->,[===,C]],F]] ,  [[[A,*,E],-->,[===,C]],['Truth_Deduction',D,F]]).
-metta_defn('&self',['|-',[[[A,*,B],-->,[===,C]],D]] ,  [[[B,*,A],-->,[===,C]],['Truth_StructuralIntersection',D]]).
+metta_defn_ES(['|-',[[['{',A,'}'],'|-',>,['$OBJ'(claz_bracket_vector,['$P'])]],B],[[['{',C,'}'],'|-',>,['$OBJ'(claz_bracket_vector,['$P'])]],D]] ,  [[[['{',A,'}'],*,['{',C,'}']],-->,[>>>,_]],['Truth_FrequencyGreater',B,D]]).
+metta_defn_ES(['|-',[[[A,*,B],-->,[>>>,C]],D],[[[B,*,E],-->,[>>>,C]],F]] ,  [[[A,*,E],-->,[>>>,C]],['Truth_Deduction',D,F]]).
+metta_defn_ES(['|-',[[['{',A,'}'],'|-',>,['$OBJ'(claz_bracket_vector,['$P'])]],B],[[['{',C,'}'],'|-',>,['$OBJ'(claz_bracket_vector,['$P'])]],D]] ,  [[[['{',A,'}'],*,['{',C,'}']],-->,[===,_]],['Truth_FrequencyEqual',B,D]]).
+metta_defn_ES(['|-',[[[A,*,B],-->,[===,C]],D],[[[B,*,E],-->,[===,C]],F]] ,  [[[A,*,E],-->,[===,C]],['Truth_Deduction',D,F]]).
+metta_defn_ES(['|-',[[[A,*,B],-->,[===,C]],D]] ,  [[[B,*,A],-->,[===,C]],['Truth_StructuralIntersection',D]]).
 % ;;!Optional rules for more efficient reasoning about relation components:
-metta_defn('&self',['|-',[[[A,*,B],-->,C],D],[[[E,*,B],-->,C],F]] ,  [[E,-->,A],['Truth_Abduction',D,F]]).
-metta_defn('&self',['|-',[[[A,*,B],-->,C],D],[[[A,*,E],-->,C],F]] ,  [[E,-->,B],['Truth_Abduction',D,F]]).
-metta_defn('&self',['|-',[[A,-->,[B,*,C]],D],[[A,-->,[E,*,C]],F]] ,  [[E,-->,B],['Truth_Induction',D,F]]).
-metta_defn('&self',['|-',[[A,-->,[B,*,C]],D],[[A,-->,[B,*,E]],F]] ,  [[E,-->,C],['Truth_Induction',D,F]]).
-metta_defn('&self',['|-',[[[A,*,B],-->,C],D],[[E,-->,A],F]] ,  [[[E,*,B],-->,C],['Truth_Deduction',D,F]]).
-metta_defn('&self',['|-',[[[A,*,B],-->,C],D],[[A,-->,E],F]] ,  [[[E,*,B],-->,C],['Truth_Induction',D,F]]).
-metta_defn('&self',['|-',[[[A,*,B],-->,C],D],[[E,<->,A],F]] ,  [[[E,*,B],-->,C],['Truth_Analogy',D,F]]).
-metta_defn('&self',['|-',[[[A,*,B],-->,C],D],[[E,-->,B],F]] ,  [[[A,*,E],-->,C],['Truth_Deduction',D,F]]).
-metta_defn('&self',['|-',[[[A,*,B],-->,C],D],[[B,-->,E],F]] ,  [[[A,*,E],-->,C],['Truth_Induction',D,F]]).
-metta_defn('&self',['|-',[[[A,*,B],-->,C],D],[[E,<->,B],F]] ,  [[[A,*,E],-->,C],['Truth_Analogy',D,F]]).
-metta_defn('&self',['|-',[[A,-->,[B,*,C]],D],[[B,-->,E],F]] ,  [[A,-->,[E,*,C]],['Truth_Deduction',D,F]]).
-metta_defn('&self',['|-',[[A,-->,[B,*,C]],D],[[E,-->,B],F]] ,  [[A,-->,[E,*,C]],['Truth_Abduction',D,F]]).
-metta_defn('&self',['|-',[[A,-->,[B,*,C]],D],[[E,<->,B],F]] ,  [[A,-->,[E,*,C]],['Truth_Analogy',D,F]]).
-metta_defn('&self',['|-',[[A,-->,[B,*,C]],D],[[C,-->,E],F]] ,  [[A,-->,[B,*,E]],['Truth_Deduction',D,F]]).
-metta_defn('&self',['|-',[[A,-->,[B,*,C]],D],[[E,-->,C],F]] ,  [[A,-->,[B,*,E]],['Truth_Abduction',D,F]]).
-metta_defn('&self',['|-',[[A,-->,[B,*,C]],D],[[E,<->,C],F]] ,  [[A,-->,[B,*,E]],['Truth_Analogy',D,F]]).
-metta_defn('&self',['|-',[[[A,*,B],-->,C],D],[[[E,*,B],-->,C],F]] ,  [[A,<->,E],['Truth_Comparison',D,F]]).
-metta_defn('&self',['|-',[[[A,*,B],-->,C],D],[[[A,*,E],-->,C],F]] ,  [[B,<->,E],['Truth_Comparison',D,F]]).
-metta_defn('&self',['|-',[[A,-->,[B,*,C]],D],[[A,-->,[E,*,C]],F]] ,  [[B,<->,E],['Truth_Comparison',D,F]]).
-metta_defn('&self',['|-',[[A,-->,[B,*,C]],D],[[A,-->,[B,*,E]],F]] ,  [[C,<->,E],['Truth_Comparison',D,F]]).
+metta_defn_ES(['|-',[[[A,*,B],-->,C],D],[[[E,*,B],-->,C],F]] ,  [[E,-->,A],['Truth_Abduction',D,F]]).
+metta_defn_ES(['|-',[[[A,*,B],-->,C],D],[[[A,*,E],-->,C],F]] ,  [[E,-->,B],['Truth_Abduction',D,F]]).
+metta_defn_ES(['|-',[[A,-->,[B,*,C]],D],[[A,-->,[E,*,C]],F]] ,  [[E,-->,B],['Truth_Induction',D,F]]).
+metta_defn_ES(['|-',[[A,-->,[B,*,C]],D],[[A,-->,[B,*,E]],F]] ,  [[E,-->,C],['Truth_Induction',D,F]]).
+metta_defn_ES(['|-',[[[A,*,B],-->,C],D],[[E,-->,A],F]] ,  [[[E,*,B],-->,C],['Truth_Deduction',D,F]]).
+metta_defn_ES(['|-',[[[A,*,B],-->,C],D],[[A,-->,E],F]] ,  [[[E,*,B],-->,C],['Truth_Induction',D,F]]).
+metta_defn_ES(['|-',[[[A,*,B],-->,C],D],[[E,<->,A],F]] ,  [[[E,*,B],-->,C],['Truth_Analogy',D,F]]).
+metta_defn_ES(['|-',[[[A,*,B],-->,C],D],[[E,-->,B],F]] ,  [[[A,*,E],-->,C],['Truth_Deduction',D,F]]).
+metta_defn_ES(['|-',[[[A,*,B],-->,C],D],[[B,-->,E],F]] ,  [[[A,*,E],-->,C],['Truth_Induction',D,F]]).
+metta_defn_ES(['|-',[[[A,*,B],-->,C],D],[[E,<->,B],F]] ,  [[[A,*,E],-->,C],['Truth_Analogy',D,F]]).
+metta_defn_ES(['|-',[[A,-->,[B,*,C]],D],[[B,-->,E],F]] ,  [[A,-->,[E,*,C]],['Truth_Deduction',D,F]]).
+metta_defn_ES(['|-',[[A,-->,[B,*,C]],D],[[E,-->,B],F]] ,  [[A,-->,[E,*,C]],['Truth_Abduction',D,F]]).
+metta_defn_ES(['|-',[[A,-->,[B,*,C]],D],[[E,<->,B],F]] ,  [[A,-->,[E,*,C]],['Truth_Analogy',D,F]]).
+metta_defn_ES(['|-',[[A,-->,[B,*,C]],D],[[C,-->,E],F]] ,  [[A,-->,[B,*,E]],['Truth_Deduction',D,F]]).
+metta_defn_ES(['|-',[[A,-->,[B,*,C]],D],[[E,-->,C],F]] ,  [[A,-->,[B,*,E]],['Truth_Abduction',D,F]]).
+metta_defn_ES(['|-',[[A,-->,[B,*,C]],D],[[E,<->,C],F]] ,  [[A,-->,[B,*,E]],['Truth_Analogy',D,F]]).
+metta_defn_ES(['|-',[[[A,*,B],-->,C],D],[[[E,*,B],-->,C],F]] ,  [[A,<->,E],['Truth_Comparison',D,F]]).
+metta_defn_ES(['|-',[[[A,*,B],-->,C],D],[[[A,*,E],-->,C],F]] ,  [[B,<->,E],['Truth_Comparison',D,F]]).
+metta_defn_ES(['|-',[[A,-->,[B,*,C]],D],[[A,-->,[E,*,C]],F]] ,  [[B,<->,E],['Truth_Comparison',D,F]]).
+metta_defn_ES(['|-',[[A,-->,[B,*,C]],D],[[A,-->,[B,*,E]],F]] ,  [[C,<->,E],['Truth_Comparison',D,F]]).
 % ;;NAL-5
 % ;;!Negation conjunction and disjunction decomposition:
-metta_defn('&self',['|-',[[!,A],B]],[A,['Truth_Negation',B]]).
-metta_defn('&self',['|-',[[A,&&,_],B]],[A,['Truth_StructuralDeduction',B]]).
-metta_defn('&self',['|-',[[_,&&,A],B]],[A,['Truth_StructuralDeduction',B]]).
-metta_defn('&self',['|-',[[A,&&,B],C]] ,  [[B,&&,A],['Truth_StructuralIntersection',C]]).
-metta_defn('&self',['|-',[A,B],[[A,&&,C],D]],[C,['Truth_DecomposePNN',B,D]]).
-metta_defn('&self',['|-',[A,B],[[A,'||',C],D]],[C,['Truth_DecomposeNPP',B,D]]).
-metta_defn('&self',['|-',[A,B],[[[!,A],&&,C],D]],[C,['Truth_DecomposeNNN',B,D]]).
-metta_defn('&self',['|-',[A,B],[[[!,A],'||',C],D]],[C,['Truth_DecomposePPP',B,D]]).
+metta_defn_ES(['|-',[[!,A],B]],[A,['Truth_Negation',B]]).
+metta_defn_ES(['|-',[[A,&&,_],B]],[A,['Truth_StructuralDeduction',B]]).
+metta_defn_ES(['|-',[[_,&&,A],B]],[A,['Truth_StructuralDeduction',B]]).
+metta_defn_ES(['|-',[[A,&&,B],C]] ,  [[B,&&,A],['Truth_StructuralIntersection',C]]).
+metta_defn_ES(['|-',[A,B],[[A,&&,C],D]],[C,['Truth_DecomposePNN',B,D]]).
+metta_defn_ES(['|-',[A,B],[[A,'||',C],D]],[C,['Truth_DecomposeNPP',B,D]]).
+metta_defn_ES(['|-',[A,B],[[[!,A],&&,C],D]],[C,['Truth_DecomposeNNN',B,D]]).
+metta_defn_ES(['|-',[A,B],[[[!,A],'||',C],D]],[C,['Truth_DecomposePPP',B,D]]).
 % ;;!Syllogistic rules for Implication:
-metta_defn('&self',['|-',[[A,==>,B],C],[[B,==>,D],E]] ,  [[A,==>,D],['Truth_Deduction',C,E]]).
-metta_defn('&self',['|-',[[A,==>,B],C],[[A,==>,D],E]] ,  [[D,==>,B],['Truth_Induction',C,E]]).
-metta_defn('&self',['|-',[[A,==>,B],C],[[D,==>,B],E]] ,  [[D,==>,A],['Truth_Abduction',C,E]]).
-metta_defn('&self',['|-',[[A,==>,B],C],[[B,==>,D],E]] ,  [[D,==>,A],['Truth_Exemplification',C,E]]).
+metta_defn_ES(['|-',[[A,==>,B],C],[[B,==>,D],E]] ,  [[A,==>,D],['Truth_Deduction',C,E]]).
+metta_defn_ES(['|-',[[A,==>,B],C],[[A,==>,D],E]] ,  [[D,==>,B],['Truth_Induction',C,E]]).
+metta_defn_ES(['|-',[[A,==>,B],C],[[D,==>,B],E]] ,  [[D,==>,A],['Truth_Abduction',C,E]]).
+metta_defn_ES(['|-',[[A,==>,B],C],[[B,==>,D],E]] ,  [[D,==>,A],['Truth_Exemplification',C,E]]).
 % ;;!Conditional composition for conjunction and disjunction:
-metta_defn('&self',['|-',[[A,==>,B],C],[[D,==>,B],E]] ,  [[[A,&&,D],==>,B],['Truth_Union',C,E]]).
-metta_defn('&self',['|-',[[A,==>,B],C],[[D,==>,B],E]] ,  [[[A,'||',D],==>,B],['Truth_Intersection',C,E]]).
-metta_defn('&self',['|-',[[A,==>,B],C],[[A,==>,D],E]] ,  [[A,==>,[B,&&,D]],['Truth_Intersection',C,E]]).
-metta_defn('&self',['|-',[[A,==>,B],C],[[A,==>,D],E]] ,  [[A,==>,[B,'||',D]],['Truth_Union',C,E]]).
+metta_defn_ES(['|-',[[A,==>,B],C],[[D,==>,B],E]] ,  [[[A,&&,D],==>,B],['Truth_Union',C,E]]).
+metta_defn_ES(['|-',[[A,==>,B],C],[[D,==>,B],E]] ,  [[[A,'||',D],==>,B],['Truth_Intersection',C,E]]).
+metta_defn_ES(['|-',[[A,==>,B],C],[[A,==>,D],E]] ,  [[A,==>,[B,&&,D]],['Truth_Intersection',C,E]]).
+metta_defn_ES(['|-',[[A,==>,B],C],[[A,==>,D],E]] ,  [[A,==>,[B,'||',D]],['Truth_Union',C,E]]).
 % ;;!Multi-conditional inference:
-metta_defn('&self',['|-',[[[A,&&,B],==>,C],D],[[A,==>,C],E]],[B,['Truth_Abduction',D,E]]).
-metta_defn('&self',['|-',[[[A,&&,B],==>,C],D],[[E,==>,B],F]] ,  [[[A,&&,E],==>,C],['Truth_Deduction',D,F]]).
-metta_defn('&self',['|-',[[[A,&&,B],==>,C],D],[[[A,&&,E],==>,C],F]] ,  [[E,==>,B],['Truth_Abduction',D,F]]).
-metta_defn('&self',['|-',[[[A,&&,B],==>,C],D],[[B,==>,E],F]] ,  [[[A,&&,E],==>,C],['Truth_Induction',D,F]]).
+metta_defn_ES(['|-',[[[A,&&,B],==>,C],D],[[A,==>,C],E]],[B,['Truth_Abduction',D,E]]).
+metta_defn_ES(['|-',[[[A,&&,B],==>,C],D],[[E,==>,B],F]] ,  [[[A,&&,E],==>,C],['Truth_Deduction',D,F]]).
+metta_defn_ES(['|-',[[[A,&&,B],==>,C],D],[[[A,&&,E],==>,C],F]] ,  [[E,==>,B],['Truth_Abduction',D,F]]).
+metta_defn_ES(['|-',[[[A,&&,B],==>,C],D],[[B,==>,E],F]] ,  [[[A,&&,E],==>,C],['Truth_Induction',D,F]]).
 % ;;!Rules for equivalence:
-metta_defn('&self',['|-',[[A,<=>,B],C]] ,  [[B,<=>,A],['Truth_StructuralIntersection',C]]).
-metta_defn('&self',['|-',[[A,==>,B],C],[[B,==>,A],D]] ,  [[A,<=>,B],['Truth_Intersection',C,D]]).
-metta_defn('&self',['|-',[[A,==>,B],C],[[D,==>,B],E]] ,  [[D,<=>,A],['Truth_Comparison',C,E]]).
-metta_defn('&self',['|-',[[A,==>,B],C],[[A,==>,D],E]] ,  [[D,<=>,B],['Truth_Comparison',C,E]]).
-metta_defn('&self',['|-',[[A,==>,B],C],[[D,<=>,A],E]] ,  [[D,==>,B],['Truth_Analogy',C,E]]).
-metta_defn('&self',['|-',[[A,==>,B],C],[[D,<=>,B],E]] ,  [[A,==>,D],['Truth_Analogy',C,E]]).
-metta_defn('&self',['|-',[[A,<=>,B],C],[[D,<=>,A],E]] ,  [[D,<=>,B],['Truth_Resemblance',C,E]]).
+metta_defn_ES(['|-',[[A,<=>,B],C]] ,  [[B,<=>,A],['Truth_StructuralIntersection',C]]).
+metta_defn_ES(['|-',[[A,==>,B],C],[[B,==>,A],D]] ,  [[A,<=>,B],['Truth_Intersection',C,D]]).
+metta_defn_ES(['|-',[[A,==>,B],C],[[D,==>,B],E]] ,  [[D,<=>,A],['Truth_Comparison',C,E]]).
+metta_defn_ES(['|-',[[A,==>,B],C],[[A,==>,D],E]] ,  [[D,<=>,B],['Truth_Comparison',C,E]]).
+metta_defn_ES(['|-',[[A,==>,B],C],[[D,<=>,A],E]] ,  [[D,==>,B],['Truth_Analogy',C,E]]).
+metta_defn_ES(['|-',[[A,==>,B],C],[[D,<=>,B],E]] ,  [[A,==>,D],['Truth_Analogy',C,E]]).
+metta_defn_ES(['|-',[[A,<=>,B],C],[[D,<=>,A],E]] ,  [[D,<=>,B],['Truth_Resemblance',C,E]]).
 % ;;!Higher-order decomposition
-metta_defn('&self',['|-',[A,B],[[A,==>,C],D]],[C,['Truth_Deduction',B,D]]).
-metta_defn('&self',['|-',[A,B],[[[A,&&,C],==>,D],E]] ,  [[C,==>,D],['Truth_Deduction',B,E]]).
-metta_defn('&self',['|-',[A,B],[[C,==>,A],D]],[C,['Truth_Abduction',B,D]]).
-metta_defn('&self',['|-',[A,B],[[A,<=>,C],D]],[C,['Truth_Analogy',B,D]]).
+metta_defn_ES(['|-',[A,B],[[A,==>,C],D]],[C,['Truth_Deduction',B,D]]).
+metta_defn_ES(['|-',[A,B],[[[A,&&,C],==>,D],E]] ,  [[C,==>,D],['Truth_Deduction',B,E]]).
+metta_defn_ES(['|-',[A,B],[[C,==>,A],D]],[C,['Truth_Abduction',B,D]]).
+metta_defn_ES(['|-',[A,B],[[A,<=>,C],D]],[C,['Truth_Analogy',B,D]]).
 % ;;NAL term reductions
 % ;;!Extensional intersection, union, conjunction reductions:
-metta_defn('&self',[A,&,A],A).
-metta_defn('&self',[A,'|',A],A).
-metta_defn('&self',[A,&&,A],A).
-metta_defn('&self',[A,'||',A],A).
+metta_defn_ES([A,&,A],A).
+metta_defn_ES([A,'|',A],A).
+metta_defn_ES([A,&&,A],A).
+metta_defn_ES([A,'||',A],A).
 % ;;!Extensional set reductions:
-metta_defn('&self',[['{',A,'}'],'|',['{',B,'}']],['{',A,B,'}']).
-metta_defn('&self',[['{',A,B,'}'],'|',['{',C,'}']],['{',[A|B],C,'}']).
-metta_defn('&self',[['{',A,'}'],'|',['{',B,C,'}']],['{',A,[B|C],'}']).
+metta_defn_ES([['{',A,'}'],'|',['{',B,'}']],['{',A,B,'}']).
+metta_defn_ES([['{',A,B,'}'],'|',['{',C,'}']],['{',[A|B],C,'}']).
+metta_defn_ES([['{',A,'}'],'|',['{',B,C,'}']],['{',A,[B|C],'}']).
 % ;;!Intensional set reductions:
-metta_defn('&self',[['$OBJ'(claz_bracket_vector,[A])],&,['$OBJ'(claz_bracket_vector,[B])]],['$OBJ'(claz_bracket_vector,[A,B])]).
-metta_defn('&self',[['$OBJ'(claz_bracket_vector,[A,B])],&,['$OBJ'(claz_bracket_vector,[C])]],['$OBJ'(claz_bracket_vector,[[A|B],C])]).
-metta_defn('&self',[['$OBJ'(claz_bracket_vector,[A])],&,['$OBJ'(claz_bracket_vector,[B,C])]],['$OBJ'(claz_bracket_vector,[A,[B|C]])]).
+metta_defn_ES([['$OBJ'(claz_bracket_vector,[A])],&,['$OBJ'(claz_bracket_vector,[B])]],['$OBJ'(claz_bracket_vector,[A,B])]).
+metta_defn_ES([['$OBJ'(claz_bracket_vector,[A,B])],&,['$OBJ'(claz_bracket_vector,[C])]],['$OBJ'(claz_bracket_vector,[[A|B],C])]).
+metta_defn_ES([['$OBJ'(claz_bracket_vector,[A])],&,['$OBJ'(claz_bracket_vector,[B,C])]],['$OBJ'(claz_bracket_vector,[A,[B|C]])]).
 % ;;!Reduction for set element copula:
-metta_defn('&self',['{',[A|B],'}'],['{',A,B,'}']).
-metta_defn('&self',['$OBJ'(claz_bracket_vector,[[A|B]])],['$OBJ'(claz_bracket_vector,[A,B])]).
+metta_defn_ES(['{',[A|B],'}'],['{',A,B,'}']).
+metta_defn_ES(['$OBJ'(claz_bracket_vector,[[A|B]])],['$OBJ'(claz_bracket_vector,[A,B])]).
 
 %;params
-metta_defn('&self',['BeliefEventsMax'],10).
+metta_defn_ES(['BeliefEventsMax'],10).
 
-metta_defn('&self',['GoalEventsMax'],10).
+metta_defn_ES(['GoalEventsMax'],10).
 
 %;spaces
 :-metta_eval(['bind!','&belief_events',['new-space']]).
@@ -516,7 +516,7 @@ metta_defn('&self',['GoalEventsMax'],10).
 
 :-metta_eval(['bind!','&evidentialBase',['new-state',1]]).
 
-metta_defn( '&self',
+metta_defn_ES(
   [increment,Atom],
   [ 'change-state!',
     Atom,
@@ -524,18 +524,18 @@ metta_defn( '&self',
       1,
       ['get-state',Atom]]]).
 
-metta_defn( '&self',
+metta_defn_ES(
   ['UpdateReasonerState'],
   [ [     increment    , '&currentTime'  ],
     [     increment    ,'&evidentialBase']]).
 
-metta_defn( '&self',
+metta_defn_ES(
   ['GetReasonerState'],
   [ ['get-state','&currentTime'],
     [ [    'get-state'   ,'&evidentialBase']]]).
 
 %;priority of events
-metta_defn( '&self',
+metta_defn_ES(
   [ 'EventPriorityNow',
     [T,P],
     T],
@@ -552,7 +552,7 @@ metta_defn( '&self',
 
 :-metta_eval(['bind!','&tempbestscore',['new-state',0]]).
 
-metta_defn( '&self',
+metta_defn_ES(
   ['BestCandidate',Tuple,EvaluateCandidateFunction,T],
   [ sequential,
     [ [ do,
@@ -576,7 +576,7 @@ metta_defn( '&self',
       ['get-state','&tempbest']]]).
 
 %;functions to select highest-priority events in belief and goal PQ
-metta_defn( '&self',
+metta_defn_ES(
   [ 'PriorityOf',
     [ 'Event',
       Sentence,
@@ -584,21 +584,21 @@ metta_defn( '&self',
     T],
   ['EventPriorityNow',Prio,T]).
 
-metta_defn( '&self',
+metta_defn_ES(
   ['SelectHighestPriorityEvent',Collection,T],
   [ 'BestCandidate',
     [ collapse,
       ['get-atoms',Collection]], 'PriorityOf',T]).
 
 %;a belief event to process, which demands adding it to the PQ and updating its concept
-metta_defn( '&self',
+metta_defn_ES(
   ['ProcessBeliefEvent',Ev,T],
   [ sequential,
     [ [    'add-atom'   ,'&belief_events',       Ev       ],
       [ 'UpdateConcept' ,       Ev       ,       T        ]]]).
 
 %;bound the size of the attentional focus for tasks / events
-metta_defn( '&self',
+metta_defn_ES(
   [ 'BoundEvents', Collection,Threshold,
        Increment, TargetAmount, T],
   [ sequential,
@@ -626,7 +626,7 @@ metta_defn( '&self',
             [+,Threshold,Increment],            Increment, TargetAmount, T]]]]]).
 
 %;params
-metta_defn('&self',['AttentionalFocusConceptsMax'],10).
+metta_defn_ES(['AttentionalFocusConceptsMax'],10).
 
 %;spaces
 :-metta_eval(['bind!','&concepts',['new-space']]).
@@ -634,7 +634,7 @@ metta_defn('&self',['AttentionalFocusConceptsMax'],10).
 :-metta_eval(['bind!','&attentional_focus',['new-space']]).
 
 %;priority of concepts
-metta_defn( '&self',
+metta_defn_ES(
   [ 'ConceptPriorityNow',
     [T,P],
     T],
@@ -651,7 +651,7 @@ metta_defn( '&self',
 
 :-metta_eval(['bind!','&tempset',['new-space']]).
 
-metta_defn( '&self',
+metta_defn_ES(
   ['StampDisjoint',X],
   [ not,
     [ sequential,
@@ -675,7 +675,7 @@ metta_defn( '&self',
         ['get-state','&tempstate']]]]).
 
 %;revise if there is no evidential overlap, else use higher-confident candidate
-metta_defn( '&self',
+metta_defn_ES(
   [ 'RevisionAndChoice',
     [ 'Event',
       [ Term1,
@@ -714,7 +714,7 @@ metta_defn( '&self',
             [0,0.0]]]]]]).
 
 %;;update beliefs in existing concept with the new event or create new concept to enter the new evidence
-metta_defn( '&self',
+metta_defn_ES(
   ['UpdateConcept',NewEvent,T],
   [ 'let*',
     [ [ [ 'Event',
@@ -757,7 +757,7 @@ metta_defn( '&self',
                       [ 'Concept',                Term, NewEventEternalized, NewEvent, EPrio]]]]]]]]]]]).
 
 %;bound the size of attentional focus of concepts
-metta_defn( '&self',
+metta_defn_ES(
   [ 'BoundAttention', Threshold,Increment,
     TargetAmount,T],
   [ sequential,
@@ -788,7 +788,7 @@ metta_defn( '&self',
 %;get eternal belief of concept
 metta_type('&self','EternalQuestion',[->,'Expression',T]).
 
-metta_defn( '&self',
+metta_defn_ES(
   ['EternalQuestion',Term],
   [ case,
     [ match,
@@ -807,7 +807,7 @@ metta_defn( '&self',
 %;get event belief of concept
 metta_type('&self','EventQuestion',[->,'Expression',T]).
 
-metta_defn( '&self',
+metta_defn_ES(
   ['EventQuestion',Term],
   [ case,
     [ match,
@@ -825,14 +825,14 @@ metta_defn( '&self',
 
 %;;Declarative inference (deriving events and knowledge from observed events)
 %;Derived belief event priority
-metta_defn( '&self',
+metta_defn_ES(
   ['ConclusionPriority',EPrio,CPrio,ConcTV],
   [ *,
     [*,EPrio,CPrio],
     ['Truth_Expectation',ConcTV]]).
 
 %;making declarative inferences on two events (task from PQ and belief from concept)
-metta_defn( '&self',
+metta_defn_ES(
   [ 'Conclude',
     [ 'Event',
       S1,
@@ -861,7 +861,7 @@ metta_defn( '&self',
                 ConcTV]]]]]]]).
 
 %;find a belief for the task to generate conclusions with
-metta_defn( '&self',
+metta_defn_ES(
   [ 'ReasonWithTask',
     [ 'Event',
       S1,
@@ -908,7 +908,7 @@ metta_defn( '&self',
             T]]]]]).
 
 %;select the highest priority belief event from the PQ and use it for reasoning
-metta_defn( '&self',
+metta_defn_ES(
   ['BeliefCycle',T],
   [ do,
     [ sequential,
@@ -928,7 +928,7 @@ metta_defn( '&self',
 
 %;;Temporal inference (sequence and implication formation based on FIFO)
 %;use the event's evidence to induce a time-independent belief which can be used in the future
-metta_defn( '&self',
+metta_defn_ES(
   ['Eternalize',Ev],
   [ let,
     [ 'Event',
@@ -946,7 +946,7 @@ metta_defn( '&self',
           [0,0.0]]]]]).
 
 %;use evidence of an event at a slightly different moment in time
-metta_defn( '&self',
+metta_defn_ES(
   [ 'Projection',
     [ 'Event',
       [ Term,
@@ -967,7 +967,7 @@ metta_defn( '&self',
     [TargetTime,Evidence,EPrio]]).
 
 %;make the belief occurrence time compatible with the task's
-metta_defn( '&self',
+metta_defn_ES(
   ['TemporallyAlignedBelief',TaskTime,Belief],
   [ 'If',
     [==,TaskTime,eternal],
@@ -977,9 +977,9 @@ metta_defn( '&self',
 %;FIFO max. size bound
 :-metta_eval(['bind!','&FIFO',['new-state',[]]]).
 
-metta_defn('&self',['ListFirstK',C,[]],[]).
+metta_defn_ES(['ListFirstK',C,[]],[]).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'ListFirstK',
     C,
     [LH,LT]],
@@ -992,7 +992,7 @@ metta_defn( '&self',
     []]).
 
 %;Add event to FIFO
-metta_defn( '&self',
+metta_defn_ES(
   ['EventToFIFO',Ev],
   [ let,
     Newlist,
@@ -1003,7 +1003,7 @@ metta_defn( '&self',
     ['change-state!','&FIFO',Newlist]]).
 
 %;Form a sequence of two events
-metta_defn( '&self',
+metta_defn_ES(
   [ 'TemporalSequence',
     Ev1,
     [ 'Event',
@@ -1022,7 +1022,7 @@ metta_defn( '&self',
         [0,0.0]]]]).
 
 %;Form a temporal implication between two events
-metta_defn( '&self',
+metta_defn_ES(
   [ 'TemporalImplication',
     Ev1,
     [ 'Event',
@@ -1041,7 +1041,7 @@ metta_defn( '&self',
         [0,0.0]]]]).
 
 %;Whether an event's term is an operation
-metta_defn( '&self',
+metta_defn_ES(
   [ 'IsOp',
     [ 'Event',
       [Term,Truth],
@@ -1054,7 +1054,7 @@ metta_defn( '&self',
 
 %;Find implications in the event FIFO:
 %;procedural implications
-metta_defn( '&self',
+metta_defn_ES(
   [ 'TemporalImplicationInduction',
     [ Cons,
       [ Op,
@@ -1073,7 +1073,7 @@ metta_defn( '&self',
       ['TemporalImplication',PrecOp,Cons]]]).
 
 %;and temporal without operation
-metta_defn( '&self',
+metta_defn_ES(
   [ 'TemporalImplicationInduction',
     [ Cons,
       [Prec,Tail]]],
@@ -1086,7 +1086,7 @@ metta_defn( '&self',
     ['TemporalImplication',Prec,Cons]]).
 
 %;Add negative evidence for implications which predicted the input unsuccessfully
-metta_defn( '&self',
+metta_defn_ES(
   ['NegConfirmation',PrecTerm,ObservedCons,T],
   [ let,
     [ 'Event',
@@ -1108,13 +1108,13 @@ metta_defn( '&self',
         T]]]).
 
 %;Check if the implication's preconditions are met to anticipate the by the implication predicted outcome
-metta_atom( '&self', [
+get_metta_atom(Eq, '&self', [
   =,
   [ 'Anticipate',
     [Pos,[]],
     T]]).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'Anticipate',
     [ Pos,
       [Pre,[]]],
@@ -1133,7 +1133,7 @@ metta_defn( '&self',
         ['IsOp',Pre]],
       ['NegConfirmation',PreTerm,PosTerm,T]]]).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'Anticipate',
     [ Pos,
       [ Op,
@@ -1163,7 +1163,7 @@ metta_defn( '&self',
         [PreTerm,&/,OpTerm], PosTerm,T]]]).
 
 %;;Input procedure
-metta_defn( '&self',
+metta_defn_ES(
   ['AddBeliefEvent',Sentence],
   [ 'let*',
     [ [ [         T         ,  EvidentialBase  ],
@@ -1190,14 +1190,14 @@ metta_defn( '&self',
 
 %;;Procedural inference (decision making with operation execution and subgoaling)
 %;Derived goal event priority
-metta_defn( '&self',
+metta_defn_ES(
   ['SubgoalPriority',EPrio,ConcTV],
   [ *,
     EPrio,
     ['Truth_Expectation',ConcTV]]).
 
 %;Expectation of an operation is the truth expectation of its desire value
-metta_defn( '&self',
+metta_defn_ES(
   [ 'OpExpectation',
     [ 'Decision',
       [Opname,DVOp],
@@ -1206,7 +1206,7 @@ metta_defn( '&self',
   ['Truth_Expectation',DVOp]).
 
 %;Inject executed operation as an event and return its name
-metta_defn( '&self',
+metta_defn_ES(
   ['Execute',Opname],
   [ superpose,
     [ [ 'AddBeliefEvent',
@@ -1215,7 +1215,7 @@ metta_defn( '&self',
       Opname]]).
 
 %;Add subgoals to the PQ
-metta_defn( '&self',
+metta_defn_ES(
   ['DeriveSubgoals',Options],
   [ do,
     [ let,
@@ -1224,7 +1224,7 @@ metta_defn( '&self',
       ['add-atom','&goal_events',Subgoal]]]).
 
 %;execute the operation which most likely gets the goal achieved in current contexts, and if contexts are not yet fulfilled, derive them as subgoals
-metta_defn( '&self',
+metta_defn_ES(
   [ 'BestDecision',
     T,
     [ 'Event',
@@ -1286,7 +1286,7 @@ metta_defn( '&self',
         ['DeriveSubgoals',Options]]]]).
 
 %;;select the highest priority goal event from the PQ and use it for decision making
-metta_defn( '&self',
+metta_defn_ES(
   ['GoalCycle',T],
   [ sequential,
     [ [ let,
@@ -1305,7 +1305,7 @@ metta_defn( '&self',
           T]]]]).
 
 %;;Input procedure
-metta_defn( '&self',
+metta_defn_ES(
   ['AddGoalEvent',Sentence],
   [ 'let*',
     [ [ [         T         ,  EvidentialBase  ],
@@ -1330,7 +1330,7 @@ metta_defn( '&self',
                  [ [ ['{',garfield,'}'], -->,cat],
                    [1.0,0.9]]])) ).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'AddBeliefEvent',
     [ [ ['{',garfield,'}'], -->,cat],
       [1.0,0.9]]],
@@ -1363,7 +1363,7 @@ metta_defn( '&self',
                  [ [ [cat,*,sky], -->,like],
                    [1.0,0.9]]])) ).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'AddBeliefEvent',
     [ [ [cat,*,sky], -->,like],
       [1.0,0.9]]],
@@ -1398,7 +1398,7 @@ metta_defn( '&self',
                      [ '$OBJ'(claz_bracket_vector,[blue])]],
                    [1.0,0.9]]])) ).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'AddBeliefEvent',
     [ [ sky,
         -->,
@@ -1437,7 +1437,7 @@ metta_defn( '&self',
                      *,
                      [ '$OBJ'(claz_bracket_vector,[blue])]], -->,like]])) ).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'EternalQuestion',
     [ [ ['{',garfield,'}'],
         *,
@@ -1465,7 +1465,7 @@ metta_defn( '&self',
                  [ [  A ,-->,cat],
                    [ 1.0,0.9]]])) ).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'AddBeliefEvent',
     [ [ 'A',-->,cat],
       [ 1.0,0.9]]],
@@ -1498,7 +1498,7 @@ metta_defn( '&self',
                  [ [  B ,-->,cat],
                    [ 1.0,0.9]]])) ).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'AddBeliefEvent',
     [ [ 'B',-->,cat],
       [ 1.0,0.9]]],
@@ -1531,7 +1531,7 @@ metta_defn( '&self',
                  [ [  C ,-->,cat],
                    [ 1.0,0.9]]])) ).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'AddBeliefEvent',
     [ [ 'C',-->,cat],
       [ 1.0,0.9]]],
@@ -1561,7 +1561,7 @@ metta_defn( '&self',
 
 :-metta_eval(['EternalQuestion',[['A',&,'B'],-->,cat]]).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'EternalQuestion',
     [['A',&,'B'],-->,cat]],
   [ case,
@@ -1581,7 +1581,7 @@ metta_defn( '&self',
 %;expected: [(Event (((A & B) --> cat) (1.0 0.44751381215469616)) (eternal (Cons 4 (Cons 5 Nil)) (5 0.4525)))]
 :-metta_eval(['EternalQuestion',[['B',&,'C'],-->,cat]]).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'EternalQuestion',
     [['B',&,'C'],-->,cat]],
   [ case,
@@ -1603,7 +1603,7 @@ metta_defn( '&self',
    metta_eval( [ 'EternalQuestion',
                  [ [['A',&,'B'],&,'C'], -->,cat]])) ).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'EternalQuestion',
     [ [['A',&,'B'],&,'C'], -->,cat]],
   [ case,
@@ -1628,7 +1628,7 @@ metta_defn( '&self',
                        [ '$OBJ'(claz_bracket_vector,[blue])]], -->,like],
                    [1.0,0.9]]])) ).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'AddBeliefEvent',
     [ [ [ ['{',garfield,'}'],
           *,
@@ -1666,7 +1666,7 @@ metta_defn( '&self',
                      *,
                      [ '$OBJ'(claz_bracket_vector,[blue])]], -->,like]])) ).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'EternalQuestion',
     [ [ ['{',garfield,'}'],
         *,
@@ -1694,7 +1694,7 @@ metta_defn( '&self',
 %;debug:
 :-metta_eval(['CollapseCardinality',['get-atoms','&belief_events']]).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'CollapseCardinality',
     ['get-atoms','&belief_events']],
   [ 'TupleCount',
@@ -1702,7 +1702,7 @@ metta_defn( '&self',
       [ 'CountElement',
         ['get-atoms','&belief_events']]]]).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'CountElement',
     ['get-atoms','&belief_events']],
   [ case,
@@ -1712,7 +1712,7 @@ metta_defn( '&self',
 %;[8]
 :-metta_eval(['CollapseCardinality',['get-atoms','&attentional_focus']]).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'CollapseCardinality',
     ['get-atoms','&attentional_focus']],
   [ 'TupleCount',
@@ -1720,7 +1720,7 @@ metta_defn( '&self',
       [ 'CountElement',
         ['get-atoms','&attentional_focus']]]]).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'CountElement',
     ['get-atoms','&attentional_focus']],
   [ case,
@@ -1730,7 +1730,7 @@ metta_defn( '&self',
 %;[8]
 :-metta_eval(['CollapseCardinality',['get-atoms','&concepts']]).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'CollapseCardinality',
     ['get-atoms','&concepts']],
   [ 'TupleCount',
@@ -1738,7 +1738,7 @@ metta_defn( '&self',
       [ 'CountElement',
         ['get-atoms','&concepts']]]]).
 
-metta_defn( '&self',
+metta_defn_ES(
   [ 'CountElement',
     ['get-atoms','&concepts']],
   [ case,

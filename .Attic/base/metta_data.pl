@@ -6,11 +6,11 @@ is_syspred0(H,Len,Pred):- current_predicate(H/Len),!,Pred=H.
 is_syspred0(H,Len,Pred):- atom_concat(Mid,'!',H), H\==Mid, is_syspred0(Mid,Len,Pred),!.
 is_syspred0(H,Len,Pred):- into_underscores(H,Mid), H\==Mid, is_syspred0(Mid,Len,Pred),!.
 %is_function(F):- atom(F).
-is_metta_data_functor(_Othr,H):- clause(is_data_functor(H),_).
-is_metta_data_functor(Other,H):- H\=='Right', H\=='Something',
+is_metta_data_functor(Eq,_Othr,H):- clause(is_data_functor(H),_).
+is_metta_data_functor(Eq,Other,H):- H\=='Right', H\=='Something',
  % metta_type(Other,H,_), % fail,
-  \+ metta_atom(Other,[H|_]),
-  \+ metta_defn(Other,[H|_],_),
+  \+ get_metta_atom(Eq,Other,[H|_]),
+  \+ metta_defn(Eq,Other,[H|_],_),
   \+ is_metta_builtin(H),
   \+ is_comp_op(H,_),
   \+ is_math_op(H,_,_).
@@ -228,18 +228,21 @@ as_prolog(Depth,Self,[H|T],[HH|TT]):- as_prolog(Depth,Self,H,HH),as_prolog(Depth
 
 
 
-try_adjust_arg_types(RetType,Depth,Self,Params,X,Y):-
+try_adjust_arg_types(Eq,RetType,Depth,Self,Params,X,Y):-
   as_prolog(Depth,Self,X,M),
   args_conform(Depth,Self,M,Params),!,
   set_type(Depth,Self,Y,RetType),
   into_typed_args(Depth,Self,Params,M,Y).
-%adjust_args(Depth,Self,_,X,Y):- is_list(X), !, maplist(eval_args(Depth,Self),X,Y).
-%adjust_args(Depth,Self,_,X,Y):- is_list(X), !, maplist(as_prolog(Depth,Self),X,Y),!.
-adjust_args(_Dpth,Self,F,X,X):- (is_special_op(Self,F); \+ iz_conz(X)),!.
-adjust_args(Depth,Self,Op,X,Y):-
+%adjust_args(Eq,RetType,Depth,Self,_,X,Y):- is_list(X), !, maplist(eval_args(Depth,Self),X,Y).
+%adjust_args(Eq,RetType,Depth,Self,_,X,Y):- is_list(X), !, maplist(as_prolog(Depth,Self),X,Y),!.
+
+adjust_args(Eq,RetType,Depth,Self,Op,X,Y):- X==[],!,Y=[].
+adjust_args(Eq,RetType,_Dpth,Self,F,X,X):- (is_special_op(Self,F); \+ iz_conz(X)),!.
+adjust_args(Eq,RetType,Depth,Self,Op,X,Y):-
+  %trace,
   get_operator_typedef(Self,Op,Params,RetType),
-  try_adjust_arg_types(RetType,Depth,Self,Params,X,Y).
-adjust_args(Depth,Self,_,X,Y):- as_prolog(Depth,Self,X,Y).
+  try_adjust_arg_types(Eq,RetType,Depth,Self,Params,X,Y).
+adjust_args(Eq,RetType,Depth,Self,_,X,Y):- as_prolog(Depth,Self,X,Y).
 
 into_typed_args(_Dpth,_Slf,T,M,Y):- (\+ iz_conz(T); \+ iz_conz(M)),!, M=Y.
 into_typed_args(Depth,Self,[T|TT],[M|MM],[Y|YY]):-
@@ -289,20 +292,23 @@ is_seo_f('Event').
 is_seo_f('Concept').
 is_seo_f(N):- number(N),!.
 
-%is_user_defined_goal(Self,[H|_]):- is_user_defined_head(Self,H).
+%is_user_defined_goal(Self,[H|_]):- is_user_defined_head(Eq,Self,H).
 
-is_user_defined_head(Other,H):- mnotrace(is_user_defined_head0(Other,H)).
-is_user_defined_head0(Other,[H|_]):- !, nonvar(H),!, is_user_defined_head_f(Other,H).
-is_user_defined_head0(Other,H):- callable(H),!,functor(H,F,_), is_user_defined_head_f(Other,F).
-is_user_defined_head0(Other,H):- is_user_defined_head_f(Other,H).
+is_user_defined_head(Other,H):- is_user_defined_head(=,Other,H).
+is_user_defined_head(Eq,Other,H):- mnotrace(is_user_defined_head0(Eq,Other,H)).
+is_user_defined_head0(Eq,Other,[H|_]):- !, nonvar(H),!, is_user_defined_head_f(Eq,Other,H).
+is_user_defined_head0(Eq,Other,H):- callable(H),!,functor(H,F,_), is_user_defined_head_f(Eq,Other,F).
+is_user_defined_head0(Eq,Other,H):- is_user_defined_head_f(Eq,Other,H).
 
-is_user_defined_head_f(Other,H):- is_user_defined_head_f1(Other,H).
-is_user_defined_head_f(Other,H):- is_user_defined_head_f1(Other,[H|_]).
+is_user_defined_head_f(Other,H):- is_user_defined_head_f(=,Other,H).
+is_user_defined_head_f(Eq,Other,H):- is_user_defined_head_f1(Eq,Other,H).
+is_user_defined_head_f(Eq,Other,H):- is_user_defined_head_f1(Eq,Other,[H|_]).
 
-%is_user_defined_head_f1(Other,H):- metta_type(Other,H,_).
-%s_user_defined_head_f1(Other,H):- metta_atom(Other,[H|_]).
-is_user_defined_head_f1(Other,H):- metta_defn(Other,[H|_],_).
-%is_user_defined_head_f(_,H):- is_metta_builtin(H).
+%is_user_defined_head_f1(Eq,Other,H):- metta_type(Other,H,_).
+%s_user_defined_head_f1(Other,H):- get_metta_atom(Eq,Other,[H|_]).
+is_user_defined_head_f1(Other,H):- is_user_defined_head_f1(=,Other,H).
+is_user_defined_head_f1(Eq,Other,H):- metta_defn(Eq,Other,[H|_],_).
+%is_user_defined_head_f(Eq,_,H):- is_metta_builtin(H).
 
 
 
@@ -324,8 +330,8 @@ get_operator_typedef1(Self,Op,Params,RetType):-
 get_operator_typedef2(Self,Op,Params,RetType):-
   nop(wdmsg(missing(get_operator_typedef2(Self,Op,Params,RetType)))),!,fail.
 
-is_metta_data_functor(F):-
-  current_self(Self),is_metta_data_functor(Self,F).
+is_metta_data_functor(Eq,F):-
+  current_self(Self),is_metta_data_functor(Eq,Self,F).
 
 
 is_special_builtin('case').
