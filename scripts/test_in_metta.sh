@@ -435,6 +435,7 @@ function generate_final_MeTTaLog() {
         echo " "
         echo "| STATUS | TEST NAME | TEST CONDITION | ACTUAL RESULT | EXPECTED RESULT |"
         echo "|--------|-----------|----------------|---------------|-----------------|"
+        # tac /tmp/SHARED.UNITS | awk '!seen[$0]++' | tac
     } > TEST_LINKS.md
     sort -t'|' -k3 /tmp/SHARED.UNITS | sed 's/^[ \t]*//' | \
     awk -F '|' -v OFS='|' '{ $4 = substr($4, 1, 200); print }' | \
