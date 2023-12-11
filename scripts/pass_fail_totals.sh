@@ -75,8 +75,6 @@ echo ""
 echo ""
 
 
-echo  "|  Pass |  Fail |  Percent | File/Directory Information                                                                              |"
-printf "|-------|-------|----------|----------------------------------------------------------------------------------------------------|\n"
 
 
 base_url="https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/vspace-metta/main/"
@@ -113,7 +111,7 @@ sort -k2,2n "$temp_file" | while read -r dir slash_count; do
             fi
             relative_path=$(echo "$file" | sed 's/^\.\///' | sed -e 's|examples|reports/cuRRent|g' -e 's|-reports/cuRRent|-examples|g')
             github_link="${base_url}${relative_path}"
-            printf "| %5d | %5d | %7s%% | [%s](%s) |\n" "$pass" "$fail" "$file_percent%" "$(basename "${file%.html}")" "$github_link" >> file_info.tmp
+            printf "| %5d | %5d |  %5d%%  | [%s](%s) |\n" "$pass" "$fail" "$file_percent" "$(basename "${file%.html}")" "$github_link" >> file_info.tmp
         fi
     done < <(find "$dir" -name "*.metta.html" -type f -maxdepth 1)
 
@@ -123,15 +121,17 @@ sort -k2,2n "$temp_file" | while read -r dir slash_count; do
     if [ "$total_tests" -ne 0 ]; then
         dir_percent=$((100 * total_pass / total_tests))
         if [ "$had_files" == "true" ]; then
-           printf "|-------|-------|----------|----------------------------------------------------------------------------------------------------|\n"
+           echo ""
+           echo  "|  Pass |  Fail |  Percent | File/Directory Information                                                                              |"
+           echo  "|-------|-------|----------|----------------------------------------------------------------------------------------------------|"
            printf "|       |       |          |                                                                                                    |\n"
            printf "|       |       |          | Directory:     ./%s                 |\n" "$dir/"
            printf "|       |       |          |                                                                                                    |\n"
            cat file_info.tmp
            printf "|       |       |          |                                                                                                    |\n"
-           printf "| %5d | %5d | %7d%% | Total                                                                                              |\n" "$total_pass" "$total_fail" "$dir_percent"
+           printf "| %5d | %5d |  %5d%%  | Total                                                                                              |\n" "$total_pass" "$total_fail" "$dir_percent"
            printf "|       |       |          |                                                                                                    |\n"
-           printf "|-------|-------|----------|----------------------------------------------------------------------------------------------------|\n"
+           echo ""
         fi
     fi
 done
