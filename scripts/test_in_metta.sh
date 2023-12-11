@@ -124,7 +124,7 @@ IF_REALLY_DO() {
 
 function delete_html_files() {
     if [ -n "${UNITS_DIR}" ]; then  # Check if UNITS_DIR is not empty
-        echo "Deleting .html files in $UNITS_DIR"
+        echo "Deleting .metta.html files in $UNITS_DIR"
 
         local include_pattern=""
         local exclude_pattern=""
@@ -351,8 +351,6 @@ process_file() {
              set -e
 
          else
-             echo "Checked for answers:  $file.answers"
-             IF_REALLY_DO cat "${file}.answers"
              echo "Using for answers:  $file.answers"
          fi
 
@@ -467,10 +465,11 @@ function generate_final_MeTTaLog() {
     # Clean up the summary markdown file
     rm summary.md
 
+    ./scripts/pass_fail_totals.sh > temp1a.txt
     # Assemble the final MeTTaLog report
     awk '/# Bugs in MeTTaLog/{exit} 1' MeTTaLog.md > temp1.txt
     awk 'BEGIN{flag=0} /# Installation Guide/{flag=1} flag' MeTTaLog.md > temp2.txt
-    cat temp1.txt TEST_LINKS.md temp2.txt > final_MeTTaLog.md
+    cat temp1.txt temp1a.txt TEST_LINKS.md temp2.txt > final_MeTTaLog.md
 
     # Clean up temporary files
     rm temp1.txt temp2.txt
@@ -485,10 +484,8 @@ function PreCommitReports() {
 
     cd "$SCRIPT_DIR"
     echo "Executing Tasks..."
-    rsync -avm --include='*.html' -f 'hide,! */' examples/ reports/cuRRent/ \
+    rsync -avm --include='*.metta.html' -f 'hide,! */' examples/ reports/cuRRent/ \
     && echo "1) Synced HTML files from examples/ to reports/cuRRent/ and deleted the original HTML files in examples/"
-
-    #find examples/ -name '*.html' -delete
 
     mv final_MeTTaLog.md MeTTaLog.md \
     && echo "2) Renamed final_MeTTaLog.md to MeTTaLog.md"

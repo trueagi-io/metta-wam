@@ -10,7 +10,7 @@ export METTALOG_DIR=$(dirname "$SCRIPT")
 cd "$METTALOG_DIR" || { echo "Failed to navigate to $METTALOG_DIR"; [[ "$IS_SOURCED" == "1" ]] && return 1 || exit 1; }
 should_compile=0
 never_compile=0
-
+CMD_TIMEOUT=0
 
 # Initialize the variable to indicate whether to use the test script
 use_test_script=0
@@ -36,7 +36,7 @@ if [[ "$use_test_script" -eq 1 ]]; then
 fi
 
 
-export TEE_FILE=${TEE_FILE:-"$METTALOG_DIR/TEE.ansi"}
+#export TEE_FILE=${TEE_FILE:-"$METTALOG_DIR/TEE.ansi"}
 
 set -e
 
@@ -147,7 +147,7 @@ function print_help {
 # Initialize variables
 SWI_OPTIONS=()
 OTHER_OPTIONS=()
-PRE_OPTIONS=()
+PRE_OTHER_OPTIONS=()
 FLAG_WITH_ARG=false
 python_flag=enable
 LIST_OF_FILE_ARGS=()
@@ -188,9 +188,10 @@ function handle_args {
         fi
 
         if [[ "$arg" =~ ^--timeout=([0-9]+)$ ]]; then
-            TIMEOUT="${BASH_REMATCH[1]}"
-	    echo "$0 TIMEOUT=$TIMEOUT"
-	    export TIMEOUT
+            export TIMEOUT="${BASH_REMATCH[1]}"
+	    #echo "$0 TIMEOUT=$TIMEOUT"
+	    CMD_TIMEOUT=$TIMEOUT
+	    OTHER_OPTIONS=("--timeout=$TIMEOUT" "${OTHER_OPTIONS[@]}")
 	    continue
 	elif [[ "$arg" =~ ^--python=(enable|false)$ ]]; then
             python_flag="${BASH_REMATCH[1]}"
@@ -199,13 +200,15 @@ function handle_args {
         elif [[ "$arg" == "--no-python" ]]; then
             python_flag=false
         elif [[ "$arg" == "--repl" ]]; then
-            repl_flag=enable
+            repl_flag=true
         elif [[ "$arg" == "--no-repl" ]]; then
             repl_flag=false
         elif [[ "$arg" == "--html" ]]; then
             html_flag=enable
         elif [[ "$arg" == "--no-html" ]]; then
             html_flag=false
+        elif [[ "$arg" == "--prolog" ]]; then
+            repl_flag=enable
         fi
 
         [[ "$arg" == "--help" || "$arg" == "-h" ]] && { wants_print_help=1; EXIT_SCRIPT=0; }
@@ -306,7 +309,11 @@ fi
 
 # Decide on enabling the REPL
 if [[ -z "$repl_flag" ]]; then
-  [[ ${#LIST_OF_FILE_ARGS[@]} -eq 0 ]] && repl_flag=enable || repl_flag=false
+  [[ ${#LIST_OF_FILE_ARGS[@]} -eq 0 ]] && repl_flag=true  ||  true
+fi
+
+if [[ "$repl_flag" != "false" ]]; then
+  export TIMEOUT=0
 fi
 
 # Store the initial PYTHONPATH for later comparison
@@ -407,8 +414,6 @@ else
   MLOG="swipl ${SWI_OPTIONS[*]} -l $METTALOG_DIR/metta_vspace/$PYSWIP_VERSION/metta_interp.pl --"
 fi
 
-
-
 METTA_CMD="$MLOG --python=$python_flag ${PRE_OTHER_OPTIONS[*]} ${OTHER_OPTIONS[*]}"
 
 OS=$(uname)
@@ -440,35 +445,43 @@ cleanup() {
     [[ $IS_SOURCED -eq 1 ]] && return $METTA_CMD_EXIT_STATUS || exit $METTA_CMD_EXIT_STATUS
 }
 
+#echo "CMD_TIMEOUT=$CMD_TIMEOUT"
 
-if [[ -n "$TIMEOUT" && "$TIMEOUT" -gt 0 ]]; then
+if [[ -n "$CMD_TIMEOUT" && "$CMD_TIMEOUT" -gt 0 ]]; then
   trap cleanup EXIT TERM
-   METTA_CMD="$TIMEOUT_CMD --foreground --preserve-status --signal=SIGTERM --kill-after=5s $TIMEOUT ${METTA_CMD}"
+  METTA_CMD="$TIMEOUT_CMD --foreground --preserve-status --signal=SIGTERM --kill-after=5s $CMD_TIMEOUT ${METTA_CMD}"
 fi
 
 # Conditional to check if html_flag is enabled
 if [[ "$html_flag" == "enable" ]]; then
-    export TEE_FILE=${TEE_FILE:-"$METTALOG_DIR/TEE.ansi"}
+    # Generate a random filename for TEE_FILE with date, PID, and a random number
+    random_suffix=$(date +"%Y%m%d%H%M%S")_$$_$RANDOM
+    TEE_FILE="$METTALOG_DIR/TEE_$random_suffix.ansi"
+    export TEE_FILE
     touch "$TEE_FILE"
     chmod 777 "$TEE_FILE"
     cat /dev/null > "$TEE_FILE"
 
     export TYPESCRIPT=1
 
-	if [[ "$OS" == "Darwin" ]]; then
-	    # macOS
-	    /usr/bin/script -q -f -a "$TEE_FILE" "$METTA_CMD"
-	    echo $? > "$TEMP_EXIT_CODE_FILE"
-	    cleanup
-	else
-	    # Assume Linux
-	    /usr/bin/script -q -f --force -e -a "$TEE_FILE" -c "$METTA_CMD"
-	    echo $? > "$TEMP_EXIT_CODE_FILE"
-	    cleanup
-	fi
+    echo "afterwhich ansi2html -u < $TEE_FILE > ${LIST_OF_FILE_ARGS[0]}.html"
+    if [[ "$OS" == "Darwin" ]]; then
+        # macOS
+        /usr/bin/script -q -f -a "$TEE_FILE" "$METTA_CMD"
+        echo $? > "$TEMP_EXIT_CODE_FILE"
+        cleanup
+        ansi2html -u < "$TEE_FILE" >"${LIST_OF_FILE_ARGS[0]}.html"
+    else
+        # Assume Linux
+        /usr/bin/script -q -f --force -e -a "$TEE_FILE" -c "$METTA_CMD"
+        echo $? > "$TEMP_EXIT_CODE_FILE"
+        cleanup
+        ansi2html -u < "$TEE_FILE" >"${LIST_OF_FILE_ARGS[0]}.html"
+    fi
+    rm -f "$TEE_FILE"
+fi
 
 else
-
    exec $METTA_CMD
 fi
 
