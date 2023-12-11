@@ -83,6 +83,14 @@ loonit_asserts(S,Pre,G):-
  % wots(S,((((nb_current(exec_src,WS),WS\==[])->writeln(WS);write_src(exec(TestSrc)))))),
   once(loonit_asserts1(Exec,Pro,G)).
 
+give_pass_credit(TestSrc,_Pre,_G):-
+     inside_assert(TestSrc,BaseEval),
+    always_exec(BaseEval),!.
+give_pass_credit(TestSrc,_Pre,G):-
+    write_pass_fail(TestSrc,'PASS',G),
+    flag(loonit_success, X, X+1),!,
+    color_g_mesg(cyan,write_src(loonit_success(G))),!.
+
 write_pass_fail([P,C,_],PASS_FAIL,G):-
  must_det_ll((
     loonit_number(Number),
@@ -97,7 +105,8 @@ write_pass_fail(TestName,P,C,PASS_FAIL,G1,G2):-
       nop(format('<h3 id="~w">;; ~w</h3>',[TestName,TestName])),
 
       if_t( (tee_file(TEE_FILE)->true;'TEE.ansi'=TEE_FILE),
-      (atom_concat(TEE_FILE,'.UNITS',UNITS),
+      (%atom_concat(TEE_FILE,'.UNITS',UNITS),
+      UNITS = '/tmp/SHARED.UNITS',
       open(UNITS, append, Stream,[encoding(utf8)]),
       format(Stream,'| ~w | [~w](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/vspace-metta/main/reports/cuRRent/~w.metta.html#~w) | ~@ | ~@ | ~@ |~n',
       [PASS_FAIL,TestName,Base,TestName,trim_gstring(with_indents(false,write_src([P,C])),200),
@@ -119,9 +128,7 @@ trim_gstring(Goal, MaxLen) :-
 
 loonit_asserts1(TestSrc,Pre,G) :- nop(Pre),
     call(G), !,
-    write_pass_fail(TestSrc,'PASS',G),
-    flag(loonit_success, X, X+1),!,
-    color_g_mesg(cyan,write_src(loonit_success(G))),!.
+  give_pass_credit(TestSrc,Pre,G),!.
 
 loonit_asserts1(TestSrc,Pre,G) :-
     sub_var('BadType',TestSrc), \+ check_type,!,

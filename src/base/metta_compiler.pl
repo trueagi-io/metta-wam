@@ -103,7 +103,7 @@ functional_predicate_arg(F, A, L):- (atom(F)->true;trace), predicate_arity(F,A),
   \+ decl_functional_predicate_arg(F, A, _).
 functional_predicate_arg(F, A, L):- functional_predicate_arg_tricky(F, A, L).
 
-predicate_arity(F,A):- metta_atom('&self',[:,F,[->|Args]]), length(Args,A).
+predicate_arity(F,A):- get_metta_atom(Eq,'&self',[:,F,[->|Args]]), length(Args,A).
 predicate_arity(F,A):- current_predicate(F/A).
 % Certain constructs should not be converted to functions.
 not_function(P):- atom(P),!,not_function(P,0).
@@ -787,7 +787,7 @@ u_assign(FList,R):- FList=@=R,!,FList=R.
 u_assign(FList,R):- number(FList), var(R),!,R=FList.
 u_assign(FList,R):- self_eval(FList), var(R),!,R=FList.
 u_assign(FList,R):- var(FList),!,/*trace,*/freeze(FList,u_assign(FList,R)).
-u_assign([V|VI],[V|VO]):- nonvar(V),is_metta_data_functor(V),!,maplist(eval_args,VI,VO).
+u_assign([V|VI],[V|VO]):- nonvar(V),is_metta_data_functor(Eq,V),!,maplist(eval_args,VI,VO).
 u_assign((F:-List),R):- !, R = (F:-List).
 u_assign(FList,R):- \+ compound(FList), var(R),!,R=FList.
 u_assign([F|List],R):- F == ':-',!, trace_break,as_tf(clause(F,List),R).
@@ -1081,9 +1081,9 @@ p2m((A;B),O):- !, p2m(or(A,B),O).
 p2m((A*->B;C),O):- !, p2m(each_then_otherwise(A,B,C),O).
 p2m((A->B),O):- !, p2m(if_then(A,B),O).
 p2m((A*->B),O):- !, p2m(each_then(A,B),O).
-p2m(metta_defn(Self,Eq,H,B),'add-atom'(Self,[Eq,H,B])).
+p2m(metta_defn(Eq,Self,H,B),'add-atom'(Self,[Eq,H,B])).
 p2m(metta_type,'add-atom').
-p2m(metta_atom,'add-atom').
+p2m(get_metta_atom,'add-atom').
 p2m(retractall(X),'remove-all-atoms'('&self',X)).
 p2m(clause(H,B),'get-atoms'('&self',[=,H,B])).
 p2m(retract(X),'remove-atom'('&self',X)).
@@ -1585,7 +1585,7 @@ expects_type(Fn,Nth,Type):-
   get_operator_typedef(Self,Fn,Params,RetType),
   nth0(Nth,[RetType|Params],Type),nonvar(Type).
 
-will_become_type(Type,S,P):- try_adjust_arg_types(_RetType,88,_Self,[Type],[S],[PS]),PS=P,!.
+will_become_type(Type,S,P):- try_adjust_arg_types(=,_RetType,88,_Self,[Type],[S],[PS]),PS=P,!.
 will_become_type(Type,S,P):- is_ftVar(S),!,P=S.
 will_become_type(Type,S,P):-
    get_type(S,T),!,

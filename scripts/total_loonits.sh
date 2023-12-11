@@ -12,7 +12,7 @@ function initialize_counters() {
 
 function analyze_files() {
     cat /dev/null > $FOUND_UNITS.sortme
-    find "${UNITS_DIR}" -name "*.html" -type f > $FOUND_UNITS
+    find "${UNITS_DIR}" -name "*.metta.html" -type f > $FOUND_UNITS
 
     while read -r file; do
         process_file "$file"
@@ -20,6 +20,8 @@ function analyze_files() {
 
     rm $FOUND_UNITS
     sort_and_calculate_totals
+
+       cat $FOUND_UNITS.sortme
 }
 
 function process_file() {
@@ -38,7 +40,7 @@ function process_file() {
     directory=$(dirname $relative_path)
     github_link="${base_url}${relative_path}"
 
-    printf "|%-5s|%-5s|%-35s|%-130s|\n" "  $current_successes" "  $current_failures" " ${basename}.metta" "[$relative_path]($github_link)" >> $FOUND_UNITS.sortme
+    printf "|%-5s|%-5s|%-35s|%-130s|\n" "  $current_successes" "  $current_failures" " ${basename}" "[$relative_path]($github_link)" >> $FOUND_UNITS.sortme
 
     accumulate_totals "$directory" $current_successes $current_failures
 }
@@ -52,7 +54,7 @@ function accumulate_totals() {
         dir_totals["$directory,success"]=$(( ${dir_totals["$directory,success"]} + current_successes ))
         dir_totals["$directory,failure"]=$(( ${dir_totals["$directory,failure"]} + current_failures ))
 
-        if [[ $directory == *"compat"* ]]; then
+        if [[ $directory == *""* ]]; then
             total_successes=$((total_successes + current_successes))
             total_failures=$((total_failures + current_failures))
         fi
