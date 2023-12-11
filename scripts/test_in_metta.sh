@@ -425,8 +425,8 @@ function generate_final_MeTTaLog() {
     cd "$SCRIPT_DIR" || exit 1
 
     # Calculate the number of passed and failed tests
-    passed=$(grep -c "| PASS |" TEE.ansi.UNITS)
-    failed=$(grep -c "| FAIL |" TEE.ansi.UNITS)
+    passed=$(grep -c "| PASS |" /tmp/SHARED.UNITS)
+    failed=$(grep -c "| FAIL |" /tmp/SHARED.UNITS)
     total=$((passed + failed))
     percent_passed=$(awk -v passed="$passed" -v total="$total" 'BEGIN { printf "%.2f", (passed/total)*100 }')
 
@@ -436,7 +436,7 @@ function generate_final_MeTTaLog() {
         echo "| STATUS | TEST NAME | TEST CONDITION | ACTUAL RESULT | EXPECTED RESULT |"
         echo "|--------|-----------|----------------|---------------|-----------------|"
     } > TEST_LINKS.md
-    sort -t'|' -k3 TEE.ansi.UNITS | sed 's/^[ \t]*//' | \
+    sort -t'|' -k3 /tmp/SHARED.UNITS | sed 's/^[ \t]*//' | \
     awk -F '|' -v OFS='|' '{ $4 = substr($4, 1, 200); print }' | \
     awk -F '|' -v OFS='|' '{ $5 = substr($5, 1, 200); print }' | \
     awk -F '|' -v OFS='|' '{ $6 = substr($6, 1, 200); print }' >> TEST_LINKS.md

@@ -79,7 +79,7 @@ function get_current_successes() {
     relative_path=$(echo "$file" | sed 's/^\.\///' | sed -e 's|examples|reports/cuRRent|g' -e 's|-reports/cuRRent|-examples|g')
     basename=$(basename "$relative_path")
     basename=${basename%.*}
-    echo $(grep "$basename" TEE.ansi.UNITS | grep -c "| PASS |")
+    echo $(grep "$basename" /tmp/SHARED.UNITS | grep -c "| PASS |")
 }
 
 
@@ -101,7 +101,7 @@ function get_current_failures() {
     relative_path=$(echo "$file" | sed 's/^\.\///' | sed -e 's|examples|reports/cuRRent|g' -e 's|-reports/cuRRent|-examples|g')
     basename=$(basename "$relative_path")
     basename=${basename%.*}
-    echo $(grep "$basename" TEE.ansi.UNITS | grep -c "| FAIL |")
+    echo $(grep "$basename" /tmp/SHARED.UNITS | grep -c "| FAIL |")
 }
 
 function get_current_successes1() {
