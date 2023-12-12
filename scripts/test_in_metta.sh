@@ -427,13 +427,13 @@ function generate_final_MeTTaLog() {
     total=$((passed + failed))
     percent_passed=$(awk -v passed="$passed" -v total="$total" 'BEGIN { printf "%.2f", (passed/total)*100 }')
 
-    # Create a markdown file with test links and headers
-    {
+    # Create a markdown file with test links and headers    {
         echo " "
         echo "| STATUS | TEST NAME | TEST CONDITION | ACTUAL RESULT | EXPECTED RESULT |"
         echo "|--------|-----------|----------------|---------------|-----------------|"
         cat /tmp/SHARED.UNITS | awk -F'cuRRent|\\) \\| \\(' '{ print $2 " " $0 }'  | sort | cut -d' ' -f2- | tac | awk '!seen[$0]++' | tac
     } > ./examples/PASS_FAIL.md
+
 
    ./scripts/pass_fail_totals.sh examples/ > ./examples/TEST_LINKS.md
 
