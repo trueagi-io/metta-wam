@@ -122,7 +122,7 @@ function print_help {
     echo "    --home[=DIR]             Print home or use DIR as SWI-Prolog home"
     echo "    --stack-limit=size[BKMG] Specify maximum size of stacks"
     echo "    --table-space=size[BKMG] Specify maximum size of SLG tables"
-    echo "    --shared-table-space=size[BKMG] Maximum size of _shared_ SLG tables"
+    echo "    --shared-table-space=size[BKMG] Maximum size of *shared* SLG tables"
     echo "    --pce[=bool]             Make the xpce gui available"
     echo "    --packs[=bool]           Do (not) attach add-ons"
     echo "    --pldoc[=port]           Start PlDoc server [at port]"

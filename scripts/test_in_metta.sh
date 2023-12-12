@@ -33,6 +33,7 @@ METTALOG_MAX_TIME=75
 clean=0  # 0 means don't clean, 1 means do clean
 fresh=0
 if_failures=1
+if_regressions=0
 show_help=0
 export RUST_METTA_MAX_TIME=120
 EXTRA_FIND_ARGS=""
@@ -41,46 +42,32 @@ explain_only=1
 
 # command-line argument parsing
 while [ "$#" -gt 0 ]; do
-  case "$1" in
-    -y|-n|--timeout=*|--report=*|--clean|--cont*|--fail*|--test|--fresh*)
-      [[ "$1" == --timeout=* ]] && METTALOG_MAX_TIME="${1#*=}"
-      [[ "$1" == --report=* ]] && generate_report_auto_reply="${1#*=}"
-      [[ "$1" == --clean ]] && clean=1 && if_failures=0
-      [[ "$1" == --cont* ]] && clean=0 && if_failures=0
-      [[ "$1" == --fail* ]] && clean=0 && if_failures=1
-      [[ "$1" == --expain ]] && explain_only=1
-      [[ "$1" == --test ]] && explain_only=0
-      [[ "$1" == --fresh* ]] && fresh=1
-      [[ "$1" == -y ]] && run_tests_auto_reply="y"
-      [[ "$1" == -n ]] && run_tests_auto_reply="n"
-      shift
-      ;;
-      --exclude*=*)
-        EXTRA_FIND_ARGS+=" ! -path ${1#*=}"
-        CANT_HAVE="${1#*=}"
-        shift
-        ;;
-    --include*=*)
-       EXTRA_FIND_ARGS+=" -path ${1#*=}"
-       MUST_HAVE="${1#*=}"
-          shift
-          ;;
-    -h|--help)
-      echo "Usage: $0 [options] [directory] [extra args]"
-      # we delay showing help so variables can be filled in
-      show_help=1
-      explain_only=1
-      ;;
-    *)
-      if [ -d "$1" ] || [ -f "$1" ]; then
-        UNITS_DIR="$1"
-      else
-        add_to_list "$1" passed_along_to_mettalog
-      fi
-      shift
-      ;;
-  esac
+    case "$1" in
+        -y|--yes) run_tests_auto_reply="y" ;;
+        -n|--no) run_tests_auto_reply="n" ;;
+        --timeout=*) METTALOG_MAX_TIME="${1#*=}" ;;
+        --report=*) generate_report_auto_reply="${1#*=}" ;;
+        --clean) clean=1; if_failures=0 ;;
+        --regres*) clean=0; if_failures=0; if_regressions=1 ;;
+        --cont*) clean=0; if_failures=0 ;;
+        --fail*) clean=0; if_failures=1 ;;
+        --explain) explain_only=1 ;;
+        --test) explain_only=0 ;;
+        --fresh*) fresh=1 ;;
+        --exclude=*) EXTRA_FIND_ARGS+=" ! -path ${1#*=}"; CANT_HAVE="${1#*=}" ;;
+        --include=*) EXTRA_FIND_ARGS+=" -path ${1#*=}"; MUST_HAVE="${1#*=}" ;;
+        -h|--help) echo "Usage: $0 [options] [directory] [extra args]"; show_help=1; explain_only=1 ;;
+        *)
+            if [ -d "$1" ] || [ -f "$1" ]; then
+                UNITS_DIR="$1"
+            else
+                add_to_list "$1" passed_along_to_mettalog
+            fi
+            ;;
+    esac
+    shift
 done
+
 
 
 
@@ -356,7 +343,20 @@ process_file() {
 
          local take_test=0
 
-         if [[ ! -f "$file_html" ]]; then
+         if [ "$if_regressions" -eq 1 ]; then
+             if [[ ! -f "$file_html" ]]; then
+                 echo "Not taking test since HTML file does not exist."
+                 return
+             fi
+
+             failures_zero=$(grep -h -c "Failures: 0" "$file_html")
+             if [ "$failures_zero" -ne 0 ]; then
+                 echo "Not taking test since Failures not 0."
+                 return
+             fi
+             take_test=1
+             echo "Taking test since Failures: 0 and looking for regressions."
+         elif [[ ! -f "$file_html" ]]; then
              take_test=1
              echo "Taking test since HTML file does not exist."
          else
@@ -364,31 +364,28 @@ process_file() {
                  take_test=1
                  echo "Taking test since --clean."
              elif [ "$if_failures" -eq 1 ]; then
-               failures_not_zero=$(grep -h -c "Failures: [^0]" "$file_html")
-               if [ "$failures_not_zero" -eq 0 ]; then
-                     success_missing=0  # Default to 0 (false)
+                 failures_not_zero=$(grep -h -c "Failures: [^0]" "$file_html")
+                 if [ "$failures_not_zero" -eq 0 ]; then
+                     success_missing=0
 
-                     # Check if the word "success" is in the file
                      if ! grep -q "Successes: " "$file_html"; then
-                         # Set variable if "success" is missing
                          success_missing=1
                      fi
 
-                     # Now you can use success_missing as needed
                      if [ "$success_missing" -eq 1 ]; then
                          echo "The word 'Success' is missing from $file_html."
-                        failures_not_zero=1
+                         failures_not_zero=1
                      else
                          echo "The word 'Success' is present in $file_html."
                      fi
-               fi
-               if [ "$failures_not_zero" -eq 1 ]; then
-                   take_test=1
-                   echo "Retaking test since failures are present."
-                   IF_REALLY_DO rm -f "$file_html"
-               else
-                   echo "Not retaking since Failures: 0."
-               fi
+                 fi
+                 if [ "$failures_not_zero" -eq 1 ]; then
+                     take_test=1
+                     echo "Retaking test since failures are present."
+                     IF_REALLY_DO rm -f "$file_html"
+                 else
+                     echo "Not retaking since Failures: 0."
+                 fi
              else
                  echo "Results present, not taking test."
              fi
@@ -435,48 +432,11 @@ function generate_final_MeTTaLog() {
         echo " "
         echo "| STATUS | TEST NAME | TEST CONDITION | ACTUAL RESULT | EXPECTED RESULT |"
         echo "|--------|-----------|----------------|---------------|-----------------|"
-        # tac /tmp/SHARED.UNITS | awk '!seen[$0]++' | tac
-    } > TEST_LINKS.md
-    sort -t'|' -k3 /tmp/SHARED.UNITS | sed 's/^[ \t]*//' | \
-    awk -F '|' -v OFS='|' '{ $4 = substr($4, 1, 200); print }' | \
-    awk -F '|' -v OFS='|' '{ $5 = substr($5, 1, 200); print }' | \
-    awk -F '|' -v OFS='|' '{ $6 = substr($6, 1, 200); print }' >> TEST_LINKS.md
+        cat /tmp/SHARED.UNITS | awk -F'cuRRent|\\) \\| \\(' '{ print $2 " " $0 }'  | sort | cut -d' ' -f2- | tac | awk '!seen[$0]++' | tac
+    } > ./examples/PASS_FAIL.md
 
-    # Append extra newlines to the test links markdown file
-    echo -e "\n\n\n" >> TEST_LINKS.md
+   ./scripts/pass_fail_totals.sh examples/ > ./examples/TEST_LINKS.md
 
-    # Create a summary of the test results
-    {
-        echo "Test Results:"
-        echo "$passed Passed,"
-        echo "$failed Failed,"
-        echo "$total Total,"
-        echo "$percent_passed% Passed"
-    } > summary.md
-
-    # Combine different markdown sections into one
-    {
-        cat PASS_FAIL.md
-        echo " "
-        cat TEST_LINKS.md
-        cat summary.md
-        echo " "
-    } > temp && mv temp TEST_LINKS.md
-
-    # Clean up the summary markdown file
-    rm summary.md
-
-    ./scripts/pass_fail_totals.sh > temp1a.txt
-    # Assemble the final MeTTaLog report
-    awk '/# Bugs in MeTTaLog/{exit} 1' MeTTaLog.md > temp1.txt
-    awk 'BEGIN{flag=0} /# Installation Guide/{flag=1} flag' MeTTaLog.md > temp2.txt
-    cat temp1.txt temp1a.txt TEST_LINKS.md temp2.txt > final_MeTTaLog.md
-
-    # Clean up temporary files
-    rm temp1.txt temp2.txt
-
-    # Optionally, display the final MeTTaLog report
-    # cat final_MeTTaLog.md
 }
 
 
@@ -487,9 +447,10 @@ function PreCommitReports() {
     echo "Executing Tasks..."
     rsync -avm --include='*.metta.html' -f 'hide,! */' examples/ reports/cuRRent/ \
     && echo "1) Synced HTML files from examples/ to reports/cuRRent/ and deleted the original HTML files in examples/"
-
-    mv final_MeTTaLog.md MeTTaLog.md \
-    && echo "2) Renamed final_MeTTaLog.md to MeTTaLog.md"
+    \cp -f examples/PASS_FAIL.md reports/PASS_FAIL.md
+    \cp -f examples/TEST_LINKS.md reports/TEST_LINKS.md
+    #mv final_MeTTaLog.md MeTTaLog.md \
+    #&& echo "2) Renamed final_MeTTaLog.md to MeTTaLog.md"
 
    # Get current branch name
    branch_name=$(git rev-parse --abbrev-ref HEAD)
