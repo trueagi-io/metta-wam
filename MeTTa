@@ -91,15 +91,9 @@ add_to_list() {
 }
 
 function print_help {
-    echo " CMD: $0 ${SWI_OPTIONS[*]} -l $METTALOG_DIR/metta_vspace/$PYSWIP_VERSION/metta_interp.pl -- --python=$python_flag ${PRE_OTHER_OPTIONS[*]} ${OTHER_OPTIONS[*]}"
-    echo " Usage: $MeTTa [options] <metta-files|directories> ... [-- arg ...passed to your program...]"
-    echo "        $MeTTa [options] [-o executable] -c metta-file1 -c metta-file2 ... to compile into executable ..."
-    echo "        $MeTTa --help         Display this message"
-    echo "        $MeTTa --version      Display version information"
-    echo "        $MeTTa --abi-version  Display ABI version key"
-    echo "        $MeTTa --arch         Display architecture"
-    echo "        $MeTTa --dump-runtime-variables[=format]"
-    echo "                        Dump link info in sh(1) format"
+    echo " Usage: $0 [options] <metta-files|directories> ... [-- arg ...passed to your program...]"
+    echo "        $0 --help         Display this message"
+    echo "        $0 --version      Display version information"
     echo ""
     echo "    -x state                 Start from state (must be first)"
     echo "    -g goal                  Run goal (may be repeated)"
@@ -109,30 +103,53 @@ function print_help {
     echo "    -l file                  Script source file"
     echo "    -s file                  Script source file"
     echo "    -p alias=path            Define file search path 'alias'"
+    echo "    "
+    echo "   Compilation: "
+    echo ""
+    echo "    $0 [options] [-o executable] -c metta-file1 -c metta-file2 ... to compile into executable ..."
+    echo ""
     echo "    -O                       Optimised compilation"
-    echo "    --on-error=style         One of print, halt or status"
-    echo "    --on-warning=style       One of print, halt or status"
-    echo "    --tty[=bool]             (Dis)allow tty control"
-    echo "    --packs[=bool]           Do (not) attach add-ons"
-    echo "    --signals[=bool]         Do (not) modify signal handling"
-    echo "    --threads[=bool]         Do (not) allow for threads"
     echo "    --debug[=bool]           Do (not) generate debug info"
-    echo "    --debug-on-interrupt[=bool] Trap the debugger on interrupt"
-    echo "    --quiet[=bool] (-q)      Do (not) suppress informational messages"
-    echo "    --traditional            Disable extensions of version 7"
-    echo "    --home[=DIR]             Print home or use DIR as SWI-Prolog home"
-    echo "    --stack-limit=size[BKMG] Specify maximum size of Prolog stacks"
-    echo "    --table-space=size[BKMG] Specify maximum size of SLG tables"
-    echo "    --shared-table-space=size[BKMG] Maximum size of shared SLG tables"
-    echo "    --pce[=bool]             Make the xpce gui available"
-    echo "    --pldoc[=port]           Start PlDoc server [at port]"
-    echo "    --python[=bool]          Enable or disable Python support (default: $python_flag)"
+    echo "    --traditional            Disable extensions of version (SWI-Prolog version 7)"
+    echo "    --abi-version            Display ABI version key (and exit)"
+    echo "    --arch                   Display architecture (and exit)"
+    echo "    --dump-runtime-variables[=format] "
+    echo "                             Dump link info in sh(1) format (and exit)"
+    echo ""
+    echo "  Running:"
     echo "    --repl                   Start the REPL (Read-Eval-Print Loop) after processing metta files."
     echo "                             If no metta files are provided, this is the default behavior."
+    echo "    --home[=DIR]             Print home or use DIR as SWI-Prolog home"
+    echo "    --stack-limit=size[BKMG] Specify maximum size of stacks"
+    echo "    --table-space=size[BKMG] Specify maximum size of SLG tables"
+    echo "    --shared-table-space=size[BKMG] Maximum size of _shared_ SLG tables"
+    echo "    --pce[=bool]             Make the xpce gui available"
+    echo "    --packs[=bool]           Do (not) attach add-ons"
+    echo "    --pldoc[=port]           Start PlDoc server [at port]"
+    echo "    --python[=bool]          Enable or disable Python support (default: $python_flag)"
+    echo "    --tty[=bool]             (Dis)allow tty control"
+    echo "    --quiet[=bool] (-q)      Do (not) suppress informational messages"
+    echo "   "
+    echo "  Testing:"
+    echo "    --test                 Use the test options:"
+    echo "    --continue               Continue running tests (Generating any missing html files)"
+    echo "    --failures               Rerun unsuccessfull tests only"
     echo "    --timeout=seconds        Kill the script after so many seconds."
     echo "    --html[=bool]            Save an HTML file containing terminal output in the same"
     echo "                             directory as the input file or directory."
     echo "                             Defaults to true if exactly one metta file or directory argument was provided"
+    echo "    --fresh                  Clean up by deleting any .answers files under directory"
+    echo "    --clean                  Clean up by deleting all .html files under directory"
+    echo "         "
+    echo "  Debugging:"
+    echo "    --exec=skip              Skip over !exec dirrectives"
+    echo "    --eval=rtrace            Recursively trace Evaluation"
+    echo "    --signals[=bool]         Do (not) modify signal handling"
+    echo "    --threads[=bool]         Do (not) allow for threads"
+    echo "    --debug-on-interrupt[=bool] Trap the debugger on interrupt"
+    echo "    --prolog                 Drop to the host system debugger"
+    echo "    --on-error=style         One of print, halt or status"
+    echo "    --on-warning=style       One of print, halt or status"
     echo ""
     echo " Boolean options may be written as --name=bool, --name, --no-name or --noname."
     echo " Both '-' or '_' are accepted as word-separator for long options."
@@ -140,6 +157,9 @@ function print_help {
     echo " Configuration File:"
     echo "    This script reads options from the ~/.mettalogrc file, one option per line."
     echo "    Options specified in ~/.mettalogrc are processed before command-line arguments."
+    echo ""
+    echo " WAS: $0 ${SWI_OPTIONS[*]} -l $METTALOG_DIR/metta_vspace/$PYSWIP_VERSION/metta_interp.pl -- --python=$python_flag ${PRE_OTHER_OPTIONS[*]} ${OTHER_OPTIONS[*]} \\"
+    echo "            $METTA_CMD"
     echo ""
 }
 
@@ -277,11 +297,14 @@ done
 #echo "LIST_OF_FILE_ARGS[0]=${LIST_OF_FILE_ARGS[0]}"
 DIRNAME="${LIST_OF_FILE_ARGS[0]}"
 if [[ -f "$DIRNAME" ]]; then
+  HTML_OUT="$DIRNAME".html
   DIRNAME=$(dirname "${DIRNAME}")
 elif [[ -d "$DIRNAME" ]]; then
-   :
+   HTML_OUT="${DIRNAME}/Result.html"
 else
   handle_args --repl
+  DIRNAME="${PWD}"
+  HTML_OUT="${DIRNAME}/Result.html"
 fi
 DIR_RC="$DIRNAME/.mettalogrc"
 #echo "DIR_RC=$DIR_RC"
@@ -294,7 +317,9 @@ if [[ -f "$DIR_RC" ]]; then
 	handle_args $DIR_OPTS
     fi
 else
-    echo "No RC file (.mettalogrc) for directory: $DIRNAME"
+    echo ";"
+    echo "; No RC file (.mettalogrc) for directory: $DIRNAME"
+    echo ";"
 fi
 
 # Then process actual command-line arguments
@@ -333,19 +358,6 @@ if [[ "$PYTHONPATH" != "$initial_pythonpath" ]]; then
 fi
 
 export RUST_BACKTRACE=full
-
-if  [[ "$wants_print_help" == "1" ]]; then
-   print_help
-    [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"
-fi
-
-if [ -z "${EXIT_SCRIPT+x}" ]; then
-    :
-else
-    [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"
-fi
-
-
 
 # Directory containing the .pl files
 pl_directory="metta_vspace/$PYSWIP_VERSION"
@@ -431,7 +443,7 @@ fi
 
 # Initialize the variable to store the exit status of METTA_CMD
 METTA_CMD_EXIT_STATUS=666
-
+TEMP_EXIT_CODE_FILE="$(mktemp)"
 # Set a trap to ensure stty sane is run on script exit or interruption
 cleanup() {
     stty sane
@@ -454,35 +466,39 @@ fi
 
 # Conditional to check if html_flag is enabled
 if [[ "$html_flag" == "enable" ]]; then
-    # Generate a random filename for TEE_FILE with date, PID, and a random number
-    random_suffix=$(date +"%Y%m%d%H%M%S")_$$_$RANDOM
+    # Generate a random filename for TEE_FILE with date,time,PID
+    random_suffix=$(date +"%Y%m%d_%H%M")_$$
     TEE_FILE="$METTALOG_DIR/TEE_$random_suffix.ansi"
     export TEE_FILE
+
+    export TYPESCRIPT=1
+    if [[ "$OS" == "Darwin" ]]; then # macOS
+	METTA_CMD="/usr/bin/script -q -f -a \"$TEE_FILE\" \"$METTA_CMD\""
+    else # Assume Linux
+        METTA_CMD="/usr/bin/script -q -f --force -e -a \"$TEE_FILE\" -c \"$METTA_CMD\""
+    fi
+
+    [[ "$wants_print_help" == "1" ]] && { print_help; }
+    echo "; "
+    echo "; Afterwhich ansi2html -u < $TEE_FILE > \"$HTML_OUT\""
+    echo "; "
+    [[ -n "${EXIT_SCRIPT+x}" ]] && { [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
+
+
     touch "$TEE_FILE"
     chmod 777 "$TEE_FILE"
     cat /dev/null > "$TEE_FILE"
-
-    export TYPESCRIPT=1
-
-    echo "afterwhich ansi2html -u < $TEE_FILE > ${LIST_OF_FILE_ARGS[0]}.html"
-    if [[ "$OS" == "Darwin" ]]; then
-        # macOS
-        /usr/bin/script -q -f -a "$TEE_FILE" "$METTA_CMD"
-        echo $? > "$TEMP_EXIT_CODE_FILE"
-        cleanup
-        ansi2html -u < "$TEE_FILE" >"${LIST_OF_FILE_ARGS[0]}.html"
-    else
-        # Assume Linux
-        /usr/bin/script -q -f --force -e -a "$TEE_FILE" -c "$METTA_CMD"
-        echo $? > "$TEMP_EXIT_CODE_FILE"
-        cleanup
-        ansi2html -u < "$TEE_FILE" >"${LIST_OF_FILE_ARGS[0]}.html"
-    fi
+    eval "$METTA_CMD"
+    echo $? > "$TEMP_EXIT_CODE_FILE"
+    ansi2html -u < "$TEE_FILE" >"$HTML_OUT"
     rm -f "$TEE_FILE"
-fi
-
+    cleanup
 else
-   exec $METTA_CMD
+
+    [[ "$wants_print_help" == "1" ]] && { print_help; [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
+    [[ -n "${EXIT_SCRIPT+x}" ]] && { [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
+    exec $METTA_CMD
+
 fi
 
 
