@@ -152,7 +152,7 @@ loonit_asserts1(TestSrc,Pre,G) :-
 :- dynamic(gave_loonit_report/0).
 loonit_report:- gave_loonit_report,!.
 loonit_report :-
-    assert(gave_loonit_report),
+%    assert(gave_loonit_report),
     flag(loonit_success, Successes, Successes),
     flag(loonit_failure, Failures, Failures),
     loonit_report(Successes,Failures).

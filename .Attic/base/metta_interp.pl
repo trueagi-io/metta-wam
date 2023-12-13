@@ -1485,7 +1485,7 @@ interactively_do_metta_exec(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut
                  true
              )
         ; GG =       locally(set_prolog_flag(gc,false),
-                             ( (dcall(Term),deterministic(Complete)), nb_setarg(1,Result,Output))),
+                             ( (dcall0(Term),deterministic(Complete)), nb_setarg(1,Result,Output))),
     !, % metta_toplevel
    flag(result_num,_,0),
    PL=eval(Self,BaseEval,X),
@@ -1782,7 +1782,7 @@ example3(a). example3(b). example3(c). example3(_):- fail.
 %eval_H(100,'&self',['change-state!','&var',[+,1,['get-state','&var']]],OUT)
 %dcall(X):- (call(X),deterministic(YN)),trace,((YN==true)->!;true).
 dcall(XX):- !, call(XX).
-dcall(XX):-
+dcall0(XX):-
    USol = sol(dead),
    copy_term(XX,X),
    call_nth(USol,X,Nth,Det,Prev),
@@ -1846,7 +1846,7 @@ do_loon:-
   \+ prolog_load_context(reloading,true),
   maplist(catch_red_ignore,[
 
-   if_t(is_compiled,ensure_metta_learner),
+   %if_t(is_compiled,ensure_metta_learner),
    metta_final,
    load_history,
    update_changed_files,
@@ -1902,7 +1902,7 @@ ensure_mettalog_system:-
     system:use_module(library(pairs)),
     user:use_module(library(swi_ide)),
     user:use_module(library(prolog_profile)),
-    metta_python,
+    %metta_python,
     %ensure_loaded('./metta_vspace/pyswip/flybase_convert'),
     %ensure_loaded('./metta_vspace/pyswip/flybase_main'),
     ensure_loaded(library(metta_python)),
