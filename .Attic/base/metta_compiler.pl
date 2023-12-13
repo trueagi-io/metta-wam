@@ -103,7 +103,7 @@ functional_predicate_arg(F, A, L):- (atom(F)->true;trace), predicate_arity(F,A),
   \+ decl_functional_predicate_arg(F, A, _).
 functional_predicate_arg(F, A, L):- functional_predicate_arg_tricky(F, A, L).
 
-predicate_arity(F,A):- get_metta_atom(Eq,'&self',[:,F,[->|Args]]), length(Args,A).
+predicate_arity(F,A):- metta_atom('&self',[:,F,[->|Args]]), length(Args,A).
 predicate_arity(F,A):- current_predicate(F/A).
 % Certain constructs should not be converted to functions.
 not_function(P):- atom(P),!,not_function(P,0).
@@ -787,7 +787,7 @@ u_assign(FList,R):- FList=@=R,!,FList=R.
 u_assign(FList,R):- number(FList), var(R),!,R=FList.
 u_assign(FList,R):- self_eval(FList), var(R),!,R=FList.
 u_assign(FList,R):- var(FList),!,/*trace,*/freeze(FList,u_assign(FList,R)).
-u_assign([V|VI],[V|VO]):- nonvar(V),is_metta_data_functor(Eq,V),!,maplist(eval_args,VI,VO).
+u_assign([V|VI],[V|VO]):- nonvar(V),is_metta_data_functor(_Eq,V),!,maplist(eval_args,VI,VO).
 u_assign((F:-List),R):- !, R = (F:-List).
 u_assign(FList,R):- \+ compound(FList), var(R),!,R=FList.
 u_assign([F|List],R):- F == ':-',!, trace_break,as_tf(clause(F,List),R).

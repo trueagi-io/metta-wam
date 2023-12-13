@@ -124,8 +124,6 @@ trim_gstring(Goal, MaxLen) :-
     ),
     write(Trimmed).
 
-
-
 loonit_asserts1(TestSrc,Pre,G) :- nop(Pre),
     call(G), !,
   give_pass_credit(TestSrc,Pre,G),!.
@@ -151,12 +149,16 @@ loonit_asserts1(TestSrc,Pre,G) :-
     %(thread_self(main)->trace;sleep(0.3))
 
 % Generate loonit report with colorized output
+:- dynamic(gave_loonit_report/0).
+loonit_report:- gave_loonit_report,!.
 loonit_report :-
+    assert(gave_loonit_report),
     flag(loonit_success, Successes, Successes),
     flag(loonit_failure, Failures, Failures),
     loonit_report(Successes,Failures).
 
 :- at_halt(loonit_report).
+
 
 loonit_report(0,0):-!. % ansi_format([fg(yellow)], 'Nothing to report~n', []).
 loonit_report(Successes,Failures):-

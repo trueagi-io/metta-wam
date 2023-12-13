@@ -1,4 +1,12 @@
 :- encoding(iso_latin_1).
+is_compiling:- current_prolog_flag(os_argv,ArgV),member(E,ArgV),
+  (E==qcompile_mettalog;E==qsave_program),!.
+is_compiled:- current_prolog_flag(os_argv,ArgV), member('-x',ArgV),!.
+is_compiled:- current_prolog_flag(os_argv,ArgV),\+ member('swipl',ArgV),!.
+is_converting:- nb_current('convert','True'),!.
+is_converting:- current_prolog_flag(os_argv,ArgV), member('--convert',ArgV),!.
+show_os_argv:- current_prolog_flag(os_argv,ArgV),write('; libswipl: '),writeln(ArgV).
+is_pyswip:- current_prolog_flag(os_argv,ArgV),member( './',ArgV).
 :- multifile(is_metta_data_functor/1).
 :- dynamic(is_metta_data_functor/1).
 :- multifile(is_nb_space/1).
@@ -1277,7 +1285,7 @@ eval_H(StackMax,Self,Term,X):-
 
 eval_H(Term,X):-
     current_self(Self), StackMax = 100,
-    if_or_else((t1('=',_,StackMax,Self,Term,X),X\==Term),(t2('=',_,StackMax,Self,Term,X),Y\==Term)).
+    if_or_else((t1('=',_,StackMax,Self,Term,X),X\==Term),(t2('=',_,StackMax,Self,Term,X),nop(X\==Term))).
 
 
 t1('=',_,StackMax,Self,Term,X):- eval_args('=',_,StackMax,Self,Term,X).
@@ -1309,10 +1317,10 @@ catch_err(G,E,C):- catch(G,E,(notrace(if_t(atom(E),throw(E))),C)).
 
 %:- discontiguous do_metta_exec/3.
 
-repl:- setup_call_cleanup(flag(repl_level,Was,Was+1),repl0,
-  (flag(repl_level,_,Was),(Was==0 -> maybe_halt(7) ; true))).
+%repl:- setup_call_cleanup(flag(repl_level,Was,Was+1),repl0,
+ % (flag(repl_level,_,Was),(Was==0 -> maybe_halt(7) ; true))).
 
-repl0:-  catch(repl2,end_of_input,true).
+repl:-  catch(repl2,end_of_input,true).
 
 repl1:-
    with_option('doing_repl',true,
@@ -1328,12 +1336,13 @@ repl3:-
       current_space(Self),
       ((nb_current(read_mode,Mode),Mode\==[])->true;Mode='!'),
       %ignore(shell('stty sane ; stty echo')),
-      current_input(In),
+      %current_input(In),
       format(atom(P),'metta ~w ~w> ',[Self, Mode]))),
       setup_call_cleanup(
          notrace(prompt(Was,P)),
-         notrace((ttyflush,read_metta(In,Expr),ttyflush)),
+         notrace((ttyflush,repl_read(Expr),ttyflush)),
          notrace(prompt(_,Was))),
+      wdmsg(repl_read(Expr)),
       notrace(if_t(Expr==end_of_file,throw(end_of_input))),
       %ignore(shell('stty sane ; stty echo')),
       notrace(ignore(check_has_directive(Expr))),
@@ -1826,7 +1835,8 @@ catch_red_ignore(G):- catch_red(G)*->true;true.
 %loon(Why):- began_loon(Why),!,wdmsg(begun_loon(Why)).
 loon(Why):- is_compiling,!,wdmsg(compiling_loon(Why)),!.
 %loon( _Y):- current_prolog_flag(os_argv,ArgV),member('-s',ArgV),!.
-loon(Why):- is_compiled, Why\==toplevel,Why\==default, Why\==program,!,wdmsg(compiled_loon(Why)),!.
+% Why\==toplevel,Why\==default, Why\==program,!
+loon(Why):- is_compiled, Why\==toplevel,!,wdmsg(compiled_loon(Why)),!.
 loon(Why):- began_loon(_),!,wdmsg(skip_loon(Why)).
 loon(Why):- wdmsg(began_loon(Why)), assert(began_loon(Why)),
   do_loon.
@@ -1836,6 +1846,7 @@ do_loon:-
   \+ prolog_load_context(reloading,true),
   maplist(catch_red_ignore,[
 
+   if_t(is_compiled,ensure_metta_learner),
    metta_final,
    load_history,
    update_changed_files,
@@ -1843,8 +1854,16 @@ do_loon:-
    pre_halt,
    maybe_halt(7)]))),!.
 
-pre_halt:-  option_value('prolog',true),!,call_cleanup(prolog,(set_option_value('prolog',false),pre_halt)).
-pre_halt:-  option_value('repl',true),!,call_cleanup(repl,(set_option_value('repl',false),pre_halt)).
+
+need_interaction:- \+ option_value('had_interaction',true),
+   \+ is_converting,  \+ is_compiling, \+ is_pyswip,!,
+    option_value('prolog',false), option_value('repl',false),  \+ metta_file(_Self,_Filename,_Directory).
+
+pre_halt:- is_compiling,!,fail.
+pre_halt:-  option_value('prolog',true),!,set_option_value('prolog',started),call_cleanup(prolog,pre_halt).
+pre_halt:-  option_value('repl',true),!,set_option_value('repl',started),call_cleanup(repl,pre_halt).
+pre_halt:-  need_interaction, set_option_value('had_interaction',true),call_cleanup(repl,pre_halt).
+
 pre_halt:- loonit_report.
 %loon:- time(loon_metta('./examples/compat/test_scripts/*.metta')),fail.
 %loon:- repl, (option_value('halt',false)->true;halt(7)).
@@ -1855,13 +1874,8 @@ maybe_halt(_):- once(pre_halt), fail.
 maybe_halt(Seven):- option_value('halt',true),!,halt(Seven).
 maybe_halt(Seven):- wdmsg(maybe_halt(Seven)).
 
-is_compiling:- current_prolog_flag(os_argv,ArgV),member(E,ArgV),
-  (E==qcompile_mettalog;E==qsave_program),!.
-is_compiled:- current_prolog_flag(os_argv,ArgV),\+ member('swipl',ArgV),!.
-is_converting:- nb_current('convert','True'),!.
-is_converting:- current_prolog_flag(os_argv,ArgV), member('--convert',ArgV),!.
-show_os_argv:- current_prolog_flag(os_argv,ArgV),write('; libswipl: '),writeln(ArgV).
-is_pyswip:- current_prolog_flag(os_argv,ArgV),member( './',ArgV).
+
+%needs_repl:- \+ is_converting, \+ is_pyswip, \+ is_compiling, \+ has_file_arg.
 %  libswipl: ['./','-q',--home=/usr/local/lib/swipl]
 
 :- initialization(show_os_argv).
@@ -1888,8 +1902,12 @@ ensure_mettalog_system:-
     system:use_module(library(pairs)),
     user:use_module(library(swi_ide)),
     user:use_module(library(prolog_profile)),
-    ensure_loaded('./metta_vspace/pyswip/flybase_convert'),
-    ensure_loaded('./metta_vspace/pyswip/flybase_main'),
+    metta_python,
+    %ensure_loaded('./metta_vspace/pyswip/flybase_convert'),
+    %ensure_loaded('./metta_vspace/pyswip/flybase_main'),
+    ensure_loaded(library(metta_python)),
+    ensure_loaded(library(flybase_convert)),
+    ensure_loaded(library(flybase_main)),
     autoload_all,
     make,
     autoload_all,
