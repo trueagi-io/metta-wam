@@ -695,14 +695,15 @@ eval_20(Eq,RetType,Depth,Self,['Cons', A, B ],[AA|BB]):- \+ no_cons_reduce, !,
 % =================================================================
 % =================================================================
 
-eval_20(Eq,RetType,Depth,Self,['change-state!',StateExpr, UpdatedValue], Ret):- !, eval(Eq,RetType,Depth,Self,StateExpr,StateMonad),
-  eval(Eq,RetType,Depth,Self,UpdatedValue,Value),  'change-state!'(Depth,Self,StateMonad, Value, Ret).
+eval_20(Eq,RetType,Depth,Self,['change-state!',StateExpr, UpdatedValue], Ret):- !,
+ call_in_shared_space(((eval(Eq,RetType,Depth,Self,StateExpr,StateMonad),
+  eval(Eq,RetType,Depth,Self,UpdatedValue,Value),  'change-state!'(Depth,Self,StateMonad, Value, Ret)))).
 eval_20(Eq,RetType,Depth,Self,['new-state',UpdatedValue],StateMonad):- !,
-  eval(Eq,RetType,Depth,Self,UpdatedValue,Value),  'new-state'(Depth,Self,Value,StateMonad).
+  call_in_shared_space(((eval(Eq,RetType,Depth,Self,UpdatedValue,Value),  'new-state'(Depth,Self,Value,StateMonad)))).
 eval_20(Eq,RetType,Depth,Self,['get-state',StateExpr],Value):- !,
-  eval(Eq,RetType,Depth,Self,StateExpr,StateMonad), 'get-state'(StateMonad,Value).
+  call_in_shared_space((eval(Eq,RetType,Depth,Self,StateExpr,StateMonad), 'get-state'(StateMonad,Value))).
 
-
+call_in_shared_space(G):- call_in_thread(main,G).
 
 % eval_20(Eq,RetType,Depth,Self,['get-state',Expr],Value):- !, eval(Eq,RetType,Depth,Self,Expr,State), arg(1,State,Value).
 
@@ -745,13 +746,13 @@ is_valid_nb_state(State):- compound(State),functor(State,'State',_).
 % Find the original name of a given state
 state_original_name(State, Name) :-
     is_registered_state(Name),
-    nb_current(Name, State).
+    call_in_shared_space(nb_current(Name, State)).
 
 % Register and initialize a new state
 init_state(Name) :-
     State = 'State'(_,_),
     asserta(is_registered_state(Name)),
-    nb_setval(Name, State).
+    call_in_shared_space(nb_setval(Name, State)).
 
 % Change a value in a state
 'change-state!'(Depth,Self,StateNameOrInstance, UpdatedValue, Out) :-
@@ -810,7 +811,7 @@ eval_20(Eq,RetType,Depth,Self,['get-type',Val],TypeO):- !, get_type(Depth,Self,V
 % =================================================================
 % =================================================================
 nb_bind(Name,Value):- nb_current(Name,Was),same_term(Value,Was),!.
-nb_bind(Name,Value):- nb_setval(Name,Value),!.
+nb_bind(Name,Value):- call_in_shared_space(nb_setval(Name,Value)),!.
 eval_20(Eq,RetType,Depth,Self,['import!',Other,File],RetVal):-
      (( into_space(Depth,Self,Other,Space),!, include_metta(Space,File),!,return_empty(Space,RetVal))),
      check_returnval(Eq,RetType,RetVal). %RetVal=[].
@@ -1010,6 +1011,40 @@ eval_40(Eq,RetType,_Dpth,_Slf,['arity',F,A],TF):- !,as_tf(current_predicate(F/A)
 eval_40(Eq,RetType,Depth,Self,['CountElement',L],Res):- !, eval(Eq,RetType,Depth,Self,L,LL), !, (is_list(LL)->length(LL,Res);Res=1),check_returnval(Eq,RetType,Res).
 eval_40(Eq,RetType,_Dpth,_Slf,['make_list',List],MettaList):- !, into_metta_cons(List,MettaList),check_returnval(Eq,RetType,MettaList).
 
+
+
+
+eval_40(Eq,RetType,Depth,Self,['maplist!',Pred,ArgL1],ResL):- !,
+      maplist(eval_pred(Eq,RetType,Depth,Self,Pred),ArgL1,ResL).
+eval_40(Eq,RetType,Depth,Self,['maplist!',Pred,ArgL1,ArgL2],ResL):- !,
+      maplist(eval_pred(Eq,RetType,Depth,Self,Pred),ArgL1,ArgL2,ResL).
+eval_40(Eq,RetType,Depth,Self,['maplist!',Pred,ArgL1,ArgL2,ArgL3],ResL):- !,
+      maplist(eval_pred(Eq,RetType,Depth,Self,Pred),ArgL1,ArgL2,ArgL3,ResL).
+
+  eval_pred(Eq,RetType,Depth,Self,Pred,Arg1,Res):-
+      eval(Eq,RetType,Depth,Self,[Pred,Arg1],Res).
+  eval_pred(Eq,RetType,Depth,Self,Pred,Arg1,Arg2,Res):-
+      eval(Eq,RetType,Depth,Self,[Pred,Arg1,Arg2],Res).
+  eval_pred(Eq,RetType,Depth,Self,Pred,Arg1,Arg2,Arg3,Res):-
+      eval(Eq,RetType,Depth,Self,[Pred,Arg1,Arg2,Arg3],Res).
+
+eval_40(Eq,RetType,Depth,Self,['concurrent-maplist!',Pred,ArgL1],ResL):- !,
+      concurrent_maplist(eval_pred(Eq,RetType,Depth,Self,Pred),ArgL1,ResL).
+eval_40(Eq,RetType,Depth,Self,['concurrent-maplist!',Pred,ArgL1,ArgL2],ResL):- !,
+      concurrent_maplist(eval_pred(Eq,RetType,Depth,Self,Pred),ArgL1,ArgL2,ResL).
+eval_40(Eq,RetType,Depth,Self,['concurrent-maplist!',Pred,ArgL1,ArgL2,ArgL3],ResL):- !,
+      concurrent_maplist(eval_pred(Eq,RetType,Depth,Self,Pred),ArgL1,ArgL2,ArgL3,ResL).
+eval_40(Eq,RetType,Depth,Self,['concurrent-forall!',Gen,Test|Options],Empty):- !,
+      maplist(s2p,Options,POptions),
+      call(thread:concurrent_forall(
+            user:eval_ne(Eq,RetType,Depth,Self,Gen,_),
+            user:forall(eval(Eq,RetType,Depth,Self,Test,_),true),
+            POptions)),
+     return_empty([],Empty).
+eval_40(Eq,RetType,Depth,Self,['hyperpose',ArgL1],ResL):- !,
+      concurrent_maplist(eval(Eq,RetType,Depth,Self),ArgL1,ResL).
+
+
 % user defined function
 eval_40(Eq,RetType,Depth,Self,[H|PredDecl],Res):-
    mnotrace(is_user_defined_head(Self,H)),!,
@@ -1091,13 +1126,12 @@ eval_80(_Eq,_RetType,_Dpth,_Slf,LESS,Res):-
 
 
 % predicate inherited by system
-eval_80(Eq,RetType,_Depth,_Self,[AE|More],TF):-
+eval_80(Eq,RetType,Depth,Self,[AE|More],TF):-
   is_system_pred(AE),
   length(More,Len),
   is_syspred(AE,Len,Pred),
   %mnotrace( \+ is_user_defined_goal(Self,[AE|More])),!,
-  %adjust_args(Depth,Self,AE,More,Adjusted),
-  More = Adjusted,
+  adjust_args_mp(Eq,RetType,Depth,Self,Pred,Len,AE,More,Adjusted),
   catch_warn(efbug(show_call,eval_call(apply(Pred,Adjusted),TF))),
   check_returnval(Eq,RetType,TF).
 
@@ -1110,18 +1144,31 @@ is_user_defined_goal(Self,Head):-
 
 :- endif.
 
+adjust_args_mp(Eq,RetType,Depth,Self,Pred,Len,AE,Args,Adjusted):-
+   functor(P,Pred,Len), predicate_property(P,meta_predicate(Needs)),
+   account_needs(1,Needs,Args,More),
+   adjust_args(Eq,RetType,Depth,Self,AE,More,Adjusted).
+
+acct(0,A,call(eval(A,_))).
+acct(':',A,call(eval(A,_))).
+acct(_,A,A).
+account_needs(_,_,[],[]).
+account_needs(N,Needs,[A|Args],[M|More]):- arg(N,Needs,What),!,
+   acct(What,A,M),plus(1,N,NP1),
+   account_needs(NP1,Needs,Args,More).
+
 eval_call(S,TF):-
   s2p(S,P), !,
   if_trace(call,dmsg(eval_call(P,'$VAR'('TF')))),
   as_tf(P,TF).
 
-eval_80(Eq,RetType,_Depth,_Self,[AE|More],Res):-
+eval_80(Eq,RetType,Depth,Self,[AE|More],Res):-
   is_system_pred(AE),
   length([AE|More],Len),
   is_syspred(AE,Len,Pred),
   %mnotrace( \+ is_user_defined_goal(Self,[AE|More])),!,
   %adjust_args(Depth,Self,AE,More,Adjusted),!,
-  More = Adjusted,
+  adjust_args_mp(Eq,RetType,Depth,Self,Pred,Len,AE,More,Adjusted),
   append(Adjusted,[Res],Args),!,
   efbug(show_call,catch_warn(apply(Pred,Args))),
   check_returnval(Eq,RetType,Res).
