@@ -125,8 +125,8 @@ flag_to_var(metta(Flag),Var):- !, nonvar(Flag), flag_to_var(Flag,Var).
 flag_to_var(Flag,Var):- Flag=Var.
 
 set_debug(Flag,Val):- \+ atom(Flag), flag_to_var(Flag,Var), atom(Var),!,set_debug(Var,Val).
-set_debug(Flag,true):- !, debug(metta(Flag)),flag_to_var(Flag,Var),set_option_value(Var,true).
-set_debug(Flag,false):- nodebug(metta(Flag)),flag_to_var(Flag,Var),set_option_value(Var,false).
+set_debug(Flag,true):- !, debug(metta(Flag)),flag_to_var(Flag,Var),set_option_value(Var,rtrace).
+set_debug(Flag,false):- nodebug(metta(Flag)),flag_to_var(Flag,Var),set_option_value(Var,true).
 if_trace((Flag;true),Goal):- !, notrace(( catch_err(ignore((Goal)),E,wdmsg(E-->if_trace((Flag;true),Goal))))).
 if_trace(Flag,Goal):- notrace((catch_err(ignore((is_debugging(Flag),Goal)),E,wdmsg(E-->if_trace(Flag,Goal))))).
 
@@ -147,7 +147,7 @@ is_debugging(Flag):- Flag== true,!.
 is_debugging(Flag):- debugging(metta(Flag),TF),!,TF==true.
 is_debugging(Flag):- debugging(Flag,TF),!,TF==true.
 is_debugging(Flag):- flag_to_var(Flag,Var),
-   (option_value(Var,true)->true;(Flag\==Var -> is_debugging(Var))).
+   (option_value(Var,rtrace)->true;(Flag\==Var -> is_debugging(Var))).
 
 :- nodebug(metta(overflow)).
 
@@ -215,7 +215,7 @@ eval_11(Eq,RetType,Depth,Self,X,Y):-
 eval_20(Eq,RetType,Depth,Self,X,Y):- maybe_redirect(Eq,RetType,Depth,Self,X,Y),
   fail,
    eval_50(Eq,RetType,Depth,Self,X,Y).
-  
+
 maybe_redirect(_Eq,_RetType,_Dpth,_Slf,X,_Y):-  \+ is_list(X).
 maybe_redirect(_Eq,_RetType,_Dpth,_Slf,[X|_],_Y):-  \+ atom(X).
 maybe_redirect(_Eq,_RetType,_Dpth,_Slf,X,_Y):- self_eval(X).
@@ -414,7 +414,7 @@ eval_match(Eq,_RetType,_Depth,_Slf,Other,[Equal,[F|H],B]):- Eq == Equal,!,  % tr
 eval_match(_Eq,_,Depth,_,_,_):- Depth<3,!,fail.
 % And
 eval_match(Eq,RetType,Depth,Self,Other,[And|Y]):- atom(And), is_and(And),!,
-  (Y==[] -> true ;  
+  (Y==[] -> true ;
       ( D2 is Depth -1, Y = [H|T], eval_match(Eq,_AltRetType,D2,Self,Other,H),eval_match(Eq,RetType,D2,Self,Other,[And|T]))).
 eval_match(Eq,_RetType,_Dpth,_Slf,Other,H):- get_metta_atom(Eq,Other,H).
 
@@ -1035,7 +1035,7 @@ eval_40(Eq,RetType,Depth,Self,[AE|More],Res):-
   eval_70(Eq,RetType,Depth,Self,[AE|Adjusted],Res),
   check_returnval(Eq,RetType,Res).
 
-eval_40(Eq,RetType,Depth,Self,X,Y):- 
+eval_40(Eq,RetType,Depth,Self,X,Y):-
    fail,
    eval_50(Eq,RetType,Depth,Self,X,Y).
 
@@ -1112,7 +1112,8 @@ is_user_defined_goal(Self,Head):-
 
 eval_call(S,TF):-
   s2p(S,P), !,
-  dmsg(eval_call(P,'$VAR'('TF'))),as_tf(P,TF).
+  if_trace(call,dmsg(eval_call(P,'$VAR'('TF')))),
+  as_tf(P,TF).
 
 eval_80(Eq,RetType,_Depth,_Self,[AE|More],Res):-
   is_system_pred(AE),
