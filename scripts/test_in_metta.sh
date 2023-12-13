@@ -350,10 +350,10 @@ process_file() {
              fi
 
              failures_zero=$(grep -h -c "Failures: 0" "$file_html")
-             if [ "$failures_zero" -ne 0 ]; then
-                 echo "Not taking test since Failures not 0."
-                 return
-             fi
+            if [ "$failures_zero" -ne 1 ]; then
+                echo "Not taking test since Failures not 0."
+                return
+            fi
              take_test=1
              echo "Taking test since Failures: 0 and looking for regressions."
          elif [[ ! -f "$file_html" ]]; then
@@ -427,11 +427,10 @@ function generate_final_MeTTaLog() {
     total=$((passed + failed))
     percent_passed=$(awk -v passed="$passed" -v total="$total" 'BEGIN { printf "%.2f", (passed/total)*100 }')
 
-    # Create a markdown file with test links and headers    {
-        echo " "
-        echo "| STATUS | TEST NAME | TEST CONDITION | ACTUAL RESULT | EXPECTED RESULT |"
+    # Create a markdown file with test links and headers
+    {  echo "| STATUS | TEST NAME | TEST CONDITION | ACTUAL RESULT | EXPECTED RESULT |"
         echo "|--------|-----------|----------------|---------------|-----------------|"
-        cat /tmp/SHARED.UNITS | awk -F'cuRRent|\\) \\| \\(' '{ print $2 " " $0 }'  | sort | cut -d' ' -f2- | tac | awk '!seen[$0]++' | tac
+        cat /tmp/SHARED.UNITS | awk -F'\\(|\\) \\| \\(' '{ print $2 " " $0 }'  | sort | cut -d' ' -f2- | tac | awk '!seen[$0]++' | tac
     } > ./examples/PASS_FAIL.md
 
 

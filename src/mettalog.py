@@ -2582,6 +2582,10 @@ def get_atoms_from_space(space_name, result):
 
 context_atom_iters = {}
 
+def MkExpr(py_list):
+    list = py_list
+    return E(*list)
+
 class IteratorAndConversionDict:
     def __init__(self, iterator=None, conversion_dict=None):
         self.iterator = iterator
@@ -2599,6 +2603,23 @@ class IteratorAndConversionDict:
     def get_conversion_dict(self):
         return self.conversion_dict
 
+@export_flags(Janus=True)
+def get_atoms_iter_from_space(space_name):
+    space = getSpaceByName(space_name)
+    if space:
+        get_iterator =  getattr(space,"atoms_iter", None) # Create a new iterator
+        if get_iterator is not None:
+            return get_iterator()
+        else:
+            get_iterator =  getattr(space,"get_atoms", None) # Create a new iterator
+            if get_iterator is not None:
+                return iter(get_iterator)
+            else:
+                V = V("X")
+                iterator =  space.query(V) # Create a new iterator
+                return iterator
+
+
 @export_flags(Janus=True, arity=2, flags=PL_FA_NONDETERMINISTIC)
 def atoms_iter_from_space(space_name, result, context):
     global idKey, context_atom_iters
@@ -2609,14 +2630,8 @@ def atoms_iter_from_space(space_name, result, context):
     if control == PL_FIRST_CALL:
         id = idKey
         idKey= idKey+1
-        space = getSpaceByName(space_name)
-        if space:
-            get_iterator =  getattr(space,"atoms_iter", None) # Create a new iterator
-            if get_iterator is not None:
-                iterator = get_iterator()
-            else:
-                got_atoms =  space.get_atoms()
-                iterator = iter(got_atoms)
+        iterator = get_atoms_iter_from_space(space_name)
+        if iterator is not None:
             try:
                 circles = Circles()
                 while True:

@@ -95,6 +95,11 @@ symbol_contains(T,TT):- atom_contains(T,TT).
     asserta(pyswip_dir(Dir)).
 
 
+:- prolog_load_context(directory, Dir),
+    asserta(user:library_directory(Dir)),
+    asserta(pyswip_metta_dir(Dir)).
+
+metta_python:- ensure_loaded(library(metta_python)).
 :- if( (fail, \+ current_predicate(must_det_ll/1))).
 % Calls the given Goal and throws an exception if Goal fails.
 % Usage: must_det_ll(+Goal).

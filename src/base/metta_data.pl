@@ -6,7 +6,7 @@ is_syspred0(H,Len,Pred):- current_predicate(H/Len),!,Pred=H.
 is_syspred0(H,Len,Pred):- atom_concat(Mid,'!',H), H\==Mid, is_syspred0(Mid,Len,Pred),!.
 is_syspred0(H,Len,Pred):- into_underscores(H,Mid), H\==Mid, is_syspred0(Mid,Len,Pred),!.
 %is_function(F):- atom(F).
-is_metta_data_functor(Eq,_Othr,H):- clause(is_data_functor(H),_).
+is_metta_data_functor(_Eq,_Othr,H):- clause(is_data_functor(H),_).
 is_metta_data_functor(Eq,Other,H):- H\=='Right', H\=='Something',
  % metta_type(Other,H,_), % fail,
   \+ get_metta_atom(Eq,Other,[H|_]),
@@ -228,7 +228,7 @@ as_prolog(Depth,Self,[H|T],[HH|TT]):- as_prolog(Depth,Self,H,HH),as_prolog(Depth
 
 
 
-try_adjust_arg_types(Eq,RetType,Depth,Self,Params,X,Y):-
+try_adjust_arg_types(_Eq,RetType,Depth,Self,Params,X,Y):-
   as_prolog(Depth,Self,X,M),
   args_conform(Depth,Self,M,Params),!,
   set_type(Depth,Self,Y,RetType),
@@ -236,13 +236,13 @@ try_adjust_arg_types(Eq,RetType,Depth,Self,Params,X,Y):-
 %adjust_args(Eq,RetType,Depth,Self,_,X,Y):- is_list(X), !, maplist(eval_args(Depth,Self),X,Y).
 %adjust_args(Eq,RetType,Depth,Self,_,X,Y):- is_list(X), !, maplist(as_prolog(Depth,Self),X,Y),!.
 
-adjust_args(Eq,RetType,Depth,Self,Op,X,Y):- X==[],!,Y=[].
-adjust_args(Eq,RetType,_Dpth,Self,F,X,X):- (is_special_op(Self,F); \+ iz_conz(X)),!.
+adjust_args(_Eq,_RetType,_Depth,_Self,_Op,X,Y):- X==[],!,Y=[].
+adjust_args(_Eq,_RetType,_Dpth,Self,F,X,X):- (is_special_op(Self,F); \+ iz_conz(X)),!.
 adjust_args(Eq,RetType,Depth,Self,Op,X,Y):-
   %trace,
   get_operator_typedef(Self,Op,Params,RetType),
   try_adjust_arg_types(Eq,RetType,Depth,Self,Params,X,Y).
-adjust_args(Eq,RetType,Depth,Self,_,X,Y):- as_prolog(Depth,Self,X,Y).
+adjust_args(_Eq,_RetType,Depth,Self,_,X,Y):- as_prolog(Depth,Self,X,Y).
 
 into_typed_args(_Dpth,_Slf,T,M,Y):- (\+ iz_conz(T); \+ iz_conz(M)),!, M=Y.
 into_typed_args(Depth,Self,[T|TT],[M|MM],[Y|YY]):-

@@ -11,6 +11,7 @@ cd "$METTALOG_DIR" || { echo "Failed to navigate to $METTALOG_DIR"; [[ "$IS_SOUR
 should_compile=0
 never_compile=0
 CMD_TIMEOUT=0
+repl_flag=enable
 
 # Initialize the variable to indicate whether to use the test script
 use_test_script=0
@@ -228,7 +229,8 @@ function handle_args {
         elif [[ "$arg" == "--no-html" ]]; then
             html_flag=false
         elif [[ "$arg" == "--prolog" ]]; then
-            repl_flag=enable
+	    add_to_list "$arg" OTHER_OPTIONS
+            repl_flag=false
         fi
 
         [[ "$arg" == "--help" || "$arg" == "-h" ]] && { wants_print_help=1; EXIT_SCRIPT=0; }
@@ -302,7 +304,9 @@ if [[ -f "$DIRNAME" ]]; then
 elif [[ -d "$DIRNAME" ]]; then
    HTML_OUT="${DIRNAME}/Result.html"
 else
-  handle_args --repl
+  if [[ "$repl_flag" == "enable" ]]; then
+    handle_args --repl
+  fi
   DIRNAME="${PWD}"
   HTML_OUT="${DIRNAME}/Result.html"
 fi
@@ -323,22 +327,24 @@ else
 fi
 
 # Then process actual command-line arguments
-handle_args "$@"
+
 if [[ ! -z "$DIR_OPTS" ]]; then
     handle_args $DIR_OPTS
 fi
+
+handle_args "$@"
 
 #echo "Debug: SWI_OPTIONS: ${SWI_OPTIONS[@]}"
 #echo "Debug: LIST_OF_FILE_ARGS: ${LIST_OF_FILE_ARGS[@]}"
 #echo "Debug: OTHER_OPTIONS: ${OTHER_OPTIONS[@]}"
 
 # Decide on enabling the REPL
-if [[ -z "$repl_flag" ]]; then
+if [[ "$repl_flag" == "enable" ]]; then
   [[ ${#LIST_OF_FILE_ARGS[@]} -eq 0 ]] && repl_flag=true  ||  true
 fi
 
-if [[ "$repl_flag" != "false" ]]; then
-  export TIMEOUT=0
+if [[ "$repl_flag" == "true" ]]; then
+  CMD_TIMEOUT=0
 fi
 
 # Store the initial PYTHONPATH for later comparison
@@ -463,6 +469,8 @@ if [[ -n "$CMD_TIMEOUT" && "$CMD_TIMEOUT" -gt 0 ]]; then
   trap cleanup EXIT TERM
   METTA_CMD="$TIMEOUT_CMD --foreground --preserve-status --signal=SIGTERM --kill-after=5s $CMD_TIMEOUT ${METTA_CMD}"
 fi
+
+export CMD_TIMEOUT
 
 # Conditional to check if html_flag is enabled
 if [[ "$html_flag" == "enable" ]]; then
