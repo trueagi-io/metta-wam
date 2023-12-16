@@ -466,12 +466,11 @@ cleanup() {
 #echo "CMD_TIMEOUT=$CMD_TIMEOUT"
 
 if [[ -n "$CMD_TIMEOUT" && "$CMD_TIMEOUT" -gt 0 ]]; then
-  trap cleanup EXIT TERM
   METTA_CMD="$TIMEOUT_CMD --foreground --preserve-status --signal=SIGTERM --kill-after=5s $CMD_TIMEOUT ${METTA_CMD}"
 fi
 
 export CMD_TIMEOUT
-
+set +e
 # Conditional to check if html_flag is enabled
 if [[ "$html_flag" == "enable" ]]; then
     # Generate a random filename for TEE_FILE with date,time,PID
@@ -493,20 +492,22 @@ if [[ "$html_flag" == "enable" ]]; then
     [[ -n "${EXIT_SCRIPT+x}" ]] && { [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
 
 
-    touch "$TEE_FILE"
+    ( touch "$TEE_FILE"
     chmod 777 "$TEE_FILE"
     cat /dev/null > "$TEE_FILE"
     eval "$METTA_CMD"
     echo $? > "$TEMP_EXIT_CODE_FILE"
-    ansi2html -u < "$TEE_FILE" >"$HTML_OUT"
+    ansi2html -u < "$TEE_FILE" >"$HTML_OUT" ) || true
     rm -f "$TEE_FILE"
     cleanup
 else
 
     [[ "$wants_print_help" == "1" ]] && { print_help; [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
     [[ -n "${EXIT_SCRIPT+x}" ]] && { [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
-    exec $METTA_CMD
-
+    ( eval "$METTA_CMD"
+    echo $? > "$TEMP_EXIT_CODE_FILE" ) || true
+    #rm -f "$TEE_FILE"
+    cleanup
 fi
 
 

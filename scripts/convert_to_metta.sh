@@ -49,7 +49,7 @@ process_file() {
       #echo "" ; echo ""
       #echo "swipl -l metta_vspace/pyswip/flybase_convert.pl -- --context=$HEAD --convert \"$INPUT_FILE\" --halt > \"$OUTPUT_FILE\""
       #echo "" ; echo ""
-      swipl -l metta_vspace/pyswip/flybase_convert.pl -- --context=$HEAD --convert "$INPUT_FILE" --halt > "$OUTPUT_FILE" 2>/dev/null
+      swipl -l metta_vspace/pyswip/flybase_convert.pl -- --context=$HEAD --convert "$INPUT_FILE" --halt  #> "$OUTPUT_FILE" 2>/dev/null
 
       echo -ne "."
       # Create a temporary file
