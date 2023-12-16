@@ -379,7 +379,7 @@ into_datum(Fn, [D|DataL], Data):-
     (nb_current(pred_va, 'True') -> Data =.. [Fn,D,DataL]; Data =.. [Fn,D|DataL]).
 
 % Create a new assertion from old data
-make_assertion4(Fn, Cols, NewData, OldData):-
+make_assertion4(Fn, Cols, NewData, OldData):- fail,
   OldData=Cols,
   NewData =..[Fn|Cols],!.
 make_assertion4(Fn, Cols, NewData, OldData):-

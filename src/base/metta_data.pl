@@ -16,9 +16,9 @@ is_metta_data_functor(Eq,Other,H):- H\=='Right', H\=='Something',
   \+ is_math_op(H,_,_).
 
 
-
-mnotrace(G):- once(G).
-
+:- if( \+ current_predicate(mnotrace/1) ).
+ mnotrace(G):- once(G).
+:- endif.
 
 
 is_decl_type(ST):- metta_type(_,_,Type),sub_sterm(T,Type),T=@=ST, \+ nontype(ST).
