@@ -6,7 +6,7 @@
 :- abolish((system:'$exported_op'/3)).
 :- assert((system:'$exported_op'(_,_,_):- fail)).
 
-fbug(P) :- format("~N"), with_output_to(user_error,pp_fb(P)),!.
+fbug(P) :- format("~N"), with_output_to(user_error,in_cmt(pp_fb(P))),!.
 fbug(N=V) :- nonvar(N), !, fbdebug1(N:-V).
 fbug(V) :- compound(V),functor(V,F,_A),!,fbdebug1(F:-V).
 fbug(V) :- fbdebug1(debug:-V).

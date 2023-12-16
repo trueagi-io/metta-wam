@@ -29,39 +29,44 @@ cd vspace-metta
 export PYTHONPATH=$PWD/metta_vspace:$PYTHONPATH
 
 # set our precomputed url
-export PRECOMPUTED_URL=ftp.flybase.org/releases/FB2023_04/precomputed_files/
+export FBPC_URL=ftp.flybase.org/releases/FB2023_04/precomputed_files/
 
 # Download necessary files
-wget --no-parent -A .gz -r -P ./data/ http://$PRECOMPUTED_URL
+wget --no-parent -A .gz -r -P ./data/ http://$FBPC_URL
 
 # set our precomputed loc
-export PRECOMPUTED_LOC=./data/$PRECOMPUTED_URL
+export FBPC_LOC=./data/$FBPC_URL
 
 # see if the server gave us duplicated files (usually two files!)
-find $PRECOMPUTED_LOC -type f -name '*_fb_*' -exec bash -c 'if [[ -f ${1/_fb_????_??/} ]]; then ls -l ${1}; ls -l ${1/_fb_????_??/};  echo "Will delete:" ${1/_fb_????_??/}; fi' _ {} \;
+find $FBPC_LOC -type f -name '*_fb_*' -exec bash -c 'if [[ -f ${1/_fb_????_??/} ]]; then ls -l ${1}; ls -l ${1/_fb_????_??/};  echo "Will delete:" ${1/_fb_????_??/}; fi' _ {} \;
 
 # delete the more ambiguous duplicated files
-find $PRECOMPUTED_LOC -type f -name '*_fb_*' -exec bash -c 'if [[ -f ${1/_fb_????_??/} ]]; then rm -f ${1/_fb_????_??/}; fi' _ {} \;
+find $FBPC_LOC -type f -name '*_fb_*' -exec bash -c 'if [[ -f ${1/_fb_????_??/} ]]; then rm -f ${1/_fb_????_??/}; fi' _ {} \;
 
 # Should be arround 587M
-du -hs $PRECOMPUTED_LOC
+du -hs $FBPC_LOC
 
 # Decompress the downloaded files
-find $PRECOMPUTED_LOC -type f -name "*.gz" -execdir gunzip {} \;
+find $FBPC_LOC -type f -name "*.gz" -execdir gunzip {} \;
 
 # Check that it should be arround 7.2G now
-du -hs $PRECOMPUTED_LOC
+du -hs $FBPC_LOC
 
 # For all files instead of using FBte:0000666  we will use FBte0000666  (since that is how it is used in the TSV files)
 # Also flybase:FBte0000666  will become FBte0000666 (mostly it only happens in strings)
-find $PRECOMPUTED_LOC -type f -exec sed -i -e 's/\(FB[a-z]\{2\}\):\([0-9]\)/\1\2/g' -e 's/[Ff][Ll][Yy][Bb][Aa][Ss][Ee]:\([A-Za-z]\)/\1/g' {} \;
-find $PRECOMPUTED_LOC -name "*.fb" -exec sed -i -e 's/FB:FB/FB/g' {} \;
-find $PRECOMPUTED_LOC -name "*.json" -exec sed -i -e 's/FLYBASE:FB/FB/g' {} \;
+find $FBPC_LOC -type f -exec sed -i -e 's/\(FB[a-z]\{2\}\):\([0-9]\)/\1\2/g' -e 's/[Ff][Ll][Yy][Bb][Aa][Ss][Ee]:\([A-Za-z]\)/\1/g' {} \;
+find $FBPC_LOC -name "*.fb" -exec sed -i -e 's/FB:FB/FB/g' {} \;
+find $FBPC_LOC -name "*.json" -exec sed -i -e 's/FLYBASE:FB/FB/g' {} \;
 
+# Build the whole_flybase.qlf  (Quick Load File) Takes about 40 minutes one time but makes
+./MeTTa -G "!(create-whole-flybase-pl! ${FBPC_LOC})" -G "!(halt! 777)"
+
+# Load the file and make queries
+./MeTTa flybase.metta -G "!(repl!)"
 
 ```
 
-#### Completely Optional
+#### For loading Flybase into Rust Metta (Optional)
 
 For testing/viewing to see how we see the flybase as MeTTa.
 Or to load it into a Rust Space instead of VSpace.

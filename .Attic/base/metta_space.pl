@@ -136,7 +136,8 @@ subst_pattern_template(SpaceNameOrInstance, Pattern, Template) :-
 space_query_vars(SpaceNameOrInstance, Query, Vars) :- is_as_nb_space(SpaceNameOrInstance),!,
     fetch_or_create_space(SpaceNameOrInstance, Space),
     call_metta(Space,Query,Vars).
-*/ :- dynamic(was_asserted_space/1).
+*/
+:- dynamic(was_asserted_space/1).
 
 was_asserted_space('&flybase').
 was_asserted_space('&self').
@@ -306,26 +307,26 @@ space_type_method(is_asserted_space,atom_iter,metta_assertdb_iter).
 
 %:- dynamic(for_metta/2).
 %for_metta(_,T):- fb_pred(F,A),functor(T,F,A),call(T).
-metta_assertdb_ls(KB):-listing(metta_atom(KB,_)).
+metta_assertdb_ls(KB):-listing(asserted_metta_atom(KB,_)).
 metta_assertdb_add(KB,Atom):- subst_vars(Atom,New),
-  decl_m_fb_pred(user,get_metta_atom,2),
-  MP = metta_atom(KB,New),
+  decl_m_fb_pred(user,asserted_metta_atom,2),
+  MP = asserted_metta_atom(KB,New),
   assert_new(MP).
 metta_assertdb_rem(KB,Old):- metta_assertdb_del(KB,Old).
-metta_assertdb_del(KB,Atom):- subst_vars(Atom,Old), decl_m_fb_pred(user,get_metta_atom,2), MP = metta_atom(KB,Old),
+metta_assertdb_del(KB,Atom):- subst_vars(Atom,Old), decl_m_fb_pred(user,asserted_metta_atom,2), MP = asserted_metta_atom(KB,Old),
   copy_term(MP,Copy), clause(MP,true,Ref), MP=@= Copy, !, erase(Ref). % ,metta_assertdb('DEL',Old).
 metta_assertdb_replace(KB,Old,New):- metta_assertdb_del(KB,Old), metta_assertdb_add(KB,New).
 metta_assertdb_count(KB,Count):-
  must_det_ll((
-  decl_m_fb_pred(user,get_metta_atom,2), full_symbol_count(SL1),
-  MP = metta_atom(KB,_),
+  decl_m_fb_pred(user,asserted_metta_atom,2), full_symbol_count(SL1),
+  MP = asserted_metta_atom(KB,_),
   predicate_property(MP,number_of_clauses(SL2)),
   predicate_property(MP,number_of_rules(SL3)),
   %metta_assertdb_ls(KB),
   Count is SL1 + SL2 - SL3)),!.
 metta_assertdb_count(_KB,0):-!.
 %metta_assertdb_count(KB,Count):- writeln(metta_assertdb_count_in(KB,Count)), findall(Atom,for_metta(KB,Atom),AtomsL),length(AtomsL,Count),writeln(metta_assertdb_count_out(KB,Count)).
-metta_assertdb_iter(KB,Atoms):- decl_m_fb_pred(user,get_metta_atom,2), metta_atom(KB,Atoms).
+metta_assertdb_iter(KB,Atoms):- decl_m_fb_pred(user,asserted_metta_atom,2), asserted_metta_atom(KB,Atoms).
 
 
 
@@ -343,19 +344,19 @@ metta_iter_bind(KB,Query,Vars,VarNames):-
 
 % Query from hyperon.base.GroundingSpace
 space_query_vars(KB,Query,Vars):- is_asserted_space(KB),!,
-    decl_m_fb_pred(user,get_metta_atom,2),
+    decl_m_fb_pred(user,asserted_metta_atom,2),
     call_metta(KB,Query,Vars),
     debug_metta('RES',space_query_vars(KB,Query,Vars)).
 
 
-metta_assertdb_get_atoms(KB,AtomsL):- decl_m_fb_pred(user,get_metta_atom,2), findall(Atom,metta_atom(KB,Atom),AtomsL).
+metta_assertdb_get_atoms(KB,AtomsL):- decl_m_fb_pred(user,asserted_metta_atom,2), findall(Atom,asserted_metta_atom(KB,Atom),AtomsL).
 /*
 
-%metta_assertdb_iter_bind(KB,Query,Template,AtomsL):- decl_m_fb_pred(user,get_metta_atom,2), findall(Template,metta_atom(KB,Query),AtomsL).
+%metta_assertdb_iter_bind(KB,Query,Template,AtomsL):- decl_m_fb_pred(user,asserted_metta_atom,2), findall(Template,asserted_metta_atom(KB,Query),AtomsL).
 metta_assertdb_iter_bind(KB,Query,Vars):-
   ignore(term_variables(Query,Vars)),
   print(metta_assertdb(['match',KB,Query,Vars])),nl,
-  decl_m_fb_pred(user,get_metta_atom,2), (metta_atom(KB,Query)*->true;call_metta_assertdb(KB,Query,Vars)),
+  decl_m_fb_pred(user,asserted_metta_atom,2), (asserted_metta_atom(KB,Query)*->true;call_metta_assertdb(KB,Query,Vars)),
   metta_assertdb('RES',metta_assertdb_iter_bind(KB,Query,Vars)).
 %metta_assertdb_iter_bind(KB,Atom,Template):- metta_assertdb_stats, findall(Template,metta_assertdb_iter(KB,Atom),VarList).
 
@@ -404,8 +405,8 @@ write_src_nl(Src):- format('~N'),write_src(Src),format('~N').
 'get-metta-src'(Pred,[Len|SrcL]):- findall(Src,'get-metta-src1'(Pred,Src),SrcL), length(SrcL,Len).
 'get-metta-src1'(Pred,Src):-
   current_self(Space),
-  metta_atom(Space,F,A,List),
-  once((sub_var(Pred,A)->Src = [F,A,List];sub_var(Pred,F)->Src = [F,A|List])).
+  metta_atom(Space,[F,A|List]),
+  once((sub_var(Pred,A)->Src = [F,A|List];sub_var(Pred,F)->Src = [F,A|List])).
 
 % is a quine
 'AtomDef'(X,['AtomDef',X]).

@@ -71,7 +71,7 @@ our_ansi_format(C, Fmt,Args):- our_ansi_format([fg(C)], Fmt,Args).
 
 print_current_test:-
    loonit_number(Number),
-   get_test_name(Number,TestName),format('<h3 id="~w">;; ~w</h3>~n',[TestName,TestName]).
+   get_test_name(Number,TestName),format(';<h3 id="~w">;; ~w</h3>~n',[TestName,TestName]).
 
 % Increment loonit counters based on goal evaluation
 loonit_asserts(S,Pre,G):-
@@ -108,7 +108,7 @@ write_pass_fail(TestName,P,C,PASS_FAIL,G1,G2):-
       (%atom_concat(TEE_FILE,'.UNITS',UNITS),
       UNITS = '/tmp/SHARED.UNITS',
       open(UNITS, append, Stream,[encoding(utf8)]),
-      format(Stream,'| ~w | [~w](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/vspace-metta/main/reports/cuRRent/~w.metta.html#~w) | ~@ | ~@ | ~@ |~n',
+      format(Stream,'| ~w | [~w](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/vspace-metta/main/reports/~w.metta.html#~w) | ~@ | ~@ | ~@ |~n',
       [PASS_FAIL,TestName,Base,TestName,trim_gstring(with_indents(false,write_src([P,C])),200),
         trim_gstring(with_indents(false,write_src(G1)),100),with_indents(false,write_src(G2))]),!,
       close(Stream))).
@@ -260,7 +260,7 @@ load_answer_file_now(File) :-
     ensure_extension(File, answers, AnsFile),
     remove_specific_extension(AnsFile, answers, StoredAs),
     set_exec_num(StoredAs,1),
-    wdmsg(load_answer_file(AnsFile,StoredAs)),
+    fbug(load_answer_file(AnsFile,StoredAs)),
     load_answer_file(AnsFile,StoredAs))).
 
 load_answer_file(AnsFile,StoredAs):-
@@ -274,7 +274,8 @@ load_answer_file(AnsFile,StoredAs):-
 
 :- debug(metta(answers)).
 load_answer_stream(_Nth, StoredAs, Stream):- at_end_of_stream(Stream),!,
-  if_trace(metta(answers),listing(file_answers(StoredAs,_,_))).
+  if_trace(metta(answers),
+    prolog_only(listing(file_answers(StoredAs,_,_)))).
 load_answer_stream(Nth, StoredAs, Stream):-
     read_line_to_string(Stream, String),
     load_answer_stream(Nth, StoredAs, String, Stream).
@@ -291,7 +292,7 @@ load_answer_stream(Nth, StoredAs, String, Stream) :- fail,
     ).
 */
 load_answer_stream(Nth, StoredAs, String, Stream):- % string_concat("[",_,String),!,
-    writeln(Nth = String),
+    fbug(Nth = String),
     parse_answer_string(String,Metta),!,
     %if_t(sub_var(',',Metta),rtrace(parse_answer_string(String,_Metta2))),
     assert(file_answers(StoredAs,Nth,Metta)),
