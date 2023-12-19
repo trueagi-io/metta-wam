@@ -80,7 +80,7 @@ def_to_prolog_string(I,O):- any_to_string(I,O).
 
 
 def_compile_all(I,O):- current_predicate(compile_all/2),!,call(call,compile_all,I,O).
-def_compile_all(I,O):- wdmsg(undefined_compile_all(I)),I=O.
+def_compile_all(I,O):- fbug(undefined_compile_all(I)),I=O.
 
 
 zalwayzz(G):- call(G)*->true;throw(fail_zalwayzz(G)).
@@ -480,7 +480,7 @@ ugly_sexpr_cont('$OBJ'(sugly,S))                 -->  read_string_until(S,`>`), 
 
 %sexpr(L)                   --> sblank,!,sexpr(L),!.
 %sexpr(_) --> `)`,!,{trace,break,throw_reader_error(": an object cannot start with #\\)")}.
-sexpr(X,H,T):- zalwayzz(sexpr0(X),H,M),zalwayzz(swhite,M,T), nop(if_debugging(sreader,(wdmsg(sexpr(X))))),!.
+sexpr(X,H,T):- zalwayzz(sexpr0(X),H,M),zalwayzz(swhite,M,T), nop(if_debugging(sreader,(fbug(sexpr(X))))),!.
 %sexpr(X,H,T):- zalwayzz(sexpr0(X,H,T)),!,swhite.
 is_common_lisp:- fail.
 
@@ -900,8 +900,8 @@ to_char(N,'#\\'(N)).
 char_code_int(Char,Code):- notrace_catch_fail(char_code(Char,Code)),!.
 char_code_int(Char,Code):- notrace_catch_fail(atom_codes(Char,[Code])),!.
 char_code_int(Char,Code):- atom(Char),name_to_charcode(Char,Code),!.
-char_code_int(Char,Code):- var(Char),!,wdmsg(char_code_int(Char,Code)), only_debug(break).
-char_code_int(Char,Code):- wdmsg(char_code_int(Char,Code)),only_debug(break).
+char_code_int(Char,Code):- var(Char),!,fbug(char_code_int(Char,Code)), only_debug(break).
+char_code_int(Char,Code):- fbug(char_code_int(Char,Code)),only_debug(break).
 
 char_code_to_char(N,S):- atom(N),atom_codes(N,[_]),!,S=N.
 char_code_to_char(N,S):- atom(N),!,S=N.

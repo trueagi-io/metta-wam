@@ -247,8 +247,8 @@ compile_for_assert(HeadIs, AsBodyFn, Converted) :-
      %RetResult = Converted,
      %RetResult = _,
      head_preconds_into_body(Head,NextBody,HeadC,NextBodyC),
-     wdmsg([convert(Convert),head_preconds_into_body(HeadC:-NextBodyC)]),
-     %if_t(((Head:-NextBody)\=@=(HeadC:-NextBodyC)),wdmsg(was(Head:-NextBody))),
+     fbug([convert(Convert),head_preconds_into_body(HeadC:-NextBodyC)]),
+     %if_t(((Head:-NextBody)\=@=(HeadC:-NextBodyC)),fbug(was(Head:-NextBody))),
 
      nop(ignore(Result = '$VAR'('HeadRes'))))),!.
 
@@ -1141,7 +1141,7 @@ combine_clauses(HeadBodiesList, NewHead, NewCombinedBodies) :-
     transform_and_combine_bodies(HeadBodiesList, NewHead, NewCombinedBodies)),
     \+ \+ (
      Print=[converting=HeadBodiesList,newHead=NewHead],
-     numbervars(Print,0,_,[]),wdmsg(Print),in_cmt(portray_clause(( NewHead :- NewCombinedBodies)))),!.
+     numbervars(Print,0,_,[]),fbug(Print),in_cmt(portray_clause(( NewHead :- NewCombinedBodies)))),!.
 
 % Predicate to find the least general unified head (LGU) among the given list of heads.
 % Heads is a list of head terms, and LeastGeneralHead is the least general term that unifies all terms in Heads.
@@ -1426,7 +1426,7 @@ with_indents(TF, Goal) :-
 
 % The predicate allow_concepts/0 checks whether the use of concepts is allowed.
 % It does this by checking the value of the concepts option and ensuring it is not false.
-allow_concepts :-
+allow_concepts :- !, fail,
     % Check if the option `concepts` is not set to false
     option_else(concepts, TF, 'False'),
     \+ TF == 'False'.
@@ -1454,7 +1454,7 @@ is_final_write('$VAR'(S)):- !, write('$'),write(S).
 % Handling more cases for 'write_src1', when the value is a number, a string, a symbol, or a compound.
 write_src1(V) :- is_final_write(V),!.
 write_src1((Head:-Body)) :- !, print_metta_clause0(Head,Body).
-write_src1(''):- !, writeq('').
+write_src1(''):- !, write('()').
 write_src1(V):- number(V),!, writeq(V).
 write_src1(V):- string(V),!, writeq(V).
 
@@ -1485,7 +1485,7 @@ dont_quote(Atom):- atom(Atom),upcase_atom(Atom,Atom),downcase_atom(Atom,Atom).
 
 should_quote(Atom) :- \+ atom(Atom), \+ string(Atom),!,fail.
 should_quote(Atom) :-
-   \+ dont_quote(Atom),
+   %\+ dont_quote(Atom),
    % atom(Atom),  % Ensure that the input is an atom
     atom_chars(Atom, Chars),
     once(should_quote_chars(Chars);should_quote_atom_chars(Atom,Chars)).
@@ -1502,11 +1502,11 @@ should_quote_chars(Chars) :-
       member('"', Chars);         % Contains quote not captured with above clause
       member(' ', Chars);         % Contains space
       member('''', Chars);        % Contains single quote
-      member('/', Chars);         % Contains slash
+    %  member('/', Chars);         % Contains slash
       member(',', Chars);         % Contains comma
-      member('|', Chars).         % Contains pipe
-should_quote_atom_chars(Atom,_) :- atom_number(Atom,_),!.
-should_quote_atom_chars(Atom,[Digit|_]) :- char_type(Digit, digit), \+ atom_number(Atom,_).
+      (fail,member('|', Chars)).         % Contains pipe
+%should_quote_atom_chars(Atom,_) :- atom_number(Atom,_),!.
+should_quote_atom_chars(Atom,[Digit|_]) :- fail, char_type(Digit, digit), \+ atom_number(Atom,_).
 
 % Example usage:
 % ?- should_quote('123abc').

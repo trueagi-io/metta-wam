@@ -159,7 +159,7 @@ function print_help {
     echo "    This script reads options from the ~/.mettalogrc file, one option per line."
     echo "    Options specified in ~/.mettalogrc are processed before command-line arguments."
     echo ""
-    echo " WAS: $0 ${SWI_OPTIONS[*]} -l $METTALOG_DIR/metta_vspace/$PYSWIP_VERSION/metta_interp.pl -- --python=$python_flag ${PRE_OTHER_OPTIONS[*]} ${OTHER_OPTIONS[*]} \\"
+    echo " WAS: $0 ${SWI_OPTIONS[*]} -l $METTALOG_DIR/metta_vspace/$PYSWIP_VERSION/metta_interp.pl -- --python=$python_flag ${PRE_METTALOG_OPTIONS[*]} ${METTALOG_OPTIONS[*]} \\"
     echo "            $METTA_CMD"
     echo ""
 }
@@ -167,9 +167,9 @@ function print_help {
 
 # Initialize variables
 SWI_OPTIONS=()
-OTHER_OPTIONS=()
-PRE_OTHER_OPTIONS=()
-FLAG_WITH_ARG=false
+METTALOG_OPTIONS=()
+PRE_METTALOG_OPTIONS=()
+SWI_FLAG_WITH_ARG=false
 python_flag=enable
 LIST_OF_FILE_ARGS=()
 PYSWIP_VERSION="pyswip"
@@ -182,19 +182,20 @@ remove_quotes() {
 }
 
 function handle_args {
-    FLAG_WITH_ARG=false
-    SKIP_TO_OTHER_OPTIONS=false
+    SWI_FLAG_WITH_ARG=false
+    METTA_FLAG_WITH_ARG=false
+    SKIP_TO_METTALOG_OPTIONS=false
 
     for arg in "$@"; do
 
-        if [[ $SKIP_TO_OTHER_OPTIONS == true ]]; then
-            OTHER_OPTIONS+=("$arg")
+        if [[ $SKIP_TO_METTALOG_OPTIONS == true ]]; then
+            METTALOG_OPTIONS+=("$arg")
             continue
         fi
 
         if [[ "$arg" == "--" ]]; then
-	    OTHER_OPTIONS+=("$arg")
-            SKIP_TO_OTHER_OPTIONS=true
+	    METTALOG_OPTIONS+=("$arg")
+            SKIP_TO_METTALOG_OPTIONS=true
             continue
         fi
 
@@ -212,7 +213,7 @@ function handle_args {
             export TIMEOUT="${BASH_REMATCH[1]}"
 	    #echo "$0 TIMEOUT=$TIMEOUT"
 	    CMD_TIMEOUT=$TIMEOUT
-	    OTHER_OPTIONS=("--timeout=$TIMEOUT" "${OTHER_OPTIONS[@]}")
+	    METTALOG_OPTIONS=("--timeout=$TIMEOUT" "${METTALOG_OPTIONS[@]}")
 	    continue
 	elif [[ "$arg" =~ ^--python=(enable|false)$ ]]; then
             python_flag="${BASH_REMATCH[1]}"
@@ -229,14 +230,15 @@ function handle_args {
         elif [[ "$arg" == "--no-html" ]]; then
             html_flag=false
         elif [[ "$arg" == "--prolog" ]]; then
-	    add_to_list "$arg" OTHER_OPTIONS
+	    add_to_list "$arg" METTALOG_OPTIONS
             repl_flag=false
         fi
 
         [[ "$arg" == "--help" || "$arg" == "-h" ]] && { wants_print_help=1; EXIT_SCRIPT=0; }
         [[ "$arg" =~ ^--dump-runtime-variables.*$ || "$arg" == "--abi-version" || "$arg" == "--version" || "$arg" == "--arch" ]] && { swipl $@; EXIT_SCRIPT=0; }
 
-        [[ "$FLAG_WITH_ARG" == true ]] && { SWI_OPTIONS+=("$arg"); FLAG_WITH_ARG=false; continue; }
+        [[ "$SWI_FLAG_WITH_ARG" == true ]] && { SWI_OPTIONS+=("$arg"); SWI_FLAG_WITH_ARG=false; continue; }
+	[[ "$METTA_FLAG_WITH_ARG" == true ]] && { METTALOG_OPTIONS+=("\"$arg\""); METTA_FLAG_WITH_ARG=false; continue; }
 
         # These options require an argument (like a filename)
         case $arg in
@@ -250,9 +252,16 @@ function handle_args {
 
             -x|-g|-t|-f|-F|-l|-s|-p|--on-error|--on-warning|--home|--stack-limit|--table-space|--shared-table-space|--pldoc)
                 SWI_OPTIONS+=("$arg")
-                FLAG_WITH_ARG=true
+                SWI_FLAG_WITH_ARG=true
                 continue
                 ;;
+
+            -G|-L|-F)
+                METTALOG_OPTIONS+=("$arg")
+                METTA_FLAG_WITH_ARG=true
+                continue
+                ;;
+
             # These options don't require an argument
             -O|--traditional|--tty*|--packs*|--signals*|--threads*|--debug*|--debug-on-interrupt*|--quiet*|--pce*)
                 SWI_OPTIONS+=("$arg")
@@ -261,7 +270,7 @@ function handle_args {
 
             ---*)
 		    DASH2="-${arg#*---}"
-                   OTHER_OPTIONS=("$DASH2" "${OTHER_OPTIONS[@]}")
+                   METTALOG_OPTIONS=("$DASH2" "${METTALOG_OPTIONS[@]}")
                 continue
                 ;;
 
@@ -271,9 +280,9 @@ function handle_args {
 		    if [[ -f "$arg_realpath" || -d "$arg_realpath" ]]; then
 		        add_to_list "$arg_realpath" LIST_OF_FILE_ARGS
 		    fi
-		    add_to_list "$arg" OTHER_OPTIONS
+		    add_to_list "$arg" METTALOG_OPTIONS
 		else
-		    add_to_list "$arg" OTHER_OPTIONS
+		    add_to_list "$arg" METTALOG_OPTIONS
 		fi
                 ;;
         esac
@@ -336,7 +345,7 @@ handle_args "$@"
 
 #echo "Debug: SWI_OPTIONS: ${SWI_OPTIONS[@]}"
 #echo "Debug: LIST_OF_FILE_ARGS: ${LIST_OF_FILE_ARGS[@]}"
-#echo "Debug: OTHER_OPTIONS: ${OTHER_OPTIONS[@]}"
+#echo "Debug: METTALOG_OPTIONS: ${METTALOG_OPTIONS[@]}"
 
 # Decide on enabling the REPL
 if [[ "$repl_flag" == "enable" ]]; then
@@ -432,7 +441,7 @@ else
   MLOG="swipl ${SWI_OPTIONS[*]} -l $METTALOG_DIR/metta_vspace/$PYSWIP_VERSION/metta_interp.pl --"
 fi
 
-METTA_CMD="$MLOG --python=$python_flag ${PRE_OTHER_OPTIONS[*]} ${OTHER_OPTIONS[*]}"
+METTA_CMD="$MLOG --python=$python_flag ${PRE_METTALOG_OPTIONS[*]} ${METTALOG_OPTIONS[*]}"
 
 OS=$(uname)
 TIMEOUT_CMD="timeout"
@@ -505,7 +514,7 @@ else
     [[ "$wants_print_help" == "1" ]] && { print_help; [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
     [[ -n "${EXIT_SCRIPT+x}" ]] && { [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
     ( eval "$METTA_CMD"
-    echo $? > "$TEMP_EXIT_CODE_FILE" ) || true
+    echo $? > "$TEMP_EXIT_CODE_FILE" )
     #rm -f "$TEE_FILE"
     cleanup
 fi

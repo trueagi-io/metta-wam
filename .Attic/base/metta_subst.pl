@@ -11,6 +11,7 @@ self_subst(X):- is_list(X),!,fail.
 self_subst(X):- atom(X),!, \+ nb_current(X,_),!.
 self_subst('True'). self_subst('False'). self_subst('F').
 
+:- style_check(-singleton).
 
 :- nb_setval(self_space, '&self').
 substs_to(XX,Y):- Y==XX,!.
@@ -75,11 +76,11 @@ flag_to_var(Flag,Var):- Flag=Var.
 set_debug(Flag,Val):- \+ atom(Flag), flag_to_var(Flag,Var), atom(Var),!,set_debug(Var,Val).
 set_debug(Flag,true):- !, debug(metta(Flag)),flag_to_var(Flag,Var),set_option_value(Var,true).
 set_debug(Flag,false):- nodebug(metta(Flag)),flag_to_var(Flag,Var),set_option_value(Var,false).
-if_trace((Flag;true),Goal):- !, notrace(( catch_err(ignore((Goal)),E,wdmsg(E-->if_trace((Flag;true),Goal))))).
-if_trace(Flag,Goal):- notrace((catch_err(ignore((is_debugging(Flag),Goal)),E,wdmsg(E-->if_trace(Flag,Goal))))).
+if_trace((Flag;true),Goal):- !, notrace(( catch_err(ignore((Goal)),E,fbug(E-->if_trace((Flag;true),Goal))))).
+if_trace(Flag,Goal):- notrace((catch_err(ignore((is_debugging(Flag),Goal)),E,fbug(E-->if_trace(Flag,Goal))))).
 
 
-%maybe_efbug(SS,G):- efbug(SS,G)*-> if_trace(eval,wdmsg(SS=G)) ; fail.
+%maybe_efbug(SS,G):- efbug(SS,G)*-> if_trace(eval,fbug(SS=G)) ; fail.
 maybe_efbug(_,G):- call(G).
 %efbug(P1,G):- call(P1,G).
 efbug(_,G):- call(G).
@@ -737,7 +738,7 @@ last_element(T,E):- compound_name_arguments(T,_,List),last_element(List,E),!.
 
 
 
-%catch_warn(G):- notrace(catch_err(G,E,(wdmsg(catch_warn(G)-->E),fail))).
+%catch_warn(G):- notrace(catch_err(G,E,(fbug(catch_warn(G)-->E),fail))).
 %catch_nowarn(G):- notrace(catch_err(G,error(_,_),fail)).
 
 %as_tf(G,TF):- catch_nowarn((call(G)*->TF='True';TF='False')).

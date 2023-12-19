@@ -37,7 +37,7 @@ process_obo_file(File, MXFile):- exists_file(File),!,
              open(MXFile,write,Strm,[]),
              setup_call_cleanup(
                     set_stream(Strm,alias(metta_x_output)),
-                    with_option(make_metta_x,'True',
+                    with_option(make_metta_x,'False',
                        process_obo_direct(File)),
                     set_stream(current_output,alias(metta_x_output))),
              close(Strm)),
@@ -63,8 +63,8 @@ remove_duplicates(InputFile) :-
     ExitStatus2 =:= 0,!.
 
 % rename_file(+Source, +Destination) - renames or moves a file.
-rename_file(Source, Destination) :-
-    rename(Source, Destination).
+%rename_file(Source, Destination) :-
+ %   rename(Source, Destination).
 
 process_obo_direct(Filename):-
     directory_file_path(Directory, BaseName, Filename),
@@ -255,7 +255,7 @@ assert_OBO(OBO):-
 assert_OB1(List):- nb_current(make_metta_x,'True'),!, assert_OB2(List).
 assert_OB1([OboFn|Cols]):-
   OBO1=..[OboFn|Cols],
-  assert_MeTTa(OBO1).
+  assert_to_metta(OBO1).
 
 assert_OB2(List):- maplist(to_metta_x_args,List,ListO),
  atomics_to_string(ListO,'\t',Str),

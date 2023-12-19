@@ -48,7 +48,7 @@ is_metta_declaration_f(F):- F == '=', !,
 evals_to(XX,Y):- Y=@=XX,!.
 evals_to(XX,Y):- Y=='True',!, is_True(XX),!.
 
-current_self(Space):- nb_current(self_space,Space).
+%current_self(Space):- nb_current(self_space,Space).
 
 do_expander('=',_,X,X):-!.
 do_expander(':',_,X,Y):- !, get_type(X,Y)*->X=Y.
@@ -117,9 +117,9 @@ w_indent(Depth,Goal):-
     format('~N'),
     setup_call_cleanup(forall(between(Depth,101,_),write('  ')),Goal, format('~N')))))).
 indentq(Depth,Term):-
-  \+ \+ mnotrace(ignore(((
+  \+ \+ notrace(ignore(((
     format('~N'),
-    setup_call_cleanup(forall(between(Depth,101,_),write('  ')),format('~q',[Term]),
+    setup_call_cleanup(forall(between(Depth,101,_),write('  ')),fbug(Term),
     format('~N')))))).
 
 
@@ -134,11 +134,11 @@ flag_to_var(Flag,Var):- Flag=Var.
 set_debug(Flag,Val):- \+ atom(Flag), flag_to_var(Flag,Var), atom(Var),!,set_debug(Var,Val).
 set_debug(Flag,true):- !, debug(metta(Flag)),flag_to_var(Flag,Var),set_option_value(Var,true).
 set_debug(Flag,false):- nodebug(metta(Flag)),flag_to_var(Flag,Var),set_option_value(Var,false).
-if_trace((Flag;true),Goal):- !, notrace(( catch_err(ignore((Goal)),E,wdmsg(E-->if_trace((Flag;true),Goal))))).
-if_trace(Flag,Goal):- notrace((catch_err(ignore((is_debugging(Flag),Goal)),E,wdmsg(E-->if_trace(Flag,Goal))))).
+if_trace((Flag;true),Goal):- !, notrace(( catch_err(ignore((Goal)),E,fbug(E-->if_trace((Flag;true),Goal))))).
+if_trace(Flag,Goal):- notrace((catch_err(ignore((is_debugging(Flag),Goal)),E,fbug(E-->if_trace(Flag,Goal))))).
 
 
-%maybe_efbug(SS,G):- efbug(SS,G)*-> if_trace(eval,wdmsg(SS=G)) ; fail.
+%maybe_efbug(SS,G):- efbug(SS,G)*-> if_trace(eval,fbug(SS=G)) ; fail.
 maybe_efbug(_,G):- call(G).
 %efbug(P1,G):- call(P1,G).
 efbug(_,G):- call(G).
@@ -214,7 +214,7 @@ eval_15(Eq,RetType,Depth,Self,X,Y):- !,
 
 eval_15(Eq,RetType,Depth,Self,X,Y):-
   ((eval_20(Eq,RetType,Depth,Self,X,Y),
-   if_t(var(Y),dmsg((eval_20(Eq,RetType,Depth,Self,X,Y),var(Y)))),
+   if_t(var(Y),fbug((eval_20(Eq,RetType,Depth,Self,X,Y),var(Y)))),
    nonvar(Y))*->true;(eval_failed(Depth,Self,X,Y),fail)).
 
 
@@ -290,8 +290,8 @@ eval_20(Eq,RetType,Depth,Self,['println!'|Cond],Res):- !, maplist(eval(Eq,RetTyp
 eval_20(Eq,RetType,Depth,Self,['trace!',A|Cond],Res):- !, maplist(eval(Eq,RetType,Depth,Self),[A|Cond],[AA|Result]),
    last(Result,Res), format('~N'),maplist(write_src,[AA]),format('~N').
 
-%eval_20(Eq,RetType,Depth,Self,['trace!',A,B],C):- !,eval(Eq,RetType,Depth,Self,B,C),format('~N'),wdmsg(['trace!',A,B]=C),format('~N').
-%eval_20(Eq,RetType,_Dpth,_Slf,['trace!',A],A):- !, format('~N'),wdmsg(A),format('~N').
+%eval_20(Eq,RetType,Depth,Self,['trace!',A,B],C):- !,eval(Eq,RetType,Depth,Self,B,C),format('~N'),fbug(['trace!',A,B]=C),format('~N').
+%eval_20(Eq,RetType,_Dpth,_Slf,['trace!',A],A):- !, format('~N'),fbug(A),format('~N').
 
 eval_20(Eq,RetType,_Dpth,_Slf,List,YY):- is_list(List),maplist(self_eval,List),List=[H|_], \+ atom(H), !,Y=List,do_expander(Eq,RetType,Y,YY).
 
@@ -480,14 +480,14 @@ eval_space(Eq,RetType,Depth,Self,['match',Other,Goal,Template,Else],Template):- 
        \+ return_empty([],Template))*->true;Template=Else).
 % Match-TEMPLATE
 
-eval_space(Eq,RetType,Depth,Self,['match',Other,Goal,Template],Res):- !,
+eval_space(Eq,_RetType,Depth,Self,['match',Other,Goal,Template],Res):- !,
    metta_atom_iter(Eq,Depth,Self,Other,Goal),
    Template=Res.
     %finish_eval(Eq,RetType,Depth,Self,Template,Res).
 /*
   dcall(( % copy_term(Goal+Template,CGoal+CTemplate),
   catch_err(try_match(Eq,RetType,Depth,Self,Other,Goal),E,
-   ((wdmsg(catch_err(try_match(Eq,RetType,Depth,Self,Other,Goal))=E)),
+   ((fbug(catch_err(try_match(Eq,RetType,Depth,Self,Other,Goal))=E)),
      rtrace(try_match(Eq,RetType,Depth,Self,Other,Goal)))))),
   %print(Template),
     finish_eval(Eq,RetType,Depth,Self,Template,Res).
@@ -1279,7 +1279,7 @@ is_user_defined_goal(Self,Head):-
 
 eval_call(S,TF):-
   s2p(S,P), !,
-  dmsg(eval_call(P,'$VAR'('TF'))),as_tf(P,TF).
+  fbug(eval_call(P,'$VAR'('TF'))),as_tf(P,TF).
 
 eval_80(Eq,RetType,_Depth,_Self,[AE|More],Res):-
   is_system_pred(AE),
@@ -1312,7 +1312,7 @@ last_element(T,E):- compound_name_arguments(T,_,List),last_element(List,E),!.
 
 
 
-catch_warn(G):- quietly(catch_err(G,E,(wdmsg(catch_warn(G)-->E),fail))).
+catch_warn(G):- quietly(catch_err(G,E,(fbug(catch_warn(G)-->E),fail))).
 catch_nowarn(G):- quietly(catch_err(G,error(_,_),fail)).
 
 

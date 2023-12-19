@@ -1,6 +1,9 @@
 :- encoding(iso_latin_1).
 :- flush_output.
 :- setenv('RUST_BACKTRACE',full).
+:- multifile(fb_pred/2).
+:- discontiguous(fb_pred/2).
+:- dynamic(fb_pred/2).
 
 
 :- ensure_loaded(swi_support).
@@ -19,16 +22,146 @@ fb_stats:- metta_stats,!.
 
 :- ensure_loaded(metta_interp).
 
+
 create_flybase_qlf:-
+   shell('swipl -g "qcompile(whole_flybase)').
+
+create_flybase_pl(_FtpDir):- create_flybase_pl.
+
+create_flybase_pl:-
    all_data_once,
   % all_metta_once,
    load_flybase_full,
+   all_data_done.
+  % all_metta_done,
+   %shell('mv whole_metta.pl whole_flybase.pl').
+
+create_flybase_pl_tiny:-
+   all_data_once,
+  % all_metta_once,
+   load_flybase_tiny,
    all_data_done,
   % all_metta_done,
-   shell('swipl -g "qcompile(whole_flybase)" -t halt').
+   shell('mv whole_metta.pl tiny_flybase.pl').
 
 save_to_pl:- tell('flybase_metta.pl'),
    forall(fb_pred(F,A),listing(F/A)),told.
+
+
+real_assert(OBO):- is_converting, \+ is_loading_file(_File), !, throw(real_assert(OBO)).
+real_assert(OBO):-
+   ignore(real_assert1(OBO)),
+   real_assert2(OBO).
+
+%real_assert(OBO):- is_converting,!,print_src(OBO).
+real_assert1(OBO):- all_metta_to(Out),!,with_output_to(Out,print_src(OBO)).
+real_assert2(OBO):- all_data_to(Out),!,write_canonical(Out,OBO),!,writeln(Out,'.').
+real_assert2(OBO):- is_converting,!,throw(real_assert2(OBO)).
+real_assert2(OBO):- call(OBO),!.
+real_assert2(OBO):- assert(OBO).
+
+print_src(OBO):- format('~N'), uncompound(OBO,Src),!, write_srcH(Src).
+write_srcH([F|Args]):- write('( '),write_src(F),maplist(write_srcE,Args),writeln(' )').
+write_srcE(Arg):- write(' '),write_src(Arg).
+
+
+
+is_loading_file(File):- nb_current(loading_file,File),File\==[],!.
+is_loading_file(File):- nb_current(saving_file,File),File\==[].
+
+
+
+all_data_once:- is_loading_file(_File),!.
+all_data_once:- nb_setval(saving_file,'whole_metta'),
+  all_data_to(Out),
+  writeln(Out,':- encoding(utf8).'),
+  writeln(Out,':- style_check(-discontiguous).'),
+  flush_output(Out),!,
+  all_data_preds.
+all_data_preds:-
+ all_data_to(Out), with_output_to(Out,all_data_preds0),!.
+all_data_preds.
+all_data_preds0:-
+ listing_c(table_n_type/3),
+  listing_c(load_state/2),
+  listing_c(is_loaded_from_file_count/2),
+  listing_c(fb_pred/2),
+  listing_c(fb_arg_type/1),
+  listing_c(fb_arg_table_n/3),
+  listing_c(fb_arg/1),
+  listing_c(done_reading/1),!.
+:- dynamic(is_all_data_to/2).
+
+
+all_data_to(Out):- once((is_all_data_to(File1,Out1),is_loading_file(File2))),File1==File2,!, Out = Out1.
+all_data_to(Out):- is_all_data_to(File1,Out1),is_loading_file(File2),!,
+   close(Out1), atom_concat(File2,'.metta.datalog.tmp',File2Data),
+   open(File2Data,write,Out2,[alias(all_data),encoding(utf8),lock(write)]),
+   retract(is_all_data_to(File1,Out1)),assert(is_all_data_to(File2,Out2)),
+   fbug(all_data_to_switch(File1,File2)),!,
+   Out = Out2.
+all_data_to(Out):- is_all_data_to(_File1,Out),!.
+all_data_to(Out):-  is_converting, is_loading_file(File2),!, atom_concat(File2,'.metta.datalog.tmp',File2Data),
+   open(File2Data,write,Out2), assert(is_all_data_to(File2,Out2)),
+   fbug(all_data_to(File2)),!,
+   Out = Out2.
+
+all_data_done:-
+  all_data_preds,
+  nb_delete(saving_file),
+  all_metta_done,
+  forall(retract(is_all_data_to(_,Out)), catch_ignore(close(Out))).
+
+:- if(is_converting).
+:- at_halt(all_data_done).
+:- endif.
+
+listing_c(F/A):-
+   format('~N~q.~n',[:-multifile(F/A)]),
+   format('~q.~n',[:-dynamic(F/A)]),
+   functor(P,F,A),
+   catch(forall(P,format('~q.~n',[P])),E, fbug(caused(F/A,E))).
+
+
+:- dynamic(is_all_metta_to/2).
+all_metta_to(Out):- once((is_all_metta_to(File1,Out1),is_loading_file(File2))),File1==File2,!, Out = Out1.
+all_metta_to(Out):- is_all_metta_to(File1,Out1),is_loading_file(File2),!,
+   close(Out1), atom_concat(File2,'.metta.tmp',File2Data),
+   open(File2Data,write,Out2,[alias(all_metta),encoding(utf8),lock(write)]),
+   retract(is_all_metta_to(File1,Out1)),assert(is_all_metta_to(File2,Out2)),
+   fbug(all_metta_to_switch(File1,File2)),!,
+   Out = Out2.
+all_metta_to(Out):- is_all_metta_to(_File1,Out),!.
+all_metta_to(Out):- is_loading_file(File2),!, atom_concat(File2,'.metta.tmp',File2Data),
+   open(File2Data,write,Out2), assert(is_all_metta_to(File2,Out2)),
+   fbug(all_metta_to(File2)),!,
+   Out = Out2.
+
+all_metta_done:-
+    forall(retract(is_all_metta_to(_,Out)), catch_ignore(close(Out))).
+
+
+
+
+
+loaded_from_file_count(X):- flag(loaded_from_file_count,X,X).
+incr_file_count(X):- flag(loaded_from_file_count,X,X+1),  flag(total_loaded_symbols,TA,TA+1), flag(total_loaded_atoms,TA,TA+1).
+
+should_cache:- fail, loaded_from_file_count(X), option_else(max_disk_cache,Num,1000), X=<Num.
+reached_file_max:- option_value(max_per_file,Y),Y\==inf,Y\==0,loaded_from_file_count(X),X>=Y.
+should_fix_args :- fail, \+ should_sample.
+should_sample :- !, fail.
+should_sample :- should_show_data(_),!.
+should_sample :-
+  once(option_value(samples_per_million,Fifty);Fifty=50), loaded_from_file_count(X), Y is X mod 1_000_000,!, Y >= 0, Y =< Fifty,!.
+should_show_data(X):- loaded_from_file_count(X),!,
+  once((X=<13,X>=10); (X>0,(0 is X rem 1_000_000))),
+  format(user_error,'~N',[]),
+  format(user_output,'~N',[]),!,
+  heartbeat.
+should_show_data(X):- nb_current(loading_file,F),F\==[],symbol_concat(_,'.obo',F),
+  loaded_from_file_count(X),Y is X mod 100_000, Y=<15,Y>=10.
+
 
 % ==============
 % VSPACE LOADER
@@ -36,10 +169,11 @@ save_to_pl:- tell('flybase_metta.pl'),
 %:- set_option_value(max_per_file,10_000_000).
 %:- set_option_value(max_per_file,1_000).
 %:- set_option_value(max_per_file,300).
-:- set_option_value(max_per_file,inf+1).
-:- set_option_value(max_per_file,inf).
-:- set_option_value(max_per_file,20_000).
-
+%:- set_option_value(max_per_file,inf+1).
+:- set_option_value(max_per_file,0).
+%:- set_option_value(max_per_file,20_000).
+%:- set_option_value(max_per_file,20_000_000_000_000_000_000_000_000_000_000_000).
+% load_flybase('./precomputed_files/insertions/fu_gal4_table_fb_*.json').
 :- set_option_value(max_disk_cache,1000).
 :- set_option_value(samples_per_million,30).
 :- set_option_value(full_canon,true).
@@ -199,6 +333,7 @@ load_flybase_files_ftp:-
   load_flybase_das_11,
   % 36 more that DAS doesnt load
 
+  load_flybase_obo_files,
 
   load_flybase('./precomputed_files/alleles/fbal_to_fbgn*.tsv'),
 
@@ -255,6 +390,7 @@ load_fbase_after_17:-
   !.
 
 load_flybase_obo_files:-
+ load_flybase('./data/*/*/*.scm'),
   load_flybase('./precomputed_files/ontologies/doid.obo'),
   load_flybase('./precomputed_files/ontologies/fly_anatomy.obo'),
   load_flybase('./precomputed_files/ontologies/fly_development.obo'),
@@ -356,6 +492,8 @@ load_obo_files:-
   %               Runtime (days:hh:mm:ss): ................................................. 0:00:00:40
 
   load_flybase('./data/Legacy/Cross_Products/*.obo'),
+  %load_flybase('./data/*/*/*.obo'),
+
   % Total         Atoms (Atomspace size): ...................................................... 20,968
   %               ConceptNodes: ................................................................. 4,306
   %               Random samples: .............................................................. 14,418
@@ -381,7 +519,7 @@ load_obo_files:-
   %               Random samples: .............................................................. 26,006
   %               Total Memory Used: ............................................................ 1.19G
   %               Runtime (days:hh:mm:ss): ................................................. 0:00:34:35
-print_loaded_from_files,
+  print_loaded_from_files,
 %loaded_from_file(2_637_502, './precomputed_files/ontologies/chebi_fb_2023_04.obo').
 %loaded_from_file(  451_168, './precomputed_files/ontologies/go-basic.obo').
 %loaded_from_file(  221_705, './precomputed_files/ontologies/fly_anatomy.obo').
@@ -749,17 +887,17 @@ pad_number(Number, N) :-
 % Process a file or directory path with a given predicate.
 with_wild_path(Fnicate, Dir) :- extreme_debug(fbug(with_wild_path(Fnicate, Dir))),fail.
 with_wild_path(_Fnicate, []) :- !.
-with_wild_path(Fnicate, Dir) :-  is_scryer, symbol(Dir), !, must_det_ll_r((path_chars(Dir,Chars), with_wild_path(Fnicate, Chars))).
-with_wild_path(Fnicate, Chars) :-  \+ is_scryer, \+ symbol(Chars), !, must_det_ll_r((name(Atom,Chars), with_wild_path(Fnicate, Atom))).
-with_wild_path(Fnicate, File) :- exists_file(File), !, must_det_ll_r(( call(Fnicate, File))).
+with_wild_path(Fnicate, Dir) :-  is_scryer, symbol(Dir), !, must_det_ll((path_chars(Dir,Chars), with_wild_path(Fnicate, Chars))).
+with_wild_path(Fnicate, Chars) :-  \+ is_scryer, \+ symbol(Chars), !, must_det_ll((name(Atom,Chars), with_wild_path(Fnicate, Atom))).
+with_wild_path(Fnicate, File) :- exists_file(File), !, must_det_ll(( call(Fnicate, File))).
 with_wild_path(Fnicate, File) :- !, with_wild_path_swi(Fnicate, File).
 with_wild_path(Fnicate, Dir) :-  exists_directory(Dir), !,
-  must_det_ll_r((directory_files(Dir, Files),
+  must_det_ll((directory_files(Dir, Files),
   maplist(directory_file_path(Dir,Files),Paths),
   maplist(path_chars,Paths,CharPaths),
   maplist(with_wild_path(Fnicate), CharPaths))), !.
-with_wild_path(Fnicate, File) :- is_list(File), !,  must_det_ll_r((maplist(with_wild_path(Fnicate), File))).
-with_wild_path(Fnicate, File) :- must_det_ll_r((call(Fnicate, File))).
+with_wild_path(Fnicate, File) :- is_list(File), !,  must_det_ll((maplist(with_wild_path(Fnicate), File))).
+with_wild_path(Fnicate, File) :- must_det_ll((call(Fnicate, File))).
 
 path_chars(A,C):- symbol_chars(A,C).
 
@@ -801,7 +939,9 @@ fix_columns_n(Fn,N):-
 load_fb_mask(Filename):- is_scryer,symbol(Filename),name(Filename,Chars),!,load_fb_mask(Chars).
 load_fb_mask(Filename):- expand_file_name(Filename,Files1),maplist(load_fb_cache,Files1).
 load_fb_cache(File):- with_wild_path(load_fb_cache0,File).
-load_fb_cache0(File):- file_name_extension(Name,_E,File),
+load_fb_cache0(RFile):-
+  absolute_file_name(RFile,File),
+  file_name_extension(Name,_E,File),
   symbolic_list_concat([Pub,Table],'.',Name),
   symbolic_list_concat([Pub,Table,qlf],'.',OutputFile),!,
   load_fb_cache(File,OutputFile,Table).
@@ -814,23 +954,41 @@ load_fb_cache0(File):- file_name_extension(Name,_E,File),
 %  LOAD FB Files
 % ============================================================================
 track_load_into_file(RelFilename,Goal):-
- absolute_file_name(RelFilename,Filename),
- must_det_ll((
+ must_det_ll(absolute_file_name(RelFilename,Filename)),
+ must_det_ll(track_load_into_file0(Filename,Goal)),!.
+
+track_load_into_file0(Filename,Goal):- nb_current(tracking_file,FilenameW),  Filename==FilenameW, !,call(Goal).
+track_load_into_file0(Filename,Goal):-
+  must_det_ll((
+  nb_setval(tracking_file,Filename),
   start_html_of(Filename),
   fbug(track_load_into_file(Filename)),
-  flag(loaded_from_file_count,Was,0),
-  with_option(loading_file,Filename,time(Goal)),!,
+  flag(loaded_from_file_count,Was,0))),
+  must_det_ll(with_option(loading_file, Filename, time(must_det_ll(Goal)))),
+  must_det_ll((
   flag(loaded_from_file_count,New,Was),
   ((New>0 ; \+ is_loaded_from_file_count(Filename,_))->assert(is_loaded_from_file_count(Filename,New));true),
   fbug(Filename=New),
-  save_html_of(Filename))).
+  rename_tmp_files(Filename),
+  save_html_of(Filename))),!.
+
+rename_tmp_files(_Filename):- \+ is_converting,!.
+rename_tmp_files(Filename):- rename_tmp_files(Filename,'.metta'),rename_tmp_files(Filename,'.metta.datalog').
+
+rename_tmp_files(Filename,NonTmp):- atomic_list_concat([Filename,NonTmp,'.tmp'],From),
+   atomic_list_concat([Filename,NonTmp],To),
+   fbug(rename_file(From,To)),
+   ignore((exists_file(From),rename_file(From,To))).
 
 :- dynamic(is_loaded_from_file_count/2).
 
 :- use_module(library(http/json)).
 :- ensure_loaded(flybase_json).
 load_fb_json(Fn,File):- fbug(load_fb_json(Fn,File)),
-  current_predicate(load_flybase_json/2),load_flybase_json(Fn,File).
+  current_predicate(load_flybase_json/2),
+     absolute_file_name(File,Filename),
+       track_load_into_file(Filename,load_flybase_json(Fn,File)).
+
 load_fb_json(Fn,File):- fbug(load_fb_json(Fn,File)),
  setup_call_cleanup(open(File,read,In,[encoding(utf8)]),  json:json_read(In,Term,[]), close(In)),
     time(assert(saved_fb_json(File,Term,Fn))).
@@ -843,12 +1001,13 @@ load_fb_fa(Fn,Filename):-
     directory_file_path(Directory, BaseName, Filename),
     file_name_extension(Id, _, BaseName),
     Type = 'SequenceFile',
-    assert_MeTTa(id_type(Id,Type)),
-    assert_MeTTa(pathname(Id,Filename)),!,
-    assert_MeTTa(basename(Id,BaseName)),!,
-    assert_MeTTa(directory(Id,Directory)),!,
+    assert_OBO(id_type(Id,Type)),
+    assert_OBO(pathname(Id,Filename)),!,
+    assert_OBO(basename(Id,BaseName)),!,
+    assert_OBO(directory(Id,Directory)),!,
     setup_call_cleanup(open(Filename,read,In), load_fb_fa_read(Id,In,_), close(In))))).
 load_fb_fa_read(_Fn,In, _):- (at_end_of_stream(In);reached_file_max),!.
+
 load_fb_fa_read(Fn,In,FBTe):- read_line_to_chars(In,Chars), load_fb_fa_read_n(Fn,In,FBTe,Chars).
 load_fb_fa_read_n(Fn,In,_,['>'|Chars]):- !, must_det_ll((path_chars(FBTe,Chars), load_fb_fa_read(Fn,In,seq(FBTe,1)))).
 load_fb_fa_read_n(Fn,In,seq(FBTe,N),Chars):-
@@ -952,7 +1111,14 @@ load_flybase(File):- file_name_extension(_,Ext,File),!, load_flybase(File,Ext).
 load_flybase(File,Ext):-
    with_wild_path(load_flybase0(Ext),File),!.
 
+
+exists_with_ext(File,Ext):- atom_concat(File,Ext,Res),exists_file(Res),!.
+
+load_flybase0(Ext,File):- Ext=='',file_name_extension(_,Ext2,File),Ext2\=='',!,load_flybase0(Ext2,File).
 load_flybase0(Ext,_File):-  Ext=='pl',!.
+load_flybase0(Ext,_File):-  Ext=='metta', is_converting,!.
+load_flybase0(Ext,_File):-  Ext=='datalog', is_converting,!.
+load_flybase0(Ext, File):-  is_converting,exists_with_ext(File,'.metta'),(exists_with_ext(File,'.datalog');exists_with_ext(File,'.metta.datalog')),!.
 load_flybase0(Ext,File):-
   must_det_ll((file_name_extension(Name,_,File),
   data_pred(Name,Fn),load_flybase(Ext,File,Fn))).
@@ -977,24 +1143,91 @@ load_flybase_ext(_Ext,File,_Fn):-  fail, atom_concat(File,'.metta',MFile),
   \+ option_value(mettafiles,false),!,
   load_flybase_metta(MFile).
 load_flybase_ext(Ext,File,_Fn):-  Ext==obo,current_predicate(load_obo/1),!,load_obo(File).
+load_flybase_ext(Ext,File,_Fn):-  Ext==scm,include_atomspace_1_0(File).
 load_flybase_ext(Ext,File, Fn):-  Ext==json,!,load_fb_json(Fn,File),!.
 load_flybase_ext(Ext,File, Fn):-  Ext==fa,!,load_fb_fa(Fn,File),!.
 load_flybase_ext(Ext,File,_Fn):-  Ext==metta,current_predicate(load_metta/2),!,load_flybase_metta(File).
 load_flybase_ext(Ext,File, Fn):-  file_to_sep(Ext,Sep),!,
   track_load_into_file(File,
-setup_call_cleanup(open(File,read,Stream), load_flybase_sv(Sep,File,Stream,Fn), close(Stream))),!.
+    setup_call_cleanup(open(File,read,Stream),
+       must_det_ll(load_flybase_sv(Sep,File,Stream,Fn)),
+        close(Stream))),!.
 load_flybase_ext(Ext,File, Fn):-  fbug(missed_loading_flybase(Ext,File,Fn)),!.
 
 %load_flybase_metta(File):- !, load_metta('&flybase',File).
 load_flybase_metta(File):-
    with_option('trace-on-load',false,
-                  load_metta('&flybase',File)).
+    with_option('current_self','&flybase',
+      include_atomspace_1_0(File))).
+/*
+   (EvaluationLink
+    (PredicateNode "has_name")
+    (ListLink
+        (DiseaseOntologyNode "DOID:0001816")
+        (ConceptNode "angiosarcoma")))
 
+
+                  load_metta('&flybase',File)).
+*/
+include_atomspace_1_0(RelFilename):-
+ absolute_file_name(RelFilename,Filename),
+ track_load_into_file(Filename,
+ must_det_ll((
+  atom(RelFilename),
+  current_self(Self),
+  exists_file(RelFilename),!,
+   must_det_ll((setup_call_cleanup(open(Filename,read,In, [encoding(utf8)]),
+    ((directory_file_path(Directory, _, Filename),
+      assert(metta_file(Self,Filename,Directory)),
+      with_cwd(Directory,
+        must_det_ll( load_atomspace_1_0_file_stream(Filename,Self,In))))),close(In))))))).
+
+load_atomspace_1_0_file_stream(Filename,Self,In):-
+  once((is_file_stream_and_size(In, Size) , Size>102400) -> P2 = read_sform2 ; P2 = read_metta),!,
+  with_option(loading_file,Filename,
+   %current_exec_file(Filename),
+   ((must_det_ll((
+       set_exec_num(Filename,1),
+       %load_answer_file(Filename),
+       set_exec_num(Filename,0))),
+       once((repeat, ((
+            current_read_mode(Mode),
+            once(call(P2, In,Expr)), %write_src(read_atomspace_1_0=Expr),nl,
+            must_det_ll((((do_atomspace_1_0(file(Filename),Mode,Self,Expr,_O)))->true;
+                 pp_m(unknown_do_atomspace_1_0(file(Filename),Mode,Self,Expr)))),
+           flush_output)),
+          at_end_of_stream(In)))))),!.
+
+%  ['InheritanceLink',['DiseaseOntologyNode','DOID:0112326'],['DiseaseOntologyNode','DOID:0050737']]
+do_atomspace_1_0(W,M,S,end_of_file,O):-!.
+do_atomspace_1_0(W,M,S,E,O):-
+    rewrite_as10_to_as20(E,E2,Extras),!,
+    maplist(do_atomspace_2_0(W,M,S),[E2|Extras]).
+
+do_atomspace_2_0(W,M,S,E):-
+    assert_OBO(E),
+    !. % writeq(E),!,nl.
+
+rewrite_as10_to_as20(A,A,[]):- \+ is_list(A).
+rewrite_as10_to_as20([CN,Arg],Arg,[]):- CN='ConceptNode',!.
+rewrite_as10_to_as20([ConceptNode,Arg1],Arg,[is_a(Arg,ConceptNode)|R]):- atom(ConceptNode),atom_concat(_Concept,'Node',ConceptNode),!,
+   rewrite_as10_to_as20(Arg1,Arg,R),!.
+rewrite_as10_to_as20(['EvaluationLink',['PredicateNode',Pred],['ListLink'|Args]], Res,
+  [arity(Pred,Len),is_a(Pred,'Predicate')|ExtrasF]):-
+   length(Args,Len),maplist(rewrite_as10_to_as20,Args,ArgsL,Extras), flatten(Extras,ExtrasF),
+   Res =..  [Pred|ArgsL].
+
+
+rewrite_as10_to_as20([InheritanceLink|Args],[Inheritance|ArgsL],ExtrasF):-
+    atom(InheritanceLink),atom_concat(Inheritance,'Link',InheritanceLink),
+    maplist(rewrite_as10_to_as20,Args,ArgsL,Extras), flatten(Extras,ExtrasF),!.
+
+rewrite_as10_to_as20(A,A,[]).
 
 fix_list_args(_,_,Y,Y):- option_value(early_canon,[]), \+ should_sample,!.
 %fix_list_args(_Fn,_ArgTypes,[X],[X]):- !.
 fix_list_args(Fn,ArgTypes,Args,NewArgs):-
- must_det_ll_r((
+ must_det_ll((
   primary_term(Fn,ArgTypes,Args,Term,NewArgTypes),
   fix_elist_args(Term,Fn,1,NewArgTypes,Args,NewArgs),
   extreme_debug(ignore(((Args \== NewArgs,fbug(NewArgs))))))).
@@ -1037,7 +1270,7 @@ into_number(Concept,Arg):- Concept=Arg,!.
 assert_type_of(_Term,_Fn,_N,_Type,_Arg):- \+ should_sample,!.
 assert_type_of(Term,Fn,N,Type,Arg):- is_list(Arg),!,maplist(assert_type_of(Term,Fn,N,Type),Arg).
 assert_type_of(_Term,Fn,N,_Type,Arg):-
- must_det_ll_r((
+ must_det_ll((
    assert_new(fb_arg(Arg)),
    assert_new(fb_arg_table_n(Arg,Fn,N)))).
 
@@ -1107,7 +1340,7 @@ write_flybase_data(_ArgTypes,_Fn,['']):-!.
 write_flybase_data(_ArgTypes,_Fn,[_]):-!.
 write_flybase_data(_ArgTypes,Fn,DataL0):-
  maplist(fast_column,DataL0,DataL), !, Data=..[Fn|DataL], assert_MeTTa(Data).
-%write_flybase_data(_ArgTypes,Fn,DataL):- into_datum(Fn,DataL,Data), assert_MeTTa(Data).
+%write_flybase_data(_ArgTypes,Fn,DataL):- into_datum(Fn,DataL,Data), assert_OBO(Data).
 
 
 /*
@@ -1124,23 +1357,23 @@ assert_MeTTa(Fn,DataL0):-
     flag(total_loaded_symbols,TA,TA+1),
     assert(Data),
     ignore((((has_list(_ArgTypes)->(X<23,X>20); (X<13,X>10)); (X>0,(0 is X rem 1_000_000),fb_stats)),nl,nl,fbug(X=Data),ignore((OldData\==DataL0,fbug(oldData=OldData))))),
-    ignore((fail,catch_ignore(ignore((X<1000,must_det_ll_r((write_canonical(OutputStream,Data),writeln(OutputStream,'.')))))))))),!.
+    ignore((fail,catch_ignore(ignore((X<1000,must_det_ll((write_canonical(OutputStream,Data),writeln(OutputStream,'.')))))))))),!.
  */
 
 make_assertion(Fn, Cols, NewData, OldData):- !, make_assertion4(Fn, Cols, NewData, OldData).
 
 make_assertion(Fn,DataL0,Data,DataL0):-
- must_det_ll_r((
+ must_det_ll((
     into_datum(Fn,DataL0,Data0),
     Data0=..[F|Args],
     Args=DataL,
     Data=..[F|DataL])).
 
 make_assertion(ArgTypes,Fn,DataL0,Data,DataL0):-
- must_det_ll_r((
+ must_det_ll((
     into_datum(Fn,DataL0,Data0),
     Data0=..[F|Args],
-    skip(if_t(var(ArgTypes),must_det_ll_r((once((length(Args,Len),length(ArgTypes,Len),once((table_columns(Fn,ArgTypes);table_columns(F,ArgTypes))))))))),
+    skip(if_t(var(ArgTypes),must_det_ll((once((length(Args,Len),length(ArgTypes,Len),once((table_columns(Fn,ArgTypes);table_columns(F,ArgTypes))))))))),
     fix_list_args(Fn,ArgTypes,Args,DataL),
     Data=..[F|DataL])).
 
@@ -1251,7 +1484,7 @@ fix_columns_nth(transposon_sequence_set, 8).
 
 
 load_flybase(Sep,File,Stream,Fn):-
- must_det_ll_r((
+ must_det_ll((
   %ignore(swi_only(format(":- ~q.\n",[encoding(utf8)]))),
   symbolic_list_concat([data,Fn],'_',Fn0),
   data_pred(Fn0,Fn),
@@ -1262,7 +1495,7 @@ load_flybase_sv(Sep,File,Stream,Fn):- at_end_of_stream(Stream),!,
   once(load_fb_data(_ArgTypes,File,Stream,Fn,Sep,end_of_file)).
 
 load_flybase_sv(Sep,File,Stream,Fn):-
- must_det_ll_r((
+ must_det_ll((
   flag(loaded_from_file_count,_,0),
   ignore(once((table_columns(File,Header);table_columns(Fn,Header)))),
   fix_header_names(Fn,Header,ArgTypes),
@@ -1279,7 +1512,7 @@ load_flybase_sv(Sep,File,Stream,Fn):-
   once(load_fb_data(NArgTypes,File,Stream,Fn,Sep,end_of_file)))),
   loaded_from_file_count(X),!,
   metta_stats(Fn),
-  pl_stats(File,X))).
+  pl_stats(File,X))),!.
 
 
 %save_conversion_data(ArgTypes,Fn,OutputStream,Data):- maplist(write_flybase_data(ArgTypes,ArgTypes,Fn,OutputStream),Data).
@@ -1533,7 +1766,7 @@ use_flybase_cols(Table,Columns):-
   do_arity_2_names(Table,ArgTypes))).
 
 do_arity_2_names(Table,[ID|ArgTypes]):-
-  must_det_ll_r((
+  must_det_ll((
   symbol_concat('data_',Table,F),
   length([ID|ArgTypes],Arity),
   length(Args,Arity),
@@ -2587,6 +2820,285 @@ ah:- add_history1(fb_stats),
 
 
 
+
+fb_pred('allele_genetic_interactions',4).
+fb_pred('automated_gene_summaries',2).
+fb_pred('automated_gene_summaries',3).
+fb_pred('best_gene_summary',4).
+fb_pred('cDNA_clone',6).
+fb_pred('cDNA_clone_data',5).
+fb_pred('cDNA_clone_data',6).
+fb_pred('cyto_genetic_seq',4).
+fb_pred('cyto-genetic-seq',4).
+fb_pred('dataset_metadata',4).
+fb_pred('directory',2).
+fb_pred('disease_model_annotations',12).
+fb_pred('disease_model_annotations',9).
+fb_pred('Dmel_enzyme',11).
+fb_pred('Dmel_enzyme_data',11).
+fb_pred('Dmel_enzyme_data',7).
+fb_pred('dmel_gene_sequence_ontology_annotations',4).
+fb_pred('dmel_human_orthologs_disease',8).
+fb_pred('dmel_paralogs',11).
+fb_pred('dmel_unique_protein_isoforms',4).
+fb_pred('entity_publication',3).
+fb_pred('entity_publication',4).
+fb_pred('fb_synonym',4).
+fb_pred('fb_synonym',6).
+fb_pred('fbal_to_fbgn',4).
+fb_pred('fbgn_annotation_ID',4).
+fb_pred('fbgn_annotation_ID',6).
+fb_pred('fbgn_exons2affy1_overlaps',2).
+fb_pred('fbgn_exons2affy2_overlaps',2).
+fb_pred('fbgn_fbtr_fbpp',2).
+fb_pred('fbgn_fbtr_fbpp',3).
+fb_pred('fbgn_fbtr_fbpp_expanded',11).
+fb_pred('fbgn_fbtr_fbpp_expanded',9).
+fb_pred('fbgn_gleanr',4).
+fb_pred('fbgn_NAseq_Uniprot',4).
+fb_pred('fbgn_NAseq_Uniprot',9).
+fb_pred('fbgn_uniprot',4).
+fb_pred('fbrf_pmid_pmcid_doi',2).
+fb_pred('fbrf_pmid_pmcid_doi',6).
+fb_pred('fbrf_pmid_pmcid_doi',7).
+fb_pred('gene_functional_complementation',5).
+fb_pred('gene_genetic_interactions',6).
+fb_pred('gene_group',7).
+fb_pred('gene_group_data',2).
+fb_pred('gene_group_data',7).
+fb_pred('gene_groups_HGNC',2).
+fb_pred('gene_groups_HGNC',3).
+fb_pred('gene_groups_HGNC',4).
+fb_pred('gene_map_table',5).
+fb_pred('gene_map_table',6).
+fb_pred('gene_rpkm_matrix',170).
+fb_pred('gene_rpkm_report',12).
+fb_pred('gene_snapshots',5).
+fb_pred('genome_cyto_seq',3).
+fb_pred('genome-cyto-seq',3).
+fb_pred('genomic_clone',4).
+fb_pred('genomic_clone_data',4).
+fb_pred('genotype_phenotype',7).
+fb_pred('genotype_phenotype_data',5).
+fb_pred('genotype_phenotype_data',7).
+fb_pred('gp_information',10).
+fb_pred('gp_information',8).
+fb_pred('id_type',2).
+fb_pred('insertion_mapping',4).
+fb_pred('insertion_mapping',7).
+fb_pred('obo-adjacent-to',3).
+fb_pred('obo-alt-id',2).
+fb_pred('obo-arity',2).
+fb_pred('obo-attached-to',3).
+fb_pred('obo-attached-to-part-of',3).
+fb_pred('obo-auto-generated-by',2).
+fb_pred('obo-basename',2).
+fb_pred('obo-broadMatch',2).
+fb_pred('obo-charge',2).
+fb_pred('obo-ChEBI-has-part',2).
+fb_pred('obo-ChEBI-has-role',2).
+fb_pred('obo-CL-capable-of',2).
+fb_pred('obo-CL-capable-of-part-of',2).
+fb_pred('obo-CL-has-part',2).
+fb_pred('obo-closeMatch',2).
+fb_pred('obo-comment',2).
+fb_pred('obo-composed-primarily-of',3).
+fb_pred('obo-conditionality',3).
+fb_pred('obo-connected-to',3).
+fb_pred('obo-consider',2).
+fb_pred('obo-contains',3).
+fb_pred('obo-continuous-with',3).
+fb_pred('obo-created-by',2).
+fb_pred('obo-creation-date',2).
+fb_pred('obo-data-version',2).
+fb_pred('obo-date',2).
+fb_pred('obo-def',3).
+fb_pred('obo-def',4).
+fb_pred('obo-default-namespace',2).
+fb_pred('obo-derives-from',3).
+fb_pred('obo-develops-directly-from',3).
+fb_pred('obo-develops-from',3).
+fb_pred('obo-develops-from-part-of',3).
+fb_pred('obo-develops-into',3).
+fb_pred('obo-directory',2).
+fb_pred('obo-disjoint-from',3).
+fb_pred('obo-electrically-synapsed-to',3).
+fb_pred('obo-exactMatch',2).
+fb_pred('obo-fasciculates-with',3).
+fb_pred('obo-FBcv-namespace',2).
+fb_pred('obo-format-version',2).
+fb_pred('obo-formula',2).
+fb_pred('obo-GO-capable-of',2).
+fb_pred('obo-GO-capable-of-part-of',2).
+fb_pred('obo-GO-directly-negatively-regulates',2).
+fb_pred('obo-GO-directly-positively-regulates',2).
+fb_pred('obo-GO-directly-regulates',2).
+fb_pred('obo-GO-has-part',2).
+fb_pred('obo-GO-has-participant',2).
+fb_pred('obo-GO-negatively-regulates',2).
+fb_pred('obo-GO-occurs-in',2).
+fb_pred('obo-GO-positively-regulates',2).
+fb_pred('obo-GO-regulates',2).
+fb_pred('obo-GO-results-in-formation-of',2).
+fb_pred('obo-GO-results-in-growth-of',2).
+fb_pred('obo-guided-by',3).
+fb_pred('obo-has-definition',2).
+fb_pred('obo-has-fasciculating-neuron-projection',3).
+fb_pred('obo-has-functional-parent',2).
+fb_pred('obo-has-name',2).
+fb_pred('obo-has-origin',3).
+fb_pred('obo-has-parent-hydride',2).
+fb_pred('obo-has-part',2).
+fb_pred('obo-has-part',3).
+fb_pred('obo-has-quality',3).
+fb_pred('obo-has-role',2).
+fb_pred('obo-has-sensory-dendrite-in',3).
+fb_pred('obo-has-soma-location',3).
+fb_pred('obo-has-synaptic-IO-in',3).
+fb_pred('obo-has-synaptic-IO-throughout',3).
+fb_pred('obo-holds-over-chain',2).
+fb_pred('obo-id-type',2).
+fb_pred('obo-immediately-preceded-by',3).
+fb_pred('obo-inchi',2).
+fb_pred('obo-inchikey',2).
+fb_pred('obo-Inheritance',2).
+fb_pred('obo-innervated-by',3).
+fb_pred('obo-innervates',3).
+fb_pred('obo-intersection-of',4).
+fb_pred('obo-inverse-of',2).
+fb_pred('obo-inverse-of',3).
+fb_pred('obo-is-a',2).
+fb_pred('obo-is-class-level',2).
+fb_pred('obo-is-conjugate-acid-of',2).
+fb_pred('obo-is-conjugate-base-of',2).
+fb_pred('obo-is-cyclic',2).
+fb_pred('obo-is-enantiomer-of',2).
+fb_pred('obo-is-functional',2).
+fb_pred('obo-is-inverse-functional',2).
+fb_pred('obo-is-metadata-tag',2).
+fb_pred('obo-is-obsolete',2).
+fb_pred('obo-is-substituent-group-from',2).
+fb_pred('obo-is-symmetric',2).
+fb_pred('obo-is-tautomer-of',2).
+fb_pred('obo-is-transitive',2).
+fb_pred('obo-mass',2).
+fb_pred('obo-member-of',3).
+fb_pred('obo-monoisotopicmass',2).
+fb_pred('obo-name',2).
+fb_pred('obo-namespace',2).
+fb_pred('obo-namespace-id-rule',2).
+fb_pred('obo-narrowMatch',2).
+fb_pred('obo-negatively-regulates',3).
+fb_pred('obo-non-functional-homolog-of',3).
+fb_pred('obo-OBI:9991118',2).
+fb_pred('obo-ontology',2).
+fb_pred('obo-overlaps',3).
+fb_pred('obo-owl:versionInfo',2).
+fb_pred('obo-part-of',3).
+fb_pred('obo-pathname',2).
+fb_pred('obo-positively-regulates',3).
+fb_pred('obo-property-value',2).
+fb_pred('obo-property-value',3).
+fb_pred('obo-receives-input-from',3).
+fb_pred('obo-receives-synaptic-input-from-neuron',3).
+fb_pred('obo-receives-synaptic-input-in-region',3).
+fb_pred('obo-receives-synaptic-input-throughout',3).
+fb_pred('obo-regulates',3).
+fb_pred('obo-relatedMatch',2).
+fb_pred('obo-remark',2).
+fb_pred('obo-replaced-by',2).
+fb_pred('obo-RO',4).
+fb_pred('obo-saved-by',2).
+fb_pred('obo-sends-synaptic-output-throughout',3).
+fb_pred('obo-sends-synaptic-output-to-cell',3).
+fb_pred('obo-sends-synaptic-output-to-region',3).
+fb_pred('obo-smiles',2).
+fb_pred('obo-subset',2).
+fb_pred('obo-subsetdef',3).
+fb_pred('obo-substage-of',3).
+fb_pred('obo-synapsed-via-type-Ib-bouton-to',3).
+fb_pred('obo-synapsed-via-type-II-bouton-to',3).
+fb_pred('obo-synapsed-via-type-III-bouton-to',3).
+fb_pred('obo-synapsed-via-type-Is-bouton-to',3).
+fb_pred('obo-synonym',3).
+fb_pred('obo-synonym',4).
+fb_pred('obo-synonym',5).
+fb_pred('obo-synonymtypedef',3).
+fb_pred('obo-synonymtypedef',4).
+fb_pred('obo-transcribed-from',3).
+fb_pred('obo-transcribed-to',3).
+fb_pred('obo-transitive-over',3).
+fb_pred('obo-variant-of',3).
+fb_pred('obo-xref',2).
+fb_pred('obo-xref',3).
+fb_pred('obo-xref',4).
+fb_pred('obo-xref-analog',2).
+fb_pred('organism_list',2).
+fb_pred('organism_list',6).
+fb_pred('pathname',2).
+fb_pred('pathway_group',7).
+fb_pred('pathway_group_data',2).
+fb_pred('pathway_group_data',7).
+fb_pred('physical_interactions_mitab',42).
+fb_pred('pmid_fbgn_uniprot',5).
+fb_pred('stocks',7).
+fb_pred('stocks_FB2023_05',7).
+fb_pred('synonym',6).
+fb_pred('transposon_sequence_set',10).
+fb_pred('transposon_sequence_set',11).
+fb_pred('transposon_sequence_set',12).
+fb_pred('transposon_sequence_set',13).
+fb_pred('transposon_sequence_set',14).
+fb_pred('transposon_sequence_set',15).
+fb_pred('transposon_sequence_set',17).
+fb_pred('transposon_sequence_set',18).
+fb_pred('transposon_sequence_set',19).
+fb_pred('transposon_sequence_set',20).
+fb_pred('transposon_sequence_set',21).
+fb_pred('transposon_sequence_set',22).
+fb_pred('transposon_sequence_set',23).
+fb_pred('transposon_sequence_set',25).
+fb_pred('transposon_sequence_set',26).
+fb_pred('transposon_sequence_set',27).
+fb_pred('transposon_sequence_set',28).
+fb_pred('transposon_sequence_set',29).
+fb_pred('transposon_sequence_set',3).
+fb_pred('transposon_sequence_set',30).
+fb_pred('transposon_sequence_set',31).
+fb_pred('transposon_sequence_set',32).
+fb_pred('transposon_sequence_set',33).
+fb_pred('transposon_sequence_set',34).
+fb_pred('transposon_sequence_set',35).
+fb_pred('transposon_sequence_set',36).
+fb_pred('transposon_sequence_set',37).
+fb_pred('transposon_sequence_set',38).
+fb_pred('transposon_sequence_set',4).
+fb_pred('transposon_sequence_set',40).
+fb_pred('transposon_sequence_set',41).
+fb_pred('transposon_sequence_set',42).
+fb_pred('transposon_sequence_set',44).
+fb_pred('transposon_sequence_set',45).
+fb_pred('transposon_sequence_set',46).
+fb_pred('transposon_sequence_set',47).
+fb_pred('transposon_sequence_set',48).
+fb_pred('transposon_sequence_set',49).
+fb_pred('transposon_sequence_set',5).
+fb_pred('transposon_sequence_set',50).
+fb_pred('transposon_sequence_set',51).
+fb_pred('transposon_sequence_set',52).
+fb_pred('transposon_sequence_set',53).
+fb_pred('transposon_sequence_set',54).
+fb_pred('transposon_sequence_set',55).
+fb_pred('transposon_sequence_set',56).
+fb_pred('transposon_sequence_set',57).
+fb_pred('transposon_sequence_set',58).
+fb_pred('transposon_sequence_set',59).
+fb_pred('transposon_sequence_set',60).
+fb_pred('transposon_sequence_set',61).
+fb_pred('transposon_sequence_set',62).
+fb_pred('transposon_sequence_set',7).
+fb_pred('transposon_sequence_set',8).
+fb_pred('transposon_sequence_set',9).
 % ==============
 % METTA COMPILER
 % ==============
@@ -2594,4 +3106,77 @@ ah:- add_history1(fb_stats),
 :- ensure_loaded(metta_interp).
 %:- ensure_loaded(metta_python).
 
+
+
+
+if_m2(G):- once(G).
+
+datalog_to_termlog(File):- atom_contains(File,'*'),expand_file_name(File,List),!,maplist(datalog_to_termlog,List).
+datalog_to_termlog(File):-
+ nb_setval(src_indents,'False'),
+   atom_concat(File,'2',File2),
+   fbug(datalog_to_termlog(File)),
+  if_m2(atom_concat(File,'.metta',M)),
+   setup_call_cleanup((open(File,read,In), open(File2,write,Out), if_m2(open(M,write,OutM))),
+  (repeat,
+   read_term(In,Term,[]),
+   (Term==end_of_file -> ! ; (process_datalog(Out,OutM,Term),fail))),
+   ((close(In),close(Out),if_m2(close(OutM)),listing(fb_pred/2)))).
+
+
+process_datalog(Out,OutM,Term):-
+   Term=..[F|Args],
+   process_datalog(Out,OutM,F,Args).
+
+
+process_datalog(Out,OutM,F,Args):-
+  must_det_ll((maplist(better_arg,Args,ArgsL),
+   Src=[F|ArgsL],OBO=..Src,
+   length(ArgsL,N),
+   assert_if_new(fb_pred(F,N)),
+   write_canonical(Out,OBO),!,writeln(Out,'.'),
+   if_m2((with_output_to(OutM,write_srcH(Src)))))).
+
+
+   % Split a string or atom by a specified delimiter.
+split_by_delimiter(Input, Delimiter, Parts) :-
+    atomic_list_concat(Parts, Delimiter, Input),
+    Parts = [_,_|_].  % Ensure that there's more than one part.
+
+always_delistify(A,A):- \+ compound(A),!.
+always_delistify(s(A,M,E),s(A,MM,E)):- !, always_delistify(M,MM).
+always_delistify(A,A):- \+ is_list(A),!.
+always_delistify([A],A):-!.
+always_delistify(A,A).
+
+better_arg(S,A):- string(S),atom_string(A,S),!.
+%better_arg1(A,B):- fix_concept(A,B),!.
+better_arg(A,A):- !.
+
+better_arg(A,B):- better_arg1(A,AA),always_delistify(AA,B).
+% Main predicate to try different delimiters.
+better_arg1(Input,s(A,Mid,E)) :- fail, (string(Input);atom(Input)),
+  once(to_case_breaks(Input,CB)), CB=[_,_,_|_],  once(cb_better_args(CB,[A|ABCParts])),
+   ABCParts=[_,_|_], append(Mid,[E],ABCParts),!.
+better_arg1(S,A):- string(S),atom_string(A,S),!.
+%better_arg1(A,B):- fix_concept(A,B),!.
+better_arg1(A,A).
+
+is_FB_input([xti(_, upper), xti(":", punct), xti(_, digit)]):-!.
+is_FB_input([xti("FB", upper), xti(_,lower), xti(_, digit)]):-!.
+cb_better_args([_],_):-!,fail.
+cb_better_args(X,_):- is_FB_input(X),!,fail.
+cb_better_args(CB,Parts):-cb_better_args_ni(CB,Parts),!.
+cb_better_args_ni([A,B,C|L],[I|Parts]):- is_FB_input([A,B,C]),maplist(arg(1),[A,B,C],ABC),atomic_list_concat(ABC,I),cb_better_args_ni(L,Parts).
+cb_better_args_ni([XTI|L],[I|Parts]):-arg(1,XTI,S),!,atom_string(I,S),cb_better_args_ni(L,Parts).
+cb_better_args_ni([],[]):-!.
+datalog_to_termlog:-
+  datalog_to_termlog('./data/*/*.datalog'),
+  datalog_to_termlog('./data/*/*/*.datalog'),
+  datalog_to_termlog('./data/*/*/*/*.datalog'),
+  datalog_to_termlog('./data/*/*/*/*/*.datalog'),
+  datalog_to_termlog('./data/*/*/*/*/*/*.datalog'),
+  datalog_to_termlog('./data/*/*/*/*/*/*/*.datalog').
+
+%datalog_to_termlog:- datalog_to_termlog('whole_flybase.datalog').
 
