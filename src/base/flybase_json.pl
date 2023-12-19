@@ -48,7 +48,7 @@ extracted_predicate(allele_image3,
             images_publicationId,
             images_pubFigure, images_permission]).
 
-wdmsg_json(G):- nop(wdmsg(G)).
+wdmsg_json(G):- nop(fbug(G)).
 note_doing(P):- wdmsg_json(P),!,call(user:P).
 assert_JSON(P):- note_doing(assert_OBO(P)).
 
@@ -127,14 +127,14 @@ with_json1(O,Values) :- is_list(Values),!,maplist(with_json1(O),Values).
 
 with_json1(O,json([driver=json(Values0)])) :- !,with_json2(O,Values0),!.
 with_json1(O,json(Values0)) :- is_list(Values0),!,with_json2(O,Values0),!.
-with_json1(O,Val):- wdmsg(error(O=Val)),!.
+with_json1(O,Val):- fbug(error(O=Val)),!.
 
 with_json2([metaData],_Values0):-!.
 with_json2(O,Values):-
   retractall(seen_arg(_,_)),
   with_json3(O,Values),
   ignore((seen_arg(_,_),
-  wdmsg(Values),
+  fbug(Values),
   listing(seen_arg/2))).
 
 with_json3(O,Values0):-
@@ -152,7 +152,7 @@ with_json4(O,Values0):-
 
 with_entry(O,AR, Key=Value):-!, with_kv([Key|O],AR,Key,Value).
 %with_entry(O,assert,JSON) :- !, process_json(O,JSON).
-with_entry(O,AR,JSON):- wdmsg(error_with_entry(O,AR,JSON)).
+with_entry(O,AR,JSON):- fbug(error_with_entry(O,AR,JSON)).
 
 uses_id_subprops(images).
 key_can_nv(M):-

@@ -470,7 +470,9 @@ pp_sex(V) :- no_src_indents,!,pp_sexi(V).
 
 pp_sex(V) :- w_proper_indent(2,w_in_p(pp_sexi(V))).
 
-no_src_indents:- option_else(src_indents,TF,true),!,TF=='False'.
+:- nb_setval(src_indents,'True').
+no_src_indents:- nb_setval(src_indents,'False').
+    %option_else(src_indents,TF,true),!,TF=='False'.
 
 pp_sexi_l([H,S]):-H=='[...]', write('['),print_items_list(S),write(' ]').
 pp_sexi_l([H,S]):-H=='{...}', write('{'),print_items_list(S),write(' }').
@@ -619,9 +621,11 @@ metta_stats:- gc_now,
    pl_stats('Total Memory Used',PM),
    pl_stats('Runtime (days:hh:mm:ss)',Formatted),
    nl,nl,!.
+
 metta_stats(F):- for_all(fb_pred(F,A),metta_stats(F,A)).
-metta_stats(F,A):- metta_stats(F,A,NC), pl_stats(F/A,NC).
-metta_stats(F,A,NC):- functor(P,F,A),predicate_property(P,number_of_clauses(NC)).
+
+metta_stats(F,A):- forall(metta_stats(F,A,NC), pl_stats(F/A,NC)).
+metta_stats(F,A,NC):- functor(P,F,A),(predicate_property(P,number_of_clauses(NC))->true;NC=0).
 pl_stats(Stat):- statistics(Stat,Value),pl_stats(Stat,Value).
 pl_stats(Stat,[Value|_]):- nonvar(Value),!, pl_stats(Stat,Value).
 pl_stats(Stat,Value):- format("~N;\t\t~@: ~`.t ~@~100|",[format_value(Stat),format_value(Value)]),!.

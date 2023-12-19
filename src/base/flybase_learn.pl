@@ -338,25 +338,6 @@ assert_progress(Concept,Atom):- pp_fb(assert_progress(Concept)=Atom),assert(Atom
 
 
 
-loaded_from_file_count(X):- flag(loaded_from_file_count,X,X).
-incr_file_count(X):- flag(loaded_from_file_count,X,X+1),  flag(total_loaded_symbols,TA,TA+1).
-
-should_cache:- fail, loaded_from_file_count(X), option_else(max_disk_cache,Num,1000), X=<Num.
-reached_file_max:- option_value(max_per_file,Y),Y\==inf,loaded_from_file_count(X),X>=Y.
-should_fix_args :- fail, \+ should_sample.
-should_sample :- !, fail.
-should_sample :- should_show_data(_),!.
-should_sample :-
-  once(option_value(samples_per_million,Fifty);Fifty=50), loaded_from_file_count(X), Y is X mod 1_000_000,!, Y >= 0, Y =< Fifty,!.
-should_show_data(X):- loaded_from_file_count(X),!,
-  once((X=<13,X>=10); (X>0,(0 is X rem 1_000_000))),
-  format(user_error,'~N',[]),
-  format(user_output,'~N',[]),!,
-  heartbeat.
-should_show_data(X):- nb_current(loading_file,F),F\==[],symbol_concat(_,'.obo',F),
-  loaded_from_file_count(X),Y is X mod 100_000, Y=<15,Y>=10.
-
-
 pfb:-
   setenv('DISPLAY','10.0.0.122:0.0'),
   profile(load_flybase_tiny).

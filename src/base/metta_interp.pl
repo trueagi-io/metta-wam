@@ -361,6 +361,7 @@ start_html_of(_Filename):-
 save_html_of(_Filename):- \+ tee_file(_TEE_FILE),!.
 save_html_of(_):- \+ has_loonit_results, \+ option_value('html',true).
 save_html_of(_):- !, writeln('<br/><a href="https://github.com/logicmoo/vspace-metta/blob/main/MeTTaLog.md">Return to Summaries</a><br/>').
+save_html_of(_Filename):-!.
 save_html_of(Filename):-
  must_det_ll((
   file_name_extension(Base,_,Filename),
@@ -1015,68 +1016,14 @@ uncompound(IsList,Src):- is_list(IsList),!,maplist(uncompound,IsList,Src).
 uncompound([Is|NotList],[SrcH|SrcT]):-!, uncompound(Is,SrcH),uncompound(NotList,SrcT).
 uncompound(Compound,Src):- compound_name_arguments(Compound,Name,Args),maplist(uncompound,[Name|Args],Src).
 
-:- dynamic(all_data_to/1).
-all_data_once:- all_data_to(_),!.
-all_data_once:- open('whole_flybase.pl',write,Out,[alias(all_data),encoding(utf8),lock(write)]),
-  assert(all_data_to(Out)),
-  writeln(Out,':- encoding(utf8).'),
-  writeln(Out,':- style_check(-discontiguous).'),
-  flush_output(Out),
-  all_data_preds.
-all_data_preds:-
- all_data_to(Out),
- with_output_to(Out,
-((listing_c(table_n_type/3),
-  listing_c(load_state/2),
-  listing_c(is_loaded_from_file_count/2),
-  listing_c(fb_pred/2),
-  listing_c(fb_arg_type/1),
-  listing_c(fb_arg_table_n/3),
-  listing_c(fb_arg/1),
-  listing_c(done_reading/1)))),!.
-all_data_done:-
-  all_data_preds,
-  ignore(retract(all_data_to(Out))),
-  close(Out).
-
-listing_c(F/A):-
-   format('~N~q.~n',[:-multifile(F/A)]),
-   format('~q.~n',[:-dynamic(F/A)]),
-   functor(P,F,A),
-   catch(forall(P,format('~q.~n',[P])),E, fbug(caused(F/A,E))).
-
-
-:- dynamic(all_metta_to/1).
-all_metta_once:- all_metta_to(_),!.
-all_metta_once:- open('whole_flybase.metta',write,Out,[alias(all_metta),encoding(utf8),lock(write)]),
-  assert(all_metta_to(Out)),
-  all_metta_preds.
-all_metta_preds:-!.
-all_metta_done:-
-  all_metta_preds,
-  retract(all_metta_to(Out)),
-  close(Out).
-
-real_assert(OBO):- is_converting,!,print_src(OBO).
-real_assert(OBO):-
-   ignore(real_assert1(OBO)),
-   real_assert2(OBO).
-
-%real_assert(OBO):- is_converting,!,print_src(OBO).
-real_assert1(OBO):- all_metta_to(Out),!,with_output_to(Out,print_src(OBO)).
-real_assert2(OBO):- all_data_to(Out),!,write_canonical(Out,OBO),!,writeln(Out,'.').
-real_assert2(OBO):- call(OBO),!.
-real_assert2(OBO):- assert(OBO).
-
-print_src(OBO):- format('~N'), uncompound(OBO,Src),!, with_indents(false,write_src(Src)).
-
 assert_to_metta(_):- reached_file_max,!.
 assert_to_metta(OBO):-
-    OBO=..[Fn|DataL],
+    must_det_ll((OBO=..[Fn|DataLL],
+    maplist(better_arg,DataLL,DataL),
     into_datum(Fn, DataL, Data),
     functor(Data,Fn,A),decl_fb_pred(Fn,A),
     real_assert(Data),!,
-   incr_file_count(_).
+   incr_file_count(_))).
 
 assert_to_metta(OBO):-
  ignore(( A>=2,A<700,
