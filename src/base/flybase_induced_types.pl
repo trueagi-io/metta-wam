@@ -40,18 +40,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 /*
 Finding Publications That Link Multiple Mutations
 SQL Version:
@@ -218,7 +206,7 @@ WHERE Gene.name IN ('gene1', 'gene2', 'gene3')
 
 gene_go_annotation(GeneName, GOTerm, GODescription) :-
     gene(GeneId, GeneName),
-    member(GeneName, ['gene1', 'gene2', 'gene3']),
+    fb-member(GeneName, ['gene1', 'gene2', 'gene3']),
     go_annotation(GeneId, GOTerm, GODescription).
 
 

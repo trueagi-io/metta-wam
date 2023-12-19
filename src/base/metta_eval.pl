@@ -1279,7 +1279,7 @@ is_user_defined_goal(Self,Head):-
 
 eval_call(S,TF):-
   s2p(S,P), !,
-  fbug(eval_call(P,'$VAR'('TF'))),as_tf(P,TF).
+  if_trace(call,fbug(eval_call(P,'$VAR'('TF')))),as_tf(P,TF).
 
 eval_80(Eq,RetType,_Depth,_Self,[AE|More],Res):-
   is_system_pred(AE),
