@@ -9,6 +9,16 @@
   multifile(fb_arg/1),
   multifile(done_reading/1).
 
+ :- discontiguous fb_metta_query/1.
+
+
+
+
+
+
+
+
+
 %./KBs/SUMO-OBO/gene-merged-SUMO.kif
 %
 %FBbt_00051628
@@ -53,6 +63,9 @@ mine_overlaps1:-
 mine_overlaps2_slow:-
  % for_all(mine_typelevel_overlaps,true),
   for_all(mine_symbolspace_overlaps,true).
+
+
+
 
 mine_typelevel_overlaps:-
   for_all(mine_typelevel_overlaps(Concept1,SC1,SC2),
@@ -460,6 +473,8 @@ into_start_end(At,S,E):- atomic_list_concat([SS,EE],'_at_',At),
 into_fb_term(Atom,Term):- \+ atom(Atom), \+ string(Atom),!,Term=Atom.
 into_fb_term(Atom,'..'(S,E)):- into_start_end(Atom,S,E),!.
 into_fb_term(Atom,Term):- into_number_or_symbol(Atom,Term),!.
+
+fb_member(E,L):- as_list([],L,LL),member(E,LL).
 
 into_number_or_symbol(Atom,Term):- atomic_list_concat(List,'|',Atom),List\=[_],!,maplist(into_fb_term,List,Term).
 %into_number_or_symbol(Atom,Term):- atom_number(Atom, Term),!,Term= Term.

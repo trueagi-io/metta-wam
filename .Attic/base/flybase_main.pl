@@ -1118,7 +1118,7 @@ load_flybase0(Ext,File):- Ext=='',file_name_extension(_,Ext2,File),Ext2\=='',!,l
 load_flybase0(Ext,_File):-  Ext=='pl',!.
 load_flybase0(Ext,_File):-  Ext=='metta', is_converting,!.
 load_flybase0(Ext,_File):-  Ext=='datalog', is_converting,!.
-load_flybase0(Ext, File):-  is_converting,exists_with_ext(File,'.metta'),(exists_with_ext(File,'.datalog');exists_with_ext(File,'.metta.datalog')),!.
+load_flybase0(_Ext, File):-  is_converting,exists_with_ext(File,'.metta'),(exists_with_ext(File,'.datalog');exists_with_ext(File,'.metta.datalog')),!.
 load_flybase0(Ext,File):-
   must_det_ll((file_name_extension(Name,_,File),
   data_pred(Name,Fn),load_flybase(Ext,File,Fn))).
@@ -1199,12 +1199,12 @@ load_atomspace_1_0_file_stream(Filename,Self,In):-
           at_end_of_stream(In)))))),!.
 
 %  ['InheritanceLink',['DiseaseOntologyNode','DOID:0112326'],['DiseaseOntologyNode','DOID:0050737']]
-do_atomspace_1_0(W,M,S,end_of_file,O):-!.
-do_atomspace_1_0(W,M,S,E,O):-
+do_atomspace_1_0(_W,_M,_S,end_of_file,_O):-!.
+do_atomspace_1_0(W,M,S,E,_O):-
     rewrite_as10_to_as20(E,E2,Extras),!,
     maplist(do_atomspace_2_0(W,M,S),[E2|Extras]).
 
-do_atomspace_2_0(W,M,S,E):-
+do_atomspace_2_0(_W,_M,_S,E):-
     assert_OBO(E),
     !. % writeq(E),!,nl.
 

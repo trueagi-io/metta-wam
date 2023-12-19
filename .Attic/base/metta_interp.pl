@@ -866,10 +866,14 @@ preview_compiler:- \+ option_value('compile',false), !.
 
 op_decl('pragma!', [ 'Atom', 'Atom'], 'EmptyType').
 
-op_decl(match, [ 'Space', 'Atom', 'Atom'], '%Undefined%').
+op_decl('match', [ 'Space', 'Atom', 'Atom'], '%Undefined%').
 op_decl('remove-atom', [ 'Space', 'Atom'], 'EmptyType').
 op_decl('add-atom', [ 'Space', 'Atom'], 'EmptyType').
 op_decl('get-atoms', [ 'Space' ], 'Atom').
+
+op_decl('get-state', [[ 'MonadicState', Type]],Type).
+op_decl('change-state!', [[ 'MonadicState',Type],Type],'EmptyType').
+op_decl('new-state', [Type], ['MonadicState',Type ]).
 
 op_decl('car-atom', [ 'Expression' ], 'Atom').
 op_decl('cdr-atom', [ 'Expression' ], 'Expression').
@@ -899,11 +903,11 @@ op_decl(cons, [ 'Atom', 'Atom' ], 'Atom').
 op_decl(decons, [ 'Atom' ], 'Atom').
 op_decl(empty, [], '%Undefined%').
 op_decl('Error', [ 'Atom', 'Atom' ], 'ErrorType').
-op_decl(eval, [ 'Atom' ], 'Atom').
 op_decl(function, [ 'Atom' ], 'Atom').
 op_decl(id, [ 'Atom' ], 'Atom').
 op_decl(unify, [ 'Atom', 'Atom', 'Atom', 'Atom' ], 'Atom').
 */
+op_decl(eval, [ 'Atom' ], 'Atom').
 op_decl(unify, [ 'Atom', 'Atom', 'Atom', 'Atom'], '%Undefined%').
 op_decl(if, [ 'Bool', 'Atom', 'Atom'], _T).
 op_decl('%', [ 'Number', 'Number' ], 'Number').
@@ -929,6 +933,7 @@ type_decl('MemoizedState').
 type_decl('Type').
 type_decl('%Undefined%').
 type_decl('Variable').
+
 
 :- dynamic(get_metta_atom/2).
 :- dynamic(asserted_metta_atom/2).
@@ -1603,6 +1608,7 @@ forall_interactive(From,WasInteractive,Complete,Goal,After):-
     Goal, (Complete==true ->  ( quietly(After),!)  ;  (  quietly( \+ After) )).
 
 print_var(Name=Var) :- print_var(Name,Var).
+print_var(Name,_Var) :- atom_concat('Num',Rest,Name),atom_number(Rest,_),!.
 print_var(Name,Var):-  write('$'),write(Name), write(' = '), write_src(Var), nl.
 
 % Entry point for the user to call with tracing enabled
