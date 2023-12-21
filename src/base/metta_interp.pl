@@ -70,6 +70,8 @@ option_value_def('trace-length',100).
 option_value_def('stack-max',100).
 option_value_def('trace-on-overtime',20.0).
 option_value_def('trace-on-overflow',false).
+
+
 option_value_def('trace-on-error',true).
 option_value_def('trace-on-load',true).
 option_value_def('trace-on-exec',true).
@@ -86,12 +88,11 @@ set_is_unit_test(TF):-
   set_option_value('trace-on-eval',TF),
   set_option_value('trace-on-pass',false),
   set_option_value('trace-on-fail',false),
-  set_option_value('exec',rtrace),
-  set_option_value('eval',rtrace),
+  if_t(TF,set_option_value('exec',rtrace)),
+  if_t(TF,set_option_value('eval',rtrace)),
   !.
 
-:- set_is_unit_test(true).
-%:- set_is_unit_test.
+:- set_is_unit_test(false).
 
 trace_on_fail:-     option_value('trace-on-fail',true).
 trace_on_overflow:- option_value('trace-on-overflow',true).
@@ -110,7 +111,7 @@ any_floats(S):- member(E,S),float(E),!.
 
 % Addition
 %'+'(Addend1, Addend2, Sum):- \+ any_floats([Addend1, Addend2, Sum]),!,Sum #= Addend1+Addend2 .
-'+'(Addend1, Addend2, Sum):- mnotrace(catch_err(plus(Addend1, Addend2, Sum),_,fail)),!.
+'+'(Addend1, Addend2, Sum):- notrace(catch_err(plus(Addend1, Addend2, Sum),_,fail)),!.
 '+'(Addend1, Addend2, Sum):- {Sum = Addend1+Addend2}.
 % Subtraction
 '-'(Sum, Addend1, Addend2):- '+'(Addend1, Addend2, Sum).
@@ -275,7 +276,7 @@ process_option_value_def:- option_value('python',load), ensure_loaded(metta_vspa
 process_option_value_def.
 
 
-%process_late_opts:- once(option_value('html',true)), once(shell('./total_loonits.sh')).
+process_late_opts:- once(option_value('html',true)), set_is_unit_test(true).
 process_late_opts:- current_prolog_flag(os_argv,[_]),!,ignore(repl).
 process_late_opts:- forall(process_option_value_def,true).
 %process_late_opts:- halt(7).
@@ -454,8 +455,8 @@ write_f_src(HB):-
 
 
 
-debug_only(G):- mnotrace(ignore(catch_warn(G))).
-debug_only(_What,G):- ignore((fail,mnotrace(catch_warn(G)))).
+debug_only(G):- notrace(ignore(catch_warn(G))).
+debug_only(_What,G):- ignore((fail,notrace(catch_warn(G)))).
 
 
 'True':- true.
@@ -483,7 +484,7 @@ descend_and_transform(P2, Input, Transformed) :-
     ).
 
 /*
-is_syspred(H,Len,Pred):- mnotrace(is_syspred0(H,Len,Pred)).
+is_syspred(H,Len,Pred):- notrace(is_syspred0(H,Len,Pred)).
 is_syspred0(H,_Ln,_Prd):- \+ atom(H),!,fail.
 is_syspred0(H,_Ln,_Prd):- upcase_atom(H,U),downcase_atom(H,U),!,fail.
 is_syspred0(H,Len,Pred):- current_predicate(H/Len),!,Pred=H.
@@ -581,15 +582,15 @@ repl_read(Expr) :- repeat,
         % this cutrs the repeat/0
         ((peek_pending_codes(_,Peek),Peek==[])->!;true).
 
-add_history_string(Str):- mnotrace(ignore(add_history01(Str))),!.
+add_history_string(Str):- notrace(ignore(add_history01(Str))),!.
 
-add_history_src(Exec):- mnotrace(ignore((Exec\=[],with_output_to(string(H),with_indents(false,write_src(Exec))),add_history_string(H)))).
+add_history_src(Exec):- notrace(ignore((Exec\=[],with_output_to(string(H),with_indents(false,write_src(Exec))),add_history_string(H)))).
 
 add_history_pl(Exec):- var(Exec), !.
 add_history_pl(eval(_,catch_red(PL),_)):- !,add_history_pl(PL).
 add_history_pl(show_failure(PL)):-!,add_history_pl(PL).
 add_history_pl(as_tf(PL,_OUT)):-!,add_history_pl(PL).
-add_history_pl(Exec):- mnotrace(ignore((Exec\=[],with_output_to(string(H),with_indents(false,(writeq(Exec),writeln('.')))),add_history_string(H)))).
+add_history_pl(Exec):- notrace(ignore((Exec\=[],with_output_to(string(H),with_indents(false,(writeq(Exec),writeln('.')))),add_history_string(H)))).
 
 
 %read_metta(In,Expr):- current_input(CI), \+ is_same_streams(CI,In), !, read_sform(In,Expr).
@@ -620,7 +621,7 @@ is_file_stream_and_size(Stream, Size) :-
 
 maybe_read_pl(In,Expr):-
   peek_line(In,Line1), Line1\=='', atom_contains(Line1, '.'),atom_contains(Line1, ':-'),
-  mnotrace(((catch_err((read_term_from_atom(Line1, Term, []), Term\==end_of_file, Expr=call(Term)),_, fail),!,
+  notrace(((catch_err((read_term_from_atom(Line1, Term, []), Term\==end_of_file, Expr=call(Term)),_, fail),!,
   read_term(In, Term, [])))).
 peek_line(In,Line1):- peek_string(In, 1024, Str), split_string(Str, "\r\n", "\s", [Line1,_|_]),!.
 peek_line(In,Line1):- peek_string(In, 4096, Str), split_string(Str, "\r\n", "\s", [Line1,_|_]),!.
@@ -859,7 +860,7 @@ load_hook0(Load,get_metta_atom(Eq,Self,H)):- B = 'True',
        assert_preds(Self,Load,Preds).
 */
 
-use_metta_compiler:- mnotrace(option_value('compile','full')), !.
+use_metta_compiler:- notrace(option_value('compile','full')), !.
 preview_compiler:- \+ option_value('compile',false), !.
 %preview_compiler:- use_metta_compiler,!.
 
@@ -945,7 +946,7 @@ metta_atom_stdlib([:, Op, [->|List]]):- op_decl(Op,Params,ReturnType),append(Par
 
 get_metta_atom(Eq,Space, Atom):- get_metta_atom_from(Space, Atom), \+ (Atom =[EQ,_,_], EQ==Eq).
 
-get_metta_atom_from(KB, [F, A| List]):- KB='&flybase',fb_pred(F, Len), length([A|List],Len),apply(F,[A|List]).
+get_metta_atom_from(KB, [F, A| List]):- KB='&flybase',fb_pred_nr(F, Len), length([A|List],Len),apply(F,[A|List]).
 get_metta_atom_from([Superpose,ListOf], Atom):- Superpose == 'superpose',is_list(ListOf),!,member(KB,ListOf),get_metta_atom_from(KB,Atom).
 get_metta_atom_from(Space, Atom):- typed_list(Space,_,L),!, member(Atom,L).
 get_metta_atom_from(KB,Atom):- (KB=='&self'; KB='&stdlib'), metta_atom_stdlib(Atom).
@@ -1086,12 +1087,12 @@ do_metta1_e(_Self,_,[=,A,B]):- !, with_concepts(false,
   (con_write('(= '), with_indents(false,write_src(A)), (is_list(B) -> connl ; true),con_write(' '),with_indents(true,write_src(B)),con_write(')'))),connl.
 do_metta1_e(_Self,_LoadExec,Term):- write_src(Term),connl.
 
-write_exec(Exec):- mnotrace(write_exec0(Exec)).
+write_exec(Exec):- notrace(write_exec0(Exec)).
 %write_exec0(Exec):- atom(Exec),!,write_exec0([Exec]).
 write_exec0(Exec):-
   wots(S,write_src(exec(Exec))),
   nb_setval(exec_src,Exec),
-  ignore((mnotrace((color_g_mesg_ok('#0D6328',(format('~N'),writeln(S))))))).
+  ignore((notrace((color_g_mesg_ok('#0D6328',(format('~N'),writeln(S))))))).
 
 
 
@@ -1203,8 +1204,8 @@ convert_tax(How,_Self,Tax,Expr,How):-
   normalize_space(string(NewTax),Tax),
   parse_sexpr_metta1(NewTax,Expr).
 
-:- if( \+ current_predicate(mnotrace/1) ).
-  mnotrace(G):- once(G).
+:- if( \+ current_predicate(notrace/1) ).
+  notrace(G):- once(G).
 :- endif.
 
 metta_interp_mode('+',load).
@@ -1249,7 +1250,7 @@ do_metta(From,call,Self,TermV,FOut):- !,
 do_metta(_File,Load,Self,Src,Out):- Load\==exec, !, as_tf(asserted_do_metta(Self,Load,Src),Out).
 
 do_metta(file(Filename),exec,Self,TermV,Out):-
-  mnotrace((
+  notrace((
      inc_exec_num(Filename),
     must_det_ll((
      get_exec_num(Filename,Nth),
@@ -1267,7 +1268,7 @@ do_metta(From,exec,Self,TermV,Out):- !, do_metta_exec(From,Self,TermV,Out).
 
 do_metta_exec(From,Self,TermV,FOut):-
   Output = X,
-   mnotrace(into_metta_callable(Self,TermV,Term,X,NamedVarsList,Was)),!,
+   notrace(into_metta_callable(Self,TermV,Term,X,NamedVarsList,Was)),!,
    user:interactively_do_metta_exec(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut).
 
 
@@ -1288,7 +1289,7 @@ into_metta_callable(_Self,TermV,Term,X,NamedVarsList,Was):- use_metta_compiler, 
   subst_vars(Res+ExecGoal,Res+Term,NamedVarsList),
   copy_term(NamedVarsList,Was),
   term_variables(Term,Vars),
-  mnotrace((color_g_mesg('#114411',print_tree(exec(Res):-ExecGoal)))),
+  notrace((color_g_mesg('#114411',print_tree(exec(Res):-ExecGoal)))),
   %nl,writeq(Term),nl,
   ((\+ \+
   ((numbervars(v(TermV,Term,NamedVarsList,Vars),999,_,[attvar(bind)]),
@@ -1303,7 +1304,7 @@ into_metta_callable(_Self,TermV,Term,X,NamedVarsList,Was):- use_metta_compiler, 
 into_metta_callable(Self,TermV,CALL,X,NamedVarsList,Was):-!,
  option_else('stack-max',StackMax,100),
  CALL = eval_H(StackMax,Self,Term,X),
- mnotrace(( must_det_ll((
+ notrace(( must_det_ll((
  if_t(preview_compiler,write_compiled_exec(TermV,_Goal)),
   subst_vars(TermV,Term,NamedVarsList),
   copy_term(NamedVarsList,Was)
@@ -1356,7 +1357,7 @@ call_max_time(Goal, MaxTime, Else) :-
     catch(if_or_else(call_with_time_limit(MaxTime, Goal),Else), time_limit_exceeded, Else).
 
 
-catch_err(G,E,C):- catch(G,E,(mnotrace(if_t(atom(E),throw(E))),C)).
+catch_err(G,E,C):- catch(G,E,(notrace(if_t(atom(E),throw(E))),C)).
 
 %repl:- option_value('repl',prolog),!,prolog.
 %:- ensure_loaded(metta_toplevel).
@@ -1372,7 +1373,7 @@ repl1:-
    with_option('doing_repl',true,
      with_option(repl,true,repl2)). %catch((repeat, repl2, fail)'$aborted',true).
 repl2:-
-   %mnotrace((current_input(In),nop(catch(load_history,_,true)))),
+   %notrace((current_input(In),nop(catch(load_history,_,true)))),
   % ignore(install_readline(In)),
    repeat,
      set_prolog_flag(gc,false),
@@ -1380,25 +1381,25 @@ repl2:-
       ignore(catch(once(repl3),restart_reading,true)),
       set_prolog_flag(gc,true),fail.
 repl3:-
-     mnotrace(( flag(eval_num,_,0),
+     notrace(( flag(eval_num,_,0),
       current_self(Self),
       current_read_mode(Mode),
       %ignore(shell('stty sane ; stty echo')),
       %current_input(In),
       format(atom(P),'metta ~w ~w> ',[Self, Mode]))),
       setup_call_cleanup(
-         mnotrace(prompt(Was,P)),
-         mnotrace((ttyflush,repl_read(Expr),ttyflush)),
-         mnotrace(prompt(_,Was))),
-      fbug(repl_read(Expr)),
-      mnotrace(if_t(Expr==end_of_file,throw(end_of_input))),
+         notrace(prompt(Was,P)),
+         notrace((ttyflush,repl_read(Expr),ttyflush)),
+         notrace(prompt(_,Was))),
+      if_trace(repl,fbug(repl_read(Expr))),
+      notrace(if_t(Expr==end_of_file,throw(end_of_input))),
       %ignore(shell('stty sane ; stty echo')),
-      mnotrace(ignore(check_has_directive(Expr))),
+      notrace(ignore(check_has_directive(Expr))),
       once(do_metta(repl_true,Mode,Self,Expr,_)).
 
 check_has_directive(Atom):- atom(Atom),atom_concat(_,'.',Atom),!.
 check_has_directive(call(N=V)):- nonvar(N),!, set_directive(N,V).
-check_has_directive(call(Rtrace)):- rtrace == Rtrace,!, rtrace,mnotrace(throw(restart_reading)).
+check_has_directive(call(Rtrace)):- rtrace == Rtrace,!, rtrace,notrace(throw(restart_reading)).
 check_has_directive(NEV):- atom(NEV), atomic_list_concat([N,V],'=',NEV), set_directive(N,V).
 check_has_directive([AtEq,Value]):-atom(AtEq),atom_concat('@',Name,AtEq), set_directive(Name,Value).
 check_has_directive(ModeChar):- atom(ModeChar),metta_interp_mode(ModeChar,_Mode),!,set_directive(read_mode,ModeChar).
@@ -1406,7 +1407,7 @@ check_has_directive(AtEq):-atom(AtEq),atom_concat('@',NEV,AtEq),check_has_direct
 check_has_directive(_).
 set_directive(N,V):- atom_concat('@',NN,N),!,set_directive(NN,V).
 set_directive(N,V):- N==mode,!,set_directive(read_mode,V).
-set_directive(N,V):- show_call(set_option_value(N,V)),!,mnotrace(throw(restart_reading)).
+set_directive(N,V):- show_call(set_option_value(N,V)),!,notrace(throw(restart_reading)).
 
 read_pending_white_codes(In):-
   read_pending_codes(In,[10],[]),!.
@@ -1472,7 +1473,7 @@ call_for_term_variables5(Term,_,SVars,Vars,call_nth(Term,Count),[Vars,SVars],Cou
 
 
 
-is_interactive(From):- mnotrace(is_interactive0(From)).
+is_interactive(From):- notrace(is_interactive0(From)).
 is_interactive0(From):- From==false,!,fail.
 is_interactive0(From):- atomic(From),is_stream(From),!, \+ stream_property(From,filename(_)).
 is_interactive0(From):- From = repl_true,!.
@@ -1521,11 +1522,11 @@ interactively_do_metta_exec(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut
   catch(interactively_do_metta_exec0(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut),'$aborted',fbug(aborted(From,TermV))).
 
 interactively_do_metta_exec0(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut):-
-  mnotrace((
+  notrace((
     Result = res(FOut),
     inside_assert(Term,BaseEval),
     option_else(answer,Leap,each),
-    Control = contrl(Leap),
+    Control = contrl(inf,Leap),
     Skipping = _,
     % Initialize Control as a compound term with 'each' as its argument.
     %GG = interact(['Result'=X|NamedVarsList],Term,trace_off),
@@ -1564,37 +1565,52 @@ interactively_do_metta_exec0(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOu
       true))))),
 
    (forall_interactive(
-    From, WasInteractive,Complete,may_rtrace(timed_call(GG,Seconds)),
-     ((Complete==true->!;true),
+    From, WasInteractive,Complete, %may_rtrace
+     (timed_call(GG,Seconds)),
+      ((Complete==true->!;true),
        %repeat,
        set_option_value(interactive,WasInteractive),
+       Control = contrl(Max,DoLeap),
        nb_setarg(1,Result,Output),
        read_pending_codes(user_input,_,[]),
        flag(result_num,R,R+1),
        flag(result_num,ResNum,ResNum),
-       (((ResNum==1,Complete==true)->(format('~NDeterministic: ',  []), !);          %or Nondet
-           ( Complete==true -> (format('~NLast Result(~w): ',[ResNum]),! );
-                               format('~NNDet Result(~w): ',[ResNum])))),
+     if_t(ResNum=<Max,
+         ((((ResNum==1,Complete==true)->(format('~NDeterministic: ',  []), !);          %or Nondet
+             ( Complete==true -> (format('~NLast Result(~w): ',[ResNum]),! );
+                                 format('~NNDet Result(~w): ',[ResNum])))),
        color_g_mesg(yellow, ignore((( if_t( \+ atomic(Output), nl), write_src(Output), nl)))),
+       give_time('Execution',Seconds),
        color_g_mesg(green,
-           ignore((NamedVarsList \=@= Was ->( maplist(print_var,NamedVarsList), nl) ; true))),
-       ( give_time('Execution',Seconds),
-         (Complete\==true, WasInteractive, Control \== contrl(leap))->
+           ignore((NamedVarsList \=@= Was ->( maplist(print_var,NamedVarsList), nl) ; true))))),
+       (
+         (Complete\==true, WasInteractive, DoLeap\==leap, ResNum<Max)->
          (write("More Solutions? "),get_single_char_key(C), writeq(key=C),nl,
          (C=='b' -> (once(repl),fail) ;
          (C=='m' -> make ;
          (C=='t' -> (nop(set_debug(eval,true)),rtrace) ;
          (C=='T' -> (set_debug(eval,true));
          (C==';' -> true ;
-         (C==esc('[A',[27,91,65]) -> nb_setarg(1, Control, leap) ;
-         (C=='l' -> nb_setarg(1, Control, leap) ;
+         (C==esc('[A',[27,91,65]) -> nb_setarg(2, Control, leap) ;
+         (C=='L' -> nb_setarg(1, Control, ResNum) ;
+         (C=='l' -> nb_setarg(2, Control, leap) ;
          (((C=='\n');(C=='\r')) -> (!,fail);
-         (!,fail)))))))))));
-       (Complete\==true, \+ WasInteractive, Control == contrl(leap)) -> true ;
+         (!,fail))))))))))));
+       (Complete\==true, \+ WasInteractive, Control = contrl(Max,leap)) -> true ;
         (((Complete==true ->! ; true)))))
                     *-> (ignore(Result = res(FOut)),ignore(Output = (FOut)))
                     ; (flag(result_num,ResNum,ResNum),(ResNum==0->(format('~N<no-results>~n~n'),!,true);true))),
    ignore(Result = res(FOut)).
+
+
+
+mqd:-
+  forall(metta_atom(_KB,['query-info',E,T,Q]),
+     (writeln(E),
+      term_variables(T,TVs),
+      term_variables(Q,QVs),
+      intersection(TVs,QVs,_,_,SVs),
+      notrace(eval(['match','&flybase',Q,T],SVs)))).
 
 
 get_single_char_key(O):- get_single_char(C),get_single_char_key(C,O).
@@ -1773,12 +1789,12 @@ really_rtrace(Goal):- with_debug((eval),with_debug((exec),Goal)).
 rtrace_on_existence_error(G):- !, catch_err(G,E, (fbug(E=G),  \+ tracing, trace, rtrace(G))).
 %rtrace_on_existence_error(G):- catch(G,error(existence_error(procedure,W),Where),rtrace(G)).
 
-prolog_only(Goal):- mnotrace(if_t(option_value(prolog,true), call(Goal))).
+prolog_only(Goal):- if_trace(prolog,Goal).
 
 write_compiled_exec(Exec,Goal):-
 %  ignore(Res = '$VAR'('ExecRes')),
   compile_for_exec(Res,Exec,Goal),
-  mnotrace((color_g_mesg('#114411',portray_clause(exec(Res):-Goal)))).
+  notrace((color_g_mesg('#114411',portray_clause(exec(Res):-Goal)))).
 
 verbose_unify(Term):- verbose_unify(trace,Term).
 verbose_unify(What,Term):- term_variables(Term,Vars),maplist(verbose_unify0(What),Vars),!.
@@ -1842,7 +1858,7 @@ timed_call(Goal,Seconds):-
 %:- nb_setval(cmt_override,lse('; ',' !(" ',' ") ')).
 
 :- abolish(fbug/1).
-fbug(Info):- in_cmt(color_g_mesg('#2f2f2f',write_src(Info))).
+fbug(Info):- notrace(in_cmt(color_g_mesg('#2f2f2f',write_src(Info)))).
 example0(_):- fail.
 example1(a). example1(_):- fail.
 example2(a). example2(b). example2(_):- fail.
@@ -1893,8 +1909,8 @@ arg_types(L,R,LR):- append(L,R,LR).
 %:- ensure_loaded('../../examples/factorial').
 %:- ensure_loaded('../../examples/fibonacci').
 
-:- abolish(notrace/1).
-notrace(G):- once(G).
+%:- abolish(system:notrace/1).
+%system:notrace(G):- once(G).
 
 %print_preds_to_functs:-preds_to_functs_src(factorial_tail_basic)
 ggtrace(G):- call(G).

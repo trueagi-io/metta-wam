@@ -23,7 +23,7 @@
 % TODO move non flybase specific code between here and the compiler
 :- ensure_loaded(flybase_main).
 % =======================================
-:- set_option_value(encoding,utf8).
+%:- set_option_value(encoding,utf8).
 
 % Meta-predicate that ensures that for every instance where G1 holds, G2 also holds.
 :- meta_predicate(for_all(0,0)).
@@ -1067,6 +1067,8 @@ p2m(NC,[F]):- compound_name_arity(NC,F,0),!.
 % Conversion for the negation as failure
 p2m((\+ A), O):- !, p2m(not(A), O).
 
+p2m((G,E),O):-  conjuncts_to_list((G,E),List),!,into_sequential(List,O),!.
+
 % Conversion for arithmetic evaluation
 %p2m(is(A, B), O):- !, p2m(eval(B, A), O).
 %p2m(is(V,Expr),let(V,Expr,'True')).
@@ -1074,7 +1076,6 @@ p2m((Head:-Body),O):- Body == true,!, O = (=(Head,'True')).
 p2m((Head:-Body),O):- Body == fail,!, O = (=(Head,'False')).
 p2m((Head:-Body),O):- conjuncts_to_list(Body,List),into_sequential(List,SP),!,O=(=(Head,SP)).
 
-p2m((G,E),O):- conjuncts_to_list((G,E),List),into_sequential(List,O),!.
 % Conversion for if-then-else constructs
 p2m((A->B;C),O):- !, p2m(if_then_else(A,B,C),O).
 p2m((A;B),O):- !, p2m(or(A,B),O).
@@ -1115,13 +1116,14 @@ prolog_to_metta(V, D) :-
 into_sequential(Body, SP) :-
     % Check if Body is not a list and convert conjunctions in Body to a list of conjuncts.
     \+ is_list(Body),
-    conjuncts_to_list(Body, List), % Converts a list of conjunctions into a sequential representation in MeTTa
+    conjuncts_to_list(Body, List),
+    is_list(List), % Converts a list of conjunctions into a sequential representation in MeTTa
     into_sequential(List, SP), !.
 into_sequential(Nothing,'True'):- Nothing ==[],!.
  % If there's only one element
 into_sequential([SP],O):- prolog_to_metta(SP,O).
 % Otherwise, construct sequential representation using AND.
-into_sequential(List, [AND|SPList]) :- is_compiled_and(CAND),CAND==AND, maplist(prolog_to_metta, List, SPList),!.
+into_sequential(List, [AND|SPList]) :- is_compiled_and(AND), maplist(prolog_to_metta, List, SPList),!.
 
 
 
@@ -1480,12 +1482,12 @@ write_mobj(F,Args):- fail, mlog_sym(K),!,pp_sexi([K,F|Args]).
 write_mobj(F,Args):- pp_sexi([F|Args]).
 
 % Rules for determining when a symbol needs to be quoted in metta.
-
+dont_quote(Atom):- atom_length(Atom,1), !, char_type(Atom,punct).
 dont_quote(Atom):- atom(Atom),upcase_atom(Atom,Atom),downcase_atom(Atom,Atom).
 
 should_quote(Atom) :- \+ atom(Atom), \+ string(Atom),!,fail.
 should_quote(Atom) :-
-   %\+ dont_quote(Atom),
+   \+ dont_quote(Atom),
    % atom(Atom),  % Ensure that the input is an atom
     atom_chars(Atom, Chars),
     once(should_quote_chars(Chars);should_quote_atom_chars(Atom,Chars)).

@@ -11,7 +11,7 @@
 
 fb_stats:- metta_stats,!.
 
-'&flybase':for_metta('&flybase',P):- fb_pred(F,A),length(L,A),P=[F|L],apply(F,L).
+'&flybase':for_metta('&flybase',P):- fb_pred_nr(F,A),length(L,A),P=[F|L],apply(F,L).
 
 % ==============
 % OBO LOADER
@@ -223,7 +223,7 @@ symbol_prefix('CHEBI', obo, 'Chemical Entities of Biological Interest').
 :- include(flybase_learn).
 
 %fbd(X,P):- fb_pred(F,A),functor(P,F,A),arg(_,P,X), no_repeats(P,call(P)).
-fbdead:- fb_pred(F,A),functor(P,F,A),arg(_,P,xxxxxxxxxxxxxxxxx),no_repeats(P,call(P)),
+fbdead:- fb_pred_nr(F,A),functor(P,F,A),arg(_,P,xxxxxxxxxxxxxxxxx),no_repeats(P,call(P)),
  writeln(fbdead=P),fail.
 fbdead.
 
@@ -261,7 +261,7 @@ fbdead.
 
 */
 
-recount_total_loaded_symbols:- flag(total_loaded_symbols,_,0),full_symbol_count(Was),flag(total_loaded_symbols,_,Was).
+recount_total_loaded_symbols:- flag(total_loaded_symbols,_,0),full_atom_count(Was),flag(total_loaded_symbols,_,Was).
 
 % Convert flybase data from CSV to Prolog format.
 load_flybase:- is_scryer,!,load_flybase_files.
@@ -853,7 +853,7 @@ sql_est_size(              0,tableinfo).
 est_size_loaded(N,F/A):- fb_pred_major(F,A),metta_stats(F,A,N).
 
 fb_pred_major(F,A):- fb_pred_m(F,A).
-fb_pred_major(F,A):- fb_pred(F,A),
+fb_pred_major(F,A):- fb_pred_nr(F,A),
   \+ fb_pred_m(F,A), \+ (fb_pred(F,A2),A2>A).
 
 fb_pred_m(fbgn_exons2affy1_overlaps,2).
@@ -2797,7 +2797,7 @@ ucn(physical_interactions_mitab, 14). %,flybase:FBrf0218395-7641.DPiM,))
 
 
 list_column_names:-
-  for_all((column_names(T,CNs),once((length(CNs,Len),Len>=2,fb_pred(T,Len)))),
+  for_all((column_names(T,CNs),once((length(CNs,Len),Len>=2,fb_pred_nr(T,Len)))),
   (print(column_names(T,CNs)),nl)).
 
 
