@@ -1,15 +1,13 @@
 ;;  Load the VSPACE python space
 
+;; to start in MeTTaLog use    ./MeTTa 8-FlybaseQuestions.metta --repl
 
 !(extend-py! metta_vspace.metta_learner)
 
-
-;; Rust only:
-!(metta_learner::vspace-main)
-
+!(fb-info!)
 
 ;; MeTTaLog only:
-!(ensure-loaded! "./data/whole_flybase")
+!(ensure-loaded! whole_flybase)
 
 ;;  define some queries
 
@@ -47,10 +45,10 @@
 
 ;; Query: Count the Number of Known RNA Processing Related Genes and Select Those with Less Than 2 Instances
 (query-info "Find the number of known RNA processing related genes and select those with less than 2 instances."
-    (genes-rna-process-less-than-two $GeneSymbol $RNAProcess $NumberOf)
+    (genes-rna-process-<-two $GeneSymbol $RNAProcess $NumberOf)
     (, (gene_rpkm_matrix! $GeneSymbol $1 $2 $RNAProcess $3)
        (number-of! (gene_rpkm_matrix! $GeneSymbol $4 $5 $RNAProcess $6) $NumberOf)
-       (less-than $NumberOf 2))
+       (< $NumberOf 2))
 )
 
 ;; Query: Identify Genes with More Than 4 Physical Interactions
@@ -58,7 +56,7 @@
     (genes-physical-interactions-more-than-four $GeneSymbol $PhysicalInteraction $NumberOf)
     (, (physical_interactions_mitab! $GeneSymbol $1 $2 $PhysicalInteraction $3 $4 $5)
        (number-of! (physical_interactions_mitab! $GeneSymbol $6 $7 $PhysicalInteraction $8 $9 $10) $NumberOf)
-       (greater-than $NumberOf 4))
+       (> $NumberOf 4))
 )
 
 ;; Query: Count Genes Associated with Specific Diseases and Select Those with More Than 3 Associations
@@ -66,23 +64,23 @@
     (genes-disease-associations-more-than-three $GeneSymbol $Disease $NumberOf)
     (, (disease_model_annotations! $GeneSymbol $1 $2 $3 $4 $5 $6 $Disease $7 $8 $9)
        (number-of! (disease_model_annotations! $GeneSymbol $10 $11 $12 $13 $14 $15 $Disease $16 $17 $18) $NumberOf)
-       (greater-than $NumberOf 3))
+       (> $NumberOf 3))
 )
 
 ;; Query: Find the Number of Gene Synonyms and Select Those with Less Than 5 Synonyms
 (query-info "Find the number of synonyms for genes and select those with less than 5 synonyms."
-    (genes-synonyms-less-than-five $GeneSymbol $Synonym $NumberOf)
+    (genes-synonyms-<-five $GeneSymbol $Synonym $NumberOf)
     (, (fb_synonym! $GeneSymbol $1 $2 $Synonym $3)
        (number-of! (fb_synonym! $GeneSymbol $4 $5 $Synonym $6) $NumberOf)
-       (less-than $NumberOf 5))
+       (< $NumberOf 5))
 )
 
 ;; Query: Count Genes Involved in Gene Regulation and Exclude Those with Less Than 2 Instances
 (query-info "Count genes involved in gene regulation and exclude those with less than 2 instances."
-    (genes-regulation-not-less-than-two $GeneSymbol $GeneRegulation $NumberOf)
+    (genes-regulation-not-<-two $GeneSymbol $GeneRegulation $NumberOf)
     (, (gene_functional_complementation! $GeneSymbol $1 $2 $GeneRegulation $3 $4)
        (number-of! (gene_functional_complementation! $GeneSymbol $5 $6 $GeneRegulation $7 $8) $NumberOf)
-       (not (less-than $NumberOf 2)))
+       (not (< $NumberOf 2)))
 )
 
 ;; Query: Identify Genes with Allelic Variants and Select Those with More Than 6 Variants
@@ -90,7 +88,7 @@
     (genes-allelic-variants-more-than-six $GeneSymbol $AlleleSymbol $NumberOf)
     (, (allele_genetic_interactions! $AlleleSymbol $1 $2 $3 $GeneSymbol)
        (number-of! (allele_genetic_interactions! $AlleleSymbol $4 $5 $6 $GeneSymbol) $NumberOf)
-       (greater-than $NumberOf 6))
+       (> $NumberOf 6))
 )
 
 
@@ -374,12 +372,14 @@
       (synonym! $SynonymID $MapTableID $CurrentSymbol $CurrentFullName $43 $44))
 )
 
-(number-of!
+!"
+!(number-of!
    (, (fbgn_fbtr_fbpp_expanded! $GeneID $TranscriptType $TranscriptID $GeneSymbol $GeneFullName $AnnotationID $28 $29 $30 $31 $32)
       (dmel_unique_protein_isoforms! $ProteinID $ProteinSymbol $TranscriptSymbol $33)
       (dmel_paralogs! $ParalogGeneID $ProteinSymbol $34 $35 $36 $37 $38 $39 $40 $41 $42)
       (gene_map_table! $MapTableID $OrganismAbbreviation $ParalogGeneID $RecombinationLoc $CytogeneticLoc $SequenceLoc)
       (synonym! $SynonymID $MapTableID $CurrentSymbol $CurrentFullName $43 $44))
+"
 
 ;; Query: Connect Gene Mapping with Expanded Transcripts, Protein Isoforms, Gene Summaries, and Basic Transcripts
 (query-info "Link gene mapping data with expanded transcripts, unique protein isoforms, gene summaries, and basic transcript information."
@@ -639,6 +639,8 @@
             (not (fbgn_NAseq_Uniprot! $GeneSymbol $12 $13 $ExcludedProteinAccession $14 $15 $16))))
 )
 
+!(fb-info!)
+
 (: number-of! (-> Atom Number))
 (= (number-of! $query $length)
     (length! (match &self $query t) $length))
@@ -662,6 +664,9 @@
    (println! ("time was = " (time! (number-of! $query $count))))
    (println! ("total of query = " $count)))
 
+
+;; Rust only:
+!(metta_learner::vspace-main)
 
 ;; !(do-77-queries)
 
