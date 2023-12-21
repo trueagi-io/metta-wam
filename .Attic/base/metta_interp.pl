@@ -1316,7 +1316,7 @@ into_metta_callable(Self,TermV,CALL,X,NamedVarsList,Was):-!,
   )))),!.
 
 eval_H(StackMax,Self,Term,X):-  eval_args('=',_,StackMax,Self,Term,X).
-
+eval_H(Term,X):- eval_args(Term,X).
 /*
 eval_H(StackMax,Self,Term,X).
 
