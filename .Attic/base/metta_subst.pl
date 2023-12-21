@@ -922,9 +922,9 @@ subst_args40(Eq,Depth,Self,[F|X],FY):- is_function(F), \+ is_special_op(F), is_l
 subst_args40(Eq,Depth,Self,FX,FY):- subst_args5(Depth,Self,FX,FY).
 
 subst_args5(_Dpth,_Slf,[F|LESS],Res):- once(subst_selfless([F|LESS],Res)),mnotrace(([F|LESS]\==Res)),!.
-subst_args5(Depth,Self,[AE|More],TF):- is_system_pred(AE), length(More,Len),
+subst_args5(Depth,Self,[AE|More],TF):- fail, is_system_pred(AE), length(More,Len),
   (is_syspred(AE,Len,Pred),catch_warn(as_tf(apply(Pred,More),TF)))*->true;subst_args6(Depth,Self,[AE|More],TF).
-subst_args6(_Dpth,_Slf,[AE|More],TF):- is_system_pred(AE),length([AE|More],Len), is_syspred(AE,Len,Pred),append(More,[TF],Args),!,catch_warn(apply(Pred,Args)).
+subst_args6(_Dpth,_Slf,[AE|More],TF):- fail, is_system_pred(AE),length([AE|More],Len), is_syspred(AE,Len,Pred),append(More,[TF],Args),!,catch_warn(apply(Pred,Args)).
 
 %subst_args40(Eq,Depth,Self,[X1|[F2|X2]],[Y1|Y2]):- is_function(F2),!,subst_args(Eq,RetType,Depth,Self,[F2|X2],Y2),subst_args(Eq,RetType,Depth,Self,X1,Y1).
 

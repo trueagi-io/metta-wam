@@ -3,7 +3,7 @@
   multifile(table_n_type/3),
   multifile(load_state/2),
   multifile(is_loaded_from_file_count/2),
-  multifile(fb_pred/2),
+  multifile(fb_pred_nr/2),
   multifile(fb_arg_type/1),
   multifile(fb_arg_table_n/3),
   multifile(fb_arg/1),
@@ -39,7 +39,7 @@ good_concept(listOf(E1)):- good_concept(E1),symbol(E1).
 
 is_good_symbol_name(E1):- symbol(E1), symbol_length(E1,L),L>=2, \+ symbol_number(E1,_).
 
-fb_pred_g(F,A):-fb_pred(F,A), \+ skipped_anotations(F), A>0, A<20.
+fb_pred_g(F,A):-fb_pred_nr(F,A), \+ skipped_anotations(F), A>0, A<20.
 
 mine_corisponds(Concept1,Corispondance):-
  fb_arg_table_n(Concept1,Fn1,Nth1),is_good_symbol_name(Concept1),
@@ -397,7 +397,7 @@ maybe_fix_columns_nth(Fn,Nth,A,New):- fix_columns_nth(Fn,Nth), fix_concept(A,New
 maybe_fix_columns_nth(_,_,A,A).
 
 
-cleanup_arities:- for_all((fb_pred(F,2),fb_pred(F,N),N>2),retract(fb_pred(F,2))).
+cleanup_arities:- for_all((fb_pred_nr(F,2),fb_pred_nr(F,N),N>2),retract(fb_pred(F,2))).
 
 
 
@@ -450,7 +450,7 @@ pp_fb1(P):- fbdebug1(P),!,nl.
 
 
 fbgn_exons2affy1_overlaps_each(Gene,At):-
-   fb_pred(fbgn_exons2affy1_overlaps, Arity),
+   fb_pred_nr(fbgn_exons2affy1_overlaps, Arity),
    functor(Pred,fbgn_exons2affy1_overlaps, Arity),
    arg(1,Pred,Gene),
    call(Pred),
@@ -484,7 +484,7 @@ into_number_or_symbol(Atom,Term):- Term=Atom.
 a2t_assign_var(N=V):- N=V.
 
 fbgn_exons2affy2_overlaps_each(Gene,At):-
-   fb_pred(fbgn_exons2affy2_overlaps, Arity),
+   fb_pred_nr(fbgn_exons2affy2_overlaps, Arity),
    functor(Pred,fbgn_exons2affy2_overlaps, Arity),
    arg(1,Pred,Gene),
    call(Pred),
@@ -527,7 +527,7 @@ expand_xref_once_except(Except,Id,Set):-
     ->true;Set=Except).
 
 expand_xref_once_except_each(Except,Id,N,P1):-
-  fb_pred(F, Arity),
+  fb_pred_nr(F, Arity),
   xgc,
   \+ member(argNOf(N,F/Arity),Except),   \+ member(F/Arity,Except),
   Arity>=N,

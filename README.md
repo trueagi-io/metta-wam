@@ -25,46 +25,12 @@ git clone https://github.com/logicmoo/vspace-metta
 # Change to the cloned directory
 cd vspace-metta
 
-# Add our python scripts PYTHONPATH  ( Later on we might use pip install . )
-export PYTHONPATH=$PWD/metta_vspace:$PYTHONPATH
-
-# set our precomputed url
-export FBPC_URL=ftp.flybase.org/releases/FB2023_04/precomputed_files/
-
-# Download necessary files
-wget --no-parent -A .gz -r -P ./data/ http://$FBPC_URL
-
-# set our precomputed loc
-export FBPC_LOC=./data/$FBPC_URL
-
-# see if the server gave us duplicated files (usually two files!)
-find $FBPC_LOC -type f -name '*_fb_*' -exec bash -c 'if [[ -f ${1/_fb_????_??/} ]]; then ls -l ${1}; ls -l ${1/_fb_????_??/};  echo "Will delete:" ${1/_fb_????_??/}; fi' _ {} \;
-
-# delete the more ambiguous duplicated files
-find $FBPC_LOC -type f -name '*_fb_*' -exec bash -c 'if [[ -f ${1/_fb_????_??/} ]]; then rm -f ${1/_fb_????_??/}; fi' _ {} \;
-
-# Should be arround 587M
-du -hs $FBPC_LOC
-
-# Decompress the downloaded files
-find $FBPC_LOC -type f -name "*.gz" -execdir gunzip {} \;
-
-# Check that it should be arround 7.2G now
-du -hs $FBPC_LOC
-
-# For all files instead of using FBte:0000666  we will use FBte0000666  (since that is how it is used in the TSV files)
-# Also flybase:FBte0000666  will become FBte0000666 (mostly it only happens in strings)
-find $FBPC_LOC -type f -exec sed -i -e 's/\(FB[a-z]\{2\}\):\([0-9]\)/\1\2/g' -e 's/[Ff][Ll][Yy][Bb][Aa][Ss][Ee]:\([A-Za-z]\)/\1/g' {} \;
-find $FBPC_LOC -name "*.fb" -exec sed -i -e 's/FB:FB/FB/g' {} \;
-find $FBPC_LOC -name "*.json" -exec sed -i -e 's/FLYBASE:FB/FB/g' {} \;
-
-# Build the whole_flybase.qlf  (Quick Load File) Takes about 40 minutes one time but makes
-./MeTTa -G "!(create-whole-flybase-pl! ${FBPC_LOC})" -G "!(halt! 777)"
-
-# Load the file and make queries
-./MeTTa flybase.metta -G "!(repl!)"
-
+chmod +x INSTALL.md  #incase Git lost +x n the file
+# Answer the questions and follow the directions
+./INSTALL.md
 ```
+
+
 
 #### For loading Flybase into Rust Metta (Optional)
 
@@ -84,11 +50,53 @@ find ./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/ -type f -name 
 
 
 ## :computer: Various Usages and Demos
-- Run in MeTTA:
+
+- Run in MeTTaLog without Rust installed:
+```
+./MeTTa
+metta &self +> !(ensure-loaded! whole_flybase)
+metta &self +> !(match &flybase (gene_map_table $Dmel $abo FBgn0000018 $C $D $E) (gene_map_table $Dmel $abo FBgn0000018 $C $D $E))
+
+
+!(match &flybase (gene_map_table $Dmel $Abo FBgn0000018 $C $D $E) (gene_map_table $Dmel $Abo FBgn0000018 $C $D $E))
+
+NDet Result(1):
+(gene_map_table Dmel abo FBgn0000018 2-44 32C1-32C1 2L:10973443..10975293(-1))
+
+$E = 2L:10973443..10975293(-1)
+$D = 32C1-32C1
+$C = 2-44
+$Abo = abo
+$Dmel = Dmel
+
+
+; Execution took 0.000279 secs. (279.20 microseconds)
+More Solutions? key=(;)
+NDet Result(2):
+(gene_map_table Dmel abo FBgn0000018 2-44 32C1-32C1 2L:10973443..10975293(-1))
+
+$E = 2L:10973443..10975293(-1)
+$D = 32C1-32C1
+$C = 2-44
+$Abo = abo
+$Dmel = Dmel
+
+
+; Execution took 0.002 secs. (1.53 milliseconds)
+More Solutions? key=(;)
+Last Result(3):
+(gene_map_table $_311278 $_311500 FBgn0000018 $_311724 $_311928 $_312132)
+
+metta &self +> !(, (fbgn_fbtr_fbpp_expanded! $GeneID $TranscriptType $TranscriptID $GeneSymbol $GeneFullName $AnnotationID $28 $29 $30 $31 $32) (dmel_unique_protein_isoforms! $ProteinID $ProteinSymbol $TranscriptSymbol $33) (dmel_paralogs! $ParalogGeneID $ProteinSymbol $34 $35 $36 $37 $38 $39 $40 $41 $42) (gene_map_table! $MapTableID $OrganismAbbreviation $ParalogGeneID $RecombinationLoc $CytogeneticLoc $SequenceLoc) (synonym! $SynonymID $MapTableID $CurrentSymbol $CurrentFullName $43 $44))
+
+
+- Run in Rust MeTTA:
   ```
   export PYTHONPATH=metta_vspace:$PYTHONPATH
   metta 1-VSpaceTest.metta
   @h
+  metta@&self +> !(ensure-loaded! whole_flybase)
+  metta@&self +> !(, (fbgn_fbtr_fbpp_expanded! $GeneID $TranscriptType $TranscriptID $GeneSymbol $GeneFullName $AnnotationID $28 $29 $30 $31 $32) (dmel_unique_protein_isoforms! $ProteinID $ProteinSymbol $TranscriptSymbol $33) (dmel_paralogs! $ParalogGeneID $ProteinSymbol $34 $35 $36 $37 $38 $39 $40 $41 $42) (gene_map_table! $MapTableID $OrganismAbbreviation $ParalogGeneID $RecombinationLoc $CytogeneticLoc $SequenceLoc) (synonym! $SynonymID $MapTableID $CurrentSymbol $CurrentFullName $43 $44))
   ```
 - Launch vspace-metta Jupyter notebook:
   ```

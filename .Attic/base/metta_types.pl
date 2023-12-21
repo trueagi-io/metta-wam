@@ -1,7 +1,7 @@
 
 
 
-mnotrace(G):- once(G).
+mnotrace(G):- notrace(G).
 
 is_decl_type(ST):- metta_type(_,_,Type),sub_sterm(T,Type),T=@=ST, \+ nontype(ST).
 is_decl_type([ST|_]):- !, atom(ST),is_decl_type_l(ST).

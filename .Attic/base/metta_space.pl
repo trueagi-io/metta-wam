@@ -318,7 +318,7 @@ metta_assertdb_del(KB,Atom):- subst_vars(Atom,Old), decl_m_fb_pred(user,asserted
 metta_assertdb_replace(KB,Old,New):- metta_assertdb_del(KB,Old), metta_assertdb_add(KB,New).
 metta_assertdb_count(KB,Count):-
  must_det_ll((
-  decl_m_fb_pred(user,asserted_metta_atom,2), full_symbol_count(SL1),
+  decl_m_fb_pred(user,asserted_metta_atom,2), full_atom_count(SL1),
   MP = asserted_metta_atom(KB,_),
   predicate_property(MP,number_of_clauses(SL2)),
   predicate_property(MP,number_of_rules(SL3)),
@@ -565,8 +565,10 @@ call_sexpr(S):- writeln(call=S).
 
 :- dynamic(fb_pred/2).
 
-full_symbol_count(SL):- flag(total_loaded_atoms,SL,SL),SL>1,!.
-full_symbol_count(SL):- findall(NC,(fb_pred(F,A),metta_stats(F,A,NC)),Each), sumlist(Each,SL).
+%full_atom_count(SL):- flag(total_loaded_atoms,SL,SL),SL>1,!.
+full_atom_count(SL):- findall(NC,(fb_pred_nr(F,A),metta_stats(F,A,NC)),Each), sumlist(Each,SL).
+
+fb_pred_nr(F,A):-  dcall0000000000(no_repeats((F=A), fb_pred(F,A))).
 
 heartbeat :-
     % Get the current time and the last printed time
@@ -593,7 +595,7 @@ heartbeat :-
 metta_stats:- gc_now,
    writeln('\n\n\n\n\n\n;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'),
    writeln(';~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'),
-   full_symbol_count(SL),
+   full_atom_count(SL),
    format("~N~n; Total\t\tAtoms (Atomspace size): ~`.t ~D~108|~n",[SL]),
    get_time(CurrentTime), nb_setval(last_printed_time, CurrentTime),
    post_statistic(memory,Mem),
@@ -622,7 +624,7 @@ metta_stats:- gc_now,
    pl_stats('Runtime (days:hh:mm:ss)',Formatted),
    nl,nl,!.
 
-metta_stats(F):- for_all(fb_pred(F,A),metta_stats(F,A)).
+metta_stats(F):- for_all(fb_pred_nr(F,A),metta_stats(F,A)).
 
 metta_stats(F,A):- forall(metta_stats(F,A,NC), pl_stats(F/A,NC)).
 metta_stats(F,A,NC):- functor(P,F,A),(predicate_property(P,number_of_clauses(NC))->true;NC=0).
