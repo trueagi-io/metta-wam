@@ -1068,6 +1068,8 @@ eq_unify( Eq,  SharedType, X, Y, TF):- as_tf(eval_until_unify(Eq,SharedType, X, 
 suggest_type(_RetType,_Bool).
 
 
+true_type(_,_,_).
+
 eval_20(Nth,Eq,RetType,Depth,Self,PredDecl,Res):-
   if_or_else((eval_30(Eq,RetType,Depth,Self,PredDecl,Res)),
        if_or_else(eval_40(Eq,RetType,Depth,Self,PredDecl,Res),
