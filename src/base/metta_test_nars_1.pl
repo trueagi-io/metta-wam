@@ -370,8 +370,8 @@ metta_defn_ES(['|-',[[A,-->,['{',B,'}']],C]] ,  [[A,<->,['{',B,'}']],['Truth_Str
 metta_defn_ES(['|-',[[['$OBJ'(claz_bracket_vector,['$S'])],-->,A],B]] ,  [[['$OBJ'(claz_bracket_vector,['$S'])],<->,A],['Truth_StructuralIntersection',B]]).
 metta_defn_ES(['|-',[[['{',A,'}'],-->,B],C],[[D,<->,A],E]] ,  [[['{',D,'}'],-->,B],['Truth_Analogy',C,E]]).
 metta_defn_ES(['|-',[[A,-->,['$OBJ'(claz_bracket_vector,['$M'])]],B],[[_,<->,_],C]] ,  [[A,-->,['$OBJ'(claz_bracket_vector,['$S'])]],['Truth_Analogy',B,C]]).
-get_metta_atom(Eq,'&self',[=,['|-',[[['{',A,'}'],<->,['{',B,'}']]],[A,<->,B],['Truth_StructuralIntersection',_]]]).
-get_metta_atom(Eq,'&self',[=,['|-',[[['$OBJ'(claz_bracket_vector,[A])],<->,['$OBJ'(claz_bracket_vector,[B])]]],[_,<->,_],['Truth_StructuralIntersection',_]]]).
+metta_defn_ES([=,['|-',[[['{',A,'}'],<->,['{',B,'}']]],[A,<->,B],['Truth_StructuralIntersection',_]]]).
+metta_defn_ES([=,['|-',[[['$OBJ'(claz_bracket_vector,[A])],<->,['$OBJ'(claz_bracket_vector,[B])]]],[_,<->,_],['Truth_StructuralIntersection',_]]]).
 % ;;NAL-3
 % ;;!Set decomposition:
 metta_defn_ES(['|-',[[['{',A,_,'}'],-->,B],C]] ,  [[['{',A,'}'],-->,B],['Truth_StructuralDeduction',C]]).

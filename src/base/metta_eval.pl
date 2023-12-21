@@ -424,6 +424,8 @@ eval_20(Eq,RetType,_Dpth,Self,['atom-count',Other],Count):- !, into_space(Self,O
 eval_20(Eq,RetType,_Dpth,Self,['atom-replace',Other,Rem,Add],TF):- !, into_space(Self,Other,Space), copy_term(Rem,RCopy),
   as_tf((metta_atom_iter_ref(Space,RCopy,Ref), RCopy=@=Rem,erase(Ref), do_metta(Other,load,Add)),TF).
 */
+eval_20(Eq,RetType,_Dpth,_Slf,['new-space'],Space):- !, 'new-space'(Space),check_returnval(Eq,RetType,Space).
+
 eval_20(Eq,RetType,Depth,Self,[Op,Space|Args],Res):- is_space_op(Op),!,
   eval_space_start(Eq,RetType,Depth,Self,[Op,Space|Args],Res).
 
@@ -454,22 +456,6 @@ eval_space(Eq,RetType,_Dpth,_Slf,['atom-replace',Space,Rem,Add],TF):- !,
 eval_space(Eq,RetType,_Dpth,_Slf,['get-atoms',Space],Atom):- !,
   ignore(RetType='Atom'), get_metta_atom_from(Space, Atom), check_returnval(Eq,RetType,Atom).
 
-/*
-get_atoms(_Dpth,_Slf,Other,Atom):- Other=='&self',!,get_metta_atom_from(Other, Atom).
-% get_atoms_fail(Depth,Self,Other,Atom):- fail, is_asserted_space(Other),!, get_metta_atom(Eq,Other,Atom).
-get_atoms(Depth,Self,Other,AtomO):-
-  into_space(Depth,Self,Other,Space),
-  once((space_to_Space(Depth,Self,Space,SpaceC),
-  into_listoid(SpaceC,AtomsL))),
-  %no_repeat_var(NRAtom),
-  dcall((member(Atom,AtomsL),
-  %Atom = NRAtom,
-  AtomO=Atom)).
-
-space_to_Space(_Dpth,_Slf,Space,SpaceC):- compound(Space),functor(Space,_,1),arg(1,Space,L),is_list(L),!,SpaceC=Space.
-space_to_Space(_Dpth,_Slf,Space,SpaceC):- findall(Atom, get_metta_atom_from(Space, Atom),Atoms),
-   SpaceC = 'hyperon::space::DynSpace'(Atoms).
-*/
 
 %eval_space(Eq,RetType,Depth,Self,['match',Other,Goal,Template],Template):- into_space(Self,Other,Space),!, metta_atom_iter(Eq,Depth,Space,Goal).
 %eval_space(Eq,RetType,Depth,Self,['match',Other,Goal,Template,Else],Template):- into_space(Self,Other,Space),!,  (metta_atom_iter(Eq,Depth,Space,Goal)*->true;Else=Template).
@@ -516,35 +502,15 @@ metta_atom_iter(Eq,_Depth,_Slf,Other,[Equal,[F|H],B]):- Eq == Equal,!,  % trace,
 metta_atom_iter(_Eq,Depth,_,_,_):- Depth<3,!,fail.
 metta_atom_iter(Eq,Depth,Self,Other,[And|Y]):- atom(And), is_and(And),!,
   (Y==[] -> true ;  ( D2 is Depth -1, Y = [H|T], metta_atom_iter(Eq,D2,Self,Other,H),metta_atom_iter(Eq,D2,Self,Other,[And|T]))).
-metta_atom_iter(Eq,_Dpth,_Slf,Other,H):- get_metta_atom(Eq,Other,H).
 
-% is this OK?
-metta_atom_iter(Eq,Depth,Self,Other,H):- metta_defn(Eq,Other,H,B), D2 is Depth -1, metta_atom_iter(Eq,D2,Self,Other,B).
+metta_atom_iter(Eq,Depth,_Slf,Other,X):- eval_args_true(Eq,_RetType,Depth,Other,X).
+
+%get_metta_atom_from(Space, Atom)
+
 %metta_atom_iter_l2(Depth,Self,Other,H):- metta_atom_iter(Eq,Depth,Self,Other,H).
 %$metta_atom_iter(Eq,_Dpth,_Slf,[]):-!.
 
-eval_20(Eq,RetType,_Dpth,_Slf,['new-space'],Space):- !, 'new-space'(Space),check_returnval(Eq,RetType,Space).
 
-
-/*
-
-metta_atom_iter(Eq,_Dpth,Other,[Equal,H,B]):- '=' == Equal,!,
-  (metta_defn(Eq,Other,H,B)*->true;(get_metta_atom(Eq,Other,H),B='True')).
-
-metta_atom_iter(Eq,Depth,_,_):- Depth<3,!,fail.
-metta_atom_iter(Eq,_Dpth,_Slf,[]):-!.
-metta_atom_iter(Eq,_Dpth,Other,H):- get_metta_atom(Eq,Other,H).
-metta_atom_iter(Eq,Depth,Other,H):- D2 is Depth -1, metta_defn(Eq,Other,H,B),metta_atom_iter(Eq,D2,Other,B).
-metta_atom_iter(Eq,_Dpth,_Slf,[And]):- is_and(And),!.
-metta_atom_iter(Eq,Depth,Self,[And,X|Y]):- is_and(And),!,D2 is Depth -1, metta_atom_iter(Eq,D2,Self,X),metta_atom_iter(Eq,D2,Self,[And|Y]).
-*/
-/*
-metta_atom_iter2(_,Self,[=,X,Y]):- metta_defn(Eq,Self,X,Y).
-metta_atom_iter2(_Dpth,Other,[Equal,H,B]):- '=' == Equal,!, metta_defn(Eq,Other,H,B).
-metta_atom_iter2(_Dpth,Self,X,Y):- metta_defn(Eq,Self,X,Y). %, Y\=='True'.
-metta_atom_iter2(_Dpth,Self,X,Y):- get_metta_atom(Eq,Self,[=,X,Y]). %, Y\=='True'.
-*/
-%metta_atom_iter_ref(Other,[Eq,H,B],Ref):-clause(metta_defn(Eq,Other,H,B),true,Ref).
 metta_atom_iter_ref(Other,H,Ref):-clause(asserted_metta_atom(Other,H),true,Ref).
 
 
@@ -557,68 +523,7 @@ metta_atom_iter_ref(Other,H,Ref):-clause(asserted_metta_atom(Other,H),true,Ref).
 % =================================================================
 % Macro: case
 :- nodebug(metta(case)).
-/*
-!(assertEqualToResult
-  (case
-    (Link $X B)
-    ( ( (g $Y)
-        (Link $X $Y)))) ())
-*/
-/*
-eval_20(Eq,RetType,Depth,Self,['case',A,CL],Value):- !,
-((eval(Depth,Self,A,AA),
-  if_trace((case),(writeqln('switch'(A)=AA))),
-  eval_case_result(Eq,RetType,Depth,Self,A,AA,CL,Value))*->true;
-Value=found_none).
 
-eval_case_result(Eq,RetType,Depth,Self,A,AA,CL,Value):-
-    must_det_ll(into_case_list(1,CL,KVs)),
-    select_switch(Depth,Self,AA,KVs,Match,Value),
-    if_trace((case),(writeqln('matched'=Match))),
-    if_trace((case),(writeqln('result'=Value))),
-   check_returnval(Value,Eq,RetType).
-eval_case_result(Eq,RetType,Depth,Self,A,AA,CL,Value):-
-        select(['%void%',_],CL,Rest), Rest == [],!, Value =[].
-eval_case_result(Eq,RetType,Depth,Self,A,AA,CL,Value):-
-        select(['%void%',Value],CL,Rest),!.
-
-
-select_switch(Depth,_Self,_A,_Cases,_Match,_Value):- Depth<1,!,fail.
-select_switch(Depth,Self,A,Cases,Match,Value):-
-  Depth2 is Depth -1,
-  ((if_trace((case),(writeqln('select-1'=A))),select_case(Depth2,Self,A,Cases,Match,Value))*->true;
-    ((eval_complete_change(Eq,_RetType,Depth2,Self,A,AA),if_trace((case),(writeqln('select-2'=AA))),
-     select_switch(Depth2,Self, AA,Cases,Match,Value))*->true;
-                    (best_key('%void%',Cases,Match,Value)))).
-
-  select_case(Depth,Self,AA,Cases,Match,Value):-
-     ((best_key(AA,Cases,Match,Value) *-> true ;
-      ((maybe_special_keys(Depth,Self,Cases,CasES), best_key(AA,CasES,Match,Value)) *-> true;
-         (fail)))).
-
-  best_key(AA,Cases,Match,Value):-
-    ((member(Match-Value,Cases),AA ==Match,must_det_ll(AA = Match))->true;
-      ((member(Match-Value,Cases),AA=@=Match,must_det_ll(AA = Match))->true;
-        ((member(Match-Value,Cases), AA=Match))->true;
-         ((member(Match-Value,Cases),unify_enough(AA,Match))->true))).
-
- %into_case_list([[C|ASES0]],CASES):-  is_list(C),!, into_case_list([C|ASES0],CASES),!.
-	into_case_list(N,[SV|CL],[S-V|CASES]):-
-     must_det_ll(is_case(S,SV,V)),
-     if_trace((case),(format('~N'), writeqln('case'(N)=(S>V)))),
-     N2 is N+1,
-     into_case_list(N2,CL,CASES).
-  into_case_list(_,[],[]).
-
-		is_case(AA,[AA,Value],Value):-!.
-		is_case(AA,[AA|Value],Value).
-
-   %maybe_special_keys(Depth,Self,[K-V|KVI],[AK-V|KVO]):- fail,eval(Eq,RetType,Depth,Self,K,AK), K\=@=AK,!, maybe_special_keys(Depth,Self,KVI,KVO).
-   maybe_special_keys(Depth,Self,[_|KVI],KVO):-
-     fail, maybe_special_keys(Depth,Self,KVI,KVO).
-   maybe_special_keys(_Depth,_Self,[],[]).
-
-*/
 
 % if there is only a void then always return nothing for each Case
 eval_20(Eq,_RetType,Depth,Self,['case',A,[[Void,_]]],Res):-
@@ -1082,6 +987,7 @@ nd_ignore(Goal):- call(Goal)*->true;true.
 % =================================================================
 
 is_True(T):- T\=='False',T\==[].
+%is_False(T):- once(T=='False';T==[]).
 
 is_and(S):- \+ atom(S),!,fail.
 is_and(',').
@@ -1090,21 +996,44 @@ is_and(S):- is_and(S,_).
 is_and(S,_):- \+ atom(S),!,fail.
 is_and('and','True').
 is_and('and2','True').
-is_and('#COMMA','True'). is_and(',','True').  % is_and('And').
+is_and('#COMMA','True').
+is_and(',' , 'EmptyType').  % is_and('And').
 
-eval_20(Eq,RetType,_Dpth,_Slf,[And],True):- is_and(And,True),!,check_returnval(Eq,RetType,True).
-eval_20(Eq,RetType,Depth,Self,[And,X,Y],TF):-  is_and(And,True),!, as_tf((
-  eval_args(Eq,RetType,Depth,Self,X,True),eval_args(Eq,RetType,Depth,Self,Y,True)),TF).
-eval_20(Eq,RetType,Depth,Self,[And,X],True):- is_and(And,True),!,
-  eval_args(Eq,RetType,Depth,Self,X,True).
+%eval_20(Eq,RetType,Depth,Self,[And,X,Y],TF):-  is_and(And,True),!,
+  %as_tf((eval_args(Eq,RetType,Depth,Self,X,True),
+   %         eval_args(Eq,RetType,Depth,Self,Y,True)),TF).
+
+%eval_20(Eq,RetType,Depth,Self,[And,X],True):- is_and(And,True),!, eval_args(Eq,RetType,Depth,Self,X,True).
+
+eval_20(Eq,RetType,_Dpth,_Slf,[And],TF):- is_and(And,_), !, \+ is_False(TF), check_returnval(Eq,RetType,TF), ignore(TF='True').
 eval_20(Eq,RetType,Depth,Self,[And,X|Y],TF):- is_and(And,_True),!,
-  eval_args(Eq,RetType,Depth,Self,X,TF1), \+ \+ is_True(TF1),
-  eval_args(Eq,RetType,Depth,Self,[And|Y],TF).
+  eval_args_true(Eq,RetType,Depth,Self,X,TF),
+  eval_args(Eq,RetType,Depth,Self,[And|Y],_TF).
 
 eval_20(Eq,RetType,Depth,Self,['or',X,Y],TF):- !,
-   as_tf((eval_args(Eq,RetType,Depth,Self,X,'True');eval_args(Eq,RetType,Depth,Self,Y,'True')),TF).
+   as_tf((eval_args_true(Eq,RetType,Depth,Self,X);eval_args_true(Eq,RetType,Depth,Self,Y)),TF).
 
+eval_20(Eq,RetType,Depth,Self,['not',X],TF):- !,
+   as_tf(( \+ eval_args_true(Eq,RetType,Depth,Self,X)), TF).
 
+eval_20(Eq,RetType,Depth,Self,['number-of!',X],N):- !,
+   bagof_eval(Eq,RetType,Depth,Self,X,ResL),
+   length(ResL,N), ignore(RetType='Number').
+
+eval_20(Eq,RetType,Depth,Self,['number-of!',X,N],TF):- !,
+   bagof_eval(Eq,RetType,Depth,Self,X,ResL),
+   length(ResL,N), true_type(Eq,RetType,TF).
+
+eval_args_true(Eq,RetType,Depth,Self,X,TF1):-
+  ((eval_ne(Eq,RetType,Depth,Self,X,TF1),  \+  is_False(TF1));
+     ( \+  is_False(TF1),metta_atom_true(Eq,Depth,Self,Self,X))).
+
+eval_args_true(Eq,RetType,Depth,Self,X):-
+  metta_atom_true(Eq,Depth,Self,Self,X);  (eval_ne(Eq,RetType,Depth,Self,X,TF1),  \+  is_False(TF1)).
+
+% is this OK?
+metta_atom_true(Eq,Depth,Self,Other,H):- metta_defn(Eq,Other,H,B), D2 is Depth -1, metta_atom_true(Eq,D2,Self,Other,B).
+metta_atom_true(Eq,_Dpth,_Slf,Other,H):- get_metta_atom(Eq,Other,H).
 
 % =================================================================
 % =================================================================
