@@ -311,7 +311,7 @@ try_overlaps(N):-
   \+ \+ (call_match(Query),
          pp_fb(grounded=Query),
          ignore(maybe_english(Query))),nl,nl,
-  AQ = [and|Query],
+  AQ = [','|Query],
   pp_fb('!'(match('&flybase',AQ,AQ))),nl,nl,nl.
 
 no_english(fbrf_pmid_pmcid_doi,_).

@@ -198,7 +198,7 @@ eval_02(Eq,RetType,Depth,Self,_XX,M,YO):- eval_00(Eq,RetType,Depth,Self,M,Y)*-> 
 
 
 eval_03(_Nth,Eq,RetType,Depth2,Self,_XX,Y,YO):-
-  once(if_or_else((subst_args(Eq,RetType,Depth2,Self,Y,YO)),
+  (if_or_else((subst_args(Eq,RetType,Depth2,Self,Y,YO)),
      if_or_else(finish_eval(Eq,RetType,Depth2,Self,Y,YO),
           Y=YO))).
 
@@ -289,8 +289,14 @@ eval_20(_Nth,Eq,RetType,Depth,Self,['trace',Cond],Res):- !, with_debug(eval,eval
 eval_20(_Nth,Eq,RetType,Depth,Self,['time',Cond],Res):- !, time_eval(eval(Cond),eval(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(_Nth,Eq,RetType,Depth,Self,['print',Cond],Res):- !, eval(Eq,RetType,Depth,Self,Cond,Res),format('~N'),print(Res),format('~N').
 % !(println! $1)
-eval_20(_Nth,Eq,RetType,Depth,Self,['println!'|Cond],Res):- !, maplist(eval(Eq,RetType,Depth,Self),Cond,[Res|Out]),
+eval_20(_Nth,Eq,RetType,Depth,Self,['println!'|Cond],Res):- !,
+   maplist(eval(Eq,RetType,Depth,Self),Cond,[Res|Out]),
    format('~N'),maplist(write_src,[Res|Out]),format('~N').
+
+
+eval_20(_Nth,Eq,RetType,Depth,Self,['println'|Cond],'Empty'):- !,
+   format('~N'),maplist(write_src_nl,Cond),format('~N').
+
 eval_20(_Nth,Eq,RetType,Depth,Self,['trace!',A|Cond],Res):- !, maplist(eval(Eq,RetType,Depth,Self),[A|Cond],[AA|Result]),
    last(Result,Res), format('~N'),maplist(write_src,[AA]),format('~N').
 
@@ -475,13 +481,13 @@ eval_20(_Nth,Eq,_RetType,Depth,Self,['case',A,[[Void,_]]],Res):-
    eval(Eq,_UnkRetType,Depth,Self,A,_),!,Res =[].
 
 % if there is nothing for case just treat like a collapse
-eval_20(_Nth,Eq,_RetType,Depth,Self,['case',A,[]],Empty):-
+eval_20(_Nth,Eq,_RetType,Depth,Self,['case',A,[]],Empty):- !,
   %forall(eval(Eq,_RetType2,Depth,Self,Expr,_),true),
   once(eval(Eq,_RetType2,Depth,Self,A,_)),
   return_empty([],Empty).
 
 % Macro: case
-eval_20(_Nth,Eq,RetType,Depth,Self,['case',A,CL|T],Res):-
+eval_20(_Nth,Eq,RetType,Depth,Self,['case',A,CL|T],Res):- !,
    must_det_ll(T==[]),
    into_case_list(CL,CASES),
    findall(Key-Value,
@@ -849,17 +855,17 @@ eval_20(_Nth,Eq,RetType,Depth,Self,['get-type',Val],TypeO):- !, get_type(Depth,S
 % =================================================================
 nb_bind(Name,Value):- nb_current(Name,Was),same_term(Value,Was),!.
 nb_bind(Name,Value):- call_in_shared_space(nb_setval(Name,Value)),!.
-eval_20(_Nth,Eq,RetType,Depth,Self,['import!',Other,File],RetVal):-
-     (( into_space(Depth,Self,Other,Space),!, include_metta(Space,File),!,return_empty(Space,RetVal))),
+eval_20(_Nth,Eq,RetType,Depth,Self,['import!',Other,File],RetVal):- !,
+     (( into_space(Depth,Self,Other,Space), include_metta(Space,File),!,return_empty(Space,RetVal))),
      check_returnval(Eq,RetType,RetVal). %RetVal=[].
 eval_20(_Nth,Eq,RetType,_Depth,_Slf,['bind!',Other,['new-space']],RetVal):- atom(Other),!,assert(was_asserted_space(Other)),
   return_empty([],RetVal), check_returnval(Eq,RetType,RetVal).
-eval_20(_Nth,Eq,RetType,Depth,Self,['bind!',Other,Expr],RetVal):-
+eval_20(_Nth,Eq,RetType,Depth,Self,['bind!',Other,Expr],RetVal):- !,
    must_det_ll((into_name(Self,Other,Name),!,eval(Eq,RetType,Depth,Self,Expr,Value),
     nb_bind(Name,Value),  return_empty(Value,RetVal))),
    check_returnval(Eq,RetType,RetVal).
-eval_20(_Nth,Eq,RetType,Depth,Self,['pragma!',Other,Expr],RetVal):-
-   must_det_ll((into_name(Self,Other,Name),!,nd_ignore((eval(Eq,RetType,Depth,Self,Expr,Value),
+eval_20(_Nth,Eq,RetType,Depth,Self,['pragma!',Other,Expr],RetVal):- !,
+   must_det_ll((into_name(Self,Other,Name),nd_ignore((eval(Eq,RetType,Depth,Self,Expr,Value),
    set_option_value(Name,Value))),  return_empty(Value,RetVal),
     check_returnval(Eq,RetType,RetVal))).
 eval_20(_Nth,Eq,RetType,_Dpth,Self,['transfer!',File],RetVal):- !, must_det_ll((include_metta(Self,File),
@@ -914,11 +920,11 @@ eval_20(_Nth,Eq,RetType,Depth,Self,['or',X,Y],TF):- !,
 eval_20(_Nth,Eq,RetType,Depth,Self,['not',X],TF):- !,
    as_tf(( \+ eval_args_true(Eq,RetType,Depth,Self,X)), TF).
 
-eval_20(_Nth,Eq,RetType,Depth,Self,['number-of!',X],N):- !,
+eval_20(_Nth,Eq,RetType,Depth,Self,['number-of',X],N):- !,
    bagof_eval(Eq,RetType,Depth,Self,X,ResL),
    length(ResL,N), ignore(RetType='Number').
 
-eval_20(_Nth,Eq,RetType,Depth,Self,['number-of!',X,N],TF):- !,
+eval_20(_Nth,Eq,RetType,Depth,Self,['number-of',X,N],TF):- !,
    bagof_eval(Eq,RetType,Depth,Self,X,ResL),
    length(ResL,N), true_type(Eq,RetType,TF).
 
@@ -967,6 +973,9 @@ eval20_failed_2(Eq,RetType,Depth,Self, Term, Res):-
 
 eval_20(_Nth,_Eq,_RetType1,_Depth,_Self,['call',S], TF):- !, eval_call(S,TF).
 eval_20(_Nth,Eq,RetType,Depth,Self,['eval',S], Res):-  !, eval(Eq,RetType,Depth,Self,S, Res).
+eval_20(Nth,Eq,RetType,Depth,Self,['limit!',NE,S], Res):- !,
+   eval_20(Nth,Eq,RetType,Depth,Self,NE, N),!,
+   limit(N,eval_ne(Eq,RetType,Depth,Self,S, Res)).
 
 eval_20(_Nth,Eq,RetType,Depth,Self,PredDecl,Res):-
   Do_more_defs = do_more_defs(true),
@@ -1195,13 +1204,14 @@ eval_sys_predicate(Eq,RetType,_Depth,Self,[AE|More],TF):-
   once((is_system_pred(AE),
   length(More,Len),
   is_syspred(AE,Len,Pred))),
+  current_predicate(Pred/Len),
   %trace,  ls,length(More,Len),
-  notrace( \+ is_user_defined_goal(Self,[AE|More])),!,
+  notrace(  \+ is_user_defined_goal(Self,[AE|More]) ),!,
   %show_ndet(adjust_args_mp(Eq,RetType,Depth,Self,Pred,Len,AE,More,Adjusted)),
   %
   More=Adjusted,
   show_ndet(efbug(show_call,eval_call(catch_warn(apply(Pred,Adjusted)),TF))),
-  show_ndet(check_returnval(Eq,RetType,TF)),!.
+  show_ndet(check_returnval(Eq,RetType,TF)).
 
 show_ndet(G):- call(G).
 %show_ndet(G):- call_ndet(G,DET),(DET==true -> ! ; dmsg(show_ndet(G))).

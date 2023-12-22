@@ -11,7 +11,7 @@
 
 fb_stats:- metta_stats,!.
 
-'&flybase':for_metta('&flybase',P):- fb_pred_nr(F,A),length(L,A),P=[F|L],apply(F,L).
+'&flybase':for_metta('&flybase',P):- fb_pred_nr(F,A),current_predicate(F/A),length(L,A),P=[F|L],apply(F,L).
 
 % ==============
 % OBO LOADER
