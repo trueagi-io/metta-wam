@@ -548,10 +548,10 @@ repl_read(NewAccumulated, Expr):-
        (write('Syntax error: '), writeq(E), nl, repl_read(Expr))),!.
 
 
+%repl_read(Str, Expr):- ((clause(t_l:s_reader_info(Expr),_,Ref),erase(Ref))).
 repl_read("!", '!'):-!.
 repl_read("+", '+'):-!.
 repl_read(Str,Atom):- atom_string(Atom,Str),metta_interp_mode(Atom,_),!.
-
 repl_read(Str, Expr):- atom_concat('@',_,Str),!,atom_string(Expr,Str).
 repl_read(NewAccumulated, Expr):-
     normalize_space(string(Renew),NewAccumulated), Renew \== NewAccumulated, !,
@@ -594,7 +594,7 @@ add_history_pl(Exec):- notrace(ignore((Exec\=[],with_output_to(string(H),with_in
 
 
 %read_metta(In,Expr):- current_input(CI), \+ is_same_streams(CI,In), !, read_sform(In,Expr).
-read_metta(_,O2):- clause(t_l:s_reader_info(O2),_,Ref),erase(Ref).
+read_metta(_,O):- clause(t_l:s_reader_info(O),_,Ref),erase(Ref).
 read_metta(I,O):- string(I),normalize_space(string(M),I),!,parse_sexpr_metta1(M,O),!.
 read_metta(In,Expr):- current_input(In0),In==In0,!, repl_read(Expr).
 read_metta(In,Expr):- read_metta1(In,Expr).
@@ -602,11 +602,13 @@ read_metta(In,Expr):- read_metta1(In,Expr).
 read_metta1(In,Expr):- is_file_stream_and_size(In, Size) , Size>10240,!,read_sform1([],In,Expr).
 read_metta1(In,Expr):- read_metta2(In,Expr).
 
+read_metta2(_,O):- clause(t_l:s_reader_info(O),_,Ref),erase(Ref).
 read_metta2(In,Expr):- peek_char(In,Char), read_metta2(In,Char,Expr).
 read_metta2(In,Char,Expr):- char_type(Char,space),get_char(In,Char),put(Char),!,read_metta2(In,Expr).
 read_metta2(In,'!',Expr):- get_char(In,_), !, read_metta2(In,Read1),!,Expr=exec(Read1).
-read_metta2(In,';',Expr):- get_char(In,_), !, (maybe_read_pl(In,Expr)-> true ; (read_line_to_string(In,Str),write_comment(Str),!,read_metta2(In,Expr))),!.
-read_metta2(In,_,Expr):-  maybe_read_pl(In,Expr),!.
+read_metta2(In,';',Expr):- get_char(In,_), !, (maybe_read_pl(In,Expr)-> true ; (read_line_to_string(In,Str),Expr='$COMMENT'(Str,0,0))).
+% write_comment(Str),!,read_metta2(In,Expr))),!.
+% read_metta2(In,_,Expr):-  maybe_read_pl(In,Expr),!.
 read_metta2(In,_,Read1):- parse_sexpr_metta(In,Expr),!,must_det_ll(Expr=Read1).
 
 
@@ -636,8 +638,10 @@ read_sform(S,F):-
   ( F1\=='!' -> F=F1 ;
     (read_sform1([],S,F2), F = exec(F2))).
 
+read_sform2(S,F1):- !, read_metta2(S,F1).
 read_sform2(S,F1):- read_sform1([],S,F1).
 
+read_sform1(_,_,O):- clause(t_l:s_reader_info(O),_,Ref),erase(Ref).
 read_sform1( AltEnd,Str,F):- string(Str),open_string(Str,S),!,read_sform1( AltEnd,S,F).
 read_sform1(_AltEnd,S,F):- at_end_of_stream(S),!,F=end_of_file.
 read_sform1( AltEnd,S,M):- get_char(S,C),read_sform3(s, AltEnd,C,S,F), untyped_to_metta(F,M).
@@ -946,7 +950,7 @@ metta_atom_stdlib([:, Op, [->|List]]):- op_decl(Op,Params,ReturnType),append(Par
 
 get_metta_atom(Eq,Space, Atom):- get_metta_atom_from(Space, Atom), \+ (Atom =[EQ,_,_], EQ==Eq).
 
-get_metta_atom_from(KB, [F, A| List]):- KB='&flybase',fb_pred_nr(F, Len), length([A|List],Len),apply(F,[A|List]).
+get_metta_atom_from(KB, [F, A| List]):- KB='&flybase',fb_pred_nr(F, Len),current_predicate(F/Len), length([A|List],Len),apply(F,[A|List]).
 get_metta_atom_from([Superpose,ListOf], Atom):- Superpose == 'superpose',is_list(ListOf),!,member(KB,ListOf),get_metta_atom_from(KB,Atom).
 get_metta_atom_from(Space, Atom):- typed_list(Space,_,L),!, member(Atom,L).
 get_metta_atom_from(KB,Atom):- (KB=='&self'; KB='&stdlib'), metta_atom_stdlib(Atom).
@@ -1392,6 +1396,7 @@ repl3:-
          notrace((ttyflush,repl_read(Expr),ttyflush)),
          notrace(prompt(_,Was))),
       if_trace(repl,fbug(repl_read(Expr))),
+      %fbug(repl_read(Expr)),
       notrace(if_t(Expr==end_of_file,throw(end_of_input))),
       %ignore(shell('stty sane ; stty echo')),
       notrace(ignore(check_has_directive(Expr))),
@@ -1789,6 +1794,7 @@ really_rtrace(Goal):- with_debug((eval),with_debug((exec),Goal)).
 rtrace_on_existence_error(G):- !, catch_err(G,E, (fbug(E=G),  \+ tracing, trace, rtrace(G))).
 %rtrace_on_existence_error(G):- catch(G,error(existence_error(procedure,W),Where),rtrace(G)).
 
+% prolog_only(Goal):- !,Goal.
 prolog_only(Goal):- if_trace(prolog,Goal).
 
 write_compiled_exec(Exec,Goal):-
@@ -2051,4 +2057,5 @@ qsave_program:-  ensure_mettalog_system, next_save_name(Name),
     initialization(loon(restore),restore),
    metta_final
 ))).
+
 :- set_prolog_flag(metta_interp,ready).

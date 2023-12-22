@@ -561,6 +561,7 @@ is_scm:- fail.
 % c:/opt/logicmoo_workspace/packs_sys/logicmoo_opencog/guile/module/ice-9/and-let-star.scm
 
 priority_symbol((`|-`)).
+/*
 priority_symbol((`#=`)).
 priority_symbol((`#+`)).
 priority_symbol((`#-`)).
@@ -578,19 +579,18 @@ priority_symbol((`-1+`)).
 priority_symbol((`-1-`)).
 priority_symbol((`1+`)).
 priority_symbol((`1-`)).
+*/
 
 sym_or_num('$COMPLEX'(L)) --> `#C(`,!, swhite, sexpr_list(L), swhite.
 %sym_or_num((E)) --> unsigned_number(S),{number_string(E,S)}.
 %sym_or_num((E)) --> unsigned_number(S),{number_string(E,S)}.
 
-sym_or_num((E)) --> lnumber(E),swhite,!.
+%sym_or_num((E)) --> lnumber(E),swhite,!.
 sym_or_num(E) --> rsymbol_maybe(``,E),!.
 %sym_or_num('#'(E)) --> [C],{atom_codes(E,[C])}.
 
 sym_or_num(E) --> dcg_xor(rsymbol(``,E),lnumber(E)),!.
-
-
-sym_or_num(E) --> dcg_xor(rsymbol(``,E),lnumber(E)),!.
+%sym_or_num(E) --> dcg_xor(rsymbol(``,E),lnumber(E)),!.
 % sym_or_num('#'(E)) --> [C],{atom_codes(E,[C])}.
 
 

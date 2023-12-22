@@ -280,7 +280,7 @@ is_space_op('remove-atom').
 is_space_op('atom-count').
 is_space_op('atom-replace').
 
-subst_args_as(Depth, Self, [OP|ARGS], Template):- !, eval_20('=',_,Depth, Self, [OP|ARGS], Template).
+subst_args_as(Depth, Self, [OP|ARGS], Template):- !, eval('=',_,Depth, Self, [OP|ARGS], Template).
 
 subst_args_as(Depth,Self,['match',Other,Goal,Template],Template):- into_space(Self,Other,Space),!, metta_atom_iter_l1t(Eq,Depth,Space,Goal).
 subst_args_as(Depth,Self,['match',Other,Goal,Template,Else],Template):-
@@ -293,7 +293,7 @@ subst_args_as(_Dpth,Self,['atom-replace',Other,Rem,Add],TF):- !, into_space(Self
   as_tf((metta_atom_iter_l1t_ref(Space,RCopy,Ref), RCopy=@=Rem,erase(Ref), do_metta(Other,load,Add)),TF).
 
 subst_args1(Eq,RetType,Depth,Self,X,Res):-
-   X= [CaseSym|_],CaseSym == 'case',  !, eval_20('=',_,Depth, Self, X,Res).
+   X= [CaseSym|_],CaseSym == 'case',  !, eval('=',_,Depth, Self, X,Res).
 
 % Macro: case
 subst_args1_hide(Depth,Self,X,Res):-
