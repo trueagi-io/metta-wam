@@ -21,11 +21,11 @@ is_pyswip:- current_prolog_flag(os_argv,ArgV),member( './',ArgV).
 %:- use_module(library(tabling)).
 :- use_module(library(system)).
 :- ensure_loaded(metta_compiler).
+:- ensure_loaded(metta_printer).
+:- ensure_loaded(metta_convert).
 %:- ensure_loaded(metta_types).
 :- ensure_loaded(metta_data).
 :- ensure_loaded(metta_space).
-:- ensure_loaded(metta_printer).
-:- ensure_loaded(metta_convert).
 :- ensure_loaded(metta_eval).
 :- ensure_loaded(flybase_main).
 :- set_stream(user_input,tty(true)).
