@@ -513,7 +513,7 @@ always_dash_functor(A,B):- once(dash_functor(A,B)),A\=@=B,!.
 always_dash_functor(A,A).
 
 dash_functor(A,C):- \+ symbol(A),!,C=A.
-dash_functor(A,C):- p2m(A,B),A\==B,!,always_dash_functor(B,C).
+dash_functor(A,C):- fail, p2m(A,B),A\==B,!,always_dash_functor(B,C).
 dash_functor(Functor,DFunctor):-
    symbol(Functor), atomic_list_concat(L,'-',Functor), L\=[_],maplist(always_dash_functor,L,LL),
    atomic_list_concat(LL,'-',DFunctor).
