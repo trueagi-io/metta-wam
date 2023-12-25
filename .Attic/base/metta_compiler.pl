@@ -1028,7 +1028,6 @@ body_member(Body,BE,NewBE,NewBody):-
    append(Left,[NewBE|Right],NewRevList),
    reverse(NewRevList,NewList),
    list_to_conjuncts(NewList,NewBody).
-
 % combine_clauses/3 is the main predicate combining clauses with similar heads and bodies.
 % HeadBodiesList is a list of clauses (Head:-Body)
 % NewHead will be the generalized head representing all clauses in HeadBodiesList
