@@ -12,10 +12,6 @@ The Candidate Elimination algorithm is a conceptual learning algorithm that incr
 ## :package: Getting Started
 ### :gear: Prerequisites
 - Build [Hyperon Experimental](https://github.com/trueagi-io/hyperon-experimental).
-- Install PySWIP using:
-  ```
-  pip install git+https://github.com/logicmoo/pyswip.git
-  ```
 
 ### :toolbox: Installation
 ```
@@ -29,6 +25,35 @@ chmod +x INSTALL.md  #incase Git lost +x n the file
 # Answer the questions and follow the directions
 ./INSTALL.md
 ```
+
+This script automates the setup of SWI-Prolog and its associated Python packages on your system. Here's a brief overview of the main components it installs and updates:
+
+#### SWI-Prolog
+- **Checks** if SWI-Prolog is already installed.
+- **Installs or Updates** SWI-Prolog to ensure version 9.1 or higher is present.
+
+#### Python and pip
+- **Verifies** if Python's package manager `pip` is installed.
+- **Installs pip** if it's not found, allowing Python packages to be managed.
+
+#### Python Packages for SWI-Prolog
+- **Installs Janus**: A Python package that interfaces with SWI-Prolog.
+- **Installs PySWIP**: Another Python package that provides integration with SWI-Prolog.
+
+#### SWI-Prolog Packages
+- **Updates or Installs** specific SWI-Prolog packages (`predicate_streams`, `logicmoo_utils`, and `dictoo`) as needed.
+
+#### System Requirements
+- **Requires sudo access** for certain operations, such as installing SWI-Prolog and pip.
+- **Modifies system package sources** to include the SWI-Prolog development repository.
+- **Installs and updates packages** using the system's package manager and Python's pip.
+
+---
+
+**Note**: Running this script will modify your system's software configuration, including adding repositories and installing new packages. Ensure you understand these changes and have the necessary permissions before proceeding.
+
+---
+
 
 
 
