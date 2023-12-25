@@ -7,11 +7,11 @@ fb_database="flybase"
 fb_scheme="public"
 
 # Create a directory to store the TSV files
-mkdir -p "./data/tsv_exports/$fb_scheme/"
+mkdir -p "./data/tsv_exports_new/$fb_scheme/"
 
 (
 
-cd "./data/tsv_exports/$fb_scheme/"
+cd "./data/tsv_exports_new/$fb_scheme/"
 
 # List of table names in the information_schema
 is_tables=(
@@ -89,9 +89,6 @@ ORDER BY
 
 # Export query result to TSV file
 psql -h $fb_remote_host -U $fb_user -d $fb_database -c "\COPY ($sql_query) TO './fk_to_pk_links.tsv' WITH (FORMAT CSV, DELIMITER E'\t')"
-
-
-
 
 
 
