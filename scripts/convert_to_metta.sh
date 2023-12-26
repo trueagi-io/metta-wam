@@ -65,16 +65,23 @@ process_file() {
       ;;
     *)
       echo -ne "."
-      python metta_vspace/metta_learner.py "$INPUT_FILE" --analyze > "$OUTPUT_FILE"
+      #python3 metta_vspace/metta_learner.py "$INPUT_FILE" --analyze > "$OUTPUT_FILE"
+      python3 metta_vspace/panda_util.py "$INPUT_FILE" --analyze > "$OUTPUT_FILE"
       skip_lines=$?
       echo -ne "."
       awk -v head="$HEAD" -v skip="$skip_lines" '
-      function should_quote(field) {
+      function should_quote_metta(field) {
+       if (field ~ /[ ()\n\t\r]/) {
+           return 1  # Quote if field contains space, (, ), newline, tab, or carriage return
+       }
+       if (field ~ /[^[:print:]]/) {
+          return 1  # Quote if field contains any non-printing character
+       }
         if (field ~ /[" ]|'\''|\/|,|\|/) {
-          return 1  # Quote if field contains ", space, , /, , or |
+          # return 1  # Quote if field contains ", space, , /, , or |
         }
         if (field ~ /^[0-9]/ && field !~ /^[0-9]+$/) {
-          return 1  # Quote if field starts with a number and contains non-numeric characters
+          # return 1  # Quote if field starts with a number and contains non-numeric characters
         }
         return 0  # No need to quote
       }
@@ -105,7 +112,7 @@ process_file() {
             line_output = line_output " ()"
           } else {
             # Determine if we should quote this field
-            if (should_quote($i)) {
+            if (should_quote_metta($i)) {
               line_output = line_output " \"" $i "\""
             } else {
               line_output = line_output " " $i
@@ -168,7 +175,7 @@ for INPUT_PATH in "${ARGS[@]}"; do
     done
     echo "Processing Special files: $INPUT_PATH"
     find "$INPUT_PATH" -type f \( -name "*.obo" -or -name "*.json" -or -name "*.fa" \) -print0 | while IFS= read -r -d $'\0' file; do
-       process_file "$file" "$FORCE"
+      echo  process_file "$file" "$FORCE"
     done
     # End timing for directory processing
     dir_end_time=$(date +%s.%N)
