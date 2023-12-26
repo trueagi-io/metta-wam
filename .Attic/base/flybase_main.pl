@@ -995,7 +995,7 @@ load_fb_json(Fn,File):- fbug(load_fb_json(Fn,File)),
 
 
 % ==============================
-% GFF files
+% GFF/GTF/GFF3 Reader
 % ==============================
 
 load_fb_gff(Fn,Filename):-
@@ -1013,34 +1013,37 @@ load_fb_gff(Fn,Filename):-
  % Main predicate to parse a GFF line and store it as facts
 load_fb_gff_read(_Fn,In):- (at_end_of_stream(In);reached_file_max),!.
 load_fb_gff_read(Fn,In):- read_line_to_string(In,Line), load_fb_gff_line(Fn,Line),!,fail.
+load_fb_gff_line(Fn,Line) :- string_concat('#', _, Line),!.
 load_fb_gff_line(Fn,Line) :- split_string(Line, " \t", " \t", ['##gff-version'|_]),!.
 load_fb_gff_line(Fn,Line) :- % Predicate to process a line starting with ##sequence-region
     split_string(Line, " \t", " \t", ['##sequence-region', SeqID, StartStr, EndStr]),
     atom_number(StartStr, Start), atom_number(EndStr, End),!,
-    assert_MeTTa(genomic_sequence_region(Fn,SeqID, Start, End)).
+    assert_MeTTa(genomic_sequence_region(Fn,SeqID)).
 load_fb_gff_line(Fn,Line) :-
-    split_string(Line, "\t", "", [SeqID, Source, Type, StartStr, EndStr, ScoreStr, Strand, Phase | Rest]),
+    split_string(Line, "\t", "", [SeqID, Source, Type, StartStr, EndStr, ScoreStr, Strand, Phase | MoreProps]),
     atom_number(StartStr, Start),
     atom_number(EndStr, End),
-    store_gff_fact(Fn,SeqID, Start, End, "source", Source),
-    store_gff_fact(Fn,SeqID, Start, End, "type", Type),
-    store_gff_fact(Fn,SeqID, Start, End, "score", ScoreStr),
-    store_gff_fact(Fn,SeqID, Start, End, "strand", Strand),
-    store_gff_fact(Fn,SeqID, Start, End, "phase", Phase),
-    parse_and_store_attributes(SeqID, Start, End, Rest).
+    store_gff_fact(Fn,SeqID, "source", Source),
+    store_gff_fact(Fn,SeqID, "type", Type),
+    store_gff_fact(Fn,SeqID, "start", Start),
+    store_gff_fact(Fn,SeqID, "end", End),
+    store_gff_fact(Fn,SeqID, "score", ScoreStr),
+    store_gff_fact(Fn,SeqID, "strand", Strand),
+    store_gff_fact(Fn,SeqID, "phase", Phase),
+    parse_and_store_attributes(SeqID, MoreProps).
 load_fb_gff_line(Fn,Line):- fbug(load_fb_gff_line(Fn,Line)).
 % Predicate to store each field as a fact
-store_gff_fact(Fn,SeqID, Start, End, Key, Value) :-
+store_gff_fact(Fn,SeqID, Key, Value) :-
     Value \= ".",
-    assert_MeTTa(genomic_sequence_feature(Fn, SeqID, Start, End, Key, Value)).
+    assert_MeTTa(genomic_sequence_feature(Fn, SeqID, Key, Value)).
 % Predicate to handle the attributes field
-parse_and_store_attributes(Fn, SeqID, Start, End, [AttributesStr | _]) :-
+parse_and_store_attributes(Fn, SeqID, [AttributesStr | _]) :-
     split_string(AttributesStr, ";", "", AttrList),
-    maplist(parse_and_store_attribute(Fn, SeqID, Start, End), AttrList).
+    maplist(parse_and_store_attribute(Fn, SeqID), AttrList).
 % Parse individual attribute and store it
-parse_and_store_attribute(Fn, SeqID, Start, End, AttrStr) :-
-    split_string(AttrStr, "=", "", [Key, Value]),
-    store_gff_fact(Fn,SeqID, Start, End, Key, Value).
+parse_and_store_attribute(Fn, SeqID, AttrStr) :-
+    (split_string(AttrStr, "=", "\"", [Key, Value])->true;split_string(AttrStr, " ", "\"", [Key | Value])),
+    store_gff_fact(Fn,SeqID, Key, Value).
 /*
 
 find . \( -name "*.fa" -o -name "*.gff" -o -name "*.json" \) -execdir bash -c 'for file; do metta_pattern="${file%.*}"*metta*; full_path="$(pwd)/$file"; if compgen -G "$metta_pattern" > /dev/null; then true; else echo "Metta file does not exist for $full_path"; fi; done' bash {} \; | sort -r
@@ -1052,7 +1055,7 @@ find . \( -name "*.fa" -o -name "*.gff" -o -name "*.json" \) -execdir bash -c 'f
 */
 
 % ==============================
-% FA files
+% FA/FASTA Reader
 % ==============================
 
 load_fb_fa(Fn,Filename):-
@@ -1066,16 +1069,22 @@ load_fb_fa(Fn,Filename):-
     assert_OBO(pathname(Id,Filename)),!,
     assert_OBO(basename(Id,BaseName)),!,
     assert_OBO(directory(Id,Directory)),!,
-    setup_call_cleanup(open(Filename,read,In), load_fb_fa_read(Id,In,_), close(In))))).
-load_fb_fa_read(_Fn,In, _):- (at_end_of_stream(In);reached_file_max),!.
+    setup_call_cleanup(open(Filename,read,In), load_fb_fa_read(Id,In,_,0), close(In))))).
+load_fb_fa_read(_Fn,In, _, _):- (at_end_of_stream(In);reached_file_max),!.
+load_fb_fa_read(Fn,In,FBTe,At):- read_line_to_string(In,Str), load_fb_fa_read_str(Fn,In,FBTe,Str,At).
 
-load_fb_fa_read(Fn,In,FBTe):- read_line_to_chars(In,Chars), load_fb_fa_read_n(Fn,In,FBTe,Chars).
-load_fb_fa_read_n(Fn,In,_,['>'|Chars]):- !, must_det_ll((path_chars(FBTe,Chars), load_fb_fa_read(Fn,In,seq(FBTe,0)))).
-load_fb_fa_read_n(Fn,In,seq(FBTe,N),Chars):-
-   Data =..[Fn,FBTe,N|Chars],
+load_fb_fa_read_str(Fn,In,_,Str,_):- string_concat('>',Line,Str),!,
+     split_string(Line, " \t", " \t", [FBTe|Props]),!,
+     parse_and_store_attributes(FBTe, Props),
+     load_fb_fa_read(Fn,In,FBTe,0).
+
+load_fb_fa_read_str(Fn,In,FBTe,Str,From):-
+   atom_chars(Str,Chars),
+   Data =..[fasta_sequence,Fn,FBTe,From,Chars],
    assert_MeTTa(Data),!,
    length(Chars,Plus),
-   N2 is N+Plus,load_fb_fa_read(Fn,In,seq(FBTe,N2)).
+   At is From+Plus,
+   load_fb_fa_read(Fn,In,FBTe,At).
 
 maybe_sample(_Fn,_Args):- \+ should_sample,!.
 maybe_sample( Fn, Args):- assert_arg_samples(Fn,1,Args).
@@ -1207,7 +1216,10 @@ load_flybase_ext(_Ext,File,_Fn):-  fail, atom_concat(File,'.metta',MFile),
 load_flybase_ext(Ext,File,_Fn):-  Ext==obo,current_predicate(load_obo/1),!,load_obo(File).
 load_flybase_ext(Ext,File,_Fn):-  Ext==scm,include_atomspace_1_0(File).
 load_flybase_ext(Ext,File, Fn):-  Ext==json,!,load_fb_json(Fn,File),!.
+load_flybase_ext(Ext,File, Fn):-  Ext==gff,!,load_fb_gff(Fn,File),!.
+load_flybase_ext(Ext,File, Fn):-  Ext==gff3,!,load_fb_gff(Fn,File),!.
 load_flybase_ext(Ext,File, Fn):-  Ext==fa,!,load_fb_fa(Fn,File),!.
+load_flybase_ext(Ext,File, Fn):-  Ext==fasta,!,load_fb_fa(Fn,File),!.
 load_flybase_ext(Ext,File,_Fn):-  Ext==metta,current_predicate(load_metta/2),!,load_flybase_metta(File).
 load_flybase_ext(Ext,File, Fn):-  file_to_sep(Ext,Sep),!,
   track_load_into_file(File,
