@@ -380,6 +380,12 @@ load_flybase_files_ftp:-
   load_fbase_after_17]),
   !.
 
+ gene_sequences:-
+    load_flybase('./dmel_r6.55/gff/dmel-all-r6.55.gff'),
+    load_flybase('./dmel_r6.55/fasta/*.fasta'),
+    load_flybase('./dmel_r6.55/gtf/*.gft'),!.
+
+
 load_fbase_after_17:-
   %load_flybase('./precomputed_files/genes/scRNA-Seq_gene_expression*.tsv'),
   must_det_ll(load_flybase('./precomputed_files/transposons/transposon_sequence_set.gff*')),
@@ -1013,12 +1019,13 @@ load_fb_gff(Fn,Filename):-
  % Main predicate to parse a GFF line and store it as facts
 load_fb_gff_read(_Fn,In):- (at_end_of_stream(In);reached_file_max),!.
 load_fb_gff_read(Fn,In):- read_line_to_string(In,Line), load_fb_gff_line(Fn,Line),!,fail.
-load_fb_gff_line(Fn,Line) :- string_concat('#', _, Line),!.
-load_fb_gff_line(Fn,Line) :- split_string(Line, " \t", " \t", ['##gff-version'|_]),!.
+
 load_fb_gff_line(Fn,Line) :- % Predicate to process a line starting with ##sequence-region
     split_string(Line, " \t", " \t", ['##sequence-region', SeqID, StartStr, EndStr]),
     atom_number(StartStr, Start), atom_number(EndStr, End),!,
-    assert_MeTTa(genomic_sequence_region(Fn,SeqID)).
+    assert_MeTTa(genomic_sequence_region(Fn,SeqID,Start,End)).
+load_fb_gff_line(_Fn,Line) :- split_string(Line, " \t", " \t", ['##gff-version'|_]),!.
+load_fb_gff_line(_Fn,Line) :- string_concat('#', _, Line),!.
 load_fb_gff_line(Fn,Line) :-
     split_string(Line, "\t", "", [SeqID, Source, Type, StartStr, EndStr, ScoreStr, Strand, Phase | MoreProps]),
     atom_number(StartStr, Start),

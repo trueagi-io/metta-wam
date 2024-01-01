@@ -330,8 +330,8 @@ md_failed(P1,G):- is_cgi,!, u_dmsg(arc_html(md_failed(P1,G))).
 md_failed(P1,X):- notrace,is_guitracer,u_dmsg(failed(X))/*,arcST*/,nortrace,atrace, call(P1,X).
 md_failed(P1,X):-
  u_dmsg(failed(P1,X))/*,arcST*/,nortrace,atrace,
-  trace,visible_rtrace([-all,+fail,+call,+exception],X).
-  % must_det_ll(X):- must_det_ll(X),!.
+ trace,visible_rtrace([-all,+fail,+call,+exception],X).
+% must_det_ll(X):- must_det_ll(X),!.
 
 :- meta_predicate(rrtrace(0)).
 rrtrace(X):- rrtrace(etrace,X).

@@ -27,6 +27,7 @@ is_pyswip:- current_prolog_flag(os_argv,ArgV),member( './',ArgV).
 :- ensure_loaded(metta_data).
 :- ensure_loaded(metta_space).
 :- ensure_loaded(metta_eval).
+:- ensure_loaded(metta_server).
 :- ensure_loaded(flybase_main).
 :- set_stream(user_input,tty(true)).
 :- set_prolog_flag(encoding,iso_latin_1).
@@ -72,10 +73,12 @@ option_value_def('trace-length',100).
 option_value_def('stack-max',100).
 option_value_def('trace-on-overtime',20.0).
 option_value_def('trace-on-overflow',false).
+option_value_def('exeout','./Sav.godlike.MeTTaLog').
+
 
 
 option_value_def('trace-on-error',true).
-option_value_def('trace-on-load',true).
+option_value_def('trace-on-load',false).
 option_value_def('trace-on-exec',true).
 option_value_def('trace-on-eval',true).
 option_value_def('trace-on-fail',false).
@@ -85,6 +88,7 @@ option_value_def('trace-on-pass',false).
 
 
 set_is_unit_test(TF):-
+  forall(option_value_def(A,B),set_option_value(A,B)),
   set_option_value('trace-on-load',TF),
   set_option_value('trace-on-exec',TF),
   set_option_value('trace-on-eval',TF),
@@ -101,6 +105,9 @@ trace_on_overflow:- option_value('trace-on-overflow',true).
 trace_on_pass:-     option_value('trace-on-pass',true).
 doing_repl:-     option_value('doing_repl',true).
 if_repl(Goal):- doing_repl->call(Goal);true.
+
+show_options_values:-
+   forall((nb_current(N,V),\+((atom(N),atom_concat('$',_,N)))),write_src_nl(['pragma!',N,V])).
 
 any_floats(S):- member(E,S),float(E),!.
 
@@ -271,7 +278,7 @@ get_flag_value(_,true).
 
 :- ignore(((
    \+ prolog_load_context(reloading,true),
-   forall(option_value_def(Opt,Default),set_option_value(Opt,Default))))).
+   nop((forall(option_value_def(Opt,Default),set_option_value(Opt,Default))))))).
 
 %process_option_value_def:- \+ option_value('python',false), skip(ensure_loaded(metta_python)).
 process_option_value_def:- option_value('python',load), ensure_loaded(metta_vspace/pyswip/metta_python).
@@ -411,6 +418,7 @@ include_metta(Self,RelFilename):-
       with_cwd(Directory,
         must_det_ll( load_metta_file_stream(Filename,Self,In))))),close(In)))))).
 
+
 load_metta_file_stream(Filename,Self,In):-
   once((is_file_stream_and_size(In, Size) , Size>102400) -> P2 = read_sform2 ; P2 = read_metta2),
   with_option(loading_file,Filename,
@@ -419,13 +427,34 @@ load_metta_file_stream(Filename,Self,In):-
        set_exec_num(Filename,1),
        load_answer_file(Filename),
        set_exec_num(Filename,0))),
+   load_metta_file_stream_fast(Size,P2,Filename,Self,In)))).
+
+
+
+accept_line(_Self,end_of_file):-!.
+accept_line(Self,I):- normalize_space(string(Str),I),!,accept_line2(Self,Str),!.
+
+accept_line2(_Self,S):- string_concat(";",_,S),!,writeln(S).
+accept_line2(Self,S):- string_concat('(',RS,S),string_concat(M,')',RS),!,
+ atomic_list_concat([F|LL],' ',M),PL =..[F,Self|LL],assert(PL),!,flag(next_assert,X,X+1),
+ if_t((0 is X mod 10_000_000),(writeln(X=PL),statistics)).
+accept_line2(Self,S):- fbug(accept_line2(Self,S)),!.
+
+load_metta_file_stream_fast(_Size,_P2,Filename,Self,S):- atomic_list_concat([_,_,_|_],'.',Filename),!,
+   atomic(S),is_stream(S),stream_property(S,input),
+   repeat,
+   read_line_to_string(S,I),
+   accept_line(Self,I),
+   I==end_of_file,!.
+
+load_metta_file_stream_fast(_Size,P2,Filename,Self,In):-
        once((repeat, ((
             current_read_mode(Mode),
             once(call(P2, In,Expr)), %write_src(read_metta=Expr),nl,
             must_det_ll((((do_metta(file(Filename),Mode,Self,Expr,_O)))->true;
                  pp_m(unknown_do_metta(file(Filename),Mode,Self,Expr)))),
            flush_output)),
-          at_end_of_stream(In)))))),!.
+          at_end_of_stream(In))),!.
 
 clear_spaces:- clear_space(_).
 clear_space(S):-
@@ -554,6 +583,7 @@ repl_read(NewAccumulated, Expr):-
 repl_read("!", '!'):-!.
 repl_read("+", '+'):-!.
 repl_read(Str,Atom):- atom_string(Atom,Str),metta_interp_mode(Atom,_),!.
+
 repl_read(Str, Expr):- atom_concat('@',_,Str),!,atom_string(Expr,Str).
 repl_read(NewAccumulated, Expr):-
     normalize_space(string(Renew),NewAccumulated), Renew \== NewAccumulated, !,
@@ -576,11 +606,8 @@ repl_read(Accumulated, Line, Expr) :- atomics_to_string([Accumulated," ",Line], 
 repl_read(O2):- clause(t_l:s_reader_info(O2),_,Ref),erase(Ref).
 repl_read(Expr) :- repeat,
   remove_pending_buffer_codes(_,Was),text_to_string(Was,Str),
-      repl_read(Str, Expr1),
-        once(((atom(Expr1),atom_concat('@',_,Expr1),
-            \+ atom_contains(Expr1,"="),
-            repl_read(Expr2))
-            -> Expr=[Expr1,Expr2] ; Expr1 = Expr)),
+      repl_read(Str, Expr),
+        % once(((atom(Expr1),atom_concat('@',_,Expr1), \+ atom_contains(Expr1,"="), repl_read(Expr2)) -> Expr=[Expr1,Expr2] ; Expr1 = Expr)),
         % this cutrs the repeat/0
         ((peek_pending_codes(_,Peek),Peek==[])->!;true).
 
@@ -639,6 +666,7 @@ read_sform(S,F):-
   read_sform1([],S,F1),
   ( F1\=='!' -> F=F1 ;
     (read_sform1([],S,F2), F = exec(F2))).
+
 
 read_sform2(S,F1):- !, read_metta2(S,F1).
 read_sform2(S,F1):- read_sform1([],S,F1).
@@ -940,7 +968,6 @@ type_decl('MemoizedState').
 type_decl('Type').
 type_decl('%Undefined%').
 type_decl('Variable').
-
 
 :- dynamic(get_metta_atom/2).
 :- dynamic(asserted_metta_atom/2).
@@ -1410,7 +1437,8 @@ check_has_directive(call(Rtrace)):- rtrace == Rtrace,!, rtrace,notrace(throw(res
 check_has_directive(NEV):- atom(NEV), atomic_list_concat([N,V],'=',NEV), set_directive(N,V).
 check_has_directive([AtEq,Value]):-atom(AtEq),atom_concat('@',Name,AtEq), set_directive(Name,Value).
 check_has_directive(ModeChar):- atom(ModeChar),metta_interp_mode(ModeChar,_Mode),!,set_directive(read_mode,ModeChar).
-check_has_directive(AtEq):-atom(AtEq),atom_concat('@',NEV,AtEq),check_has_directive(NEV,true).
+check_has_directive('@'):- show_options_values,nl,!,notrace(throw(restart_reading)).
+check_has_directive(AtEq):-atom(AtEq),atom_concat('@',NEV,AtEq),option_value(NEV,Foo),print(NEV=Foo),nl,!,notrace(throw(restart_reading)).
 check_has_directive(_).
 set_directive(N,V):- atom_concat('@',NN,N),!,set_directive(NN,V).
 set_directive(N,V):- N==mode,!,set_directive(read_mode,V).
@@ -1574,7 +1602,7 @@ interactively_do_metta_exec0(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOu
    (forall_interactive(
     From, WasInteractive,Complete, %may_rtrace
      (timed_call(GG,Seconds)),
-      ((Complete==true->!;true),
+     ((Complete==true->!;true),
        %repeat,
        set_option_value(interactive,WasInteractive),
        Control = contrl(Max,DoLeap),
@@ -1584,8 +1612,8 @@ interactively_do_metta_exec0(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOu
        flag(result_num,ResNum,ResNum),
      if_t(ResNum=<Max,
          ((((ResNum==1,Complete==true)->(format('~NDeterministic: ',  []), !);          %or Nondet
-             ( Complete==true -> (format('~NLast Result(~w): ',[ResNum]),! );
-                                 format('~NNDet Result(~w): ',[ResNum])))),
+           ( Complete==true -> (format('~NLast Result(~w): ',[ResNum]),! );
+                               format('~NNDet Result(~w): ',[ResNum])))),
        color_g_mesg(yellow, ignore((( if_t( \+ atomic(Output), nl), write_src(Output), nl)))),
        give_time('Execution',Seconds),
        color_g_mesg(green,
@@ -1969,11 +1997,11 @@ need_interaction:- \+ option_value('had_interaction',true),
     option_value('prolog',false), option_value('repl',false),  \+ metta_file(_Self,_Filename,_Directory).
 
 pre_halt:- is_compiling,!,fail.
+pre_halt:- loonit_report,fail.
 pre_halt:-  option_value('prolog',true),!,set_option_value('prolog',started),call_cleanup(prolog,pre_halt).
 pre_halt:-  option_value('repl',true),!,set_option_value('repl',started),call_cleanup(repl,pre_halt).
 pre_halt:-  need_interaction, set_option_value('had_interaction',true),call_cleanup(repl,pre_halt).
 
-pre_halt:- loonit_report.
 %loon:- time(loon_metta('./examples/compat/test_scripts/*.metta')),fail.
 %loon:- repl, (option_value('halt',false)->true;halt(7)).
 %maybe_halt(Seven):- option_value('prolog',true),!,call_cleanup(prolog,(set_option_value('prolog',false),maybe_halt(Seven))).
@@ -2039,10 +2067,12 @@ next_save_name(Name):- save_name(E),
   gensym(Stem,Name),
   \+ exists_file(Name),
   Name\==E,!.
+next_save_name(SavMeTTaLog):- option_value(exeout,SavMeTTaLog),atomic(SavMeTTaLog),atom_length(SavMeTTaLog,Len),Len>1,!.
 next_save_name('Sav.MeTTaLog').
 qcompile_mettalog:-
     ensure_mettalog_system,
-    catch_err(qsave_program('Sav.MeTTaLog',
+    option_value(exeout,Named),
+    catch_err(qsave_program(Named,
         [class(development),autoload(true),goal(loon(goal)), toplevel(loon(toplevel)), stand_alone(true)]),E,writeln(E)),
     halt(0).
 qsave_program:-  ensure_mettalog_system, next_save_name(Name),
@@ -2059,5 +2089,4 @@ qsave_program:-  ensure_mettalog_system, next_save_name(Name),
     initialization(loon(restore),restore),
    metta_final
 ))).
-
 :- set_prolog_flag(metta_interp,ready).

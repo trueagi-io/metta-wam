@@ -4,6 +4,8 @@ is_syspred0(H,_Ln,_Prd):- \+ atom(H),!,fail.
 is_syspred0(H,_Ln,_Prd):- upcase_atom(H,U),downcase_atom(H,U),!,fail.
 is_syspred0(H,Len,Pred):- current_predicate(H/Len),!,Pred=H.
 is_syspred0(H,Len,Pred):- atom_concat(Mid,'!',H), H\==Mid, is_syspred0(Mid,Len,Pred),!.
+is_syspred0(H,Len,Pred):- atom_concat(Mid,'-p',H), H\==Mid, is_syspred0(Mid,Len,Pred),!.
+is_syspred0(H,Len,Pred):- atom_concat(Mid,'-fn',H), H\==Mid, is_syspred0(Mid,Len,Pred),!.
 is_syspred0(H,Len,Pred):- into_underscores(H,Mid), H\==Mid, is_syspred0(Mid,Len,Pred),!.
 %is_function(F):- atom(F).
 is_metta_data_functor(_Eq,_Othr,H):- clause(is_data_functor(H),_).
@@ -49,8 +51,8 @@ needs_eval(EvalMe):- is_list(EvalMe),!.
 
 args_violation(_Dpth,_Slf,Args,List):- ( \+ iz_conz(Args); \+ iz_conz(List)), !, fail.
 args_violation(Depth,Self,[A|Args],[L|List]):- once(arg_violation(Depth,Self,A,L) ; args_violation(Depth,Self,Args,List)).
-arg_violation(Depth,Self,A,L):- \+ (get_type0(Depth,Self,A,T), \+ type_violation(T,L)).
-%arg_violation(Depth,Self,A,_):- get_type(Depth,Self,A,_),!.
+arg_violation(Depth,Self,A,L):- \+ (get_type0(_False,Depth,Self,A,T), \+ type_violation(T,L)).
+%arg_violation(Depth,Self,A,_):- get_type(_False,Depth,Self,A,_),!.
 
 type_violation(T,L):- \+ \+ (is_nonspecific_type(T);is_nonspecific_type(L)),!,fail.
 type_violation(T,L):- T\=L.
@@ -60,12 +62,13 @@ not_arg_violation(Depth,Self,Arg,Type):-
    \+ arg_violation(Depth,Self,Arg,Type),
    arg_conform(Depth,Self,Arg,Type).
 
-
-args_conform(_Dpth,_Slf,Args,List):- ( \+ iz_conz(Args); \+ iz_conz(List)), !.
-args_conform(Depth,Self,[A|Args],[L|List]):- arg_conform(Depth,Self,A,L) , args_conform(Depth,Self,Args,List).
-arg_conform(Depth,Self,A,L):- get_type(Depth,Self,A,T), type_conform(T,L),!.
-arg_conform(_Dpth,_Slf,_,_).
-%arg_conform(Depth,Self,A,_):- get_type(Depth,Self,A,_),!.
+args_conform(_,_,I,O):- I==[],!,O=I.
+args_conform(_Dpth,_Slf,Args,ParamTypes):- ( \+ iz_conz(Args); \+ iz_conz(ParamTypes)), !.
+args_conform(Depth,Self,[A|Args],[TypeSought|ParamTypes]):- arg_conform(Depth,Self,A,TypeSought) , args_conform(Depth,Self,Args,ParamTypes).
+arg_conform(Depth,Self,Var,TypeSought):-  var(Var),!,set_type(Depth,Self,Var,TypeSought),!.
+arg_conform(Depth,Self,A,TypeSought):- get_type(_False,Depth,Self,A,ArgType), type_conform(ArgType,TypeSought),!.
+%arg_conform(_Dpth,_Slf,_,_).
+%arg_conform(Depth,Self,A,_):- get_type(_False,Depth,Self,A,_),!.
 
 type_conform(T,L):- T=L,!.
 type_conform(T,L):- \+ \+ (is_nonspecific_type(T);is_nonspecific_type(L)),!.
@@ -76,20 +79,25 @@ is_nonspecific_type([]).
 is_nonspecific_type('Atom').
 is_nonspecific_type('Any').
 
-%get_type(Depth,Self,Val,Type):- get_type01(Depth,Self,Val,Type).
-get_type(Depth,Self,Val,TypeO):- no_repeats(TypeT,(get_type9(Depth,Self,Val,Type),TypeT=Type)),Type=TypeO.
+%get_type(_False,Depth,Self,Val,Type):- get_type01(_False,Depth,Self,Val,Type).
+get_type(IsMT,Depth,Self,Val,TypeO):- no_repeats(TypeT,(get_type9(IsMT,Depth,Self,Val,Type),TypeT=Type)),Type=TypeO.
+get_type(Depth,Self,Val,TypeO):- no_repeats(TypeT,(get_type9(false,Depth,Self,Val,Type),TypeT=Type)),Type=TypeO.
+get_metatype(Depth,Self,Val,TypeO):- no_repeats(TypeT,(get_type9(true,Depth,Self,Val,Type),TypeT=Type)),Type=TypeO.
 
-get_type9(_Dpth,_Slf,Expr,'hyperon::space::DynSpace'):- is_dynaspace(Expr),!.
-get_type9(Depth,Self,Val,Type):- get_type0(Depth,Self,Val,Type).
-get_type9(Depth,Self,Val,Type):- get_type1(Depth,Self,Val,Type), ground(Type),Type\==[], Type\==Val,!.
-get_type9(Depth,Self,Val,Type):- get_type2(Depth,Self,Val,Type), ( is_list(Type)->! ; true).
-get_type9(_Dpth,_Slf,_Vl,[]).
 
-get_type2(Depth,_Slf,Type,Type):- Depth<1,!.
-%get_type(Depth,Self,Val,Type):- is_debugging(eval), !,
-% ftrace(get_type0(Depth,Self,Val,Type)).
-get_type2(Depth,Self,Val,Type):- get_type0(Depth,Self,Val,Type).
-get_type2(Depth,Self,Val,Type):- get_type1(Depth,Self,Val,Type).
+
+get_type9(_False,_Depth,Self,Val,Type):- var(Val),get_attr(Val,metta_type,S=Type),!,S==Self.
+get_type9(_False,_Dpth,_Slf,Expr,'hyperon::space::DynSpace'):- is_dynaspace(Expr),!.
+get_type9(IsMT,Depth,Self,Val,Type):- get_type0(IsMT,Depth,Self,Val,Type).
+get_type9(IsMT,Depth,Self,Val,Type):- get_type1(IsMT,Depth,Self,Val,Type), ground(Type),Type\==[], Type\==Val,!.
+get_type9(IsMT,Depth,Self,Val,Type):- get_type2(IsMT,Depth,Self,Val,Type), ( is_list(Type)->! ; true).
+get_type9(_False,_Dpth,_Slf,_Vl,[]).
+
+get_type2(_False,Depth,_Slf,Type,Type):- Depth<1,!.
+%get_type(_False,Depth,Self,Val,Type):- is_debugging(eval), !,
+% ftrace(get_type0(_False,Depth,Self,Val,Type)).
+get_type2(IsMT,Depth,Self,Val,Type):- get_type0(IsMT,Depth,Self,Val,Type).
+get_type2(IsMT,Depth,Self,Val,Type):- get_type1(IsMT,Depth,Self,Val,Type).
 
 
 is_space_type(Space,is_asserted_space):- was_asserted_space(Space),!.
@@ -103,122 +111,122 @@ is_dynaspace(S):- was_asserted_space(S).
 is_dynaspace(S):- py_named_space(S).
 is_dynaspace(S):- typed_list(S,'hyperon::space::DynSpace',_).
 %  notrace( is_space_type(Expr,_)),!.
-get_type0(_Dpth,_Slf,Expr,'hyperon::space::DynSpace'):- is_dynaspace(Expr),!.
-get_type0(Depth,Self,Expr,['StateMonad',Type]):-  notrace( is_valid_nb_state(Expr)),!, 'get-state'(Expr,Val),!,
-  ((state_decltype(Expr,Type),nonvar(Type)); (Depth2 is Depth-1, get_type(Depth2,Self,Val,Type))).
-get_type0(Depth,Self,Val,Type):- \+ compound(Val),!,get_type01(Depth,Self,Val,Type),!.
-get_type0(Depth,Self,Val,Type):- get_type03(Depth,Self,Val,Type),!.
+get_type0(_False,_Dpth,_Slf,Expr,'hyperon::space::DynSpace'):- is_dynaspace(Expr),!.
+get_type0(IsMT,Depth,Self,Expr,['StateMonad',Type]):-  notrace( is_valid_nb_state(Expr)),!, 'get-state'(Expr,Val),!,
+  ((state_decltype(Expr,Type),nonvar(Type)); (Depth2 is Depth-1, get_type(IsMT,Depth2,Self,Val,Type))).
+get_type0(IsMT,Depth,Self,Val,Type):- \+ compound(Val),!,get_type01(IsMT,Depth,Self,Val,Type),!.
+get_type0(IsMT,Depth,Self,Val,Type):- get_type03(IsMT,Depth,Self,Val,Type),!.
 
-get_type01(_Dpth,_Slf,Var,'%Undefined%'):- var(Var),!.
-get_type01(_Dpth,_Slf, [],'%Undefined%'):- !.
-get_type01(_Dpth,_Slf,Val,'Number'):- number(Val).
-get_type01(_Dpth,_Slf,Val,'Integer'):- integer(Val).
-get_type01(_Dpth,_Slf,Val,'Decimal'):- float(Val).
-get_type01(_Dpth,_Slf,Val,'Rational'):- rational(Val).
-get_type01(_Dpth,_Slf,Val,'Bool'):- (Val=='False';Val=='True'),!.
-get_type01(_Dpth,_Slf,Val,Type):- string(Val),!,(Type='String';Type='Symbol').
-get_type01(_Dpth,_Slf,Expr,_):-  \+ atom(Expr),!,fail.
-get_type01(_Dpth,Self,Op,Type):- metta_type(Self,Op,Type).
-get_type01(_Dpth,_Slf,Val,Type):- is_decl_type(Val),(Type=Val;Type='Type').
-get_type01(_Dpth,_Slf,Val,Type):- atomic_list_concat([Type,_|_],'@',Val).
-get_type01(_Dpth,_Slf,Val,Type):- atomic_list_concat([Type,_|_],':',Val).
-get_type01(Depth,Self,Op,Type):- Depth2 is Depth-1, eval_args(Depth2,Self,Op,Val),Op\=@=Val,!, get_type(Depth2,Self,Val,Type).
-%get_type01(_Dpth,_Slf,Expr,'hyperon::space::DynSpace'):- \+ is_list(Expr), callable(Expr), is_space_type(Expr,_).
-get_type01(_Dpth,_Slf,_Val,'String').
-get_type01(_Dpth,_Slf,_Val,'Symbol').
+get_type01(_False,_Dpth,_Slf,Var,'%Undefined%'):- var(Var),!.
+get_type01(_False,_Dpth,_Slf, [],'%Undefined%'):- !.
+get_type01(_False,_Dpth,_Slf,Val,'Number'):- number(Val).
+get_type01(_False,_Dpth,_Slf,Val,'Integer'):- integer(Val).
+get_type01(_False,_Dpth,_Slf,Val,'Decimal'):- float(Val).
+get_type01(_False,_Dpth,_Slf,Val,'Rational'):- rational(Val).
+get_type01(_False,_Dpth,_Slf,Val,'Bool'):- (Val=='False';Val=='True'),!.
+get_type01(_False,_Dpth,_Slf,Val,Type):- string(Val),!,(Type='String';Type='Symbol').
+get_type01(_False,_Dpth,_Slf,Expr,_):-  \+ atom(Expr),!,fail.
+get_type01(_False,_Dpth,Self,Op,Type):- metta_type(Self,Op,Type).
+get_type01(_False,_Dpth,_Slf,Val,Type):- is_decl_type(Val),(Type=Val;Type='Type').
+get_type01(_False,_Dpth,_Slf,Val,Type):- atomic_list_concat([Type,_|_],'@',Val).
+get_type01(_False,_Dpth,_Slf,Val,Type):- atomic_list_concat([Type,_|_],':',Val).
+get_type01(IsMT,Depth,Self,Op,Type):- Depth2 is Depth-1, eval_args(Depth2,Self,Op,Val),Op\=@=Val,!, get_type(IsMT,Depth2,Self,Val,Type).
+%get_type01(_False,_Dpth,_Slf,Expr,'hyperon::space::DynSpace'):- \+ is_list(Expr), callable(Expr), is_space_type(Expr,_).
+get_type01(true,_Dpth,_Slf,_Val,'String').
+get_type01(true,_Dpth,_Slf,_Val,'Symbol').
 
 
 
-get_type02(_Dpth,Self,Expr,Type):- metta_type(Self,TExpr,Type), TExpr == Expr.
-get_type02(_Dpth,Self,Expr,Type):- metta_type(Self,TExpr,Type), TExpr =@= Expr.
-get_type02(Depth,Self,[Op|Expr],Type):- maplist(get_type(Depth,Self),Expr,Types),
+get_type02(_False,_Dpth,Self,Expr,Type):- metta_type(Self,TExpr,Type), TExpr == Expr.
+get_type02(_False,_Dpth,Self,Expr,Type):- metta_type(Self,TExpr,Type), TExpr =@= Expr.
+get_type02(IsMT,Depth,Self,[Op|Expr],Type):- maplist(get_type(IsMT,Depth,Self),Expr,Types),
   metta_type(Self,[Op|Types],Type).
 
 
-get_type03(Depth,Self,[[Op|Args]|Arg],Type):- symbol(Op),
- get_type03(Depth,Self,[Op|Args],Type1),
- get_type(Depth,Self,Arg,ArgType),
+get_type03(IsMT,Depth,Self,[[Op|Args]|Arg],Type):- symbol(Op),
+ get_type03(IsMT,Depth,Self,[Op|Args],Type1),
+ get_type(IsMT,Depth,Self,Arg,ArgType),
  ignore(sub_var(ArgType,Type1)->true;(sub_term(ST,Type1),var(ST),ST=ArgType)),
  last(Type1,Type).
 
-get_type03(_Dpth,_Slf,Cmpd,Type):-typed_list(Cmpd,Type,_List).
-get_type03(Depth,Self,[Op|Args],Type):- symbol(Op),
-  get_operator_typedef(Self,Op,Params,RetType),
+get_type03(_False,_Dpth,_Slf,Cmpd,Type):-typed_list(Cmpd,Type,_List).
+get_type03(_False,Depth,Self,[Op|Args],Type):- symbol(Op),
+  get_operator_typedef(Self,Op,ParamTypes,RetType),
   % Fills in type variables when possible
-  ignore(args_conform(Depth,Self,Args,Params)),
+  ignore(args_conform(Depth,Self,Args,ParamTypes)),
   % unitests:  arg violations should return ()
-  (\+ args_violation(Depth,Self,Args,Params) -> Type=RetType ; (Type=[],!)).
+  (\+ args_violation(Depth,Self,Args,ParamTypes) -> Type=RetType ; (Type=[],!)).
 
 
-get_type03(Depth,Self,Expr,Type):- get_type02(Depth,Self,Expr,Type).
+get_type03(IsMT,Depth,Self,Expr,Type):- get_type02(IsMT,Depth,Self,Expr,Type).
 
-get_type03(Depth,Self,EvalMe,Type):- needs_eval(EvalMe),Depth2 is Depth-1,
+get_type03(IsMT,Depth,Self,EvalMe,Type):- needs_eval(EvalMe),Depth2 is Depth-1,
    eval_args(Depth2,Self,EvalMe,Val),
    \+ needs_eval(Val),!,
-   get_type(Depth2,Self,Val,Type).
+   get_type(IsMT,Depth2,Self,Val,Type).
 
-get_type03(Depth,Self,Expr,Type):-  Depth2 is Depth-1,
+get_type03(IsMT,Depth,Self,Expr,Type):-  Depth2 is Depth-1,
   eval_args(Depth2, Self,Expr,Val), Expr\=@=Val,!,
-  get_type(Depth2,Self,Val,Type).
+  get_type(IsMT,Depth2,Self,Val,Type).
 
-get_type03(_Dpth,_Slf,Val,Type):- is_decl_type(Val),(Type=Val;Type='Type').
+get_type03(_False,_Dpth,_Slf,Val,Type):- is_decl_type(Val),(Type=Val;Type='Type').
 
-get_type03(_Dpth,_Slf,Expr,'Expression'):- is_list(Expr),!.
+get_type03(_False,_Dpth,_Slf,Expr,'Expression'):- is_list(Expr),!.
 
-get_type03(Depth,Self,List,Types):- List\==[], is_list(List),
-  Depth2 is Depth-1,maplist(get_type(Depth2,Self),List,Types).
+get_type03(IsMT,Depth,Self,List,Types):- List\==[], is_list(List),
+  Depth2 is Depth-1,maplist(get_type(IsMT,Depth2,Self),List,Types).
 
 
-get_type03(_Dpth,_Slf,Cmpd,Type):- compound(Cmpd),!, \+ ground(Cmpd),!,Type=[].
+get_type03(_False,_Dpth,_Slf,Cmpd,Type):- compound(Cmpd),!, \+ ground(Cmpd),!,Type=[].
 
-%get_type0(_Dpth,Self,List,Type):- is_list(List),metta_type(Self,Type,['->'|List]).
-%get_type(Depth,Self,Op,Type):- nonvar(Op),metta_type(Self,Op,Type2),Depth2 is Depth-1,get_type(Depth2,Self,Type2,Type).
-%get_type(Depth,Self,Op,Type):- Depth>0,nonvar(Op),metta_type(Self,Type,Op),!. %,!,last_element(List,Type).
-%get_type(Depth,Self,[T|List],['List',Type]):- Depth2 is Depth-1,  is_list(List),get_type(Depth2,Self,T,Type),!,
-%  forall((member(Ele,List),nonvar(Ele)),get_type(Depth2,Self,Ele,Type)),!.
-%get_type(Depth,_Slf,Cmpd,Type):- compound(Cmpd), functor(Cmpd,Type,1),!.
-%get_type0(_Dpth,_Slf,_,'%Undefined%'):- fail.
+%get_type0(_False,_Dpth,Self,List,Type):- is_list(List),metta_type(Self,Type,['->'|List]).
+%get_type(_False,Depth,Self,Op,Type):- nonvar(Op),metta_type(Self,Op,Type2),Depth2 is Depth-1,get_type(_False,Depth2,Self,Type2,Type).
+%get_type(_False,Depth,Self,Op,Type):- Depth>0,nonvar(Op),metta_type(Self,Type,Op),!. %,!,last_element(List,Type).
+%get_type(_False,Depth,Self,[T|List],['List',Type]):- Depth2 is Depth-1,  is_list(List),get_type(_False,Depth2,Self,T,Type),!,
+%  forall((member(Ele,List),nonvar(Ele)),get_type(_False,Depth2,Self,Ele,Type)),!.
+%get_type(_False,Depth,_Slf,Cmpd,Type):- compound(Cmpd), functor(Cmpd,Type,1),!.
+%get_type0(_False,_Dpth,_Slf,_,'%Undefined%'):- fail.
 
 state_decltype(Expr,Type):- functor(Expr,_,A),arg(A,Expr,Type),once(var(Type);is_decl_type(Type)).
 
 
-get_type1(_Dpth,_Slf,Var,'%Undefined%'):- var(Var),!.
-get_type1(_Dpth,_Slf,Val,'Number'):- number(Val),!.
-get_type1(Depth,Self,Expr,['StateMonad',Type]):- is_valid_nb_state(Expr),'get-state'(Expr,Val),!,
-   get_type1(Depth,Self,Val,Type).
+get_type1(_False,_Dpth,_Slf,Var,'%Undefined%'):- var(Var),!.
+get_type1(_False,_Dpth,_Slf,Val,'Number'):- number(Val),!.
+get_type1(IsMT,Depth,Self,Expr,['StateMonad',Type]):- is_valid_nb_state(Expr),'get-state'(Expr,Val),!,
+   get_type1(IsMT,Depth,Self,Val,Type).
 
 
-get_type1(Depth,Self,EvalMe,Type):- needs_eval(EvalMe),
+get_type1(IsMT,Depth,Self,EvalMe,Type):- needs_eval(EvalMe),
      eval_args(Depth,Self,EvalMe,Val), \+ needs_eval(Val),!,
-   get_type1(Depth,Self,Val,Type).
+   get_type1(IsMT,Depth,Self,Val,Type).
 
-get_type1(_Dpth,Self,[Fn|_],Type):- symbol(Fn),metta_type(Self,Fn,List),last_element(List,Type), nonvar(Type),
+get_type1(_False,_Dpth,Self,[Fn|_],Type):- symbol(Fn),metta_type(Self,Fn,List),last_element(List,Type), nonvar(Type),
    is_type(Type).
-get_type1(_Dpth,Self,List,Type):- is_list(List),metta_type(Self,List,LType),last_element(LType,Type), nonvar(Type),
+get_type1(_False,_Dpth,Self,List,Type):- is_list(List),metta_type(Self,List,LType),last_element(LType,Type), nonvar(Type),
    is_type(Type).
 
-get_type1(Depth,_Slf,Type,Type):- Depth<1,!.
-get_type1(_Dpth,Self,List,Type):- is_list(List),metta_type(Self,Type,['->'|List]).
-get_type1(Depth,Self,List,Types):- List\==[], is_list(List),Depth2 is Depth-1,maplist(get_type1(Depth2,Self),List,Types).
-get_type1(_Dpth,Self,Fn,Type):- symbol(Fn),metta_type(Self,Fn,Type),!.
-%get_type1(Depth,Self,Fn,Type):- nonvar(Fn),metta_type(Self,Fn,Type2),Depth2 is Depth-1,get_type1(Depth2,Self,Type2,Type).
-%get_type1(Depth,Self,Fn,Type):- Depth>0,nonvar(Fn),metta_type(Self,Type,Fn),!. %,!,last_element(List,Type).
+get_type1(_False,Depth,_Slf,Type,Type):- Depth<1,!.
+get_type1(_True,_Dpth,Self,List,Type):- is_list(List),metta_type(Self,Type,['->'|List]).
+get_type1(IsMT,Depth,Self,List,Types):- List\==[], is_list(List),Depth2 is Depth-1,maplist(get_type1(IsMT,Depth2,Self),List,Types).
+get_type1(_False,_Dpth,Self,Fn,Type):- symbol(Fn),metta_type(Self,Fn,Type),!.
+%get_type1(_False,Depth,Self,Fn,Type):- nonvar(Fn),metta_type(Self,Fn,Type2),Depth2 is Depth-1,get_type1(_False,Depth2,Self,Type2,Type).
+%get_type1(_False,Depth,Self,Fn,Type):- Depth>0,nonvar(Fn),metta_type(Self,Type,Fn),!. %,!,last_element(List,Type).
 
-get_type1(Depth,Self,Expr,Type):-Depth2 is Depth-1,
+get_type1(IsMT,Depth,Self,Expr,Type):-Depth2 is Depth-1,
  eval_args(Depth2,Self,Expr,Val),
-  Expr\=@=Val,get_type1(Depth2,Self,Val,Type).
+  Expr\=@=Val,get_type1(IsMT,Depth2,Self,Val,Type).
 
 
-get_type1(_Dpth,_Slf,Val,'String'):- string(Val),!.
-get_type1(_Dpth,_Slf,Val,Type):- is_decl_type(Val),Type=Val.
-get_type1(_Dpth,_Slf,Val,'Bool'):- (Val=='False';Val=='True'),!.
-get_type1(_Dpth,_Slf,Val,'Symbol'):- symbol(Val).
-%get_type1(Depth,Self,[T|List],['List',Type]):- Depth2 is Depth-1,  is_list(List),get_type1(Depth2,Self,T,Type),!,
-%  forall((member(Ele,List),nonvar(Ele)),get_type1(Depth2,Self,Ele,Type)),!.
-%get_type1(Depth,_Slf,Cmpd,Type):- compound(Cmpd), functor(Cmpd,Type,1),!.
-get_type1(_Dpth,_Slf,Cmpd,Type):- \+ ground(Cmpd),!,Type=[].
-get_type1(_Dpth,_Slf,_,'%Undefined%'):- fail.
-%get_type1(Depth,Self,Val,Type):- Depth2 is Depth-1, get_type0(Depth2,Self,Val,Type).
+get_type1(_False,_Dpth,_Slf,Val,'String'):- string(Val),!.
+get_type1(_False,_Dpth,_Slf,Val,Type):- is_decl_type(Val),Type=Val.
+get_type1(_False,_Dpth,_Slf,Val,'Bool'):- (Val=='False';Val=='True'),!.
+%get_type1(_False,_Dpth,_Slf,Val,'Symbol'):- symbol(Val).
+%get_type1(_False,Depth,Self,[T|List],['List',Type]):- Depth2 is Depth-1,  is_list(List),get_type1(_False,Depth2,Self,T,Type),!,
+%  forall((member(Ele,List),nonvar(Ele)),get_type1(_False,Depth2,Self,Ele,Type)),!.
+%get_type1(_False,Depth,_Slf,Cmpd,Type):- compound(Cmpd), functor(Cmpd,Type,1),!.
+get_type1(_False,_Dpth,_Slf,Cmpd,Type):- \+ ground(Cmpd),!,Type=[].
+get_type1(_False,_Dpth,_Slf,_,'%Undefined%').
+%get_type1(_False,Depth,Self,Val,Type):- Depth2 is Depth-1, get_type0(_False,Depth2,Self,Val,Type).
 
 
 
@@ -227,53 +235,61 @@ as_prolog(Depth,Self,[H|T],O):- H=='::',!,as_prolog(Depth,Self,T,O).
 as_prolog(Depth,Self,[H|T],[HH|TT]):- as_prolog(Depth,Self,H,HH),as_prolog(Depth,Self,T,TT).
 
 
+as_prolog_e(_Dpth,_Slf,I,O):- \+ iz_conz(I),!,I=O.
+as_prolog_e(Depth,Self,[H|T],O):- H=='::',!,as_prolog(Depth,Self,T,O).
+as_prolog_e(Depth,Self,[H|T],[HH|TT]):- eval(Depth,Self,H,HH),as_prolog_e(Depth,Self,T,TT).
 
-try_adjust_arg_types(_Eq,RetType,Depth,Self,Params,X,Y):-
-  as_prolog(Depth,Self,X,M),
-  args_conform(Depth,Self,M,Params),!,
-  set_type(Depth,Self,Y,RetType),
-  into_typed_args(Depth,Self,Params,M,Y).
+
+
+try_adjust_arg_types(_Eq,_RetType,Depth,Self,ParamTypes,X,Y):-
+  args_conform(Depth,Self,X,ParamTypes),!,
+  %set_type(Depth,Self,Y,RetType),
+  into_typed_args(Depth,Self,ParamTypes,X,Y).
 %adjust_args(Eq,RetType,Depth,Self,_,X,Y):- is_list(X), !, maplist(eval_args(Depth,Self),X,Y).
 %adjust_args(Eq,RetType,Depth,Self,_,X,Y):- is_list(X), !, maplist(as_prolog(Depth,Self),X,Y),!.
 
-adjust_args(_Eq,_RetType,_Depth,_Self,_Op,X,Y):- X==[],!,Y=[].
-adjust_args(_Eq,_RetType,_Dpth,Self,F,X,X):- (is_special_op(Self,F); \+ iz_conz(X)),!.
-adjust_args(Eq,RetType,Depth,Self,Op,X,Y):-
+adjust_args(_Eq,_RetType,Res,Res,_Depth,_Self,_Op,X,Y):- X==[],!,Y=[].
+adjust_args(_Eq,_RetType,Res,Res,_Dpth,Self,F,X,X):- (is_special_op(Self,F); \+ iz_conz(X)),!.
+adjust_args(Eq,RetType,Res,NewRes,Depth,Self,Op,X,Y):-
   %trace,
-  get_operator_typedef(Self,Op,Params,RetType),
-  try_adjust_arg_types(Eq,RetType,Depth,Self,Params,X,Y).
-adjust_args(_Eq,_RetType,Depth,Self,_,X,Y):- as_prolog(Depth,Self,X,Y).
+  get_operator_typedef(Self,Op,ParamTypes,RetType),!,
+  try_adjust_arg_types(Eq,RetType,Depth,Self,[RetType|ParamTypes],[Res|X],[NewRes|Y]).
+adjust_args(_Eq,_RetType,Res,NewRes,Depth,Self,_,X,Y):-
+  maplist(eval(Depth,Self),[Res|X],[NewRes|Y]).
 
-into_typed_args(_Dpth,_Slf,T,M,Y):- (\+ iz_conz(T); \+ iz_conz(M)),!, M=Y.
-into_typed_args(Depth,Self,[T|TT],[M|MM],[Y|YY]):-
-  into_typed_arg(Depth,Self,T,M,Y),
-  into_typed_args(Depth,Self,TT,MM,YY).
+into_typed_args(_Dpth,_Slf,Sought,Before,Y):- (\+ iz_conz(Sought); \+ iz_conz(Before)),!, Before=Y.
+into_typed_args(Depth,Self,[Sought|SoughtSought],[Before|BeforeBefore],[Y|YY]):-
+  into_typed_arg(Depth,Self,Sought,Before,Y),
+  into_typed_args(Depth,Self,SoughtSought,BeforeBefore,YY).
 
-into_typed_arg(_Dpth,Self,T,M,Y):- var(M),!,put_attr(M,metta_type,Self=T),put_attr(Y,metta_type,Self=T),Y=M.
-into_typed_arg(Depth,Self,T,M,Y):- into_typed_arg0(Depth,Self,T,M,Y)*->true;M=Y.
+into_typed_arg(Depth,Self,Sought,Before,Y):- into_typed_arg0(Depth,Self,Sought,Before,Y)*->true;Before=Y.
 
-into_typed_arg0(Depth,Self,T,M,Y):- var(T), !, get_type(Depth,Self,M,T),
- (wants_eval_kind(T)->eval_args(Depth,Self,M,Y);Y=M).
+into_typed_arg0(Depth,Self,T,M,Y):- var(M),!,Y=M,put_attr(M,metta_vtype,typed_arg(Depth,Self,T)).
+%into_typed_arg0(_Dpth,Self,Sought,Before,Y):- var(Before),!,put_attr(Before,metta_type,Self=Sought),put_attr(Y,metta_type,Self=Sought),Y=Before.
+into_typed_arg0(Depth,Self,Sought,Before,Y):- var(Sought), !, get_type(_False,Depth,Self,Before,Sought),
+ (wants_eval_kind(Sought)->eval_args(Depth,Self,Before,Y);Y=Before).
 
-into_typed_arg0(Depth,Self,T,M,Y):- is_pro_eval_kind(T),!,eval_args(Depth,Self,M,Y).
-into_typed_arg0(Depth,Self,T,M,Y):- ground(M),!, \+ arg_violation(Depth,Self,M,T),Y=M.
-into_typed_arg0(_Dpth,_Slf,T,M,Y):- is_non_eval_kind(T),!,M=Y.
-into_typed_arg0(Depth,Self,_,M,Y):- eval_args(Depth,Self,M,Y).
+into_typed_arg0(Depth,Self,Sought,Before,Y):- is_pro_eval_kind(Sought),!,eval_args(Depth,Self,Before,Y).
+into_typed_arg0(Depth,Self,Sought,Before,Y):- ground(Before),!, \+ arg_violation(Depth,Self,Before,Sought),Y=Before.
+into_typed_arg0(_Dpth,_Slf,Sought,Before,Y):- is_non_eval_kind(Sought),!,Before=Y.
+into_typed_arg0(Depth,Self,_,Before,Y):- eval_args(Depth,Self,Before,Y).
 
 set_type(Depth,Self,Var,Type):- nop(set_type(Depth,Self,Var,Type)),!.
 set_type(Depth,Self,Var,Type):- get_type(Depth,Self,Var,Was)
    *->Was=Type
-   ; if_t(var(Var),put_attr(Var,metta_type,Self=Type)).
+   ; if_t(var(Var),put_attr(Var,metta_vtype,typed_arg(Depth,Self,Type))).
 
-metta_type:attr_unify_hook(Self=Type,NewValue):-
-   get_type(20,Self,NewValue,Was),
+metta_vtype:attr_unify_hook(typed_arg(Depth,Self,Type),NewValue):-
+   get_type(Depth,Self,NewValue,Was),
    can_assign(Was,Type).
 
 can_assign(Was,Type):- Was=Type,!.
 can_assign(Was,Type):- (is_nonspecific_type(Was);is_nonspecific_type(Type)),!.
-can_assign(_Ws,_Typ).
+can_assign(_Ws,_Typ):- fail.
 
 is_non_eval_kind(Type):- is_nonspecific_type(Type),!.
+is_non_eval_kind('Type').
+is_non_eval_kind('Expression').
 is_non_eval_kind('Atom').
 
 is_pro_eval_kind('Number').
@@ -315,20 +331,20 @@ is_user_defined_head_f1(Eq,Other,H):- metta_defn(Eq,Other,[H|_],_).
 is_special_op(Op):-  current_self(Self),is_special_op(Self,Op).
 
 is_special_op(_Slf,F):- \+ atom(F), \+ var(F), !, fail.
-is_special_op(Self,Op):- get_operator_typedef(Self,Op,Params,_RetType),
-   maplist(is_non_eval_kind,Params).
+is_special_op(Self,Op):- get_operator_typedef(Self,Op,ParamTypes,_RetType),
+   maplist(is_non_eval_kind,ParamTypes).
 is_special_op(_Slf,Op):- is_special_builtin(Op).
 
 
 
-get_operator_typedef(Self,Op,Params,RetType):-
-  get_operator_typedef1(Self,Op,Params,RetType)*->true;
-  get_operator_typedef2(Self,Op,Params,RetType).
-get_operator_typedef1(Self,Op,Params,RetType):-
+get_operator_typedef(Self,Op,ParamTypes,RetType):-
+  get_operator_typedef1(Self,Op,ParamTypes,RetType)*->true;
+  get_operator_typedef2(Self,Op,ParamTypes,RetType).
+get_operator_typedef1(Self,Op,ParamTypes,RetType):-
    metta_type(Self,Op,['->'|List]),
-   append(Params,[RetType],List).
-get_operator_typedef2(Self,Op,Params,RetType):-
-  nop(fbug(missing(get_operator_typedef2(Self,Op,Params,RetType)))),!,fail.
+   append(ParamTypes,[RetType],List).
+get_operator_typedef2(Self,Op,ParamTypes,RetType):-
+  nop(fbug(missing(get_operator_typedef2(Self,Op,ParamTypes,RetType)))),!,fail.
 
 is_metta_data_functor(Eq,F):-
   current_self(Self),is_metta_data_functor(Eq,Self,F).
