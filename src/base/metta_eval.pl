@@ -8,7 +8,7 @@ self_eval0(X):- is_valid_nb_state(X),!.
 %self_eval0(X):- number(X),!.
 %self_eval0([]).
 self_eval0(X):- is_metta_declaration(X),!.
-self_eval0([F|X]):- is_list(X),length(X,Len),!,is_self_eval_l_fa(F,Len),!.
+self_eval0([F|X]):- is_list(X),length(X,Len),!,nonvar(F), is_self_eval_l_fa(F,Len),!.
 self_eval0(X):- typed_list(X,_,_),!.
 %self_eval0(X):- compound(X),!.
 %self_eval0(X):- is_ref(X),!,fail.
@@ -60,8 +60,7 @@ do_expander(':',_,X,Y):- !, get_type(X,Y)*->X=Y.
 
 
 
-eval_args(X,Y):- current_self(Self),
-  eval_args(100,Self,X,Y).
+eval_args(X,Y):- current_self(Self), eval_args(100,Self,X,Y).
 eval_args(Depth,Self,X,Y):- eval_args('=',_,Depth,Self,X,Y).
 eval_args(Eq,RetType,Depth,Self,X,Y):- eval(Eq,RetType,Depth,Self,X,Y).
 /*
@@ -457,9 +456,11 @@ metta_atom_iter(Eq,_Depth,_Slf,Other,[Equal,[F|H],B]):- Eq == Equal,!,  % trace,
 
 metta_atom_iter(_Eq,Depth,_,_,_):- Depth<3,!,fail.
 metta_atom_iter(Eq,Depth,Self,Other,[And|Y]):- atom(And), is_and(And),!,
-  (Y==[] -> true ;  ( D2 is Depth -1, Y = [H|T], metta_atom_iter(Eq,D2,Self,Other,H),metta_atom_iter(Eq,D2,Self,Other,[And|T]))).
+  (Y==[] -> true ;
+    ( D2 is Depth -1, Y = [H|T],
+       metta_atom_iter(Eq,D2,Self,Other,H),metta_atom_iter(Eq,D2,Self,Other,[And|T]))).
 
-metta_atom_iter(Eq,Depth,_Slf,Other,X):- dcall0000000000(eval_args_true(Eq,_RetType,Depth,Other,X)).
+metta_atom_iter(Eq,Depth,_Slf,Other,X):- dcall0000000000(eval_args_true(Eq,_RetType,Depth,Other,XX)),XX=X.
 
 
 
@@ -1313,41 +1314,41 @@ eval_selfless(LIS,Y):-  notrace(( ground(LIS),
 
 call_ndet(Goal,DET):- call(Goal),deterministic(DET),(DET==true->!;true).
 
-eval_60(Eq,RetType,Depth,Self,[[H|Start]|T1],Y):-
-   notrace((is_user_defined_head_f(Self,H),is_list(Start))),
-   metta_defn(Eq,Self,[H|Start],Left),
-   [Left|T1] \=@= [[H|Start]|T1],
-   eval(Eq,RetType,Depth,Self,[Left|T1],Y).
-
+/*
 eval_60(Eq,_RetT,Depth,Self,[H|Args0],B):-
    \+ get_operator_typedef1(Self,H,_ParamTypes,_RType),!,
    maplist(eval_99(Eq,_,Depth,Self),Args0,Args),
    eval_65(Eq,RetType,Depth,Self,[H|Args],B),!.
+*/
 
 eval_60(Eq,RetType,Depth,Self,H,B):-
-   eval_64(Eq,RetType,Depth,Self,H,B).
-
-eval_61(Eq,RetType,Depth,Self,H,B):-
    (eval_64(Eq,RetType,Depth,Self,H,B)*->true;
      (fail,eval_67(Eq,RetType,Depth,Self,H,B))).
 
 
 %eval_64(Eq,_RetType,_Dpth,Self,H,B):-  Eq='=',!, metta_defn(Eq,Self,H,B).
 eval_64(Eq,_RetType,_Dpth,Self,H,B):-
-   Eq=='match', call(metta_atom(Self,H)),B=H.
+   Eq='match', call(metta_atom(Self,H)),B=H.
 
-eval_64(Eq,RetType,Depth,Self,[H|Args0],B):- % no weird template matchers
+
+eval_64(Eq,RetType,Depth,Self,[[H|Start]|T1],Y):-
+   notrace((is_user_defined_head_f(Self,H),is_list(Start))),
+   metta_defn(Eq,Self,[H|Start],Left),
+   [Left|T1] \=@= [[H|Start]|T1],
+   eval(Eq,RetType,Depth,Self,[Left|T1],Y).
+
+eval_64(Eq,_RetType,Depth,Self,[H|Args],B):- % no weird template matchers
   % forall(metta_defn(Eq,Self,[H|Template],_),
   %    maplist(not_template_arg,Template)),
-   (Eq == ('=')),
-   adjust_args(Eq,RetType,B0,B,Depth,Self,H,Args0,Args),
-   (metta_defn(Eq,Self,[H|Args],B0)*->true;([H|Args]=B0)),
+   Eq='=',
+   (metta_defn(Eq,Self,[H|Args],B0)*->true;(fail,[H|Args]=B0)),
    light_eval(Depth,Self,B0,B).
     %(eval(Eq,RetType,Depth,Self,B,Y);eval_match(Eq,RetType,Depth,Self,Y)).
+
 % Use the first template match
 eval_65(Eq,_RetType,Depth,Self,[H|Args],B):-
-   (Eq == ('=')),
-   (metta_defn(Eq,Self,[H|Args],B0)*->true;([H|Args]=B0)),
+   Eq='=',
+  (metta_defn(Eq,Self,[H|Template],B0),Args=Template),
    light_eval(Depth,Self,B0,B).
 
 
