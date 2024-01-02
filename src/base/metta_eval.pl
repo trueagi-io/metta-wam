@@ -179,7 +179,7 @@ is_debugging(Flag):- flag_to_var(Flag,Var),
 
 
 eval_99(Eq,RetType,Depth,Self,X,Y):-
-  eval_20(Eq,RetType,Depth,Self,X,Y)*->true;eval_failed(Depth,Self,X,Y).
+  eval(Eq,RetType,Depth,Self,X,Y)*->true;eval_failed(Eq,RetVal,Depth,Self,X,Y).
 
 
 
@@ -214,13 +214,13 @@ eval_11(_Eq,_RetType,_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
 eval_11(Eq,RetType,Depth,Self,X,Y):-
   ((
 
-  flag(eval_num,EX,EX+1),
+  notrace((flag(eval_num,EX,EX+1),
   D1 is Depth-1,
   DR is 99-D1,
-  PrintRet = _,
+  PrintRet = _)),
   option_else('trace-length',Max,100),
-  if_t((EX>Max), (set_debug(eval,false),MaxP1 is Max+1, set_debug(overflow,false),
-      nop(format('; Switched off tracing. For a longer trace: !(pragma! trace-length ~w)',[MaxP1])))),
+  notrace((if_t((EX>Max), (set_debug(eval,false),MaxP1 is Max+1, set_debug(overflow,false),
+      nop(format('; Switched off tracing. For a longer trace: !(pragma! trace-length ~w)',[MaxP1])))))),
   nop(notrace(no_repeats_var(YY))),
 
   if_t(DR<20,if_trace((eval),(PrintRet=1, indentq(DR,EX, '-->',eval(X))))),
@@ -1313,7 +1313,21 @@ eval_selfless(LIS,Y):-  notrace(( ground(LIS),
 
 call_ndet(Goal,DET):- call(Goal),deterministic(DET),(DET==true->!;true).
 
+eval_60(Eq,RetType,Depth,Self,[[H|Start]|T1],Y):-
+   notrace((is_user_defined_head_f(Self,H),is_list(Start))),
+   metta_defn(Eq,Self,[H|Start],Left),
+   [Left|T1] \=@= [[H|Start]|T1],
+   eval(Eq,RetType,Depth,Self,[Left|T1],Y).
+
+eval_60(Eq,_RetT,Depth,Self,[H|Args0],B):-
+   \+ get_operator_typedef1(Self,H,_ParamTypes,_RType),!,
+   maplist(eval_99(Eq,_,Depth,Self),Args0,Args),
+   eval_65(Eq,RetType,Depth,Self,[H|Args],B),!.
+
 eval_60(Eq,RetType,Depth,Self,H,B):-
+   eval_64(Eq,RetType,Depth,Self,H,B).
+
+eval_61(Eq,RetType,Depth,Self,H,B):-
    (eval_64(Eq,RetType,Depth,Self,H,B)*->true;
      (fail,eval_67(Eq,RetType,Depth,Self,H,B))).
 
@@ -1321,13 +1335,6 @@ eval_60(Eq,RetType,Depth,Self,H,B):-
 %eval_64(Eq,_RetType,_Dpth,Self,H,B):-  Eq='=',!, metta_defn(Eq,Self,H,B).
 eval_64(Eq,_RetType,_Dpth,Self,H,B):-
    Eq=='match', call(metta_atom(Self,H)),B=H.
-
-
-eval_64(Eq,RetType,Depth,Self,[[H|Start]|T1],Y):-
-   notrace((is_user_defined_head_f(Self,H),is_list(Start))),
-   metta_defn(Eq,Self,[H|Start],Left),
-   [Left|T1] \=@= [[H|Start]|T1],
-   eval(Eq,RetType,Depth,Self,[Left|T1],Y).
 
 eval_64(Eq,RetType,Depth,Self,[H|Args0],B):- % no weird template matchers
   % forall(metta_defn(Eq,Self,[H|Template],_),
@@ -1338,10 +1345,10 @@ eval_64(Eq,RetType,Depth,Self,[H|Args0],B):- % no weird template matchers
    light_eval(Depth,Self,B0,B).
     %(eval(Eq,RetType,Depth,Self,B,Y);eval_match(Eq,RetType,Depth,Self,Y)).
 % Use the first template match
-eval_64(Eq,_RetType,Depth,Self,[H|Args],B):- fail,
-   Eq='=',
-  (metta_defn(Eq,Self,[H|Template],B0),Args=Template),
-  light_eval(Depth,Self,B0,B).
+eval_65(Eq,_RetType,Depth,Self,[H|Args],B):-
+   (Eq == ('=')),
+   (metta_defn(Eq,Self,[H|Args],B0)*->true;([H|Args]=B0)),
+   light_eval(Depth,Self,B0,B).
 
 
 light_eval(_Depth,_Self,B,B).
