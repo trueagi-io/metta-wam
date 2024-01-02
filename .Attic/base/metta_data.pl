@@ -248,14 +248,14 @@ try_adjust_arg_types(_Eq,_RetType,Depth,Self,ParamTypes,X,Y):-
 %adjust_args(Eq,RetType,Depth,Self,_,X,Y):- is_list(X), !, maplist(eval_args(Depth,Self),X,Y).
 %adjust_args(Eq,RetType,Depth,Self,_,X,Y):- is_list(X), !, maplist(as_prolog(Depth,Self),X,Y),!.
 
+:- nodebug(casting).
+
 adjust_args(_Eq,_RetType,Res,Res,_Depth,_Self,_Op,X,Y):- X==[],!,Y=[].
-adjust_args(_Eq,_RetType,Res,Res,_Dpth,Self,F,X,X):- (is_special_op(Self,F); \+ iz_conz(X)),!.
 adjust_args(Eq,RetType,Res,NewRes,Depth,Self,Op,X,Y):-
-  %trace,
   get_operator_typedef(Self,Op,ParamTypes,RetType),!,
-  try_adjust_arg_types(Eq,RetType,Depth,Self,[RetType|ParamTypes],[Res|X],[NewRes|Y]).
-adjust_args(_Eq,_RetType,Res,NewRes,Depth,Self,_,X,Y):-
-  maplist(eval(Depth,Self),[Res|X],[NewRes|Y]).
+  show_failure(casting,try_adjust_arg_types(Eq,RetType,Depth,Self,[RetType|ParamTypes],[Res|X],[NewRes|Y])).
+adjust_args(_Eq,_RetType,Res,Res,_Dpth,Self,F,X,X):- (is_special_op(Self,F); \+ iz_conz(X)),!.
+adjust_args(Eq,_RetType,Res,NewRes,Depth,Self,_,X,Y):- maplist(eval_99(Eq,_,Depth,Self),[Res|X],[NewRes|Y]),!.
 
 into_typed_args(_Dpth,_Slf,Sought,Before,Y):- (\+ iz_conz(Sought); \+ iz_conz(Before)),!, Before=Y.
 into_typed_args(Depth,Self,[Sought|SoughtSought],[Before|BeforeBefore],[Y|YY]):-
@@ -293,8 +293,10 @@ is_non_eval_kind('Expression').
 is_non_eval_kind('Atom').
 
 is_pro_eval_kind('Number').
+%is_pro_eval_kind('Nat').
 is_pro_eval_kind('Symbol').
 is_pro_eval_kind('Bool').
+is_pro_eval_kind(Type):-  \+ is_non_eval_kind(Type).
 
 is_feo_f('Cons').
 
