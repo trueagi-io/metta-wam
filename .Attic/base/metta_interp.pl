@@ -78,7 +78,7 @@ option_value_def('exeout','./Sav.godlike.MeTTaLog').
 
 
 option_value_def('trace-on-error',true).
-option_value_def('trace-on-load',false).
+%option_value_def('trace-on-load',false).
 option_value_def('trace-on-exec',true).
 option_value_def('trace-on-eval',true).
 option_value_def('trace-on-fail',false).
@@ -89,13 +89,14 @@ option_value_def('trace-on-pass',false).
 
 set_is_unit_test(TF):-
   forall(option_value_def(A,B),set_option_value(A,B)),
-  set_option_value('trace-on-load',TF),
-  set_option_value('trace-on-exec',TF),
-  set_option_value('trace-on-eval',TF),
   set_option_value('trace-on-pass',false),
   set_option_value('trace-on-fail',false),
   if_t(TF,set_option_value('exec',rtrace)),
   if_t(TF,set_option_value('eval',rtrace)),
+  set_option_value('trace-on-load',TF),
+  set_option_value('trace-on-exec',TF),
+  set_option_value('trace-on-eval',TF),
+
   !.
 
 :- set_is_unit_test(false).
@@ -285,9 +286,9 @@ process_option_value_def:- option_value('python',load), ensure_loaded(metta_vspa
 process_option_value_def.
 
 
-process_late_opts:- once(option_value('html',true)), set_is_unit_test(true).
-process_late_opts:- current_prolog_flag(os_argv,[_]),!,ignore(repl).
 process_late_opts:- forall(process_option_value_def,true).
+process_late_opts:- once(option_value('html',true)), set_is_unit_test(true).
+%process_late_opts:- current_prolog_flag(os_argv,[_]),!,ignore(repl).
 %process_late_opts:- halt(7).
 process_late_opts.
 
@@ -309,6 +310,8 @@ catch_abort(From,TermV,Goal):-
    catch(Goal,'$aborted',fbug(aborted(From,TermV))).
 % done
 cmdline_load_metta(_,Nil):- Nil==[],!.
+
+cmdline_load_metta(Self,['--repl'|Rest]):- !, repl,cmdline_load_metta(Self,Rest).
 cmdline_load_metta(Self,[Filemask|Rest]):- atom(Filemask), \+ atom_concat('-',_,Filemask),
   Src=user:load_metta_file(Self,Filemask),
   catch_abort(Src,
@@ -440,21 +443,21 @@ accept_line2(Self,S):- string_concat('(',RS,S),string_concat(M,')',RS),!,
  if_t((0 is X mod 10_000_000),(writeln(X=PL),statistics)).
 accept_line2(Self,S):- fbug(accept_line2(Self,S)),!.
 
-load_metta_file_stream_fast(_Size,_P2,Filename,Self,S):- atomic_list_concat([_,_,_|_],'.',Filename),!,
-   atomic(S),is_stream(S),stream_property(S,input),
+load_metta_file_stream_fast(_Size,_P2,Filename,Self,S):- atomic_list_concat([_,_,_|_],'.',Filename),
+   \+ option_value(html,true),
+   atomic(S),is_stream(S),stream_property(S,input),!,
    repeat,
    read_line_to_string(S,I),
    accept_line(Self,I),
    I==end_of_file,!.
 
 load_metta_file_stream_fast(_Size,P2,Filename,Self,In):-
-       once((repeat, ((
+       repeat,
             current_read_mode(Mode),
             once(call(P2, In,Expr)), %write_src(read_metta=Expr),nl,
-            must_det_ll((((do_metta(file(Filename),Mode,Self,Expr,_O)))->true;
-                 pp_m(unknown_do_metta(file(Filename),Mode,Self,Expr)))),
-           flush_output)),
-          at_end_of_stream(In))),!.
+            once((((do_metta(file(Filename),Mode,Self,Expr,_O)))->true; pp_m(unknown_do_metta(file(Filename),Mode,Self,Expr)))),
+       flush_output,
+       at_end_of_stream(In),!.
 
 clear_spaces:- clear_space(_).
 clear_space(S):-
@@ -1045,7 +1048,9 @@ connl:- check_silent_loading,nl.
 % check_silent_loading:- silent_loading,!,trace,break.
 check_silent_loading.
 silent_loading:- is_converting,!.
-silent_loading:- \+ option_value('trace-on-load',true), !.
+silent_loading:- option_value('html','True'), !,fail.
+silent_loading:- option_value('trace-on-load','False'), !.
+
 
 
 
@@ -1824,7 +1829,7 @@ really_rtrace(Goal):- with_debug((eval),with_debug((exec),Goal)).
 rtrace_on_existence_error(G):- !, catch_err(G,E, (fbug(E=G),  \+ tracing, trace, rtrace(G))).
 %rtrace_on_existence_error(G):- catch(G,error(existence_error(procedure,W),Where),rtrace(G)).
 
-% prolog_only(Goal):- !,Goal.
+prolog_only(Goal):- !,Goal.
 prolog_only(Goal):- if_trace(prolog,Goal).
 
 write_compiled_exec(Exec,Goal):-
