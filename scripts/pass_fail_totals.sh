@@ -32,8 +32,8 @@ sort -k1,1r -k2,2nr  "$temp_file" | while read -r dir slash_count; do
     # Process each .metta.html file in the directory
     while read -r file; do
             # Extract successes and failures
-            pass=$(grep -oP 'Successes: \K\d+' "$file" | paste -sd+ | bc || echo 0)
-            fail=$(grep -oP 'Failures: \K\d+' "$file" | paste -sd+ | bc || echo 0)
+       pass=$(tac "$file" | grep -oP 'Successes: \K\d+' | head -n 1 | bc || echo 0)
+       fail=$(tac "$file" | grep -oP 'Failures: \K\d+' | head -n 1 | bc || echo 0)
 
             # Add to totals
             total_pass=$((total_pass + pass))
@@ -69,6 +69,9 @@ done
 
 
 
+
+
+
 echo ""
 echo ""
 echo ""
@@ -90,8 +93,8 @@ sort -k2,2n "$temp_file" | while read -r dir slash_count; do
     while read -r file; do
         if [[ -f "$file" ]]; then
             # Extract successes and failures
-            pass=$(grep -oP 'Successes: \K\d+' "$file" | paste -sd+ | bc || echo 0)
-            fail=$(grep -oP 'Failures: \K\d+' "$file" | paste -sd+ | bc || echo 0)
+           pass=$(tac "$file" | grep -oP 'Successes: \K\d+' | head -n 1 | bc || echo 0)
+           fail=$(tac "$file" | grep -oP 'Failures: \K\d+' | head -n 1 | bc || echo 0)
 
             # Add to totals
             total_pass=$((total_pass + pass))
