@@ -1,7 +1,7 @@
 :- encoding(iso_latin_1).
 :- flush_output.
 :- setenv('RUST_BACKTRACE',full).
-
+:- op(700,xfx,'=~').
 
 % ===============================
 %    TESTING

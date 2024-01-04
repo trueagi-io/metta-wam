@@ -57,7 +57,7 @@ Now FAILING TEST-SCRIPTS.C1-GROUNDED-BASIC.20)
 */
 
 
-option_value_def('repl',auto).
+%option_value_def('repl',auto).
 option_value_def('prolog',false).
 option_value_def('compile',false).
 option_value_def('table',false).
@@ -66,7 +66,7 @@ option_value_def('time',true).
 option_value_def('exec',true).
 option_value_def('html',false).
 option_value_def('python',false).
-option_value_def('halt',false).
+%option_value_def('halt',false).
 option_value_def('doing_repl',false).
 option_value_def('test-retval',false).
 option_value_def('trace-length',100).
@@ -421,7 +421,6 @@ include_metta(Self,RelFilename):-
       with_cwd(Directory,
         must_det_ll( load_metta_file_stream(Filename,Self,In))))),close(In)))))).
 
-
 load_metta_file_stream(Filename,Self,In):-
   once((is_file_stream_and_size(In, Size) , Size>102400) -> P2 = read_sform2 ; P2 = read_metta2),
   with_option(loading_file,Filename,
@@ -454,7 +453,7 @@ load_metta_file_stream_fast(_Size,_P2,Filename,Self,S):- atomic_list_concat([_,_
 load_metta_file_stream_fast(_Size,P2,Filename,Self,In):-
        repeat,
             current_read_mode(Mode),
-            once(call(P2, In,Expr)), %write_src(read_metta=Expr),nl,
+            call(P2, In,Expr), %write_src(read_metta=Expr),nl,
             once((((do_metta(file(Filename),Mode,Self,Expr,_O)))->true; pp_m(unknown_do_metta(file(Filename),Mode,Self,Expr)))),
        flush_output,
        at_end_of_stream(In),!.
@@ -974,6 +973,7 @@ type_decl('Variable').
 
 :- dynamic(get_metta_atom/2).
 :- dynamic(asserted_metta_atom/2).
+metta_atom_stdlib(_):-!,fail.
 metta_atom_stdlib([:, Type, 'Type']):- type_decl(Type).
 metta_atom_stdlib([:, Op, [->|List]]):- op_decl(Op,Params,ReturnType),append(Params,[ReturnType],List).
 
@@ -993,6 +993,7 @@ asserted_metta_atom_fallback( KB,Atom):- fail, is_list(KB),!, member(Atom,KB).
 
 %metta_atom(KB,[F,A|List]):- metta_atom(KB,F,A,List), F \== '=',!.
 metta_atom(KB,Atom):- get_metta_atom_from(KB,Atom).
+metta_defn(KB,Head,Body):- metta_defn(_Eq,KB,Head,Body).
 metta_defn(Eq,KB,Head,Body):- ignore(Eq = '='), get_metta_atom_from(KB,[Eq,Head,Body]).
 metta_type(S,H,B):- get_metta_atom_from(S,[':',H,B]).
 %typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_arguments(Cmpd,Type,[List|_]),is_list(List).
@@ -1993,7 +1994,6 @@ do_loon:-
    load_history,
    update_changed_files,
    run_cmd_args,
-   pre_halt,
    maybe_halt(7)]))),!.
 
 
@@ -2001,19 +2001,22 @@ need_interaction:- \+ option_value('had_interaction',true),
    \+ is_converting,  \+ is_compiling, \+ is_pyswip,!,
     option_value('prolog',false), option_value('repl',false),  \+ metta_file(_Self,_Filename,_Directory).
 
-pre_halt:- is_compiling,!,fail.
-pre_halt:- loonit_report,fail.
-pre_halt:-  option_value('prolog',true),!,set_option_value('prolog',started),call_cleanup(prolog,pre_halt).
-pre_halt:-  option_value('repl',true),!,set_option_value('repl',started),call_cleanup(repl,pre_halt).
-pre_halt:-  need_interaction, set_option_value('had_interaction',true),call_cleanup(repl,pre_halt).
+pre_halt1:- is_compiling,!,fail.
+pre_halt1:- loonit_report,fail.
+pre_halt2:- is_compiling,!,fail.
+pre_halt2:-  option_value('prolog',true),!,set_option_value('prolog',started),call_cleanup(prolog,pre_halt2).
+pre_halt2:-  option_value('repl',true),!,set_option_value('repl',started),call_cleanup(repl,pre_halt2).
+pre_halt2:-  need_interaction, set_option_value('had_interaction',true),call_cleanup(repl,pre_halt2).
 
 %loon:- time(loon_metta('./examples/compat/test_scripts/*.metta')),fail.
 %loon:- repl, (option_value('halt',false)->true;halt(7)).
 %maybe_halt(Seven):- option_value('prolog',true),!,call_cleanup(prolog,(set_option_value('prolog',false),maybe_halt(Seven))).
 %maybe_halt(Seven):- option_value('repl',true),!,call_cleanup(repl,(set_option_value('repl',false),maybe_halt(Seven))).
 %maybe_halt(Seven):- option_value('repl',true),!,halt(Seven).
-maybe_halt(_):- once(pre_halt), fail.
+maybe_halt(_):- once(pre_halt1), fail.
+maybe_halt(Seven):- option_value('repl',false),!,halt(Seven).
 maybe_halt(Seven):- option_value('halt',true),!,halt(Seven).
+maybe_halt(_):- once(pre_halt2), fail.
 maybe_halt(Seven):- fbug(maybe_halt(Seven)).
 
 :- initialization(nb_setval(cmt_override,lse('; ',' !(" ',' ") ')),restore).
