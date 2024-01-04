@@ -1,9 +1,7 @@
 
 
-:- throw(metta_types).
 
-
-mnotrace(G):- notrace(G).
+mnotrace(G):- once(G).
 
 is_decl_type(ST):- metta_type(_,_,Type),sub_sterm(T,Type),T=@=ST, \+ nontype(ST).
 is_decl_type([ST|_]):- !, atom(ST),is_decl_type_l(ST).
@@ -239,7 +237,7 @@ into_typed_args(Depth,Self,[T|TT],[M|MM],[Y|YY]):-
   into_typed_arg(Depth,Self,T,M,Y),
   into_typed_args(Depth,Self,TT,MM,YY).
 
-into_typed_arg(Depth,Self,T,M,Y):- var(M),!,Y=M,put_attr(M,metta_vtype,typed_arg(Depth,Self,T)).
+into_typed_arg(_Dpth,Self,T,M,Y):- var(M),!,put_attr(M,metta_type,Self=T),put_attr(Y,metta_type,Self=T),Y=M.
 into_typed_arg(Depth,Self,T,M,Y):- into_typed_arg0(Depth,Self,T,M,Y)*->true;M=Y.
 
 into_typed_arg0(Depth,Self,T,M,Y):- var(T), !, get_type(Depth,Self,M,T),
@@ -253,10 +251,10 @@ into_typed_arg0(Depth,Self,_,M,Y):- eval_args(Depth,Self,M,Y).
 set_type(Depth,Self,Var,Type):- nop(set_type(Depth,Self,Var,Type)),!.
 set_type(Depth,Self,Var,Type):- get_type(Depth,Self,Var,Was)
    *->Was=Type
-   ; if_t(var(Var),put_attr(Var,metta_vtype,typed_arg(Depth,Self,Type)).
+   ; if_t(var(Var),put_attr(Var,metta_type,Self=Type)).
 
-metta_vtype:attr_unify_hook(typed_arg(Depth,Self,Type),NewValue):-
-   get_type(Depth,Self,NewValue,Was),
+metta_type:attr_unify_hook(Self=Type,NewValue):-
+   get_type(20,Self,NewValue,Was),
    can_assign(Was,Type).
 
 can_assign(Was,Type):- Was=Type,!.
@@ -311,8 +309,6 @@ is_syspred0(H,_Ln,_Prd):- \+ atom(H),!,fail.
 is_syspred0(H,_Ln,_Prd):- upcase_atom(H,U),downcase_atom(H,U),!,fail.
 is_syspred0(H,Len,Pred):- current_predicate(H/Len),!,Pred=H.
 is_syspred0(H,Len,Pred):- atom_concat(Mid,'!',H), H\==Mid, is_syspred0(Mid,Len,Pred),!.
-is_syspred0(H,Len,Pred):- atom_concat(Mid,'-fn',H), H\==Mid, is_syspred0(Mid,Len,Pred),!.
-is_syspred0(H,Len,Pred):- atom_concat(Mid,'-p',H), H\==Mid, is_syspred0(Mid,Len,Pred),!.
 is_syspred0(H,Len,Pred):- into_underscores(H,Mid), H\==Mid, is_syspred0(Mid,Len,Pred),!.
 %is_function(F):- atom(F).
 is_metta_data_functor(Eq,_Othr,H):- clause(is_data_functor(H),_).
@@ -332,7 +328,7 @@ get_operator_typedef1(Self,Op,Params,RetType):-
    metta_type(Self,Op,['->'|List]),
    append(Params,[RetType],List).
 get_operator_typedef2(Self,Op,Params,RetType):-
-  nop(fbug(missing(get_operator_typedef2(Self,Op,Params,RetType)))),!,fail.
+  nop(wdmsg(missing(get_operator_typedef2(Self,Op,Params,RetType)))),!,fail.
 
 is_metta_data_functor(Eq,F):-
   current_self(Self),is_metta_data_functor(Eq,Self,F).

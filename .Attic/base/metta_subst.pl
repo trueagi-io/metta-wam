@@ -11,21 +11,24 @@ self_subst(X):- is_list(X),!,fail.
 self_subst(X):- atom(X),!, \+ nb_current(X,_),!.
 self_subst('True'). self_subst('False'). self_subst('F').
 
-:- style_check(-singleton).
 
 :- nb_setval(self_space, '&self').
 substs_to(XX,Y):- Y==XX,!.
 substs_to(XX,Y):- Y=='True',!, is_True(XX),!.
 
 %current_self(Space):- nb_current(self_space,Space).
+/*
 subst_args(Eq,RetType,A,AA):-
   current_self(Space),
   subst_args(Eq,RetType,11,Space,A,AA).
 
 %subst_args(Eq,RetType,Depth,_Self,X,_Y):- forall(between(6,Depth,_),write(' ')),writeqln(subst_args(Eq,RetType,X)),fail.
+*/
 
 subst_args(Eq,RetType,Depth,Self,X,Y):- atom(Eq),  ( Eq \== ('=')) ,!,
    call(Eq,'=',RetType,Depth,Self,X,Y).
+
+ :- style_check(-singleton).
 
 
 
@@ -37,14 +40,14 @@ subst_args(Eq,RetType,_Dpth,_Slf,[X|T],Y):- T==[], \+ callable(X),!,Y=[X].
 subst_args(Eq,RetType,Depth,Self,[F|X],Y):-
  % (F=='superpose' ; ( option_value(no_repeats,false))),
   mnotrace((D1 is Depth-1)),!,
-  subst_args0(D1,Self,[F|X],Y).
+  subst_args0(Eq,RetType,D1,Self,[F|X],Y).
 
-subst_args(Eq,RetType,Depth,Self,X,Y):- subst_args0(Depth,Self,X,Y).
+subst_args(Eq,RetType,Depth,Self,X,Y):- subst_args0(Eq,RetType,Depth,Self,X,Y).
 /*
 subst_args(Eq,RetType,Depth,Self,X,Y):-
   mnotrace((no_repeats_var(YY),
   D1 is Depth-1)),
-  subst_args0(D1,Self,X,Y),
+  subst_args0(Eq,RetType,D1,Self,X,Y),
    mnotrace(( \+ (Y\=YY))).
 */
 
@@ -58,7 +61,7 @@ w_indent(Depth,Goal):-
   \+ \+ mnotrace(ignore(((
     format('~N'),
     setup_call_cleanup(forall(between(Depth,101,_),write('  ')),Goal, format('~N')))))).
-indentq(Depth,Term):-
+indentq(DR,EX,Term):-
   \+ \+ mnotrace(ignore(((
     format('~N'),
     setup_call_cleanup(forall(between(Depth,101,_),write('  ')),format('~q',[Term]),
@@ -76,11 +79,11 @@ flag_to_var(Flag,Var):- Flag=Var.
 set_debug(Flag,Val):- \+ atom(Flag), flag_to_var(Flag,Var), atom(Var),!,set_debug(Var,Val).
 set_debug(Flag,true):- !, debug(metta(Flag)),flag_to_var(Flag,Var),set_option_value(Var,true).
 set_debug(Flag,false):- nodebug(metta(Flag)),flag_to_var(Flag,Var),set_option_value(Var,false).
-if_trace((Flag;true),Goal):- !, notrace(( catch_err(ignore((Goal)),E,fbug(E-->if_trace((Flag;true),Goal))))).
-if_trace(Flag,Goal):- notrace((catch_err(ignore((is_debugging(Flag),Goal)),E,fbug(E-->if_trace(Flag,Goal))))).
+if_trace((Flag;true),Goal):- !, notrace(( catch_err(ignore((Goal)),E,wdmsg(E-->if_trace((Flag;true),Goal))))).
+if_trace(Flag,Goal):- notrace((catch_err(ignore((is_debugging(Flag),Goal)),E,wdmsg(E-->if_trace(Flag,Goal))))).
 
 
-%maybe_efbug(SS,G):- efbug(SS,G)*-> if_trace(eval,fbug(SS=G)) ; fail.
+%maybe_efbug(SS,G):- efbug(SS,G)*-> if_trace(eval,wdmsg(SS=G)) ; fail.
 maybe_efbug(_,G):- call(G).
 %efbug(P1,G):- call(P1,G).
 efbug(_,G):- call(G).
@@ -102,18 +105,49 @@ is_debugging(Flag):- flag_to_var(Flag,Var),
 
 */
 
-subst_args0(Depth,_Slf,X,Y):- Depth<1,!,X=Y, (\+ trace_on_overflow-> true; flag(eval_num,_,0),debug(metta(eval))).
-subst_args0(_Dpth,_Slf,X,Y):- self_subst(X),!,Y=X.
-subst_args0(Depth,Self,X,Y):-
+subst_args0(Eq,RetType,Depth,_Slf,X,Y):- Depth<1,!,X=Y, (\+ trace_on_overflow-> true; flag(eval_num,_,0),debug(metta(eval))).
+subst_args0(Eq,RetType,_Dpth,_Slf,X,Y):- self_subst(X),!,Y=X.
+subst_args0(Eq,RetType,Depth,Self,X,Y):-
   Depth2 is Depth-1,
-  subst_args11(Depth,Self,X,M),
-  (M\=@=X ->subst_args0(Depth2,Self,M,Y);Y=X).
+  subst_args11(Eq,RetType,Depth,Self,X,M),
+  (M\=@=X ->subst_args0(Eq,RetType,Depth2,Self,M,Y);Y=X).
 
 
 
-subst_args11(_Dpth,_Slf,X,Y):- self_subst(X),!,Y=X.
-subst_args11(Depth,Self,X,Y):- \+ debugging(metta(eval)),!, subst_args1(Eq,RetType,Depth,Self,X,Y).
-subst_args11(Depth,Self,X,Y):-
+subst_args11(_Eq,_RetType,_Dpth,_Slf,X,Y):- self_subst(X),!,Y=X.
+subst_args11(Eq,RetType,Depth,Self,X,Y):- \+ is_debugging((subst_args)),!,
+  D1 is Depth-1,
+  subst_args1(Eq,RetType,D1,Self,X,Y).
+subst_args11(Eq,RetType,Eq,RetType,Depth,Self,X,Y):-
+ notrace((
+
+  flag(subst_args_num,EX,EX+1),
+  D1 is Depth-1,
+  DR is 99-D1,
+  PrintRet = _,
+  option_else('trace-length',Max,100),
+  if_t((EX>Max), (set_debug(subst_args,false),MaxP1 is Max+1, set_debug(overflow,false),
+      format('; Switched off tracing. For a longer trace: !(pragma! trace-length ~w)',[MaxP1]))),
+  nop(notrace(no_repeats_var(YY))),
+
+  if_t(DR<10,if_trace((subst_args),(PrintRet=1, indentq(DR,EX, '-->',subst(X))))),
+  Ret=retval(fail))),
+
+  call_cleanup((
+    (subst_args1(Eq,RetType,D1,Self,X,Y)),
+    notrace(( \+ (Y\=YY), nb_setarg(1,Ret,Y)))),
+
+    (PrintRet==1 -> indentq(DR,EX,'<--',Ret) ;
+    mnotrace(ignore(((Y\=@=X,
+      if_t(DR<10,if_trace((subst_args),indentq(DR,EX,'<--',s(Ret)))))))))),
+
+  (Ret\=@=retval(fail)->true;(rtrace(subst_args_00(Eq,RetType,D1,Self,X,Y)),fail)).
+
+/*
+
+subst_args11(Eq,RetType,_Dpth,_Slf,X,Y):- self_subst(X),!,Y=X.
+subst_args11(Eq,RetType,Depth,Self,X,Y):- \+ debugging(metta(eval)),!, subst_args1(Eq,RetType,Depth,Self,X,Y).
+subst_args11(Eq,RetType,Depth,Self,X,Y):-
 
 notrace((
 
@@ -126,15 +160,15 @@ notrace((
       format('; Switched off tracing. For a longer trace: !(pragma! trace-length ~w)',[MaxP1]))),
   nop(notrace(no_repeats_var(YY))),
 
-  if_t(DR<10,if_trace((eval),(PrintRet=1, indentq(Depth,'-->'(EX,subst_args(Self,X,'$VAR'('RET')),depth(DR)))))),
+  if_t(DR<10,if_trace((eval),(PrintRet=1, indentq(DR,EX,'-->'(subst_args(Self,X,'$VAR'('RET'))))))),
   Ret=retval(fail))),
 
   call_cleanup((
     subst_args1(Eq,RetType,D1,Self,X,Y),
     mnotrace(( \+ (Y\=YY), nb_setarg(1,Ret,Y)))),
-    mnotrace(ignore(((Y\=@=X,if_trace(metta(eval),indentq(Depth,'<--'(EX,Ret)))))))),
-  (Ret\=@=retval(fail)->true;(rtrace(subst_args0(D1,Self,X,Y)),fail)).
-
+    mnotrace(ignore(((Y\=@=X,if_trace(metta(eval),indentq(DR,EX,'<--'(Ret)))))))),
+  (Ret\=@=retval(fail)->true;(rtrace(subst_args0(Eq,RetType,D1,Self,X,Y)),fail)).
+*/
 
 :- discontiguous subst_args1/6.
 :- discontiguous subst_args2/6.
@@ -280,7 +314,7 @@ is_space_op('remove-atom').
 is_space_op('atom-count').
 is_space_op('atom-replace').
 
-subst_args_as(Depth, Self, [OP|ARGS], Template):- !, eval('=',_,Depth, Self, [OP|ARGS], Template).
+subst_args_as(Depth, Self, [OP|ARGS], Template):- !, eval_20('=',_,Depth, Self, [OP|ARGS], Template).
 
 subst_args_as(Depth,Self,['match',Other,Goal,Template],Template):- into_space(Self,Other,Space),!, metta_atom_iter_l1t(Eq,Depth,Space,Goal).
 subst_args_as(Depth,Self,['match',Other,Goal,Template,Else],Template):-
@@ -293,7 +327,7 @@ subst_args_as(_Dpth,Self,['atom-replace',Other,Rem,Add],TF):- !, into_space(Self
   as_tf((metta_atom_iter_l1t_ref(Space,RCopy,Ref), RCopy=@=Rem,erase(Ref), do_metta(Other,load,Add)),TF).
 
 subst_args1(Eq,RetType,Depth,Self,X,Res):-
-   X= [CaseSym|_],CaseSym == 'case',  !, eval('=',_,Depth, Self, X,Res).
+   X= [CaseSym|_],CaseSym == 'case',  !, eval_20('=',_,Depth, Self, X,Res).
 
 % Macro: case
 subst_args1_hide(Depth,Self,X,Res):-
@@ -738,7 +772,7 @@ last_element(T,E):- compound_name_arguments(T,_,List),last_element(List,E),!.
 
 
 
-%catch_warn(G):- notrace(catch_err(G,E,(fbug(catch_warn(G)-->E),fail))).
+%catch_warn(G):- notrace(catch_err(G,E,(wdmsg(catch_warn(G)-->E),fail))).
 %catch_nowarn(G):- notrace(catch_err(G,error(_,_),fail)).
 
 %as_tf(G,TF):- catch_nowarn((call(G)*->TF='True';TF='False')).
@@ -922,9 +956,9 @@ subst_args40(Eq,Depth,Self,[F|X],FY):- is_function(F), \+ is_special_op(F), is_l
 subst_args40(Eq,Depth,Self,FX,FY):- subst_args5(Depth,Self,FX,FY).
 
 subst_args5(_Dpth,_Slf,[F|LESS],Res):- once(subst_selfless([F|LESS],Res)),mnotrace(([F|LESS]\==Res)),!.
-subst_args5(Depth,Self,[AE|More],TF):- fail, is_system_pred(AE), length(More,Len),
+subst_args5(Depth,Self,[AE|More],TF):- is_system_pred(AE), length(More,Len),
   (is_syspred(AE,Len,Pred),catch_warn(as_tf(apply(Pred,More),TF)))*->true;subst_args6(Depth,Self,[AE|More],TF).
-subst_args6(_Dpth,_Slf,[AE|More],TF):- fail, is_system_pred(AE),length([AE|More],Len), is_syspred(AE,Len,Pred),append(More,[TF],Args),!,catch_warn(apply(Pred,Args)).
+subst_args6(_Dpth,_Slf,[AE|More],TF):- is_system_pred(AE),length([AE|More],Len), is_syspred(AE,Len,Pred),append(More,[TF],Args),!,catch_warn(apply(Pred,Args)).
 
 %subst_args40(Eq,Depth,Self,[X1|[F2|X2]],[Y1|Y2]):- is_function(F2),!,subst_args(Eq,RetType,Depth,Self,[F2|X2],Y2),subst_args(Eq,RetType,Depth,Self,X1,Y1).
 

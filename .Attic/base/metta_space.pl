@@ -136,8 +136,7 @@ subst_pattern_template(SpaceNameOrInstance, Pattern, Template) :-
 space_query_vars(SpaceNameOrInstance, Query, Vars) :- is_as_nb_space(SpaceNameOrInstance),!,
     fetch_or_create_space(SpaceNameOrInstance, Space),
     call_metta(Space,Query,Vars).
-*/
-:- dynamic(was_asserted_space/1).
+*/ :- dynamic(was_asserted_space/1).
 
 was_asserted_space('&flybase').
 was_asserted_space('&self').
@@ -307,26 +306,26 @@ space_type_method(is_asserted_space,atom_iter,metta_assertdb_iter).
 
 %:- dynamic(for_metta/2).
 %for_metta(_,T):- fb_pred(F,A),functor(T,F,A),call(T).
-metta_assertdb_ls(KB):-listing(asserted_metta_atom(KB,_)).
+metta_assertdb_ls(KB):-listing(metta_atom(KB,_)).
 metta_assertdb_add(KB,Atom):- subst_vars(Atom,New),
-  decl_m_fb_pred(user,asserted_metta_atom,2),
-  MP = asserted_metta_atom(KB,New),
+  decl_m_fb_pred(user,get_metta_atom,2),
+  MP = metta_atom(KB,New),
   assert_new(MP).
 metta_assertdb_rem(KB,Old):- metta_assertdb_del(KB,Old).
-metta_assertdb_del(KB,Atom):- subst_vars(Atom,Old), decl_m_fb_pred(user,asserted_metta_atom,2), MP = asserted_metta_atom(KB,Old),
+metta_assertdb_del(KB,Atom):- subst_vars(Atom,Old), decl_m_fb_pred(user,get_metta_atom,2), MP = metta_atom(KB,Old),
   copy_term(MP,Copy), clause(MP,true,Ref), MP=@= Copy, !, erase(Ref). % ,metta_assertdb('DEL',Old).
 metta_assertdb_replace(KB,Old,New):- metta_assertdb_del(KB,Old), metta_assertdb_add(KB,New).
 metta_assertdb_count(KB,Count):-
  must_det_ll((
-  decl_m_fb_pred(user,asserted_metta_atom,2), full_atom_count(SL1),
-  MP = asserted_metta_atom(KB,_),
+  decl_m_fb_pred(user,get_metta_atom,2), full_symbol_count(SL1),
+  MP = metta_atom(KB,_),
   predicate_property(MP,number_of_clauses(SL2)),
   predicate_property(MP,number_of_rules(SL3)),
   %metta_assertdb_ls(KB),
   Count is SL1 + SL2 - SL3)),!.
 metta_assertdb_count(_KB,0):-!.
 %metta_assertdb_count(KB,Count):- writeln(metta_assertdb_count_in(KB,Count)), findall(Atom,for_metta(KB,Atom),AtomsL),length(AtomsL,Count),writeln(metta_assertdb_count_out(KB,Count)).
-metta_assertdb_iter(KB,Atoms):- decl_m_fb_pred(user,asserted_metta_atom,2), asserted_metta_atom(KB,Atoms).
+metta_assertdb_iter(KB,Atoms):- decl_m_fb_pred(user,get_metta_atom,2), metta_atom(KB,Atoms).
 
 
 
@@ -344,19 +343,19 @@ metta_iter_bind(KB,Query,Vars,VarNames):-
 
 % Query from hyperon.base.GroundingSpace
 space_query_vars(KB,Query,Vars):- is_asserted_space(KB),!,
-    decl_m_fb_pred(user,asserted_metta_atom,2),
+    decl_m_fb_pred(user,get_metta_atom,2),
     call_metta(KB,Query,Vars),
     debug_metta('RES',space_query_vars(KB,Query,Vars)).
 
 
-metta_assertdb_get_atoms(KB,AtomsL):- decl_m_fb_pred(user,asserted_metta_atom,2), findall(Atom,asserted_metta_atom(KB,Atom),AtomsL).
+metta_assertdb_get_atoms(KB,AtomsL):- decl_m_fb_pred(user,get_metta_atom,2), findall(Atom,metta_atom(KB,Atom),AtomsL).
 /*
 
-%metta_assertdb_iter_bind(KB,Query,Template,AtomsL):- decl_m_fb_pred(user,asserted_metta_atom,2), findall(Template,asserted_metta_atom(KB,Query),AtomsL).
+%metta_assertdb_iter_bind(KB,Query,Template,AtomsL):- decl_m_fb_pred(user,get_metta_atom,2), findall(Template,metta_atom(KB,Query),AtomsL).
 metta_assertdb_iter_bind(KB,Query,Vars):-
   ignore(term_variables(Query,Vars)),
   print(metta_assertdb(['match',KB,Query,Vars])),nl,
-  decl_m_fb_pred(user,asserted_metta_atom,2), (asserted_metta_atom(KB,Query)*->true;call_metta_assertdb(KB,Query,Vars)),
+  decl_m_fb_pred(user,get_metta_atom,2), (metta_atom(KB,Query)*->true;call_metta_assertdb(KB,Query,Vars)),
   metta_assertdb('RES',metta_assertdb_iter_bind(KB,Query,Vars)).
 %metta_assertdb_iter_bind(KB,Atom,Template):- metta_assertdb_stats, findall(Template,metta_assertdb_iter(KB,Atom),VarList).
 
@@ -405,8 +404,8 @@ write_src_nl(Src):- format('~N'),write_src(Src),format('~N').
 'get-metta-src'(Pred,[Len|SrcL]):- findall(Src,'get-metta-src1'(Pred,Src),SrcL), length(SrcL,Len).
 'get-metta-src1'(Pred,Src):-
   current_self(Space),
-  metta_atom(Space,[F,A|List]),
-  once((sub_var(Pred,A)->Src = [F,A|List];sub_var(Pred,F)->Src = [F,A|List])).
+  metta_atom(Space,F,A,List),
+  once((sub_var(Pred,A)->Src = [F,A,List];sub_var(Pred,F)->Src = [F,A|List])).
 
 % is a quine
 'AtomDef'(X,['AtomDef',X]).
@@ -470,9 +469,7 @@ pp_sex(V) :- no_src_indents,!,pp_sexi(V).
 
 pp_sex(V) :- w_proper_indent(2,w_in_p(pp_sexi(V))).
 
-:- nb_setval(src_indents,'True').
-no_src_indents:- nb_setval(src_indents,'False').
-    %option_else(src_indents,TF,true),!,TF=='False'.
+no_src_indents:- option_else(src_indents,TF,true),!,TF=='False'.
 
 pp_sexi_l([H,S]):-H=='[...]', write('['),print_items_list(S),write(' ]').
 pp_sexi_l([H,S]):-H=='{...}', write('{'),print_items_list(S),write(' }').
@@ -513,7 +510,7 @@ always_dash_functor(A,B):- once(dash_functor(A,B)),A\=@=B,!.
 always_dash_functor(A,A).
 
 dash_functor(A,C):- \+ symbol(A),!,C=A.
-dash_functor(A,C):- fail, p2m(A,B),A\==B,!,always_dash_functor(B,C).
+dash_functor(A,C):- p2m(A,B),A\==B,!,always_dash_functor(B,C).
 dash_functor(Functor,DFunctor):-
    symbol(Functor), atomic_list_concat(L,'-',Functor), L\=[_],maplist(always_dash_functor,L,LL),
    atomic_list_concat(LL,'-',DFunctor).
@@ -565,10 +562,8 @@ call_sexpr(S):- writeln(call=S).
 
 :- dynamic(fb_pred/2).
 
-%full_atom_count(SL):- flag(total_loaded_atoms,SL,SL),SL>1,!.
-full_atom_count(SL):- findall(NC,(fb_pred_nr(F,A),metta_stats(F,A,NC)),Each), sumlist(Each,SL).
-
-fb_pred_nr(F,A):-  dcall0000000000(no_repeats((F=A), fb_pred(F,A))).
+full_symbol_count(SL):- flag(total_loaded_atoms,SL,SL),SL>1,!.
+full_symbol_count(SL):- findall(NC,(fb_pred(F,A),metta_stats(F,A,NC)),Each), sumlist(Each,SL).
 
 heartbeat :-
     % Get the current time and the last printed time
@@ -595,7 +590,7 @@ heartbeat :-
 metta_stats:- gc_now,
    writeln('\n\n\n\n\n\n;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'),
    writeln(';~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'),
-   full_atom_count(SL),
+   full_symbol_count(SL),
    format("~N~n; Total\t\tAtoms (Atomspace size): ~`.t ~D~108|~n",[SL]),
    get_time(CurrentTime), nb_setval(last_printed_time, CurrentTime),
    post_statistic(memory,Mem),
@@ -623,11 +618,9 @@ metta_stats:- gc_now,
    pl_stats('Total Memory Used',PM),
    pl_stats('Runtime (days:hh:mm:ss)',Formatted),
    nl,nl,!.
-
-metta_stats(F):- for_all(fb_pred_nr(F,A),metta_stats(F,A)).
-
-metta_stats(F,A):- forall(metta_stats(F,A,NC), pl_stats(F/A,NC)).
-metta_stats(F,A,NC):- functor(P,F,A),(predicate_property(P,number_of_clauses(NC))->true;NC=0).
+metta_stats(F):- for_all(fb_pred(F,A),metta_stats(F,A)).
+metta_stats(F,A):- metta_stats(F,A,NC), pl_stats(F/A,NC).
+metta_stats(F,A,NC):- functor(P,F,A),predicate_property(P,number_of_clauses(NC)).
 pl_stats(Stat):- statistics(Stat,Value),pl_stats(Stat,Value).
 pl_stats(Stat,[Value|_]):- nonvar(Value),!, pl_stats(Stat,Value).
 pl_stats(Stat,Value):- format("~N;\t\t~@: ~`.t ~@~100|",[format_value(Stat),format_value(Value)]),!.
