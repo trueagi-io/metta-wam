@@ -568,7 +568,7 @@ est_size(      1_611_349, ontology_info).
 est_size(      1_316_132, fbgn_NAseq_Uniprot).
 est_size(      1_045_549, property_value).
 est_size(      1_001_254, synonym).
-est_size(        722_570, cDNA_clone).
+est_size(        722_570, cDNA_clone_data).
 est_size(        384_206, genotype_phenotype).
 est_size(        363_453, allele_genetic_interactions).
 est_size(        288_469, fbal_to_fbgn).
@@ -2115,7 +2115,7 @@ column_names(genotype_phenotype_data, [listOf(genotype_symbols, [/, ' ']), listO
 %                                        #genotype_symbols           	genotype_FBids	phenotype_name	phenotype_id	qualifier_names	qualifier_ids	reference
 column_names(automated_gene_summaries, [primary_FBgn, summary_text]).
 column_names(best_gene_summary, ['FBgn', 'Gene_Symbol', 'Summary_Source', 'Summary']).
-column_names(cDNA_clone, ['FBcl', organism_abbreviation, clone_name, dataset_metadata_name, listOf(cDNA_accession), listOf('EST_accession')]).
+column_names(cDNA_clone_data, ['FBcl', organism_abbreviation, clone_name, dataset_metadata_name, listOf(cDNA_accession), listOf('EST_accession')]).
 column_names(dataset_metadata, ['Dataset_Metadata_ID', 'Dataset_Metadata_Name', 'Item_ID', 'Item_Name']).
 column_names(disease_model_annotations, ['FBgn', 'Gene_symbol', 'HGNC', 'DO_qualifier', 'DO', 'DO_term', 'Allele_used_in_model_(FBal)', 'Allele_used_in_model_(symbol)', 'Based_on_orthology_with_(HGNC_ID)', 'Based_on_orthology_with_(symbol)', 'Evidence/interacting_alleles', 'Reference_(FBrf)']).
 column_names(dmel_gene_sequence_ontology_annotations, [gene_primary_id, gene_symbol, so_term_name, so_term_id]).
@@ -2289,12 +2289,12 @@ table_n_type(fbal_to_fbgn, 1, 'AlleleID', 'FBal').
 table_n_type(fbal_to_fbgn, 2, 'AlleleSymbol', _).
 table_n_type(fbal_to_fbgn, 3, 'GeneID', 'FBgn').
 table_n_type(fbal_to_fbgn, 4, 'GeneSymbol', _).
-table_n_type(cDNA_clone, 1, 'FBcl', 'FBcl').
-table_n_type(cDNA_clone, 2, organism_abbreviation, _).
-table_n_type(cDNA_clone, 3, clone_name, _).
-table_n_type(cDNA_clone, 4, dataset_metadata_name, _).
-table_n_type(cDNA_clone, 5, cDNA_accession, _).
-table_n_type(cDNA_clone, 6, 'EST_accession', _).
+table_n_type(cDNA_clone_data, 1, 'FBcl', 'FBcl').
+table_n_type(cDNA_clone_data, 2, organism_abbreviation, _).
+table_n_type(cDNA_clone_data, 3, clone_name, _).
+table_n_type(cDNA_clone_data, 4, dataset_metadata_name, _).
+table_n_type(cDNA_clone_data, 5, cDNA_accession, _).
+table_n_type(cDNA_clone_data, 6, 'EST_accession', _).
 table_n_type(genomic_clone, 1, 'FBcl', 'FBcl').
 table_n_type(genomic_clone, 2, organism_abbreviation, _).
 table_n_type(genomic_clone, 3, clone_name, _).
@@ -2858,7 +2858,7 @@ ucn('scRNA-Seq_gene_expression',[]).
 
 ucn(dmel_unique_protein_isoforms, 3). % ,a-PA,))
 ucn(best_gene_summary, 1). % ,FBgn0031081,) (2 ,Nep3,))
-ucn(cDNA_clone, 1). % ,FBcl0000001,) (3 ,UUGC0315,))
+ucn(cDNA_clone_data, 1). % ,FBcl0000001,) (3 ,UUGC0315,))
 ucn(fb_synonym, 1). % ,FBal0000001,))
 ucn(fbal_to_fbgn, 1). % ,FBal0137236,))
 ucn(fbgn_annotation_ID.tsv, 1). % ,7SLRNA:CR32864,) (3 ,FBgn0000003,) (5 ,CR32864,))
@@ -2906,7 +2906,7 @@ fb_pred('allele_genetic_interactions',4).
 fb_pred('automated_gene_summaries',2).
 fb_pred('automated_gene_summaries',3).
 fb_pred('best_gene_summary',4).
-fb_pred('cDNA_clone',6).
+fb_pred('cDNA_clone_data',6).
 fb_pred('cDNA_clone_data',5).
 fb_pred('cDNA_clone_data',6).
 fb_pred('cyto_genetic_seq',4).
