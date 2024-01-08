@@ -115,7 +115,7 @@ doing_repl:-     option_value('doing_repl',true).
 if_repl(Goal):- doing_repl->call(Goal);true.
 
 show_options_values:-
-   forall((nb_current(N,V),\+((atom(N),atom_concat('$',_,N)))),write_src_nl(['pragma!',N,V])).
+   forall((nb_current(N,V), \+((atom(N),atom_concat('$',_,N)))),write_src_nl(['pragma!',N,V])).
 
 any_floats(S):- member(E,S),float(E),!.
 
@@ -123,7 +123,7 @@ any_floats(S):- member(E,S),float(E),!.
 % %%%% Arithmetic Operations
 % ============================
 %:- use_module(library(clpfd)).
-:- use_module(library(clpq)).
+%:- use_module(library(clpq)).
 %:- use_module(library(clpr)).
 
 % Addition
@@ -780,6 +780,8 @@ mfix_vars1('$STRING'(I),O):- !, mfix_vars1(I,M),atom_chars(O,M),!.
 %mfix_vars1('$STRING'(I),O):- !, mfix_vars1(I,M),name(O,M),!.
 mfix_vars1([H|T],O):-   H=='[', is_list(T), last(T,L),L==']',append(List,[L],T), !, O = ['[...]',List].
 mfix_vars1([H|T],O):-   H=='{', is_list(T), last(T,L),L=='}',append(List,[L],T), !, O = ['{...}',List].
+mfix_vars1([H|T],O):-   is_list(T), last(T,L),L=='}',append(List,[L],T),
+   append(Left,['{'|R],List),append([H|Left],[['{}',R]],NewList),mfix_vars1(NewList,O).
 mfix_vars1('$OBJ'(claz_bracket_vector,List),O):- is_list(List),!, O = ['[...]',List].
 mfix_vars1(I,O):-  I = ['[', X, ']'], nonvar(X), !, O = ['[...]',X].
 mfix_vars1(I,O):-  I = ['{', X, '}'], nonvar(X), !, O = ['{...}',X].
@@ -981,8 +983,8 @@ type_decl('Variable').
 :- dynamic(get_metta_atom/2).
 :- dynamic(asserted_metta_atom/2).
 metta_atom_stdlib(_):-!,fail.
-metta_atom_stdlib([:, Type, 'Type']):- type_decl(Type).
-metta_atom_stdlib([:, Op, [->|List]]):- op_decl(Op,Params,ReturnType),append(Params,[ReturnType],List).
+metta_atom_stdlib([':', Type, 'Type']):- type_decl(Type).
+metta_atom_stdlib([':', Op, [->|List]]):- op_decl(Op,Params,ReturnType),append(Params,[ReturnType],List).
 
 %get_metta_atom(Eq,KB, [F|List]):- KB='&flybase',fb_pred(F, Len), length(List,Len),apply(F,List).
 
@@ -1627,7 +1629,7 @@ interactively_do_metta_exec0(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOu
          ((((ResNum==1,Complete==true)->(format('~NDeterministic: ',  []), !);          %or Nondet
            ( Complete==true -> (format('~NLast Result(~w): ',[ResNum]),! );
                                format('~NNDet Result(~w): ',[ResNum])))),
-       color_g_mesg(yellow, ignore((( if_t( \+ atomic(Output), nl), write_src(Output), nl)))),
+       color_g_mesg(yellow, ignore((( if_t( \+ atomic(Output), nl), write_asrc(Output), nl)))),
        give_time('Execution',Seconds),
        color_g_mesg(green,
            ignore((NamedVarsList \=@= Was ->( maplist(print_var,NamedVarsList), nl) ; true))))),
@@ -1673,7 +1675,13 @@ forall_interactive(From,WasInteractive,Complete,Goal,After):-
 
 print_var(Name=Var) :- print_var(Name,Var).
 print_var(Name,_Var) :- atom_concat('Num',Rest,Name),atom_number(Rest,_),!.
-print_var(Name,Var):-  write('$'),write(Name), write(' = '), write_src(Var), nl.
+print_var(Name,Var):-  write('$'),write(Name), write(' = '), write_asrc(Var), nl.
+
+write_asrc(Var):- copy_term(Var,Copy,Goals),Var=Copy,write_asrc(Var,Goals).
+write_asrc(Var,[]):- write_src(Var).
+write_asrc(Var,[G|Goals]):- write_src(Var), write(' { '),write_src(G),maplist(write_src_space,Goals),writeln(' } ').
+
+write_src_space(Goal):- write(' '),write_src(Goal).
 
 % Entry point for the user to call with tracing enabled
 toplevel_goal(Goal) :-
@@ -2106,3 +2114,15 @@ qsave_program:-  ensure_mettalog_system, next_save_name(Name),
    metta_final
 ))).
 :- set_prolog_flag(metta_interp,ready).
+
+:- use_module(library(clpr)). % Import the CLP(R) library
+
+% Define a predicate to relate the likelihoods of three events
+complex_relationship3_ex(Likelihood1, Likelihood2, Likelihood3) :-
+    { Likelihood1 = 0.3 * Likelihood2 },
+    { Likelihood2 = 0.5 * Likelihood3 },
+    { Likelihood3 < 1.0 },
+    { Likelihood3 > 0.0 }.
+
+% Example query to find the likelihoods that satisfy the constraints
+%?- complex_relationship(L1, L2, L3).
