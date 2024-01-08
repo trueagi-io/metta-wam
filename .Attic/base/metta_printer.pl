@@ -80,6 +80,7 @@ is_final_write('$VAR'(S)):- !, write('$'),write(S).
 
 % Handling more cases for 'write_src1', when the value is a number, a string, a symbol, or a compound.
 write_src1(V) :- is_final_write(V),!.
+write_src1([F|V]):- atom(F), is_list(V),write_mobj(F,V),!.
 write_src1((Head:-Body)) :- !, print_metta_clause0(Head,Body).
 write_src1(''):- !, write('()').
 write_src1(V):- number(V),!, writeq(V).
@@ -100,6 +101,7 @@ write_mobj(V):- compound_name_list(V,F,Args),write_mobj(F,Args),!.
 write_mobj(V):- writeq(V).
 write_mobj(exec,[V]):- !, write('!'),write_src(V).
 write_mobj('$OBJ',[_,S]):- write('['),write_src(S),write(' ]').
+write_mobj('{}',[S]):- write('{'),write_src(S),write(' }').
 write_mobj('{...}',[S]):- write('{'),write_src(S),write(' }').
 write_mobj('[...]',[S]):- write('['),write_src(S),write(' ]').
 write_mobj('$STRING',[S]):- !, writeq(S).

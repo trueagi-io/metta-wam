@@ -78,18 +78,25 @@ register_predicate_server(Predicate, Server) :- assertz(predicate_server(Predica
 
 % Meta-interpreter with cut handling
 execute_goal(Goal, IsCut) :-
-    predicate_server(Goal, Server), !,
-    remote_call(Server, Goal),  % If the goal is registered for a server, call remotely
-    IsCut = _.
-execute_goal(!, IsCut) :- !,  IsCut = cut.  % Handle cuts
-execute_goal(Goal, IsCut) :- predicate_property(Goal,numberr_of_clauses(_)),!,
+    predicate_server(Goal, Server), !,   % If the goal is registered for a server, call remotely
+    remote_call(Server, execute_goal(Goal,IsCut)).
+
+execute_goal(!, IsCut) :- !,  IsCut = true.  % Handle cuts
+execute_goal(fail, IsCut) :- !, (was_t(IsCut)->throw(cut_fail); fail).
+execute_goal(Goal, _) :- predicate_property(Goal,numberr_of_clauses(_)),!,
     clause(Goal, Body),  % Retrieve the clause body for the goal
-    execute_goal(Body, IsCut),
-    (nonvar(IsCut)->!;true).
-execute_goal((SubGoal1, SubGoal2), IsCut) :- !, execute_goal(SubGoal1, IsCut), execute_goal(SubGoal2, IsCut).
-execute_goal((SubGoal1; SubGoal2), IsCut) :- !, (execute_goal(SubGoal1, IsCut); execute_goal(SubGoal2, IsCut)).
-execute_goal((SubGoal1 -> SubGoal2), IsCut) :- !, (execute_goal(SubGoal1, IsCut) ->  execute_goal(SubGoal2, IsCut)).
+    catch(execute_goal(Body, IsCut),cut_fail,(!,fail)),
+    (was_t(IsCut)-> !; true).
+execute_goal(call(Cond), _ ) :- !, execute_goal(Cond, IsCut), (was_t(IsCut)->!;true).
+execute_goal((Cond, Then), IsCut) :- !, execute_goal(Cond, IsCut), execute_goal(Then, IsCut).
+execute_goal((Cond; Else), IsCut) :- !, (execute_goal(Cond, IsCut); execute_goal(Else, IsCut)).
+execute_goal((Cond *-> Then; Else), IsCut) :- !, (execute_goal(Cond, IsCut) *->  execute_goal(Then, IsCut) ; execute_goal(Else, IsCut)).
+execute_goal((Cond *->  Then), IsCut) :- !, (execute_goal(Cond, IsCut) *->  execute_goal(Then, IsCut)).
+execute_goal((Cond -> Then; Else), IsCut) :- !, (execute_goal(Cond, IsCut) ->  execute_goal(Then, IsCut) ; execute_goal(Else, IsCut)).
+execute_goal((Cond -> Then), IsCut) :- !, (execute_goal(Cond, IsCut) -> execute_goal(Then, IsCut)).
+execute_goal(catch(X, E, Z), IsCut) :- !, catch(execute_goal(X, IsCut) , E,  execute_goal(Z, _)).
 execute_goal(findall(X, Y, Z), _) :- !, findall(X, execute_goal(Y, _), Z).
 execute_goal(forall(X, Y), _) :- !, forall(execute_goal(X, _), execute_goal(Y, _)).
-execute_goal(SubGoal, _IsCut) :- call_wdet(SubGoal, _WasDet).
+execute_goal(SubGoal, _IsCut) :- call_wdet(SubGoal, WasDet), (was_t(WasDet)->!;true).
 
+was_t(T):- T == true.
