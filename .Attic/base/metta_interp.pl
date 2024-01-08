@@ -122,23 +122,20 @@ any_floats(S):- member(E,S),float(E),!.
 % ============================
 % %%%% Arithmetic Operations
 % ============================
-%:- use_module(library(clpfd)).
-%:- use_module(library(clpq)).
-%:- use_module(library(clpr)).
 
 % Addition
-%'+'(Addend1, Addend2, Sum):- \+ any_floats([Addend1, Addend2, Sum]),!,Sum #= Addend1+Addend2 .
-'+'(Addend1, Addend2, Sum):- notrace(catch_err(plus(Addend1, Addend2, Sum),_,fail)),!.
-'+'(Addend1, Addend2, Sum):- {Sum = Addend1+Addend2}.
+%'+'(A, B, Sum):- \+ any_floats([A, B, Sum]),!,Sum #= A+B .
+%'+'(A, B, Sum):- notrace(catch_err(plus(A, B, Sum),_,fail)),!.
+'+'(A, B, Sum):- eval_H([+,A,B],Sum).
 % Subtraction
-'-'(Sum, Addend1, Addend2):- '+'(Addend1, Addend2, Sum).
-
+'-'( A, B, Sum):- eval_H([-,A,B],Sum).
 % Multiplication
-'*'(Factor1, Factor2, Product):- {Product = Factor1*Factor2}.
+'*'(A, B, Product):- eval_H([*,A,B],Product).
 % Division
-'/'(Dividend, Divisor, Quotient):- {Dividend = Quotient * Divisor}.
+'/'(Dividend, Divisor, Quotient):- eval_H(['/',Dividend, Divisor], Quotient).   %{Dividend = Quotient * Divisor}.
 % Modulus
-'mod'(Dividend, Divisor, Remainder):- {Remainder = Dividend mod Divisor}.
+'mod'(Dividend, Divisor, Remainder):- eval_H(['mod',Dividend, Divisor], Remainder).
+'%'(Dividend, Divisor, Remainder):- eval_H(['mod',Dividend, Divisor], Remainder).
 % Exponentiation
 'exp'(Base, Exponent, Result):- eval_H(['exp', Base, Exponent], Result).
 % Square Root
