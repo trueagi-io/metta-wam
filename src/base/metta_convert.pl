@@ -244,7 +244,7 @@ p2m(( ';' ),or).
 %p2m(( ',' ),and).
 %p2m(( '\\+' ),unless).
 %p2m(( ':-' ),entailed_by).
-p2m('=..','atom_2_list').
+%p2m('=..','atom_2_list').
 
 % Conversion for any atomic term
 p2m(A, A):- atomic(A).

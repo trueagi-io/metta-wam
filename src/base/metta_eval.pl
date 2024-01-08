@@ -35,15 +35,12 @@ hyde(F/A):- functor(P,F,A), redefine_system_predicate(P),'$hide'(F/A), '$iso'(F/
 
 
 is_metta_declaration([F|_]):- F == '->',!.
-is_metta_declaration([F,_,_|T]):- T ==[], is_metta_declaration_f(F).
+is_metta_declaration([F,H,_|T]):- T ==[], is_metta_declaration_f(F,H).
 
-is_metta_declaration_f(F):- F == ':', !.
-is_metta_declaration_f(F):- F == '=', !,
-   \+ (current_self(Space), is_user_defined_head_f(Space,F)).
+is_metta_declaration_f(F,H):- F == ':<', !, nonvar(H).
+is_metta_declaration_f(F,H):- F == ':>', !, nonvar(H).
+is_metta_declaration_f(F,H):- F == '=', !, is_list(H),  \+ (current_self(Space), is_user_defined_head_f(Space,F)).
 
-(F==':';
-  (F=='=',  \+
-   \+ (current_self(Space), is_user_defined_head_f(Space,F)))).
 % is_metta_declaration([F|T]):- is_list(T), is_user_defined_head([F]),!.
 
 :- nb_setval(self_space, '&self').
@@ -189,7 +186,7 @@ eval_00(Eq,RetType,Depth,Self,X,YO):-
   eval_20(Eq,RetType,Depth,Self,X,M),
   ((M\=@=XX,  \+ self_eval(M))->
       eval_00(Eq,RetType,Depth2,Self,M,Y);Y=M),
-  once(if_or_else((fail,subst_args(Eq,RetType,Depth2,Self,Y,YO)),
+  once(if_or_else((subst_args(Eq,RetType,Depth2,Self,Y,YO)),
      if_or_else(finish_eval(Depth2,Self,Y,YO),
           Y=YO))).
 
@@ -753,8 +750,9 @@ eval_in_steps_or_same(Eq,RetType,_Dpth,_Slf,X,Y):- X=Y,check_returnval(Eq,RetTyp
 
 eval_20(Eq,RetType,Depth,Self,['let',A,A5,AA],OO):- !,
   %(var(A)->true;trace),
-  ((eval(Eq,RetType,Depth,Self,A5,AE), AE=A)),
-    eval(Eq,RetType,Depth,Self,AA,OO).
+  eval(Eq,_RetTypeV,Depth,Self,A5,A),
+  eval(Eq,RetType,Depth,Self,AA,OO).
+
 %eval_20(Eq,RetType,Depth,Self,['let',A,A5,AA],AAO):- !,eval(Eq,RetType,Depth,Self,A5,A),eval(Eq,RetType,Depth,Self,AA,AAO).
 eval_20(Eq,RetType,Depth,Self,['let*',[],Body],RetVal):- !, eval(Eq,RetType,Depth,Self,Body,RetVal).
 eval_20(Eq,RetType,Depth,Self,['let*',[[Var,Val]|LetRest],Body],RetVal):- !,
@@ -983,6 +981,15 @@ is_and('and','True').
 is_and('and2','True').
 is_and('#COMMA','True'). is_and(',','True').  % is_and('And').
 
+is_comma(C):- var(C),!,fail.
+is_comma(',').
+is_comma('{}').
+
+eval_20(Eq,RetType,Depth,Self,[And,X],True):- is_comma(And),!, eval_args(Eq,RetType,Depth,Self,X,True).
+eval_20(Eq,RetType,Depth,Self,[And,X,Y],TF):-  is_comma(And),!, eval_args(Eq,RetType,Depth,Self,X,_),eval_args(Eq,RetType,Depth,Self,Y,TF).
+eval_20(Eq,RetType,Depth,Self,[And,X|Y],TF):- is_comma(And),!, eval_args(Eq,RetType,Depth,Self,X,_), eval_args(Eq,RetType,Depth,Self,[And|Y],TF).
+
+
 eval_20(Eq,RetType,_Dpth,_Slf,[And],True):- is_and(And,True),!,check_returnval(Eq,RetType,True).
 eval_20(Eq,RetType,Depth,Self,[And,X,Y],TF):-  is_and(And,True),!, as_tf((
   eval_args(Eq,RetType,Depth,Self,X,True),eval_args(Eq,RetType,Depth,Self,Y,True)),TF).
@@ -1030,15 +1037,13 @@ eval20_failked(Eq,RetType,Depth,Self,[V|VI],[V|VO]):-
 eval_failed(Depth,Self,T,TT):-
   finish_eval(Depth,Self,T,TT).
 
-finish_eval(_,_,X,X):-!.
+%finish_eval(_,_,X,X):-!.
 
 finish_eval(_Dpth,_Slf,T,TT):- var(T),!,TT=T.
 finish_eval(_Dpth,_Slf,[],[]):-!.
-%finish_eval(_Dpth,_Slf,[F|LESS],Res):- once(eval_selfless([F|LESS],Res)),notrace([F|LESS]\==Res),!.
+finish_eval(_Dpth,_Slf,[F|LESS],Res):- once(eval_selfless([F|LESS],Res)),notrace([F|LESS]\==Res),!.
 %finish_eval(Depth,Self,[V|Nil],[O]):- Nil==[], once(eval(Eq,RetType,Depth,Self,V,O)),V\=@=O,!.
-finish_eval(Depth,Self,[H|T],[HH|TT]):- !,
-  eval(Depth,Self,H,HH),
-  finish_eval(Depth,Self,T,TT).
+finish_eval(Depth,Self,[H|T],[HH|TT]):- !, eval(Depth,Self,H,HH), finish_eval(Depth,Self,T,TT).
 finish_eval(Depth,Self,T,TT):- eval(Depth,Self,T,TT).
 
    %eval(Eq,RetType,Depth,Self,X,Y):- eval_20(Eq,RetType,Depth,Self,X,Y)*->true;Y=[].
@@ -1096,13 +1101,13 @@ eval_20(Eq,RetType,Depth,Self,['hyperpose',ArgL1],ResL):-
   !, concurrent_maplist(eval(Eq,RetType,Depth,Self),ArgL1,ResL).
 
 
+simple_math(Var):- attvar(Var),!,fail.
 simple_math([F|XY]):- !, atom(F),atom_length(F,1), is_list(XY),maplist(simple_math,XY).
 simple_math(X):- number(X),!.
 
 
 eval_20(Eq,RetType,Depth,Self,X,Y):-
-  (eval_40(Eq,RetType,Depth,Self,X,M)*->
-     M=Y ;
+  (eval_40(Eq,RetType,Depth,Self,X,M)*-> M=Y ;
      % finish_eval(Depth,Self,M,Y);
     (eval_failed(Depth,Self,X,Y)*->true;X=Y)).
 
@@ -1130,6 +1135,9 @@ eval_40(Eq,RetType,Depth,Self,[F|PredDecl],Res):- fail,
 % =================================================================
 % =================================================================
 % =================================================================
+eval_40(_Eq,_RetType,_Dpth,_Slf,LESS,Res):-
+   ((((eval_selfless(LESS,Res),notrace(LESS\==Res))))),!.
+
 eval_40(Eq,RetType,Depth,Self,['+',N1,N2],N):- number(N1),!,
    eval(Eq,RetType,Depth,Self,N2,N2Res), notrace(catch_err(N is N1+N2Res,_E,(set_last_error(['Error',N2Res,'Number']),fail))).
 eval_40(Eq,RetType,Depth,Self,['-',N1,N2],N):- number(N1),!,
@@ -1178,17 +1186,13 @@ must_eval_args(Eq,RetType,Depth,Self,More,Adjusted):-
 
 
 
-
 eval_70(Eq,RetType,Depth,Self,PredDecl,Res):-
   Do_more_defs = do_more_defs(true),
   clause(eval_80(Eq,RetType,Depth,Self,PredDecl,Res),Body),
   Do_more_defs == do_more_defs(true),
-  call(Body),nb_setarg(1,Do_more_defs,false).
-
-eval_70(Eq,RetType,Depth,Self,PredDecl,Res):-
-    eval_60(Eq,RetType,Depth,Self,PredDecl,Res).
-
-
+  call_ndet(Body,DET),
+  nb_setarg(1,Do_more_defs,false),
+ (DET==true -> ! ; true).
 
 % =================================================================
 % =================================================================
@@ -1201,9 +1205,7 @@ is_system_pred(S):- atom(S),atom_concat(_,'!',S).
 
 
 
-eval_80(_Eq,_RetType,_Dpth,_Slf,LESS,Res):-
-   notrace((ground(LESS),once((eval_selfless(LESS,Res),notrace(LESS\==Res))))),!.
-
+%eval_80(_Eq,_RetType,_Dpth,_Slf,LESS,Res):- notrace((once((eval_selfless(LESS,Res),notrace(LESS\==Res))))),!.
 
 % predicate inherited by system
 eval_80(Eq,RetType,_Depth,_Self,[AE|More],TF):-
@@ -1286,6 +1288,8 @@ adjust_args(_Depth,_Self,_V,VI,VI).
  %  notrace(is_user_defined_head(Self,H)),!,
  %  eval_60(Eq,RetType,Depth,Self,[H|PredDecl],Res).
 
+eval_80(Eq,RetType,Depth,Self,PredDecl,Res):-
+    eval_60(Eq,RetType,Depth,Self,PredDecl,Res).
 
 
 last_element(T,E):- \+ compound(T),!,E=T.
@@ -1299,23 +1303,68 @@ catch_warn(G):- quietly(catch_err(G,E,(fbug(catch_warn(G)-->E),fail))).
 catch_nowarn(G):- quietly(catch_err(G,error(_,_),fail)).
 
 
-as_tf(G,TF):-  G\=[_|_], catch_nowarn((call(G)*->TF='True';TF='False')).
-%eval_selfless(['==',X,Y],TF):- as_tf(X=:=Y,TF),!.
-%eval_selfless(['==',X,Y],TF):- as_tf(X=@=Y,TF),!.
-eval_selfless(['>',X,Y],TF):-!,as_tf(X>Y,TF).
-eval_selfless(['<',X,Y],TF):-!,as_tf(X<Y,TF).
-eval_selfless(['=>',X,Y],TF):-!,as_tf(X>=Y,TF).
-eval_selfless(['<=',X,Y],TF):-!,as_tf(X=<Y,TF).
+% less Macro-ey Functions
 
-eval_selfless(E,R):- eval_selfless_2(E,R).
+
+as_tf(G,TF):-  G\=[_|_], catch_nowarn((call(G)*->TF='True';TF='False')).
+%eval_selfless_1(['==',X,Y],TF):- as_tf(X=:=Y,TF),!.
+%eval_selfless_1(['==',X,Y],TF):- as_tf(X=@=Y,TF),!.
+
+is_assignment(V):- \+ atom(V),!, fail.
+is_assignment('is'). is_assignment('is!').
+is_assignment('='). is_assignment('==').
+is_assignment('=:=').  is_assignment(':=').
+
+eval_selfless(E,R):-  eval_selfless_0(E,R).
+
+eval_selfless_0([F,X,XY],TF):- is_assignment(F),  notrace(args_to_mathlib([X,XY],Lib)),!,eval_selfless3(Lib,['=',X,XY],TF).
+eval_selfless_0([F|XY],TF):- eval_selfless_1([F|XY],TF),!.
+eval_selfless_0(E,R):- eval_selfless_2(E,R).
+
+eval_selfless_1([F|XY],TF):- \+ ground(XY),!,notrace(args_to_mathlib(XY,Lib)),!,eval_selfless3(Lib,[F|XY],TF).
+eval_selfless_1(['>',X,Y],TF):-!,as_tf(X>Y,TF).
+eval_selfless_1(['<',X,Y],TF):-!,as_tf(X<Y,TF).
+eval_selfless_1(['=>',X,Y],TF):-!,as_tf(X>=Y,TF).
+eval_selfless_1(['<=',X,Y],TF):-!,as_tf(X=<Y,TF).
+eval_selfless_1(['\\=',X,Y],TF):-!,as_tf(dif(X,Y),TF).
 
 eval_selfless_2(['%',X,Y],TF):-!,eval_selfless_2(['mod',X,Y],TF).
 eval_selfless_2(LIS,Y):-  notrace(( ground(LIS),
    LIS=[F,_,_], atom(F), catch_warn(current_op(_,yfx,F)),
    LIS\=[_], s2ps(LIS,IS))), notrace(catch((Y is IS),_,fail)),!.
 
-% less Macro-ey Functions
 
+eval_selfless3(Lib,FArgs,TF):- maplist(s2ps,FArgs,Next),!,compare_selfless0(Lib,Next,TF).
+
+:- use_module(library(clpfd)).
+:- clpq:use_module(library(clpq)).
+:- clpr:use_module(library(clpr)).
+
+compare_selfless0(_,[F|_],_TF):- \+ atom(F),!,fail.
+compare_selfless0(cplfd,['=',X,Y],TF):-!,as_tf(X#=Y,TF).
+compare_selfless0(cplfd,['\\=',X,Y],TF):-!,as_tf(X #\=Y,TF).
+compare_selfless0(cplfd,['>',X,Y],TF):-!,as_tf(X#>Y,TF).
+compare_selfless0(cplfd,['<',X,Y],TF):-!,as_tf(X#<Y,TF).
+compare_selfless0(cplfd,['=>',X,Y],TF):-!,as_tf(X#>=Y,TF).
+compare_selfless0(cplfd,['<=',X,Y],TF):-!,as_tf(X#=<Y,TF).
+compare_selfless0(cplfd,[F|Stuff],TF):- atom_concat('#',F,SharpF),P=..[SharpF|Stuff],!,as_tf(P,TF).
+compare_selfless0(Lib,['\\=',X,Y],TF):-!,as_tf(Lib:{X \=Y}, TF).
+compare_selfless0(Lib,['=',X,Y],TF):-!,as_tf(Lib:{X =Y}, TF).
+compare_selfless0(Lib,['>',X,Y],TF):-!,as_tf(Lib:{X>Y},TF).
+compare_selfless0(Lib,['<',X,Y],TF):-!,as_tf(Lib:{X<Y},TF).
+compare_selfless0(Lib,['=>',X,Y],TF):-!,as_tf(Lib:{X>=Y},TF).
+compare_selfless0(Lib,['<=',X,Y],TF):-!,as_tf(Lib:{X=<Y},TF).
+compare_selfless0(Lib,[F|Stuff],TF):- P=..[F|Stuff],!,as_tf(Lib:{P},TF).
+
+args_to_mathlib(XY,Lib):- sub_term(T,XY), var(T),get_attrs(T,XX),get_attrlib(XX,Lib).
+args_to_mathlib(XY,clpr):- once((sub_term(T,XY), float(T))). % Reals
+args_to_mathlib(XY,clpq):- once((sub_term(Rat,XY),compound(Rat),Rat='/'(_,_))).
+args_to_mathlib(_,clpfd).
+
+
+get_attrlib(XX,clpfd):- sub_var(clpfd,XX),!.
+get_attrlib(XX,clpq):- sub_var(clpr,XX),!.
+get_attrlib(XX,clpr):- sub_var(clpr,XX),!.
 
 % =================================================================
 % =================================================================
@@ -1429,4 +1478,7 @@ eval_ne(Eq,RetType,Depth,Self,X,E):-
 
 :- ensure_loaded(metta_subst).
 
-
+solve_quadratic(A, B, I, J, K) :-
+    %X in -1000..1000,  % Define a domain for X
+     (X + A) * (X + B) #= I*X*X + J*X + K.  % Define the quadratic equation
+    %label([X]).  % Find solutions for X
