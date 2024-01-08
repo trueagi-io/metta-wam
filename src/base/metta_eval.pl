@@ -8,7 +8,7 @@ self_eval0(X):- is_valid_nb_state(X),!.
 %self_eval0(X):- number(X),!.
 %self_eval0([]).
 self_eval0(X):- is_metta_declaration(X),!.
-self_eval0([F|X]):- is_list(X),length(X,Len),!,nonvar(F), is_self_eval_l_fa(F,Len),!.
+%self_eval0([F|X]):- is_list(X),length(X,Len),!,nonvar(F), is_self_eval_l_fa(F,Len),!.
 self_eval0(X):- typed_list(X,_,_),!.
 %self_eval0(X):- compound(X),!.
 %self_eval0(X):- is_ref(X),!,fail.
@@ -214,14 +214,14 @@ eval_11(Eq,RetType,Depth,Self,X,Y):-
   Ret=retval(fail))),
 
   call_cleanup((
-    (eval_00(Eq,RetType,D1,Self,X,Y)),
+    (eval_00(Eq,RetType,D1,Self,X,Y)*->true;(fail,rtrace(eval_00(Eq,RetType,D1,Self,X,Y)))),
     notrace(( \+ (Y\=YY), nb_setarg(1,Ret,Y)))),
 
     (PrintRet==1 -> indentq(DR,EX,'<--',Ret) ;
     notrace(ignore(((Y\=@=X,
       if_t(DR<DMax,if_trace((eval),indentq(DR,EX,'<--',Ret))))))))),
 
-  (Ret\=@=retval(fail)->true;(rtrace(eval_00(Eq,RetType,D1,Self,X,Y)),fail)).
+  (Ret\=@=retval(fail)->true;(trace,rtrace(eval_00(Eq,RetType,D1,Self,X,Y)),fail)).
 
 
 
