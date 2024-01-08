@@ -406,21 +406,21 @@ if [[ $never_compile -eq 0 ]]; then
 	    fi
 	done
     fi
+fi
 
-
-    # If any newer file found or reference file missing, call the compiler
-    if [[ $should_compile -eq 1 ]]; then
-	#if [[ -f "$reference_file" ]]; then
-	#    echo "Calling compiler from $reference_file..."
-	#	swipl -x $reference_file -g qsave_program -g halt
-	#else
-	rm -f $reference_file
-	if [[ "$never_compile" -eq 0 ]]; then
-	    echo "Compiling $reference_file"
-	    swipl -l metta_vspace/$PYSWIP_VERSION/metta_interp.pl -g qcompile_mettalog -- --exeout=$reference_file
-	fi
+# If any newer file found or reference file missing, call the compiler
+if [[ $should_compile -eq 1 ]]; then
+    #if [[ -f "$reference_file" ]]; then
+    #    echo "Calling compiler from $reference_file..."
+    #	swipl -x $reference_file -g qsave_program -g halt
+    #else
+    rm -f $reference_file
+    if [[ "$never_compile" -eq 0 ]]; then
+	echo "Compiling $reference_file"
+	swipl -l metta_vspace/$PYSWIP_VERSION/metta_interp.pl -g qcompile_mettalog -- --exeout=$reference_file
     fi
 fi
+
 
 reference_file=$(find . -maxdepth 1 -type f -name "${DefaultSav}*" -not -name "*.*" -printf "%T@ %p\n" | sort -k1,1nr | head -n 1 | cut -f2- -d" ")
 if [[ -z "$reference_file" ]]; then
