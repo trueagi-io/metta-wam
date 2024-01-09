@@ -796,15 +796,18 @@ mfix_vars1(I,'$VAR'(O)):- atom_concat('$',N,I),dvar_name(N,O),!.
 mfix_vars1(I,I).
 
 no_cons_reduce.
+svar_fixvarname_dont_capitalize(O,O):-!.
+svar_fixvarname_dont_capitalize(M,O):- svar_fixvarname(M,O),!.
 
-dvar_name(t,'T'):- !.
-dvar_name(N,O):- atom(N),atom_number(N,Num),atom_concat('Num',Num,M),!,svar_fixvarname(M,O).
-dvar_name(N,O):- number(N),atom_concat('Num',N,M),!,svar_fixvarname(M,O).
+
+%dvar_name(t,'T'):- !.
+dvar_name(N,O):- integer(N),atom_concat('_',N,O).
+dvar_name(N,O):- atom(N),atom_number(N,Num),dvar_name(Num,O),!.
 dvar_name(N,O):- \+ atom(N),!,format(atom(A),'~w',[N]),dvar_name(A,O).
 dvar_name('','__'):-!. % "$"
 dvar_name('_','_'):-!. % "$_"
-dvar_name(N,O):- svar_fixvarname(N,O),!.
-dvar_name(N,O):- must_det_ll((atom_chars(N,Lst),maplist(c2vn,Lst,NList),atomic_list_concat(NList,S),svar_fixvarname(S,O))),!.
+dvar_name(N,O):- svar_fixvarname_dont_capitalize(N,O),!.
+dvar_name(N,O):- must_det_ll((atom_chars(N,Lst),maplist(c2vn,Lst,NList),atomic_list_concat(NList,S),svar_fixvarname_dont_capitalize(S,O))),!.
 c2vn(A,A):- char_type(A,prolog_identifier_continue),!.
 c2vn(A,A):- char_type(A,prolog_var_start),!.
 c2vn(A,AA):- char_code(A,C),atomic_list_concat(['_C',C,'_'],AA).
@@ -856,7 +859,7 @@ subst_vars([TermWDV|RestWDV], [Term|Rest], Acc, NamedVarsList) :- !,
     subst_vars(TermWDV, Term, Acc, IntermediateNamedVarsList),
     subst_vars(RestWDV, Rest, IntermediateNamedVarsList, NamedVarsList).
 subst_vars('$VAR'('_'), _, NamedVarsList, NamedVarsList) :- !.
-subst_vars('$VAR'(VName), Var, Acc, NamedVarsList) :- nonvar(VName), svar_fixvarname(VName,Name), !,
+subst_vars('$VAR'(VName), Var, Acc, NamedVarsList) :- nonvar(VName), svar_fixvarname_dont_capitalize(VName,Name), !,
     (memberchk(Name=Var, Acc) -> NamedVarsList = Acc ; ( !, Var = _, NamedVarsList = [Name=Var|Acc])).
 subst_vars(Term, Var, Acc, NamedVarsList) :- atom(Term),atom_concat('$',DName,Term),
    dvar_name(DName,Name),!,subst_vars('$VAR'(Name), Var, Acc, NamedVarsList).
