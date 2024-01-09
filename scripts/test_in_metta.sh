@@ -253,6 +253,8 @@ function main() {
         echo "Skipping test run."
     fi
 
+    scripts/pass_fail_totals.sh $UNITS_DIR
+
     # Prompt for code commit and unit report generation
     if [ -z "$generate_report_auto_reply" ]; then
         read -p "Commit code and generate unit reports? (y/N): " -n 1 -r
