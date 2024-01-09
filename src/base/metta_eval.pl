@@ -750,7 +750,7 @@ eval_in_steps_or_same(Eq,RetType,_Dpth,_Slf,X,Y):- X=Y,check_returnval(Eq,RetTyp
 
 eval_20(Eq,RetType,Depth,Self,['let',A,A5,AA],OO):- !,
   %(var(A)->true;trace),
-  eval_until_unify(Eq,_RetTypeV,Depth,Self,A5,AR),
+  eval(Eq,_RetTypeV,Depth,Self,A5,AR),
   A=AR,
   eval(Eq,RetType,Depth,Self,AA,OO).
 
