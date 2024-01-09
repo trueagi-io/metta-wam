@@ -214,14 +214,14 @@ eval_11(Eq,RetType,Depth,Self,X,Y):-
   Ret=retval(fail))),
 
   call_cleanup((
-    (eval_00(Eq,RetType,D1,Self,X,Y)*->true;(fail,rtrace(eval_00(Eq,RetType,D1,Self,X,Y)))),
+    (eval_00(Eq,RetType,D1,Self,X,Y)*->true;(fail,trace,(eval_00(Eq,RetType,D1,Self,X,Y)))),
     notrace(( \+ (Y\=YY), nb_setarg(1,Ret,Y)))),
 
     (PrintRet==1 -> indentq(DR,EX,'<--',Ret) ;
     notrace(ignore(((Y\=@=X,
       if_t(DR<DMax,if_trace((eval),indentq(DR,EX,'<--',Ret))))))))),
 
-  (Ret\=@=retval(fail)->true;(trace,rtrace(eval_00(Eq,RetType,D1,Self,X,Y)),fail)).
+  (Ret\=@=retval(fail)->true;(fail,trace,(eval_00(Eq,RetType,D1,Self,X,Y)),fail)).
 
 
 
@@ -494,7 +494,7 @@ eval_args_true_r(Eq,RetType,Depth,Self,X,TF1):-
 
 eval_args_true(Eq,RetType,Depth,Self,X):-
   metta_atom_true(Eq,Depth,Self,Self,X);
-   (nonvar(X),eval_ne(Eq,RetType,Depth,Self,X,TF1), TF1\=@=X,  \+  is_False(TF1)).
+   (nonvar(X),eval_ne(Eq,RetType,Depth,Self,X,TF1),  \+  is_False(TF1)).
 
 metta_atom_true(Eq,_Dpth,_Slf,Other,H):- get_metta_atom(Eq,Other,H).
 % is this OK?
@@ -750,13 +750,17 @@ eval_in_steps_or_same(Eq,RetType,_Dpth,_Slf,X,Y):- X=Y,check_returnval(Eq,RetTyp
 
 eval_20(Eq,RetType,Depth,Self,['let',A,A5,AA],OO):- !,
   %(var(A)->true;trace),
-  eval(Eq,_RetTypeV,Depth,Self,A5,A),
+  eval_until_unify(Eq,_RetTypeV,Depth,Self,A5,AR),
+  A=AR,
   eval(Eq,RetType,Depth,Self,AA,OO).
 
 %eval_20(Eq,RetType,Depth,Self,['let',A,A5,AA],AAO):- !,eval(Eq,RetType,Depth,Self,A5,A),eval(Eq,RetType,Depth,Self,AA,AAO).
 eval_20(Eq,RetType,Depth,Self,['let*',[],Body],RetVal):- !, eval(Eq,RetType,Depth,Self,Body,RetVal).
+%eval_20(Eq,RetType,Depth,Self,['let*',[[Var,Val]|LetRest],Body],RetVal):- !,
+%   eval_until_unify(Eq,_RetTypeV,Depth,Self,Val,Var),
+%   eval_20(Eq,RetType,Depth,Self,['let*',LetRest,Body],RetVal).
 eval_20(Eq,RetType,Depth,Self,['let*',[[Var,Val]|LetRest],Body],RetVal):- !,
-     eval_20(Eq,RetType,Depth,Self,['let',Var,Val,['let*',LetRest,Body]],RetVal).
+    eval_20(Eq,RetType,Depth,Self,['let',Var,Val,['let*',LetRest,Body]],RetVal).
 
 
 % =================================================================
@@ -991,13 +995,11 @@ eval_20(Eq,RetType,Depth,Self,[And,X|Y],TF):- is_comma(And),!, eval_args(Eq,RetT
 
 
 eval_20(Eq,RetType,_Dpth,_Slf,[And],True):- is_and(And,True),!,check_returnval(Eq,RetType,True).
-eval_20(Eq,RetType,Depth,Self,[And,X,Y],TF):-  is_and(And,True),!, as_tf((
-  eval_args(Eq,RetType,Depth,Self,X,True),eval_args(Eq,RetType,Depth,Self,Y,True)),TF).
-eval_20(Eq,RetType,Depth,Self,[And,X],True):- is_and(And,True),!,
-  eval_args(Eq,RetType,Depth,Self,X,True).
-eval_20(Eq,RetType,Depth,Self,[And,X|Y],TF):- is_and(And,_True),!,
-  eval_args(Eq,RetType,Depth,Self,X,TF1), \+ \+ is_True(TF1),
-  eval_args(Eq,RetType,Depth,Self,[And|Y],TF).
+%eval_20(Eq,RetType,Depth,Self,[And,X,Y],TF):-  is_and(And,True),!,
+% as_tf(( eval_args(Eq,RetType,Depth,Self,X,True),eval_args(Eq,RetType,Depth,Self,Y,True)),TF).
+eval_20(Eq,RetType,Depth,Self,[And,X],TF):- is_and(And,True),!, as_tf(eval_args(Eq,RetType,Depth,Self,X,True),TF).
+eval_20(Eq,RetType,Depth,Self,[And,X|Y],TF):- is_and(And,True),!, as_tf(eval_args(Eq,RetType,Depth,Self,X,True),TF1),
+  (TF1=='False' -> TF=TF1 ; eval_args(Eq,RetType,Depth,Self,[And|Y],TF)).
 
 eval_20(Eq,RetType,Depth,Self,['or',X,Y],TF):- !,
    as_tf((eval_args_true(Eq,RetType,Depth,Self,X);eval_args_true(Eq,RetType,Depth,Self,Y)),TF).
@@ -1085,7 +1087,7 @@ eval_20(Eq,RetType,Depth,Self,['maplist!',Pred,ArgL1,ArgL2,ArgL3],ResL):- !,
       eval(Eq,RetType,Depth,Self,[Pred,Arg1,Arg2,Arg3],Res).
 
 eval_20(Eq,RetType,Depth,Self,['concurrent-maplist!',Pred,ArgL1],ResL):- !,
-      concurrent_maplist(eval_pred(Eq,RetType,Depth,Self,Pred),ArgL1,ResL).
+      metta_concurrent_maplist(eval_pred(Eq,RetType,Depth,Self,Pred),ArgL1,ResL).
 eval_20(Eq,RetType,Depth,Self,['concurrent-maplist!',Pred,ArgL1,ArgL2],ResL):- !,
       concurrent_maplist(eval_pred(Eq,RetType,Depth,Self,Pred),ArgL1,ArgL2,ResL).
 eval_20(Eq,RetType,Depth,Self,['concurrent-maplist!',Pred,ArgL1,ArgL2,ArgL3],ResL):- !,
@@ -1097,8 +1099,8 @@ eval_20(Eq,RetType,Depth,Self,['concurrent-forall!',Gen,Test|Options],Empty):- !
             user:forall(eval(Eq,RetType,Depth,Self,Test,_),true),
             POptions)),
      return_empty([],Empty).
-eval_20(Eq,RetType,Depth,Self,['hyperpose',ArgL1],ResL):-
-  !, concurrent_maplist(eval(Eq,RetType,Depth,Self),ArgL1,ResL).
+
+eval_20(Eq,RetType,Depth,Self,['hyperpose',ArgL],Res):- !, metta_hyperpose(Eq,RetType,Depth,Self,ArgL,Res).
 
 
 simple_math(Var):- attvar(Var),!,fail.
@@ -1255,7 +1257,7 @@ s2ps(S,P):- \+ is_list(S),!,P=S.
 s2ps([F|S],P):- atom(F),maplist(s2ps,S,SS),join_s2ps(F,SS,P),!.
 s2ps(S,S):-!.
 join_s2ps('Cons',[H,T],[H|T]):-!.
-join_s2ps(F,Args,P):-P=..[F|Args].
+join_s2ps(F,Args,P):-atom(F),P=..[F|Args].
 
 eval_call(S,TF):-
   s2ps(S,P), !,

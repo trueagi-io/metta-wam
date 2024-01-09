@@ -100,3 +100,92 @@ execute_goal(forall(X, Y), _) :- !, forall(execute_goal(X, _), execute_goal(Y, _
 execute_goal(SubGoal, _IsCut) :- call_wdet(SubGoal, WasDet), (was_t(WasDet)->!;true).
 
 was_t(T):- T == true.
+
+
+ccml_nth:attr_unify_hook(_Nth,_Var).
+
+metta_hyperpose_v0(P2, InList, OutList) :-
+    current_prolog_flag(cpu_count,Count),
+    length(InList,Len), length(OutList,Len),
+    max_min(Count,Len,_,Procs),
+    findall(thread(Goal, OutputVar),
+            (nth1(N, InList, InputVar), Goal = call(P2, InputVar, OutputVar), put_attr(OutputVar,ccml_nth,N)),
+            GoalsWithOutputs),
+    separate_goals_and_outputs(GoalsWithOutputs, Goals, OutList),
+    concurrent(Procs, Goals, []).
+
+separate_goals_and_outputs([], [], []).
+separate_goals_and_outputs([thread(Goal, OutputVar)|GoalsWithOutputs], [Goal|Goals], [OutputVar|Outputs]) :-
+    separate_goals_and_outputs(GoalsWithOutputs, Goals, Outputs).
+
+
+
+
+
+%:- use_module(library(concurrent)).
+
+% Meta predicate that combines concurrent processing and result gathering
+metta_concurrent_maplist(P2, InList, OutList) :-  InList=[_,_|_],!,  % only use extra threads iof 2 or more
+    setup_call_cleanup(
+             concurrent_assert_result(P2, InList, Tag),
+             gather_results_in_order(Tag, InList, OutList),
+             cleanup_results(Tag)).
+metta_concurrent_maplist(P2, InList, OutList):- maplist(P2, InList, OutList).
+
+% Meta predicate that combines concurrent processing and result gathering
+metta_hyperpose(Eq,RetType,Depth,Self,InList,Res) :- fail,  InList=[_,_|_],!,  % only use extra threads iof 2 or more
+    setup_call_cleanup(
+             concurrent_assert_result(eval_20(Eq,RetType,Depth,Self), InList, Tag),
+             each_result_in_order(Tag, InList, Res),
+             cleanup_results(Tag)).
+metta_hyperpose(Eq,RetType,Depth,Self,ArgL,Res):- eval_20(Eq,RetType,Depth,Self,['superpose',ArgL],Res).
+
+
+% Concurrently applies P2 to each element of InList, results are tagged with a unique identifier
+concurrent_assert_result(P2, InList, Tag) :-
+    current_prolog_flag(cpu_count,Count),
+    length(InList,Len), max_min(Count,Len,_,Procs),
+    gensym(counter, Tag),  % Generate a unique identifier
+    concurrent_forall( nth1(Index, InList, InputVar),assert_result_after_computation(P2, Tag, Index, InputVar), [threads(Procs)]).
+    %findall(assert_result_after_computation(P2, Tag, Index, InputVar), nth1(Index, InList, InputVar), Goals),
+    %concurrent(Procs, Goals, []).
+
+% Asserts the output of applying P2 to Input
+assert_result_after_computation(P2, Tag, Index, Input) :-
+    catch(
+      (call(P2, Input, Output)*-> assert(result(Tag, Index, Input, Output)) ;  assert(result(Tag, Index, Input, failed(Tag)))),
+                E, (assert(result(Tag, Index, Input, error(E))))).
+
+
+% Gathers results in order, matching them with the corresponding inputs
+gather_results_in_order(Tag, InList, OrderedResults) :-
+    gather_results_in_order(Tag, InList, 0, OrderedResults).
+
+use_result( IInput, RResult,  Input, Result):- var(RResult),!,IInput=Input,Result=RResult.
+use_result( IInput, error(E),  Input,  _Result):- ignore(IInput=Input),!, throw(E).
+use_result( IInput,  failed(_),  Input,  _Result):-  ignore(IInput=Input),!,fail.
+use_result( IInput, RResult,  Input, Result):- IInput=Input,Result=RResult.
+
+gather_results_in_order(_, [], _, []).
+gather_results_in_order(Tag, [Input|RestInputs], Index, [Result|OrderedResults]) :-
+     ( result(Tag, Index, IInput, RResult)
+       *->  (use_result( IInput, RResult,  Input, Result),NextIndex is Index + 1,gather_results_in_order(Tag, RestInputs, NextIndex, OrderedResults))
+      ;   % Wait for 75 milliseconds before retrying
+        (  sleep(0.075),  gather_results_in_order(Tag, [Input|RestInputs], Index, [Result|OrderedResults]))).
+
+
+each_result_in_order(Tag, InList, OrderedResults) :-
+    each_result_in_order(Tag, InList, 0, OrderedResults).
+each_result_in_order(_, [], _,_):-!,fail.
+each_result_in_order(Tag, [Input|RestInputs], Index,Result) :-
+     ( result(Tag, Index, IInput, RResult)
+       *->  (use_result( IInput, RResult,  Input, Result);
+                (NextIndex is Index + 1,each_result_in_order(Tag, RestInputs, NextIndex, Result)))
+      ;   % Wait for 75 milliseconds before retrying
+        (  sleep(0.075),  each_result_in_order(Tag, [Input|RestInputs], Index,Result))).
+
+
+% Cleanup predicate to remove asserted results from the database
+cleanup_results(Tag) :-
+    retractall(result(Tag, _, _, _)).
+
