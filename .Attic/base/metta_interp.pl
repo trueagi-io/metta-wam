@@ -1845,7 +1845,7 @@ really_rtrace(Goal):- with_debug((eval),with_debug((exec),Goal)).
 rtrace_on_existence_error(G):- !, catch_err(G,E, (fbug(E=G),  \+ tracing, trace, rtrace(G))).
 %rtrace_on_existence_error(G):- catch(G,error(existence_error(procedure,W),Where),rtrace(G)).
 
-prolog_only(Goal):- !,Goal.
+%prolog_only(Goal):- !,Goal.
 prolog_only(Goal):- if_trace(prolog,Goal).
 
 write_compiled_exec(Exec,Goal):-
