@@ -83,19 +83,21 @@ read_response(Stream,Goal) :-
 % Example usage
 % ?- remote_call('localhost', member(X, [1,2,3])).
 
-:- dynamic predicate_server/2.  % Maps predicate to server
+:- dynamic remote_code/3.  % Maps predicate to server
 
 % Registers a predicate to a server
-register_predicate_server(Predicate, Server) :- assertz(predicate_server(Predicate, Server)).
+register_remote_code(Predicate, NonDet, Server) :- assertz(remote_code(Predicate, NonDet, Server)).
 
 % Meta-interpreter with cut handling
 execute_goal(Goal, IsCut) :-
-    predicate_server(Goal, Server), !,   % If the goal is registered for a server, call remotely
+    remote_code(Goal, NonDet, Server),    % If the goal is registered for a server, call remotely
+    (was_t(NonDet) -> true ; !),
     remote_call(Server, execute_goal(Goal,IsCut)).
+
 
 execute_goal(!, IsCut) :- !,  IsCut = true.  % Handle cuts
 execute_goal(fail, IsCut) :- !, (was_t(IsCut)->throw(cut_fail); fail).
-execute_goal(Goal, _) :- predicate_property(Goal,numberr_of_clauses(_)),!,
+execute_goal(Goal, _) :- predicate_property(Goal,number_of_clauses(_)),!,
     clause(Goal, Body),  % Retrieve the clause body for the goal
     catch(execute_goal(Body, IsCut),cut_fail,(!,fail)),
     (was_t(IsCut)-> !; true).
