@@ -223,7 +223,8 @@ get_type1(_Dpth,_Slf,_,'%Undefined%'):- fail.
 
 
 as_prolog(_Dpth,_Slf,I,O):- \+ iz_conz(I),!,I=O.
-as_prolog(Depth,Self,[H|T],O):- H=='::',!,as_prolog(Depth,Self,T,O).
+as_prolog(Depth,Self,[H|T],O):- H=='::',!,maplist(as_prolog(Depth,Self),T,L),!, O = L.
+as_prolog(Depth,Self,[H|T],O):- H=='@',!,maplist(as_prolog(Depth,Self),T,L),!, O =.. L.
 as_prolog(Depth,Self,[H|T],[HH|TT]):- as_prolog(Depth,Self,H,HH),as_prolog(Depth,Self,T,TT).
 
 
