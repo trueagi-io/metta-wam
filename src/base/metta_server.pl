@@ -83,7 +83,7 @@ execute_goal(Goal, IsCut) :-
 
 execute_goal(!, IsCut) :- !,  IsCut = true.  % Handle cuts
 execute_goal(fail, IsCut) :- !, (was_t(IsCut)->throw(cut_fail); fail).
-execute_goal(Goal, _) :- predicate_property(Goal,numberr_of_clauses(_)),!,
+execute_goal(Goal, _) :- predicate_property(Goal,number_of_clauses(_)),!,
     clause(Goal, Body),  % Retrieve the clause body for the goal
     catch(execute_goal(Body, IsCut),cut_fail,(!,fail)),
     (was_t(IsCut)-> !; true).
