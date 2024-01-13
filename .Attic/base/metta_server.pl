@@ -13,8 +13,22 @@ parse_server_port(ServerPort,DefaultPort, Server, Port) :-
 start_vspace_server(Port) :-
     thread_create(run_vspace_server(Port),_,[detached(true),alias(vspace_server)]).
 
-run_vspace_server(Port) :-
-    tcp_socket(Socket),  tcp_bind(Socket, Port), tcp_listen(Socket, 5), tcp_open_socket(Socket, ListenFd),
+:- dynamic(was_vspace_server_in_use/1).
+
+vspace_server_in_use(Port):-
+   assert(was_vspace_server_in_use(Port)),
+   Port100 is Port +100,run_vspace_server(Port100).
+
+run_vspace_server(Port):-
+    catch(
+      run_vspace_server0(Port),
+      error(socket_error(eaddrinuse,_),_),
+      vspace_server_in_use(Port)).
+
+run_vspace_server0(Port) :-
+    tcp_socket(Socket),
+    tcp_bind(Socket, Port),
+    tcp_listen(Socket, 5), tcp_open_socket(Socket, ListenFd),
     fbug(run_vspace_server(Port)),
     accept_vspace_connections(ListenFd).
 
@@ -38,8 +52,6 @@ handle_vspace_client(Stream) :-
 % Start the server automatically on a default port or a specified port
 :- dynamic vspace_port/1.
 start_vspace_server:- (   vspace_port(Port) -> start_vspace_server(Port); start_vspace_server(3023) ).
-
-:- initialization(start_vspace_server).
 
 % Connects to the server and sends the goal
 remote_call(ServerPort, Goal) :-
@@ -83,7 +95,7 @@ execute_goal(Goal, IsCut) :-
 
 execute_goal(!, IsCut) :- !,  IsCut = true.  % Handle cuts
 execute_goal(fail, IsCut) :- !, (was_t(IsCut)->throw(cut_fail); fail).
-execute_goal(Goal, _) :- predicate_property(Goal,number_of_clauses(_)),!,
+execute_goal(Goal, _) :- predicate_property(Goal,numberr_of_clauses(_)),!,
     clause(Goal, Body),  % Retrieve the clause body for the goal
     catch(execute_goal(Body, IsCut),cut_fail,(!,fail)),
     (was_t(IsCut)-> !; true).
@@ -188,4 +200,8 @@ each_result_in_order(Tag, [Input|RestInputs], Index,Result) :-
 % Cleanup predicate to remove asserted results from the database
 cleanup_results(Tag) :-
     retractall(result(Tag, _, _, _)).
+
+
+
+:- initialization(start_vspace_server).
 

@@ -32,6 +32,7 @@ is_pyswip:- current_prolog_flag(os_argv,ArgV),member( './',ArgV).
 :- set_stream(user_input,tty(true)).
 :- set_prolog_flag(encoding,iso_latin_1).
 :- set_prolog_flag(encoding,utf8).
+:- set_output(user_error).
 %:- set_prolog_flag(encoding,octet).
 /*
 Now PASSING NARS.TEC:\opt\logicmoo_workspace\packs_sys\logicmoo_opencog\MeTTa\vspace-metta\metta_vspace\pyswip\metta_interp.pl
@@ -591,9 +592,12 @@ repl_read("+", '+'):-!.
 repl_read(Str,Atom):- atom_string(Atom,Str),metta_interp_mode(Atom,_),!.
 
 repl_read(Str, Expr):- atom_concat('@',_,Str),!,atom_string(Expr,Str).
+repl_read(Str, Expr):- atom_concat(')',_,Str),!,fbug(repl_read_syntax(Str)),throw(restart_reading).
 repl_read(NewAccumulated, Expr):-
-    normalize_space(string(Renew),NewAccumulated), Renew \== NewAccumulated, !,
+    normalize_space(string(Renew),NewAccumulated),
+    Renew \== NewAccumulated, !,
     repl_read(Renew, Expr).
+%repl_read(Str, 'add-atom'('&self',Expr)):- atom_concat('+',W,Str),!,repl_read(W,Expr).
 %repl_read(NewAccumulated,exec(Expr)):- string_concat("!",Renew,NewAccumulated), !, repl_read(Renew, Expr).
 repl_read(NewAccumulated, Expr):- string_chars(NewAccumulated, Chars),
     balanced_parentheses(Chars), length(Chars, Len), Len > 0,
@@ -1269,6 +1273,8 @@ call_sexpr(How,Self,Tax,_S,Out):-
     convert_tax(How,Self,TaxM,Expr,NewHow),!,
     show_call(do_metta(python,NewHow,Self,Expr,Out)).
 
+do_metta(File,Load,Self,Cmt,Out):-
+  if_trace(do_metta, fbug(do_metta(File,Load,Self,Cmt,Out))),fail.
 
 do_metta(_File,_Load,_Self,In,Out):- var(In),!,In=Out.
 do_metta(_From,_Mode,_Self,end_of_file,'Empty'):- !. %, halt(7), writeln('\n\n% To restart, use: ?- repl.').
@@ -1423,6 +1429,8 @@ repl2:-
    %notrace((current_input(In),nop(catch(load_history,_,true)))),
   % ignore(install_readline(In)),
    repeat,
+     set_prolog_flag(gc,true),
+     garbage_collect,
      set_prolog_flag(gc,false),
      %with_option(not_a_reload,true,make),
       ignore(catch(once(repl3),restart_reading,true)),
@@ -1433,12 +1441,13 @@ repl3:-
       current_read_mode(repl,Mode),
       %ignore(shell('stty sane ; stty echo')),
       %current_input(In),
+     format(atom(P2),'metta> ',[]),
       format(atom(P),'metta ~w ~w> ',[Self, Mode]))),
       setup_call_cleanup(
          notrace(prompt(Was,P)),
-         notrace((ttyflush,repl_read(Expr),ttyflush)),
+         notrace((write(P),ttyflush,repl_read(Expr),ttyflush)),
          notrace(prompt(_,Was))),
-      if_trace(repl,fbug(repl_read(Expr))),
+      if_trace(replt,fbug(repl_read(Mode,Expr))),
       %fbug(repl_read(Expr)),
       notrace(if_t(Expr==end_of_file,throw(end_of_input))),
       %ignore(shell('stty sane ; stty echo')),
