@@ -92,11 +92,12 @@ set_option_value_interp(N,V):-
   set_option_value(N,V),
     fbug(set_option_value(N,V)),
   ignore((if_t((atom(N), atom_concat('trace-on-',F,N)),set_debug(F,V)))),
-  ignore((if_t((atom(V), is_debug_like(V)),set_debug(N,true)))),!.
+  ignore((if_t((atom(V), is_debug_like(V,TF)),set_debug(N,TF)))),!.
 
-is_debug_like(trace).
-is_debug_like(rtrace).
-is_debug_like(debug).
+is_debug_like(trace, true).
+is_debug_like(notrace, false).
+is_debug_like(debug, true).
+is_debug_like(nodebug, false).
 
 set_is_unit_test(TF):-
   forall(option_value_def(A,B),set_option_value_interp(A,B)),
