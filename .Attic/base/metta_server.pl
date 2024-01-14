@@ -30,11 +30,14 @@ run_vspace_server0(Port) :-
     tcp_bind(Socket, Port),
     tcp_listen(Socket, 5), tcp_open_socket(Socket, ListenFd),
     fbug(run_vspace_server(Port)),
+    retractall(vspace_port(_)),
+    assert(vspace_port(Port)),
     accept_vspace_connections(ListenFd).
 
 accept_vspace_connections(ListenFd) :-
     tcp_accept(ListenFd, ClientFd, ClientAddr),
-    format(atom(ThreadAlias), 'client_~w', [ClientAddr]),
+    format(atom(ThreadAlias0), 'client_~w_~w_', [ClientAddr,ClientFd]),
+    gensym(ThreadAlias0,ThreadAlias),
     thread_create(setup_call_cleanup(
             tcp_open_socket(ClientFd, Stream),
             ignore(handle_vspace_client(Stream)),
@@ -49,9 +52,17 @@ handle_vspace_client(Stream) :-
              ;send_term(Stream, 'failed'))),
         handle_vspace_client(Stream).
 
+any_to_i(A,I):- integer(A),I=A.
+any_to_i(A,I):- format(atom(Ay),'~w',[A]),atom_number(Ay,I).
 % Start the server automatically on a default port or a specified port
 :- dynamic vspace_port/1.
-start_vspace_server:- (   vspace_port(Port) -> start_vspace_server(Port); start_vspace_server(3023) ).
+get_vspace_port(Port):- current_prolog_flag('argv',L),member(AA,L),atom_concat('--server=',P,AA),atom_number(P,Port),!,set_prolog_flag('port',Port).
+get_vspace_port(Port):- current_prolog_flag('port',P),any_to_i(P,Port),!.
+get_vspace_port(Port):- vspace_port(Port),!.
+get_vspace_port(Port):- Port = 3023.
+start_vspace_server:- is_compiling,!.
+start_vspace_server:- thread_property(VSS,TS),VSS=vspace_server,TS=status(running),!.
+start_vspace_server:-  get_vspace_port(Port), start_vspace_server(Port),!.
 
 % Connects to the server and sends the goal
 remote_call(ServerPort, Goal) :-
@@ -68,13 +79,14 @@ connect_to_server(HostPort, Stream) :-
     tcp_open_socket(Socket, Stream).
 
 % Helper to send goal and receive response
-send_term(Stream, Goal) :-  write_canonical(Stream, Goal),writeln(Stream, '.'), flush_output(Stream).
+send_term(Stream, MeTTa) :-  write_canonical(Stream, MeTTa),writeln(Stream, '.'), flush_output(Stream).
+recv_term(Stream, MeTTa) :-  read_term(Stream, MeTTa, []).
 
 
 % Read and process the server's response
 read_response(Stream,Goal) :-
    flush_output(Stream),
-    repeat, read_term(Stream,Response,[]),
+    repeat, recv_term(Stream,Response),
     (Response == failed -> (!,fail) ;
        (Response = error(Throw) -> throw(Throw) ;
          ((Response = success(Goal,WasDet)),
@@ -85,9 +97,29 @@ read_response(Stream,Goal) :-
 
 :- dynamic remote_code/3.  % Maps predicate to server
 
-% Registers a predicate to a server
-register_remote_code(Predicate, NonDet, Server) :- assertz(remote_code(Predicate, NonDet, Server)).
+our_address(Host:Port):- gethostname(Host),vspace_port(Port).
+we_exist(Addr):- our_address(Addr).
 
+they_exist(Addr):- execute_goal(we_exist(Addr)), \+ our_address(Addr).
+% tell the server that took our place about us...
+register_ready:-
+  our_address(Ours),
+  forall(was_vspace_server_in_use(Port),
+     remote_call(Port,register_remote_code(we_exist(_),true,Ours))).
+register_gone:-
+  our_address(Ours),
+  forall(they_exist(Addr),
+     remote_call(Addr,register_remote_code(we_exist(_),Ours))).
+
+% Registers a predicate to a server
+register_remote_code(Predicate, NonDet, Server) :-
+   unregister_remote_code(Predicate, Server),
+   assertz(remote_code(Predicate, NonDet, Server)).
+unregister_remote_code(Predicate, Server) :- retractall(remote_code(Predicate, _, Server)).
+
+
+
+execute_goal(Goal):- execute_goal(Goal, _).
 % Meta-interpreter with cut handling
 execute_goal(Goal, IsCut) :-
     remote_code(Goal, NonDet, Server),    % If the goal is registered for a server, call remotely
@@ -202,7 +234,6 @@ each_result_in_order(Tag, [Input|RestInputs], Index,Result) :-
 % Cleanup predicate to remove asserted results from the database
 cleanup_results(Tag) :-
     retractall(result(Tag, _, _, _)).
-
 
 
 :- initialization(start_vspace_server).

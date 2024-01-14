@@ -62,8 +62,8 @@ set_option_value(N,V):-
 set_option_value0(N,V):-
    p2mE(V,VV),!,
    catch(nb_setval(N,VV),E,fbug(E)),
-   catch(create_prolog_flag(N,V,[keep(false),access(read_write), type(term)]),E,fbug(E)),
-   catch(set_prolog_flag(N,V),E,fbug(E)),!.
+   catch(create_prolog_flag(N,V,[keep(false),access(read_write), type(term)]),E2,fbug(E2)),
+   catch(set_prolog_flag(N,V),E3,fbug(E3)),!.
 
 kaggle_arc:- \+ exists_directory('/opt/logicmoo_workspace/packs_sys/logicmoo_agi/prolog/kaggle_arc/'), !.
 %kaggle_arc:- !.
