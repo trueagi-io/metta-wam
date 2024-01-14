@@ -12,6 +12,7 @@ should_compile=0
 never_compile=0
 CMD_TIMEOUT=0
 repl_flag=enable
+use_rc_file=~/.mettalogrc
 
 # Initialize the variable to indicate whether to use the test script
 use_test_script=0
@@ -41,9 +42,10 @@ fi
 
 set -e
 
-function load_mettalogrc {
-    local file="${1:-$HOME/.mettalogrc}"  # Use the argument if supplied, else use the default file
-    local METTALOG_OPTIONS=()
+
+function load_rc_file {
+    local file="$1"  # Use the argument as the file
+    local METTALOG_OPTIONS_LOCAL=()
     local multiline_accumulator=""
     local verbose="${VERBOSE:-0}"  # Use the VERBOSE environment variable or default to '0' (not verbose)
 
@@ -66,21 +68,18 @@ function load_mettalogrc {
 
             [[ $line =~ ^# ]] && continue # Skip lines that start with a comment
 
-            METTALOG_OPTIONS+=("$line")
+            METTALOG_OPTIONS_LOCAL+=("$line")
 
             # Verbose logging
             [[ "$verbose" == "1" ]] && echo "Loaded option: $line"
         done < "$file"
-    else
-        [[ "$verbose" == "1" ]] && echo "File $file does not exist."
-        return 1
     fi
 
-    # Return the array (in bash, arrays are typically returned by echoing their elements)
-    echo "${METTALOG_OPTIONS[@]}"
-    return 0
+    local do_args="${METTALOG_OPTIONS_LOCAL[@]}"
+    [[ -z "$do_args" ]] && return
+    echo "handle_args ${do_args}"
+    handle_args "${do_args}"
 }
-
 
 
 add_to_list() {
@@ -92,76 +91,83 @@ add_to_list() {
 }
 
 function print_help {
-    echo " Usage: $0 [options] <metta-files|directories> ... [-- arg ...passed to your program...]"
+    echo " Usage: ${MeTTa} [options] <metta-files|directories> ... [-- arg ...passed to your program...]"
     echo "        $0 --help         Display this message"
     echo "        $0 --version      Display version information"
-    echo ""
-    echo "    -x state                 Start from state (must be first)"
-    echo "    -g goal                  Run goal (may be repeated)"
-    echo "    -t toplevel              Toplevel goal"
-    echo "    -f file                  User initialisation file"
-    echo "    -F file                  Site initialisation file"
-    echo "    -l file                  Script source file"
-    echo "    -s file                  Script source file"
-    echo "    -p alias=path            Define file search path 'alias'"
-    echo "    "
-    echo "   Compilation: "
-    echo ""
-    echo "    $0 [options] [-o executable] -c metta-file1 -c metta-file2 ... to compile into executable ..."
-    echo ""
-    echo "    -O                       Optimised compilation"
-    echo "    --debug[=bool]           Do (not) generate debug info"
-    echo "    --traditional            Disable extensions of version (SWI-Prolog version 7)"
-    echo "    --abi-version            Display ABI version key (and exit)"
-    echo "    --arch                   Display architecture (and exit)"
-    echo "    --dump-runtime-variables[=format] "
-    echo "                             Dump link info in sh(1) format (and exit)"
-    echo ""
-    echo "  Running:"
-    echo "    --repl                   Start the REPL (Read-Eval-Print Loop) after processing metta files."
-    echo "                             If no metta files are provided, this is the default behavior."
-    echo "    --home[=DIR]             Print home or use DIR as SWI-Prolog home"
-    echo "    --stack-limit=size[BKMG] Specify maximum size of stacks"
-    echo "    --table-space=size[BKMG] Specify maximum size of SLG tables"
-    echo "    --shared-table-space=size[BKMG] Maximum size of *shared* SLG tables"
-    echo "    --pce[=bool]             Make the xpce gui available"
-    echo "    --packs[=bool]           Do (not) attach add-ons"
-    echo "    --pldoc[=port]           Start PlDoc server [at port]"
-    echo "    --python[=bool]          Enable or disable Python support (default: $python_flag)"
-    echo "    --tty[=bool]             (Dis)allow tty control"
-    echo "    --quiet[=bool] (-q)      Do (not) suppress informational messages"
-    echo "   "
-    echo "  Testing:"
-    echo "    --test                 Use the test options:"
-    echo "    --continue               Continue running tests (Generating any missing html files)"
-    echo "    --failures               Rerun unsuccessfull tests only"
-    echo "    --timeout=seconds        Kill the script after so many seconds."
-    echo "    --html[=bool]            Save an HTML file containing terminal output in the same"
-    echo "                             directory as the input file or directory."
-    echo "                             Defaults to true if exactly one metta file or directory argument was provided"
-    echo "    --fresh                  Clean up by deleting any .answers files under directory"
-    echo "    --clean                  Clean up by deleting all .html files under directory"
-    echo "         "
-    echo "  Debugging:"
-    echo "    --exec=skip              Skip over !exec dirrectives"
-    echo "    --eval=rtrace            Recursively trace Evaluation"
-    echo "    --signals[=bool]         Do (not) modify signal handling"
-    echo "    --threads[=bool]         Do (not) allow for threads"
-    echo "    --debug-on-interrupt[=bool] Trap the debugger on interrupt"
-    echo "    --prolog                 Drop to the host system debugger"
-    echo "    --on-error=style         One of print, halt or status"
-    echo "    --on-warning=style       One of print, halt or status"
-    echo ""
-    echo " Boolean options may be written as --name=bool, --name, --no-name or --noname."
-    echo " Both '-' or '_' are accepted as word-separator for long options."
-    echo ""
-    echo " Configuration File:"
-    echo "    This script reads options from the ~/.mettalogrc file, one option per line."
-    echo "    Options specified in ~/.mettalogrc are processed before command-line arguments."
-    echo ""
-    echo " WAS: $0 ${SWI_OPTIONS[*]} -l $METTALOG_DIR/metta_vspace/$PYSWIP_VERSION/metta_interp.pl -- --python=$python_flag ${PRE_METTALOG_OPTIONS[*]} ${METTALOG_OPTIONS[*]} \\"
-    echo "            $METTA_CMD"
-    echo ""
+cat << EOF
+
+     -x state                 Start from state (must be first)
+     -g goal                  Run goal (may be repeated)
+     -t toplevel              Toplevel goal
+     -f file                  User initialisation file
+     -F file                  Site initialisation file
+     -l file                  Script source file
+     -s file                  Script source file
+     -p alias=path            Define file search path 'alias'
+
+    Compilation:
+
+     ${MeTTa} [options] [-o executable] -c metta-file1 -c metta-file2 ... to compile into executable ...
+
+     -O                       Optimised compilation
+     --debug[=bool]           Do (not) generate debug info
+     --traditional            Disable extensions of version (SWI-Prolog version 7)
+     --abi-version            Display ABI version key (and exit)
+     --arch                   Display architecture (and exit)
+     --dump-runtime-variables[=format]
+			      Dump link info in sh(1) format (and exit)
+
+   Running:
+     --rc File                read command line arguments from a file
+     --repl                   Start the REPL (Read-Eval-Print Loop) after processing metta files.
+			      If no metta files are provided, this is the default behavior.
+     --home[=DIR]             Print home or use DIR as SWI-Prolog home
+     --stack-limit=size[BKMG] Specify maximum size of stacks
+     --table-space=size[BKMG] Specify maximum size of SLG tables
+     --shared-table-space=size[BKMG] Maximum size of *shared* SLG tables
+     --pce[=bool]             Make the xpce gui available
+     --packs[=bool]           Do (not) attach add-ons
+     --pldoc[=port]           Start PlDoc server [at port]
+     --python[=bool]          Enable or disable Python support (default: $python_flag)
+     --tty[=bool]             (Dis)allow tty control
+     --quiet[=bool] (-q)      Do (not) suppress informational messages
+
+   Testing:
+     --test                 Use the test options:
+     --continue               Continue running tests (Generating any missing html files)
+     --failures               Rerun unsuccessfull tests only
+     --regressions            Rerun only tests in which we previously scored 100%
+
+     --timeout=seconds        Kill the script after so many seconds.
+     --html[=bool]            Save an HTML file containing terminal output in the same
+			      directory as the input file or directory.
+			      Defaults to true if exactly one metta file or directory argument was provided
+     --fresh                  Clean up by deleting any .answers files under directory
+     --clean                  Clean up by deleting all .html files under directory
+
+   Debugging:
+     --exec=skip              Skip over !exec dirrectives
+     --eval=debug             Recursively trace Evaluation
+     --case=debug             Show extra debug info about case statements
+     --signals[=bool]         Do (not) modify signal handling
+     --threads[=bool]         Do (not) allow for threads
+     --debug-on-interrupt[=bool] Trap the debugger on interrupt
+     --prolog                 Drop to the host system debugger
+     --on-error=style         One of print, halt or status
+     --on-warning=style       One of print, halt or status
+
+  Boolean options may be written as --name=bool, --name, --no-name or --noname.
+  Both '-' or '_' are accepted as word-separator for long options.
+
+  Configuration File:
+     This script reads options from the ~/.mettalogrc file, one option per line.
+     Options specified in ~/.mettalogrc are processed before command-line arguments.
+
+  WAS: $0 ${SWI_OPTIONS[*]} -l $METTALOG_DIR/metta_vspace/$PYSWIP_VERSION/metta_interp.pl -- --python=$python_flag ${PRE_METTALOG_OPTIONS[*]} ${METTALOG_OPTIONS[*]} \\
+	     $METTA_CMD
+
+
+EOF
 }
 
 
@@ -187,8 +193,19 @@ function handle_args {
     SWI_FLAG_WITH_ARG=false
     METTA_FLAG_WITH_ARG=false
     SKIP_TO_METTALOG_OPTIONS=false
+    NEXT_ARG_IS_RC_FILE=false
+    PrevDir="${RPWD:-$(pwd)}"  # Default to current directory if PrevDir is not set
 
     for arg in "$@"; do
+
+        # Check if the previous argument was --rc
+        if [[ "$NEXT_ARG_IS_RC_FILE" == true ]]; then
+            rc_file_path="$PrevDir/$arg"  # Resolve file path relative to PrevDir
+            rc_file_path="$(realpath "$rc_file_path")"  # Resolve to absolute path
+            load_rc_file "$rc_file_path"
+            NEXT_ARG_IS_RC_FILE=false
+            continue
+        fi
 
         if [[ $SKIP_TO_METTALOG_OPTIONS == true ]]; then
             METTALOG_OPTIONS+=("$arg")
@@ -198,6 +215,12 @@ function handle_args {
         if [[ "$arg" == "--" ]]; then
 	    METTALOG_OPTIONS+=("$arg")
             SKIP_TO_METTALOG_OPTIONS=true
+            continue
+        fi
+
+        # Add support for --rc followed by a file
+        if [[ "$arg" == "--rc" ]]; then
+            NEXT_ARG_IS_RC_FILE=true
             continue
         fi
 
@@ -291,8 +314,9 @@ function handle_args {
     done
 }
 
+
 # First process arguments from ~/.mettalogrc
-handle_args $(load_mettalogrc)
+
 # Then process actual command-line arguments
 #handle_args "$@"
 
@@ -304,8 +328,13 @@ for arg in "$@"; do
 	if [[ -f "$arg_realpath" || -d "$arg_realpath" ]]; then
 	    add_to_list "$arg_realpath" LIST_OF_FILE_ARGS
 	fi
+    elif [[ "$arg" =~ ^--rc=(.*) ]]; then
+	use_rc_file=""
+	continue
     fi
 done
+
+# Then process actual command-line arguments
 
 #echo "LIST_OF_FILE_ARGS[0]=${LIST_OF_FILE_ARGS[0]}"
 DIRNAME="${LIST_OF_FILE_ARGS[0]}"
@@ -320,31 +349,21 @@ else
 fi
 DIR_RC="$DIRNAME/.mettalogrc"
 #echo "DIR_RC=$DIR_RC"
-if [[ -f "$DIR_RC" ]]; then
-    DIR_OPTS=$(load_mettalogrc "$DIR_RC")
-    echo "DIR_RC($DIR_RC)='$DIR_OPTS'"
-    # Assuming DIR_OPTS contains options and not filenames.
-    # So we directly handle them as arguments.
-    if [[ ! -z "$DIR_OPTS" ]]; then
-	handle_args $DIR_OPTS
-    fi
+if [[ -z "${use_rc_file}" ]]; then
+    :
+elif [[ -f "$DIR_RC" ]]; then
+    use_rc_file="${DIR_RC}"
 else
-    echo ";"
     echo "; No RC file (.mettalogrc) for directory: $DIRNAME"
-    echo ";"
-fi
-
-# Then process actual command-line arguments
-
-if [[ ! -z "$DIR_OPTS" ]]; then
-    handle_args $DIR_OPTS
 fi
 
 handle_args "$@"
+load_rc_file $use_rc_file
 
-#echo "Debug: SWI_OPTIONS: ${SWI_OPTIONS[@]}"
-#echo "Debug: LIST_OF_FILE_ARGS: ${LIST_OF_FILE_ARGS[@]}"
-#echo "Debug: METTALOG_OPTIONS: ${METTALOG_OPTIONS[@]}"
+echo "Debug: SWI_OPTIONS: ${SWI_OPTIONS[@]}"
+echo "Debug: PRE_METTALOG_OPTIONS: ${PRE_METTALOG_OPTIONS[@]}"
+echo "Debug: LIST_OF_FILE_ARGS: ${LIST_OF_FILE_ARGS[@]}"
+echo "Debug: METTALOG_OPTIONS: ${METTALOG_OPTIONS[@]}"
 
 # Decide on enabling the REPL
 if [[ "$repl_flag" == "enable" ]]; then
