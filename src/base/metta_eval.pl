@@ -953,7 +953,7 @@ eval_20(Eq,RetType,Depth,Self,['bind!',Other,Expr],RetVal):- !,
    check_returnval(Eq,RetType,RetVal).
 eval_20(Eq,RetType,Depth,Self,['pragma!',Other,Expr],RetVal):- !,
    must_det_ll((into_name(Self,Other,Name),nd_ignore((eval(Eq,RetType,Depth,Self,Expr,Value),
-   set_option_value(Name,Value))),  return_empty(Value,RetVal),
+   set_option_value_interp(Name,Value))),  return_empty(Value,RetVal),
     check_returnval(Eq,RetType,RetVal))).
 eval_20(Eq,RetType,_Dpth,Self,['transfer!',File],RetVal):- !, must_det_ll((include_metta(Self,File),
    return_empty(Self,RetVal),check_returnval(Eq,RetType,RetVal))).
@@ -1012,11 +1012,16 @@ eval_20(Eq,RetType,Depth,Self,['not',X],TF):- !,
 
 eval_20(Eq,RetType,Depth,Self,['number-of',X],N):- !,
    bagof_eval(Eq,RetType,Depth,Self,X,ResL),
-   length(ResL,N), ignore(RetType='Number').
-
+   length(ResL,N), ignore(RetType='').
 eval_20(Eq,RetType,Depth,Self,['number-of',X,N],TF):- !,
    bagof_eval(Eq,RetType,Depth,Self,X,ResL),
    length(ResL,N), true_type(Eq,RetType,TF).
+
+
+eval_20(Eq,RetType,Depth,Self,['limit!',N,E],R):- !, eval_20(Eq,RetType,Depth,Self,['limit',N,E],R).
+eval_20(Eq,RetType,Depth,Self,['limit',NE,E],R):-  !,
+   eval('=','Number',Depth,Self,NE,N),
+   limit(N,eval_ne(Eq,RetType,Depth,Self,E,R)).
 
 
 % =================================================================
@@ -1261,12 +1266,13 @@ s2ps(S,P):- S=='Nil',!,P=[].
 s2ps(S,P):- \+ is_list(S),!,P=S.
 s2ps([F|S],P):- atom(F),maplist(s2ps,S,SS),join_s2ps(F,SS,P),!.
 s2ps(S,S):-!.
+
 join_s2ps('Cons',[H,T],[H|T]):-!.
 join_s2ps(F,Args,P):-atom(F),P=..[F|Args].
 
 eval_call(S,TF):-
-  s2ps(S,P), !,
-  fbug(eval_call(P,'$VAR'('TF'))),as_tf(P,TF).
+  s2ps(S,P), % if_trace(call,fbug(eval_call(S,P,'$VAR'('TF')))),!,
+  as_tf(P,TF).
 
 eval_80(Eq,RetType,Depth,Self,[AE|More],Res):-
   is_system_pred(AE),
