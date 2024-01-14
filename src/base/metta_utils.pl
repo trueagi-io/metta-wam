@@ -14,6 +14,9 @@
 :- ensure_loaded(library(dictoo)).
 :- endif.
 
+cleanup_debug:-
+  forall((clause(prolog_debug:debugging(A1,B,C),Body,Cl1), clause(prolog_debug:debugging(A2,B,C),Body,Cl2),A1=@=A2,Cl1\==Cl2),
+     erase(Cl2)).
 
 :- export(plain_var/1).
 plain_var(V):- notrace((var(V), \+ attvar(V), \+ get_attr(V,ci,_))).

@@ -804,6 +804,9 @@ eval_20(Eq,RetType,_Dpth,_Slf,['cdr-atom',Atom],CDR_Y):- !, Atom=[_|CDR],!,do_ex
 eval_20(Eq,RetType,Depth,Self,['Cons', A, B ],['Cons', AA, BB]):- no_cons_reduce, !,
   eval(Eq,RetType,Depth,Self,A,AA), eval(Eq,RetType,Depth,Self,B,BB).
 
+eval_20(_Eq,_RetType,Depth,Self,['::'|PL],Prolog):-  maplist(as_prolog(Depth,Self),PL,Prolog),!.
+eval_20(_Eq,_RetType,Depth,Self,['@'|PL],Prolog):- as_prolog(Depth,Self,['@'|PL],Prolog),!.
+
 eval_20(Eq,RetType,Depth,Self,['Cons', A, B ],[AA|BB]):- \+ no_cons_reduce, !,
    eval(Eq,RetType,Depth,Self,A,AA), eval(Eq,RetType,Depth,Self,B,BB).
 
@@ -1168,7 +1171,8 @@ eq_unify( Eq,  SharedType, X, Y, TF):- as_tf(eval_until_unify(Eq,SharedType, X, 
 
 suggest_type(_RetType,_Bool).
 
-eval_40(Eq,RetType,Depth,Self,[AE|More],Res):- fail, %is_special_op(AE),!,
+eval_40(Eq,RetType,Depth,Self,[AE|More],Res):-
+  is_special_op(AE),!,
   eval_70(Eq,RetType,Depth,Self,[AE|More],Res),
   check_returnval(Eq,RetType,Res).
 
@@ -1204,13 +1208,16 @@ eval_70(Eq,RetType,Depth,Self,PredDecl,Res):-
 % =================================================================
 % =================================================================
 is_system_pred(S):- atom(S),atom_concat(_,'!',S).
+is_system_pred(S):- atom(S),atom_concat(_,'-fn',S).
+is_system_pred(S):- atom(S),atom_concat(_,'-p',S).
 
 
+:- discontiguous eval_80/6.
 
 %eval_80(_Eq,_RetType,_Dpth,_Slf,LESS,Res):- notrace((once((eval_selfless(LESS,Res),notrace(LESS\==Res))))),!.
 
 % predicate inherited by system
-eval_80(Eq,RetType,_Depth,_Self,[AE|More],TF):-
+eval_80(Eq,RetType,Depth,Self,[AE|More],TF):-
   once((is_system_pred(AE),
   length(More,Len),
   is_syspred(AE,Len,Pred))),
@@ -1218,7 +1225,7 @@ eval_80(Eq,RetType,_Depth,_Self,[AE|More],TF):-
   current_predicate(Pred/Len),
   %notrace( \+ is_user_defined_goal(Self,[AE|More])),!,
   %adjust_args(Depth,Self,AE,More,Adjusted),
-  More = Adjusted,
+  maplist(as_prolog(Depth,Self),More,Adjusted),
   catch_warn(efbug(show_call,eval_call(apply(Pred,Adjusted),TF))),
   check_returnval(Eq,RetType,TF).
 
@@ -1226,8 +1233,6 @@ show_ndet(G):- call(G).
 %show_ndet(G):- call_ndet(G,DET),(DET==true -> ! ; fbug(show_ndet(G))).
 
 :- if( \+  current_predicate( adjust_args / 2 )).
-
-   :- discontiguous eval_80/6.
 
 is_user_defined_goal(Self,Head):-
   is_user_defined_head(Self,Head).
@@ -1263,16 +1268,15 @@ eval_call(S,TF):-
   s2ps(S,P), !,
   fbug(eval_call(P,'$VAR'('TF'))),as_tf(P,TF).
 
-eval_80(Eq,RetType,_Depth,_Self,[AE|More],Res):-
+eval_80(Eq,RetType,Depth,Self,[AE|More],Res):-
   is_system_pred(AE),
-  length([AE|More],Len),
-  is_syspred(AE,Len,Pred),
+  is_syspred(AE,_,Pred),
   \+ (atom(AE), atom_concat(_,'-p',AE)),
   %notrace( \+ is_user_defined_goal(Self,[AE|More])),!,
   %adjust_args(Depth,Self,AE,More,Adjusted),!,
-  More = Adjusted,
-  Len1 is Len+1,
-  current_predicate(Pred/Len1),
+  length([AE|More],Len),
+  current_predicate(Pred/Len),
+  maplist(as_prolog(Depth,Self),More,Adjusted),
   append(Adjusted,[Res],Args),!,
   efbug(show_call,catch_warn(apply(Pred,Args))),
   check_returnval(Eq,RetType,Res).
