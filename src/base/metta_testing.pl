@@ -144,7 +144,7 @@ loonit_asserts1(TestSrc,Pre,G) :-
     color_g_mesg(red,write_src(loonit_failureR(G))),!,
      %itrace, G.
     ignore(((
-      % repl	       
+      % repl
        option_value('on-fail','trace'),
        setup_call_cleanup(debug(metta(eval)),call((Pre,G)),nodebug(metta(eval)))))).
     %(thread_self(main)->trace;sleep(0.3))
@@ -252,7 +252,7 @@ inc_exec_num(FileName) :-
     ),
     asserta(file_exec_num(FileName, NewVal)).
 
-
+load_answer_file(_File):- is_testing,!.
 load_answer_file(File):-  ( \+ atom(File); \+ is_absolute_file_name(File); \+ exists_file(File)),
     absolute_file_name(File,AbsFile), File\=@=AbsFile, load_answer_file_now(AbsFile),!.
 load_answer_file(File):- load_answer_file_now(File),!.
@@ -264,6 +264,7 @@ load_answer_file_now(File) :-
     fbug(load_answer_file(AnsFile,StoredAs)),
     load_answer_file(AnsFile,StoredAs))).
 
+load_answer_file(_,_):- is_testing,!.
 load_answer_file(AnsFile,StoredAs):-
     (   file_answers(StoredAs,_, _) ->  true
     ;   (   \+ exists_file(AnsFile) ->  true
