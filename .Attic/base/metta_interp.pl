@@ -65,6 +65,7 @@ option_value_def('table',false).
 option_value_def(no_repeats,false).
 option_value_def('time',true).
 option_value_def('exec',true).
+option_value_def('test',false).
 option_value_def('html',false).
 option_value_def('python',false).
 %option_value_def('halt',false).
@@ -103,6 +104,7 @@ set_is_unit_test(TF):-
   forall(option_value_def(A,B),set_option_value_interp(A,B)),
   set_option_value_interp('trace-on-pass',false),
   set_option_value_interp('trace-on-fail',false),
+  set_option_value_interp('test',TF),
   if_t(TF,set_option_value_interp('exec',debug)),
   if_t(TF,set_option_value_interp('eval',debug)),
   %set_option_value_interp('trace-on-load',TF),
@@ -113,6 +115,9 @@ set_is_unit_test(TF):-
 
 :- set_is_unit_test(false).
 
+is_testing:- nb_current('test','True'),!.
+is_testing:- option_value('test','True'),!.
+is_testing:- current_prolog_flag(os_argv,ArgV), member('--test',ArgV),!.
 trace_on_fail:-     option_value('trace-on-fail',true).
 trace_on_overflow:- option_value('trace-on-overflow',true).
 trace_on_pass:-     option_value('trace-on-pass',true).
@@ -1313,6 +1318,7 @@ do_metta(_File,Load,Self,Src,Out):- Load\==exec, !, as_tf(asserted_do_metta(Self
 
 do_metta(file(Filename),exec,Self,TermV,Out):-
   notrace((
+     is_testing,
      inc_exec_num(Filename),
     must_det_ll((
      get_exec_num(Filename,Nth),

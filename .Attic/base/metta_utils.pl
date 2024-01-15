@@ -291,8 +291,7 @@ must_det_ll1(P1,X):-
   strip_module(X,M,P),functor(P,F,A),setup_call_cleanup(nop(trace(M:F/A,+fail)),(must_not_error(call(P1,X))*->true;md_failed(P1,X)),
     nop(trace(M:F/A,-fail))),!.
 
-ugtrace(_):-  option_value(testing,true),!, give_up(5).
-ugtrace(_):-  option_value(test,true),!, throw('$aborted').
+ugtrace(_):-  is_testing, !, ignore(give_up(5)), throw('$aborted').
 ugtrace(G):-  notrace,trace,rtrace(G).
 %ugtrace(G):- ggtrace(G).
 
