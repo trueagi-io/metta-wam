@@ -301,6 +301,9 @@ process_file() {
              export OPENAI_API_KEY=freeve
          fi
 
+
+        local take_test=0
+
          # Combined condition check
          if [[ "$fresh" -eq 1 ]] || [ ! -f "${file}.answers" ] || ([ "${file}" -nt "${file}.answers" ] && [ -s "${file}.answers" ]); then
              echo "Regenerating answers:  $file.answers"
@@ -322,6 +325,7 @@ process_file() {
                 set -x
                IF_REALLY_DO timeout --foreground --kill-after=5 --signal=SIGINT $(($RUST_METTA_MAX_TIME + 1)) time metta "$absfile" 2>&1 | tee "${absfile}.answers"
                TEST_EXIT_CODE=$?
+                take_test=1
                 #set +x
               if [ $TEST_EXIT_CODE -eq 124 ]; then
                   echo "Rust MeTTa  Killed (definitely due to timeout) after $RUST_METTA_MAX_TIME seconds: ${TEST_CMD}"
@@ -342,8 +346,6 @@ process_file() {
          else
              echo "Using for answers:  $file.answers"
          fi
-
-         local take_test=0
 
          if [ "$if_regressions" -eq 1 ]; then
              if [[ ! -f "$file_html" ]]; then

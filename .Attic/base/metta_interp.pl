@@ -32,7 +32,7 @@ is_pyswip:- current_prolog_flag(os_argv,ArgV),member( './',ArgV).
 :- set_stream(user_input,tty(true)).
 :- set_prolog_flag(encoding,iso_latin_1).
 :- set_prolog_flag(encoding,utf8).
-:- set_output(user_error).
+%:- set_output(user_error).
 %:- set_prolog_flag(encoding,octet).
 /*
 Now PASSING NARS.TEC:\opt\logicmoo_workspace\packs_sys\logicmoo_opencog\MeTTa\vspace-metta\metta_vspace\pyswip\metta_interp.pl
@@ -105,7 +105,7 @@ set_is_unit_test(TF):-
   set_option_value_interp('trace-on-fail',false),
   if_t(TF,set_option_value_interp('exec',debug)),
   if_t(TF,set_option_value_interp('eval',debug)),
-  set_option_value_interp('trace-on-load',TF),
+  %set_option_value_interp('trace-on-load',TF),
   set_option_value_interp('trace-on-exec',TF),
   set_option_value_interp('trace-on-eval',TF),
 
@@ -1438,12 +1438,13 @@ repl2:-
    %notrace((current_input(In),nop(catch(load_history,_,true)))),
   % ignore(install_readline(In)),
    repeat,
-     set_prolog_flag(gc,true),
+     %set_prolog_flag(gc,true),
      garbage_collect,
-     set_prolog_flag(gc,false),
+     %set_prolog_flag(gc,false),
      %with_option(not_a_reload,true,make),
       ignore(catch(once(repl3),restart_reading,true)),
-      set_prolog_flag(gc,true),fail.
+      %set_prolog_flag(gc,true),
+      fail.
 repl3:-
      notrace(( flag(eval_num,_,0),
       current_self(Self),
@@ -1692,8 +1693,8 @@ forall_interactive(From,WasInteractive,Complete,Goal,After):-
     Goal, (Complete==true ->  ( quietly(After),!)  ;  (  quietly( \+ After) )).
 
 print_var(Name=Var) :- print_var(Name,Var).
-print_var(Name,_Var) :- atom_concat('Num',Rest,Name),atom_number(Rest,_),!.
-print_var(Name,Var):-  write('$'),write(Name), write(' = '), write_asrc(Var), nl.
+%print_var(Name,_Var) :- atom_concat('Num',Rest,Name),atom_number(Rest,_),!.
+print_var(Name,Var):-  write_src('$VAR'(Name)), write(' = '), write_asrc(Var), nl.
 
 write_asrc(Var):- copy_term(Var,Copy,Goals),Var=Copy,write_asrc(Var,Goals).
 write_asrc(Var,[]):- write_src(Var).
