@@ -26,7 +26,7 @@ start_vspace_service(Alias,MSpace,Port):-
       thread_create(run_vspace_service(MSpace,Port),_,[detached(true),alias(Alias)]).
 
 
-:- dynamic(was_vspace_port_in_use/1).
+:- dynamic(was_vspace_port_in_use/2).
 
 handle_port_in_use(MSpace,Port):-
    assert(was_vspace_port_in_use(MSpace,Port)),

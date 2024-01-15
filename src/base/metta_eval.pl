@@ -601,10 +601,12 @@ eval_21(Eq,RetType,Depth,Self,['CollapseCardinality',List],Len):-!,
 eval_21(_Eq,_RetType,_Depth,_Self,['TupleCount', [N]],N):- number(N),!.
 
 
+*/
 eval_21(Eq,RetType,Depth,Self,['TupleCount',List],Len):-!,
  bagof_eval(Eq,RetType,Depth,Self,List,Res),
  length(Res,Len).
-*/
+eval_21(_Eq,_RetType,_Depth,_Self,['tuple-count',List],Len):-!,
+ length(List,Len).
 
 %[superpose,[1,2,3]]
 eval_20(Eq,RetType,Depth,Self,['superpose',List],Res):- !,
@@ -804,8 +806,8 @@ eval_20(Eq,RetType,_Dpth,_Slf,['cdr-atom',Atom],CDR_Y):- !, Atom=[_|CDR],!,do_ex
 eval_20(Eq,RetType,Depth,Self,['Cons', A, B ],['Cons', AA, BB]):- no_cons_reduce, !,
   eval(Eq,RetType,Depth,Self,A,AA), eval(Eq,RetType,Depth,Self,B,BB).
 
-eval_20(_Eq,_RetType,Depth,Self,['::'|PL],Prolog):-  maplist(as_prolog(Depth,Self),PL,Prolog),!.
-eval_20(_Eq,_RetType,Depth,Self,['@'|PL],Prolog):- as_prolog(Depth,Self,['@'|PL],Prolog),!.
+%eval_20(_Eq,_RetType,Depth,Self,['::'|PL],Prolog):-  maplist(as_prolog(Depth,Self),PL,Prolog),!.
+%eval_20(_Eq,_RetType,Depth,Self,['@'|PL],Prolog):- as_prolog(Depth,Self,['@'|PL],Prolog),!.
 
 eval_20(Eq,RetType,Depth,Self,['Cons', A, B ],[AA|BB]):- \+ no_cons_reduce, !,
    eval(Eq,RetType,Depth,Self,A,AA), eval(Eq,RetType,Depth,Self,B,BB).
@@ -1176,14 +1178,15 @@ eq_unify( Eq,  SharedType, X, Y, TF):- as_tf(eval_until_unify(Eq,SharedType, X, 
 
 suggest_type(_RetType,_Bool).
 
+/*
 eval_40(Eq,RetType,Depth,Self,[AE|More],Res):-
-  is_special_op(AE),!,
+ % is_special_op(AE),!,
+  !,
   eval_70(Eq,RetType,Depth,Self,[AE|More],Res),
   check_returnval(Eq,RetType,Res).
-
+*/
 eval_40(Eq,RetType,Depth,Self,[AE|More],Res):- % fail,
-  maplist(must_eval_args(Eq,_,Depth,Self),More,Adjusted),
-  eval_70(Eq,RetType,Depth,Self,[AE|Adjusted],Res),
+  eval_70(Eq,RetType,Depth,Self,[AE|More],Res),
   check_returnval(Eq,RetType,Res).
 
 
@@ -1227,10 +1230,11 @@ eval_80(Eq,RetType,Depth,Self,[AE|More],TF):-
   length(More,Len),
   is_syspred(AE,Len,Pred))),
   \+ (atom(AE),   atom_concat(_,'-fn',AE)),
-  current_predicate(Pred/Len),
+  current_predicate(Pred/Len),!,
   %notrace( \+ is_user_defined_goal(Self,[AE|More])),!,
-  %adjust_args(Depth,Self,AE,More,Adjusted),
-  maplist(as_prolog(Depth,Self),More,Adjusted),
+
+  must_det_ll(maplist(as_prolog(Depth,Self),More,Adjusted1)),
+  must_ll(adjust_args(Eq,RetType,Depth,Self,AE,Adjusted1,Adjusted)),
   catch_warn(efbug(show_call,eval_call(apply(Pred,Adjusted),TF))),
   check_returnval(Eq,RetType,TF).
 
@@ -1281,10 +1285,11 @@ eval_80(Eq,RetType,Depth,Self,[AE|More],Res):-
   %notrace( \+ is_user_defined_goal(Self,[AE|More])),!,
   %adjust_args(Depth,Self,AE,More,Adjusted),!,
   length([AE|More],Len),
-  current_predicate(Pred/Len),
-  maplist(as_prolog(Depth,Self),More,Adjusted),
-  append(Adjusted,[Res],Args),!,
-  efbug(show_call,catch_warn(apply(Pred,Args))),
+  current_predicate(Pred/Len),!,
+  must_det_ll(maplist(as_prolog(Depth,Self),More,Adjusted)),
+  append(Adjusted,[Res],Args),
+  must_ll(adjust_args(Eq,RetType,Depth,Self,AE,Args,Adjusted)),
+  efbug(show_call,catch_warn(apply(Pred,Adjusted))),
   check_returnval(Eq,RetType,Res).
 
 :- if( \+  current_predicate( check_returnval / 3 )).
@@ -1406,28 +1411,61 @@ eval_60(Eq,RetType,Depth,Self,H,B):-
      (fail,eval_67(Eq,RetType,Depth,Self,H,B))).
 
 
+adjust_args_H(Eq,RetType,Depth,Self,[AE|Args],[AE|HArgs]):- !,
+  adjust_args(Eq,RetType,Depth,Self,AE,Args,HArgs).
+adjust_args_H(_Eq,_RetType,_Depth,_Self,H,H).
+
 %eval_64(Eq,_RetType,_Dpth,Self,H,B):-  Eq='=',!, metta_defn(Eq,Self,H,B).
-eval_64(Eq,_RetType,_Dpth,Self,H,B):-
-   Eq=='match',!,call(metta_atom(Self,H)),B=H.
+eval_64(Eq,RetType,Depth,Self,H,B):-
+   Eq=='match',!,
+   adjust_args_H(Eq,RetType,Depth,Self,H,HH),
+   call(metta_atom(Self,HH)),B=HH.
+
+eval_64(Eq,RetType,Depth,Self,H,B):-
+   Eq='=',
+  (eval_64a(Eq,RetType,Depth,Self,H,B)*-> true;
+  (eval_64b(Eq,RetType,Depth,Self,H,B)*-> true;
+  (eval_64c(Eq,RetType,Depth,Self,H,B)*-> true;
+  (eval_64d(Eq,RetType,Depth,Self,H,B)*-> true;
+  (eval_64e(Eq,RetType,Depth,Self,H,B)))))).
 
 
-eval_64(Eq,RetType,Depth,Self,[[H|Start]|T1],Y):-
-   notrace((is_user_defined_head_f(Self,H),is_list(Start))),
-   metta_defn(Eq,Self,[H|Start],Left),
-   [Left|T1] \=@= [[H|Start]|T1],
+eval_64a(Eq,RetType,Depth,Self,[[AE|Start]|T1],Y):-
+   notrace((is_user_defined_head_f(Self,AE),is_list(Start))),
+   metta_defn(Eq,Self,[AE|Start],Left),
+   [Left|T1] \=@= [[AE|Start]|T1],
    eval(Eq,RetType,Depth,Self,[Left|T1],Y).
 
-eval_64(Eq,_RetType,Depth,Self,[H|Args],B):- % no weird template matchers
-  % forall(metta_defn(Eq,Self,[H|Template],_),
-  %    maplist(not_template_arg,Template)),
-   Eq='=',
-   (metta_defn(Eq,Self,[H|Args],B0)*->true;(fail,[H|Args]=B0)),
+eval_64b(Eq,_RetType,Depth,Self,[AE|Args],B):-
+   is_special_op(AE),!,
+   (metta_defn(Eq,Self,[AE|Args],B0)*->true;(fail,[AE|Args]=B0)),
    light_eval(Depth,Self,B0,B).
-    %(eval(Eq,RetType,Depth,Self,B,Y);metta_atom_iter(Depth,Self,Y)).
+
+eval_64c(Eq,RetType,Depth,Self,[AE|Args0],B):-
+   maplist(must_eval_args(Eq,RetType,Depth,Self),Args0,Args),
+   (metta_defn(Eq,Self,[AE|Args],B0)*->true;(fail,[AE|Args]=B0)),
+   light_eval(Depth,Self,B0,B).
+
+eval_64d(Eq,RetType,Depth,Self,[AE|Args0],B):-
+   adjust_args(Eq,RetType,Depth,Self,AE,Args0,Args),
+   (metta_defn(Eq,Self,[AE|Args],B0)*->true;
+     ((Args=@=Args0 ->
+         maplist(must_eval_args(Eq,RetType,Depth,Self),Args0,Args1) ; fail),
+         (Args1\=@=Args0,[AE|Args1]=B0))),
+   light_eval(Depth,Self,B0,B).
+
+
+eval_64e(Eq,_RetType,Depth,Self,[AE|Args],B):-
+   metta_defn(Eq,Self,[AE|Args],B0),
+   [AE|Args]\=@=B0,
+   light_eval(Depth,Self,B0,B).
+
+
+
 % Use the first template match
-eval_65(Eq,_RetType,Depth,Self,[H|Args],B):-
+eval_65(Eq,_RetType,Depth,Self,[AE|Args],B):-
    Eq='=',
-  (metta_defn(Eq,Self,[H|Template],B0),Args=Template),
+  (metta_defn(Eq,Self,[AE|Template],B0),Args=Template),
   light_eval(Depth,Self,B0,B).
 
 

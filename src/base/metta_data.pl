@@ -113,6 +113,7 @@ get_type0(Depth,Self,Val,Type):- get_type03(Depth,Self,Val,Type),!.
 
 get_type01(_Dpth,_Slf,Var,'%Undefined%'):- var(Var),!.
 get_type01(_Dpth,_Slf, [],'%Undefined%'):- !.
+get_type01(_Dpth,Self,Op,Type):- metta_type(Self,Op,Type),!.
 get_type01(_Dpth,_Slf,Val,'Number'):- number(Val).
 get_type01(_Dpth,_Slf,Val,'Integer'):- integer(Val).
 get_type01(_Dpth,_Slf,Val,'Decimal'):- float(Val).
@@ -120,7 +121,6 @@ get_type01(_Dpth,_Slf,Val,'Rational'):- rational(Val).
 get_type01(_Dpth,_Slf,Val,'Bool'):- (Val=='False';Val=='True'),!.
 get_type01(_Dpth,_Slf,Val,Type):- string(Val),!,(Type='String';Type='Symbol').
 get_type01(_Dpth,_Slf,Expr,_):-  \+ atom(Expr),!,fail.
-get_type01(_Dpth,Self,Op,Type):- metta_type(Self,Op,Type).
 get_type01(_Dpth,_Slf,Val,Type):- is_decl_type(Val),(Type=Val;Type='Type').
 get_type01(_Dpth,_Slf,Val,Type):- atomic_list_concat([Type,_|_],'@',Val).
 get_type01(_Dpth,_Slf,Val,Type):- atomic_list_concat([Type,_|_],':',Val).
@@ -232,20 +232,24 @@ as_prolog(Depth,Self,[H|T],[HH|TT]):- as_prolog(Depth,Self,H,HH),as_prolog(Depth
 
 
 try_adjust_arg_types(_Eq,RetType,Depth,Self,Params,X,Y):-
-  as_prolog(Depth,Self,X,M),
+  %as_prolog(Depth,Self,X,M),
+  X = M,
   args_conform(Depth,Self,M,Params),!,
   set_type(Depth,Self,Y,RetType),
   into_typed_args(Depth,Self,Params,M,Y).
 %adjust_args(Eq,RetType,Depth,Self,_,X,Y):- is_list(X), !, maplist(eval_args(Depth,Self),X,Y).
 %adjust_args(Eq,RetType,Depth,Self,_,X,Y):- is_list(X), !, maplist(as_prolog(Depth,Self),X,Y),!.
 
-adjust_args(_Eq,_RetType,_Depth,_Self,_Op,X,Y):- X==[],!,Y=[].
-adjust_args(_Eq,_RetType,_Dpth,Self,F,X,X):- (is_special_op(Self,F); \+ iz_conz(X)),!.
+adjust_args(_Eq,_RetType,_Dpth,Self,F,X,Y):- (X==[] ; is_special_op(Self,F); \+ iz_conz(X)),!,Y=X.
 adjust_args(Eq,RetType,Depth,Self,Op,X,Y):-
+    adjust_argsA(Eq,RetType,Depth,Self,Op,X,Y)*->true; adjust_argsB(Eq,RetType,Depth,Self,Op,X,Y).
+
+adjust_argsA(Eq,RetType,Depth,Self,Op,X,Y):-
   %trace,
   get_operator_typedef(Self,Op,Params,RetType),
   try_adjust_arg_types(Eq,RetType,Depth,Self,Params,X,Y).
-adjust_args(_Eq,_RetType,Depth,Self,_,X,Y):- as_prolog(Depth,Self,X,Y).
+%adjust_args(_Eq,_RetType,Depth,Self,_,X,Y):- as_prolog(Depth,Self,X,Y).
+adjust_argsB(_Eq,_RetType,_Depth,_Self,_,X,Y):- X = Y.
 
 into_typed_args(_Dpth,_Slf,T,M,Y):- (\+ iz_conz(T); \+ iz_conz(M)),!, M=Y.
 into_typed_args(Depth,Self,[T|TT],[M|MM],[Y|YY]):-

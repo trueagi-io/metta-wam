@@ -225,7 +225,8 @@ adjust_args(Depth,Self,Op,X,Y):-
   try_adjust_arg_types(RetType,Depth,Self,Params,X,Y).
 
 try_adjust_arg_types(RetType,Depth,Self,Params,X,Y):-
-  as_prolog(Depth,Self,X,M),
+  %s_prolog(Depth,Self,X,M),
+   X= M,
   args_conform(Depth,Self,M,Params),!,
   set_type(Depth,Self,Y,RetType),
   into_typed_args(Depth,Self,Params,M,Y).

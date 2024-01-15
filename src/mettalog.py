@@ -358,6 +358,34 @@ def add_to_janus(name, param_parts, params_call_parts, func, non_underscore_attr
 #
 #############################################################################################################################
 
+import importlib
+
+def find_methods_with_annotation(module_name, annotation_string):
+    # Load the module
+    module = importlib.import_module(module_name)
+
+    # List to hold methods that match the annotation
+    matching_methods = []
+
+    # Iterate over all attributes in the module
+    for attr_name in dir(module):
+        attr = getattr(module, attr_name)
+
+        # Check if the attribute is a callable (function/method)
+        if callable(attr):
+            # Check if the attribute has annotations
+            if hasattr(attr, '__annotations__'):
+                for annot in attr.__annotations__.values():
+                    # Check if the annotation matches the given string
+                    if annotation_string in str(annot):
+                        matching_methods.append(attr_name)
+
+    return matching_methods
+
+# Example usage
+# methods = find_methods_with_annotation('math', 'float')
+# print(methods)
+
 
 # Function to find subclasses of clazz in a module
 def find_subclasses_of(module, clazz):
