@@ -4,7 +4,7 @@ export RPWD=$PWD
 IS_SOURCED=$( [[ "${BASH_SOURCE[0]}" != "${0}" ]] && echo 1 || echo 0)
 # Function to exit the script properly
 if [ "$IS_SOURCED" -eq "0" ]; then SCRIPT=$(readlink -f "$0"); else SCRIPT=$(readlink -f "${BASH_SOURCE[0]}"); fi
-export MeTTa=$(basename "$SCRIPT")
+export MeTTa=$(basename "$0")
 export METTALOG_DIR=$(dirname "$SCRIPT")
 #echo "METTALOG_DIR=$METTALOG_DIR"
 cd "$METTALOG_DIR" || { echo "Failed to navigate to $METTALOG_DIR"; [[ "$IS_SOURCED" == "1" ]] && return 1 || exit 1; }
@@ -92,8 +92,8 @@ add_to_list() {
 
 function print_help {
     echo " Usage: ${MeTTa} [options] <metta-files|directories> ... [-- arg ...passed to your program...]"
-    echo "        $0 --help         Display this message"
-    echo "        $0 --version      Display version information"
+    echo "        ${MeTTa} --help         Display this message"
+    echo "        ${MeTTa} --version      Display version information"
 cat << EOF
 
      -x state                 Start from state (must be first)
@@ -163,7 +163,7 @@ cat << EOF
      This script reads options from the ~/.mettalogrc file, one option per line.
      Options specified in ~/.mettalogrc are processed before command-line arguments.
 
-  WAS: $0 ${SWI_OPTIONS[*]} -l $METTALOG_DIR/metta_vspace/$PYSWIP_VERSION/metta_interp.pl -- --python=$python_flag ${PRE_METTALOG_OPTIONS[*]} ${METTALOG_OPTIONS[*]} \\
+  WAS: ${MeTTa} ${SWI_OPTIONS[*]} -l $METTALOG_DIR/metta_vspace/$PYSWIP_VERSION/metta_interp.pl -- --python=$python_flag ${PRE_METTALOG_OPTIONS[*]} ${METTALOG_OPTIONS[*]} \\
 	     $METTA_CMD
 
 
@@ -354,16 +354,16 @@ if [[ -z "${use_rc_file}" ]]; then
 elif [[ -f "$DIR_RC" ]]; then
     use_rc_file="${DIR_RC}"
 else
-    echo "; No RC file (.mettalogrc) for directory: $DIRNAME"
+    echo "; Debug: No RC file (.mettalogrc) for directory: $DIRNAME"
 fi
 
 handle_args "$@"
 load_rc_file $use_rc_file
 
-echo "Debug: SWI_OPTIONS: ${SWI_OPTIONS[@]}"
-echo "Debug: PRE_METTALOG_OPTIONS: ${PRE_METTALOG_OPTIONS[@]}"
-echo "Debug: LIST_OF_FILE_ARGS: ${LIST_OF_FILE_ARGS[@]}"
-echo "Debug: METTALOG_OPTIONS: ${METTALOG_OPTIONS[@]}"
+echo "; Debug: SWI_OPTIONS: ${SWI_OPTIONS[@]}"
+echo "; Debug: PRE_METTALOG_OPTIONS: ${PRE_METTALOG_OPTIONS[@]}"
+echo "; Debug: LIST_OF_FILE_ARGS: ${LIST_OF_FILE_ARGS[@]}"
+echo "; Debug: METTALOG_OPTIONS: ${METTALOG_OPTIONS[@]}"
 
 # Decide on enabling the REPL
 if [[ "$repl_flag" == "enable" ]]; then
