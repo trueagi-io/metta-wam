@@ -691,7 +691,7 @@ read_sform(S,F):-
     (read_sform1([],S,F2), F = exec(F2))).
 
 
-read_sform2(S,F1):- !, read_metta2(S,F1).
+read_sform2(S,F1):- is_testing, !, read_metta2(S,F1).
 read_sform2(S,F1):- read_sform1([],S,F1).
 
 read_sform1(_,_,O):- clause(t_l:s_reader_info(O),_,Ref),erase(Ref).
