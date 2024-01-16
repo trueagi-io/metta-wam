@@ -27,6 +27,10 @@ is_pyswip:- current_prolog_flag(os_argv,ArgV),member( './',ArgV).
 :- ensure_loaded(metta_data).
 :- ensure_loaded(metta_space).
 :- ensure_loaded(metta_eval).
+:- nb_setval(self_space, '&self').
+current_self(Self):- ((nb_current(self_space,Self),Self\==[])->true;Self='&self').
+:- nb_setval(repl_mode, '+').
+
 :- ensure_loaded(metta_server).
 :- ensure_loaded(flybase_main).
 :- set_stream(user_input,tty(true)).
@@ -1568,9 +1572,6 @@ inside_assert( ?-(I), O):- !, inside_assert(I,O).
 inside_assert( :-(I), O):-  !, inside_assert(I,O).
 inside_assert(Var,Var).
 
-:- nb_setval(self_space, '&self').
-current_self(Self):- ((nb_current(self_space,Self),Self\==[])->true;Self='&self').
-:- nb_setval(repl_mode, '+').
 current_read_mode(repl,Mode):- ((nb_current(repl_mode,Mode),Mode\==[])->true;Mode='+'),!.
 current_read_mode(file,Mode):- ((nb_current(file_mode,Mode),Mode\==[])->true;Mode='+').
 
