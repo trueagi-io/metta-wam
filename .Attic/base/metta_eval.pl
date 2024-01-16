@@ -655,6 +655,7 @@ eval20_failed_2(Eq,RetType,Depth,Self, Term, Res):-
 % =================================================================
 % ================================================================
 eval_20(_Eq,_RetType,_Depth,_Self,['nop'],                 _ ):- !, fail.
+eval_20(_Eq,_RetType,_Depth,_Self,['empty'],                 _ ):- !, fail.
 eval_20(_Eq,_RetType1,Depth,Self,['nop',Expr], Empty):- !,
   ignore(eval('=',_RetType2,Depth,Self,Expr,_)),
   return_empty([], Empty).
