@@ -37,19 +37,21 @@ with_option(N=V,G):-!,  with_option(N,V,G).
 with_option(NV,G):- compound(NV), NV =..[N,V],!,with_option(N,V,G).
 with_option(N,G):- with_option(N,true,G).
 
-with_option(N,V,G):-  option_value(N,W),
+with_option(N,V,G):-  (was_option_value(N,W)->true;W=[]),
   setup_call_cleanup(set_option_value(N,V),G, set_option_value(N,W)).
 
 
-was_option_value(N,V):- nb_current(N,VV), !,V=VV.
-was_option_value(N,V):- current_prolog_flag(N,VV),!,V=VV.
+was_option_value(N,V):- nb_current(N,VV), VV\==[], !,V=VV.
+%was_option_value(N,V):- current_prolog_flag(N,VV),!,V=VV.
 was_option_value(N,V):- prolog_load_context(N,VV),!,V=VV.
 
 option_else(N,V,Else):- notrace(option_else0(N,V,Else)).
 option_else0( N,V,_Else):- was_option_value(N,VV),!,VV=V.
 option_else0(_N,V, Else):- !,V=Else.
 
+%option_value( N,V):- var(V), !, (was_option_value( N,V)->true;trace).
 option_value(N,V):- notrace(option_value0(N,V)).
+option_value0( N,V):- var(V), !,  was_option_value( N,V).
 option_value0( N,V):- nonvar(V), option_value0( N,VV), !, p2m(VV,V1),p2m(V,V2),!,V1=V2.%equal_enough(V1,V2).
 option_value0( N,V):- option_else0( N,V ,[]).
 

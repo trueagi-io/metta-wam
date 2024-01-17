@@ -21,9 +21,9 @@ git clone https://github.com/logicmoo/vspace-metta
 # Change to the cloned directory
 cd vspace-metta
 
-chmod +x INSTALL.md  #incase Git lost +x n the file
+chmod +x INSTALL.sh  #incase Git lost +x n the file
 # Answer the questions and follow the directions
-./INSTALL.md
+./INSTALL.sh
 ```
 
 This script automates the setup of SWI-Prolog and its associated Python packages on your system. Here's a brief overview of the main components it installs and updates:

@@ -2058,7 +2058,6 @@ def wrapsqlop(func):
 from hyperon.atoms import *
 from hyperon.ext import register_atoms
 
-import psycopg2
 from hyperon import *
 from hyperon.ext import register_atoms
 import re
@@ -2191,6 +2190,7 @@ class SqlHelper:
 class SqlSpace(GroundingSpace):
     def __init__(self, database, host, user, password, port):
         super().__init__()
+        import psycopg2
         self.conn = psycopg2.connect(database=database,
                                      host=host,
                                      user=user,
@@ -2228,6 +2228,7 @@ class SqlSpace(GroundingSpace):
         return sql_query, vars_names
 
     def insert(self, sql_query):
+        import psycopg2
         try:
             if len(sql_query) > 6:
                 self.cursor.execute(sql_query)
@@ -2241,6 +2242,7 @@ class SqlSpace(GroundingSpace):
         return BindingsSet.empty()
 
     def query(self, query_atom):
+        import psycopg2
         try:
             atoms = query_atom.get_children()
             if len(atoms) > 0 and SqlHelper.insert_command_sql in repr(atoms[0]):
@@ -3017,7 +3019,7 @@ NeedNameSpaceInSWIP = True
 @export_flags(MeTTa=True, unwrap=True)
 def load_vspace():
    global NeedNameSpaceInSWIP
-   swip_exec(f"ensure_loaded('{os.path.dirname(__file__)}/pyswip/flybase_main')")
+   swip_exec(f"ensure_loaded('{os.path.dirname(__file__)}/pyswip/metta_interp')")
    if NeedNameSpaceInSWIP:
        NeedNameSpaceInSWIP = False
        swip.retractall("was_asserted_space('&self')")
