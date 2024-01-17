@@ -1026,6 +1026,8 @@ type_decl('Variable').
 
 :- dynamic(get_metta_atom/2).
 :- dynamic(asserted_metta_atom/2).
+:- multifile(asserted_metta/4).
+:- dynamic(asserted_metta/4).
 metta_atom_stdlib(_):-!,fail.
 metta_atom_stdlib([':', Type, 'Type']):- type_decl(Type).
 metta_atom_stdlib([':', Op, [->|List]]):- op_decl(Op,Params,ReturnType),append(Params,[ReturnType],List).
