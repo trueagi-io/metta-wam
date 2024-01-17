@@ -31,8 +31,6 @@ is_pyswip:- current_prolog_flag(os_argv,ArgV),member( './',ArgV).
 current_self(Self):- ((nb_current(self_space,Self),Self\==[])->true;Self='&self').
 :- nb_setval(repl_mode, '+').
 
-:- ensure_loaded(metta_server).
-:- ensure_loaded(flybase_main).
 :- set_stream(user_input,tty(true)).
 :- set_prolog_flag(encoding,iso_latin_1).
 :- set_prolog_flag(encoding,utf8).
@@ -84,7 +82,7 @@ option_value_def('exeout','./Sav.godlike.MeTTaLog').
 
 
 option_value_def('trace-on-error',true).
-option_value_def('trace-on-load',true).
+%option_value_def('trace-on-load',true).
 option_value_def('load',debug).
 option_value_def('trace-on-exec',true).
 option_value_def('trace-on-eval',true).
@@ -95,14 +93,15 @@ set_option_value_interp(N,V):- atom(N), atomic_list_concat(List,',',N),List\=[_]
   forall(member(E,List),set_option_value_interp(E,V)).
 set_option_value_interp(N,V):-
   set_option_value(N,V),
-    fbug(set_option_value(N,V)),
-  ignore((if_t((atom(N), atom_concat('trace-on-',F,N)),set_debug(F,V)))),
-  ignore((if_t((atom(V), is_debug_like(V,TF)),set_debug(N,TF)))),!.
+  fbug(set_option_value(N,V)),
+  ignore((if_t((atom(N), atom_concat('trace-on-',F,N),fbug(set_debug(F,V))),set_debug(F,V)))),
+  ignore((if_t((atom(V), is_debug_like(V,TF),fbug(set_debug(N,TF))),set_debug(N,TF)))),!.
 
 is_debug_like(trace, true).
 is_debug_like(notrace, false).
 is_debug_like(debug, true).
 is_debug_like(nodebug, false).
+%is_debug_like(false, false).
 
 set_is_unit_test(TF):-
   forall(option_value_def(A,B),set_option_value_interp(A,B)),
@@ -433,14 +432,37 @@ include_metta(Self,RelFilename):-
   atom(RelFilename),
   exists_file(RelFilename),!,
   absolute_file_name(RelFilename,Filename),
-   must_det_ll((setup_call_cleanup(open(Filename,read,In, [encoding(utf8)]),
-    ((directory_file_path(Directory, _, Filename),
-      assert(metta_file(Self,Filename,Directory)),
-      with_cwd(Directory,
-        must_det_ll( load_metta_file_stream(Filename,Self,In))))),close(In)))))).
+  directory_file_path(Directory, _, Filename),
+  assert(metta_file(Self,Filename,Directory)),
+  include_metta_directory_file(Self,Directory, Filename))).
+
+include_metta_directory_file(_Self,_Directory, Filename):-
+    atom_concat(_,'.metta',Filename),
+    atom_concat(Filename,'.qlf',QLFFilename),
+    exists_file(QLFFilename),
+    ensure_loaded(QLFFilename),!.
+include_metta_directory_file(_Self,_Directory, Filename):-
+    atom_concat(_,'.metta',Filename),
+    atom_concat(Filename,'.qlf',QLFFilename),
+    \+ exists_file(QLFFilename),
+    convert_metta_to_qlf(Filename,_),
+    exists_file(QLFFilename),
+    ensure_loaded(QLFFilename),!.
+include_metta_directory_file(Self,Directory, Filename):-
+    setup_call_cleanup(open(Filename,read,In, [encoding(utf8)]),
+      with_cwd(Directory, must_det_ll( load_metta_file_stream(Filename,Self,In))),
+      close(In)).
+
+convert_metta_to_qlf(Filename,_):-
+   sformat(S,'cheap_convert.sh --verbose=1 ~w',[Filename]),
+   shell(S,Ret),!,Ret==0.
+
 
 load_metta_file_stream(Filename,Self,In):-
-  once((is_file_stream_and_size(In, Size) , Size>102400) -> P2 = read_sform2 ; P2 = read_metta2),
+  once((is_file_stream_and_size(In, Size) , Size>20000) -> P2 = read_sform2 ; P2 = read_metta2),
+  if_t( \+ was_option_value('trace-on-load',_),
+      (once((is_file_stream_and_size(In, Size) , Size>15000) -> TOL = false ; TOL = true),
+                        set_option_value_interp('trace-on-load',TOL))),
   with_option(loading_file,Filename,
    %current_exec_file(Filename),
    ((must_det_ll((
@@ -927,8 +949,8 @@ load_hook0(Load,get_metta_atom(Eq,Self,H)):- B = 'True',
        assert_preds(Self,Load,Preds).
 */
 
-use_metta_compiler:- notrace(option_value('compile','full')), !.
-preview_compiler:- \+ option_value('compile',false), !.
+use_metta_compiler:- fail, notrace(option_value('compile','full')), !.
+preview_compiler:- fail, \+ was_option_value('compile','False'), !.
 %preview_compiler:- use_metta_compiler,!.
 
 
@@ -1036,6 +1058,8 @@ maybe_xform(metta_type(KB,Head,Body),metta_atom(KB,[':',Head,Body])).
 maybe_xform(metta_atom(KB,HeadBody),asserted_metta_atom(KB,HeadBody)).
 maybe_xform(_OBO,_XForm):- !, fail.
 
+asserted_metta_atom(KB,HeadBody):- asserted_metta(KB,HeadBody,_,_).
+
 metta_anew1(Load,_OBO):- var(Load),trace,!.
 metta_anew1(Ch,OBO):-  metta_interp_mode(Ch,Mode), !, metta_anew1(Mode,OBO).
 metta_anew1(Load,OBO):- maybe_xform(OBO,XForm),!,metta_anew1(Load,XForm).
@@ -1043,7 +1067,9 @@ metta_anew1(load,OBO):- OBO= metta_atom(Space,Atom),!,'add-atom'(Space, Atom).
 metta_anew1(unload,OBO):- OBO= metta_atom(Space,Atom),!,'remove-atom'(Space, Atom).
 
 metta_anew1(load,OBO):- !, must_det_ll((load_hook(load,OBO),
-   subst_vars(OBO,Cl),show_failure(assertz_if_new(Cl)))). %to_metta(Cl).
+   subst_vars(OBO,Cl),assertz(Cl))). %to_metta(Cl).
+metta_anew1(load,OBO):- !, must_det_ll((load_hook(load,OBO),
+   subst_vars(OBO,Cl),show_failure(assertz(Cl)))). %to_metta(Cl).
 metta_anew1(unload,OBO):- subst_vars(OBO,Cl),load_hook(unload,OBO),
   expand_to_hb(Cl,Head,Body),
   predicate_property(Head,number_of_clauses(_)),
@@ -2133,6 +2159,8 @@ qsave_program:-  ensure_mettalog_system, next_save_name(Name),
     !.
 
 
+:- ensure_loaded(flybase_main).
+:- ensure_loaded(metta_server).
 
 :- initialization(update_changed_files,restore).
 
@@ -2154,3 +2182,4 @@ complex_relationship3_ex(Likelihood1, Likelihood2, Likelihood3) :-
 
 % Example query to find the likelihoods that satisfy the constraints
 %?- complex_relationship(L1, L2, L3).
+

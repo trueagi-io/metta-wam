@@ -289,7 +289,9 @@ eval_20(Eq,_RetType,Depth,Self,[V|VI],[V|VO]):- var(V),is_list(VI),!,maplist(eva
 % =================================================================
 % =================================================================
 
+
 eval_20(Eq,RetType,_Dpth,_Slf,['repl!'],Y):- !,  repl,check_returnval(Eq,RetType,Y).
+%eval_20(Eq,RetType,Depth,Self,['enforce',Cond],Res):- !, enforce_true(Eq,RetType,Depth,Self,Cond,Res).
 eval_20(Eq,RetType,Depth,Self,['!',Cond],Res):- !, call(eval(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(Eq,RetType,Depth,Self,['rtrace!',Cond],Res):- !, rtrace(eval(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(Eq,RetType,Depth,Self,['trace',Cond],Res):- !, with_debug(eval,eval(Eq,RetType,Depth,Self,Cond,Res)).
@@ -482,10 +484,14 @@ metta_atom_iter(Eq,Depth,Self,Other,[And|Y]):- atom(And), is_and(And),!,
     ( D2 is Depth -1, Y = [H|T],
        metta_atom_iter(Eq,D2,Self,Other,H),metta_atom_iter(Eq,D2,Self,Other,[And|T]))).
 
+
+metta_atom_iter(Eq,Depth,_Slf,Other,X):- eval_args_true(Eq,RetType,Depth,Other,X).
+metta_atom_iter(Eq,Depth,Self,_Other,['Freeze',Var,X]):- s2ps(X,XX),freeze(Var,XX).
 %metta_atom_iter(Eq,Depth,_Slf,Other,X):- dcall0000000000(eval_args_true(Eq,_RetType,Depth,Other,X)).
 metta_atom_iter(Eq,Depth,_Slf,Other,X):-
   %copy_term(X,XX),
   dcall0000000000(eval_args_true(Eq,_RetType,Depth,Other,XX)), X=XX.
+
 
 
 eval_args_true_r(Eq,RetType,Depth,Self,X,TF1):-
@@ -493,10 +499,16 @@ eval_args_true_r(Eq,RetType,Depth,Self,X,TF1):-
      ( \+  is_False(TF1),metta_atom_true(Eq,Depth,Self,Self,X))).
 
 eval_args_true(Eq,RetType,Depth,Self,X):-
+  eval_args_trueA(Eq,RetType,Depth,Self,X)*->true;eval_args_trueB(Eq,RetType,Depth,Self,X).
+
+eval_args_trueA(Eq,RetType,Depth,Self,X):-
   metta_atom_true(Eq,Depth,Self,Self,X);
    (nonvar(X),eval_ne(Eq,RetType,Depth,Self,X,TF1),  \+  is_False(TF1)).
 
+eval_args_trueB(Eq,RetType,Depth,Self,Cond):- trace, term_variables(Cond+Res,[V|_]),freeze(V,eval(Eq,RetType,Depth,Self,Cond,Res)),Res='True'.
+
 metta_atom_true(Eq,_Dpth,_Slf,Other,H):- get_metta_atom(Eq,Other,H).
+
 % is this OK?
 metta_atom_true(Eq,Depth,Self,Other,H):- nonvar(H), metta_defn(Eq,Other,H,B), D2 is Depth -1, eval_args_true(Eq,_,D2,Self,B).
 % is this OK?

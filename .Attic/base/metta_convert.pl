@@ -235,9 +235,9 @@ p2m(NC, OO) :-
     maplist(p2m, NC, OO).
 p2m(!, '!').  % Translate the cut operation directly.
 p2m(false, 'False').
-p2m(fail, 'False').  % Translate Prolog’s fail to MeTTa’s False.
+% p2m(fail, 'False').  % Translate Prolog’s fail to MeTTa’s False.
 p2m(true, 'True').  % Translate Prolog’s true to MeTTa’s True.
-p2m(prolog, meTTa).  % Translate the atom prolog to meTTa.
+% p2m(prolog, meTTa).  % Translate the atom prolog to meTTa.
 
 p2m('[|]','Cons').
 p2m(( ';' ),or).
@@ -261,7 +261,7 @@ p2m((G,E),O):-  conjuncts_to_list((G,E),List),!,into_sequential(List,O),!.
 %p2m(is(A, B), O):- !, p2m(eval(B, A), O).
 %p2m(is(V,Expr),let(V,Expr,'True')).
 p2m((Head:-Body),O):- Body == true,!, O = (=(Head,'True')).
-p2m((Head:-Body),O):- Body == fail,!, O = (=(Head,'False')).
+p2m((Head:-Body),O):- Body == fail,!, O = (=(Head,[empty])).
 p2m((Head:-Body),O):- conjuncts_to_list(Body,List),into_sequential(List,SP),!,O=(=(Head,SP)).
 
 % Conversion for if-then-else constructs
