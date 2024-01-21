@@ -750,16 +750,19 @@ read_sform5(AoS,'[',S,List,']'):- !,collect_list_until(AoS,S,']',List),!.
 read_symbol_or_number(_AltEnd,Peek,_S,SoFar,Expr):- char_type(Peek,space),!,must_det_ll(( atomic_list_concat(SoFar,Expr))).
 read_symbol_or_number(AltEnd,B,S,SoFar,Expr):- read_sform5(AltEnd,B,S,List,E),flatten([List,E],F), append(SoFar,F,NSoFar),
   peek_char(S,NPeek), read_symbol_or_number(AltEnd,NPeek,S,NSoFar,Expr).
-read_symbol_or_number( AltEnd,Peek,_S,SoFar,Expr):- member(Peek,AltEnd),!,must_det_ll(( atomic_list_concat(SoFar,Expr))).
+read_symbol_or_number( AltEnd,Peek,_S,SoFar,Expr):- member(Peek,AltEnd),!,must_det_ll(( do_atomic_list_concat(Peek,SoFar,Expr))).
 read_symbol_or_number( AltEnd,_Peek,S,SoFar,Expr):- get_char(S,C),append(SoFar,[C],NSoFar),
    peek_char(S,NPeek), read_symbol_or_number(AltEnd,NPeek,S,NSoFar,Expr).
 
 atom_until(S,SoFar,End,Text):- get_char(S,C),atom_until(S,SoFar,C,End,Text).
-atom_until(_,SoFar,C,End,Expr):- C ==End,!,must_det_ll((atomic_list_concat(SoFar,Expr))).
+atom_until(_,SoFar,C,End,Expr):- C ==End,!,must_det_ll((do_atomic_list_concat(End,SoFar,Expr))).
 atom_until(S,SoFar,'\\',End,Expr):-get_char(S,C),!,atom_until2(S,SoFar,C,End,Expr).
 atom_until(S,SoFar,C,End,Expr):- atom_until2(S,SoFar,C,End,Expr).
 atom_until2(S,SoFar,C,End,Expr):- append(SoFar,[C],NSoFar),get_char(S,NC),
    atom_until(S,NSoFar,NC,End,Expr).
+
+do_atomic_list_concat('"',SoFar,Expr):- \+ string_to_syms,!, atomics_to_string(SoFar,Expr),!.
+do_atomic_list_concat(_End,SoFar,Expr):- atomic_list_concat(SoFar,Expr).
 
 collect_list_until(AoS,S,End,List):- get_char(S,C), cont_list(AoS,C,End,S,List).
 cont_list(_AoS,End,End,_,[]):- !.
@@ -814,7 +817,8 @@ mfix_vars1(I,'$VAR'(O)):- atom(I),atom_concat('$',N,I),atom_concat('_',N,O).
 %mfix_vars1(I,O):- is_i_nil(I),!,O=[].
 mfix_vars1(I,O):- I=='true',!,O='True'.
 mfix_vars1(I,O):- I=='false',!,O='False'.
-mfix_vars1('$STRING'(I),O):- option_value(strings,true),!, mfix_vars1(I,O).
+mfix_vars1('$STRING'(I),O):- \+ string_to_syms, mfix_vars1(I,OO),text_to_string(OO,O),!.
+%mfix_vars1('$STRING'(I),O):- \+ string_to_syms, text_to_string(I,O),!.
 mfix_vars1('$STRING'(I),O):- !, mfix_vars1(I,M),atom_chars(O,M),!.
 %mfix_vars1('$STRING'(I),O):- !, mfix_vars1(I,M),name(O,M),!.
 mfix_vars1([H|T],O):-   H=='[', is_list(T), last(T,L),L==']',append(List,[L],T), !, O = ['[...]',List].
@@ -830,7 +834,7 @@ mfix_vars1([K,H|T],Cmpd):- atom(K),mlog_sym(K),is_list(T),mfix_vars1([H|T],[HH|T
   compound_name_arguments(Cmpd,HH,TT).
 %mfix_vars1([H|T],[HH|TT]):- !, mfix_vars1(H,HH),mfix_vars1(T,TT).
 mfix_vars1(List,ListO):- is_list(List),!,maplist(mfix_vars1,List,ListO).
-mfix_vars1(I,O):- string(I),option_value('string-are-atoms',true),!,atom_string(O,I).
+mfix_vars1(I,O):- string(I),string_to_syms,!,atom_string(O,I).
 
 mfix_vars1(I,O):- compound(I),!,compound_name_arguments(I,F,II),F\=='$VAR',maplist(mfix_vars1,II,OO),!,compound_name_arguments(O,F,OO).
 mfix_vars1(I,O):- \+ atom(I),!,I=O.
