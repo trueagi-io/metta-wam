@@ -3231,7 +3231,7 @@ always_delistify(A,A):- \+ is_list(A),!.
 always_delistify([A],A):-!.
 always_delistify(A,A).
 
-better_arg(S,A):- string(S),atom_string(A,S),!.
+better_arg(S,A):- string(S),string_to_syms,atom_string(A,S),!.
 %better_arg1(A,B):- fix_concept(A,B),!.
 better_arg(A,A):- !.
 
@@ -3240,7 +3240,7 @@ better_arg(A,B):- better_arg1(A,AA),always_delistify(AA,B).
 better_arg1(Input,s(A,Mid,E)) :- fail, (string(Input);atom(Input)),
   once(to_case_breaks(Input,CB)), CB=[_,_,_|_],  once(cb_better_args(CB,[A|ABCParts])),
    ABCParts=[_,_|_], append(Mid,[E],ABCParts),!.
-better_arg1(S,A):- string(S),atom_string(A,S),!.
+better_arg1(S,A):- string(S),string_to_syms,tom_string(A,S),!.
 %better_arg1(A,B):- fix_concept(A,B),!.
 better_arg1(A,A).
 
@@ -3250,7 +3250,7 @@ cb_better_args([_],_):-!,fail.
 cb_better_args(X,_):- is_FB_input(X),!,fail.
 cb_better_args(CB,Parts):-cb_better_args_ni(CB,Parts),!.
 cb_better_args_ni([A,B,C|L],[I|Parts]):- is_FB_input([A,B,C]),maplist(arg(1),[A,B,C],ABC),atomic_list_concat(ABC,I),cb_better_args_ni(L,Parts).
-cb_better_args_ni([XTI|L],[I|Parts]):-arg(1,XTI,S),!,atom_string(I,S),cb_better_args_ni(L,Parts).
+cb_better_args_ni([XTI|L],[I|Parts]):-arg(1,XTI,S),string_to_syms,!,atom_string(I,S),cb_better_args_ni(L,Parts).
 cb_better_args_ni([],[]):-!.
 datalog_to_termlog:-
   datalog_to_termlog('./data/*/*.datalog'),

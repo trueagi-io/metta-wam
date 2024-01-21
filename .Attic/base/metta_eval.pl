@@ -485,13 +485,16 @@ metta_atom_iter(Eq,Depth,Self,Other,[And|Y]):- atom(And), is_and(And),!,
        metta_atom_iter(Eq,D2,Self,Other,H),metta_atom_iter(Eq,D2,Self,Other,[And|T]))).
 
 
-metta_atom_iter(Eq,Depth,_Slf,Other,X):- eval_args_true(Eq,RetType,Depth,Other,X).
-metta_atom_iter(Eq,Depth,Self,_Other,['Freeze',Var,X]):- s2ps(X,XX),freeze(Var,XX).
+metta_atom_iter(Eq,Depth,_Slf,Other,X):- eval_args_true(Eq,_RetType,Depth,Other,X).
+
 %metta_atom_iter(Eq,Depth,_Slf,Other,X):- dcall0000000000(eval_args_true(Eq,_RetType,Depth,Other,X)).
 metta_atom_iter(Eq,Depth,_Slf,Other,X):-
   %copy_term(X,XX),
   dcall0000000000(eval_args_true(Eq,_RetType,Depth,Other,XX)), X=XX.
 
+metta_atom_iterA(_Eq,_Depth,_Self,_Other,['Freeze',Var,X]):- !,s2ps(X,XX),freeze(Var,XX).
+metta_atom_iterA(_Eq,_Depth,_Self,_Other,['enforce',Var,X]):- !,s2ps(X,XX),freeze(Var,XX).
+metta_atom_iterA(Eq,Depth,Self,Other,['enforce',Var,C,X]):- !,s2ps(C,XX),freeze(Var,XX),metta_atom_iter(Eq,Depth,Self,Other,X).
 
 
 eval_args_true_r(Eq,RetType,Depth,Self,X,TF1):-
@@ -499,13 +502,10 @@ eval_args_true_r(Eq,RetType,Depth,Self,X,TF1):-
      ( \+  is_False(TF1),metta_atom_true(Eq,Depth,Self,Self,X))).
 
 eval_args_true(Eq,RetType,Depth,Self,X):-
-  eval_args_trueA(Eq,RetType,Depth,Self,X)*->true;eval_args_trueB(Eq,RetType,Depth,Self,X).
-
-eval_args_trueA(Eq,RetType,Depth,Self,X):-
   metta_atom_true(Eq,Depth,Self,Self,X);
    (nonvar(X),eval_ne(Eq,RetType,Depth,Self,X,TF1),  \+  is_False(TF1)).
 
-eval_args_trueB(Eq,RetType,Depth,Self,Cond):- trace, term_variables(Cond+Res,[V|_]),freeze(V,eval(Eq,RetType,Depth,Self,Cond,Res)),Res='True'.
+%eval_args_trueB(Eq,RetType,Depth,Self,Cond):- trace, term_variables(Cond+Res,[V|_]),freeze(V,eval(Eq,RetType,Depth,Self,Cond,Res)),Res='True'.
 
 metta_atom_true(Eq,_Dpth,_Slf,Other,H):- get_metta_atom(Eq,Other,H).
 

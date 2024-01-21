@@ -804,6 +804,8 @@ sym_char_start(C):- C\==44,C\==59,sym_char(C).
 :- thread_local(t_l:s2p/1).
 :- thread_local(t_l:each_file_term/1).
 
+string_to_syms:- !, false.
+string_to_syms:- option_value('string-are-atoms',true).
 
 
 %=
