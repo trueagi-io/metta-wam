@@ -607,8 +607,8 @@ eval_20(Eq,RetType,Depth,Self,PredDecl,Res):-
   nb_setarg(1,Do_more_defs,false),
  (DET==true -> ! ; true).
 
-eval_21(Eq,RetType,Depth,Self,['fb-member',Res,List],TF):-!, as_tf(fb_member(Res,List),TF).
-eval_21(Eq,RetType,Depth,Self,['fb-member',List],Res):-!, fb_member(Res,List).
+eval_21(_Eq,_RetType,_Depth,_Self,['fb-member',Res,List],TF):-!, as_tf(fb_member(Res,List),TF).
+eval_21(_Eq,_RetType,_Depth,_Self,['fb-member',List],Res):-!, fb_member(Res,List).
 
 
 eval_21(Eq,RetType,Depth,Self,['CollapseCardinality',List],Len):-!,
@@ -1042,6 +1042,11 @@ eval_20(Eq,RetType,Depth,Self,['limit!',N,E],R):- !, eval_20(Eq,RetType,Depth,Se
 eval_20(Eq,RetType,Depth,Self,['limit',NE,E],R):-  !,
    eval('=','Number',Depth,Self,NE,N),
    limit(N,eval_ne(Eq,RetType,Depth,Self,E,R)).
+
+eval_20(Eq,RetType,Depth,Self,['max-time!',N,E],R):- !, eval_20(Eq,RetType,Depth,Self,['max-time',N,E],R).
+eval_20(Eq,RetType,Depth,Self,['max-time',NE,E],R):-  !,
+   eval('=','Number',Depth,Self,NE,N),
+   cwtl(N,eval_ne(Eq,RetType,Depth,Self,E,R)).
 
 
 % =================================================================
@@ -1529,6 +1534,8 @@ eval_67(Eq,RetType,Depth,Self,[F|PredDecl],Res):- fail,
 % =================================================================
 
 cwdl(DL,Goal):- call_with_depth_limit(Goal,DL,R), (R==depth_limit_exceeded->(!,fail);true).
+
+cwtl(DL,Goal):- catch(call_with_time_limit(DL,Goal),time_limit_exceeded(_),fail).
 
 %bagof_eval(Eq,RetType,Depth,Self,X,L):- bagof_eval(Eq,RetType,_RT,Depth,Self,X,L).
 
