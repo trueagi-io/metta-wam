@@ -436,6 +436,25 @@ include_metta(Self,RelFilename):-
   assert(metta_file(Self,Filename,Directory)),
   include_metta_directory_file(Self,Directory, Filename))).
 
+% count_lines_up_to_200(Filename, Count).
+count_lines_up_to_200(Filename, Count) :-
+    open(Filename, read, Stream),
+    count_lines_in_stream(Stream, 0, Count),
+    close(Stream).
+
+% count_lines_in_stream(Stream, CurrentCount, FinalCount).
+count_lines_in_stream(Stream, CurrentCount, FinalCount) :-
+    ( CurrentCount >= 2000
+    -> FinalCount = 2000
+    ;  read_line_to_codes(Stream, Codes),
+       ( Codes == end_of_file
+       -> FinalCount = CurrentCount
+       ;  NewCount is CurrentCount + 1,
+          count_lines_in_stream(Stream, NewCount, FinalCount)
+       )
+    ).
+
+
 include_metta_directory_file(_Self,_Directory, Filename):-
     atom_concat(_,'.metta',Filename),
     atom_concat(Filename,'.qlf',QLFFilename),
@@ -445,6 +464,7 @@ include_metta_directory_file(_Self,_Directory, Filename):-
     atom_concat(_,'.metta',Filename),
     atom_concat(Filename,'.qlf',QLFFilename),
     \+ exists_file(QLFFilename),
+    count_lines_up_to_200(Filename, Count), Count > 1980,
     convert_metta_to_qlf(Filename,_),
     exists_file(QLFFilename),
     ensure_loaded(QLFFilename),!.
@@ -689,10 +709,10 @@ read_metta2(In,_,Read1):- parse_sexpr_metta(In,Expr),!,must_det_ll(Expr=Read1).
 % Predicate to check if a stream is a file stream and get its size.
 is_file_stream_and_size(Stream, Size) :-
     % Check if the stream is associated with a file.
-    stream_property(Stream, file_name(FileName)),
+    stream_property(Stream, file_name(Filename)),
     % Check if the file is accessible and get its size.
-    exists_file(FileName),
-    size_file(FileName, Size).
+    exists_file(Filename),
+    size_file(Filename, Size).
 
 
 maybe_read_pl(In,Expr):-
@@ -714,6 +734,7 @@ read_sform(S,F):-
 
 
 read_sform2(S,F1):- is_testing, !, read_metta2(S,F1).
+read_sform2(S,F1):- \+ is_testing, !, read_metta2(S,F1).
 read_sform2(S,F1):- read_sform1([],S,F1).
 
 read_sform1(_,_,O):- clause(t_l:s_reader_info(O),_,Ref),erase(Ref).
@@ -765,7 +786,9 @@ do_atomic_list_concat('"',SoFar,Expr):- \+ string_to_syms,!, atomics_to_string(S
 do_atomic_list_concat(_End,SoFar,Expr):- atomic_list_concat(SoFar,Expr).
 
 collect_list_until(AoS,S,End,List):- get_char(S,C), cont_list(AoS,C,End,S,List).
-cont_list(_AoS,End,End,_,[]):- !.
+
+cont_list(_AoS,End,_End1,_,[]):- End==end_of_file, !.
+cont_list(_AoS,End,End1,_,[]):- End==End1, !.
 cont_list( AoS,C,End,S,[F|List]):- read_sform3(AoS,[End],C,S,F),!,collect_list_until(AoS,S,End,List).
 
 
@@ -1964,7 +1987,8 @@ give_time(What,Seconds):-
         ; (Milliseconds >= 1
             -> format('; ~w took ~3f secs. (~2f milliseconds) ~n', [What, Seconds, Milliseconds])
             ;( Micro is Milliseconds * 1_000,
-              format('; ~w took ~6f secs. (~2f microseconds) ~n', [What, Seconds, Micro])))).
+              format('; ~w took ~6f secs. (~2f microseconds) ~n', [What, Seconds, Micro])))),
+    nl,nl.
 
 timed_call(Goal,Seconds):-
     statistics(cputime, Start),

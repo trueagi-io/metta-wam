@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-print(";; ...doing...",__name__)
+print(";; ...doing HIST...",__name__)
 
 # Version Space Candidate Elimination inside of MeTTa
 # This implementation focuses on bringing this machine learning algorithm into the MeTTa relational programming environment.
@@ -12,10 +12,14 @@ from collections import Counter
 from glob import glob
 from time import monotonic_ns, time
 
+print(";; ...doing...",__name__)
+
+
 # Third-Party Imports
 from pyswip import (Atom as PySwipAtom, Term, call, Functor, PL_discard_foreign_frame, PL_new_term_ref, PL_open_foreign_frame,
                     registerForeign, PL_PRUNED, PL_retry, PL_FA_NONDETERMINISTIC, PL_foreign_control, PL_foreign_context, PL_FIRST_CALL, PL_REDO, Variable, Prolog as PySwip)
 from pyswip.easy import newModule, Query
+
 
 import hyperonpy as hp
 from hyperon.atoms import *
@@ -38,10 +42,22 @@ if VSPACE_VERBOSE is not None:
  try: verbose = int(VSPACE_VERBOSE) # Convert it to an integer
  except ValueError: ""
 
+
 # Error Handling for Janus
-try: from janus import *
+try: import janus_swi as janus
 except Exception as e:
  if verbose>0: print(f"; Error: {e}")
+
+
+
+try:
+    from janus_swi import *
+    janus.query_once("Y is X+1", {"X":1})
+except Exception as e:
+    if verbose>0: print(f"; Error: {e}")
+    try: from janus import *
+    except Exception as e:
+     if verbose>0: print(f"; Error: {e}")
 
 # Error Handling for OpenAI
 try:
@@ -49,9 +65,8 @@ try:
  try: openai.api_key = os.environ["OPENAI_API_KEY"]
  except KeyError: ""
 except Exception as e:
- if verbose>0: print(f"; Error: {e}")
-
-
+ if verbose>0:
+    if False: print(f"; Error: {e}")
 
 histfile = os.path.join(os.path.expanduser("~"), ".metta_history")
 is_init = True
