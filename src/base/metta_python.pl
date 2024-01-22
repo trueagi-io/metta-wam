@@ -29,7 +29,7 @@ is_not_prolog_space(GSpace):-  \+ is_asserted_space(GSpace), \+ is_nb_space(GSpa
 
 with_safe_argv(Goal):-
   current_prolog_flag(argv,Was),
-  setup_call_cleanup(set_prolog_flag(argv,[]),Goal,set_prolog_flag(argv,Was)).
+  setup_call_cleanup(set_prolog_flag(argv,[]), must_det_llp((Goal)),set_prolog_flag(argv,Was)).
 
 ensure_space_py(Space,GSpace):- py_is_object(Space),!,GSpace=Space.
 ensure_space_py(Space,GSpace):- var(Space),ensure_primary_metta_space(GSpace), Space=GSpace.
@@ -48,8 +48,11 @@ ensure_rust_metta:- ensure_rust_metta(_).
 :- volatile(is_metta_learner/1).
 ensure_metta_learner(Metta_Learner):- is_metta_learner(Metta_Learner),!.
 ensure_metta_learner(Metta_Learner):-
-   with_safe_argv(py_call(metta_vspace:'metta_learner':'MettaLearner'(),Metta_Learner)),
-   asserta(is_metta_learner(Metta_Learner)).
+   with_safe_argv(
+   (want_py_lib_dir,
+    py_call(metta_vspace:'metta_learner':'MettaLearner'(),Metta_Learner))),
+   fbug(is_metta_learner(Metta_Learner)),
+    asserta(is_metta_learner(Metta_Learner)).
 
 
 :- multifile(space_type_method/3).
@@ -255,15 +258,20 @@ add_to_space(Space, Sym) :-
 
 extend_py(Module,R):- 'extend-py!'(Module,R).
 
+must_det_llp((A,B)):-!, must_det_llp(A), must_det_llp(B).
+must_det_llp(B):- fbug(B),!,once(ignore(must_det_ll(B))).
+
 'extend-py!'(Module,_):-
-  with_safe_argv((
+  with_safe_argv((((
   %listing(ensure_rust_metta/1),
-  ensure_metta_learner,
   fbug('extend-py!'(Module)),
+  ensure_metta_learner,
   ensure_rust_metta(MeTTa),
   replace_in_string(["/"="."],Module,ToPython),
+  working_directory(PWD,PWD), py_add_lib_dir(PWD),
+  %py_module_exists(Module),
   py_call(MeTTa:load_py_module(ToPython),Result),
-  fbug(result(MeTTa->Result)))),!.
+  fbug(result(MeTTa->Result)))))),!.
 
 ensure_metta_learner:-
   with_safe_argv(ensure_metta_learner(Learner)),
@@ -309,7 +317,23 @@ on_restore1:- ensure_metta_learner.
    assert(want_py_lib_dir(GParentDir)).
 
 want_py_lib_dir:-
-   with_safe_argv(forall(want_py_lib_dir(GParentDir),  py_add_lib_dir(GParentDir))).
+   with_safe_argv((forall(want_py_lib_dir(GParentDir),  py_add_lib_dir(GParentDir)),sync_python_path)).
 
+sync_python_path:-
+  working_directory(PWD,PWD), py_add_lib_dir(PWD),
+   ignore(( getenv('PYTHONPATH', CurrentPythonPath),
+    atomic_list_concat(List, ':', CurrentPythonPath),
+    list_to_set(List,Set),
+    py_lib_dirs(DirsA),
+    forall(member(E,Set),if_t( \+member(E,DirsA), if_t( \+ atom_length(E,0), py_add_lib_dir(E)))))),
+    py_lib_dirs(DirsL),
+    list_to_set(DirsL,Dirs),
+    fbug(py_lib_dirs(Dirs)),
+    atomic_list_concat(Dirs, ':',NewPythonPath),
+    setenv('PYTHONPATH', NewPythonPath).
+
+
+:- set_prolog_flag(py_backtrace_depth,10).
+:- set_prolog_flag(py_backtrace, true).
 %:- initialization(on_restore1,restore).
 %:- initialization(on_restore2,restore).

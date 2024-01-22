@@ -483,36 +483,38 @@ metta_atom_iter(Eq,Depth,Self,Other,[And|Y]):- atom(And), is_and(And),!,
   (Y==[] -> true ;
     ( D2 is Depth -1, Y = [H|T],
        metta_atom_iter(Eq,D2,Self,Other,H),metta_atom_iter(Eq,D2,Self,Other,[And|T]))).
+%metta_atom_iter(Eq,Depth,_Slf,Other,X):- eval_args _true(Eq,_RetType,Depth,Other,X).
+metta_atom_iter(Eq,Depth,Self,Other,X):-  metta_atom_true(Eq,Depth,Self,Other,X).
 
 
-metta_atom_iter(Eq,Depth,_Slf,Other,X):- eval_args_true(Eq,_RetType,Depth,Other,X).
+%metta_atom_iter(Eq,Depth,_Slf,Other,X):- dcall0000000000(eval_args _true(Eq,_RetType,Depth,Other,X)).
+%metta_atom_iter(Eq,Depth,_Slf,Other,X):- %copy_term(X,XX),
+  %dcall0000000000(eval_ar gs_true(Eq,_RetType,Depth,Other,XX)), X=XX.
 
-%metta_atom_iter(Eq,Depth,_Slf,Other,X):- dcall0000000000(eval_args_true(Eq,_RetType,Depth,Other,X)).
-metta_atom_iter(Eq,Depth,_Slf,Other,X):-
-  %copy_term(X,XX),
-  dcall0000000000(eval_args_true(Eq,_RetType,Depth,Other,XX)), X=XX.
+%ev al_args_true_r(Eq,RetType,Depth,Self,X,TF1):- ((eval_ne(Eq,RetType,Depth,Self,X,TF1),  \+  is_False(TF1)); ( \+  is_False(TF1),metta_atom_true(Eq,Depth,Self,Self,X))).
+
+%eva l_args_true(Eq,RetType,Depth,Self,X):-
+ % metta_atom_true(Eq,Depth,Self,Self,X);
+  % (nonvar(X),eval_ne(Eq,RetType,Depth,Self,X,TF1),  \+  is_False(TF1)).
+
+%ev al_args_trueB(Eq,RetType,Depth,Self,Cond):- trace, term_variables(Cond+Res,[V|_]),freeze(V,eval(Eq,RetType,Depth,Self,Cond,Res)),Res='True'.
 
 metta_atom_iterA(_Eq,_Depth,_Self,_Other,['Freeze',Var,X]):- !,s2ps(X,XX),freeze(Var,XX).
 metta_atom_iterA(_Eq,_Depth,_Self,_Other,['enforce',Var,X]):- !,s2ps(X,XX),freeze(Var,XX).
 metta_atom_iterA(Eq,Depth,Self,Other,['enforce',Var,C,X]):- !,s2ps(C,XX),freeze(Var,XX),metta_atom_iter(Eq,Depth,Self,Other,X).
 
 
-eval_args_true_r(Eq,RetType,Depth,Self,X,TF1):-
-  ((eval_ne(Eq,RetType,Depth,Self,X,TF1),  \+  is_False(TF1));
-     ( \+  is_False(TF1),metta_atom_true(Eq,Depth,Self,Self,X))).
+eval_args_true(Eq,_RetType,Depth,Self,X):- metta_atom_true(Eq,Depth,Self,Self,X).
 
-eval_args_true(Eq,RetType,Depth,Self,X):-
-  metta_atom_true(Eq,Depth,Self,Self,X);
-   (nonvar(X),eval_ne(Eq,RetType,Depth,Self,X,TF1),  \+  is_False(TF1)).
-
-%eval_args_trueB(Eq,RetType,Depth,Self,Cond):- trace, term_variables(Cond+Res,[V|_]),freeze(V,eval(Eq,RetType,Depth,Self,Cond,Res)),Res='True'.
 
 metta_atom_true(Eq,_Dpth,_Slf,Other,H):- get_metta_atom(Eq,Other,H).
-
 % is this OK?
 metta_atom_true(Eq,Depth,Self,Other,H):- nonvar(H), metta_defn(Eq,Other,H,B), D2 is Depth -1, eval_args_true(Eq,_,D2,Self,B).
 % is this OK?
-metta_atom_true(Eq,Depth,Self,Other,H):- Other\==Self, nonvar(H), metta_defn(Eq,Other,H,B), D2 is Depth -1, eval_args_true(Eq,_,D2,Other,B).
+metta_atom_true(Eq,Depth,Self,Other,H):- Other\==Self, nonvar(H), metta_defn(Eq,Self,H,B), D2 is Depth -1, eval_args_true(Eq,_,D2,Other,B).
+%metta_atom_true(Eq,Depth,Self,Other,[H|X]):-atom(H),atom_concat(HH,'!',H),!, metta_atom_true(Eq,Depth,Self,Other,[HH|X]).
+
+metta_atom_true(Eq,Depth,_Self,Other,X):- (nonvar(X),eval_ne(Eq,_RetType,Depth,Other,X,TF1),  \+  is_False(TF1)).
 
 
 
@@ -604,6 +606,9 @@ eval_20(Eq,RetType,Depth,Self,PredDecl,Res):-
   call_ndet(Body,DET),
   nb_setarg(1,Do_more_defs,false),
  (DET==true -> ! ; true).
+
+eval_21(Eq,RetType,Depth,Self,['fb-member',Res,List],TF):-!, as_tf(fb_member(Res,List),TF).
+eval_21(Eq,RetType,Depth,Self,['fb-member',List],Res):-!, fb_member(Res,List).
 
 
 eval_21(Eq,RetType,Depth,Self,['CollapseCardinality',List],Len):-!,
@@ -1136,6 +1141,7 @@ eval_20(Eq,RetType,Depth,Self,X,Y):-
      % finish_eval(Depth,Self,M,Y);
     (eval_failed(Depth,Self,X,Y)*->true;X=Y)).
 
+eval_40(_Eq,_RetType,_Dpth,_Slf,['extend-py!',Module],Res):-  !, 'extend-py!'(Module,Res).
 
 /*
 into_values(List,Many):- List==[],!,Many=[].
@@ -1183,6 +1189,8 @@ eval_40(Eq,RetType,Depth,Self,[P,A,X|More],YY):- is_list(X),X=[_,_,_],simple_mat
 eval_40(Eq,RetType,_Dpth,_Slf,['==',X,Y],Res):-  !,
     suggest_type(RetType,'Bool'),
     eq_unify(Eq,_SharedType, X, Y, Res).
+
+
 
 eq_unify(_Eq,_SharedType, X, Y, TF):- as_tf(X=:=Y,TF),!.
 eq_unify(_Eq,_SharedType, X, Y, TF):- as_tf( '#='(X,Y),TF),!.

@@ -23,7 +23,7 @@ is_metta_data_functor(Eq,Other,H):- H\=='Right', H\=='Something',
 :- endif.
 
 
-is_decl_type(ST):- metta_type(_,_,Type),sub_sterm(T,Type),T=@=ST, \+ nontype(ST).
+%is_decl_type(ST):- metta_type(_,_,[_|Type]),is_list(Type),sub_sterm(T,Type),nonvar(T),T=@=ST, \+ nontype(ST).
 is_decl_type([ST|_]):- !, atom(ST),is_decl_type_l(ST).
 is_decl_type(ST):- \+ atom(ST),!,fail.
 is_decl_type('%Undefined%').  is_decl_type('Number').
@@ -51,7 +51,7 @@ needs_eval(EvalMe):- is_list(EvalMe),!.
 
 args_violation(_Dpth,_Slf,Args,List):- ( \+ iz_conz(Args); \+ iz_conz(List)), !, fail.
 args_violation(Depth,Self,[A|Args],[L|List]):- once(arg_violation(Depth,Self,A,L) ; args_violation(Depth,Self,Args,List)).
-arg_violation(Depth,Self,A,L):- \+ (get_type0(Depth,Self,A,T), \+ type_violation(T,L)).
+arg_violation(Depth,Self,A,L):- fail, \+ (get_type0(Depth,Self,A,T), \+ type_violation(T,L)).
 %arg_violation(Depth,Self,A,_):- get_type(Depth,Self,A,_),!.
 
 type_violation(T,L):- \+ \+ (is_nonspecific_type(T);is_nonspecific_type(L)),!,fail.
@@ -82,6 +82,7 @@ is_nonspecific_type('Any').
 get_type(Depth,Self,Val,TypeO):- no_repeats(TypeT,(get_type9(Depth,Self,Val,Type),TypeT=Type)),Type=TypeO.
 
 get_type9(_Dpth,_Slf,Expr,'hyperon::space::DynSpace'):- is_dynaspace(Expr),!.
+get_type9(Depth,Self,Val,Type):- symbol(Val),atom_contains(Val,' '),!,Type='String'.
 get_type9(Depth,Self,Val,Type):- get_type0(Depth,Self,Val,Type).
 get_type9(Depth,Self,Val,Type):- get_type1(Depth,Self,Val,Type), ground(Type),Type\==[], Type\==Val,!.
 get_type9(Depth,Self,Val,Type):- get_type2(Depth,Self,Val,Type), ( is_list(Type)->! ; true).
@@ -119,15 +120,15 @@ get_type01(_Dpth,_Slf,Val,'Integer'):- integer(Val).
 get_type01(_Dpth,_Slf,Val,'Decimal'):- float(Val).
 get_type01(_Dpth,_Slf,Val,'Rational'):- rational(Val).
 get_type01(_Dpth,_Slf,Val,'Bool'):- (Val=='False';Val=='True'),!.
-get_type01(_Dpth,_Slf,Val,Type):- string(Val),!,(Type='String';Type='Symbol').
+%get_type01(_Dpth,_Slf,Val,Type):- string(Val),!,(Type='String';Type='Symbol').
 get_type01(_Dpth,_Slf,Expr,_):-  \+ atom(Expr),!,fail.
 get_type01(_Dpth,_Slf,Val,Type):- is_decl_type(Val),(Type=Val;Type='Type').
 get_type01(_Dpth,_Slf,Val,Type):- atomic_list_concat([Type,_|_],'@',Val).
 get_type01(_Dpth,_Slf,Val,Type):- atomic_list_concat([Type,_|_],':',Val).
 get_type01(Depth,Self,Op,Type):- Depth2 is Depth-1, eval_args(Depth2,Self,Op,Val),Op\=@=Val,!, get_type(Depth2,Self,Val,Type).
 %get_type01(_Dpth,_Slf,Expr,'hyperon::space::DynSpace'):- \+ is_list(Expr), callable(Expr), is_space_type(Expr,_).
-get_type01(_Dpth,_Slf,_Val,'String').
-get_type01(_Dpth,_Slf,_Val,'Symbol').
+%get_type01(_Dpth,_Slf,_Val,'String').
+%get_type01(_Dpth,_Slf,_Val,'Symbol').
 
 
 
@@ -214,7 +215,7 @@ get_type1(Depth,Self,Expr,Type):-Depth2 is Depth-1,
 get_type1(_Dpth,_Slf,Val,'String'):- string(Val),!.
 get_type1(_Dpth,_Slf,Val,Type):- is_decl_type(Val),Type=Val.
 get_type1(_Dpth,_Slf,Val,'Bool'):- (Val=='False';Val=='True'),!.
-get_type1(_Dpth,_Slf,Val,'Symbol'):- symbol(Val).
+% get_type1(_Dpth,_Slf,Val,'Symbol'):- symbol(Val).
 %get_type1(Depth,Self,[T|List],['List',Type]):- Depth2 is Depth-1,  is_list(List),get_type1(Depth2,Self,T,Type),!,
 %  forall((member(Ele,List),nonvar(Ele)),get_type1(Depth2,Self,Ele,Type)),!.
 %get_type1(Depth,_Slf,Cmpd,Type):- compound(Cmpd), functor(Cmpd,Type,1),!.
