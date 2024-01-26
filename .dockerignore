@@ -1,4 +1,7 @@
 *.*
 .*
 */
-
+# local development might need these changes without commiting
+!mettalog
+!MeTTa
+!./metta_vspace/pyswip

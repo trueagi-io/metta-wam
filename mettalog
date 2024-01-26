@@ -1,9 +1,13 @@
+#!/bin/bash
 
 if [ -f /.dockerenv ] ; then
- cd $1
+ cd /host/root/$1
  shift 1
  $*
 else
- docker build -t mettalog .
- docker run --rm -it -v /:/host/root -v $(pwd):/host/cwd mettalog /home/user/vspace-metta/mettalog "$(pwd)" $*
+ if [ "$#" -eq 0 ]; then
+    exec "$0" --repl
+ fi
+ docker build -t mettalog . > /dev/null
+ docker run --rm -it -v /:/host/root -v $(pwd):/host/cwd mettalog /home/user/vspace-metta/mettalog "$(pwd)" /home/user/vspace-metta/MeTTa $*
 fi

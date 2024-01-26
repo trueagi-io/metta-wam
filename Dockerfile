@@ -71,9 +71,15 @@ RUN echo >> ${HOME}/.bashrc
 RUN echo "# For MeTTaLog" >> ${HOME}/.bashrc
 RUN echo "export PATH=${PATH}:${HOME}/vspace-metta:/home/user/.local/bin:/home/user/.conan/bin" >> ${HOME}/.bashrc
 
-RUN swipl -l metta_vspace/pyswip/metta_interp.pl -g qcompile_mettalog --
 
-# RUN ./MeTTa
+COPY ./mettalog /home/user/vspace-metta/mettalog
+COPY ./metta_vspace/pyswip /home/user/vspace-metta/metta_vspace/pyswip
+COPY ./MeTTa /home/user/vspace-metta/MeTTa
+RUN ls -lh /home/user/vspace-metta/mettalog
+RUN sudo chmod +x /home/user/vspace-metta/mettalog
+
+#RUN swipl -l metta_vspace/pyswip/metta_interp.pl -g qcompile_mettalog
+
 
 
 
