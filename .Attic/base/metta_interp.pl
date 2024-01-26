@@ -6,6 +6,15 @@ is_compiled:- current_prolog_flag(os_argv,ArgV), member('-x',ArgV),!.
 is_compiled:- current_prolog_flag(os_argv,ArgV),\+ member('swipl',ArgV),!.
 is_converting:- nb_current('convert','True'),!.
 is_converting:- current_prolog_flag(os_argv,ArgV), member('--convert',ArgV),!.
+
+is_compat:- nb_current('compat','True'),!.
+is_compat:- current_prolog_flag(os_argv,ArgV), member('--compat',ArgV),!.
+
+%is_compatio:- !,fail.
+is_compatio:- nb_current('compatio','True'),!.
+is_compatio:- current_prolog_flag(os_argv,ArgV), member('--compatio',ArgV),!.
+
+show_os_argv:- is_compatio,!.
 show_os_argv:- current_prolog_flag(os_argv,ArgV),write('; libswipl: '),writeln(ArgV).
 is_pyswip:- current_prolog_flag(os_argv,ArgV),member( './',ArgV).
 :- multifile(is_metta_data_functor/1).
@@ -63,6 +72,7 @@ Now FAILING TEST-SCRIPTS.C1-GROUNDED-BASIC.20)
 
 %option_value_def('repl',auto).
 option_value_def('prolog',false).
+option_value_def('compat',auto).
 option_value_def('compile',false).
 option_value_def('table',false).
 option_value_def(no_repeats,false).
@@ -90,13 +100,16 @@ option_value_def('trace-on-eval',true).
 option_value_def('trace-on-fail',false).
 option_value_def('trace-on-pass',false).
 
+fbugio(_):- is_compatio,!.
+fbugio(P):- fbug(P).
+
 set_option_value_interp(N,V):- atom(N), atomic_list_concat(List,',',N),List\=[_],!,
   forall(member(E,List),set_option_value_interp(E,V)).
 set_option_value_interp(N,V):-
   set_option_value(N,V),
-  fbug(set_option_value(N,V)),
-  ignore((if_t((atom(N), atom_concat('trace-on-',F,N),fbug(set_debug(F,V))),set_debug(F,V)))),
-  ignore((if_t((atom(V), is_debug_like(V,TF),fbug(set_debug(N,TF))),set_debug(N,TF)))),!.
+  fbugio(set_option_value(N,V)),
+  ignore((if_t((atom(N), atom_concat('trace-on-',F,N),fbugio(set_debug(F,V))),set_debug(F,V)))),
+  ignore((if_t((atom(V), is_debug_like(V,TF),fbugio(set_debug(N,TF))),set_debug(N,TF)))),!.
 
 is_debug_like(trace, true).
 is_debug_like(notrace, false).
@@ -348,7 +361,7 @@ cmdline_load_metta(Self,['-G',Str|Rest]):- !,
 cmdline_load_metta(Self,[M|Rest]):-
   m_opt(M,Opt),!,
   forall((is_cmd_option(Opt,M,TF)),
-     (fbug(is_cmd_option(Opt,M,TF)), !, set_option_value_interp(Opt,TF))),
+     (fbugio(is_cmd_option(Opt,M,TF)), !, set_option_value_interp(Opt,TF))),
   %set_tty_color_term(true),
   cmdline_load_metta(Self,Rest).
 
@@ -2076,13 +2089,13 @@ catch_red_ignore(G):- catch_red(G)*->true;true.
 :- public(loon/1).
 
 
-%loon(Why):- began_loon(Why),!,fbug(begun_loon(Why)).
+%loon(Why):- began_loon(Why),!,fbugio(begun_loon(Why)).
 loon(Why):- is_compiling,!,fbug(compiling_loon(Why)),!.
 %loon( _Y):- current_prolog_flag(os_argv,ArgV),member('-s',ArgV),!.
 % Why\==toplevel,Why\==default, Why\==program,!
-loon(Why):- is_compiled, Why\==toplevel,!,fbug(compiled_loon(Why)),!.
-loon(Why):- began_loon(_),!,fbug(skip_loon(Why)).
-loon(Why):- fbug(began_loon(Why)), assert(began_loon(Why)),
+loon(Why):- is_compiled, Why\==toplevel,!,fbugio(compiled_loon(Why)),!.
+loon(Why):- began_loon(_),!,fbugio(skip_loon(Why)).
+loon(Why):- fbugio(began_loon(Why)), assert(began_loon(Why)),
   do_loon.
 
 do_loon:-
@@ -2118,8 +2131,9 @@ maybe_halt(_):- once(pre_halt1), fail.
 maybe_halt(Seven):- option_value('repl',false),!,halt(Seven).
 maybe_halt(Seven):- option_value('halt',true),!,halt(Seven).
 maybe_halt(_):- once(pre_halt2), fail.
+maybe_halt(Seven):- fbugio(maybe_halt(Seven)), fail.
 maybe_halt(H):- halt(H). 
-maybe_halt(Seven):- fbug(maybe_halt(Seven)).
+
 
 :- initialization(nb_setval(cmt_override,lse('; ',' !(" ',' ") ')),restore).
 
