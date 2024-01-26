@@ -72,7 +72,45 @@ find ./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/ -type f -name 
 
 ```
 
+## :whale: Docker
 
+To build a docker image containing MeTTaLog readily available run the
+following command
+
+```bash
+docker build -t mettalog .
+```
+
+You may then enter a corresponding containter with the following
+command
+
+```bash
+docker run --rm -it --entrypoint bash mettalog
+```
+
+Once inside the container you may enter the MeTTaLog REPL with the
+following command
+
+```bash
+MeTTa --repl
+```
+
+or run a metta script as follows
+
+```bash
+MeTTa myprg.metta
+```
+
+Beware that the container will be removed after leaving it.  If you
+wish to keep it, then remove the `--rm` flag from the command line
+used to enter the container.
+
+Docker has a rich functionality set.  In particular it allows you to
+[copy](https://docs.docker.com/engine/reference/commandline/container_cp/)
+files back and forth between the host and the container.  For more
+information about Docker you may refer to its
+[manuals](https://docs.docker.com/manuals/) and its [reference
+documentation](https://docs.docker.com/reference/).
 
 ## :computer: Various Usages and Demos
 
