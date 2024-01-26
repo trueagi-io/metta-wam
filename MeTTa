@@ -1,5 +1,7 @@
 #!/bin/bash
-
+if [ "$#" -eq 0 ]; then
+    exec "$0" --repl
+fi
 export RPWD=$PWD
 IS_SOURCED=$( [[ "${BASH_SOURCE[0]}" != "${0}" ]] && echo 1 || echo 0)
 # Function to exit the script properly
@@ -435,18 +437,19 @@ if [[ $should_compile -eq 1 ]]; then
     #else
     rm -f $reference_file
     if [[ "$never_compile" -eq 0 ]]; then
-	echo "Compiling $reference_file"
-	swipl -l metta_vspace/$PYSWIP_VERSION/metta_interp.pl -g qcompile_mettalog -- --exeout=$reference_file
+	echo "Compiling $reference_file" 
+	# swipl -l metta_vspace/$PYSWIP_VERSION/metta_interp.pl -g qcompile_mettalog -- --exeout=$reference_file
     fi
 fi
-
 
 reference_file=$(find . -maxdepth 1 -type f -name "${DefaultSav}*" -not -name "*.*" -printf "%T@ %p\n" | sort -k1,1nr | head -n 1 | cut -f2- -d" ")
 if [[ -z "$reference_file" ]]; then
   reference_file="$METTALOG_DIR/${DefaultSav}"
 fi
 
-
+if [[ -f "$reference_file" ]]; then
+    rm -f $reference_file
+fi
 
 if [[ -f "$reference_file" ]]; then
   MLOG="$reference_file --"
