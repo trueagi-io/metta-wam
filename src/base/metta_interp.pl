@@ -13,9 +13,6 @@ is_pyswip:- current_prolog_flag(os_argv,ArgV),member( './',ArgV).
 :- multifile(is_nb_space/1).
 :- dynamic(is_nb_space/1).
 %:- '$set_source_module'('user').
-:- set_stream(user_input,tty(true)).
-:- use_module(library(readline)).
-%:- use_module(library(editline)).
 :- use_module(library(filesex)).
 :- use_module(library(shell)).
 %:- use_module(library(tabling)).
@@ -31,7 +28,11 @@ is_pyswip:- current_prolog_flag(os_argv,ArgV),member( './',ArgV).
 current_self(Self):- ((nb_current(self_space,Self),Self\==[])->true;Self='&self').
 :- nb_setval(repl_mode, '+').
 
-:- set_stream(user_input,tty(true)).
+%:- set_stream(user_input,tty(true)).
+%:- set_stream(user_input,tty(true)).
+%:- use_module(library(readline)).
+%:- use_module(library(editline)).
+
 :- set_prolog_flag(encoding,iso_latin_1).
 :- set_prolog_flag(encoding,utf8).
 %:- set_output(user_error).
@@ -1703,7 +1704,8 @@ interactively_do_metta_exec0(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOu
        set_option_value(interactive,WasInteractive),
        Control = contrl(Max,DoLeap),
        nb_setarg(1,Result,Output),
-       read_pending_codes(user_input,_,[]),
+       current_input(CI),
+       read_pending_codes(CI,_,[]),
        flag(result_num,R,R+1),
        flag(result_num,ResNum,ResNum),
      if_t(ResNum=<Max,
@@ -1799,8 +1801,8 @@ install_readline(Input):-
     add_history_string("!(load-flybase-full)"),
     add_history_string("!(obo-alt-id $X BS:00063)"),
     add_history_string("!(and (total-rows $T TR$) (unique-values $T2 $Col $TR))"),
-    ignore(editline:el_wrap),
-    ignore(editline:add_prolog_commands(Input)).
+    nop(ignore(editline:el_wrap)),
+    nop(ignore(editline:add_prolog_commands(Input))).
 
 
 
@@ -2116,6 +2118,7 @@ maybe_halt(_):- once(pre_halt1), fail.
 maybe_halt(Seven):- option_value('repl',false),!,halt(Seven).
 maybe_halt(Seven):- option_value('halt',true),!,halt(Seven).
 maybe_halt(_):- once(pre_halt2), fail.
+maybe_halt(H):- halt(H). 
 maybe_halt(Seven):- fbug(maybe_halt(Seven)).
 
 :- initialization(nb_setval(cmt_override,lse('; ',' !(" ',' ") ')),restore).
