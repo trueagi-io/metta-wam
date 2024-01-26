@@ -1,19 +1,18 @@
 #!/bin/bash
-if [ "$#" -eq 0 ]; then
-    exec "$0" --repl
-fi
 export RPWD=$PWD
 IS_SOURCED=$( [[ "${BASH_SOURCE[0]}" != "${0}" ]] && echo 1 || echo 0)
 # Function to exit the script properly
 if [ "$IS_SOURCED" -eq "0" ]; then SCRIPT=$(readlink -f "$0"); else SCRIPT=$(readlink -f "${BASH_SOURCE[0]}"); fi
 export MeTTa=$(basename "$0")
 export METTALOG_DIR=$(dirname "$SCRIPT")
-#echo "METTALOG_DIR=$METTALOG_DIR"
-cd "$METTALOG_DIR" || { echo "Failed to navigate to $METTALOG_DIR"; [[ "$IS_SOURCED" == "1" ]] && return 1 || exit 1; }
+#DEBUG "METTALOG_DIR=$METTALOG_DIR"
+cd "$METTALOG_DIR" || { DEBUG "Failed to navigate to $METTALOG_DIR"; [[ "$IS_SOURCED" == "1" ]] && return 1 || exit 1; }
 should_compile=0
 never_compile=0
+compatio=true
+#compatio=false
 CMD_TIMEOUT=0
-repl_flag=enable
+repl_flag=true
 use_rc_file=~/.mettalogrc
 
 # Initialize the variable to indicate whether to use the test script
@@ -21,6 +20,16 @@ use_test_script=0
 
 # Iterate over all command-line arguments
 for arg in "$@"; do
+
+
+    if [[ "$arg" == "--compatio" ]]; then
+	compatio=true
+    fi
+
+    if [[ "$arg" == "--debug" ]]; then
+	compatio=false
+    fi
+
     # Check if the argument is a directory
     if [ -d "$arg" ]; then
         use_test_script=1
@@ -43,6 +52,13 @@ fi
 #export TEE_FILE=${TEE_FILE:-"$METTALOG_DIR/TEE.ansi"}
 
 set -e
+
+DEBUG() {
+  if [ "$compatio" != "true" ]; then
+    echo "; DEBUG $*" >&2
+  fi
+}
+
 
 
 function load_rc_file {
@@ -73,13 +89,13 @@ function load_rc_file {
             METTALOG_OPTIONS_LOCAL+=("$line")
 
             # Verbose logging
-            [[ "$verbose" == "1" ]] && echo "Loaded option: $line"
+            [[ "$verbose" == "1" ]] && DEBUG "Loaded option: $line"
         done < "$file"
     fi
 
     local do_args="${METTALOG_OPTIONS_LOCAL[@]}"
     [[ -z "$do_args" ]] && return
-    echo "handle_args ${do_args}"
+    DEBUG "handle_args ${do_args}"
     handle_args "${do_args}"
 }
 
@@ -176,6 +192,9 @@ EOF
 # Initialize variables
 SWI_OPTIONS=()
 METTALOG_OPTIONS=()
+if [[ "$compatio" == "true" && ! ( $* == *--compatio* ) ]]; then
+  METTALOG_OPTIONS=("--compatio")
+fi
 PRE_METTALOG_OPTIONS=()
 SWI_FLAG_WITH_ARG=false
 python_flag=enable
@@ -238,7 +257,7 @@ function handle_args {
 
         if [[ "$arg" =~ ^--timeout=([0-9]+)$ ]]; then
             export TIMEOUT="${BASH_REMATCH[1]}"
-	    #echo "$0 TIMEOUT=$TIMEOUT"
+	    #DEBUG "$0 TIMEOUT=$TIMEOUT"
 	    CMD_TIMEOUT=$TIMEOUT
 	    METTALOG_OPTIONS=("--timeout=$TIMEOUT" "${METTALOG_OPTIONS[@]}")
 	    continue
@@ -249,6 +268,8 @@ function handle_args {
         elif [[ "$arg" == "--no-python" ]]; then
             python_flag=false
         elif [[ "$arg" == "--repl" ]]; then
+            repl_flag=true
+        elif [[ "$arg" == "--repl=true" ]]; then
             repl_flag=true
         elif [[ "$arg" == "--no-repl" ]]; then
             repl_flag=false
@@ -338,7 +359,7 @@ done
 
 # Then process actual command-line arguments
 
-#echo "LIST_OF_FILE_ARGS[0]=${LIST_OF_FILE_ARGS[0]}"
+#DEBUG "LIST_OF_FILE_ARGS[0]=${LIST_OF_FILE_ARGS[0]}"
 DIRNAME="${LIST_OF_FILE_ARGS[0]}"
 if [[ -f "$DIRNAME" ]]; then
   HTML_OUT="$DIRNAME".html
@@ -350,27 +371,29 @@ else
   HTML_OUT="${DIRNAME}/Result.html"
 fi
 DIR_RC="$DIRNAME/.mettalogrc"
-#echo "DIR_RC=$DIR_RC"
+#DEBUG "DIR_RC=$DIR_RC"
 if [[ -z "${use_rc_file}" ]]; then
     :
 elif [[ -f "$DIR_RC" ]]; then
     use_rc_file="${DIR_RC}"
 else
-    echo "; Debug: No RC file (.mettalogrc) for directory: $DIRNAME"
+   : # DEBUG "No RC file (.mettalogrc) for directory: $DIRNAME"
 fi
 
 handle_args "$@"
 load_rc_file $use_rc_file
 
-echo "; Debug: SWI_OPTIONS: ${SWI_OPTIONS[@]}"
-echo "; Debug: PRE_METTALOG_OPTIONS: ${PRE_METTALOG_OPTIONS[@]}"
-echo "; Debug: LIST_OF_FILE_ARGS: ${LIST_OF_FILE_ARGS[@]}"
-echo "; Debug: METTALOG_OPTIONS: ${METTALOG_OPTIONS[@]}"
+
+
+DEBUG "SWI_OPTIONS: ${SWI_OPTIONS[@]}"
+DEBUG "PRE_METTALOG_OPTIONS: ${PRE_METTALOG_OPTIONS[@]}"
+DEBUG "LIST_OF_FILE_ARGS: ${LIST_OF_FILE_ARGS[@]}"
+DEBUG "METTALOG_OPTIONS: ${METTALOG_OPTIONS[@]}"
 
 # Decide on enabling the REPL
 if [[ "$repl_flag" == "enable" ]]; then
   [[ ${#LIST_OF_FILE_ARGS[@]} -eq 0 ]] && repl_flag=true  ||  true
-  #handle_args --repl
+  handle_args --repl
 fi
 
 if [[ "$repl_flag" == "true" ]]; then
@@ -390,7 +413,7 @@ fi
 
 # If PYTHONPATH has changed, echo the new value
 if [[ "$PYTHONPATH" != "$initial_pythonpath" ]]; then
-    : #echo ";; Updated PYTHONPATH: $PYTHONPATH"
+    : #DEBUG ";; Updated PYTHONPATH: $PYTHONPATH"
 fi
 
 export RUST_BACKTRACE=full
@@ -409,19 +432,19 @@ if [[ $never_compile -eq 0 ]]; then
 
     # Check if ${DefaultSav} exists
     if [[ ! -e "$reference_file" ]]; then
-	echo "Reference file $reference_file does not exist. Compiler will be called."
+	DEBUG "Reference file $reference_file does not exist. Compiler will be called."
 	should_compile=1
     else
 	# Iterate over each .pl file to check if it's newer
 	for pl_file in "$pl_directory"/*_*.pl; do
 	    if [[ ! -e "$pl_file" ]]; then
-		echo "No matching .pl files found in $pl_directory."
+		DEBUG "No matching .pl files found in $pl_directory."
 		#exit 1
 	    fi
 
 	    # Check if this .pl file is newer than the reference file
 	    if [[ "$pl_file" -nt "$reference_file" ]]; then
-		echo "$pl_file is newer than $reference_file."
+		DEBUG "$pl_file is newer than $reference_file."
 		should_compile=1
 		break  # No need to check further, exit loop
 	    fi
@@ -432,12 +455,12 @@ fi
 # If any newer file found or reference file missing, call the compiler
 if [[ $should_compile -eq 1 ]]; then
     #if [[ -f "$reference_file" ]]; then
-    #    echo "Calling compiler from $reference_file..."
+    #    DEBUG "Calling compiler from $reference_file..."
     #	swipl -x $reference_file -g qsave_program -g halt
     #else
     rm -f $reference_file
     if [[ "$never_compile" -eq 0 ]]; then
-	echo "Compiling $reference_file" 
+	DEBUG "Compiling $reference_file" 
 	# swipl -l metta_vspace/$PYSWIP_VERSION/metta_interp.pl -g qcompile_mettalog -- --exeout=$reference_file
     fi
 fi
@@ -474,7 +497,7 @@ if [[ "$OS" == "Darwin" ]]; then
     if command -v gtimeout >/dev/null 2>&1; then
         TIMEOUT_CMD="gtimeout"
     else
-        echo "Please install coreutils using Homebrew to get the gtimeout command."
+        DEBUG "Please install coreutils using Homebrew to get the gtimeout command."
         [[ "$IS_SOURCED" == "1" ]] && return 1 || exit 1
     fi
 fi
@@ -491,11 +514,11 @@ cleanup() {
     else
         METTA_CMD_EXIT_STATUS=${METTA_CMD_EXIT_STATUS:-$?}
     fi
-    echo "Exit code of METTA_CMD: $METTA_CMD_EXIT_STATUS"
+    DEBUG "Exit code of METTA_CMD: $METTA_CMD_EXIT_STATUS"
     [[ $IS_SOURCED -eq 1 ]] && return $METTA_CMD_EXIT_STATUS || exit $METTA_CMD_EXIT_STATUS
 }
 
-#echo "CMD_TIMEOUT=$CMD_TIMEOUT"
+#DEBUG "CMD_TIMEOUT=$CMD_TIMEOUT"
 
 if [[ -n "$CMD_TIMEOUT" && "$CMD_TIMEOUT" -gt 0 ]]; then
   METTA_CMD="$TIMEOUT_CMD --foreground --preserve-status --signal=SIGTERM --kill-after=5s $CMD_TIMEOUT ${METTA_CMD}"
@@ -519,9 +542,9 @@ if [[ "$html_flag" == "enable" ]]; then
     fi
 
     [[ "$wants_print_help" == "1" ]] && { print_help; }
-    echo "; "
-    echo "; Afterwhich ansi2html -u < $TEE_FILE > \"$HTML_OUT\""
-    echo "; "
+    DEBUG ""
+    DEBUG "Afterwhich ansi2html -u < $TEE_FILE > \"$HTML_OUT\""
+    DEBUG ""
     [[ -n "${EXIT_SCRIPT+x}" ]] && { [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
 
 

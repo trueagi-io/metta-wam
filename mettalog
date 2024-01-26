@@ -1,13 +1,43 @@
 #!/bin/bash
 
-if [ -f /.dockerenv ] ; then
- cd /host/root/$1
- shift 1
- $*
+# Restart the script with --repl if no arguments are provided.
+if [ "$#" -eq 0 ]; then
+  exec "$0" --repl
+fi
+
+# Check if we are inside a Docker container
+if [ -f /.dockerenv ]; then
+  # Check if the first argument is a directory
+  if [ -d "$1" ]; then
+    # Change directory to the first argument, if it's a directory
+    : # cd "$1" || exit
+  else
+    # Otherwise, change directory to the specified path inside the host's root
+    # Contextual path needs to be provided or it will fail.
+    : # cd "/host/root/$1" || exit
+  fi
+  # Remove the first argument and execute the rest of the arguments
+  #shift
+  exec "$@"
 else
- if [ "$#" -eq 0 ]; then
-    exec "$0" --repl
- fi
- docker build -t mettalog . > /dev/null
- docker run --rm -it -v /:/host/root -v $(pwd):/host/cwd mettalog /home/user/vspace-metta/mettalog "$(pwd)" /home/user/vspace-metta/MeTTa $*
+  # Not inside a Docker container
+  # Build the Docker image named 'mettalog'
+	# Store the output in a temporary file
+	temp_file=$(mktemp)
+	if ! docker build -t mettalog . > "$temp_file" 2>&1; then
+	  echo "Docker build failed. Output:"
+	  cat "$temp_file"
+	  rm "$temp_file"
+	  exit 1
+	fi
+	rm "$temp_file"
+  # Run the Docker container with necessary volumes mounted
+  # Note: It's crucial to quote '$(pwd)' to handle spaces in the path
+  docker run --rm -it \
+    -v /:/host/root \
+    -v "$(realpath $(pwd)/../..)":"$(realpath $(pwd)/../..)" \
+    -v "$(pwd)":/host/cwd \
+    -w "$(pwd)" \
+    mettalog \
+    /home/user/vspace-metta/mettalog /home/user/vspace-metta/MeTTa "$@"
 fi
