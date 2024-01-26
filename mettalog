@@ -1,0 +1,9 @@
+
+if [ -f /.dockerenv ] ; then
+ cd $1
+ shift 1
+ $*
+else
+ docker build -t mettalog .
+ docker run --rm -it -v /:/host/root -v $(pwd):/host/cwd mettalog /home/user/vspace-metta/mettalog "$(pwd)" $*
+fi
