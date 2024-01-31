@@ -759,19 +759,24 @@ read_sform5(AoS,'[',S,List,']'):- !,collect_list_until(AoS,S,']',List),!.
 read_symbol_or_number(_AltEnd,Peek,_S,SoFar,Expr):- char_type(Peek,space),!,must_det_ll(( atomic_list_concat(SoFar,Expr))).
 read_symbol_or_number(AltEnd,B,S,SoFar,Expr):- read_sform5(AltEnd,B,S,List,E),flatten([List,E],F), append(SoFar,F,NSoFar),
   peek_char(S,NPeek), read_symbol_or_number(AltEnd,NPeek,S,NSoFar,Expr).
-read_symbol_or_number( AltEnd,Peek,_S,SoFar,Expr):- member(Peek,AltEnd),!,must_det_ll(( atomic_list_concat(SoFar,Expr))).
+read_symbol_or_number( AltEnd,Peek,_S,SoFar,Expr):- member(Peek,AltEnd),!,must_det_ll(( do_atomic_list_concat(Peek,SoFar,Expr))).
 read_symbol_or_number( AltEnd,_Peek,S,SoFar,Expr):- get_char(S,C),append(SoFar,[C],NSoFar),
    peek_char(S,NPeek), read_symbol_or_number(AltEnd,NPeek,S,NSoFar,Expr).
 
 atom_until(S,SoFar,End,Text):- get_char(S,C),atom_until(S,SoFar,C,End,Text).
-atom_until(_,SoFar,C,End,Expr):- C ==End,!,must_det_ll((atomic_list_concat(SoFar,Expr))).
+atom_until(_,SoFar,C,End,Expr):- C ==End,!,must_det_ll((do_atomic_list_concat(End,SoFar,Expr))).
 atom_until(S,SoFar,'\\',End,Expr):-get_char(S,C),!,atom_until2(S,SoFar,C,End,Expr).
 atom_until(S,SoFar,C,End,Expr):- atom_until2(S,SoFar,C,End,Expr).
 atom_until2(S,SoFar,C,End,Expr):- append(SoFar,[C],NSoFar),get_char(S,NC),
    atom_until(S,NSoFar,NC,End,Expr).
 
+do_atomic_list_concat('"',SoFar,Expr):- \+ string_to_syms,!, atomics_to_string(SoFar,Expr),!.
+do_atomic_list_concat(_End,SoFar,Expr):- atomic_list_concat(SoFar,Expr).
+
 collect_list_until(AoS,S,End,List):- get_char(S,C), cont_list(AoS,C,End,S,List).
-cont_list(_AoS,End,End,_,[]):- !.
+
+cont_list(_AoS,End,_End1,_,[]):- End==end_of_file, !.
+cont_list(_AoS,End,End1,_,[]):- End==End1, !.
 cont_list( AoS,C,End,S,[F|List]):- read_sform3(AoS,[End],C,S,F),!,collect_list_until(AoS,S,End,List).
 
 
@@ -813,14 +818,18 @@ trly(P2,A,B):- once(call(P2,A,M)),A\=@=M,!,trly(P2,M,B).
 trly(_,A,A).
 
 mfix_vars1(I,O):- var(I),!,I=O.
-mfix_vars1('$t','$VAR'('T')):-!.
-mfix_vars1('$T','$VAR'('T')):-!.
+mfix_vars1('$_','$VAR'('_')).
+mfix_vars1('$','$VAR'('__')).
+mfix_vars1(I,'$VAR'(O)):- atom(I),atom_concat('$',N,I),atom_concat('_',N,O).
+%mfix_vars1('$t','$VAR'('T')):-!.
+%mfix_vars1('$T','$VAR'('T')):-!.
 %mfix_vars1(I,O):- I=='T',!,O='True'.
 %mfix_vars1(I,O):- I=='F',!,O='False'.
 %mfix_vars1(I,O):- is_i_nil(I),!,O=[].
 mfix_vars1(I,O):- I=='true',!,O='True'.
 mfix_vars1(I,O):- I=='false',!,O='False'.
-mfix_vars1('$STRING'(I),O):- option_value(strings,true),!, mfix_vars1(I,O).
+mfix_vars1('$STRING'(I),O):- \+ string_to_syms, mfix_vars1(I,OO),text_to_string(OO,O),!.
+%mfix_vars1('$STRING'(I),O):- \+ string_to_syms, text_to_string(I,O),!.
 mfix_vars1('$STRING'(I),O):- !, mfix_vars1(I,M),atom_chars(O,M),!.
 %mfix_vars1('$STRING'(I),O):- !, mfix_vars1(I,M),name(O,M),!.
 mfix_vars1([H|T],O):-   H=='[', is_list(T), last(T,L),L==']',append(List,[L],T), !, O = ['[...]',List].
@@ -836,11 +845,10 @@ mfix_vars1([K,H|T],Cmpd):- atom(K),mlog_sym(K),is_list(T),mfix_vars1([H|T],[HH|T
   compound_name_arguments(Cmpd,HH,TT).
 %mfix_vars1([H|T],[HH|TT]):- !, mfix_vars1(H,HH),mfix_vars1(T,TT).
 mfix_vars1(List,ListO):- is_list(List),!,maplist(mfix_vars1,List,ListO).
-mfix_vars1(I,O):- string(I),option_value('string-are-atoms',true),!,atom_string(O,I).
+mfix_vars1(I,O):- string(I),string_to_syms,!,atom_string(O,I).
 
 mfix_vars1(I,O):- compound(I),!,compound_name_arguments(I,F,II),F\=='$VAR',maplist(mfix_vars1,II,OO),!,compound_name_arguments(O,F,OO).
 mfix_vars1(I,O):- \+ atom(I),!,I=O.
-mfix_vars1(I,'$VAR'(O)):- atom_concat('$',N,I),dvar_name(N,O),!.
 mfix_vars1(I,I).
 
 no_cons_reduce.
@@ -849,11 +857,14 @@ svar_fixvarname_dont_capitalize(M,O):- svar_fixvarname(M,O),!.
 
 
 %dvar_name(t,'T'):- !.
+dvar_name(N,O):-atom_concat('_',_,N),!,O=N.
 dvar_name(N,O):- integer(N),atom_concat('_',N,O).
 dvar_name(N,O):- atom(N),atom_number(N,Num),dvar_name(Num,O),!.
 dvar_name(N,O):- \+ atom(N),!,format(atom(A),'~w',[N]),dvar_name(A,O).
-dvar_name('','__'):-!. % "$"
-dvar_name('_','_'):-!. % "$_"
+dvar_name(N,O):- !, format(atom(A),'_~w',[N]),dvar_name(A,O).
+%dvar_name(  '',''):-!. % "$"
+%dvar_name('_','__'):-!. % "$_"
+dvar_name(N,O):-atom_concat('_',_,N),!,atom_concat('_',N,O).
 dvar_name(N,O):- svar_fixvarname_dont_capitalize(N,O),!.
 dvar_name(N,O):- must_det_ll((atom_chars(N,Lst),maplist(c2vn,Lst,NList),atomic_list_concat(NList,S),svar_fixvarname_dont_capitalize(S,O))),!.
 c2vn(A,A):- char_type(A,prolog_identifier_continue),!.
@@ -1030,6 +1041,8 @@ type_decl('Variable').
 
 :- dynamic(get_metta_atom/2).
 :- dynamic(asserted_metta_atom/2).
+:- multifile(asserted_metta/4).
+:- dynamic(asserted_metta/4).
 metta_atom_stdlib(_):-!,fail.
 metta_atom_stdlib([':', Type, 'Type']):- type_decl(Type).
 metta_atom_stdlib([':', Op, [->|List]]):- op_decl(Op,Params,ReturnType),append(Params,[ReturnType],List).
@@ -1062,6 +1075,8 @@ maybe_xform(metta_type(KB,Head,Body),metta_atom(KB,[':',Head,Body])).
 maybe_xform(metta_atom(KB,HeadBody),asserted_metta_atom(KB,HeadBody)).
 maybe_xform(_OBO,_XForm):- !, fail.
 
+asserted_metta_atom(KB,HeadBody):- asserted_metta(KB,HeadBody,_,_).
+
 metta_anew1(Load,_OBO):- var(Load),trace,!.
 metta_anew1(Ch,OBO):-  metta_interp_mode(Ch,Mode), !, metta_anew1(Mode,OBO).
 metta_anew1(Load,OBO):- maybe_xform(OBO,XForm),!,metta_anew1(Load,XForm).
@@ -1069,7 +1084,9 @@ metta_anew1(load,OBO):- OBO= metta_atom(Space,Atom),!,'add-atom'(Space, Atom).
 metta_anew1(unload,OBO):- OBO= metta_atom(Space,Atom),!,'remove-atom'(Space, Atom).
 
 metta_anew1(load,OBO):- !, must_det_ll((load_hook(load,OBO),
-   subst_vars(OBO,Cl),show_failure(assertz_if_new(Cl)))). %to_metta(Cl).
+   subst_vars(OBO,Cl),assertz(Cl))). %to_metta(Cl).
+metta_anew1(load,OBO):- !, must_det_ll((load_hook(load,OBO),
+   subst_vars(OBO,Cl),show_failure(assertz(Cl)))). %to_metta(Cl).
 metta_anew1(unload,OBO):- subst_vars(OBO,Cl),load_hook(unload,OBO),
   expand_to_hb(Cl,Head,Body),
   predicate_property(Head,number_of_clauses(_)),
@@ -1473,23 +1490,24 @@ repl2:-
    %notrace((current_input(In),nop(catch(load_history,_,true)))),
   % ignore(install_readline(In)),
    repeat,
-     set_prolog_flag(gc,true),
+     %set_prolog_flag(gc,true),
      garbage_collect,
-     set_prolog_flag(gc,false),
+     %set_prolog_flag(gc,false),
      %with_option(not_a_reload,true,make),
       ignore(catch(once(repl3),restart_reading,true)),
-      set_prolog_flag(gc,true),fail.
+      %set_prolog_flag(gc,true),
+      fail.
 repl3:-
      notrace(( flag(eval_num,_,0),
       current_self(Self),
       current_read_mode(repl,Mode),
       %ignore(shell('stty sane ; stty echo')),
       %current_input(In),
-     format(atom(P2),'metta> ',[]),
+     %format(atom(P2),'metta> ',[]),
       format(atom(P),'metta ~w ~w> ',[Self, Mode]))),
       setup_call_cleanup(
          notrace(prompt(Was,P)),
-         notrace((write(P),ttyflush,repl_read(Expr),ttyflush)),
+         notrace((ttyflush,repl_read(Expr),ttyflush)),
          notrace(prompt(_,Was))),
       if_trace(replt,fbug(repl_read(Mode,Expr))),
       %fbug(repl_read(Expr)),
@@ -1654,7 +1672,7 @@ interactively_do_metta_exec0(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOu
     maplist(name_vars,NamedVarsList),
     name_vars('OUT'=X),
     % add_history_src(exec(BaseEval)),
-      write_exec(TermV),
+      not_compat_io(write_exec(TermV)),
       if_t(Skipping==1,writeln(' ; SKIPPING')),
       if_t(TermV\=BaseEval,color_g_mesg('#fa90f6', (write('; '), with_indents(false,write_src(exec(BaseEval)))))),
       if_t((is_interactive(From);Skipping==1),
@@ -1672,23 +1690,25 @@ interactively_do_metta_exec0(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOu
      (timed_call(GG,Seconds)),
      ((Complete==true->!;true),
        %repeat,
-       set_option_value_interp(interactive,WasInteractive),
+       set_option_value(interactive,WasInteractive),
        Control = contrl(Max,DoLeap),
        nb_setarg(1,Result,Output),
-       read_pending_codes(user_input,_,[]),
+       current_input(CI),
+       read_pending_codes(CI,_,[]),
        flag(result_num,R,R+1),
        flag(result_num,ResNum,ResNum),
      if_t(ResNum=<Max,
-         ((((ResNum==1,Complete==true)->(format('~NDeterministic: ',  []), !);          %or Nondet
-           ( Complete==true -> (format('~NLast Result(~w): ',[ResNum]),! );
-                               format('~NNDet Result(~w): ',[ResNum])))),
+         ((((ResNum==1,Complete==true)->(not_compat_io(format('~NDeterministic: ',  [])), !);          %or Nondet
+           ( Complete==true -> (not_compat_io(format('~NLast Result(~w): ',[ResNum])),! );
+                               not_compat_io(format('~NNDet Result(~w): ',[ResNum]))))),
        color_g_mesg(yellow, ignore((( if_t( \+ atomic(Output), nl), write_asrc(Output), nl)))),
-       give_time('Execution',Seconds),
+       not_compat_io(give_time('Execution',Seconds)),
+       if_compat_io(with_output_to(user_error,give_time('Execution',Seconds))),
        color_g_mesg(green,
-           ignore((NamedVarsList \=@= Was ->( maplist(print_var,NamedVarsList), nl) ; true))))),
+           ignore((NamedVarsList \=@= Was ->(not_compat_io(( maplist(print_var,NamedVarsList), nl))) ; true))))),
        (
          (Complete\==true, WasInteractive, DoLeap\==leap, ResNum<Max)->
-         (write("More Solutions? "),get_single_char_key(C), writeq(key=C),nl,
+         (write("press ';' for more solutions "),get_single_char_key(C), writeq(key=C),nl,
          (C=='b' -> (once(repl),fail) ;
          (C=='m' -> make ;
          (C=='t' -> (nop(set_debug(eval,true)),rtrace) ;
@@ -1727,8 +1747,8 @@ forall_interactive(From,WasInteractive,Complete,Goal,After):-
     Goal, (Complete==true ->  ( quietly(After),!)  ;  (  quietly( \+ After) )).
 
 print_var(Name=Var) :- print_var(Name,Var).
-print_var(Name,_Var) :- atom_concat('Num',Rest,Name),atom_number(Rest,_),!.
-print_var(Name,Var):-  write('$'),write(Name), write(' = '), write_asrc(Var), nl.
+%print_var(Name,_Var) :- atom_concat('Num',Rest,Name),atom_number(Rest,_),!.
+print_var(Name,Var):-  write_src('$VAR'(Name)), write(' = '), write_asrc(Var), nl.
 
 write_asrc(Var):- copy_term(Var,Copy,Goals),Var=Copy,write_asrc(Var,Goals).
 write_asrc(Var,[]):- write_src(Var).
@@ -1771,8 +1791,8 @@ install_readline(Input):-
     add_history_string("!(load-flybase-full)"),
     add_history_string("!(obo-alt-id $X BS:00063)"),
     add_history_string("!(and (total-rows $T TR$) (unique-values $T2 $Col $TR))"),
-    ignore(editline:el_wrap),
-    ignore(editline:add_prolog_commands(Input)).
+    nop(ignore(editline:el_wrap)),
+    nop(ignore(editline:add_prolog_commands(Input))).
 
 
 
@@ -1918,6 +1938,8 @@ vu(true,_Value):- !.
 vu(trace,_Value):- trace.
 :- nodebug(metta(eval)).
 :- nodebug(metta(exec)).
+:- nodebug(metta(load)).
+:- nodebug(metta(prolog)).
 % Measures the execution time of a Prolog goal and displays the duration in seconds,
 % milliseconds, or microseconds, depending on the execution time.
 %
@@ -1953,11 +1975,11 @@ time_eval(What,Goal) :-
 give_time(What,Seconds):-
     Milliseconds is Seconds * 1_000,
     (Seconds > 2
-        -> format('; ~w took ~2f seconds.~n', [What, Seconds])
+        -> format('~N; ~w took ~2f seconds.~n~n', [What, Seconds])
         ; (Milliseconds >= 1
-            -> format('; ~w took ~3f secs. (~2f milliseconds) ~n', [What, Seconds, Milliseconds])
+            -> format('~N; ~w took ~3f secs. (~2f milliseconds) ~n~n', [What, Seconds, Milliseconds])
             ;( Micro is Milliseconds * 1_000,
-              format('; ~w took ~6f secs. (~2f microseconds) ~n', [What, Seconds, Micro])))).
+              format('~N; ~w took ~6f secs. (~2f microseconds) ~n~n', [What, Seconds, Micro])))).
 
 timed_call(Goal,Seconds):-
     statistics(cputime, Start),
@@ -2018,9 +2040,6 @@ arg_types(L,R,LR):- append(L,R,LR).
 
 %:- ensure_loaded('../../examples/factorial').
 %:- ensure_loaded('../../examples/fibonacci').
-
-%:- abolish(system:notrace/1).
-%system:notrace(G):- once(G).
 
 %print_preds_to_functs:-preds_to_functs_src(factorial_tail_basic)
 ggtrace(G):- call(G).
