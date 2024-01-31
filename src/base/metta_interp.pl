@@ -6,6 +6,28 @@ is_compiled:- current_prolog_flag(os_argv,ArgV), member('-x',ArgV),!.
 is_compiled:- current_prolog_flag(os_argv,ArgV),\+ member('swipl',ArgV),!.
 is_converting:- nb_current('convert','True'),!.
 is_converting:- current_prolog_flag(os_argv,ArgV), member('--convert',ArgV),!.
+
+
+is_compat:- nb_current('compat','True'),!.
+is_compat:- current_prolog_flag(os_argv,ArgV), member('--compat',ArgV),!.
+
+%is_compatio:- !,fail.
+is_compatio:- is_html,!,fail.
+is_compatio:- is_testing,!,fail.
+is_compatio:- nb_current('compatio','True'),!.
+is_compatio:- current_prolog_flag(os_argv,ArgV), member('--compatio',ArgV),!.
+is_compatio:- current_prolog_flag(os_argv,ArgV), member('--compatio=true',ArgV),!.
+
+is_testing:- nb_current('test','True'),!.
+is_testing:- current_prolog_flag(os_argv,ArgV), member('--test',ArgV),!.
+is_testing:- option_value('test','True'),!.
+
+
+is_html:- nb_current('html','True'),!.
+is_html:- current_prolog_flag(os_argv,ArgV), member('--html',ArgV),!.
+is_html:- option_value('html','True'),!.
+
+show_os_argv:- is_compatio,!.
 show_os_argv:- current_prolog_flag(os_argv,ArgV),write('; libswipl: '),writeln(ArgV).
 is_pyswip:- current_prolog_flag(os_argv,ArgV),member( './',ArgV).
 :- multifile(is_metta_data_functor/1).
@@ -13,9 +35,6 @@ is_pyswip:- current_prolog_flag(os_argv,ArgV),member( './',ArgV).
 :- multifile(is_nb_space/1).
 :- dynamic(is_nb_space/1).
 %:- '$set_source_module'('user').
-:- set_stream(user_input,tty(true)).
-:- use_module(library(readline)).
-%:- use_module(library(editline)).
 :- use_module(library(filesex)).
 :- use_module(library(shell)).
 %:- use_module(library(tabling)).
@@ -27,12 +46,17 @@ is_pyswip:- current_prolog_flag(os_argv,ArgV),member( './',ArgV).
 :- ensure_loaded(metta_data).
 :- ensure_loaded(metta_space).
 :- ensure_loaded(metta_eval).
-:- ensure_loaded(metta_server).
-:- ensure_loaded(flybase_main).
-:- set_stream(user_input,tty(true)).
+:- nb_setval(self_space, '&self').
+current_self(Self):- ((nb_current(self_space,Self),Self\==[])->true;Self='&self').
+:- nb_setval(repl_mode, '+').
+
+%:- set_stream(user_input,tty(true)).
+%:- set_stream(user_input,tty(true)).
+:- use_module(library(readline)).
+%:- use_module(library(editline)).
 :- set_prolog_flag(encoding,iso_latin_1).
 :- set_prolog_flag(encoding,utf8).
-:- set_output(user_error).
+%:- set_output(user_error).
 %:- set_prolog_flag(encoding,octet).
 /*
 Now PASSING NARS.TEC:\opt\logicmoo_workspace\packs_sys\logicmoo_opencog\MeTTa\vspace-metta\metta_vspace\pyswip\metta_interp.pl
@@ -60,11 +84,14 @@ Now FAILING TEST-SCRIPTS.C1-GROUNDED-BASIC.20)
 
 %option_value_def('repl',auto).
 option_value_def('prolog',false).
+option_value_def('compat',auto).
+option_value_def('compatio',auto).
 option_value_def('compile',false).
 option_value_def('table',false).
 option_value_def(no_repeats,false).
 option_value_def('time',true).
 option_value_def('exec',true).
+option_value_def('test',false).
 option_value_def('html',false).
 option_value_def('python',false).
 %option_value_def('halt',false).
@@ -79,33 +106,50 @@ option_value_def('exeout','./Sav.godlike.MeTTaLog').
 
 
 option_value_def('trace-on-error',true).
-%option_value_def('trace-on-load',false).
+%option_value_def('trace-on-load',true).
+option_value_def('load',debug).
 option_value_def('trace-on-exec',true).
 option_value_def('trace-on-eval',true).
 option_value_def('trace-on-fail',false).
 option_value_def('trace-on-pass',false).
 
+fbugio(_):- is_compatio,!.
+fbugio(P):- fbug(P).
 
+set_option_value_interp(N,V):- atom(N), atomic_list_concat(List,',',N),List\=[_],!,
+  forall(member(E,List),set_option_value_interp(E,V)).
 set_option_value_interp(N,V):-
   set_option_value(N,V),
-  ignore((if_t((atom(N), atom_concat('trace-on-',F,N)),set_debug(F,V)))),
-  ignore((if_t((atom(V), is_debug_like(V)),set_debug(N,true)))),!.
+  fbugio(set_option_value(N,V)),
+  ignore((if_t((atom(N), atom_concat('trace-on-',F,N),fbugio(set_debug(F,V))),set_debug(F,V)))),
+  ignore((if_t((atom(V), is_debug_like(V,TF),fbugio(set_debug(N,TF))),set_debug(N,TF)))),!.
 
-is_debug_like(trace).
-is_debug_like(rtrace).
-is_debug_like(debug).
+is_debug_like(trace, true).
+is_debug_like(notrace, false).
+is_debug_like(debug, true).
+is_debug_like(nodebug, false).
+%is_debug_like(false, false).
 
 set_is_unit_test(TF):-
   forall(option_value_def(A,B),set_option_value_interp(A,B)),
   set_option_value_interp('trace-on-pass',false),
   set_option_value_interp('trace-on-fail',false),
-  if_t(TF,set_option_value_interp('exec',rtrace)),
-  if_t(TF,set_option_value_interp('eval',rtrace)),
-  set_option_value_interp('trace-on-load',TF),
+  set_option_value_interp('test',TF),
+  if_t(TF,set_option_value_interp('exec',debug)),
+  if_t(TF,set_option_value_interp('eval',debug)),
+  %set_option_value_interp('trace-on-load',TF),
   set_option_value_interp('trace-on-exec',TF),
   set_option_value_interp('trace-on-eval',TF),
 
   !.
+
+fake_notrace(G):- tracing,!,notrace(G).
+fake_notrace(G):- !,once(G).
+fake_notrace(G):- quietly(G),!.
+real_notrace(G):- notrace(G).
+if_compat_io(G):- if_t(is_compatio,G).
+not_compat_io(G):- if_t( \+ is_compatio, G).
+
 
 :- set_is_unit_test(false).
 
@@ -1552,9 +1596,6 @@ inside_assert( ?-(I), O):- !, inside_assert(I,O).
 inside_assert( :-(I), O):-  !, inside_assert(I,O).
 inside_assert(Var,Var).
 
-:- nb_setval(self_space, '&self').
-current_self(Self):- ((nb_current(self_space,Self),Self\==[])->true;Self='&self').
-:- nb_setval(repl_mode, '+').
 current_read_mode(repl,Mode):- ((nb_current(repl_mode,Mode),Mode\==[])->true;Mode='+'),!.
 current_read_mode(file,Mode):- ((nb_current(file_mode,Mode),Mode\==[])->true;Mode='+').
 
@@ -1584,7 +1625,10 @@ interactively_do_metta_exec0(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOu
   notrace((
     Result = res(FOut),
     inside_assert(Term,BaseEval),
-    option_else(answer,Leap,each),
+    (is_compatio
+       -> option_else(answer,Leap,leap)
+         ;   option_else(answer,Leap,each)),
+    
     Control = contrl(inf,Leap),
     Skipping = _,
     % Initialize Control as a compound term with 'each' as its argument.
@@ -1999,13 +2043,13 @@ catch_red_ignore(G):- catch_red(G)*->true;true.
 :- public(loon/1).
 
 
-%loon(Why):- began_loon(Why),!,fbug(begun_loon(Why)).
+%loon(Why):- began_loon(Why),!,fbugio(begun_loon(Why)).
 loon(Why):- is_compiling,!,fbug(compiling_loon(Why)),!.
 %loon( _Y):- current_prolog_flag(os_argv,ArgV),member('-s',ArgV),!.
 % Why\==toplevel,Why\==default, Why\==program,!
-loon(Why):- is_compiled, Why\==toplevel,!,fbug(compiled_loon(Why)),!.
-loon(Why):- began_loon(_),!,fbug(skip_loon(Why)).
-loon(Why):- fbug(began_loon(Why)), assert(began_loon(Why)),
+loon(Why):- is_compiled, Why\==toplevel,!,fbugio(compiled_loon(Why)),!.
+loon(Why):- began_loon(_),!,fbugio(skip_loon(Why)).
+loon(Why):- fbugio(began_loon(Why)), assert(began_loon(Why)),
   do_loon.
 
 do_loon:-
@@ -2014,6 +2058,7 @@ do_loon:-
   maplist(catch_red_ignore,[
 
    %if_t(is_compiled,ensure_metta_learner),
+	nts,
    metta_final,
    load_history,
    update_changed_files,
@@ -2028,9 +2073,9 @@ need_interaction:- \+ option_value('had_interaction',true),
 pre_halt1:- is_compiling,!,fail.
 pre_halt1:- loonit_report,fail.
 pre_halt2:- is_compiling,!,fail.
-pre_halt2:-  option_value('prolog',true),!,set_option_value_interp('prolog',started),call_cleanup(prolog,pre_halt2).
-pre_halt2:-  option_value('repl',true),!,set_option_value_interp('repl',started),call_cleanup(repl,pre_halt2).
-pre_halt2:-  need_interaction, set_option_value_interp('had_interaction',true),call_cleanup(repl,pre_halt2).
+pre_halt2:-  option_value('prolog',true),!,set_option_value('prolog',started),call_cleanup(prolog,pre_halt2).
+pre_halt2:-  option_value('repl',true),!,set_option_value('repl',started),call_cleanup(repl,pre_halt2).
+pre_halt2:-  need_interaction, set_option_value('had_interaction',true),call_cleanup(repl,pre_halt2).
 
 %loon:- time(loon_metta('./examples/compat/test_scripts/*.metta')),fail.
 %loon:- repl, (option_value('halt',false)->true;halt(7)).
@@ -2041,7 +2086,9 @@ maybe_halt(_):- once(pre_halt1), fail.
 maybe_halt(Seven):- option_value('repl',false),!,halt(Seven).
 maybe_halt(Seven):- option_value('halt',true),!,halt(Seven).
 maybe_halt(_):- once(pre_halt2), fail.
-maybe_halt(Seven):- fbug(maybe_halt(Seven)).
+maybe_halt(Seven):- fbugio(maybe_halt(Seven)), fail.
+maybe_halt(H):- halt(H). 
+
 
 :- initialization(nb_setval(cmt_override,lse('; ',' !(" ',' ") ')),restore).
 
@@ -2114,12 +2161,21 @@ qsave_program:-  ensure_mettalog_system, next_save_name(Name),
     !.
 
 
+:- ensure_loaded(flybase_main).
+:- ensure_loaded(metta_server).
 
 :- initialization(update_changed_files,restore).
+
+nts:- !.
+nts:-  redefine_system_predicate(system:notrace/1), 
+  abolish(system:notrace/1),
+  meta_predicate(system:notrace(0)),
+  asserta((system:notrace(G):- (!,once(G)))).
 
 :- ignore(((
    \+ prolog_load_context(reloading,true),
     initialization(loon(restore),restore),
+    nts,
    metta_final
 ))).
 :- set_prolog_flag(metta_interp,ready).

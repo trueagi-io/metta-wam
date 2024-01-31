@@ -713,7 +713,7 @@ subst_args1(Eq,RetType,Depth,Self,['+',N1,N2],N):- number(N1),!,
 subst_args1(Eq,RetType,Depth,Self,['-',N1,N2],N):- number(N1),!,
    subst_args(Eq,RetType,Depth,Self,N2,N2Res), catch_err(N is N1-N2Res,_E,(set_last_error(['Error',N2Res,'Number']),fail)).
 
-subst_args1(Eq,RetType,Depth,Self,[V|VI],[V|VO]):- nonvar(V),is_metta_data_functor(Eq,V),is_list(VI),!,maplist(subst_args(Eq,RetType,Depth,Self),VI,VO).
+subst_args1(Eq,RetType,Depth,Self,[V|VI],[V|VO]):- nonvar(V), fail, is_metta_data_functor(Eq,V),is_list(VI),!,maplist(subst_args(Eq,RetType,Depth,Self),VI,VO).
 
 subst_args1(Eq,RetType,Depth,Self,X,Y):-
   (subst_args2(Eq,Depth,Self,X,Y)*->true;
