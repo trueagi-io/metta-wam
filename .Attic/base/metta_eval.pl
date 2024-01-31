@@ -1016,6 +1016,17 @@ eval_20(Eq,RetType,Depth,Self,['number-of',X,N],TF):- !,
    length(ResL,N), true_type(Eq,RetType,TF).
 
 
+eval_20(Eq,RetType,Depth,Self,['limit!',N,E],R):- !, eval_20(Eq,RetType,Depth,Self,['limit',N,E],R).
+eval_20(Eq,RetType,Depth,Self,['limit',NE,E],R):-  !,
+   eval('=','Number',Depth,Self,NE,N),
+   limit(N,eval_ne(Eq,RetType,Depth,Self,E,R)).
+
+eval_20(Eq,RetType,Depth,Self,['max-time!',N,E],R):- !, eval_20(Eq,RetType,Depth,Self,['max-time',N,E],R).
+eval_20(Eq,RetType,Depth,Self,['max-time',NE,E],R):-  !,
+   eval('=','Number',Depth,Self,NE,N),
+   cwtl(N,eval_ne(Eq,RetType,Depth,Self,E,R)).
+
+
 % =================================================================
 % =================================================================
 % =================================================================
@@ -1113,6 +1124,7 @@ eval_20(Eq,RetType,Depth,Self,X,Y):-
      % finish_eval(Depth,Self,M,Y);
     (eval_failed(Depth,Self,X,Y)*->true;X=Y)).
 
+eval_40(_Eq,_RetType,_Dpth,_Slf,['extend-py!',Module],Res):-  !, 'extend-py!'(Module,Res).
 
 /*
 into_values(List,Many):- List==[],!,Many=[].
@@ -1123,11 +1135,12 @@ eval_40(Eq,RetType,_Dpth,_Slf,Name,Value):- atom(Name), nb_current(Name,Value),!
 % Macro Functions
 %eval_20(Eq,RetType,Depth,_,_,_):- Depth<1,!,fail.
 eval_40(_Eq,_RetType,Depth,_,X,Y):- Depth<3, !, fail, ground(X), (Y=X).
-eval_40(Eq,RetType,Depth,Self,[F|PredDecl],Res):- fail,
+eval_40(Eq,RetType,Depth,Self,[F|PredDecl],Res):- 
+   fail,
    Depth>1,
-   notrace((sub_sterm1(SSub,PredDecl), ground(SSub),SSub=[_|Sub], is_list(Sub), maplist(atomic,SSub))),
+   fake_notrace((sub_sterm1(SSub,PredDecl), ground(SSub),SSub=[_|Sub], is_list(Sub), maplist(atomic,SSub))),
    eval(Eq,RetType,Depth,Self,SSub,Repl),
-   notrace((SSub\=Repl, subst(PredDecl,SSub,Repl,Temp))),
+   fake_notrace((SSub\=Repl, subst(PredDecl,SSub,Repl,Temp))),
    eval(Eq,RetType,Depth,Self,[F|Temp],Res).
 
 % =================================================================
