@@ -54,8 +54,10 @@ try:
     from janus_swi import *
     janus.query_once("Y is X+1", {"X":1})
 except Exception as e:
-    if verbose>0: print(f"; Error: {e}")
-    try: from janus import *
+    #if verbose>0: print(f"; Error: {e}")
+    try: 
+        from janus import *  
+        #janus.query_once("Y is X+1", {"X":1})    
     except Exception as e:
      if verbose>0: print(f"; Error: {e}")
 
@@ -3919,7 +3921,7 @@ def vspace_main(*args):
     if verbose>1: timeFrom("main", t0)
     flush_console()
 
-def vspace_main_from_python(sysargv1toN):
+def vspace_main_from_python(sysargv1toN=sys.argv[1:]):
     vspace_main(sysargv1toN)
 
 def handle_arg(string, skip_filetypes=['.metta', '.md','.pl', '.png', '.jpg', '.obo']):
@@ -4003,5 +4005,5 @@ if the_python_runner is None:  #MakeInteractiveMeTTa() #def MakeInteractiveMeTTa
 is_init=False
 
 if __name__ == "__main__":
-    vspace_main_from_python(sys.argv[1:])
+    vspace_main_from_python()
 

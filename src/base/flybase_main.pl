@@ -1477,7 +1477,6 @@ as_list('-',[]). as_list("-",[]). as_list('',[]).
 as_list("",[]). as_list(' ',[]). as_list(" ",[]).
 %as_list(N,[N]):- !.
 as_list(_,S,O):- as_list(S,O),!.
-
 as_list(SepL,A,List):-  member(Sep,SepL),catch_ignore(symbolic_list_concat(List,Sep,A)),List\=[_],!.
 as_list([],A,ListO):-  member(Sep,['|',',',';']),catch_ignore(symbolic_list_concat(List,Sep,A)),List\=[_],!,maplist(fix_concept,List,ListO).
 as_list(_Sep,A,[A]).

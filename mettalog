@@ -5,39 +5,71 @@ if [ "$#" -eq 0 ]; then
   exec "$0" --repl
 fi
 
+# Function to resolve path upward but stop one level higher than /usr/
+function resolve_upward {
+  local current_dir="$1"
+  while [ "$current_dir" != "/" ]; do
+    if [ "$current_dir" == "/tmp" ]; then
+      echo "/tmp"
+      return
+    fi
+    if [ "$current_dir" == "/usr" ]; then
+      echo "/usr"
+      return
+    fi
+    if [ -d "$current_dir/$2" ]; then
+      echo "$current_dir/$2"
+      return
+    fi
+    current_dir=$(dirname "$current_dir")
+  done
+}
+
 # Check if we are inside a Docker container
 if [ -f /.dockerenv ]; then
   # Check if the first argument is a directory
   if [ -d "$1" ]; then
     # Change directory to the first argument, if it's a directory
-    : # cd "$1" || exit
+    cd "$1"
+    shift 1
   else
     # Otherwise, change directory to the specified path inside the host's root
-    # Contextual path needs to be provided or it will fail.
-    : # cd "/host/root/$1" || exit
+    resolved_path=$(resolve_upward "/host/root" "$1")
+    if [ -n "$resolved_path" ]; then
+      cd "$resolved_path"
+      shift 1
+    fi
   fi
-  # Remove the first argument and execute the rest of the arguments
-  #shift
+  # Execute the rest of the arguments
   exec "$@"
 else
   # Not inside a Docker container
-  # Build the Docker image named 'mettalog'
-	# Store the output in a temporary file
-	temp_file=$(mktemp)
-	if ! docker build -t mettalog . > "$temp_file" 2>&1; then
-	  echo "Docker build failed. Output:"
-	  cat "$temp_file"
-	  rm "$temp_file"
-	  exit 1
-	fi
-	rm "$temp_file"
+  # Check if the Docker image named 'mettalog' already exists
+  if docker image inspect mettalog &>/dev/null; then
+    # Build the Docker image named 'mettalog'
+    # Store the output in a temporary file
+    temp_file=$(mktemp)
+    if ! docker build -t mettalog . > "$temp_file" 2>&1; then
+      echo "Docker build failed. Output:"
+      cat "$temp_file"
+      rm "$temp_file"
+      exit 1
+    fi
+    rm "$temp_file"
+  else 
+    docker build -t mettalog .
+  fi
+
+  UPWARD=$(resolve_upward "$(pwd)")
   # Run the Docker container with necessary volumes mounted
   # Note: It's crucial to quote '$(pwd)' to handle spaces in the path
   docker run --rm -it \
-    -v /:/host/root \
-    -v "$(realpath $(pwd)/../..)":"$(realpath $(pwd)/../..)" \
+    -v "${UPWARD}:${UPWARD}" \
     -v "$(pwd)":/host/cwd \
+    -v /:/host/root \
     -w "$(pwd)" \
     mettalog \
-    /home/user/vspace-metta/mettalog /home/user/vspace-metta/MeTTa "$@"
+    /home/user/vspace-metta/mettalog /home/user/vspace-metta/MeTTa --compatio=true "$@"
 fi
+
+

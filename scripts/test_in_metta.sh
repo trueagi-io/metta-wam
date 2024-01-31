@@ -308,6 +308,7 @@ process_file() {
          if [[ "$fresh" -eq 1 ]] || [ ! -f "${file}.answers" ] || ([ "${file}" -nt "${file}.answers" ] && [ -s "${file}.answers" ]); then
              echo "Regenerating answers:  $file.answers"
              IF_REALLY_DO cat /dev/null > "${file}.answers"
+	     IF_REALLY_DO rm -f "${file}.answers"
 
              set +e
 
@@ -322,7 +323,7 @@ process_file() {
 
              ( cd "$(dirname "${file}")" || true
 
-                set -x
+               set +x
                IF_REALLY_DO timeout --foreground --kill-after=5 --signal=SIGINT $(($RUST_METTA_MAX_TIME + 1)) time metta "$absfile" 2>&1 | tee "${absfile}.answers"
                TEST_EXIT_CODE=$?
                 take_test=1
