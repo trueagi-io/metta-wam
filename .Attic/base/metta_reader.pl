@@ -80,7 +80,7 @@ def_to_prolog_string(I,O):- any_to_string(I,O).
 
 
 def_compile_all(I,O):- current_predicate(compile_all/2),!,call(call,compile_all,I,O).
-def_compile_all(I,O):- fbug(undefined_compile_all(I)),I=O.
+def_compile_all(I,O):- wdmsg(undefined_compile_all(I)),I=O.
 
 
 zalwayzz(G):- call(G)*->true;throw(fail_zalwayzz(G)).
@@ -112,9 +112,9 @@ s_item_metta(Symbol, Until) --> symbol_metta(Symbol, Until).
 :- encoding(iso_latin_1).
 %string_metta(S) --> `"`, !, string_until_metta(S, `"`), {atomics_to_string_metta(A,S)}.
 %string_metta(Text)                 --> `"`, !, zalmetta_wayzz_metta(string_until_metta(Text,`"`)),!.
-%string_metta(Text)                 --> `â€œ`, !, zalmetta_wayzz_metta(string_until_metta(Text,(`â€`;`â€œ`))),!.
+%string_metta(Text)                 --> `“`, !, zalmetta_wayzz_metta(string_until_metta(Text,(`”`;`“`))),!.
 string_metta(Text)                 --> (`"`), string_until_metta(L,(`"`)), {atomics_to_string(L,Text)}, !.
-string_metta(Text)                 --> (`â€`;`â€œ`;`"`), !, string_until_metta(L,(`â€œ`;`â€`;`"`)),  {atomics_to_string(L,Text)}.
+string_metta(Text)                 --> (`”`;`“`;`"`), !, string_until_metta(L,(`“`;`”`;`"`)),  {atomics_to_string(L,Text)}.
 :- encoding(utf8).
 %string_metta(Text)                 --> `#|`, !, zalmetta_wayzz_metta(string_until_metta(Text,`|#`)),!.
 
@@ -480,7 +480,7 @@ ugly_sexpr_cont('$OBJ'(sugly,S))                 -->  read_string_until(S,`>`), 
 
 %sexpr(L)                   --> sblank,!,sexpr(L),!.
 %sexpr(_) --> `)`,!,{trace,break,throw_reader_error(": an object cannot start with #\\)")}.
-sexpr(X,H,T):- zalwayzz(sexpr0(X),H,M),zalwayzz(swhite,M,T), nop(if_debugging(sreader,(fbug(sexpr(X))))),!.
+sexpr(X,H,T):- zalwayzz(sexpr0(X),H,M),zalwayzz(swhite,M,T), nop(if_debugging(sreader,(wdmsg(sexpr(X))))),!.
 %sexpr(X,H,T):- zalwayzz(sexpr0(X,H,T)),!,swhite.
 is_common_lisp:- fail.
 
@@ -561,7 +561,6 @@ is_scm:- fail.
 % c:/opt/logicmoo_workspace/packs_sys/logicmoo_opencog/guile/module/ice-9/and-let-star.scm
 
 priority_symbol((`|-`)).
-/*
 priority_symbol((`#=`)).
 priority_symbol((`#+`)).
 priority_symbol((`#-`)).
@@ -579,18 +578,19 @@ priority_symbol((`-1+`)).
 priority_symbol((`-1-`)).
 priority_symbol((`1+`)).
 priority_symbol((`1-`)).
-*/
 
 sym_or_num('$COMPLEX'(L)) --> `#C(`,!, swhite, sexpr_list(L), swhite.
 %sym_or_num((E)) --> unsigned_number(S),{number_string(E,S)}.
 %sym_or_num((E)) --> unsigned_number(S),{number_string(E,S)}.
 
-%sym_or_num((E)) --> lnumber(E),swhite,!.
+sym_or_num((E)) --> lnumber(E),swhite,!.
 sym_or_num(E) --> rsymbol_maybe(``,E),!.
 %sym_or_num('#'(E)) --> [C],{atom_codes(E,[C])}.
 
 sym_or_num(E) --> dcg_xor(rsymbol(``,E),lnumber(E)),!.
-%sym_or_num(E) --> dcg_xor(rsymbol(``,E),lnumber(E)),!.
+
+
+sym_or_num(E) --> dcg_xor(rsymbol(``,E),lnumber(E)),!.
 % sym_or_num('#'(E)) --> [C],{atom_codes(E,[C])}.
 
 
@@ -676,8 +676,8 @@ sexpr_vector0([First|Rest],End) --> sexpr(First), !, sexpr_vector0(Rest,End).
 %s_string_cont(Until,"")             --> Until,!, swhite.
 :- encoding(iso_latin_1).
 sexpr_string(Text)                 --> `"`, !, zalwayzz(read_string_until(Text,`"`)),!.
-sexpr_string(Text)                 --> `â€œ`, !, zalwayzz(read_string_until(Text,(`â€`;`â€œ`))),!.
-sexpr_string(Text)                 --> (`â€`;`â€œ`), !, zalwayzz(read_string_until(Text,(`â€`;`â€œ`))),!.
+sexpr_string(Text)                 --> `“`, !, zalwayzz(read_string_until(Text,(`”`;`“`))),!.
+sexpr_string(Text)                 --> (`”`;`“`), !, zalwayzz(read_string_until(Text,(`”`;`“`))),!.
 sexpr_string(Text)                 --> `#|`, !, zalwayzz(read_string_until(Text,`|#`)),!.
 :- encoding(utf8).
 %sexpr_string([C|S],End) --> `\\`,!, zalwayzz(escaped_char(C)),!, sexpr_string(S,End).
@@ -804,8 +804,6 @@ sym_char_start(C):- C\==44,C\==59,sym_char(C).
 :- thread_local(t_l:s2p/1).
 :- thread_local(t_l:each_file_term/1).
 
-string_to_syms:- !, false.
-string_to_syms:- option_value('string-are-atoms',true).
 
 
 %=
@@ -902,8 +900,8 @@ to_char(N,'#\\'(N)).
 char_code_int(Char,Code):- notrace_catch_fail(char_code(Char,Code)),!.
 char_code_int(Char,Code):- notrace_catch_fail(atom_codes(Char,[Code])),!.
 char_code_int(Char,Code):- atom(Char),name_to_charcode(Char,Code),!.
-char_code_int(Char,Code):- var(Char),!,fbug(char_code_int(Char,Code)), only_debug(break).
-char_code_int(Char,Code):- fbug(char_code_int(Char,Code)),only_debug(break).
+char_code_int(Char,Code):- var(Char),!,wdmsg(char_code_int(Char,Code)), only_debug(break).
+char_code_int(Char,Code):- wdmsg(char_code_int(Char,Code)),only_debug(break).
 
 char_code_to_char(N,S):- atom(N),atom_codes(N,[_]),!,S=N.
 char_code_to_char(N,S):- atom(N),!,S=N.
@@ -1615,5 +1613,4 @@ writeqnl(O):- writeq(O),nl.
 
 %:- fixup_exports.
 %:- endif.
-
 
