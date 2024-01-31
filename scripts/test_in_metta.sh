@@ -354,8 +354,8 @@ process_file() {
                  return
              fi
 
-             failures_zero=$(grep -h -c "Failures: 0" "$file_html")
-            if [ "$failures_zero" -ne 1 ]; then
+            failures_zero=$(grep -h -c "Failures: 0" "$file_html")
+            if [ "$failures_zero" -eq 0 ]; then
                 echo "Not taking test since Failures not 0."
                 return
             fi
