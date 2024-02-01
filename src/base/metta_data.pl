@@ -4,6 +4,8 @@ is_syspred0(H,_Ln,_Prd):- \+ atom(H),!,fail.
 is_syspred0(H,_Ln,_Prd):- upcase_atom(H,U),downcase_atom(H,U),!,fail.
 is_syspred0(H,Len,Pred):- current_predicate(H/Len),!,Pred=H.
 is_syspred0(H,Len,Pred):- atom_concat(Mid,'!',H), H\==Mid, is_syspred0(Mid,Len,Pred),!.
+is_syspred0(H,Len,Pred):- atom_concat(Mid,'-p',H), H\==Mid, is_syspred0(Mid,Len,Pred),!.
+is_syspred0(H,Len,Pred):- atom_concat(Mid,'-fn',H), H\==Mid, is_syspred0(Mid,Len,Pred),!.
 is_syspred0(H,Len,Pred):- into_underscores(H,Mid), H\==Mid, is_syspred0(Mid,Len,Pred),!.
 %is_function(F):- atom(F).
 is_metta_data_functor(_Eq,_Othr,H):- clause(is_data_functor(H),_).
@@ -124,8 +126,8 @@ get_type01(_Dpth,_Slf,Val,Type):- atomic_list_concat([Type,_|_],'@',Val).
 get_type01(_Dpth,_Slf,Val,Type):- atomic_list_concat([Type,_|_],':',Val).
 get_type01(Depth,Self,Op,Type):- Depth2 is Depth-1, eval_args(Depth2,Self,Op,Val),Op\=@=Val,!, get_type(Depth2,Self,Val,Type).
 %get_type01(_Dpth,_Slf,Expr,'hyperon::space::DynSpace'):- \+ is_list(Expr), callable(Expr), is_space_type(Expr,_).
-get_type01(_Dpth,_Slf,_Val,'String').
-get_type01(_Dpth,_Slf,_Val,'Symbol').
+%get_type01(_Dpth,_Slf,_Val,'String').
+%get_type01(_Dpth,_Slf,_Val,'Symbol').
 
 
 
@@ -222,11 +224,12 @@ get_type1(_Dpth,_Slf,_,'%Undefined%'):- fail.
 
 
 
+
 as_prolog(_Dpth,_Slf,I,O):- \+ iz_conz(I),!,I=O.
 as_prolog(Depth,Self,[H|T],O):- H=='::',!,maplist(as_prolog(Depth,Self),T,L),!, O = L.
 as_prolog(Depth,Self,[H|T],O):- H=='@',!,maplist(as_prolog(Depth,Self),T,L),!, O =.. L.
-as_prolog(Depth,Self,[H|T],[HH|TT]):- as_prolog(Depth,Self,H,HH),as_prolog(Depth,Self,T,TT).
-
+as_prolog(Depth,Self,I,O):- is_list(I),!,maplist(as_prolog(Depth,Self),I,O).
+as_prolog(_Dpth,_Slf,I,I).
 
 
 try_adjust_arg_types(_Eq,RetType,Depth,Self,Params,X,Y):-
