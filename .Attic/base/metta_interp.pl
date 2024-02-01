@@ -636,7 +636,7 @@ repl_read("+", '+'):-!.
 repl_read(Str,Atom):- atom_string(Atom,Str),metta_interp_mode(Atom,_),!.
 
 repl_read(Str, Expr):- atom_concat('@',_,Str),!,atom_string(Expr,Str).
-repl_read(Str, Expr):- atom_concat(')',_,Str),!,fbug(repl_read_syntax(Str)),throw(restart_reading).
+repl_read(Str, _Expr):- atom_concat(')',_,Str),!,fbug(repl_read_syntax(Str)),throw(restart_reading).
 repl_read(NewAccumulated, Expr):-
     normalize_space(string(Renew),NewAccumulated),
     Renew \== NewAccumulated, !,
@@ -2182,7 +2182,7 @@ qsave_program:-  ensure_mettalog_system, next_save_name(Name),
 
 :- ensure_loaded(flybase_main).
 :- ensure_loaded(metta_server).
-
+:- ensure_loaded(metta_python).
 :- initialization(update_changed_files,restore).
 
 nts:- !.

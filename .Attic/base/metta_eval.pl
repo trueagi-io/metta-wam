@@ -937,6 +937,14 @@ eval_get_type(Eq,RetType,Depth,Self,Val,TypeO):-
 eval_20(Eq,RetType,Depth,Self,['length',L],Res):- !, eval(Eq,RetType,Depth,Self,L,LL), !, (is_list(LL)->length(LL,Res);Res=1).
 eval_20(Eq,RetType,Depth,Self,['CountElement',L],Res):- !, eval(Eq,RetType,Depth,Self,L,LL), !, (is_list(LL)->length(LL,Res);Res=1).
 
+eval_20(Eq,RetType,Depth,Self,['get-metatype',Val],TypeO):- !,
+  get_metatype(Val,TypeO).
+
+get_metatype(Val,Want):- get_metatype0(Val,Was),!,Want=Was.
+get_metatype0(Val,'Variable'):- var(Val).
+get_metatype0(Val,'Symbol'):- symbol(Val).
+get_metatype0(Val,'Expression'):- is_list(Val).
+get_metatype0(Val,'Grounded').
 
 
 

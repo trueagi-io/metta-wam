@@ -256,12 +256,12 @@ add_to_space(Space, Sym) :-
     py_call(GSpace:'add'(Sym), _).
 :- endif.
 
-extend_py(Module,R):- 'extend-py!'(Module,R).
+'extend-py!'(Module,R):- nop(notrace(extend_py(Module,R))).
 
 must_det_llp((A,B)):-!, must_det_llp(A), must_det_llp(B).
 must_det_llp(B):- fbug(B),!,once(ignore(must_det_ll(B))).
 
-'extend-py!'(Module,_):-
+extend_py(Module,_):-
   with_safe_argv((((
   %listing(ensure_rust_metta/1),
   fbug('extend-py!'(Module)),
