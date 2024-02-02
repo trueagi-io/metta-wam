@@ -2034,8 +2034,8 @@ discover_body(Self,Load,Body):-
 decl_length(TypeDecL,Len):- is_list(TypeDecL),!,length(TypeDecL,Len).
 decl_length(_TypeDecL,1).
 
-arg_types([['->'|L]],R,LR):-!, arg_types(L,R,LR).
-arg_types(['->'|L],R,LR):-!, arg_types(L,R,LR).
+arg_types([Ar|L],R,LR):- Ar == '->', !, arg_types(L,R,LR).
+arg_types([[Ar|L]],R,LR):- Ar == '->', !, arg_types(L,R,LR).
 arg_types(L,R,LR):- append(L,R,LR).
 
 %:- ensure_loaded('../../examples/factorial').

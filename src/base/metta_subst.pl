@@ -3,7 +3,7 @@
 %self_subst(X):- number(X),!.
 %self_subst([]).
 self_subst(X):- \+ callable(X),!.
-self_subst(X):- self_eval(X),!.
+self_subst(X):- !, self_eval(X),!.
 self_subst(X):- is_valid_nb_state(X),!.
 self_subst(X):- is_list(X),!,fail.
 %self_subst(X):- compound(X),!.
@@ -25,7 +25,7 @@ subst_args(Eq,RetType,A,AA):-
 %subst_args(Eq,RetType,Depth,_Self,X,_Y):- forall(between(6,Depth,_),write(' ')),writeqln(subst_args(Eq,RetType,X)),fail.
 */
 
-subst_args(Eq,RetType,Depth,Self,X,Y):- atom(Eq),  ( Eq \== ('=')) ,!,
+subst_args(Eq,RetType,Depth,Self,X,Y):- atom(Eq),  ( Eq \== ('=')),  ( Eq \== ('match')) ,!,
    call(Eq,'=',RetType,Depth,Self,X,Y).
 
  :- style_check(-singleton).
@@ -105,16 +105,13 @@ is_debugging(Flag):- flag_to_var(Flag,Var),
 
 */
 
-subst_args0(Eq,RetType,Depth,_Slf,X,Y):- Depth<1,!,X=Y, (\+ trace_on_overflow-> true; flag(eval_num,_,0),debug(metta(eval))).
+%subst_args0(Eq,RetType,Depth,_Slf,X,Y):- Depth<1,!,X=Y, (\+ trace_on_overflow-> true; flag(eval_num,_,0),debug(metta(eval))).
 subst_args0(Eq,RetType,_Dpth,_Slf,X,Y):- self_subst(X),!,Y=X.
 subst_args0(Eq,RetType,Depth,Self,X,Y):-
   Depth2 is Depth-1,
   subst_args11(Eq,RetType,Depth,Self,X,M),
   (M\=@=X ->subst_args0(Eq,RetType,Depth2,Self,M,Y);Y=X).
 
-
-
-subst_args11(_Eq,_RetType,_Dpth,_Slf,X,Y):- self_subst(X),!,Y=X.
 subst_args11(Eq,RetType,Depth,Self,X,Y):- \+ is_debugging((subst_args)),!,
   D1 is Depth-1,
   subst_args1(Eq,RetType,D1,Self,X,Y).
@@ -175,7 +172,7 @@ notrace((
 
 subst_args1(Eq,RetType,Depth,Self,X,Y):-
   var(Eq) -> (!,subst_args1('=',RetType,Depth,Self,X,Y));
-    (atom(Eq),  ( Eq \== ('=')) ,!, call(Eq,'=',RetType,Depth,Self,X,Y)).
+    (atom(Eq),  ( Eq \== ('='), Eq \== ('match')) ,!, call(Eq,'=',RetType,Depth,Self,X,Y)).
 
 subst_args1(Eq,RetType,_Dpth,_Slf,Name,Value):- atom(Name), nb_current(Name,Value),!.
 
