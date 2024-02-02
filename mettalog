@@ -49,7 +49,7 @@ else
     # Build the Docker image named 'mettalog'
     # Store the output in a temporary file
     temp_file=$(mktemp)
-    if ! docker build -t mettalog . > "$temp_file" 2>&1; then
+    if ! docker build -t mettalog "$(dirname "$(realpath "${0}")")" > "$temp_file" 2>&1; then
       echo "Docker build failed. Output:"
       cat "$temp_file"
       rm "$temp_file"
@@ -57,7 +57,7 @@ else
     fi
     rm "$temp_file"
   else 
-    docker build -t mettalog .
+    docker build -t mettalog "$(dirname "$(realpath "${0}")")"
   fi
 
   UPWARD=$(resolve_upward "$(pwd)")
