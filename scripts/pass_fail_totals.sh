@@ -112,7 +112,7 @@ sort -k2,2n "$temp_file" | while read -r dir slash_count; do
                fail=-1
                pass=-1
             fi
-            relative_path=$(echo "$file" | sed 's/^\.\///' | sed -e 's|examples|reports/cuRRent|g' -e 's|-reports/cuRRent|-examples|g')
+            relative_path=$(echo "$file" | sed 's/^\.\///' | sed -e 's|examples|reports|g' -e 's|-reports|-examples|g')
             github_link="${base_url}${relative_path}"
             printf "| %5d | %5d |  %5d%%  | [%s](%s) |\n" "$pass" "$fail" "$file_percent" "$(basename "${file%.html}")" "$github_link" >> file_info.tmp
         fi

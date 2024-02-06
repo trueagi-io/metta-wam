@@ -13,8 +13,8 @@ foreach arg $argv {
     if {[file exists $arg] && $file_arg eq ""} {
         # If it exists and no file_arg has been set, use this as the file_arg
         set file_arg $arg
-    } else {
-        # Otherwise, add the argument to the modified_argv list
+    } elseif {$arg ne "--debugable"} {  # Exclude the --breakable argument
+        # Otherwise, if the argument is not --breakable, add it to the modified_argv list
         lappend modified_argv $arg
     }
 }
@@ -24,14 +24,15 @@ foreach arg $argv {
 set args_for_metta [join $modified_argv " "]
 
 # Spawn the MeTTa REPL with debug and REPL mode, omitting the file path from argv
-spawn sh -c "clear; MeTTa --eval=debug --compatio=false --repl $args_for_metta"
+# clear; 
+spawn sh -c "MeTTa $args_for_metta --repl "
 
 # Send initial commands to MeTTa REPL. Use \r to simulate ENTER key.
-send "prolog.\rls.\r"
+send "prolog.\r(repl,maybe_halt(7)).\r"
 
 
 # Continue with REPL interaction
-send "repl.\r"
+#send "repl.\r"
 #expect "metta &self +>"
 
 

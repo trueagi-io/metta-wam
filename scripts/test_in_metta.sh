@@ -370,7 +370,7 @@ process_file() {
                  echo "Taking test since --clean."
              elif [ "$if_failures" -eq 1 ]; then
                  failures_not_zero=$(grep -h -c "Failures: [^0]" "$file_html")
-                 if [ "$failures_not_zero" -eq 0 ]; then
+		 if [ "$failures_not_zero" -eq 0 ]; then
                      success_missing=0
 
                      if ! grep -q "Successes: " "$file_html"; then
@@ -378,18 +378,20 @@ process_file() {
                      fi
 
                      if [ "$success_missing" -eq 1 ]; then
-                         echo "The word 'Success' is missing from $file_html."
-                         failures_not_zero=1
+                         echo "Retaking Test since the word 'Success' is missing from $file_html."
+			 take_test=1
                      else
                          echo "The word 'Success' is present in $file_html."
                      fi
                  fi
-                 if [ "$failures_not_zero" -eq 1 ]; then
+                 if [ "$failures_not_zero" -gt 0 ]; then
                      take_test=1
                      echo "Retaking test since failures are present."
                      IF_REALLY_DO rm -f "$file_html"
                  else
-                     echo "Not retaking since Failures: 0."
+		     if [ "$take_test" -eq 0 ]; then
+			echo "Not retaking since Failures: 0."
+		     fi
                  fi
              else
                  echo "Results present, not taking test."
@@ -449,8 +451,8 @@ function PreCommitReports() {
 
     cd "$SCRIPT_DIR"
     echo "Executing Tasks..."
-    rsync -avm --include='*.metta.html' -f 'hide,! */' examples/ reports/cuRRent/ \
-    && echo "1) Synced HTML files from examples/ to reports/cuRRent/ and deleted the original HTML files in examples/"
+    rsync -avm --include='*.metta.html' -f 'hide,! */' examples/ reports/ \
+    && echo "1) Synced HTML files from examples/ to reports/ and deleted the original HTML files in examples/"
     \cp -f examples/PASS_FAIL.md reports/PASS_FAIL.md
     \cp -f examples/TEST_LINKS.md reports/TEST_LINKS.md
     #mv final_MeTTaLog.md MeTTaLog.md \
