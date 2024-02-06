@@ -338,4 +338,7 @@ sync_python_path:-
 %:- initialization(on_restore1,restore).
 %:- initialization(on_restore2,restore).
 
-:- set_prolog_flag(argv,[]).
+%:- set_prolog_flag(argv,[]).
+:- set_prolog_flag(py_argv,[]).
+
+% py_initialize(, +Argv, +Options)
