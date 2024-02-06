@@ -34,7 +34,7 @@ function process_file() {
     [ -z "$current_successes" ] && current_successes=0
     [ -z "$current_failures" ] && current_failures=0
 
-    relative_path=$(echo "$file" | sed 's/^\.\///' | sed -e 's|examples|reports/cuRRent|g' -e 's|-reports/cuRRent|-examples|g')
+    relative_path=$(echo "$file" | sed 's/^\.\///' | sed -e 's|examples|reports|g' -e 's|-reports|-examples|g')
     basename=$(basename $relative_path)
     basename=${basename%.*}
     directory=$(dirname $relative_path)
@@ -76,7 +76,7 @@ function get_current_successes() {
    fi
 
    # If not, proceed with the original logic
-    relative_path=$(echo "$file" | sed 's/^\.\///' | sed -e 's|examples|reports/cuRRent|g' -e 's|-reports/cuRRent|-examples|g')
+    relative_path=$(echo "$file" | sed 's/^\.\///' | sed -e 's|examples|reports|g' -e 's|-reports|-examples|g')
     basename=$(basename "$relative_path")
     basename=${basename%.*}
     echo $(grep "$basename" /tmp/SHARED.UNITS | grep -c "| PASS |")
@@ -98,7 +98,7 @@ function get_current_failures() {
 
    # If not, proceed with the original logic
     local file="$1"
-    relative_path=$(echo "$file" | sed 's/^\.\///' | sed -e 's|examples|reports/cuRRent|g' -e 's|-reports/cuRRent|-examples|g')
+    relative_path=$(echo "$file" | sed 's/^\.\///' | sed -e 's|examples|reports|g' -e 's|-reports|-examples|g')
     basename=$(basename "$relative_path")
     basename=${basename%.*}
     echo $(grep "$basename" /tmp/SHARED.UNITS | grep -c "| FAIL |")
