@@ -14,7 +14,7 @@ export METTALOG_DIR=$(dirname "$SCRIPT")
 cd "$METTALOG_DIR" || { DEBUG "Failed to navigate to $METTALOG_DIR"; [[ "$IS_SOURCED" == "1" ]] && return 1 || exit 1; }
 should_compile=0
 never_compile=0
-compatio=true
+compatio=false
 #compatio=false
 CMD_TIMEOUT=0
 repl_flag=true
@@ -53,6 +53,11 @@ if [[ "$use_test_script" -eq 1 ]]; then
     exec ./scripts/test_in_metta.sh -y --report=n "$@"
 fi
 
+for arg in "$@"; do
+   if [[ "$arg" == "--debugable" ]]; then
+	scripts/send_keys_debug.sh $@
+    fi
+done
 
 #export TEE_FILE=${TEE_FILE:-"$METTALOG_DIR/TEE.ansi"}
 
