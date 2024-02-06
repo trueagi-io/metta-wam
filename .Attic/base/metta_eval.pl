@@ -1255,6 +1255,30 @@ is_system_pred(S):- atom(S),atom_concat(_,'!',S).
 is_system_pred(S):- atom(S),atom_concat(_,'-fn',S).
 is_system_pred(S):- atom(S),atom_concat(_,'-p',S).
 
+% eval_80/6: Evaluates a Python function call within MeTTa.
+% Parameters:
+% - Eq: denotes get-type, match, or interpret call.
+% - RetType: Expected return type of the MeTTa function.
+% - Depth: Recursion depth or complexity control.
+% - Self: Context or environment for the evaluation.
+% - [MyFun|More]: List with MeTTa function and additional arguments.
+% - RetVal: Variable to store the result of the Python function call.
+eval_80(Eq, RetType, Depth, Self, [MyFun|More], RetVal) :-
+    % MyFun as a registered Python function with its module and function name.
+    metta_atom(Self, ['registered-python-function', PyModule, PyFun, MyFun]),
+    % Tries to fetch the type definition for MyFun, ignoring failures.
+    ((  get_operator_typedef(Self, MyFun, Params, RetType),
+        try_adjust_arg_types(RetType, Depth, Self, [RetType|Params], [RetVal|More], [MVal|Adjusted])
+    )->true; (maplist(as_prolog, More , Adjusted), MVal=RetVal)),
+    % Constructs a compound term for the Python function call with adjusted arguments.
+    compound_name_arguments(Call, PyFun, Adjusted),
+    % Optionally prints a debug tree of the Python call if tracing is enabled.
+    if_trace(host;python, print_tree(py_call(PyModule:Call, RetVal))),
+    % Executes the Python function call and captures the result in MVal which propagates to RetVal.
+    py_call(PyModule:Call, MVal),
+    % Checks the return value against the expected type and criteria.
+    check_returnval(Eq, RetType, RetVal).
+
 
 
 %eval_80(_Eq,_RetType,_Dpth,_Slf,LESS,Res):- fake_notrace((once((eval_selfless(LESS,Res),fake_notrace(LESS\==Res))))),!.
@@ -1268,8 +1292,8 @@ eval_80(Eq,RetType,_Depth,_Self,[AE|More],TF):-
   current_predicate(Pred/Len),
   %fake_notrace( \+ is_user_defined_goal(Self,[AE|More])),!,
   %adjust_args(Depth,Self,AE,More,Adjusted),
-  as_prolog(More , Adjusted),
-  if_trace(prolog,print_tree(apply(Pred,Adjusted))),
+  maplist(as_prolog, More , Adjusted),
+  if_trace(host;prolog,print_tree(apply(Pred,Adjusted))),
   catch_warn(efbug(show_call,eval_call(apply(Pred,Adjusted),TF))),
   check_returnval(Eq,RetType,TF).
 
@@ -1325,7 +1349,7 @@ eval_80(Eq,RetType,_Depth,_Self,[AE|More],Res):-
   current_predicate(Pred/Len1),
   maplist(as_prolog,More,Adjusted),
   append(Adjusted,[Res],Args),!,  
-  if_trace(prolog,print_tree(apply(Pred,Args))),
+  if_trace(host;prolog,print_tree(apply(Pred,Args))),
   efbug(show_call,catch_warn(apply(Pred,Args))),
   check_returnval(Eq,RetType,Res).
 
