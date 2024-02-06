@@ -1268,7 +1268,8 @@ eval_80(Eq,RetType,_Depth,_Self,[AE|More],TF):-
   current_predicate(Pred/Len),
   %fake_notrace( \+ is_user_defined_goal(Self,[AE|More])),!,
   %adjust_args(Depth,Self,AE,More,Adjusted),
-  More = Adjusted,
+  as_prolog(More , Adjusted),
+  if_trace(prolog,print_tree(apply(Pred,Adjusted))),
   catch_warn(efbug(show_call,eval_call(apply(Pred,Adjusted),TF))),
   check_returnval(Eq,RetType,TF).
 
@@ -1320,10 +1321,11 @@ eval_80(Eq,RetType,_Depth,_Self,[AE|More],Res):-
   \+ (atom(AE), atom_concat(_,'-p',AE)),
   %fake_notrace( \+ is_user_defined_goal(Self,[AE|More])),!,
   %adjust_args(Depth,Self,AE,More,Adjusted),!,
-  More = Adjusted,
   Len1 is Len+1,
   current_predicate(Pred/Len1),
-  append(Adjusted,[Res],Args),!,
+  maplist(as_prolog,More,Adjusted),
+  append(Adjusted,[Res],Args),!,  
+  if_trace(prolog,print_tree(apply(Pred,Args))),
   efbug(show_call,catch_warn(apply(Pred,Args))),
   check_returnval(Eq,RetType,Res).
 
