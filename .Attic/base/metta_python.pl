@@ -337,3 +337,5 @@ sync_python_path:-
 :- set_prolog_flag(py_backtrace, true).
 %:- initialization(on_restore1,restore).
 %:- initialization(on_restore2,restore).
+
+:- set_prolog_flag(argv,[]).
