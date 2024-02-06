@@ -19,6 +19,7 @@ compatio=false
 CMD_TIMEOUT=0
 repl_flag=true
 use_rc_file=~/.mettalogrc
+debug_this_script=false
 
 # Initialize the variable to indicate whether to use the test script
 use_test_script=0
@@ -28,10 +29,12 @@ for arg in "$@"; do
 
 
     if [[ "$arg" == "--compatio" ]]; then
-	compatio=true
+	debug_this_script=false
+	compatio=true        
     fi
 
     if [[ "$arg" == "--debug" ]]; then
+        debug_this_script=true
 	compatio=false
     fi
 
@@ -64,7 +67,7 @@ done
 set -e
 
 DEBUG() {
-  if [ "$compatio" != "true" ]; then
+  if [ "$debug_this_script" == "true" ]; then
     echo "; DEBUG $*" >&2
   fi
 }
