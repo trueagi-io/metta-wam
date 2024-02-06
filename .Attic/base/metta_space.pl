@@ -8,7 +8,8 @@
 
 :- multifile(is_pre_statistic/2).
 :- dynamic(is_pre_statistic/2).
-save_pre_statistic(Name):- is_pre_statistic(Name,_)-> true; (statistics(Name,AS),term_number(AS,FN),assert(is_pre_statistic(Name,FN))).
+save_pre_statistic(Name):- is_pre_statistic(Name,_)-> true; (statistics(Name,AS),term_number(AS,FN),
+                               pfcAdd(is_pre_statistic(Name,FN))).
 pre_statistic(N,V):- is_pre_statistic(N,V)-> true ; V = 0.
 post_statistic(N,V):- statistics(N,VV),term_number(VV,FV),pre_statistic(N,WV), V0 is FV-WV, (V0<0 -> V = 0 ; V0=V).
 term_number(T,N):- sub_term(N,T),number(N).
@@ -22,24 +23,25 @@ call_match(G):- call(G).
 :- dynamic(repeats/1).
 :- dynamic(not_repeats/1).
 assert_new(P):- call(P),!,assert_new1(repeats(P)).
-assert_new(P):- assert(P), flag(assert_new,TA,TA+1),assert_new1(not_repeats(P)),!.
+assert_new(P):- pfcAdd(P), flag(assert_new,TA,TA+1),assert_new1(not_repeats(P)),!.
 
 retract1(P):- \+ call(P),!.
 retract1(P):- ignore(\+ retract(P)).
 
 assert_new1(P):- \+ \+ call(P),!.
-assert_new1(P):- assert(P).
+assert_new1(P):- pfcAdd(P).
 
 
 :- dynamic(fb_pred/3).
 :- dynamic(mod_f_a/3).
 decl_m_fb_pred(Mod,Fn,A):- var(Mod),!,mod_f_a(Mod,Fn,A).
-decl_m_fb_pred(Mod,Fn,A):- mod_f_a(Mod,Fn,A)->true;(dynamic(Mod:Fn/A),assert(mod_f_a(Mod,Fn,A))).
+decl_m_fb_pred(Mod,Fn,A):- mod_f_a(Mod,Fn,A)->true;(dynamic(Mod:Fn/A),
+    pfcAdd(mod_f_a(Mod,Fn,A))).
 :- dynamic(fb_pred_file/3).
 decl_fb_pred(Fn,A):-
-   (fb_pred(Fn,A)-> true; (dynamic(Fn/A),assert(fb_pred(Fn,A)))),
+   (fb_pred(Fn,A)-> true; (dynamic(Fn/A),pfcAdd(fb_pred(Fn,A)))),
    ignore((nb_current(loading_file,File),
-    (fb_pred_file(Fn,A,File)-> true; assert(fb_pred_file(Fn,A,File))))).
+    (fb_pred_file(Fn,A,File)-> true; pfcAdd(fb_pred_file(Fn,A,File))))).
 % Import necessary libraries
 :- use_module(library(readutil)).
 
@@ -306,26 +308,39 @@ space_type_method(is_asserted_space,atom_iter,metta_assertdb_iter).
 
 %:- dynamic(for_metta/2).
 %for_metta(_,T):- fb_pred(F,A),functor(T,F,A),call(T).
-metta_assertdb_ls(KB):-listing(metta_atom(KB,_)).
-metta_assertdb_add(KB,Atom):- subst_vars(Atom,New),
-  decl_m_fb_pred(user,get_metta_atom,2),
-  MP = metta_atom(KB,New),
-  assert_new(MP).
+metta_assertdb_ls(KB):-
+     AMA = asserted_metta_atom,
+     decl_m_fb_pred(user,AMA,2),   
+     MP =.. [AMA,KB,_],
+  listing(MP).
+
+metta_assertdb_add(KB,AtomIn):- 
+ must_det_ll((subst_vars(AtomIn,Atom),
+     AMA = asserted_metta_atom,
+     decl_m_fb_pred(user,AMA,2),   
+     MP =.. [AMA,KB,Atom],
+  assert_new(MP))).
 metta_assertdb_rem(KB,Old):- metta_assertdb_del(KB,Old).
-metta_assertdb_del(KB,Atom):- subst_vars(Atom,Old), decl_m_fb_pred(user,get_metta_atom,2), MP = metta_atom(KB,Old),
+metta_assertdb_del(KB,Atom):- subst_vars(Atom,Old), decl_m_fb_pred(user,asserted_metta_atom,2), MP = metta_atom(KB,Old),
   copy_term(MP,Copy), clause(MP,true,Ref), MP=@= Copy, !, erase(Ref). % ,metta_assertdb('DEL',Old).
 metta_assertdb_replace(KB,Old,New):- metta_assertdb_del(KB,Old), metta_assertdb_add(KB,New).
 metta_assertdb_count(KB,Count):-
  must_det_ll((
-  decl_m_fb_pred(user,get_metta_atom,2), full_symbol_count(SL1),
-  MP = metta_atom(KB,_),
+  AMA = asserted_metta_atom,
+  decl_m_fb_pred(user,AMA,2),   
+  MP =.. [AMA,KB,_],
   predicate_property(MP,number_of_clauses(SL2)),
   predicate_property(MP,number_of_rules(SL3)),
   %metta_assertdb_ls(KB),
+  full_symbol_count(SL1),
   Count is SL1 + SL2 - SL3)),!.
 metta_assertdb_count(_KB,0):-!.
 %metta_assertdb_count(KB,Count):- writeln(metta_assertdb_count_in(KB,Count)), findall(Atom,for_metta(KB,Atom),AtomsL),length(AtomsL,Count),writeln(metta_assertdb_count_out(KB,Count)).
-metta_assertdb_iter(KB,Atoms):- decl_m_fb_pred(user,get_metta_atom,2), metta_atom(KB,Atoms).
+metta_assertdb_iter(KB,Atoms):-
+     AMA = asserted_metta_atom,
+     decl_m_fb_pred(user,AMA,2),   
+     MP =.. [AMA,KB,Atoms],
+     call(MP).
 
 
 
@@ -343,19 +358,22 @@ metta_iter_bind(KB,Query,Vars,VarNames):-
 
 % Query from hyperon.base.GroundingSpace
 space_query_vars(KB,Query,Vars):- is_asserted_space(KB),!,
-    decl_m_fb_pred(user,get_metta_atom,2),
     call_metta(KB,Query,Vars),
     debug_metta('RES',space_query_vars(KB,Query,Vars)).
 
 
-metta_assertdb_get_atoms(KB,AtomsL):- decl_m_fb_pred(user,get_metta_atom,2), findall(Atom,metta_atom(KB,Atom),AtomsL).
+metta_assertdb_get_atoms(KB,AtomsL):- decl_m_fb_pred(user,asserted_metta_atom,2), findall(Atom,metta_atom(KB,Atom),AtomsL).
 /*
 
-%metta_assertdb_iter_bind(KB,Query,Template,AtomsL):- decl_m_fb_pred(user,get_metta_atom,2), findall(Template,metta_atom(KB,Query),AtomsL).
+%metta_assertdb_iter_bind(KB,Query,Template,AtomsL):- decl_m_fb_pred(user,asserted_metta_atom,2), findall(Template,metta_atom(KB,Query),AtomsL).
 metta_assertdb_iter_bind(KB,Query,Vars):-
   ignore(term_variables(Query,Vars)),
   print(metta_assertdb(['match',KB,Query,Vars])),nl,
-  decl_m_fb_pred(user,get_metta_atom,2), (metta_atom(KB,Query)*->true;call_metta_assertdb(KB,Query,Vars)),
+     AMA = asserted_metta_atom,
+     decl_m_fb_pred(user,AMA,2),   
+     MP =.. [AMA,KB,Query],
+
+  (MP*->true;call_metta_assertdb(KB,Query,Vars)),
   metta_assertdb('RES',metta_assertdb_iter_bind(KB,Query,Vars)).
 %metta_assertdb_iter_bind(KB,Atom,Template):- metta_assertdb_stats, findall(Template,metta_assertdb_iter(KB,Atom),VarList).
 
@@ -454,13 +472,13 @@ pp_sex([H|T]) :- \+ no_src_indents, atom(H),member(H,['If','cond','let','let*'])
   with_indents(true,w_proper_indent(2,w_in_p(pp_sexi([H|T])))).
 
 pp_sex([H|T]) :- is_list(T), length(T,Args),Args =< 2, fail,
-   wots(SS,((with_indents(false,(write('('), pp_sex(H), print_list_as_sexpression(T), write(')')))))),
+   wots(SS,((with_indents(false,(write('('), pp_sex(H), write(' '), print_list_as_sexpression(T), write(')')))))),
    ((atom_length(SS,Len),Len < 20) ->write(SS);
       with_indents(true,w_proper_indent(2,w_in_p(pp_sexi([H|T]))))),!.
 /*
 
 pp_sex([H|T]) :- is_list(T),atom(H),upcase_atom(H,U),downcase_atom(H,U),!,
-   with_indents(false,(write('('), pp_sex(H), print_list_as_sexpression(T), write(')'))).
+   with_indents(false,(write('('), pp_sex(H), write(' '), print_list_as_sexpression(T), write(')'))).
 
 %pp_sex([H,B,C|T]) :- T==[],!,
 %  with_indents(false,(write('('), pp_sex(H), print_list_as_sexpression([B,C]), write(')'))).
@@ -473,17 +491,22 @@ no_src_indents:- option_else(src_indents,TF,true),!,TF=='False'.
 
 pp_sexi_l([H,S]):-H=='[...]', write('['),print_items_list(S),write(' ]').
 pp_sexi_l([H,S]):-H=='{...}', write('{'),print_items_list(S),write(' }').
-pp_sexi_l([H|T]):-write('('), pp_sex(H), print_list_as_sexpression(T), write(')').
+pp_sexi_l(Decl):- '=~'(Decl , (=(H,B))),
+  write('(= '), with_indents(false,write_src(H)), nl, write('  '),
+        with_indents(true,write_src(B)),write(')').
+    
+pp_sexi_l([H,H2]):- write('('), pp_sex(H), write(' '), with_indents(false,print_list_as_sexpression([H2])), write(')').
+pp_sexi_l([H|T]):-write('('), pp_sex(H), write(' '), print_list_as_sexpression(T), write(')').
 
 print_items_list(X):- is_list(X),!,print_list_as_sexpression(X).
 print_items_list(X):- write_src(X).
 
+pp_sexi(Term) :- Term==[],!,write('()').
 pp_sexi(V) :- is_final_write(V),!.
 pp_sexi([H|T]) :- is_list(T),!,pp_sexi_l([H|T]).
 % Compound terms.
 %pp_sex(Term) :- compound(Term), Term =.. [Functor|Args], write('('),format('(~w ',[Functor]), write_args_as_sexpression(Args), write(')').
 %pp_sex(Term) :- Term =.. ['=',H|Args], length(Args,L),L>2, write('(= '),  pp_sex(H), write('\n\t\t'), maplist(pp_sex(2),Args).
-pp_sexi(Term) :- Term==[],!,write('()').
 pp_sexi(Term) :- compound_name_arity(Term,F,0),!,pp_sexi([F]).
 pp_sexi(Term) :- Term =.. [Functor|Args], always_dash_functor(Functor,DFunctor), format('(~w ',[DFunctor]), write_args_as_sexpression(Args), write(')'),!.
 pp_sexi(Term) :- allow_concepts, Term =.. [Functor|Args], format('(EvaluationLink (PredicateNode "~w") (ListLink ',[Functor]), write_args_as_sexpression(Args), write('))'),!.
@@ -554,8 +577,9 @@ write_args_as_sexpression([H|T]) :- write(' '), pp_sex(H), write_args_as_sexpres
 
 % Print the rest of the list.
 print_list_as_sexpression([]).
+print_list_as_sexpression([H]):- pp_sex(H).
 %print_list_as_sexpression([H]):- w_proper_indent(pp_sex(H)),!.
-print_list_as_sexpression([H|T]):- write(' '), pp_sex(H), print_list_as_sexpression(T).
+print_list_as_sexpression([H|T]):- pp_sex(H), write(' '), print_list_as_sexpression(T).
 
 call_sexpr(S):- writeln(call=S).
 %call_sexpr(Space,Expr,Result):-

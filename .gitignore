@@ -11,6 +11,7 @@ das_precomputed/*.pl
 precomputed_files/**/*.pl
 ftp.flybase.net/**
 .?*~/
+.bash_history
 *.bak
 ImplicitQuantification.tex
 data/ftp.flybase.net/

@@ -22,7 +22,7 @@ is_self_eval_l_fa('quote',_).
 is_self_eval_l_fa('{...}',_).
 is_self_eval_l_fa('[...]',_).
 
-self_eval(X):- fake_notrace(self_eval0(X)).
+self_eval(X):- notrace(self_eval0(X)).
 
 :-  set_prolog_flag(access_level,system).
 hyde(F/A):- functor(P,F,A), redefine_system_predicate(P),'$hide'(F/A), '$iso'(F/A).
@@ -75,7 +75,7 @@ eval_args(Eq,RetTyp e,Depth,Self,X,Y):-
 %eval(Eq,RetType,Depth,_Self,X,_Y):- forall(between(6,Depth,_),write(' ')),writeqln(eval(Eq,RetType,X)),fail.
 eval(Depth,Self,X,Y):- eval('=',_RetType,Depth,Self,X,Y).
 
-eval(Eq,RetType,_Dpth,_Slf,X,Y):- var(X),nonvar(Y),!,X=Y.
+%eval(_Eq,_RetType,_Dpth,_Slf,X,Y):- var(X),nonvar(Y),!,X=Y.
 eval(_Eq,_RetType,_Dpth,_Slf,X,Y):- notrace(self_eval(X)),!,Y=X.
 eval(Eq,RetType,Depth,Self,X,Y):- notrace(nonvar(Y)), var(RetType), 
    get_type(Depth,Self,Y,RetType), !,
@@ -388,7 +388,7 @@ equal_enough(R,V):- copy_term(R,RR),copy_term(V,VV),equal_enouf(R,V),!,R=@=RR,V=
 %s_empty(X):- var(X),!.
 s_empty(X):- var(X),!,fail.
 is_empty('Empty').
-is_empty([]).
+is_empty([]). %
 is_empty([X]):-!,is_empty(X).
 has_let_star(Y):- sub_var('let*',Y).
 
@@ -399,6 +399,7 @@ equal_enough_for_test2(X,Y):- equal_enough(X,Y).
 
 equal_enouf(R,V):- is_ftVar(R), is_ftVar(V), R=V,!.
 equal_enouf(X,Y):- is_empty(X),!,is_empty(Y).
+equal_enouf(X,Y):- symbol(X),symbol(Y),atom_concat('&',_,X),atom_concat('Grounding',_,Y).
 equal_enouf(R,V):- R=@=V, R=V, !.
 equal_enouf(_,V):- V=@='...',!.
 equal_enouf(L,C):- is_list(L),into_list_args(C,CC),!,equal_enouf_l(CC,L).
@@ -596,9 +597,6 @@ eval_20(Eq,RetType,Depth,Self,PredDecl,Res):-
   nb_setarg(1,Do_more_defs,false),
  (DET==true -> ! ; true).
 
-eval_21(_Eq,_RetType,_Depth,_Self,['fb-member',Res,List],TF):-!, as_tf(fb_member(Res,List),TF).
-eval_21(_Eq,_RetType,_Depth,_Self,['fb-member',List],Res):-!, fb_member(Res,List).
-
 
 eval_21(Eq,RetType,Depth,Self,['CollapseCardinality',List],Len):-!,
  bagof_eval(Eq,RetType,Depth,Self,List,Res),
@@ -607,12 +605,10 @@ eval_21(Eq,RetType,Depth,Self,['CollapseCardinality',List],Len):-!,
 eval_21(_Eq,_RetType,_Depth,_Self,['TupleCount', [N]],N):- number(N),!.
 
 
-*/
 eval_21(Eq,RetType,Depth,Self,['TupleCount',List],Len):-!,
  bagof_eval(Eq,RetType,Depth,Self,List,Res),
  length(Res,Len).
-eval_21(_Eq,_RetType,_Depth,_Self,['tuple-count',List],Len):-!,
- length(List,Len).
+*/
 
 %[superpose,[1,2,3]]
 eval_20(Eq,RetType,Depth,Self,['superpose',List],Res):- !,

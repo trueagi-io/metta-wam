@@ -1,9 +1,31 @@
 
+typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_arguments(Cmpd,Type,[List|_]),is_list(List).
+is_syspred(H,Len,Pred):- notrace(is_syspred0(H,Len,Pred)).
+is_syspred0(H,_Ln,_Prd):- \+ atom(H),!,fail.
+is_syspred0(H,_Ln,_Prd):- upcase_atom(H,U),downcase_atom(H,U),!,fail.
+is_syspred0(H,Len,Pred):- current_predicate(H/Len),!,Pred=H.
+is_syspred0(H,Len,Pred):- atom_concat(Mid,'!',H), H\==Mid, is_syspred0(Mid,Len,Pred),!.
+is_syspred0(H,Len,Pred):- atom_concat(Mid,'-p',H), H\==Mid, is_syspred0(Mid,Len,Pred),!.
+is_syspred0(H,Len,Pred):- atom_concat(Mid,'-fn',H), H\==Mid, is_syspred0(Mid,Len,Pred),!.
+is_syspred0(H,Len,Pred):- into_underscores(H,Mid), H\==Mid, is_syspred0(Mid,Len,Pred),!.
+%is_function(F):- atom(F).
+is_metta_data_functor(_Eq,_Othr,H):- trace, clause(is_data_functor(H),_).
+is_metta_data_functor(Eq,Other,H):- H\=='Right', H\=='Something',
+ % metta_type(Other,H,_), % fail,
+  \+ get_metta_atom(Eq,Other,[H|_]),
+  \+ metta_defn(Eq,Other,[H|_],_),
+  \+ is_metta_builtin(H),
+  \+ is_comp_op(H,_),
+  \+ is_math_op(H,_,_).
 
 
-mnotrace(G):- once(G).
+:- if( \+ current_predicate(mnotrace/1) ).
+ mnotrace(G):- once(G).
+:- endif.
 
-is_decl_type(ST):- metta_type(_,_,Type),sub_sterm(T,Type),T=@=ST, \+ nontype(ST).
+'Number':attr_unify_hook(_,NewValue):- numeric(NewValue).
+
+%is_decl_type(ST):- metta_type(_,_,[_|Type]),is_list(Type),sub_sterm(T,Type),nonvar(T),T=@=ST, \+ nontype(ST).
 is_decl_type([ST|_]):- !, atom(ST),is_decl_type_l(ST).
 is_decl_type(ST):- \+ atom(ST),!,fail.
 is_decl_type('%Undefined%').  is_decl_type('Number').
@@ -31,7 +53,8 @@ needs_eval(EvalMe):- is_list(EvalMe),!.
 
 args_violation(_Dpth,_Slf,Args,List):- ( \+ iz_conz(Args); \+ iz_conz(List)), !, fail.
 args_violation(Depth,Self,[A|Args],[L|List]):- once(arg_violation(Depth,Self,A,L) ; args_violation(Depth,Self,Args,List)).
-arg_violation(Depth,Self,A,L):- \+ (get_type0(Depth,Self,A,T), \+ type_violation(T,L)).
+arg_violation(Depth,Self,A,L):- fail, 
+   \+ (get_type0(Depth,Self,A,T), \+ type_violation(T,L)).
 %arg_violation(Depth,Self,A,_):- get_type(Depth,Self,A,_),!.
 
 type_violation(T,L):- \+ \+ (is_nonspecific_type(T);is_nonspecific_type(L)),!,fail.
@@ -59,11 +82,26 @@ is_nonspecific_type('Atom').
 is_nonspecific_type('Any').
 
 %get_type(Depth,Self,Val,Type):- get_type01(Depth,Self,Val,Type).
-get_type(Depth,Self,Val,TypeO):- no_repeats(TypeT,(get_type9(Depth,Self,Val,Type),TypeT=Type)),Type=TypeO.
+get_type(_Depth,Self,Val,Type):- Val = [Curry, Op| T],T==[],symbol(Curry),
+	  metta_type(Self,Curry,['->',OpArgTypes, ArgTypesNew]),
+	  metta_type(Self,Op,OpArgTypes),
+	  Type = ArgTypesNew,!.
+get_type(Depth,Self,Val,TypeO):-
+   no_repeats(TypeT,(get_type9(Depth,Self,Val,Type),TypeT=Type)),Type=TypeO.
+
+
+% (: curry  (->  (-> $a $b $c)  (-> $a  (-> $b $c))))
+get_type9(Depth,Self,Val,Type):- Val = [ [Curry, Op| T], Arg1 ],T==[],symbol(Curry),
+	  metta_type(Self,Curry,['->',OpArgTypes, ArgTypesNew]),
+	  metta_type(Self,Op,OpArgTypes),
+	  get_type(Depth,Self,Arg1,Arg1Type),
+	  ArgTypesNew = ['->',Arg1Type,Type],!.
 
 get_type9(_Dpth,_Slf,Expr,'hyperon::space::DynSpace'):- is_dynaspace(Expr),!.
+%get_type9(_Depth,Self,Val,Type):- symbol(Val),metta_type(Self,Val,Type).
 get_type9(Depth,Self,Val,Type):- get_type0(Depth,Self,Val,Type).
 get_type9(Depth,Self,Val,Type):- get_type1(Depth,Self,Val,Type), ground(Type),Type\==[], Type\==Val,!.
+%get_type9(_Depth,_Self,Val,Type):- symbol(Val),atom_contains(Val,' '),!,Type='String'.
 get_type9(Depth,Self,Val,Type):- get_type2(Depth,Self,Val,Type), ( is_list(Type)->! ; true).
 get_type9(_Dpth,_Slf,_Vl,[]).
 
@@ -91,31 +129,23 @@ get_type0(Depth,Self,Expr,['StateMonad',Type]):-  notrace( is_valid_nb_state(Exp
 get_type0(Depth,Self,Val,Type):- \+ compound(Val),!,get_type01(Depth,Self,Val,Type),!.
 get_type0(Depth,Self,Val,Type):- get_type03(Depth,Self,Val,Type),!.
 
-typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_arguments(Cmpd,Type,[List|_]),is_list(List).
-/*
-(: Left
-  (-> %Undefined% Either))
-
-(: (Left %Undefined%) Either)
-
-*/
 get_type01(_Dpth,_Slf,Var,'%Undefined%'):- var(Var),!.
 get_type01(_Dpth,_Slf, [],'%Undefined%'):- !.
+get_type01(_Dpth,Self,Op,Type):- metta_type(Self,Op,Type),!.
 get_type01(_Dpth,_Slf,Val,'Number'):- number(Val).
 get_type01(_Dpth,_Slf,Val,'Integer'):- integer(Val).
 get_type01(_Dpth,_Slf,Val,'Decimal'):- float(Val).
 get_type01(_Dpth,_Slf,Val,'Rational'):- rational(Val).
 get_type01(_Dpth,_Slf,Val,'Bool'):- (Val=='False';Val=='True'),!.
-get_type01(_Dpth,_Slf,Val,Type):- string(Val),!,(Type='String';Type='Symbol').
+%get_type01(_Dpth,_Slf,Val,Type):- string(Val),!,(Type='String';Type='Symbol').
 get_type01(_Dpth,_Slf,Expr,_):-  \+ atom(Expr),!,fail.
-get_type01(_Dpth,Self,Op,Type):- metta_type(Self,Op,Type).
 get_type01(_Dpth,_Slf,Val,Type):- is_decl_type(Val),(Type=Val;Type='Type').
 get_type01(_Dpth,_Slf,Val,Type):- atomic_list_concat([Type,_|_],'@',Val).
 get_type01(_Dpth,_Slf,Val,Type):- atomic_list_concat([Type,_|_],':',Val).
 get_type01(Depth,Self,Op,Type):- Depth2 is Depth-1, eval_args(Depth2,Self,Op,Val),Op\=@=Val,!, get_type(Depth2,Self,Val,Type).
 %get_type01(_Dpth,_Slf,Expr,'hyperon::space::DynSpace'):- \+ is_list(Expr), callable(Expr), is_space_type(Expr,_).
-get_type01(_Dpth,_Slf,_Val,'String').
-get_type01(_Dpth,_Slf,_Val,'Symbol').
+%get_type01(_Dpth,_Slf,_Val,'String').
+%get_type01(_Dpth,_Slf,_Val,'Symbol').
 
 
 
@@ -153,7 +183,7 @@ get_type03(Depth,Self,Expr,Type):-  Depth2 is Depth-1,
 
 get_type03(_Dpth,_Slf,Val,Type):- is_decl_type(Val),(Type=Val;Type='Type').
 
-get_type03(_Dpth,_Slf,Expr,'Expression'):- is_list(Expr),!.
+%get_type03(_Dpth,_Slf,Expr,'Expression'):- is_list(Expr),!.
 
 get_type03(Depth,Self,List,Types):- List\==[], is_list(List),
   Depth2 is Depth-1,maplist(get_type(Depth2,Self),List,Types).
@@ -202,7 +232,7 @@ get_type1(Depth,Self,Expr,Type):-Depth2 is Depth-1,
 get_type1(_Dpth,_Slf,Val,'String'):- string(Val),!.
 get_type1(_Dpth,_Slf,Val,Type):- is_decl_type(Val),Type=Val.
 get_type1(_Dpth,_Slf,Val,'Bool'):- (Val=='False';Val=='True'),!.
-get_type1(_Dpth,_Slf,Val,'Symbol'):- symbol(Val).
+% get_type1(_Dpth,_Slf,Val,'Symbol'):- symbol(Val).
 %get_type1(Depth,Self,[T|List],['List',Type]):- Depth2 is Depth-1,  is_list(List),get_type1(Depth2,Self,T,Type),!,
 %  forall((member(Ele,List),nonvar(Ele)),get_type1(Depth2,Self,Ele,Type)),!.
 %get_type1(Depth,_Slf,Cmpd,Type):- compound(Cmpd), functor(Cmpd,Type,1),!.
@@ -212,27 +242,32 @@ get_type1(_Dpth,_Slf,_,'%Undefined%'):- fail.
 
 
 
+
 as_prolog(_Dpth,_Slf,I,O):- \+ iz_conz(I),!,I=O.
 as_prolog(Depth,Self,[H|T],O):- H=='::',!,maplist(as_prolog(Depth,Self),T,L),!, O = L.
 as_prolog(Depth,Self,[H|T],O):- H=='@',!,maplist(as_prolog(Depth,Self),T,L),!, O =.. L.
-as_prolog(Depth,Self,[H|T],[HH|TT]):- as_prolog(Depth,Self,H,HH),as_prolog(Depth,Self,T,TT).
+as_prolog(Depth,Self,I,O):- is_list(I),!,maplist(as_prolog(Depth,Self),I,O).
+as_prolog(_Dpth,_Slf,I,I).
 
 
-
-adjust_args(_Dpth,Self,F,X,X):- (is_special_op(Self,F); \+ iz_conz(X)),!.
-adjust_args(Depth,Self,Op,X,Y):-
-  get_operator_typedef(Self,Op,Params,RetType),
-  try_adjust_arg_types(RetType,Depth,Self,Params,X,Y).
-
-try_adjust_arg_types(RetType,Depth,Self,Params,X,Y):-
-  %s_prolog(Depth,Self,X,M),
-   X= M,
+try_adjust_arg_types(_Eq,RetType,Depth,Self,Params,X,Y):-
+  as_prolog(Depth,Self,X,M),
   args_conform(Depth,Self,M,Params),!,
   set_type(Depth,Self,Y,RetType),
   into_typed_args(Depth,Self,Params,M,Y).
-%adjust_args(Depth,Self,_,X,Y):- is_list(X), !, maplist(eval_args(Depth,Self),X,Y).
-%adjust_args(Depth,Self,_,X,Y):- is_list(X), !, maplist(as_prolog(Depth,Self),X,Y),!.
-adjust_args(Depth,Self,_,X,Y):- as_prolog(Depth,Self,X,Y).
+%adjust_args(Eq,RetType,Depth,Self,_,X,Y):- is_list(X), !, maplist(eval_args(Depth,Self),X,Y).
+%adjust_args(Eq,RetType,Depth,Self,_,X,Y):- is_list(X), !, maplist(as_prolog(Depth,Self),X,Y),!.
+
+adjust_args(_Eq,_RetType,_Dpth,Self,F,X,Y):- (X==[] ; is_special_op(Self,F); \+ iz_conz(X)),!,Y=X.
+adjust_args(Eq,RetType,Depth,Self,Op,X,Y):-
+    adjust_argsA(Eq,RetType,Depth,Self,Op,X,Y)*->true; adjust_argsB(Eq,RetType,Depth,Self,Op,X,Y).
+
+adjust_argsA(Eq,RetType,Depth,Self,Op,X,Y):-
+  %trace,
+  get_operator_typedef(Self,Op,Params,RetType),
+  try_adjust_arg_types(Eq,RetType,Depth,Self,Params,X,Y).
+%adjust_args(_Eq,_RetType,Depth,Self,_,X,Y):- as_prolog(Depth,Self,X,Y).
+adjust_argsB(_Eq,_RetType,_Depth,_Self,_,X,Y):- X = Y.
 
 into_typed_args(_Dpth,_Slf,T,M,Y):- (\+ iz_conz(T); \+ iz_conz(M)),!, M=Y.
 into_typed_args(Depth,Self,[T|TT],[M|MM],[Y|YY]):-
@@ -284,16 +319,19 @@ is_seo_f(N):- number(N),!.
 
 %is_user_defined_goal(Self,[H|_]):- is_user_defined_head(Eq,Self,H).
 
+is_user_defined_head(Other,H):- is_user_defined_head(=,Other,H).
 is_user_defined_head(Eq,Other,H):- mnotrace(is_user_defined_head0(Eq,Other,H)).
 is_user_defined_head0(Eq,Other,[H|_]):- !, nonvar(H),!, is_user_defined_head_f(Eq,Other,H).
 is_user_defined_head0(Eq,Other,H):- callable(H),!,functor(H,F,_), is_user_defined_head_f(Eq,Other,F).
 is_user_defined_head0(Eq,Other,H):- is_user_defined_head_f(Eq,Other,H).
 
+is_user_defined_head_f(Other,H):- is_user_defined_head_f(=,Other,H).
 is_user_defined_head_f(Eq,Other,H):- is_user_defined_head_f1(Eq,Other,H).
 is_user_defined_head_f(Eq,Other,H):- is_user_defined_head_f1(Eq,Other,[H|_]).
 
 %is_user_defined_head_f1(Eq,Other,H):- metta_type(Other,H,_).
 %s_user_defined_head_f1(Other,H):- get_metta_atom(Eq,Other,[H|_]).
+is_user_defined_head_f1(Other,H):- is_user_defined_head_f1(=,Other,H).
 is_user_defined_head_f1(Eq,Other,H):- metta_defn(Eq,Other,[H|_],_).
 %is_user_defined_head_f(Eq,_,H):- is_metta_builtin(H).
 
@@ -306,21 +344,6 @@ is_special_op(Self,Op):- get_operator_typedef(Self,Op,Params,_RetType),
    maplist(is_non_eval_kind,Params).
 is_special_op(_Slf,Op):- is_special_builtin(Op).
 
-is_syspred(H,Len,Pred):- notrace(is_syspred0(H,Len,Pred)).
-is_syspred0(H,_Ln,_Prd):- \+ atom(H),!,fail.
-is_syspred0(H,_Ln,_Prd):- upcase_atom(H,U),downcase_atom(H,U),!,fail.
-is_syspred0(H,Len,Pred):- current_predicate(H/Len),!,Pred=H.
-is_syspred0(H,Len,Pred):- atom_concat(Mid,'!',H), H\==Mid, is_syspred0(Mid,Len,Pred),!.
-is_syspred0(H,Len,Pred):- into_underscores(H,Mid), H\==Mid, is_syspred0(Mid,Len,Pred),!.
-%is_function(F):- atom(F).
-is_metta_data_functor(Eq,_Othr,H):- clause(is_data_functor(H),_).
-is_metta_data_functor(Eq,Other,H):- H\=='Right', H\=='Something',
- % metta_type(Other,H,_), % fail,
-  \+ get_metta_atom(Eq,Other,[H|_]),
-  \+ metta_defn(Eq,Other,[H|_],_),
-  \+ is_metta_builtin(H),
-  \+ is_comp_op(H,_),
-  \+ is_math_op(H,_,_).
 
 
 get_operator_typedef(Self,Op,Params,RetType):-
@@ -379,7 +402,6 @@ is_metta_builtin('>').
 is_metta_builtin('all').
 is_metta_builtin('import!').
 is_metta_builtin('pragma!').
-
 
 % Comparison Operators in Prolog
 % is_comp_op('=', 2).          % Unification
@@ -1153,6 +1175,4 @@ longest_string_acc([H|T], Acc, Longest) :-
     length(Acc, LenAcc),
     (LenH > LenAcc -> longest_string_acc(T, H, Longest); longest_string_acc(T, Acc, Longest)).
 %
-
-
 
