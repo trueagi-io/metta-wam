@@ -75,10 +75,10 @@ pfcStateTerm(F/A):-
 :- if( \+  current_prolog_flag(xref,true)).
 :- current_prolog_flag(pfc_shared_module,BaseKB),
    must(retract(BaseKB:'wusing_pfc'(M,CM,SM,pfc_rt))),
-   nop(wdmsg(BaseKB:'chusing_pfc'(M,CM,SM,pfc_rt))),
+   nop(fbugio(BaseKB:'chusing_pfc'(M,CM,SM,pfc_rt))),
    (M==SM -> 
      (nop(maybe_ensure_abox(SM)),nop((M:ain(genlMt(SM,BaseKB)))));
-     nop(wdmsg(BaseKB:'lusing_pfc'(M,CM,SM,pfc_rt)))),
+     nop(fbugio(BaseKB:'lusing_pfc'(M,CM,SM,pfc_rt)))),
    assert(BaseKB:'$using_pfc'(M,CM,SM,pfc_rt)),
    asserta(SM:'$does_use_pfc_mod'(M,CM,SM,pfc_rt)).
    %backtrace(200).
@@ -120,11 +120,11 @@ clause_u(H,B):- clause(H,B).
 
 mpred_ain(P):- arc_assert(P).
 arc_assert(P:-True):- True==true,!,arc_assert(P).
-arc_assert(P):-  % wdmsg(arc_assert(P)), 
-  must(current_why_UU(UU)),nop(wdmsg(pfcAdd(P, UU))),!, pfcAdd(P, UU),asserta_if_new(P).
+arc_assert(P):-  % fbugio(arc_assert(P)), 
+  must(current_why_UU(UU)),nop(fbugio(pfcAdd(P, UU))),!, pfcAdd(P, UU),asserta_if_new(P).
 
-pfc_retract(P):- wdmsg(pfc_retract(P)),pfcRetract(P).
-pfc_retractall(P):- wdmsg(pfc_retractall(P)),pfcRetractAll(P).
+pfc_retract(P):- fbugio(pfc_retract(P)),pfcRetract(P).
+pfc_retractall(P):- fbugio(pfc_retractall(P)),pfcRetractAll(P).
 
 :- dynamic((~)/1).
 ~(_):- fail.
@@ -135,7 +135,7 @@ add(X):- pfcAdd(X).
 
 
 mpred_test(call_u(X)):- nonvar(X),!,pfcCallSystem(X),pfcWhy(X).
-mpred_test(\+ call_u(X)):- nonvar(X),!, (call_u(X)-> (dmsg(warn(failed(mpred_test(\+ call_u(X))))),mpred_test_why(X)); mpred_test_why(~(X))).
+mpred_test(\+ call_u(X)):- nonvar(X),!, (call_u(X)-> (fbugio(warn(failed(mpred_test(\+ call_u(X))))),mpred_test_why(X)); mpred_test_why(~(X))).
 mpred_test(X):- (mpred_test_why(X) *-> true ; mpred_test_why(~(X))).
 
 :- thread_local t_l:shown_child/1.
@@ -210,7 +210,7 @@ call_in_thread_code(M,G,Why,TN):-
  with_only_current_why(Why,
    catch(( M:G-> nop(dmsg_pretty(suceeded(exit,TN)));dmsg_pretty(failed(exit,TN))),E, dmsg_pretty(error(E-->TN)))).
 
-:- call_in_thread(wdmsg(call_in_thread)).
+%:- call_in_thread(fbugio(call_in_thread)).
 % why_dmsg(Why,Msg):- with_current_why(Why,dmsg_pretty(Msg)).
 
 %   File   : pfc
@@ -1044,7 +1044,7 @@ fcpt(Fact,F) :-
   pfcGetTriggerQuick('$pt$'(F,Body)),
   pfcTraceMsg('      Found positive trigger(+): ~p~n       body: ~p~n',
 		[F,Body]),
-  pfcGetSupport('$pt$'(F,Body),Support), %wdmsg(pfcGetSupport('$pt$'(F,Body),Support)),
+  pfcGetSupport('$pt$'(F,Body),Support), %fbugio(pfcGetSupport('$pt$'(F,Body),Support)),
   with_current_why(Support,with_current_why(Fact,fcEvalLHS(Body,(Fact,'$pt$'(F,Body))))),
   fail.
 
@@ -2379,7 +2379,7 @@ maybe_more_c(C):- t_l:shown_why((C)),!.
 maybe_more_c(C):- assert(t_l:shown_why(more(C))),assert(t_l:shown_why((C))), 
  locally(t_l:shown_why(no_recurse),
   locally(t_l:shown_why((C)),locally(t_l:shown_why(more(C)),
-   ignore(catch(pfcWhy2(C,1.1),E,wdmsg(E)))))),!.
+   ignore(catch(pfcWhy2(C,1.1),E,fbugio(E)))))),!.
 
 pfcShowSingleJust_C(C):-is_file_ref(C),!.
 pfcShowSingleJust_C(C):-find_mfl(C,MFL),assert(t_l:shown_why(MFL)),!,pfcShowSingleJust_MFL(MFL).
@@ -3349,7 +3349,7 @@ which_missing_argnum(Q,_F,A,N):- between(A,1,N),get_assertion_head_arg(N,Q,Was),
 system:term_expansion(I,S0,O,S1):- %use_pfc_term_expansion, % trace,
  ( \+ current_prolog_flag(pfc_term_expansion,false),
   ( \+ \+ (source_location(File,_), atom_concat(_,'.pfc.pl',File)) ; current_prolog_flag(pfc_term_expansion,true))) ->
- prolog_load_context('term',T)->(T==I->pfc_term_expansion(I,O)-> I\=@=O->S0=S1, wdmsg(I-->O)).
+ prolog_load_context('term',T)->(T==I->pfc_term_expansion(I,O)-> I\=@=O->S0=S1, fbugio(I-->O)).
 
 
 % :- endif.

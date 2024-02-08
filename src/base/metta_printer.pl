@@ -89,6 +89,7 @@ pp_sex(V):- pp_sexi(V),!.
 % dealing with different types of values, whether they are lists, atoms, numbers, strings, compounds, or symbols.
 pp_sexi(V):- is_final_write(V),!.
 pp_sexi(V):- allow_concepts,!,with_concepts('False',pp_sex(V)),flush_output.
+pp_sexi('Empty') :- !.
 pp_sexi('') :- !, writeq('').
 % Handling more cases for 'pp_sex', when the value is a number, a string, a symbol, or a compound.
 %pp_sex('') :- format('(EmptyNode null)',[]).
@@ -104,7 +105,7 @@ pp_sexi(V) :- (number(V) ; is_dict(V)), !, print_concept('ValueAtom',V).
 %pp_sex(''):- !, write('()').
 
 % Continuing with 'pp_sex', 'write_mobj', and related rules,
-% handling different cases based on the value’s type and structure, and performing the appropriate writing action.
+% handling different cases based on the valueï¿½s type and structure, and performing the appropriate writing action.
 % Lists are printed with parentheses.
 pp_sexi(V) :- \+ compound(V), !, format('~p',[V]).
 pp_sexi(V):-  \+ is_list(V),!, pp_sex_c(V).
