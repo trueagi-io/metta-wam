@@ -574,7 +574,8 @@ else
 
     [[ "$wants_print_help" == "1" ]] && { print_help; [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
     [[ -n "${EXIT_SCRIPT+x}" ]] && { [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
-    (DEBUG echo "$METTA_CMD"
+    #DEBUG echo "$METTA_CMD"
+    (
      eval "$METTA_CMD"
     echo $? > "$TEMP_EXIT_CODE_FILE" )
     #rm -f "$TEE_FILE"

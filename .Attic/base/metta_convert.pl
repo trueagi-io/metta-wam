@@ -242,9 +242,9 @@ p2m(OC,NC, OO) :-
 p2m(_OC,!, ['set-det']).  % Translate the cut operation directly.
 p2m(_OC,!, '!').  % Translate the cut operation directly.
 p2m(_OC,false, 'False').
-p2m([progn|_], (!,fail), [empty]).  % Translate Prolog’s fail to MeTTa’s False.
-% p2m(_OC,fail, 'False').  % Translate Prolog’s fail to MeTTa’s False.
-p2m(_OC,true, 'True').  % Translate Prolog’s true to MeTTa’s True.
+p2m([progn|_], (!,fail), [empty]).  % Translate Prologï¿½s fail to MeTTaï¿½s False.
+% p2m(_OC,fail, 'False').  % Translate Prologï¿½s fail to MeTTaï¿½s False.
+p2m(_OC,true, 'True').  % Translate Prologï¿½s true to MeTTaï¿½s True.
 % p2m(_OC,prolog, meTTa).  % Translate the atom prolog to meTTa.
 
 p2m(_OC,'[|]','Cons').
@@ -342,7 +342,7 @@ print_to_metta :-
  % with_pwd(
   %   '/opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta/examples/gpt2-like/language_models/',
  %Filt = 'examples/gpt2-like/language_models/*.pl',
- Filt = '/opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta/examples/performance/clasic_unification/*.pl',
+ Filt = '/opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta/examples/performance/nondet_unify/*.pl',
 
    % Finds all Prolog files in the specified directory.
    print_to_metta(Filt),  % Processes each found file.
