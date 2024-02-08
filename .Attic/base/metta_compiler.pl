@@ -306,7 +306,9 @@ optimize_body_singles(Head,Body,BodyNewest):-
    optimize_body((Head:-Body),Body,BodyNew),
    (Body=@=BodyNew 
     ->  BodyNew=BodyNewest
-     ; optimize_body_singles(Head,BodyNew,BodyNewest)).
+     ; 
+      (in_cmt(print_pl_source(( Head :- Body))),
+        optimize_body_singles(Head,BodyNew,BodyNewest))).
 
 
 must_optimize_body(A,B,C):- optimize_body(A,B,C),!.
@@ -358,7 +360,7 @@ optimize_u_assign(HB,MeTTaEvalP, R, Code):- \+ is_ftVar(MeTTaEvalP),
 % optimize_u_assign(_,_,_,_):- !,fail.
 optimize_u_assign((H:-_),[Pred| ArgsL], R, Code):- var(R), atom(Pred), ok_to_append(Pred),   
   append([Pred| ArgsL],[R], PrednArgs),Code=..PrednArgs,
-  (H=..[Pred|_] -> set_option_value('tabling',true) ; current_predicate(_,Code)),!.
+  (H=..[Pred|_] -> nop(set_option_value('tabling',true)) ; current_predicate(_,Code)),!.
 
 optimize_u_assign(_,[Pred| ArgsL], R, u_assign([Pred| ArgsL],R)).
 
@@ -547,7 +549,7 @@ f2p_assign(HeadIs,ValueResult,Value,Converted):-
 
 compile_flow_control(HeadIs,RetResult,Convert,Converted) :- 
   Convert =~ ['println!',Value],!,
-  Converted = (ValueCode,eval_args('println!'(ValueResult), RetResult)),
+  Converted = (ValueCode,eval_args(['println!',ValueResult], RetResult)),
   f2p(HeadIs,ValueResult,Value,ValueCode).
   
  

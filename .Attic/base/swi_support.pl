@@ -6,6 +6,7 @@
 :- abolish((system:'$exported_op'/3)).
 :- assert((system:'$exported_op'(_,_,_):- fail)).
 
+fbug(_):- is_compatio,!.
 fbug(P) :- format("~N"), current_predicate(write_src/1),with_output_to(user_error,in_cmt(pp_fb(P))),!.
 fbug(N=V) :- nonvar(N), !, fbdebug1(N:-V).
 fbug(V) :- compound(V),functor(V,F,_A),!,fbdebug1(F:-V).
