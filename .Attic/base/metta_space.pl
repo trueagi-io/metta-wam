@@ -428,121 +428,6 @@ write_src_nl(Src):- format('~N'),write_src(Src),format('~N').
 % is a quine
 'AtomDef'(X,['AtomDef',X]).
 
-% ===============================
-%       PRINTERS
-% ===============================
-
-
-pp_sax(V) :- is_final_write(V),!.
-pp_sax(S) :-  \+ allow_concepts,!, write_src(S).
-pp_sax(S) :- is_englishy(S),!,print_concept("StringValue",S).
-pp_sax(S) :- symbol_length(S,1),symbol_string(S,SS),!,print_concept("StringValue",SS).
-pp_sax(S) :- is_an_arg_type(S,T),!,print_concept("TypeNode",T).
-pp_sax(S) :- has_type(S,T),!,format('(~wValueNode "~w")',[T,S]).
-pp_sax(S) :- sub_atom(S,0,4,Aft,FB),flybase_identifier(FB,Type),!,(Aft>0->format('(~wValueNode "~w")',[Type,S]);format('(TypeNode "~w")',[Type])).
-pp_sax(S) :- print_concept("ConceptNode",S).
-
-print_concept( CType,V):- allow_concepts, !, write("("),write(CType),write(" "),ignore(with_concepts(false,write_src(V))),write(")").
-print_concept(_CType,V):- ignore(write_src(V)).
-write_val(V):- number(V),!, write_src(V).
-write_val(V):- compound(V),!, write_src(V).
-write_val(V):- write('"'),write(V),write('"').
-
-% Base case: atoms are printed as-is.
-pp_as(V) :- \+ \+ pp_sex(V),flush_output.
-pp_sex(V) :- is_final_write(V),!.
-pp_sex('!'(V)) :- write('!'),!,pp_sex(V).
-pp_sex('exec'(V)) :- write('!'),!,pp_sex(V).
-%pp_sex('') :- format('(EmptyNode null)',[]).
-pp_sex('') :- !, format('""',[]).
-pp_sex([]):-  !, write('()').
-pp_sex('='(N,V)):- allow_concepts, !, format("~N;; ~w == ~n",[N]),!,pp_sex(V).
-pp_sex(V) :- (number(V) ; is_dict(V)), !, print_concept('ValueAtom',V).
-%pp_sex(V) :- (symbol(V),symbol_number(V,N)), !, print_concept('ValueAtom',N).
-pp_sex(S) :- symbol(S), always_dash_functor(S,D), pp_sax(D),!.
-pp_sex(S) :- string(S),!, print_concept('StringValue',S).
-% Lists are printed with parentheses.
-pp_sex(V) :- \+ compound(V), !, format('~p',[V]).
-pp_sex(V) :- V = '$VAR'(_), !, format('$~p',[V]).
-pp_sex('!'(V)) :- write('!'),!,pp_sex(V).
-pp_sex(listOf(S,_)) :- !,pp_sex(listOf(S)).
-pp_sex(listOf(S)) :- !,format('(ListValue ~@)',[pp_sex(S)]).
-
-pp_sex([H|T]) :- \+ no_src_indents, atom(H),member(H,['If','cond','let','let*']),!,
-  with_indents(true,w_proper_indent(2,w_in_p(pp_sexi([H|T])))).
-
-pp_sex([H|T]) :- is_list(T), length(T,Args),Args =< 2, fail,
-   wots(SS,((with_indents(false,(write('('), pp_sex(H), write(' '), print_list_as_sexpression(T), write(')')))))),
-   ((atom_length(SS,Len),Len < 20) ->write(SS);
-      with_indents(true,w_proper_indent(2,w_in_p(pp_sexi([H|T]))))),!.
-/*
-
-pp_sex([H|T]) :- is_list(T),atom(H),upcase_atom(H,U),downcase_atom(H,U),!,
-   with_indents(false,(write('('), pp_sex(H), write(' '), print_list_as_sexpression(T), write(')'))).
-
-%pp_sex([H,B,C|T]) :- T==[],!,
-%  with_indents(false,(write('('), pp_sex(H), print_list_as_sexpression([B,C]), write(')'))).
-*/
-pp_sex(V) :- no_src_indents,!,pp_sexi(V).
-
-pp_sex(V) :- w_proper_indent(2,w_in_p(pp_sexi(V))).
-
-no_src_indents:- option_else(src_indents,TF,true),!,TF=='False'.
-
-pp_sexi_l([H,S]):-H=='[...]', write('['),print_items_list(S),write(' ]').
-pp_sexi_l([H,S]):-H=='{...}', write('{'),print_items_list(S),write(' }').
-pp_sexi_l(Decl):- '=~'(Decl , (=(H,B))),
-  write('(= '), with_indents(false,write_src(H)), nl, write('  '),
-        with_indents(true,write_src(B)),write(')').
-    
-pp_sexi_l([H,H2]):- write('('), pp_sex(H), write(' '), with_indents(false,print_list_as_sexpression([H2])), write(')').
-pp_sexi_l([H|T]):-write('('), pp_sex(H), write(' '), print_list_as_sexpression(T), write(')').
-
-print_items_list(X):- is_list(X),!,print_list_as_sexpression(X).
-print_items_list(X):- write_src(X).
-
-pp_sexi(Term) :- Term==[],!,write('()').
-pp_sexi(V) :- is_final_write(V),!.
-pp_sexi([H|T]) :- is_list(T),!,pp_sexi_l([H|T]).
-% Compound terms.
-%pp_sex(Term) :- compound(Term), Term =.. [Functor|Args], write('('),format('(~w ',[Functor]), write_args_as_sexpression(Args), write(')').
-%pp_sex(Term) :- Term =.. ['=',H|Args], length(Args,L),L>2, write('(= '),  pp_sex(H), write('\n\t\t'), maplist(pp_sex(2),Args).
-pp_sexi(Term) :- compound_name_arity(Term,F,0),!,pp_sexi([F]).
-pp_sexi(Term) :- Term =.. [Functor|Args], always_dash_functor(Functor,DFunctor), format('(~w ',[DFunctor]), write_args_as_sexpression(Args), write(')'),!.
-pp_sexi(Term) :- allow_concepts, Term =.. [Functor|Args], format('(EvaluationLink (PredicateNode "~w") (ListLink ',[Functor]), write_args_as_sexpression(Args), write('))'),!.
-pp_sexi(Term) :- Term =.. [Functor|Args],
-   always_dash_functor(Functor,DFunctor), format('(~w ',[DFunctor]), write_args_as_sexpression(Args), write(')'),!.
-
-pp_sex(2,Result):- write('\t\t'),pp_sex(Result).
-
-
-current_column(Column) :- current_output(Stream), line_position(Stream, Column),!.
-current_column(Column) :- stream_property(current_output, position(Position)), stream_position_data(column, Position, Column).
-min_indent(Sz):- current_column(Col),Col>Sz,nl,indent_len(Sz).
-min_indent(Sz):- current_column(Col),Need is Sz-Col,indent_len(Need),!.
-min_indent(Sz):- nl, indent_len(Sz).
-indent_len(Need):- forall(between(1,Need,_),write(' ')).
-
-w_proper_indent(N,G):-
-  flag(w_in_p,X,X), %(X==0->nl;true),
-  XX is (X*2)+N,setup_call_cleanup(min_indent(XX),G,true).
-w_in_p(G):- setup_call_cleanup(flag(w_in_p,X,X+1),G,flag(w_in_p,_,X)).
-
-
-always_dash_functor(A,B):- once(dash_functor(A,B)),A\=@=B,!.
-always_dash_functor(A,A).
-
-dash_functor(A,C):- \+ symbol(A),!,C=A.
-dash_functor(A,C):- p2m(A,B),A\==B,!,always_dash_functor(B,C).
-dash_functor(Functor,DFunctor):-
-   symbol(Functor), atomic_list_concat(L,'-',Functor), L\=[_],maplist(always_dash_functor,L,LL),
-   atomic_list_concat(LL,'-',DFunctor).
-dash_functor(Functor,DFunctor):- fail,
-   symbol(Functor), atomic_list_concat(L,'_',Functor), L\=[_],maplist(always_dash_functor,L,LL),
-   atomic_list_concat(LL,'-',DFunctor).
-dash_functor(Functor,DFunctor):-
-   symbol(Functor), atomic_list_concat(L,'_',Functor), L\=[_],maplist(always_dash_functor,L,LL),
-   atomic_list_concat(LL,'_',DFunctor).
 
 sort_on(C,R,A,B):- (A==B-> R= (=) ; must_det_ll((call(C,A,AA),call(C,B,BB),!,compare(R,AA+A,BB+B)))),!.
 tokens(X,VL):- unaccent_atom(X,A),!, findall(E,(is_tokenizer(T),call(T,A,E)),L),predsort(sort_on(length_fw_len),L,S),last(S,VL).
@@ -571,15 +456,6 @@ is_tokenizer(tokenize_atom).
 is_an_arg_type(S,T):- flybase_identifier(S,T),!.
 has_type(S,Type):- sub_atom(S,0,4,Aft,FB),flybase_identifier(FB,Type),!,Aft>0.
 
-% Print arguments of a compound term.
-write_args_as_sexpression([]).
-write_args_as_sexpression([H|T]) :- write(' '), pp_sex(H), write_args_as_sexpression(T).
-
-% Print the rest of the list.
-print_list_as_sexpression([]).
-print_list_as_sexpression([H]):- pp_sex(H).
-%print_list_as_sexpression([H]):- w_proper_indent(pp_sex(H)),!.
-print_list_as_sexpression([H|T]):- pp_sex(H), write(' '), print_list_as_sexpression(T).
 
 call_sexpr(S):- writeln(call=S).
 %call_sexpr(Space,Expr,Result):-

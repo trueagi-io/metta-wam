@@ -50,8 +50,10 @@ option_else0( N,V,_Else):- was_option_value(N,VV),!,VV=V.
 option_else0(_N,V, Else):- !,V=Else.
 
 %option_value( N,V):- var(V), !, (was_option_value( N,V)->true;trace).
+option_value(N,V):- V==true,option_value0(N,'True'),!.
 option_value(N,V):- notrace(option_value0(N,V)).
 option_value0( N,V):- var(V), !,  was_option_value( N,V).
+
 option_value0( N,V):- nonvar(V), option_value0( N,VV), !, p2m(VV,V1),p2m(V,V2),!,V1=V2.%equal_enough(V1,V2).
 option_value0( N,V):- option_else0( N,V ,[]).
 

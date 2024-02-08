@@ -242,14 +242,14 @@ compile_for_assert(HeadIs, AsBodyFn, Converted) :- is_ftVar(AsBodyFn), /*trace,*
      nop(ignore(Result = '$VAR'('HeadRes'))))),!.
 
 compile_for_assert(HeadIs, AsBodyFn, Converted) :-
-     AsFunction = HeadIs,
+     AsFunction = HeadIs, 
      must_det_ll((
      Converted = (HeadC :- NextBodyC),  % Create a rule with Head as the converted AsFunction and NextBody as the converted AsBodyFn
      /*funct_with_result_is_nth_of_pred(HeadIs,AsFunction, Result, _Nth, Head),*/
      f2p(HeadIs,HResult,AsFunction,HHead),
      (var(HResult) -> (Result = HResult, HHead = Head) ;
         funct_with_result_is_nth_of_pred(HeadIs,AsFunction, Result, _Nth, Head)),
-     verbose_unify(Converted),
+     %verbose_unify(Converted),
      f2p(HeadIs,Result,AsBodyFn,NextBody),
      %RetResult = Converted,
      %RetResult = _,
@@ -545,10 +545,17 @@ f2p_assign(HeadIs,ValueResult,Value,Converted):-
    ValueResultRValueResult = (ValueResultR=ValueResult),
    combine_code(CodeForValue,ValueResultRValueResult,Converted).
 
+compile_flow_control(HeadIs,RetResult,Convert,Converted) :- 
+  Convert =~ ['println!',Value],!,
+  Converted = (ValueCode,eval_args('println!'(ValueResult), RetResult)),
+  f2p(HeadIs,ValueResult,Value,ValueCode).
+  
+ 
 
 compile_flow_control(HeadIs,RetResult,Convert, Converted) :-
   Convert =~ ['case',Value,PNil],[]==PNil,!,Converted = (ValueCode,RetResult=[]),
       f2p(HeadIs,_ValueResult,Value,ValueCode).
+
 
 compile_flow_control(HeadIs,RetResult,Convert, (ValueCode, Converted)) :-
   Convert =~ ['case',Value|Options], \+ is_ftVar(Value),!,
@@ -1369,7 +1376,7 @@ create_and_consult_temp_file(PredName/Arity, PredClauses) :-
     format(TempFileStream, ':- multifile((~q)/~w).~n', [PredName, Arity]),
     format(TempFileStream, ':- dynamic((~q)/~w).~n', [PredName, Arity]),
     %if_t( \+ option_value('tabling',false),
-    if_t(option_value('tabling',true),format(TempFileStream,':- ~q.~n',[table(PredName/Arity)])),
+    if_t(option_value('tabling','True'),format(TempFileStream,':- ~q.~n',[table(PredName/Arity)])),
     maplist(write_clause(TempFileStream), PredClauses),
     % Close the temporary file
     close(TempFileStream),
