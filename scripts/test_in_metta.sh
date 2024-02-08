@@ -27,7 +27,8 @@ export METTALOG_MAX_TIME
 export all_test_args="${@}"
 run_tests_auto_reply=""
 generate_report_auto_reply=""
-UNITS_DIR="examples/"
+METTALOG_OUTPUT="examples"
+UNITS_DIR="$METTALOG_OUTPUT/"
 passed_along_to_mettalog=()
 METTALOG_MAX_TIME=75
 clean=0  # 0 means don't clean, 1 means do clean
@@ -46,10 +47,11 @@ while [ "$#" -gt 0 ]; do
         -y|--yes) run_tests_auto_reply="y" ;;
         -n|--no) run_tests_auto_reply="n" ;;
         --timeout=*) METTALOG_MAX_TIME="${1#*=}" ;;
+	--output=*) METTALOG_OUTPUT="${1#*=}";;
         --report=*) generate_report_auto_reply="${1#*=}" ;;
         --clean) clean=1; if_failures=0 ;;
         --regres*) clean=0; if_failures=0; if_regressions=1 ;;
-        --cont*) clean=0; if_failures=0 ;;
+        --cont*) clean=0; if_failures=0 ;;	
         --fail*) clean=0; if_failures=1 ;;
         --explain) explain_only=1 ;;
         --test) explain_only=0 ;;
@@ -90,8 +92,8 @@ if [  "$show_help" -eq 1 ]; then
       echo "  extra args         Optional command-line arguments passed to MeTTaLog"
       echo ""
       echo "Examples:"
-      echo "  # Run under '${SCRIPT_DIR}/examples/baseline_compat/hyperon-pln_metta/sumo' with a 60 second timeout per test"
-      echo "  $0 examples/ --include \"*sumo/\" --timeout=60"
+      echo "  # Run under '${SCRIPT_DIR}/$METTALOG_OUTPUT/baseline_compat/hyperon-pln_metta/sumo' with a 60 second timeout per test"
+      echo "  $0 $METTALOG_OUTPUT/ --include \"*sumo/\" --timeout=60"
       echo ""
       echo "  # Automatically (chooses 'y') cleans up and runs all tests in default '${SCRIPT_DIR}/examples' directory with a 180 second timeout per test"
       echo "  $0 -y --clean --timeout=180"
@@ -107,6 +109,20 @@ IF_REALLY_DO() {
         eval "$*"
     fi
 }
+
+if [[ "$METTALOG_OUTPUT" != "" ]]; then
+    # Create the directory if it doesn't exist
+
+    NEW_UNITSDIR="${METTALOG_OUTPUT}/${UNITS_DIR#*/}"
+
+    IF_REALLY_DO mkdir -p "$NEW_UNITSDIR"
+    
+    IF_REALLY_DO \cp -an "$UNITS_DIR"/* "$NEW_UNITSDIR/"
+
+    UNITS_DIR="$NEW_UNITSDIR"
+else
+    METTALOG_OUTPUT=examples
+fi
 
 
 function delete_html_files() {
@@ -234,6 +250,7 @@ function run_tests() {
 
 # Main execution block
 function main() {
+
     cd "$SCRIPT_DIR"
 
     # Prompt user to rerun all tests if run_tests_auto_reply is not set
@@ -438,10 +455,10 @@ function generate_final_MeTTaLog() {
     {  echo "| STATUS | TEST NAME | TEST CONDITION | ACTUAL RESULT | EXPECTED RESULT |"
         echo "|--------|-----------|----------------|---------------|-----------------|"
         cat /tmp/SHARED.UNITS | awk -F'\\(|\\) \\| \\(' '{ print $2 " " $0 }'  | sort | cut -d' ' -f2- | tac | awk '!seen[$0]++' | tac
-    } > ./examples/PASS_FAIL.md
+    } > ./$METTALOG_OUTPUT/PASS_FAIL.md
 
 
-   ./scripts/pass_fail_totals.sh examples/ > ./examples/TEST_LINKS.md
+   ./scripts/pass_fail_totals.sh $METTALOG_OUTPUT/ > $METTALOG_OUTPUT/TEST_LINKS.md
 
 }
 
@@ -451,10 +468,10 @@ function PreCommitReports() {
 
     cd "$SCRIPT_DIR"
     echo "Executing Tasks..."
-    rsync -avm --include='*.metta.html' -f 'hide,! */' examples/ reports/ \
-    && echo "1) Synced HTML files from examples/ to reports/ and deleted the original HTML files in examples/"
-    \cp -f examples/PASS_FAIL.md reports/PASS_FAIL.md
-    \cp -f examples/TEST_LINKS.md reports/TEST_LINKS.md
+    rsync -avm --include='*.metta.html' -f 'hide,! */' $METTALOG_OUTPUT/ reports/ \
+    && echo "1) Synced HTML files from $METTALOG_OUTPUT/ to reports/ and deleted the original HTML files in $METTALOG_OUTPUT/"
+    \cp -f $METTALOG_OUTPUT/PASS_FAIL.md reports/PASS_FAIL.md
+    \cp -f $METTALOG_OUTPUT/TEST_LINKS.md reports/TEST_LINKS.md
     #mv final_MeTTaLog.md MeTTaLog.md \
     #&& echo "2) Renamed final_MeTTaLog.md to MeTTaLog.md"
 
@@ -554,7 +571,7 @@ function compare_test_files() {
     rm -f "$sorted1" "$sorted2" new_tests.md missing_tests.md
 }
 
-main
+( main )
 
 
 

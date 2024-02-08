@@ -230,18 +230,19 @@ p2m(I,O):- p2m([progn],I,O).
 
 p2m(_OC,NC, NC) :- var(NC), !.  % If NC is a variable, do not translate.
 p2m(_OC,NC, NC) :- is_ftVar(NC), !.  % If NC is a free term variable, do not translate.
-
+p2m(_OC,[], 'Nil'). % empty list
 p2m(_OC,M:I, with_self(N,O)):-  p2m(OC,M,N),p2m(I,O).
 % Conversion for lists
-p2m(_OC,[], 'Nil'). % empty list
 p2m(OC,[H|T],['::'|L]):- is_list([H|T]),maplist(p2m(OC),[H|T],L).
 p2m(OC,[H|T], 'Cons'(OH, OT)):- p2m(OC,H, OH), p2m(OC,T, OT).
 p2m(OC,NC, OO) :-
     % If NC is a list, map each element of the list from Prolog to MeTTa
     is_list(NC),!,
     maplist(p2m(OC), NC, OO).
+p2m(_OC,!, ['set-det']).  % Translate the cut operation directly.
 p2m(_OC,!, '!').  % Translate the cut operation directly.
 p2m(_OC,false, 'False').
+p2m([progn|_], (!,fail), [empty]).  % Translate Prolog’s fail to MeTTa’s False.
 % p2m(_OC,fail, 'False').  % Translate Prolog’s fail to MeTTa’s False.
 p2m(_OC,true, 'True').  % Translate Prolog’s true to MeTTa’s True.
 % p2m(_OC,prolog, meTTa).  % Translate the atom prolog to meTTa.
@@ -255,7 +256,7 @@ p2m(_OC,( ';' ),or).
 
 % Conversion for any atomic term
 p2m(_OC,A, A):- string(A),!.
-%p2m([progn|_],A, [H]):- atom(A),into_hyphens(A,H),!.
+p2m([progn|_],A, [H]):- atom(A),into_hyphens(A,H),!.
 p2m(_,A, H):- atom(A),into_hyphens(A,H),!.
 p2m(_OC,A, A):- atomic(A).
 
@@ -337,31 +338,49 @@ into_sequential(List, [AND|SPList]) :- is_compiled_and(AND), maplist(prolog_to_m
 % Entry point for printing to Metta format. It clears the screen, sets the working directory,
 % expands the filenames with a specific extension, and processes each file.
 print_to_metta :-
-  cls, % Clears the screen (assumes a custom or system-specific implementation).
+ % cls, % Clears the screen (assumes a custom or system-specific implementation).
  % with_pwd(
   %   '/opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta/examples/gpt2-like/language_models/',
- Filt = '/opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta/examples/gpt2-like/language_models/*.pl',
-   expand_file_name(Filt, Files), 
-   % Finds all Prolog files in the specified directory.
-   print_to_metta(Files),
-   MC = '/opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta/metta_vspace/pyswip/metta_convert.pl',
-   print_to_metta(MC). % Processes each found file.
+ %Filt = 'examples/gpt2-like/language_models/*.pl',
+ Filt = '/opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta/examples/performance/clasic_unification/*.pl',
 
+   % Finds all Prolog files in the specified directory.
+   print_to_metta(Filt),  % Processes each found file.
+  % MC = '/opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta/metta_vspace/pyswip/metta_convert.pl',
+  % print_to_metta(MC), % Processes each found file.
+   !.
 % Example of a no-operation (nop) call for a specific file path, indicating a placeholder or unused example.
 %$nop(print_to_metta('/opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta/metta_vspace/pyswip/metta_convert.pl')).
 
 % Processes a list of filenames, applying 'print_to_metta' to each.
-print_to_metta(Filenames):- is_list(Filenames),!,maplist(print_to_metta,Filenames).
+with_file_lists(P1,FileSpec):- is_list(FileSpec),!,maplist(with_file_lists(P1),FileSpec).
+with_file_lists(P1,Directory):- atom(Directory), exists_directory(Directory), 
+  findall(File,directory_source_files(Directory, File, [recursive(true),if(true)]),Files),
+  maplist(with_file_lists(P1),Files).
+with_file_lists(P1,Mask):- atom(Mask), \+ exists_file(Mask), 
+  expand_file_name(Mask, Files), Files\==[],!,maplist(with_file_lists(P1),Files).
+with_file_lists(P1,Filename):- ignore(call(P1,Filename)).
+ 
+
+print_to_metta(Filename):- 
+  ignore(print_to_metta_file(Filename)),
+  ignore(print_to_metta_console(Filename)),!.
+  
+
+% Processes a list of filenames, applying 'print_to_metta' to each.
+print_to_metta_console(FileSpec):-  with_file_lists(print_to_metta_now(user_output),FileSpec).
+print_to_metta_file(FileSpec):-  with_file_lists(print_to_metta_now(_Create),FileSpec).
 
 % Processes a single filename by opening the file, translating its content, and then closing the file.
-print_to_metta(Filename):- 
+print_to_metta_now(OutputIn,Filename):-
     atom(Filename),  % Verifies that the filename is an atom.
     % Generate the new filename with .metta extension.
     file_name_extension(Base, _OldExt, Filename),
     file_name_extension(Base, metta, NewFilename),
     % Setup step: open both the input and output files.
     format('~N~n~w~n', [print_to_metta(Filename,NewFilename)]), % Prints the action being performed.
-    Output = user_output,
+    %Output = user_output,
+    copy_term(OutputIn,Output),
     setup_call_cleanup(
         open(Filename, read, Input, [encoding(utf8)]),
         % Call step: perform the translation and write to the output file.
@@ -419,7 +438,8 @@ read_clause_with_info(Stream) :-
                     term_position(Pos),
                     subterm_positions(RawLayout),
                     syntax_errors(error), 
-                    comments(Comments)],
+                    comments(Comments),
+                    module(trans_mod)],
     read_term(Stream, Term, Options),
     (   Term == end_of_file
     ->  true
@@ -443,11 +463,15 @@ print_metta_comments(Cmt):- translate_comment(Cmt,String),write(String).
 process_term(end_of_file):- !.
 process_term(Term):-
     is_directive(Term), 
+    ignore(maybe_call_directive(Term)),
     !, print_directive(Term).
 process_term(Term):-
-  p2m(Term,STerm),
+  expand_to_hb(Term,H,B),
+  p2m((H:-B),STerm),
   push_term_ctx(Term),
   write_src(STerm).
+
+maybe_call_directive((:- op(X,F,Y))):- trans_mod:op(X,F,Y).
 
 % Checks if a term is a directive.
 is_directive((:- _)).

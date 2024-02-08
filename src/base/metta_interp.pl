@@ -87,8 +87,9 @@ Now FAILING TEST-SCRIPTS.C1-GROUNDED-BASIC.20)
 option_value_def('prolog',false).
 option_value_def('compat',auto).
 option_value_def('compatio',auto).
-option_value_def('compile',false).
-option_value_def('table',false).
+option_value_def('compile',false). % true false and full
+option_value_def('tabling',true).
+option_value_def('optimize',true).
 option_value_def(no_repeats,false).
 option_value_def('time',true).
 option_value_def('exec',true).
@@ -98,11 +99,11 @@ option_value_def('python',false).
 %option_value_def('halt',false).
 option_value_def('doing_repl',false).
 option_value_def('test-retval',false).
-option_value_def('trace-length',100).
-option_value_def('stack-max',100).
+option_value_def('trace-length',10_000).
+option_value_def('stack-max',10_000).
 option_value_def('trace-on-overtime',20.0).
 option_value_def('trace-on-overflow',false).
-option_value_def('exeout','./Sav.godlike.MeTTaLog').
+option_value_def('exeout','./Sav.gitlab.MeTTaLog').
 
 
 
@@ -147,7 +148,7 @@ set_is_unit_test(TF):-
   %set_option_value_interp('trace-on-load',TF),
   set_option_value_interp('trace-on-exec',TF),
   set_option_value_interp('trace-on-eval',TF),
-
+  if_t( \+ TF , set_prolog_flag(debug_on_interrupt,true)).
   !.
 
 fake_notrace(G):- tracing,!,notrace(G).
@@ -1769,9 +1770,12 @@ forall_interactive(From,WasInteractive,Complete,Goal,After):-
 
 print_var(Name=Var) :- print_var(Name,Var).
 %print_var(Name,_Var) :- atom_concat('Num',Rest,Name),atom_number(Rest,_),!.
-print_var(Name,Var):- var(Name),!,write_src(Name), write(' = '), write_asrc(Var), nl.
-print_var('$VAR'(Name),Var):-!, print_var(Name,Var).
-print_var(Name,Var):-  write('$'), write(Name), write(' = '), write_asrc(Var), nl.
+
+write_var(V):- var(V), !, write_dvar(V),!. 
+write_var('$VAR'(S)):-  !, write_dvar(S),!. 
+write_var(V):- write_dvar(V),!.
+
+print_var(Name,Var):- write_var(Name), write(' = '), write_asrc(Var), nl.
 
 write_asrc(Var):- copy_term(Var,Copy,Goals),Var=Copy,write_asrc(Var,Goals).
 write_asrc(Var,[]):- write_src(Var).

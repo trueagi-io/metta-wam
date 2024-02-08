@@ -473,8 +473,9 @@ if [[ $should_compile -eq 1 ]]; then
     #else
     rm -f $reference_file
     if [[ "$never_compile" -eq 0 ]]; then
-	DEBUG "Compiling $reference_file" 
-	# swipl -l metta_vspace/$PYSWIP_VERSION/metta_interp.pl -g qcompile_mettalog -- --exeout=$reference_file
+        :
+	#DEBUG "Compiling $reference_file" 
+	#swipl -l metta_vspace/$PYSWIP_VERSION/metta_interp.pl -g qcompile_mettalog -- --exeout=$reference_file
     fi
 fi
 
@@ -484,7 +485,7 @@ if [[ -z "$reference_file" ]]; then
 fi
 
 if [[ -f "$reference_file" ]]; then
-    rm -f $reference_file
+   : # rm -f $reference_file
 fi
 
 if [[ -f "$reference_file" ]]; then
