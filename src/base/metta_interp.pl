@@ -23,6 +23,10 @@ is_html:- nb_current('html','True'),!.
 %is_html:- current_prolog_flag(os_argv,ArgV), member('--html',ArgV),!.
 %is_html:- option_value('html','True'),!.
 
+
+is_mettalog:- current_prolog_flag(os_argv,ArgV), member('--log',ArgV),!,fail.
+
+
 % is_compatio:- !,fail.
 is_compatio:- current_prolog_flag(os_argv,ArgV), member('--log',ArgV),!,fail.
 is_compatio:- nb_current('compatio','True'),!.
@@ -40,7 +44,7 @@ null_output(MFS):- use_module(library(memfile)), new_memory_file(MF),open_memory
 :- null_user_output(_)->true;(null_output(MFS),asserta(null_user_output(MFS))).
 nullify_output:- null_user_output(MFS), set_prolog_IO(user_input,MFS,MFS).
 
-
+set_output_stream :- is_mettalog, !.
 set_output_stream :- is_compatio -> nullify_output;  unnullify_output.
 %:- nullify_output.
 :- set_output_stream.
@@ -69,7 +73,6 @@ is_pyswip:- current_prolog_flag(os_argv,ArgV),member( './',ArgV).
 current_self(Self):- ((nb_current(self_space,Self),Self\==[])->true;Self='&self').
 :- nb_setval(repl_mode, '+').
 
-%:- set_stream(user_input,tty(true)).
 %:- set_stream(user_input,tty(true)).
 :- use_module(library(readline)).
 %:- use_module(library(editline)).
