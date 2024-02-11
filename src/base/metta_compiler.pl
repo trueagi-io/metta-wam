@@ -372,22 +372,32 @@ label_body_singles_2(HeadV,Var):- sub_var(Var,HeadV),!.
 label_body_singles_2(_,Var):- ignore(Var='$VAR'('_')).
 
 
-must_optimize_body(A,B,C):- optimize_body(A,B,C),!.
+must_optimize_body(A,B,CC):- once(optimize_body(A,B,C)), C \=@= B,!, must_optimize_body(A,C,CC).
 must_optimize_body(_,B,C):- B =C.
 
-optimize_body(_HB,Body,BodyNew):- var(Body),!,Body=BodyNew.
-optimize_body( HB,(B1*->B2;B3),(BN1*->BN2;BN3)):-!, must_optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2), optimize_body(HB,B3,BN3).
-optimize_body( HB,(B1->B2;B3),(BN1->BN2;BN3)):-!, must_optimize_body(HB,B1,BN1), must_optimize_body(HB,B2,BN2), must_optimize_body(HB,B3,BN3).
+
+metta_predicate(eval_args(evaluable,eachvar)).
+metta_predicate(eval_true(matchable)).
+metta_predicate(with_space(space,matchable)).
+metta_predicate(limit(number,matchable)).
+metta_predicate(findall(template,matchable,listvar)).
+metta_predicate(match(space,matchable,template,eachvar)).
+
+optimize_body(_HB,Body,BodyNew):- is_ftVar(Body),!,Body=BodyNew.
+optimize_body( HB,eval_args(VT,R),eval_args(VT,R)):-!, must_optimize_body(HB,VT,VTT).
 optimize_body( HB,with_space(V,T),with_space(V,TT)):-!, must_optimize_body(HB,T,TT).
+optimize_body( HB,limit(V,T),limit(V,TT)):-!, must_optimize_body(HB,T,TT).
 optimize_body( HB,findall(V,T,R),findall(V,TT,R)):-!, must_optimize_body(HB,T,TT).
-optimize_body( HB,loonit_assert_source_tf(V,T,R3,R4),
-                  loonit_assert_source_tf(V,TT,R3,R4)):-!,
+optimize_body( HB,loonit_assert_source_tf(V,T,R3,R4), loonit_assert_source_tf(V,TT,R3,R4)):-!,
   must_optimize_body(HB,T,TT).
 
-optimize_body( HB,(B1,B2),(BN1)):- optimize_conjuncts(HB,(B1,B2),BN1).
+optimize_body( HB,(B1*->B2;B3),(BN1*->BN2;BN3)):-!, must_optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2), optimize_body(HB,B3,BN3).
+optimize_body( HB,(B1->B2;B3),(BN1->BN2;BN3)):-!, must_optimize_body(HB,B1,BN1), must_optimize_body(HB,B2,BN2), must_optimize_body(HB,B3,BN3).
 optimize_body( HB,(B1:-B2),(BN1:-BN2)):-!, optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2).
+optimize_body( HB,(B1*->B2),(BN1*->BN2)):-!, must_optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2).
+optimize_body( HB,(B1->B2),(BN1*->BN2)):-!, must_optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2).
 optimize_body( HB,(B1;B2),(BN1;BN2)):-!, optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2).
-
+optimize_body( HB,(B1,B2),(BN1)):- optimize_conjuncts(HB,(B1,B2),BN1).
 %optimize_body(_HB,==(Var, C), Var=C):- self_eval(C),!.
 optimize_body( HB,u_assign(A,B),R):- optimize_u_assign_1(HB,A,B,R),!.
 optimize_body(_HB,u_assign(A,B),u_assign(AA,B)):- p2s(A,AA),!. 
@@ -411,8 +421,12 @@ optimize_u_assign(_,[Var|_],_,_):- is_ftVar(Var),!,fail.
 optimize_u_assign(_,[Empty], _, (!,fail)):-  Empty == empty,!.
 optimize_u_assign(_,[+, A, B], C, plus(A , B, C)):- number_wang(A,B,C), !.
 optimize_u_assign(_,[-, A, B], C, plus(B , C, A)):- number_wang(A,B,C), !.
-optimize_u_assign(_,[+, A, B], C, plus(A , B, C)):- !.
-optimize_u_assign(_,[-, A, B], C, plus(B , C, A)):- !.
+optimize_u_assign(_,[+, A, B], C, +(A , B, C)):- !.
+optimize_u_assign(_,[-, A, B], C, +(B , C, A)):- !.
+optimize_u_assign(_,[*, A, B], C, *(A , B, C)):- number_wang(A,B,C), !.
+optimize_u_assign(_,['/', A, B], C, *(B , C, A)):- number_wang(A,B,C), !.
+optimize_u_assign(_,[*, A, B], C, *(A , B, C)):- !.
+optimize_u_assign(_,['/', A, B], C, *(B , C, A)):- !.
 optimize_u_assign(_,[fib, B], C, fib(B, C)):- !.
 optimize_u_assign(_,[fib1, A,B,C,D], R, fib1(A, B, C, D, R)):- !.
 optimize_u_assign(_,['pragma!',N,V],Empty,set_option_value(N,V)):- nonvar(N),ignore((fail,Empty='Empty')), !.
@@ -453,8 +467,11 @@ did_optimize_conj(Head,B1,B2,B12):- optimize_conj(Head,B1,B2,B12), B12\=@=(B1,B2
 optimize_conjuncts(Head,(B1,B2,B3),BN):- B3\==(_,_),  did_optimize_conj(Head,B2,B3,B23),
   optimize_conj(Head,B1,B23,BN), !.
 optimize_conjuncts(Head,(B1,B2,B3),BN):- did_optimize_conj(Head,B1,B2,B12),
-  optimize_conj(Head,B12,B3,BN),!.
-optimize_conjuncts(Head,(B1,B2),BN1):- !, optimize_conj(Head,B1,B2,BN1).
+  optimize_conjuncts(Head,B12,B3,BN),!.
+%optimize_conjuncts(Head,(B1,B2),BN1):- optimize_conj(Head,B1,B2,BN1).
+optimize_conjuncts(Head,(B1,B2),BN1):- did_optimize_conj(Head,B1,B2,BN1).
+optimize_conjuncts(Head,B1,B2,(BN1,BN2)):-!,
+   optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2).
 
 
 optimize_conj(Head, u_assign(Term, C), u_assign(True,CC), CTerm):- 'True'==True,
