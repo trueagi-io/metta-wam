@@ -1,5 +1,5 @@
 
-!(extend-py! metta_vspace/metta_learner)
+!(extend-py! mettalog)
 !(print "; =====================================")
 !(print "; Starting 5")
 !(print "; =====================================")

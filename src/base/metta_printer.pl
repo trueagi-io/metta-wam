@@ -44,6 +44,45 @@ ppct(Msg,Term):- Term=(_ :- _),!,
 % 'pp_metta' rule is responsible for pretty-printing metta terms.
 pp_metta(P):- pretty_numbervars(P,PP),with_option(concepts=false,pp_fb(PP)).
 
+string_height(Pt1,H1):- split_string(Pt1,"\r\n", "\s\t\n\n", L),length(L,H1).
+
+:- dynamic(just_printed/1). 
+% 'print_pl_source' rule is responsible for printing the source of a Prolog term.
+
+
+print_pl_source(P):- run_pl_source(print_pl_source0(P)).
+
+
+run_pl_source(G):- notrace(catch(G,_,fail)),!.
+run_pl_source(G):- ignore(rtrace(G)), trace.
+
+
+print_pl_source0(_):- notrace(is_compatio),!.
+print_pl_source0(_):- notrace(silent_loading),!.
+print_pl_source0(P):- notrace((just_printed(PP), PP=@=P)),!.
+print_pl_source0(P):- 
+    Actions = [print_tree, portray_clause, pp_fb1], % List of actions to apply
+    findall(H-Pt, 
+      (member(Action, Actions), 
+       must_det_ll((
+         run_pl_source(with_output_to(string(Pt), call(Action, P))),
+        string_height(Pt, H)))), HeightsAndOutputs),
+    sort(HeightsAndOutputs, Lst), last(Lst, _-Pt), writeln(Pt),
+    retractall(just_printed(_)),
+    assert(just_printed(P)),
+    !.
+
+
+pp_fb(P):- format("~N "),  \+ \+ (numbervars_w_singles(P), pp_fb1(P)), format("~N "),flush_output.
+  
+pp_fb1(P):- pp_fb2(print_tree,P).
+pp_fb1(P):- pp_fb2(pp_ilp,P).
+pp_fb1(P):- pp_fb2(pp_as,P).
+pp_fb1(P):- pp_fb2(portray_clause,P).
+pp_fb1(P):- pp_fb2(print,P).
+pp_fb1(P):- pp_fb2(fbdebug1,P).
+pp_fb1(P):- pp_fb2(fmt0(P)).
+pp_fb2(F,P):- atom(F),current_predicate(F/1), call(F,P).
 
 
 

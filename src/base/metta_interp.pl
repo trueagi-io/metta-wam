@@ -1440,6 +1440,7 @@ do_metta(From,exec,Self,TermV,Out):- !, do_metta_exec(From,Self,TermV,Out).
 
 do_metta_exec(From,Self,TermV,FOut):-
   Output = X,
+  not_compatio(write_exec(TermV)),
    notrace(into_metta_callable(Self,TermV,Term,X,NamedVarsList,Was)),!,
    user:interactively_do_metta_exec(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut),!.
 
@@ -1701,7 +1702,7 @@ interactively_do_metta_exec(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut
 
 
 %interactively_do_metta_exec0(file(_),Self,_TermV,Term,X,_NamedVarsList,_Was,_Output,_FOut):- file_hides_results(Term),!,eval_args(Self,Term,X).
-interactively_do_metta_exec0(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut):-
+interactively_do_metta_exec0(From,Self,_TermV,Term,X,NamedVarsList,Was,Output,FOut):-
   notrace((
     Result = res(FOut),
     inside_assert(Term,BaseEval),
@@ -1734,7 +1735,6 @@ interactively_do_metta_exec0(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOu
     user:maplist(name_vars,NamedVarsList),
     user:name_vars('OUT'=X),
     % add_history_src(exec(BaseEval)),
-      not_compatio(write_exec(TermV)),
       if_t(Skipping==1,writeln(' ; SKIPPING')),
       %if_t(TermV\=BaseEval,color_g_mesg('#fa90f6', (write('; '), with_indents(false,write_src(exec(BaseEval)))))),
       if_t((is_interactive(From);Skipping==1),
@@ -1764,7 +1764,7 @@ interactively_do_metta_exec0(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOu
            ( Complete==true -> (not_compatio(format('~NLast Result(~w): ',[ResNum])),! );
                                not_compatio(format('~NNDet Result(~w): ',[ResNum]))))),
        color_g_mesg_ok(yellow, ignore((( not_compatio(if_t( \+ atomic(Output), nl)), 
-          if_compatio(with_indents(false,write_asrc(Output))),not_compatio(write_asrc(Output)), not_compatio(nl))))),
+          if_compatio((if_t(ResNum> 1,write(', ')),with_indents(false,write_asrc(Output)))),not_compatio(write_asrc(Output)), not_compatio(nl))))),
 
        not_compatio(give_time('Execution',Seconds)),
        not_compatio(with_output_to(user_error,give_time('Execution',Seconds))),
@@ -1862,8 +1862,9 @@ interact(Variables, Goal, Tracing) :-
 :- volatile(is_installed_readline_editline/1).
 install_readline_editline:- current_input(Input), install_readline(Input),!.
 
-install_readline(_):- is_compatio,!.
 install_readline(Input):- is_installed_readline_editline(Input),!.
+install_readline(_):- is_compatio,!.
+install_readline(_):-!.
 install_readline(Input):-
     assert(is_installed_readline_editline(Input)),   
     install_readline_editline1,
@@ -2028,13 +2029,7 @@ rtrace_on_existence_error(G):- !, catch_err(G,E, (fbug(E=G),  \+ tracing, trace,
 %prolog_only(Goal):- !,Goal.
 prolog_only(Goal):- if_trace(prolog,Goal).
 
-string_height(Pt1,H1):- string_lines(Pt1,L1),length(L1,H1).
 
-print_pl_source(_):- is_compatio,!.
-print_pl_source(_):- silent_loading,!.
-print_pl_source(P):- wots(Pt1,print_tree(P)),wots(Pt2,portray_clause(P)),
-   string_height(Pt1,H1),string_height(Pt2,H2),
-   ((H1>H2) -> writeln(Pt1); writeln(Pt2)).
 write_compiled_exec(Exec,Goal):-
 %  ignore(Res = '$VAR'('ExecRes')),
   compile_for_exec(Res,Exec,Goal),

@@ -74,45 +74,121 @@ fi
 
 echo -e "${BLUE}Starting the installation process..${NC}."
 
+# Function to compare versions
+version_ge() {
+    # Compare $1 with $2; if $1 >= $2, return 0 (true), else return 1 (false)
+    printf '%s\n%s' "$2" "$1" | sort -VC
+    return $?
+}
+
+SWI-Prolog from source
+build_swi_prolog_from_src() {
+
+    # Install build dependencies
+    echo -e "${BLUE}Installing build dependencies...${NC}"
+    local build_deps="build-essential autoconf git libgmp-dev libssl-dev unixodbc-dev \
+        libreadline-dev zlib1g-dev libarchive-dev libossp-uuid-dev libxext-dev \
+        libice-dev libjpeg-dev libxinerama-dev libxft-dev libxpm-dev libxt-dev \
+        pkg-config libdb-dev libpcre3-dev libyaml-dev"
+    sudo apt-get update && sudo apt-get install -y $build_deps && {
+        echo -e "${GREEN}Build dependencies installed successfully.${NC}"
+    } || {
+        echo -e "${RED}Failed to install build dependencies. Exiting.${NC}"
+        exit 1
+    }
+
+    # Clone the SWI-Prolog repository
+    echo -e "${BLUE}Cloning SWI-Prolog source code...${NC}"
+    rm -rf swipl-devel/
+    git clone https://github.com/SWI-Prolog/swipl-devel.git && cd swipl-devel && {
+        echo -e "${GREEN}SWI-Prolog source code cloned successfully.${NC}"
+    } || {
+        echo -e "${RED}Failed to clone SWI-Prolog repository. Exiting.${NC}"
+        exit 1
+    }
+
+    # Update submodules
+    echo -e "${BLUE}Updating submodules...${NC}"
+    git -C . submodule update --init packages/ltx2htm packages/pldoc packages/nlp packages/archive packages/clib packages/http packages/sgml packages/ssl packages/zlib && {
+        echo -e "${GREEN}Submodules updated successfully.${NC}"
+    } || {
+        echo -e "${RED}Failed to update submodules. Exiting.${NC}"
+        exit 1
+    }
+
+    # Configure and build
+    echo -e "${BLUE}Configuring and building SWI-Prolog...${NC}"
+    mkdir build && cd build
+    cmake .. && make && {
+        echo -e "${GREEN}SWI-Prolog configured and built successfully.${NC}"
+    } || {
+        echo -e "${RED}Failed during SWI-Prolog build process. Exiting.${NC}"
+        exit 1
+    }
+    sudo make install && {
+        echo -e "${GREEN}SWI-Prolog installed successfully.${NC}"
+    } || {
+        echo -e "${RED}Failed to install SWI-Prolog. Exiting.${NC}"
+        exit 1
+    }
+}
+
+# Call the build function
+# build_swi_prolog_from_src
+
+
+# Function to install or update SWI-Prolog
+install_or_update_swipl() {
+
+    echo -e "${BLUE}Starting SWI-Prolog installation or update.${NC}"
+    sudo apt-add-repository -y ppa:swi-prolog/devel
+    sudo apt-get update
+    # Remove existing installation if any before reinstalling/upgrading
+    sudo apt-get remove -y swi-prolog??* 
+    sudo apt-get install -y swi-prolog
+    swi_prolog_version=$(swipl --version | awk '{print $3}')
+    required_version="9.1"
+    if version_ge $swi_prolog_version $required_version; then
+        echo -e "${GREEN}SWI-Prolog version $swi_prolog_version is installed and meets the required version $required_version or higher.${NC}"
+    else
+            echo -e "${YELLOW}Attempting to update SWI-Prolog...${NC}"
+            build_swi_prolog_from_src
+            swi_prolog_version=$(swipl --version | awk '{print $3}')
+            if version_ge $swi_prolog_version $required_version; then
+                echo -e "${GREEN}SWI-Prolog upgraded to $swi_prolog_version, which meets the required version $required_version or higher.${NC}"
+            else
+                echo -e "${YELLOW}Failed to upgrade SWI-Prolog to version $required_version or higher. Janus may not work without this version.${NC}"
+            fi
+    fi
+
+}
+
 # Check if SWI-Prolog is installed
 if ! command -v swipl &> /dev/null; then
     if confirm_with_default "Y" "SWI-Prolog is not installed. Would you like to install it?"; then
-        echo -e "${BLUE}Installing SWI-Prolog.${NC}."
-	sudo apt-add-repository -y ppa:swi-prolog/devel
-	sudo apt-get update
-	sudo apt-get install -y swi-prolog
-        if [ $? -ne 0 ]; then
-            echo -e "${RED}Failed to install SWI-Prolog. Exiting script${NC}."
-            exit 1
-        fi
+        install_or_update_swipl
     else
         echo -e "${RED}SWI-Prolog installation aborted. Exiting script${NC}."
         exit 1
     fi
 else
-    swi_prolog_version=$(swipl --version)
-    if [[ $swi_prolog_version == *"9.1"* ]]; then
-      echo -e "${GREEN}SWI-Prolog version 9.1 is already installed${NC}."
+    swi_prolog_version=$(swipl --version | awk '{print $3}')
+    required_version="9.1"
+    if version_ge $swi_prolog_version $required_version; then
+        echo -e "${GREEN}SWI-Prolog version $swi_prolog_version is installed and meets the required version $required_version or higher.${NC}"
     else
-      echo "${YELLOW}SWI-Prolog is not version 9.1${NC}."
-	sudo apt-add-repository -y ppa:swi-prolog/devel
-	sudo apt-get remove -y swi-prolog*
-	sudo apt-get update
-	sudo apt-get install -y swi-prolog
-	# sudo apt-get install -y swi-prolog-bdb swi-prolog-odbc swi-prolog-java
-        if [ $? -ne 0 ]; then
-            echo -e "${RED}Failed to install SWI-Prolog. Exiting script${NC}."
-            exit 1
+        if confirm_with_default "Y" "SWI-Prolog is not version $required_version or higher. Would you like to update it?"; then
+            echo -e "${YELLOW}Attempting to update SWI-Prolog...${NC}"
+            install_or_update_swipl
+            swi_prolog_version=$(swipl --version | awk '{print $3}')
+            if version_ge $swi_prolog_version $required_version; then
+                echo -e "${GREEN}SWI-Prolog upgraded to $swi_prolog_version, which meets the required version $required_version or higher.${NC}"
+            else
+                echo -e "${YELLOW}Failed to upgrade SWI-Prolog to version $required_version or higher. Janus may not work without this version.${NC}"
+            fi
         fi
-	swi_prolog_version=$(swipl --version)
-	if [[ $swi_prolog_version == *"9.1"* ]]; then
-	  echo -e "${GREEN}SWI-Prolog upgraded to 9.1{NC}."
-	else
-	  echo "${YELLOW}SWI-Prolog is still not version 9.1 .. So Janus will probably fail if not already installed${NC}."
-       fi
     fi
 fi
-
 
 function ensure_pip() {
     # Check if pip is installed
@@ -137,7 +213,7 @@ if ! swipl -g "use_module(library(janus)), halt(0)." -t "halt(1)" 2>/dev/null; t
     if [ "${easy_install}" == "Y" ] || confirm_with_default "Y" "Would you like to install Python (Janus) support"; then
 	    echo "Installing Janus for SWI-Prolog..."
 	    ensure_pip
-	    sudo pip install git+https://github.com/SWI-Prolog/packages-swipy.git
+	    sudo pip install --break-system-packages git+https://github.com/SWI-Prolog/packages-swipy.git
 	    sudo apt install -y libpython3-dev
 	    if [ $? -ne 0 ]; then
 		echo -e "${RED}Failed to install Janus. Exiting script${NC}."
@@ -160,7 +236,7 @@ if ! python3 -c "import pyswip" &> /dev/null; then
     if [ "${easy_install}" == "Y" ] || confirm_with_default "Y" "Would you like to install Pyswip"; then
         echo -e "${BLUE}Installing Pyswip..${NC}."
 	ensure_pip
-        sudo pip install git+https://github.com/logicmoo/pyswip.git
+        sudo pip install --break-system-packages git+https://github.com/logicmoo/pyswip.git
         echo -e "${GREEN}Pyswip installation complete${NC}."
     else
         echo -e "${YELLOW}Skipping Pyswip installation${NC}."
@@ -199,6 +275,9 @@ fi
 # Setting PYTHONPATH environment variable
 echo -e "${BLUE}Setting PYTHONPATH environment variable..${NC}."
 export PYTHONPATH=$PWD/metta_vspace:$PYTHONPATH
+
+
+if confirm_with_default "N" "Setup Flybase Developnent files"; then
 
 # Confirming download of Quick Loadable Flybase files
 if [ "${easy_install}" == "Y" ] || confirm_with_default "Y" "Download Quick Loadable Flybase files"; then
@@ -347,6 +426,8 @@ if confirm_with_default_no "Would you like to be able to load these Flybase Mett
     set +x
     echo -e "${BLUE}Counting atoms (should be at least 56 million)..${NC}."
     find $FBPC_LOC -type f -name "*.metta" -exec wc -l {} +
+fi
+
 fi
 
 echo -e "${BLUE}Installation and setup complete!"
