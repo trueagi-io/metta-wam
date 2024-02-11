@@ -228,11 +228,9 @@ eval_11(Eq,RetType,Depth,Self,X,Y):-
 
 
 
-eval_15(Eq,RetType,Depth,Self,X,Y):- !,
-  eval_20(Eq,RetType,Depth,Self,X,Y).
+% eval_15(Eq,RetType,Depth,Self,X,Y):- !, eval_20(Eq,RetType,Depth,Self,X,Y).
 
-eval_15(Eq,RetType,Depth,Self,X,Y):-
-  ((eval_20(Eq,RetType,Depth,Self,X,Y),
+eval_15(Eq,RetType,Depth,Self,X,Y):- ((eval_20(Eq,RetType,Depth,Self,X,Y),
    if_t(var(Y),fbug((eval_20(Eq,RetType,Depth,Self,X,Y),var(Y)))),
    nonvar(Y))*->true;(eval_failed(Depth,Self,X,Y),fail)).
 
@@ -249,10 +247,8 @@ eval_15(Eq,RetType,Depth,Self,X,Y):-
 %:- discontiguous eval_31/5.
 %:- discontiguous eval_60/5.
 
-eval_20(Eq,RetType,_Dpth,_Slf,Name,Y):-
-    atom(Name), !,
-      (nb_current(Name,X)->do_expander(Eq,RetType,X,Y);
-       Y = Name).
+eval_20(Eq,RetType,_Dpth,_Slf,Name,Y):- atom(Name), !,
+      (nb_current(Name,X)->do_expander(Eq,RetType,X,Y); Y = Name).
 
 
 eval_20(Eq,RetType,_Dpth,_Slf,X,Y):- self_eval(X),!,do_expander(Eq,RetType,X,Y).

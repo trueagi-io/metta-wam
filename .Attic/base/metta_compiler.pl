@@ -384,7 +384,7 @@ optimize_body( HB,loonit_assert_source_tf(V,T,R3,R4),
                   loonit_assert_source_tf(V,TT,R3,R4)):-!,
   must_optimize_body(HB,T,TT).
 
-optimize_body( HB,(B1,B2),(BN1)):- optimize_conj1(HB,(B1,B2),BN1).
+optimize_body( HB,(B1,B2),(BN1)):- optimize_conjuncts(HB,(B1,B2),BN1).
 optimize_body( HB,(B1:-B2),(BN1:-BN2)):-!, optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2).
 optimize_body( HB,(B1;B2),(BN1;BN2)):-!, optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2).
 
@@ -450,11 +450,11 @@ non_compound(S):- \+ compound(S).
 did_optimize_conj(Head,B1,B2,B12):- optimize_conj(Head,B1,B2,B12), B12\=@=(B1,B2),!.
 
 
-optimize_conj1(Head,(B1,B2,B3),BN):- B3\==(_,_),  did_optimize_conj(Head,B2,B3,B23),
+optimize_conjuncts(Head,(B1,B2,B3),BN):- B3\==(_,_),  did_optimize_conj(Head,B2,B3,B23),
   optimize_conj(Head,B1,B23,BN), !.
-optimize_conj1(Head,(B1,B2,B3),BN):- did_optimize_conj(Head,B1,B2,B12),
+optimize_conjuncts(Head,(B1,B2,B3),BN):- did_optimize_conj(Head,B1,B2,B12),
   optimize_conj(Head,B12,B3,BN),!.
-optimize_conj1(Head,(B1,B2),BN1):- !, optimize_conj(Head,B1,B2,BN1).
+optimize_conjuncts(Head,(B1,B2),BN1):- !, optimize_conj(Head,B1,B2,BN1).
 
 
 optimize_conj(Head, u_assign(Term, C), u_assign(True,CC), CTerm):- 'True'==True,
@@ -466,10 +466,12 @@ optimize_conj(Head,B1,B2,(BN1,BN2)):-!,
   optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2).
 
 assumed_true(B2):- var(B2),!,fail.
+assumed_true(eval_true(B2)):-!,assumed_true(B2).
 assumed_true(B2):- B2== true,!.
 assumed_true(B2):- B2==u_assign('True', '$VAR'('_')),!.
+assumed_true(X==Y):- assumed_true(X=Y).
 assumed_true(X=Y):- var(X),var(Y), X=Y.
-assumed_true(X=Y):- var(X),var(Y), X=Y.
+assumed_true(X=Y):- is_ftVar(X),is_ftVar(Y), X=Y.
 
 
 filter_head_arg(H,F):- var(H),!,H=F.
@@ -870,7 +872,7 @@ is_compiled_and(AND):- member(AND,[ (','), ('and')]).
 flowc.
 
 
- :- discontiguous f2p/4.
+:- discontiguous f2p/4.
 
 f2p(_HeadIs,Convert, Convert, true) :-
      (is_ftVar(Convert);number(Convert)),!.% Check if Convert is a variable
