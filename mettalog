@@ -97,7 +97,7 @@ do_DEBUG() {
 }
 DEBUG() {
   if [ "$debug_this_script" == "true" ]; then
-    do_DEBUG "$@"
+     do_DEBUG "$@"
   fi
 }
 
@@ -133,7 +133,7 @@ for arg in "$@"; do
 done
 
 if [ "$#" -gt 0 ]; then
-    echo "ARGS: ${quoted_args[*]}"
+    : #echo "ARGS: ${quoted_args[*]}"
 fi
 
 

@@ -411,6 +411,10 @@ optimize_u_assign(_,[Var|_],_,_):- is_ftVar(Var),!,fail.
 optimize_u_assign(_,[Empty], _, (!,fail)):-  Empty == empty,!.
 optimize_u_assign(_,[+, A, B], C, plus(A , B, C)):- number_wang(A,B,C), !.
 optimize_u_assign(_,[-, A, B], C, plus(B , C, A)):- number_wang(A,B,C), !.
+optimize_u_assign(_,[+, A, B], C, plus(A , B, C)):- !.
+optimize_u_assign(_,[-, A, B], C, plus(B , C, A)):- !.
+optimize_u_assign(_,[fib, B], C, fib(B, C)):- !.
+optimize_u_assign(_,[fib1, A,B,C,D], R, fib1(A, B, C, D, R)):- !.
 optimize_u_assign(_,['pragma!',N,V],Empty,set_option_value(N,V)):- nonvar(N),ignore((fail,Empty='Empty')), !.
 optimize_u_assign((H:-_),Filter,A,filter_head_arg(A,Filter)):- fail, compound(H), arg(_,H,HV), 
   HV==A, is_list(Filter),!.
@@ -452,22 +456,21 @@ optimize_conj1(Head,(B1,B2,B3),BN):- did_optimize_conj(Head,B1,B2,B12),
   optimize_conj(Head,B12,B3,BN),!.
 optimize_conj1(Head,(B1,B2),BN1):- !, optimize_conj(Head,B1,B2,BN1).
 
-optimize_conj(_Head, u_assign(Term, C), is_True(CC), CTerm):- CC==C, 
-  \+ is_list(Term), code_callable(Term,CTerm),!.
-optimize_conj(_Head, u_assign(Term, C), is_True(CC), eval_true(Term)):- CC==C, 
-  is_list(Term).
 
-optimize_conj(_Head, u_assign(Term, C), u_assign(True,CC), CTerm):- CC==C,
-  'True'==True,code_callable(Term,CTerm),   \+ is_list(Term),!.
+optimize_conj(Head, u_assign(Term, C), u_assign(True,CC), CTerm):- 'True'==True,
+     optimize_conj(Head, u_assign(Term, C), is_True(CC), CTerm).
+optimize_conj(_Head, u_assign(Term, C), is_True(CC), eval_true(Term)):- CC==C, !.
 optimize_conj(Head,B1,BT,BN1):- assumed_true(BT),!, optimize_body(Head,B1,BN1).
 optimize_conj(Head,BT,B1,BN1):- assumed_true(BT),!, optimize_body(Head,B1,BN1).
-optimize_conj(Head,B1,B2,(BN1,BN2)):-!, 
+optimize_conj(Head,B1,B2,(BN1,BN2)):-!,
   optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2).
 
 assumed_true(B2):- var(B2),!,fail.
 assumed_true(B2):- B2== true,!.
 assumed_true(B2):- B2==u_assign('True', '$VAR'('_')),!.
 assumed_true(X=Y):- var(X),var(Y), X=Y.
+assumed_true(X=Y):- var(X),var(Y), X=Y.
+
 
 filter_head_arg(H,F):- var(H),!,H=F.
 filter_head_arge(H,F):- H = F.
