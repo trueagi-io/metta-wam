@@ -216,115 +216,162 @@ function ensure_pip() {
     fi
 }
 
-# Assuming SWI-Prolog 9.1 is installed successfully
-# Install Janus for SWI-Prolog
-echo -e "${BLUE}Checking if Janus Python support is already installed${NC}..."
-if ! swipl -g "use_module(library(janus)), halt(0)." -t "halt(1)" 2>/dev/null; then
-    # janus not installed, prompt the user
-    if [ "${easy_install}" == "Y" ] || confirm_with_default "Y" "Would you like to install Python (Janus) support"; then
-	    echo "Installing Janus for SWI-Prolog..."
-	    ensure_pip
-	    sudo pip install --break-system-packages git+https://github.com/SWI-Prolog/packages-swipy.git
-	    sudo apt install -y libpython3-dev
-	    if [ $? -ne 0 ]; then
-		echo -e "${RED}Failed to install Janus. Exiting script${NC}."
-		exit 1
-	    else
-		echo "Janus installed successfully."
-	    fi
-    else
-        echo -e "${YELLOW}Skipping Janus Python support installation${NC}."
-    fi
-else
-    echo -e "${GREEN}Janus Python support is already installed${NC}."
-fi
-
-
-# Install PySWIP for SWI-Prolog
-echo -e "${BLUE}Checking if Pyswip is already installed${NC}..."
-if ! python3 -c "import pyswip" &> /dev/null; then
-    # Pyswip not installed, prompt the user
-    if [ "${easy_install}" == "Y" ] || confirm_with_default "Y" "Would you like to install Pyswip"; then
-        echo -e "${BLUE}Installing Pyswip..${NC}."
-	ensure_pip
-        sudo pip install --break-system-packages git+https://github.com/logicmoo/pyswip.git
-        echo -e "${GREEN}Pyswip installation complete${NC}."
-    else
-        echo -e "${YELLOW}Skipping Pyswip installation${NC}."
-    fi
-else
-    echo -e "${GREEN}Pyswip is already installed${NC}."
-fi
-
-
-echo -e "${BLUE}Updating SWI-Prolog packages...${NC}"
-if ! swipl -g "use_module(library(predicate_streams)), halt(0)." -t "halt(1)" 2>/dev/null; then
-    echo "Installing predicate_streams..."
-    echo -e "${YELLOW}${BOLD}If asked, say yes to everything and/or accept the defaults...${NC}"
-    swipl -g "pack_install(predicate_streams,[interactive(false)])" -t halt
-else
-    echo -e "${GREEN}Pack predicate_streams is already installed${NC}."
-fi
-
-if ! swipl -g "use_module(library(logicmoo_utils)), halt(0)." -t "halt(1)" 2>/dev/null; then
-    echo "Installing logicmoo_utils..."
-    echo -e "${YELLOW}${BOLD}If asked, say yes to everything and/or accept the defaults...${NC}"
-    swipl -g "pack_install('https://github.com/TeamSPoon/logicmoo_utils.git',[insecure(true),interactive(false),git(true),verify(false)])" -t halt
-else
-    echo -e "${GREEN}Pack logicmoo_utils is already installed${NC}."
-fi
-
-if ! swipl -g "use_module(library(dictoo)), halt(0)." -t "halt(1)" 2>/dev/null; then
-    echo "Installing dictoo..."
-    echo -e "${YELLOW}${BOLD}If asked, say yes to everything and/or accept the defaults...${NC}"
-    swipl -g "pack_install(dictoo,[interactive(false)])" -t halt
-else
-    echo -e "${GREEN}Pack dictoo is already installed${NC}."
-fi
-
 
 # Setting PYTHONPATH environment variable
 echo -e "${BLUE}Setting PYTHONPATH environment variable..${NC}."
 export PYTHONPATH=$PWD/metta_vspace:$PYTHONPATH
 
 
-# Function to check if metalog is in the user's PATH
-check_metalog_in_path() {
-    # Using command -v to find metalog in the PATH
-    if ! command -v metalog &> /dev/null; then
-        # If metalog is not found, print a message
-        echo "Adding mettalog to your PATH."
-        # Update PATH
-        echo "" >> ${HOME}/.bashrc
-        echo "# For MeTTaLog" >> ${HOME}/.bashrc
-        echo "export PATH=${PATH}:${METTALOG_DIR}" >> ${HOME}/.bashrc
+if confirm_with_default "N" "Setup Flybase Developnent files"; then
 
-        export PATH=${PATH}:${METTALOG_DIR}
-        # Update PYTHONPATH
-        echo "" >> ${HOME}/.bashrc
-        echo "# For MeTTaLog to use python libraries" >> ${HOME}/.bashrc
-        echo "export PYTHONPATH=\${PYTHONPATH:+\${PYTHONPATH}:}.:${METTALOG_DIR}/metta_vspace" >> ${HOME}/.bashrc
+# Confirming download of Quick Loadable Flybase files
+if [ "${easy_install}" == "Y" ] || confirm_with_default "Y" "Download Quick Loadable Flybase files"; then
+    if [ -f whole_flybase.qlf ]; then
+        echo -e "${YELLOW}whole_flybase.qlf already exists. Skipping download and extraction.${NC}"
     else
-        # If metalog is found, print a success message
-        echo "mettalog is in your PATH."
+        echo -e "${BLUE}Downloading whole_flybase.qlf...${NC}"
+        wget --show-progress https://logicmoo.org/public/metta/data/whole_flybase.qlf.gz && echo "Unzipping..." && gunzip whole_flybase.qlf.gz || { echo -e "${RED}Error in download or unzipping.${NC}" && exit 1; }
+        echo -e "${BLUE}Download and unzipping complete.${NC}"
     fi
-}
 
-# Call the function to perform the check
-check_metalog_in_path
+    # Checking for whole_flybase in README.md
+    echo -e "${BLUE}Checking for whole_flybase in README.md...${NC}"
+    grep -B 3 -A 4 whole_flybase README.md || { echo -e "${RED}Error or no matches in README.md${NC}" && exit 1; }
 
-
-
-
-echo -e "${BLUE}Installation and setup complete!"
-
-
-if confirm_with_default "N" "Show README.md"; then
- cat README.md
+    echo -e "${Green}Process completed successfully.${NC}"
+    if [ "${easy_install}" == "Y" ]; then
+         exit 0
+    fi
+else
+    echo -e "${YELLOW}Download of Quick Loadable Flybase files skipped.${NC}"
 fi
 
-# End of the script
 
-# ```
 
+
+echo -e "${BLUE}Allowing user to override FBPC_VERSION..${NC}."
+export FBPC_VERSION=$(prompt_for_input "Enter the Flybase version slug (or press <enter> to use this default): " "2023_05")
+echo -e "${GREEN}"
+set -x
+export FBPC_URL="ftp.flybase.org/releases/FB$FBPC_VERSION/precomputed_files/"
+export FBPC_LOC="./data/$FBPC_URL"
+set +x
+echo -e "${NC}"
+
+need_fb_files="Y"
+if find "$FBPC_LOC" -mindepth 2 -type f -print -quit | grep -q '.'; then
+    need_fb_files="N"
+    echo -e -n "${GREEN}Looks like we already have the Flybase data.. \n${BLUE}Really RE-"
+else
+   echo -e "${YELLOW}Looks like we *need* have the Flybase data..${NC}."
+fi
+
+if confirm_with_default "${need_fb_files}" "Download Flybase Release?"; then
+    echo -e "${BLUE}You may override the Flybase URL${NC}..."
+    export FBPC_URL=$(prompt_for_input "Enter the FBPC URL http://" "${FBPC_URL}")
+
+    echo -e "${BLUE}Downloading necessary files..${NC}."
+    wget -c --no-parent -r -P ./data/  --reject="index.htm*"  http://$FBPC_URL
+
+    echo -e "${BLUE}Setting the precomputed location..${NC}."
+    export FBPC_LOC=./data/$FBPC_URL
+
+    echo -e "${BLUE}Checking and deleting duplicated files..${NC}."
+    find $FBPC_LOC -type f -name '*_fb_*' -exec bash -c 'if [[ -f ${1/_fb_????_??/} ]]; then rm -f ${1/_fb_????_??/}; fi' _ {} \;
+
+    echo -e "${BLUE}Calculating disk usage (should be around 587M)..${NC}."
+    du -hs $FBPC_LOC
+    echo ""
+
+    echo -e "${BLUE}Decompressing the downloaded files..${NC}."
+    find $FBPC_LOC -type f -name "*.gz" -execdir bash -c 'if [ ! -f "${1%.gz}" ]; then gunzip -k "$1"; else echo "File exists, skipping: $1"; fi' bash {} \;
+    #find $FBPC_LOC -type f -name "*.zip" -print -execdir unzip -o -d . {} \;
+    echo ""
+
+    echo -e "${BLUE}Normalizing identifiers in files..${NC}."
+    set -x
+    find $FBPC_LOC -name "*.fb" -exec sed -i -e 's/FB:FB/FB/g' {} \;
+    find $FBPC_LOC -name "*.json" -exec sed -i -e 's/FLYBASE:FB/FB/g' {} \;
+    time find $FBPC_LOC -type f ! -name "*.gz" -exec sed -i -e 's/\(FB[a-z]\{2\}\):\([0-9]\)/\1\2/g' -e 's/[Ff][Ll][Yy][Bb][Aa][Ss][Ee]:\([A-Za-z]\)/\1/g' {} \;
+    set +x
+
+fi
+
+echo -e "${BLUE}Checking disk usage for flybase (should be around 7.9G)..${NC}."
+du -hs $FBPC_LOC
+echo ""
+
+
+if confirm_with_default "N" "Building the Loadable Files might take around 30 minutes. Do you want to continue"; then
+    echo -e "${BLUE}Building the Loadable File..${NC}."
+    set -x
+    ./MeTTa -G "'!(create-flybase-pl! ${FBPC_LOC})'" -G "'!(halt! 777)'"
+    set +x
+    echo -e "${BLUE}Loadable File build complete${NC}."
+
+
+    echo -e "${BLUE}No metta files for:${NC}."
+    find ftp.flybase.org -type f ! -name "*.png" ! -name "*.gz" ! -name "*.metta" ! -name "*.datalog" -exec bash -c 'for file; do base="${file%.*}"; [[ -z $(find "$(dirname "$file")" -type f -wholename "$base*etta") ]] && echo "$file"; done' bash {} +
+
+    echo -e "${BLUE}No datalog files for:${NC}."
+    find ftp.flybase.org -type f ! -name "*.png" ! -name "*.gz" ! -name "*.zip" ! -name "*.datalog" -exec bash -c 'for file; do base="${file%.*}"; [[ -z $(find "$(dirname "$file")" -type f -wholename "$base*atalog") ]] && echo "$file"; done' bash {} +
+
+
+    echo -e "${BLUE}Removing ':' in datalog files..${NC}."
+    find ./data -type f -name "*.datalog" -print -exec sed -i -e 's/\(FB[a-z]\{2\}\):\([0-9]\)/\1\2/g' -e 's/[Ff][Ll][Yy][Bb][Aa][Ss][Ee]:\([A-Za-z]\)/\1/g' {} \;
+
+    echo -e "${BLUE}Removing duplicate lines in datalog files..${NC}."
+    time find ./data -type f -name "*.datalog" -exec sh -c 'awk '\''!seen[$0]++'\'' "$1" > tmpfile && mv -f tmpfile "$1"' sh {} \;
+
+    echo -e "${BLUE}Removing duplicate lines in metta files..${NC}."
+    time find ./data -type f -name "*.metta" -exec sh -c 'awk '\''!seen[$0]++'\'' "$1" > tmpfile && mv -f tmpfile "$1"' sh {} \;
+
+    echo -e "${BLUE}Alligning OBO preds.${NC}."
+    time find ./data/supplimental/12_ontologies/ -type f -name "*.datalog?*" -print -exec sed -i -e 's/obo-is-a/obo-is-type/g'  {} \;
+
+    echo -e "${BLUE}Alligning OBO preds.${NC}."
+    time find ./data -type f -name "*.datalog?*" -print -exec sed -i -e 's/obo-has-definition/obo-def/g' -e 's/obo-Inheritance/obo-is-a/g' -e 's/obo-Member/Member/g' -e 's/obo-has-name/obo-name/g'  {} \;
+    #  -e 's/obo-[A-Z][A-z]+-/obo-/g'
+
+    echo -e "${BLUE}Combining all of the datalog files into one big one..${NC}."
+    find ./data -mindepth 2 -type f -name "*.datalog" -exec cat ./data/whole_header.datalog {} + > ./data/whole_flybase.metta.datalog
+
+    echo -e "${BLUE}Combining all of the MeTTa files into one big one..${NC}."
+    find ./data -mindepth 2 -type f -name "*.metta" -exec cat {} + > ./data/whole_flybase.metta
+
+    echo -e "${BLUE}Removing any duplicates from one big one..${NC}."
+    time awk '!seen[$0]++' ./data/whole_flybase.metta.datalog > tmpfile && mv -f tmpfile ./data/whole_flybase.metta.datalog
+
+    echo -e "${BLUE}Removing any duplicates from one big one..${NC}."
+    time awk '!seen[$0]++' ./data/whole_flybase.metta > tmpfile && mv -f tmpfile ./data/whole_flybase.metta
+
+
+else
+    echo -e "${BLUE}Skipping the building of the Loadable File${NC}."
+fi
+
+ls -lh whole_flybase.datalog2
+wc - l whole_flybase.datalog2
+
+if confirm_with_default "Y" "Building the  Quick Load File might take around 30 minutes. Do you want to continue"; then
+    echo -e "${BLUE}Building the Quick Load File..${NC}."
+    set -x
+    time swipl -g "qcompile('data/whole_flybase.datalog2')" -t halt
+    set +x
+    echo -e "${BLUE}Quick Load File build complete${NC}."
+else
+    echo -e "${BLUE}Skipping the building of the Quick Load File${NC}."
+fi
+
+# Optional Rust Metta loading
+if confirm_with_default_no "Would you like to be able to load these Flybase Metta files into Rust Metta"; then
+    echo -e "${BLUE}Converting data for Rust Metta..${NC}."
+    set -x
+    ./scripts/convert_to_metta.sh $FBPC_LOC
+    set +x
+    echo -e "${BLUE}Counting atoms (should be at least 56 million)..${NC}."
+    find $FBPC_LOC -type f -name "*.metta" -exec wc -l {} +
+fi
+
+fi
 
