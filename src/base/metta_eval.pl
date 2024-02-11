@@ -59,6 +59,7 @@ do_expander(':',_,X,Y):- !, get_type(X,Y)*->X=Y.
 'get_type'(Arg,Type):- 'get-type'(Arg,Type).
 
 
+eval_true(X):- compound(X), !, call(X).
 eval_true(X):- eval_args(X,Y), \+ is_False(Y).
 
 eval_args(X,Y):- current_self(Self), eval_args(100,Self,X,Y).
@@ -121,10 +122,11 @@ debugging_metta(G):- fake_notrace((is_debugging((eval))->ignore(G);true)).
 :- nodebug(metta(eval)).
 
 
-w_indent(Depth,Goal):-
-  \+ \+ fake_notrace(ignore(((
+w_indent(Depth,Goal):- \+ \+ notrace(
+    ignore(((
     format('~N'),
     setup_call_cleanup(forall(between(Depth,101,_),write('  ')),Goal, format('~N')))))).
+
 indentq(Depth,Term):-
   \+ \+ fake_notrace(ignore(((
     format('~N'),
@@ -191,7 +193,6 @@ eval_00(Eq,RetType,Depth,Self,X,YO):-
   once(if_or_else((subst_args(Eq,RetType,Depth2,Self,Y,YO)),
      if_or_else(finish_eval(Depth2,Self,Y,YO),
           Y=YO))).
-
 
 
 eval_11(_Eq,_RetType,_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
