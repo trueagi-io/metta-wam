@@ -1766,8 +1766,8 @@ interactively_do_metta_exec0(From,Self,_TermV,Term,X,NamedVarsList,Was,Output,FO
        color_g_mesg_ok(yellow, ignore((( not_compatio(if_t( \+ atomic(Output), nl)), 
           if_compatio((if_t(ResNum> 1,write(', ')),with_indents(false,write_asrc(Output)))),not_compatio(write_asrc(Output)), not_compatio(nl))))),
 
-       not_compatio(give_time('Execution',Seconds)),
        not_compatio(with_output_to(user_error,give_time('Execution',Seconds))),
+       %not_compatio(give_time('Execution',Seconds),
        color_g_mesg(green,
            ignore((NamedVarsList \=@= Was ->(not_compatio(( maplist(print_var,NamedVarsList), nl))) ; true))))),
        (
