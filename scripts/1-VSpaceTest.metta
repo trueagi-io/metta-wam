@@ -1,9 +1,9 @@
 ﻿
-!(extend-py! metta_vspace.metta_learner)
+!(extend-py! mettalog)
 
-!(metta_learner::vspace-main)
+%!(metta_learner::vspace-main)
 
-;!(metta_learner::vspace-main (superpose ( 1 2)))
+%;!(metta_learner::vspace-main (superpose ( 1 2)))
 
 ;!(mettalog)
 

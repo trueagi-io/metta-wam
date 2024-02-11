@@ -1,7 +1,13 @@
-*.*
-.*
-*/
+flybase_metta.qlf
+.bash_*
+./.*~
+./.git
+./data/
+./examples/performance/gpt2-like/corpus
+./reports/
+./reports_local/
+./venv/lib
 # local development might need these changes without commiting
-!mettalog
-!MeTTa
-!./metta_vspace/pyswip
+#!./metta_vspace/pyswip
+#!MeTTa
+#!mettalog
