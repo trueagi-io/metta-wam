@@ -5,8 +5,7 @@ IS_SOURCED=$( [[ "${BASH_SOURCE[0]}" != "${0}" ]] && echo 1 || echo 0)
 # Function to exit the script properly
 if [ "$IS_SOURCED" -eq "0" ]; then SCRIPT=$(readlink -f "$0"); else SCRIPT=$(readlink -f "${BASH_SOURCE[0]}"); fi
 export MeTTa=$(realpath "$SCRIPT")
-export METTALOG_DIR=$(dirname "$SCRIPT")
-echo "METTALOG_DIR=$METTALOG_DIR"
+export METTALOG_DIR=$(dirname "$MeTTa")
 # cd "$METTALOG_DIR" || { echo "Failed to navigate to $METTALOG_DIR"; [[ "$IS_SOURCED" == "1" ]] && return 1 || exit 1; }
 
 # Run this file with ./INSTALL.md
@@ -291,14 +290,14 @@ export PYTHONPATH=$PWD/metta_vspace:$PYTHONPATH
 # Function to check if metalog is in the user's PATH
 check_metalog_in_path() {
     # Using command -v to find metalog in the PATH
-    if ! command -v metalog &> /dev/null; then
+    if ! command -v mettalog &> /dev/null; then
+        echo "METTALOG_DIR=$METTALOG_DIR"
         # If metalog is not found, print a message
         echo "Adding mettalog to your PATH."
         # Update PATH
         echo "" >> ${HOME}/.bashrc
         echo "# For MeTTaLog" >> ${HOME}/.bashrc
         echo "export PATH=${PATH}:${METTALOG_DIR}" >> ${HOME}/.bashrc
-
         export PATH=${PATH}:${METTALOG_DIR}
         # Update PYTHONPATH
         echo "" >> ${HOME}/.bashrc
@@ -309,6 +308,7 @@ check_metalog_in_path() {
         echo "mettalog is in your PATH."
     fi
 }
+echo "PATH=$PATH"
 
 # Call the function to perform the check
 check_metalog_in_path
@@ -316,11 +316,13 @@ check_metalog_in_path
 
 
 
-echo -e "${BLUE}Installation and setup complete!"
+echo -e "${GREEN}Installation and setup complete!${NC}."
 
 
 if confirm_with_default "N" "Show README.md"; then
- cat README.md
+    echo -en "${GREEN}"
+    cat README.md
+    echo -en "${NC}"
 fi
 
 # End of the script
