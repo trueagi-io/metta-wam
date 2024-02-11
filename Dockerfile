@@ -62,19 +62,23 @@ RUN swipl -g "pack_install(dictoo,[interactive(false)])" -t halt
 
 # Install MeTTaLog
 WORKDIR ${HOME}
-RUN git clone https://github.com/logicmoo/vspace-metta.git
+#RUN git clone https://github.com/logicmoo/vspace-metta.git
 
+COPY ./ /home/user/vspace-metta/
 WORKDIR ${HOME}/vspace-metta
 
 # Update PATH
-RUN echo >> ${HOME}/.bashrc
+RUN echo "" >> ${HOME}/.bashrc
 RUN echo "# For MeTTaLog" >> ${HOME}/.bashrc
 RUN echo "export PATH=${PATH}:${HOME}/vspace-metta:/home/user/.local/bin:/home/user/.conan/bin" >> ${HOME}/.bashrc
 
+# Update PYTHONPATH
+RUN echo "" >> ${HOME}/.bashrc
+RUN echo "# For MeTTaLog to use python libraries" >> ${HOME}/.bashrc
+RUN echo "export PYTHONPATH=\${PYTHONPATH:+\${PYTHONPATH}:}.:${HOME}/vspace-metta/metta_vspace" >> ${HOME}/.bashrc
 
-COPY ./mettalog /home/user/vspace-metta/mettalog
-COPY ./metta_vspace/pyswip /home/user/vspace-metta/metta_vspace/pyswip
-COPY ./MeTTa /home/user/vspace-metta/MeTTa
+
+#COPY ./metta_vspace/pyswip /home/user/vspace-metta/
 RUN ls -lh /home/user/vspace-metta/mettalog
 RUN sudo chmod +x /home/user/vspace-metta/mettalog
 

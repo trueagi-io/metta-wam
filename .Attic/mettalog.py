@@ -76,6 +76,71 @@ oper_dict = {}
 janus_dict = {}
 syms_dict = {}
 
+
+import ast
+import sys
+
+def print_ast(module_name_or_source_code):
+    try:
+        source_code = get_src(module_name_or_source_code)
+        # Parse the source code into an AST
+        parsed_ast = ast.parse(source_code)
+        # Use ast.dump to get a formatted string of the AST
+        print(ast.dump(parsed_ast, indent=4))
+        return parsed_ast
+    except ImportError:
+        print(f"Error: Module {module_name} not found.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+def get_src(module_name_or_source_code):
+    try:
+        # Import the module dynamically using __import__ function
+        module = __import__(module_name_or_source_code)
+        # Construct the module file path
+        file_path = module.__file__
+        # Read the source code from the module file
+        with open(file_path, "r") as file:
+            source_code = file.read()
+        return source_code
+    except ImportError:
+        print(f"Error: Module {module_name_or_source_code} not found.")
+        return module_name_or_source_code
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    
+     
+def src_ast(module_name_or_source_code):
+    try:
+        source_code = get_src(module_name_or_source_code)
+        # Parse the source code into an AST
+        parsed_ast = ast.parse(source_code)
+        # Use ast.dump to get a formatted string of the AST
+        return parsed_ast
+    except ImportError:
+        print(f"Error: Module {module_name} not found.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+def src_ast_str(source_code):
+    try:
+        # Parse the source code into an AST
+        parsed_ast = src_ast(source_code)
+        # Use ast.dump to get a formatted string of the AST
+        return ast.dump(parsed_ast, indent=4)
+    except ImportError:
+        print(f"Error: Module {module_name} not found.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("Usage: python script.py <module_name>")
+    else:
+        module_name = sys.argv[1]
+        print_ast(module_name)
+
+
 def parent_space():
     return the_python_runner.parent.space()
 
