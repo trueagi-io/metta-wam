@@ -682,7 +682,7 @@ if [[ "$html_flag" == "enable" ]]; then
     ( touch "$TEE_FILE"
     chmod 777 "$TEE_FILE"
     cat /dev/null > "$TEE_FILE"
-    DEBUG "$METTA_CMD"
+    DEBUG "METTA_CMD: $METTA_CMD"
     eval "$METTA_CMD"
     echo $? > "$TEMP_EXIT_CODE_FILE"
     ansi2html -u < "$TEE_FILE" >"$HTML_OUT" ) || true
@@ -692,8 +692,7 @@ else
 
     [[ "$wants_print_help" == "1" ]] && { print_help; [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
     [[ -n "${EXIT_SCRIPT+x}" ]] && { [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
-    #DEBUG 
-    echo "$METTA_CMD"
+    DEBUG "METTA_CMD: $METTA_CMD"
     (
      eval "$METTA_CMD"
     echo $? > "$TEMP_EXIT_CODE_FILE" )
