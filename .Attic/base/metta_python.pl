@@ -2,10 +2,6 @@
 :- flush_output.
 :- setenv('RUST_BACKTRACE',full).
 %:- '$set_source_module'('user').
-:- set_prolog_flag(py_backtrace_depth,10).
-:- set_prolog_flag(py_backtrace, true).
-:- set_prolog_flag(py_argv,[]).
-%:- set_prolog_flag(argv,[]).
 /*
 # Core in Rust
 In the original version, the core logic and functionalities of the MeTTa system are implemented in Rust. Rust is known for its performance and safety features, making it a suitable choice for building robust, high-performance systems.
@@ -337,9 +333,7 @@ sync_python_path:-
     setenv('PYTHONPATH', NewPythonPath).
 
 
+:- set_prolog_flag(py_backtrace_depth,10).
+:- set_prolog_flag(py_backtrace, true).
 %:- initialization(on_restore1,restore).
 %:- initialization(on_restore2,restore).
-
-
-
-% py_initialize(, +Argv, +Options)

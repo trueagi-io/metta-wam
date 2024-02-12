@@ -6,9 +6,7 @@
 :- abolish((system:'$exported_op'/3)).
 :- assert((system:'$exported_op'(_,_,_):- fail)).
 
-fbug(_):- is_compatio,!.
-fbug(P) :- format("~N"), current_predicate(write_src/1),
-  with_output_to(user_error,in_cmt(pp_fb(P))),!.
+fbug(P) :- format("~N"), current_predicate(write_src/1),with_output_to(user_error,in_cmt(pp_fb(P))),!.
 fbug(N=V) :- nonvar(N), !, fbdebug1(N:-V).
 fbug(V) :- compound(V),functor(V,F,_A),!,fbdebug1(F:-V).
 fbug(V) :- fbdebug1(debug:-V).
@@ -52,13 +50,9 @@ option_else0( N,V,_Else):- was_option_value(N,VV),!,VV=V.
 option_else0(_N,V, Else):- !,V=Else.
 
 %option_value( N,V):- var(V), !, (was_option_value( N,V)->true;trace).
-option_value(N,V):- V==true,option_value0(N,'True'),!.
-option_value(N,V):- V==false,option_value0(N,'False'),!.
-option_value(N,V):- notrace(once(((p2mE(V,VV),option_value0(N,VV))))).
-
-
+option_value(N,V):- notrace(option_value0(N,V)).
 option_value0( N,V):- var(V), !,  was_option_value( N,V).
-option_value0( N,V):- nonvar(V), option_value0( N,VV), once((p2m(VV,V2),p2m(V,V1))), V1=V2.
+option_value0( N,V):- nonvar(V), option_value0( N,VV), !, p2m(VV,V1),p2m(V,V2),!,V1=V2.%equal_enough(V1,V2).
 option_value0( N,V):- option_else0( N,V ,[]).
 
 p2mE(NA,NA):- \+ atom(NA),!.
