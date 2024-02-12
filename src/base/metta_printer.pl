@@ -95,7 +95,7 @@ pp_sax(S) :- has_type(S,T),!,format('(~wValueNode "~w")',[T,S]).
 pp_sax(S) :- sub_atom(S,0,4,Aft,FB),flybase_identifier(FB,Type),!,(Aft>0->format('(~wValueNode "~w")',[Type,S]);format('(TypeNode "~w")',[Type])).
 pp_sax(S) :- print_concept("ConceptNode",S).
 
-print_concept( CType,V):- allow_concepts, !, write("("),write(CType),write(" "),ignore(with_concepts(false,write_src(V))),write(")").
+%print_concept( CType,V):- allow_concepts, !, write("("),write(CType),write(" "),ignore(with_concepts(false,write_src(V))),write(")").
 print_concept(_CType,V):- ignore(write_src(V)).
 write_val(V):- number(V),!, write_src(V).
 write_val(V):- compound(V),!, write_src(V).
@@ -122,7 +122,18 @@ write_dname(S):- write('$'),write(S).
 
 pp_as(V) :- \+ \+ pp_sex(V),flush_output.
 pp_sex_nc(V):- with_no_quoting_symbols(true,pp_sex(V)),!.
-write_src(V):- notrace(pp_sex(V)),!.
+
+
+
+unlooped_fbug(Mesg):- nb_current(fbug_message_hook,true),!,print(Mesg),nl.
+unlooped_fbug(Mesg):- 
+  setup_call_cleanup(nb_setval(fbug_message_hook,true),
+    once(fbug(Mesg)),nb_setval(fbug_message_hook,false)).
+
+
+write_src(V):- quietly(pp_sex(V)),!.
+
+pp_sex(V):- is_dict(V),!,print(V).
 pp_sex(V):- pp_sexi(V),!.
 % Various 'write_src' and 'pp_sex' rules are handling the writing of the source,
 % dealing with different types of values, whether they are lists, atoms, numbers, strings, compounds, or symbols.
