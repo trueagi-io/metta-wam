@@ -16,6 +16,15 @@ self_eval0('True'). self_eval0('False'). % self_eval0('F').
 self_eval0('Empty').
 self_eval0(X):- atom(X),!, \+ nb_current(X,_),!.
 
+coerce(Type,Value,Result):- nonvar(Value),Value=[Echo|EValue], Echo == echo, EValue = [RValue],!,coerce(Type,RValue,Result).
+coerce(Type,Value,Result):- var(Type), !, Value=Result, freeze(Type,coerce(Type,Value,Result)).
+coerce('Atom',Value,Result):- !, Value=Result.
+coerce('Bool',Value,Result):- var(Value), !, Value=Result, freeze(Value,coerce('Bool',Value,Result)).
+coerce('Bool',Value,Result):- is_list(Value),!,as_tf(call_true(Value),Result),
+set_list_value(Value,Result).
+   
+set_list_value(Value,Result):- nb_setarg(1,Value,echo),nb_setarg(1,Value,[Result]).
+
 is_self_eval_l_fa('S',1).
 % eval_20(Eq,RetType,Depth,Self,['quote',Eval],RetVal):- !, Eval = RetVal, check_returnval(Eq,RetType,RetVal).
 is_self_eval_l_fa('quote',_).
@@ -60,7 +69,7 @@ do_expander(':',_,X,Y):- !, get_type(X,Y)*->X=Y.
 
 
 eval_true(X):- compound(X), !, call(X).
-eval_true(X):- eval_args(X,Y), \+ is_False(Y).
+eval_true(X):- eval_args(X,Y), once(var(Y) ; \+ is_False(Y)).
 
 eval_args(X,Y):- current_self(Self), eval_args(100,Self,X,Y).
 eval_args(Depth,Self,X,Y):- eval_args('=',_,Depth,Self,X,Y).
@@ -279,6 +288,8 @@ eval_20(Eq,RetType,_Dpth,_Slf,X,Y):- \+ is_list(X),!,do_expander(Eq,RetType,X,Y)
 
 eval_20(Eq,_RetType,Depth,Self,[V|VI],[V|VO]):- var(V),is_list(VI),!,maplist(eval(Eq,_ArgRetType,Depth,Self),VI,VO).
 
+eval_20(_,_,_,_,['echo',Value],Value):- !.
+eval_20(=,Type,_,_,['coerce',Type,Value],Result):- !, coerce(Type,Value,Result).
 
 % =================================================================
 % =================================================================
@@ -1422,7 +1433,7 @@ compare_selfless0(cplfd,['>',X,Y],TF):-!,as_tf(X#>Y,TF).
 compare_selfless0(cplfd,['<',X,Y],TF):-!,as_tf(X#<Y,TF).
 compare_selfless0(cplfd,['=>',X,Y],TF):-!,as_tf(X#>=Y,TF).
 compare_selfless0(cplfd,['<=',X,Y],TF):-!,as_tf(X#=<Y,TF).
-compare_selfless0(cplfd,[F|Stuff],TF):- atom_concat('#',F,SharpF),P=..[SharpF|Stuff],!,as_tf(P,TF).
+compare_selfless0(cplfd,[F|Stuff],TF):- !,atom_concat('#',F,SharpF),P=..[SharpF|Stuff],!,as_tf(P,TF).
 compare_selfless0(Lib,['\\=',X,Y],TF):-!,as_tf(Lib:{X \=Y}, TF).
 compare_selfless0(Lib,['=',X,Y],TF):-!,as_tf(Lib:{X =Y}, TF).
 compare_selfless0(Lib,['>',X,Y],TF):-!,as_tf(Lib:{X>Y},TF).
