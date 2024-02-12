@@ -19,9 +19,10 @@
 :- ensure_loaded(metta_reader).
 :- ensure_loaded(metta_interp).
 :- ensure_loaded(metta_space).
+
 % =======================================
 % TODO move non flybase specific code between here and the compiler
-:- ensure_loaded(flybase_main).
+%:- ensure_loaded(flybase_main).
 % =======================================
 %:- set_option_value(encoding,utf8).
 
@@ -30,6 +31,7 @@
 for_all(G1,G2):- forall(G1,G2).
 
 :- op(700,xfx,'=~').
+:- op(690,xfx, =~ ).
 
 compound_non_cons(B):-  compound(B),  \+ B = [_|_].
 iz_conz(B):- compound(B), B=[_|_].
@@ -89,6 +91,8 @@ decl_functional_predicate_arg(assertFalse, 2, 2).
 decl_functional_predicate_arg(match,4,4).
 decl_functional_predicate_arg('TupleConcat',3,3).
 decl_functional_predicate_arg('new-space',1,1).
+decl_functional_predicate_arg('exec0',1,1).
+decl_functional_predicate_arg('exec1',1,1).
 
 decl_functional_predicate_arg(superpose, 2, 2).
 
@@ -180,7 +184,7 @@ functs_to_preds0(I,OO):-
    sexpr_s2p(I, M),
    f2p(_,_,M,O),
    expand_to_hb(O,H,B),
-   head_preconds_into_body(H,B,HH,BB),!,
+   optimize_head_and_body(H,B,HH,BB),!,
    OO = ':-'(HH,BB).
 
 % ?- compile_for_exec(RetResult, is(pi+pi), Converted).
@@ -189,36 +193,35 @@ compile_for_exec(Res,I,O):-
    %ignore(Res='$VAR'('RetResult')),
    compile_for_exec0(Res,I,O),!.
 
-
-
 compile_for_exec0(Res,I,eval_args(I,Res)):- is_ftVar(I),!.
 compile_for_exec0(Res,(:- I),O):- !, compile_for_exec0(Res,I,O).
 
-compile_for_exec0(Res,I,BB):-  
-   compile_for_assert([exec0], I, H:-BB),
-   arg(1,H,Res).
-
 compile_for_exec0(Res,I,BB):- 
    %ignore(Res='$VAR'('RetResult')),
-   compile_flow_control(exec(),Res,I,O), 
-   head_preconds_into_body(exec(Res),O,_,BB).
+   compound_name_arguments(EXEC1, exec1, []),
+   f2p(EXEC1,Res,I,O), 
+   optimize_head_and_body(exec1(Res),O,_,BB).
+
+compile_for_exec0(Res,I,BB):- fail,
+   compound_name_arguments(EXEC0, exec0, []),
+   compile_for_assert(EXEC0, I, H:-BB),
+   arg(1,H,Res).
+
 
 %compile_for_exec0(Res,I,O):- f2p(exec(),Res,I,O).
 
 
 % If Convert is of the form (AsFunction=AsBodyFn), we perform conversion to obtain the equivalent predicate.
-compile_head_for_assert(HeadIs, (Head:-Body)):-
+compile_fact_for_assert(HeadIs, (Head:-Body)):-
    compile_head_for_assert(HeadIs, NewHeadIs,Converted),
-   head_preconds_into_body(NewHeadIs,Converted,Head,Body).
+   optimize_head_and_body(NewHeadIs,Converted,Head,Body).
 
 head_as_is(Head):-
    as_functor_args(Head,Functor,A,_),!,
    head_as_is(Functor,A).
 head_as_is(if,3).
 
-compile_head_for_assert(Head, Head, true):-
-   head_as_is(Head),!.
-
+compile_head_for_assert(Head, Head, true):- head_as_is(Head),!.
 compile_head_for_assert(Head, NewestHead, HeadCode):-
    compile_head_variablization(Head, NewHead, VHeadCode),
    compile_head_args(NewHead, NewestHead, AHeadCode),
@@ -286,7 +289,9 @@ as_functor_args(AsPred,F,A,ArgsL):-    nonvar(AsPred),!,into_list_args(AsPred,[F
 as_functor_args(AsPred,F,A,ArgsL):- 
    nonvar(F),length(ArgsL,A),AsPred = [F|ArgsL].
 
-compile_for_assert(HeadIs, AsBodyFn, Converted) :-  (AsBodyFn =@= HeadIs ; AsBodyFn == []), !,/*trace,*/  compile_head_for_assert(HeadIs,Converted).
+compile_for_assert(HeadIs, AsBodyFn, Converted) :-  
+   (AsBodyFn =@= HeadIs ; AsBodyFn == []), !,/*trace,*/  
+   compile_fact_for_assert(HeadIs,Converted).
 
 % If Convert is of the form (AsFunction=AsBodyFn), we perform conversion to obtain the equivalent predicate.
 compile_for_assert(Head, AsBodyFn, Converted) :-
@@ -320,7 +325,7 @@ compile_for_assert(HeadIs, AsBodyFn, Converted) :-
    %RetResult = Converted,
    %RetResult = _,
    optimize_head_and_body(Head,NextBody,HeadC,NextBodyC),
-   %fbug([convert(Convert),head_preconds_into_body(HeadC:-NextBodyC)]),
+   %fbug([convert(Convert),optimize_head_and_body(HeadC:-NextBodyC)]),
    %if_t(((Head:-NextBody)\=@=(HeadC:-NextBodyC)),fbug(was(Head:-NextBody))),
    nop(ignore(Result = '$VAR'('HeadRes'))))),!.
 
@@ -332,7 +337,6 @@ compile_for_assert(HeadIs, AsBodyFn, Converted) :-
    f2p(HeadIs,Result,AsBodyFn,NextBody),
    combine_code(CodeForHeadArgs,NextBody,BodyC),!,
    optimize_head_and_body(HeadC,BodyC,HeadCC,BodyCC),!.
-
 
 /*
 */
@@ -1060,8 +1064,10 @@ call3(G):- call(G).
 call4(G):- call(G).
 call5(G):- call(G).
 
+
 trace_break:- trace,break.
 
+:- table(u_assign/2).
 u_assign(FList,R):- is_list(FList),!,eval_args(FList,R).
 u_assign(FList,R):- var(FList),nonvar(R), !, u_assign(R,FList).
 u_assign(FList,R):- FList=@=R,!,FList=R.

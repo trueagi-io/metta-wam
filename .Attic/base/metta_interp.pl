@@ -1,6 +1,12 @@
 :- encoding(iso_latin_1).
-
-
+:- set_prolog_flag(backtrace,true).
+:- set_prolog_flag(backtrace_depth,100).
+:- set_prolog_flag(backtrace_goal_dept,100).
+:- set_prolog_flag(backtrace_show_lines,true).
+:- set_prolog_flag(write_attributes,portray).
+:- set_prolog_flag(debug_on_interrupt,true).
+:- set_prolog_flag(debug_on_error,true).
+%:- set_prolog_flag(compile_meta_arguments,control).
 
 :- nb_setval(cmt_override,lse('; ',' !(" ',' ") ')).
 is_compiling:- current_prolog_flag(os_argv,ArgV),member(E,ArgV),
@@ -24,16 +30,17 @@ is_html:- nb_current('html','True'),!.
 %is_html:- option_value('html','True'),!.
 
 
-is_mettalog:- current_prolog_flag(os_argv,ArgV), member('--log',ArgV),!,fail.
+is_mettalog:- current_prolog_flag(os_argv,ArgV), member('--log',ArgV),!.
 
 
 % is_compatio:- !,fail.
-is_compatio:- current_prolog_flag(os_argv,ArgV), member('--log',ArgV),!,fail.
-is_compatio:- nb_current('compatio','True'),!.
-is_compatio:- current_prolog_flag(os_argv,ArgV), member('--compatio',ArgV),!.
-is_compatio:- current_prolog_flag(os_argv,ArgV), member('--compatio=true',ArgV),!.
-is_compatio:- is_html,!,fail.
-is_compatio:- is_testing,!,fail.
+is_compatio:- notrace(is_compatio0).
+is_compatio0:- current_prolog_flag(os_argv,ArgV), member('--log',ArgV),!,fail.
+is_compatio0:- nb_current('compatio','True'),!.
+is_compatio0:- current_prolog_flag(os_argv,ArgV), member('--compatio',ArgV),!.
+is_compatio0:- current_prolog_flag(os_argv,ArgV), member('--compatio=true',ArgV),!.
+is_compatio0:- is_html,!,fail.
+is_compatio0:- is_testing,!,fail.
 
 :- dynamic(original_user_output/1).
 :- original_user_output(_)->true;current_output(Out),asserta(original_user_output(Out)).
@@ -61,13 +68,6 @@ is_pyswip:- current_prolog_flag(os_argv,ArgV),member( './',ArgV).
 :- use_module(library(system)).
 :- use_module(library(shell)).
 %:- use_module(library(tabling)).
-:- ensure_loaded(metta_compiler).
-:- ensure_loaded(metta_printer).
-:- ensure_loaded(metta_convert).
-:- ensure_loaded(metta_types).
-:- ensure_loaded(metta_space).
-:- ensure_loaded(metta_eval).
-:- include(metta_data).
 
 :- nb_setval(self_space, '&self').
 current_self(Self):- ((nb_current(self_space,Self),Self\==[])->true;Self='&self').
@@ -80,6 +80,16 @@ current_self(Self):- ((nb_current(self_space,Self),Self\==[])->true;Self='&self'
 :- set_prolog_flag(encoding,utf8).
 %:- set_output(user_error).
 %:- set_prolog_flag(encoding,octet).
+
+
+:- ensure_loaded(swi_support).
+:- ensure_loaded(metta_printer).
+:- ensure_loaded(metta_utils).
+:- ensure_loaded(flybase_main).
+
+:- ensure_loaded(library(logicmoo_utils)).
+
+
 /*
 Now PASSING NARS.TEC:\opt\logicmoo_workspace\packs_sys\logicmoo_opencog\MeTTa\vspace-metta\metta_vspace\pyswip\metta_interp.pl
 C:\opt\logicmoo_workspace\packs_sys\logicmoo_opencog\MeTTa\vspace-metta\metta_vspace\pyswip1\metta_interp.pl
@@ -116,7 +126,6 @@ option_value_def('tabling',true).
 option_value_def('optimize',true).
 option_value_def(no_repeats,false).
 option_value_def('time',true).
-option_value_def('exec',true).
 option_value_def('test',false).
 option_value_def('html',false).
 option_value_def('python',false).
@@ -126,21 +135,28 @@ option_value_def('test-retval',false).
 option_value_def('exeout','./Sav.gitlab.MeTTaLog').
 
 
-option_value_def('load',silent).
-option_value_def('eval',silent).
-option_value_def('transpiler',silent).
-option_value_def('result',show).
 
 option_value_def('trace-length',10_000).
 option_value_def('stack-max',10_000).
-option_value_def('trace-on-load',true).
 option_value_def('trace-on-overtime',20.0).
 option_value_def('trace-on-overflow',false).
 option_value_def('trace-on-error',true).
-option_value_def('trace-on-exec',false).
-option_value_def('trace-on-eval',false).
 option_value_def('trace-on-fail',false).
 option_value_def('trace-on-pass',false).
+
+option_value_def('trace-on-exec',false).
+option_value_def('exec',true). % vs skip
+
+option_value_def('trace-on-load',true).
+option_value_def('load',show).
+
+option_value_def('trace-on-eval',false).
+option_value_def('eval',silent).
+
+option_value_def('transpiler',silent).
+option_value_def('result',show).
+
+
 
 
 fbugio(_,_):- is_compatio,!.
@@ -176,12 +192,13 @@ set_is_unit_test(TF):-
   %set_option_value_interp('trace-on-load',TF),
   set_option_value_interp('trace-on-exec',TF),
   set_option_value_interp('trace-on-eval',TF),
-  if_t( \+ TF , set_prolog_flag(debug_on_interrupt,true)).
+  if_t( \+ TF , set_prolog_flag(debug_on_interrupt,true)),
   !.
 
-fake_notrace(G):- tracing,!,notrace(G).
-fake_notrace(G):- !,once(G).
+%fake_notrace(G):- tracing,!,notrace(G).
+%fake_notrace(G):- !,once(G).
 fake_notrace(G):- quietly(G),!.
+
 real_notrace(G):- notrace(G).
 user_io(G):- original_user_output(Out), 
   current_output(COut), 
@@ -191,7 +208,6 @@ if_compatio(G):- if_t(is_compatio,user_io(G)).
 not_compatio(G):- if_t( \+ is_compatio, G).
 
 :- if_compatio(writeln("Hello")).
-:- set_is_unit_test(false).
 
 trace_on_fail:-     option_value('trace-on-fail',true).
 trace_on_overflow:- option_value('trace-on-overflow',true).
@@ -342,8 +358,7 @@ metta_argv(Before):- current_prolog_flag(os_argv,OSArgv), append(_,['--args'|AAr
     before_arfer_dash_dash(AArgs,Before,_),!,set_metta_argv(Before).
 argv_metta(Nth,Value):- metta_argv(Args),nth1(Nth,Args,Value).
 
-set_metta_argv(Before):-
-  maplist(read_argv,Before,Args),set_prolog_flag(metta_argv, Args),!.
+set_metta_argv(Before):-  maplist(read_argv,Before,Args),set_prolog_flag(metta_argv, Args),!.
 read_argv(AArg,Arg):- \+ atom(AArg),!,AArg=Arg.
 read_argv(AArg,Arg):- atom_string(AArg,S),read_metta(S,Arg),!.
 
@@ -1015,19 +1030,23 @@ subst_vars(Term, Term, NamedVarsList, NamedVarsList).
 :- nb_setval(variable_names,[]).
 
 assert_preds(Self,Load,List):- is_list(List),!,maplist(assert_preds(Self,Load),List).
-assert_preds(_Self,_Load,_Preds):- \+ show_transpiler,!.
+%assert_preds(_Self,_Load,_Preds):- \+ show_transpiler,!.
 assert_preds(Self,Load,Preds):-
   expand_to_hb(Preds,H,_B),functor(H,F,A),
-  color_g_mesg_ok('#005288',(
-   ignore((
-   \+ predicate_property(H,defined),
-   if_t(is_transpiling,catch_i(dynamic(F,A))),
-         not_compatio(format('  :- ~q.~n',[dynamic(F/A)])),
-   if_t(option_value('tabling','True'), not_compatio(format('  :- ~q.~n',[table(F/A)]))))),
-   if_t((show_transpiler),
-     not_compatio(format('~N~n  ~@',[portray_clause(Preds)]))),
-   if_t(is_transpiling,
-	   if_t(\+ predicate_property(H,static),add_assertion(Self,Preds))))),
+  if_t((show_transpiler),
+    color_g_mesg_ok('#005288',(    
+      ignore((
+      % \+ predicate_property(H,defined),
+      %if_t(is_transpiling,catch_i(dynamic(F,A))),
+      if_t( \+ predicate_property(H,defined),
+           not_compatio(format('  :- ~q.~n',[dynamic(F/A)]))),
+      if_t(option_value('tabling','True'), 
+           not_compatio(format('  :- ~q.~n',[table(F/A)]))))),
+      not_compatio(format('~N~n  ~@',[portray_clause(Preds)]))))),
+   
+   
+  if_t(is_transpiling,
+    if_t(\+ predicate_property(H,static),add_assertion(Self,Preds))),
   nop(metta_anew1(Load,Preds)).
 
 
@@ -1052,7 +1071,7 @@ load_hook0(Load,get_metta_atom(Eq,Self,H)):- B = 'True',
 */
 
 is_transpiling:- notrace(option_value('compile','full')), !.
-show_transpiler:- is_transpiling,!.
+%show_transpiler:- is_transpiling,!.
 show_transpiler:- option_value('code',Something), Something\==silent,!.
 
 do_show_options_values:-
@@ -2337,7 +2356,12 @@ qsave_program:-  ensure_mettalog_system, next_save_name(Name),
         [class(development),autoload(true),goal(loon(goal)), toplevel(loon(toplevel)), stand_alone(false)]),E,writeln(E)),
    !.
 
-
+:- include(metta_data).
+:- ensure_loaded(metta_compiler).
+:- ensure_loaded(metta_convert).
+:- ensure_loaded(metta_types).
+:- ensure_loaded(metta_space).
+:- ensure_loaded(metta_eval).
 :- ensure_loaded(flybase_main).
 :- ensure_loaded(metta_server).
 :- ensure_loaded(metta_python).
@@ -2382,7 +2406,8 @@ fix_message_hook:-
 
 :- ignore(((
    \+ prolog_load_context(reloading,true),
-   initialization(loon(restore),restore),
+   set_is_unit_test(false),
+  initialization(loon(restore),restore),
    % nts,
    metta_final
 ))).
