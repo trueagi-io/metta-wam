@@ -43,7 +43,7 @@ run_vspace_service_unsafe(MSpace,Port) :-
     tcp_socket(Socket),
     tcp_bind(Socket, Port),
     tcp_listen(Socket, 5), tcp_open_socket(Socket, ListenFd),
-    not_compatio(fbugio(run_vspace_service(MSpace,Port))),
+    fbugio(run_vspace_service(MSpace,Port)),
     retractall(vspace_port(_)),
     assert(vspace_port(Port)),
     accept_vspace_connections(MSpace,ListenFd).
@@ -282,5 +282,5 @@ cleanup_results(Tag) :-
     retractall(result(Tag, _, _, _)).
 
 
-% :- initialization(start_vspace_service).
+:- initialization(start_vspace_service).
 

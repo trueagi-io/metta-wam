@@ -438,16 +438,16 @@ numbervars_w_singles(P):- term_singletons(P, Vars),
   numbervars(P,14,_,[attvar(bind),singletons(true)]).
 
 
-/*
-pp_fb(P):- format("~N "),  \+ \+ (numbervars_w_singles(P), pp_fb1(P)), format("~N "),flush_output.
-pp_fb1(P):- pp_fb2(print_tree,P).
-pp_fb1(P):- pp_fb2(pp_ilp,P).
-pp_fb1(P):- pp_fb2(pp_as,P).
-pp_fb1(P):- pp_fb2(print,P).
-pp_fb1(P):- pp_fb2(print,P).
-pp_fb1(P):- pp_fb2(fbdebug1,P).
-pp_fb2(F,P):- current_predicate(F/1), call(F,P).
-*/
+
+pp_fb(P):- format("~N "),  \+ \+ (numbervars_w_singles(P), pp_fb1(P)),flush_output.
+pp_fb1(P):- write_src(P),!,nl.
+:- if(current_predicate(pp_ilp/1)).
+pp_fb1(P):- pp_as(P),!,format("~N"),pp_ilp(P),!.
+:- endif.
+pp_fb1(P):- pp_as(P),!.
+pp_fb1(P):- print(P),!,nl.
+pp_fb1(P):- fbdebug1(P),!,nl.
+
 
 fbgn_exons2affy1_overlaps_each(Gene,At):-
    fb_pred_nr(fbgn_exons2affy1_overlaps, Arity),

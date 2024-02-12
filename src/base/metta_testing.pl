@@ -58,10 +58,8 @@ make_test_name(FilePath0, Number, TestName) :-
     format(string(TestName), "~w.~w.~w", [NoUnderscoreParent, NoUnderscore, NS]).
 
 
-color_g_mesg(_,_):- is_compatio,!.
-color_g_mesg(_,_):- silent_loading,!.
+%color_g_mesg(C,G):- silent_loading,!.
 color_g_mesg(C,G):- notrace((nop(check_silent_loading),color_g_mesg_ok(C,G))).
-color_g_mesg_ok(_,G):- is_compatio,!,call(G).
 color_g_mesg_ok(C,G):-
  quietly((
    wots(S,must_det_ll(user:G)),
