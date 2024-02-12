@@ -1,6 +1,6 @@
 %
 % post match modew
-%:- style_check(-singleton).
+%:- style_check(-singleton:- ensure_loaded(swi_support).
 
 self_eval0(X):- \+ callable(X),!.
 self_eval0(X):- is_valid_nb_state(X),!.
@@ -1403,11 +1403,19 @@ is_assignment('=:=').  is_assignment(':=').
 
 eval_selfless(E,R):-  eval_selfless_0(E,R).
 
-eval_selfless_0([F,X,XY],TF):- is_assignment(F),  fake_notrace(args_to_mathlib([X,XY],Lib)),!,eval_selfless3(Lib,['=',X,XY],TF).
-eval_selfless_0([F|XY],TF):- eval_selfless_1([F|XY],TF),!.
+
+eval_selfless_0a(F,X,Y,TF):- X=Y,!, TF='True'.
+eval_selfless_0a(F,X,Y,TF):- var(X),!,as_tf(X=Y,TF).
+eval_selfless_0a(F,X,Y,TF):- var(Y),!,as_tf(X=Y,TF).
+eval_selfless_0a(F,X,Y,TF):- 
+    notrace(args_to_mathlib([X,Y],Lib)),!, eval_selfless3(Lib,['=',X,Y],TF).
+
+
+eval_selfless_0([F,X,XY],TF):- is_assignment(F), !, eval_selfless_0a(F,X,XY,TF).
+ eval_selfless_0([F|XY],TF):- eval_selfless_1([F|XY],TF),!.
 eval_selfless_0(E,R):- eval_selfless_2(E,R).
 
-eval_selfless_1([F|XY],TF):- \+ ground(XY),!,fake_notrace(args_to_mathlib(XY,Lib)),!,eval_selfless3(Lib,[F|XY],TF).
+eval_selfless_1([F|XY],TF):- \+ ground(XY),!,notrace(args_to_mathlib(XY,Lib)),!,eval_selfless3(Lib,[F|XY],TF).
 eval_selfless_1(['>',X,Y],TF):-!,as_tf(X>Y,TF).
 eval_selfless_1(['<',X,Y],TF):-!,as_tf(X<Y,TF).
 eval_selfless_1(['=>',X,Y],TF):-!,as_tf(X>=Y,TF).
@@ -1415,41 +1423,43 @@ eval_selfless_1(['<=',X,Y],TF):-!,as_tf(X=<Y,TF).
 eval_selfless_1(['\\=',X,Y],TF):-!,as_tf(dif(X,Y),TF).
 
 eval_selfless_2(['%',X,Y],TF):-!,eval_selfless_2(['mod',X,Y],TF).
-eval_selfless_2(LIS,Y):-  fake_notrace(( ground(LIS),
+eval_selfless_2(LIS,Y):-  notrace(( ground(LIS),
    LIS=[F,_,_], atom(F), catch_warn(current_op(_,yfx,F)),
-   LIS\=[_], s2ps(LIS,IS))), fake_notrace(catch((Y is IS),_,fail)),!.
+   LIS\=[_], s2ps(LIS,IS))), notrace(catch((Y is IS),_,fail)),!.
 
 
 eval_selfless3(Lib,FArgs,TF):- maplist(s2ps,FArgs,Next),!,compare_selfless0(Lib,Next,TF).
 
-:- use_module(library(clpfd)).
+
 :- clpq:use_module(library(clpq)).
 :- clpr:use_module(library(clpr)).
 
+:- use_module(library(clpfd)).
 compare_selfless0(_,[F|_],_TF):- \+ atom(F),!,fail.
-compare_selfless0(cplfd,['=',X,Y],TF):-!,as_tf(X#=Y,TF).
-compare_selfless0(cplfd,['\\=',X,Y],TF):-!,as_tf(X #\=Y,TF).
-compare_selfless0(cplfd,['>',X,Y],TF):-!,as_tf(X#>Y,TF).
-compare_selfless0(cplfd,['<',X,Y],TF):-!,as_tf(X#<Y,TF).
-compare_selfless0(cplfd,['=>',X,Y],TF):-!,as_tf(X#>=Y,TF).
-compare_selfless0(cplfd,['<=',X,Y],TF):-!,as_tf(X#=<Y,TF).
-compare_selfless0(cplfd,[F|Stuff],TF):- !,atom_concat('#',F,SharpF),P=..[SharpF|Stuff],!,as_tf(P,TF).
-compare_selfless0(Lib,['\\=',X,Y],TF):-!,as_tf(Lib:{X \=Y}, TF).
-compare_selfless0(Lib,['=',X,Y],TF):-!,as_tf(Lib:{X =Y}, TF).
-compare_selfless0(Lib,['>',X,Y],TF):-!,as_tf(Lib:{X>Y},TF).
-compare_selfless0(Lib,['<',X,Y],TF):-!,as_tf(Lib:{X<Y},TF).
-compare_selfless0(Lib,['=>',X,Y],TF):-!,as_tf(Lib:{X>=Y},TF).
-compare_selfless0(Lib,['<=',X,Y],TF):-!,as_tf(Lib:{X=<Y},TF).
-compare_selfless0(Lib,[F|Stuff],TF):- P=..[F|Stuff],!,as_tf(Lib:{P},TF).
+compare_selfless0(LIB,[SharpF,X,Y],TF):- atom_concat('#',F,SharpF),!,
+   compare_selfless1(LIB,[F,X,Y],TF).
+compare_selfless0(Lib,[F|Stuff],TF):- compare_selfless1(Lib,[F|Stuff],TF).
 
-args_to_mathlib(XY,Lib):- sub_term(T,XY), var(T),get_attrs(T,XX),get_attrlib(XX,Lib).
-args_to_mathlib(XY,clpr):- once((sub_term(T,XY), float(T))). % Reals
-args_to_mathlib(XY,clpq):- once((sub_term(Rat,XY),compound(Rat),Rat='/'(_,_))).
+compare_selfless1(LIB,['=>',X,Y],TF):-!,compare_selfless2(LIB,['>=',X,Y],TF).
+compare_selfless1(LIB,['<=',X,Y],TF):-!,compare_selfless2(LIB,['=<',X,Y],TF).
+compare_selfless1(Lib,[F|Stuff],TF):- compare_selfless2(Lib,[F|Stuff],TF).
+
+compare_selfless2(cplfd,[F|Stuff],TF):- !,atom_concat('#',F,SharpF),
+  P=..[SharpF|Stuff],!,as_tf(P,TF).
+compare_selfless2(Lib,[F|Stuff],TF):- Lib\==clpfd, P=..[F|Stuff],!,as_tf(Lib:{P},TF).
+
+sub_ele(E,Args):- is_list(Args),!, member(ST,Args),sub_ele(E,ST).
+sub_ele(A,A).
+sub_ele(E,Args):- compound(Args),arg(_,Args,ST),sub_ele(E,ST).
+
+args_to_mathlib(XY,Lib):- sub_ele(T,XY), var(T),get_attrs(T,XX),get_attrlib(XX,Lib),!.
+args_to_mathlib(XY,clpr):- once((sub_ele(T,XY), float(T))),!. % Reals
+args_to_mathlib(XY,clpq):- once((sub_ele(Rat,XY),compound(Rat),Rat='/'(_,_))).
 args_to_mathlib(_,clpfd).
 
 
 get_attrlib(XX,clpfd):- sub_var(clpfd,XX),!.
-get_attrlib(XX,clpq):- sub_var(clpr,XX),!.
+get_attrlib(XX,clpq):- sub_var(clpq,XX),!.
 get_attrlib(XX,clpr):- sub_var(clpr,XX),!.
 
 % =================================================================
@@ -1568,5 +1578,5 @@ eval_ne(Eq,RetType,Depth,Self,X,E):-
 
 solve_quadratic(A, B, I, J, K) :-
     %X in -1000..1000,  % Define a domain for X
-     (X + A) * (X + B) #= I*X*X + J*X + K.  % Define the quadratic equation
+    #=(((X + A) * (X + B)) , (I*X*X + J*X + K)).  % Define the quadratic equation
     %label([X]).  % Find solutions for X
