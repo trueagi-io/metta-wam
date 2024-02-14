@@ -6,6 +6,7 @@ IS_SOURCED=$( [[ "${BASH_SOURCE[0]}" != "${0}" ]] && echo 1 || echo 0)
 if [ "$IS_SOURCED" -eq "0" ]; then SCRIPT=$(readlink -f "$0"); else SCRIPT=$(readlink -f "${BASH_SOURCE[0]}"); fi
 export MeTTa=$(realpath "$SCRIPT")
 export METTALOG_DIR=$(dirname "$MeTTa")
+export PIP_BREAK_SYSTEM_PACKAGES=1
 # cd "$METTALOG_DIR" || { echo "Failed to navigate to $METTALOG_DIR"; [[ "$IS_SOURCED" == "1" ]] && return 1 || exit 1; }
 
 # Run this file with ./INSTALL.md
@@ -106,15 +107,15 @@ build_swi_prolog_from_src() {
         exit 1
     }
 
-    # Clone the SWI-Prolog repository
-    echo -e "${BLUE}Cloning SWI-Prolog source code...${NC}"
-    rm -rf swipl-devel/
-    git clone https://github.com/SWI-Prolog/swipl-devel.git && cd swipl-devel && {
-        echo -e "${GREEN}SWI-Prolog source code cloned successfully.${NC}"
-    } || {
-        echo -e "${RED}Failed to clone SWI-Prolog repository. Exiting.${NC}"
-        exit 1
-    }
+    # Check if the SWI-Prolog source code directory exists
+    if [ -d "swipl-devel" ]; then
+        echo -e "${BLUE}SWI-Prolog source code directory exists. Pulling updates...${NC}"
+        cd swipl-devel && git pull && cd ..
+    else
+        echo -e "${BLUE}Cloning SWI-Prolog source code...${NC}"
+        git clone https://github.com/SWI-Prolog/swipl-devel.git
+    fi
+
 
     # Update submodules
     echo -e "${BLUE}Updating submodules...${NC}"
@@ -223,8 +224,8 @@ if ! swipl -g "use_module(library(janus)), halt(0)." -t "halt(1)" 2>/dev/null; t
     if [ "${easy_install}" == "Y" ] || confirm_with_default "Y" "Would you like to install Python (Janus) support"; then
 	    echo "Installing Janus for SWI-Prolog..."
 	    ensure_pip
-	    sudo pip install --break-system-packages git+https://github.com/SWI-Prolog/packages-swipy.git
-	    sudo apt install -y libpython3-dev
+	    sudo pip install git+https://github.com/SWI-Prolog/packages-swipy.git
+	    sudo apt install libpython3-dev
 	    if [ $? -ne 0 ]; then
 		echo -e "${RED}Failed to install Janus. Exiting script${NC}."
 		exit 1
@@ -246,7 +247,7 @@ if ! python3 -c "import pyswip" &> /dev/null; then
     if [ "${easy_install}" == "Y" ] || confirm_with_default "Y" "Would you like to install Pyswip"; then
         echo -e "${BLUE}Installing Pyswip..${NC}."
 	ensure_pip
-        sudo pip install --break-system-packages git+https://github.com/logicmoo/pyswip.git
+        sudo pip install git+https://github.com/logicmoo/pyswip.git
         echo -e "${GREEN}Pyswip installation complete${NC}."
     else
         echo -e "${YELLOW}Skipping Pyswip installation${NC}."
@@ -255,71 +256,73 @@ else
     echo -e "${GREEN}Pyswip is already installed${NC}."
 fi
 
-
-echo -e "${BLUE}Updating SWI-Prolog packages...${NC}"
 if ! swipl -g "use_module(library(predicate_streams)), halt(0)." -t "halt(1)" 2>/dev/null; then
     echo "Installing predicate_streams..."
     echo -e "${YELLOW}${BOLD}If asked, say yes to everything and/or accept the defaults...${NC}"
-    swipl -g "pack_install(predicate_streams,[interactive(false)])" -t halt
+    (
+    if [ -d "reqs/predicate_streams" ]; then
+        echo -e "${BLUE}predicate_streams directory exists. Pulling updates...${NC}"
+        (cd reqs/predicate_streams && git pull)
+     else
+        mkdir -p reqs/ && cd reqs
+        git clone https://github.com/logicmoo/predicate_streams
+        cd ..
+     fi
+    ) || swipl -g "pack_install(predicate_streams,[interactive(false)])" -t halt
 else
     echo -e "${GREEN}Pack predicate_streams is already installed${NC}."
 fi
 
+
+
 if ! swipl -g "use_module(library(logicmoo_utils)), halt(0)." -t "halt(1)" 2>/dev/null; then
     echo "Installing logicmoo_utils..."
     echo -e "${YELLOW}${BOLD}If asked, say yes to everything and/or accept the defaults...${NC}"
-    swipl -g "pack_install('https://github.com/TeamSPoon/logicmoo_utils.git',[insecure(true),interactive(false),git(true),verify(false)])" -t halt
+    (
+    if [ -d "reqs/logicmoo_utils" ]; then
+        echo -e "${BLUE}logicmoo_utils directory exists. Pulling updates...${NC}"
+        (cd reqs/logicmoo_utils && git pull)
+     else
+        mkdir -p reqs/ && cd reqs
+        git clone https://github.com/TeamSPoon/logicmoo_utils
+        cd ..
+     fi
+    ) || swipl -g "pack_install(logicmoo_utils,[interactive(false)])" -t halt
 else
     echo -e "${GREEN}Pack logicmoo_utils is already installed${NC}."
 fi
 
-if ! swipl -g "use_module(library(dictoo)), halt(0)." -t "halt(1)" 2>/dev/null; then
-    echo "Installing dictoo..."
-    echo -e "${YELLOW}${BOLD}If asked, say yes to everything and/or accept the defaults...${NC}"
-    swipl -g "pack_install(dictoo,[interactive(false)])" -t halt
-else
-    echo -e "${GREEN}Pack dictoo is already installed${NC}."
-fi
+env_file="${METTALOG_DIR}/scripts/envvars_mettalog.sh"
 
-
-# Setting PYTHONPATH environment variable
-echo -e "${BLUE}Setting PYTHONPATH environment variable..${NC}."
-export PYTHONPATH=$PWD/metta_vspace:$PYTHONPATH
-
-
-# Function to check if metalog is in the user's PATH
+# Function to check if metalog is in the user's PATH and update environment variables
 check_metalog_in_path() {
-    # Using command -v to find metalog in the PATH
-    if ! command -v mettalog &> /dev/null; then
-        echo "METTALOG_DIR=$METTALOG_DIR"
-        # If metalog is not found, print a message
-        echo "Adding mettalog to your PATH."
-        # Update PATH
-        echo "" >> ${HOME}/.bashrc
-        echo "# For MeTTaLog" >> ${HOME}/.bashrc
-        echo "export PATH=${PATH}:${METTALOG_DIR}" >> ${HOME}/.bashrc
-        export PATH=${PATH}:${METTALOG_DIR}
-        # Update PYTHONPATH
-        echo "" >> ${HOME}/.bashrc
-        echo "# For MeTTaLog to use python libraries" >> ${HOME}/.bashrc
-        echo "export PYTHONPATH=\${PYTHONPATH:+\${PYTHONPATH}:}.:${METTALOG_DIR}/metta_vspace" >> ${HOME}/.bashrc
-    else
-        # If metalog is found, print a success message
-        echo "mettalog is in your PATH."
+    # Add sourcing line to .bashrc if it's not already there
+    if ! grep -q "$env_file" "${HOME}/.bashrc"; then
+        echo ""
+        echo -e "${BLUE}MeTTaLog is not in your .bashrc${NC}."
+        echo "" >> "${HOME}/.bashrc"
+        echo "# Source MeTTaLog environment" >> "${HOME}/.bashrc"
+        echo "source \"$env_file\"" >> "${HOME}/.bashrc"
+        echo -e "${GREEN}MeTTaLog is NOW in your .bashrc\!${NC}."
+    else 
+        echo -e "${GREEN}MeTTaLog was already in your .bashrc\!${NC}."
     fi
+
+    source "$env_file"
+
+    echo "METTALOG_DIR=$METTALOG_DIR"
+    echo "PYTHONPATH=$PYTHONPATH"
+    echo "PATH=$PATH"
 }
-echo "PATH=$PATH"
 
-# Call the function to perform the check
+# Call the function to perform the check and update
 check_metalog_in_path
-
-
 
 
 echo -e "${GREEN}Installation and setup complete!${NC}."
 
 
-if confirm_with_default "N" "Show README.md"; then
+if false && confirm_with_default "N" "Show README.md"; then
     echo -en "${GREEN}"
     cat README.md
     echo -en "${NC}"
