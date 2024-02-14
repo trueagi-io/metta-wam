@@ -195,7 +195,7 @@ eval_00(Eq,RetType,Depth,Self,X,YO):-
 
 
 eval_11(_Eq,_RetType,_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
-eval_11(Eq,RetType,Depth,Self,X,Y):- fail, \+ is_debugging((eval)),!,
+eval_11(Eq,RetType,Depth,Self,X,Y):- \+ is_debugging((eval)),!,
   D1 is Depth-1,
   eval_00(Eq,RetType,D1,Self,X,Y).
 eval_11(Eq,RetType,Depth,Self,X,Y):-
@@ -204,7 +204,7 @@ eval_11(Eq,RetType,Depth,Self,X,Y):-
   fake_notrace((flag(eval_num,EX0,EX0+1),
   EX is EX0 mod 500,
   D1 is Depth-1,
-  DR is 99-D1,
+  DR is 99 - (D1 mod 100),
   PrintRet = _)),
   option_else('trace-length',Max,100),
   option_else('trace-depth',DMax,30),

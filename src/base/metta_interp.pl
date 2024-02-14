@@ -2,7 +2,8 @@
 :- nb_setval(cmt_override,lse('; ',' !(" ',' ") ')).
 
 :- prolog_load_context(directory, Value), absolute_file_name('../../reqs/',Dir,[relative_to(Value)]),
-    atom_concat(Dir,'/predicate_streams',PS), atom_concat(Dir,'/logicmoo_utils',LU),
+    atom_concat(Dir,'predicate_streams',PS), 
+    atom_concat(Dir,'logicmoo_utils',LU),
     pack_attach(PS,[duplicate(replace),search(first)]),
     pack_attach(LU,[duplicate(replace),search(first)]).
 
