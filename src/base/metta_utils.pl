@@ -11,7 +11,7 @@
 :- ensure_loaded(library(logicmoo_utils)).
 :- endif.
 :- if(exists_source(library(dictoo))).
-:- ensure_loaded(library(dictoo)).
+%:- ensure_loaded(library(dictoo)).
 :- endif.
 
 cleanup_debug:-

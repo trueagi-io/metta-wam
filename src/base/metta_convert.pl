@@ -315,5 +315,184 @@ into_sequential(List, [AND|SPList]) :- is_compiled_and(AND), maplist(prolog_to_m
 
 
 
+% Entry point for printing to Metta format. It clears the screen, sets the working directory,
+% expands the filenames with a specific extension, and processes each file.
+print_to_metta :-
+ % cls, % Clears the screen (assumes a custom or system-specific implementation).
+ % with_pwd(
+  %   '/opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta/examples/gpt2-like/language_models/',
+ %Filt = 'examples/gpt2-like/language_models/*.pl',
+% Filt = '/opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta/examples/performance/nondet_unify/*.pl',
+ ignore(print_to_metta([  
+ % 'examples/*/*.pl',
+  'examples/*/*/*.pl',
+  'examples/*/*/*/*.pl',
+  %'examples/*/*/*/*/*.pl',
+  %'examples/*/*/*/*/*/*.pl',
+  %'metta_vspace/extra_pytests/*.pl',
+  'metta_vspace/pyswip/metta_*.pl',
+  'metta_vspace/pyswip/flybase_*.pl'
+  
+  ])),
+   % Finds all Prolog files in the specified directory.
+ %  print_to_metta(Filt),  % Processes each found file.
+  % MC = '/opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta/metta_vspace/pyswip/metta_convert.pl',
+  % print_to_metta(MC), % Processes each found file.
+   !, writeln(';; print_to_metta. ').
+% Example of a no-operation (nop) call for a specific file path, indicating a placeholder or unused example.
+%$nop(print_to_metta('/opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta/metta_vspace/pyswip/metta_convert.pl')).
+
+% Processes a list of filenames, applying 'print_to_metta' to each.
+with_file_lists(P1,FileSpec):- is_list(FileSpec),!,
+   ignore(maplist(with_file_lists(P1),FileSpec)).
+with_file_lists(P1,Directory):- atomic(Directory), exists_directory(Directory), 
+  findall(File,directory_source_files(Directory, File, [recursive(true),if(true)]),Files),!,
+  ignore(maplist(with_file_lists(P1),Files)).
+with_file_lists(P1,Mask):- atom(Mask), \+ exists_file(Mask), 
+  expand_file_name(Mask, Files), Files\==[],!,ignore(maplist(with_file_lists(P1),Files)).
+with_file_lists(P1,Filename):- ignore(call(P1,Filename)).
+ 
+
+print_to_metta(Filename):- 
+  ignore(print_to_metta_file(Filename)),
+  ignore(print_to_metta_console(Filename)),!.
+  
+
+% Processes a list of filenames, applying 'print_to_metta' to each.
+print_to_metta_console(FileSpec):-  with_file_lists(print_to_metta_now(user_output),FileSpec).
+print_to_metta_file(FileSpec):-  with_file_lists(print_to_metta_now(_Create),FileSpec).
+
+% Processes a single filename by opening the file, translating its content, and then closing the file.
+print_to_metta_now(OutputIn,Filename):-
+    atom(Filename),  % Verifies that the filename is an atom.
+    % Generate the new filename with .metta extension.
+    file_name_extension(Base, _OldExt, Filename),
+    file_name_extension(Base, metta, NewFilename),
+    % Setup step: open both the input and output files.
+    format('~N~n~w~n', [print_to_metta(Filename,NewFilename)]), % Prints the action being performed.
+    %Output = user_output,
+    copy_term(OutputIn,Output),
+    setup_call_cleanup(
+        open(Filename, read, Input, [encoding(utf8)]),
+        % Call step: perform the translation and write to the output file.
+        setup_call_cleanup(
+            (if_t(var(Output),open(NewFilename, write, Output, [encoding(utf8)]))),
+            with_output_to(Output,translate_to_metta(Input)),
+            % Cleanup step for the output file: close the output stream.
+            close(Output)
+        ),
+        % Cleanup step for the input file: close the input stream.
+        close(Input)
+    ).
+
+into_namings(N=V):- ignore(V='$VAR'(N)).
+
+% Recursively translates content, stopping at the end of the file.
+translate_to_metta(Input):- 
+    at_end_of_stream(Input),  % Checks for the end of the file.
+    !, nl.
+
+% Processes whitespace characters, maintaining their presence in the output.
+translate_to_metta(Input):- 
+    peek_char(Input, Char),  % Peeks at the next character without consuming it.
+    is_reprint_char(Char), !,
+    get_char(Input, _),  % Consumes the character.
+    put_char(Char),  % Prints the character.
+    translate_to_metta(Input).
+
+% Converts Prolog comments to Metta-style comments, then continues processing.
+translate_to_metta(Input):- 
+    peek_char(Input, Char), 
+    Char == '%', % Checks for Prolog comment start.
+    get_char(Input, _), put_char(';'),  
+    read_line_to_string(Input, Cmt),  % Reads the comment line.
+    print_metta_comments(Cmt),nl, % Converts and prints the comment in Metta style.
+    translate_to_metta(Input).  % Continues with the next line.
+
+% Reads a clause along with its metadata, then continues translation.
+translate_to_metta(Input):- 
+  read_clause_with_info(Input),!,
+  translate_to_metta(Input).
+
+% Helper predicates and processing functions follow...
+
+% Determines if a character should be reprinted (spaces and period).
+is_reprint_char(Char):- char_type(Char, space).
+is_reprint_char(Char):- Char == '.'.
+
+% Translates Prolog comments to Metta comments, applying string replacements.
+translate_comment(Cmt,Str):- replace_in_string(["%"=";","prolog"="MeTTa","Prolog"="MeTTa"],Cmt,Str).
+
+% Reads a clause while capturing various pieces of metadata.
+read_clause_with_info(Stream) :-
+    Options = [ variable_names(Bindings),
+                    term_position(Pos),
+                    subterm_positions(RawLayout),
+                    syntax_errors(error), 
+                    comments(Comments),
+                    module(trans_mod)],
+    read_term(Stream, Term, Options),
+    (   Term == end_of_file
+    ->  true
+    ;   b_setval('$term_position', Pos),
+        b_setval('$variable_names', Bindings),
+        display_term_info(Stream, Term, Bindings, Pos, RawLayout, Comments)).
+
+% Displays term information and processes comments.
+display_term_info(Stream, Term, Bindings, Pos, RawLayout, Comments):-
+   maplist(into_namings,Bindings),
+   ignore(process_term(Term)),
+   print_metta_comments(Comments),!.
+
+
+print_metta_comments([]):-!.
+print_metta_comments(_TP-Cmt):-!, print_metta_comments(Cmt).
+print_metta_comments([Cmt|Cs]):- !, print_metta_comments(Cmt),nl,!, print_metta_comments(Cs).
+print_metta_comments(Cmt):- translate_comment(Cmt,String),write(String).
+
+% Processes each term based on its type (directive or other).
+process_term(end_of_file):- !.
+process_term(Term):-
+    is_directive(Term), 
+    ignore(maybe_call_directive(Term)),
+    !, ignore(print_directive(Term)).
+process_term(Term):-
+  expand_to_hb(Term,H,B),
+  p2m((H:-B),STerm),
+  push_term_ctx(Term),
+  write_pl_metta(STerm).
+
+maybe_call_directive((:- op(X,F,Y))):- trans_mod:op(X,F,Y).
+
+% Checks if a term is a directive.
+is_directive((:- _)).
+
+push_term_ctx(X):- \+ compound(X),!,
+  (nb_current(term_ctx,Was)->true;Was=[]),
+  (Was =@= X -> true; (nb_setval(term_ctx,X),nl)).
+push_term_ctx((X:-_)):- !, push_term_ctx(X).
+push_term_ctx(X):- compound_name_arity(X,F,_A),push_term_ctx(F).
+% Print a Prolog directive in a specific format.
+print_directive((:- Directive)):- 
+  push_term_ctx(exec), % pc
+  p2m(Directive,STerm), % p2m
+  write_pl_metta(STerm). %we
+
+write_pl_metta(STerm):-
+    \+ \+ write_pl_metta_0(STerm).
+  write_pl_metta_0(STerm):- numbervars(STerm,0,_,[singletons(true)]),
+   write_src(STerm).
+
+
+   :- ensure_loaded(metta_interp).
+  :- ensure_loaded(metta_compiler).
+  :- ensure_loaded(metta_convert).
+  :- ensure_loaded(metta_types).
+  :- ensure_loaded(metta_space).
+  :- ensure_loaded(metta_testing).
+  :- ensure_loaded(metta_utils).
+  :- ensure_loaded(metta_printer).
+  :- ensure_loaded(metta_eval).
+  
 
 

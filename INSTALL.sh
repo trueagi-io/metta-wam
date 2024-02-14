@@ -257,7 +257,7 @@ else
     echo -e "${GREEN}Pyswip is already installed${NC}."
 fi
 
-#if ! swipl -g "use_module(library(predicate_streams)), halt(0)." -t "halt(1)" 2>/dev/null; then
+if false && ! swipl -g "use_module(library(predicate_streams)), halt(0)." -t "halt(1)" 2>/dev/null; then
     echo "Installing predicate_streams..."
     echo -e "${YELLOW}${BOLD}If asked, say yes to everything and/or accept the defaults...${NC}"
     (
@@ -270,13 +270,13 @@ fi
         cd ..
      fi
     ) || swipl -g "pack_install(predicate_streams,[interactive(false)])" -t halt
-#else
-#    echo -e "${GREEN}Pack predicate_streams is already installed${NC}."
-#fi
+else
+    echo -e "${GREEN}Pack predicate_streams is already installed${NC}."
+fi
 
 
 
-#if ! swipl -g  "use_module(library(logicmoo_utils)), halt(0)." -t "halt(1)" 2>/dev/null; then
+if false && ! swipl -g  "use_module(library(logicmoo_utils)), halt(0)." -t "halt(1)" 2>/dev/null; then
     echo "Installing logicmoo_utils..."
     echo -e "${YELLOW}${BOLD}If asked, say yes to everything and/or accept the defaults...${NC}"
     (
@@ -289,9 +289,9 @@ fi
         cd ..
      fi
     ) || swipl -g "pack_install(logicmoo_utils,[interactive(false)])" -t halt
-# else
-#    echo -e "${GREEN}Pack logicmoo_utils is already installed${NC}."
-#fi
+ else
+    echo -e "${GREEN}Pack logicmoo_utils is already installed${NC}."
+fi
 
 env_file="${METTALOG_DIR}/scripts/envvars_mettalog.sh"
 
@@ -304,9 +304,9 @@ check_metalog_in_path() {
         echo "" >> "${HOME}/.bashrc"
         echo "# Source MeTTaLog environment" >> "${HOME}/.bashrc"
         echo "source \"$env_file\"" >> "${HOME}/.bashrc"
-        echo -e "${GREEN}MeTTaLog is NOW in your .bashrc\!${NC}."
+        echo -e "${GREEN}MeTTaLog is NOW in your .bashrc!${NC}."
     else 
-        echo -e "${GREEN}MeTTaLog was already in your .bashrc\!${NC}."
+        echo -e "${GREEN}MeTTaLog was already in your .bashrc!${NC}."
     fi
 
     source "$env_file"
@@ -319,6 +319,7 @@ check_metalog_in_path() {
 # Call the function to perform the check and update
 check_metalog_in_path
 
+git update-index --assume-unchanged .bash_history
 
 echo -e "${GREEN}Installation and setup complete!${NC}."
 
