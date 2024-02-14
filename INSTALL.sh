@@ -120,7 +120,7 @@ build_swi_prolog_from_src() {
     # Update submodules
     echo -e "${BLUE}Updating submodules...${NC}"
     #git -C . submodule update --init packages/ltx2htm packages/pldoc packages/nlp packages/archive packages/clib packages/http packages/sgml packages/ssl packages/zlib
-    git submodule update --init  && {
+    cd swipl-devel && git submodule update --init  && {
         echo -e "${GREEN}Submodules updated successfully.${NC}"
     } || {
         echo -e "${RED}Failed to update submodules. Exiting.${NC}"
@@ -150,12 +150,13 @@ build_swi_prolog_from_src() {
 
 # Function to install or update SWI-Prolog
 install_or_update_swipl() {
-
     echo -e "${BLUE}Starting SWI-Prolog installation or update.${NC}"
-    sudo apt-add-repository -y ppa:swi-prolog/devel
+    #echo " " > /etc/apt/sources.list
+    #sudo apt install -y apt-utils software-properties-common
+    #sudo apt-add-repository -y ppa:swi-prolog/devel
     sudo apt-get update
     # Remove existing installation if any before reinstalling/upgrading
-    sudo apt-get remove -y swi-prolog??* 
+    #sudo apt-get remove -y swi-prolog??* 
     sudo apt-get install -y swi-prolog
     swi_prolog_version=$(swipl --version | awk '{print $3}')
     required_version="9.1"
@@ -256,7 +257,7 @@ else
     echo -e "${GREEN}Pyswip is already installed${NC}."
 fi
 
-if ! swipl -g "use_module(library(predicate_streams)), halt(0)." -t "halt(1)" 2>/dev/null; then
+#if ! swipl -g "use_module(library(predicate_streams)), halt(0)." -t "halt(1)" 2>/dev/null; then
     echo "Installing predicate_streams..."
     echo -e "${YELLOW}${BOLD}If asked, say yes to everything and/or accept the defaults...${NC}"
     (
@@ -269,13 +270,13 @@ if ! swipl -g "use_module(library(predicate_streams)), halt(0)." -t "halt(1)" 2>
         cd ..
      fi
     ) || swipl -g "pack_install(predicate_streams,[interactive(false)])" -t halt
-else
-    echo -e "${GREEN}Pack predicate_streams is already installed${NC}."
-fi
+#else
+#    echo -e "${GREEN}Pack predicate_streams is already installed${NC}."
+#fi
 
 
 
-if ! swipl -g "use_module(library(logicmoo_utils)), halt(0)." -t "halt(1)" 2>/dev/null; then
+#if ! swipl -g  "use_module(library(logicmoo_utils)), halt(0)." -t "halt(1)" 2>/dev/null; then
     echo "Installing logicmoo_utils..."
     echo -e "${YELLOW}${BOLD}If asked, say yes to everything and/or accept the defaults...${NC}"
     (
@@ -288,9 +289,9 @@ if ! swipl -g "use_module(library(logicmoo_utils)), halt(0)." -t "halt(1)" 2>/de
         cd ..
      fi
     ) || swipl -g "pack_install(logicmoo_utils,[interactive(false)])" -t halt
-else
-    echo -e "${GREEN}Pack logicmoo_utils is already installed${NC}."
-fi
+# else
+#    echo -e "${GREEN}Pack logicmoo_utils is already installed${NC}."
+#fi
 
 env_file="${METTALOG_DIR}/scripts/envvars_mettalog.sh"
 
