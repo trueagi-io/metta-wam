@@ -75,7 +75,7 @@ eval_args(Eq,RetTyp e,Depth,Self,X,Y):-
 %eval(Eq,RetType,Depth,_Self,X,_Y):- forall(between(6,Depth,_),write(' ')),writeqln(eval(Eq,RetType,X)),fail.
 eval(Depth,Self,X,Y):- eval('=',_RetType,Depth,Self,X,Y).
 
-eval(Eq,RetType,_Dpth,_Slf,X,Y):- var(X),nonvar(Y),!,X=Y.
+eval(_,_,_Dpth,_Slf,X,Y):- var(X),nonvar(Y),!,X=Y.
 eval(_Eq,_RetType,_Dpth,_Slf,X,Y):- notrace(self_eval(X)),!,Y=X.
 eval(Eq,RetType,Depth,Self,X,Y):- notrace(nonvar(Y)), var(RetType), 
    get_type(Depth,Self,Y,RetType), !,
