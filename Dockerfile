@@ -45,7 +45,7 @@ WORKDIR ${HOME}
 
 # Install MeTTaLog
 WORKDIR ${HOME}
-#RUN git clone https://github.com/logicmoo/vspace-metta.git
+RUN git clone https://github.com/logicmoo/vspace-metta.git
 
 COPY ./ /home/user/vspace-metta/
 WORKDIR ${HOME}/vspace-metta
