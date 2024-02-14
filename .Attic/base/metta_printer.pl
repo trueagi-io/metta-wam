@@ -49,7 +49,8 @@ pp_metta(P):- pretty_numbervars(P,PP),with_option(concepts=false,pp_fb(PP)).
 % and the second argument is the Goal to be executed with the given src_indents setting.
 with_indents(TF, Goal) :-
     % Set the value of the `src_indents` option to TF and then execute the Goal
-    with_option(src_indents, TF, Goal).
+    as_tf(TF,Value),
+    with_option(src_indents, Value, Goal).
 
 % The predicate allow_concepts/0 checks whether the use of concepts is allowed.
 % It does this by checking the value of the concepts option and ensuring it is not false.
