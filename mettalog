@@ -118,6 +118,55 @@ repl_flag=auto
 use_rc_file=~/.mettalogrc
 debug_this_script=false
 
+# Function to resolve path upward but stop one level higher than /usr/
+function resolve_upward {
+  local current_dir="$1"
+  while [ "$current_dir" != "/" ]; do
+    if [ "$current_dir" == "/tmp" ]; then
+      echo "/tmp"
+      return
+    fi
+    if [ "$current_dir" == "/usr" ]; then
+      echo "/usr"
+      return
+    fi
+    if [ -d "$current_dir/$2" ]; then
+      echo "$current_dir/$2"
+      return
+    fi
+    current_dir=$(dirname "$current_dir")
+  done
+}
+
+# if not already in docker
+if [ ! -f /.dockerenv ]; then
+    # The name of the Docker image you're looking to use
+    IMAGE_NAME="mettalog"
+
+    # Check if Docker is installed
+    if command -v docker &> /dev/null; then
+        # Check if the Docker image exists
+        if docker image inspect "$IMAGE_NAME" &> /dev/null; then
+            echo "Image $IMAGE_NAME is installed. Running command..."
+            # Run your command inside the Docker container
+            UPWARD=$(resolve_upward "$(pwd)")
+            # Run the Docker container with necessary volumes mounted
+            # Note: It's crucial to quote '$(pwd)' to handle spaces in the path
+            docker run --rm -it \
+                -v "${SCRIPT_DIR}:/home/user/vspace-metta" \
+                -v "${UPWARD}:${UPWARD}" \
+                -v "$(pwd):/host/cwd" \
+                -w "$(pwd)" \
+                mettalog:latest \
+                /home/user/vspace-metta/mettalog $"@"
+        else
+            echo "Image $IMAGE_NAME is not installed. Continuing with script..."
+        fi
+    else
+        echo "Docker is not installed. Continuing with script..."
+    fi
+fi
+
 
 quoted_args=() # Initialize an empty array to store the results
 for arg in "$@"; do
