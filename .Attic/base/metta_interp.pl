@@ -16,32 +16,39 @@
     pack_attach(PS,[duplicate(replace),search(first)]),
     pack_attach(LU,[duplicate(replace),search(first)]).
 
-is_compiling:- current_prolog_flag(os_argv,ArgV),member(E,ArgV),
-  (E==qcompile_mettalog;E==qsave_program),!.
+
+is_metta_flag(What):- notrace(is_flag0(What)).
+is_flag0(What):- nb_current(What,'False'),!,fail.
+is_flag0(What):- nb_current(What,'True'),!.
+is_flag0(What):- current_prolog_flag(What,false),!,fail.
+is_flag0(What):- current_prolog_flag(What,true),!.
+is_flag0(What):- 
+  current_prolog_flag(os_argv,ArgV),
+  atom_concat('--',What,FWhat), 
+  (member(FWhat,ArgV)-> true ;
+    (atom_concat(FWhat,'=true',FWhatEqTrue),member(FWhatEqTrue,ArgV))).
+   
+  
+
+is_compiling:- current_prolog_flag(os_argv,ArgV),member(E,ArgV),   (E==qcompile_mettalog;E==qsave_program),!.
 is_compiled:- current_prolog_flag(os_argv,ArgV), member('-x',ArgV),!.
 is_compiled:- current_prolog_flag(os_argv,ArgV),\+ member('swipl',ArgV),!.
-is_converting:- nb_current('convert','True'),!.
-is_converting:- current_prolog_flag(os_argv,ArgV), member('--convert',ArgV),!.
 
-is_compat:- nb_current('compat','True'),!.
-is_compat:- current_prolog_flag(os_argv,ArgV), member('--compat',ArgV),!.
+is_converting:- is_metta_flag('convert').
 
-is_mettalog:- current_prolog_flag(os_argv,ArgV), 
-  once(member('--log',ArgV);member('--debug',ArgV)).
+is_compat:- is_metta_flag('compat').
+
+is_mettalog:- is_metta_flag('log').
 
 is_synthing_unit_tests:- notrace(is_synthing_unit_tests0).
 is_synthing_unit_tests0:- is_testing.
 % is_synthing_unit_tests0:- is_compatio,!,fail.
 
-is_testing:- nb_current('test','True'),!.
-is_testing:- current_prolog_flag(os_argv,ArgV), member('--test',ArgV),!.
-%is_testing:- option_value('test','True'),!.
+is_testing:- is_metta_flag('test').
+is_html:- is_metta_flag('html').
 
 :- ensure_loaded(metta_printer).
 
-is_html:- nb_current('html','True'),!.
-is_html:- current_prolog_flag(os_argv,ArgV), member('--html',ArgV),!.
-%is_html:- option_value('html','True'),!.
 
 :- nodebug(metta('trace-on-eval')).
 
@@ -51,27 +58,49 @@ is_compatio0:- is_mettalog,!,fail.
 is_compatio0:- is_testing,!,fail.
 %is_compatio0:- is_html,!,fail.
 is_compatio0:- !.
-%is_compatio0:- nb_current('compatio',true),!.
+is_compatio0:- is_metta_flag('compatio').
 
+keep_output:- is_mettalog.
+keep_output:- is_testing.
 
 
 :- volatile(original_user_output/1).
 :- dynamic(original_user_output/1).
 :- original_user_output(_)->true;current_output(Out),asserta(original_user_output(Out)).
-unnullify_output:- original_user_output(MFS), set_prolog_IO(user_input,MFS,MFS).
+unnullify_output:- current_output(MFS),  (original_user_output(OUT)-> MFS==OUT ; true), !.
+unnullify_output:- original_user_output(MFS), set_prolog_IO(user_input,MFS,user_error).
 
 null_output(MFS):- use_module(library(memfile)),
   new_memory_file(MF),open_memory_file(MF,append,MFS).
 :- dynamic(null_user_output/1).
 :- null_user_output(_)->true;(null_output(MFS),
    asserta(null_user_output(MFS))).
-nullify_output:- null_user_output(MFS), 
-  set_prolog_IO(user_input,MFS,MFS).
 
-set_output_stream :- is_mettalog, !.
-set_output_stream :- is_compatio -> nullify_output;  unnullify_output.
+
+nullify_output:- keep_output,!.
+nullify_output_really:- current_output(MFS), null_user_output(OUT),  MFS==OUT, !.
+nullify_output_really:- null_user_output(MFS), set_prolog_IO(user_input,MFS,user_error).
+
+
+set_output_stream :- keep_output -> nullify_output;  unnullify_output.
+:- set_output_stream.
 % :- nullify_output.
-% :- set_output_stream.
+
+switch_to_mettalog:- 
+  unnullify_output,  
+  set_metta_lag('compatio',false),
+  set_metta_lag('compat',false),
+  set_metta_lag('log',true),
+  set_output_stream.
+  
+switch_to_mettarust:- 
+  nullify_output,  
+  set_metta_lag('compatio',true),
+  set_metta_lag('compat',true),
+  set_metta_lag('log',false),
+  set_output_stream.
+  
+
 
 show_os_argv:- is_compatio,!.
 show_os_argv:- current_prolog_flag(os_argv,ArgV),write('; libswipl: '),writeln(ArgV).
@@ -222,18 +251,17 @@ fake_notrace(G):- !,once(G).
 fake_notrace(G):- quietly(G),!.
 real_notrace(G):- notrace(G).
 
-user_io(G):- original_user_output(Out), !,
-  with_output_to(Out,G).
+user_io(G):- original_user_output(Out), !, with_output_to(Out,G).
 user_io(G):- original_user_output(Out), 
   current_output(COut), 
   setup_call_cleanup(set_prolog_IO(user_input,Out,user_error), G, set_prolog_IO(user_input,COut,user_error)), 
     set_prolog_IO(user_input,COut,user_error).
 
 only_compatio(G):- if_t(is_compatio,user_io(G)).
-if_compatio(G):- if_t(is_compatio,user_io(G)).
-not_compatio(G):- if_t( is_mettalog,user_io(G)).
+  if_compatio(G):- if_t(is_compatio,user_io(G)).
+ not_compatio(G):- if_t( is_mettalog,user_io(G)).
 
-if_compat_io(G):- if_compatio(G).
+ if_compat_io(G):- if_compatio(G).
 not_compat_io(G):- not_compatio(G).
 
 :- set_is_unit_test(false).
@@ -1691,7 +1719,13 @@ repl3:-
       notrace(ignore(check_has_directive(Expr))),
       once(do_metta(repl_true,Mode,Self,Expr,_)).
 
+
+
+check_has_directive(V):- var(V),!,fail.
+check_has_directive('log.'):- switch_to_mettalog,!.
+check_has_directive('rust.'):- switch_to_mettarust,!.
 check_has_directive(Atom):- atom(Atom),atom_concat(_,'.',Atom),!.
+
 check_has_directive(call(N=V)):- nonvar(N),!, set_directive(N,V).
 check_has_directive(call(Rtrace)):- rtrace == Rtrace,!, rtrace,notrace(throw(restart_reading)).
 check_has_directive(NEV):- atom(NEV), atomic_list_concat([N,V],'=',NEV), set_directive(N,V).
@@ -1786,7 +1820,7 @@ inside_assert(Eval,O):- functor(Eval,eval_H,A), A1 is A-1, arg(A1,Eval,I),!, ins
 %inside_assert(eval_H(A,B,I,C),eval_H(A,B,O,C)):- !, inside_assert(I,O).
 inside_assert(call(I),O):- !, inside_assert(I,O).
 inside_assert( ?-(I), O):- !, inside_assert(I,O).
-inside_assert( :-(I), O):-  !, inside_assert(I,O).
+inside_assert( :-(I), O):- !, inside_assert(I,O).
 inside_assert(Var,Var).
 
 current_read_mode(repl,Mode):- ((nb_current(repl_mode,Mode),Mode\==[])->true;Mode='+'),!.
@@ -1815,106 +1849,7 @@ interactively_do_metta_exec0(file(_), Self, _TermV, Term, X, _NamedVarsList, _Wa
     file_hides_results(Term), !,
     eval_args(Self, Term, X).
 
-% Main predicate for interactive execution of mettalog commands, handling various configurations and output controls.
-interactively_do_metta_exec0(From, Self, _TermV, Term, X, NamedVarsList, Was, Output, FOut) :- 
-  fail, !,
-    notrace(( % Begin complex logic without trace for clarity.
-        Result = res(FOut),
-        inside_assert(Term, BaseEval),
-        % Determine interaction mode based on compatibility settings.
-        (is_compatio
-            -> option_else(answer, Leap, leap)
-            ;   option_else(answer, Leap, each)),
-        % Set maximum and initial result count options.
-        option_else('maximum-result-count', MaxResults, inf), % Infinite answers by default.
-        option_else('initial-result-count', LeashResults, 10), % Show first 10 answers without stopping.
-        Control = contrl(MaxResults, Leap),
-        Skipping = _,
-        % Check conditions for skipping execution.
-        (((From = file(_Filename), option_value('exec', skip), \+ always_exec(BaseEval)))
-            -> (GG = (skip(Term), deterministic(Complete)),
-                Skipping = 1, !,
-                true
-            )
-            ; GG = ( % Execute the term if not skipping.
-                ((Term), deterministic(Complete), nb_setarg(1, Result, Output))
-            )),
-        !, % Cut to ensure only one execution path is followed.
-        flag(result_num, _, 0),
-        PL = eval(Self, BaseEval, X),
-        \+ \+ ( % Double negation to ensure variables are properly uninstantiated upon exit
-            user:maplist(name_vars, NamedVarsList),
-            user:name_vars('OUT' = X),
-            % Handling of interactive or skipped execution logging and history.
-            if_t(Skipping == 1, writeln(' ; SKIPPING')),
-            if_t((is_interactive(From); Skipping == 1),
-                (
-                    if_t(\+ option_value(doing_repl, true),
-                        if_t(\+ option_value(repl, true),
-                            if_t(option_value(prolog, true), add_history_pl(PL)))),
-                    if_t(option_value(repl, true), add_history_src(exec(BaseEval)))
-                )),
-            % Debug message for Prolog only environments.
-            prolog_only((color_g_mesg('#da70d6', (write('% DEBUG:   '), writeq(PL), writeln('.'))))),
-            true
-        )
-    )),
-    only_compatio(write('[')), 
-    % Forall loop handling interactive execution and control flow based on user input.
-    (forall_interactive(
-        From, WasInteractive, Complete, % May include tracing based on conditions.
-        (timed_call(GG, Seconds)),
-        ((Complete == true -> !; true), % Ensure termination on complete execution.
-            set_option_value(interactive, WasInteractive),
-            Control = contrl(Max, DoLeap),
-            nb_setarg(1, Result, Output),
-            current_input(CI),
-            read_pending_codes(CI, _, []),
-            flag(result_num, R, R + 1),
-            flag(result_num, ResNum, ResNum),
-            if_t(ResNum =< Max,
-                ((((ResNum == 1, Complete == true) -> (not_compatio(format('~NDeterministic: ', [])), !); % Or Nondet.
-                    (Complete == true -> (not_compatio(format('~NLast Result(~w): ', [ResNum])), !);
-                        not_compatio(format('~NNDet Result(~w): ', [ResNum]))
-                    ))),
-                color_g_mesg_ok(yellow, 
-                    ignore(( 
-                        not_compatio(if_t(\+ atomic(Output), nl)), 
-                        only_compatio((if_t(ResNum > 1, write(', ')),
-                            with_indents(\+ compatio, write_asrc(Output)))),
-                        not_compatio(write_asrc(Output)), 
-                        not_compatio(nl)
-                    ))
-                ),
-                not_compatio(with_output_to(user_error, give_time('Execution', Seconds))),
-                color_g_mesg(green,
-                    ignore((NamedVarsList \=@= Was -> (not_compatio((maplist(print_var, NamedVarsList), nl))) ; true))
-                )
-            ),
-            % Handling user input for interactive control.
-            (
-                (Complete \== true, WasInteractive, DoLeap \== leap, 
-                LeashResults > ResNum, ResNum < Max) ->
-                (write("press ';' for more solutions "), get_single_char_key(C), 
-                    not_compatio((writeq(key = C), nl)),
-                    (C == 'b' -> (once(repl), fail) ;
-                    (C == 'm' -> make ;
-                    (C == 't' -> (nop(set_debug(eval, true)), rtrace) ;
-                    (C == 'T' -> (set_debug(eval, true));
-                    (C == ';' -> true ;
-                    (C == esc('[A', [27, 91, 65]) -> nb_setarg(2, Control, leap) ;
-                    (C == 'L' -> nb_setarg(1, Control, ResNum) ;
-                    (C == 'l' -> nb_setarg(2, Control, leap) ;
-                    (((C == '\n'); (C == '\r')) -> (!, fail);
-                    (!, fail)))))))))))))
-                ; (Complete \== true, \+ WasInteractive, Control = contrl(Max, leap)) -> true
-                ; (((Complete == true -> !; true)))
-            )
-        ) *-> (ignore(Result = res(FOut)), ignore(Output = (FOut)))
-        ; (flag(result_num, ResNum, ResNum), (ResNum == 0 -> (not_compatio(format('~N<no-results>~n~n')), !, true); true))
-    ),
-    only_compatio(write(']\n')),
-    ignore(Result = res(FOut)).
+
 
 interactively_do_metta_exec0(From,Self,_TermV,Term,X,NamedVarsList,Was,Output,FOut):-
   notrace((
@@ -1978,12 +1913,14 @@ interactively_do_metta_exec0(From,Self,_TermV,Term,X,NamedVarsList,Was,Output,FO
          ((((ResNum==1,Complete==true)->(not_compatio(format('~NDeterministic: ',  [])), !);          %or Nondet
            ( Complete==true -> (not_compatio(format('~NLast Result(~w): ',[ResNum])),! );
                                not_compatio(format('~NNDet Result(~w): ',[ResNum]))))),
-      color_g_mesg_ok(yellow, 
+      (
         ignore((( 
           not_compatio(if_t( \+ atomic(Output), nl)), 
-          only_compatio((if_t(ResNum> 1,write(', ')),
-          user_io(with_indents(is_mettalog,write_asrc(Output))),               
-          not_compatio(nl))))))),
+          (
+           only_compatio(if_t(ResNum> 1,write(', '))),
+            not_compatio(if_t(ResNum> 1,nl)),
+          user_io(with_indents(is_mettalog,
+             color_g_mesg_ok(yellow,write_asrc(Output))))  ))))),
 
       not_compatio(with_output_to(user_error,give_time('Execution',Seconds))),
       %not_compatio(give_time('Execution',Seconds),
@@ -2532,12 +2469,7 @@ override_portray:-
     erase(Cl))),
     asserta((user:portray(List) :- metta_portray(List))).
 
-    message_hook(A, B, C) :-
-      user:
-      (   B==error,
-          fbug(user:message_hook(A, B, C)),
-          fail
-      ).
+
 
 override_message_hook:- 
       forall(
