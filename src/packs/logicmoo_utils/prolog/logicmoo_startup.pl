@@ -1996,7 +1996,7 @@ wemsg(W,D):- format(user_error,"~N; ~q.~n",[W=D]).
 %= Register a hook
 %:- initialization(init_why(runtime,main),main).
 
-:- now_and_later(load_history).
+:- now_and_later(ignore(load_history)).
 :- fixup_exports.
 
 

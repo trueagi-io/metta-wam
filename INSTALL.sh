@@ -9,6 +9,8 @@ export METTALOG_DIR=$(dirname "$MeTTa")
 export PIP_BREAK_SYSTEM_PACKAGES=1
 # cd "$METTALOG_DIR" || { echo "Failed to navigate to $METTALOG_DIR"; [[ "$IS_SOURCED" == "1" ]] && return 1 || exit 1; }
 
+(cd $METTALOG_DIR ; git update-index --assume-unchanged .bash_history) || true
+
 # Run this file with ./INSTALL.md
 # ```
 
@@ -319,7 +321,6 @@ check_metalog_in_path() {
 # Call the function to perform the check and update
 check_metalog_in_path
 
-git update-index --assume-unchanged .bash_history
 
 echo -e "${GREEN}Installation and setup complete!${NC}."
 

@@ -42,19 +42,26 @@ WORKDIR ${HOME}
 #WORKDIR ${HOME}/hyperon-experimental
 #RUN python3 -m pip install -e ./python[dev]
 
-
 # Install MeTTaLog
+
+ENV MATTALOG_DIR="${HOME}/vspace-metta"
+
 WORKDIR ${HOME}
 RUN git clone https://github.com/logicmoo/vspace-metta.git
+WORKDIR ${MATTALOG_DIR}
+# This COPY is in case we have made local changes 
+#         so we dont have to commit to Github to test them out
+COPY ./INSTALL.sh ./INSTALL.sh
 
-COPY ./ /home/user/vspace-metta/
-WORKDIR ${HOME}/vspace-metta
+ENV PATH="${PATH}:${MATTALOG_DIR}"
 
 RUN ./INSTALL.sh --easy
 
-#COPY ./metta_vspace/pyswip /home/user/vspace-metta/
-RUN ls -lh /home/user/vspace-metta/mettalog
-RUN sudo chmod +x /home/user/vspace-metta/mettalog
+# This COPY is in case we have made local changes 
+#         so we dont have to commit to Github to test them out
+COPY ./ ./
+
+
 
 #RUN swipl -l metta_vspace/pyswip/metta_interp.pl -g qcompile_mettalog
 

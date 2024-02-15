@@ -1,5 +1,5 @@
 flybase_metta.qlf
-.bash_*
+#.bash_*
 ./.*~
 ./.git
 ./data/
@@ -7,6 +7,9 @@ flybase_metta.qlf
 ./reports/
 ./reports_local/
 ./venv/lib
+./reqs/
+!./reqs/logicmoo_utils
+!./reqs/predicate_streams
 # local development might need these changes without commiting
 #!./metta_vspace/pyswip
 #!MeTTa

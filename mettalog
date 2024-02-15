@@ -146,8 +146,8 @@ if [ ! -f /.dockerenv ]; then
     # Check if Docker is installed
     if command -v docker &> /dev/null; then
         # Check if the Docker image exists
-        if docker image inspect "$IMAGE_NAME" &> /dev/null; then
-            echo "Image $IMAGE_NAME is installed. Running command..."
+        if docker image inspect "$IMAGE_NAME" &> /dev/null ; then
+            DEBUG "Image $IMAGE_NAME is installed. Running command..."
             # Run your command inside the Docker container
             UPWARD=$(resolve_upward "$(pwd)")
             # Run the Docker container with necessary volumes mounted
@@ -158,7 +158,7 @@ if [ ! -f /.dockerenv ]; then
                 -v "$(pwd):/host/cwd" \
                 -w "$(pwd)" \
                 mettalog:latest \
-                /home/user/vspace-metta/mettalog $"@"
+                /home/user/vspace-metta/mettalog ${@}
         else
             echo "Image $IMAGE_NAME is not installed. Continuing with script..."
         fi
