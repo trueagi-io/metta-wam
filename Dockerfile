@@ -44,21 +44,21 @@ WORKDIR ${HOME}
 
 # Install MeTTaLog
 
-ENV MATTALOG_DIR="${HOME}/vspace-metta"
+ENV METTALOG_DIR="${HOME}/vspace-metta"
+ENV PATH="${PATH}:${METTALOG_DIR}"
 
 WORKDIR ${HOME}
 RUN git clone https://github.com/logicmoo/vspace-metta.git
-WORKDIR ${MATTALOG_DIR}
+WORKDIR ${METTALOG_DIR}
 # This COPY is in case we have made local changes 
 #         so we dont have to commit to Github to test them out
 COPY ./INSTALL.sh ./INSTALL.sh
-
-ENV PATH="${PATH}:${MATTALOG_DIR}"
-
 RUN ./INSTALL.sh --easy
 
 # This COPY is in case we have made local changes 
 #         so we dont have to commit to Github to test them out
+#COPY ./ ${METTALOG_DIR}/
+#COPY ./metta_vspace/pyswip ${METTALOG_DIR}/metta_vspace/pyswip
 COPY ./ ./
 
 

@@ -2313,7 +2313,7 @@ ggtrace(G):- call(G).
 ggtrace0(G):- ggtrace,
     leash(-all),
   visible(-all),
-    % debug,
+    % debug, 
   %visible(+redo),
   visible(+call),
   visible(+exception),
@@ -2350,7 +2350,7 @@ do_loon:-
    nop(load_history),
    set_prolog_flag(history, 3),
    (set_output_stream),
-   update_changed_files,
+   if_t(is_compiled,update_changed_files),
    run_cmd_args,
    maybe_halt(7)]))),!.
 

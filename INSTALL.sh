@@ -321,6 +321,7 @@ check_metalog_in_path() {
 # Call the function to perform the check and update
 check_metalog_in_path
 
+which swipl
 
 echo -e "${GREEN}Installation and setup complete!${NC}."
 
