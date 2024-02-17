@@ -25,22 +25,20 @@ chmod +x INSTALL.sh  #in case Git lost +x n the file
 ./INSTALL.sh # Answer the questions and follow the directions
 ```
 
-This script automates the setup of SWI-Prolog and its associated Python packages on your system. Here's a brief overview of the main components it installs and updates:
+This script automates the setup and its associated Python packages on your system. Here's a brief overview of the main components it installs and updates:
 
 #### SWI-Prolog
 - **Checks** if SWI-Prolog is already installed.
-- **Installs or Updates** SWI-Prolog to ensure version 9.1 or higher is present.
+- **Installs or Updates** to ensure version 9.1 or higher is present.
 
 #### Python and pip
 - **Verifies** if Python's package manager `pip` is installed.
 - **Installs pip** if it's not found, allowing Python packages to be managed.
 
-#### Python Packages for SWI-Prolog
+#### Python Packages
 - **Installs Janus**: A Python package that interfaces with SWI-Prolog.
-- **Installs PySWIP**: Another Python package that provides integration with SWI-Prolog.
+- **Installs PySWIP**: Another Python package that provides further integration
 
-#### SWI-Prolog Packages
-- **Updates or Installs** specific SWI-Prolog packages (`predicate_streams`, `trueagi-io_utils`, and `dictoo`) as needed.
 
 #### System Requirements
 - **Requires sudo access** for certain operations, such as installing SWI-Prolog and pip.
@@ -59,21 +57,21 @@ To build a docker image containing MeTTaLog readily available run the
 following command
 
 ```bash
-docker build -t MeTTa --log .
+docker build -t mettalog .
 ```
 
 You may then enter a corresponding containter with the following
 command
 
 ```bash
-docker run --rm -it --entrypoint bash MeTTa --log
+docker run --rm -it --entrypoint bash mettalog
 ```
 
 Once inside the container you may enter the MeTTaLog REPL with the
 following command
 
 ```bash
-MeTTa --log --repl
+MeTTa --repl
 ```
 
 or run a metta script as follows
@@ -106,11 +104,7 @@ documentation](https://docs.docker.com/reference/).
 ```
 MeTTa --log --test --clean ./tests/baseline-compat
 ```
- 
 
-`MeTTa` vs `mettalog`
-`MeTTa --log == mettalog`
-`mettalog --compatio == MeTTa`
 
 
 Within the REPL, you can interact directly with the MeTTaLog system. For instance:
@@ -133,7 +127,7 @@ To exit the REPL, press `ctrl-D`.
 **To run the REPL (such as to debug) once the file is loaded:**
 
 ```bash
-MeTTa --log tests/compat/scripts/b0_chaining_prelim.MeTTa --log --repl
+MeTTa --log tests/compat/scripts/b0_chaining_prelim.metta --repl
 ```
 
 
@@ -352,6 +346,12 @@ source ~/.profile
 
 Once installed, MeTTaLog can be accessed through the `MeTTa` script included in the repository, which serves as a front-end for the compiled `Sav.$hostname.MeTTaLog` executable. The name "MeTTa" is used in this context because the corresponding Rust executable is all lowercase `metta`.
 
+Two scripts are provided:
+
+`mettalog` which is the same as `MeTTa --log`
+
+`MeTTa` which is the same as `mettalog --compatio`
+
 
 
 **See `--help` for more options:**
@@ -407,8 +407,8 @@ MeTTa --log --help
  Both '-' or '_' are accepted as word-separator for long options.
 
  Configuration File:
-    This script reads options from the ~/.MeTTa --logrc file, one option per line.
-    Options specified in ~/.MeTTa --logrc are processed before command-line arguments.
+    This script reads options from the ~/.mettarc file, one option per line.
+    Options specified in ~/.mettarc are processed before command-line arguments.
 
 ```
 
