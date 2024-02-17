@@ -3,7 +3,7 @@
 
 # Get the absolute path to the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
+ 
 # Function to prompt for user confirmation with 'N' as the default
 confirm_with_default() {
     echo -e -n "$2"
