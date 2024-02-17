@@ -51,7 +51,11 @@ subst_args(Eq,RetType,Depth,Self,X,Y):-
    mnotrace(( \+ (Y\=YY))).
 */
 
+subst_args(X,Y):- subst_args('&self',X,Y).
+subst_args(Space,X,Y):- subst_args(100,Space,X,Y).
 
+subst_args(Depth,Space,X,Y):-subst_args('=',_RetType,
+  Depth,Space,X,Y).
 
 :- nodebug(metta(eval)).
 

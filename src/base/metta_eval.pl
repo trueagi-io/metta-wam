@@ -192,49 +192,53 @@ is_debugging(Flag):- flag_to_var(Flag,Var),
 
 eval_00(_Eq,_RetType,_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
 eval_00(_Eq,_RetType,Depth,_Slf,X,Y):- Depth<1,!,X=Y, (\+ trace_on_overflow-> true; flag(eval_num,_,0),
-    debug(metta(eval))).
+   debug(metta(eval))).
 eval_00(Eq,RetType,Depth,Self,X,YO):-
-  Depth2 is Depth-1,
-  copy_term(X, XX),
-  eval_20(Eq,RetType,Depth,Self,X,M),
-  ((M\=@=XX,  \+ self_eval(M))->
-      eval_00(Eq,RetType,Depth2,Self,M,Y);Y=M),
-  once(if_or_else((subst_args(Eq,RetType,Depth2,Self,Y,YO)),
-     if_or_else(finish_eval(Depth2,Self,Y,YO),
-          Y=YO))).
+   Depth2 is Depth-1,
+   copy_term(X, XX),
+   eval_20(Eq,RetType,Depth,Self,X,M),
+   ((M\=@=XX,  \+ self_eval(M))->
+         eval_00(Eq,RetType,Depth2,Self,M,Y);Y=M),
+   once(if_or_else((subst_args(Eq,RetType,Depth2,Self,Y,YO)),
+      if_or_else(finish_eval(Depth2,Self,Y,YO),
+            Y=YO))).
 
 
 
 eval_11(_Eq,_RetType,_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
-eval_11(Eq,RetType,Depth,Self,X,Y):- \+ is_debugging((eval)),!,
-  D1 is Depth-1,
-  eval_00(Eq,RetType,D1,Self,X,Y).
+eval_11(Eq,RetType,Depth,Self,X,Y):- 
+   \+ is_debugging((eval)),!,
+   D1 is Depth-1,
+   eval_00(Eq,RetType,D1,Self,X,Y).
 eval_11(Eq,RetType,Depth,Self,X,Y):-
-  ((
+   must_det_ll((
 
-  fake_notrace((flag(eval_num,EX0,EX0+1),
-  EX is EX0 mod 500,
-  D1 is Depth-1,
-  DR is 99 - (D1 mod 100),
-  PrintRet = _)),
-  option_else('trace-length',Max,100),
-  option_else('trace-depth',DMax,30),
-  quietly((if_t((nop(stop_rtrace),EX>Max), (set_debug(eval,false),MaxP1 is Max+1, %set_debug(overflow,false),
-      nop(format('; Switched off tracing. For a longer trace: !(pragma! trace-length ~w)',[MaxP1])),nop((start_rtrace,rtrace)))))),
-  nop(notrace(no_repeats_var(YY))),
+   fake_notrace((flag(eval_num,EX0,EX0+1),
+   EX is EX0 mod 500,
+   D1 is Depth-1,
+   DR is 99 - (D1 mod 100),
+   PrintRet = _)),
+   option_else('trace-length',Max,100),
+   option_else('trace-depth',DMax,30),
+   quietly((if_t((nop(stop_rtrace),EX>Max), (set_debug(eval,false),MaxP1 is Max+1, 
+         %set_debug(overflow,false),
+         nop(format('; Switched off tracing. For a longer trace: !(pragma! trace-length ~w)',[MaxP1])),
+         nop((start_rtrace,rtrace)))))),
+   nop(notrace(no_repeats_var(YY))),
 
-  if_t(DR<DMax,if_trace((eval),(PrintRet=1, indentq(DR,EX, '-->',eval(X))))),
-  Ret=retval(fail))),
+   if_t(DR<DMax,if_trace((eval), 
+      (PrintRet=1, indentq(DR,EX, '-->',eval(X))))),
+   Ret=retval(fail))),!,
 
-  call_cleanup((
-    (eval_00(Eq,RetType,D1,Self,X,Y)*->true;(fail,trace,(eval_00(Eq,RetType,D1,Self,X,Y)))),
-    fake_notrace(( \+ (Y\=YY), nb_setarg(1,Ret,Y)))),
+   call_cleanup((
+      (eval_00(Eq,RetType,D1,Self,X,Y)*->true;
+        (fail,trace,(eval_00(Eq,RetType,D1,Self,X,Y)))),
+      ignore((fake_notrace(( \+ (Y\=YY), nb_setarg(1,Ret,Y)))))),
 
-    (PrintRet==1 -> indentq(DR,EX,'<--',Ret) ;
-    fake_notrace(ignore(((Y\=@=X,
-      if_t(DR<DMax,if_trace((eval),indentq(DR,EX,'<--',Ret))))))))),
-
-  (Ret\=@=retval(fail)->true;(fail,trace,(eval_00(Eq,RetType,D1,Self,X,Y)),fail)).
+      (PrintRet==1 -> indentq(DR,EX,'<--',Ret) ;
+      fake_notrace(ignore(((Y\=@=X,
+      if_t(DR<DMax,if_trace((eval),indentq(DR,EX,'<--',Ret))))))))).
+%  (Ret\=@=retval(fail)->true;(fail,trace,(eval_00(Eq,RetType,D1,Self,X,Y)),fail)).
 
 
 

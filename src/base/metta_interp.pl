@@ -7,7 +7,7 @@
 :- set_prolog_flag(backtrace_goal_dept,100).
 :- set_prolog_flag(backtrace_show_lines,true).
 :- set_prolog_flag(write_attributes,portray).
-:- set_prolog_flag(debug_on_interrupt,true).
+%:- set_prolog_flag(debug_on_interrupt,true).
 :- set_prolog_flag(debug_on_error,true).
 %:- set_prolog_flag(compile_meta_arguments,control).
 :- prolog_load_context(directory, Value), absolute_file_name('../../reqs/',Dir,[relative_to(Value)]),
@@ -434,7 +434,10 @@ metta_cmd_args(Rest):- current_prolog_flag(argv,Rest).
 run_cmd_args_prescan:- has_run_cmd_args, !.
 run_cmd_args_prescan:- assert(has_run_cmd_args), do_cmdline_load_metta(prescan).
 
-run_cmd_args:-  do_cmdline_load_metta(execute).
+run_cmd_args:-  
+  run_cmd_args_prescan,
+  set_prolog_flag(debug_on_interrupt,true),
+  do_cmdline_load_metta(execute).
 
 
 metta_make_hook:-  loonit_reset, option_value(not_a_reload,true),!.
