@@ -3,7 +3,7 @@
 The Candidate Elimination algorithm is a conceptual learning algorithm that incrementally refines the version space boundary. This implementation focuses on bringing this algorithm into the MeTTa relational programming environment.
 
 ## :pushpin: Overview
-- The algorithm refines the version space boundary using observed training examples.
+- The algorithm refines the version space boundary using observed training tests.
 - It maintains two sets of hypotheses:
   - **G**: The most general hypotheses.
   - **S**: The most specific hypotheses.
@@ -16,14 +16,13 @@ The Candidate Elimination algorithm is a conceptual learning algorithm that incr
 ### :toolbox: Installation
 ```
 # Clone the repository
-git clone https://github.com/logicmoo/vspace-metta
+git clone https://github.com/trueagi-io/hyperon-wam
 
 # Change to the cloned directory
-cd vspace-metta
+cd hyperon-wam
 
-chmod +x INSTALL.sh  #incase Git lost +x n the file
-# Answer the questions and follow the directions
-./INSTALL.sh
+chmod +x INSTALL.sh  #in case Git lost +x n the file
+./INSTALL.sh # Answer the questions and follow the directions
 ```
 
 This script automates the setup of SWI-Prolog and its associated Python packages on your system. Here's a brief overview of the main components it installs and updates:
@@ -41,7 +40,7 @@ This script automates the setup of SWI-Prolog and its associated Python packages
 - **Installs PySWIP**: Another Python package that provides integration with SWI-Prolog.
 
 #### SWI-Prolog Packages
-- **Updates or Installs** specific SWI-Prolog packages (`predicate_streams`, `logicmoo_utils`, and `dictoo`) as needed.
+- **Updates or Installs** specific SWI-Prolog packages (`predicate_streams`, `trueagi-io_utils`, and `dictoo`) as needed.
 
 #### System Requirements
 - **Requires sudo access** for certain operations, such as installing SWI-Prolog and pip.
@@ -54,45 +53,27 @@ This script automates the setup of SWI-Prolog and its associated Python packages
 
 ---
 
-
-
-
-#### For loading Flybase into Rust Metta (Optional)
-
-For testing/viewing to see how we see the flybase as MeTTa.
-Or to load it into a Rust Space instead of VSpace.
-
-```
-
-# takes around 8 minutes
-./scripts/convert_to_metta.sh ./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/
-
-# to get an atoms count (should be at least 56 million)
-find ./data/ftp.flybase.org/releases/FB2023_04/precomputed_files/ -type f -name "*.metta" -exec wc -l {} +
-
-```
-
 ## :whale: Docker
 
 To build a docker image containing MeTTaLog readily available run the
 following command
 
 ```bash
-docker build -t mettalog .
+docker build -t MeTTa --log .
 ```
 
 You may then enter a corresponding containter with the following
 command
 
 ```bash
-docker run --rm -it --entrypoint bash mettalog
+docker run --rm -it --entrypoint bash MeTTa --log
 ```
 
 Once inside the container you may enter the MeTTaLog REPL with the
 following command
 
 ```bash
-MeTTa --repl
+MeTTa --log --repl
 ```
 
 or run a metta script as follows
@@ -114,10 +95,89 @@ documentation](https://docs.docker.com/reference/).
 
 ## :computer: Various Usages and Demos
 
-- Run in MeTTaLog without Rust installed:
+
+
+- Launch hyperon-wam Jupyter notebook:
 ```
-./MeTTa
-metta &self +> !(ensure-loaded! whole_flybase)
+./scripts/start_jupyter.sh
+```
+
+- Run the baseline sanity tests of hyperon-wam
+```
+MeTTa --log --test --clean ./tests/baseline-compat
+```
+ 
+
+`MeTTa` vs `mettalog`
+`MeTTa --log == mettalog`
+`mettalog --compatio == MeTTa`
+
+
+Within the REPL, you can interact directly with the MeTTaLog system. For instance:
+
+```bash
+MeTTa --log --repl
+
+metta &self +> !(+ 1 1)
+!(+ 1 1)
+
+Deterministic: 2
+
+; Execution took 0.000105 secs. (105.29 microseconds)
+metta &self +>
+```
+
+To exit the REPL, press `ctrl-D`.
+
+
+**To run the REPL (such as to debug) once the file is loaded:**
+
+```bash
+MeTTa --log tests/compat/scripts/b0_chaining_prelim.MeTTa --log --repl
+```
+
+
+#### Running Tests
+
+To run your first unit test (referred to as a LoonIt Test):
+
+```bash
+MeTTa --log --test --clean tests/compat/scripts/00_lang_case.metta
+```
+
+Upon execution, the output will be saved as `tests/compat/scripts/00_lang_case.metta.html`.
+
+**Note:** Remember, the `MeTTa` script's name is case-sensitive. Do not confuse it with `metta`, which might refer to a different tool written in Rust.
+
+
+**To run a metta file normally:**
+
+```bash
+MeTTa tests/compat/scripts/b0_chaining_prelim.metta
+```
+
+
+## Familiarize Yourself with MeTTa`
+
+1. [Read the MeTTa specification](https://wiki.opencog.org/wikihome/images/b/b7/MeTTa_Specification.pdf).
+2. [Learn the Minimal instruction set](https://github.com/trueagi-io/hyperon-experimental/blob/main/docs/minimal-metta.md)
+
+
+**To run all tests:**
+
+```bash
+./total_loonits.sh tests/compat/scripts/
+```
+
+**To run a single test:**
+
+```bash
+MeTTa --log --html tests/compat/scripts/b0_chaining_prelim.metta
+```
+
+```
+MeTTa --log
+metta &self +> !(import! &self http://logicmoo.org/public/metta/whole_flybase.metta.qlf.gz)
 metta &self +> !(match &flybase (gene_map_table $Dmel $abo FBgn0000018 $C $D $E) (gene_map_table $Dmel $abo FBgn0000018 $C $D $E))
 
 
@@ -151,24 +211,28 @@ Last Result(3):
 (gene_map_table $_311278 $_311500 FBgn0000018 $_311724 $_311928 $_312132)
 
 metta &self +> !(, (fbgn_fbtr_fbpp_expanded! $GeneID $TranscriptType $TranscriptID $GeneSymbol $GeneFullName $AnnotationID $28 $29 $30 $31 $32) (dmel_unique_protein_isoforms! $ProteinID $ProteinSymbol $TranscriptSymbol $33) (dmel_paralogs! $ParalogGeneID $ProteinSymbol $34 $35 $36 $37 $38 $39 $40 $41 $42) (gene_map_table! $MapTableID $OrganismAbbreviation $ParalogGeneID $RecombinationLoc $CytogeneticLoc $SequenceLoc) (synonym! $SynonymID $MapTableID $CurrentSymbol $CurrentFullName $43 $44))
+```
+
+
+
+
+
+
+
+
+
+
+
 
 
 - Run in Rust MeTTA:
-  ```
+```
   export PYTHONPATH=metta_vspace:$PYTHONPATH
   metta 1-VSpaceTest.metta
   @h
   metta@&self +> !(ensure-loaded! whole_flybase)
   metta@&self +> !(, (fbgn_fbtr_fbpp_expanded! $GeneID $TranscriptType $TranscriptID $GeneSymbol $GeneFullName $AnnotationID $28 $29 $30 $31 $32) (dmel_unique_protein_isoforms! $ProteinID $ProteinSymbol $TranscriptSymbol $33) (dmel_paralogs! $ParalogGeneID $ProteinSymbol $34 $35 $36 $37 $38 $39 $40 $41 $42) (gene_map_table! $MapTableID $OrganismAbbreviation $ParalogGeneID $RecombinationLoc $CytogeneticLoc $SequenceLoc) (synonym! $SynonymID $MapTableID $CurrentSymbol $CurrentFullName $43 $44))
-  ```
-- Launch vspace-metta Jupyter notebook:
-  ```
-  ./scripts/start_jupyter.sh
-  ```
-- Run long huge tests of vspace-metta
-  ```
-  ./scripts/test_in_metta.sh
-  ```
+```
 
 ```
 metta +> !(test_custom_v_space)
@@ -232,13 +296,13 @@ Pass Test:(Values same: [[B]] == [[B]])
 - Appreciation to [Flybase](https://flybase.org) for their genetic data that aids in learning and testing.
 
 ## :phone: Support
-- For support, queries, or feature suggestions, kindly open an issue on our [GitHub repository](https://github.com/logicmoo/vspace-metta/issues).
+- For support, queries, or feature suggestions, kindly open an issue on our [GitHub repository](https://github.com/trueagi-io/hyperon-wam/issues).
 
 ## :scroll: License
-- vspace-metta is distributed under the LGPL License.
+- hyperon-wam is distributed under the LGPL License.
 
 ## metta_interp.PL
-[MeTTaLog (In Prolog)](https://github.com/logicmoo/vspace-metta/blob/main/MeTTaLog.md)
+[MeTTaLog (In Prolog)](https://github.com/trueagi-io/hyperon-wam/blob/main/MeTTaLog.md)
 # MeTTaLog: An Implementation of MeTTa in Prolog
 
 MeTTaLog is a superfluous implementation of MeTTa, a language designed to succeed OpenCog Classic Atomese. As part of the OpenCog Hyperon initiative, MeTTa offers well-defined semantics for meta-language features, supports various types of inference, and more.
@@ -254,13 +318,13 @@ MeTTaLog provides an environment for managing and interacting with Prolog-based 
 Clone the repository using the following command:
 
 ```bash
-git clone https://github.com/logicmoo/vspace-metta
+git clone https://github.com/trueagi-io/hyperon-wam
 ```
 
 Navigate to the cloned directory:
 
 ```bash
-cd vspace-metta
+cd hyperon-wam
 ```
 
 ### 2. Build and Install Required Packages
@@ -271,11 +335,11 @@ Run the installation script:
 ./INSTALL.sh
 ```
 
-This script will install necessary Prolog packs, including `predicate_streams`, `logicmoo_utils`, and `dictoo`. During installation, you may encounter prompts for configuration choices. It's generally recommended to accept the default options.
+This script will install necessary Prolog packs, including `predicate_streams`, `trueagi-io_utils`, and `dictoo`. During installation, you may encounter prompts for configuration choices. It's generally recommended to accept the default options.
 
 ### 3. Update the PATH
 
-After installation, add the `vspace-metta` directory to your system's PATH to easily access the MeTTaLog executable:
+After installation, add the `hyperon-wam` directory to your system's PATH to easily access the MeTTaLog executable:
 
 ```bash
 echo 'export PATH="$PATH:$(pwd)"' >> ~/.profile
@@ -289,85 +353,18 @@ source ~/.profile
 Once installed, MeTTaLog can be accessed through the `MeTTa` script included in the repository, which serves as a front-end for the compiled `Sav.$hostname.MeTTaLog` executable. The name "MeTTa" is used in this context because the corresponding Rust executable is all lowercase `metta`.
 
 
-## Running
-
-Within the REPL, you can interact directly with the MeTTaLog system. For instance:
-
-```bash
-MeTTaLog --repl
-
-metta &self +> !(+ 1 1)
-!(+ 1 1)
-
-Deterministic: 2
-
-; Execution took 0.000105 secs. (105.29 microseconds)
-metta &self +>
-```
-
-To exit the REPL, press `ctrl-D`.
-
-#### Running Tests
-
-To run your first unit test (referred to as a LoonIt Test):
-
-```bash
-MeTTa --html examples/compat/scripts/00_lang_case.metta
-```
-
-Upon execution, the output will be saved as `examples/compat/scripts/00_lang_case.metta.html`.
-
-**Note:** Remember, the `MeTTa` script's name is case-sensitive. Do not confuse it with `metta`, which might refer to a different tool written in Rust.
-
-
-**To run a metta file normally:**
-
-```bash
-MeTTa examples/compat/scripts/b0_chaining_prelim.metta
-```
-
-**To run the REPL (such as to debug) once the file is loaded:**
-
-```bash
-MeTTa examples/compat/scripts/b0_chaining_prelim.metta --repl
-```
-
-**To run the REPL:**
-
-```bash
-MeTTa --repl
-```
-
-## Familiarize Yourself with MeTTa`
-
-1. [Read the MeTTa specification](https://wiki.opencog.org/wikihome/images/b/b7/MeTTa_Specification.pdf).
-2. [Learn the Minimal instruction set](https://github.com/trueagi-io/hyperon-experimental/blob/main/docs/minimal-metta.md)
-
-
-**To run all tests:**
-
-```bash
-./total_loonits.sh examples/compat/scripts/
-```
-
-**To run a single test:**
-
-```bash
-./MeTTa --html examples/compat/scripts/b0_chaining_prelim.metta
-```
-
 
 **See `--help` for more options:**
 ```
-./MeTTa --help
- CMD: ./MeTTa
+MeTTa --log --help
+ CMD: MeTTa --log
  Usage: MeTTa [options] <metta-files|directories> ... [-- arg ...passed to your program...]
         MeTTa [options] [-o executable] -c metta-file1 -c metta-file2 ... to compile into executable ...
-        MeTTa --help         Display this message
-        MeTTa --version      Display version information
-        MeTTa --abi-version  Display ABI version key
-        MeTTa --arch         Display architecture
-        MeTTa --dump-runtime-variables[=format]
+        MeTTa --log --help         Display this message
+        MeTTa --log --version      Display version information
+        MeTTa --log --abi-version  Display ABI version key
+        MeTTa --log --arch         Display architecture
+        MeTTa --log --dump-runtime-variables[=format]
                         Dump link info in sh(1) format
 
     -x state                 Start from state (must be first)
@@ -410,8 +407,8 @@ MeTTa --repl
  Both '-' or '_' are accepted as word-separator for long options.
 
  Configuration File:
-    This script reads options from the ~/.mettalogrc file, one option per line.
-    Options specified in ~/.mettalogrc are processed before command-line arguments.
+    This script reads options from the ~/.MeTTa --logrc file, one option per line.
+    Options specified in ~/.MeTTa --logrc are processed before command-line arguments.
 
 ```
 
@@ -426,16 +423,16 @@ Special thanks to the OpenCog community and everyone involved in the development
 
 MeTTa can be executed in one of the following modes:
 
-- `./MeTTa [option ...] script-file [arg ...]`
+- `MeTTa --log [option ...] script-file [arg ...]`
 Arguments after the script file are made available in the MeTTa flag `argv`.
 
-- `./MeTTa [option ...] metta-file ... [[--] arg ...]`
+- `MeTTa --log [option ...] metta-file ... [[--] arg ...]`
 This is the normal way to start MeTTa. The MeTTa flag `argv` provides access to `arg ...`. If the options are followed by one or more MeTTa file names (i.e., names with extension .metta), these files are loaded. The first file is registered in the MeTTa flag `associated_file`.
 
-- `./MeTTa -o output -c metta-file ...`
+- `MeTTa --log -o output -c metta-file ...`
 The `-c` option is used to compile a set of MeTTa files into an executable.
 
-- `./MeTTa -o output -b prolog-bootfile metta-file ...`
+- `MeTTa --log -o output -b prolog-bootfile metta-file ...`
 Bootstrap compilation.
 
 
@@ -511,7 +508,7 @@ Stops scanning for more arguments.
 ### Controlling the Stack Sizes
 
 ```shell
-$ ./MeTTa --stack-limit=32g
+$ MeTTa --log --stack-limit=32g
 ```
 
 - `--stack-limit=size[bkmg]`
@@ -529,7 +526,7 @@ Limit for the table space for shared tables.
 Goal is executed just before entering the top level.
 
 ```shell
-% ./MeTTa <options> -g (go) -g (quit)
+% MeTTa --log <options> -g (go) -g (quit)
 ```
 
 - `-t (goal)`
@@ -554,7 +551,7 @@ When given as the only option, it prints the architecture identifier (see MeTTa 
 When given as the only option, it prints a sequence of variable settings that can be used in shell scripts to deal with MeTTa parameters.
 
 ```shell
-eval `./MeTTa --dump-runtime-variables`
+eval `MeTTa --log --dump-runtime-variables`
 cc -I$PLBASE/include -L$PLBASE/lib/$PLARCH ...
 ```
 
