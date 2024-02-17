@@ -1,4 +1,10 @@
-# :rocket: Version Space Candidate Elimination inside of MeTTa
+# :rocket: MeTTaLog: An Implementation of MeTTa in Prolog
+
+MeTTaLog is an implementation of MeTTa, a language designed to succeed OpenCog Classic Atomese. As part of the OpenCog Hyperon initiative, MeTTa offers well-defined semantics for meta-language features, supports various types of inference, and more.
+
+[Latest Test Results](reports/TEST_LINKS.md)
+
+
 
 The Candidate Elimination algorithm is a conceptual learning algorithm that incrementally refines the version space boundary. This implementation focuses on bringing this algorithm into the MeTTa relational programming environment.
 
@@ -27,18 +33,23 @@ chmod +x INSTALL.sh  #in case Git lost +x n the file
 
 This script automates the setup and its associated Python packages on your system. Here's a brief overview of the main components it installs and updates:
 
-#### SWI-Prolog
-- **Checks** if SWI-Prolog is already installed.
-- **Installs or Updates** to ensure version 9.1 or higher is present.
-
 #### Python and pip
 - **Verifies** if Python's package manager `pip` is installed.
 - **Installs pip** if it's not found, allowing Python packages to be managed.
 
 #### Python Packages
-- **Installs Janus**: A Python package that interfaces with SWI-Prolog.
-- **Installs PySWIP**: Another Python package that provides further integration
+- **Installs mettalog**: Allows Rust MeTTa use extra functionality found in mettalog
+- **Installs mettalog-jupyter-kernal**: Work with metta files in Jupyter Notebooks
+- **Installs metakernal**: (No relation!) but allows our Jypter Kernel to work
+- **Installs janus**: A Python package that interfaces with SWI-Prolog.
+- **Installs pyswip**: Another Python package that provides further integration
 
+#### Updates Path
+**Note:** This only updates the PATH for the current user. If you need system-wide access, consider adding the path to a system-wide profile file, such as `/etc/profile`.
+
+#### SWI-Prolog
+- **Checks** if SWI-Prolog is already installed.
+- **Installs or Updates** to ensure version 9.1 or higher is present.
 
 #### System Requirements
 - **Requires sudo access** for certain operations, such as installing SWI-Prolog and pip.
@@ -102,7 +113,7 @@ documentation](https://docs.docker.com/reference/).
 
 - Run the baseline sanity tests of hyperon-wam
 ```
-MeTTa --log --test --clean ./tests/baseline-compat
+mettalog --test --clean ./tests/baseline-compat
 ```
 
 
@@ -110,7 +121,7 @@ MeTTa --log --test --clean ./tests/baseline-compat
 Within the REPL, you can interact directly with the MeTTaLog system. For instance:
 
 ```bash
-MeTTa --log --repl
+mettalog --repl
 
 metta &self +> !(+ 1 1)
 !(+ 1 1)
@@ -127,7 +138,7 @@ To exit the REPL, press `ctrl-D`.
 **To run the REPL (such as to debug) once the file is loaded:**
 
 ```bash
-MeTTa --log tests/compat/scripts/b0_chaining_prelim.metta --repl
+mettalog tests/compat/scripts/b0_chaining_prelim.metta --repl
 ```
 
 
@@ -136,7 +147,7 @@ MeTTa --log tests/compat/scripts/b0_chaining_prelim.metta --repl
 To run your first unit test (referred to as a LoonIt Test):
 
 ```bash
-MeTTa --log --test --clean tests/compat/scripts/00_lang_case.metta
+mettalog --test --clean tests/compat/scripts/00_lang_case.metta
 ```
 
 Upon execution, the output will be saved as `tests/compat/scripts/00_lang_case.metta.html`.
@@ -166,11 +177,11 @@ MeTTa tests/compat/scripts/b0_chaining_prelim.metta
 **To run a single test:**
 
 ```bash
-MeTTa --log --html tests/compat/scripts/b0_chaining_prelim.metta
+mettalog --html tests/compat/scripts/b0_chaining_prelim.metta
 ```
 
 ```
-MeTTa --log
+mettalog
 metta &self +> !(import! &self http://logicmoo.org/public/metta/whole_flybase.metta.qlf.gz)
 metta &self +> !(match &flybase (gene_map_table $Dmel $abo FBgn0000018 $C $D $E) (gene_map_table $Dmel $abo FBgn0000018 $C $D $E))
 
@@ -219,17 +230,17 @@ metta &self +> !(, (fbgn_fbtr_fbpp_expanded! $GeneID $TranscriptType $Transcript
 
 
 
-- Run in Rust MeTTA:
+- MeTTaLog also runs in Rust MeTTa:
 ```
-  export PYTHONPATH=metta_vspace:$PYTHONPATH
-  metta 1-VSpaceTest.metta
-  @h
+  /home/user$ metta
+  metta> !(import-py! mettalog)
+  metta> !(mettalog:repl)
   metta@&self +> !(ensure-loaded! whole_flybase)
   metta@&self +> !(, (fbgn_fbtr_fbpp_expanded! $GeneID $TranscriptType $TranscriptID $GeneSymbol $GeneFullName $AnnotationID $28 $29 $30 $31 $32) (dmel_unique_protein_isoforms! $ProteinID $ProteinSymbol $TranscriptSymbol $33) (dmel_paralogs! $ParalogGeneID $ProteinSymbol $34 $35 $36 $37 $38 $39 $40 $41 $42) (gene_map_table! $MapTableID $OrganismAbbreviation $ParalogGeneID $RecombinationLoc $CytogeneticLoc $SequenceLoc) (synonym! $SynonymID $MapTableID $CurrentSymbol $CurrentFullName $43 $44))
 ```
 
 ```
-metta +> !(test_custom_v_space)
+metta> !(test_custom_v_space)
 
 ; (add-atom &vspace_8 a)
 ; (add-atom &vspace_8 b)
@@ -297,58 +308,12 @@ Pass Test:(Values same: [[B]] == [[B]])
 
 ## metta_interp.PL
 [MeTTaLog (In Prolog)](https://github.com/trueagi-io/hyperon-wam/blob/main/MeTTaLog.md)
-# MeTTaLog: An Implementation of MeTTa in Prolog
-
-MeTTaLog is a superfluous implementation of MeTTa, a language designed to succeed OpenCog Classic Atomese. As part of the OpenCog Hyperon initiative, MeTTa offers well-defined semantics for meta-language features, supports various types of inference, and more.
-
-[Latest Test Results](reports/TEST_LINKS.md)
-
-## Installation Guide
-
-MeTTaLog provides an environment for managing and interacting with Prolog-based logic systems. To set up MeTTaLog on your system, follow the steps below:
-
-### 1. Clone the MeTTaLog Repository
-
-Clone the repository using the following command:
-
-```bash
-git clone https://github.com/trueagi-io/hyperon-wam
-```
-
-Navigate to the cloned directory:
-
-```bash
-cd hyperon-wam
-```
-
-### 2. Build and Install Required Packages
-
-Run the installation script:
-
-```bash
-./INSTALL.sh
-```
-
-This script will install necessary Prolog packs, including `predicate_streams`, `trueagi-io_utils`, and `dictoo`. During installation, you may encounter prompts for configuration choices. It's generally recommended to accept the default options.
-
-### 3. Update the PATH
-
-After installation, add the `hyperon-wam` directory to your system's PATH to easily access the MeTTaLog executable:
-
-```bash
-echo 'export PATH="$PATH:$(pwd)"' >> ~/.profile
-source ~/.profile
-```
-
-**Note:** This command updates the PATH for the current user. If you need system-wide access, consider adding the path to a system-wide profile file, such as `/etc/profile`.
-
-## Usage
 
 Once installed, MeTTaLog can be accessed through the `MeTTa` script included in the repository, which serves as a front-end for the compiled `Sav.$hostname.MeTTaLog` executable. The name "MeTTa" is used in this context because the corresponding Rust executable is all lowercase `metta`.
 
 Two scripts are provided:
 
-`mettalog` which is the same as `MeTTa --log`
+`mettalog` which is the same as `mettalog`
 
 `MeTTa` which is the same as `mettalog --compatio`
 
@@ -356,15 +321,15 @@ Two scripts are provided:
 
 **See `--help` for more options:**
 ```
-MeTTa --log --help
- CMD: MeTTa --log
+mettalog --help
+ CMD: mettalog
  Usage: MeTTa [options] <metta-files|directories> ... [-- arg ...passed to your program...]
         MeTTa [options] [-o executable] -c metta-file1 -c metta-file2 ... to compile into executable ...
-        MeTTa --log --help         Display this message
-        MeTTa --log --version      Display version information
-        MeTTa --log --abi-version  Display ABI version key
-        MeTTa --log --arch         Display architecture
-        MeTTa --log --dump-runtime-variables[=format]
+        mettalog --help         Display this message
+        mettalog --version      Display version information
+        mettalog --abi-version  Display ABI version key
+        mettalog --arch         Display architecture
+        mettalog --dump-runtime-variables[=format]
                         Dump link info in sh(1) format
 
     -x state                 Start from state (must be first)
@@ -423,16 +388,16 @@ Special thanks to the OpenCog community and everyone involved in the development
 
 MeTTa can be executed in one of the following modes:
 
-- `MeTTa --log [option ...] script-file [arg ...]`
+- `mettalog [option ...] script-file [arg ...]`
 Arguments after the script file are made available in the MeTTa flag `argv`.
 
-- `MeTTa --log [option ...] metta-file ... [[--] arg ...]`
+- `mettalog [option ...] metta-file ... [[--] arg ...]`
 This is the normal way to start MeTTa. The MeTTa flag `argv` provides access to `arg ...`. If the options are followed by one or more MeTTa file names (i.e., names with extension .metta), these files are loaded. The first file is registered in the MeTTa flag `associated_file`.
 
-- `MeTTa --log -o output -c metta-file ...`
+- `mettalog -o output -c metta-file ...`
 The `-c` option is used to compile a set of MeTTa files into an executable.
 
-- `MeTTa --log -o output -b prolog-bootfile metta-file ...`
+- `mettalog -o output -b prolog-bootfile metta-file ...`
 Bootstrap compilation.
 
 
@@ -508,7 +473,7 @@ Stops scanning for more arguments.
 ### Controlling the Stack Sizes
 
 ```shell
-$ MeTTa --log --stack-limit=32g
+$ mettalog --stack-limit=32g
 ```
 
 - `--stack-limit=size[bkmg]`
@@ -526,7 +491,7 @@ Limit for the table space for shared tables.
 Goal is executed just before entering the top level.
 
 ```shell
-% MeTTa --log <options> -g (go) -g (quit)
+% mettalog <options> -g (go) -g (quit)
 ```
 
 - `-t (goal)`
@@ -551,7 +516,7 @@ When given as the only option, it prints the architecture identifier (see MeTTa 
 When given as the only option, it prints a sequence of variable settings that can be used in shell scripts to deal with MeTTa parameters.
 
 ```shell
-eval `MeTTa --log --dump-runtime-variables`
+eval `mettalog --dump-runtime-variables`
 cc -I$PLBASE/include -L$PLBASE/lib/$PLARCH ...
 ```
 
