@@ -147,7 +147,7 @@ if [ ! -f /.dockerenv ]; then
     if command -v docker &> /dev/null; then
         # Check if the Docker image exists
         if docker image inspect "$IMAGE_NAME" &> /dev/null; then
-            echo "Updating the Docker image: $IMAGE_NAME"
+            DEBUG "Updating the Docker image: $IMAGE_NAME"
 
             # Create a temporary file to capture the build output
             temp_file=$(mktemp)
@@ -163,7 +163,7 @@ if [ ! -f /.dockerenv ]; then
             else
                 # If build succeeds, remove the temporary file
                 rm "$temp_file"
-                echo "Image $IMAGE_NAME successfully updated."
+                DEBUG "Image $IMAGE_NAME successfully updated."
             fi
 
             # Setup additional environment variables or paths
@@ -179,10 +179,10 @@ if [ ! -f /.dockerenv ]; then
                 /home/user/vspace-metta/mettalog "$@"
             
         else
-            echo "Image $IMAGE_NAME is not installed. Continuing with script..."
+            DEBUG "Image $IMAGE_NAME is not installed. Continuing with script..."
         fi
     else
-        echo "Docker is not installed. Continuing with script..."
+        DEBUG "Docker is not installed. Continuing with script..."
     fi
 fi
 
