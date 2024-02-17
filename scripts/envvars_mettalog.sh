@@ -1,5 +1,18 @@
 #!/bin/bash
 
+# Check if the script was sourced or executed
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    # ANSI escape code for yellow foreground
+    yellow='\033[1;33m'
+    # Reset color
+    NC='\033[0m'
+
+    echo -e "${yellow}This script should be sourced to work correctly."
+    echo -e "Please use '. ${BASH_SOURCE[0]}' \n   or 'source ${BASH_SOURCE[0]}' instead.${NC}"
+    exit 1
+fi
+
+
 # Resolve the actual directory of the current script, following symlinks
 SCRIPT=$(readlink -f "${BASH_SOURCE[0]}")
 SCRIPT_DIR=$(dirname "$SCRIPT")
@@ -24,3 +37,118 @@ fi
 # echo "METTALOG_DIR=$METTALOG_DIR"
 # echo "PATH=$PATH"
 # echo "PYTHONPATH=$PYTHONPATH"
+
+
+_mettalog_autocomplete() {
+    local cur prev opts files_and_dirs    
+    COMPREPLY=() # Array variable storing the possible completions.
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    # echo "COMP_WORDS: ${COMP_WORDS[@]} COMP_CWORD: ${COMP_CWORD} cur: ${cur} prev: ${prev}" > /dev/null
+    opts="
+        --log --html --debug --quiet
+        -g -t -G -T
+        --abi-version --help --version --arch --dump-runtime-variables
+        -c -O 
+        -o        
+         --prolog  --repl --home= --stack-limit=300M --table-space=300M --code=
+        --shared-table-space=2000M --pce=false --packs --pldoc=8040 --python=false --tty=false 
+        --test --fresh
+        --timeout=90
+        --exec=skip --eval=debug --case=debug --signals=false --threads=false ---load=
+        ---eval=nodebug
+        --debug-on-interrupt=false
+        --on-error= 
+        --on-warning="
+
+    compopt -o nospace
+    
+    # Handle comppleion for -g -t 
+    if [[ ${prev} == "-g" || ${prev} == "-t" ]]; then
+        COMPREPLY=( '"repl"' )
+        return 0
+    fi    
+    
+    if [[ ${prev} == "-G" || ${prev} == "-T" ]]; then
+        COMPREPLY=( "'\"(REPL!)\"'" )
+        return 0
+    fi
+
+    # Example adjustment for directory completion
+    if [[ ${prev} == "-d" || ${prev} == "--directory" ]]; then
+        local IFS=$'\n' # Change IFS to handle spaces in directory names
+        # Generate directory completions and append a slash to each
+        local dirs=$(compgen -d -- "${cur}" | sed 's/$/\//')
+        COMPREPLY=( $dirs )
+        return 0
+    fi
+    
+    # Handle file completion after --test 
+    if [[ ${prev} == "--test" || ${prev} == "--fresh" ]]; then
+        COMPREPLY=( $(compgen -W "--clean --continue --failures --regressions" -- ${cur}) )
+        return 0
+    fi
+    # Handle file completion (no directory) for -x -f -F -l -s --rc
+    if [[ ${prev} == "-x" || ${prev} == "-l" || ${prev} == "-s" || ${prev} == "--rc" ]]; then
+        _filedir -f # Bash's internal function for file completion.
+        return 0
+    fi     
+    if [[ ${prev} == "-f" || ${prev} == "-F" ]]; then
+        _filedir -f # Bash's internal function for file and directory completion.
+        return 0
+    fi
+
+    if [[ ${prev} == "-L" ]]; then 
+        # only allow .metta files and directories possibly containing .metta files
+        _filedir -f "./*.metta"
+        return 0
+    fi
+
+    if [[ "$cur" == --home=* ]]; then
+        # Extract the part after '=' to complete it as a directory
+        local cur_dir="${cur#*=}"
+        local dir_completions=$(compgen -d -- "$cur_dir" | sed 's/$/\//')
+
+        # Append each directory completion with --home= prefix, avoiding space
+        COMPREPLY=( $(printf "%s\n" "${dir_completions[@]}" | sed -e "s|^|--home=|") )
+        
+        # Ensure COMPREPLY items are treated as single items
+        compopt -o nospace
+        return 0
+    fi
+
+
+    if [[ ${cur} == -* ]]; then
+        compopt -o nospace
+        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )        
+        return 0
+    fi
+
+    if [[ ${cur} == =* ]]; then
+        COMPREPLY=( "true" "false" "debug" "silent" "show" "verbose")
+        return 0
+    fi
+
+    # Handle general case where options are not being completed,
+    # allowing completion of both files and directories as well as all other options.
+    # first get a list of files in the current directory
+    
+    # then filter out the files that match the file mask "*.metta" 
+    COMPREPLY1=( $(compgen -G "${cur}*.metta" -- ${cur}) )
+    # use $files_and_dirs to inumerate the directories make sure they end with a slash
+    # and will be used like ( $(compgen -W "${files_and_dirs}" -- ${cur}) )
+    files_and_dirs=$(ls -d */ 2>/dev/null)
+    # then filter out the directories
+    COMPREPLY2=( $(compgen -G "${files_and_dirs}" -- ${cur}) )
+    COMPREPLY2=( $(compgen -d -- "$cur" | sed 's/$/\//') )
+    # then filter out the options
+    COMPREPLY3=( $(compgen -W "${opts}" -- ${cur}) )
+    # merge the completions
+    COMPREPLY=( "${COMPREPLY1[@]}" "${COMPREPLY2[@]}" "${COMPREPLY3[@]}" )
+    return 0
+}
+
+# Register the autocomplete function for mettalog command.
+complete -F _mettalog_autocomplete mettalog
+complete -F _mettalog_autocomplete MeTTaLog
+complete -F _mettalog_autocomplete MeTTa
