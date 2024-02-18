@@ -1,3 +1,4 @@
+
 typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_arguments(Cmpd,Type,[List|_]),is_list(List).
 is_syspred(H,Len,Pred):- notrace(is_syspred0(H,Len,Pred)).
 is_syspred0(H,_Ln,_Prd):- \+ atom(H),!,fail.
@@ -22,6 +23,7 @@ is_metta_data_functor(Eq,Other,H):- H\=='Right', H\=='Something',
  mnotrace(G):- once(G).
 :- endif.
 
+'Number':attr_unify_hook(_,NewValue):- numeric(NewValue).
 
 %is_decl_type(ST):- metta_type(_,_,[_|Type]),is_list(Type),sub_sterm(T,Type),nonvar(T),T=@=ST, \+ nontype(ST).
 is_decl_type([ST|_]):- !, atom(ST),is_decl_type_l(ST).
@@ -80,9 +82,23 @@ is_nonspecific_type('Atom').
 is_nonspecific_type('Any').
 
 %get_type(Depth,Self,Val,Type):- get_type01(Depth,Self,Val,Type).
-get_type(Depth,Self,Val,TypeO):- no_repeats(TypeT,(get_type9(Depth,Self,Val,Type),TypeT=Type)),Type=TypeO.
+get_type(_Depth,Self,Val,Type):- Val = [Curry, Op| T],T==[],symbol(Curry),
+	  metta_type(Self,Curry,['->',OpArgTypes, ArgTypesNew]),
+	  metta_type(Self,Op,OpArgTypes),
+	  Type = ArgTypesNew,!.
+get_type(Depth,Self,Val,TypeO):-
+   no_repeats(TypeT,(get_type9(Depth,Self,Val,Type),TypeT=Type)),Type=TypeO.
+
+
+% (: curry  (->  (-> $a $b $c)  (-> $a  (-> $b $c))))
+get_type9(Depth,Self,Val,Type):- Val = [ [Curry, Op| T], Arg1 ],T==[],symbol(Curry),
+	  metta_type(Self,Curry,['->',OpArgTypes, ArgTypesNew]),
+	  metta_type(Self,Op,OpArgTypes),
+	  get_type(Depth,Self,Arg1,Arg1Type),
+	  ArgTypesNew = ['->',Arg1Type,Type],!.
 
 get_type9(_Dpth,_Slf,Expr,'hyperon::space::DynSpace'):- is_dynaspace(Expr),!.
+%get_type9(_Depth,Self,Val,Type):- symbol(Val),metta_type(Self,Val,Type).
 get_type9(Depth,Self,Val,Type):- get_type0(Depth,Self,Val,Type).
 get_type9(Depth,Self,Val,Type):- get_type1(Depth,Self,Val,Type), ground(Type),Type\==[], Type\==Val,!.
 %get_type9(_Depth,_Self,Val,Type):- symbol(Val),atom_contains(Val,' '),!,Type='String'.
@@ -167,7 +183,7 @@ get_type03(Depth,Self,Expr,Type):-  Depth2 is Depth-1,
 
 get_type03(_Dpth,_Slf,Val,Type):- is_decl_type(Val),(Type=Val;Type='Type').
 
-get_type03(_Dpth,_Slf,Expr,'Expression'):- is_list(Expr),!.
+%get_type03(_Dpth,_Slf,Expr,'Expression'):- is_list(Expr),!.
 
 get_type03(Depth,Self,List,Types):- List\==[], is_list(List),
   Depth2 is Depth-1,maplist(get_type(Depth2,Self),List,Types).
@@ -231,7 +247,7 @@ as_prolog(_Dpth,_Slf,I,O):- \+ iz_conz(I),!,I=O.
 as_prolog(Depth,Self,[Cons,H,T],[HH|TT]):- Cons=='Cons',as_prolog(Depth,Self,H,HH),as_prolog(Depth,Self,T,TT).
 as_prolog(Depth,Self,[List,H|T],O):- List=='::',!,maplist(as_prolog(Depth,Self),[H|T],L),!, O = L.
 as_prolog(Depth,Self,[At,H|T],O):- At=='@',!,maplist(as_prolog(Depth,Self),[H|T],[HH|L]),atom(H),!, O =.. [HH|L].
-as_prolog(Depth,Self,I,O):- is_list(I),!,maplist(as_prolog(Depth,Self),I,O).
+as_prolog(Depth,Self,[H|T],O):- is_list(T),!,maplist(as_prolog(Depth,Self),[H|T],[HH|L]),atom(H),!, compound_name_arguments(O,HH,L).
 as_prolog(_Dpth,_Slf,I,I).
 
 
@@ -1160,5 +1176,4 @@ longest_string_acc([H|T], Acc, Longest) :-
     length(Acc, LenAcc),
     (LenH > LenAcc -> longest_string_acc(T, H, Longest); longest_string_acc(T, Acc, Longest)).
 %
-
 
