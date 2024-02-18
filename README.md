@@ -16,47 +16,91 @@ chmod +x INSTALL.sh  # Make sure the script is executable
 ./INSTALL.sh # Follow the prompts
 ```
 The setup script handles the installation of essential components and updates:
+#### Python Packages
 - Ensures Python's `pip` is installed or installs it.
-- Installs necessary Python packages: `mettalog`, `mettalog-jupyter-kernel`, `metakernel`, `janus`, and `pyswip`.
-- Updates the PATH for the current user session.
-- Checks for SWI-Prolog installation, updating or installing as needed.
-
+- **Installs mettalog**: Allows Rust MeTTa use extra functionality found in mettalog
+- **Installs mettalog-jupyter-kernal**: Work with metta files in Jupyter Notebooks
+- **Installs metakernal**: (No relation!) but allows our Jypter Kernel to work
+- **Checks** if SWI-Prolog is already installed.
+- **Installs or Updates** to ensure version 9.1 or higher is present.
+- **Installs janus**: A Python package that interfaces with SWI-Prolog.
+- **Installs pyswip**: Another Python package that provides further integration
 **Note**: Running this script modifies software configurations and installs packages. Ensure you're prepared for these changes.
 
 ## :whale: Docker
-Build and run MeTTaLog in Docker:
+
+To build a docker image containing MeTTaLog readily available run the
+following command
+
 ```bash
 docker build -t mettalog .
 ```
-Enter the container:
+
+You may then enter a corresponding containter with the following
+command
+
 ```bash
 docker run --rm -it --entrypoint bash mettalog
 ```
-Within the container, access the MeTTaLog REPL or execute a script:
+
+Once inside the container you may enter the MeTTaLog REPL with the
+following command
+
 ```bash
 MeTTa --repl
-# or
+```
+
+or run a metta script as follows
+
+```bash
 MeTTa myprg.metta
 ```
-**Note**: The container is removed upon exit unless `--rm` is omitted. Docker facilitates file transfers between host and container.
+
+Beware that the container will be removed after leaving it.  If you
+wish to keep it, then remove the `--rm` flag from the command line
+used to enter the container.
+
+Docker has a rich functionality set.  In particular it allows you to
+[copy](https://docs.docker.com/engine/reference/commandline/container_cp/)
+files back and forth between the host and the container.  For more
+information about Docker you may refer to its
+[manuals](https://docs.docker.com/manuals/) and its [reference
+documentation](https://docs.docker.com/reference/).
+
 
 ## :computer: Usage and Demos
 - Launch Jupyter notebook:
 ```
 ./scripts/start_jupyter.sh
 ```
-- Execute baseline sanity tests:
-```
-mettalog --test --clean ./tests/baseline-compat
-```
 Interact directly with MeTTaLog through the REPL:
 ```bash
 mettalog --repl
 
 metta &self +> !(+ 1 1)
-# Output: Deterministic: 2
+!(+ 1 1)
+
+Deterministic: 2
+
+; Execution took 0.000105 secs. (105.29 microseconds)
+metta &self +>
 ```
 Exit the REPL with `ctrl-D`.
+
+**To run a script:**
+```bash
+MeTTa tests/baseline_compat/hyperon-experimental_scripts/b0_chaining_prelim.metta
+```
+
+**Note:** Remember, the `MeTTa` script's name is case-sensitive. Do not confuse it with `metta`, which might refer to a different tool written in Rust.
+
+
+**To run a metta file normally:**
+
+```bash
+MeTTa tests/baseline_compat/hyperon-experimental_scripts/b0_chaining_prelim.metta
+```
+
 
 ### Running Tests
 Execute a unit test:
@@ -65,19 +109,10 @@ mettalog --test --clean tests/baseline_compat/hyperon-experimental_scripts/00_la
 ```
 The output is saved as an HTML file in the same directory.
 
-**To run a script:**
-```bash
-MeTTa tests/baseline_compat/hyperon-experimental_scripts/b0_chaining_prelim.metta
+- Execute baseline sanity tests:
 ```
-
-## :bulb: Key Features
-- **Relational Programming**: Harness MeTTa's paradigm for complex knowledge representation and querying.
-- **Flybase Integration**: Utilize genetic data for enriched learning experiences.
-
-## :dart: Version Space Advantages
-- **Incremental Learning**: Adapt to new examples without revisiting previous data.
-- **Consistency**: Keep hypotheses in line with observed data.
-- **Interpretability**: Understand learning outcomes through G and S sets.
+mettalog --test --clean ./tests/baseline-compat
+```
 
 ## :raised_hands: Acknowledgments
 Thanks to the Hyperon Experimental MeTTa, PySWIP teams, and Flybase for their contributions to this project.
@@ -97,7 +132,55 @@ MeTTaLog is distributed under the LGPL License, facilitating open collaboration 
   metta> !(mettalog:repl)
   metta@&self +> !(ensure-loaded! whole_flybase)
   metta@&self +> !(, (fbgn_fbtr_fbpp_expanded! $GeneID $TranscriptType $TranscriptID $GeneSymbol $GeneFullName $AnnotationID $28 $29 $30 $31 $32) (dmel_unique_protein_isoforms! $ProteinID $ProteinSymbol $TranscriptSymbol $33) (dmel_paralogs! $ParalogGeneID $ProteinSymbol $34 $35 $36 $37 $38 $39 $40 $41 $42) (gene_map_table! $MapTableID $OrganismAbbreviation $ParalogGeneID $RecombinationLoc $CytogeneticLoc $SequenceLoc) (synonym! $SynonymID $MapTableID $CurrentSymbol $CurrentFullName $43 $44))
+
 ```
+metta> !(test_custom_v_space)
+
+; (add-atom &vspace_8 a)
+; (add-atom &vspace_8 b)
+; (atom-count &vspace_8)
+Pass Test:(Values same: 2 == 2)
+Pass Test:(Values same: Test Space Payload Attrib == Test Space Payload Attrib)
+; (get-atoms &vspace_8)
+Pass Test:( [a, b] == [a, b] )
+; (add-atom &vspace_9 a)
+; (add-atom &vspace_9 b)
+; (add-atom &vspace_9 c)
+; (remove-atom &vspace_9 b)
+Pass Test:(remove_atom on a present atom should return true)
+; (remove-atom &vspace_9 bogus)
+Pass Test:(remove_atom on a missing atom should return false)
+; (get-atoms &vspace_9)
+Pass Test:( [a, c] == [a, c] )
+; (add-atom &vspace_10 a)
+; (add-atom &vspace_10 b)
+; (add-atom &vspace_10 c)
+; (atom-replace &vspace_10 b d)
+; (add-atom &vspace_10 d)
+Pass Test:(Expression is true: True)
+; (get-atoms &vspace_10)
+Pass Test:( [a, c, d] == [a, d, c] )
+; (add-atom &vspace_11 (A B))
+; (add-atom &vspace_11 (C D))
+; (add-atom &vspace_11 (A E))
+; (match &vspace_11 ($_105354) (A $_105354))
+; RES: (metta-iter-bind  &vspace_11 (A B) (B))
+; RES: (metta-iter-bind  &vspace_11 (A E) (E))
+Pass Test:( [ { $xx <- B },
+ { $xx <- E } ] == [{xx: B}, {xx: E}] )
+; (add-atom &vspace_12 (A B))
+Pass Test:(Values same: CSpace == CSpace)
+; (match &vspace_12 ($_117600) (A $_117600))
+; RES: (metta-iter-bind  &vspace_12 (A B) (B))
+Pass Test:( [ { $v <- B } ] == [{v: B}] )
+; (add-atom &vspace_12 (big-space None))
+; (add-atom &vspace_13 (A B))
+; (match &vspace_13 ($_129826) (A $_129826))
+; RES: (metta-iter-bind  &vspace_13 (A B) (B))
+; (match &vspace_13 ($_135548) (: B $_135548))
+Pass Test:(Values same: [[B]] == [[B]])
+```
+
 
 # MeTTa Execution Modes
 [These are inherited from SWI-Prolog](https://www.swi-prolog.org/pldoc/man?section=cmdline)
