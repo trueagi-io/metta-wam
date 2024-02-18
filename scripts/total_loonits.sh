@@ -176,7 +176,7 @@ function main() {
     echo "Error: Provided UNITS_DIR '$UNITS_DIR' is not a directory or does not exist." >&2
     exit 1
    fi
-    base_url="https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/vspace-metta/main/"
+    base_url="https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/"
     initialize_counters
     analyze_files
 }

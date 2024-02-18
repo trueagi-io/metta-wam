@@ -340,17 +340,17 @@ into_sequential(List, [AND|SPList]) :- is_compiled_and(AND), maplist(prolog_to_m
 print_to_metta :-
  % cls, % Clears the screen (assumes a custom or system-specific implementation).
  % with_pwd(
-  %   '/opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta/examples/gpt2-like/language_models/',
+  %   '/opt/logicmoo_opencog/hyperon-wam/examples/gpt2-like/language_models/',
  %Filt = 'examples/gpt2-like/language_models/*.pl',
- Filt = '/opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta/examples/performance/nondet_unify/*.pl',
+ Filt = '/opt/logicmoo_opencog/hyperon-wam/examples/performance/nondet_unify/*.pl',
 
    % Finds all Prolog files in the specified directory.
    print_to_metta(Filt),  % Processes each found file.
-  % MC = '/opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta/metta_vspace/pyswip/metta_convert.pl',
+  % MC = '/opt/logicmoo_opencog/hyperon-wam/src/main/metta_convert.pl',
   % print_to_metta(MC), % Processes each found file.
    !.
 % Example of a no-operation (nop) call for a specific file path, indicating a placeholder or unused example.
-%$nop(print_to_metta('/opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta/metta_vspace/pyswip/metta_convert.pl')).
+%$nop(print_to_metta('/opt/logicmoo_opencog/hyperon-wam/src/main/metta_convert.pl')).
 
 % Processes a list of filenames, applying 'print_to_metta' to each.
 with_file_lists(P1,FileSpec):- is_list(FileSpec),!,maplist(with_file_lists(P1),FileSpec).

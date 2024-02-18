@@ -1,9 +1,9 @@
-!(extend-py! metta_vspace.metta_learner)
+!(extend-py! mettalog)
 
-;! metta_vspace ; hyperon.runner.MeTTa object (`metta_vspace` is registered 'manually' now)
-;! metta_learner ; just a symbol, because `metta_learner` extension doesn''t 'register itself', but it could be possible to automate this
+;! src ; hyperon.runner.MeTTa object (`src` is registered 'manually' now)
+;! mettalog ; just a symbol, because `mettalog` extension doesn''t 'register itself', but it could be possible to automate this
 
-!(metta_learner::fact 5) ; 120
+!(mettalog::fact 5) ; 120
 
 !(get-by-key &my-dict "A")
 
@@ -37,26 +37,26 @@
 !(print "=====================================")
 
 
-!(metta_learner::vspace-main)
+!(mettalog::vspace-main)
 
 
 
-!(metta_learner::self-from-self) ; content
+!(mettalog::self-from-self) ; content
 
 ; !(match &self ($x content) $x) ; []
 
 ; this returns `some` meaning that `content` from this scripts
-; is not distinguished from `content` symbol in `metta_learner`
-; !(match metta_learner::&self ($x content) $x)
+; is not distinguished from `content` symbol in `mettalog`
+; !(match mettalog::&self ($x content) $x)
 
-! metta_learner::content ; it is turned in OperationAtom, but it is not executed
-! (metta_learner::content) ; its execution results in unreduced `(content)`
+! mettalog::content ; it is turned in OperationAtom, but it is not executed
+! (mettalog::content) ; its execution results in unreduced `(content)`
 ; the following doesn't work (it might be ok, but semantics of :: is weird overall)
-;!(match metta_learner::&self ($x metta_learner::content) $x)
+;!(match mettalog::&self ($x mettalog::content) $x)
 
 ; both work, so :: doesn't separate "namespaces" precisely
-!(metta_learner::call_func fact 6)
-!(metta_learner::call_func metta_learner::fact 6)
+!(mettalog::call_func fact 6)
+!(mettalog::call_func mettalog::fact 6)
 
 ; bind a bunch of numpy objects to tokens for convenience
 !(bind! &x (np.vector 1 2 3))
@@ -110,4 +110,4 @@
   )
 
 
-!(metta_learner::vspace-main)
+!(mettalog::vspace-main)

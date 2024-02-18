@@ -25,7 +25,7 @@ def import_module_from_path(path):
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
-version = import_module_from_path("metta_vspace/_version.py").__version__
+version = import_module_from_path("src/_version.py").__version__
 
 setup(
     name="vspace_metta",
@@ -35,19 +35,19 @@ setup(
     description="VSpace wrapper around the MeTTa interpreter to make it useable from within Python and jupyter notebooks.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/logicmoo/vspace-metta",
+    url="https://github.com/logicmoo/hyperon-wam",
     project_urls={
         "Bug Tracker": "https://github.com/logicmoo/metta-vspace/issues",
     },
     #packages=find_packages(exclude=["data/"]),
-    packages=["metta_vspace"],
+    packages=["src"],
     install_requires=[
     	"metakernel", 
     	"yasi",
         "pyswip",
         "hyperon"
     ],
-    package_dir={"metta_vspace": "metta_vspace"},
+    package_dir={"src": "src"},
     include_package_data=True,
     license="LGPL",
     classifiers=[

@@ -125,6 +125,7 @@ MeTTaLog is distributed under the LGPL License, facilitating open collaboration 
 
 
 ## :gear: Prerequisites for using in Rust 
+
 - A build of [Hyperon Experimental](https://github.com/trueagi-io/hyperon-experimental) is required.
 ``` bash
   /home/user$ metta
@@ -132,6 +133,8 @@ MeTTaLog is distributed under the LGPL License, facilitating open collaboration 
   metta> !(mettalog:repl)
   metta@&self +> !(ensure-loaded! whole_flybase)
   metta@&self +> !(, (fbgn_fbtr_fbpp_expanded! $GeneID $TranscriptType $TranscriptID $GeneSymbol $GeneFullName $AnnotationID $28 $29 $30 $31 $32) (dmel_unique_protein_isoforms! $ProteinID $ProteinSymbol $TranscriptSymbol $33) (dmel_paralogs! $ParalogGeneID $ProteinSymbol $34 $35 $36 $37 $38 $39 $40 $41 $42) (gene_map_table! $MapTableID $OrganismAbbreviation $ParalogGeneID $RecombinationLoc $CytogeneticLoc $SequenceLoc) (synonym! $SynonymID $MapTableID $CurrentSymbol $CurrentFullName $43 $44))
+```
+
 
 ```
 metta> !(test_custom_v_space)

@@ -63,12 +63,12 @@ else
   # Run the Docker container with necessary volumes mounted
   # Note: It's crucial to quote '$(pwd)' to handle spaces in the path
   docker run --rm -it \
-    -v "${SCRIPT_DIR}:/home/user/vspace-metta" \
+    -v "${SCRIPT_DIR}:/home/user/hyperon-wam" \
     -v "${UPWARD}:${UPWARD}" \
     -v "$(pwd):/host/cwd" \
     -w "$(pwd)" \
     mettalog:latest \
-    /home/user/vspace-metta/mettalog /home/user/vspace-metta/scripts/MeTTa.sh "$@"
+    /home/user/hyperon-wam/mettalog /home/user/hyperon-wam/scripts/MeTTa.sh "$@"
 fi
 
 

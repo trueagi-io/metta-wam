@@ -172,11 +172,11 @@ if [ ! -f /.dockerenv ]; then
 
             # Run the Docker container with the necessary volumes mounted
             exec docker run -it \
-                -v "${SCRIPT_DIR}:/home/user/vspace-metta" \
+                -v "${SCRIPT_DIR}:/home/user/hyperon-wam" \
                 -v "$(pwd):$(pwd)" \
                 -w "$(pwd)" \
                 "$IMAGE_NAME" \
-                /home/user/vspace-metta/mettalog "$@"
+                /home/user/hyperon-wam/mettalog "$@"
             
         else
             DEBUG "Image $IMAGE_NAME is not installed. Continuing with script..."
@@ -376,7 +376,7 @@ cat << EOF
      This script reads options from the ~/.mettalogrc file, one option per line.
      Options specified in ~/.mettalogrc are processed before command-line arguments.
 
-  WAS: ${MeTTa} ${SWI_OPTIONS[*]} -l $METTALOG_DIR/metta_vspace/$PYSWIP_VERSION/metta_interp.pl -- --python=$python_flag ${PRE_METTALOG_OPTIONS[*]} ${METTALOG_OPTIONS[*]} \\
+  WAS: ${MeTTa} ${SWI_OPTIONS[*]} -l $METTALOG_DIR/src/$PYSWIP_VERSION/metta_interp.pl -- --python=$python_flag ${PRE_METTALOG_OPTIONS[*]} ${METTALOG_OPTIONS[*]} \\
 	     $METTA_CMD
 
 
@@ -600,8 +600,8 @@ if [[ -d "$DIRNAME" && ":$PYTHONPATH:" != *":$DIRNAME:"* ]]; then
     export PYTHONPATH="${PYTHONPATH:+${PYTHONPATH}:}$DIRNAME"
 fi
 
-# Add metta_vspace to PYTHONPATH if not already present
-[[ ":$PYTHONPATH:" != *":$METTALOG_DIR/metta_vspace:"* ]] && export PYTHONPATH="${PYTHONPATH:+${PYTHONPATH}:}$METTALOG_DIR/metta_vspace"
+# Add src to PYTHONPATH if not already present
+[[ ":$PYTHONPATH:" != *":$METTALOG_DIR/src:"* ]] && export PYTHONPATH="${PYTHONPATH:+${PYTHONPATH}:}$METTALOG_DIR/src"
 
 # If PYTHONPATH has changed, echo the new value
 if [[ "$PYTHONPATH" != "$initial_pythonpath" ]]; then
@@ -611,7 +611,7 @@ fi
 export RUST_BACKTRACE=full
 
 # Directory containing the .pl files
-pl_directory="metta_vspace/$PYSWIP_VERSION"
+pl_directory="src/$PYSWIP_VERSION"
 
 # Initialize a flag to check if any file is newer or if reference file is missing
 
@@ -654,7 +654,7 @@ if [[ $should_compile -eq 1 ]]; then
     if [[ "$never_compile" -eq 0 ]]; then
         :
 	#DEBUG "Compiling $reference_file" 
-	#swipl -l metta_vspace/$PYSWIP_VERSION/metta_interp.pl -g qcompile_mettalog -- --exeout=$reference_file
+	#swipl -l src/$PYSWIP_VERSION/metta_interp.pl -g qcompile_mettalog -- --exeout=$reference_file
     fi
 fi
 
@@ -673,10 +673,10 @@ if [[ -f "$reference_file" ]]; then
        MLOG="swipl -x $reference_file  ${SWI_OPTIONS[*]} --"
   fi
   if [[ "$never_compile" -eq 1 ]]; then
-       MLOG="swipl ${SWI_OPTIONS[*]} -l $METTALOG_DIR/metta_vspace/$PYSWIP_VERSION/metta_interp.pl --"
+       MLOG="swipl ${SWI_OPTIONS[*]} -l $METTALOG_DIR/src/$PYSWIP_VERSION/metta_interp.pl --"
   fi
 else
-  MLOG="swipl ${SWI_OPTIONS[*]} -l $METTALOG_DIR/metta_vspace/$PYSWIP_VERSION/metta_interp.pl --"
+  MLOG="swipl ${SWI_OPTIONS[*]} -l $METTALOG_DIR/src/$PYSWIP_VERSION/metta_interp.pl --"
 fi
 
 

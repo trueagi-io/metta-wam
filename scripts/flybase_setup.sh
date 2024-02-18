@@ -219,7 +219,7 @@ function ensure_pip() {
 
 # Setting PYTHONPATH environment variable
 echo -e "${BLUE}Setting PYTHONPATH environment variable..${NC}."
-export PYTHONPATH=$PWD/metta_vspace:$PYTHONPATH
+export PYTHONPATH=$PWD/src:$PYTHONPATH
 
 
 if confirm_with_default "N" "Setup Flybase Developnent files"; then

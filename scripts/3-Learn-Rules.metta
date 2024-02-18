@@ -1,6 +1,6 @@
 ; !(import! &self examples/RUN_tests1.metta)
 
-!(extend-py! metta_learner)
+!(extend-py! mettalog)
 
 ;A "better" if which works for both if-then and if-then-else:
 (: If (-> Bool Atom Atom))
@@ -113,6 +113,6 @@
 
 
 
-!(metta_learner::vspace-main)
+!(mettalog::vspace-main)
 
 
