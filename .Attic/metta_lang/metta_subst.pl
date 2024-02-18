@@ -42,7 +42,8 @@ subst_args(Eq,RetType,Depth,Self,[F|X],Y):-
   mnotrace((D1 is Depth-1)),!,
   subst_args0(Eq,RetType,D1,Self,[F|X],Y).
 
-subst_args(Eq,RetType,Depth,Self,X,Y):- subst_args0(Eq,RetType,Depth,Self,X,Y).
+subst_args(Eq,RetType,Depth,Self,X,Y):- 
+ subst_args0(Eq,RetType,Depth,Self,X,Y).
 /*
 subst_args(Eq,RetType,Depth,Self,X,Y):-
   mnotrace((no_repeats_var(YY),
