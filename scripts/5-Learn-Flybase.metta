@@ -57,7 +57,7 @@
 
 ;;;
 (vspace test 1)
-; !(extend-py! metta_learner)
+; !(extend-py! mettalog)
 ; !(load-flybase)
 
 !(print "; =====================================")
@@ -68,7 +68,7 @@
 (= (my-match $a $b $c) (match $a $b $c))
 !(match &self $s $s)
 !(my-match &self $s $s)
-!(metta_learner::vspace-main)
+!(mettalog::vspace-main)
 
 
 

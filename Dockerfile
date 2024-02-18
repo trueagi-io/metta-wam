@@ -44,11 +44,11 @@ WORKDIR ${HOME}
 
 # Install MeTTaLog
 
-ENV METTALOG_DIR="${HOME}/vspace-metta"
+ENV METTALOG_DIR="${HOME}/hyperon-wam"
 ENV PATH="${PATH}:${METTALOG_DIR}"
 
 WORKDIR ${HOME}
-RUN git clone https://github.com/logicmoo/vspace-metta.git
+RUN git clone https://github.com/logicmoo/hyperon-wam.git
 WORKDIR ${METTALOG_DIR}
 # This COPY is in case we have made local changes 
 #         so we dont have to commit to Github to test them out
@@ -58,12 +58,12 @@ RUN ./INSTALL.sh --easy
 # This COPY is in case we have made local changes 
 #         so we dont have to commit to Github to test them out
 #COPY ./ ${METTALOG_DIR}/
-#COPY ./metta_vspace/pyswip ${METTALOG_DIR}/metta_vspace/pyswip
+#COPY ./src/main ${METTALOG_DIR}/src/main
 COPY ./ ./
 
 
 
-#RUN swipl -l metta_vspace/pyswip/metta_interp.pl -g qcompile_mettalog
+#RUN swipl -l src/main/metta_interp.pl -g qcompile_mettalog
 
 
 

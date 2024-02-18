@@ -1,5 +1,5 @@
 % (track_load_into_file  "../../examples/VRUN_tests1.metta")
-:-metta_eval(['extend-py!',metta_learner]).
+:-metta_eval(['extend-py!',mettalog]).
 
 %;; stdlib extension
 metta_type('&self','If',[->,'Bool','Atom','Atom']).
@@ -1323,7 +1323,7 @@ metta_defn_ES(
 
 :-metta_eval([print,'$STRING'("NARS test!!!!!!!!!!!!!!!!!!")]).
 
-:-metta_eval(['metta_learner::vspace-main']).
+:-metta_eval(['mettalog::vspace-main']).
 
 ( :- (
    metta_eval( [ 'AddBeliefEvent',
@@ -1689,7 +1689,7 @@ metta_defn_ES(
 
 %;expected: [(Event (((({ garfield }) * ([ blue ])) --> like) (1.0 0.5692683291397822)) (eternal (Cons 7 (Cons 2 (Cons 1 (Cons 3 Nil)))) 0.0))]
 %;Please notice that it has revised it with the prior derived result, as you can also see in the evidence trail 1,2,3 being included
-:-metta_eval(['metta_learner::vspace-main']).
+:-metta_eval(['mettalog::vspace-main']).
 
 %;debug:
 :-metta_eval(['CollapseCardinality',['get-atoms','&belief_events']]).
@@ -1746,7 +1746,7 @@ metta_defn_ES(
     [ [ _,1]]]).
 
 %;[100]
-:-metta_eval(['metta_learner::vspace-main']).
+:-metta_eval(['mettalog::vspace-main']).
 
 % 17,439,387 inferences, 1.561 CPU in 1.572 seconds (99% CPU, 11172049 Lips)
 

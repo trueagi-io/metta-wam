@@ -2,7 +2,7 @@
 
 ;; to start in MeTTaLog use    ./MeTTa 8-FlybaseQuestions.metta --repl
 
-!(extend-py! metta_vspace.metta_learner)
+!(extend-py! mettalog)
 
 !(fb-info!)
 
@@ -835,7 +835,7 @@
 
 
 ;; Rust only:
-!(metta_learner::vspace-main)
+!(mettalog::vspace-main)
 
 
 

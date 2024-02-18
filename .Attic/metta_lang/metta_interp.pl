@@ -132,8 +132,8 @@ current_self(Self):- ((nb_current(self_space,Self),Self\==[])->true;Self='&self'
 :- ensure_loaded(metta_space).
 :- ensure_loaded(metta_eval).
 /*
-Now PASSING NARS.TEC:\opt\logicmoo_workspace\packs_sys\logicmoo_opencog\MeTTa\vspace-metta\metta_vspace\pyswip\metta_interp.pl
-C:\opt\logicmoo_workspace\packs_sys\logicmoo_opencog\MeTTa\vspace-metta\metta_vspace\pyswip1\metta_interp.pl
+Now PASSING NARS.TEC:\opt\logicmoo_workspace\packs_sys\logicmoo_opencog\MeTTa\hyperon-wam\src\pyswip\metta_interp.pl
+C:\opt\logicmoo_workspace\packs_sys\logicmoo_opencog\MeTTa\hyperon-wam\src\pyswip1\metta_interp.pl
 STS1.01)
 Now PASSING TEST-SCRIPTS.B5-TYPES-PRELIM.08)
 Now PASSING TEST-SCRIPTS.B5-TYPES-PRELIM.14)
@@ -458,7 +458,7 @@ get_flag_value(_,true).
    nop((forall(option_value_def(Opt,Default),set_option_value_interp(Opt,Default))))))).
 
 %process_option_value_def:- \+ option_value('python',false), skip(ensure_loaded(metta_python)).
-process_option_value_def:- option_value('python',load), ensure_loaded(metta_vspace/pyswip/metta_python).
+process_option_value_def:- option_value('python',load), ensure_loaded(src/main/metta_python).
 process_option_value_def.
 
 
@@ -574,7 +574,7 @@ start_html_of(_Filename):-
 
 save_html_of(_Filename):- \+ tee_file(_TEE_FILE),!.
 save_html_of(_):- \+ has_loonit_results, \+ option_value('html',true).
-save_html_of(_):- !, writeln('<br/><a href="https://github.com/logicmoo/vspace-metta/blob/main/MeTTaLog.md">Return to Summaries</a><br/>').
+save_html_of(_):- !, writeln('<br/><a href="https://github.com/logicmoo/hyperon-wam/blob/main/MeTTaLog.md">Return to Summaries</a><br/>').
 save_html_of(_Filename):-!.
 save_html_of(Filename):-
  must_det_ll((
@@ -582,7 +582,7 @@ save_html_of(Filename):-
   file_name_extension(Base,'metta.html',HtmlFilename),
   loonit_reset,
   tee_file(TEE_FILE),
-  writeln('<br/><a href="https://github.com/logicmoo/vspace-metta/blob/main/MeTTaLog.md">Return to Summaries</a><br/>'),
+  writeln('<br/><a href="https://github.com/logicmoo/hyperon-wam/blob/main/MeTTaLog.md">Return to Summaries</a><br/>'),
   sformat(S,'ansi2html -u < "~w" > "~w" ',[TEE_FILE,HtmlFilename]),
   writeln(doing(S)),
   ignore(shell(S)))).
@@ -697,7 +697,7 @@ debug_only(_What,G):- ignore((fail,notrace(catch_warn(G)))).
 'False':- fail.
 
 
-'metta_learner::vspace-main':- repl.
+'mettalog::vspace-main':- repl.
 
 into_underscores(D,U):- atom(D),!,atomic_list_concat(L,'-',D),atomic_list_concat(L,'_',U).
 into_underscores(D,U):- descend_and_transform(into_underscores,D,U),!.
@@ -2338,7 +2338,7 @@ do_loon:-
   \+ prolog_load_context(reloading,true),
   maplist(catch_red_ignore,[
 
-   %if_t(is_compiled,ensure_metta_learner),
+   %if_t(is_compiled,ensure_mettalog),
           install_readline_editline,
 	% nts,
    metta_final,
@@ -2405,8 +2405,8 @@ ensure_mettalog_system:-
     user:use_module(library(swi_ide)),
     user:use_module(library(prolog_profile)),
     %metta_python,
-    %ensure_loaded('./metta_vspace/pyswip/flybase_convert'),
-    %ensure_loaded('./metta_vspace/pyswip/flybase_main'),
+    %ensure_loaded('./src/main/flybase_convert'),
+    %ensure_loaded('./src/main/flybase_main'),
     ensure_loaded(library(metta_python)),
     ensure_loaded(library(flybase_convert)),
     ensure_loaded(library(flybase_main)),

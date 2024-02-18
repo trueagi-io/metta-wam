@@ -11,6 +11,6 @@ flybase_metta.qlf
 !./reqs/logicmoo_utils
 !./reqs/predicate_streams
 # local development might need these changes without commiting
-#!./metta_vspace/pyswip
+#!./src/main
 #!MeTTa
 #!mettalog

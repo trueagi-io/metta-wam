@@ -168,8 +168,8 @@ fi
 
 
 
-#python3 metta_vspace/metta_learner.py $@
-python3 metta_vspace/mettalog.py $@
-#python3 metta_vspace/metta_learner_no_panda.py $@
+#python3 src/mettalog.py $@
+python3 src/mettalog.py $@
+#python3 src/mettalog_no_panda.py $@
 
 deactivate

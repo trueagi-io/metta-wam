@@ -110,7 +110,7 @@ write_pass_fail(TestName,P,C,PASS_FAIL,G1,G2):-
       (%atom_concat(TEE_FILE,'.UNITS',UNITS),
       UNITS = '/tmp/SHARED.UNITS',
       open(UNITS, append, Stream,[encoding(utf8)]),
-      format(Stream,'| ~w | [~w](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/vspace-metta/main/reports/~w.metta.html#~w) | ~@ | ~@ | ~@ |~n',
+      format(Stream,'| ~w | [~w](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/~w.metta.html#~w) | ~@ | ~@ | ~@ |~n',
       [PASS_FAIL,TestName,Base,TestName,trim_gstring(with_indents(false,write_src([P,C])),200),
         trim_gstring(with_indents(false,write_src(G1)),100),with_indents(false,write_src(G2))]),!,
       close(Stream))).
@@ -720,9 +720,9 @@ mf('./examples/VRUN_tests0.metta').
 mf('./examples/VRUN_tests1.metta').
 mf('./examples/VRUN_tests2.metta').
 mf('./examples/VRUN_tests3.metta').
-mf('./metta_vspace/nm_test.metta').
-mf('./metta_vspace/r.metta').
-mf('./metta_vspace/test_nspace.metta').
+mf('./src/nm_test.metta').
+mf('./src/r.metta').
+mf('./src/test_nspace.metta').
 :- forall(mf(H),add_history1(load_metta(H))).
 %:- load_metta
 

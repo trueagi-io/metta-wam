@@ -1,4 +1,4 @@
-!(extend-py! metta_learner)
+!(extend-py! mettalog)
 
 !(let $space (new-gpt-space)
   (add-atom &self (= (my-nspace) $space)))
@@ -48,5 +48,5 @@
 
 
 
-!(metta_learner::vspace-main)
+!(mettalog::vspace-main)
 

@@ -9,7 +9,7 @@ from metakernel import MetaKernel
 from ipykernel.kernelbase import Kernel
 from pexpect import replwrap, EOF
 from subprocess import check_output
-from metta_learner  import ExtendedMeTTa
+from mettalog  import ExtendedMeTTa
 
 import re
 import signal

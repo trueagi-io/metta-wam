@@ -80,7 +80,7 @@ echo ""
 
 
 
-base_url="https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/vspace-metta/main/"
+base_url="https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/"
 
 # Sort the directories by file count in reverse order
 sort -k2,2n "$temp_file" | while read -r dir slash_count; do

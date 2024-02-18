@@ -44,15 +44,15 @@ ensure_rust_metta(MeTTa):-
 
 ensure_rust_metta:- ensure_rust_metta(_).
 
-:- dynamic(is_metta_learner/1).
-:- volatile(is_metta_learner/1).
-ensure_metta_learner(Metta_Learner):- is_metta_learner(Metta_Learner),!.
-ensure_metta_learner(Metta_Learner):-
+:- dynamic(is_mettalog/1).
+:- volatile(is_mettalog/1).
+ensure_mettalog(mettalog):- is_mettalog(mettalog),!.
+ensure_mettalog(mettalog):-
    with_safe_argv(
    (want_py_lib_dir,
-    py_call(metta_vspace:'metta_learner':'MettaLearner'(),Metta_Learner))),
-   fbug(is_metta_learner(Metta_Learner)),
-   asserta(is_metta_learner(Metta_Learner)).
+    py_call(src:'mettalog':'MettaLearner'(),mettalog))),
+   fbug(is_mettalog(mettalog)),
+   asserta(is_mettalog(mettalog)).
 
 
 :- multifile(space_type_method/3).
@@ -111,7 +111,7 @@ atom_from_space(Space, Sym):-
 % Get the atom iterator from hyperon.base.GroundingSpace
 atoms_iter_from_space(Space, Atoms) :-
     ensure_space(Space,GSpace),
-    with_safe_argv(py_call(metta_vspace:'metta_learner':get_atoms_iter_from_space(GSpace),Atoms)),
+    with_safe_argv(py_call(src:'mettalog':get_atoms_iter_from_space(GSpace),Atoms)),
     %py_call(GSpace:'atoms_iter'(), Atoms).
     true.
 :- endif.
@@ -172,7 +172,7 @@ pyo_to_pl(VL,Par,Cir,CirO,Cl,O,E):- catch(py_obj_dir(O,L),_,fail),fbug(py_obj_di
 
 pl_to_py(Var,Py):- pl_to_py(_VL,Var,Py).
 pl_to_py(VL,Var,Py):- var(VL),!,ignore(VL=[vars]),pl_to_py(VL,Var,Py).
-pl_to_py(_VL,Sym,Py):- is_list(Sym),!, maplist(pl_to_py,Sym,PyL), py_call(metta_vspace:'metta_learner':'MkExpr'(PyL),Py),!.
+pl_to_py(_VL,Sym,Py):- is_list(Sym),!, maplist(pl_to_py,Sym,PyL), py_call(src:'mettalog':'MkExpr'(PyL),Py),!.
 pl_to_py(VL,Var,Py):- var(Var), !, real_VL_var(Sym,VL,Var), py_call('hyperon.atoms':'V'(Sym),Py),!.
 pl_to_py(VL,'$VAR'(Sym),Py):- !, real_VL_var(Sym,VL,_),py_call('hyperon.atoms':'V'(Sym),Py),!.
 pl_to_py(VL,DSym,Py):- atom(DSym),atom_concat('$',VName,DSym), rinto_varname(VName,Sym),!, pl_to_py(VL,'$VAR'(Sym),Py).
@@ -265,7 +265,7 @@ extend_py(Module,_):-
   with_safe_argv((((
   %listing(ensure_rust_metta/1),
   fbug('extend-py!'(Module)),
-  ensure_metta_learner,
+  ensure_mettalog,
   ensure_rust_metta(MeTTa),
   replace_in_string(["/"="."],Module,ToPython),
   working_directory(PWD,PWD), py_add_lib_dir(PWD),
@@ -273,9 +273,9 @@ extend_py(Module,_):-
   py_call(MeTTa:load_py_module(ToPython),Result),
   fbug(result(MeTTa->Result)))))),!.
 
-ensure_metta_learner:-
-  with_safe_argv(ensure_metta_learner(Learner)),
-  fbug(ensure_metta_learner(Learner)).
+ensure_mettalog:-
+  with_safe_argv(ensure_mettalog(Learner)),
+  fbug(ensure_mettalog(Learner)).
 
 % Example usage
 example_usage :-
@@ -308,7 +308,7 @@ To integrate VSpace with the existing Python and Rust components, similar interf
 */
 
 %:- ensure_loaded(metta_interp).
-on_restore1:- ensure_metta_learner.
+on_restore1:- ensure_mettalog.
 
 :- dynamic(want_py_lib_dir/1).
 :- prolog_load_context(directory, ChildDir),

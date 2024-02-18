@@ -1,7 +1,7 @@
 
 
 
-;; !(extend-py! metta_vspace.metta_learner)
+;; !(extend-py! mettalog)
 
 !(ensure-loaded! "./whole_flybase.qlf")
 

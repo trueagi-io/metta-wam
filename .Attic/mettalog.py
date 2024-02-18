@@ -2547,7 +2547,7 @@ try:
 	        r"fb.test-nondeterministic-foreign": OperationAtom('test-nondeterministic-foreign', lambda: test_nondeterministic_foreign, unwrap=False),
 	
 	        'vspace-main': OperationAtom('vspace-main', vspace_main),
-	        'metta_learner::vspace-main': OperationAtom('vspace-main', lambda *args: [vspace_main(*args)]),
+	        'mettalog::vspace-main': OperationAtom('vspace-main', lambda *args: [vspace_main(*args)]),
 	        'swip-exec': OperationAtom('swip-exec', lambda s: [swip_exec(s)]),
 	        'py-eval': OperationAtom('py-eval', lambda s: [eval(s)]) })
 	
@@ -3237,7 +3237,7 @@ def swip_exec(qry):
 
 @foreign_framed
 def swip_exec_ff(qry):
-    #from metta_vspace import swip
+    #from src import swip
     #if is_init==True:
     #   print_cmt("Not running Query: ",qry)
     #   return
@@ -4107,7 +4107,7 @@ if the_python_runner is None:  #MakeInteractiveMeTTa() #def MakeInteractiveMeTTa
 	    the_new_runner_space = the_python_runner.space()
 	    print_cmt("The sys.argv list is:", sys.argv)
 	    vspace_init()
-	    the_python_runner.run("!(extend-py! metta_space/metta_learner)")
+	    the_python_runner.run("!(extend-py! metta_space/mettalog)")
     except Exception as e:
         if verbose>0: print(f"; Error: {e}")
 

@@ -16,7 +16,7 @@ service_running(Alias):- thread_property(VSS,TS),VSS=Alias,TS=status(running),!.
 % Start interpreter service with MSpace = &self
 start_vspace_service(Port):-
     current_self(MSpace), start_vspace_service(MSpace,Port).
-% see amples of using this https://github.com/logicmoo/vspace-metta/blob/main/examples/features/distributed-processing/create-server.metta
+% see amples of using this https://github.com/logicmoo/hyperon-wam/blob/main/examples/features/distributed-processing/create-server.metta
 start_vspace_service(MSpace,Port):-
       atomic_list_concat([vspace_service,MSpace,Port],'_',Alias),
       start_vspace_service(Alias,MSpace,Port).

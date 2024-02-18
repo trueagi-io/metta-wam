@@ -7,7 +7,7 @@
 export IS_SOURCED=$( [[ "${BASH_SOURCE[0]}" != "${0}" ]] && echo 1 || echo 0)
 
 export RUST_BACKTRACE=full
-#export PYTHONPATH=./metta_vspace
+#export PYTHONPATH=./src
 
 # Save the directory one above where this script resides
 export SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd .. && pwd )"
