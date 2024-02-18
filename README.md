@@ -1,6 +1,7 @@
-# :rocket: MeTTaLog: An Implementation of MeTTa in Prolog
+# :rocket: An Implementation of MeTTa on the Warren Abstract Machine (WAM)
 
-MeTTaLog brings the power of MeTTa, a language designed to extend OpenCog Classic Atomese, into the Prolog environment. It's part of the OpenCog Hyperon initiative, offering enhanced semantics for meta-language features and supporting a broad spectrum of inference types.
+In stark contrast to the von Neumann architectures' sequential execution pattern, the Warren Abstract Machine (WAM) embodies a distinct and specialized computational model that thrives within the realm of functional logic programming. Its reliance on registers, its tailored instruction set, its stack-based execution model, and its unique approach to memory management collectively enable it to excel in the execution of logic programs, where logical constraints and backtracking play a pivotal role.
+
 
 [View the Latest Test Results](reports/TEST_LINKS.md)
 
