@@ -28,9 +28,9 @@ if [[ ":$PATH:" != *":$METTALOG_DIR:"* ]]; then
     export PATH=$PATH:${METTALOG_DIR}
 fi
 
-# Check if METTALOG_DIR/metta_vspace is already in PYTHONPATH, if not, add it
-if [[ ":$PYTHONPATH:" != *":${METTALOG_DIR}/metta_vspace:"* ]]; then
-    export PYTHONPATH=${PYTHONPATH:+${PYTHONPATH}:}${METTALOG_DIR}/metta_vspace
+# Check if METTALOG_DIR/src is already in PYTHONPATH, if not, add it
+if [[ ":$PYTHONPATH:" != *":${METTALOG_DIR}/src:"* ]]; then
+    export PYTHONPATH=${PYTHONPATH:+${PYTHONPATH}:}${METTALOG_DIR}/src
 fi
 
 # Optionally, print the values to verify they are set (you can remove these lines in production)

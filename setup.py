@@ -15,15 +15,15 @@ setup(
       description="A MeTTa kernel for Jupyter that can use Python libraries",
       long_description=readme,
       long_description_content_type="text/markdown",
-      url="https://github.com/logicmoo/vspace-metta",
+      url="https://github.com/logicmoo/hyperon-wam",
       
-      packages=find_packages(include=["metta_vspace", "metta_vspace.*"]),
-      package_data={"metta_vspace": ["images/*.png", "modules/*.ss"]},
+      packages=find_packages(include=["src", "*"]),
+      package_data={"src": ["images/*.png", "modules/*.ss"]},
       platforms=["Any"],
       scripts = ["scripts/metta-jupyter-kernel", "scripts/metta-jupyter-kernel-debug"],
       data_files=[
-          ("share/jupyter/kernels/metta_vspace",
-           ["metta_vspace/kernel.json"] + glob.glob("metta_vspace/images/*.png")
+          ("share/jupyter/kernels/src",
+           ["src/kernel.json"] + glob.glob("src/images/*.png")
           )
       ],
       install_requires=["metakernel", "yasi"],

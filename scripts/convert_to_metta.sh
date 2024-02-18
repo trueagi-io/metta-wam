@@ -45,11 +45,11 @@ process_file() {
     *.obo | *.json | *.fa)
       rm -f "$OUTPUT_FILE"
       echo -ne "."
-      ###########swipl -l metta_vspace/pyswip/flybase_convert.pl -- --convert "$INPUT_FILE" --halt | tee -p "$OUTPUT_FILE"
+      ###########swipl -l src/main/flybase_convert.pl -- --convert "$INPUT_FILE" --halt | tee -p "$OUTPUT_FILE"
       #echo "" ; echo ""
-      #echo "swipl -l metta_vspace/pyswip/flybase_convert.pl -- --context=$HEAD --convert \"$INPUT_FILE\" --halt > \"$OUTPUT_FILE\""
+      #echo "swipl -l src/main/flybase_convert.pl -- --context=$HEAD --convert \"$INPUT_FILE\" --halt > \"$OUTPUT_FILE\""
       #echo "" ; echo ""
-      swipl -l metta_vspace/pyswip/flybase_convert.pl -- --context=$HEAD --convert "$INPUT_FILE" --halt  #> "$OUTPUT_FILE" 2>/dev/null
+      swipl -l src/main/flybase_convert.pl -- --context=$HEAD --convert "$INPUT_FILE" --halt  #> "$OUTPUT_FILE" 2>/dev/null
 
       echo -ne "."
       # Create a temporary file
@@ -65,8 +65,8 @@ process_file() {
       ;;
     *)
       echo -ne "."
-      #python3 metta_vspace/metta_learner.py "$INPUT_FILE" --analyze > "$OUTPUT_FILE"
-      python3 metta_vspace/panda_util.py "$INPUT_FILE" --analyze > "$OUTPUT_FILE"
+      #python3 src/mettalog.py "$INPUT_FILE" --analyze > "$OUTPUT_FILE"
+      python3 src/panda_util.py "$INPUT_FILE" --analyze > "$OUTPUT_FILE"
       skip_lines=$?
       echo -ne "."
       awk -v head="$HEAD" -v skip="$skip_lines" '

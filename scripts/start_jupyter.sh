@@ -32,7 +32,7 @@ pip install -e reqs/picat_kernel/
 jupyter kernelspec install reqs/picat_kernel
 pip install -force -e reqs/metta_kernel/
 jupyter kernelspec install reqs/metta_kernel
-jupyter kernelspec install metta_vspace
+jupyter kernelspec install src
 #--user 65534:65534 \
 # -d --restart always 
 
@@ -108,9 +108,9 @@ echo sleep 10
 
 # Clean up
 # handle_sigint
-export PYTHONPATH=$PYTHONPATH:/opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta/metta_vspace
+export PYTHONPATH=$PYTHONPATH:/opt/logicmoo_opencog/hyperon-wam/src
 
-export PATH=/opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta:/opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta/reqs/Picat:$PATH
+export PATH=/opt/logicmoo_opencog/hyperon-wam:/opt/logicmoo_opencog/hyperon-wam/reqs/Picat:$PATH
 
 chown logicmoo my-python3-env/ -R
 echo ""
