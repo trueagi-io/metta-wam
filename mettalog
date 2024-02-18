@@ -394,7 +394,7 @@ PRE_METTALOG_OPTIONS=()
 SWI_FLAG_WITH_ARG=false
 python_flag=enable
 LIST_OF_FILE_ARGS=()
-PYSWIP_VERSION="pyswip"
+PYSWIP_VERSION="main"
 wants_print_help=0
 
 

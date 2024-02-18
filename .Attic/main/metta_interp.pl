@@ -10,7 +10,7 @@
 %:- set_prolog_flag(debug_on_interrupt,true).
 :- set_prolog_flag(debug_on_error,true).
 %:- set_prolog_flag(compile_meta_arguments,control).
-:- prolog_load_context(directory, Value), absolute_file_name('../../reqs/',Dir,[relative_to(Value)]),
+:- prolog_load_context(directory, Value), absolute_file_name('../packs/',Dir,[relative_to(Value)]),
     atom_concat(Dir,'predicate_streams',PS), 
     atom_concat(Dir,'logicmoo_utils',LU),
     pack_attach(PS,[duplicate(replace),search(first)]),
