@@ -127,7 +127,7 @@ MeTTaLog is distributed under the LGPL License, facilitating open collaboration 
 ## :gear: Prerequisites for using in Rust 
 
 - A build of [Hyperon Experimental](https://github.com/trueagi-io/hyperon-experimental) is required.
-``` bash
+```bash
   /home/user$ metta
   metta> !(import-py! mettalog)
   metta> !(mettalog:repl)
@@ -136,7 +136,7 @@ MeTTaLog is distributed under the LGPL License, facilitating open collaboration 
 ```
 
 
-```
+```shell
 metta> !(test_custom_v_space)
 
 ; (add-atom &vspace_8 a)
