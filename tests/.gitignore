@@ -1,0 +1,6 @@
+*.html
+*.bak
+~temp~
+.git/
+.*~/
+__pycache__
