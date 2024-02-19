@@ -1,0 +1,12 @@
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_opencog/hyperon-wam/examples/extended_compat/hyperon-pln/metta/curried-chaining/curried-chainer.metta
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+0.24user 0.01system 0:00.25elapsed 100%CPU (0avgtext+0avgdata 34332maxresident)k
+0inputs+0outputs (0major+3831minor)pagefaults 0swaps

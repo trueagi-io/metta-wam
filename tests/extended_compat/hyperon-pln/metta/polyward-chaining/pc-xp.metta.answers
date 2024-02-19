@@ -1,0 +1,24 @@
++ '[' 0 -eq 1 ']'
++ echo 'Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/polyward-chaining/pc-xp.metta'
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/polyward-chaining/pc-xp.metta
++ eval 'timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/polyward-chaining/pc-xp.metta'
+++ timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/polyward-chaining/pc-xp.metta
+["=== Forward Revertant ==="]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[(: a A), (: (ModusPonens ab a) B), (: (ModusPonens bc (ModusPonens ab a)) C), (: (ModusPonens (Deduction ab bc) a) C), (match GroundingSpace-0x564e226e3458 (: $ctor#2196 (-> $prms1#2197 C $ccln#2198)) (let (: $prf1#2199 $prms1#2197) (bc (: $prf1#2199 $prms1#2197) Z) (frc (: ($ctor#2196 $prf1#2199 (ModusPonens (Deduction ab bc) a)) $ccln#2198) Z)))]
+0.21user 0.00system 0:00.21elapsed 100%CPU (0avgtext+0avgdata 25328maxresident)k
+0inputs+0outputs (0major+3209minor)pagefaults 0swaps

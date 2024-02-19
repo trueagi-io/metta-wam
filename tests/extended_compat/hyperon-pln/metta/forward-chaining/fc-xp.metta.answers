@@ -1,0 +1,41 @@
++ '[' 0 -eq 1 ']'
++ echo 'Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/forward-chaining/fc-xp.metta'
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/forward-chaining/fc-xp.metta
++ eval 'timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/forward-chaining/fc-xp.metta'
+++ timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/forward-chaining/fc-xp.metta
+["=== Entail ==="]
+[()]
+[()]
+[()]
+["=== Bare Entail ==="]
+[()]
+[()]
+[()]
+["=== Equality ==="]
+[()]
+[()]
+[()]
+["=== Bare Entail Match ==="]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+["=== Equality Match ==="]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+["=== DTL ==="]
+[()]
+[()]
+[()]
+0.27user 0.00system 0:00.27elapsed 100%CPU (0avgtext+0avgdata 25844maxresident)k
+0inputs+0outputs (0major+3224minor)pagefaults 0swaps

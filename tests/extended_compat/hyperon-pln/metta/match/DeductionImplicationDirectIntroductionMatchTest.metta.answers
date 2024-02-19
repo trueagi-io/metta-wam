@@ -1,0 +1,10 @@
++ '[' 0 -eq 1 ']'
++ echo 'Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/match/DeductionImplicationDirectIntroductionMatchTest.metta'
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/match/DeductionImplicationDirectIntroductionMatchTest.metta
++ eval 'timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/match/DeductionImplicationDirectIntroductionMatchTest.metta'
+++ timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/match/DeductionImplicationDirectIntroductionMatchTest.metta
+[()]
+[()]
+[(≞ (→ P R) (ded_formula (STV 1 0.1) (STV 1 0.5) (STV 1 0.1) (ETV (insert 42 Empty) (idi_formula (Bl True) (Bl False) (STV 1 0))) (STV 1 0.5))), (≞ (→ Q R) (ded_formula (STV 1 0.5) (STV 1 0.5) (STV 1 0.1) (ETV (insert 42 Empty) (idi_formula (Bl False) (Bl False) (STV 1 0))) (STV 1 0.5)))]
+0.07user 0.00system 0:00.07elapsed 100%CPU (0avgtext+0avgdata 28400maxresident)k
+0inputs+0outputs (0major+3884minor)pagefaults 0swaps

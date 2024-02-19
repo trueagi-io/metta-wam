@@ -1,0 +1,8 @@
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_opencog/hyperon-wam/examples/extended_compat/hyperon-pln/metta/hol/NatDTLTest.metta
+[()]
+[()]
+[()]
+[()]
+[(bc (: $prf (=== (=== Z Z) (plusRightId Z))) (S (S Z)))]
+0.16user 0.01system 0:00.18elapsed 100%CPU (0avgtext+0avgdata 33756maxresident)k
+0inputs+0outputs (0major+3752minor)pagefaults 0swaps

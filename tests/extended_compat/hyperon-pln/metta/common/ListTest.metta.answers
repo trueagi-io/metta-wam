@@ -1,0 +1,27 @@
++ '[' 0 -eq 1 ']'
++ echo 'Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/common/ListTest.metta'
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/common/ListTest.metta
++ eval 'timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/common/ListTest.metta'
+++ timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/common/ListTest.metta
+[()]
+[("============ Test insert ============")]
+[(Cons 1 Nil)]
+[(Cons 1 (Cons 2 Nil))]
+[(Cons 1 (Cons 2 (Cons 3 Nil)))]
+[True]
+[("============ Test sort ============")]
+[(Cons 1 Nil)]
+[(Cons 1 (Cons 2 Nil))]
+[(Cons 1 (Cons 2 (Cons 3 Nil)))]
+[("============ Test elem ============")]
+[True]
+[False]
+[("============ Test uniq ============")]
+[(Cons 2 (Cons 3 (Cons 1 Nil)))]
+[(Cons 2 (Cons 3 Nil))]
+[("============ Test insert_uniq ============")]
+[(Cons 1 (Cons 2 Nil))]
+[(Cons 1 (Cons 2 (Cons 3 Nil)))]
+[(Cons 1 (Cons 2 (Cons 3 Nil)))]
+0.52user 0.00system 0:00.52elapsed 100%CPU (0avgtext+0avgdata 26348maxresident)k
+0inputs+0outputs (0major+3421minor)pagefaults 0swaps

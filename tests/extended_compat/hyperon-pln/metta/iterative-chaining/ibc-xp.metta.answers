@@ -1,0 +1,42 @@
++ '[' 0 -eq 1 ']'
++ echo 'Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/iterative-chaining/ibc-xp.metta'
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/iterative-chaining/ibc-xp.metta
++ eval 'timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/iterative-chaining/ibc-xp.metta'
+++ timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/iterative-chaining/ibc-xp.metta
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+["=== Test Backward Chainer DTL Curried ==="]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+["=== Test Utility Functions ==="]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+["=== Test Iterative Chainer Wrapped Around Backward DTL Curried (collapse) ==="]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[(: (((((. (. ModusPonens)) Deduction) ef) de) ((ModusPonens cd) ((ModusPonens bc) ((ModusPonens ab) a)))) F), (: (((((((. .) .) ModusPonens) Deduction) ef) de) ((ModusPonens cd) ((ModusPonens bc) ((ModusPonens ab) a)))) F), (let* (((: $prfarg#449372 E) (syn (: $prfarg#449372 E) (S (S Z))))) (: ((ModusPonens ef) $prfarg#449372) F))]
+57.95user 0.14system 0:58.10elapsed 99%CPU (0avgtext+0avgdata 668148maxresident)k
+0inputs+0outputs (0major+163869minor)pagefaults 0swaps

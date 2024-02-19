@@ -1,0 +1,9 @@
++ '[' 0 -eq 1 ']'
++ echo 'Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/match/DeductionMatchTest.metta'
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/match/DeductionMatchTest.metta
++ eval 'timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/match/DeductionMatchTest.metta'
+++ timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/match/DeductionMatchTest.metta
+[()]
+[(≞ (→ P R) (ded_formula (STV 1 0.1) (STV 1 0.1) (STV 1 0.1) (STV 1 0.5) (STV 1 0.5)))]
+0.02user 0.01system 0:00.04elapsed 97%CPU (0avgtext+0avgdata 27120maxresident)k
+0inputs+0outputs (0major+3498minor)pagefaults 0swaps

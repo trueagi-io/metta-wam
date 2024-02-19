@@ -1,0 +1,14 @@
++ '[' 0 -eq 1 ']'
++ echo 'Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/sumo/located/located-test.metta'
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/sumo/located/located-test.metta
++ eval 'timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/sumo/located/located-test.metta'
+++ timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/sumo/located/located-test.metta
+[()]
+[()]
+[()]
+[()]
+[(), (), (), (), (), (), (), (), (), (), ()]
+[(: (ModusPonens (WitnessOf (⟹ (orientation John JohnsHouse Inside) (located John JohnsHouse))) (WitnessOf (orientation John JohnsHouse Inside))) (located John JohnsHouse)), (let* (((: $proof2#1231 (∧ (located John $INST2#1312) (located $INST2#1312 JohnsHouse))) (synthesize (: $proof2#1231 (∧ (located John $INST2#1312) (located $INST2#1312 JohnsHouse))) kb rb Z))) (: (ModusPonens (WitnessOf (⟹ (∧ (located John $INST2#1312) (located $INST2#1312 JohnsHouse)) (located John JohnsHouse))) $proof2#1231) (located John JohnsHouse)))]
+[(let* (((: $proof2#3158 (orientation John SanJose Inside)) (synthesize (: $proof2#3158 (orientation John SanJose Inside)) kb rb (S (S Z))))) (: (ModusPonens (WitnessOf (⟹ (orientation John SanJose Inside) (located John SanJose))) $proof2#3158) (located John SanJose))), (: (ModusPonens (WitnessOf (⟹ (∧ (located John JohnsHouse) (located JohnsHouse SanJose)) (located John SanJose))) (BinaryConjunctionIntroduction (ModusPonens (WitnessOf (⟹ (orientation John JohnsHouse Inside) (located John JohnsHouse))) (WitnessOf (orientation John JohnsHouse Inside))) (WitnessOf (located JohnsHouse SanJose)))) (located John SanJose))]
+1.19user 0.00system 0:01.19elapsed 100%CPU (0avgtext+0avgdata 32788maxresident)k
+0inputs+0outputs (0major+5236minor)pagefaults 0swaps

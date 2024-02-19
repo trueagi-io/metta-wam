@@ -1,0 +1,23 @@
++ '[' 0 -eq 1 ']'
++ echo 'Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/forward-chainer/forward-chainer-test.metta'
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/forward-chainer/forward-chainer-test.metta
++ eval 'timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/forward-chainer/forward-chainer-test.metta'
+++ timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/forward-chainer/forward-chainer-test.metta
+["=== Entail ==="]
+[(⊢ A), (⊢ B), (⊢ C)]
+[(⊢ (→ A B)), (⊢ B), (⊢ C)]
+[(⊢ (→ A B)), (⊢ B), (⊢ C), (⊢ (→ B C))]
+["=== Bare entail ==="]
+[A, B, C]
+[(→ A B), B, C]
+[(→ A B), B, C, (→ B C)]
+["=== Equality ==="]
+[A, B, C]
+[(→ A B), B, C]
+[(→ A B), B, C, (→ B C)]
+["=== DTL ==="]
+[(: a A), (: (ModusPonens ab a) B), (: (ModusPonens bc (ModusPonens ab a)) C)]
+[(: ab (→ A B)), (: (ModusPonens ab a) B), (: (ModusPonens bc (ModusPonens ab a)) C)]
+[(: ab (→ A B)), (: (ModusPonens ab a) B), (: (ModusPonens bc (ModusPonens ab a)) C), (: bc (→ B C))]
+0.72user 0.00system 0:00.72elapsed 100%CPU (0avgtext+0avgdata 25588maxresident)k
+0inputs+0outputs (0major+3207minor)pagefaults 0swaps

@@ -1,0 +1,75 @@
+;; Self-contained SUO-KIF file extracted from
+;;
+;; https://github.com/ontologyportal/sumo/blob/master/Merge.kif
+;;
+;; containing knowledge about `objectTransferred`.
+
+(=>
+  (and
+    (subclass ?X ?Y)
+    (instance ?Z ?X))
+  (instance ?Z ?Y))
+
+(instance objectTransferred CaseRole)
+(subrelation objectTransferred patient)
+(domain objectTransferred 1 Transfer)
+(domain objectTransferred 2 Object)
+(format EnglishLanguage objectTransferred "the object transferred in %1 is %n %2")
+(documentation objectTransferred EnglishLanguage "A relation that specifies the object that
+is transferred during the process.  For example, in a &%Mailing process, the object
+transferred is a letter or package.")
+
+(=>
+  (objectTransferred ?P ?OBJ)
+  (exists (?O ?D)
+    (and
+      (origin ?P ?O)
+      (destination ?P ?D)
+      (holdsDuring
+        (ImmediatePastFn ?P)
+        (located ?OBJ ?O))
+      (holdsDuring
+        (ImmediateFutureFn ?P)
+        (located ?OBJ ?D)))))
+
+(=>
+  (and
+    (instance ?T Transfer)
+    (objectTransferred ?T ?O)
+    (orientation ?O2 ?O Inside))
+  (objectTransferred ?T ?O2))
+
+(=>
+  (and
+    (instance ?T Transfer)
+    (objectTransferred ?T ?O)
+    (orientation ?O2 ?O On))
+  (objectTransferred ?T ?O2))
+
+(subclass Carrying Transfer)
+
+;; Add instances of `objectTransferred`, extracted from
+;;
+;; https://github.com/ontologyportal/sumo/blob/master/tests/SP04.kif.tq
+;;
+;; to test it.
+
+(subclass Flower PlantAnatomicalStructure)
+(instance Inside PositionalAttribute)
+(subclass Container Object)
+
+(domain objectTransferred 1 Transfer)
+(domain objectTransferred 2 Object)
+(instance objectTransferred CaseRole)
+(subrelation objectTransferred patient)
+
+(instance JohnsCarry Carrying)
+(objectTransferred JohnsCarry JohnsVase)
+(agent JohnsCarry John)
+(instance JohnsFlower Flower)
+(instance JohnsVase Container)
+(orientation JohnsFlower JohnsVase Inside)
+
+;; An example of query would be
+;;
+;; (query (and (instance ?C Carrying) (agent ?C John) (instance ?F Flower) (objectTransferred ?C ?F)))

@@ -1,0 +1,13 @@
++ '[' 0 -eq 1 ']'
++ echo 'Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/synthesis/experiments/synthesize-via-unify-test.metta'
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/synthesis/experiments/synthesize-via-unify-test.metta
++ eval 'timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/synthesis/experiments/synthesize-via-unify-test.metta'
+++ timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/synthesis/experiments/synthesize-via-unify-test.metta
+[()]
+[()]
+[(Error (assertEqualToResult (record synthesize ((: $term $type) Z)) ((: f (-> Number String)) (: g (-> String Bool)) (: h (-> Bool Number)))) 
+Expected: [(: f (-> Number String)), (: g (-> String Bool)), (: h (-> Bool Number))]
+Got: [(record synthesize ((: $term $type) Z))]
+Missed result: (: f (-> Number String)))]
+0.02user 0.00system 0:00.03elapsed 97%CPU (0avgtext+0avgdata 26100maxresident)k
+0inputs+0outputs (0major+3271minor)pagefaults 0swaps

@@ -1,0 +1,14 @@
++ '[' 0 -eq 1 ']'
++ echo 'Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/sumo/orientation/orientation-test.metta'
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/sumo/orientation/orientation-test.metta
++ eval 'timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/sumo/orientation/orientation-test.metta'
+++ timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/sumo/orientation/orientation-test.metta
+[()]
+[()]
+[()]
+[()]
+[(), (), (), (), (), (), (), (), (), (), (), ()]
+[(: (WitnessOf (orientation A B Right)) (orientation A B Right))]
+[(: (ModusPonens (WitnessOf (⟹ (∧ (orientation A B Right) (orientation C B Left)) (orientation A C Right))) (BinaryConjunctionIntroduction (WitnessOf (orientation A B Right)) (WitnessOf (orientation C B Left)))) (orientation A C Right))]
+0.47user 0.00system 0:00.47elapsed 99%CPU (0avgtext+0avgdata 29684maxresident)k
+0inputs+0outputs (0major+4145minor)pagefaults 0swaps

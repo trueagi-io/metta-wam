@@ -1,0 +1,43 @@
+;; Self-contained SUO-KIF file extracted from
+;;
+;; https://github.com/ontologyportal/sumo/blob/master/Merge.kif
+;;
+;; containing knowledge about `located` and related symbols.
+
+(subclass TransitiveRelation BinaryRelation)
+(disjoint TransitiveRelation IntransitiveRelation)
+
+(documentation TransitiveRelation EnglishLanguage "A &%BinaryRelation ?REL is transitive
+if (?REL ?INST1 ?INST2) and (?REL ?INST2 ?INST3) imply (?REL ?INST1 ?INST3),
+for all ?INST1, ?INST2, and ?INST3.")
+
+(=>
+   (instance ?REL TransitiveRelation)
+   (forall (?INST1 ?INST2 ?INST3)
+      (=>
+         (and
+            (?REL ?INST1 ?INST2)
+            (?REL ?INST2 ?INST3))
+         (?REL ?INST1 ?INST3))))
+
+(instance located TransitiveRelation)
+
+(=>
+   (orientation ?OBJ1 ?OBJ2 Inside)
+   (located ?OBJ1 ?OBJ2))
+
+;; Add instances of `located`, extracted from
+;;
+;; https://github.com/ontologyportal/sumo/blob/master/tests/SP03.kif.tq
+;;
+;; to test it.
+
+(instance JohnsHouse Building)
+(instance John Human)
+(instance SanJose City)
+(orientation John JohnsHouse Inside)
+(located JohnsHouse SanJose)
+
+;; An example of query would be
+;;
+;; (located John SanJose)

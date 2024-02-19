@@ -1,0 +1,23 @@
++ '[' 0 -eq 1 ']'
++ echo 'Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/synthesis/experiments/synthesize-via-type-checking.metta'
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/synthesis/experiments/synthesize-via-type-checking.metta
++ eval 'timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/synthesis/experiments/synthesize-via-type-checking.metta'
+++ timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-pln_metta/synthesis/experiments/synthesize-via-type-checking.metta
+(synthesize= (Cons f (Cons g Nil)) (S Z) (Cons f (Cons g Nil)))
+(info (variables (prgs (Cons f (Cons g Nil))) (cmbs (Cons (. f f) (Cons (. f g) (Cons (. g f) (Cons (. g g) Nil)))))) (synthesize= (Cons f (Cons g Nil)) (S (S Z)) (Cons (. f f) (Cons (. f g) (Cons (. g f) (Cons (. g g) Nil))))))
+[()]
+[("Unit Tests")]
+[(Cons 3 (Cons 4 (Cons 2 Nil)))]
+[(Cons 2 Nil)]
+[Nil]
+[(Cons 1 (Cons "a" (Cons 2 (Cons "b" Nil))))]
+[Nil]
+[Nil]
+[(Cons 2 Nil)]
+[(Cons 3 (Cons 4 (Cons 6 (Cons 8 Nil))))]
+[(Cons (. g f) Nil)]
+[(Cons (. f g) Nil)]
+[(Cons (. f f) (Cons (. f g) (Cons (. g f) (Cons (. g g) Nil))))]
+[(Cons (. f f) (Cons (. f g) (Cons (. g f) (Cons (. g g) Nil))))]
+0.71user 0.00system 0:00.72elapsed 100%CPU (0avgtext+0avgdata 31216maxresident)k
+0inputs+0outputs (0major+4534minor)pagefaults 0swaps
