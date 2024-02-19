@@ -108,7 +108,7 @@ if [ "$IS_SOURCED" -eq "0" ]; then SCRIPT=$(readlink -f "$0"); else SCRIPT=$(rea
 export MeTTa=$(realpath "$SCRIPT")
 export METTALOG_DIR=$(dirname "$SCRIPT")
 # echo "METTALOG_DIR=$METTALOG_DIR"
-cd "$METTALOG_DIR" || { echo "Failed to navigate to $METTALOG_DIR"; [[ "$IS_SOURCED" == "1" ]] && return 1 || exit 1; }
+#cd "$METTALOG_DIR" || { echo "Failed to navigate to $METTALOG_DIR"; [[ "$IS_SOURCED" == "1" ]] && return 1 || exit 1; }
 should_compile=0
 never_compile=0
 compatio=false
@@ -215,7 +215,7 @@ for arg in "$@"; do
 
 
     if [[ "$arg" == "--compatio" ]]; then
-	debug_this_script=false
+	#debug_this_script=false
 	compatio=true        
     fi
 
@@ -263,6 +263,7 @@ function load_rc_file {
     local verbose="${VERBOSE:-0}"  # Use the VERBOSE environment variable or default to '0' (not verbose)
 
     if [[ -f "$file" ]]; then
+        DEBUG "reading $file"
         while IFS= read -r line || [[ -n "$line" ]]; do
             # Trim leading and trailing whitespace
             line="${line#"${line%%[![:space:]]*}"}"

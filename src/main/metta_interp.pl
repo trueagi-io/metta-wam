@@ -54,21 +54,22 @@ is_html:- is_metta_flag('html').
 
 % is_compatio:- !,fail.
 is_compatio:- notrace(is_compatio0).
+is_compatio0:- is_flag0('compatio').
 is_compatio0:- is_mettalog,!,fail.
 is_compatio0:- is_testing,!,fail.
 %is_compatio0:- is_html,!,fail.
 is_compatio0:- !.
-is_compatio0:- is_flag0('compatio').
 
-keep_output:- is_mettalog.
-keep_output:- is_testing.
+keep_output:- is_compatio,!,fail.
+keep_output:- is_mettalog,!.
+keep_output:- is_testing,!.
 
 
 :- volatile(original_user_output/1).
 :- dynamic(original_user_output/1).
 :- original_user_output(_)->true;current_output(Out),asserta(original_user_output(Out)).
 unnullify_output:- current_output(MFS),  (original_user_output(OUT)-> MFS==OUT ; true), !.
-unnullify_output:- original_user_output(MFS), set_prolog_IO(user_input,MFS,user_error).
+unnullify_output:- original_user_output(MFS), set_prolog_IO(user_input,MFS,MFS).
 
 null_output(MFS):- use_module(library(memfile)),
   new_memory_file(MF),open_memory_file(MF,append,MFS).
@@ -170,7 +171,7 @@ option_value_def('compile',false).
 option_value_def('tabling',true).
 option_value_def('optimize',true).
 option_value_def(no_repeats,false).
-option_value_def('time',true).
+option_value_def('time',false).
 option_value_def('test',false).
 option_value_def('html',false).
 option_value_def('python',false).
@@ -1448,21 +1449,22 @@ metta_anew2(unload,OBO):- subst_vars_not_last(OBO,Cl),load_hook(unload,OBO),
 metta_anew(Load,Src,OBO):- maybe_xform(OBO,XForm),!,metta_anew(Load,Src,XForm).
 metta_anew(Ch, Src, OBO):-  metta_interp_mode(Ch,Mode), !, metta_anew(Mode,Src,OBO).
 metta_anew(Load,_Src,OBO):- silent_loading,!,metta_anew1(Load,OBO).
-metta_anew(Load,Src,OBO):- format('~N'), color_g_mesg('#0f0f0f',(write('  ; Action: '),writeq(Load=OBO))),
-   color_g_mesg('#ffa500', write_src(Src)),
-   metta_anew1(Load,OBO),format('~n').
+metta_anew(Load,Src,OBO):- 
+  not_compat_io((format('~N'), color_g_mesg('#0f0f0f',(write('  ; Action: '),writeq(Load=OBO))),
+   color_g_mesg('#ffa500', write_src(Src)))),
+   metta_anew1(Load,OBO),not_compat_io((format('~n'))).
 
 subst_vars_not_last(A,B):-
   functor(A,_F,N),arg(N,A,E),
   subst_vars(A,B),
   nb_setarg(N,B,E),!.
 
-con_write(W):-check_silent_loading, write(W).
-con_writeq(W):-check_silent_loading, writeq(W).
-writeqln(Q):- check_silent_loading,write(' '),con_writeq(Q),connl.
+con_write(W):-check_silent_loading, not_compat_io((write(W))).
+con_writeq(W):-check_silent_loading, not_compat_io((writeq(W))).
+writeqln(Q):- check_silent_loading,not_compat_io((write(' '),con_writeq(Q),connl)).
 
-connlf:- check_silent_loading, format('~N').
-connl:- check_silent_loading,nl.
+connlf:- check_silent_loading, not_compat_io((format('~N'))).
+connl:- check_silent_loading,not_compat_io((nl)).
 % check_silent_loading:- silent_loading,!,trace,break.
 check_silent_loading.
 silent_loading:- is_converting,!.
@@ -2145,7 +2147,7 @@ write_src_space(Goal):- write(' '),write_src(Goal).
 % Entry point for the user to call with tracing enabled
 toplevel_goal(Goal) :-
    term_variables(Goal,Vars),
-    trace_goal(Vars, Goal, trace_off).
+   interact(Vars, Goal, trace_off).
 
 % Entry point for the user to call with tracing enabled
 trace_goal(Goal) :-
