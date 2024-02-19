@@ -1,0 +1,18 @@
+sh: 0: cannot open run_scheme.sh: No such file
+cat: ./../RUN.scm: No such file or directory
+[]
+[(Error (compile! ((= (test1) 42) (: test2 (-> Number Number)) (= (test2 $x) 42))) Exception caught:
+OSError: TEMP.so: cannot open shared object file: No such file or directory
+
+At:
+  /usr/lib/python3.11/ctypes/__init__.py(376): __init__
+  /opt/logicmoo_opencog/hyperon-wam/examples/python_compat/extend/mettamorph.py(116): call_compilefile
+  /opt/logicmoo_opencog/hyperon-wam/examples/python_compat/extend/mettamorph.py(18): wrapper
+  /opt/logicmoo_opencog/hyperon-experimental/python/hyperon/atoms.py(320): execute
+  /opt/logicmoo_opencog/hyperon-wam/examples/python_compat/extend/mettamorph.py(13): execute
+  /opt/logicmoo_opencog/hyperon-experimental/python/hyperon/atoms.py(167): _priv_call_execute_on_grounded_atom
+  /opt/logicmoo_opencog/hyperon-experimental/python/hyperon/runner.py(31): run_step
+  (18): run_step
+)]
+0.49user 0.08system 0:00.68elapsed 85%CPU (0avgtext+0avgdata 36552maxresident)k
+66248inputs+616outputs (421major+18464minor)pagefaults 0swaps

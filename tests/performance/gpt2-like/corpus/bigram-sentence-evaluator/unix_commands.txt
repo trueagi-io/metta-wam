@@ -1,0 +1,143 @@
+/* PLEASE RUN THE COMMAND IN SEQUENCE AND PLEASE IGNORE THE COMMENTS WHILE COPYING THE COMMANDS TO THE COMMAND PROMPT */
+/* CREATING THE DUPLICATE OF ORIGINAL FILE AND CONVERTING TO SMALLCASE ALL CHARACTERS */
+
+tr 'A-Z' 'a-z' < DA_Corpus.txt > DA_New.txt
+
+
+
+
+/* REMOVING THE UNWANTED CHARACTERS */
+
+sed -i "s/[()]//g" DA_New.txt
+sed -i 's/\,//g' DA_New.txt     
+sed -i 's/|//g' DA_New.txt 
+sed -i "s/\.\.\.//g" DA_New.txt
+
+
+
+
+/* HANDLING SPECIAL CASES WHERE WORDS HAVE BEEN SPELLED WRONGLY */
+
+sed -i 's/m@ch@/mache/g' DA_New.txt
+sed -i 's/gr@ce/grace/g' DA_New.txt
+sed -i 's/i@/i /g' DA_New.txt
+sed -i 's/m\*a\*s\*h/mash/g' DA_New.txt
+
+
+
+
+/* COMMANDS FOR REPLACING ' WITH IT PROPER MEANING */
+
+sed -i "s/'' / /g" DA_New.txt  
+sed -i "s/'em/ them/g" DA_New.txt
+sed -i "s/'cos/because/g" DA_New.txt
+sed -i "s/vl'hurg/vlhurg/g" DA_New.txt
+sed -i "s/m'lud/my lord /g" DA_New.txt
+sed -i "s/o'clock/ o clock /g" DA_New.txt
+sed -i "s/' / /g" DA_New.txt
+sed -i 's/-/ /g' DA_New.txt
+sed -i 's/%/percentage/g' DA_New.txt
+sed -i "s/'ll/ will /g" DA_New.txt
+sed -i "s/'m/ am /g" DA_New.txt
+sed -i "s/'re/ are /g" DA_New.txt
+sed -i "s/'ve/ have /g" DA_New.txt
+sed -i "s/ain't /are not /g" DA_New.txt             
+sed -i "s/n't/ not /g" DA_New.txt
+
+
+
+
+/* REPLACING 'S WITH THE PROPER WORD FROM THE ASSOCIATED WORD. ALSO TAKING CARE OF SOME SPECIAL CASE, LIKE WHERE TO REPLACE THIS WITH HAS AND WHERE TO REPLACE WITH IS OR US */
+
+sed -i "s/let's/let us /g" DA_New.txt
+sed -i "/[[:alpha:]]*'s [[:alpha:]]*ed /s/'s / has /g" DA_New.txt
+sed -i "/[[:alpha:]]*'s been /s/'s/ has/g" DA_New.txt
+sed -i "s/it's/it is /g" DA_New.txt
+sed -i "s/that's/that is /g" DA_New.txt
+sed -i "s/what's/what is /g" DA_New.txt
+sed -i "s/he's/he is /g" DA_New.txt
+sed -i "s/she's/she is /g" DA_New.txt
+sed -i "s/where's/where is /g" DA_New.txt
+sed -i "s/here's/here is /g" DA_New.txt
+sed -i "s/why's/why is /g" DA_New.txt
+sed -i "s/who's/who is /g" DA_New.txt
+sed -i "s/when's/when is /g" DA_New.txt
+sed -i "s/there's/there is /g" DA_New.txt
+sed -i "s/someone's/someone is/g" DA_New.txt
+sed -i "s/nothing's/nothing is/g" DA_New.txt
+sed -i "s/everything's/everything is/g" DA_New.txt
+sed -i "s/sugar's/sugar is/g" DA_New.txt
+sed -i "s/one's/one is/g" DA_New.txt
+sed -i "s/life's/life is/g" DA_New.txt
+sed -i "s/time's/time is/g" DA_New.txt
+sed -i "s/computer's/computer is/g" DA_New.txt
+sed -i "s/ground's/ground is/g" DA_New.txt
+sed -i "s/cat's/cat is/g" DA_New.txt
+sed -i "s/down's/down is/g" DA_New.txt
+sed -i "s/building's/building is/g" DA_New.txt
+sed -i "s/flying's/flying is/g" DA_New.txt
+sed -i "s/algol's/algol is/g" DA_New.txt
+sed -i "s/aldebaran's/aldebaran is/g" DA_New.txt
+sed -i "s/'s/ s /g" DA_New.txt
+
+
+
+
+/* REPLACING 'D WITH THE PROPER WORD */
+
+sed -i "/[[:alpha:]]*'d been /s/'d/ had/g" DA_New.txt
+sed -i "s/'d/ would/g" DA_New.txt
+
+
+
+
+/* REMOVING SOME UNWANTED CHARACTERS */
+
+sed -i "s/'//g"  DA_New.txt
+sed -i 's/\*//g' DA_New.txt 
+
+
+
+
+/* COMMANDS FOR BOUNDARY CASE */
+ 
+sed -i "s/\?/ @ /g" DA_New.txt
+sed -i "s/\!/ @ /g" DA_New.txt
+sed -i "s/\./ @ /g" DA_New.txt
+sed -i 's/"/ @ /g' DA_New.txt
+sed -i "s/\;/ @ /g" DA_New.txt  
+sed -i "s/\:/ @ /g" DA_New.txt 
+sed -i 's/\"/ @ /g' DA_New.txt     
+sed -i 's/ \+/ /g' DA_New.txt
+
+
+
+
+
+/* REMOVING REPITITION OF @ */
+
+tr '\n' ' ' < DA_New.txt > DA_New2.txt
+sed -i "s/@@*/@/g" DA_New2.txt
+sed -i "s/@\( \+@\)\+/@/g" DA_New2.txt 
+
+
+
+
+/* COMMANDS TO GENERATE THE UNIGRAMS AND BIGRAMS FILE */
+
+egrep -o '[a-z@]+' DA_New2.txt > unig1.txt
+tail -n+2 unig1.txt > unig2.txt
+paste unig1.txt unig2.txt > pairs.txt
+sort < unig1.txt | uniq -c | sort -n -r > unigrams.pl
+sort < pairs.txt | uniq -c | sort -n -r > bigrams.pl
+
+sed -i 's/^ */unigram(/g;' unigrams.pl
+sed -i 's/ /,/g' unigrams.pl
+sed -i 's/\t/,/g' unigrams.pl
+sed -i 's/$/)\./g' unigrams.pl
+sed -i 's/^ */bigram(/g;' bigrams.pl
+sed -i 's/ /,/g' bigrams.pl
+sed -i 's/\t/,/g' bigrams.pl
+sed -i 's/$/)\./g' bigrams.pl
+sed -i '/bigram(1,@,)/d' bigrams.pl
+

@@ -1,0 +1,8 @@
++ '[' 0 -eq 1 ']'
++ echo 'Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/flybase/sanity/download_file.metta'
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/flybase/sanity/download_file.metta
++ eval 'timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/flybase/sanity/download_file.metta'
+++ timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/flybase/sanity/download_file.metta
+[("MettaLog Test")]
+0.11user 0.02system 0:00.13elapsed 99%CPU (0avgtext+0avgdata 32808maxresident)k
+0inputs+0outputs (0major+3456minor)pagefaults 0swaps

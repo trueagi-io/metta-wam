@@ -1,0 +1,112 @@
++ '[' 0 -eq 1 ']'
++ echo 'Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta/examples/flybase/output~/flybase-mined.metta'
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta/examples/flybase/output~/flybase-mined.metta
++ eval 'timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta/examples/flybase/output~/flybase-mined.metta'
+++ timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta/examples/flybase/output~/flybase-mined.metta
+thread '<unnamed>' panicked at /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/lib/src/metta/runner/arithmetics.rs:50:36:
+Could not parse float: ParseFloatError { kind: Invalid }
+stack backtrace:
+   0:     0x7f8c5e0fb07c - std::backtrace_rs::backtrace::libunwind::trace::h67a838aed1f4d6ec
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/../../backtrace/src/backtrace/libunwind.rs:93:5
+   1:     0x7f8c5e0fb07c - std::backtrace_rs::backtrace::trace_unsynchronized::h1d1786bb1962baf8
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/../../backtrace/src/backtrace/mod.rs:66:5
+   2:     0x7f8c5e0fb07c - std::sys_common::backtrace::_print_fmt::h5a0b1f807a002d23
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/sys_common/backtrace.rs:67:5
+   3:     0x7f8c5e0fb07c - <std::sys_common::backtrace::_print::DisplayBacktrace as core::fmt::Display>::fmt::hf84ab6ad0b91784c
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/sys_common/backtrace.rs:44:22
+   4:     0x7f8c5e15e72c - core::fmt::rt::Argument::fmt::h28f463bd1fdabed5
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/core/src/fmt/rt.rs:138:9
+   5:     0x7f8c5e15e72c - core::fmt::write::ha37c23b175e921b3
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/core/src/fmt/mod.rs:1114:21
+   6:     0x7f8c5e0ef53e - std::io::Write::write_fmt::haa1b000741bcbbe1
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/io/mod.rs:1763:15
+   7:     0x7f8c5e0fae64 - std::sys_common::backtrace::_print::h1ff1030b04dfb157
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/sys_common/backtrace.rs:47:5
+   8:     0x7f8c5e0fae64 - std::sys_common::backtrace::print::hb982056c6f29541c
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/sys_common/backtrace.rs:34:9
+   9:     0x7f8c5e0fdd43 - std::panicking::default_hook::{{closure}}::h11f92f82c62fbd68
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/panicking.rs:272:22
+  10:     0x7f8c5e0fda64 - std::panicking::default_hook::hb8810fe276772c66
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/panicking.rs:292:9
+  11:     0x7f8c5e0fe385 - std::panicking::rust_panic_with_hook::hd2f0efd2fec86cb0
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/panicking.rs:731:13
+  12:     0x7f8c5e0fe281 - std::panicking::begin_panic_handler::{{closure}}::h3651b7fc4f61d784
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/panicking.rs:609:13
+  13:     0x7f8c5e0fb5a6 - std::sys_common::backtrace::__rust_end_short_backtrace::hbc468e4b98c7ae04
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/sys_common/backtrace.rs:170:18
+  14:     0x7f8c5e0fdfd2 - rust_begin_unwind
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/panicking.rs:597:5
+  15:     0x7f8c5dbff375 - core::panicking::panic_fmt::h979245e2fdb2fabd
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/core/src/panicking.rs:72:14
+  16:     0x7f8c5dbff943 - core::result::unwrap_failed::h8c4b86241881fbbb
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/core/src/result.rs:1652:5
+  17:     0x7f8c5ddce504 - core::result::Result<T,E>::expect::hd7d720d52ffc072c
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/core/src/result.rs:1034:23
+  18:     0x7f8c5dce8f50 - hyperon::metta::runner::arithmetics::Number::from_float_str::h48f8cf92703d5766
+                               at /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/lib/src/metta/runner/arithmetics.rs:50:17
+  19:     0x7f8c5dce8a30 - hyperon::metta::runner::stdlib::register_rust_tokens::{{closure}}::h2693c0eac0ac8bcf
+                               at /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/lib/src/metta/runner/stdlib.rs:1198:29
+  20:     0x7f8c5dd8c102 - hyperon::metta::text::SyntaxNode::as_atom::h4e7b34f4b9f164fa
+                               at /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/lib/src/metta/text.rs:172:36
+  21:     0x7f8c5dd8c580 - hyperon::metta::text::SExprParser::parse::ha2574bbee8d7d1a8
+                               at /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/lib/src/metta/text.rs:251:41
+  22:     0x7f8c5dd8c41b - <hyperon::metta::text::SExprParser as hyperon::metta::text::Parser>::next_atom::h1aa7e6252d3518aa
+                               at /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/lib/src/metta/text.rs:228:9
+  23:     0x7f8c5dd41642 - hyperon::metta::runner::RunnerState::run_step::h751be5bcd7c73fc5
+                               at /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/lib/src/metta/runner/mod.rs:348:23
+  24:     0x7f8c5dc9d60e - runner_state_step
+                               at /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/c/src/metta.rs:1151:11
+  25:     0x7f8c5dc05144 - operator()
+                               at /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/python/hyperonpy.cpp:835:75
+  26:     0x7f8c5dc2c19b - call_impl<void, pybind11_init_hyperonpy(pybind11::module_&)::<lambda(CRunnerState&)>&, 0, pybind11::detail::void_type>
+                               at /root/.conan/data/pybind11/2.10.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include/pybind11/cast.h:1439:37
+  27:     0x7f8c5dc2867f - call<void, pybind11::detail::void_type, pybind11_init_hyperonpy(pybind11::module_&)::<lambda(CRunnerState&)>&>
+                               at /root/.conan/data/pybind11/2.10.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include/pybind11/cast.h:1413:65
+  28:     0x7f8c5dc2404e - operator()
+                               at /root/.conan/data/pybind11/2.10.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include/pybind11/pybind11.h:249:88
+  29:     0x7f8c5dc2409e - _FUN
+                               at /root/.conan/data/pybind11/2.10.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include/pybind11/pybind11.h:224:21
+  30:     0x7f8c5dc3c1e5 - _ZN8pybind1112cpp_function10dispatcherEP7_objectS2_S2_
+                               at /root/.conan/data/pybind11/2.10.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include/pybind11/pybind11.h:929:35
+  31:     0x7f8c5ed7d133 - cfunction_call
+                               at /build/reproducible-path/python3.11-3.11.5/build-shared/../Objects/methodobject.c:542:18
+  32:     0x7f8c5ed2eaed - _PyObject_MakeTpCall
+                               at /build/reproducible-path/python3.11-3.11.5/build-shared/../Objects/call.c:214:18
+  33:     0x7f8c5ecc1d27 - _PyEval_EvalFrameDefault
+                               at /build/reproducible-path/python3.11-3.11.5/build-shared/../Python/ceval.c:4774:23
+  34:     0x7f8c5ee1bd6a - _PyEval_EvalFrame
+                               at /build/reproducible-path/python3.11-3.11.5/build-shared/../Include/internal/pycore_ceval.h:73:16
+  35:     0x7f8c5ee1bd6a - _PyEval_Vector
+                               at /build/reproducible-path/python3.11-3.11.5/build-shared/../Python/ceval.c:6439:24
+  36:     0x55f061f5c2fe - pyo3::types::any::PyAny::call::hc3ec1468948a5c0c
+  37:     0x55f061f5a0af - metta::metta_shim::metta_interface_mod::MettaShim::exec::he664f34e01237be7
+  38:     0x55f061f5f52c - metta::main::h4061cff84c875f01
+  39:     0x55f061f66f93 - std::sys_common::backtrace::__rust_begin_short_backtrace::h9ba8fef5bf9c9a16
+  40:     0x55f061f6c36d - std::rt::lang_start::{{closure}}::h44f0433eb5c0c983
+  41:     0x55f0620e865b - core::ops::function::impls::<impl core::ops::function::FnOnce<A> for &F>::call_once::hf9057cfaeeb252e2
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/core/src/ops/function.rs:284:13
+  42:     0x55f0620e865b - std::panicking::try::do_call::h629e203a624883e4
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/panicking.rs:504:40
+  43:     0x55f0620e865b - std::panicking::try::h7b61614724d6a4f1
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/panicking.rs:468:19
+  44:     0x55f0620e865b - std::panic::catch_unwind::h354ac1c0268491d8
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/panic.rs:142:14
+  45:     0x55f0620e865b - std::rt::lang_start_internal::{{closure}}::h919fee3c5ba8f617
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/rt.rs:148:48
+  46:     0x55f0620e865b - std::panicking::try::do_call::h54583f67455bff32
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/panicking.rs:504:40
+  47:     0x55f0620e865b - std::panicking::try::hb0e12c4e01d39dc2
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/panicking.rs:468:19
+  48:     0x55f0620e865b - std::panic::catch_unwind::h367b6339e3ca9a3b
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/panic.rs:142:14
+  49:     0x55f0620e865b - std::rt::lang_start_internal::ha5ce8533eaa0fda8
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/rt.rs:148:20
+  50:     0x55f061f618d5 - main
+  51:     0x7f8c5e9db18a - <unknown>
+  52:     0x7f8c5e9db245 - __libc_start_main
+  53:     0x55f061f49ca1 - _start
+  54:                0x0 - <unknown>
+fatal runtime error: Rust panics must be rethrown
+Command terminated by signal 6
+0.58user 0.05system 0:00.64elapsed 99%CPU (0avgtext+0avgdata 110608maxresident)k
+128inputs+0outputs (1major+11808minor)pagefaults 0swaps

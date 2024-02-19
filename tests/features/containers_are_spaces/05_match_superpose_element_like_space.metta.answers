@@ -1,0 +1,11 @@
++ '[' 0 -eq 1 ']'
++ echo 'Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-mettalog_sanity/05_match_superpose_element_like_space.metta'
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-mettalog_sanity/05_match_superpose_element_like_space.metta
++ eval 'timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-mettalog_sanity/05_match_superpose_element_like_space.metta'
+++ timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-mettalog_sanity/05_match_superpose_element_like_space.metta
+[(Error (assertEqualToResult (match (kb) ($SS A_Each $X) ($SS A_Each $X)) ((SS-P_Each A_Each B_Each) (SS-Q_Each A_Each C_Each))) 
+Expected: [(SS-P_Each A_Each B_Each), (SS-Q_Each A_Each C_Each)]
+Got: [(Error (match ((SS-P_Each A_Each B_Each)) ($SS A_Each $X) ($SS A_Each $X)) match expects a space as the first argument), (Error (match ((SS-Q_Each A_Each C_Each)) ($SS A_Each $X) ($SS A_Each $X)) match expects a space as the first argument)]
+Missed result: (SS-P_Each A_Each B_Each))]
+0.11user 0.01system 0:00.12elapsed 99%CPU (0avgtext+0avgdata 32956maxresident)k
+0inputs+0outputs (0major+3498minor)pagefaults 0swaps

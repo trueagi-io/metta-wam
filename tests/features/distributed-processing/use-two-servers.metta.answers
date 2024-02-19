@@ -1,0 +1,9 @@
++ '[' 0 -eq 1 ']'
++ echo 'Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_opencog/hyperon-wam/examples/features/distributed-processing/use-two-servers.metta'
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_opencog/hyperon-wam/examples/features/distributed-processing/use-two-servers.metta
++ eval 'timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_opencog/hyperon-wam/examples/features/distributed-processing/use-two-servers.metta'
+++ timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_opencog/hyperon-wam/examples/features/distributed-processing/use-two-servers.metta
+time: cannot run metta: No such file or directory
+Command exited with non-zero status 127
+0.00user 0.00system 0:00.00elapsed 71%CPU (0avgtext+0avgdata 768maxresident)k
+0inputs+0outputs (0major+54minor)pagefaults 0swaps

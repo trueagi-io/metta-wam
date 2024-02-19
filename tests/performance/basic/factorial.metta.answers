@@ -1,0 +1,4 @@
+Error: stream did not contain valid UTF-8
+Command exited with non-zero status 1
+0.09user 0.01system 0:00.11elapsed 99%CPU (0avgtext+0avgdata 33000maxresident)k
+0inputs+0outputs (0major+3487minor)pagefaults 0swaps

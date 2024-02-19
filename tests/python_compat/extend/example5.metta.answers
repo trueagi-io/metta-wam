@@ -1,0 +1,25 @@
+sh: 0: cannot open run_scheme.sh: No such file
+cat: ./../RUN.scm: No such file or directory
+[]
+[(Error (compile! "
+(= (Add $x Z) $x)
+(= (Add $x (S $y)) (Add (S $x) $y))
+
+(= (Sub) 2)
+(= (Sub) 3)
+(= (Mul) (superpose (4 5)))
+") Exception caught:
+OSError: TEMP.so: cannot open shared object file: No such file or directory
+
+At:
+  /usr/lib/python3.11/ctypes/__init__.py(376): __init__
+  /opt/logicmoo_opencog/hyperon-wam/examples/python_compat/extend/mettamorph.py(116): call_compilefile
+  /opt/logicmoo_opencog/hyperon-wam/examples/python_compat/extend/mettamorph.py(18): wrapper
+  /opt/logicmoo_opencog/hyperon-experimental/python/hyperon/atoms.py(320): execute
+  /opt/logicmoo_opencog/hyperon-wam/examples/python_compat/extend/mettamorph.py(13): execute
+  /opt/logicmoo_opencog/hyperon-experimental/python/hyperon/atoms.py(167): _priv_call_execute_on_grounded_atom
+  /opt/logicmoo_opencog/hyperon-experimental/python/hyperon/runner.py(31): run_step
+  (18): run_step
+)]
+0.45user 0.07system 0:00.52elapsed 100%CPU (0avgtext+0avgdata 36568maxresident)k
+0inputs+616outputs (0major+18183minor)pagefaults 0swaps

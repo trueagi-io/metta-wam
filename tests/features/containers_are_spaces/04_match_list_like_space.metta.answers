@@ -1,0 +1,11 @@
++ '[' 0 -eq 1 ']'
++ echo 'Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-mettalog_sanity/04_match_list_like_space.metta'
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-mettalog_sanity/04_match_list_like_space.metta
++ eval 'timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-mettalog_sanity/04_match_list_like_space.metta'
+++ timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-mettalog_sanity/04_match_list_like_space.metta
+[(Error (assertEqualToResult (match (kb) ($SS A_List $X) ($SS A_List $X)) ((SS-P_List A_List B_List) (SS-Q_List A_List C_List))) 
+Expected: [(SS-P_List A_List B_List), (SS-Q_List A_List C_List)]
+Got: [(Error (match ((SS-P_List A_List B_List) (SS-Q_List A_List C_List)) ($SS A_List $X) ($SS A_List $X)) match expects a space as the first argument)]
+Missed result: (SS-P_List A_List B_List))]
+0.11user 0.00system 0:00.11elapsed 100%CPU (0avgtext+0avgdata 32820maxresident)k
+0inputs+0outputs (0major+3473minor)pagefaults 0swaps

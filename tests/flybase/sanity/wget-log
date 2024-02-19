@@ -1,0 +1,11 @@
+--2023-12-06 06:39:45--  https://logicmoo.org/public/metta/flybase.metta.qlf.gz
+Resolving logicmoo.org (logicmoo.org)... 10.0.0.233
+Connecting to logicmoo.org (logicmoo.org)|10.0.0.233|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 379378749 (362M) [application/x-gzip]
+Saving to: ‘flybase.metta.qlf.gz.7’
+
+flybase.metta.qlf.gz.7           50%[=========================>                           ] 182.59M   456MB/s               flybase.metta.qlf.gz.7           76%[=======================================>             ] 275.11M   458MB/s               flybase.metta.qlf.gz.7          100%[====================================================>] 361.80M   460MB/s    in 0.8s    
+
+2023-12-06 06:39:46 (460 MB/s) - ‘flybase.metta.qlf.gz.7’ saved [379378749/379378749]
+

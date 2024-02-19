@@ -1,0 +1,5 @@
++ '[' 0 -eq 1 ']'
++ echo 'Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-mettalog_sanity/06_loop_1.metta'
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-mettalog_sanity/06_loop_1.metta
++ eval 'timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-mettalog_sanity/06_loop_1.metta'
+++ timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-mettalog_sanity/06_loop_1.metta

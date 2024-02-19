@@ -1,0 +1,6 @@
+[(Error (assertEqual (if (: (apply reverse "Hello") $t) $t) String) 
+Expected: [String]
+Got: [(Error (if (: (apply reverse "Hello") $t) $t) IncorrectNumberOfArguments)]
+Missed result: String)]
+0.10user 0.02system 0:00.12elapsed 100%CPU (0avgtext+0avgdata 33132maxresident)k
+0inputs+0outputs (0major+3490minor)pagefaults 0swaps

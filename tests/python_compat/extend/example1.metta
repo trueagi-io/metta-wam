@@ -1,0 +1,12 @@
+!(extend-py! mettamorph)
+!(compile! compileme.metta)
+
+(= (rustmettafunc $a) 42)
+!(facF 10)
+!(test1 dummy)
+!(test2 dummy)
+!(test3 dummy)
+!(test4 dummy)
+!(test5 dummy)
+!(test6 this thing)
+!(test7 (this thing))

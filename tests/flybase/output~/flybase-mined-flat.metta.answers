@@ -1,0 +1,178 @@
++ '[' 0 -eq 1 ']'
++ echo 'Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta/examples/flybase/output~/flybase-mined-flat.metta'
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta/examples/flybase/output~/flybase-mined-flat.metta
++ eval 'timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta/examples/flybase/output~/flybase-mined-flat.metta'
+++ timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta/examples/flybase/output~/flybase-mined-flat.metta
+thread '<unnamed>' panicked at /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/lib/src/metta/runner/arithmetics.rs:50:36:
+Could not parse float: ParseFloatError { kind: Invalid }
+stack backtrace:
+   0:     0x7f9e4ab0707c - std::backtrace_rs::backtrace::libunwind::trace::h67a838aed1f4d6ec
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/../../backtrace/src/backtrace/libunwind.rs:93:5
+   1:     0x7f9e4ab0707c - std::backtrace_rs::backtrace::trace_unsynchronized::h1d1786bb1962baf8
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/../../backtrace/src/backtrace/mod.rs:66:5
+   2:     0x7f9e4ab0707c - std::sys_common::backtrace::_print_fmt::h5a0b1f807a002d23
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/sys_common/backtrace.rs:67:5
+   3:     0x7f9e4ab0707c - <std::sys_common::backtrace::_print::DisplayBacktrace as core::fmt::Display>::fmt::hf84ab6ad0b91784c
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/sys_common/backtrace.rs:44:22
+   4:     0x7f9e4ab6a72c - core::fmt::rt::Argument::fmt::h28f463bd1fdabed5
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/core/src/fmt/rt.rs:138:9
+   5:     0x7f9e4ab6a72c - core::fmt::write::ha37c23b175e921b3
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/core/src/fmt/mod.rs:1114:21
+   6:     0x7f9e4aafb53e - std::io::Write::write_fmt::haa1b000741bcbbe1
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/io/mod.rs:1763:15
+   7:     0x7f9e4ab06e64 - std::sys_common::backtrace::_print::h1ff1030b04dfb157
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/sys_common/backtrace.rs:47:5
+   8:     0x7f9e4ab06e64 - std::sys_common::backtrace::print::hb982056c6f29541c
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/sys_common/backtrace.rs:34:9
+   9:     0x7f9e4ab09d43 - std::panicking::default_hook::{{closure}}::h11f92f82c62fbd68
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/panicking.rs:272:22
+  10:     0x7f9e4ab09a64 - std::panicking::default_hook::hb8810fe276772c66
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/panicking.rs:292:9
+  11:     0x7f9e4ab0a385 - std::panicking::rust_panic_with_hook::hd2f0efd2fec86cb0
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/panicking.rs:731:13
+  12:     0x7f9e4ab0a281 - std::panicking::begin_panic_handler::{{closure}}::h3651b7fc4f61d784
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/panicking.rs:609:13
+  13:     0x7f9e4ab075a6 - std::sys_common::backtrace::__rust_end_short_backtrace::hbc468e4b98c7ae04
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/sys_common/backtrace.rs:170:18
+  14:     0x7f9e4ab09fd2 - rust_begin_unwind
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/panicking.rs:597:5
+  15:     0x7f9e4a60b375 - core::panicking::panic_fmt::h979245e2fdb2fabd
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/core/src/panicking.rs:72:14
+  16:     0x7f9e4a60b943 - core::result::unwrap_failed::h8c4b86241881fbbb
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/core/src/result.rs:1652:5
+  17:     0x7f9e4a7da504 - core::result::Result<T,E>::expect::hd7d720d52ffc072c
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/core/src/result.rs:1034:23
+  18:     0x7f9e4a6f4f50 - hyperon::metta::runner::arithmetics::Number::from_float_str::h48f8cf92703d5766
+                               at /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/lib/src/metta/runner/arithmetics.rs:50:17
+  19:     0x7f9e4a6f4a30 - hyperon::metta::runner::stdlib::register_rust_tokens::{{closure}}::h2693c0eac0ac8bcf
+                               at /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/lib/src/metta/runner/stdlib.rs:1198:29
+  20:     0x7f9e4a798102 - hyperon::metta::text::SyntaxNode::as_atom::h4e7b34f4b9f164fa
+                               at /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/lib/src/metta/text.rs:172:36
+  21:     0x7f9e4a78ed41 - hyperon::metta::text::SyntaxNode::as_atom::{{closure}}::hcd003ce44132e30a
+                               at /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/lib/src/metta/text.rs:182:27
+  22:     0x7f9e4a78c2b2 - core::ops::function::impls::<impl core::ops::function::FnMut<A> for &mut F>::call_mut::hc56375d0c79d14b4
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/core/src/ops/function.rs:294:13
+  23:     0x7f9e4a7967c9 - <core::slice::iter::Iter<T> as core::iter::traits::iterator::Iterator>::find_map::h882367017805d536
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/core/src/slice/iter/macros.rs:319:38
+  24:     0x7f9e4a6ff34e - <core::iter::adapters::filter_map::FilterMap<I,F> as core::iter::traits::iterator::Iterator>::next::hcd175aafad11629b
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/core/src/iter/adapters/filter_map.rs:62:9
+  25:     0x7f9e4a7808e5 - alloc::vec::Vec<T,A>::extend_desugared::hed800a8c1611fbb9
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/alloc/src/vec/mod.rs:2849:35
+  26:     0x7f9e4a787e2b - <alloc::vec::Vec<T,A> as alloc::vec::spec_extend::SpecExtend<T,I>>::spec_extend::h5e285b404a5620d1
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/alloc/src/vec/spec_extend.rs:17:9
+  27:     0x7f9e4a773550 - <alloc::vec::Vec<T> as alloc::vec::spec_from_iter_nested::SpecFromIterNested<T,I>>::from_iter::h3daa475092619cf7
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/alloc/src/vec/spec_from_iter_nested.rs:43:9
+  28:     0x7f9e4a7881fe - <alloc::vec::Vec<T> as alloc::vec::spec_from_iter::SpecFromIter<T,I>>::from_iter::h565980d79a87fd68
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/alloc/src/vec/spec_from_iter.rs:33:9
+  29:     0x7f9e4a787679 - <alloc::vec::Vec<T> as core::iter::traits::collect::FromIterator<T>>::from_iter::h7f2a0586ac85b526
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/alloc/src/vec/mod.rs:2749:9
+  30:     0x7f9e4a6ff6fe - core::iter::traits::iterator::Iterator::collect::h134ab88518f6a94e
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/core/src/iter/traits/iterator.rs:2053:9
+  31:     0x7f9e4a798271 - hyperon::metta::text::SyntaxNode::as_atom::h4e7b34f4b9f164fa
+                               at /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/lib/src/metta/text.rs:181:48
+  32:     0x7f9e4a78ed41 - hyperon::metta::text::SyntaxNode::as_atom::{{closure}}::hcd003ce44132e30a
+                               at /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/lib/src/metta/text.rs:182:27
+  33:     0x7f9e4a78c2b2 - core::ops::function::impls::<impl core::ops::function::FnMut<A> for &mut F>::call_mut::hc56375d0c79d14b4
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/core/src/ops/function.rs:294:13
+  34:     0x7f9e4a7967c9 - <core::slice::iter::Iter<T> as core::iter::traits::iterator::Iterator>::find_map::h882367017805d536
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/core/src/slice/iter/macros.rs:319:38
+  35:     0x7f9e4a6ff34e - <core::iter::adapters::filter_map::FilterMap<I,F> as core::iter::traits::iterator::Iterator>::next::hcd175aafad11629b
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/core/src/iter/adapters/filter_map.rs:62:9
+  36:     0x7f9e4a7808e5 - alloc::vec::Vec<T,A>::extend_desugared::hed800a8c1611fbb9
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/alloc/src/vec/mod.rs:2849:35
+  37:     0x7f9e4a787e2b - <alloc::vec::Vec<T,A> as alloc::vec::spec_extend::SpecExtend<T,I>>::spec_extend::h5e285b404a5620d1
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/alloc/src/vec/spec_extend.rs:17:9
+  38:     0x7f9e4a773550 - <alloc::vec::Vec<T> as alloc::vec::spec_from_iter_nested::SpecFromIterNested<T,I>>::from_iter::h3daa475092619cf7
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/alloc/src/vec/spec_from_iter_nested.rs:43:9
+  39:     0x7f9e4a7881fe - <alloc::vec::Vec<T> as alloc::vec::spec_from_iter::SpecFromIter<T,I>>::from_iter::h565980d79a87fd68
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/alloc/src/vec/spec_from_iter.rs:33:9
+  40:     0x7f9e4a787679 - <alloc::vec::Vec<T> as core::iter::traits::collect::FromIterator<T>>::from_iter::h7f2a0586ac85b526
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/alloc/src/vec/mod.rs:2749:9
+  41:     0x7f9e4a6ff6fe - core::iter::traits::iterator::Iterator::collect::h134ab88518f6a94e
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/core/src/iter/traits/iterator.rs:2053:9
+  42:     0x7f9e4a798271 - hyperon::metta::text::SyntaxNode::as_atom::h4e7b34f4b9f164fa
+                               at /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/lib/src/metta/text.rs:181:48
+  43:     0x7f9e4a78ed41 - hyperon::metta::text::SyntaxNode::as_atom::{{closure}}::hcd003ce44132e30a
+                               at /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/lib/src/metta/text.rs:182:27
+  44:     0x7f9e4a78c2b2 - core::ops::function::impls::<impl core::ops::function::FnMut<A> for &mut F>::call_mut::hc56375d0c79d14b4
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/core/src/ops/function.rs:294:13
+  45:     0x7f9e4a7967c9 - <core::slice::iter::Iter<T> as core::iter::traits::iterator::Iterator>::find_map::h882367017805d536
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/core/src/slice/iter/macros.rs:319:38
+  46:     0x7f9e4a6ff34e - <core::iter::adapters::filter_map::FilterMap<I,F> as core::iter::traits::iterator::Iterator>::next::hcd175aafad11629b
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/core/src/iter/adapters/filter_map.rs:62:9
+  47:     0x7f9e4a7808e5 - alloc::vec::Vec<T,A>::extend_desugared::hed800a8c1611fbb9
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/alloc/src/vec/mod.rs:2849:35
+  48:     0x7f9e4a787e2b - <alloc::vec::Vec<T,A> as alloc::vec::spec_extend::SpecExtend<T,I>>::spec_extend::h5e285b404a5620d1
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/alloc/src/vec/spec_extend.rs:17:9
+  49:     0x7f9e4a773550 - <alloc::vec::Vec<T> as alloc::vec::spec_from_iter_nested::SpecFromIterNested<T,I>>::from_iter::h3daa475092619cf7
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/alloc/src/vec/spec_from_iter_nested.rs:43:9
+  50:     0x7f9e4a7881fe - <alloc::vec::Vec<T> as alloc::vec::spec_from_iter::SpecFromIter<T,I>>::from_iter::h565980d79a87fd68
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/alloc/src/vec/spec_from_iter.rs:33:9
+  51:     0x7f9e4a787679 - <alloc::vec::Vec<T> as core::iter::traits::collect::FromIterator<T>>::from_iter::h7f2a0586ac85b526
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/alloc/src/vec/mod.rs:2749:9
+  52:     0x7f9e4a6ff6fe - core::iter::traits::iterator::Iterator::collect::h134ab88518f6a94e
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/core/src/iter/traits/iterator.rs:2053:9
+  53:     0x7f9e4a798271 - hyperon::metta::text::SyntaxNode::as_atom::h4e7b34f4b9f164fa
+                               at /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/lib/src/metta/text.rs:181:48
+  54:     0x7f9e4a798580 - hyperon::metta::text::SExprParser::parse::ha2574bbee8d7d1a8
+                               at /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/lib/src/metta/text.rs:251:41
+  55:     0x7f9e4a79841b - <hyperon::metta::text::SExprParser as hyperon::metta::text::Parser>::next_atom::h1aa7e6252d3518aa
+                               at /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/lib/src/metta/text.rs:228:9
+  56:     0x7f9e4a74d642 - hyperon::metta::runner::RunnerState::run_step::h751be5bcd7c73fc5
+                               at /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/lib/src/metta/runner/mod.rs:348:23
+  57:     0x7f9e4a6a960e - runner_state_step
+                               at /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/c/src/metta.rs:1151:11
+  58:     0x7f9e4a611144 - operator()
+                               at /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/python/hyperonpy.cpp:835:75
+  59:     0x7f9e4a63819b - call_impl<void, pybind11_init_hyperonpy(pybind11::module_&)::<lambda(CRunnerState&)>&, 0, pybind11::detail::void_type>
+                               at /root/.conan/data/pybind11/2.10.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include/pybind11/cast.h:1439:37
+  60:     0x7f9e4a63467f - call<void, pybind11::detail::void_type, pybind11_init_hyperonpy(pybind11::module_&)::<lambda(CRunnerState&)>&>
+                               at /root/.conan/data/pybind11/2.10.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include/pybind11/cast.h:1413:65
+  61:     0x7f9e4a63004e - operator()
+                               at /root/.conan/data/pybind11/2.10.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include/pybind11/pybind11.h:249:88
+  62:     0x7f9e4a63009e - _FUN
+                               at /root/.conan/data/pybind11/2.10.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include/pybind11/pybind11.h:224:21
+  63:     0x7f9e4a6481e5 - _ZN8pybind1112cpp_function10dispatcherEP7_objectS2_S2_
+                               at /root/.conan/data/pybind11/2.10.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include/pybind11/pybind11.h:929:35
+  64:     0x7f9e4b789133 - cfunction_call
+                               at /build/reproducible-path/python3.11-3.11.5/build-shared/../Objects/methodobject.c:542:18
+  65:     0x7f9e4b73aaed - _PyObject_MakeTpCall
+                               at /build/reproducible-path/python3.11-3.11.5/build-shared/../Objects/call.c:214:18
+  66:     0x7f9e4b6cdd27 - _PyEval_EvalFrameDefault
+                               at /build/reproducible-path/python3.11-3.11.5/build-shared/../Python/ceval.c:4774:23
+  67:     0x7f9e4b827d6a - _PyEval_EvalFrame
+                               at /build/reproducible-path/python3.11-3.11.5/build-shared/../Include/internal/pycore_ceval.h:73:16
+  68:     0x7f9e4b827d6a - _PyEval_Vector
+                               at /build/reproducible-path/python3.11-3.11.5/build-shared/../Python/ceval.c:6439:24
+  69:     0x558ac9d092fe - pyo3::types::any::PyAny::call::hc3ec1468948a5c0c
+  70:     0x558ac9d070af - metta::metta_shim::metta_interface_mod::MettaShim::exec::he664f34e01237be7
+  71:     0x558ac9d0c52c - metta::main::h4061cff84c875f01
+  72:     0x558ac9d13f93 - std::sys_common::backtrace::__rust_begin_short_backtrace::h9ba8fef5bf9c9a16
+  73:     0x558ac9d1936d - std::rt::lang_start::{{closure}}::h44f0433eb5c0c983
+  74:     0x558ac9e9565b - core::ops::function::impls::<impl core::ops::function::FnOnce<A> for &F>::call_once::hf9057cfaeeb252e2
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/core/src/ops/function.rs:284:13
+  75:     0x558ac9e9565b - std::panicking::try::do_call::h629e203a624883e4
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/panicking.rs:504:40
+  76:     0x558ac9e9565b - std::panicking::try::h7b61614724d6a4f1
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/panicking.rs:468:19
+  77:     0x558ac9e9565b - std::panic::catch_unwind::h354ac1c0268491d8
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/panic.rs:142:14
+  78:     0x558ac9e9565b - std::rt::lang_start_internal::{{closure}}::h919fee3c5ba8f617
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/rt.rs:148:48
+  79:     0x558ac9e9565b - std::panicking::try::do_call::h54583f67455bff32
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/panicking.rs:504:40
+  80:     0x558ac9e9565b - std::panicking::try::hb0e12c4e01d39dc2
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/panicking.rs:468:19
+  81:     0x558ac9e9565b - std::panic::catch_unwind::h367b6339e3ca9a3b
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/panic.rs:142:14
+  82:     0x558ac9e9565b - std::rt::lang_start_internal::ha5ce8533eaa0fda8
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/rt.rs:148:20
+  83:     0x558ac9d0e8d5 - main
+  84:     0x7f9e4b3e718a - <unknown>
+  85:     0x7f9e4b3e7245 - __libc_start_main
+  86:     0x558ac9cf6ca1 - _start
+  87:                0x0 - <unknown>
+fatal runtime error: Rust panics must be rethrown
+Command terminated by signal 6
+0.29user 0.05system 0:00.43elapsed 82%CPU (0avgtext+0avgdata 107104maxresident)k
+86664inputs+0outputs (437major+10641minor)pagefaults 0swaps
