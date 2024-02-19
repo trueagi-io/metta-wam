@@ -1,0 +1,9 @@
++ '[' 0 -eq 1 ']'
++ echo 'Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/extended_compat/metta-examples/recursion-schemes/src/examples/benchmark.metta'
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/extended_compat/metta-examples/recursion-schemes/src/examples/benchmark.metta
++ eval 'timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/extended_compat/metta-examples/recursion-schemes/src/examples/benchmark.metta'
+++ timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/extended_compat/metta-examples/recursion-schemes/src/examples/benchmark.metta
+[(transfer! "../schemes.metta")]
+[((hylo mapExpr evalExpr nTimes) (, 3 ((hylo mapNat identity peano) 10)))]
+0.15user 0.01system 0:00.22elapsed 79%CPU (0avgtext+0avgdata 33200maxresident)k
+36960inputs+0outputs (235major+3492minor)pagefaults 0swaps

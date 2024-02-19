@@ -1,0 +1,9 @@
+[()]
+[(evalExpr (mapExpr (cata mapExpr evalExpr) (unFix (Fix (Plus (Fix (Plus (Fix (Var X)) (Fix (Const 2)))) (Fix (Const 40)))))))]
+[(Fix (Plus (Fix (Const 2)) (Fix (Const 2))))]
+[9]
+[(diff (mapExpr (para_pair mapExpr diff) (unFix (Fix (Plus (Fix (Var X)) (Fix (Const 1)))))))]
+[(Fix $Y), (2t $x#534), (1p $x#535)]
+[(Fix (Plus (Fix (Plus (Fix (Const 1)) (Fix (Var X)))) (Fix (Plus (Fix (Const 1)) (Fix (Var X))))))]
+1.20user 0.00system 0:01.21elapsed 100%CPU (0avgtext+0avgdata 34056maxresident)k
+0inputs+0outputs (0major+3707minor)pagefaults 0swaps

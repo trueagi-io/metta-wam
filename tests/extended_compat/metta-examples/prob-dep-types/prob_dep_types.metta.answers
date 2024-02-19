@@ -1,0 +1,18 @@
+[True, False]
+[()]
+[Red, Green, Red, Blue]
+[()]
+[True, False, Red, Green, Red, Blue]
+[()]
+[False, True, Green, Blue, Green, Red]
+[()]
+[(thunk (random Red (random Green Blue))), (thunk (ColPerm (sample (ColDist))))]
+[()]
+[Red, Green, Red, Blue, Green, Blue, Green, Red]
+[()]
+[(thunk (f (sample (Bernoulli)))), (thunk (HybridPerm (sample (HybridDist))))]
+[()]
+[True, False, Red, Green, Red, Blue, False, True, Green, Blue, Green, Red]
+[()]
+2.46user 0.01system 0:02.47elapsed 99%CPU (0avgtext+0avgdata 34160maxresident)k
+0inputs+0outputs (0major+3745minor)pagefaults 0swaps

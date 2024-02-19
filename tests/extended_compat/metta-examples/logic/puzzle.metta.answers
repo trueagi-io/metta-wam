@@ -1,0 +1,3 @@
+[None, None, None, None, None, (Cons (Cons ivan (Cons cashier (Cons no_sister Nil))) (Cons (Cons boris (Cons controller (Cons has_sister Nil))) (Cons (Cons semyon (Cons supervisor (Cons $v6#17 Nil))) Nil))), None]
+6.05user 0.03system 0:06.08elapsed 99%CPU (0avgtext+0avgdata 57420maxresident)k
+0inputs+0outputs (0major+9554minor)pagefaults 0swaps
