@@ -1,0 +1,4 @@
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/metta-morph_tests/types.metta
+[42]
+0.03user 0.01system 0:00.04elapsed 100%CPU (0avgtext+0avgdata 32460maxresident)k
+0inputs+0outputs (0major+3510minor)pagefaults 0swaps

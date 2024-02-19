@@ -1,0 +1,9 @@
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-experimental_scripts/b1_equal_chain.metta
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+0.04user 0.00system 0:00.05elapsed 98%CPU (0avgtext+0avgdata 32552maxresident)k
+0inputs+0outputs (0major+3505minor)pagefaults 0swaps

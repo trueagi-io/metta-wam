@@ -1,0 +1,4 @@
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-mettalog_sanity/02-curried-plus.metta
+[()]
+0.04user 0.00system 0:00.04elapsed 100%CPU (0avgtext+0avgdata 32484maxresident)k
+0inputs+0outputs (0major+3490minor)pagefaults 0swaps

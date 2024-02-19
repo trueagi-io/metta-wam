@@ -1,0 +1,8 @@
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-experimental_scripts/c3_pln_stv.metta
+[()]
+[()]
+[()]
+[()]
+[()]
+0.10user 0.02system 0:00.14elapsed 83%CPU (0avgtext+0avgdata 33204maxresident)k
+27928inputs+0outputs (185major+3553minor)pagefaults 0swaps
