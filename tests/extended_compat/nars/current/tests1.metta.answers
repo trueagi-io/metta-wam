@@ -1,0 +1,17 @@
+[()]
+[(" (get-type &belief_events) => " hyperon::space::DynSpace)]
+[()]
+[()]
+[()]
+[(" (get-type &currentTime) => " (StateMonad Number))]
+[()]
+[()]
+[(repl!)]
+[()]
+[()]
+[()]
+[()]
+[()]
+[(Error ("(get-atoms &belief_events)=" (get-atoms GroundingSpace-0x5569e814b168)) NoValidAlternatives)]
+0.35user 0.02system 0:00.37elapsed 100%CPU (0avgtext+0avgdata 35404maxresident)k
+0inputs+0outputs (0major+4080minor)pagefaults 0swaps

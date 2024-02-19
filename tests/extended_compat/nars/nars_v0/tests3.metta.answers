@@ -1,0 +1,25 @@
+(. (((corridorIn &/ (^ forward)) =/> doorAt) (1.0 0.9)))
+(time = (Error (get-state &currentTime) get-state expects single state atom as an argument))
+(time = (Error (get-state &currentTime) get-state expects single state atom as an argument))
+(. (((windowAt &/ (^ open)) =/> Outside) (1.0 0.9)))
+(time = (Error (get-state &currentTime) get-state expects single state atom as an argument))
+(time = (Error (get-state &currentTime) get-state expects single state atom as an argument))
+(. (((doorAt &/ (^ open)) =/> Outside) (1.0 0.9)))
+(time = (Error (get-state &currentTime) get-state expects single state atom as an argument))
+(time = (Error (get-state &currentTime) get-state expects single state atom as an argument))
+(. (corridorIn (1.0 0.9)))
+(time = (Error (get-state &currentTime) get-state expects single state atom as an argument))
+(time = (Error (get-state &currentTime) get-state expects single state atom as an argument))
+(! (Outside (1.0 0.9)))
+(time = (Error (get-state &currentTime) get-state expects single state atom as an argument))
+[()]
+[]
+[]
+[]
+[]
+[(Error (assertEqual (AddGoalEvent (Outside (1.0 0.9))) None) 
+Expected: [None]
+Got: [(BestDecision (Error (Error (Error (Error (Error (get-state &currentTime) get-state expects single state atom as an argument) get-state expects single state atom as an argument) get-state expects single state atom as an argument) get-state expects single state atom as an argument) get-state expects single state atom as an argument) (Error (Error (Error (Error (Error (get-state &tempbest) get-state expects single state atom as an argument) get-state expects single state atom as an argument) get-state expects single state atom as an argument) get-state expects single state atom as an argument) get-state expects single state atom as an argument) (Error (Error (Error (get-state &FIFO) get-state expects single state atom as an argument) get-state expects single state atom as an argument) get-state expects single state atom as an argument))]
+Missed result: None)]
+5.41user 0.01system 0:05.43elapsed 99%CPU (0avgtext+0avgdata 38692maxresident)k
+0inputs+0outputs (0major+4737minor)pagefaults 0swaps

@@ -1,0 +1,11 @@
+[()]
+[]
+[]
+[]
+[]
+[(Error (assertEqual (EternalQuestion (({ garfield }) --> artist)) (Event ((({ garfield }) --> artist) (1.0 0.27508280575237937)) (eternal (4 3 2 1.0) (0 0.0)))) 
+Expected: [(Event ((({ garfield }) --> artist) (1.0 0.27508280575237937)) (eternal (4 3 2 1.0) (0 0.0)))]
+Got: [(Error (match &attentional_focus (Concept (({ garfield }) --> artist) $Belief#34540 $BeliefEvent#34541 $CPrio#34542) $Belief#34540) match expects a space as the first argument), (Error (match &concepts (Concept (({ garfield }) --> artist) $Belief#34540 $BeliefEvent#34541 $CPrio#34542) $Belief#34540) match expects a space as the first argument)]
+Missed result: (Event ((({ garfield }) --> artist) (1.0 0.27508280575237937)) (eternal (4 3 2 1.0) (0 0.0))))]
+3.92user 0.01system 0:03.94elapsed 100%CPU (0avgtext+0avgdata 38524maxresident)k
+0inputs+0outputs (0major+4694minor)pagefaults 0swaps

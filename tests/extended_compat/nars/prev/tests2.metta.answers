@@ -1,0 +1,18 @@
+[()]
+[]
+[]
+[]
+[]
+[]
+[]
+[]
+[]
+[]
+[]
+[]
+[]
+[]
+[]
+[(Error (match &attentional_focus (Concept ((ballleft &/ (^ $Op)) =/> ballhit) $Belief#101701 $BeliefEvent#101702 $CPrio#101703) $Belief#101701) match expects a space as the first argument), (Error (match &concepts (Concept ((ballleft &/ (^ $Op)) =/> ballhit) $Belief#101701 $BeliefEvent#101702 $CPrio#101703) $Belief#101701) match expects a space as the first argument)]
+11.43user 0.00system 0:11.44elapsed 99%CPU (0avgtext+0avgdata 37820maxresident)k
+0inputs+0outputs (0major+4570minor)pagefaults 0swaps

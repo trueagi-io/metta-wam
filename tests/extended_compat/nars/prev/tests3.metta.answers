@@ -1,0 +1,11 @@
+[()]
+[]
+[]
+[]
+[]
+[(Error (assertEqual (AddGoalEvent (Outside (1.0 0.9))) None) 
+Expected: [None]
+Got: [(BestDecision (Error (Error (Error (Error (Error (get-state &currentTime) get-state expects single state atom as an argument) get-state expects single state atom as an argument) get-state expects single state atom as an argument) get-state expects single state atom as an argument) get-state expects single state atom as an argument) (Error (Error (Error (Error (Error (get-state &tempbest) get-state expects single state atom as an argument) get-state expects single state atom as an argument) get-state expects single state atom as an argument) get-state expects single state atom as an argument) get-state expects single state atom as an argument) (Error (Error (Error (get-state &FIFO) get-state expects single state atom as an argument) get-state expects single state atom as an argument) get-state expects single state atom as an argument))]
+Missed result: None)]
+3.82user 0.03system 0:03.85elapsed 99%CPU (0avgtext+0avgdata 37908maxresident)k
+0inputs+0outputs (0major+4585minor)pagefaults 0swaps

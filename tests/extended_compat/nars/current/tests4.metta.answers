@@ -1,0 +1,30 @@
+(. ((({ garfield }) --> cat) (1.0 0.9)))
+(time = 1)
+(. (((cat * sky) --> like) (1.0 0.9)))
+(. (((({ garfield }) * sky) --> like) (1.0 0.81)))
+(time = 2)
+(. ((sky --> ([ blue ])) (1.0 0.9)))
+(. (((cat * ([ blue ])) --> like) (1.0 0.44751381215469616)))
+(. (((({ garfield }) * ([ blue ])) --> like) (1.0 0.42163100057836905)))
+(time = 3)
+(. ((((({ garfield }) * ([ blue ])) --> like) ==> (({ garfield }) --> artist)) (1.0 0.9)))
+(. ((({ garfield }) --> artist) (1.0 0.37946790052053214)))
+(time = 4)
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[]
+[]
+[]
+[]
+[()]
+26.81user 0.05system 0:26.87elapsed 99%CPU (0avgtext+0avgdata 42156maxresident)k
+0inputs+0outputs (0major+5801minor)pagefaults 0swaps

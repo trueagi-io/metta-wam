@@ -1,0 +1,32 @@
+;; stdlib extension
+
+;;(assert Equals 0.11111 0.11112)
+
+(: If (-> Bool Atom Atom))
+(= (If True $then) $then)
+(= (If False $then) ())
+(: If (-> Bool Atom Atom Atom))
+(= (If $cond $then $else) (if $cond $then $else))
+(= (TupleConcat $Ev1 $Ev2) (collapse (superpose ((superpose $Ev1) (superpose $Ev2)))))
+(= (max $1 $2) (If (> $1 $2) $1 $2))
+(= (min $1 $2) (If (< $1 $2) $1 $2))
+(= (abs $x) (If (< $x 0) (- 0 $x) $x))
+(: sequential (-> Expression %Undefined%))
+(= (sequential $1) (superpose $1))
+(: do (-> Expression %Undefined%))
+(= (do $1) (case $1 ()))
+(= (TupleCount ()) 0)
+(= (TupleCount (1)) 1)
+(= (BuildTupleCounts $TOld $C $N)
+   (let $T (collapse (superpose (1 (superpose $TOld))))
+        (superpose ((add-atom &self (= (TupleCount $T) (+ $C 2)))
+                    (If (< $C $N) (BuildTupleCounts $T (+ $C 1) $N))))))
+(: CountElement (-> Expression Number))
+(= (CountElement $x) (case $x (($y 1))))
+;;Build for count up to 100 (takes a few sec but it is worth it if space or generally collapse counts are often needed)
+!(BuildTupleCounts (1) 0 10)
+(: CollapseCardinality (-> Expression Number))
+(= (CollapseCardinality $expression) (TupleCount (collapse (CountElement $expression))))
+
+!(get-atoms &self)
+

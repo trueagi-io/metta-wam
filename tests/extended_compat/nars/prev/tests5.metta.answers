@@ -1,0 +1,12 @@
+[()]
+[]
+[]
+[]
+[]
+[]
+[(Error (assertEqual (EternalQuestion (({ instance1 }) --> sheep)) (Event ((({ instance1 }) --> sheep) (1.0 0.30916030534351147)) (eternal (4 3) (0 0.0)))) 
+Expected: [(Event ((({ instance1 }) --> sheep) (1.0 0.30916030534351147)) (eternal (4 3) (0 0.0)))]
+Got: [(Error (match &attentional_focus (Concept (({ instance1 }) --> sheep) $Belief#34693 $BeliefEvent#34694 $CPrio#34695) $Belief#34693) match expects a space as the first argument), (Error (match &concepts (Concept (({ instance1 }) --> sheep) $Belief#34693 $BeliefEvent#34694 $CPrio#34695) $Belief#34693) match expects a space as the first argument)]
+Missed result: (Event ((({ instance1 }) --> sheep) (1.0 0.30916030534351147)) (eternal (4 3) (0 0.0))))]
+4.14user 0.02system 0:04.17elapsed 99%CPU (0avgtext+0avgdata 38352maxresident)k
+0inputs+0outputs (0major+4648minor)pagefaults 0swaps

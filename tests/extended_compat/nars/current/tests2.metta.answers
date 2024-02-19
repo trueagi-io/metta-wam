@@ -1,0 +1,91 @@
+(. (ballleft (1.0 0.9)))
+(time = 1)
+(. ((^ left) (1.0 0.9)))
+(time = 2)
+(. (ballhit (1.0 0.9)))
+(. (((ballleft &/ (^ left)) =/> ballhit) (1.0 0.42163100057836905)))
+(time = 3)
+(. (ballleft (1.0 0.9)))
+(@ (ballleft (1.0 0.6428571428571429)))
+(time = 4)
+(. ((^ left) (1.0 0.9)))
+(time = 5)
+(. (ballright (1.0 0.9)))
+(@ (((ballleft &/ (^ left)) =/> ballhit) (0.808293602394944 0.3428104450948345)))
+(. (((ballleft &/ (^ left)) =/> ballright) (1.0 0.42163100057836905)))
+(time = 6)
+(. ((^ left) (1.0 0.9)))
+(time = 7)
+(. (ballhit (1.0 0.9)))
+(. (((ballright &/ (^ left)) =/> ballhit) (1.0 0.42163100057836905)))
+(@ (ballhit (1.0 0.6428571428571429)))
+(time = 8)
+(. (ballright (1.0 0.9)))
+(@ (ballright (1.0 0.6428571428571429)))
+(time = 9)
+(. ((^ right) (1.0 0.9)))
+(time = 10)
+(. (ballhit (1.0 0.9)))
+(. (((ballright &/ (^ right)) =/> ballhit) (1.0 0.42163100057836905)))
+(@ (ballhit (1.0 0.7297297297297297)))
+(time = 11)
+(. (ballright (1.0 0.9)))
+(@ (ballright (1.0 0.7297297297297297)))
+(time = 12)
+(. ((^ right) (1.0 0.9)))
+(time = 13)
+(. (ballhit (1.0 0.9)))
+(. (((ballright &/ (^ right)) =/> ballhit) (1.0 0.42163100057836905)))
+(@ (((ballright &/ (^ right)) =/> ballhit) (1.0 0.45748352682773774)))
+(@ (ballhit (1.0 0.782608695652174)))
+(time = 14)
+(. (ballleft (1.0 0.9)))
+(@ (ballleft (1.0 0.7297297297297297)))
+(time = 15)
+(! (ballhit (1.0 0.9)))
+(. ((^ left) (1.0 0.9)))
+(time = 16)
+(time = 17)
+(. (ballright (1.0 0.9)))
+(@ (((ballleft &/ (^ left)) =/> ballhit) (0.678265723855601 0.3833368999215351)))
+(. (((ballleft &/ (^ left)) =/> ballright) (1.0 0.2671308171491389)))
+(@ (((ballleft &/ (^ left)) =/> ballright) (1.0 0.4078501837839656)))
+(@ (ballright (1.0 0.782608695652174)))
+(time = 18)
+(! (ballhit (1.0 0.9)))
+(. ((^ right) (1.0 0.9)))
+(time = 19)
+(time = 20)
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[]
+[]
+[]
+[]
+[]
+[]
+[]
+[]
+[]
+[]
+[]
+[]
+[]
+[]
+[(Event (((ballleft &/ (^ left)) =/> ballhit) (0.808293602394944 0.3428104450948345)) (eternal (1 2 3) (0 0.0)))]
+[(Event (((ballright &/ (^ right)) =/> ballhit) (1.0 0.45748352682773774)) (eternal (9 10 11 12 13 14) (0 0.0))), (Event (((ballright &/ (^ left)) =/> ballhit) (1.0 0.2965825874694874)) (eternal (6 7 8) (0 0.0)))]
+[]
+[()]
+[]
+[()]
+98.85user 0.06system 1:38.92elapsed 99%CPU (0avgtext+0avgdata 45000maxresident)k
+0inputs+0outputs (1major+6434minor)pagefaults 0swaps

@@ -1,0 +1,13 @@
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[(Error (assertEqual (TupleCount (get-atoms GroundingSpace-0x55cfe6b68a98)) 0) 
+Expected: [0]
+Got: [(Error (TupleCount (get-atoms GroundingSpace-0x55cfe6b68a98)) NoValidAlternatives)]
+Missed result: 0)]
+0.20user 0.02system 0:00.22elapsed 100%CPU (0avgtext+0avgdata 35844maxresident)k
+0inputs+0outputs (0major+4180minor)pagefaults 0swaps

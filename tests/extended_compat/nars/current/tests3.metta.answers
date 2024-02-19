@@ -1,0 +1,33 @@
+(. (((corridorIn &/ (^ forward)) =/> doorAt) (1.0 0.9)))
+(time = 1)
+(. (((windowAt &/ (^ open)) =/> Outside) (1.0 0.9)))
+(time = 2)
+(. (((doorAt &/ (^ open)) =/> Outside) (1.0 0.9)))
+(time = 3)
+(. (corridorIn (1.0 0.9)))
+(time = 4)
+(! (Outside (1.0 0.9)))
+(! (windowAt (1.0 0.38368421052631585)))
+(! (doorAt (1.0 0.38368421052631585)))
+(time = 5)
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[]
+[]
+[]
+[]
+[(Error (assertEqual (AddGoalEvent (Outside (1.0 0.9))) None) 
+Expected: [None]
+Got: []
+Missed result: None)]
+16.57user 0.02system 0:16.59elapsed 99%CPU (0avgtext+0avgdata 39404maxresident)k
+0inputs+0outputs (0major+5051minor)pagefaults 0swaps

@@ -1,0 +1,33 @@
++ '[' 0 -eq 1 ']'
++ echo 'Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/extended_compat/nars/new/tests5.metta'
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/extended_compat/nars/new/tests5.metta
++ eval 'timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/extended_compat/nars/new/tests5.metta'
+++ timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/extended_compat/nars/new/tests5.metta
+(. ((((sheep --> ([ see ])) &/ (^ count)) =/> (sheep --> ([ counted ]))) (1.0 0.9)))
+(time = (Error (get-state &currentTime) get-state expects single state atom as an argument))
+(time = (Error (get-state &currentTime) get-state expects single state atom as an argument))
+(time = (Error (get-state &currentTime) get-state expects single state atom as an argument))
+(. ((sheep --> ([ white ])) (1.0 0.9)))
+(time = (Error (get-state &currentTime) get-state expects single state atom as an argument))
+(time = (Error (get-state &currentTime) get-state expects single state atom as an argument))
+(. ((({ instance1 }) --> ([ white ])) (1.0 0.9)))
+(time = (Error (get-state &currentTime) get-state expects single state atom as an argument))
+(time = (Error (get-state &currentTime) get-state expects single state atom as an argument))
+(. ((({ instance1 }) --> ([ see ])) (1.0 0.9)))
+(time = (Error (get-state &currentTime) get-state expects single state atom as an argument))
+(time = (Error (get-state &currentTime) get-state expects single state atom as an argument))
+[()]
+[("sheep see")]
+[]
+[("current time")]
+[]
+[("sheep white")]
+[]
+[]
+[]
+[(Error (assertEqual (EternalQuestion (({ instance1 }) --> sheep)) (Event ((({ instance1 }) --> sheep) (1.0 0.30916030534351147)) (eternal (4 3) (0 0.0)))) 
+Expected: [(Event ((({ instance1 }) --> sheep) (1.0 0.30916030534351147)) (eternal (4 3) (0 0.0)))]
+Got: [(Error (match &attentional_focus (Concept (({ instance1 }) --> sheep) $Belief#93714 $BeliefEvent#93715 $CPrio#93716) $Belief#93714) match expects a space as the first argument), (Error (match &concepts (Concept (({ instance1 }) --> sheep) $Belief#93714 $BeliefEvent#93715 $CPrio#93716) $Belief#93714) match expects a space as the first argument)]
+Missed result: (Event ((({ instance1 }) --> sheep) (1.0 0.30916030534351147)) (eternal (4 3) (0 0.0))))]
+6.26user 0.02system 0:06.29elapsed 99%CPU (0avgtext+0avgdata 38864maxresident)k
+752inputs+0outputs (5major+4895minor)pagefaults 0swaps
