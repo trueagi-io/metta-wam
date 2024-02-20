@@ -1,6 +1,12 @@
 %
 % post match modew
 %:- style_check(-singleton).
+:- multifile(nop/1).
+:- meta_predicate(nop(0)).
+:- multifile(fake_notrace/1).
+:- meta_predicate(fake_notrace(0)).
+:- meta_predicate(color_g_mesg(+,0)).
+:- multifile(color_g_mesg/2).
 
 self_eval0(X):- \+ callable(X),!.
 self_eval0(X):- is_valid_nb_state(X),!.
@@ -206,7 +212,8 @@ eval_00(Eq,RetType,Depth,Self,X,YO):-
 
 
 eval_11(_Eq,_RetType,_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
-eval_11(Eq,RetType,Depth,Self,X,Y):- \+ is_debugging((eval)),!,
+eval_11(Eq,RetType,Depth,Self,X,Y):- 
+  \+ is_debugging((eval)),!,
   D1 is Depth-1,
   eval_00(Eq,RetType,D1,Self,X,Y).
 eval_11(Eq,RetType,Depth,Self,X,Y):-
