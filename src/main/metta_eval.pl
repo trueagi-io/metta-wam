@@ -1093,6 +1093,10 @@ eval_20(Eq,RetType,Depth,Self,['or',X,Y],TF):- !,
 eval_20(Eq,RetType,Depth,Self,['not',X],TF):- !,
    as_tf(( \+ eval_args_true(Eq,RetType,Depth,Self,X)), TF).
 
+
+eval_20(Eq,RetType,Depth,Self,['eval',X],TF):- !,
+   eval_args(Eq,RetType,Depth,Self,X, TF).
+
 eval_20(Eq,RetType,Depth,Self,['number-of',X],N):- !,
    bagof_eval(Eq,RetType,Depth,Self,X,ResL),
    length(ResL,N), ignore(RetType='Number').
@@ -1102,10 +1106,15 @@ eval_20(Eq,RetType,Depth,Self,['number-of',X,N],TF):- !,
    length(ResL,N), true_type(Eq,RetType,TF).
 
 
-eval_20(Eq,RetType,Depth,Self,['limit!',N,E],R):- !, eval_20(Eq,RetType,Depth,Self,['limit',N,E],R).
+   eval_20(Eq,RetType,Depth,Self,['limit!',N,E],R):- !, eval_20(Eq,RetType,Depth,Self,['limit',N,E],R).
 eval_20(Eq,RetType,Depth,Self,['limit',NE,E],R):-  !,
    eval('=','Number',Depth,Self,NE,N),
    limit(N,eval_ne(Eq,RetType,Depth,Self,E,R)).
+
+eval_20(Eq,RetType,Depth,Self,['offset!',N,E],R):- !, eval_20(Eq,RetType,Depth,Self,['offset',N,E],R).
+eval_20(Eq,RetType,Depth,Self,['offset',NE,E],R):-  !,
+   eval('=','Number',Depth,Self,NE,N),
+   offset(N,eval_ne(Eq,RetType,Depth,Self,E,R)).
 
 eval_20(Eq,RetType,Depth,Self,['max-time!',N,E],R):- !, eval_20(Eq,RetType,Depth,Self,['max-time',N,E],R).
 eval_20(Eq,RetType,Depth,Self,['max-time',NE,E],R):-  !,
@@ -1124,7 +1133,7 @@ eval_20(Eq,RetType,Depth,Self,['setup-call-cleanup!',S,NE,E],R):-  !,
 
 eval_20(Eq,RetType,Depth,Self,['with-output-to!',S,NE],R):-  !,
    eval(Eq,_,Depth,Self,S,OUT),
-   with_output_to(OUT,
+   with_output_to_stream(OUT,
       eval(Eq,RetType,Depth,Self,NE,R)).
                   
       

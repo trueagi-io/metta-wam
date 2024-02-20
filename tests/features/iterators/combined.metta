@@ -58,7 +58,9 @@
 !(switch_to_mettalog!)
 
 ;; create our input file
-!(with-results-to-file "neg1_pos1.txt" (superpose (-1 1 )))
+;;; !(with-results-to-file "neg1_pos1.txt" (superpose (-1 1 )))
+!(with-output-to-file "neg1_pos1.txt" (and (println! -1)(println! 1)))
+
 
 ;; display and wait 
 !(shell! "cat neg1_pos1.txt")

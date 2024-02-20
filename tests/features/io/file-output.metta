@@ -13,7 +13,8 @@
 (: with-results-to (-> Writable (-> $Ret) $Ret))
 (= (with-results-to $stream $eval)
     (let $res (eval $eval)
-     (write-src! $stream $res)))
+     (, (write-src! $stream $res) 
+            (nl! $stream))))
 
 ;; Captures results of function places them in file
 (: with-results-to-file (-> Uri (-> $Ret) $Ret))
@@ -21,7 +22,7 @@
  (let $out 
   (open! $name write)
   (call-cleanup!
-    (with-results-to $out (collapse (nop $atom)))
+    (with-results-to $out $atom)
     (close! $out))))
 
 
