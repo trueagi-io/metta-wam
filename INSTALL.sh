@@ -37,7 +37,6 @@ confirm_with_default() {
 }
 
 
-
 # Function to prompt for input with a default value
 prompt_for_input() {
     read -e -i "$2" -p "$1" value
@@ -83,6 +82,12 @@ if [ "$easy_install" == "?" ]; then
     fi
 fi
 
+if [ -f /.dockerenv ]; then
+    inside_docker=-y
+else
+    inside_docker=
+fi
+
 
 echo -e "${BLUE}Starting the installation process..${NC}."
 
@@ -96,18 +101,21 @@ version_ge() {
 # SWI-Prolog from source
 build_swi_prolog_from_src() {
 
+    sudo apt-get update
     # Install build dependencies
     echo -e "${BLUE}Installing build dependencies...${NC}"
     local build_deps="build-essential autoconf git libgmp-dev libssl-dev unixodbc-dev \
         libreadline-dev zlib1g-dev libarchive-dev libossp-uuid-dev libxext-dev \
         libice-dev libjpeg-dev libxinerama-dev libxft-dev libxpm-dev libxt-dev \
         pkg-config libdb-dev libpcre3-dev libyaml-dev"
-    sudo apt-get update && sudo apt-get install -y $build_deps && {
+    sudo apt-get install $inside_docker $build_deps && {
         echo -e "${GREEN}Build dependencies installed successfully.${NC}"
     } || {
         echo -e "${RED}Failed to install build dependencies. Exiting.${NC}"
         exit 1
     }
+    
+    rm -rf swipl-devel
 
     # Check if the SWI-Prolog source code directory exists
     if [ -d "swipl-devel" ]; then
@@ -116,7 +124,10 @@ build_swi_prolog_from_src() {
     else
         echo -e "${BLUE}Cloning SWI-Prolog source code...${NC}"
         git clone https://github.com/SWI-Prolog/swipl-devel.git
+        
     fi
+
+    #(cd swipl-devel && git checkout V9.3.0)
 
 
     # Update submodules
@@ -131,7 +142,8 @@ build_swi_prolog_from_src() {
 
     # Configure and build
     echo -e "${BLUE}Configuring and building SWI-Prolog...${NC}"
-    mkdir build && cd build
+    unset LD_PRELOAD
+    mkdir -p build && cd build
     cmake .. && make && {
         echo -e "${GREEN}SWI-Prolog configured and built successfully.${NC}"
     } || {
@@ -150,24 +162,32 @@ build_swi_prolog_from_src() {
 # build_swi_prolog_from_src
 
 
+function swipl_version () {
+    if ! command -v swipl &> /dev/null; then
+       echo "0.0"
+    else
+       echo $(swipl --version | awk '{print $3}')
+    fi
+}
+
 # Function to install or update SWI-Prolog
 install_or_update_swipl() {
     echo -e "${BLUE}Starting SWI-Prolog installation or update.${NC}"
     #echo " " > /etc/apt/sources.list
     #sudo apt install -y apt-utils software-properties-common
     #sudo apt-add-repository -y ppa:swi-prolog/devel
-    sudo apt-get update
+    #sudo apt-get update
     # Remove existing installation if any before reinstalling/upgrading
     #sudo apt-get remove -y swi-prolog??* 
-    sudo apt-get install -y swi-prolog
-    swi_prolog_version=$(swipl --version | awk '{print $3}')
+    #sudo apt-get install -y swi-prolog
+    swi_prolog_version=$(swipl_version)
     required_version="9.1"
     if version_ge $swi_prolog_version $required_version; then
         echo -e "${GREEN}SWI-Prolog version $swi_prolog_version is installed and meets the required version $required_version or higher.${NC}"
     else
             echo -e "${YELLOW}Attempting to update SWI-Prolog...${NC}"
             build_swi_prolog_from_src
-            swi_prolog_version=$(swipl --version | awk '{print $3}')
+            swi_prolog_version=$(swipl_version)
             if version_ge $swi_prolog_version $required_version; then
                 echo -e "${GREEN}SWI-Prolog upgraded to $swi_prolog_version, which meets the required version $required_version or higher.${NC}"
             else
@@ -186,7 +206,7 @@ if ! command -v swipl &> /dev/null; then
         exit 1
     fi
 else
-    swi_prolog_version=$(swipl --version | awk '{print $3}')
+    swi_prolog_version=$(swipl_version)
     required_version="9.1"
     if version_ge $swi_prolog_version $required_version; then
         echo -e "${GREEN}SWI-Prolog version $swi_prolog_version is installed and meets the required version $required_version or higher.${NC}"
@@ -194,7 +214,7 @@ else
         if confirm_with_default "Y" "SWI-Prolog is not version $required_version or higher. Would you like to update it?"; then
             echo -e "${YELLOW}Attempting to update SWI-Prolog...${NC}"
             install_or_update_swipl
-            swi_prolog_version=$(swipl --version | awk '{print $3}')
+            swi_prolog_version=$(swipl_version)
             if version_ge $swi_prolog_version $required_version; then
                 echo -e "${GREEN}SWI-Prolog upgraded to $swi_prolog_version, which meets the required version $required_version or higher.${NC}"
             else
