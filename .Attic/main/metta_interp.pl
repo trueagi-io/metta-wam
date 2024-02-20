@@ -69,7 +69,7 @@ keep_output:- is_testing,!.
 :- dynamic(original_user_output/1).
 :- original_user_output(_)->true;current_output(Out),asserta(original_user_output(Out)).
 unnullify_output:- current_output(MFS),  (original_user_output(OUT)-> MFS==OUT ; true), !.
-unnullify_output:- original_user_output(MFS), set_prolog_IO(user_input,MFS,MFS).
+unnullify_output:- original_user_output(MFS), set_prolog_IO(user_input,MFS,user_error).
 
 null_output(MFS):- use_module(library(memfile)),
   new_memory_file(MF),open_memory_file(MF,append,MFS).
@@ -81,7 +81,7 @@ null_output(MFS):- use_module(library(memfile)),
 nullify_output:- keep_output,!.
 nullify_output:- nullify_output_really.
 nullify_output_really:- current_output(MFS), null_user_output(OUT),  MFS==OUT, !.
-nullify_output_really:- null_user_output(MFS), set_prolog_IO(user_input,MFS,user_error).
+nullify_output_really:- null_user_output(MFS), set_prolog_IO(user_input,MFS,MFS).
 
 
 set_output_stream :- keep_output -> nullify_output;  unnullify_output.
