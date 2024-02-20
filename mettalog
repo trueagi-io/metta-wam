@@ -224,7 +224,7 @@ if [ ! -f /.dockerenv ]; then
             temp_file=$(mktemp)
 
             # Build the Docker image and redirect stderr to the temporary file
-            if ! docker build . -t "$IMAGE_NAME" > "$temp_file" 2>&1; then
+            if ! (cd $METTALOG_DIR ; docker build . -t "$IMAGE_NAME" > "$temp_file" ) 2>&1; then
                 echo "Docker build failed. Output:"
                 # Tail the last 30 lines of the build output for debugging
                 tail -30 "$temp_file"

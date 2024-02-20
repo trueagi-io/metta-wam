@@ -87,6 +87,7 @@ is_final_write('$VAR'(S)):- string(S), atom_concat('_',N,S),write('$'),write(N).
 
 % Handling more cases for 'write_src1', when the value is a number, a string, a symbol, or a compound.
 write_src1(V) :- is_final_write(V),!.
+write_src1((USER:Body)) :- USER==user,!, write_src(Body).
 write_src1([F|V]):- atom(F), is_list(V),write_mobj(F,V),!.
 write_src1((Head:-Body)) :- !, print_metta_clause0(Head,Body).
 write_src1(''):- !, write('()').
