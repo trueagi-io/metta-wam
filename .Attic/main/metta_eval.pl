@@ -22,6 +22,22 @@ self_eval0('True'). self_eval0('False'). % self_eval0('F').
 self_eval0('Empty').
 self_eval0(X):- atom(X),!, \+ nb_current(X,_),!.
 
+% we use lazy lists a superposed closures
+is_lazy_list(Var):- var(Var),!,get_attr(Var,lazy_list,_),!.
+is_lazy_list([_|T]):- !, is_lazy_list(T).
+
+list_iter(Iter,L)  :- lazy_iter3(Iter,nth0,L).
+space_iter(Iter,L) :- lazy_iter2(Iter,metta_atom,L).
+lazy_map(P2,Iter,L):- lazy_iter2(Iter,P2,L). 
+
+
+lazy_iter2(Iter,P2,L) :- lazy_list(lazy_iter2(Iter,P2), state(0), L).
+lazy_iter2(List,P2,state(N),state(N1),V):- is_lazy_list(List),!,member(E,List),N1 is N +1,call(P2,E,V). 
+lazy_iter2(Iter,P2,state(N),state(N1),V):- N1 is N +1,call(P2,Iter,V).
+lazy_iter3(Iter,P3,L) :- lazy_list(lazy_iter3(Iter,P3), state(0), L).   
+lazy_iter3(Iter,P3,state(N),state(N1),V):- N1 is N +1,call(P3,N,Iter,V).
+     
+
 coerce(Type,Value,Result):- nonvar(Value),Value=[Echo|EValue], Echo == echo, EValue = [RValue],!,coerce(Type,RValue,Result).
 coerce(Type,Value,Result):- var(Type), !, Value=Result, freeze(Type,coerce(Type,Value,Result)).
 coerce('Atom',Value,Result):- !, Value=Result.
@@ -777,12 +793,12 @@ eval_in_steps_or_same(Eq,RetType,Depth,Self,X,Y):-eval_in_steps_some_change(Eq,R
 eval_in_steps_or_same(Eq,RetType,_Dpth,_Slf,X,Y):- X=Y,check_returnval(Eq,RetType,Y).
 
   % (fail,return_empty([],Template))).
-
+possible_type(_Self,_Var,_RetTypeV).
 
 eval_20(Eq,RetType,Depth,Self,['let',A,A5,AA],OO):- !,
   %(var(A)->true;trace),
-  eval(Eq,_RetTypeV,Depth,Self,A5,AR),
-  A=AR,
+  possible_type(Self,A,RetTypeV),
+  eval(Eq,RetTypeV,Depth,Self,A5,AR), A=AR,
   eval(Eq,RetType,Depth,Self,AA,OO).
 
 %eval_20(Eq,RetType,Depth,Self,['let',A,A5,AA],AAO):- !,eval(Eq,RetType,Depth,Self,A5,A),eval(Eq,RetType,Depth,Self,AA,AAO).
@@ -1050,9 +1066,11 @@ is_comma(C):- var(C),!,fail.
 is_comma(',').
 is_comma('{}').
 
-eval_20(Eq,RetType,Depth,Self,[And,X],True):- is_comma(And),!, eval_args(Eq,RetType,Depth,Self,X,True).
-eval_20(Eq,RetType,Depth,Self,[And,X,Y],TF):-  is_comma(And),!, eval_args(Eq,RetType,Depth,Self,X,_),eval_args(Eq,RetType,Depth,Self,Y,TF).
-eval_20(Eq,RetType,Depth,Self,[And,X|Y],TF):- is_comma(And),!, eval_args(Eq,RetType,Depth,Self,X,_), eval_args(Eq,RetType,Depth,Self,[And|Y],TF).
+eval_20(Eq,RetType,Depth,Self,[Comma,X  ],Res):- is_comma(Comma),!, eval_args(Eq,RetType,Depth,Self,X,Res).
+eval_20(Eq,RetType,Depth,Self,[Comma,X,Y],Res):- is_comma(Comma),!, eval_args(Eq,_,Depth,Self,X,_),
+  eval_args(Eq,RetType,Depth,Self,Y,Res).
+eval_20(Eq,RetType,Depth,Self,[Comma,X|Y],Res):- is_comma(Comma),!, eval_args(Eq,_,Depth,Self,X,_),
+  eval_args(Eq,RetType,Depth,Self,[Comma|Y],Res).
 
 
 eval_20(Eq,RetType,_Dpth,_Slf,[And],True):- is_and(And,True),!,check_returnval(Eq,RetType,True).
@@ -1095,6 +1113,22 @@ eval_20(Eq,RetType,Depth,Self,['max-time',NE,E],R):-  !,
    cwtl(N,eval_ne(Eq,RetType,Depth,Self,E,R)).
 
 
+eval_20(Eq,RetType,Depth,Self,['call-cleanup!',NE,E],R):-  !,
+   call_cleanup(eval(Eq,RetType,Depth,Self,NE,R),
+                eval(Eq,_U_,Depth,Self,NE,_)).
+
+eval_20(Eq,RetType,Depth,Self,['setup-call-cleanup!',S,NE,E],R):-  !,
+   setup_call_cleanup(eval(Eq,_,Depth,Self,S,_),
+         eval(Eq,RetType,Depth,Self,NE,R),
+         eval(Eq,_,Depth,Self,NE,_)).
+
+eval_20(Eq,RetType,Depth,Self,['with-output-to!',S,NE],R):-  !,
+   eval(Eq,_,Depth,Self,S,OUT),
+   with_output_to(OUT,
+      eval(Eq,RetType,Depth,Self,NE,R)).
+                  
+      
+                                                                       
 % =================================================================
 % =================================================================
 % =================================================================
