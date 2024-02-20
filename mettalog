@@ -114,7 +114,7 @@ never_compile=0
 compatio=false
 #compatio=false
 CMD_TIMEOUT=0
-no_docker=false
+use_docker=auto
 repl_flag=auto
 use_rc_file=~/.mettalogrc
 debug_this_script=false
@@ -157,7 +157,10 @@ for arg in "$@"; do
     fi
 
     if [[ "$arg" == "--docker=false" ]]; then
-        no_docker=true
+        use_docker=false
+    fi
+    if [[ "$arg" == "--docker" ]]; then
+        use_docker=true
     fi
 
     # Check if the argument is a directory
@@ -208,7 +211,8 @@ done
 
 #export TEE_FILE=${TEE_FILE:-"$METTALOG_DIR/TEE.ansi"}
 
-if [ "$no_docker" == "false" ]; then
+if [ "$use_docker" != "auto" ]; then
+if [ "$use_docker" == "true" ]; then
 # Check if the script is running inside a Docker container
 if [ ! -f /.dockerenv ]; then
     # Define the name of the Docker image
@@ -255,6 +259,7 @@ if [ ! -f /.dockerenv ]; then
     else
         DEBUG "Docker is not installed. Continuing with script..."
     fi
+fi
 fi
 fi
 

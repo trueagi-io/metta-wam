@@ -1,13 +1,7 @@
 
 
-!(pragma! sandbox False) ;; in case we are in SWISH
-!(pragma! host-functions all) ;; throw a security exception if use is not logged in
-
-
-!(import! &self ../io/file-output.metta)
-
-!(repl!)
-
+; !(pragma! sandbox False) ;; in case we are in SWISH
+; !(pragma! host-functions all) ;; throw a security exception if use is not logged in
 
 !(bind! &iter1 (new-space))
 
@@ -23,6 +17,8 @@
   ((double $i) (positive $i)))
 
 !(repl!)
+
+!(import! &self ../io/file-output.metta)
 
 
 (= (iterate $obj)
