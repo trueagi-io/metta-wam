@@ -259,7 +259,7 @@ user_io(G):- original_user_output(Out),
   setup_call_cleanup(set_prolog_IO(user_input,Out,user_error), G, set_prolog_IO(user_input,COut,user_error)), 
     set_prolog_IO(user_input,COut,user_error).
 
-only_compatio(G):- if_t((is_compatio, \+ is_mettalog),user_io(G)).
+    only_compatio(G):- if_t((is_compatio, \+ is_mettalog),user_io(G)).
   if_compatio(G):- if_t(is_compatio,user_io(G)).
  not_compatio(G):- if_t( is_mettalog,user_io(G)).
 
@@ -795,14 +795,14 @@ load_metta_file_stream(Filename,Self,In):-
   once((is_file_stream_and_size(In, Size) , Size>102400) -> P2 = read_sform2 ; P2 = read_metta2),
   with_option(loading_file,Filename,
   %current_exec_file(Filename),
-  ((must_det_ll((
+  must_det_ll((must_det_ll((
       set_exec_num(Filename,1),
       load_answer_file(Filename),
       set_exec_num(Filename,0))),
   load_metta_file_stream_fast(Size,P2,Filename,Self,In)))).
 
 
-load_metta_file_stream_fast(_Size,_P2,Filename,Self,S):- atomic_list_concat([_,_,_|_],'.',Filename),
+load_metta_file_stream_fast(_Size,_P2,Filename,Self,S):- fail, atomic_list_concat([_,_,_|_],'.',Filename),
   \+ option_value(html,true),
   atomic(S),is_stream(S),stream_property(S,input),!,
   repeat,
@@ -814,8 +814,8 @@ load_metta_file_stream_fast(_Size,_P2,Filename,Self,S):- atomic_list_concat([_,_
 load_metta_file_stream_fast(_Size,P2,Filename,Self,In):-
       repeat,
             current_read_mode(file,Mode),
-            call(P2, In,Expr), %write_src(read_metta=Expr),nl,
-            once((((do_metta(file(Filename),Mode,Self,Expr,_O)))->true; pp_m(unknown_do_metta(file(Filename),Mode,Self,Expr)))),
+            must_det_ll(call(P2, In,Expr)), %write_src(read_metta=Expr),nl,
+            must_det_ll((((do_metta(file(Filename),Mode,Self,Expr,_O)))->true; pp_m(unknown_do_metta(file(Filename),Mode,Self,Expr)))),
       flush_output,
       at_end_of_stream(In),!.
 
@@ -1266,7 +1266,7 @@ assert_preds(Self,Load,Preds):-
    
    
   if_t(is_transpiling,
-    if_t(\+ predicate_property(H,static),add_assertion(Self,Preds))),
+   if_t( \+ predicate_property(H,static),add_assertion(Self,Preds))),
    nop(metta_anew1(Load,Preds)).
 
 
@@ -1404,8 +1404,8 @@ metta_defn(KB,Head,Body):- metta_defn(_Eq,KB,Head,Body).
 metta_defn(Eq,KB,Head,Body):- ignore(Eq = '='), get_metta_atom_from(KB,[Eq,Head,Body]).
 
 metta_type(KB,H,B):- 
-   if_or_else(get_metta_atom_from(KB,[':',H,B]),
-			  metta_atom_stdlib_types([':',H,B])).
+  if_or_else(get_metta_atom_from(KB,[':',H,B]),
+       metta_atom_stdlib_types([':',H,B])).
 
 %typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_arguments(Cmpd,Type,[List|_]),is_list(List).
 
@@ -1450,8 +1450,8 @@ metta_anew(Load,Src,OBO):- maybe_xform(OBO,XForm),!,metta_anew(Load,Src,XForm).
 metta_anew(Ch, Src, OBO):-  metta_interp_mode(Ch,Mode), !, metta_anew(Mode,Src,OBO).
 metta_anew(Load,_Src,OBO):- silent_loading,!,metta_anew1(Load,OBO).
 metta_anew(Load,Src,OBO):- 
-  not_compat_io((format('~N'), color_g_mesg('#0f0f0f',(write('  ; Action: '),writeq(Load=OBO))),
-   color_g_mesg('#ffa500', write_src(Src)))),
+  not_compat_io((format('~N'), color_g_mesg('#0f0f0f',(write('  ; Action: '),writeq(Load=OBO),nl)),
+   color_g_mesg('#ffa500', ((format('~N '), write_src(Src)))))),
    metta_anew1(Load,OBO),not_compat_io((format('~n'))).
 
 subst_vars_not_last(A,B):-
@@ -2105,7 +2105,7 @@ interactively_do_metta_exec0(From,Self,_TermV,Term,X,NamedVarsList,Was,Output,FO
         (((Complete==true ->! ; true)))))
                     *-> (ignore(Result = res(FOut)),ignore(Output = (FOut)))
                     ; (flag(result_num,ResNum,ResNum),(ResNum==0->(not_compatio(format('~N<no-results>~n~n')),!,true);true))),
-          only_compatio(write(']')),nl,
+                    only_compatio(write(']')),nl,
    ignore(Result = res(FOut)).
 
 
