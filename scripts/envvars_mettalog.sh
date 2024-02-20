@@ -55,9 +55,10 @@ _mettalog_autocomplete() {
         --shared-table-space=2000M --pce=false --packs --pldoc=8040 --python=false --tty=false 
         --test --fresh
         --timeout=90
+	--docker=false
         --exec=skip --eval=debug --case=debug --signals=false --threads=false ---load=
         ---eval=nodebug
-        --debug-on-interrupt=false
+        --debug-on-interrupt=false --breakable
         --on-error= 
         --on-warning="
 

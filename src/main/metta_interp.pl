@@ -259,7 +259,7 @@ user_io(G):- original_user_output(Out),
   setup_call_cleanup(set_prolog_IO(user_input,Out,user_error), G, set_prolog_IO(user_input,COut,user_error)), 
     set_prolog_IO(user_input,COut,user_error).
 
-only_compatio(G):- if_t(is_compatio,user_io(G)).
+only_compatio(G):- if_t((is_compatio, \+ is_mettalog),user_io(G)).
   if_compatio(G):- if_t(is_compatio,user_io(G)).
  not_compatio(G):- if_t( is_mettalog,user_io(G)).
 
@@ -1403,8 +1403,8 @@ metta_atom(KB,Atom):- get_metta_atom_from(KB,Atom).
 metta_defn(KB,Head,Body):- metta_defn(_Eq,KB,Head,Body).
 metta_defn(Eq,KB,Head,Body):- ignore(Eq = '='), get_metta_atom_from(KB,[Eq,Head,Body]).
 
-metta_type(S,H,B):- 
-   if_or_else(get_metta_atom_from(S,[':',H,B]),
+metta_type(KB,H,B):- 
+   if_or_else(get_metta_atom_from(KB,[':',H,B]),
 			  metta_atom_stdlib_types([':',H,B])).
 
 %typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_arguments(Cmpd,Type,[List|_]),is_list(List).
@@ -2105,7 +2105,7 @@ interactively_do_metta_exec0(From,Self,_TermV,Term,X,NamedVarsList,Was,Output,FO
         (((Complete==true ->! ; true)))))
                     *-> (ignore(Result = res(FOut)),ignore(Output = (FOut)))
                     ; (flag(result_num,ResNum,ResNum),(ResNum==0->(not_compatio(format('~N<no-results>~n~n')),!,true);true))),
-          only_compatio(write(']\n')),
+          only_compatio(write(']')),nl,
    ignore(Result = res(FOut)).
 
 
