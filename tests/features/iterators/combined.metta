@@ -1,4 +1,13 @@
 
+!(switch_to_mettalog!)
+
+(= (wait-for-key)
+ (, (println! "Press 'en-ee' key to continue...")
+    (case (get-single-char-fn)
+     
+    (((101 (halt! 6)))
+    (98 (repl!))
+    ($_ ())))))
 
 ; !(pragma! sandbox False) ;; in case we are in SWISH
 ; !(pragma! host-functions all) ;; throw a security exception if use is not logged in
@@ -13,13 +22,15 @@
 (= (positive $x) (> $x 0))
 
 ; plain old metta
+!(switch_to_mettarust!)
+
 !(let $i (get-atoms &iter1)
   ((double $i) (positive $i)))
 
-!(repl!)
+!(wait-for-key)
+!(switch_to_mettalog!)
 
 !(import! &self ../io/file-output.metta)
-
 
 (= (iterate $obj)
    (case ($obj (get-mettatype $obj))
@@ -35,30 +46,35 @@
         (do (add-atom $space (superpose $fill))) 
           $space)))
 
+(= (map $p2 $itr)
+   (lazy-map! $p2 (iterate $itr)))
 
-(= (test-diamond $fileout $constructor)
- (with-result-to-file $fileout
-  (let $obj (eval! $constructor)
-    (let $i (iterate $obj)
-      (zip (double $i) (positive $i))))))
+(= (test-diamond $filename $obj)
+   (let $isPositive (map (< 0) $obj)
+      (let $doubledNumbers (map (* 2) $obj)
+          (let $combinedStream (zip isPositive $doubledNumbers)
+             (with-results-to-file $filename combinedStream)))))
 
+!(switch_to_mettalog!)
 
-!(with-results-to-file "neg1_pos1.txt" (superpose -1 1 ))
+;; create our input file
+!(with-results-to-file "neg1_pos1.txt" (superpose (-1 1 )))
+
+;; display and wait 
 !(shell! "cat neg1_pos1.txt")
-!(repl!)
-
-!(test-diamond "from_file.txt" (open! "neg1_pos1.txt" input))
-!(shell! "cat from_file.txt")
-!(repl!)
-
+!(wait-for-key)
 
 !(test-diamond "space.txt" (new-space-with (-1 1)))
 !(shell! "cat space.txt")
-!(repl!)
+!(wait-for-key)
 
 !(test-diamond "fifo.txt" (fifo (-1 1)))
 !(shell! "cat fifo.txt")
-!(repl!)
+!(wait-for-key)
+
+!(test-diamond "from_file.txt" (open! "neg1_pos1.txt" input))
+!(shell! "cat from_file.txt")
+!(wait-for-key)
 
 
 

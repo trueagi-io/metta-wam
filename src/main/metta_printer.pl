@@ -70,6 +70,9 @@ with_concepts(TF, Goal) :-
 % Various 'write_src' and 'write_src0' rules are handling the writing of the source,
 % dealing with different types of values, whether they are lists, atoms, numbers, strings, compounds, or symbols.
 write_src(V):- notrace(write_src0(V)).
+write_src(V,O):- atomic(V),is_stream(V),!,write_src(V,O,_).
+write_src(V,O):- notrace(write_src0(V)),V=O.
+write_src(Stream,V,O):- notrace(with_output_to(Stream,write_src0(V))),O=V.
 write_src0(V):- V ==[],!,write('()').
 write_src0(V):- allow_concepts,!,with_concepts('False',write_src1(V)),flush_output.
 write_src0(V):- is_list(V),!,pp_sexi(V).
@@ -87,7 +90,7 @@ is_final_write('$VAR'(S)):- string(S), atom_concat('_',N,S),write('$'),write(N).
 
 % Handling more cases for 'write_src1', when the value is a number, a string, a symbol, or a compound.
 write_src1(V) :- is_final_write(V),!.
-write_src1((USER:Body)) :- USER==user,!, write_src(Body).
+write_src1((USER:Body)) :- USER==user,!, write_src0(Body).
 write_src1([F|V]):- atom(F), is_list(V),write_mobj(F,V),!.
 write_src1((Head:-Body)) :- !, print_metta_clause0(Head,Body).
 write_src1(''):- !, write('()').
@@ -95,7 +98,7 @@ write_src1(V):- number(V),!, writeq(V).
 write_src1(V):- string(V),!, writeq(V).
 
 % Continuing with 'write_src1', 'write_mobj', and related rules,
-% handling different cases based on the value’s type and structure, and performing the appropriate writing action.
+% handling different cases based on the valueï¿½s type and structure, and performing the appropriate writing action.
 write_src1(V):- symbol(V), should_quote(V),!,
   symbol_string(V,S),writeq(S).
 write_src1(V):- symbol(V),!,write(V).
@@ -105,6 +108,7 @@ write_src1(V):- pp_sex(V),!.
 write_mobj(V) :- is_final_write(V),!.
 write_mobj(V):- ( \+ compound(V) ; is_list(V)),!, write_src0(V).
 
+write_mobj((USER:Body)) :- USER==user,!, write_src0(Body).
 write_mobj(V):- compound_name_list(V,F,Args),write_mobj(F,Args),!.
 write_mobj(V):- writeq(V).
 write_mobj(exec,[V]):- !, write('!'),write_src(V).

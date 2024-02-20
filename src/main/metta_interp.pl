@@ -90,16 +90,16 @@ set_output_stream :- keep_output -> nullify_output;  unnullify_output.
 
 switch_to_mettalog:- 
   unnullify_output,  
-  set_metta_lag('compatio',false),
-  set_metta_lag('compat',false),
-  set_metta_lag('log',true),
+  set_option_value('compatio',false),
+  set_option_value('compat',false),
+  set_option_value('log',true),
   set_output_stream.
   
 switch_to_mettarust:- 
   nullify_output,  
-  set_metta_lag('compatio',true),
-  set_metta_lag('compat',true),
-  set_metta_lag('log',false),
+  set_option_value('compatio',true),
+  set_option_value('compat',true),
+  set_option_value('log',false),
   set_output_stream.
   
 
@@ -1424,13 +1424,12 @@ asserted_metta_atom(KB,HeadBody):- asserted_metta(KB,HeadBody,_,_).
 metta_anew1(Load,_OBO):- var(Load),trace,!.
 metta_anew1(Ch,OBO):-  metta_interp_mode(Ch,Mode), !, metta_anew1(Mode,OBO).
 metta_anew1(Load,OBO):- maybe_xform(OBO,XForm),!,metta_anew1(Load,XForm).
-metta_anew1(load,OBO):- OBO= metta_atom(Space,Atom),!,'add-atom'(Space, Atom).
-metta_anew1(unload,OBO):- OBO= metta_atom(Space,Atom),!,'remove-atom'(Space, Atom).
 
-metta_anew1(load,OBO):- !, must_det_ll((load_hook(load,OBO),
-   subst_vars(OBO,Cl),pfcAdd(Cl))). %to_metta(Cl).
-metta_anew1(load,OBO):- !, must_det_ll((load_hook(load,OBO),
-   subst_vars(OBO,Cl),show_failure(pfcAdd(Cl)))). %to_metta(Cl).
+%metta_anew1(load,OBO):- OBO= asserted_metta_atom(Space,Atom),!,'add-atom'(Space, Atom).
+%metta_anew1(load,OBO):- !, must_det_ll((load_hook(load,OBO), subst_vars(OBO,Cl),pfcAdd(Cl))). %to_metta(Cl).
+metta_anew1(load,OBO):- !, must_det_ll((load_hook(load,OBO), subst_vars(OBO,Cl),show_failure(pfcAdd(Cl)))). %to_metta(Cl).
+
+%metta_anew1(unload,OBO):- OBO=asserted_metta_atom(Space,Atom),!,'remove-atom'(Space, Atom).
 metta_anew1(unload,OBO):- subst_vars(OBO,Cl),load_hook(unload,OBO),
   expand_to_hb(Cl,Head,Body),
   predicate_property(Head,number_of_clauses(_)),

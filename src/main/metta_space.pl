@@ -479,6 +479,7 @@ print_items_list(X):- is_list(X),!,print_list_as_sexpression(X).
 print_items_list(X):- write_src(X).
 
 pp_sexi(V) :- is_final_write(V),!.
+pp_sexi((USER:Body)) :- USER==user,!, pp_sex(Body).
 pp_sexi([H|T]) :- is_list(T),!,pp_sexi_l([H|T]).
 % Compound terms.
 %pp_sex(Term) :- compound(Term), Term =.. [Functor|Args], write('('),format('(~w ',[Functor]), write_args_as_sexpression(Args), write(')').
