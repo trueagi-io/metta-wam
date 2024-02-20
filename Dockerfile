@@ -16,31 +16,33 @@ RUN chsh -s /bin/bash user
 ENV HOME=/home/${USER}
 WORKDIR ${HOME}
 
+# Install hyperonpy
+
 # MeTTaLog is already taking enough time we will have a separate one for Rustr MeTTa
-#RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > /tmp/rustup.sh
-#RUN sh /tmp/rustup.sh -y && rm /tmp/rustup.sh
-#ENV PATH="${PATH}:/home/user/.cargo/bin"
-#RUN cargo install cbindgen
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > /tmp/rustup.sh
+RUN sh /tmp/rustup.sh -y && rm /tmp/rustup.sh
+ENV PATH="${PATH}:/home/user/.cargo/bin"
+RUN cargo install cbindgen
 
-#RUN python3 -m pip install conan==1.60.2 pip==23.1.2
-#ENV PATH="${PATH}:/home/user/.local/bin"
-#RUN conan profile new --detect default
+RUN python3 -m pip install conan==1.60.2 pip==23.1.2
+ENV PATH="${PATH}:/home/user/.local/bin"
+RUN conan profile new --detect default
 
-#RUN git clone https://github.com/trueagi-io/hyperon-experimental.git
-#WORKDIR ${HOME}/hyperon-experimental
-#RUN mkdir build
+RUN git clone https://github.com/trueagi-io/hyperon-experimental.git
+WORKDIR ${HOME}/hyperon-experimental
+RUN mkdir build
 
-#WORKDIR ${HOME}/hyperon-experimental/lib
-#RUN cargo build
-#RUN cargo test
+WORKDIR ${HOME}/hyperon-experimental/lib
+RUN cargo build
+RUN cargo test
 
-#WORKDIR ${HOME}/hyperon-experimental/build
-#RUN cmake ..
-#RUN make
-#RUN make check
+WORKDIR ${HOME}/hyperon-experimental/build
+RUN cmake ..
+RUN make
+RUN make check
 
-#WORKDIR ${HOME}/hyperon-experimental
-#RUN python3 -m pip install -e ./python[dev]
+WORKDIR ${HOME}/hyperon-experimental
+RUN python3 -m pip install -e ./python[dev]
 
 # Install MeTTaLog
 

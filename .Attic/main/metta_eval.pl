@@ -1,6 +1,12 @@
 %
 % post match modew
 %:- style_check(-singleton).
+:- multifile(nop/1).
+:- meta_predicate(nop(0)).
+:- multifile(fake_notrace/1).
+:- meta_predicate(fake_notrace(0)).
+:- meta_predicate(color_g_mesg(+,0)).
+:- multifile(color_g_mesg/2).
 
 self_eval0(X):- \+ callable(X),!.
 self_eval0(X):- is_valid_nb_state(X),!.
@@ -105,7 +111,7 @@ eval(Eq,RetType,Depth,Self,[F|X],Y):-
 */
 
 eval(Eq,RetType,Depth,Self,X,Y):- atom(Eq),  ( Eq \== ('='),  Eq \== ('match')) ,!,
-   call(Eq,'=',RetType,Depth,Self,X,Y).
+   call(call,Eq,'=',RetType,Depth,Self,X,Y).
 
 
 
@@ -114,7 +120,8 @@ eval(Eq,RetType,Depth,Self,X,Y):-
   !,
   eval_11(Eq,RetType,Depth,Self,X,Y).
 eval(Eq,RetType,Depth,Self,X,Y):-
-  nop(notrace((no_repeats_var(YY)),
+  nop(
+   notrace((no_repeats_var(YY)),
   D1 is Depth-1)),!,
   eval_11(Eq,RetType,D1,Self,X,Y),
    notrace(( \+ (Y\=YY))).
@@ -130,7 +137,6 @@ debugging_metta(G):- fake_notrace((is_debugging((eval))->ignore(G);true)).
 
 
 :- nodebug(metta(eval)).
-
 
 w_indent(Depth,Goal):-
   \+ \+ fake_notrace(ignore(((

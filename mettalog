@@ -114,6 +114,7 @@ never_compile=0
 compatio=false
 #compatio=false
 CMD_TIMEOUT=0
+no_docker=false
 repl_flag=auto
 use_rc_file=~/.mettalogrc
 debug_this_script=false
@@ -138,6 +139,76 @@ function resolve_upward {
   done
 }
 
+# Initialize the variable to indicate whether to use the test script
+use_test_script=0
+
+# Iterate over all command-line arguments
+for arg in "$@"; do
+
+
+    if [[ "$arg" == "--compatio" ]]; then
+	#debug_this_script=false
+	compatio=true        
+    fi
+
+    if [[ "$arg" == "--debug" ]]; then
+        debug_this_script=true
+	compatio=false
+    fi
+
+    if [[ "$arg" == "--docker=false" ]]; then
+        no_docker=true
+    fi
+
+    # Check if the argument is a directory
+    if [ -d "$arg" ]; then
+        use_test_script=1
+    else
+         # Check for specific flags
+         case "$arg" in
+             --fres*|--fail*|--contin*|--clean)
+                 use_test_script=1
+                 ;;
+         esac
+    fi
+done
+
+
+
+quoted_args=() # Initialize an empty array to store the results
+for arg in "$@"; do
+  # Check if the argument contains spaces, exclamation marks, backslashes, or quote characters
+  if [[ $arg =~ [[:space:]] || $arg == *'!'* || $arg == *'\\'* || $arg == *\"* || $arg == *\'* ]]; then
+    # The argument needs to be quoted
+    quoted_arg=$(quote_arg "$arg")
+    quoted_args+=("$quoted_arg")
+  else
+    # The argument does not need quoting
+    quoted_args+=("$arg")
+  fi
+done
+
+if [ "$#" -gt 0 ]; then
+    : #echo "ARGS: ${quoted_args[*]}"
+fi
+
+
+
+
+# Execute the test script if the condition is met
+if [[ "$use_test_script" -eq 1 ]]; then
+    exec ./scripts/test_in_metta.sh -y --report=n $(quote_args_if_needed $@)
+fi
+
+for arg in "$@"; do
+   if [[ "$arg" == "--debugable" ]]; then
+	scripts/send_keys_debug.sh $(quote_args_if_needed $@)
+    fi
+done
+
+#export TEE_FILE=${TEE_FILE:-"$METTALOG_DIR/TEE.ansi"}
+
+if [ "$no_docker" == "false" ]; then
 # Check if the script is running inside a Docker container
 if [ ! -f /.dockerenv ]; then
     # Define the name of the Docker image
@@ -185,70 +256,8 @@ if [ ! -f /.dockerenv ]; then
         DEBUG "Docker is not installed. Continuing with script..."
     fi
 fi
-
-
-
-quoted_args=() # Initialize an empty array to store the results
-for arg in "$@"; do
-  # Check if the argument contains spaces, exclamation marks, backslashes, or quote characters
-  if [[ $arg =~ [[:space:]] || $arg == *'!'* || $arg == *'\\'* || $arg == *\"* || $arg == *\'* ]]; then
-    # The argument needs to be quoted
-    quoted_arg=$(quote_arg "$arg")
-    quoted_args+=("$quoted_arg")
-  else
-    # The argument does not need quoting
-    quoted_args+=("$arg")
-  fi
-done
-
-if [ "$#" -gt 0 ]; then
-    : #echo "ARGS: ${quoted_args[*]}"
 fi
 
-
-
-# Initialize the variable to indicate whether to use the test script
-use_test_script=0
-
-# Iterate over all command-line arguments
-for arg in "$@"; do
-
-
-    if [[ "$arg" == "--compatio" ]]; then
-	#debug_this_script=false
-	compatio=true        
-    fi
-
-    if [[ "$arg" == "--debug" ]]; then
-        debug_this_script=true
-	compatio=false
-    fi
-
-    # Check if the argument is a directory
-    if [ -d "$arg" ]; then
-        use_test_script=1
-    else
-         # Check for specific flags
-         case "$arg" in
-             --fres*|--fail*|--contin*|--clean)
-                 use_test_script=1
-                 ;;
-         esac
-    fi
-done
-
-# Execute the test script if the condition is met
-if [[ "$use_test_script" -eq 1 ]]; then
-    exec ./scripts/test_in_metta.sh -y --report=n $(quote_args_if_needed $@)
-fi
-
-for arg in "$@"; do
-   if [[ "$arg" == "--debugable" ]]; then
-	scripts/send_keys_debug.sh $(quote_args_if_needed $@)
-    fi
-done
-
-#export TEE_FILE=${TEE_FILE:-"$METTALOG_DIR/TEE.ansi"}
 
 set -e
 
