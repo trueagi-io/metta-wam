@@ -502,7 +502,7 @@ function handle_args {
         case $arg in
 
            --v*)
-                PYSWIP_VERSION="pyswip${arg#*v}"
+                PYSWIP_VERSION="${arg#*v}"
 		rm -f "${DefaultSav}"
 		never_compile=1
                 continue

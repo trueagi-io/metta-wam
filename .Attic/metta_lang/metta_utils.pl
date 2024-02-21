@@ -222,8 +222,8 @@ compound_name_arg(G,MD,Goal):- compound(G),!, compound_name_arguments(G,MD,[Goal
 :- dynamic(user:message_hook/3).
 %user:message_hook(Term, Kind, Lines):- error==Kind, itrace,fbug(user:message_hook(Term, Kind, Lines)),trace,fail.
 user:message_hook(Term, Kind, Lines):- 
-   fail, error==Kind,
-   unlooped_fbug(er:message_hook(Term, Kind, Lines)),fail.
+   fail, error==Kind,  
+   fbug(message_hook(Term, Kind, Lines)),fail.
 
 :- meta_predicate(must_det_ll(0)).
 :- meta_predicate(must_det_ll1(1,0)).

@@ -21,8 +21,8 @@
 :- set_prolog_flag(encoding,utf8).
 %:- set_prolog_flag(encoding,octet).
 /*
-Now PASSING NARS.TEC:\opt\logicmoo_workspace\packs_sys\logicmoo_opencog\MeTTa\hyperon-wam\src\pyswip\metta_interp.pl
-C:\opt\logicmoo_workspace\packs_sys\logicmoo_opencog\MeTTa\hyperon-wam\src\pyswip1\metta_interp.pl
+Now PASSING NARS.TEC:\opt\logicmoo_workspace\packs_sys\logicmoo_opencog\MeTTa\vspace-metta\metta_vspace\pyswip\metta_interp.pl
+C:\opt\logicmoo_workspace\packs_sys\logicmoo_opencog\MeTTa\vspace-metta\metta_vspace\pyswip1\metta_interp.pl
 STS1.01)
 Now PASSING TEST-SCRIPTS.B5-TYPES-PRELIM.08)
 Now PASSING TEST-SCRIPTS.B5-TYPES-PRELIM.14)
@@ -261,7 +261,7 @@ get_flag_value(_,true).
    forall(option_value_def(Opt,Default),set_option_value(Opt,Default))))).
 
 %process_option_value_def:- \+ option_value('python',false), skip(ensure_loaded(metta_python)).
-process_option_value_def:- option_value('python',load), ensure_loaded(src/main/metta_python).
+process_option_value_def:- option_value('python',load), ensure_loaded(metta_vspace/pyswip/metta_python).
 process_option_value_def.
 
 
@@ -345,7 +345,7 @@ save_html_of(Filename):-
   file_name_extension(Base,'metta.html',HtmlFilename),
   loonit_reset,
   tee_file(TEE_FILE),
-  writeln('<br/><a href="https://github.com/logicmoo/hyperon-wam/blob/main/MeTTaLog.md">Return to Summaries</a><br/>'),
+  writeln('<br/><a href="https://github.com/logicmoo/vspace-metta/blob/main/MeTTaLog.md">Return to Summaries</a><br/>'),
   sformat(S,'ansi2html -u < "~w" > "~w" ',[TEE_FILE,HtmlFilename]),
   writeln(doing(S)),
   ignore(shell(S)))).
@@ -438,7 +438,7 @@ debug_only(_What,G):- ignore((fail,notrace(catch_warn(G)))).
 'False':- fail.
 
 
-'mettalog::vspace-main':- repl.
+'metta_learner::vspace-main':- repl.
 
 into_underscores(D,U):- atom(D),!,atomic_list_concat(L,'-',D),atomic_list_concat(L,'_',U).
 into_underscores(D,U):- descend_and_transform(into_underscores,D,U),!.
@@ -1876,8 +1876,8 @@ ensure_mettalog_system:-
     system:use_module(library(pairs)),
     user:use_module(library(swi_ide)),
     user:use_module(library(prolog_profile)),
-    ensure_loaded('./src/main/flybase_convert'),
-    ensure_loaded('./src/main/flybase_main'),
+    ensure_loaded('./metta_vspace/pyswip/flybase_convert'),
+    ensure_loaded('./metta_vspace/pyswip/flybase_main'),
     autoload_all,
     make,
     autoload_all,
