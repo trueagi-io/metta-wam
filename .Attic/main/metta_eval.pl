@@ -22,22 +22,6 @@ self_eval0('True'). self_eval0('False'). % self_eval0('F').
 self_eval0('Empty').
 self_eval0(X):- atom(X),!, \+ nb_current(X,_),!.
 
-% we use lazy lists a superposed closures
-is_lazy_list(Var):- var(Var),!,get_attr(Var,lazy_list,_),!.
-is_lazy_list([_|T]):- !, is_lazy_list(T).
-
-list_iter(Iter,L)  :- lazy_iter3(Iter,nth0,L).
-space_iter(Iter,L) :- lazy_iter2(Iter,metta_atom,L).
-lazy_map(P2,Iter,L):- lazy_iter2(Iter,P2,L). 
-
-
-lazy_iter2(Iter,P2,L) :- lazy_list(lazy_iter2(Iter,P2), state(0), L).
-lazy_iter2(List,P2,state(N),state(N1),V):- is_lazy_list(List),!,member(E,List),N1 is N +1,call(P2,E,V). 
-lazy_iter2(Iter,P2,state(N),state(N1),V):- N1 is N +1,call(P2,Iter,V).
-lazy_iter3(Iter,P3,L) :- lazy_list(lazy_iter3(Iter,P3), state(0), L).   
-lazy_iter3(Iter,P3,state(N),state(N1),V):- N1 is N +1,call(P3,N,Iter,V).
-     
-
 coerce(Type,Value,Result):- nonvar(Value),Value=[Echo|EValue], Echo == echo, EValue = [RValue],!,coerce(Type,RValue,Result).
 coerce(Type,Value,Result):- var(Type), !, Value=Result, freeze(Type,coerce(Type,Value,Result)).
 coerce('Atom',Value,Result):- !, Value=Result.
@@ -156,24 +140,24 @@ debugging_metta(G):- fake_notrace((is_debugging((eval))->ignore(G);true)).
 
 w_indent(Depth,Goal):-
   \+ \+ fake_notrace(ignore(((
-    format('~N'),
-    setup_call_cleanup(forall(between(Depth,101,_),write('  ')),Goal, format('~N')))))).
+    'format'('~N'),
+    setup_call_cleanup(forall(between(Depth,101,_),write('  ')),Goal, 'format'('~N')))))).
 indentq(Depth,Term):-
   \+ \+ fake_notrace(ignore(((
-    format('~N'),
-    setup_call_cleanup(forall(between(Depth,101,_),write('  ')),format('~q',[Term]),
-    format('~N')))))).
+    'format'('~N'),
+    setup_call_cleanup(forall(between(Depth,101,_),write('  ')),'format'('~q',[Term]),
+    'format'('~N')))))).
 
 
 indentq(DR,EX,AR,retval(Term)):-nonvar(Term),!,indentq(DR,EX,AR,Term).
 indentq(DR,EX,AR,Term):-
   \+ \+
    color_g_mesg('#2f2f2f',
-      fake_notrace(ignore((( format('~N;'),
-      format('~` t~d~5|:', [EX]),
-      format('~` t~d~8|', [DR]),
+      fake_notrace(ignore((( 'format'('~N;'),
+      'format'('~` t~d~5|:', [EX]),
+      'format'('~` t~d~8|', [DR]),
       forall(between(1,DR,_),write('     |')),write('-'),write(AR),with_indents(false,write_src(Term)),
-      format('~N')))))).
+      'format'('~N')))))).
 
 
 with_debug(Flag,Goal):- is_debugging(Flag),!, call(Goal).
@@ -229,38 +213,49 @@ eval_00(Eq,RetType,Depth,Self,X,YO):-
 
 eval_11(_Eq,_RetType,_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
 eval_11(Eq,RetType,Depth,Self,X,Y):- 
-   \+ is_debugging((eval)),!,
+   \+ is_debugging((eval)),
+   !,
    D1 is Depth-1,
    eval_00(Eq,RetType,D1,Self,X,Y).
 eval_11(Eq,RetType,Depth,Self,X,Y):-
-   must_det_ll((
+	D1 is Depth-1,
+	notrace(flag(eval_num,EX0,EX0+1)),
+    trace_eval(eval_00(Eq,RetType),eval_00,D1,Self,X,Y).
 
-   fake_notrace((flag(eval_num,EX0,EX0+1),
+
+trace_eval(P4,TN,D1,Self,X,Y):-
+   must_det_ll((
+   fake_notrace((flag(eval_num,EX0,EX0),
    EX is EX0 mod 500,
-   D1 is Depth-1,
    DR is 99 - (D1 mod 100),
    PrintRet = _)),
-   option_else('trace-length',Max,100),
+   option_else('trace-length',Max,500),
    option_else('trace-depth',DMax,30),
    quietly((if_t((nop(stop_rtrace),EX>Max), (set_debug(eval,false),MaxP1 is Max+1, 
          %set_debug(overflow,false),
-         nop(format('; Switched off tracing. For a longer trace: !(pragma! trace-length ~w)',[MaxP1])),
+         nop('format'('; Switched off tracing. For a longer trace: !(pragma! trace-length ~w)',[MaxP1])),
          nop((start_rtrace,rtrace)))))),
    nop(notrace(no_repeats_var(YY))),
 
-   if_t(DR<DMax,if_trace((eval), 
-      (PrintRet=1, indentq(DR,EX, '-->',eval(X))))),
+   if_t(DR<DMax,
+    if_trace((eval), 
+      (PrintRet=1, indentq(DR,EX, '-->',[TN,X])))),
+
    Ret=retval(fail))),!,
 
-   call_cleanup((
-      (eval_00(Eq,RetType,D1,Self,X,Y)*->true;
-        (fail,trace,(eval_00(Eq,RetType,D1,Self,X,Y)))),
-      ignore((fake_notrace(( \+ (Y\=YY), nb_setarg(1,Ret,Y)))))),
+   (Display= ((Ret\=@=retval(fail),nonvar(Y)) -> indentq(DR,EX,'<--',[TN,Y]); indentq(DR,EX,'<--',[TN,Ret]))),
 
-      (PrintRet==1 -> indentq(DR,EX,'<--',Ret) ;
-      fake_notrace(ignore(((Y\=@=X,
-      if_t(DR<DMax,if_trace((eval),indentq(DR,EX,'<--',Ret))))))))).
-%  (Ret\=@=retval(fail)->true;(fail,trace,(eval_00(Eq,RetType,D1,Self,X,Y)),fail)).
+   call_cleanup((
+      (call(P4,D1,Self,X,Y)*->true;
+        (fail,trace,(call(P4,D1,Self,X,Y)))),
+      ignore((fake_notrace(( \+ (Y\=YY), nb_setarg(1,Ret,Y)))))),
+    % cleanup 
+      (PrintRet==1 -> call(Display) ;
+       (fake_notrace(ignore((( % Y\=@=X,
+         if_t(DR<DMax,if_trace((eval),call(Display)))))))))),
+   Ret\=@=retval(fail).
+
+%  (Ret\=@=retval(fail)->true;(fail,trace,(call(P4,D1,Self,X,Y)),fail)).
 
 
 
@@ -334,15 +329,16 @@ eval_20(Eq,RetType,Depth,Self,['!',Cond],Res):- !, call(eval(Eq,RetType,Depth,Se
 eval_20(Eq,RetType,Depth,Self,['rtrace!',Cond],Res):- !, rtrace(eval(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(Eq,RetType,Depth,Self,['trace',Cond],Res):- !, with_debug(eval,eval(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(Eq,RetType,Depth,Self,['time',Cond],Res):- !, time_eval(eval(Cond),eval(Eq,RetType,Depth,Self,Cond,Res)).
-eval_20(Eq,RetType,Depth,Self,['print',Cond],Res):- !, eval(Eq,RetType,Depth,Self,Cond,Res),format('~N'),print(Res),format('~N').
+eval_20(Eq,RetType,Depth,Self,['print',Cond],Res):- !, eval(Eq,RetType,Depth,Self,Cond,Res),'format'('~N'),print(Res),'format'('~N').
 % !(println! $1)
-eval_20(Eq,RetType,Depth,Self,['println!'|Cond],Res):- !, maplist(eval(Eq,RetType,Depth,Self),Cond,[Res|Out]),
-   format('~N'),maplist(write_src,[Res|Out]),format('~N').
+eval_20(Eq,RetType,Depth,Self,['println!'|Cond],Res):- !, 
+  maplist(eval(Eq,RetType,Depth,Self),Cond,[Res|Out]),
+    'format'('~N'),maplist(write_src,[Res|Out]),'format'('~N').
 eval_20(Eq,RetType,Depth,Self,['trace!',A|Cond],Res):- !, maplist(eval(Eq,RetType,Depth,Self),[A|Cond],[AA|Result]),
-   last(Result,Res), format('~N'),maplist(write_src,[AA]),format('~N').
+   last(Result,Res), 'format'('~N'),maplist(write_src,[AA]),'format'('~N').
 
-%eval_20(Eq,RetType,Depth,Self,['trace!',A,B],C):- !,eval(Eq,RetType,Depth,Self,B,C),format('~N'),fbug(['trace!',A,B]=C),format('~N').
-%eval_20(Eq,RetType,_Dpth,_Slf,['trace!',A],A):- !, format('~N'),fbug(A),format('~N').
+%eval_20(Eq,RetType,Depth,Self,['trace!',A,B],C):- !,eval(Eq,RetType,Depth,Self,B,C),'format'('~N'),fbug(['trace!',A,B]=C),'format'('~N').
+%eval_20(Eq,RetType,_Dpth,_Slf,['trace!',A],A):- !, 'format'('~N'),fbug(A),'format'('~N').
 
 eval_20(Eq,RetType,_Dpth,_Slf,List,YY):- is_list(List),maplist(self_eval,List),List=[H|_], \+ atom(H), !,Y=List,do_expander(Eq,RetType,Y,YY).
 
@@ -578,7 +574,7 @@ eval_20(Eq,RetType,Depth,Self,['case',A,CL|T],Res):- !,
    findall(Key-Value,
      (nth0(Nth,CASES,Case0),
        (is_case(Key,Case0,Value),
-        if_trace(metta(case),(format('~N'),writeqln(c(Nth,Key)=Value))))),KVs),!,
+        if_trace(metta(case),('format'('~N'),writeqln(c(Nth,Key)=Value))))),KVs),!,
    eval_case(Eq,RetType,Depth,Self,A,KVs,Res).
 
 eval_case(Eq,CaseRetType,Depth,Self,A,KVs,Res):-
@@ -1093,7 +1089,6 @@ eval_20(Eq,RetType,Depth,Self,['or',X,Y],TF):- !,
 eval_20(Eq,RetType,Depth,Self,['not',X],TF):- !,
    as_tf(( \+ eval_args_true(Eq,RetType,Depth,Self,X)), TF).
 
-
 eval_20(Eq,RetType,Depth,Self,['eval',X],TF):- !,
    eval_args(Eq,RetType,Depth,Self,X, TF).
 
@@ -1105,8 +1100,12 @@ eval_20(Eq,RetType,Depth,Self,['number-of',X,N],TF):- !,
    bagof_eval(Eq,RetType,Depth,Self,X,ResL),
    length(ResL,N), true_type(Eq,RetType,TF).
 
+eval_20(Eq,RetType,Depth,Self,['findall!',Template,X],ResL):- !,
+   findall(Template,eval_args(Eq,RetType,Depth,Self,X,_),ResL).
 
-   eval_20(Eq,RetType,Depth,Self,['limit!',N,E],R):- !, eval_20(Eq,RetType,Depth,Self,['limit',N,E],R).
+
+
+eval_20(Eq,RetType,Depth,Self,['limit!',N,E],R):- !, eval_20(Eq,RetType,Depth,Self,['limit',N,E],R).
 eval_20(Eq,RetType,Depth,Self,['limit',NE,E],R):-  !,
    eval('=','Number',Depth,Self,NE,N),
    limit(N,eval_ne(Eq,RetType,Depth,Self,E,R)).
@@ -1368,7 +1367,8 @@ eval_80(Eq,RetType,_Depth,_Self,[AE|More],TF):-
   current_predicate(Pred/Len),
   %fake_notrace( \+ is_user_defined_goal(Self,[AE|More])),!,
   %adjust_args(Depth,Self,AE,More,Adjusted),
-  More = Adjusted,
+  maplist(as_prolog, More , Adjusted),
+  if_trace(host;prolog,print_tree(apply(Pred,Adjusted))),
   catch_warn(efbug(show_call,eval_call(apply(Pred,Adjusted),TF))),
   check_returnval(Eq,RetType,TF).
 
@@ -1420,9 +1420,9 @@ eval_80(Eq,RetType,_Depth,_Self,[AE|More],Res):-
   \+ (atom(AE), atom_concat(_,'-p',AE)),
   %fake_notrace( \+ is_user_defined_goal(Self,[AE|More])),!,
   %adjust_args(Depth,Self,AE,More,Adjusted),!,
-  More = Adjusted,
   Len1 is Len+1,
   current_predicate(Pred/Len1),
+  maplist(as_prolog,More,Adjusted),
   append(Adjusted,[Res],Args),!,
   if_trace(host;prolog,print_tree(apply(Pred,Args))),
   efbug(show_call,catch_warn(apply(Pred,Args))),

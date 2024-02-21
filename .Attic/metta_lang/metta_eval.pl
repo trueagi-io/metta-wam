@@ -111,7 +111,7 @@ eval(Eq,RetType,Depth,Self,[F|X],Y):-
 */
 
 eval(Eq,RetType,Depth,Self,X,Y):- atom(Eq),  ( Eq \== ('='),  Eq \== ('match')) ,!,
-   call(Eq,'=',RetType,Depth,Self,X,Y).
+   call(call,Eq,'=',RetType,Depth,Self,X,Y).
 
 
 
@@ -120,7 +120,8 @@ eval(Eq,RetType,Depth,Self,X,Y):-
   !,
   eval_11(Eq,RetType,Depth,Self,X,Y).
 eval(Eq,RetType,Depth,Self,X,Y):-
-  nop(notrace((no_repeats_var(YY)),
+  nop(
+   notrace((no_repeats_var(YY)),
   D1 is Depth-1)),!,
   eval_11(Eq,RetType,D1,Self,X,Y),
    notrace(( \+ (Y\=YY))).
@@ -217,7 +218,7 @@ eval_11(Eq,RetType,Depth,Self,X,Y):-
   D1 is Depth-1,
   eval_00(Eq,RetType,D1,Self,X,Y).
 eval_11(Eq,RetType,Depth,Self,X,Y):-
-  ((
+   must_det_ll((
 
   fake_notrace((flag(eval_num,EX0,EX0+1),
   EX is EX0 mod 500,
@@ -226,22 +227,25 @@ eval_11(Eq,RetType,Depth,Self,X,Y):-
   PrintRet = _)),
   option_else('trace-length',Max,100),
   option_else('trace-depth',DMax,30),
-  quietly((if_t((nop(stop_rtrace),EX>Max), (set_debug(eval,false),MaxP1 is Max+1, %set_debug(overflow,false),
-      nop(format('; Switched off tracing. For a longer trace: !(pragma! trace-length ~w)',[MaxP1])),nop((start_rtrace,rtrace)))))),
+   quietly((if_t((nop(stop_rtrace),EX>Max), (set_debug(eval,false),MaxP1 is Max+1, 
+         %set_debug(overflow,false),
+         nop(format('; Switched off tracing. For a longer trace: !(pragma! trace-length ~w)',[MaxP1])),
+         nop((start_rtrace,rtrace)))))),
   nop(notrace(no_repeats_var(YY))),
 
-  if_t(DR<DMax,if_trace((eval),(PrintRet=1, indentq(DR,EX, '-->',eval(X))))),
-  Ret=retval(fail))),
+   if_t(DR<DMax,if_trace((eval), 
+      (PrintRet=1, indentq(DR,EX, '-->',eval(X))))),
+   Ret=retval(fail))),!,
 
   call_cleanup((
-    (eval_00(Eq,RetType,D1,Self,X,Y)*->true;(fail,trace,(eval_00(Eq,RetType,D1,Self,X,Y)))),
-    fake_notrace(( \+ (Y\=YY), nb_setarg(1,Ret,Y)))),
+      (eval_00(Eq,RetType,D1,Self,X,Y)*->true;
+        (fail,trace,(eval_00(Eq,RetType,D1,Self,X,Y)))),
+      ignore((fake_notrace(( \+ (Y\=YY), nb_setarg(1,Ret,Y)))))),
 
     (PrintRet==1 -> indentq(DR,EX,'<--',Ret) ;
     fake_notrace(ignore(((Y\=@=X,
-      if_t(DR<DMax,if_trace((eval),indentq(DR,EX,'<--',Ret))))))))),
-
-  (Ret\=@=retval(fail)->true;(fail,trace,(eval_00(Eq,RetType,D1,Self,X,Y)),fail)).
+      if_t(DR<DMax,if_trace((eval),indentq(DR,EX,'<--',Ret))))))))).
+%  (Ret\=@=retval(fail)->true;(fail,trace,(eval_00(Eq,RetType,D1,Self,X,Y)),fail)).
 
 
 
@@ -317,7 +321,8 @@ eval_20(Eq,RetType,Depth,Self,['trace',Cond],Res):- !, with_debug(eval,eval(Eq,R
 eval_20(Eq,RetType,Depth,Self,['time',Cond],Res):- !, time_eval(eval(Cond),eval(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(Eq,RetType,Depth,Self,['print',Cond],Res):- !, eval(Eq,RetType,Depth,Self,Cond,Res),format('~N'),print(Res),format('~N').
 % !(println! $1)
-eval_20(Eq,RetType,Depth,Self,['println!'|Cond],Res):- !, maplist(eval(Eq,RetType,Depth,Self),Cond,[Res|Out]),
+eval_20(Eq,RetType,Depth,Self,['println!'|Cond],Res):- !, 
+  maplist(eval(Eq,RetType,Depth,Self),Cond,[Res|Out]),
    format('~N'),maplist(write_src,[Res|Out]),format('~N').
 eval_20(Eq,RetType,Depth,Self,['trace!',A|Cond],Res):- !, maplist(eval(Eq,RetType,Depth,Self),[A|Cond],[AA|Result]),
    last(Result,Res), format('~N'),maplist(write_src,[AA]),format('~N').
@@ -774,12 +779,12 @@ eval_in_steps_or_same(Eq,RetType,Depth,Self,X,Y):-eval_in_steps_some_change(Eq,R
 eval_in_steps_or_same(Eq,RetType,_Dpth,_Slf,X,Y):- X=Y,check_returnval(Eq,RetType,Y).
 
   % (fail,return_empty([],Template))).
-
+possible_type(_Self,_Var,_RetTypeV).
 
 eval_20(Eq,RetType,Depth,Self,['let',A,A5,AA],OO):- !,
   %(var(A)->true;trace),
-  eval(Eq,_RetTypeV,Depth,Self,A5,AR),
-  A=AR,
+  possible_type(Self,A,RetTypeV),
+  eval(Eq,RetTypeV,Depth,Self,A5,AR), A=AR,
   eval(Eq,RetType,Depth,Self,AA,OO).
 
 %eval_20(Eq,RetType,Depth,Self,['let',A,A5,AA],AAO):- !,eval(Eq,RetType,Depth,Self,A5,A),eval(Eq,RetType,Depth,Self,AA,AAO).
@@ -1047,9 +1052,11 @@ is_comma(C):- var(C),!,fail.
 is_comma(',').
 is_comma('{}').
 
-eval_20(Eq,RetType,Depth,Self,[And,X],True):- is_comma(And),!, eval_args(Eq,RetType,Depth,Self,X,True).
-eval_20(Eq,RetType,Depth,Self,[And,X,Y],TF):-  is_comma(And),!, eval_args(Eq,RetType,Depth,Self,X,_),eval_args(Eq,RetType,Depth,Self,Y,TF).
-eval_20(Eq,RetType,Depth,Self,[And,X|Y],TF):- is_comma(And),!, eval_args(Eq,RetType,Depth,Self,X,_), eval_args(Eq,RetType,Depth,Self,[And|Y],TF).
+eval_20(Eq,RetType,Depth,Self,[Comma,X  ],Res):- is_comma(Comma),!, eval_args(Eq,RetType,Depth,Self,X,Res).
+eval_20(Eq,RetType,Depth,Self,[Comma,X,Y],Res):- is_comma(Comma),!, eval_args(Eq,_,Depth,Self,X,_),
+  eval_args(Eq,RetType,Depth,Self,Y,Res).
+eval_20(Eq,RetType,Depth,Self,[Comma,X|Y],Res):- is_comma(Comma),!, eval_args(Eq,_,Depth,Self,X,_),
+  eval_args(Eq,RetType,Depth,Self,[Comma|Y],Res).
 
 
 eval_20(Eq,RetType,_Dpth,_Slf,[And],True):- is_and(And,True),!,check_returnval(Eq,RetType,True).
@@ -1072,6 +1079,9 @@ eval_20(Eq,RetType,Depth,Self,['or',X,Y],TF):- !,
 eval_20(Eq,RetType,Depth,Self,['not',X],TF):- !,
    as_tf(( \+ eval_args_true(Eq,RetType,Depth,Self,X)), TF).
 
+eval_20(Eq,RetType,Depth,Self,['eval',X],TF):- !,
+   eval_args(Eq,RetType,Depth,Self,X, TF).
+
 eval_20(Eq,RetType,Depth,Self,['number-of',X],N):- !,
    bagof_eval(Eq,RetType,Depth,Self,X,ResL),
    length(ResL,N), ignore(RetType='Number').
@@ -1080,11 +1090,20 @@ eval_20(Eq,RetType,Depth,Self,['number-of',X,N],TF):- !,
    bagof_eval(Eq,RetType,Depth,Self,X,ResL),
    length(ResL,N), true_type(Eq,RetType,TF).
 
+eval_20(Eq,RetType,Depth,Self,['findall!',Template,X],ResL):- !,
+   findall(Template,eval_args(Eq,RetType,Depth,Self,X,_),ResL).
+
+
 
 eval_20(Eq,RetType,Depth,Self,['limit!',N,E],R):- !, eval_20(Eq,RetType,Depth,Self,['limit',N,E],R).
 eval_20(Eq,RetType,Depth,Self,['limit',NE,E],R):-  !,
    eval('=','Number',Depth,Self,NE,N),
    limit(N,eval_ne(Eq,RetType,Depth,Self,E,R)).
+
+eval_20(Eq,RetType,Depth,Self,['offset!',N,E],R):- !, eval_20(Eq,RetType,Depth,Self,['offset',N,E],R).
+eval_20(Eq,RetType,Depth,Self,['offset',NE,E],R):-  !,
+   eval('=','Number',Depth,Self,NE,N),
+   offset(N,eval_ne(Eq,RetType,Depth,Self,E,R)).
 
 eval_20(Eq,RetType,Depth,Self,['max-time!',N,E],R):- !, eval_20(Eq,RetType,Depth,Self,['max-time',N,E],R).
 eval_20(Eq,RetType,Depth,Self,['max-time',NE,E],R):-  !,
@@ -1092,6 +1111,22 @@ eval_20(Eq,RetType,Depth,Self,['max-time',NE,E],R):-  !,
    cwtl(N,eval_ne(Eq,RetType,Depth,Self,E,R)).
 
 
+eval_20(Eq,RetType,Depth,Self,['call-cleanup!',NE,E],R):-  !,
+   call_cleanup(eval(Eq,RetType,Depth,Self,NE,R),
+                eval(Eq,_U_,Depth,Self,NE,_)).
+
+eval_20(Eq,RetType,Depth,Self,['setup-call-cleanup!',S,NE,E],R):-  !,
+   setup_call_cleanup(eval(Eq,_,Depth,Self,S,_),
+         eval(Eq,RetType,Depth,Self,NE,R),
+         eval(Eq,_,Depth,Self,NE,_)).
+
+eval_20(Eq,RetType,Depth,Self,['with-output-to!',S,NE],R):-  !,
+   eval(Eq,_,Depth,Self,S,OUT),
+   with_output_to_stream(OUT,
+      eval(Eq,RetType,Depth,Self,NE,R)).
+                  
+      
+                                                                       
 % =================================================================
 % =================================================================
 % =================================================================

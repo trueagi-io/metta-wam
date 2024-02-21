@@ -146,6 +146,7 @@ pp_sex(V):- pp_sexi(V),!.
 % dealing with different types of values, whether they are lists, atoms, numbers, strings, compounds, or symbols.
 pp_sexi(V):- is_final_write(V),!.
 pp_sexi(V):- is_dict(V),!,print(V).
+pp_sexi((USER:Body)) :- USER==user,!, pp_sex(Body).
 pp_sexi(V):- allow_concepts,!,with_concepts('False',pp_sex(V)),flush_output.
 pp_sexi('Empty') :- !.
 pp_sexi('') :- !, writeq('').
@@ -175,6 +176,7 @@ pp_sexi(V) :- w_proper_indent(2,w_in_p(pp_sex_c(V))).
 
 write_mobj(H,_):- \+ symbol(H),!,fail.
 write_mobj('$VAR',[S]):- write_dvar(S). 
+write_mobj((USER:Body)) :- USER==user,!, write_src(Body).
 write_mobj(exec,[V]):- !, write('!'),write_src(V).
 write_mobj('$OBJ',[_,S]):- write('['),write_src(S),write(' ]').
 write_mobj('{}',[S]):- write('{'),write_src(S),write(' }').
@@ -220,6 +222,7 @@ pp_sexi_l([H|T]) :- is_list(T),symbol(H),upcase_atom(H,U),downcase_atom(H,U),!,
 
 pp_sex_c(V):- pp_sexi_c(V),!.
 pp_sexi_c(V) :- is_final_write(V),!.
+pp_sexi_c((USER:Body)) :- USER==user,!, pp_sex(Body).
 pp_sexi_c(exec([H|T])) :- is_list(T),!,write('!'),pp_sex_l([H|T]).
 pp_sexi_c(!([H|T])) :- is_list(T),!,write('!'),pp_sex_l([H|T]).
 %pp_sexi_c([H|T]) :- is_list(T),!,unlooped_fbug(pp_sexi_c,pp_sex_l([H|T])).

@@ -8,7 +8,8 @@
 
 :- multifile(is_pre_statistic/2).
 :- dynamic(is_pre_statistic/2).
-save_pre_statistic(Name):- is_pre_statistic(Name,_)-> true; (statistics(Name,AS),term_number(AS,FN),assert(is_pre_statistic(Name,FN))).
+save_pre_statistic(Name):- is_pre_statistic(Name,_)-> true; (statistics(Name,AS),term_number(AS,FN),
+              assert(is_pre_statistic(Name,FN))).
 pre_statistic(N,V):- is_pre_statistic(N,V)-> true ; V = 0.
 post_statistic(N,V):- statistics(N,VV),term_number(VV,FV),pre_statistic(N,WV), V0 is FV-WV, (V0<0 -> V = 0 ; V0=V).
 term_number(T,N):- sub_term(N,T),number(N).
@@ -306,26 +307,41 @@ space_type_method(is_asserted_space,atom_iter,metta_assertdb_iter).
 
 %:- dynamic(for_metta/2).
 %for_metta(_,T):- fb_pred(F,A),functor(T,F,A),call(T).
-metta_assertdb_ls(KB):-listing(metta_atom(KB,_)).
-metta_assertdb_add(KB,Atom):- subst_vars(Atom,New),
-  decl_m_fb_pred(user,get_metta_atom,2),
-  MP = metta_atom(KB,New),
-  assert_new(MP).
+metta_assertdb_ls(KB):-
+     AMA = asserted_metta_atom,
+     decl_m_fb_pred(user,AMA,2),   
+     MP =.. [AMA,KB,_],
+  listing(MP).
+
+metta_assertdb_add(KB,AtomIn):- 
+ must_det_ll((subst_vars(AtomIn,Atom),
+     AMA = asserted_metta_atom,
+     decl_m_fb_pred(user,AMA,2),   
+     MP =.. [AMA,KB,Atom],
+  assert_new(MP))).
 metta_assertdb_rem(KB,Old):- metta_assertdb_del(KB,Old).
-metta_assertdb_del(KB,Atom):- subst_vars(Atom,Old), decl_m_fb_pred(user,get_metta_atom,2), MP = metta_atom(KB,Old),
+metta_assertdb_del(KB,Atom):- subst_vars(Atom,Old),
+  decl_m_fb_pred(user,asserted_metta_atom,2), 
+   MP = metta_atom(KB,Old),
   copy_term(MP,Copy), clause(MP,true,Ref), MP=@= Copy, !, erase(Ref). % ,metta_assertdb('DEL',Old).
 metta_assertdb_replace(KB,Old,New):- metta_assertdb_del(KB,Old), metta_assertdb_add(KB,New).
 metta_assertdb_count(KB,Count):-
  must_det_ll((
-  decl_m_fb_pred(user,get_metta_atom,2), full_symbol_count(SL1),
-  MP = metta_atom(KB,_),
+  AMA = asserted_metta_atom,
+  decl_m_fb_pred(user,AMA,2),   
+  MP =.. [AMA,KB,_],
   predicate_property(MP,number_of_clauses(SL2)),
   predicate_property(MP,number_of_rules(SL3)),
   %metta_assertdb_ls(KB),
+  full_symbol_count(SL1),
   Count is SL1 + SL2 - SL3)),!.
 metta_assertdb_count(_KB,0):-!.
 %metta_assertdb_count(KB,Count):- writeln(metta_assertdb_count_in(KB,Count)), findall(Atom,for_metta(KB,Atom),AtomsL),length(AtomsL,Count),writeln(metta_assertdb_count_out(KB,Count)).
-metta_assertdb_iter(KB,Atoms):- decl_m_fb_pred(user,get_metta_atom,2), metta_atom(KB,Atoms).
+metta_assertdb_iter(KB,Atoms):- 
+     AMA = asserted_metta_atom,
+     decl_m_fb_pred(user,AMA,2),   
+     MP =.. [AMA,KB,Atoms],
+     call(MP).
 
 
 
@@ -348,10 +364,13 @@ space_query_vars(KB,Query,Vars):- is_asserted_space(KB),!,
     debug_metta('RES',space_query_vars(KB,Query,Vars)).
 
 
-metta_assertdb_get_atoms(KB,AtomsL):- decl_m_fb_pred(user,get_metta_atom,2), findall(Atom,metta_atom(KB,Atom),AtomsL).
+metta_assertdb_get_atoms(KB,AtomsL):- 
+  decl_m_fb_pred(user,get_metta_atom,2), 
+  findall(Atom,metta_atom(KB,Atom),AtomsL).
 /*
 
-%metta_assertdb_iter_bind(KB,Query,Template,AtomsL):- decl_m_fb_pred(user,get_metta_atom,2), findall(Template,metta_atom(KB,Query),AtomsL).
+%metta_assertdb_iter_bind(KB,Query,Template,AtomsL):- 
+decl_m_fb_pred(user,get_metta_atom,2), findall(Template,metta_atom(KB,Query),AtomsL).
 metta_assertdb_iter_bind(KB,Query,Vars):-
   ignore(term_variables(Query,Vars)),
   print(metta_assertdb(['match',KB,Query,Vars])),nl,
@@ -410,117 +429,6 @@ write_src_nl(Src):- format('~N'),write_src(Src),format('~N').
 % is a quine
 'AtomDef'(X,['AtomDef',X]).
 
-% ===============================
-%       PRINTERS
-% ===============================
-
-
-pp_sax(V) :- is_final_write(V),!.
-pp_sax(S) :-  \+ allow_concepts,!, write_src(S).
-pp_sax(S) :- is_englishy(S),!,print_concept("StringValue",S).
-pp_sax(S) :- symbol_length(S,1),symbol_string(S,SS),!,print_concept("StringValue",SS).
-pp_sax(S) :- is_an_arg_type(S,T),!,print_concept("TypeNode",T).
-pp_sax(S) :- has_type(S,T),!,format('(~wValueNode "~w")',[T,S]).
-pp_sax(S) :- sub_atom(S,0,4,Aft,FB),flybase_identifier(FB,Type),!,(Aft>0->format('(~wValueNode "~w")',[Type,S]);format('(TypeNode "~w")',[Type])).
-pp_sax(S) :- print_concept("ConceptNode",S).
-
-print_concept( CType,V):- allow_concepts, !, write("("),write(CType),write(" "),ignore(with_concepts(false,write_src(V))),write(")").
-print_concept(_CType,V):- ignore(write_src(V)).
-write_val(V):- number(V),!, write_src(V).
-write_val(V):- compound(V),!, write_src(V).
-write_val(V):- write('"'),write(V),write('"').
-
-% Base case: atoms are printed as-is.
-pp_as(V) :- \+ \+ pp_sex(V),flush_output.
-pp_sex(V) :- is_final_write(V),!.
-pp_sex('!'(V)) :- write('!'),!,pp_sex(V).
-pp_sex('exec'(V)) :- write('!'),!,pp_sex(V).
-%pp_sex('') :- format('(EmptyNode null)',[]).
-pp_sex('') :- !, format('""',[]).
-pp_sex([]):-  !, write('()').
-pp_sex('='(N,V)):- allow_concepts, !, format("~N;; ~w == ~n",[N]),!,pp_sex(V).
-pp_sex(V) :- (number(V) ; is_dict(V)), !, print_concept('ValueAtom',V).
-%pp_sex(V) :- (symbol(V),symbol_number(V,N)), !, print_concept('ValueAtom',N).
-pp_sex(S) :- symbol(S), always_dash_functor(S,D), pp_sax(D),!.
-pp_sex(S) :- string(S),!, print_concept('StringValue',S).
-% Lists are printed with parentheses.
-pp_sex(V) :- \+ compound(V), !, format('~p',[V]).
-pp_sex(V) :- V = '$VAR'(_), !, format('$~p',[V]).
-pp_sex('!'(V)) :- write('!'),!,pp_sex(V).
-pp_sex(listOf(S,_)) :- !,pp_sex(listOf(S)).
-pp_sex(listOf(S)) :- !,format('(ListValue ~@)',[pp_sex(S)]).
-
-pp_sex([H|T]) :- \+ no_src_indents, atom(H),member(H,['If','cond','let','let*']),!,
-  with_indents(true,w_proper_indent(2,w_in_p(pp_sexi([H|T])))).
-
-pp_sex([H|T]) :- is_list(T), length(T,Args),Args =< 2, fail,
-   wots(SS,((with_indents(false,(write('('), pp_sex(H), print_list_as_sexpression(T), write(')')))))),
-   ((atom_length(SS,Len),Len < 20) ->write(SS);
-      with_indents(true,w_proper_indent(2,w_in_p(pp_sexi([H|T]))))),!.
-/*
-
-pp_sex([H|T]) :- is_list(T),atom(H),upcase_atom(H,U),downcase_atom(H,U),!,
-   with_indents(false,(write('('), pp_sex(H), print_list_as_sexpression(T), write(')'))).
-
-%pp_sex([H,B,C|T]) :- T==[],!,
-%  with_indents(false,(write('('), pp_sex(H), print_list_as_sexpression([B,C]), write(')'))).
-*/
-pp_sex(V) :- no_src_indents,!,pp_sexi(V).
-
-pp_sex(V) :- w_proper_indent(2,w_in_p(pp_sexi(V))).
-
-no_src_indents:- option_else(src_indents,TF,true),!,TF=='False'.
-
-pp_sexi_l([H,S]):-H=='[...]', write('['),print_items_list(S),write(' ]').
-pp_sexi_l([H,S]):-H=='{...}', write('{'),print_items_list(S),write(' }').
-pp_sexi_l([H|T]):-write('('), pp_sex(H), print_list_as_sexpression(T), write(')').
-
-print_items_list(X):- is_list(X),!,print_list_as_sexpression(X).
-print_items_list(X):- write_src(X).
-
-pp_sexi(V) :- is_final_write(V),!.
-pp_sexi((USER:Body)) :- USER==user,!, pp_sex(Body).
-pp_sexi([H|T]) :- is_list(T),!,pp_sexi_l([H|T]).
-% Compound terms.
-%pp_sex(Term) :- compound(Term), Term =.. [Functor|Args], write('('),format('(~w ',[Functor]), write_args_as_sexpression(Args), write(')').
-%pp_sex(Term) :- Term =.. ['=',H|Args], length(Args,L),L>2, write('(= '),  pp_sex(H), write('\n\t\t'), maplist(pp_sex(2),Args).
-pp_sexi(Term) :- Term==[],!,write('()').
-pp_sexi(Term) :- compound_name_arity(Term,F,0),!,pp_sexi([F]).
-pp_sexi(Term) :- Term =.. [Functor|Args], always_dash_functor(Functor,DFunctor), format('(~w ',[DFunctor]), write_args_as_sexpression(Args), write(')'),!.
-pp_sexi(Term) :- allow_concepts, Term =.. [Functor|Args], format('(EvaluationLink (PredicateNode "~w") (ListLink ',[Functor]), write_args_as_sexpression(Args), write('))'),!.
-pp_sexi(Term) :- Term =.. [Functor|Args],
-   always_dash_functor(Functor,DFunctor), format('(~w ',[DFunctor]), write_args_as_sexpression(Args), write(')'),!.
-
-pp_sex(2,Result):- write('\t\t'),pp_sex(Result).
-
-
-current_column(Column) :- current_output(Stream), line_position(Stream, Column),!.
-current_column(Column) :- stream_property(current_output, position(Position)), stream_position_data(column, Position, Column).
-min_indent(Sz):- current_column(Col),Col>Sz,nl,indent_len(Sz).
-min_indent(Sz):- current_column(Col),Need is Sz-Col,indent_len(Need),!.
-min_indent(Sz):- nl, indent_len(Sz).
-indent_len(Need):- forall(between(1,Need,_),write(' ')).
-
-w_proper_indent(N,G):-
-  flag(w_in_p,X,X), %(X==0->nl;true),
-  XX is (X*2)+N,setup_call_cleanup(min_indent(XX),G,true).
-w_in_p(G):- setup_call_cleanup(flag(w_in_p,X,X+1),G,flag(w_in_p,_,X)).
-
-
-always_dash_functor(A,B):- once(dash_functor(A,B)),A\=@=B,!.
-always_dash_functor(A,A).
-
-dash_functor(A,C):- \+ symbol(A),!,C=A.
-dash_functor(A,C):- p2m(A,B),A\==B,!,always_dash_functor(B,C).
-dash_functor(Functor,DFunctor):-
-   symbol(Functor), atomic_list_concat(L,'-',Functor), L\=[_],maplist(always_dash_functor,L,LL),
-   atomic_list_concat(LL,'-',DFunctor).
-dash_functor(Functor,DFunctor):- fail,
-   symbol(Functor), atomic_list_concat(L,'_',Functor), L\=[_],maplist(always_dash_functor,L,LL),
-   atomic_list_concat(LL,'-',DFunctor).
-dash_functor(Functor,DFunctor):-
-   symbol(Functor), atomic_list_concat(L,'_',Functor), L\=[_],maplist(always_dash_functor,L,LL),
-   atomic_list_concat(LL,'_',DFunctor).
 
 sort_on(C,R,A,B):- (A==B-> R= (=) ; must_det_ll((call(C,A,AA),call(C,B,BB),!,compare(R,AA+A,BB+B)))),!.
 tokens(X,VL):- unaccent_atom(X,A),!, findall(E,(is_tokenizer(T),call(T,A,E)),L),predsort(sort_on(length_fw_len),L,S),last(S,VL).
@@ -549,14 +457,6 @@ is_tokenizer(tokenize_atom).
 is_an_arg_type(S,T):- flybase_identifier(S,T),!.
 has_type(S,Type):- sub_atom(S,0,4,Aft,FB),flybase_identifier(FB,Type),!,Aft>0.
 
-% Print arguments of a compound term.
-write_args_as_sexpression([]).
-write_args_as_sexpression([H|T]) :- write(' '), pp_sex(H), write_args_as_sexpression(T).
-
-% Print the rest of the list.
-print_list_as_sexpression([]).
-%print_list_as_sexpression([H]):- w_proper_indent(pp_sex(H)),!.
-print_list_as_sexpression([H|T]):- write(' '), pp_sex(H), print_list_as_sexpression(T).
 
 call_sexpr(S):- writeln(call=S).
 %call_sexpr(Space,Expr,Result):-

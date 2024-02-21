@@ -95,8 +95,10 @@ symbol_concat(A,B,C):- atom_concat(A,B,C).
 symbolic_list_concat(A,B,C):- atomic_list_concat(A,B,C).
 symbol_contains(T,TT):- atom_contains(T,TT).
 
-:- prolog_load_context(file, File),
-   ignore(( absolute_file_name('../../data/ftp.flybase.org/releases/current/',Dir,[relative_to(File),file_type(directory), file_error(ignore)]),
+:- prolog_load_context(directory, File),
+   ignore(( 
+     absolute_file_name('../../data/ftp.flybase.org/releases/current/',Dir,[relative_to(File),
+     file_type(directory), file_errors(fail)]),
     asserta(ftp_data(Dir)))).
 
 :- prolog_load_context(file, File),

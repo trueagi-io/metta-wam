@@ -60,7 +60,9 @@ make_test_name(FilePath0, Number, TestName) :-
 
 %color_g_mesg(_,_):- is_compatio,!.
 %color_g_mesg(_,_):- silent_loading,!.
-color_g_mesg(C,G):- notrace((nop(check_silent_loading),color_g_mesg_ok(C,G))).
+color_g_mesg(C,G):- 
+  notrace((nop(check_silent_loading),
+    color_g_mesg_ok(C,G))).
 color_g_mesg_ok(_,G):- is_compatio,!,call(G).
 color_g_mesg_ok(C,G):-
  quietly((
