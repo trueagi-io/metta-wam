@@ -2,7 +2,7 @@
 
 In stark contrast to the von Neumann architectures' sequential execution pattern, the Warren Abstract Machine (WAM) embodies a distinct and specialized computational model that thrives within the realm of functional logic programming. Its reliance on registers, its tailored instruction set, its stack-based execution model, and its unique approach to memory management collectively enable it to excel in the execution of logic programs, where logical constraints and backtracking play a pivotal role.
 
-MeTTaLog replaces all functions written in MeTTa with canonical form nondeterministic predicates that have an extra argument for a return value.  
+This compiler, transpiler and interpeter replaces all functions written in MeTTa with canonical form nondeterministic predicates that have an extra argument for a return value.  
 
 For example a function body like
 `(= (my-function $b) (foo a b (bar c d )))`
@@ -14,9 +14,11 @@ becomes a Modus Ponens rule denoted by `==>`
     (my-function $b $foofRet2))
 ```
 
-This allows an inference engine to run programs as if they are knowledge-base queries so that both simple and very complex functions are now optimizable with state of the art query optimization techniques.  This somewhat recent technique works for other languages as well such as Python\*, Haskell, Common Lisp\*, Curry\*, Verse, Java\*, Rust, Oz, OcamML and so on and so on.  But the most important place it works is with MeTTa!  This allowed MeTTa's functional programming and the logic programming of `match` to use a singular well-typed execution model further allowing `match` and `eval` to pre and post (at runtime) optimize each others execution order and infer what this means forward and backwards.  The resulting emmited code is converted to WAM VM instructions which is optimizes using all the computational techniques available.  See [docs/OVERVIEW.md](docs/OVERVIEW.md). 
+This allows the state of the art Automated theoerm provers and inference engines such as created for SUMO, CycL, KIF, FOL, HOL and TPTP to run programs as if they are knowledge-base queries.  Both simple and very complex functions that were only optimizable using computational techniqes for imperitiave code can now be optimized the way the engines do with quieries. This recent technique has been tested (even boring GUI  programs) and seems to work for other languages as well such as Python\*, Haskell, Common Lisp\*, Curry\*, Verse, Java\*, Rust, Oz, OcamML and so on and so on.  But the most important place it was successfully deployed is with MeTTa!  (The repository _ that_ deployment.  Our technique has allowed MeTTa's functional programming (refered to as `eval`) and the logic programming of `match` to use a singular well-typed execution model. Or deployment allows `match` and `eval` to pre and post (at runtime) optimize each others execution order and both forward and backwards.  The resulting code is converted to WAM VM instructions (JITed) which is then further optimized using the typical computational techniques known outside our.  See [docs/OVERVIEW.md](docs/OVERVIEW.md) for more information
 
-Our gradual type system derives it's types from various FOL and HOL inference engines. This the first time ever programmers are allowed to mix ontological types (such as from SUMO and RDF) with regular types and dependant types during both compile and runtime.  This means variables and objects can have semantic relationships such as a `StringHoldingALikeableStatement` or `StringHoldingWhoKnowsWhat` vs `ALikeableStatement` or `WhoKnowsWhat` as well as any type theory and type system can dream up concurrently with each other.  These theories and systems can be added and removed at the programmers descretion durring execution. (Inferences about `ALikeableStatement` and various implied context and implications and so forth can be logically deduced or induced and effect changes at both compile time and runtime.
+\* Transpilers/compilers exist already that transform sourcecode/AST of these languages into our imediate representation (IR).  Thus can run in our currently with MeTTa which extends them with above and below properties of our system mentioned above and below.
+
+On such property in our implementation is for first time ever programmers are allowed to mix ontological types (such as from SUMO and RDF) with regular types and dependant types during both compile and runtime.  This means variables and objects can have semantic relationships such as a `StringHoldingALikeableStatement` or `StringHoldingWhoKnowsWhat` vs `ALikeableStatement` or `WhoKnowsWhat` as well as any type theory and type system can dream up concurrently with each other.  These theories and systems can be added and removed at the programmers descretion durring execution. (HOL and FOL inferences about `ALikeableStatement` and various implied context and implications and can be both logically deduced and induced and effect changes at both compile time and runtime through out the system and Atomspace.
 
 
 [View the Latest Test Results](reports/TEST_LINKS.md)
@@ -361,4 +363,3 @@ Print debug messages for DEBUG statements.
 
 
 
-\* This has been test by us to work!
