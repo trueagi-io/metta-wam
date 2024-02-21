@@ -2,7 +2,7 @@
 
 In stark contrast to the von Neumann architectures' sequential execution pattern, the Warren Abstract Machine (WAM) embodies a distinct and specialized computational model that thrives within the realm of functional logic programming. Its reliance on registers, its tailored instruction set, its stack-based execution model, and its unique approach to memory management collectively enable it to excel in the execution of logic programs, where logical constraints and backtracking play a pivotal role.
 
-MeTTaLog replaces all functions written in MeTTa with nondeterministic predicates that have an extra argument for a return value. 
+MeTTaLog replaces all functions written in MeTTa with canonical form nondeterministic predicates that have an extra argument for a return value.  
 
 For example a function body like
 `(= (my-function $b) (foo a b (bar c d )))`
@@ -14,7 +14,9 @@ becomes a Modus Ponens rule denoted by `==>`
     (my-function $b $foofRet2))
 ```
 
-This allows an inference engine to run programs as if they are knowledge-base queries so that both simple and very complex functions are now optimizable with state of the art query optimization techniques. This works for other languages as well such as Python, Common Lisp, Curry, Verse, Haskell, Java, Rust and so on and so on.  But the most important place it works is with MeTTa!  This projects allows MeTTa functional programming and the logic programming of `match` to use a singular well-typed execution model further allowing `match` and `eval` to pre and post (at runtime) optimize each others code forward and backwards.  The resulting emmited code is converted to WAM VM instructions which is optimizes using all the computational techniques available.  See [docs/OVERVIEW.md](docs/OVERVIEW.md). MeTTaLog's gradual type system is the first time ever programmers have been allowed to mix and match ontological types and regular types.  This means variables and objects can have semantic relationships such as a `StringHoldingALikeableStatement` or `StringHoldingWhoKnowsWhat` vs `ALikeableStatement` or `WhoKnowsWhat`.   Inferences about `ALikeableStatement` and various supertpyes and so forth can be logically reasoned over and effected and chanrged at compile tikme and runtime both. 
+This allows an inference engine to run programs as if they are knowledge-base queries so that both simple and very complex functions are now optimizable with state of the art query optimization techniques.  This somewhat recent technique works for other languages as well such as Python\*, Haskell, Common Lisp\*, Curry\*, Verse, Java\*, Rust, Oz, OcamML and so on and so on.  But the most important place it works is with MeTTa!  This allowed MeTTa's functional programming and the logic programming of `match` to use a singular well-typed execution model further allowing `match` and `eval` to pre and post (at runtime) optimize each others execution order and infer what this means forward and backwards.  The resulting emmited code is converted to WAM VM instructions which is optimizes using all the computational techniques available.  See [docs/OVERVIEW.md](docs/OVERVIEW.md). 
+
+Our gradual type system derives it's types from various FOL and HOL inference engines. This the first time ever programmers are allowed to mix ontological types (such as from SUMO and RDF) with regular types and dependant types during both compile and runtime.  This means variables and objects can have semantic relationships such as a `StringHoldingALikeableStatement` or `StringHoldingWhoKnowsWhat` vs `ALikeableStatement` or `WhoKnowsWhat` as well as any type theory and type system can dream up concurrently with each other.  These theories and systems can be added and removed at the programmers descretion durring execution. (Inferences about `ALikeableStatement` and various implied context and implications and so forth can be logically deduced or induced and effect changes at both compile time and runtime.
 
 
 [View the Latest Test Results](reports/TEST_LINKS.md)
@@ -357,3 +359,6 @@ Boot compilation.
 Print debug messages for DEBUG statements.
 
 
+
+
+\* This has been test by us to work!
