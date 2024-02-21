@@ -1890,7 +1890,6 @@ check_has_directive(V):- var(V),!,fail.
 check_has_directive('log.'):- switch_to_mettalog,!.
 check_has_directive('rust.'):- switch_to_mettarust,!.
 check_has_directive(Atom):- atom(Atom),atom_concat(_,'.',Atom),!.
-
 check_has_directive(call(N=V)):- nonvar(N),!, set_directive(N,V).
 check_has_directive(call(Rtrace)):- rtrace == Rtrace,!, rtrace,notrace(throw(restart_reading)).
 check_has_directive(NEV):- atom(NEV), atomic_list_concat([N,V],'=',NEV), set_directive(N,V).
