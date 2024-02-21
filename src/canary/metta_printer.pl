@@ -176,7 +176,6 @@ pp_sexi(V) :- w_proper_indent(2,w_in_p(pp_sex_c(V))).
 
 write_mobj(H,_):- \+ symbol(H),!,fail.
 write_mobj('$VAR',[S]):- write_dvar(S). 
-write_mobj((USER:Body)) :- USER==user,!, write_src(Body).
 write_mobj(exec,[V]):- !, write('!'),write_src(V).
 write_mobj('$OBJ',[_,S]):- write('['),write_src(S),write(' ]').
 write_mobj('{}',[S]):- write('{'),write_src(S),write(' }').

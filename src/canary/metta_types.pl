@@ -231,7 +231,7 @@ as_prolog(_Dpth,_Slf,I,O):- \+ iz_conz(I),!,I=O.
 as_prolog(Depth,Self,[Cons,H,T],[HH|TT]):- Cons=='Cons',as_prolog(Depth,Self,H,HH),as_prolog(Depth,Self,T,TT).
 as_prolog(Depth,Self,[List,H|T],O):- List=='::',!,maplist(as_prolog(Depth,Self),[H|T],L),!, O = L.
 as_prolog(Depth,Self,[At,H|T],O):- At=='@',!,maplist(as_prolog(Depth,Self),[H|T],[HH|L]),atom(H),!, O =.. [HH|L].
-as_prolog(Depth,Self,[H|T],O):- is_list(T),!,maplist(as_prolog(Depth,Self),[H|T],[HH|L]),atom(H),!, compound_name_arguments(O,HH,L).
+as_prolog(Depth,Self,I,O):- is_list(I),!,maplist(as_prolog(Depth,Self),I,O).
 as_prolog(_Dpth,_Slf,I,I).
 
 

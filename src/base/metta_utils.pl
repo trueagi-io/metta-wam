@@ -11,7 +11,7 @@
 :- ensure_loaded(library(logicmoo_utils)).
 :- endif.
 :- if(exists_source(library(dictoo))).
-%:- ensure_loaded(library(dictoo)).
+:- ensure_loaded(library(dictoo)).
 :- endif.
 
 cleanup_debug:-
@@ -221,7 +221,7 @@ compound_name_arg(G,MD,Goal):- compound(G),!, compound_name_arguments(G,MD,[Goal
 :- multifile(user:message_hook/3).
 :- dynamic(user:message_hook/3).
 %user:message_hook(Term, Kind, Lines):- error==Kind, itrace,fbug(user:message_hook(Term, Kind, Lines)),trace,fail.
-user:message_hook(Term, Kind, Lines):- fail, error==Kind,  fbug(user:message_hook(Term, Kind, Lines)),fail.
+user:message_hook(Term, Kind, Lines):- error==Kind,  fbug(user:message_hook(Term, Kind, Lines)),fail.
 
 :- meta_predicate(must_det_ll(0)).
 :- meta_predicate(must_det_ll1(1,0)).

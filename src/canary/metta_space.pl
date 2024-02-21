@@ -9,7 +9,7 @@
 :- multifile(is_pre_statistic/2).
 :- dynamic(is_pre_statistic/2).
 save_pre_statistic(Name):- is_pre_statistic(Name,_)-> true; (statistics(Name,AS),term_number(AS,FN),
-                               pfcAdd(is_pre_statistic(Name,FN))).
+              assert(is_pre_statistic(Name,FN))).
 pre_statistic(N,V):- is_pre_statistic(N,V)-> true ; V = 0.
 post_statistic(N,V):- statistics(N,VV),term_number(VV,FV),pre_statistic(N,WV), V0 is FV-WV, (V0<0 -> V = 0 ; V0=V).
 term_number(T,N):- sub_term(N,T),number(N).
@@ -23,25 +23,24 @@ call_match(G):- call(G).
 :- dynamic(repeats/1).
 :- dynamic(not_repeats/1).
 assert_new(P):- call(P),!,assert_new1(repeats(P)).
-assert_new(P):- pfcAdd(P), flag(assert_new,TA,TA+1),assert_new1(not_repeats(P)),!.
+assert_new(P):- assert(P), flag(assert_new,TA,TA+1),assert_new1(not_repeats(P)),!.
 
 retract1(P):- \+ call(P),!.
 retract1(P):- ignore(\+ retract(P)).
 
 assert_new1(P):- \+ \+ call(P),!.
-assert_new1(P):- pfcAdd(P).
+assert_new1(P):- assert(P).
 
 
 :- dynamic(fb_pred/3).
 :- dynamic(mod_f_a/3).
 decl_m_fb_pred(Mod,Fn,A):- var(Mod),!,mod_f_a(Mod,Fn,A).
-decl_m_fb_pred(Mod,Fn,A):- mod_f_a(Mod,Fn,A)->true;(dynamic(Mod:Fn/A),
-    pfcAdd(mod_f_a(Mod,Fn,A))).
+decl_m_fb_pred(Mod,Fn,A):- mod_f_a(Mod,Fn,A)->true;(dynamic(Mod:Fn/A),assert(mod_f_a(Mod,Fn,A))).
 :- dynamic(fb_pred_file/3).
 decl_fb_pred(Fn,A):-
-   (fb_pred(Fn,A)-> true; (dynamic(Fn/A),pfcAdd(fb_pred(Fn,A)))),
+   (fb_pred(Fn,A)-> true; (dynamic(Fn/A),assert(fb_pred(Fn,A)))),
    ignore((nb_current(loading_file,File),
-    (fb_pred_file(Fn,A,File)-> true; pfcAdd(fb_pred_file(Fn,A,File))))).
+    (fb_pred_file(Fn,A,File)-> true; assert(fb_pred_file(Fn,A,File))))).
 % Import necessary libraries
 :- use_module(library(readutil)).
 
@@ -321,9 +320,9 @@ metta_assertdb_add(KB,AtomIn):-
      MP =.. [AMA,KB,Atom],
   assert_new(MP))).
 metta_assertdb_rem(KB,Old):- metta_assertdb_del(KB,Old).
-metta_assertdb_del(KB,Atom):- subst_vars(Atom,Old), 
+metta_assertdb_del(KB,Atom):- subst_vars(Atom,Old),
   decl_m_fb_pred(user,asserted_metta_atom,2), 
-  MP = metta_atom(KB,Old),
+   MP = metta_atom(KB,Old),
   copy_term(MP,Copy), clause(MP,true,Ref), MP=@= Copy, !, erase(Ref). % ,metta_assertdb('DEL',Old).
 metta_assertdb_replace(KB,Old,New):- metta_assertdb_del(KB,Old), metta_assertdb_add(KB,New).
 metta_assertdb_count(KB,Count):-
@@ -338,7 +337,7 @@ metta_assertdb_count(KB,Count):-
   Count is SL1 + SL2 - SL3)),!.
 metta_assertdb_count(_KB,0):-!.
 %metta_assertdb_count(KB,Count):- writeln(metta_assertdb_count_in(KB,Count)), findall(Atom,for_metta(KB,Atom),AtomsL),length(AtomsL,Count),writeln(metta_assertdb_count_out(KB,Count)).
-metta_assertdb_iter(KB,Atoms):-
+metta_assertdb_iter(KB,Atoms):- 
      AMA = asserted_metta_atom,
      decl_m_fb_pred(user,AMA,2),   
      MP =.. [AMA,KB,Atoms],
@@ -360,24 +359,22 @@ metta_iter_bind(KB,Query,Vars,VarNames):-
 
 % Query from hyperon.base.GroundingSpace
 space_query_vars(KB,Query,Vars):- is_asserted_space(KB),!,
+    decl_m_fb_pred(user,get_metta_atom,2),
     call_metta(KB,Query,Vars),
     debug_metta('RES',space_query_vars(KB,Query,Vars)).
 
 
 metta_assertdb_get_atoms(KB,AtomsL):- 
-   decl_m_fb_pred(user,asserted_metta_atom,2), 
-   findall(Atom,metta_atom(KB,Atom),AtomsL).
+  decl_m_fb_pred(user,get_metta_atom,2), 
+  findall(Atom,metta_atom(KB,Atom),AtomsL).
 /*
 
-%metta_assertdb_iter_bind(KB,Query,Template,AtomsL):- decl_m_fb_pred(user,asserted_metta_atom,2), findall(Template,metta_atom(KB,Query),AtomsL).
+%metta_assertdb_iter_bind(KB,Query,Template,AtomsL):- 
+decl_m_fb_pred(user,get_metta_atom,2), findall(Template,metta_atom(KB,Query),AtomsL).
 metta_assertdb_iter_bind(KB,Query,Vars):-
   ignore(term_variables(Query,Vars)),
   print(metta_assertdb(['match',KB,Query,Vars])),nl,
-     AMA = asserted_metta_atom,
-     decl_m_fb_pred(user,AMA,2),   
-     MP =.. [AMA,KB,Query],
-
-  (MP*->true;call_metta_assertdb(KB,Query,Vars)),
+  decl_m_fb_pred(user,get_metta_atom,2), (metta_atom(KB,Query)*->true;call_metta_assertdb(KB,Query,Vars)),
   metta_assertdb('RES',metta_assertdb_iter_bind(KB,Query,Vars)).
 %metta_assertdb_iter_bind(KB,Atom,Template):- metta_assertdb_stats, findall(Template,metta_assertdb_iter(KB,Atom),VarList).
 
