@@ -101,7 +101,7 @@ switch_to_mettarust:-
   set_option_value('compat',true),
   set_option_value('log',false),
   set_output_stream.
-
+  
 
 
 show_os_argv:- is_compatio,!.
@@ -128,6 +128,8 @@ current_self(Self):- ((nb_current(self_space,Self),Self\==[])->true;Self='&self'
 :- set_prolog_flag(encoding,utf8).
 %:- set_output(user_error).
 %:- set_prolog_flag(encoding,octet).
+
+
 :- ensure_loaded(metta_compiler).
 :- ensure_loaded(metta_convert).
 :- ensure_loaded(metta_types).
@@ -273,6 +275,7 @@ doing_repl:-     option_value('doing_repl',true).
 if_repl(Goal):- doing_repl->call(Goal);true.
 
 any_floats(S):- member(E,S),float(E),!.
+
 show_options_values:-
    forall((nb_current(N,V), \+((atom(N),atom_concat('$',_,N)))),write_src_nl(['pragma!',N,V])).
 
@@ -622,14 +625,13 @@ load_metta(Self,RelFilename):-
 include_metta(Self,Filename):-
   (\+ atom(Filename); \+ exists_file(Filename)),!,
   must_det_ll(with_wild_path(include_metta(Self),Filename)),!.
-
 include_metta(Self,RelFilename):-
- must_det_ll((
-  atom(RelFilename),
-  exists_file(RelFilename),!,
-  absolute_file_name(RelFilename,Filename),
+  must_det_ll((
+     atom(RelFilename),
+     exists_file(RelFilename),!,
+     absolute_file_name(RelFilename,Filename),
      directory_file_path(Directory, _, Filename),
-      assert(metta_file(Self,Filename,Directory)),
+     assert(metta_file(Self,Filename,Directory)),
      include_metta_directory_file(Self,Directory, Filename))).
 
 
@@ -787,36 +789,38 @@ accept_line(Self,I):- normalize_space(string(Str),I),!,accept_line2(Self,Str),!.
 
 accept_line2(_Self,S):- string_concat(";",_,S),!,writeln(S).
 accept_line2(Self,S):- string_concat('(',RS,S),string_concat(M,')',RS),!,
- atomic_list_concat([F|LL],' ',M),PL =..[F,Self|LL],assert(PL),!,flag(next_assert,X,X+1),
- if_t((0 is X mod 10_000_000),(writeln(X=PL),statistics)).
+  atomic_list_concat([F|LL],' ',M),PL =..[F,Self|LL],assert(PL),!,flag(next_assert,X,X+1),
+  if_t((0 is X mod 10_000_000),(writeln(X=PL),statistics)).
 accept_line2(Self,S):- fbug(accept_line2(Self,S)),!.
+
 
 load_metta_file_stream(Filename,Self,In):-
   once((is_file_stream_and_size(In, Size) , Size>102400) -> P2 = read_sform2 ; P2 = read_metta2),
   with_option(loading_file,Filename,
-   %current_exec_file(Filename),
+  %current_exec_file(Filename),
   must_det_ll((must_det_ll((
-       set_exec_num(Filename,1),
-       load_answer_file(Filename),
-       set_exec_num(Filename,0))),
-   load_metta_file_stream_fast(Size,P2,Filename,Self,In)))).
+      set_exec_num(Filename,1),
+      load_answer_file(Filename),
+      set_exec_num(Filename,0))),
+  load_metta_file_stream_fast(Size,P2,Filename,Self,In)))).
 
 
 load_metta_file_stream_fast(_Size,_P2,Filename,Self,S):- fail, atomic_list_concat([_,_,_|_],'.',Filename),
-   \+ option_value(html,true),
-   atomic(S),is_stream(S),stream_property(S,input),!,
-   repeat,
-   read_line_to_string(S,I),
-   accept_line(Self,I),
-   I==end_of_file,!.
+  \+ option_value(html,true),
+  atomic(S),is_stream(S),stream_property(S,input),!,
+  repeat,
+  read_line_to_string(S,I),
+  accept_line(Self,I),
+  I==end_of_file,!.
+
 
 load_metta_file_stream_fast(_Size,P2,Filename,Self,In):-
-       repeat,
+      repeat,
             current_read_mode(file,Mode),
             must_det_ll(call(P2, In,Expr)), %write_src(read_metta=Expr),nl,
             must_det_ll((((do_metta(file(Filename),Mode,Self,Expr,_O)))->true; pp_m(unknown_do_metta(file(Filename),Mode,Self,Expr)))),
-       flush_output,
-       at_end_of_stream(In),!.
+      flush_output,
+      at_end_of_stream(In),!.
 
 clear_spaces:- clear_space(_).
 clear_space(S):-
@@ -1071,16 +1075,16 @@ read_symbol_or_number( AltEnd,Peek,_S,SoFar,Expr):- member(Peek,AltEnd),!,
     must_det_ll(( do_atomic_list_concat(Peek,SoFar,Expr))).
 read_symbol_or_number(AltEnd,B,S,SoFar,Expr):- fail,read_sform5(AltEnd,B,S,List,E),
   flatten([List,E],F), append(SoFar,F,NSoFar),!,
-  peek_char(S,NPeek), read_symbol_or_number(AltEnd,NPeek,S,NSoFar,Expr).
-read_symbol_or_number( AltEnd,_Peek,S,SoFar,Expr):- get_char(S,C),append(SoFar,[C],NSoFar),
    peek_char(S,NPeek), read_symbol_or_number(AltEnd,NPeek,S,NSoFar,Expr).
+read_symbol_or_number( AltEnd,_Peek,S,SoFar,Expr):- get_char(S,C),append(SoFar,[C],NSoFar),
+    peek_char(S,NPeek), read_symbol_or_number(AltEnd,NPeek,S,NSoFar,Expr).
 
 atom_until(S,SoFar,End,Text):- get_char(S,C),atom_until(S,SoFar,C,End,Text).
 atom_until(_,SoFar,C,End,Expr):- C ==End,!,must_det_ll((do_atomic_list_concat(End,SoFar,Expr))).
 atom_until(S,SoFar,'\\',End,Expr):-get_char(S,C),!,atom_until2(S,SoFar,C,End,Expr).
 atom_until(S,SoFar,C,End,Expr):- atom_until2(S,SoFar,C,End,Expr).
 atom_until2(S,SoFar,C,End,Expr):- append(SoFar,[C],NSoFar),get_char(S,NC),
-   atom_until(S,NSoFar,NC,End,Expr).
+    atom_until(S,NSoFar,NC,End,Expr).
 
 do_atomic_list_concat('"',SoFar,Expr):- \+ string_to_syms,!, atomics_to_string(SoFar,Expr),!.
 do_atomic_list_concat(_End,SoFar,Expr):- atomic_list_concat(SoFar,Expr).
@@ -1424,12 +1428,12 @@ metta_anew1(load,OBO):- OBO= metta_atom(Space,Atom),!,'add-atom'(Space, Atom).
 metta_anew1(unload,OBO):- OBO= metta_atom(Space,Atom),!,'remove-atom'(Space, Atom).
 
 metta_anew1(load,OBO):- !, 
-   must_det_ll((load_hook(load,OBO),
+  must_det_ll((load_hook(load,OBO),
    subst_vars(OBO,Cl),
    pfcAdd_Now(Cl))). %to_metta(Cl).
 metta_anew1(load,OBO):- !, 
-   must_det_ll((load_hook(load,OBO),
-   subst_vars(OBO,Cl),
+  must_det_ll((load_hook(load,OBO), 
+  subst_vars(OBO,Cl),
   show_failure(pfcAdd_Now(Cl)))).
 metta_anew1(unload,OBO):- subst_vars(OBO,Cl),load_hook(unload,OBO),
   expand_to_hb(Cl,Head,Body),
@@ -1853,7 +1857,7 @@ load_and_trim_history:-
 
 repl:-  catch(repl2,end_of_input,true).
 
-repl1:-
+repl1:-   
    with_option('doing_repl',true,
      with_option(repl,true,repl2)). %catch((repeat, repl2, fail)'$aborted',true).
 repl2:-
@@ -1985,7 +1989,7 @@ inside_assert(Eval,O):- functor(Eval,eval_H,A), A1 is A-1, arg(A1,Eval,I),!, ins
 %inside_assert(eval_H(A,B,I,C),eval_H(A,B,O,C)):- !, inside_assert(I,O).
 inside_assert(call(I),O):- !, inside_assert(I,O).
 inside_assert( ?-(I), O):- !, inside_assert(I,O).
-inside_assert( :-(I), O):-  !, inside_assert(I,O).
+inside_assert( :-(I), O):- !, inside_assert(I,O).
 inside_assert(Var,Var).
 
 current_read_mode(repl,Mode):- ((nb_current(repl_mode,Mode),Mode\==[])->true;Mode='+'),!.
@@ -2018,6 +2022,7 @@ interactively_do_metta_exec0(file(_), Self, _TermV, Term, X, _NamedVarsList, _Wa
 
 interactively_do_metta_exec0(From,Self,_TermV,Term,X,NamedVarsList,Was,Output,FOut):-
   notrace((
+  	flag(eval_num,_,0),
     Result = res(FOut),
     inside_assert(Term,BaseEval),
     (is_compatio
@@ -2479,7 +2484,7 @@ ggtrace(G):- call(G).
 ggtrace0(G):- ggtrace,
     leash(-all),
   visible(-all),
-    % debug,
+    % debug, 
   %visible(+redo),
   visible(+call),
   visible(+exception),

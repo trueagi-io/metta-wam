@@ -6,7 +6,9 @@
 :- abolish((system:'$exported_op'/3)).
 :- assert((system:'$exported_op'(_,_,_):- fail)).
 
-fbug(P) :- format("~N"), current_predicate(write_src/1),with_output_to(user_error,in_cmt(pp_fb(P))),!.
+fbug(_):- is_compatio,!.
+fbug(P) :- format("~N"), current_predicate(write_src/1),
+  with_output_to(user_error,in_cmt(pp_fb(P))),!.
 fbug(N=V) :- nonvar(N), !, fbdebug1(N:-V).
 fbug(V) :- compound(V),functor(V,F,_A),!,fbdebug1(F:-V).
 fbug(V) :- fbdebug1(debug:-V).
@@ -49,10 +51,15 @@ option_else(N,V,Else):- notrace(option_else0(N,V,Else)).
 option_else0( N,V,_Else):- was_option_value(N,VV),!,VV=V.
 option_else0(_N,V, Else):- !,V=Else.
 
-%option_value( N,V):- var(V), !, (was_option_value( N,V)->true;trace).
-option_value(N,V):- notrace(option_value0(N,V)).
+%option_value( N,V):- var(V), !, notrace(once(((option_value0(N,V))))).
+option_value(N,V):- var(V), !, option_value0( N,VV), once((p2m(VV,V2),p2m(V,V1))), V1=V2.
+option_value(N,V):- V==true,option_value0(N,'True'),!.
+option_value(N,V):- V==false,option_value0(N,'False'),!.
+option_value(N,V):- notrace(once(((p2mE(V,VV),option_value0(N,VV))))).
+
+
 option_value0( N,V):- var(V), !,  was_option_value( N,V).
-option_value0( N,V):- nonvar(V), option_value0( N,VV), !, p2m(VV,V1),p2m(V,V2),!,V1=V2.%equal_enough(V1,V2).
+option_value0( N,V):- nonvar(V), option_value0( N,VV), once((p2m(VV,V2),p2m(V,V1))), V1=V2.
 option_value0( N,V):- option_else0( N,V ,[]).
 
 p2mE(NA,NA):- \+ atom(NA),!.
@@ -88,9 +95,11 @@ symbol_concat(A,B,C):- atom_concat(A,B,C).
 symbolic_list_concat(A,B,C):- atomic_list_concat(A,B,C).
 symbol_contains(T,TT):- atom_contains(T,TT).
 
-:- prolog_load_context(file, File),
-    absolute_file_name('../../data/ftp.flybase.org/releases/current/',Dir,[relative_to(File),file_type(directory)]),
-    asserta(ftp_data(Dir)).
+:- prolog_load_context(directory, File),
+   ignore(( 
+     absolute_file_name('../../data/ftp.flybase.org/releases/current/',Dir,[relative_to(File),
+     file_type(directory), file_errors(fail)]),
+    asserta(ftp_data(Dir)))).
 
 :- prolog_load_context(file, File),
     absolute_file_name('./',Dir,[relative_to(File),file_type(directory)]),

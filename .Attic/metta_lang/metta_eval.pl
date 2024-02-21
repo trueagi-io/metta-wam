@@ -31,10 +31,9 @@ set_list_value(Value,Result).
    
 set_list_value(Value,Result):- nb_setarg(1,Value,echo),nb_setarg(1,Value,[Result]).
 
-is_self_eval_l_fa('S',1).
+is_self_eval_l_fa('S',1). % cheat to comment
 is_self_eval_l_fa(':',2).
-is_self_eval_l_fa('=',2).
-is_self_eval_l_fa('=',2).
+% is_self_eval_l_fa('=',2).
 % eval_20(Eq,RetType,Depth,Self,['quote',Eval],RetVal):- !, Eval = RetVal, check_returnval(Eq,RetType,RetVal).
 is_self_eval_l_fa('quote',_).
 is_self_eval_l_fa('{...}',_).
@@ -119,19 +118,6 @@ eval(Eq,RetType,Depth,Self,X,Y):- atom(Eq),  ( Eq \== ('='),  Eq \== ('match')) 
 eval(_Eq,_RetType,_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
 eval(Eq,RetType,Depth,Self,X,Y):- eval_00(Eq,RetType,Depth,Self,X,Y).
 
-eval_00(_Eq,_RetType,Depth,_Slf,X,Y):- Depth<1,!,X=Y, (\+ trace_on_overflow-> true; flag(eval_num,_,0),
-   debug(metta(eval))).
-eval_00(Eq,RetType,Depth,Self,X,YO):-
-   notrace((Depth2 is Depth-1,
-   copy_term(X, XX))),
-	trace_eval(eval_20(Eq,RetType),eval_20,Depth2,Self,X,M),
-   ((M=@=XX ; self_eval(M))-> Y=M 
-	  ;eval_00(Eq,RetType,Depth2,Self,M,Y)),
-   once(if_or_else((subst_args(Eq,RetType,Depth2,Self,Y,YO)),
-      if_or_else(finish_eval(Depth2,Self,Y,YO),
-            Y=YO))).
-
-
 allow_repeats_eval_(_):- !.
 allow_repeats_eval_(_):- option_value(no_repeats,false),!.
 allow_repeats_eval_(X):- \+ is_list(X),!,fail.
@@ -146,13 +132,13 @@ debugging_metta(G):- fake_notrace((is_debugging((eval))->ignore(G);true)).
 
 w_indent(Depth,Goal):-
   \+ \+ fake_notrace(ignore(((
-    'format'('~N'),
-    setup_call_cleanup(forall(between(Depth,101,_),write('  ')),Goal, 'format'('~N')))))).
+    format('~N'),
+    setup_call_cleanup(forall(between(Depth,101,_),write('  ')),Goal, format('~N')))))).
 indentq(Depth,Term):-
   \+ \+ fake_notrace(ignore(((
-    'format'('~N'),
-    setup_call_cleanup(forall(between(Depth,101,_),write('  ')),'format'('~q',[Term]),
-    'format'('~N')))))).
+    format('~N'),
+    setup_call_cleanup(forall(between(Depth,101,_),write('  ')),format('~q',[Term]),
+    format('~N')))))).
 
 
 indentq_d(Depth,Prefix4, Message):-
@@ -165,11 +151,11 @@ indentq(DR,EX,AR,retval(Term)):-nonvar(Term),!,indentq(DR,EX,AR,Term).
 indentq(DR,EX,AR,Term):-
   \+ \+
    color_g_mesg('#2f2f2f',
-      fake_notrace(ignore((( 'format'('~N;'),
-      'format'('~` t~d~5|:', [EX]),
-      'format'('~` t~d~8|', [DR]),
+      fake_notrace(ignore((( format('~N;'),
+      format('~` t~d~5|:', [EX]),
+      format('~` t~d~8|', [DR]),
       forall(between(1,DR,_),write('     |')),write('-'),write(AR),with_indents(false,write_src(Term)),
-      'format'('~N')))))).
+      format('~N')))))).
 
 
 with_debug(Flag,Goal):- is_debugging(Flag),!, call(Goal).
@@ -208,6 +194,18 @@ is_debugging(Flag):- flag_to_var(Flag,Var),
 :- nodebug(metta(overflow)).
 
 
+eval_00(_Eq,_RetType,Depth,_Slf,X,Y):- Depth<1,!,X=Y, (\+ trace_on_overflow-> true; flag(eval_num,_,0),
+   debug(metta(eval))).
+eval_00(Eq,RetType,Depth,Self,X,YO):-
+   notrace((Depth2 is Depth-1,
+   copy_term(X, XX))),
+	trace_eval(eval_20(Eq,RetType),eval_20,Depth2,Self,X,M),
+   ((M=@=XX ; self_eval(M))-> Y=M 
+	  ;eval_00(Eq,RetType,Depth2,Self,M,Y)),
+   once(if_or_else((subst_args(Eq,RetType,Depth2,Self,Y,YO)),
+      if_or_else(finish_eval(Depth2,Self,Y,YO),
+            Y=YO))).
+
 trace_eval(P4,TN,D1,Self,X,Y):- \+ is_debugging(TN), \+ is_debugging(eval),!, call(P4,D1,Self,X,Y).
 trace_eval(P4,TN,D1,Self,X,Y):-
    must_det_ll((
@@ -220,7 +218,7 @@ trace_eval(P4,TN,D1,Self,X,Y):-
    option_else('trace-depth',DMax,30))),
    quietly((if_t((nop(stop_rtrace),EX>Max), (set_debug(eval,false),MaxP1 is Max+1, 
          %set_debug(overflow,false),
-         nop('format'('; Switched off tracing. For a longer trace: !(pragma! trace-length ~w)',[MaxP1])),
+         nop(format('; Switched off tracing. For a longer trace: !(pragma! trace-length ~w)',[MaxP1])),
          nop((start_rtrace,rtrace)))))),
    nop(notrace(no_repeats_var(YY))))),
 
@@ -317,16 +315,16 @@ eval_20(Eq,RetType,Depth,Self,['!',Cond],Res):- !, call(eval(Eq,RetType,Depth,Se
 eval_20(Eq,RetType,Depth,Self,['rtrace!',Cond],Res):- !, rtrace(eval(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(Eq,RetType,Depth,Self,['trace',Cond],Res):- !, with_debug(eval,eval(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(Eq,RetType,Depth,Self,['time',Cond],Res):- !, time_eval(eval(Cond),eval(Eq,RetType,Depth,Self,Cond,Res)).
-eval_20(Eq,RetType,Depth,Self,['print',Cond],Res):- !, eval(Eq,RetType,Depth,Self,Cond,Res),'format'('~N'),print(Res),'format'('~N').
+eval_20(Eq,RetType,Depth,Self,['print',Cond],Res):- !, eval(Eq,RetType,Depth,Self,Cond,Res),format('~N'),print(Res),format('~N').
 % !(println! $1)
 eval_20(Eq,RetType,Depth,Self,['println!'|Cond],Res):- !, 
   maplist(eval(Eq,RetType,Depth,Self),Cond,[Res|Out]),
-    'format'('~N'),maplist(write_src,[Res|Out]),'format'('~N').
+    format('~N'),maplist(write_src,[Res|Out]),format('~N').
 eval_20(Eq,RetType,Depth,Self,['trace!',A|Cond],Res):- !, maplist(eval(Eq,RetType,Depth,Self),[A|Cond],[AA|Result]),
-   last(Result,Res), 'format'('~N'),maplist(write_src,[AA]),'format'('~N').
+   last(Result,Res), format('~N'),maplist(write_src,[AA]),format('~N').
 
-%eval_20(Eq,RetType,Depth,Self,['trace!',A,B],C):- !,eval(Eq,RetType,Depth,Self,B,C),'format'('~N'),fbug(['trace!',A,B]=C),'format'('~N').
-%eval_20(Eq,RetType,_Dpth,_Slf,['trace!',A],A):- !, 'format'('~N'),fbug(A),'format'('~N').
+%eval_20(Eq,RetType,Depth,Self,['trace!',A,B],C):- !,eval(Eq,RetType,Depth,Self,B,C),format('~N'),fbug(['trace!',A,B]=C),format('~N').
+%eval_20(Eq,RetType,_Dpth,_Slf,['trace!',A],A):- !, format('~N'),fbug(A),format('~N').
 
 eval_20(Eq,RetType,_Dpth,_Slf,List,YY):- is_list(List),maplist(self_eval,List),List=[H|_], \+ atom(H), !,Y=List,do_expander(Eq,RetType,Y,YY).
 
@@ -566,7 +564,7 @@ eval_20(Eq,RetType,Depth,Self,['case',A,CL|T],Res):- !,
    findall(Key-Value,
      (nth0(Nth,CASES,Case0),
        (is_case(Key,Case0,Value),
-        if_trace(metta(case),('format'('~N'),writeqln(c(Nth,Key)=Value))))),KVs),!,
+        if_trace(metta(case),(format('~N'),writeqln(c(Nth,Key)=Value))))),KVs),!,
    eval_case(Eq,RetType,Depth,Self,A,KVs,Res).
 
 eval_case(Eq,CaseRetType,Depth,Self,A,KVs,Res):-
@@ -1567,7 +1565,8 @@ eval_61(Eq,RetType,Depth,Self,X,Y):-
 	member(XX->B0,XXB0L), X=XX, Y=B0, X\=@=B0,
 	%(X==B0 -> trace; eval(Eq,RetType,Depth,Self,B0,Y)).
 	 light_eval(Depth,Self,B0,Y).
-eval_61(Eq,RetType,Depth,Self,X,Y):- color_g_mesg('red',write(failed(X))),!,fail.
+eval_61(_Eq,_RetType,_Depth,_Self,X,_Y):- 
+   color_g_mesg('#773700',write(no_def(X))),!,fail.
 
 
 same_len_copy(Args,NewArgs):- length(Args,N),length(NewArgs,N).

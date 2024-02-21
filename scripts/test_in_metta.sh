@@ -25,10 +25,13 @@ export UNITS_DIR
 export passed_along_to_mettalog
 export METTALOG_MAX_TIME
 export all_test_args="${@}"
+
+
 run_tests_auto_reply=""
 generate_report_auto_reply=""
-METTALOG_OUTPUT="examples"
-UNITS_DIR="$METTALOG_OUTPUT/"
+#METTALOG_OUTPUT="examples"
+METTALOG_OUTPUT="tests_output/testrun_$(date +%Y%m%d_%H%M%S)"
+UNITS_DIR="tests/"
 passed_along_to_mettalog=()
 METTALOG_MAX_TIME=75
 clean=0  # 0 means don't clean, 1 means do clean
@@ -47,14 +50,14 @@ while [ "$#" -gt 0 ]; do
         -y|--yes) run_tests_auto_reply="y" ;;
         -n|--no) run_tests_auto_reply="n" ;;
         --timeout=*) METTALOG_MAX_TIME="${1#*=}" ;;
-	--output=*) METTALOG_OUTPUT="${1#*=}";;
+	--output=*) METTALOG_OUTPUT="${1#*=}"  ;;
         --report=*) generate_report_auto_reply="${1#*=}" ;;
         --clean) clean=1; if_failures=0 ;;
         --regres*) clean=0; if_failures=0; if_regressions=1 ;;
         --cont*) clean=0; if_failures=0 ;;	
-        --fail*) clean=0; if_failures=1 ;;
+        --fail*) clean=0; if_failures=1 ; add_to_list "$1" passed_along_to_mettalog ;;
         --explain) explain_only=1 ;;
-        --test) explain_only=0 ;;
+        --test) explain_only=0 ; add_to_list "$1" passed_along_to_mettalog ;;	    
         --fresh*) fresh=1 ;;
         --exclude=*) EXTRA_FIND_ARGS+=" ! -path ${1#*=}"; CANT_HAVE="${1#*=}" ;;
         --include=*) EXTRA_FIND_ARGS+=" -path ${1#*=}"; MUST_HAVE="${1#*=}" ;;
@@ -120,8 +123,11 @@ if [[ "$METTALOG_OUTPUT" != "" ]]; then
     IF_REALLY_DO \cp -an "$UNITS_DIR"/* "$NEW_UNITSDIR/"
 
     UNITS_DIR="$NEW_UNITSDIR"
+
 else
-    METTALOG_OUTPUT=examples
+
+    METTALOG_OUTPUT="examples"
+
 fi
 
 
@@ -419,7 +425,7 @@ process_file() {
              sleep 0.1
              IF_REALLY_DO  touch "$file_html"
 
-             TEST_CMD="./MeTTa --timeout=$METTALOG_MAX_TIME --html --repl=false $extra_args $passed_along_to_mettalog \"$file\" --halt=true"
+             TEST_CMD="./MeTTa '--output=$METTALOG_OUTPUT' --timeout=$METTALOG_MAX_TIME --html --repl=false ${extra_args[@]} ${passed_along_to_mettalog[@]} \"$file\" --halt=true"
              echo "Running command with timeout: $TEST_CMD"
 
              set +e

@@ -2022,6 +2022,7 @@ interactively_do_metta_exec0(file(_), Self, _TermV, Term, X, _NamedVarsList, _Wa
 
 interactively_do_metta_exec0(From,Self,_TermV,Term,X,NamedVarsList,Was,Output,FOut):-
   notrace((
+  	flag(eval_num,_,0),
     Result = res(FOut),
     inside_assert(Term,BaseEval),
     (is_compatio

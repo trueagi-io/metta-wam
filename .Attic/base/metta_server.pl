@@ -16,7 +16,7 @@ service_running(Alias):- thread_property(VSS,TS),VSS=Alias,TS=status(running),!.
 % Start interpreter service with MSpace = &self
 start_vspace_service(Port):-
     current_self(MSpace), start_vspace_service(MSpace,Port).
-% see amples of using this https://github.com/logicmoo/vspace-metta/blob/main/examples/features/distributed-processing/create-server.metta
+% see amples of using this https://github.com/logicmoo/hyperon-wam/blob/main/examples/features/distributed-processing/create-server.metta
 start_vspace_service(MSpace,Port):-
       atomic_list_concat([vspace_service,MSpace,Port],'_',Alias),
       start_vspace_service(Alias,MSpace,Port).
@@ -43,7 +43,7 @@ run_vspace_service_unsafe(MSpace,Port) :-
     tcp_socket(Socket),
     tcp_bind(Socket, Port),
     tcp_listen(Socket, 5), tcp_open_socket(Socket, ListenFd),
-    fbugio(run_vspace_service(MSpace,Port)),
+    not_compatio(fbugio(run_vspace_service(MSpace,Port))),
     retractall(vspace_port(_)),
     assert(vspace_port(Port)),
     accept_vspace_connections(MSpace,ListenFd).
@@ -282,5 +282,5 @@ cleanup_results(Tag) :-
     retractall(result(Tag, _, _, _)).
 
 
-:- initialization(start_vspace_service).
+% :- initialization(start_vspace_service).
 
