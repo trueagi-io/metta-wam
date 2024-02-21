@@ -1402,8 +1402,12 @@ metta_atom(KB,Atom):- get_metta_atom_from(KB,Atom).
 metta_defn(KB,Head,Body):- metta_defn(_Eq,KB,Head,Body).
 metta_defn(Eq,KB,Head,Body):- ignore(Eq = '='), get_metta_atom_from(KB,[Eq,Head,Body]).
 metta_type(S,H,B):- get_metta_atom_from(S,[':',H,B]).
+metta_type(_,H,B):- metta_atom_stdlib_types([':',H,B]).
 %typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_arguments(Cmpd,Type,[List|_]),is_list(List).
 
+:- if( \+ current_predicate(pfcAdd/1 )).
+pfcAdd(P):- assert(P).
+:- endif.
 
 %maybe_xform(metta_atom(KB,[F,A|List]),metta_atom(KB,F,A,List)):- is_list(List),!.
 maybe_xform(metta_defn(Eq,KB,Head,Body),metta_atom(KB,[Eq,Head,Body])).
@@ -1419,14 +1423,22 @@ metta_anew1(Load,OBO):- maybe_xform(OBO,XForm),!,metta_anew1(Load,XForm).
 metta_anew1(load,OBO):- OBO= metta_atom(Space,Atom),!,'add-atom'(Space, Atom).
 metta_anew1(unload,OBO):- OBO= metta_atom(Space,Atom),!,'remove-atom'(Space, Atom).
 
-metta_anew1(load,OBO):- !, must_det_ll((load_hook(load,OBO),
-   subst_vars(OBO,Cl),assertz(Cl))). %to_metta(Cl).
-metta_anew1(load,OBO):- !, must_det_ll((load_hook(load,OBO),
-   subst_vars(OBO,Cl),show_failure(assertz(Cl)))). %to_metta(Cl).
+metta_anew1(load,OBO):- !, 
+   must_det_ll((load_hook(load,OBO),
+   subst_vars(OBO,Cl),
+   pfcAdd_Now(Cl))). %to_metta(Cl).
+metta_anew1(load,OBO):- !, 
+   must_det_ll((load_hook(load,OBO),
+   subst_vars(OBO,Cl),
+  show_failure(pfcAdd_Now(Cl)))).
 metta_anew1(unload,OBO):- subst_vars(OBO,Cl),load_hook(unload,OBO),
   expand_to_hb(Cl,Head,Body),
   predicate_property(Head,number_of_clauses(_)),
   ignore((clause(Head,Body,Ref),clause(Head2,Body2,Ref),(Head+Body)=@=(Head2+Body2),erase(Ref),pp_m(Cl))).
+
+% TODO uncomment this next line but it is breaking the curried chainer
+% pfcAdd_Now(P):- pfcAdd(P),!.
+pfcAdd_Now(P):- assertz(P),!.
 
 metta_anew2(Load,_OBO):- var(Load),trace,!.
 metta_anew2(Load,OBO):- maybe_xform(OBO,XForm),!,metta_anew2(Load,XForm).
@@ -1441,9 +1453,12 @@ metta_anew2(unload,OBO):- subst_vars_not_last(OBO,Cl),load_hook(unload,OBO),
 metta_anew(Load,Src,OBO):- maybe_xform(OBO,XForm),!,metta_anew(Load,Src,XForm).
 metta_anew(Ch, Src, OBO):-  metta_interp_mode(Ch,Mode), !, metta_anew(Mode,Src,OBO).
 metta_anew(Load,_Src,OBO):- silent_loading,!,metta_anew1(Load,OBO).
-metta_anew(Load,Src,OBO):- format('~N'), color_g_mesg('#0f0f0f',(write('  ; Action: '),writeq(Load=OBO))),
-   color_g_mesg('#ffa500', write_src(Src)),
-   metta_anew1(Load,OBO),format('~n').
+metta_anew(Load,Src,OBO):- 
+  not_compat_io((
+	color_g_mesg('#ffa500', ((format('~N '), write_src(Src)))),
+	format('~N'), 
+	color_g_mesg('#0f0f0f',(write('  ; Action: '),writeq(Load=OBO),nl)))),
+   metta_anew1(Load,OBO),not_compat_io((format('~N'))).
 
 subst_vars_not_last(A,B):-
   functor(A,_F,N),arg(N,A,E),
@@ -2122,7 +2137,12 @@ forall_interactive(From,WasInteractive,Complete,Goal,After):-
 
 print_var(Name=Var) :- print_var(Name,Var).
 %print_var(Name,_Var) :- atom_concat('Num',Rest,Name),atom_number(Rest,_),!.
-print_var(Name,Var):-  write_src('$VAR'(Name)), write(' = '), write_asrc(Var), nl.
+
+write_var(V):- var(V), !, write_dvar(V),!. 
+write_var('$VAR'(S)):-  !, write_dvar(S),!. 
+write_var(V):- write_dvar(V),!.
+
+print_var(Name,Var):- write_var(Name), write(' = '), write_asrc(Var), nl.
 
 write_asrc(Var):- copy_term(Var,Copy,Goals),Var=Copy,write_asrc(Var,Goals).
 write_asrc(Var,[]):- write_src(Var).
@@ -2133,7 +2153,7 @@ write_src_space(Goal):- write(' '),write_src(Goal).
 % Entry point for the user to call with tracing enabled
 toplevel_goal(Goal) :-
    term_variables(Goal,Vars),
-    trace_goal(Vars, Goal, trace_off).
+   interact(Vars, Goal, trace_off).
 
 % Entry point for the user to call with tracing enabled
 trace_goal(Goal) :-
@@ -2323,7 +2343,7 @@ really_trace:- once(option_value('exec',rtrace);option_value('eval',rtrace);is_d
 % !(pragma! exec rtrace)
 may_rtrace(Goal):- really_trace,!,  really_rtrace(Goal).
 may_rtrace(Goal):- Goal*->true;( \+ tracing, trace,really_rtrace(Goal)).
-really_rtrace(Goal):- use_metta_compiler,!,rtrace(call(Goal)).
+really_rtrace(Goal):- is_transpiling,!,rtrace(call(Goal)).
 really_rtrace(Goal):- with_debug((eval),with_debug((exec),Goal)).
 
 rtrace_on_existence_error(G):- !, catch_err(G,E, (fbug(E=G),  \+ tracing, trace, rtrace(G))).
@@ -2335,7 +2355,7 @@ prolog_only(Goal):- if_trace(prolog,Goal).
 write_compiled_exec(Exec,Goal):-
 %  ignore(Res = '$VAR'('ExecRes')),
   compile_for_exec(Res,Exec,Goal),
-  notrace((color_g_mesg('#114411',portray_clause(exec(Res):-Goal)))).
+  notrace((color_g_mesg('#114411',print_pl_source(answer2(Res):-Goal)))).
 
 verbose_unify(Term):- verbose_unify(trace,Term).
 verbose_unify(What,Term):- term_variables(Term,Vars),maplist(verbose_unify0(What),Vars),!.

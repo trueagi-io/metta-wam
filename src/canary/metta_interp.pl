@@ -1405,11 +1405,8 @@ asserted_metta_atom_fallback( KB,Atom):- fail, is_list(KB),!, member(Atom,KB).
 metta_atom(KB,Atom):- get_metta_atom_from(KB,Atom).
 metta_defn(KB,Head,Body):- metta_defn(_Eq,KB,Head,Body).
 metta_defn(Eq,KB,Head,Body):- ignore(Eq = '='), get_metta_atom_from(KB,[Eq,Head,Body]).
-
-metta_type(KB,H,B):- 
-  if_or_else(get_metta_atom_from(KB,[':',H,B]),
-       metta_atom_stdlib_types([':',H,B])).
-
+metta_type(S,H,B):- get_metta_atom_from(S,[':',H,B]).
+metta_type(_,H,B):- metta_atom_stdlib_types([':',H,B]).
 %typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_arguments(Cmpd,Type,[List|_]),is_list(List).
 
 :- if( \+ current_predicate(pfcAdd/1 )).
@@ -1430,14 +1427,22 @@ metta_anew1(Load,OBO):- maybe_xform(OBO,XForm),!,metta_anew1(Load,XForm).
 metta_anew1(load,OBO):- OBO= metta_atom(Space,Atom),!,'add-atom'(Space, Atom).
 metta_anew1(unload,OBO):- OBO= metta_atom(Space,Atom),!,'remove-atom'(Space, Atom).
 
-metta_anew1(load,OBO):- !, must_det_ll((load_hook(load,OBO),
-   subst_vars(OBO,Cl),pfcAdd(Cl))). %to_metta(Cl).
-metta_anew1(load,OBO):- !, must_det_ll((load_hook(load,OBO), 
-  subst_vars(OBO,Cl),show_failure(pfcAdd(Cl)))). %to_metta(Cl).
+metta_anew1(load,OBO):- !, 
+  must_det_ll((load_hook(load,OBO),
+   subst_vars(OBO,Cl),
+   pfcAdd_Now(Cl))). %to_metta(Cl).
+metta_anew1(load,OBO):- !, 
+  must_det_ll((load_hook(load,OBO), 
+  subst_vars(OBO,Cl),
+  show_failure(pfcAdd_Now(Cl)))).
 metta_anew1(unload,OBO):- subst_vars(OBO,Cl),load_hook(unload,OBO),
   expand_to_hb(Cl,Head,Body),
   predicate_property(Head,number_of_clauses(_)),
   ignore((clause(Head,Body,Ref),clause(Head2,Body2,Ref),(Head+Body)=@=(Head2+Body2),erase(Ref),pp_m(Cl))).
+
+% TODO uncomment this next line but it is breaking the curried chainer
+% pfcAdd_Now(P):- pfcAdd(P),!.
+pfcAdd_Now(P):- assertz(P),!.
 
 metta_anew2(Load,_OBO):- var(Load),trace,!.
 metta_anew2(Load,OBO):- maybe_xform(OBO,XForm),!,metta_anew2(Load,XForm).
