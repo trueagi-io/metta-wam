@@ -14,7 +14,7 @@ becomes a Modus Ponens rule denoted by `==>`
     (my-function $b $foofRet2))
 ```
 
-This allows an inference engine to run programs as if they are knowledge-base queries so that both simple and very complex functions are now optimizable with state of the art query optimization techniques.  The resulting The emmited code is converted to WAM VM instructions which is optimized with computational techniques.  See [docs/OVERVIEW.md](docs/OVERVIEW.md).
+This allows an inference engine to run programs as if they are knowledge-base queries so that both simple and very complex functions are now optimizable with state of the art query optimization techniques. This works for other languages as well such as Python, Common Lisp, Curry, Haskell, Verse, Java, Rust and so on and on.  But the mnost important place it works is with MeTTa!  This allows MeTTa functional programming and logic programming of `match` to use a singular well-typed execution model.  So that optimizations allow `match` and `eval` optimizations look forward ahead and backwards to optimize.  The resulting emmited code is converted to WAM VM instructions which is then optimized using the computational techniques.  See [docs/OVERVIEW.md](docs/OVERVIEW.md).
 
 
 [View the Latest Test Results](reports/TEST_LINKS.md)
