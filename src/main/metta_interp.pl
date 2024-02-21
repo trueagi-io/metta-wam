@@ -511,8 +511,11 @@ cmdline_load_metta(Phase,Self,['--args'|Rest]):- !,
   set_metta_argv(Before),
   cmdline_load_metta(Phase,Self,NewRest).
     
-cmdline_load_metta(Phase,Self,['--repl'|Rest]):- !, 
+  cmdline_load_metta(Phase,Self,['--repl'|Rest]):- !, 
   if_phase(Phase,execute,repl),
+  cmdline_load_metta(Phase,Self,Rest).
+cmdline_load_metta(Phase,Self,['--log'|Rest]):- !, 
+  if_phase(Phase,execute,switch_to_mettalog),
   cmdline_load_metta(Phase,Self,Rest).
 cmdline_load_metta(Phase,Self,[Filemask|Rest]):- atom(Filemask), \+ atom_concat('-',_,Filemask),
   if_phase(Phase,execute,cmdline_load_file(Self,Filemask)),
@@ -715,13 +718,13 @@ translate_metta_file_to_datalog_io(Filename,Input,Output):-
 
 % write comments
 write_metta_datalog_term(Output,'$COMMENT'(Term,_,_),_File,_Lineno):-
-  format(Output,"/* ~w */~n",[Term]).
+  'format'(Output,"/* ~w */~n",[Term]).
 % write executed terms
 write_metta_datalog_term(Output,exec(Term),File,Lineno):-
-  format(Output,":-eval_H('&self',~q,~q,~q).~n",[Term,File,Lineno]).
+  'format'(Output,":-eval_H('&self',~q,~q,~q).~n",[Term,File,Lineno]).
 % write asserted terms
 write_metta_datalog_term(Output,Term,File,Lineno):-
-  format(Output,"asserted_metta('&self',~q,~q,~q).~n",[Term,File,Lineno]).
+  'format'(Output,"asserted_metta('&self',~q,~q,~q).~n",[Term,File,Lineno]).
 
 translate_metta_datalog(Input,Output):- translate_metta_datalog('',Input,Output),!.
 
@@ -1113,7 +1116,7 @@ parse_sexpr_metta1(I,O):- parse_sexpr_untyped(I,U),trly(untyped_to_metta,U,O).
 
 write_comment(_):- is_compatio,!.
 write_comment(_):- silent_loading,!.
-write_comment(Cmt):- connlf,format(';;~w~n',[Cmt]).
+write_comment(Cmt):- connlf,'format'(';;~w~n',[Cmt]).
 do_metta_cmt(_,'$COMMENT'(Cmt,_,_)):- write_comment(Cmt),!.
 do_metta_cmt(_,'$STRING'(Cmt)):- write_comment(Cmt),!.
 do_metta_cmt(Self,[Cmt]):- !, do_metta_cmt(Self, Cmt),!.
@@ -1175,8 +1178,8 @@ svar_fixvarname_dont_capitalize(M,O):- svar_fixvarname(M,O),!.
 dvar_name(N,O):-atom_concat('_',_,N),!,O=N.
 dvar_name(N,O):- integer(N),atom_concat('_',N,O).
 dvar_name(N,O):- atom(N),atom_number(N,Num),dvar_name(Num,O),!.
-dvar_name(N,O):- \+ atom(N),!,format(atom(A),'~w',[N]),dvar_name(A,O).
-dvar_name(N,O):- !, format(atom(A),'_~w',[N]),dvar_name(A,O).
+dvar_name(N,O):- \+ atom(N),!,'format'(atom(A),'~w',[N]),dvar_name(A,O).
+dvar_name(N,O):- !, 'format'(atom(A),'_~w',[N]),dvar_name(A,O).
 %dvar_name(  '',''):-!. % "$"
 %dvar_name('_','__'):-!. % "$_"
 dvar_name(N,O):-atom_concat('_',_,N),!,atom_concat('_',N,O).
@@ -1259,10 +1262,10 @@ assert_preds(Self,Load,Preds):-
       % \+ predicate_property(H,defined),
       %if_t(is_transpiling,catch_i(dynamic(F,A))),
       if_t( \+ predicate_property(H,defined),
-           not_compatio(format('  :- ~q.~n',[dynamic(F/A)]))),
+           not_compatio('format'('  :- ~q.~n',[dynamic(F/A)]))),
       if_t(option_value('tabling','True'), 
-           not_compatio(format('  :- ~q.~n',[table(F/A)]))))),
-      not_compatio(format('~N~n  ~@',[portray_clause(Preds)]))))),
+           not_compatio('format'('  :- ~q.~n',[table(F/A)]))))),
+      not_compatio('format'('~N~n  ~@',[portray_clause(Preds)]))))),
    
    
   if_t(is_transpiling,
@@ -1424,12 +1427,13 @@ asserted_metta_atom(KB,HeadBody):- asserted_metta(KB,HeadBody,_,_).
 metta_anew1(Load,_OBO):- var(Load),trace,!.
 metta_anew1(Ch,OBO):-  metta_interp_mode(Ch,Mode), !, metta_anew1(Mode,OBO).
 metta_anew1(Load,OBO):- maybe_xform(OBO,XForm),!,metta_anew1(Load,XForm).
+metta_anew1(load,OBO):- OBO= metta_atom(Space,Atom),!,'add-atom'(Space, Atom).
+metta_anew1(unload,OBO):- OBO= metta_atom(Space,Atom),!,'remove-atom'(Space, Atom).
 
-%metta_anew1(load,OBO):- OBO= asserted_metta_atom(Space,Atom),!,'add-atom'(Space, Atom).
-%metta_anew1(load,OBO):- !, must_det_ll((load_hook(load,OBO), subst_vars(OBO,Cl),pfcAdd(Cl))). %to_metta(Cl).
-metta_anew1(load,OBO):- !, must_det_ll((load_hook(load,OBO), subst_vars(OBO,Cl),show_failure(pfcAdd(Cl)))). %to_metta(Cl).
-
-%metta_anew1(unload,OBO):- OBO=asserted_metta_atom(Space,Atom),!,'remove-atom'(Space, Atom).
+metta_anew1(load,OBO):- !, must_det_ll((load_hook(load,OBO),
+   subst_vars(OBO,Cl),pfcAdd(Cl))). %to_metta(Cl).
+metta_anew1(load,OBO):- !, must_det_ll((load_hook(load,OBO), 
+  subst_vars(OBO,Cl),show_failure(pfcAdd(Cl)))). %to_metta(Cl).
 metta_anew1(unload,OBO):- subst_vars(OBO,Cl),load_hook(unload,OBO),
   expand_to_hb(Cl,Head,Body),
   predicate_property(Head,number_of_clauses(_)),
@@ -1449,9 +1453,9 @@ metta_anew(Load,Src,OBO):- maybe_xform(OBO,XForm),!,metta_anew(Load,Src,XForm).
 metta_anew(Ch, Src, OBO):-  metta_interp_mode(Ch,Mode), !, metta_anew(Mode,Src,OBO).
 metta_anew(Load,_Src,OBO):- silent_loading,!,metta_anew1(Load,OBO).
 metta_anew(Load,Src,OBO):- 
-  not_compat_io((format('~N'), color_g_mesg('#0f0f0f',(write('  ; Action: '),writeq(Load=OBO),nl)),
-   color_g_mesg('#ffa500', ((format('~N '), write_src(Src)))))),
-   metta_anew1(Load,OBO),not_compat_io((format('~n'))).
+  not_compat_io(('format'('~N'), color_g_mesg('#0f0f0f',(write('  ; Action: '),writeq(Load=OBO),nl)),
+   color_g_mesg('#ffa500', (('format'('~N '), write_src(Src)))))),
+   metta_anew1(Load,OBO),not_compat_io(('format'('~n'))).
 
 subst_vars_not_last(A,B):-
   functor(A,_F,N),arg(N,A,E),
@@ -1462,7 +1466,7 @@ con_write(W):-check_silent_loading, not_compat_io((write(W))).
 con_writeq(W):-check_silent_loading, not_compat_io((writeq(W))).
 writeqln(Q):- check_silent_loading,not_compat_io((write(' '),con_writeq(Q),connl)).
 
-connlf:- check_silent_loading, not_compat_io((format('~N'))).
+connlf:- check_silent_loading, not_compat_io(('format'('~N'))).
 connl:- check_silent_loading,not_compat_io((nl)).
 % check_silent_loading:- silent_loading,!,trace,break.
 check_silent_loading.
@@ -1500,8 +1504,8 @@ assert_to_metta(OBO):-
      real_assert(Data),
      incr_file_count(_),
      ignore((((should_show_data(X),
-       ignore((fail,OldData\==Data,write('; oldData '),write_src(OldData),format('  ; ~w ~n',[X]))),
-       write_src(Data),format('  ; ~w ~n',[X]))))),
+       ignore((fail,OldData\==Data,write('; oldData '),write_src(OldData),'format'('  ; ~w ~n',[X]))),
+       write_src(Data),'format'('  ; ~w ~n',[X]))))),
      ignore((
        fail, option_value(output_stream,OutputStream),
        is_stream(OutputStream),
@@ -1551,7 +1555,7 @@ write_exec0(_):- is_compatio,!.
 write_exec0(Exec):-
   wots(S,write_src(exec(Exec))),
   nb_setval(exec_src,Exec),
-  format('~N'),
+  'format'('~N'),
   ignore((notrace((color_g_mesg('#0D6328',writeln(S)))))).
 
 
@@ -1865,8 +1869,8 @@ repl3:-
       current_read_mode(repl,Mode),
       %ignore(shell('stty sane ; stty echo')),
       %current_input(In),
-     %format(atom(P2),'metta> ',[]),
-      format(atom(P),'metta ~w ~w> ',[Self, Mode]))),
+     %'format'(atom(P2),'metta> ',[]),
+      'format'(atom(P),'metta ~w ~w> ',[Self, Mode]))),
       setup_call_cleanup(
          notrace(prompt(Was,P)),
          notrace((ttyflush,repl_read(Expr),ttyflush)),
@@ -2069,17 +2073,18 @@ interactively_do_metta_exec0(From,Self,_TermV,Term,X,NamedVarsList,Was,Output,FO
        flag(result_num,R,R+1),
        flag(result_num,ResNum,ResNum),
      if_t(ResNum=<Max,
-         ((((ResNum==1,Complete==true)->(not_compatio(format('~NDeterministic: ',  [])), !);          %or Nondet
-           ( Complete==true -> (not_compatio(format('~NLast Result(~w): ',[ResNum])),! );
-                               not_compatio(format('~NNDet Result(~w): ',[ResNum]))))),
+         ((((ResNum==1,Complete==true)->(not_compatio('format'('~NDeterministic: ',  [])), !);          %or Nondet
+           ( Complete==true -> (not_compatio('format'('~NLast Result(~w): ',[ResNum])),! );
+                               not_compatio('format'('~NNDet Result(~w): ',[ResNum]))))),
       (
         ignore((( 
           not_compatio(if_t( \+ atomic(Output), nl)), 
-          (
-           only_compatio(if_t(ResNum> 1,write(', '))),
-            not_compatio(if_t(ResNum> 1,nl)),
+          ( only_compatio(if_t(ResNum> 1,write(', '))),
+            not_compatio(if_t(ResNum> 1, nl)),
           user_io(with_indents(is_mettalog,
-             color_g_mesg_ok(yellow,write_asrc(Output))))  ))))),
+             color_g_mesg_ok(yellow,
+              \+ \+ ( maplist(maybe_assign,NamedVarsList),
+                write_asrc(Output)))))  ))))),
 
       not_compatio(with_output_to(user_error,give_time('Execution',Seconds))),
       %not_compatio(give_time('Execution',Seconds),
@@ -2103,11 +2108,11 @@ interactively_do_metta_exec0(From,Self,_TermV,Term,X,NamedVarsList,Was,Output,FO
        (Complete\==true, \+ WasInteractive, Control = contrl(Max,leap)) -> true ;
         (((Complete==true ->! ; true)))))
                     *-> (ignore(Result = res(FOut)),ignore(Output = (FOut)))
-                    ; (flag(result_num,ResNum,ResNum),(ResNum==0->(not_compatio(format('~N<no-results>~n~n')),!,true);true))),
+                    ; (flag(result_num,ResNum,ResNum),(ResNum==0->(not_compatio('format'('~N<no-results>~n~n')),!,true);true))),
                     only_compatio(write(']')),nl,
    ignore(Result = res(FOut)).
 
-
+maybe_assign(N=V):- ignore(V='$VAR'(N)).
 
 mqd:-
   forall(metta_atom(_KB,['query-info',E,T,Q]),
@@ -2354,7 +2359,7 @@ verbose_unify(Term):- verbose_unify(trace,Term).
 verbose_unify(What,Term):- term_variables(Term,Vars),maplist(verbose_unify0(What),Vars),!.
 verbose_unify0(What,Var):- put_attr(Var,verbose_unify,What).
 verbose_unify:attr_unify_hook(Attr, Value) :-
-    format('~N~q~n',[verbose_unify:attr_unify_hook(Attr, Value)]),
+    'format'('~N~q~n',[verbose_unify:attr_unify_hook(Attr, Value)]),
     vu(Attr,Value).
 vu(_Attr,Value):- is_ftVar(Value),!.
 vu(fail,_Value):- !, fail.
@@ -2400,11 +2405,11 @@ give_time(_What,_Seconds):- is_compatio,!.
 give_time(What,Seconds):-
     Milliseconds is Seconds * 1_000,
     (Seconds > 2
-        -> format('~N; ~w took ~2f seconds.~n~n', [What, Seconds])
+        -> 'format'('~N; ~w took ~2f seconds.~n~n', [What, Seconds])
         ; (Milliseconds >= 1
-            -> format('~N; ~w took ~3f secs. (~2f milliseconds) ~n~n', [What, Seconds, Milliseconds])
+            -> 'format'('~N; ~w took ~3f secs. (~2f milliseconds) ~n~n', [What, Seconds, Milliseconds])
             ;( Micro is Milliseconds * 1_000,
-              format('~N; ~w took ~6f secs. (~2f microseconds) ~n~n', [What, Seconds, Micro])))).
+              'format'('~N; ~w took ~6f secs. (~2f microseconds) ~n~n', [What, Seconds, Micro])))).
 
 timed_call(Goal,Seconds):-
     statistics(cputime, Start),
@@ -2629,7 +2634,12 @@ override_portray:-
     erase(Cl))),
     asserta((user:portray(List) :- metta_portray(List))).
 
-
+metta_message_hook(A, B, C) :-
+      user:
+      (   B==error,
+          fbug(metta_message_hook(A, B, C)),
+          fail
+      ).
 
 override_message_hook:- 
       forall(

@@ -23,3 +23,10 @@
         (union (union (FizzBuzz (superpose $m35)) (Nothing $n35)) (union (Fizz $m3n5) (Buzz $m5n3)))))
 
 !(fizzbuzz 50)
+
+
+(== 2 (superpose (1 2 3 4)))
+
+
+(== 2 (superpose (1 2 3 $x)))
+

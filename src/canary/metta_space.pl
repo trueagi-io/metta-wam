@@ -321,7 +321,9 @@ metta_assertdb_add(KB,AtomIn):-
      MP =.. [AMA,KB,Atom],
   assert_new(MP))).
 metta_assertdb_rem(KB,Old):- metta_assertdb_del(KB,Old).
-metta_assertdb_del(KB,Atom):- subst_vars(Atom,Old), decl_m_fb_pred(user,asserted_metta_atom,2), MP = metta_atom(KB,Old),
+metta_assertdb_del(KB,Atom):- subst_vars(Atom,Old), 
+  decl_m_fb_pred(user,asserted_metta_atom,2), 
+  MP = metta_atom(KB,Old),
   copy_term(MP,Copy), clause(MP,true,Ref), MP=@= Copy, !, erase(Ref). % ,metta_assertdb('DEL',Old).
 metta_assertdb_replace(KB,Old,New):- metta_assertdb_del(KB,Old), metta_assertdb_add(KB,New).
 metta_assertdb_count(KB,Count):-
@@ -362,7 +364,9 @@ space_query_vars(KB,Query,Vars):- is_asserted_space(KB),!,
     debug_metta('RES',space_query_vars(KB,Query,Vars)).
 
 
-metta_assertdb_get_atoms(KB,AtomsL):- decl_m_fb_pred(user,asserted_metta_atom,2), findall(Atom,metta_atom(KB,Atom),AtomsL).
+metta_assertdb_get_atoms(KB,AtomsL):- 
+   decl_m_fb_pred(user,asserted_metta_atom,2), 
+   findall(Atom,metta_atom(KB,Atom),AtomsL).
 /*
 
 %metta_assertdb_iter_bind(KB,Query,Template,AtomsL):- decl_m_fb_pred(user,asserted_metta_atom,2), findall(Template,metta_atom(KB,Query),AtomsL).
