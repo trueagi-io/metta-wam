@@ -41,7 +41,7 @@ You may then enter a corresponding containter with the following
 command
 
 ```bash
-docker run --rm -it --entrypoint bash mettalog
+docker run -it --entrypoint 'bash -i' mettalog
 ```
 
 Once inside the container you may enter the MeTTaLog REPL with the
@@ -57,9 +57,6 @@ or run a metta script as follows
 MeTTa myprg.metta
 ```
 
-Beware that the container will be removed after leaving it.  If you
-wish to keep it, then remove the `--rm` flag from the command line
-used to enter the container.
 
 Docker has a rich functionality set.  In particular it allows you to
 [copy](https://docs.docker.com/engine/reference/commandline/container_cp/)
@@ -70,10 +67,7 @@ documentation](https://docs.docker.com/reference/).
 
 
 ## :computer: Usage and Demos
-- Launch Jupyter notebook:
-```
-./scripts/start_jupyter.sh
-```
+
 Interact directly with MeTTaLog through the REPL:
 ```bash
 mettalog --repl
@@ -102,6 +96,11 @@ MeTTa tests/baseline_compat/hyperon-experimental_scripts/b0_chaining_prelim.mett
 MeTTa tests/baseline_compat/hyperon-experimental_scripts/b0_chaining_prelim.metta
 ```
 
+** Launch Jupyter notebook: (in progress) **
+ - Contains a Jupyter Kernel for MeTTa (allows runing of MeTTa scripts remotely)
+```
+./scripts/start_jupyter.sh
+```
 
 ### Running Tests
 Execute a unit test:

@@ -64,6 +64,7 @@ do_expander(':',_,X,Y):- !, get_type(X,Y)*->X=Y.
 eval_args(X,Y):- current_self(Self), eval_args(100,Self,X,Y).
 eval_args(Depth,Self,X,Y):- eval_args('=',_,Depth,Self,X,Y).
 eval_args(Eq,RetType,Depth,Self,X,Y):- eval(Eq,RetType,Depth,Self,X,Y).
+
 /*
 eval_args(Eq,RetTyp e,Depth,Self,X,Y):-
    locally(set_prolog_flag(gc,true),
@@ -120,7 +121,6 @@ debugging_metta(G):- fake_notrace((is_debugging((eval))->ignore(G);true)).
 
 :- nodebug(metta(eval)).
 
-
 w_indent(Depth,Goal):-
   \+ \+ fake_notrace(ignore(((
     format('~N'),
@@ -131,6 +131,12 @@ indentq(Depth,Term):-
     setup_call_cleanup(forall(between(Depth,101,_),write('  ')),format('~q',[Term]),
     format('~N')))))).
 
+
+indentq_d(Depth,Prefix4, Message):-
+	fake_notrace((flag(eval_num,EX0,EX0),
+	EX is EX0 mod 500,
+	DR is 99 - (Depth mod 100),
+	indentq(DR,EX,Prefix4,Message))).
 
 indentq(DR,EX,AR,retval(Term)):-nonvar(Term),!,indentq(DR,EX,AR,Term).
 indentq(DR,EX,AR,Term):-
@@ -203,7 +209,7 @@ eval_11(Eq,RetType,Depth,Self,X,Y):-
   ((
 
   fake_notrace((flag(eval_num,EX0,EX0+1),
-  EX is EX0 mod 500,
+   EX is EX0 mod 500,
   D1 is Depth-1,
   DR is 99-D1,
   PrintRet = _)),
@@ -216,7 +222,7 @@ eval_11(Eq,RetType,Depth,Self,X,Y):-
   if_t(DR<DMax,if_trace((eval),(PrintRet=1, indentq(DR,EX, '-->',eval(X))))),
   Ret=retval(fail))),
 
-  call_cleanup((
+   call_cleanup((
     (eval_00(Eq,RetType,D1,Self,X,Y)*->true;(fail,trace,(eval_00(Eq,RetType,D1,Self,X,Y)))),
     fake_notrace(( \+ (Y\=YY), nb_setarg(1,Ret,Y)))),
 
@@ -225,6 +231,44 @@ eval_11(Eq,RetType,Depth,Self,X,Y):-
       if_t(DR<DMax,if_trace((eval),indentq(DR,EX,'<--',Ret))))))))),
 
   (Ret\=@=retval(fail)->true;(fail,trace,(eval_00(Eq,RetType,D1,Self,X,Y)),fail)).
+
+trace_eval(P4,TN,D1,Self,X,Y):- \+ is_debugging(TN), \+ is_debugging(eval),!, call(P4,D1,Self,X,Y).
+trace_eval(P4,TN,D1,Self,X,Y):-
+   must_det_ll((
+   notrace((
+   flag(eval_num,EX0,EX0+1),
+   EX is EX0 mod 500,
+   DR is 99 - (D1 mod 100),
+   PrintRet = _,
+   option_else('trace-length',Max,500),
+   option_else('trace-depth',DMax,30))),
+   quietly((if_t((nop(stop_rtrace),EX>Max), (set_debug(eval,false),MaxP1 is Max+1, 
+         %set_debug(overflow,false),
+         nop(format('; Switched off tracing. For a longer trace: !(pragma! trace-length ~w)',[MaxP1])),
+         nop((start_rtrace,rtrace)))))),
+   nop(notrace(no_repeats_var(YY))))),
+
+   if_t(DR<DMax, if_trace((eval;TN), (PrintRet=1, indentq(DR,EX, '-->',[TN,X])))),
+
+   Ret=retval(fail),!,
+
+   (Display= (flag(eval_num,EX1,EX1+1),
+			    ((Ret\=@=retval(fail),nonvar(Y)) 
+			    -> indentq(DR,EX1,'<--',[TN,Y])
+			     ; indentq(DR,EX1,'<--',[TN,Ret])))),
+
+   call_cleanup((
+      (call(P4,D1,Self,X,Y)*->true;
+        (fail,trace,(call(P4,D1,Self,X,Y)))),
+      ignore((fake_notrace(( \+ (Y\=YY), nb_setarg(1,Ret,Y)))))),
+    % cleanup 
+      (PrintRet==1 -> call(Display) ;
+       (fake_notrace(ignore((( % Y\=@=X,
+         if_t(DR<DMax,if_trace((eval),call(Display)))))))))),
+   Ret\=@=retval(fail).
+
+%  (Ret\=@=retval(fail)->true;(fail,trace,(call(P4,D1,Self,X,Y)),fail)).
+
 
 
 
@@ -1190,7 +1234,7 @@ eval_40(Eq,RetType,Depth,Self,[F|PredDecl],Res):-
 % =================================================================
 % =================================================================
 % =================================================================
-eval_40(_Eq,_RetType,_Dpth,_Slf,LESS,Res):-
+eval_40(_Eq,_RetType,_Dpth,_Slf,LESS,Res):- 
    ((((eval_selfless(LESS,Res),fake_notrace(LESS\==Res))))),!.
 
 eval_40(Eq,RetType,Depth,Self,['+',N1,N2],N):- number(N1),!,
@@ -1465,7 +1509,8 @@ eval_64(Eq,RetType,Depth,Self,[[H|Start]|T1],Y):-
 eval_64(Eq,_RetType,Depth,Self,[H|Args],B):- % no weird template matchers
   % forall(metta_defn(Eq,Self,[H|Template],_),
   %    maplist(not_template_arg,Template)),
-   Eq='=',
+   Eq='=',	
+
    (metta_defn(Eq,Self,[H|Args],B0)*->true;(fail,[H|Args]=B0)),
    light_eval(Depth,Self,B0,B).
     %(eval(Eq,RetType,Depth,Self,B,Y);metta_atom_iter(Depth,Self,Y)).
@@ -1474,6 +1519,9 @@ eval_65(Eq,_RetType,Depth,Self,[H|Args],B):-
    Eq='=',
   (metta_defn(Eq,Self,[H|Template],B0),Args=Template),
   light_eval(Depth,Self,B0,B).
+
+
+
 
 
 light_eval(_Depth,_Self,B,B).

@@ -159,6 +159,9 @@ for arg in "$@"; do
     if [[ "$arg" == "--docker=false" ]]; then
         use_docker=false
     fi
+    if [[ "$arg" == "--docker=true" ]]; then
+        use_docker=true
+    fi
     if [[ "$arg" == "--docker" ]]; then
         use_docker=true
     fi
