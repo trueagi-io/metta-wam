@@ -13,14 +13,13 @@ ftp.flybase.net/**
 .?*~/
 .bash_history
 *.bak
+tests~output/
 ImplicitQuantification.tex
 data/ftp.flybase.net/
 data/SO-Ontologies/
 data/tsv_exports/
 git-mv-with-history-wildcards
-src/__pycache__/
-src/mettalog-20230913205939.py.bak
-src/mettalog.new
+__pycache__/
 #        src/main/extra_pytests/
 src/main/metta_interp.new
 src/main/metta_interp.old
@@ -29,11 +28,11 @@ src/main/swi_flybase_fast.new
 src/main/swi_flybase_fast_good.pl
 reqs/
 # temp files
-FOUND_UNITS.sortme
-PASS_FAIL.md
-Results.md
-TEE.ansi
-TEE.ansi.UNITS
-TEST_LINKS.md
-final_MeTTaLog.md
+./FOUND_UNITS.sortme
+./PASS_FAIL.md
+./Results.md
+./*.ansi
+./TEE.ansi.UNITS
+./TEST_LINKS.md
+./final_MeTTaLog.md
 
