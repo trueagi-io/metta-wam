@@ -6,12 +6,15 @@ MeTTaLog replaces all functions written in MeTTa with nondeterministic predicate
 
 For example a function body like
 `(= (my-function $b) (foo a b (bar c d )))`
-becomes 
-`(<= (my-function $b $foofRet2)
-    (, (bar c d $barRet1) 
-      (foo a b $barRet1 $fooRet2))`
+becomes a Modus Ponens rule denoted by `==>`
+```clif
+(==> 
+   (and (bar c d $barRet1) 
+        (foo a b $barRet1 $fooRet2))
+    (my-function $b $foofRet2))
+```
 
-This allows an inference engine to run programs as if they are knowledge base queries so that both simple and very complex functions are now optimizable with state of the art query optimization techniques.  The resulting The emmited code is converted to WAM VM instructions which is optimized with computational techniques.  See [docs/OVERVIEW.md](docs/OVERVIEW.md).
+This allows an inference engine to run programs as if they are knowledge-base queries so that both simple and very complex functions are now optimizable with state of the art query optimization techniques.  The resulting The emmited code is converted to WAM VM instructions which is optimized with computational techniques.  See [docs/OVERVIEW.md](docs/OVERVIEW.md).
 
 
 [View the Latest Test Results](reports/TEST_LINKS.md)
