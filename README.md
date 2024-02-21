@@ -2,6 +2,13 @@
 
 In stark contrast to the von Neumann architectures' sequential execution pattern, the Warren Abstract Machine (WAM) embodies a distinct and specialized computational model that thrives within the realm of functional logic programming. Its reliance on registers, its tailored instruction set, its stack-based execution model, and its unique approach to memory management collectively enable it to excel in the execution of logic programs, where logical constraints and backtracking play a pivotal role.
 
+MeTTaLog replaces all functions written in MeTTa with nondeterministic predicates that have an extra argument for a return value. 
+`(foo a b (bar c d ))`
+becomes 
+`(match &self (, (bar c d $BarRet1) (foo a b $BarRet1 $FooRet2)) $FooRet2)`
+
+This allows an inference engine to run programs as if they are knowledge base queries so that both simple and very complex functions are now optimizable with state of the art query optimization techniques.  The emmited code is converted to WAM VM instructions which is optimized with computational techniques.  See [docs/OVERVIEW.md](docs/OVERVIEW.md).
+
 
 [View the Latest Test Results](reports/TEST_LINKS.md)
 
@@ -10,7 +17,8 @@ In stark contrast to the von Neumann architectures' sequential execution pattern
 ### :toolbox: Installation
 Clone and set up MeTTaLog with the following commands:
 ```
-git clone https://github.com/trueagi-io/hyperon-wam
+git clone https://github.com/trueagi-io/hyperon-wam # currently git clone https://github.com/logicmoo/hyperon-wam
+
 cd hyperon-wam
 
 chmod +x INSTALL.sh  # Make sure the script is executable
