@@ -1,24 +1,50 @@
 # :rocket: An Implementation of MeTTa on the Warren Abstract Machine (WAM)
 
-In stark contrast to the von Neumann architectures' sequential execution pattern, the Warren Abstract Machine (WAM) embodies a distinct and specialized computational model that thrives within the realm of functional logic programming. Its reliance on registers, its tailored instruction set, its stack-based execution model, and its unique approach to memory management collectively enable it to excel in the execution of logic programs, where logical constraints and backtracking play a pivotal role.
+In stark contrast to the von Neumann architectures' sequential execution pattern, our system embodies a distinct and specialized computational model that thrives within the realm of functional and logic programming. Leveraging the Warren Abstract Machine (WAM), our approach utilizes registers, a tailored instruction set, a stack-based execution model, and a unique approach to memory management. These features collectively enable superior execution of logic programs, where logical constraints and backtracking are crucial.
 
-This compiler, transpiler and interpeter replaces all functions written in MeTTa with canonical form nondeterministic predicates that have an extra argument for a return value.  
+### Function Transformation into Logic Rules
 
-For example a function body like
-`(= (my-function $b) (foo a b (bar c d )))`
-becomes a Modus Ponens rule denoted by `==>`
+Our system transforms all functions written in MeTTa into canonical form nondeterministic predicates, enhancing them with an additional argument for the return value. For instance, a function body like:
+
+```lisp
+(= (my-function $b) (foo a b (bar c d)))
+```
+
+is transformed into a Modus Ponens rule represented as:
+
 ```clif
 (==> 
    (and (bar c d $barRet1) 
         (foo a b $barRet1 $fooRet2))
-    (my-function $b $foofRet2))
+   (my-function $b $fooRet2))
 ```
+This approach not streamlines MeTTa's functional programming (`eval`) and logic programming in Atomspaces (`match`) into one optimizable model.
 
-This allows the state of the art Automated theoerm provers and inference engines such as created for SUMO, CycL, KIF, FOL, HOL and TPTP to run programs as if they are knowledge-base queries.  Both simple and very complex functions that were only optimizable using computational techniqes for imperitiave code can now be optimized the way the engines do with quieries. This recent technique has been tested (even boring GUI  programs) and seems to work for other languages as well such as Python\*, Haskell, Common Lisp\*, Curry\*, Verse, Java\*, Rust, Oz, OcamML and so on and so on.  But the most important place it was successfully deployed is with MeTTa!  (The repository _ that_ deployment.  Our technique has allowed MeTTa's functional programming (refered to as `eval`) and the logic programming of `match` to use a singular well-typed execution model. Or deployment allows `match` and `eval` to pre and post (at runtime) optimize each others execution order and both forward and backwards.  The resulting code is converted to WAM VM instructions (JITed) which is then further optimized using the typical computational techniques known outside our.  See [docs/OVERVIEW.md](docs/OVERVIEW.md) for more information
+ This interplay allows for optimizing execution order and efficiency dynamically.  Segments of  reordered code is JIT-compiled on WAM and further optimized using conventional computational techniques.
 
-\* Transpilers/compilers exist already that transform sourcecode/AST of these languages into our imediate representation (IR).  Thus can run in our currently with MeTTa which extends them with above and below properties of our system mentioned above and below.
+Importantly this gives Probablistic reasoning inference as well as several others type of reasonming a role to play in execution of code.
 
-On such property in our implementation is for first time ever programmers are allowed to mix ontological types (such as from SUMO and RDF) with regular types and dependant types during both compile and runtime.  This means variables and objects can have semantic relationships such as a `StringHoldingALikeableStatement` or `StringHoldingWhoKnowsWhat` vs `ALikeableStatement` or `WhoKnowsWhat` as well as any type theory and type system can dream up concurrently with each other.  These theories and systems can be added and removed at the programmers descretion durring execution. (HOL and FOL inferences about `ALikeableStatement` and various implied context and implications and can be both logically deduced and induced and effect changes at both compile time and runtime through out the system and Atomspace.
+This transformation inside our Atomsapce allows heuistics and optization used automated theorem provers and inference engines _(such as those created for SUMO, CycL, FOL, and HOL)_ to be able to run programs as if they are knowledge-base queries.
+
+We have appied this unque model of compuation to functional programming tests created for MeTT. 
+
+See [Tests](tests/).
+
+
+ This has even worked for GUI systems and programs side effects. It is able within the query system to hanlde event base programming. 
+
+
+### Ontological and Type System Integration
+Our system allows for the integration of ontological types (e.g., from SUMO and RDF) with regular and dependent types during both compile-time and runtime. This integration permits variables and objects to be defined not only in terms of traditional data types, behavoural interfaces and dependant types but also in terms of more complex semantic relationships and theories. As a result, developers can employ types such as `StringHoldingALikeableStatement` or `StringHoldingWhoKnowsWhat` versus traditional types like `ALikeableStatement` or `WhoKnowsWhat`. This enhancement enables the system to process information with a greater level of semantic understanding, allowing for more accurate logical deductions and inductions that directly influence the behavior of programs at both compile-time and runtime.
+
+
+### Extensive Language Support
+Our compilation technique has been effectively applied to: Python*,  Common Lisp*, Curry* and HVM* by converting the source code (or AST) written in these languages into our intermediate representation (IR). In the Python experiment it allow python code to benefit from the extended features described here.  But more importantly it runs inline aftwerwards so MeTTa can update and change the semantics of the code in our VM. Our success with the fore-listed languages implies it could as well with Haskell, Verse, Java, Rust, Oz and OcamML etc etc
+
+
+
+For more details  refer to the [docs/OVERVIEW.md] in this repository.
+
 
 
 [View the Latest Test Results](reports/TEST_LINKS.md)
