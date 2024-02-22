@@ -1,15 +1,9 @@
 
 # :rocket: An Implementation of MeTTa designed to run on the Warren Abstract Machine (WAM)
 
+Info at [./docs/OVERVIEW.md](docs/OVERVIEW.md) in this repository.
+
 See [Tests](tests/) for MeTTa as well as [Results](reports/TEST_LINKS.md)
-
- **Execute programs as if they are knowledge-base queries**: Using the dozens query optimization methods that are otherwise impossible in the realm of program execution, we changes quadratic algorithms into linear or better.
-
-
-Refer to the [./docs/OVERVIEW.md](docs/OVERVIEW.md) in this repository.
-
-The biggest novel gain of this implimention is we have made it possible for Probablistic reasoning inference (or even Neural Nets) to no longer need a have the code ran in a separate interpreter.
-
 
 ## :package: Getting Started
 
