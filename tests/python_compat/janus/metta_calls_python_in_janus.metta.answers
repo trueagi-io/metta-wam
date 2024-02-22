@@ -1,0 +1,7 @@
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-wam/reports/python_compat/janus/metta_calls_python_in_janus.metta
+[(Error (assertEqual rand 4) 
+Expected: [4]
+Got: [rand]
+Missed result: 4)]
+0.06user 0.02system 0:00.09elapsed 97%CPU (0avgtext+0avgdata 33448maxresident)k
+0inputs+0outputs (0major+3676minor)pagefaults 0swaps

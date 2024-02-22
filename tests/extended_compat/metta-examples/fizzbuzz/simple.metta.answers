@@ -1,0 +1,4 @@
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-wam/reports/extended_compat/metta-examples/fizzbuzz/simple.metta
+[(Nothing 1), (Nothing 2), (Fizz 3), (Nothing 4), (Buzz 5), (Fizz 6), (Nothing 7), (Nothing 8), (Fizz 9), (Buzz 10), (Nothing 11), (Fizz 12), (Nothing 13), (Nothing 14), (FizzBuzz 15), (Nothing 16), (Nothing 17), (Fizz 18), (Nothing 19), (Buzz 20), (Fizz 21), (Nothing 22), (Nothing 23), (Fizz 24), (Buzz 25), (Nothing 26), (Fizz 27), (Nothing 28), (Nothing 29), (FizzBuzz 30), (Nothing 31), (Nothing 32), (Fizz 33), (Nothing 34), (Buzz 35), (Fizz 36), (Nothing 37), (Nothing 38), (Fizz 39), (Buzz 40), (Nothing 41), (Fizz 42), (Nothing 43), (Nothing 44), (FizzBuzz 45), (Nothing 46), (Nothing 47), (Fizz 48), (Nothing 49), (Buzz 50)]
+2.87user 0.02system 0:02.89elapsed 100%CPU (0avgtext+0avgdata 76612maxresident)k
+0inputs+0outputs (0major+14447minor)pagefaults 0swaps

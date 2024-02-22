@@ -1,0 +1,4 @@
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-wam/reports/flybase/extra/pmquery.metta
+[("ENSG00000227868" "ENSG00000004487" "ENSG00000169641" "ENSG00000179546" "ENSG00000125944" "ENSG00000125945" "ENSG00000204219" "ENSG00000088280" "ENSG00000007968" "ENSG00000117318" "ENSG00000142676" "ENSG00000011007" "ENSG00000057757" "ENSG00000011009" "ENSG00000117308")]
+0.06user 0.02system 0:00.08elapsed 100%CPU (0avgtext+0avgdata 33536maxresident)k
+0inputs+0outputs (0major+3683minor)pagefaults 0swaps

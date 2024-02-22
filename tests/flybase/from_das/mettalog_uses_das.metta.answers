@@ -1,0 +1,19 @@
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-wam/reports/flybase/from_das/mettalog_uses_das.metta
+[(ls!)]
+[(Error (extend-py! ./mettalog_das_client.py) Exception caught:
+IndentationError: unindent does not match any outer indentation level (mettalog.py, line 1412)
+
+At:
+  /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-wam/reports/flybase/from_das/./mettalog_das_client.py(6): <module>
+  <frozen importlib._bootstrap>(241): _call_with_frames_removed
+  <frozen importlib._bootstrap_external>(940): exec_module
+  /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/python/hyperon/runner.py(173): load_py_module_from_path
+  /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/python/hyperon/runner.py(160): load_py_module_from_mod_or_file
+  /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/python/hyperon/runner.py(78): <lambda>
+  /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/python/hyperon/atoms.py(332): execute
+  /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/python/hyperon/atoms.py(176): _priv_call_execute_on_grounded_atom
+  /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/python/hyperon/runner.py(31): run_step
+  (18): run_step
+)]
+0.07user 0.01system 0:00.08elapsed 98%CPU (0avgtext+0avgdata 36508maxresident)k
+0inputs+16outputs (0major+4640minor)pagefaults 0swaps

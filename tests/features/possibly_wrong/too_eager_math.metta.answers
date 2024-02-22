@@ -1,0 +1,6 @@
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-wam/reports/features/possibly_wrong/too_eager_math.metta
+[(got 1 4), 5]
+[(got 1 (plus 2 2)), (+ 1 (plus 2 2))]
+[(got 1 (plus 2 2)), (+ 1 (plus 2 2))]
+0.06user 0.03system 0:00.09elapsed 100%CPU (0avgtext+0avgdata 34072maxresident)k
+0inputs+0outputs (0major+3671minor)pagefaults 0swaps

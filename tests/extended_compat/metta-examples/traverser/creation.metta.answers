@@ -1,0 +1,9 @@
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-wam/reports/extended_compat/metta-examples/traverser/creation.metta
+[()]
+[()]
+[()]
+[(Outgoing created 0 created 1 0.4)]
+[(Node person 0), (Node software 1)]
+[(Prop lang java 1), (Prop age 29 0), (Prop name marko 0), (Prop name lop 1)]
+0.13user 0.02system 0:00.15elapsed 99%CPU (0avgtext+0avgdata 33388maxresident)k
+0inputs+0outputs (0major+3700minor)pagefaults 0swaps

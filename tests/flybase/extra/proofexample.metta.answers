@@ -1,0 +1,4 @@
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-wam/reports/flybase/extra/proofexample.metta
+[(Error (import! GroundingSpace-0x55a30bdc3528 ../../../../hyperon-pln/metta/synthesis/Synthesize.metta) Failed to load module ../../../../hyperon-pln/metta/synthesis/Synthesize.metta; could not locate file)]
+0.06user 0.01system 0:00.08elapsed 100%CPU (0avgtext+0avgdata 33488maxresident)k
+0inputs+0outputs (0major+3662minor)pagefaults 0swaps

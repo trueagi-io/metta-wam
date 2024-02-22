@@ -1,0 +1,7 @@
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-wam/reports/performance/basic/hyperposing.metta
+[(Error (assertEqual (hyperpose (1 2)) (superpose (1 2))) 
+Expected: [1, 2]
+Got: [(hyperpose (1 2))]
+Missed result: 1)]
+0.06user 0.02system 0:00.08elapsed 100%CPU (0avgtext+0avgdata 33072maxresident)k
+0inputs+0outputs (0major+3655minor)pagefaults 0swaps

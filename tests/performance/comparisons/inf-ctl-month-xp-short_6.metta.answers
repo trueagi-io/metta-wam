@@ -1,0 +1,4 @@
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-wam/reports/performance/comparisons/inf-ctl-month-xp-short_6.metta
+[(Error (add-atom &kb (: JF (≼ Jan Feb))) add-atom expects a space as the first argument)]
+0.08user 0.00system 0:00.08elapsed 98%CPU (0avgtext+0avgdata 33040maxresident)k
+0inputs+0outputs (0major+3650minor)pagefaults 0swaps

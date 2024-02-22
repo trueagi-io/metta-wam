@@ -1,0 +1,10 @@
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-wam/reports/features/bidirectional_computation/relative-arithmetic.metta
+[(Error (assertEqual (< $L1 $L3) True) 
+Expected: [True]
+Got: [(< $L1 $L3)]
+Missed result: True), (Error (assertEqual (< $L2 $L1) False) 
+Expected: [False]
+Got: [(< $L2 $L1)]
+Missed result: False)]
+0.06user 0.02system 0:00.08elapsed 100%CPU (0avgtext+0avgdata 33844maxresident)k
+0inputs+0outputs (0major+3679minor)pagefaults 0swaps

@@ -1,0 +1,14 @@
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-wam/reports/performance/comparisons/add-atom-naive-fib.metta
+[()]
+[()]
+[(+ (fib 1) (fib 0))]
+[(+ (fib 2) (fib 1))]
+[(named-new-space &other2 GroundingSpace-0x55d278670fb8)]
+[()]
+[()]
+[()]
+[foo1, foo2]
+[(eval-in-space GroundingSpace-0x55d27822e408 (fib 50))]
+[(eval-in-space GroundingSpace-0x55d27867ec48 (foo))]
+0.12user 0.01system 0:00.13elapsed 100%CPU (0avgtext+0avgdata 34052maxresident)k
+0inputs+0outputs (0major+3714minor)pagefaults 0swaps

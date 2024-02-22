@@ -1,0 +1,10 @@
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-wam/reports/extended_compat/hyperon-pln/metta/pln/entail/ImplicationDirectIntroductionEntailTest.metta
+[()]
+[("========== Test formula ==========")]
+[(idi_formula (Bl True) (Bl False) (STV 1 0))]
+[("========== Test axiom ==========")]
+[]
+[("========== Test inductive rule ==========")]
+[]
+0.09user 0.01system 0:00.10elapsed 99%CPU (0avgtext+0avgdata 33376maxresident)k
+0inputs+0outputs (0major+3668minor)pagefaults 0swaps

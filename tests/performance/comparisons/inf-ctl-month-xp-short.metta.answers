@@ -1,0 +1,24 @@
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-wam/reports/performance/comparisons/inf-ctl-month-xp-short.metta
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[(Error (assertEqualToResult (bc td-updater td-updater td-terminator (MkTD (≼ Feb Jul) (fromNumber 5)) (: $prf (≼ Feb Jul))) ((: ((Trans ((Trans FM) ((Trans MA) AM))) ((Trans MJ) JJ)) (≼ Feb Jul)) (: ((Trans ((Trans FM) MA)) ((Trans ((Trans AM) MJ)) JJ)) (≼ Feb Jul)) (: ((Trans ((Trans FM) MA)) ((Trans AM) ((Trans MJ) JJ))) (≼ Feb Jul)) (: ((Trans FM) ((Trans ((Trans MA) AM)) ((Trans MJ) JJ))) (≼ Feb Jul)) (: ((Trans FM) ((Trans MA) ((Trans AM) ((Trans MJ) JJ)))) (≼ Feb Jul)))) 
+Expected: [(: ((Trans ((Trans FM) ((Trans MA) AM))) ((Trans MJ) JJ)) (≼ Feb Jul)), (: ((Trans ((Trans FM) MA)) ((Trans ((Trans AM) MJ)) JJ)) (≼ Feb Jul)), (: ((Trans ((Trans FM) MA)) ((Trans AM) ((Trans MJ) JJ))) (≼ Feb Jul)), (: ((Trans FM) ((Trans ((Trans MA) AM)) ((Trans MJ) JJ))) (≼ Feb Jul)), (: ((Trans FM) ((Trans MA) ((Trans AM) ((Trans MJ) JJ)))) (≼ Feb Jul))]
+Got: [(: ((Trans ((Trans FM) MA)) ((Trans AM) ((Trans MJ) JJ))) (≼ Feb Jul)), (let* (((: $prfarg#263 (≼ Mar Jul)) (bc td-updater td-updater td-terminator (td-updater (: ((Trans FM) $prfarg#263) (≼ Feb Jul)) (MkTD (≼ Feb Jul) (S (S (S (S (S Z))))))) (: $prfarg#263 (≼ Mar Jul))))) (: ((Trans FM) $prfarg#263) (≼ Feb Jul)))]
+Missed result: (: ((Trans ((Trans FM) ((Trans MA) AM))) ((Trans MJ) JJ)) (≼ Feb Jul)))]
+42.38user 0.11system 0:42.50elapsed 99%CPU (0avgtext+0avgdata 144616maxresident)k
+0inputs+0outputs (0major+48574minor)pagefaults 0swaps

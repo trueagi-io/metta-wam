@@ -1,5 +1,6 @@
-[c', c', c', b', b', c', c', c', b', b', c', c', c', b', b', c', c', c', b', b', c', c', c', b', b', c', c', c', b', b']
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-wam/reports/extended_compat/metta-examples/prob-dep-types/inf_order_probs.metta
+[b', b', c', c', c', b', b', c', c', c', b', b', c', c', c', b', b', c', c', c', b', b', c', c', c', b', b', c', c', c']
 [()]
 [(Error ((sample (a'))) NoValidAlternatives)]
-0.18user 0.00system 0:00.19elapsed 100%CPU (0avgtext+0avgdata 33092maxresident)k
-0inputs+0outputs (0major+3527minor)pagefaults 0swaps
+0.07user 0.01system 0:00.08elapsed 98%CPU (0avgtext+0avgdata 33192maxresident)k
+0inputs+0outputs (0major+3682minor)pagefaults 0swaps

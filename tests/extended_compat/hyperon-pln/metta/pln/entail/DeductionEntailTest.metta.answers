@@ -1,0 +1,5 @@
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-wam/reports/extended_compat/hyperon-pln/metta/pln/entail/DeductionEntailTest.metta
+[()]
+[]
+0.07user 0.01system 0:00.08elapsed 98%CPU (0avgtext+0avgdata 33180maxresident)k
+8inputs+0outputs (0major+3675minor)pagefaults 0swaps

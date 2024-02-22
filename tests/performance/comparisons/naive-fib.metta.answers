@@ -1,0 +1,8 @@
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-wam/reports/performance/comparisons/naive-fib.metta
+[()]
+[()]
+[55]
+[6765]
+[23416728348467685]
+26.82user 0.10system 0:26.92elapsed 99%CPU (0avgtext+0avgdata 197864maxresident)k
+0inputs+0outputs (0major+44947minor)pagefaults 0swaps

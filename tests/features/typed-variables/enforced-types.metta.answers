@@ -1,0 +1,67 @@
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-wam/reports/features/typed-variables/enforced-types.metta
+thread 'main' panicked at repl/src/metta_shim.rs:168:20:
+called `Result::unwrap()` on an `Err` value: PyErr { type: <class 'RuntimeError'>, value: RuntimeError('Unexpected end of expression'), traceback: Some(<traceback object at 0x7f3ef660ad00>) }
+stack backtrace:
+   0:     0x55abee8fa9e6 - std::backtrace_rs::backtrace::libunwind::trace::hbee8a7973eeb6c93
+                               at /rustc/07dca489ac2d933c78d3c5158e3f43beefeb02ce/library/std/src/../../backtrace/src/backtrace/libunwind.rs:104:5
+   1:     0x55abee8fa9e6 - std::backtrace_rs::backtrace::trace_unsynchronized::hc8ac75eea3aa6899
+                               at /rustc/07dca489ac2d933c78d3c5158e3f43beefeb02ce/library/std/src/../../backtrace/src/backtrace/mod.rs:66:5
+   2:     0x55abee8fa9e6 - std::sys_common::backtrace::_print_fmt::hc7f3e3b5298b1083
+                               at /rustc/07dca489ac2d933c78d3c5158e3f43beefeb02ce/library/std/src/sys_common/backtrace.rs:68:5
+   3:     0x55abee8fa9e6 - <std::sys_common::backtrace::_print::DisplayBacktrace as core::fmt::Display>::fmt::hbb235daedd7c6190
+                               at /rustc/07dca489ac2d933c78d3c5158e3f43beefeb02ce/library/std/src/sys_common/backtrace.rs:44:22
+   4:     0x55abee91c810 - core::fmt::rt::Argument::fmt::h76c38a80d925a410
+                               at /rustc/07dca489ac2d933c78d3c5158e3f43beefeb02ce/library/core/src/fmt/rt.rs:142:9
+   5:     0x55abee91c810 - core::fmt::write::h3ed6aeaa977c8e45
+                               at /rustc/07dca489ac2d933c78d3c5158e3f43beefeb02ce/library/core/src/fmt/mod.rs:1120:17
+   6:     0x55abee8f7eff - std::io::Write::write_fmt::h78b18af5775fedb5
+                               at /rustc/07dca489ac2d933c78d3c5158e3f43beefeb02ce/library/std/src/io/mod.rs:1810:15
+   7:     0x55abee8fa7c4 - std::sys_common::backtrace::_print::h5d645a07e0fcfdbb
+                               at /rustc/07dca489ac2d933c78d3c5158e3f43beefeb02ce/library/std/src/sys_common/backtrace.rs:47:5
+   8:     0x55abee8fa7c4 - std::sys_common::backtrace::print::h85035a511aafe7a8
+                               at /rustc/07dca489ac2d933c78d3c5158e3f43beefeb02ce/library/std/src/sys_common/backtrace.rs:34:9
+   9:     0x55abee8fbd27 - std::panicking::default_hook::{{closure}}::hcce8cea212785a25
+  10:     0x55abee8fba89 - std::panicking::default_hook::hf5fcb0f213fe709a
+                               at /rustc/07dca489ac2d933c78d3c5158e3f43beefeb02ce/library/std/src/panicking.rs:292:9
+  11:     0x55abee8fc1b8 - std::panicking::rust_panic_with_hook::h095fccf1dc9379ee
+                               at /rustc/07dca489ac2d933c78d3c5158e3f43beefeb02ce/library/std/src/panicking.rs:779:13
+  12:     0x55abee8fc092 - std::panicking::begin_panic_handler::{{closure}}::h032ba12139b353db
+                               at /rustc/07dca489ac2d933c78d3c5158e3f43beefeb02ce/library/std/src/panicking.rs:657:13
+  13:     0x55abee8faee6 - std::sys_common::backtrace::__rust_end_short_backtrace::h9259bc2ff8fd0f76
+                               at /rustc/07dca489ac2d933c78d3c5158e3f43beefeb02ce/library/std/src/sys_common/backtrace.rs:171:18
+  14:     0x55abee8fbdf0 - rust_begin_unwind
+                               at /rustc/07dca489ac2d933c78d3c5158e3f43beefeb02ce/library/std/src/panicking.rs:645:5
+  15:     0x55abee746ba5 - core::panicking::panic_fmt::h784f20a50eaab275
+                               at /rustc/07dca489ac2d933c78d3c5158e3f43beefeb02ce/library/core/src/panicking.rs:72:14
+  16:     0x55abee747053 - core::result::unwrap_failed::h03d8a5018196e1cd
+                               at /rustc/07dca489ac2d933c78d3c5158e3f43beefeb02ce/library/core/src/result.rs:1649:5
+  17:     0x55abee76faa6 - metta::metta_shim::metta_interface_mod::MettaShim::exec::h0f5ac323114e7829
+  18:     0x55abee768217 - metta::main::h8008ecdb7fa6171d
+  19:     0x55abee7653f3 - std::sys_common::backtrace::__rust_begin_short_backtrace::h49782db17e124899
+  20:     0x55abee76402d - std::rt::lang_start::{{closure}}::hfb8495cf6d0703d3
+  21:     0x55abee8f1831 - core::ops::function::impls::<impl core::ops::function::FnOnce<A> for &F>::call_once::h37600b1e5eea4ecd
+                               at /rustc/07dca489ac2d933c78d3c5158e3f43beefeb02ce/library/core/src/ops/function.rs:284:13
+  22:     0x55abee8f1831 - std::panicking::try::do_call::hb4bda49fa13a0c2b
+                               at /rustc/07dca489ac2d933c78d3c5158e3f43beefeb02ce/library/std/src/panicking.rs:552:40
+  23:     0x55abee8f1831 - std::panicking::try::h8bbf75149211aaaa
+                               at /rustc/07dca489ac2d933c78d3c5158e3f43beefeb02ce/library/std/src/panicking.rs:516:19
+  24:     0x55abee8f1831 - std::panic::catch_unwind::h8c78ec68ebea34cb
+                               at /rustc/07dca489ac2d933c78d3c5158e3f43beefeb02ce/library/std/src/panic.rs:142:14
+  25:     0x55abee8f1831 - std::rt::lang_start_internal::{{closure}}::hffdf44a19fd9e220
+                               at /rustc/07dca489ac2d933c78d3c5158e3f43beefeb02ce/library/std/src/rt.rs:148:48
+  26:     0x55abee8f1831 - std::panicking::try::do_call::hcb3194972c74716d
+                               at /rustc/07dca489ac2d933c78d3c5158e3f43beefeb02ce/library/std/src/panicking.rs:552:40
+  27:     0x55abee8f1831 - std::panicking::try::hcdc6892c5f0dba4c
+                               at /rustc/07dca489ac2d933c78d3c5158e3f43beefeb02ce/library/std/src/panicking.rs:516:19
+  28:     0x55abee8f1831 - std::panic::catch_unwind::h4910beb4573f4776
+                               at /rustc/07dca489ac2d933c78d3c5158e3f43beefeb02ce/library/std/src/panic.rs:142:14
+  29:     0x55abee8f1831 - std::rt::lang_start_internal::h6939038e2873596b
+                               at /rustc/07dca489ac2d933c78d3c5158e3f43beefeb02ce/library/std/src/rt.rs:148:20
+  30:     0x55abee76a995 - main
+  31:     0x7f3ef7c0b18a - <unknown>
+  32:     0x7f3ef7c0b245 - __libc_start_main
+  33:     0x55abee747351 - _start
+  34:                0x0 - <unknown>
+Command exited with non-zero status 101
+0.07user 0.00system 0:00.08elapsed 98%CPU (0avgtext+0avgdata 38756maxresident)k
+0inputs+0outputs (0major+4197minor)pagefaults 0swaps

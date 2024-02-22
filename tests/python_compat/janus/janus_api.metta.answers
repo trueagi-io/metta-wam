@@ -1,0 +1,6 @@
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-wam/reports/python_compat/janus/janus_api.metta
+[()]
+[(py-call-p (print "Hello World!"))]
+[(py-call-fn (: mymodule (rand)))]
+0.09user 0.01system 0:00.11elapsed 97%CPU (0avgtext+0avgdata 33568maxresident)k
+0inputs+0outputs (0major+3679minor)pagefaults 0swaps

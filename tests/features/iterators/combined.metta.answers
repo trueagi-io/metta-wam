@@ -1,0 +1,19 @@
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-wam/reports/features/iterators/combined.metta
+"Press 'en-ee' key to continue..."
+"Press 'en-ee' key to continue..."
+[(switch_to_mettalog!)]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[(shell! "cat neg1_pos1.txt")]
+[((read-metta! (open! "neg1_pos1.txt" read)))]
+[((read-metta! (open! "neg1_pos1.txt" read)))]
+[(, () (get-single-char-fn))]
+[(let $doubledNumbers#125 (map (* 2) (open! "neg1_pos1.txt" read)) (let $combinedStream#126 (zip (map (< 0) (open! "neg1_pos1.txt" read)) $doubledNumbers#125) (let $each#127 (materialize! $combinedStream#126) (with-results-to-file "from_file.txt" $each#127))))]
+[(shell! "cat from_file.txt")]
+[(, () (get-single-char-fn))]
+0.15user 0.00system 0:00.16elapsed 100%CPU (0avgtext+0avgdata 33892maxresident)k
+0inputs+0outputs (0major+3775minor)pagefaults 0swaps

@@ -1,0 +1,5 @@
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-wam/reports/features/debugging/hyperon_experimental_issue_516_redduced.metta
+[$a]
+[(R $a)]
+0.05user 0.02system 0:00.07elapsed 100%CPU (0avgtext+0avgdata 33292maxresident)k
+0inputs+0outputs (0major+3631minor)pagefaults 0swaps

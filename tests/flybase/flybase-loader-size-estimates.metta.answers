@@ -1,0 +1,14 @@
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-wam/reports/flybase/flybase-loader-size-estimates.metta
+[(Error (extend-py! mettalog) Exception caught:
+RuntimeError: Failed to load module mettalog; could not locate file: mettalog/__init__.py
+
+At:
+  /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/python/hyperon/runner.py(164): load_py_module_from_mod_or_file
+  /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/python/hyperon/runner.py(78): <lambda>
+  /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/python/hyperon/atoms.py(332): execute
+  /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/python/hyperon/atoms.py(176): _priv_call_execute_on_grounded_atom
+  /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/python/hyperon/runner.py(31): run_step
+  (18): run_step
+)]
+0.07user 0.01system 0:00.08elapsed 98%CPU (0avgtext+0avgdata 36516maxresident)k
+8inputs+0outputs (1major+4639minor)pagefaults 0swaps

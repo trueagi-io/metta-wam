@@ -1,0 +1,13 @@
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-wam/reports/extended_compat/metta-examples/stack-based/rewrites.metta
+5
+[(E 2)]
+[((E 2) 3)]
+[(E 5)]
+[((E 1) 1.2)]
+[((E 5) 4)]
+[E]
+[(E 36)]
+[(E 2), (E 4)]
+[(E 6), (E 9), (E 10), (E 25)]
+0.24user 0.01system 0:00.26elapsed 100%CPU (0avgtext+0avgdata 33480maxresident)k
+0inputs+0outputs (0major+3685minor)pagefaults 0swaps

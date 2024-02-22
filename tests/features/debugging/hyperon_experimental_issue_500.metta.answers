@@ -1,0 +1,4 @@
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-wam/reports/features/debugging/hyperon_experimental_issue_500.metta
+
+thread 'main' has overflowed its stack
+fatal runtime error: stack overflow

@@ -1,0 +1,6 @@
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-wam/reports/features/debugging/hyperon_experimental_issue_481.metta
+[False]
+[((Error (superpose Empty) superpose expects single expression as an argument))]
+[(Empty)]
+0.07user 0.01system 0:00.08elapsed 100%CPU (0avgtext+0avgdata 33308maxresident)k
+0inputs+0outputs (0major+3635minor)pagefaults 0swaps

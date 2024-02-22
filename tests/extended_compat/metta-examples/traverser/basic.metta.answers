@@ -1,0 +1,16 @@
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-wam/reports/extended_compat/metta-examples/traverser/basic.metta
+[()]
+[6, 4, 1, 2, 3, 5]
+[(Node person 6), (Node person 4), (Node person 1), (Node person 2), (Node software 3), (Node software 5)]
+[(Prop age 35 6), (Prop age 32 4), (Prop age 29 1), (Prop age 27 2)]
+[(Prop name peter 6), (Prop name josh 4), (Prop name marko 1), (Prop name vadas 2), (Prop name lop 3), (Prop name ripple 5)]
+[(Outgoing 6 created 3 0.2), (Outgoing 4 created 5 1.0), (Outgoing 4 created 3 0.4), (Outgoing 1 knows 4 1.0), (Outgoing 1 knows 2 0.5), (Outgoing 1 created 3 0.4)]
+[(Node software 3), (Node software 5), (Node person 6), (Node person 1), (Node person 2), (Node person 4)]
+[(Node person 1)]
+[marko]
+[(Outgoing 1 knows 2 0.5), (Outgoing 1 knows 4 1.0)]
+[vadas, josh]
+[vadas, josh]
+[josh]
+2.10user 0.03system 0:02.13elapsed 100%CPU (0avgtext+0avgdata 34336maxresident)k
+0inputs+0outputs (0major+3880minor)pagefaults 0swaps

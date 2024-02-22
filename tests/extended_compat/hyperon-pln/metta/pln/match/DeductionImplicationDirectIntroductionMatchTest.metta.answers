@@ -1,0 +1,6 @@
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-wam/reports/extended_compat/hyperon-pln/metta/pln/match/DeductionImplicationDirectIntroductionMatchTest.metta
+[()]
+[()]
+[(deduction (≞ P (STV 1 0.1)) (≞ Q (STV 1 0.5)) (≞ R (STV 1 0.1)) (idi_induction (≞ (P 42) (Bl True)) (≞ (Q 42) (Bl False)) (idi_axiom) (∉ 42 Empty)) (≞ (→ Q R) (STV 1 0.5))), (deduction (≞ Q (STV 1 0.5)) (≞ Q (STV 1 0.5)) (≞ R (STV 1 0.1)) (idi_induction (≞ (Q 42) (Bl False)) (≞ (Q 42) (Bl False)) (idi_axiom) (∉ 42 Empty)) (≞ (→ Q R) (STV 1 0.5)))]
+0.11user 0.01system 0:00.12elapsed 100%CPU (0avgtext+0avgdata 34340maxresident)k
+0inputs+0outputs (0major+3892minor)pagefaults 0swaps

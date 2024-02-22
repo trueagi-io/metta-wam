@@ -1,18 +1,19 @@
-[True, False]
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-wam/reports/extended_compat/metta-examples/prob-dep-types/prob_dep_types.metta
+[False, True]
 [()]
-[Red, Green, Red, Blue]
+[Blue, Red, Green, Red]
 [()]
-[True, False, Red, Green, Red, Blue]
+[Blue, Red, Green, Red, False, True]
 [()]
-[False, True, Green, Blue, Green, Red]
+[Red, Green, Blue, Green, True, False]
 [()]
-[(thunk (random Red (random Green Blue))), (thunk (ColPerm (sample (ColDist))))]
+[(thunk (ColPerm (sample (ColDist)))), (thunk (random Red (random Green Blue)))]
 [()]
-[Red, Green, Red, Blue, Green, Blue, Green, Red]
+[Red, Green, Blue, Green, Blue, Red, Green, Red]
 [()]
-[(thunk (f (sample (Bernoulli)))), (thunk (HybridPerm (sample (HybridDist))))]
+[(thunk (HybridPerm (sample (HybridDist)))), (thunk (f (sample (Bernoulli))))]
 [()]
-[True, False, Red, Green, Red, Blue, False, True, Green, Blue, Green, Red]
+[Red, Green, Blue, Green, True, False, Blue, Red, Green, Red, False, True]
 [()]
-2.46user 0.01system 0:02.47elapsed 99%CPU (0avgtext+0avgdata 34160maxresident)k
-0inputs+0outputs (0major+3745minor)pagefaults 0swaps
+0.68user 0.01system 0:00.70elapsed 99%CPU (0avgtext+0avgdata 34252maxresident)k
+0inputs+0outputs (0major+3869minor)pagefaults 0swaps
