@@ -1566,6 +1566,7 @@ eval_61(Eq,RetType,Depth,Self,X,Y):-
 	member(XX->B0,XXB0L), X=XX, Y=B0, X\=@=B0,
 	%(X==B0 -> trace; eval(Eq,RetType,Depth,Self,B0,Y)).
 	 light_eval(Depth,Self,B0,Y).
+eval_61(_Eq,_RetType,_Depth,_Self,X,_Y):- \+ is_debugging(metta_defn),!,fail.
 eval_61(_Eq,_RetType,_Depth,_Self,X,_Y):- 
    color_g_mesg('#773700',write(no_def(X))),!,fail.
 
