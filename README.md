@@ -20,13 +20,13 @@ is transformed into a Modus Ponens rule represented as:
 ```
 This approach not streamlines MeTTa's functional programming (`eval`) and logic programming in Atomspaces (`match`) into one optimizable model.
 
- This interplay allows for optimizing execution order and efficiency dynamically.  Segments of  reordered code is JIT-compiled on WAM and further optimized using conventional computational techniques.
+ 
+ We can alter the execution order to create algebraic (multidirectional processing) efficiently dynamically.  Segments of reordered code is JIT-compiled on WAM and further optimized using conventional computational techniques.
 
-Importantly this gives Probablistic reasoning inference as well as several others type of reasonming a role to play in execution of code.
+This transformation inside our Atomspace allows  automated theorem provers and inference engines _(such as those created for SUMO, CycL, FOL, and HOL)_ to be able to run programs as if they are knowledge-base queries.  But the bigger deal is we have made it possible for Probablistic reasoning inference as well as several others types to play in execution of code.
 
-This transformation inside our Atomsapce allows heuistics and optization used automated theorem provers and inference engines _(such as those created for SUMO, CycL, FOL, and HOL)_ to be able to run programs as if they are knowledge-base queries.
 
-We have appied this unque model of compuation to functional programming tests created for MeTT. 
+Our unque model of compuation does pretty well at functional programming tests created for the MeTTa project. 
 
 See [Tests](tests/).
 
@@ -35,11 +35,11 @@ See [Tests](tests/).
 
 
 ### Ontological and Type System Integration
-Our system allows for the integration of ontological types (e.g., from SUMO and RDF) with regular and dependent types during both compile-time and runtime. This integration permits variables and objects to be defined not only in terms of traditional data types, behavoural interfaces and dependant types but also in terms of more complex semantic relationships and theories. As a result, developers can employ types such as `StringHoldingALikeableStatement` or `StringHoldingWhoKnowsWhat` versus traditional types like `ALikeableStatement` or `WhoKnowsWhat`. This enhancement enables the system to process information with a greater level of semantic understanding, allowing for more accurate logical deductions and inductions that directly influence the behavior of programs at both compile-time and runtime.
+Our system allows for the integration of ontological types (e.g., from SUMO and RDF) with regular and dependent types on free variables, values, objects and functions. As a result, developers can employ types such as `StringHoldingALikeableStatement` or `StringHoldingWhoKnowsWhat` versus traditional types like `ALikeableStatement` or `WhoKnowsWhat`.  This enhancement allows more complex semantic relationships and type theories to work off of each other.  Using this you process information with accurate logical deductions and inductions that directly influence the behavior of programs and functions.  For example your program can operate using epistemic and deontontic reasoning at runtime about what it is doing.
 
 
 ### Extensive Language Support
-Our compilation technique has been effectively applied to: Python*,  Common Lisp*, Curry* and HVM* by converting the source code (or AST) written in these languages into our intermediate representation (IR). In the Python experiment it allow python code to benefit from the extended features described here.  But more importantly it runs inline aftwerwards so MeTTa can update and change the semantics of the code in our VM. Our success with the fore-listed languages implies it could as well with Haskell, Verse, Java, Rust, Oz and OcamML etc etc
+Our compilation technique has been effectively applied to: Python*, Common Lisp*, Curry* and HVM* by converting their individual programs' source code (in AST form) into our intermediate representation. In the Python experiment it allowed python code for a novel solver for the visual Abstract Reasoning corpus that won the 2022 Lab42 challenge. Michael Hodel purposely overly specialized it in such a way that if you changed something like the color inside of a riddle in the test set it would break his solver's ability to solve it (Much liek a "single pixel attack").  Our tranpilation framework didnt mind and was able to take the code which was purposly written overly specialized for 800 riddles and find new pathways in his code.  Afterwhich we were able to use his code as a slightly general purpose solver. Exciting as that is, more exciting is that MeTTa can update and change the semantics of his code while running. Our success with the previous languages listed indicate some amazing things it would be able to do with Haskell, Verse,  Java, Idris, Agda, Rust, Oz and OcamML etc etc.
 
 
 
