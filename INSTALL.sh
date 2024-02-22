@@ -101,14 +101,14 @@ version_ge() {
 # SWI-Prolog from source
 build_swi_prolog_from_src() {
 
-    sudo apt-get update
+    sudo apt-get update -y
     # Install build dependencies
     echo -e "${BLUE}Installing build dependencies...${NC}"
     local build_deps="build-essential autoconf git libgmp-dev libssl-dev unixodbc-dev \
         libreadline-dev zlib1g-dev libarchive-dev libossp-uuid-dev libxext-dev \
         libice-dev libjpeg-dev libxinerama-dev libxft-dev libxpm-dev libxt-dev \
         pkg-config libdb-dev libpcre3-dev libyaml-dev"
-    sudo apt-get install $inside_docker $build_deps && {
+    sudo apt-get install -y $build_deps && {
         echo -e "${GREEN}Build dependencies installed successfully.${NC}"
     } || {
         echo -e "${RED}Failed to install build dependencies. Exiting.${NC}"
