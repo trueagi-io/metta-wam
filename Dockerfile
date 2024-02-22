@@ -46,11 +46,11 @@ RUN python3 -m pip install -e ./python[dev]
 
 # Install MeTTaLog
 
-ENV METTALOG_DIR="${HOME}/hyperon-wam"
+ENV METTALOG_DIR="${HOME}/metta-log"
 ENV PATH="${PATH}:${METTALOG_DIR}"
 
 WORKDIR ${HOME}
-RUN git clone https://github.com/logicmoo/hyperon-wam.git
+RUN git clone https://github.com/logicmoo/metta-log.git
 WORKDIR ${METTALOG_DIR}
 # This COPY is in case we have made local changes 
 #         so we dont have to commit to Github to test them out

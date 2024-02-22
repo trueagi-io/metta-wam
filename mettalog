@@ -250,11 +250,11 @@ if [ ! -f /.dockerenv ]; then
 
             # Run the Docker container with the necessary volumes mounted
             exec docker run -it \
-                -v "${SCRIPT_DIR}:/home/user/hyperon-wam" \
+                -v "${SCRIPT_DIR}:/home/user/metta-log" \
                 -v "$(pwd):$(pwd)" \
                 -w "$(pwd)" \
                 "$IMAGE_NAME" \
-                /home/user/hyperon-wam/mettalog "$@"
+                /home/user/metta-log/mettalog "$@"
             
         else
             DEBUG "Image $IMAGE_NAME is not installed. Continuing with script..."
