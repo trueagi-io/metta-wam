@@ -122,7 +122,9 @@ current_self(Self):- ((nb_current(self_space,Self),Self\==[])->true;Self='&self'
 :- nb_setval(repl_mode, '+').
 
 %:- set_stream(user_input,tty(true)).
+:- if(exists_source(library(readline))).
 :- use_module(library(readline)).
+:- endif.
 %:- use_module(library(editline)).
 :- set_prolog_flag(encoding,iso_latin_1).
 :- set_prolog_flag(encoding,utf8).
@@ -467,7 +469,7 @@ get_flag_value(_,true).
    nop((forall(option_value_def(Opt,Default),set_option_value_interp(Opt,Default))))))).
 
 %process_option_value_def:- \+ option_value('python',false), skip(ensure_loaded(metta_python)).
-process_option_value_def:- option_value('python',load), ensure_loaded(src/main/metta_python).
+process_option_value_def:- \+ option_value('python',false), ensure_loaded(src/main/metta_python).
 process_option_value_def.
 
 
@@ -1666,6 +1668,8 @@ is_unit_test_exec(Exec):- sformat(S,'~q',[Exec]),sub_atom(S,_,_,_,"!',").
 
 return_empty('Empty').
 return_empty(_,Empty):- return_empty(Empty).
+return_empty(_RetType,_,Empty):- return_empty(Empty).
+
 
 convert_tax(_How,Self,Tax,Expr,NewHow):-
   metta_interp_mode(Ch,Mode),
@@ -1871,13 +1875,12 @@ repl2:-
       %set_prolog_flag(gc,true),
       fail.
 repl3:-
-     notrace(( flag(eval_num,_,0),
-      current_self(Self),
-      current_read_mode(repl,Mode),
-      %ignore(shell('stty sane ; stty echo')),
-      %current_input(In),
-     %format(atom(P2),'metta> ',[]),
-      format(atom(P),'metta ~w ~w> ',[Self, Mode]))),
+    notrace(( flag(eval_num,_,0),
+     current_self(Self),
+     current_read_mode(repl,Mode),
+     %ignore(shell('stty sane ; stty echo')),
+     %current_input(In),
+      'format'(atom(P),'metta ~w ~w> ',[Self, Mode]))), 
       setup_call_cleanup(
          notrace(prompt(Was,P)),
          notrace((ttyflush,repl_read(Expr),ttyflush)),
@@ -2561,7 +2564,10 @@ maybe_halt(H):- halt(H).
 :- initialization(loon(program),program).
 :- initialization(loon(default)).
 
-ensure_mettalog_system:-
+ensure_mettalog_system_compilable:- 
+    %ensure_loaded(library(metta_python)),
+    ensure_mettalog_system.
+ensure_mettalog_system:-    
     abolish(began_loon/1),
     dynamic(began_loon/1),
     system:use_module(library(quasi_quotations)),
@@ -2582,8 +2588,7 @@ ensure_mettalog_system:-
     user:use_module(library(prolog_profile)),
     %metta_python,
     %ensure_loaded('./src/main/flybase_convert'),
-    %ensure_loaded('./src/main/flybase_main'),
-    ensure_loaded(library(metta_python)),
+    %ensure_loaded('./src/main/flybase_main'),    
     ensure_loaded(library(flybase_convert)),
     ensure_loaded(library(flybase_main)),
     autoload_all,
@@ -2610,7 +2615,7 @@ next_save_name(SavMeTTaLog):- option_value(exeout,SavMeTTaLog),
   atomic(SavMeTTaLog),atom_length(SavMeTTaLog,Len),Len>1,!.
 next_save_name('Sav.MeTTaLog').
 qcompile_mettalog:-
-    ensure_mettalog_system,
+    ensure_mettalog_system,    
     option_value(exeout,Named),
     catch_err(qsave_program(Named,
         [class(development),autoload(true),goal(loon(goal)), 
@@ -2624,7 +2629,6 @@ qsave_program:-  ensure_mettalog_system, next_save_name(Name),
 
 :- ensure_loaded(flybase_main).
 :- ensure_loaded(metta_server).
-:- ensure_loaded(metta_python).
 :- initialization(update_changed_files,restore).
 :- set_prolog_flag(history, 3).
 
@@ -2663,6 +2667,9 @@ fix_message_hook:-
         ), Cl),erase(Cl).
 
 :- unnullify_output.  
+
+%:- ensure_loaded(metta_python).
+
 
 :- ignore(((
    (is_testing -> UNIT_TEST=true; UNIT_TEST=false),

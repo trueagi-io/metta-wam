@@ -46,27 +46,21 @@ RUN python3 -m pip install -e ./python[dev]
 
 # Install MeTTaLog
 
-ENV METTALOG_DIR="${HOME}/metta-log"
+ENV METTALOG_DIR="${HOME}/metta-wam"
 ENV PATH="${PATH}:${METTALOG_DIR}"
 
 WORKDIR ${HOME}
-RUN git clone https://github.com/logicmoo/metta-log.git
+# RUN git clone https://github.com/trueagi-io/metta-wam.git
+
+RUN mkdir -p ${METTALOG_DIR}"
 WORKDIR ${METTALOG_DIR}
 # This COPY is in case we have made local changes 
 #         so we dont have to commit to Github to test them out
+COPY ./ ./
 COPY ./INSTALL.sh ./INSTALL.sh
 RUN ./INSTALL.sh --easy
 
-# This COPY is in case we have made local changes 
-#         so we dont have to commit to Github to test them out
-#COPY ./ ${METTALOG_DIR}/
-#COPY ./src/main ${METTALOG_DIR}/src/main
-COPY ./ ./
-
-
 
 #RUN swipl -l src/main/metta_interp.pl -g qcompile_mettalog
-
-
 
 
