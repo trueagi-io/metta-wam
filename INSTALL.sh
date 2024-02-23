@@ -83,9 +83,9 @@ if [ "$easy_install" == "?" ]; then
 fi
 
 if [ -f /.dockerenv ]; then
-    inside_docker=-y
+    inside_docker="-y"
 else
-    inside_docker=
+    inside_docker=""
 fi
 
 
@@ -101,7 +101,7 @@ version_ge() {
 # SWI-Prolog from source
 build_swi_prolog_from_src() {
 
-    sudo apt-get update -y
+    sudo apt-get update
     # Install build dependencies
     echo -e "${BLUE}Installing build dependencies...${NC}"
     local build_deps="build-essential autoconf git libgmp-dev libssl-dev unixodbc-dev \
@@ -158,10 +158,6 @@ build_swi_prolog_from_src() {
     }
 }
 
-# Call the build function
-# build_swi_prolog_from_src
-
-
 function swipl_version () {
     if ! command -v swipl &> /dev/null; then
        echo "0.0"
@@ -173,6 +169,8 @@ function swipl_version () {
 # Function to install or update SWI-Prolog
 install_or_update_swipl() {
     echo -e "${BLUE}Starting SWI-Prolog installation or update.${NC}"
+
+    #commented this out since the maintainer may not be doing this for every version we want to run
     #echo " " > /etc/apt/sources.list
     #sudo apt install -y apt-utils software-properties-common
     #sudo apt-add-repository -y ppa:swi-prolog/devel
