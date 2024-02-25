@@ -16,8 +16,7 @@
 
   (= 
     (top) 
-    (, 
-      (odd $A) 
+    ( (odd $A) 
       (even $B) 
       (even $C) 
       (even $E) 
@@ -71,8 +70,7 @@
       (Cons  $A $AL) 
       (Cons  $B $BL) $Carry 
       (Cons  $C $CL)) 
-    (, 
-      (set-det) 
+    ( (set-det) 
       (is $X 
         (+ 
           (+ $A $B) $Carry)) 
@@ -91,8 +89,7 @@
     (sum Nil 
       (Cons  $B $BL) $Carry 
       (Cons  $C $CL)) 
-    (, 
-      (set-det) 
+    ( (set-det) 
       (is $X 
         (+ $B $Carry)) 
       (is $NewCarry 
@@ -104,8 +101,7 @@
     (sum 
       (Cons  $A $AL) Nil $Carry 
       (Cons  $C $CL)) 
-    (, 
-      (set-det) 
+    ( (set-det) 
       (is $X 
         (+ $A $Carry)) 
       (is $NewCarry 
@@ -127,8 +123,7 @@
     (mult 
       (Cons  $A $AL) $D $Carry 
       (Cons  $B $BL)) 
-    (, 
-      (is $X 
+    ( (is $X 
         (+ 
           (* $A $D) $Carry)) 
       (is $B 
@@ -139,11 +134,8 @@
   (= 
     (mult Nil $_ $Carry 
       (:: $C $Cend)) 
-    (, 
-      (is $C 
-        (mod $Carry 10)) 
-      (is $Cend 
-        (// $Carry 10))))
+    ( (is $C 
+        (mod $Carry 10)) (is $Cend (// $Carry 10))))
 
 
   (= 

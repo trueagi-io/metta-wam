@@ -8,8 +8,7 @@
 
   (= 
     (run $S $F) 
-    (, 
-      (compile-programs) 
+    ( (compile-programs) 
       (format $S '~p~t~18| ~t~w~25| ~t~w~32|~n' 
         (:: Program Time GC)) 
       (format $S ~`=t~32|~n Nil) 
@@ -28,33 +27,22 @@
         (:: average $AvgT $AvgGC))))
 
 
-  (if-then-else 
+  (det-if-then-else 
     (file-search-path bench $_) True 
     (, 
       (prolog-load-context directory $Dir) 
       (add-atom  &self 
-        (:  user 
-          (file_search_path  bench $Dir)))))
+        (file_search_path  bench $Dir))))
 
 
   (= 
     (compile-programs) 
-    (, 
-      (style-check (- singleton)) 
-      (forall 
-        (program $P $_) 
-        (load-files 
-          (with_self  $P 
-            (bench $P)) 
-          (:: 
-            (silent True) 
-            (if changed))))))
+    ( (style-check (- singleton)) (forall (program $P $_) (load-files (with_self  $P (bench $P)) (:: (silent True) (if changed))))))
 
 
   (= 
     (run-program $Program $N $S $Total) 
-    (, 
-      (ntimes $Program $N $Time $GC) 
+    ( (ntimes $Program $N $Time $GC) 
       (set-det) 
       (add 1 $Total 1) 
       (add 2 $Total $Time) 
@@ -65,8 +53,7 @@
 
   (= 
     (add $Arg $Term $Time) 
-    (, 
-      (arg $Arg $Term $T0) 
+    ( (arg $Arg $Term $T0) 
       (is $T 
         (+ $T0 $Time)) 
       (nb-setarg $Arg $Term $T)))
@@ -77,17 +64,14 @@
 
   (= 
     (get-performance-stats $GC $T) 
-    (, 
-      (statistics gctime $GC) 
-      (statistics cputime $T))); SWI-MeTTa
+    ( (statistics gctime $GC) (statistics cputime $T))); SWI-MeTTa
 
 
   (else)
 
   (= 
     (get-performance-stats $GC $T) 
-    (, 
-      (statistics garbage-collection 
+    ( (statistics garbage-collection 
         (:: $_ $_ $TGC)) 
       (statistics cputime 
         (:: $TT $_)) 
@@ -101,8 +85,7 @@
 
   (= 
     (ntimes $M $N $T $GC) 
-    (, 
-      (get-performance-stats $GC0 $T0) 
+    ( (get-performance-stats $GC0 $T0) 
       (ntimes $M $N) 
       (get-performance-stats $GC1 $T1) 
       (ntimes-dummy $N) 
@@ -118,13 +101,10 @@
 
   (= 
     (ntimes $_ $N) 
-    (, 
-      (=:= $N 0) 
-      (set-det)))
+    ( (=:= $N 0) (set-det)))
   (= 
     (ntimes $M $N) 
-    (, 
-      (not-not-top $M) 
+    ( (not-not-top $M) 
       (set-det) 
       (is $N1 
         (- $N 1)) 
@@ -133,13 +113,10 @@
 
   (= 
     (ntimes-dummy $N) 
-    (, 
-      (=:= $N 0) 
-      (set-det)))
+    ( (=:= $N 0) (set-det)))
   (= 
     (ntimes-dummy $N) 
-    (, 
-      (not-not-dummy) 
+    ( (not-not-dummy) 
       (set-det) 
       (is $N1 
         (- $N 1)) 
@@ -148,8 +125,7 @@
 
   (= 
     (not-not-top $M) 
-    (, 
-      (not-top $M) 
+    ( (not-top $M) 
       (set-det) 
       (fail)))
   (= 
@@ -158,8 +134,7 @@
 
   (= 
     (not-top $M) 
-    (, 
-      (with_self  $M 
+    ( (with_self  $M 
         (top)) 
       (set-det) 
       (fail)))
@@ -169,8 +144,7 @@
 
   (= 
     (not-not-dummy) 
-    (, 
-      (not-dummy) 
+    ( (not-dummy) 
       (set-det) 
       (fail)))
   (= not_not_dummy True)
@@ -178,8 +152,7 @@
 
   (= 
     (not-dummy) 
-    (, 
-      (dummy) 
+    ( (dummy) 
       (set-det) 
       (fail)))
   (= not_dummy True)
@@ -205,8 +178,7 @@
 
   (= 
     (tune-count $Program $Count) 
-    (, 
-      (between 1 100 $I) 
+    ( (between 1 100 $I) 
       (is $C 
         (<< 1 $I)) 
       (ntimes $Program $C $T $_) 
@@ -218,11 +190,7 @@
 
   (= 
     (program $P $N $F) 
-    (, 
-      (program $P $N0) 
-      (is $N 
-        (max 1 
-          (round (* $N0 $F))))))
+    ( (program $P $N0) (is $N (max 1 (round (* $N0 $F))))))
 
 ;;	program(?Program, ?Times)
 ;
@@ -278,8 +246,7 @@
 
   (= 
     (run-interleaved $F) 
-    (, 
-      (compile-programs) 
+    ( (compile-programs) 
       (findall 
         (- $N $P) 
         (program $P $N $F) $Pairs) 
@@ -344,8 +311,7 @@
 
   (= 
     (run-non-interleaved $F) 
-    (, 
-      (compile-programs) 
+    ( (compile-programs) 
       (findall 
         (- $N $P) 
         (program $P $N $F) $Pairs) 

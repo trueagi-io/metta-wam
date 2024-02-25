@@ -38,8 +38,7 @@
 
   (= 
     (main $N) 
-    (, 
-      (init-state $N $NumVars $NumGs $Gs) 
+    ( (init-state $N $NumVars $NumGs $Gs) 
       (add-necessary-functions $NumVars $NumGs $Gs $NumGs2 $Gs2) 
       (test-bounds $NumVars $NumGs2 $Gs2) 
       (search $NumVars $NumGs2 $Gs2)))
@@ -181,8 +180,7 @@
 
   (= 
     (search $NumVars $NumGsIn $GsIn) 
-    (, 
-      (select-vector $NumVars $NumGsIn $GsIn $Gj $Vector) 
+    ( (select-vector $NumVars $NumGsIn $GsIn $Gj $Vector) 
       (set-det) 
       (cover-vector $NumVars $NumGsIn $GsIn $Gj $Vector $NumGs $Gs) 
       (add-necessary-functions $NumVars $NumGs $Gs $NumGsOut $GsOut) 
@@ -190,9 +188,7 @@
       (search $NumVars $NumGsOut $GsOut)))
   (= 
     (search $NumVars $NumGs $Gs) 
-    (, 
-      (update-bounds $NumVars $NumGs $Gs) 
-      (fail)));	output_results(NumVars, NumGs, Gs),
+    ( (update-bounds $NumVars $NumGs $Gs) (fail)));	output_results(NumVars, NumGs, Gs),
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -204,8 +200,7 @@
 
   (= 
     (select-vector $NumVars $NumGs $Gs $Gj $Vector) 
-    (, 
-      (select-vector $Gs $NumVars $NumGs $Gs dummy 0 nf 999 $Gj $Vector $Type $_) 
+    ( (select-vector $Gs $NumVars $NumGs $Gs dummy 0 nf 999 $Gj $Vector $Type $_) 
       (set-det) 
       (\= $Type cov) 
       (\= $Type nf)))
@@ -214,14 +209,11 @@
   (= 
     (select-vector 
       (Cons  $Gk $_) $NumVars $_ $_ $Gj $V $Type $N $Gj $V $Type $N) 
-    (, 
-      (function-number $Gk $K) 
-      (< $K $NumVars)))
+    ( (function-number $Gk $K) (< $K $NumVars)))
   (= 
     (select-vector 
       (Cons  $Gk $Gks) $NumVars $NumGs $Gs $GjIn $Vin $TypeIn $Nin $GjOut $Vout $TypeOut $Nout) 
-    (, 
-      (function-number $Gk $K) 
+    ( (function-number $Gk $K) 
       (>= $K $NumVars) 
       (true-set $Gk $Tk) 
       (select-vector $Tk $Gk $NumVars $NumGs $Gs $GjIn $Vin $TypeIn $Nin $Gj $V $Type $N) 
@@ -233,16 +225,14 @@
   (= 
     (select-vector 
       (Cons  $V $Vs) $Gk $NumVars $NumGs $Gs $GjIn $Vin $TypeIn $Nin $GjOut $Vout $TypeOut $Nout) 
-    (, 
-      (vector-cover-type $NumVars $Gs $Gk $V $Type $N) 
+    ( (vector-cover-type $NumVars $Gs $Gk $V $Type $N) 
       (best-vector $GjIn $Vin $TypeIn $Nin $Gk $V $Type $N $Gj2 $V2 $Type2 $N2) 
       (select-vector $Vs $Gk $NumVars $NumGs $Gs $Gj2 $V2 $Type2 $N2 $GjOut $Vout $TypeOut $Nout)))
 
 
   (= 
     (vector-cover-type $NumVars $Gs $Gj $Vector $Type $NumCovers) 
-    (, 
-      (immediate-predecessors $Gj $IPs) 
+    ( (immediate-predecessors $Gj $IPs) 
       (conceivable-inputs $Gj $CIs) 
       (false-set $Gj $Fj) 
       (cover-type1 $IPs $Gs $Vector nf 0 $T $N) 
@@ -254,13 +244,12 @@
   (= 
     (cover-type1 
       (Cons  $I $IPs) $Gs $V $TypeIn $Nin $TypeOut $Nout) 
-    (, 
-      (function $I $Gs $Gi) 
+    ( (function $I $Gs $Gi) 
       (true-set $Gi $Ti) 
       (not (set-member $V $Ti)) 
       (set-det) 
       (false-set $Gi $Fi) 
-      (if-then-else 
+      (det-if-then-else 
         (set-member $V $Fi) 
         (max-type $TypeIn cov $Type) 
         (max-type $TypeIn exp $Type)) 
@@ -278,8 +267,7 @@
   (= 
     (cover-type2 
       (Cons  $I $CIs) $Gs $NumVars $Fj $V $TypeIn $Nin $TypeOut $Nout) 
-    (, 
-      (< $I $NumVars) 
+    ( (< $I $NumVars) 
       (function $I $Gs $Gi) 
       (false-set $Gi $Fi) 
       (set-member $V $Fi) 
@@ -291,20 +279,19 @@
   (= 
     (cover-type2 
       (Cons  $I $CIs) $Gs $NumVars $Fj $V $TypeIn $Nin $TypeOut $Nout) 
-    (, 
-      (>= $I $NumVars) 
+    ( (>= $I $NumVars) 
       (function $I $Gs $Gi) 
       (true-set $Gi $Ti) 
       (not (set-member $V $Ti)) 
       (set-det) 
       (false-set $Gi $Fi) 
-      (if-then-else 
+      (det-if-then-else 
         (set-member $V $Fi) 
-        (if-then-else 
+        (det-if-then-else 
           (set-subset $Fj $Ti) 
           (max-type $TypeIn fcn $Type) 
           (max-type $TypeIn mcf $Type)) 
-        (if-then-else 
+        (det-if-then-else 
           (set-subset $Fj $Ti) 
           (max-type $TypeIn exf $Type) 
           (max-type $TypeIn exmcf $Type))) 
@@ -327,22 +314,19 @@
     (set-det))
   (= 
     (best-vector $Gj1 $V1 $Type $N1 $Gj2 $_ $Type $N2 $Gj1 $V1 $Type $N1) 
-    (, 
-      (function-number $Gj1 $J) 
+    ( (function-number $Gj1 $J) 
       (function-number $Gj2 $J) 
       (< $N1 $N2) 
       (set-det)))
   (= 
     (best-vector $Gj1 $_ $Type $N1 $Gj2 $V2 $Type $N2 $Gj2 $V2 $Type $N2) 
-    (, 
-      (function-number $Gj1 $J) 
+    ( (function-number $Gj1 $J) 
       (function-number $Gj2 $J) 
       (>= $N1 $N2) 
       (set-det)))
   (= 
     (best-vector $Gj1 $V1 $Type $N1 $Gj2 $_ $Type $_ $Gj1 $V1 $Type $N1) 
-    (, 
-      (or 
+    ( (or 
         (= $Type exp) 
         (= $Type var)) 
       (function-number $Gj1 $J1) 
@@ -351,8 +335,7 @@
       (set-det)))
   (= 
     (best-vector $Gj1 $_ $Type $_ $Gj2 $V2 $Type $N2 $Gj2 $V2 $Type $N2) 
-    (, 
-      (or 
+    ( (or 
         (= $Type exp) 
         (= $Type var)) 
       (function-number $Gj1 $J1) 
@@ -361,42 +344,32 @@
       (set-det)))
   (= 
     (best-vector $Gj1 $V1 $Type $N1 $Gj2 $_ $Type $_ $Gj1 $V1 $Type $N1) 
-    (, 
-      (not (or (= $Type exp) (= $Type var))) 
+    ( (not (or (= $Type exp) (= $Type var))) 
       (function-number $Gj1 $J1) 
       (function-number $Gj2 $J2) 
       (< $J1 $J2) 
       (set-det)))
   (= 
     (best-vector $Gj1 $_ $Type $_ $Gj2 $V2 $Type $N2 $Gj2 $V2 $Type $N2) 
-    (, 
-      (not (or (= $Type exp) (= $Type var))) 
+    ( (not (or (= $Type exp) (= $Type var))) 
       (function-number $Gj1 $J1) 
       (function-number $Gj2 $J2) 
       (> $J1 $J2) 
       (set-det)))
   (= 
     (best-vector $Gj1 $V1 $Type1 $N1 $_ $_ $Type2 $_ $Gj1 $V1 $Type1 $N1) 
-    (, 
-      (type-order $Type2 $Type1) 
-      (set-det)))
+    ( (type-order $Type2 $Type1) (set-det)))
   (= 
     (best-vector $_ $_ $Type1 $_ $Gj2 $V2 $Type2 $N2 $Gj2 $V2 $Type2 $N2) 
-    (, 
-      (type-order $Type1 $Type2) 
-      (set-det)))
+    ( (type-order $Type1 $Type2) (set-det)))
 
 
   (= 
     (max-type $T1 $T2 $T1) 
-    (, 
-      (type-order $T1 $T2) 
-      (set-det)))
+    ( (type-order $T1 $T2) (set-det)))
   (= 
     (max-type $T1 $T2 $T2) 
-    (, 
-      (not (type-order $T1 $T2)) 
-      (set-det)))
+    ( (not (type-order $T1 $T2)) (set-det)))
 
 ;  Order of types
 
@@ -469,8 +442,7 @@
 
   (= 
     (cover-vector $NumVars $NumGsIn $GsIn $Gj $Vector $NumGsOut $GsOut) 
-    (, 
-      (immediate-predecessors $Gj $IPs) 
+    ( (immediate-predecessors $Gj $IPs) 
       (conceivable-inputs $Gj $CIs) 
       (vector-types $Type) 
       (cover-vector $Type $IPs $CIs $Gj $Vector $NumVars $NumGsIn $GsIn $NumGsOut $GsOut)))
@@ -495,8 +467,7 @@
   (= 
     (cover-vector exp 
       (Cons  $I $_) $_ $Gj $V $_ $NumGs $GsIn $NumGs $GsOut) 
-    (, 
-      (function $I $GsIn $Gi) 
+    ( (function $I $GsIn $Gi) 
       (true-set $Gi $Ti) 
       (not (set-member $V $Ti)) 
       (update-circuit $GsIn $Gi $Gj $V $GsIn $GsOut)))
@@ -507,8 +478,7 @@
   (= 
     (cover-vector var $_ 
       (Cons  $I $_) $Gj $V $NumVars $NumGs $GsIn $NumGs $GsOut) 
-    (, 
-      (< $I $NumVars) 
+    ( (< $I $NumVars) 
       (function $I $GsIn $Gi) 
       (false-set $Gi $Fi) 
       (set-member $V $Fi) 
@@ -520,8 +490,7 @@
   (= 
     (cover-vector fcn $_ 
       (Cons  $I $_) $Gj $V $NumVars $NumGs $GsIn $NumGs $GsOut) 
-    (, 
-      (>= $I $NumVars) 
+    ( (>= $I $NumVars) 
       (function $I $GsIn $Gi) 
       (false-set $Gi $Fi) 
       (set-member $V $Fi) 
@@ -536,8 +505,7 @@
   (= 
     (cover-vector mcf $_ 
       (Cons  $I $_) $Gj $V $NumVars $NumGs $GsIn $NumGs $GsOut) 
-    (, 
-      (>= $I $NumVars) 
+    ( (>= $I $NumVars) 
       (function $I $GsIn $Gi) 
       (false-set $Gi $Fi) 
       (set-member $V $Fi) 
@@ -552,8 +520,7 @@
   (= 
     (cover-vector exf $_ 
       (Cons  $I $_) $Gj $V $NumVars $NumGs $GsIn $NumGs $GsOut) 
-    (, 
-      (>= $I $NumVars) 
+    ( (>= $I $NumVars) 
       (function $I $GsIn $Gi) 
       (false-set $Gi $Fi) 
       (not (set-member $V $Fi)) 
@@ -569,8 +536,7 @@
   (= 
     (cover-vector exmcf $_ 
       (Cons  $I $_) $Gj $V $NumVars $NumGs $GsIn $NumGs $GsOut) 
-    (, 
-      (>= $I $NumVars) 
+    ( (>= $I $NumVars) 
       (function $I $GsIn $Gi) 
       (false-set $Gi $Fi) 
       (not (set-member $V $Fi)) 
@@ -585,8 +551,7 @@
     (cover-vector exmcf $_ $CIs $Gj $V $NumVars $NumGs $GsIn $NumGs $GsOut))
   (= 
     (cover-vector nf $_ $_ $Gj $V $NumVars $NumGsIn $GsIn $NumGsOut $GsOut) 
-    (, 
-      (is $NumGsOut 
+    ( (is $NumGsOut 
         (+ $NumGsIn 1)) 
       (false-set $Gj $Fj) 
       (new-function-CIs $GsIn 
@@ -606,8 +571,7 @@
         (function $K $Tk $Fk $CIk $IPk $ISk $Pk $Sk) $GsIn) $Gi $Gj $V $Gs 
       (Cons  
         (function $K $Tko $Fko $CIko $IPko $ISko $Pko $Sko) $GsOut)) 
-    (, 
-      (= $Gi 
+    ( (= $Gi 
         (function $I $_ $Fi $_ $IPi $ISi $Pi $_)) 
       (= $Gj 
         (function $J $_ $Fj $_ $_ $_ $_ $Sj)) 
@@ -615,63 +579,63 @@
         (:: $I) $Pi $PiI) 
       (set-union 
         (:: $J) $Sj $SjJ) 
-      (if-then-else 
+      (det-if-then-else 
         (= $K $J) 
         (set-union $Tk $Fi $Tk2) 
         (= $Tk2 $Tk)) 
-      (if-then-else 
+      (det-if-then-else 
         (= $K $I) 
         (set-union $Tk2 $Fj $Tk3) 
         (= $Tk3 $Tk2)) 
-      (if-then-else 
+      (det-if-then-else 
         (or 
           (set-member $K $IPi) 
           (set-member $K $ISi)) 
         (set-union $Tk3 
           (:: $V) $Tko) 
         (= $Tko $Tk3)) 
-      (if-then-else 
+      (det-if-then-else 
         (= $K $I) 
         (set-union $Fk 
           (:: $V) $Fko) 
         (= $Fko $Fk)) 
-      (if-then-else 
+      (det-if-then-else 
         (or 
           (set-member $K $Pi) 
           (= $K $I)) 
         (set-difference $CIk $SjJ $CIk2) 
         (= $CIk2 $CIk)) 
-      (if-then-else 
+      (det-if-then-else 
         (, 
           (set-member $I $CIk) 
           (set-member $V $Fk)) 
         (set-difference $CIk2 
           (:: $I) $CIk3) 
         (= $CIk3 $CIk2)) 
-      (if-then-else 
+      (det-if-then-else 
         (= $K $I) 
         (exclude-if-vector-in-false-set $CIk3 $Gs $V $CIk4) 
         (= $CIk4 $CIk3)) 
-      (if-then-else 
+      (det-if-then-else 
         (= $K $J) 
         (set-difference $CIk4 
           (:: $I) $CIko) 
         (= $CIko $CIk4)) 
-      (if-then-else 
+      (det-if-then-else 
         (= $K $J) 
         (set-union $IPk 
           (:: $I) $IPko) 
         (= $IPko $IPk)) 
-      (if-then-else 
+      (det-if-then-else 
         (= $K $I) 
         (set-union $ISk 
           (:: $J) $ISko) 
         (= $ISko $ISk)) 
-      (if-then-else 
+      (det-if-then-else 
         (set-member $K $SjJ) 
         (set-union $Pk $PiI $Pko) 
         (= $Pko $Pk)) 
-      (if-then-else 
+      (det-if-then-else 
         (set-member $K $PiI) 
         (set-union $Sk $SjJ $Sko) 
         (= $Sko $Sk)) 
@@ -683,8 +647,7 @@
   (= 
     (exclude-if-vector-in-false-set 
       (Cons  $K $CIsIn) $Gs $V $CIsOut) 
-    (, 
-      (function $K $Gs $Gk) 
+    ( (function $K $Gs $Gk) 
       (false-set $Gk $Fk) 
       (set-member $V $Fk) 
       (set-det) 
@@ -708,8 +671,7 @@
     (set-det))
   (= 
     (add-necessary-functions $K $NumVars $NumGsIn $GsIn $NumGsOut $GsOut) 
-    (, 
-      (function $K $GsIn $Gk) 
+    ( (function $K $GsIn $Gk) 
       (function-type $NumVars $NumGsIn $GsIn $Gk nf $V) 
       (set-det) 
       (false-set $Gk $Fk) 
@@ -725,20 +687,15 @@
       (add-necessary-functions $K1 $NumVars $NumGs1 $Gs1 $NumGsOut $GsOut)))
   (= 
     (add-necessary-functions $K $NumVars $NumGsIn $GsIn $NumGsOut $GsOut) 
-    (, 
-      (is $K1 
-        (+ $K 1)) 
-      (add-necessary-functions $K1 $NumVars $NumGsIn $GsIn $NumGsOut $GsOut)))
+    ( (is $K1 
+        (+ $K 1)) (add-necessary-functions $K1 $NumVars $NumGsIn $GsIn $NumGsOut $GsOut)))
 
 
   (= 
     (new-function-CIs $GsIn 
       (function $L $Tl $Fl $_ $IPl $ISl $Pl $Sl) $NumVars 
       (Cons  $GlOut $GsOut) $GlOut) 
-    (, 
-      (new-function-CIs $GsIn $L $Fl $NumVars $GsOut Nil $CIlo) 
-      (= $GlOut 
-        (function $L $Tl $Fl $CIlo $IPl $ISl $Pl $Sl))))
+    ( (new-function-CIs $GsIn $L $Fl $NumVars $GsOut Nil $CIlo) (= $GlOut (function $L $Tl $Fl $CIlo $IPl $ISl $Pl $Sl))))
 
   (= 
     (new_function_CIs  () $_ $_ $_ () $CIl $CIl) True)
@@ -748,10 +705,9 @@
         (function $K $Tk $Fk $CIk $IPk $ISk $Pk $Sk) $GsIn) $L $Fl $NumVars 
       (Cons  
         (function $K $Tk $Fk $CIko $IPk $ISk $Pk $Sk) $GsOut) $CIlIn $CIlOut) 
-    (, 
-      (set-intersection $Fl $Fk Nil) 
+    ( (set-intersection $Fl $Fk Nil) 
       (set-det) 
-      (if-then-else 
+      (det-if-then-else 
         (>= $K $NumVars) 
         (set-union $CIk 
           (:: $L) $CIko) 
@@ -767,9 +723,7 @@
 
   (= 
     (function-type $NumVars $NumGs $Gs $Gk $Type $Vector) 
-    (, 
-      (true-set $Gk $Tk) 
-      (select-vector $Tk $Gk $NumVars $NumGs $Gs dummy 0 nf 999 $_ $Vector $Type $_)))
+    ( (true-set $Gk $Tk) (select-vector $Tk $Gk $NumVars $NumGs $Gs dummy 0 nf 999 $_ $Vector $Type $_)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;  Cost and constraint predicates:
@@ -779,9 +733,7 @@
 
   (= 
     (test-bounds $_ $NumGs $_) 
-    (, 
-      (access bound $Bound) 
-      (< $NumGs $Bound)))
+    ( (access bound $Bound) (< $NumGs $Bound)))
 
 
   (= 
@@ -792,11 +744,9 @@
 
   (= 
     (set $N $A) 
-    (, 
-      (if-then-else 
+    ( (det-if-then-else 
         (recorded $N $_ $Ref) 
-        (erase $Ref) True) 
-      (recorda $N $A $_)))
+        (erase $Ref) True) (recorda $N $A $_)))
 
 
   (= 
@@ -819,8 +769,7 @@
     (write_gates  ()) True)
   (= 
     (write-gates (Cons  $Gi $Gs)) 
-    (, 
-      (function-number $Gi $I) 
+    ( (function-number $Gi $I) 
       (write 'gate #') 
       (write $I) 
       (write ' inputs:   ') 
@@ -837,9 +786,7 @@
   (= 
     (function $I 
       (Cons  $Gi $_) $Gi) 
-    (, 
-      (function-number $Gi $I) 
-      (set-det)))
+    ( (function-number $Gi $I) (set-det)))
   (= 
     (function $I 
       (Cons  $_ $Gs) $Gi) 
@@ -904,19 +851,13 @@
       (Cons  $X $L1) 
       (Cons  $Y $L2) 
       (Cons  $X $L3)) 
-    (, 
-      (< $X $Y) 
-      (set-union $L1 
-        (Cons  $Y $L2) $L3)))
+    ( (< $X $Y) (set-union $L1 (Cons  $Y $L2) $L3)))
   (= 
     (set-union 
       (Cons  $X $L1) 
       (Cons  $Y $L2) 
       (Cons  $Y $L3)) 
-    (, 
-      (> $X $Y) 
-      (set-union 
-        (Cons  $X $L1) $L2 $L3)))
+    ( (> $X $Y) (set-union (Cons  $X $L1) $L2 $L3)))
 
 
   (= 
@@ -937,18 +878,12 @@
     (set-intersection 
       (Cons  $X $L1) 
       (Cons  $Y $L2) $L3) 
-    (, 
-      (< $X $Y) 
-      (set-intersection $L1 
-        (Cons  $Y $L2) $L3)))
+    ( (< $X $Y) (set-intersection $L1 (Cons  $Y $L2) $L3)))
   (= 
     (set-intersection 
       (Cons  $X $L1) 
       (Cons  $Y $L2) $L3) 
-    (, 
-      (> $X $Y) 
-      (set-intersection 
-        (Cons  $X $L1) $L2 $L3)))
+    ( (> $X $Y) (set-intersection (Cons  $X $L1) $L2 $L3)))
 
 
   (= 
@@ -970,18 +905,12 @@
       (Cons  $X $L1) 
       (Cons  $Y $L2) 
       (Cons  $X $L3)) 
-    (, 
-      (< $X $Y) 
-      (set-difference $L1 
-        (Cons  $Y $L2) $L3)))
+    ( (< $X $Y) (set-difference $L1 (Cons  $Y $L2) $L3)))
   (= 
     (set-difference 
       (Cons  $X $L1) 
       (Cons  $Y $L2) $L3) 
-    (, 
-      (> $X $Y) 
-      (set-difference 
-        (Cons  $X $L1) $L2 $L3)))
+    ( (> $X $Y) (set-difference (Cons  $X $L1) $L2 $L3)))
 
 
   (= 
@@ -995,10 +924,7 @@
     (set-subset 
       (Cons  $X $L1) 
       (Cons  $Y $L2)) 
-    (, 
-      (> $X $Y) 
-      (set-subset 
-        (Cons  $X $L1) $L2)))
+    ( (> $X $Y) (set-subset (Cons  $X $L1) $L2)))
 
 
   (= 
@@ -1007,7 +933,5 @@
   (= 
     (set-member $X 
       (Cons  $Y $T)) 
-    (, 
-      (> $X $Y) 
-      (set-member $X $T)))
+    ( (> $X $Y) (set-member $X $T)))
 

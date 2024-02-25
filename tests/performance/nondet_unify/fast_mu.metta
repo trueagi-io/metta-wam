@@ -33,8 +33,7 @@
 
   (= 
     (theorem $G) 
-    (, 
-      (length $G $GL1) 
+    ( (length $G $GL1) 
       (is $GL 
         (- $GL1 1)) 
       (derive 
@@ -51,10 +50,8 @@
 
   (= 
     (derive $S $G $SL $GL $D $B) 
-    (, 
-      (is $B1 
-        (+ $B 1)) 
-      (derive $S $G $SL $GL $D $B1)))
+    ( (is $B1 
+        (+ $B 1)) (derive $S $G $SL $GL $D $B1)))
 
 ; derive2(StartString, GoalString, StartStringLength, GoalStringLength,
 ;		ScanPointer, Derivation, NumRemainingSteps).
@@ -65,8 +62,7 @@
     (derive2 $S $G $SL $GL $Pin 
       (Cons  
         (rule $N $I) $D) $R) 
-    (, 
-      (lower-bound $SL $GL $B) 
+    ( (lower-bound $SL $GL $B) 
       (>= $R $B) 
       (is $R1 
         (- $R 1)) 
@@ -88,8 +84,7 @@
     (rule 
       (:: i) 
       (:: i u) $L1 $L2 $Pin $Pout $Pos $_ 1 $_ $_) 
-    (, 
-      (>= $Pos $Pin) 
+    ( (>= $Pos $Pin) 
       (is $Pout 
         (- $Pos 2)) 
       (is $L2 
@@ -104,8 +99,7 @@
         (Cons  i 
           (Cons  i $T))) 
       (Cons  u $T) $L1 $L2 $Pin $Pout $Pos $_ 3 $_ $_) 
-    (, 
-      (>= $Pos $Pin) 
+    ( (>= $Pos $Pin) 
       (is $Pout 
         (- $Pos 1)) 
       (is $L2 
@@ -114,8 +108,7 @@
     (rule 
       (Cons  u 
         (Cons  u $T)) $T $L1 $L2 $Pin $Pout $Pos i 4 $_ $_) 
-    (, 
-      (>= $Pos $Pin) 
+    ( (>= $Pos $Pin) 
       (is $Pout 
         (- $Pos 2)) 
       (is $L2 
@@ -125,10 +118,8 @@
       (Cons  $H $T1) 
       (Cons  $H $T2) $L1 $L2 $Pin $Pout $Pos $_ $N $L 
       (Cons  $H $X)) 
-    (, 
-      (is $Pos1 
-        (+ $Pos 1)) 
-      (rule $T1 $T2 $L1 $L2 $Pin $Pout $Pos1 $H $N $L $X)))
+    ( (is $Pos1 
+        (+ $Pos 1)) (rule $T1 $T2 $L1 $L2 $Pin $Pout $Pos1 $H $N $L $X)))
 
 ; print_results([], _).
 ; print_results([rule(N,G)|T], M) :-
@@ -147,13 +138,12 @@
     (lower_bound  $N $N 2) True)
   (= 
     (lower-bound $N $M $B) 
-    (, 
-      (> $N $M) 
+    ( (> $N $M) 
       (is $Diff 
         (- $N $M)) 
       (is $P 
         (/\ $Diff 1)) 
-      (if-then-else 
+      (det-if-then-else 
         (=:= $P 0) 
         (is $B 
           (>> $Diff 1)) 

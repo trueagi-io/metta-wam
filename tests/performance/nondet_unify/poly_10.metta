@@ -19,26 +19,20 @@
 
   (= 
     (poly-10) 
-    (, 
-      (test-poly $P) 
-      (poly-exp 10 $P $_)))
+    ( (test-poly $P) (poly-exp 10 $P $_)))
 
 ; test polynomial definition
 
 
   (= 
     (test-poly $P) 
-    (, 
-      (poly-add 
+    ( (poly-add 
         (poly x 
           (:: 
             (term 0 1) 
             (term 1 1))) 
         (poly y 
-          (:: (term 1 1))) $Q) 
-      (poly-add 
-        (poly z 
-          (:: (term 1 1))) $Q $P)))
+          (:: (term 1 1))) $Q) (poly-add (poly z (:: (term 1 1))) $Q $P)))
 
 ; 'less_than'/2 for x, y, z
 
@@ -58,16 +52,13 @@
       (poly $Var $Terms1) 
       (poly $Var $Terms2) 
       (poly $Var $Terms)) 
-    (, 
-      (set-det) 
-      (term-add $Terms1 $Terms2 $Terms)))
+    ( (set-det) (term-add $Terms1 $Terms2 $Terms)))
   (= 
     (poly-add 
       (poly $Var1 $Terms1) 
       (poly $Var2 $Terms2) 
       (poly $Var1 $Terms)) 
-    (, 
-      (less-than $Var1 $Var2) 
+    ( (less-than $Var1 $Var2) 
       (set-det) 
       (add-to-order-zero-term $Terms1 
         (poly $Var2 $Terms2) $Terms)))
@@ -75,16 +66,12 @@
     (poly-add $Poly 
       (poly $Var $Terms2) 
       (poly $Var $Terms)) 
-    (, 
-      (set-det) 
-      (add-to-order-zero-term $Terms2 $Poly $Terms)))
+    ( (set-det) (add-to-order-zero-term $Terms2 $Poly $Terms)))
   (= 
     (poly-add 
       (poly $Var $Terms1) $C 
       (poly $Var $Terms)) 
-    (, 
-      (set-det) 
-      (add-to-order-zero-term $Terms1 $C $Terms)))
+    ( (set-det) (add-to-order-zero-term $Terms1 $C $Terms)))
   (= 
     (poly-add $C1 $C2 $C) 
     (is $C 
@@ -107,8 +94,7 @@
         (term $E $C2) $Terms2) 
       (Cons  
         (term $E $C) $Terms)) 
-    (, 
-      (set-det) 
+    ( (set-det) 
       (poly-add $C1 $C2 $C) 
       (term-add $Terms1 $Terms2 $Terms)))
   (= 
@@ -119,8 +105,7 @@
         (term $E2 $C2) $Terms2) 
       (Cons  
         (term $E1 $C1) $Terms)) 
-    (, 
-      (< $E1 $E2) 
+    ( (< $E1 $E2) 
       (set-det) 
       (term-add $Terms1 
         (Cons  
@@ -140,9 +125,7 @@
         (term 0 $C1) $Terms) $C2 
       (Cons  
         (term 0 $C) $Terms)) 
-    (, 
-      (set-det) 
-      (poly-add $C1 $C2 $C)))
+    ( (set-det) (poly-add $C1 $C2 $C)))
   (= 
     (add_to_order_zero_term  $Terms $C 
       (Cons  
@@ -156,8 +139,7 @@
     (set-det))
   (= 
     (poly-exp $N $Poly $Result) 
-    (, 
-      (is $M 
+    ( (is $M 
         (>> $N 1)) 
       (is $N 
         (<< $M 1)) 
@@ -166,8 +148,7 @@
       (poly-mul $Part $Part $Result)))
   (= 
     (poly-exp $N $Poly $Result) 
-    (, 
-      (is $M 
+    ( (is $M 
         (- $N 1)) 
       (poly-exp $M $Poly $Part) 
       (poly-mul $Poly $Part $Result)))
@@ -180,16 +161,13 @@
       (poly $Var $Terms1) 
       (poly $Var $Terms2) 
       (poly $Var $Terms)) 
-    (, 
-      (set-det) 
-      (term-mul $Terms1 $Terms2 $Terms)))
+    ( (set-det) (term-mul $Terms1 $Terms2 $Terms)))
   (= 
     (poly-mul 
       (poly $Var1 $Terms1) 
       (poly $Var2 $Terms2) 
       (poly $Var1 $Terms)) 
-    (, 
-      (less-than $Var1 $Var2) 
+    ( (less-than $Var1 $Var2) 
       (set-det) 
       (mul-through $Terms1 
         (poly $Var2 $Terms2) $Terms)))
@@ -197,16 +175,12 @@
     (poly-mul $P 
       (poly $Var $Terms2) 
       (poly $Var $Terms)) 
-    (, 
-      (set-det) 
-      (mul-through $Terms2 $P $Terms)))
+    ( (set-det) (mul-through $Terms2 $P $Terms)))
   (= 
     (poly-mul 
       (poly $Var $Terms1) $C 
       (poly $Var $Terms)) 
-    (, 
-      (set-det) 
-      (mul-through $Terms1 $C $Terms)))
+    ( (set-det) (mul-through $Terms1 $C $Terms)))
   (= 
     (poly-mul $C1 $C2 $C) 
     (is $C 
@@ -222,8 +196,7 @@
   (= 
     (term-mul 
       (Cons  $Term $Terms1) $Terms2 $Terms) 
-    (, 
-      (single-term-mul $Terms2 $Term $PartA) 
+    ( (single-term-mul $Terms2 $Term $PartA) 
       (term-mul $Terms1 $Terms2 $PartB) 
       (term-add $PartA $PartB $Terms)))
 
@@ -238,8 +211,7 @@
       (term $E2 $C2) 
       (Cons  
         (term $E $C) $Terms)) 
-    (, 
-      (is $E 
+    ( (is $E 
         (+ $E1 $E2)) 
       (poly-mul $C1 $C2 $C) 
       (single-term-mul $Terms1 
@@ -255,7 +227,5 @@
         (term $E $Term) $Terms) $Poly 
       (Cons  
         (term $E $NewTerm) $NewTerms)) 
-    (, 
-      (poly-mul $Term $Poly $NewTerm) 
-      (mul-through $Terms $Poly $NewTerms)))
+    ( (poly-mul $Term $Poly $NewTerm) (mul-through $Terms $Poly $NewTerms)))
 

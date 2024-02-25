@@ -3,8 +3,7 @@
 
   (= 
     (top) 
-    (, 
-      (houses $Houses) 
+    ( (houses $Houses) 
       (member 
         (house red english $_ $_ $_) $Houses) 
       (member 
@@ -90,8 +89,7 @@
 
   (= 
     (print-houses (Cons  $A $B)) 
-    (, 
-      (set-det) 
+    ( (set-det) 
       (write $A) 
       (nl) 
       (print-houses $B)))

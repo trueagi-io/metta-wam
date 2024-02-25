@@ -16,15 +16,12 @@
 
   (= 
     (query) 
-    (, 
-      (query $_) 
-      (fail)))
+    ( (query $_) (fail)))
   (= query True)
 
   (= 
     (query (:: $C1 $D1 $C2 $D2)) 
-    (, 
-      (density $C1 $D1) 
+    ( (density $C1 $D1) 
       (density $C2 $D2) 
       (> $D1 $D2) 
       (is $T1 
@@ -36,8 +33,7 @@
 
   (= 
     (density $C $D) 
-    (, 
-      (pop $C $P) 
+    ( (pop $C $P) 
       (area $C $A) 
       (is $D 
         (// 

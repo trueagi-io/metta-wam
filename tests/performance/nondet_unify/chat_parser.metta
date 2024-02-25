@@ -13,8 +13,7 @@
 
   (= 
     (go) 
-    (, 
-      (statistics runtime 
+    ( (statistics runtime 
         (:: $_ $_)) 
       (chat-parser) 
       (statistics runtime 
@@ -88,9 +87,7 @@
 
   (= 
     (determinate-say $X $Y) 
-    (, 
-      (say $X $Y) 
-      (set-det)))
+    ( (say $X $Y) (set-det)))
 
 
 ;-----------------------------------------------------------------------------
@@ -192,8 +189,7 @@
       (# $B1 $B2 $B3 $B4) 
       (# $C1 $C2 $C3 $C4) 
       (# $D1 $D2 $D3 $D4)) 
-    (, 
-      (or $B1 $C1 $D1) 
+    ( (or $B1 $C1 $D1) 
       (or $B2 $C2 $D2) 
       (or $B3 $C3 $D3) 
       (or $B4 $C4 $D4)))
@@ -204,8 +200,7 @@
       (# $B1 $B2 $B3 $B4) 
       (# $C1 $C2 $C3 $C4) 
       (# $D1 $D2 $D3 $D4)) 
-    (, 
-      (anot $B1 $C1 $D1) 
+    ( (anot $B1 $C1 $D1) 
       (anot $B2 $C2 $D2) 
       (anot $B3 $C3 $D3) 
       (anot $B4 $C4 $D4)))
@@ -277,31 +272,21 @@
 
   (= 
     (sentence $B $C $D $E $F) 
-    (, 
-      (declarative $B $C $G $E $H) 
-      (terminator . $G $D $H $F)))
+    ( (declarative $B $C $G $E $H) (terminator . $G $D $H $F)))
   (= 
     (sentence $B $C $D $E $F) 
-    (, 
-      (wh-question $B $C $G $E $H) 
-      (terminator ? $G $D $H $F)))
+    ( (wh-question $B $C $G $E $H) (terminator ? $G $D $H $F)))
   (= 
     (sentence $B $C $D $E $F) 
-    (, 
-      (topic $C $G $E $H) 
+    ( (topic $C $G $E $H) 
       (wh-question $B $G $I $H $J) 
       (terminator ? $I $D $J $F)))
   (= 
     (sentence $B $C $D $E $F) 
-    (, 
-      (yn-question $B $C $G $E $H) 
-      (terminator ? $G $D $H $F)))
+    ( (yn-question $B $C $G $E $H) (terminator ? $G $D $H $F)))
   (= 
     (sentence $B $C $D $E $F) 
-    (, 
-      (imperative $B $C $G $E $H) 
-      (terminator 
-        (set-det) $G $D $H $F)))
+    ( (imperative $B $C $G $E $H) (terminator (set-det) $G $D $H $F)))
 
 
 
@@ -312,8 +297,7 @@
   (= 
     (pp 
       (pp $B $C) $D $E $F $G $H $I $J) 
-    (, 
-      (prep $B $G $K $I $L) 
+    ( (prep $B $G $K $I $L) 
       (prep-case $M) 
       (np $C $N $M $O $D $E $F $K $H $L $J)))
 
@@ -323,9 +307,7 @@
     (topic $B $C $D 
       (x gap nonterminal 
         (pp $E compl $F $G) $H)) 
-    (, 
-      (pp $E compl $F $G $B $I $D $J) 
-      (opt-comma $I $C $J $H)))
+    ( (pp $E compl $F $G $B $I $D $J) (opt-comma $I $C $J $H)))
 
 
 
@@ -347,9 +329,7 @@
   (= 
     (wh-question 
       (whq $B $C) $D $E $F $G) 
-    (, 
-      (variable-q $B $H $I $J $D $K $F $L) 
-      (question $I $J $C $K $E $L $G)))
+    ( (variable-q $B $H $I $J $D $K $F $L) (question $I $J $C $K $E $L $G)))
 
 
 
@@ -360,16 +340,14 @@
   (= 
     (np 
       (np $B $C Nil) $B $D def $E $F $G $H $I $J $K) 
-    (, 
-      (is-pp $F) 
+    ( (is-pp $F) 
       (pers-pron $C $B $L $H $I $J $K) 
       (empty $G) 
       (role $L decl $D)))
   (= 
     (np 
       (np $B $C $D) $B $E $F $G $H $I $J $K $L $M) 
-    (, 
-      (is-pp $H) 
+    ( (is-pp $H) 
       (np-head $C $B 
         (+ $F $N) $O $D $J $P $L $Q) 
       (np-all $R) 
@@ -378,8 +356,7 @@
     (np 
       (part $B $C) 
       (+ 3 $D) $E indef $F $G $H $I $J $K $L) 
-    (, 
-      (is-pp $G) 
+    ( (is-pp $G) 
       (determiner $B $D indef $I $M $K $N) 
       (~ of $M $O $N $P) 
       (s-all $Q) 
@@ -393,16 +370,13 @@
     (variable-q $B $C $D $E $F $G $H 
       (x gap nonterminal 
         (np $I $C $E $J $K $L $M) $N)) 
-    (, 
-      (whq $B $C $I $D $F $G $H $N) 
-      (trace1 $L $M)))
+    ( (whq $B $C $I $D $F $G $H $N) (trace1 $L $M)))
   (= 
     (variable-q $B $C compl $D $E $F $G 
       (x gap nonterminal 
         (pp 
           (pp $H $I) compl $J $K) $L)) 
-    (, 
-      (prep $H $E $M $G $N) 
+    ( (prep $H $E $M $G $N) 
       (whq $B $C $I $O $M $F $N $L) 
       (trace1 $J $K) 
       (compl-case $D)))
@@ -414,8 +388,7 @@
             (np $C 
               (np-head 
                 (int-det $B) Nil $I) Nil)) $J $K) $L)) 
-    (, 
-      (context-pron $H $I $E $F $G $L) 
+    ( (context-pron $H $I $E $F $G $L) 
       (trace1 $J $K) 
       (verb-case $D)))
   (= 
@@ -424,8 +397,7 @@
         (predicate adj 
           (value $H 
             (wh $B)) $I) $J)) 
-    (, 
-      (~ how $E $K $G $L) 
+    ( (~ how $E $K $G $L) 
       (adj quant $H $K $F $L $J) 
       (empty $I) 
       (verb-case $D)))
@@ -439,11 +411,7 @@
   (= 
     (adv-phrase 
       (pp $B $C) $D $E $F $G $H $I) 
-    (, 
-      (loc-pred $B $F $J $H $K) 
-      (pp 
-        (pp 
-          (prep of) $C) compl $D $E $J $G $K $I)))
+    ( (loc-pred $B $F $J $H $K) (pp (pp (prep of) $C) compl $D $E $J $G $K $I)))
 
 
 
@@ -456,21 +424,16 @@
     (adj-phrase $C $D $E $F $G $H))
   (= 
     (predicate neg $B $C $D $E $F $G) 
-    (, 
-      (s-all $H) 
-      (pp $B compl $H $C $D $E $F $G)))
+    ( (s-all $H) (pp $B compl $H $C $D $E $F $G)))
   (= 
     (predicate $B $C $D $E $F $G $H) 
-    (, 
-      (s-all $I) 
-      (adv-phrase $C $I $D $E $F $G $H)))
+    ( (s-all $I) (adv-phrase $C $I $D $E $F $G $H)))
 
 
 
   (= 
     (whq $B $C $D undef $E $F $G $H) 
-    (, 
-      (int-det $B $C $E $I $G $J) 
+    ( (int-det $B $C $E $I $G $J) 
       (s-all $K) 
       (np $D $C $L $M subj $K $N $I $F $J $H)))
   (= 
@@ -499,9 +462,7 @@
     (virtual gen-marker $C $D))
   (= 
     (gen-marker $B $C $D $E) 
-    (, 
-      (~ ~ $B $F $D $G) 
-      (an-s $F $C $G $E)))
+    ( (~ ~ $B $F $D $G) (an-s $F $C $G $E)))
 
 
 
@@ -517,15 +478,12 @@
 
   (= 
     (question $B $C $D $E $F $G $H) 
-    (, 
-      (subj-question $B) 
+    ( (subj-question $B) 
       (role subj $I $C) 
       (s $D $J $E $F $G $H)))
   (= 
     (question $B $C $D $E $F $G $H) 
-    (, 
-      (fronted-verb $B $C $E $I $G $J) 
-      (s $D $K $I $F $J $H)))
+    ( (fronted-verb $B $C $E $I $G $J) (s $D $K $I $F $J $H)))
 
 
 
@@ -536,9 +494,7 @@
   (= 
     (det 
       (det $B) $C $D $E $F $G $H) 
-    (, 
-      (terminal $I $E $F $G $H) 
-      (det $I $C $B $D)))
+    ( (terminal $I $E $F $G $H) (det $I $C $B $D)))
   (= 
     (det  generic $B generic $C $C $D $D) True)
 
@@ -562,9 +518,7 @@
   (= 
     (yn-question 
       (q $B) $C $D $E $F) 
-    (, 
-      (fronted-verb nil $G $C $H $E $I) 
-      (s $B $J $H $D $I $F)))
+    ( (fronted-verb nil $G $C $H $E $I) (s $B $J $H $D $I $F)))
 
 
 
@@ -574,9 +528,7 @@
       (verb-form $B $C $D $E) $G $H))
   (= 
     (verb-form $B $C $D $E $F $G $H $I) 
-    (, 
-      (terminal $J $F $G $H $I) 
-      (verb-form $J $B $C $D)))
+    ( (terminal $J $F $G $H $I) (verb-form $J $B $C $D)))
 
 
 
@@ -599,8 +551,7 @@
         (verb-form $G $H $I $J) 
         (x nogap nonterminal 
           (neg $K $L) $M))) 
-    (, 
-      (verb-form $G $H $I $N $D $O $F $P) 
+    ( (verb-form $G $H $I $N $D $O $F $P) 
       (verb-type $G 
         (+ aux $Q)) 
       (role $B $J $C) 
@@ -611,9 +562,7 @@
   (= 
     (imperative 
       (imp $B) $C $D $E $F) 
-    (, 
-      (imperative-verb $C $G $E $H) 
-      (s $B $I $G $D $H $F)))
+    ( (imperative-verb $C $G $E $H) (s $B $I $G $D $H $F)))
 
 
 
@@ -631,8 +580,7 @@
   (= 
     (s 
       (s $B $C $D $E) $F $G $H $I $J) 
-    (, 
-      (subj $B $K $L $G $M $I $N) 
+    ( (subj $B $K $L $G $M $I $N) 
       (verb $C $K $L $O $M $P $N $Q) 
       (empty $R) 
       (s-all $S) 
@@ -649,8 +597,7 @@
     (~ there $D $E $F $G))
   (= 
     (subj $B $C $D $E $F $G $H) 
-    (, 
-      (s-all $I) 
+    ( (s-all $I) 
       (subj-case $J) 
       (np $B $C $J $K subj $I $L $E $F $G $H)))
 
@@ -658,9 +605,7 @@
 
   (= 
     (np-head $B $C $D $E $F $G $H $I $J) 
-    (, 
-      (np-head0 $K $L $M $G $N $I $O) 
-      (possessive $K $L $M $P $P $B $C $D $E $F $N $H $O $J)))
+    ( (np-head0 $K $L $M $G $N $I $O) (possessive $K $L $M $P $P $B $C $D $E $F $N $H $O $J)))
 
 
 
@@ -679,8 +624,7 @@
       (np-head $B $C $D) 
       (+ 3 $E) 
       (+ $F common) $G $H $I $J) 
-    (, 
-      (determiner $B $E $F $G $K $I $L) 
+    ( (determiner $B $E $F $G $K $I $L) 
       (adjs $C $K $M $L $N) 
       (noun $D $E $M $H $N $J)))
   (= 
@@ -702,8 +646,7 @@
     (empty $E))
   (= 
     (np-compls common $B $C $D $E $F $G $H $I $J) 
-    (, 
-      (np-all $K) 
+    ( (np-all $K) 
       (np-mods $B $C $L $D $E $M $K $N $G $O $I $P) 
       (relative $B $L $M $N $F $O $H $P $J)))
 
@@ -711,8 +654,7 @@
 
   (= 
     (possessive $B $C $D Nil $E $F $G $H $I $J $K $L $M $N) 
-    (, 
-      (gen-case $K $O $M $P) 
+    ( (gen-case $K $O $M $P) 
       (np-head0 $Q $R $S $O $T $P $U) 
       (possessive $Q $R $S $V 
         (Cons  
@@ -750,22 +692,18 @@
   (= 
     (quant-phrase 
       (quant $B $C) $D $E $F $G $H $I) 
-    (, 
-      (quant $B $E $F $J $H $K) 
-      (number $C $D $J $G $K $I)))
+    ( (quant $B $E $F $J $H $K) (number $C $D $J $G $K $I)))
 
 
 
   (= 
     (quant $B indef $C $D $E $F) 
-    (, 
-      (neg-adv $G $B $C $H $E $I) 
+    ( (neg-adv $G $B $C $H $E $I) 
       (comp-adv $G $H $J $I $K) 
       (~ than $J $D $K $F)))
   (= 
     (quant $B indef $C $D $E $F) 
-    (, 
-      (~ at $C $G $E $H) 
+    ( (~ at $C $G $E $H) 
       (sup-adv $I $G $D $H $F) 
       (sup-op $I $B)))
   (= 
@@ -797,8 +735,7 @@
   (= 
     (np-mods $B $C $D 
       (Cons  $E $F) $G $H $I $J $K $L $M $N) 
-    (, 
-      (np-mod $B $C $E $G $O $K $P $M $Q) 
+    ( (np-mod $B $C $E $G $O $K $P $M $Q) 
       (trace1 $R) 
       (myplus $R $O $S) 
       (minus $G $S $T) 
@@ -821,8 +758,7 @@
   (= 
     (verb-mods 
       (Cons  $B $C) $D $E $F $G $H $I $J) 
-    (, 
-      (verb-mod $B $D $K $G $L $I $M) 
+    ( (verb-mod $B $D $K $G $L $I $M) 
       (trace1 $N) 
       (myplus $N $K $O) 
       (minus $D $O $P) 
@@ -838,8 +774,7 @@
     (adv-phrase $B $C $D $E $F $G $H))
   (= 
     (verb-mod $B $C $D $E $F $G $H) 
-    (, 
-      (is-adv $C) 
+    ( (is-adv $C) 
       (adverb $B $E $F $G $H) 
       (empty $D)))
   (= 
@@ -851,9 +786,7 @@
   (= 
     (adjs 
       (Cons  $B $C) $D $E $F $G) 
-    (, 
-      (pre-adj $B $D $H $F $I) 
-      (adjs $C $H $E $I $G)))
+    ( (pre-adj $B $D $H $F $I) (adjs $C $H $E $I $G)))
   (= 
     (adjs  () $B $B $C $C) True)
 
@@ -875,17 +808,14 @@
   (= 
     (sup-phrase 
       (sup $B $C) $D $E $F $G) 
-    (, 
-      (sup-adv $B $D $I $F $J) 
-      (adj quant $C $I $E $J $G)))
+    ( (sup-adv $B $D $I $F $J) (adj quant $C $I $E $J $G)))
 
 
 
   (= 
     (comp-phrase 
       (comp $B $C $D) $E $F $G $H $I) 
-    (, 
-      (comp $B $C $F $J $H $K) 
+    ( (comp $B $C $F $J $H $K) 
       (np-no-trace $L) 
       (prep-case $M) 
       (np $D $N $M $O compl $L $E $J $G $K $I)))
@@ -894,19 +824,15 @@
 
   (= 
     (comp $B $C $D $E $F $G) 
-    (, 
-      (comp-adv $B $D $H $F $I) 
+    ( (comp-adv $B $D $H $F $I) 
       (adj quant $C $H $J $I $K) 
       (~ than $J $E $K $G)))
   (= 
     (comp more $B $C $D $E $F) 
-    (, 
-      (rel-adj $B $C $G $E $H) 
-      (~ than $G $D $H $F)))
+    ( (rel-adj $B $C $G $E $H) (~ than $G $D $H $F)))
   (= 
     (comp same $B $C $D $E $F) 
-    (, 
-      (~ as $C $G $E $H) 
+    ( (~ as $C $G $E $H) 
       (adj quant $B $G $I $H $J) 
       (~ as $I $D $J $F)))
 
@@ -915,9 +841,7 @@
   (= 
     (relative $B 
       (:: $C) $D $E $F $G $H $I $J) 
-    (, 
-      (is-pred $D) 
-      (rel-conj $B $K $C $F $G $H $I $J)))
+    ( (is-pred $D) (rel-conj $B $K $C $F $G $H $I $J)))
   (= 
     (relative  $B () $C $D $D $E $E $F $F) True)
 
@@ -925,17 +849,13 @@
 
   (= 
     (rel-conj $B $C $D $E $F $G $H $I) 
-    (, 
-      (rel $B $J $K $F $L $H $M) 
-      (rel-rest $B $C $J $D $K $E $L $G $M $I)))
+    ( (rel $B $J $K $F $L $H $M) (rel-rest $B $C $J $D $K $E $L $G $M $I)))
 
 
 
   (= 
     (rel-rest $B $C $D $E $F $G $H $I $J $K) 
-    (, 
-      (conj $C $L $D $M $E $H $N $J $O) 
-      (rel-conj $B $L $M $G $N $I $O $K)))
+    ( (conj $C $L $D $M $E $H $N $J $O) (rel-conj $B $L $M $G $N $I $O $K)))
   (= 
     (rel_rest  $B $C $D $D $E $E $F $F $G $G) True)
 
@@ -944,8 +864,7 @@
   (= 
     (rel $B 
       (rel $C $D) $E $F $G $H $I) 
-    (, 
-      (myopen $F $J $H $K) 
+    ( (myopen $F $J $H $K) 
       (variable $B $C $J $L $K $M) 
       (s $D $N $L $O $M $P) 
       (trace1 $Q) 
@@ -960,23 +879,18 @@
         (np 
           (np $B 
             (wh $C) Nil) $B $G $H $I $J $K) $L)) 
-    (, 
-      (~ that $D $E $F $L) 
-      (trace1 $J $K)))
+    ( (~ that $D $E $F $L) (trace1 $J $K)))
   (= 
     (variable $B $C $D $E $F 
       (x gap nonterminal 
         (np $G $H $I $J $K $L $M) $N)) 
-    (, 
-      (wh $C $B $G $H $I $D $E $F $N) 
-      (trace1 $L $M)))
+    ( (wh $C $B $G $H $I $D $E $F $N) (trace1 $L $M)))
   (= 
     (variable $B $C $D $E $F 
       (x gap nonterminal 
         (pp 
           (pp $G $H) compl $I $J) $K)) 
-    (, 
-      (prep $G $D $L $F $M) 
+    ( (prep $G $D $L $F $M) 
       (wh $C $B $H $N $O $L $E $M $K) 
       (trace1 $I $J) 
       (compl-case $O)))
@@ -987,22 +901,18 @@
     (wh $B $C 
       (np $C 
         (wh $B) Nil) $C $D $E $F $G $H) 
-    (, 
-      (rel-pron $I $E $F $G $H) 
-      (role $I decl $D)))
+    ( (rel-pron $I $E $F $G $H) (role $I decl $D)))
   (= 
     (wh $B $C 
       (np $D $E 
         (:: (pp $F $G))) $D $H $I $J $K $L) 
-    (, 
-      (np-head0 $E $D 
+    ( (np-head0 $E $D 
         (+ $M common) $I $N $K $O) 
       (prep $F $N $P $O $Q) 
       (wh $B $C $G $R $S $P $J $Q $L)))
   (= 
     (wh $B $C $D $E $F $G $H $I $J) 
-    (, 
-      (whose $B $C $G $K $I $L) 
+    ( (whose $B $C $G $K $I $L) 
       (s-all $M) 
       (np $D $E $F def subj $M $N $K $H $L $J)))
 
@@ -1010,25 +920,19 @@
 
   (= 
     (reduced-relative $B $C $D $E $F $G $H $I) 
-    (, 
-      (is-pred $D) 
-      (reduced-rel-conj $B $J $C $E $F $G $H $I)))
+    ( (is-pred $D) (reduced-rel-conj $B $J $C $E $F $G $H $I)))
 
 
 
   (= 
     (reduced-rel-conj $B $C $D $E $F $G $H $I) 
-    (, 
-      (reduced-rel $B $J $K $F $L $H $M) 
-      (reduced-rel-rest $B $C $J $D $K $E $L $G $M $I)))
+    ( (reduced-rel $B $J $K $F $L $H $M) (reduced-rel-rest $B $C $J $D $K $E $L $G $M $I)))
 
 
 
   (= 
     (reduced-rel-rest $B $C $D $E $F $G $H $I $J $K) 
-    (, 
-      (conj $C $L $D $M $E $H $N $J $O) 
-      (reduced-rel-conj $B $L $M $G $N $I $O $K)))
+    ( (conj $C $L $D $M $E $H $N $J $O) (reduced-rel-conj $B $L $M $G $N $I $O $K)))
   (= 
     (reduced_rel_rest  $B $C $D $D $E $E $F $F $G $G) True)
 
@@ -1037,8 +941,7 @@
   (= 
     (reduced-rel $B 
       (reduced-rel $C $D) $E $F $G $H $I) 
-    (, 
-      (myopen $F $J $H $K) 
+    ( (myopen $F $J $H $K) 
       (reduced-wh $B $C $J $L $K $M) 
       (s $D $N $L $O $M $P) 
       (trace1 $Q) 
@@ -1060,8 +963,7 @@
             (neg $L $M) 
             (x nogap nonterminal 
               (predicate $M $N $O) $P))))) 
-    (, 
-      (neg $Q $M $D $R $F $S) 
+    ( (neg $Q $M $D $R $F $S) 
       (predicate $M $N $O $R $E $S $P) 
       (trace1 $J $K) 
       (subj-case $G)))
@@ -1073,8 +975,7 @@
             (wh $C) Nil) $B $G $H $I $J $K) 
         (x nogap nonterminal 
           (verb $L $M $N $O) $P))) 
-    (, 
-      (participle $L $N $O $D $E $F $P) 
+    ( (participle $L $N $O $D $E $F $P) 
       (trace1 $J $K) 
       (subj-case $G)))
   (= 
@@ -1085,8 +986,7 @@
           (np 
             (np $B 
               (wh $C) Nil) $B $N $O $P $Q $R) $S))) 
-    (, 
-      (s-all $T) 
+    ( (s-all $T) 
       (subj-case $I) 
       (verb-case $N) 
       (np $G $H $U $J subj $T $V $D $E $F $S) 
@@ -1103,8 +1003,7 @@
     (verb 
       (verb $B $C 
         (+ $D fin) $E $F) $G $H $C $I $J $K $L) 
-    (, 
-      (verb-form $M 
+    ( (verb-form $M 
         (+ $D fin) $G $N $I $O $K $P) 
       (verb-type $M $Q) 
       (neg $Q $F $O $R $P $S) 
@@ -1116,15 +1015,11 @@
   (= 
     (rest-verb aux have $B $C 
       (Cons  perf $D) $E $F $G $H) 
-    (, 
-      (verb-form $I 
-        (+ past part) $J $K $E $L $G $M) 
-      (have $I $B $C $D $L $F $M $H)))
+    ( (verb-form $I 
+        (+ past part) $J $K $E $L $G $M) (have $I $B $C $D $L $F $M $H)))
   (= 
     (rest-verb aux be $B $C $D $E $F $G $H) 
-    (, 
-      (verb-form $I $J $K $L $E $M $G $N) 
-      (be $J $I $B $C $D $M $F $N $H)))
+    ( (verb-form $I $J $K $L $E $M $G $N) (be $J $I $B $C $D $M $F $N $H)))
   (= 
     (rest-verb aux do $B active Nil $C $D $E $F) 
     (verb-form $B inf $G $H $C $D $E $F))
@@ -1135,9 +1030,7 @@
 
   (= 
     (have be $B $C $D $E $F $G $H) 
-    (, 
-      (verb-form $I $J $K $L $E $M $G $N) 
-      (be $J $I $B $C $D $M $F $N $H)))
+    ( (verb-form $I $J $K $L $E $M $G $N) (be $J $I $B $C $D $M $F $N $H)))
   (= 
     (have  $B $B active () $C $C $D $D) True)
 
@@ -1156,8 +1049,7 @@
 
   (= 
     (passive be $B passive $C $D $E $F) 
-    (, 
-      (verb-form $B 
+    ( (verb-form $B 
         (+ past part) $G $H $C $D $E $F) 
       (verb-type $B $I) 
       (passive $I)))
@@ -1169,8 +1061,7 @@
   (= 
     (participle 
       (verb $B $C inf $D $E) $F $C $G $H $I $J) 
-    (, 
-      (neg $K $E $G $L $I $M) 
+    ( (neg $K $E $G $L $I $M) 
       (verb-form $B $N $O $P $L $H $M $J) 
       (participle $N $C $D) 
       (verb-type $B $F)))
@@ -1211,9 +1102,7 @@
   (= 
     (verb-args 
       (+ $B $C) $D $E $F $G $H $I $J $K) 
-    (, 
-      (advs $E $L $M $H $N $J $O) 
-      (verb-args $C $D $L $F $G $N $I $O $K)))
+    ( (advs $E $L $M $H $N $J $O) (verb-args $C $D $L $F $G $N $I $O $K)))
   (= 
     (verb-args trans active 
       (:: (arg dir $B)) $C $D $E $F $G $H) 
@@ -1222,9 +1111,7 @@
     (verb-args ditrans $B 
       (Cons  
         (arg $C $D) $E) $F $G $H $I $J $K) 
-    (, 
-      (verb-arg np $D $L $H $M $J $N) 
-      (object $C $E $L $G $M $I $N $K)))
+    ( (verb-arg np $D $L $H $M $J $N) (object $C $E $L $G $M $I $N $K)))
   (= 
     (verb-args be $B 
       (:: void) $C $C $D $E $F $G) 
@@ -1249,8 +1136,7 @@
 
   (= 
     (object $B $C $D $E $F $G $H $I) 
-    (, 
-      (adv $J) 
+    ( (adv $J) 
       (minus $J $D $K) 
       (advs $C $L $K $F $M $H $N) 
       (obj $B $L $D $E $M $G $N $I)))
@@ -1268,17 +1154,13 @@
 
   (= 
     (pred-conj $B $C $D $E $F $G $H) 
-    (, 
-      (predicate $I $J $K $E $L $G $M) 
-      (pred-rest $B $J $C $K $D $L $F $M $H)))
+    ( (predicate $I $J $K $E $L $G $M) (pred-rest $B $J $C $K $D $L $F $M $H)))
 
 
 
   (= 
     (pred-rest $B $C $D $E $F $G $H $I $J) 
-    (, 
-      (conj $B $K $C $L $D $G $M $I $N) 
-      (pred-conj $K $L $F $M $H $N $J)))
+    ( (conj $B $K $C $L $D $G $M $I $N) (pred-conj $K $L $F $M $H $N $J)))
   (= 
     (pred_rest  $B $C $C $D $D $E $E $F $F) True)
 
@@ -1286,8 +1168,7 @@
 
   (= 
     (verb-arg np $B $C $D $E $F $G) 
-    (, 
-      (s-all $H) 
+    ( (s-all $H) 
       (verb-case $I) 
       (np $B $J $I $K compl $H $C $D $E $F $G)))
 
@@ -1296,8 +1177,7 @@
   (= 
     (advs 
       (Cons  $B $C) $D $E $F $G $H $I) 
-    (, 
-      (is-adv $E) 
+    ( (is-adv $E) 
       (adverb $B $F $J $H $K) 
       (advs $C $D $E $J $G $K $I)))
   (= 
@@ -1307,9 +1187,7 @@
 
   (= 
     (adj-phrase $B $C $D $E $F $G) 
-    (, 
-      (adj $H $B $D $E $F $G) 
-      (empty $C)))
+    ( (adj $H $B $D $E $F $G) (empty $C)))
   (= 
     (adj-phrase $B $C $D $E $F $G) 
     (comp-phrase $B $C $D $E $F $G))
@@ -1336,45 +1214,35 @@
 
   (= 
     (noun $B $C $D $E $F $G) 
-    (, 
-      (terminal $H $D $E $F $G) 
-      (noun-form $H $B $C)))
+    ( (terminal $H $D $E $F $G) (noun-form $H $B $C)))
 
 
 
   (= 
     (adj $B 
       (adj $C) $D $E $F $G) 
-    (, 
-      (terminal $C $D $E $F $G) 
-      (adj $C $B)))
+    ( (terminal $C $D $E $F $G) (adj $C $B)))
 
 
 
   (= 
     (prep 
       (prep $B) $C $D $E $F) 
-    (, 
-      (terminal $B $C $D $E $F) 
-      (prep $B)))
+    ( (terminal $B $C $D $E $F) (prep $B)))
 
 
 
   (= 
     (rel-adj 
       (adj $B) $C $D $E $F) 
-    (, 
-      (terminal $G $C $D $E $F) 
-      (rel-adj $G $B)))
+    ( (terminal $G $C $D $E $F) (rel-adj $G $B)))
 
 
 
   (= 
     (sup-adj 
       (adj $B) $C $D $E $F) 
-    (, 
-      (terminal $G $C $D $E $F) 
-      (sup-adj $G $B)))
+    ( (terminal $G $C $D $E $F) (sup-adj $G $B)))
 
 
 
@@ -1398,16 +1266,13 @@
 
   (= 
     (rel-pron $B $C $D $E $F) 
-    (, 
-      (terminal $G $C $D $E $F) 
-      (rel-pron $G $B)))
+    ( (terminal $G $C $D $E $F) (rel-pron $G $B)))
 
 
 
   (= 
     (name $B $C $D $E $F) 
-    (, 
-      (opt-the $C $G $E $H) 
+    ( (opt-the $C $G $E $H) 
       (terminal $B $G $D $H $F) 
       (name $B)))
 
@@ -1417,31 +1282,23 @@
     (int-art $B plu 
       (quant same 
         (wh $B)) $C $D $E $F) 
-    (, 
-      (~ how $C $G $E $H) 
-      (~ many $G $D $H $F)))
+    ( (~ how $C $G $E $H) (~ many $G $D $H $F)))
   (= 
     (int-art $B $C $D $E $F $G $H) 
-    (, 
-      (terminal $I $E $F $G $H) 
-      (int-art $I $B $C $D)))
+    ( (terminal $I $E $F $G $H) (int-art $I $B $C $D)))
 
 
 
   (= 
     (int-pron $B $C $D $E $F) 
-    (, 
-      (terminal $G $C $D $E $F) 
-      (int-pron $G $B)))
+    ( (terminal $G $C $D $E $F) (int-pron $G $B)))
 
 
 
   (= 
     (adverb 
       (adv $B) $C $D $E $F) 
-    (, 
-      (terminal $B $C $D $E $F) 
-      (adverb $B)))
+    ( (terminal $B $C $D $E $F) (adverb $B)))
 
 
 
@@ -1449,9 +1306,7 @@
     (poss-pron 
       (pronoun $B) 
       (+ $C $D) $E $F $G $H) 
-    (, 
-      (terminal $I $E $F $G $H) 
-      (poss-pron $I $B $C $D)))
+    ( (terminal $I $E $F $G $H) (poss-pron $I $B $C $D)))
 
 
 
@@ -1459,17 +1314,13 @@
     (pers-pron 
       (pronoun $B) 
       (+ $C $D) $E $F $G $H $I) 
-    (, 
-      (terminal $J $F $G $H $I) 
-      (pers-pron $J $B $C $D $E)))
+    ( (terminal $J $F $G $H $I) (pers-pron $J $B $C $D $E)))
 
 
 
   (= 
     (quantifier-pron $B $C $D $E $F $G) 
-    (, 
-      (terminal $H $D $E $F $G) 
-      (quantifier-pron $H $B $C)))
+    ( (terminal $H $D $E $F $G) (quantifier-pron $H $B $C)))
 
 
 
@@ -1487,17 +1338,13 @@
   (= 
     (number 
       (nb $B) $C $D $E $F $G) 
-    (, 
-      (terminal $H $D $E $F $G) 
-      (number $H $B $C)))
+    ( (terminal $H $D $E $F $G) (number $H $B $C)))
 
 
 
   (= 
     (terminator $B $C $D $E $F) 
-    (, 
-      (terminal $G $C $D $E $F) 
-      (terminator $G $B)))
+    ( (terminal $G $C $D $E $F) (terminator $G $B)))
 
 
 
@@ -1514,25 +1361,19 @@
     (terminal , $C $D $E $F))
   (= 
     (conj $B list end $C $D $E $F) 
-    (, 
-      (terminal $B $C $D $E $F) 
-      (conj $B)))
+    ( (terminal $B $C $D $E $F) (conj $B)))
 
 
 
   (= 
     (loc-pred $B $C $D $E $F) 
-    (, 
-      (terminal $G $C $D $E $F) 
-      (loc-pred $G $B)))
+    ( (terminal $G $C $D $E $F) (loc-pred $G $B)))
 
 
 
   (= 
     (~ $B $C $D $E $F) 
-    (, 
-      (terminal $B $C $D $E $F) 
-      (~ $B)))
+    ( (terminal $B $C $D $E $F) (~ $B)))
 
 
 ;----------------------------------------------------------------------------
@@ -1693,9 +1534,7 @@
 
   (= 
     (number $W $I $Nb) 
-    (, 
-      (tr-number $W $I) 
-      (ag-number $I $Nb)))
+    ( (tr-number $W $I) (ag-number $I $Nb)))
 
 
   (= 
@@ -2113,8 +1952,7 @@
   (= 
     (verb-form $V $V 
       (+ pres fin) $Agmt) 
-    (, 
-      (regular-pres $V) 
+    ( (regular-pres $V) 
       (root-form $Agmt) 
       (verb-root $V)))
   (= 

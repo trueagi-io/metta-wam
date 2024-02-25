@@ -16,14 +16,11 @@
 
   (= 
     (serialise) 
-    (, 
-      (atom-codes 'ABLE WAS I ERE I SAW ELBA' $Codes) 
-      (serialise $Codes $_)))
+    ( (atom-codes 'ABLE WAS I ERE I SAW ELBA' $Codes) (serialise $Codes $_)))
 
   (= 
     (serialise $L $R) 
-    (, 
-      (pairlists $L $R $A) 
+    ( (pairlists $L $R $A) 
       (arrange $A $T) 
       (numbered $T 1 $_)))
 
@@ -43,8 +40,7 @@
     (arrange 
       (Cons  $X $L) 
       (tree $T1 $X $T2)) 
-    (, 
-      (split $L $X $L1 $L2) 
+    ( (split $L $X $L1 $L2) 
       (arrange $L1 $T1) 
       (arrange $L2 $T2)))
   (= 
@@ -54,23 +50,19 @@
   (= 
     (split 
       (Cons  $X $L) $X $L1 $L2) 
-    (, 
-      (set-det) 
-      (split $L $X $L1 $L2)))
+    ( (set-det) (split $L $X $L1 $L2)))
   (= 
     (split 
       (Cons  $X $L) $Y 
       (Cons  $X $L1) $L2) 
-    (, 
-      (before $X $Y) 
+    ( (before $X $Y) 
       (set-det) 
       (split $L $Y $L1 $L2)))
   (= 
     (split 
       (Cons  $X $L) $Y $L1 
       (Cons  $X $L2)) 
-    (, 
-      (before $Y $X) 
+    ( (before $Y $X) 
       (set-det) 
       (split $L $Y $L1 $L2)))
   (= 
@@ -88,8 +80,7 @@
     (numbered 
       (tree $T1 
         (pair $_ $N1) $T2) $N0 $N) 
-    (, 
-      (numbered $T1 $N0 $N1) 
+    ( (numbered $T1 $N0 $N1) 
       (is $N2 
         (+ $N1 1)) 
       (numbered $T2 $N2 $N)))

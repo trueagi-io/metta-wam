@@ -3,10 +3,8 @@
 
   (= 
     (top) 
-    (, 
-      (findall $C 
-        (perfect 100 $C) $X) 
-      (ok $X)))
+    ( (findall $C 
+        (perfect 100 $C) $X) (ok $X)))
 
 
   (= 
@@ -17,16 +15,14 @@
 
   (= 
     (divisible $X $Y) 
-    (, 
-      (is $N 
+    ( (is $N 
         (* $Y $Y)) 
       (=< $N $X) 
       (=:= 
         (mod $X $Y) 0)))
   (= 
     (divisible $X $Y) 
-    (, 
-      (< $Y $X) 
+    ( (< $Y $X) 
       (is $Y1 
         (+ $Y 1)) 
       (divisible $X $Y1)))
@@ -37,8 +33,7 @@
   (= 
     (isprime 
       (Cons  $X $_) $X) 
-    (, 
-      (is $Y 2) 
+    ( (is $Y 2) 
       (> $X 1) 
       (not (divisible $X $Y))))
   (= 
@@ -55,8 +50,7 @@
     (set-det))
   (= 
     (power $N $K $R) 
-    (, 
-      (is $K1 
+    ( (is $K1 
         (- $K 1)) 
       (power $N $K1 $R1) 
       (is $R 
@@ -68,8 +62,7 @@
 
   (= 
     (calc 2 $K $R) 
-    (, 
-      (power 2 $K $X) 
+    ( (power 2 $K $X) 
       (is $R1 
         (- $X 1)) 
       (power 2 
@@ -98,8 +91,7 @@
   (= 
     (generateList $N 
       (Cons  $X $Xs)) 
-    (, 
-      (> $N 0) 
+    ( (> $N 0) 
       (is $X 
         (+ $N 1)) 
       (is $N1 
@@ -111,8 +103,7 @@
 
   (= 
     (perfect $N $C) 
-    (, 
-      (generateList $N $R) 
+    ( (generateList $N $R) 
       (findall $L 
         (isprime $R $L) $P) 
       (listperf $P $C)))

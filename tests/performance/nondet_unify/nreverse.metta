@@ -21,10 +21,7 @@
   (= 
     (nreverse 
       (Cons  $X $L0) $L) 
-    (, 
-      (nreverse $L0 $L1) 
-      (concatenate $L1 
-        (:: $X) $L)))
+    ( (nreverse $L0 $L1) (concatenate $L1 (:: $X) $L)))
   (= 
     (nreverse  () ()) True)
 

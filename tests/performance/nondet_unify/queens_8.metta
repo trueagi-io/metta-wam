@@ -35,24 +35,19 @@
 
   (= 
     (top) 
-    (, 
-      (queens 8 $Qs) 
-      (fail)))
+    ( (queens 8 $Qs) (fail)))
   (= top True)
 
 
   (= 
     (queens $N $Qs) 
-    (, 
-      (range 1 $N $Ns) 
-      (queens $Ns Nil $Qs)))
+    ( (range 1 $N $Ns) (queens $Ns Nil $Qs)))
 
   (= 
     (queens  () $Qs $Qs) True)
   (= 
     (queens $UnplacedQs $SafeQs $Qs) 
-    (, 
-      (select $UnplacedQs $UnplacedQs1 $Q) 
+    ( (select $UnplacedQs $UnplacedQs1 $Q) 
       (not-attack $SafeQs $Q) 
       (queens $UnplacedQs1 
         (Cons  $Q $SafeQs) $Qs)))
@@ -68,8 +63,7 @@
   (= 
     (not-attack 
       (Cons  $Y $Ys) $X $N) 
-    (, 
-      (=\= $X 
+    ( (=\= $X 
         (+ $Y $N)) 
       (=\= $X 
         (- $Y $N)) 
@@ -95,8 +89,7 @@
   (= 
     (range $M $N 
       (Cons  $M $Ns)) 
-    (, 
-      (< $M $N) 
+    ( (< $M $N) 
       (is $M1 
         (+ $M 1)) 
       (range $M1 $N $Ns)))

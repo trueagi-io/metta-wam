@@ -8,10 +8,8 @@
 
   (= 
     (top) 
-    (, 
-      (eliminate-disjunctions 
-        (:: (= (a $A $B $C) (or (b $A) (c $C)))) $X $Y Nil) 
-      (inst-vars (, $X $Y))))
+    ( (eliminate-disjunctions 
+        (:: (= (a $A $B $C) (or (b $A) (c $C)))) $X $Y Nil) (inst-vars (, $X $Y))))
 ;	write((X,Y)), nl,
 	; (X,Y) == ([(a:-'_dummy_0')],[('_dummy_0':-b),('_dummy_0':-c)]),
 ;	write(ok), nl.
@@ -21,9 +19,7 @@
 
   (= 
     (eliminate-disjunctions $OneProc $NewProc $NewClauses $Link) 
-    (, 
-      (gather-disj $OneProc $NewProc $Disj Nil) 
-      (treat-disj $Disj $NewClauses $Link)))
+    ( (gather-disj $OneProc $NewProc $Disj Nil) (treat-disj $Disj $NewClauses $Link)))
 
 
   (= 
@@ -31,8 +27,7 @@
   (= 
     (gather-disj 
       (Cons  $C $Cs) $NewProc $Disj $Link) 
-    (, 
-      (extract-disj $C $NewC $Disj $Rest) 
+    ( (extract-disj $C $NewC $Disj $Rest) 
       (= $NewProc 
         (Cons  $NewC $NewCs)) 
       (gather-disj $Cs $NewCs $Rest $Link)))
@@ -48,8 +43,7 @@
   (= 
     (extract-disj $C 
       (= $Head $NewBody) $Disj $Link) 
-    (, 
-      (= $C 
+    ( (= $C 
         (= $Head $Body)) 
       (set-det) 
       (= $CtrIn 0) 
@@ -61,14 +55,11 @@
     (extract-disj 
       (, $C1 $C2) 
       (, $NewC1 $NewC2) $Disj $Link $C $CtrIn $CtrOut) 
-    (, 
-      (extract-disj $C1 $NewC1 $Disj $Link1 $C $CtrIn $Ctr) 
-      (extract-disj $C2 $NewC2 $Link1 $Link $C $Ctr $CtrOut)))
+    ( (extract-disj $C1 $NewC1 $Disj $Link1 $C $CtrIn $Ctr) (extract-disj $C2 $NewC2 $Link1 $Link $C $Ctr $CtrOut)))
 
   (= 
     (extract-disj $Goal $X $Disj $Link $C $CtrIn $CtrOut) 
-    (, 
-      (is-disj $Goal $NewGoal) 
+    ( (is-disj $Goal $NewGoal) 
       (set-det) 
       (= $Disj 
         (Cons  
@@ -81,7 +72,7 @@
 
   (= 
     (is-disj 
-      (if-then-else $C1 $C2 $C3) 
+      (det-if-then-else $C1 $C2 $C3) 
       (or 
         (, $C1 
           (set-det) $C2) $C3)) 
@@ -126,8 +117,7 @@
       (Cons  
         (disj 
           (or $A $B) $N $X $C) $Disjs) $DummyClauses $Link) 
-    (, 
-      (find-vars 
+    ( (find-vars 
         (or $A $B) $Vars) 
       (find-vars $C $CVars) 
       (intersect-vars $Vars $CVars $Args) 
@@ -143,8 +133,7 @@
     (make-dummy-clauses 
       (or $A $B) $X 
       (Cons  $NewC $Cs) $Link) 
-    (, 
-      (set-det) 
+    ( (set-det) 
       (copy 
         (= $X $A) $NewC) 
       (make-dummy-clauses $B $X $Cs $Link)))
@@ -157,48 +146,37 @@
 
   (= 
     (find-vars $X $Y) 
-    (, 
-      (find-vars $X $Y $Link) 
-      (= $Link Nil)))
+    ( (find-vars $X $Y $Link) (= $Link Nil)))
 
   (= 
     (find-vars $Var 
       (Cons  $Var $Link) $Link) 
-    (, 
-      (var $Var) 
-      (set-det)))
+    ( (var $Var) (set-det)))
   (= 
     (find-vars $Cst $Link $Link) 
-    (, 
-      (atomic $Cst) 
-      (set-det)))
+    ( (atomic $Cst) (set-det)))
   (= 
     (find-vars 
       (Cons  $T $Ts) $Vars $NewLink) 
-    (, 
-      (set-det) 
+    ( (set-det) 
       (find-vars $T $Vars $Link) 
       (find-vars $Ts $Link $NewLink)))
   (= 
     (find-vars $Term $Vars $Link) 
-    (, 
-      (=.. $Term 
-        (Cons  $_ $Args)) 
-      (find-vars $Args $Vars $Link)))
+    ( (=.. $Term 
+        (Cons  $_ $Args)) (find-vars $Args $Vars $Link)))
 
 
   (= 
     (intersect-vars $V1 $V2 $Out) 
-    (, 
-      (sort-vars $V1 $Sorted1) 
+    ( (sort-vars $V1 $Sorted1) 
       (sort-vars $V2 $Sorted2) 
       (intersect-sorted-vars $Sorted1 $Sorted2 $Out)))
 
 
   (= 
     (make-dummy-name $N $Name) 
-    (, 
-      (atom-codes -dummy- $L1) 
+    ( (atom-codes -dummy- $L1) 
       (number-codes $N $L2) 
       (my-append $L1 $L2 $L) 
       (atom-codes $Name $L)))
@@ -216,8 +194,7 @@
 
   (= 
     (copy $Term1 $Term2) 
-    (, 
-      (varset $Term1 $Set) 
+    ( (varset $Term1 $Set) 
       (make-sym $Set $Sym) 
       (copy2 $Term1 $Term2 $Sym) 
       (set-det)))
@@ -225,14 +202,12 @@
 
   (= 
     (copy2 $V1 $V2 $Sym) 
-    (, 
-      (var $V1) 
+    ( (var $V1) 
       (set-det) 
       (retrieve-sym $V1 $Sym $V2)))
   (= 
     (copy2 $X1 $X2 $Sym) 
-    (, 
-      (nonvar $X1) 
+    ( (nonvar $X1) 
       (set-det) 
       (functor $X1 $Name $Arity) 
       (functor $X2 $Name $Arity) 
@@ -240,13 +215,10 @@
 
   (= 
     (copy2 $X1 $X2 $Sym $N $Arity) 
-    (, 
-      (> $N $Arity) 
-      (set-det)))
+    ( (> $N $Arity) (set-det)))
   (= 
     (copy2 $X1 $X2 $Sym $N $Arity) 
-    (, 
-      (=< $N $Arity) 
+    ( (=< $N $Arity) 
       (set-det) 
       (arg $N $X1 $Arg1) 
       (arg $N $X2 $Arg2) 
@@ -260,9 +232,7 @@
     (retrieve-sym $V 
       (Cons  
         (p $W $X) $Sym) $X) 
-    (, 
-      (== $V $W) 
-      (set-det)))
+    ( (== $V $W) (set-det)))
   (= 
     (retrieve-sym $V 
       (Cons  $_ $Sym) $X) 
@@ -282,9 +252,7 @@
 
   (= 
     (varset $Term $VarSet) 
-    (, 
-      (varbag $Term $VB) 
-      (sort $VB $VarSet)))
+    ( (varbag $Term $VB) (sort $VB $VarSet)))
 
   (= 
     (varbag $Term $VarBag) 
@@ -332,8 +300,7 @@
 
   (= 
     (inst-vars $Term) 
-    (, 
-      (varset $Term $Vars) 
+    ( (varset $Term $Vars) 
       (char-code A $A) 
       (inst-vars-list $Vars $A))); original code was:
 ; [A]=`A`,
@@ -345,8 +312,7 @@
   (= 
     (inst-vars-list 
       (Cons  $T $L) $N) 
-    (, 
-      (char-code $T $N) 
+    ( (char-code $T $N) 
       (is $N1 
         (+ $N 1)) 
       (inst-vars-list $L $N1)))
@@ -360,8 +326,7 @@
   (= 
     (sort-vars 
       (Cons  $V $Vs) $Result $Link) 
-    (, 
-      (split-vars $Vs $V $Smaller $Bigger) 
+    ( (split-vars $Vs $V $Smaller $Bigger) 
       (sort-vars $Smaller $Result 
         (Cons  $V $SLink)) 
       (sort-vars $Bigger $SLink $Link)))
@@ -377,16 +342,14 @@
       (Cons  $X $Xs) 
       (Cons  $Y $Ys) 
       (Cons  $X $Rs)) 
-    (, 
-      (== $X $Y) 
+    ( (== $X $Y) 
       (set-det) 
       (intersect-sorted-vars $Xs $Ys $Rs)))
   (= 
     (intersect-sorted-vars 
       (Cons  $X $Xs) 
       (Cons  $Y $Ys) $Rs) 
-    (, 
-      (@< $X $Y) 
+    ( (@< $X $Y) 
       (set-det) 
       (intersect-sorted-vars $Xs 
         (Cons  $Y $Ys) $Rs)))
@@ -394,8 +357,7 @@
     (intersect-sorted-vars 
       (Cons  $X $Xs) 
       (Cons  $Y $Ys) $Rs) 
-    (, 
-      (@> $X $Y) 
+    ( (@> $X $Y) 
       (set-det) 
       (intersect-sorted-vars 
         (Cons  $X $Xs) $Ys $Rs)))
@@ -408,23 +370,20 @@
     (split-vars 
       (Cons  $V $Vs) $A 
       (Cons  $V $Ss) $Bs) 
-    (, 
-      (@< $V $A) 
+    ( (@< $V $A) 
       (set-det) 
       (split-vars $Vs $A $Ss $Bs)))
   (= 
     (split-vars 
       (Cons  $V $Vs) $A $Ss $Bs) 
-    (, 
-      (== $V $A) 
+    ( (== $V $A) 
       (set-det) 
       (split-vars $Vs $A $Ss $Bs)))
   (= 
     (split-vars 
       (Cons  $V $Vs) $A $Ss 
       (Cons  $V $Bs)) 
-    (, 
-      (@> $V $A) 
+    ( (@> $V $A) 
       (set-det) 
       (split-vars $Vs $A $Ss $Bs)))
 

@@ -15,10 +15,8 @@
 
   (= 
     (mu) 
-    (, 
-      (theorem 
-        (:: m u i i u) 5 $_) 
-      (set-det)))
+    ( (theorem 
+        (:: m u i i u) 5 $_) (set-det)))
 
 
   (= 
@@ -29,8 +27,7 @@
     (theorem $R $Depth 
       (Cons  
         (Cons  $N $R) $P)) 
-    (, 
-      (> $Depth 0) 
+    ( (> $Depth 0) 
       (is $D 
         (- $Depth 1)) 
       (theorem $S $D $P) 

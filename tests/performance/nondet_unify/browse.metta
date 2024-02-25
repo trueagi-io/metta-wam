@@ -10,8 +10,7 @@
 
   (= 
     (top) 
-    (, 
-      (init 100 10 4 
+    ( (init 100 10 4 
         (:: 
           (:: a a a b b b b a a a a a b b a a a) 
           (:: a a b b b b a a 
@@ -53,8 +52,7 @@
   (= 
     (init $N $I $M $Npats $Ipats 
       (Cons  $Symb $Rest)) 
-    (, 
-      (fill $I Nil $L) 
+    ( (fill $I Nil $L) 
       (get-pats $Npats $Ipats $Ppats) 
       (is $J 
         (- $M $I)) 
@@ -63,7 +61,7 @@
           (pattern $Ppats) $L) $Symb) 
       (is $N1 
         (- $N 1)) 
-      (if-then-else 
+      (det-if-then-else 
         (=:= $I 0) 
         (is $I1 $M) 
         (is $I1 
@@ -78,10 +76,8 @@
     (fill $N $L 
       (Cons  
         (dummy Nil) $Rest)) 
-    (, 
-      (is $N1 
-        (- $N 1)) 
-      (fill $N1 $L $Rest)))
+    ( (is $N1 
+        (- $N 1)) (fill $N1 $L $Rest)))
 
 
   (= 
@@ -90,8 +86,7 @@
   (= 
     (randomize $In 
       (Cons  $X $Out) $Rand) 
-    (, 
-      (length $In $Lin) 
+    ( (length $In $Lin) 
       (is $Rand1 
         (mod 
           (* $Rand 17) 251)) 
@@ -109,10 +104,8 @@
     (split $N 
       (Cons  $X $Xs) $RemovedElt 
       (Cons  $X $Ys)) 
-    (, 
-      (is $N1 
-        (- $N 1)) 
-      (split $N1 $Xs $RemovedElt $Ys)))
+    ( (is $N1 
+        (- $N 1)) (split $N1 $Xs $RemovedElt $Ys)))
 
 
   (= 
@@ -121,8 +114,7 @@
   (= 
     (investigate 
       (Cons  $U $Units) $Patterns) 
-    (, 
-      (property $U pattern $Data) 
+    ( (property $U pattern $Data) 
       (p-investigate $Data $Patterns) 
       (investigate $Units $Patterns)))
 
@@ -138,10 +130,8 @@
     (get-pats $N 
       (Cons  $X $Xs) 
       (Cons  $X $Ys) $Ipats) 
-    (, 
-      (is $N1 
-        (- $N 1)) 
-      (get-pats $N1 $Xs $Ys $Ipats)))
+    ( (is $N1 
+        (- $N 1)) (get-pats $N1 $Xs $Ys $Ipats)))
   (= 
     (get-pats $N Nil $Ys $Ipats) 
     (get-pats $N $Ipats $Ys $Ipats))
@@ -153,8 +143,7 @@
   (= 
     (property 
       (Cons  $Prop $_) $P $Val) 
-    (, 
-      (functor $Prop $P $_) 
+    ( (functor $Prop $P $_) 
       (set-det) 
       (arg 1 $Prop $Val)))/* don't really need this */
 
@@ -169,9 +158,7 @@
   (= 
     (p-investigate 
       (Cons  $D $Data) $Patterns) 
-    (, 
-      (p-match $Patterns $D) 
-      (p-investigate $Data $Patterns)))
+    ( (p-match $Patterns $D) (p-investigate $Data $Patterns)))
 
 
   (= 
@@ -179,12 +166,10 @@
   (= 
     (p-match 
       (Cons  $P $Patterns) $D) 
-    (, 
-      (or 
+    ( (or 
         (, 
           (match $D $P) 
-          (fail)) True) 
-      (p-match $Patterns $D)))
+          (fail)) True) (p-match $Patterns $D)))
 
 
   (= 
@@ -194,16 +179,14 @@
     (match 
       (Cons  $X $PRest) 
       (Cons  $Y $SRest)) 
-    (, 
-      (var $Y) 
+    ( (var $Y) 
       (set-det) 
       (= $X $Y) 
       (match $PRest $SRest)))
   (= 
     (match $List 
       (Cons  $Y $Rest)) 
-    (, 
-      (nonvar $Y) 
+    ( (nonvar $Y) 
       (= $Y 
         (star $X)) 
       (set-det) 
@@ -213,12 +196,10 @@
     (match 
       (Cons  $X $PRest) 
       (Cons  $Y $SRest)) 
-    (, 
-      (if-then-else 
+    ( (det-if-then-else 
         (atom $X) 
         (= $X $Y) 
-        (match $X $Y)) 
-      (match $PRest $SRest)))
+        (match $X $Y)) (match $PRest $SRest)))
 
 
   (= 

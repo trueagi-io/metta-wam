@@ -19,8 +19,7 @@
 
   (= 
     (main $Size) 
-    (, 
-      (u $X 
+    ( (u $X 
         (:: 1 $Y) 
         (:: $X) $Code) 
       (= $Start 0) 
@@ -433,21 +432,16 @@
     (make-word $C $Off 
       (^ $Tag 
         (+ h $Off))) 
-    (, 
-      (my-compound $C) 
+    ( (my-compound $C) 
       (set-det) 
       (termtag $C $Tag)))
   (= 
     (make-word $V $_ $V) 
-    (, 
-      (var $V) 
-      (set-det)))
+    ( (var $V) (set-det)))
   (= 
     (make-word $A $_ 
       (^ tatm $A)) 
-    (, 
-      (atomic $A) 
-      (set-det)))
+    ( (atomic $A) (set-det)))
 
 ; Calculate the size of T on the heap:
 
@@ -519,9 +513,7 @@
   (= 
     (myin $A 
       (Cons  $B $S)) 
-    (, 
-      (compare $Order $A $B) 
-      (in-2 $Order $A $S)))
+    ( (compare $Order $A $B) (in-2 $Order $A $S)))
 
 
   (= 
@@ -542,9 +534,7 @@
   (= 
     (incl-2 
       (Cons  $B $S1) $A $S) 
-    (, 
-      (compare $Order $A $B) 
-      (incl-3 $Order $A $B $S1 $S)))
+    ( (compare $Order $A $B) (incl-3 $Order $A $B $S1 $S)))
 
 
   (= 
@@ -562,23 +552,15 @@
 
   (= 
     (my-compound $X) 
-    (, 
-      (nonvar $X) 
-      (not (atomic $X))))
+    ( (nonvar $X) (not (atomic $X))))
 
   (= 
     (cons $X) 
-    (, 
-      (nonvar $X) 
-      (= $X 
-        (Cons  $_ $_))))
+    ( (nonvar $X) (= $X (Cons  $_ $_))))
 
   (= 
     (structure $X) 
-    (, 
-      (my-compound $X) 
-      (\= $X 
-        (Cons  $_ $_))))
+    ( (my-compound $X) (\= $X (Cons  $_ $_))))
 
 
   (= 

@@ -11,19 +11,15 @@
 
   (= 
     (top) 
-    (, 
-      (try 
-        (fac 3) $ans1) 
-      (try 
-        (quick (:: 3 1 2)) $ans2)));	write(_ans1), nl,
+    ( (try 
+        (fac 3) $ans1) (try (quick (:: 3 1 2)) $ans2)));	write(_ans1), nl,
 
 ;	write(_ans2), nl.
 
 
   (= 
     (try $inpexpr $anslist) 
-    (, 
-      (listify $inpexpr $list) 
+    ( (listify $inpexpr $list) 
       (curry $list $curry) 
       (t-reduce $curry $ans) 
       (make-list $ans $anslist)))
@@ -33,9 +29,7 @@
 
   (= 
     (end $X) 
-    (, 
-      (atom $X) 
-      (set-det)))
+    ( (atom $X) (set-det)))
   (= 
     (end $X) 
     (== $X Nil))
@@ -43,10 +37,8 @@
 
   (= 
     (list-functor-name $Name) 
-    (, 
-      (functor 
-        (Cons  $_ $_) $Name0 $_) 
-      (= $Name $Name0))); workaround a functor/3 error-checking issue with GNU MeTTa
+    ( (functor 
+        (Cons  $_ $_) $Name0 $_) (= $Name $Name0))); workaround a functor/3 error-checking issue with GNU MeTTa
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -137,8 +129,7 @@
 
   (= 
     (t-reduce $expr $ans) 
-    (, 
-      (atomic $expr) 
+    ( (atomic $expr) 
       (set-det) 
       (= $ans $expr)))
 ; The reduction of '$cons' must be here to avoid an infinite loop
@@ -148,16 +139,14 @@
         (Cons  $x $LF)) 
       (Cons  $yr 
         (Cons  $xr $LF))) 
-    (, 
-      (list-functor-name $LF) 
+    ( (list-functor-name $LF) 
       (t-reduce $x $xr) 
       (set-det) 
       (t-reduce $y $yr) 
       (set-det)))
   (= 
     (t-reduce $expr $ans) 
-    (, 
-      (t-append $next $red $form $expr) 
+    ( (t-append $next $red $form $expr) 
       (t-redex $form $red) 
       (set-det) 
       (t-reduce $next $ans) 
@@ -243,8 +232,7 @@
       (Cons  $elsepart 
         (Cons  $ifpart 
           (Cons  $cond cond))) $ifpart) 
-    (, 
-      (t-reduce $cond $bool) 
+    ( (t-reduce $cond $bool) 
       (= $bool True) 
       (set-det)))
 	; Does NOT work if _bool is substituted in the call!
@@ -264,27 +252,18 @@
   (= 
     (t-redex 
       (Cons  $arg hd) $x) 
-    (, 
-      (list-functor-name $LF) 
-      (t-reduce $arg 
-        (Cons  $y 
-          (Cons  $x $LF)))))
+    ( (list-functor-name $LF) (t-reduce $arg (Cons  $y (Cons  $x $LF)))))
   (= 
     (t-redex 
       (Cons  $arg tl) $y) 
-    (, 
-      (list-functor-name $LF) 
-      (t-reduce $arg 
-        (Cons  $y 
-          (Cons  $x $LF)))))
+    ( (list-functor-name $LF) (t-reduce $arg (Cons  $y (Cons  $x $LF)))))
 
 ; Arithmetic:
   (= 
     (t-redex 
       (Cons  $y 
         (Cons  $x $op)) $res) 
-    (, 
-      (end $op) 
+    ( (end $op) 
       (my-member $op 
         (:: + - * // mod)) 
       (t-reduce $x $xres) 
@@ -298,15 +277,14 @@
     (t-redex 
       (Cons  $y 
         (Cons  $x $test)) $res) 
-    (, 
-      (end $test) 
+    ( (end $test) 
       (my-member $test 
         (:: < > =< >= =\= =:=)) 
       (t-reduce $x $xres) 
       (t-reduce $y $yres) 
       (number $xres) 
       (number $yres) 
-      (if-then-else 
+      (det-if-then-else 
         (relop $test $xres $yres) 
         (= $res True) 
         (= $res False)) 
@@ -317,10 +295,9 @@
     (t-redex 
       (Cons  $y 
         (Cons  $x =)) $res) 
-    (, 
-      (t-reduce $x $xres) 
+    ( (t-reduce $x $xres) 
       (t-reduce $y $yres) 
-      (if-then-else 
+      (det-if-then-else 
         (= $xres $yres) 
         (= $res True) 
         (= $res False)) 
@@ -330,8 +307,7 @@
   (= 
     (t-redex 
       (Cons  $x $op) $res) 
-    (, 
-      (end $op) 
+    ( (end $op) 
       (my-member $op 
         (:: -)) 
       (t-reduce $x $xres) 
@@ -343,8 +319,7 @@
 ; defined function.
   (= 
     (t-redex $in $out) 
-    (, 
-      (my-append $par $func $in) 
+    ( (my-append $par $func $in) 
       (end $func) 
       (t-def $func $args $expr) 
       (t $args $expr $def) 
@@ -410,8 +385,7 @@
 
   (= 
     (t $argvars $expr $trans) 
-    (, 
-      (listify $expr $list) 
+    ( (listify $expr $list) 
       (curry $list $curry) 
       (t-argvars $argvars $curry $trans) 
       (set-det)))
@@ -422,8 +396,7 @@
   (= 
     (t-argvars 
       (Cons  $x $argvars) $in $trans) 
-    (, 
-      (t-argvars $argvars $in $mid) 
+    ( (t-argvars $argvars $in $mid) 
       (t-vars $mid $vars) 
       (t-trans $x $mid $vars $trans))); calculate variables in each subexpression
  ; main translation routine
@@ -439,11 +412,9 @@
 
   (= 
     (curry $a $a) 
-    (, 
-      (or 
+    ( (or 
         (var $a) 
-        (atomic $a)) 
-      (set-det)))
+        (atomic $a)) (set-det)))
   (= 
     (curry 
       (Cons  $func $args) $cargs) 
@@ -457,10 +428,7 @@
   (= 
     (currylist 
       (Cons  $a $args) $cargs $link) 
-    (, 
-      (curry $a $c) 
-      (currylist $args $cargs 
-        (Cons  $c $link))))
+    ( (curry $a $c) (currylist $args $cargs (Cons  $c $link))))
 
 ; Calculate variables in each subexpression:
 ; To any expression a list of the form
@@ -473,30 +441,23 @@
   (= 
     (t-vars $v 
       (:: (:: $v))) 
-    (, 
-      (var $v) 
-      (set-det)))
+    ( (var $v) (set-det)))
   (= 
     (t-vars $a 
       (:: Nil)) 
-    (, 
-      (atomic $a) 
-      (set-det)))
+    ( (atomic $a) (set-det)))
   (= 
     (t-vars 
       (:: $func) 
       (:: Nil)) 
-    (, 
-      (atomic $func) 
-      (set-det)))
+    ( (atomic $func) (set-det)))
   (= 
     (t-vars 
       (Cons  $arg $func) 
       (:: $g 
         (Cons  $g1 $af1) 
         (Cons  $g2 $af2))) 
-    (, 
-      (t-vars $arg 
+    ( (t-vars $arg 
         (Cons  $g1 $af1)) 
       (t-vars $func 
         (Cons  $g2 $af2)) 
@@ -510,18 +471,14 @@
   (= 
     (t-trans $x $a $_ 
       (Cons  $a k)) 
-    (, 
-      (or 
+    ( (or 
         (atomic $a) 
         (, 
           (var $a) 
-          (\== $a $x))) 
-      (set-det)))
+          (\== $a $x))) (set-det)))
   (= 
     (t-trans $x $y $_ i) 
-    (, 
-      (== $x $y) 
-      (set-det)))
+    ( (== $x $y) (set-det)))
   (= 
     (t-trans $x $e 
       (Cons  $ve $_) 
@@ -531,8 +488,7 @@
     (t-trans $x 
       (Cons  $f $e) 
       (:: $vef $sf $se) $res) 
-    (, 
-      (= $sf 
+    ( (= $sf 
         (Cons  $vf $_)) 
       (= $se 
         (Cons  $ve $other)) 
@@ -549,8 +505,7 @@
       (Cons  $g 
         (Cons  $f $e)) 
       (:: $vefg $sg $sef) $res) 
-    (, 
-      (= $sg 
+    ( (= $sg 
         (Cons  $vg $_)) 
       (= $sef 
         (:: $vef $sf $se)) 
@@ -564,16 +519,14 @@
 
   (= 
     (t-rule1 $x $e $ve $se $f $vf $sf $e) 
-    (, 
-      (notinv $x $ve) 
+    ( (notinv $x $ve) 
       (== $x $f) 
       (set-det)))
   (= 
     (t-rule1 $x $e $ve $se $f $vf $sf 
       (Cons  $resf 
         (Cons  $e b))) 
-    (, 
-      (notinv $x $ve) 
+    ( (notinv $x $ve) 
       (inv $x $vf) 
       (\== $x $f) 
       (set-det) 
@@ -582,8 +535,7 @@
     (t-rule1 $x $e $ve $se $f $vf $sf 
       (Cons  $f 
         (Cons  $rese c))) 
-    (, 
-      (notinv $x $vf) 
+    ( (notinv $x $vf) 
       (set-det) 
       (t-trans $x $e $se $rese)))/* inv(_x, _ve), */
 
@@ -591,9 +543,7 @@
     (t-rule1 $x $e $ve $se $f $vf $sf 
       (Cons  $resf 
         (Cons  $rese s))) 
-    (, 
-      (t-trans $x $e $se $rese) 
-      (t-trans $x $f $sf $resf)))/* inv(_x, _ve), inv(_x, _vf), */
+    ( (t-trans $x $e $se $rese) (t-trans $x $f $sf $resf)))/* inv(_x, _ve), inv(_x, _vf), */
 
 
 ; Second complex rule of translation scheme T:
@@ -602,16 +552,14 @@
     (t-rule2 $x $e $f $vf $sf $g $vg $sg 
       (Cons  $g 
         (Cons  $e c))) 
-    (, 
-      (== $x $f) 
+    ( (== $x $f) 
       (notinv $x $vg) 
       (set-det)))
   (= 
     (t-rule2 $x $e $f $vf $sf $g $vg $sg 
       (Cons  $resg 
         (Cons  $e s))) 
-    (, 
-      (== $x $f) 
+    ( (== $x $f) 
       (set-det) 
       (t-trans $x $g $sg $resg)))/* inv(_x, _vg), */
 
@@ -620,8 +568,7 @@
       (Cons  $g 
         (Cons  $resf 
           (Cons  $e cp)))) 
-    (, 
-      (inv $x $vf) 
+    ( (inv $x $vf) 
       (notinv $x $vg) 
       (set-det) 
       (t-trans $x $f $sf $resf)))/* _x\==_f, */
@@ -631,8 +578,7 @@
       (Cons  $resg 
         (Cons  $resf 
           (Cons  $e sp)))) 
-    (, 
-      (inv $x $vf) 
+    ( (inv $x $vf) 
       (set-det) 
       (t-trans $x $f $sf $resf) 
       (t-trans $x $g $sg $resg)))/* _x\==_f, */
@@ -641,9 +587,7 @@
   (= 
     (t-rule2 $x $e $f $vf $sf $g $vg $sg 
       (Cons  $f $e)) 
-    (, 
-      (== $x $g) 
-      (set-det)))/* notinv(_x, _vf), */
+    ( (== $x $g) (set-det)))/* notinv(_x, _vf), */
 
   (= 
     (t-rule2 $x $e $f $vf $sf $g $vg $sg 
@@ -667,36 +611,27 @@
       (Cons  $b 
         (Cons  $a $LF)) 
       (Cons  $a $rb)) 
-    (, 
-      (list-functor-name $LF) 
-      (make-list $b $rb)))
+    ( (list-functor-name $LF) (make-list $b $rb)))
 
 
   (= 
     (listify $X $X) 
-    (, 
-      (or 
+    ( (or 
         (var $X) 
-        (atomic $X)) 
-      (set-det)))
+        (atomic $X)) (set-det)))
   (= 
     (listify $Expr 
       (Cons  $Op $LArgs)) 
-    (, 
-      (functor $Expr $Op $N) 
-      (listify-list 1 $N $Expr $LArgs)))
+    ( (functor $Expr $Op $N) (listify-list 1 $N $Expr $LArgs)))
 
 
   (= 
     (listify-list $I $N $_ Nil) 
-    (, 
-      (> $I $N) 
-      (set-det)))
+    ( (> $I $N) (set-det)))
   (= 
     (listify-list $I $N $Expr 
       (Cons  $LA $LArgs)) 
-    (, 
-      (=< $I $N) 
+    ( (=< $I $N) 
       (set-det) 
       (arg $I $Expr $A) 
       (listify $A $LA) 
@@ -744,9 +679,7 @@
   (= 
     (intersectv-2 
       (Cons  $B $S2) $A $S1 $S) 
-    (, 
-      (compare $Order $A $B) 
-      (intersectv-3 $Order $A $S1 $B $S2 $S)))
+    ( (compare $Order $A $B) (intersectv-3 $Order $A $S1 $B $S2 $S)))
 
 
   (= 
@@ -798,9 +731,7 @@
   (= 
     (diffv-2 
       (Cons  $B $S2) $A $S1 $S) 
-    (, 
-      (compare $Order $A $B) 
-      (diffv-3 $Order $A $S1 $B $S2 $S)))
+    ( (compare $Order $A $B) (diffv-3 $Order $A $S1 $B $S2 $S)))
 
 
   (= 
@@ -831,9 +762,7 @@
   (= 
     (unionv-2 
       (Cons  $B $S2) $A $S1 $S) 
-    (, 
-      (compare $Order $A $B) 
-      (unionv-3 $Order $A $S1 $B $S2 $S)))
+    ( (compare $Order $A $B) (unionv-3 $Order $A $S1 $B $S2 $S)))
 
 
   (= 
@@ -857,9 +786,7 @@
     (subsetv 
       (Cons  $A $S1) 
       (Cons  $B $S2)) 
-    (, 
-      (compare $Order $A $B) 
-      (subsetv-2 $Order $A $S1 $S2)))
+    ( (compare $Order $A $B) (subsetv-2 $Order $A $S1 $S2)))
 
 
   (= 
@@ -877,18 +804,14 @@
   (= 
     (small-subsetv 
       (Cons  $A $S1) $S2) 
-    (, 
-      (inv $A $S2) 
-      (small-subsetv $S1 $S2)))
+    ( (inv $A $S2) (small-subsetv $S1 $S2)))
 
 ; *** Membership
 
   (= 
     (inv $A 
       (Cons  $B $S)) 
-    (, 
-      (compare $Order $A $B) 
-      (inv-2 $Order $A $S)))
+    ( (compare $Order $A $B) (inv-2 $Order $A $S)))
 
 
   (= 
@@ -909,9 +832,7 @@
   (= 
     (notinv-2 
       (Cons  $B $S) $A) 
-    (, 
-      (compare $Order $A $B) 
-      (notinv-3 $Order $A $S)))
+    ( (compare $Order $A $B) (notinv-3 $Order $A $S)))
 
 
   (= 

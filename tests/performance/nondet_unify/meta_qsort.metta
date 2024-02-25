@@ -40,27 +40,19 @@
 
   (= 
     (interpret $Goal) 
-    (, 
-      (interpret $Goal $Rest) 
-      (or 
-        (, 
-          (nonvar $Rest) 
-          (set-det) 
-          (interpret $Rest)) True)))
+    ( (interpret $Goal $Rest) (or (, (nonvar $Rest) (set-det) (interpret $Rest)) True)))
 
   (= 
     (interpret $G $_) 
-    (, 
-      (var $G) 
+    ( (var $G) 
       (set-det) 
       (fail)))
   (= 
     (interpret 
       (, $A $B) $Rest) 
-    (, 
-      (set-det) 
+    ( (set-det) 
       (interpret $A $Rest0) 
-      (if-then-else 
+      (det-if-then-else 
         (nonvar $Rest0) 
         (= $Rest 
           (, $Rest0 $B)) 
@@ -68,63 +60,48 @@
   (= 
     (interpret 
       (or $A $B) $Rest) 
-    (, 
-      (set-det) 
-      (interpret-disjunction $A $B $Rest)))
+    ( (set-det) (interpret-disjunction $A $B $Rest)))
   (= 
     (interpret 
-      (if-then $A $B) $Rest) 
-    (, 
-      (set-det) 
-      (interpret-disjunction 
-        (if-then $A $B) fail $Rest)))
+      (det-if-then $A $B) $Rest) 
+    ( (set-det) (interpret-disjunction (det-if-then $A $B) fail $Rest)))
   (= 
     (interpret 
       (not $A) $Rest) 
-    (, 
-      (set-det) 
-      (interpret-disjunction 
-        (if-then $A fail) True $Rest)))
+    ( (set-det) (interpret-disjunction (det-if-then $A fail) True $Rest)))
   (= 
     (interpret 
       (set-det) True) 
     (set-det))
   (= 
     (interpret $G $_) 
-    (, 
-      (number $G) 
+    ( (number $G) 
       (set-det) 
       (fail)))
   (= 
     (interpret $G $_) 
-    (, 
-      (is-built-in $G) 
+    ( (is-built-in $G) 
       (set-det) 
       (interpret-built-in $G)))
   (= 
     (interpret $G $_) 
-    (, 
-      (define $G $Body) 
-      (interpret $Body)))
+    ( (define $G $Body) (interpret $Body)))
 
 
   (= 
     (interpret-disjunction 
-      (if-then $A $B) $_ $Rest) 
-    (, 
-      (interpret $A $Rest0) 
+      (det-if-then $A $B) $_ $Rest) 
+    ( (interpret $A $Rest0) 
       (set-det) 
-      (if-then-else 
+      (det-if-then-else 
         (nonvar $Rest0) 
         (= $Rest 
-          (if-then $Rest0 $B)) 
+          (det-if-then $Rest0 $B)) 
         (interpret $B $Rest))))
   (= 
     (interpret-disjunction 
-      (if-then $_ $_) $C $Rest) 
-    (, 
-      (set-det) 
-      (interpret $C $Rest)))
+      (det-if-then $_ $_) $C $Rest) 
+    ( (set-det) (interpret $C $Rest)))
   (= 
     (interpret-disjunction $A $_ $Rest) 
     (interpret $A $Rest))

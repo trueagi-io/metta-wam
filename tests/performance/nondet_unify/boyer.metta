@@ -12,8 +12,7 @@
 
   (= 
     (go) 
-    (, 
-      (statistics runtime 
+    ( (statistics runtime 
         (:: $_ $_)) 
       (wff $Wff) 
       (rewrite $Wff $NewWff) 
@@ -27,16 +26,14 @@
 
   (= 
     (top) 
-    (, 
-      (wff $Wff) 
+    ( (wff $Wff) 
       (rewrite $Wff $NewWff) 
       (tautology $NewWff Nil Nil)))
 
 
   (= 
     (wff (implies (and (implies $X $Y) (and (implies $Y $Z) (and (implies $Z $U) (implies $U $W)))) (implies $X $W))) 
-    (, 
-      (= $X 
+    ( (= $X 
         (f (myplus (myplus a b) (myplus c zero)))) 
       (= $Y 
         (f (times (times a b) (myplus c d)))) 
@@ -55,47 +52,40 @@
 
   (= 
     (tautology $Wff) 
-    (, 
-      (rewrite $Wff $NewWff) 
-      (tautology $NewWff Nil Nil)));        write('rewriting...'),nl,
+    ( (rewrite $Wff $NewWff) (tautology $NewWff Nil Nil)));        write('rewriting...'),nl,
 ;        write('proving...'),nl,
 
 
   (= 
     (tautology $Wff $Tlist $Flist) 
-    (, 
-      (if-then-else 
+    ( (det-if-then-else 
         (truep $Wff $Tlist) True 
-        (if-then-else 
+        (det-if-then-else 
           (falsep $Wff $Flist) fail 
-          (if-then-else 
+          (det-if-then-else 
             (= $Wff 
               (if $If $Then $Else)) 
-            (if-then-else 
+            (det-if-then-else 
               (truep $If $Tlist) 
               (tautology $Then $Tlist $Flist) 
-              (if-then-else 
+              (det-if-then-else 
                 (falsep $If $Flist) 
                 (tautology $Else $Tlist $Flist) 
                 (, 
                   (tautology $Then 
                     (Cons  $If $Tlist) $Flist) 
                   (tautology $Else $Tlist 
-                    (Cons  $If $Flist))))) False))) 
-      (set-det))); both must hold
+                    (Cons  $If $Flist))))) False))) (set-det))); both must hold
 
 
 
 
   (= 
     (rewrite $Atom $Atom) 
-    (, 
-      (atomic $Atom) 
-      (set-det)))
+    ( (atomic $Atom) (set-det)))
   (= 
     (rewrite $Old $New) 
-    (, 
-      (functor $Old $F $N) 
+    ( (functor $Old $F $N) 
       (functor $Mid $F $N) 
       (rewrite-args $N $Old $Mid) 
       (or 
@@ -113,8 +103,7 @@
     (set-det))
   (= 
     (rewrite-args $N $Old $Mid) 
-    (, 
-      (arg $N $Old $OldArg) 
+    ( (arg $N $Old $OldArg) 
       (arg $N $Mid $MidArg) 
       (rewrite $OldArg $MidArg) 
       (is $N1 

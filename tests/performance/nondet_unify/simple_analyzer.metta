@@ -58,13 +58,12 @@
                 ($cut-part/4-1 $W $X $Y $Z $A1)) fail)) 
           (= 
             (part  $_ $_ $_ $_) True) 
-          (:: (stree (/ $cut-part/4-1 5) (= ($cut-part/4-1 $I1 $E1 $F1 $G1 $H1) (or (, (= $I1 (Cons  $C1 $D1)) ($fac-$cut-part/4-1/5-2 $D1 $E1 $F1 $G1 $H1 $C1)) (or (, (= $I1 Nil) (= $F1 Nil) (= $G1 Nil)) fail))) (= ($cut_part/4_1  $_ $_ $_ $_ $_) True) (:: (stree (/ $fac-$cut-part/4-1/5-2 6) (= ($fac-$cut-part/4-1/5-2 $K1 $L1 $Q1 $O1 $P1 $M1) (or (, (= $Q1 (Cons  $M1 $N1)) (=< $M1 $L1) ($cut-shallow $P1) (part $K1 $L1 $N1 $O1)) (or (, (= $O1 (Cons  $M1 $R1)) (part $K1 $L1 $Q1 $R1)) fail))) (= ($fac_$cut_part/4_1/5_2  $_ $_ $_ $_ $_ $_) True) Nil 1)) 1)) 1)) $Table))
+          (:: (stree (/ %cut-part/4-1 5) (= ($cut-part/4-1 $I1 $E1 $F1 $G1 $H1) (or (, (= $I1 (Cons  $C1 $D1)) ($fac-$cut-part/4-1/5-2 $D1 $E1 $F1 $G1 $H1 $C1)) (or (, (= $I1 Nil) (= $F1 Nil) (= $G1 Nil)) fail))) (= ($cut_part/4_1  $_ $_ $_ $_ $_) True) (:: (stree (/ %fac-%cut-part/4-1/5-2 6) (= ($fac-$cut-part/4-1/5-2 $K1 $L1 $Q1 $O1 $P1 $M1) (or (, (= $Q1 (Cons  $M1 $N1)) (=< $M1 $L1) ($cut-shallow $P1) (part $K1 $L1 $N1 $O1)) (or (, (= $O1 (Cons  $M1 $R1)) (part $K1 $L1 $Q1 $R1)) fail))) (= ($fac_$cut_part/4_1/5_2  $_ $_ $_ $_ $_ $_) True) Nil 1)) 1)) 1)) $Table))
 
 
   (= 
     (analyze-strees $Strees $OutTable) 
-    (, 
-      (init-strees $Strees $_ $Table) 
+    ( (init-strees $Strees $_ $Table) 
       (seal $Table) 
       (analyze-closure $Strees $Table $OutTable)))
 
@@ -72,21 +71,16 @@
 
   (= 
     (analyze-closure $Strees $InTable $OutTable) 
-    (, 
-      (traverse-strees $Strees $InTable $MidTable 0 $Changes) 
-      (analyze-closure $Strees $MidTable $OutTable $Changes))); Mark an analysis pass:
+    ( (traverse-strees $Strees $InTable $MidTable 0 $Changes) (analyze-closure $Strees $MidTable $OutTable $Changes))); Mark an analysis pass:
 ; put("x"), nl,
 
 
   (= 
     (analyze-closure $Strees $InTable $InTable $N) 
-    (, 
-      (=< $N 0) 
-      (set-det)))
+    ( (=< $N 0) (set-det)))
   (= 
     (analyze-closure $Strees $InTable $OutTable $N) 
-    (, 
-      (> $N 0) 
+    ( (> $N 0) 
       (set-det) 
       (analyze-closure $Strees $InTable $OutTable)))
 
@@ -100,8 +94,7 @@
   (= 
     (init-strees 
       (Cons  $12 $13) $4 $5) 
-    (, 
-      (= $12 
+    ( (= $12 
         (stree $14 
           (= $15 $16) $17 $18 $19)) 
       (bottom-call $14 $20) 
@@ -117,9 +110,7 @@
   (= 
     (init-conj 
       (, $12 $13) $4 $5) 
-    (, 
-      (init-goal $12 $4 $16) 
-      (init-conj $13 $16 $5)))
+    ( (init-goal $12 $4 $16) (init-conj $13 $16 $5)))
 
 
   (= 
@@ -127,15 +118,12 @@
   (= 
     (init-disj 
       (or $12 $13) $4 $5) 
-    (, 
-      (init-conj $12 $4 $16) 
-      (init-disj $13 $16 $5)))
+    ( (init-conj $12 $4 $16) (init-disj $13 $16 $5)))
 
 
   (= 
     (init-goal $3 $4 $5) 
-    (, 
-      (call-p $3) 
+    ( (call-p $3) 
       (set-det) 
       (functor $3 $12 $13) 
       (bottom-call 
@@ -145,9 +133,7 @@
           (/ $12 $13) $14) $4 $5)))
   (= 
     (init-goal $3 $4 $4) 
-    (, 
-      (unify-p $3) 
-      (set-det)))
+    ( (unify-p $3) (set-det)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -157,8 +143,7 @@
   (= 
     (traverse-strees 
       (Cons  $14 $15) $4 $5 $6 $7) 
-    (, 
-      (= $14 
+    ( (= $14 
         (stree $16 
           (= $17 $18) $19 $20 $21)) 
       (traverse-disj $17 $18 $4 $26 $6 $27) 
@@ -171,15 +156,12 @@
   (= 
     (traverse-disj $3 
       (or $15 $16) $5 $6 $7 $8) 
-    (, 
-      (traverse-conj $3 $15 $5 $22 $7 $23) 
-      (traverse-disj $3 $16 $22 $6 $23 $8)))
+    ( (traverse-conj $3 $15 $5 $22 $7 $23) (traverse-disj $3 $16 $22 $6 $23 $8)))
 
 
   (= 
     (traverse-conj $3 $4 $5 $6 $7 $8) 
-    (, 
-      (varset $3 $24) 
+    ( (varset $3 $24) 
       (functor $3 $15 $16) 
       (table-command 
         (get 
@@ -193,8 +175,7 @@
   (= 
     (traverse-conj 
       (, $20 $21) $4 $5 $6 $7 $8 $9 $10 $11 $12 $13) 
-    (, 
-      (varset $20 $32) 
+    ( (varset $20 $32) 
       (update-goal $20 $32 $4 $33 $6 $34 $8 $35 $10 $36 $12 $37) 
       (unionv $32 $37 $38) 
       (traverse-conj $21 $33 $5 $34 $7 $35 $9 $36 $11 $38 $13)))
@@ -202,8 +183,7 @@
 
   (= 
     (update-goal $3 $4 $5 $5 $7 $7 $9 $10 $11 $12 $13 $13) 
-    (, 
-      (split-unify $3 $21 $27) 
+    ( (split-unify $3 $21 $27) 
       (var $21) 
       (nonvar $27) 
       (varset $27 $28) 
@@ -215,8 +195,7 @@
         (sub $21) $11 $12)))
   (= 
     (update-goal $3 $4 $5 $5 $7 $7 $9 $9 $11 $12 $13 $13) 
-    (, 
-      (split-unify $3 $21 $30) 
+    ( (split-unify $3 $21 $30) 
       (var $21) 
       (nonvar $30) 
       (inv $21 $11) 
@@ -232,8 +211,7 @@
         (sub-set $23) $33 $12)))
   (= 
     (update-goal $3 $4 $5 $5 $7 $7 $9 $10 $11 $12 $13 $13) 
-    (, 
-      (split-unify $3 $27 $28) 
+    ( (split-unify $3 $27 $28) 
       (var $27) 
       (inv $27 $9) 
       (set-det) 
@@ -243,15 +221,13 @@
         (sub-set $4) $11 $12)))
   (= 
     (update-goal $3 $4 $5 $5 $7 $7 $9 $9 $11 $12 $13 $13) 
-    (, 
-      (unify-p $3) 
+    ( (unify-p $3) 
       (set-det) 
       (set-command 
         (sub-set $4) $11 $12)))
   (= 
     (update-goal $3 $4 $5 $6 $7 $8 $9 $9 $11 $12 $13 $13) 
-    (, 
-      (call-p $3) 
+    ( (call-p $3) 
       (set-det) 
       (goal-dupset $3 $33) 
       (var-args $3 $34) 
@@ -267,8 +243,7 @@
   (= 
     (update-table 
       (/ $15 $16) $4 $5 $6 $7 $8) 
-    (, 
-      (table-command 
+    ( (table-command 
         (get 
           (/ $15 $16) $18) $5 $24) 
       (lub-call $18 $4 $19) 
@@ -286,13 +261,10 @@
 
   (= 
     (create-new-call $I $Ar $_ $_ $_ $_ $_ $_ $_) 
-    (, 
-      (> $I $Ar) 
-      (set-det)))
+    ( (> $I $Ar) (set-det)))
   (= 
     (create-new-call $I $Ar $Gnd $VarArgs $DupVars $Uni $SoFar $Goal $Call) 
-    (, 
-      (=< $I $Ar) 
+    ( (=< $I $Ar) 
       (set-det) 
       (arg $I $Goal $X) 
       (arg $I $Call $Y) 
@@ -363,21 +335,17 @@
 
   (= 
     (lub-call $Call1 $Call2 $Lub) 
-    (, 
-      (functor $Call1 $Na $Ar) 
+    ( (functor $Call1 $Na $Ar) 
       (functor $Call2 $Na $Ar) 
       (functor $Lub $Na $Ar) 
       (lub-call 1 $Ar $Call1 $Call2 $Lub)))
 
   (= 
     (lub-call $I $Ar $_ $_ $_) 
-    (, 
-      (> $I $Ar) 
-      (set-det)))
+    ( (> $I $Ar) (set-det)))
   (= 
     (lub-call $I $Ar $Call1 $Call2 $Lub) 
-    (, 
-      (=< $I $Ar) 
+    ( (=< $I $Ar) 
       (set-det) 
       (arg $I $Call1 $X1) 
       (arg $I $Call2 $X2) 
@@ -391,19 +359,14 @@
   (= 
     (bottom-call 
       (/ $Na $Ar) $Bottom) 
-    (, 
-      (functor $Bottom $Na $Ar) 
-      (bottom-call 1 $Ar $Bottom)))
+    ( (functor $Bottom $Na $Ar) (bottom-call 1 $Ar $Bottom)))
 
   (= 
     (bottom-call $I $Ar $Bottom) 
-    (, 
-      (> $I $Ar) 
-      (set-det)))
+    ( (> $I $Ar) (set-det)))
   (= 
     (bottom-call $I $Ar $Bottom) 
-    (, 
-      (=< $I $Ar) 
+    ( (=< $I $Ar) 
       (set-det) 
       (bottom $B) 
       (arg $I $Bottom $B) 
@@ -416,21 +379,17 @@
     (lattice-modes-call 
       (/ $Na $Ar) $Table 
       (= $Head $Formula)) 
-    (, 
-      (functor $Head $Na $Ar) 
+    ( (functor $Head $Na $Ar) 
       (get $Table 
         (/ $Na $Ar) $Value) 
       (lattice-modes-call 1 $Ar $Value $Head $Formula True)))
 
   (= 
     (lattice-modes-call $I $Ar $_ $_ $Link $Link) 
-    (, 
-      (> $I $Ar) 
-      (set-det)))
+    ( (> $I $Ar) (set-det)))
   (= 
     (lattice-modes-call $I $Ar $Value $Head $Formula $Link) 
-    (, 
-      (=< $I $Ar) 
+    ( (=< $I $Ar) 
       (set-det) 
       (arg $I $Value $T) 
       (arg $I $Head $X) 
@@ -469,14 +428,10 @@
 
   (= 
     (get $N $V $_ $_ $I $V) 
-    (, 
-      (= $I $N) 
-      (set-det)))
+    ( (= $I $N) (set-det)))
   (= 
     (get $N $_ $L $R $I $V) 
-    (, 
-      (compare $Order $I $N) 
-      (get $Order $I $V $L $R)))
+    ( (compare $Order $I $N) (get $Order $I $V $L $R)))
 
   (= 
     (get < $I $V $L $_) 
@@ -493,9 +448,7 @@
     (set 
       (node $N $W $L $R) $I $V 
       (node $N $NW $NL $NR)) 
-    (, 
-      (compare $Order $I $N) 
-      (set-2 $Order $I $V $W $L $R $NW $NL $NR)))
+    ( (compare $Order $I $N) (set-2 $Order $I $V $W $L $R $NW $NL $NR)))
 
 
   (= 
@@ -513,9 +466,7 @@
     (seal  leaf) True)
   (= 
     (seal (node $_ $_ $L $R)) 
-    (, 
-      (seal $L) 
-      (seal $R)))
+    ( (seal $L) (seal $R)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -524,17 +475,14 @@
 
   (= 
     (membership-flag $X $Set yes) 
-    (, 
-      (inv $X $Set) 
-      (set-det)))
+    ( (inv $X $Set) (set-det)))
   (= 
     (membership_flag  $X $Set no) True)
 
 
   (= 
     (ground-flag $X $Ground yes) 
-    (, 
-      (varset $X $Set) 
+    ( (varset $X $Set) 
       (subsetv $Set $Ground) 
       (set-det)))
   (= 
@@ -543,21 +491,17 @@
 
   (= 
     (get-entry-modes $Type $Head $Value $TypeSet) 
-    (, 
-      (functor $Head $Na $Ar) 
+    ( (functor $Head $Na $Ar) 
       (get-entry-modes $Type 1 $Ar $Head $Value $Bag) 
       (sort $Bag $TypeSet)))
 
   (= 
     (get-entry-modes $_ $I $Ar $_ $_ Nil) 
-    (, 
-      (> $I $Ar) 
-      (set-det)))
+    ( (> $I $Ar) (set-det)))
   (= 
     (get-entry-modes $T $I $Ar $Head $Value 
       (Cons  $X $Bag)) 
-    (, 
-      (=< $I $Ar) 
+    ( (=< $I $Ar) 
       (arg $I $Value $T) 
       (set-det) 
       (arg $I $Head $X) 
@@ -566,8 +510,7 @@
       (get-entry-modes $T $I1 $Ar $Head $Value $Bag)))
   (= 
     (get-entry-modes $T $I $Ar $Head $Value $Bag) 
-    (, 
-      (=< $I $Ar) 
+    ( (=< $I $Ar) 
       (set-det) 
       (is $I1 
         (+ $I 1)) 
@@ -576,8 +519,7 @@
 
   (= 
     (var-args $Goal $Set) 
-    (, 
-      (functor $Goal $_ $Ar) 
+    ( (functor $Goal $_ $Ar) 
       (filter-vars $Ar $Goal $Bag) 
       (sort $Bag $Set)))
 
@@ -634,15 +576,12 @@
 
   (= 
     (goal-dupset-varset $Goal $DupSet $VarSet) 
-    (, 
-      (goal-dupset-varbag $Goal $DupSet $VarBag) 
-      (sort $VarBag $VarSet)))
+    ( (goal-dupset-varbag $Goal $DupSet $VarBag) (sort $VarBag $VarSet)))
 
 
   (= 
     (goal-dupset-varbag $Goal $DupSet $VarBag) 
-    (, 
-      (varbag $Goal $VarBag) 
+    ( (varbag $Goal $VarBag) 
       (make-key $VarBag $KeyBag) 
       (keysort $KeyBag $KeySet) 
       (filter-dups $KeySet $DupSet)))
@@ -745,9 +684,7 @@
   (= 
     (inv $A 
       (Cons  $B $S)) 
-    (, 
-      (compare $Order $A $B) 
-      (inv-2 $Order $A $S)))
+    ( (compare $Order $A $B) (inv-2 $Order $A $S)))
 
 
   (= 
@@ -770,9 +707,7 @@
   (= 
     (intersectv-2 
       (Cons  $B $S2) $A $S1 $S) 
-    (, 
-      (compare $Order $A $B) 
-      (intersectv-3 $Order $A $S1 $B $S2 $S)))
+    ( (compare $Order $A $B) (intersectv-3 $Order $A $S1 $B $S2 $S)))
 
 
   (= 
@@ -801,9 +736,7 @@
   (= 
     (diffv-2 
       (Cons  $B $S2) $A $S1 $S) 
-    (, 
-      (compare $Order $A $B) 
-      (diffv-3 $Order $A $S1 $B $S2 $S)))
+    ( (compare $Order $A $B) (diffv-3 $Order $A $S1 $B $S2 $S)))
 
 
   (= 
@@ -833,9 +766,7 @@
   (= 
     (unionv-2 
       (Cons  $B $S2) $A $S1 $S) 
-    (, 
-      (compare $Order $A $B) 
-      (unionv-3 $Order $A $S1 $B $S2 $S)))
+    ( (compare $Order $A $B) (unionv-3 $Order $A $S1 $B $S2 $S)))
 
 
   (= 
@@ -863,9 +794,7 @@
   (= 
     (includev-2 
       (Cons  $B $S1) $A $S) 
-    (, 
-      (compare $Order $A $B) 
-      (includev-3 $Order $A $B $S1 $S)))
+    ( (compare $Order $A $B) (includev-3 $Order $A $B $S1 $S)))
 
 
   (= 
@@ -887,9 +816,7 @@
     (subsetv 
       (Cons  $A $S1) 
       (Cons  $B $S2)) 
-    (, 
-      (compare $Order $A $B) 
-      (subsetv-2 $Order $A $S1 $S2)))
+    ( (compare $Order $A $B) (subsetv-2 $Order $A $S1 $S2)))
 
 
   (= 
@@ -903,9 +830,7 @@
 
   (= 
     (varset $Term $VarSet) 
-    (, 
-      (varbag $Term $VB) 
-      (sort $VB $VarSet)))
+    ( (varbag $Term $VB) (sort $VB $VarSet)))
 
   (= 
     (varbag $Term $VarBag) 

@@ -29,8 +29,7 @@
 
   (= 
     (prover) 
-    (, 
-      (problem $_ $P $C) 
+    ( (problem $_ $P $C) 
       (implies $P $C) 
       (fail)))
   (= prover True)
@@ -135,26 +134,21 @@
 
   (= 
     (implies $Premise $Conclusion) 
-    (, 
-      (opposite $Conclusion $Denial) 
-      (add-conjunction $Premise $Denial 
-        (fs Nil Nil Nil Nil))))
+    ( (opposite $Conclusion $Denial) (add-conjunction $Premise $Denial (fs Nil Nil Nil Nil))))
 
 
   (= 
     (opposite 
       (and $F0 $G0) 
       (or $F1 $G1)) 
-    (, 
-      (set-det) 
+    ( (set-det) 
       (opposite $F0 $F1) 
       (opposite $G0 $G1)))
   (= 
     (opposite 
       (or $F1 $G1) 
       (and $F0 $G0)) 
-    (, 
-      (set-det) 
+    ( (set-det) 
       (opposite $F1 $F0) 
       (opposite $G1 $G0)))
   (= 
@@ -170,8 +164,7 @@
 
   (= 
     (add-conjunction $F $G $Set) 
-    (, 
-      (expand $F $Set $Mid) 
+    ( (expand $F $Set $Mid) 
       (expand $G $Mid $New) 
       (refute $New)))
 
@@ -183,25 +176,20 @@
     (expand 
       (and $F $G) 
       (fs $D $_ $_ $_) refuted) 
-    (, 
-      (includes $D 
-        (and $F $G)) 
-      (set-det)))
+    ( (includes $D 
+        (and $F $G)) (set-det)))
   (= 
     (expand 
       (and $F $G) 
       (fs $D $C $P $N) 
       (fs $D $C $P $N)) 
-    (, 
-      (includes $C 
-        (and $F $G)) 
-      (set-det)))
+    ( (includes $C 
+        (and $F $G)) (set-det)))
   (= 
     (expand 
       (and $F $G) 
       (fs $D $C $P $N) $New) 
-    (, 
-      (set-det) 
+    ( (set-det) 
       (expand $F 
         (fs $D 
           (Cons  
@@ -211,8 +199,7 @@
     (expand 
       (or $F $G) 
       (fs $D $C $P $N) $Set) 
-    (, 
-      (set-det) 
+    ( (set-det) 
       (opposite 
         (or $F $G) $Conj) 
       (extend $Conj $D $C $D1 
@@ -221,10 +208,7 @@
     (expand 
       (+ $Atom) 
       (fs $D $C $P $N) $Set) 
-    (, 
-      (set-det) 
-      (extend $Atom $P $N $P1 
-        (fs $D $C $P1 $N) $Set)))
+    ( (set-det) (extend $Atom $P $N $P1 (fs $D $C $P1 $N) $Set)))
   (= 
     (expand 
       (- $Atom) 
@@ -245,14 +229,10 @@
 
   (= 
     (extend $Exp $_ $Neg $_ $_ refuted) 
-    (, 
-      (includes $Neg $Exp) 
-      (set-det)))
+    ( (includes $Neg $Exp) (set-det)))
   (= 
     (extend $Exp $Pos $_ $Pos $Set $Set) 
-    (, 
-      (includes $Pos $Exp) 
-      (set-det)))
+    ( (includes $Pos $Exp) (set-det)))
   (= 
     (extend  $Exp $Pos $_ 
       (Cons  $Exp $Pos) $Set $Set) True)
@@ -263,8 +243,7 @@
     (set-det))
   (= 
     (refute (fs (Cons  (and $F1 $G1) $D) $C $P $N)) 
-    (, 
-      (opposite $F1 $F0) 
+    ( (opposite $F1 $F0) 
       (opposite $G1 $G0) 
       (= $Set 
         (fs $D $C $P $N)) 

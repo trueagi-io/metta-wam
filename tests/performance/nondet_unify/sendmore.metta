@@ -10,8 +10,7 @@
 
   (= 
     (top) 
-    (, 
-      (digit $D) 
+    ( (digit $D) 
       (digit $E) 
       (=\= $D $E) 
       (sumdigit 0 $D $E $Y $C1) 
@@ -57,19 +56,9 @@
 
   (= 
     (sumdigit $C $A $B $S $D) 
-    (, 
-      (is $X 
+    ( (is $X 
         (+ 
-          (+ $C $A) $B)) 
-      (if-then-else 
-        (< $X 10) 
-        (, 
-          (= $S $X) 
-          (= $D 0)) 
-        (, 
-          (is $S 
-            (- $X 10)) 
-          (= $D 1)))))
+          (+ $C $A) $B)) (det-if-then-else (< $X 10) (, (= $S $X) (= $D 0)) (, (is $S (- $X 10)) (= $D 1)))))
 
 
   (= 
