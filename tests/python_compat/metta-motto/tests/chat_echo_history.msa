@@ -1,0 +1,7 @@
+; The response depends on the history (in the simplest way).
+; It also passes the history together with the current message[s]
+; to another agent, which is not a dialog agent.
+!(Response
+  (if (== (history) (Messages))
+      "Nice to meet you"
+      (llm (Agent EchoAgent) (Messages (history) (messages)))))

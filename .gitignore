@@ -11,9 +11,15 @@ das_precomputed/*.pl
 precomputed_files/**/*.pl
 ftp.flybase.net/**
 .?*~/
+.*/
+*~
+.*
+*-wam.vpw?*
+*.vtg
 .bash_history
 *.bak
 tests~output/
+reports/*/
 ImplicitQuantification.tex
 data/ftp.flybase.net/
 data/SO-Ontologies/

@@ -1,0 +1,207 @@
+! (Response
+    (llm (Agent (chat-gpt "gpt-3.5-turbo"))
+        (system "Make sparql query to wikidata and represent it as expressions in Scheme.
+        There are some examples of queries converted to Scheme:
+
+        Get the names and places of birth of all Nobel laureates in literature over the past 10 years
+        (select
+        (
+            (fields ($laureateLabel $placeOfBirthLabel $when))
+            (where
+                (
+                ($laureate p:P166 $event)
+                ($laureate  wdt:P19 $placeOfBirth) ($event ps:P166 wd:Q37922 )
+                ($event pq:P585 $when)
+                (filter (>= (year $when) (- (year (now)) 10)))
+                (service (wikibase:label (bd:serviceParam wikibase:language \"'en'\")))
+                )
+            )
+            (order_by $when)
+         ))
+
+        List all actors born in US after 2000
+        (select
+        (
+            (fields ($actor $actorLabel))
+            (where
+                (
+                ($actor wdt:P106 wd:Q33999) ($actor wdt:P569 $dob)
+                ($actor wdt:P27 wd:Q30)
+                (filter (> (year $dob) 2000 ))
+                (service (wikibase:label (bd:serviceParam wikibase:language \"'en'\")))
+                )
+            )
+        ))
+
+        List all actors born in US after 1980 who are alive
+        (select
+        (
+            (fields ($actor $actorLabel))
+            (where
+                (
+                ($actor wdt:P106 wd:Q33999) ($actor wdt:P569 $dob)
+                ($actor wdt:P27 wd:Q30)
+                (filter (> (year $dob) 1980 ))
+                (filter_not_exists ($actor wdt:P570 $death))
+                (service (wikibase:label (bd:serviceParam wikibase:language \"'en'\")))
+                )
+            )
+        ))
+
+
+        Get sculptures by Max Bill
+        (select
+        (
+            (fields ($item $itemLabel $countryLabel $placeLabel (as (year $date) $year) $coords $image))
+            (where
+                (
+                ($item wdt:P31/wdt:P279* wd:Q860861) ($item wdt:P170 wd:Q123454) (optional ($item wdt:P17 $country))
+                (optional ($item wdt:P131 $place))(optional ($item wdt:P571 $date))  (optional ($item wdt:P625 $coords))
+                (optional ($item wdt:P18 $image))
+                (service (wikibase:label (bd:serviceParam wikibase:language \"'en'\")))
+                )
+            )
+        ))
+
+        Get number of sculptures by Max Bill
+        (select
+        (
+            (fields ( (as (count $item) $count) ))
+            (
+                where (($item wdt:P31/wdt:P279* wd:Q860861) ($item wdt:P170 wd:Q123454) )
+            )
+        ))
+
+        What team did basketball player Michael Jordan play on?
+        (select
+        (
+            (fields ($teamLabel))
+            (where
+                (
+                    ($player wdt:P106 wd:Q3665646) ($player wdt:P54 $team) ($player rdfs:label \"'Michael Jordan' @en\")
+                    (service (wikibase:label (bd:serviceParam wikibase:language \"'en'\")))
+                )
+            )
+        ))
+
+
+        Select US presidents and their wives
+
+        (select
+        (
+            (fields ($president $presidentLabel $wife $wifeLabel))
+            (where
+                (
+                ($president wdt:P31 wd:Q5) ($president wdt:P39 wd:Q11696)
+                ($president wdt:P27 wd:Q30) ($president wdt:P26 $wife)
+                (service (wikibase:label (bd:serviceParam wikibase:language \"'en'\")))
+                )
+            )
+        ))
+
+        Select number of musicians born in the US  after 1984 year and before 1988
+
+        (select
+        (
+            (fields ((as (count $musician) $count)))
+            (where
+                (
+                ($musician wdt:P31 wd:Q5) ($musician wdt:P106 wd:Q639669)
+                ($musician wdt:P569 $dob) ($musician wdt:P19 $placeofbirh) ($placeofbirh  wdt:P17 wd:Q30)
+                (filter (and (> (year $dob) 1984) (< (year $dob) 1988)))
+                )
+            )
+       ))
+
+        When did John Lennon die?
+
+        (select
+        (
+            (fields ($dateOfDeathLabel))
+            (where
+                (
+                    ($person rdfs:label \"'John Lennon'@en\")
+                    ($person wdt:P570 $dateOfDeath)
+                    (service (wikibase:label (bd:serviceParam wikibase:language \"'en'\")))
+                )
+            )
+        ))
+
+
+
+        Show US Republican politicians over 70 years of age and who are still alive.
+        (select_distinct
+        (
+            (fields ($politician $politicianLabel))
+            (where
+                (
+                ($politician wdt:P106 wd:Q82955) ($politician wdt:P569 $dob)
+                ($politician wdt:P27 wd:Q30)
+                ($politician wdt:P102 wd:Q29468 )
+                (filter (> (year $dob) (- (year (now)) 70)))
+                (filter_not_exists ($politician wdt:P570 $death))
+                (service (wikibase:label (bd:serviceParam wikibase:language \"'en'\")))
+                )
+            )
+         ))
+
+        Select all writers names from Switzerland and also select theirs birthplaces
+        (select
+        (
+            (fields ($writerLabel $birthplaceLabel))
+            (where
+                (
+                ($writer wdt:P31 wd:Q5) ($writer wdt:P27 wd:Q39) ($writer wdt:P106 wd:Q36180) ($writer wdt:P19 $birthplace)
+                (service (wikibase:label (bd:serviceParam wikibase:language \"'en'\")))
+                )
+            )
+        ))
+
+        Display names of all capital cities that are in the CET time zone.
+
+        (select
+         (
+            (fields ($capitalLabel))
+            (where
+                (
+                ($capital wdt:P31 wd:Q5119)  ($capital wdt:P421 wd:Q25989) ($capital wdt:P1082 $population)
+                (service (wikibase:label (bd:serviceParam wikibase:language \"'en'\")))
+                )
+            )
+           (order_by_desc $population)
+        ))
+
+        Where was Edvard Munch born?
+        (select
+        (
+            (fields ($placeOfBirthLabel))
+            (where
+                (
+                ($person wdt:P31 wd:Q5) ($person rdfs:label \"'Edvard Munch'@en\") ($person wdt:P19 $placeOfBirth)
+                (service (wikibase:label (bd:serviceParam wikibase:language \"'en'\")))
+                )
+            )
+        ))
+
+        Tell me Michael Jordan's draft year and the name of the draft team.
+        (select
+        (
+            (fields ($draftYearLabel $draftTeamLabel))
+            (where
+                (
+                ($player wdt:P106 wd:Q3665646) ($player wdt:P54 $draftTeam) ($player rdfs:label \"'Michael Jordan'@en\")
+                ($draftTeam wdt:P571 $draftYear)
+                (service (wikibase:label (bd:serviceParam wikibase:language \"'en'\")))
+                )
+            )
+        ))
+
+    Please check that variables in 'fields'  statement are also present in 'where' statement.
+
+    Important:
+    Check the correctness of brackets in query, number of closing brackets should be equal to the number of opening brackets.
+    All values  starting with \"<http://\" should be in quotes.
+    The fields statement should not contain properties (like dbo:MusicalArtist or foaf:name).
+    Start variable names with \"$\" noot with \"?\".
+    Return only query, no explanation and other texts")
+    (messages)))

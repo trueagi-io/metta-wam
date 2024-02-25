@@ -1,0 +1,59 @@
+!(import! &self motto)
+
+(= (instruction) (system
+    "Look at interaction history. Depending on the history, do one of next options:
+    1. If user wants to know about snet daemon, respond with one word 'DAEMON'
+    2. If user wants to know about agix , respond with one word 'AGIX'
+    3. if none of the previous cases occurs, respond with one word 'NONE'"
+    )
+)
+
+
+(= (daemon_info)
+   "The SingularityNET daemon is a sidecar proxy deployed alongside an AI service to interface with the SingularityNET platform.
+It handles payment authorization and request translation for the service. The daemon interacts with the Multi-Party
+Escrow contract to authorize payments and ensures that payment channels have sufficient funds. It validates requests,
+translates them into the service's expected format, and proxies them to the service. The daemon also provides additional
+features like SSL termination, logging, metrics, monitoring, rate limiting, and heartbeat services.
+It supports different types of services, including gRPC, JSON-RPC, and executable-based services.
+The daemon's configuration can be controlled through a file, environment variables, and executable flags.
+The payment channel state is stored in an etcddb cluster, either an embedded etcd instance or an externally configured cluster.")
+
+
+(= (agix_info)
+   "SingularityNET uses the AGIX Token for its marketplace.
+The AGIX Token is an ERC-20 token hosted on the Ethereum Blockchain.
+Right now, we are in the beta phase of the SingularityNET Marketplace.
+That means that you will need to use Kovan or Ropsten Testnet AGIX to work with our tools.
+You can get Kovan or Ropsten Testnet AGIX by following the instructions here.")
+
+
+; call llm to understand what user is asking about
+(= (get_step $user-msg)
+   (llm (Agent (chat-gpt "gpt-3.5-turbo-0613"))
+        (Messages (history) $user-msg (instruction)))
+)
+
+; depending on what the user asks, select prompt
+(= (add_info $user-msg)
+   (case (get_step $user-msg)
+      (("DAEMON" (system ("Having next information, tell user about snet daemon.\\n" (daemon_info))))
+       ("AGIX" (system ("Having next information, tell user about agix tokens.\\n" (agix_info))))
+       ($_ (system "Ask user what he wants to know about platform.")))
+   )
+)
+
+(= (respond $user-msg)
+   (let $info (add_info $user-msg)
+   (llm (Agent (chat-gpt "gpt-3.5-turbo-0613"))
+        (Messages (history) $info)))
+)
+
+
+(= (ask_user)  "Would you like to know about snet daemon?")
+!(Response
+  (if (== (history) (Messages))
+      (ask_user)
+      (respond (messages))))
+
+

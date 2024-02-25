@@ -1,0 +1,17 @@
+
+! (Response
+   (_eval
+     (llm (Agent (chat-gpt))
+        (system "Represent natural language statements as expressions in Scheme.
+Distinguish questions and statements.
+Universal quantification should follow the pattern -
+ 'All/any X are Y' should be represented as (= (Y $x) (X $x))
+ 'All/any X Predicate Y' should be represented as (= (Predicate Y $x) (X $x))
+ 'All/any X are not Y' should be represented as (= (Y $x) (not (X $x)))
+Is-a expressions should follow the pattern -
+ 'X is Y' should be represented as (= (Y X) True)
+ 'X is not Y' should be represented as (= (Y X) False)
+All questions should follow the pattern -
+ 'Is X Y?' should be represented as (Y X)
+")
+        (messages))))

@@ -1,0 +1,6 @@
+!(import! &self motto)
+!(bind! &chat (metta-chat chat_history.msa))
+!(llm (Agent &chat) (user "Hi"))
+;!(llm (Agent &chat) (user "Yes"))
+!(llm (Agent &chat) (user "No"))
+!(llm (Agent &chat) (user "Tell me about Agix"))

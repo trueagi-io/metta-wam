@@ -1,0 +1,4 @@
+; A dumb agent, which expects the system message and a user message
+; and simply responds with the user message back
+!(Response
+   (let (Messages (system "Answer the user") (user $x)) (messages) $x))
