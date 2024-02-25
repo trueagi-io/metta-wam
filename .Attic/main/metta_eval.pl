@@ -990,8 +990,21 @@ eval_20(Eq,RetType,Depth,Self,['or',X,Y],TF):- !,
 eval_20(Eq,RetType,Depth,Self,['not',X],TF):- !,
    as_tf(( \+ eval_args_true(Eq,RetType,Depth,Self,X)), TF).
 
-eval_20(Eq,RetType,Depth,Self,['eval',X],TF):- !,
-   eval_args(Eq,RetType,Depth,Self,X, TF).
+	eval_20(Eq,RetType,Depth,Self,['eval',X],TF):- !,
+	   eval_args(Eq,RetType,Depth,Self,X, TF).
+
+% === function / return of minimal metta
+eval_20(Eq,RetType,Depth,Self,['function',X],TF):- !,
+  catch(eval_args(Eq,RetType,Depth,Self,X, TF),return(TF),true).
+eval_20(Eq,RetType,Depth,Self,['return',X],_):- !,
+  eval_args(Eq,RetType,Depth,Self,X, Val), throw(return(Val)).
+
+% === catch / throw of mettalog
+eval_20(Eq,RetType,Depth,Self,['catch',X,EX,Handler],TF):- !,	 
+  catch(eval_args(Eq,RetType,Depth,Self,X, TF),
+		 EX,eval_args(Eq,RetType,Depth,Self,Handler, TF)).
+eval_20(Eq,_TRetType,Depth,Self,['throw',X],_):- !,
+  eval_args(Eq,RetType,Depth,Self,X, Val), throw(Val).
 
 eval_20(Eq,RetType,Depth,Self,['number-of',X],N):- !,
    bagof_eval(Eq,RetType,Depth,Self,X,ResL),

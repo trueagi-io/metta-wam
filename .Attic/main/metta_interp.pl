@@ -15,6 +15,20 @@
     atom_concat(Dir,'logicmoo_utils',LU),
     pack_attach(PS,[duplicate(replace),search(first)]),
     pack_attach(LU,[duplicate(replace),search(first)]).
+%	:- attach_packs.
+%	:- initialization(attach_packs).
+
+
+:- dynamic(user:is_metta_dir/1).
+:- dynamic user:file_search_path/2.
+:- multifile user:file_search_path/2.
+:- prolog_load_context(directory,Dir),retractall(user:is_metta_dir(_)),asserta(user:is_metta_dir(Dir)).
+
+user:file_search_path(mettalog,Dir):- metta_dir(Dir).
+
+
+metta_dir(Dir):- user:is_metta_dir(Dir),!.
+metta_dir(Dir):- getenv('METTA_DIR',Dir),!.
 
 :- ensure_loaded(metta_debug).
 
@@ -470,7 +484,7 @@ get_flag_value(_,true).
    nop((forall(option_value_def(Opt,Default),set_option_value_interp(Opt,Default))))))).
 
 %process_option_value_def:- \+ option_value('python',false), skip(ensure_loaded(metta_python)).
-process_option_value_def:- \+ option_value('python',false), ensure_loaded(src/main/metta_python).
+process_option_value_def:- \+ option_value('python',false), ensure_loaded(mettalog(metta_python)).
 process_option_value_def.
 
 
@@ -607,7 +621,6 @@ save_html_of(Filename):-
 
 tee_file(TEE_FILE):- getenv('TEE_FILE',TEE_FILE),!.
 tee_file(TEE_FILE):- metta_dir(Dir),directory_file_path(Dir,'TEE.ansi',TEE_FILE),!.
-metta_dir(Dir):- getenv('METTA_DIR',Dir),!.
 
 load_metta(Filename):-
  %clear_spaces,

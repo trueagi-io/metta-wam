@@ -92,7 +92,8 @@ pp_sax(S) :- is_englishy(S),!,print_concept("StringValue",S).
 pp_sax(S) :- symbol_length(S,1),symbol_string(S,SS),!,print_concept("StringValue",SS).
 pp_sax(S) :- is_an_arg_type(S,T),!,print_concept("TypeNode",T).
 pp_sax(S) :- has_type(S,T),!,format('(~wValueNode "~w")',[T,S]).
-pp_sax(S) :- sub_atom(S,0,4,Aft,FB),flybase_identifier(FB,Type),!,(Aft>0->format('(~wValueNode "~w")',[Type,S]);format('(TypeNode "~w")',[Type])).
+pp_sax(S) :- sub_atom(S,0,4,Aft,FB),flybase_identifier(FB,Type),!,
+ (Aft>0->format('(~wValueNode "~w")',[Type,S]);'format'('(TypeNode "~w")',[Type])).
 pp_sax(S) :- print_concept("ConceptNode",S).
 
 %print_concept( CType,V):- allow_concepts, !, write("("),write(CType),write(" "),ignore(with_concepts(false,write_src(V))),write(")").

@@ -2,6 +2,7 @@
 :- flush_output.
 :- setenv('RUST_BACKTRACE',full).
 :- op(700,xfx,'=~').
+:- ensure_loaded(metta_interp).
 
 % ===============================
 %    TESTING
@@ -85,7 +86,7 @@ print_metta_clause(Head,Body):-
 % It transforms the body to a list, if needed, and prints it in a sequential form.
 print_metta_clause0(Head,Body):- Body == true,!, pp_metta([=,Head,'True']).
 print_metta_clause0(Head,Body):- Body == false,!, pp_metta([=,Head,'False']).
-print_metta_clause0(Head,Body):- conjuncts_to_list(Body,List), into_sequential(List,SP), pp_metta([=,Head,SP]).
+print_metta_clause0(Head,Body):- conjuncts_to_list(Body,List), into_sequential([':-'],List,SP), pp_metta([=,Head,SP]).
 
 
 
@@ -228,11 +229,26 @@ p2m(I,O):- p2m([progn],I,O).
 
 p2m(_OC,NC, NC) :- var(NC), !.  % If NC is a variable, do not translate.
 p2m(_OC,NC, NC) :- is_ftVar(NC), !.  % If NC is a free term variable, do not translate.
-p2m(_OC,[], 'Nil'). % empty list
-p2m(_OC,M:I, with_self(N,O)):-  p2m(OC,M,N),p2m(I,O).
-% Conversion for lists
+
 p2m(OC,[H|T],['::'|L]):- is_list([H|T]),maplist(p2m(OC),[H|T],L).
 p2m(OC,[H|T], 'Cons'(OH, OT)):- p2m(OC,H, OH), p2m(OC,T, OT).
+p2m(_OC,[], 'Nil'). % empty list
+p2m(_OC,[], 'Nil'). % empty list
+
+p2m(_OC,'[|]','Cons').
+p2m(_OC,'atom','is-symbol').
+p2m(OC,ASymbolProc,O):- atom(ASymbolProc),
+	atomic_list_concat(LS,'atom',ASymbolProc),LS\==[],LS\=[_],!,
+	atomic_list_concat(LS,'symbol',SymbolProc),
+	p2m(OC,SymbolProc,O).
+p2m(OC,ASymbolProc,O):- atom(ASymbolProc),
+	atomic_list_concat(LS,'$',ASymbolProc),LS\==[],LS\=[_],!,
+	atomic_list_concat(LS,'%',SymbolProc),
+	p2m(OC,SymbolProc,O).
+
+p2m(OC,M:I, O):- M==user,!, p2m(OC,I,O),!.
+p2m(_OC,M:I, with_self(N,O)):-  p2m(OC,M,N),p2m(I,O).
+% Conversion for lists
 p2m(OC,NC, OO) :-
     % If NC is a list, map each element of the list from Prolog to MeTTa
     is_list(NC),!,
@@ -245,7 +261,7 @@ p2m([progn|_], (!,fail), [empty]).  % Translate Prolog?s fail to MeTTa?s False.
 p2m(_OC,true, 'True').  % Translate Prolog?s true to MeTTa?s True.
 % p2m(_OC,prolog, meTTa).  % Translate the atom prolog to meTTa.
 
-p2m(_OC,'[|]','Cons').
+
 p2m(_OC,( ';' ),or).
 %p2m(_OC,( ',' ),and).
 %p2m(_OC,( '\\+' ),unless).
@@ -264,35 +280,38 @@ p2m(_OC,NC,[F]):- compound_name_arity(NC,F,0),!.
 % Conversion for the negation as failure
 p2m(_OC,(\+ A), O):- !, p2m(_OC,not(A), O).
 
-p2m(_OC,(G,E),O):-  conjuncts_to_list((G,E),List),!,into_sequential(List,O),!.
+p2m(OC,(G,E),O):-  conjuncts_to_list((G,E),List),!,into_sequential(OC,List,O),!.
 
 % Conversion for arithmetic evaluation
 %p2m(_OC,is(A, B), O):- !, p2m(_OC,eval(B, A), O).
 %p2m(_OC,is(V,Expr),let(V,Expr,'True')).
 p2m(_OC,(Head:-Body),O):- Body == true,!, O = (=(Head,'True')).
 p2m(_OC,(Head:-Body),O):- Body == fail,!, O = (=(Head,[empty])).
-p2m(_OC,(Head:-Body),O):- 
-   p2m(Head,H),conjuncts_to_list(Body,List),into_sequential(List,SP),!,
+p2m(OC,(Head:-Body),O):- 
+   p2m(Head,H),conjuncts_to_list(Body,List),into_sequential([':-'|OC],List,SP),!,
    O =  (=(H,SP)).
 
-p2m(_OC,(:-Body),O):- 
-   conjuncts_to_list(Body,List),into_sequential(List,SP),!, O= exec(SP).
+p2m(OC,(:-Body),O):- 
+   conjuncts_to_list(Body,List),into_sequential([':-'|OC],List,SP),!, O= exec(SP).
 
-%p2m(_OC,(Head:-Body),O):- conjuncts_to_list(Body,List),into_sequential(List,SP),!,O=(=(Head,SP)).
+%p2m(_OC,(Head:-Body),O):- conjuncts_to_list(Body,List),into_sequential(OC,List,SP),!,O=(=(Head,SP)).
 
 % Conversion for if-then-else constructs
-p2m(_OC,(A->B;C),O):- !, p2m(_OC,if_then_else(A,B,C),O).
-p2m(_OC,(A;B),O):- !, p2m(_OC,or(A,B),O).
-p2m(_OC,(A*->B;C),O):- !, p2m(_OC,each_then_otherwise(A,B,C),O).
-p2m(_OC,(A->B),O):- !, p2m(_OC,if_then(A,B),O).
-p2m(_OC,(A*->B),O):- !, p2m(_OC,each_then(A,B),O).
+p2m(OC,(A->B;C),O):- !, p2m(OC,det_if_then_else(A,B,C),O).
+p2m(OC,(A;B),O):- !, p2m(OC,or(A,B),O).
+p2m(OC,(A*->B;C),O):- !, p2m(OC,if(A,B,C),O).
+p2m(OC,(A->B),O):- !, p2m(OC,det_if_then(A,B),O).
+p2m(OC,(A*->B),O):- !, p2m(OC,if(A,B),O).
 p2m(_OC,metta_defn(Eq,Self,H,B),'add-atom'(Self,[Eq,H,B])).
-p2m(_OC,metta_type,'add-atom').
-p2m(_OC,get_metta_atom,'add-atom').
-p2m(_OC,retractall(X),'remove-all-atoms'('&self',X)).
+p2m(_OC,metta_type,'get-type').
+p2m(_OC,metta_atom,'get-atoms').
+p2m(_OC,get_metta_atom,'get-atoms').
 p2m(_OC,clause(H,B),'get-atoms'('&self',[=,H,B])).
-p2m(_OC,retract(X),'remove-atom'('&self',X)).
 p2m(_OC,assert(X),'add-atom'('&self',X)).
+p2m(_OC,assertz(X),'add-atom'('&self',X)).
+p2m(_OC,asserta(X),'add-atom'('&self',X)).
+p2m(_OC,retract(X),'remove-atom'('&self',X)).
+p2m(_OC,retractall(X),'remove-all-atoms'('&self',X)).
 % The catch-all case for the other compound terms.
 %p2m(_OC,I,O):- I=..[F|II],maplist(p2m,[F|II],OO),O=..OO.
 
@@ -319,75 +338,138 @@ prolog_to_metta(V, D) :-
 % Define predicates to support the transformation from Prolog to MeTTa syntax
 % (Continuing the translation from Prolog to MeTTa syntax as per the given code)
 % Handle the case where the body is a conjunction of terms
-into_sequential(Body, SP) :-
+into_sequential(OC,Body, SP) :-
     % Check if Body is not a list and convert conjunctions in Body to a list of conjuncts.
     \+ is_list(Body),
     conjuncts_to_list(Body, List),
     is_list(List), % Converts a list of conjunctions into a sequential representation in MeTTa
-    into_sequential(List, SP), !.
-into_sequential(Nothing,'True'):- Nothing ==[],!.
- % If there's only one element
-into_sequential([SP],O):- prolog_to_metta(SP,O).
+    into_sequential(OC,List, SP), !.
+into_sequential([':-'|_],Nothing,'True'):- Nothing ==[],!.
+into_sequential(_OC,Nothing,'Nil'):- Nothing ==[],!.
+% If theres only one element
+into_sequential(_,[SP],O):- prolog_to_metta(SP,O).
 % Otherwise, construct sequential representation using AND.
-into_sequential(List, [AND|SPList]) :- is_compiled_and(AND), maplist(prolog_to_metta, List, SPList),!.
+into_sequential([':-'|_],List, SPList) :-
+		maplist(prolog_to_metta, List, SPList),!.
+into_sequential(_CA,List, [AND|SPList]) :-
+		   is_compiled_and(AND), maplist(prolog_to_metta, List, SPList),!.
 
 
 
-% Entry point for printing to Metta format. It clears the screen, sets the working directory,
-% expands the filenames with a specific extension, and processes each file.
-print_to_metta :-
- % cls, % Clears the screen (assumes a custom or system-specific implementation).
- % with_pwd(
-  %   '/opt/logicmoo_opencog/hyperon-wam/examples/gpt2-like/language_models/',
- %Filt = 'examples/gpt2-like/language_models/*.pl',
-% Filt = '/opt/logicmoo_opencog/hyperon-wam/examples/performance/nondet_unify/*.pl',
- ignore(print_to_metta([  
- % 'examples/*/*.pl',
-  'examples/*/*/*.pl',
-  'examples/*/*/*/*.pl',
-  %'examples/*/*/*/*/*.pl',
-  %'examples/*/*/*/*/*/*.pl',
-  %'src/extra_pytests/*.pl',
-  'src/main/metta_*.pl',
-  'src/main/flybase_*.pl'
-  
-  ])),
-   % Finds all Prolog files in the specified directory.
- %  print_to_metta(Filt),  % Processes each found file.
-  % MC = '/opt/logicmoo_opencog/hyperon-wam/src/main/metta_convert.pl',
-  % print_to_metta(MC), % Processes each found file.
-   !, writeln(';; print_to_metta. ').
-% Example of a no-operation (nop) call for a specific file path, indicating a placeholder or unused example.
-%$nop(print_to_metta('/opt/logicmoo_opencog/hyperon-wam/src/main/metta_convert.pl')).
 
-% Processes a list of filenames, applying 'print_to_metta' to each.
-with_file_lists(P1,FileSpec):- is_list(FileSpec),!,
-   ignore(maplist(with_file_lists(P1),FileSpec)).
-with_file_lists(P1,Directory):- atomic(Directory), exists_directory(Directory), 
-  findall(File,directory_source_files(Directory, File, [recursive(true),if(true)]),Files),!,
-  ignore(maplist(with_file_lists(P1),Files)).
-with_file_lists(P1,Mask):- atom(Mask), \+ exists_file(Mask), 
-  expand_file_name(Mask, Files), Files\==[],!,ignore(maplist(with_file_lists(P1),Files)).
-with_file_lists(P1,Filename):- ignore(call(P1,Filename)).
+list_direct_subdirectories(Directory, DirectSubdirectories) :- 
+    directory_files(Directory, Entries),
+    findall(Path,
+            (member(Entry, Entries),
+             \+ member(Entry, ['.', '..']), % Exclude '.' and '..'
+             atomic_list_concat([Directory, '/', Entry], Path),
+             is_directory(Path)),
+            DirectSubdirectories).
+
+% List all subdirectories of a given directory recursively
+list_all_subdirectories(Directory, AllSubdirectories) :-
+    list_direct_subdirectories(Directory, DirectSubdirectories),
+    findall(Sub,
+            (member(SubDir, DirectSubdirectories),
+             list_all_subdirectories(SubDir, Subs),
+             member(Sub, Subs)),
+            NestedSubdirectories),
+    append(DirectSubdirectories, NestedSubdirectories, AllSubdirectories).
+
+% Processes a list of filenames, applying 'convert_to_metta' to each.
+with_file_lists(Rel,P1,Filename):- atomic(Filename), exists_file(Filename),!,
+   ignore(call(P1,Filename)).
+	  
+with_file_lists(Rel,P1,FileSpec):- is_list(FileSpec),!,
+   ignore(maplist(with_file_lists(Rel,P1),FileSpec)).
+
+with_file_lists(Rel,P1,Local):- (Local=='.';Local=='';Local=='*.pl'),Directory = Rel,
+	absolute_file_name(Directory,AbsDirectory,[relative_to(Rel),file_type(directory)]),
+	exists_directory(AbsDirectory), 
+	findall(File,directory_source_files(AbsDirectory, File, [recursive(false),if(true)]),Files),
+	ignore(maplist(with_file_lists(Rel,P1),Files)),!.
+
+with_file_lists(Rel,P1,Local):- (Local=='**';Local=='**.pl'),Directory = Rel,!,
+	must_det_ll((absolute_file_name(Directory,AbsDirectory,[file_type(directory)]),
+	exists_directory(AbsDirectory))), 
+	findall(File,directory_source_files(AbsDirectory, File, [recursive(true),if(true)]),Files),!,
+	ignore(maplist(with_file_lists(Rel,P1),Files)).
+
+
+with_file_lists(Rel,P1,Filename):- 
+	atomic_list_concat(['**',S|More],'/',Filename), 
+	atomic_list_concat([S|More],'/',Rest),
+	list_all_subdirectories(Rel, AllSubdirectories),!,
+	forall(member(SubDir,AllSubdirectories),with_file_lists(SubDir,P1,Rest)).
+
+with_file_lists(Rel,P1,Filename):- 
+	atomic_list_concat([WildDir,S|More],'/',Filename), 
+	atomic_list_concat([Rel,WildDir,''],'/',WildMaskDir),
+	expand_file_name(WildMaskDir, AllSubdirectories),
+	atomic_list_concat([S|More],'/',Rest),!,
+	forall(member(SubDir,AllSubdirectories),with_file_lists(SubDir,P1,Rest)).
+
+
+
+with_file_lists(Rel,P1,FileSpec):- atomic(FileSpec),
+  absolute_file_name(FileSpec,AbsFile,[relative_to(Rel),file_errors(fail)]),
+  exists_file(AbsFile), !, ignore(call(P1,AbsFile)).
+
+with_file_lists(Rel,P1,Directory):- atomic(Directory),
+	absolute_file_name(Directory,AbsDirectory,[relative_to(Rel),file_type(directory)]),
+	exists_directory(AbsDirectory), !,
+  findall(File,directory_source_files(AbsDirectory, File, [recursive(true),if(true)]),Files),!,
+  ignore(maplist(with_file_lists(Rel,P1),Files)).
+
+with_file_lists(Rel,P1,Wildcard):- atom(Wildcard), 
+  absolute_file_name(Wildcard,AbsWildcard,[relative_to(Rel)]),
+  \+ exists_file(AbsWildcard), 
+  expand_file_name(AbsWildcard, Files), Files\==[], !,
+  ignore(maplist(with_file_lists(Rel,P1),Files)).
+
+with_file_lists(Rel,P1,Filename):- must_det_ll(call(P1,Filename)).
+with_file_lists(Rel,P1,Filename):- write_src(with_file_lists(Rel,P1,Filename)),nl.
  
 
-print_to_metta(Filename):- 
-  ignore(print_to_metta_file(Filename)),
-  ignore(print_to_metta_console(Filename)),!.
+convert_to_metta(Filename):- atomic(Filename), exists_file(Filename),!,
+  ignore(convert_to_metta_file(Filename)),
+  ignore(convert_to_metta_console(Filename)),!.
+convert_to_metta(FileSpec):- with_file_lists('.',convert_to_metta,FileSpec).
   
 
-% Processes a list of filenames, applying 'print_to_metta' to each.
-print_to_metta_console(FileSpec):-  with_file_lists(print_to_metta_now(user_output),FileSpec).
-print_to_metta_file(FileSpec):-  with_file_lists(print_to_metta_now(_Create),FileSpec).
+	% Entry point for printing to Metta format. It clears the screen, sets the working directory,
+	% expands the filenames with a specific extension, and processes each file.
+	 % cls, % Clears the screen (assumes a custom or system-specific implementation).
+	 % with_pwd(
+	  %   '/opt/logicmoo_opencog/hyperon-wam/examples/gpt2-like/language_models/',
+	 %Filt = 'examples/gpt2-like/language_models/*.pl',
+	% Filt = '/opt/logicmoo_opencog/hyperon-wam/examples/performance/nondet_unify/*.pl',
+	   % Finds all Prolog files in the specified directory.
+	 %  convert_to_metta(Filt),  % Processes each found file.
+	  % MC = '/opt/logicmoo_opencog/hyperon-wam/src/main/metta_convert.pl',
+	  % convert_to_metta(MC), % Processes each found file.
+	% Example of a no-operation (nop) call for a specific file path, indicating a placeholder or unused example.
+	%$nop(convert_to_metta('/opt/logicmoo_opencog/hyperon-wam/src/main/metta_convert.pl')).
+
+default_pl_mask(Mask):- Mask = ['**/*.pl'].
+
+convert_to_metta_console :- default_pl_mask(Mask),ignore(convert_to_metta_console(Mask)),!, writeln(';; convert_to_metta_console. ').
+convert_to_metta_file :- default_pl_mask(Mask),ignore(convert_to_metta_file(Mask)),!, writeln(';; convert_to_metta_file. ').
+convert_to_metta :- default_pl_mask(Mask),ignore(convert_to_metta(Mask)),!, writeln(';; convert_to_metta. ').
+
+
+% Processes a list of filenames, applying 'convert_to_metta' to each.
+convert_to_metta_console(FileSpec):-  with_file_lists(Rel,convert_to_metta_now(user_output),FileSpec).
+convert_to_metta_file(FileSpec):-  with_file_lists(Rel,convert_to_metta_now(_Create),FileSpec).
 
 % Processes a single filename by opening the file, translating its content, and then closing the file.
-print_to_metta_now(OutputIn,Filename):-
+convert_to_metta_now(OutputIn,Filename):-
     atom(Filename),  % Verifies that the filename is an atom.
     % Generate the new filename with .metta extension.
     file_name_extension(Base, _OldExt, Filename),
     file_name_extension(Base, metta, NewFilename),
     % Setup step: open both the input and output files.
-    format('~N~n~w~n', [print_to_metta(Filename,NewFilename)]), % Prints the action being performed.
+    format('~N~n~w~n', [convert_to_metta(Filename,NewFilename)]), % Prints the action being performed.
     %Output = user_output,
     copy_term(OutputIn,Output),
     setup_call_cleanup(
@@ -502,15 +584,14 @@ write_pl_metta(STerm):-
    write_src(STerm).
 
 
-   :- ensure_loaded(metta_interp).
-  :- ensure_loaded(metta_compiler).
-  :- ensure_loaded(metta_convert).
-  :- ensure_loaded(metta_types).
-  :- ensure_loaded(metta_space).
-  :- ensure_loaded(metta_testing).
-  :- ensure_loaded(metta_utils).
-  :- ensure_loaded(metta_printer).
-  :- ensure_loaded(metta_eval).
-  
+:- ensure_loaded(metta_compiler).
+:- ensure_loaded(metta_convert).
+:- ensure_loaded(metta_types).
+:- ensure_loaded(metta_space).
+:- ensure_loaded(metta_testing).
+:- ensure_loaded(metta_utils).
+:- ensure_loaded(metta_printer).
+:- ensure_loaded(metta_eval).
+
 
 
