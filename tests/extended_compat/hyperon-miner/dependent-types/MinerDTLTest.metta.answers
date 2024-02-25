@@ -1,10 +1,5 @@
-Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_opencog/hyperon-wam/examples/extended_compat/hyperon-miner/dependent-types/MinerDTLTest.metta
-[()]
-[()]
-[()]
-[()]
-[()]
-[(init-miner GroundingSpace-0x55a21dc614d8 1 0.8)]
-[]
-0.05user 0.00system 0:00.06elapsed 100%CPU (0avgtext+0avgdata 33248maxresident)k
-0inputs+0outputs (0major+3534minor)pagefaults 0swaps
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/extended_compat/hyperon-miner/dependent-types/MinerDTLTest.metta
+Fatal Error: ModuleNotFoundError: No module named 'hyperonpy'
+Command exited with non-zero status 255
+0.01user 0.00system 0:00.01elapsed 94%CPU (0avgtext+0avgdata 15024maxresident)k
+0inputs+0outputs (0major+1762minor)pagefaults 0swaps

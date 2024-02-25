@@ -1,9 +1,10 @@
 #!/bin/bash -x
 
-set -e -v -x
 
 export VPSACE=$PWD
 
+(
+set -v -x -e
 cd ../hyperon-experimental
 
 # Prepare environment
@@ -38,10 +39,10 @@ python3 -m pip install -v -e ./python[dev]
 # Build Hyperon MeTTa-REPL
 cd ./repl
 cargo clean
-cargo build --features python
-cargo test --features python
-cargo install --path=. --features python
-cargo doc --no-deps --features python
+cargo build 
+cargo test 
+cargo install --path=. 
+cargo doc --no-deps 
 cd ..
 
 # Test
@@ -49,6 +50,15 @@ cd python
 pytest ./tests
 cd ..
 
-cd $VPSACE
+(
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
+)
+
+cd $VPSACE
+
+)
+(
+python -m pip install -r requirements.txt
+)
+

@@ -1,3 +1,5 @@
+!(import! &self resolve)
+!(import! &self r)
 !(extend-py! resolve)
 !(extend-py! r)
 

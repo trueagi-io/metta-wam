@@ -1,3 +1,4 @@
+!(import! &self numme)
 !(extend-py! numme)
 
 ; bind a bunch of numpy objects to tokens for convenience
