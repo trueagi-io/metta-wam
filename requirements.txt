@@ -29,4 +29,6 @@ pyreadline3
 metakernel
 #calysto
 yasi
+hyperon-das==0.4.1
+hyperon-das-atomdb==0.3.2
 

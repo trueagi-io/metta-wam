@@ -1,5 +1,68 @@
 #!/bin/bash
 
+export RPWD=$PWD
+IS_SOURCED=$( [[ "${BASH_SOURCE[0]}" != "${0}" ]] && echo 1 || echo 0)
+# Function to exit the script properly
+if [ "$IS_SOURCED" -eq "0" ]; then SCRIPT=$(readlink -f "$0"); else SCRIPT=$(readlink -f "${BASH_SOURCE[0]}"); fi
+export MeTTa=$(realpath "$SCRIPT")
+export METTALOG_DIR=$(dirname "$SCRIPT")
+# echo "METTALOG_DIR=$METTALOG_DIR"
+#cd "$METTALOG_DIR" || { echo "Failed to navigate to $METTALOG_DIR"; [[ "$IS_SOURCED" == "1" ]] && return 1 || exit 1; }
+should_compile=0
+never_compile=0
+compatio=false
+#compatio=false
+CMD_TIMEOUT=0
+export OUTPUT_DIR="./"
+
+use_docker=auto
+repl_flag=auto
+use_rc_file=~/.mettalogrc
+debug_this_script=false
+dry_run=0
+#debug_this_script=true
+
+
+# Capture original auto margins setting and terminal size
+original_automargins=$(stty -a | grep -o 'onlcr' || echo 'off')
+original_size=$(stty size)
+original_rows=$(echo $original_size | cut -d ' ' -f1)
+original_cols=$(echo $original_size | cut -d ' ' -f2)
+
+# Function to reset auto margins and terminal size to their original state
+reset_settings() {
+    # Reset auto margins to original state
+    if [ "$original_automargins" == "on" ]; then
+        stty onlcr
+    else
+        stty -onlcr
+    fi
+
+    # Reset terminal size to original
+    echo -ne "\e[8;${original_rows};${original_cols}t"
+    stty cols "$original_cols"
+    tput smam
+    echo "Settings reset to original."
+}
+
+# Function to disable auto margins and set terminal width to 999 columns
+disable_automargins() {
+    stty -onlcr  # Disable auto margins
+    tput rmam
+    stty cols 999  # Set columns to a large number to prevent wrapping
+    echo "Auto margins disabled, terminal width set to 999 columns."
+}
+
+# Function to set traps for clean exit and interruption
+set_exit_traps() {
+    trap reset_settings EXIT
+    trap 'reset_settings; kill -SIGINT $$' INT
+}
+
+# Initial trap setup for safety
+# set_exit_traps
+
+
 function quote_arg {
   # Check if the argument contains single quotes
   if [[ $1 == *\'* ]]; then
@@ -70,9 +133,6 @@ function unquote_arg {
   echo "$arg"
 }
 
-
-debug_this_script=true
-
 do_DEBUG() {
     # Calculate the screen width and 74% of it
     local screen_width=$(tput cols)
@@ -95,29 +155,25 @@ do_DEBUG() {
       echo "$msg" >&2
     fi
 }
+
 DEBUG() {
   if [ "$debug_this_script" == "true" ]; then
      do_DEBUG "$@"
+  else 
+     if [ "$dry_run" -eq 1 ]; then
+	do_DEBUG "$@"
+     fi
   fi
 }
 
-export RPWD=$PWD
-IS_SOURCED=$( [[ "${BASH_SOURCE[0]}" != "${0}" ]] && echo 1 || echo 0)
-# Function to exit the script properly
-if [ "$IS_SOURCED" -eq "0" ]; then SCRIPT=$(readlink -f "$0"); else SCRIPT=$(readlink -f "${BASH_SOURCE[0]}"); fi
-export MeTTa=$(realpath "$SCRIPT")
-export METTALOG_DIR=$(dirname "$SCRIPT")
-# echo "METTALOG_DIR=$METTALOG_DIR"
-#cd "$METTALOG_DIR" || { echo "Failed to navigate to $METTALOG_DIR"; [[ "$IS_SOURCED" == "1" ]] && return 1 || exit 1; }
-should_compile=0
-never_compile=0
-compatio=false
-#compatio=false
-CMD_TIMEOUT=0
-use_docker=auto
-repl_flag=auto
-use_rc_file=~/.mettalogrc
-debug_this_script=false
+IF_REALLY_DO() {
+    if [ "$dry_run" -eq 1 ]; then
+        do_DEBUG "Dry Run: $*"
+    else
+        DEBUG "Doing: $*"
+        eval "$*"
+    fi
+}
 
 # Function to resolve path upward but stop one level higher than /usr/
 function resolve_upward {
@@ -172,7 +228,7 @@ for arg in "$@"; do
     else
          # Check for specific flags
          case "$arg" in
-             --fres*|--fail*|--contin*|--clean)
+             --fres*|--fail*|--contin*|--regres*|--clean)
                  use_test_script=1
                  ;;
          esac
@@ -504,6 +560,14 @@ function handle_args {
         # These options require an argument (like a filename)
         case $arg in
 
+           --output=*)
+	        add_to_list "$arg" METTALOG_OPTIONS
+		if [[ "$arg" =~ ^--output=(.*)$ ]]; then
+		    OUTPUT_DIR="${BASH_REMATCH[1]}"
+		fi
+                continue
+                ;;
+
            --v*)
                 PYSWIP_VERSION="${arg#*v}"
 		rm -f "${DefaultSav}"
@@ -573,10 +637,10 @@ done
 #DEBUG "LIST_OF_FILE_ARGS[0]=${LIST_OF_FILE_ARGS[0]}"
 DIRNAME="${LIST_OF_FILE_ARGS[0]}"
 if [[ -f "$DIRNAME" ]]; then
-  HTML_OUT="$DIRNAME".html
+  HTML_OUT="${DIRNAME}.html"
   DIRNAME=$(dirname "${DIRNAME}")
 elif [[ -d "$DIRNAME" ]]; then
-   HTML_OUT="${DIRNAME}/Result.html"
+  HTML_OUT="${DIRNAME}/Result.html"
 else
   DIRNAME="${PWD}"
   HTML_OUT="${DIRNAME}/Result.html"
@@ -721,7 +785,7 @@ cleanup() {
     stty sane
     if [[ -f "$TEMP_EXIT_CODE_FILE" ]]; then
         METTA_CMD_EXIT_STATUS=$(<"$TEMP_EXIT_CODE_FILE")
-        rm -f "$TEMP_EXIT_CODE_FILE"
+        IF_REALLY_DO "rm -f '$TEE_FILE'"
     else
         METTA_CMD_EXIT_STATUS=${METTA_CMD_EXIT_STATUS:-$?}
     fi
@@ -732,7 +796,7 @@ cleanup() {
 #DEBUG "CMD_TIMEOUT=$CMD_TIMEOUT"
 
 if [[ -n "$CMD_TIMEOUT" && "$CMD_TIMEOUT" -gt 0 ]]; then
-  METTA_CMD="$TIMEOUT_CMD --foreground --preserve-status --signal=SIGTERM --kill-after=5s $CMD_TIMEOUT ${METTA_CMD}"
+  METTA_CMD="$TIMEOUT_CMD --preserve-status --signal=SIGTERM --kill-after=5s $CMD_TIMEOUT ${METTA_CMD}"
 fi
 
 function escape_quotes {
@@ -750,6 +814,12 @@ if [[ "$html_flag" == "enable" ]]; then
     TEE_FILE="$METTALOG_DIR/TEE_$random_suffix.ansi"
     export TEE_FILE
 
+    if [ -z "$HTML_OUT" ];then
+	if [ -z "$OUTPUT_DIR" ] ;then
+	    HTML_OUT="${OUTPUT_DIR}/${HTML_OUT}"
+	fi
+    fi
+
     export TYPESCRIPT=1
     if [[ "$OS" == "Darwin" ]]; then # macOS
 	      METTA_CMD="/usr/bin/script -q -f -a \"$TEE_FILE\" \"${METTA_CMD//\"/\\\"}\""
@@ -761,29 +831,28 @@ if [[ "$html_flag" == "enable" ]]; then
 
     [[ "$wants_print_help" == "1" ]] && { print_help; }
     DEBUG ""
-    DEBUG "Afterwhich ansi2html -u < $TEE_FILE > \"$HTML_OUT\""
+    do_DEBUG "Afterwhich ansi2html -u < $TEE_FILE > '$HTML_OUT'"
     DEBUG ""
     [[ -n "${EXIT_SCRIPT+x}" ]] && { [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
 
 
-    ( touch "$TEE_FILE"
-    chmod 777 "$TEE_FILE"
-    cat /dev/null > "$TEE_FILE"
-    DEBUG "METTA_CMD: $METTA_CMD"
+    ( IF_REALLY_DO "touch '$TEE_FILE'"
+    IF_REALLY_DO "chmod 777 '$TEE_FILE'"
+    IF_REALLY_DO "cat /dev/null > '$TEE_FILE'"
+    do_DEBUG "METTA_CMD: $METTA_CMD"
     eval "$METTA_CMD"
-    echo $? > "$TEMP_EXIT_CODE_FILE"
-    ansi2html -u < "$TEE_FILE" >"$HTML_OUT" ) || true
-    rm -f "$TEE_FILE"
+       echo $? > "$TEMP_EXIT_CODE_FILE" 
+    IF_REALLY_DO "ansi2html -u < '$TEE_FILE' >'$HTML_OUT'" 
+    IF_REALLY_DO "rm -f '$TEE_FILE'" )
     cleanup
 else
 
     [[ "$wants_print_help" == "1" ]] && { print_help; [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
     [[ -n "${EXIT_SCRIPT+x}" ]] && { [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
     DEBUG "METTA_CMD: $METTA_CMD"
-    (
-     eval "$METTA_CMD"
-    echo $? > "$TEMP_EXIT_CODE_FILE" )
-    #rm -f "$TEE_FILE"
+    ( IF_REALLY_DO eval "$METTA_CMD"
+       IF_REALLY_DO "echo $? > '$TEMP_EXIT_CODE_FILE'" )
+    # rm -f "$TEE_FILE"
     cleanup
 fi
 

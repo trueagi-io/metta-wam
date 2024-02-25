@@ -1,5 +1,166 @@
 #!/bin/bash
 
+# Initialize default values and export variables for later use
+export UNITS_DIR
+export passed_along_to_mettalog
+export METTALOG_MAX_TIME
+export all_test_args="${@}"
+
+
+run_tests_auto_reply=""
+generate_report_auto_reply=""
+#METTALOG_OUTPUT="examples"
+METTALOG_OUTPUT="tests_output/testrun_$(date +%Y%m%d_%H%M%S)"
+passed_along_to_mettalog=()
+METTALOG_MAX_TIME=75
+clean=0  # 0 means don't clean, 1 means do clean
+fresh=0
+if_failures=1
+if_regressions=0
+show_help=0
+export RUST_METTA_MAX_TIME=60
+EXTRA_FIND_ARGS=" ! -path '*/.*' ! -path '*~*' "
+EXTRA_GREP_ARGS=""
+dry_run=0
+
+# Filters to exclude names starting with a dot, containing a tilde,
+# starting with an underscore, and for files, excluding those not ending with 'metta'
+DIR_FILTER=("^\." ".*~.*" "^_")
+FILE_FILTER=("^\." ".*~.*" "^_" "!.*\.metta$")
+
+# Initialize arrays to hold the files to be tested, excluded, and containing '!'
+declare -a files_to_test
+declare -a excluded_files
+declare -a excluded_dirs
+declare -a files_with_exclamation
+
+# Function to check if the filename matches the filter
+matches_filter() {
+    local filename="$(basename "$1")"
+    local -n filter=$2
+    for pattern in "${filter[@]}"; do
+        if [[ "$pattern" == "!"* ]]; then
+            pattern="${pattern#!}"  # Remove the '!' from the start
+            if [[ ! "$filename" =~ $pattern ]]; then
+                return 0
+            fi
+        elif [[ "$filename" =~ $pattern ]]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+# Main function to handle files and directories based on patterns
+find_test_masks() {
+    shopt -s globstar nullglob  # Enable recursive glob patterns
+    for pattern_or_path in "$@"; do  # Iterate over all arguments
+        for file in $pattern_or_path; do
+            if [ -f "$file" ]; then
+                if matches_filter "$file" FILE_FILTER; then
+                    excluded_files+=("$file")
+                else
+                    files_to_test+=("$file")
+                    # Check if file contains lines starting with "!"
+                    if grep -q '^!' "$file"; then
+                        files_with_exclamation+=("$file")
+                    fi
+                fi
+            elif [ -d "$file" ]; then
+                if matches_filter "$(basename "$file")" DIR_FILTER; then
+                    excluded_dirs+=("$file")
+                else
+                    echo "Directory: $file"
+                    while IFS= read -r -d $'\0' subfile; do
+                        if [ -f "$subfile" ] && matches_filter "$(basename "$subfile")" FILE_FILTER; then
+                            excluded_files+=("$subfile")
+                        else
+                            files_to_test+=("$subfile")
+                            # Check if file contains lines starting with "!"
+                            if grep -q '^!' "$subfile"; then
+                                files_with_exclamation+=("$subfile")
+                            fi
+                        fi
+                    done < <(find "$file" -type f -print0)
+                fi
+            fi
+        done
+    done
+    shopt -u globstar nullglob  # Disable recursive glob patterns after use
+}
+
+# Execute the main function with all provided arguments
+find_test_masks "$@"
+
+# Report files containing lines starting with '!'
+echo "Files containing lines starting with '!':"
+printf '%s\n' "${files_with_exclamation[@]}"
+
+# Report excluded files and directories
+#echo "Excluded files:"
+#printf '%s\n' "${excluded_files[@]}"
+
+echo "Excluded directories:"
+printf '%s\n' "${excluded_dirs[@]}"
+
+# Function to extract directories and their parents from the files_to_test array
+# Function to extract all parent directories for each file
+extract_all_parent_directories() {
+    declare -A directory_map  # Use an associative array to avoid duplicate entries
+
+    for filepath in "${files_to_test[@]}"; do
+        # Extract the directory path of the current file
+        current_dir=$(dirname "$filepath")
+
+        # Traverse up the directory path until the root or predefined level
+        while [[ "$current_dir" != "." && "$current_dir" != "/" ]]; do  # Change "/" to a different level if needed
+            # Add the directory to the map
+	    # echo "CD $current_dir"
+            directory_map["$current_dir"]=1
+            # Move up to the parent directory
+            current_dir=$(dirname "$current_dir")
+        done
+    done
+
+    # Convert the associative array keys to an indexed array
+    unique_directories=("${!directory_map[@]}")
+}
+
+extract_all_parent_directories
+
+# Function to sort directories by their depth
+sort_directories_by_depth() {
+    # Use array to store sorted directories
+    IFS=$'\n' read -d '' -r -a sorted_directories1 < <(for dir in "${unique_directories[@]}"; do
+        echo "$dir"
+    done | sort )
+
+    # Assign sorted directories back to unique_directories
+    unique_directories=("${sorted_directories1[@]}")
+
+    # Use array to store sorted directories
+    IFS=$'\n' read -d '' -r -a sorted_directories2 < <(for dir in "${unique_directories[@]}"; do
+        echo "$dir"
+    done | awk -F'/' '{print NF-1, $0}' | sort -nr | cut -d' ' -f2-)
+
+    # Assign sorted directories back to unique_directories
+    unique_directories=("${sorted_directories2[@]}")
+}
+
+sort_directories_by_depth
+
+
+# Check if unique_directories is empty and set UNITS_DIR accordingly
+if [ ${#unique_directories[@]} -eq 0 ]; then
+    UNITS_DIR="test"
+else
+    UNITS_DIR="${unique_directories[-1]}"
+fi
+
+echo "UNITS_DIR is set to: $UNITS_DIR"
+
+
+
 # This script performs various testing operations for MeTTaLog.
 # It handles command-line arguments to customize its behavior.
 
@@ -20,29 +181,6 @@ add_to_list() {
     fi
 }
 
-# Initialize default values and export variables for later use
-export UNITS_DIR
-export passed_along_to_mettalog
-export METTALOG_MAX_TIME
-export all_test_args="${@}"
-
-
-run_tests_auto_reply=""
-generate_report_auto_reply=""
-#METTALOG_OUTPUT="examples"
-METTALOG_OUTPUT="tests_output/testrun_$(date +%Y%m%d_%H%M%S)"
-UNITS_DIR="tests/"
-passed_along_to_mettalog=()
-METTALOG_MAX_TIME=75
-clean=0  # 0 means don't clean, 1 means do clean
-fresh=0
-if_failures=1
-if_regressions=0
-show_help=0
-export RUST_METTA_MAX_TIME=60
-EXTRA_FIND_ARGS=""
-EXTRA_GREP_ARGS=""
-explain_only=1
 
 # command-line argument parsing
 while [ "$#" -gt 0 ]; do
@@ -56,17 +194,18 @@ while [ "$#" -gt 0 ]; do
         --regres*) clean=0; if_failures=0; if_regressions=1 ;;
         --cont*) clean=0; if_failures=0 ;;	
         --fail*) clean=0; if_failures=1 ; add_to_list "$1" passed_along_to_mettalog ;;
-        --explain) explain_only=1 ;;
-        --test) explain_only=0 ; add_to_list "$1" passed_along_to_mettalog ;;	    
+        --dry-run) dry_run=1 ;;
+        --test) dry_run=0 ; add_to_list "$1" passed_along_to_mettalog ;;	    
         --fresh*) fresh=1 ;;
         --exclude=*) EXTRA_FIND_ARGS+=" ! -path ${1#*=}"; CANT_HAVE="${1#*=}" ;;
         --include=*) EXTRA_FIND_ARGS+=" -path ${1#*=}"; MUST_HAVE="${1#*=}" ;;
-        -h|--help) echo "Usage: $0 [options] [directory] [extra args]"; show_help=1; explain_only=1 ;;
+        -h|--help) echo "Usage: $0 [options] [directory] [extra args]"; show_help=1; dry_run=1 ;;
+	-*) add_to_list "$1" passed_along_to_mettalog ;;
         *)
             if [ -d "$1" ] || [ -f "$1" ]; then
                 UNITS_DIR="$1"
             else
-                add_to_list "$1" passed_along_to_mettalog
+	       :
             fi
             ;;
     esac
@@ -79,8 +218,8 @@ done
 if [  "$show_help" -eq 1 ]; then
       # Help section with detailed usage instructions
       echo "Options:"
-      echo "  -y |--yes                Automatically choose 'y' for rerunning all tests"
-      echo "  -n|--no                 Automatically choose 'n'"
+      echo "  -y|--yes                Automatically choose 'y' for rerunning all tests"
+      echo "  -n|--no                  Automatically choose 'n'"
       echo "  --fresh            Clean up by deleting any .answers files under directory"
       echo "  --clean           Clean up by deleting all .html files under directory"
       echo "  --continue     Continue running tests (Generating any missing html files)"
@@ -105,7 +244,7 @@ if [  "$show_help" -eq 1 ]; then
 fi
 
 IF_REALLY_DO() {
-    if [ "$explain_only" -eq 1 ]; then
+    if [ "$dry_run" -eq 1 ]; then
         echo "Would be doing: $*"
     else
         echo "Doing: $*"
@@ -120,45 +259,29 @@ if [[ "$METTALOG_OUTPUT" != "" ]]; then
 
     IF_REALLY_DO mkdir -p "$NEW_UNITSDIR"
     
-    IF_REALLY_DO \cp -an "$UNITS_DIR"/* "$NEW_UNITSDIR/"
+    echo "$UNITS_DIR -> $NEW_UNITSDIR"
 
-    UNITS_DIR="$NEW_UNITSDIR"
+    #UNITS_DIR="$NEW_UNITSDIR"
 
 else
 
     METTALOG_OUTPUT="examples"
 
 fi
+# Function to print the list of unique directories
+# echo "All unique parent directories:"
+for dir in "${unique_directories[@]}"; do
+   IF_REALLY_DO mkdir -p "${METTALOG_OUTPUT}/$dir"
+done
 
 
-function delete_html_files() {
-    if [ -n "${UNITS_DIR}" ]; then  # Check if UNITS_DIR is not empty
-        echo "Deleting .metta.html files in $UNITS_DIR"
-
-        local include_pattern=""
-        local exclude_pattern=""
-
-        # Extract include and exclude patterns from EXTRA_FIND_ARGS
-        for arg in $MUST_HAVE; do
-            case "$arg" in
-            esac
-        done
-
-        # Construct the find command
-        local find_cmd="find \"${UNITS_DIR}\" -type f -name \"*.metta.html\""
-
-        # Append include and exclude patterns
-        find_cmd+=$EXTRA_FIND_ARGS
-
-        if [ "$explain_only" -eq 1 ]; then
-            echo "would be deleting these files: "
-            find_cmd+=" -print"
-        else
-           find_cmd+=" -delete -print"
+# Function to delete .html files from the included_files list
+delete_html_files() {
+    for file in "${files_to_test[@]}"; do
+        if [ -f "${METTALOG_OUTPUT}/${file}.html" ]; then
+  	    IF_REALLY_DO rm -f "${METTALOG_OUTPUT}/${file}.html"
         fi
-
-        eval $find_cmd
-    fi
+    done
 }
 
 
@@ -178,8 +301,18 @@ file_in_array() {
     return 1
 }
 
+
+# Function to check if a file is in an array
+run_tests() {
+    for file in "${files_to_test[@]}"; do
+        if [ -f "${file}" ]; then
+  	    process_file "$file"
+        fi
+    done
+}
+
 # Function to run tests
-function run_tests() {
+function run_tests_units_dir() {
     # Process test files
    BASE_DIR="${UNITS_DIR}"
     echo "Running tests in $BASE_DIR"
@@ -276,7 +409,7 @@ function main() {
         echo "Skipping test run."
     fi
 
-    scripts/pass_fail_totals.sh $UNITS_DIR
+    IF_REALLY_DO scripts/pass_fail_totals.sh $METTALOG_OUTPUT
 
     # Prompt for code commit and unit report generation
     if [ -z "$generate_report_auto_reply" ]; then
@@ -293,6 +426,44 @@ function main() {
     fi
 }
 
+# Capture original auto margins setting and terminal size
+original_automargins=$(stty -a | grep -o 'onlcr' || echo 'off')
+original_size=$(stty size)
+original_rows=$(echo $original_size | cut -d ' ' -f1)
+original_cols=$(echo $original_size | cut -d ' ' -f2)
+
+# Function to reset auto margins and terminal size to their original state
+reset_settings() {
+    # Reset auto margins to original state
+    if [ "$original_automargins" == "on" ]; then
+        stty onlcr
+    else
+        stty -onlcr
+    fi
+
+    # Reset terminal size to original
+    echo -ne "\e[8;${original_rows};${original_cols}t"
+    stty cols "$original_cols"
+    echo "Settings reset to original."
+}
+
+# Function to disable auto margins and set terminal width to 999 columns
+disable_automargins() {
+    stty -onlcr  # Disable auto margins
+    stty cols 999  # Set columns to a large number to prevent wrapping
+    echo "Auto margins disabled, terminal width set to 999 columns."
+}
+
+# Function to set traps for clean exit and interruption
+set_exit_traps() {
+    trap reset_settings EXIT
+    trap 'reset_settings; kill -SIGINT $$' INT
+}
+
+# Initial trap setup for safety
+#set_exit_traps
+
+
 process_file() {
        #local file=$(find_override_file "$1")
        local file="$1"
@@ -302,7 +473,7 @@ process_file() {
        local extra_args="${@:2}"
        shift
 
-       file_html="${file}.html"
+       export file_html="${METTALOG_OUTPUT}/${file}.html"
 
        echo ""
        echo "Testing:  $file"
@@ -431,19 +602,21 @@ process_file() {
              set +e
              IF_REALLY_DO time  $TEST_CMD
             TEST_EXIT_CODE=$?
+	     #reset_settings
             # set -e
              echo ""
 
               if [ $TEST_EXIT_CODE -eq 124 ]; then
                   echo "Killed (definitely due to timeout) after $METTALOG_MAX_TIME seconds: ${TEST_CMD}"
                   IF_REALLY_DO [ "$if_failures" -eq 1 ] && rm -f "$file_html"
-              elif [ $TEST_EXIT_CODE -ne 0 ]; then
+              elif [ $TEST_EXIT_CODE -ne 7 ]; then
                   echo "Completed with error (EXITCODE=$TEST_EXIT_CODE) under $METTALOG_MAX_TIME seconds: ${TEST_CMD}"
               else
                   echo "Completed successfully (EXITCODE=0) under $METTALOG_MAX_TIME seconds: ${TEST_CMD}"
               fi
               #/scripts/total_loonits.sh
          fi
+	 
 }
 
 
