@@ -67,6 +67,8 @@
 			Name="Other Files"
 			Filters=""></Folder>
 	</CustomFolders>
+	<List Name="RTE">
+	</List>
 	<Files AutoFolders="DirectoryView">
 		<Folder Name=".history">
 			<Folder Name="docs">
@@ -229,15 +231,12 @@
 				<F N="src/canary/metta_eval.new"/>
 				<F N="src/canary/metta_eval.old"/>
 				<F N="src/canary/metta_eval.pl"/>
-				<F N="src/canary/metta_eval.pl.bak"/>
 				<F N="src/canary/metta_eval.prev"/>
 				<F N="src/canary/metta_interp.new"/>
 				<F N="src/canary/metta_interp.pl"/>
-				<F N="src/canary/metta_interp.pl.bak"/>
 				<F N="src/canary/metta_prelude.metta"/>
 				<F N="src/canary/metta_prelude.pl"/>
 				<F N="src/canary/metta_printer.pl"/>
-				<F N="src/canary/metta_printer.pl.bak"/>
 				<F N="src/canary/metta_python.pl"/>
 				<F N="src/canary/metta_reader.new"/>
 				<F N="src/canary/metta_reader.pl"/>
@@ -258,59 +257,35 @@
 			</Folder>
 			<Folder Name="development">
 				<F N="src/development/chars.data"/>
-				<F N="src/development/fb_induced_types.pl"/>
-				<F N="src/development/flybase_convert.metta"/>
 				<F N="src/development/flybase_convert.pl"/>
-				<F N="src/development/flybase_induced_types.metta"/>
 				<F N="src/development/flybase_induced_types.pl"/>
-				<F N="src/development/flybase_json.metta"/>
 				<F N="src/development/flybase_json.pl"/>
-				<F N="src/development/flybase_learn.metta"/>
 				<F N="src/development/flybase_learn.pl"/>
-				<F N="src/development/flybase_main.metta"/>
 				<F N="src/development/flybase_main.pl"/>
 				<F N="src/development/flybase_obo.pl"/>
 				<F N="src/development/flybase_scheme.pl"/>
 				<F N="src/development/init.default.metta"/>
-				<F N="src/development/metta_compiler.metta"/>
 				<F N="src/development/metta_compiler.pl"/>
-				<F N="src/development/metta_convert.metta"/>
 				<F N="src/development/metta_convert.pl"/>
-				<F N="src/development/metta_data.metta"/>
 				<F N="src/development/metta_data.pl"/>
-				<F N="src/development/metta_eval.metta"/>
 				<F N="src/development/metta_eval.new"/>
 				<F N="src/development/metta_eval.old"/>
 				<F N="src/development/metta_eval.pl"/>
-				<F N="src/development/metta_eval.pl.bak"/>
 				<F N="src/development/metta_eval.prev"/>
-				<F N="src/development/metta_interp - Copy.metta"/>
-				<F N="src/development/metta_interp.metta"/>
 				<F N="src/development/metta_interp.new"/>
 				<F N="src/development/metta_interp.pl"/>
-				<F N="src/development/metta_interp.pl.bak"/>
 				<F N="src/development/metta_prelude.metta"/>
 				<F N="src/development/metta_prelude.pl"/>
-				<F N="src/development/metta_prelude.pl.txt"/>
-				<F N="src/development/metta_printer.metta"/>
 				<F N="src/development/metta_printer.pl"/>
-				<F N="src/development/metta_python.metta"/>
 				<F N="src/development/metta_python.pl"/>
-				<F N="src/development/metta_reader.metta"/>
 				<F N="src/development/metta_reader.new"/>
 				<F N="src/development/metta_reader.pl"/>
-				<F N="src/development/metta_rust.metta"/>
 				<F N="src/development/metta_rust.pl"/>
-				<F N="src/development/metta_server.metta"/>
 				<F N="src/development/metta_server.pl"/>
-				<F N="src/development/metta_space.metta"/>
 				<F N="src/development/metta_space.pl"/>
 				<F N="src/development/metta_subst.bk"/>
-				<F N="src/development/metta_subst.metta"/>
 				<F N="src/development/metta_subst.pl"/>
-				<F N="src/development/metta_test_nars_1.metta"/>
 				<F N="src/development/metta_test_nars_1.pl"/>
-				<F N="src/development/metta_testing.metta"/>
 				<F N="src/development/metta_testing.pl"/>
 				<F N="src/development/metta_toplevel.pl"/>
 				<F N="src/development/metta_types.pl"/>
@@ -340,7 +315,6 @@
 				<F N="src/main/metta_interp.new"/>
 				<F N="src/main/metta_interp.pl"/>
 				<F N="src/main/metta_prelude.metta"/>
-				<F N="src/main/metta_prelude.pl"/>
 				<F N="src/main/metta_printer.pl"/>
 				<F N="src/main/metta_python.pl"/>
 				<F N="src/main/metta_reader.new"/>
@@ -1876,7 +1850,6 @@
 		<F N=".bash_history"/>
 		<F N=".dockerignore"/>
 		<F N=".gitignore"/>
-		<F N="deleted.txt"/>
 		<F N="Dockerfile"/>
 		<F N="hyperon-wam.vpj"/>
 		<F N="hyperon-wam.vpw"/>
@@ -1890,6 +1863,4 @@
 		<F N="setup.py"/>
 		<F N="setup.soon"/>
 	</Files>
-	<List Name="RTE">
-	</List>
 </Project>
