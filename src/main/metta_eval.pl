@@ -980,18 +980,22 @@ is_and(',').
 is_and(S):- is_and(S,_).
 
 is_and(S,_):- \+ atom(S),!,fail.
-is_and('and','True').
+%is_and('and','True').
 is_and('and2','True').
-is_and('#COMMA','True'). is_and(',','True').  % is_and('And').
+%is_and('#COMMA','True'). %is_and(',','True').  % is_and('And').
 
 is_comma(C):- var(C),!,fail.
 is_comma(',').
 is_comma('{}').
 
-eval_20(Eq,RetType,Depth,Self,[Comma,X  ],Res):- is_comma(Comma),!, eval_args(Eq,RetType,Depth,Self,X,Res).
-eval_20(Eq,RetType,Depth,Self,[Comma,X,Y],Res):- is_comma(Comma),!, eval_args(Eq,_,Depth,Self,X,_),
+is_progn(C):- var(C),!,fail.
+is_progn('chain-body').
+is_progn('progn').
+
+eval_20(Eq,RetType,Depth,Self,[Comma,X  ],Res):- is_progn(Comma),!, eval_args(Eq,RetType,Depth,Self,X,Res).
+eval_20(Eq,RetType,Depth,Self,[Comma,X,Y],Res):- is_progn(Comma),!, eval_args(Eq,_,Depth,Self,X,_),
   eval_args(Eq,RetType,Depth,Self,Y,Res).
-eval_20(Eq,RetType,Depth,Self,[Comma,X|Y],Res):- is_comma(Comma),!, eval_args(Eq,_,Depth,Self,X,_),
+eval_20(Eq,RetType,Depth,Self,[Comma,X|Y],Res):- is_progn(Comma),!, eval_args(Eq,_,Depth,Self,X,_),
   eval_args(Eq,RetType,Depth,Self,[Comma|Y],Res).
 
 
@@ -1005,9 +1009,10 @@ eval_20(Eq,RetType,Depth,Self,[And,X|Y],TF):- is_and(And,True),!, as_tf(eval_arg
 
 eval_20(Eq,RetType,Depth,Self,[chain,X],TF):- 
    eval_args(Eq,RetType,Depth,Self,X,TF).
-eval_20(Eq,RetType,Depth,Self,[chain,X|Y],TF):- 
-   eval_args(Eq,RetType,Depth,Self,X,_),
-   eval_args(Eq,RetType,Depth,Self,[chain|Y],TF).
+eval_20(Eq,RetType,Depth,Self,[chain,X|Y],TF):-  eval_args(Eq,RetType,Depth,Self,X,_), eval_args(Eq,RetType,Depth,Self,[chain|Y],TF).
+
+eval_20(Eq,RetType,Depth,Self,['and',X,Y],TF):- !,
+   as_tf((eval_args_true(Eq,RetType,Depth,Self,X),eval_args_true(Eq,RetType,Depth,Self,Y)),TF).
 
 eval_20(Eq,RetType,Depth,Self,['or',X,Y],TF):- !,
    as_tf((eval_args_true(Eq,RetType,Depth,Self,X);eval_args_true(Eq,RetType,Depth,Self,Y)),TF).
