@@ -1,117 +1,24 @@
 
-  (use-module (library logicmoo-utils))
+:- use_module(library(logicmoo_utils)).
 
-; debug printing
+% debug printing
+debugln(X):- debugln_xfrm(X,S), dmsg(S).
+fmt_pllm(X):- debugln_xfrm(X,S), fmt(S).
 
-  (= 
-    (debugln $X) 
-    (, 
-      (debugln-xfrm $X $S) 
-      (dmsg $S)))
-
-  (= 
-    (fmt-pllm $X) 
-    (, 
-      (debugln-xfrm $X $S) 
-      (fmt $S)))
-
-
-  (= 
-    (debugln-xfrm $Insts $S) 
-    (, 
-      (var $Insts) 
-      (set-det) 
-      (sformat $S "~p" 
-        (:: $Insts))))
-  (= 
-    (debugln-xfrm 
-      (i $X) $S) 
-    (if-then-else 
-      (not (is-list $X)) 
-      (debugln-xfrm $X $S) 
-      (, 
-        (maplist debugln-xfrm $X $Y) 
-        (atomics-to-string $Y ' ' $S))))
-  (= 
-    (debugln-xfrm 
-      (Cons  $N $A) $S) 
-    (, 
-      (is-list $A) 
-      (set-det) 
-      (maplist debugln-xfrm 
-        (Cons  $N $A) $Y) 
-      (atomics-to-string $Y ' ' $S)))
-  (= 
-    (debugln-xfrm 
-      (/ $F $A) $S) 
-    (, 
-      (functor $P $F $A) 
-      (predicate-property $P 
-        (number-of-clauses $Insts)) 
-      (set-det) 
-      (sformat $S "~w=~:d~n" 
-        (:: 
-          (/ $F $A) $Insts))))
-  (= 
-    (debugln-xfrm 
-      (w $E) $S) 
-    (, 
-      (sformat $S ~p $E) 
-      (set-det)))
-  (= 
-    (debugln-xfrm 
-      ($ $E) $S) 
-    (, 
-      (get-flag $E $Insts) 
-      (set-det) 
-      (sformat $S "~w=~:d~n" 
-        (:: $E $Insts))))
-  (= 
-    (debugln-xfrm 
-      (= $N $V) $S) 
-    (, 
-      (integer $V) 
-      (set-det) 
-      (sformat $S "~n\t~w\t= ~:d " 
-        (:: $N $V))))
-  (= 
-    (debugln-xfrm 
-      (= $N $V) $S) 
-    (, 
-      (set-det) 
-      (sformat $S "~n\t~w\t= ~w " 
-        (:: $N $V))))
-  (= 
-    (debugln-xfrm 
-      (:: $N) $S) 
-    (, 
-      (set-det) 
-      (debugln-xfrm $N $S)))
-  (= 
-    (debugln-xfrm $C $S) 
-    (, 
-      (if-defined (tok-split $_ $C $S $_)) 
-      (set-det)))
-  (= 
-    (debugln-xfrm $C $S) 
-    (, 
-      (if-defined (tok-split $C $S $_)) 
-      (set-det)))
-  (= 
-    (debugln-xfrm $C $S) 
-    (, 
-      (compound $C) 
-      (set-det) 
-      (sformat $S "~p" 
-        (:: $C))))
-;debugln_xfrm(C,S):- compound(C),compound_name_arguments(C,N,A),debugln_xfrm([N|A],S).
-  (= 
-    (debugln-xfrm nl 
-)   (set-det))
-  (= 
-    (debugln-xfrm Nil '') 
-    (set-det))
-  (= 
-    (debugln_xfrm  $E $E) True)
-
+debugln_xfrm(Insts,S):- var(Insts), !, sformat(S,"~p",[Insts]).
+debugln_xfrm(i(X),S):- \+ is_list(X) -> debugln_xfrm(X,S) ; maplist(debugln_xfrm,X,Y),atomics_to_string(Y,' ',S).
+debugln_xfrm([N|A],S):- is_list(A),!,maplist(debugln_xfrm,[N|A],Y),atomics_to_string(Y,' ',S).
+debugln_xfrm((F/A),S):- functor(P,F,A),predicate_property(P,number_of_clauses(Insts)),!,sformat(S,"~w=~:d~n",[(F/A),Insts]).
+debugln_xfrm(w(E),S):- sformat(S,'~p',E),!.
+debugln_xfrm('$'(E),S):- get_flag(E,Insts),!,sformat(S,"~w=~:d~n",[E,Insts]).
+debugln_xfrm(N=V,S):- integer(V),!,sformat(S,"~n\t~w\t= ~:d ",[N,V]).
+debugln_xfrm(N=V,S):- !,sformat(S,"~n\t~w\t= ~w ",[N,V]).
+debugln_xfrm([N],S):- !, debugln_xfrm(N,S).
+debugln_xfrm(C,S):- if_defined(tok_split(_,C,S,_)),!.
+debugln_xfrm(C,S):- if_defined(tok_split(C,S,_)),!.
+debugln_xfrm(C,S):- compound(C),!,sformat(S,"~p",[C]).
+%debugln_xfrm(C,S):- compound(C),compound_name_arguments(C,N,A),debugln_xfrm([N|A],S).
+debugln_xfrm(nl,'\n'):-!.
+debugln_xfrm([],''):-!.
+debugln_xfrm(E,E).
 

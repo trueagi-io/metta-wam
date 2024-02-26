@@ -1,1059 +1,357 @@
+:- encoding(iso_latin_1).
+:- module(pllm,[]).
 
-  (encoding iso-latin-1)
-  (module pllm Nil)
+% :- include(weightless_pllm).
 
-; :- include(weightless_pllm).
+pllm_preds([training/3,is_word/1,is_word/2,ngram/5,ngram/6,trigram/3,trigram/4,tok_split/3,tok_split/4,tmp:buffer_training/2]).
 
+declare_preds(X):- dynamic(X),multifile(X).
 
-  (= 
-    (pllm_preds  
-      ( (/  training 3) 
-        (/  is_word 1) 
-        (/  is_word 2) 
-        (/  ngram 5) 
-        (/  ngram 6) 
-        (/  trigram 3) 
-        (/  trigram 4) 
-        (/  tok_split 3) 
-        (/  tok_split 4) 
-        (:  tmp 
-          (/  buffer_training 2)))) True)
+:- pllm_preds(L), maplist(declare_preds,L).
 
+% :- ensure_loaded(trains_trigrams).
+:- ensure_loaded(utils_pllm).
+:- ensure_loaded(library(logicmoo_nlu)).
+:- ensure_loaded(library(logicmoo_nlu/parser_link_grammar)).
 
-  (= 
-    (declare-preds $X) 
-    (, 
-      (dynamic $X) 
-      (multifile $X)))
+%compile_corpus:- functor(P,ngram,6), predicate_property(P,number_of_clauses(N)),N>2.
+compile_corpus:- 
+  compile_corpus_in_mem.
 
+recompile_corpus:- 
+  pllm_preds(L),
+  maplist(abolish,L),
+  maplist(declare_preds,L),
+  compile_corpus_in_mem.
 
-  (, 
-    (pllm-preds $L) 
-    (maplist declare-preds $L))
+compile_corpus_in_mem:- 
+ train_from_corpus,
+ compute_corpus_extents,
+ nop(retrain_from_trigrams),!.
 
-; :- ensure_loaded(trains_trigrams).
-  (ensure-loaded utils-pllm)
-  (ensure-loaded (library logicmoo-nlu))
-  (ensure-loaded (library (/ logicmoo-nlu parser-link-grammar)))
+corpus_stat(corpus_training). corpus_stat(corpus_nodes). corpus_stat(corpus_node_overlap).
+corpus_stat(corpus_unique_toks). corpus_stat(corpus_total_toks). 
+corpus_stat(corpus_convos).
 
-;compile_corpus:- functor(P,ngram,6), predicate_property(P,number_of_clauses(N)),N>2.
+set_last_oc(OC):- nb_setval(last_oc,OC).
+get_last_oc(OC):- nb_current(last_oc,OC).
 
-  (= 
-    (compile-corpus) 
-    (compile-corpus-in-mem))
+%train_from_corpus:- training(_,string,_),!,forall(training(XX,string,Val),add_training_str(XX,Val)).
+train_from_corpus:- train_from_corpus(library('../self_dialogue_corpus/train_from.txt')).
 
+train_from_corpus(Path):-
+ debugln(["reading corpus...",Path]),
+setup_call_cleanup(
+ must(absolute_file_name(Path,File,[access(read)])),
 
-  (= 
-    (recompile-corpus) 
-    (, 
-      (pllm-preds $L) 
-      (maplist abolish $L) 
-      (maplist declare-preds $L) 
-      (compile-corpus-in-mem)))
+ time((open(File,read,In), 
+ forall(corpus_stat(Stat),set_flag(Stat,0)),
+ set_flag(file_line,0),
+ repeat,
+ (at_end_of_stream(In) -> ! ; 
+ inc_flag(file_line), read_line_to_string(In,Str),get_flag(file_line,X),add_training(X,Str), fail),
+ forall(corpus_stat(Stat),(get_flag(Stat,Value),debugln(Stat=Value))))),
+ save_training).
 
+:- add_history(load_training).
+load_training:-
+  pllm_preds(L),maplist(load_training,L).
+load_training(F/A):-
+ atomic_list_concat(['done_',F,'_',A,'.pl'],File),
+ (exists_file(File)->ensure_loaded(File) ; true).
 
-  (= 
-    (compile-corpus-in-mem) 
-    (, 
-      (train-from-corpus) 
-      (compute-corpus-extents) 
-      (nop retrain-from-trigrams) 
-      (set-det)))
-
-
-  (= 
-    (corpus_stat  corpus_training) True) 
-  (= 
-    (corpus_stat  corpus_nodes) True) 
-  (= 
-    (corpus_stat  corpus_node_overlap) True)
-  (= 
-    (corpus_stat  corpus_unique_toks) True) 
-  (= 
-    (corpus_stat  corpus_total_toks) True) 
-  (= 
-    (corpus_stat  corpus_convos) True)
+save_training:-
+  pllm_preds(L),maplist(save_training,L).
+save_training(F/A):-
+ atomic_list_concat(['done_',F,'_',A,'.pl'],File),
+ tell(File),
+ writeln(:- encoding(iso_latin_1)),
+ listing(F/A),
+ % functor(P,F,A),forall(P,(writeq(P),writeln('.'))),
+ told.
 
 
-  (= 
-    (set-last-oc $OC) 
-    (nb-setval last-oc $OC))
+save_stat(G):- 
+  ( \+ G -> assert(G) ; true),
+  nop((writeq(G),writeln('.'))).
 
-  (= 
-    (get-last-oc $OC) 
-    (nb-current last-oc $OC))
-
-;train_from_corpus:- training(_,string,_),!,forall(training(XX,string,Val),add_training_str(XX,Val)).
-
-  (= 
-    (train-from-corpus) 
-    (train-from-corpus (library ../self-dialogue-corpus/train-from.txt)))
-
-  (= 
-    (train-from-corpus $Path) 
-    (, 
-      (debugln (:: "reading corpus..." $Path)) 
-      (setup-call-cleanup 
-        (must (absolute-file-name $Path $File (:: (access read)))) 
-        (time (, (open $File read $In) (forall (corpus-stat $Stat) (set-flag $Stat 0)) (set-flag file-line 0) (repeat) (if-then-else (at-end-of-stream $In) (set-det) (, (inc-flag file-line) (read-line-to-string $In $Str) (get-flag file-line $X) (add-training $X $Str) (fail))) (forall (corpus-stat $Stat) (, (get-flag $Stat $Value) (debugln (= $Stat $Value)))))) save-training)))
+use_extent(is_word,1). use_extent(tok_split,3). use_extent(trigram,3). use_extent(ngram,5).
+compute_corpus_extents:-
+ debugln("compute corpus extents..."),
+ time((forall(use_extent(F,A),compute_extent(F,A)))).
 
 
-  (add-history load-training)
+min_of(X,Y,X):-X<Y,!. min_of(_,Y,Y).
+max_of(X,Y,X):-X>Y,!. max_of(_,Y,Y).
+inc_flag(F):- flag(F,X,X+1).
+compute_extent(F,A):-
+  functor(NGram,F,A),
+  A2 is A + 1, functor(NGram2,F,A2), dynamic(NGram2),
+  set_flag(total_fa,0),
+  set_flag(min_fa,999999999),
+  set_flag(max_fa,0),
+  forall(NGram,(ngram_val(NGram,NN),
+     flag(total_fa,Total,Total+NN),
+     get_flag(min_fa,Min),min_of(Min,NN,NewMin),set_flag(min_fa,NewMin),
+     get_flag(max_fa,Max),max_of(Max,NN,NewMax),set_flag(max_fa,NewMax),
+     append_term(NGram,NN,NGramStat),save_stat(NGramStat))),  
+  get_flag(total_fa,Total),
+  get_flag(min_fa,Min),
+  get_flag(max_fa,Max),
+  predicate_property(NGram,number_of_clauses(Insts)),
+  max_of(Insts,1,Insts1), % avoid division by zero
+  Mean is round(Total/Insts1),
+  High is ((Max-Mean)/2 + Mean),
+  Low is (Mean-Min)/2 + Min,
+  set_flag(med_high_fa, High), set_flag(med_low_fa, Low),
+ nop((
+  % adds 20 seconds and is not yet used
+  set_flag(above_mean_fa, 0), set_flag(above_med_high_fa, 0), set_flag(num_min_fa, 0),
+  set_flag(below_mean_fa, 0), set_flag(below_med_low_fa, 0),
+  append_term(NGram,NN,NGramStatN),
+  forall(NGramStatN,
+    (ignore((NN=Min,inc_flag(num_min_fa))),
+     ignore((NN>High,inc_flag(above_med_high_fa))),
+     ignore((NN<Low,inc_flag(below_med_low_fa))),
+     (NN =< Mean ->inc_flag(below_mean_fa);inc_flag(above_mean_fa)))),
+  get_flag(num_min_fa, NEMin), get_flag(above_med_high_fa, NAMedHi),
+  get_flag(below_mean_fa, NBMean), get_flag(above_mean_fa, NAMean),  
+  get_flag(below_med_low_fa, NBMedLo),
+  NAMeanNAMedHi is NAMean-NAMedHi,
+  NBMeanNBMedLo is NBMean-NBMedLo,
+  NBMedLoNEMin is NBMedLo-NEMin,
+ !)),
+  Props = [
+      (min->min)=NEMin,
+      (min->low)=NBMedLoNEMin,
+      (low->mean)=NBMeanNBMedLo,
+      (mean->high)=NAMeanNAMedHi,
+      (high->max)=NAMedHi,
+      '---------'='------------',
+      (min->max)=Insts, 
+      nl,
+      min=Min,
+      low=Low,
+      mean=Mean,
+      high=High,
+      max=Max,
+      total=Total],
+  maplist(save_extents(F,A),Props),
+  debugln([extent_props(F/A),Props]),!.
 
-  (= 
-    (load-training) 
-    (, 
-      (pllm-preds $L) 
-      (maplist load-training $L)))
-  (= 
-    (load-training (/ $F $A)) 
-    (, 
-      (atomic-list-concat 
-        (:: done- $F - $A .pl) $File) 
-      (if-then-else 
-        (exists-file $File) 
-        (ensure-loaded $File) True)))
+save_extents(_,_,(_=x)):-!.
+save_extents(F,A,X=Y):- !, assert(extent_props(F,A,X,Y)). 
+save_extents(_,_,_):-!.
 
+ngram_val(NGram,NN):- ngram_key(NGram,Key),get_flag(Key,NN).
 
-  (= 
-    (save-training) 
-    (, 
-      (pllm-preds $L) 
-      (maplist save-training $L)))
-  (= 
-    (save-training (/ $F $A)) 
-    (, 
-      (atomic-list-concat 
-        (:: done- $F - $A .pl) $File) 
-      (tell $File) 
-      (writeln !(encoding iso-latin-1)) 
-      (listing (/ $F $A)) 
-      (told))); functor(P,F,A),forall(P,(writeq(P),writeln('.'))),
+ngram_inc(NGram):- ngram_inc(NGram,_NN).
+ngram_inc(NGram,NN):- ngram_key(NGram,Key),flag(Key,NN,NN+1).
 
+ngram_key(tok_split(O,_,_),O):-!.
+ngram_key(is_word(O),O):-!.
+ngram_key(trigram(A,B,C),Key):- !, join_text([A,B,C],Key).
+ngram_key(ngram(Loc,A,B,C,D,_),Key):- !, ngram_key(ngram(Loc,A,B,C,D),Key).
+ngram_key(ngram(_Loc,oc(_),B,C,oc(_)),Key):- !, join_text([oc,B,C,oc],Key).
+ngram_key(ngram(_Loc,oc(_),A,B,C),Key):- !, join_text([oc,A,B,C],Key).
+ngram_key(ngram(_Loc,A,B,C,oc(_)),Key):- !, join_text([A,B,C,oc],Key).
+ngram_key(ngram(_Loc,A,B,C,D),Key):- join_text([A,B,C,D],Key).
 
+join_text(List,Key):- atomic_list_concat(List,',',Key).
 
+save_corpus_stats:-
+ time((tell('plm.pl'),
+ write('
+ :- style_check(- discontiguous).
+ :- X= (is_word/2,ngram/6),
+    dynamic(X),multifile(X). \n'),
+  listing([is_word/2,ngram/6]), told)).
 
-  (= 
-    (save-stat $G) 
-    (, 
-      (if-then-else 
-        (not $G) 
-        (add-atom  &self $G) True) 
-      (nop (, (writeq $G) (writeln .)))))
-
-
-  (= 
-    (use_extent  is_word 1) True) 
-  (= 
-    (use_extent  tok_split 3) True) 
-  (= 
-    (use_extent  trigram 3) True) 
-  (= 
-    (use_extent  ngram 5) True)
-
-  (= 
-    (compute-corpus-extents) 
-    (, 
-      (debugln "compute corpus extents...") 
-      (time (forall (use-extent $F $A) (compute-extent $F $A)))))
-
-
-
-  (= 
-    (min-of $X $Y $X) 
-    (, 
-      (< $X $Y) 
-      (set-det))) 
-  (= 
-    (min_of  $_ $Y $Y) True)
-
-  (= 
-    (max-of $X $Y $X) 
-    (, 
-      (> $X $Y) 
-      (set-det))) 
-  (= 
-    (max_of  $_ $Y $Y) True)
-
-  (= 
-    (inc-flag $F) 
-    (flag $F $X 
-      (+ $X 1)))
-
-  (= 
-    (compute-extent $F $A) 
-    (, 
-      (functor $NGram $F $A) 
-      (is $A2 
-        (+ $A 1)) 
-      (functor $NGram2 $F $A2) 
-      (dynamic $NGram2) 
-      (set-flag total-fa 0) 
-      (set-flag min-fa 999999999) 
-      (set-flag max-fa 0) 
-      (forall $NGram 
-        (, 
-          (ngram-val $NGram $NN) 
-          (flag total-fa $Total 
-            (+ $Total $NN)) 
-          (get-flag min-fa $Min) 
-          (min-of $Min $NN $NewMin) 
-          (set-flag min-fa $NewMin) 
-          (get-flag max-fa $Max) 
-          (max-of $Max $NN $NewMax) 
-          (set-flag max-fa $NewMax) 
-          (append-term $NGram $NN $NGramStat) 
-          (save-stat $NGramStat))) 
-      (get-flag total-fa $Total) 
-      (get-flag min-fa $Min) 
-      (get-flag max-fa $Max) 
-      (predicate-property $NGram 
-        (number-of-clauses $Insts)) 
-      (max-of $Insts 1 $Insts1) 
-      (is $Mean 
-        (round (/ $Total $Insts1))) 
-      (is $High 
-        (+ 
-          (/ 
-            (- $Max $Mean) 2) $Mean)) 
-      (is $Low 
-        (+ 
-          (/ 
-            (- $Mean $Min) 2) $Min)) 
-      (set-flag med-high-fa $High) 
-      (set-flag med-low-fa $Low) 
-      (nop (, (set-flag above-mean-fa 0) (set-flag above-med-high-fa 0) (set-flag num-min-fa 0) (set-flag below-mean-fa 0) (set-flag below-med-low-fa 0) (append-term $NGram $NN $NGramStatN) (forall $NGramStatN (, (ignore (, (= $NN $Min) (inc-flag num-min-fa))) (ignore (, (> $NN $High) (inc-flag above-med-high-fa))) (ignore (, (< $NN $Low) (inc-flag below-med-low-fa))) (if-then-else (=< $NN $Mean) (inc-flag below-mean-fa) (inc-flag above-mean-fa)))) (get-flag num-min-fa $NEMin) (get-flag above-med-high-fa $NAMedHi) (get-flag below-mean-fa $NBMean) (get-flag above-mean-fa $NAMean) (get-flag below-med-low-fa $NBMedLo) (is $NAMeanNAMedHi (- $NAMean $NAMedHi)) (is $NBMeanNBMedLo (- $NBMean $NBMedLo)) (is $NBMedLoNEMin (- $NBMedLo $NEMin)) (set-det))) 
-      (= $Props 
-        (:: 
-          (= 
-            (if-then min min) $NEMin) 
-          (= 
-            (if-then min low) $NBMedLoNEMin) 
-          (= 
-            (if-then low mean) $NBMeanNBMedLo) 
-          (= 
-            (if-then mean high) $NAMeanNAMedHi) 
-          (= 
-            (if-then high max) $NAMedHi) 
-          (= --------- ------------) 
-          (= 
-            (if-then min max) $Insts) nl 
-          (= min $Min) 
-          (= low $Low) 
-          (= mean $Mean) 
-          (= high $High) 
-          (= max $Max) 
-          (= total $Total))) 
-      (maplist 
-        (save-extents $F $A) $Props) 
-      (debugln (:: (extent-props (/ $F $A)) $Props)) 
-      (set-det))); avoid division by zero
-; adds 20 seconds and is not yet used
+qcompile_corpus:- 
+  save_corpus_stats,
+  debugln("Compiling now..."),
+  time(pllm:qcompile(plm)),
+  debugln("Loading now..."),
+  time(pllm:ensure_loaded(plm)),
+  debugln("Corpus Ready").
 
 
+add_training(X,Str):- 
+ flag(speech_act,A,A+1),
+ get_flag(corpus_convos,Z),
+ XX is ((Z+1)*100_000_000_000)+(A*10_000_000)+X, 
+ add_training_str(XX,Str).
 
-  (= 
-    (save-extents $_ $_ 
-      (= $_ x)) 
-    (set-det))
-  (= 
-    (save-extents $F $A 
-      (= $X $Y)) 
-    (, 
-      (set-det) 
-      (add-atom  &self 
-        (extent_props  $F $A $X $Y)))) 
-  (= 
-    (save-extents $_ $_ $_) 
-    (set-det))
+add_training_str(XX,"XXXXXXXXXXX"):- C = 100_000_000_000, Buffer is floor(XX/C)*C + 09911111111111,  
+  ignore(add_conversation_training(Buffer)), inc_flag(corpus_convos),!,set_flag(speech_act,1).
+add_training_str(XX,Str):- 1 is XX mod 2, !, add_training_said(said,"Al",XX,Str),!. 
+add_training_str(XX,Str):- add_training_said(said,"Jo",XX,Str),!. 
 
-
-  (= 
-    (ngram-val $NGram $NN) 
-    (, 
-      (ngram-key $NGram $Key) 
-      (get-flag $Key $NN)))
-
-
-  (= 
-    (ngram-inc $NGram) 
-    (ngram-inc $NGram $NN))
-  (= 
-    (ngram-inc $NGram $NN) 
-    (, 
-      (ngram-key $NGram $Key) 
-      (flag $Key $NN 
-        (+ $NN 1))))
-
-
-  (= 
-    (ngram-key 
-      (tok-split $O $_ $_) $O) 
-    (set-det))
-  (= 
-    (ngram-key 
-      (is-word $O) $O) 
-    (set-det))
-  (= 
-    (ngram-key 
-      (trigram $A $B $C) $Key) 
-    (, 
-      (set-det) 
-      (join-text 
-        (:: $A $B $C) $Key)))
-  (= 
-    (ngram-key 
-      (ngram $Loc $A $B $C $D $_) $Key) 
-    (, 
-      (set-det) 
-      (ngram-key 
-        (ngram $Loc $A $B $C $D) $Key)))
-  (= 
-    (ngram-key 
-      (ngram $Loc 
-        (oc $_) $B $C 
-        (oc $_)) $Key) 
-    (, 
-      (set-det) 
-      (join-text 
-        (:: oc $B $C oc) $Key)))
-  (= 
-    (ngram-key 
-      (ngram $Loc 
-        (oc $_) $A $B $C) $Key) 
-    (, 
-      (set-det) 
-      (join-text 
-        (:: oc $A $B $C) $Key)))
-  (= 
-    (ngram-key 
-      (ngram $Loc $A $B $C 
-        (oc $_)) $Key) 
-    (, 
-      (set-det) 
-      (join-text 
-        (:: $A $B $C oc) $Key)))
-  (= 
-    (ngram-key 
-      (ngram $Loc $A $B $C $D) $Key) 
-    (join-text 
-      (:: $A $B $C $D) $Key))
-
-
-  (= 
-    (join-text $List $Key) 
-    (atomic-list-concat $List , $Key))
-
-
-  (= 
-    (save-corpus-stats) 
-    (time (, (tell plm.pl) (write '
- :- style-check(- discontiguous).
- :- X= (is-word/2,ngram/6),
-    dynamic(X),multifile(X). 
-') (listing (:: (/ is-word 2) (/ ngram 6))) (told))))
-
-
-  (= 
-    (qcompile-corpus) 
-    (, 
-      (save-corpus-stats) 
-      (debugln "Compiling now...") 
-      (time (with_self  (pllm) (qcompile plm))) 
-      (debugln "Loading now...") 
-      (time (with_self  (pllm) (ensure-loaded plm))) 
-      (debugln "Corpus Ready")))
-
-
-
-  (= 
-    (add-training $X $Str) 
-    (, 
-      (flag speech-act $A 
-        (+ $A 1)) 
-      (get-flag corpus-convos $Z) 
-      (is $XX 
-        (+ 
-          (+ 
-            (* 
-              (+ $Z 1) 100000000000) 
-            (* $A 10000000)) $X)) 
-      (add-training-str $XX $Str)))
-
-
-  (= 
-    (add-training-str $XX "XXXXXXXXXXX") 
-    (, 
-      (= $C 100000000000) 
-      (is $Buffer 
-        (+ 
-          (* 
-            (floor (/ $XX $C)) $C) 9911111111111)) 
-      (ignore (add-conversation-training $Buffer)) 
-      (inc-flag corpus-convos) 
-      (set-det) 
-      (set-flag speech-act 1)))
-  (= 
-    (add-training-str $XX $Str) 
-    (, 
-      (is 1 
-        (mod $XX 2)) 
-      (set-det) 
-      (add-training-said said "Al" $XX $Str) 
-      (set-det))) 
-  (= 
-    (add-training-str $XX $Str) 
-    (, 
-      (add-training-said said "Jo" $XX $Str) 
-      (set-det))) 
-
-
-  (= 
-    (add-training-said $_ $_ $_ Nil) 
-    (set-det))
-  (= 
-    (add-training-said $Says $PERSON $XX $Str) 
-    (, 
-      (string $Str) 
-      (tokenize-atom $Str $Toks) 
-      (set-det) 
-      (pretok $Toks $PreToks) 
-      (add-training-said $Says $PERSON $XX $PreToks)))
-  (= 
-    (add-training-said $Says $PERSON $XX $Toks) 
-    (, 
-      (append $Left 
-        (:: .) $Toks) 
-      (set-det) 
-      (add-training-said $Says $PERSON $XX $Left)))
-  (= 
-    (add-training-said $Says $PERSON $XX $Toks) 
-    (, 
-      (append $Left 
-        (Cons  $LE $Right) $Toks) 
-      (\== $Right Nil) 
-      (member $LE 
-        (:: . ?)) 
-      (append $Left 
-        (:: $LE) $Said) 
-      (set-det) 
-      (add-training-said $Says $PERSON $XX $Said) 
-      (add-training-said $Says $PERSON $XX $Right)))
-  (= 
-    (add-training-said said $PERSON $XX $Toks) 
-    (, 
-      (append $Left 
-        (:: ?) $Toks) 
-      (set-det) 
-      (add-training-said asks $PERSON $XX $Left)))
-  (= 
-    (add-training-said $Says $PERSON $XX $Toks) 
-    (, 
-      (if-then-else 
-        (== $Says asks) 
-        (= $J ?) 
-        (= $J .)) 
-      (atomics-to-string $Toks ' ' $Str) 
-      (atomics-to-string 
-        (:: $Str $J) '' $StrP) 
-      (sformat $S " ~w ~w, ~q " 
-        (:: $PERSON $Says $StrP)) 
-      (= $BB 
-        (with_self  
-          (tmp) 
-          (buffer-training $XX $S))) 
-      (add-atom  &self $BB) 
-      (wdmsg $BB)))
+add_training_said(_,_,_,[]):-!.
+add_training_said(Says,PERSON,XX,Str):- string(Str),tokenize_atom(Str,Toks),!,pretok(Toks,PreToks),
+   add_training_said(Says,PERSON,XX,PreToks).
+add_training_said(Says,PERSON,XX,Toks):- append(Left,['.'],Toks),!,add_training_said(Says,PERSON,XX,Left).
+add_training_said(Says,PERSON,XX,Toks):- append(Left,[LE|Right],Toks), Right\==[],
+  member(LE,['.','?']),append(Left,[LE],Said),!,
+  add_training_said(Says,PERSON,XX,Said), add_training_said(Says,PERSON,XX,Right).
+add_training_said(said,PERSON,XX,Toks):- append(Left,['?'],Toks),!,add_training_said(asks,PERSON,XX,Left).
+add_training_said(Says,PERSON,XX,Toks):-
+  (Says==asks-> J='?' ; J ='.'),
+  atomics_to_string(Toks,' ',Str), atomics_to_string([Str,J],'',StrP), sformat(S," ~w ~w, ~q ",[PERSON,Says,StrP]),
+  BB = tmp:buffer_training(XX,S), assert(BB),wdmsg(BB).
 
  
+assert_training(XX,P,Parse):- assert_if_new(training(XX,P,Parse)),dmsg(training(XX,P,Parse)),save_training(training/3).
+
+do_training(XX,_Str,F2):- training(XX,F2,_),!.
+do_training(XX,Str,F2):-
+  catch(call(F2,Str,Result),E,(dumpSt,format('%~~~~~ ERROR: ~p~n',[E --> call(F2,Str,Result)])),fail),!,
+  assert_training(XX,F2,Result),!.
+
+
+add_conversation_training(XX):- 
+ wots(Str,
+  forall(retract(tmp:buffer_training(_,S)),(write(' : '),writeln(S)))),
+  assert_training(XX,convo,Str),
+  do_training(XX,Str,text_to_best_tree).
+
+
+all_letters(X):- \+ (upcase_atom(X,U),downcase_atom(X,U)).
+ %tokenize_atom(Str,Toks),
+ %maplist(downcase_atom,Toks,TokList),pretok(TokList,PreToks),!,
+ %assert_training(XX,tokenize_atom,PreToks),
+
+
+add_training_toks(_,[]):- !.
+add_training_toks(X,[A]):- !, add_training_toks(X,[A,'.']).
+add_training_toks(XX,PreToks):-
+ maplist(add_occurs(is_word),PreToks),
+ inc_flag(corpus_training),
+ add_ngrams(except_symbols,trigram,3,skip,PreToks),
+ dbltok(oc,PreToks,ReToks),!,
+ XX1 is XX+1,
+ append([oc(XX)|ReToks],[oc(XX1)],Grams),!,
+ add_ngrams(except_none,ngram,4,XX,Grams).
 
-  (= 
-    (assert-training $XX $P $Parse) 
-    (, 
-      (assert-if-new (training $XX $P $Parse)) 
-      (dmsg (training $XX $P $Parse)) 
-      (save-training (/ training 3))))
-
-
-  (= 
-    (do-training $XX $Str $F2) 
-    (, 
-      (training $XX $F2 $_) 
-      (set-det)))
-  (= 
-    (do-training $XX $Str $F2) 
-    (, 
-      (catch 
-        (call $F2 $Str $Result) $E 
-        (, 
-          (dumpSt) 
-          (format '%~~~~~ ERROR: ~p~n' 
-            (:: (--> $E (call $F2 $Str $Result))))) fail) 
-      (set-det) 
-      (assert-training $XX $F2 $Result) 
-      (set-det)))
-
-
-
-  (= 
-    (add-conversation-training $XX) 
-    (, 
-      (wots $Str 
-        (forall 
-          (remove-atom  &self 
-            (:  tmp 
-              (buffer_training  $_ $S))) 
-          (, 
-            (write  : ) 
-            (writeln $S)))) 
-      (assert-training $XX convo $Str) 
-      (do-training $XX $Str text-to-best-tree)))
-
-
-
-  (= 
-    (all-letters $X) 
-    (not (, (upcase-atom $X $U) (downcase-atom $X $U))))
- ;tokenize_atom(Str,Toks),
- ;maplist(downcase_atom,Toks,TokList),pretok(TokList,PreToks),!,
- ;assert_training(XX,tokenize_atom,PreToks),
-
-
-
-  (= 
-    (add-training-toks $_ Nil) 
-    (set-det))
-  (= 
-    (add-training-toks $X 
-      (:: $A)) 
-    (, 
-      (set-det) 
-      (add-training-toks $X 
-        (:: $A .))))
-  (= 
-    (add-training-toks $XX $PreToks) 
-    (, 
-      (maplist 
-        (add-occurs is-word) $PreToks) 
-      (inc-flag corpus-training) 
-      (add-ngrams except-symbols trigram 3 skip $PreToks) 
-      (dbltok oc $PreToks $ReToks) 
-      (set-det) 
-      (is $XX1 
-        (+ $XX 1)) 
-      (append 
-        (Cons  
-          (oc $XX) $ReToks) 
-        (:: (oc $XX1)) $Grams) 
-      (set-det) 
-      (add-ngrams except-none ngram 4 $XX $Grams)))
-
-
-  (= 
-    (add-ngrams $Except $F $N $Loc $Grams) 
-    (, 
-      (length $NGram $N) 
-      (append $NGram $_ $Mid) 
-      (forall 
-        (append $_ $Mid $Grams) 
-        (assert-ngram $Except $F $Loc $NGram))))
-
-
-  (= 
-    (except_none  $_) True)
-
-  (= 
-    (assert-ngram $Except $F $Loc $List) 
-    (, 
-      (or 
-        (== $Except except-none) 
-        (maplist $Except $List)) 
-      (set-det) 
-      (if-then-else 
-        (== $Loc skip) 
-        (=.. $W 
-          (Cons  $F $List)) 
-        (=.. $W 
-          (Cons  $F 
-            (Cons  $Loc $List)))) 
-      (ngram-inc $W $X) 
-      (if-then-else 
-        (== $Loc skip) 
-        (if-then-else 
-          (not $W) 
-          (add-atom  &self $W) True) 
-        (add-atom  &self $W)) 
-      (if-then-else 
-        (= $X 0) 
-        (inc-flag corpus-nodes) 
-        (inc-flag corpus-node-overlap)) 
-      (set-det)))
-
-
-  (= 
-    (add-occurs $F $Tok) 
-    (, 
-      (=.. $P 
-        (:: $F $Tok)) 
-      (ignore (, (not $P) (add-atom  &self $P) (inc-flag corpus-unique-toks))) 
-      (ngram-inc $P) 
-      (inc-flag corpus-total-toks)))
-
-
-  (= 
-    (except-symbols $X) 
-    (not (, (upcase-atom $X $U) (downcase-atom $X $U))))
-
-
-  (= 
-    (pretok  () ()) True)
-  (= 
-    (pretok 
-      (:: .) Nil) 
-    (set-det))
-  (= 
-    (pretok 
-      (Cons  $X 
-        (Cons  $X 
-          (Cons  $X $Nxt))) $O) 
-    (, 
-      (set-det) 
-      (atomic-list-concat 
-        (:: $X $X $X) , $Y) 
-      (pretok 
-        (Cons  $Y $Nxt) $O)))
-  (= 
-    (pretok 
-      (Cons  $A 
-        (Cons  - 
-          (Cons  $S $Grams))) 
-      (Cons  $F $ReTok)) 
-    (, 
-      (atomic-list-concat 
-        (:: $A $S) - $F) 
-      (set-det) 
-      (pretok $Grams $ReTok)))
-  (= 
-    (pretok 
-      (Cons  $A 
-        (Cons  ' 
-          (Cons  $S $Grams))) 
-      (Cons  $F $ReTok)) 
-    (, 
-      (all-letters $A) 
-      (all-letters $S) 
-      (atomic-list-concat 
-        (:: $A $S) ' $F) 
-      (set-det) 
-      (pretok $Grams $ReTok)))
-  (= 
-    (pretok 
-      (Cons  $A 
-        (Cons  ï¿½ 
-          (Cons  $S $Grams))) 
-      (Cons  $F $ReTok)) 
-    (, 
-      (all-letters $A) 
-      (all-letters $S) 
-      (atomic-list-concat 
-        (:: $A $S) ' $F) 
-      (set-det) 
-      (pretok $Grams $ReTok)))
-  (= 
-    (pretok 
-      (Cons  $A 
-        (Cons  ` 
-          (Cons  $S $Grams))) 
-      (Cons  $F $ReTok)) 
-    (, 
-      (all-letters $A) 
-      (all-letters $S) 
-      (atomic-list-concat 
-        (:: $A $S) ' $F) 
-      (set-det) 
-      (pretok $Grams $ReTok)))
-  (= 
-    (pretok 
-      (Cons  
-        (set-det) $Grams) $ReTok) 
-    (pretok 
-      (Cons  . $Grams) $ReTok))
-  (= 
-    (pretok 
-      (Cons  $S $Grams) 
-      (Cons  $S $ReTok)) 
-    (pretok $Grams $ReTok))
-
-; dbltok(_,X,X):-!.
-
-  (= 
-    (dbltok oc Nil Nil) 
-    (set-det))
-  (= 
-    (dbltok $Pre Nil 
-      (:: $PS)) 
-    (, 
-      (set-det) 
-      (atoms-join $Pre oc $PS)))
-  (= 
-    (dbltok $Pre 
-      (Cons  $S $Grams) 
-      (Cons  $PS $ReTok)) 
-    (, 
-      (atoms-join $Pre $S $PS) 
-      (dbltok $S $Grams $ReTok)))
-
-
-  (= 
-    (atoms-join $A $B $O) 
-    (, 
-      (tok-split $O $A $B) 
-      (set-det) 
-      (ngram-inc (tok-split $O $A $B))))
-  (= 
-    (atoms-join $A $B $O) 
-    (, 
-      (atomic-list-concat 
-        (:: $A $B) : $O) 
-      (set-det) 
-      (add-atom  &self 
-        (tok_split  $O $A $B)) 
-      (ngram-inc (tok-split $O $A $B))))
-
-; @TODO use average 
-;as_good(T,X):- is_word(T,X),(Nxt>500->X=0;X is 500-Nxt).
-;ngram_rate(A,B,C,D,N,NN):- ngram(Loc,A,B,C,D,N), maplist(as_good,[A,B,C,D],Num), sumlist(Num,NN).
-
-
-  (= 
-    (add-blanks $N $S $Slotted) 
-    (, 
-      (not (is-list $S)) 
-      (set-det) 
-      (add-blanks $N 
-        (:: $S) $Slotted)))
-  (= 
-    (add-blanks $_ Nil Nil) 
-    (set-det))
-
-  (= 
-    (add-blanks $N 
-      (Cons  $A 
-        (Cons  $B $Sent)) 
-      (Cons  $O $Slotted)) 
-    (, 
-      (tok-split $O $A $B) 
-      (set-det) 
-      (add-blanks $N $Sent $Slotted)))
-  (= 
-    (add-blanks $N 
-      (Cons  $S $Sent) 
-      (Cons  $O $Slotted)) 
-    (, 
-      (not (not (tok-split $_ $S $_))) 
-      (set-det) 
-      (tok-split $O $S $_) 
-      (add-blanks $N $Sent $Slotted)))
-  (= 
-    (add-blanks $N 
-      (Cons  $O $Sent) 
-      (Cons  $O $Slotted)) 
-    (, 
-      (atom $O) 
-      (tok-split $O $_ $_) 
-      (set-det) 
-      (add-blanks $N $Sent $Slotted)))
-
-  (= 
-    (add-blanks $N 
-      (Cons  
-        (len $S) $Sent) $Slotted) 
-    (, 
-      (integer $S) 
-      (length $L $S) 
-      (set-det) 
-      (add-blanks $N $Sent $Mid) 
-      (append $L $Mid $Slotted)))
-  (= 
-    (add-blanks $N 
-      (Cons  $S $Sent) 
-      (Cons  $A $Slotted)) 
-    (, 
-      (string $S) 
-      (atom-string $A $S) 
-      (set-det) 
-      (add-blanks $N $Sent $Slotted)))
-  (= 
-    (add-blanks $N 
-      (Cons  $S $Sent) $Slotted) 
-    (, 
-      (var $S) 
-      (set-det) 
-      (between 1 $N $L) 
-      (add-blanks $N 
-        (Cons  
-          (- 1 $L) $Sent) $Slotted)))
-  (= 
-    (add-blanks $N 
-      (Cons  
-        (- $Lo $Hi) $Sent) $Slotted) 
-    (, 
-      (or 
-        (integer $Lo) 
-        (integer $Hi)) 
-      (set-det) 
-      (between $Lo $Hi $L) 
-      (length $S $L) 
-      (add-blanks $N $Sent $Mid) 
-      (append $S $Mid $Slotted)))
-  (= 
-    (add-blanks $N 
-      (Cons  $S $Sent) $Slotted) 
-    (, 
-      (is-list $S) 
-      (set-det) 
-      (flatten $S $SL) 
-      (append $SL $Sent $SLSent) 
-      (set-det) 
-      (add-blanks $N $SLSent $Slotted)))
-  (= 
-    (add-blanks $N 
-      (Cons  $S $Sent) $Slotted) 
-    (, 
-      (atom $S) 
-      (into-mw $S $SL) 
-      (set-det) 
-      (append $SL $Sent $SLSent) 
-      (set-det) 
-      (add-blanks $N $SLSent $Slotted)))
-  (= 
-    (add-blanks $N 
-      (Cons  $S $Sent) 
-      (Cons  $S $Slotted)) 
-    (add-blanks $N $Sent $Slotted))
-
-
-  (= 
-    (into-mw $S $SL) 
-    (, 
-      (into-mw0 $S $SL) 
-      (\== $SL 
-        (:: $S)) 
-      (set-det)))
-
-  (= 
-    (into-mw0 $S $SL) 
-    (, 
-      (atomic-list-concat 
-        (Cons  $M 
-          (Cons  $_ $_)) : $S) 
-      (set-det) 
-      (into-mw0 $M $SL)))
-  (= 
-    (into-mw0 $S $SL) 
-    (atomic-list-concat $SL , $S))
-  (= 
-    (into-mw0 $S $SL) 
-    (atomic-list-concat $SL ' ' $S))
-  (= 
-    (into-mw0 $S $SL) 
-    (atomic-list-concat $SL - $S))
-
-
-  (= 
-    (loc-dists $Loc1 $Loc2 $NN) 
-    (is $NN 
-      (abs (- $Loc1 $Loc2))))
-  (= 
-    (loc-dists $Loc1 $Loc2 $Loc3 $NN) 
-    (is $NN 
-      (/ 
-        (+ 
-          (+ 
-            (abs (- $Loc1 $Loc2)) 
-            (abs (- $Loc3 $Loc2))) 
-          (abs (- $Loc1 $Loc3))) 3)))
-
-;:- pllm:ensure_loaded(plm).
-; added for conversations
-
-  (= 
-    (ngram $Loc $A 
-      (oc $X) $B $C $NN) 
-    (, 
-      (nonvar $X) 
-      (ngram $Loc $_ $_ $A 
-        (oc $X) $_) 
-      (ngram $ULoc 
-        (oc $X) $B $C $_ $NN)))
-  (= 
-    (ngram $Loc $A $B 
-      (oc $X) $C $NN) 
-    (, 
-      (nonvar $X) 
-      (ngram $Loc $_ $A $B 
-        (oc $X) $_) 
-      (ngram $ULoc 
-        (oc $X) $C $_ $_ $NN)))
-
-
-  (= 
-    (autoc $Sent) 
-    (autoc 1 $Sent))
-  (= 
-    (autoc $N $Sent) 
-    (, 
-      (remove-all-atoms  &self 
-        (used_cl  
-          (ngram  $_ $_ $_ $_))) 
-      (add-blanks $N $Sent $Slotted) 
-      (no-repeats (map-sent $_ $Loc $Slotted)) 
-      (fmt-pllm $Slotted)))
-
-
-  (= 
-    (good-toks $Key $E) 
-    (, 
-      (functor $P ngram 6) 
-      (arg 6 $P $E) 
-      (no-repeats $Key 
-        (, $P 
-          (ngram-key $P $Key)))))
-
-
-
-  (add-history recompile-corpus)
-
-  (fixup-exports)
-
-  (dynamic (/ used-cl 1))
-
-
-  (= 
-    (map-sent $_ $_ $Sent) 
-    (, 
-      (ground $Sent) 
-      (set-det)))
-  (= 
-    (map-sent $LR $Loc $Sent) 
-    (, 
-      (var $Sent) 
-      (length $Sent 9) 
-      (map-sent $LR $Loc $Sent)))
-  (= 
-    (map-sent $LR $Loc $List) 
-    (, 
-      (= $LR lr) 
-      (append $Left 
-        (Cons  $X $More) $List) 
-      (nonvar $X) 
-      (\== $Left Nil) 
-      (set-det) 
-      (map-sent $LR $Loc 
-        (Cons  $X $More)) 
-      (map-sent rl $Loc $List)))
-  (= 
-    (map-sent $LR $Loc 
-      (Cons  $A 
-        (Cons  $B 
-          (Cons  $C 
-            (Cons  $D $More))))) 
-    (, 
-      (some-ngram $Loc $A $B $C $D $Fire) 
-      (map-sent $LR $Loc 
-        (Cons  $C 
-          (Cons  $D $More)))))
-  (= 
-    (map-sent $LR $Loc 
-      (Cons  $A 
-        (Cons  $B 
-          (Cons  $C 
-            (Cons  $D $More))))) 
-    (, 
-      (some-ngram $Loc $A $B $C $_ $Fire) 
-      (map-sent $LR $Loc 
-        (Cons  $B 
-          (Cons  $C 
-            (Cons  $D $More))))))
-  (= 
-    (map-sent $_ $Loc $List) 
-    (, 
-      (= $ABCDO 
-        (:: $_ $_ $_ $_ $Occurs)) 
-      (append $List $_ $ABCDO) 
-      (apply some-ngram 
-        (Cons  $Loc $ABCDO))))
-
-
-
-  (= 
-    (some-ngram $PrevLoc $A $B $C $D $N) 
-    (, 
-      (pick-ngram $Loc $A $B $C $D $N) 
-      (may-use $Loc $A $B $C $D $N)))
-
-
-  (= 
-    (pick-ngram $Loc $A $B $C $D $N) 
-    (if-then-else 
-      (maplist var 
-        (:: $A $B $C $D)) 
-      (rnd-ngram $Loc $A $B $C $D $N) 
-      (ngram $Loc $A $B $C $D $N)))
-
-
-  (= 
-    (rnd-ngram $Loc $A $B $C $D $N) 
-    (, 
-      (= $G 
-        (ngram $Loc $A $B $C $D $N)) 
-      (predicate-property $G 
-        (number-of-clauses $R)) 
-      (is $CN 
-        (+ 
-          (random $R) 1)) 
-      (nth-clause $G $CN $Ref) 
-      (clause $G $Body $Ref) $Body))
-
-
-
-  (style-check (- singleton))
-
-  (add-history (, (good-toks $Key $E) (> $E 20)))
-  (add-history (autoc (:: music:you (len 200))))
-  (add-history (autoc (:: oc music:you (len 200))))
-  (add-history (autoc (:: oc:music music:you (len 200))))
-  (add-history (autoc (:: music (len 200))))
-  (add-history (autoc (:: (len 10) music (len 200))))
-
-
-  (= 
-    (may-use $Loc $_ $B $C $D $_) 
-    (, 
-      (not (used-cl (ngram $A $B $C $D))) 
-      (assert 
-        (used-cl (ngram $A $B $C $D)) $Cl2) 
-      (undo (erase $Cl2)) 
-      (set-det)))
-
-
-
-  (= 
-    (gen6 (= (:: $A $B $C $D $E $F $G $H) $N)) 
-    (, 
-      (ngram $Loc1 $E $F $G $H $Z) 
-      (ngram $Loc2 $C $D $E $F $Y) 
-      (ngram $Loc3 $A $B $C $D $X) 
-      (is $N 
-        (+ 
-          (+ $X $Y) $Z))))
-
-  (fixup-exports)
-
-  (if (not (prolog-load-context reloading True)))
-  (load-training)
-  (compile-corpus)
-  (endif)
+add_ngrams(Except,F,N,Loc,Grams):- length(NGram,N),
+ append(NGram,_,Mid),
+ forall(append(_,Mid,Grams),assert_ngram(Except,F,Loc,NGram)).
 
+except_none(_).
+assert_ngram(Except,F,Loc,List):- 
+ (Except == except_none ; maplist(Except,List)),!,
+ (Loc==skip->W=..[F|List];W=..[F,Loc|List]),
+ ngram_inc(W,X),
+ (Loc==skip-> (( \+ W -> assert(W) ; true)) ; assert(W)),
+ (X=0->(inc_flag(corpus_nodes));inc_flag(corpus_node_overlap)),!.
+
+add_occurs(F,Tok):- P=..[F,Tok],
+  ignore(( \+ P, assert(P), inc_flag(corpus_unique_toks) )),
+  ngram_inc(P),inc_flag(corpus_total_toks).
+
+except_symbols(X):- \+ (upcase_atom(X,U),downcase_atom(X,U)).
+
+pretok([],[]).
+pretok(['.'],[]):-!.
+pretok([X,X,X|Nxt],O):-!,atomic_list_concat([X,X,X],',',Y),pretok([Y|Nxt],O).
+pretok([A,'-',S|Grams],[F|ReTok]):- atomic_list_concat([A,S],'-',F),!, pretok(Grams,ReTok).
+pretok([A,'\'',S|Grams],[F|ReTok]):- all_letters(A),all_letters(S), atomic_list_concat([A,S],'\'',F),!, pretok(Grams,ReTok).
+pretok([A,'´',S|Grams],[F|ReTok]):- all_letters(A),all_letters(S), atomic_list_concat([A,S],'\'',F),!, pretok(Grams,ReTok).
+pretok([A,'`',S|Grams],[F|ReTok]):- all_letters(A),all_letters(S), atomic_list_concat([A,S],'\'',F),!, pretok(Grams,ReTok).
+pretok(['!'|Grams],ReTok):- pretok(['.'|Grams],ReTok).
+pretok([S|Grams],[S|ReTok]):- pretok(Grams,ReTok).
+
+% dbltok(_,X,X):-!.
+dbltok(oc,[],[]):-!.
+dbltok(Pre,[],[PS]):-!, atoms_join(Pre,oc,PS).
+dbltok(Pre,[S|Grams],[PS|ReTok]):- atoms_join(Pre,S,PS), dbltok(S,Grams,ReTok).
+
+atoms_join(A,B,O):- tok_split(O,A,B),!,ngram_inc(tok_split(O,A,B)).
+atoms_join(A,B,O):- atomic_list_concat([A,B],':',O),!,assert(tok_split(O,A,B)),ngram_inc(tok_split(O,A,B)).
+
+% @TODO use average 
+%as_good(T,X):- is_word(T,X),(Nxt>500->X=0;X is 500-Nxt).
+%ngram_rate(A,B,C,D,N,NN):- ngram(Loc,A,B,C,D,N), maplist(as_good,[A,B,C,D],Num), sumlist(Num,NN).
+
+add_blanks(N,S,Slotted):- \+ is_list(S),!,add_blanks(N,[S],Slotted).
+add_blanks(_,[],[]):-!.
+
+add_blanks(N,[A,B|Sent],[O|Slotted]):- tok_split(O,A,B),!,add_blanks(N,Sent,Slotted).
+add_blanks(N,[S|Sent],[O|Slotted]):- \+ \+ tok_split(_,S,_),!, tok_split(O,S,_),add_blanks(N,Sent,Slotted).
+add_blanks(N,[O|Sent],[O|Slotted]):- atom(O), tok_split(O,_,_),!,add_blanks(N,Sent,Slotted).
+
+add_blanks(N,[len(S)|Sent],Slotted):- integer(S),length(L,S),!,add_blanks(N,Sent,Mid),append(L,Mid,Slotted).
+add_blanks(N,[S|Sent],[A|Slotted]):- string(S),atom_string(A,S),!,add_blanks(N,Sent,Slotted).
+add_blanks(N,[S|Sent],Slotted):- var(S),!,between(1,N,L),add_blanks(N,[1-L|Sent],Slotted).
+add_blanks(N,[Lo-Hi|Sent],Slotted):- (integer(Lo);integer(Hi)),!,between(Lo,Hi,L),length(S,L),add_blanks(N,Sent,Mid),append(S,Mid,Slotted).
+add_blanks(N,[S|Sent],Slotted):- is_list(S),!,flatten(S,SL),append(SL,Sent,SLSent),!,add_blanks(N,SLSent,Slotted).
+add_blanks(N,[S|Sent],Slotted):- atom(S),into_mw(S,SL),!,append(SL,Sent,SLSent),!,add_blanks(N,SLSent,Slotted).
+add_blanks(N,[S|Sent],[S|Slotted]):- add_blanks(N,Sent,Slotted).
+
+into_mw(S,SL):- into_mw0(S,SL),SL\==[S],!.
+into_mw0(S,SL):- atomic_list_concat([M,_|_],':',S),!,into_mw0(M,SL).
+into_mw0(S,SL):- atomic_list_concat(SL,',',S).
+into_mw0(S,SL):- atomic_list_concat(SL,' ',S).
+into_mw0(S,SL):- atomic_list_concat(SL,'_',S).
+
+loc_dists(Loc1,Loc2, NN):- NN is abs(Loc1-Loc2).
+loc_dists(Loc1,Loc2,Loc3, NN):- NN is (abs(Loc1-Loc2) + abs(Loc3-Loc2) + abs(Loc1-Loc3))/3.
+
+%:- pllm:ensure_loaded(plm).
+% added for conversations
+ngram(Loc,A,oc(X),B,C,NN):- nonvar(X), ngram(Loc,_,_,A,oc(X),_),ngram(_ULoc,oc(X),B,C,_,NN).
+ngram(Loc,A,B,oc(X),C,NN):- nonvar(X), ngram(Loc,_,A,B,oc(X),_),ngram(_ULoc,oc(X),C,_,_,NN).
+
+autoc(Sent):- autoc(1,Sent).
+autoc(N,Sent):- 
+  retractall(used_cl(ngram(_,_,_,_))),
+  add_blanks(N,Sent,Slotted),no_repeats( map_sent(_,_Loc,Slotted)),fmt_pllm(Slotted).
+
+good_toks(Key,E):- functor(P,ngram,6),arg(6,P,E),no_repeats(Key,(P,ngram_key(P,Key))).
+
+
+:- add_history(recompile_corpus).
+
+:- fixup_exports.
+
+:-dynamic(used_cl/1).
+
+map_sent(_,_,Sent):- ground(Sent),!.
+map_sent(LR,Loc,Sent):- var(Sent), length(Sent,9),map_sent(LR,Loc,Sent).
+map_sent(LR,Loc,List):- LR=lr,append(Left,[X|More],List),nonvar(X),Left\==[],!,map_sent(LR,Loc,[X|More]),map_sent(rl,Loc,List).
+map_sent(LR,Loc,[A,B,C,D|More]):- some_ngram(Loc,A,B,C,D,_Fire), map_sent(LR,Loc,[C,D|More]).
+map_sent(LR,Loc,[A,B,C,D|More]):- some_ngram(Loc,A,B,C,_,_Fire), map_sent(LR,Loc,[B,C,D|More]).
+map_sent(_,Loc,List):- ABCDO=[_,_,_,_,_Occurs],append(List,_,ABCDO), apply(some_ngram,[Loc|ABCDO]).
+
+
+some_ngram(_PrevLoc,A,B,C,D,N):- pick_ngram(Loc,A,B,C,D,N),may_use(Loc,A,B,C,D,N).
+
+pick_ngram(Loc,A,B,C,D,N):- maplist(var,[A,B,C,D])->rnd_ngram(Loc,A,B,C,D,N);ngram(Loc,A,B,C,D,N).
+
+rnd_ngram(Loc,A,B,C,D,N):-  G = ngram(Loc,A,B,C,D,N),
+ predicate_property(G,number_of_clauses(R)),
+  CN is random(R)+1, nth_clause(G,CN,Ref),clause(G,Body,Ref),Body.
+
+
+:- style_check(- singleton).
+
+:- add_history((good_toks(Key,E),E>20)).
+:- add_history((autoc([ 'music:you',len(200)]))).
+:- add_history((autoc([oc,'music:you',len(200)]))).
+:- add_history((autoc([ 'oc:music', 'music:you',len(200)]))).
+:- add_history((autoc([ 'music',len(200)]))).
+:- add_history((autoc([len(10),music,len(200)]))).
+
+may_use(Loc,_,B,C,D,_):- \+ used_cl(ngram(A,B,C,D)), assert(used_cl(ngram(A,B,C,D)),Cl2), undo(erase(Cl2)), !.
+
+
+gen6([A,B,C,D,E,F,G,H]=N):-
+  ngram(Loc1,E,F,G,H,Z), ngram(Loc2,C,D,E,F,Y), ngram(Loc3,A,B,C,D,X), N is X+Y+Z.
+:- fixup_exports.
+
+:- if(\+ prolog_load_context(reloading, true)).
+:- load_training.
+:- compile_corpus.
+:- endif.
 
 

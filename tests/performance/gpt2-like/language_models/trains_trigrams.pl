@@ -1,5018 +1,2508 @@
-
-  (= 
-    (trigram  do you think 4489) True)
-  (= 
-    (trigram  do you like 3754) True)
-  (= 
-    (trigram  a lot of 3356) True)
-  (= 
-    (trigram  do you like 3001) True)
-  (= 
-    (trigram  what do you 2825) True)
-  (= 
-    (trigram  is your favorite 2400) True)
-  (= 
-    (trigram  i dont know 2166) True)
-  (= 
-    (trigram  do you think 2114) True)
-  (= 
-    (trigram  have you seen 2062) True)
-  (= 
-    (trigram  i dont know 1892) True)
-  (= 
-    (trigram  one of the 1569) True)
-  (= 
-    (trigram  did you see 1525) True)
-  (= 
-    (trigram  i dont think 1480) True)
-  (= 
-    (trigram  what is your 1425) True)
-  (= 
-    (trigram  did you see 1365) True)
-  (= 
-    (trigram  one of the 1325) True)
-  (= 
-    (trigram  i think it 1277) True)
-  (= 
-    (trigram  i like the 1214) True)
-  (= 
-    (trigram  i dont think 1186) True)
-  (= 
-    (trigram  i think the 1183) True)
-  (= 
-    (trigram  you think of 1172) True)
-  (= 
-    (trigram  i think the 1144) True)
-  (= 
-    (trigram  it was a 1135) True)
-  (= 
-    (trigram  whats your favorite 1099) True)
-  (= 
-    (trigram  i really like 1079) True)
-  (= 
-    (trigram  do you mean 1068) True)
-  (= 
-    (trigram  i think i 1059) True)
-  (= 
-    (trigram  i think they 1037) True)
-  (= 
-    (trigram  one of my 1030) True)
-  (= 
-    (trigram  did you like 1030) True)
-  (= 
-    (trigram  i think they 978) True)
-  (= 
-    (trigram  i think i 958) True)
-  (= 
-    (trigram  that is a 952) True)
-  (= 
-    (trigram  what did you 951) True)
-  (= 
-    (trigram  you like the 927) True)
-  (= 
-    (trigram  have you ever 917) True)
-  (= 
-    (trigram  do you know 909) True)
-  (= 
-    (trigram  have you heard 886) True)
-  (= 
-    (trigram  that was a 873) True)
-  (= 
-    (trigram  some of the 869) True)
-  (= 
-    (trigram  who is your 843) True)
-  (= 
-    (trigram  do you have 843) True)
-  (= 
-    (trigram  why do you 840) True)
-  (= 
-    (trigram  did you think 830) True)
-  (= 
-    (trigram  who do you 808) True)
-  (= 
-    (trigram  is one of 806) True)
-  (= 
-    (trigram  i love the 806) True)
-  (= 
-    (trigram  you seen the 805) True)
-  (= 
-    (trigram  i love that 800) True)
-  (= 
-    (trigram  of all time 794) True)
-  (= 
-    (trigram  i think that 791) True)
-  (= 
-    (trigram  im not sure 778) True)
-  (= 
-    (trigram  i think he 775) True)
-  (= 
-    (trigram  did you know 775) True)
-  (= 
-    (trigram  that would be 774) True)
-  (= 
-    (trigram  some of the 774) True)
-  (= 
-    (trigram  but i think 767) True)
-  (= 
-    (trigram  going to be 757) True)
-  (= 
-    (trigram  in the movie 735) True)
-  (= 
-    (trigram  why do you 732) True)
-  (= 
-    (trigram  you think about 729) True)
-  (= 
-    (trigram  of all time 726) True)
-  (= 
-    (trigram  i think he 721) True)
-  (= 
-    (trigram  i think so 704) True)
-  (= 
-    (trigram  is a great 697) True)
-  (= 
-    (trigram  i want to 695) True)
-  (= 
-    (trigram  but i think 690) True)
-  (= 
-    (trigram  it is a 688) True)
-  (= 
-    (trigram  i love that 686) True)
-  (= 
-    (trigram  what kind of 676) True)
-  (= 
-    (trigram  to listen to 676) True)
-  (= 
-    (trigram  i think so 671) True)
-  (= 
-    (trigram  i would have 661) True)
-  (= 
-    (trigram  did you know 655) True)
-  (= 
-    (trigram  would have to 654) True)
-  (= 
-    (trigram  thought it was 646) True)
-  (= 
-    (trigram  of the best 642) True)
-  (= 
-    (trigram  you see the 637) True)
-  (= 
-    (trigram  you want to 636) True)
-  (= 
-    (trigram  i think its 634) True)
-  (= 
-    (trigram  is the best 631) True)
-  (= 
-    (trigram  i thought it 629) True)
-  (= 
-    (trigram  i would have 622) True)
-  (= 
-    (trigram  it would be 621) True)
-  (= 
-    (trigram  have to say 613) True)
-  (= 
-    (trigram  yes it was 611) True)
-  (= 
-    (trigram  when i was 610) True)
-  (= 
-    (trigram  think it was 604) True)
-  (= 
-    (trigram  the first one 596) True)
-  (= 
-    (trigram  whats your favorite 582) True)
-  (= 
-    (trigram  was your favorite 574) True)
-  (= 
-    (trigram  a fan of 574) True)
-  (= 
-    (trigram  you have a 566) True)
-  (= 
-    (trigram  to be a 565) True)
-  (= 
-    (trigram  yes it is 564) True)
-  (= 
-    (trigram  of my favorite 564) True)
-  (= 
-    (trigram  is going to 556) True)
-  (= 
-    (trigram  you listen to 554) True)
-  (= 
-    (trigram  is a good 554) True)
-  (= 
-    (trigram  did you ever 552) True)
-  (= 
-    (trigram  you think the 551) True)
-  (= 
-    (trigram  i would say 551) True)
-  (= 
-    (trigram  i really liked 545) True)
-  (= 
-    (trigram  how do you 543) True)
-  (= 
-    (trigram  im not sure 542) True)
-  (= 
-    (trigram  check it out 542) True)
-  (= 
-    (trigram  they have a 540) True)
-  (= 
-    (trigram  what you mean 533) True)
-  (= 
-    (trigram  i am not 532) True)
-  (= 
-    (trigram  yeah i think 527) True)
-  (= 
-    (trigram  to see it 527) True)
-  (= 
-    (trigram  i like that 524) True)
-  (= 
-    (trigram  yeah it was 513) True)
-  (= 
-    (trigram  he is a 511) True)
-  (= 
-    (trigram  do you remember 511) True)
-  (= 
-    (trigram  ill have to 508) True)
-  (= 
-    (trigram  was a great 506) True)
-  (= 
-    (trigram  he was a 500) True)
-  (= 
-    (trigram  yes it is 494) True)
-  (= 
-    (trigram  i know i 492) True)
-  (= 
-    (trigram  your favorite song 488) True)
-  (= 
-    (trigram  at the end 488) True)
-  (= 
-    (trigram  was a good 485) True)
-  (= 
-    (trigram  a good one 483) True)
-  (= 
-    (trigram  thats a good 476) True)
-  (= 
-    (trigram  i liked the 473) True)
-  (= 
-    (trigram  what was the 472) True)
-  (= 
-    (trigram  i can see 461) True)
-  (= 
-    (trigram  i didnt know 456) True)
-  (= 
-    (trigram  i cant wait 456) True)
-  (= 
-    (trigram  in that movie 454) True)
-  (= 
-    (trigram  i do not 454) True)
-  (= 
-    (trigram  back in the 454) True)
-  (= 
-    (trigram  when i was 451) True)
-  (= 
-    (trigram  i have to 451) True)
-  (= 
-    (trigram  kind of music 443) True)
-  (= 
-    (trigram  is my favorite 442) True)
-  (= 
-    (trigram  yes it was 441) True)
-  (= 
-    (trigram  of the movie 440) True)
-  (= 
-    (trigram  but i dont 440) True)
-  (= 
-    (trigram  want to see 439) True)
-  (= 
-    (trigram  it will be 438) True)
-  (= 
-    (trigram  i wonder if 437) True)
-  (= 
-    (trigram  i know what 437) True)
-  (= 
-    (trigram  i didnt know 433) True)
-  (= 
-    (trigram  yeah that was 432) True)
-  (= 
-    (trigram  to see the 432) True)
-  (= 
-    (trigram  know what you 431) True)
-  (= 
-    (trigram  the super bowl 429) True)
-  (= 
-    (trigram  the one with 429) True)
-  (= 
-    (trigram  what about the 427) True)
-  (= 
-    (trigram  what is the 424) True)
-  (= 
-    (trigram  think of the 424) True)
-  (= 
-    (trigram  you ever seen 423) True)
-  (= 
-    (trigram  but it was 421) True)
-  (= 
-    (trigram  think of the 420) True)
-  (= 
-    (trigram  i used to 420) True)
-  (= 
-    (trigram  what do 'you,think,of' 415) True)
-  (= 
-    (trigram  'what,do,you' think of 415) True)
-  (= 
-    (trigram  have a favorite 413) True)
-  (= 
-    (trigram  of my favorites 412) True)
-  (= 
-    (trigram  in the nfl 408) True)
-  (= 
-    (trigram  a long time 407) True)
-  (= 
-    (trigram  is that the 405) True)
-  (= 
-    (trigram  no i havent 403) True)
-  (= 
-    (trigram  no i havent 402) True)
-  (= 
-    (trigram  i know i 402) True)
-  (= 
-    (trigram  will have to 399) True)
-  (= 
-    (trigram  i know what 399) True)
-  (= 
-    (trigram  i guess i 398) True)
-  (= 
-    (trigram  but i dont 398) True)
-  (= 
-    (trigram  as good as 398) True)
-  (= 
-    (trigram  you know what 394) True)
-  (= 
-    (trigram  never heard of 394) True)
-  (= 
-    (trigram  why is that 393) True)
-  (= 
-    (trigram  you have to 392) True)
-  (= 
-    (trigram  beauty and the 389) True)
-  (= 
-    (trigram  and the beast 388) True)
-  (= 
-    (trigram  do you listen 385) True)
-  (= 
-    (trigram  all of the 384) True)
-  (= 
-    (trigram  i know right 382) True)
-  (= 
-    (trigram  i have heard 380) True)
-  (= 
-    (trigram  i know right 379) True)
-  (= 
-    (trigram  to watch it 377) True)
-  (= 
-    (trigram  what was your 376) True)
-  (= 
-    (trigram  do you want 376) True)
-  (= 
-    (trigram  are you a 374) True)
-  (= 
-    (trigram  there is a 370) True)
-  (= 
-    (trigram  it seems like 370) True)
-  (= 
-    (trigram  i havent seen 369) True)
-  (= 
-    (trigram  i dont like 369) True)
-  (= 
-    (trigram  you know that 368) True)
-  (= 
-    (trigram  i feel like 368) True)
-  (= 
-    (trigram  have to check 368) True)
-  (= 
-    (trigram  you think is 367) True)
-  (= 
-    (trigram  all the time 367) True)
-  (= 
-    (trigram  what is it 366) True)
-  (= 
-    (trigram  i did not 362) True)
-  (= 
-    (trigram  i remember that 360) True)
-  (= 
-    (trigram  why is that 359) True)
-  (= 
-    (trigram  im going to 359) True)
-  (= 
-    (trigram  thats the one 355) True)
-  (= 
-    (trigram  i also like 352) True)
-  (= 
-    (trigram  are you a 352) True)
-  (= 
-    (trigram  are going to 352) True)
-  (= 
-    (trigram  was the best 351) True)
-  (= 
-    (trigram  was one of 348) True)
-  (= 
-    (trigram  you say that 347) True)
-  (= 
-    (trigram  sounds like a 346) True)
-  (= 
-    (trigram  did you hear 346) True)
-  (= 
-    (trigram  i guess i 343) True)
-  (= 
-    (trigram  back in the 343) True)
-  (= 
-    (trigram  i loved the 342) True)
-  (= 
-    (trigram  i heard that 342) True)
-  (= 
-    (trigram  you think they 341) True)
-  (= 
-    (trigram  dont think so 341) True)
-  (= 
-    (trigram  you like it 340) True)
-  (= 
-    (trigram  on the radio 339) True)
-  (= 
-    (trigram  i have not 339) True)
-  (= 
-    (trigram  it was really 338) True)
-  (= 
-    (trigram  to go to 337) True)
-  (= 
-    (trigram  i have a 336) True)
-  (= 
-    (trigram  most of the 335) True)
-  (= 
-    (trigram  have you been 335) True)
-  (= 
-    (trigram  i dont like 334) True)
-  (= 
-    (trigram  a really good 333) True)
-  (= 
-    (trigram  part of the 331) True)
-  (= 
-    (trigram  i think you 328) True)
-  (= 
-    (trigram  to be honest 327) True)
-  (= 
-    (trigram  any of the 327) True)
-  (= 
-    (trigram  yeah it was 326) True)
-  (= 
-    (trigram  i was a 326) True)
-  (= 
-    (trigram  that is true 325) True)
-  (= 
-    (trigram  i cant believe 324) True)
-  (= 
-    (trigram  it was pretty 323) True)
-  (= 
-    (trigram  have to be 321) True)
-  (= 
-    (trigram  but it was 321) True)
-  (= 
-    (trigram  yes i love 317) True)
-  (= 
-    (trigram  the name of 317) True)
-  (= 
-    (trigram  i thought the 317) True)
-  (= 
-    (trigram  i havent heard 317) True)
-  (= 
-    (trigram  think it is 316) True)
-  (= 
-    (trigram  a great movie 316) True)
-  (= 
-    (trigram  i cant believe 315) True)
-  (= 
-    (trigram  been listening to 315) True)
-  (= 
-    (trigram  it was the 313) True)
-  (= 
-    (trigram  a bunch of 312) True)
-  (= 
-    (trigram  a big fan 312) True)
-  (= 
-    (trigram  the star wars 311) True)
-  (= 
-    (trigram  i am a 310) True)
-  (= 
-    (trigram  you heard of 309) True)
-  (= 
-    (trigram  i have seen 309) True)
-  (= 
-    (trigram  i agree with 307) True)
-  (= 
-    (trigram  music do you 305) True)
-  (= 
-    (trigram  i listen to 305) True)
-  (= 
-    (trigram  agree with you 305) True)
-  (= 
-    (trigram  there is a 304) True)
-  (= 
-    (trigram  you think that 303) True)
-  (= 
-    (trigram  you ever see 302) True)
-  (= 
-    (trigram  'i,know,what' you mean 302) True)
-  (= 
-    (trigram  dont know if 301) True)
-  (= 
-    (trigram  star wars movie 300) True)
-  (= 
-    (trigram  oh yeah i 300) True)
-  (= 
-    (trigram  was such a 299) True)
-  (= 
-    (trigram  want to go 299) True)
-  (= 
-    (trigram  i just saw 298) True)
-  (= 
-    (trigram  i agree with 298) True)
-  (= 
-    (trigram  you seen any 297) True)
-  (= 
-    (trigram  yes i think 297) True)
-  (= 
-    (trigram  the one with 297) True)
-  (= 
-    (trigram  yes i do 296) True)
-  (= 
-    (trigram  listen to it 296) True)
-  (= 
-    (trigram  it was so 296) True)
-  (= 
-    (trigram  music do you 295) True)
-  (= 
-    (trigram  dont think so 295) True)
-  (= 
-    (trigram  it came out 294) True)
-  (= 
-    (trigram  i saw the 294) True)
-  (= 
-    (trigram  i love it 294) True)
-  (= 
-    (trigram  i do like 294) True)
-  (= 
-    (trigram  are some of 294) True)
-  (= 
-    (trigram  yeah i know 293) True)
-  (= 
-    (trigram  what are you 291) True)
-  (= 
-    (trigram  i know that 291) True)
-  (= 
-    (trigram  am not sure 291) True)
-  (= 
-    (trigram  i saw it 290) True)
-  (= 
-    (trigram  a great song 289) True)
-  (= 
-    (trigram  looking forward to 288) True)
-  (= 
-    (trigram  yes i have 287) True)
-  (= 
-    (trigram  it was the 287) True)
-  (= 
-    (trigram  i think she 287) True)
-  (= 
-    (trigram  thats the one 286) True)
-  (= 
-    (trigram  'what,do,you' think about 285) True)
-  (= 
-    (trigram  a good movie 285) True)
-  (= 
-    (trigram  yes i do 284) True)
-  (= 
-    (trigram  to be the 284) True)
-  (= 
-    (trigram  my favorite is 283) True)
-  (= 
-    (trigram  was pretty good 282) True)
-  (= 
-    (trigram  think about the 282) True)
-  (= 
-    (trigram  i will have 282) True)
-  (= 
-    (trigram  i dont really 282) True)
-  (= 
-    (trigram  i saw the 281) True)
-  (= 
-    (trigram  yeah i think 280) True)
-  (= 
-    (trigram  it came out 280) True)
-  (= 
-    (trigram  'do,you,have' a favorite 280) True)
-  (= 
-    (trigram  was really good 279) True)
-  (= 
-    (trigram  the end of 279) True)
-  (= 
-    (trigram  it seems like 276) True)
-  (= 
-    (trigram  i like it 276) True)
-  (= 
-    (trigram  i saw that 275) True)
-  (= 
-    (trigram  he has a 275) True)
-  (= 
-    (trigram  of music do 274) True)
-  (= 
-    (trigram  it was great 274) True)
-  (= 
-    (trigram  used to be 273) True)
-  (= 
-    (trigram  i wish i 273) True)
-  (= 
-    (trigram  its hard to 272) True)
-  (= 
-    (trigram  be able to 272) True)
-  (= 
-    (trigram  in my opinion 269) True)
-  (= 
-    (trigram  and i think 269) True)
-  (= 
-    (trigram  who is the 268) True)
-  (= 
-    (trigram  are you going 268) True)
-  (= 
-    (trigram  was one of 267) True)
-  (= 
-    (trigram  they are a 267) True)
-  (= 
-    (trigram  that sounds like 267) True)
-  (= 
-    (trigram  i know but 267) True)
-  (= 
-    (trigram  go to the 267) True)
-  (= 
-    (trigram  yeah that was 266) True)
-  (= 
-    (trigram  i hope they 266) True)
-  (= 
-    (trigram  i do too 266) True)
-  (= 
-    (trigram  you are right 265) True)
-  (= 
-    (trigram  yes they are 265) True)
-  (= 
-    (trigram  star wars movies 265) True)
-  (= 
-    (trigram  i am a 265) True)
-  (= 
-    (trigram  have to go 264) True)
-  (= 
-    (trigram  has to be 264) True)
-  (= 
-    (trigram  yeah he was 263) True)
-  (= 
-    (trigram  what are some 262) True)
-  (= 
-    (trigram  think they will 262) True)
-  (= 
-    (trigram  really like the 262) True)
-  (= 
-    (trigram  did you watch 262) True)
-  (= 
-    (trigram  a great job 262) True)
-  (= 
-    (trigram  you going to 261) True)
-  (= 
-    (trigram  most of the 261) True)
-  (= 
-    (trigram  i cant wait 260) True)
-  (= 
-    (trigram  think they are 258) True)
-  (= 
-    (trigram  is in it 258) True)
-  (= 
-    (trigram  i dont really 258) True)
-  (= 
-    (trigram  have a lot 258) True)
-  (= 
-    (trigram  didnt know that 258) True)
-  (= 
-    (trigram  i hope so 256) True)
-  (= 
-    (trigram  i do too 256) True)
-  (= 
-    (trigram  have a good 256) True)
-  (= 
-    (trigram  lot of people 255) True)
-  (= 
-    (trigram  i know that 255) True)
-  (= 
-    (trigram  a little bit 255) True)
-  (= 
-    (trigram  a few years 255) True)
-  (= 
-    (trigram  big fan of 254) True)
-  (= 
-    (trigram  yes he is 253) True)
-  (= 
-    (trigram  all of them 253) True)
-  (= 
-    (trigram  what about you 252) True)
-  (= 
-    (trigram  he was the 252) True)
-  (= 
-    (trigram  would have been 250) True)
-  (= 
-    (trigram  seen the movie 250) True)
-  (= 
-    (trigram  i think thats 250) True)
-  (= 
-    (trigram  would be a 249) True)
-  (= 
-    (trigram  heard of them 249) True)
-  (= 
-    (trigram  yes that is 248) True)
-  (= 
-    (trigram  that one too 248) True)
-  (= 
-    (trigram  like that one 248) True)
-  (= 
-    (trigram  fan of the 248) True)
-  (= 
-    (trigram  i would love 247) True)
-  (= 
-    (trigram  i havent seen 247) True)
-  (= 
-    (trigram  and it was 247) True)
-  (= 
-    (trigram  that song is 246) True)
-  (= 
-    (trigram  cant wait to 246) True)
-  (= 
-    (trigram  but it is 246) True)
-  (= 
-    (trigram  came out in 245) True)
-  (= 
-    (trigram  agree with that 245) True)
-  (= 
-    (trigram  there was a 244) True)
-  (= 
-    (trigram  to have a 243) True)
-  (= 
-    (trigram  thats a great 243) True)
-  (= 
-    (trigram  was the best 242) True)
-  (= 
-    (trigram  a couple of 242) True)
-  (= 
-    (trigram  you mean the 241) True)
-  (= 
-    (trigram  out of the 241) True)
-  (= 
-    (trigram  i have been 241) True)
-  (= 
-    (trigram  all of them 241) True)
-  (= 
-    (trigram  i like them 240) True)
-  (= 
-    (trigram  you like to 239) True)
-  (= 
-    (trigram  the first time 238) True)
-  (= 
-    (trigram  i liked it 238) True)
-  (= 
-    (trigram  you know the 237) True)
-  (= 
-    (trigram  that is the 237) True)
-  (= 
-    (trigram  i thought the 237) True)
-  (= 
-    (trigram  i loved it 237) True)
-  (= 
-    (trigram  was in the 236) True)
-  (= 
-    (trigram  it sounds like 236) True)
-  (= 
-    (trigram  is such a 236) True)
-  (= 
-    (trigram  but i do 236) True)
-  (= 
-    (trigram  you think will 235) True)
-  (= 
-    (trigram  he was in 235) True)
-  (= 
-    (trigram  do you say 235) True)
-  (= 
-    (trigram  as long as 235) True)
-  (= 
-    (trigram  seen the new 234) True)
-  (= 
-    (trigram  me too i 234) True)
-  (= 
-    (trigram  yeah i like 233) True)
-  (= 
-    (trigram  more of a 233) True)
-  (= 
-    (trigram  yes they are 232) True)
-  (= 
-    (trigram  to go with 232) True)
-  (= 
-    (trigram  that the one 232) True)
-  (= 
-    (trigram  didnt know that 232) True)
-  (= 
-    (trigram  think is the 231) True)
-  (= 
-    (trigram  was such a 230) True)
-  (= 
-    (trigram  want to watch 230) True)
-  (= 
-    (trigram  to go see 229) True)
-  (= 
-    (trigram  like to see 229) True)
-  (= 
-    (trigram  'i,would,have' to say 229) True)
-  (= 
-    (trigram  in the first 229) True)
-  (= 
-    (trigram  i know it 229) True)
-  (= 
-    (trigram  yeah i know 228) True)
-  (= 
-    (trigram  would love to 228) True)
-  (= 
-    (trigram  the other day 228) True)
-  (= 
-    (trigram  i love them 228) True)
-  (= 
-    (trigram  your favorite disney 227) True)
-  (= 
-    (trigram  that one is 227) True)
-  (= 
-    (trigram  see the new 227) True)
-  (= 
-    (trigram  in the end 227) True)
-  (= 
-    (trigram  favorite disney movie 227) True)
-  (= 
-    (trigram  you like about 226) True)
-  (= 
-    (trigram  yeah me too 226) True)
-  (= 
-    (trigram  yes i did 225) True)
-  (= 
-    (trigram  oh i love 225) True)
-  (= 
-    (trigram  i would like 225) True)
-  (= 
-    (trigram  better than the 225) True)
-  (= 
-    (trigram  a good job 225) True)
-  (= 
-    (trigram  to see them 224) True)
-  (= 
-    (trigram  to do with 224) True)
-  (= 
-    (trigram  there are a 224) True)
-  (= 
-    (trigram  listen to the 224) True)
-  (= 
-    (trigram  yeah me too 223) True)
-  (= 
-    (trigram  thats what i 222) True)
-  (= 
-    (trigram  yes i have 221) True)
-  (= 
-    (trigram  but i like 221) True)
-  (= 
-    (trigram  you ever heard 220) True)
-  (= 
-    (trigram  to watch the 220) True)
-  (= 
-    (trigram  that was the 220) True)
-  (= 
-    (trigram  of course i 220) True)
-  (= 
-    (trigram  and i think 220) True)
-  (= 
-    (trigram  in that one 219) True)
-  (= 
-    (trigram  they had a 217) True)
-  (= 
-    (trigram  i was thinking 217) True)
-  (= 
-    (trigram  yeah i guess 216) True)
-  (= 
-    (trigram  that makes sense 216) True)
-  (= 
-    (trigram  to check it 215) True)
-  (= 
-    (trigram  supposed to be 215) True)
-  (= 
-    (trigram  of the galaxy 215) True)
-  (= 
-    (trigram  yes i did 214) True)
-  (= 
-    (trigram  he had a 214) True)
-  (= 
-    (trigram  was kind of 213) True)
-  (= 
-    (trigram  not at all 213) True)
-  (= 
-    (trigram  you mean the 212) True)
-  (= 
-    (trigram  you know who 212) True)
-  (= 
-    (trigram  yeah it is 212) True)
-  (= 
-    (trigram  in the league 212) True)
-  (= 
-    (trigram  you have any 211) True)
-  (= 
-    (trigram  i went to 210) True)
-  (= 
-    (trigram  i hope they 210) True)
-  (= 
-    (trigram  love that song 209) True)
-  (= 
-    (trigram  it was good 209) True)
-  (= 
-    (trigram  i am sure 209) True)
-  (= 
-    (trigram  can see that 209) True)
-  (= 
-    (trigram  but i really 209) True)
-  (= 
-    (trigram  i need to 208) True)
-  (= 
-    (trigram  you a fan 207) True)
-  (= 
-    (trigram  type of music 207) True)
-  (= 
-    (trigram  sounds like a 207) True)
-  (= 
-    (trigram  but it is 207) True)
-  (= 
-    (trigram  the force awakens 206) True)
-  (= 
-    (trigram  of course i 206) True)
-  (= 
-    (trigram  id have to 206) True)
-  (= 
-    (trigram  yes that was 205) True)
-  (= 
-    (trigram  yes he is 205) True)
-  (= 
-    (trigram  'why,do,you' say that 205) True)
-  (= 
-    (trigram  was a little 205) True)
-  (= 
-    (trigram  no i dont 205) True)
-  (= 
-    (trigram  its hard to 205) True)
-  (= 
-    (trigram  i know but 205) True)
-  (= 
-    (trigram  give it a 205) True)
-  (= 
-    (trigram  i havent heard 204) True)
-  (= 
-    (trigram  have to watch 204) True)
-  (= 
-    (trigram  are there any 203) True)
-  (= 
-    (trigram  you talking about 202) True)
-  (= 
-    (trigram  well i think 202) True)
-  (= 
-    (trigram  think he is 202) True)
-  (= 
-    (trigram  no i dont 202) True)
-  (= 
-    (trigram  guardians of the 202) True)
-  (= 
-    (trigram  dont think i 202) True)
-  (= 
-    (trigram  a bit of 202) True)
-  (= 
-    (trigram  there are so 201) True)
-  (= 
-    (trigram  that one was 201) True)
-  (= 
-    (trigram  of their songs 201) True)
-  (= 
-    (trigram  i wish i 201) True)
-  (= 
-    (trigram  is it about 201) True)
-  (= 
-    (trigram  like a lot 200) True)
-  (= 
-    (trigram  i like to 200) True)
-  (= 
-    (trigram  who was the 199) True)
-  (= 
-    (trigram  i know it 199) True)
-  (= 
-    (trigram  i heard it 199) True)
-  (= 
-    (trigram  are so many 199) True)
-  (= 
-    (trigram  you watch the 198) True)
-  (= 
-    (trigram  one of those 198) True)
-  (= 
-    (trigram  one of his 198) True)
-  (= 
-    (trigram  no but i 198) True)
-  (= 
-    (trigram  fast and furious 198) True)
-  (= 
-    (trigram  whos your favorite 197) True)
-  (= 
-    (trigram  think i have 197) True)
-  (= 
-    (trigram  the rest of 197) True)
-  (= 
-    (trigram  that one was 197) True)
-  (= 
-    (trigram  its one of 197) True)
-  (= 
-    (trigram  he is the 197) True)
-  (= 
-    (trigram  do you feel 197) True)
-  (= 
-    (trigram  but i do 197) True)
-  (= 
-    (trigram  a pretty good 197) True)
-  (= 
-    (trigram  your favorite character 196) True)
-  (= 
-    (trigram  that song is 196) True)
-  (= 
-    (trigram  such a great 196) True)
-  (= 
-    (trigram  some of his 196) True)
-  (= 
-    (trigram  as well as 196) True)
-  (= 
-    (trigram  going to see 195) True)
-  (= 
-    (trigram  fun to watch 195) True)
-  (= 
-    (trigram  your favorite movie 194) True)
-  (= 
-    (trigram  i like her 194) True)
-  (= 
-    (trigram  heard of it 194) True)
-  (= 
-    (trigram  let me know 193) True)
-  (= 
-    (trigram  i loved that 193) True)
-  (= 
-    (trigram  i kind of 193) True)
-  (= 
-    (trigram  you know i 192) True)
-  (= 
-    (trigram  ever heard of 192) True)
-  (= 
-    (trigram  you remember the 191) True)
-  (= 
-    (trigram  wait to see 191) True)
-  (= 
-    (trigram  it was just 191) True)
-  (= 
-    (trigram  go see it 191) True)
-  (= 
-    (trigram  going to have 191) True)
-  (= 
-    (trigram  some of their 189) True)
-  (= 
-    (trigram  lets talk about 189) True)
-  (= 
-    (trigram  ive heard of 189) True)
-  (= 
-    (trigram  i just dont 189) True)
-  (= 
-    (trigram  yeah but i 188) True)
-  (= 
-    (trigram  will be a 187) True)
-  (= 
-    (trigram  if you want 187) True)
-  (= 
-    (trigram  how did you 187) True)
-  (= 
-    (trigram  the star wars 186) True)
-  (= 
-    (trigram  that movie was 186) True)
-  (= 
-    (trigram  kind of like 186) True)
-  (= 
-    (trigram  it was just 186) True)
-  (= 
-    (trigram  i like a 186) True)
-  (= 
-    (trigram  yeah it is 185) True)
-  (= 
-    (trigram  for a while 185) True)
-  (= 
-    (trigram  would like to 184) True)
-  (= 
-    (trigram  what was it 184) True)
-  (= 
-    (trigram  talking to you 184) True)
-  (= 
-    (trigram  i have no 184) True)
-  (= 
-    (trigram  i dont remember 184) True)
-  (= 
-    (trigram  i agree i 184) True)
-  (= 
-    (trigram  had a lot 184) True)
-  (= 
-    (trigram  yes i love 183) True)
-  (= 
-    (trigram  wow that is 183) True)
-  (= 
-    (trigram  was a kid 183) True)
-  (= 
-    (trigram  to see that 183) True)
-  (= 
-    (trigram  the movie was 183) True)
-  (= 
-    (trigram  thats what i 183) True)
-  (= 
-    (trigram  what are your 182) True)
-  (= 
-    (trigram  name of the 182) True)
-  (= 
-    (trigram  it really is 182) True)
-  (= 
-    (trigram  was going to 181) True)
-  (= 
-    (trigram  the lion king 181) True)
-  (= 
-    (trigram  he is the 181) True)
-  (= 
-    (trigram  heard of that 181) True)
-  (= 
-    (trigram  but i have 181) True)
-  (= 
-    (trigram  back to the 181) True)
-  (= 
-    (trigram  what is that 180) True)
-  (= 
-    (trigram  to be in 180) True)
-  (= 
-    (trigram  my favorite song 180) True)
-  (= 
-    (trigram  thats a good 179) True)
-  (= 
-    (trigram  it sounds like 179) True)
-  (= 
-    (trigram  i liked that 179) True)
-  (= 
-    (trigram  i didnt like 179) True)
-  (= 
-    (trigram  who is in 178) True)
-  (= 
-    (trigram  tell me about 178) True)
-  (= 
-    (trigram  like the song 178) True)
-  (= 
-    (trigram  kind of a 178) True)
-  (= 
-    (trigram  i think hes 178) True)
-  (= 
-    (trigram  all time favorite 178) True)
-  (= 
-    (trigram  a good song 178) True)
-  (= 
-    (trigram  love that movie 177) True)
-  (= 
-    (trigram  i have never 177) True)
-  (= 
-    (trigram  end of the 177) True)
-  (= 
-    (trigram  yeah i love 176) True)
-  (= 
-    (trigram  what 'did,you,think' of 176) True)
-  (= 
-    (trigram  'what,did,you' think of 176) True)
-  (= 
-    (trigram  havent seen it 176) True)
-  (= 
-    (trigram  going to the 176) True)
-  (= 
-    (trigram  but i really 176) True)
-  (= 
-    (trigram  you feel about 175) True)
-  (= 
-    (trigram  yeah he is 175) True)
-  (= 
-    (trigram  think about it 175) True)
-  (= 
-    (trigram  the movie is 175) True)
-  (= 
-    (trigram  that it was 175) True)
-  (= 
-    (trigram  she is a 175) True)
-  (= 
-    (trigram  pirates of the 175) True)
-  (= 
-    (trigram  i agree but 175) True)
-  (= 
-    (trigram  yes he was 174) True)
-  (= 
-    (trigram  ive never heard 174) True)
-  (= 
-    (trigram  has a lot 174) True)
-  (= 
-    (trigram  dont want to 174) True)
-  (= 
-    (trigram  a lot more 174) True)
-  (= 
-    (trigram  ever seen the 173) True)
-  (= 
-    (trigram  when he was 172) True)
-  (= 
-    (trigram  to watch the 172) True)
-  (= 
-    (trigram  such a good 172) True)
-  (= 
-    (trigram  it is so 172) True)
-  (= 
-    (trigram  as much as 172) True)
-  (= 
-    (trigram  oh i love 171) True)
-  (= 
-    (trigram  no i think 171) True)
-  (= 
-    (trigram  it to the 171) True)
-  (= 
-    (trigram  i love her 171) True)
-  (= 
-    (trigram  i dont remember 171) True)
-  (= 
-    (trigram  be a good 171) True)
-  (= 
-    (trigram  of the most 170) True)
-  (= 
-    (trigram  no i didnt 170) True)
-  (= 
-    (trigram  i guess so 170) True)
-  (= 
-    (trigram  favorite star wars 170) True)
-  (= 
-    (trigram  did a great 170) True)
-  (= 
-    (trigram  one of their 169) True)
-  (= 
-    (trigram  i just dont 169) True)
-  (= 
-    (trigram  good as the 169) True)
-  (= 
-    (trigram  you see that 168) True)
-  (= 
-    (trigram  how are you 168) True)
-  (= 
-    (trigram  yeah he was 167) True)
-  (= 
-    (trigram  when it comes 167) True)
-  (= 
-    (trigram  movies do you 167) True)
-  (= 
-    (trigram  is really good 167) True)
-  (= 
-    (trigram  im not a 167) True)
-  (= 
-    (trigram  really liked the 166) True)
-  (= 
-    (trigram  i wonder what 166) True)
-  (= 
-    (trigram  i forgot about 166) True)
-  (= 
-    (trigram  but they are 166) True)
-  (= 
-    (trigram  be in the 166) True)
-  (= 
-    (trigram  as a kid 166) True)
-  (= 
-    (trigram  would you say 165) True)
-  (= 
-    (trigram  oh yeah i 165) True)
-  (= 
-    (trigram  it has a 165) True)
-  (= 
-    (trigram  in the day 165) True)
-  (= 
-    (trigram  i guess that 165) True)
-  (= 
-    (trigram  empire strikes back 165) True)
-  (= 
-    (trigram  are you talking 165) True)
-  (= 
-    (trigram  love to see 164) True)
-  (= 
-    (trigram  i guess it 164) True)
-  (= 
-    (trigram  but i have 164) True)
-  (= 
-    (trigram  lot of the 163) True)
-  (= 
-    (trigram  i just watched 163) True)
-  (= 
-    (trigram  a huge fan 163) True)
-  (= 
-    (trigram  it is the 162) True)
-  (= 
-    (trigram  it is so 162) True)
-  (= 
-    (trigram  it but i 162) True)
-  (= 
-    (trigram  i know its 162) True)
-  (= 
-    (trigram  check them out 162) True)
-  (= 
-    (trigram  but i am 162) True)
-  (= 
-    (trigram  you know i 161) True)
-  (= 
-    (trigram  yes that is 161) True)
-  (= 
-    (trigram  yeah they are 161) True)
-  (= 
-    (trigram  of the jedi 161) True)
-  (= 
-    (trigram  lets talk about 161) True)
-  (= 
-    (trigram  i like him 161) True)
-  (= 
-    (trigram  i guess you 161) True)
-  (= 
-    (trigram  but im not 161) True)
-  (= 
-    (trigram  yes i like 160) True)
-  (= 
-    (trigram  was the last 160) True)
-  (= 
-    (trigram  thats for sure 160) True)
-  (= 
-    (trigram  oh i see 160) True)
-  (= 
-    (trigram  like that song 160) True)
-  (= 
-    (trigram  is it a 160) True)
-  (= 
-    (trigram  is in the 160) True)
-  (= 
-    (trigram  have no idea 160) True)
-  (= 
-    (trigram  you should check 159) True)
-  (= 
-    (trigram  well i guess 159) True)
-  (= 
-    (trigram  to a lot 159) True)
-  (= 
-    (trigram  return of the 159) True)
-  (= 
-    (trigram  over and over 159) True)
-  (= 
-    (trigram  favorite song by 159) True)
-  (= 
-    (trigram  do you ever 159) True)
-  (= 
-    (trigram  to see how 158) True)
-  (= 
-    (trigram  to see a 158) True)
-  (= 
-    (trigram  the second one 158) True)
-  (= 
-    (trigram  the same thing 158) True)
-  (= 
-    (trigram  seen any good 158) True)
-  (= 
-    (trigram  heard of the 158) True)
-  (= 
-    (trigram  fun to watch 158) True)
-  (= 
-    (trigram  what type of 157) True)
-  (= 
-    (trigram  lot of good 157) True)
-  (= 
-    (trigram  is a classic 157) True)
-  (= 
-    (trigram  i heard it 157) True)
-  (= 
-    (trigram  a ton of 157) True)
-  (= 
-    (trigram  you heard the 156) True)
-  (= 
-    (trigram  yes but i 156) True)
-  (= 
-    (trigram  was in it 156) True)
-  (= 
-    (trigram  the last one 156) True)
-  (= 
-    (trigram  rest of the 156) True)
-  (= 
-    (trigram  oh i see 156) True)
-  (= 
-    (trigram  not sure if 156) True)
-  (= 
-    (trigram  i wish they 156) True)
-  (= 
-    (trigram  i know they 156) True)
-  (= 
-    (trigram  cant wait for 156) True)
-  (= 
-    (trigram  was the first 155) True)
-  (= 
-    (trigram  think so too 155) True)
-  (= 
-    (trigram  the one that 155) True)
-  (= 
-    (trigram  the little mermaid 155) True)
-  (= 
-    (trigram  seems to be 155) True)
-  (= 
-    (trigram  if you like 155) True)
-  (= 
-    (trigram  hey have you 155) True)
-  (= 
-    (trigram  he was so 155) True)
-  (= 
-    (trigram  the same way 154) True)
-  (= 
-    (trigram  the harry potter 154) True)
-  (= 
-    (trigram  i didnt like 154) True)
-  (= 
-    (trigram  which one is 153) True)
-  (= 
-    (trigram  that kind of 153) True)
-  (= 
-    (trigram  of all the 153) True)
-  (= 
-    (trigram  is the most 153) True)
-  (= 
-    (trigram  i guess so 153) True)
-  (= 
-    (trigram  i am so 153) True)
-  (= 
-    (trigram  have a great 153) True)
-  (= 
-    (trigram  came out in 153) True)
-  (= 
-    (trigram  you think he 152) True)
-  (= 
-    (trigram  yeah i like 152) True)
-  (= 
-    (trigram  what happened to 152) True)
-  (= 
-    (trigram  thats one of 152) True)
-  (= 
-    (trigram  of his songs 152) True)
-  (= 
-    (trigram  i know they 152) True)
-  (= 
-    (trigram  have to see 152) True)
-  (= 
-    (trigram  dont know i 152) True)
-  (= 
-    (trigram  at the time 152) True)
-  (= 
-    (trigram  the one where 151) True)
-  (= 
-    (trigram  thats a tough 151) True)
-  (= 
-    (trigram  i think we 151) True)
-  (= 
-    (trigram  i know its 151) True)
-  (= 
-    (trigram  have to agree 151) True)
-  (= 
-    (trigram  yeah i saw 150) True)
-  (= 
-    (trigram  was my favorite 150) True)
-  (= 
-    (trigram  the end of 150) True)
-  (= 
-    (trigram  of your favorite 150) True)
-  (= 
-    (trigram  i wonder how 150) True)
-  (= 
-    (trigram  i thought that 150) True)
-  (= 
-    (trigram  i still think 150) True)
-  (= 
-    (trigram  i could see 150) True)
-  (= 
-    (trigram  i am going 150) True)
-  (= 
-    (trigram  but i am 150) True)
-  (= 
-    (trigram  think of it 149) True)
-  (= 
-    (trigram  there are some 149) True)
-  (= 
-    (trigram  some of them 149) True)
-  (= 
-    (trigram  one of them 149) True)
-  (= 
-    (trigram  it was very 149) True)
-  (= 
-    (trigram  i really enjoyed 149) True)
-  (= 
-    (trigram  have heard of 149) True)
-  (= 
-    (trigram  all the way 149) True)
-  (= 
-    (trigram  you think it 148) True)
-  (= 
-    (trigram  your favorite team 148) True)
-  (= 
-    (trigram  you dont like 148) True)
-  (= 
-    (trigram  they need to 148) True)
-  (= 
-    (trigram  they have to 148) True)
-  (= 
-    (trigram  the same time 148) True)
-  (= 
-    (trigram  the first movie 148) True)
-  (= 
-    (trigram  some of your 148) True)
-  (= 
-    (trigram  no i have 148) True)
-  (= 
-    (trigram  i know he 148) True)
-  (= 
-    (trigram  heard of him 148) True)
-  (= 
-    (trigram  but he was 148) True)
-  (= 
-    (trigram  yeah i remember 147) True)
-  (= 
-    (trigram  yeah he is 147) True)
-  (= 
-    (trigram  whats it about 147) True)
-  (= 
-    (trigram  was a bit 147) True)
-  (= 
-    (trigram  think he was 147) True)
-  (= 
-    (trigram  i think we 147) True)
-  (= 
-    (trigram  is kind of 147) True)
-  (= 
-    (trigram  im going to 147) True)
-  (= 
-    (trigram  how about the 147) True)
-  (= 
-    (trigram  a new album 147) True)
-  (= 
-    (trigram  to see him 146) True)
-  (= 
-    (trigram  to make a 146) True)
-  (= 
-    (trigram  the fact that 146) True)
-  (= 
-    (trigram  something like that 146) True)
-  (= 
-    (trigram  it would have 146) True)
-  (= 
-    (trigram  in the playoffs 146) True)
-  (= 
-    (trigram  i like how 146) True)
-  (= 
-    (trigram  but i still 146) True)
-  (= 
-    (trigram  whats it about 145) True)
-  (= 
-    (trigram  not sure i 145) True)
-  (= 
-    (trigram  like some of 145) True)
-  (= 
-    (trigram  ever listen to 145) True)
-  (= 
-    (trigram  yeah that is 144) True)
-  (= 
-    (trigram  yeah i dont 144) True)
-  (= 
-    (trigram  the new one 144) True)
-  (= 
-    (trigram  of the songs 144) True)
-  (= 
-    (trigram  love that one 144) True)
-  (= 
-    (trigram  listen to them 144) True)
-  (= 
-    (trigram  its going to 144) True)
-  (= 
-    (trigram  hey do you 144) True)
-  (= 
-    (trigram  do you watch 144) True)
-  (= 
-    (trigram  a great one 144) True)
-  (= 
-    (trigram  that it was 143) True)
-  (= 
-    (trigram  is a really 143) True)
-  (= 
-    (trigram  i just think 143) True)
-  (= 
-    (trigram  because of the 143) True)
-  (= 
-    (trigram  your favorite part 142) True)
-  (= 
-    (trigram  yeah i dont 142) True)
-  (= 
-    (trigram  to the movies 142) True)
-  (= 
-    (trigram  so what do 142) True)
-  (= 
-    (trigram  she has a 142) True)
-  (= 
-    (trigram  of the new 142) True)
-  (= 
-    (trigram  not sure if 142) True)
-  (= 
-    (trigram  must have been 142) True)
-  (= 
-    (trigram  i know the 142) True)
-  (= 
-    (trigram  i dont want 142) True)
-  (= 
-    (trigram  yes i am 141) True)
-  (= 
-    (trigram  was a really 141) True)
-  (= 
-    (trigram  they did a 141) True)
-  (= 
-    (trigram  that came out 141) True)
-  (= 
-    (trigram  thank you for 141) True)
-  (= 
-    (trigram  oh i know 141) True)
-  (= 
-    (trigram  for the first 141) True)
-  (= 
-    (trigram  but they are 141) True)
-  (= 
-    (trigram  you dont like 140) True)
-  (= 
-    (trigram  wow that is 140) True)
-  (= 
-    (trigram  think that the 140) True)
-  (= 
-    (trigram  think that is 140) True)
-  (= 
-    (trigram  think it will 140) True)
-  (= 
-    (trigram  pirates of the 140) True)
-  (= 
-    (trigram  it in the 140) True)
-  (= 
-    (trigram  is in the 140) True)
-  (= 
-    (trigram  you ever listen 139) True)
-  (= 
-    (trigram  will be the 139) True)
-  (= 
-    (trigram  to say the 139) True)
-  (= 
-    (trigram  ive heard that 139) True)
-  (= 
-    (trigram  it is the 139) True)
-  (= 
-    (trigram  i thought he 139) True)
-  (= 
-    (trigram  i know the 139) True)
-  (= 
-    (trigram  dont know about 139) True)
-  (= 
-    (trigram  did not know 139) True)
-  (= 
-    (trigram  did a good 139) True)
-  (= 
-    (trigram  who was your 138) True)
-  (= 
-    (trigram  thats why i 138) True)
-  (= 
-    (trigram  it is really 138) True)
-  (= 
-    (trigram  in love with 138) True)
-  (= 
-    (trigram  heard that one 138) True)
-  (= 
-    (trigram  you like any 137) True)
-  (= 
-    (trigram  the fast and 137) True)
-  (= 
-    (trigram  its a good 137) True)
-  (= 
-    (trigram  did you get 137) True)
-  (= 
-    (trigram  a few of 137) True)
-  (= 
-    (trigram  yes that was 136) True)
-  (= 
-    (trigram  yes i agree 136) True)
-  (= 
-    (trigram  was so good 136) True)
-  (= 
-    (trigram  think they have 136) True)
-  (= 
-    (trigram  seen that one 136) True)
-  (= 
-    (trigram  me too i 136) True)
-  (= 
-    (trigram  i totally agree 136) True)
-  (= 
-    (trigram  i think there 136) True)
-  (= 
-    (trigram  is pretty good 136) True)
-  (= 
-    (trigram  i really love 136) True)
-  (= 
-    (trigram  him in the 136) True)
-  (= 
-    (trigram  he will be 136) True)
-  (= 
-    (trigram  'have,you,seen' the movie 136) True)
-  (= 
-    (trigram  dont think they 136) True)
-  (= 
-    (trigram  your favorite star 135) True)
-  (= 
-    (trigram  not as good 135) True)
-  (= 
-    (trigram  i watched it 135) True)
-  (= 
-    (trigram  its kind of 135) True)
-  (= 
-    (trigram  i had to 135) True)
-  (= 
-    (trigram  you need to 134) True)
-  (= 
-    (trigram  well it was 134) True)
-  (= 
-    (trigram  that he was 134) True)
-  (= 
-    (trigram  songs do you 134) True)
-  (= 
-    (trigram  my all time 134) True)
-  (= 
-    (trigram  i was just 134) True)
-  (= 
-    (trigram  it had a 134) True)
-  (= 
-    (trigram  i know he 134) True)
-  (= 
-    (trigram  dont know if 134) True)
-  (= 
-    (trigram  do not think 134) True)
-  (= 
-    (trigram  to talk about 133) True)
-  (= 
-    (trigram  thought he was 133) True)
-  (= 
-    (trigram  on that album 133) True)
-  (= 
-    (trigram  oh yeah that 133) True)
-  (= 
-    (trigram  movies do you 133) True)
-  (= 
-    (trigram  it is not 133) True)
-  (= 
-    (trigram  it could be 133) True)
-  (= 
-    (trigram  how was it 133) True)
-  (= 
-    (trigram  have been a 133) True)
-  (= 
-    (trigram  has a great 133) True)
-  (= 
-    (trigram  go to a 133) True)
-  (= 
-    (trigram  dont know but 133) True)
-  (= 
-    (trigram  yes he was 132) True)
-  (= 
-    (trigram  think i will 132) True)
-  (= 
-    (trigram  think it was 132) True)
-  (= 
-    (trigram  that movie is 132) True)
-  (= 
-    (trigram  new star wars 132) True)
-  (= 
-    (trigram  my all time 132) True)
-  (= 
-    (trigram  it looks like 132) True)
-  (= 
-    (trigram  i like some 132) True)
-  (= 
-    (trigram  but there are 132) True)
-  (= 
-    (trigram  am going to 132) True)
-  (= 
-    (trigram  would be great 131) True)
-  (= 
-    (trigram  'when,i,was' a kid 131) True)
-  (= 
-    (trigram  to see a 131) True)
-  (= 
-    (trigram  think that was 131) True)
-  (= 
-    (trigram  long time ago 131) True)
-  (= 
-    (trigram  its a great 131) True)
-  (= 
-    (trigram  it is really 131) True)
-  (= 
-    (trigram  i am so 131) True)
-  (= 
-    (trigram  dont you think 131) True)
-  (= 
-    (trigram  as well as 131) True)
-  (= 
-    (trigram  reminds me of 130) True)
-  (= 
-    (trigram  i think my 130) True)
-  (= 
-    (trigram  forgot about that 130) True)
-  (= 
-    (trigram  i really enjoy 129) True)
-  (= 
-    (trigram  i love his 129) True)
-  (= 
-    (trigram  'have,you,seen' the new 129) True)
-  (= 
-    (trigram  a good point 129) True)
-  (= 
-    (trigram  yeah i agree 128) True)
-  (= 
-    (trigram  too but i 128) True)
-  (= 
-    (trigram  i thought they 128) True)
-  (= 
-    (trigram  in this one 128) True)
-  (= 
-    (trigram  in this movie 128) True)
-  (= 
-    (trigram  had no idea 128) True)
-  (= 
-    (trigram  excited to see 128) True)
-  (= 
-    (trigram  about the new 128) True)
-  (= 
-    (trigram  yes i think 127) True)
-  (= 
-    (trigram  yeah they were 127) True)
-  (= 
-    (trigram  that he was 127) True)
-  (= 
-    (trigram  its about a 127) True)
-  (= 
-    (trigram  it has to 127) True)
-  (= 
-    (trigram  it a lot 127) True)
-  (= 
-    (trigram  is a lot 127) True)
-  (= 
-    (trigram  i grew up 127) True)
-  (= 
-    (trigram  have you watched 127) True)
-  (= 
-    (trigram  few years ago 127) True)
-  (= 
-    (trigram  are a lot 127) True)
-  (= 
-    (trigram  you mean by 126) True)
-  (= 
-    (trigram  yes i agree 126) True)
-  (= 
-    (trigram  wish i could 126) True)
-  (= 
-    (trigram  to have to 126) True)
-  (= 
-    (trigram  me about it 126) True)
-  (= 
-    (trigram  like i said 126) True)
-  (= 
-    (trigram  id like to 126) True)
-  (= 
-    (trigram  i believe it 126) True)
-  (= 
-    (trigram  do you prefer 126) True)
-  (= 
-    (trigram  but he was 126) True)
-  (= 
-    (trigram  yeah they are 125) True)
-  (= 
-    (trigram  what would you 125) True)
-  (= 
-    (trigram  that is one 125) True)
-  (= 
-    (trigram  really want to 125) True)
-  (= 
-    (trigram  i had no 125) True)
-  (= 
-    (trigram  i guess thats 125) True)
-  (= 
-    (trigram  i dont see 125) True)
-  (= 
-    (trigram  based on a 125) True)
-  (= 
-    (trigram  at the same 125) True)
-  (= 
-    (trigram  you mean like 124) True)
-  (= 
-    (trigram  you listened to 124) True)
-  (= 
-    (trigram  see the movie 124) True)
-  (= 
-    (trigram  like to listen 124) True)
-  (= 
-    (trigram  in the world 124) True)
-  (= 
-    (trigram  have to look 124) True)
-  (= 
-    (trigram  you know how 123) True)
-  (= 
-    (trigram  they are going 123) True)
-  (= 
-    (trigram  the new star 123) True)
-  (= 
-    (trigram  so many good 123) True)
-  (= 
-    (trigram  know what i 123) True)
-  (= 
-    (trigram  know but i 123) True)
-  (= 
-    (trigram  i agree but 123) True)
-  (= 
-    (trigram  whos your favorite 122) True)
-  (= 
-    (trigram  we will see 122) True)
-  (= 
-    (trigram  think he will 122) True)
-  (= 
-    (trigram  one with the 122) True)
-  (= 
-    (trigram  oh that is 122) True)
-  (= 
-    (trigram  not a fan 122) True)
-  (= 
-    (trigram  it was called 122) True)
-  (= 
-    (trigram  its about a 122) True)
-  (= 
-    (trigram  in the past 122) True)
-  (= 
-    (trigram  in the last 122) True)
-  (= 
-    (trigram  i dont see 122) True)
-  (= 
-    (trigram  i cant 'wait,to,see' 122) True)
-  (= 
-    (trigram  'i,cant,wait' to see 122) True)
-  (= 
-    (trigram  are the best 122) True)
-  (= 
-    (trigram  and he is 122) True)
-  (= 
-    (trigram  yeah thats a 121) True)
-  (= 
-    (trigram  to make it 121) True)
-  (= 
-    (trigram  so do you 121) True)
-  (= 
-    (trigram  see what you 121) True)
-  (= 
-    (trigram  seem to be 121) True)
-  (= 
-    (trigram  look it up 121) True)
-  (= 
-    (trigram  i also love 121) True)
-  (= 
-    (trigram  but i would 121) True)
-  (= 
-    (trigram  be the best 121) True)
-  (= 
-    (trigram  that would have 120) True)
-  (= 
-    (trigram  is that a 120) True)
-  (= 
-    (trigram  i see what 120) True)
-  (= 
-    (trigram  i really dont 120) True)
-  (= 
-    (trigram  i dont want 120) True)
-  (= 
-    (trigram  i dont have 120) True)
-  (= 
-    (trigram  i agree i 120) True)
-  (= 
-    (trigram  dont want to 120) True)
-  (= 
-    (trigram  a chance to 120) True)
-  (= 
-    (trigram  you had to 119) True)
-  (= 
-    (trigram  yeah i really 119) True)
-  (= 
-    (trigram  yeah i guess 119) True)
-  (= 
-    (trigram  think it would 119) True)
-  (= 
-    (trigram  they have been 119) True)
-  (= 
-    (trigram  thats true but 119) True)
-  (= 
-    (trigram  she was a 119) True)
-  (= 
-    (trigram  rock and roll 119) True)
-  (= 
-    (trigram  oh i know 119) True)
-  (= 
-    (trigram  not sure but 119) True)
-  (= 
-    (trigram  i saw a 119) True)
-  (= 
-    (trigram  he was so 119) True)
-  (= 
-    (trigram  he is so 119) True)
-  (= 
-    (trigram  hall of fame 119) True)
-  (= 
-    (trigram  and the furious 119) True)
-  (= 
-    (trigram  about the movie 119) True)
-  (= 
-    (trigram  you listening to 118) True)
-  (= 
-    (trigram  you like that 118) True)
-  (= 
-    (trigram  the main character 118) True)
-  (= 
-    (trigram  in real life 118) True)
-  (= 
-    (trigram  favorite song of 118) True)
-  (= 
-    (trigram  but there are 118) True)
-  (= 
-    (trigram  but i was 118) True)
-  (= 
-    (trigram  but he is 118) True)
-  (= 
-    (trigram  any good movies 118) True)
-  (= 
-    (trigram  yes i am 117) True)
-  (= 
-    (trigram  they will be 117) True)
-  (= 
-    (trigram  the dark side 117) True)
-  (= 
-    (trigram  the best part 117) True)
-  (= 
-    (trigram  that they are 117) True)
-  (= 
-    (trigram  so do you 117) True)
-  (= 
-    (trigram  so do i 117) True)
-  (= 
-    (trigram  quite a few 117) True)
-  (= 
-    (trigram  oh yes i 117) True)
-  (= 
-    (trigram  of all the 117) True)
-  (= 
-    (trigram  i was in 117) True)
-  (= 
-    (trigram  it was in 117) True)
-  (= 
-    (trigram  i mean i 117) True)
-  (= 
-    (trigram  i know and 117) True)
-  (= 
-    (trigram  'have,to,check' it out 117) True)
-  (= 
-    (trigram  dont know how 117) True)
-  (= 
-    (trigram  yeah i agree 116) True)
-  (= 
-    (trigram  well i dont 116) True)
-  (= 
-    (trigram  of the greatest 116) True)
-  (= 
-    (trigram  me too but 116) True)
-  (= 
-    (trigram  like the new 116) True)
-  (= 
-    (trigram  it is one 116) True)
-  (= 
-    (trigram  in a while 116) True)
-  (= 
-    (trigram  havent heard of 116) True)
-  (= 
-    (trigram  fast and the 116) True)
-  (= 
-    (trigram  because it was 116) True)
-  (= 
-    (trigram  'are,you,a' fan of 116) True)
-  (= 
-    (trigram  wow thats a 115) True)
-  (= 
-    (trigram  with all the 115) True)
-  (= 
-    (trigram  well i dont 115) True)
-  (= 
-    (trigram  that was pretty 115) True)
-  (= 
-    (trigram  of the song 115) True)
-  (= 
-    (trigram  i wanted to 115) True)
-  (= 
-    (trigram  in star wars 115) True)
-  (= 
-    (trigram  i had a 115) True)
-  (= 
-    (trigram  you never know 114) True)
-  (= 
-    (trigram  well it is 114) True)
-  (= 
-    (trigram  of the movies 114) True)
-  (= 
-    (trigram  of the caribbean 114) True)
-  (= 
-    (trigram  i see what 114) True)
-  (= 
-    (trigram  i like all 114) True)
-  (= 
-    (trigram  i know you 114) True)
-  (= 
-    (trigram  i heard they 114) True)
-  (= 
-    (trigram  yeah thats the 113) True)
-  (= 
-    (trigram  that they are 113) True)
-  (= 
-    (trigram  oh my god 113) True)
-  (= 
-    (trigram  of the year 113) True)
-  (= 
-    (trigram  like about it 113) True)
-  (= 
-    (trigram  it is about 113) True)
-  (= 
-    (trigram  ill check it 113) True)
-  (= 
-    (trigram  if you had 113) True)
-  (= 
-    (trigram  hey did you 113) True)
-  (= 
-    (trigram  else do you 113) True)
-  (= 
-    (trigram  do they have 113) True)
-  (= 
-    (trigram  do not know 113) True)
-  (= 
-    (trigram  are you into 113) True)
-  (= 
-    (trigram  yes he did 112) True)
-  (= 
-    (trigram  yeah that one 112) True)
-  (= 
-    (trigram  yeah i do 112) True)
-  (= 
-    (trigram  they are going 112) True)
-  (= 
-    (trigram  of the first 112) True)
-  (= 
-    (trigram  i think theyre 112) True)
-  (= 
-    (trigram  i guess they 112) True)
-  (= 
-    (trigram  he did a 112) True)
-  (= 
-    (trigram  dont like the 112) True)
-  (= 
-    (trigram  be a great 112) True)
-  (= 
-    (trigram  well it was 111) True)
-  (= 
-    (trigram  to see what 111) True)
-  (= 
-    (trigram  seen any of 111) True)
-  (= 
-    (trigram  i thought so 111) True)
-  (= 
-    (trigram  i love how 111) True)
-  (= 
-    (trigram  i can understand 111) True)
-  (= 
-    (trigram  hard to say 111) True)
-  (= 
-    (trigram  good but i 111) True)
-  (= 
-    (trigram  and it is 111) True)
-  (= 
-    (trigram  you like them 110) True)
-  (= 
-    (trigram  yeah but i 110) True)
-  (= 
-    (trigram  would you like 110) True)
-  (= 
-    (trigram  was a lot 110) True)
-  (= 
-    (trigram  to the super 110) True)
-  (= 
-    (trigram  to say the 110) True)
-  (= 
-    (trigram  ok i will 110) True)
-  (= 
-    (trigram  no not really 110) True)
-  (= 
-    (trigram  ive been listening 110) True)
-  (= 
-    (trigram  it was released 110) True)
-  (= 
-    (trigram  it should be 110) True)
-  (= 
-    (trigram  its a shame 110) True)
-  (= 
-    (trigram  it any good 110) True)
-  (= 
-    (trigram  i really want 110) True)
-  (= 
-    (trigram  i get that 110) True)
-  (= 
-    (trigram  favorite song from 110) True)
-  (= 
-    (trigram  a great actor 110) True)
-  (= 
-    (trigram  you been listening 109) True)
-  (= 
-    (trigram  yes i saw 109) True)
-  (= 
-    (trigram  yeah i heard 109) True)
-  (= 
-    (trigram  to come out 109) True)
-  (= 
-    (trigram  they are so 109) True)
-  (= 
-    (trigram  that is what 109) True)
-  (= 
-    (trigram  in the movies 109) True)
-  (= 
-    (trigram  going to go 109) True)
-  (= 
-    (trigram  going to do 109) True)
-  (= 
-    (trigram  but i cant 109) True)
-  (= 
-    (trigram  all of his 109) True)
-  (= 
-    (trigram  you mean like 108) True)
-  (= 
-    (trigram  yeah thats the 108) True)
-  (= 
-    (trigram  would be the 108) True)
-  (= 
-    (trigram  who would you 108) True)
-  (= 
-    (trigram  to do that 108) True)
-  (= 
-    (trigram  think i would 108) True)
-  (= 
-    (trigram  the way he 108) True)
-  (= 
-    (trigram  team in the 108) True)
-  (= 
-    (trigram  on that one 108) True)
-  (= 
-    (trigram  of the time 108) True)
-  (= 
-    (trigram  movie of all 108) True)
-  (= 
-    (trigram  make it to 108) True)
-  (= 
-    (trigram  i was so 108) True)
-  (= 
-    (trigram  it is very 108) True)
-  (= 
-    (trigram  i think a 108) True)
-  (= 
-    (trigram  is hard to 108) True)
-  (= 
-    (trigram  is a very 108) True)
-  (= 
-    (trigram  i really dont 108) True)
-  (= 
-    (trigram  in high school 108) True)
-  (= 
-    (trigram  huge fan of 108) True)
-  (= 
-    (trigram  get to see 108) True)
-  (= 
-    (trigram  dont know what 108) True)
-  (= 
-    (trigram  you know the 107) True)
-  (= 
-    (trigram  yes he did 107) True)
-  (= 
-    (trigram  well that is 107) True)
-  (= 
-    (trigram  watch it again 107) True)
-  (= 
-    (trigram  to win the 107) True)
-  (= 
-    (trigram  they are the 107) True)
-  (= 
-    (trigram  out in the 107) True)
-  (= 
-    (trigram  like the beatles 107) True)
-  (= 
-    (trigram  it was awesome 107) True)
-  (= 
-    (trigram  ill 'have,to,check' it 107) True)
-  (= 
-    (trigram  but i love 107) True)
-  (= 
-    (trigram  and they are 107) True)
-  (= 
-    (trigram  what is a 106) True)
-  (= 
-    (trigram  up with the 106) True)
-  (= 
-    (trigram  they are the 106) True)
-  (= 
-    (trigram  the way they 106) True)
-  (= 
-    (trigram  of the band 106) True)
-  (= 
-    (trigram  no not really 106) True)
-  (= 
-    (trigram  i would be 106) True)
-  (= 
-    (trigram  it is not 106) True)
-  (= 
-    (trigram  i remember the 106) True)
-  (= 
-    (trigram  in terms of 106) True)
-  (= 
-    (trigram  i like their 106) True)
-  (= 
-    (trigram  how can you 106) True)
-  (= 
-    (trigram  had a great 106) True)
-  (= 
-    (trigram  but im not 106) True)
-  (= 
-    (trigram  as far as 106) True)
-  (= 
-    (trigram  are you excited 106) True)
-  (= 
-    (trigram  would be cool 105) True)
-  (= 
-    (trigram  who was in 105) True)
-  (= 
-    (trigram  when they were 105) True)
-  (= 
-    (trigram  were going to 105) True)
-  (= 
-    (trigram  went to the 105) True)
-  (= 
-    (trigram  well i like 105) True)
-  (= 
-    (trigram  was good but 105) True)
-  (= 
-    (trigram  the last movie 105) True)
-  (= 
-    (trigram  that you like 105) True)
-  (= 
-    (trigram  so what is 105) True)
-  (= 
-    (trigram  should watch it 105) True)
-  (= 
-    (trigram  out with a 105) True)
-  (= 
-    (trigram  know if i 105) True)
-  (= 
-    (trigram  it was an 105) True)
-  (= 
-    (trigram  i guess we 105) True)
-  (= 
-    (trigram  i cant remember 105) True)
-  (= 
-    (trigram  i also liked 105) True)
-  (= 
-    (trigram  for a long 105) True)
-  (= 
-    (trigram  are you kidding 105) True)
-  (= 
-    (trigram  you like the 104) True)
-  (= 
-    (trigram  who is that 104) True)
-  (= 
-    (trigram  what are they 104) True)
-  (= 
-    (trigram  they have the 104) True)
-  (= 
-    (trigram  oh that is 104) True)
-  (= 
-    (trigram  of the other 104) True)
-  (= 
-    (trigram  it is but 104) True)
-  (= 
-    (trigram  in the theater 104) True)
-  (= 
-    (trigram  in the next 104) True)
-  (= 
-    (trigram  i love him 104) True)
-  (= 
-    (trigram  i didnt think 104) True)
-  (= 
-    (trigram  for some reason 104) True)
-  (= 
-    (trigram  a tough one 104) True)
-  (= 
-    (trigram  yes she is 103) True)
-  (= 
-    (trigram  we should go 103) True)
-  (= 
-    (trigram  to the superbowl 103) True)
-  (= 
-    (trigram  that is what 103) True)
-  (= 
-    (trigram  that could be 103) True)
-  (= 
-    (trigram  remember that one 103) True)
-  (= 
-    (trigram  quite a bit 103) True)
-  (= 
-    (trigram  oh my god 103) True)
-  (= 
-    (trigram  not going to 103) True)
-  (= 
-    (trigram  my favorite part 103) True)
-  (= 
-    (trigram  maybe i will 103) True)
-  (= 
-    (trigram  it was amazing 103) True)
-  (= 
-    (trigram  its a shame 103) True)
-  (= 
-    (trigram  im not really 103) True)
-  (= 
-    (trigram  i love all 103) True)
-  (= 
-    (trigram  i heard he 103) True)
-  (= 
-    (trigram  i didnt see 103) True)
-  (= 
-    (trigram  have you listened 103) True)
-  (= 
-    (trigram  got to be 103) True)
-  (= 
-    (trigram  be in the 103) True)
-  (= 
-    (trigram  yes that one 102) True)
-  (= 
-    (trigram  well i think 102) True)
-  (= 
-    (trigram  well i guess 102) True)
-  (= 
-    (trigram  wait for the 102) True)
-  (= 
-    (trigram  they used to 102) True)
-  (= 
-    (trigram  that is so 102) True)
-  (= 
-    (trigram  ok i will 102) True)
-  (= 
-    (trigram  not sure i 102) True)
-  (= 
-    (trigram  like to watch 102) True)
-  (= 
-    (trigram  it was in 102) True)
-  (= 
-    (trigram  i think ive 102) True)
-  (= 
-    (trigram  it has been 102) True)
-  (= 
-    (trigram  is the one 102) True)
-  (= 
-    (trigram  in the new 102) True)
-  (= 
-    (trigram  i never thought 102) True)
-  (= 
-    (trigram  i know and 102) True)
-  (= 
-    (trigram  i dont have 102) True)
-  (= 
-    (trigram  he has been 102) True)
-  (= 
-    (trigram  harry potter movies 102) True)
-  (= 
-    (trigram  game last night 102) True)
-  (= 
-    (trigram  ever been to 102) True)
-  (= 
-    (trigram  a good idea 102) True)
-  (= 
-    (trigram  yes thats the 101) True)
-  (= 
-    (trigram  the last time 101) True)
-  (= 
-    (trigram  make the playoffs 101) True)
-  (= 
-    (trigram  like a good 101) True)
-  (= 
-    (trigram  it had a 101) True)
-  (= 
-    (trigram  going to win 101) True)
-  (= 
-    (trigram  you ready for 100) True)
-  (= 
-    (trigram  yeah its a 100) True)
-  (= 
-    (trigram  yeah i have 100) True)
-  (= 
-    (trigram  why did you 100) True)
-  (= 
-    (trigram  was a big 100) True)
-  (= 
-    (trigram  the way they 100) True)
-  (= 
-    (trigram  thats too bad 100) True)
-  (= 
-    (trigram  some of it 100) True)
-  (= 
-    (trigram  some of her 100) True)
-  (= 
-    (trigram  of that one 100) True)
-  (= 
-    (trigram  of her songs 100) True)
-  (= 
-    (trigram  not a big 100) True)
-  (= 
-    (trigram  no it was 100) True)
-  (= 
-    (trigram  no but i 100) True)
-  (= 
-    (trigram  listen to a 100) True)
-  (= 
-    (trigram  listening to the 100) True)
-  (= 
-    (trigram  i will be 100) True)
-  (= 
-    (trigram  it was one 100) True)
-  (= 
-    (trigram  i heard the 100) True)
-  (= 
-    (trigram  id love to 100) True)
-  (= 
-    (trigram  i did too 100) True)
-  (= 
-    (trigram  how about you 100) True)
-  (= 
-    (trigram  havent seen it 100) True)
-  (= 
-    (trigram  have not seen 100) True)
-  (= 
-    (trigram  but if you 100) True)
-  (= 
-    (trigram  are you serious 100) True)
-  (= 
-    (trigram  was a pretty 99) True)
-  (= 
-    (trigram  oh my gosh 99) True)
-  (= 
-    (trigram  of the original 99) True)
-  (= 
-    (trigram  of them are 99) True)
-  (= 
-    (trigram  me want to 99) True)
-  (= 
-    (trigram  i will check 99) True)
-  (= 
-    (trigram  ive never seen 99) True)
-  (= 
-    (trigram  it might be 99) True)
-  (= 
-    (trigram  is a little 99) True)
-  (= 
-    (trigram  in the same 99) True)
-  (= 
-    (trigram  i heard they 99) True)
-  (= 
-    (trigram  'have,you,ever' heard of 99) True)
-  (= 
-    (trigram  and of course 99) True)
-  (= 
-    (trigram  and he was 99) True)
-  (= 
-    (trigram  and he is 99) True)
-  (= 
-    (trigram  yes she is 98) True)
-  (= 
-    (trigram  yeah i was 98) True)
-  (= 
-    (trigram  will have a 98) True)
-  (= 
-    (trigram  well it is 98) True)
-  (= 
-    (trigram  was great in 98) True)
-  (= 
-    (trigram  they are great 98) True)
-  (= 
-    (trigram  the only one 98) True)
-  (= 
-    (trigram  the new beauty 98) True)
-  (= 
-    (trigram  the lead singer 98) True)
-  (= 
-    (trigram  the guy who 98) True)
-  (= 
-    (trigram  that was one 98) True)
-  (= 
-    (trigram  sounds like it 98) True)
-  (= 
-    (trigram  really liked it 98) True)
-  (= 
-    (trigram  i love those 98) True)
-  (= 
-    (trigram  i know you 98) True)
-  (= 
-    (trigram  i bet it 98) True)
-  (= 
-    (trigram  black and white 98) True)
-  (= 
-    (trigram  been to a 98) True)
-  (= 
-    (trigram  are your favorite 98) True)
-  (= 
-    (trigram  are you listening 98) True)
-  (= 
-    (trigram  and i love 98) True)
-  (= 
-    (trigram  you ever been 97) True)
-  (= 
-    (trigram  yeah they were 97) True)
-  (= 
-    (trigram  yeah i can 97) True)
-  (= 
-    (trigram  think ive heard 97) True)
-  (= 
-    (trigram  that was really 97) True)
-  (= 
-    (trigram  so what is 97) True)
-  (= 
-    (trigram  seen it yet 97) True)
-  (= 
-    (trigram  i guess youre 97) True)
-  (= 
-    (trigram  he was great 97) True)
-  (= 
-    (trigram  have never heard 97) True)
-  (= 
-    (trigram  for the new 97) True)
-  (= 
-    (trigram  but i cant 97) True)
-  (= 
-    (trigram  bit of a 97) True)
-  (= 
-    (trigram  you should watch 96) True)
-  (= 
-    (trigram  yes they were 96) True)
-  (= 
-    (trigram  up in the 96) True)
-  (= 
-    (trigram  to say that 96) True)
-  (= 
-    (trigram  they are all 96) True)
-  (= 
-    (trigram  the whole movie 96) True)
-  (= 
-    (trigram  the special effects 96) True)
-  (= 
-    (trigram  one of her 96) True)
-  (= 
-    (trigram  of the game 96) True)
-  (= 
-    (trigram  of the beatles 96) True)
-  (= 
-    (trigram  listen to some 96) True)
-  (= 
-    (trigram  i think this 96) True)
-  (= 
-    (trigram  it but i 96) True)
-  (= 
-    (trigram  i like his 96) True)
-  (= 
-    (trigram  i know a 96) True)
-  (= 
-    (trigram  i also love 96) True)
-  (= 
-    (trigram  going to watch 96) True)
-  (= 
-    (trigram  ever see the 96) True)
-  (= 
-    (trigram  dont think it 96) True)
-  (= 
-    (trigram  dont think he 96) True)
-  (= 
-    (trigram  because it was 96) True)
-  (= 
-    (trigram  all of his 96) True)
-  (= 
-    (trigram  you think was 95) True)
-  (= 
-    (trigram  you know it 95) True)
-  (= 
-    (trigram  yes thats the 95) True)
-  (= 
-    (trigram  yeah i do 95) True)
-  (= 
-    (trigram  yeah but it 95) True)
-  (= 
-    (trigram  will be in 95) True)
-  (= 
-    (trigram  want to be 95) True)
-  (= 
-    (trigram  up with the 95) True)
-  (= 
-    (trigram  this is the 95) True)
-  (= 
-    (trigram  this is a 95) True)
-  (= 
-    (trigram  thats true but 95) True)
-  (= 
-    (trigram  that sounds great 95) True)
-  (= 
-    (trigram  that sounds good 95) True)
-  (= 
-    (trigram  song do you 95) True)
-  (= 
-    (trigram  oh thats a 95) True)
-  (= 
-    (trigram  oh my gosh 95) True)
-  (= 
-    (trigram  new beauty and 95) True)
-  (= 
-    (trigram  i was really 95) True)
-  (= 
-    (trigram  it was about 95) True)
-  (= 
-    (trigram  i think this 95) True)
-  (= 
-    (trigram  it comes out 95) True)
-  (= 
-    (trigram  if i had 95) True)
-  (= 
-    (trigram  he is one 95) True)
-  (= 
-    (trigram  have a chance 95) True)
-  (= 
-    (trigram  but i know 95) True)
-  (= 
-    (trigram  yes and i 94) True)
-  (= 
-    (trigram  they should have 94) True)
-  (= 
-    (trigram  sure but i 94) True)
-  (= 
-    (trigram  so many great 94) True)
-  (= 
-    (trigram  my favorite character 94) True)
-  (= 
-    (trigram  love the song 94) True)
-  (= 
-    (trigram  lot of great 94) True)
-  (= 
-    (trigram  listen to music 94) True)
-  (= 
-    (trigram  know it was 94) True)
-  (= 
-    (trigram  'is,that,the' one with 94) True)
-  (= 
-    (trigram  is so good 94) True)
-  (= 
-    (trigram  i dont even 94) True)
-  (= 
-    (trigram  'have,you,ever' seen the 94) True)
-  (= 
-    (trigram  have to admit 94) True)
-  (= 
-    (trigram  both of them 94) True)
-  (= 
-    (trigram  all time favorite 94) True)
-  (= 
-    (trigram  you ever watch 93) True)
-  (= 
-    (trigram  was on the 93) True)
-  (= 
-    (trigram  there is no 93) True)
-  (= 
-    (trigram  the other night 93) True)
-  (= 
-    (trigram  the new movie 93) True)
-  (= 
-    (trigram  that was so 93) True)
-  (= 
-    (trigram  that he is 93) True)
-  (= 
-    (trigram  should check out 93) True)
-  (= 
-    (trigram  much of a 93) True)
-  (= 
-    (trigram  me too but 93) True)
-  (= 
-    (trigram  i did like 93) True)
-  (= 
-    (trigram  but i was 93) True)
-  (= 
-    (trigram  would be awesome 92) True)
-  (= 
-    (trigram  wish they would 92) True)
-  (= 
-    (trigram  win it all 92) True)
-  (= 
-    (trigram  well at least 92) True)
-  (= 
-    (trigram  was the name 92) True)
-  (= 
-    (trigram  was released in 92) True)
-  (= 
-    (trigram  think they can 92) True)
-  (= 
-    (trigram  the last jedi 92) True)
-  (= 
-    (trigram  that was an 92) True)
-  (= 
-    (trigram  that but i 92) True)
-  (= 
-    (trigram  talking about the 92) True)
-  (= 
-    (trigram  she was in 92) True)
-  (= 
-    (trigram  not know that 92) True)
-  (= 
-    (trigram  i wonder why 92) True)
-  (= 
-    (trigram  it was okay 92) True)
-  (= 
-    (trigram  it was like 92) True)
-  (= 
-    (trigram  it kind of 92) True)
-  (= 
-    (trigram  it comes to 92) True)
-  (= 
-    (trigram  it all the 92) True)
-  (= 
-    (trigram  i guess the 92) True)
-  (= 
-    (trigram  i dont even 92) True)
-  (= 
-    (trigram  i always thought 92) True)
-  (= 
-    (trigram  he is in 92) True)
-  (= 
-    (trigram  are you doing 92) True)
-  (= 
-    (trigram  yes i like 91) True)
-  (= 
-    (trigram  well that is 91) True)
-  (= 
-    (trigram  think you are 91) True)
-  (= 
-    (trigram  think will win 91) True)
-  (= 
-    (trigram  think its a 91) True)
-  (= 
-    (trigram  they have some 91) True)
-  (= 
-    (trigram  they are still 91) True)
-  (= 
-    (trigram  the empire strikes 91) True)
-  (= 
-    (trigram  the dark side 91) True)
-  (= 
-    (trigram  most of them 91) True)
-  (= 
-    (trigram  like i said 91) True)
-  (= 
-    (trigram  it was not 91) True)
-  (= 
-    (trigram  have to listen 91) True)
-  (= 
-    (trigram  had so many 91) True)
-  (= 
-    (trigram  came out with 91) True)
-  (= 
-    (trigram  are you ready 91) True)
-  (= 
-    (trigram  are you looking 91) True)
-  (= 
-    (trigram  a lot about 91) True)
-  (= 
-    (trigram  about that one 91) True)
-  (= 
-    (trigram  you on that 90) True)
-  (= 
-    (trigram  which is your 90) True)
-  (= 
-    (trigram  'what,kind,of' 'music,do,you' like 90) True)
-  (= 
-    (trigram  think she is 90) True)
-  (= 
-    (trigram  they are really 90) True)
-  (= 
-    (trigram  they are good 90) True)
-  (= 
-    (trigram  the movie the 90) True)
-  (= 
-    (trigram  the dark knight 90) True)
-  (= 
-    (trigram  that will be 90) True)
-  (= 
-    (trigram  that is not 90) True)
-  (= 
-    (trigram  talk about music 90) True)
-  (= 
-    (trigram  should be a 90) True)
-  (= 
-    (trigram  oh i think 90) True)
-  (= 
-    (trigram  it is hard 90) True)
-  (= 
-    (trigram  in the series 90) True)
-  (= 
-    (trigram  in the film 90) True)
-  (= 
-    (trigram  interesting to see 90) True)
-  (= 
-    (trigram  ill have to 90) True)
-  (= 
-    (trigram  i heard he 90) True)
-  (= 
-    (trigram  i feel the 90) True)
-  (= 
-    (trigram  i didnt see 90) True)
-  (= 
-    (trigram  i completely agree 90) True)
-  (= 
-    (trigram  are in the 90) True)
-  (= 
-    (trigram  and i dont 90) True)
-  (= 
-    (trigram  you think so 89) True)
-  (= 
-    (trigram  yeah i love 89) True)
-  (= 
-    (trigram  yeah but he 89) True)
-  (= 
-    (trigram  with you on 89) True)
-  (= 
-    (trigram  will win the 89) True)
-  (= 
-    (trigram  who are they 89) True)
-  (= 
-    (trigram  was so funny 89) True)
-  (= 
-    (trigram  think i know 89) True)
-  (= 
-    (trigram  them in concert 89) True)
-  (= 
-    (trigram  that you like 89) True)
-  (= 
-    (trigram  that is an 89) True)
-  (= 
-    (trigram  that he is 89) True)
-  (= 
-    (trigram  really like that 89) True)
-  (= 
-    (trigram  over the top 89) True)
-  (= 
-    (trigram  maybe i will 89) True)
-  (= 
-    (trigram  like the movie 89) True)
-  (= 
-    (trigram  is the greatest 89) True)
-  (= 
-    (trigram  im a big 89) True)
-  (= 
-    (trigram  i know a 89) True)
-  (= 
-    (trigram  i dont care 89) True)
-  (= 
-    (trigram  hes a great 89) True)
-  (= 
-    (trigram  heard the new 89) True)
-  (= 
-    (trigram  guess youre right 89) True)
-  (= 
-    (trigram  your favorite band 88) True)
-  (= 
-    (trigram  you hear that 88) True)
-  (= 
-    (trigram  yeah but they 88) True)
-  (= 
-    (trigram  were going to 88) True)
-  (= 
-    (trigram  think they were 88) True)
-  (= 
-    (trigram  the best of 88) True)
-  (= 
-    (trigram  of his movies 88) True)
-  (= 
-    (trigram  no i think 88) True)
-  (= 
-    (trigram  my favorite movies 88) True)
-  (= 
-    (trigram  listen to that 88) True)
-  (= 
-    (trigram  like the most 88) True)
-  (= 
-    (trigram  i would go 88) True)
-  (= 
-    (trigram  i watched the 88) True)
-  (= 
-    (trigram  it was kind 88) True)
-  (= 
-    (trigram  is the name 88) True)
-  (= 
-    (trigram  in a way 88) True)
-  (= 
-    (trigram  in a lot 88) True)
-  (= 
-    (trigram  i listened to 88) True)
-  (= 
-    (trigram  i have the 88) True)
-  (= 
-    (trigram  i bet that 88) True)
-  (= 
-    (trigram  have to do 88) True)
-  (= 
-    (trigram  a very good 88) True)
-  (= 
-    (trigram  and i dont 88) True)
-  (= 
-    (trigram  a disney movie 88) True)
-  (= 
-    (trigram  you see it 87) True)
-  (= 
-    (trigram  you know they 87) True)
-  (= 
-    (trigram  you hear about 87) True)
-  (= 
-    (trigram  yes i remember 87) True)
-  (= 
-    (trigram  wow that sounds 87) True)
-  (= 
-    (trigram  what i mean 87) True)
-  (= 
-    (trigram  well if you 87) True)
-  (= 
-    (trigram  to see her 87) True)
-  (= 
-    (trigram  to get a 87) True)
-  (= 
-    (trigram  they could have 87) True)
-  (= 
-    (trigram  theres a lot 87) True)
-  (= 
-    (trigram  that it is 87) True)
-  (= 
-    (trigram  one is your 87) True)
-  (= 
-    (trigram  lot of fun 87) True)
-  (= 
-    (trigram  know that one 87) True)
-  (= 
-    (trigram  know a lot 87) True)
-  (= 
-    (trigram  its kind of 87) True)
-  (= 
-    (trigram  it depends on 87) True)
-  (= 
-    (trigram  i remember when 87) True)
-  (= 
-    (trigram  in real life 87) True)
-  (= 
-    (trigram  i hope he 87) True)
-  (= 
-    (trigram  i am glad 87) True)
-  (= 
-    (trigram  he is so 87) True)
-  (= 
-    (trigram  have heard that 87) True)
-  (= 
-    (trigram  had a good 87) True)
-  (= 
-    (trigram  genre of music 87) True)
-  (= 
-    (trigram  feel the same 87) True)
-  (= 
-    (trigram  but i guess 87) True)
-  (= 
-    (trigram  but i didnt 87) True)
-  (= 
-    (trigram  but i also 87) True)
-  (= 
-    (trigram  your favorite album 86) True)
-  (= 
-    (trigram  you know it 86) True)
-  (= 
-    (trigram  you go to 86) True)
-  (= 
-    (trigram  yes they were 86) True)
-  (= 
-    (trigram  yeah i thought 86) True)
-  (= 
-    (trigram  yeah and the 86) True)
-  (= 
-    (trigram  what makes you 86) True)
-  (= 
-    (trigram  'what,is,your' favorite song 86) True)
-  (= 
-    (trigram  what does that 86) True)
-  (= 
-    (trigram  well at least 86) True)
-  (= 
-    (trigram  think my favorite 86) True)
-  (= 
-    (trigram  they were a 86) True)
-  (= 
-    (trigram  the top of 86) True)
-  (= 
-    (trigram  the story line 86) True)
-  (= 
-    (trigram  on the album 86) True)
-  (= 
-    (trigram  of his music 86) True)
-  (= 
-    (trigram  jar jar binks 86) True)
-  (= 
-    (trigram  'is,one,of' the best 86) True)
-  (= 
-    (trigram  is a bit 86) True)
-  (= 
-    (trigram  i remember the 86) True)
-  (= 
-    (trigram  i just love 86) True)
-  (= 
-    (trigram  i cant remember 86) True)
-  (= 
-    (trigram  for the most 86) True)
-  (= 
-    (trigram  do this year 86) True)
-  (= 
-    (trigram  dont know how 86) True)
-  (= 
-    (trigram  didnt like it 86) True)
-  (= 
-    (trigram  could have been 86) True)
-  (= 
-    (trigram  character in the 86) True)
-  (= 
-    (trigram  you dont think 85) True)
-  (= 
-    (trigram  you been to 85) True)
-  (= 
-    (trigram  yeah that is 85) True)
-  (= 
-    (trigram  why dont you 85) True)
-  (= 
-    (trigram  the scene where 85) True)
-  (= 
-    (trigram  thats my favorite 85) True)
-  (= 
-    (trigram  thats a great 85) True)
-  (= 
-    (trigram  team do you 85) True)
-  (= 
-    (trigram  seen it yet 85) True)
-  (= 
-    (trigram  of the season 85) True)
-  (= 
-    (trigram  of movies do 85) True)
-  (= 
-    (trigram  not really i 85) True)
-  (= 
-    (trigram  my favorite movie 85) True)
-  (= 
-    (trigram  its a great 85) True)
-  (= 
-    (trigram  i think youre 85) True)
-  (= 
-    (trigram  it can be 85) True)
-  (= 
-    (trigram  im pretty sure 85) True)
-  (= 
-    (trigram  i hope it 85) True)
-  (= 
-    (trigram  i heard about 85) True)
-  (= 
-    (trigram  'how,do,you' feel about 85) True)
-  (= 
-    (trigram  hey what do 85) True)
-  (= 
-    (trigram  he is very 85) True)
-  (= 
-    (trigram  hall of fame 85) True)
-  (= 
-    (trigram  dont think ive 85) True)
-  (= 
-    (trigram  dont know but 85) True)
-  (= 
-    (trigram  did not like 85) True)
-  (= 
-    (trigram  all kinds of 85) True)
-  (= 
-    (trigram  a little more 85) True)
-  (= 
-    (trigram  a great voice 85) True)
-  (= 
-    (trigram  a good team 85) True)
-  (= 
-    (trigram  yes of course 84) True)
-  (= 
-    (trigram  yes and the 84) True)
-  (= 
-    (trigram  used to love 84) True)
-  (= 
-    (trigram  to make the 84) True)
-  (= 
-    (trigram  them in the 84) True)
-  (= 
-    (trigram  thats why i 84) True)
-  (= 
-    (trigram  thanks for the 84) True)
-  (= 
-    (trigram  some of my 84) True)
-  (= 
-    (trigram  of it is 84) True)
-  (= 
-    (trigram  just saw the 84) True)
-  (= 
-    (trigram  is there a 84) True)
-  (= 
-    (trigram  i love their 84) True)
-  (= 
-    (trigram  you like him 83) True)
-  (= 
-    (trigram  yes that one 83) True)
-  (= 
-    (trigram  will be good 83) True)
-  (= 
-    (trigram  will always be 83) True)
-  (= 
-    (trigram  why did you 83) True)
-  (= 
-    (trigram  what it is 83) True)
-  (= 
-    (trigram  well i am 83) True)
-  (= 
-    (trigram  was supposed to 83) True)
-  (= 
-    (trigram  to a game 83) True)
-  (= 
-    (trigram  they are pretty 83) True)
-  (= 
-    (trigram  the rolling stones 83) True)
-  (= 
-    (trigram  there will be 83) True)
-  (= 
-    (trigram  there were a 83) True)
-  (= 
-    (trigram  seems like a 83) True)
-  (= 
-    (trigram  oh yeah that 83) True)
-  (= 
-    (trigram  look forward to 83) True)
-  (= 
-    (trigram  look at the 83) True)
-  (= 
-    (trigram  its been a 83) True)
-  (= 
-    (trigram  it really was 83) True)
-  (= 
-    (trigram  it is called 83) True)
-  (= 
-    (trigram  i think im 83) True)
-  (= 
-    (trigram  i saw them 83) True)
-  (= 
-    (trigram  in my head 83) True)
-  (= 
-    (trigram  i do think 83) True)
-  (= 
-    (trigram  have been listening 83) True)
-  (= 
-    (trigram  hard to believe 83) True)
-  (= 
-    (trigram  dont you think 83) True)
-  (= 
-    (trigram  dont have to 83) True)
-  (= 
-    (trigram  didnt like the 83) True)
-  (= 
-    (trigram  but i just 83) True)
-  (= 
-    (trigram  a tough question 83) True)
-  (= 
-    (trigram  yes i know 82) True)
-  (= 
-    (trigram  yes but it 82) True)
-  (= 
-    (trigram  yeah but the 82) True)
-  (= 
-    (trigram  wonder if they 82) True)
-  (= 
-    (trigram  who else is 82) True)
-  (= 
-    (trigram  well they are 82) True)
-  (= 
-    (trigram  to see if 82) True)
-  (= 
-    (trigram  that sounds interesting 82) True)
-  (= 
-    (trigram  thats kind of 82) True)
-  (= 
-    (trigram  oh thats right 82) True)
-  (= 
-    (trigram  my favorite songs 82) True)
-  (= 
-    (trigram  interesting to see 82) True)
-  (= 
-    (trigram  i hope the 82) True)
-  (= 
-    (trigram  i doubt it 82) True)
-  (= 
-    (trigram  i didnt really 82) True)
-  (= 
-    (trigram  hes one of 82) True)
-  (= 
-    (trigram  heard it was 82) True)
-  (= 
-    (trigram  had to pick 82) True)
-  (= 
-    (trigram  'do,you,think' they will 82) True)
-  (= 
-    (trigram  dont know why 82) True)
-  (= 
-    (trigram  but you know 82) True)
-  (= 
-    (trigram  but what about 82) True)
-  (= 
-    (trigram  are really good 82) True)
-  (= 
-    (trigram  a new hope 82) True)
-  (= 
-    (trigram  a bit more 82) True)
-  (= 
-    (trigram  your favorite scene 81) True)
-  (= 
-    (trigram  yes of course 81) True)
-  (= 
-    (trigram  yes i loved 81) True)
-  (= 
-    (trigram  yes but i 81) True)
-  (= 
-    (trigram  want to hear 81) True)
-  (= 
-    (trigram  wanted to see 81) True)
-  (= 
-    (trigram  true but i 81) True)
-  (= 
-    (trigram  they had to 81) True)
-  (= 
-    (trigram  the edge of 81) True)
-  (= 
-    (trigram  that the movie 81) True)
-  (= 
-    (trigram  of that movie 81) True)
-  (= 
-    (trigram  know about that 81) True)
-  (= 
-    (trigram  its such a 81) True)
-  (= 
-    (trigram  is better than 81) True)
-  (= 
-    (trigram  in the super 81) True)
-  (= 
-    (trigram  in the mood 81) True)
-  (= 
-    (trigram  i never saw 81) True)
-  (= 
-    (trigram  i liked how 81) True)
-  (= 
-    (trigram  'have,you,been' listening to 81) True)
-  (= 
-    (trigram  good movies lately 81) True)
-  (= 
-    (trigram  dont like the 81) True)
-  (= 
-    (trigram  but if you 81) True)
-  (= 
-    (trigram  believe it was 81) True)
-  (= 
-    (trigram  a good actor 81) True)
-  (= 
-    (trigram  you could say 80) True)
-  (= 
-    (trigram  yea it was 80) True)
-  (= 
-    (trigram  thought they were 80) True)
-  (= 
-    (trigram  the story line 80) True)
-  (= 
-    (trigram  the music is 80) True)
-  (= 
-    (trigram  the best in 80) True)
-  (= 
-    (trigram  song on the 80) True)
-  (= 
-    (trigram  so it was 80) True)
-  (= 
-    (trigram  so i guess 80) True)
-  (= 
-    (trigram  over the years 80) True)
-  (= 
-    (trigram  let you know 80) True)
-  (= 
-    (trigram  i sure hope 80) True)
-  (= 
-    (trigram  'is,one,of' my favorite 80) True)
-  (= 
-    (trigram  i bet that 80) True)
-  (= 
-    (trigram  i bet it 80) True)
-  (= 
-    (trigram  has the best 80) True)
-  (= 
-    (trigram  had to be 80) True)
-  (= 
-    (trigram  from the movie 80) True)
-  (= 
-    (trigram  first one was 80) True)
-  (= 
-    (trigram  dont think ive 80) True)
-  (= 
-    (trigram  did you have 80) True)
-  (= 
-    (trigram  definitely one of 80) True)
-  (= 
-    (trigram  come out with 80) True)
-  (= 
-    (trigram  can you believe 80) True)
-  (= 
-    (trigram  can understand that 80) True)
-  (= 
-    (trigram  but they have 80) True)
-  (= 
-    (trigram  because it is 80) True)
-  (= 
-    (trigram  are my favorite 80) True)
-  (= 
-    (trigram  yeah thats true 79) True)
-  (= 
-    (trigram  yeah i am 79) True)
-  (= 
-    (trigram  what you think 79) True)
-  (= 
-    (trigram  we will have 79) True)
-  (= 
-    (trigram  to do it 79) True)
-  (= 
-    (trigram  they would have 79) True)
-  (= 
-    (trigram  they were so 79) True)
-  (= 
-    (trigram  they are not 79) True)
-  (= 
-    (trigram  they are both 79) True)
-  (= 
-    (trigram  that they have 79) True)
-  (= 
-    (trigram  that is why 79) True)
-  (= 
-    (trigram  of their music 79) True)
-  (= 
-    (trigram  not so much 79) True)
-  (= 
-    (trigram  not really a 79) True)
-  (= 
-    (trigram  no i have 79) True)
-  (= 
-    (trigram  maybe we can 79) True)
-  (= 
-    (trigram  like to go 79) True)
-  (= 
-    (trigram  it is pretty 79) True)
-  (= 
-    (trigram  i guess the 79) True)
-  (= 
-    (trigram  i agree it 79) True)
-  (= 
-    (trigram  he used to 79) True)
-  (= 
-    (trigram  has been a 79) True)
-  (= 
-    (trigram  first came out 79) True)
-  (= 
-    (trigram  excited for the 79) True)
-  (= 
-    (trigram  do you enjoy 79) True)
-  (= 
-    (trigram  could be a 79) True)
-  (= 
-    (trigram  but they were 79) True)
-  (= 
-    (trigram  are one of 79) True)
-  (= 
-    (trigram  a new one 79) True)
-  (= 
-    (trigram  a great idea 79) True)
-  (= 
-    (trigram  you know if 78) True)
-  (= 
-    (trigram  yes they did 78) True)
-  (= 
-    (trigram  yeah that one 78) True)
-  (= 
-    (trigram  would say the 78) True)
-  (= 
-    (trigram  'what,did,you' think about 78) True)
-  (= 
-    (trigram  to one of 78) True)
-  (= 
-    (trigram  they made a 78) True)
-  (= 
-    (trigram  that was an 78) True)
-  (= 
-    (trigram  on the field 78) True)
-  (= 
-    (trigram  oh me too 78) True)
-  (= 
-    (trigram  of the star 78) True)
-  (= 
-    (trigram  of the music 78) True)
-  (= 
-    (trigram  not sure what 78) True)
-  (= 
-    (trigram  not sure but 78) True)
-  (= 
-    (trigram  much better than 78) True)
-  (= 
-    (trigram  know much about 78) True)
-  (= 
-    (trigram  just like the 78) True)
-  (= 
-    (trigram  i really loved 78) True)
-  (= 
-    (trigram  i hear you 78) True)
-  (= 
-    (trigram  i didnt realize 78) True)
-  (= 
-    (trigram  come up with 78) True)
-  (= 
-    (trigram  are your thoughts 78) True)
-  (= 
-    (trigram  and they were 78) True)
-  (= 
-    (trigram  a lot to 78) True)
-  (= 
-    (trigram  yeah and the 77) True)
-  (= 
-    (trigram  was just a 77) True)
-  (= 
-    (trigram  to watch a 77) True)
-  (= 
-    (trigram  the music video 77) True)
-  (= 
-    (trigram  the most part 77) True)
-  (= 
-    (trigram  that song was 77) True)
-  (= 
-    (trigram  that might be 77) True)
-  (= 
-    (trigram  so you think 77) True)
-  (= 
-    (trigram  so much more 77) True)
-  (= 
-    (trigram  right about that 77) True)
-  (= 
-    (trigram  lot of money 77) True)
-  (= 
-    (trigram  listening to a 77) True)
-  (= 
-    (trigram  i wouldnt say 77) True)
-  (= 
-    (trigram  it was on 77) True)
-  (= 
-    (trigram  i think shes 77) True)
-  (= 
-    (trigram  i think of 77) True)
-  (= 
-    (trigram  i might have 77) True)
-  (= 
-    (trigram  if they are 77) True)
-  (= 
-    (trigram  i cant stand 77) True)
-  (= 
-    (trigram  has a good 77) True)
-  (= 
-    (trigram  are a few 77) True)
-  (= 
-    (trigram  any of them 77) True)
-  (= 
-    (trigram  also like the 77) True)
-  (= 
-    (trigram  a little too 77) True)
-  (= 
-    (trigram  your least favorite 76) True)
-  (= 
-    (trigram  your favorite genre 76) True)
-  (= 
-    (trigram  you didnt like 76) True)
-  (= 
-    (trigram  yes i really 76) True)
-  (= 
-    (trigram  yes he does 76) True)
-  (= 
-    (trigram  yes and the 76) True)
-  (= 
-    (trigram  where did you 76) True)
-  (= 
-    (trigram  when it came 76) True)
-  (= 
-    (trigram  was in that 76) True)
-  (= 
-    (trigram  to the playoffs 76) True)
-  (= 
-    (trigram  to find out 76) True)
-  (= 
-    (trigram  the new ones 76) True)
-  (= 
-    (trigram  the death star 76) True)
-  (= 
-    (trigram  thats a really 76) True)
-  (= 
-    (trigram  star wars character 76) True)
-  (= 
-    (trigram  really like it 76) True)
-  (= 
-    (trigram  out to be 76) True)
-  (= 
-    (trigram  on the edge 76) True)
-  (= 
-    (trigram  ive heard that 76) True)
-  (= 
-    (trigram  it to be 76) True)
-  (= 
-    (trigram  its really good 76) True)
-  (= 
-    (trigram  it on the 76) True)
-  (= 
-    (trigram  it makes me 76) True)
-  (= 
-    (trigram  i think ill 76) True)
-  (= 
-    (trigram  i think his 76) True)
-  (= 
-    (trigram  is so much 76) True)
-  (= 
-    (trigram  is good but 76) True)
-  (= 
-    (trigram  i never heard 76) True)
-  (= 
-    (trigram  i mean the 76) True)
-  (= 
-    (trigram  i also really 76) True)
-  (= 
-    (trigram  havent seen that 76) True)
-  (= 
-    (trigram  going to get 76) True)
-  (= 
-    (trigram  but its a 76) True)
-  (= 
-    (trigram  but i liked 76) True)
-  (= 
-    (trigram  any of their 76) True)
-  (= 
-    (trigram  and of course 76) True)
-  (= 
-    (trigram  and listen to 76) True)
-  (= 
-    (trigram  yeah they have 75) True)
-  (= 
-    (trigram  yeah i remember 75) True)
-  (= 
-    (trigram  yeah i liked 75) True)
-  (= 
-    (trigram  yeah but the 75) True)
-  (= 
-    (trigram  who are the 75) True)
-  (= 
-    (trigram  'which,one,is' your favorite 75) True)
-  (= 
-    (trigram  they were all 75) True)
-  (= 
-    (trigram  the part where 75) True)
-  (= 
-    (trigram  now that you 75) True)
-  (= 
-    (trigram  not really but 75) True)
-  (= 
-    (trigram  not a huge 75) True)
-  (= 
-    (trigram  movie do you 75) True)
-  (= 
-    (trigram  it was funny 75) True)
-  (= 
-    (trigram  it that way 75) True)
-  (= 
-    (trigram  its a really 75) True)
-  (= 
-    (trigram  in a long 75) True)
-  (= 
-    (trigram  i guess its 75) True)
-  (= 
-    (trigram  i dont 'know,if,i' 75) True)
-  (= 
-    (trigram  'i,dont,know' if i 75) True)
-  (= 
-    (trigram  i didnt realize 75) True)
-  (= 
-    (trigram  i agree that 75) True)
-  (= 
-    (trigram  hey do you 75) True)
-  (= 
-    (trigram  he was pretty 75) True)
-  (= 
-    (trigram  he is really 75) True)
-  (= 
-    (trigram  forward to the 75) True)
-  (= 
-    (trigram  but its not 75) True)
-  (= 
-    (trigram  but i didnt 75) True)
-  (= 
-    (trigram  be one of 75) True)
-  (= 
-    (trigram  be interesting to 75) True)
-  (= 
-    (trigram  you know any 74) True)
-  (= 
-    (trigram  you dont think 74) True)
-  (= 
-    (trigram  yes they did 74) True)
-  (= 
-    (trigram  yes he does 74) True)
-  (= 
-    (trigram  yeah its a 74) True)
-  (= 
-    (trigram  was it about 74) True)
-  (= 
-    (trigram  to some of 74) True)
-  (= 
-    (trigram  the hall of 74) True)
-  (= 
-    (trigram  the best movie 74) True)
-  (= 
-    (trigram  should listen to 74) True)
-  (= 
-    (trigram  of music is 74) True)
-  (= 
-    (trigram  it was more 74) True)
-  (= 
-    (trigram  it is just 74) True)
-  (= 
-    (trigram  in the game 74) True)
-  (= 
-    (trigram  i just hope 74) True)
-  (= 
-    (trigram  i did see 74) True)
-  (= 
-    (trigram  i didnt even 74) True)
-  (= 
-    (trigram  i believe so 74) True)
-  (= 
-    (trigram  he was really 74) True)
-  (= 
-    (trigram  he is good 74) True)
-  (= 
-    (trigram  good to me 74) True)
-  (= 
-    (trigram  give them a 74) True)
-  (= 
-    (trigram  do with the 74) True)
-  (= 
-    (trigram  do they play 74) True)
-  (= 
-    (trigram  dont really like 74) True)
-  (= 
-    (trigram  did you go 74) True)
-  (= 
-    (trigram  didnt like it 74) True)
-  (= 
-    (trigram  black and white 74) True)
-  (= 
-    (trigram  because it is 74) True)
-  (= 
-    (trigram  a super bowl 74) True)
-  (= 
-    (trigram  agree to disagree 74) True)
-  (= 
-    (trigram  your thoughts on 73) True)
-  (= 
-    (trigram  you like best 73) True)
-  (= 
-    (trigram  yeah but he 73) True)
-  (= 
-    (trigram  who were the 73) True)
-  (= 
-    (trigram  who directed it 73) True)
-  (= 
-    (trigram  went to see 73) True)
-  (= 
-    (trigram  well you know 73) True)
-  (= 
-    (trigram  well i like 73) True)
-  (= 
-    (trigram  was a very 73) True)
-  (= 
-    (trigram  to watch that 73) True)
-  (= 
-    (trigram  to be on 73) True)
-  (= 
-    (trigram  they are making 73) True)
-  (= 
-    (trigram  the whole thing 73) True)
-  (= 
-    (trigram  the patriots are 73) True)
-  (= 
-    (trigram  that it is 73) True)
-  (= 
-    (trigram  not sure what 73) True)
-  (= 
-    (trigram  music from the 73) True)
-  (= 
-    (trigram  loved that movie 73) True)
-  (= 
-    (trigram  like any of 73) True)
-  (= 
-    (trigram  i will see 73) True)
-  (= 
-    (trigram  its really good 73) True)
-  (= 
-    (trigram  in the original 73) True)
-  (= 
-    (trigram  im looking forward 73) True)
-  (= 
-    (trigram  'i,like,that' one too 73) True)
-  (= 
-    (trigram  he would have 73) True)
-  (= 
-    (trigram  heard about that 73) True)
-  (= 
-    (trigram  go with the 73) True)
-  (= 
-    (trigram  favorite type of 73) True)
-  (= 
-    (trigram  favorite character in 73) True)
-  (= 
-    (trigram  ever listened to 73) True)
-  (= 
-    (trigram  dont think that 73) True)
-  (= 
-    (trigram  dont know that 73) True)
-  (= 
-    (trigram  but not as 73) True)
-  (= 
-    (trigram  but i heard 73) True)
-  (= 
-    (trigram  but i did 73) True)
-  (= 
-    (trigram  both of those 73) True)
-  (= 
-    (trigram  are pretty good 73) True)
-  (= 
-    (trigram  and they have 73) True)
-  (= 
-    (trigram  a little too 73) True)
-  (= 
-    (trigram  yeah thats right 72) True)
-  (= 
-    (trigram  yeah i would 72) True)
-  (= 
-    (trigram  yeah but they 72) True)
-  (= 
-    (trigram  would it be 72) True)
-  (= 
-    (trigram  what was that 72) True)
-  (= 
-    (trigram  well i have 72) True)
-  (= 
-    (trigram  was the one 72) True)
-  (= 
-    (trigram  was it good 72) True)
-  (= 
-    (trigram  was better than 72) True)
-  (= 
-    (trigram  the nfl season 72) True)
-  (= 
-    (trigram  song by them 72) True)
-  (= 
-    (trigram  some kind of 72) True)
-  (= 
-    (trigram  see that one 72) True)
-  (= 
-    (trigram  one with the 72) True)
-  (= 
-    (trigram  oh man i 72) True)
-  (= 
-    (trigram  oh for sure 72) True)
-  (= 
-    (trigram  no not yet 72) True)
-  (= 
-    (trigram  might be the 72) True)
-  (= 
-    (trigram  little bit of 72) True)
-  (= 
-    (trigram  liked that one 72) True)
-  (= 
-    (trigram  know how to 72) True)
-  (= 
-    (trigram  i would probably 72) True)
-  (= 
-    (trigram  its such a 72) True)
-  (= 
-    (trigram  it is good 72) True)
-  (= 
-    (trigram  it come out 72) True)
-  (= 
-    (trigram  it as well 72) True)
-  (= 
-    (trigram  is so funny 72) True)
-  (= 
-    (trigram  i saw him 72) True)
-  (= 
-    (trigram  i mean it 72) True)
-  (= 
-    (trigram  i do but 72) True)
-  (= 
-    (trigram  i cant stand 72) True)
-  (= 
-    (trigram  i always liked 72) True)
-  (= 
-    (trigram  i agree and 72) True)
-  (= 
-    (trigram  dont know what 72) True)
-  (= 
-    (trigram  all over the 72) True)
-  (= 
-    (trigram  a horror movie 72) True)
-  (= 
-    (trigram  your favorite pop 71) True)
-  (= 
-    (trigram  you get to 71) True)
-  (= 
-    (trigram  yeah i have 71) True)
-  (= 
-    (trigram  wow that sounds 71) True)
-  (= 
-    (trigram  with you there 71) True)
-  (= 
-    (trigram  who are you 71) True)
-  (= 
-    (trigram  when they are 71) True)
-  (= 
-    (trigram  what songs do 71) True)
-  (= 
-    (trigram  were in the 71) True)
-  (= 
-    (trigram  went to a 71) True)
-  (= 
-    (trigram  to think of 71) True)
-  (= 
-    (trigram  the live action 71) True)
-  (= 
-    (trigram  the beginning of 71) True)
-  (= 
-    (trigram  so did i 71) True)
-  (= 
-    (trigram  over the top 71) True)
-  (= 
-    (trigram  oh yes i 71) True)
-  (= 
-    (trigram  no not yet 71) True)
-  (= 
-    (trigram  need to get 71) True)
-  (= 
-    (trigram  like the first 71) True)
-  (= 
-    (trigram  like it was 71) True)
-  (= 
-    (trigram  just have to 71) True)
-  (= 
-    (trigram  ive seen it 71) True)
-  (= 
-    (trigram  it was that 71) True)
-  (= 
-    (trigram  it as well 71) True)
-  (= 
-    (trigram  i still like 71) True)
-  (= 
-    (trigram  is not a 71) True)
-  (= 
-    (trigram  in the 90s 71) True)
-  (= 
-    (trigram  in it too 71) True)
-  (= 
-    (trigram  if you could 71) True)
-  (= 
-    (trigram  'i,did,not' know that 71) True)
-  (= 
-    (trigram  i agree he 71) True)
-  (= 
-    (trigram  he was good 71) True)
-  (= 
-    (trigram  heard that song 71) True)
-  (= 
-    (trigram  have never seen 71) True)
-  (= 
-    (trigram  got to see 71) True)
-  (= 
-    (trigram  favorite part of 71) True)
-  (= 
-    (trigram  dont have a 71) True)
-  (= 
-    (trigram  check that out 71) True)
-  (= 
-    (trigram  check out the 71) True)
-  (= 
-    (trigram  but my favorite 71) True)
-  (= 
-    (trigram  at this point 71) True)
-  (= 
-    (trigram  as the first 71) True)
-  (= 
-    (trigram  any of his 71) True)
-  (= 
-    (trigram  and i really 71) True)
-  (= 
-    (trigram  and i like 71) True)
-  (= 
-    (trigram  your favorite nfl 70) True)
-  (= 
-    (trigram  your favorite comedy 70) True)
-  (= 
-    (trigram  you know that 70) True)
-  (= 
-    (trigram  you heard any 70) True)
-  (= 
-    (trigram  you dont have 70) True)
-  (= 
-    (trigram  yes i would 70) True)
-  (= 
-    (trigram  yeah i did 70) True)
-  (= 
-    (trigram  wow thats a 70) True)
-  (= 
-    (trigram  'why,do,you' think that 70) True)
-  (= 
-    (trigram  whats it called 70) True)
-  (= 
-    (trigram  what makes it 70) True)
-  (= 
-    (trigram  what are they 70) True)
-  (= 
-    (trigram  trying to get 70) True)
-  (= 
-    (trigram  to check out 70) True)
-  (= 
-    (trigram  they were in 70) True)
-  (= 
-    (trigram  they seem to 70) True)
-  (= 
-    (trigram  the voice of 70) True)
-  (= 
-    (trigram  there any other 70) True)
-  (= 
-    (trigram  the live action 70) True)
-  (= 
-    (trigram  that they were 70) True)
-  (= 
-    (trigram  that sounds really 70) True)
-  (= 
-    (trigram  that song too 70) True)
-  (= 
-    (trigram  that i have 70) True)
-  (= 
-    (trigram  team do you 70) True)
-  (= 
-    (trigram  see your point 70) True)
-  (= 
-    (trigram  scene in the 70) True)
-  (= 
-    (trigram  never thought of 70) True)
-  (= 
-    (trigram  mean by that 70) True)
-  (= 
-    (trigram  know he was 70) True)
-  (= 
-    (trigram  i would not 70) True)
-  (= 
-    (trigram  it so much 70) True)
-  (= 
-    (trigram  it all the 70) True)
-  (= 
-    (trigram  i still dont 70) True)
-  (= 
-    (trigram  i read that 70) True)
-  (= 
-    (trigram  in a movie 70) True)
-  (= 
-    (trigram  i mean the 70) True)
-  (= 
-    (trigram  his music is 70) True)
-  (= 
-    (trigram  hes going to 70) True)
-  (= 
-    (trigram  have a few 70) True)
-  (= 
-    (trigram  dont think the 70) True)
-  (= 
-    (trigram  cant wait for 70) True)
-  (= 
-    (trigram  born this way 70) True)
-  (= 
-    (trigram  a song called 70) True)
-  (= 
-    (trigram  a really great 70) True)
-  (= 
-    (trigram  you say is 69) True)
-  (= 
-    (trigram  you know when 69) True)
-  (= 
-    (trigram  you didnt like 69) True)
-  (= 
-    (trigram  with a new 69) True)
-  (= 
-    (trigram  what a great 69) True)
-  (= 
-    (trigram  was pretty cool 69) True)
-  (= 
-    (trigram  was able to 69) True)
-  (= 
-    (trigram  want to talk 69) True)
-  (= 
-    (trigram  to get the 69) True)
-  (= 
-    (trigram  they do have 69) True)
-  (= 
-    (trigram  the way the 69) True)
-  (= 
-    (trigram  the next movie 69) True)
-  (= 
-    (trigram  the lyrics are 69) True)
-  (= 
-    (trigram  that sounds really 69) True)
-  (= 
-    (trigram  that is pretty 69) True)
-  (= 
-    (trigram  that in the 69) True)
-  (= 
-    (trigram  still listen to 69) True)
-  (= 
-    (trigram  probably my favorite 69) True)
-  (= 
-    (trigram  of the nfl 69) True)
-  (= 
-    (trigram  no it was 69) True)
-  (= 
-    (trigram  many of the 69) True)
-  (= 
-    (trigram  like pop music 69) True)
-  (= 
-    (trigram  know i think 69) True)
-  (= 
-    (trigram  i liked him 69) True)
-  (= 
-    (trigram  i guess its 69) True)
-  (= 
-    (trigram  i get it 69) True)
-  (= 
-    (trigram  if you are 69) True)
-  (= 
-    (trigram  if it was 69) True)
-  (= 
-    (trigram  i dont 'know,about,that' 69) True)
-  (= 
-    (trigram  'i,dont,know' about that 69) True)
-  (= 
-    (trigram  he is not 69) True)
-  (= 
-    (trigram  'have,you,heard' the new 69) True)
-  (= 
-    (trigram  have to give 69) True)
-  (= 
-    (trigram  have so many 69) True)
-  (= 
-    (trigram  has such a 69) True)
-  (= 
-    (trigram  for the nfl 69) True)
-  (= 
-    (trigram  feel about the 69) True)
-  (= 
-    (trigram  could see that 69) True)
-  (= 
-    (trigram  can see why 69) True)
-  (= 
-    (trigram  but i thought 69) True)
-  (= 
-    (trigram  and i loved 69) True)
-  (= 
-    (trigram  again this year 69) True)
-  (= 
-    (trigram  a few times 69) True)
-  (= 
-    (trigram  a few songs 69) True)
-  (= 
-    (trigram  you think its 68) True)
-  (= 
-    (trigram  you looking forward 68) True)
-  (= 
-    (trigram  you are a 68) True)
-  (= 
-    (trigram  yeah i was 68) True)
-  (= 
-    (trigram  yeah i saw 68) True)
-  (= 
-    (trigram  yeah i just 68) True)
-  (= 
-    (trigram  would be nice 68) True)
-  (= 
-    (trigram  when you were 68) True)
-  (= 
-    (trigram  whats it called 68) True)
-  (= 
-    (trigram  what do they 68) True)
-  (= 
-    (trigram  well if you 68) True)
-  (= 
-    (trigram  used to listen 68) True)
-  (= 
-    (trigram  the world series 68) True)
-  (= 
-    (trigram  the new york 68) True)
-  (= 
-    (trigram  the most recent 68) True)
-  (= 
-    (trigram  the hall of 68) True)
-  (= 
-    (trigram  'that,was,a' good one 68) True)
-  (= 
-    (trigram  song on the 68) True)
-  (= 
-    (trigram  so i think 68) True)
-  (= 
-    (trigram  see a movie 68) True)
-  (= 
-    (trigram  one in the 68) True)
-  (= 
-    (trigram  one but i 68) True)
-  (= 
-    (trigram  of them but 68) True)
-  (= 
-    (trigram  like the old 68) True)
-  (= 
-    (trigram  i would agree 68) True)
-  (= 
-    (trigram  i will definitely 68) True)
-  (= 
-    (trigram  i thought you 68) True)
-  (= 
-    (trigram  is it good 68) True)
-  (= 
-    (trigram  is it called 68) True)
-  (= 
-    (trigram  in the early 68) True)
-  (= 
-    (trigram  in the beginning 68) True)
-  (= 
-    (trigram  i know she 68) True)
-  (= 
-    (trigram  i just like 68) True)
-  (= 
-    (trigram  i just cant 68) True)
-  (= 
-    (trigram  i have always 68) True)
-  (= 
-    (trigram  i am excited 68) True)
-  (= 
-    (trigram  hey are you 68) True)
-  (= 
-    (trigram  have the best 68) True)
-  (= 
-    (trigram  have seen that 68) True)
-  (= 
-    (trigram  going to make 68) True)
-  (= 
-    (trigram  go back to 68) True)
-  (= 
-    (trigram  dont get me 68) True)
-  (= 
-    (trigram  do not like 68) True)
-  (= 
-    (trigram  'did,you,ever' see the 68) True)
-  (= 
-    (trigram  but not the 68) True)
-  (= 
-    (trigram  and a lot 68) True)
-  (= 
-    (trigram  about that movie 68) True)
-  (= 
-    (trigram  you seen that 67) True)
-  (= 
-    (trigram  yes and i 67) True)
-  (= 
-    (trigram  yeah i am 67) True)
-  (= 
-    (trigram  yeah but it 67) True)
-  (= 
-    (trigram  why would you 67) True)
-  (= 
-    (trigram  who are some 67) True)
-  (= 
-    (trigram  where do you 67) True)
-  (= 
-    (trigram  well i am 67) True)
-  (= 
-    (trigram  up to the 67) True)
-  (= 
-    (trigram  to think about 67) True)
-  (= 
-    (trigram  think there are 67) True)
-  (= 
-    (trigram  think he has 67) True)
-  (= 
-    (trigram  theyre going to 67) True)
-  (= 
-    (trigram  the third one 67) True)
-  (= 
-    (trigram  the best one 67) True)
-  (= 
-    (trigram  that they have 67) True)
-  (= 
-    (trigram  that should be 67) True)
-  (= 
-    (trigram  so who is 67) True)
-  (= 
-    (trigram  so much better 67) True)
-  (= 
-    (trigram  seen all of 67) True)
-  (= 
-    (trigram  ok thank you 67) True)
-  (= 
-    (trigram  oh wow i 67) True)
-  (= 
-    (trigram  oh i remember 67) True)
-  (= 
-    (trigram  nice talking to 67) True)
-  (= 
-    (trigram  just came out 67) True)
-  (= 
-    (trigram  jar jar binks 67) True)
-  (= 
-    (trigram  ive seen that 67) True)
-  (= 
-    (trigram  it that way 67) True)
-  (= 
-    (trigram  is on the 67) True)
-  (= 
-    (trigram  is a pretty 67) True)
-  (= 
-    (trigram  i prefer the 67) True)
-  (= 
-    (trigram  in the future 67) True)
-  (= 
-    (trigram  im not really 67) True)
-  (= 
-    (trigram  i loved her 67) True)
-  (= 
-    (trigram  i cant imagine 67) True)
-  (= 
-    (trigram  he has to 67) True)
-  (= 
-    (trigram  heard that too 67) True)
-  (= 
-    (trigram  for the recommendation 67) True)
-  (= 
-    (trigram  yeah i did 66) True)
-  (= 
-    (trigram  yeah i cant 66) True)
-  (= 
-    (trigram  would you want 66) True)
-  (= 
-    (trigram  'who,do,you' 'think,is,the' best 66) True)
-  (= 
-    (trigram  what song do 66) True)
-  (= 
-    (trigram  what i think 66) True)
-  (= 
-    (trigram  what have you 66) True)
-  (= 
-    (trigram  well they are 66) True)
-  (= 
-    (trigram  well in the 66) True)
-  (= 
-    (trigram  used to play 66) True)
-  (= 
-    (trigram  think will be 66) True)
-  (= 
-    (trigram  they were pretty 66) True)
-  (= 
-    (trigram  they are one 66) True)
-  (= 
-    (trigram  there were some 66) True)
-  (= 
-    (trigram  the dallas cowboys 66) True)
-  (= 
-    (trigram  thats a classic 66) True)
-  (= 
-    (trigram  so it was 66) True)
-  (= 
-    (trigram  okay i will 66) True)
-  (= 
-    (trigram  oh yeah thats 66) True)
-  (= 
-    (trigram  oh i like 66) True)
-  (= 
-    (trigram  listening to it 66) True)
-  (= 
-    (trigram  like the way 66) True)
-  (= 
-    (trigram  it when it 66) True)
-  (= 
-    (trigram  its not a 66) True)
-  (= 
-    (trigram  its a good 66) True)
-  (= 
-    (trigram  i tend to 66) True)
-  (= 
-    (trigram  is what i 66) True)
-  (= 
-    (trigram  i remember seeing 66) True)
-  (= 
-    (trigram  i didnt really 66) True)
-  (= 
-    (trigram  he was just 66) True)
-  (= 
-    (trigram  have to wait 66) True)
-  (= 
-    (trigram  get a chance 66) True)
-  (= 
-    (trigram  dont you like 66) True)
-  (= 
-    (trigram  does have a 66) True)
-  (= 
-    (trigram  cant think of 66) True)
-  (= 
-    (trigram  a movie that 66) True)
-  (= 
-    (trigram  am a big 66) True)
-  (= 
-    (trigram  a lot better 66) True)
-  (= 
-    (trigram  a great band 66) True)
-  (= 
-    (trigram  a good choice 66) True)
-  (= 
-    (trigram  you tell me 65) True)
-  (= 
-    (trigram  you ever listened 65) True)
-  (= 
-    (trigram  yes they do 65) True)
-  (= 
-    (trigram  yeah thats right 65) True)
-  (= 
-    (trigram  what i think 65) True)
-  (= 
-    (trigram  what are the 65) True)
-  (= 
-    (trigram  was thinking about 65) True)
-  (= 
-    (trigram  to watch them 65) True)
-  (= 
-    (trigram  think they should 65) True)
-  (= 
-    (trigram  think i saw 65) True)
-  (= 
-    (trigram  the nfl is 65) True)
-  (= 
-    (trigram  the first two 65) True)
-  (= 
-    (trigram  the disney movie 65) True)
-  (= 
-    (trigram  the bad guy 65) True)
-  (= 
-    (trigram  that was great 65) True)
-  (= 
-    (trigram  that must have 65) True)
-  (= 
-    (trigram  so whats your 65) True)
-  (= 
-    (trigram  so are you 65) True)
-  (= 
-    (trigram  one in the 65) True)
-  (= 
-    (trigram  of star wars 65) True)
-  (= 
-    (trigram  not my favorite 65) True)
-  (= 
-    (trigram  no i did 65) True)
-  (= 
-    (trigram  like star wars 65) True)
-  (= 
-    (trigram  liked the first 65) True)
-  (= 
-    (trigram  just as good 65) True)
-  (= 
-    (trigram  i think their 65) True)
-  (= 
-    (trigram  is the only 65) True)
-  (= 
-    (trigram  is it any 65) True)
-  (= 
-    (trigram  i mean it 65) True)
-  (= 
-    (trigram  i like when 65) True)
-  (= 
-    (trigram  if i can 65) True)
-  (= 
-    (trigram  i didnt think 65) True)
-  (= 
-    (trigram  i can agree 65) True)
-  (= 
-    (trigram  i bet they 65) True)
-  (= 
-    (trigram  i agree and 65) True)
-  (= 
-    (trigram  he was just 65) True)
-  (= 
-    (trigram  have the same 65) True)
-  (= 
-    (trigram  have not heard 65) True)
-  (= 
-    (trigram  have a new 65) True)
-  (= 
-    (trigram  go see the 65) True)
-  (= 
-    (trigram  give you that 65) True)
-  (= 
-    (trigram  dont listen to 65) True)
-  (= 
-    (trigram  dont know i 65) True)
-  (= 
-    (trigram  as the original 65) True)
-  (= 
-    (trigram  a great team 65) True)
-  (= 
-    (trigram  you seen it 64) True)
-  (= 
-    (trigram  you really should 64) True)
-  (= 
-    (trigram  you like lady 64) True)
-  (= 
-    (trigram  you for the 64) True)
-  (= 
-    (trigram  yes she was 64) True)
-  (= 
-    (trigram  yeah i cant 64) True)
-  (= 
-    (trigram  will do this 64) True)
-  (= 
-    (trigram  well in the 64) True)
-  (= 
-    (trigram  watch the movie 64) True)
-  (= 
-    (trigram  to play the 64) True)
-  (= 
-    (trigram  too but i 64) True)
-  (= 
-    (trigram  to check that 64) True)
-  (= 
-    (trigram  to be good 64) True)
-  (= 
-    (trigram  to agree with 64) True)
-  (= 
-    (trigram  thought so too 64) True)
-  (= 
-    (trigram  they were in 64) True)
-  (= 
-    (trigram  they were great 64) True)
-  (= 
-    (trigram  the main characters 64) True)
-  (= 
-    (trigram  thats kind of 64) True)
-  (= 
-    (trigram  thats a hard 64) True)
-  (= 
-    (trigram  so much fun 64) True)
-  (= 
-    (trigram  so i think 64) True)
-  (= 
-    (trigram  so i guess 64) True)
-  (= 
-    (trigram  so are you 64) True)
-  (= 
-    (trigram  since i was 64) True)
-  (= 
-    (trigram  see him in 64) True)
-  (= 
-    (trigram  oh you mean 64) True)
-  (= 
-    (trigram  of the old 64) True)
-  (= 
-    (trigram  not sure about 64) True)
-  (= 
-    (trigram  lot of them 64) True)
-  (= 
-    (trigram  let me guess 64) True)
-  (= 
-    (trigram  it is but 64) True)
-  (= 
-    (trigram  is the movie 64) True)
-  (= 
-    (trigram  is an amazing 64) True)
-  (= 
-    (trigram  is also a 64) True)
-  (= 
-    (trigram  i miss the 64) True)
-  (= 
-    (trigram  i just got 64) True)
-  (= 
-    (trigram  i cant 'wait,for,the' 64) True)
-  (= 
-    (trigram  'i,cant,wait' for the 64) True)
-  (= 
-    (trigram  i agree that 64) True)
-  (= 
-    (trigram  did you catch 64) True)
-  (= 
-    (trigram  coming out with 64) True)
-  (= 
-    (trigram  cant wait to 64) True)
-  (= 
-    (trigram  but you know 64) True)
-  (= 
-    (trigram  but i can 64) True)
-  (= 
-    (trigram  be a lot 64) True)
-  (= 
-    (trigram  based on the 64) True)
-  (= 
-    (trigram  are talking about 64) True)
-  (= 
-    (trigram  a good thing 64) True)
-  (= 
-    (trigram  you seen all 63) True)
-  (= 
-    (trigram  yes they have 63) True)
-  (= 
-    (trigram  yeah youre right 63) True)
-  (= 
-    (trigram  wonder woman movie 63) True)
-  (= 
-    (trigram  whos in it 63) True)
-  (= 
-    (trigram  when i saw 63) True)
-  (= 
-    (trigram  what other movies 63) True)
-  (= 
-    (trigram  'what,are,your' thoughts on 63) True)
-  (= 
-    (trigram  well i really 63) True)
-  (= 
-    (trigram  was a huge 63) True)
-  (= 
-    (trigram  to hear that 63) True)
-  (= 
-    (trigram  to get to 63) True)
-  (= 
-    (trigram  this one is 63) True)
-  (= 
-    (trigram  this is true 63) True)
-  (= 
-    (trigram  they should be 63) True)
-  (= 
-    (trigram  they had some 63) True)
-  (= 
-    (trigram  the one about 63) True)
-  (= 
-    (trigram  the dallas cowboys 63) True)
-  (= 
-    (trigram  the best team 63) True)
-  (= 
-    (trigram  that is my 63) True)
-  (= 
-    (trigram  she had a 63) True)
-  (= 
-    (trigram  part of it 63) True)
-  (= 
-    (trigram  oh that was 63) True)
-  (= 
-    (trigram  my favorite team 63) True)
-  (= 
-    (trigram  like they are 63) True)
-  (= 
-    (trigram  ive seen it 63) True)
-  (= 
-    (trigram  is probably the 63) True)
-  (= 
-    (trigram  in the superbowl 63) True)
-  (= 
-    (trigram  in the middle 63) True)
-  (= 
-    (trigram  in it too 63) True)
-  (= 
-    (trigram  i never really 63) True)
-  (= 
-    (trigram  in all of 63) True)
-  (= 
-    (trigram  im a fan 63) True)
-  (= 
-    (trigram  ill give you 63) True)
-  (= 
-    (trigram  i just cant 63) True)
-  (= 
-    (trigram  i hear that 63) True)
-  (= 
-    (trigram  have to get 63) True)
-  (= 
-    (trigram  for some reason 63) True)
-  (= 
-    (trigram  dont think the 63) True)
-  (= 
-    (trigram  be honest i 63) True)
-  (= 
-    (trigram  because he was 63) True)
-  (= 
-    (trigram  a part of 63) True)
-  (= 
-    (trigram  and i am 63) True)
-  (= 
-    (trigram  am not a 63) True)
-  (= 
-    (trigram  a great album 63) True)
-  (= 
-    (trigram  your favorite type 62) True)
-  (= 
-    (trigram  your favorite songs 62) True)
-  (= 
-    (trigram  your favorite music 62) True)
-  (= 
-    (trigram  your favorite artist 62) True)
-  (= 
-    (trigram  you like her 62) True)
-  (= 
-    (trigram  you know he 62) True)
-  (= 
-    (trigram  would be fun 62) True)
-  (= 
-    (trigram  with a lot 62) True)
-  (= 
-    (trigram  when was the 62) True)
-  (= 
-    (trigram  what it is 62) True)
-  (= 
-    (trigram  what else do 62) True)
-  (= 
-    (trigram  well he was 62) True)
-  (= 
-    (trigram  was that the 62) True)
-  (= 
-    (trigram  was in a 62) True)
-  (= 
-    (trigram  want to know 62) True)
-  (= 
-    (trigram  to the beatles 62) True)
-  (= 
-    (trigram  think was the 62) True)
-  (= 
-    (trigram  think the patriots 62) True)
-  (= 
-    (trigram  they still have 62) True)
-  (= 
-    (trigram  they dont have 62) True)
-  (= 
-    (trigram  the whole time 62) True)
-  (= 
-    (trigram  the story of 62) True)
-  (= 
-    (trigram  so who do 62) True)
-  (= 
-    (trigram  seen that movie 62) True)
-  (= 
-    (trigram  on the team 62) True)
-  (= 
-    (trigram  no it is 62) True)
-  (= 
-    (trigram  maybe we can 62) True)
-  (= 
-    (trigram  lot of movies 62) True)
-  (= 
-    (trigram  lot of his 62) True)
-  (= 
-    (trigram  listen to her 62) True)
-  (= 
-    (trigram  like the best 62) True)
-  (= 
-    (trigram  know that song 62) True)
-  (= 
-    (trigram  its just a 62) True)
-  (= 
-    (trigram  its been a 62) True)
-  (= 
-    (trigram  is in that 62) True)
-  (= 
-    (trigram  in the star 62) True)
-  (= 
-    (trigram  in the second 62) True)
-  (= 
-    (trigram  i know she 62) True)
-  (= 
-    (trigram  i hope you 62) True)
-  (= 
-    (trigram  i guess but 62) True)
-  (= 
-    (trigram  i dont get 62) True)
-  (= 
-    (trigram  i agree the 62) True)
-  (= 
-    (trigram  how is it 62) True)
-  (= 
-    (trigram  hey have you 62) True)
-  (= 
-    (trigram  her in the 62) True)
-  (= 
-    (trigram  heard the song 62) True)
-  (= 
-    (trigram  has always been 62) True)
-  (= 
-    (trigram  green bay packers 62) True)
-  (= 
-    (trigram  dont know why 62) True)
-  (= 
-    (trigram  does that mean 62) True)
-  (= 
-    (trigram  does he play 62) True)
-  (= 
-    (trigram  'did,you,see' the new 62) True)
-  (= 
-    (trigram  but they were 62) True)
-  (= 
-    (trigram  but its a 62) True)
-  (= 
-    (trigram  but i havent 62) True)
-  (= 
-    (trigram  been around for 62) True)
-  (= 
-    (trigram  are a good 62) True)
-  (= 
-    (trigram  a great player 62) True)
-  (= 
-    (trigram  your all time 61) True)
-  (= 
-    (trigram  you hear the 61) True)
-  (= 
-    (trigram  you heard about 61) True)
-  (= 
-    (trigram  yes i remember 61) True)
-  (= 
-    (trigram  yes i know 61) True)
-  (= 
-    (trigram  yeah youre right 61) True)
-  (= 
-    (trigram  yeah i loved 61) True)
-  (= 
-    (trigram  yeah i heard 61) True)
-  (= 
-    (trigram  yeah but its 61) True)
-  (= 
-    (trigram  wow i didnt 61) True)
-  (= 
-    (trigram  will do this 61) True)
-  (= 
-    (trigram  why i like 61) True)
-  (= 
-    (trigram  why dont you 61) True)
-  (= 
-    (trigram  why are you 61) True)
-  (= 
-    (trigram  well he is 61) True)
-  (= 
-    (trigram  was so sad 61) True)
-  (= 
-    (trigram  to the new 61) True)
-  (= 
-    (trigram  to see if 61) True)
-  (= 
-    (trigram  think a lot 61) True)
-  (= 
-    (trigram  'there,are,a' lot of 61) True)
-  (= 
-    (trigram  the movie with 61) True)
-  (= 
-    (trigram  the movie about 61) True)
-  (= 
-    (trigram  that one too 61) True)
-  (= 
-    (trigram  that is good 61) True)
-  (= 
-    (trigram  'that,is,a' great song 61) True)
-  (= 
-    (trigram  that i can 61) True)
-  (= 
-    (trigram  so did you 61) True)
-  (= 
-    (trigram  she did a 61) True)
-  (= 
-    (trigram  see the movie 61) True)
-  (= 
-    (trigram  see them in 61) True)
-  (= 
-    (trigram  saw that one 61) True)
-  (= 
-    (trigram  remember that song 61) True)
-  (= 
-    (trigram  ready for the 61) True)
-  (= 
-    (trigram  original star wars 61) True)
-  (= 
-    (trigram  of the team 61) True)
-  (= 
-    (trigram  of the same 61) True)
-  (= 
-    (trigram  not like the 61) True)
-  (= 
-    (trigram  never seen it 61) True)
-  (= 
-    (trigram  my favorite was 61) True)
-  (= 
-    (trigram  me know what 61) True)
-  (= 
-    (trigram  like the original 61) True)
-  (= 
-    (trigram  just want to 61) True)
-  (= 
-    (trigram  i will watch 61) True)
-  (= 
-    (trigram  i will do 61) True)
-  (= 
-    (trigram  it was cool 61) True)
-  (= 
-    (trigram  i think im 61) True)
-  (= 
-    (trigram  in the draft 61) True)
-  (= 
-    (trigram  im sure they 61) True)
-  (= 
-    (trigram  i hope it 61) True)
-  (= 
-    (trigram  if it is 61) True)
-  (= 
-    (trigram  i dont 'think,i,have' 61) True)
-  (= 
-    (trigram  'i,dont,think' i have 61) True)
-  (= 
-    (trigram  i do love 61) True)
-  (= 
-    (trigram  how was the 61) True)
-  (= 
-    (trigram  'how,do,you' think the 61) True)
-  (= 
-    (trigram  excited about the 61) True)
-  (= 
-    (trigram  did he do 61) True)
-  (= 
-    (trigram  can you name 61) True)
-  (= 
-    (trigram  can listen to 61) True)
-  (= 
-    (trigram  because they are 61) True)
-  (= 
-    (trigram  a star wars 61) True)
-  (= 
-    (trigram  and then the 61) True)
-  (= 
-    (trigram  a movie about 61) True)
-  (= 
-    (trigram  a lot but 61) True)
-
+trigram(do,you,think,4489).
+trigram(do,you,like,3754).
+trigram(a,lot,of,3356).
+trigram(do,you,like,3001).
+trigram(what,do,you,2825).
+trigram(is,your,favorite,2400).
+trigram(i,dont,know,2166).
+trigram(do,you,think,2114).
+trigram(have,you,seen,2062).
+trigram(i,dont,know,1892).
+trigram(one,of,the,1569).
+trigram(did,you,see,1525).
+trigram(i,dont,think,1480).
+trigram(what,is,your,1425).
+trigram(did,you,see,1365).
+trigram(one,of,the,1325).
+trigram(i,think,it,1277).
+trigram(i,like,the,1214).
+trigram(i,dont,think,1186).
+trigram(i,think,the,1183).
+trigram(you,think,of,1172).
+trigram(i,think,the,1144).
+trigram(it,was,a,1135).
+trigram(whats,your,favorite,1099).
+trigram(i,really,like,1079).
+trigram(do,you,mean,1068).
+trigram(i,think,i,1059).
+trigram(i,think,they,1037).
+trigram(one,of,my,1030).
+trigram(did,you,like,1030).
+trigram(i,think,they,978).
+trigram(i,think,i,958).
+trigram(that,is,a,952).
+trigram(what,did,you,951).
+trigram(you,like,the,927).
+trigram(have,you,ever,917).
+trigram(do,you,know,909).
+trigram(have,you,heard,886).
+trigram(that,was,a,873).
+trigram(some,of,the,869).
+trigram(who,is,your,843).
+trigram(do,you,have,843).
+trigram(why,do,you,840).
+trigram(did,you,think,830).
+trigram(who,do,you,808).
+trigram(is,one,of,806).
+trigram(i,love,the,806).
+trigram(you,seen,the,805).
+trigram(i,love,that,800).
+trigram(of,all,time,794).
+trigram(i,think,that,791).
+trigram(im,not,sure,778).
+trigram(i,think,he,775).
+trigram(did,you,know,775).
+trigram(that,would,be,774).
+trigram(some,of,the,774).
+trigram(but,i,think,767).
+trigram(going,to,be,757).
+trigram(in,the,movie,735).
+trigram(why,do,you,732).
+trigram(you,think,about,729).
+trigram(of,all,time,726).
+trigram(i,think,he,721).
+trigram(i,think,so,704).
+trigram(is,a,great,697).
+trigram(i,want,to,695).
+trigram(but,i,think,690).
+trigram(it,is,a,688).
+trigram(i,love,that,686).
+trigram(what,kind,of,676).
+trigram(to,listen,to,676).
+trigram(i,think,so,671).
+trigram(i,would,have,661).
+trigram(did,you,know,655).
+trigram(would,have,to,654).
+trigram(thought,it,was,646).
+trigram(of,the,best,642).
+trigram(you,see,the,637).
+trigram(you,want,to,636).
+trigram(i,think,its,634).
+trigram(is,the,best,631).
+trigram(i,thought,it,629).
+trigram(i,would,have,622).
+trigram(it,would,be,621).
+trigram(have,to,say,613).
+trigram(yes,it,was,611).
+trigram(when,i,was,610).
+trigram(think,it,was,604).
+trigram(the,first,one,596).
+trigram(whats,your,favorite,582).
+trigram(was,your,favorite,574).
+trigram(a,fan,of,574).
+trigram(you,have,a,566).
+trigram(to,be,a,565).
+trigram(yes,it,is,564).
+trigram(of,my,favorite,564).
+trigram(is,going,to,556).
+trigram(you,listen,to,554).
+trigram(is,a,good,554).
+trigram(did,you,ever,552).
+trigram(you,think,the,551).
+trigram(i,would,say,551).
+trigram(i,really,liked,545).
+trigram(how,do,you,543).
+trigram(im,not,sure,542).
+trigram(check,it,out,542).
+trigram(they,have,a,540).
+trigram(what,you,mean,533).
+trigram(i,am,not,532).
+trigram(yeah,i,think,527).
+trigram(to,see,it,527).
+trigram(i,like,that,524).
+trigram(yeah,it,was,513).
+trigram(he,is,a,511).
+trigram(do,you,remember,511).
+trigram(ill,have,to,508).
+trigram(was,a,great,506).
+trigram(he,was,a,500).
+trigram(yes,it,is,494).
+trigram(i,know,i,492).
+trigram(your,favorite,song,488).
+trigram(at,the,end,488).
+trigram(was,a,good,485).
+trigram(a,good,one,483).
+trigram(thats,a,good,476).
+trigram(i,liked,the,473).
+trigram(what,was,the,472).
+trigram(i,can,see,461).
+trigram(i,didnt,know,456).
+trigram(i,cant,wait,456).
+trigram(in,that,movie,454).
+trigram(i,do,not,454).
+trigram(back,in,the,454).
+trigram(when,i,was,451).
+trigram(i,have,to,451).
+trigram(kind,of,music,443).
+trigram(is,my,favorite,442).
+trigram(yes,it,was,441).
+trigram(of,the,movie,440).
+trigram(but,i,dont,440).
+trigram(want,to,see,439).
+trigram(it,will,be,438).
+trigram(i,wonder,if,437).
+trigram(i,know,what,437).
+trigram(i,didnt,know,433).
+trigram(yeah,that,was,432).
+trigram(to,see,the,432).
+trigram(know,what,you,431).
+trigram(the,super,bowl,429).
+trigram(the,one,with,429).
+trigram(what,about,the,427).
+trigram(what,is,the,424).
+trigram(think,of,the,424).
+trigram(you,ever,seen,423).
+trigram(but,it,was,421).
+trigram(think,of,the,420).
+trigram(i,used,to,420).
+trigram(what,do,'you,think,of',415).
+trigram('what,do,you',think,of,415).
+trigram(have,a,favorite,413).
+trigram(of,my,favorites,412).
+trigram(in,the,nfl,408).
+trigram(a,long,time,407).
+trigram(is,that,the,405).
+trigram(no,i,havent,403).
+trigram(no,i,havent,402).
+trigram(i,know,i,402).
+trigram(will,have,to,399).
+trigram(i,know,what,399).
+trigram(i,guess,i,398).
+trigram(but,i,dont,398).
+trigram(as,good,as,398).
+trigram(you,know,what,394).
+trigram(never,heard,of,394).
+trigram(why,is,that,393).
+trigram(you,have,to,392).
+trigram(beauty,and,the,389).
+trigram(and,the,beast,388).
+trigram(do,you,listen,385).
+trigram(all,of,the,384).
+trigram(i,know,right,382).
+trigram(i,have,heard,380).
+trigram(i,know,right,379).
+trigram(to,watch,it,377).
+trigram(what,was,your,376).
+trigram(do,you,want,376).
+trigram(are,you,a,374).
+trigram(there,is,a,370).
+trigram(it,seems,like,370).
+trigram(i,havent,seen,369).
+trigram(i,dont,like,369).
+trigram(you,know,that,368).
+trigram(i,feel,like,368).
+trigram(have,to,check,368).
+trigram(you,think,is,367).
+trigram(all,the,time,367).
+trigram(what,is,it,366).
+trigram(i,did,not,362).
+trigram(i,remember,that,360).
+trigram(why,is,that,359).
+trigram(im,going,to,359).
+trigram(thats,the,one,355).
+trigram(i,also,like,352).
+trigram(are,you,a,352).
+trigram(are,going,to,352).
+trigram(was,the,best,351).
+trigram(was,one,of,348).
+trigram(you,say,that,347).
+trigram(sounds,like,a,346).
+trigram(did,you,hear,346).
+trigram(i,guess,i,343).
+trigram(back,in,the,343).
+trigram(i,loved,the,342).
+trigram(i,heard,that,342).
+trigram(you,think,they,341).
+trigram(dont,think,so,341).
+trigram(you,like,it,340).
+trigram(on,the,radio,339).
+trigram(i,have,not,339).
+trigram(it,was,really,338).
+trigram(to,go,to,337).
+trigram(i,have,a,336).
+trigram(most,of,the,335).
+trigram(have,you,been,335).
+trigram(i,dont,like,334).
+trigram(a,really,good,333).
+trigram(part,of,the,331).
+trigram(i,think,you,328).
+trigram(to,be,honest,327).
+trigram(any,of,the,327).
+trigram(yeah,it,was,326).
+trigram(i,was,a,326).
+trigram(that,is,true,325).
+trigram(i,cant,believe,324).
+trigram(it,was,pretty,323).
+trigram(have,to,be,321).
+trigram(but,it,was,321).
+trigram(yes,i,love,317).
+trigram(the,name,of,317).
+trigram(i,thought,the,317).
+trigram(i,havent,heard,317).
+trigram(think,it,is,316).
+trigram(a,great,movie,316).
+trigram(i,cant,believe,315).
+trigram(been,listening,to,315).
+trigram(it,was,the,313).
+trigram(a,bunch,of,312).
+trigram(a,big,fan,312).
+trigram(the,star,wars,311).
+trigram(i,am,a,310).
+trigram(you,heard,of,309).
+trigram(i,have,seen,309).
+trigram(i,agree,with,307).
+trigram(music,do,you,305).
+trigram(i,listen,to,305).
+trigram(agree,with,you,305).
+trigram(there,is,a,304).
+trigram(you,think,that,303).
+trigram(you,ever,see,302).
+trigram('i,know,what',you,mean,302).
+trigram(dont,know,if,301).
+trigram(star,wars,movie,300).
+trigram(oh,yeah,i,300).
+trigram(was,such,a,299).
+trigram(want,to,go,299).
+trigram(i,just,saw,298).
+trigram(i,agree,with,298).
+trigram(you,seen,any,297).
+trigram(yes,i,think,297).
+trigram(the,one,with,297).
+trigram(yes,i,do,296).
+trigram(listen,to,it,296).
+trigram(it,was,so,296).
+trigram(music,do,you,295).
+trigram(dont,think,so,295).
+trigram(it,came,out,294).
+trigram(i,saw,the,294).
+trigram(i,love,it,294).
+trigram(i,do,like,294).
+trigram(are,some,of,294).
+trigram(yeah,i,know,293).
+trigram(what,are,you,291).
+trigram(i,know,that,291).
+trigram(am,not,sure,291).
+trigram(i,saw,it,290).
+trigram(a,great,song,289).
+trigram(looking,forward,to,288).
+trigram(yes,i,have,287).
+trigram(it,was,the,287).
+trigram(i,think,she,287).
+trigram(thats,the,one,286).
+trigram('what,do,you',think,about,285).
+trigram(a,good,movie,285).
+trigram(yes,i,do,284).
+trigram(to,be,the,284).
+trigram(my,favorite,is,283).
+trigram(was,pretty,good,282).
+trigram(think,about,the,282).
+trigram(i,will,have,282).
+trigram(i,dont,really,282).
+trigram(i,saw,the,281).
+trigram(yeah,i,think,280).
+trigram(it,came,out,280).
+trigram('do,you,have',a,favorite,280).
+trigram(was,really,good,279).
+trigram(the,end,of,279).
+trigram(it,seems,like,276).
+trigram(i,like,it,276).
+trigram(i,saw,that,275).
+trigram(he,has,a,275).
+trigram(of,music,do,274).
+trigram(it,was,great,274).
+trigram(used,to,be,273).
+trigram(i,wish,i,273).
+trigram(its,hard,to,272).
+trigram(be,able,to,272).
+trigram(in,my,opinion,269).
+trigram(and,i,think,269).
+trigram(who,is,the,268).
+trigram(are,you,going,268).
+trigram(was,one,of,267).
+trigram(they,are,a,267).
+trigram(that,sounds,like,267).
+trigram(i,know,but,267).
+trigram(go,to,the,267).
+trigram(yeah,that,was,266).
+trigram(i,hope,they,266).
+trigram(i,do,too,266).
+trigram(you,are,right,265).
+trigram(yes,they,are,265).
+trigram(star,wars,movies,265).
+trigram(i,am,a,265).
+trigram(have,to,go,264).
+trigram(has,to,be,264).
+trigram(yeah,he,was,263).
+trigram(what,are,some,262).
+trigram(think,they,will,262).
+trigram(really,like,the,262).
+trigram(did,you,watch,262).
+trigram(a,great,job,262).
+trigram(you,going,to,261).
+trigram(most,of,the,261).
+trigram(i,cant,wait,260).
+trigram(think,they,are,258).
+trigram(is,in,it,258).
+trigram(i,dont,really,258).
+trigram(have,a,lot,258).
+trigram(didnt,know,that,258).
+trigram(i,hope,so,256).
+trigram(i,do,too,256).
+trigram(have,a,good,256).
+trigram(lot,of,people,255).
+trigram(i,know,that,255).
+trigram(a,little,bit,255).
+trigram(a,few,years,255).
+trigram(big,fan,of,254).
+trigram(yes,he,is,253).
+trigram(all,of,them,253).
+trigram(what,about,you,252).
+trigram(he,was,the,252).
+trigram(would,have,been,250).
+trigram(seen,the,movie,250).
+trigram(i,think,thats,250).
+trigram(would,be,a,249).
+trigram(heard,of,them,249).
+trigram(yes,that,is,248).
+trigram(that,one,too,248).
+trigram(like,that,one,248).
+trigram(fan,of,the,248).
+trigram(i,would,love,247).
+trigram(i,havent,seen,247).
+trigram(and,it,was,247).
+trigram(that,song,is,246).
+trigram(cant,wait,to,246).
+trigram(but,it,is,246).
+trigram(came,out,in,245).
+trigram(agree,with,that,245).
+trigram(there,was,a,244).
+trigram(to,have,a,243).
+trigram(thats,a,great,243).
+trigram(was,the,best,242).
+trigram(a,couple,of,242).
+trigram(you,mean,the,241).
+trigram(out,of,the,241).
+trigram(i,have,been,241).
+trigram(all,of,them,241).
+trigram(i,like,them,240).
+trigram(you,like,to,239).
+trigram(the,first,time,238).
+trigram(i,liked,it,238).
+trigram(you,know,the,237).
+trigram(that,is,the,237).
+trigram(i,thought,the,237).
+trigram(i,loved,it,237).
+trigram(was,in,the,236).
+trigram(it,sounds,like,236).
+trigram(is,such,a,236).
+trigram(but,i,do,236).
+trigram(you,think,will,235).
+trigram(he,was,in,235).
+trigram(do,you,say,235).
+trigram(as,long,as,235).
+trigram(seen,the,new,234).
+trigram(me,too,i,234).
+trigram(yeah,i,like,233).
+trigram(more,of,a,233).
+trigram(yes,they,are,232).
+trigram(to,go,with,232).
+trigram(that,the,one,232).
+trigram(didnt,know,that,232).
+trigram(think,is,the,231).
+trigram(was,such,a,230).
+trigram(want,to,watch,230).
+trigram(to,go,see,229).
+trigram(like,to,see,229).
+trigram('i,would,have',to,say,229).
+trigram(in,the,first,229).
+trigram(i,know,it,229).
+trigram(yeah,i,know,228).
+trigram(would,love,to,228).
+trigram(the,other,day,228).
+trigram(i,love,them,228).
+trigram(your,favorite,disney,227).
+trigram(that,one,is,227).
+trigram(see,the,new,227).
+trigram(in,the,end,227).
+trigram(favorite,disney,movie,227).
+trigram(you,like,about,226).
+trigram(yeah,me,too,226).
+trigram(yes,i,did,225).
+trigram(oh,i,love,225).
+trigram(i,would,like,225).
+trigram(better,than,the,225).
+trigram(a,good,job,225).
+trigram(to,see,them,224).
+trigram(to,do,with,224).
+trigram(there,are,a,224).
+trigram(listen,to,the,224).
+trigram(yeah,me,too,223).
+trigram(thats,what,i,222).
+trigram(yes,i,have,221).
+trigram(but,i,like,221).
+trigram(you,ever,heard,220).
+trigram(to,watch,the,220).
+trigram(that,was,the,220).
+trigram(of,course,i,220).
+trigram(and,i,think,220).
+trigram(in,that,one,219).
+trigram(they,had,a,217).
+trigram(i,was,thinking,217).
+trigram(yeah,i,guess,216).
+trigram(that,makes,sense,216).
+trigram(to,check,it,215).
+trigram(supposed,to,be,215).
+trigram(of,the,galaxy,215).
+trigram(yes,i,did,214).
+trigram(he,had,a,214).
+trigram(was,kind,of,213).
+trigram(not,at,all,213).
+trigram(you,mean,the,212).
+trigram(you,know,who,212).
+trigram(yeah,it,is,212).
+trigram(in,the,league,212).
+trigram(you,have,any,211).
+trigram(i,went,to,210).
+trigram(i,hope,they,210).
+trigram(love,that,song,209).
+trigram(it,was,good,209).
+trigram(i,am,sure,209).
+trigram(can,see,that,209).
+trigram(but,i,really,209).
+trigram(i,need,to,208).
+trigram(you,a,fan,207).
+trigram(type,of,music,207).
+trigram(sounds,like,a,207).
+trigram(but,it,is,207).
+trigram(the,force,awakens,206).
+trigram(of,course,i,206).
+trigram(id,have,to,206).
+trigram(yes,that,was,205).
+trigram(yes,he,is,205).
+trigram('why,do,you',say,that,205).
+trigram(was,a,little,205).
+trigram(no,i,dont,205).
+trigram(its,hard,to,205).
+trigram(i,know,but,205).
+trigram(give,it,a,205).
+trigram(i,havent,heard,204).
+trigram(have,to,watch,204).
+trigram(are,there,any,203).
+trigram(you,talking,about,202).
+trigram(well,i,think,202).
+trigram(think,he,is,202).
+trigram(no,i,dont,202).
+trigram(guardians,of,the,202).
+trigram(dont,think,i,202).
+trigram(a,bit,of,202).
+trigram(there,are,so,201).
+trigram(that,one,was,201).
+trigram(of,their,songs,201).
+trigram(i,wish,i,201).
+trigram(is,it,about,201).
+trigram(like,a,lot,200).
+trigram(i,like,to,200).
+trigram(who,was,the,199).
+trigram(i,know,it,199).
+trigram(i,heard,it,199).
+trigram(are,so,many,199).
+trigram(you,watch,the,198).
+trigram(one,of,those,198).
+trigram(one,of,his,198).
+trigram(no,but,i,198).
+trigram(fast,and,furious,198).
+trigram(whos,your,favorite,197).
+trigram(think,i,have,197).
+trigram(the,rest,of,197).
+trigram(that,one,was,197).
+trigram(its,one,of,197).
+trigram(he,is,the,197).
+trigram(do,you,feel,197).
+trigram(but,i,do,197).
+trigram(a,pretty,good,197).
+trigram(your,favorite,character,196).
+trigram(that,song,is,196).
+trigram(such,a,great,196).
+trigram(some,of,his,196).
+trigram(as,well,as,196).
+trigram(going,to,see,195).
+trigram(fun,to,watch,195).
+trigram(your,favorite,movie,194).
+trigram(i,like,her,194).
+trigram(heard,of,it,194).
+trigram(let,me,know,193).
+trigram(i,loved,that,193).
+trigram(i,kind,of,193).
+trigram(you,know,i,192).
+trigram(ever,heard,of,192).
+trigram(you,remember,the,191).
+trigram(wait,to,see,191).
+trigram(it,was,just,191).
+trigram(go,see,it,191).
+trigram(going,to,have,191).
+trigram(some,of,their,189).
+trigram(lets,talk,about,189).
+trigram(ive,heard,of,189).
+trigram(i,just,dont,189).
+trigram(yeah,but,i,188).
+trigram(will,be,a,187).
+trigram(if,you,want,187).
+trigram(how,did,you,187).
+trigram(the,star,wars,186).
+trigram(that,movie,was,186).
+trigram(kind,of,like,186).
+trigram(it,was,just,186).
+trigram(i,like,a,186).
+trigram(yeah,it,is,185).
+trigram(for,a,while,185).
+trigram(would,like,to,184).
+trigram(what,was,it,184).
+trigram(talking,to,you,184).
+trigram(i,have,no,184).
+trigram(i,dont,remember,184).
+trigram(i,agree,i,184).
+trigram(had,a,lot,184).
+trigram(yes,i,love,183).
+trigram(wow,that,is,183).
+trigram(was,a,kid,183).
+trigram(to,see,that,183).
+trigram(the,movie,was,183).
+trigram(thats,what,i,183).
+trigram(what,are,your,182).
+trigram(name,of,the,182).
+trigram(it,really,is,182).
+trigram(was,going,to,181).
+trigram(the,lion,king,181).
+trigram(he,is,the,181).
+trigram(heard,of,that,181).
+trigram(but,i,have,181).
+trigram(back,to,the,181).
+trigram(what,is,that,180).
+trigram(to,be,in,180).
+trigram(my,favorite,song,180).
+trigram(thats,a,good,179).
+trigram(it,sounds,like,179).
+trigram(i,liked,that,179).
+trigram(i,didnt,like,179).
+trigram(who,is,in,178).
+trigram(tell,me,about,178).
+trigram(like,the,song,178).
+trigram(kind,of,a,178).
+trigram(i,think,hes,178).
+trigram(all,time,favorite,178).
+trigram(a,good,song,178).
+trigram(love,that,movie,177).
+trigram(i,have,never,177).
+trigram(end,of,the,177).
+trigram(yeah,i,love,176).
+trigram(what,'did,you,think',of,176).
+trigram('what,did,you',think,of,176).
+trigram(havent,seen,it,176).
+trigram(going,to,the,176).
+trigram(but,i,really,176).
+trigram(you,feel,about,175).
+trigram(yeah,he,is,175).
+trigram(think,about,it,175).
+trigram(the,movie,is,175).
+trigram(that,it,was,175).
+trigram(she,is,a,175).
+trigram(pirates,of,the,175).
+trigram(i,agree,but,175).
+trigram(yes,he,was,174).
+trigram(ive,never,heard,174).
+trigram(has,a,lot,174).
+trigram(dont,want,to,174).
+trigram(a,lot,more,174).
+trigram(ever,seen,the,173).
+trigram(when,he,was,172).
+trigram(to,watch,the,172).
+trigram(such,a,good,172).
+trigram(it,is,so,172).
+trigram(as,much,as,172).
+trigram(oh,i,love,171).
+trigram(no,i,think,171).
+trigram(it,to,the,171).
+trigram(i,love,her,171).
+trigram(i,dont,remember,171).
+trigram(be,a,good,171).
+trigram(of,the,most,170).
+trigram(no,i,didnt,170).
+trigram(i,guess,so,170).
+trigram(favorite,star,wars,170).
+trigram(did,a,great,170).
+trigram(one,of,their,169).
+trigram(i,just,dont,169).
+trigram(good,as,the,169).
+trigram(you,see,that,168).
+trigram(how,are,you,168).
+trigram(yeah,he,was,167).
+trigram(when,it,comes,167).
+trigram(movies,do,you,167).
+trigram(is,really,good,167).
+trigram(im,not,a,167).
+trigram(really,liked,the,166).
+trigram(i,wonder,what,166).
+trigram(i,forgot,about,166).
+trigram(but,they,are,166).
+trigram(be,in,the,166).
+trigram(as,a,kid,166).
+trigram(would,you,say,165).
+trigram(oh,yeah,i,165).
+trigram(it,has,a,165).
+trigram(in,the,day,165).
+trigram(i,guess,that,165).
+trigram(empire,strikes,back,165).
+trigram(are,you,talking,165).
+trigram(love,to,see,164).
+trigram(i,guess,it,164).
+trigram(but,i,have,164).
+trigram(lot,of,the,163).
+trigram(i,just,watched,163).
+trigram(a,huge,fan,163).
+trigram(it,is,the,162).
+trigram(it,is,so,162).
+trigram(it,but,i,162).
+trigram(i,know,its,162).
+trigram(check,them,out,162).
+trigram(but,i,am,162).
+trigram(you,know,i,161).
+trigram(yes,that,is,161).
+trigram(yeah,they,are,161).
+trigram(of,the,jedi,161).
+trigram(lets,talk,about,161).
+trigram(i,like,him,161).
+trigram(i,guess,you,161).
+trigram(but,im,not,161).
+trigram(yes,i,like,160).
+trigram(was,the,last,160).
+trigram(thats,for,sure,160).
+trigram(oh,i,see,160).
+trigram(like,that,song,160).
+trigram(is,it,a,160).
+trigram(is,in,the,160).
+trigram(have,no,idea,160).
+trigram(you,should,check,159).
+trigram(well,i,guess,159).
+trigram(to,a,lot,159).
+trigram(return,of,the,159).
+trigram(over,and,over,159).
+trigram(favorite,song,by,159).
+trigram(do,you,ever,159).
+trigram(to,see,how,158).
+trigram(to,see,a,158).
+trigram(the,second,one,158).
+trigram(the,same,thing,158).
+trigram(seen,any,good,158).
+trigram(heard,of,the,158).
+trigram(fun,to,watch,158).
+trigram(what,type,of,157).
+trigram(lot,of,good,157).
+trigram(is,a,classic,157).
+trigram(i,heard,it,157).
+trigram(a,ton,of,157).
+trigram(you,heard,the,156).
+trigram(yes,but,i,156).
+trigram(was,in,it,156).
+trigram(the,last,one,156).
+trigram(rest,of,the,156).
+trigram(oh,i,see,156).
+trigram(not,sure,if,156).
+trigram(i,wish,they,156).
+trigram(i,know,they,156).
+trigram(cant,wait,for,156).
+trigram(was,the,first,155).
+trigram(think,so,too,155).
+trigram(the,one,that,155).
+trigram(the,little,mermaid,155).
+trigram(seems,to,be,155).
+trigram(if,you,like,155).
+trigram(hey,have,you,155).
+trigram(he,was,so,155).
+trigram(the,same,way,154).
+trigram(the,harry,potter,154).
+trigram(i,didnt,like,154).
+trigram(which,one,is,153).
+trigram(that,kind,of,153).
+trigram(of,all,the,153).
+trigram(is,the,most,153).
+trigram(i,guess,so,153).
+trigram(i,am,so,153).
+trigram(have,a,great,153).
+trigram(came,out,in,153).
+trigram(you,think,he,152).
+trigram(yeah,i,like,152).
+trigram(what,happened,to,152).
+trigram(thats,one,of,152).
+trigram(of,his,songs,152).
+trigram(i,know,they,152).
+trigram(have,to,see,152).
+trigram(dont,know,i,152).
+trigram(at,the,time,152).
+trigram(the,one,where,151).
+trigram(thats,a,tough,151).
+trigram(i,think,we,151).
+trigram(i,know,its,151).
+trigram(have,to,agree,151).
+trigram(yeah,i,saw,150).
+trigram(was,my,favorite,150).
+trigram(the,end,of,150).
+trigram(of,your,favorite,150).
+trigram(i,wonder,how,150).
+trigram(i,thought,that,150).
+trigram(i,still,think,150).
+trigram(i,could,see,150).
+trigram(i,am,going,150).
+trigram(but,i,am,150).
+trigram(think,of,it,149).
+trigram(there,are,some,149).
+trigram(some,of,them,149).
+trigram(one,of,them,149).
+trigram(it,was,very,149).
+trigram(i,really,enjoyed,149).
+trigram(have,heard,of,149).
+trigram(all,the,way,149).
+trigram(you,think,it,148).
+trigram(your,favorite,team,148).
+trigram(you,dont,like,148).
+trigram(they,need,to,148).
+trigram(they,have,to,148).
+trigram(the,same,time,148).
+trigram(the,first,movie,148).
+trigram(some,of,your,148).
+trigram(no,i,have,148).
+trigram(i,know,he,148).
+trigram(heard,of,him,148).
+trigram(but,he,was,148).
+trigram(yeah,i,remember,147).
+trigram(yeah,he,is,147).
+trigram(whats,it,about,147).
+trigram(was,a,bit,147).
+trigram(think,he,was,147).
+trigram(i,think,we,147).
+trigram(is,kind,of,147).
+trigram(im,going,to,147).
+trigram(how,about,the,147).
+trigram(a,new,album,147).
+trigram(to,see,him,146).
+trigram(to,make,a,146).
+trigram(the,fact,that,146).
+trigram(something,like,that,146).
+trigram(it,would,have,146).
+trigram(in,the,playoffs,146).
+trigram(i,like,how,146).
+trigram(but,i,still,146).
+trigram(whats,it,about,145).
+trigram(not,sure,i,145).
+trigram(like,some,of,145).
+trigram(ever,listen,to,145).
+trigram(yeah,that,is,144).
+trigram(yeah,i,dont,144).
+trigram(the,new,one,144).
+trigram(of,the,songs,144).
+trigram(love,that,one,144).
+trigram(listen,to,them,144).
+trigram(its,going,to,144).
+trigram(hey,do,you,144).
+trigram(do,you,watch,144).
+trigram(a,great,one,144).
+trigram(that,it,was,143).
+trigram(is,a,really,143).
+trigram(i,just,think,143).
+trigram(because,of,the,143).
+trigram(your,favorite,part,142).
+trigram(yeah,i,dont,142).
+trigram(to,the,movies,142).
+trigram(so,what,do,142).
+trigram(she,has,a,142).
+trigram(of,the,new,142).
+trigram(not,sure,if,142).
+trigram(must,have,been,142).
+trigram(i,know,the,142).
+trigram(i,dont,want,142).
+trigram(yes,i,am,141).
+trigram(was,a,really,141).
+trigram(they,did,a,141).
+trigram(that,came,out,141).
+trigram(thank,you,for,141).
+trigram(oh,i,know,141).
+trigram(for,the,first,141).
+trigram(but,they,are,141).
+trigram(you,dont,like,140).
+trigram(wow,that,is,140).
+trigram(think,that,the,140).
+trigram(think,that,is,140).
+trigram(think,it,will,140).
+trigram(pirates,of,the,140).
+trigram(it,in,the,140).
+trigram(is,in,the,140).
+trigram(you,ever,listen,139).
+trigram(will,be,the,139).
+trigram(to,say,the,139).
+trigram(ive,heard,that,139).
+trigram(it,is,the,139).
+trigram(i,thought,he,139).
+trigram(i,know,the,139).
+trigram(dont,know,about,139).
+trigram(did,not,know,139).
+trigram(did,a,good,139).
+trigram(who,was,your,138).
+trigram(thats,why,i,138).
+trigram(it,is,really,138).
+trigram(in,love,with,138).
+trigram(heard,that,one,138).
+trigram(you,like,any,137).
+trigram(the,fast,and,137).
+trigram(its,a,good,137).
+trigram(did,you,get,137).
+trigram(a,few,of,137).
+trigram(yes,that,was,136).
+trigram(yes,i,agree,136).
+trigram(was,so,good,136).
+trigram(think,they,have,136).
+trigram(seen,that,one,136).
+trigram(me,too,i,136).
+trigram(i,totally,agree,136).
+trigram(i,think,there,136).
+trigram(is,pretty,good,136).
+trigram(i,really,love,136).
+trigram(him,in,the,136).
+trigram(he,will,be,136).
+trigram('have,you,seen',the,movie,136).
+trigram(dont,think,they,136).
+trigram(your,favorite,star,135).
+trigram(not,as,good,135).
+trigram(i,watched,it,135).
+trigram(its,kind,of,135).
+trigram(i,had,to,135).
+trigram(you,need,to,134).
+trigram(well,it,was,134).
+trigram(that,he,was,134).
+trigram(songs,do,you,134).
+trigram(my,all,time,134).
+trigram(i,was,just,134).
+trigram(it,had,a,134).
+trigram(i,know,he,134).
+trigram(dont,know,if,134).
+trigram(do,not,think,134).
+trigram(to,talk,about,133).
+trigram(thought,he,was,133).
+trigram(on,that,album,133).
+trigram(oh,yeah,that,133).
+trigram(movies,do,you,133).
+trigram(it,is,not,133).
+trigram(it,could,be,133).
+trigram(how,was,it,133).
+trigram(have,been,a,133).
+trigram(has,a,great,133).
+trigram(go,to,a,133).
+trigram(dont,know,but,133).
+trigram(yes,he,was,132).
+trigram(think,i,will,132).
+trigram(think,it,was,132).
+trigram(that,movie,is,132).
+trigram(new,star,wars,132).
+trigram(my,all,time,132).
+trigram(it,looks,like,132).
+trigram(i,like,some,132).
+trigram(but,there,are,132).
+trigram(am,going,to,132).
+trigram(would,be,great,131).
+trigram('when,i,was',a,kid,131).
+trigram(to,see,a,131).
+trigram(think,that,was,131).
+trigram(long,time,ago,131).
+trigram(its,a,great,131).
+trigram(it,is,really,131).
+trigram(i,am,so,131).
+trigram(dont,you,think,131).
+trigram(as,well,as,131).
+trigram(reminds,me,of,130).
+trigram(i,think,my,130).
+trigram(forgot,about,that,130).
+trigram(i,really,enjoy,129).
+trigram(i,love,his,129).
+trigram('have,you,seen',the,new,129).
+trigram(a,good,point,129).
+trigram(yeah,i,agree,128).
+trigram(too,but,i,128).
+trigram(i,thought,they,128).
+trigram(in,this,one,128).
+trigram(in,this,movie,128).
+trigram(had,no,idea,128).
+trigram(excited,to,see,128).
+trigram(about,the,new,128).
+trigram(yes,i,think,127).
+trigram(yeah,they,were,127).
+trigram(that,he,was,127).
+trigram(its,about,a,127).
+trigram(it,has,to,127).
+trigram(it,a,lot,127).
+trigram(is,a,lot,127).
+trigram(i,grew,up,127).
+trigram(have,you,watched,127).
+trigram(few,years,ago,127).
+trigram(are,a,lot,127).
+trigram(you,mean,by,126).
+trigram(yes,i,agree,126).
+trigram(wish,i,could,126).
+trigram(to,have,to,126).
+trigram(me,about,it,126).
+trigram(like,i,said,126).
+trigram(id,like,to,126).
+trigram(i,believe,it,126).
+trigram(do,you,prefer,126).
+trigram(but,he,was,126).
+trigram(yeah,they,are,125).
+trigram(what,would,you,125).
+trigram(that,is,one,125).
+trigram(really,want,to,125).
+trigram(i,had,no,125).
+trigram(i,guess,thats,125).
+trigram(i,dont,see,125).
+trigram(based,on,a,125).
+trigram(at,the,same,125).
+trigram(you,mean,like,124).
+trigram(you,listened,to,124).
+trigram(see,the,movie,124).
+trigram(like,to,listen,124).
+trigram(in,the,world,124).
+trigram(have,to,look,124).
+trigram(you,know,how,123).
+trigram(they,are,going,123).
+trigram(the,new,star,123).
+trigram(so,many,good,123).
+trigram(know,what,i,123).
+trigram(know,but,i,123).
+trigram(i,agree,but,123).
+trigram(whos,your,favorite,122).
+trigram(we,will,see,122).
+trigram(think,he,will,122).
+trigram(one,with,the,122).
+trigram(oh,that,is,122).
+trigram(not,a,fan,122).
+trigram(it,was,called,122).
+trigram(its,about,a,122).
+trigram(in,the,past,122).
+trigram(in,the,last,122).
+trigram(i,dont,see,122).
+trigram(i,cant,'wait,to,see',122).
+trigram('i,cant,wait',to,see,122).
+trigram(are,the,best,122).
+trigram(and,he,is,122).
+trigram(yeah,thats,a,121).
+trigram(to,make,it,121).
+trigram(so,do,you,121).
+trigram(see,what,you,121).
+trigram(seem,to,be,121).
+trigram(look,it,up,121).
+trigram(i,also,love,121).
+trigram(but,i,would,121).
+trigram(be,the,best,121).
+trigram(that,would,have,120).
+trigram(is,that,a,120).
+trigram(i,see,what,120).
+trigram(i,really,dont,120).
+trigram(i,dont,want,120).
+trigram(i,dont,have,120).
+trigram(i,agree,i,120).
+trigram(dont,want,to,120).
+trigram(a,chance,to,120).
+trigram(you,had,to,119).
+trigram(yeah,i,really,119).
+trigram(yeah,i,guess,119).
+trigram(think,it,would,119).
+trigram(they,have,been,119).
+trigram(thats,true,but,119).
+trigram(she,was,a,119).
+trigram(rock,and,roll,119).
+trigram(oh,i,know,119).
+trigram(not,sure,but,119).
+trigram(i,saw,a,119).
+trigram(he,was,so,119).
+trigram(he,is,so,119).
+trigram(hall,of,fame,119).
+trigram(and,the,furious,119).
+trigram(about,the,movie,119).
+trigram(you,listening,to,118).
+trigram(you,like,that,118).
+trigram(the,main,character,118).
+trigram(in,real,life,118).
+trigram(favorite,song,of,118).
+trigram(but,there,are,118).
+trigram(but,i,was,118).
+trigram(but,he,is,118).
+trigram(any,good,movies,118).
+trigram(yes,i,am,117).
+trigram(they,will,be,117).
+trigram(the,dark,side,117).
+trigram(the,best,part,117).
+trigram(that,they,are,117).
+trigram(so,do,you,117).
+trigram(so,do,i,117).
+trigram(quite,a,few,117).
+trigram(oh,yes,i,117).
+trigram(of,all,the,117).
+trigram(i,was,in,117).
+trigram(it,was,in,117).
+trigram(i,mean,i,117).
+trigram(i,know,and,117).
+trigram('have,to,check',it,out,117).
+trigram(dont,know,how,117).
+trigram(yeah,i,agree,116).
+trigram(well,i,dont,116).
+trigram(of,the,greatest,116).
+trigram(me,too,but,116).
+trigram(like,the,new,116).
+trigram(it,is,one,116).
+trigram(in,a,while,116).
+trigram(havent,heard,of,116).
+trigram(fast,and,the,116).
+trigram(because,it,was,116).
+trigram('are,you,a',fan,of,116).
+trigram(wow,thats,a,115).
+trigram(with,all,the,115).
+trigram(well,i,dont,115).
+trigram(that,was,pretty,115).
+trigram(of,the,song,115).
+trigram(i,wanted,to,115).
+trigram(in,star,wars,115).
+trigram(i,had,a,115).
+trigram(you,never,know,114).
+trigram(well,it,is,114).
+trigram(of,the,movies,114).
+trigram(of,the,caribbean,114).
+trigram(i,see,what,114).
+trigram(i,like,all,114).
+trigram(i,know,you,114).
+trigram(i,heard,they,114).
+trigram(yeah,thats,the,113).
+trigram(that,they,are,113).
+trigram(oh,my,god,113).
+trigram(of,the,year,113).
+trigram(like,about,it,113).
+trigram(it,is,about,113).
+trigram(ill,check,it,113).
+trigram(if,you,had,113).
+trigram(hey,did,you,113).
+trigram(else,do,you,113).
+trigram(do,they,have,113).
+trigram(do,not,know,113).
+trigram(are,you,into,113).
+trigram(yes,he,did,112).
+trigram(yeah,that,one,112).
+trigram(yeah,i,do,112).
+trigram(they,are,going,112).
+trigram(of,the,first,112).
+trigram(i,think,theyre,112).
+trigram(i,guess,they,112).
+trigram(he,did,a,112).
+trigram(dont,like,the,112).
+trigram(be,a,great,112).
+trigram(well,it,was,111).
+trigram(to,see,what,111).
+trigram(seen,any,of,111).
+trigram(i,thought,so,111).
+trigram(i,love,how,111).
+trigram(i,can,understand,111).
+trigram(hard,to,say,111).
+trigram(good,but,i,111).
+trigram(and,it,is,111).
+trigram(you,like,them,110).
+trigram(yeah,but,i,110).
+trigram(would,you,like,110).
+trigram(was,a,lot,110).
+trigram(to,the,super,110).
+trigram(to,say,the,110).
+trigram(ok,i,will,110).
+trigram(no,not,really,110).
+trigram(ive,been,listening,110).
+trigram(it,was,released,110).
+trigram(it,should,be,110).
+trigram(its,a,shame,110).
+trigram(it,any,good,110).
+trigram(i,really,want,110).
+trigram(i,get,that,110).
+trigram(favorite,song,from,110).
+trigram(a,great,actor,110).
+trigram(you,been,listening,109).
+trigram(yes,i,saw,109).
+trigram(yeah,i,heard,109).
+trigram(to,come,out,109).
+trigram(they,are,so,109).
+trigram(that,is,what,109).
+trigram(in,the,movies,109).
+trigram(going,to,go,109).
+trigram(going,to,do,109).
+trigram(but,i,cant,109).
+trigram(all,of,his,109).
+trigram(you,mean,like,108).
+trigram(yeah,thats,the,108).
+trigram(would,be,the,108).
+trigram(who,would,you,108).
+trigram(to,do,that,108).
+trigram(think,i,would,108).
+trigram(the,way,he,108).
+trigram(team,in,the,108).
+trigram(on,that,one,108).
+trigram(of,the,time,108).
+trigram(movie,of,all,108).
+trigram(make,it,to,108).
+trigram(i,was,so,108).
+trigram(it,is,very,108).
+trigram(i,think,a,108).
+trigram(is,hard,to,108).
+trigram(is,a,very,108).
+trigram(i,really,dont,108).
+trigram(in,high,school,108).
+trigram(huge,fan,of,108).
+trigram(get,to,see,108).
+trigram(dont,know,what,108).
+trigram(you,know,the,107).
+trigram(yes,he,did,107).
+trigram(well,that,is,107).
+trigram(watch,it,again,107).
+trigram(to,win,the,107).
+trigram(they,are,the,107).
+trigram(out,in,the,107).
+trigram(like,the,beatles,107).
+trigram(it,was,awesome,107).
+trigram(ill,'have,to,check',it,107).
+trigram(but,i,love,107).
+trigram(and,they,are,107).
+trigram(what,is,a,106).
+trigram(up,with,the,106).
+trigram(they,are,the,106).
+trigram(the,way,they,106).
+trigram(of,the,band,106).
+trigram(no,not,really,106).
+trigram(i,would,be,106).
+trigram(it,is,not,106).
+trigram(i,remember,the,106).
+trigram(in,terms,of,106).
+trigram(i,like,their,106).
+trigram(how,can,you,106).
+trigram(had,a,great,106).
+trigram(but,im,not,106).
+trigram(as,far,as,106).
+trigram(are,you,excited,106).
+trigram(would,be,cool,105).
+trigram(who,was,in,105).
+trigram(when,they,were,105).
+trigram(were,going,to,105).
+trigram(went,to,the,105).
+trigram(well,i,like,105).
+trigram(was,good,but,105).
+trigram(the,last,movie,105).
+trigram(that,you,like,105).
+trigram(so,what,is,105).
+trigram(should,watch,it,105).
+trigram(out,with,a,105).
+trigram(know,if,i,105).
+trigram(it,was,an,105).
+trigram(i,guess,we,105).
+trigram(i,cant,remember,105).
+trigram(i,also,liked,105).
+trigram(for,a,long,105).
+trigram(are,you,kidding,105).
+trigram(you,like,the,104).
+trigram(who,is,that,104).
+trigram(what,are,they,104).
+trigram(they,have,the,104).
+trigram(oh,that,is,104).
+trigram(of,the,other,104).
+trigram(it,is,but,104).
+trigram(in,the,theater,104).
+trigram(in,the,next,104).
+trigram(i,love,him,104).
+trigram(i,didnt,think,104).
+trigram(for,some,reason,104).
+trigram(a,tough,one,104).
+trigram(yes,she,is,103).
+trigram(we,should,go,103).
+trigram(to,the,superbowl,103).
+trigram(that,is,what,103).
+trigram(that,could,be,103).
+trigram(remember,that,one,103).
+trigram(quite,a,bit,103).
+trigram(oh,my,god,103).
+trigram(not,going,to,103).
+trigram(my,favorite,part,103).
+trigram(maybe,i,will,103).
+trigram(it,was,amazing,103).
+trigram(its,a,shame,103).
+trigram(im,not,really,103).
+trigram(i,love,all,103).
+trigram(i,heard,he,103).
+trigram(i,didnt,see,103).
+trigram(have,you,listened,103).
+trigram(got,to,be,103).
+trigram(be,in,the,103).
+trigram(yes,that,one,102).
+trigram(well,i,think,102).
+trigram(well,i,guess,102).
+trigram(wait,for,the,102).
+trigram(they,used,to,102).
+trigram(that,is,so,102).
+trigram(ok,i,will,102).
+trigram(not,sure,i,102).
+trigram(like,to,watch,102).
+trigram(it,was,in,102).
+trigram(i,think,ive,102).
+trigram(it,has,been,102).
+trigram(is,the,one,102).
+trigram(in,the,new,102).
+trigram(i,never,thought,102).
+trigram(i,know,and,102).
+trigram(i,dont,have,102).
+trigram(he,has,been,102).
+trigram(harry,potter,movies,102).
+trigram(game,last,night,102).
+trigram(ever,been,to,102).
+trigram(a,good,idea,102).
+trigram(yes,thats,the,101).
+trigram(the,last,time,101).
+trigram(make,the,playoffs,101).
+trigram(like,a,good,101).
+trigram(it,had,a,101).
+trigram(going,to,win,101).
+trigram(you,ready,for,100).
+trigram(yeah,its,a,100).
+trigram(yeah,i,have,100).
+trigram(why,did,you,100).
+trigram(was,a,big,100).
+trigram(the,way,they,100).
+trigram(thats,too,bad,100).
+trigram(some,of,it,100).
+trigram(some,of,her,100).
+trigram(of,that,one,100).
+trigram(of,her,songs,100).
+trigram(not,a,big,100).
+trigram(no,it,was,100).
+trigram(no,but,i,100).
+trigram(listen,to,a,100).
+trigram(listening,to,the,100).
+trigram(i,will,be,100).
+trigram(it,was,one,100).
+trigram(i,heard,the,100).
+trigram(id,love,to,100).
+trigram(i,did,too,100).
+trigram(how,about,you,100).
+trigram(havent,seen,it,100).
+trigram(have,not,seen,100).
+trigram(but,if,you,100).
+trigram(are,you,serious,100).
+trigram(was,a,pretty,99).
+trigram(oh,my,gosh,99).
+trigram(of,the,original,99).
+trigram(of,them,are,99).
+trigram(me,want,to,99).
+trigram(i,will,check,99).
+trigram(ive,never,seen,99).
+trigram(it,might,be,99).
+trigram(is,a,little,99).
+trigram(in,the,same,99).
+trigram(i,heard,they,99).
+trigram('have,you,ever',heard,of,99).
+trigram(and,of,course,99).
+trigram(and,he,was,99).
+trigram(and,he,is,99).
+trigram(yes,she,is,98).
+trigram(yeah,i,was,98).
+trigram(will,have,a,98).
+trigram(well,it,is,98).
+trigram(was,great,in,98).
+trigram(they,are,great,98).
+trigram(the,only,one,98).
+trigram(the,new,beauty,98).
+trigram(the,lead,singer,98).
+trigram(the,guy,who,98).
+trigram(that,was,one,98).
+trigram(sounds,like,it,98).
+trigram(really,liked,it,98).
+trigram(i,love,those,98).
+trigram(i,know,you,98).
+trigram(i,bet,it,98).
+trigram(black,and,white,98).
+trigram(been,to,a,98).
+trigram(are,your,favorite,98).
+trigram(are,you,listening,98).
+trigram(and,i,love,98).
+trigram(you,ever,been,97).
+trigram(yeah,they,were,97).
+trigram(yeah,i,can,97).
+trigram(think,ive,heard,97).
+trigram(that,was,really,97).
+trigram(so,what,is,97).
+trigram(seen,it,yet,97).
+trigram(i,guess,youre,97).
+trigram(he,was,great,97).
+trigram(have,never,heard,97).
+trigram(for,the,new,97).
+trigram(but,i,cant,97).
+trigram(bit,of,a,97).
+trigram(you,should,watch,96).
+trigram(yes,they,were,96).
+trigram(up,in,the,96).
+trigram(to,say,that,96).
+trigram(they,are,all,96).
+trigram(the,whole,movie,96).
+trigram(the,special,effects,96).
+trigram(one,of,her,96).
+trigram(of,the,game,96).
+trigram(of,the,beatles,96).
+trigram(listen,to,some,96).
+trigram(i,think,this,96).
+trigram(it,but,i,96).
+trigram(i,like,his,96).
+trigram(i,know,a,96).
+trigram(i,also,love,96).
+trigram(going,to,watch,96).
+trigram(ever,see,the,96).
+trigram(dont,think,it,96).
+trigram(dont,think,he,96).
+trigram(because,it,was,96).
+trigram(all,of,his,96).
+trigram(you,think,was,95).
+trigram(you,know,it,95).
+trigram(yes,thats,the,95).
+trigram(yeah,i,do,95).
+trigram(yeah,but,it,95).
+trigram(will,be,in,95).
+trigram(want,to,be,95).
+trigram(up,with,the,95).
+trigram(this,is,the,95).
+trigram(this,is,a,95).
+trigram(thats,true,but,95).
+trigram(that,sounds,great,95).
+trigram(that,sounds,good,95).
+trigram(song,do,you,95).
+trigram(oh,thats,a,95).
+trigram(oh,my,gosh,95).
+trigram(new,beauty,and,95).
+trigram(i,was,really,95).
+trigram(it,was,about,95).
+trigram(i,think,this,95).
+trigram(it,comes,out,95).
+trigram(if,i,had,95).
+trigram(he,is,one,95).
+trigram(have,a,chance,95).
+trigram(but,i,know,95).
+trigram(yes,and,i,94).
+trigram(they,should,have,94).
+trigram(sure,but,i,94).
+trigram(so,many,great,94).
+trigram(my,favorite,character,94).
+trigram(love,the,song,94).
+trigram(lot,of,great,94).
+trigram(listen,to,music,94).
+trigram(know,it,was,94).
+trigram('is,that,the',one,with,94).
+trigram(is,so,good,94).
+trigram(i,dont,even,94).
+trigram('have,you,ever',seen,the,94).
+trigram(have,to,admit,94).
+trigram(both,of,them,94).
+trigram(all,time,favorite,94).
+trigram(you,ever,watch,93).
+trigram(was,on,the,93).
+trigram(there,is,no,93).
+trigram(the,other,night,93).
+trigram(the,new,movie,93).
+trigram(that,was,so,93).
+trigram(that,he,is,93).
+trigram(should,check,out,93).
+trigram(much,of,a,93).
+trigram(me,too,but,93).
+trigram(i,did,like,93).
+trigram(but,i,was,93).
+trigram(would,be,awesome,92).
+trigram(wish,they,would,92).
+trigram(win,it,all,92).
+trigram(well,at,least,92).
+trigram(was,the,name,92).
+trigram(was,released,in,92).
+trigram(think,they,can,92).
+trigram(the,last,jedi,92).
+trigram(that,was,an,92).
+trigram(that,but,i,92).
+trigram(talking,about,the,92).
+trigram(she,was,in,92).
+trigram(not,know,that,92).
+trigram(i,wonder,why,92).
+trigram(it,was,okay,92).
+trigram(it,was,like,92).
+trigram(it,kind,of,92).
+trigram(it,comes,to,92).
+trigram(it,all,the,92).
+trigram(i,guess,the,92).
+trigram(i,dont,even,92).
+trigram(i,always,thought,92).
+trigram(he,is,in,92).
+trigram(are,you,doing,92).
+trigram(yes,i,like,91).
+trigram(well,that,is,91).
+trigram(think,you,are,91).
+trigram(think,will,win,91).
+trigram(think,its,a,91).
+trigram(they,have,some,91).
+trigram(they,are,still,91).
+trigram(the,empire,strikes,91).
+trigram(the,dark,side,91).
+trigram(most,of,them,91).
+trigram(like,i,said,91).
+trigram(it,was,not,91).
+trigram(have,to,listen,91).
+trigram(had,so,many,91).
+trigram(came,out,with,91).
+trigram(are,you,ready,91).
+trigram(are,you,looking,91).
+trigram(a,lot,about,91).
+trigram(about,that,one,91).
+trigram(you,on,that,90).
+trigram(which,is,your,90).
+trigram('what,kind,of','music,do,you',like,90).
+trigram(think,she,is,90).
+trigram(they,are,really,90).
+trigram(they,are,good,90).
+trigram(the,movie,the,90).
+trigram(the,dark,knight,90).
+trigram(that,will,be,90).
+trigram(that,is,not,90).
+trigram(talk,about,music,90).
+trigram(should,be,a,90).
+trigram(oh,i,think,90).
+trigram(it,is,hard,90).
+trigram(in,the,series,90).
+trigram(in,the,film,90).
+trigram(interesting,to,see,90).
+trigram(ill,have,to,90).
+trigram(i,heard,he,90).
+trigram(i,feel,the,90).
+trigram(i,didnt,see,90).
+trigram(i,completely,agree,90).
+trigram(are,in,the,90).
+trigram(and,i,dont,90).
+trigram(you,think,so,89).
+trigram(yeah,i,love,89).
+trigram(yeah,but,he,89).
+trigram(with,you,on,89).
+trigram(will,win,the,89).
+trigram(who,are,they,89).
+trigram(was,so,funny,89).
+trigram(think,i,know,89).
+trigram(them,in,concert,89).
+trigram(that,you,like,89).
+trigram(that,is,an,89).
+trigram(that,he,is,89).
+trigram(really,like,that,89).
+trigram(over,the,top,89).
+trigram(maybe,i,will,89).
+trigram(like,the,movie,89).
+trigram(is,the,greatest,89).
+trigram(im,a,big,89).
+trigram(i,know,a,89).
+trigram(i,dont,care,89).
+trigram(hes,a,great,89).
+trigram(heard,the,new,89).
+trigram(guess,youre,right,89).
+trigram(your,favorite,band,88).
+trigram(you,hear,that,88).
+trigram(yeah,but,they,88).
+trigram(were,going,to,88).
+trigram(think,they,were,88).
+trigram(the,best,of,88).
+trigram(of,his,movies,88).
+trigram(no,i,think,88).
+trigram(my,favorite,movies,88).
+trigram(listen,to,that,88).
+trigram(like,the,most,88).
+trigram(i,would,go,88).
+trigram(i,watched,the,88).
+trigram(it,was,kind,88).
+trigram(is,the,name,88).
+trigram(in,a,way,88).
+trigram(in,a,lot,88).
+trigram(i,listened,to,88).
+trigram(i,have,the,88).
+trigram(i,bet,that,88).
+trigram(have,to,do,88).
+trigram(a,very,good,88).
+trigram(and,i,dont,88).
+trigram(a,disney,movie,88).
+trigram(you,see,it,87).
+trigram(you,know,they,87).
+trigram(you,hear,about,87).
+trigram(yes,i,remember,87).
+trigram(wow,that,sounds,87).
+trigram(what,i,mean,87).
+trigram(well,if,you,87).
+trigram(to,see,her,87).
+trigram(to,get,a,87).
+trigram(they,could,have,87).
+trigram(theres,a,lot,87).
+trigram(that,it,is,87).
+trigram(one,is,your,87).
+trigram(lot,of,fun,87).
+trigram(know,that,one,87).
+trigram(know,a,lot,87).
+trigram(its,kind,of,87).
+trigram(it,depends,on,87).
+trigram(i,remember,when,87).
+trigram(in,real,life,87).
+trigram(i,hope,he,87).
+trigram(i,am,glad,87).
+trigram(he,is,so,87).
+trigram(have,heard,that,87).
+trigram(had,a,good,87).
+trigram(genre,of,music,87).
+trigram(feel,the,same,87).
+trigram(but,i,guess,87).
+trigram(but,i,didnt,87).
+trigram(but,i,also,87).
+trigram(your,favorite,album,86).
+trigram(you,know,it,86).
+trigram(you,go,to,86).
+trigram(yes,they,were,86).
+trigram(yeah,i,thought,86).
+trigram(yeah,and,the,86).
+trigram(what,makes,you,86).
+trigram('what,is,your',favorite,song,86).
+trigram(what,does,that,86).
+trigram(well,at,least,86).
+trigram(think,my,favorite,86).
+trigram(they,were,a,86).
+trigram(the,top,of,86).
+trigram(the,story,line,86).
+trigram(on,the,album,86).
+trigram(of,his,music,86).
+trigram(jar,jar,binks,86).
+trigram('is,one,of',the,best,86).
+trigram(is,a,bit,86).
+trigram(i,remember,the,86).
+trigram(i,just,love,86).
+trigram(i,cant,remember,86).
+trigram(for,the,most,86).
+trigram(do,this,year,86).
+trigram(dont,know,how,86).
+trigram(didnt,like,it,86).
+trigram(could,have,been,86).
+trigram(character,in,the,86).
+trigram(you,dont,think,85).
+trigram(you,been,to,85).
+trigram(yeah,that,is,85).
+trigram(why,dont,you,85).
+trigram(the,scene,where,85).
+trigram(thats,my,favorite,85).
+trigram(thats,a,great,85).
+trigram(team,do,you,85).
+trigram(seen,it,yet,85).
+trigram(of,the,season,85).
+trigram(of,movies,do,85).
+trigram(not,really,i,85).
+trigram(my,favorite,movie,85).
+trigram(its,a,great,85).
+trigram(i,think,youre,85).
+trigram(it,can,be,85).
+trigram(im,pretty,sure,85).
+trigram(i,hope,it,85).
+trigram(i,heard,about,85).
+trigram('how,do,you',feel,about,85).
+trigram(hey,what,do,85).
+trigram(he,is,very,85).
+trigram(hall,of,fame,85).
+trigram(dont,think,ive,85).
+trigram(dont,know,but,85).
+trigram(did,not,like,85).
+trigram(all,kinds,of,85).
+trigram(a,little,more,85).
+trigram(a,great,voice,85).
+trigram(a,good,team,85).
+trigram(yes,of,course,84).
+trigram(yes,and,the,84).
+trigram(used,to,love,84).
+trigram(to,make,the,84).
+trigram(them,in,the,84).
+trigram(thats,why,i,84).
+trigram(thanks,for,the,84).
+trigram(some,of,my,84).
+trigram(of,it,is,84).
+trigram(just,saw,the,84).
+trigram(is,there,a,84).
+trigram(i,love,their,84).
+trigram(you,like,him,83).
+trigram(yes,that,one,83).
+trigram(will,be,good,83).
+trigram(will,always,be,83).
+trigram(why,did,you,83).
+trigram(what,it,is,83).
+trigram(well,i,am,83).
+trigram(was,supposed,to,83).
+trigram(to,a,game,83).
+trigram(they,are,pretty,83).
+trigram(the,rolling,stones,83).
+trigram(there,will,be,83).
+trigram(there,were,a,83).
+trigram(seems,like,a,83).
+trigram(oh,yeah,that,83).
+trigram(look,forward,to,83).
+trigram(look,at,the,83).
+trigram(its,been,a,83).
+trigram(it,really,was,83).
+trigram(it,is,called,83).
+trigram(i,think,im,83).
+trigram(i,saw,them,83).
+trigram(in,my,head,83).
+trigram(i,do,think,83).
+trigram(have,been,listening,83).
+trigram(hard,to,believe,83).
+trigram(dont,you,think,83).
+trigram(dont,have,to,83).
+trigram(didnt,like,the,83).
+trigram(but,i,just,83).
+trigram(a,tough,question,83).
+trigram(yes,i,know,82).
+trigram(yes,but,it,82).
+trigram(yeah,but,the,82).
+trigram(wonder,if,they,82).
+trigram(who,else,is,82).
+trigram(well,they,are,82).
+trigram(to,see,if,82).
+trigram(that,sounds,interesting,82).
+trigram(thats,kind,of,82).
+trigram(oh,thats,right,82).
+trigram(my,favorite,songs,82).
+trigram(interesting,to,see,82).
+trigram(i,hope,the,82).
+trigram(i,doubt,it,82).
+trigram(i,didnt,really,82).
+trigram(hes,one,of,82).
+trigram(heard,it,was,82).
+trigram(had,to,pick,82).
+trigram('do,you,think',they,will,82).
+trigram(dont,know,why,82).
+trigram(but,you,know,82).
+trigram(but,what,about,82).
+trigram(are,really,good,82).
+trigram(a,new,hope,82).
+trigram(a,bit,more,82).
+trigram(your,favorite,scene,81).
+trigram(yes,of,course,81).
+trigram(yes,i,loved,81).
+trigram(yes,but,i,81).
+trigram(want,to,hear,81).
+trigram(wanted,to,see,81).
+trigram(true,but,i,81).
+trigram(they,had,to,81).
+trigram(the,edge,of,81).
+trigram(that,the,movie,81).
+trigram(of,that,movie,81).
+trigram(know,about,that,81).
+trigram(its,such,a,81).
+trigram(is,better,than,81).
+trigram(in,the,super,81).
+trigram(in,the,mood,81).
+trigram(i,never,saw,81).
+trigram(i,liked,how,81).
+trigram('have,you,been',listening,to,81).
+trigram(good,movies,lately,81).
+trigram(dont,like,the,81).
+trigram(but,if,you,81).
+trigram(believe,it,was,81).
+trigram(a,good,actor,81).
+trigram(you,could,say,80).
+trigram(yea,it,was,80).
+trigram(thought,they,were,80).
+trigram(the,story,line,80).
+trigram(the,music,is,80).
+trigram(the,best,in,80).
+trigram(song,on,the,80).
+trigram(so,it,was,80).
+trigram(so,i,guess,80).
+trigram(over,the,years,80).
+trigram(let,you,know,80).
+trigram(i,sure,hope,80).
+trigram('is,one,of',my,favorite,80).
+trigram(i,bet,that,80).
+trigram(i,bet,it,80).
+trigram(has,the,best,80).
+trigram(had,to,be,80).
+trigram(from,the,movie,80).
+trigram(first,one,was,80).
+trigram(dont,think,ive,80).
+trigram(did,you,have,80).
+trigram(definitely,one,of,80).
+trigram(come,out,with,80).
+trigram(can,you,believe,80).
+trigram(can,understand,that,80).
+trigram(but,they,have,80).
+trigram(because,it,is,80).
+trigram(are,my,favorite,80).
+trigram(yeah,thats,true,79).
+trigram(yeah,i,am,79).
+trigram(what,you,think,79).
+trigram(we,will,have,79).
+trigram(to,do,it,79).
+trigram(they,would,have,79).
+trigram(they,were,so,79).
+trigram(they,are,not,79).
+trigram(they,are,both,79).
+trigram(that,they,have,79).
+trigram(that,is,why,79).
+trigram(of,their,music,79).
+trigram(not,so,much,79).
+trigram(not,really,a,79).
+trigram(no,i,have,79).
+trigram(maybe,we,can,79).
+trigram(like,to,go,79).
+trigram(it,is,pretty,79).
+trigram(i,guess,the,79).
+trigram(i,agree,it,79).
+trigram(he,used,to,79).
+trigram(has,been,a,79).
+trigram(first,came,out,79).
+trigram(excited,for,the,79).
+trigram(do,you,enjoy,79).
+trigram(could,be,a,79).
+trigram(but,they,were,79).
+trigram(are,one,of,79).
+trigram(a,new,one,79).
+trigram(a,great,idea,79).
+trigram(you,know,if,78).
+trigram(yes,they,did,78).
+trigram(yeah,that,one,78).
+trigram(would,say,the,78).
+trigram('what,did,you',think,about,78).
+trigram(to,one,of,78).
+trigram(they,made,a,78).
+trigram(that,was,an,78).
+trigram(on,the,field,78).
+trigram(oh,me,too,78).
+trigram(of,the,star,78).
+trigram(of,the,music,78).
+trigram(not,sure,what,78).
+trigram(not,sure,but,78).
+trigram(much,better,than,78).
+trigram(know,much,about,78).
+trigram(just,like,the,78).
+trigram(i,really,loved,78).
+trigram(i,hear,you,78).
+trigram(i,didnt,realize,78).
+trigram(come,up,with,78).
+trigram(are,your,thoughts,78).
+trigram(and,they,were,78).
+trigram(a,lot,to,78).
+trigram(yeah,and,the,77).
+trigram(was,just,a,77).
+trigram(to,watch,a,77).
+trigram(the,music,video,77).
+trigram(the,most,part,77).
+trigram(that,song,was,77).
+trigram(that,might,be,77).
+trigram(so,you,think,77).
+trigram(so,much,more,77).
+trigram(right,about,that,77).
+trigram(lot,of,money,77).
+trigram(listening,to,a,77).
+trigram(i,wouldnt,say,77).
+trigram(it,was,on,77).
+trigram(i,think,shes,77).
+trigram(i,think,of,77).
+trigram(i,might,have,77).
+trigram(if,they,are,77).
+trigram(i,cant,stand,77).
+trigram(has,a,good,77).
+trigram(are,a,few,77).
+trigram(any,of,them,77).
+trigram(also,like,the,77).
+trigram(a,little,too,77).
+trigram(your,least,favorite,76).
+trigram(your,favorite,genre,76).
+trigram(you,didnt,like,76).
+trigram(yes,i,really,76).
+trigram(yes,he,does,76).
+trigram(yes,and,the,76).
+trigram(where,did,you,76).
+trigram(when,it,came,76).
+trigram(was,in,that,76).
+trigram(to,the,playoffs,76).
+trigram(to,find,out,76).
+trigram(the,new,ones,76).
+trigram(the,death,star,76).
+trigram(thats,a,really,76).
+trigram(star,wars,character,76).
+trigram(really,like,it,76).
+trigram(out,to,be,76).
+trigram(on,the,edge,76).
+trigram(ive,heard,that,76).
+trigram(it,to,be,76).
+trigram(its,really,good,76).
+trigram(it,on,the,76).
+trigram(it,makes,me,76).
+trigram(i,think,ill,76).
+trigram(i,think,his,76).
+trigram(is,so,much,76).
+trigram(is,good,but,76).
+trigram(i,never,heard,76).
+trigram(i,mean,the,76).
+trigram(i,also,really,76).
+trigram(havent,seen,that,76).
+trigram(going,to,get,76).
+trigram(but,its,a,76).
+trigram(but,i,liked,76).
+trigram(any,of,their,76).
+trigram(and,of,course,76).
+trigram(and,listen,to,76).
+trigram(yeah,they,have,75).
+trigram(yeah,i,remember,75).
+trigram(yeah,i,liked,75).
+trigram(yeah,but,the,75).
+trigram(who,are,the,75).
+trigram('which,one,is',your,favorite,75).
+trigram(they,were,all,75).
+trigram(the,part,where,75).
+trigram(now,that,you,75).
+trigram(not,really,but,75).
+trigram(not,a,huge,75).
+trigram(movie,do,you,75).
+trigram(it,was,funny,75).
+trigram(it,that,way,75).
+trigram(its,a,really,75).
+trigram(in,a,long,75).
+trigram(i,guess,its,75).
+trigram(i,dont,'know,if,i',75).
+trigram('i,dont,know',if,i,75).
+trigram(i,didnt,realize,75).
+trigram(i,agree,that,75).
+trigram(hey,do,you,75).
+trigram(he,was,pretty,75).
+trigram(he,is,really,75).
+trigram(forward,to,the,75).
+trigram(but,its,not,75).
+trigram(but,i,didnt,75).
+trigram(be,one,of,75).
+trigram(be,interesting,to,75).
+trigram(you,know,any,74).
+trigram(you,dont,think,74).
+trigram(yes,they,did,74).
+trigram(yes,he,does,74).
+trigram(yeah,its,a,74).
+trigram(was,it,about,74).
+trigram(to,some,of,74).
+trigram(the,hall,of,74).
+trigram(the,best,movie,74).
+trigram(should,listen,to,74).
+trigram(of,music,is,74).
+trigram(it,was,more,74).
+trigram(it,is,just,74).
+trigram(in,the,game,74).
+trigram(i,just,hope,74).
+trigram(i,did,see,74).
+trigram(i,didnt,even,74).
+trigram(i,believe,so,74).
+trigram(he,was,really,74).
+trigram(he,is,good,74).
+trigram(good,to,me,74).
+trigram(give,them,a,74).
+trigram(do,with,the,74).
+trigram(do,they,play,74).
+trigram(dont,really,like,74).
+trigram(did,you,go,74).
+trigram(didnt,like,it,74).
+trigram(black,and,white,74).
+trigram(because,it,is,74).
+trigram(a,super,bowl,74).
+trigram(agree,to,disagree,74).
+trigram(your,thoughts,on,73).
+trigram(you,like,best,73).
+trigram(yeah,but,he,73).
+trigram(who,were,the,73).
+trigram(who,directed,it,73).
+trigram(went,to,see,73).
+trigram(well,you,know,73).
+trigram(well,i,like,73).
+trigram(was,a,very,73).
+trigram(to,watch,that,73).
+trigram(to,be,on,73).
+trigram(they,are,making,73).
+trigram(the,whole,thing,73).
+trigram(the,patriots,are,73).
+trigram(that,it,is,73).
+trigram(not,sure,what,73).
+trigram(music,from,the,73).
+trigram(loved,that,movie,73).
+trigram(like,any,of,73).
+trigram(i,will,see,73).
+trigram(its,really,good,73).
+trigram(in,the,original,73).
+trigram(im,looking,forward,73).
+trigram('i,like,that',one,too,73).
+trigram(he,would,have,73).
+trigram(heard,about,that,73).
+trigram(go,with,the,73).
+trigram(favorite,type,of,73).
+trigram(favorite,character,in,73).
+trigram(ever,listened,to,73).
+trigram(dont,think,that,73).
+trigram(dont,know,that,73).
+trigram(but,not,as,73).
+trigram(but,i,heard,73).
+trigram(but,i,did,73).
+trigram(both,of,those,73).
+trigram(are,pretty,good,73).
+trigram(and,they,have,73).
+trigram(a,little,too,73).
+trigram(yeah,thats,right,72).
+trigram(yeah,i,would,72).
+trigram(yeah,but,they,72).
+trigram(would,it,be,72).
+trigram(what,was,that,72).
+trigram(well,i,have,72).
+trigram(was,the,one,72).
+trigram(was,it,good,72).
+trigram(was,better,than,72).
+trigram(the,nfl,season,72).
+trigram(song,by,them,72).
+trigram(some,kind,of,72).
+trigram(see,that,one,72).
+trigram(one,with,the,72).
+trigram(oh,man,i,72).
+trigram(oh,for,sure,72).
+trigram(no,not,yet,72).
+trigram(might,be,the,72).
+trigram(little,bit,of,72).
+trigram(liked,that,one,72).
+trigram(know,how,to,72).
+trigram(i,would,probably,72).
+trigram(its,such,a,72).
+trigram(it,is,good,72).
+trigram(it,come,out,72).
+trigram(it,as,well,72).
+trigram(is,so,funny,72).
+trigram(i,saw,him,72).
+trigram(i,mean,it,72).
+trigram(i,do,but,72).
+trigram(i,cant,stand,72).
+trigram(i,always,liked,72).
+trigram(i,agree,and,72).
+trigram(dont,know,what,72).
+trigram(all,over,the,72).
+trigram(a,horror,movie,72).
+trigram(your,favorite,pop,71).
+trigram(you,get,to,71).
+trigram(yeah,i,have,71).
+trigram(wow,that,sounds,71).
+trigram(with,you,there,71).
+trigram(who,are,you,71).
+trigram(when,they,are,71).
+trigram(what,songs,do,71).
+trigram(were,in,the,71).
+trigram(went,to,a,71).
+trigram(to,think,of,71).
+trigram(the,live,action,71).
+trigram(the,beginning,of,71).
+trigram(so,did,i,71).
+trigram(over,the,top,71).
+trigram(oh,yes,i,71).
+trigram(no,not,yet,71).
+trigram(need,to,get,71).
+trigram(like,the,first,71).
+trigram(like,it,was,71).
+trigram(just,have,to,71).
+trigram(ive,seen,it,71).
+trigram(it,was,that,71).
+trigram(it,as,well,71).
+trigram(i,still,like,71).
+trigram(is,not,a,71).
+trigram(in,the,'90s',71).
+trigram(in,it,too,71).
+trigram(if,you,could,71).
+trigram('i,did,not',know,that,71).
+trigram(i,agree,he,71).
+trigram(he,was,good,71).
+trigram(heard,that,song,71).
+trigram(have,never,seen,71).
+trigram(got,to,see,71).
+trigram(favorite,part,of,71).
+trigram(dont,have,a,71).
+trigram(check,that,out,71).
+trigram(check,out,the,71).
+trigram(but,my,favorite,71).
+trigram(at,this,point,71).
+trigram(as,the,first,71).
+trigram(any,of,his,71).
+trigram(and,i,really,71).
+trigram(and,i,like,71).
+trigram(your,favorite,nfl,70).
+trigram(your,favorite,comedy,70).
+trigram(you,know,that,70).
+trigram(you,heard,any,70).
+trigram(you,dont,have,70).
+trigram(yes,i,would,70).
+trigram(yeah,i,did,70).
+trigram(wow,thats,a,70).
+trigram('why,do,you',think,that,70).
+trigram(whats,it,called,70).
+trigram(what,makes,it,70).
+trigram(what,are,they,70).
+trigram(trying,to,get,70).
+trigram(to,check,out,70).
+trigram(they,were,in,70).
+trigram(they,seem,to,70).
+trigram(the,voice,of,70).
+trigram(there,any,other,70).
+trigram(the,live,action,70).
+trigram(that,they,were,70).
+trigram(that,sounds,really,70).
+trigram(that,song,too,70).
+trigram(that,i,have,70).
+trigram(team,do,you,70).
+trigram(see,your,point,70).
+trigram(scene,in,the,70).
+trigram(never,thought,of,70).
+trigram(mean,by,that,70).
+trigram(know,he,was,70).
+trigram(i,would,not,70).
+trigram(it,so,much,70).
+trigram(it,all,the,70).
+trigram(i,still,dont,70).
+trigram(i,read,that,70).
+trigram(in,a,movie,70).
+trigram(i,mean,the,70).
+trigram(his,music,is,70).
+trigram(hes,going,to,70).
+trigram(have,a,few,70).
+trigram(dont,think,the,70).
+trigram(cant,wait,for,70).
+trigram(born,this,way,70).
+trigram(a,song,called,70).
+trigram(a,really,great,70).
+trigram(you,say,is,69).
+trigram(you,know,when,69).
+trigram(you,didnt,like,69).
+trigram(with,a,new,69).
+trigram(what,a,great,69).
+trigram(was,pretty,cool,69).
+trigram(was,able,to,69).
+trigram(want,to,talk,69).
+trigram(to,get,the,69).
+trigram(they,do,have,69).
+trigram(the,way,the,69).
+trigram(the,next,movie,69).
+trigram(the,lyrics,are,69).
+trigram(that,sounds,really,69).
+trigram(that,is,pretty,69).
+trigram(that,in,the,69).
+trigram(still,listen,to,69).
+trigram(probably,my,favorite,69).
+trigram(of,the,nfl,69).
+trigram(no,it,was,69).
+trigram(many,of,the,69).
+trigram(like,pop,music,69).
+trigram(know,i,think,69).
+trigram(i,liked,him,69).
+trigram(i,guess,its,69).
+trigram(i,get,it,69).
+trigram(if,you,are,69).
+trigram(if,it,was,69).
+trigram(i,dont,'know,about,that',69).
+trigram('i,dont,know',about,that,69).
+trigram(he,is,not,69).
+trigram('have,you,heard',the,new,69).
+trigram(have,to,give,69).
+trigram(have,so,many,69).
+trigram(has,such,a,69).
+trigram(for,the,nfl,69).
+trigram(feel,about,the,69).
+trigram(could,see,that,69).
+trigram(can,see,why,69).
+trigram(but,i,thought,69).
+trigram(and,i,loved,69).
+trigram(again,this,year,69).
+trigram(a,few,times,69).
+trigram(a,few,songs,69).
+trigram(you,think,its,68).
+trigram(you,looking,forward,68).
+trigram(you,are,a,68).
+trigram(yeah,i,was,68).
+trigram(yeah,i,saw,68).
+trigram(yeah,i,just,68).
+trigram(would,be,nice,68).
+trigram(when,you,were,68).
+trigram(whats,it,called,68).
+trigram(what,do,they,68).
+trigram(well,if,you,68).
+trigram(used,to,listen,68).
+trigram(the,world,series,68).
+trigram(the,new,york,68).
+trigram(the,most,recent,68).
+trigram(the,hall,of,68).
+trigram('that,was,a',good,one,68).
+trigram(song,on,the,68).
+trigram(so,i,think,68).
+trigram(see,a,movie,68).
+trigram(one,in,the,68).
+trigram(one,but,i,68).
+trigram(of,them,but,68).
+trigram(like,the,old,68).
+trigram(i,would,agree,68).
+trigram(i,will,definitely,68).
+trigram(i,thought,you,68).
+trigram(is,it,good,68).
+trigram(is,it,called,68).
+trigram(in,the,early,68).
+trigram(in,the,beginning,68).
+trigram(i,know,she,68).
+trigram(i,just,like,68).
+trigram(i,just,cant,68).
+trigram(i,have,always,68).
+trigram(i,am,excited,68).
+trigram(hey,are,you,68).
+trigram(have,the,best,68).
+trigram(have,seen,that,68).
+trigram(going,to,make,68).
+trigram(go,back,to,68).
+trigram(dont,get,me,68).
+trigram(do,not,like,68).
+trigram('did,you,ever',see,the,68).
+trigram(but,not,the,68).
+trigram(and,a,lot,68).
+trigram(about,that,movie,68).
+trigram(you,seen,that,67).
+trigram(yes,and,i,67).
+trigram(yeah,i,am,67).
+trigram(yeah,but,it,67).
+trigram(why,would,you,67).
+trigram(who,are,some,67).
+trigram(where,do,you,67).
+trigram(well,i,am,67).
+trigram(up,to,the,67).
+trigram(to,think,about,67).
+trigram(think,there,are,67).
+trigram(think,he,has,67).
+trigram(theyre,going,to,67).
+trigram(the,third,one,67).
+trigram(the,best,one,67).
+trigram(that,they,have,67).
+trigram(that,should,be,67).
+trigram(so,who,is,67).
+trigram(so,much,better,67).
+trigram(seen,all,of,67).
+trigram(ok,thank,you,67).
+trigram(oh,wow,i,67).
+trigram(oh,i,remember,67).
+trigram(nice,talking,to,67).
+trigram(just,came,out,67).
+trigram(jar,jar,binks,67).
+trigram(ive,seen,that,67).
+trigram(it,that,way,67).
+trigram(is,on,the,67).
+trigram(is,a,pretty,67).
+trigram(i,prefer,the,67).
+trigram(in,the,future,67).
+trigram(im,not,really,67).
+trigram(i,loved,her,67).
+trigram(i,cant,imagine,67).
+trigram(he,has,to,67).
+trigram(heard,that,too,67).
+trigram(for,the,recommendation,67).
+trigram(yeah,i,did,66).
+trigram(yeah,i,cant,66).
+trigram(would,you,want,66).
+trigram('who,do,you','think,is,the',best,66).
+trigram(what,song,do,66).
+trigram(what,i,think,66).
+trigram(what,have,you,66).
+trigram(well,they,are,66).
+trigram(well,in,the,66).
+trigram(used,to,play,66).
+trigram(think,will,be,66).
+trigram(they,were,pretty,66).
+trigram(they,are,one,66).
+trigram(there,were,some,66).
+trigram(the,dallas,cowboys,66).
+trigram(thats,a,classic,66).
+trigram(so,it,was,66).
+trigram(okay,i,will,66).
+trigram(oh,yeah,thats,66).
+trigram(oh,i,like,66).
+trigram(listening,to,it,66).
+trigram(like,the,way,66).
+trigram(it,when,it,66).
+trigram(its,not,a,66).
+trigram(its,a,good,66).
+trigram(i,tend,to,66).
+trigram(is,what,i,66).
+trigram(i,remember,seeing,66).
+trigram(i,didnt,really,66).
+trigram(he,was,just,66).
+trigram(have,to,wait,66).
+trigram(get,a,chance,66).
+trigram(dont,you,like,66).
+trigram(does,have,a,66).
+trigram(cant,think,of,66).
+trigram(a,movie,that,66).
+trigram(am,a,big,66).
+trigram(a,lot,better,66).
+trigram(a,great,band,66).
+trigram(a,good,choice,66).
+trigram(you,tell,me,65).
+trigram(you,ever,listened,65).
+trigram(yes,they,do,65).
+trigram(yeah,thats,right,65).
+trigram(what,i,think,65).
+trigram(what,are,the,65).
+trigram(was,thinking,about,65).
+trigram(to,watch,them,65).
+trigram(think,they,should,65).
+trigram(think,i,saw,65).
+trigram(the,nfl,is,65).
+trigram(the,first,two,65).
+trigram(the,disney,movie,65).
+trigram(the,bad,guy,65).
+trigram(that,was,great,65).
+trigram(that,must,have,65).
+trigram(so,whats,your,65).
+trigram(so,are,you,65).
+trigram(one,in,the,65).
+trigram(of,star,wars,65).
+trigram(not,my,favorite,65).
+trigram(no,i,did,65).
+trigram(like,star,wars,65).
+trigram(liked,the,first,65).
+trigram(just,as,good,65).
+trigram(i,think,their,65).
+trigram(is,the,only,65).
+trigram(is,it,any,65).
+trigram(i,mean,it,65).
+trigram(i,like,when,65).
+trigram(if,i,can,65).
+trigram(i,didnt,think,65).
+trigram(i,can,agree,65).
+trigram(i,bet,they,65).
+trigram(i,agree,and,65).
+trigram(he,was,just,65).
+trigram(have,the,same,65).
+trigram(have,not,heard,65).
+trigram(have,a,new,65).
+trigram(go,see,the,65).
+trigram(give,you,that,65).
+trigram(dont,listen,to,65).
+trigram(dont,know,i,65).
+trigram(as,the,original,65).
+trigram(a,great,team,65).
+trigram(you,seen,it,64).
+trigram(you,really,should,64).
+trigram(you,like,lady,64).
+trigram(you,for,the,64).
+trigram(yes,she,was,64).
+trigram(yeah,i,cant,64).
+trigram(will,do,this,64).
+trigram(well,in,the,64).
+trigram(watch,the,movie,64).
+trigram(to,play,the,64).
+trigram(too,but,i,64).
+trigram(to,check,that,64).
+trigram(to,be,good,64).
+trigram(to,agree,with,64).
+trigram(thought,so,too,64).
+trigram(they,were,in,64).
+trigram(they,were,great,64).
+trigram(the,main,characters,64).
+trigram(thats,kind,of,64).
+trigram(thats,a,hard,64).
+trigram(so,much,fun,64).
+trigram(so,i,think,64).
+trigram(so,i,guess,64).
+trigram(so,are,you,64).
+trigram(since,i,was,64).
+trigram(see,him,in,64).
+trigram(oh,you,mean,64).
+trigram(of,the,old,64).
+trigram(not,sure,about,64).
+trigram(lot,of,them,64).
+trigram(let,me,guess,64).
+trigram(it,is,but,64).
+trigram(is,the,movie,64).
+trigram(is,an,amazing,64).
+trigram(is,also,a,64).
+trigram(i,miss,the,64).
+trigram(i,just,got,64).
+trigram(i,cant,'wait,for,the',64).
+trigram('i,cant,wait',for,the,64).
+trigram(i,agree,that,64).
+trigram(did,you,catch,64).
+trigram(coming,out,with,64).
+trigram(cant,wait,to,64).
+trigram(but,you,know,64).
+trigram(but,i,can,64).
+trigram(be,a,lot,64).
+trigram(based,on,the,64).
+trigram(are,talking,about,64).
+trigram(a,good,thing,64).
+trigram(you,seen,all,63).
+trigram(yes,they,have,63).
+trigram(yeah,youre,right,63).
+trigram(wonder,woman,movie,63).
+trigram(whos,in,it,63).
+trigram(when,i,saw,63).
+trigram(what,other,movies,63).
+trigram('what,are,your',thoughts,on,63).
+trigram(well,i,really,63).
+trigram(was,a,huge,63).
+trigram(to,hear,that,63).
+trigram(to,get,to,63).
+trigram(this,one,is,63).
+trigram(this,is,true,63).
+trigram(they,should,be,63).
+trigram(they,had,some,63).
+trigram(the,one,about,63).
+trigram(the,dallas,cowboys,63).
+trigram(the,best,team,63).
+trigram(that,is,my,63).
+trigram(she,had,a,63).
+trigram(part,of,it,63).
+trigram(oh,that,was,63).
+trigram(my,favorite,team,63).
+trigram(like,they,are,63).
+trigram(ive,seen,it,63).
+trigram(is,probably,the,63).
+trigram(in,the,superbowl,63).
+trigram(in,the,middle,63).
+trigram(in,it,too,63).
+trigram(i,never,really,63).
+trigram(in,all,of,63).
+trigram(im,a,fan,63).
+trigram(ill,give,you,63).
+trigram(i,just,cant,63).
+trigram(i,hear,that,63).
+trigram(have,to,get,63).
+trigram(for,some,reason,63).
+trigram(dont,think,the,63).
+trigram(be,honest,i,63).
+trigram(because,he,was,63).
+trigram(a,part,of,63).
+trigram(and,i,am,63).
+trigram(am,not,a,63).
+trigram(a,great,album,63).
+trigram(your,favorite,type,62).
+trigram(your,favorite,songs,62).
+trigram(your,favorite,music,62).
+trigram(your,favorite,artist,62).
+trigram(you,like,her,62).
+trigram(you,know,he,62).
+trigram(would,be,fun,62).
+trigram(with,a,lot,62).
+trigram(when,was,the,62).
+trigram(what,it,is,62).
+trigram(what,else,do,62).
+trigram(well,he,was,62).
+trigram(was,that,the,62).
+trigram(was,in,a,62).
+trigram(want,to,know,62).
+trigram(to,the,beatles,62).
+trigram(think,was,the,62).
+trigram(think,the,patriots,62).
+trigram(they,still,have,62).
+trigram(they,dont,have,62).
+trigram(the,whole,time,62).
+trigram(the,story,of,62).
+trigram(so,who,do,62).
+trigram(seen,that,movie,62).
+trigram(on,the,team,62).
+trigram(no,it,is,62).
+trigram(maybe,we,can,62).
+trigram(lot,of,movies,62).
+trigram(lot,of,his,62).
+trigram(listen,to,her,62).
+trigram(like,the,best,62).
+trigram(know,that,song,62).
+trigram(its,just,a,62).
+trigram(its,been,a,62).
+trigram(is,in,that,62).
+trigram(in,the,star,62).
+trigram(in,the,second,62).
+trigram(i,know,she,62).
+trigram(i,hope,you,62).
+trigram(i,guess,but,62).
+trigram(i,dont,get,62).
+trigram(i,agree,the,62).
+trigram(how,is,it,62).
+trigram(hey,have,you,62).
+trigram(her,in,the,62).
+trigram(heard,the,song,62).
+trigram(has,always,been,62).
+trigram(green,bay,packers,62).
+trigram(dont,know,why,62).
+trigram(does,that,mean,62).
+trigram(does,he,play,62).
+trigram('did,you,see',the,new,62).
+trigram(but,they,were,62).
+trigram(but,its,a,62).
+trigram(but,i,havent,62).
+trigram(been,around,for,62).
+trigram(are,a,good,62).
+trigram(a,great,player,62).
+trigram(your,all,time,61).
+trigram(you,hear,the,61).
+trigram(you,heard,about,61).
+trigram(yes,i,remember,61).
+trigram(yes,i,know,61).
+trigram(yeah,youre,right,61).
+trigram(yeah,i,loved,61).
+trigram(yeah,i,heard,61).
+trigram(yeah,but,its,61).
+trigram(wow,i,didnt,61).
+trigram(will,do,this,61).
+trigram(why,i,like,61).
+trigram(why,dont,you,61).
+trigram(why,are,you,61).
+trigram(well,he,is,61).
+trigram(was,so,sad,61).
+trigram(to,the,new,61).
+trigram(to,see,if,61).
+trigram(think,a,lot,61).
+trigram('there,are,a',lot,of,61).
+trigram(the,movie,with,61).
+trigram(the,movie,about,61).
+trigram(that,one,too,61).
+trigram(that,is,good,61).
+trigram('that,is,a',great,song,61).
+trigram(that,i,can,61).
+trigram(so,did,you,61).
+trigram(she,did,a,61).
+trigram(see,the,movie,61).
+trigram(see,them,in,61).
+trigram(saw,that,one,61).
+trigram(remember,that,song,61).
+trigram(ready,for,the,61).
+trigram(original,star,wars,61).
+trigram(of,the,team,61).
+trigram(of,the,same,61).
+trigram(not,like,the,61).
+trigram(never,seen,it,61).
+trigram(my,favorite,was,61).
+trigram(me,know,what,61).
+trigram(like,the,original,61).
+trigram(just,want,to,61).
+trigram(i,will,watch,61).
+trigram(i,will,do,61).
+trigram(it,was,cool,61).
+trigram(i,think,im,61).
+trigram(in,the,draft,61).
+trigram(im,sure,they,61).
+trigram(i,hope,it,61).
+trigram(if,it,is,61).
+trigram(i,dont,'think,i,have',61).
+trigram('i,dont,think',i,have,61).
+trigram(i,do,love,61).
+trigram(how,was,the,61).
+trigram('how,do,you',think,the,61).
+trigram(excited,about,the,61).
+trigram(did,he,do,61).
+trigram(can,you,name,61).
+trigram(can,listen,to,61).
+trigram(because,they,are,61).
+trigram(a,star,wars,61).
+trigram(and,then,the,61).
+trigram(a,movie,about,61).
+trigram(a,lot,but,61).
