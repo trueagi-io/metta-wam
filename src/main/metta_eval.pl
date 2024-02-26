@@ -215,6 +215,8 @@ eval_20(Eq,RetType,_Dpth,_Slf,['repl!'],Y):- !,  repl,check_returnval(Eq,RetType
 %eval_20(Eq,RetType,Depth,Self,['enforce',Cond],Res):- !, enforce_true(Eq,RetType,Depth,Self,Cond,Res).
 eval_20(Eq,RetType,Depth,Self,['!',Cond],Res):- !, call(eval(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(Eq,RetType,Depth,Self,['rtrace!',Cond],Res):- !, rtrace(eval(Eq,RetType,Depth,Self,Cond,Res)).
+eval_20(Eq,RetType,Depth,Self,['trace!',A,B],C):- !,eval(Eq,RetType,Depth,Self,A,AA),write_src(AA),format('~N'),
+	 eval(Eq,RetType,Depth,Self,B,C).
 eval_20(Eq,RetType,Depth,Self,['trace',Cond],Res):- !, with_debug(eval,eval(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(Eq,RetType,Depth,Self,['time',Cond],Res):- !, time_eval(eval(Cond),eval(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(Eq,RetType,Depth,Self,['print',Cond],Res):- !, eval(Eq,RetType,Depth,Self,Cond,Res),format('~N'),print(Res),format('~N').
@@ -225,7 +227,6 @@ eval_20(Eq,RetType,Depth,Self,['println!'|Cond],Res):- !,
 eval_20(Eq,RetType,Depth,Self,['trace!',A|Cond],Res):- !, maplist(eval(Eq,RetType,Depth,Self),[A|Cond],[AA|Result]),
    last(Result,Res), format('~N'),maplist(write_src,[AA]),format('~N').
 
-%eval_20(Eq,RetType,Depth,Self,['trace!',A,B],C):- !,eval(Eq,RetType,Depth,Self,B,C),format('~N'),fbug(['trace!',A,B]=C),format('~N').
 %eval_20(Eq,RetType,_Dpth,_Slf,['trace!',A],A):- !, format('~N'),fbug(A),format('~N').
 
 eval_20(Eq,RetType,_Dpth,_Slf,List,YY):- is_list(List),maplist(self_eval,List),List=[H|_], \+ atom(H), !,Y=List,do_expander(Eq,RetType,Y,YY).
@@ -459,7 +460,7 @@ eval_20(Eq,_RetType,Depth,Self,['case',A,[[Void,_]]],Res):-
    eval(Eq,_UnkRetType,Depth,Self,A,_),!,Res =[].
 
 % if there is nothing for case just treat like a collapse
-eval_20(Eq,_RetType,Depth,Self,['case',A,[]],Empty):- !,
+eval_20(Eq,RetType,Depth,Self,['case',A,[]],Empty):- !,
   %forall(eval(Eq,_RetType2,Depth,Self,Expr,_),true),
   once(eval(Eq,_RetType2,Depth,Self,A,_)),
   make_empty(RetType,[],Empty).
@@ -539,14 +540,14 @@ eval_21(_Eq,_RetType,_Depth,_Self,['TupleCount', [N]],N):- number(N),!.
 
 
 */
-eval_21(Eq,RetType,Depth,Self,['TupleCount',List],Len):-!,
- bagof_eval(Eq,RetType,Depth,Self,List,Res),
+eval_21(Eq,_RetType,Depth,Self,['Tuple-Count',List],Len):-!,
+ (\+ is_list(List)->bagof_eval(Eq,_,Depth,Self,List,Res);Res=List),!,
  length(Res,Len).
 eval_21(_Eq,_RetType,_Depth,_Self,['tuple-count',List],Len):-!,
  length(List,Len).
 
 %[superpose,[1,2,3]]
-eval_20(Eq,RetType,Depth,Self,['superpose',List],Res):- List==[], !,
+eval_20(_Eq,RetType,_Depth,_Self,['superpose',List],Res):- List==[], !,
   make_empty(RetType,[],Res).
   
 
@@ -597,11 +598,11 @@ eval20_failed_2(Eq,RetType,Depth,Self, Term, Res):-
 % ================================================================
 eval_20(_Eq,_RetType,_Depth,_Self,['nop'],                 _ ):- !, fail.
 eval_20(_Eq,_RetType,_Depth,_Self,['empty'],                 _ ):- !, fail.
-eval_20(_Eq,_RetType1,Depth,Self,['nop',Expr], Empty):- !,
+eval_20(_Eq,RetType,Depth,Self,['nop',Expr], Empty):- !,
   ignore(eval('=',_RetType2,Depth,Self,Expr,_)),
   make_empty(RetType,[], Empty).
 
-eval_20(Eq,_RetType1,Depth,Self,['do',Expr], Empty):- !,
+eval_20(Eq,RetType,Depth,Self,['do',Expr], Empty):- !,
   forall(eval(Eq,_RetType2,Depth,Self,Expr,_),true),
   %eval_ne(Eq,_RetType2,Depth,Self,Expr,_),!,
   make_empty(RetType,[],Empty).
@@ -690,15 +691,39 @@ eval_in_steps_or_same(Eq,RetType,Depth,Self,X,Y):-eval_in_steps_some_change(Eq,R
 eval_in_steps_or_same(Eq,RetType,_Dpth,_Slf,X,Y):- X=Y,check_returnval(Eq,RetType,Y).
 
   % (fail,make_empty(RetType,[],Template))).
+
+
 possible_type(_Self,_Var,_RetTypeV).
 
-eval_20(Eq,RetType,Depth,Self,['let',A,A5,AA],OO):- !,
-  %(var(A)->true;trace),
-  possible_type(Self,A,RetTypeV),
-  eval(Eq,RetTypeV,Depth,Self,A5,AR), A=AR,
-  eval(Eq,RetType,Depth,Self,AA,OO).
 
-%eval_20(Eq,RetType,Depth,Self,['let',A,A5,AA],AAO):- !,eval(Eq,RetType,Depth,Self,A5,A),eval(Eq,RetType,Depth,Self,AA,AAO).
+eval_20(Eq,RetType,Depth,Self,['let',V,E,Body],OO):- nonvar(V),nonvar(E),!,
+	possible_type(Self,V,RetTypeV),
+	possible_type(Self,E,RetTypeV),
+	(V=E -> true;
+	(eval(Eq,RetTypeV,Depth,Self,E,ER), 
+	(V=ER -> true;
+	(eval(Eq,RetTypeV,Depth,Self,V,VR),
+	(E=VR -> true; ER=VR))))),
+	eval(Eq,RetType,Depth,Self,Body,OO).
+
+eval_20(Eq,RetType,Depth,Self,['let',E,V,Body],OO):- var(V), nonvar(E), !,
+	  %(var(V)->true;trace),
+	  possible_type(Self,V,RetTypeV),
+	  eval(Eq,RetTypeV,Depth,Self,E,ER), V=ER,
+	  eval(Eq,RetType,Depth,Self,Body,OO).
+
+
+eval_20(Eq,RetType,Depth,Self,['let',V,E,Body],OO):- var(V), nonvar(E), !,
+	%(var(V)->true;trace),
+	possible_type(Self,V,RetTypeV),
+	eval(Eq,RetTypeV,Depth,Self,E,ER), V=ER,
+	eval(Eq,RetType,Depth,Self,Body,OO).
+
+eval_20(Eq,RetType,Depth,Self,['let',V,E,Body],OO):- var(V), var(E), !,
+	  V=E, eval(Eq,RetType,Depth,Self,Body,OO).
+
+
+%eval_20(Eq,RetType,Depth,Self,['let',V,E,Body],BodyO):- !,eval(Eq,RetType,Depth,Self,E,V),eval(Eq,RetType,Depth,Self,Body,BodyO).
 eval_20(Eq,RetType,Depth,Self,['let*',[],Body],RetVal):- !, eval(Eq,RetType,Depth,Self,Body,RetVal).
 %eval_20(Eq,RetType,Depth,Self,['let*',[[Var,Val]|LetRest],Body],RetVal):- !,
 %   eval_until_unify(Eq,_RetTypeV,Depth,Self,Val,Var),
@@ -1004,7 +1029,7 @@ eval_20(Eq,RetType,Depth,Self,['catch',X,EX,Handler],TF):- !,
   catch(eval_args(Eq,RetType,Depth,Self,X, TF),
 		 EX,eval_args(Eq,RetType,Depth,Self,Handler, TF)).
 eval_20(Eq,_TRetType,Depth,Self,['throw',X],_):- !,
-  eval_args(Eq,RetType,Depth,Self,X, Val), throw(Val).
+  eval_args(Eq,_RetType,Depth,Self,X, Val), throw(Val).
 
 eval_20(Eq,RetType,Depth,Self,['number-of',X],N):- !,
    bagof_eval(Eq,RetType,Depth,Self,X,ResL),
@@ -1037,15 +1062,16 @@ eval_20(Eq,RetType,Depth,Self,['max-time',NE,E],R):-  !,
 
 eval_20(Eq,RetType,Depth,Self,['call-cleanup!',NE,E],R):-  !,
    call_cleanup(eval(Eq,RetType,Depth,Self,NE,R),
-                eval(Eq,_U_,Depth,Self,NE,_)).
+                eval(Eq,_U_,Depth,Self,E,_)).
 
 eval_20(Eq,RetType,Depth,Self,['setup-call-cleanup!',S,NE,E],R):-  !,
-   setup_call_cleanup(eval(Eq,_,Depth,Self,S,_),
+   setup_call_cleanup(
+	     eval(Eq,_,Depth,Self,S,_),
          eval(Eq,RetType,Depth,Self,NE,R),
-         eval(Eq,_,Depth,Self,NE,_)).
+         eval(Eq,_,Depth,Self,E,_)).
 
 eval_20(Eq,RetType,Depth,Self,['with-output-to!',S,NE],R):-  !,
-   eval(Eq,_,Depth,Self,S,OUT),
+   eval(Eq,'Sink',Depth,Self,S,OUT),
    with_output_to_stream(OUT,
       eval(Eq,RetType,Depth,Self,NE,R)).
                   
@@ -1492,7 +1518,7 @@ eval_61(Eq,RetType,Depth,Self,X,Y):-
 	member(XX->B0,XXB0L), X=XX, Y=B0, X\=@=B0,
 	%(X==B0 -> trace; eval(Eq,RetType,Depth,Self,B0,Y)).
 	 light_eval(Depth2,Self,B0,Y).
-eval_61(_Eq,_RetType,_Depth,_Self,X,_Y):- \+ is_debugging(metta_defn),!,fail.
+eval_61(_Eq,_RetType,_Depth,_Self,_X,_Y):- \+ is_debugging(metta_defn),!,fail.
 eval_61(_Eq,_RetType,_Depth,_Self,X,_Y):- 
    color_g_mesg('#773700',write(no_def(X))),!,fail.
 

@@ -269,9 +269,20 @@ w_in_p(G):- setup_call_cleanup(flag(w_in_p,X,X+1),G,flag(w_in_p,_,X)).
 always_dash_functor(A,B):- once(dash_functor(A,B)),A\=@=B,!.
 always_dash_functor(A,A).
 
+
 dash_functor(A,C):- \+ symbol(A),!,C=A.
 dash_functor(A,C):- A=='[|]',!,C='Cons'.
 %dash_functor(A,C):- p2m(A,B),A\==B,!,always_dash_functor(B,C).
+dash_functor('atom','is-symbol').
+dash_functor(ASymbolProc,O):- atom(ASymbolProc),
+	atomic_list_concat(LS,'atom',ASymbolProc),LS\==[],LS\=[_],!,
+	atomic_list_concat(LS,'symbol',SymbolProc),
+	dash_functor(SymbolProc,O).
+dash_functor(ASymbolProc,O):- atom(ASymbolProc),
+	atomic_list_concat(LS,'$',ASymbolProc),LS\==[],LS\=[_],!,
+	atomic_list_concat(LS,'%',SymbolProc),
+	dash_functor(SymbolProc,O).
+
 dash_functor(Functor,DFunctor):-
    symbol(Functor), atomic_list_concat(L,'-',Functor), L\=[_],maplist(always_dash_functor,L,LL),
    atomic_list_concat(LL,'-',DFunctor).
