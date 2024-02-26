@@ -377,7 +377,7 @@ is_word(2, tame).
 is_word(2, 'high-octane').
 is_word(2, artist).
 is_word(2, detective).
-is_word(2, —).
+is_word(2, '—').
 is_word(2, mile).
 is_word(2, pops).
 is_word(2, rens).
@@ -1766,7 +1766,7 @@ is_word(2, fanatical).
 is_word(4, '\u00A0').
 is_word(2, preference).
 is_word(2, 'pro-rebel').
-is_word(14, ‚).
+is_word(14, '‚').
 is_word(2, midiclorians).
 is_word(2, chills).
 is_word(4, switched).
@@ -1880,7 +1880,7 @@ is_word(2, slam).
 is_word(2, trusting).
 is_word(2, trusted).
 is_word(2, storie).
-is_word(16, ’).
+is_word(16, '’').
 is_word(2, dieting).
 is_word(4, hoped).
 is_word(2, scenary).
@@ -2502,9 +2502,9 @@ is_word(2, unlearn).
 is_word(2, truths).
 is_word(2, cling).
 is_word(2, depend).
-is_word(6, “).
-is_word(2, …).
-is_word(6, ”).
+is_word(6, '“').
+is_word(2, '…').
+is_word(6, '”').
 is_word(4, someday).
 is_word(2, ourselves).
 is_word(2, hauling).
@@ -4322,7 +4322,7 @@ is_word(2, missions).
 is_word(26, dying).
 is_word(10, sacrifice).
 is_word(4, younglings).
-is_word(4, –).
+is_word(4, '–').
 is_word(6, bugging).
 is_word(30, excellent).
 is_word(14, helping).

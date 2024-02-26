@@ -1,11 +1,25 @@
 
-; Cryptoaddition:
-; Find the unique answer to:
-;  SEND
-; +MORE
-; -----
-; MONEY
-; where each letter is a distinct digit.
+;
+;                        Cryptoaddition:
+
+;
+;                         Find the unique answer to:
+
+;
+;                          SEND
+
+;
+;                         +MORE
+
+;
+;                         -----
+
+;
+;                         MONEY
+
+;
+;                          where each letter is a distinct digit.
+
 
 
   (= 
@@ -48,10 +62,18 @@
       (=\= $M $D) 
       (sumdigit $C3 $S $M $O $M) 
       (set-det)))
-	;write(' '),write(S),write(E),write(N),write(D),nl,
-	;write('+'),write(M),write(O),write(R),write(E),nl,
-	;write('-----'),nl,
-	;write(M),write(O),write(N),write(E),write(Y),nl,nl.
+	;
+;                          write(' '),write(S),write(E),write(N),write(D),nl,
+
+	;
+;                          write('+'),write(M),write(O),write(R),write(E),nl,
+
+	;
+;                          write('-----'),nl,
+
+	;
+;                           write(M),write(O),write(N),write(E),write(Y),nl,nl.
+
 
 
   (= 

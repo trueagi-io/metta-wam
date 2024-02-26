@@ -1,15 +1,37 @@
-; generated: 30 October 1989
-; option(s):
 ;
-;   prover
-;
-;   Richard A. O'Keefe
-;
-;   MeTTa theorem prover
-;
-;   from "MeTTa Compared with Lisp?," SIGPLAN Notices, v. 18 #5, May 1983
+;                       generated: 30 October 1989
 
-; op/3 directives
+;
+;                       option(s):
+
+;
+; 
+
+;
+;                          prover
+
+;
+; 
+
+;
+;                          Richard A. O'Keefe
+
+;
+; 
+
+;
+;                          MeTTa theorem prover
+
+;
+; 
+
+;
+;                           from "MeTTa Compared with Lisp?," SIGPLAN Notices, v. 18 #5, May 1983
+
+
+;
+;                         op/3 directives
+
 
 
   (= 
@@ -18,13 +40,27 @@
 
 
 
-  (op 950 xfy or)	; disjunction
-  (op 850 xfy and)	; conjunction
-; comment out the next two directives as they clash with the standard
-; definition of the + and - operators; they are also not required and
-; interfere loading the "bench" example with some backends
-;:- op(500, fx, +).	; assertion
-;:- op(500, fx, -).	; denial
+  !(op 950 xfy or)	;
+;                           disjunction
+
+  !(op 850 xfy and)	;
+;                           conjunction
+
+;
+;                            comment out the next two directives as they clash with the standard
+
+;
+;                            definition of the + and - operators; they are also not required and
+
+;
+;                            interfere loading the "bench" example with some backends
+
+;
+;                           :- op(500, fx, +).	; assertion
+
+;
+;                           :- op(500, fx, -).	; denial
+
 
 
   (= 
@@ -34,7 +70,9 @@
       (fail)))
   (= prover True)
 
-; problem set
+;
+;                              problem set
+
 
 
   (= 
@@ -129,7 +167,9 @@
           (-  b)) 
         (+  c))) True)
 
-; MeTTa theorem prover
+;
+;                                    MeTTa theorem prover
+
 
 
   (= 

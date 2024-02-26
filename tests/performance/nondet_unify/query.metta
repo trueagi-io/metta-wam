@@ -1,12 +1,30 @@
-; generated: 17 November 1989
-; option(s): SOURCE_TRANSFORM_1
 ;
-;   query
+;                        generated: 17 November 1989
+
 ;
-;   David H. D. Warren
+;                        option(s): SOURCE_TRANSFORM_1
+
 ;
-;   query population and area database to find coun-
-;   tries of approximately equal population density
+; 
+
+;
+;                          query
+
+;
+; 
+
+;
+;                           David H. D. Warren
+
+;
+; 
+
+;
+;                           query population and area database to find coun-
+
+;
+;                           tries of approximately equal population density
+
 
 
   (= 
@@ -39,7 +57,9 @@
         (// 
           (* $P 100) $A))))
 
-; populations in 100000's
+;
+;                            populations in 100000's
+
 
   (= 
     (pop  china 8250) True)
@@ -92,7 +112,9 @@
   (= 
     (pop  argentina 251) True)
 
-; areas in 1000's of square miles
+;
+;                                       areas in 1000's of square miles
+
 
   (= 
     (area  china 3380) True)

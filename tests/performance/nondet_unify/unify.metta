@@ -1,21 +1,43 @@
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; Copyright (C) 1990 Regents of the University of California.
-; All rights reserved.  This program may be freely used and modified for
-; non-commercial purposes provided this copyright notice is kept unchanged.
-; Written by Peter Van Roy as a part of the Aquarius project.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+;                        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Benchmark based on part of Aquarius MeTTa compiler
-; Compiling unification into abstract machine code.
+;
+;                         Copyright (C) 1990 Regents of the University of California.
+
+;
+;                          All rights reserved.  This program may be freely used and modified for
+
+;
+;                          non-commercial purposes provided this copyright notice is kept unchanged.
+
+;
+;                          Written by Peter Van Roy as a part of the Aquarius project.
+
+;
+;                         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;
+;                           Benchmark based on part of Aquarius MeTTa compiler
+
+;
+;                           Compiling unification into abstract machine code.
+
 
 
   (= 
     (top) 
     (main $X))
-;, write(X), nl.
+;
+;                           , write(X), nl.
 
-; PM: rewritten to use phrase/3
-;     the Start variable allows bypassing phrase/3 type-checking
+
+;
+;                            PM: rewritten to use phrase/3
+
+;
+;                                the Start variable allows bypassing phrase/3 type-checking
+
 
   (= 
     (main $Size) 
@@ -26,17 +48,27 @@
       (phrase 
         (size $Code) $Start $Size)))
 
-; Unify variable X with term T and write the result:
+;
+;                             Unify variable X with term T and write the result:
+
 
   (= 
     (u $X $T $In $Code) 
     (phrase 
       (unify $X $T $In $_) $Code))
 
-; Unify the variable X with the term T, given that
-; In = set of variables initialized before the unification.
-; Returns the intermediate code for the unification and
-; Out = set of variables initialized after the unification.
+;
+;                              Unify the variable X with the term T, given that
+
+;
+;                              In = set of variables initialized before the unification.
+
+;
+;                              Returns the intermediate code for the unification and
+
+;
+;                              Out = set of variables initialized after the unification.
+
 
   (= 
     (-->  
@@ -54,7 +86,9 @@
         (,  ! 
           (init  $X $T $In $Out nonlast $_)))) True)
 
-;**** Uninit assumes X has not yet been initialized:
+;
+;                               **** Uninit assumes X has not yet been initialized:
+
   (= 
     (-->  
       (uninit  $X $T $In $Out) 
@@ -87,7 +121,9 @@
         (,  ! 
           (unify_var  $X $T $In $Out)))) True)
 
-;**** Init assumes X has already been initialized:
+;
+;                                **** Init assumes X has already been initialized:
+
   (= 
     (-->  
       (init  $X $T $In $Out $Last $LLbls) 
@@ -109,7 +145,9 @@
         (,  ! 
           (unify_var  $X $T $In $Out)))) True)
 
-;**** Unifying two variables together:
+;
+;                                 **** Unifying two variables together:
+
   (= 
     (-->  
       (unify_var  $X $Y $In $In) 
@@ -165,8 +203,12 @@
                 (incl  $X $In $Mid) 
                 (incl  $Y $Mid $Out)) })))) True)
 
-;**** Unify_readmode assumes X is a dereferenced nonvariable
-; at run-time and T is a nonvariable at compile-time.
+;
+;                                   **** Unify_readmode assumes X is a dereferenced nonvariable
+
+;
+;                                     at run-time and T is a nonvariable at compile-time.
+
   (= 
     (-->  
       (unify_readmode  $X $T $In $Out $LLbls) 
@@ -240,8 +282,12 @@
 
 
 
-;**** Unify_writemode assumes X is a dereferenced unbound
-; variable at run-time and T is a nonvariable at compile-time.
+;
+;                                        **** Unify_writemode assumes X is a dereferenced unbound
+
+;
+;                                         variable at run-time and T is a nonvariable at compile-time.
+
   (= 
     (-->  
       (unify_writemode  $X $T $In $Last $LLbls) 
@@ -266,7 +312,9 @@
               ($X)))))) True)
 
 
-;**** Generate a minimal sequence of moves to create T on the heap:
+;
+;                                         **** Generate a minimal sequence of moves to create T on the heap:
+
   (= 
     (-->  
       (unify_block  last $T $Size $In $In 
@@ -401,7 +449,9 @@
                     (make_slots  $I1 $N $T $S1 $Offsets $Mid $Out))))))))) True)
 
 
-; Initialize first-time variables in write mode:
+;
+;                                          Initialize first-time variables in write mode:
+
   (= 
     (-->  
       (init_var  $V $I $In) 
@@ -443,7 +493,9 @@
       (^ tatm $A)) 
     ( (atomic $A) (set-det)))
 
-; Calculate the size of T on the heap:
+;
+;                                          Calculate the size of T on the heap:
+
 
   (= 
     (-->  
@@ -501,7 +553,9 @@
                     (+  $I 1)) } 
                 (size_args  $I1 $N $T))))))) True)
 
-;**** Utility routines:
+;
+;                                         **** Utility routines:
+
 
 
   (= 

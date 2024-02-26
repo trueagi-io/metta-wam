@@ -1,11 +1,27 @@
-; generated: 16 November 1989
-; option(s): SOURCE_TRANSFORM_1
 ;
-;   qsort
+;                       generated: 16 November 1989
+
 ;
-;   David H. D. Warren
+;                       option(s): SOURCE_TRANSFORM_1
+
 ;
-;   quicksort a list of 50 integers
+; 
+
+;
+;                          qsort
+
+;
+; 
+
+;
+;                          David H. D. Warren
+
+;
+; 
+
+;
+;                           quicksort a list of 50 integers
+
 
 
   (= 

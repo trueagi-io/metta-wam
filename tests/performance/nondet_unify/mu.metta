@@ -1,11 +1,27 @@
-; generated: 9 November 1989
-; option(s): 
 ;
-;   mu
+;                      generated: 9 November 1989
+
 ;
-;   derived from Douglas R. Hofstadter, "Godel, Escher, Bach," pages 33-35.
+;                      option(s):
+
 ;
-;   prove "mu-math" theorem muiiu
+; 
+
+;
+;                        mu
+
+;
+; 
+
+;
+;                         derived from Douglas R. Hofstadter, "Godel, Escher, Bach," pages 33-35.
+
+;
+; 
+
+;
+;                         prove "mu-math" theorem muiiu
+
 
 
   (= 

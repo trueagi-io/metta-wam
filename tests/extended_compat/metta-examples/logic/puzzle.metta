@@ -4,8 +4,7 @@
 
   (= 
     (foo1) 
-    (, 
-      (= $Employers 
+    ( (= $Employers 
         (:: $_ $_ $_)) 
       (member 
         (:: boris $_ has-sister) $Employers) 
@@ -20,10 +19,15 @@
         (:: $_ supervisor $_) $Employers) 
       (writeq $Employers) 
       (nl) 
-      (call halt)));   /name, position, has sister/
-;    /Boris has sister/
-;    /cashier is the shortest and has no sister/
-;    /Semyon is higher than controller/
+      (call halt)))
+;                     ;   /name, position, has sister/
+
+;                     ;    /Boris has sister/
+
+;                     ;    /cashier is the shortest and has no sister/
+
+;                     ;    /Semyon is higher than controller/
+
 
 
 
@@ -43,7 +47,7 @@
     (time foo1))
 
 
-  (foo)
+  !foo
 
 
 

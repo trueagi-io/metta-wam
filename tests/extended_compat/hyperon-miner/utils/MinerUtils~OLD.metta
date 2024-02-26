@@ -9,7 +9,7 @@
 (= (min $x $y) (if (< $x $y) $x $y))
 
 ;; Tuple count grounded python function
-; !(extend-py! ../utils/helper)
+!(extend-py! ../utils/helper.py)
 ;; This is very slow, use the grounded python function instead
 (= (tuple-count $tuple) (if (== $tuple ()) 0 (+ 1 (tuple-count (cdr-atom $tuple)))))
 

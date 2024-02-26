@@ -1,11 +1,27 @@
-; generated: 25 October 1989
-; option(s): 
 ;
-;   nreverse
+;                      generated: 25 October 1989
+
 ;
-;   David H. D. Warren
+;                      option(s):
+
 ;
-;   "naive"-reverse a list of 30 integers
+; 
+
+;
+;                         nreverse
+
+;
+; 
+
+;
+;                         David H. D. Warren
+
+;
+; 
+
+;
+;                          "naive"-reverse a list of 30 integers
+
 
 
   (= 

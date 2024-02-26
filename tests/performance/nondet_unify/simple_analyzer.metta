@@ -1,21 +1,45 @@
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; Copyright (C) 1990 Peter Van Roy and Regents of the University of California.
-; All rights reserved.  This program may be freely used and modified for
-; non-commercial purposes provided this copyright notice is kept unchanged.
-; Written by Peter Van Roy as a part of the Aquarius project.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+;                        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Benchmark based on the Aquarius compiler flow analyzer version 1.
-; This program does a dataflow analysis of quicksort using abstract
-; interpretation.  The lattice has two useful values: uninit and ground.
-; Analysis takes three passes (it prints three 'x' characters).
-; Builtins used: compare/3, arg/3, functor/3, sort/2, keysort/2, ==/2, \==/2.
+;
+;                         Copyright (C) 1990 Peter Van Roy and Regents of the University of California.
+
+;
+;                         All rights reserved.  This program may be freely used and modified for
+
+;
+;                         non-commercial purposes provided this copyright notice is kept unchanged.
+
+;
+;                         Written by Peter Van Roy as a part of the Aquarius project.
+
+;
+;                         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;
+;                          Benchmark based on the Aquarius compiler flow analyzer version 1.
+
+;
+;                          This program does a dataflow analysis of quicksort using abstract
+
+;
+;                          interpretation.  The lattice has two useful values: uninit and ground.
+
+;
+;                           Analysis takes three passes (it prints three 'x' characters).
+
+;
+;                           Builtins used: compare/3, arg/3, functor/3, sort/2, keysort/2, ==/2, \==/2.
+
 
 
   (= 
     (top) 
     (main $_))
-; main :- main(Table), write(Table), nl.
+;
+;                            main :- main(Table), write(Table), nl.
+
 
 
   (= 
@@ -67,12 +91,17 @@
       (seal $Table) 
       (analyze-closure $Strees $Table $OutTable)))
 
-; Repeat traversal step until there are no more changes:
+;
+;                             Repeat traversal step until there are no more changes:
+
 
   (= 
     (analyze-closure $Strees $InTable $OutTable) 
-    ( (traverse-strees $Strees $InTable $MidTable 0 $Changes) (analyze-closure $Strees $MidTable $OutTable $Changes))); Mark an analysis pass:
-; put("x"), nl,
+    ( (traverse-strees $Strees $InTable $MidTable 0 $Changes) (analyze-closure $Strees $MidTable $OutTable $Changes)))
+;                              ; Mark an analysis pass:
+
+;                              ; put("x"), nl,
+
 
 
   (= 
@@ -84,9 +113,13 @@
       (set-det) 
       (analyze-closure $Strees $InTable $OutTable)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+;                              ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Initialize the table of call lattice values:
+
+;
+;                               Initialize the table of call lattice values:
+
 
 
   (= 
@@ -135,7 +168,9 @@
     (init-goal $3 $4 $4) 
     ( (unify-p $3) (set-det)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+;                                   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 
   (= 
@@ -278,9 +313,13 @@
         (+ $I 1)) 
       (create-new-call $I1 $Ar $Gnd $VarArgs $DupVars $Uni $SoFar $Goal $Call)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+;                                         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Lattice utilities:
+
+;
+;                                          Lattice utilities:
+
 
 
   (= 
@@ -315,22 +354,34 @@
 
   (= 
     (create-argument yes $_ $_ $_ $_ ground) 
-    (set-det)) ; Ground argument.
+    (set-det)) ;
+;                                          Ground argument.
+
   (= 
     (create-argument no yes no yes $_ uninit) 
-    (set-det)) ; Non-duplicated uninit.
+    (set-det)) ;
+;                                          Non-duplicated uninit.
+
   (= 
     (create-argument no yes no $_ no uninit) 
-    (set-det)) ; First occurrence.
+    (set-det)) ;
+;                                          First occurrence.
+
   (= 
     (create-argument no yes $_ no yes any) 
-    (set-det))    ; Already initialized.
+    (set-det))    ;
+;                                          Already initialized.
+
   (= 
     (create-argument no yes yes $_ $_ any) 
-    (set-det))    ; Duplicated argument.
+    (set-det))    ;
+;                                          Duplicated argument.
+
   (= 
     (create-argument no no $_ $_ $_ any) 
-    (set-det))    ; Non-variable argument.
+    (set-det))    ;
+;                                          Non-variable argument.
+
 
 
   (= 
@@ -412,14 +463,24 @@
   (= 
     (lattice_modes_arg  $Other $X $Link $Link) True)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+;                                         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Table utilities:
 
-; This code implements a mutable array, represented as a binary tree.
+;
+;                                          Table utilities:
 
-; Access a value in logarithmic time and constant space:
-; This predicate can be used to create the array incrementally.
+
+;
+;                                          This code implements a mutable array, represented as a binary tree.
+
+
+;
+;                                          Access a value in logarithmic time and constant space:
+
+;
+;                                          This predicate can be used to create the array incrementally.
+
 
   (= 
     (get 
@@ -460,7 +521,9 @@
     (set-2 > $I $V $W $L $R $W $L $NR) 
     (set $R $I $V $NR))
 
-; Prevent any further insertions in the array:
+;
+;                                          Prevent any further insertions in the array:
+
 
   (= 
     (seal  leaf) True)
@@ -468,9 +531,13 @@
     (seal (node $_ $_ $L $R)) 
     ( (seal $L) (seal $R)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+;                                         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; General utilities:
+
+;
+;                                          General utilities:
+
 
 
   (= 
@@ -646,9 +713,13 @@
       (,  ! 
         (filter_dups  $KeySet))) True)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+;                                         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Low-level utilities:
+
+;
+;                                          Low-level utilities:
+
 
 
   (= 
@@ -679,7 +750,9 @@
       (set $I $Val) $In $Out) 
     (set $In $I $Val $Out))
 
-; Set utilities inspired by R. O'Keefe in Practical MeTTa:
+;
+;                                          Set utilities inspired by R. O'Keefe in Practical MeTTa:
+
 
   (= 
     (inv $A 
@@ -893,5 +966,7 @@
     (split_unify  
       (= $Y $X) $X $Y) True)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+;                                         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 

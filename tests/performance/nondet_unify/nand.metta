@@ -1,34 +1,96 @@
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
-;  This is a rough approximation to the algorithm presented in:
+;                     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ;
-;	"An Algorithm for NAND Decomposition Under Network Constraints,"
-;	IEEE Trans. Comp., vol C-18, no. 12, Dec. 1969, p. 1098
-;	by E. S. Davidson.
+; 
+
 ;
-;  Written by Bruce Holmer
+;                       This is a rough approximation to the algorithm presented in:
+
 ;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 
+
 ;
-;  I have used the paper's terminology for names used in the program.
+;                      	"An Algorithm for NAND Decomposition Under Network Constraints,"
+
 ;
-;  The data structure for representing functions and variables is
-;		function(FunctionNumber, TrueSet, FalseSet,
-;			ConceivableInputs,
-;			ImmediatePredecessors, ImmediateSuccessors,
-;			Predecessors, Successors)
+;                      	IEEE Trans. Comp., vol C-18, no. 12, Dec. 1969, p. 1098
+
 ;
+;                      	by E. S. Davidson.
+
 ;
-;  Common names used in the program:
+; 
+
 ;
-;	NumVars		number of variables (signal inputs)
-;	NumGs		current number of variables and functions
-;	Gs		list of variable and function data
-;	Gi,Gj,Gk,Gl	individual variable or function--letter corresponds to
-;			the subscript in the paper (most of the time)
-;	Vector,V	vector from a function's true set
+;                         Written by Bruce Holmer
+
 ;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 
+
+;
+;                       ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;
+; 
+
+;
+;                         I have used the paper's terminology for names used in the program.
+
+;
+; 
+
+;
+;                          The data structure for representing functions and variables is
+
+;
+;                        		function(FunctionNumber, TrueSet, FalseSet,
+
+;
+;                        			ConceivableInputs,
+
+;
+;                        			ImmediatePredecessors, ImmediateSuccessors,
+
+;
+;                         			Predecessors, Successors)
+
+;
+; 
+
+;
+; 
+
+;
+;                           Common names used in the program:
+
+;
+; 
+
+;
+;                          	NumVars		number of variables (signal inputs)
+
+;
+;                          	NumGs		current number of variables and functions
+
+;
+;                          	Gs		list of variable and function data
+
+;
+;                          	Gi,Gj,Gk,Gl	individual variable or function--letter corresponds to
+
+;
+;                          			the subscript in the paper (most of the time)
+
+;
+;                           	Vector,V	vector from a function's true set
+
+;
+; 
+
+;
+;                           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 
   (= 
@@ -44,10 +106,16 @@
       (search $NumVars $NumGs2 $Gs2)))
   (= 
     (main  $_) True)
-;	write('Search completed'), nl.
+;
+;                             	write('Search completed'), nl.
 
-;  Test input
-;  init_state(circuit(NumInputs, NumOutputs, FunctionList))
+
+;
+;                               Test input
+
+;
+;                               init_state(circuit(NumInputs, NumOutputs, FunctionList))
+
 
   (= 
     (init-state 0 2 3 
@@ -61,7 +129,9 @@
         (function 0 
           (:: 1 3) 
           (:: 0 2) Nil Nil Nil Nil Nil))) 
-    (update-bounds $_ 100 $_)); 2 input xor
+    (update-bounds $_ 100 $_))
+;                               ; 2 input xor
+
 
   (= 
     (init-state 1 3 4 
@@ -78,7 +148,9 @@
         (function 0 
           (:: 1 3 5 7) 
           (:: 0 2 4 6) Nil Nil Nil Nil Nil))) 
-    (update-bounds $_ 100 $_)); carry circuit
+    (update-bounds $_ 100 $_))
+;                               ; carry circuit
+
 
   (= 
     (init-state 2 3 4 
@@ -95,7 +167,9 @@
         (function 0 
           (:: 1 3 5 7) 
           (:: 0 2 4 6) Nil Nil Nil Nil Nil))) 
-    (update-bounds $_ 100 $_)); example in paper
+    (update-bounds $_ 100 $_))
+;                                ; example in paper
+
 
   (= 
     (init-state 3 3 4 
@@ -112,7 +186,9 @@
         (function 0 
           (:: 1 3 5 7) 
           (:: 0 2 4 6) Nil Nil Nil Nil Nil))) 
-    (update-bounds $_ 100 $_)); sum (3 input xor)
+    (update-bounds $_ 100 $_))
+;                                ; sum (3 input xor)
+
 
   (= 
     (init-state 4 3 5 
@@ -132,7 +208,9 @@
         (function 0 
           (:: 1 3 5 7) 
           (:: 0 2 4 6) Nil Nil Nil Nil Nil))) 
-    (update-bounds $_ 100 $_)); do sum and carry together
+    (update-bounds $_ 100 $_))
+;                                ; do sum and carry together
+
 
   (= 
     (init-state 5 5 8 
@@ -161,22 +239,40 @@
         (function 0 
           (:: 1 3 5 7 9 11 13 15 17 19 21 23 25 27 29 31) 
           (:: 0 2 4 6 8 10 12 14 16 18 20 22 24 26 28 30) Nil Nil Nil Nil Nil))) 
-    (update-bounds $_ 21 $_)); 2 bit full adder
-; A2 (output)
-; B2 (output)
-; carry-out (output)
-; carry-in
-; B1 input
-; B0 input
-; A1 input
-; A0 input
+    (update-bounds $_ 21 $_))
+;                                 ; 2 bit full adder
+
+;                                 ; A2 (output)
+
+;                                 ; B2 (output)
+
+;                                 ; carry-out (output)
+
+;                                  ; carry-in
+
+;                                  ; B1 input
+
+;                                  ; B0 input
+
+;                                  ; A1 input
+
+;                                  ; A0 input
 
 
 
-;  Iterate over all the TRUE vectors that need to be covered.
-;  If no vectors remain to be covered (select_vector fails), then
-;  the circuit is complete (printout results, update bounds, and
-;  continue search for a lower cost circuit).
+
+;
+;                                  Iterate over all the TRUE vectors that need to be covered.
+
+;
+;                                   If no vectors remain to be covered (select_vector fails), then
+
+;
+;                                   the circuit is complete (printout results, update bounds, and
+
+;
+;                                   continue search for a lower cost circuit).
+
 
   (= 
     (search $NumVars $NumGsIn $GsIn) 
@@ -188,15 +284,29 @@
       (search $NumVars $NumGsOut $GsOut)))
   (= 
     (search $NumVars $NumGs $Gs) 
-    ( (update-bounds $NumVars $NumGs $Gs) (fail)));	output_results(NumVars, NumGs, Gs),
+    ( (update-bounds $NumVars $NumGs $Gs) (fail)))
+;                                   ;	output_results(NumVars, NumGs, Gs),
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;  Given the current solution, pick the best uncovered TRUE vector
-;  for covering next.
-;  The selected vector is specified by its vector number and function.
-;  Select_vector fails if all TRUE vectors are covered.
-;  Select_vector is determinant (gives only one solution).
+
+;
+;                                  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;
+;                                    Given the current solution, pick the best uncovered TRUE vector
+
+;
+;                                     for covering next.
+
+;
+;                                     The selected vector is specified by its vector number and function.
+
+;
+;                                     Select_vector fails if all TRUE vectors are covered.
+
+;
+;                                     Select_vector is determinant (gives only one solution).
+
 
   (= 
     (select-vector $NumVars $NumGs $Gs $Gj $Vector) 
@@ -205,7 +315,9 @@
       (\= $Type cov) 
       (\= $Type nf)))
 
-; loop over functions
+;
+;                                     loop over functions
+
   (= 
     (select-vector 
       (Cons  $Gk $_) $NumVars $_ $_ $Gj $V $Type $N $Gj $V $Type $N) 
@@ -219,7 +331,9 @@
       (select-vector $Tk $Gk $NumVars $NumGs $Gs $GjIn $Vin $TypeIn $Nin $Gj $V $Type $N) 
       (select-vector $Gks $NumVars $NumGs $Gs $Gj $V $Type $N $GjOut $Vout $TypeOut $Nout)))
 
-; loop over vectors
+;
+;                                      loop over vectors
+
   (= 
     (select_vector  () $_ $_ $_ $_ $Gj $V $Type $N $Gj $V $Type $N) True)
   (= 
@@ -303,8 +417,12 @@
       (Cons  $_ $CIs) $Gs $NumVars $Fj $V $TypeIn $Nin $TypeOut $Nout) 
     (cover-type2 $CIs $Gs $NumVars $Fj $V $TypeIn $Nin $TypeOut $Nout))
 
-;  The best vector to cover is the one with worst type, or, if types
-;  are equal, with the least number of possible covers.
+;
+;                                           The best vector to cover is the one with worst type, or, if types
+
+;
+;                                           are equal, with the least number of possible covers.
+
 
   (= 
     (best-vector dummy $_ $_ $_ $Gj2 $V2 $Type2 $N2 $Gj2 $V2 $Type2 $N2) 
@@ -371,7 +489,9 @@
     (max-type $T1 $T2 $T2) 
     ( (not (type-order $T1 $T2)) (set-det)))
 
-;  Order of types
+;
+;                                           Order of types
+
 
 
   (= 
@@ -431,13 +551,25 @@
   (= 
     (type_order  exmcf nf) True)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+;                                         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;  Cover_vector will cover the specified vector and
-;  generate new circuit information.
-;  Using backtracking, all possible coverings are generated.
-;  The ordering of the possible coverings is approximately that
-;  given in Davidson's paper, but has been simplified.
+
+;
+;                                           Cover_vector will cover the specified vector and
+
+;
+;                                           generate new circuit information.
+
+;
+;                                           Using backtracking, all possible coverings are generated.
+
+;
+;                                           The ordering of the possible coverings is approximately that
+
+;
+;                                           given in Davidson's paper, but has been simplified.
+
 
 
   (= 
@@ -560,7 +692,9 @@
       (update-circuit $Gs $Gi $Gj $V $Gs $GsOut)))
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+;                                         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 
   (= 
@@ -659,7 +793,9 @@
     (exclude-if-vector-in-false-set $CIsIn $Gs $V $CIsOut))
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+;                                         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 
   (= 
@@ -725,10 +861,16 @@
     (function-type $NumVars $NumGs $Gs $Gk $Type $Vector) 
     ( (true-set $Gk $Tk) (select-vector $Tk $Gk $NumVars $NumGs $Gs dummy 0 nf 999 $_ $Vector $Type $_)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;  Cost and constraint predicates:
+;
+;                                         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; very simple bound for now
+;
+;                                           Cost and constraint predicates:
+
+
+;
+;                                          very simple bound for now
+
 
 
   (= 
@@ -740,7 +882,9 @@
     (update-bounds $_ $NumGs $_) 
     (set bound $NumGs))
 
-; set and access for systems that don't support them
+;
+;                                          set and access for systems that don't support them
+
 
   (= 
     (set $N $A) 
@@ -753,16 +897,32 @@
     (access $N $A) 
     (recorded $N $A $_))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;  Output predicates:
+;
+;                                         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;  for now just dump everything
+;
+;                                           Output predicates:
 
-;output_results(NumVars, NumGs, Gs) :-
-;	NumGates is NumGs - NumVars,
-;	write(NumGates), write(' gates'), nl,
-;	write_gates(Gs), nl,
-;	write('searching for a better solution...'), nl, nl.
+
+;
+;                                           for now just dump everything
+
+
+;
+;                                         output_results(NumVars, NumGs, Gs) :-
+
+;
+;                                         	NumGates is NumGs - NumVars,
+
+;
+;                                         	write(NumGates), write(' gates'), nl,
+
+;
+;                                         	write_gates(Gs), nl,
+
+;
+;                                         	write('searching for a better solution...'), nl, nl.
+
 
 
   (= 
@@ -778,10 +938,16 @@
       (nl) 
       (write-gates $Gs)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+;                                         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;  Retrieve the specified function from the function list.
-;  function(FunctionNumber, FunctionList, Function).
+
+;
+;                                           Retrieve the specified function from the function list.
+
+;
+;                                           function(FunctionNumber, FunctionList, Function).
+
 
   (= 
     (function $I 
@@ -825,9 +991,15 @@
     (successors  
       (function  $_ $_ $_ $_ $_ $_ $_ $S) $S) True)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;  Set operations assume that the sets are represented by an ordered list
-;  of integers.
+;
+;                                         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;
+;                                           Set operations assume that the sets are represented by an ordered list
+
+;
+;                                           of integers.
+
 
 
   (= 

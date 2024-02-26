@@ -1,11 +1,27 @@
-; generated: 19 June 1990
-; option(s): 
 ;
-;   browse
+;                    generated: 19 June 1990
+
 ;
-;   Tep Dobry (from Lisp version by R. P. Gabriel)
+;                    option(s):
+
 ;
-;   (modified January 1987 by Herve' Touati)
+; 
+
+;
+;                       browse
+
+;
+; 
+
+;
+;                       Tep Dobry (from Lisp version by R. P. Gabriel)
+
+;
+; 
+
+;
+;                       (modified January 1987 by Herve' Touati)
+
 
 
   (= 
@@ -145,7 +161,9 @@
       (Cons  $Prop $_) $P $Val) 
     ( (functor $Prop $P $_) 
       (set-det) 
-      (arg 1 $Prop $Val)))/* don't really need this */
+      (arg 1 $Prop $Val)))
+;                               /* don't really need this */
+
 
   (= 
     (property 

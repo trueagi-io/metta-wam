@@ -1,31 +1,87 @@
-; generated: 8 March 1990
-; option(s):
 ;
-;   meta_qsort
+;                      generated: 8 March 1990
+
 ;
-;   Ralph M. Haygood
+;                      option(s):
+
 ;
-;   meta-interpret Warren benchmark qsort
+; 
+
 ;
-; For any meta-variable ~X~, interpret(~X~) behaves as if
+;                        meta_qsort
+
 ;
-;  interpret(~X~) :- ~X~.
+; 
+
 ;
-;  Thus, for example, interpret((foo(X), bar(X), !)) behaves as if
+;                         Ralph M. Haygood
+
 ;
-;  interpret((foo(X), bar(X), !)) :- foo(X), bar(X), !.
+; 
+
 ;
-;  Note that though ~X~ may contain cuts, those cuts cannot escape from
-;  interpret(~X~) to effect the parent goal; interpret(!) is equivalent
-;  to true.
+;                         meta-interpret Warren benchmark qsort
+
 ;
-;  Cuts inside ~X~ are executed according to the rule that conjunction,
-;  disjunction, and if-then-else are transparent to cuts, and any other
-;  form is transparent to cuts if and only if it can be macro-expanded
-;  into a form involving only these three without interpret/1.  If-then
-;  and negation are the only such other forms currently recognized; ( A
-;  -> B) is equivalent to ( A -> B ; fail ), and \+ A is equivalent to
-;  ( A -> fail ; true ).
+; 
+
+;
+;                       For any meta-variable ~X~, interpret(~X~) behaves as if
+
+;
+; 
+
+;
+;                         interpret(~X~) :- ~X~.
+
+;
+; 
+
+;
+;                         Thus, for example, interpret((foo(X), bar(X), !)) behaves as if
+
+;
+; 
+
+;
+;                          interpret((foo(X), bar(X), !)) :- foo(X), bar(X), !.
+
+;
+; 
+
+;
+;                          Note that though ~X~ may contain cuts, those cuts cannot escape from
+
+;
+;                          interpret(~X~) to effect the parent goal; interpret(!) is equivalent
+
+;
+;                          to true.
+
+;
+; 
+
+;
+;                           Cuts inside ~X~ are executed according to the rule that conjunction,
+
+;
+;                           disjunction, and if-then-else are transparent to cuts, and any other
+
+;
+;                           form is transparent to cuts if and only if it can be macro-expanded
+
+;
+;                           into a form involving only these three without interpret/1.  If-then
+
+;
+;                            and negation are the only such other forms currently recognized; ( A
+
+;
+;                            -> B) is equivalent to ( A -> B ; fail ), and \+ A is equivalent to
+
+;
+;                            ( A -> fail ; true ).
+
 
 
   (= 

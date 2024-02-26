@@ -1,11 +1,27 @@
-; generated: 7 March 1990
-; option(s): 
 ;
-;   (deriv) divide10
+;                     generated: 7 March 1990
+
 ;
-;   David H. D. Warren
+;                     option(s):
+
 ;
-;   symbolic derivative of ((((((((x/x)/x)/x)/x)/x)/x)/x)/x)/x
+; 
+
+;
+;                       (deriv) divide10
+
+;
+; 
+
+;
+;                        David H. D. Warren
+
+;
+; 
+
+;
+;                        symbolic derivative of ((((((((x/x)/x)/x)/x)/x)/x)/x)/x)/x
+
 
 
   (= 

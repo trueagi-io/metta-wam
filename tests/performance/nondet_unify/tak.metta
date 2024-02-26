@@ -1,11 +1,27 @@
-; generated: 17 November 1989
-; option(s): SOURCE_TRANSFORM_1
 ;
-;   tak
+;                         generated: 17 November 1989
+
 ;
-;   Evan Tick (from Lisp version by R. P. Gabriel)
+;                         option(s): SOURCE_TRANSFORM_1
+
 ;
-;   (almost) Takeuchi function (recursive arithmetic)
+; 
+
+;
+;                           tak
+
+;
+; 
+
+;
+;                            Evan Tick (from Lisp version by R. P. Gabriel)
+
+;
+; 
+
+;
+;                            (almost) Takeuchi function (recursive arithmetic)
+
 
 
   (= 

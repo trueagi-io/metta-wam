@@ -1,20 +1,38 @@
-; preprocessing phase to eliminate disjunctions from the code
+;
+;                     preprocessing phase to eliminate disjunctions from the code
 
-; takes a list of clauses of the form source(Name,Clause)
-; returns these clauses with disjunctions replaced by dummy calls
-; and a list of NewClauses corresponding to those dummy calls
-; Link is the uninstantiated last cdr of this list
+
+;
+;                      takes a list of clauses of the form source(Name,Clause)
+
+;
+;                      returns these clauses with disjunctions replaced by dummy calls
+
+;
+;                      and a list of NewClauses corresponding to those dummy calls
+
+;
+;                      Link is the uninstantiated last cdr of this list
+
 
 
   (= 
     (top) 
     ( (eliminate-disjunctions 
         (:: (= (a $A $B $C) (or (b $A) (c $C)))) $X $Y Nil) (inst-vars (, $X $Y))))
-;	write((X,Y)), nl,
-	; (X,Y) == ([(a:-'_dummy_0')],[('_dummy_0':-b),('_dummy_0':-c)]),
-;	write(ok), nl.
+;
+;                      	write((X,Y)), nl,
+
+	;
+;                       (X,Y) == ([(a:-'_dummy_0')],[('_dummy_0':-b),('_dummy_0':-c)]),
+
+;
+;                       	write(ok), nl.
+
   (= top True)
-;write(wrong), nl.
+;
+;                       write(wrong), nl.
+
 
 
   (= 
@@ -32,13 +50,27 @@
         (Cons  $NewC $NewCs)) 
       (gather-disj $Cs $NewCs $Rest $Link)))
 
-; given a clause, find in Disj the list of disj((A;B),N,X,C)
-; where N is a unique ID, X is a var that takes the place of
-; (A;B) in the code, NewC is the clause modified in such a way that
-; the disjunctions are replaced by the corresponding vars
-; Link is the last (uninstantiated) cdr of the list Disj.
-; do the work of pretrans for nots, -> etc...
-; put all those guys inside disjunctions
+;
+;                          given a clause, find in Disj the list of disj((A;B),N,X,C)
+
+;
+;                          where N is a unique ID, X is a var that takes the place of
+
+;
+;                           (A;B) in the code, NewC is the clause modified in such a way that
+
+;
+;                           the disjunctions are replaced by the corresponding vars
+
+;
+;                           Link is the last (uninstantiated) cdr of the list Disj.
+
+;
+;                           do the work of pretrans for nots, -> etc...
+
+;
+;                           put all those guys inside disjunctions
+
 
   (= 
     (extract-disj $C 
@@ -101,14 +133,30 @@
           (= $C1 $C2) 
           (,  ! fail)) true)) True)
 
-; given a list of disj((A;B),N,X,C), for each, do the following:
-; 1) find vars in (A;B)
-; 2) find the vars in C
-; 3) intersect the two sets of vars into one list
-; 4) make a predicate name using N as a part of it ('dummy_disjN')
-; 5) put a structure with that name and those vars as args
-; 6) binds X to this call
-; 7) add new clauses [(dummy:-A)),(dummy:-B))]
+;
+;                                given a list of disj((A;B),N,X,C), for each, do the following:
+
+;
+;                                 1) find vars in (A;B)
+
+;
+;                                 2) find the vars in C
+
+;
+;                                 3) intersect the two sets of vars into one list
+
+;
+;                                 4) make a predicate name using N as a part of it ('dummy_disjN')
+
+;
+;                                 5) put a structure with that name and those vars as args
+
+;
+;                                  6) binds X to this call
+
+;
+;                                  7) add new clauses [(dummy:-A)),(dummy:-B))]
+
 
   (= 
     (treat_disj  () $Link $Link) True)
@@ -190,7 +238,9 @@
       (Cons  $H $Res)) 
     (my-append $L1 $L2 $Res))
 
-; copy_term using a symbol table.
+;
+;                                         copy_term using a symbol table.
+
 
   (= 
     (copy $Term1 $Term2) 
@@ -248,7 +298,9 @@
         (p $V $_) $S)) 
     (make-sym $L $S))
 
-; *** Gather all variables used in a term: (in a set or a bag)
+;
+;                                          *** Gather all variables used in a term: (in a set or a bag)
+
 
   (= 
     (varset $Term $VarSet) 
@@ -302,8 +354,11 @@
     (inst-vars $Term) 
     ( (varset $Term $Vars) 
       (char-code A $A) 
-      (inst-vars-list $Vars $A))); original code was:
-; [A]=`A`,
+      (inst-vars-list $Vars $A)))
+;                                         ; original code was:
+
+;                                         ; [A]=`A`,
+
 
 
 

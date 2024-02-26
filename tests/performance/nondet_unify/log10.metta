@@ -1,11 +1,27 @@
-; generated: 25 October 1989
-; option(s):
 ;
-;   (deriv) log10
+;                     generated: 25 October 1989
+
 ;
-;   David H. D. Warren
+;                      option(s):
+
 ;
-;   symbolic derivative of log(log(log(log(log(log(log(log(log(log(x))))))))))
+; 
+
+;
+;                        (deriv) log10
+
+;
+; 
+
+;
+;                        David H. D. Warren
+
+;
+; 
+
+;
+;                         symbolic derivative of log(log(log(log(log(log(log(log(log(log(x))))))))))
+
 
 
   (= 

@@ -223,4 +223,4 @@
 !(miner &db (ms) (depth))
 
 ;; Surprising patterns
-;!(miner-surprising &db (ms) (depth) (highsurp))
+!(miner-surprising &db (ms) (depth) (highsurp))

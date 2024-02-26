@@ -1,5 +1,9 @@
-; Where does the zebra live?
-; Puzzle solution written by Claude Sammut.
+;
+;                         Where does the zebra live?
+
+;
+;                          Puzzle solution written by Claude Sammut.
+
 
   (= 
     (top) 
@@ -42,7 +46,9 @@
         (house $_ $_ zebra $_ $_) $Houses) 
       (member 
         (house $_ $_ $_ water $_) $Houses)))
-;	print_houses(Houses).
+;
+;                         	print_houses(Houses).
+
 
 
   (= 

@@ -1,11 +1,27 @@
-; generated: 25 October 1989
-; option(s):
 ;
-;   (deriv) ops8
+;                     generated: 25 October 1989
+
 ;
-;   David H. D. Warren
+;                     option(s):
+
 ;
-;   symbolic derivative of (x+1)*((^(x,2)+2)*(^(x,3)+3))
+; 
+
+;
+;                       (deriv) ops8
+
+;
+; 
+
+;
+;                        David H. D. Warren
+
+;
+; 
+
+;
+;                        symbolic derivative of (x+1)*((^(x,2)+2)*(^(x,3)+3))
+
 
 
   (= 

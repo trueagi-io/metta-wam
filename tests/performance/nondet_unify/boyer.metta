@@ -1,13 +1,33 @@
-; generated: 20 November 1989
-; option(s):
 ;
-;   boyer
+;                    generated: 20 November 1989
+
 ;
-;   Evan Tick (from Lisp version by R. P. Gabriel)
+;                    option(s):
+
 ;
-;   November 1985
+; 
+
 ;
-;   prove arithmetic theorem
+;                      boyer
+
+;
+; 
+
+;
+;                       Evan Tick (from Lisp version by R. P. Gabriel)
+
+;
+; 
+
+;
+;                       November 1985
+
+;
+; 
+
+;
+;                        prove arithmetic theorem
+
 
 
   (= 
@@ -52,8 +72,11 @@
 
   (= 
     (tautology $Wff) 
-    ( (rewrite $Wff $NewWff) (tautology $NewWff Nil Nil)));        write('rewriting...'),nl,
-;        write('proving...'),nl,
+    ( (rewrite $Wff $NewWff) (tautology $NewWff Nil Nil)))
+;                        ;        write('rewriting...'),nl,
+
+;                        ;        write('proving...'),nl,
+
 
 
   (= 
@@ -75,7 +98,9 @@
                   (tautology $Then 
                     (Cons  $If $Tlist) $Flist) 
                   (tautology $Else $Tlist 
-                    (Cons  $If $Flist))))) False))) (set-det))); both must hold
+                    (Cons  $If $Flist))))) False))) (set-det)))
+;                         ; both must hold
+
 
 
 
@@ -93,8 +118,11 @@
           (equal $Mid $Next) 
           (rewrite $Next $New)) 
         (= $New $Mid)) 
-      (set-det))); should be ->, but is compiler smart
-; enough to generate cut for -> ?
+      (set-det)))
+;                          ; should be ->, but is compiler smart
+
+;                          ; enough to generate cut for -> ?
+
 
 
 

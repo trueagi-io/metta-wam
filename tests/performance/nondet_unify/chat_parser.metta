@@ -1,9 +1,21 @@
-; generated: 19 November 1989
-; option(s):
 ;
-;  chat_parser
+;                    generated: 19 November 1989
+
 ;
-;  Fernando C. N. Pereira and David H. D. Warren
+;                    option(s):
+
+;
+; 
+
+;
+;                      chat_parser
+
+;
+; 
+
+;
+;                      Fernando C. N. Pereira and David H. D. Warren
+
 
 
   (= 
@@ -25,11 +37,16 @@
 
   (= 
     (chat-parser) 
-    (not (, (my-string $X) (not (determinate-say $X $Y))))); original code used a failure-driven loop; changed to use unrolled
-; forall/2 so that unexpected failures will make chat_parser/0 fail
+    (not (, (my-string $X) (not (determinate-say $X $Y)))))
+;                       ; original code used a failure-driven loop; changed to use unrolled
+
+;                       ; forall/2 so that unexpected failures will make chat_parser/0 fail
 
 
-;  query set
+
+;
+;                        query set
+
 
 
   (= 
@@ -82,7 +99,9 @@
       (what are the countries from which a river flows into the black_sea ?)) True)
 
 
-;  determinate_say
+;
+;                                determinate_say
+
 
 
   (= 
@@ -90,11 +109,21 @@
     ( (say $X $Y) (set-det)))
 
 
-;-----------------------------------------------------------------------------
 ;
-;  xgrun
+;                               -----------------------------------------------------------------------------
+
 ;
-;-----------------------------------------------------------------------------
+; 
+
+;
+;                                 xgrun
+
+;
+; 
+
+;
+;                                -----------------------------------------------------------------------------
+
 
 
   (= 
@@ -118,13 +147,25 @@
       (x  $_ nonterminal $NT $X) $X) True)
 
 
-;----------------------------------------------------------------------------
 ;
-;  clotab
-;
-;----------------------------------------------------------------------------
+;                                   ----------------------------------------------------------------------------
 
-; normal form masks
+;
+; 
+
+;
+;                                     clotab
+
+;
+; 
+
+;
+;                                    ----------------------------------------------------------------------------
+
+
+;
+;                                     normal form masks
+
 
 
   (= 
@@ -181,7 +222,9 @@
     (np_no_trace  
       (#  1 1 0 0)) True)
 
-; mask operations
+;
+;                                          mask operations
+
 
 
   (= 
@@ -219,7 +262,9 @@
   (= 
     (anot  $X 1 0) True)
 
-; noun phrase position features
+;
+;                                          noun phrase position features
+
 
 
   (= 
@@ -257,11 +302,21 @@
       (#  0 $_ $_)) True)
 
 
-;----------------------------------------------------------------------------
 ;
-;  newg
+;                                         ----------------------------------------------------------------------------
+
 ;
-;----------------------------------------------------------------------------
+; 
+
+;
+;                                           newg
+
+;
+; 
+
+;
+;                                         ----------------------------------------------------------------------------
+
 
 
   (= 
@@ -1376,11 +1431,21 @@
     ( (terminal $B $C $D $E $F) (~ $B)))
 
 
-;----------------------------------------------------------------------------
 ;
-;  newdic
+;                                         ----------------------------------------------------------------------------
+
 ;
-;----------------------------------------------------------------------------
+; 
+
+;
+;                                           newdic
+
+;
+; 
+
+;
+;                                         ----------------------------------------------------------------------------
+
 
 
   (= 
@@ -1454,7 +1519,9 @@
   (= 
     (~  of) True)
   (= 
-    (~  ~) True)		; use ~ instead of ' to help assembler
+    (~  ~) True)		;
+;                                          use ~ instead of ' to help assembler
+
   (= 
     (~  ,) True)
   (= 
@@ -1761,9 +1828,13 @@
   (= 
     (name  $_) True)
 
-; ===========================================================================
+;
+;                                          ===========================================================================
 
-; specialised dictionary
+
+;
+;                                          specialised dictionary
+
 
 
   (= 

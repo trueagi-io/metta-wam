@@ -1304,7 +1304,7 @@ is_word(1, sadness).
 is_word(4, herself).
 is_word(1, despair).
 is_word(1, selves).
-is_word(2, –).
+is_word(2, '–').
 is_word(5, six).
 is_word(1, decoy).
 is_word(3, potters).
@@ -1795,7 +1795,7 @@ is_word(3, uh).
 is_word(7, huh).
 is_word(8, director).
 is_word(2, alfonso).
-is_word(1, cuarón).
+is_word(1, cuarAn).
 is_word(7, plays).
 is_word(1, assassin).
 is_word(1, bram).
@@ -2350,15 +2350,15 @@ is_word(6, body).
 is_word(1, suggest).
 is_word(2, sprout).
 is_word(3, s).
-is_word(1, “).
-is_word(1, ”).
+is_word(1, '“').
+is_word(1, '”').
 is_word(2, robe).
 is_word(1, 'burlap-style').
 is_word(3, material).
 is_word(1, graduation).
 is_word(1, gown).
 is_word(1, isn).
-is_word(4, ’).
+is_word(4, '’').
 is_word(2, t).
 is_word(1, dyed).
 is_word(4, brown).

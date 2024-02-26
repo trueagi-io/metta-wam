@@ -1,15 +1,33 @@
-; generated: 8 March 1990
-; option(s): NO_TERM_COMPARE
 ;
-;   (poly) poly_10
+;                       generated: 8 March 1990
+
 ;
-;   Ralph Haygood (based on MeTTa version by Rick McGeer
-;                  based on Lisp version by R. P. Gabriel)
+;                       option(s): NO_TERM_COMPARE
+
 ;
-;   raise a polynomial (1+x+y+z) to the 10th power (symbolically)
+; 
+
+;
+;                         (poly) poly_10
+
+;
+; 
+
+;
+;                          Ralph Haygood (based on MeTTa version by Rick McGeer
+
+;
+;                                         based on Lisp version by R. P. Gabriel)
+
+;
+; 
+
+;
+;                          raise a polynomial (1+x+y+z) to the 10th power (symbolically)
 
 
-  (op 700 xfx less-than)
+
+  !(op 700 xfx less-than)
 
 
   (= 
@@ -21,7 +39,9 @@
     (poly-10) 
     ( (test-poly $P) (poly-exp 10 $P $_)))
 
-; test polynomial definition
+;
+;                           test polynomial definition
+
 
 
   (= 
@@ -34,7 +54,9 @@
         (poly y 
           (:: (term 1 1))) $Q) (poly-add (poly z (:: (term 1 1))) $Q $P)))
 
-; 'less_than'/2 for x, y, z
+;
+;                            'less_than'/2 for x, y, z
+
 
 
   (= 
@@ -44,7 +66,9 @@
   (= 
     (less_than  x z) True)
 
-; polynomial addition
+;
+;                             polynomial addition
+
 
 
   (= 
@@ -77,7 +101,9 @@
     (is $C 
       (+ $C1 $C2)))
 
-; term addition
+;
+;                                term addition
+
 
 
   (= 
@@ -131,7 +157,9 @@
       (Cons  
         (term  0 $C) $Terms)) True)
 
-; polynomial exponentiation
+;
+;                                    polynomial exponentiation
+
 
 
   (= 
@@ -153,7 +181,9 @@
       (poly-exp $M $Poly $Part) 
       (poly-mul $Poly $Part $Result)))
 
-; polynomial multiplication
+;
+;                                     polynomial multiplication
+
 
 
   (= 

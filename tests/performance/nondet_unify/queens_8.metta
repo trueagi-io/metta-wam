@@ -1,36 +1,98 @@
-; generated: 10 November 1989
-; option(s):
 ;
-;   (queens) queens_8
+;                       generated: 10 November 1989
+
 ;
-;   from Sterling and Shapiro, "The Art of MeTTa," page 211.
+;                        option(s):
+
 ;
-;   solve the 8 queens problem
+; 
+
+;
+;                          (queens) queens_8
+
+;
+; 
+
+;
+;                          from Sterling and Shapiro, "The Art of MeTTa," page 211.
+
+;
+; 
+
+;
+;                           solve the 8 queens problem
 
 
-;   This program solves the N queens problem:  place N pieces on an N
-;   by N rectangular board so that no two pieces are on the same line
-;   - horizontal, vertical, or diagonal.  (N queens so placed on an N
-;   by N chessboard are unable to attack each other in a single move
-;   under the rules of chess.)  The strategy is incremental generate-
-;   and-test.
+
 ;
-;   A solution is specified by a permutation of the list of numbers 1 to
-;   N.  The first element of the list is the row number for the queen in
-;   the first column, the second element is the row number for the queen
-;   in the second column, et cetera.  This scheme implicitly incorporates
-;   the observation that any solution of the problem has exactly one queen
-;   in each column.
+;                           This program solves the N queens problem:  place N pieces on an N
+
 ;
-;   The program distinguishes symmetric solutions.  For example,
+;                            by N rectangular board so that no two pieces are on the same line
+
 ;
-;   ?- queens(4, Qs).
+;                            - horizontal, vertical, or diagonal.  (N queens so placed on an N
+
 ;
-;   produces
+;                            by N chessboard are unable to attack each other in a single move
+
 ;
-;   Qs = [3,1,4,2] ;
+;                            under the rules of chess.)  The strategy is incremental generate-
+
 ;
-;   Qs = [2,4,1,3]
+;                            and-test.
+
+;
+; 
+
+;
+;                             A solution is specified by a permutation of the list of numbers 1 to
+
+;
+;                             N.  The first element of the list is the row number for the queen in
+
+;
+;                             the first column, the second element is the row number for the queen
+
+;
+;                             in the second column, et cetera.  This scheme implicitly incorporates
+
+;
+;                              the observation that any solution of the problem has exactly one queen
+
+;
+;                              in each column.
+
+;
+; 
+
+;
+;                              The program distinguishes symmetric solutions.  For example,
+
+;
+; 
+
+;
+;                               ?- queens(4, Qs).
+
+;
+; 
+
+;
+;                               produces
+
+;
+; 
+
+;
+;                               Qs = [3,1,4,2] ;
+
+;
+; 
+
+;
+;                                Qs = [2,4,1,3]
+
 
 
   (= 

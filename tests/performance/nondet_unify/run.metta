@@ -1,5 +1,5 @@
 
-  (style-check (- singleton))
+  !(style-check (- singleton))
 
 
   (= 
@@ -27,7 +27,7 @@
         (:: average $AvgT $AvgGC))))
 
 
-  (det-if-then-else 
+  !(det-if-then-else 
     (file-search-path bench $_) True 
     (, 
       (prolog-load-context directory $Dir) 
@@ -60,14 +60,16 @@
 
 
 
-  (if (statistics gctime $_))
+  !(if (statistics gctime $_))
 
   (= 
     (get-performance-stats $GC $T) 
-    ( (statistics gctime $GC) (statistics cputime $T))); SWI-MeTTa
+    ( (statistics gctime $GC) (statistics cputime $T)))
+;                             ; SWI-MeTTa
 
 
-  (else)
+
+  !else
 
   (= 
     (get-performance-stats $GC $T) 
@@ -80,7 +82,7 @@
       (is $T 
         (/ $TT 1000))))
 
-  (endif)
+  !endif
 
 
   (= 
@@ -160,10 +162,18 @@
 
   (= dummy True)
 
-;;	tune_counts
 ;
-;	Write the program/2 table below, tuning all counts such that the
-;	test runs for about 1 second.
+;                                     ;	tune_counts
+
+;
+; 
+
+;
+;                                     	Write the program/2 table below, tuning all counts such that the
+
+;
+;                                     	test runs for about 1 second.
+
 
 
   (= 
@@ -192,10 +202,18 @@
     (program $P $N $F) 
     ( (program $P $N0) (is $N (max 1 (round (* $N0 $F))))))
 
-;;	program(?Program, ?Times)
 ;
-;	Times are tuned on Jan 24, 2010, using SWI-MeTTa 5.9.7 on
-;	AMD 5400+ (gcc 4.4.1; AMD64 mode)
+;                                        ;	program(?Program, ?Times)
+
+;
+; 
+
+;
+;                                        	Times are tuned on Jan 24, 2010, using SWI-MeTTa 5.9.7 on
+
+;
+;                                        	AMD 5400+ (gcc 4.4.1; AMD64 mode)
+
 
   (= 
     (program  boyer 8) True)
@@ -238,9 +256,11 @@
 
 
 		 
-  (dynamic (/ rni 0))/*******************************
-		 *	    INTERLEAVED		*
-		 *******************************/
+  !(dynamic (/ rni 0))
+;                                         /*******************************
+;                                         		 *	    INTERLEAVED		*
+;                                         		 *******************************/
+
 
 
 
@@ -305,7 +325,9 @@
     (seq-clause 
       (Cons  $H $T) 
       (, 
-        (not (not (with_self  $H (top)))) $G)) 
+        (with_self  
+          (not (not $H)) 
+          (top)) $G)) 
     (seq-clause $T $G))
 
 

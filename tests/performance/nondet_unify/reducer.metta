@@ -1,20 +1,40 @@
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+;                       ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; A Graph Reducer for T-Combinators:
-; Reduces a T-combinator expression to a final answer.  Recognizes
-; the combinators I,K,S,B,C,S',B',C', cond, apply, arithmetic, tests,
-; basic list operations, and function definitions in the data base stored
-; as facts of the form t_def(_func, _args, _expr).
-; Written by Peter Van Roy
 
-; Uses write/1, compare/3, functor/3, arg/3.
+;
+;                        A Graph Reducer for T-Combinators:
+
+;
+;                        Reduces a T-combinator expression to a final answer.  Recognizes
+
+;
+;                         the combinators I,K,S,B,C,S',B',C', cond, apply, arithmetic, tests,
+
+;
+;                         basic list operations, and function definitions in the data base stored
+
+;
+;                         as facts of the form t_def(_func, _args, _expr).
+
+;
+;                         Written by Peter Van Roy
+
+
+;
+;                          Uses write/1, compare/3, functor/3, arg/3.
+
 
   (= 
     (top) 
     ( (try 
-        (fac 3) $ans1) (try (quick (:: 3 1 2)) $ans2)));	write(_ans1), nl,
+        (fac 3) $ans1) (try (quick (:: 3 1 2)) $ans2)))
+;                          ;	write(_ans1), nl,
 
-;	write(_ans2), nl.
+
+;
+;                         	write(_ans2), nl.
+
 
 
   (= 
@@ -24,7 +44,9 @@
       (t-reduce $curry $ans) 
       (make-list $ans $anslist)))
 
-;;	SWI-MeTTa V7 compatibility hacks.
+;
+;                          ;	SWI-MeTTa V7 compatibility hacks.
+
 
 
   (= 
@@ -38,15 +60,25 @@
   (= 
     (list-functor-name $Name) 
     ( (functor 
-        (Cons  $_ $_) $Name0 $_) (= $Name $Name0))); workaround a functor/3 error-checking issue with GNU MeTTa
+        (Cons  $_ $_) $Name0 $_) (= $Name $Name0)))
+;                             ; workaround a functor/3 error-checking issue with GNU MeTTa
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Examples of applicative functions which can be compiled & executed.
-; This test version compiles them just before each execution.
+;
+;                            ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Factorial function:
+
+;
+;                              Examples of applicative functions which can be compiled & executed.
+
+;
+;                              This test version compiles them just before each execution.
+
+
+;
+;                              Factorial function:
+
 
   (= 
     (t_def  fac 
@@ -57,7 +89,9 @@
           (fac  
             (-  $N 1))))) True)
 
-; Quicksort:
+;
+;                               Quicksort:
+
   (= 
     (t_def  quick 
       ($l) 
@@ -121,10 +155,16 @@
           (append  
             (tl  $a) $b)))) True)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+;                                 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Full reduction:
-; A dot '.' is printed for each reduction step.
+
+;
+;                                   Full reduction:
+
+;
+;                                   A dot '.' is printed for each reduction step.
+
 
 
   (= 
@@ -132,7 +172,9 @@
     ( (atomic $expr) 
       (set-det) 
       (= $ans $expr)))
-; The reduction of '$cons' must be here to avoid an infinite loop
+;
+;                                    The reduction of '$cons' must be here to avoid an infinite loop
+
   (= 
     (t-reduce 
       (Cons  $y 
@@ -150,7 +192,9 @@
       (t-redex $form $red) 
       (set-det) 
       (t-reduce $next $ans) 
-      (set-det)));	write('.'),
+      (set-det)))
+;                                    ;	write('.'),
+
 
 
 
@@ -162,9 +206,13 @@
       (Cons  $a $l3)) 
     (t-append $l1 $link $l2 $l3))
 
-; One step of the reduction:
+;
+;                                      One step of the reduction:
 
-; Combinators:
+
+;
+;                                      Combinators:
+
 
   (= 
     (t-redex 
@@ -226,7 +274,9 @@
     (t_redex  
       (Cons  $x i) $x) True)
 
-; Conditional:
+;
+;                                          Conditional:
+
   (= 
     (t-redex 
       (Cons  $elsepart 
@@ -235,20 +285,26 @@
     ( (t-reduce $cond $bool) 
       (= $bool True) 
       (set-det)))
-	; Does NOT work if _bool is substituted in the call!
+	;
+;                                          Does NOT work if _bool is substituted in the call!
+
   (= 
     (t_redex  
       (Cons  $elsepart 
         (Cons  $ifpart 
           (Cons  $cond cond))) $elsepart) True)
 
-; Apply:
+;
+;                                          Apply:
+
   (= 
     (t-redex 
       (Cons  $f apply) $fr) 
     (t-reduce $f $fr))
 
-; List operations:
+;
+;                                          List operations:
+
   (= 
     (t-redex 
       (Cons  $arg hd) $x) 
@@ -258,7 +314,9 @@
       (Cons  $arg tl) $y) 
     ( (list-functor-name $LF) (t-reduce $arg (Cons  $y (Cons  $x $LF)))))
 
-; Arithmetic:
+;
+;                                          Arithmetic:
+
   (= 
     (t-redex 
       (Cons  $y 
@@ -272,7 +330,9 @@
       (number $yres) 
       (eval $op $res $xres $yres)))
 
-; Tests:
+;
+;                                          Tests:
+
   (= 
     (t-redex 
       (Cons  $y 
@@ -290,7 +350,9 @@
         (= $res False)) 
       (set-det)))
 
-; Equality:
+;
+;                                          Equality:
+
   (= 
     (t-redex 
       (Cons  $y 
@@ -303,7 +365,9 @@
         (= $res False)) 
       (set-det)))
 
-; Arithmetic functions:
+;
+;                                          Arithmetic functions:
+
   (= 
     (t-redex 
       (Cons  $x $op) $res) 
@@ -314,9 +378,15 @@
       (number $xres) 
       (eval1 $op $t $xres)))
 
-; Definitions:
-; Assumes a fact t_def(_func,_def) in the database for every
-; defined function.
+;
+;                                          Definitions:
+
+;
+;                                          Assumes a fact t_def(_func,_def) in the database for every
+
+;
+;                                          defined function.
+
   (= 
     (t-redex $in $out) 
     ( (my-append $par $func $in) 
@@ -325,7 +395,9 @@
       (t $args $expr $def) 
       (my-append $par $def $out)))
 
-; Basic arithmetic and relational operators:
+;
+;                                          Basic arithmetic and relational operators:
+
 
 
   (= 
@@ -375,13 +447,23 @@
     (relop =:= $A $B) 
     (=:= $A $B))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+;                                         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Scheme T:
-; A Translation Scheme for T-Combinators
 
-; Translate an expression to combinator form
-; by abstracting out all variables in _argvars:
+;
+;                                          Scheme T:
+
+;
+;                                          A Translation Scheme for T-Combinators
+
+
+;
+;                                          Translate an expression to combinator form
+
+;
+;                                          by abstracting out all variables in _argvars:
+
 
   (= 
     (t $argvars $expr $trans) 
@@ -398,17 +480,37 @@
       (Cons  $x $argvars) $in $trans) 
     ( (t-argvars $argvars $in $mid) 
       (t-vars $mid $vars) 
-      (t-trans $x $mid $vars $trans))); calculate variables in each subexpression
- ; main translation routine
+      (t-trans $x $mid $vars $trans)))
+;                                         ; calculate variables in each subexpression
 
-; Curry the original expression:
-; This converts an applicative expression of any number
-; of arguments and any depth of nesting into an expression
-; where all functions are curried, i.e. all function
-; applications are to one argument and have the form
-; [_arg|_func] where _func & _arg are also of that form.
-; Input is a nested function application in list form.
-; Currying makes t_trans faster.
+ ;
+;                                          main translation routine
+
+
+;
+;                                          Curry the original expression:
+
+;
+;                                          This converts an applicative expression of any number
+
+;
+;                                          of arguments and any depth of nesting into an expression
+
+;
+;                                          where all functions are curried, i.e. all function
+
+;
+;                                          applications are to one argument and have the form
+
+;
+;                                          [_arg|_func] where _func & _arg are also of that form.
+
+;
+;                                          Input is a nested function application in list form.
+
+;
+;                                          Currying makes t_trans faster.
+
 
   (= 
     (curry $a $a) 
@@ -420,7 +522,9 @@
       (Cons  $func $args) $cargs) 
     (currylist $args $cargs $func))
 
-; Transform [_a1, ..., _aN] to [_cN, ..., _c1|_link]-_link
+;
+;                                          Transform [_a1, ..., _aN] to [_cN, ..., _c1|_link]-_link
+
 
   (= 
     (currylist Nil $link $link) 
@@ -430,13 +534,27 @@
       (Cons  $a $args) $cargs $link) 
     ( (curry $a $c) (currylist $args $cargs (Cons  $c $link))))
 
-; Calculate variables in each subexpression:
-; To any expression a list of the form
-; [_vexpr, _astr, _fstr] is matched.
-; If the expression is a variable or an atom
-; then this list only has the first element.
-; _vexpr = List of all variables in the expression.
-; _astr, _fstr = Similar structures for argument & function.
+;
+;                                          Calculate variables in each subexpression:
+
+;
+;                                          To any expression a list of the form
+
+;
+;                                          [_vexpr, _astr, _fstr] is matched.
+
+;
+;                                          If the expression is a variable or an atom
+
+;
+;                                          then this list only has the first element.
+
+;
+;                                          _vexpr = List of all variables in the expression.
+
+;
+;                                          _astr, _fstr = Similar structures for argument & function.
+
 
   (= 
     (t-vars $v 
@@ -463,10 +581,18 @@
         (Cons  $g2 $af2)) 
       (unionv $g1 $g2 $g)))
 
-; The main translation routine:
-; trans(_var, _curriedexpr, _varexpr, _result)
-; The translation scheme T in the article is followed literally.
-; A good example of MeTTa as a specification language.
+;
+;                                          The main translation routine:
+
+;
+;                                          trans(_var, _curriedexpr, _varexpr, _result)
+
+;
+;                                          The translation scheme T in the article is followed literally.
+
+;
+;                                          A good example of MeTTa as a specification language.
+
 
   (= 
     (t-trans $x $a $_ 
@@ -515,7 +641,9 @@
         (Cons  $vf $_)) 
       (t-rule2 $x $e $f $vf $sf $g $vg $sg $res)))
 
-; First complex rule of translation scheme T:
+;
+;                                          First complex rule of translation scheme T:
+
 
   (= 
     (t-rule1 $x $e $ve $se $f $vf $sf $e) 
@@ -537,16 +665,22 @@
         (Cons  $rese c))) 
     ( (notinv $x $vf) 
       (set-det) 
-      (t-trans $x $e $se $rese)))/* inv(_x, _ve), */
+      (t-trans $x $e $se $rese)))
+;                                         /* inv(_x, _ve), */
+
 
   (= 
     (t-rule1 $x $e $ve $se $f $vf $sf 
       (Cons  $resf 
         (Cons  $rese s))) 
-    ( (t-trans $x $e $se $rese) (t-trans $x $f $sf $resf)))/* inv(_x, _ve), inv(_x, _vf), */
+    ( (t-trans $x $e $se $rese) (t-trans $x $f $sf $resf)))
+;                                         /* inv(_x, _ve), inv(_x, _vf), */
 
 
-; Second complex rule of translation scheme T:
+
+;
+;                                          Second complex rule of translation scheme T:
+
 
   (= 
     (t-rule2 $x $e $f $vf $sf $g $vg $sg 
@@ -561,7 +695,9 @@
         (Cons  $e s))) 
     ( (== $x $f) 
       (set-det) 
-      (t-trans $x $g $sg $resg)))/* inv(_x, _vg), */
+      (t-trans $x $g $sg $resg)))
+;                                         /* inv(_x, _vg), */
+
 
   (= 
     (t-rule2 $x $e $f $vf $sf $g $vg $sg 
@@ -571,7 +707,9 @@
     ( (inv $x $vf) 
       (notinv $x $vg) 
       (set-det) 
-      (t-trans $x $f $sf $resf)))/* _x\==_f, */
+      (t-trans $x $f $sf $resf)))
+;                                         /* _x\==_f, */
+
 
   (= 
     (t-rule2 $x $e $f $vf $sf $g $vg $sg 
@@ -581,27 +719,40 @@
     ( (inv $x $vf) 
       (set-det) 
       (t-trans $x $f $sf $resf) 
-      (t-trans $x $g $sg $resg)))/* _x\==_f, */
-/* inv(_x, _vg), */
+      (t-trans $x $g $sg $resg)))
+;                                         /* _x\==_f, */
+
+;                                         /* inv(_x, _vg), */
+
 
   (= 
     (t-rule2 $x $e $f $vf $sf $g $vg $sg 
       (Cons  $f $e)) 
-    ( (== $x $g) (set-det)))/* notinv(_x, _vf), */
+    ( (== $x $g) (set-det)))
+;                                         /* notinv(_x, _vf), */
+
 
   (= 
     (t-rule2 $x $e $f $vf $sf $g $vg $sg 
       (Cons  $resg 
         (Cons  $f 
           (Cons  $e bp)))) 
-    (t-trans $x $g $sg $resg))/* notinv(_x, _vf), inv(_x, _vg), _x\==_g, */
+    (t-trans $x $g $sg $resg))
+;                                         /* notinv(_x, _vf), inv(_x, _vg), _x\==_g, */
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; List utilities:
+;
+;                                         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Convert curried list into a regular list:
+
+;
+;                                          List utilities:
+
+
+;
+;                                          Convert curried list into a regular list:
+
 
   (= 
     (make-list $a $a) 
@@ -657,14 +808,26 @@
       (Cons  $X $L3)) 
     (my-append $L1 $L2 $L3))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+;                                         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Set utilities:
-; Implementation inspired by R. O'Keefe, Practical MeTTa.
-; Sets are represented as sorted lists without duplicates.
-; Predicates with 'v' suffix work with sets containing uninstantiated vars.
 
-; *** Intersection
+;
+;                                          Set utilities:
+
+;
+;                                          Implementation inspired by R. O'Keefe, Practical MeTTa.
+
+;
+;                                          Sets are represented as sorted lists without duplicates.
+
+;
+;                                          Predicates with 'v' suffix work with sets containing uninstantiated vars.
+
+
+;
+;                                          *** Intersection
+
 
   (= 
     (intersectv  () $_ ()) True)
@@ -715,7 +878,9 @@
           (intersectv  $S)) 
         (intersectv_list  $Sets))) True)
 
-; *** Difference
+;
+;                                          *** Difference
+
 
   (= 
     (diffv  () $_ ()) True)
@@ -746,7 +911,9 @@
     (diffv-3 > $A $S1 $_ $S2 $S) 
     (diffv-2 $S2 $A $S1 $S))
 
-; *** Union
+;
+;                                          *** Union
+
 
   (= 
     (unionv  () $S2 $S2) True)
@@ -778,7 +945,9 @@
       (Cons  $B $S)) 
     (unionv-2 $S2 $A $S1 $S))
 
-; *** Subset
+;
+;                                          *** Subset
+
 
   (= 
     (subsetv  () $_) True)
@@ -797,7 +966,9 @@
     (subsetv 
       (Cons  $A $S1) $S2))
 
-; For unordered lists S1:
+;
+;                                          For unordered lists S1:
+
 
   (= 
     (small_subsetv  () $_) True)
@@ -806,7 +977,9 @@
       (Cons  $A $S1) $S2) 
     ( (inv $A $S2) (small-subsetv $S1 $S2)))
 
-; *** Membership
+;
+;                                          *** Membership
+
 
   (= 
     (inv $A 
@@ -820,7 +993,9 @@
     (inv-2 > $A $S) 
     (inv $A $S))
 
-; *** Non-membership
+;
+;                                          *** Non-membership
+
 
   (= 
     (notinv $A $S) 
@@ -841,5 +1016,7 @@
     (notinv-3 > $A $S) 
     (notinv-2 $S $A))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+;                                         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 

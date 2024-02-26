@@ -1,12 +1,30 @@
-; generated: 17 November 1989
-; option(s): 
 ;
-;   serialise
+;                        generated: 17 November 1989
+
 ;
-;   David H. D. Warren
+;                         option(s):
+
 ;
-;   itemize (pick a "serial number" for each 
-;   unique integer in) a list of 25 integers
+; 
+
+;
+;                           serialise
+
+;
+; 
+
+;
+;                           David H. D. Warren
+
+;
+; 
+
+;
+;                            itemize (pick a "serial number" for each
+
+;
+;                            unique integer in) a list of 25 integers
+
 
 
   (= 

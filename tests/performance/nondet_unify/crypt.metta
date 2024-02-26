@@ -1,17 +1,43 @@
 
-; Cryptomultiplication:
-; Find the unique answer to:
-;	OEE
-;	 EE
-; 	---
-;      EOEE
-;      EOE
-;      ----
-;      OOEE
 ;
-; where E=even, O=odd.
-; This program generalizes easily to any such problem.
-; Written by Peter Van Roy
+;                     Cryptomultiplication:
+
+;
+;                     Find the unique answer to:
+
+;
+;                    	OEE
+
+;
+;                    	 EE
+
+;
+;                     	---
+
+;
+;                           EOEE
+
+;
+;                           EOE
+
+;
+;                           ----
+
+;
+;                           OOEE
+
+;
+; 
+
+;
+;                       where E=even, O=odd.
+
+;
+;                       This program generalizes easily to any such problem.
+
+;
+;                       Written by Peter Van Roy
+
 
 
   (= 
@@ -53,13 +79,25 @@
       (even $O) 
       (even $P) 
       (zero $Z)))
-	; write(' '), write(A), write(B), write(C), nl,
-	; write('  '), write(D), write(E), nl,
-	; write(F), write(G), write(H), write(I), nl,
-	; write(J), write(K), write(L), nl,
-	; write(M), write(N), write(O), write(P), nl.
+	;
+;                        write(' '), write(A), write(B), write(C), nl,
 
-; Addition of two numbers
+	;
+;                        write('  '), write(D), write(E), nl,
+
+	;
+;                         write(F), write(G), write(H), write(I), nl,
+
+	;
+;                         write(J), write(K), write(L), nl,
+
+	;
+;                          write(M), write(N), write(O), write(P), nl.
+
+
+;
+;                          Addition of two numbers
+
 
   (= 
     (sum $AL $BL $CL) 
@@ -113,7 +151,9 @@
     (sum  () () $Carry 
       ($Carry)) True)
 
-; Multiplication
+;
+;                             Multiplication
+
 
   (= 
     (mult $AL $D $BL) 

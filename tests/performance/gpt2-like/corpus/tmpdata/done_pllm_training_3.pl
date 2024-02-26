@@ -3425,8 +3425,8 @@ training(17100100001880, string, "Yeah I know what you mean.").
 training(17100100001880, grams, [17100100001880, yeah, i, know, what, you, mean, 17100100001881]).
 training(17200010001882, string, "I saw the final Harry Potter flick.").
 training(17200010001882, grams, [17200010001882, i, saw, the, final, harry, potter, flick, 17200010001883]).
-training(17200020001883, string, "Harry Potter and the Deathly Hallows – Part, 2!").
-training(17200020001883, grams, [17200020001883, harry, potter, and, the, deathly, hallows, –, part, '2', 17200020001884]).
+training(17200020001883, string, "Harry Potter and the Deathly Hallows '–' Part, 2!").
+training(17200020001883, grams, [17200020001883, harry, potter, and, the, deathly, hallows, '–', part, '2', 17200020001884]).
 training(17200030001884, string, "Yes, with David Yates as director, once again.").
 training(17200030001884, grams, [17200030001884, yes, with, david, yates, as, director, once, again, 17200030001885]).
 training(17200040001885, string, "Doesn't Harry \"die\" in this one?").
@@ -4903,8 +4903,8 @@ training(24500090002693, string, "But she still kept the sort of sad but happy t
 training(24500090002693, grams, [24500090002693, but, she, still, kept, the, sort, of, sad, but, happy, tone, to, herself, 24500090002694]).
 training(24500100002694, string, "I think it was meant to show that even young people can grown from despair, it changes them, but they can still be happy in their selves.").
 training(24500100002694, grams, [24500100002694, i, think, it, was, meant, to, show, that, even, young, people, can, grown, from, despair, it, changes, them, but, they, can, still, be, happy, in, their, selves, 24500100002695]).
-training(24600010002696, string, "I just saw Harry Potter and the Deathly Hallows – Part 1.").
-training(24600010002696, grams, [24600010002696, i, just, saw, harry, potter, and, the, deathly, hallows, –, part, '1', 24600010002697]).
+training(24600010002696, string, "I just saw Harry Potter and the Deathly Hallows '–' Part 1.").
+training(24600010002696, grams, [24600010002696, i, just, saw, harry, potter, and, the, deathly, hallows, '–', part, '1', 24600010002697]).
 training(24600020002697, string, "I didn't like them making two movies out of one book.").
 training(24600020002697, grams, [24600020002697, i, 'didn\'t', like, them, making, two, movies, out, of, one, book, 24600020002698]).
 training(24600030002698, string, "Yes, it's all about the money.").
@@ -4963,8 +4963,8 @@ training(24800090002726, string, "Maybe more like the James Earl Jones in Conan 
 training(24800090002726, grams, [24800090002726, maybe, more, like, the, james, earl, jones, in, conan, the, barbarian, ?, 24800090002727, 24800090002726, ?, 24800090002727]).
 training(24800100002727, string, "Oh yeah, that would have been cool.").
 training(24800100002727, grams, [24800100002727, oh, yeah, that, would, have, been, cool, 24800100002728]).
-training(24900010002729, string, "What Bertie Bott’s Every Flavour Beans?").
-training(24900010002729, grams, [24900010002729, what, bertie, bott, ’, s, every, flavour, beans, ?, 24900010002730]).
+training(24900010002729, string, "What Bertie Bott'’'s Every Flavour Beans?").
+training(24900010002729, grams, [24900010002729, what, bertie, bott, '’', s, every, flavour, beans, ?, 24900010002730]).
 training(24900020002730, string, "Ewww, I can't believe I know this...but booger flavor.").
 training(24900020002730, grams, [24900020002730, ewww, i, 'can\'t', believe, i, know, this, '.,.,.', but, booger, flavor, 24900020002731]).
 training(24900030002731, string, "My favorite was when they tranfigured the opjects in Water goblets").
@@ -6211,8 +6211,8 @@ training(31100030003413, string, "Yes, that's it.").
 training(31100030003413, grams, [31100030003413, yes, 'that\'s', it, 31100030003414]).
 training(31100040003414, string, "A new director from the first two movies?").
 training(31100040003414, grams, [31100040003414, new, director, from, the, first, two, movies, ?, 31100040003415]).
-training(31100050003415, string, "Right,  Alfonso Cuarón.").
-training(31100050003415, grams, [31100050003415, right, alfonso, cuarón, 31100050003416]).
+training(31100050003415, string, "Right,  Alfonso CuarAn.").
+training(31100050003415, grams, [31100050003415, right, alfonso, cuarAn, 31100050003416]).
 training(31100060003416, string, "Who took over as Dumbledore?").
 training(31100060003416, grams, [31100060003416, who, took, over, as, dumbledore, ?, 31100060003417]).
 training(31100070003417, string, "Michael Gambon").
@@ -7303,8 +7303,8 @@ training(36500090004013, string, "Yes it will").
 training(36500090004013, grams, [36500090004013, yes, it, will, 36500090004014]).
 training(36500100004014, string, "Do not forget all the snacks!").
 training(36500100004014, grams, [36500100004014, do, not, forget, all, the, snacks, 36500100004015]).
-training(36600010004016, string, "Hi, I’m going to a costume party with the theme of Harry Potter movies, so I need to come up with something.").
-training(36600010004016, grams, [36600010004016, hi, i, ’, m, going, to, a, costume, party, with, the, theme, of, harry, potter, movies, so, i, need, to, come, up, with, something, 36600010004017]).
+training(36600010004016, string, "Hi, I'’'m going to a costume party with the theme of Harry Potter movies, so I need to come up with something.").
+training(36600010004016, grams, [36600010004016, hi, i, '’', m, going, to, a, costume, party, with, the, theme, of, harry, potter, movies, so, i, need, to, come, up, with, something, 36600010004017]).
 training(36600020004017, string, "Did you want to go as person or as an object?").
 training(36600020004017, grams, [36600020004017, did, you, want, to, go, as, person, or, as, an, object, ?, 36600020004018]).
 training(36600030004018, string, "I wanted to maybe go as one of the female staff as I am a mature lady.").
@@ -7313,8 +7313,8 @@ training(36600040004019, string, "Could you pull off a Professor Sprout outfit?"
 training(36600040004019, grams, [36600040004019, could, you, pull, off, a, professor, sprout, outfit, ?, 36600040004020]).
 training(36600050004020, string, "I am a mature lady who is not thin so we have the same body type.  What do you suggest?").
 training(36600050004020, grams, [36600050004020, i, am, a, mature, lady, who, is, not, thin, so, we, have, the, same, body, type, 36600050004020, what, do, you, suggest, ?, 36600050004021]).
-training(36600060004021, string, "Professor Sprout’s costume in “Harry Potter and the Chamber of Secrets” has a brown robe made up of burlap-style material, but almost any graduation gown that isn’t black could be dyed brown.").
-training(36600060004021, grams, [36600060004021, professor, sprout, ’, s, costume, in, “, harry, potter, and, the, chamber, of, secrets, ”, has, a, brown, robe, made, up, of, 'burlap-style', material, but, almost, any, graduation, gown, that, isn, ’, t, black, could, be, dyed, brown, 36600060004022]).
+training(36600060004021, string, "Professor Sprout'’'s costume in '“'Harry Potter and the Chamber of Secrets'”' has a brown robe made up of burlap-style material, but almost any graduation gown that isn'’'t black could be dyed brown.").
+training(36600060004021, grams, [36600060004021, professor, sprout, '’', s, costume, in, '“', harry, potter, and, the, chamber, of, secrets, '”', has, a, brown, robe, made, up, of, 'burlap-style', material, but, almost, any, graduation, gown, that, isn, '’', t, black, could, be, dyed, brown, 36600060004022]).
 training(36600070004022, string, "What else would I need for that costume?").
 training(36600070004022, grams, [36600070004022, what, else, would, i, need, for, that, costume, ?, 36600070004023]).
 training(36600080004023, string, "She has lots of greenery poking out of her collar, wand, and hat top and such. You could use probably any combo of dried or fresh or silk plants and flowers.").
