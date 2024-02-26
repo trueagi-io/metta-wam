@@ -1,0 +1,26 @@
+;                                           (convert_to_metta_file  done_pllm_trigram_3 $_821036 tests/performance/gpt2-like/corpus/tmpdata/done_pllm_trigram_3.pl tests/performance/gpt2-like/corpus/tmpdata/done_pllm_trigram_3.metta)
+  !(encoding iso-latin-1)
+  !(dynamic (with_self  (pllm *) (/ trigram 3)))
+  !(multifile (with_self  (pllm *) (/ trigram 3)))
+  !(module-transparent (with_self  (pllm *) (/ trigram 3)))
+
+
+  (= (:  pllm (trigram  are you a-fan))  True)
+  (= (:  pllm (trigram  you a-fan of))  True)
+  (= (:  pllm (trigram  a-fan of the-star-wars-series))  True)
+  (= (:  pllm (trigram  yeah love them))  True)
+  (= (:  pllm (trigram  who is your-least-favorite-character))  True)
+  (= (:  pllm (trigram  without a-doubt jar-jar-binks))  True)
+  (= (:  pllm (trigram  absolutely hate him))  True)
+  (= (:  pllm (trigram  who ''s' you))  True)
+  (= (:  pllm (trigram  ''s' you favorite-star-wars))  True)
+  (= (:  pllm (trigram  you favorite-star-wars character))  True)
+  (= (:  pllm (trigram  do 'n't' you))  True)
+  (= (:  pllm (trigram  'n't' you wish))  True)
+  (= (:  pllm (trigram  you wish he))  True)
+  (= (:  pllm (trigram  wish he was))  True)
+  (= (:  pllm (trigram  he was in))  True)
+  (= (:  pllm (trigram  was in the-new-movies))  True)
+  (= (:  pllm (trigram  dead he is))  True)
+
+
