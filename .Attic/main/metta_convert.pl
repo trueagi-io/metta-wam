@@ -293,8 +293,10 @@ p2m(OC,(Head:-Body),O):-
    p2m(Head,H),conjuncts_to_list(Body,List),into_sequential([':-'|OC],List,SP),!,
    O =  (=(H,SP)).
 
-p2m(OC,(:-Body),O):- 
-   conjuncts_to_list(Body,List),into_sequential([':-'|OC],List,SP),!, O= exec(SP).
+	p2m(OC,(:-Body),O):- !,
+	   conjuncts_to_list(Body,List),into_sequential([':-'|OC],List,SP),!, O= exec(SP).
+	p2m(OC,( ?- Body),O):- !,
+	   conjuncts_to_list(Body,List),into_sequential([':-'|OC],List,SP),!, O= exec('?-'(SP)).
 
 %p2m(_OC,(Head:-Body),O):- conjuncts_to_list(Body,List),into_sequential(OC,List,SP),!,O=(=(Head,SP)).
 
@@ -308,7 +310,7 @@ p2m(_OC,metta_defn(Eq,Self,H,B),'add-atom'(Self,[Eq,H,B])).
 p2m(_OC,metta_type,'get-type').
 p2m(_OC,metta_atom,'get-atoms').
 p2m(_OC,get_metta_atom,'get-atoms').
-p2m(_OC,clause(H,B),'get-atoms'('&self',[=,H,B])).
+p2m(_OC,clause(H,B), ==([=,H,B],'get-atoms'('&self'))).
 p2m(_OC,assert(X),'add-atom'('&self',X)).
 p2m(_OC,assertz(X),'add-atom'('&self',X)).
 p2m(_OC,asserta(X),'add-atom'('&self',X)).
@@ -561,7 +563,7 @@ convert_to_metta_now_out(OutputIn,Filename):-
     %format('~N~n~w~n', [convert_to_metta(Filename,NewFilename)]), % Prints the action being performed.
 	convert_to_metta_file(Module,OutputIn,Filename,NewFilename).
 
-write_src_cmt(G):- ignore(with_output_to(string(S),write_src(G)),in_cmt(S)).
+write_src_cmt(G):- ignore((with_output_to(string(S),write_src(G)),in_cmt(write(S)))).
 
 convert_to_metta_file(Module,OutputIn,Filename,NewFilename):-
 
@@ -576,7 +578,8 @@ convert_to_metta_file(Module,OutputIn,Filename,NewFilename):-
         setup_call_cleanup(
             (if_t(var(Output),open(NewFilename, write, Output, [encoding(utf8)]))),
             with_output_to(Output,			 
-			     translate_to_metta(Module,Input)),
+		 (write_src_cmt(convert_to_metta_file(Module,OutputIn,Filename,NewFilename)),
+			     translate_to_metta(Module,Input))),
             % Cleanup step for the output file: close the output stream.
             close(Output)
         ),
@@ -656,12 +659,15 @@ display_term_info(Stream, Term, Bindings, Pos, RawLayout, Comments):-
    ignore(process_term(Stream,Term)),
    print_metta_comments(Comments),!.
 
-print_metta_comments(Comments):- in_cmt(print_metta_comment(Commets)).
+print_metta_comments(Comments):- print_metta_comment(Comments).
 print_metta_comment([]):-!.
 print_metta_comment(_TP-Cmt):-!, print_metta_comment(Cmt).
-print_metta_comment([Cmt|Cs]):- !, print_metta_comment(Cmt),nl,!, print_metta_comment(Cs).
-print_metta_comment(Cmt):- translate_comment(Cmt,String),writeln(String).
+print_metta_comment([Cmt|Cs]):- !, print_metta_comment(Cmt),!, print_metta_comment(Cs).
+print_metta_comment(Cmt):- translate_comment(Cmt,String), print_cmt_lines(String).
 
+print_cmt_lines(String):- atomic_list_concat(List,'\n',String),!,
+	(List=[Str] -> format('~N; ~w',[Str]) ; 
+      print_metta_comments(List)).
 
 echo_as_commnents_until_eof(Stream):-
 	repeat,

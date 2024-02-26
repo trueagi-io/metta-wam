@@ -140,7 +140,7 @@ unlooped_fbug(W,Mesg):-
     once(Mesg),nb_setval(W,false)),nb_setval(W,false).
 
 
-write_src(V):- quietly(pp_sex(V)),!.
+write_src(V):- \+ \+ quietly(pp_sex(V)),!.
 
 pp_sex(V):- pp_sexi(V),!.
 % Various 'write_src' and 'pp_sex' rules are handling the writing of the source,
@@ -201,9 +201,8 @@ pp_sexi_l([H,S]):-H=='[...]', write('['),print_items_list(S),write(' ]').
 pp_sexi_l([H,S]):-H=='{...}', write('{'),print_items_list(S),write(' }').
 %pp_sex_l(X):- \+ compound(X),!,write_src(X).  
 %pp_sex_l('$VAR'(S))):- 
-pp_sexi_l([=,H,B]):-
-  write('(= '), with_indents(false,write_src(H)), nl, write('  '),
-        with_indents(true,write_src(B)),write(')').
+pp_sexi_l([=,H,B]):- pp_sexi_hb(H,B),!.
+
 pp_sexi_l([H|T]) :- \+ no_src_indents, symbol(H),member(H,['If','cond','let','let*']),!,
   with_indents(true,w_proper_indent(2,w_in_p(pp_sex([H|T])))).
 
@@ -220,6 +219,15 @@ pp_sexi_l([H|T]) :- is_list(T),symbol(H),upcase_atom(H,U),downcase_atom(H,U),!,
 %  with_indents(false,(write('('), pp_sex(H), print_list_as_sexpression([B,C]), write(')'))).
 */    
 
+pp_sexi_hb(H,B):-
+  write('(= '), with_indents(false,pp_sex(H)), write('  '),
+        ((is_list(B),maplist(is_list,B))
+	  ->with_indents(true,maplist(write_src_inl,B))
+	  ;with_indents(true,pp_sex(B))),
+	write(')').
+
+write_src_inl(B):- nl, write('    '),pp_sex(B).
+
 pp_sex_c(V):- pp_sexi_c(V),!.
 pp_sexi_c(V) :- is_final_write(V),!.
 pp_sexi_c((USER:Body)) :- USER==user,!, pp_sex(Body).
@@ -229,7 +237,7 @@ pp_sexi_c(!([H|T])) :- is_list(T),!,write('!'),pp_sex_l([H|T]).
 pp_sexi_c([H|T]) :- is_list(T),!,pp_sex_l([H|T]).
 %pp_sexi_c(V) :- print(V),!.
 
-pp_sexi_c(=(H,B)):- !, pp_sex_l([=,H,B]).
+pp_sexi_c(=(H,B)):- !, pp_sexi_hb(H,B),!.
 pp_sexi_c(V):- compound_name_list(V,F,Args),write_mobj(F,Args),!.
 % Compound terms.
 %pp_sex(Term) :- compound(Term), Term =.. [Functor|Args], write('('),format('(~w ',[Functor]), write_args_as_sexpression(Args), write(')').
@@ -274,14 +282,14 @@ dash_functor(A,C):- \+ symbol(A),!,C=A.
 dash_functor(A,C):- A=='[|]',!,C='Cons'.
 %dash_functor(A,C):- p2m(A,B),A\==B,!,always_dash_functor(B,C).
 dash_functor('atom','is-symbol').
-dash_functor(ASymbolProc,O):- atom(ASymbolProc),
+dash_functor('atomic','is-symbolic').
+dash_functor(ASymbolProc,O):- atom(ASymbolProc), atom_contains(ASymbolProc,'_'),
 	atomic_list_concat(LS,'atom',ASymbolProc),LS\==[],LS\=[_],!,
 	atomic_list_concat(LS,'symbol',SymbolProc),
-	dash_functor(SymbolProc,O).
-dash_functor(ASymbolProc,O):- atom(ASymbolProc),
-	atomic_list_concat(LS,'$',ASymbolProc),LS\==[],LS\=[_],!,
-	atomic_list_concat(LS,'%',SymbolProc),
-	dash_functor(SymbolProc,O).
+	always_dash_functor(SymbolProc,O).
+dash_functor(ASymbolProc,O):- atom(ASymbolProc),atom_concat('$',LS,ASymbolProc),!,
+	atom_concat('%',LS,SymbolProc),
+	always_dash_functor(SymbolProc,O).
 
 dash_functor(Functor,DFunctor):-
    symbol(Functor), atomic_list_concat(L,'-',Functor), L\=[_],maplist(always_dash_functor,L,LL),
