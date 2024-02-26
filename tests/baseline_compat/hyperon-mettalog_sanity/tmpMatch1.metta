@@ -94,9 +94,10 @@
           (($_ $pattern)
             (let ($link $a $b) $pattern
                 (case ($link (get-type $a) (get-type $b))
-                  ((($link DeBruijn %Undefined%) ($link $Xvar $b))
-                   (($link %Undefined% DeBruijn) ($link $a $Yvar))
-                   (($link DeBruijn DeBruijn) ($link $Xvar $Yvar))
+                  ((($link DeBruijn DeBruijn) ($link $Xvar $Yvar))
+    			   (($link DeBruijn $_) ($link $Xvar $b))
+				   (($link $_ DeBruijn) ($link $a $Yvar))
+
                    ($_ $pattern)))))
           ($_ $pattern))))
 
