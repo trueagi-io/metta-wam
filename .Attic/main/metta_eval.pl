@@ -976,7 +976,7 @@ nd_ignore(Goal):- call(Goal)*->true;true.
 is_True(T):- atomic(T), T\=='False', T\==0.
 
 is_and(S):- \+ atom(S),!,fail.
-is_and(',').
+%is_and(',').
 is_and(S):- is_and(S,_).
 
 is_and(S,_):- \+ atom(S),!,fail.
@@ -998,14 +998,14 @@ eval_20(Eq,RetType,Depth,Self,[Comma,X,Y],Res):- is_progn(Comma),!, eval_args(Eq
 eval_20(Eq,RetType,Depth,Self,[Comma,X|Y],Res):- is_progn(Comma),!, eval_args(Eq,_,Depth,Self,X,_),
   eval_args(Eq,RetType,Depth,Self,[Comma|Y],Res).
 
-
+/*
 eval_20(Eq,RetType,_Dpth,_Slf,[And],True):- is_and(And,True),!,check_returnval(Eq,RetType,True).
 %eval_20(Eq,RetType,Depth,Self,[And,X,Y],TF):-  is_and(And,True),!,
 % as_tf(( eval_args(Eq,RetType,Depth,Self,X,True),eval_args(Eq,RetType,Depth,Self,Y,True)),TF).
 eval_20(Eq,RetType,Depth,Self,[And,X],TF):- is_and(And,True),!, as_tf(eval_args(Eq,RetType,Depth,Self,X,True),TF).
 eval_20(Eq,RetType,Depth,Self,[And,X|Y],TF):- is_and(And,True),!, as_tf(eval_args(Eq,RetType,Depth,Self,X,True),TF1),
   (TF1=='False' -> TF=TF1 ; eval_args(Eq,RetType,Depth,Self,[And|Y],TF)).
-
+*/
 
 eval_20(Eq,RetType,Depth,Self,[chain,X],TF):- 
    eval_args(Eq,RetType,Depth,Self,X,TF).
