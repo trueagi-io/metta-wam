@@ -12,7 +12,7 @@ should_compile=0
 never_compile=0
 compatio=false
 #compatio=false
-CMD_TIMEOUT=0
+TIMEOUT=0
 export OUTPUT_DIR="./"
 
 use_docker=auto
@@ -523,7 +523,7 @@ function handle_args {
         if [[ "$arg" =~ ^--timeout=([0-9]+)$ ]]; then
             export TIMEOUT="${BASH_REMATCH[1]}"
 	    #DEBUG "$0 TIMEOUT=$TIMEOUT"
-	    CMD_TIMEOUT=$TIMEOUT
+	    #TIMEOUT=$TIMEOUT
 	    METTALOG_OPTIONS=("--timeout=$TIMEOUT" "${METTALOG_OPTIONS[@]}")
 	    continue
 	elif [[ "$arg" =~ ^--python=(enable|false)$ ]]; then
@@ -665,7 +665,7 @@ if [[ "$repl_flag" != "false" ]]; then
 fi
 
 if [[ "$repl_flag" == "true" ]]; then
-  CMD_TIMEOUT=0
+  TIMEOUT=0
 fi
 
 
@@ -793,10 +793,10 @@ cleanup() {
     [[ $IS_SOURCED -eq 1 ]] && return $METTA_CMD_EXIT_STATUS || exit $METTA_CMD_EXIT_STATUS
 }
 
-#DEBUG "CMD_TIMEOUT=$CMD_TIMEOUT"
+#DEBUG "TIMEOUT=$TIMEOUT"
 
-if [[ -n "$CMD_TIMEOUT" && "$CMD_TIMEOUT" -gt 0 ]]; then
-  METTA_CMD="$TIMEOUT_CMD --preserve-status --signal=SIGTERM --kill-after=5s $CMD_TIMEOUT ${METTA_CMD}"
+if [[ -n "$TIMEOUT" && "$TIMEOUT" -gt 0 ]]; then
+  METTA_CMD="$TIMEOUT_CMD --preserve-status --signal=SIGTERM --kill-after=5s $TIMEOUT ${METTA_CMD}"
 fi
 
 function escape_quotes {
@@ -805,7 +805,7 @@ function escape_quotes {
 }
 
 cd "${RPWD}"
-export CMD_TIMEOUT
+export TIMEOUT
 set +e
 # Conditional to check if html_flag is enabled
 if [[ "$html_flag" == "enable" ]]; then

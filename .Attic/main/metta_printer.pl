@@ -129,7 +129,7 @@ pp_sex_nc(V):- with_no_quoting_symbols(true,pp_sex(V)),!.
 unlooped_fbug(Mesg):- 
  fbug_message_hook(fbug_message_hook,fbug(Mesg)).
 
-into_hyphens(D,U):- atom(D),!,atomic_list_concat(L,'_',D),atomic_list_concat(L,'-',U).
+into_hyphens(D,U):- atom(D),!,always_dash_functor(D,U).
 into_hyphens(D,U):- descend_and_transform(into_hyphens,D,U),!.
 
 
@@ -279,27 +279,18 @@ always_dash_functor(A,A).
 
 
 dash_functor(A,C):- \+ symbol(A),!,C=A.
-dash_functor(A,C):- A=='[|]',!,C='Cons'.
-%dash_functor(A,C):- p2m(A,B),A\==B,!,always_dash_functor(B,C).
-dash_functor('atom','is-symbol').
-dash_functor('atomic','is-symbolic').
-dash_functor(ASymbolProc,O):- atom(ASymbolProc), atom_contains(ASymbolProc,'_'),
-	atomic_list_concat(LS,'atom',ASymbolProc),LS\==[],LS\=[_],!,
+% dash_functor(A,C):- p2m(A,B),A\==B,!,always_dash_functor(B,C).
+dash_functor(ASymbolProc,O):- atom_contains(ASymbolProc,'_'),
+	atomic_list_concat(LS,'atom',ASymbolProc),LS\==[],LS\=[_],
 	atomic_list_concat(LS,'symbol',SymbolProc),
 	always_dash_functor(SymbolProc,O).
-dash_functor(ASymbolProc,O):- atom(ASymbolProc),atom_concat('$',LS,ASymbolProc),!,
+dash_functor(ASymbolProc,O):- atom_concat('$',LS,ASymbolProc),!,
 	atom_concat('%',LS,SymbolProc),
 	always_dash_functor(SymbolProc,O).
 
-dash_functor(Functor,DFunctor):-
-   symbol(Functor), atomic_list_concat(L,'-',Functor), L\=[_],maplist(always_dash_functor,L,LL),
-   atomic_list_concat(LL,'-',DFunctor).
-dash_functor(Functor,DFunctor):- fail,
-   symbol(Functor), atomic_list_concat(L,'_',Functor), L\=[_],maplist(always_dash_functor,L,LL),
-   atomic_list_concat(LL,'-',DFunctor).
-dash_functor(Functor,DFunctor):-
-   symbol(Functor), atomic_list_concat(L,'_',Functor), L\=[_],maplist(always_dash_functor,L,LL),
-   atomic_list_concat(LL,'_',DFunctor).
+dash_functor(Functor,DFunctor):- 
+   atomic_list_concat(L,'_',Functor), L\=[_],
+   atomic_list_concat(L,'-',DFunctor).
 
 % Print arguments of a compound term.
 write_args_as_sexpression([]).

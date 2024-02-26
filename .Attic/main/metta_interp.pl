@@ -38,10 +38,12 @@ is_flag0(What):- nb_current(What,'True'),!.
 is_flag0(What):- current_prolog_flag(What,false),!,fail.
 is_flag0(What):- current_prolog_flag(What,true),!.
 is_flag0(What):- 
-  current_prolog_flag(os_argv,ArgV),
-  atom_concat('--',What,FWhat), 
-  (member(FWhat,ArgV)-> true ;
-    (atom_concat(FWhat,'=true',FWhatEqTrue),member(FWhatEqTrue,ArgV))).
+ ((current_prolog_flag(os_argv,ArgV),
+   atom_concat('--',What,FWhat), 
+   (member(FWhat,ArgV)-> true ;
+     (atom_concat(FWhat,'=true',FWhatEqTrue),member(FWhatEqTrue,ArgV))))->
+	current_prolog_flag(What,true);
+    current_prolog_flag(What,false)).
   
   
 
@@ -69,9 +71,9 @@ is_html:- is_metta_flag('html').
 
 % is_compatio:- !,fail.
 is_compatio:- notrace(is_compatio0).
+is_compatio0:- is_testing,!,fail.
 is_compatio0:- is_flag0('compatio').
 is_compatio0:- is_mettalog,!,fail.
-is_compatio0:- is_testing,!,fail.
 %is_compatio0:- is_html,!,fail.
 is_compatio0:- !.
 
@@ -256,6 +258,7 @@ set_is_unit_test(TF):-
   forall(option_value_def(A,B),set_option_value_interp(A,B)),
   set_option_value_interp('trace-on-pass',false),
   set_option_value_interp('trace-on-fail',false),
+  set_option_value_interp('load',show),
   set_option_value_interp('test',TF),
   if_t(TF,set_option_value_interp('exec',debug)),
   if_t(TF,set_option_value_interp('eval',debug)),
@@ -281,7 +284,7 @@ with_output_to_s(Out,G):- current_output(COut),
 
     only_compatio(G):- if_t((is_compatio, \+ is_mettalog),user_io(G)).
   if_compatio(G):- if_t(is_compatio,user_io(G)).
- not_compatio(G):- if_t( is_mettalog,user_io(G)).
+ not_compatio(G):- if_t(once(is_mettalog;is_testing),user_io(G)).
 
  if_compat_io(G):- if_compatio(G).
 not_compat_io(G):- not_compatio(G).
@@ -1404,7 +1407,9 @@ type_decl('Variable').
 % metta_atom_stdlib(_):-!,fail.
 metta_atom_stdlib(X):- metta_atom_stdlib_types(X).
 metta_atom_stdlib_types([':', Type, 'Type']):- type_decl(Type).
-metta_atom_stdlib_types([':', Op, [->|List]]):- op_decl(Op,Params,ReturnType),append(Params,[ReturnType],List).
+metta_atom_stdlib_types([':', Op, [->|List]]):- 
+	 atom(Op), op_decl(Op,Params,ReturnType),
+	 append(Params,[ReturnType],List).
 
 %get_metta_atom(Eq,KB, [F|List]):- KB='&flybase',fb_pred(F, Len), length(List,Len),apply(F,List).
 
@@ -1895,7 +1900,7 @@ repl2:-
       %set_prolog_flag(gc,true),
       fail.
 repl3:-
-    notrace(( flag(eval_num,_,0),
+    notrace(( reset_eval_num,
      current_self(Self),
      current_read_mode(repl,Mode),
      %ignore(shell('stty sane ; stty echo')),
@@ -2046,7 +2051,7 @@ interactively_do_metta_exec01(file(_), Self, _TermV, Term, X, _NamedVarsList, _W
 
 interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,Output,FOut):-
   notrace((
-  	flag(eval_num,_,0),
+  	reset_eval_num,
     Result = res(FOut),
     inside_assert(Term,BaseEval),
     (is_compatio
@@ -2103,7 +2108,7 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,Output,F
        read_pending_codes(CI,_,[]),
        flag(result_num,R,R+1),
        flag(result_num,ResNum,ResNum),
-	   flag(eval_num,_,0),
+	   reset_eval_num,
      if_t(ResNum=<Max,
          ((((ResNum==1,Complete==true)->(not_compatio(format('~NDeterministic: ',  [])), !);          %or Nondet
            ( Complete==true -> (not_compatio(format('~NLast Result(~w): ',[ResNum])),! );

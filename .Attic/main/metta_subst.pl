@@ -73,7 +73,7 @@ indentq(DR,EX,Term):-
 
 
 with_debug(Flag,Goal):- is_debugging(Flag),!, call(Goal).
-with_debug(Flag,Goal):- flag(eval_num,_,0),
+with_debug(Flag,Goal):- reset_eval_num,
   setup_call_cleanup(set_debug(Flag,true),call(Goal),set_debug(Flag,flase)).
 
 flag_to_var(Flag,Var):- atom(Flag), \+ atom_concat('trace-on-',_,Flag),!,atom_concat('trace-on-',Flag,Var).
@@ -109,7 +109,7 @@ is_debugging(Flag):- flag_to_var(Flag,Var),
 
 */
 
-%subst_args0(Eq,RetType,Depth,_Slf,X,Y):- Depth<1,!,X=Y, (\+ trace_on_overflow-> true; flag(eval_num,_,0),debug(metta(eval))).
+%subst_args0(Eq,RetType,Depth,_Slf,X,Y):- Depth<1,!,X=Y, (\+ trace_on_overflow-> true; reset_eval_num,debug(metta(eval))).
 subst_args0(Eq,RetType,_Dpth,_Slf,X,Y):- self_subst(X),!,Y=X.
 subst_args0(Eq,RetType,Depth,Self,X,Y):-
   Depth2 is Depth-1,

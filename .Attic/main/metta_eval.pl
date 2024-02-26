@@ -282,13 +282,13 @@ eval_20(Eq,RetType,Depth,Self,['assertEqualToResult',X,Y],RetVal):- !,
 
 
 loonit_assert_source_tf(_Src,Goal,Check,TF):- \+ is_testing,!,
-    flag(eval_num,_,0),
+    reset_eval_num,
     call(Goal),
     as_tf(Check,TF),!.
 
 loonit_assert_source_tf(Src,Goal,Check,TF):-
     copy_term(Goal,OrigGoal),
-    flag(eval_num,_,0),
+    reset_eval_num,
    loonit_asserts(Src, time_eval('\n; EVAL TEST\n;',Goal), Check),
    as_tf(Check,TF),!,
   ignore((

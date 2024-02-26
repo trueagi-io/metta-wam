@@ -15,7 +15,7 @@ passed_along_to_mettalog=()
 METTALOG_MAX_TIME=75
 clean=0  # 0 means don't clean, 1 means do clean
 fresh=0
-if_failures=1
+if_failures=0
 if_regressions=0
 show_help=0
 export RUST_METTA_MAX_TIME=60
@@ -192,8 +192,8 @@ while [ "$#" -gt 0 ]; do
         --report=*) generate_report_auto_reply="${1#*=}" ;;
         --clean) clean=1; if_failures=0 ;;
         --regres*) clean=0; if_failures=0; if_regressions=1 ;;
-        --cont*) clean=0; if_failures=0 ;;	
-        --fail*) clean=0; if_failures=1 ; add_to_list "$1" passed_along_to_mettalog ;;
+        --conti*) clean=0; if_failures=0 ;;	
+        --failu*) clean=0; if_failures=1 ;;
         --dry-run) dry_run=1 ;;
         --test) dry_run=0 ; add_to_list "$1" passed_along_to_mettalog ;;	    
         --fresh*) fresh=1 ;;
