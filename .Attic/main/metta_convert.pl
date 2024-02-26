@@ -665,9 +665,12 @@ print_metta_comment(_TP-Cmt):-!, print_metta_comment(Cmt).
 print_metta_comment([Cmt|Cs]):- !, print_metta_comment(Cmt),!, print_metta_comment(Cs).
 print_metta_comment(Cmt):- translate_comment(Cmt,String), print_cmt_lines(String).
 
-print_cmt_lines(String):- atomic_list_concat(List,'\n',String),!,
-	(List=[Str] -> format('~N; ~w',[Str]) ; 
-      print_metta_comments(List)).
+print_cmt_lines(String):- 
+	normalize_space(string(String),TaxM),
+	atomics_to_string(List,'\n',TaxM),!,
+	maplist(print_cmt_line,List).
+print_cmt_line(Str):- format('~N; ~w',[Str]).
+	
 
 echo_as_commnents_until_eof(Stream):-
 	repeat,
