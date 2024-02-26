@@ -319,6 +319,10 @@ is_empty([]).
 is_empty([X]):-!,is_empty(X).
 has_let_star(Y):- sub_var('let*',Y).
 
+
+% !(pragma! unit-tests tollerant) ; tollerant or exact
+is_tollerant:- \+ option_value('unit-tests','exact').
+
 equal_enough_for_test(X,Y):- is_empty(X),!,is_empty(Y).
 equal_enough_for_test(X,Y):- has_let_star(Y),!,\+ is_empty(X).
 equal_enough_for_test(X,Y):- must_det_ll((subst_vars(X,XX),subst_vars(Y,YY))),!,equal_enough_for_test2(XX,YY),!.
@@ -329,6 +333,10 @@ equal_enouf(X,Y):- is_empty(X),!,is_empty(Y).
 equal_enouf(X,Y):- symbol(X),symbol(Y),atom_concat('&',_,X),atom_concat('Grounding',_,Y).
 equal_enouf(R,V):- R=@=V, R=V, !.
 equal_enouf(_,V):- V=@='...',!.
+
+equal_enouf(L,C):- is_tollerant, is_list(L),is_list(C), 
+	 maybe_remove_nils(C,CC),equal_enouf(L,CC).
+
 equal_enouf(L,C):- is_list(L),into_list_args(C,CC),!,equal_enouf_l(CC,L).
 equal_enouf(C,L):- is_list(L),into_list_args(C,CC),!,equal_enouf_l(CC,L).
 %equal_enouf(R,V):- (var(R),var(V)),!, R=V.
@@ -343,6 +351,10 @@ equal_enouf_l(C,L):- \+ compound(C),!,L=@=C.
 equal_enouf_l(L,C):- \+ compound(C),!,L=@=C.
 equal_enouf_l([C|CC],[L|LL]):- !, equal_enouf(L,C),!,equal_enouf_l(CC,LL).
 
+maybe_remove_nils(I,O):- always_remove_nils(I,O),!,I\=@=O.
+always_remove_nils(I,O):- \+ compound(I),!,I=O.
+always_remove_nils([H|T], TT):- H==[],!, always_remove_nils(T,TT). 
+always_remove_nils([H|T],[H|TT]):- always_remove_nils(T,TT). 
 
 has_unicode(A):- atom_codes(A,Cs),member(N,Cs),N>127,!.
 
@@ -408,7 +420,7 @@ metta_atom_iter(Eq,Depth,Self,Other,[Equal,[F|H],B]):- Eq == Equal,!,  % trace,
 */
 
 metta_atom_iter(_Eq,Depth,_,_,_):- Depth<3,!,fail.
-metta_atom_iter(Eq,Depth,Self,Other,[And|Y]):- atom(And), is_and(And),!,
+metta_atom_iter(Eq,Depth,Self,Other,[And|Y]):- atom(And), is_comma(And),!,
   (Y==[] -> true ;
     ( D2 is Depth -1, Y = [H|T],
        metta_atom_iter(Eq,D2,Self,Other,H),metta_atom_iter(Eq,D2,Self,Other,[And|T]))).
@@ -998,14 +1010,6 @@ eval_20(Eq,RetType,Depth,Self,[Comma,X,Y],Res):- is_progn(Comma),!, eval_args(Eq
 eval_20(Eq,RetType,Depth,Self,[Comma,X|Y],Res):- is_progn(Comma),!, eval_args(Eq,_,Depth,Self,X,_),
   eval_args(Eq,RetType,Depth,Self,[Comma|Y],Res).
 
-/*
-eval_20(Eq,RetType,_Dpth,_Slf,[And],True):- is_and(And,True),!,check_returnval(Eq,RetType,True).
-%eval_20(Eq,RetType,Depth,Self,[And,X,Y],TF):-  is_and(And,True),!,
-% as_tf(( eval_args(Eq,RetType,Depth,Self,X,True),eval_args(Eq,RetType,Depth,Self,Y,True)),TF).
-eval_20(Eq,RetType,Depth,Self,[And,X],TF):- is_and(And,True),!, as_tf(eval_args(Eq,RetType,Depth,Self,X,True),TF).
-eval_20(Eq,RetType,Depth,Self,[And,X|Y],TF):- is_and(And,True),!, as_tf(eval_args(Eq,RetType,Depth,Self,X,True),TF1),
-  (TF1=='False' -> TF=TF1 ; eval_args(Eq,RetType,Depth,Self,[And|Y],TF)).
-*/
 
 eval_20(Eq,RetType,Depth,Self,[chain,X],TF):- 
    eval_args(Eq,RetType,Depth,Self,X,TF).
