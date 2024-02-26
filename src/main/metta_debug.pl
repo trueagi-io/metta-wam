@@ -53,6 +53,7 @@ w_indent(Depth,Goal):- must_be(integer,Depth),
 
 indentq2(Depth,Term):- w_indent(Depth,format('~q',[Term])).
 
+print_padded(_DR,_EX,_AR):- is_fast,!.
 print_padded(EX, DR, AR ):- integer(EX),integer(DR), EX>0,DR>0,
    nb_current('$print_padded',print_padded(EX, DR, _)),!,
    format("~|          |", []),
@@ -64,20 +65,29 @@ print_padded(EX, DR, AR):-
    DRA is abs(round(DR) mod 24),
    forall(between(1,DRA,_),write('   |')),write('-'),write(AR). 
 
+indentq_d(_DR,_EX,_AR):- is_fast,!.
 indentq_d(Depth,Prefix4, Message):-
 	flag(eval_num,EX0,EX0),
 	EX is EX0 mod 500,
 	DR is 99 - (Depth mod 100),
 	indentq(DR,EX,Prefix4,Message).
 
+indentq(_DR,_EX,_AR,_Term):- is_fast,!.
 indentq(DR,EX,AR,retval(Term)):-nonvar(Term),!,indentq(DR,EX,AR,Term).
 indentq(DR,EX,AR,[E,Term]):- E==e,!,indentq(DR,EX,AR,Term).
+indentq(_DR,_EX,_AR,_Term):- flag(trace_output_len,X,X+1), XX is (X mod 1000), XX<100,!.
 indentq(DR,EX,AR,Term):- 
+
     setup_call_cleanup(
          notrace(format('~N;')),
          as_trace((
            print_padded(EX, DR, AR),with_indents(false,write_src(Term)))),
 	notrace(format('~N'))).
+
+reset_eval_num:- flag(eval_num,_,0),flag(trace_output_len,_,0).
+reset_only_eval_num:- flag(eval_num,_,0).
+
+is_fast.
 
 %ignore_trace_once(Goal):- !, call(Goal).
 ignore_trace_once(Goal):- 
@@ -124,7 +134,7 @@ set_terminal_size(Cols, Rows) :-
 
 
 with_debug(Flag,Goal):- is_debugging(Flag),!, call(Goal).
-with_debug(Flag,Goal):- flag(eval_num,_,0),
+with_debug(Flag,Goal):- reset_only_eval_num,
   setup_call_cleanup(set_debug(Flag,true),call(Goal),set_debug(Flag,false)).
 
 flag_to_var(Flag,Var):- atom(Flag), \+ atom_concat('trace-on-',_,Flag),!,atom_concat('trace-on-',Flag,Var).
@@ -183,6 +193,7 @@ is_debugging(Flag):- flag_to_var(Flag,Var),
 % overflow = continue
 % overflow = debug
 
+trace_eval(P4,_TN,D1,Self,X,Y):- is_fast,!, call(P4,D1,Self,X,Y).
 trace_eval(P4,TN,D1,Self,X,Y):- \+ is_debugging(TN), \+ is_debugging(eval),!, call(P4,D1,Self,X,Y).
 trace_eval(P4,TN,D1,Self,X,Y):-
    must_det_ll((

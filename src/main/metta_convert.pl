@@ -232,21 +232,33 @@ p2m(_OC,NC, NC) :- is_ftVar(NC), !.  % If NC is a free term variable, do not tra
 
 p2m(OC,[H|T],['::'|L]):- is_list([H|T]),maplist(p2m(OC),[H|T],L).
 p2m(OC,[H|T], 'Cons'(OH, OT)):- p2m(OC,H, OH), p2m(OC,T, OT).
+
+
+% Conversion for any atomic term
+p2m(_OC,A, A):- string(A),!.
 p2m(_OC,[], 'Nil'). % empty list
 p2m(_OC,[], 'Nil'). % empty list
-
-p2m([':-'|_],Atom,[O,*]):- atom(Atom), p2m([arg],Atom,O),!.
-
 p2m(_OC,'[|]','Cons').
+p2m(_OC,!, ['set-det']).  % Translate the cut operation directly.
+p2m(_OC,!, '!').  % Translate the cut operation directly.
+p2m(_OC,false, 'False').
+p2m(_OC,true, 'True').  % Translate Prolog?s true to MeTTa?s True.
+p2m([':-'|_],Atom,[O,*]):- atom(Atom), p2m([arg],Atom,O),!.
+p2m(_OC,( ';' ),or).
+%p2m(_OC,( ',' ),and).
+%p2m(_OC,( '\\+' ),unless).
+%p2m(_OC,( ':-' ),entailed_by).
+p2m(_OC,'=..','atom_2_list').
+p2m(_,A, H):- atom(A),into_hyphens(A,H),!.
+p2m(_OC,A, A):- atomic(A).
+p2m(_OC,NC,NC):- \+ compound(NC),!.
+p2m(_OC,NC,[F]):- compound_name_arity(NC,F,0),!.
 p2m(_OC,'atom','is-symbol').
-p2m(OC,ASymbolProc,O):- atom(ASymbolProc),
-	atomic_list_concat(LS,'atom',ASymbolProc),LS\==[],LS\=[_],!,
-	atomic_list_concat(LS,'symbol',SymbolProc),
-	p2m(OC,SymbolProc,O).
+p2m(_OC,'atomic','symbolic').
 p2m(OC,ASymbolProc,O):- atom(ASymbolProc),
 	atomic_list_concat(LS,'$',ASymbolProc),LS\==[],LS\=[_],!,
-	atomic_list_concat(LS,'%',SymbolProc),
-	p2m(OC,SymbolProc,O).
+	atomic_list_concat(LS,'%',SymbolProc),into_hyphens(SymbolProc,O).
+p2m(OC,ASymbolProc,O):- atom(ASymbolProc),into_hyphens(ASymbolProc,O).
 
 p2m(OC,M:I, O):- M==user,!, p2m(OC,I,O),!.
 p2m(_OC,M:I, with_self(N,O)):-  p2m(OC,M,N),p2m(I,O).
@@ -255,29 +267,12 @@ p2m(OC,NC, OO) :-
     % If NC is a list, map each element of the list from Prolog to MeTTa
     is_list(NC),!,
     maplist(p2m(OC), NC, OO).
-p2m(_OC,!, ['set-det']).  % Translate the cut operation directly.
-p2m(_OC,!, '!').  % Translate the cut operation directly.
-p2m(_OC,false, 'False').
 p2m([progn|_], (!,fail), [empty]).  % Translate Prolog?s fail to MeTTa?s False.
 % p2m(_OC,fail, 'False').  % Translate Prolog?s fail to MeTTa?s False.
-p2m(_OC,true, 'True').  % Translate Prolog?s true to MeTTa?s True.
 % p2m(_OC,prolog, meTTa).  % Translate the atom prolog to meTTa.
 
 
-p2m(_OC,( ';' ),or).
-%p2m(_OC,( ',' ),and).
-%p2m(_OC,( '\\+' ),unless).
-%p2m(_OC,( ':-' ),entailed_by).
-%p2m(_OC,'=..','atom_2_list').
-
-% Conversion for any atomic term
-p2m(_OC,A, A):- string(A),!.
 p2m([progn|_],A, [H]):- atom(A),into_hyphens(A,H),!.
-p2m(_,A, H):- atom(A),into_hyphens(A,H),!.
-p2m(_OC,A, A):- atomic(A).
-
-p2m(_OC,NC,NC):- \+ compound(NC),!.
-p2m(_OC,NC,[F]):- compound_name_arity(NC,F,0),!.
 
 % Conversion for the negation as failure
 p2m(_OC,(\+ A), O):- !, p2m(_OC,not(A), O).
@@ -631,7 +626,10 @@ is_reprint_char(Char):- char_type(Char, space).
 is_reprint_char(Char):- Char == '.'.
 
 % Translates Prolog comments to Metta comments, applying string replacements.
-translate_comment(Cmt,Str):- replace_in_string(["%"=";","prolog"="MeTTa","Prolog"="MeTTa"],Cmt,Str).
+translate_comment(Cmt,Str):- replace_in_string(["%"=";",
+											     "prolog"="MeTTa",
+											     "PROLOG"="MeTTa",
+											     "Prolog"="MeTTa"],Cmt,Str).
 
 % Reads a clause while capturing various pieces of metadata.
 
@@ -666,7 +664,7 @@ print_metta_comment([Cmt|Cs]):- !, print_metta_comment(Cmt),!, print_metta_comme
 print_metta_comment(Cmt):- translate_comment(Cmt,String), print_cmt_lines(String).
 
 print_cmt_lines(String):- 
-	normalize_space(string(String),TaxM),
+	normalize_space(string(TaxM),String),
 	atomics_to_string(List,'\n',TaxM),!,
 	maplist(print_cmt_line,List).
 print_cmt_line(Str):- format('~N; ~w',[Str]).
