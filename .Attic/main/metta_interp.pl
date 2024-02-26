@@ -270,11 +270,14 @@ fake_notrace(G):- !,once(G).
 fake_notrace(G):- quietly(G),!.
 real_notrace(G):- notrace(G).
 
+
+null_io(G):- null_user_output(Out), !, with_output_to(Out,G).
 user_io(G):- original_user_output(Out), !, with_output_to(Out,G).
-user_io(G):- original_user_output(Out), 
-  current_output(COut), 
-  setup_call_cleanup(set_prolog_IO(user_input,Out,user_error), G, set_prolog_IO(user_input,COut,user_error)), 
-    set_prolog_IO(user_input,COut,user_error).
+
+with_output_to_s(Out,G):- current_output(COut), 
+  redo_call_cleanup(set_prolog_IO(user_input, Out,user_error), G, 
+					 set_prolog_IO(user_input,COut,user_error)).
+
 
     only_compatio(G):- if_t((is_compatio, \+ is_mettalog),user_io(G)).
   if_compatio(G):- if_t(is_compatio,user_io(G)).
@@ -564,7 +567,7 @@ cmdline_load_metta(Phase,Self,[M|Rest]):-
 %cmdline_load_file(Self,Filemask):- is_converting,!,
 
 cmdline_load_file(Self,Filemask):-
-    Src=user:load_metta_file(Self,Filemask),
+    Src=(user:load_metta_file(Self,Filemask)),
     catch_abort(Src,
     (must_det_ll((
           not_compatio((nl,write('; '),write_src(Src),nl)),
@@ -1575,7 +1578,6 @@ do_metta1_e(_Self,_LoadExec,Term):- write_src(Term),connl.
 write_exec(Exec):- notrace(write_exec0(Exec)).
 %write_exec0(Exec):- atom(Exec),!,write_exec0([Exec]).
 
-write_exec0(_):- is_compatio,!.
 write_exec0(Exec):-
   wots(S,write_src(exec(Exec))),
   nb_setval(exec_src,Exec),
@@ -1924,8 +1926,9 @@ check_has_directive(ModeChar):- atom(ModeChar),metta_interp_mode(ModeChar,_Mode)
 check_has_directive('@'):- do_show_options_values,!,notrace(throw(restart_reading)).
 check_has_directive(AtEq):-atom(AtEq),atom_concat('@',NEV,AtEq),option_value(NEV,Foo),fbug(NEV=Foo),!,notrace(throw(restart_reading)).
 check_has_directive(_).
+
 set_directive(N,V):- atom_concat('@',NN,N),!,set_directive(NN,V).
-set_directive(N,V):- N==mode,!,set_directive(repl_mode,V).
+set_directive(N,V):- N=='mode',!,set_directive((repl_mode),V).
 set_directive(N,V):- show_call(set_option_value_interp(N,V)),!,notrace(throw(restart_reading)).
 
 read_pending_white_codes(In):-
@@ -2087,7 +2090,7 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,Output,F
 
       prolog_only((color_g_mesg('#da70d6', (write('% DEBUG:   '), writeq(PL),writeln('.'))))),
       true))))),
-   only_compatio(write('[')), 
+   
    (forall_interactive(
     From, WasInteractive,Complete, %may_rtrace
      (timed_call(GG,Seconds)),
@@ -2100,15 +2103,18 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,Output,F
        read_pending_codes(CI,_,[]),
        flag(result_num,R,R+1),
        flag(result_num,ResNum,ResNum),
+	   flag(eval_num,_,0),
      if_t(ResNum=<Max,
          ((((ResNum==1,Complete==true)->(not_compatio(format('~NDeterministic: ',  [])), !);          %or Nondet
            ( Complete==true -> (not_compatio(format('~NLast Result(~w): ',[ResNum])),! );
                                not_compatio(format('~NNDet Result(~w): ',[ResNum]))))),
       (
-        ignore((( 
+        ignore(((
+		 
           not_compatio(if_t( \+ atomic(Output), nl)), 
           ( only_compatio(if_t(ResNum> 1,write(', '))),
             not_compatio(if_t(ResNum> 1, nl)),
+		  if_t(ResNum==1,only_compatio(write('['))),
           user_io(with_indents(is_mettalog,
              color_g_mesg_ok(yellow,
               \+ \+ ( maplist(maybe_assign,NamedVarsList),

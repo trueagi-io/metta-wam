@@ -235,6 +235,8 @@ p2m(OC,[H|T], 'Cons'(OH, OT)):- p2m(OC,H, OH), p2m(OC,T, OT).
 p2m(_OC,[], 'Nil'). % empty list
 p2m(_OC,[], 'Nil'). % empty list
 
+p2m([':-'|_],Atom,[O,*]):- atom(Atom), p2m([arg],Atom,O),!.
+
 p2m(_OC,'[|]','Cons').
 p2m(_OC,'atom','is-symbol').
 p2m(OC,ASymbolProc,O):- atom(ASymbolProc),
@@ -377,19 +379,82 @@ list_all_subdirectories(Directory, AllSubdirectories) :-
     append(DirectSubdirectories, NestedSubdirectories, AllSubdirectories).
 
 % Processes a list of filenames, applying 'convert_to_metta' to each.
+
+with_file_lists(Rel,P1,FileSpec):- FileSpec=='.pl',!.
+with_file_lists(Rel,P1,FileSpec):- is_list(FileSpec),!,
+	   ignore(maplist(with_file_lists(Rel,P1),FileSpec)).
+
+
 with_file_lists(Rel,P1,Filename):- atomic(Filename), exists_file(Filename),!,
    ignore(call(P1,Filename)).
-	  
-with_file_lists(Rel,P1,FileSpec):- is_list(FileSpec),!,
-   ignore(maplist(with_file_lists(Rel,P1),FileSpec)).
 
+with_file_lists(Rel,P1,Filename):- 
+	absolute_file_name(Rel, Dir, [access(read), file_errors(fail), file_type(directory)]),
+	Rel \=@=  Dir,!,
+	with_file_lists(Dir,P1,Filename).
+with_file_lists(Rel,P1,Filename):- \+ exists_directory(Rel), !,
+	with_file_lists('.',P1,Filename).
+
+
+with_file_lists(Rel,P1, File) :-
+  compound(File),
+  absolute_file_name(File, Dir, [access(read), relative_to(Rel), file_errors(fail), 
+					 extensions(['pl', 'prolog', 'pfc'])]),
+  '\\=@='(Dir, File), !,
+  with_file_lists(Rel,P1, Dir).
+
+with_file_lists(Rel,P1, File) :-
+  compound(File),
+  absolute_file_name(File, Dir, [access(read), file_errors(fail),relative_to(Rel), file_type(directory)]),
+  '\\=@='(Dir, File), !,
+  with_file_lists(Rel,P1, Dir).
+
+/*
+with_file_lists(Rel,P1, File) :-
+	  compound(File),
+	  absolute_file_name(File, Dir, [access(read), file_errors(fail), file_type(directory)]),
+	  '\\=@='(Dir, File), !,
+	  with_file_lists(Rel,P1, Dir).
+with_file_lists(Rel,P1, File) :-
+	  compound(File), !,
+	  absolute_file_name(File, Dir, [access(read), file_errors(fail), file_type(['csv', 'tsv', ''])]),
+	  '\\=@='(Dir, File), !,
+	  with_file_lists(Rel,P1, Dir).
+with_file_lists(Rel,P1, File) :-
+	  symbol_contains(File, '*'),
+	  expand_file_name(File, List),List\==[],  !,
+	  maplist(with_wild_path(Fnicate), List).
+with_file_lists(Rel,P1, File) :-
+	  exists_directory(File),
+	  directory_file_path(File, '*.*sv', Wildcard),
+	  expand_file_name(Wildcard, List), !,
+	  maplist(Fnicate, List).
+*/
+
+
+
+with_file_lists(Rel,P1,Wildcard):-  atom(Wildcard), 
+	  \+ exists_file(Wildcard),
+	once(atom_contains(Wildcard,'*');atom_contains(Wildcard,'?');atom_contains(Wildcard,'|')),
+	  expand_file_name(Wildcard, Files), Files\==[], !,
+	  ignore(maplist(with_file_lists(Rel,P1),Files)).
+
+with_file_lists(Rel,P1,Wildcard):-  atom(Wildcard), 
+	once(atom_contains(Wildcard,'*');atom_contains(Wildcard,'?');atom_contains(Wildcard,'|')),
+	  \+ exists_file(Wildcard),
+	  absolute_file_name(Wildcard,AbsWildcard,[relative_to(Rel)]),
+	  \+ exists_file(AbsWildcard), 
+	  expand_file_name(AbsWildcard, Files), Files\==[], !,
+	  ignore(maplist(with_file_lists(Rel,P1),Files)).
+
+/*	  
 with_file_lists(Rel,P1,Local):- (Local=='.';Local=='';Local=='*.pl'),Directory = Rel,
 	absolute_file_name(Directory,AbsDirectory,[relative_to(Rel),file_type(directory)]),
 	exists_directory(AbsDirectory), 
 	findall(File,directory_source_files(AbsDirectory, File, [recursive(false),if(true)]),Files),
 	ignore(maplist(with_file_lists(Rel,P1),Files)),!.
-
-with_file_lists(Rel,P1,Local):- (Local=='**';Local=='**.pl'),Directory = Rel,!,
+*/
+with_file_lists(Rel,P1,Local):- (Local=='**';Local=='**.pl'),
 	must_det_ll((absolute_file_name(Directory,AbsDirectory,[file_type(directory)]),
 	exists_directory(AbsDirectory))), 
 	findall(File,directory_source_files(AbsDirectory, File, [recursive(true),if(true)]),Files),!,
@@ -412,11 +477,11 @@ with_file_lists(Rel,P1,Filename):-
 
 
 with_file_lists(Rel,P1,FileSpec):- atomic(FileSpec),
-  absolute_file_name(FileSpec,AbsFile,[relative_to(Rel),file_errors(fail)]),
+  absolute_file_name(FileSpec,AbsFile,[relative_to(Rel),access(read), file_errors(fail)]),
   exists_file(AbsFile), !, ignore(call(P1,AbsFile)).
 
 with_file_lists(Rel,P1,Directory):- atomic(Directory),
-	absolute_file_name(Directory,AbsDirectory,[relative_to(Rel),file_type(directory)]),
+	absolute_file_name(Directory,AbsDirectory,[relative_to(Rel),access(read), file_errors(fail), file_type(directory)]),
 	exists_directory(AbsDirectory), !,
   findall(File,directory_source_files(AbsDirectory, File, [recursive(true),if(true)]),Files),!,
   ignore(maplist(with_file_lists(Rel,P1),Files)).
@@ -427,23 +492,19 @@ with_file_lists(Rel,P1,Wildcard):- atom(Wildcard),
   expand_file_name(AbsWildcard, Files), Files\==[], !,
   ignore(maplist(with_file_lists(Rel,P1),Files)).
 
-with_file_lists(Rel,P1,Filename):- must_det_ll(call(P1,Filename)).
+%with_file_lists(Rel,P1,Filename):- must_det_ll(call(P1,Filename)).
 with_file_lists(Rel,P1,Filename):- write_src(with_file_lists(Rel,P1,Filename)),nl.
  
 
-convert_to_metta(Filename):- atomic(Filename), exists_file(Filename),!,
-  ignore(convert_to_metta_file(Filename)),
-  ignore(convert_to_metta_console(Filename)),!.
-convert_to_metta(FileSpec):- with_file_lists('.',convert_to_metta,FileSpec).
   
 
 	% Entry point for printing to Metta format. It clears the screen, sets the working directory,
 	% expands the filenames with a specific extension, and processes each file.
 	 % cls, % Clears the screen (assumes a custom or system-specific implementation).
 	 % with_pwd(
-	  %   '/opt/logicmoo_opencog/hyperon-wam/examples/gpt2-like/language_models/',
-	 %Filt = 'examples/gpt2-like/language_models/*.pl',
-	% Filt = '/opt/logicmoo_opencog/hyperon-wam/examples/performance/nondet_unify/*.pl',
+	  %   '/opt/logicmoo_opencog/hyperon-wam/tests/gpt2-like/language_models/',
+	 %Filt = 'tests/gpt2-like/language_models/*.pl',
+	% Filt = '/opt/logicmoo_opencog/hyperon-wam/tests/performance/nondet_unify/*.pl',
 	   % Finds all Prolog files in the specified directory.
 	 %  convert_to_metta(Filt),  % Processes each found file.
 	  % MC = '/opt/logicmoo_opencog/hyperon-wam/src/main/metta_convert.pl',
@@ -451,33 +512,71 @@ convert_to_metta(FileSpec):- with_file_lists('.',convert_to_metta,FileSpec).
 	% Example of a no-operation (nop) call for a specific file path, indicating a placeholder or unused example.
 	%$nop(convert_to_metta('/opt/logicmoo_opencog/hyperon-wam/src/main/metta_convert.pl')).
 
+default_pl_mask(Mask):- Mask = [  
+   %'src/main/metta_*.pl',
+   %'src/main/flybase_*.pl',   
+   '*/*.pl',
+   '*/*/*.pl',
+   '*/*/*/.pl',
+   '*/*/*/*/.pl',
+   '*/*/*/*/*/.pl',
+   '*/*/*/*/*/*.pl',
+   '*.pl'
+  ],!.
 default_pl_mask(Mask):- Mask = ['**/*.pl'].
 
-convert_to_metta_console :- default_pl_mask(Mask),ignore(convert_to_metta_console(Mask)),!, writeln(';; convert_to_metta_console. ').
-convert_to_metta_file :- default_pl_mask(Mask),ignore(convert_to_metta_file(Mask)),!, writeln(';; convert_to_metta_file. ').
-convert_to_metta :- default_pl_mask(Mask),ignore(convert_to_metta(Mask)),!, writeln(';; convert_to_metta. ').
+convert_to_metta_console :- default_pl_mask(Mask), 
+	  ignore(convert_to_metta_console(Mask)),!, writeln(';; convert_to_metta_console. ').
+
+convert_to_metta_file :- default_pl_mask(Mask),
+	   ignore(convert_to_metta_file(Mask)),!, writeln(';; convert_to_metta_file. ').
 
 
+convert_to_metta :- default_pl_mask(Mask),
+	 %locally(set_prolog_flag(gc,true),
+	  
+	  call(
+			ignore(convert_to_metta(Mask))),!, writeln(';; convert_to_metta. ').
+
+ctm:- convert_to_metta.
 % Processes a list of filenames, applying 'convert_to_metta' to each.
-convert_to_metta_console(FileSpec):-  with_file_lists(Rel,convert_to_metta_now(user_output),FileSpec).
-convert_to_metta_file(FileSpec):-  with_file_lists(Rel,convert_to_metta_now(_Create),FileSpec).
+convert_to_metta_console(FileSpec):-  with_file_lists('.',convert_to_metta_now(user_output),FileSpec).
+convert_to_metta_file(FileSpec):-  with_file_lists('.',convert_to_metta_now(_Create),FileSpec).
+convert_to_metta(Filename):- atomic(Filename), exists_file(Filename),!,
+	  ignore(convert_to_metta_file(Filename)),
+	  ignore(convert_to_metta_console(Filename)),!.
+convert_to_metta(FileSpec):- with_file_lists('.',convert_to_metta,FileSpec).
+
+convert_to_metta_now(OutputIn,Filename):-
+	  user_io(convert_to_metta_now_out(OutputIn,Filename)).
 
 % Processes a single filename by opening the file, translating its content, and then closing the file.
-convert_to_metta_now(OutputIn,Filename):-
+convert_to_metta_now_out(OutputIn,Filename):-
     atom(Filename),  % Verifies that the filename is an atom.
     % Generate the new filename with .metta extension.
     file_name_extension(Base, _OldExt, Filename),
     file_name_extension(Base, metta, NewFilename),
+	file_base_name(Base,Module),
     % Setup step: open both the input and output files.
-    format('~N~n~w~n', [convert_to_metta(Filename,NewFilename)]), % Prints the action being performed.
-    %Output = user_output,
-    copy_term(OutputIn,Output),
+    %format('~N~n~w~n', [convert_to_metta(Filename,NewFilename)]), % Prints the action being performed.
+	convert_to_metta_file(Module,OutputIn,Filename,NewFilename).
+
+write_src_cmt(G):- ignore(with_output_to(string(S),write_src(G)),in_cmt(S)).
+
+convert_to_metta_file(Module,OutputIn,Filename,NewFilename):-
+
+	copy_term(OutputIn,Output),
+
+	if_t(var(OutputIn),
+	   user_io(write_src_cmt(convert_to_metta_file(Module,OutputIn,Filename,NewFilename)))),
+    %Output = user_output,    
     setup_call_cleanup(
-        open(Filename, read, Input, [encoding(utf8)]),
+        open(Filename, read, Input, [encoding(iso_latin_1)]),
         % Call step: perform the translation and write to the output file.
         setup_call_cleanup(
             (if_t(var(Output),open(NewFilename, write, Output, [encoding(utf8)]))),
-            with_output_to(Output,translate_to_metta(Input)),
+            with_output_to(Output,			 
+			     translate_to_metta(Module,Input)),
             % Cleanup step for the output file: close the output stream.
             close(Output)
         ),
@@ -488,31 +587,39 @@ convert_to_metta_now(OutputIn,Filename):-
 into_namings(N=V):- ignore(V='$VAR'(N)).
 
 % Recursively translates content, stopping at the end of the file.
-translate_to_metta(Input):- 
+translate_to_metta(Module,Input):- 
     at_end_of_stream(Input),  % Checks for the end of the file.
     !, nl.
 
 % Processes whitespace characters, maintaining their presence in the output.
-translate_to_metta(Input):- 
+translate_to_metta(Module,Input):- 
     peek_char(Input, Char),  % Peeks at the next character without consuming it.
     is_reprint_char(Char), !,
     get_char(Input, _),  % Consumes the character.
     put_char(Char),  % Prints the character.
-    translate_to_metta(Input).
+    translate_to_metta(Module,Input).
 
 % Converts Prolog comments to Metta-style comments, then continues processing.
-translate_to_metta(Input):- 
-    peek_char(Input, Char), 
-    Char == '%', % Checks for Prolog comment start.
-    get_char(Input, _), put_char(';'),  
-    read_line_to_string(Input, Cmt),  % Reads the comment line.
-    print_metta_comments(Cmt),nl, % Converts and prints the comment in Metta style.
-    translate_to_metta(Input).  % Continues with the next line.
+	translate_to_metta(Module,Input):- 
+		peek_char(Input, Char), 
+		Char == '%', % Checks for Prolog comment start.
+		get_char(Input, _), put_char(';'),  
+		read_line_to_string(Input, Cmt),  % Reads the comment line.
+		print_metta_comments(Cmt),nl, % Converts and prints the comment in Metta style.
+		translate_to_metta(Module,Input).  % Continues with the next line.
+
+	translate_to_metta(Module,Input):- 
+		peek_char(Input, Char), 
+		Char == '#', % Checks for Prolog comment start.
+		get_char(Input, _), put_char(';'),  
+		read_line_to_string(Input, Cmt),  % Reads the comment line.
+		print_metta_comments(Cmt),nl, % Converts and prints the comment in Metta style.
+		translate_to_metta(Module,Input).  % Continues with the next line.
 
 % Reads a clause along with its metadata, then continues translation.
-translate_to_metta(Input):- 
+translate_to_metta(Module,Input):- 
   read_clause_with_info(Input),!,
-  translate_to_metta(Input).
+  translate_to_metta(Module,Input).
 
 % Helper predicates and processing functions follow...
 
@@ -524,7 +631,12 @@ is_reprint_char(Char):- Char == '.'.
 translate_comment(Cmt,Str):- replace_in_string(["%"=";","prolog"="MeTTa","Prolog"="MeTTa"],Cmt,Str).
 
 % Reads a clause while capturing various pieces of metadata.
-read_clause_with_info(Stream) :-
+
+read_clause_with_info(Stream) :- at_end_of_stream(Stream),!.
+read_clause_with_info(Stream):- catch(read_clause_with_info_0(Stream),E,
+  ((user_io(write_src_cmt(E)),write_src_cmt(E)))).
+							
+read_clause_with_info_0(Stream) :-
     Options = [ variable_names(Bindings),
                     term_position(Pos),
                     subterm_positions(RawLayout),
@@ -532,7 +644,7 @@ read_clause_with_info(Stream) :-
                     comments(Comments),
                     module(trans_mod)],
     read_term(Stream, Term, Options),
-    (   Term == end_of_file
+    (   (fail,Term == end_of_file)
     ->  true
     ;   b_setval('$term_position', Pos),
         b_setval('$variable_names', Bindings),
@@ -541,28 +653,42 @@ read_clause_with_info(Stream) :-
 % Displays term information and processes comments.
 display_term_info(Stream, Term, Bindings, Pos, RawLayout, Comments):-
    maplist(into_namings,Bindings),
-   ignore(process_term(Term)),
+   ignore(process_term(Stream,Term)),
    print_metta_comments(Comments),!.
 
+print_metta_comments(Comments):- in_cmt(print_metta_comment(Commets)).
+print_metta_comment([]):-!.
+print_metta_comment(_TP-Cmt):-!, print_metta_comment(Cmt).
+print_metta_comment([Cmt|Cs]):- !, print_metta_comment(Cmt),nl,!, print_metta_comment(Cs).
+print_metta_comment(Cmt):- translate_comment(Cmt,String),writeln(String).
 
-print_metta_comments([]):-!.
-print_metta_comments(_TP-Cmt):-!, print_metta_comments(Cmt).
-print_metta_comments([Cmt|Cs]):- !, print_metta_comments(Cmt),nl,!, print_metta_comments(Cs).
-print_metta_comments(Cmt):- translate_comment(Cmt,String),write(String).
 
-% Processes each term based on its type (directive or other).
-process_term(end_of_file):- !.
-process_term(Term):-
+echo_as_commnents_until_eof(Stream):-
+	repeat,
+	(at_end_of_stream(Stream)-> !; 
+  	 (read_line_to_string(Stream,Cmt),
+	   ignore((print_metta_comments(Cmt))),
+		fail)).
+
+
+
+% Processes each term based on its type (directive or other).	
+process_term(Stream,end_of_file):- !, echo_as_commnents_until_eof(Stream).
+process_term(Stream,Term):-
     is_directive(Term), 
-    ignore(maybe_call_directive(Term)),
+    ignore(maybe_call_directive(Stream,Term)),
     !, ignore(print_directive(Term)).
-process_term(Term):-
+process_term(_,Term):-
   expand_to_hb(Term,H,B),
   p2m((H:-B),STerm),
   push_term_ctx(Term),
   write_pl_metta(STerm).
 
-maybe_call_directive((:- op(X,F,Y))):- trans_mod:op(X,F,Y).
+maybe_call_directive(Stream,(:- X)):- !, maybe_call_directive(Stream,X).
+maybe_call_directive(_Stream,op(X,F,Y)):- trans_mod:op(X,F,Y).
+maybe_call_directive(_Stream,use_module(library(W))):- trans_mod:use_module(library(W)).
+maybe_call_directive(Stream,encoding(Enc)):- 
+	set_stream(Stream,encoding(Enc)).
 
 % Checks if a term is a directive.
 is_directive((:- _)).
@@ -575,8 +701,8 @@ push_term_ctx(X):- compound_name_arity(X,F,_A),push_term_ctx(F).
 % Print a Prolog directive in a specific format.
 print_directive((:- Directive)):- 
   push_term_ctx(exec), % pc
-  p2m(Directive,STerm), % p2m
-  write_pl_metta(STerm). %we
+  p2m([':-'],Directive,STerm), % p2m
+  write_pl_metta(exec(STerm)). %we
 
 write_pl_metta(STerm):-
     \+ \+ write_pl_metta_0(STerm).
