@@ -176,8 +176,8 @@ with_kif_not_ok(G):-
  ?,?).
 
 
-:- dynamic user:file_search_path/2.
-:- multifile user:file_search_path/2.
+	:- dynamic user:file_search_path/2.
+	:- multifile user:file_search_path/2.
 
 :- thread_local(t_l:s_reader_info/1).
 
