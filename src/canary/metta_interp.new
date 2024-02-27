@@ -1139,6 +1139,7 @@ is_unit_test_exec(Exec):- sformat(S,'~q',[Exec]),sub_atom(S,_,_,_,"!',").
 
 return_empty('Empty').
 return_empty(_,Empty):- return_empty(Empty).
+return_empty(_RetType,_,Empty):- return_empty(Empty).
 
 convert_tax(_How,Self,Tax,Expr,NewHow):-
   metta_interp_mode(Ch,Mode),

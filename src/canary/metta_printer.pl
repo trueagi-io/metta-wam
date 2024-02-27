@@ -92,7 +92,8 @@ pp_sax(S) :- is_englishy(S),!,print_concept("StringValue",S).
 pp_sax(S) :- symbol_length(S,1),symbol_string(S,SS),!,print_concept("StringValue",SS).
 pp_sax(S) :- is_an_arg_type(S,T),!,print_concept("TypeNode",T).
 pp_sax(S) :- has_type(S,T),!,format('(~wValueNode "~w")',[T,S]).
-pp_sax(S) :- sub_atom(S,0,4,Aft,FB),flybase_identifier(FB,Type),!,(Aft>0->format('(~wValueNode "~w")',[Type,S]);format('(TypeNode "~w")',[Type])).
+pp_sax(S) :- sub_atom(S,0,4,Aft,FB),flybase_identifier(FB,Type),!,
+ (Aft>0->format('(~wValueNode "~w")',[Type,S]);'format'('(TypeNode "~w")',[Type])).
 pp_sax(S) :- print_concept("ConceptNode",S).
 
 %print_concept( CType,V):- allow_concepts, !, write("("),write(CType),write(" "),ignore(with_concepts(false,write_src(V))),write(")").
@@ -128,7 +129,7 @@ pp_sex_nc(V):- with_no_quoting_symbols(true,pp_sex(V)),!.
 unlooped_fbug(Mesg):- 
  fbug_message_hook(fbug_message_hook,fbug(Mesg)).
 
-into_hyphens(D,U):- atom(D),!,atomic_list_concat(L,'_',D),atomic_list_concat(L,'-',U).
+into_hyphens(D,U):- atom(D),!,always_dash_functor(D,U).
 into_hyphens(D,U):- descend_and_transform(into_hyphens,D,U),!.
 
 
@@ -139,7 +140,7 @@ unlooped_fbug(W,Mesg):-
     once(Mesg),nb_setval(W,false)),nb_setval(W,false).
 
 
-write_src(V):- quietly(pp_sex(V)),!.
+write_src(V):- \+ \+ quietly(pp_sex(V)),!.
 
 pp_sex(V):- pp_sexi(V),!.
 % Various 'write_src' and 'pp_sex' rules are handling the writing of the source,
@@ -200,9 +201,8 @@ pp_sexi_l([H,S]):-H=='[...]', write('['),print_items_list(S),write(' ]').
 pp_sexi_l([H,S]):-H=='{...}', write('{'),print_items_list(S),write(' }').
 %pp_sex_l(X):- \+ compound(X),!,write_src(X).  
 %pp_sex_l('$VAR'(S))):- 
-pp_sexi_l([=,H,B]):-
-  write('(= '), with_indents(false,write_src(H)), nl, write('  '),
-        with_indents(true,write_src(B)),write(')').
+pp_sexi_l([=,H,B]):- pp_sexi_hb(H,B),!.
+
 pp_sexi_l([H|T]) :- \+ no_src_indents, symbol(H),member(H,['If','cond','let','let*']),!,
   with_indents(true,w_proper_indent(2,w_in_p(pp_sex([H|T])))).
 
@@ -219,6 +219,15 @@ pp_sexi_l([H|T]) :- is_list(T),symbol(H),upcase_atom(H,U),downcase_atom(H,U),!,
 %  with_indents(false,(write('('), pp_sex(H), print_list_as_sexpression([B,C]), write(')'))).
 */    
 
+pp_sexi_hb(H,B):-
+  write('(= '), with_indents(false,pp_sex(H)), write('  '),
+        ((is_list(B),maplist(is_list,B))
+	  ->with_indents(true,maplist(write_src_inl,B))
+	  ;with_indents(true,pp_sex(B))),
+	write(')').
+
+write_src_inl(B):- nl, write('    '),pp_sex(B).
+
 pp_sex_c(V):- pp_sexi_c(V),!.
 pp_sexi_c(V) :- is_final_write(V),!.
 pp_sexi_c((USER:Body)) :- USER==user,!, pp_sex(Body).
@@ -228,7 +237,7 @@ pp_sexi_c(!([H|T])) :- is_list(T),!,write('!'),pp_sex_l([H|T]).
 pp_sexi_c([H|T]) :- is_list(T),!,pp_sex_l([H|T]).
 %pp_sexi_c(V) :- print(V),!.
 
-pp_sexi_c(=(H,B)):- !, pp_sex_l([=,H,B]).
+pp_sexi_c(=(H,B)):- !, pp_sexi_hb(H,B),!.
 pp_sexi_c(V):- compound_name_list(V,F,Args),write_mobj(F,Args),!.
 % Compound terms.
 %pp_sex(Term) :- compound(Term), Term =.. [Functor|Args], write('('),format('(~w ',[Functor]), write_args_as_sexpression(Args), write(')').
@@ -268,18 +277,20 @@ w_in_p(G):- setup_call_cleanup(flag(w_in_p,X,X+1),G,flag(w_in_p,_,X)).
 always_dash_functor(A,B):- once(dash_functor(A,B)),A\=@=B,!.
 always_dash_functor(A,A).
 
+
 dash_functor(A,C):- \+ symbol(A),!,C=A.
-dash_functor(A,C):- A=='[|]',!,C='Cons'.
-%dash_functor(A,C):- p2m(A,B),A\==B,!,always_dash_functor(B,C).
-dash_functor(Functor,DFunctor):-
-   symbol(Functor), atomic_list_concat(L,'-',Functor), L\=[_],maplist(always_dash_functor,L,LL),
-   atomic_list_concat(LL,'-',DFunctor).
-dash_functor(Functor,DFunctor):- fail,
-   symbol(Functor), atomic_list_concat(L,'_',Functor), L\=[_],maplist(always_dash_functor,L,LL),
-   atomic_list_concat(LL,'-',DFunctor).
-dash_functor(Functor,DFunctor):-
-   symbol(Functor), atomic_list_concat(L,'_',Functor), L\=[_],maplist(always_dash_functor,L,LL),
-   atomic_list_concat(LL,'_',DFunctor).
+% dash_functor(A,C):- p2m(A,B),A\==B,!,always_dash_functor(B,C).
+dash_functor(ASymbolProc,O):- atom_contains(ASymbolProc,'_'),
+	atomic_list_concat(LS,'atom',ASymbolProc),LS\==[],LS\=[_],
+	atomic_list_concat(LS,'symbol',SymbolProc),
+	always_dash_functor(SymbolProc,O).
+dash_functor(ASymbolProc,O):- atom_concat('$',LS,ASymbolProc),!,
+	atom_concat('%',LS,SymbolProc),
+	always_dash_functor(SymbolProc,O).
+
+dash_functor(Functor,DFunctor):- 
+   atomic_list_concat(L,'_',Functor), L\=[_],
+   atomic_list_concat(L,'-',DFunctor).
 
 % Print arguments of a compound term.
 write_args_as_sexpression([]).
