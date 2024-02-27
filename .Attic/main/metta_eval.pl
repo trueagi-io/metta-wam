@@ -707,11 +707,17 @@ eval_in_steps_or_same(Eq,RetType,_Dpth,_Slf,X,Y):- X=Y,check_returnval(Eq,RetTyp
 
 possible_type(_Self,_Var,_RetTypeV).
 
+eval_20(Eq,RetType,Depth,Self,['let',V,E,Body],OO):- !, % var(V), nonvar(E), !,
+        %(var(V)->true;trace),
+        possible_type(Self,V,RetTypeV),
+        eval(Eq,RetTypeV,Depth,Self,E,ER), V=ER,
+        eval(Eq,RetType,Depth,Self,Body,OO).
+
 
 eval_20(Eq,RetType,Depth,Self,['let',V,E,Body],OO):- nonvar(V),nonvar(E),!,
 	possible_type(Self,V,RetTypeV),
 	possible_type(Self,E,RetTypeV),
-	(V=E -> true;
+	((V=E,fail) -> true;
 	(eval(Eq,RetTypeV,Depth,Self,E,ER), 
 	(V=ER -> true;
 	(eval(Eq,RetTypeV,Depth,Self,V,VR),
@@ -726,10 +732,10 @@ eval_20(Eq,RetType,Depth,Self,['let',E,V,Body],OO):- var(V), nonvar(E), !,
 
 
 eval_20(Eq,RetType,Depth,Self,['let',V,E,Body],OO):- var(V), nonvar(E), !,
-	%(var(V)->true;trace),
-	possible_type(Self,V,RetTypeV),
-	eval(Eq,RetTypeV,Depth,Self,E,ER), V=ER,
-	eval(Eq,RetType,Depth,Self,Body,OO).
+        %(var(V)->true;trace),
+        possible_type(Self,V,RetTypeV),
+        eval(Eq,RetTypeV,Depth,Self,E,ER), V=ER,
+        eval(Eq,RetType,Depth,Self,Body,OO).
 
 eval_20(Eq,RetType,Depth,Self,['let',V,E,Body],OO):- var(V), var(E), !,
 	  V=E, eval(Eq,RetType,Depth,Self,Body,OO).
