@@ -1,1 +1,0 @@
-Would be doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/c2_spaces_kb.metta
