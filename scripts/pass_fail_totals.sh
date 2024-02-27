@@ -13,12 +13,11 @@ start_dir=$1
 temp_file=$(mktemp)
 
 # Find all directories under the specified start directory and store in temp file with slash count
-find "$start_dir" -type d -not -path '*/__pycache__*' -not -path '*~*' | while read -r dir; do
+find "$start_dir" -type d -not -path '*/__pycache__*' | while read -r dir; do
     # Count the number of slashes in the directory path
     slash_count=$(tr -cd '/' <<< "$dir" | wc -c)
     echo "$dir $slash_count" >> "$temp_file"
 done
-
 
 echo "| Pass | Fail |Miss|Percent| Directory |"
 echo "|------|------|----|-------|-----------|"
