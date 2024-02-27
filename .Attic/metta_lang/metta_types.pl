@@ -122,11 +122,12 @@ get_type01(_Dpth,_Slf,Val,'Decimal'):- float(Val).
 get_type01(_Dpth,_Slf,Val,'Rational'):- rational(Val).
 get_type01(_Dpth,_Slf,Val,'Bool'):- (Val=='False';Val=='True'),!.
 %get_type01(_Dpth,_Slf,Val,Type):- string(Val),!,(Type='String';Type='Symbol').
+get_type01(Depth,Self,Op,Type):- Depth2 is Depth-1, eval_args(Depth2,Self,Op,Val),Op\=@=Val,!, get_type(Depth2,Self,Val,Type).
 get_type01(_Dpth,_Slf,Expr,_):-  \+ atom(Expr),!,fail.
 get_type01(_Dpth,_Slf,Val,Type):- is_decl_type(Val),(Type=Val;Type='Type').
 get_type01(_Dpth,_Slf,Val,Type):- atomic_list_concat([Type,_|_],'@',Val).
 get_type01(_Dpth,_Slf,Val,Type):- atomic_list_concat([Type,_|_],':',Val).
-get_type01(Depth,Self,Op,Type):- Depth2 is Depth-1, eval_args(Depth2,Self,Op,Val),Op\=@=Val,!, get_type(Depth2,Self,Val,Type).
+get_type01(_Dpth,_Slf,_,'%Undefined%'):- !. %report undefined symbols as such 
 %get_type01(_Dpth,_Slf,Expr,'hyperon::space::DynSpace'):- \+ is_list(Expr), callable(Expr), is_space_type(Expr,_).
 %get_type01(_Dpth,_Slf,_Val,'String').
 %get_type01(_Dpth,_Slf,_Val,'Symbol').
