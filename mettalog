@@ -23,6 +23,7 @@ dry_run=0
 #debug_this_script=true
 
 
+
 # Capture original auto margins setting and terminal size
 original_automargins=$(stty -a | grep -o 'onlcr' || echo 'off')
 original_size=$(stty size)
@@ -133,13 +134,24 @@ function unquote_arg {
   echo "$arg"
 }
 
+
+# ANSI escape codes for colors
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BOLD='\033[1m'
+# ANSI escape code to reset color
+NC='\033[0m' # No Color
+
 do_DEBUG() {
     # Calculate the screen width and 74% of it
     local screen_width=$(tput cols)
     local threshold=$((screen_width * 74 / 100))
 
     # Construct the debug message
-    local msg="; DEBUG $*"
+    # Construct the debug message
+    local msg="; ${YELLOW}DEBUG${NC} $*"
 
     # Calculate the length of the debug message
     local msg_length=${#msg}
@@ -148,11 +160,11 @@ do_DEBUG() {
       # If the message is longer than 74% of the screen width,
       # print a newline before and after the message
       echo >&2
-      echo "$msg" >&2
+      echo -e "$msg" >&2
       echo >&2
     else
       # If the message is not longer than 74% of the screen width, print it as usual
-      echo "$msg" >&2
+      echo -e "$msg" >&2
     fi
 }
 
@@ -168,10 +180,10 @@ DEBUG() {
 
 IF_REALLY_DO() {
     if [ "$dry_run" -eq 1 ]; then
-        do_DEBUG "Dry Run: $*"
+        do_DEBUG "${BLUE}Dry Run:${NC} $*"
     else
-        DEBUG "Doing: $*"
-        eval "$*"
+        DEBUG "${GREEN}Doing:${NC} $*"
+        eval "$@" || { DEBUG "${RED}Error executing command:${NC} $*"; return 1; }
     fi
 }
 
@@ -777,21 +789,39 @@ if [[ "$OS" == "Darwin" ]]; then
     fi
 fi
 
+
+
 # Initialize the variable to store the exit status of METTA_CMD
 METTA_CMD_EXIT_STATUS=666
 TEMP_EXIT_CODE_FILE="$(mktemp)"
+
 # Set a trap to ensure stty sane is run on script exit or interruption
 cleanup() {
     stty sane
     if [[ -f "$TEMP_EXIT_CODE_FILE" ]]; then
-        METTA_CMD_EXIT_STATUS=$(<"$TEMP_EXIT_CODE_FILE")
-        IF_REALLY_DO "rm -f '$TEE_FILE'"
+        METTA_CMD_EXIT_STATUS=$(<"$TEMP_EXIT_CODE_FILE")        
     else
         METTA_CMD_EXIT_STATUS=${METTA_CMD_EXIT_STATUS:-$?}
     fi
     DEBUG "Exit code of METTA_CMD: $METTA_CMD_EXIT_STATUS"
-    [[ $IS_SOURCED -eq 1 ]] && return $METTA_CMD_EXIT_STATUS || exit $METTA_CMD_EXIT_STATUS
+
+    if [ ! -z "$TEE_FILE" ];then
+        if [ ! -z "$HTML_OUT" ];then
+            IF_REALLY_DO "ansi2html -u < '$TEE_FILE' > '$HTML_OUT'"
+            HTML_OUT=
+        fi
+        IF_REALLY_DO "rm -f '$TEE_FILE'"
+        TEE_FILE=
+    fi
+    if [ "$IS_SOURCED" -eq 1 ]; then
+        return $METTA_CMD_EXIT_STATUS
+    else
+        exit $METTA_CMD_EXIT_STATUS
+    fi
 }
+
+# Trap exit signal to execute cleanup function
+trap 'cleanup' EXIT
 
 #DEBUG "TIMEOUT=$TIMEOUT"
 
@@ -807,6 +837,7 @@ function escape_quotes {
 cd "${RPWD}"
 export TIMEOUT
 set +e
+
 # Conditional to check if html_flag is enabled
 if [[ "$html_flag" == "enable" ]]; then
     # Generate a random filename for TEE_FILE with date,time,PID
@@ -814,19 +845,18 @@ if [[ "$html_flag" == "enable" ]]; then
     TEE_FILE="$METTALOG_DIR/TEE_$random_suffix.ansi"
     export TEE_FILE
 
-    if [ -z "$HTML_OUT" ];then
-	if [ -z "$OUTPUT_DIR" ] ;then
-	    HTML_OUT="${OUTPUT_DIR}/${HTML_OUT}"
-	fi
+    if [ ! -z "$HTML_OUT" ];then
+        HTML_OUT=$(realpath --relative-to="$(pwd)" "$HTML_OUT")
+        if [ ! -z "$OUTPUT_DIR" ] ;then
+            HTML_OUT="${OUTPUT_DIR}/${HTML_OUT}"
+        fi
     fi
 
     export TYPESCRIPT=1
     if [[ "$OS" == "Darwin" ]]; then # macOS
-	      METTA_CMD="/usr/bin/script -q -f -a \"$TEE_FILE\" \"${METTA_CMD//\"/\\\"}\""
+        METTA_CMD="/usr/bin/script -q -f -a \"$TEE_FILE\" \"${METTA_CMD//\"/\\\"}\""
     else # Assume Linux
-
-
-          METTA_CMD="/usr/bin/script -q -f --force -e -a \"$TEE_FILE\" -c \"${METTA_CMD//\"/\\\"}\""
+        METTA_CMD="/usr/bin/script -q -f --force -e -a \"$TEE_FILE\" -c \"${METTA_CMD//\"/\\\"}\""
     fi
 
     [[ "$wants_print_help" == "1" ]] && { print_help; }
@@ -835,26 +865,21 @@ if [[ "$html_flag" == "enable" ]]; then
     DEBUG ""
     [[ -n "${EXIT_SCRIPT+x}" ]] && { [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
 
-
-    ( IF_REALLY_DO "touch '$TEE_FILE'"
-    IF_REALLY_DO "chmod 777 '$TEE_FILE'"
-    IF_REALLY_DO "cat /dev/null > '$TEE_FILE'"
-    do_DEBUG "METTA_CMD: $METTA_CMD"
-    eval "$METTA_CMD"
-       echo $? > "$TEMP_EXIT_CODE_FILE" 
-    IF_REALLY_DO "ansi2html -u < '$TEE_FILE' >'$HTML_OUT'" 
-    IF_REALLY_DO "rm -f '$TEE_FILE'" )
-    cleanup
+    (
+        IF_REALLY_DO "touch '$TEE_FILE'"
+        IF_REALLY_DO "chmod 777 '$TEE_FILE'"
+        IF_REALLY_DO "cat /dev/null > '$TEE_FILE'"
+        DEBUG "METTA_CMD: $METTA_CMD"
+        eval "$METTA_CMD"
+        echo $? > "$TEMP_EXIT_CODE_FILE"
+    )
 else
-
     [[ "$wants_print_help" == "1" ]] && { print_help; [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
     [[ -n "${EXIT_SCRIPT+x}" ]] && { [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
     DEBUG "METTA_CMD: $METTA_CMD"
-    ( IF_REALLY_DO eval "$METTA_CMD"
-       IF_REALLY_DO "echo $? > '$TEMP_EXIT_CODE_FILE'" )
-    # rm -f "$TEE_FILE"
-    cleanup
+    (
+        IF_REALLY_DO eval "$METTA_CMD"
+        IF_REALLY_DO "echo $? > '$TEMP_EXIT_CODE_FILE'"
+    )
 fi
-
-
 

@@ -13,12 +13,11 @@ start_dir=$1
 temp_file=$(mktemp)
 
 # Find all directories under the specified start directory and store in temp file with slash count
-find "$start_dir" -type d -not -path '*/__pycache__*' -not -path '*~*' | while read -r dir; do
+find "$start_dir" -type d -not -path '*/__pycache__*' | while read -r dir; do
     # Count the number of slashes in the directory path
     slash_count=$(tr -cd '/' <<< "$dir" | wc -c)
     echo "$dir $slash_count" >> "$temp_file"
 done
-
 
 echo "| Pass | Fail |Miss|Percent| Directory |"
 echo "|------|------|----|-------|-----------|"
@@ -80,7 +79,7 @@ echo ""
 
 
 
-base_url="https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/"
+base_url="https://logicmoo.org/public/metta/"
 
 # Sort the directories by file count in reverse order
 sort -k2,2n "$temp_file" | while read -r dir slash_count; do
