@@ -480,9 +480,22 @@ PRE_METTALOG_OPTIONS=()
 SWI_FLAG_WITH_ARG=false
 python_flag=enable
 LIST_OF_FILE_ARGS=()
-PYSWIP_VERSION="main"
+
 wants_print_help=0
 
+
+PYSWIP_VERSION="main"
+
+# Check if the file exists and Read the first line from the file
+VERSION_FILE="src/version-config"
+if [ -f "$VERSION_FILE" ]; then    
+    read -r FIRST_LINE < "$VERSION_FILE"
+    if [ ! -z "$FIRST_LINE" ]; then
+	if [ -d "src/$FIRST_LINE" ]; then
+	    PYSWIP_VERSION="$FIRST_LINE"
+	fi
+    fi
+fi
 
 
 DefaultSav="Sav.$(hostname).MeTTaLog"
