@@ -230,8 +230,8 @@ p2m(I,O):- p2m([progn],I,O).
 p2m(_OC,NC, NC) :- var(NC), !.  % If NC is a variable, do not translate.
 p2m(_OC,NC, NC) :- is_ftVar(NC), !.  % If NC is a free term variable, do not translate.
 
-p2m(OC,[H|T],['::'|L]):- is_list([H|T]),maplist(p2m(OC),[H|T],L).
-p2m(OC,[H|T], 'Cons'(OH, OT)):- p2m(OC,H, OH), p2m(OC,T, OT).
+p2m(OC,[H|T],'::'(L)):- is_list([H|T]),maplist(p2m(OC),[H|T],L).
+p2m(OC,[H|T], 'Cons'(OH,OT)):- p2m(OC,H, OH), p2m(OC,T, OT).
 
 
 % Conversion for any atomic term
@@ -243,31 +243,35 @@ p2m(_OC,!, ['set-det']).  % Translate the cut operation directly.
 p2m(_OC,!, '!').  % Translate the cut operation directly.
 p2m(_OC,false, 'False').
 p2m(_OC,true, 'True').  % Translate Prolog?s true to MeTTa?s True.
-p2m([':-'|_],Atom,[O,*]):- atom(Atom), p2m([arg],Atom,O),!.
-p2m(_OC,( ';' ),or).
+p2m([progn|_],Atom,[O]):- atom(Atom),!,p2m([arg],Atom,O),!.
+p2m(_OC,( ';' ),'xor').
+p2m(_OC,( ',' ),'and2').
 %p2m(_OC,( ',' ),and).
 %p2m(_OC,( '\\+' ),unless).
 %p2m(_OC,( ':-' ),entailed_by).
 p2m(_OC,'=..','atom_2_list').
-p2m(_,A, H):- atom(A),into_hyphens(A,H),!.
-p2m(_OC,A, A):- atomic(A).
-p2m(_OC,NC,NC):- \+ compound(NC),!.
-p2m(_OC,NC,[F]):- compound_name_arity(NC,F,0),!.
+p2m([progn|_], (fail), [empty]).  % Translate Prolog?s fail to MeTTa?s False.
 p2m(_OC,'atom','is-symbol').
 p2m(_OC,'atomic','symbolic').
 p2m(OC,ASymbolProc,O):- atom(ASymbolProc),
 	atomic_list_concat(LS,'$',ASymbolProc),LS\==[],LS\=[_],!,
 	atomic_list_concat(LS,'%',SymbolProc),into_hyphens(SymbolProc,O).
 p2m(OC,ASymbolProc,O):- atom(ASymbolProc),into_hyphens(ASymbolProc,O).
+p2m(_,A, H):- atom(A),into_hyphens(A,H),!.
+p2m(_OC,A, A):- atomic(A).
+p2m(_OC,NC,NC):- \+ compound(NC),!.
 
+
+p2m(_OC,NC,[F]):- compound_name_arity(NC,F,0),!.
 p2m(OC,M:I, O):- M==user,!, p2m(OC,I,O),!.
-p2m(_OC,M:I, with_self(N,O)):-  p2m(OC,M,N),p2m(I,O).
+p2m(OC,M:I, O):- M==user,!, p2m(OC,I,O),!.
+p2m(_OC,M:I, 'scoped'(N,O)):-  p2m(OC,M,N),p2m(I,O).
 % Conversion for lists
 p2m(OC,NC, OO) :-
     % If NC is a list, map each element of the list from Prolog to MeTTa
     is_list(NC),!,
     maplist(p2m(OC), NC, OO).
-p2m([progn|_], (!,fail), [empty]).  % Translate Prolog?s fail to MeTTa?s False.
+	p2m([progn|_], (!,fail), [empty]).  % Translate Prolog?s fail to MeTTa?s False.
 % p2m(_OC,fail, 'False').  % Translate Prolog?s fail to MeTTa?s False.
 % p2m(_OC,prolog, meTTa).  % Translate the atom prolog to meTTa.
 
@@ -275,7 +279,7 @@ p2m([progn|_], (!,fail), [empty]).  % Translate Prolog?s fail to MeTTa?s False.
 p2m([progn|_],A, [H]):- atom(A),into_hyphens(A,H),!.
 
 % Conversion for the negation as failure
-p2m(_OC,(\+ A), O):- !, p2m(_OC,not(A), O).
+p2m(_OC,(\+ A), O):- !, p2m(_OC,naf(A), O).
 
 p2m(OC,(G,E),O):-  conjuncts_to_list((G,E),List),!,into_sequential(OC,List,O),!.
 
@@ -285,13 +289,13 @@ p2m(OC,(G,E),O):-  conjuncts_to_list((G,E),List),!,into_sequential(OC,List,O),!.
 p2m(_OC,(Head:-Body),O):- Body == true,!, O = (=(Head,'True')).
 p2m(_OC,(Head:-Body),O):- Body == fail,!, O = (=(Head,[empty])).
 p2m(OC,(Head:-Body),O):- 
-   p2m(Head,H),conjuncts_to_list(Body,List),into_sequential([':-'|OC],List,SP),!,
-   O =  (=(H,SP)).
+   p2m(Head,H),conjuncts_to_list(Body,List),maplist(p2m([progn|OC]),List,SP),!,
+   O =  ['=',H|SP].
 
 	p2m(OC,(:-Body),O):- !,
-	   conjuncts_to_list(Body,List),into_sequential([':-'|OC],List,SP),!, O= exec(SP).
+	   conjuncts_to_list(Body,List),into_sequential([progn|OC],List,SP),!, O= exec(SP).
 	p2m(OC,( ?- Body),O):- !,
-	   conjuncts_to_list(Body,List),into_sequential([':-'|OC],List,SP),!, O= exec('?-'(SP)).
+	   conjuncts_to_list(Body,List),into_sequential([progn|OC],List,SP),!, O= exec('?-'(SP)).
 
 %p2m(_OC,(Head:-Body),O):- conjuncts_to_list(Body,List),into_sequential(OC,List,SP),!,O=(=(Head,SP)).
 
@@ -343,12 +347,12 @@ into_sequential(OC,Body, SP) :-
     conjuncts_to_list(Body, List),
     is_list(List), % Converts a list of conjunctions into a sequential representation in MeTTa
     into_sequential(OC,List, SP), !.
-into_sequential([':-'|_],Nothing,'True'):- Nothing ==[],!.
+into_sequential([progn|_],Nothing,'True'):- Nothing ==[],!.
 into_sequential(_OC,Nothing,'Nil'):- Nothing ==[],!.
 % If theres only one element
 into_sequential(_,[SP],O):- prolog_to_metta(SP,O).
 % Otherwise, construct sequential representation using AND.
-into_sequential([':-'|_],List, SPList) :-
+into_sequential([progn|_],List, SPList) :-
 		maplist(prolog_to_metta, List, SPList),!.
 into_sequential(_CA,List, [AND|SPList]) :-
 		   is_compiled_and(AND), maplist(prolog_to_metta, List, SPList),!.

@@ -100,7 +100,7 @@ nullify_output:- nullify_output_really.
 nullify_output_really:- current_output(MFS), null_user_output(OUT),  MFS==OUT, !.
 nullify_output_really:- null_user_output(MFS), set_prolog_IO(user_input,MFS,MFS).
 
-
+set_output_stream :- !.
 set_output_stream :- keep_output -> nullify_output;  unnullify_output.
 :- set_output_stream.
 % :- nullify_output.
@@ -190,7 +190,7 @@ option_value_def('compile',false).
 option_value_def('tabling',true).
 option_value_def('optimize',true).
 option_value_def(no_repeats,false).
-option_value_def('time',false).
+%option_value_def('time',false).
 option_value_def('test',false).
 option_value_def('html',false).
 option_value_def('python',false).
@@ -397,14 +397,14 @@ show_options_values:-
 % Condition: The condition/expression being traced.
 % EvalResult: The result of the evaluation of Condition.
 % Example: `rtrace((2 + 2), EvalResult).` would trace the evaluation of 2 + 2 and store its result in EvalResult.
-'rtrace'(Condition, EvalResult):- eval_H(['rtrace', Condition], EvalResult).
+'rtrace!'(Condition, EvalResult):- eval_H(['rtrace', Condition], EvalResult).
 
 % `time` Predicate
 % This predicate is used to measure the time taken to evaluate EvalThis.
 % EvalThis: The expression whose evaluation time is being measured.
 % EvalResult: The result of the evaluation of EvalThis.
 % Example: `time((factorial(5)), EvalResult).` would measure the time taken to evaluate factorial(5) and store its result in EvalResult.
-'time'(EvalThis, EvalResult):- eval_H(['time', EvalThis], EvalResult).
+'time!'(EvalThis, EvalResult):- eval_H(['time', EvalThis], EvalResult).
 
 % ============================
 % %%%% Debugging, Printing and Utility Operations

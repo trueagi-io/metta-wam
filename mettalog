@@ -183,10 +183,11 @@ IF_REALLY_DO() {
         do_DEBUG "${BLUE}Dry Run:${NC} $*"
     else
         DEBUG "${GREEN}Doing:${NC} $*"
-        eval "$@" || { DEBUG "${RED}Error executing command:${NC} $*"; return 1; }
+        eval "$@"
+	return $?
+	#|| { DEBUG "${RED}Error executing command:${NC} $*"; return 1; }
     fi
 }
-
 # Function to resolve path upward but stop one level higher than /usr/
 function resolve_upward {
   local current_dir="$1"
@@ -487,11 +488,12 @@ wants_print_help=0
 PYSWIP_VERSION="main"
 
 # Check if the file exists and Read the first line from the file
-VERSION_FILE="src/version-config"
+VERSION_FILE="$METTALOG_DIR/src/version-config"
 if [ -f "$VERSION_FILE" ]; then    
     read -r FIRST_LINE < "$VERSION_FILE"
+    FIRST_LINE="${FIRST_LINE%"${FIRST_LINE##*[![:space:]]}"}" 
     if [ ! -z "$FIRST_LINE" ]; then
-	if [ -d "src/$FIRST_LINE" ]; then
+	if [ -d "$METTALOG_DIR/src/$FIRST_LINE/" ]; then
 	    PYSWIP_VERSION="$FIRST_LINE"
 	fi
     fi

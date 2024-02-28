@@ -215,17 +215,22 @@ eval_20(Eq,RetType,_Dpth,_Slf,['repl!'],Y):- !,  repl,check_returnval(Eq,RetType
 %eval_20(Eq,RetType,Depth,Self,['enforce',Cond],Res):- !, enforce_true(Eq,RetType,Depth,Self,Cond,Res).
 eval_20(Eq,RetType,Depth,Self,['!',Cond],Res):- !, call(eval(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(Eq,RetType,Depth,Self,['rtrace!',Cond],Res):- !, rtrace(eval(Eq,RetType,Depth,Self,Cond,Res)).
-eval_20(Eq,RetType,Depth,Self,['trace!',A,B],C):- !,eval(Eq,RetType,Depth,Self,A,AA),write_src(AA),format('~N'),
+eval_20(Eq,RetType,Depth,Self,['trace!',A,B],C):- !,
+	 stream_property(S,file_no(2)),!,
+	 eval(Eq,RetType,Depth,Self,A,AA),	
+	 with_output_to(S,(format('~N'), write_src(AA),format('~N'))),
 	 eval(Eq,RetType,Depth,Self,B,C).
 eval_20(Eq,RetType,Depth,Self,['trace',Cond],Res):- !, with_debug(eval,eval(Eq,RetType,Depth,Self,Cond,Res)).
-eval_20(Eq,RetType,Depth,Self,['time',Cond],Res):- !, time_eval(eval(Cond),eval(Eq,RetType,Depth,Self,Cond,Res)).
+eval_20(Eq,RetType,Depth,Self,['time!',Cond],Res):- !, time_eval(eval(Cond),eval(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(Eq,RetType,Depth,Self,['print',Cond],Res):- !, eval(Eq,RetType,Depth,Self,Cond,Res),format('~N'),print(Res),format('~N').
 % !(println! $1)
 eval_20(Eq,RetType,Depth,Self,['println!'|Cond],Res):- !, 
   maplist(eval(Eq,RetType,Depth,Self),Cond,[Res|Out]),
     format('~N'),maplist(write_src,[Res|Out]),format('~N').
 eval_20(Eq,RetType,Depth,Self,['trace!',A|Cond],Res):- !, maplist(eval(Eq,RetType,Depth,Self),[A|Cond],[AA|Result]),
-   last(Result,Res), format('~N'),maplist(write_src,[AA]),format('~N').
+   last(Result,Res),
+	 stream_property(S,file_no(2)),
+	 with_output_to(S,(format('~N'),maplist(write_src,[AA]),format('~N'))).
 
 %eval_20(Eq,RetType,_Dpth,_Slf,['trace!',A],A):- !, format('~N'),fbug(A),format('~N').
 
@@ -1324,7 +1329,7 @@ eval_81(Eq, RetType, Depth, Self, [MyFun|More], RetVal) :-
 %eval_80(_Eq,_RetType,_Dpth,_Slf,LESS,Res):- fake_notrace((once((eval_selfless(LESS,Res),fake_notrace(LESS\==Res))))),!.
 
 % predicate inherited by system
-eval_82(Eq,RetType,_Depth,_Self,[AE|More],TF):-
+eval_82(Eq,RetType,_Depth,_Self,[AE|More],TF):- allow_host_functions,
   once((is_system_pred(AE),
   length(More,Len),
   is_syspred(AE,Len,Pred))),
@@ -1366,6 +1371,7 @@ account_needs(N,Needs,[A|Args],[M|More]):- arg(N,Needs,What),!,
    account_needs(NP1,Needs,Args,More).
 
 :- nodebug(metta(call)).
+allow_host_functions:- fail.
 
 s2ps(S,P):- S=='Nil',!,P=[].
 s2ps(S,P):- \+ is_list(S),!,P=S.
@@ -1379,7 +1385,7 @@ eval_call(S,TF):-
   fbug(eval_call(P,'$VAR'('TF'))),as_tf(P,TF).
 
 % function inherited from system
-eval_83(Eq,RetType,_Depth,_Self,[AE|More],Res):-
+eval_83(Eq,RetType,_Depth,_Self,[AE|More],Res):- allow_host_functions,
   is_system_pred(AE),
   length([AE|More],Len),
   is_syspred(AE,Len,Pred),
