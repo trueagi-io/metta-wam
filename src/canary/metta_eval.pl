@@ -624,7 +624,8 @@ eval_20(Eq,RetType,Depth,Self,['do',Expr], Empty):- !,
   %eval_ne(Eq,_RetType2,Depth,Self,Expr,_),!,
   make_empty(RetType,[],Empty).
 
-eval_20(_Eq,_RetType1,_Depth,_Self,['call',S], TF):- !, eval_call(S,TF).
+eval_20(_Eq,_RetType1,_Depth,_Self,['call!',S], TF):- !, eval_call(S,TF).
+eval_20(_Eq,_RetType1,_Depth,_Self,['call-fn!',S], R):- !, eval_call_fn(S,TF).
 
 max_counting(F,Max):- flag(F,X,X+1),  X<Max ->  true; (flag(F,_,10),!,fail).
 % =================================================================
@@ -1383,6 +1384,10 @@ join_s2ps(F,Args,P):-atom(F),P=..[F|Args].
 eval_call(S,TF):-
   s2ps(S,P), !,
   fbug(eval_call(P,'$VAR'('TF'))),as_tf(P,TF).
+
+eval_call_fn(S,R):-
+  s2ps(S,P), !,
+  fbug(eval_call_fn(P,'$VAR'('R'))),as_tf(call(P,R),TF),TF\=='False'.
 
 % function inherited from system
 eval_83(Eq,RetType,_Depth,_Self,[AE|More],Res):- allow_host_functions,
