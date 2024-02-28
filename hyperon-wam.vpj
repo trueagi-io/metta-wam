@@ -235,7 +235,6 @@
 				<F N="src/canary/metta_interp.new"/>
 				<F N="src/canary/metta_interp.pl"/>
 				<F N="src/canary/metta_prelude.metta"/>
-				<F N="src/canary/metta_prelude.pl"/>
 				<F N="src/canary/metta_printer.pl"/>
 				<F N="src/canary/metta_python.pl"/>
 				<F N="src/canary/metta_reader.new"/>
@@ -648,7 +647,6 @@
 					<F N="tests/baseline_compat/hyperon-experimental_scripts/d3_deptypes.metta.answers"/>
 					<F N="tests/baseline_compat/hyperon-experimental_scripts/d4_type_prop.metta"/>
 					<F N="tests/baseline_compat/hyperon-experimental_scripts/d4_type_prop.metta.answers"/>
-					<F N="tests/baseline_compat/hyperon-experimental_scripts/d4_type_prop.metta.html"/>
 					<F N="tests/baseline_compat/hyperon-experimental_scripts/d5_auto_types.metta"/>
 					<F N="tests/baseline_compat/hyperon-experimental_scripts/d5_auto_types.metta.answers"/>
 					<F N="tests/baseline_compat/hyperon-experimental_scripts/e1_kb_write.metta"/>
