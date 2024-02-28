@@ -1,4 +1,5 @@
-:- encoding(iso_latin_1).
+:- encoding(utf8).
+:- set_prolog_flag(encoding, utf8).
 :- nb_setval(cmt_override,lse('; ',' !(" ',' ") ')).
 :- set_prolog_flag(history, 10).
 :- set_prolog_flag(save_history, true).
@@ -110,6 +111,7 @@ switch_to_mettalog:-
   set_option_value('compatio',false),
   set_option_value('compat',false),
   set_option_value('log',true),
+  set_option_value('test',true),
   set_output_stream.
   
 switch_to_mettarust:- 
@@ -117,6 +119,7 @@ switch_to_mettarust:-
   set_option_value('compatio',true),
   set_option_value('compat',true),
   set_option_value('log',false),
+  set_option_value('test',false),
   set_output_stream.
   
 
@@ -659,7 +662,7 @@ include_metta(Self,RelFilename):-
 
 % count_lines_up_to_200(Filename, Count).
 count_lines_up_to_200(Filename, Count) :-
-  open(Filename, read, Stream),
+  open(Filename, read, Stream,[encoding(utf8)]),
   count_lines_in_stream(Stream, 0, Count),
   close(Stream).
 
@@ -701,8 +704,8 @@ include_metta_directory_file(Self,Directory, Filename):-
 
 convert_metta_to_datalog(Filename,DatalogFile):-
   atom_concat(Filename,'.datalog',DatalogFile),
-  setup_call_cleanup(open(Filename,read,Input,[]),
-    setup_call_cleanup(open(DatalogFile, write, Output,[]),
+  setup_call_cleanup(open(Filename,read,Input,[encoding(utf8)]),
+    setup_call_cleanup(open(DatalogFile, write, Output,[encoding(utf8)]),
       translate_metta_file_to_datalog_io(Filename,Input,Output),
                     close(Output)),
                   close(Input)),!.
@@ -2053,6 +2056,7 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,Output,F
   notrace((
   	reset_eval_num,
     Result = res(FOut),
+	Prev = prev_result(_),
     inside_assert(Term,BaseEval),
     (is_compatio
        -> option_else(answer,Leap,leap)
@@ -2117,9 +2121,10 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,Output,F
         ignore(((
 		 
           not_compatio(if_t( \+ atomic(Output), nl)), 
-          ( only_compatio(if_t(ResNum> 1,write(', '))),
+          ( only_compatio(if_t((ResNum> 1, Prev\=@=(prev_result('Empty'))),write(', '))),
             not_compatio(if_t(ResNum> 1, nl)),
 		  if_t(ResNum==1,only_compatio(write('['))),
+		  nb_setarg(1,Prev,Output),
           user_io(with_indents(is_mettalog,
              color_g_mesg_ok(yellow,
               \+ \+ ( maplist(maybe_assign,NamedVarsList),
@@ -2172,18 +2177,23 @@ forall_interactive(From,WasInteractive,Complete,Goal,After):-
    (is_interactive(From) -> WasInteractive = true ; WasInteractive = false),!,
     Goal, (Complete==true ->  ( quietly(After),!)  ;  (  quietly( \+ After) )).
 
-print_var(Name=Var) :- print_var(Name,Var).
-%print_var(Name,_Var) :- atom_concat('Num',Rest,Name),atom_number(Rest,_),!.
 
+
+print_var(Name=Var) :- print_var(Name,Var).
 write_var(V):- var(V), !, write_dvar(V),!. 
 write_var('$VAR'(S)):-  !, write_dvar(S),!. 
 write_var(V):- write_dvar(V),!.
+%print_var(Name,_Var) :- atom_concat('Num',Rest,Name),atom_number(Rest,_),!.
+print_var(Name,Var):- write_var(Name), write(' = '), write_bsrc(Var), nl.
 
-print_var(Name,Var):- write_var(Name), write(' = '), write_asrc(Var), nl.
+write_asrc(Var):- Var=='Empty',is_compatio,!.
+write_asrc(Var):- write_bsrc(Var),!.
 
-write_asrc(Var):- copy_term(Var,Copy,Goals),Var=Copy,write_asrc(Var,Goals).
-write_asrc(Var,[]):- write_src(Var).
-write_asrc(Var,[G|Goals]):- write_src(Var), write(' { '),write_src(G),maplist(write_src_space,Goals),writeln(' } ').
+write_bsrc(Var):- Var=='Empty',!,write(Var).
+write_bsrc(Var):- ground(Var),!,write_src(Var).
+write_bsrc(Var):- copy_term(Var,Copy,Goals),Var=Copy,write_bsrc(Var,Goals).
+write_bsrc(Var,[]):- write_src(Var).
+write_bsrc(Var,[G|Goals]):- write_src(Var), write(' { '),write_src(G),maplist(write_src_space,Goals),writeln(' } ').
 
 write_src_space(Goal):- write(' '),write_src(Goal).
 

@@ -1088,7 +1088,7 @@ load_fb_fa(Fn,Filename):-
     assert_OBO(pathname(Id,Filename)),!,
     assert_OBO(basename(Id,BaseName)),!,
     assert_OBO(directory(Id,Directory)),!,
-    setup_call_cleanup(open(Filename,read,In), load_fb_fa_read(Id,In,_,0), close(In))))).
+    setup_call_cleanup(open(Filename,read,In,[encoding(utf8)]), load_fb_fa_read(Id,In,_,0), close(In))))).
 load_fb_fa_read(_Fn,In, _, _):- (at_end_of_stream(In);reached_file_max),!.
 load_fb_fa_read(Fn,In,FBTe,At):- read_line_to_string(In,Str), load_fb_fa_read_str(Fn,In,FBTe,Str,At).
 
@@ -3210,7 +3210,9 @@ datalog_to_termlog(File):-
    atom_concat(File,'2',File2),
    fbug(datalog_to_termlog(File)),
   if_m2(atom_concat(File,'.metta',M)),
-   setup_call_cleanup((open(File,read,In), open(File2,write,Out), if_m2(open(M,write,OutM))),
+   setup_call_cleanup((open(File,read,In,[encoding(utf8)]),
+					   open(File2,write,Out,[encoding(utf8)]), 
+					   if_m2(open(M,write,OutM,[encoding(utf8)]))),
   (repeat,
    read_term(In,Term,[]),
    (Term==end_of_file -> ! ; (process_datalog(Out,OutM,Term),fail))),
