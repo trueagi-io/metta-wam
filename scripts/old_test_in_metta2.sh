@@ -79,7 +79,9 @@ IF_REALLY_DO() {
         do_DEBUG "${BLUE}Dry Run:${NC} $*"
     else
         DEBUG "${GREEN}Doing:${NC} $*"
-        eval "$@" || { DEBUG "${RED}Error executing command:${NC} $*"; return 1; }
+        eval "$@"
+	return $?
+	#|| { DEBUG "${RED}Error executing command:${NC} $*"; return 1; }
     fi
 }
 
