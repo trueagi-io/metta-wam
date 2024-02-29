@@ -87,7 +87,7 @@ indentq(DR,EX,AR,Term):-
 reset_eval_num:- flag(eval_num,_,0),flag(trace_output_len,_,0).
 reset_only_eval_num:- flag(eval_num,_,0).
 
-is_fast_mode.
+is_fast_mode:- \+ is_debugging(eval),!.
 
 %ignore_trace_once(Goal):- !, call(Goal).
 ignore_trace_once(Goal):- 
@@ -97,6 +97,7 @@ ignore_trace_once(Goal):- must_det_ll(Goal).
 as_trace(Goal):- 
   ignore_trace_once( \+ with_no_screen_wrap(color_g_mesg('#2f2f2f', Goal))).
 
+with_no_screen_wrap(Goal) :-!,call(Goal).
 with_no_screen_wrap(Goal) :- with_no_wrap(6000, Goal).
 
 with_no_wrap(Cols, Goal) :-
@@ -174,7 +175,7 @@ efbug(_,G):- call(G).
 
 
 
-is_debugging(Flag):- var(Flag),!,fail.
+%is_debugging(Flag):- var(Flag),!,fail.
 %is_debugging(Flag):- !, fail.
 
 is_debugging(Flag):- var(Flag),!,fail.

@@ -208,6 +208,217 @@ eval_20(=,Type,_,_,['coerce',Type,Value],Result):- !, coerce(Type,Value,Result).
 % =================================================================
 % =================================================================
 % =================================================================
+%  LET*
+% =================================================================
+% =================================================================
+% =================================================================
+
+
+	eval_20(Eq,RetType,Depth,Self,['let*',Lets,Body],RetVal):-
+		expand_let_star(Lets,Body,NewLet),!, 
+			eval_20(Eq,RetType,Depth,Self,NewLet,RetVal).
+
+
+
+expand_let_star(Lets,Body,Body):- Lets==[],!.
+expand_let_star([H|LetRest],Body,['let',V,E,NewBody]):- 
+    is_list(H), H = [V,E], !,
+	expand_let_star(LetRest,Body,NewBody).
+
+eval_20(Eq,RetType,Depth,Self,X,RetVal):-
+	once(expand_eval(X,XX)),X\==XX,!, 
+		%fbug(expand_eval(X,XX)),
+	    eval_20(Eq,RetType,Depth,Self,XX,RetVal).
+
+expand_eval(X,Y):- \+ is_list(X),!, X=Y.
+expand_eval([H|A],[H|AA]):- \+ ground(H),!,maplist(expand_eval,A,AA).
+expand_eval(['let*',Lets,Body],NewBody):- expand_let_star(Lets,Body,NewBody),!.
+expand_eval([H|A],[H|AA]):- maplist(expand_eval,A,AA).
+
+% =================================================================
+% =================================================================
+% =================================================================
+%  EVAL LAZY
+% =================================================================
+% =================================================================
+% =================================================================
+eval_20(Eq,RetType,Depth,Self,X,Y):- fail,
+  once(type_fit_childs(Eq,Depth,Self,RetType,X,XX)),
+	X\=@=XX, fbug(type_fit_childs(X,XX)),fail,
+  eval_evals(Eq,RetType,Depth,Self,XX,Y).
+
+% reduce args to match types even inside atoms
+type_fit_childs(Eq,Depth,Self,RetType,X,Y):- \+ is_list(X),!,Y=X.
+type_fit_childs(Eq,Depth,Self,RetType,X,Y):- self_eval(X),!,Y=X.
+
+type_fit_childs(_Eq,_Depth,_Self,_RetType,[H|Args],[H|Args]):- (H=='eval';H=='eval-for'),!.
+
+type_fit_childs(Eq,Depth,Self,RetType,['let*',Lets,Body],RetVal):- !, 
+	expand_let_star(Lets,Body,NewLet),!, 
+		type_fit_childs(Eq,Depth,Self,RetType,NewLet,RetVal).
+
+type_fit_childs(Eq,Depth,Self,RetType,[H|Args],Y):- H\==':',
+   ignore(get_operator_typedef1(Self,H,ParamTypes,RType)),
+
+   eager_for_type(RType,RetType),!,
+   maplist(type_fit_childs(Eq,Depth,Self),ParamTypes,Args,NewArgs),
+   XX = [H|NewNewArgs],
+   Y = ['eval-for',RetType,XX].
+   %eval(Eq,RetType,Depth,Self,XX,Y).
+
+
+type_fit_childs(Eq,Depth,Self,RetType,[H|Args],Y):-
+   ignore(get_operator_typedef1(Self,H,ParamTypes,RType)),
+   maplist(type_fit_childs(Eq,Depth,Self),ParamTypes,Args,NewArgs),
+   Y = [H|NewArgs].
+type_fit_childs(_Eq,_Depth,_Self,_RetType,X,X):-!.
+
+eager_for_type(_RType,'Atom'):- !, fail.	
+eager_for_type(_RType,'Type'):- !, fail.
+eager_for_type(RType,RetType):- RType==RetType,!.
+eager_for_type(RType,'Expression'):- !, RType=='Expression'.
+eager_for_type('Atom','Expression'):- !, fail.
+eager_for_type('Symbol','Expression'):- !, fail.
+eager_for_type(RType,Var):- var(Var),!,RType=Var.
+eager_for_type(_RType,_):-!.
+%eager_for_type(_RType,'Any'):- !.
+%eager_for_type(_RType,'Number').
+%eager_for_type(_RType,'Nat').
+
+
+eval_evals(Eq,Depth,Self,RetType,X,Y):-self_eval(X),!,Y=X.
+eval_evals(Eq,Depth,Self,RetType,X,Y):- \+ is_list(X),!,Y=X.
+eval_evals(Eq,Depth,Self,RetType,[Eval,X],Y):- Eval == 'eval',!,
+  eval_evals(Eq,Depth,Self,RetType,X,XX),
+  eval(Eq,RetType,Depth,Self,XX,Y).
+eval_evals(Eq,Depth,Self,RetType,[Eval,SomeType,X],Y):- Eval == 'eval-for',!,
+  eval_evals(Eq,Depth,Self,RetType,X,XX),
+  eval(Eq,SomeType,Depth,Self,XX,Y).
+eval_evals(Eq,Depth,Self,RetType,[H|Args],Y):- 
+   ignore(get_operator_typedef1(Self,H,ParamTypes,RType)),
+   maplist(eval_evals(Eq,Depth,Self),ParamTypes,Args,NewArgs),
+   XX = [H|NewNewArgs],Y=XX.
+eval_evals(_Eq,_Depth,_Self,_RetType,X,X):-!.
+
+
+is_progn(C):- var(C),!,fail.
+is_progn('chain-body').
+is_progn('progn').
+
+eval_20(Eq,RetType,Depth,Self,[Comma,X  ],Res):- is_progn(Comma),!, eval_args(Eq,RetType,Depth,Self,X,Res).
+eval_20(Eq,RetType,Depth,Self,[Comma,X,Y],Res):- is_progn(Comma),!, eval_args(Eq,_,Depth,Self,X,_),
+  eval_args(Eq,RetType,Depth,Self,Y,Res).
+eval_20(Eq,RetType,Depth,Self,[Comma,X|Y],Res):- is_progn(Comma),!, eval_args(Eq,_,Depth,Self,X,_),
+  eval_args(Eq,RetType,Depth,Self,[Comma|Y],Res).
+
+
+eval_20(Eq,RetType,Depth,Self,[chain,X],TF):- 
+   eval_args(Eq,RetType,Depth,Self,X,TF).
+eval_20(Eq,RetType,Depth,Self,[chain,X|Y],TF):-  eval_args(Eq,RetType,Depth,Self,X,_), eval_args(Eq,RetType,Depth,Self,[chain|Y],TF).
+
+eval_20(Eq,RetType,Depth,Self,['eval',X],TF):- !,
+   eval_args(Eq,RetType,Depth,Self,X, TF).
+
+
+eval_20(Eq,RetType,Depth,Self,['eval-for',Type,X],TF):- !,
+	ignore(Type=RetType),
+	eval_args(Eq,Type,Depth,Self,X, TF).
+
+
+% =================================================================
+% =================================================================
+% =================================================================
+%  LET
+% =================================================================
+% =================================================================
+% =================================================================
+
+
+
+eval_until_unify(_Eq,_RetType,_Dpth,_Slf,X,X):- !.
+eval_until_unify(Eq,RetType,Depth,Self,X,Y):- eval_until_eq(Eq,RetType,Depth,Self,X,Y),!.
+
+eval_until_eq(Eq,RetType,_Dpth,_Slf,X,Y):-  X=Y,check_returnval(Eq,RetType,Y).
+%eval_until_eq(Eq,RetType,Depth,Self,X,Y):- var(Y),!,eval_in_steps_or_same(Eq,RetType,Depth,Self,X,XX),Y=XX.
+%eval_until_eq(Eq,RetType,Depth,Self,Y,X):- var(Y),!,eval_in_steps_or_same(Eq,RetType,Depth,Self,X,XX),Y=XX.
+eval_until_eq(Eq,RetType,Depth,Self,X,Y):- \+is_list(Y),!,eval_in_steps_some_change(Eq,RetType,Depth,Self,X,XX),Y=XX.
+eval_until_eq(Eq,RetType,Depth,Self,Y,X):- \+is_list(Y),!,eval_in_steps_some_change(Eq,RetType,Depth,Self,X,XX),Y=XX.
+eval_until_eq(Eq,RetType,Depth,Self,X,Y):- eval_in_steps_some_change(Eq,RetType,Depth,Self,X,XX),eval_until_eq(Eq,RetType,Depth,Self,Y,XX).
+eval_until_eq(_Eq,_RetType,_Dpth,_Slf,X,Y):- length(X,Len), \+ length(Y,Len),!,fail.
+eval_until_eq(Eq,RetType,Depth,Self,X,Y):-  nth1(N,X,EX,RX), nth1(N,Y,EY,RY),
+  EX=EY,!, maplist(eval_until_eq(Eq,RetType,Depth,Self),RX,RY).
+eval_until_eq(Eq,RetType,Depth,Self,X,Y):-  nth1(N,X,EX,RX), nth1(N,Y,EY,RY),
+  ((var(EX);var(EY)),eval_until_eq(Eq,RetType,Depth,Self,EX,EY)),
+  maplist(eval_until_eq(Eq,RetType,Depth,Self),RX,RY).
+eval_until_eq(Eq,RetType,Depth,Self,X,Y):-  nth1(N,X,EX,RX), nth1(N,Y,EY,RY),
+  h((is_list(EX);is_list(EY)),eval_until_eq(Eq,RetType,Depth,Self,EX,EY)),
+  maplist(eval_until_eq(Eq,RetType,Depth,Self),RX,RY).
+
+ eval_1change(Eq,RetType,Depth,Self,EX,EXX):-
+    eval_20(Eq,RetType,Depth,Self,EX,EXX),  EX \=@= EXX.
+
+eval_complete_change(Eq,RetType,Depth,Self,EX,EXX):-
+   eval(Eq,RetType,Depth,Self,EX,EXX),  EX \=@= EXX.
+
+eval_in_steps_some_change(_Eq,_RetType,_Dpth,_Slf,EX,_):- \+ is_list(EX),!,fail.
+eval_in_steps_some_change(Eq,RetType,Depth,Self,EX,EXX):- eval_1change(Eq,RetType,Depth,Self,EX,EXX).
+eval_in_steps_some_change(Eq,RetType,Depth,Self,X,Y):- append(L,[EX|R],X),is_list(EX),
+    eval_in_steps_some_change(Eq,RetType,Depth,Self,EX,EXX), EX\=@=EXX,
+    append(L,[EXX|R],XX),eval_in_steps_or_same(Eq,RetType,Depth,Self,XX,Y).
+
+eval_in_steps_or_same(Eq,RetType,Depth,Self,X,Y):-eval_in_steps_some_change(Eq,RetType,Depth,Self,X,Y).
+eval_in_steps_or_same(Eq,RetType,_Dpth,_Slf,X,Y):- X=Y,check_returnval(Eq,RetType,Y).
+
+  % (fail,make_empty(RetType,[],Template))).
+
+
+possible_type(_Self,_Var,_RetTypeV).
+
+eval_20(Eq,RetType,Depth,Self,['let',E,V,Body],OO):- var(V), nonvar(E), !,
+	  %(var(V)->true;trace),
+	  possible_type(Self,V,RetTypeV),
+	  eval(Eq,RetTypeV,Depth,Self,E,ER), V=ER,
+	  eval(Eq,RetType,Depth,Self,Body,OO).
+
+eval_20(Eq,RetType,Depth,Self,['let',V,E,Body],OO):- !, % var(V), nonvar(E), !,
+        %(var(V)->true;trace),
+        possible_type(Self,V,RetTypeV),
+        eval(Eq,RetTypeV,Depth,Self,E,ER), V=ER,
+        eval(Eq,RetType,Depth,Self,Body,OO).
+/*
+
+eval_20(Eq,RetType,Depth,Self,['let',V,E,Body],OO):- nonvar(V),nonvar(E),!,
+	possible_type(Self,V,RetTypeV),
+	possible_type(Self,E,RetTypeV),
+	((V=E,fail) -> true;
+	(eval(Eq,RetTypeV,Depth,Self,E,ER), 
+	(V=ER -> true;
+	(eval(Eq,RetTypeV,Depth,Self,V,VR),
+	(E=VR -> true; ER=VR))))),
+	eval(Eq,RetType,Depth,Self,Body,OO).
+
+
+eval_20(Eq,RetType,Depth,Self,['let',V,E,Body],OO):- var(V), nonvar(E), !,
+        %(var(V)->true;trace),
+        possible_type(Self,V,RetTypeV),
+        eval(Eq,RetTypeV,Depth,Self,E,ER), V=ER,
+        eval(Eq,RetType,Depth,Self,Body,OO).
+
+eval_20(Eq,RetType,Depth,Self,['let',V,E,Body],OO):- var(V), var(E), !,
+	  V=E, eval(Eq,RetType,Depth,Self,Body,OO).
+
+
+%eval_20(Eq,RetType,Depth,Self,['let',V,E,Body],BodyO):- !,eval(Eq,RetType,Depth,Self,E,V),eval(Eq,RetType,Depth,Self,Body,BodyO).
+eval_20(Eq,RetType,Depth,Self,['let*',[],Body],RetVal):- !, eval(Eq,RetType,Depth,Self,Body,RetVal).
+%eval_20(Eq,RetType,Depth,Self,['let*',[[Var,Val]|LetRest],Body],RetVal):- !,
+%   eval_until_unify(Eq,_RetTypeV,Depth,Self,Val,Var),
+%   eval_20(Eq,RetType,Depth,Self,['let*',LetRest,Body],RetVal).
+eval_20(Eq,RetType,Depth,Self,['let*',[[Var,Val]|LetRest],Body],RetVal):- !,
+    eval_20(Eq,RetType,Depth,Self,['let',Var,Val,['let*',LetRest,Body]],RetVal).
+*/
+% =================================================================
+% =================================================================
+% =================================================================
 %  TRACE/PRINT
 % =================================================================
 % =================================================================
@@ -666,97 +877,6 @@ eval_20(Eq,RetType,Depth,Self,['if',Cond,Then],Res):- !,
 eval_20(Eq,RetType,_Dpth,_Slf,[_,Nothing],NothingO):-
    'Nothing'==Nothing,!,do_expander(Eq,RetType,Nothing,NothingO).
 
-% =================================================================
-% =================================================================
-% =================================================================
-%  LET/LET*
-% =================================================================
-% =================================================================
-% =================================================================
-
-
-
-eval_until_unify(_Eq,_RetType,_Dpth,_Slf,X,X):- !.
-eval_until_unify(Eq,RetType,Depth,Self,X,Y):- eval_until_eq(Eq,RetType,Depth,Self,X,Y),!.
-
-eval_until_eq(Eq,RetType,_Dpth,_Slf,X,Y):-  X=Y,check_returnval(Eq,RetType,Y).
-%eval_until_eq(Eq,RetType,Depth,Self,X,Y):- var(Y),!,eval_in_steps_or_same(Eq,RetType,Depth,Self,X,XX),Y=XX.
-%eval_until_eq(Eq,RetType,Depth,Self,Y,X):- var(Y),!,eval_in_steps_or_same(Eq,RetType,Depth,Self,X,XX),Y=XX.
-eval_until_eq(Eq,RetType,Depth,Self,X,Y):- \+is_list(Y),!,eval_in_steps_some_change(Eq,RetType,Depth,Self,X,XX),Y=XX.
-eval_until_eq(Eq,RetType,Depth,Self,Y,X):- \+is_list(Y),!,eval_in_steps_some_change(Eq,RetType,Depth,Self,X,XX),Y=XX.
-eval_until_eq(Eq,RetType,Depth,Self,X,Y):- eval_in_steps_some_change(Eq,RetType,Depth,Self,X,XX),eval_until_eq(Eq,RetType,Depth,Self,Y,XX).
-eval_until_eq(_Eq,_RetType,_Dpth,_Slf,X,Y):- length(X,Len), \+ length(Y,Len),!,fail.
-eval_until_eq(Eq,RetType,Depth,Self,X,Y):-  nth1(N,X,EX,RX), nth1(N,Y,EY,RY),
-  EX=EY,!, maplist(eval_until_eq(Eq,RetType,Depth,Self),RX,RY).
-eval_until_eq(Eq,RetType,Depth,Self,X,Y):-  nth1(N,X,EX,RX), nth1(N,Y,EY,RY),
-  ((var(EX);var(EY)),eval_until_eq(Eq,RetType,Depth,Self,EX,EY)),
-  maplist(eval_until_eq(Eq,RetType,Depth,Self),RX,RY).
-eval_until_eq(Eq,RetType,Depth,Self,X,Y):-  nth1(N,X,EX,RX), nth1(N,Y,EY,RY),
-  h((is_list(EX);is_list(EY)),eval_until_eq(Eq,RetType,Depth,Self,EX,EY)),
-  maplist(eval_until_eq(Eq,RetType,Depth,Self),RX,RY).
-
- eval_1change(Eq,RetType,Depth,Self,EX,EXX):-
-    eval_20(Eq,RetType,Depth,Self,EX,EXX),  EX \=@= EXX.
-
-eval_complete_change(Eq,RetType,Depth,Self,EX,EXX):-
-   eval(Eq,RetType,Depth,Self,EX,EXX),  EX \=@= EXX.
-
-eval_in_steps_some_change(_Eq,_RetType,_Dpth,_Slf,EX,_):- \+ is_list(EX),!,fail.
-eval_in_steps_some_change(Eq,RetType,Depth,Self,EX,EXX):- eval_1change(Eq,RetType,Depth,Self,EX,EXX).
-eval_in_steps_some_change(Eq,RetType,Depth,Self,X,Y):- append(L,[EX|R],X),is_list(EX),
-    eval_in_steps_some_change(Eq,RetType,Depth,Self,EX,EXX), EX\=@=EXX,
-    append(L,[EXX|R],XX),eval_in_steps_or_same(Eq,RetType,Depth,Self,XX,Y).
-
-eval_in_steps_or_same(Eq,RetType,Depth,Self,X,Y):-eval_in_steps_some_change(Eq,RetType,Depth,Self,X,Y).
-eval_in_steps_or_same(Eq,RetType,_Dpth,_Slf,X,Y):- X=Y,check_returnval(Eq,RetType,Y).
-
-  % (fail,make_empty(RetType,[],Template))).
-
-
-possible_type(_Self,_Var,_RetTypeV).
-
-eval_20(Eq,RetType,Depth,Self,['let',V,E,Body],OO):- !, % var(V), nonvar(E), !,
-        %(var(V)->true;trace),
-        possible_type(Self,V,RetTypeV),
-        eval(Eq,RetTypeV,Depth,Self,E,ER), V=ER,
-        eval(Eq,RetType,Depth,Self,Body,OO).
-
-
-eval_20(Eq,RetType,Depth,Self,['let',V,E,Body],OO):- nonvar(V),nonvar(E),!,
-	possible_type(Self,V,RetTypeV),
-	possible_type(Self,E,RetTypeV),
-	((V=E,fail) -> true;
-	(eval(Eq,RetTypeV,Depth,Self,E,ER), 
-	(V=ER -> true;
-	(eval(Eq,RetTypeV,Depth,Self,V,VR),
-	(E=VR -> true; ER=VR))))),
-	eval(Eq,RetType,Depth,Self,Body,OO).
-
-eval_20(Eq,RetType,Depth,Self,['let',E,V,Body],OO):- var(V), nonvar(E), !,
-	  %(var(V)->true;trace),
-	  possible_type(Self,V,RetTypeV),
-	  eval(Eq,RetTypeV,Depth,Self,E,ER), V=ER,
-	  eval(Eq,RetType,Depth,Self,Body,OO).
-
-
-eval_20(Eq,RetType,Depth,Self,['let',V,E,Body],OO):- var(V), nonvar(E), !,
-        %(var(V)->true;trace),
-        possible_type(Self,V,RetTypeV),
-        eval(Eq,RetTypeV,Depth,Self,E,ER), V=ER,
-        eval(Eq,RetType,Depth,Self,Body,OO).
-
-eval_20(Eq,RetType,Depth,Self,['let',V,E,Body],OO):- var(V), var(E), !,
-	  V=E, eval(Eq,RetType,Depth,Self,Body,OO).
-
-
-%eval_20(Eq,RetType,Depth,Self,['let',V,E,Body],BodyO):- !,eval(Eq,RetType,Depth,Self,E,V),eval(Eq,RetType,Depth,Self,Body,BodyO).
-eval_20(Eq,RetType,Depth,Self,['let*',[],Body],RetVal):- !, eval(Eq,RetType,Depth,Self,Body,RetVal).
-%eval_20(Eq,RetType,Depth,Self,['let*',[[Var,Val]|LetRest],Body],RetVal):- !,
-%   eval_until_unify(Eq,_RetTypeV,Depth,Self,Val,Var),
-%   eval_20(Eq,RetType,Depth,Self,['let*',LetRest,Body],RetVal).
-eval_20(Eq,RetType,Depth,Self,['let*',[[Var,Val]|LetRest],Body],RetVal):- !,
-    eval_20(Eq,RetType,Depth,Self,['let',Var,Val,['let*',LetRest,Body]],RetVal).
-
 
 % =================================================================
 % =================================================================
@@ -1014,21 +1134,6 @@ is_comma(C):- var(C),!,fail.
 is_comma(',').
 is_comma('{}').
 
-is_progn(C):- var(C),!,fail.
-is_progn('chain-body').
-is_progn('progn').
-
-eval_20(Eq,RetType,Depth,Self,[Comma,X  ],Res):- is_progn(Comma),!, eval_args(Eq,RetType,Depth,Self,X,Res).
-eval_20(Eq,RetType,Depth,Self,[Comma,X,Y],Res):- is_progn(Comma),!, eval_args(Eq,_,Depth,Self,X,_),
-  eval_args(Eq,RetType,Depth,Self,Y,Res).
-eval_20(Eq,RetType,Depth,Self,[Comma,X|Y],Res):- is_progn(Comma),!, eval_args(Eq,_,Depth,Self,X,_),
-  eval_args(Eq,RetType,Depth,Self,[Comma|Y],Res).
-
-
-eval_20(Eq,RetType,Depth,Self,[chain,X],TF):- 
-   eval_args(Eq,RetType,Depth,Self,X,TF).
-eval_20(Eq,RetType,Depth,Self,[chain,X|Y],TF):-  eval_args(Eq,RetType,Depth,Self,X,_), eval_args(Eq,RetType,Depth,Self,[chain|Y],TF).
-
 eval_20(Eq,RetType,Depth,Self,['and',X,Y],TF):- !,
    as_tf((eval_args_true(Eq,RetType,Depth,Self,X),eval_args_true(Eq,RetType,Depth,Self,Y)),TF).
 
@@ -1038,8 +1143,6 @@ eval_20(Eq,RetType,Depth,Self,['or',X,Y],TF):- !,
 eval_20(Eq,RetType,Depth,Self,['not',X],TF):- !,
    as_tf(( \+ eval_args_true(Eq,RetType,Depth,Self,X)), TF).
 
-	eval_20(Eq,RetType,Depth,Self,['eval',X],TF):- !,
-	   eval_args(Eq,RetType,Depth,Self,X, TF).
 
 % === function / return of minimal metta
 eval_20(Eq,RetType,Depth,Self,['function',X],TF):- !,
