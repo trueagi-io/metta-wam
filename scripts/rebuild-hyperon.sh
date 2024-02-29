@@ -55,7 +55,7 @@ cd ..
 # Test
 (
 cd python
-# pytest ./tests
+echo pytest ./tests
 cd ..
 )
 
