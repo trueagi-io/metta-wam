@@ -101,25 +101,21 @@ write_pass_fail([P,C,_],PASS_FAIL,G):-
     get_test_name(Number,TestName),
     arg(1,G,G1),arg(2,G,G2), write_pass_fail(TestName,P,C,PASS_FAIL,G1,G2))).
 
-write_pass_fail(TestName,P,C,PASS_FAIL,G1,G2):-	
-   ((nb_current(loading_file,FilePath),FilePath\==[])->true; 
-            FilePath='/tests/UNIT-TEST.metta'),
-    atomic_list_concat([_,R],'/tests/',FilePath),
+write_pass_fail(TestName,P,C,PASS_FAIL,G1,G2):-
+    ignore(((
+   (nb_current(loading_file,FilePath),FilePath\==[])->true; FilePath='SOME/UNIT-TEST.metta'),
+    atomic_list_concat([_,R],'examples/',FilePath),
     file_name_extension(Base, _, R))),
-    nop(format('<h3 id="~w">;; ~w</h3>',[TestName,TestName])),
+      nop(format('<h3 id="~w">;; ~w</h3>',[TestName,TestName])),
 
-      %if_t( (tee_file(TEE_FILE)->true;'TEE.ansi'=TEE_FILE),
+      if_t( (tee_file(TEE_FILE)->true;'TEE.ansi'=TEE_FILE),
       (%atom_concat(TEE_FILE,'.UNITS',UNITS),
-      get_units_file(UNITS),
+      UNITS = '/tmp/SHARED.UNITS',
       open(UNITS, append, Stream,[encoding(utf8)]),
-      format(Stream,'| ~w | [~w](https://logicmoo.org/public/metta/reports/tests/~w.metta.html#~w) | ~@ | ~@ | ~@ |~n',
+      format(Stream,'| ~w | [~w](https://logicmoo.org/public/metta/reports/~w.metta.html#~w) | ~@ | ~@ | ~@ |~n',
       [PASS_FAIL,TestName,Base,TestName,trim_gstring(with_indents(false,write_src([P,C])),200),
         trim_gstring(with_indents(false,write_src(G1)),100),with_indents(false,write_src(G2))]),!,
       close(Stream))).
-
-get_units_file(UNITS):-
-	 get_output_path(OutputPath),
-	 atom_concat(OutputPath,'/SHARED.UNITS',UNITS).
 
 trim_gstring(Goal, MaxLen) :-
     wots(String,Goal),
