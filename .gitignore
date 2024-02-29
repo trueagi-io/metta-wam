@@ -10,6 +10,7 @@ reqs/pyswip-notebook/pyswip-notebook.egg-info
 das_precomputed/*.pl
 precomputed_files/**/*.pl
 ftp.flybase.net/**
+./src/version-config
 .?*~/
 .*/
 *~

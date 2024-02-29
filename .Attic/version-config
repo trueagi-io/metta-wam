@@ -1,0 +1,19 @@
+main
+#
+# the mettalog interpreter script uses the 
+# first line of this file to decide witch subdir or src/ to 
+# choices at the time of writing this:
+#
+# main - suggested for stable general use such as for those doing timing tests
+#
+# canary - bug fixes with short turn around times.  Most ideal for 
+#          those who have submitting problems and want things working w/in
+#          48 hours.
+#
+# development - Not to be confused with the branch of the same name
+#               code being developed that does NOT pass the sanity tests
+#               the moment it did it would have already been immediately 
+#               integrated to canary!
+#
+# base - reference to last known working main
+

@@ -243,7 +243,7 @@ p2m(_OC,!, ['set-det']).  % Translate the cut operation directly.
 p2m(_OC,!, '!').  % Translate the cut operation directly.
 p2m(_OC,false, 'False').
 p2m(_OC,true, 'True').  % Translate Prolog?s true to MeTTa?s True.
-p2m([':-'|_],Atom,[O,*]):- atom(Atom), p2m([arg],Atom,O),!.
+p2m([progn|_],Atom,[O,*]):- atom(Atom), p2m([arg],Atom,O),!.
 p2m(_OC,( ';' ),or).
 %p2m(_OC,( ',' ),and).
 %p2m(_OC,( '\\+' ),unless).
@@ -285,13 +285,13 @@ p2m(OC,(G,E),O):-  conjuncts_to_list((G,E),List),!,into_sequential(OC,List,O),!.
 p2m(_OC,(Head:-Body),O):- Body == true,!, O = (=(Head,'True')).
 p2m(_OC,(Head:-Body),O):- Body == fail,!, O = (=(Head,[empty])).
 p2m(OC,(Head:-Body),O):- 
-   p2m(Head,H),conjuncts_to_list(Body,List),into_sequential([':-'|OC],List,SP),!,
+   p2m(Head,H),conjuncts_to_list(Body,List),into_sequential([progn|OC],List,SP),!,
    O =  (=(H,SP)).
 
 	p2m(OC,(:-Body),O):- !,
-	   conjuncts_to_list(Body,List),into_sequential([':-'|OC],List,SP),!, O= exec(SP).
+	   conjuncts_to_list(Body,List),into_sequential([progn|OC],List,SP),!, O= exec(SP).
 	p2m(OC,( ?- Body),O):- !,
-	   conjuncts_to_list(Body,List),into_sequential([':-'|OC],List,SP),!, O= exec('?-'(SP)).
+	   conjuncts_to_list(Body,List),into_sequential([progn|OC],List,SP),!, O= exec('?-'(SP)).
 
 %p2m(_OC,(Head:-Body),O):- conjuncts_to_list(Body,List),into_sequential(OC,List,SP),!,O=(=(Head,SP)).
 
@@ -343,12 +343,12 @@ into_sequential(OC,Body, SP) :-
     conjuncts_to_list(Body, List),
     is_list(List), % Converts a list of conjunctions into a sequential representation in MeTTa
     into_sequential(OC,List, SP), !.
-into_sequential([':-'|_],Nothing,'True'):- Nothing ==[],!.
+into_sequential([progn|_],Nothing,'True'):- Nothing ==[],!.
 into_sequential(_OC,Nothing,'Nil'):- Nothing ==[],!.
 % If theres only one element
 into_sequential(_,[SP],O):- prolog_to_metta(SP,O).
 % Otherwise, construct sequential representation using AND.
-into_sequential([':-'|_],List, SPList) :-
+into_sequential([progn|_],List, SPList) :-
 		maplist(prolog_to_metta, List, SPList),!.
 into_sequential(_CA,List, [AND|SPList]) :-
 		   is_compiled_and(AND), maplist(prolog_to_metta, List, SPList),!.
