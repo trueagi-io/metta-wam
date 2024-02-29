@@ -1,4 +1,5 @@
-:- encoding(iso_latin_1).
+:- encoding(utf8).
+:- set_prolog_flag(encoding, utf8).
 :- nb_setval(cmt_override,lse('; ',' !(" ',' ") ')).
 :- set_prolog_flag(history, 10).
 :- set_prolog_flag(save_history, true).
@@ -59,6 +60,7 @@ is_mettalog:- is_metta_flag('log').
 
 is_synthing_unit_tests:- notrace(is_synthing_unit_tests0).
 is_synthing_unit_tests0:- is_testing.
+is_synthing_unit_tests0:- is_html.
 % is_synthing_unit_tests0:- is_compatio,!,fail.
 
 is_testing:- is_metta_flag('test').
@@ -100,7 +102,7 @@ nullify_output:- nullify_output_really.
 nullify_output_really:- current_output(MFS), null_user_output(OUT),  MFS==OUT, !.
 nullify_output_really:- null_user_output(MFS), set_prolog_IO(user_input,MFS,MFS).
 
-
+set_output_stream :- !.
 set_output_stream :- keep_output -> nullify_output;  unnullify_output.
 :- set_output_stream.
 % :- nullify_output.
@@ -110,6 +112,7 @@ switch_to_mettalog:-
   set_option_value('compatio',false),
   set_option_value('compat',false),
   set_option_value('log',true),
+  set_option_value('test',true),
   set_output_stream.
   
 switch_to_mettarust:- 
@@ -117,6 +120,7 @@ switch_to_mettarust:-
   set_option_value('compatio',true),
   set_option_value('compat',true),
   set_option_value('log',false),
+  set_option_value('test',false),
   set_output_stream.
   
 
@@ -190,7 +194,7 @@ option_value_def('compile',false).
 option_value_def('tabling',true).
 option_value_def('optimize',true).
 option_value_def(no_repeats,false).
-option_value_def('time',false).
+%option_value_def('time',false).
 option_value_def('test',false).
 option_value_def('html',false).
 option_value_def('python',false).
@@ -260,11 +264,11 @@ set_is_unit_test(TF):-
   set_option_value_interp('trace-on-fail',false),
   set_option_value_interp('load',show),
   set_option_value_interp('test',TF),
-  if_t(TF,set_option_value_interp('exec',debug)),
+	%set_option_value_interp('trace-on-load',TF),
+/*  if_t(TF,set_option_value_interp('exec',debug)),
   if_t(TF,set_option_value_interp('eval',debug)),
-  %set_option_value_interp('trace-on-load',TF),
   set_option_value_interp('trace-on-exec',TF),
-  set_option_value_interp('trace-on-eval',TF),
+  set_option_value_interp('trace-on-eval',TF),*/
  % if_t( \+ TF , set_prolog_flag(debug_on_interrupt,true)),
   !.
 
@@ -397,14 +401,14 @@ show_options_values:-
 % Condition: The condition/expression being traced.
 % EvalResult: The result of the evaluation of Condition.
 % Example: `rtrace((2 + 2), EvalResult).` would trace the evaluation of 2 + 2 and store its result in EvalResult.
-'rtrace'(Condition, EvalResult):- eval_H(['rtrace', Condition], EvalResult).
+'rtrace!'(Condition, EvalResult):- eval_H(['rtrace', Condition], EvalResult).
 
 % `time` Predicate
 % This predicate is used to measure the time taken to evaluate EvalThis.
 % EvalThis: The expression whose evaluation time is being measured.
 % EvalResult: The result of the evaluation of EvalThis.
 % Example: `time((factorial(5)), EvalResult).` would measure the time taken to evaluate factorial(5) and store its result in EvalResult.
-'time'(EvalThis, EvalResult):- eval_H(['time', EvalThis], EvalResult).
+'time!'(EvalThis, EvalResult):- eval_H(['time', EvalThis], EvalResult).
 
 % ============================
 % %%%% Debugging, Printing and Utility Operations
@@ -659,7 +663,7 @@ include_metta(Self,RelFilename):-
 
 % count_lines_up_to_200(Filename, Count).
 count_lines_up_to_200(Filename, Count) :-
-  open(Filename, read, Stream),
+  open(Filename, read, Stream,[encoding(utf8)]),
   count_lines_in_stream(Stream, 0, Count),
   close(Stream).
 
@@ -701,8 +705,8 @@ include_metta_directory_file(Self,Directory, Filename):-
 
 convert_metta_to_datalog(Filename,DatalogFile):-
   atom_concat(Filename,'.datalog',DatalogFile),
-  setup_call_cleanup(open(Filename,read,Input,[]),
-    setup_call_cleanup(open(DatalogFile, write, Output,[]),
+  setup_call_cleanup(open(Filename,read,Input,[encoding(utf8)]),
+    setup_call_cleanup(open(DatalogFile, write, Output,[encoding(utf8)]),
       translate_metta_file_to_datalog_io(Filename,Input,Output),
                     close(Output)),
                   close(Input)),!.
@@ -816,8 +820,11 @@ accept_line2(Self,S):- string_concat('(',RS,S),string_concat(M,')',RS),!,
 accept_line2(Self,S):- fbug(accept_line2(Self,S)),!.
 
 
-load_metta_file_stream(Filename,Self,In):-
-  once((is_file_stream_and_size(In, Size) , Size>102400) -> P2 = read_sform2 ; P2 = read_metta2),
+load_metta_file_stream(Filename,Self,In):-  
+  if_t((atomic(Filename),exists_file(Filename)), size_file(Filename, Size)),
+  if_t(var(Size),is_file_stream_and_size(In, Size)),
+  %once((is_file_stream_and_size(In, Size),Size>102400) -> P2 = read_sform2 ;
+  P2 = read_metta2, %)  
   with_option(loading_file,Filename,
   %current_exec_file(Filename),
   must_det_ll((must_det_ll((
@@ -959,6 +966,7 @@ balanced_parentheses(['('|T], N) :- N1 is N + 1, balanced_parentheses(T, N1).
 balanced_parentheses([')'|T], N) :- N > 0, N1 is N - 1, balanced_parentheses(T, N1).
 balanced_parentheses([H|T], N) :- H \= '(', H \= ')', balanced_parentheses(T, N).
 % Recursive function to read lines until parentheses are balanced.
+
 repl_read(NewAccumulated, Expr):-
     atom_concat(Atom, '.', NewAccumulated),
     catch_err((read_term_from_atom(Atom, Term, []), Expr=call(Term)), E,
@@ -980,8 +988,8 @@ repl_read(NewAccumulated, Expr):-
 %repl_read(NewAccumulated,exec(Expr)):- string_concat("!",Renew,NewAccumulated), !, repl_read(Renew, Expr).
 repl_read(NewAccumulated, Expr):- string_chars(NewAccumulated, Chars),
     balanced_parentheses(Chars), length(Chars, Len), Len > 0,
-    parse_sexpr_metta(NewAccumulated, Expr), !,
-    normalize_space(string(Renew),NewAccumulated),
+	read_metta(NewAccumulated,Expr),
+	normalize_space(string(Renew),NewAccumulated), 
     add_history_string(Renew).
 repl_read(Accumulated, Expr) :- read_line_to_string(current_input, Line), repl_read(Accumulated, Line, Expr).
 
@@ -1023,8 +1031,11 @@ read_metta1(In,Expr):- read_metta2(In,Expr).
 read_metta2(_,O):- clause(t_l:s_reader_info(O),_,Ref),erase(Ref).
 read_metta2(In,Expr):- peek_char(In,Char), read_metta2(In,Char,Expr).
 read_metta2(In,Char,Expr):- char_type(Char,space),get_char(In,Char),not_compatio(put(Char)),!,read_metta2(In,Expr).
+%read_metta2(In,'"',Expr):- read_sform2(In,Expr),!.
+%read_metta2(In,'\'',Expr):- read_sform2(In,Expr),!.
 read_metta2(In,'!',Expr):- get_char(In,_), !, read_metta2(In,Read1),!,Expr=exec(Read1).
-read_metta2(In,';',Expr):- get_char(In,_), !, (maybe_read_pl(In,Expr)-> true ; (read_line_to_string(In,Str),Expr='$COMMENT'(Str,0,0))).
+read_metta2(In,';',Expr):- get_char(In,_), !, (maybe_read_pl(In,Expr)-> true ; 
+  (read_line_to_string(In,Str),Expr='$COMMENT'(Str,0,0))).
 % write_comment(Str),!,read_metta2(In,Expr))),!.
 % read_metta2(In,_,Expr):-  maybe_read_pl(In,Expr),!.
 read_metta2(In,_,Read1):- parse_sexpr_metta(In,Expr),!,must_det_ll(Expr=Read1).
@@ -1057,13 +1068,14 @@ read_sform(S,F):-
     (read_sform1([],S,F2), F = exec(F2))).
 
 
-read_sform2(S,F1):- !, read_metta2(S,F1).
+%read_sform2(S,F1):- !, read_metta2(S,F1).
 read_sform2(S,F1):- read_sform1([],S,F1).
 
 read_sform1(_,_,O):- clause(t_l:s_reader_info(O),_,Ref),erase(Ref).
 read_sform1( AltEnd,Str,F):- string(Str),open_string(Str,S),!,read_sform1( AltEnd,S,F).
 read_sform1(_AltEnd,S,F):- at_end_of_stream(S),!,F=end_of_file.
-read_sform1( AltEnd,S,M):- get_char(S,C),read_sform3(s, AltEnd,C,S,F), untyped_to_metta(F,M).
+read_sform1( AltEnd,S,M):- get_char(S,C),read_sform3(s, AltEnd,C,S,F),
+	  untyped_to_metta(F,M).
 %read_sform1( AltEnd,S,F):- profile(parse_sexpr_metta(S,F)).
 
 read_sform3(_AoS,_AltEnd,C,_,F):- C == end_of_file,!,F=end_of_file.
@@ -1753,20 +1765,18 @@ do_metta(_File,Load,Self,Src,Out):- Load\==exec, !,
 	 as_tf(asserted_do_metta(Self,Load,Src),Out).
 
 do_metta(file(Filename),exec,Self,TermV,Out):-
-  ((
-     
-     inc_exec_num(Filename),
-     is_synthing_unit_tests,
-    must_det_ll((
+   must_det_ll((inc_exec_num(Filename),
      get_exec_num(Filename,Nth),
      Nth>0)),
+	show_failure((
+	 is_synthing_unit_tests,
      file_answers(Filename, Nth, Ans),
-     check_answers_for(TermV,Ans),!,
+     check_answers_for(TermV,Ans))),!,
      must_det_ll((
       color_g_mesg_ok('#ffa500',
        (writeln(';; In file as:  '),
         color_g_mesg([bold,fg('#FFEE58')], write_src(exec(TermV))),
-        write(';; To unit test case:'))))),!,
+        write(';; To unit test case:'))),!,
         do_metta_exec(file(Filename),Self,['assertEqualToResult',TermV,Ans],Out))).
 
 do_metta(From,exec,Self,TermV,Out):- !, do_metta_exec(From,Self,TermV,Out).
@@ -2053,6 +2063,7 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,Output,F
   notrace((
   	reset_eval_num,
     Result = res(FOut),
+	Prev = prev_result('Empty'),
     inside_assert(Term,BaseEval),
     (is_compatio
        -> option_else(answer,Leap,leap)
@@ -2113,17 +2124,15 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,Output,F
          ((((ResNum==1,Complete==true)->(not_compatio(format('~NDeterministic: ',  [])), !);          %or Nondet
            ( Complete==true -> (not_compatio(format('~NLast Result(~w): ',[ResNum])),! );
                                not_compatio(format('~NNDet Result(~w): ',[ResNum]))))),
-      (
-        ignore(((
-		 
-          not_compatio(if_t( \+ atomic(Output), nl)), 
-          ( only_compatio(if_t(ResNum> 1,write(', '))),
-            not_compatio(if_t(ResNum> 1, nl)),
-		  if_t(ResNum==1,only_compatio(write('['))),
-          user_io(with_indents(is_mettalog,
+      ignore(((		 
+            not_compatio(if_t( \+ atomic(Output), nl)), 
+			if_t(ResNum==1,only_compatio(format('~N['))),
+			only_compatio(if_t((Prev\=@=prev_result('Empty')),write(', '))),
+			nb_setarg(1,Prev,Output),
+			user_io(with_indents(is_mettalog,
              color_g_mesg_ok(yellow,
               \+ \+ ( maplist(maybe_assign,NamedVarsList),
-                write_asrc(Output)))))  ))))),
+                write_asrc(Output)))))  ))),
 
       not_compatio(with_output_to(user_error,give_time('Execution',Seconds))),
       %not_compatio(give_time('Execution',Seconds),
@@ -2148,7 +2157,7 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,Output,F
         (((Complete==true ->! ; true)))))
                     *-> (ignore(Result = res(FOut)),ignore(Output = (FOut)))
                     ; (flag(result_num,ResNum,ResNum),(ResNum==0->(not_compatio(format('~N<no-results>~n~n')),!,true);true))),
-                    only_compatio(write(']')),nl,
+                    only_compatio(write(']')),user_io(nl),
    ignore(Result = res(FOut)).
 
 maybe_assign(N=V):- ignore(V='$VAR'(N)).
@@ -2172,18 +2181,23 @@ forall_interactive(From,WasInteractive,Complete,Goal,After):-
    (is_interactive(From) -> WasInteractive = true ; WasInteractive = false),!,
     Goal, (Complete==true ->  ( quietly(After),!)  ;  (  quietly( \+ After) )).
 
-print_var(Name=Var) :- print_var(Name,Var).
-%print_var(Name,_Var) :- atom_concat('Num',Rest,Name),atom_number(Rest,_),!.
 
+
+print_var(Name=Var) :- print_var(Name,Var).
 write_var(V):- var(V), !, write_dvar(V),!. 
 write_var('$VAR'(S)):-  !, write_dvar(S),!. 
 write_var(V):- write_dvar(V),!.
+%print_var(Name,_Var) :- atom_concat('Num',Rest,Name),atom_number(Rest,_),!.
+print_var(Name,Var):- write_var(Name), write(' = '), write_bsrc(Var), nl.
 
-print_var(Name,Var):- write_var(Name), write(' = '), write_asrc(Var), nl.
+write_asrc(Var):- Var=='Empty',is_compatio,!.
+write_asrc(Var):- write_bsrc(Var),!.
 
-write_asrc(Var):- copy_term(Var,Copy,Goals),Var=Copy,write_asrc(Var,Goals).
-write_asrc(Var,[]):- write_src(Var).
-write_asrc(Var,[G|Goals]):- write_src(Var), write(' { '),write_src(G),maplist(write_src_space,Goals),writeln(' } ').
+write_bsrc(Var):- Var=='Empty',!,write(Var).
+write_bsrc(Var):- ground(Var),!,write_src(Var).
+write_bsrc(Var):- copy_term(Var,Copy,Goals),Var=Copy,write_bsrc(Var,Goals).
+write_bsrc(Var,[]):- write_src(Var).
+write_bsrc(Var,[G|Goals]):- write_src(Var), write(' { '),write_src(G),maplist(write_src_space,Goals),writeln(' } ').
 
 write_src_space(Goal):- write(' '),write_src(Goal).
 

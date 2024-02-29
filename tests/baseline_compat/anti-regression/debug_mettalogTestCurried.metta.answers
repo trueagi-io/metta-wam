@@ -1,0 +1,13 @@
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[(), (), (), (), (), (), (), (), ()]
+[()]
+[("loading succAtoms into kb2")]
+[(Error (import! &kb2 succAxiom.metta) Illegal module name: succAxiom.metta)]
+0.08user 0.01system 0:00.10elapsed 99%CPU (0avgtext+0avgdata 33780maxresident)k
+0inputs+0outputs (0major+3702minor)pagefaults 0swaps
