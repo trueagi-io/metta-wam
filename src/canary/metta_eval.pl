@@ -31,8 +31,10 @@ set_list_value(Value,Result).
    
 set_list_value(Value,Result):- nb_setarg(1,Value,echo),nb_setarg(1,Value,[Result]).
 
-is_self_eval_l_fa('S',1). % cheat to comment
-is_self_eval_l_fa(':',2).
+%is_self_eval_l_fa('S',1). % cheat to comment
+
+% these should get uncomented with a flag
+%is_self_eval_l_fa(':',2)
 % is_self_eval_l_fa('=',2).
 % eval_20(Eq,RetType,Depth,Self,['quote',Eval],RetVal):- !, Eval = RetVal, check_returnval(Eq,RetType,RetVal).
 is_self_eval_l_fa('quote',_).
