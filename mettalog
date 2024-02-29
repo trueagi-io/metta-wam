@@ -272,12 +272,12 @@ fi
 
 # Execute the test script if the condition is met
 if [[ "$use_test_script" -eq 1 ]]; then
-    exec ./scripts/test_in_metta.sh -y --report=n $(quote_args_if_needed $@)
+    exec $METTALOG_DIR/scripts/test_in_metta.sh -y --report=n $(quote_args_if_needed $@)
 fi
 
 for arg in "$@"; do
    if [[ "$arg" == "--debugable" ]]; then
-	scripts/send_keys_debug.sh $(quote_args_if_needed $@)
+	exec $METTALOG_DIR/scripts/send_keys_debug.sh $(quote_args_if_needed $@)
     fi
 done
 
