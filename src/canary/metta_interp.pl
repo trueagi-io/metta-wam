@@ -60,6 +60,7 @@ is_mettalog:- is_metta_flag('log').
 
 is_synthing_unit_tests:- notrace(is_synthing_unit_tests0).
 is_synthing_unit_tests0:- is_testing.
+is_synthing_unit_tests0:- is_html.
 % is_synthing_unit_tests0:- is_compatio,!,fail.
 
 is_testing:- is_metta_flag('test').
@@ -263,11 +264,11 @@ set_is_unit_test(TF):-
   set_option_value_interp('trace-on-fail',false),
   set_option_value_interp('load',show),
   set_option_value_interp('test',TF),
-  if_t(TF,set_option_value_interp('exec',debug)),
+	%set_option_value_interp('trace-on-load',TF),
+/*  if_t(TF,set_option_value_interp('exec',debug)),
   if_t(TF,set_option_value_interp('eval',debug)),
-  %set_option_value_interp('trace-on-load',TF),
   set_option_value_interp('trace-on-exec',TF),
-  set_option_value_interp('trace-on-eval',TF),
+  set_option_value_interp('trace-on-eval',TF),*/
  % if_t( \+ TF , set_prolog_flag(debug_on_interrupt,true)),
   !.
 
@@ -1764,20 +1765,18 @@ do_metta(_File,Load,Self,Src,Out):- Load\==exec, !,
 	 as_tf(asserted_do_metta(Self,Load,Src),Out).
 
 do_metta(file(Filename),exec,Self,TermV,Out):-
-  ((
-     
-     inc_exec_num(Filename),
-     is_synthing_unit_tests,
-    must_det_ll((
+   must_det_ll((inc_exec_num(Filename),
      get_exec_num(Filename,Nth),
      Nth>0)),
+	show_failure((
+	 is_synthing_unit_tests,
      file_answers(Filename, Nth, Ans),
-     check_answers_for(TermV,Ans),!,
+     check_answers_for(TermV,Ans))),!,
      must_det_ll((
       color_g_mesg_ok('#ffa500',
        (writeln(';; In file as:  '),
         color_g_mesg([bold,fg('#FFEE58')], write_src(exec(TermV))),
-        write(';; To unit test case:'))))),!,
+        write(';; To unit test case:'))),!,
         do_metta_exec(file(Filename),Self,['assertEqualToResult',TermV,Ans],Out))).
 
 do_metta(From,exec,Self,TermV,Out):- !, do_metta_exec(From,Self,TermV,Out).
