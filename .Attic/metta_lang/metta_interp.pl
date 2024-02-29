@@ -819,8 +819,11 @@ accept_line2(Self,S):- string_concat('(',RS,S),string_concat(M,')',RS),!,
 accept_line2(Self,S):- fbug(accept_line2(Self,S)),!.
 
 
-load_metta_file_stream(Filename,Self,In):-
-  once((is_file_stream_and_size(In, Size) , Size>102400) -> P2 = read_sform2 ; P2 = read_metta2),
+load_metta_file_stream(Filename,Self,In):-  
+  if_t((atomic(Filename),exists_file(Filename)), size_file(Filename, Size)),
+  if_t(var(Size),is_file_stream_and_size(In, Size)),
+  %once((is_file_stream_and_size(In, Size),Size>102400) -> P2 = read_sform2 ;
+  P2 = read_metta2, %)  
   with_option(loading_file,Filename,
   %current_exec_file(Filename),
   must_det_ll((must_det_ll((
@@ -962,6 +965,7 @@ balanced_parentheses(['('|T], N) :- N1 is N + 1, balanced_parentheses(T, N1).
 balanced_parentheses([')'|T], N) :- N > 0, N1 is N - 1, balanced_parentheses(T, N1).
 balanced_parentheses([H|T], N) :- H \= '(', H \= ')', balanced_parentheses(T, N).
 % Recursive function to read lines until parentheses are balanced.
+
 repl_read(NewAccumulated, Expr):-
     atom_concat(Atom, '.', NewAccumulated),
     catch_err((read_term_from_atom(Atom, Term, []), Expr=call(Term)), E,
@@ -983,8 +987,8 @@ repl_read(NewAccumulated, Expr):-
 %repl_read(NewAccumulated,exec(Expr)):- string_concat("!",Renew,NewAccumulated), !, repl_read(Renew, Expr).
 repl_read(NewAccumulated, Expr):- string_chars(NewAccumulated, Chars),
     balanced_parentheses(Chars), length(Chars, Len), Len > 0,
-    parse_sexpr_metta(NewAccumulated, Expr), !,
-    normalize_space(string(Renew),NewAccumulated),
+	read_metta(NewAccumulated,Expr),
+	normalize_space(string(Renew),NewAccumulated), 
     add_history_string(Renew).
 repl_read(Accumulated, Expr) :- read_line_to_string(current_input, Line), repl_read(Accumulated, Line, Expr).
 
@@ -1026,8 +1030,11 @@ read_metta1(In,Expr):- read_metta2(In,Expr).
 read_metta2(_,O):- clause(t_l:s_reader_info(O),_,Ref),erase(Ref).
 read_metta2(In,Expr):- peek_char(In,Char), read_metta2(In,Char,Expr).
 read_metta2(In,Char,Expr):- char_type(Char,space),get_char(In,Char),not_compatio(put(Char)),!,read_metta2(In,Expr).
+%read_metta2(In,'"',Expr):- read_sform2(In,Expr),!.
+%read_metta2(In,'\'',Expr):- read_sform2(In,Expr),!.
 read_metta2(In,'!',Expr):- get_char(In,_), !, read_metta2(In,Read1),!,Expr=exec(Read1).
-read_metta2(In,';',Expr):- get_char(In,_), !, (maybe_read_pl(In,Expr)-> true ; (read_line_to_string(In,Str),Expr='$COMMENT'(Str,0,0))).
+read_metta2(In,';',Expr):- get_char(In,_), !, (maybe_read_pl(In,Expr)-> true ; 
+  (read_line_to_string(In,Str),Expr='$COMMENT'(Str,0,0))).
 % write_comment(Str),!,read_metta2(In,Expr))),!.
 % read_metta2(In,_,Expr):-  maybe_read_pl(In,Expr),!.
 read_metta2(In,_,Read1):- parse_sexpr_metta(In,Expr),!,must_det_ll(Expr=Read1).
@@ -1060,13 +1067,14 @@ read_sform(S,F):-
     (read_sform1([],S,F2), F = exec(F2))).
 
 
-read_sform2(S,F1):- !, read_metta2(S,F1).
+%read_sform2(S,F1):- !, read_metta2(S,F1).
 read_sform2(S,F1):- read_sform1([],S,F1).
 
 read_sform1(_,_,O):- clause(t_l:s_reader_info(O),_,Ref),erase(Ref).
 read_sform1( AltEnd,Str,F):- string(Str),open_string(Str,S),!,read_sform1( AltEnd,S,F).
 read_sform1(_AltEnd,S,F):- at_end_of_stream(S),!,F=end_of_file.
-read_sform1( AltEnd,S,M):- get_char(S,C),read_sform3(s, AltEnd,C,S,F), untyped_to_metta(F,M).
+read_sform1( AltEnd,S,M):- get_char(S,C),read_sform3(s, AltEnd,C,S,F),
+	  untyped_to_metta(F,M).
 %read_sform1( AltEnd,S,F):- profile(parse_sexpr_metta(S,F)).
 
 read_sform3(_AoS,_AltEnd,C,_,F):- C == end_of_file,!,F=end_of_file.
@@ -2056,7 +2064,7 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,Output,F
   notrace((
   	reset_eval_num,
     Result = res(FOut),
-	Prev = prev_result(_),
+	Prev = prev_result('Empty'),
     inside_assert(Term,BaseEval),
     (is_compatio
        -> option_else(answer,Leap,leap)
@@ -2117,18 +2125,15 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,Output,F
          ((((ResNum==1,Complete==true)->(not_compatio(format('~NDeterministic: ',  [])), !);          %or Nondet
            ( Complete==true -> (not_compatio(format('~NLast Result(~w): ',[ResNum])),! );
                                not_compatio(format('~NNDet Result(~w): ',[ResNum]))))),
-      (
-        ignore(((
-		 
-          not_compatio(if_t( \+ atomic(Output), nl)), 
-          ( only_compatio(if_t((ResNum> 1, Prev\=@=(prev_result('Empty'))),write(', '))),
-            not_compatio(if_t(ResNum> 1, nl)),
-		  if_t(ResNum==1,only_compatio(write('['))),
-		  nb_setarg(1,Prev,Output),
-          user_io(with_indents(is_mettalog,
+      ignore(((		 
+            not_compatio(if_t( \+ atomic(Output), nl)), 
+			if_t(ResNum==1,only_compatio(format('~N['))),
+			only_compatio(if_t((Prev\=@=prev_result('Empty')),write(', '))),
+			nb_setarg(1,Prev,Output),
+			user_io(with_indents(is_mettalog,
              color_g_mesg_ok(yellow,
               \+ \+ ( maplist(maybe_assign,NamedVarsList),
-                write_asrc(Output)))))  ))))),
+                write_asrc(Output)))))  ))),
 
       not_compatio(with_output_to(user_error,give_time('Execution',Seconds))),
       %not_compatio(give_time('Execution',Seconds),
@@ -2153,7 +2158,7 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,Output,F
         (((Complete==true ->! ; true)))))
                     *-> (ignore(Result = res(FOut)),ignore(Output = (FOut)))
                     ; (flag(result_num,ResNum,ResNum),(ResNum==0->(not_compatio(format('~N<no-results>~n~n')),!,true);true))),
-                    only_compatio(write(']')),nl,
+                    only_compatio(write(']')),user_io(nl),
    ignore(Result = res(FOut)).
 
 maybe_assign(N=V):- ignore(V='$VAR'(N)).
