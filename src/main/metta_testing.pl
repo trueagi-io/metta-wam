@@ -104,7 +104,7 @@ write_pass_fail([P,C,_],PASS_FAIL,G):-
 write_pass_fail(TestName,P,C,PASS_FAIL,G1,G2):-
     ignore(((
    (nb_current(loading_file,FilePath),FilePath\==[])->true; FilePath='SOME/UNIT-TEST.metta'),
-    atomic_list_concat([_,R],'examples/',FilePath),
+    atomic_list_concat([_,R],'tests/',FilePath),
     file_name_extension(Base, _, R))),
       nop(format('<h3 id="~w">;; ~w</h3>',[TestName,TestName])),
 

@@ -53,7 +53,7 @@ w_indent(Depth,Goal):- must_be(integer,Depth),
 
 indentq2(Depth,Term):- w_indent(Depth,format('~q',[Term])).
 
-print_padded(_DR,_EX,_AR):- is_fast,!.
+print_padded(_DR,_EX,_AR):- is_fast_mode,!.
 print_padded(EX, DR, AR ):- integer(EX),integer(DR), EX>0,DR>0,
    nb_current('$print_padded',print_padded(EX, DR, _)),!,
    format("~|          |", []),
@@ -65,14 +65,14 @@ print_padded(EX, DR, AR):-
    DRA is abs(round(DR) mod 24),
    forall(between(1,DRA,_),write('   |')),write('-'),write(AR). 
 
-indentq_d(_DR,_EX,_AR):- is_fast,!.
+indentq_d(_DR,_EX,_AR):- is_fast_mode,!.
 indentq_d(Depth,Prefix4, Message):-
 	flag(eval_num,EX0,EX0),
 	EX is EX0 mod 500,
 	DR is 99 - (Depth mod 100),
 	indentq(DR,EX,Prefix4,Message).
 
-indentq(_DR,_EX,_AR,_Term):- is_fast,!.
+indentq(_DR,_EX,_AR,_Term):- is_fast_mode,!.
 indentq(DR,EX,AR,retval(Term)):-nonvar(Term),!,indentq(DR,EX,AR,Term).
 indentq(DR,EX,AR,[E,Term]):- E==e,!,indentq(DR,EX,AR,Term).
 indentq(_DR,_EX,_AR,_Term):- flag(trace_output_len,X,X+1), XX is (X mod 1000), XX<100,!.
@@ -87,7 +87,7 @@ indentq(DR,EX,AR,Term):-
 reset_eval_num:- flag(eval_num,_,0),flag(trace_output_len,_,0).
 reset_only_eval_num:- flag(eval_num,_,0).
 
-is_fast.
+is_fast_mode:- \+ is_debugging(eval),!.
 
 %ignore_trace_once(Goal):- !, call(Goal).
 ignore_trace_once(Goal):- 
@@ -97,6 +97,7 @@ ignore_trace_once(Goal):- must_det_ll(Goal).
 as_trace(Goal):- 
   ignore_trace_once( \+ with_no_screen_wrap(color_g_mesg('#2f2f2f', Goal))).
 
+with_no_screen_wrap(Goal) :-!,call(Goal).
 with_no_screen_wrap(Goal) :- with_no_wrap(6000, Goal).
 
 with_no_wrap(Cols, Goal) :-
@@ -174,7 +175,7 @@ efbug(_,G):- call(G).
 
 
 
-is_debugging(Flag):- var(Flag),!,fail.
+%is_debugging(Flag):- var(Flag),!,fail.
 %is_debugging(Flag):- !, fail.
 
 is_debugging(Flag):- var(Flag),!,fail.
@@ -193,7 +194,7 @@ is_debugging(Flag):- flag_to_var(Flag,Var),
 % overflow = continue
 % overflow = debug
 
-trace_eval(P4,_TN,D1,Self,X,Y):- is_fast,!, call(P4,D1,Self,X,Y).
+trace_eval(P4,_TN,D1,Self,X,Y):- is_fast_mode,!, call(P4,D1,Self,X,Y).
 trace_eval(P4,TN,D1,Self,X,Y):- \+ is_debugging(TN), \+ is_debugging(eval),!, call(P4,D1,Self,X,Y).
 trace_eval(P4,TN,D1,Self,X,Y):-
    must_det_ll((
