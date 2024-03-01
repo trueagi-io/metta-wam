@@ -1,37 +1,27 @@
-
 !(pragma! compile full)
-
 (: Arity (-> Symbol Number))
 (Arity Arity 2)
-
 ;; We do this because the Arity is variable (it can be 3 or 4)
 ;; Treat "If" as a function (missing an arg wheneever we see it in src)
 (: If SrcFunction)
-
 ;; stdlib extension
 (: If (-> Bool Atom Atom))
 (= (If True $then) $then)
 (= (If False $then) (let $x 0 (let $x 1 $x)))
 (: If (-> Bool Atom Atom Atom))
 (= (If $cond $then $else) (if $cond $then $else))
-
 (: TupleConcat (-> List List List))
 (Arity TupleConcat 3)
 (= (TupleConcat $Ev1 $Ev2) (collapse (superpose ((superpose $Ev1) (superpose $Ev2)))))
-
 (: max (-> Number Number Number))
 (Arity max 3)
 (= (max $1 $2) (If (> $1 $2) $1 $2))
-
 (: min (-> Number Number Number))
 (Arity min 3)
 (= (min $1 $2) (If (< $1 $2) $1 $2))
-
 (: abs (-> Number Number))
 (Arity abs 2)
 (= (abs $x) (If (< $x 0) (- 0 $x) $x))
-
-
 ;; Treat "sequential" as a Predicate (NOT missing an arg whenever we see it in src)
 (: sequential SrcPredicate)
 ;; we will try sequential in NARS to maintain bindings and not return anything 
@@ -39,21 +29,11 @@
 (: sequential (-> (ListOf Expression)))
 (Arity sequential 1)
 (= (sequential $1) (maplist do $1))
-
-
 ; was (: do (-> Expression %Undefined%))
 (: do SrcPredicate)
 (: do (-> Expression))
 (Arity do 1)
 (= (do $1) (case $1 ()))
-
-;; turn off compiler while we call into the REPL
-!(pragma! compile false)
-
-!(repl!)
-
-!(pragma! compile full)
-
 (: TupleCount (-> List Number))
 (: TupleCount BinaryPredicate)
 (Arity TupleCount 2)
@@ -64,15 +44,12 @@
    (let $T (collapse (superpose (1 (superpose $TOld))))
         (superpose ((trace! (= (TupleCount $T) (+ $C 2)) ())
                     (If (< $C $N) (BuildTupleCounts $T (+ $C 1) $N))))))
-
 (: CountElement (-> Expression Number))
 (Arity CountElement 2)
 (= (CountElement $x) (case $x (($y 1))))
-
 (: CollapseCardinality (-> Expression Number))
 (Arity CollapseCardinality 2)
 (= (CollapseCardinality $expression) (TupleCount (collapse (CountElement $expression))))
-
 (= (TupleCount (1 1)) 2)
 (= (TupleCount (1 1 1)) 3)
 (= (TupleCount (1 1 1 1)) 4)
@@ -174,8 +151,6 @@
 (= (TupleCount (1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1)) 100)
 (= (TupleCount (1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1)) 101)
 (= (TupleCount (1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1)) 102)
-
-
 ;; Truth functions
 
 (: Truth_c2w (-> Number  Number))
@@ -430,22 +405,17 @@
 (= ($A | $A) $A)
 (= ($A && $A) $A)
 (= ($A || $A) $A)
-
-
 ;;!Extensional set reductions:
 (= (({ $A }) | ({ $B })) ({ $A $B }))
 (= (({ $A $B }) | ({ $C })) ({ ($A . $B) $C }))
 (= (({ $C }) | ({ $A $B }) ) ({ $C ($A . $B) }))
-
 ;;!Intensional set reductions:
 (= (([ $A ]) & ([ $B ])) ([ $A $B ]) )
 (= (([ $A $B ]) & ([ $C ])) ([ ($A . $B) $C ]))
 (= (([ $A ]) & ([ $B $C ])) ([ $A ($B . $C) ]))
-
 ;;!Reduction for set element copula:
 (= ({ ( $A . $B ) }) ({ $A $B }))
 (= ([ ( $A . $B ) ]) ([ $A $B ]))
-
 ;params
 (: Beleif (-> Number))
 (Arity BeliefEventsMax 1)
@@ -497,8 +467,6 @@
                                               (sequential ((change-state! &tempbest $x)
                                                            (change-state! &tempbestscore $fx))))))))
                 (get-state &tempbest))))
-
-
 
 ;functions to select highest-priority events in belief and goal PQ
 (: PriorityOf (-> EventWithTruthValue TruthValue Number)) 
@@ -797,12 +765,33 @@
           ($InputEvent (Event (trace! (!: $Sentence) $Sentence) ($t $evidentialBase ($t 1.0)))))
          (sequential ((do (add-atom &goal_events $InputEvent))
                       (GoalCycle $t)))))
+                      
+                      
+                      
+                      
+                      
+                      
+                      
+                      
+;;NAL tests
 
+!(|- ((Garfield --> cat) (1.0 0.9)) ((cat --> animal) (1.0 0.9)))
+;expected: [((animal --> Garfield) (1.0 0.44751381215469616)), ((Garfield --> animal) (1.0 0.81))]
 
+!(|- ((Garfield --> carnivore) (1.0 0.9)) (((Garfield --> cat) ==> (Garfield --> carnivore)) (1.0 0.9)))
+;expected: [((Garfield --> cat) (1.0 0.44751381215469616))]
 
+!(|- ((({ a b }) --> mwawa) (1.0 0.9)))
+;expected: [((({ a }) --> mwawa) (1.0 0.81)), ((({ b }) --> mwawa) (1.0 0.81))]
 
+!(|- (((a * b) --> R) (1.0 0.9)))
+;expected: [((a --> (R /1 b)) (1.0 0.81)), ((b --> (R /2 a)) (1.0 0.81))]
 
+!(|- ((R --> (a * b)) (1.0 0.9)))
+;expected: [(((R \1 b) --> a) (1.0 0.81)), (((R \2 a) --> b) (1.0 0.81))]
 
+!(|- ((A --> cat) (1.0 0.9)) ((B --> cat) (1.0 0.9)))
+;expected: [((B --> A) (1.0 0.44751381215469616)), (((A ~ B) --> cat) (0.0 0.81)), (((A | B) --> cat) (1.0 0.81)), ((B <-> A) (1.0 0.44751381215469616)), (((A & B) --> cat) (1.0 0.81))]
 
-
-
+!(|- (|- ((Garfield --> cat) (1.0 0.9)) ((cat --> animal) (1.0 0.9))) ((animal --> being) (1.0 0.9)))
+;expected: [((animal --> (Garfield | being)) (1.0 0.40276243093922653)), ((animal --> (Garfield & being)) (1.0 0.40276243093922653)), ((animal --> (Garfield - being)) (0.0 0.40276243093922653)), ((being <-> Garfield) (1.0 0.28712091374556914)), ((being --> Garfield) (1.0 0.28712091374556914)), ((being --> Garfield) (1.0 0.42163100057836905)), ((Garfield --> being) (1.0 0.7290000000000001))]
