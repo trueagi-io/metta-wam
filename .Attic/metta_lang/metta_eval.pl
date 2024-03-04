@@ -143,7 +143,7 @@ eval_01(Eq,RetType,Depth,Self,X,YO):-
    eval_02(Eq,RetType,Depth2,Self,Y,YO))).
 
 eval_02(Eq,RetType,Depth2,Self,Y,YO):- 
-  once(if_or_else((subst_args(Eq,RetType,Depth2,Self,Y,YO)), 
+  once(user:if_or_else((subst_args(Eq,RetType,Depth2,Self,Y,YO)), 
     if_or_else(finish_eval(Depth2,Self,Y,YO),
 	    Y=YO))).
 
@@ -247,31 +247,56 @@ eval_20(Eq,RetType,Depth,Self,X,Y):- fail,
 	X\=@=XX, fbug(type_fit_childs(X,XX)),fail,
   eval_evals(Eq,RetType,Depth,Self,XX,Y).
 
+
+	into_arg_code([],true):-!.
+into_arg_code(H,TT):- \+ iz_conz(H), TT = H.
+into_arg_code([H,T],TT):- H==true,!,into_arg_code(T,TT).
+into_arg_code([T,H],TT):- H==true,!,into_arg_code(T,TT).
+into_arg_code([H,T],','(HH,TT)):- !, into_arg_code(H,HH),into_arg_code(T,TT).
+into_arg_code([H|T],TT):- H==true,!,into_arg_code(T,TT).
+into_arg_code([H|T],','(HH,TT)):- !, into_arg_code(H,HH),into_arg_code(T,TT).
+into_arg_code(TT,TT).
+into_arg_code([H|T],next(H,TT)):- into_arg_code(T,TT).
+
+
 % reduce args to match types even inside atoms
-type_fit_childs(Eq,Depth,Self,RetType,X,Y):- \+ is_list(X),!,Y=X.
-type_fit_childs(Eq,Depth,Self,RetType,X,Y):- self_eval(X),!,Y=X.
+type_fit_childs(Eq,Depth,Self,RetType,true,X,Y):- is_ftVar(X),!,Y=X.
+type_fit_childs(Eq,Depth,Self,RetType,true,X,Y):- symbolic(X),!,Y=X.
+type_fit_childs(Eq,Depth,Self,RetType,true,X,Y):- compound_non_cons(X),!,into_list_args(X,XX),!,type_fit_childs(Eq,Depth,Self,RetType,CodeForArg,XX,Y).
+type_fit_childs(Eq,Depth,Self,RetType,true,X,Y):- \+ is_list(X),iz_conz(X), trace, !,Y=X.
+type_fit_childs(Eq,Depth,Self,RetType,true,X,Y):- self_eval(X),!,Y=X.
 
-type_fit_childs(_Eq,_Depth,_Self,_RetType,[H|Args],[H|Args]):- (H=='eval';H=='eval-for'),!.
+type_fit_childs(_Eq,_Depth,_Self,_RetType,true,[H|Args],[H|Args]):- (H=='eval';H=='eval-for'),!.
 
-type_fit_childs(Eq,Depth,Self,RetType,['let*',Lets,Body],RetVal):- !, 
+type_fit_childs(Eq,Depth,Self,RetType,CodeForArg,['let*',Lets,Body],RetVal):- !, 
 	expand_let_star(Lets,Body,NewLet),!, 
-		type_fit_childs(Eq,Depth,Self,RetType,NewLet,RetVal).
+		type_fit_childs(Eq,Depth,Self,RetType,CodeForArg,NewLet,RetVal).
 
-type_fit_childs(Eq,Depth,Self,RetType,[H|Args],Y):- H\==':',
+/*    							  e,CodeForCond,['If',Cond,Then,Else],
+	pe_fit_childs(Eq,Depth,Self,RetType,CodeForCond,['If',Cond,Then,Else],
+            ['If',ConVal,(CodeForThen),CodeForElse]):-
+	type_fit_childs(Eq,Depth,Self,'Bool',CodeForCond,Cond,ConVal).
+	type_fit_childs(Eq,Depth,Self,RetType,CodeForThen,Then,ThenVal).
+	type_fit_childs(Eq,Depth,Self,RetType,CodeForElse,Else,ElseVal).
+*/
+
+type_fit_childs(Eq,Depth,Self,RetType,FullCodeForArgs,[H|Args],Y):- H\==':',
    ignore(get_operator_typedef1(Self,H,ParamTypes,RType)),
+   ignore(eager_for_type(RType,RetType)),!,
+   must_det_ll((maplist(type_fit_childs(Eq,Depth,Self),ParamTypes,CodeForArgs,Args,NewArgs),
+   into_arg_code(CodeForArgs,MCodeForArgs),
+   into_arg_code([MCodeForArgs,'eval'(XX,Y)],FullCodeForArgs),
 
-   eager_for_type(RType,RetType),!,
-   maplist(type_fit_childs(Eq,Depth,Self),ParamTypes,Args,NewArgs),
-   XX = [H|NewNewArgs],
-   Y = ['eval-for',RetType,XX].
-   %eval(Eq,RetType,Depth,Self,XX,Y).
+   XX = [H|NewArgs],
+   Y = _)).
+   %eval(Eq,RetType,CodeForArg,Depth,Self,XX,Y).
 
-
-type_fit_childs(Eq,Depth,Self,RetType,[H|Args],Y):-
-   ignore(get_operator_typedef1(Self,H,ParamTypes,RType)),
-   maplist(type_fit_childs(Eq,Depth,Self),ParamTypes,Args,NewArgs),
-   Y = [H|NewArgs].
-type_fit_childs(_Eq,_Depth,_Self,_RetType,X,X):-!.
+type_fit_childs(Eq,Depth,Self,RetType,FullCodeForArgs,[H|Args],Y):-
+   must_det_ll((ignore(get_operator_typedef1(Self,H,ParamTypes,RType)),
+   maplist(type_fit_childs(Eq,Depth,Self),ParamTypes,CodeForArgs,Args,NewArgs),
+   into_arg_code(CodeForArgs,FullCodeForArgs),
+   Y = [H|NewArgs])).
+type_fit_childs(_Eq,_Depth,_Self,_RetType,true,X,Y):-!,must_det_ll((X=Y)).
 
 eager_for_type(_RType,'Atom'):- !, fail.	
 eager_for_type(_RType,'Type'):- !, fail.
@@ -494,7 +519,7 @@ eval_20(Eq,RetType,Depth,Self,['assertNotEqual',X,Y],RetVal):- !,
 eval_20(Eq,RetType,Depth,Self,['assertEqualToResult',X,Y],RetVal):- !,
    loonit_assert_source_tf(
         ['assertEqualToResult',X,Y],
-        (bagof_eval(Eq,RetType,Depth,Self,X,XX), sort(Y,YY)),
+        (bagof_eval(Eq,RetType,Depth,Self,X,XX), =(Y,YY)),
          equal_enough_for_test(XX,YY), TF),
   (TF=='True'->make_empty(RetType,RetVal);RetVal=['Error'(XX,expected(YY))]).
 
@@ -502,13 +527,13 @@ eval_20(Eq,RetType,Depth,Self,['assertEqualToResult',X,Y],RetVal):- !,
 loonit_assert_source_tf(_Src,Goal,Check,TF):- \+ is_testing,!,
     reset_eval_num,
     call(Goal),
-    as_tf(Check,TF),!.
+    as_tf_tracabe(Check,TF),!.
 
 loonit_assert_source_tf(Src,Goal,Check,TF):-
     copy_term(Goal,OrigGoal),
     reset_eval_num,
    loonit_asserts(Src, time_eval('\n; EVAL TEST\n;',Goal), Check),
-   as_tf(Check,TF),!,
+    as_tf_tracabe(Check,TF),!,
   ignore((
           once((TF='True', trace_on_pass);(TF='False', trace_on_fail)),
      with_debug(metta(eval),time_eval('Trace',OrigGoal)))).
@@ -527,9 +552,6 @@ unify_enough(L,C):- into_list_args(L,LL),into_list_args(C,CC),unify_lists(CC,LL)
 unify_lists(L,L):-!.
 unify_lists([C|CC],[L|LL]):- unify_enough(L,C),!,unify_lists(CC,LL).
 
-equal_enough(R,V):- is_list(R),is_list(V),sort(R,RR),sort(V,VV),!,equal_enouf(RR,VV),!.
-equal_enough(R,V):- copy_term(R,RR),copy_term(V,VV),equal_enouf(R,V),!,R=@=RR,V=@=VV.
-
 %s_empty(X):- var(X),!.
 s_empty(X):- var(X),!,fail.
 is_empty('Empty').
@@ -541,17 +563,26 @@ has_let_star(Y):- sub_var('let*',Y).
 % !(pragma! unit-tests tollerant) ; tollerant or exact
 is_tollerant:- \+ option_value('unit-tests','exact').
 
-equal_enough_for_test(X,Y):- is_empty(X),!,is_empty(Y).
-equal_enough_for_test(X,Y):- has_let_star(Y),!,\+ is_empty(X).
-equal_enough_for_test(X,Y):- must_det_ll((subst_vars(X,XX),subst_vars(Y,YY))),!,equal_enough_for_test2(XX,YY),!.
+equal_enough_for_test(X,Y):- equal_enough_for_test1(X,Y),!.
+
+equal_enough_for_test1(X,Y):- is_empty(X),!,is_empty(Y).
+equal_enough_for_test1(X,Y):- has_let_star(Y),!,\+ is_empty(X).
+equal_enough_for_test1(X,Y):- must_det_ll((subst_vars(X,XX),subst_vars(Y,YY))),!,equal_enough_for_test2(XX,YY),!.
 equal_enough_for_test2(X,Y):- equal_enough(X,Y).
+
+equal_enough(R,V):- copy_term(R,RR),copy_term(V,VV),equal_enough1(R,V),!,R=@=RR,V=@=VV.
+
+equal_enough1(R,V):- 
+  is_list(R),is_list(V),sort(R,RR),sort(V,VV),!,
+  always_remove_nils(RR,RRR), always_remove_nils(VV,VVV),
+  equal_enouf(RRR,VVV),!.
+equal_enough1(R,V):- equal_enouf(R,V),!.
 
 equal_enouf(R,V):- is_ftVar(R), is_ftVar(V), R=V,!.
 equal_enouf(X,Y):- is_empty(X),!,is_empty(Y).
 equal_enouf(X,Y):- symbol(X),symbol(Y),atom_concat('&',_,X),atom_concat('Grounding',_,Y).
 equal_enouf(R,V):- R=@=V, R=V, !.
 equal_enouf(_,V):- V=@='...',!.
-
 equal_enouf(L,C):- is_tollerant, is_list(L),is_list(C), 
 	 maybe_remove_nils(C,CC),equal_enouf(L,CC).
 
@@ -572,6 +603,7 @@ equal_enouf_l([C|CC],[L|LL]):- !, equal_enouf(L,C),!,equal_enouf_l(CC,LL).
 maybe_remove_nils(I,O):- always_remove_nils(I,O),!,I\=@=O.
 always_remove_nils(I,O):- \+ compound(I),!,I=O.
 always_remove_nils([H|T], TT):- H==[],!, always_remove_nils(T,TT). 
+always_remove_nils([H|T], TT):- H=='Empty',!, always_remove_nils(T,TT). 
 always_remove_nils([H|T],[H|TT]):- always_remove_nils(T,TT). 
 
 has_unicode(A):- atom_codes(A,Cs),member(N,Cs),N>127,!.
@@ -981,7 +1013,7 @@ clear_nb_values(StateNameOrInstance) :-
 
 
 % Function to confirm if a term represents a state
-is_valid_nb_state(State):- compound(State),functor(State,'State',_).
+is_valid_nb_state(State):- compound(State),compound_name_arity(State,'State',N),N>0.
 
 % Find the original name of a given state
 state_original_name(State, Name) :-
@@ -1414,12 +1446,15 @@ is_system_pred(S):- atom(S),atom_concat(_,'-p',S).
 % - Self: Context or environment for the evaluation.
 % - [MyFun|More]: List with MeTTa function and additional arguments.
 % - RetVal: Variable to store the result of the Python function call.
-eval_81(Eq, RetType, Depth, Self, [MyFun|More], RetVal) :-
+eval_81(Eq, RetType, Depth, Self, [MyFun|More], RetVal) :- MyFun\==':',
     % MyFun as a registered Python function with its module and function name.
     metta_atom(Self, ['registered-python-function', PyModule, PyFun, MyFun]),
     % Tries to fetch the type definition for MyFun, ignoring failures.
     ((  get_operator_typedef(Self, MyFun, Params, RetType),
-        try_adjust_arg_types(RetType, Depth, Self, [RetType|Params], [RetVal|More], [MVal|Adjusted])
+        %adjust_args(Eq,RetType,Depth,Self,Op,X,Y),
+	    %try_adjust_arg_types(RetType,Depth,Self,Params,X,Y)
+        try_adjust_arg_types(RetType, Depth, Self, [RetType|Params], [RetVal|More], 
+                    [MVal|Adjusted])
     )->true; (maplist(as_prolog, More , Adjusted), MVal=RetVal)),
     % Constructs a compound term for the Python function call with adjusted arguments.
     compound_name_arguments(Call, PyFun, Adjusted),
@@ -1462,7 +1497,7 @@ is_user_defined_goal(Self,Head):-
 
 adjust_args_mp(_Eq,_RetType,Res,Res,_Depth,_Self,_Pred,_Len,_AE,Args,Adjusted):- Args==[],!,Adjusted=Args.
 adjust_args_mp(Eq,RetType,Res,NewRes,Depth,Self,Pred,Len,AE,Args,Adjusted):-
-   functor(P,Pred,Len), predicate_property(P,meta_predicate(Needs)),
+   Len> 0 , functor(P,Pred,Len), predicate_property(P,meta_predicate(Needs)),
    account_needs(1,Needs,Args,More),!,
    adjust_args(Eq,RetType,Res,NewRes,Depth,Self,AE,More,Adjusted).
 adjust_args_mp(Eq,RetType,Res,NewRes,Depth,Self,_Pred,_Len,AE,Args,Adjusted):-
@@ -1547,6 +1582,7 @@ catch_nowarn(G):- quietly(catch_err(G,error(_,_),fail)).
 
 
 as_tf(G,TF):-  G\=[_|_], catch_nowarn((call(G)*->TF='True';TF='False')).
+as_tf_tracabe(G,TF):-  G\=[_|_], ((call(G)*->TF='True';TF='False')).
 %eval_selfless_1(['==',X,Y],TF):- as_tf(X=:=Y,TF),!.
 %eval_selfless_1(['==',X,Y],TF):- as_tf(X=@=Y,TF),!.
 
