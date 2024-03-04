@@ -58,9 +58,11 @@ make_test_name(FilePath0, Number, TestName) :-
     format(string(TestName), "~w.~w.~w", [NoUnderscoreParent, NoUnderscore, NS]).
 
 
-color_g_mesg(_,_):- is_compatio,!.
-color_g_mesg(_,_):- silent_loading,!.
-color_g_mesg(C,G):- notrace((nop(check_silent_loading),color_g_mesg_ok(C,G))).
+%color_g_mesg(_,_):- is_compatio,!.
+%color_g_mesg(_,_):- silent_loading,!.
+color_g_mesg(C,G):- 
+  notrace((nop(check_silent_loading),
+    color_g_mesg_ok(C,G))).
 color_g_mesg_ok(_,G):- is_compatio,!,call(G).
 color_g_mesg_ok(C,G):-
  quietly((
@@ -102,7 +104,7 @@ write_pass_fail([P,C,_],PASS_FAIL,G):-
 write_pass_fail(TestName,P,C,PASS_FAIL,G1,G2):-
     ignore(((
    (nb_current(loading_file,FilePath),FilePath\==[])->true; FilePath='SOME/UNIT-TEST.metta'),
-    atomic_list_concat([_,R],'examples/',FilePath),
+    atomic_list_concat([_,R],'tests/',FilePath),
     file_name_extension(Base, _, R))),
       nop(format('<h3 id="~w">;; ~w</h3>',[TestName,TestName])),
 
@@ -110,7 +112,7 @@ write_pass_fail(TestName,P,C,PASS_FAIL,G1,G2):-
       (%atom_concat(TEE_FILE,'.UNITS',UNITS),
       UNITS = '/tmp/SHARED.UNITS',
       open(UNITS, append, Stream,[encoding(utf8)]),
-      format(Stream,'| ~w | [~w](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/~w.metta.html#~w) | ~@ | ~@ | ~@ |~n',
+      format(Stream,'| ~w | [~w](https://logicmoo.org/public/metta/reports/~w.metta.html#~w) | ~@ | ~@ | ~@ |~n',
       [PASS_FAIL,TestName,Base,TestName,trim_gstring(with_indents(false,write_src([P,C])),200),
         trim_gstring(with_indents(false,write_src(G1)),100),with_indents(false,write_src(G2))]),!,
       close(Stream))).
