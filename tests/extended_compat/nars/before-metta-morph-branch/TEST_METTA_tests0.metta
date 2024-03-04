@@ -28,7 +28,7 @@
 ;; was (: sequential (-> Expression %Undefined%))
 (: sequential (-> (ListOf Expression)))
 (Arity sequential 1)
-(= (sequential $1) (maplist do $1))
+(= (sequential $1) (maplist! do $1))
 ; was (: do (-> Expression %Undefined%))
 (: do SrcPredicate)
 (: do (-> Expression))
