@@ -151,8 +151,8 @@ if_trace(Flag,Goal):- real_notrace((catch_err(ignore((is_debugging(Flag),Goal)),
 
 
 is_showing(Flag):- option_value(Flag,'silent'),!,fail.
+is_showing(Flag):- is_verbose(Flag),!.
 is_showing(Flag):- option_value(Flag,'show'),!.
-is_showing(Flag):- is_debugging(Flag),!.
 
 if_show(Flag,Goal):- real_notrace((catch_err(ignore((is_showing(Flag),Goal)),E,
 						fbug(E-->if_show(Flag,Goal))))).

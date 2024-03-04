@@ -296,9 +296,10 @@ must_det_ll1(P1,X):-
   strip_module(X,M,P),functor(P,F,A),setup_call_cleanup(nop(trace(M:F/A,+fail)),(must_not_error(call(P1,X))*->true;md_failed(P1,X)),
     nop(trace(M:F/A,-fail))),!.
 
+ugtrace(G):- ggtrace(G).
 ugtrace(_):-  is_testing, !, ignore(give_up(5)), throw('$aborted').
 ugtrace(G):-  notrace,trace,rtrace(G).
-%ugtrace(G):- ggtrace(G).
+
 
 %must_not_error(G):- must(once(G)).
 
@@ -2481,12 +2482,12 @@ to_prop_name(Name,UName):- to_case_breaks(Name,Breaks),xtis_to_atomic(Breaks,UNa
 
 xtis_to_atomic([xti(Str,upper),xti(StrL,lower)|Breaks],StrO):- string_upper(Str,Str),
    atom_chars(Str,CharsList),append(Left,[U],CharsList),
-   name(S1,Left),atomic_list_concat([S1,'_',U,StrL],'',StrUL),!,
+   name(S1,Left),symbolic_list_concat([S1,'_',U,StrL],'',StrUL),!,
    xtis_to_atomic([xti(StrUL,lower)|Breaks],StrO).
 xtis_to_atomic([],'').
 xtis_to_atomic([xti(Str,_)],Lower):- downcase_atom(Str,Lower).
 xtis_to_atomic([XTI|Breaks],Atomic):-
-  xtis_to_atomic([XTI],S1),xtis_to_atomic(Breaks,S2),!,atomic_list_concat([S1,S2],'_',Atomic).
+  xtis_to_atomic([XTI],S1),xtis_to_atomic(Breaks,S2),!,symbolic_list_concat([S1,S2],'_',Atomic).
 
 share_vars(Vs,Name=Value):- member(VName=VValue,Vs),VName==Name,!,(Value=VValue->true;trace_or_throw(cant(share_vars(Vs,Name=Value)))).
 share_vars(_,Name=_):- string_concat('_',_,Name),!. % Hide some vars
