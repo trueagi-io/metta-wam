@@ -78,7 +78,7 @@ do_expander(':',_,X,Y):- !, get_type(X,Y)*->X=Y.
 'get_type'(Arg,Type):- 'get-type'(Arg,Type).
 
 
-eval_true(X):- \+ iz_conz(X), callable(X), call(X).
+eval_true(X):- \+ iz_conz(X), !, callable(X),call(X).
 eval_true(X):- eval_args(X,Y), once(var(Y) ; \+ is_False(Y)).
 
 eval_args(X,Y):- current_self(Self), eval_args(100,Self,X,Y).
@@ -1327,12 +1327,20 @@ simple_math([F|XY]):- !, atom(F),atom_length(F,1), is_list(XY),maplist(simple_ma
 simple_math(X):- number(X),!.
 
 
+eval_20(_Eq,_RetType,_Depth,_Self,['call-string!',Str],Empty):- !,'call-string!'(Str,Empty).
+
+'call-string!'(Str,Empty):- 
+			   read_term_from_atom(Str,Term,[variables(Vars)]),!,
+			   call(Term),Empty=Vars.
+
+
 eval_20(Eq,RetType,Depth,Self,X,Y):-
   (eval_40(Eq,RetType,Depth,Self,X,M)*-> M=Y ;
      % finish_eval(Depth,Self,M,Y);
     (eval_failed(Depth,Self,X,Y)*->true;X=Y)).
 
 eval_40(_Eq,_RetType,_Dpth,_Slf,['extend-py!',Module],Res):-  !, 'extend-py!'(Module,Res).
+
 
 /*
 into_values(List,Many):- List==[],!,Many=[].
@@ -1651,6 +1659,9 @@ get_attrlib(XX,clpr):- sub_var(clpr,XX),!.
 % =================================================================
 
 call_ndet(Goal,DET):- call(Goal),deterministic(DET),(DET==true->!;true).
+
+
+
 
 /*
 eval_60(Eq,_RetT,Depth,Self,[H|Args0],B):-

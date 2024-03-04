@@ -855,14 +855,28 @@ load_metta_file_stream_fast(_Size,_P2,Filename,Self,S):- fail, symbolic_list_con
   accept_line(Self,I),
   I==end_of_file,!.
 
-
+:- dynamic(metta_file_buffer/5).
 load_metta_file_stream_fast(_Size,P2,Filename,Self,In):-
-      repeat,
-            current_read_mode(file,Mode),
-            must_det_ll(call(P2, In,Expr)), %write_src(read_metta=Expr),nl,
-            must_det_ll((((do_metta(file(Filename),Mode,Self,Expr,_O)))->true; pp_m(unknown_do_metta(file(Filename),Mode,Self,Expr)))),
-      flush_output,
-      at_end_of_stream(In),!.
+	  repeat,
+			current_read_mode(file,Mode),
+			must_det_ll(call(P2, In,Expr)), %write_src(read_metta=Expr),nl,
+			line_count(In, LineCount),
+			subst_vars(Expr, Term, [], NamedVarsList),
+			assertz(metta_file_buffer(Mode,Term,NamedVarsList,Filename,LineCount)),
+	  flush_output,
+	  at_end_of_stream(In),!,
+	  listing(metta_file_buffer/5),
+	  load_metta_buffer(Self,Filename).
+
+
+load_metta_buffer(Self,Filename):-
+   set_exec_num(Filename,1),
+   load_answer_file(Filename),
+   set_exec_num(Filename,0),
+   forall(metta_file_buffer(Mode,Expr,NamedVarsList,Filename,_LineCount),
+	   (maplist(maybe_assign,NamedVarsList),
+		must_det_ll((((do_metta(file(Filename),Mode,Self,Expr,_O)))->true; pp_m(unknown_do_metta(file(Filename),Mode,Self,Expr)))))).
+
 
 clear_spaces:- clear_space(_).
 clear_space(S):-

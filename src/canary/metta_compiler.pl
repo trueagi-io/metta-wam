@@ -159,6 +159,7 @@ functional_predicate_arg(F, A, L):-
 
 functional_predicate_arg(F, A, L):- functional_predicate_arg_tricky(F, A, L).
 
+decl_arity(F,A):- freeze(Arity, 'Arity' == Arity), metta_file_buffer(+,[Arity,F,A],_NamedVarsList,_Filename,_LineCount).
 decl_arity(F,A):- freeze(Arity, 'Arity' == Arity), metta_atom([Arity,F,A]).
 predicate_arity(F,A):- decl_arity(F,A).
 predicate_arity(F,A):- metta_atom([:,F,[Ar|Args]]),Ar == '->', \+ decl_arity(F,_), length(Args,AA),!,A=AA.
@@ -569,6 +570,7 @@ optimize_body( HB,(B1;B2),(BN1;BN2)):-!, optimize_body(HB,B1,BN1), optimize_body
 optimize_body( HB,(B1,B2),(BN1)):- optimize_conjuncts(HB,(B1,B2),BN1).
 %optimize_body(_HB,==(Var, C), Var=C):- self_eval(C),!.
 optimize_body( HB,u_assign(A,B),R):- optimize_u_assign_1(HB,A,B,R),!.
+optimize_body( HB,eval(A,B),R):- optimize_u_assign_1(HB,A,B,R),!.
 %optimize_body(_HB,u_assign(A,B),u_assign(AA,B)):- p2s(A,AA),!. 
 optimize_body(_HB,Body,BodyNew):- Body=BodyNew.
 
@@ -581,6 +583,11 @@ number_wang(A,B,C):-
   maplist(decl_numeric,[A,B,C]),!.
 
 optimize_u_assign_1(_,Var,_,_):- is_nsVar(Var),!,fail.
+
+
+optimize_u_assign_1(_HB,[H|T],R,Code):- symbol(H),length([H|T],Arity), 
+   predicate_arity(F,A),Arity==A, \+ (predicate_arity(F,A2),A2\=A),
+    append([H|T],[R],ArgsR),Code=..ArgsR,!.
 optimize_u_assign_1(HB,Compound,R,Code):- \+ compound(Compound),!, optimize_u_assign(HB,Compound,R,Code).
 optimize_u_assign_1(HB,[H|T],R,Code):- !, optimize_u_assign(HB,[H|T],R,Code).
 optimize_u_assign_1(_ ,Compound,R,Code):- 
@@ -723,8 +730,14 @@ compile_flow_control(_Depth,_HeadIs,_RetResult,Convert,_):- \+ compound(Convert)
 
 compile_flow_control(_Depth,_HeadIs,_RetResult,Convert,_):- is_arity_0(Convert,_),!,fail.
 
-	compile_flow_control(_Depth,_HeadIs,RetResult,Convert, u_assign(Convert,RetResult)) :-   
+compile_flow_control(_Depth,_HeadIs,RetResult,Convert, u_assign(Convert,RetResult)) :-   
 	   is_ftVar(Convert), var(RetResult),!.
+
+compile_flow_control(_Depth,_HeadIs,RetResult,Convert,Converted) :- % dif_functors(HeadIs,Convert),
+   Convert =~ [H|_], \+ symbol(H), \+ is_non_evaluatable(H),
+   Converted = (Convert=RetResult),!.
+  
+
 
 :- op(700,xfx, =~).
 compile_flow_control(Depth,HeadIs,RetResult,Convert, (Code1,Eval1Result=Result,Converted)) :- % dif_functors(HeadIs,Convert),
@@ -1012,7 +1025,8 @@ compile_flow_control(Depth,HeadIs,RetResult,(AsPredI; Convert), (AsPredO; Conver
   must_det_ll((f2p(Depth,HeadIs,RetResult,AsPredI, AsPredO),
 			   f2p(Depth,HeadIs,RetResult,Convert, Converted))).
 
-
+'True'(X):- ignore(is_True(X)).
+'False'(X):- is_False(X).
 
 get_inline_case_list(HeadDef,Quot,CaseList):-
    findall([HeadDef,NewDef],get_inline_def1(HeadDef,NewDef),DefList),DefList\==[],
@@ -1077,23 +1091,25 @@ compile_flow_control(Depth,HeadIs,RetResult,Convert, once(Converted)) :-
 
 
 
-compile_flow_control(Depth,HeadIs,RetResult,Convert, Converted) :-
+compile_flow_control(Depth,HeadIs,RetResult,Convert, Converted) :- dif_functors(HeadIs,Convert),
   get_inline_def(Convert,InlineDef),!,
   must_det_ll((f2p(Depth,HeadIs,RetResult,InlineDef,Converted))).
-
-% If Convert is a "," (and) function, we convert it to the equivalent "," (and) predicate.
-compile_flow_control(Depth,HeadIs,RetResult,(AsPredI, Convert), (AsPredO, Converted)) :- !,
-  must_det_ll((f2p(Depth,HeadIs,_RtResult,AsPredI, AsPredO),
-			   f2p(Depth,HeadIs,RetResult,Convert, Converted))).
 
 % If Convert is a ":-" (if) function, we convert it to the equivalent ":-" (if) predicate.
 compile_flow_control(_Depth,_HeadIs,RetResult, Convert, Converted) :- Convert =(H:-B),!,
   RetResult=(H:-B), Converted = true.
 
+% If Convert is a "," (and) function, we convert it to the equivalent "," (and) predicate.
+compile_flow_control(Depth,HeadIs,RetResult,SOR,(AsPredO, Converted)) :- 
+  SOR =~ (AsPredI, Convert),
+  must_det_ll((f2p(Depth,HeadIs,RetResult,AsPredI, AsPredO),
+			   f2p(Depth,HeadIs,RetResult,Convert, Converted))),!.
+
 
 % If Convert is a "not" function, we convert it to the equivalent ";" (or) predicate.
-compile_flow_control(Depth,HeadIs,RetResult,not(AsPredI), \+ (AsPredO)) :- !,
-  must_det_ll(f2p(Depth,HeadIs,RetResult,AsPredI, AsPredO)).
+	compile_flow_control(Depth,HeadIs,RetResult,Convert, \+ eval_true(AsPredO)) :- !,
+	  Convert =~ not(AsPredI),
+	  must_det_ll(f2p(Depth,HeadIs,RetResult,AsPredI, AsPredO)).
   
 each_result(Depth,HeadIs,RetResult,Convert,Converted):-
    f2p(Depth,HeadIs,OneResult,Convert,Code1),
@@ -1186,13 +1202,10 @@ f2q(_Depth,_HeadIs,RetResult,Convert, Converted) :- % HeadIs\=@=Convert,
      is_arity_0(Convert,F), !, Converted = u_assign([F],RetResult),!.
 
 
-f2q(Depth,HeadIs,RetResult,Convert, Converted):-
-   Depth2 is Depth -1,
-   compound(Convert), \+ compound_name_arity(Convert,_,0),
-   compile_flow_control(Depth2,HeadIs,RetResult,Convert, Converted),!.
+f2q(_Depth,_HeadIs,RetResult,Convert,Converted) :- % dif_functors(HeadIs,Convert),
+	Convert =~ [H|_], \+ symbol(H), \+ is_non_evaluatable(H),
+	Converted = (Convert=RetResult),!.
 
-
-f2q(_Depth,_HeadIs, _RetVal, Convert, Convert) :- compound(Convert), (Convert= (_,_)),!.
 
 get_first_p1(_,Cmpd,_):- \+ compound(Cmpd),!, fail.
 get_first_p1(E,Cmpd,set_nth1(N1,Cmpd)):- is_list(Cmpd),   nth1(N1,Cmpd,E).
@@ -1201,73 +1214,16 @@ get_first_p1(_,Cmpd,_)                :- is_conz(Cmpd),!,fail.
 get_first_p1(E,Cmpd,set_arg(N1,Cmpd)) :- arg(N1,Cmpd,E).
 get_first_p1(E,Cmpd,Result)           :- arg(_,Cmpd,Ele),!,get_first_p1(E,Ele,Result).
 
+non_simple_arg(E):- compound(E),!, \+ is_ftVar(E).
 
-% If any sub-term of Convert is a control flow imperative, convert that sub-term and then proceed with the conversion.
-f2q(Depth,HeadIs,RetResult,Convert, Converted) :-   fail,
-	% Get the least deepest sub-term AsFunction of Convert
-	get_first_p1(AsFunction,Convert,N1Cmpd),
-	arg(2,N1Cmpd,Cmpd),
-	Cmpd \= ( ==(_,_) ),
-	(Cmpd = [EE,_,_] -> (EE \== '==') ; true ),
-	AsFunction\=@= Convert,
-	callable(AsFunction),  % Check if AsFunction is callable
-	Depth2 is Depth -1,
-	% check that that is is a control flow imperative
-	compile_flow_control(Depth2,HeadIs,Result,AsFunction, AsPred),
-	HeadIs\=@=AsFunction,!,
-	subst(Convert, AsFunction, Result, Converting),  % Substitute AsFunction by Result in Convert
-	f2p(Depth2,HeadIs,RetResult,(AsPred,Result==AsFunction,Converting), Converted).  % Proceed with the conversion of the remaining terms
-
-
-	% If any sub-term of Convert is a control flow imperative, convert that sub-term and then proceed with the conversion.
-f2q(Depth,HeadIs,RetResult,Convert, Converted) :-   fail,
-		deep_lhs_sub_sterm(AsFunction, Convert),
-		AsFunction\=@= Convert,
-		% Get the deepest sub-term AsFunction of Convert
-	  %  sub_term(AsFunction, Convert), AsFunction\==Convert,
-		callable(AsFunction),  % Check if AsFunction is callable
-	Depth2 is Depth -1,
-		compile_flow_control(Depth2,HeadIs,Result,AsFunction, AsPred),
-		HeadIs\=@=AsFunction,!,
-		subst(Convert, AsFunction, Result, Converting),  % Substitute AsFunction by Result in Convert
-		f2p(Depth2,HeadIs,RetResult,(AsPred,Converting), Converted).  % Proceed with the conversion of the remaining terms
-
-% If any sub-term of Convert is a function, convert that sub-term and then proceed with the conversion.
-f2q(Depth,HeadIs,RetResult,Convert, Converted) :- fail,
-	deep_lhs_sub_sterm(AsFunction, Convert),  % Get the deepest sub-term AsFunction of Convert
-	AsFunction\=@= Convert,
-	callable(AsFunction),  % Check if AsFunction is callable
-	%is_function(AsFunction, Nth),  % Check if AsFunction is a function and get the position Nth where the result is stored/retrieved
-	HeadIs\=@=AsFunction,
-	funct_with_result_is_nth_of_pred(HeadIs,AsFunction, Result, _Nth, AsPred),  % Convert AsFunction to a predicate AsPred
-	subst(Convert, AsFunction, Result, Converting),  % Substitute AsFunction by Result in Convert
-	f2p(Depth,HeadIs,RetResult, (AsPred, Converting), Converted).  % Proceed with the conversion of the remaining terms
-/*
-% If AsFunction is a recognized function, convert it to a predicate.
-f2q(Depth,HeadIs,RetResult,AsFunction,AsPred):- % HeadIs\=@=AsFunction,
-   is_function(AsFunction, Nth),  % Check if AsFunction is a recognized function and get the position Nth where the result is stored/retrieved
-   funct_with_result_is_nth_of_pred(HeadIs,AsFunction, RetResult, Nth, AsPred),
-   \+ ( compound(AsFunction), arg(_,AsFunction, Arg), is_function(Arg,_)),!.
-*/
-
-% If any sub-term of Convert is an eval/2, convert that sub-term and then proceed with the conversion.
-f2q(Depth,HeadIs,RetResult,Convert, Converted) :- fail,
-	deep_lhs_sub_sterm0(ConvertFunction, Convert), % Get the deepest sub-term AsFunction of Convert
-	callable(ConvertFunction),  % Check if AsFunction is callable
-	ConvertFunction = eval(AsFunction,Result),
-	ignore(is_function(AsFunction, Nth)),
-	funct_with_result_is_nth_of_pred(HeadIs,AsFunction, Result, Nth, AsPred),  % Convert AsFunction to a predicate AsPred
-	subst(Convert, ConvertFunction, Result, Converting),  % Substitute AsFunction by Result in Convert
-	f2p(Depth,HeadIs,RetResult, (AsPred, Converting), Converted).  % Proceed with the conversion of the remaining terms
-
-
-
-f2q(Depth,HeadIs,RetResult,Convert, Converted) :-
+f2q(Depth,HeadIs,RetResult,Convert, Converted) :- dif_functors(HeadIs,Convert),
   get_inline_def(Convert,NewDef),!,
   must_det_ll((f2p(Depth,HeadIs,RetResult,NewDef,Converted))).
 
-
-non_simple_arg(E):- compound(E),!.
+f2q(Depth,HeadIs,RetResult,Convert, Converted):-
+   Depth2 is Depth -1,
+   compound(Convert), \+ compound_name_arity(Convert,_,0),
+   compile_flow_control(Depth2,HeadIs,RetResult,Convert, Converted),!.
 
 f2q(Depth,HeadIs,RetResult,Converting, (PreArgs,Converted)):-
      as_functor_args(Converting,F,A,Args),
@@ -1282,6 +1238,10 @@ f2q(Depth,HeadIs,RetResult,Converting, (PreArgs,Converted)):-
 		\+ (member(E,NewArgs), non_simple_arg(E)),!,
 		f2p(Depth,HeadIs,RetResult,Convert, Converted). 
 
+
+
+%	f2q(_Depth,_HeadIs, _RetVal, Convert, Convert) :- compound(Convert), (Convert= (_,_)),!.
+
 f2q(Depth,HeadIs,RetResult,Convert, Converted) :- fail,
  must_det_ll((
   as_functor_args(Convert,F,A,Args),
@@ -1289,6 +1249,12 @@ f2q(Depth,HeadIs,RetResult,Convert, Converted) :- fail,
   as_functor_args(QConvert,quot,A,Args))),
   get_inline_case_list([F|NewArgs],Quot,DefList),!,
   must_det_ll((f2p(Depth,HeadIs,RetResult,case(QConvert,DefList),Converted))).
+
+is_non_evaluatable(S):- \+ compound(S),!.
+is_non_evaluatable(S):- is_ftVar(S),!.
+is_non_evaluatable([H|_]):- \+ symbol(H), \+ is_non_evaluatable(H).
+f2q(_Depth,_HeadIs,RetResult,Convert, Converted) :- is_non_evaluatable(Convert),
+   Converted = (Convert=RetResult),!.
 
 f2q(_Depth,_HeadIs,RetResult,Convert, Converted) :- % dif_functors(HeadIs,Convert),
    Convert =~ 'bind!'(Var,Value),is_ftVar(Value),!,
@@ -1691,7 +1657,7 @@ funct_with_result_is_nth_of_pred0(_HeadIs,AsFunction, Result, Nth, (AsPred)) :-
     do_predicate_function_canonical(FP,F),
     length(FuncArgs, Len),
    ignore(var(Nth) -> is_function(AsFunction,Nth); true),
-   ((number(Nth),Nth > Len + 1) -> throw(error(index_out_of_bounds, _)); true),
+   ((number(Nth),Nth > Len + 1) -> (trace,throw(error(index_out_of_bounds, _))); true),
    (var(Nth)->(between(1,Len,From1),Nth is Len-From1+1);true),
     nth1(Nth,PredArgs,Result,FuncArgs),
     AsPred =~ [FP | PredArgs].
@@ -1993,4 +1959,67 @@ write_clause(Stream, Clause) :-
     write(Stream, '.'),
     nl(Stream).
 
+
+
+end_of_file.
+
+
+
+	% If any sub-term of Convert is a control flow imperative, convert that sub-term and then proceed with the conversion.
+	f2q(Depth,HeadIs,RetResult,Convert, Converted) :-   fail,
+		% Get the least deepest sub-term AsFunction of Convert
+		get_first_p1(AsFunction,Convert,N1Cmpd),
+		arg(2,N1Cmpd,Cmpd),
+		Cmpd \= ( ==(_,_) ),
+		(Cmpd = [EE,_,_] -> (EE \== '==') ; true ),
+		AsFunction\=@= Convert,
+		callable(AsFunction),  % Check if AsFunction is callable
+		Depth2 is Depth -1,
+		% check that that is is a control flow imperative
+		compile_flow_control(Depth2,HeadIs,Result,AsFunction, AsPred),
+		HeadIs\=@=AsFunction,!,
+		subst(Convert, AsFunction, Result, Converting),  % Substitute AsFunction by Result in Convert
+		f2p(Depth2,HeadIs,RetResult,(AsPred,Result==AsFunction,Converting), Converted).  % Proceed with the conversion of the remaining terms
+
+
+		% If any sub-term of Convert is a control flow imperative, convert that sub-term and then proceed with the conversion.
+	f2q(Depth,HeadIs,RetResult,Convert, Converted) :-   fail,
+			deep_lhs_sub_sterm(AsFunction, Convert),
+			AsFunction\=@= Convert,
+			% Get the deepest sub-term AsFunction of Convert
+		  %  sub_term(AsFunction, Convert), AsFunction\==Convert,
+			callable(AsFunction),  % Check if AsFunction is callable
+		Depth2 is Depth -1,
+			compile_flow_control(Depth2,HeadIs,Result,AsFunction, AsPred),
+			HeadIs\=@=AsFunction,!,
+			subst(Convert, AsFunction, Result, Converting),  % Substitute AsFunction by Result in Convert
+			f2p(Depth2,HeadIs,RetResult,(AsPred,Converting), Converted).  % Proceed with the conversion of the remaining terms
+
+	% If any sub-term of Convert is a function, convert that sub-term and then proceed with the conversion.
+	f2q(Depth,HeadIs,RetResult,Convert, Converted) :- fail,
+		deep_lhs_sub_sterm(AsFunction, Convert),  % Get the deepest sub-term AsFunction of Convert
+		AsFunction\=@= Convert,
+		callable(AsFunction),  % Check if AsFunction is callable
+		%is_function(AsFunction, Nth),  % Check if AsFunction is a function and get the position Nth where the result is stored/retrieved
+		HeadIs\=@=AsFunction,
+		funct_with_result_is_nth_of_pred(HeadIs,AsFunction, Result, _Nth, AsPred),  % Convert AsFunction to a predicate AsPred
+		subst(Convert, AsFunction, Result, Converting),  % Substitute AsFunction by Result in Convert
+		f2p(Depth,HeadIs,RetResult, (AsPred, Converting), Converted).  % Proceed with the conversion of the remaining terms
+	/*
+	% If AsFunction is a recognized function, convert it to a predicate.
+	f2q(Depth,HeadIs,RetResult,AsFunction,AsPred):- % HeadIs\=@=AsFunction,
+	   is_function(AsFunction, Nth),  % Check if AsFunction is a recognized function and get the position Nth where the result is stored/retrieved
+	   funct_with_result_is_nth_of_pred(HeadIs,AsFunction, RetResult, Nth, AsPred),
+	   \+ ( compound(AsFunction), arg(_,AsFunction, Arg), is_function(Arg,_)),!.
+	*/
+
+	% If any sub-term of Convert is an eval/2, convert that sub-term and then proceed with the conversion.
+	f2q(Depth,HeadIs,RetResult,Convert, Converted) :- fail,
+		deep_lhs_sub_sterm0(ConvertFunction, Convert), % Get the deepest sub-term AsFunction of Convert
+		callable(ConvertFunction),  % Check if AsFunction is callable
+		ConvertFunction = eval(AsFunction,Result),
+		ignore(is_function(AsFunction, Nth)),
+		funct_with_result_is_nth_of_pred(HeadIs,AsFunction, Result, Nth, AsPred),  % Convert AsFunction to a predicate AsPred
+		subst(Convert, ConvertFunction, Result, Converting),  % Substitute AsFunction by Result in Convert
+		f2p(Depth,HeadIs,RetResult, (AsPred, Converting), Converted).  % Proceed with the conversion of the remaining terms
 
