@@ -15,12 +15,15 @@ ftp.flybase.net/**
 .*/
 *~
 .*
+*.qlf
+*.datalog
 *-wam.vpw?*
 *.vtg
 .bash_history
 *.bak
 tests~output/
 reports/*/
+swipl-devel/
 ImplicitQuantification.tex
 data/ftp.flybase.net/
 data/SO-Ontologies/
@@ -35,11 +38,29 @@ src/main/swi_flybase_fast.new
 src/main/swi_flybase_fast_good.pl
 reqs/
 # temp files
-./FOUND_UNITS.sortme
-./PASS_FAIL.md
-./Results.md
 ./*.ansi
-./TEE.ansi.UNITS
-./TEST_LINKS.md
-./final_MeTTaLog.md
+./TEE*.ansi.UNITS
+Result.html
+# Added by Visual Studio Code
+apples/
+bline/
+compout/
+ctm.metta
+file_info.tmp
+last-run/
+main123/
+mettalog.bg
+nars123/
+repsss/
+rr/
+rtests/
+src/CAAA/
+src/canary/metta_compiler - Copy.pl
+src/canary/metta_compiler.pl.304
+src/canary/metta_compiler.pl.bak.right
+src/canary/metta_compiler.pl.left
+src/canary/metta_compiler.pl.new2
+src/canary/metta_compiler.pl.newest
+src/canary/metta_compiler.pl.old
+tests_output/
 
