@@ -9,7 +9,9 @@ DEBUG_WHY() {
 
 process_file() {
 
-    [[ $SHOULD_EXIT -eq 1 ]] && return
+    if [ $SHOULD_EXIT -eq 1 ]; then
+	return
+    fi
 
     #local file=$(find_override_file "$1")
     local file="$1"
@@ -50,7 +52,7 @@ process_file() {
     fi
 
     local take_test=0
-    local TEST_EXIT_CODE=0
+    local TEST_EXIT_CODE=999
 
     # Combined condition check
     if [[ "$fresh" -eq 1 ]] || [ ! -f "${file}.answers" ] || ([ "${file}" -nt "${file}.answers" ] && [ -s "${file}.answers" ]); then
@@ -145,8 +147,7 @@ process_file() {
             DEBUG_WHY "Results present, not taking test."
         fi
     fi
-
-    set +e
+    
 
     if [ "$take_test" -eq 1 ]; then
         sleep 0.1
@@ -155,22 +156,24 @@ process_file() {
         TEST_CMD="./MeTTa '--output=$METTALOG_OUTPUT' --timeout=$METTALOG_MAX_TIME --html --repl=false ${extra_args[@]} ${passed_along_to_mettalog[@]} \"$file\" --halt=true"
         do_DEBUG "${BOLD}$TEST_CMD${NC}"
 
-        IF_REALLY_DO "$TEST_CMD"
-        TEST_EXIT_CODE=$?
+     
+	IF_REALLY_DO "$TEST_CMD"
+	TEST_EXIT_CODE=$?
+
 
         if [ $TEST_EXIT_CODE -eq 124 ]; then
             DEBUG "${RED}Killed (definitely due to timeout) (EXITCODE=$TEST_EXIT_CODE) after $METTALOG_MAX_TIME seconds: ${TEST_CMD}${NC}"
             IF_REALLY_DO [ "$if_failures" -eq 1 ] && rm -f "$file_html"
-        elif [[ $TEST_EXIT_CODE -eq 4 ]] || [[ $TEST_EXIT_CODE -eq 134 ]]; then
-            DEBUG "${RED}Stopping tests (EXITCODE=$TEST_EXIT_CODE) under $METTALOG_MAX_TIME seconds: ${TEST_CMD}${NC}"     
-            SHOULD_EXIT=1
+	elif [[ $TEST_EXIT_CODE -eq 4 ]] || [[ $TEST_EXIT_CODE -eq 134 ]]; then
+            DEBUG "${RED}Stopping tests (EXITCODE=$TEST_EXIT_CODE) under $METTALOG_MAX_TIME seconds: ${TEST_CMD}${NC}"	    
+	    SHOULD_EXIT=1
         elif [ $TEST_EXIT_CODE -ne 7 ]; then
             DEBUG "${YELLOW}Completed (EXITCODE=$TEST_EXIT_CODE) under $METTALOG_MAX_TIME seconds: ${TEST_CMD}${NC}"
         else
             DEBUG "${GREEN}Completed successfully (EXITCODE=$TEST_EXIT_CODE) under $METTALOG_MAX_TIME seconds: ${TEST_CMD}${NC}"
         fi
-        return $TEST_EXIT_CODE
         #set -e
+	return $TEST_EXIT_CODE
     fi
 }
 
@@ -251,6 +254,7 @@ DEBUG() {
 IF_REALLY_DO() {
     if [ "$dry_run" -eq 1 ]; then
         do_DEBUG "${BOLD}Dry Run:${NC} $*"
+	return 0
     else
         DEBUG "${GREEN}Doing:${NC} $*"
         eval "$@" 
@@ -429,7 +433,7 @@ function add_test_units_dir() {
 
 generate_final_MeTTaLog() {
     # Change to the script directory
-    cd "$METTALOG_DIR" || exit 1
+    cd "$METTALOG_DIR" || return 1
 
     # Calculate the number of passed and failed tests
     passed=$(grep -c "| PASS |" /tmp/SHARED.UNITS)
@@ -459,14 +463,25 @@ delete_html_files() {
 
 # Function to check if a file is in an array
 run_tests() {
+    local TEST_EXIT=0
     for file in "${files_to_test[@]}"; do
-	[[ $SHOULD_EXIT -eq 1 ]] && return
+	if [ $SHOULD_EXIT -eq 1 ]; then
+	# For a script, use exit
+	# exit 4
+	# For a function, use return
+	    return 1
+	fi
+
         if [ -f "${file}" ]; then
-            process_file "$file"
+            TEST_EXIT=$(process_file "$file")
+	    if [ "$TEST_EXIT" -eq 4 ]; then
+		return 1
+	    fi
         else
             do_DEBUG "${RED}File does not exist:${NC} $file"
         fi
     done
+    return 0
 }
 
 
