@@ -35,7 +35,8 @@ assert_new1(P):- pfcAdd(P).
 :- dynamic(fb_pred/3).
 :- dynamic(mod_f_a/3).
 decl_m_fb_pred(Mod,Fn,A):- var(Mod),!,mod_f_a(Mod,Fn,A).
-decl_m_fb_pred(Mod,Fn,A):- mod_f_a(Mod,Fn,A)->true;(dynamic(Mod:Fn/A),
+decl_m_fb_pred(Mod,Fn,A):- mod_f_a(Mod,Fn,A)->true;
+   (dynamic(Mod:Fn/A),
     pfcAdd(mod_f_a(Mod,Fn,A))).
 :- dynamic(fb_pred_file/3).
 decl_fb_pred(Fn,A):-
@@ -58,80 +59,81 @@ skip(_).
 
 % Clear all atoms from a space
 'clear-atoms'(SpaceNameOrInstance) :-
-  debug_metta(['clear-atoms',SpaceNameOrInstance]),
+  dout(space,['clear-atoms',SpaceNameOrInstance]),
   space_type_method(Type,clear_space,Method), call(Type,SpaceNameOrInstance),!,
-  debug_metta(['type-method',Type,Method]),
+  dout(space,['type-method',Type,Method]),
   call(Method,SpaceNameOrInstance).
 
 % Add an atom to the space
-'add-atom'(SpaceNameOrInstance, Atom) :-      % debug_metta(['add-atom',SpaceNameOrInstance, Atom]),
-    space_type_method(Type,add_atom,Method), call(Type,SpaceNameOrInstance),!,
+'add-atom'(SpaceNameOrInstance, Atom) :-      % dout(space,['add-atom',SpaceNameOrInstance, Atom]),
+   (( space_type_method(Type,add_atom,Method), call(Type,SpaceNameOrInstance),!,
     if_t((SpaceNameOrInstance\=='&self' ; Type\=='is_asserted_space'),
-       debug_metta(['type-method',Type,Method,SpaceNameOrInstance,Atom])),
-    call(Method,SpaceNameOrInstance,Atom).
+       dout(space,['type-method',Type,Method,SpaceNameOrInstance,Atom])),
+    call(Method,SpaceNameOrInstance,Atom))).
 % Add Atom
-'add-atom'(Environment, AtomDeclaration, Result):- eval_args(['add-atom', Environment, AtomDeclaration], Result).
+'add-atom'(Environment, AtomDeclaration, Result):- 
+  eval_args(['add-atom', Environment, AtomDeclaration], Result).
 
 % remove an atom from the space
 'remove-atom'(SpaceNameOrInstance, Atom) :-
-    debug_metta(['remove-atom',SpaceNameOrInstance, Atom]),
+    dout(space,['remove-atom',SpaceNameOrInstance, Atom]),
     space_type_method(Type,remove_atom,Method), call(Type,SpaceNameOrInstance),!,
-    debug_metta(['type-method',Type,Method]),
+    dout(space,['type-method',Type,Method]),
     call(Method,SpaceNameOrInstance,Atom).
 % Remove Atom
 'remove-atom'(Environment, AtomDeclaration, Result):- eval_args(['remove-atom', Environment, AtomDeclaration], Result).
 
 % Add an atom to the space
 'replace-atom'(SpaceNameOrInstance, Atom, New) :-
-    debug_metta(['replace-atom',SpaceNameOrInstance, Atom, New]),
+    dout(space,['replace-atom',SpaceNameOrInstance, Atom, New]),
     space_type_method(Type,replace_atom,Method), call(Type,SpaceNameOrInstance),!,
-    debug_metta(['type-method',Type,Method]),
+    dout(space,['type-method',Type,Method]),
     call(Method,SpaceNameOrInstance,Atom, New).
 % Replace Atom
 'atom-replace'(Environment, OldAtom, NewAtom, Result):- eval_args(['atom-replace', Environment, OldAtom, NewAtom], Result).
 
 % Count atoms in a space
 'atom-count'(SpaceNameOrInstance, Count) :-
-    debug_metta(['atom-count',SpaceNameOrInstance]),
+    dout(space,['atom-count',SpaceNameOrInstance]),
     space_type_method(Type,atom_count,Method), call(Type,SpaceNameOrInstance),!,
     call(Method,SpaceNameOrInstance,Count),
-    debug_metta(['type-method-result',Type,Method,Count]).
+    dout(space,['type-method-result',Type,Method,Count]).
 % Count Atoms
 'atom-count'(Environment, Count):- eval_args(['atom-count', Environment], Count).
 
 % Fetch all atoms from a space
 'get-atoms'(SpaceNameOrInstance, AtomsL) :-
-    debug_metta(['get-atoms',SpaceNameOrInstance]),
+    dout(space,['get-atoms',SpaceNameOrInstance]),
     space_type_method(Type,get_atoms,Method), call(Type,SpaceNameOrInstance),!,
     call(Method,SpaceNameOrInstance, AtomsL),
     length(AtomsL,Count),
-    debug_metta(['type-method-result',Type,Method,Count]).
+    dout(space,['type-method-result',Type,Method,Count]).
 % Get Atoms
 'get-atoms'(Environment, Atoms):- eval_args(['get-atoms', Environment], Atoms).
 
 % Iterate all atoms from a space
 'atoms_iter'(SpaceNameOrInstance, Iter) :-
-    debug_metta(['atoms_iter',SpaceNameOrInstance]),
+    dout(space,['atoms_iter',SpaceNameOrInstance]),
     space_type_method(Type,atoms_iter,Method), call(Type,SpaceNameOrInstance),!,
     call(Method,SpaceNameOrInstance, Iter),
-    debug_metta(['type-method-result',Type,Method,Iter]).
+    dout(space,['type-method-result',Type,Method,Iter]).
 
 % Match all atoms from a space
 'atoms_match'(SpaceNameOrInstance, Atoms, Template, Else) :-
     space_type_method(Type,atoms_match,Method), call(Type,SpaceNameOrInstance),!,
     call(Method,SpaceNameOrInstance, Atoms, Template, Else),
-    debug_metta(['type-method-result',Type,Method,Atoms, Template, Else]).
+    dout(space,['type-method-result',Type,Method,Atoms, Template, Else]).
 
 
 % Query all atoms from a space
 'space_query'(SpaceNameOrInstance, QueryAtom, Result) :-
     space_type_method(Type,query,Method), call(Type,SpaceNameOrInstance),!,
     call(Method,SpaceNameOrInstance, QueryAtom, Result),
-    debug_metta(['type-method-result',Type,Method,Result]).
+    dout(space,['type-method-result',Type,Method,Result]).
 
 
 subst_pattern_template(SpaceNameOrInstance, Pattern, Template) :-
-    debug_metta([subst_pattern_template,SpaceNameOrInstance, Pattern, Template]),
+    dout(space,[subst_pattern_template,SpaceNameOrInstance, Pattern, Template]),
     'atoms_match'(SpaceNameOrInstance, Pattern, Template, []).
 
 /*
@@ -287,12 +289,12 @@ ensure_space(_N,_V):- fail.
 % ===============================
 % Clause Database interface
 % ===============================
-%debug_metta(Call):- skip(Call).
+%dout(space,Call):- skip(Call).
 if_metta_debug(Goal):- getenv('VSPACE_VERBOSE','2'),!,ignore(call(Goal)).
-%if_metta_debug(_):-!.
+if_metta_debug(_):-!.
 if_metta_debug(Goal):- !,ignore(call(Goal)).
-debug_metta(Term):- notrace(if_metta_debug((format('~N; ~@~n',[write_src(Term)])))).
-debug_metta(Msg,Term):- notrace(if_metta_debug((format('~N; ~w: ~@~n',[Msg,write_src(Term)])))),!.
+dout(_,_):-!.
+dout(W,Term):- notrace(if_metta_debug((format('~N; ~w ~@~n',[W,write_src(Term)])))).
 
 :- multifile(space_type_method/3).
 :- dynamic(space_type_method/3).
@@ -321,7 +323,9 @@ metta_assertdb_add(KB,AtomIn):-
      MP =.. [AMA,KB,Atom],
   assert_new(MP))).
 metta_assertdb_rem(KB,Old):- metta_assertdb_del(KB,Old).
-metta_assertdb_del(KB,Atom):- subst_vars(Atom,Old), decl_m_fb_pred(user,asserted_metta_atom,2), MP = metta_atom(KB,Old),
+metta_assertdb_del(KB,Atom):- subst_vars(Atom,Old),
+  decl_m_fb_pred(user,asserted_metta_atom,2), 
+   MP = metta_atom(KB,Old),
   copy_term(MP,Copy), clause(MP,true,Ref), MP=@= Copy, !, erase(Ref). % ,metta_assertdb('DEL',Old).
 metta_assertdb_replace(KB,Old,New):- metta_assertdb_del(KB,Old), metta_assertdb_add(KB,New).
 metta_assertdb_count(KB,Count):-
@@ -347,7 +351,7 @@ metta_assertdb_iter(KB,Atoms):-
 metta_iter_bind(KB,Query,Vars,VarNames):-
   term_variables(Query,QVars),
   align_varnames(VarNames,Vars),
-  TV = debug_metta(['match',KB,Query,QVars,Vars,VarNames]),
+  TV = dout(space,['match',KB,Query,QVars,Vars,VarNames]),
 %  \+ \+ (numbervars(TV,0,_,[]),print(tv=TV),nl),
   ignore(QVars=Vars),
 %  \+ \+ (numbervars(TV,0,_,[]),print(qv=TV),nl),
@@ -358,14 +362,18 @@ metta_iter_bind(KB,Query,Vars,VarNames):-
 
 % Query from hyperon.base.GroundingSpace
 space_query_vars(KB,Query,Vars):- is_asserted_space(KB),!,
+    decl_m_fb_pred(user,asserted_metta_atom,2),
     call_metta(KB,Query,Vars),
-    debug_metta('RES',space_query_vars(KB,Query,Vars)).
+    dout('RES',space_query_vars(KB,Query,Vars)).
 
 
-metta_assertdb_get_atoms(KB,AtomsL):- decl_m_fb_pred(user,asserted_metta_atom,2), findall(Atom,metta_atom(KB,Atom),AtomsL).
+metta_assertdb_get_atoms(KB,AtomsL):- 
+  decl_m_fb_pred(user,asserted_metta_atom,2), 
+  findall(Atom,metta_atom(KB,Atom),AtomsL).
 /*
 
-%metta_assertdb_iter_bind(KB,Query,Template,AtomsL):- decl_m_fb_pred(user,asserted_metta_atom,2), findall(Template,metta_atom(KB,Query),AtomsL).
+%metta_assertdb_iter_bind(KB,Query,Template,AtomsL):- 
+    decl_m_fb_pred(user,asserted_metta_atom,2), findall(Template,metta_atom(KB,Query),AtomsL).
 metta_assertdb_iter_bind(KB,Query,Vars):-
   ignore(term_variables(Query,Vars)),
   print(metta_assertdb(['match',KB,Query,Vars])),nl,
@@ -401,7 +409,8 @@ merge_named(N,V,[N|VarNames],[V|Vars]):-
 
 call_metta( KB,Query,_Vars):- metta_atom(KB,Query).
 call_metta(_KB,Query,_Vars):- metta_to_pyswip([],Query,Call),!,
-  print(user:Call),nl,user:call(Call).
+  %print(user:Call),nl,
+	user:call(Call).
 
 metta_to_pyswip(_PS,Query,Call):- var(Query),!,Call=Query.
 metta_to_pyswip(_PS,Query,Call):- \+ compound(Query),!,Call=Query,!.

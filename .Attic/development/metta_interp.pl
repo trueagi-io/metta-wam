@@ -1,4 +1,5 @@
 :- encoding(iso_latin_1).
+:- ensure_loaded(swi_support).
 :- set_prolog_flag(backtrace,true).
 :- set_prolog_flag(backtrace_depth,100).
 :- set_prolog_flag(backtrace_goal_dept,100).

@@ -34,7 +34,7 @@ process_obo_file(File):- atom_concat(File,'.metta_x',MXFile),process_obo_file(Fi
 process_obo_file(_File,MXFile):- exists_file(MXFile),!,process_metta_x_file(MXFile).
 process_obo_file(File, MXFile):- exists_file(File),!,
           setup_call_cleanup(
-             open(MXFile,write,Strm,[]),
+             open(MXFile,write,Strm,[encoding(utf8)]),
              setup_call_cleanup(
                     set_stream(Strm,alias(metta_x_output)),
                     with_option(make_metta_x,'False',

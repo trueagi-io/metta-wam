@@ -889,10 +889,13 @@ pad_number(Number, N) :-
   sformat(S,"~t~D~*|", [Number,N]),symbolic_list_concat(L,',',S),
   symbolic_list_concat(L,'_',SS),write(SS).
 
+exists_virtually(corlib).
 
 % Process a file or directory path with a given predicate.
 with_wild_path(Fnicate, Dir) :- extreme_debug(fbug(with_wild_path(Fnicate, Dir))),fail.
 with_wild_path(_Fnicate, []) :- !.
+with_wild_path(_Fnicate, Virtual) :- exists_virtually(Virtual),!.
+with_wild_path(Fnicate, Virtual) :- var(Virtual),!,throw(var_with_wild_path(Fnicate, Virtual)).
 with_wild_path(Fnicate, Dir) :-  is_scryer, symbol(Dir), !, must_det_ll((path_chars(Dir,Chars), with_wild_path(Fnicate, Chars))).
 with_wild_path(Fnicate, Chars) :-  \+ is_scryer, \+ symbol(Chars), !, must_det_ll((name(Atom,Chars), with_wild_path(Fnicate, Atom))).
 with_wild_path(Fnicate, File) :- exists_file(File), !, must_det_ll(( call(Fnicate, File))).
@@ -922,11 +925,19 @@ with_wild_path_swi(Fnicate, File) :-
   expand_file_name(File, List), !,
   maplist(with_wild_path(Fnicate), List).
 with_wild_path_swi(Fnicate, File) :-
+  \+ exists_directory(File), \+ exists_file(File), \+ symbol_contains(File,'.'),
+  extension_search_order(Ext),
+  atomic_list_concat([File|Ext],MeTTafile),
+  exists_file(MeTTafile),
+  call(Fnicate, MeTTafile).
+with_wild_path_swi(Fnicate, File) :-
   exists_directory(File),
   directory_file_path(File, '*.*sv', Wildcard),
   expand_file_name(Wildcard, List), !,
   maplist(Fnicate, List).
 
+extension_search_order(['.metta']).
+extension_search_order(['.py']).
 
 :- dynamic(fix_columns_nth/2).
 needs_fixed(X,Y):- (var(X)->fb_arg(X);true),fix_concept(X,L),(L\=@=[X],L\=@=X),(L=[Y]->true;Y=L).
@@ -1076,7 +1087,7 @@ load_fb_fa(Fn,Filename):-
     assert_OBO(pathname(Id,Filename)),!,
     assert_OBO(basename(Id,BaseName)),!,
     assert_OBO(directory(Id,Directory)),!,
-    setup_call_cleanup(open(Filename,read,In), load_fb_fa_read(Id,In,_,0), close(In))))).
+    setup_call_cleanup(open(Filename,read,In,[encoding(utf8)]), load_fb_fa_read(Id,In,_,0), close(In))))).
 load_fb_fa_read(_Fn,In, _, _):- (at_end_of_stream(In);reached_file_max),!.
 load_fb_fa_read(Fn,In,FBTe,At):- read_line_to_string(In,Str), load_fb_fa_read_str(Fn,In,FBTe,Str,At).
 
@@ -3198,7 +3209,9 @@ datalog_to_termlog(File):-
    atom_concat(File,'2',File2),
    fbug(datalog_to_termlog(File)),
   if_m2(atom_concat(File,'.metta',M)),
-   setup_call_cleanup((open(File,read,In), open(File2,write,Out), if_m2(open(M,write,OutM))),
+   setup_call_cleanup((open(File,read,In,[encoding(utf8)]),
+					   open(File2,write,Out,[encoding(utf8)]), 
+					   if_m2(open(M,write,OutM,[encoding(utf8)]))),
   (repeat,
    read_term(In,Term,[]),
    (Term==end_of_file -> ! ; (process_datalog(Out,OutM,Term),fail))),

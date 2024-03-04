@@ -337,6 +337,8 @@ sync_python_path:-
     setenv('PYTHONPATH', NewPythonPath).
 
 
+:- set_prolog_flag(py_backtrace_depth,10).
+:- set_prolog_flag(py_backtrace, true).
 %:- initialization(on_restore1,restore).
 %:- initialization(on_restore2,restore).
 
