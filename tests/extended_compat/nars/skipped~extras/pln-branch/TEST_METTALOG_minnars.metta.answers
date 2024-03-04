@@ -1,0 +1,3 @@
+[(Error (import! GroundingSpace-top LIB_MINNARS.metta) Illegal module name: LIB_MINNARS.metta)]
+0.04user 0.03system 0:00.07elapsed 98%CPU (0avgtext+0avgdata 34024maxresident)k
+0inputs+0outputs (0major+3710minor)pagefaults 0swaps
