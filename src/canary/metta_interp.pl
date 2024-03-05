@@ -865,7 +865,7 @@ load_metta_file_stream_fast(_Size,P2,Filename,Self,In):-
 			assertz(metta_file_buffer(Mode,Term,NamedVarsList,Filename,LineCount)),
 	  flush_output,
 	  at_end_of_stream(In),!,
-	  listing(metta_file_buffer/5),
+	  %listing(metta_file_buffer/5),
 	  load_metta_buffer(Self,Filename).
 
 

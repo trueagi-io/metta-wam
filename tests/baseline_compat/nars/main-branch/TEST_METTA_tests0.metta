@@ -30,6 +30,8 @@
 (Arity max 3)
 (= (max $1 $2) (If (> $1 $2) $1 $2))
 
+!(assertEqual (max 4 3) 4)
+
 (: min (-> Number Number Number))
 (Arity min 3)
 (= (min $1 $2) (If (< $1 $2) $1 $2))
@@ -68,7 +70,9 @@
   (collapse (superpose ((superpose $Ev1) (superpose $Ev2)))))
 (= (TupleCount $tuple) (If (== $tuple ()) 0 (+ 1 (TupleCount (cdr-atom $tuple)))))
 
-!(pragma! compile false) !(repl!) !(pragma! compile full)
+!(assertEqual (TupleCount (2 4 3)) 3)
+
+
 
 (: CountElement (-> Expression Number))
 (Arity CountElement 2)
@@ -80,7 +84,6 @@
 (= (get-morph-atoms $space) (get-atoms $space))
 (: get-concept-terms (-> Atom))
 (= (get-concept-terms) (match (superpose (&attentional_focus &concepts)) (Concept $TermX $Belief $BeliefEvent $CPrio) $TermX))
-!(pragma! compile false) !(repl!) !(pragma! compile full)
 (: get-concept-beliefs (-> Atom))
 (= (get-concept-beliefs) (match (superpose (&attentional_focus &concepts)) (Concept $TermX $Belief $BeliefEvent $CPrio) $Belief))
 (: get-concept-terms-of-positive-beliefs (-> Atom))
@@ -369,16 +372,9 @@
 (= (GoalEventsMax) 10)
 
 
-!(pragma! compile false)
-
 ;spaces
 !(bind! &belief_events (new-space))
-
-!(pragma! compile false) !(repl!) !(pragma! compile full)
-
 !(bind! &goal_events (new-space))
-
-!(pragma! compile false) !(repl!) !(pragma! compile full)
 
 ;states
 !(bind! &currentTime (new-state 1))
@@ -613,24 +609,28 @@
         (change-state! &FIFO $newlist)))
 
 ;Form a sequence of two events
+(Arity TemporalSequence 3)
 (= (TemporalSequence $Ev1 (Event ($Term2 $Truth2) ($Time2 $Evidence2 $EPrio2)))
    (let (Event ($Term1 $Truth1) ($Time1 $Evidence1 $EPrio1)) 
       (Projection $Ev1 $Time2)
         (Event (($Term1 &/ $Term2) (Truth_Intersection $Truth1 $Truth2)) ($Time2 (TupleConcat $Evidence1 $Evidence2) (0 0.0)))))
 
 ;Form a temporal implication between two events
+(Arity TemporalImplication 3)
 (= (TemporalImplication $Ev1 (Event ($Term2 $Truth2) ($Time2 $Evidence2 $EPrio2)))
    (let (Event ($Term1 $Truth1) ($Time1 $Evidence1 $EPrio1)) (Projection $Ev1 $Time2)
         (trace! (.: (($Term1 =/> $Term2) (Truth_Induction $Truth1 $Truth2)))
                 (Event (($Term1 =/> $Term2) (Truth_Induction $Truth1 $Truth2)) ($Time2 (TupleConcat $Evidence1 $Evidence2) (0 0.0))))))
 
 ;Whether an event's term is an operation
+(Arity IsOp 1)
 (= (IsOp (Event ($Term $Truth) $Metadata))
    (case $Term (((^ $Opname) True)
                 ($Otherwise False))))
 
 ;Find implications in the event FIFO:
 ;procedural implications
+(Arity TemporalImplicationInduction 2)
 (= (TemporalImplicationInduction ($Cons $Op $Prec))
    (If (and (IsOp $Op) (and (not (IsOp $Cons)) (not (IsOp $Prec))))
        (let $PrecOp (TemporalSequence $Prec $Op)
@@ -641,6 +641,7 @@
 ;       (TemporalImplication $Prec $Cons)))
 
 ;Add negative evidence for implications which predicted the input unsuccessfully
+(Arity NegConfirmation 3)
 (= (NegConfirmation $PrecTerm $ObservedCons $t)
    (let (Event (($PrecTerm =/> $PredictedCons) $ImpTV) $ImpMetadata) (WhatWillHappenQuestion $PrecTerm)
         (If (not (== $ObservedCons $PredictedCons))
@@ -652,6 +653,7 @@
 ;          ((Event ($PosTerm $PosTV) $PosMetadata) $Pos))
 ;         (If (not (IsOp $Pre))
 ;             (NegConfirmation $PreTerm $PosTerm $t))))
+(Arity Anticipate 3)
 (= (Anticipate ($Pos $Op $Pre) $t)
    (let* (((Event ($PreTerm $PreTV) $PreMetadata) $Pre)
           ((Event ($OpTerm $OpTV) $OpMetadata) $Op)
@@ -660,6 +662,7 @@
              (NegConfirmation ($PreTerm &/ $OpTerm) $PosTerm $t))))
 
 ;Input procedure
+(Arity AddBeliefEvent 1)
 (= (AddBeliefEvent $Sentence)
    (let* ((($t $evidentialBase) (GetReasonerState))
           ($InputEvent (Event (trace! (.: $Sentence) $Sentence) ($t $evidentialBase ($t 1.0))))
@@ -675,21 +678,26 @@
 ;;Procedural inference (decision making with operation execution and subgoaling)
 
 ;Derived goal event priority
+(Arity SubgoalPriority 3)
 (= (SubgoalPriority $EPrio $ConcTV) (* $EPrio (Truth_Expectation $ConcTV)))
 
 ;Expectation of an operation is the truth expectation of its desire value
+(Arity OpExpectation 3)
 (= (OpExpectation (Decision ($Opname $DVOp) $Subgoal) $t) (Truth_Expectation $DVOp))
 
 ;Inject executed operation as an event and return its name
+(Arity Execute 2)
 (= (Execute $Opname) (superpose ((AddBeliefEvent ($Opname (1.0 0.9))) $Opname)))
 
 ;Add subgoals to the PQ
+(Arity DeriveSubgoals 1)
 (= (DeriveSubgoals $Options)
    (do (let (Decision $Op (Event $S $Metadata)) (superpose $Options)
             (let $Subgoal (Event (trace! (!: $S) $S) $Metadata)
                  (add-atom &goal_events $Subgoal)))))
 
 ;execute the operation which most likely gets the goal achieved in current contexts, and if contexts are not yet fulfilled, derive them as subgoals
+(Arity BestDecision 2)
 (= (BestDecision $t (Event ($Term $DV) ($GoalTime $GoalEvBase $GoalPrio)))
    (let $Options (collapse (let* (((Event ((($Prec &/ (^ $Op)) =/> $Term) $ImpTV) ($ImpTime $ImpEvBase $ImpPrio))
                                    (HowAchieveQuestion $Term))
@@ -710,6 +718,7 @@
                  (DeriveSubgoals $Options)))))
 
 ;select the highest priority goal event from the PQ and use it for decision making
+(Arity GoalCycle 1)
 (= (GoalCycle $t) (sequential ((let $Ev (SelectHighestPriorityEvent &goal_events $t)
                                     (sequential ((do (remove-atom &goal_events $Ev))
                                                  (BestDecision $t $Ev))))
@@ -717,11 +726,14 @@
                                (do (BoundEvents &goal_events 0.0 0.1 (GoalEventsMax) $t)))))
 
 ;Input procedure
+(Arity AddGoalEvent 1)
 (= (AddGoalEvent $Sentence)
    (let* ((($t $evidentialBase) (GetReasonerState))
           ($InputEvent (Event (trace! (!: $Sentence) $Sentence) ($t $evidentialBase ($t 1.0)))))
          (sequential ((do (add-atom &goal_events $InputEvent))
                       (GoalCycle $t)))))
+
+
 ;;NAL tests
 
 !(|- ((Garfield --> cat) (1.0 0.9)) ((cat --> animal) (1.0 0.9)))

@@ -71,7 +71,7 @@
   
 (= (TupleCount $tuple) (If (== $tuple ()) 0 (+ 1 (TupleCount (cdr-atom $tuple)))))
 
-!(assertEqual (2 4 3) 3)
+!(assertEqual (TupleCount (2 4 3)) 3)
 
 
 
@@ -373,8 +373,6 @@
 (= (GoalEventsMax) 10)
 
 
-!(pragma! compile false) !(repl!) !(pragma! compile full)
-
 ;spaces
 !(bind! &belief_events (new-space))
 !(bind! &goal_events (new-space))
@@ -612,7 +610,8 @@
 ;Form a sequence of two events
 (Arity TemporalSequence 3)
 (= (TemporalSequence $Ev1 (Event ($Term2 $Truth2) ($Time2 $Evidence2 $EPrio2)))
-   (let (Event ($Term1 $Truth1) ($Time1 $Evidence1 $EPrio1)) (Projection $Ev1 $Time2)
+   (let (Event ($Term1 $Truth1) ($Time1 $Evidence1 $EPrio1)) 
+     (Projection $Ev1 $Time2)
         (Event (($Term1 &/ $Term2) (Truth_Intersection $Truth1 $Truth2)) ($Time2 (TupleConcat $Evidence1 $Evidence2) (0 0.0)))))
 
 ;Form a temporal implication between two events
@@ -732,4 +731,6 @@
           ($InputEvent (Event (trace! (!: $Sentence) $Sentence) ($t $evidentialBase ($t 1.0)))))
          (sequential ((do (add-atom &goal_events $InputEvent))
                       (GoalCycle $t)))))
+
+
 
