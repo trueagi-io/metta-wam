@@ -1959,7 +1959,7 @@ write_clause(Stream, Clause) :-
     write(Stream, '.'),
     nl(Stream).
 
-
+same(X,Y):- X =~ Y.
 
 end_of_file.
 

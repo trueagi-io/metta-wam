@@ -79,7 +79,7 @@ do_expander(':',_,X,Y):- !, get_type(X,Y)*->X=Y.
 
 
 eval_true(X):- \+ iz_conz(X), !, callable(X),call(X).
-eval_true(X):- eval_args(X,Y), once(var(Y) ; \+ is_False(Y)).
+eval_true(X):- eval_args(X,Y), is_False(Y).
 
 eval_args(X,Y):- current_self(Self), eval_args(100,Self,X,Y).
 eval_args(Depth,Self,X,Y):- eval_args('=',_,Depth,Self,X,Y).
