@@ -173,7 +173,7 @@ defined_arity(F,A):- current_predicate(F/A), \+ predicate_arity(F,_).
 decl_arity(F,A):- metta_atom_file_buffer([Eq,[FF|Len]|_]),
    Eq=='=',nonvar(FF),F==FF,is_list(Len),length([FF|Len],A).
 
-import_arity(F,A):- fail, todo(metta_file_buffer(_Atom,_NamedVarsList,_Filename,_LineCount)).
+import_arity(_,_):- fail, todo(metta_file_buffer(_Atom,_NamedVarsList,_Filename,_LineCount)).
 is_data_functor(DataFunctor,DenotationalArity):- nonvar(DataFunctor),
 	   metta_atom_file_buffer(['DataFunctor',DataFunctor,DenotationalArity]).
 is_data_functor(F,_):- \+ import_arity(F,_), \+ decl_arity(F,_).
