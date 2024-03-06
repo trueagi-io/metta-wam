@@ -37,20 +37,49 @@ metta_dir(Dir):- getenv('METTA_DIR',Dir),!.
 
 :- ensure_loaded(metta_debug).
 
+different_from(N,V):- \+ \+ option_value_def(N,V),!,fail.
+different_from(N,V):- \+ \+ nb_current(N,V),!,fail.
+different_from(_,_).
+
+set_option_value_interp(N,V):- atom(N), symbolic_list_concat(List,',',N),List\=[_],!,
+  forall(member(E,List),set_option_value_interp(E,V)).
+set_option_value_interp(N,V):-
+  (different_from(N,V)->Note=true;Note=false),
+  fbugio(Note,set_option_value(N,V)),set_option_value(N,V),
+  ignore((if_t((atom(N), atom_concat('trace-on-',F,N),fbugio(Note,set_debug(F,V))),set_debug(F,V)))),
+  ignore((if_t((atom(V), is_debug_like(V,TF),fbugio(Note,set_debug(N,TF))),set_debug(N,TF)))),!.
+
+is_debug_like(trace, true).
+is_debug_like(notrace, false).
+is_debug_like(debug, true).
+is_debug_like(nodebug, false).
+is_debug_like(silent, false).
+%is_debug_like(false, false).
+
 is_metta_flag(What):- notrace(is_flag0(What)).
-is_flag0(What):- nb_current(What,'False'),!,fail.
-is_flag0(What):- nb_current(What,'True'),!.
-is_flag0(What):- current_prolog_flag(What,false),!,fail.
-is_flag0(What):- current_prolog_flag(What,true),!.
+
+is_tRuE(TF):- TF=='True',!.
+is_tRuE(TF):- TF=='true',!.
+is_flag0(What):- nb_current(What,TF),TF\==[],!,is_tRuE(TF).
+is_flag0(What):- current_prolog_flag(What,TF),TF\==[],!,is_tRuE(TF).
 is_flag0(What):- 
- ((current_prolog_flag(os_argv,ArgV),
-   atom_concat('--',What,FWhat), 
-   (member(FWhat,ArgV)-> true ;
-     (atom_concat(FWhat,'=true',FWhatEqTrue),member(FWhatEqTrue,ArgV))))->
-	current_prolog_flag(What,true);
-    current_prolog_flag(What,false)).
-  
-  
+ atom_concat('--',What,FWhat),atom_concat(FWhat,'=true',FWhatTrue),
+ atom_concat('--no-',What,NoWhat),atom_concat(FWhat,'=false',FWhatFalse),
+ is_flag0(What,[FWhat,FWhatTrue],[NoWhat,FWhatFalse]).
+ 
+is_flag0(What,_FWhatTrue,FWhatFalse):-
+   current_prolog_flag(os_argv,ArgV),
+   member(FWhat,FWhatFalse),member(FWhat,ArgV),!,   
+   set_prolog_flag(What,false),!,fail.
+is_flag0(What,FWhatTrue,_FWhatFalse):-
+   current_prolog_flag(os_argv,ArgV),
+   member(FWhat,FWhatTrue),member(FWhat,ArgV),!,   
+   set_prolog_flag(What,true).
+is_flag0(What,_FWhatTrue,_FWhatFalse):-
+  current_prolog_flag(os_argv,ArgV),
+  atomic_list_concat(['--',What,'='],Starts),
+  member(FWhat,ArgV),atom_concat(Starts,Rest,FWhat),
+  set_option_value_interp(What,Rest),!.
 
 is_compiling:- current_prolog_flag(os_argv,ArgV),member(E,ArgV),   (E==qcompile_mettalog;E==qsave_program),!.
 is_compiled:- current_prolog_flag(os_argv,ArgV), member('-x',ArgV),!.
@@ -64,11 +93,13 @@ is_mettalog:- is_metta_flag('log').
 
 is_synthing_unit_tests:- notrace(is_synthing_unit_tests0).
 is_synthing_unit_tests0:- is_testing.
-is_synthing_unit_tests0:- is_html.
+%is_synthing_unit_tests0:- is_html.
 % is_synthing_unit_tests0:- is_compatio,!,fail.
 
 is_testing:- is_metta_flag('test').
 is_html:- is_metta_flag('html').
+is_html:- is_mettalog,!.
+is_html:- is_testing,!.
 
 :- ensure_loaded(metta_printer).
 
@@ -122,7 +153,6 @@ switch_to_mettalog:-
   set_option_value('load',show),
   set_option_value('load',verbose),
   set_option_value('log',true),
-  set_option_value('test',true),
   set_output_stream.
   
 switch_to_mettarust:- 
@@ -252,23 +282,6 @@ fbugio(_,_):- is_compatio,!.
 fbugio(TF,P):-!, ignore(( TF,!,fbug(P))).
 fbugio(IO):-fbugio(true,IO).
 
-different_from(N,V):- \+ \+ option_value_def(N,V),!,fail.
-different_from(N,V):- \+ \+ nb_current(N,V),!,fail.
-different_from(_,_).
-
-set_option_value_interp(N,V):- atom(N), symbolic_list_concat(List,',',N),List\=[_],!,
-  forall(member(E,List),set_option_value_interp(E,V)).
-set_option_value_interp(N,V):-
-  (different_from(N,V)->Note=true;Note=false),
-  fbugio(Note,set_option_value(N,V)),set_option_value(N,V),
-  ignore((if_t((atom(N), atom_concat('trace-on-',F,N),fbugio(Note,set_debug(F,V))),set_debug(F,V)))),
-  ignore((if_t((atom(V), is_debug_like(V,TF),fbugio(Note,set_debug(N,TF))),set_debug(N,TF)))),!.
-
-is_debug_like(trace, true).
-is_debug_like(notrace, false).
-is_debug_like(debug, true).
-is_debug_like(nodebug, false).
-%is_debug_like(false, false).
 
 set_is_unit_test(TF):-
   forall(option_value_def(A,B),set_option_value_interp(A,B)),
@@ -693,11 +706,15 @@ count_lines_in_stream(Stream, CurrentCount, FinalCount) :-
   ).
 
 
-include_metta_directory_file_prebuilt(_Self,_Directory, Filename):-
-  atom_concat(_,'.metta',Filename),
-  atom_concat(Filename,'.qlf',QLFFilename),
-  exists_file(QLFFilename),
-  ensure_loaded(QLFFilename),!.
+include_metta_directory_file_prebuilt(_Self, _Directory, Filename):-
+    atom_concat(_, '.metta', Filename),
+    atom_concat(Filename, '.qlf', QLFFilename),
+    exists_file(QLFFilename),
+    time_file(Filename, MettaTime),
+    time_file(QLFFilename, QLFTime),
+    QLFTime > MettaTime, % Ensure QLF file is newer than the METTA file
+    ensure_loaded(QLFFilename),!.
+
 include_metta_directory_file_prebuilt(_Self,_Directory, Filename):- just_load_datalog,
   atom_concat(_,'.metta',Filename),
   atom_concat(Filename,'.datalog',QLFFilename),
@@ -1130,13 +1147,25 @@ read_sform5(AoS,'{',S,List,'}'):- !,collect_list_until(AoS,S,'}',List),!.
 read_sform5(AoS,'[',S,List,']'):- !,collect_list_until(AoS,S,']',List),!.
 
 
+read_symbol_or_number( AltEnd,Peek,S,SoFar,Expr):- SoFar\==[], Peek=='\\', !,
+    get_char(S,_),get_char(S,C),append(SoFar,[C],NSoFar),
+	peek_char(S,NPeek), read_symbol_or_number(AltEnd,NPeek,S,NSoFar,Expr).
+
+read_symbol_or_number(_AltEnd,Peek,_S,SoFar,Expr):- Peek==end_of_file,!,
+	must_det_ll(( symbolic_list_concat(SoFar,Expr))).
+
+
+
+
 read_symbol_or_number(_AltEnd,Peek,_S,SoFar,Expr):- char_type(Peek,space),!,
-    must_det_ll(( symbolic_list_concat(SoFar,Expr))).
+	must_det_ll(( symbolic_list_concat(SoFar,Expr))).
+
 read_symbol_or_number( AltEnd,Peek,_S,SoFar,Expr):- member(Peek,AltEnd),!,
     must_det_ll(( do_symbolic_list_concat(Peek,SoFar,Expr))).
 read_symbol_or_number(AltEnd,B,S,SoFar,Expr):- fail,read_sform5(AltEnd,B,S,List,E),
   flatten([List,E],F), append(SoFar,F,NSoFar),!,
    peek_char(S,NPeek), read_symbol_or_number(AltEnd,NPeek,S,NSoFar,Expr).
+
 read_symbol_or_number( AltEnd,_Peek,S,SoFar,Expr):- get_char(S,C),append(SoFar,[C],NSoFar),
     peek_char(S,NPeek), read_symbol_or_number(AltEnd,NPeek,S,NSoFar,Expr).
 
