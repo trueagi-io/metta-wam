@@ -1475,10 +1475,11 @@ type_decl('Variable').
 :- multifile(asserted_metta/4).
 :- dynamic(asserted_metta/4).
 % metta_atom_stdlib(_):-!,fail.
-metta_atom_stdlib(X):- metta_atom_stdlib_types(X).
+metta_atom_stdlib([Colon, Value, Type]):-
+  Colon==':', metta_atom_stdlib_types([Colon, Value, Type]).
 metta_atom_stdlib_types([':', Type, 'Type']):- type_decl(Type).
-metta_atom_stdlib_types([':', Op, [->|List]]):- 
-	 atom(Op), op_decl(Op,Params,ReturnType),
+metta_atom_stdlib_types([':', Op, ['->'|List]]):- 
+	 op_decl(Op,Params,ReturnType),
 	 append(Params,[ReturnType],List).
 
 %get_metta_atom(Eq,KB, [F|List]):- KB='&flybase',fb_pred(F, Len), length(List,Len),apply(F,List).
@@ -2115,7 +2116,7 @@ current_read_mode(file,Mode):- ((nb_current(file_mode,Mode),Mode\==[])->true;Mod
 eval(all(Form)):- nonvar(Form), !, forall(eval(Form,_),true).
 eval(Form):-   current_self(Self),   do_metta(true,exec,Self,Form,_Out).
 eval(Form,Out):-current_self(Self),eval(Self,Form,Out). 
-eval(Self,Form,Out):- do_metta(prolog,exec,Self,Form,Out).
+eval(Self,Form,Out):- eval_H(100,Self,Form,Out).
 
 name_vars(P):- ignore(name_vars0(P)).
 name_vars0(X=Y):- X==Y,!.
