@@ -143,6 +143,9 @@ always_predicate_in_src(F,A):- predicate_arity(F,A).
 symbol_or_var(V):- var(V),!.
 symbol_or_var(F):- symbol(F),!.
 
+eval_false(X):- \+ eval_true(X).
+do(X):- ignore(eval(X,_)).
+
 is_devel.
 
 functional_predicate_arg(F, A, L):- \+ symbol(F), \+ var(F),!,
@@ -729,6 +732,7 @@ compile_test_then_else(Depth,RetResult,If,Then,Else,Converted):-
                   (ElseCode,ElseResult=RetResult)).
 
 :- discontiguous(cfc/5).
+:- discontiguous(f2q/5).
 
 %compile_flow_control(Depth,_HeadIs,RetVar, Convert, u_assign(Convert,RetVar)) :- Depth=<0,!.
 
@@ -1147,8 +1151,8 @@ cfc(_Depth,_HeadIs,RetResult, Convert, Converted) :- Convert =(H:-B),!,
   RetResult=(H:-B), Converted = true.
 
 % If Convert is a "," (and) function, we convert it to the equivalent "," (and) predicate.
-cfc(Depth,HeadIs,RetResult,SOR,(AsPredO, Converted)) :- 
-  SOR =~ (AsPredI, Convert),
+cfc(Depth,HeadIs,RetResult,SOR,[',',AsPredO, Converted]) :- 
+  SOR =~ [',', AsPredI, Convert],
   must_det_ll((f2p(Depth,HeadIs,RetResult,AsPredI, AsPredO),
 			   f2p(Depth,HeadIs,RetResult,Convert, Converted))),!.
 
@@ -1197,8 +1201,7 @@ no_lists(Args):- maplist(not_a_function_in_arg,Args).
 
 not_a_function_in_arg(Arg):- is_ftVar(Arg),!.
 not_a_function_in_arg(Arg):- \+ is_list(Arg),!.
- :- discontiguous f2q/5.
-
+ 
 f2p(HeadIs,RetResult,Convert, Converted):-
   f2p(20,HeadIs,RetResult,Convert, Converted).
 
@@ -1231,7 +1234,7 @@ f2q(Depth,HeadIs,RetResult,Convert, Converted) :- fail,  dif_functors(HeadIs,Con
   must_det_ll((f2p(Depth,HeadIs,RetResult,NewDef,Converted))).
 
 f2q(Depth,HeadIs,RetResult,Convert, Converted):-
-   Depth2 is Depth -1,
+   Depth2 is Depth -0,
    compound(Convert), \+ compound_name_arity(Convert,_,0),
    compile_flow_control(Depth2,HeadIs,RetResult,Convert, Converted),!.
 
@@ -1396,10 +1399,6 @@ make_with_space(Space,MatchCode,with_space(Space,MatchCode)):- Space\=='&self'.
 % If Convert is a Value, and RetResult is a Variable bind them together and mark the compiler used them
 f2q(_Depth,_HeadIs, _RetResult,(A =~ B), (A =~ B)) :-!.
 
-
-/*f2q(Depth,HeadIs,RetResult, ConvertL, (Converted,RetResultL=RetResult)) :- is_list(ConvertL),
-   maplist(f2p_assign(Depth,HeadIs),RetResultL,ConvertL, ConvertedL),
-   list_to_conjuncts(ConvertedL,Converted).*/
 
 % If Convert is an "u_assign" function, we convert it to the equivalent "is" predicate.
 f2q(Depth,HeadIs,RetResult,EvalConvert,Converted):- 
@@ -2023,7 +2022,7 @@ end_of_file.
 		(Cmpd = [EE,_,_] -> (EE \== '==') ; true ),
 		AsFunction\=@= Convert,
 		callable(AsFunction),  % Check if AsFunction is callable
-		Depth2 is Depth -1,
+		Depth2 is Depth -0,
 		% check that that is is a control flow imperative
 		compile_flow_control(Depth2,HeadIs,Result,AsFunction, AsPred),
 		HeadIs\=@=AsFunction,!,
@@ -2038,7 +2037,7 @@ end_of_file.
 			% Get the deepest sub-term AsFunction of Convert
 		  %  sub_term(AsFunction, Convert), AsFunction\==Convert,
 			callable(AsFunction),  % Check if AsFunction is callable
-		Depth2 is Depth -1,
+		Depth2 is Depth -0,
 			compile_flow_control(Depth2,HeadIs,Result,AsFunction, AsPred),
 			HeadIs\=@=AsFunction,!,
 			subst(Convert, AsFunction, Result, Converting),  % Substitute AsFunction by Result in Convert
