@@ -1103,8 +1103,11 @@ get_metatype0(_Val,'Grounded').
 nb_bind(Name,Value):- nb_current(Name,Was),same_term(Value,Was),!.
 nb_bind(Name,Value):- call_in_shared_space(nb_setval(Name,Value)),!.
 eval_20(Eq,RetType,Depth,Self,['import!',Other,File],RetVal):- !,
-     (( into_space(Depth,Self,Other,Space), include_metta(Space,File),!,make_empty(RetType,Space,RetVal))),
-     check_returnval(Eq,RetType,RetVal). %RetVal=[].
+	 (( into_space(Depth,Self,Other,Space), include_metta(Space,File),!,make_empty(RetType,Space,RetVal))),
+	 check_returnval(Eq,RetType,RetVal). %RetVal=[].
+eval_20(Eq,RetType,Depth,Self,['load-ascii',Other,File],RetVal):- !,
+	 (( into_space(Depth,Self,Other,Space), include_metta(Space,File),!,make_empty(RetType,Space,RetVal))),
+	 check_returnval(Eq,RetType,RetVal). %RetVal=[].
 eval_20(Eq,RetType,_Depth,_Slf,['bind!',Other,['new-space']],RetVal):- atom(Other),!,assert(was_asserted_space(Other)),
   make_empty(RetType,[],RetVal), check_returnval(Eq,RetType,RetVal).
 eval_20(Eq,RetType,Depth,Self,['bind!',Other,Expr],RetVal):- !,
