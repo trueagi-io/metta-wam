@@ -1084,13 +1084,10 @@ eval_20(_Eq,_RetType,_Depth,_Self,['get-metatype',Val],TypeO):- !,
   get_metatype(Val,TypeO).
 
 get_metatype(Val,Want):- get_metatype0(Val,Was),!,Want=Was.
-get_metatype0(Val,'Variable'):- var(Val).
-get_metatype0(Val,'Symbol'):- symbol(Val).
-get_metatype0(Val,'Expression'):- is_list(Val).
-get_metatype0(_Val,'Grounded').
-
-
-
+	get_metatype0(Val,'Variable'):- var(Val),!.
+	get_metatype0(Val,'Symbol'):- symbol(Val),!.
+	get_metatype0(Val,'Expression'):- is_list(Val),!.
+	get_metatype0(_Val,'Grounded').
 
 
 % =================================================================
@@ -1122,7 +1119,9 @@ eval_20(Eq,RetType,_Dpth,Self,['transfer!',File],RetVal):- !, must_det_ll((inclu
    make_empty(RetType,Self,RetVal),check_returnval(Eq,RetType,RetVal))).
 
 
-fromNumber(Var1,Var2):- var(Var1),var(Var2),!,freeze(Var1,fromNumber(Var1,Var2)),freeze(Var2,fromNumber(Var1,Var2)).
+fromNumber(Var1,Var2):- var(Var1),var(Var2),!,
+   freeze(Var1,fromNumber(Var1,Var2)),
+   freeze(Var2,fromNumber(Var1,Var2)).
 fromNumber(0,'Z'):-!.
 fromNumber(N,['S',Nat]):- integer(N), M is N -1,!,fromNumber(M,Nat).
 
@@ -1179,18 +1178,25 @@ eval_20(Eq,RetType,Depth,Self,['not',X],TF):- !,
    as_tf(( \+ eval_args_true(Eq,RetType,Depth,Self,X)), TF).
 
 
+% ================================================
 % === function / return of minimal metta
-eval_20(Eq,RetType,Depth,Self,['function',X],TF):- !,
-  catch(eval_args(Eq,RetType,Depth,Self,X, TF),return(TF),true).
+eval_20(Eq,RetType,Depth,Self,['function',X],Res):- !, gensym(return_,RetF),
+  RetUnit=..[RetF,Res],
+  catch(locally(nb_setval('$rettag',RetF),
+           eval_args(Eq,RetType,Depth,Self,X, Res)),RetUnitR,RetUnitR=RetUnit).
 eval_20(Eq,RetType,Depth,Self,['return',X],_):- !,
-  eval_args(Eq,RetType,Depth,Self,X, Val), throw(return(Val)).
+  nb_current('$rettag',RetF),RetUnit=..[RetF,Val],
+  eval_args(Eq,RetType,Depth,Self,X, Val), throw(RetUnit).
+% ================================================
 
+% ================================================
 % === catch / throw of mettalog
 eval_20(Eq,RetType,Depth,Self,['catch',X,EX,Handler],TF):- !,	 
   catch(eval_args(Eq,RetType,Depth,Self,X, TF),
 		 EX,eval_args(Eq,RetType,Depth,Self,Handler, TF)).
 eval_20(Eq,_TRetType,Depth,Self,['throw',X],_):- !,
   eval_args(Eq,_RetType,Depth,Self,X, Val), throw(Val).
+% ================================================
 
 eval_20(Eq,RetType,Depth,Self,['number-of',X],N):- !,
    bagof_eval(Eq,RetType,Depth,Self,X,ResL),
@@ -1599,7 +1605,7 @@ as_tf_tracabe(G,TF):-  G\=[_|_], ((call(G)*->TF='True';TF='False')).
 
 is_assignment(V):- \+ atom(V),!, fail.
 is_assignment('is'). is_assignment('is!').
-is_assignment('='). is_assignment('==').
+is_assignment('='). %is_assignment('==').
 is_assignment('=:=').  is_assignment(':=').
 
 eval_selfless(E,R):-  eval_selfless_0(E,R).
@@ -1628,13 +1634,13 @@ eval_selfless3(Lib,FArgs,TF):- maplist(s2ps,FArgs,Next),!,compare_selfless0(Lib,
 :- clpr:use_module(library(clpr)).
 
 compare_selfless0(_,[F|_],_TF):- \+ atom(F),!,fail.
-compare_selfless0(cplfd,['=',X,Y],TF):-!,as_tf(X#=Y,TF).
-compare_selfless0(cplfd,['\\=',X,Y],TF):-!,as_tf(X #\=Y,TF).
-compare_selfless0(cplfd,['>',X,Y],TF):-!,as_tf(X#>Y,TF).
-compare_selfless0(cplfd,['<',X,Y],TF):-!,as_tf(X#<Y,TF).
-compare_selfless0(cplfd,['=>',X,Y],TF):-!,as_tf(X#>=Y,TF).
-compare_selfless0(cplfd,['<=',X,Y],TF):-!,as_tf(X#=<Y,TF).
-compare_selfless0(cplfd,[F|Stuff],TF):- atom_concat('#',F,SharpF),P=..[SharpF|Stuff],!,as_tf(P,TF).
+compare_selfless0(clpfd,['=',X,Y],TF):-!,as_tf(X#=Y,TF).
+compare_selfless0(clpfd,['\\=',X,Y],TF):-!,as_tf(X #\=Y,TF).
+compare_selfless0(clpfd,['>',X,Y],TF):-!,as_tf(X#>Y,TF).
+compare_selfless0(clpfd,['<',X,Y],TF):-!,as_tf(X#<Y,TF).
+compare_selfless0(clpfd,['=>',X,Y],TF):-!,as_tf(X#>=Y,TF).
+compare_selfless0(clpfd,['<=',X,Y],TF):-!,as_tf(X#=<Y,TF).
+compare_selfless0(clpfd,[F|Stuff],TF):- atom_concat('#',F,SharpF),P=..[SharpF|Stuff],!,as_tf(P,TF).
 compare_selfless0(Lib,['\\=',X,Y],TF):-!,as_tf(Lib:{X \=Y}, TF).
 compare_selfless0(Lib,['=',X,Y],TF):-!,as_tf(Lib:{X =Y}, TF).
 compare_selfless0(Lib,['>',X,Y],TF):-!,as_tf(Lib:{X>Y},TF).
