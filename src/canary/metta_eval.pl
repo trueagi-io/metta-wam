@@ -136,7 +136,7 @@ eval_01(Eq,RetType,Depth,Self,X,YO):-
       (debug(metta(eval)))),
    notrace((Depth2 is Depth-1,
    copy_term(X, XX))),
-	trace_eval(eval_20(Eq,RetType),e,Depth2,Self,X,M),
+   trace_eval(eval_20(Eq,RetType),e,Depth2,Self,X,M),
    (self_eval(M)-> YO=M ;
    (((M=@=XX)-> Y=M 
 	  ;eval_01(Eq,RetType,Depth2,Self,M,Y)),
@@ -146,8 +146,6 @@ eval_02(Eq,RetType,Depth2,Self,Y,YO):-
   once(user:if_or_else((subst_args(Eq,RetType,Depth2,Self,Y,YO)), 
     if_or_else(finish_eval(Depth2,Self,Y,YO),
 	    Y=YO))).
-
-
 
 % eval_15(Eq,RetType,Depth,Self,X,Y):- !, eval_20(Eq,RetType,Depth,Self,X,Y).
 
@@ -248,7 +246,7 @@ eval_20(Eq,RetType,Depth,Self,X,Y):- fail,
   eval_evals(Eq,RetType,Depth,Self,XX,Y).
 
 
-	into_arg_code([],true):-!.
+into_arg_code([],true):-!.
 into_arg_code(H,TT):- \+ iz_conz(H), TT = H.
 into_arg_code([H,T],TT):- H==true,!,into_arg_code(T,TT).
 into_arg_code([T,H],TT):- H==true,!,into_arg_code(T,TT).
@@ -640,8 +638,9 @@ eval_space(Eq,RetType,_Dpth,_Slf,['remove-atom',Space,PredDecl],Res):- !,
 
 eval_space(Eq,RetType,_Dpth,_Slf,['atom-count',Space],Count):- !,
     ignore(RetType='Number'),ignore(Eq='='),
-    findall(Atom, get_metta_atom_from(Space, Atom),Atoms),
-    length(Atoms,Count).
+	'atom-count'(Space, Count).
+    %findall(Atom, get_metta_atom_from(Space, Atom),Atoms),
+    %length(Atoms,Count).
 
 eval_space(Eq,RetType,_Dpth,_Slf,['atom-replace',Space,Rem,Add],TF):- !,
    copy_term(Rem,RCopy), as_tf((metta_atom_iter_ref(Space,RCopy,Ref), RCopy=@=Rem,erase(Ref), do_metta(Space,load,Add)),TF),
@@ -864,10 +863,14 @@ eval_20(_Eq,RetType,Depth,Self,['nop',Expr], Empty):- !,
   ignore(eval('=',_RetType2,Depth,Self,Expr,_)),
   make_empty(RetType,[], Empty).
 
+eval_20(Eq,RetType,Depth,Self,['do-all',Expr], Empty):- !,
+	 forall(eval(Eq,_RetType2,Depth,Self,Expr,_),true),
+	 %eval_ne(Eq,_RetType2,Depth,Self,Expr,_),!,
+	 make_empty(RetType,[],Empty).
+% should this be calling backtracking on the first success?
 eval_20(Eq,RetType,Depth,Self,['do',Expr], Empty):- !,
-  forall(eval(Eq,_RetType2,Depth,Self,Expr,_),true),
-  %eval_ne(Eq,_RetType2,Depth,Self,Expr,_),!,
-  make_empty(RetType,[],Empty).
+	forall(eval(Eq,_RetType2,Depth,Self,Expr,_),true),
+	make_empty(RetType,[],Empty).
 
 eval_20(_Eq,_RetType1,_Depth,_Self,['call!',S], TF):- !, eval_call(S,TF).
 eval_20(_Eq,_RetType1,_Depth,_Self,['call-fn!',S], R):- !, eval_call_fn(S,TF).
@@ -1089,7 +1092,6 @@ get_metatype(Val,Want):- get_metatype0(Val,Was),!,Want=Was.
 	get_metatype0(Val,'Expression'):- is_list(Val),!.
 	get_metatype0(_Val,'Grounded').
 
-
 % =================================================================
 % =================================================================
 % =================================================================
@@ -1100,6 +1102,9 @@ get_metatype(Val,Want):- get_metatype0(Val,Was),!,Want=Was.
 nb_bind(Name,Value):- nb_current(Name,Was),same_term(Value,Was),!.
 nb_bind(Name,Value):- call_in_shared_space(nb_setval(Name,Value)),!.
 eval_20(Eq,RetType,Depth,Self,['import!',Other,File],RetVal):- !,
+	 (( into_space(Depth,Self,Other,Space), include_metta(Space,File),!,make_empty(RetType,Space,RetVal))),
+	 check_returnval(Eq,RetType,RetVal). %RetVal=[].
+eval_20(Eq,RetType,Depth,Self,['include!',Other,File],RetVal):- !,
 	 (( into_space(Depth,Self,Other,Space), include_metta(Space,File),!,make_empty(RetType,Space,RetVal))),
 	 check_returnval(Eq,RetType,RetVal). %RetVal=[].
 eval_20(Eq,RetType,Depth,Self,['load-ascii',Other,File],RetVal):- !,
@@ -1191,9 +1196,9 @@ eval_20(Eq,RetType,Depth,Self,['return',X],_):- !,
 
 % ================================================
 % === catch / throw of mettalog
-eval_20(Eq,RetType,Depth,Self,['catch',X,EX,Handler],TF):- !,	 
-  catch(eval_args(Eq,RetType,Depth,Self,X, TF),
-		 EX,eval_args(Eq,RetType,Depth,Self,Handler, TF)).
+eval_20(Eq,RetType,Depth,Self,['catch',X,EX,Handler],Res):- !,	 
+  catch(eval_args(Eq,RetType,Depth,Self,X, Res),
+		 EX,eval_args(Eq,RetType,Depth,Self,Handler, Res)).
 eval_20(Eq,_TRetType,Depth,Self,['throw',X],_):- !,
   eval_args(Eq,_RetType,Depth,Self,X, Val), throw(Val).
 % ================================================

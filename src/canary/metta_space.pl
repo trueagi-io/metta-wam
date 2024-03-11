@@ -22,7 +22,7 @@ call_match(G):- call(G).
 
 :- dynamic(repeats/1).
 :- dynamic(not_repeats/1).
-assert_new(P):- call(P),!,assert_new1(repeats(P)).
+assert_new(P):- notrace(catch(call(P),_,fail)),!,assert_new1(repeats(P)).
 assert_new(P):- pfcAdd_Now(P), flag(assert_new,TA,TA+1),assert_new1(not_repeats(P)),!.
 
 retract1(P):- \+ call(P),!.
@@ -328,22 +328,35 @@ metta_assertdb_del(KB,Atom):- subst_vars(Atom,Old),
    MP = metta_atom(KB,Old),
   copy_term(MP,Copy), clause(MP,true,Ref), MP=@= Copy, !, erase(Ref). % ,metta_assertdb('DEL',Old).
 metta_assertdb_replace(KB,Old,New):- metta_assertdb_del(KB,Old), metta_assertdb_add(KB,New).
+
+
+atom_count_provider(Self,Count):- 
+	user:loaded_into_kb(Self,Filename),
+    must_det_ll((
+	 once(user:asserted_metta_pred(Mangle,Filename)),
+	 Data =..[Mangle,_Term,_Lineno],
+	 predicate_property(Data,number_of_clauses(Count)))).
+
+atom_count_provider(KB,Count):-
+	 must_det_ll((
+	  AMA = asserted_metta_atom,
+	  decl_m_fb_pred(user,AMA,2),   
+	  MP =.. [AMA,KB,_],
+	  predicate_property(MP,number_of_clauses(SL2)),
+	  predicate_property(MP,number_of_rules(SL3)),
+	  %metta_assertdb_ls(KB),
+	  full_atom_count(SL1),
+	  Count is SL1 + SL2 - SL3)),!.
+
 metta_assertdb_count(KB,Count):-
- must_det_ll((
-  AMA = asserted_metta_atom,
-  decl_m_fb_pred(user,AMA,2),   
-  MP =.. [AMA,KB,_],
-  predicate_property(MP,number_of_clauses(SL2)),
-  predicate_property(MP,number_of_rules(SL3)),
-  %metta_assertdb_ls(KB),
-  full_symbol_count(SL1),
-  Count is SL1 + SL2 - SL3)),!.
-metta_assertdb_count(_KB,0):-!.
+	findall(C,atom_count_provider(KB,C),CL),
+	sumlist(CL,Count).
+
+
+
 %metta_assertdb_count(KB,Count):- writeln(metta_assertdb_count_in(KB,Count)), findall(Atom,for_metta(KB,Atom),AtomsL),length(AtomsL,Count),writeln(metta_assertdb_count_out(KB,Count)).
 metta_assertdb_iter(KB,Atoms):- 
-     AMA = asserted_metta_atom,
-     decl_m_fb_pred(user,AMA,2),   
-     MP =.. [AMA,KB,Atoms],
+     MP =.. [metta_atom,KB,Atoms],
      call(MP).
 
 
@@ -471,8 +484,8 @@ call_sexpr(S):- writeln(call=S).
 
 :- dynamic(fb_pred/2).
 
-full_symbol_count(SL):- flag(total_loaded_atoms,SL,SL),SL>1,!.
-full_symbol_count(SL):- findall(NC,(fb_pred(F,A),metta_stats(F,A,NC)),Each), sumlist(Each,SL).
+full_atom_count(SL):- flag(total_loaded_atoms,SL,SL),SL>1,!.
+full_atom_count(SL):- findall(NC,(fb_pred(F,A),metta_stats(F,A,NC)),Each), sumlist(Each,SL).
 
 heartbeat :-
     % Get the current time and the last printed time
@@ -499,7 +512,7 @@ heartbeat :-
 metta_stats:- gc_now,
    writeln('\n\n\n\n\n\n;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'),
    writeln(';~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'),
-   full_symbol_count(SL),
+   full_atom_count(SL),
    format("~N~n; Total\t\tAtoms (Atomspace size): ~`.t ~D~108|~n",[SL]),
    get_time(CurrentTime), nb_setval(last_printed_time, CurrentTime),
    post_statistic(memory,Mem),
