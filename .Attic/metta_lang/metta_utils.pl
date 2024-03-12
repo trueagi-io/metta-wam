@@ -1272,7 +1272,7 @@ end_of_file.
 
 %:- autoload(library(http/html_write),[html/3,print_html/1]).
 
-is_debugging(M):- \+ \+ debugging(M),!.
+is_debugging(M):- nop( \+ \+ debugging(M)),!.
 %is_debugging(_):- menu_or_upper('B').
 
 debug_m(_,Tiny):- display_length(Tiny,Len),Len<30,!,pp(Tiny).

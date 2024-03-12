@@ -806,7 +806,7 @@ sexpr(E,C,X,Z) :- swhite([C|X],Y), sexpr(E,Y,Z),!.
 
 sym_char(C):- bx(C =<  32),!,fail.
 %sym_char(44). % allow comma in middle of symbol
-sym_char(C):- memberchk(C,`"()```),!,fail.  % maybe 44 ? comma maybe not # or ; ? '
+sym_char(C):- memberchk(C,`"()```),!,fail.  % maybe 44 ? comma maybe not # or ; ? ' `'`'````'"
 %sym_char(C):- nb_current('$maybe_string',t),memberchk(C,`,.:;!%`),!,fail.
 sym_char(_):- !.
 
