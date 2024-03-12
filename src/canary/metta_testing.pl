@@ -390,7 +390,7 @@ quick_test:-
 
 */
 % :- debug(term_expansion).
-:- if(debugging(term_expansion)).
+:- if(( false, debugging(term_expansion))).
 :- enable_arc_expansion.
 :- style_check(-singleton).
 dte:- set(_X.local) = val.

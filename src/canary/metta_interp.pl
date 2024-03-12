@@ -56,7 +56,7 @@ set_option_value_interp(N,V):-
 
 is_debug_like(trace, true).
 is_debug_like(notrace, false).
-is_debug_like(debug, true).
+is_debug_like(debug, 'True').
 is_debug_like(nodebug, false).
 is_debug_like(silent, false).
 %is_debug_like(false, false).
@@ -283,7 +283,7 @@ option_value_def('initial-result-count',10).
 
 
 
-
+fbugio(_,_):- !.
 fbugio(_,_):- is_compatio,!.
 fbugio(TF,P):-!, ignore(( TF,!,fbug(P))).
 fbugio(IO):-fbugio(true,IO).
@@ -1252,7 +1252,7 @@ call_sexpr(How,Self,Tax,_S,Out):-
     show_call(do_metta(python,NewHow,Self,Expr,Out)).
 
 do_metta(File,Load,Self,Cmt,Out):-
-  if_trace(do_metta, fbug(do_metta(File,Load,Self,Cmt,Out))),fail.
+  fail, if_trace(do_metta, fbug(do_metta(File,Load,Self,Cmt,Out))),fail.
 
 do_metta(_File,_Load,_Self,In,Out):- var(In),!,In=Out.
 do_metta(_From,_Mode,_Self,end_of_file,'Empty'):- !. %, halt(7), writeln('\n\n% To restart, use: ?- repl.').
@@ -1285,7 +1285,7 @@ do_metta(file(Filename),exec,Self,TermV,Out):-
    must_det_ll((inc_exec_num(Filename),
      get_exec_num(Filename,Nth),
      Nth>0)),
-	show_failure((
+	((
 	 is_synthing_unit_tests,
      file_answers(Filename, Nth, Ans),
      check_answers_for(TermV,Ans))),!,
@@ -1673,7 +1673,8 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,Output,F
        (Complete\==true, \+ WasInteractive, Control = contrl(Max,leap)) -> true ;
         (((Complete==true ->! ; true)))))
                     *-> (ignore(Result = res(FOut)),ignore(Output = (FOut)))
-                    ; (flag(result_num,ResNum,ResNum),(ResNum==0->(not_compatio(format('~N<no-results>~n~n')),!,true);true))),
+                    ; (flag(result_num,ResNum,ResNum),
+                        (ResNum==0->(only_compatio(write('[')),not_compatio(format('~N[<no-results>]~n~n')),!,true);true))),
                     only_compatio(write(']')),user_io(nl),
    ignore(Result = res(FOut)).
 
