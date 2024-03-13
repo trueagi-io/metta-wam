@@ -191,6 +191,7 @@ print_items_list(X):- write_src(X).
 
 pp_sex_l(V):- pp_sexi_l(V),!.
 pp_sexi_l(V) :- is_final_write(V),!.
+pp_sexi_l([F|V]):- integer(F), is_codelist([F|V]),!,format("|~s|",[[F|V]]).
 pp_sexi_l([F|V]):- symbol(F), is_list(V),write_mobj(F,V),!.
 pp_sexi_l([H|T]):-T ==[],!,write('('), pp_sex_nc(H),write(')').
 pp_sexi_l([H,H2]):- write('('), pp_sex_nc(H), write(' '), with_indents(false,print_list_as_sexpression([H2])), write(')'),!.

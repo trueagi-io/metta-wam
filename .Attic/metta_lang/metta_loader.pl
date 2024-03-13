@@ -34,73 +34,119 @@ include_metta(Self,RelFilename):-
 
 
 
-% count_lines_up_to_200(Filename, Count).
-count_lines_up_to_200(Filename, Count) :-
+% count_lines_up_to(TwoK,Filename, Count).
+count_lines_up_to(TwoK,Filename, Count) :-
   open(Filename, read, Stream,[encoding(utf8)]),
-  count_lines_in_stream(Stream, 0, Count),
+  count_lines_in_stream(TwoK,Stream, 0, Count),
   close(Stream).
 
 % count_lines_in_stream(Stream, CurrentCount, FinalCount).
-count_lines_in_stream(Stream, CurrentCount, FinalCount) :-
-  ( CurrentCount >= 200
-  -> FinalCount = 200
+count_lines_in_stream(TwoK,Stream, CurrentCount, FinalCount) :-
+  ( CurrentCount >= TwoK
+  -> FinalCount = TwoK
   ;  read_line_to_codes(Stream, Codes),
     ( Codes == end_of_file
     -> FinalCount = CurrentCount
     ;  NewCount is CurrentCount + 1,
-        count_lines_in_stream(Stream, NewCount, FinalCount)
+        count_lines_in_stream(TwoK, Stream, NewCount, FinalCount)
     )
   ).
 
 
 include_metta_directory_file_prebuilt(Self, _Directory, Filename):-
     atom_concat(_, '.metta', Filename),
-    atom_concat(Filename, '.qlf', QLFFilename),
-    exists_file(QLFFilename),
+    atom_concat(Filename, '.qlf', QlfFile),
+    exists_file(QlfFile),
     time_file(Filename, MettaTime),
-    time_file(QLFFilename, QLFTime),
-    QLFTime > MettaTime, % Ensure QLF file is newer than the METTA file
-    ensure_loaded(QLFFilename),!,
-    assert_new(user:loaded_into_kb(Self,Filename)).
+    time_file(QlfFile, QLFTime),
+    QLFTime > MettaTime,!, % Ensure QLF file is newer than the METTA file
+    assert_new(user:loaded_into_kb(Self,Filename)),
+    ensure_loaded(QlfFile),!.
+    
 
 include_metta_directory_file_prebuilt(Self,_Directory, Filename):- just_load_datalog,
   atom_concat(_,'.metta',Filename),
-  atom_concat(Filename,'.datalog',QLFFilename),
-  exists_file(QLFFilename),
-  ensure_loaded(QLFFilename),!,
-  assert_new(user:loaded_into_kb(Self,Filename)).
+  atom_concat(Filename,'.datalog',DatalogFile),
+  exists_file(DatalogFile),
+  time_file(Filename, MettaTime),
+  time_file(DatalogFile, DatalogTime),
+  DatalogTime > MettaTime, !, % Ensure Datalog file is newer than the METTA file
+	size_file(Filename, MettaSize),
+	size_file(DatalogFile, DatalogSize),
+	% Ensure the size of the Datalog file is at least 25% of the METTA file
+	DatalogSize >= 0.25 * MettaSize,
+	!, % Cut to prevent backtracking
+  assert_new(user:loaded_into_kb(Self,Filename)),
+  ensure_loaded(DatalogFile),!.
+
+include_metta_directory_file_prebuilt(Self,_Directory, Filename):- 
+  atom_concat(_,'.metta',Filename),
+  atom_concat(Filename,'.datalog',DatalogFile),
+  exists_file(DatalogFile),!,
+	size_file(Filename, MettaSize),
+	size_file(DatalogFile, DatalogSize),
+	% Ensure the size of the Datalog file is at least 25% of the METTA file
+	DatalogSize >= 0.25 * MettaSize,
+	!, % Cut to prevent backtracking
+  convert_datalog_to_loadable(DatalogFile,QlfFile),!,
+  exists_file(QlfFile),!,
+  assert_new(user:loaded_into_kb(Self,Filename)),
+  ensure_loaded(QlfFile),!.
+  
+
 
 include_metta_directory_file(Self,Directory, Filename):-
   include_metta_directory_file_prebuilt(Self,Directory, Filename),!.
-include_metta_directory_file(Self,Directory, Filename):-
-  count_lines_up_to_200(Filename, Count), Count > 1980,
-  convert_metta_to_qlf(Filename,Load),  
-  (exists_file(Load)-> ensure_loaded(Load);
-    include_metta_directory_file_prebuilt(Self,Directory, Filename)),!.
+include_metta_directory_file(Self,_Directory, Filename):-
+  count_lines_up_to(2000,Filename, Count), Count > 1980,
+  once(convert_metta_to_loadable(Filename,QlfFile)),
+  exists_file(QlfFile),!, 
+  assert_new(user:loaded_into_kb(Self,Filename)),
+  ensure_loaded(QlfFile).
+
 include_metta_directory_file(Self,Directory, Filename):-
   setup_call_cleanup(open(Filename,read,In, [encoding(utf8)]),
     with_cwd(Directory, must_det_ll( load_metta_file_stream(Filename,Self,In))),
     close(In)).
 
 convert_metta_to_datalog(Filename,DatalogFile):-
+    % Generate the Datalog file name
   atom_concat(Filename,'.datalog',DatalogFile),
-  setup_call_cleanup(open(Filename,read,Input,[encoding(utf8)]),
-    setup_call_cleanup(open(DatalogFile, write, Output,[encoding(utf8)]),
+    % Open the METTA file for reading
+    setup_call_cleanup(
+        open(Filename, read, Input, [encoding(utf8)]),
+        % Open the Datalog file for writing
+        setup_call_cleanup(
+            open(DatalogFile, write, Output, [encoding(utf8)]),
+            % Perform the conversion
       translate_metta_file_to_datalog_io(Filename,Input,Output),
-                    close(Output)),
-                  close(Input)),!.
+            % Cleanup: Close the Datalog file
+            close(Output)
+        ),
+        % Cleanup: Close the METTA file
+        close(Input)
+    ),
+    % Ensure the generated Datalog file is at least 50% the size of the METTA file
+    size_file(Filename, MettaSize),
+    size_file(DatalogFile, DatalogSize),
+    (
+        DatalogSize >= 0.5 * MettaSize
+    ->  true  % If the size condition is met, succeed
+    ;   delete_file(DatalogFile), fail  % If not, delete the Datalog file and fail
+    ),
+    !.  % Prevent backtracking
 
 filename_to_mangled_pred(Filename,MangleP2):-
   get_time(Time),
-  atomic_list_concat(['data',Filename,Time],'_',GS),
-  atomic_list_concat(Elements,'/',GS),  
-  atomic_list_concat(Elements,'_',Filename2),
-  atomic_list_concat(Elements2,'.',Filename2),
-  atomic_list_concat(Elements2,'_',Filename3),
-  atomic_list_concat(Elements3,'-',Filename3),
-  atomic_list_concat(Elements3,'_',Filename4),
-  atomic_list_concat(Elements4,'__',Filename4),
-  atomic_list_concat(Elements4,'_',MangleP2).
+  symbolic_list_concat(['data',Filename,Time],'_',GS),
+  symbolic_list_concat(Elements,'/',GS),  
+  symbolic_list_concat(Elements,'_',Filename2),
+  symbolic_list_concat(Elements2,'.',Filename2),
+  symbolic_list_concat(Elements2,'_',Filename3),
+  symbolic_list_concat(Elements3,'-',Filename3),
+  symbolic_list_concat(Elements3,'_',Filename4),
+  symbolic_list_concat(Elements4,'__',Filename4),
+  symbolic_list_concat(Elements4,'_',MangleP2).
 
 
 translate_metta_file_to_datalog_io(Filename,Input,Output):-
@@ -127,8 +173,7 @@ translate_metta_file_to_datalog_io(Filename,Input,Output):-
   (at_end_of_stream(Input)->!;
   ( must_det_ll((
     line_count(Input,Lineno),
-    read_line_to_string(Input,Line),
-    read_sform(Line,Term))),
+    read_sform(Input,Term))),
     (Term==end_of_file->!;
     (once(((      
       % if_t((0 is (Lineno mod 10000)),writeln(Term:Lineno)),
@@ -202,19 +247,19 @@ read_chars_until(StopsBefore, Char, Input, [Char|Codes]):- get_char(Input,_),
   read_chars_until(StopsBefore, Input, Codes).
 
   just_load_datalog:-!, fail.
-convert_datalog_to_qlf(DatalogFile,DatalogFile):-just_load_datalog,!.
-convert_datalog_to_qlf(DatalogFile,QlfFile):-
+convert_datalog_to_loadable(DatalogFile,DatalogFile):-just_load_datalog,!.
+convert_datalog_to_loadable(DatalogFile,QlfFile):-
   sformat(S,'swipl -g "qcompile(~q)" -t halt',[DatalogFile]),
   shell(S,_),
   file_name_extension(Base, _, DatalogFile),
   file_name_extension(Base,'qlf',QlfFile).
       
-convert_metta_to_qlf(Filename,QlfFile):- 
+convert_metta_to_loadable(Filename,QlfFile):- 
   must_det_ll((
   convert_metta_to_datalog(Filename,DatalogFile),
-  convert_datalog_to_qlf(DatalogFile,QlfFile))),!.
+  convert_datalog_to_loadable(DatalogFile,QlfFile))),!.
 
-convert_metta_to_qlf(Filename,_):-
+convert_metta_to_loadable(Filename,_):-
   metta_dir(Dir),    
   sformat(S,'~w/cheap_convert.sh --verbose=1 ~w',[Dir,Filename]),
   shell(S,Ret),!,Ret==0.
@@ -269,6 +314,7 @@ load_metta_buffer(Self,Filename):-
    set_exec_num(Filename,1),
    load_answer_file(Filename),
    set_exec_num(Filename,0),
+   assert_new(user:loaded_into_kb(Self,Filename)),
    forall(metta_file_buffer(Mode,Expr,NamedVarsList,Filename,_LineCount),
 	   (maplist(maybe_assign,NamedVarsList),
 		must_det_ll((((do_metta(file(Filename),Mode,Self,Expr,_O)))->true; 
@@ -311,9 +357,43 @@ maybe_read_pl(In,Expr):-
   peek_line(In,Line1), Line1\=='', atom_contains(Line1, '.'),atom_contains(Line1, ':-'),
   notrace(((catch_err((read_term_from_atom(Line1, Term, []), Term\==end_of_file, Expr=call(Term)),_, fail),!,
   read_term(In, Term, [])))).
-peek_line(In,Line1):- peek_string(In, 1024, Str), split_string(Str, "\r\n", "\s", [Line1,_|_]),!.
-peek_line(In,Line1):- peek_string(In, 4096, Str), split_string(Str, "\r\n", "\s", [Line1,_|_]),!.
 
+
+% Define the peek_line predicate.
+% It uses a temporary string buffer to peek at the current line.
+peek_line(Line) :-
+    current_input(Stream),
+    peek_line(Stream, Line).
+
+% Helper predicate to peek the line from a specific stream.
+peek_line(Stream, Line) :-
+    % Remember the current stream position.
+    stream_property(Stream, position(Pos)),
+    % Read the next line.
+    read_line_to_string(Stream, Line),
+    % Set the stream back to the remembered position.
+    set_stream_position(Stream, Pos).
+
+
+
+maybe_read_sform_line(Stream, P2, Form) :- fail,
+    % Check if the stream is repositionable    
+	% Get the current position in the stream
+	stream_property(Stream, position(Pos)),
+	% Read a line from the stream
+	read_line_to_string(Stream, Line),
+    maybe_read_sform_line_pos(Stream, Line, Pos, P2, Form).
+
+
+maybe_read_sform_line_pos(Stream, Line, _Pos, P2, Form):- normalize_space(string(M),Line),M="",!,
+  maybe_read_sform_line(Stream, P2, Form).
+
+maybe_read_sform_line_pos(Stream, Line, Pos, P2, Form):- 
+	% Call P2 with the line. If P2 fails, reset the stream position
+	(    call(P2,Line,Form)
+	->  true  % If P2 succeeds, do nothing more
+	;   set_stream_position(Stream, Pos), fail  % If P2 fails, reset position and fail
+	).
 
 
 
@@ -340,6 +420,8 @@ read_sform3(       s, AltEnd,C,S,F):- char_type(C,space),!,read_sform1( AltEnd,S
 %read_sform3(AoS,_AltEnd,';',S,'$COMMENT'(F,0,0)):- !, read_line_to_string(S,F).
 read_sform3(       s, AltEnd,';',S,F):- read_line_to_string(S,_),!,read_sform1( AltEnd,S,F).
 read_sform3(       s, AltEnd,'!',S,exec(F)):- !,read_sform1( AltEnd,S,F).
+
+read_sform3(s,_AltEnd,_,S,F1):- maybe_read_sform_line(S, parse_sexpr_metta1, F1),!.
 
 read_sform3(_AoS,_AltEnd,'"',S,Text):- !,must_det_ll(atom_until(S,[],'"',Text)).
 read_sform3(_AoS,_AltEnd,'`',S,Text):- !,atom_until(S,[],'`',Text).
@@ -408,14 +490,36 @@ is_same_streams(N1,N2):- in2_stream(N1,S1),in2_stream(N2,S2),!,S1==S2.
 
 
 
-parse_sexpr_metta(I,O):- string(I),normalize_space(string(M),I),parse_sexpr_metta1(M,O),!.
-parse_sexpr_metta(I,O):- parse_sexpr_untyped(I,U),trly(untyped_to_metta,U,O).
+parse_sexpr_metta(I,O):- (\+ atomic(I) ; \+ is_stream(I)),!,text_to_string(I,S),!,parse_sexpr_metta1(S,O),!.
+parse_sexpr_metta(S,F1):-  %line_count(S, LineNumber),
+                           character_count(S, Offset), 
+                           write(Offset),
+                          maybe_read_sform_line(S, parse_sexpr_metta1, F1),!.
+parse_sexpr_metta(S,F1):- parse_sexpr_metta_IO(S,F1),!.
 
-parse_sexpr_metta1(M,exec(O)):- string_concat('!',I,M),!,parse_sexpr_metta1(I,O).
-parse_sexpr_metta1(M,(O)):- string_concat('+',I,M),!,parse_sexpr_metta1(I,O).
-parse_sexpr_metta1(I,O):- parse_sexpr_untyped(I,U),trly(untyped_to_metta,U,O).
+parse_sexpr_metta_IO(S,F1):- at_end_of_stream(S),!,F1=end_of_file.
+parse_sexpr_metta_IO(S,F1):- peek_char(S,Char),char_type(Char,space),!,
+  get_char(S,Char), parse_sexpr_metta_IO(S,F1).
+parse_sexpr_metta_IO(S,F1):-    
+    %line_count(S, LineNumber),
+    % Get the character position within the current line
+    %line_position(S, LinePos),    
+    parse_sexpr_untyped(S, M),!, write('.'),!,
+    trly(untyped_to_metta,M,F1),
+    nop(writeqln(user_error,F1)),!.
 
+parse_sexpr_metta1(I,O):- normalize_space(string(M),I),!,parse_sexpr_metta2(M,U),!,
+  trly(untyped_to_metta,U,O).
+parse_sexpr_metta2(M,exec(O)):- string_concat('!',I,M),!,parse_sexpr_metta2(I,O).
+parse_sexpr_metta2(M,(O)):- string_concat('+',I,M),!,parse_sexpr_metta2(I,O).
+parse_sexpr_metta2(I,U):- parse_sexpr_untyped(I,U),!,writeqln(user_error,U).
 
+test_parse_sexpr_metta1:-
+  ignore((parse_sexpr_metta1(
+"(: synonyms-gene-ENSG00000085491 (synonyms (gene ENSG00000085491) (ATP-Mg/P\\(i\\)_co-transporter_1 calcium-binding_mitochondrial_carrier_protein_SCaMC-1 HGNC:20662 mitochondrial_ATP-Mg/Pi_carrier_protein_1 small_calcium-binding_mitochondrial_carrier_protein_1 mitochondrial_Ca\\(2+\\)-dependent_solute_carrier_protein_1 mitochondrial_adenyl_nucleotide_antiporter_SLC25A24 solute_carrier_family_25_member_24 calcium-binding_transporter APC1 short_calcium-binding_mitochondrial_carrier_1 solute_carrier_family_25_\\(mitochondrial_carrier;_phosphate_carrier\\),_member_24 SCAMC1 SLC25A24 short_calcium-binding_mitochondrial_carrier_protein_1 SCAMC-1)))",O),
+  writeq(parse_sexpr_metta1(O)))),break.
+
+writeqln(W,Q):-format(W,'~q~n',[Q]).
 
 write_comment(_):- is_compatio,!.
 write_comment(_):- silent_loading,!.
@@ -449,6 +553,7 @@ mfix_vars1(I,'$VAR'(O)):- atom(I),atom_concat('$',N,I),atom_concat('_',N,O).
 %mfix_vars1(I,O):- is_i_nil(I),!,O=[].
 mfix_vars1(I,O):- I=='true',!,O='True'.
 mfix_vars1(I,O):- I=='false',!,O='False'.
+mfix_vars1('$STRING'(I),O):- I=O,!.
 mfix_vars1('$STRING'(I),O):- \+ string_to_syms, mfix_vars1(I,OO),text_to_string(OO,O),!.
 %mfix_vars1('$STRING'(I),O):- \+ string_to_syms, text_to_string(I,O),!.
 mfix_vars1('$STRING'(I),O):- !, mfix_vars1(I,M),atom_chars(O,M),!.
@@ -612,4 +717,56 @@ assert_MeTTa(Data):- !, heartbeat, functor(Data,F,A), A>=2,
 
 
 %:- dynamic((metta_type/3,metta_defn/3,get_metta_atom/2)).
+
+
+:- dynamic(progress_bar_position/1).
+
+% Initialize the progress bar and remember its starting position
+init_progress_bar(Width) :-
+    current_output(Stream),
+    stream_property(Stream, position(Pos)),
+    asserta(progress_bar_position(Pos)),
+    write('['),
+    forall(between(1, Width, _), write(' ')),
+    write(']'),
+    flush_output.
+
+% Check if the progress bar needs to be redrawn and update it accordingly
+update_progress_bar(Current, Total, Width) :-
+    current_output(Stream),
+    % Get the current position
+    stream_property(Stream, position(CurrentPos)),
+    % Get the remembered position
+    progress_bar_position(SavedPos),
+    % Compare positions; if they differ, redraw the entire progress bar
+    (   SavedPos \= CurrentPos
+    ->  redraw_progress_bar(Width)
+    ;   true
+    ),
+    % Update the progress bar
+    Percentage is Current / Total,
+    Filled is round(Percentage * Width),
+    write('\r['),
+    forall(between(1, Filled, _), write('#')),
+    Remaining is Width - Filled,
+    forall(between(1, Remaining, _), write(' ')),
+    write(']'),
+    flush_output.
+
+% Redraw the progress bar if the position has changed
+redraw_progress_bar(Width) :-
+    nl,
+    init_progress_bar(Width).
+
+% Adjusted example predicate for 1 million steps
+progress_bar_example :-
+    TotalSteps = 1000000,  % Adjust the total steps to 1 million
+    ProgressBarWidth = 30,
+    init_progress_bar(ProgressBarWidth),
+    between(1, TotalSteps, Step),
+    update_progress_bar(Step, TotalSteps, ProgressBarWidth),
+    % Simulate work
+    sleep(0.00001),  % Adjust sleep time as needed for demonstration
+    fail. % Continue looping until between/3 fails
+progress_bar_example.
 
