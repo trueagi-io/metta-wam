@@ -88,11 +88,19 @@ get_dcg_meta_reader_options(N,V):- t_l:dcg_meta_reader_options(N,V).
 user:portray(List):- compound(List),compound_name_arity([_,_],F,A),compound_name_arity(List,F,A),
     List=[H|_],integer(H),H>9,user_portray_dcg_seq(List).
 
-user_portray_dcg_seq(List):- \+ is_list(List),!,between(32,1,Len),length(Left,Len),append(Left,_,List), ground(Left),!,
+user_portray_dcg_seq(List):- \+ is_list(List),!,between(32,1,Len),l_length(Left,Len),append(Left,_,List), ground(Left),!,
    catch(atom_codes(W,Left),_,fail),format("|~w ___|",[W]).
-user_portray_dcg_seq(List):- is_codelist(List), catch(atom_codes(Atom,List),_,fail),length(List,Len),
+user_portray_dcg_seq(List):- is_codelist(List), catch(atom_codes(Atom,List),_,fail),l_length(List,Len),
   (Len < 32 -> format("`~w`",[Atom]) ;
-    (length(Left,26),append(Left,_Rest,List),format(atom(Print),"~s",[Left]),format("|~w ... |",[Print]))).
+    (l_length(Left,26),append(Left,_Rest,List),format(atom(Print),"~s",[Left]),format("|~w ... |",[Print]))).
+
+l_length(L,N):- integer(N),!,length(L,N).
+l_length(L,N):- is_list(L),!,length(L,N).
+l_length(L,N):- !,fail,length(L,N),!.
+l_length([_|L],N):- !, l_length0(L,N1),N is N1+1.
+l_length0(L,N):- var(L),!,N=0.
+l_length0([_|L],N):- !, l_length0(L,N1),N is N1+1.
+l_length0(_,1).
 
 
 % :- ensure_loaded(library(logicmoo_utils)).
@@ -328,7 +336,7 @@ dcgMust((DCG1,List),S,E) :- is_list(List),!,must((phrase(DCG1,S,SE),phrase(List,
 dcgMust(DCG1,S,E) :- must(phrase(DCG1,S,E)).
 
 dcgSeqLen(Len, FB, END) :-
-        length(CD, Len),
+        l_length(CD, Len),
         '$append'(CD, END, FB).
 
 
@@ -338,7 +346,7 @@ dcgLenBetween(Start,Start) --> {!}, dcgSeqLen(Start),{!}.
 dcgLenBetween(Start,End, FB, END) :- FB==[],!, ((Start>End -> between(End,Start,0) ; between(Start,End,0))),must(END=[]).
 dcgLenBetween(Start,End) --> dcgOnceOr(dcgSeqLen(Start),({(Start>End -> Next is Start-1 ; Next is Start+1)},dcgLenBetween(Next,End))).
 dcgLenBetween(Len, Start, End, FB, END) :-
-       (length(CD, Start),
+       (l_length(CD, Start),
         '$append'(CD, END, FB)) -> ignore(End=Start) ;
         (
             (Start>End -> Next is Start-1 ; Next is Start+1),
@@ -507,16 +515,22 @@ read_string_until_no_esc(String,End)--> dcg_notrace(read_string_until(noesc,Stri
 read_string_until(String,End)--> read_string_until(esc,String,End).
 
 read_string_until(_,[],eoln,S,E):- S==[],!,E=[].
-read_string_until(esc,[C|S],End) --> `\\`,!, zalwayz(escaped_char(C)),!, read_string_until(esc,S,End),!.
+read_string_until(esc,[C|S],End) --> `\\`,!, zalwayz(escaped_char(C)),!,
+   read_string_until(esc,S,End),!.
 read_string_until(_,[],End) --> End, !.
 %read_string_until(Esc,[35, 36|S],HB) --> {kif_ok}, `&%`, !,read_string_until(Esc,S,HB),!.
 read_string_until(Esc,[C|S],End) --> [C],!,read_string_until(Esc,S,End),!.
-
+%read_string_until(_,[],_) --> [].
 
 read_string_until_pairs([C|S],End) --> `\\`,!, zalwayz(escaped_char(C)),!, read_string_until_pairs(S,End).
 read_string_until_pairs([],HB) --> HB, !.
 read_string_until_pairs([C|S],HB) --> [C],read_string_until_pairs(S,HB).
 
+%escaped_char(10) --> eoln.
+escaped_char(10) --> `n`,!.
+escaped_char(13) --> `r`,!.
+escaped_char(9) --> `t`,!.
+escaped_char(C) --> [C],!.
 escaped_char(C) --> eoln,!,[C].
 escaped_char(E) --> [C], {atom_codes(Format,[92,C]),format(codes([E|_]),Format,[])},!.
 escaped_char(Code)  --> [C], {escape_to_char([C],Code)},!.
@@ -549,7 +563,7 @@ zalwayz(G):- must(G).
 always_b(G,H,T):- only_debug(break),H=[_|_],writeq(phrase_h(G,H,T)),dcg_print_start_of(H),writeq(phrase(G,H,T)),!,trace,ignore(rtrace(phrase(G,H,T))),!,quietly_pfs,dcg_print_start_of(H),writeq(phrase(G,H,T)), only_debug(break),!,fail.
 always_b(G,H,T):- writeq(phrase(G,H,T)),dcg_print_start_of(H),writeq(phrase(G,H,T)),!,only_debug(trace),ignore(rtrace(phrase(G,H,T))),!,quietly_pfs,dcg_print_start_of(H),writeq(phrase(G,H,T)), break,!,fail.
 
-dcg_print_start_of(H):- (length(L,3000);length(L,300);length(L,30);length(L,10);length(L,1);length(L,0)),append(L,_,H),!,format('~NTEXT: ~s~n',[L]),!.
+dcg_print_start_of(H):- (l_length(L,3000);l_length(L,300);l_length(L,30);l_length(L,10);l_length(L,1);l_length(L,0)),append(L,_,H),!,format('~NTEXT: ~s~n',[L]),!.
 bx(CT2):- notrace_catch_fail(CT2,E,(writeq(E:CT2),only_debug(break))),!.
 notrace_catch_fail(G,E,C):- catch(G,E,C),!.
 notrace_catch_fail(G):- quietly_pfs(catch(G,_,fail)),!.
@@ -561,7 +575,7 @@ clean_fromt_ws([D|DCodes],Codes):-
 txt_to_codes(S,Codes):- quietly_pfs(is_stream(S)),!,stream_to_lazy_list(S,Codes),!.
 txt_to_codes(AttVar,AttVarO):- quietly_pfs(attvar(AttVar)),!,AttVarO=AttVar.
 % txt_to_codes([C|Text],[C|Text]):- integer(C),is_list(Text),!.
-% txt_to_codes([C|Text],_):- atom(C),atom_length(C,1),!,throw(txt_to_codes([C|Text])).
+% txt_to_codes([C|Text],_):- atom(C),atom_l_length(C,1),!,throw(txt_to_codes([C|Text])).
 txt_to_codes(Text,Codes):- notrace_catch_fail((text_to_string_safe(Text,String),!,string_codes(String,Codes))),!.
 
 phrase_from_pending_stream(Grammar, In):-
@@ -797,10 +811,9 @@ is_eof_codes(-1).
 
 file_eof(I,O):- notrace(file_eof0(I,O)).
 file_eof0(I,O):- I==end_of_file,!,O=[].
-file_eof0 --> [X],{ attvar(X), X = -1},!.
-file_eof0 --> [X],{ attvar(X), X = end_of_file},!.
-file_eof0 --> [X],{ var(X), X = -1},!.
 file_eof0 --> [X],{ X = -1},!.
+file_eof0 --> [X],{ X = 0},!.
+file_eof0 --> [X],{ X = end_of_file},!.
 
 expr_with_text(Out,DCG,O,S,E):-
    zalwayz(lazy_list_character_count(StartPos,S,M)),%integer(StartPos),
@@ -810,11 +823,11 @@ expr_with_text(Out,DCG,O,S,E):-
 
 expr_with_text2(Out,_ ,O,StartPos,M,ME,EndPos,_,_):-
    integer(StartPos),integer(EndPos),!,
-   bx(Len is EndPos - StartPos),length(Grabber,Len),!,
+   bx(Len is EndPos - StartPos),l_length(Grabber,Len),!,
    get_some_with_comments(O,Grabber,Out,M,ME),!.
 expr_with_text2(Out,_ ,O,end_of_file-StartPos,M,ME,end_of_file-EndPos,_,_):-
    integer(StartPos),integer(EndPos),!,
-   bx(Len is StartPos - EndPos),length(Grabber,Len),!,
+   bx(Len is StartPos - EndPos),l_length(Grabber,Len),!,
    get_some_with_comments(O,Grabber,Out,M,ME),!.
 
 expr_with_text2(Out,DCG,O,StartPos,M,ME,EndPos,S,E):-
@@ -828,7 +841,7 @@ get_some_with_comments(O,_,O,_,_):- compound(O),compound_name_arity(O,'$COMMENT'
 get_some_with_comments(O,Txt,with_text(O,Str),S,_E):-append(Txt,_,S),!,text_to_string(Txt,Str).
 
 
-dcg_peek_meta(Grammar,List,List):- (var(Grammar)->((N=2;N=1;between(3,20,N)),length(Grammar,N)); true),phrase(Grammar,List,_),!.
+dcg_peek_meta(Grammar,List,List):- (var(Grammar)->((N=2;N=1;between(3,20,N)),l_length(Grammar,N)); true),phrase(Grammar,List,_),!.
 
 
 

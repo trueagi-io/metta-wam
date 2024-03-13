@@ -487,6 +487,10 @@ ugly_sexpr_cont('$OBJ'(sugly,S))                 -->  read_string_until(S,`>`), 
 sexpr(X,H,T):- zalwayzz(sexpr0(X),H,M),zalwayzz(swhite,M,T), nop(if_debugging(sreader,(fbug(sexpr(X))))),!.
 %sexpr(X,H,T):- zalwayzz(sexpr0(X,H,T)),!,swhite.
 is_common_lisp:- fail.
+is_scm:- fail.
+is_metta:- true.
+
+:- discontiguous(sexpr0/3).
 
 sexpr0(L)                      --> sblank,!,sexpr(L),!.
 sexpr0(L)                      --> `(`, !, swhite, zalwayzz(sexpr_list(L)),!, swhite.
@@ -500,6 +504,19 @@ sexpr0(['#'(backquote),E])         --> ````, !, sexpr(E).
 sexpr0(['#BQ-COMMA-ELIPSE',E])     --> `,@`, !, sexpr(E).
 sexpr0(['#COMMA',E])               --> { is_common_lisp }, `,`, !, sexpr(E).
 sexpr0(['#HCOMMA',E])               --> {is_scm}, `#,`, !, sexpr(E).
+
+
+
+% sexpr_metta('$STRING'(S))             --> s_string(S),!.
+
+
+
+sexpr_metta(O) --> dcg_peek(dcg_not( ( `(` ; `)` ; ` ` ; 
+   sblank_ch) )),
+  (read_string_until(Text, dcg_peek( ( `(` ; `)` ; ` ` ; 
+   sblank_ch) ))),!,{atom_string(O,Text)}.
+
+
 sexpr0('$OBJ'(claz_bracket_vector,V))                 --> `[`, sexpr_vector(V,`]`),!, swhite.
 
 % MeTTA/NARS % sexpr0('#'(A))              --> `|`, !, read_string_until(S,`|`), swhite,{quietly_sreader(((atom_string(A,S))))}.
@@ -554,13 +571,14 @@ sexpr0(OBJ)--> `#<`,!,zalwayzz(ugly_sexpr_cont(OBJ)),!.
 
 /*********END HASH ***********/
 
+sexpr0(L)--> { is_metta }, sexpr_metta(L),!.
+
 sexpr0(E)    --> sym_or_num(E), swhite,!.
 sexpr0(Sym) --> `#`,integer(N123), swhite,!, {atom_concat('#',N123,Sym)}.
 sexpr0(C) -->  s_line_metta(C) ,swhite, !. %s_line_metta(C), !.
 sexpr0(C) -->  s_item_metta(C, e_o_s), swhite. %s_line_metta(C), !.
 sexpr0(E)                      --> !,zalwayzz(sym_or_num(E)), swhite,!.
 
-is_scm:- fail.
 
 % c:/opt/logicmoo_workspace/packs_sys/logicmoo_opencog/guile/module/ice-9/and-let-star.scm
 
@@ -604,8 +622,9 @@ dcg_xor(_,DCG2,S,E):- phrase(DCG2,S,E),!.
 %sblank --> [C], {var(C)},!.
 
 % sblank --> comment_expr(S,I,CP),!,{assert(t_l:s_reader_info('$COMMENT'(S,I,CP)))},!,swhite.
-sblank --> comment_expr(CMT),!,{assert(t_l:s_reader_info(CMT))},!,swhite.
-sblank --> [C], {nonvar(C),charvar(C),!,bx(C =< 32)},!,swhite.
+sblank --> ` `, comment_expr(CMT),!,{assert(t_l:s_reader_info(CMT))},!,swhite.
+sblank --> sblank_ch.
+sblank_ch --> [C], {nonvar(C),charvar(C),!,bx(C =< 32)},!,swhite.
 
 sblank_line --> eoln,!.
 sblank_line --> [C],{bx(C =< 32)},!, sblank_line.
@@ -613,7 +632,7 @@ sblank_line --> [C],{bx(C =< 32)},!, sblank_line.
 s_string(Text)                 --> sexpr_string(Text).
 s_string(Text)                 --> {kif_ok},`'`, !, zalwayzz(read_string_until(Text,`'`)),!.
 
-
+:- export(sblank_ch/2).
 
 swhite --> sblank,!.
 swhite --> [].

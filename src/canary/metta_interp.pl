@@ -771,11 +771,12 @@ fn_append1(Term,X,eval_H(Term,X)).
 
 
 % Check if parentheses are balanced in a list of characters
+balanced_parentheses(Str):- string(Str), string_chars(Str,Chars),!,balanced_parentheses(Chars, 0).
 balanced_parentheses(Chars) :- balanced_parentheses(Chars, 0).
 balanced_parentheses([], 0).
-balanced_parentheses(['('|T], N) :- N1 is N + 1, balanced_parentheses(T, N1).
-balanced_parentheses([')'|T], N) :- N > 0, N1 is N - 1, balanced_parentheses(T, N1).
-balanced_parentheses([H|T], N) :- H \= '(', H \= ')', balanced_parentheses(T, N).
+balanced_parentheses(['('|T], N) :- N1 is N + 1, !, balanced_parentheses(T, N1).
+balanced_parentheses([')'|T], N) :- N > 0, N1 is N - 1, !, balanced_parentheses(T, N1).
+balanced_parentheses([H|T], N) :- H \= '(', H \= ')', !, balanced_parentheses(T, N).
 % Recursive function to read lines until parentheses are balanced.
 
 repl_read(NewAccumulated, Expr):-
