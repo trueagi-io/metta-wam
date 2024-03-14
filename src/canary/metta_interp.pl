@@ -664,9 +664,10 @@ tee_file(TEE_FILE):- metta_dir(Dir),directory_file_path(Dir,'TEE.ansi',TEE_FILE)
 
 clear_spaces:- clear_space(_).
 clear_space(S):-
+   retractall(user:loaded_into_kb(S,_)),
    %retractall(metta_defn(_,S,_,_)),
    nop(retractall(metta_type(S,_,_))),
-   retractall(asserted_metta_atom(S,_)).
+   retractall(metta_atom_asserted(S,_)).
 
 dcall(G):- call(G).
 
@@ -862,7 +863,7 @@ load_hook(Load,Hooked):-
 rtrace_on_error(G):- catch(G,_,fail),!.
 rtrace_on_error(G):- rtrace(G),!.
 assertion_hb(metta_defn(=,Self,H,B),Self,H,B).
-assertion_hb(asserted_metta_atom(Self,[=,H,B]),Self,H,B).
+assertion_hb(metta_atom_asserted(Self,[=,H,B]),Self,H,B).
 
 load_hook0(_,_):- \+ show_transpiler, \+ is_transpiling, !.
 load_hook0(Load,Assertion):- 
@@ -961,47 +962,41 @@ type_decl('Type').
 type_decl('%Undefined%').
 type_decl('Variable').
 
-:- dynamic(get_metta_atom/2).
-:- dynamic(asserted_metta_atom/2).
-:- multifile(asserted_metta/4).
-:- dynamic(asserted_metta/4).
-asserted_metta(Self,Term,Filename,Lineno):- 
-	user:loaded_into_kb(Self,Filename),
-	user:asserted_metta_pred(Mangle,Filename),
-	Data =..[Mangle,Term,Lineno],
-	call(Data).
-
-
+:- dynamic(metta_atom_asserted/2).
 
 % metta_atom_stdlib(_):-!,fail.
-metta_atom_stdlib([Colon, Value, Type]):-
-  Colon==':', metta_atom_stdlib_types([Colon, Value, Type]).
-metta_atom_stdlib_types([':', Type, 'Type']):- type_decl(Type).
-metta_atom_stdlib_types([':', Op, ['->'|List]]):- 
+metta_atom_stdlib([Colon, Value, Type]):- Colon==':', 
+   metta_atom_stdlib_types(Value, Type).
+metta_atom_stdlib_types(Type, 'Type'):- type_decl(Type).
+metta_atom_stdlib_types(Op, '->'(List)):- 
 	 op_decl(Op,Params,ReturnType),
 	 append(Params,[ReturnType],List).
 
 %get_metta_atom(Eq,KB, [F|List]):- KB='&flybase',fb_pred(F, Len), length(List,Len),apply(F,List).
 
 
-get_metta_atom(Eq,Space, Atom):- get_metta_atom_from(Space, Atom), \+ (Atom =[EQ,_,_], EQ==Eq).
-
-get_metta_atom_from(KB, [F, A| List]):- KB='&flybase',fb_pred_nr(F, Len),current_predicate(F/Len), length([A|List],Len),apply(F,[A|List]).
-get_metta_atom_from([Superpose,ListOf], Atom):- Superpose == 'superpose',is_list(ListOf),!,member(KB,ListOf),get_metta_atom_from(KB,Atom).
-get_metta_atom_from(Space, Atom):- typed_list(Space,_,L),!, member(Atom,L).
-get_metta_atom_from(KB,Atom):- (KB=='&self'; KB='&stdlib'), metta_atom_stdlib(Atom).
-get_metta_atom_from(KB,Atom):- if_or_else(asserted_metta_atom( KB,Atom),asserted_metta_atom_fallback( KB,Atom)).
+get_metta_atom(Eq,Space, Atom):- metta_atom(Space, Atom), \+ (Atom =[EQ,_,_], EQ==Eq).
 
 asserted_metta_atom_fallback( KB,Atom):- fail, is_list(KB),!, member(Atom,KB).
-%asserted_metta_atom_fallback( KB,Atom):- get_metta_atom_from(KB,Atom)
+%asserted_metta_atom_fallback( KB,Atom):- metta_atom(KB,Atom)
 
 %metta_atom(KB,[F,A|List]):- metta_atom(KB,F,A,List), F \== '=',!.
-metta_atom(KB,Atom):- get_metta_atom_from(KB,Atom).
-metta_atom(Atom):- current_self(KB),get_metta_atom_from(KB,Atom).
+metta_atom(Atom):- current_self(KB),metta_atom(KB,Atom).
+metta_atom(KB, [F, A| List]):- KB='&flybase',fb_pred_nr(F, Len),current_predicate(F/Len), length([A|List],Len),apply(F,[A|List]).
+metta_atom([Superpose,ListOf], Atom):- Superpose == 'superpose',is_list(ListOf),!,member(KB,ListOf),metta_atom(KB,Atom).
+metta_atom(Space, Atom):- typed_list(Space,_,L),!, member(Atom,L).
+metta_atom(KB,Atom):- var(Atom),constrain_sterm(Atom),nonvar(Atom),metta_atom(KB,Atom).
+metta_atom(KB,Atom):- if_or_else(metta_atom_asserted( KB,Atom),
+											asserted_metta_atom_fallback( KB,Atom)).
+
+metta_atom(KB,Atom):- metta_atom_in_file(KB,Atom).
+
+metta_atom(KB,Atom):- (KB=='&self'; KB='&stdlib'), metta_atom_stdlib(Atom).
+
 metta_defn(KB,Head,Body):- metta_defn(_Eq,KB,Head,Body).
-metta_defn(Eq,KB,Head,Body):- ignore(Eq = '='), get_metta_atom_from(KB,[Eq,Head,Body]).
-metta_type(S,H,B):- get_metta_atom_from(S,[':',H,B]).
-metta_type(_,H,B):- metta_atom_stdlib_types([':',H,B]).
+metta_defn(Eq,KB,Head,Body):- ignore(Eq = '='), metta_atom(KB,[Eq,Head,Body]).
+metta_type(S,H,B):- metta_atom(S,[':',H,B]).
+metta_type(_,H,B):- metta_atom_stdlib_types(H,B).
 %typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_arguments(Cmpd,Type,[List|_]),is_list(List).
 
 :- if( \+ current_predicate(pfcAdd/1 )).
@@ -1011,11 +1006,10 @@ pfcAdd(P):- assert(P).
 %maybe_xform(metta_atom(KB,[F,A|List]),metta_atom(KB,F,A,List)):- is_list(List),!.
 maybe_xform(metta_defn(Eq,KB,Head,Body),metta_atom(KB,[Eq,Head,Body])).
 maybe_xform(metta_type(KB,Head,Body),metta_atom(KB,[':',Head,Body])).
-maybe_xform(metta_atom(KB,HeadBody),asserted_metta_atom(KB,HeadBody)).
+maybe_xform(metta_atom(KB,HeadBody),metta_atom_asserted(KB,HeadBody)):-!. % s2t(HeadBody,HeadBodyT).
 maybe_xform(_OBO,_XForm):- !, fail.
 
-asserted_metta_atom(KB,HeadBody):- asserted_metta(KB,HeadBody,_,_).
-asserted_metta_atom('&self',HeadBody):- asserted_metta_extra(HeadBody).
+%metta_atom_asserted('&self',HeadBody):- asserted_metta_extra(HeadBody).
 
 asserted_metta_extra([':','If','SrcFunction']).
 asserted_metta_extra([':','If',[->,'Bool','Atom','Atom','Atom']]).
