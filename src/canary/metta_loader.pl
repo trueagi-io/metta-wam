@@ -136,17 +136,39 @@ convert_metta_to_datalog(Filename,DatalogFile):-
     ),
     !.  % Prevent backtracking
 
-filename_to_mangled_pred(Filename,MangleP2):-
-  get_time(Time),
-  symbolic_list_concat(['data',Filename,Time],'_',GS),
-  symbolic_list_concat(Elements,'/',GS),  
-  symbolic_list_concat(Elements,'_',Filename2),
-  symbolic_list_concat(Elements2,'.',Filename2),
-  symbolic_list_concat(Elements2,'_',Filename3),
-  symbolic_list_concat(Elements3,'-',Filename3),
-  symbolic_list_concat(Elements3,'_',Filename4),
-  symbolic_list_concat(Elements4,'__',Filename4),
-  symbolic_list_concat(Elements4,'_',MangleP2).
+% atom_subst(+Source, +Replacements, -Result)
+% Replacements is a list of Search-Replace pairs.
+atom_subst(Source, Replacements, Result) :-
+    foldl(replace_in_symbol, Replacements, Source, Result).
+
+% replace_in_symbol(+Search-Replace, +CurrentSource, -NewSource)
+% Helper predicate to apply a single search-replace operation.
+replace_in_symbol(Search-Replace, CurrentSource, NewSource) :-
+    symbolic_list_concat(Split, Search, CurrentSource),
+    symbolic_list_concat(Split, Replace, NewSource).
+
+
+% filename_to_mangled_pred(+Filename, -MangleP)
+filename_to_mangled_pred(Filename, MangleP) :-
+    get_time(Time),
+    symbolic_list_concat(['data', Filename, Time], '_', GS),
+    Replacements = [ '.metta_'- '_', 
+                     '_1710'-'_',
+                     '/'- '_',
+                 '/'- '_', '.'- '_', '-'- '_', '__'- '_'],
+    atom_subst(GS, Replacements, IntermediateResult),
+    trim_to_last_nchars(24, IntermediateResult, MangleP).
+
+
+% trim_to_last_32(+Atom, -TrimmedAtom)
+% Trims the given Atom to its last 32 characters, producing TrimmedAtom.
+trim_to_last_nchars(Len, Atom, TrimmedAtom) :-
+    atom_length(Atom, Length),
+    (   Length =< Len
+    ->  TrimmedAtom = Atom  % Atom is shorter than or exactly 32 characters, no trimming needed
+    ;   Before is Length - 32,
+        sub_atom(Atom, Before, 32, _, TrimmedAtom)
+    ).
 
 
 translate_metta_file_to_datalog_io(Filename,Input,Output):-
@@ -159,15 +181,25 @@ translate_metta_file_to_datalog_io(Filename,Input,Output):-
   write(Output,'/* '),write(Output,DateStr),writeln(Output,' */'),
   % make the predicate dynamic/multifile
   filename_to_mangled_pred(Filename,MangleP2),
-    format(Output,':- dynamic((~q)/2). ~n',[MangleP2]),
-    format(Output,':- dynamic((~q)/3). ~n',[MangleP2]),
-	format(Output,':- dynamic((~q)/4). ~n',[MangleP2]),
-	format(Output,':- dynamic((~q)/5). ~n',[MangleP2]),
-	format(Output,':- dynamic((~q)/6). ~n',[MangleP2]),
-	format(Output,':- dynamic((~q)/7). ~n',[MangleP2]),
+	symbol_concat(MangleP2,'_iz',MangleIZ),
+
+  format(Output,':- style_check(-discontiguous). ~n',[]),
+  format(Output,':- dynamic((~q)/2). ~n',[MangleP2]),
+  format(Output,':- dynamic((~q)/3). ~n',[MangleP2]),
+  format(Output,':- dynamic((~q)/4). ~n',[MangleP2]),
+  format(Output,':- dynamic((~q)/5). ~n',[MangleP2]),
+  format(Output,':- dynamic((~q)/6). ~n',[MangleP2]),
+  format(Output,':- dynamic((~q)/7). ~n',[MangleP2]),
+  
+  format(Output,':- dynamic((~q)/4). ~n',[MangleIZ]),
+  format(Output,':- dynamic((~q)/5). ~n',[MangleIZ]),
+  format(Output,':- dynamic((~q)/6). ~n',[MangleIZ]),
+  format(Output,':- dynamic((~q)/7). ~n',[MangleIZ]),
+  format(Output,':- dynamic((~q)/8). ~n',[MangleIZ]),
   writeln(Output,':- dynamic(user:asserted_metta_pred/2).'),
   writeln(Output,':- multifile(user:asserted_metta_pred/2).'),
   format(Output,':- asserta(user:asserted_metta_pred(~q,~q)). ~n',[MangleP2,Filename]), 
+  with_output_to(Output,produce_iz(MangleP2)),
   %format(Output,':- user:register_asserted_metta_pred(~q,~q). ~n',[MangleP2,Filename]), 
   flag(translated_forms,_,0),
   LastTime = t(Time),
@@ -208,8 +240,8 @@ write_metta_datalog_term(Output,exec(Term),MangleP2,Lineno):-
   format(Output,":-eval_Line(~q,~q,~q).~n",[Term,MangleP2,Lineno]).
 % write asserted terms
 write_metta_datalog_term(Output,STerm,MangleP2,Lineno):-
-  maplist(s2t,STerm,Term),
-  Data =..[MangleP2,Lineno|Term], 
+  s2t_iz(MangleP2,P,STerm,Term),
+  Data =..[P,Lineno|Term], 
   format(Output,"~q.~n",[Data]).
 
 eval_Line(A,B,C):- format('~N'),
@@ -547,12 +579,10 @@ metta_atom_in_file(Self,Term,Filename,Lineno):-
 	copy_term(STerm,CTerm),
 	term_variables(STerm,SVs),
 	term_variables(CTerm,CVs),
-	s2t(CTerm,Term),
-
 	user:loaded_into_kb(Self,Filename),
 	once(user:asserted_metta_pred(Mangle,Filename)),
-
-	Data =..[Mangle,Lineno|Term],
+	s2t_iz(Mangle,P,CTerm,Term),
+	Data =..[P,Lineno|Term],
 	call(Data),
 	maplist(mapvar,CVs,SVs).
 
@@ -562,7 +592,22 @@ mapvar(CV,SV):- t2s(CV,CCV),!,SV=CCV.
 constrain_sterm(STerm):- is_list(STerm),!.
 constrain_sterm(STerm):- var(STerm),!,between(1,5,Len),length(STerm,Len).
 
+s2t_iz(Mangle,Iz,[Colon,Name,Info],[Name|InfoL]):- Colon == ':',
+   is_list(Info), symbol_concat(Mangle,'_iz',Iz),!,
+   maplist(s2t,Info,InfoL).
+s2t_iz(Mangle,Mangle,Info,InfoL):- s2tl(Info,InfoL).
 
+
+produce_iz(Mangle):-
+  symbol_concat(Mangle,'_iz',Iz),
+  forall(between(1,5,Len),
+    once((length(Args,Len),  
+	produce_iz_hb([Mangle,Lineno,[:,Name,[Pred|Args]]],[Iz,Lineno,Name,Pred|Args])))).
+
+produce_iz_hb(HList,BList):-
+   H=..HList,B=..BList,  HB=(H:-B),
+   numbervars(HB,0,_),
+   writeq(HB),writeln('.').
 
 t2s(SList,List):- \+ compound(SList),!,SList=List.
 t2s([H|SList],[HH|List]):- !, t2s(H,HH),!,t2s(SList,List).

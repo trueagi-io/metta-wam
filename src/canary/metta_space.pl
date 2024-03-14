@@ -311,20 +311,20 @@ space_type_method(is_asserted_space,atom_iter,metta_assertdb_iter).
 %:- dynamic(for_metta/2).
 %for_metta(_,T):- fb_pred(F,A),functor(T,F,A),call(T).
 metta_assertdb_ls(KB):-
-     AMA = asserted_metta_atom,
+     AMA = metta_atom_asserted,
      decl_m_fb_pred(user,AMA,2),   
      MP =.. [AMA,KB,_],
   listing(MP).
 
 metta_assertdb_add(KB,AtomIn):- 
  must_det_ll((subst_vars(AtomIn,Atom),
-     AMA = asserted_metta_atom,
+     AMA = metta_atom_asserted,
      decl_m_fb_pred(user,AMA,2),   
      MP =.. [AMA,KB,Atom],
   assert_new(MP))).
 metta_assertdb_rem(KB,Old):- metta_assertdb_del(KB,Old).
 metta_assertdb_del(KB,Atom):- subst_vars(Atom,Old),
-  decl_m_fb_pred(user,asserted_metta_atom,2), 
+  decl_m_fb_pred(user,metta_atom_asserted,2), 
    MP = metta_atom(KB,Old),
   copy_term(MP,Copy), clause(MP,true,Ref), MP=@= Copy, !, erase(Ref). % ,metta_assertdb('DEL',Old).
 metta_assertdb_replace(KB,Old,New):- metta_assertdb_del(KB,Old), metta_assertdb_add(KB,New).
@@ -334,12 +334,13 @@ atom_count_provider(Self,Count):-
 	user:loaded_into_kb(Self,Filename),
     must_det_ll((
 	 once(user:asserted_metta_pred(Mangle,Filename)),
-	 Data =..[Mangle,_Term,_Lineno],
+	 between(2,7,Arity),
+	 functor(Data,Mangle,Arity),	 
 	 predicate_property(Data,number_of_clauses(Count)))).
 
 atom_count_provider(KB,Count):-
 	 must_det_ll((
-	  AMA = asserted_metta_atom,
+	  AMA = metta_atom_asserted,
 	  decl_m_fb_pred(user,AMA,2),   
 	  MP =.. [AMA,KB,_],
 	  predicate_property(MP,number_of_clauses(SL2)),
@@ -375,22 +376,22 @@ metta_iter_bind(KB,Query,Vars,VarNames):-
 
 % Query from hyperon.base.GroundingSpace
 space_query_vars(KB,Query,Vars):- is_asserted_space(KB),!,
-    decl_m_fb_pred(user,asserted_metta_atom,2),
+    decl_m_fb_pred(user,metta_atom_asserted,2),
     call_metta(KB,Query,Vars),
     dout('RES',space_query_vars(KB,Query,Vars)).
 
 
 metta_assertdb_get_atoms(KB,AtomsL):- 
-  decl_m_fb_pred(user,asserted_metta_atom,2), 
+  decl_m_fb_pred(user,metta_atom_asserted,2), 
   findall(Atom,metta_atom(KB,Atom),AtomsL).
 /*
 
 %metta_assertdb_iter_bind(KB,Query,Template,AtomsL):- 
-decl_m_fb_pred(user,asserted_metta_atom,2), findall(Template,metta_atom(KB,Query),AtomsL).
+decl_m_fb_pred(user,metta_atom_asserted,2), findall(Template,metta_atom(KB,Query),AtomsL).
 metta_assertdb_iter_bind(KB,Query,Vars):-
   ignore(term_variables(Query,Vars)),
   print(metta_assertdb(['match',KB,Query,Vars])),nl,
-     AMA = asserted_metta_atom,
+     AMA = metta_atom_asserted,
      decl_m_fb_pred(user,AMA,2),   
      MP =.. [AMA,KB,Query],
 
