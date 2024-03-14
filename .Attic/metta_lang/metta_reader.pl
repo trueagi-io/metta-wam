@@ -622,9 +622,11 @@ dcg_xor(_,DCG2,S,E):- phrase(DCG2,S,E),!.
 %sblank --> [C], {var(C)},!.
 
 % sblank --> comment_expr(S,I,CP),!,{assert(t_l:s_reader_info('$COMMENT'(S,I,CP)))},!,swhite.
-sblank --> ` `, comment_expr(CMT),!,{assert(t_l:s_reader_info(CMT))},!,swhite.
+sblank --> sblank_char, comment_expr(CMT),!,{assert(t_l:s_reader_info(CMT))},!,swhite.
 sblank --> sblank_ch.
-sblank_ch --> [C], {nonvar(C),charvar(C),!,bx(C =< 32)},!,swhite.
+sblank_ch --> sblank_char,!,swhite.
+
+sblank_char --> [C], {nonvar(C),charvar(C),!,bx(C =< 32)}.
 
 sblank_line --> eoln,!.
 sblank_line --> [C],{bx(C =< 32)},!, sblank_line.
@@ -731,7 +733,7 @@ maybe_string(E,ES):- nb_current('$maybe_string',t),!,text_to_string_safe(E,ES),!
 maybe_string(E,E).
 
 sym_continue([H|T]) --> [H], {sym_char(H)},!, sym_continue(T).
-sym_continue([39]) --> `'`, peek_symbol_breaker,!.
+sym_continue([39]) --> `'`, peek_symbol_breaker,!. % '
 sym_continue([]) --> peek_symbol_breaker,!.
 sym_continue([]) --> [].
 
