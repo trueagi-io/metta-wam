@@ -159,8 +159,12 @@ translate_metta_file_to_datalog_io(Filename,Input,Output):-
   write(Output,'/* '),write(Output,DateStr),writeln(Output,' */'),
   % make the predicate dynamic/multifile
   filename_to_mangled_pred(Filename,MangleP2),
-  format(Output,':- dynamic((~q)/2). ~n',[MangleP2]),
-  format(Output,':- multifile((~q)/2). ~n',[MangleP2]),
+    format(Output,':- dynamic((~q)/2). ~n',[MangleP2]),
+    format(Output,':- dynamic((~q)/3). ~n',[MangleP2]),
+	format(Output,':- dynamic((~q)/4). ~n',[MangleP2]),
+	format(Output,':- dynamic((~q)/5). ~n',[MangleP2]),
+	format(Output,':- dynamic((~q)/6). ~n',[MangleP2]),
+	format(Output,':- dynamic((~q)/7). ~n',[MangleP2]),
   writeln(Output,':- dynamic(user:asserted_metta_pred/2).'),
   writeln(Output,':- multifile(user:asserted_metta_pred/2).'),
   format(Output,':- asserta(user:asserted_metta_pred(~q,~q)). ~n',[MangleP2,Filename]), 
@@ -182,7 +186,10 @@ translate_metta_file_to_datalog_io(Filename,Input,Output):-
              get_time(NTime),arg(1,LastTime,Last),
                 Elapsed is (NTime-Last), Elapsed > 4),
             (nb_setarg(1,LastTime,NTime),
-               format(user_error,'~N; ~@ ; line: ~w ~n',[with_indents(false,write_src(Term)),Lineno])))),
+               move_cursor_to_first_column,
+               format(user_error,'; ~@ ; line: ~w ',[write_src_woi(Term),Lineno]),
+               write(user_error,'\033[K'),
+			   move_cursor_to_first_column))),
       flag(translated_forms,X,X+1),
       write_metta_datalog_term(Output,Term,MangleP2,Lineno))))),fail)))))),
   flush_output(Output),
@@ -191,6 +198,7 @@ translate_metta_file_to_datalog_io(Filename,Input,Output):-
   format(user_error,'~N; Done translating ~w forms: ~q.',
                            [TF,asserted_metta_pred(MangleP2,Filename)]))).
 
+write_src_woi(Term):- with_indents(false,write_src(Term)).
 
 % write comments
 write_metta_datalog_term(Output,'$COMMENT'(Term,_,_),_MangleP2,_Lineno):-
@@ -199,8 +207,9 @@ write_metta_datalog_term(Output,'$COMMENT'(Term,_,_),_MangleP2,_Lineno):-
 write_metta_datalog_term(Output,exec(Term),MangleP2,Lineno):-
   format(Output,":-eval_Line(~q,~q,~q).~n",[Term,MangleP2,Lineno]).
 % write asserted terms
-write_metta_datalog_term(Output,Term,MangleP2,Lineno):-
-  Data =..[MangleP2,Term,Lineno], 
+write_metta_datalog_term(Output,STerm,MangleP2,Lineno):-
+  maplist(s2t,STerm,Term),
+  Data =..[MangleP2,Lineno|Term], 
   format(Output,"~q.~n",[Data]).
 
 eval_Line(A,B,C):- format('~N'),
@@ -491,9 +500,7 @@ is_same_streams(N1,N2):- in2_stream(N1,S1),in2_stream(N2,S2),!,S1==S2.
 
 
 parse_sexpr_metta(I,O):- (\+ atomic(I) ; \+ is_stream(I)),!,text_to_string(I,S),!,parse_sexpr_metta1(S,O),!.
-parse_sexpr_metta(S,F1):-  %line_count(S, LineNumber),
-                           character_count(S, Offset), 
-                           write(Offset),
+parse_sexpr_metta(S,F1):- fail, %line_count(S, LineNumber),                          
                           maybe_read_sform_line(S, parse_sexpr_metta1, F1),!.
 parse_sexpr_metta(S,F1):- parse_sexpr_metta_IO(S,F1),!.
 
@@ -503,10 +510,15 @@ parse_sexpr_metta_IO(S,F1):- peek_char(S,Char),char_type(Char,space),!,
 parse_sexpr_metta_IO(S,F1):-    
     %line_count(S, LineNumber),
     % Get the character position within the current line
-    %line_position(S, LinePos),    
-    parse_sexpr_untyped(S, M),!, write('.'),!,
+    %line_position(S, LinePos),   
+	character_count(S, Offset),move_cursor_to_first_column,
+	write(user_error,'Offest: '),write(user_error,Offset), 
+    parse_sexpr_untyped(S, M),!, write(user_error,'.'),!,move_cursor_to_first_column,
     trly(untyped_to_metta,M,F1),
     nop(writeqln(user_error,F1)),!.
+
+move_cursor_to_first_column:- write(user_error,'\033[1G').
+move_cursor_to_first_column_out:- write(user_output,'\033[1G').
 
 parse_sexpr_metta1(I,O):- normalize_space(string(M),I),!,parse_sexpr_metta2(M,U),!,
   trly(untyped_to_metta,U,O).
@@ -519,7 +531,7 @@ test_parse_sexpr_metta1:-
 "(: synonyms-gene-ENSG00000085491 (synonyms (gene ENSG00000085491) (ATP-Mg/P\\(i\\)_co-transporter_1 calcium-binding_mitochondrial_carrier_protein_SCaMC-1 HGNC:20662 mitochondrial_ATP-Mg/Pi_carrier_protein_1 small_calcium-binding_mitochondrial_carrier_protein_1 mitochondrial_Ca\\(2+\\)-dependent_solute_carrier_protein_1 mitochondrial_adenyl_nucleotide_antiporter_SLC25A24 solute_carrier_family_25_member_24 calcium-binding_transporter APC1 short_calcium-binding_mitochondrial_carrier_1 solute_carrier_family_25_\\(mitochondrial_carrier;_phosphate_carrier\\),_member_24 SCAMC1 SLC25A24 short_calcium-binding_mitochondrial_carrier_protein_1 SCAMC-1)))",O),
   writeq(parse_sexpr_metta1(O)))),break.
 
-writeqln(W,Q):-format(W,'~q~n',[Q]).
+writeqln(W,Q):- nop(format(W,'; ~q~n',[Q])).
 
 write_comment(_):- is_compatio,!.
 write_comment(_):- silent_loading,!.
@@ -528,6 +540,48 @@ do_metta_cmt(_,'$COMMENT'(Cmt,_,_)):- write_comment(Cmt),!.
 do_metta_cmt(_,'$STRING'(Cmt)):- write_comment(Cmt),!.
 do_metta_cmt(Self,[Cmt]):- !, do_metta_cmt(Self, Cmt),!.
 
+metta_atom_in_file(Self,Term):- 
+  metta_atom_in_file(Self,Term,_,_).
+metta_atom_in_file(Self,Term,Filename,Lineno):- 
+	constrain_sterm(STerm),
+	copy_term(STerm,CTerm),
+	term_variables(STerm,SVs),
+	term_variables(CTerm,CVs),
+	s2t(CTerm,Term),
+
+	user:loaded_into_kb(Self,Filename),
+	once(user:asserted_metta_pred(Mangle,Filename)),
+
+	Data =..[Mangle,Lineno|Term],
+	call(Data),
+	maplist(mapvar,CVs,SVs).
+
+%mapvar(CV,SV):- var(CV),!,SV=CV.
+mapvar(CV,SV):- t2s(CV,CCV),!,SV=CCV.
+
+constrain_sterm(STerm):- is_list(STerm),!.
+constrain_sterm(STerm):- var(STerm),!,between(1,5,Len),length(STerm,Len).
+
+
+
+t2s(SList,List):- \+ compound(SList),!,SList=List.
+t2s([H|SList],[HH|List]):- !, t2s(H,HH),!,t2s(SList,List).
+t2s(X,XX):- compound(X),!,compound_name_arguments(X,t,Args),
+	maplist(t2s,Args,XX).
+t2s(X,X):-!.
+
+s2tl(SList,List):- \+ compound(SList),!,SList=List.
+s2tl([H|SList],[HH|List]):- !, s2t(H,HH),!,s2tl(SList,List).
+s2tl(List,List).
+%s2tl(SList,List):- is_list(SList), maplist(s2t,SList,List),!.
+
+s2t(SList,List):- \+ compound(SList), !, SList=List.
+s2t([A|SList],Term):- A == '->',!, s2tl(SList,List),   Term =.. [A,List].
+s2t([A|SList],Term):- A == 'Cons',!,s2tl(SList,List), Term =.. [A|List].
+s2t([A|SList],Term):- A == '=',!, s2tl(SList,List),   Term =.. [A|List].
+s2t(List,Term):- is_list(List),!,maplist(s2t,List,TermList),
+  compound_name_arguments(Term,t,TermList),!.
+s2t(STerm,Term):- s2tl(STerm,Term),!.
 
 mlog_sym('@').
 
