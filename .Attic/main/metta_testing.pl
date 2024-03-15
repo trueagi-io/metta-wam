@@ -27,8 +27,8 @@ loonit_number(FS) :-
 
 
 string_replace(Original, Search, Replace, Replaced) :-
-    atomic_list_concat(Split, Search, Original),
-    atomic_list_concat(Split, Replace, Replaced),!.
+    symbolic_list_concat(Split, Search, Original),
+    symbolic_list_concat(Split, Replace, Replaced),!.
 
 get_test_name(Number,TestName) :-
    ((nb_current(loading_file,FilePath),FilePath\==[])->true; FilePath='SOME/UNIT-TEST'),
@@ -104,7 +104,7 @@ write_pass_fail([P,C,_],PASS_FAIL,G):-
 write_pass_fail(TestName,P,C,PASS_FAIL,G1,G2):-
     ignore(((
    (nb_current(loading_file,FilePath),FilePath\==[])->true; FilePath='SOME/UNIT-TEST.metta'),
-    atomic_list_concat([_,R],'tests/',FilePath),
+    symbolic_list_concat([_,R],'tests/',FilePath),
     file_name_extension(Base, _, R))),
       nop(format('<h3 id="~w">;; ~w</h3>',[TestName,TestName])),
 
@@ -333,7 +333,7 @@ parse_answer_str(Inner,[C|Metta]):-
     parse_sexpr_metta(Str,CMettaC), CMettaC=[C|MettaC],
    ((remove_m_commas(MettaC,Metta),
      \+ sub_var(',',rc(Metta)))).
-parse_answer_str(Inner0,Metta):- atomic_list_concat(InnerL,' , ',Inner0), maplist(atom_string,InnerL,Inner), maplist(parse_sexpr_metta,Inner,Metta),skip((must_det_ll(( \+ sub_var(',',rc2(Metta)))))),!.
+parse_answer_str(Inner0,Metta):- symbolic_list_concat(InnerL,' , ',Inner0), maplist(atom_string,InnerL,Inner), maplist(parse_sexpr_metta,Inner,Metta),skip((must_det_ll(( \+ sub_var(',',rc2(Metta)))))),!.
 parse_answer_str(Inner0,Metta):-
    (( replace_in_string([' , '=' '],Inner0,Inner),
    atomics_to_string(["(",Inner,")"],Str),!,
@@ -390,7 +390,7 @@ quick_test:-
 
 */
 % :- debug(term_expansion).
-:- if(debugging(term_expansion)).
+:- if(( false, debugging(term_expansion))).
 :- enable_arc_expansion.
 :- style_check(-singleton).
 dte:- set(_X.local) = val.
