@@ -572,6 +572,7 @@ equal_enouf_l([C|CC],[L|LL]):- !, equal_enouf(L,C),!,equal_enouf_l(CC,LL).
 maybe_remove_nils(I,O):- always_remove_nils(I,O),!,I\=@=O.
 always_remove_nils(I,O):- \+ compound(I),!,I=O.
 always_remove_nils([H|T], TT):- H==[],!, always_remove_nils(T,TT). 
+always_remove_nils([H|T], TT):- H=='Empty',!, always_remove_nils(T,TT). 
 always_remove_nils([H|T],[H|TT]):- always_remove_nils(T,TT). 
 
 has_unicode(A):- atom_codes(A,Cs),member(N,Cs),N>127,!.
@@ -628,8 +629,8 @@ eval_space(Eq,_RetType,Depth,Self,['match',Other,Goal,Template],Res):- !,
    metta_atom_iter(Eq,Depth,Self,Other,Goal),
    Template=Res.
 
-metta_atom_iter(Eq,_Depth,_Slf,Other,[Equal,[F|H],B]):- Eq == Equal,!,  % trace,
-   metta_defn(Eq,Other,[F|H],B).
+%metta_atom_iter(Eq,_Depth,_Slf,Other,[Equal,[F|H],B]):- Eq == Equal,!,  % trace,
+%   metta_defn(Eq,Other,[F|H],B).
 
 /*
 metta_atom_iter(Eq,Depth,Self,Other,[Equal,[F|H],B]):- Eq == Equal,!,  % trace,
@@ -644,9 +645,9 @@ metta_atom_iter(Eq,Depth,Self,Other,[And|Y]):- atom(And), is_comma(And),!,
        metta_atom_iter(Eq,D2,Self,Other,H),metta_atom_iter(Eq,D2,Self,Other,[And|T]))).
 
 %metta_atom_iter(Eq,Depth,_Slf,Other,X):- dcall0000000000(eval_args_true(Eq,_RetType,Depth,Other,X)).
-metta_atom_iter(Eq,Depth,_Slf,Other,X):-
+metta_atom_iter(Eq,Depth,Self,Other,X):-
   %copy_term(X,XX),
-  dcall0000000000(eval_args_true(Eq,_RetType,Depth,Other,XX)), X=XX.
+  dcall0000000000(metta_atom_true(Eq,Depth,Self,Other,XX)), X=XX.
 
 
 eval_args_true_r(Eq,RetType,Depth,Self,X,TF1):-
@@ -654,16 +655,17 @@ eval_args_true_r(Eq,RetType,Depth,Self,X,TF1):-
      ( \+  is_False(TF1),metta_atom_true(Eq,Depth,Self,Self,X))).
 
 eval_args_true(Eq,RetType,Depth,Self,X):-
-  can_be_ok(eval_args_true,X),
-  metta_atom_true(Eq,Depth,Self,Self,X);
+ % can_be_ok(eval_args_true,X),
+ % metta_atom_true(Eq,Depth,Self,Self,X);
    (nonvar(X),eval_ne(Eq,RetType,Depth,Self,X,TF1),  \+  is_False(TF1)).
 
 metta_atom_true(Eq,_Dpth,_Slf,Other,H):-
-	  can_be_ok(metta_atom_true,H), get_metta_atom(Eq,Other,H).
+	  can_be_ok(metta_atom_true,H), 
+	  metta_atom(Other,H).
 % is this OK?
-metta_atom_true(Eq,Depth,Self,Other,H):- nonvar(H), metta_defn(Eq,Other,H,B), D2 is Depth -1, eval_args_true(Eq,_,D2,Self,B).
+%metta_atom_true(Eq,Depth,Self,Other,H):- nonvar(H), metta_defn(Eq,Other,H,B), D2 is Depth -1, eval_args_true(Eq,_,D2,Self,B).
 % is this OK?
-metta_atom_true(Eq,Depth,Self,Other,H):- Other\==Self, nonvar(H), metta_defn(Eq,Other,H,B), D2 is Depth -1, eval_args_true(Eq,_,D2,Other,B).
+%metta_atom_true(Eq,Depth,Self,Other,H):- Other\==Self, nonvar(H), metta_defn(Eq,Other,H,B), D2 is Depth -1, eval_args_true(Eq,_,D2,Other,B).
 
 
 
@@ -1295,6 +1297,11 @@ simple_math([F|XY]):- !, atom(F),atom_length(F,1), is_list(XY),maplist(simple_ma
 simple_math(X):- number(X),!.
 
 
+eval_20(_Eq,_RetType,_Depth,_Self,['call-string!',Str],Empty):- !,'call-string!'(Str,Empty).
+
+'call-string!'(Str,Empty):- 
+			   read_term_from_atom(Str,Term,[variables(Vars)]),!,
+			   call(Term),Empty=Vars.
 eval_20(Eq,RetType,Depth,Self,X,Y):-
   (eval_40(Eq,RetType,Depth,Self,X,M)*-> M=Y ;
      % finish_eval(Depth,Self,M,Y);

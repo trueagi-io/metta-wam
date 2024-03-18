@@ -1,5 +1,6 @@
 !(bind! &kb (new-space))
 
+; inow
 (= (include-now $space $file)
   (let* 
 	  (($before (atom-count $space))
@@ -15,7 +16,7 @@
 ;!(include-now &kb sample_kb_v2.metta)
 ;gencode
 !(println! "Importing gencode")
-!(include-now &kb gencode/nodes.metta)
+!(load-ascii &kb gencode/nodes.metta)
 !(include-now &kb gencode/edges.metta)
 
 ;uniprot
@@ -52,14 +53,16 @@
 
 (: q (-> Atom Atom Atom))
 (= (q $space $query)
+  (match $space (: $_ $query) $query))
+(= (q $space $query)
   (match $space $query $query))
 
 !(println! "gene_name query")
-!(q &kb (gene_name (gene $X) MT-TT))
+;;!(q &kb (gene_name (gene $X) MT-TT))
 
 !(println! "limit 5 gene_name query")
 (: limit! (-> Number Atom Atom))
-!(limit! 5 (q &kb (gene_name $X $Y)))
+;;!(limit! 5 (q &kb (gene_name $X $Y)))
 
 
 
@@ -136,7 +139,7 @@
 (= (communicative-coexpressed (communicative-coexpressed $x)) $x)
 (= (communicative-interaction (communicative-interaction $x)) $x)
 
-!(pragma! eval trace)
+;;!(pragma! eval trace)
 !(println! "bc relevant-go")
 ;Proof for the relation between (sequence_variant rs9930506) and regulation of cold-induced thermogenesis (GO:0120161)
 !(bc (: $prf (relevant-go (ontology_term GO:0120161) (sequence_variant rs9930506))) (fromNumber 9))
@@ -144,9 +147,9 @@
 ;; return (let* (((: $prfabs#826 (-> $prms#830 (relevant-go (ontology_term GO:0120161) (sequence_variant rs9930506)))) (bc (: $prfabs#826 (-> $prms#830 (relevant-go (ontology_term GO:0120161) (sequence_variant rs9930506)))) (S (S (S (S (S (S (S (S Z)))))))))) ((: $prfarg#827 $prms#830) (bc (: $prfarg#827 $prms#830) (S (S (S (S (S (S (S (S Z))))))))))) (: ($prfabs#826 $prfarg#827) (relevant-go (ontology_term GO:0120161) (sequence_variant rs9930506))))
 
 
-!(println! "fake-bc relevant-go")
-!(fake-bc (: $prf (relevant-go (ontology_term GO:0120161) (sequence_variant rs9930506))) (fromNumber 9))
-!(println! "finished fake-bc relevant-go")
+;!(println! "fake-bc relevant-go")
+;!(fake-bc (: $prf (relevant-go (ontology_term GO:0120161) (sequence_variant rs9930506))) (fromNumber 9))
+;!(println! "finished fake-bc relevant-go")
 ;; (quote (let* (((: $prfabs#835 (-> $prms#839 (relevant-go (ontology_term GO:0120161) (sequence_variant rs9930506)))) (bc (: $prfabs#835 (-> $prms#839 (relevant-go (ontology_term GO:0120161) (sequence_variant rs9930506)))) (S (S (S (S (S (S (S (S Z)))))))))) ((: $prfarg#836 $prms#839) (bc (: $prfarg#836 $prms#839) (S (S (S (S (S (S (S (S Z))))))))))) (: ($prfabs#835 $prfarg#836) (relevant-go (ontology_term GO:0120161) (sequence_variant rs9930506)))) )
 
 

@@ -20,7 +20,7 @@
 
 
 
-%!(pragma! eval trace)
+;!(pragma! eval trace)
 
 
 !(is-expression $x) ; rust/mettalog False

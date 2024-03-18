@@ -1,37 +1,50 @@
-!(bind! &kb (new-space))
-!(bind! &kb2 (new-space))
-!(bind! &kb3 (new-space))
-;!(import! &kb2 rules.metta)
-;!(import! &kb3 sample_kb_v2.metta)
+;!(bind! &kb (new-space))
+; !(bind! &kb2 (new-space))
+; inow
+(= (include-now $space $file)
+  (let* 
+	  (($before (atom-count $space))
+	   ($_ (load-ascii $space $file))
+	   ($after (atom-count $space))
+	   ($loaded (- $after $before))
+	   ($_ (println! (loaded $file into $space adding $loaded atoms before-after $before $after))))
+	 $after))
+
+!(import! &kb rules)
+
+; !(bind! &kb3 (new-space))
+; !(include-now &kb sample_kb_v2.metta)
 ;gencode
 !(println! "Importing gencode")
-!(import! &kb3 gencode/nodes.metta)
-!(import! &kb3 gencode/edges.metta)
+!(include-now &kb /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/extended_compat/bio-atomspace/gencode/nodes.metta)
+!(include-now &kb /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/extended_compat/bio-atomspace/gencode/edges.metta)
 ;uniprot
 !(println! "Importing uniprot")
-!(import! &kb3 uniprot/nodes.metta)
-!(import! &kb3 uniprot/edges.metta)
+!(include-now &kb /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/extended_compat/bio-atomspace/uniprot/nodes.metta)
+!(include-now &kb /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/extended_compat/bio-atomspace/uniprot/edges.metta)
 ;onotology
 !(println! "Importing onotology")
-!(import! &kb3 onotology/nodes.metta)
-!(import! &kb3 onotology/edges.metta)
+!(include-now &kb /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/extended_compat/bio-atomspace/onotology/nodes.metta)
+!(include-now &kb /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/extended_compat/bio-atomspace/onotology/edges.metta)
 ;gtex
 !(println! "Importing gtex")
-!(import! &kb3 gtex/eqtl/edges.metta)
-;cellxgene co-expression
+!(include-now &kb /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/extended_compat/bio-atomspace/gtex/eqtl/edges.metta)
+;cellxgene co-expression using brown preadipocyte expression
 !(println! "Importing co-expression")
-;;!(import! &kb3 cellxgene/edges.metta)
+!(include-now &kb /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/extended_compat/bio-atomspace/cellxgene/edges.metta)
 ;gaf
 !(println! "Importing gaf")
-!(import! &kb3 gaf/edges.metta)
+!(include-now &kb /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/extended_compat/bio-atomspace/gaf/edges.metta)
 ;tadmap
 !(println! "Importing tadmap")
-;;!(import! &kb3 tadmap/edges.metta)
+!(include-now &kb /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/extended_compat/bio-atomspace/tadmap/edges.metta)
 ;refseq closest gene
 !(println! "Importing refseq")
-;;!(import! &kb3 refseq/edges.metta)
+!(include-now &kb /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/extended_compat/bio-atomspace/refseq/edges.metta)
+!(println! "Importing Done...running inference")
 
-!(match (superpose (&kb2 &kb3)) $x (add-atom &kb $x))
+
+; !(match (superpose (&kb2 &kb3)) $x (add-atom &kb $x))
 
 ;; Define Nat
 (: Nat Type)
@@ -49,18 +62,22 @@
 (= (fromNat Z) 0)
 (= (fromNat (S $k)) (+ 1 (fromNat $k)))
 
+(= (less_than $x $y) (if (< $x $y) (: (less_than $x $y) (≪ $x $y)) (empty)))
+
 ;; Curried Backward Chainer
-(: bc (-> $a Nat $a))
+(: bc-i (-> $a Nat $a))
 ;; Base case
-(= (bc (: $prf $ccln) $_)
-;(trace! (⊷ bc-25 (: $prf $ccln) $_)
-     (match &kb (: $prf $ccln) (: $prf $ccln)))
+(= (bc-i (: $prf $ccln) $_)
+     (let () (println! (bc-base (: $prf $ccln)))
+          (match &kb (: $prf $ccln) 
+               (let () (println! (bc-base-ground (: $prf $ccln))) (: $prf $ccln)))))
+
 ;; Recursive step
-(= (bc (: ($prfabs $prfarg) $ccln) (S $k))
-; (trace! (⊷ bc-29 (: ($prfabs $prfarg) $ccln) (S $k))
-   (let* (((: $prfabs (-> $prms $ccln)) (bc (: $prfabs (-> $prms $ccln)) $k))
-          ((: $prfarg $prms) (bc (: $prfarg $prms) $k)))
-     (: ($prfabs $prfarg) $ccln)))
+(= (bc-i (: ($prfabs $prfarg) $ccln) (S $k))
+  (let () (println! (bc-rec (: ($prfabs $prfarg) $ccln) (S $k))) 
+     (let* (((: $prfabs (-> $prms $ccln)) (bc-i (: $prfabs (-> $prms $ccln)) $k))
+               ((: $prfarg $prms) (bc-i (: $prfarg $prms) $k)))
+               (: ($prfabs $prfarg) $ccln))))
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;; Forward chainer ;;
@@ -89,5 +106,28 @@
 (= (communicative-coexpressed (communicative-coexpressed $x)) $x)
 (= (communicative-interaction (communicative-interaction $x)) $x)
 
-;Proof for the relation between (sequence_variant rs9930506) and regulation of cold-induced thermogenesis (GO:0120161)
-!(bc (: $prf (relevant-go (ontology_term GO:0120161) (sequence_variant rs9930506))) (fromNumber 9))
+; !(bc (: $prf (in_tad_with (sequence_variant rs15) (gene d))) (fromNumber 4))
+
+;Prove that IRX3 is in-tad-with (sequence_variant rs1421085) using R2
+(= (test1)
+( let*
+  (($_ (println! "Prove that IRX3 is in-tad-with (sequence_variant rs1421085) using R2"))
+   ($res (println! (bcc-fn (: $prf (in_tad_with (sequence_variant rs1421085) (gene ENSG00000177508))) (fromNumber 4))))
+   ($_ (println! (expected (: ((tad-eqtl (((snp-gene-tad in_tad_region-chr16_53550000_55450000_GRCh38-ENSG00000140718) in_tad_region-chr16_5355000    0_55450000_GRCh38-ENSG00000177508) closest_gene-rs1421085-ENSG00000140718)) eqtl-rs1421085-ENSG00000177508-Pancreas) (relevant_gene (gene ENSG00000177508) (sequence_variant rs1421085))))))
+	) $res))
+
+;!(test1)
+
+;!(bc-fn (: $prf (in_tad_with (sequence_variant rs1421085) (gene ENSG00000177508))) (fromNumber 4))
+
+;Prove that IRX3 is relevant-gene for (sequence_variant rs1421085) using R3 and R2
+;!(println! "Prove that IRX3 is relevant gene for (sequence_variant rs1421085) using R2 & R3")
+;!(bc (: $prf (relevant_gene (gene ENSG00000177508) (sequence_variant rs1421085))) (fromNumber 5))
+
+;;Prove that FABP4 is relevant-gene for (sequence_variant rs1421085) using R5
+;!(bc (: $prf (relevant_gene (gene ENSG00000170323) (sequence_variant rs1421085))) (fromNumber 7))
+
+;Proof for the relation between (sequence_variant rs1421085) and regulation of fat cell differentiation (GO:0045598)
+; !(bc (: $prf (relevant_go (ontology_term GO:0045598) (sequence_variant rs1421085))) (fromNumber 9))
+; [(Error (import! GroundingSpace-0x559a73053968 gencode/nodes.metta) Illegal module name: gencode/nodes.metta)]
+

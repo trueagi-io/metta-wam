@@ -1,5 +1,6 @@
 from hyperon import *
 from hyperon.ext import register_atoms
+from motto.utils import get_string_value
 
 # TODO: requirement for SPARQLWrapper
 
@@ -73,17 +74,9 @@ class RdfHelper:
         self.set_service_type(service_type)
 
     def set_service_type(self, service_type):
-        self.service_type =self.repr_atom(service_type).lower() if not isinstance(service_type, str) else service_type.lower()
+        self.service_type = get_string_value(service_type).lower() if not isinstance(service_type, str) else service_type.lower()
         self.service_features = ServiceFeatures(self.service_type)
         return []
-
-
-    @staticmethod
-    def repr_atom(atom) -> str:
-        item = repr(atom)
-        if len(item) > 2 and item[0] == '"' and item[-1] == '"':
-            item = item[1:-1]
-        return item
 
     @staticmethod
     def parse_functions_and_args(atom):
@@ -92,11 +85,11 @@ class RdfHelper:
         :return: converts expression like  (>  (count $product) 10)) into next: count($product) > 10
         '''
         if not hasattr(atom, 'get_children'):
-            return RdfHelper.repr_atom(atom)
+            return get_string_value(atom)
         children = atom.get_children()
         if len(children) > 2:
             # for the case of binary operations like >,<, or, and
-            key = RdfHelper.repr_atom(children[0]).lower()
+            key = get_string_value(children[0]).lower()
             if key in RdfHelper.binary_operations_dict:
                 left = RdfHelper.parse_functions_and_args(children[1])
                 right = RdfHelper.parse_functions_and_args(children[2])
@@ -106,14 +99,14 @@ class RdfHelper:
         for i in range(last + 1):
             child = children[i]
             if not hasattr(child, 'get_children'):
-                key = RdfHelper.repr_atom(child)
+                key = get_string_value(child)
                 # takes into account unary operations
                 args += RdfHelper.unary_operations_dict[
-                    key] if key in RdfHelper.unary_operations_dict else RdfHelper.repr_atom(child)
+                    key] if key in RdfHelper.unary_operations_dict else get_string_value(child)
                 if i == 0:
                     args += "("
                 elif i < last:
-                    atom_repr = RdfHelper.repr_atom(children[0]).lower()
+                    atom_repr = get_string_value(children[0]).lower()
                     args += ", " if  atom_repr not in RdfHelper.aggregate_functions else "; "
 
             else:
@@ -161,8 +154,8 @@ class RdfHelper:
     def repr_children(atom):
         if hasattr(atom, 'get_children'):
             children = atom.get_children()
-            return [RdfHelper.repr_atom(child) for child in children]
-        return RdfHelper.repr_atom(atom)
+            return [get_string_value(child) for child in children]
+        return get_string_value(atom)
 
     def where(self, atom, function):
         conditions, _ = self.__get_conditions_from_children(atom)
@@ -221,8 +214,6 @@ class RdfHelper:
         elif function in RdfHelper.output_options_functions:
             return [ValueAtom(f"{function} {atom}")]
         return []
-
-
 
     def execute_query(self, query_atom, function, distinct=False):
         '''
@@ -308,17 +299,14 @@ def sql_space_atoms():
             G(OperationObject('select', lambda a: helper.execute_query(a, "select"), unwrap=False)),
         'ask':
             G(OperationObject('ask', lambda a: helper.execute_query(a, "ask"), unwrap=False)),
-
         'describe':
             G(OperationObject('describe', lambda a: helper.execute_query(a, "describe"), unwrap=False)),
-
         'select_distinct':
             G(OperationObject('select_distinct', lambda a: helper.execute_query(a, "select", True), unwrap=False)),
         'group_by':
             G(OperationObject('group_by', lambda a: helper.collect_conditions(a, "group by"), unwrap=False)),
         'having':
             OperationAtom('having', lambda a: helper.having(a), type_names=['Atom', 'Atom'], unwrap=False),
-
         'service':
             G(OperationObject('where', lambda a: helper.service(a), unwrap=False)),
 

@@ -8,6 +8,7 @@
 (= (append Nil $L) $L)
 (= (append (Cons $H $T) $L) (Cons $H (append $T $L))
 
+
 (= (length (Cons  $_ $T) $T) (length (+ 1 (Cons  $_ $T))))
 
 
@@ -19,8 +20,6 @@
 (= (pet $Pet (house $_ $_ $_ $_ $Pet))  True)
 
 
-(= (append Nil $L) $L)
-(= (append (Cons $H $T) $L (Cons $H $R)) (append $T $L $R))
 
 ;
 ; Next to
@@ -42,13 +41,13 @@
 ; Generates a neighborhood with a specified number of houses
 (= (new-neighborhood $N) 
  (let $Neighborhood 
-    (== $n (length $Neighborhood)) 
+    (= $n (length $Neighborhood)) 
       $Neighborhood))
 ;
 ; Calculates the center position(s) in the neighborhood
 
 (= (center-of $Neighborhood)    
-  (== $CNth 
+  (= $CNth 
 	(+ (div (length $Neighborhood) 2) 1)) 
   (nth1 $CNth $Neighborhood))
 
@@ -63,7 +62,7 @@
 (= 
  (the-neighboors $Neighborhood) 
 
-  (== $Neighborhood (new-neighborhood 5))
+  ((= $Neighborhood (new-neighborhood 5))
 
   ;; 1. The Englishman lives in the red house.
   (nationality english $EnglishmansHouse) 
@@ -131,7 +130,7 @@
 
   ;; 16. The man who smokes Blends has a neighbor who drinks water.
   (next-to $BlendsHouse $BlendsNeighor $Neighborhood) 
-  (beverage water $BlendsNeighor))
+  (beverage water $BlendsNeighor)))
 
 
 ; Determine who owns the fish

@@ -9,7 +9,7 @@
 :- multifile(is_pre_statistic/2).
 :- dynamic(is_pre_statistic/2).
 save_pre_statistic(Name):- is_pre_statistic(Name,_)-> true; (statistics(Name,AS),term_number(AS,FN),
-              pfcAdd_Now(is_pre_statistic(Name,FN))).
+              assert(is_pre_statistic(Name,FN))).
 pre_statistic(N,V):- is_pre_statistic(N,V)-> true ; V = 0.
 post_statistic(N,V):- statistics(N,VV),term_number(VV,FV),pre_statistic(N,WV), V0 is FV-WV, (V0<0 -> V = 0 ; V0=V).
 term_number(T,N):- sub_term(N,T),number(N).
@@ -22,27 +22,25 @@ call_match(G):- call(G).
 
 :- dynamic(repeats/1).
 :- dynamic(not_repeats/1).
-assert_new(P):- notrace(catch(call(P),_,fail)),!,assert_new1(repeats(P)).
-assert_new(P):- pfcAdd_Now(P), flag(assert_new,TA,TA+1),assert_new1(not_repeats(P)),!.
+assert_new(P):- call(P),!,assert_new1(repeats(P)).
+assert_new(P):- assert(P), flag(assert_new,TA,TA+1),assert_new1(not_repeats(P)),!.
 
 retract1(P):- \+ call(P),!.
 retract1(P):- ignore(\+ retract(P)).
 
 assert_new1(P):- \+ \+ call(P),!.
-assert_new1(P):- pfcAdd_Now(P).
+assert_new1(P):- assert(P).
 
 
 :- dynamic(fb_pred/3).
 :- dynamic(mod_f_a/3).
 decl_m_fb_pred(Mod,Fn,A):- var(Mod),!,mod_f_a(Mod,Fn,A).
-decl_m_fb_pred(Mod,Fn,A):- mod_f_a(Mod,Fn,A)->true;
- (dynamic(Mod:Fn/A),
-  pfcAdd_Now(mod_f_a(Mod,Fn,A))).
+decl_m_fb_pred(Mod,Fn,A):- mod_f_a(Mod,Fn,A)->true;(dynamic(Mod:Fn/A),assert(mod_f_a(Mod,Fn,A))).
 :- dynamic(fb_pred_file/3).
 decl_fb_pred(Fn,A):-
-   (fb_pred(Fn,A)-> true; (dynamic(Fn/A),pfcAdd_Now(fb_pred(Fn,A)))),
+   (fb_pred(Fn,A)-> true; (dynamic(Fn/A),assert(fb_pred(Fn,A)))),
    ignore((nb_current(loading_file,File),
-    (fb_pred_file(Fn,A,File)-> true; pfcAdd_Now(fb_pred_file(Fn,A,File))))).
+    (fb_pred_file(Fn,A,File)-> true; assert(fb_pred_file(Fn,A,File))))).
 % Import necessary libraries
 :- use_module(library(readutil)).
 
@@ -175,7 +173,7 @@ is_nb_space(G):- nonvar(G), is_as_nb_space(G).
 % Pattern Matching with an else branch
 'match'(Environment, Pattern, Template, ElseBranch, Result):- eval_args(['match', Environment, Pattern, Template, ElseBranch], Result).
 % Pattern Matching without an else branch
-'match'(Environment, Pattern, Template, Result):- eval_args(['match', Environment, Pattern, Template], Result).
+'match'(Environment, Pattern, Template, Result):- eval_argss(['match', Environment, Pattern, Template], Result).
 %'match'(_Environment, Pattern, Template, Result):- callable(Pattern),!, call(Pattern),Result=Template.
 %'match'(_Environment, Pattern, Template, Result):- !, is_True(Pattern),Result=Template.
 
@@ -291,7 +289,7 @@ ensure_space(_N,_V):- fail.
 % ===============================
 %dout(space,Call):- skip(Call).
 if_metta_debug(Goal):- getenv('VSPACE_VERBOSE','2'),!,ignore(call(Goal)).
-%if_metta_debug(_):-!.
+if_metta_debug(_):-!.
 if_metta_debug(Goal):- !,ignore(call(Goal)).
 dout(_,_):-!.
 dout(W,Term):- notrace(if_metta_debug((format('~N; ~w ~@~n',[W,write_src(Term)])))).
@@ -311,53 +309,39 @@ space_type_method(is_asserted_space,atom_iter,metta_assertdb_iter).
 %:- dynamic(for_metta/2).
 %for_metta(_,T):- fb_pred(F,A),functor(T,F,A),call(T).
 metta_assertdb_ls(KB):-
-     AMA = metta_atom_asserted,
+     AMA = asserted_metta_atom,
      decl_m_fb_pred(user,AMA,2),   
      MP =.. [AMA,KB,_],
   listing(MP).
 
 metta_assertdb_add(KB,AtomIn):- 
  must_det_ll((subst_vars(AtomIn,Atom),
-     AMA = metta_atom_asserted,
+     AMA = asserted_metta_atom,
      decl_m_fb_pred(user,AMA,2),   
      MP =.. [AMA,KB,Atom],
   assert_new(MP))).
 metta_assertdb_rem(KB,Old):- metta_assertdb_del(KB,Old).
 metta_assertdb_del(KB,Atom):- subst_vars(Atom,Old),
-  decl_m_fb_pred(user,metta_atom_asserted,2), 
+  decl_m_fb_pred(user,asserted_metta_atom,2), 
    MP = metta_atom(KB,Old),
   copy_term(MP,Copy), clause(MP,true,Ref), MP=@= Copy, !, erase(Ref). % ,metta_assertdb('DEL',Old).
 metta_assertdb_replace(KB,Old,New):- metta_assertdb_del(KB,Old), metta_assertdb_add(KB,New).
-
-
-atom_count_provider(Self,Count):- 
-	user:loaded_into_kb(Self,Filename),
-    must_det_ll((
-	 once(user:asserted_metta_pred(Mangle,Filename)),
-	 between(2,7,Arity),
-	 functor(Data,Mangle,Arity),	 
-	 predicate_property(Data,number_of_clauses(Count)))).
-
-atom_count_provider(KB,Count):-
-	 must_det_ll((
-	  AMA = metta_atom_asserted,
-	  decl_m_fb_pred(user,AMA,2),   
-	  MP =.. [AMA,KB,_],
-	  predicate_property(MP,number_of_clauses(SL2)),
-	  predicate_property(MP,number_of_rules(SL3)),
-	  %metta_assertdb_ls(KB),
-	  full_atom_count(SL1),
-	  Count is SL1 + SL2 - SL3)),!.
-
 metta_assertdb_count(KB,Count):-
-	findall(C,atom_count_provider(KB,C),CL),
-	sumlist(CL,Count).
-
-
-
+ must_det_ll((
+  AMA = asserted_metta_atom,
+  decl_m_fb_pred(user,AMA,2),   
+  MP =.. [AMA,KB,_],
+  predicate_property(MP,number_of_clauses(SL2)),
+  predicate_property(MP,number_of_rules(SL3)),
+  %metta_assertdb_ls(KB),
+  full_symbol_count(SL1),
+  Count is SL1 + SL2 - SL3)),!.
+metta_assertdb_count(_KB,0):-!.
 %metta_assertdb_count(KB,Count):- writeln(metta_assertdb_count_in(KB,Count)), findall(Atom,for_metta(KB,Atom),AtomsL),length(AtomsL,Count),writeln(metta_assertdb_count_out(KB,Count)).
 metta_assertdb_iter(KB,Atoms):- 
-     MP =.. [metta_atom,KB,Atoms],
+     AMA = asserted_metta_atom,
+     decl_m_fb_pred(user,AMA,2),   
+     MP =.. [AMA,KB,Atoms],
      call(MP).
 
 
@@ -376,26 +360,22 @@ metta_iter_bind(KB,Query,Vars,VarNames):-
 
 % Query from hyperon.base.GroundingSpace
 space_query_vars(KB,Query,Vars):- is_asserted_space(KB),!,
-    decl_m_fb_pred(user,metta_atom_asserted,2),
+    decl_m_fb_pred(user,get_metta_atom,2),
     call_metta(KB,Query,Vars),
     dout('RES',space_query_vars(KB,Query,Vars)).
 
 
 metta_assertdb_get_atoms(KB,AtomsL):- 
-  decl_m_fb_pred(user,metta_atom_asserted,2), 
+  decl_m_fb_pred(user,get_metta_atom,2), 
   findall(Atom,metta_atom(KB,Atom),AtomsL).
 /*
 
 %metta_assertdb_iter_bind(KB,Query,Template,AtomsL):- 
-decl_m_fb_pred(user,metta_atom_asserted,2), findall(Template,metta_atom(KB,Query),AtomsL).
+decl_m_fb_pred(user,get_metta_atom,2), findall(Template,metta_atom(KB,Query),AtomsL).
 metta_assertdb_iter_bind(KB,Query,Vars):-
   ignore(term_variables(Query,Vars)),
   print(metta_assertdb(['match',KB,Query,Vars])),nl,
-     AMA = metta_atom_asserted,
-     decl_m_fb_pred(user,AMA,2),   
-     MP =.. [AMA,KB,Query],
-
-  (MP*->true;call_metta_assertdb(KB,Query,Vars)),
+  decl_m_fb_pred(user,get_metta_atom,2), (metta_atom(KB,Query)*->true;call_metta_assertdb(KB,Query,Vars)),
   metta_assertdb('RES',metta_assertdb_iter_bind(KB,Query,Vars)).
 %metta_assertdb_iter_bind(KB,Atom,Template):- metta_assertdb_stats, findall(Template,metta_assertdb_iter(KB,Atom),VarList).
 
@@ -589,7 +569,8 @@ symbol_string(S,N):- atom_string(S,N).
 symbol_chars(S,N):- atom_chars(S,N).
 symbol_length(S,N):- atom_length(S,N).
 symbol_concat(A,B,C):- atom_concat(A,B,C).
-symbolic_list_concat(A,B,C):- symbolic_list_concat(A,B,C).
+symbolic_list_concat(A,B,C):- atomic_list_concat(A,B,C).
+symbolic_list_concat(A,B):- atomic_list_concat(A,B).
 symbol_contains(T,TT):- atom_contains(T,TT).
 */
 

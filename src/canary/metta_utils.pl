@@ -2481,7 +2481,7 @@ to_prop_name(Name,UName):- compound(Name),compound_name_arity(Name,F,_),!,to_pro
 to_prop_name(Name,UName):- to_case_breaks(Name,Breaks),xtis_to_atomic(Breaks,UName).
 
 xtis_to_atomic([xti(Str,upper),xti(StrL,lower)|Breaks],StrO):- string_upper(Str,Str),
-   atom_chars(Str,CharsList),append(Left,[U],CharsList),
+   symbol_chars(Str,CharsList),append(Left,[U],CharsList),
    name(S1,Left),symbolic_list_concat([S1,'_',U,StrL],'',StrUL),!,
    xtis_to_atomic([xti(StrUL,lower)|Breaks],StrO).
 xtis_to_atomic([],'').

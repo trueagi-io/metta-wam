@@ -2,6 +2,7 @@ from hyperon import *
 from hyperon.ext import register_atoms
 from .agents import *
 import json
+from .utils import *
 
 import logging
 logger = logging.getLogger(__name__)
@@ -244,6 +245,10 @@ def llmgate_atoms(metta):
                     lambda x: [ValueAtom(DialogAgent(code=x) if isinstance(x, ExpressionAtom) else \
                                          DialogAgent(path=x))], unwrap=False)
     retrievalAgentAtom = OperationAtom('retrieval-agent', RetrievalAgent, unwrap=True)
+
+    containsStrAtom = OperationAtom('contains-str', lambda a, b: [ValueAtom(contains_str(a, b))], unwrap=False)
+
+    concatStrAtom = OperationAtom('concat-str', lambda a, b: [ValueAtom(concat_str(a, b))], unwrap=False)
     return {
         r"llm": llmAtom,
         r"atom2msg": msgAtom,
@@ -256,6 +261,8 @@ def llmgate_atoms(metta):
         r"_eval": OperationAtom("_eval",
             lambda atom: metta.run("! " + atom.get_object().value)[0],
             unwrap=False),
+        r"contains-str": containsStrAtom,
+        r"concat-str":  concatStrAtom,
     }
 
 

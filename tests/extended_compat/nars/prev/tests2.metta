@@ -1,4 +1,4 @@
-!(import! &self NARS.metta)
+!(import! &self NARS)
 
 !(AddBeliefEvent (ballleft (1.0 0.9)))
 !(AddBeliefEvent ((^ left) (1.0 0.9)))

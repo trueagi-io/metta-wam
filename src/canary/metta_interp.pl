@@ -1,6 +1,7 @@
 :- encoding(utf8).
 :- set_prolog_flag(encoding, utf8).
 :- nb_setval(cmt_override,lse('; ',' !(" ',' ") ')).
+:- ensure_loaded(swi_support).
 :- set_prolog_flag(history, 10).
 :- set_prolog_flag(save_history, true).
 :- set_prolog_flag(backtrace,true).
@@ -24,8 +25,12 @@
 :- nodebug(metta(prolog)).
 
 
-:-multifile(user:asserted_metta_pred/2).
-:-dynamic(user:asserted_metta_pred/2).
+	:-multifile(user:metta_file/3).
+	:-dynamic(user:metta_file/3).
+
+
+	:-multifile(user:asserted_metta_pred/2).
+	:-dynamic(user:asserted_metta_pred/2).
 :-multifile(user:loaded_into_kb/2).
 :-dynamic(user:loaded_into_kb/2).
 :- dynamic(user:is_metta_dir/1).
@@ -46,17 +51,23 @@ different_from(N,V):- \+ \+ option_value_def(N,V),!,fail.
 different_from(N,V):- \+ \+ nb_current(N,V),!,fail.
 different_from(_,_).
 
-set_option_value_interp(N,V):- atom(N), symbolic_list_concat(List,',',N),List\=[_],!,
+set_option_value_interp(N,V):- symbol(N), symbolic_list_concat(List,',',N),List\=[_],!,
   forall(member(E,List),set_option_value_interp(E,V)).
 set_option_value_interp(N,V):-
   (different_from(N,V)->Note=true;Note=false),
   fbugio(Note,set_option_value(N,V)),set_option_value(N,V),
-  ignore((if_t((atom(N), atom_concat('trace-on-',F,N),fbugio(Note,set_debug(F,V))),set_debug(F,V)))),
-  ignore((if_t((atom(V), is_debug_like(V,TF),fbugio(Note,set_debug(N,TF))),set_debug(N,TF)))),!.
+  ignore(forall(on_set_value(Note,N,V),true)).
+
+on_set_value(Note,N,'True'):- on_set_value(Note,N,true).   
+on_set_value(Note,N,'False'):- on_set_value(Note,N,false).
+on_set_value(_Note,log,true):- switch_to_mettalog.
+on_set_value(_Note,compatio,true):- switch_to_mettarust.
+on_set_value(Note,N,V):- symbol(N), symbol_concat('trace-on-',F,N),fbugio(Note,set_debug(F,V)),set_debug(F,V).
+on_set_value(Note,N,V):- symbol(N), is_debug_like(V,TF),fbugio(Note,set_debug(N,TF)),set_debug(N,TF).
 
 is_debug_like(trace, true).
 is_debug_like(notrace, false).
-is_debug_like(debug, 'True').
+is_debug_like(debug, true).
 is_debug_like(nodebug, false).
 is_debug_like(silent, false).
 %is_debug_like(false, false).
@@ -68,8 +79,8 @@ is_tRuE(TF):- TF=='true',!.
 is_flag0(What):- nb_current(What,TF),TF\==[],!,is_tRuE(TF).
 is_flag0(What):- current_prolog_flag(What,TF),TF\==[],!,is_tRuE(TF).
 is_flag0(What):- 
- atom_concat('--',What,FWhat),atom_concat(FWhat,'=true',FWhatTrue),
- atom_concat('--no-',What,NoWhat),atom_concat(FWhat,'=false',FWhatFalse),
+ symbol_concat('--',What,FWhat),symbol_concat(FWhat,'=true',FWhatTrue),
+ symbol_concat('--no-',What,NoWhat),symbol_concat(FWhat,'=false',FWhatFalse),
  is_flag0(What,[FWhat,FWhatTrue],[NoWhat,FWhatFalse]).
  
 is_flag0(What,_FWhatTrue,FWhatFalse):-
@@ -82,8 +93,8 @@ is_flag0(What,FWhatTrue,_FWhatFalse):-
    set_prolog_flag(What,true).
 is_flag0(What,_FWhatTrue,_FWhatFalse):-
   current_prolog_flag(os_argv,ArgV),
-  atomic_list_concat(['--',What,'='],Starts),
-  member(FWhat,ArgV),atom_concat(Starts,Rest,FWhat),
+  symbolic_list_concat(['--',What,'='],Starts),
+  member(FWhat,ArgV),symbol_concat(Starts,Rest,FWhat),
   set_option_value_interp(What,Rest),!.
 
 is_compiling:- current_prolog_flag(os_argv,ArgV),member(E,ArgV),   (E==qcompile_mettalog;E==qsave_program),!.
@@ -103,8 +114,6 @@ is_synthing_unit_tests0:- is_testing.
 
 is_testing:- is_metta_flag('test').
 is_html:- is_metta_flag('html').
-is_html:- is_mettalog,!.
-is_html:- is_testing,!.
 
 :- ensure_loaded(metta_printer).
 :- ensure_loaded(metta_loader).
@@ -120,10 +129,8 @@ is_compatio0:- is_mettalog,!,fail.
 %is_compatio0:- is_html,!,fail.
 is_compatio0:- !.
 
-
-keep_output:- !.
-keep_output:- is_testing,!.
 keep_output:- is_mettalog,!.
+keep_output:- is_testing,!.
 keep_output:- is_compatio,!,fail.
 
 
@@ -159,6 +166,7 @@ switch_to_mettalog:-
   set_option_value('load',show),
   set_option_value('load',verbose),
   set_option_value('log',true),
+  set_option_value('test',true),
   set_output_stream.
   
 switch_to_mettarust:- 
@@ -283,7 +291,7 @@ option_value_def('initial-result-count',10).
 
 
 
-fbugio(_,_):- !.
+
 fbugio(_,_):- is_compatio,!.
 fbugio(TF,P):-!, ignore(( TF,!,fbug(P))).
 fbugio(IO):-fbugio(true,IO).
@@ -336,7 +344,7 @@ if_repl(Goal):- doing_repl->call(Goal);true.
 any_floats(S):- member(E,S),float(E),!.
 
 show_options_values:-
-   forall((nb_current(N,V), \+((atom(N),atom_concat('$',_,N)))),write_src_nl(['pragma!',N,V])).
+   forall((nb_current(N,V), \+((symbol(N),symbol_concat('$',_,N)))),write_src_nl(['pragma!',N,V])).
 
 :- prolog_load_context(source,File), assert(interpreter_source_file(File)).
 
@@ -481,7 +489,7 @@ metta_argv(Before):- current_prolog_flag(os_argv,OSArgv), append(_,['--args'|AAr
 argv_metta(Nth,Value):- metta_argv(Args),nth1(Nth,Args,Value).
 
 set_metta_argv(Before):-  maplist(read_argv,Before,Args),set_prolog_flag(metta_argv, Args),!.
-read_argv(AArg,Arg):- \+ atom(AArg),!,AArg=Arg.
+read_argv(AArg,Arg):- \+ symbol(AArg),!,AArg=Arg.
 read_argv(AArg,Arg):- atom_string(AArg,S),read_metta(S,Arg),!.
 
 metta_cmd_args(Rest):- current_prolog_flag(late_metta_opts,Rest),!.
@@ -510,8 +518,8 @@ prolog:make_hook(after, _Some):- nop( metta_make_hook).
 
 into_reload_options(Reload,Reload).
 
-is_cmd_option(Opt,M, TF):- atom(M),
-   atom_concat('-',Opt,Flag),
+is_cmd_option(Opt,M, TF):- symbol(M),
+   symbol_concat('-',Opt,Flag),
    atom_contains(M,Flag),!,
    get_flag_value(M,FV),
    TF=FV.
@@ -573,7 +581,7 @@ cmdline_load_metta(Phase,Self,['--args'|Rest]):- !,
 cmdline_load_metta(Phase,Self,['--log'|Rest]):- !, 
   if_phase(Phase,execute,switch_to_mettalog),
   cmdline_load_metta(Phase,Self,Rest).
-cmdline_load_metta(Phase,Self,[Filemask|Rest]):- atom(Filemask), \+ atom_concat('-',_,Filemask),
+cmdline_load_metta(Phase,Self,[Filemask|Rest]):- symbol(Filemask), \+ symbol_concat('-',_,Filemask),
   if_phase(Phase,execute,cmdline_load_file(Self,Filemask)),
   cmdline_load_metta(Phase,Self,Rest).        
 
@@ -622,9 +630,9 @@ m_opt(M,Opt):-
 
 m_opt1(Opt1,Opt):- symbolic_list_concat([Opt|_],'=',Opt1).
 
-m_opt0(M,Opt):- atom_concat('--no-',Opt,M),!.
-m_opt0(M,Opt):- atom_concat('--',Opt,M),!.
-m_opt0(M,Opt):- atom_concat('-',Opt,M),!.
+m_opt0(M,Opt):- symbol_concat('--no-',Opt,M),!.
+m_opt0(M,Opt):- symbol_concat('--',Opt,M),!.
+m_opt0(M,Opt):- symbol_concat('-',Opt,M),!.
 
 :- set_prolog_flag(occurs_check,true).
 
@@ -684,7 +692,7 @@ lsm(S):-
 write_f_src(H,B):- H=@=B,!,write_f_src(H).
 write_f_src(H,B):- write_f_src(['=',H,B]).
 
-hb_f(HB,ST):- sub_term(ST,HB),(atom(ST),ST\==(=),ST\==(:)),!.
+hb_f(HB,ST):- sub_term(ST,HB),(symbol(ST),ST\==(=),ST\==(:)),!.
 write_f_src(HB):-
   hb_f(HB,ST),
   option_else(current_def,CST,[]),!,
@@ -703,7 +711,7 @@ debug_only(_What,G):- ignore((fail,notrace(catch_warn(G)))).
 
 'mettalog::vspace-main':- repl.
 
-into_underscores(D,U):- atom(D),!,symbolic_list_concat(L,'-',D),symbolic_list_concat(L,'_',U).
+into_underscores(D,U):- symbol(D),!,symbolic_list_concat(L,'-',D),symbolic_list_concat(L,'_',U).
 into_underscores(D,U):- descend_and_transform(into_underscores,D,U),!.
 
 
@@ -714,17 +722,17 @@ descend_and_transform(P2, Input, Transformed) :-
     -> (compound_name_arguments(Input, Functor, Args),
         maplist(descend_and_transform(P2), Args, TransformedArgs),
         compound_name_arguments(Transformed, Functor, TransformedArgs))
-    ;   (atom(Input),call(P2,Input,Transformed))
+    ;   (symbol(Input),call(P2,Input,Transformed))
     ->  true % Transform atoms using xform_atom/2
     ;   Transformed = Input  % Keep other non-compound terms as they are
     ).
 
 /*
 is_syspred(H,Len,Pred):- notrace(is_syspred0(H,Len,Pred)).
-is_syspred0(H,_Ln,_Prd):- \+ atom(H),!,fail.
+is_syspred0(H,_Ln,_Prd):- \+ symbol(H),!,fail.
 is_syspred0(H,_Ln,_Prd):- upcase_atom(H,U),downcase_atom(H,U),!,fail.
 is_syspred0(H,Len,Pred):- current_predicate(H/Len),!,Pred=H.
-is_syspred0(H,Len,Pred):- atom_concat(Mid,'!',H), H\==Mid, is_syspred0(Mid,Len,Pred),!.
+is_syspred0(H,Len,Pred):- symbol_concat(Mid,'!',H), H\==Mid, is_syspred0(Mid,Len,Pred),!.
 is_syspred0(H,Len,Pred):- into_underscores(H,Mid), H\==Mid, is_syspred0(Mid,Len,Pred),!.
 
 fn_append(List,X,Call):-
@@ -743,7 +751,7 @@ is_metta_data_functor(Eq,Other,H):-
   \+ get_metta_atom(Eq,Other,[H|_]),
   \+ metta_defn(Eq,Other,[H|_],_).
 */
-is_function(F):- atom(F).
+is_function(F):- symbol(F).
 
 is_False(X):- X\=='True', (is_False1(X)-> true ; (eval_H(X,Y),is_False1(Y))).
 is_False1(Y):- (Y==0;Y==[];Y=='False').
@@ -762,7 +770,7 @@ into_fp(ListX,CallAB):-
   into_fp((CallA,CallB),CallAB).
 into_fp(A,A).
 
-needs_expand(Expand):- compound(Expand),functor(Expand,F,N),N>=1,atom_concat(metta_,_,F).
+needs_expand(Expand):- compound(Expand),functor(Expand,F,N),N>=1,symbol_concat(metta_,_,F).
 needs_expanded(eval_H(Term,_),Expand):- !,sub_term(Expand,Term),compound(Expand),Expand\=@=Term,
    compound(Expand), \+ is_conz(Expand), \+ is_ftVar(Expand), needs_expand(Expand).
 needs_expanded([A|B],Expand):- sub_term(Expand,[A|B]), compound(Expand), \+ is_conz(Expand), \+ is_ftVar(Expand), needs_expand(Expand).
@@ -781,7 +789,7 @@ balanced_parentheses([H|T], N) :- H \= '(', H \= ')', !, balanced_parentheses(T,
 % Recursive function to read lines until parentheses are balanced.
 
 repl_read(NewAccumulated, Expr):-
-    atom_concat(Atom, '.', NewAccumulated),
+    symbol_concat(Atom, '.', NewAccumulated),
     catch_err((read_term_from_atom(Atom, Term, []), Expr=call(Term)), E,
        (write('Syntax error: '), writeq(E), nl, repl_read(Expr))),!.
 
@@ -791,13 +799,13 @@ repl_read("!", '!'):-!.
 repl_read("+", '+'):-!.
 repl_read(Str,Atom):- atom_string(Atom,Str),metta_interp_mode(Atom,_),!.
 
-repl_read(Str, Expr):- atom_concat('@',_,Str),!,atom_string(Expr,Str).
-repl_read(Str, _Expr):- atom_concat(')',_,Str),!,fbug(repl_read_syntax(Str)),throw(restart_reading).
+repl_read(Str, Expr):- symbol_concat('@',_,Str),!,atom_string(Expr,Str).
+repl_read(Str, _Expr):- symbol_concat(')',_,Str),!,fbug(repl_read_syntax(Str)),throw(restart_reading).
 repl_read(NewAccumulated, Expr):-
     normalize_space(string(Renew),NewAccumulated),
     Renew \== NewAccumulated, !,
     repl_read(Renew, Expr).
-%repl_read(Str, 'add-atom'('&self',Expr)):- atom_concat('+',W,Str),!,repl_read(W,Expr).
+%repl_read(Str, 'add-atom'('&self',Expr)):- symbol_concat('+',W,Str),!,repl_read(W,Expr).
 %repl_read(NewAccumulated,exec(Expr)):- string_concat("!",Renew,NewAccumulated), !, repl_read(Renew, Expr).
 repl_read(NewAccumulated, Expr):- string_chars(NewAccumulated, Chars),
     balanced_parentheses(Chars), length(Chars, Len), Len > 0,
@@ -817,7 +825,7 @@ repl_read(O2):- clause(t_l:s_reader_info(O2),_,Ref),erase(Ref).
 repl_read(Expr) :- repeat,
   remove_pending_buffer_codes(_,Was),text_to_string(Was,Str),
       repl_read(Str, Expr),
-        % once(((atom(Expr1),atom_concat('@',_,Expr1), \+ atom_contains(Expr1,"="), repl_read(Expr2)) -> Expr=[Expr1,Expr2] ; Expr1 = Expr)),
+        % once(((symbol(Expr1),symbol_concat('@',_,Expr1), \+ atom_contains(Expr1,"="), repl_read(Expr2)) -> Expr=[Expr1,Expr2] ; Expr1 = Expr)),
         % this cutrs the repeat/0
         ((peek_pending_codes(_,Peek),Peek==[])->!;true).
 
@@ -851,7 +859,8 @@ assert_preds(Self,Load,Preds):-
    
    
   if_t(is_transpiling,
-   if_t( \+ predicate_property(H,static),add_assertion(Self,Preds))),
+   if_t( \+ predicate_property(H,static),
+    add_assertion(Self,Preds))),
    nop(metta_anew1(Load,Preds)).
 
 
@@ -861,13 +870,15 @@ load_hook(Load,Hooked):-
 
 
 rtrace_on_error(G):- catch(G,_,fail),!.
-rtrace_on_error(G):- rtrace(G),!.
+rtrace_on_error(G):-rtrace(G),!.
 assertion_hb(metta_defn(=,Self,H,B),Self,H,B).
 assertion_hb(metta_atom_asserted(Self,[=,H,B]),Self,H,B).
+assertion_hb(asserted_metta_atom(Self,[=,H,B]),Self,H,B).
+assertion_hb(metta_atom(Self,[=,H,B]),Self,H,B).
 
 load_hook0(_,_):- \+ show_transpiler, \+ is_transpiling, !.
 load_hook0(Load,Assertion):- 
-     assertion_hb(Assertion,Self,H,B),
+       assertion_hb(Assertion,Self,H,B),
      rtrace_on_error(compile_for_assert(H, B, Preds)),!,
      rtrace_on_error(assert_preds(Self,Load,Preds)).
 load_hook0(_,_):- \+ current_prolog_flag(metta_interp,ready),!.
@@ -884,20 +895,20 @@ show_transpiler:- option_value('code',Something), Something\==silent,!.
 show_transpiler:- preview_compiler.
 option_switch_pred(F):- 
   current_predicate(F/0),interpreter_source_file(File),
-  source_file(F, File), \+ \+ (member(Prefix,[is_,show_,trace_on_]), atom_concat(Prefix,_,F)).
+  source_file(F, File), \+ \+ (member(Prefix,[is_,show_,trace_on_]), symbol_concat(Prefix,_,F)).
 
 do_show_option_switches :- 
   forall(option_switch_pred(F),(call(F)-> writeln(yes(F)); writeln(not(F)))). 
 do_show_options_values:-
-  forall((nb_current(N,V), \+((atom(N),atom_concat('$',_,N)))),write_src_nl(['pragma!',N,V])),
+  forall((nb_current(N,V), \+((symbol(N),symbol_concat('$',_,N)))),write_src_nl(['pragma!',N,V])),
   do_show_option_switches. 
 
 op_decl('pragma!', [ 'Atom', 'Atom'], 'EmptyType').
 
-op_decl('match', [ 'Space', 'Atom', 'Atom'], '%Undefined%').
-op_decl('remove-atom', [ 'Space', 'Atom'], 'EmptyType').
-op_decl('add-atom', [ 'Space', 'Atom'], 'EmptyType').
-op_decl('get-atoms', [ 'Space' ], 'Atom').
+op_decl('match', [ 'hyperon::space::DynSpace', 'Atom', 'Atom'], '%Undefined%').
+op_decl('remove-atom', [ 'hyperon::space::DynSpace', 'Atom'], 'EmptyType').
+op_decl('add-atom', [ 'hyperon::space::DynSpace', 'Atom'], 'EmptyType').
+op_decl('get-atoms', [ 'hyperon::space::DynSpace' ], 'Atom').
 
 op_decl('get-state', [[ 'StateMonad', Type]],Type).
 op_decl('change-state!', [[ 'StateMonad',Type],Type],'EmptyType').
@@ -945,7 +956,7 @@ op_decl('+', [ 'Number', 'Number' ], 'Number').
 op_decl(combine, [ X, X], X).
 
 op_decl('bind!', ['Symbol','%Undefined%'], 'EmptyType').
-op_decl('import!', ['Space','Atom'], 'EmptyType').
+op_decl('import!', ['hyperon::space::DynSpace','Atom'], 'EmptyType').
 op_decl('get-type', ['Atom'], 'Type').
 
 type_decl('Any').
@@ -955,48 +966,43 @@ type_decl('ErrorType').
 type_decl('Expression').
 type_decl('Number').
 type_decl('ReturnType').
-type_decl('Space').
+type_decl('hyperon::space::DynSpace').
 type_decl('Symbol').
 type_decl('StateMonad').
 type_decl('Type').
 type_decl('%Undefined%').
 type_decl('Variable').
 
-:- dynamic(metta_atom_asserted/2).
-
+:- dynamic(asserted_metta_atom/2).
+:- multifile(asserted_metta/4).
+:- dynamic(asserted_metta/4).
 % metta_atom_stdlib(_):-!,fail.
-metta_atom_stdlib([Colon, Value, Type]):- Colon==':', 
-   metta_atom_stdlib_types(Value, Type).
-metta_atom_stdlib_types(Type, 'Type'):- type_decl(Type).
-metta_atom_stdlib_types(Op, '->'(List)):- 
-	 op_decl(Op,Params,ReturnType),
+metta_atom_stdlib(X):- metta_atom_stdlib_types(X).
+metta_atom_stdlib_types([':', Type, 'Type']):- type_decl(Type).
+metta_atom_stdlib_types([':', Op, [->|List]]):- 
+	 symbol(Op), op_decl(Op,Params,ReturnType),
 	 append(Params,[ReturnType],List).
 
 %get_metta_atom(Eq,KB, [F|List]):- KB='&flybase',fb_pred(F, Len), length(List,Len),apply(F,List).
 
 
-get_metta_atom(Eq,Space, Atom):- metta_atom(Space, Atom), \+ (Atom =[EQ,_,_], EQ==Eq).
+get_metta_atom(Eq,Space, Atom):- get_metta_atom_from(Space, Atom), \+ (Atom =[EQ,_,_], EQ==Eq).
+
+get_metta_atom_from(KB, [F, A| List]):- KB='&flybase',fb_pred_nr(F, Len),current_predicate(F/Len), length([A|List],Len),apply(F,[A|List]).
+get_metta_atom_from([Superpose,ListOf], Atom):- Superpose == 'superpose',is_list(ListOf),!,member(KB,ListOf),get_metta_atom_from(KB,Atom).
+get_metta_atom_from(Space, Atom):- typed_list(Space,_,L),!, member(Atom,L).
+get_metta_atom_from(KB,Atom):- (KB=='&self'; KB='&stdlib'), metta_atom_stdlib(Atom).
+get_metta_atom_from(KB,Atom):- if_or_else(asserted_metta_atom( KB,Atom),asserted_metta_atom_fallback( KB,Atom)).
 
 asserted_metta_atom_fallback( KB,Atom):- fail, is_list(KB),!, member(Atom,KB).
-%asserted_metta_atom_fallback( KB,Atom):- metta_atom(KB,Atom)
+%asserted_metta_atom_fallback( KB,Atom):- get_metta_atom_from(KB,Atom)
 
 %metta_atom(KB,[F,A|List]):- metta_atom(KB,F,A,List), F \== '=',!.
-metta_atom(Atom):- current_self(KB),metta_atom(KB,Atom).
-metta_atom(KB, [F, A| List]):- KB='&flybase',fb_pred_nr(F, Len),current_predicate(F/Len), length([A|List],Len),apply(F,[A|List]).
-metta_atom([Superpose,ListOf], Atom):- Superpose == 'superpose',is_list(ListOf),!,member(KB,ListOf),metta_atom(KB,Atom).
-metta_atom(Space, Atom):- typed_list(Space,_,L),!, member(Atom,L).
-metta_atom(KB,Atom):- var(Atom),constrain_sterm(Atom),nonvar(Atom),metta_atom(KB,Atom).
-metta_atom(KB,Atom):- if_or_else(metta_atom_asserted( KB,Atom),
-											asserted_metta_atom_fallback( KB,Atom)).
-
-metta_atom(KB,Atom):- metta_atom_in_file(KB,Atom).
-
-metta_atom(KB,Atom):- (KB=='&self'; KB='&stdlib'), metta_atom_stdlib(Atom).
-
+metta_atom(KB,Atom):- get_metta_atom_from(KB,Atom).
 metta_defn(KB,Head,Body):- metta_defn(_Eq,KB,Head,Body).
-metta_defn(Eq,KB,Head,Body):- ignore(Eq = '='), metta_atom(KB,[Eq,Head,Body]).
-metta_type(S,H,B):- metta_atom(S,[':',H,B]).
-metta_type(_,H,B):- metta_atom_stdlib_types(H,B).
+metta_defn(Eq,KB,Head,Body):- ignore(Eq = '='), get_metta_atom_from(KB,[Eq,Head,Body]).
+metta_type(S,H,B):- get_metta_atom_from(S,[':',H,B]).
+metta_type(_,H,B):- metta_atom_stdlib_types([':',H,B]).
 %typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_arguments(Cmpd,Type,[List|_]),is_list(List).
 
 :- if( \+ current_predicate(pfcAdd/1 )).
@@ -1006,26 +1012,10 @@ pfcAdd(P):- assert(P).
 %maybe_xform(metta_atom(KB,[F,A|List]),metta_atom(KB,F,A,List)):- is_list(List),!.
 maybe_xform(metta_defn(Eq,KB,Head,Body),metta_atom(KB,[Eq,Head,Body])).
 maybe_xform(metta_type(KB,Head,Body),metta_atom(KB,[':',Head,Body])).
-maybe_xform(metta_atom(KB,HeadBody),metta_atom_asserted(KB,HeadBody)):-!. % s2t(HeadBody,HeadBodyT).
+maybe_xform(metta_atom(KB,HeadBody),asserted_metta_atom(KB,HeadBody)).
 maybe_xform(_OBO,_XForm):- !, fail.
 
-%metta_atom_asserted('&self',HeadBody):- asserted_metta_extra(HeadBody).
-
-asserted_metta_extra([':','If','SrcFunction']).
-asserted_metta_extra([':','If',[->,'Bool','Atom','Atom','Atom']]).
-asserted_metta_extra([=,['If',_cond,_then,_else],[if,_cond,_then,_else]]).
-%	'If'(_cond, _then, _else, A) ':'- eval_true(_cond) *-> eval(_then, A); eval(_else, A).
-asserted_metta_extra([':','If',[->,'Bool','Atom','Atom']]).
-asserted_metta_extra([=,['If','True',then],then]).
-asserted_metta_extra([=,['If','False',_Then],[let,X,0,[let,X,1,X]]]).
-%	'If'(_cond, _then, A) ':'- eval_true(_cond), eval(_then, A).
-
-asserted_metta_extra([':','Arity',[->,'Symbol','Number']]).
-asserted_metta_extra(['Arity','Arity',2]).
-asserted_metta_extra(['Arity',':',2]).
-asserted_metta_extra([':',':','SrcPredicate']).
-asserted_metta_extra([=,[':',R,'P1'],['Arity',R,1]]).
-
+asserted_metta_atom(KB,HeadBody):- asserted_metta(KB,HeadBody,_,_).
 
 metta_anew1(Load,_OBO):- var(Load),trace,!.
 metta_anew1(Ch,OBO):-  metta_interp_mode(Ch,Mode), !, metta_anew1(Mode,OBO).
@@ -1105,7 +1095,7 @@ do_metta1_e(_Self,_,[=,A,B]):- !, with_concepts(false,
 do_metta1_e(_Self,_LoadExec,Term):- write_src(Term),connl.
 
 write_exec(Exec):- notrace(write_exec0(Exec)).
-%write_exec0(Exec):- atom(Exec),!,write_exec0([Exec]).
+%write_exec0(Exec):- symbol(Exec),!,write_exec0([Exec]).
 
 write_exec0(Exec):-
   wots(S,write_src(exec(Exec))),
@@ -1121,11 +1111,11 @@ asserted_do_metta(Space,Load,Src):- Load==exec,!,do_metta_exec(python,Space,Src,
 asserted_do_metta(Space,Load,Src):- asserted_do_metta2(Space,Load,Src,Src).
 
 asserted_do_metta2(Space,Ch,Info,Src):- metta_interp_mode(Ch,Mode), !, asserted_do_metta2(Space,Mode,Info,Src).
-asserted_do_metta2(Self,Load,[TypeOp,Fn,Type], Src):- TypeOp == ':',  \+ is_list(Type),!,
+asserted_do_metta2(Self,Load,[TypeOp,Fn,Type], Src):- TypeOp = ':',  \+ is_list(Type),!,
  must_det_ll((
   color_g_mesg_ok('#ffa500',metta_anew(Load,Src,metta_atom(Self,[':',Fn,Type]))))),!.
 
-asserted_do_metta2(Self,Load,[TypeOp,Fn,TypeDecL], Src):- TypeOp == ':',!,
+asserted_do_metta2(Self,Load,[TypeOp,Fn,TypeDecL], Src):- TypeOp = ':',!,
  must_det_ll((
   decl_length(TypeDecL,Len),LenM1 is Len - 1, last_element(TypeDecL,LE),
   color_g_mesg_ok('#ffa500',metta_anew(Load,Src,metta_atom(Self,[':',Fn,TypeDecL]))),
@@ -1134,7 +1124,7 @@ asserted_do_metta2(Self,Load,[TypeOp,Fn,TypeDecL], Src):- TypeOp == ':',!,
   metta_anew1(Load,metta_params(Self,Fn,EachArg)),!,
   metta_anew1(Load,metta_last(Self,Fn,LE)))).
 
-asserted_do_metta2(Self,Load,[TypeOp,Fn,TypeDecL,RetType], Src):- TypeOp == ':',!,
+asserted_do_metta2(Self,Load,[TypeOp,Fn,TypeDecL,RetType], Src):- TypeOp = ':',!,
  must_det_ll((
   decl_length(TypeDecL,Len),
   append(TypeDecL,[RetType],TypeDecLRet),
@@ -1163,11 +1153,11 @@ asserted_do_metta2(Self,Load,PredDecl, Src):-
 
 
 always_exec(exec(W)):- !, is_list(W), always_exec(W).
-always_exec(Comp):- compound(Comp),compound_name_arity(Comp,Name,N),atom_concat('eval',_,Name),Nm1 is N-1, arg(Nm1,Comp,TA),!,always_exec(TA).
+always_exec(Comp):- compound(Comp),compound_name_arity(Comp,Name,N),symbol_concat('eval',_,Name),Nm1 is N-1, arg(Nm1,Comp,TA),!,always_exec(TA).
 always_exec(List):- \+ is_list(List),!,fail.
-always_exec([Var|_]):- \+ atom(Var),!,fail.
+always_exec([Var|_]):- \+ symbol(Var),!,fail.
 always_exec(['extend-py!'|_]):- !, fail.
-always_exec([H|_]):- atom_concat(_,'!',H),!. %pragma!/print!/transfer!/include! etc
+always_exec([H|_]):- symbol_concat(_,'!',H),!. %pragma!/print!/transfer!/include! etc
 always_exec(['assertEqualToResult'|_]):-!,fail.
 always_exec(['assertEqual'|_]):-!,fail.
 always_exec(_):-!,fail. % everything else
@@ -1241,13 +1231,13 @@ metta_interp_mode('^',load_like_file).
 
 
 call_sexpr(How,Self,Tax,_S,Out):-
-  (atom(Tax);string(Tax)),
+  (symbol(Tax);string(Tax)),
     normalize_space(string(TaxM),Tax),
     convert_tax(How,Self,TaxM,Expr,NewHow),!,
     show_call(do_metta(python,NewHow,Self,Expr,Out)).
 
 do_metta(File,Load,Self,Cmt,Out):-
-  fail, if_trace(do_metta, fbug(do_metta(File,Load,Self,Cmt,Out))),fail.
+  if_trace(do_metta, fbug(do_metta(File,Load,Self,Cmt,Out))),fail.
 
 do_metta(_File,_Load,_Self,In,Out):- var(In),!,In=Out.
 do_metta(_From,_Mode,_Self,end_of_file,'Empty'):- !. %, halt(7), writeln('\n\n% To restart, use: ?- repl.').
@@ -1325,9 +1315,9 @@ into_metta_callable(_Self,TermV,Term,X,NamedVarsList,Was):-
   %nb_current(variable_names,NamedVarsList),
   %nl,print(subst_vars(Term,NamedVarsList,Vars)),
   nop(nl))))),
-  nop(maplist(verbose_unify,Vars)))))),
+  nop(maplist(verbose_unify,Vars)),
   %NamedVarsList=[_=RealRealRes|_],
-  var(RealRes), X = RealRes,!.
+  var(RealRes), X = RealRes)))),!.
 
 
 into_metta_callable(Self,TermV,CALL,X,NamedVarsList,Was):-!,
@@ -1391,7 +1381,7 @@ call_max_time(Goal, MaxTime, Else) :-
     catch(if_or_else(call_with_time_limit(MaxTime, Goal),Else), time_limit_exceeded, Else).
 
 
-catch_err(G,E,C):- catch(G,E,(notrace(if_t(atom(E),throw(E))),C)).
+catch_err(G,E,C):- catch(G,E,(notrace(if_t(symbol(E),throw(E))),C)).
 
 load_and_trim_history:- 
  notrace((
@@ -1444,17 +1434,17 @@ repl3:-
 check_has_directive(V):- var(V),!,fail.
 check_has_directive('log.'):- switch_to_mettalog,!.
 check_has_directive('rust.'):- switch_to_mettarust,!.
-check_has_directive(Atom):- atom(Atom),atom_concat(_,'.',Atom),!.
+check_has_directive(Atom):- symbol(Atom),symbol_concat(_,'.',Atom),!.
 check_has_directive(call(N=V)):- nonvar(N),!, set_directive(N,V).
 check_has_directive(call(Rtrace)):- rtrace == Rtrace,!, rtrace,notrace(throw(restart_reading)).
-check_has_directive(NEV):- atom(NEV), symbolic_list_concat([N,V],'=',NEV), set_directive(N,V).
-check_has_directive([AtEq,Value]):-atom(AtEq),atom_concat('@',Name,AtEq), set_directive(Name,Value).
-check_has_directive(ModeChar):- atom(ModeChar),metta_interp_mode(ModeChar,_Mode),!,set_directive(repl_mode,ModeChar).
+check_has_directive(NEV):- symbol(NEV), symbolic_list_concat([N,V],'=',NEV), set_directive(N,V).
+check_has_directive([AtEq,Value]):-atom(AtEq),symbol_concat('@',Name,AtEq), set_directive(Name,Value).
+check_has_directive(ModeChar):- symbol(ModeChar),metta_interp_mode(ModeChar,_Mode),!,set_directive(repl_mode,ModeChar).
 check_has_directive('@'):- do_show_options_values,!,notrace(throw(restart_reading)).
-check_has_directive(AtEq):-atom(AtEq),atom_concat('@',NEV,AtEq),option_value(NEV,Foo),fbug(NEV=Foo),!,notrace(throw(restart_reading)).
+check_has_directive(AtEq):-atom(AtEq),symbol_concat('@',NEV,AtEq),option_value(NEV,Foo),fbug(NEV=Foo),!,notrace(throw(restart_reading)).
 check_has_directive(_).
 
-set_directive(N,V):- atom_concat('@',NN,N),!,set_directive(NN,V).
+set_directive(N,V):- symbol_concat('@',NN,N),!,set_directive(NN,V).
 set_directive(N,V):- N=='mode',!,set_directive((repl_mode),V).
 set_directive(N,V):- show_call(set_option_value_interp(N,V)),!,notrace(throw(restart_reading)).
 
@@ -1495,7 +1485,7 @@ into_named_vars(Vars,L):- term_variables(Vars,VVs),!,into_named_vars(VVs,L).
 has_sub_var(AllVars,_=V):- sub_var(V,AllVars).
 underscore_vars(V):- var(V),!,name_for_var(V,N),!,underscore_vars(N).
 underscore_vars(N=_):- !, atomic(N),!,underscore_vars(N).
-underscore_vars(N):- atomic(N),!,atom_concat('_',_,N).
+underscore_vars(N):- atomic(N),!,symbol_concat('_',_,N).
 
 get_global_varnames(VNs):- nb_current('variable_names',VNs),VNs\==[],!.
 get_global_varnames(VNs):- prolog_load_context(variable_names,VNs),!.
@@ -1511,7 +1501,7 @@ name_for_var(N=_,N):- !.
 name_for_var(V,N):- term_to_atom(V,N),!.
 
 
-  %call_for_term_variables5(Term,[],as_tf(Term,TF),[],TF):- atom(Term),!.
+  %call_for_term_variables5(Term,[],as_tf(Term,TF),[],TF):- symbol(Term),!.
 call_for_term_variables5(Term,[],[],[],as_tf(Term,TF),[],TF):- ground(Term),!.
 call_for_term_variables5(Term,DC,[],[],call_nth(Term,TF),DC,TF):- ground(Term),!.
 call_for_term_variables5(Term,_,[],[_=Var],call_nth(Term,Count),['Count'=Count],Var).
@@ -1532,7 +1522,7 @@ is_interactive0(From):- From = true,!.
 :- set_prolog_flag(history, 3).
 
 inside_assert(Var,Var):- \+ compound(Var),!.
-inside_assert([H,IA,_],IA):- atom(H),atom_concat('assert',_,H),!.
+inside_assert([H,IA,_],IA):- symbol(H),symbol_concat('assert',_,H),!.
 inside_assert(Conz,Conz):- is_conz(Conz),!.
 inside_assert(exec(I),O):- !, inside_assert(I,O).
 inside_assert(Eval,O):- functor(Eval,eval_H,A), A1 is A-1, arg(A1,Eval,I),!, inside_assert(I,O).
@@ -1700,7 +1690,7 @@ print_var(Name=Var) :- print_var(Name,Var).
 write_var(V):- var(V), !, write_dvar(V),!. 
 write_var('$VAR'(S)):-  !, write_dvar(S),!. 
 write_var(V):- write_dvar(V),!.
-%print_var(Name,_Var) :- atom_concat('Num',Rest,Name),atom_number(Rest,_),!.
+%print_var(Name,_Var) :- symbol_concat('Num',Rest,Name),atom_number(Rest,_),!.
 print_var(Name,Var):- write_var(Name), write(' = '), write_bsrc(Var), nl.
 
 write_asrc(Var):- Var=='Empty',is_compatio,!.
@@ -2151,15 +2141,15 @@ ensure_mettalog_system:-
     %pack_install(dictoo, [upgrade(true),global(true)]),
     !.
 
-file_save_name(E,_):- \+ atom(E),!,fail.
+file_save_name(E,_):- \+ symbol(E),!,fail.
 file_save_name(E,Name):- file_base_name(E,BN),BN\==E,!,file_save_name(BN,Name).
-file_save_name(E,E):- atom_concat('Sav.',_,E),!.
-file_save_name(E,E):- atom_concat('Bin.',_,E),!.
-before_underscore(E,N):-symbolic_list_concat([N|_],'_',E),!.
+file_save_name(E,E):- symbol_concat('Sav.',_,E),!.
+file_save_name(E,E):- symbol_concat('Bin.',_,E),!.
+before_underscore(E,N):-atomic_list_concat([N|_],'_',E),!.
 save_name(Name):- current_prolog_flag(os_argv,ArgV),member(E,ArgV),file_save_name(E,Name),!.
 next_save_name(Name):- save_name(E),
   before_underscore(E,N),
-  atom_concat(N,'_',Stem),
+  symbol_concat(N,'_',Stem),
   gensym(Stem,Name),
   \+ exists_file(Name),
   Name\==E,!.
