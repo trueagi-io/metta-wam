@@ -428,6 +428,7 @@ eval_20(Eq,RetType,_Dpth,_Slf,['repl!'],Y):- !,  repl,check_returnval(Eq,RetType
 %eval_20(Eq,RetType,Depth,Self,['enforce',Cond],Res):- !, enforce_true(Eq,RetType,Depth,Self,Cond,Res).
 eval_20(Eq,RetType,Depth,Self,['!',Cond],Res):- !, call(eval(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(Eq,RetType,Depth,Self,['rtrace!',Cond],Res):- !, rtrace(eval(Eq,RetType,Depth,Self,Cond,Res)).
+eval_20(Eq,RetType,Depth,Self,['notrace!',Cond],Res):- !, quietly(eval(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(Eq,RetType,Depth,Self,['trace!',A,B],C):- !,
 	 stream_property(S,file_no(2)),!,
 	 eval(Eq,RetType,Depth,Self,A,AA),	
@@ -439,11 +440,15 @@ eval_20(Eq,RetType,Depth,Self,['print',Cond],Res):- !, eval(Eq,RetType,Depth,Sel
 % !(println! $1)
 eval_20(Eq,RetType,Depth,Self,['println!'|Cond],Res):- !, 
   maplist(eval(Eq,RetType,Depth,Self),Cond,[Res|Out]),
-    format('~N'),maplist(write_src,[Res|Out]),format('~N').
+    format('~N'),maplist(println_impl,[Res|Out]),format('~N'),
+    make_empty(RetType,Res).
 eval_20(Eq,RetType,Depth,Self,['trace!',A|Cond],Res):- !, maplist(eval(Eq,RetType,Depth,Self),[A|Cond],[AA|Result]),
    last(Result,Res),
 	 stream_property(S,file_no(2)),
-	 with_output_to(S,(format('~N'),maplist(write_src,[AA]),format('~N'))).
+	 with_output_to(S,(format('~N'),maplist(println_impl,[AA]),format('~N'))).
+
+
+println_impl(X):- nl,with_indents(false,write_src(X)),nl.
 
 %eval_20(Eq,RetType,_Dpth,_Slf,['trace!',A],A):- !, format('~N'),fbug(A),format('~N').
 
@@ -617,7 +622,9 @@ eval_space(Eq,RetType,_Dpth,_Slf,['atom-replace',Space,Rem,Add],TF):- !,
  check_returnval(Eq,RetType,TF).
 
 eval_space(Eq,RetType,_Dpth,_Slf,['get-atoms',Space],Atom):- !,
-  ignore(RetType='Atom'), get_metta_atom_from(Space, Atom), check_returnval(Eq,RetType,Atom).
+  ignore(RetType='Atom'), 
+  get_metta_atom_from(Space, Atom), 
+  check_returnval(Eq,RetType,Atom).
 
 % Match-ELSE
 eval_space(Eq,RetType,Depth,Self,['match',Other,Goal,Template,Else],Template):- !,
@@ -1075,6 +1082,12 @@ nb_bind(Name,Value):- call_in_shared_space(nb_setval(Name,Value)),!.
 eval_20(Eq,RetType,Depth,Self,['import!',Other,File],RetVal):- !,
      (( into_space(Depth,Self,Other,Space), include_metta(Space,File),!,make_empty(RetType,Space,RetVal))),
      check_returnval(Eq,RetType,RetVal). %RetVal=[].
+eval_20(Eq,RetType,Depth,Self,['include!',Other,File],RetVal):- !,
+	 (( into_space(Depth,Self,Other,Space), include_metta(Space,File),!,make_empty(RetType,Space,RetVal))),
+	 check_returnval(Eq,RetType,RetVal). %RetVal=[].
+eval_20(Eq,RetType,Depth,Self,['load-ascii',Other,File],RetVal):- !,
+	 (( into_space(Depth,Self,Other,Space), include_metta(Space,File),!,make_empty(RetType,Space,RetVal))),
+	 check_returnval(Eq,RetType,RetVal). %RetVal=[].
 eval_20(Eq,RetType,_Depth,_Slf,['bind!',Other,['new-space']],RetVal):- atom(Other),!,assert(was_asserted_space(Other)),
   make_empty(RetType,[],RetVal), check_returnval(Eq,RetType,RetVal).
 eval_20(Eq,RetType,Depth,Self,['bind!',Other,Expr],RetVal):- !,
@@ -1588,13 +1601,13 @@ eval_selfless3(Lib,FArgs,TF):- maplist(s2ps,FArgs,Next),!,compare_selfless0(Lib,
 :- clpr:use_module(library(clpr)).
 
 compare_selfless0(_,[F|_],_TF):- \+ atom(F),!,fail.
-compare_selfless0(cplfd,['=',X,Y],TF):-!,as_tf(X#=Y,TF).
-compare_selfless0(cplfd,['\\=',X,Y],TF):-!,as_tf(X #\=Y,TF).
-compare_selfless0(cplfd,['>',X,Y],TF):-!,as_tf(X#>Y,TF).
-compare_selfless0(cplfd,['<',X,Y],TF):-!,as_tf(X#<Y,TF).
-compare_selfless0(cplfd,['=>',X,Y],TF):-!,as_tf(X#>=Y,TF).
-compare_selfless0(cplfd,['<=',X,Y],TF):-!,as_tf(X#=<Y,TF).
-compare_selfless0(cplfd,[F|Stuff],TF):- atom_concat('#',F,SharpF),P=..[SharpF|Stuff],!,as_tf(P,TF).
+compare_selfless0(clpfd,['=',X,Y],TF):-!,as_tf(X#=Y,TF).
+compare_selfless0(clpfd,['\\=',X,Y],TF):-!,as_tf(X #\=Y,TF).
+compare_selfless0(clpfd,['>',X,Y],TF):-!,as_tf(X#>Y,TF).
+compare_selfless0(clpfd,['<',X,Y],TF):-!,as_tf(X#<Y,TF).
+compare_selfless0(clpfd,['=>',X,Y],TF):-!,as_tf(X#>=Y,TF).
+compare_selfless0(clpfd,['<=',X,Y],TF):-!,as_tf(X#=<Y,TF).
+compare_selfless0(clpfd,[F|Stuff],TF):- atom_concat('#',F,SharpF),P=..[SharpF|Stuff],!,as_tf(P,TF).
 compare_selfless0(Lib,['\\=',X,Y],TF):-!,as_tf(Lib:{X \=Y}, TF).
 compare_selfless0(Lib,['=',X,Y],TF):-!,as_tf(Lib:{X =Y}, TF).
 compare_selfless0(Lib,['>',X,Y],TF):-!,as_tf(Lib:{X>Y},TF).
@@ -1651,7 +1664,7 @@ eval_61(Eq,RetType,Depth,Self,X,Y):-
 	findall((XX->B0),get_defn_expansions(Eq,RetType,Depth,Self,X,XX,B0),XXB0L),
 	XXB0L\=[],!, 
         Depth2 is Depth-1,
-	if_trace((metta_defn;eval),
+	if_trace((metta_defn),
         maplist(print_templates(Depth,'   '),XXB0L)),!,
 	member(XX->B0,XXB0L), X=XX, Y=B0, X\=@=B0,
 	%(X==B0 -> trace; eval(Eq,RetType,Depth,Self,B0,Y)).
@@ -1783,3 +1796,55 @@ solve_quadratic(A, B, I, J, K) :-
     %X in -1000..1000,  % Define a domain for X
      (X + A) * (X + B) #= I*X*X + J*X + K.  % Define the quadratic equation
     %label([X]).  % Find solutions for X
+
+
+as_type(B,_Type,B):- var(B),!.
+as_type(B,_Type,B):- \+ compound(B),!.
+as_type([OP|B],Type,Res):- 
+   get_operator_typedef1(_Self,OP,_ParamTypes,RetType),Type=RetType,!,
+   eval_for(RetType,[OP|B],Res).
+   
+as_type(B,RetType,Res):- is_pro_eval_kind(RetType),
+   eval_for(RetType,B,Res).
+   
+as_type(B,_Type,B).
+
+same_types(A,C,_Type,A1,C1):-
+  A1=A,C1=C,!.
+same_types(A,C,Type,A1,C1):-
+  freeze(A,guess_type(A,Type)),
+  freeze(C,guess_type(C,Type)),
+  A1=A,C1=C.
+   
+guess_type(A,Type):-
+   current_self(Self),
+   get_type(20,Self,A,Was),
+   can_assign(Was,Type).
+   
+eval_for(RetType,X,Y):- 
+  eval('=',RetType,20,Self,X,Y).
+
+%if_debugging(G):- ignore(call(G)).
+if_debugging(_).
+bcc:-
+  bc_fn([:,Prf,[in_tad_with,[sequence_variant,rs15],[gene,d]]],
+     ['S',['S',['S',['S','Z']]]],
+     OUT),
+	write_src(prf=Prf), write_src(OUT).
+
+bc_fn(A,B,C):- %trace,
+  same_types(A,C,_,A1,C1),
+  as_type(B,'Nat',B1),
+  bc_impl(A1,B1,C1).
+
+bc_impl([:, _prf, _ccln], _, [:, _prf, _ccln]) :-
+    if_debugging(println_impl(['bc-base', [:, _prf, _ccln]])),
+    metta_atom('&kb', [:, _prf, _ccln]),
+    if_debugging(println_impl(['bc-base-ground', [:, _prf, _ccln]])).
+
+bc_impl([:, [_prfabs, _prfarg], _ccln], ['S', _k], [:, [_prfabs, _prfarg], _ccln]) :-
+    if_debugging(println_impl(['bc-rec', [:, [_prfabs, _prfarg], _ccln], ['S', _k]])),
+    bc_impl([:, _prfabs, ['->', _prms, _ccln]], _k, [:, _prfabs, [->, _prms, _ccln]]),
+    bc_impl([:, _prfarg, _prms], _k, [:, _prfarg, _prms]).
+
+
