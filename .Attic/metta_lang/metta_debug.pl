@@ -77,6 +77,7 @@ indentq(DR,EX,AR,retval(Term)):-nonvar(Term),!,indentq(DR,EX,AR,Term).
 indentq(DR,EX,AR,[E,Term]):- E==e,!,indentq(DR,EX,AR,Term).
 indentq(_DR,_EX,_AR,_Term):- flag(trace_output_len,X,X+1), XX is (X mod 1000), XX<100,!.
 indentq(DR,EX,AR,Term):- 
+
     setup_call_cleanup(
          notrace(format('~N;')),
          as_trace((
@@ -92,7 +93,7 @@ is_fast_mode:- fail, \+ is_debugging(eval),!.
 ignore_trace_once(Goal):- ignore(notrace(catch( ignore( Goal), _, fail))),!.
 %ignore_trace_once(Goal):- must_det_ll(Goal).
 
-as_trace(Goal):-
+as_trace(Goal):- 
   ignore_trace_once( \+ with_no_screen_wrap(color_g_mesg('#2f2f2f', Goal))).
 
 with_no_screen_wrap(Goal) :-!,call(Goal).
@@ -196,7 +197,7 @@ is_debugging(Flag):- flag_to_var(Flag,Var),
 % overflow = debug
 
 %trace_eval(P4,_TN,D1,Self,X,Y):- is_fast_mode,!, call(P4,D1,Self,X,Y).
-%trace_eval(P4,TN,D1,Self,X,Y):- \+ is_debugging(TN), \+ is_debugging(eval),!, call(P4,D1,Self,X,Y).
+trace_eval(P4,TN,D1,Self,X,Y):- \+ is_debugging(TN),!, call(P4,D1,Self,X,Y).
 trace_eval(P4,TN,D1,Self,X,Y):-
    must_det_ll((
    notrace((
@@ -222,13 +223,13 @@ trace_eval(P4,TN,D1,Self,X,Y):-
 			     ; indentq(DR,EX1,'<--',[TN,Ret])))),
 
    call_cleanup((
-      (call(P4,D1,Self,X,Y)*->true;
+      (call(P4,D1,Self,X,Y)*->nb_setarg(1,Ret,Y);
         (fail,trace,(call(P4,D1,Self,X,Y)))),
       ignore((fake_notrace(( \+ (Y\=YY), nb_setarg(1,Ret,Y)))))),
     % cleanup 
-      (PrintRet==1 -> call(Display) ;
+      ignore((PrintRet==1 -> ignore(Display) ;
        (fake_notrace(ignore((( % Y\=@=X,
-         if_t(DR<DMax,if_trace((eval),call(Display)))))))))),
+         if_t(DR<DMax,if_trace((eval),ignore(Display))))))))))),
    Ret\=@=retval(fail).
 
 %  (Ret\=@=retval(fail)->true;(fail,trace,(call(P4,D1,Self,X,Y)),fail)).

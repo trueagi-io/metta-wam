@@ -1,4 +1,5 @@
 typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_arguments(Cmpd,Type,[List|_]),is_list(List).
+
 is_syspred(H,Len,Pred):- notrace(is_syspred0(H,Len,Pred)).
 is_syspred0(H,_Ln,_Prd):- \+ atom(H),!,fail.
 is_syspred0(H,_Ln,_Prd):- upcase_atom(H,U),downcase_atom(H,U),!,fail.
@@ -169,7 +170,7 @@ get_type03(Depth,Self,Expr,Type):-  Depth2 is Depth-1,
 
 get_type03(_Dpth,_Slf,Val,Type):- is_decl_type(Val),(Type=Val;Type='Type').
 
-%get_type03(_Dpth,_Slf,Expr,'Expression'):- is_list(Expr),!.
+get_type03(_Dpth,_Slf,Expr,'Expression'):- is_list(Expr),!.
 
 get_type03(Depth,Self,List,Types):- List\==[], is_list(List),
   Depth2 is Depth-1,maplist(get_type(Depth2,Self),List,Types).
@@ -230,7 +231,7 @@ get_type1(_Dpth,_Slf,_,'%Undefined%'):- fail.
 
 as_prolog(I,O):- as_prolog(10,'&self',I,O).
 as_prolog(_Dpth,_Slf,I,O):- \+ iz_conz(I),!,I=O.
-as_prolog(Depth,Self,[Cons,H,T],[HH|TT]):- Cons=='Cons',as_prolog(Depth,Self,H,HH),as_prolog(Depth,Self,T,TT).
+as_prolog(Depth,Self,[Cons,H,T],[HH|TT]):- Cons=='Cons',!,as_prolog(Depth,Self,H,HH),as_prolog(Depth,Self,T,TT).
 as_prolog(Depth,Self,[List,H|T],O):- List=='::',!,maplist(as_prolog(Depth,Self),[H|T],L),!, O = L.
 as_prolog(Depth,Self,[At,H|T],O):- At=='@',!,maplist(as_prolog(Depth,Self),[H|T],[HH|L]),atom(H),!, O =.. [HH|L].
 as_prolog(Depth,Self,I,O):- is_list(I),!,maplist(as_prolog(Depth,Self),I,O).
@@ -291,6 +292,7 @@ is_non_eval_kind('Atom').
 is_pro_eval_kind('Number').
 is_pro_eval_kind('Symbol').
 is_pro_eval_kind('Bool').
+is_pro_eval_kind([List|_]):- List=='List'.
 
 is_feo_f('Cons').
 
@@ -333,14 +335,14 @@ is_special_op(_Slf,Op):- is_special_builtin(Op).
 
 
 
-get_operator_typedef(Self,Op,Params,RetType):-
-  get_operator_typedef1(Self,Op,Params,RetType)*->true;
-  get_operator_typedef2(Self,Op,Params,RetType).
-get_operator_typedef1(Self,Op,Params,RetType):-
+get_operator_typedef(Self,Op,ParamTypes,RetType):-
+  get_operator_typedef1(Self,Op,ParamTypes,RetType)*->true;
+  get_operator_typedef2(Self,Op,ParamTypes,RetType).
+get_operator_typedef1(Self,Op,ParamTypes,RetType):-
    metta_type(Self,Op,['->'|List]),
-   append(Params,[RetType],List).
-get_operator_typedef2(Self,Op,Params,RetType):-
-  nop(wdmsg(missing(get_operator_typedef2(Self,Op,Params,RetType)))),!,fail.
+   append(ParamTypes,[RetType],List).
+get_operator_typedef2(Self,Op,ParamTypes,RetType):-
+  nop(wdmsg(missing(get_operator_typedef2(Self,Op,ParamTypes,RetType)))),!,fail.
 
 is_metta_data_functor(Eq,F):-
   current_self(Self),is_metta_data_functor(Eq,Self,F).

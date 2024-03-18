@@ -1,10 +1,13 @@
 
+:- multifile(user:asserted_metta_pred/2).
+:- dynamic(user:asserted_metta_pred/2).
 
 load_metta_file(Self,Filemask):- atom_concat(_,'.metta',Filemask),!, load_metta(Self,Filemask).
 load_metta_file(_Slf,Filemask):- load_flybase(Filemask).
 
 load_metta(Filename):- %clear_spaces,
  load_metta('&self',Filename).
+
 
 load_metta(_Self,Filename):- Filename=='--repl',!,repl.
 load_metta(Self,Filename):-
@@ -16,7 +19,6 @@ load_metta(Self,RelFilename):-
  absolute_file_name(RelFilename,Filename),
  track_load_into_file(Filename,
    include_metta(Self,RelFilename)).
- 
 
 include_metta(Self,Filename):-
   (\+ atom(Filename); \+ exists_file(Filename)),!,
@@ -27,7 +29,7 @@ include_metta(Self,RelFilename):-
      exists_file(RelFilename),!,
      absolute_file_name(RelFilename,Filename),
      directory_file_path(Directory, _, Filename),
-     assert(metta_file(Self,Filename,Directory)),
+     assert_new(metta_file(Self,Filename,Directory)),
      include_metta_directory_file(Self,Directory, Filename))),
      assert_new(user:loaded_into_kb(Self,Filename)), 
      nop(listing(user:loaded_into_kb/2)).
@@ -54,7 +56,7 @@ count_lines_in_stream(TwoK,Stream, CurrentCount, FinalCount) :-
 
 
 include_metta_directory_file_prebuilt(Self, _Directory, Filename):-
-    atom_concat(_, '.metta', Filename),
+  atom_concat(_,'.metta',Filename),
     atom_concat(Filename, '.qlf', QlfFile),
     exists_file(QlfFile),
     time_file(Filename, MettaTime),
@@ -181,7 +183,7 @@ translate_metta_file_to_datalog_io(Filename,Input,Output):-
   write(Output,'/* '),write(Output,DateStr),writeln(Output,' */'),
   % make the predicate dynamic/multifile
   filename_to_mangled_pred(Filename,MangleP2),
-	symbol_concat(MangleP2,'_iz',MangleIZ),
+	mangle_iz(MangleP2,MangleIZ),
 
   format(Output,':- style_check(-discontiguous). ~n',[]),
   format(Output,':- dynamic((~q)/2). ~n',[MangleP2]),
@@ -198,7 +200,7 @@ translate_metta_file_to_datalog_io(Filename,Input,Output):-
   format(Output,':- dynamic((~q)/8). ~n',[MangleIZ]),
   writeln(Output,':- dynamic(user:asserted_metta_pred/2).'),
   writeln(Output,':- multifile(user:asserted_metta_pred/2).'),
-  format(Output,':- asserta(user:asserted_metta_pred(~q,~q)). ~n',[MangleP2,Filename]), 
+  format(Output,'user:asserted_metta_pred(~q,~q). ~n',[MangleP2,Filename]), 
   with_output_to(Output,produce_iz(MangleP2)),
   %format(Output,':- user:register_asserted_metta_pred(~q,~q). ~n',[MangleP2,Filename]), 
   flag(translated_forms,_,0),
@@ -339,13 +341,13 @@ load_metta_file_stream_fast(_Size,_P2,Filename,Self,S):- fail, symbolic_list_con
 
 :- dynamic(metta_file_buffer/5).
 load_metta_file_stream_fast(_Size,P2,Filename,Self,In):-
-	  repeat,
-			current_read_mode(file,Mode),
-			must_det_ll(call(P2, In,Expr)), %write_src(read_metta=Expr),nl,
+      repeat,
+            current_read_mode(file,Mode),
+            must_det_ll(call(P2, In,Expr)), %write_src(read_metta=Expr),nl,
 			line_count(In, LineCount),
 			subst_vars(Expr, Term, [], NamedVarsList),
 			assertz(metta_file_buffer(Mode,Term,NamedVarsList,Filename,LineCount)),
-	  flush_output,
+      flush_output,
 	  at_end_of_stream(In),!,
 	  %listing(metta_file_buffer/5),
 	  load_metta_buffer(Self,Filename).
@@ -387,11 +389,11 @@ read_metta2(In,_,Read1):- parse_sexpr_metta(In,Expr),!,must_det_ll(Expr=Read1).
 
 % Predicate to check if a stream is a file stream and get its size.
 is_file_stream_and_size(Stream, Size) :-
-	% Check if the stream is associated with a file.
-	stream_property(Stream, file_name(FileName)),
-	% Check if the file is accessible and get its size.
-	exists_file(FileName),
-	size_file(FileName, Size).
+    % Check if the stream is associated with a file.
+    stream_property(Stream, file_name(FileName)),
+    % Check if the file is accessible and get its size.
+    exists_file(FileName),
+    size_file(FileName, Size).
 
 
 maybe_read_pl(In,Expr):-
@@ -443,7 +445,7 @@ read_sform(Str,F):- string(Str),open_string(Str,S),!,read_sform(S,F).
 read_sform(S,F):-
   read_sform1([],S,F1),
   ( F1\=='!' -> F=F1 ;
-	(read_sform1([],S,F2), F = exec(F2))).
+    (read_sform1([],S,F2), F = exec(F2))).
 
 
 %read_sform2(S,F1):- !, read_metta2(S,F1).
@@ -501,16 +503,15 @@ read_symbol_or_number( AltEnd,Peek,_S,SoFar,Expr):- member(Peek,AltEnd),!,
 read_symbol_or_number(AltEnd,B,S,SoFar,Expr):- fail,read_sform5(AltEnd,B,S,List,E),
   flatten([List,E],F), append(SoFar,F,NSoFar),!,
    peek_char(S,NPeek), read_symbol_or_number(AltEnd,NPeek,S,NSoFar,Expr).
-
 read_symbol_or_number( AltEnd,_Peek,S,SoFar,Expr):- get_char(S,C),append(SoFar,[C],NSoFar),
-	peek_char(S,NPeek), read_symbol_or_number(AltEnd,NPeek,S,NSoFar,Expr).
+    peek_char(S,NPeek), read_symbol_or_number(AltEnd,NPeek,S,NSoFar,Expr).
 
 atom_until(S,SoFar,End,Text):- get_char(S,C),atom_until(S,SoFar,C,End,Text).
 atom_until(_,SoFar,C,End,Expr):- C ==End,!,must_det_ll((do_symbolic_list_concat(End,SoFar,Expr))).
 atom_until(S,SoFar,'\\',End,Expr):-get_char(S,C),!,atom_until2(S,SoFar,C,End,Expr).
 atom_until(S,SoFar,C,End,Expr):- atom_until2(S,SoFar,C,End,Expr).
 atom_until2(S,SoFar,C,End,Expr):- append(SoFar,[C],NSoFar),get_char(S,NC),
-	atom_until(S,NSoFar,NC,End,Expr).
+    atom_until(S,NSoFar,NC,End,Expr).
 
 do_symbolic_list_concat('"',SoFar,Expr):- \+ string_to_syms,!, atomics_to_string(SoFar,Expr),!.
 do_symbolic_list_concat(_End,SoFar,Expr):- symbolic_list_concat(SoFar,Expr).
@@ -543,9 +544,10 @@ parse_sexpr_metta_IO(S,F1):-
     %line_count(S, LineNumber),
     % Get the character position within the current line
     %line_position(S, LinePos),   
-	character_count(S, Offset),move_cursor_to_first_column,
-	write(user_error,'Offest: '),write(user_error,Offset), 
-    parse_sexpr_untyped(S, M),!, write(user_error,'.'),!,move_cursor_to_first_column,
+	nop((character_count(S, Offset),move_cursor_to_first_column,
+	  write(user_error,'File Offset: '),write(user_error,Offset))),
+    parse_sexpr_untyped(S, M),!, 
+    nop((write(user_error,'.'),!,move_cursor_to_first_column)),
     trly(untyped_to_metta,M,F1),
     nop(writeqln(user_error,F1)),!.
 
@@ -572,34 +574,39 @@ do_metta_cmt(_,'$COMMENT'(Cmt,_,_)):- write_comment(Cmt),!.
 do_metta_cmt(_,'$STRING'(Cmt)):- write_comment(Cmt),!.
 do_metta_cmt(Self,[Cmt]):- !, do_metta_cmt(Self, Cmt),!.
 
-metta_atom_in_file(Self,Term):- 
-  metta_atom_in_file(Self,Term,_,_).
-metta_atom_in_file(Self,Term,Filename,Lineno):- 
+metta_atom_in_file(Self,Term):-  metta_atom_in_file(Self,Term,_,_).
+metta_atom_in_file(Self,STerm,Filename,Lineno):- 	
 	constrain_sterm(STerm),
-	copy_term(STerm,CTerm),
-	term_variables(STerm,SVs),
-	term_variables(CTerm,CVs),
+    term_variables(STerm,SVs),
+	copy_term(STerm+SVs,CTerm+CVs),
 	user:loaded_into_kb(Self,Filename),
 	once(user:asserted_metta_pred(Mangle,Filename)),
-	s2t_iz(Mangle,P,CTerm,Term),
-	Data =..[P,Lineno|Term],
+	%s2t_iz(Mangle,P,CTerm,Term),
+    %CTerm=Term,Mangle=P,
+	notrace(Data =..[Mangle,Lineno|CTerm]),
+	%write_src_woi(Data),
 	call(Data),
 	maplist(mapvar,CVs,SVs).
 
 %mapvar(CV,SV):- var(CV),!,SV=CV.
 mapvar(CV,SV):- t2s(CV,CCV),!,SV=CCV.
 
-constrain_sterm(STerm):- is_list(STerm),!.
-constrain_sterm(STerm):- var(STerm),!,between(1,5,Len),length(STerm,Len).
+%constrain_sterm(STerm):- var(STerm),!,between(1,5,Len),length(STerm,Len).
+%constrain_sterm(STerm):- is_list(STerm),!.
+constrain_sterm([_,_,_]).
+constrain_sterm([_,_,_,_]).
+constrain_sterm([_,_,_,_,_]).
+constrain_sterm([_,_]).
 
 s2t_iz(Mangle,Iz,[Colon,Name,Info],[Name|InfoL]):- Colon == ':',
-   is_list(Info), symbol_concat(Mangle,'_iz',Iz),!,
+   is_list(Info), mangle_iz(Mangle,Iz),
    maplist(s2t,Info,InfoL).
 s2t_iz(Mangle,Mangle,Info,InfoL):- s2tl(Info,InfoL).
 
+mangle_iz(Mangle,Iz):- symbol_concat(Mangle,'_iz',Iz).
 
 produce_iz(Mangle):-
-  symbol_concat(Mangle,'_iz',Iz),
+  mangle_iz(Mangle,Iz),
   forall(between(1,5,Len),
     once((length(Args,Len),  
 	produce_iz_hb([Mangle,Lineno,[:,Name,[Pred|Args]]],[Iz,Lineno,Name,Pred|Args])))).
@@ -611,7 +618,7 @@ produce_iz_hb(HList,BList):-
 
 t2s(SList,List):- \+ compound(SList),!,SList=List.
 t2s([H|SList],[HH|List]):- !, t2s(H,HH),!,t2s(SList,List).
-t2s(X,XX):- compound(X),!,compound_name_arguments(X,t,Args),
+t2s(X,XX):- compound(X),compound_name_arguments(X,t,Args),!,
 	maplist(t2s,Args,XX).
 t2s(X,X):-!.
 
@@ -735,26 +742,25 @@ subst_vars(TermWDV, NewTerm):-
    maybe_set_var_names(NamedVarsList).
 
 subst_vars(TermWDV, NewTerm, NamedVarsList) :-
-	subst_vars(TermWDV, NewTerm, [], NamedVarsList).
+    subst_vars(TermWDV, NewTerm, [], NamedVarsList).
 
 subst_vars(Term, Term, NamedVarsList, NamedVarsList) :- var(Term), !.
 subst_vars([], [], NamedVarsList, NamedVarsList):- !.
 subst_vars([TermWDV|RestWDV], [Term|Rest], Acc, NamedVarsList) :- !,
-	subst_vars(TermWDV, Term, Acc, IntermediateNamedVarsList),
-	subst_vars(RestWDV, Rest, IntermediateNamedVarsList, NamedVarsList).
+    subst_vars(TermWDV, Term, Acc, IntermediateNamedVarsList),
+    subst_vars(RestWDV, Rest, IntermediateNamedVarsList, NamedVarsList).
 subst_vars('$VAR'('_'), _, NamedVarsList, NamedVarsList) :- !.
 subst_vars('$VAR'(VName), Var, Acc, NamedVarsList) :- nonvar(VName), svar_fixvarname_dont_capitalize(VName,Name), !,
-	(memberchk(Name=Var, Acc) -> NamedVarsList = Acc ; ( !, Var = _, NamedVarsList = [Name=Var|Acc])).
+    (memberchk(Name=Var, Acc) -> NamedVarsList = Acc ; ( !, Var = _, NamedVarsList = [Name=Var|Acc])).
 subst_vars(Term, Var, Acc, NamedVarsList) :- atom(Term),atom_concat('$',DName,Term),
    dvar_name(DName,Name),!,subst_vars('$VAR'(Name), Var, Acc, NamedVarsList).
 
 subst_vars(TermWDV, NewTerm, Acc, NamedVarsList) :-
-	compound(TermWDV), !,
-	compound_name_arguments(TermWDV, Functor, ArgsWDV),
-	subst_vars(ArgsWDV, Args, Acc, NamedVarsList),
-	compound_name_arguments(NewTerm, Functor, Args).
+    compound(TermWDV), !,
+    compound_name_arguments(TermWDV, Functor, ArgsWDV),
+    subst_vars(ArgsWDV, Args, Acc, NamedVarsList),
+    compound_name_arguments(NewTerm, Functor, Args).
 subst_vars(Term, Term, NamedVarsList, NamedVarsList).
-
 
 
 connlf:- check_silent_loading, not_compat_io((format('~N'))).
@@ -777,11 +783,11 @@ uncompound(Compound,Src):- compound_name_arguments(Compound,Name,Args),maplist(u
 
 assert_to_metta(_):- reached_file_max,!.
 assert_to_metta(OBO):-
-	must_det_ll((OBO=..[Fn|DataLL],
-	maplist(better_arg,DataLL,DataL),
-	into_datum(Fn, DataL, Data),
-	functor(Data,Fn,A),decl_fb_pred(Fn,A),
-	real_assert(Data),!,
+    must_det_ll((OBO=..[Fn|DataLL],
+    maplist(better_arg,DataLL,DataL),
+    into_datum(Fn, DataL, Data),
+    functor(Data,Fn,A),decl_fb_pred(Fn,A),
+    real_assert(Data),!,
    incr_file_count(_))).
 
 assert_to_metta(OBO):-
@@ -793,15 +799,15 @@ assert_to_metta(OBO):-
   decl_fb_pred(FF,AA),
   ((fail,call(Data))->true;(
    must_det_ll((
-	 real_assert(Data),
-	 incr_file_count(_),
-	 ignore((((should_show_data(X),
-	   ignore((fail,OldData\==Data,write('; oldData '),write_src(OldData),format('  ; ~w ~n',[X]))),
-	   write_src(Data),format('  ; ~w ~n',[X]))))),
-	 ignore((
-	   fail, option_value(output_stream,OutputStream),
-	   is_stream(OutputStream),
-	   should_show_data(X1),X1<1000,must_det_ll((display(OutputStream,Data),writeln(OutputStream,'.'))))))))))))),!.
+     real_assert(Data),
+     incr_file_count(_),
+     ignore((((should_show_data(X),
+       ignore((fail,OldData\==Data,write('; oldData '),write_src(OldData),format('  ; ~w ~n',[X]))),
+       write_src(Data),format('  ; ~w ~n',[X]))))),
+     ignore((
+       fail, option_value(output_stream,OutputStream),
+       is_stream(OutputStream),
+       should_show_data(X1),X1<1000,must_det_ll((display(OutputStream,Data),writeln(OutputStream,'.'))))))))))))),!.
 
 assert_MeTTa(OBO):- !, assert_to_metta(OBO).
 %assert_MeTTa(OBO):- !, assert_to_metta(OBO),!,heartbeat.
@@ -810,7 +816,7 @@ assert_MeTTa(Data):- !, heartbeat, functor(Data,F,A), A>=2,
    decl_fb_pred(F,A),
    incr_file_count(_),
    ignore((((should_show_data(X),
-	   write(newData(X)),write(=),write_src(Data))))),
+       write(newData(X)),write(=),write_src(Data))))),
    assert(Data),!.
 */
 

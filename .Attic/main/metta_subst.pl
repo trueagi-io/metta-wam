@@ -59,55 +59,6 @@ subst_args(Depth,Space,X,Y):-subst_args('=',_RetType,
 
 :- nodebug(metta(eval)).
 
-/*
-debugging_metta(G):-is_debugging((eval))->ignore(G);true.
-w_indent(Depth,Goal):-
-  \+ \+ mnotrace(ignore(((
-    format('~N'),
-    setup_call_cleanup(forall(between(Depth,101,_),write('  ')),Goal, format('~N')))))).
-indentq(DR,EX,Term):-
-  \+ \+ mnotrace(ignore(((
-    format('~N'),
-    setup_call_cleanup(forall(between(Depth,101,_),write('  ')),format('~q',[Term]),
-    format('~N')))))).
-
-
-with_debug(Flag,Goal):- is_debugging(Flag),!, call(Goal).
-with_debug(Flag,Goal):- reset_eval_num,
-  setup_call_cleanup(set_debug(Flag,true),call(Goal),set_debug(Flag,flase)).
-
-flag_to_var(Flag,Var):- atom(Flag), \+ atom_concat('trace-on-',_,Flag),!,atom_concat('trace-on-',Flag,Var).
-flag_to_var(metta(Flag),Var):- !, nonvar(Flag), flag_to_var(Flag,Var).
-flag_to_var(Flag,Var):- Flag=Var.
-
-set_debug(Flag,Val):- \+ atom(Flag), flag_to_var(Flag,Var), atom(Var),!,set_debug(Var,Val).
-set_debug(Flag,true):- !, debug(metta(Flag)),flag_to_var(Flag,Var),set_option_value(Var,true).
-set_debug(Flag,false):- nodebug(metta(Flag)),flag_to_var(Flag,Var),set_option_value(Var,false).
-if_trace((Flag;true),Goal):- !, notrace(( catch_err(ignore((Goal)),E,wdmsg(E-->if_trace((Flag;true),Goal))))).
-if_trace(Flag,Goal):- notrace((catch_err(ignore((is_debugging(Flag),Goal)),E,wdmsg(E-->if_trace(Flag,Goal))))).
-
-
-%maybe_efbug(SS,G):- efbug(SS,G)*-> if_trace(eval,wdmsg(SS=G)) ; fail.
-maybe_efbug(_,G):- call(G).
-%efbug(P1,G):- call(P1,G).
-efbug(_,G):- call(G).
-
-
-
-is_debugging(Flag):- var(Flag),!,fail.
-is_debugging((A;B)):- !, (is_debugging(A) ; is_debugging(B) ).
-is_debugging((A,B)):- !, (is_debugging(A) , is_debugging(B) ).
-is_debugging(not(Flag)):- !,  \+ is_debugging(Flag).
-is_debugging(Flag):- Flag== false,!,fail.
-is_debugging(Flag):- Flag== true,!.
-is_debugging(Flag):- debugging(metta(Flag),TF),!,TF==true.
-is_debugging(Flag):- debugging(Flag,TF),!,TF==true.
-is_debugging(Flag):- flag_to_var(Flag,Var),
-   (option_value(Var,true)->true;(Flag\==Var -> is_debugging(Var))).
-
-:- nodebug(metta(overflow)).
-
-*/
 
 %subst_args0(Eq,RetType,Depth,_Slf,X,Y):- Depth<1,!,X=Y, (\+ trace_on_overflow-> true; reset_eval_num,debug(metta(eval))).
 subst_args0(Eq,RetType,_Dpth,_Slf,X,Y):- self_subst(X),!,Y=X.
@@ -144,32 +95,7 @@ subst_args11(Eq,RetType,Eq,RetType,Depth,Self,X,Y):-
 
   (Ret\=@=retval(fail)->true;(rtrace(subst_args_00(Eq,RetType,D1,Self,X,Y)),fail)).
 
-/*
 
-subst_args11(Eq,RetType,_Dpth,_Slf,X,Y):- self_subst(X),!,Y=X.
-subst_args11(Eq,RetType,Depth,Self,X,Y):- \+ debugging(metta(eval)),!, subst_args1(Eq,RetType,Depth,Self,X,Y).
-subst_args11(Eq,RetType,Depth,Self,X,Y):-
-
-notrace((
-
-  flag(eval_num,EX,EX+1),
-  D1 is Depth-1,
-  DR is 99-D1,
-  PrintRet = _,
-  option_else('trace-length',Max,100),
-  if_t((EX>Max), (set_debug(eval,false),MaxP1 is Max+1, set_debug(overflow,false),
-      format('; Switched off tracing. For a longer trace: !(pragma! trace-length ~w)',[MaxP1]))),
-  nop(notrace(no_repeats_var(YY))),
-
-  if_t(DR<10,if_trace((eval),(PrintRet=1, indentq(DR,EX,'-->'(subst_args(Self,X,'$VAR'('RET'))))))),
-  Ret=retval(fail))),
-
-  call_cleanup((
-    subst_args1(Eq,RetType,D1,Self,X,Y),
-    mnotrace(( \+ (Y\=YY), nb_setarg(1,Ret,Y)))),
-    mnotrace(ignore(((Y\=@=X,if_trace(metta(eval),indentq(DR,EX,'<--'(Ret)))))))),
-  (Ret\=@=retval(fail)->true;(rtrace(subst_args0(Eq,RetType,D1,Self,X,Y)),fail)).
-*/
 
 :- discontiguous subst_args1/6.
 :- discontiguous subst_args2/6.

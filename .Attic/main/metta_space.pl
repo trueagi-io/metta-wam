@@ -465,8 +465,8 @@ call_sexpr(S):- writeln(call=S).
 
 :- dynamic(fb_pred/2).
 
-full_symbol_count(SL):- flag(total_loaded_atoms,SL,SL),SL>1,!.
-full_symbol_count(SL):- findall(NC,(fb_pred(F,A),metta_stats(F,A,NC)),Each), sumlist(Each,SL).
+full_atom_count(SL):- flag(total_loaded_atoms,SL,SL),SL>1,!.
+full_atom_count(SL):- findall(NC,(fb_pred(F,A),metta_stats(F,A,NC)),Each), sumlist(Each,SL).
 
 heartbeat :-
     % Get the current time and the last printed time
@@ -493,7 +493,7 @@ heartbeat :-
 metta_stats:- gc_now,
    writeln('\n\n\n\n\n\n;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'),
    writeln(';~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'),
-   full_symbol_count(SL),
+   full_atom_count(SL),
    format("~N~n; Total\t\tAtoms (Atomspace size): ~`.t ~D~108|~n",[SL]),
    get_time(CurrentTime), nb_setval(last_printed_time, CurrentTime),
    post_statistic(memory,Mem),
@@ -570,6 +570,7 @@ symbol_chars(S,N):- atom_chars(S,N).
 symbol_length(S,N):- atom_length(S,N).
 symbol_concat(A,B,C):- atom_concat(A,B,C).
 symbolic_list_concat(A,B,C):- atomic_list_concat(A,B,C).
+symbolic_list_concat(A,B):- atomic_list_concat(A,B).
 symbol_contains(T,TT):- atom_contains(T,TT).
 */
 
