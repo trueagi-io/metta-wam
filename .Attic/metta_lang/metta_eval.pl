@@ -78,7 +78,7 @@ do_expander(':',_,X,Y):- !, get_type(X,Y)*->X=Y.
 'get_type'(Arg,Type):- 'get-type'(Arg,Type).
 
 
-eval_true(X):- \+ iz_conz(X), callable(X),as_tf(X,TF),!,TF=='True'.
+eval_true(X):- \+ iz_conz(X), callable(X), call(X).
 eval_true(X):- eval_args(X,Y), once(var(Y) ; \+ is_False(Y)).
 
 eval_args(X,Y):- current_self(Self), eval_args(100,Self,X,Y).
@@ -208,32 +208,16 @@ eval_20(=,Type,_,_,['coerce',Type,Value],Result):- !, coerce(Type,Value,Result).
 % =================================================================
 % =================================================================
 % =================================================================
-%  LET/LET*
+%  LET*
 % =================================================================
 % =================================================================
 % =================================================================
-
-
-possible_type(_Self,_Var,_RetTypeV).
-
-let_equals(V,ER):- V=ER,!.
-let_equals(V,ER):- V=~ER.
-
-eval_20(Eq,RetType,Depth,Self,['let',V,E,Body],OO):- !, % var(V), nonvar(E), !,
-		%(var(V)->true;trace),
-		possible_type(Self,V,RetTypeV),
-		((eval(Eq,RetTypeV,Depth,Self,E,ER), let_equals(V,ER))*->
-		   eval(Eq,RetType,Depth,Self,Body,OO);
-			make_empty(RetType,[], OO)).
-
 
 
 	eval_20(Eq,RetType,Depth,Self,['let*',Lets,Body],RetVal):-
 		expand_let_star(Lets,Body,NewLet),!, 
 			eval_20(Eq,RetType,Depth,Self,NewLet,RetVal).
 
-eval_20(Eq,RetType,Depth,Self,['let*',[[V,E]|Lets],Body],RetVal):- !,
-		eval_20(Eq,RetType,Depth,Self,['let',V,E,['let*',Lets,Body]],RetVal).
 
 
 expand_let_star(Lets,Body,Body):- Lets==[],!.
@@ -241,7 +225,7 @@ expand_let_star([H|LetRest],Body,['let',V,E,NewBody]):-
     is_list(H), H = [V,E], !,
 	expand_let_star(LetRest,Body,NewBody).
 
-eval_20(Eq,RetType,Depth,Self,X,RetVal):- fail,
+eval_20(Eq,RetType,Depth,Self,X,RetVal):-
 	once(expand_eval(X,XX)),X\==XX,!, 
 		%fbug(expand_eval(X,XX)),
 	    eval_20(Eq,RetType,Depth,Self,XX,RetVal).
@@ -302,8 +286,8 @@ eager_for_type(_RType,_):-!.
 %eager_for_type(_RType,'Nat').
 
 
-eval_evals(_Eq,_Depth,_Self,_RetType,X,Y):-self_eval(X),!,Y=X.
-eval_evals(_Eq,_Depth,_Self,_RetType,X,Y):- \+ is_list(X),!,Y=X.
+eval_evals(Eq,Depth,Self,RetType,X,Y):-self_eval(X),!,Y=X.
+eval_evals(Eq,Depth,Self,RetType,X,Y):- \+ is_list(X),!,Y=X.
 eval_evals(Eq,Depth,Self,RetType,[Eval,X],Y):- Eval == 'eval',!,
   eval_evals(Eq,Depth,Self,RetType,X,XX),
   eval(Eq,RetType,Depth,Self,XX,Y).
@@ -311,9 +295,9 @@ eval_evals(Eq,Depth,Self,RetType,[Eval,SomeType,X],Y):- Eval == 'eval-for',!,
   eval_evals(Eq,Depth,Self,RetType,X,XX),
   eval(Eq,SomeType,Depth,Self,XX,Y).
 eval_evals(Eq,Depth,Self,RetType,[H|Args],Y):- 
-   ignore(get_operator_typedef1(Self,H,ParamTypes,RetType)),
+   ignore(get_operator_typedef1(Self,H,ParamTypes,RType)),
    maplist(eval_evals(Eq,Depth,Self),ParamTypes,Args,NewArgs),
-   XX = [H|NewArgs],Y=XX.
+   XX = [H|NewNewArgs],Y=XX.
 eval_evals(_Eq,_Depth,_Self,_RetType,X,X):-!.
 
 
@@ -387,6 +371,20 @@ eval_in_steps_or_same(Eq,RetType,_Dpth,_Slf,X,Y):- X=Y,check_returnval(Eq,RetTyp
 
   % (fail,make_empty(RetType,[],Template))).
 
+
+possible_type(_Self,_Var,_RetTypeV).
+
+eval_20(Eq,RetType,Depth,Self,['let',E,V,Body],OO):- var(V), nonvar(E), !,
+	  %(var(V)->true;trace),
+	  possible_type(Self,V,RetTypeV),
+	  eval(Eq,RetTypeV,Depth,Self,E,ER), V=ER,
+	  eval(Eq,RetType,Depth,Self,Body,OO).
+
+eval_20(Eq,RetType,Depth,Self,['let',V,E,Body],OO):- !, % var(V), nonvar(E), !,
+        %(var(V)->true;trace),
+        possible_type(Self,V,RetTypeV),
+        eval(Eq,RetTypeV,Depth,Self,E,ER), V=ER,
+        eval(Eq,RetType,Depth,Self,Body,OO).
 /*
 
 eval_20(Eq,RetType,Depth,Self,['let',V,E,Body],OO):- nonvar(V),nonvar(E),!,
@@ -430,7 +428,6 @@ eval_20(Eq,RetType,_Dpth,_Slf,['repl!'],Y):- !,  repl,check_returnval(Eq,RetType
 %eval_20(Eq,RetType,Depth,Self,['enforce',Cond],Res):- !, enforce_true(Eq,RetType,Depth,Self,Cond,Res).
 eval_20(Eq,RetType,Depth,Self,['!',Cond],Res):- !, call(eval(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(Eq,RetType,Depth,Self,['rtrace!',Cond],Res):- !, rtrace(eval(Eq,RetType,Depth,Self,Cond,Res)).
-eval_20(Eq,RetType,Depth,Self,['notrace!',Cond],Res):- !, quietly(eval(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(Eq,RetType,Depth,Self,['trace!',A,B],C):- !,
 	 stream_property(S,file_no(2)),!,
 	 eval(Eq,RetType,Depth,Self,A,AA),	
@@ -442,15 +439,11 @@ eval_20(Eq,RetType,Depth,Self,['print',Cond],Res):- !, eval(Eq,RetType,Depth,Sel
 % !(println! $1)
 eval_20(Eq,RetType,Depth,Self,['println!'|Cond],Res):- !, 
   maplist(eval(Eq,RetType,Depth,Self),Cond,[Res|Out]),
-    format('~N'),maplist(println_impl,[Res|Out]),format('~N'),
-    make_empty(RetType,Res).
+    format('~N'),maplist(write_src,[Res|Out]),format('~N').
 eval_20(Eq,RetType,Depth,Self,['trace!',A|Cond],Res):- !, maplist(eval(Eq,RetType,Depth,Self),[A|Cond],[AA|Result]),
    last(Result,Res),
 	 stream_property(S,file_no(2)),
-	 with_output_to(S,(format('~N'),maplist(println_impl,[AA]),format('~N'))).
-
-
-println_impl(X):- nl,write_src_woi(X),nl.
+	 with_output_to(S,(format('~N'),maplist(write_src,[AA]),format('~N'))).
 
 %eval_20(Eq,RetType,_Dpth,_Slf,['trace!',A],A):- !, format('~N'),fbug(A),format('~N').
 
@@ -894,6 +887,7 @@ eval_20(Eq,RetType,_Dpth,_Slf,[_,Nothing],NothingO):-
 % =================================================================
 % =================================================================
 % =================================================================
+
 
 
 into_pl_list(Var,Var):- var(Var),!.
@@ -1587,21 +1581,20 @@ eval_selfless_2(LIS,Y):-  fake_notrace(( ground(LIS),
    LIS\=[_], s2ps(LIS,IS))), fake_notrace(catch((Y is IS),_,fail)),!.
 
 
-eval_selfless3(Lib,FArgs,TF):- maplist(s2ps,FArgs,Next),!,
-  compare_selfless0(Lib,Next,TF).
+eval_selfless3(Lib,FArgs,TF):- maplist(s2ps,FArgs,Next),!,compare_selfless0(Lib,Next,TF).
 
 :- use_module(library(clpfd)).
 :- clpq:use_module(library(clpq)).
 :- clpr:use_module(library(clpr)).
 
 compare_selfless0(_,[F|_],_TF):- \+ atom(F),!,fail.
-compare_selfless0(clpfd,['=',X,Y],TF):-!,as_tf(X#=Y,TF).
-compare_selfless0(clpfd,['\\=',X,Y],TF):-!,as_tf(X #\=Y,TF).
-compare_selfless0(clpfd,['>',X,Y],TF):-!,as_tf(X#>Y,TF).
-compare_selfless0(clpfd,['<',X,Y],TF):-!,as_tf(X#<Y,TF).
-compare_selfless0(clpfd,['=>',X,Y],TF):-!,as_tf(X#>=Y,TF).
-compare_selfless0(clpfd,['<=',X,Y],TF):-!,as_tf(X#=<Y,TF).
-compare_selfless0(clpfd,[F|Stuff],TF):- atom_concat('#',F,SharpF),P=..[SharpF|Stuff],!,as_tf(P,TF).
+compare_selfless0(cplfd,['=',X,Y],TF):-!,as_tf(X#=Y,TF).
+compare_selfless0(cplfd,['\\=',X,Y],TF):-!,as_tf(X #\=Y,TF).
+compare_selfless0(cplfd,['>',X,Y],TF):-!,as_tf(X#>Y,TF).
+compare_selfless0(cplfd,['<',X,Y],TF):-!,as_tf(X#<Y,TF).
+compare_selfless0(cplfd,['=>',X,Y],TF):-!,as_tf(X#>=Y,TF).
+compare_selfless0(cplfd,['<=',X,Y],TF):-!,as_tf(X#=<Y,TF).
+compare_selfless0(cplfd,[F|Stuff],TF):- atom_concat('#',F,SharpF),P=..[SharpF|Stuff],!,as_tf(P,TF).
 compare_selfless0(Lib,['\\=',X,Y],TF):-!,as_tf(Lib:{X \=Y}, TF).
 compare_selfless0(Lib,['=',X,Y],TF):-!,as_tf(Lib:{X =Y}, TF).
 compare_selfless0(Lib,['>',X,Y],TF):-!,as_tf(Lib:{X>Y},TF).
@@ -1610,12 +1603,9 @@ compare_selfless0(Lib,['=>',X,Y],TF):-!,as_tf(Lib:{X>=Y},TF).
 compare_selfless0(Lib,['<=',X,Y],TF):-!,as_tf(Lib:{X=<Y},TF).
 compare_selfless0(Lib,[F|Stuff],TF):- P=..[F|Stuff],!,as_tf(Lib:{P},TF).
 
-/*
-args_to_mathlib(T,Lib):- var(T),!,get_attrs(T,XX),get_attrlib(XX,Lib).
-args_to_mathlib(XY,Lib):- compound(XY),sub_term(T,XY),!,get_attrs(T,XX),get_attrlib(XX,Lib).
+args_to_mathlib(XY,Lib):- sub_term(T,XY), var(T),get_attrs(T,XX),get_attrlib(XX,Lib).
 args_to_mathlib(XY,clpr):- once((sub_term(T,XY), float(T))). % Reals
 args_to_mathlib(XY,clpq):- once((sub_term(Rat,XY),compound(Rat),Rat='/'(_,_))).
-*/
 args_to_mathlib(_,clpfd).
 
 
@@ -1661,7 +1651,7 @@ eval_61(Eq,RetType,Depth,Self,X,Y):-
 	findall((XX->B0),get_defn_expansions(Eq,RetType,Depth,Self,X,XX,B0),XXB0L),
 	XXB0L\=[],!, 
         Depth2 is Depth-1,
-	if_trace((metta_defn),
+	if_trace((metta_defn;eval),
         maplist(print_templates(Depth,'   '),XXB0L)),!,
 	member(XX->B0,XXB0L), X=XX, Y=B0, X\=@=B0,
 	%(X==B0 -> trace; eval(Eq,RetType,Depth,Self,B0,Y)).
