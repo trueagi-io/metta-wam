@@ -8,7 +8,7 @@
 	   ($after (atom-count $space))
 	   ($loaded (- $after $before))
 	   ($_ (println! (loaded $file into $space adding $loaded atoms before-after $before $after))))
-	 $after))
+	 ()))
 
 !(import! &kb rules)
 

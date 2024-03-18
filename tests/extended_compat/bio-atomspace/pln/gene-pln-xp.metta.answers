@@ -1,6 +1,5 @@
-Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-wam/reports/extended_compat/bio-atomspace/pln/gene-pln-xp.metta
 [(: gene-codes-protein (-> (transcribed_to $g $t) (-> (translates_to $t $p) (codes_for $g $p))))]
-[(: transcribed_to-a-t2 (transcribed_to (gene a) (transcript t2))), (: transcribed_to-a-t1 (transcribed_to (gene a) (transcript t1)))]
+[(: transcribed_to-a-t1 (transcribed_to (gene a) (transcript t1))), (: transcribed_to-a-t2 (transcribed_to (gene a) (transcript t2)))]
 [(: (gene-codes-protein transcribed_to-a-t1) (-> (translates_to (transcript t1) $p) (codes_for (gene a) $p))), (: ((gene-codes-protein transcribed_to-a-t1) translates_to-t1-p1) (codes_for (gene a) (protein p1)))]
-0.12user 0.00system 0:00.13elapsed 99%CPU (0avgtext+0avgdata 33412maxresident)k
-0inputs+0outputs (0major+3659minor)pagefaults 0swaps
+0.12user 0.00system 0:00.12elapsed 100%CPU (0avgtext+0avgdata 34176maxresident)k
+0inputs+0outputs (0major+3744minor)pagefaults 0swaps
