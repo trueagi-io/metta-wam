@@ -1,5 +1,5 @@
 %
-% post match modew
+% post match modew`
 %:- style_check(-singleton).
 :- multifile(nop/1).
 :- meta_predicate(nop(0)).

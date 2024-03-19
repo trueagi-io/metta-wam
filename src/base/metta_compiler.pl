@@ -34,13 +34,13 @@ for_all(G1,G2):- forall(G1,G2).
 compound_non_cons(B):-  compound(B),  \+ B = [_|_].
 iz_conz(B):- compound(B), B=[_|_].
 
-'=~'(A,B):- compound_non_cons(B),!,into_list_args(B,BB),!,'=~'(A,BB).
-'=~'(B,A):- compound_non_cons(B),!,into_list_args(B,BB),!,'=~'(A,BB).
-'=~'(A,B):- iz_conz(A),iz_conz(B),!,A=B.
 '=~'(A,B):- var(A),iz_conz(B),!,A=B.
 '=~'(A,B):- iz_conz(A),var(B),!,A=B.
-'=~'(A,B):- compound_non_cons(A),var(B),!,A=..B.
-'=~'(A,B):- compound_non_cons(B),!,A=B.
+'=~'(A,B):- iz_conz(A),iz_conz(B),!,A=B.
+'=~'(A,B):- compound_non_cons(A),var(B),!,compound_name_arguments(A,FA,Args),B=[FA|Args].
+'=~'(A,B):- compound_non_cons(A),!,into_list_args(A,AA),!,'=~'(AA,B).
+'=~'(A,B):- compound_non_cons(B),!,into_list_args(B,BB),!,'=~'(A,BB).
+
 '=~'(A,B):- '=..'(A,B).
 
 %into_list_args(A,AA):- is_ftVar(A),AA=A.

@@ -253,8 +253,8 @@ p2m([progn|_], (fail), [empty]).  % Translate Prolog?s fail to MeTTa?s False.
 p2m(_OC,'atom','is-symbol').
 p2m(_OC,'atomic','symbolic').
 p2m(OC,ASymbolProc,O):- atom(ASymbolProc),
-	atomic_list_concat(LS,'$',ASymbolProc),LS\==[],LS\=[_],!,
-	atomic_list_concat(LS,'%',SymbolProc),into_hyphens(SymbolProc,O).
+	symbolic_list_concat(LS,'$',ASymbolProc),LS\==[],LS\=[_],!,
+	symbolic_list_concat(LS,'%',SymbolProc),into_hyphens(SymbolProc,O).
 p2m(OC,ASymbolProc,O):- atom(ASymbolProc),into_hyphens(ASymbolProc,O).
 p2m(_,A, H):- atom(A),into_hyphens(A,H),!.
 p2m(_OC,A, A):- atomic(A).
@@ -362,7 +362,7 @@ list_direct_subdirectories(Directory, DirectSubdirectories) :-
     findall(Path,
             (member(Entry, Entries),
              \+ member(Entry, ['.', '..']), % Exclude '.' and '..'
-             atomic_list_concat([Directory, '/', Entry], Path),
+             symbolic_list_concat([Directory, '/', Entry], Path),
              is_directory(Path)),
             DirectSubdirectories).
 
@@ -460,16 +460,16 @@ with_file_lists(Rel,P1,Local):- (Local=='**';Local=='**.pl'),
 
 
 with_file_lists(Rel,P1,Filename):- 
-	atomic_list_concat(['**',S|More],'/',Filename), 
-	atomic_list_concat([S|More],'/',Rest),
+	symbolic_list_concat(['**',S|More],'/',Filename), 
+	symbolic_list_concat([S|More],'/',Rest),
 	list_all_subdirectories(Rel, AllSubdirectories),!,
 	forall(member(SubDir,AllSubdirectories),with_file_lists(SubDir,P1,Rest)).
 
 with_file_lists(Rel,P1,Filename):- 
-	atomic_list_concat([WildDir,S|More],'/',Filename), 
-	atomic_list_concat([Rel,WildDir,''],'/',WildMaskDir),
+	symbolic_list_concat([WildDir,S|More],'/',Filename), 
+	symbolic_list_concat([Rel,WildDir,''],'/',WildMaskDir),
 	expand_file_name(WildMaskDir, AllSubdirectories),
-	atomic_list_concat([S|More],'/',Rest),!,
+	symbolic_list_concat([S|More],'/',Rest),!,
 	forall(member(SubDir,AllSubdirectories),with_file_lists(SubDir,P1,Rest)).
 
 

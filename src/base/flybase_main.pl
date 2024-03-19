@@ -889,12 +889,16 @@ pad_number(Number, N) :-
   sformat(S,"~t~D~*|", [Number,N]),symbolic_list_concat(L,',',S),
   symbolic_list_concat(L,'_',SS),write(SS).
 
+exists_virtually(corlib).
 
 % Process a file or directory path with a given predicate.
 with_wild_path(Fnicate, Dir) :- extreme_debug(fbug(with_wild_path(Fnicate, Dir))),fail.
 with_wild_path(_Fnicate, []) :- !.
+with_wild_path(_Fnicate, Virtual) :- exists_virtually(Virtual),!.
+with_wild_path(Fnicate, Virtual) :- var(Virtual),!,throw(var_with_wild_path(Fnicate, Virtual)).
 with_wild_path(Fnicate, Dir) :-  is_scryer, symbol(Dir), !, must_det_ll((path_chars(Dir,Chars), with_wild_path(Fnicate, Chars))).
 with_wild_path(Fnicate, Chars) :-  \+ is_scryer, \+ symbol(Chars), !, must_det_ll((name(Atom,Chars), with_wild_path(Fnicate, Atom))).
+
 with_wild_path(Fnicate, File) :- exists_file(File), !, must_det_ll(( call(Fnicate, File))).
 with_wild_path(Fnicate, File) :- !, with_wild_path_swi(Fnicate, File).
 with_wild_path(Fnicate, Dir) :-  exists_directory(Dir), !,
@@ -921,12 +925,20 @@ with_wild_path_swi(Fnicate, File) :-
   symbol_contains(File, '*'),
   expand_file_name(File, List), !,
   maplist(with_wild_path(Fnicate), List).
+with_wild_path_swi(Fnicate, File) :- 
+  \+ exists_directory(File), \+ exists_file(File), \+ symbol_contains(File,'.'),
+  extension_search_order(Ext),
+  symbolic_list_concat([File|Ext],MeTTafile),
+  exists_file(MeTTafile),
+  call(Fnicate, MeTTafile).
 with_wild_path_swi(Fnicate, File) :-
   exists_directory(File),
   directory_file_path(File, '*.*sv', Wildcard),
   expand_file_name(Wildcard, List), !,
   maplist(Fnicate, List).
 
+extension_search_order(['.metta']).
+extension_search_order(['.py']).
 
 :- dynamic(fix_columns_nth/2).
 needs_fixed(X,Y):- (var(X)->fb_arg(X);true),fix_concept(X,L),(L\=@=[X],L\=@=X),(L=[Y]->true;Y=L).
@@ -981,8 +993,8 @@ track_load_into_file0(Filename,Goal):-
 rename_tmp_files(_Filename):- \+ is_converting,!.
 rename_tmp_files(Filename):- rename_tmp_files(Filename,'.metta'),rename_tmp_files(Filename,'.metta.datalog').
 
-rename_tmp_files(Filename,NonTmp):- atomic_list_concat([Filename,NonTmp,'.tmp'],From),
-   atomic_list_concat([Filename,NonTmp],To),
+rename_tmp_files(Filename,NonTmp):- symbolic_list_concat([Filename,NonTmp,'.tmp'],From),
+   symbolic_list_concat([Filename,NonTmp],To),
    fbug(rename_file(From,To)),
    ignore((exists_file(From),rename_file(From,To))).
 
@@ -1076,7 +1088,7 @@ load_fb_fa(Fn,Filename):-
     assert_OBO(pathname(Id,Filename)),!,
     assert_OBO(basename(Id,BaseName)),!,
     assert_OBO(directory(Id,Directory)),!,
-    setup_call_cleanup(open(Filename,read,In), load_fb_fa_read(Id,In,_,0), close(In))))).
+    setup_call_cleanup(open(Filename,read,In,[encoding(utf8)]), load_fb_fa_read(Id,In,_,0), close(In))))).
 load_fb_fa_read(_Fn,In, _, _):- (at_end_of_stream(In);reached_file_max),!.
 load_fb_fa_read(Fn,In,FBTe,At):- read_line_to_string(In,Str), load_fb_fa_read_str(Fn,In,FBTe,Str,At).
 
@@ -1606,7 +1618,7 @@ process_metta_x_file(MXFile):-
     ((repeat,
        read_line_to_string(In,Chars),
        (In == end_of_file -> ! ;
-        once((atomic_list_concat(Row0,'\t', Chars),
+        once((symbolic_list_concat(Row0,'\t', Chars),
           maplist(fast_column,Row0,Row),
           assert_MeTTa([Fn|Row])))))),
      close(In)).
@@ -3198,7 +3210,9 @@ datalog_to_termlog(File):-
    atom_concat(File,'2',File2),
    fbug(datalog_to_termlog(File)),
   if_m2(atom_concat(File,'.metta',M)),
-   setup_call_cleanup((open(File,read,In), open(File2,write,Out), if_m2(open(M,write,OutM))),
+   setup_call_cleanup((open(File,read,In,[encoding(utf8)]),
+					   open(File2,write,Out,[encoding(utf8)]), 
+					   if_m2(open(M,write,OutM,[encoding(utf8)]))),
   (repeat,
    read_term(In,Term,[]),
    (Term==end_of_file -> ! ; (process_datalog(Out,OutM,Term),fail))),
@@ -3221,7 +3235,7 @@ process_datalog(Out,OutM,F,Args):-
 
    % Split a string or atom by a specified delimiter.
 split_by_delimiter(Input, Delimiter, Parts) :-
-    atomic_list_concat(Parts, Delimiter, Input),
+    symbolic_list_concat(Parts, Delimiter, Input),
     Parts = [_,_|_].  % Ensure that there's more than one part.
 
 always_delistify(A,A):- \+ compound(A),!.
@@ -3248,7 +3262,7 @@ is_FB_input([xti("FB", upper), xti(_,lower), xti(_, digit)]):-!.
 cb_better_args([_],_):-!,fail.
 cb_better_args(X,_):- is_FB_input(X),!,fail.
 cb_better_args(CB,Parts):-cb_better_args_ni(CB,Parts),!.
-cb_better_args_ni([A,B,C|L],[I|Parts]):- is_FB_input([A,B,C]),maplist(arg(1),[A,B,C],ABC),atomic_list_concat(ABC,I),cb_better_args_ni(L,Parts).
+cb_better_args_ni([A,B,C|L],[I|Parts]):- is_FB_input([A,B,C]),maplist(arg(1),[A,B,C],ABC),symbolic_list_concat(ABC,I),cb_better_args_ni(L,Parts).
 cb_better_args_ni([XTI|L],[I|Parts]):-arg(1,XTI,S),string_to_syms,!,atom_string(I,S),cb_better_args_ni(L,Parts).
 cb_better_args_ni([],[]):-!.
 datalog_to_termlog:-

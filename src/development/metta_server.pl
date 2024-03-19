@@ -18,7 +18,7 @@ start_vspace_service(Port):-
     current_self(MSpace), start_vspace_service(MSpace,Port).
 % see amples of using this https://github.com/logicmoo/hyperon-wam/blob/main/examples/features/distributed-processing/create-server.metta
 start_vspace_service(MSpace,Port):-
-      atomic_list_concat([vspace_service,MSpace,Port],'_',Alias),
+      symbolic_list_concat([vspace_service,MSpace,Port],'_',Alias),
       start_vspace_service(Alias,MSpace,Port).
 
 start_vspace_service(Alias,_Space,_Port):-  service_running(Alias),!.
