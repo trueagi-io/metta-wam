@@ -133,10 +133,10 @@ escape_char_metta(`t`,"\t").
 escape_char_metta(C,S):- sformat(S,'~s',[[C]]).
 
 symbol_metta(S, Until) --> metta_wspace,!,symbol_metta(S, Until).
-symbol_metta(S, Until) --> string_until_metta(SChars,(dcg_peek(metta_white); Until)), { atomic_list_concat(SChars, S) }.
+symbol_metta(S, Until) --> string_until_metta(SChars,(dcg_peek(metta_white); Until)), { symbolic_list_concat(SChars, S) }.
 
 %comment --> `;`,!,comment_chars_metta(S).
-comment_chars_metta(S) --> string_until_metta(SChars,`\n`), { atomic_list_concat(SChars, S) }.
+comment_chars_metta(S) --> string_until_metta(SChars,`\n`), { symbolic_list_concat(SChars, S) }.
 
 %e_o_s --> file_eof,!.
 e_o_s --> \+ [_|_].
@@ -176,8 +176,8 @@ with_kif_not_ok(G):-
  ?,?).
 
 
-:- dynamic user:file_search_path/2.
-:- multifile user:file_search_path/2.
+	:- dynamic user:file_search_path/2.
+	:- multifile user:file_search_path/2.
 
 :- thread_local(t_l:s_reader_info/1).
 
@@ -217,9 +217,9 @@ read_pending_whitespace(In):- repeat, peek_char(In,Code),
 
 
 make_tmpfile_name(Name,Temp):-
-  atomic_list_concat(List1,'/',Name),atomic_list_concat(List1,'_',Temp1),
-  atomic_list_concat(List2,'.',Temp1),atomic_list_concat(List2,'_',Temp2),
-  atomic_list_concat(List3,'\\',Temp2),atomic_list_concat(List3,'_',Temp3),
+  symbolic_list_concat(List1,'/',Name),symbolic_list_concat(List1,'_',Temp1),
+  symbolic_list_concat(List2,'.',Temp1),symbolic_list_concat(List2,'_',Temp2),
+  symbolic_list_concat(List3,'\\',Temp2),symbolic_list_concat(List3,'_',Temp3),
   atom_concat_or_rtrace(Temp3,'.tmp',Temp),!.
 
 
@@ -290,7 +290,9 @@ with_kifvars(Goal):-
 %
 
 parse_sexpr(S, Expr) :- quietly_sreader(parse_meta_term(
-      file_sexpr_with_comments, S, Expr)).
+      file_sexpr_with_comments, S, Expr)),
+     nb_setval('$parser_last_read',Expr).
+   
 
 %% parse_sexpr_ascii( +Codes, -Expr) is det.
 %
@@ -315,7 +317,9 @@ parse_sexpr_string(S,Expr):-
 %
 % Parse S-expression from a Stream
 %
-parse_sexpr_stream(S,Expr):- quietly_sreader(parse_meta_stream(file_sexpr_with_comments,S,Expr)),!.
+parse_sexpr_stream(S,Expr):- 
+  quietly_sreader(parse_meta_stream(file_sexpr_with_comments,S,Expr)),!,
+  nb_setval('$parser_last_read',Expr).
 
 :- export('//'(file_sexpr,1)).
 :- export('//'(sexpr,1)).
@@ -483,6 +487,10 @@ ugly_sexpr_cont('$OBJ'(sugly,S))                 -->  read_string_until(S,`>`), 
 sexpr(X,H,T):- zalwayzz(sexpr0(X),H,M),zalwayzz(swhite,M,T), nop(if_debugging(sreader,(fbug(sexpr(X))))),!.
 %sexpr(X,H,T):- zalwayzz(sexpr0(X,H,T)),!,swhite.
 is_common_lisp:- fail.
+is_scm:- fail.
+is_metta:- true.
+
+:- discontiguous(sexpr0/3).
 
 sexpr0(L)                      --> sblank,!,sexpr(L),!.
 sexpr0(L)                      --> `(`, !, swhite, zalwayzz(sexpr_list(L)),!, swhite.
@@ -496,6 +504,19 @@ sexpr0(['#'(backquote),E])         --> ````, !, sexpr(E).
 sexpr0(['#BQ-COMMA-ELIPSE',E])     --> `,@`, !, sexpr(E).
 sexpr0(['#COMMA',E])               --> { is_common_lisp }, `,`, !, sexpr(E).
 sexpr0(['#HCOMMA',E])               --> {is_scm}, `#,`, !, sexpr(E).
+
+
+
+% sexpr_metta('$STRING'(S))             --> s_string(S),!.
+
+
+
+sexpr_metta(O) --> dcg_peek(dcg_not( ( `(` ; `)` ; ` ` ; 
+   sblank_ch) )),
+  (read_string_until(Text, dcg_peek( ( `(` ; `)` ; ` ` ; 
+   sblank_ch) ))),!,{atom_string(O,Text)}.
+
+
 sexpr0('$OBJ'(claz_bracket_vector,V))                 --> `[`, sexpr_vector(V,`]`),!, swhite.
 
 % MeTTA/NARS % sexpr0('#'(A))              --> `|`, !, read_string_until(S,`|`), swhite,{quietly_sreader(((atom_string(A,S))))}.
@@ -550,13 +571,14 @@ sexpr0(OBJ)--> `#<`,!,zalwayzz(ugly_sexpr_cont(OBJ)),!.
 
 /*********END HASH ***********/
 
+sexpr0(L)--> { is_metta }, sexpr_metta(L),!.
+
 sexpr0(E)    --> sym_or_num(E), swhite,!.
 sexpr0(Sym) --> `#`,integer(N123), swhite,!, {atom_concat('#',N123,Sym)}.
 sexpr0(C) -->  s_line_metta(C) ,swhite, !. %s_line_metta(C), !.
 sexpr0(C) -->  s_item_metta(C, e_o_s), swhite. %s_line_metta(C), !.
 sexpr0(E)                      --> !,zalwayzz(sym_or_num(E)), swhite,!.
 
-is_scm:- fail.
 
 % c:/opt/logicmoo_workspace/packs_sys/logicmoo_opencog/guile/module/ice-9/and-let-star.scm
 
@@ -600,8 +622,11 @@ dcg_xor(_,DCG2,S,E):- phrase(DCG2,S,E),!.
 %sblank --> [C], {var(C)},!.
 
 % sblank --> comment_expr(S,I,CP),!,{assert(t_l:s_reader_info('$COMMENT'(S,I,CP)))},!,swhite.
-sblank --> comment_expr(CMT),!,{assert(t_l:s_reader_info(CMT))},!,swhite.
-sblank --> [C], {nonvar(C),charvar(C),!,bx(C =< 32)},!,swhite.
+sblank --> sblank_char, comment_expr(CMT),!,{assert(t_l:s_reader_info(CMT))},!,swhite.
+sblank --> sblank_ch.
+sblank_ch --> sblank_char,!,swhite.
+
+sblank_char --> [C], {nonvar(C),charvar(C),!,bx(C =< 32)}.
 
 sblank_line --> eoln,!.
 sblank_line --> [C],{bx(C =< 32)},!, sblank_line.
@@ -609,7 +634,7 @@ sblank_line --> [C],{bx(C =< 32)},!, sblank_line.
 s_string(Text)                 --> sexpr_string(Text).
 s_string(Text)                 --> {kif_ok},`'`, !, zalwayzz(read_string_until(Text,`'`)),!.
 
-
+:- export(sblank_ch/2).
 
 swhite --> sblank,!.
 swhite --> [].
@@ -665,7 +690,19 @@ sexpr_rest([]) --> `)`, !.
 % allow dotcons/improper lists.. but also allow dot in the middle of the list (non-CL)
 sexpr_rest(E) --> `.`, [C], {\+ sym_char(C)}, sexpr(E,C), `)` , ! .
 sexpr_rest(E) --> {kif_ok}, `@`, rsymbol(`?`,E), `)`.
-sexpr_rest([Car|Cdr]) --> sexpr(Car), !, sexpr_rest(Cdr),!.
+sexpr_rest([Car|Cdr]) --> sexpr(Car), !,
+  maybe_throw_reader_error(Car), sexpr_rest(Cdr),!.
+
+maybe_throw_reader_error(Car,I,O):- Car=='',lazy_list_location(Info,I,O),!,
+  write_src(Info),
+  if_t(nb_current('$parser_last_read',V),write_src('$parser_last_read'=V)),
+  throw(ll_read_error(Info)).
+maybe_throw_reader_error(Car,I,I):-  Car=='', !,
+  ignore(sexpr_lazy_list_character_count(I,CharPos,Stream)),!,
+  Info= ics(I,CharPos,Stream),
+  write_src(Info), 
+  throw(ll_read_error(Info)).
+maybe_throw_reader_error(_,I,I).
 
 sexpr_vector(O,End) --> zalwayzz(sexpr_vector0(IO,End)),!,{zalwayzz(O=IO)}.
 
@@ -697,7 +734,7 @@ maybe_string(E,ES):- nb_current('$maybe_string',t),!,text_to_string_safe(E,ES),!
 maybe_string(E,E).
 
 sym_continue([H|T]) --> [H], {sym_char(H)},!, sym_continue(T).
-sym_continue([39]) --> `'`, peek_symbol_breaker,!.
+sym_continue([39]) --> `'`, peek_symbol_breaker,!. % '
 sym_continue([]) --> peek_symbol_breaker,!.
 sym_continue([]) --> [].
 
@@ -791,7 +828,7 @@ sexpr(E,C,X,Z) :- swhite([C|X],Y), sexpr(E,Y,Z),!.
 
 sym_char(C):- bx(C =<  32),!,fail.
 %sym_char(44). % allow comma in middle of symbol
-sym_char(C):- memberchk(C,`"()```),!,fail.  % maybe 44 ? comma maybe not # or ; ? '
+sym_char(C):- memberchk(C,`"()```),!,fail.  % maybe 44 ? comma maybe not # or ; ? ' `'`'````'"
 %sym_char(C):- nb_current('$maybe_string',t),memberchk(C,`,.:;!%`),!,fail.
 sym_char(_):- !.
 
@@ -839,7 +876,7 @@ to_untyped('?'(S),_):- S=='??',!.
 % to_untyped('?'(S),'$VAR'('_')):- S=='??',!.
 % to_untyped(VAR,NameU):-atom(VAR),atom_concat_or_rtrace('#$',NameU,VAR),!.
 to_untyped(VAR,NameU):-atom(VAR),(atom_concat_or_rtrace(N,'.',VAR)->true;N=VAR),(notrace_catch_fail(atom_number(N,NameU))),!.
-%to_untyped(S,s(L)):- string(S),atom_contains(S,' '),atomic_list_concat(['(',S,')'],O),parse_sexpr_string(O,L),!.
+%to_untyped(S,s(L)):- string(S),atom_contains(S,' '),symbolic_list_concat(['(',S,')'],O),parse_sexpr_string(O,L),!.
 to_untyped(S,S):- string(S),!.
 to_untyped(S,S):- number(S),!.
 %to_untyped(S,O):- atom(S),notrace_catch_fail(atom_number(S,O)),!.

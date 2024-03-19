@@ -117,8 +117,8 @@ write_dvar(S):- S=='_', !, write_dname(S).
 write_dvar(S):- S=='__', !, write('$').
 write_dvar(S):- var(S), get_var_name(S,N),write_dname(N),!.
 write_dvar(S):- var(S), !, format('$~p',[S]).
-write_dvar(S):- atom(S), atom_concat('_',N,S),write_dname(N).
-write_dvar(S):- string(S), atom_concat('_',N,S),write_dname(N).
+write_dvar(S):- atom(S), symbol_concat('_',N,S),write_dname(N).
+write_dvar(S):- string(S), symbol_concat('_',N,S),write_dname(N).
 %write_dvar(S):- number(S), write_dname(S).
 write_dvar(S):- write_dname(S).
 write_dname(S):- write('$'),write(S).
@@ -173,7 +173,6 @@ pp_sexi(V) :- \+ compound(V), !, format('~p',[V]).
 %pp_sex(V) :- (symbol(V),symbol_number(V,N)), !, print_concept('ValueAtom',N).
 %pp_sex(V) :- V = '$VAR'(_), !, format('$~p',[V]).
 pp_sexi(V) :- no_src_indents,!,pp_sex_c(V).
-
 pp_sexi(V) :- w_proper_indent(2,w_in_p(pp_sex_c(V))).
 
 write_mobj(H,_):- \+ symbol(H),!,fail.
@@ -189,8 +188,10 @@ write_mobj(F,Args):- fail, mlog_sym(K),!,pp_sex_c([K,F|Args]).
 
 print_items_list(X):- is_list(X),!,print_list_as_sexpression(X).
 print_items_list(X):- write_src(X).
+
 pp_sex_l(V):- pp_sexi_l(V),!.
 pp_sexi_l(V) :- is_final_write(V),!.
+pp_sexi_l([F|V]):- integer(F), is_codelist([F|V]),!,format("|~s|",[[F|V]]).
 pp_sexi_l([F|V]):- symbol(F), is_list(V),write_mobj(F,V),!.
 pp_sexi_l([H|T]):-T ==[],!,write('('), pp_sex_nc(H),write(')').
 pp_sexi_l([H,H2]):- write('('), pp_sex_nc(H), write(' '), with_indents(false,print_list_as_sexpression([H2])), write(')'),!.
@@ -208,7 +209,7 @@ pp_sexi_l([H|T]) :- \+ no_src_indents, symbol(H),member(H,['If','cond','let','le
 
 pp_sexi_l([H|T]) :- is_list(T), length(T,Args),Args =< 2, fail,
    wots(SS,((with_indents(false,(write('('), pp_sex_nc(H), write(' '), print_list_as_sexpression(T), write(')')))))),
-   ((atom_length(SS,Len),Len < 20) ->write(SS);
+   ((symbol_length(SS,Len),Len < 20) ->write(SS);
       with_indents(true,w_proper_indent(2,w_in_p(pp_sex_c([H|T]))))),!.
 /*
 
@@ -277,19 +278,22 @@ w_in_p(G):- setup_call_cleanup(flag(w_in_p,X,X+1),G,flag(w_in_p,_,X)).
 always_dash_functor(A,B):- once(dash_functor(A,B)),A\=@=B,!.
 always_dash_functor(A,A).
 
+
 dash_functor(A,C):- \+ symbol(A),!,C=A.
-%dash_functor(A,C):- p2m(A,B),A\==B,!,always_dash_functor(B,C).
-dash_functor(ASymbolProc,O):- atom_contains(ASymbolProc,'_'),
-	atomic_list_concat(LS,'atom',ASymbolProc),LS\==[],LS\=[_],
-	atomic_list_concat(LS,'symbol',SymbolProc),
-	always_dash_functor(SymbolProc,O).
-dash_functor(ASymbolProc,O):- atom_concat('$',LS,ASymbolProc),!,
-	atom_concat('%',LS,SymbolProc),
+% dash_functor(A,C):- p2m(A,B),A\==B,!,always_dash_functor(B,C).
+dash_functor(ASymbolProc,O):- symbol_contains(ASymbolProc,'_'),
+    symbol_contains(ASymbolProc,'atom'),
+    current_predicate(system:ASymbolProc/_),    
+	symbolic_list_concat(LS,'atom',ASymbolProc),
+	symbolic_list_concat(LS,'symbol',SymbolProc),
+	always_dash_functor(SymbolProc,O),!.
+dash_functor(ASymbolProc,O):- symbol_concat('$',LS,ASymbolProc),!,
+	symbol_concat('%',LS,SymbolProc),
 	always_dash_functor(SymbolProc,O).
 
-dash_functor(Functor,DFunctor):-
-   atomic_list_concat(L,'_',Functor), L\=[_],
-   atomic_list_concat(L,'-',DFunctor).
+dash_functor(Functor,DFunctor):- 
+   symbolic_list_concat(L,'_',Functor), L\=[_],
+   symbolic_list_concat(L,'-',DFunctor).
 
 % Print arguments of a compound term.
 write_args_as_sexpression([]).
@@ -313,8 +317,6 @@ with_indents(TF, Goal) :-
 
 no_src_indents:- option_else(src_indents,TF,true),!,TF=='False'.
 
-
-
 no_quoting_symbols:- option_else(no_quoting_symbols,TF,true),!,TF=='True'.
 
 with_no_quoting_symbols(TF, Goal) :-
@@ -336,15 +338,15 @@ with_concepts(TF, Goal) :-
     with_option(concepts, TF, Goal).
 
 % Rules for determining when a symbol needs to be quoted in metta.
-dont_quote(Atom):- atom_length(Atom,1), !, char_type(Atom,punct).
+dont_quote(Atom):- symbol_length(Atom,1), !, char_type(Atom,punct).
 dont_quote(Atom):- symbol(Atom),upcase_atom(Atom,Atom),downcase_atom(Atom,Atom).
 
 should_quote(Atom) :- \+ symbol(Atom), \+ string(Atom),!,fail.
 should_quote(Atom) :-
    \+ dont_quote(Atom),
    % symbol(Atom),  % Ensure that the input is an symbol
-    atom_chars(Atom, Chars),
-    once(should_quote_chars(Chars);should_quote_atom_chars(Atom,Chars)).
+    symbol_chars(Atom, Chars),
+    once(should_quote_chars(Chars);should_quote_symbol_chars(Atom,Chars)).
 
 contains_unescaped_quote(['"']):- !, fail. % End with a quote
 contains_unescaped_quote(['"'|_]) :- !.
@@ -361,8 +363,8 @@ should_quote_chars(Chars) :-
     %  member('/', Chars);         % Contains slash
       member(',', Chars);         % Contains comma
       (fail,member('|', Chars)).         % Contains pipe
-%should_quote_atom_chars(Atom,_) :- atom_number(Atom,_),!.
-should_quote_atom_chars(Atom,[Digit|_]) :- fail, char_type(Digit, digit), \+ atom_number(Atom,_).
+%should_quote_symbol_chars(Atom,_) :- symbol_number(Atom,_),!.
+should_quote_symbol_chars(Atom,[Digit|_]) :- fail, char_type(Digit, digit), \+ symbol_number(Atom,_).
 
 % Example usage:
 % ?- should_quote('123abc').

@@ -77,6 +77,7 @@ indentq(DR,EX,AR,retval(Term)):-nonvar(Term),!,indentq(DR,EX,AR,Term).
 indentq(DR,EX,AR,[E,Term]):- E==e,!,indentq(DR,EX,AR,Term).
 indentq(_DR,_EX,_AR,_Term):- flag(trace_output_len,X,X+1), XX is (X mod 1000), XX<100,!.
 indentq(DR,EX,AR,Term):- 
+
     setup_call_cleanup(
          notrace(format('~N;')),
          as_trace((
@@ -92,7 +93,7 @@ is_fast_mode:- fail, \+ is_debugging(eval),!.
 ignore_trace_once(Goal):- ignore(notrace(catch( ignore( Goal), _, fail))),!.
 %ignore_trace_once(Goal):- must_det_ll(Goal).
 
-as_trace(Goal):-
+as_trace(Goal):- 
   ignore_trace_once( \+ with_no_screen_wrap(color_g_mesg('#2f2f2f', Goal))).
 
 with_no_screen_wrap(Goal) :-!,call(Goal).
@@ -206,7 +207,6 @@ trace_eval(P4,TN,D1,Self,X,Y):-
    PrintRet = _,
    option_else('trace-length',Max,500),
    option_else('trace-depth',DMax,30))),
-
    quietly((if_t((nop(stop_rtrace),EX>Max), (set_debug(eval,false),MaxP1 is Max+1, 
          %set_debug(overflow,false),
          nop(format('; Switched off tracing. For a longer trace: !(pragma! trace-length ~w)',[MaxP1])),
