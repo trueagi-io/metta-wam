@@ -622,7 +622,9 @@ eval_space(Eq,RetType,_Dpth,_Slf,['atom-replace',Space,Rem,Add],TF):- !,
  check_returnval(Eq,RetType,TF).
 
 eval_space(Eq,RetType,_Dpth,_Slf,['get-atoms',Space],Atom):- !,
-  ignore(RetType='Atom'), get_metta_atom_from(Space, Atom), check_returnval(Eq,RetType,Atom).
+  ignore(RetType='Atom'), 
+  get_metta_atom_from(Space, Atom), 
+  check_returnval(Eq,RetType,Atom).
 
 % Match-ELSE
 eval_space(Eq,RetType,Depth,Self,['match',Other,Goal,Template,Else],Template):- !,
@@ -1086,9 +1088,10 @@ get_metatype0(_Val,'Grounded').
 % =================================================================
 nb_bind(Name,Value):- nb_current(Name,Was),same_term(Value,Was),!.
 nb_bind(Name,Value):- call_in_shared_space(nb_setval(Name,Value)),!.
+eval_20(_Eq,_RetType,_Dpth,_Slf,['extend-py!',Module],Res):-  !, 'extend-py!'(Module,Res).
 eval_20(Eq,RetType,Depth,Self,['import!',Other,File],RetVal):- !,
-     (( into_space(Depth,Self,Other,Space), include_metta(Space,File),!,make_empty(RetType,Space,RetVal))),
-     check_returnval(Eq,RetType,RetVal). %RetVal=[].
+	 (( into_space(Depth,Self,Other,Space), import_metta(Space,File),!,make_empty(RetType,Space,RetVal))),
+	 check_returnval(Eq,RetType,RetVal). %RetVal=[].
 eval_20(Eq,RetType,Depth,Self,['include!',Other,File],RetVal):- !,
 	 (( into_space(Depth,Self,Other,Space), include_metta(Space,File),!,make_empty(RetType,Space,RetVal))),
 	 check_returnval(Eq,RetType,RetVal). %RetVal=[].
@@ -1339,7 +1342,6 @@ eval_20(Eq,RetType,Depth,Self,X,Y):-
      % finish_eval(Depth,Self,M,Y);
     (eval_failed(Depth,Self,X,Y)*->true;X=Y)).
 
-eval_40(_Eq,_RetType,_Dpth,_Slf,['extend-py!',Module],Res):-  !, 'extend-py!'(Module,Res).
 
 /*
 into_values(List,Many):- List==[],!,Many=[].
@@ -1375,6 +1377,10 @@ eval_40(Eq,RetType,Depth,Self,['-',N1,N2],N):- number(N1),
    eval(Eq,RetType,Depth,Self,N2,N2Res), fake_notrace(catch_err(N is N1-N2Res,_E,(set_last_error(['Error',N2Res,'Number']),fail))).
 eval_40(Eq,RetType,Depth,Self,['*',N1,N2],N):- number(N1),
    eval(Eq,RetType,Depth,Self,N2,N2Res), fake_notrace(catch_err(N is N1*N2Res,_E,(set_last_error(['Error',N2Res,'Number']),fail))).
+
+eval_40(_Eq,_RetType,_Depth,_Self,['pyr',PredDecl],Res):-
+  must_det_ll((rust_metta_run(exec(PredDecl),Res),
+  nop(write_src(res(Res))))).
 
 eval_40(Eq,RetType,Depth,Self,['length',L],Res):- !, eval(Depth,Self,L,LL),
    (is_list(LL)->length(LL,Res);Res=1),
@@ -1479,7 +1485,7 @@ eval_82(Eq,RetType,_Depth,_Self,[AE|More],TF):- allow_host_functions,
   length(More,Len),
   is_syspred(AE,Len,Pred))),
   \+ (atom(AE),   atom_concat(_,'-fn',AE)),
-  current_predicate(Pred/Len),
+  %current_predicate(Pred/Len),
   %fake_notrace( \+ is_user_defined_goal(Self,[AE|More])),!,
   %adjust_args(Depth,Self,AE,More,Adjusted),
   maplist(as_prolog, More , Adjusted),
@@ -1516,7 +1522,7 @@ account_needs(N,Needs,[A|Args],[M|More]):- arg(N,Needs,What),!,
    account_needs(NP1,Needs,Args,More).
 
 :- nodebug(metta(call)).
-allow_host_functions:- fail.
+allow_host_functions.
 
 s2ps(S,P):- S=='Nil',!,P=[].
 s2ps(S,P):- \+ is_list(S),!,P=S.
@@ -1542,7 +1548,7 @@ eval_83(Eq,RetType,_Depth,_Self,[AE|More],Res):- allow_host_functions,
   %fake_notrace( \+ is_user_defined_goal(Self,[AE|More])),!,
   %adjust_args(Depth,Self,AE,More,Adjusted),!,
   Len1 is Len+1,
-  current_predicate(Pred/Len1),
+  %current_predicate(Pred/Len1),
   maplist(as_prolog,More,Adjusted),
   append(Adjusted,[Res],Args),!,
   if_trace(host;prolog,print_tree(apply(Pred,Args))),
@@ -1556,6 +1562,11 @@ eval_83(Eq,RetType,_Depth,_Self,[AE|More],Res):- allow_host_functions,
 
 eval_84(Eq,RetType,Depth,Self,PredDecl,Res):-
     eval_60(Eq,RetType,Depth,Self,PredDecl,Res).
+
+
+eval_85(Eq,RetType,Depth,Self,PredDecl,Res):- is_rust_operation(PredDecl),!, % run
+  must_det_ll((rust_metta_run(exec(PredDecl),Res),
+  nop(write_src(res(Res))))).
 
 eval_85(Eq,RetType,Depth,Self,PredDecl,Res):-
     subst_args(Eq,RetType,Depth,Self,PredDecl,Res).
