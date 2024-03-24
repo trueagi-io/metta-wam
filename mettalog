@@ -1,5 +1,8 @@
 #!/bin/bash
 
+generate_junit_report=0
+junit_report_file=""
+start_time=0
 export RPWD=$PWD
 IS_SOURCED=$( [[ "${BASH_SOURCE[0]}" != "${0}" ]] && echo 1 || echo 0)
 # Function to exit the script properly
@@ -21,7 +24,14 @@ use_rc_file=~/.mettalogrc
 debug_this_script=false
 dry_run=0
 #debug_this_script=true
-
+stdout_is_to_file=false
+if [ -t 1 ]; then
+    #echo "stdout is connected to a terminal"
+    stdout_is_to_file=false
+else
+    #echo "stdout is being piped or redirected"
+    stdout_is_to_file=true
+fi
 
 
 # Capture original auto margins setting and terminal size
@@ -788,6 +798,13 @@ else
   MLOG="swipl ${SWI_OPTIONS[*]} -l $METTALOG_DIR/src/$PYSWIP_VERSION/metta_interp.pl --"
 fi
 
+if [[ "$stdout_is_to_file" == true ]]; then
+   add_to_list "--piped" METTALOG_OPTIONS
+fi
+
+#add_to_list "--log" METTALOG_OPTIONS
+#html_flag=enable
+#add_to_list "--html" METTALOG_OPTIONS
 
 METTA_CMD="$MLOG --python=$python_flag ${PRE_METTALOG_OPTIONS[*]} ${METTALOG_OPTIONS[*]}"
 

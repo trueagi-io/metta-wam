@@ -6,7 +6,8 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
-start_dir=$1
+start_dir="${1%/}"
+#start_dir=$1
 
 
 # Create a temporary file for storing directory and file count

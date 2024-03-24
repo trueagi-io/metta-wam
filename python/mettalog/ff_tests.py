@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 #if __name__ != "mettalog":f
-print(f";; ...doing {__file__}...{__package__} name=", __name__)
 
 # Version Space Candidate Elimination inside of MeTTa
 # This implementation focuses on bringing this machine learning algorithm into the MeTTa relational programming environment.
@@ -27,6 +26,7 @@ from time import monotonic_ns, time
 import traceback
 
 from mettalog import *
+print_l_cmt(2, f";; ...doing {__file__}...{__package__} name={__name__}")
 from mettalog.repl_loop import add_to_history_if_unique, repl
 
 
@@ -35,8 +35,8 @@ def reg_pyswip_foreign():
     #current_module = sys.modules["__main__"]
     try: 
         ""
-        #current_module = sys.modules[__name__]
-        #add_janus_methods(current_module, dict = oper_dict)
+        current_module = sys.modules[__name__]
+        add_janus_methods(current_module, dict = oper_dict)
     except Exception as e: ""
 
     redirect_stdout(test_nondeterministic_foreign)
@@ -310,3 +310,4 @@ def metta_to_swip_tests2():
     metta_expr = s2m(circles, swip_functor)
     converted_back_to_swip = m2s(circles, metta_expr)
 
+print_l_cmt(2, f";; ...did {__file__}...{__package__} name={__name__}")

@@ -8,7 +8,6 @@
 # Standard Library Imports
 import atexit, io, inspect, json, os, re, subprocess, sys, traceback
 import sys
-print(f";; ...doing {__file__}...{__package__} name=", __name__)
 import os
 import importlib.util
 import importlib
@@ -26,6 +25,7 @@ from time import monotonic_ns, time
 import traceback
 
 from mettalog import *
+print_l_cmt(2, f";; ...doing {__file__}...{__package__} name={__name__}")
 
 def addSpaceName(name, space):
     global syms_dict, space_refs
@@ -853,23 +853,6 @@ def list_to_termv(circles, retargs, depth=0):
     sv = [m2s1(circles, item, depth) for item in retargs]
     return sv
 
-def _np_atom_type(npobj):
-    pt("npobj=", npobj)
-    return E(S('NPArray'), E(*[ValueAtom(s, 'Number') for s in npobj.shape]))
-
-def dewrap(arg):
-    r = unwrap_pyobjs(arg)
-    print(f"dw({type(arg)})={type(r)}")
-    return r
-
-def wrapnpop(func):
-    def wrapper(*args):
-        a = [dewrap(arg) for arg in args]
-        res = func(*a)
-        typ = _np_atom_type(res)
-        return [G(VSNumpyValue(res), typ)]
-    return wrapper
-
 
 
 @export_flags(MeTTa=True)
@@ -880,44 +863,6 @@ def sync_space(named):
 import re
 
 
-def results2bindings(vars, values):
-    new_bindings_set = BindingsSet.empty()
-    if len(values) == 0 or len(vars) != len(values[0]):
-        return new_bindings_set
-
-    for value in values:
-        bindings = Bindings()
-        for i in range(len(vars)):
-            bindings.add_var_binding(vars[i], ValueAtom(str(value[i])))
-        new_bindings_set.push(bindings)
-
-    return new_bindings_set
-
-
-
-@export_flags(MeTTa=True)
-@register_atoms(pass_metta=True)
-def register_vspace_atoms(metta):
-    register_vspace_atoms_for_ra(metta)
-
-
-
-
-def pl_select(*args):
-    print_cmt("pl_select: ", args)
-    flush_console()
-
-def pl_insert(*args):
-    print_cmt("pl_insert: ", args)
-    flush_console()
-
-def np_array(args):
-    print_cmt("np_array=", args)
-    return np.array(args)
-
-def np_vector(*args):
-    print_cmt("np_vector=", args)
-    return np.array(args)
 
 @export_flags(MeTTa=True)
 def test_custom_m_space():
@@ -1246,4 +1191,4 @@ def test_custom_space(LambdaSpaceFn):
 
 
 
-print(f";; ...did {__file__}...{__package__} name=", __name__)
+print_l_cmt(2, f";; ...did {__file__}...{__package__} name={__name__}")

@@ -10,7 +10,6 @@
 # Standard Library Imports
 import atexit, io, inspect, json, os, re, subprocess, sys, traceback
 import sys
-print(f";; ...doing {__file__}...{__package__} name=", __name__)
 import os
 import importlib.util
 import importlib
@@ -32,12 +31,14 @@ VSPACE_VERBOSE = os.environ.get("VSPACE_VERBOSE")
 # 0 = for scripts/demos
 # 1 = developer
 # 2 = debugger
-verbose = 2
+verbose = 0
 if VSPACE_VERBOSE is not None:
     try: verbose = int(VSPACE_VERBOSE) # Convert it to an integer
     except ValueError: ""
 
 def print_exception_stack(e):
+    # become increasingly verbose!
+    verbose += 1
     print_l_cmt(1, f"Exception occurred: {e}")
     traceback.print_exc()
 
@@ -46,48 +47,52 @@ def print_l_cmt(Level, obj):
     if Level > verbose: return
     print("; " + obj)
 
+print_l_cmt(2, f";; ...doing {__file__}...{__package__} name={__name__}")
+
+
+
 #print(";; ...doing...",__name__)
 deref_op = False
 
 try: from typing_extensions import *
 except ImportError as e: 
-    if verbose > 0: print_exception_stack(e)
+    if verbose >= 0: print_exception_stack(e)
 
 # Third-Party Imports
 try: from pyswip import (Atom as PySwipAtom, Term, call, Functor, PL_discard_foreign_frame, PL_new_term_ref, PL_open_foreign_frame,
                          registerForeign, PL_PRUNED, PL_retry, PL_FA_NONDETERMINISTIC, PL_foreign_control, PL_foreign_context, PL_FIRST_CALL, PL_REDO, Variable, Prolog as PySwip)
 except ImportError as e:
-    if verbose > 0: print_exception_stack(e)
+    if verbose >= 0: print_exception_stack(e)
 
 try: from pyswip.easy import newModule, Query
 except ImportError as e:
-    if verbose > 0: print_exception_stack(e)
+    if verbose >= 0: print_exception_stack(e)
 
 try: import hyperonpy as hp
 except ImportError as e:
-    if verbose > 0: print_exception_stack(e)
+    if verbose >= 0: print_exception_stack(e)
 try: from hyperon.atoms import *
 except ImportError as e:
-    if verbose > 0: print_exception_stack(e)
+    if verbose >= 0: print_exception_stack(e)
 try: from hyperon.base import AbstractSpace, SpaceRef, GroundingSpace, interpret
 except ImportError as e:
-    if verbose > 0: print_exception_stack(e)
+    if verbose >= 0: print_exception_stack(e)
 try: from hyperon.base import *
 except ImportError as e:
-    if verbose > 0: print_exception_stack(e)
+    if verbose >= 0: print_exception_stack(e)
 try: from hyperon.ext import register_atoms, register_tokens
 except ImportError as e:
-    if verbose > 0: print_exception_stack(e)
+    if verbose >= 0: print_exception_stack(e)
 try: from hyperon.runner import MeTTa
 except ImportError as e:
-    if verbose > 0: print_exception_stack(e)
+    if verbose >= 0: print_exception_stack(e)
 
 
 
 # Error Handling for Janus
 try: import janus_swi as janus
 except Exception as e:
-    if verbose > 0: print_exception_stack(e)
+    if verbose >= 0: print_exception_stack(e)
 
 
 
@@ -100,14 +105,14 @@ except Exception as e:
         from janus import *
         #janus.query_once("Y is X+1", {"X":1})
     except Exception as e:
-        if verbose > 0: print_exception_stack(e)
+        if verbose >= 0: print_exception_stack(e)
 # Error Handling for OpenAI
 try:
     import openai
     try: openai.api_key = os.environ["OPENAI_API_KEY"]
     except KeyError: ""
 except Exception as e:
-    if verbose > 0: print_exception_stack(e)
+    if verbose >= 0: print_exception_stack(e)
 
 import os
 from importlib import import_module
@@ -123,10 +128,9 @@ from hyperon.runner import _PyFileMeTTaModFmt
 the_python_runner = globals().get('the_python_runner') or None
 
 class MeTTaLog(MeTTa):
-    """This class represents the runner to execute MeTTa programs"""
+    """This class creates an instance of the MeTTaLog runner"""
 
-    def metta(self):
-        return self
+    def metta(self): return self
 
     def __init__(self, cmetta = None, space = None, env_builder = None):
         # super().__init__(cmetta,space,env_builder)
@@ -150,7 +154,7 @@ class MeTTaLog(MeTTa):
             # this convenient it probably means making a virtual ModuleFormat base class
 
             builtin_mods_path = os.path.join(os.path.dirname(__file__), 'exts')
-            print(f"builtin_mods_path={builtin_mods_path}")
+            print_l_cmt(2, f"builtin_mods_path={builtin_mods_path}")
             hp.env_builder_push_include_path(env_builder, builtin_mods_path)
             self.cmetta = hp.metta_new(space.cspace, env_builder)
 
@@ -248,6 +252,9 @@ class MeTTaLog(MeTTa):
         return mod_id
 
     def run(self, program, flat=False):
+        return call_mettalog(program,parseWithRust=False,returnMetta=True, flat=flat)
+
+    def run_hyperon(self, program, flat=False):
         """Runs the MeTTa code from the program string containing S-Expression MeTTa syntax"""
         parser = SExprParser(program)
         results = hp.metta_run(self.cmetta, parser.cparser)
@@ -328,7 +335,6 @@ class MeTTaLog(MeTTa):
         return self
 
 
-histfile = os.path.join(os.path.expanduser("~"), ".metta_history")
 is_init = True
 oper_dict = {}
 janus_dict = {}
@@ -356,10 +362,10 @@ space_refs = {
     '&self': self_space}
 
 
-def export_to_metta(func):
-    setattr(func, 'metta', True)
-    if verbose > 3: print_cmt(f"{func}={getattr(func, 'export_to_metta', False)}")
-    return func
+##def export_to_metta(func):
+#    setattr(func, 'metta', True)
+#    if verbose > 3: print_cmt(f"{func}={getattr(func, 'export_to_metta', False)}")
+#    return func
 
 def export_flags(**kwargs):
     def decorator(func):
@@ -373,15 +379,6 @@ def export_flags(**kwargs):
         return func
     return decorator
 
-
-def unwrap_pyobjs(metta_obj):
-    if isinstance(metta_obj, ExpressionAtom):
-        return metta_obj
-    elif isinstance(metta_obj, GroundedAtom):
-        metta_obj = metta_obj.get_object()
-    if isinstance(metta_obj, ValueObject):
-        metta_obj = metta_obj.value
-    return metta_obj
     
 def get_call_parts(func):
     sig = inspect.signature(func)
@@ -595,30 +592,10 @@ class MettaLearner:
     pass  # Use 'pass' as a placeholder for an empty class body
 
 
-def get_sexpr_input(prmpt):
-    expr, inside_quotes, prev_char = "", False, None
-
-    while True:
-        line = input(prmpt)
-        flush_console()
-        for char in line:
-            if char == '"' and prev_char != '\\':
-                inside_quotes = not inside_quotes
-            expr += char
-            prev_char = char
-
-        if not inside_quotes and expr.count("(") == expr.count(")"):
-            break
-        prmpt = "continue...>>> "
-        expr += " "
-
-    return expr
-
-
 realMetta = None
 
 def metta_register_v(metta):
-    print(f";; metta_register_v={get_metta()}/{metta}")
+    print_l_cmt(2, f";; metta_register_v={get_metta()}/{metta}")
     global realMetta
     try:
         if not metta is None:
@@ -627,11 +604,16 @@ def metta_register_v(metta):
             register_vspace_atoms_for_ra(realMetta)
   #get_metta().set_cmetta(metta)
   #print(";;", metta.pymods)
-        print(";;", get_metta().pymods)
+        #print(";;", get_metta().pymods)
 
     except Exception as e:
-        if verbose > 0: print_exception_stack(e)
+        if verbose >= 0: print_exception_stack(e)
 
+
+@export_flags(MeTTa=True)
+@register_atoms(pass_metta=True)
+def register_vspace_atoms(metta):
+    return register_vspace_atoms_for_ra(metta)
 
 def register_vspace_atoms_for_ra(mettaIn):
 
@@ -702,6 +684,7 @@ def register_vspace_atoms_for_ra(mettaIn):
         'py-eval': OperationAtom('py-eval', lambda s: [eval(s)]) })
 
     #add_python_module(sys.modules[__name__], dict = oper_dict)
+    #print("oper_dict", oper_dict)
     return oper_dict
 
 
@@ -746,7 +729,7 @@ def register_vspace_tokens(metta):
             runner_name, atom_name = token.split('::')
         else:
             atom_name = token
-            runner_name = ""
+            runner_name = None
 
         if atom_name in oper_dict:
             if verbose > 1: print_cmt(f"resolve_atom: token={token} metta={metta}")
@@ -762,25 +745,28 @@ def register_vspace_tokens(metta):
             vspace_main()
             return
         # FIXME: using `run` for this is an overkill
-        ran = metta.run('! ' + runner_name)[0][0];
-        if verbose > 1: print_cmt(f"resolve_atom: token={token} ran={type(ran)} metta={metta} {self_space_info()}")
-        try:
-            this_runner = ran.get_object()
-        except Exception as e:
-            this_runner = get_metta()
-            # If there's an error, print it
-            #print(f"Error ran.get_object: {e}")
 
-        #if !isinstance(this_runner, MeTTa):
+        if runner_name:
+            ran = metta.run('! ' + runner_name)[0][0];
+            if verbose > 1: print_cmt(f"resolve_atom: token={token} ran={type(ran)} metta={metta} {self_space_info()}")
+            try:
+                this_runner = ran.get_object()
+            except Exception as e:
+                # If there's an error, print it
+                #print(f"Error ran.get_object: {e}")
+                this_runner = get_metta()
 
+        
         #if !isinstance(this_runner, MeTTa): this_runner = metta
 
 
         atom = this_runner.run('! ' + atom_name)[0][0]
+
         # A hack to make get_metta()::&self work
         # TODO? the problem is that we need to return an operation to make this
         # work in parent expressions, thus, it is unclear how to return pure
         # symbols
+
         if atom.get_type() == hp.AtomKind.GROUNDED:
             return atom
 
@@ -848,91 +834,36 @@ class PySwipQ(Query):
 
 access_error = True
 
-def is_iterable(obj):
-    try:
-        iter(obj)
-        return True
-    except TypeError:
-        return False
-
-
-def color(t, c):
-    cmap = [90, 91, 31, 93, 92, 32, 36, 96, 94, 34, 35, 95, 38]
-    return f"\033[{cmap[c % len(cmap)]}m{t}\033[0m"
-
-
-def oblique(t):
-    return f"\033[3m{t}\033[0m"
-
-
-def underline(t):
-    return f"\033[4m{t}\033[0m"
-
-
-def expr_vars(expr):
-    if isinstance(expr, SymbolAtom):
-        return []
-    elif isinstance(expr, VariableAtom):
-        return [str(expr)]
-    elif isinstance(expr, ExpressionAtom):
-        return [e for c in expr.get_children() for e in expr_vars(c)]
-    elif isinstance(expr, GroundedAtom):
-        return []
-    else:
-        raise Exception("Unexpected sexpr type: " + str(type(expr)))
-
-
-def color_expr(expr, level=0, unif_vars=None):
-    name = str(expr)
-    if level == 0:
-        unif_vars = frozenset(e for e, c in Counter(expr_vars(expr)).items() if c > 1) \
-            if unif_vars is None else frozenset()
-    if isinstance(expr, SymbolAtom):
-        return name
-    elif isinstance(expr, VariableAtom):
-        return oblique(name) if name in unif_vars else name
-    elif isinstance(expr, ExpressionAtom):
-        return (color("(", level) +
-                " ".join(color_expr(c, level + 1, unif_vars) for c in expr.get_children()) +
-                color(")", level))
-    elif isinstance(expr, GroundedAtom):
-        return underline(name)
-    else:
-        raise Exception("Unexpected sexpr type: " + str(type(expr)))
-
-
-
-@export_flags(MeTTa=True)
-def print_l_e(obj):
-    if obj is None:
-        print("None!")
-        return obj
-
-    if isinstance(obj, str):
-        print(obj)
-        return obj
-
-    try:
-        # Attempt to iterate over the object
-        for item in obj:
-            try:
-                color_expr(item)
-            except Exception:
-                print(item)
-    except TypeError:
-        # If a TypeError is raised, the object is not iterable
-        # if verbose>0: print_cmt(type(obj))
-        print(obj)
-    return obj
-
-@export_flags(MeTTa=True)
-def print_cmt(*args, prefix=";; "):
-    for arg in args:
-        println(arg, prefix=prefix)
-        flush_console()
-
 @export_flags(MeTTa=True, name="print", unwrap=True)
 def println(orig, prefix=""):
+    return println_impl(orig, prefix)
+
+def unwrap_pyobjs(metta_obj):
+    if isinstance(metta_obj, ExpressionAtom):
+        return metta_obj
+    elif isinstance(metta_obj, GroundedAtom):
+        metta_obj = metta_obj.get_object()
+    if isinstance(metta_obj, ValueObject):
+        metta_obj = metta_obj.value
+    return metta_obj
+
+def flush_console():
+    try:
+        if sys.__stdout__ is not None: sys.__stdout__.flush()
+    except Exception: ""
+    try:
+        if sys.__stderr__ is not None: sys.__stderr__.flush()
+    except Exception: ""
+    try:
+        if sys.stderr is not None and not (sys.stderr is sys.__stderr__): sys.sys.stderr.flush()
+    except Exception: ""
+    try:
+        if sys.stdout is not None and not (sys.stdout is sys.__stdout__): sys.sys.stdout.flush()
+    except Exception: ""
+
+
+
+def println_impl(orig, prefix=""):
     """
     Prints the given object and returns it.
 
@@ -945,7 +876,7 @@ def println(orig, prefix=""):
     try:
         prefix_print(prefix, orig)
     except Exception as e:
-        if verbose > 0: print_cmt(f"println-Error: {e}")
+        if verbose > 0: print(f"println-Error: {e}")
     flush_console()
     return orig
 
@@ -995,7 +926,7 @@ def prefix_print(prefix, orig):
 
     except TypeError: ""
 
-
+    #from pyswip import Term, Variable, Functor, Atom as PySwipAtom
     if isinstance(obj, (Term, Variable)):
         fn = Functor("writeln")
         print(prefix, end=' tv:')
@@ -1013,8 +944,6 @@ def prefix_print(prefix, orig):
         return
 
     prefix_print(prefix + " ", repr(obj))
-
-
 
 @export_flags(MeTTa=True)
 def pt1(obj):
@@ -1040,6 +969,50 @@ def pt(*objs):
     print()
     return r
 
+
+
+@export_flags(Janus=True)
+def add_to_history_if_unique_pl(item, position_from_last=1):
+    try: import readline
+    except ImportError: import pyreadline3 as readline
+    for i in range(1, readline.get_current_history_length() + 1):
+        if readline.get_history_item(i) == item: return
+    insert_to_history(item, position_from_last)
+
+
+@export_flags(MeTTa=True)
+def print_l_e(obj):
+    if obj is None:
+        print("None!")
+        return obj
+
+    if isinstance(obj, str):
+        print(obj)
+        return obj
+
+    try:
+        # Attempt to iterate over the object
+        for item in obj:
+            try:
+                color_expr(item)
+            except Exception:
+                print(item)
+    except TypeError:
+        # If a TypeError is raised, the object is not iterable
+        # if verbose>0: print_cmt(type(obj))
+        print(obj)
+    return obj
+
+
+
+def is_iterable(obj, exclude=(str, bytes)):
+    try:
+        iter(obj)
+        return not isinstance(obj, exclude)  # Exclude strings and bytes
+    except TypeError:
+        return False
+
+
 @export_flags(MeTTa=True)
 def test_s(metta_obj: Atom) -> Atom:
     circles = Circles()
@@ -1058,22 +1031,6 @@ def the_running_metta_space():
     if the_new_runner_space is not None: return the_new_runner_space
     return get_metta().parent.space()
 
-
-def pl_select(*args):
-    print_cmt("pl_select: ", args)
-    flush_console()
-
-def pl_insert(*args):
-    print_cmt("pl_insert: ", args)
-    flush_console()
-
-def np_array(args):
-    print_cmt("np_array=", args)
-    return np.array(args)
-
-def np_vector(*args):
-    print_cmt("np_vector=", args)
-    return np.array(args)
 
 
 def res_unify(s, v):
@@ -1245,6 +1202,7 @@ def load_flybase(size):
     swip_exec(f"load_flybase({size})")
     #readline_add_history("!(mine-overlaps)")
 
+
 @export_flags(MeTTa=True)
 def swip_exec(qry):
     swip_exec_ff(qry)
@@ -1275,13 +1233,14 @@ def timeFrom(w, t0):
 
 
 
-def call_mettalog(line, parseWithRust = False):
+def call_mettalog(line, parseWithRust = False, returnMetta = False, flat=False):
+
+    if parseWithRust or returnMetta: circles = Circles()
 
     if parseWithRust:
         expr =  get_metta().parse_single(sline)
         if verbose > 1: print_cmt(f"% S-Expr {line}")
-        if verbose > 1: print_cmt(f"% M-Expr {expr}")
-        circles = Circles()
+        if verbose > 1: print_cmt(f"% M-Expr {expr}")        
         swip_obj = m2s(circles, expr);
         if verbose > 1: print_cmt(f"% P-Expr {swip_obj}")
     else:
@@ -1294,7 +1253,8 @@ def call_mettalog(line, parseWithRust = False):
     q = PySwipQ(call_sexpr(argmode, selected_space_name, str(line), swip_obj, X))
     while q.nextSolution():
         flush_console()
-        yield X.value
+        if returnMetta: yield expr, s2m1(circles, X.value)
+        else: yield X.value
     q.closeQuery()
     flush_console()
 
@@ -1321,7 +1281,7 @@ def vspace_init():
 
     t0 = monotonic_ns()
     #os.system('clear')
-    print_cmt(underline(f"Version-Space Init: {__file__}\n"))
+    print_l_cmt(1, underline(f"Version-Space Init: {__file__}\n"))
     #import site
     #print_cmt ("Site Packages: ",site.getsitepackages())
     #test_nondeterministic_foreign()
@@ -1337,20 +1297,6 @@ def vspace_init():
     f()
     if verbose > 0: timeFrom("init", t0)
     flush_console()
-
-def flush_console():
-    try:
-        if sys.__stdout__ is not None: sys.__stdout__.flush()
-    except Exception: ""
-    try:
-        if sys.__stderr__ is not None: sys.__stderr__.flush()
-    except Exception: ""
-    try:
-        if sys.stderr is not None and not (sys.stderr is sys.__stderr__): sys.sys.stderr.flush()
-    except Exception: ""
-    try:
-        if sys.stdout is not None and not (sys.stdout is sys.__stdout__): sys.sys.stdout.flush()
-    except Exception: ""
 
 
 # Exporting to another CSV (for demonstration)
@@ -1638,6 +1584,7 @@ def update_dict_from_function(name, func, current_dict):
         elif len(params) == 1:
             print_l_cmt(2, f"Using {name}: with one argument.")
             # Assuming get_metta() is a placeholder for actual argument passing
+            print_l_cmt(2, f"the_python_runner={the_python_runner}")
             result = func(the_python_runner)  # Replace None with actual argument if needed
         else:
             print_l_cmt(2, f"Skipping {name}: requires more than one argument.")
@@ -1741,13 +1688,6 @@ def print_operations_table(tablename, operations_dict, quiet = False):
 
 
 import inspect
-
-def is_iterable(obj, exclude=(str, bytes)):
-    try:
-        iter(obj)
-        return not isinstance(obj, exclude)  # Exclude strings and bytes
-    except TypeError:
-        return False
 
 
 def is_static_method(obj, attr_name):
@@ -1945,16 +1885,16 @@ def load_module_to_rust(module):
         # If so, move up one directory to get the package or main script directory
         module_dir = os.path.dirname(module_dir)
 
-    print(f"load_module_to_rust directory: {module_dir}")  # Just for verification
+    print_l_cmt(2, f"load_module_to_rust directory: {module_dir}")  # Just for verification
 
     # Assuming the short name is the module's __name__ attribute
     short_name = module.__name__.split('.')[-1]  # Get the last part after a dot if it's a sub-module
-    print(f"load_module_to_rust short name: {short_name}")  # Just for verification
+    print_l_cmt(2, f"load_module_to_rust short name: {short_name}")  # Just for verification
 
     with temporary_change_dir(module_dir):
         # Place your Rust integration code here. The working directory is temporarily the module's directory.
         # This mock function represents calling Rust's functionality - replace with actual call
-        get_metta().run(f"(import! &self {short_name})")
+        get_metta().run_hyperon(f"(import! &self {short_name})")
         # After the block, the working directory will revert to what it was.
 
 
@@ -2054,7 +1994,7 @@ def eval_name_args(name, *args):
                 result = grounded_atom.execute(*args)
                 return result
             except Exception as e:
-                if verbose > 0: print_exception_stack(e)
+                if verbose >= 0: print_exception_stack(e)
                 raise e
         oper_props = op_registry_functions.get(f"{name}/{arity}")
         if oper_props is not None:
@@ -2062,7 +2002,7 @@ def eval_name_args(name, *args):
                 result = oper_props.get('op')(*args)
                 return result
             except Exception as e:
-                if verbose > 0: print_exception_stack(e)
+                if verbose >= 0: print_exception_stack(e)
                 raise e
 
     # Attempt to fetch operation properties using name and arity
@@ -2074,7 +2014,7 @@ def eval_name_args(name, *args):
             result = grounded_atom.execute(*args)
             return result
         except Exception as e:
-            if verbose > 0: print_exception_stack(e)
+            if verbose >= 0: print_exception_stack(e)
             raise e
     oper_props = op_registry_functions.get(name)
     if oper_props is not None:
@@ -2082,7 +2022,7 @@ def eval_name_args(name, *args):
             result = oper_props.get('op')(*args)
             return result
         except Exception as e:
-            if verbose > 0: print_exception_stack(e)
+            if verbose >= 0: print_exception_stack(e)
             raise e
 
     raise ValueError(f"Operation {name} not found in the registry.")
@@ -2139,7 +2079,7 @@ def get_operation_definition_with_arity(name, arity):
 
 def rust_metta_run(f):
     #print(f"{the_python_runner}={type(f)}/{repr(f)}"),
-    ret = the_python_runner.run(f)
+    ret = the_python_runner.run_hyperon(f)
     return ret
 
 
@@ -2150,18 +2090,19 @@ swip = globals().get('swip') or PySwip()
 selected_space_name = globals().get('selected_space_name') or "&self"
 
 from mettalog.vspace import *
-from mettalog.repl_loop import add_to_history_if_unique
-
+from mettalog.repl_loop import *
 
 try:
     the_verspace = globals().get('the_verspace') or VSpace("&verspace")
     the_flybase = globals().get('the_flybase') or VSpace("&flybase")
     the_nb_space = globals().get('the_nb_space') or VSpace("&nb")
 except Exception as e:
-    if verbose > 0: print_exception_stack(e)
+    if verbose >= 0: print_exception_stack(e)
 
 argmode = None
 sys_argv_length = len(sys.argv)
+
+from mettalog.repl_loop import add_to_history_if_unique
 
 # assume all functions below here are defined
 if the_python_runner is None:  #MakeInteractiveMeTTa() #def MakeInteractiveMeTTa(): #global get_metta(),the_old_runner_space,the_new_runner_space,sys_argv_length
@@ -2171,12 +2112,12 @@ if the_python_runner is None:  #MakeInteractiveMeTTa() #def MakeInteractiveMeTTa
         the_python_runner.cwd = [os.path.dirname(os.path.dirname(__file__))]
         the_old_runner_space = get_metta().space()
         the_new_runner_space = get_metta().space()
-        print_cmt("The sys.argv list is:", sys.argv)
+        print_l_cmt(1, f"; The sys.argv list is: {sys.argv}")
         vspace_init()
         load_functions_ext()
-        #get_metta().run("!(extend-py! metta_space/mettalog)")
+        #get_metta().rust_metta_run("!(extend-py! metta_space/mettalog)")
     except Exception as e:
-        if verbose > 0: print_exception_stack(e)
+        if verbose >= 0: print_exception_stack(e)
 
 
 is_init = False
@@ -2185,8 +2126,4 @@ if __name__ != "mettalog":
     vspace_main_from_python()
 
 
-
-print(";; ...did {__file__}...", __name__)
-
-
-
+print_l_cmt(2, f";; ...did {__file__}...{__package__} name={__name__}")
