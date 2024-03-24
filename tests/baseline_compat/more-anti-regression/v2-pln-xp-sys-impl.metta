@@ -69,7 +69,8 @@
 ;!(test1)
 
 
-!(bc-fn (: $prf (in_tad_with (sequence_variant rs15) (gene d))) (S (S (S (S Z)))))
+; !(bc-fn (: $prf (in_tad_with (sequence_variant rs15) (gene d))) (S (S (S (S Z)))))
+!(bc-i (: $prf (in_tad_with (sequence_variant rs15) (gene d))) (S (S (S (S Z)))))
 
 ;!(bc-fn (: $prf (in_tad_with (sequence_variant rs1421085) (gene ENSG00000177508))) (fromNumber 4))
 
