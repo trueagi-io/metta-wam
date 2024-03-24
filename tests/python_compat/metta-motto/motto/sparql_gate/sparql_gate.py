@@ -258,9 +258,11 @@ class RdfHelper:
         finally:
             return values
 
-
 @register_atoms
 def sql_space_atoms():
+    return sql_space_atoms_for_ra()
+
+def sql_space_atoms_for_ra():
     helper = RdfHelper()
 
     return {
@@ -311,3 +313,4 @@ def sql_space_atoms():
             G(OperationObject('where', lambda a: helper.service(a), unwrap=False)),
 
     }
+

@@ -48,9 +48,9 @@ class MettaAgent(Agent):
         # (which might be useful). The latter solution will work differently.
         if self._includes is not None:
             env_builder = Environment.custom_env(include_paths=self._includes)
-            metta = MeTTa(env_builder=env_builder)
+            metta = MeTTaLog(env_builder=env_builder)
         else:
-            metta = MeTTa()
+            metta = MeTTaLog()
         # TODO: assert
         metta.run("!(import! &self motto)")
         #metta.load_module_at_path("motto")
