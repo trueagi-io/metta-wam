@@ -70,6 +70,16 @@
 	<List Name="RTE">
 	</List>
 	<Files AutoFolders="DirectoryView">
+		<Folder Name="T:/">
+			<Folder Name="opt">
+				<Folder Name="logicmoo_workspace">
+					<Folder Name="bin">
+						<F N="T:/opt/logicmoo_workspace/bin/lmoo-junit"/>
+						<F N="T:/opt/logicmoo_workspace/bin/lmoo-junit-minor"/>
+					</Folder>
+				</Folder>
+			</Folder>
+		</Folder>
 		<Folder Name=".history">
 			<Folder Name="docs">
 				<F N=".history/docs/APPROACH_20240217225228.text"/>
@@ -104,6 +114,33 @@
 		</Folder>
 		<Folder Name="docs">
 			<F N="docs/OVERVIEW.md"/>
+		</Folder>
+		<Folder Name="../hyperon-experimental">
+			<Folder Name="python">
+				<Folder Name="hyperon">
+					<F N="../hyperon-experimental/python/hyperon/__init__.py"/>
+					<F N="../hyperon-experimental/python/hyperon/atoms.py"/>
+					<F N="../hyperon-experimental/python/hyperon/base.py"/>
+					<F N="../hyperon-experimental/python/hyperon/ext.py"/>
+					<F N="../hyperon-experimental/python/hyperon/metta.py"/>
+					<F N="../hyperon-experimental/python/hyperon/runner.py"/>
+					<F N="../hyperon-experimental/python/hyperon/stdlib.py"/>
+				</Folder>
+			</Folder>
+			<F
+				N="../hyperon-experimental/*.*"
+				Recurse="1"
+				Excludes=".git/;*.metta.html;*.bak;target/;build/"/>
+			<F N="../hyperon-experimental/.bash_history"/>
+			<F N="../hyperon-experimental/.gitignore"/>
+			<F N="../hyperon-experimental/Cargo.lock"/>
+			<F N="../hyperon-experimental/Cargo.toml"/>
+			<F N="../hyperon-experimental/CMakeLists.txt"/>
+			<F N="../hyperon-experimental/Dockerfile"/>
+			<F N="../hyperon-experimental/LICENSE"/>
+			<F N="../hyperon-experimental/mkdocs.yml"/>
+			<F N="../hyperon-experimental/README.md"/>
+			<F N="../hyperon-experimental/rebuild-hyperon.sh"/>
 		</Folder>
 		<Folder Name="notebooks">
 			<Folder Name=".ipynb_checkpoints">
@@ -607,8 +644,6 @@
 			</Folder>
 			<F N="src/kernel.json"/>
 			<F N="src/metta_jupyter_kernel.py"/>
-			<F N="src/mettalog.py"/>
-			<F N="src/panda_util.py"/>
 		</Folder>
 		<Folder Name="tests">
 			<Folder Name="baseline_compat">
