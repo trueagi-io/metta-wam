@@ -28,15 +28,72 @@ if [[ ":$PATH:" != *":$METTALOG_DIR:"* ]]; then
     export PATH=$PATH:${METTALOG_DIR}
 fi
 
-# Check if METTALOG_DIR/src is already in PYTHONPATH, if not, add it
+add_py_dirs_to_pythonpath() {
+    local dir="$1"  # The initial directory to search
+    if [[ -z "$dir" ]]; then
+        echo "Usage: add_py_dirs_to_pythonpath <directory>"
+        return 1
+    fi
+
+    # Convert existing PYTHONPATH into an array, removing duplicates
+    IFS=':' read -r -a existing_dirs <<< "$PYTHONPATH"
+    declare -A unique_dirs
+    for d in "${existing_dirs[@]}"; do
+        if [[ $d != .* ]] && [[ $d != *~* ]] && [[ -d $d ]]; then  # Ensure directories are not hidden or backup
+            unique_dirs["$d"]=1
+        fi
+    done
+
+    # Find directories containing .py files, excluding directories that are hidden or contain a tilde
+    while IFS= read -r -d '' d; do
+        # Skip directories that are hidden, contain a tilde, or are subdirectories of already-added directories
+        if [[ $d =~ /.* ]] || [[ $d == .* ]] || [[ $d == *~* ]]; then
+            continue
+        fi
+        local skip_dir=false
+        for added_dir in "${!unique_dirs[@]}"; do
+            if [[ $d == $added_dir* ]]; then
+                skip_dir=true
+                break
+            fi
+        done
+        if $skip_dir; then
+            continue
+        fi
+        # Check if the directory contains Python files
+        local py_file_count=$(find "$d" -maxdepth 1 -type f -name "*.py" | wc -l)
+        if [[ $py_file_count -gt 0 ]]; then
+            unique_dirs["$d"]=1
+        fi
+    done < <(find "$dir" -type d -print0 | sort -uz)
+
+    # Rebuild PYTHONPATH from unique directories
+    PYTHONPATH=""
+    for d in "${!unique_dirs[@]}"; do
+        PYTHONPATH="${PYTHONPATH:+$PYTHONPATH:}$d"
+    done    
+}
+
+# Resolve the absolute path and pass it to the function
+add_py_dirs_to_pythonpath "$(realpath "$METTALOG_DIR/../hyperon-experimental/python/sandbox")"
+add_py_dirs_to_pythonpath "$(realpath "$METTALOG_DIR/tests/")"
+
+
+# Prepend METTALOG_DIR/src to PYTHONPATH if it's not already included
 if [[ ":$PYTHONPATH:" != *":${METTALOG_DIR}/src:"* ]]; then
-    export PYTHONPATH=${PYTHONPATH:+${PYTHONPATH}:}${METTALOG_DIR}/src
+    PYTHONPATH="${METTALOG_DIR}/src${PYTHONPATH:+:$PYTHONPATH}"
 fi
 
+# Prepend METTALOG_DIR/tests/python_compat/metta-motto to PYTHONPATH if it's not already included
+if [[ ":$PYTHONPATH:" != *":${METTALOG_DIR}/tests/python_compat/metta-motto:"* ]]; then
+    PYTHONPATH="${METTALOG_DIR}/tests/python_compat/metta-motto${PYTHONPATH:+:$PYTHONPATH}"
+fi
+
+#echo "Updated PYTHONPATH: $PYTHONPATH"
 # Optionally, print the values to verify they are set (you can remove these lines in production)
 # echo "METTALOG_DIR=$METTALOG_DIR"
 # echo "PATH=$PATH"
-# echo "PYTHONPATH=$PYTHONPATH"
+echo "PYTHONPATH=$PYTHONPATH"
 
 
 _mettalog_autocomplete() {

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 #if __name__ != "mettalog":f
-print(f";; ...doing {__file__}...{__package__} name=", __name__)
 
 # Version Space Candidate Elimination inside of MeTTa
 # This implementation focuses on bringing this machine learning algorithm into the MeTTa relational programming environment.
@@ -28,16 +27,103 @@ import traceback
 
 from mettalog import *
 
+print_l_cmt(2, f";; ...doing {__file__}...{__package__} name={__name__}")
+
+import os
+from importlib import import_module
+import importlib.util
+import sys
+import hyperonpy as hp
+from hyperonpy import EnvBuilder, ModuleId
+from hyperon.atoms import Atom, AtomType, OperationAtom
+from hyperon.base import GroundingSpaceRef, Tokenizer, SExprParser
+from hyperon.runner import _PyFileMeTTaModFmt
+
+from hyperonpy import *
+from hyperon.atoms import *
+from hyperon.base import *
+from hyperon.runner import *
+
+
+def color(t, c):
+    cmap = [90, 91, 31, 93, 92, 32, 36, 96, 94, 34, 35, 95, 38]
+    return f"\033[{cmap[c % len(cmap)]}m{t}\033[0m"
+
+
+def oblique(t):
+    return f"\033[3m{t}\033[0m"
+
+
+def underline(t):
+    return f"\033[4m{t}\033[0m"
+
+
+def expr_vars(expr):
+    if isinstance(expr, SymbolAtom):
+        return []
+    elif isinstance(expr, VariableAtom):
+        return [str(expr)]
+    elif isinstance(expr, ExpressionAtom):
+        return [e for c in expr.get_children() for e in expr_vars(c)]
+    elif isinstance(expr, GroundedAtom):
+        return []
+    else:
+        raise Exception("Unexpected sexpr type: " + str(type(expr)))
+
+
+def color_expr(expr, level=0, unif_vars=None):
+    name = str(expr)
+    if level == 0:
+        unif_vars = frozenset(e for e, c in Counter(expr_vars(expr)).items() if c > 1) \
+            if unif_vars is None else frozenset()
+    if isinstance(expr, SymbolAtom):
+        return name
+    elif isinstance(expr, VariableAtom):
+        return oblique(name) if name in unif_vars else name
+    elif isinstance(expr, ExpressionAtom):
+        return (color("(", level) +
+                " ".join(color_expr(c, level + 1, unif_vars) for c in expr.get_children()) +
+                color(")", level))
+    elif isinstance(expr, GroundedAtom):
+        return underline(name)
+    else:
+        raise Exception("Unexpected sexpr type: " + str(type(expr)))
+
+from mettalog import *
+def print_cmt(*args, prefix=";; "):
+    
+    for arg in args:
+        println_impl(arg, prefix=prefix)
+        flush_console()
+
+
+def get_sexpr_input(prmpt):
+    expr, inside_quotes, prev_char = "", False, None
+
+    while True:
+        line = input(prmpt)
+        flush_console()
+        for char in line:
+            if char == '"' and prev_char != '\\':
+                inside_quotes = not inside_quotes
+            expr += char
+            prev_char = char
+
+        if not inside_quotes and expr.count("(") == expr.count(")"):
+            break
+        prmpt = "continue...>>> "
+        expr += " "
+
+    return expr
+
+
+
+
 # Readline Imports (Platform Specific)
 try: import readline
 except ImportError: import pyreadline3 as readline
 
-@export_flags(Janus=True)
-def add_to_history_if_unique_pl(item, position_from_last=1):
-    for i in range(1, readline.get_current_history_length() + 1):
-        if readline.get_history_item(i) == item: return
-    insert_to_history(item, position_from_last)
-
+histfile = os.path.join(os.path.expanduser("~"), ".metta_history")
 
 try:
     readline.set_history_length(300)
@@ -113,12 +199,17 @@ def save(prev_h_len, histfile):
     readline.append_history_file(new_h_len - prev_h_len, histfile)
 atexit.register(save, h_len, histfile)
 
+
+argmode = "metta"
+
+
 def repl_loop_impl(theMeTTa, get_sexpr_input=get_sexpr_input, print_cmt=print_cmt, mode="metta"):
 
-        from mettalog import selected_space_name,the_running_metta_space,the_new_runner_space
+        verbose = 2
 
         submode = "!"
-        
+        the_new_runner_space = theMeTTa.space()
+
         def maybe_submode(self, line):
             lastchar = line[-1]
             if "+-?!^".find(lastchar)>=0:
@@ -126,13 +217,19 @@ def repl_loop_impl(theMeTTa, get_sexpr_input=get_sexpr_input, print_cmt=print_cm
         def parse_single(s):
             return theMeTTa.parse_single(s)
 
-        global the_new_runner_space
-        global selected_space_name
-        global verbose
-        global argmode
+        def the_running_metta_space():
+            return the_new_runner_space
+
+        selected_space_name = "&self"
+
+
+        #from mettalog import selected_space_name,the_running_metta_space,the_new_runner_space
+        
+        #global selected_space_name
+
 
         #history = []
-        #load_vspace()
+        load_vspace()
 
         while True:
             try:
@@ -434,7 +531,7 @@ def repl_loop_impl(theMeTTa, get_sexpr_input=get_sexpr_input, print_cmt=print_cm
                 continue
 
 def repl(theMeTTa, get_sexpr_input=get_sexpr_input, print_cmt=print_cmt, mode="metta"):
-    load_vspace()
+    #load_vspace()
     argmode = mode
     if argmode is None:
         argmode = "metta"
@@ -452,3 +549,4 @@ def repl(theMeTTa, get_sexpr_input=get_sexpr_input, print_cmt=print_cmt, mode="m
             print_cmt(f"[/]")
             flush_console()
 
+print_l_cmt(2, f";; ...did {__file__}...{__package__} name={__name__}")

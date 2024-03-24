@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 #if __name__ != "mettalog":f
-print(";; ...doing {__file__}...", __name__)
 
 # Version Space Candidate Elimination inside of MeTTa
 # This implementation focuses on bringing this machine learning algorithm into the MeTTa relational programming environment.
@@ -28,7 +27,7 @@ import traceback
 
 from mettalog import *
 
-
+print_l_cmt(2, f";; ...doing {__file__}...{__package__} name={__name__}")
 
 
 import os
@@ -215,5 +214,5 @@ def analyze_csv(base_name, file_path, sep=None):
 
     #metta_read(f"(data-types {base_name} {col} {col.dtype} )")
 
-print(";; ...did {__file__}...", __name__)
+print_l_cmt(2, f";; ...did {__file__}...{__package__} name={__name__}")
 

@@ -431,20 +431,30 @@ generate_final_MeTTaLog() {
     # Change to the script directory
     cd "$METTALOG_DIR" || exit 1
 
+
     # Calculate the number of passed and failed tests
     passed=$(grep -c "| PASS |" /tmp/SHARED.UNITS)
     failed=$(grep -c "| FAIL |" /tmp/SHARED.UNITS)
     total=$((passed + failed))
-    percent_passed=$(awk -v passed="$passed" -v total="$total" 'BEGIN { printf "%.2f", (passed/total)*100 }')
+
+    # Check if total is zero to avoid divide by zero error
+    if [ "$total" -eq 0 ]; then
+        percent_passed="N/A" # Or set to 0.00 or some default value
+    else
+        percent_passed=$(awk -v passed="$passed" -v total="$total" 'BEGIN { printf "%.2f", (passed/total)*100 }')
+    fi
 
     # Create a markdown file with test links and headers
-    {  echo "| STATUS | TEST NAME | TEST CONDITION | ACTUAL RESULT | EXPECTED RESULT |"
+    {   echo "| STATUS | TEST NAME | TEST CONDITION | ACTUAL RESULT | EXPECTED RESULT |"
         echo "|--------|-----------|----------------|---------------|-----------------|"
-        cat /tmp/SHARED.UNITS | awk -F'\\(|\\) \\| \\(' '{ print $2 " " $0 }'  | sort | cut -d' ' -f2- | tac | awk '!seen[$0]++' | tac
+        cat /tmp/SHARED.UNITS | awk -F'\\(|\\) \\| \\(' '{ print $2 " " $0 }' | sort | cut -d' ' -f2- | tac | awk '!seen[$0]++' | tac
     } > ./$METTALOG_OUTPUT/PASS_FAIL.md
 
 
    ./scripts/pass_fail_totals.sh $METTALOG_OUTPUT/ > $METTALOG_OUTPUT/TEST_LINKS.md
+   printf '%s\n' "${@}" > "$METTALOG_OUTPUT/_REPORT_.md"
+   cat $METTALOG_OUTPUT/TEST_LINKS.md | sed -e "s|$METTALOG_OUTPUT|reports|g" >> "$METTALOG_OUTPUT/_REPORT_.md"
+
 }
 
 
@@ -607,6 +617,7 @@ fi
 # Delete HTML files if the clean flag is set
 if [ $clean -eq 1 ]; then
   delete_html_files
+  cat /dev/null > /tmp/SHARED.UNITS
 fi
 
 # Prompt user to rerun all tests if run_tests_auto_reply is not set
