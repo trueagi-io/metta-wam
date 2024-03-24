@@ -191,3 +191,62 @@ Pass Test:(Values same: [[B]] == [[B]])
 
 
 
+## Python interaction
+
+Module loading
+; using the python default module resolver $PYTHONPATH
+`!(import! &self motto.llm_gate)` 
+; using the python path
+`!(import! &self ../path/to/motto/llm_gate.py)`
+; Rust way (was the only way to load llm_gate functions from Rust)
+`!(import! &self motto)` 
+
+; Script running
+`!(pymain! &self ../path/to/motto/test_llm_gate.py ( arg1 arg2 ))`
+; Single methods is python files
+`!(pyr! &self ../path/to/motto/test_llm_gate.py "run_tests" ((= verbose True)))`
+
+; Can define a shortcut
+(: run-llm-tests (-> Bool Ratio))
+(= 
+  (run-llm-tests $verbose)
+  (pyr! &self ../path/to/motto/test_llm_gate.py "run_tests" ((= verbose $verbose))))
+
+## MeTTaLog Extras
+
+
+(Imported member/2 1 superpose)
+; For the compiler to know that the member function will be a predicate 
+(Compiled member/2)
+; Declare member/2
+(: member/2 Nondeterministic)
+
+
+; MeTTa file loading
+`!(include! &self ../path/to/motto/test_llm_gate.metta)`
+
+; Http Files
+`!(include! &self https://somewhere/test_llm_gate.metta)`
+
+```
+; interfacing to Prolog
+(:> OptionsList (List (^ Expresson (Arity 2))))
+(:> ThreadOptions OptionsList)
+(:> ThreadId Number)
+(: make-thread (-> Expression ThreadOptions ThreadId))
+(: thread_create/3 Deterministic)
+;; (add-atom &self (Imported thread_create/3 2 make-thread))
+(= 
+  (make-thread $goal $options)
+  (let True 
+    (as-tf (thread_create! $goal $result $options))
+	$result))
+
+; returns a number and keeps going
+!(make-thread (shell! "xeyes") ((detached False)))
+
+```
+
+
+
+
