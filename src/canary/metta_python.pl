@@ -45,11 +45,26 @@ py_catch(Goal):- catch(Goal,E,(pybug(E=py_catch(Goal)),py_dump,trace,Goal)).
 %py_catch(Goal):- trace,catch(Goal,E,(pybug(E),py_dump)),!.
 py_dump:- py_call(traceback:print_exc()).
 
-py_is_module(M):- with_safe_argv(catch((py_call(M,X),py_type(X,module)),_,fail)).
+py_call_c(G):- py_catch(py_call(G)).
+py_call_c(G,R):- py_catch(py_call(G,R)).
 
-%import_metta(_Self,Module):- \+ py_is_module(Module), writeln( \+ py_is_module(Module)),fail.
-import_metta(Self,Module):- py_is_module(Module),!,self_extend_py(Self,Module).
-import_metta(Self,Filename):- include_metta(Self,Filename).
+py_is_module(M):-with_safe_argv(catch((
+ensure_mettalog_py,
+py_call(M,X),py_type(X,module)),_,fail)).
+
+import_metta(Self,Module):- py_is_module(Module),!,
+ must_det_ll(self_extend_py(Self,Module)),!.
+import_metta(Self,Filename):-
+  (\+ symbol(Filename); \+ exists_file(Filename)),!,
+  must_det_ll(with_wild_path(import_metta(Self),Filename)),!.
+import_metta(Self,RelFilename):-
+  must_det_ll((
+	 symbol(RelFilename),
+	 exists_file(RelFilename),
+	 absolute_file_name(RelFilename,Filename),
+	 directory_file_path(Directory, _, Filename),
+	 assert(metta_file(Self,Filename,Directory)),
+	 include_metta_directory_file(Self,Directory, Filename))).
 
 
 ensure_space_py(Space,GSpace):- py_is_object(Space),!,GSpace=Space.
