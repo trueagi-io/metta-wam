@@ -906,7 +906,6 @@ with_wild_path(Fnicate, Dir) :-  exists_directory(Dir),
   with_wild_path(Fnicate, PyFile).
 
 with_wild_path(Fnicate, File) :- !, with_wild_path_swi(Fnicate, File).
-
 with_wild_path(Fnicate, Dir) :-  exists_directory(Dir), !,
   must_det_ll((directory_files(Dir, Files),
   maplist(directory_file_path(Dir,Files),Paths),

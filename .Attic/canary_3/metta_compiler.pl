@@ -1,6 +1,6 @@
 % ==============================
-% MeTTa to Prolog transpilation (which uses the Host SWI-Prolog compiler)
-% Aimed at compiling/optimizing and transforming
+% Prolog to MeTTa transpilation (which uses the Host SWI-Prolog compiler)
+% This Prolog code block is mainly aimed at compiling/optimizing and transforming
 % Prolog predicates to functional equivalents and vice versa, with special attention
 % to handling different logical constructs and performing conversions between
 % functions and predicates.

@@ -146,6 +146,8 @@ pp_sex(V):- pp_sexi(V),!.
 % Various 'write_src' and 'pp_sex' rules are handling the writing of the source,
 % dealing with different types of values, whether they are lists, atoms, numbers, strings, compounds, or symbols.
 pp_sexi(V):- is_final_write(V),!.
+pp_sexi(V):- atomic(V),py_is_object(V),py_pp(V),!.
+pp_sexi(V):- once((py_is_object(V),py_to_pl(V,PL))),V\=@=PL,!,print(PL).
 pp_sexi(V):- is_dict(V),!,print(V).
 pp_sexi((USER:Body)) :- USER==user,!, pp_sex(Body).
 pp_sexi(V):- allow_concepts,!,with_concepts('False',pp_sex(V)),flush_output.

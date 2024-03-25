@@ -62,15 +62,16 @@ subst_args(Depth,Space,X,Y):-subst_args('=',_RetType,
 
 %subst_args0(Eq,RetType,Depth,_Slf,X,Y):- Depth<1,!,X=Y, (\+ trace_on_overflow-> true; reset_eval_num,debug(metta(eval))).
 subst_args0(Eq,RetType,_Dpth,_Slf,X,Y):- self_subst(X),!,Y=X.
-subst_args0(Eq,RetType,Depth,Self,X,Y):-
+subst_args0(Eq,RetType,Depth,Self,X,Y):- fail, % BUG?
   Depth2 is Depth-1,
   subst_args11(Eq,RetType,Depth,Self,X,M),
   (M\=@=X ->subst_args0(Eq,RetType,Depth2,Self,M,Y);Y=X).
 
-subst_args11(Eq,RetType,Depth,Self,X,Y):- \+ is_debugging((subst_args)),!,
+subst_args11(Eq,RetType,Depth,Self,X,Y):- fail, % \+ is_debugging_always((subst_args)),!,
   D1 is Depth-1,
   subst_args1(Eq,RetType,D1,Self,X,Y).
-subst_args11(Eq,RetType,Eq,RetType,Depth,Self,X,Y):-
+/*
+subst_args11(Eq,Eq,Depth,Self,X,Y):-
  notrace((
 
   flag(subst_args_num,EX,EX+1),
@@ -94,8 +95,7 @@ subst_args11(Eq,RetType,Eq,RetType,Depth,Self,X,Y):-
       if_t(DR<10,if_trace((subst_args),indentq(DR,EX,'<--',s(Ret)))))))))),
 
   (Ret\=@=retval(fail)->true;(rtrace(subst_args_00(Eq,RetType,D1,Self,X,Y)),fail)).
-
-
+*/
 
 :- discontiguous subst_args1/6.
 :- discontiguous subst_args2/6.

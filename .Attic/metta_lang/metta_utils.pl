@@ -1271,7 +1271,9 @@ end_of_file.
 
 %:- autoload(library(http/html_write),[html/3,print_html/1]).
 
+
 is_debugging(M):- \+ \+ debugging(M),!.
+is_debugging(_):- is_testing,!.
 %is_debugging(_):- menu_or_upper('B').
 
 debug_m(_,Tiny):- display_length(Tiny,Len),Len<30,!,pp(Tiny).
@@ -2480,13 +2482,13 @@ to_prop_name(Name,UName):- compound(Name),compound_name_arity(Name,F,_),!,to_pro
 to_prop_name(Name,UName):- to_case_breaks(Name,Breaks),xtis_to_atomic(Breaks,UName).
 
 xtis_to_atomic([xti(Str,upper),xti(StrL,lower)|Breaks],StrO):- string_upper(Str,Str),
-   atom_chars(Str,CharsList),append(Left,[U],CharsList),
-   name(S1,Left),atomic_list_concat([S1,'_',U,StrL],'',StrUL),!,
+   symbol_chars(Str,CharsList),append(Left,[U],CharsList),
+   name(S1,Left),symbolic_list_concat([S1,'_',U,StrL],'',StrUL),!,
    xtis_to_atomic([xti(StrUL,lower)|Breaks],StrO).
 xtis_to_atomic([],'').
 xtis_to_atomic([xti(Str,_)],Lower):- downcase_atom(Str,Lower).
 xtis_to_atomic([XTI|Breaks],Atomic):-
-  xtis_to_atomic([XTI],S1),xtis_to_atomic(Breaks,S2),!,atomic_list_concat([S1,S2],'_',Atomic).
+  xtis_to_atomic([XTI],S1),xtis_to_atomic(Breaks,S2),!,symbolic_list_concat([S1,S2],'_',Atomic).
 
 share_vars(Vs,Name=Value):- member(VName=VValue,Vs),VName==Name,!,(Value=VValue->true;trace_or_throw(cant(share_vars(Vs,Name=Value)))).
 share_vars(_,Name=_):- string_concat('_',_,Name),!. % Hide some vars
