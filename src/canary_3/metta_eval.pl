@@ -587,9 +587,6 @@ unify_enough(L,C):- into_list_args(L,LL),into_list_args(C,CC),unify_lists(CC,LL)
 unify_lists(L,L):-!.
 unify_lists([C|CC],[L|LL]):- unify_enough(L,C),!,unify_lists(CC,LL).
 
-equal_enough(R,V):- is_list(R),is_list(V),sort(R,RR),sort(V,VV),!,equal_enouf(RR,VV),!.
-equal_enough(R,V):- copy_term(R,RR),copy_term(V,VV),equal_enouf(R,V),!,R=@=RR,V=@=VV.
-
 %s_empty(X):- var(X),!.
 s_empty(X):- var(X),!,fail.
 is_empty('Empty').
@@ -609,6 +606,8 @@ equal_enough_for_test1(X,Y):- must_det_ll((subst_vars(X,XX),subst_vars(Y,YY))),!
 equal_enough_for_test2(X,Y):- equal_enough(X,Y).
 
 equal_enough(R,V):- copy_term(R,RR),copy_term(V,VV),equal_enough1(R,V),!,R=@=RR,V=@=VV.
+equal_enough(R,V):- is_list(R),is_list(V),sort(R,RR),sort(V,VV),!,equal_enouf(RR,VV),!.
+equal_enough(R,V):- copy_term(R,RR),copy_term(V,VV),equal_enouf(R,V),!,R=@=RR,V=@=VV.
 
 equal_enough1(R,V):- 
   is_list(R),is_list(V),sort(R,RR),sort(V,VV),!,

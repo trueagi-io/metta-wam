@@ -264,7 +264,8 @@ into_typed_args(Depth,Self,[T|TT],[M|MM],[Y|YY]):-
 into_typed_arg(_Dpth,Self,T,M,Y):- var(M),!,put_attr(M,metta_type,Self=T),put_attr(Y,metta_type,Self=T),Y=M.
 into_typed_arg(Depth,Self,T,M,Y):- into_typed_arg0(Depth,Self,T,M,Y)*->true;M=Y.
 
-into_typed_arg0(Depth,Self,T,M,Y):- var(T), !, get_type(Depth,Self,M,T),
+into_typed_arg0(Depth,Self,T,M,Y):- var(T), !, 
+  get_type(Depth,Self,M,T),
  (wants_eval_kind(T)->eval_args(Depth,Self,M,Y);Y=M).
 
 into_typed_arg0(Depth,Self,T,M,Y):- is_pro_eval_kind(T),!,eval_args(Depth,Self,M,Y).

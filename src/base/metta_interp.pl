@@ -934,7 +934,7 @@ op_decl('+', [ 'Number', 'Number' ], 'Number').
 op_decl(combine, [ X, X], X).
 
 op_decl('bind!', ['Symbol','%Undefined%'], 'EmptyType').
-op_decl('import!', ['Space','Atom'], 'EmptyType').
+op_decl('import!', ['hyperon::space::DynSpace','Atom'], 'EmptyType').
 op_decl('get-type', ['Atom'], 'Type').
 
 type_decl('Any').
@@ -944,9 +944,9 @@ type_decl('ErrorType').
 type_decl('Expression').
 type_decl('Number').
 type_decl('ReturnType').
-type_decl('Space').
+type_decl('hyperon::space::DynSpace').
 type_decl('Symbol').
-type_decl('MemoizedState').
+type_decl('StateMonad').
 type_decl('Type').
 type_decl('%Undefined%').
 type_decl('Variable').
