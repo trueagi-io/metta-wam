@@ -215,7 +215,7 @@ option_value_def(no_repeats,false).
 %option_value_def('time',false).
 option_value_def('test',false).
 option_value_def('html',false).
-option_value_def('python',false).
+option_value_def('python',true).
 %option_value_def('halt',false).
 option_value_def('doing_repl',false).
 option_value_def('test-retval',false).
@@ -2039,7 +2039,7 @@ do_loon:-
   \+ prolog_load_context(reloading,true),
   maplist(catch_red_ignore,[
 
-   %if_t(is_compiled,ensure_mettalog),
+   %if_t(is_compiled,ensure_mettalog_py),
           install_readline_editline,
 	% nts,
    metta_final,
