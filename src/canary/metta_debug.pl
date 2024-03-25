@@ -190,6 +190,7 @@ is_debugging(Flag):- debugging(metta(Flag),TF),!,TF==true.
 is_debugging(Flag):- debugging(Flag,TF),!,TF==true.
 is_debugging(Flag):- flag_to_var(Flag,Var),
    (option_value(Var,true)->true;(Flag\==Var -> is_debugging(Var))).
+%is_debugging(_Flag):- is_testing,!.
 
 % overflow = trace
 % overflow = fail

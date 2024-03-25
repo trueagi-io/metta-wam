@@ -455,11 +455,22 @@ eval_20(Eq,RetType,_Dpth,_Slf,['repl!'],Y):- !,  repl,check_returnval(Eq,RetType
 eval_20(Eq,RetType,Depth,Self,['!',Cond],Res):- !, call(eval(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(Eq,RetType,Depth,Self,['rtrace!',Cond],Res):- !, rtrace(eval(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(Eq,RetType,Depth,Self,['notrace!',Cond],Res):- !, quietly(eval(Eq,RetType,Depth,Self,Cond,Res)).
-eval_20(Eq,RetType,Depth,Self,['trace!',A,B],C):- !,
+eval_20(Eq,RetType,Depth,Self,['trace!',A,B],C):- !, % writeln(trace(A)),
+ 
+	 ignore(once((stream_property(S,file_no(2)),
+	 (is_list(A)->maplist(eval(Depth,Self),A,AA);A=AA),
+	 eval(Eq,RetType,Depth,Self,AA,AAA),	
+	 with_output_to(S,(format('~N'), write_src(AAA),format('~N')))))),
+
+  eval(Eq,RetType,Depth,Self,B,C).
+     
+eval_20(Eq,RetType,Depth,Self,['trace!',A,B],C):- !, % writeln(trace(A)),
 	 stream_property(S,file_no(2)),!,
 	 eval(Eq,RetType,Depth,Self,A,AA),	
 	 with_output_to(S,(format('~N'), write_src(AA),format('~N'))),
 	 eval(Eq,RetType,Depth,Self,B,C).
+	 
+	 
 eval_20(Eq,RetType,Depth,Self,['trace',Cond],Res):- !, with_debug(eval,eval(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(Eq,RetType,Depth,Self,['time!',Cond],Res):- !, time_eval(eval(Cond),eval(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(Eq,RetType,Depth,Self,['print',Cond],Res):- !, eval(Eq,RetType,Depth,Self,Cond,Res),format('~N'),print(Res),format('~N').
@@ -1302,9 +1313,15 @@ eval_failed(Depth,Self,T,TT):-
 
 finish_eval(_Dpth,_Slf,T,TT):- var(T),!,TT=T.
 finish_eval(_Dpth,_Slf,[],[]):-!.
-finish_eval(_Dpth,_Slf,[F|LESS],Res):- once(eval_selfless([F|LESS],Res)),fake_notrace([F|LESS]\==Res),!.
-%finish_eval(Depth,Self,[V|Nil],[O]):- Nil==[], once(eval(Eq,RetType,Depth,Self,V,O)),V\=@=O,!.
-finish_eval(Depth,Self,[H|T],[HH|TT]):- !, eval(Depth,Self,H,HH), finish_eval(Depth,Self,T,TT).
+finish_eval(_Dpth,_Slf,[F|LESS],Res):- 
+  once(eval_selfless([F|LESS],Res)),
+      fake_notrace([F|LESS]\==Res),!.
+%finish_eval(Depth,Self,[V|Nil],[O]):- Nil==[], 
+%   once(eval(Eq,RetType,Depth,Self,V,O)),V\=@=O,!.
+
+finish_eval(Depth,Self,[H|T],[HH|TT]):- !, 
+  eval(Depth,Self,H,HH), finish_eval(Depth,Self,T,TT).
+  
 finish_eval(Depth,Self,T,TT):- eval(Depth,Self,T,TT).
 
    %eval(Eq,RetType,Depth,Self,X,Y):- eval_20(Eq,RetType,Depth,Self,X,Y)*->true;Y=[].

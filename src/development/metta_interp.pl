@@ -106,8 +106,8 @@ is_compatio0:- is_mettalog,!,fail.
 is_compatio0:- !.
 
 keep_output:- is_mettalog,!.
-keep_output:- is_compatio,!,fail.
 keep_output:- is_testing,!.
+keep_output:- is_compatio,!,fail.
 
 
 :- volatile(original_user_output/1).
@@ -151,9 +151,6 @@ switch_to_mettarust:-
   set_option_value('test',false),
   set_output_stream.
   
-
-:- (is_mettalog->switch_to_mettalog;switch_to_mettarust).
-
 
 show_os_argv:- is_compatio,!.
 show_os_argv:- current_prolog_flag(os_argv,ArgV),write('; libswipl: '),writeln(ArgV).
@@ -227,7 +224,7 @@ option_value_def(no_repeats,false).
 %option_value_def('time',false).
 option_value_def('test',false).
 option_value_def('html',false).
-option_value_def('python',false).
+option_value_def('python',true).
 %option_value_def('halt',false).
 option_value_def('doing_repl',false).
 option_value_def('test-retval',false).
@@ -294,6 +291,8 @@ is_debug_like(debug, true).
 is_debug_like(nodebug, false).
 is_debug_like(silent, false).
 %is_debug_like(false, false).
+
+%:- (is_mettalog->switch_to_mettalog;switch_to_mettarust).
 
 set_is_unit_test(TF):-
   forall(option_value_def(A,B),set_option_value_interp(A,B)),
@@ -373,9 +372,9 @@ show_options_values:-
 % %%%% List Operations
 % ============================
 % Retrieve Head of the List
-'car-symbol'(List, Head):- eval_H(['car-symbol', List], Head).
+'car-atom'(List, Head):- eval_H(['car-atom', List], Head).
 % Retrieve Tail of the List
-'cdr-symbol'(List, Tail):- eval_H(['cdr-symbol', List], Tail).
+'cdr-atom'(List, Tail):- eval_H(['cdr-atom', List], Tail).
 % Construct a List
 'Cons'(Element, List, 'Cons'(Element, List)):- !.
 % Collapse List
@@ -532,7 +531,8 @@ get_flag_value(_,true).
    nop((forall(option_value_def(Opt,Default),set_option_value_interp(Opt,Default))))))).
 
 %process_option_value_def:- \+ option_value('python',false), skip(ensure_loaded(metta_python)).
-process_option_value_def:- \+ option_value('python',false), ensure_loaded(mettalog(metta_python)).
+process_option_value_def:- \+ option_value('python',false), ensure_loaded(mettalog(metta_python)), 
+  ensure_mettalog_py.
 process_option_value_def.
 
 
@@ -553,6 +553,9 @@ do_cmdline_load_metta(Phase,Self,Rest):-
   forall(process_option_value_def,true),
   cmdline_load_metta(Phase,Self,Rest),!,
   forall(process_late_opts,true).
+
+%load_metta_file(Self,Filemask):- symbol_concat(_,'.metta',Filemask),!, load_metta(Self,Filemask).
+%load_metta_file(_Slf,Filemask):- load_flybase(Filemask).
 
 catch_abort(From,Goal):-
    catch_abort(From,Goal,Goal).
@@ -876,6 +879,10 @@ assertion_hb(metta_atom(Self,[=,H,B]),Self,H,B).
 
 load_hook0(_,_):- \+ show_transpiler, \+ is_transpiling, !.
 load_hook0(Load,Assertion):- 
+       assertion_hb(Assertion,Self,H,B),
+       functs_to_preds([=,H,B],Preds),
+       assert_preds(Self,Load,Preds).
+load_hook0(Load,Assertion):- 
      assertion_hb(Assertion,Self,H,B),
      rtrace_on_error(compile_for_assert(H, B, Preds)),!,
      rtrace_on_error(assert_preds(Self,Load,Preds)).
@@ -1037,8 +1044,8 @@ asserted_metta_extra([=,[':',R,'P1'],['Arity',R,1]]).
 metta_anew1(Load,_OBO):- var(Load),trace,!.
 metta_anew1(Ch,OBO):-  metta_interp_mode(Ch,Mode), !, metta_anew1(Mode,OBO).
 metta_anew1(Load,OBO):- maybe_xform(OBO,XForm),!,metta_anew1(Load,XForm).
-metta_anew1(load,OBO):- OBO= metta_atom(Space,Atom),!,'add-symbol'(Space, Atom).
-metta_anew1(unload,OBO):- OBO= metta_atom(Space,Atom),!,'remove-symbol'(Space, Atom).
+metta_anew1(load,OBO):- OBO= metta_atom(Space,Atom),!,'add-atom'(Space, Atom).
+metta_anew1(unload,OBO):- OBO= metta_atom(Space,Atom),!,'remove-atom'(Space, Atom).
 
 metta_anew1(load,OBO):- !, 
   must_det_ll((load_hook(load,OBO),
@@ -1107,7 +1114,8 @@ combine_result(TF,_,TF):-!.
 
 do_metta1_e(_Self,_,exec(Exec)):- !,write_exec(Exec),!.
 do_metta1_e(_Self,_,[=,A,B]):- !, with_concepts(false,
-  (con_write('(= '), with_indents(false,write_src(A)), (is_list(B) -> connl ; true),
+  (con_write('(= '), with_indents(false,write_src(A)), 
+  (is_list(B) -> connl ; true),
    con_write(' '),with_indents(true,write_src(B)),con_write(')'))),connl.
 do_metta1_e(_Self,_LoadExec,Term):- write_src(Term),connl.
 
@@ -1128,11 +1136,13 @@ asserted_do_metta(Space,Load,Src):- Load==exec,!,do_metta_exec(python,Space,Src,
 asserted_do_metta(Space,Load,Src):- asserted_do_metta2(Space,Load,Src,Src).
 
 asserted_do_metta2(Space,Ch,Info,Src):- metta_interp_mode(Ch,Mode), !, asserted_do_metta2(Space,Mode,Info,Src).
-asserted_do_metta2(Self,Load,[TypeOp,Fn,Type], Src):- TypeOp == ':',  \+ is_list(Type),!,
+asserted_do_metta2(Self,Load,[TypeOp,Fn,Type], Src):- 
+ TypeOp == ':',  \+ is_list(Type),!,
  must_det_ll((
   color_g_mesg_ok('#ffa500',metta_anew(Load,Src,metta_atom(Self,[':',Fn,Type]))))),!.
 
-asserted_do_metta2(Self,Load,[TypeOp,Fn,TypeDecL], Src):- TypeOp == ':',!,
+asserted_do_metta2(Self,Load,[TypeOp,Fn,TypeDecL], Src):- 
+ TypeOp == ':',!,
  must_det_ll((
   decl_length(TypeDecL,Len),LenM1 is Len - 1, last_element(TypeDecL,LE),
   color_g_mesg_ok('#ffa500',metta_anew(Load,Src,metta_atom(Self,[':',Fn,TypeDecL]))),
@@ -1141,7 +1151,8 @@ asserted_do_metta2(Self,Load,[TypeOp,Fn,TypeDecL], Src):- TypeOp == ':',!,
   metta_anew1(Load,metta_params(Self,Fn,EachArg)),!,
   metta_anew1(Load,metta_last(Self,Fn,LE)))).
 
-asserted_do_metta2(Self,Load,[TypeOp,Fn,TypeDecL,RetType], Src):- TypeOp == ':',!,
+asserted_do_metta2(Self,Load,[TypeOp,Fn,TypeDecL,RetType], Src):- 
+ TypeOp == ':',!,
  must_det_ll((
   decl_length(TypeDecL,Len),
   append(TypeDecL,[RetType],TypeDecLRet),
@@ -1254,7 +1265,8 @@ call_sexpr(How,Self,Tax,_S,Out):-
     show_call(do_metta(python,NewHow,Self,Expr,Out)).
 
 do_metta(File,Load,Self,Cmt,Out):-
-  fail, if_trace(do_metta, fbug(do_metta(File,Load,Self,Cmt,Out))),fail.
+  fail, 
+  if_trace(do_metta, fbug(do_metta(File,Load,Self,Cmt,Out))),fail.
 
 do_metta(_File,_Load,_Self,In,Out):- var(In),!,In=Out.
 do_metta(_From,_Mode,_Self,end_of_file,'Empty'):- !. %, halt(7), writeln('\n\n% To restart, use: ?- repl.').

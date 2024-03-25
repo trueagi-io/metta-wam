@@ -172,7 +172,7 @@ subst_args_h(_Eq,_RetType,Depth,Self,PredDecl,Res):- !, finish_eval(Depth,Self,P
 
 
 :- discontiguous eval_20/6.
-:- discontiguous eval_20/6.
+:- discontiguous eval_40/6.
 %:- discontiguous eval_30fz/5.
 %:- discontiguous eval_31/5.
 %:- discontiguous eval_60/5.
@@ -269,7 +269,8 @@ expand_let_star([H|LetRest],Body,['let',V,E,NewBody]):-
     is_list(H), H = [V,E], !,
 	expand_let_star(LetRest,Body,NewBody).
 
-eval_20(Eq,RetType,Depth,Self,X,RetVal):- fail,
+eval_20(Eq,RetType,Depth,Self,X,RetVal):- 
+    fail,
 	once(expand_eval(X,XX)),X\==XX,!, 
 		%fbug(expand_eval(X,XX)),
 	    eval_20(Eq,RetType,Depth,Self,XX,RetVal).
@@ -441,6 +442,20 @@ eval_in_steps_or_same(Eq,RetType,_Dpth,_Slf,X,Y):- X=Y,check_returnval(Eq,RetTyp
 
   % (fail,make_empty(RetType,[],Template))).
 
+
+possible_type(_Self,_Var,_RetTypeV).
+
+eval_20(Eq,RetType,Depth,Self,['let',E,V,Body],OO):- var(V), nonvar(E), !,
+	  %(var(V)->true;trace),
+	  possible_type(Self,V,RetTypeV),
+	  eval(Eq,RetTypeV,Depth,Self,E,ER), V=ER,
+	  eval(Eq,RetType,Depth,Self,Body,OO).
+
+eval_20(Eq,RetType,Depth,Self,['let',V,E,Body],OO):- !, % var(V), nonvar(E), !,
+        %(var(V)->true;trace),
+        possible_type(Self,V,RetTypeV),
+        eval(Eq,RetTypeV,Depth,Self,E,ER), V=ER,
+        eval(Eq,RetType,Depth,Self,Body,OO).
 /*
 
 eval_20(Eq,RetType,Depth,Self,['let',V,E,Body],OO):- nonvar(V),nonvar(E),!,
@@ -563,13 +578,13 @@ eval_20(Eq,RetType,Depth,Self,['assertEqualToResult',X,Y],RetVal):- !,
 loonit_assert_source_tf(_Src,Goal,Check,TF):- \+ is_testing,!,
     reset_eval_num,
     call(Goal),
-    as_tf_tracabe(Check,TF),!.
+    as_tf(Check,TF),!.
 
 loonit_assert_source_tf(Src,Goal,Check,TF):-
     copy_term(Goal,OrigGoal),
     reset_eval_num,
    loonit_asserts(Src, time_eval('\n; EVAL TEST\n;',Goal), Check),
-    as_tf_tracabe(Check,TF),!,
+   as_tf(Check,TF),!,
   ignore((
           once((TF='True', trace_on_pass);(TF='False', trace_on_fail)),
      with_debug(metta(eval),time_eval('Trace',OrigGoal)))).
@@ -587,9 +602,6 @@ unify_enough(L,C):- into_list_args(L,LL),into_list_args(C,CC),unify_lists(CC,LL)
 %unify_lists(L,C):- \+ compound(C),!,L=C.
 unify_lists(L,L):-!.
 unify_lists([C|CC],[L|LL]):- unify_enough(L,C),!,unify_lists(CC,LL).
-
-equal_enough(R,V):- is_list(R),is_list(V),sort(R,RR),sort(V,VV),!,equal_enouf(RR,VV),!.
-equal_enough(R,V):- copy_term(R,RR),copy_term(V,VV),equal_enouf(R,V),!,R=@=RR,V=@=VV.
 
 %s_empty(X):- var(X),!.
 s_empty(X):- var(X),!,fail.
@@ -610,6 +622,8 @@ equal_enough_for_test1(X,Y):- must_det_ll((subst_vars(X,XX),subst_vars(Y,YY))),!
 equal_enough_for_test2(X,Y):- equal_enough(X,Y).
 
 equal_enough(R,V):- copy_term(R,RR),copy_term(V,VV),equal_enough1(R,V),!,R=@=RR,V=@=VV.
+equal_enough(R,V):- is_list(R),is_list(V),sort(R,RR),sort(V,VV),!,equal_enouf(RR,VV),!.
+equal_enough(R,V):- copy_term(R,RR),copy_term(V,VV),equal_enouf(R,V),!,R=@=RR,V=@=VV.
 
 equal_enough1(R,V):- 
   is_list(R),is_list(V),sort(R,RR),sort(V,VV),!,
@@ -659,7 +673,6 @@ set_last_error(_).
 
 eval_20(Eq,RetType,_Dpth,_Slf,['new-space'],Space):- !, 'new-space'(Space),check_returnval(Eq,RetType,Space).
 
-
 eval_20(Eq,RetType,Depth,Self,[Op,Space|Args],Res):- is_space_op(Op),!,
   eval_space_start(Eq,RetType,Depth,Self,[Op,Space|Args],Res).
 
@@ -689,7 +702,8 @@ eval_space(Eq,RetType,_Dpth,_Slf,['atom-replace',Space,Rem,Add],TF):- !,
  check_returnval(Eq,RetType,TF).
 
 eval_space(Eq,RetType,_Dpth,_Slf,['get-atoms',Space],Atom):- !,
-  ignore(RetType='Atom'),!, metta_atom(Space, Atom), 
+  ignore(RetType='Atom'),!, 
+  metta_atom(Space, Atom), 
   check_returnval(Eq,RetType,Atom).
 
 % Match-ELSE
@@ -1155,8 +1169,9 @@ get_metatype(Val,Want):- get_metatype0(Val,Was),!,Want=Was.
 % =================================================================
 nb_bind(Name,Value):- nb_current(Name,Was),same_term(Value,Was),!.
 nb_bind(Name,Value):- call_in_shared_space(nb_setval(Name,Value)),!.
+eval_20(_Eq,_RetType,_Dpth,_Slf,['extend-py!',Module],Res):-  !, 'extend-py!'(Module,Res).
 eval_20(Eq,RetType,Depth,Self,['import!',Other,File],RetVal):- !,
-	 (( into_space(Depth,Self,Other,Space), include_metta(Space,File),!,make_empty(RetType,Space,RetVal))),
+	 (( into_space(Depth,Self,Other,Space), import_metta(Space,File),!,make_empty(RetType,Space,RetVal))),
 	 check_returnval(Eq,RetType,RetVal). %RetVal=[].
 eval_20(Eq,RetType,Depth,Self,['include!',Other,File],RetVal):- !,
 	 (( into_space(Depth,Self,Other,Space), include_metta(Space,File),!,make_empty(RetType,Space,RetVal))),
@@ -1475,6 +1490,7 @@ often_fail.
 
 suggest_type(_RetType,_Bool).
 
+
 /*
 */
 /*
@@ -1567,7 +1583,6 @@ account_needs(N,Needs,[A|Args],[M|More]):- arg(N,Needs,What),!,
    account_needs(NP1,Needs,Args,More).
 
 :- nodebug(metta(call)).
-%allow_host_functions:- fail.
 allow_host_functions.
 
 s2ps(S,P):- S=='Nil',!,P=[].
