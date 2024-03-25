@@ -81,9 +81,13 @@ is_nonspecific_type('Atom').
 is_nonspecific_type('Any').
 
 %get_type(Depth,Self,Val,Type):- get_type01(Depth,Self,Val,Type).
-get_type(Depth,Self,Val,TypeO):- no_repeats(TypeT,(get_type9(Depth,Self,Val,Type),TypeT=Type)),Type=TypeO.
+get_type(Depth,Self,Var,TypeO):- var(Var),var(TypeO),!.
+get_type(Depth,Self,Val,TypeO):- no_repeats(TypeT,
+   (get_type9(Depth,Self,Val,Type),TypeT=Type)),
+     Type=TypeO.
 
 get_type9(_Dpth,_Slf,Expr,'hyperon::space::DynSpace'):- is_dynaspace(Expr),!.
+get_type9(Depth,Self,Val,Type):- \+ integer(Depth),!,get_type9(10,Self,Val,Type).
 get_type9(Depth,Self,Val,Type):- get_type0(Depth,Self,Val,Type).
 get_type9(Depth,Self,Val,Type):- get_type1(Depth,Self,Val,Type), ground(Type),Type\==[], Type\==Val,!.
 %get_type9(_Depth,_Self,Val,Type):- symbol(Val),atom_contains(Val,' '),!,Type='String'.
@@ -169,7 +173,7 @@ get_type03(Depth,Self,Expr,Type):-  Depth2 is Depth-1,
 
 get_type03(_Dpth,_Slf,Val,Type):- is_decl_type(Val),(Type=Val;Type='Type').
 
-get_type03(_Dpth,_Slf,Expr,'Expression'):- is_list(Expr),!.
+%get_type03(_Dpth,_Slf,Expr,'Expression'):- is_list(Expr),!.
 
 get_type03(Depth,Self,List,Types):- List\==[], is_list(List),
   Depth2 is Depth-1,maplist(get_type(Depth2,Self),List,Types).
@@ -237,49 +241,60 @@ as_prolog(Depth,Self,I,O):- is_list(I),!,maplist(as_prolog(Depth,Self),I,O).
 as_prolog(_Dpth,_Slf,I,I).
 
 
-try_adjust_arg_types(_Eq,RetType,Depth,Self,Params,X,Y):-
-  as_prolog(Depth,Self,X,M),
-  args_conform(Depth,Self,M,Params),!,
-  set_type(Depth,Self,Y,RetType),
-  into_typed_args(Depth,Self,Params,M,Y).
+%try_adjust_arg_types(Depth,Self,ParamTypes,X,Y):-  into_typed_args(Depth,Self,ParamTypes,X,Y).
 %adjust_args(Eq,RetType,Depth,Self,_,X,Y):- is_list(X), !, maplist(eval_args(Depth,Self),X,Y).
 %adjust_args(Eq,RetType,Depth,Self,_,X,Y):- is_list(X), !, maplist(as_prolog(Depth,Self),X,Y),!.
 
-adjust_args(_Eq,_RetType,_Dpth,Self,F,X,Y):- (X==[] ; is_special_op(Self,F); \+ iz_conz(X)),!,Y=X.
-adjust_args(Eq,RetType,Depth,Self,Op,X,Y):-
-    adjust_argsA(Eq,RetType,Depth,Self,Op,X,Y)*->true; adjust_argsB(Eq,RetType,Depth,Self,Op,X,Y).
+adjust_args_9(Eq,RetType,Res,NewRes,Depth,Self,Op,X,Y):-
+   adjust_args(Eq,RetType,Res,NewRes,Depth,Self,Op,X,Y).
 
-adjust_argsA(Eq,RetType,Depth,Self,Op,X,Y):-
-  %trace,
-  get_operator_typedef(Self,Op,Params,RetType),
-  try_adjust_arg_types(Eq,RetType,Depth,Self,Params,X,Y).
-%adjust_args(_Eq,_RetType,Depth,Self,_,X,Y):- as_prolog(Depth,Self,X,Y).
-adjust_argsB(_Eq,_RetType,_Depth,_Self,_,X,Y):- X = Y.
+adjust_args(_Eq,_RetType,Res,Res,_Dpth,Self,F,X,Y):- (X==[] ; is_special_op(Self,F); \+ iz_conz(X)),!,Y=X.
+adjust_args(Eq,RetType,Res,NewRes,Depth,Self,Op,X,Y):-
+    adjust_argsA(Eq,RetType,Res,NewRes,Depth,Self,Op,X,Y)*->true; 
+    adjust_argsB(Eq,RetType,Res,NewRes,Depth,Self,Op,X,Y).
+
+adjust_argsA(Eq,RetType,Res,NewRes,Depth,Self,Op,X,Y):-
+  get_operator_typedef(Self,Op,ParamTypes,RetType),
+  (nonvar(NewRes)->CRes=NewRes;CRes=Res),
+  args_conform(Depth,Self,[CRes|X],[RetType|ParamTypes]),
+  into_typed_args(Depth,Self,[RetType|ParamTypes],[Res|X],[NewRes|Y]).
+
+adjust_argsB(Eq,_RetType,Res,Res,Depth,Self,_,Args,Adjusted):- is_list(Args),!, 
+  maplist(eval_1_arg(Eq,_,Depth,Self),Args,Adjusted).
+adjust_argsB(_Eq,_RetType,Res,Res,Depth,Self,_,X,Y):- as_prolog(Depth,Self,X,Y),!.
+
+eval_1_arg(Eq,ReturnType,Depth,Self,Arg,Adjusted):-
+  eval(Eq,ReturnType,Depth,Self,Arg,Adjusted)*->true;Arg=Adjusted.
 
 into_typed_args(_Dpth,_Slf,T,M,Y):- (\+ iz_conz(T); \+ iz_conz(M)),!, M=Y.
 into_typed_args(Depth,Self,[T|TT],[M|MM],[Y|YY]):-
   into_typed_arg(Depth,Self,T,M,Y),
   into_typed_args(Depth,Self,TT,MM,YY).
 
-into_typed_arg(_Dpth,Self,T,M,Y):- var(M),!,put_attr(M,metta_type,Self=T),put_attr(Y,metta_type,Self=T),Y=M.
+into_typed_arg(_Dpth,Self,T,M,Y):- var(M),!,Y=M, nop(put_attr(M,metta_type,Self=T)).
 into_typed_arg(Depth,Self,T,M,Y):- into_typed_arg0(Depth,Self,T,M,Y)*->true;M=Y.
 
-into_typed_arg0(Depth,Self,T,M,Y):- var(T), !, get_type(Depth,Self,M,T),
- (wants_eval_kind(T)->eval_args(Depth,Self,M,Y);Y=M).
+into_typed_arg0(Depth,Self,T,M,Y):- var(T), !, 
+ must_det_ll((get_type(Depth,Self,M,T),
+ (wants_eval_kind(T)->eval_args(Depth,Self,M,Y);Y=M))).
 
 into_typed_arg0(Depth,Self,T,M,Y):- is_pro_eval_kind(T),!,eval_args(Depth,Self,M,Y).
 into_typed_arg0(Depth,Self,T,M,Y):- ground(M),!, \+ arg_violation(Depth,Self,M,T),Y=M.
 into_typed_arg0(_Dpth,_Slf,T,M,Y):- is_non_eval_kind(T),!,M=Y.
 into_typed_arg0(Depth,Self,_,M,Y):- eval_args(Depth,Self,M,Y).
 
-set_type(Depth,Self,Var,Type):- nop(set_type(Depth,Self,Var,Type)),!.
-set_type(Depth,Self,Var,Type):- get_type(Depth,Self,Var,Was)
+wants_eval_kind(T):- nonvar(T), is_pro_eval_kind(T),!.
+wants_eval_kind(_):- true.
+%set_type(Depth,Self,Var,Type):- nop(set_type(Depth,Self,Var,Type)),!.
+/*
+set_type(Depth,Self,Var,Type):- var(Var),!, put_attr(Var,metta_type,Self=Type).
+set_type(Depth,Self,Var,Type):- symbol(Var), freeze(Was,W\=['->'|_], get_type(Depth,Self,Var,Was).
    *->Was=Type
-   ; if_t(var(Var),put_attr(Var,metta_type,Self=Type)).
-
+   ; if_t(var(Var),).
+*/
+metta_type:attr_unify_hook(Self=Type,NewValue):- attvar(NewValue),!,put_attr(NewValue,metta_type,Self=Type).
 metta_type:attr_unify_hook(Self=Type,NewValue):-
-   get_type(20,Self,NewValue,Was),
-   can_assign(Was,Type).
+   get_type(20,Self,NewValue,Was), !, can_assign(Was,Type).
 
 can_assign(Was,Type):- Was=Type,!.
 can_assign(Was,Type):- (is_nonspecific_type(Was);is_nonspecific_type(Type)),!.

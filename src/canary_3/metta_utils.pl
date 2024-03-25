@@ -296,9 +296,10 @@ must_det_ll1(P1,X):-
   strip_module(X,M,P),functor(P,F,A),setup_call_cleanup(nop(trace(M:F/A,+fail)),(must_not_error(call(P1,X))*->true;md_failed(P1,X)),
     nop(trace(M:F/A,-fail))),!.
 
+ugtrace(G):- ggtrace(G).
 ugtrace(_):-  is_testing, !, ignore(give_up(5)), throw('$aborted').
 ugtrace(G):-  notrace,trace,rtrace(G).
-%ugtrace(G):- ggtrace(G).
+
 
 %must_not_error(G):- must(once(G)).
 
@@ -1271,9 +1272,7 @@ end_of_file.
 
 %:- autoload(library(http/html_write),[html/3,print_html/1]).
 
-
-is_debugging(M):- \+ \+ debugging(M),!.
-is_debugging(_):- is_testing,!.
+is_debugging(M):- nop( \+ \+ debugging(M)),!.
 %is_debugging(_):- menu_or_upper('B').
 
 debug_m(_,Tiny):- display_length(Tiny,Len),Len<30,!,pp(Tiny).

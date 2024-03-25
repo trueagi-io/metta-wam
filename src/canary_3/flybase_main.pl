@@ -900,13 +900,7 @@ with_wild_path(Fnicate, Dir) :-  is_scryer, symbol(Dir), !, must_det_ll((path_ch
 with_wild_path(Fnicate, Chars) :-  \+ is_scryer, \+ symbol(Chars), !, must_det_ll((name(Atom,Chars), with_wild_path(Fnicate, Atom))).
 
 with_wild_path(Fnicate, File) :- exists_file(File), !, must_det_ll(( call(Fnicate, File))).
-
-with_wild_path(Fnicate, Dir) :-  exists_directory(Dir),
-  absolute_file_name('__init__.py', PyFile, [access(read), file_errors(fail), relative_to(Dir)]),
-  with_wild_path(Fnicate, PyFile).
-
 with_wild_path(Fnicate, File) :- !, with_wild_path_swi(Fnicate, File).
-
 with_wild_path(Fnicate, Dir) :-  exists_directory(Dir), !,
   must_det_ll((directory_files(Dir, Files),
   maplist(directory_file_path(Dir,Files),Paths),
