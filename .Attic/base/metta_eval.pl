@@ -78,7 +78,7 @@ do_expander(':',_,X,Y):- !, get_type(X,Y)*->X=Y.
 'get_type'(Arg,Type):- 'get-type'(Arg,Type).
 
 
-eval_true(X):- \+ iz_conz(X), callable(X), call(X).
+eval_true(X):- \+ iz_conz(X), callable(X),as_tf(X,TF),!,TF=='True'.
 eval_true(X):- eval_args(X,Y), once(var(Y) ; \+ is_False(Y)).
 
 eval_args(X,Y):- current_self(Self), eval_args(100,Self,X,Y).
@@ -235,10 +235,24 @@ eval_20(=,Type,_,_,['coerce',Type,Value],Result):- !, coerce(Type,Value,Result).
 % =================================================================
 % =================================================================
 % =================================================================
-%  LET*
+%  LET/LET*
 % =================================================================
 % =================================================================
 % =================================================================
+
+
+possible_type(_Self,_Var,_RetTypeV).
+
+let_equals(V,ER):- V=ER,!.
+let_equals(V,ER):- V=~ER.
+
+eval_20(Eq,RetType,Depth,Self,['let',V,E,Body],OO):- !, % var(V), nonvar(E), !,
+		%(var(V)->true;trace),
+		possible_type(Self,V,RetTypeV),
+		((eval(Eq,RetTypeV,Depth,Self,E,ER), let_equals(V,ER))*->
+		   eval(Eq,RetType,Depth,Self,Body,OO);
+			make_empty(RetType,[], OO)).
+
 
 
 	eval_20(Eq,RetType,Depth,Self,['let*',Lets,Body],RetVal):-
@@ -255,6 +269,7 @@ expand_let_star([H|LetRest],Body,['let',V,E,NewBody]):-
 	expand_let_star(LetRest,Body,NewBody).
 
 eval_20(Eq,RetType,Depth,Self,X,RetVal):-
+    fail,
 	once(expand_eval(X,XX)),X\==XX,!, 
 		%fbug(expand_eval(X,XX)),
 	    eval_20(Eq,RetType,Depth,Self,XX,RetVal).
@@ -554,7 +569,7 @@ eval_20(Eq,RetType,Depth,Self,['assertNotEqual',X,Y],RetVal):- !,
 eval_20(Eq,RetType,Depth,Self,['assertEqualToResult',X,Y],RetVal):- !,
    loonit_assert_source_tf(
         ['assertEqualToResult',X,Y],
-        (bagof_eval(Eq,RetType,Depth,Self,X,XX), sort(Y,YY)),
+        (bagof_eval(Eq,RetType,Depth,Self,X,XX), =(Y,YY)),
          equal_enough_for_test(XX,YY), TF),
   (TF=='True'->make_empty(RetType,RetVal);RetVal=['Error'(XX,expected(YY))]).
 
@@ -661,9 +676,9 @@ eval_20(Eq,RetType,_Dpth,_Slf,['new-space'],Space):- !, 'new-space'(Space),check
 eval_20(Eq,RetType,Depth,Self,[Op,Space|Args],Res):- is_space_op(Op),!,
   eval_space_start(Eq,RetType,Depth,Self,[Op,Space|Args],Res).
 
-
 eval_space_start(Eq,RetType,_Depth,_Self,[_Op,_Other,Atom],Res):-
-  (Atom == [] ;  Atom =='Empty';  Atom =='Nil'),!,make_empty(RetType,'False',Res),check_returnval(Eq,RetType,Res).
+  (Atom == [] ;  Atom =='Empty';  Atom =='Nil'),!,
+  make_empty(RetType,'False',Res),check_returnval(Eq,RetType,Res).
 
 eval_space_start(Eq,RetType,Depth,Self,[Op,Other|Args],Res):-
   into_space(Depth,Self,Other,Space),
@@ -678,16 +693,17 @@ eval_space(Eq,RetType,_Dpth,_Slf,['remove-atom',Space,PredDecl],Res):- !,
 
 eval_space(Eq,RetType,_Dpth,_Slf,['atom-count',Space],Count):- !,
     ignore(RetType='Number'),ignore(Eq='='),
-    findall(Atom, get_metta_atom_from(Space, Atom),Atoms),
-    length(Atoms,Count).
+	'atom-count'(Space, Count).
+    %findall(Atom, metta_atom(Space, Atom),Atoms),
+    %length(Atoms,Count).
 
 eval_space(Eq,RetType,_Dpth,_Slf,['atom-replace',Space,Rem,Add],TF):- !,
    copy_term(Rem,RCopy), as_tf((metta_atom_iter_ref(Space,RCopy,Ref), RCopy=@=Rem,erase(Ref), do_metta(Space,load,Add)),TF),
  check_returnval(Eq,RetType,TF).
 
 eval_space(Eq,RetType,_Dpth,_Slf,['get-atoms',Space],Atom):- !,
-  ignore(RetType='Atom'), 
-  get_metta_atom_from(Space, Atom), 
+  ignore(RetType='Atom'),!, 
+  metta_atom(Space, Atom), 
   check_returnval(Eq,RetType,Atom).
 
 % Match-ELSE
@@ -696,9 +712,11 @@ eval_space(Eq,RetType,Depth,Self,['match',Other,Goal,Template,Else],Template):- 
        \+ make_empty(RetType,[],Template))*->true;Template=Else).
 % Match-TEMPLATE
 
-eval_space(Eq,_RetType,Depth,Self,['match',Other,Goal,Template],Res):- !,
+eval_space(Eq,RetType,Depth,Self,['match',Other,Goal,Template],Res):- !,
    metta_atom_iter(Eq,Depth,Self,Other,Goal),
-   Template=Res.
+   Depth2 is Depth-1,
+   (eval(Eq,RetType,Depth2,Self,Template,Res)*->true;Template=Res).
+   
 
 %metta_atom_iter(Eq,_Depth,_Slf,Other,[Equal,[F|H],B]):- Eq == Equal,!,  % trace,
 %   metta_defn(Eq,Other,[F|H],B).
@@ -714,20 +732,18 @@ metta_atom_iter(Eq,Depth,Self,Other,[And|Y]):- atom(And), is_comma(And),!,
   (Y==[] -> true ;
     ( D2 is Depth -1, Y = [H|T],
        metta_atom_iter(Eq,D2,Self,Other,H),metta_atom_iter(Eq,D2,Self,Other,[And|T]))).
+metta_atom_iter(_Eq,_Depth,_Slf,Other,X):- dcall0000000000(metta_atom(Other,X)).
 
 %metta_atom_iter(Eq,Depth,_Slf,Other,X):- dcall0000000000(eval_args_true(Eq,_RetType,Depth,Other,X)).
-metta_atom_iter(Eq,Depth,Self,Other,X):-
-  %copy_term(X,XX),
-  dcall0000000000(metta_atom_true(Eq,Depth,Self,Other,XX)), X=XX.
+ % dcall0000000000(metta_atom_true(Eq,_RetType,Depth,Other,XX)), X=XX.
 
-
+/*
 eval_args_true_r(Eq,RetType,Depth,Self,X,TF1):-
   ((eval_ne(Eq,RetType,Depth,Self,X,TF1),  \+  is_False(TF1));
      ( \+  is_False(TF1),metta_atom_true(Eq,Depth,Self,Self,X))).
 
+*/
 eval_args_true(Eq,RetType,Depth,Self,X):-
- % can_be_ok(eval_args_true,X),
- % metta_atom_true(Eq,Depth,Self,Self,X);
    (nonvar(X),eval_ne(Eq,RetType,Depth,Self,X,TF1),  \+  is_False(TF1)).
 
 metta_atom_true(Eq,_Dpth,_Slf,Other,H):-
@@ -1570,7 +1586,6 @@ account_needs(N,Needs,[A|Args],[M|More]):- arg(N,Needs,What),!,
    account_needs(NP1,Needs,Args,More).
 
 :- nodebug(metta(call)).
-%allow_host_functions:- fail.
 allow_host_functions.
 
 s2ps(S,P):- S=='Nil',!,P=[].

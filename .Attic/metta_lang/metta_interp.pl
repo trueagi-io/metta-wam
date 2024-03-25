@@ -1158,7 +1158,7 @@ asserted_do_metta2(Self,Load,[EQ,Head,Result], Src):- EQ=='=', !,
 
 asserted_do_metta2(Self,Load,PredDecl, Src):-
    ignore(discover_head(Self,Load,PredDecl)),
-   color_g_mesg_ok('#ffa500',metta_anew(Load,Src,metta_atom(Self,PredDecl))).
+   wots(_,color_g_mesg_ok('#ffa500',(metta_anew(Load,Src,metta_atom(Self,PredDecl))))).
 
 
 always_exec(exec(W)):- !, is_list(W), always_exec(W).

@@ -175,7 +175,8 @@ is_nb_space(G):- nonvar(G), is_as_nb_space(G).
 % Pattern Matching with an else branch
 'match'(Environment, Pattern, Template, ElseBranch, Result):- eval_args(['match', Environment, Pattern, Template, ElseBranch], Result).
 % Pattern Matching without an else branch
-'match'(Environment, Pattern, Template, Result):- eval_args(['match', Environment, Pattern, Template], Result).
+'match'(Environment, Pattern, Template, Result):- 
+  eval_args(['match', Environment, Pattern, Template], Result).
 %'match'(_Environment, Pattern, Template, Result):- callable(Pattern),!, call(Pattern),Result=Template.
 %'match'(_Environment, Pattern, Template, Result):- !, is_True(Pattern),Result=Template.
 
@@ -291,7 +292,7 @@ ensure_space(_N,_V):- fail.
 % ===============================
 %dout(space,Call):- skip(Call).
 if_metta_debug(Goal):- getenv('VSPACE_VERBOSE','2'),!,ignore(call(Goal)).
-%if_metta_debug(_):-!.
+if_metta_debug(_):-!.
 if_metta_debug(Goal):- !,ignore(call(Goal)).
 dout(_,_):-!.
 dout(W,Term):- notrace(if_metta_debug((format('~N; ~w ~@~n',[W,write_src(Term)])))).

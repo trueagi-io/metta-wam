@@ -27,11 +27,12 @@ import traceback
 from mettalog import *
 
 # Global Variables
+deref_op = False
 VSPACE_VERBOSE = os.environ.get("VSPACE_VERBOSE")
 # 0 = for scripts/demos
 # 1 = developer
 # 2 = debugger
-verbose = 0
+verbose = 1
 if VSPACE_VERBOSE is not None:
     try: verbose = int(VSPACE_VERBOSE) # Convert it to an integer
     except ValueError: ""
@@ -50,9 +51,6 @@ def print_l_cmt(Level, obj):
 print_l_cmt(2, f";; ...doing {__file__}...{__package__} name={__name__}")
 
 
-
-#print(";; ...doing...",__name__)
-deref_op = False
 
 try: from typing_extensions import *
 except ImportError as e: 
@@ -601,11 +599,11 @@ def metta_register_v(metta):
         if not metta is None:
             if not isinstance(metta, MeTTaLog):
                 realMetta = metta
-            register_vspace_atoms_for_ra(realMetta)
   #get_metta().set_cmetta(metta)
   #print(";;", metta.pymods)
         #print(";;", get_metta().pymods)
 
+        return register_vspace_atoms_for_ra(realMetta)
     except Exception as e:
         if verbose >= 0: print_exception_stack(e)
 
@@ -1940,7 +1938,7 @@ def load_functions_ext():
     if did_load_functions_ext is not None: return did_load_functions_ext
     did_load_functions_ext = {}
     print_l_cmt(1, f"Load Ext functions")
-    did_load_functions_ext = load_functions0("hyperon.stdlib", did_load_functions_ext)
+    #did_load_functions_ext = load_functions0("hyperon.stdlib", did_load_functions_ext)
     did_load_functions_ext = load_functions0("mettalog", did_load_functions_ext)
     #did_load_functions_ext = load_functions0(f"{__file__}", did_load_functions_ext)
     global op_registry_atoms

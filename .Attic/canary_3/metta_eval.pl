@@ -906,11 +906,11 @@ eval_20(_Eq,RetType,Depth,Self,['nop',Expr], Empty):- !,
   make_empty(RetType,[], Empty).
 
 eval_20(Eq,RetType,Depth,Self,['do-all',Expr], Empty):- !,
-	 forall(eval(Eq,_RetType2,Depth,Self,Expr,_),true),
-	 %eval_ne(Eq,_RetType2,Depth,Self,Expr,_),!,
+	 forall(eval(Eq,_RetType2,Depth,Self,Expr,_),true),	 
 	 make_empty(RetType,[],Empty).
 % should this be calling backtracking on the first success?
 eval_20(Eq,RetType,Depth,Self,['do',Expr], Empty):- !,
+  %eval(Eq,_RetType2,Depth,Self,Expr,_),!,
   forall(eval(Eq,_RetType2,Depth,Self,Expr,_),true),
   make_empty(RetType,[],Empty).
 
