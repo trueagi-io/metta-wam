@@ -512,7 +512,8 @@ get_flag_value(_,true).
    nop((forall(option_value_def(Opt,Default),set_option_value_interp(Opt,Default))))))).
 
 %process_option_value_def:- \+ option_value('python',false), skip(ensure_loaded(metta_python)).
-process_option_value_def:- \+ option_value('python',false), ensure_loaded(mettalog(metta_python)).
+process_option_value_def:- \+ option_value('python',false), ensure_loaded(mettalog(metta_python)), 
+  ensure_mettalog_py.
 process_option_value_def.
 
 

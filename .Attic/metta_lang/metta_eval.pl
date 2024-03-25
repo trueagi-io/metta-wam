@@ -1590,9 +1590,9 @@ eval_84(Eq,RetType,Depth,Self,PredDecl,Res):-
     eval_60(Eq,RetType,Depth,Self,PredDecl,Res).
 
 
-eval_85(Eq,RetType,Depth,Self,PredDecl,Res):- fail,
-  is_rust_operation(PredDecl),!, % run
-  must_det_ll((rust_metta_run(exec(PredDecl),Res),
+eval_85(Eq,RetType,Depth,Self,[H|PredDecl],Res):- fail,
+  is_rust_operation([H|PredDecl]),!, % run
+  must_det_ll((rust_metta_run(exec([H|PredDecl]),Res),
   nop(write_src(res(Res))))).
 
 eval_85(Eq,RetType,Depth,Self,PredDecl,Res):-
@@ -1624,6 +1624,7 @@ catch_nowarn(G):- quietly(catch_err(G,error(_,_),fail)).
 
 
 as_tf(G,TF):-  G\=[_|_], catch_nowarn((call(G)*->TF='True';TF='False')).
+as_tf_tracabe(G,TF):-  G\=[_|_], ((call(G)*->TF='True';TF='False')).
 %eval_selfless_1(['==',X,Y],TF):- as_tf(X=:=Y,TF),!.
 %eval_selfless_1(['==',X,Y],TF):- as_tf(X=@=Y,TF),!.
 
