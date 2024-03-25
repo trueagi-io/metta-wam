@@ -1,0 +1,29 @@
+(.: ((((sheep --> (IntSet see)) &/ (^ count)) =/> (sheep --> (IntSet counted))) (1.0 0.9)))
+(time := 1)
+(time := 2)
+(.: ((sheep --> (IntSet white)) (1.0 0.9)))
+(time := 3)
+(.: (((ExtSet instance1) --> (IntSet white)) (1.0 0.9)))
+(time := 4)
+(.: (((ExtSet instance1) --> (IntSet see)) (1.0 0.9)))
+(time := 5)
+(!: ((sheep --> (IntSet counted)) (1.0 0.9)))
+(time := 6)
+[()]
+[()]
+[]
+[((concepts ()) (currentTime 2) (evidentialBase 2) (FIFO ((Event ((((sheep --> (IntSet see)) &/ (^ count)) =/> (sheep --> (IntSet counted))) (1.0 0.9)) (1 (1) (1 1.0))))) (tempbst (Event ((((sheep --> (IntSet see)) &/ (^ count)) =/> (sheep --> (IntSet counted))) (1.0 0.9)) (1 (1) (1 1.0)))) (belief_events ()) (goal_events ()))]
+[]
+[((concepts ()) (currentTime 3) (evidentialBase 3) (FIFO ((Event ((((sheep --> (IntSet see)) &/ (^ count)) =/> (sheep --> (IntSet counted))) (1.0 0.9)) (1 (1) (1 1.0))))) (tempbst ()) (belief_events ()) (goal_events ()))]
+[]
+[((concepts ()) (currentTime 4) (evidentialBase 4) (FIFO ((Event ((sheep --> (IntSet white)) (1.0 0.9)) (3 (3) (3 1.0))) (Event ((((sheep --> (IntSet see)) &/ (^ count)) =/> (sheep --> (IntSet counted))) (1.0 0.9)) (1 (1) (1 1.0))))) (tempbst (Event ((sheep --> (IntSet white)) (1.0 0.9)) (3 (3) (3 1.0)))) (belief_events ()) (goal_events ()))]
+[]
+[((concepts ()) (currentTime 5) (evidentialBase 5) (FIFO ((Event (((ExtSet instance1) --> (IntSet white)) (1.0 0.9)) (4 (4) (4 1.0))) (Event ((sheep --> (IntSet white)) (1.0 0.9)) (3 (3) (3 1.0))) (Event ((((sheep --> (IntSet see)) &/ (^ count)) =/> (sheep --> (IntSet counted))) (1.0 0.9)) (1 (1) (1 1.0))))) (tempbst (Event (((ExtSet instance1) --> (IntSet white)) (1.0 0.9)) (4 (4) (4 1.0)))) (belief_events ()) (goal_events ()))]
+[]
+[((concepts ()) (currentTime 6) (evidentialBase 6) (FIFO ((Event (((ExtSet instance1) --> (IntSet see)) (1.0 0.9)) (5 (5) (5 1.0))) (Event (((ExtSet instance1) --> (IntSet white)) (1.0 0.9)) (4 (4) (4 1.0))) (Event ((sheep --> (IntSet white)) (1.0 0.9)) (3 (3) (3 1.0))))) (tempbst (Event (((ExtSet instance1) --> (IntSet see)) (1.0 0.9)) (5 (5) (5 1.0)))) (belief_events ()) (goal_events ()))]
+[()]
+[()]
+[]
+[((concepts ()) (currentTime 7) (evidentialBase 7) (FIFO ((Event (((ExtSet instance1) --> (IntSet see)) (1.0 0.9)) (5 (5) (5 1.0))) (Event (((ExtSet instance1) --> (IntSet white)) (1.0 0.9)) (4 (4) (4 1.0))) (Event ((sheep --> (IntSet white)) (1.0 0.9)) (3 (3) (3 1.0))))) (tempbst ()) (belief_events ()) (goal_events ()))]
+3.60user 0.00system 0:03.60elapsed 100%CPU (0avgtext+0avgdata 47964maxresident)k
+0inputs+0outputs (0major+7109minor)pagefaults 0swaps

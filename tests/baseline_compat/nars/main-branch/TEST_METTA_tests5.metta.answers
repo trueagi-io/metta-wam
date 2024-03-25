@@ -1,8 +1,0 @@
-(.: ((((sheep --> (IntSet see)) &/ (^ count)) =/> (sheep --> (IntSet counted))) (1.0 0.9)))
-thread '<unnamed>' panicked at lib/src/metta/types.rs:142:22:
-Incorrect function type: (->)
-note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
-fatal runtime error: Rust panics must be rethrown
-Command terminated by signal 6
-0.57user 0.02system 0:00.59elapsed 99%CPU (0avgtext+0avgdata 37724maxresident)k
-0inputs+0outputs (0major+4557minor)pagefaults 0swaps

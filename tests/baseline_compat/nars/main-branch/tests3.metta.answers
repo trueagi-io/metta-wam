@@ -1,0 +1,38 @@
+(.: (((corridorIn &/ (^ forward)) =/> doorAt) (1.0 0.9)))
+(time := 1)
+(.: (((windowAt &/ (^ open)) =/> Outside) (1.0 0.9)))
+(time := 2)
+(.: (((doorAt &/ (^ open)) =/> Outside) (1.0 0.9)))
+(time := 3)
+(.: (corridorIn (1.0 0.9)))
+(time := 4)
+(!: (Outside (1.0 0.9)))
+(time := 5)
+(time := 6)
+(time := 7)
+(.: (doorAt (1.0 0.9)))
+(time := 8)
+(!: (Outside (1.0 0.9)))
+(time := 9)
+[()]
+[()]
+[]
+[((concepts ()) (currentTime 2) (evidentialBase 2) (FIFO ((Event (((corridorIn &/ (^ forward)) =/> doorAt) (1.0 0.9)) (1 (1) (1 1.0))))) (tempbst (Event (((corridorIn &/ (^ forward)) =/> doorAt) (1.0 0.9)) (1 (1) (1 1.0)))) (belief_events ()) (goal_events ()))]
+[]
+[((concepts ()) (currentTime 3) (evidentialBase 3) (FIFO ((Event (((windowAt &/ (^ open)) =/> Outside) (1.0 0.9)) (2 (2) (2 1.0))) (Event (((corridorIn &/ (^ forward)) =/> doorAt) (1.0 0.9)) (1 (1) (1 1.0))))) (tempbst (Event (((windowAt &/ (^ open)) =/> Outside) (1.0 0.9)) (2 (2) (2 1.0)))) (belief_events ()) (goal_events ()))]
+[]
+[((concepts ()) (currentTime 4) (evidentialBase 4) (FIFO ((Event (((doorAt &/ (^ open)) =/> Outside) (1.0 0.9)) (3 (3) (3 1.0))) (Event (((windowAt &/ (^ open)) =/> Outside) (1.0 0.9)) (2 (2) (2 1.0))) (Event (((corridorIn &/ (^ forward)) =/> doorAt) (1.0 0.9)) (1 (1) (1 1.0))))) (tempbst (Event (((doorAt &/ (^ open)) =/> Outside) (1.0 0.9)) (3 (3) (3 1.0)))) (belief_events ()) (goal_events ()))]
+[]
+[((concepts ()) (currentTime 5) (evidentialBase 5) (FIFO ((Event (corridorIn (1.0 0.9)) (4 (4) (4 1.0))) (Event (((doorAt &/ (^ open)) =/> Outside) (1.0 0.9)) (3 (3) (3 1.0))) (Event (((windowAt &/ (^ open)) =/> Outside) (1.0 0.9)) (2 (2) (2 1.0))))) (tempbst (Event (corridorIn (1.0 0.9)) (4 (4) (4 1.0)))) (belief_events ()) (goal_events ()))]
+[]
+[((concepts ()) (currentTime 6) (evidentialBase 6) (FIFO ((Event (corridorIn (1.0 0.9)) (4 (4) (4 1.0))) (Event (((doorAt &/ (^ open)) =/> Outside) (1.0 0.9)) (3 (3) (3 1.0))) (Event (((windowAt &/ (^ open)) =/> Outside) (1.0 0.9)) (2 (2) (2 1.0))))) (tempbst ()) (belief_events ()) (goal_events ()))]
+[(BestDecision 6 ())]
+[((concepts ()) (currentTime 7) (evidentialBase 7) (FIFO ((Event (corridorIn (1.0 0.9)) (4 (4) (4 1.0))) (Event (((doorAt &/ (^ open)) =/> Outside) (1.0 0.9)) (3 (3) (3 1.0))) (Event (((windowAt &/ (^ open)) =/> Outside) (1.0 0.9)) (2 (2) (2 1.0))))) (tempbst ()) (belief_events ()) (goal_events ()))]
+[(BestDecision 7 ())]
+[((concepts ()) (currentTime 8) (evidentialBase 8) (FIFO ((Event (corridorIn (1.0 0.9)) (4 (4) (4 1.0))) (Event (((doorAt &/ (^ open)) =/> Outside) (1.0 0.9)) (3 (3) (3 1.0))) (Event (((windowAt &/ (^ open)) =/> Outside) (1.0 0.9)) (2 (2) (2 1.0))))) (tempbst ()) (belief_events ()) (goal_events ()))]
+[]
+[((concepts ()) (currentTime 9) (evidentialBase 9) (FIFO ((Event (doorAt (1.0 0.9)) (8 (8) (8 1.0))) (Event (corridorIn (1.0 0.9)) (4 (4) (4 1.0))) (Event (((doorAt &/ (^ open)) =/> Outside) (1.0 0.9)) (3 (3) (3 1.0))))) (tempbst (Event (doorAt (1.0 0.9)) (8 (8) (8 1.0)))) (belief_events ()) (goal_events ()))]
+[]
+[((concepts ()) (currentTime 10) (evidentialBase 10) (FIFO ((Event (doorAt (1.0 0.9)) (8 (8) (8 1.0))) (Event (corridorIn (1.0 0.9)) (4 (4) (4 1.0))) (Event (((doorAt &/ (^ open)) =/> Outside) (1.0 0.9)) (3 (3) (3 1.0))))) (tempbst ()) (belief_events ()) (goal_events ()))]
+4.51user 0.02system 0:04.53elapsed 100%CPU (0avgtext+0avgdata 49356maxresident)k
+0inputs+0outputs (0major+7403minor)pagefaults 0swaps

@@ -1,0 +1,23 @@
+(.: (((ExtSet garfield) --> cat) (1.0 0.9)))
+(time := 1)
+(.: (((cat x sky) --> like) (1.0 0.9)))
+(.: ((((ExtSet garfield) x sky) --> like) (1.0 0.81)))
+(time := 2)
+(.: ((sky --> (IntSet blue)) (1.0 0.9)))
+(time := 3)
+(.: (((((ExtSet garfield) x (IntSet blue)) --> like) ==> ((ExtSet garfield) --> artist)) (1.0 0.9)))
+(time := 4)
+[()]
+[()]
+[]
+[((concepts ()) (currentTime 2) (evidentialBase 2) (FIFO ((Event (((ExtSet garfield) --> cat) (1.0 0.9)) (1 (1) (1 1.0))))) (tempbst (Event (((ExtSet garfield) --> cat) (1.0 0.9)) (1 (1) (1 1.0)))) (belief_events ()) (goal_events ()))]
+[]
+[((concepts ()) (currentTime 3) (evidentialBase 3) (FIFO ((Event (((cat x sky) --> like) (1.0 0.9)) (2 (2) (2 1.0))) (Event (((ExtSet garfield) --> cat) (1.0 0.9)) (1 (1) (1 1.0))))) (tempbst (Event (((cat x sky) --> like) (1.0 0.9)) (2 (2) (2 1.0)))) (belief_events ((Event ((((ExtSet garfield) x sky) --> like) (1.0 0.81)) (2 (2 1.0) (2 0.4525))))) (goal_events ()))]
+[]
+[((concepts ()) (currentTime 4) (evidentialBase 4) (FIFO ((Event ((sky --> (IntSet blue)) (1.0 0.9)) (3 (3) (3 1.0))) (Event (((cat x sky) --> like) (1.0 0.9)) (2 (2) (2 1.0))) (Event (((ExtSet garfield) --> cat) (1.0 0.9)) (1 (1) (1 1.0))))) (tempbst (Event ((sky --> (IntSet blue)) (1.0 0.9)) (3 (3) (3 1.0)))) (belief_events ((Event ((((ExtSet garfield) x sky) --> like) (1.0 0.81)) (2 (2 1.0) (2 0.4525))))) (goal_events ()))]
+[]
+[((concepts ()) (currentTime 5) (evidentialBase 5) (FIFO ((Event (((((ExtSet garfield) x (IntSet blue)) --> like) ==> ((ExtSet garfield) --> artist)) (1.0 0.9)) (4 (4) (4 1.0))) (Event ((sky --> (IntSet blue)) (1.0 0.9)) (3 (3) (3 1.0))) (Event (((cat x sky) --> like) (1.0 0.9)) (2 (2) (2 1.0))))) (tempbst (Event (((((ExtSet garfield) x (IntSet blue)) --> like) ==> ((ExtSet garfield) --> artist)) (1.0 0.9)) (4 (4) (4 1.0)))) (belief_events ((Event ((((ExtSet garfield) x sky) --> like) (1.0 0.81)) (2 (2 1.0) (2 0.4525))))) (goal_events ()))]
+[()]
+[((concepts ()) (currentTime 5) (evidentialBase 5) (FIFO ((Event (((((ExtSet garfield) x (IntSet blue)) --> like) ==> ((ExtSet garfield) --> artist)) (1.0 0.9)) (4 (4) (4 1.0))) (Event ((sky --> (IntSet blue)) (1.0 0.9)) (3 (3) (3 1.0))) (Event (((cat x sky) --> like) (1.0 0.9)) (2 (2) (2 1.0))))) (tempbst (Event (((((ExtSet garfield) x (IntSet blue)) --> like) ==> ((ExtSet garfield) --> artist)) (1.0 0.9)) (4 (4) (4 1.0)))) (belief_events ((Event ((((ExtSet garfield) x sky) --> like) (1.0 0.81)) (2 (2 1.0) (2 0.4525))))) (goal_events ()))]
+3.44user 0.01system 0:03.46elapsed 99%CPU (0avgtext+0avgdata 49908maxresident)k
+0inputs+0outputs (0major+7487minor)pagefaults 0swaps

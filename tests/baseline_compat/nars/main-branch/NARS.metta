@@ -1,6 +1,34 @@
+
+!(nop (pragma! load silent))
+;spaces
+!(bind! &concepts (new-space))
+!(bind! &attentional_focus (new-space))
+
+;spaces
+!(bind! &belief_events (new-space))
+!(bind! &goal_events (new-space))
+
 ;; stdlib extension
+(: If (-> Bool Atom Atom))
+(= (If True $then) $then)
+(= (If False $then) ())
+(: If (-> Bool Atom Atom Atom))
+(= (If $cond $then $else) (if $cond $then $else))
 (= (TupleConcat $Ev1 $Ev2) (collapse (superpose ((superpose $Ev1) (superpose $Ev2)))))
-(= (TupleCount $tuple) (If (== $tuple ()) 0 (+ 1 (TupleCount (cdr-atom $tuple)))))
+(= (max $1 $2) (If (> $1 $2) $1 $2))
+(= (min $1 $2) (If (< $1 $2) $1 $2))
+(= (abs $x) (If (< $x 0) (- 0 $x) $x))
+(: sequential (-> Expression %Undefined% ))
+(= (sequential $1) (superpose $1))
+(: do (-> Expression %Undefined% ))
+(= (do $1) (case $1 ()))
+;(= (TupleCount ()) 0)
+;(= (TupleCount (1)) 1)
+;(= (BuildTupleCounts $TOld $C $N)
+;   (let $T (collapse (superpose (1 (superpose $TOld))))
+;        (superpose ((add-atom &self (= (TupleCount $T) (+ $C 2)))
+;                    (If (< $C $N) (BuildTupleCounts $T (+ $C 1) $N))))))*/
+(= (TupleCount $list) (length $list))
 (: CountElement (-> Expression Number))
 (= (CountElement $x) (case $x (($y 1))))
 ;; Useful interop functions for querying when MeTTa-NARS is compiled as a library to be used via Mettamorph
@@ -194,15 +222,12 @@
 (= (BeliefEventsMax) 10)
 (= (GoalEventsMax) 10)
 
-;spaces
-!(bind! &belief_events (new-space))
-!(bind! &goal_events (new-space))
-
 ;states
 !(bind! &currentTime (new-state 1))
 !(bind! &evidentialBase (new-state 1))
 (= (increment $atom) (sequential ((change-state! $atom (+ 1 (get-state $atom))))))
-(= (UpdateReasonerState) (sequential ((trace! (time := (get-state &currentTime)) 42) (increment &currentTime) (increment &evidentialBase))))
+(= (UpdateReasonerState) (sequential ((trace! (time := (get-state &currentTime)) 42) 
+                                        (increment &currentTime) (increment &evidentialBase))))
 (= (GetReasonerState) ((get-state &currentTime) ((get-state &evidentialBase))))
 
 ;priority of events
@@ -243,9 +268,6 @@
 ;params
 (= (AttentionalFocusConceptsMax) 10)
 
-;spaces
-!(bind! &concepts (new-space))
-!(bind! &attentional_focus (new-space))
 
 ;priority of concepts
 (= (ConceptPriorityNow ($T $P) $t) (* $P (/ 1 (+ 1 (- $t $T)))))
@@ -271,20 +293,20 @@
 (= (UpdateConcept $NewEvent $t)
    (let* (((Event ($Term $TV) ($Time $Evidence $EPrio)) $NewEvent)
           ($NewEventEternalized (Eternalize $NewEvent)))
-                      (case (match &attentional_focus (Concept $TermX $Belief $BeliefEvent $CPrio) 
-                                                       (If (== $TermX $Term) (Concept $TermX $Belief $BeliefEvent $CPrio)))
-                            (((Concept $TermX $Belief $BeliefEvent $CPrio) (sequential ((remove-atom &attentional_focus (Concept $TermX $Belief $BeliefEvent $CPrio))
-                                                                                         (let* (((Event $RevSentence $Metadata) (RevisionAndChoice $Belief $NewEventEternalized))
-                                                                                                ($RevisedBelief (Event (trace! (@ $RevSentence) $RevSentence) $Metadata))
-                                                                                                ($MaxPrio (If (> (EventPriorityNow $EPrio $t) (ConceptPriorityNow $CPrio $t))
-                                                                                                              $EPrio $CPrio)))
-                                                                                               (add-atom &attentional_focus (Concept $Term $RevisedBelief $NewEvent $MaxPrio))))))
-                             (%void% (case (match &concepts (Concept $TermX2 $Belief2 $BeliefEvent2 $CPrio2)
-                                           (If (== $TermX2 $Term) (Concept $TermX2 $Belief2 $BeliefEvent2 $CPrio2)))
-                                               (((Concept $TermX2 $Belief2 $BeliefEvent2 $CPrio2) (sequential ((remove-atom &concepts (Concept $TermX2 $Belief2 $BeliefEvent2 $CPrio2))
-                                                                                                                (add-atom &attentional_focus (Concept $TermX2 $Belief2 $BeliefEvent2 $CPrio2))
-                                                                                                                (UpdateConcept $NewEvent $t))))
-                                               (%void% (sequential ((add-atom &attentional_focus (Concept $Term $NewEventEternalized $NewEvent $EPrio))))))))))))
+			(case (match &attentional_focus (Concept $TermX $Belief $BeliefEvent $CPrio) 
+ 					       (If (== $TermX $Term) (Concept $TermX $Belief $BeliefEvent $CPrio)))
+			  (((Concept $TermX $Belief $BeliefEvent $CPrio) (sequential ((remove-atom &attentional_focus (Concept $TermX $Belief $BeliefEvent $CPrio))
+				   (let* (((Event $RevSentence $Metadata) (RevisionAndChoice $Belief $NewEventEternalized))
+						  ($RevisedBelief (Event (trace! (@ $RevSentence) $RevSentence) $Metadata))
+						  ($MaxPrio (If (> (EventPriorityNow $EPrio $t) (ConceptPriorityNow $CPrio $t))
+										$EPrio $CPrio)))
+						 (add-atom &attentional_focus (Concept $Term $RevisedBelief $NewEvent $MaxPrio))))))
+			   (%void% (case (match &concepts (Concept $TermX2 $Belief2 $BeliefEvent2 $CPrio2)
+							 (If (== $TermX2 $Term) (Concept $TermX2 $Belief2 $BeliefEvent2 $CPrio2)))
+								 (((Concept $TermX2 $Belief2 $BeliefEvent2 $CPrio2) (sequential ((remove-atom &concepts (Concept $TermX2 $Belief2 $BeliefEvent2 $CPrio2))
+									  (add-atom &attentional_focus (Concept $TermX2 $Belief2 $BeliefEvent2 $CPrio2))
+									  (UpdateConcept $NewEvent $t))))
+								 (%void% (sequential ((add-atom &attentional_focus (Concept $Term $NewEventEternalized $NewEvent $EPrio))))))))))))
 
 ;bound the size of attentional focus of concepts
 (= (BoundAttention $Threshold $Increment $TargetAmount $t)
@@ -422,11 +444,16 @@
              (NegConfirmation ($PreTerm &/ $OpTerm) $PosTerm $t))))
 
 ;Input procedure
+;(: AddBeliefEvent (-> Atom Atom))
+;(= (AddBeliefEvent $Sentence) 
+;    ((AddBeliefEvent0 $Sentence) (check-state-r)))
+
+;(: AddBeliefEvent (-> Atom %Undefined%))
 (= (AddBeliefEvent $Sentence)
-   (let* ((($t $evidentialBase) (GetReasonerState))
+  (let* ((($t $evidentialBase) (GetReasonerState))
           ($InputEvent (Event (trace! (.: $Sentence) $Sentence) ($t $evidentialBase ($t 1.0))))
           ($notAnOperation (not (IsOp $InputEvent))))
-          (do (sequential ((EventToFIFO $InputEvent)
+         (do (sequential ((EventToFIFO $InputEvent)
                            (Anticipate (get-state &FIFO) $t)
                            (If $notAnOperation
                                (sequential ((let $InducedHypothesis (TemporalImplicationInduction (get-state &FIFO))
@@ -434,6 +461,8 @@
                                             (ProcessBeliefEvent $InputEvent $t)
                                             (BeliefCycle $t)))
                                (UpdateReasonerState)))))))
+	    
+
 ;;Procedural inference (decision making with operation execution and subgoaling)
 
 ;Derived goal event priority
@@ -483,9 +512,16 @@
           ($InputEvent (Event (trace! (!: $Sentence) $Sentence) ($t $evidentialBase ($t 1.0)))))
          (sequential ((do (add-atom &goal_events $InputEvent))
                       (GoalCycle $t)))))
-!(AddBeliefEvent (((ExtSet garfield) --> cat) (1.0 0.9)))
-!(AddBeliefEvent (((cat x sky) --> like) (1.0 0.9)))
-!(AddBeliefEvent ((sky --> (IntSet blue)) (1.0 0.9)))
-!(AddBeliefEvent (((((ExtSet garfield) x (IntSet blue)) --> like) ==> ((ExtSet garfield) --> artist)) (1.0 0.9)))
-!(EternalQuestion ((ExtSet garfield) --> artist))
-;[(Event (((ExtSet garfield) --> artist) (1.0 0.27508280575237937)) (eternal (4 3 2 1.0) (0 0.0)))]
+
+
+
+(= (check-state)
+ ((concepts (collapse (get-atoms &concepts)))
+;  (attentional_focus (collapse (get-atoms &attentional_focus)))
+  (currentTime (get-state &currentTime))
+  (evidentialBase (get-state &evidentialBase))
+  (FIFO (get-state &FIFO))
+  (tempbst (get-state &tempbest))
+  (belief_events (collapse (get-atoms &belief_events)))
+  (goal_events (collapse (get-atoms &goal_events)))))
+
