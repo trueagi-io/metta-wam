@@ -1,3 +1,62 @@
+
+
+exists_virtually(corelib).
+
+% Process a file or directory path with a given predicate.
+with_wild_path(Fnicate, Dir) :- extreme_debug(fbug(with_wild_path(Fnicate, Dir))),fail.
+with_wild_path(_Fnicate, []) :- !.
+with_wild_path(_Fnicate, Virtual) :- exists_virtually(Virtual),!.
+with_wild_path(Fnicate, Virtual) :- var(Virtual),!,throw(var_with_wild_path(Fnicate, Virtual)).
+with_wild_path(Fnicate, Dir) :-  is_scryer, symbol(Dir), !, must_det_ll((path_chars(Dir,Chars), with_wild_path(Fnicate, Chars))).
+with_wild_path(Fnicate, Chars) :-  \+ is_scryer, \+ symbol(Chars), !, must_det_ll((name(Atom,Chars), with_wild_path(Fnicate, Atom))).
+
+with_wild_path(Fnicate, File) :- exists_file(File), !, must_det_ll(( call(Fnicate, File))).
+
+with_wild_path(Fnicate, Dir) :-  exists_directory(Dir),
+  absolute_file_name('__init__.py', PyFile, [access(read), file_errors(fail), relative_to(Dir)]),
+  with_wild_path(Fnicate, PyFile).
+
+with_wild_path(Fnicate, File) :- !, with_wild_path_swi(Fnicate, File).
+with_wild_path(Fnicate, Dir) :-  exists_directory(Dir), !,
+  must_det_ll((directory_files(Dir, Files),
+  maplist(directory_file_path(Dir,Files),Paths),
+  maplist(path_chars,Paths,CharPaths),
+  maplist(with_wild_path(Fnicate), CharPaths))), !.
+with_wild_path(Fnicate, File) :- is_list(File), !,  must_det_ll((maplist(with_wild_path(Fnicate), File))).
+with_wild_path(Fnicate, File) :- must_det_ll((call(Fnicate, File))).
+
+path_chars(A,C):- symbol_chars(A,C).
+
+with_wild_path_swi(Fnicate, File) :-
+  compound(File),
+  absolute_file_name(File, Dir, [access(read), file_errors(fail), file_type(directory)]),
+  '\\=@='(Dir, File), !,
+  with_wild_path(Fnicate, Dir).
+with_wild_path_swi(Fnicate, File) :-
+  compound(File), !,
+  absolute_file_name(File, Dir, [access(read), file_errors(fail), file_type(['csv', 'tsv', ''])]),
+  '\\=@='(Dir, File), !,
+  with_wild_path(Fnicate, Dir).
+with_wild_path_swi(Fnicate, File) :-
+  symbol_contains(File, '*'),
+  expand_file_name(File, List), !,
+  maplist(with_wild_path(Fnicate), List).
+with_wild_path_swi(Fnicate, File) :- 
+  \+ exists_directory(File), \+ exists_file(File), \+ symbol_contains(File,'.'),
+  extension_search_order(Ext),
+  symbolic_list_concat([File|Ext],MeTTafile),
+  exists_file(MeTTafile),
+  call(Fnicate, MeTTafile).
+with_wild_path_swi(Fnicate, File) :-
+  exists_directory(File),
+  directory_file_path(File, '*.*sv', Wildcard),
+  expand_file_name(Wildcard, List), !,
+  maplist(Fnicate, List).
+
+extension_search_order(['.metta']).
+extension_search_order(['.py']).
+
+
 load_metta(Filename):-
  %clear_spaces,
  load_metta('&self',Filename).
@@ -5,7 +64,7 @@ load_metta(Filename):-
 
 load_metta(_Self,Filename):- Filename=='--repl',!,repl.
 load_metta(Self,Filename):-
-  (\+ atom(Filename); \+ exists_file(Filename)),!,
+  (\+ symbol(Filename); \+ exists_file(Filename)),!,
   with_wild_path(load_metta(Self),Filename),!,loonit_report.
 load_metta(Self,RelFilename):-
  atom(RelFilename),
@@ -15,15 +74,15 @@ load_metta(Self,RelFilename):-
    include_metta(Self,RelFilename)).
 
 include_metta(Self,Filename):-
-  (\+ atom(Filename); \+ exists_file(Filename)),!,
+  (\+ symbol(Filename); \+ exists_file(Filename)),!,
   must_det_ll(with_wild_path(include_metta(Self),Filename)),!.
 include_metta(Self,RelFilename):-
   must_det_ll((
-     atom(RelFilename),
+	 symbol(RelFilename),
      exists_file(RelFilename),!,
      absolute_file_name(RelFilename,Filename),
      directory_file_path(Directory, _, Filename),
-     assert(metta_file(Self,Filename,Directory)),
+	 %assert(metta_file(Self,Filename,Directory)),
      include_metta_directory_file(Self,Directory, Filename))).
 
 
@@ -409,7 +468,7 @@ mfix_vars1(List,ListO):- is_list(List),!,maplist(mfix_vars1,List,ListO).
 mfix_vars1(I,O):- string(I),string_to_syms,!,atom_string(O,I).
 
 mfix_vars1(I,O):- compound(I),!,compound_name_arguments(I,F,II),F\=='$VAR',maplist(mfix_vars1,II,OO),!,compound_name_arguments(O,F,OO).
-mfix_vars1(I,O):- \+ atom(I),!,I=O.
+mfix_vars1(I,O):- \+ symbol(I),!,I=O.
 mfix_vars1(I,I).
 
 no_cons_reduce.
@@ -421,7 +480,7 @@ svar_fixvarname_dont_capitalize(M,O):- svar_fixvarname(M,O),!.
 dvar_name(N,O):-atom_concat('_',_,N),!,O=N.
 dvar_name(N,O):- integer(N),atom_concat('_',N,O).
 dvar_name(N,O):- atom(N),atom_number(N,Num),dvar_name(Num,O),!.
-dvar_name(N,O):- \+ atom(N),!,format(atom(A),'~w',[N]),dvar_name(A,O).
+dvar_name(N,O):- \+ symbol(N),!,format(atom(A),'~w',[N]),dvar_name(A,O).
 dvar_name(N,O):- !, format(atom(A),'_~w',[N]),dvar_name(A,O).
 %dvar_name(  '',''):-!. % "$"
 %dvar_name('_','__'):-!. % "$_"

@@ -569,14 +569,23 @@ has_let_star(Y):- sub_var('let*',Y).
 % !(pragma! unit-tests tollerant) ; tollerant or exact
 is_tollerant:- \+ option_value('unit-tests','exact').
 
+equal_enough_for_test(X,Y):- equal_enough_for_test1(X,Y),!.
 
-equal_enough_for_test(X,Y):- is_empty(X),!,is_empty(Y).
-equal_enough_for_test(X,Y):- has_let_star(Y),!,\+ is_empty(X).
-equal_enough_for_test(X,Y):- must_det_ll((subst_vars(X,XX),subst_vars(Y,YY))),!,equal_enough_for_test2(XX,YY),!.
+equal_enough_for_test1(X,Y):- is_empty(X),!,is_empty(Y).
+equal_enough_for_test1(X,Y):- has_let_star(Y),!,\+ is_empty(X).
+equal_enough_for_test1(X,Y):- must_det_ll((subst_vars(X,XX),subst_vars(Y,YY))),!,equal_enough_for_test2(XX,YY),!.
 equal_enough_for_test2(X,Y):- equal_enough(X,Y).
 
+equal_enough(R,V):- copy_term(R,RR),copy_term(V,VV),equal_enough1(R,V),!,R=@=RR,V=@=VV.
 equal_enough(R,V):- is_list(R),is_list(V),sort(R,RR),sort(V,VV),!,equal_enouf(RR,VV),!.
 equal_enough(R,V):- copy_term(R,RR),copy_term(V,VV),equal_enouf(R,V),!,R=@=RR,V=@=VV.
+
+equal_enough1(R,V):- 
+  is_list(R),is_list(V),sort(R,RR),sort(V,VV),!,
+  always_remove_nils(RR,RRR), always_remove_nils(VV,VVV),
+  equal_enouf(RRR,VVV),!.
+equal_enough1(R,V):- equal_enouf(R,V),!.
+
 equal_enouf(R,V):- is_ftVar(R), is_ftVar(V), R=V,!.
 equal_enouf(X,Y):- is_empty(X),!,is_empty(Y).
 equal_enouf(X,Y):- symbol(X),symbol(Y),atom_concat('&',_,X),atom_concat('Grounding',_,Y).
@@ -1652,7 +1661,8 @@ eval_selfless_2(LIS,Y):-  fake_notrace(( ground(LIS),
    LIS\=[_], s2ps(LIS,IS))), fake_notrace(catch((Y is IS),_,fail)),!.
 
 
-eval_selfless3(Lib,FArgs,TF):- maplist(s2ps,FArgs,Next),!,compare_selfless0(Lib,Next,TF).
+eval_selfless3(Lib,FArgs,TF):- maplist(s2ps,FArgs,Next),!,
+   compare_selfless0(Lib,Next,TF).
 
 :- use_module(library(clpfd)).
 :- clpq:use_module(library(clpq)).
@@ -1679,6 +1689,7 @@ args_to_mathlib(XY,clpr):- once((sub_term(T,XY), float(T))). % Reals
 args_to_mathlib(XY,clpq):- once((sub_term(Rat,XY),compound(Rat),Rat='/'(_,_))).
 args_to_mathlib(_,clpfd).
 
+not_defined_by_user(Op):- current_self(Self), metta_defn('=',Self,[Op,_,_],_).
 
 get_attrlib(XX,clpfd):- sub_var(clpfd,XX),!.
 get_attrlib(XX,clpq):- sub_var(clpq,XX),!.
