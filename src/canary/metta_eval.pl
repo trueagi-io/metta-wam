@@ -702,7 +702,7 @@ metta_atom_true(Eq,_Dpth,_Slf,Other,H):-
 
 
 
-metta_atom_iter_ref(Other,H,Ref):-clause(asserted_metta_atom(Other,H),true,Ref).
+metta_atom_iter_ref(Other,H,Ref):-clause(metta_atom_asserted(Other,H),true,Ref).
 can_be_ok(A,B):- cant_be_ok(A,B),!,fbug(cant_be_ok(A,B)),trace.
 can_be_ok(_,_).
 

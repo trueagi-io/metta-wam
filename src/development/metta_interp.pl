@@ -47,30 +47,6 @@ metta_dir(Dir):- getenv('METTA_DIR',Dir),!.
 
 :- ensure_loaded(metta_debug).
 
-different_from(N,V):- \+ \+ option_value_def(N,V),!,fail.
-different_from(N,V):- \+ \+ nb_current(N,V),!,fail.
-different_from(_,_).
-
-set_option_value_interp(N,V):- symbol(N), symbolic_list_concat(List,',',N),List\=[_],!,
-  forall(member(E,List),set_option_value_interp(E,V)).
-set_option_value_interp(N,V):-
-  (different_from(N,V)->Note=true;Note=false),  
-  fbugio(Note,set_option_value(N,V)),set_option_value(N,V),
-  ignore(forall(on_set_value(Note,N,V),true)).
-
-on_set_value(Note,N,'True'):- on_set_value(Note,N,true).   
-on_set_value(Note,N,'False'):- on_set_value(Note,N,false).
-on_set_value(_Note,log,true):- switch_to_mettalog.
-on_set_value(_Note,compatio,true):- switch_to_mettarust.
-on_set_value(Note,N,V):- symbol(N), symbol_concat('trace-on-',F,N),fbugio(Note,set_debug(F,V)),set_debug(F,V).
-on_set_value(Note,N,V):- symbol(N), is_debug_like(V,TF),fbugio(Note,set_debug(N,TF)),set_debug(N,TF).
-
-is_debug_like(trace, true).
-is_debug_like(notrace, false).
-is_debug_like(debug, true).
-is_debug_like(nodebug, false).
-is_debug_like(silent, false).
-%is_debug_like(false, false).
 
 is_metta_flag(What):- notrace(is_flag0(What)).
 
@@ -294,6 +270,30 @@ fbugio(_,_):- is_compatio,!.
 fbugio(TF,P):-!, ignore(( TF,!,fbug(P))).
 fbugio(IO):-fbugio(true,IO).
 
+different_from(N,V):- \+ \+ option_value_def(N,V),!,fail.
+different_from(N,V):- \+ \+ nb_current(N,V),!,fail.
+different_from(_,_).
+
+set_option_value_interp(N,V):- symbol(N), symbolic_list_concat(List,',',N),List\=[_],!,
+  forall(member(E,List),set_option_value_interp(E,V)).
+set_option_value_interp(N,V):-
+  (different_from(N,V)->Note=true;Note=false),  
+  fbugio(Note,set_option_value(N,V)),set_option_value(N,V),
+  ignore(forall(on_set_value(Note,N,V),true)).
+
+on_set_value(Note,N,'True'):- on_set_value(Note,N,true).   
+on_set_value(Note,N,'False'):- on_set_value(Note,N,false).
+on_set_value(_Note,log,true):- switch_to_mettalog.
+on_set_value(_Note,compatio,true):- switch_to_mettarust.
+on_set_value(Note,N,V):- symbol(N), symbol_concat('trace-on-',F,N),fbugio(Note,set_debug(F,V)),set_debug(F,V).
+on_set_value(Note,N,V):- symbol(N), is_debug_like(V,TF),fbugio(Note,set_debug(N,TF)),set_debug(N,TF).
+
+is_debug_like(trace, true).
+is_debug_like(notrace, false).
+is_debug_like(debug, true).
+is_debug_like(nodebug, false).
+is_debug_like(silent, false).
+%is_debug_like(false, false).
 
 set_is_unit_test(TF):-
   forall(option_value_def(A,B),set_option_value_interp(A,B)),
@@ -871,7 +871,7 @@ rtrace_on_error(G):- catch(G,_,fail),!.
 rtrace_on_error(G):- rtrace(G),!.
 assertion_hb(metta_defn(=,Self,H,B),Self,H,B).
 assertion_hb(metta_atom_asserted(Self,[=,H,B]),Self,H,B).
-assertion_hb(asserted_metta_atom(Self,[=,H,B]),Self,H,B).
+assertion_hb(metta_atom_asserted(Self,[=,H,B]),Self,H,B).
 assertion_hb(metta_atom(Self,[=,H,B]),Self,H,B).
 
 load_hook0(_,_):- \+ show_transpiler, \+ is_transpiling, !.
@@ -986,8 +986,8 @@ metta_atom_stdlib_types(Op, ['->'|List]):- fail,
 
 %get_metta_atom(Eq,Space, Atom):- metta_atom(Space, Atom), \+ (Atom =[EQ,_,_], EQ==Eq).
 
-asserted_metta_atom_fallback( KB,Atom):- fail, is_list(KB),!, member(Atom,KB).
-%asserted_metta_atom_fallback( KB,Atom):- metta_atom(KB,Atom)
+metta_atom_asserted_fallback( KB,Atom):- fail, is_list(KB),!, member(Atom,KB).
+%metta_atom_asserted_fallback( KB,Atom):- metta_atom(KB,Atom)
 
 %metta_atom(KB,[F,A|List]):- metta_atom(KB,F,A,List), F \== '=',!.
 metta_atom(Atom):- current_self(KB),metta_atom(KB,Atom).
@@ -1332,9 +1332,9 @@ into_metta_callable(_Self,TermV,Term,X,NamedVarsList,Was):-
   %nb_current(variable_names,NamedVarsList),
   %nl,print(subst_vars(Term,NamedVarsList,Vars)),
   nop(nl))))),
-  nop(maplist(verbose_unify,Vars)))))),
+  nop(maplist(verbose_unify,Vars)),
   %NamedVarsList=[_=RealRealRes|_],
-  var(RealRes), X = RealRes,!.
+  var(RealRes), X = RealRes)))),!.
 
 
 into_metta_callable(Self,TermV,CALL,X,NamedVarsList,Was):-!,
@@ -1434,7 +1434,7 @@ repl3:-
      current_read_mode(repl,Mode),
      %ignore(shell('stty sane ; stty echo')),
      %current_input(In),
-      'format'(symbol(P),'metta ~w ~w> ',[Self, Mode]))), 
+      'format'(atom(P),'metta ~w ~w> ',[Self, Mode]))), 
       setup_call_cleanup(
          notrace(prompt(Was,P)),
          notrace((ttyflush,repl_read(Expr),ttyflush)),
@@ -1675,8 +1675,7 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,Output,F
        (Complete\==true, \+ WasInteractive, Control = contrl(Max,leap)) -> true ;
         (((Complete==true ->! ; true)))))
                     *-> (ignore(Result = res(FOut)),ignore(Output = (FOut)))
-                    ; (flag(result_num,ResNum,ResNum),
-                        (ResNum==0->(only_compatio(write('[')),not_compatio(format('~N[<no-results>]~n~n')),!,true);true))),
+                    ; (flag(result_num,ResNum,ResNum),(ResNum==0->(not_compatio(format('~N<no-results>~n~n')),!,true);true))),
                     only_compatio(write(']')),user_io(nl),
    ignore(Result = res(FOut)).
 
@@ -1938,6 +1937,10 @@ vu(_Attr,Value):- is_ftVar(Value),!.
 vu(fail,_Value):- !, fail.
 vu(true,_Value):- !.
 vu(trace,_Value):- trace.
+:- nodebug(metta(eval)).
+:- nodebug(metta(exec)).
+:- nodebug(metta(load)).
+:- nodebug(metta(prolog)).
 % Measures the execution time of a Prolog goal and displays the duration in seconds,
 % milliseconds, or microseconds, depending on the execution time.
 %
@@ -2076,7 +2079,7 @@ do_loon:-
   \+ prolog_load_context(reloading,true),
   maplist(catch_red_ignore,[
 
-   %if_t(is_compiled,ensure_mettalog),
+   %if_t(is_compiled,ensure_mettalog_py),
           install_readline_editline,
 	% nts,
    metta_final,

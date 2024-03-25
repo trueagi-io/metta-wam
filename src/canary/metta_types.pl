@@ -81,9 +81,13 @@ is_nonspecific_type('Atom').
 is_nonspecific_type('Any').
 
 %get_type(Depth,Self,Val,Type):- get_type01(Depth,Self,Val,Type).
-get_type(Depth,Self,Val,TypeO):- no_repeats(TypeT,(get_type9(Depth,Self,Val,Type),TypeT=Type)),Type=TypeO.
+get_type(Depth,Self,Var,TypeO):- var(Var),var(TypeO),!.
+get_type(Depth,Self,Val,TypeO):- no_repeats(TypeT,
+  (get_type9(Depth,Self,Val,Type),TypeT=Type)),
+  Type=TypeO.
 
 get_type9(_Dpth,_Slf,Expr,'hyperon::space::DynSpace'):- is_dynaspace(Expr),!.
+get_type9(Depth,Self,Val,Type):- \+ integer(Depth),!,get_type9(10,Self,Val,Type).
 get_type9(Depth,Self,Val,Type):- get_type0(Depth,Self,Val,Type).
 get_type9(Depth,Self,Val,Type):- get_type1(Depth,Self,Val,Type), ground(Type),Type\==[], Type\==Val,!.
 %get_type9(_Depth,_Self,Val,Type):- symbol(Val),atom_contains(Val,' '),!,Type='String'.
