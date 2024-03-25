@@ -48,19 +48,29 @@ metta_dir(Dir):- getenv('METTA_DIR',Dir),!.
 :- ensure_loaded(metta_debug).
 
 is_metta_flag(What):- notrace(is_flag0(What)).
-is_flag0(What):- nb_current(What,'False'),!,fail.
-is_flag0(What):- nb_current(What,'True'),!.
-is_flag0(What):- current_prolog_flag(What,false),!,fail.
-is_flag0(What):- current_prolog_flag(What,true),!.
+
+is_tRuE(TF):- TF=='True',!.
+is_tRuE(TF):- TF=='true',!.
+is_flag0(What):- nb_current(What,TF),TF\==[],!,is_tRuE(TF).
+is_flag0(What):- current_prolog_flag(What,TF),TF\==[],!,is_tRuE(TF).
 is_flag0(What):- 
- ((current_prolog_flag(os_argv,ArgV),
-   symbol_concat('--',What,FWhat), 
-   (member(FWhat,ArgV)-> true ;
-     (symbol_concat(FWhat,'=true',FWhatEqTrue),member(FWhatEqTrue,ArgV))))->
-	current_prolog_flag(What,true);
-    current_prolog_flag(What,false)).
-  
-  
+ symbol_concat('--',What,FWhat),symbol_concat(FWhat,'=true',FWhatTrue),
+ symbol_concat('--no-',What,NoWhat),symbol_concat(FWhat,'=false',FWhatFalse),
+ is_flag0(What,[FWhat,FWhatTrue],[NoWhat,FWhatFalse]).
+ 
+is_flag0(What,_FWhatTrue,FWhatFalse):-
+   current_prolog_flag(os_argv,ArgV),
+   member(FWhat,FWhatFalse),member(FWhat,ArgV),!,   
+   set_option_value(What,'False'),!,fail.
+is_flag0(What,FWhatTrue,_FWhatFalse):-
+   current_prolog_flag(os_argv,ArgV),
+   member(FWhat,FWhatTrue),member(FWhat,ArgV),!,   
+	set_option_value(What,'True'),!.
+is_flag0(What,_FWhatTrue,_FWhatFalse):-
+  current_prolog_flag(os_argv,ArgV),
+  symbolic_list_concat(['--',What,'='],Starts),
+  member(FWhat,ArgV),symbol_concat(Starts,Rest,FWhat),
+  set_option_value_interp(What,Rest),!.
 
 is_compiling:- current_prolog_flag(os_argv,ArgV),member(E,ArgV),   (E==qcompile_mettalog;E==qsave_program),!.
 is_compiled:- current_prolog_flag(os_argv,ArgV), member('-x',ArgV),!.
@@ -77,7 +87,8 @@ is_synthing_unit_tests0:- is_testing.
 %is_synthing_unit_tests0:- is_html.
 % is_synthing_unit_tests0:- is_compatio,!,fail.
 
-is_testing:- is_metta_flag('test').
+is_testing:- is_metta_flag('test'),!.
+%is_testing.
 is_html:- is_metta_flag('html').
 
 :- ensure_loaded(metta_printer).
@@ -94,6 +105,7 @@ is_compatio0:- is_mettalog,!,fail.
 %is_compatio0:- is_html,!,fail.
 is_compatio0:- !.
 
+keep_output:- !.
 keep_output:- is_mettalog,!.
 keep_output:- is_testing,!.
 keep_output:- is_compatio,!,fail.
@@ -130,7 +142,7 @@ switch_to_mettalog:-
   set_option_value('load',show),
   set_option_value('load',verbose),
   set_option_value('log',true),
-  set_option_value('test',true),
+  %set_option_value('test',true),
   set_output_stream.
   
 switch_to_mettarust:- 
@@ -141,8 +153,7 @@ switch_to_mettarust:-
   set_option_value('test',false),
   set_output_stream.
   
-
-
+  
 show_os_argv:- is_compatio,!.
 show_os_argv:- current_prolog_flag(os_argv,ArgV),write('; libswipl: '),writeln(ArgV).
 is_pyswip:- current_prolog_flag(os_argv,ArgV),member( './',ArgV).
@@ -262,19 +273,28 @@ different_from(N,V):- \+ \+ option_value_def(N,V),!,fail.
 different_from(N,V):- \+ \+ nb_current(N,V),!,fail.
 different_from(_,_).
 
-set_option_value_interp(N,V):- atom(N), symbolic_list_concat(List,',',N),List\=[_],!,
+set_option_value_interp(N,V):- symbol(N), symbolic_list_concat(List,',',N),List\=[_],!,
   forall(member(E,List),set_option_value_interp(E,V)).
 set_option_value_interp(N,V):-
   (different_from(N,V)->Note=true;Note=false),
   fbugio(Note,set_option_value(N,V)),set_option_value(N,V),
-  ignore((if_t((atom(N), symbol_concat('trace-on-',F,N),fbugio(Note,set_debug(F,V))),set_debug(F,V)))),
-  ignore((if_t((atom(V), is_debug_like(V,TF),fbugio(Note,set_debug(N,TF))),set_debug(N,TF)))),!.
+  ignore(forall(on_set_value(Note,N,V),true)).
+
+on_set_value(Note,N,'True'):- on_set_value(Note,N,true).   
+on_set_value(Note,N,'False'):- on_set_value(Note,N,false).
+on_set_value(_Note,log,true):- switch_to_mettalog.
+on_set_value(_Note,compatio,true):- switch_to_mettarust.
+on_set_value(Note,N,V):- symbol(N), symbol_concat('trace-on-',F,N),fbugio(Note,set_debug(F,V)),set_debug(F,V).
+on_set_value(Note,N,V):- symbol(N), is_debug_like(V,TF),fbugio(Note,set_debug(N,TF)),set_debug(N,TF).
 
 is_debug_like(trace, true).
 is_debug_like(notrace, false).
 is_debug_like(debug, true).
 is_debug_like(nodebug, false).
+is_debug_like(silent, false).
 %is_debug_like(false, false).
+
+%:- (is_mettalog->switch_to_mettalog;switch_to_mettarust).
 
 set_is_unit_test(TF):-
   forall(option_value_def(A,B),set_option_value_interp(A,B)),
@@ -310,6 +330,7 @@ with_output_to_s(Out,G):- current_output(COut),
 
  if_compat_io(G):- if_compatio(G).
 not_compat_io(G):- not_compatio(G).
+non_compat_io(G):- not_compatio(G).
 
 :- set_is_unit_test(false).
 
@@ -855,6 +876,8 @@ rtrace_on_error(G):- catch(G,_,fail),!.
 rtrace_on_error(G):-rtrace(G),!.
 assertion_hb(metta_defn(=,Self,H,B),Self,H,B).
 assertion_hb(metta_atom_asserted(Self,[=,H,B]),Self,H,B).
+assertion_hb(metta_atom_asserted(Self,[=,H,B]),Self,H,B).
+assertion_hb(metta_atom(Self,[=,H,B]),Self,H,B).
 
 load_hook0(_,_):- \+ show_transpiler, \+ is_transpiling, !.
 load_hook0(Load,Assertion):- 
@@ -1071,11 +1094,13 @@ combine_result(TF,_,TF):-!.
 
 do_metta1_e(_Self,_,exec(Exec)):- !,write_exec(Exec),!.
 do_metta1_e(_Self,_,[=,A,B]):- !, with_concepts(false,
-  (con_write('(= '), with_indents(false,write_src(A)), (is_list(B) -> connl ; true),con_write(' '),with_indents(true,write_src(B)),con_write(')'))),connl.
+  (con_write('(= '), with_indents(false,write_src(A)), 
+    (is_list(B) -> connl ; true),
+    con_write(' '),with_indents(true,write_src(B)),con_write(')'))),connl.
 do_metta1_e(_Self,_LoadExec,Term):- write_src(Term),connl.
 
 write_exec(Exec):- notrace(write_exec0(Exec)).
-%write_exec0(Exec):- atom(Exec),!,write_exec0([Exec]).
+%write_exec0(Exec):- symbol(Exec),!,write_exec0([Exec]).
 
 write_exec0(Exec):-
   wots(S,write_src(exec(Exec))),
@@ -1091,11 +1116,14 @@ asserted_do_metta(Space,Load,Src):- Load==exec,!,do_metta_exec(python,Space,Src,
 asserted_do_metta(Space,Load,Src):- asserted_do_metta2(Space,Load,Src,Src).
 
 asserted_do_metta2(Space,Ch,Info,Src):- metta_interp_mode(Ch,Mode), !, asserted_do_metta2(Space,Mode,Info,Src).
-asserted_do_metta2(Self,Load,[TypeOp,Fn,Type], Src):- TypeOp = ':',  \+ is_list(Type),!,
+asserted_do_metta2(Self,Load,[TypeOp,Fn,Type], Src):- 
+ TypeOp == ':',  \+ is_list(Type),!,
  must_det_ll((
-  color_g_mesg_ok('#ffa500',metta_anew(Load,Src,metta_atom(Self,[':',Fn,Type]))))),!.
+  color_g_mesg_ok('#ffa500',
+  metta_anew(Load,Src,metta_atom(Self,[':',Fn,Type]))))),!.
 
-asserted_do_metta2(Self,Load,[TypeOp,Fn,TypeDecL], Src):- TypeOp = ':',!,
+asserted_do_metta2(Self,Load,[TypeOp,Fn,TypeDecL], Src):- 
+ TypeOp == ':',!,
  must_det_ll((
   decl_length(TypeDecL,Len),LenM1 is Len - 1, last_element(TypeDecL,LE),
   color_g_mesg_ok('#ffa500',metta_anew(Load,Src,metta_atom(Self,[':',Fn,TypeDecL]))),
@@ -1103,8 +1131,9 @@ asserted_do_metta2(Self,Load,[TypeOp,Fn,TypeDecL], Src):- TypeOp = ':',!,
   arg_types(TypeDecL,[],EachArg),
   metta_anew1(Load,metta_params(Self,Fn,EachArg)),!,
   metta_anew1(Load,metta_last(Self,Fn,LE)))).
-
-asserted_do_metta2(Self,Load,[TypeOp,Fn,TypeDecL,RetType], Src):- TypeOp = ':',!,
+/*
+asserted_do_metta2(Self,Load,[TypeOp,Fn,TypeDecL,RetType], Src):- 
+ TypeOp == ':',!,
  must_det_ll((
   decl_length(TypeDecL,Len),
   append(TypeDecL,[RetType],TypeDecLRet),
@@ -1113,7 +1142,7 @@ asserted_do_metta2(Self,Load,[TypeOp,Fn,TypeDecL,RetType], Src):- TypeOp = ':',!
   arg_types(TypeDecL,[RetType],EachArg),
   metta_anew1(Load,metta_params(Self,Fn,EachArg)),
   metta_anew1(Load,metta_return(Self,Fn,RetType)))),!.
-
+*/
 /*do_metta(File,Self,Load,PredDecl, Src):-fail,
    metta_anew(Load,Src,metta_atom(Self,PredDecl)),
    ignore((PredDecl=['=',Head,Body], metta_anew(Load,Src,metta_defn(Eq,Self,Head,Body)))),
