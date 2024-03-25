@@ -657,7 +657,7 @@ clear_space(S):-
    retractall(user:loaded_into_kb(S,_)),
    %retractall(metta_defn(_,S,_,_)),
    nop(retractall(metta_type(S,_,_))),
-   retractall(asserted_metta_atom(S,_)).
+   retractall(metta_atom_asserted(S,_)).
 
 dcall(G):- call(G).
 
@@ -841,7 +841,8 @@ assert_preds(Self,Load,Preds):-
    
    
   if_t(is_transpiling,
-   if_t( \+ predicate_property(H,static),add_assertion(Self,Preds))),
+   if_t( \+ predicate_property(H,static),
+   add_assertion(Self,Preds))),
    nop(metta_anew1(Load,Preds)).
 
 
@@ -853,10 +854,11 @@ load_hook(Load,Hooked):-
 rtrace_on_error(G):- catch(G,_,fail),!.
 rtrace_on_error(G):-rtrace(G),!.
 assertion_hb(metta_defn(=,Self,H,B),Self,H,B).
-assertion_hb(asserted_metta_atom(Self,[=,H,B]),Self,H,B).
+assertion_hb(metta_atom_asserted(Self,[=,H,B]),Self,H,B).
 
 load_hook0(_,_):- \+ show_transpiler, \+ is_transpiling, !.
-load_hook0(Load,Assertion):- assertion_hb(Assertion,Self,H,B),
+load_hook0(Load,Assertion):- 
+       assertion_hb(Assertion,Self,H,B),
        functs_to_preds([=,H,B],Preds),
        assert_preds(Self,Load,Preds).
 load_hook0(_,_):- \+ current_prolog_flag(metta_interp,ready),!.
@@ -952,7 +954,7 @@ type_decl('%Undefined%').
 type_decl('Variable').
 
 :- dynamic(get_metta_atom/2).
-:- dynamic(asserted_metta_atom/2).
+:- dynamic(metta_atom_asserted/2).
 :- multifile(asserted_metta/4).
 :- dynamic(asserted_metta/4).
 % metta_atom_stdlib(_):-!,fail.
@@ -971,10 +973,10 @@ get_metta_atom_from(KB, [F, A| List]):- KB='&flybase',fb_pred_nr(F, Len),current
 get_metta_atom_from([Superpose,ListOf], Atom):- Superpose == 'superpose',is_list(ListOf),!,member(KB,ListOf),get_metta_atom_from(KB,Atom).
 get_metta_atom_from(Space, Atom):- typed_list(Space,_,L),!, member(Atom,L).
 get_metta_atom_from(KB,Atom):- (KB=='&self'; KB='&stdlib'), metta_atom_stdlib(Atom).
-get_metta_atom_from(KB,Atom):- if_or_else(asserted_metta_atom( KB,Atom),asserted_metta_atom_fallback( KB,Atom)).
+get_metta_atom_from(KB,Atom):- if_or_else(metta_atom_asserted( KB,Atom),metta_atom_asserted_fallback( KB,Atom)).
 
-asserted_metta_atom_fallback( KB,Atom):- fail, is_list(KB),!, member(Atom,KB).
-%asserted_metta_atom_fallback( KB,Atom):- get_metta_atom_from(KB,Atom)
+metta_atom_asserted_fallback( KB,Atom):- fail, is_list(KB),!, member(Atom,KB).
+%metta_atom_asserted_fallback( KB,Atom):- get_metta_atom_from(KB,Atom)
 
 %metta_atom(KB,[F,A|List]):- metta_atom(KB,F,A,List), F \== '=',!.
 metta_atom(KB,Atom):- get_metta_atom_from(KB,Atom).
@@ -991,10 +993,10 @@ pfcAdd(P):- assert(P).
 %maybe_xform(metta_atom(KB,[F,A|List]),metta_atom(KB,F,A,List)):- is_list(List),!.
 maybe_xform(metta_defn(Eq,KB,Head,Body),metta_atom(KB,[Eq,Head,Body])).
 maybe_xform(metta_type(KB,Head,Body),metta_atom(KB,[':',Head,Body])).
-maybe_xform(metta_atom(KB,HeadBody),asserted_metta_atom(KB,HeadBody)).
+maybe_xform(metta_atom(KB,HeadBody),metta_atom_asserted(KB,HeadBody)).
 maybe_xform(_OBO,_XForm):- !, fail.
 
-asserted_metta_atom(KB,HeadBody):- asserted_metta(KB,HeadBody,_,_).
+metta_atom_asserted(KB,HeadBody):- asserted_metta(KB,HeadBody,_,_).
 
 metta_anew1(Load,_OBO):- var(Load),trace,!.
 metta_anew1(Ch,OBO):-  metta_interp_mode(Ch,Mode), !, metta_anew1(Mode,OBO).
@@ -1209,7 +1211,7 @@ metta_interp_mode('^',load_like_file).
 
 
 call_sexpr(How,Self,Tax,_S,Out):-
-  (atom(Tax);string(Tax)),
+  (symbol(Tax);string(Tax)),
     normalize_space(string(TaxM),Tax),
     convert_tax(How,Self,TaxM,Expr,NewHow),!,
     show_call(do_metta(python,NewHow,Self,Expr,Out)).
@@ -1248,7 +1250,7 @@ do_metta(file(Filename),exec,Self,TermV,Out):-
    must_det_ll((inc_exec_num(Filename),
      get_exec_num(Filename,Nth),
      Nth>0)),
-	show_failure((
+	((
 	 is_synthing_unit_tests,
      file_answers(Filename, Nth, Ans),
      check_answers_for(TermV,Ans))),!,

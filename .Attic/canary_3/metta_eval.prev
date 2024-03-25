@@ -547,7 +547,7 @@ metta_atom_iter2(_Dpth,Self,X,Y):- metta_defn(Eq,Self,X,Y). %, Y\=='True'.
 metta_atom_iter2(_Dpth,Self,X,Y):- get_metta_atom(Eq,Self,[=,X,Y]). %, Y\=='True'.
 */
 %metta_atom_iter_ref(Other,[Eq,H,B],Ref):-clause(metta_defn(Eq,Other,H,B),true,Ref).
-metta_atom_iter_ref(Other,H,Ref):-clause(asserted_metta_atom(Other,H),true,Ref).
+metta_atom_iter_ref(Other,H,Ref):-clause(metta_atom_asserted(Other,H),true,Ref).
 
 
 % =================================================================
