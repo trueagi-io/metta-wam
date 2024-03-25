@@ -1564,7 +1564,8 @@ eval_84(Eq,RetType,Depth,Self,PredDecl,Res):-
     eval_60(Eq,RetType,Depth,Self,PredDecl,Res).
 
 
-eval_85(Eq,RetType,Depth,Self,PredDecl,Res):- is_rust_operation(PredDecl),!, % run
+eval_85(Eq,RetType,Depth,Self,PredDecl,Res):- fail,
+  is_rust_operation(PredDecl),!, % run
   must_det_ll((rust_metta_run(exec(PredDecl),Res),
   nop(write_src(res(Res))))).
 

@@ -262,7 +262,7 @@ different_from(N,V):- \+ \+ option_value_def(N,V),!,fail.
 different_from(N,V):- \+ \+ nb_current(N,V),!,fail.
 different_from(_,_).
 
-set_option_value_interp(N,V):- atom(N), atomic_list_concat(List,',',N),List\=[_],!,
+set_option_value_interp(N,V):- atom(N), symbolic_list_concat(List,',',N),List\=[_],!,
   forall(member(E,List),set_option_value_interp(E,V)).
 set_option_value_interp(N,V):-
   (different_from(N,V)->Note=true;Note=false),
@@ -512,7 +512,8 @@ get_flag_value(_,true).
    nop((forall(option_value_def(Opt,Default),set_option_value_interp(Opt,Default))))))).
 
 %process_option_value_def:- \+ option_value('python',false), skip(ensure_loaded(metta_python)).
-process_option_value_def:- \+ option_value('python',false), ensure_loaded(mettalog(metta_python)).
+process_option_value_def:- \+ option_value('python',false), ensure_loaded(mettalog(metta_python)), 
+  ensure_mettalog_py.
 process_option_value_def.
 
 
@@ -799,7 +800,7 @@ repl_read(_, end_of_file, end_of_file):- throw(end_of_input).
 
 repl_read(Accumulated, "", Expr):- !, repl_read(Accumulated, Expr).
 repl_read(_Accumulated, Line, Expr):- Line == end_of_file, !, Expr = Line.
-repl_read(Accumulated, Line, Expr) :- atomics_to_string([Accumulated," ",Line], NewAccumulated), !,
+repl_read(Accumulated, Line, Expr) :- symbolics_to_string([Accumulated," ",Line], NewAccumulated), !,
     repl_read(NewAccumulated, Expr).
 
 repl_read(O2):- clause(t_l:s_reader_info(O2),_,Ref),erase(Ref).
@@ -1132,7 +1133,7 @@ asserted_do_metta2(Self,Load,PredDecl, Src):-
 always_exec(exec(W)):- !, is_list(W), always_exec(W).
 always_exec(Comp):- compound(Comp),compound_name_arity(Comp,Name,N),symbol_concat('eval',_,Name),Nm1 is N-1, arg(Nm1,Comp,TA),!,always_exec(TA).
 always_exec(List):- \+ is_list(List),!,fail.
-always_exec([Var|_]):- \+ atom(Var),!,fail.
+always_exec([Var|_]):- \+ symbol(Var),!,fail.
 always_exec(['extend-py!'|_]):- !, fail.
 always_exec([H|_]):- symbol_concat(_,'!',H),!. %pragma!/print!/transfer!/include! etc
 always_exec(['assertEqualToResult'|_]):-!,fail.
@@ -1224,8 +1225,8 @@ do_metta(From,Load,Self,'$COMMENT'(Expr,_,_),Out):- !, do_metta(From,comment(Loa
 do_metta(From,Load,Self,'$STRING'(Expr),Out):- !, do_metta(From,comment(Load),Self,Expr,Out).
 do_metta(From,comment(Load),Self,[Expr],Out):-  !, do_metta(From,comment(Load),Self,Expr,Out).
 do_metta(From,comment(Load),Self,Cmt,Out):- write_comment(Cmt),  !,
-   ignore(( atomic(Cmt),atomic_list_concat([_,Src],'MeTTaLog only: ',Cmt),!,atom_string(Src,SrcCode),do_metta(mettalog_only(From),Load,Self,SrcCode,Out))),
-   ignore(( atomic(Cmt),atomic_list_concat([_,Src],'MeTTaLog: ',Cmt),!,atom_string(Src,SrcCode),do_metta(mettalog_only(From),Load,Self,SrcCode,Out))),!.
+   ignore(( symbolic(Cmt),symbolic_list_concat([_,Src],'MeTTaLog only: ',Cmt),!,atom_string(Src,SrcCode),do_metta(mettalog_only(From),Load,Self,SrcCode,Out))),
+   ignore(( symbolic(Cmt),symbolic_list_concat([_,Src],'MeTTaLog: ',Cmt),!,atom_string(Src,SrcCode),do_metta(mettalog_only(From),Load,Self,SrcCode,Out))),!.
 
 do_metta(From,How,Self,Src,Out):- string(Src),!,
     normalize_space(string(TaxM),Src),
@@ -1461,8 +1462,8 @@ into_named_vars(Vars,L):- term_variables(Vars,VVs),!,into_named_vars(VVs,L).
 
 has_sub_var(AllVars,_=V):- sub_var(V,AllVars).
 underscore_vars(V):- var(V),!,name_for_var(V,N),!,underscore_vars(N).
-underscore_vars(N=_):- !, atomic(N),!,underscore_vars(N).
-underscore_vars(N):- atomic(N),!,symbol_concat('_',_,N).
+underscore_vars(N=_):- !, symbolic(N),!,underscore_vars(N).
+underscore_vars(N):- symbolic(N),!,symbol_concat('_',_,N).
 
 get_global_varnames(VNs):- nb_current('variable_names',VNs),VNs\==[],!.
 get_global_varnames(VNs):- prolog_load_context(variable_names,VNs),!.
@@ -1491,7 +1492,7 @@ call_for_term_variables5(Term,_,SVars,Vars,call_nth(Term,Count),[Vars,SVars],Cou
 
 is_interactive(From):- notrace(is_interactive0(From)).
 is_interactive0(From):- From==false,!,fail.
-is_interactive0(From):- atomic(From),is_stream(From),!, \+ stream_property(From,filename(_)).
+is_interactive0(From):- symbolic(From),is_stream(From),!, \+ stream_property(From,filename(_)).
 is_interactive0(From):- From = repl_true,!.
 is_interactive0(From):- From = true,!.
 
@@ -1518,7 +1519,7 @@ current_read_mode(file,Mode):- ((nb_current(file_mode,Mode),Mode\==[])->true;Mod
 eval(all(Form)):- nonvar(Form), !, forall(eval(Form,_),true).
 eval(Form):-   current_self(Self),   do_metta(true,exec,Self,Form,_Out).
 eval(Form,Out):-current_self(Self),eval(Self,Form,Out). 
-eval(Self,Form,Out):- do_metta(prolog,exec,Self,Form,Out).
+eval(Self,Form,Out):- eval_H(100,Self,Form,Out).
 
 name_vars(P):- ignore(name_vars0(P)).
 name_vars0(X=Y):- X==Y,!.
@@ -1604,7 +1605,7 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,Output,F
            ( Complete==true -> (not_compatio(format('~NLast Result(~w): ',[ResNum])),! );
                                not_compatio(format('~NNDet Result(~w): ',[ResNum]))))),
       ignore(((		 
-            not_compatio(if_t( \+ atomic(Output), nl)), 
+            not_compatio(if_t( \+ symbolic(Output), nl)), 
 			if_t(ResNum==1,only_compatio(format('~N['))),
 			only_compatio(if_t((Prev\=@=prev_result('Empty')),write(', '))),
 			nb_setarg(1,Prev,Output),
@@ -2134,7 +2135,7 @@ next_save_name(Name):- save_name(E),
   \+ exists_file(Name),
   Name\==E,!.
 next_save_name(SavMeTTaLog):- option_value(exeout,SavMeTTaLog),
-  atomic(SavMeTTaLog),atom_length(SavMeTTaLog,Len),Len>1,!.
+  symbolic(SavMeTTaLog),atom_length(SavMeTTaLog,Len),Len>1,!.
 next_save_name('Sav.MeTTaLog').
 qcompile_mettalog:-
     ensure_mettalog_system,    
