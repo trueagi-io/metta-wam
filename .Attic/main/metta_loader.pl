@@ -14,6 +14,7 @@ load_metta(Self,RelFilename):-
  track_load_into_file(Filename,
    include_metta(Self,RelFilename)).
 
+
 include_metta(Self,Filename):-
   (\+ atom(Filename); \+ exists_file(Filename)),!,
   must_det_ll(with_wild_path(include_metta(Self),Filename)),!.
@@ -57,6 +58,16 @@ include_metta_directory_file_prebuilt(_Self,_Directory, Filename):- just_load_da
   exists_file(QLFFilename),
   ensure_loaded(QLFFilename),!.
 
+include_metta_directory_file(Self, Directory, Filename):- 
+   atom_concat(_,'/__init__.py',Filename), !, 
+   file_base_name(Directory,Module),
+   self_extend_py(Self,Module,Filename,_).
+
+include_metta_directory_file(Self, _Directory, Filename):- 
+   atom_concat(FileBaseName,'.py',Filename),
+   file_base_name(FileBaseName,Module),
+   !, self_extend_py(Self,Module,Filename,_).
+
 include_metta_directory_file(Self,Directory, Filename):-
   include_metta_directory_file_prebuilt(Self,Directory, Filename),!.
 include_metta_directory_file(Self,Directory, Filename):-
@@ -64,6 +75,8 @@ include_metta_directory_file(Self,Directory, Filename):-
   convert_metta_to_qlf(Filename,Load),  
   (exists_file(Load)-> ensure_loaded(Load);
     include_metta_directory_file_prebuilt(Self,Directory, Filename)),!.
+
+
 include_metta_directory_file(Self,Directory, Filename):-
   setup_call_cleanup(open(Filename,read,In, [encoding(utf8)]),
     with_cwd(Directory, must_det_ll( load_metta_file_stream(Filename,Self,In))),

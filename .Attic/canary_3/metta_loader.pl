@@ -58,6 +58,16 @@ include_metta_directory_file_prebuilt(_Self,_Directory, Filename):- just_load_da
   ensure_loaded(QLFFilename),!.
 
 include_metta_directory_file(Self,Directory, Filename):-
+   atom_concat(_,'/__init__.py',Filename), !, 
+   file_base_name(Directory,Module),
+   self_extend_py(Self,Module,Filename,_).
+
+include_metta_directory_file(Self, _Directory, Filename):- 
+   atom_concat(FileBaseName,'.py',Filename),
+   file_base_name(FileBaseName,Module),
+   !, self_extend_py(Self,Module,Filename,_).
+
+include_metta_directory_file(Self,Directory, Filename):-
   include_metta_directory_file_prebuilt(Self,Directory, Filename),!.
 include_metta_directory_file(Self,Directory, Filename):-
   count_lines_up_to_200(Filename, Count), Count > 1980,

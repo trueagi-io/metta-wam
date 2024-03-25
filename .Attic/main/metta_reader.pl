@@ -133,10 +133,10 @@ escape_char_metta(`t`,"\t").
 escape_char_metta(C,S):- sformat(S,'~s',[[C]]).
 
 symbol_metta(S, Until) --> metta_wspace,!,symbol_metta(S, Until).
-symbol_metta(S, Until) --> string_until_metta(SChars,(dcg_peek(metta_white); Until)), { atomic_list_concat(SChars, S) }.
+symbol_metta(S, Until) --> string_until_metta(SChars,(dcg_peek(metta_white); Until)), { symbolic_list_concat(SChars, S) }.
 
 %comment --> `;`,!,comment_chars_metta(S).
-comment_chars_metta(S) --> string_until_metta(SChars,`\n`), { atomic_list_concat(SChars, S) }.
+comment_chars_metta(S) --> string_until_metta(SChars,`\n`), { symbolic_list_concat(SChars, S) }.
 
 %e_o_s --> file_eof,!.
 e_o_s --> \+ [_|_].
@@ -290,7 +290,9 @@ with_kifvars(Goal):-
 %
 
 parse_sexpr(S, Expr) :- quietly_sreader(parse_meta_term(
-      file_sexpr_with_comments, S, Expr)).
+      file_sexpr_with_comments, S, Expr)),
+     nb_setval('$parser_last_read',Expr).
+   
 
 %% parse_sexpr_ascii( +Codes, -Expr) is det.
 %
@@ -315,7 +317,9 @@ parse_sexpr_string(S,Expr):-
 %
 % Parse S-expression from a Stream
 %
-parse_sexpr_stream(S,Expr):- quietly_sreader(parse_meta_stream(file_sexpr_with_comments,S,Expr)),!.
+parse_sexpr_stream(S,Expr):- 
+  quietly_sreader(parse_meta_stream(file_sexpr_with_comments,S,Expr)),!,
+  nb_setval('$parser_last_read',Expr).
 
 :- export('//'(file_sexpr,1)).
 :- export('//'(sexpr,1)).
@@ -686,7 +690,20 @@ sexpr_rest([]) --> `)`, !.
 % allow dotcons/improper lists.. but also allow dot in the middle of the list (non-CL)
 sexpr_rest(E) --> `.`, [C], {\+ sym_char(C)}, sexpr(E,C), `)` , ! .
 sexpr_rest(E) --> {kif_ok}, `@`, rsymbol(`?`,E), `)`.
-sexpr_rest([Car|Cdr]) --> sexpr(Car), !, sexpr_rest(Cdr),!.
+sexpr_rest([Car|Cdr]) --> sexpr(Car), !, 
+  %maybe_throw_reader_error(Car),
+   sexpr_rest(Cdr),!.
+
+maybe_throw_reader_error(Car,I,O):- Car=='',lazy_list_location(Info,I,O),!,
+  write_src(Info),
+  if_t(nb_current('$parser_last_read',V),write_src('$parser_last_read'=V)),
+  throw(ll_read_error(Info)).
+maybe_throw_reader_error(Car,I,I):-  Car=='', !,
+  ignore(sexpr_lazy_list_character_count(I,CharPos,Stream)),!,
+  Info= ics(I,CharPos,Stream),
+  write_src(Info), 
+  throw(ll_read_error(Info)).
+maybe_throw_reader_error(_,I,I).
 
 sexpr_vector(O,End) --> zalwayzz(sexpr_vector0(IO,End)),!,{zalwayzz(O=IO)}.
 
@@ -812,7 +829,8 @@ sexpr(E,C,X,Z) :- swhite([C|X],Y), sexpr(E,Y,Z),!.
 
 sym_char(C):- bx(C =<  32),!,fail.
 %sym_char(44). % allow comma in middle of symbol
-sym_char(C):- memberchk(C,`"()```),!,fail.  % maybe 44 ? comma maybe not # or ; ? '
+sym_char(C):- memberchk(C,`"()```),!,fail.  
+% maybe 44 ? comma maybe not # or ; ? ' `'`'````'"
 %sym_char(C):- nb_current('$maybe_string',t),memberchk(C,`,.:;!%`),!,fail.
 sym_char(_):- !.
 

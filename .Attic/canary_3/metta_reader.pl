@@ -691,7 +691,8 @@ sexpr_rest([]) --> `)`, !.
 sexpr_rest(E) --> `.`, [C], {\+ sym_char(C)}, sexpr(E,C), `)` , ! .
 sexpr_rest(E) --> {kif_ok}, `@`, rsymbol(`?`,E), `)`.
 sexpr_rest([Car|Cdr]) --> sexpr(Car), !,
-  maybe_throw_reader_error(Car), sexpr_rest(Cdr),!.
+  %maybe_throw_reader_error(Car),
+  sexpr_rest(Cdr),!.
 
 maybe_throw_reader_error(Car,I,O):- Car=='',lazy_list_location(Info,I,O),!,
   write_src(Info),
@@ -828,7 +829,8 @@ sexpr(E,C,X,Z) :- swhite([C|X],Y), sexpr(E,Y,Z),!.
 
 sym_char(C):- bx(C =<  32),!,fail.
 %sym_char(44). % allow comma in middle of symbol
-sym_char(C):- memberchk(C,`"()```),!,fail.  % maybe 44 ? comma maybe not # or ; ? ' `'`'````'"
+sym_char(C):- memberchk(C,`"()```),!,fail.  
+% maybe 44 ? comma maybe not # or ; ? ' `'`'````'"
 %sym_char(C):- nb_current('$maybe_string',t),memberchk(C,`,.:;!%`),!,fail.
 sym_char(_):- !.
 
@@ -876,7 +878,7 @@ to_untyped('?'(S),_):- S=='??',!.
 % to_untyped('?'(S),'$VAR'('_')):- S=='??',!.
 % to_untyped(VAR,NameU):-atom(VAR),atom_concat_or_rtrace('#$',NameU,VAR),!.
 to_untyped(VAR,NameU):-atom(VAR),(atom_concat_or_rtrace(N,'.',VAR)->true;N=VAR),(notrace_catch_fail(atom_number(N,NameU))),!.
-%to_untyped(S,s(L)):- string(S),atom_contains(S,' '),symbolic_list_concat(['(',S,')'],O),parse_sexpr_string(O,L),!.
+%to_untyped(S,s(L)):- string(S),atom_contains(S,' '),atomic_list_concat(['(',S,')'],O),parse_sexpr_string(O,L),!.
 to_untyped(S,S):- string(S),!.
 to_untyped(S,S):- number(S),!.
 %to_untyped(S,O):- atom(S),notrace_catch_fail(atom_number(S,O)),!.

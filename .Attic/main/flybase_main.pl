@@ -894,12 +894,19 @@ exists_virtually(corlib).
 % Process a file or directory path with a given predicate.
 with_wild_path(Fnicate, Dir) :- extreme_debug(fbug(with_wild_path(Fnicate, Dir))),fail.
 with_wild_path(_Fnicate, []) :- !.
+with_wild_path(_Fnicate, corelib) :- !.
+
 with_wild_path(_Fnicate, Virtual) :- exists_virtually(Virtual),!.
 with_wild_path(Fnicate, Virtual) :- var(Virtual),!,throw(var_with_wild_path(Fnicate, Virtual)).
 with_wild_path(Fnicate, Dir) :-  is_scryer, symbol(Dir), !, must_det_ll((path_chars(Dir,Chars), with_wild_path(Fnicate, Chars))).
 with_wild_path(Fnicate, Chars) :-  \+ is_scryer, \+ symbol(Chars), !, must_det_ll((name(Atom,Chars), with_wild_path(Fnicate, Atom))).
 
 with_wild_path(Fnicate, File) :- exists_file(File), !, must_det_ll(( call(Fnicate, File))).
+
+with_wild_path(Fnicate, Dir) :-  exists_directory(Dir),
+  absolute_file_name('__init__.py', PyFile, [access(read), file_errors(fail), relative_to(Dir)]),
+  with_wild_path(Fnicate, PyFile).
+
 with_wild_path(Fnicate, File) :- !, with_wild_path_swi(Fnicate, File).
 with_wild_path(Fnicate, Dir) :-  exists_directory(Dir), !,
   must_det_ll((directory_files(Dir, Files),
