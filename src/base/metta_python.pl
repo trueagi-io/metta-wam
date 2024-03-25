@@ -411,7 +411,7 @@ sync_python_path:-
     forall(member(E,Set),if_t( \+member(E,DirsA), if_t( \+ atom_length(E,0), py_add_lib_dir(E)))))),
     py_lib_dirs(DirsL),
     list_to_set(DirsL,Dirs),
-    %write_src_nl(py_lib_dirs(Dirs)),
+    fbug(py_lib_dirs(Dirs)),
     symbolic_list_concat(Dirs, ':',NewPythonPath),
     setenv('PYTHONPATH', NewPythonPath).
 
