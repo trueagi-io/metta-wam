@@ -453,7 +453,8 @@ generate_final_MeTTaLog() {
 
    ./scripts/pass_fail_totals.sh $METTALOG_OUTPUT/ > $METTALOG_OUTPUT/TEST_LINKS.md
    printf '%s\n' "${@}" > "$METTALOG_OUTPUT/_REPORT_.md"
-   cat $METTALOG_OUTPUT/TEST_LINKS.md | sed -e "s|$METTALOG_OUTPUT|reports|g" >> "$METTALOG_OUTPUT/_REPORT_.md"
+   cat $METTALOG_OUTPUT/TEST_LINKS.md | sed -e "s|$METTALOG_OUTPUT|reports|g" \
+   | sed -e "s|Directory:     ./reports/tests/|D: |g" >> "$METTALOG_OUTPUT/_REPORT_.md"
 
 }
 
