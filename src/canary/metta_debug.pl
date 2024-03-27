@@ -75,7 +75,7 @@ indentq_d(Depth,Prefix4, Message):-
 indentq(_DR,_EX,_AR,_Term):- is_fast_mode,!.
 indentq(DR,EX,AR,retval(Term)):-nonvar(Term),!,indentq(DR,EX,AR,Term).
 indentq(DR,EX,AR,[E,Term]):- E==e,!,indentq(DR,EX,AR,Term).
-indentq(_DR,_EX,_AR,_Term):- flag(trace_output_len,X,X+1), XX is (X mod 1000), XX<100,!.
+indentq(_DR,_EX,_AR,_Term):- flag(trace_output_len,X,X+1), XX is (X mod 1000), XX>100,!.
 indentq(DR,EX,AR,Term):- 
 
     setup_call_cleanup(
@@ -145,8 +145,8 @@ set_debug(Flag,Val):- \+ atom(Flag), flag_to_var(Flag,Var), atom(Var),!,set_debu
 set_debug(Flag,true):- !, debug(metta(Flag)),flag_to_var(Flag,Var),set_option_value(Var,true).
 set_debug(Flag,false):- nodebug(metta(Flag)),flag_to_var(Flag,Var),set_option_value(Var,false).
 
-if_trace(Flag,Goal):- real_notrace((catch_err(ignore((is_debugging(Flag),Goal)),E,
-												fbug(E-->if_trace(Flag,Goal))))).
+if_trace(Flag,Goal):- ignore(real_notrace((catch_err(ignore((is_debugging(Flag),Goal)),E,
+												fbug(E-->if_trace(Flag,Goal)))))).
 
 
 is_showing(Flag):- option_value(Flag,'silent'),!,fail.
@@ -186,11 +186,14 @@ is_debugging((A,B)):- !, (is_debugging(A) , is_debugging(B) ).
 is_debugging(not(Flag)):- !,  \+ is_debugging(Flag).
 is_debugging(Flag):- Flag== false,!,fail.
 is_debugging(Flag):- Flag== true,!.
+is_debugging(e):- is_testing,!.
+%is_debugging(eval):- is_testing,!.
+is_debugging(Flag):- option_value(Flag,'debug'),!.
+is_debugging(Flag):- option_value(Flag,'trace'),!.
 is_debugging(Flag):- debugging(metta(Flag),TF),!,TF==true.
 is_debugging(Flag):- debugging(Flag,TF),!,TF==true.
-is_debugging(Flag):- flag_to_var(Flag,Var),
-   (option_value(Var,true)->true;(Flag\==Var -> is_debugging(Var))).
-%is_debugging(_Flag):- is_testing,!.
+is_debugging(Flag):- once(flag_to_var(Flag,Var)), 
+  (option_value(Var,true)->true;(Flag\==Var -> is_debugging(Var))).
 
 % overflow = trace
 % overflow = fail
@@ -198,7 +201,7 @@ is_debugging(Flag):- flag_to_var(Flag,Var),
 % overflow = debug
 
 %trace_eval(P4,_TN,D1,Self,X,Y):- is_fast_mode,!, call(P4,D1,Self,X,Y).
-trace_eval(P4,TN,D1,Self,X,Y):- \+ is_debugging(TN),!, call(P4,D1,Self,X,Y).
+%trace_eval(P4,TN,D1,Self,X,Y):- \+ is_debugging(TN),!, call(P4,D1,Self,X,Y).
 trace_eval(P4,TN,D1,Self,X,Y):-
    must_det_ll((
    notrace((
@@ -214,14 +217,15 @@ trace_eval(P4,TN,D1,Self,X,Y):-
          nop((start_rtrace,rtrace)))))),
    nop(notrace(no_repeats_var(YY))))),
 
-   if_t(DR<DMax, if_trace((eval;TN), (PrintRet=1, indentq(DR,EX, '-->',[TN,X])))),
+   %if_t(DR<DMax, )
+   ( \+ \+ if_trace((eval;TN), (PrintRet=1, indentq(DR,EX, '-->',[TN,X]))) ),
 
    Ret=retval(fail),!,
 
-   (Display= (flag(eval_num,EX1,EX1+1),
+   (Display= ( \+ \+ (flag(eval_num,EX1,EX1+1),
 			    ((Ret\=@=retval(fail),nonvar(Y)) 
 			    -> indentq(DR,EX1,'<--',[TN,Y])
-			     ; indentq(DR,EX1,'<--',[TN,Ret])))),
+			     ; indentq(DR,EX1,'<--',[TN,Ret]))))),
 
    call_cleanup((
       (call(P4,D1,Self,X,Y)*->nb_setarg(1,Ret,Y);
@@ -230,7 +234,7 @@ trace_eval(P4,TN,D1,Self,X,Y):-
     % cleanup 
       ignore((PrintRet==1 -> ignore(Display) ;
        (fake_notrace(ignore((( % Y\=@=X,
-         if_t(DR<DMax,if_trace((eval),ignore(Display))))))))))),
+         if_t(DR<DMax,if_trace((eval;TN),ignore(Display))))))))))),
    Ret\=@=retval(fail).
 
 %  (Ret\=@=retval(fail)->true;(fail,trace,(call(P4,D1,Self,X,Y)),fail)).
