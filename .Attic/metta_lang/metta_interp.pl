@@ -310,10 +310,13 @@ set_is_unit_test(TF):-
  % if_t( \+ TF , set_prolog_flag(debug_on_interrupt,true)),
   !.
 
-fake_notrace(G):- tracing,!,notrace(G).
-fake_notrace(G):- !,once(G).
-fake_notrace(G):- quietly(G),!.
-real_notrace(G):- notrace(G).
+%fake_notrace(G):- tracing,!,real_notrace(G).
+fake_notrace(G):- once(G).
+%fake_notrace(G):- quietly(G),!.
+real_notrace(Goal) :-
+    setup_call_cleanup('$notrace'(Flags, SkipLevel),
+                       once(Goal),
+                       '$restore_trace'(Flags, SkipLevel)).
 
 
 null_io(G):- null_user_output(Out), !, with_output_to(Out,G).
@@ -513,7 +516,7 @@ metta_make_hook:-
 
 :- multifile(prolog:make_hook/2).
 :- dynamic(prolog:make_hook/2).
-prolog:make_hook(after, _Some):- nop( metta_make_hook).
+prolog:make_hook(after, _Some):- nop(metta_make_hook).
 
 into_reload_options(Reload,Reload).
 
@@ -534,7 +537,7 @@ get_flag_value(_,true).
 
 %process_option_value_def:- \+ option_value('python',false), skip(ensure_loaded(metta_python)).
 process_option_value_def:- \+ option_value('python',false), ensure_loaded(mettalog(metta_python)), 
-  ensure_mettalog_py.
+  real_notrace((ensure_mettalog_py)).
 process_option_value_def.
 
 
@@ -1099,7 +1102,7 @@ do_metta1_e(_Self,_,[=,A,B]):- !, with_concepts(false,
     con_write(' '),with_indents(true,write_src(B)),con_write(')'))),connl.
 do_metta1_e(_Self,_LoadExec,Term):- write_src(Term),connl.
 
-write_exec(Exec):- notrace(write_exec0(Exec)).
+write_exec(Exec):- real_notrace(write_exec0(Exec)).
 %write_exec0(Exec):- symbol(Exec),!,write_exec0([Exec]).
 
 write_exec0(Exec):-
@@ -1228,9 +1231,9 @@ convert_tax(How,_Self,Tax,Expr,How):-
   normalize_space(string(NewTax),Tax),
   parse_sexpr_metta1(NewTax,Expr).
 
-:- if( \+ current_predicate(notrace/1) ).
-  notrace(G):- once(G).
-:- endif.
+%:- if( \+ current_predicate(notrace/1) ).
+%  notrace(G):- once(G).
+%:- endif.
 
 metta_interp_mode('+',load).
 metta_interp_mode('-',unload).
@@ -1378,7 +1381,7 @@ print_goals(TermV):- write_src(TermV).
 
 if_or_else(Goal,Else):- call(Goal)*->true;call(Else).
 
-interacting:- tracing,!.
+interacting:- like_tracing,!.
 interacting:- current_prolog_flag(debug,true),!.
 interacting:- option_value(interactive,true),!.
 interacting:- option_value(prolog,true),!.
@@ -1901,14 +1904,15 @@ print_help :-
 
 
 
-really_trace:- once(option_value('exec',rtrace);option_value('eval',rtrace);is_debugging((exec));is_debugging((eval))).
+really_trace:- once(option_value('exec',rtrace);option_value('eval',rtrace);is_debugging((exec));
+  is_debugging((eval))).
 % !(pragma! exec rtrace)
 may_rtrace(Goal):- really_trace,!,  really_rtrace(Goal).
-may_rtrace(Goal):- Goal*->true;( \+ tracing, trace,really_rtrace(Goal)).
+may_rtrace(Goal):- Goal*->true;( \+ like_tracing, trace,really_rtrace(Goal)).
 really_rtrace(Goal):- is_transpiling,!,rtrace(call(Goal)).
-really_rtrace(Goal):- with_debug((eval),with_debug((exec),Goal)).
+really_rtrace(Goal):- with_debug((e),with_debug((exec),Goal)).
 
-rtrace_on_existence_error(G):- !, catch_err(G,E, (fbug(E=G),  \+ tracing, trace, rtrace(G))).
+rtrace_on_existence_error(G):- !, catch_err(G,E, (fbug(E=G),  \+ like_tracing, trace, rtrace(G))).
 %rtrace_on_existence_error(G):- catch(G,error(existence_error(procedure,W),Where),rtrace(G)).
 
 %prolog_only(Goal):- !,Goal.
@@ -1977,15 +1981,22 @@ give_time(What,Seconds):-
 
 timed_call(Goal,Seconds):-
     statistics(cputime, Start),
-    call(Goal),
+    ( \+ rtrace_this(Goal)->call(Goal);rtrace(Goal)),
     statistics(cputime, End),
     Seconds is End - Start.
+
+rtrace_this(eval_H(500, _, P , _)):- compound(P), !, rtrace_this(P).
+rtrace_this([P|_]):- P == 'pragma!',!,fail.
+rtrace_this([P|_]):- P == 'import!',!,fail.
+rtrace_this([P|_]):- P == 'rtrace!',!.
+rtrace_this(_Call):- option_value(rtrace,true),!.
+rtrace_this(_Call):- is_debugging(rtrace),!.
 
 %:- nb_setval(cmt_override,lse('; ',' !(" ',' ") ')).
 
 :- abolish(fbug/1).
 fbug(_):- is_compatio,!.
-fbug(Info):- notrace(in_cmt(color_g_mesg('#2f2f2f',write_src(Info)))).
+fbug(Info):- real_notrace(in_cmt(color_g_mesg('#2f2f2f',write_src(Info)))).
 example0(_):- fail.
 example1(a). example1(_):- fail.
 example2(a). example2(b). example2(_):- fail.
@@ -2072,12 +2083,12 @@ do_loon:-
   maplist(catch_red_ignore,[
 
    %if_t(is_compiled,ensure_mettalog_py),
-          install_readline_editline,
-	% nts,
+   install_readline_editline,
+   nts,
    metta_final,
    nop(load_history),
    set_prolog_flag(history, 3),
-   (set_output_stream),
+   set_output_stream,
    if_t(is_compiled,update_changed_files),
    run_cmd_args,
    maybe_halt(7)]))),!.
@@ -2191,6 +2202,12 @@ nts:-  redefine_system_predicate(system:notrace/1),
   abolish(system:notrace/1),
   meta_predicate(system:notrace(0)),
   asserta((system:notrace(G):- (!,once(G)))).
+nts:- !.
+
+nts0:-  redefine_system_predicate(system:notrace/0), 
+  abolish(system:notrace/0),
+  asserta((system:notrace:- wdmsg(notrace))).
+
 
 override_portray:- 
     forall(

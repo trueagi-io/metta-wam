@@ -48,9 +48,7 @@ py_dump:- py_call(traceback:print_exc()).
 py_call_c(G):- py_catch(py_call(G)).
 py_call_c(G,R):- py_catch(py_call(G,R)).
 
-py_is_module(M):-with_safe_argv(catch((
-ensure_mettalog_py,
-py_call(M,X),py_type(X,module)),_,fail)).
+py_is_module(M):-notrace((with_safe_argv(catch((py_call(M,X),py_type(X,module)),_,fail)))).
 
 import_metta(Self,Module):- py_is_module(Module),!,
  must_det_ll(self_extend_py(Self,Module)),!.
@@ -97,7 +95,9 @@ ensure_mettalog_py(MettaLearner):-
    pybug(is_mettalog(MettaLearner)),
    asserta(is_mettalog(MettaLearner)))).
 
-ensure_mettalog_py:- with_safe_argv(ensure_mettalog_py(_)),!.  
+ensure_mettalog_py:- 
+  setenv('VSPACE_VERBOSE',0),
+  with_safe_argv(ensure_mettalog_py(_)),!.  
 
 
 
@@ -437,7 +437,9 @@ is_rust_operation([Fun|Args]):-
 get_list_arity(Args,Arity):- is_list(Args),!,length(Args,Arity).
 get_list_arity(_Args,-1).
 
-:- set_prolog_flag(py_backtrace_depth,10).
+:- set_prolog_flag(debugger_write_options,[quoted(true), portray(true), max_depth(60), attributes(portray), spacing(next_argument)] ).
+:- set_prolog_flag(answer_write_options,[quoted(true), portray(true), max_depth(60), attributes(portray), spacing(next_argument)] ).
+:- set_prolog_flag(py_backtrace_depth,50).
 :- set_prolog_flag(py_backtrace, true).
 :- set_prolog_flag(py_argv , []).
 %:- initialization(on_restore1,restore).

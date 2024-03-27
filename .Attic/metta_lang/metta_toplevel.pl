@@ -1068,7 +1068,7 @@ save_debug_after_read :-
 save_debug_after_read.
 
 save_debug :-
-    (   tracing,
+    (   like_tracing,
         notrace
     ->  Tracing = true
     ;   Tracing = false
