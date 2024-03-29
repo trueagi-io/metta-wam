@@ -455,6 +455,7 @@ generate_final_MeTTaLog() {
    printf '%s\n' "${@}" > "$METTALOG_OUTPUT/_REPORT_.md"
    cat $METTALOG_OUTPUT/TEST_LINKS.md | sed -e "s|$METTALOG_OUTPUT|reports|g" \
    | sed -e "s|Directory:     ./reports/tests/|D: |g" >> "$METTALOG_OUTPUT/_REPORT_.md"
+   ./scripts/html_pass_fail.sh $METTALOG_OUTPUT/ > $METTALOG_OUTPUT/REPORT.html
 
 }
 
