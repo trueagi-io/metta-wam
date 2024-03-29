@@ -1,7 +1,6 @@
-Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/metta-morph_tests/add_atom_match.metta
-[(Error (assertEqualToResult (sequential ((add-atom GroundingSpace-0x5555fca1d548 (man mortal)) (match GroundingSpace-0x5555fca1d548 ($A mortal) (mortal $A)))) ((mortal man))) 
+[(Error (assertEqualToResult (sequential ((add-atom GroundingSpace-top (man mortal)) (match GroundingSpace-top ($A mortal) (mortal $A)))) ((mortal man))) 
 Expected: [(mortal man)]
 Got: [(), (mortal man)]
 Excessive result: ())]
-0.04user 0.00system 0:00.08elapsed 67%CPU (0avgtext+0avgdata 32416maxresident)k
-33552inputs+0outputs (227major+3413minor)pagefaults 0swaps
+0.04user 0.00system 0:00.05elapsed 100%CPU (0avgtext+0avgdata 34296maxresident)k
+0inputs+0outputs (0major+3639minor)pagefaults 0swaps

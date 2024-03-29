@@ -1,4 +1,3 @@
-Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/metta-morph_tests/nalifier.metta
 [(((ExtSet sam) --> duck) (1.0 0.618320610687023))]
-5.01user 0.04system 0:05.05elapsed 99%CPU (0avgtext+0avgdata 37584maxresident)k
-0inputs+0outputs (0major+4753minor)pagefaults 0swaps
+5.04user 0.00system 0:05.05elapsed 100%CPU (0avgtext+0avgdata 39296maxresident)k
+0inputs+0outputs (0major+4966minor)pagefaults 0swaps

@@ -1,3 +1,5 @@
+!(nop (pragma! load silent))
+
 ;; stdlib extension
 (: If (-> Bool Atom Atom))
 (= (If True $then) $then)

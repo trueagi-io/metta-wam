@@ -9,5 +9,5 @@
 [()]
 [("loading succAtoms into kb2")]
 [(Error (import! &kb2 succAxiom.metta) Illegal module name: succAxiom.metta)]
-0.08user 0.01system 0:00.09elapsed 98%CPU (0avgtext+0avgdata 34028maxresident)k
-0inputs+0outputs (0major+3711minor)pagefaults 0swaps
+0.10user 0.00system 0:00.10elapsed 93%CPU (0avgtext+0avgdata 34332maxresident)k
+6400inputs+0outputs (36major+3732minor)pagefaults 0swaps

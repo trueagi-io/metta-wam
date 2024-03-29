@@ -1,6 +1,3 @@
-Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/metta-morph_tests/tests0.metta
-[()]
-[()]
 [()]
 [()]
 [()]
@@ -9,7 +6,7 @@ Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/lo
 [()]
 [(Error (assertEqualToResult (|- ((A --> cat) (1.0 0.9)) ((B --> cat) (1.0 0.9))) (((B --> A) (1.0 0.44751381215469616)) (((A ~ B) --> cat) (0.0 0.81)) (((A | B) --> cat) (1.0 0.81)) ((B <-> A) (1.0 0.44751381215469616)) (((A & B) --> cat) (1.0 0.81)))) 
 Expected: [((B --> A) (1.0 0.44751381215469616)), (((A ~ B) --> cat) (0.0 0.81)), (((A | B) --> cat) (1.0 0.81)), ((B <-> A) (1.0 0.44751381215469616)), (((A & B) --> cat) (1.0 0.81))]
-Got: [(((A & B) --> cat) (1.0 0.81)), (((A | B) --> cat) (1.0 0.81)), ((B <-> A) (1.0 0.44751381215469616)), ((B <-> A) (1.0 0.44751381215469616)), (((A ~ B) --> cat) (0.0 0.81)), ((B --> A) (1.0 0.44751381215469616))]
+Got: [((B <-> A) (1.0 0.44751381215469616)), ((B <-> A) (1.0 0.44751381215469616)), (((A | B) --> cat) (1.0 0.81)), ((B --> A) (1.0 0.44751381215469616)), (((A & B) --> cat) (1.0 0.81)), (((A ~ B) --> cat) (0.0 0.81))]
 Excessive result: ((B <-> A) (1.0 0.44751381215469616)))]
-0.15user 0.01system 0:00.17elapsed 99%CPU (0avgtext+0avgdata 35712maxresident)k
-0inputs+0outputs (0major+4292minor)pagefaults 0swaps
+0.19user 0.01system 0:00.20elapsed 100%CPU (0avgtext+0avgdata 39744maxresident)k
+0inputs+0outputs (0major+5146minor)pagefaults 0swaps

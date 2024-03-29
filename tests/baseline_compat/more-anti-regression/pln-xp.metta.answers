@@ -1,0 +1,13 @@
+[()]
+[(Error (load-ascii &kb3 sample_kb_v2.metta) Exception caught:
+AttributeError: 'SymbolAtom' object has no attribute 'get_object'
+
+At:
+  /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/python/hyperon/stdlib.py(182): load_ascii_atom
+  /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/python/hyperon/atoms.py(346): execute
+  /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/python/hyperon/atoms.py(176): _priv_call_execute_on_grounded_atom
+  /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-experimental/python/hyperon/runner.py(31): run_step
+  (17): run_step
+)]
+0.04user 0.01system 0:00.05elapsed 100%CPU (0avgtext+0avgdata 34300maxresident)k
+0inputs+0outputs (0major+3727minor)pagefaults 0swaps

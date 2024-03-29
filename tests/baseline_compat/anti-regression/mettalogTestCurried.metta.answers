@@ -9,5 +9,5 @@
 [()]
 [()]
 [(Error (import! &kb2 succAxiom.metta) Illegal module name: succAxiom.metta)]
-0.15user 0.00system 0:00.15elapsed 99%CPU (0avgtext+0avgdata 34012maxresident)k
-0inputs+0outputs (0major+3723minor)pagefaults 0swaps
+0.15user 0.00system 0:00.16elapsed 98%CPU (0avgtext+0avgdata 34500maxresident)k
+0inputs+0outputs (0major+3778minor)pagefaults 0swaps

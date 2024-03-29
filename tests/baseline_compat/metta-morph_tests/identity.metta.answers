@@ -1,4 +1,3 @@
-Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-wam/reports/baseline_compat/metta-morph_tests/identity.metta
 [1]
-0.04user 0.00system 0:00.05elapsed 100%CPU (0avgtext+0avgdata 32436maxresident)k
-0inputs+0outputs (0major+3498minor)pagefaults 0swaps
+0.04user 0.00system 0:00.05elapsed 100%CPU (0avgtext+0avgdata 33648maxresident)k
+0inputs+0outputs (0major+3633minor)pagefaults 0swaps

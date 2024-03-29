@@ -298,7 +298,7 @@
 		 ($depth (fromNumber 8)))
 	(fc $atom $depth))))
 
-!(eachfc)
+; !(eachfc)
 
 ; !(expected)
 

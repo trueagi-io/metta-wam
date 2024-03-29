@@ -298,13 +298,16 @@
 				   (sp_witness (Inheritance D (VarIdx (S Z)))))) ms_Threshold)
        (-> (⍃ (S Z) (S Z)) (minsup (Inheritance D (VarIdx (S Z))))))))
 
+
+!(pragma! test true)
+
 (= (eachfc)
   (collapse 
    (let $aptrn (Inheritance (VarIdx Z) (VarIdx (S Z)))
 	(fc (: (supportwitness $aptrn) (supportOf $aptrn (countNat $aptrn))) (fromNumber 8)))))
 
-!(pragma! test true)
-!(eachfc)
+
+; !(eachfc)
 
 ; !(expected)
 

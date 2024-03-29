@@ -1,3 +1,5 @@
+!(pragma! compile False)
+
 (: is-variable (-> Atom Bool))
 (= (is-variable $x) (== (get-metatype $x) Variable))
 
@@ -43,12 +45,13 @@
 ;; DTL Backward chaining Curried ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+
 (: bc (-> $a Nat $a))
 ;; Base case
-(= (bc (: $prf $ccln) $_) (match &kb (: $prf $ccln) (: $prf $ccln)))
+(= (bc (: $prf $ccln) $_1) (match &kb (: $prf $ccln) (: $prf $ccln)))
 ;; if conclusion equals (⍃ $X $Y), then return (: CPU (⍃ $X $Y)) 
 ;; if $x and $Y are fully grounded and (< $X $Y)
-(= (bc (: CPU (⍃ $X $Y)) $_) 
+(= (bc (: CPU (⍃ $X $Y)) $_2) 
     (if (and (and (is-closed $X) (is-closed $Y)) (< $X $Y))
         (: CPU (⍃ $X $Y))
         (empty)))
@@ -72,4 +75,5 @@
 ;! ( rtrace! (bc (: $prf (less $x $y)) (S (S (S Z)))))
 
 !(bc (: $prf (less $x $y)) (S (S (S Z))))
+
 

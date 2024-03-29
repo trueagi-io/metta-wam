@@ -232,7 +232,8 @@ def llm(metta: MeTTa, *args):
 
 @register_atoms(pass_metta=True)
 def llmgate_atoms(metta):
-`    return ret
+    ret = llmgate_atoms_for_ra(metta)
+    return ret
 def llmgate_atoms_for_ra(metta):
     global __default_agent
     __default_agent = ChatGPTAgent()

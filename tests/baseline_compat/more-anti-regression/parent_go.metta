@@ -1,4 +1,7 @@
+
 !(import! &kb go_rel)
+
+
 (: Nat Type)
 (: Z Nat)
 (: S (-> Nat Nat))
@@ -29,4 +32,16 @@
                ((: $prfarg $prms) (bc (: $prfarg $prms) $k)))
                (: ($prfabs $prfarg) $ccln))))
 
-!(bc (: $prf (member $g $o $k)) (fromNumber 3))
+
+;!(bc (: $prf (member $g $o $k)) (fromNumber 3))
+
+!(bc_impl! (: $prf (member $g $o $k)) (fromNumber 3))
+
+!(pragma! rtrace true)
+
+!(bc_impl! (: $prf (member $g $o $k)) (fromNumber 3))
+
+!(pragma! rtrace false)
+
+;!(bcm!)
+!(bc_impl! (: $prf (member $g $o $k)) (fromNumber 3))

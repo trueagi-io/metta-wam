@@ -517,11 +517,13 @@
 
 (= (check-state)
  ((concepts (collapse (get-atoms &concepts)))
-;  (attentional_focus (collapse (get-atoms &attentional_focus)))
+  ; (attentional_focus (collapse (get-atoms &attentional_focus)))
   (currentTime (get-state &currentTime))
   (evidentialBase (get-state &evidentialBase))
   (FIFO (get-state &FIFO))
-  (tempbst (get-state &tempbest))
+  (tempbest (get-state &tempbest))
   (belief_events (collapse (get-atoms &belief_events)))
   (goal_events (collapse (get-atoms &goal_events)))))
 
+
+!(compile-easy!)

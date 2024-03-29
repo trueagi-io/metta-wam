@@ -2,5 +2,6 @@
 <Workspace Version="10.0" VendorName="SlickEdit">
 	<Projects>
 		<Project File="hyperon-wam.vpj"/>
+		<Project File="../../../../logicmoo_workspace.vpj"/>
 	</Projects>
 </Workspace>

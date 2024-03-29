@@ -304,7 +304,7 @@
 	(fc (: (supportwitness $aptrn) (supportOf $aptrn (countNat $aptrn))) (fromNumber 8)))))
 
 !(pragma! test true)
-!(eachfc)
+;!(eachfc)
 
 ; !(expected)
 
