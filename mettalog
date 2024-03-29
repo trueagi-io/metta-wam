@@ -22,6 +22,7 @@ use_docker=auto
 repl_flag=auto
 use_rc_file=~/.mettalogrc
 debug_this_script=false
+contains_halt=false
 dry_run=0
 #debug_this_script=true
 stdout_is_to_file=false
@@ -221,44 +222,6 @@ function resolve_upward {
 # Initialize the variable to indicate whether to use the test script
 use_test_script=0
 
-# Iterate over all command-line arguments
-for arg in "$@"; do
-
-
-    if [[ "$arg" == "--compatio" ]]; then
-	#debug_this_script=false
-	compatio=true        
-    fi
-
-    if [[ "$arg" == "--debug" ]]; then
-        debug_this_script=true
-	compatio=false
-    fi
-
-    if [[ "$arg" == "--docker=false" ]]; then
-        use_docker=false
-    fi
-    if [[ "$arg" == "--docker=true" ]]; then
-        use_docker=true
-    fi
-    if [[ "$arg" == "--docker" ]]; then
-        use_docker=true
-    fi
-
-    # Check if the argument is a directory
-    if [ -d "$arg" ]; then
-        use_test_script=1
-    else
-         # Check for specific flags
-         case "$arg" in
-             --fres*|--fail*|--contin*|--regres*|--clean)
-                 use_test_script=1
-                 ;;
-         esac
-    fi
-done
-
-
 
 quoted_args=() # Initialize an empty array to store the results
 for arg in "$@"; do
@@ -277,79 +240,11 @@ if [ "$#" -gt 0 ]; then
     : #echo "ARGS: ${quoted_args[*]}"
 fi
 
-
-
-
-# Execute the test script if the condition is met
-if [[ "$use_test_script" -eq 1 ]]; then
-    exec $METTALOG_DIR/scripts/test_in_metta.sh -y --report=n $(quote_args_if_needed $@)
-fi
-
 for arg in "$@"; do
    if [[ "$arg" == "--debugable" ]]; then
 	exec $METTALOG_DIR/scripts/send_keys_debug.sh $(quote_args_if_needed $@)
     fi
 done
-
-#export TEE_FILE=${TEE_FILE:-"$METTALOG_DIR/TEE.ansi"}
-
-if [ "$use_docker" != "auto" ]; then
-if [ "$use_docker" == "true" ]; then
-# Check if the script is running inside a Docker container
-if [ ! -f /.dockerenv ]; then
-    # Define the name of the Docker image
-    IMAGE_NAME="mettalog"
-
-    # Check if Docker is installed
-    if command -v docker &> /dev/null; then
-        # Check if the Docker image exists
-        if docker image inspect "$IMAGE_NAME" &> /dev/null; then
-            DEBUG "Updating the Docker image: $IMAGE_NAME"
-
-            # Create a temporary file to capture the build output
-            temp_file=$(mktemp)
-
-            # Build the Docker image and redirect stderr to the temporary file
-            if ! (cd $METTALOG_DIR ; docker build . -t "$IMAGE_NAME" > "$temp_file" ) 2>&1; then
-                echo "Docker build failed. Output:"
-                # Tail the last 30 lines of the build output for debugging
-                tail -30 "$temp_file"
-                # Clean up the temporary file
-                rm "$temp_file"
-                exit 1
-            else
-                # If build succeeds, remove the temporary file
-                rm "$temp_file"
-                DEBUG "Image $IMAGE_NAME successfully updated."
-            fi
-
-            # Setup additional environment variables or paths
-            SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
-            # Example: UPWARD=$(resolve_upward "$(pwd)")
-
-            # Run the Docker container with the necessary volumes mounted
-            exec docker run -it \
-                -v "${SCRIPT_DIR}:/home/user/metta-wam" \
-                -v "$(pwd):$(pwd)" \
-                -w "$(pwd)" \
-                "$IMAGE_NAME" \
-                /home/user/metta-wam/mettalog "$@"
-            
-        else
-            DEBUG "Image $IMAGE_NAME is not installed. Continuing with script..."
-        fi
-    else
-        DEBUG "Docker is not installed. Continuing with script..."
-    fi
-fi
-fi
-fi
-
-
-set -e
-
-
-
 
 
 function load_rc_file {
@@ -531,6 +426,11 @@ function handle_args {
             NEXT_ARG_IS_RC_FILE=false
             continue
         fi
+        # Add support for --rc followed by a file
+        if [[ "$arg" == "--rc" ]]; then
+            NEXT_ARG_IS_RC_FILE=true
+            continue
+        fi
 
         if [[ $SKIP_TO_METTALOG_OPTIONS == true ]]; then
             METTALOG_OPTIONS+=("$arg")
@@ -543,11 +443,41 @@ function handle_args {
             continue
         fi
 
-        # Add support for --rc followed by a file
-        if [[ "$arg" == "--rc" ]]; then
-            NEXT_ARG_IS_RC_FILE=true
-            continue
-        fi
+
+	if [[ "$arg" == "--compatio" ]]; then
+	    #debug_this_script=false
+	    compatio=true        
+	fi
+
+	if [[ "$arg" == "--debug" ]]; then
+	    debug_this_script=true
+	    compatio=false
+	fi
+
+	if [[ "$arg" == "--docker=false" ]]; then
+	    use_docker=false
+	fi
+	if [[ "$arg" == "--docker=true" ]]; then
+	    use_docker=true
+	fi
+	if [[ "$arg" == "--docker" ]]; then
+	    use_docker=true
+	fi
+
+	# Check if the argument is a directory
+	if [ -d "$arg" ]; then
+	    use_test_script=1
+	fi
+
+        # Check for specific flags
+        case "$arg" in
+            --fres*|--fail*|--contin*|--regres*|--clean)
+             use_test_script=1
+             ;;
+            --halt*)
+             contains_halt=true
+             ;;
+        esac
 
         # track file paths but keep going
         if [[ -f "$arg" || -d "$arg" ]]; then
@@ -705,6 +635,71 @@ if [[ "$repl_flag" == "true" ]]; then
   TIMEOUT=0
 fi
 
+
+# Execute the test script if the condition is met
+if [[ "$use_test_script" -eq 1 ]]; then
+    #if [[ "$contains_halt" == "false" ]]; then
+	exec $METTALOG_DIR/scripts/test_in_metta.sh -y --report=n $(quote_args_if_needed $@)
+    #fi
+fi
+
+
+#export TEE_FILE=${TEE_FILE:-"$METTALOG_DIR/TEE.ansi"}
+
+if [ "$use_docker" != "auto" ]; then
+if [ "$use_docker" == "true" ]; then
+# Check if the script is running inside a Docker container
+if [ ! -f /.dockerenv ]; then
+    # Define the name of the Docker image
+    IMAGE_NAME="mettalog"
+
+    # Check if Docker is installed
+    if command -v docker &> /dev/null; then
+        # Check if the Docker image exists
+        if docker image inspect "$IMAGE_NAME" &> /dev/null; then
+            DEBUG "Updating the Docker image: $IMAGE_NAME"
+
+            # Create a temporary file to capture the build output
+            temp_file=$(mktemp)
+
+            # Build the Docker image and redirect stderr to the temporary file
+            if ! (cd $METTALOG_DIR ; docker build . -t "$IMAGE_NAME" > "$temp_file" ) 2>&1; then
+                echo "Docker build failed. Output:"
+                # Tail the last 30 lines of the build output for debugging
+                tail -30 "$temp_file"
+                # Clean up the temporary file
+                rm "$temp_file"
+                exit 1
+            else
+                # If build succeeds, remove the temporary file
+                rm "$temp_file"
+                DEBUG "Image $IMAGE_NAME successfully updated."
+            fi
+
+            # Setup additional environment variables or paths
+            SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
+            # Example: UPWARD=$(resolve_upward "$(pwd)")
+
+            # Run the Docker container with the necessary volumes mounted
+            exec docker run -it \
+                -v "${SCRIPT_DIR}:/home/user/metta-wam" \
+                -v "$(pwd):$(pwd)" \
+                -w "$(pwd)" \
+                "$IMAGE_NAME" \
+                /home/user/metta-wam/mettalog "$@"
+            
+        else
+            DEBUG "Image $IMAGE_NAME is not installed. Continuing with script..."
+        fi
+    else
+        DEBUG "Docker is not installed. Continuing with script..."
+    fi
+fi
+fi
+fi
+
+
+set -e
 
 DEBUG "SWI_OPTIONS: ${SWI_OPTIONS[@]}"
 DEBUG "PRE_METTALOG_OPTIONS: ${PRE_METTALOG_OPTIONS[@]}"
@@ -893,7 +888,7 @@ if [[ "$html_flag" == "enable" ]]; then
 
     [[ "$wants_print_help" == "1" ]] && { print_help; }
     DEBUG ""
-    do_DEBUG "Afterwhich ansi2html -u < $TEE_FILE > '$HTML_OUT'"
+    DEBUG "Afterwhich ansi2html -u < $TEE_FILE > '$HTML_OUT'"
     DEBUG ""
     [[ -n "${EXIT_SCRIPT+x}" ]] && { [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
 
@@ -901,14 +896,18 @@ if [[ "$html_flag" == "enable" ]]; then
         IF_REALLY_DO "touch '$TEE_FILE'"
         IF_REALLY_DO "chmod 777 '$TEE_FILE'"
         IF_REALLY_DO "cat /dev/null > '$TEE_FILE'"
-        DEBUG "METTA_CMD: $METTA_CMD"
+        if [[ "$contains_halt" == "true" ]]; then
+	   do_DEBUG "METTA_CMD: $METTA_CMD"
+	fi
         eval "$METTA_CMD"
         echo $? > "$TEMP_EXIT_CODE_FILE"
     )
 else
     [[ "$wants_print_help" == "1" ]] && { print_help; [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
     [[ -n "${EXIT_SCRIPT+x}" ]] && { [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
-    DEBUG "METTA_CMD: $METTA_CMD"
+    if [[ "$contains_halt" == "true" ]]; then
+       do_DEBUG "METTA_CMD: $METTA_CMD"
+    fi
     (
         IF_REALLY_DO eval "$METTA_CMD"
         IF_REALLY_DO "echo $? > '$TEMP_EXIT_CODE_FILE'"
