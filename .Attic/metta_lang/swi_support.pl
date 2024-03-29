@@ -71,8 +71,9 @@ set_option_value(N,V):-
 set_option_value0(N,V):-
    p2mE(V,VV),!,
    catch(nb_setval(N,VV),E,fbug(E)),
-   catch(create_prolog_flag(N,V,[keep(false),access(read_write), type(term)]),E2,fbug(E2)),
-   catch(set_prolog_flag(N,V),E3,fbug(E3)),!.
+   p2mE(PV,VV),!,
+   catch(create_prolog_flag(N,PV,[keep(true),access(read_write), type(term)]),E2,fbug(E2)),
+   catch(set_prolog_flag(N,PV),E3,fbug(E3)),!.
 
 kaggle_arc:- \+ exists_directory('/opt/logicmoo_workspace/packs_sys/logicmoo_agi/prolog/kaggle_arc/'), !.
 %kaggle_arc:- !.
@@ -114,7 +115,7 @@ symbolics_to_string(A,B):-atomics_to_string(A,B).
 symbolics_to_string(A,B,C):-atomics_to_string(A,B,C).
 upcase_symbol(A,B):-upcase_atom(A,B).
 :- prolog_load_context(directory, File),
-   ignore(( 
+   ignore((
      absolute_file_name('../../data/ftp.flybase.org/releases/current/',Dir,[relative_to(File),
      file_type(directory), file_errors(fail)]),
     asserta(ftp_data(Dir)))).

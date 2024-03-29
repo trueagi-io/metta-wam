@@ -16,7 +16,7 @@
 
 cleanup_debug:-
   forall(
-    (clause(prolog_debug:debugging(A1,B,C),Body,Cl1), 
+    (clause(prolog_debug:debugging(A1,B,C),Body,Cl1),
      clause(prolog_debug:debugging(A2,B,C),Body,Cl2),
      A1=@=A2,Cl1\==Cl2),
      erase(Cl2)).
@@ -207,7 +207,7 @@ ibreak:- if_thread_main(((trace,break))).
 
 %tc_arg(N,C,E):- compound(C),!,arg(N,C,E).
 tc_arg(N,C,E):- catch(arg(N,C,E),Err,
-  /*unrepress_output*/((bt,fbug(tc_arg(N,C,E)=Err),((like_tracing->true;trace),break,arg(N,C,E))))).
+  /*unrepress_output*/((bt,fbug(tc_arg(N,C,E)=Err),((tracing->true;trace),break,arg(N,C,E))))).
 
 
 
@@ -221,8 +221,8 @@ compound_name_arg(G,MD,Goal):- compound(G),!, compound_name_arguments(G,MD,[Goal
 :- multifile(user:message_hook/3).
 :- dynamic(user:message_hook/3).
 %user:message_hook(Term, Kind, Lines):- error==Kind, itrace,fbug(user:message_hook(Term, Kind, Lines)),trace,fail.
-user:message_hook(Term, Kind, Lines):- 
-   fail, error==Kind,  
+user:message_hook(Term, Kind, Lines):-
+   fail, error==Kind,
    fbug(message_hook(Term, Kind, Lines)),fail.
 
 :- meta_predicate(must_det_ll(0)).
@@ -248,15 +248,11 @@ md_maplist(MD,P3,[HA|TA],[HB|TB],[HC|TC]):- call(MD,call(P3,HA,HB,HC)), md_mapli
 %must_det_ll(G):- !, once((/*notrace*/(G)*->true;md_failed(P1,G))).
 
 %:- if( \+ current_predicate(must_det_ll/1)).
-must_det_ll(X):- like_tracing,!,once(X).
-must_det_ll(X):- !,once(X).
-%must_det_ll(X):- md(once,X).
+must_det_ll(X):- tracing,!,once(X).
+must_det_ll(X):- md(once,X).
 %:- endif.
 
-like_tracing:- true.
-
-
-md(P1,G):- like_tracing,!, call(P1,G). % once((call(G)*->true;md_failed(P1,G))).
+md(P1,G):- tracing,!, call(P1,G). % once((call(G)*->true;md_failed(P1,G))).
 md(P1,G):- remove_must_det(MD), wraps_each(MD,P1),!,call(G).
 md(P1,G):- never_rrtrace,!, call(P1,G).
 md(P1,G):- /*notrace*/(arc_html),!, ignore(/*notrace*/(call(P1,G))),!.
@@ -294,19 +290,19 @@ md(P1,X):-
   ((M is N -1, M>0)->throw(md_failed(P1,G,M));(ugtrace(X),throw('$aborted')))),!.
 %must_det_ll(X):- must_det_ll1(P1,X),!.
 
-must_det_ll1(P1,X):- like_tracing,!,must_not_error(call(P1,X)),!.
+must_det_ll1(P1,X):- tracing,!,must_not_error(call(P1,X)),!.
 must_det_ll1(P1,once(A)):- !, once(md(P1,A)).
 must_det_ll1(P1,X):-
   strip_module(X,M,P),functor(P,F,A),setup_call_cleanup(nop(trace(M:F/A,+fail)),(must_not_error(call(P1,X))*->true;md_failed(P1,X)),
     nop(trace(M:F/A,-fail))),!.
 
-ugtrace(_):-  is_testing, !, ignore(give_up(5)), throw('$aborted').
 ugtrace(G):-  notrace,trace,rtrace(G).
+ugtrace(_):-  is_testing, !, ignore(give_up(5)), throw('$aborted').
 %ugtrace(G):- ggtrace(G).
 
 %must_not_error(G):- must(once(G)).
 
-must_not_error(G):- (like_tracing;never_rrtrace),!,call(G).
+must_not_error(G):- (tracing;never_rrtrace),!,call(G).
 must_not_error(G):- notrace(is_cgi),!, ncatch((G),E,((u_dmsg(E=G)))).
 %must_not_error(X):- is_guitracer,!, call(X).
 %must_not_error(G):- !, call(G).
@@ -336,7 +332,7 @@ can_rrtrace:- nb_setval(cant_rrtrace,f).
 md_failed(P1,G):- never_rrtrace,!,notrace,/*notrace*/(u_dmsg(md_failed(P1,G))),!,throw(md_failed(P1,G,2)).
 md_failed(_P1,_G):- option_value(testing,true),!,give_up(6).
 md_failed(_,_):- never_rrtrace,!,fail.
-md_failed(P1,G):- like_tracing,/*notrace*/(u_dmsg(md_failed(P1,G))),!,fail.
+md_failed(P1,G):- tracing,/*notrace*/(u_dmsg(md_failed(P1,G))),!,fail.
 md_failed(P1,G):- main_debug,/*notrace*/(u_dmsg(md_failed(P1,G))),!,throw(md_failed(P1,G,2)).
 md_failed(P1,G):- is_cgi,!, u_dmsg(arc_html(md_failed(P1,G))).
 md_failed(P1,X):- notrace,is_guitracer,u_dmsg(failed(X))/*,arcST*/,nortrace,atrace, call(P1,X).
@@ -1302,7 +1298,7 @@ print_collapsed0(Size,G):- Size<10, !, call(G).
 print_collapsed0(Size,G):- Size>=10, !, wots_hs(_S,G).
 print_collapsed0(_,G):- wots_vs(S,G),write(S).
 
-tersify(I,O):- like_tracing,!,I=O.
+tersify(I,O):- tracing,!,I=O.
 %tersify(I,O):- term_variables(I,Vs), \+ ( member(V,Vs), attvar(V)),!,I=O.
 tersify(I,O):- tersify23(I,O),!.
 tersify(X,X):-!.
@@ -1439,7 +1435,7 @@ arc_portray_pair_optional(Ps,K,Val,TF):-
   color_print(cyan,call(arc_portray_pair(Ps,diffs(K),Diffs,TF))))).
 
 
-% arc_portray(G):- \+ \+ catch((wots_hs(S,( like_tracing->arc_portray(G,true);arc_portray(G,false))),write(S),ttyflush),_,fail).
+% arc_portray(G):- \+ \+ catch((wots_hs(S,( tracing->arc_portray(G,true);arc_portray(G,false))),write(S),ttyflush),_,fail).
 arc_portray(G):- \+ compound(G),fail.
 arc_portray(G):- is_vm(G), !, write('..VM..').
 arc_portray(G):- \+ nb_current(arc_portray,t),\+ nb_current(arc_portray,f),is_print_collapsed,!,
@@ -1450,11 +1446,11 @@ arc_portray(G):- locally(nb_setval(arc_portray,f),arc_portray1(G)).
 arc_portray1(G):-
  flag(arc_portray_current_depth,X,X), X < 3,
  \+ \+
-  setup_call_cleanup(flag(arc_portray_current_depth,X,X+1),catch(((like_tracing->arc_portray(G,true);
+  setup_call_cleanup(flag(arc_portray_current_depth,X,X+1),catch(((tracing->arc_portray(G,true);
   arc_portray(G,false)),ttyflush),E,(fail,format(user_error,"~N~q~n",[E]),fail)),flag(arc_portray_current_depth,_,X)).
 
 
-%via_print_grid(G):- like_tracing,!,fail.
+%via_print_grid(G):- tracing,!,fail.
 via_print_grid(G):- is_points_list(G). %,!,fail,grid_size(G,H,V),number(H),number(V),H>1,V>1.
 via_print_grid(G):- is_grid(G).
 via_print_grid(G):- is_obj_props(G),!,fail.
@@ -1802,7 +1798,7 @@ arcp:will_arc_portray:-
    \+ nb_current(arc_can_portray,f),
    %nb_current(arc_can_portray,t),
    current_prolog_flag(debug,false),
-   \+ like_tracing,
+   \+ tracing,
    flag(arc_portray_current_depth,X,X),X<3,
    current_predicate(bfly_startup/0).
 
@@ -2354,7 +2350,7 @@ arcdbg(G):- compound(G), compound_name_arity(G,F,_),functor_test_color(F,C),
 arcdbg(G):- u_dmsg(G).
 
 
-%user:portray(Grid):- ((\+ like_tracing, is_group(Grid),print_grid(Grid))).
+%user:portray(Grid):- ((\+ tracing, is_group(Grid),print_grid(Grid))).
 %user:portray(Grid):- quietlyd((is_object(Grid),print_grid(Grid))).
 n_times(N,Goal):- forall(between(1,N,_),ignore(Goal)).
 banner_lines(Color):- banner_lines(Color,1).
