@@ -22,7 +22,8 @@ call_match(G):- call(G).
 
 :- dynamic(repeats/1).
 :- dynamic(not_repeats/1).
-assert_new(P):- notrace(catch(call(P),_,fail)),!,assert_new1(repeats(P)).
+assert_new(P):- notrace(catch(call(P),_,fail)),!,
+  assert_new1(repeats(P)).
 assert_new(P):- pfcAdd_Now(P), flag(assert_new,TA,TA+1),assert_new1(not_repeats(P)),!.
 
 retract1(P):- \+ call(P),!.

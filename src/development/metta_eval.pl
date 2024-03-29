@@ -1521,7 +1521,7 @@ is_system_pred(S):- atom(S),atom_concat(_,'-p',S).
 % - Self: Context or environment for the evaluation.
 % - [MyFun|More]: List with MeTTa function and additional arguments.
 % - RetVal: Variable to store the result of the Python function call.
-eval_20(Eq, RetType, Depth, Self, [MyFun|More], RetVal) :- MyFun\==':', often_fail,
+eval_81(Eq, RetType, Depth, Self, [MyFun|More], RetVal) :-
     % MyFun as a registered Python function with its module and function name.
     metta_atom(Self, ['registered-python-function', PyModule, PyFun, MyFun]),!,
     % Tries to fetch the type definition for MyFun, ignoring failures.
@@ -1540,12 +1540,12 @@ eval_20(Eq, RetType, Depth, Self, [MyFun|More], RetVal) :- MyFun\==':', often_fa
 %eval_20(_Eq,_RetType,_Dpth,_Slf,LESS,Res):- fake_notrace((once((eval_selfless(LESS,Res),fake_notrace(LESS\==Res))))),!.
 
 % predicate inherited by system
-eval_20(Eq,RetType,Depth,Self,[AE|More],NewRes):- often_fail, allow_host_functions,
+eval_82(Eq,RetType,_Depth,_Self,[AE|More],TF):- allow_host_functions,
   once((is_system_pred(AE),
   length(More,Len),
   is_syspred(AE,Len,Pred))),
-  \+ (atom(AE),   atom_concat(_,'-fn',AE)), % thus -p
-  current_predicate(Pred/Len),!,
+  \+ (atom(AE),   atom_concat(_,'-fn',AE)), %  % thus maybe -p or or !
+  %current_predicate(Pred/Len),!,
   adjust_args_mp(Eq,RetType,Res,NewRes,Depth,Self,Pred,Len,AE,More,Adjusted),
   %fake_notrace( \+ is_user_defined_goal(Self,[AE|More])),!,
   %adjust_args(Depth,Self,AE,More,Adjusted),
@@ -1601,11 +1601,11 @@ eval_call_fn(S,R):-
   fbug(eval_call_fn(P,'$VAR'('R'))),as_tf(call(P,R),TF),TF\=='False'.
 
 % function inherited from system
-eval_20(Eq,RetType,Depth,Self,[AE|More],Res):- often_fail, allow_host_functions,
+eval_83(Eq,RetType,_Depth,_Self,[AE|More],Res):- allow_host_functions,
   is_system_pred(AE),
   length([AE|More],Len),
   is_syspred(AE,Len,Pred),
-  \+ (atom(AE), atom_concat(_,'-p',AE)), % thus -fn
+  \+ (atom(AE), atom_concat(_,'-p',AE)), % thus maybe -fn or !
   %fake_notrace( \+ is_user_defined_goal(Self,[AE|More])),!,
   %adjust_args(Depth,Self,AE,More,Adjusted),!,
   %Len1 is Len+1,
@@ -1744,7 +1744,7 @@ eval_60(Eq,RetType,Depth,Self,H,B):-
      (fail,eval_67(Eq,RetType,Depth,Self,H,B))).
 */
 
-eval_20(Eq,RetType,Depth,Self,[AE|More],NewRes):-
+eval_50(Eq,RetType,Depth,Self,[AE|More],NewRes):-
   no_repeats_var(YY),!,
    ((
       adjust_args_9(Eq,RetType,Res,NewRes,Depth,Self,AE,More,Adjusted),
@@ -1926,21 +1926,39 @@ eval_for(RetType,X,Y):-
 
 %if_debugging(G):- ignore(call(G)).
 if_debugging(_).
-bcc:-
+bcc:- trace,
   bc_fn([:,Prf,[in_tad_with,[sequence_variant,rs15],[gene,d]]],
      ['S',['S',['S',['S','Z']]]],
      OUT),
 	write_src(prf=Prf), write_src(OUT).
 
-bc_fn(A,B,C):- %trace,
-  same_types(A,C,_,A1,C1),
-  as_type(B,'Nat',B1),
-  bc_impl(A1,B1,C1).
+
+bci:- trace,
+  bc_impl([:,Prf,[in_tad_with,[sequence_variant,rs15],[gene,d]]],
+	 ['S',['S',['S',['S','Z']]]],
+	 OUT),    
+	write_src(prf=Prf), write_src(OUT).
+
+
+
+bcm:- % trace,
+  bc_impl([:,Prf,[member,A,B,C]],
+	 ['S',['S',['S','Z']]],
+	 OUT),    
+	write_src(prf=Prf), write_src(OUT).
+
+
+    bc_fn(A,B,C):- %trace,
+      same_types(A,C,_,A1,C1),
+      as_type(B,'Nat',B1),
+      bc_impl(A1,B1,C1).
+
 
 bc_impl([:, _prf, _ccln], _, [:, _prf, _ccln]) :-
     if_debugging(println_impl(['bc-base', [:, _prf, _ccln]])),
     metta_atom('&kb', [:, _prf, _ccln]),
-    if_debugging(println_impl(['bc-base-ground', [:, _prf, _ccln]])).
+    if_debugging(println_impl(['bc-base-ground', [:, _prf, _ccln]])),
+    true.
 
 bc_impl([:, [_prfabs, _prfarg], _ccln], ['S', _k], [:, [_prfabs, _prfarg], _ccln]) :-
     if_debugging(println_impl(['bc-rec', [:, [_prfabs, _prfarg], _ccln], ['S', _k]])),

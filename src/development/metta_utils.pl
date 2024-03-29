@@ -16,7 +16,7 @@
 
 cleanup_debug:-
   forall(
-    (clause(prolog_debug:debugging(A1,B,C),Body,Cl1), 
+    (clause(prolog_debug:debugging(A1,B,C),Body,Cl1),
      clause(prolog_debug:debugging(A2,B,C),Body,Cl2),
      A1=@=A2,Cl1\==Cl2),
      erase(Cl2)).
@@ -221,8 +221,8 @@ compound_name_arg(G,MD,Goal):- compound(G),!, compound_name_arguments(G,MD,[Goal
 :- multifile(user:message_hook/3).
 :- dynamic(user:message_hook/3).
 %user:message_hook(Term, Kind, Lines):- error==Kind, itrace,fbug(user:message_hook(Term, Kind, Lines)),trace,fail.
-user:message_hook(Term, Kind, Lines):- 
-   fail, error==Kind,  
+user:message_hook(Term, Kind, Lines):-
+   fail, error==Kind,
    fbug(message_hook(Term, Kind, Lines)),fail.
 
 :- meta_predicate(must_det_ll(0)).
@@ -296,8 +296,8 @@ must_det_ll1(P1,X):-
   strip_module(X,M,P),functor(P,F,A),setup_call_cleanup(nop(trace(M:F/A,+fail)),(must_not_error(call(P1,X))*->true;md_failed(P1,X)),
     nop(trace(M:F/A,-fail))),!.
 
-ugtrace(_):-  is_testing, !, ignore(give_up(5)), throw('$aborted').
 ugtrace(G):-  notrace,trace,rtrace(G).
+ugtrace(_):-  is_testing, !, ignore(give_up(5)), throw('$aborted').
 %ugtrace(G):- ggtrace(G).
 
 %must_not_error(G):- must(once(G)).
