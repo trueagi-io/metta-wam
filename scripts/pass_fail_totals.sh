@@ -9,6 +9,37 @@ fi
 start_dir="${1%/}"
 #start_dir=$1
 
+reverse_path() {
+    # The original path is read from the first argument to the function
+    local original_path=$1
+
+    # Split the path into components based on the slash character
+    # and reverse the components
+    IFS='/' read -ra ADDR <<< "$original_path"
+    local reversed_path=""
+    for (( i=${#ADDR[@]}-1 ; i>=0 ; i-- )) ; do
+        reversed_path+="${ADDR[i]}"
+        if [ $i -gt 0 ]; then
+            reversed_path+="/"
+        fi
+    done
+
+    # Print the reversed path
+    echo "$reversed_path"
+}
+
+convert_path() {
+    # Remove the leading './' from the path
+    local path=${1#./}
+
+    # Remove the first directory component from the path
+    local modified_path=${path#*/}
+
+    # Print the modified path
+    echo "$modified_path"
+}
+
+
 
 # Create a temporary file for storing directory and file count
 temp_file=$(mktemp)
@@ -20,8 +51,10 @@ find "$start_dir" -type d -not -path '*/__pycache__*' | while read -r dir; do
     echo "$dir $slash_count" >> "$temp_file"
 done
 
-echo "| Pass | Fail |Miss|Percent| Directory |"
-echo "|------|------|----|-------|-----------|"
+tput rmam
+
+echo "| Pass | Fail |Miss|Percent| Module | Directory |"
+echo "|------|------|----|-------|--------|-----------|"
 
 # Find all directories under the specified start directory and loop through them
 sort -k1,1r -k2,2nr  "$temp_file" | while read -r dir slash_count; do
@@ -60,7 +93,9 @@ sort -k1,1r -k2,2nr  "$temp_file" | while read -r dir slash_count; do
             if [ "$files_no_totals" -ne 0 ]; then
                   missing="${files_no_totals}"
             fi
-           printf "| %5d| %5d| %2s |  %3d%% |%s |\n" "$total_pass" "$total_fail" "$missing" "$dir_percent" "$dir"
+	    mdir="$(convert_path $dir)"
+           printf "| %5d| %5d| %2s |  %3d%% | %s                                                           |%s |\n" "$total_pass" "$total_fail" "$missing" "$dir_percent" "$(reverse_path $mdir)" "$mdir"
+
        fi
     fi
 
@@ -121,14 +156,16 @@ sort -k2,2n "$temp_file" | while read -r dir slash_count; do
     # Calculate and print the directory percentage
     total_tests=$((total_pass + total_fail))
     dir_percent=0
+    mdir="$(convert_path $dir)"
     if [ "$total_tests" -ne 0 ]; then
         dir_percent=$((100 * total_pass / total_tests))
         if [ "$had_files" == "true" ]; then
            echo ""
-           echo  "|  Pass |  Fail |  Percent | File/Directory Information                                                                              |"
+           echo  "|  Pass |  Fail |  Percent | File/Module/Directory Information                                                                              |"
            echo  "|-------|-------|----------|----------------------------------------------------------------------------------------------------|"
            printf "|       |       |          |                                                                                                    |\n"
-           printf "|       |       |          | Directory:     ./%s                 |\n" "$dir/"
+           printf "|       |       |          | Dir: ./%s                 |\n" "$mdir"
+           printf "|       |       |          | Mod: %s                 |\n" "$(reverse_path $mdir)"
            printf "|       |       |          |                                                                                                    |\n"
            cat file_info.tmp
            printf "|       |       |          |                                                                                                    |\n"
@@ -139,4 +176,4 @@ sort -k2,2n "$temp_file" | while read -r dir slash_count; do
     fi
 done
 
-
+tput smam
