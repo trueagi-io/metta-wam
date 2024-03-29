@@ -242,7 +242,11 @@ as_prolog(Depth,Self,I,O):- is_list(I),!,maplist(as_prolog(Depth,Self),I,O).
 as_prolog(_Dpth,_Slf,I,I).
 
 
-%try_adjust_arg_types(Depth,Self,ParamTypes,X,Y):-  into_typed_args(Depth,Self,ParamTypes,X,Y).
+try_adjust_arg_types(_Eq,RetType,Depth,Self,Params,X,Y):-
+  as_prolog(Depth,Self,X,M),
+  args_conform(Depth,Self,M,Params),!,
+  set_type(Depth,Self,Y,RetType),
+  into_typed_args(Depth,Self,Params,M,Y).
 %adjust_args(Eq,RetType,Depth,Self,_,X,Y):- is_list(X), !, maplist(eval_args(Depth,Self),X,Y).
 %adjust_args(Eq,RetType,Depth,Self,_,X,Y):- is_list(X), !, maplist(as_prolog(Depth,Self),X,Y),!.
 
@@ -286,16 +290,18 @@ into_typed_arg0(Depth,Self,_,M,Y):- eval_args(Depth,Self,M,Y).
 
 wants_eval_kind(T):- nonvar(T), is_pro_eval_kind(T),!.
 wants_eval_kind(_):- true.
-%set_type(Depth,Self,Var,Type):- nop(set_type(Depth,Self,Var,Type)),!.
-/*
-set_type(Depth,Self,Var,Type):- var(Var),!, put_attr(Var,metta_type,Self=Type).
-set_type(Depth,Self,Var,Type):- symbol(Var), freeze(Was,W\=['->'|_], get_type(Depth,Self,Var,Was).
-   *->Was=Type
-   ; if_t(var(Var),).
-*/
+
 metta_type:attr_unify_hook(Self=Type,NewValue):- attvar(NewValue),!,put_attr(NewValue,metta_type,Self=Type).
 metta_type:attr_unify_hook(Self=Type,NewValue):-
-   get_type(20,Self,NewValue,Was), !, can_assign(Was,Type).
+   get_type(20,Self,NewValue,Was),
+   can_assign(Was,Type).
+
+%set_type(Depth,Self,Var,Type):- nop(set_type(Depth,Self,Var,Type)),!.
+set_type(Depth,Self,Var,Type):- nop(set_type(Depth,Self,Var,Type)),!.
+set_type(Depth,Self,Var,Type):- get_type(Depth,Self,Var,Was)
+   *->Was=Type
+   ; if_t(var(Var),put_attr(Var,metta_type,Self=Type)).
+
 
 can_assign(Was,Type):- Was=Type,!.
 can_assign(Was,Type):- (is_nonspecific_type(Was);is_nonspecific_type(Type)),!.

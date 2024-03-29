@@ -35,7 +35,8 @@ subst_args(Eq,RetType,Depth,Self,X,Y):- atom(Eq),  ( Eq \== ('=')),  ( Eq \== ('
 %subst_args(Eq,RetType,_Dpth,_Slf,X,Y):- nonvar(Y),X=Y,!.
 %subst_args(Eq,RetType,Depth,Self,X,Y):- nonvar(Y),!,subst_args(Eq,RetType,Depth,Self,X,XX),substs_to(XX,Y).
 subst_args(Eq,RetType,_Dpth,_Slf,X,Y):- self_subst(X),!,Y=X.
-subst_args(Eq,RetType,_Dpth,_Slf,[X|T],Y):- T==[], \+ callable(X),!,Y=[X].
+subst_args(Eq,RetType,_Dpth,_Slf,[X|T],Y):- 
+     T==[], \+ callable(X),!,Y=[X].
 
 subst_args(Eq,RetType,Depth,Self,[F|X],Y):-
  % (F=='superpose' ; ( option_value(no_repeats,false))),  %'
