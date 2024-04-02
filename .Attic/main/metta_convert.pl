@@ -308,7 +308,7 @@ p2m(OC,(A*->B),O):- !, p2m(OC,if(A,B),O).
 p2m(_OC,metta_defn(Eq,Self,H,B),'add-atom'(Self,[Eq,H,B])).
 p2m(_OC,metta_type,'get-type').
 p2m(_OC,metta_atom,'get-atoms').
-p2m(_OC,get_metta_atom,'get-atoms').
+%p2m(_OC,get_metta_atom,'get-atoms').
 p2m(_OC,clause(H,B), ==([=,H,B],'get-atoms'('&self'))).
 p2m(_OC,assert(X),'add-atom'('&self',X)).
 p2m(_OC,assertz(X),'add-atom'('&self',X)).

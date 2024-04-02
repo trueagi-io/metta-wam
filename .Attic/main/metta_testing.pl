@@ -279,7 +279,7 @@ load_answer_file(AnsFile,StoredAs):-
 
 :- debug(metta(answers)).
 load_answer_stream(_Nth, StoredAs, Stream):- at_end_of_stream(Stream),!,
-  if_trace(metta(answers),
+  if_trace((answers),
     prolog_only(listing(file_answers(StoredAs,_,_)))).
 load_answer_stream(Nth, StoredAs, Stream):-
     read_line_to_string(Stream, String),

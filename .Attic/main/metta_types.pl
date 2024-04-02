@@ -67,6 +67,8 @@ not_arg_violation(Depth,Self,Arg,Type):-
 
 args_conform(_Dpth,_Slf,Args,List):- ( \+ iz_conz(Args); \+ iz_conz(List)), !.
 args_conform(Depth,Self,[A|Args],[L|List]):- arg_conform(Depth,Self,A,L) , args_conform(Depth,Self,Args,List).
+
+arg_conform(Depth,Self,A,L):- L == 'Any',!.
 arg_conform(Depth,Self,A,L):- get_type(Depth,Self,A,T), type_conform(T,L),!.
 arg_conform(_Dpth,_Slf,_,_).
 %arg_conform(Depth,Self,A,_):- get_type(Depth,Self,A,_),!.
@@ -273,14 +275,14 @@ into_typed_arg0(Depth,Self,T,M,Y):- ground(M),!, \+ arg_violation(Depth,Self,M,T
 into_typed_arg0(_Dpth,_Slf,T,M,Y):- is_non_eval_kind(T),!,M=Y.
 into_typed_arg0(Depth,Self,_,M,Y):- eval_args(Depth,Self,M,Y).
 
+metta_type:attr_unify_hook(Self=Type,NewValue):-
+   get_type(20,Self,NewValue,Was),
+   can_assign(Was,Type).
 set_type(Depth,Self,Var,Type):- nop(set_type(Depth,Self,Var,Type)),!.
 set_type(Depth,Self,Var,Type):- get_type(Depth,Self,Var,Was)
    *->Was=Type
    ; if_t(var(Var),put_attr(Var,metta_type,Self=Type)).
 
-metta_type:attr_unify_hook(Self=Type,NewValue):-
-   get_type(20,Self,NewValue,Was),
-   can_assign(Was,Type).
 
 can_assign(Was,Type):- Was=Type,!.
 can_assign(Was,Type):- (is_nonspecific_type(Was);is_nonspecific_type(Type)),!.
