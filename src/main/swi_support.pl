@@ -71,8 +71,9 @@ set_option_value(N,V):-
 set_option_value0(N,V):-
    p2mE(V,VV),!,
    catch(nb_setval(N,VV),E,fbug(E)),
-   catch(create_prolog_flag(N,V,[keep(false),access(read_write), type(term)]),E2,fbug(E2)),
-   catch(set_prolog_flag(N,V),E3,fbug(E3)),!.
+   p2mE(PV,VV),!,
+   catch(create_prolog_flag(N,PV,[keep(false),access(read_write), type(term)]),E2,fbug(E2)),
+   catch(set_prolog_flag(N,PV),E3,fbug(E3)),!.
 
 kaggle_arc:- \+ exists_directory('/opt/logicmoo_workspace/packs_sys/logicmoo_agi/prolog/kaggle_arc/'), !.
 %kaggle_arc:- !.
@@ -85,17 +86,34 @@ kaggle_arc:-
 
 %:- kaggle_arc.
 
-symbol(X):- atom(X).
-symbolic(X):- atomic(X).
-symbol_number(S,N):- atom_number(S,N).
-symbol_string(S,N):- atom_string(S,N).
-symbol_chars(S,N):- atom_chars(S,N).
-symbol_length(S,N):- atom_length(S,N).
-symbol_concat(A,B,C):- atom_concat(A,B,C).
-symbolic_list_concat(A,C):- atomic_list_concat(A,C).
-symbolic_list_concat(A,B,C):- atomic_list_concat(A,B,C).
-symbol_contains(T,TT):- atom_contains(T,TT).
 
+all_upper_symbol(A):-all_upper_atom(A).
+any_to_symbol(A,B):-any_to_atom(A,B).
+concat_symbol(A,B,C):-concat_atom(A,B,C).
+downcase_symbol(A,B):-downcase_atom(A,B).
+non_empty_symbol(A):-non_empty_atom(A).
+string_to_symbol(A,B):-string_to_atom(A,B).
+sub_string_or_symbol(A,B,C,D,E):-sub_string_or_atom(A,B,C,D,E).
+sub_symbol(A,B,C,D,E):-sub_atom(A,B,C,D,E).
+
+symbol(A):- atom(A).
+symbol_chars(A,B):- atom_chars(A,B).
+symbol_codes(A,B):-atom_codes(A,B).
+symbol_concat(A,B,C):- atom_concat(A,B,C).
+symbol_contains(A,B):- atom_contains(A,B).
+symbol_length(A,B):- atom_length(A,B).
+symbol_number(A,B):- atom_number(A,B).
+symbol_string(A,B):- atom_string(A,B).
+symbol_upper(A,B):-atom_upper(A,B).
+symbolic(A):-atomic(A).
+symbolic_concat(A,B,C):-atomic_concat(A,B,C).
+symbolic_concat(A,B,C,D):-atomic_concat(A,B,C,D).
+symbolic_list_concat(A,B):-atomic_list_concat(A,B).
+symbolic_list_concat(A,B,C):- atomic_list_concat(A,B,C).
+symbolic_to_string(A,B):-atomic_to_string(A,B).
+symbolics_to_string(A,B):-atomics_to_string(A,B).
+symbolics_to_string(A,B,C):-atomics_to_string(A,B,C).
+upcase_symbol(A,B):-upcase_atom(A,B).
 :- prolog_load_context(directory, File),
    ignore(( 
      absolute_file_name('../../data/ftp.flybase.org/releases/current/',Dir,[relative_to(File),

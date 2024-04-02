@@ -498,7 +498,7 @@ sexpr0((Expr))                 -->  `.{`, read_string_until(S,`}.`), swhite,
   {prolog_readable_term(Expr,S,_)}.
 
 
-sexpr0(['#'(quote),E])             --> `'`, !, sexpr(E).
+sexpr0(['#'(quote),E])             --> `'`, !, sexpr(E). % '
 sexpr0(['#'(hbackquote),E])         --> {is_scm}, `#```, !, sexpr(E).
 sexpr0(['#'(backquote),E])         --> ````, !, sexpr(E).
 sexpr0(['#BQ-COMMA-ELIPSE',E])     --> `,@`, !, sexpr(E).
@@ -553,7 +553,7 @@ sexpr0('$S'(C)) -->                  (`#`, ci(`s`),`(`),!,zalwayzz(sexpr_list(C)
 sexpr0('$COMPLEX'(R,I)) -->         (`#`, ci(`c`),`(`),!,zalwayzz(sexpr_list([R,I])),swhite,!.
 sexpr0('$OBJ'(claz_bitvector,C)) --> `#*`,radix_digits(2,C),swhite,!.
 
-sexpr0(function(E))                 --> `#\'`, sexpr(E), !. %, swhite.
+sexpr0(function(E))                 --> `#\'`, sexpr(E), !. %, swhite. % '
 sexpr0('$OBJ'(claz_vector,V))                 --> `#(`, !, zalwayzz(sexpr_vector(V,`)`)),!, swhite,!.
 
 sexpr0(Number) --> `#`,integer(Radix),ci(`r`),!,zalwayzz((signed_radix_2(Radix,Number0),extend_radix(Radix,Number0,Number))),!.

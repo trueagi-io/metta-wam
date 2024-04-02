@@ -535,8 +535,10 @@ do_cmdline_load_metta(Phase,Self,Rest):-
   cmdline_load_metta(Phase,Self,Rest),!,
   forall(process_late_opts,true).
 
+:- if( \+ current_predicate(load_metta_file/2)).
 load_metta_file(Self,Filemask):- symbol_concat(_,'.metta',Filemask),!, load_metta(Self,Filemask).
 load_metta_file(_Slf,Filemask):- load_flybase(Filemask).
+:- endif.
 
 catch_abort(From,Goal):-
    catch_abort(From,Goal,Goal).
@@ -841,7 +843,8 @@ assert_preds(Self,Load,Preds):-
    
    
   if_t(is_transpiling,
-   if_t( \+ predicate_property(H,static),add_assertion(Self,Preds))),
+   if_t( \+ predicate_property(H,static),
+   add_assertion(Self,Preds))),
    nop(metta_anew1(Load,Preds)).
 
 
@@ -854,11 +857,18 @@ rtrace_on_error(G):- catch(G,_,fail),!.
 rtrace_on_error(G):-rtrace(G),!.
 assertion_hb(metta_defn(=,Self,H,B),Self,H,B).
 assertion_hb(metta_atom_asserted(Self,[=,H,B]),Self,H,B).
+assertion_hb(metta_atom_asserted(Self,[=,H,B]),Self,H,B).
+assertion_hb(metta_atom(Self,[=,H,B]),Self,H,B).
 
 load_hook0(_,_):- \+ show_transpiler, \+ is_transpiling, !.
-load_hook0(Load,Assertion):- assertion_hb(Assertion,Self,H,B),
+load_hook0(Load,Assertion):- fail,
+       assertion_hb(Assertion,Self,H,B),
        functs_to_preds([=,H,B],Preds),
        assert_preds(Self,Load,Preds).
+load_hook0(Load,Assertion):-
+     assertion_hb(Assertion,Self,H,B),
+     rtrace_on_error(compile_for_assert(H, B, Preds)),!,
+     rtrace_on_error(assert_preds(Self,Load,Preds)).
 load_hook0(_,_):- \+ current_prolog_flag(metta_interp,ready),!.
 /*
 load_hook0(Load,get_metta_atom(Eq,Self,H)):- B = 'True',

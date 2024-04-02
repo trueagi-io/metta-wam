@@ -889,13 +889,12 @@ pad_number(Number, N) :-
   sformat(S,"~t~D~*|", [Number,N]),symbolic_list_concat(L,',',S),
   symbolic_list_concat(L,'_',SS),write(SS).
 
-exists_virtually(corlib).
+/*
+	exists_virtually(corelib).
 
 % Process a file or directory path with a given predicate.
 with_wild_path(Fnicate, Dir) :- extreme_debug(fbug(with_wild_path(Fnicate, Dir))),fail.
 with_wild_path(_Fnicate, []) :- !.
-with_wild_path(_Fnicate, corelib) :- !.
-
 with_wild_path(_Fnicate, Virtual) :- exists_virtually(Virtual),!.
 with_wild_path(Fnicate, Virtual) :- var(Virtual),!,throw(var_with_wild_path(Fnicate, Virtual)).
 with_wild_path(Fnicate, Dir) :-  is_scryer, symbol(Dir), !, must_det_ll((path_chars(Dir,Chars), with_wild_path(Fnicate, Chars))).
@@ -946,7 +945,7 @@ with_wild_path_swi(Fnicate, File) :-
 
 extension_search_order(['.metta']).
 extension_search_order(['.py']).
-
+*/
 :- dynamic(fix_columns_nth/2).
 needs_fixed(X,Y):- (var(X)->fb_arg(X);true),fix_concept(X,L),(L\=@=[X],L\=@=X),(L=[Y]->true;Y=L).
 mine_args_that_need_reduced:-
