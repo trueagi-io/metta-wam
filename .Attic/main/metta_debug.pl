@@ -141,8 +141,9 @@ set_debug(Flag,Val):- \+ atom(Flag), flag_to_var(Flag,Var), atom(Var),!,set_debu
 set_debug(Flag,true):- !, debug(metta(Flag)),flag_to_var(Flag,Var),set_option_value(Var,true).
 set_debug(Flag,false):- nodebug(metta(Flag)),flag_to_var(Flag,Var),set_option_value(Var,false).
 
-if_trace(Flag,Goal):- ignore(real_notrace((catch_err(ignore((is_debugging(Flag),Goal)),E,
-												fbug(E-->if_trace(Flag,Goal)))))).
+if_trace(Flag,Goal):- 
+   real_notrace((catch_err(ignore((is_debugging(Flag),Goal)),E,
+         fbug(E-->if_trace(Flag,Goal))))).
 
 
 is_showing(Flag):- option_value(Flag,'silent'),!,fail.
