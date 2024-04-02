@@ -247,37 +247,56 @@ try_adjust_arg_types(_Eq,RetType,Depth,Self,Params,X,Y):-
 %adjust_args(Eq,RetType,Depth,Self,_,X,Y):- is_list(X), !, maplist(eval_args(Depth,Self),X,Y).
 %adjust_args(Eq,RetType,Depth,Self,_,X,Y):- is_list(X), !, maplist(as_prolog(Depth,Self),X,Y),!.
 
-adjust_args(_Eq,_RetType,_Dpth,Self,F,X,Y):- (X==[] ; is_special_op(Self,F); \+ iz_conz(X)),!,Y=X.
-adjust_args(Eq,RetType,Depth,Self,Op,X,Y):-
-    adjust_argsA(Eq,RetType,Depth,Self,Op,X,Y)*->true; adjust_argsB(Eq,RetType,Depth,Self,Op,X,Y).
+adjust_args_9(Eq,RetType,Res,NewRes,Depth,Self,Op,X,Y):-
+   adjust_args(Eq,RetType,Res,NewRes,Depth,Self,Op,X,Y).
 
-adjust_argsA(Eq,RetType,Depth,Self,Op,X,Y):-
-  %trace,
-  get_operator_typedef(Self,Op,Params,RetType),
-  try_adjust_arg_types(Eq,RetType,Depth,Self,Params,X,Y).
-%adjust_args(_Eq,_RetType,Depth,Self,_,X,Y):- as_prolog(Depth,Self,X,Y).
-adjust_argsB(_Eq,_RetType,_Depth,_Self,_,X,Y):- X = Y.
+adjust_args(_Eq,_RetType,Res,Res,_Dpth,Self,F,X,Y):- (X==[] ;
+    is_special_op(Self,F); \+ iz_conz(X)),!,Y=X.
+adjust_args(Eq,RetType,Res,NewRes,Depth,Self,Op,X,Y):-
+    if_or_else(adjust_argsA(Eq,RetType,Res,NewRes,Depth,Self,Op,X,Y),
+       adjust_argsB(Eq,RetType,Res,NewRes,Depth,Self,Op,X,Y)).
+
+adjust_argsA(Eq,RetType,Res,NewRes,Depth,Self,Op,X,Y):-
+  len_or_unbound(X,Len),
+  get_operator_typedef(Self,Op,Len,ParamTypes,RRetType),
+  (nonvar(NewRes)->CRes=NewRes;CRes=Res),
+  RRetType = RetType,
+  args_conform(Depth,Self,[CRes|X],[RRetType|ParamTypes]),
+  into_typed_args(Depth,Self,[RRetType|ParamTypes],[Res|X],[NewRes|Y]).
+
+adjust_argsB(Eq,_RetType,Res,Res,Depth,Self,_,Args,Adjusted):- is_list(Args),!,
+  maplist(eval_1_arg(Eq,_,Depth,Self),Args,Adjusted).
+adjust_argsB(_Eq,_RetType,Res,Res,Depth,Self,_,X,Y):- as_prolog(Depth,Self,X,Y),!.
+
+eval_1_arg(Eq,ReturnType,Depth,Self,Arg,Adjusted):-
+  if_or_else(eval(Eq,ReturnType,Depth,Self,Arg,Adjusted),Arg=Adjusted).
 
 into_typed_args(_Dpth,_Slf,T,M,Y):- (\+ iz_conz(T); \+ iz_conz(M)),!, M=Y.
 into_typed_args(Depth,Self,[T|TT],[M|MM],[Y|YY]):-
   into_typed_arg(Depth,Self,T,M,Y),
   into_typed_args(Depth,Self,TT,MM,YY).
 
-into_typed_arg(_Dpth,Self,T,M,Y):- var(M),!,put_attr(M,metta_type,Self=T),put_attr(Y,metta_type,Self=T),Y=M.
+into_typed_arg(_Dpth,Self,T,M,Y):- var(M),!,Y=M, nop(put_attr(M,metta_type,Self=T)).
 into_typed_arg(Depth,Self,T,M,Y):- into_typed_arg0(Depth,Self,T,M,Y)*->true;M=Y.
 
 into_typed_arg0(Depth,Self,T,M,Y):- var(T), !, 
-  get_type(Depth,Self,M,T),
- (wants_eval_kind(T)->eval_args(Depth,Self,M,Y);Y=M).
+ must_det_ll((get_type(Depth,Self,M,T),
+ (wants_eval_kind(T)->eval_args(Depth,Self,M,Y);Y=M))).
 
 into_typed_arg0(Depth,Self,T,M,Y):- is_pro_eval_kind(T),!,eval_args(Depth,Self,M,Y).
 into_typed_arg0(Depth,Self,T,M,Y):- ground(M),!, \+ arg_violation(Depth,Self,M,T),Y=M.
 into_typed_arg0(_Dpth,_Slf,T,M,Y):- is_non_eval_kind(T),!,M=Y.
 into_typed_arg0(Depth,Self,_,M,Y):- eval_args(Depth,Self,M,Y).
 
+wants_eval_kind(T):- nonvar(T), is_pro_eval_kind(T),!.
+wants_eval_kind(_):- true.
+
+metta_type:attr_unify_hook(Self=Type,NewValue):- attvar(NewValue),!,put_attr(NewValue,metta_type,Self=Type).
 metta_type:attr_unify_hook(Self=Type,NewValue):-
    get_type(20,Self,NewValue,Was),
    can_assign(Was,Type).
+
+%set_type(Depth,Self,Var,Type):- nop(set_type(Depth,Self,Var,Type)),!.
 set_type(Depth,Self,Var,Type):- nop(set_type(Depth,Self,Var,Type)),!.
 set_type(Depth,Self,Var,Type):- get_type(Depth,Self,Var,Was)
    *->Was=Type
@@ -331,20 +350,35 @@ is_user_defined_head_f1(Eq,Other,H):- metta_defn(Eq,Other,[H|_],_).
 is_special_op(Op):-  current_self(Self),is_special_op(Self,Op).
 
 is_special_op(_Slf,F):- \+ atom(F), \+ var(F), !, fail.
-is_special_op(Self,Op):- get_operator_typedef(Self,Op,Params,_RetType),
-   maplist(is_non_eval_kind,Params).
+%is_special_op(Self,Op):- get_operator_typedef(Self,Op,Params,_RetType),
+%   maplist(is_non_eval_kind,Params).
 is_special_op(_Slf,Op):- is_special_builtin(Op).
 
 
 
 get_operator_typedef(Self,Op,ParamTypes,RetType):-
-  get_operator_typedef1(Self,Op,ParamTypes,RetType)*->true;
-  get_operator_typedef2(Self,Op,ParamTypes,RetType).
-get_operator_typedef1(Self,Op,ParamTypes,RetType):-
+  len_or_unbound(ParamTypes,Len),
+  get_operator_typedef(Self,Op,Len,ParamTypes,RetType).
+
+:- dynamic(get_operator_typedef0/5).
+get_operator_typedef(Self,Op,Len,ParamTypes,RetType):-
+ len_or_unbound(ParamTypes,Len),
+ if_or_else(get_operator_typedef0(Self,Op,Len,ParamTypes,RetType),
+ if_or_else(get_operator_typedef1(Self,Op,Len,ParamTypes,RetType),
+            get_operator_typedef2(Self,Op,Len,ParamTypes,RetType))).
+
+get_operator_typedef1(Self,Op,Len,ParamTypes,RetType):-
+   len_or_unbound(ParamTypes,Len),
+   append(ParamTypes,[RetType],List),
    metta_type(Self,Op,['->'|List]),
-   append(ParamTypes,[RetType],List).
-get_operator_typedef2(Self,Op,ParamTypes,RetType):-
-  nop(wdmsg(missing(get_operator_typedef2(Self,Op,ParamTypes,RetType)))),!,fail.
+   assert(get_operator_typedef0(Self,Op,Len,ParamTypes,RetType)).
+get_operator_typedef2(Self,Op,Len,ParamTypes,RetType):-
+  ignore('Atom'=RetType),
+  maplist(is_eval_kind,ParamTypes),
+  assert(get_operator_typedef0(Self,Op,Len,ParamTypes,'Any')).
+  %nop(wdmsg(missing(get_operator_typedef2(Self,Op,ParamTypes,RetType)))),!,fail.
+
+is_eval_kind(ParamType):- ignore(ParamType='Any').
 
 is_metta_data_functor(Eq,F):-
   current_self(Self),is_metta_data_functor(Eq,Self,F).
