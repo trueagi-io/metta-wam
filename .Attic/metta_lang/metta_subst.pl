@@ -35,7 +35,7 @@ subst_args(Eq,RetType,Depth,Self,X,Y):- atom(Eq),  ( Eq \== ('=')),  ( Eq \== ('
 %subst_args(Eq,RetType,_Dpth,_Slf,X,Y):- nonvar(Y),X=Y,!.
 %subst_args(Eq,RetType,Depth,Self,X,Y):- nonvar(Y),!,subst_args(Eq,RetType,Depth,Self,X,XX),substs_to(XX,Y).
 subst_args(Eq,RetType,_Dpth,_Slf,X,Y):- self_subst(X),!,Y=X.
-subst_args(Eq,RetType,_Dpth,_Slf,[X|T],Y):- 
+subst_args(Eq,RetType,_Dpth,_Slf,[X|T],Y):-
   % !, fail,
   T==[], \+ callable(X),!,Y=[X].
 
@@ -240,6 +240,7 @@ is_space_op('match').
 is_space_op('get-atoms').
 is_space_op('add-atom').
 is_space_op('remove-atom').
+%is_space_op('replace-atom').
 is_space_op('atom-count').
 is_space_op('atom-replace').
 

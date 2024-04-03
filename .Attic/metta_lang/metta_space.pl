@@ -37,7 +37,7 @@ assert_new1(P):- pfcAdd_Now(P).
 :- dynamic(mod_f_a/3).
 decl_m_fb_pred(Mod,Fn,A):- var(Mod),!,mod_f_a(Mod,Fn,A).
 decl_m_fb_pred(Mod,Fn,A):- mod_f_a(Mod,Fn,A)->true;
- (dynamic(Mod:Fn/A),
+   (dynamic(Mod:Fn/A),
   pfcAdd_Now(mod_f_a(Mod,Fn,A))).
 :- dynamic(fb_pred_file/3).
 decl_fb_pred(Fn,A):-
@@ -182,7 +182,8 @@ is_nb_space(G):- nonvar(G), is_as_nb_space(G).
 %'match'(_Environment, Pattern, Template, Result):- !, is_True(Pattern),Result=Template.
 
 
-'new-space'(Space):- gensym('hyperon::space::DynSpace@_',Name), fetch_or_create_space(Name, Space).
+'new-space'(Space):- gensym('hyperon::space::DynSpace@_',Name), 
+   fetch_or_create_space(Name, Space).
 
 :- dynamic(is_python_space/1).
 % ===============================
@@ -333,31 +334,31 @@ metta_assertdb_replace(KB,Old,New):- metta_assertdb_del(KB,Old), metta_assertdb_
 
 
 
-atom_count_provider(Self,Count):- 
-	user:loaded_into_kb(Self,Filename),
-	 once(user:asserted_metta_pred(Mangle,Filename)),
+atom_count_provider(Self,Count):-
+    user:loaded_into_kb(Self,Filename),
+     once(user:asserted_metta_pred(Mangle,Filename)),
      mangle_iz(Mangle,Iz),
-	 member(P,[Mangle,Iz]),
-	 between(2,8,Arity),
-	 functor(Data,P,Arity),	 
-	 predicate_property(Data,number_of_clauses(CC)),
-	 predicate_property(Data,number_of_rules(RC)),
-	 Count is CC - RC.
+     member(P,[Mangle,Iz]),
+     between(2,8,Arity),
+     functor(Data,P,Arity),
+     predicate_property(Data,number_of_clauses(CC)),
+     predicate_property(Data,number_of_rules(RC)),
+     Count is CC - RC.
 
 atom_count_provider(KB,Count):-
-	 must_det_ll((
-	  AMA = metta_atom_asserted,
-	  decl_m_fb_pred(user,AMA,2),   
-	  MP =.. [AMA,KB,_],
-	  predicate_property(MP,number_of_clauses(SL2)),
-	  predicate_property(MP,number_of_rules(SL3)),
-	  %metta_assertdb_ls(KB),
-	  full_atom_count(SL1),
-	  Count is SL1 + SL2 - SL3)),!.
+ must_det_ll((
+  AMA = metta_atom_asserted,
+  decl_m_fb_pred(user,AMA,2),   
+  MP =.. [AMA,KB,_],
+  predicate_property(MP,number_of_clauses(SL2)),
+  predicate_property(MP,number_of_rules(SL3)),
+  %metta_assertdb_ls(KB),
+      full_atom_count(SL1),
+  Count is SL1 + SL2 - SL3)),!.
 
 metta_assertdb_count(KB,Count):-
-	findall(C,atom_count_provider(KB,C),CL),
-	sumlist(CL,Count).
+    findall(C,atom_count_provider(KB,C),CL),
+    sumlist(CL,Count).
 
 
 
@@ -388,7 +389,7 @@ space_query_vars(KB,Query,Vars):- is_asserted_space(KB),!,
 
 
 metta_assertdb_get_atoms(KB,AtomsL):- 
-  decl_m_fb_pred(user,metta_atom_asserted,2), 
+  decl_m_fb_pred(user,metta_atom_asserted,2),
   findall(Atom,metta_atom(KB,Atom),AtomsL).
 /*
 
@@ -398,7 +399,7 @@ metta_assertdb_iter_bind(KB,Query,Vars):-
   ignore(term_variables(Query,Vars)),
   print(metta_assertdb(['match',KB,Query,Vars])),nl,
      AMA = metta_atom_asserted,
-     decl_m_fb_pred(user,AMA,2),   
+     decl_m_fb_pred(user,AMA,2),
      MP =.. [AMA,KB,Query],
 
   (MP*->true;call_metta_assertdb(KB,Query,Vars)),

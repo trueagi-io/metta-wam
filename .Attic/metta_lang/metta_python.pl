@@ -19,11 +19,12 @@ Just like the Rust core allowed for Python extensions, the Prolog code also perm
 */
 :- use_module(library(filesex)).
 
-:- if(exists_file('/usr/local/lib/swipl/library/ext/swipy/janus.pl')).
-:- janus:ensure_loaded('/usr/local/lib/swipl/library/ext/swipy/janus.pl').
-:- else.
-:- janus:ensure_loaded(library(janus)).
-:- endif.
+:-
+  (module_property(janus,file(File))->
+    janus:ensure_loaded(File);
+   (exists_file('/usr/local/lib/swipl/library/ext/swipy/janus.pl')
+        -> janus:ensure_loaded('/usr/local/lib/swipl/library/ext/swipy/janus.pl')
+        ; janus:ensure_loaded(library(janus)))).
 
 :- multifile(is_python_space/1).
 :- dynamic(is_python_space/1).
@@ -57,12 +58,12 @@ import_metta(Self,Filename):-
   must_det_ll(with_wild_path(import_metta(Self),Filename)),!.
 import_metta(Self,RelFilename):-
   must_det_ll((
-	 symbol(RelFilename),
-	 exists_file(RelFilename),
-	 absolute_file_name(RelFilename,Filename),
-	 directory_file_path(Directory, _, Filename),
-	 assert(metta_file(Self,Filename,Directory)),
-	 include_metta_directory_file(Self,Directory, Filename))).
+     symbol(RelFilename),
+     exists_file(RelFilename),
+     absolute_file_name(RelFilename,Filename),
+     directory_file_path(Directory, _, Filename),
+     assert(metta_file(Self,Filename,Directory)),
+     include_metta_directory_file(Self,Directory, Filename))).
 
 
 ensure_space_py(Space,GSpace):- py_is_object(Space),!,GSpace=Space.
@@ -86,7 +87,7 @@ ensure_rust_metta:- ensure_rust_metta(_).
 ensure_mettalog_py(MettaLearner):- is_mettalog(MettaLearner),!.
 ensure_mettalog_py(MettaLearner):- 
    with_safe_argv(
-   (want_py_lib_dir,
+   (want_py_lib_dir,   
 	py_call('mettalog',MettaLearner),
 	%py_call('motto',_),
 	%py_call('motto.sparql_gate':'sql_space_atoms'(),Res1),pybug(Res1),
@@ -95,9 +96,9 @@ ensure_mettalog_py(MettaLearner):-
    pybug(is_mettalog(MettaLearner)),
    asserta(is_mettalog(MettaLearner)))).
 
-ensure_mettalog_py:- 
+ensure_mettalog_py:-
   setenv('VSPACE_VERBOSE',0),
-  with_safe_argv(ensure_mettalog_py(_)),!.  
+  with_safe_argv(ensure_mettalog_py(_)),!.
 
 
 

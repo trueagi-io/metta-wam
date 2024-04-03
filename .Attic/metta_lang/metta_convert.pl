@@ -124,7 +124,7 @@ sexpr_s2p(_Fn,_Nth,'#'(S),P):- iz_exact_symbol(S,P),!.
 sexpr_s2p(_Fn,_Nth,VAR,'$VAR'(Name)):- atom(VAR),svar(VAR,Name),!.
 sexpr_s2p(Fn,Nth,S,P):- S==[], iz_fun_argz(Fn,Nth),!,P=S.
 
-sexpr_s2p(Fn,Nth,S,P):- expects_type(Fn,Nth,Type),will_become_type(Type,S,P),!.
+%sexpr_s2p(Fn,Nth,S,P):- expects_type(Fn,Nth,Type),will_become_type(Type,S,P),!.
 
 sexpr_s2p(_Fn,_Nth,[F|SList],P):- is_list(SList), length(SList,Len),is_syspred(F,Len,Pred), sexpr_s2p_arglist(F,1,SList,PList), !, P=..[Pred|PList].
 :- style_check(-singleton).
@@ -292,10 +292,10 @@ p2m(OC,(Head:-Body),O):-
    p2m(Head,H),conjuncts_to_list(Body,List),maplist(p2m([progn|OC]),List,SP),!,
    O =  ['=',H|SP].
 
-    p2m(OC,(:-Body),O):- !,
-       conjuncts_to_list(Body,List),into_sequential([progn|OC],List,SP),!, O= exec(SP).
-    p2m(OC,( ?- Body),O):- !,
-       conjuncts_to_list(Body,List),into_sequential([progn|OC],List,SP),!, O= exec('?-'(SP)).
+p2m(OC,(:-Body),O):- !,
+   conjuncts_to_list(Body,List),into_sequential([progn|OC],List,SP),!, O= exec(SP).
+p2m(OC,( ?- Body),O):- !,
+   conjuncts_to_list(Body,List),into_sequential([progn|OC],List,SP),!, O= exec('?-'(SP)).
 
 %p2m(_OC,(Head:-Body),O):- conjuncts_to_list(Body,List),into_sequential(OC,List,SP),!,O=(=(Head,SP)).
 

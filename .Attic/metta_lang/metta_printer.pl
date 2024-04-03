@@ -283,7 +283,7 @@ always_dash_functor(A,A).
 
 dash_functor(A,C):- \+ symbol(A),!,C=A.
 % dash_functor(A,C):- p2m(A,B),A\==B,!,always_dash_functor(B,C).
-dash_functor(ASymbolProc,O):- symbol_contains(ASymbolProc,'_'),
+dash_functor(ASymbolProc,O):- fail, symbol_contains(ASymbolProc,'_'),
     symbol_contains(ASymbolProc,'atom'),
     current_predicate(system:ASymbolProc/_),    
 	symbolic_list_concat(LS,'atom',ASymbolProc),
@@ -293,7 +293,7 @@ dash_functor(ASymbolProc,O):- symbol_concat('$',LS,ASymbolProc),!,
 	symbol_concat('%',LS,SymbolProc),
 	always_dash_functor(SymbolProc,O).
 
-dash_functor(Functor,DFunctor):- 
+dash_functor(Functor,DFunctor):- fail,
    symbolic_list_concat(L,'_',Functor), L\=[_],
    symbolic_list_concat(L,'-',DFunctor).
 
