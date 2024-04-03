@@ -16,7 +16,7 @@
 
 cleanup_debug:-
   forall(
-    (clause(prolog_debug:debugging(A1,B,C),Body,Cl1),
+    (clause(prolog_debug:debugging(A1,B,C),Body,Cl1), 
      clause(prolog_debug:debugging(A2,B,C),Body,Cl2),
      A1=@=A2,Cl1\==Cl2),
      erase(Cl2)).
@@ -221,8 +221,8 @@ compound_name_arg(G,MD,Goal):- compound(G),!, compound_name_arguments(G,MD,[Goal
 :- multifile(user:message_hook/3).
 :- dynamic(user:message_hook/3).
 %user:message_hook(Term, Kind, Lines):- error==Kind, itrace,fbug(user:message_hook(Term, Kind, Lines)),trace,fail.
-user:message_hook(Term, Kind, Lines):-
-   fail, error==Kind,
+user:message_hook(Term, Kind, Lines):- 
+   fail, error==Kind,  
    fbug(message_hook(Term, Kind, Lines)),fail.
 
 :- meta_predicate(must_det_ll(0)).
@@ -363,7 +363,7 @@ ugtrace(Why,_):-  is_testing, !, ignore(give_up(Why,5)),throw('$aborted').
 ugtrace(_Why,G):-  ggtrace(G),throw('$aborted').
 %ugtrace(Why,G):- ggtrace(G).
 
-give_up(Why,N):- is_testing,!,write_src_uo(Why),!, halt(N).
+%give_up(Why,N):- is_testing,!,write_src_uo(Why),!, halt(N).
 give_up(Why,_):- write_src_uo(Why),throw('$aborted').
 
 is_guitracer:- getenv('DISPLAY',_), current_prolog_flag(gui_tracer,true).
