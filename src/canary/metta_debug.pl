@@ -72,13 +72,17 @@ indentq(_DR,_EX,_AR,_Term):- is_fast_mode,!.
 indentq(DR,EX,AR,retval(Term)):-nonvar(Term),!,indentq(DR,EX,AR,Term).
 indentq(DR,EX,AR,[E,Term]):- E==e,!,indentq(DR,EX,AR,Term).
 indentq(_DR,_EX,_AR,_Term):- flag(trace_output_len,X,X+1), XX is (X mod 1000), XX>100,!.
-indentq(DR,EX,AR,Term):-
 
-    setup_call_cleanup(
-         notrace(format('~N;')),
-         as_trace((
-           print_padded(EX, DR, AR),with_indents(false,write_src(Term)))),
-    notrace(format('~N'))).
+indentq(DR,EX,AR,ste(S,Term,E)):- !, indentq(DR,EX,AR,S,Term,E).
+indentq(DR,EX,AR,Term):- indentq(DR,EX,AR,'',Term,'').
+
+indentq(DR,EX,AR,S,Term,E):-
+        setup_call_cleanup(
+             notrace(format('~N;')),
+             as_trace((
+               print_padded(EX, DR, AR),format(S,[]),with_indents(false,write_src(Term)),
+               format(E,[]))),
+        notrace(format('~N'))).
 
 reset_eval_num:- flag(eval_num,_,0),flag(trace_output_len,_,0).
 reset_only_eval_num:- flag(eval_num,_,0).
@@ -141,8 +145,9 @@ set_debug(Flag,Val):- \+ atom(Flag), flag_to_var(Flag,Var), atom(Var),!,set_debu
 set_debug(Flag,true):- !, debug(metta(Flag)),flag_to_var(Flag,Var),set_option_value(Var,true).
 set_debug(Flag,false):- nodebug(metta(Flag)),flag_to_var(Flag,Var),set_option_value(Var,false).
 
-if_trace(Flag,Goal):- real_notrace((catch_err(ignore((is_debugging(Flag),Goal)),E,
-												fbug(E-->if_trace(Flag,Goal))))).
+if_trace(Flag,Goal):-
+   real_notrace((catch_err(ignore((is_debugging(Flag),Goal)),E,
+         fbug(E-->if_trace(Flag,Goal))))).
 
 
 is_showing(Flag):- option_value(Flag,'silent'),!,fail.
@@ -182,14 +187,14 @@ is_debugging((A,B)):- !, (is_debugging(A) , is_debugging(B) ).
 is_debugging(not(Flag)):- !,  \+ is_debugging(Flag).
 is_debugging(Flag):- Flag== false,!,fail.
 is_debugging(Flag):- Flag== true,!.
-%is_debugging(e):- is_testing,!.
+is_debugging(e):- is_testing,!.
 %is_debugging(eval):- is_testing,!.
 is_debugging(Flag):- option_value(Flag,'debug'),!.
 is_debugging(Flag):- option_value(Flag,'trace'),!.
 is_debugging(Flag):- debugging(metta(Flag),TF),!,TF==true.
 is_debugging(Flag):- debugging(Flag,TF),!,TF==true.
 is_debugging(Flag):- once(flag_to_var(Flag,Var)),
-  (option_value(Var,true)->true;(Flag\==Var -> is_debugging(Var))).
+   (option_value(Var,true)->true;(Flag\==Var -> is_debugging(Var))).
 
 % overflow = trace
 % overflow = fail

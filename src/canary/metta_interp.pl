@@ -89,8 +89,7 @@ is_synthing_unit_tests0:- is_testing.
 %is_synthing_unit_tests0:- is_html.
 % is_synthing_unit_tests0:- is_compatio,!,fail.
 
-is_testing:- is_metta_flag('test'),!.
-%is_testing.
+is_testing:- is_metta_flag('test').
 is_html:- is_metta_flag('html').
 
 :- ensure_loaded(metta_printer).
@@ -154,6 +153,7 @@ switch_to_mettarust:-
   set_option_value('log',false),
   set_option_value('test',false),
   set_output_stream.
+
 
 
 show_os_argv:- is_compatio,!.
@@ -266,7 +266,6 @@ option_value_def('initial-result-count',10).
 
 
 
-
 fbugio(_,_):- is_compatio,!.
 fbugio(TF,P):-!, ignore(( TF,!,fbug(P))).
 fbugio(IO):-fbugio(true,IO).
@@ -296,6 +295,7 @@ is_debug_like(nodebug, false).
 is_debug_like(silent, false).
 %is_debug_like(false, false).
 
+'is-symbol'(X):- symbol(X).
 %:- (is_mettalog->switch_to_mettalog;switch_to_mettarust).
 
 set_is_unit_test(TF):-
@@ -312,13 +312,15 @@ set_is_unit_test(TF):-
  % if_t( \+ TF , set_prolog_flag(debug_on_interrupt,true)),
   !.
 
-%fake_notrace(G):- tracing,!,real_notrace(G).
-fake_notrace(G):- once(G).
-%fake_notrace(G):- quietly(G),!.
+fake_notrace(G):- tracing,!,notrace(G).
+fake_notrace(G):- !,once(G).
+fake_notrace(G):- quietly(G),!.
+real_notrace(Goal):-!,notrace(Goal).
 real_notrace(Goal) :-
     setup_call_cleanup('$notrace'(Flags, SkipLevel),
                        once(Goal),
                        '$restore_trace'(Flags, SkipLevel)).
+
 
 
 null_io(G):- null_user_output(Out), !, with_output_to(Out,G).
@@ -518,7 +520,7 @@ metta_make_hook:-
 
 :- multifile(prolog:make_hook/2).
 :- dynamic(prolog:make_hook/2).
-prolog:make_hook(after, _Some):- nop(metta_make_hook).
+prolog:make_hook(after, _Some):- nop( metta_make_hook).
 
 into_reload_options(Reload,Reload).
 
@@ -560,6 +562,11 @@ do_cmdline_load_metta(Phase,Self,Rest):-
   forall(process_option_value_def,true),
   cmdline_load_metta(Phase,Self,Rest),!,
   forall(process_late_opts,true).
+
+:- if( \+ current_predicate(load_metta_file/2)).
+load_metta_file(Self,Filemask):- symbol_concat(_,'.metta',Filemask),!, load_metta(Self,Filemask).
+load_metta_file(_Slf,Filemask):- load_flybase(Filemask).
+:- endif.
 
 catch_abort(From,Goal):-
    catch_abort(From,Goal,Goal).
@@ -611,6 +618,7 @@ cmdline_load_metta(Phase,Self,[M|Rest]):-
   format('~N'), fbug(unused_cmdline_option(Phase,M)), !,
   cmdline_load_metta(Phase,Self,Rest).
 
+install_ontology:- !.
 
 
 %cmdline_load_file(Self,Filemask):- is_converting,!,
@@ -982,39 +990,56 @@ type_decl('Type').
 type_decl('%Undefined%').
 type_decl('Variable').
 
+%:- dynamic(get_metta_atom/2).
 :- dynamic(metta_atom_asserted/2).
-:- multifile(asserted_metta/4).
-:- dynamic(asserted_metta/4).
+%:- multifile(asserted_metta/4).
+%:- dynamic(asserted_metta/4).
 % metta_atom_stdlib(_):-!,fail.
-metta_atom_stdlib([Colon, Value, Type]):- Colon=':',
-   metta_atom_stdlib_types(Value, Type).
-metta_atom_stdlib_types(Type, 'Type'):- type_decl(Type).
-metta_atom_stdlib_types(Op, ['->'|List]):-
+metta_atom_stdlib([=,['If','True',_then],_then]).
+metta_atom_stdlib([=,['If','False',_Then],[let,X,0,[let,X,1,X]]]).
+metta_atom_stdlib([=,['If',_cond,_then,_else],[if,_cond,_then,_else]]).
+metta_atom_stdlib(['PredicateArity','PredicateArity',2]).
+metta_atom_stdlib(['PredicateArity',':',2]).
+metta_atom_stdlib([=,[':',R,'P1'],['PredicateArity',R,1]]).
+metta_atom_stdlib(X):- metta_atom_stdlib_types(X).
+
+metta_atom_stdlib_types([':', Type, 'Type']):- type_decl(Type).
+metta_atom_stdlib_types([':', Op, [->|List]]):- % symbol(Op),
      op_decl(Op,Params,ReturnType),
      append(Params,[ReturnType],List).
 
+metta_atom_stdlib_types([':',':','SrcPredicate']).
+metta_atom_stdlib_types([':','PredicateArity',[->,'Symbol','Number']]).
+metta_atom_stdlib_types([':','If','SrcFunction']).
+metta_atom_stdlib_types([':','If',[->,'Bool','Atom','Atom','Atom']]).
+metta_atom_stdlib_types([':','If',[->,'Bool','Atom','Atom']]).
+%   'If'(_cond, _then, _else, A) ':'- eval_true(_cond) *-> eval(_then, A); eval(_else, A).
+%   'If'(_cond, _then, A) ':'- eval_true(_cond), eval(_then, A).
 
-get_metta_atom_from(KB,Atom):- metta_atom(KB,Atom).
+
+%get_metta_atom(Eq,KB, [F|List]):- KB='&flybase',fb_pred(F, Len), length(List,Len),apply(F,List).
+
+
 get_metta_atom(Eq,Space, Atom):- metta_atom(Space, Atom), \+ (Atom =[EQ,_,_], EQ==Eq).
 
-metta_atom_asserted_fallback( KB,Atom):- fail, is_list(KB),!, member(Atom,KB).
-
 metta_atom(Atom):- current_self(KB),metta_atom(KB,Atom).
+%metta_atom([Superpose,ListOf], Atom):- Superpose == 'superpose',is_list(ListOf),!,member(KB,ListOf),get_metta_atom_from(KB,Atom).
+metta_atom(Space, Atom):- typed_list(Space,_,L),!, member(Atom,L).
+metta_atom(KB, [F, A| List]):- KB=='&flybase',fb_pred_nr(F, Len),current_predicate(F/Len), length([A|List],Len),apply(F,[A|List]).
+metta_atom(KB,Atom):- KB=='&corelib', metta_atom_stdlib(Atom).
+metta_atom(KB,Atom):- metta_atom_in_file( KB,Atom).
+metta_atom(KB,Atom):- metta_atom_asserted( KB,Atom).
+
+%metta_atom_asserted_fallback( KB,Atom):- metta_atom_stdlib(KB,Atom)
+
 
 %metta_atom(KB,[F,A|List]):- metta_atom(KB,F,A,List), F \== '=',!.
-metta_atom(KB,Atom):- metta_atom_asserted(KB,Atom).
-metta_atom(KB,Atom):- metta_atom_in_file(KB,Atom).
-metta_atom(_KB,Atom):- var(Atom),!,fail.
-metta_atom(KB, [F, A| List]):- KB='&flybase',fb_pred_nr(F, Len),current_predicate(F/Len), length([A|List],Len),apply(F,[A|List]).
-metta_atom([Superpose,ListOf], Atom):- Superpose == 'superpose',is_list(ListOf),!,member(KB,ListOf),metta_atom(KB,Atom).
-metta_atom(Space, Atom):- typed_list(Space,_,L),!, member(Atom,L).
-%metta_atom(KB,Atom):- var(Atom),constrain_sterm(Atom),nonvar(Atom),metta_atom(KB,Atom).
-metta_atom(KB,Atom):- (KB=='&self'; KB='&stdlib'), metta_atom_stdlib(Atom).
+is_metta_space(Space):- \+ \+ is_space_type(Space,_Test).
 
 metta_defn(KB,Head,Body):- metta_defn(_Eq,KB,Head,Body).
 metta_defn(Eq,KB,Head,Body):- ignore(Eq = '='), metta_atom(KB,[Eq,Head,Body]).
-metta_type(S,H,B):- metta_atom(S,[':',H,B]).
-metta_type(_,H,B):- metta_atom_stdlib_types(H,B).
+metta_type(S,H,B):- if_or_else(metta_atom(S,[':',H,B]),metta_atom_stdlib([':',H,B])).
+%metta_type(S,H,B):- S == '&corelib', metta_atom_stdlib_types([':',H,B]).
 %typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_arguments(Cmpd,Type,[List|_]),is_list(List).
 
 :- if( \+ current_predicate(pfcAdd/1 )).
@@ -1024,32 +1049,15 @@ pfcAdd(P):- assert(P).
 %maybe_xform(metta_atom(KB,[F,A|List]),metta_atom(KB,F,A,List)):- is_list(List),!.
 maybe_xform(metta_defn(Eq,KB,Head,Body),metta_atom(KB,[Eq,Head,Body])).
 maybe_xform(metta_type(KB,Head,Body),metta_atom(KB,[':',Head,Body])).
-maybe_xform(metta_atom(KB,HeadBody),metta_atom_asserted(KB,HeadBody)):-!. % s2t(HeadBody,HeadBodyT).
+maybe_xform(metta_atom(KB,HeadBody),metta_atom_asserted(KB,HeadBody)).
 maybe_xform(_OBO,_XForm):- !, fail.
-
-%metta_atom_asserted('&self',HeadBody):- asserted_metta_extra(HeadBody).
-
-asserted_metta_extra([':','If','SrcFunction']).
-asserted_metta_extra([':','If',[->,'Bool','Atom','Atom','Atom']]).
-asserted_metta_extra([=,['If',_cond,_then,_else],[if,_cond,_then,_else]]).
-%   'If'(_cond, _then, _else, A) ':'- eval_true(_cond) *-> eval(_then, A); eval(_else, A).
-asserted_metta_extra([':','If',[->,'Bool','Atom','Atom']]).
-asserted_metta_extra([=,['If','True',then],then]).
-asserted_metta_extra([=,['If','False',_Then],[let,X,0,[let,X,1,X]]]).
-%   'If'(_cond, _then, A) ':'- eval_true(_cond), eval(_then, A).
-
-asserted_metta_extra([':','Arity',[->,'Symbol','Number']]).
-asserted_metta_extra(['Arity','Arity',2]).
-asserted_metta_extra(['Arity',':',2]).
-asserted_metta_extra([':',':','SrcPredicate']).
-asserted_metta_extra([=,[':',R,'P1'],['Arity',R,1]]).
-
 
 metta_anew1(Load,_OBO):- var(Load),trace,!.
 metta_anew1(Ch,OBO):-  metta_interp_mode(Ch,Mode), !, metta_anew1(Mode,OBO).
 metta_anew1(Load,OBO):- maybe_xform(OBO,XForm),!,metta_anew1(Load,XForm).
 metta_anew1(load,OBO):- OBO= metta_atom(Space,Atom),!,'add-atom'(Space, Atom).
 metta_anew1(unload,OBO):- OBO= metta_atom(Space,Atom),!,'remove-atom'(Space, Atom).
+metta_anew1(unload_all,OBO):- OBO= metta_atom(Space,Atom),!,'remove-atom'(Space, Atom).
 
 metta_anew1(load,OBO):- !,
   must_det_ll((load_hook(load,OBO),
@@ -1062,7 +1070,16 @@ metta_anew1(load,OBO):- !,
 metta_anew1(unload,OBO):- subst_vars(OBO,Cl),load_hook(unload,OBO),
   expand_to_hb(Cl,Head,Body),
   predicate_property(Head,number_of_clauses(_)),
-  ignore((clause(Head,Body,Ref),clause(Head2,Body2,Ref),(Head+Body)=@=(Head2+Body2),erase(Ref),pp_m(Cl))).
+  ignore((clause(Head,Body,Ref),clause(Head2,Body2,Ref),
+    (Head+Body)=@=(Head2+Body2),erase(Ref),pp_m(Cl))).
+metta_anew1(unload_all,OBO):- subst_vars(OBO,Cl),load_hook(unload_all,OBO),
+  expand_to_hb(Cl,Head,Body),
+  predicate_property(Head,number_of_clauses(_)),
+  forall(
+    (clause(Head,Body,Ref),clause(Head2,Body2,Ref)),
+    must_det_ll((((Head+Body)=@=(Head2+Body2))
+               ->(erase(Ref),pp_m(unload_all(Cl)))
+               ;(pp_m(unload_all(Cl,(Head+Body)\=@=(Head2+Body2))))))).
 
 % TODO uncomment this next line but it is breaking the curried chainer
 % pfcAdd_Now(P):- pfcAdd(P),!.
@@ -1076,6 +1093,10 @@ metta_anew2(unload,OBO):- subst_vars_not_last(OBO,Cl),load_hook(unload,OBO),
   expand_to_hb(Cl,Head,Body),
   predicate_property(Head,number_of_clauses(_)),
   ignore((clause(Head,Body,Ref),clause(Head2,Body2,Ref),(Head+Body)=@=(Head2+Body2),erase(Ref),pp_m(Cl))).
+metta_anew2(unload_all,OBO):- subst_vars_not_last(OBO,Cl),load_hook(unload_all,OBO),
+  expand_to_hb(Cl,Head,Body),
+  predicate_property(Head,number_of_clauses(_)),
+  forall((clause(Head,Body,Ref),clause(Head2,Body2,Ref),(Head+Body)=@=(Head2+Body2),erase(Ref),pp_m(Cl)),true).
 
 
 metta_anew(Load,Src,OBO):- maybe_xform(OBO,XForm),!,metta_anew(Load,Src,XForm).
@@ -1132,36 +1153,33 @@ write_exec0(Exec):-
   format('~N'),
   ignore((notrace((color_g_mesg('#0D6328',writeln(S)))))).
 
-
+%!(let* (( ($a $b) (collapse (get-atoms &self)))) ((bind! &stdlib $a) (bind! &corelib $b)))
 
 asserted_do_metta(Space,Ch,Src):- metta_interp_mode(Ch,Mode), !, asserted_do_metta(Space,Mode,Src).
 
 asserted_do_metta(Space,Load,Src):- Load==exec,!,do_metta_exec(python,Space,Src,_Out).
 asserted_do_metta(Space,Load,Src):- asserted_do_metta2(Space,Load,Src,Src).
 
-asserted_do_metta2(Space,Ch,Info,Src):- metta_interp_mode(Ch,Mode), !, asserted_do_metta2(Space,Mode,Info,Src).
-asserted_do_metta2(Self,Load,[TypeOp,Fn,Type], Src):-
- TypeOp == ':',  \+ is_list(Type),!,
- must_det_ll((
-  color_g_mesg_ok('#ffa500',
-  metta_anew(Load,Src,metta_atom(Self,[':',Fn,Type]))))),!.
+asserted_do_metta2(Space,Ch,Info,Src):- nonvar(Ch), metta_interp_mode(Ch,Mode), !, asserted_do_metta2(Space,Mode,Info,Src).
 
-asserted_do_metta2(Self,Load,[TypeOp,Fn,TypeDecL], Src):-
- TypeOp == ':',!,
+asserted_do_metta2(Self,Load,[TypeOp,Fn,Type], Src):- TypeOp == ':',  \+ is_list(Type),!,
+ must_det_ll((
+  color_g_mesg_ok('#ffa501',metta_anew(Load,Src,metta_atom(Self,[':',Fn,Type]))))),!.
+
+asserted_do_metta2(Self,Load,[TypeOp,Fn,TypeDecL], Src):- TypeOp == ':',!,
  must_det_ll((
   decl_length(TypeDecL,Len),LenM1 is Len - 1, last_element(TypeDecL,LE),
-  color_g_mesg_ok('#ffa500',metta_anew(Load,Src,metta_atom(Self,[':',Fn,TypeDecL]))),
+  color_g_mesg_ok('#ffa502',metta_anew(Load,Src,metta_atom(Self,[':',Fn,TypeDecL]))),
   metta_anew1(Load,metta_arity(Self,Fn,LenM1)),
   arg_types(TypeDecL,[],EachArg),
   metta_anew1(Load,metta_params(Self,Fn,EachArg)),!,
   metta_anew1(Load,metta_last(Self,Fn,LE)))).
 /*
-asserted_do_metta2(Self,Load,[TypeOp,Fn,TypeDecL,RetType], Src):-
- TypeOp == ':',!,
+asserted_do_metta2(Self,Load,[TypeOp,Fn,TypeDecL,RetType], Src):- TypeOp == ':',!,
  must_det_ll((
   decl_length(TypeDecL,Len),
   append(TypeDecL,[RetType],TypeDecLRet),
-  color_g_mesg_ok('#ffa500',metta_anew(Load,Src,metta_atom(Self,[':',Fn,TypeDecLRet]))),
+  color_g_mesg_ok('#ffa503',metta_anew(Load,Src,metta_atom(Self,[':',Fn,TypeDecLRet]))),
   metta_anew1(Load,metta_arity(Self,Fn,Len)),
   arg_types(TypeDecL,[RetType],EachArg),
   metta_anew1(Load,metta_params(Self,Fn,EachArg)),
@@ -1175,14 +1193,14 @@ asserted_do_metta2(Self,Load,[TypeOp,Fn,TypeDecL,RetType], Src):-
    metta_anew((Head:- Body)))),!.*/
 
 asserted_do_metta2(Self,Load,[EQ,Head,Result], Src):- EQ=='=', !,
- must_det_ll((
+ color_g_mesg_ok('#ffa504',must_det_ll((
     discover_head(Self,Load,Head),
-    color_g_mesg_ok('#ffa500',metta_anew(Load,Src,metta_defn(EQ,Self,Head,Result))),
-    discover_body(Self,Load,Result))).
+    metta_anew(Load,Src,metta_defn(EQ,Self,Head,Result)),
+    discover_body(Self,Load,Result)))).
 
 asserted_do_metta2(Self,Load,PredDecl, Src):-
    ignore(discover_head(Self,Load,PredDecl)),
-   color_g_mesg_ok('#ffa500',metta_anew(Load,Src,metta_atom(Self,PredDecl))).
+   color_g_mesg_ok('#ffa505',metta_anew(Load,Src,metta_atom(Self,PredDecl))).
 
 
 always_exec(exec(W)):- !, is_list(W), always_exec(W).
@@ -1258,6 +1276,7 @@ convert_tax(How,_Self,Tax,Expr,How):-
 
 metta_interp_mode('+',load).
 metta_interp_mode('-',unload).
+metta_interp_mode('--',unload_all).
 metta_interp_mode('!',exec).
 metta_interp_mode('?',call).
 metta_interp_mode('^',load_like_file).
@@ -1297,7 +1316,6 @@ do_metta(From,call,Self,TermV,FOut):- !,
    copy_term(NamedVarsList,Was),
    Output = NamedVarsList,
    user:interactively_do_metta_exec(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut).
-
 do_metta(_File,Load,Self,Src,Out):- Load\==exec, !,
      as_tf(asserted_do_metta(Self,Load,Src),Out).
 
@@ -1310,7 +1328,7 @@ do_metta(file(Filename),exec,Self,TermV,Out):-
      file_answers(Filename, Nth, Ans),
      check_answers_for(TermV,Ans))),!,
      must_det_ll((
-      color_g_mesg_ok('#ffa500',
+      color_g_mesg_ok('#ffa509',
        (writeln(';; In file as:  '),
         color_g_mesg([bold,fg('#FFEE58')], write_src(exec(TermV))),
         write(';; To unit test case:'))),!,
@@ -2085,7 +2103,7 @@ ggtrace0(G):- ggtrace,
 loon:- loon(typein).
 
 
-catch_red_ignore(G):- catch_red(G)*->true;true.
+catch_red_ignore(G):- if_or_else(catch_red(G),true).
 
 :- export(loon/1).
 :- public(loon/1).
@@ -2106,8 +2124,9 @@ do_loon:-
   maplist(catch_red_ignore,[
 
    %if_t(is_compiled,ensure_mettalog_py),
-   install_readline_editline,
+          install_readline_editline,
    nts,
+   install_ontology,
    metta_final,
    nop(load_history),
    set_prolog_flag(history, 3),
@@ -2277,6 +2296,7 @@ fix_message_hook:-
 :- set_prolog_flag(metta_interp,ready).
 
 :- use_module(library(clpr)). % Import the CLP(R) library
+:- ensure_loaded('metta_ontology.pfc.pl').
 
 % Define a predicate to relate the likelihoods of three events
 complex_relationship3_ex(Likelihood1, Likelihood2, Likelihood3) :-
