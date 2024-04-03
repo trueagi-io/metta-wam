@@ -55,7 +55,7 @@ import_metta(Self,Module):- py_is_module(Module),!,
  must_det_ll(self_extend_py(Self,Module)),!.
 import_metta(Self,Filename):-
   (\+ symbol(Filename); \+ exists_file(Filename)),!,
-  with_wild_path(import_metta(Self),Filename),!.
+  must_det_ll(with_wild_path(import_metta(Self),Filename)),!.
 import_metta(Self,RelFilename):-
   must_det_ll((
      symbol(RelFilename),

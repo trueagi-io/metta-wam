@@ -661,14 +661,15 @@ do_metta_cmt(Self,[Cmt]):- !, do_metta_cmt(Self, Cmt),!.
 
 metta_atom_in_file(Self,Term):-  metta_atom_in_file(Self,Term,_,_).
 metta_atom_in_file(Self,STerm,Filename,Lineno):-
-    constrain_sterm(STerm),
-    term_variables(STerm,SVs),
-    copy_term(STerm+SVs,CTerm+CVs),
     user:loaded_into_kb(Self,Filename),
     once(user:asserted_metta_pred(Mangle,Filename)),
     %s2t_iz(Mangle,P,CTerm,Term),
     %CTerm=Term,Mangle=P,
-    notrace(Data =..[Mangle,Lineno|CTerm]),
+    current_predicate(Mangle/Arity),
+    notrace((length(STerm,Arity),
+    term_variables(STerm,SVs),
+    copy_term(STerm+SVs,CTerm+CVs),
+    Data =..[Mangle,Lineno|CTerm])),
     %write_src_woi(Data),
     call(Data),
     maplist(mapvar,CVs,SVs).

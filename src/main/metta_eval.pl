@@ -557,7 +557,7 @@ eval_space(Eq,RetType,_Dpth,_Slf,['remove-atom',Space,PredDecl],Res):- !,
 
 eval_space(Eq,RetType,_Dpth,_Slf,['atom-count',Space],Count):- !,
     ignore(RetType='Number'),ignore(Eq='='),
-    findall(Atom, get_metta_atom_from(Space, Atom),Atoms),
+    findall(Atom, metta_atom(Space, Atom),Atoms),
     length(Atoms,Count).
 
 eval_space(Eq,RetType,_Dpth,_Slf,['atom-replace',Space,Rem,Add],TF):- !,
@@ -566,7 +566,7 @@ eval_space(Eq,RetType,_Dpth,_Slf,['atom-replace',Space,Rem,Add],TF):- !,
 
 eval_space(Eq,RetType,_Dpth,_Slf,['get-atoms',Space],Atom):- !,
   ignore(RetType='Atom'),
-  get_metta_atom_from(Space, Atom),
+  metta_atom(Space, Atom),
   check_returnval(Eq,RetType,Atom).
 
 % Match-ELSE
@@ -818,12 +818,12 @@ eval_20(Eq,RetType,Depth,Self,['If',Cond,Then,Else],Res):- !,
      ;  eval(Eq,RetType,Depth,Self,Else,Res)).
 
 eval_20(Eq,RetType,Depth,Self,['If',Cond,Then],Res):- !,
-   eval(Eq,'Bool',Depth,Self,Cond,TF),
+   no_repeats(TF,eval(Eq,'Bool',Depth,Self,Cond,TF)),
    (is_True(TF) -> eval(Eq,RetType,Depth,Self,Then,Res) ;
       (!, fail,Res = [],!)).
 
 eval_20(Eq,RetType,Depth,Self,['if',Cond,Then],Res):- !,
-   eval(Eq,'Bool',Depth,Self,Cond,TF),
+   no_repeats(TF,eval(Eq,'Bool',Depth,Self,Cond,TF)),
    (is_True(TF) -> eval(Eq,RetType,Depth,Self,Then,Res) ;
       (!, fail,Res = [],!)).
 

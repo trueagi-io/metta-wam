@@ -151,7 +151,8 @@ get_type03(Depth,Self,[[Op|Args]|Arg],Type):- symbol(Op),
 
 get_type03(_Dpth,_Slf,Cmpd,Type):-typed_list(Cmpd,Type,_List).
 get_type03(Depth,Self,[Op|Args],Type):- symbol(Op),
-  get_operator_typedef(Self,Op,Params,RetType),
+  len_or_unbound(Args,Len),
+  get_operator_typedef(Self,Op,Len,Params,RetType),
   % Fills in type variables when possible
   ignore(args_conform(Depth,Self,Args,Params)),
   % unitests:  arg violations should return ()
