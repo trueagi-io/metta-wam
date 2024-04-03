@@ -308,9 +308,15 @@ must_not_error(X):- ncatch(X,E,(rethrow_abort(E);(/*arcST,*/writeq(E=X),pp(etrac
   trace,
   rrtrace(visible_rtrace([-all,+exception]),X)))).
 
-always_rethrow(E):- never_rrtrace,!,throw(E).
+
 always_rethrow('$aborted').
 always_rethrow(md_failed(_,_,_)).
+always_rethrow(return(_)).
+always_rethrow(give_up(_)).
+always_rethrow(time_limit_exceeded(_)).
+always_rethrow(depth_limit_exceeded).
+always_rethrow(restart_reading).
+always_rethrow(E):- never_rrtrace,!,throw(E).
 
 %catch_non_abort(Goal):- cant_rrtrace(Goal).
 catch_non_abort(Goal):- catch(cant_rrtrace(Goal),E,rethrow_abort(E)),!.
@@ -363,7 +369,8 @@ ugtrace(Why,_):-  is_testing, !, ignore(give_up(Why,5)),throw('$aborted').
 ugtrace(_Why,G):-  ggtrace(G),throw('$aborted').
 %ugtrace(Why,G):- ggtrace(G).
 
-%give_up(Why,N):- is_testing,!,write_src_uo(Why),!, halt(N).
+give_up(Why,_):- is_testing,!,write_src_uo(Why),!, throw(give_up(Why)).
+give_up(Why,N):- is_testing,!,write_src_uo(Why),!, halt(N).
 give_up(Why,_):- write_src_uo(Why),throw('$aborted').
 
 is_guitracer:- getenv('DISPLAY',_), current_prolog_flag(gui_tracer,true).

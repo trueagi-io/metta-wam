@@ -50,7 +50,27 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+/*
 
+ @TODO make this test
+
+            !(unify (a $b 1 (d)) (a $a 1 (d)) ok nok)
+            !(unify (a $b c) (a b $c) (ok $b $c) nok)
+            !(unify $a (a b c) (ok $a) nok)
+            !(unify (a b c) $a (ok $a) nok)
+            !(unify (a b c) (a b d) ok nok)
+            !(unify ($x a) (b $x) ok nok)
+        ");
+
+        assert_eq_metta_results!(metta.run(parser),
+            Ok(vec![
+                vec![expr!("ok")],
+                vec![expr!("ok" "b" "c")],
+                vec![expr!("ok" ("a" "b" "c"))],
+                vec![expr!("ok" ("a" "b" "c"))],
+                vec![expr!("nok")],
+                vec![expr!("nok")]
+*/
 %
 % post match modew
 %:- style_check(-singleton).
@@ -221,7 +241,7 @@ eval_15(Eq,RetType,Depth,Self,X,Y):- ((eval_20(Eq,RetType,Depth,Self,X,Y),
 :- discontiguous eval_40/6.
 %:- discontiguous eval_30fz/5.
 %:- discontiguous eval_31/5.
-%:- discontiguous eval_60/5.
+%:- discontiguous eval_maybe_defn/5.
 
 eval_20(Eq,RetType,_Dpth,_Slf,Name,Y):-
     atom(Name), !,
@@ -607,20 +627,21 @@ eval_space(Eq,RetType,_Dpth,_Slf,['add-atom',Space,PredDecl],Res):- !,
    do_metta(python,load,Space,PredDecl,TF),make_empty(RetType,TF,Res),check_returnval(Eq,RetType,Res).
 
 eval_space(Eq,RetType,_Dpth,_Slf,['remove-atom',Space,PredDecl],Res):- !,
-   do_metta(python,unload,Space,PredDecl,TF),
+   do_metta(python,unload_all,Space,PredDecl,TF),
    make_empty(RetType,TF,Res),check_returnval(Eq,RetType,Res).
 
 eval_space(Eq,RetType,_Dpth,_Slf,['atom-count',Space],Count):- !,
     ignore(RetType='Number'),ignore(Eq='='),
-    findall(Atom, get_metta_atom_from(Space, Atom),Atoms),
-    length(Atoms,Count).
+    'atom-count'(Space, Count).
+    %findall(Atom, metta_atom(Space, Atom),Atoms),
+    %length(Atoms,Count).
 
 eval_space(Eq,RetType,_Dpth,_Slf,['atom-replace',Space,Rem,Add],TF):- !,
    copy_term(Rem,RCopy), as_tf((metta_atom_iter_ref(Space,RCopy,Ref), RCopy=@=Rem,erase(Ref), do_metta(Space,load,Add)),TF),
  check_returnval(Eq,RetType,TF).
 
 eval_space(Eq,RetType,_Dpth,_Slf,['get-atoms',Space],Atom):- !,
-  ignore(RetType='Atom'), 
+  ignore(RetType='Atom'),!,
   get_metta_atom_from(Space, Atom), 
   check_returnval(Eq,RetType,Atom).
 
@@ -1186,10 +1207,10 @@ eval_20(Eq,RetType,Depth,Self,['not',X],TF):- !,
 eval_20(Eq,RetType,Depth,Self,['function',X],Res):- !, gensym(return_,RetF),
   RetUnit=..[RetF,Res],
   catch(locally(nb_setval('$rettag',RetF),
-           eval_args(Eq,RetType,Depth,Self,X, Res)),RetUnitR,RetUnitR=RetUnit).
+           eval_args(Eq,RetType,Depth,Self,X, Res)),return(RetUnitR),RetUnitR=RetUnit).
 eval_20(Eq,RetType,Depth,Self,['return',X],_):- !,
   nb_current('$rettag',RetF),RetUnit=..[RetF,Val],
-  eval_args(Eq,RetType,Depth,Self,X, Val), throw(RetUnit).
+  eval_args(Eq,RetType,Depth,Self,X, Val), throw(return(RetUnit)).
 % ================================================
 
 % ================================================
@@ -1267,9 +1288,12 @@ eval20_failked(Eq,RetType,Depth,Self,[V|VI],[V|VO]):-
 % =================================================================
 % =================================================================
 
-eval_failed(Depth,Self,T,TT):-
+eval_failed(Depth,Seslf,T,TT):-
    eval_failed('=',_RetType,Depth,Self,T,TT).
-   
+
+finish_eval(Depth,Seslf,T,TT):-
+   finish_eval('=',_RetType,Depth,Self,T,TT).
+
 eval_failed(Eq,RetType,Depth,Self,T,TT):-
   finish_eval(Eq,RetType,Depth,Self,T,TT).
 
@@ -1433,11 +1457,19 @@ must_eval_args(Eq,RetType,Depth,Self,More,Adjusted):-
 
 
 eval_70(Eq,RetType,Depth,Self,PredDecl,Res):-
-	if_or_else(eval_81(Eq,RetType,Depth,Self,PredDecl,Res),
-	if_or_else(eval_82(Eq,RetType,Depth,Self,PredDecl,Res),
-	if_or_else(eval_83(Eq,RetType,Depth,Self,PredDecl,Res),
-	if_or_else(eval_84(Eq,RetType,Depth,Self,PredDecl,Res),
-	           eval_85(Eq,RetType,Depth,Self,PredDecl,Res))))).
+	if_or_else(eval_maybe_python(Eq,RetType,Depth,Self,PredDecl,Res),
+	if_or_else(eval_maybe_host_predicate(Eq,RetType,Depth,Self,PredDecl,Res),
+	if_or_else(eval_maybe_host_function(Eq,RetType,Depth,Self,PredDecl,Res),
+	if_or_else(eval_maybe_defn(Eq,RetType,Depth,Self,PredDecl,Res),
+	           eval_maybe_subst(Eq,RetType,Depth,Self,PredDecl,Res))))).
+eval_maybe_subst(_Eq,_RetType,_Depth,_Self,[H|PredDecl],Res):- fail,
+  is_rust_operation([H|PredDecl]),!, % run
+  must_det_ll((rust_metta_run(exec([H|PredDecl]),Res),
+  nop(write_src(res(Res))))).
+
+eval_maybe_subst(Eq,RetType,Depth,Self,PredDecl,Res):-
+    subst_args(Eq,RetType,Depth,Self,PredDecl,Res).
+
 
 /*
 eval_70(Eq,RetType,Depth,Self,PredDecl,Res):-
@@ -1467,13 +1499,12 @@ is_system_pred(S):- atom(S),atom_concat(_,'-p',S).
 % - Self: Context or environment for the evaluation.
 % - [MyFun|More]: List with MeTTa function and additional arguments.
 % - RetVal: Variable to store the result of the Python function call.
-eval_81(Eq, RetType, Depth, Self, [MyFun|More], RetVal) :-
+eval_maybe_python(Eq, RetType, _Depth, Self, [MyFun|More], RetVal) :-
     % MyFun as a registered Python function with its module and function name.
-    metta_atom(Self, ['registered-python-function', PyModule, PyFun, MyFun]),
+    metta_atom(Self, ['registered-python-function', PyModule, PyFun, MyFun]),!,
     % Tries to fetch the type definition for MyFun, ignoring failures.
-    ((  get_operator_typedef(Self, MyFun, Params, RetType),
-        try_adjust_arg_types(RetType, Depth, Self, [RetType|Params], [RetVal|More], [MVal|Adjusted])
-    )->true; (maplist(as_prolog, More , Adjusted), MVal=RetVal)),
+    %adjust_args_9(Eq,RetType,MVal,RetVal,Depth,Self,MyFun,More,Adjusted),
+    More=Adjusted,MVal=RetVal,
     % Constructs a compound term for the Python function call with adjusted arguments.
     compound_name_arguments(Call, PyFun, Adjusted),
     % Optionally prints a debug tree of the Python call if tracing is enabled.
@@ -1488,7 +1519,7 @@ eval_81(Eq, RetType, Depth, Self, [MyFun|More], RetVal) :-
 %eval_80(_Eq,_RetType,_Dpth,_Slf,LESS,Res):- fake_notrace((once((eval_selfless(LESS,Res),fake_notrace(LESS\==Res))))),!.
 
 % predicate inherited by system
-eval_82(Eq,RetType,_Depth,_Self,[AE|More],TF):- allow_host_functions,
+eval_maybe_host_predicate(Eq,RetType,_Depth,_Self,[AE|More],TF):- allow_host_functions,
   once((is_system_pred(AE),
   length(More,Len),
   is_syspred(AE,Len,Pred))),
@@ -1548,14 +1579,14 @@ eval_call_fn(S,R):-
   fbug(eval_call_fn(P,'$VAR'('R'))),as_tf(call(P,R),TF),TF\=='False'.
 
 % function inherited from system
-eval_83(Eq,RetType,_Depth,_Self,[AE|More],Res):- allow_host_functions,
+eval_maybe_host_function(Eq,RetType,_Depth,_Self,[AE|More],Res):- allow_host_functions,
   is_system_pred(AE),
   length([AE|More],Len),
   is_syspred(AE,Len,Pred),
-  \+ (atom(AE), atom_concat(_,'-p',AE)),
+  \+ (symbol(AE), symbol_concat(_,'-p',AE)), % thus maybe -fn or !
   %fake_notrace( \+ is_user_defined_goal(Self,[AE|More])),!,
   %adjust_args(Depth,Self,AE,More,Adjusted),!,
-  Len1 is Len+1,
+  %Len1 is Len+1,
   %current_predicate(Pred/Len1),
   maplist(as_prolog,More,Adjusted),
   append(Adjusted,[Res],Args),!,
@@ -1566,19 +1597,9 @@ eval_83(Eq,RetType,_Depth,_Self,[AE|More],Res):- allow_host_functions,
 % user defined function
 %eval_40(Eq,RetType,Depth,Self,[H|PredDecl],Res):-
  %  fake_notrace(is_user_defined_head(Self,H)),!,
- %  eval_60(Eq,RetType,Depth,Self,[H|PredDecl],Res).
-
-eval_84(Eq,RetType,Depth,Self,PredDecl,Res):-
-    eval_60(Eq,RetType,Depth,Self,PredDecl,Res).
+ %  eval_maybe_defn(Eq,RetType,Depth,Self,[H|PredDecl],Res).
 
 
-eval_85(Eq,RetType,Depth,Self,[H|PredDecl],Res):- fail,
-  is_rust_operation([H|PredDecl]),!, % run
-  must_det_ll((rust_metta_run(exec([H|PredDecl]),Res),
-  nop(write_src(res(Res))))).
-
-eval_85(Eq,RetType,Depth,Self,PredDecl,Res):-
-    subst_args(Eq,RetType,Depth,Self,PredDecl,Res).
 
 
 
@@ -1680,11 +1701,26 @@ call_ndet(Goal,DET):- call(Goal),deterministic(DET),(DET==true->!;true).
 
 
 
+:- dynamic(is_metta_type_constructor/3).
 
-eval_60(Eq,RetType,Depth,Self,X,Y):- can_be_ok(eval_60,X),!,
-	  trace_eval(eval_61(Eq,RetType),' find_defn ',Depth,Self,X,Y).
+curried_arity(X,_,_):- var(X),!,fail.
+curried_arity([F|T],F,A):-var(F),!,fail,len_or_unbound(T,A).
+curried_arity([[F|T1]|T2],F,A):- nonvar(F),!,len_or_unbound(T1,A1),
+  (var(A1)->A=A1;(len_or_unbound(T2,A2),(var(A2)->A=A2;A is A1+A2))).
+curried_arity([F|T],F,A):-len_or_unbound(T,A).
 
-eval_61(Eq,RetType,Depth,Self,X,Y):-
+%curried_arity(_,_,_).
+
+
+len_or_unbound(T,A):- is_list(T),!,length(T,A).
+len_or_unbound(T,A):- integer(A),!,length(T,A).
+len_or_unbound(_,_).
+
+
+eval_maybe_defn(Eq,RetType,Depth,Self,X,Y):- can_be_ok(eval_maybe_defn,X),!,
+	  trace_eval(eval_defn_choose_candidates(Eq,RetType),' find_defn ',Depth,Self,X,Y).
+
+eval_defn_choose_candidates(Eq,RetType,Depth,Self,X,Y):-
 	findall((XX->B0),get_defn_expansions(Eq,RetType,Depth,Self,X,XX,B0),XXB0L),
 	XXB0L\=[],!, 
         Depth2 is Depth-1,
@@ -1693,8 +1729,8 @@ eval_61(Eq,RetType,Depth,Self,X,Y):-
 	member(XX->B0,XXB0L), X=XX, Y=B0, X\=@=B0,
 	%(X==B0 -> trace; eval(Eq,RetType,Depth,Self,B0,Y)).
 	 light_eval(Depth2,Self,B0,Y).
-eval_61(_Eq,_RetType,_Depth,_Self,_X,_Y):- \+ is_debugging(metta_defn),!,fail.
-eval_61(_Eq,_RetType,_Depth,_Self,X,_Y):- 
+eval_defn_choose_candidates(_Eq,_RetType,_Depth,_Self,_X,_Y):- \+ is_debugging(metta_defn),!,fail.
+eval_defn_choose_candidates(_Eq,_RetType,_Depth,_Self,X,_Y):- 
    color_g_mesg('#773700',write(no_def(X))),!,fail.
 
 
@@ -1720,71 +1756,14 @@ print_templates(Depth,_T,XX->B0):-!,
 	indentq_d(Depth,'(=',XX),
 	indentq_d(Depth,'',ste('',B0,')')).
 print_templates(Depth,T,XXB0):- ignore(indentq_d(Depth,'<<>>'(T),template(XXB0))),!.
-%eval_64(Eq,_RetType,_Dpth,Self,H,B):-  Eq='=',!, metta_defn(Eq,Self,H,B).
-eval_64(Eq,_RetType,_Dpth,Self,H,B):- throw(eval_64),
-   Eq=='match',!,call(metta_atom(Self,H)),B=H.
 
-% eval_64(Eq,RetType,Depth,Self,X,Y):- eval_64_curried(Eq,RetType,Depth,Self,X,Y).
-
-
-eval_64(Eq,_RetType,Depth,Self,[H|Args],B):- % no weird template matchers
-  % forall(metta_defn(Eq,Self,[H|Template],_),
-  %    maplist(not_template_arg,Template)),
-   Eq='=',	
-
-   (metta_defn(Eq,Self,[H|Args],B0)*->true;(fail,[H|Args]=B0)),
-   light_eval(Depth,Self,B0,B).
-    %(eval(Eq,RetType,Depth,Self,B,Y);metta_atom_iter(Depth,Self,Y)).
-
-eval_64_curried1(Eq,RetType,Depth,Self,[[H|Start]|T1],Y):-
-	   notrace((is_user_defined_head_f(Self,H),is_list(Start))),
-	   metta_defn(Eq,Self,[H|Start],Left),
-	   [Left|T1] \=@= [[H|Start]|T1],
-	   eval(Eq,RetType,Depth,Self,[Left|T1],Y).
-
-
-eval_64_curried2(Eq,RetType,Depth,Self,[[H|Start]|T1],Y):- append(Start,T1,Args),
-   eval_64(Eq,RetType,Depth,Self,[H|Args],Y).
-
-
-% Use the first template match
-eval_65(Eq,_RetType,Depth,Self,[H|Args],B):-
-   Eq='=',
-  (metta_defn(Eq,Self,[H|Template],B0),Args=Template),
-  light_eval(Depth,Self,B0,B).
-
-
-
-
-
-light_eval(_Depth,_Self,B,B).
+light_eval(Depth,Self,X,B):-
+  light_eval(_Eq,_RetType,Depth,Self,X,B).
+light_eval(_Eq,_RetType,_Depth,_Self,B,B).
 
 not_template_arg(TArg):- var(TArg), !, \+ attvar(TArg).
 not_template_arg(TArg):- atomic(TArg),!.
 %not_template_arg(TArg):- is_list(TArg),!,fail.
-
-
-% Has argument that is headed by the same function
-eval_67(Eq,RetType,Depth,Self,[H1|Args],Res):- throw(eval_67),
-   fake_notrace((append(Left,[[H2|H2Args]|Rest],Args), H2==H1)),!,
-   eval(Eq,RetType,Depth,Self,[H2|H2Args],ArgRes),
-   fake_notrace((ArgRes\==[H2|H2Args], append(Left,[ArgRes|Rest],NewArgs))),
-   eval_60(Eq,RetType,Depth,Self,[H1|NewArgs],Res).
-
-eval_67(Eq,RetType,Depth,Self,[[H|Start]|T1],Y):-
-   fake_notrace((is_user_defined_head_f(Self,H),is_list(Start))),
-   metta_defn(Eq,Self,[H|Start],Left),
-   eval(Eq,RetType,Depth,Self,[Left|T1],Y).
-
-% Has subterm to eval
-eval_67(Eq,RetType,Depth,Self,[F|PredDecl],Res):- fail,
-   Depth>1,
-   quietly(sub_sterm1(SSub,PredDecl)),
-   fake_notrace((ground(SSub),SSub=[_|Sub], is_list(Sub),maplist(atomic,SSub))),
-   eval(Eq,RetType,Depth,Self,SSub,Repl),
-   fake_notrace((SSub\=Repl,subst(PredDecl,SSub,Repl,Temp))),
-   eval_60(Eq,RetType,Depth,Self,[F|Temp],Res).
-
 
 
 % =================================================================
@@ -1827,7 +1806,8 @@ solve_quadratic(A, B, I, J, K) :-
 as_type(B,_Type,B):- var(B),!.
 as_type(B,_Type,B):- \+ compound(B),!.
 as_type([OP|B],Type,Res):- 
-   get_operator_typedef1(_Self,OP,_ParamTypes,RetType),Type=RetType,!,
+    len_or_unbound(B,Len),
+   get_operator_typedef(_Self,OP,Len,_ParamTypes,RetType),Type=RetType,!,
    eval_for(RetType,[OP|B],Res).
    
 as_type(B,RetType,Res):- is_pro_eval_kind(RetType),

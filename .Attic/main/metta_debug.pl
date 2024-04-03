@@ -255,7 +255,7 @@ is_debugging(Flag):- once(flag_to_var(Flag,Var)),
 
 %trace_eval(P4,_TN,D1,Self,X,Y):- is_fast_mode,!, call(P4,D1,Self,X,Y).
 %trace_eval(P4,TN,D1,Self,X,Y):- \+ is_debugging(TN),!, call(P4,D1,Self,X,Y).
-trace_eval(P4,TN,D1,Self,X,Y):-
+trace_eval(P4,TNT,D1,Self,X,Y):-
    must_det_ll((
    notrace((
    flag(eval_num,EX0,EX0+1),
@@ -270,8 +270,10 @@ trace_eval(P4,TN,D1,Self,X,Y):-
          nop((start_rtrace,rtrace)))))),
    nop(notrace(no_repeats_var(YY))))),
 
+   ((sub_term(TN,TNT),TNT\=TN)-> true ; TNT=TN),
    %if_t(DR<DMax, )
-   ( \+ \+ if_trace((eval;TN), (PrintRet=1, indentq(DR,EX, '-->',[TN,X]))) ),
+   ( \+ \+ if_trace((eval;TNT), (PrintRet=1, 
+      indentq(DR,EX, '-->',[TN,X]))) ),
 
    Ret=retval(fail),!,
 

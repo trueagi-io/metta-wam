@@ -1,3 +1,55 @@
+/*
+ * Project: MeTTaLog - A MeTTa to Prolog Transpiler/Interpreter/Runtime
+ * Description: This file is part of the source code for a transpiler designed to convert
+ *              MeTTa language programs into Prolog, utilizing the SWI-Prolog compiler for
+ *              optimizing and transforming function/logic programs. It handles different
+ *              logical constructs and performs conversions between functions and predicates.
+ *
+ * Author: Douglas R. Miles
+ * Contact: logicmoo@gmail.com / dmiles@logicmoo.org
+ * License: LGPL
+ * Repository: https://github.com/trueagi-io/metta-wam
+ *             https://github.com/logicmoo/hyperon-wam
+ * Created Date: 8/23/2023
+ * Last Modified: $LastChangedDate$  # You will replace this with Git automation
+ *
+ * Usage: This file is a part of the transpiler that transforms MeTTa programs into Prolog. For details
+ *        on how to contribute or use this project, please refer to the repository README or the project documentation.
+ *
+ * Contribution: Contributions are welcome! For contributing guidelines, please check the CONTRIBUTING.md
+ *               file in the repository.
+ *
+ * Notes:
+ * - Ensure you have SWI-Prolog installed and properly configured to use this transpiler.
+ * - This project is under active development, and we welcome feedback and contributions.
+ *
+ * Acknowledgments: Special thanks to all contributors and the open source community for their support and contributions.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_arguments(Cmpd,Type,[List|_]),is_list(List).
 is_syspred(H,Len,Pred):- notrace(is_syspred0(H,Len,Pred)).
 is_syspred0(H,_Ln,_Prd):- \+ atom(H),!,fail.
@@ -33,8 +85,8 @@ is_decl_type('Type').         is_decl_type('Symbol').
 is_decl_type('Expression').
 is_decl_type('Any').          is_decl_type('Atom').
 is_decl_type(Type):-          is_decl_type_l(Type).
+%is_decl_type([Type,EleType]):- is_decl_type_l(Type),is_decl_type(EleType)
 is_decl_type_l('StateMonad'). is_decl_type_l('List').
-
 
 last_type(List,Type):- is_list(List),last(List,Type),is_type(Type).
 last_type(Type,Type):- is_type(Type),!.
@@ -151,7 +203,8 @@ get_type03(Depth,Self,[[Op|Args]|Arg],Type):- symbol(Op),
 
 get_type03(_Dpth,_Slf,Cmpd,Type):-typed_list(Cmpd,Type,_List).
 get_type03(Depth,Self,[Op|Args],Type):- symbol(Op),
-  get_operator_typedef(Self,Op,Params,RetType),
+  len_or_unbound(Args,Len),
+  get_operator_typedef(Self,Op,Len,Params,RetType),
   % Fills in type variables when possible
   ignore(args_conform(Depth,Self,Args,Params)),
   % unitests:  arg violations should return ()
@@ -247,42 +300,61 @@ try_adjust_arg_types(_Eq,RetType,Depth,Self,Params,X,Y):-
 %adjust_args(Eq,RetType,Depth,Self,_,X,Y):- is_list(X), !, maplist(eval_args(Depth,Self),X,Y).
 %adjust_args(Eq,RetType,Depth,Self,_,X,Y):- is_list(X), !, maplist(as_prolog(Depth,Self),X,Y),!.
 
-adjust_args(_Eq,_RetType,_Dpth,Self,F,X,Y):- (X==[] ; is_special_op(Self,F); \+ iz_conz(X)),!,Y=X.
-adjust_args(Eq,RetType,Depth,Self,Op,X,Y):-
-    adjust_argsA(Eq,RetType,Depth,Self,Op,X,Y)*->true; adjust_argsB(Eq,RetType,Depth,Self,Op,X,Y).
+adjust_args_9(Eq,RetType,Res,NewRes,Depth,Self,Op,X,Y):-
+   adjust_args(Eq,RetType,Res,NewRes,Depth,Self,Op,X,Y).
 
-adjust_argsA(Eq,RetType,Depth,Self,Op,X,Y):-
-  %trace,
-  get_operator_typedef(Self,Op,Params,RetType),
-  try_adjust_arg_types(Eq,RetType,Depth,Self,Params,X,Y).
-%adjust_args(_Eq,_RetType,Depth,Self,_,X,Y):- as_prolog(Depth,Self,X,Y).
-adjust_argsB(_Eq,_RetType,_Depth,_Self,_,X,Y):- X = Y.
+adjust_args(_Eq,_RetType,Res,Res,_Dpth,Self,F,X,Y):- (X==[] ;
+    is_special_op(Self,F); \+ iz_conz(X)),!,Y=X.
+adjust_args(Eq,RetType,Res,NewRes,Depth,Self,Op,X,Y):-
+    if_or_else(adjust_argsA(Eq,RetType,Res,NewRes,Depth,Self,Op,X,Y),
+       adjust_argsB(Eq,RetType,Res,NewRes,Depth,Self,Op,X,Y)).
+
+adjust_argsA(Eq,RetType,Res,NewRes,Depth,Self,Op,X,Y):-
+  len_or_unbound(X,Len),
+  get_operator_typedef(Self,Op,Len,ParamTypes,RRetType),
+  (nonvar(NewRes)->CRes=NewRes;CRes=Res),
+  RRetType = RetType,
+  args_conform(Depth,Self,[CRes|X],[RRetType|ParamTypes]),
+  into_typed_args(Depth,Self,[RRetType|ParamTypes],[Res|X],[NewRes|Y]).
+
+adjust_argsB(Eq,_RetType,Res,Res,Depth,Self,_,Args,Adjusted):- is_list(Args),!,
+  maplist(eval_1_arg(Eq,_,Depth,Self),Args,Adjusted).
+adjust_argsB(_Eq,_RetType,Res,Res,Depth,Self,_,X,Y):- as_prolog(Depth,Self,X,Y),!.
+
+eval_1_arg(Eq,ReturnType,Depth,Self,Arg,Adjusted):-
+  if_or_else(eval(Eq,ReturnType,Depth,Self,Arg,Adjusted),Arg=Adjusted).
 
 into_typed_args(_Dpth,_Slf,T,M,Y):- (\+ iz_conz(T); \+ iz_conz(M)),!, M=Y.
 into_typed_args(Depth,Self,[T|TT],[M|MM],[Y|YY]):-
   into_typed_arg(Depth,Self,T,M,Y),
   into_typed_args(Depth,Self,TT,MM,YY).
 
-into_typed_arg(_Dpth,Self,T,M,Y):- var(M),!,put_attr(M,metta_type,Self=T),put_attr(Y,metta_type,Self=T),Y=M.
+into_typed_arg(_Dpth,Self,T,M,Y):- var(M),!,Y=M, nop(put_attr(M,metta_type,Self=T)).
 into_typed_arg(Depth,Self,T,M,Y):- into_typed_arg0(Depth,Self,T,M,Y)*->true;M=Y.
 
 into_typed_arg0(Depth,Self,T,M,Y):- var(T), !, 
-  get_type(Depth,Self,M,T),
- (wants_eval_kind(T)->eval_args(Depth,Self,M,Y);Y=M).
+ must_det_ll((get_type(Depth,Self,M,T),
+ (wants_eval_kind(T)->eval_args(Depth,Self,M,Y);Y=M))).
 
 into_typed_arg0(Depth,Self,T,M,Y):- is_pro_eval_kind(T),!,eval_args(Depth,Self,M,Y).
 into_typed_arg0(Depth,Self,T,M,Y):- ground(M),!, \+ arg_violation(Depth,Self,M,T),Y=M.
 into_typed_arg0(_Dpth,_Slf,T,M,Y):- is_non_eval_kind(T),!,M=Y.
 into_typed_arg0(Depth,Self,_,M,Y):- eval_args(Depth,Self,M,Y).
 
+wants_eval_kind(T):- nonvar(T), is_pro_eval_kind(T),!.
+wants_eval_kind(_):- true.
+
+metta_type:attr_unify_hook(Self=Type,NewValue):- attvar(NewValue),!,put_attr(NewValue,metta_type,Self=Type).
+metta_type:attr_unify_hook(Self=Type,NewValue):-
+   get_type(20,Self,NewValue,Was),
+   can_assign(Was,Type).
+
+%set_type(Depth,Self,Var,Type):- nop(set_type(Depth,Self,Var,Type)),!.
 set_type(Depth,Self,Var,Type):- nop(set_type(Depth,Self,Var,Type)),!.
 set_type(Depth,Self,Var,Type):- get_type(Depth,Self,Var,Was)
    *->Was=Type
    ; if_t(var(Var),put_attr(Var,metta_type,Self=Type)).
 
-metta_type:attr_unify_hook(Self=Type,NewValue):-
-   get_type(20,Self,NewValue,Was),
-   can_assign(Was,Type).
 
 can_assign(Was,Type):- Was=Type,!.
 can_assign(Was,Type):- (is_nonspecific_type(Was);is_nonspecific_type(Type)),!.
@@ -331,20 +403,35 @@ is_user_defined_head_f1(Eq,Other,H):- metta_defn(Eq,Other,[H|_],_).
 is_special_op(Op):-  current_self(Self),is_special_op(Self,Op).
 
 is_special_op(_Slf,F):- \+ atom(F), \+ var(F), !, fail.
-is_special_op(Self,Op):- get_operator_typedef(Self,Op,Params,_RetType),
-   maplist(is_non_eval_kind,Params).
+%is_special_op(Self,Op):- get_operator_typedef(Self,Op,Params,_RetType),
+%   maplist(is_non_eval_kind,Params).
 is_special_op(_Slf,Op):- is_special_builtin(Op).
 
 
 
 get_operator_typedef(Self,Op,ParamTypes,RetType):-
-  get_operator_typedef1(Self,Op,ParamTypes,RetType)*->true;
-  get_operator_typedef2(Self,Op,ParamTypes,RetType).
-get_operator_typedef1(Self,Op,ParamTypes,RetType):-
+  len_or_unbound(ParamTypes,Len),
+  get_operator_typedef(Self,Op,Len,ParamTypes,RetType).
+
+:- dynamic(get_operator_typedef0/5).
+get_operator_typedef(Self,Op,Len,ParamTypes,RetType):-
+ len_or_unbound(ParamTypes,Len),
+ if_or_else(get_operator_typedef0(Self,Op,Len,ParamTypes,RetType),
+ if_or_else(get_operator_typedef1(Self,Op,Len,ParamTypes,RetType),
+            get_operator_typedef2(Self,Op,Len,ParamTypes,RetType))).
+
+get_operator_typedef1(Self,Op,Len,ParamTypes,RetType):-
+   len_or_unbound(ParamTypes,Len),
+   append(ParamTypes,[RetType],List),
    metta_type(Self,Op,['->'|List]),
-   append(ParamTypes,[RetType],List).
-get_operator_typedef2(Self,Op,ParamTypes,RetType):-
-  nop(wdmsg(missing(get_operator_typedef2(Self,Op,ParamTypes,RetType)))),!,fail.
+   assert(get_operator_typedef0(Self,Op,Len,ParamTypes,RetType)).
+get_operator_typedef2(Self,Op,Len,ParamTypes,RetType):-
+  ignore('Atom'=RetType),
+  maplist(is_eval_kind,ParamTypes),
+  assert(get_operator_typedef0(Self,Op,Len,ParamTypes,'Any')).
+  %nop(wdmsg(missing(get_operator_typedef2(Self,Op,ParamTypes,RetType)))),!,fail.
+
+is_eval_kind(ParamType):- ignore(ParamType='Any').
 
 is_metta_data_functor(Eq,F):-
   current_self(Self),is_metta_data_functor(Eq,Self,F).
@@ -355,7 +442,7 @@ get_operator_typedef(Self,Op,ParamTypes,RetType):-
 :- endif.
 
 :- if( \+ current_predicate(get_operator_typedef1/4)).
-get_operator_typedef(Self,Op,ParamTypes,RetType):-
+get_operator_typedef1(Self,Op,ParamTypes,RetType):-
   get_operator_typedef1(Self,Op,_,ParamTypes,RetType).
 :- endif.
 

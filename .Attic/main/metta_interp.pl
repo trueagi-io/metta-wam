@@ -1501,7 +1501,7 @@ call_max_time(Goal, MaxTime, Else) :-
     catch(if_or_else(call_with_time_limit(MaxTime, Goal),Else), time_limit_exceeded, Else).
 
 
-catch_err(G,E,C):- catch(G,E,(notrace(if_t(symbol(E),throw(E))),C)).
+catch_err(G,E,C):- catch(G,E,(notrace(if_t(always_rethrow(E),throw(E))),C)).
 
 load_and_trim_history:-
  notrace((
