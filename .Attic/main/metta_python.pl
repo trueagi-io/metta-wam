@@ -1,3 +1,56 @@
+/*
+ * Project: MeTTaLog - A MeTTa to Prolog Transpiler/Interpreter
+ * Description: This file is part of the source code for a transpiler designed to convert
+ *              MeTTa language programs into Prolog, utilizing the SWI-Prolog compiler for
+ *              optimizing and transforming function/logic programs. It handles different
+ *              logical constructs and performs conversions between functions and predicates.
+ *
+ * Author: Douglas R. Miles
+ * Contact: logicmoo@gmail.com / dmiles@logicmoo.org
+ * License: LGPL
+ * Repository: https://github.com/trueagi-io/metta-wam
+ *             https://github.com/logicmoo/hyperon-wam
+ * Created Date: 8/23/2023
+ * Last Modified: $LastChangedDate$  # You will replace this with Git automation
+ *
+ * Usage: This file is a part of the transpiler that transforms MeTTa programs into Prolog. For details
+ *        on how to contribute or use this project, please refer to the repository README or the project documentation.
+ *
+ * Contribution: Contributions are welcome! For contributing guidelines, please check the CONTRIBUTING.md
+ *               file in the repository.
+ *
+ * Notes:
+ * - Ensure you have SWI-Prolog installed and properly configured to use this transpiler.
+ * - This project is under active development, and we welcome feedback and contributions.
+ *
+ * Acknowledgments: Special thanks to all contributors and the open source community for their support and contributions.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
 :- encoding(iso_latin_1).
 :- flush_output.
 :- setenv('RUST_BACKTRACE',full).
@@ -37,8 +90,8 @@ is_not_prolog_space(GSpace):-  \+ is_asserted_space(GSpace), \+ is_nb_space(GSpa
 
 with_safe_argv(Goal):-
   current_prolog_flag(argv,Was),
-  setup_call_cleanup(set_prolog_flag(argv,[]), 
-	py_catch(Goal),
+  setup_call_cleanup(set_prolog_flag(argv,[]),
+    py_catch(Goal),
   set_prolog_flag(argv,Was)).
 with_safe_argv(G1,G2):- with_safe_argv((G1,G2)).
 py_catch((G1,G2)):-!,py_catch(G1),py_catch(G2).
@@ -85,13 +138,13 @@ ensure_rust_metta:- ensure_rust_metta(_).
 :- dynamic(is_mettalog/1).
 :- volatile(is_mettalog/1).
 ensure_mettalog_py(MettaLearner):- is_mettalog(MettaLearner),!.
-ensure_mettalog_py(MettaLearner):- 
+ensure_mettalog_py(MettaLearner):-
    with_safe_argv(
-   (want_py_lib_dir,   
-	py_call('mettalog',MettaLearner),
-	%py_call('motto',_),
-	%py_call('motto.sparql_gate':'sql_space_atoms'(),Res1),pybug(Res1),
-	%py_call('motto.llm_gate':'llmgate_atoms'(MeTTa),Res2),pybug(Res2),
+   (want_py_lib_dir,
+    py_call('mettalog',MettaLearner),
+    %py_call('motto',_),
+    %py_call('motto.sparql_gate':'sql_space_atoms'(),Res1),pybug(Res1),
+    %py_call('motto.llm_gate':'llmgate_atoms'(MeTTa),Res2),pybug(Res2),
 
    pybug(is_mettalog(MettaLearner)),
    asserta(is_mettalog(MettaLearner)))).
@@ -333,7 +386,7 @@ self_extend_py(Self,Module,File,R):-
   (nonvar(File)-> Use=File ; Use=Module),
   pybug('extend-py!'(Use)),
    %py_call(mettalog:use_mettalog()),
-  (Use==mettalog->true;(py_call(mettalog:load_functions(Use),R),pybug(R))),  
+  (Use==mettalog->true;(py_call(mettalog:load_functions(Use),R),pybug(R))),
   %listing(ensure_rust_metta/1),
   %ensure_mettalog_py,
   nb_setval('$py_ready','true'),
@@ -354,11 +407,11 @@ rust_metta_run(S,Run):- % run
   s_to_run(S,R),
   py_call(mettalog:rust_metta_run(R),Run))))).
 
-rust_metta_run(S):- 
+rust_metta_run(S):-
   rust_metta_run(S,Py),
   print_py(Py).
 
-print_py(Py):- 
+print_py(Py):-
   py_to_pl(Py,R), print(R),nl.
 
 s_to_run(S,R):- atom(S), sformat(R,'~w',[S]),!.
@@ -414,7 +467,7 @@ on_restore1:- ensure_mettalog_py.
    assert(want_py_lib_dir(GParentDir)).
 
 want_py_lib_dir:-
-   with_safe_argv((forall(want_py_lib_dir(GParentDir),  
+   with_safe_argv((forall(want_py_lib_dir(GParentDir),
                          py_add_lib_dir(GParentDir)),
     sync_python_path)).
 

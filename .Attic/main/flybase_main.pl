@@ -890,7 +890,7 @@ pad_number(Number, N) :-
   symbolic_list_concat(L,'_',SS),write(SS).
 
 /*
-	exists_virtually(corelib).
+    exists_virtually(corelib).
 
 % Process a file or directory path with a given predicate.
 with_wild_path(Fnicate, Dir) :- extreme_debug(fbug(with_wild_path(Fnicate, Dir))),fail.
@@ -931,7 +931,7 @@ with_wild_path_swi(Fnicate, File) :-
   symbol_contains(File, '*'),
   expand_file_name(File, List), !,
   maplist(with_wild_path(Fnicate), List).
-with_wild_path_swi(Fnicate, File) :- 
+with_wild_path_swi(Fnicate, File) :-
   \+ exists_directory(File), \+ exists_file(File), \+ symbol_contains(File,'.'),
   extension_search_order(Ext),
   symbolic_list_concat([File|Ext],MeTTafile),
@@ -1186,7 +1186,7 @@ fb_assert(Term) :-
 
 :- dynamic(done_reading/1).
 
-use_metta_x:- fail.
+use_metta_x:- fail_flag.
 
 load_fb_cache(_File,OutputFile,_Fn):- exists_file(OutputFile),!,ensure_loaded(OutputFile),!.
 load_fb_cache(File,_OutputFile,_Fn):- load_files([File],[qcompile(large)]).
@@ -2130,7 +2130,7 @@ column_names(allele_genetic_interactions, [allele_symbol, allele_FBal, interacti
 column_names(allele_phenotypic,           [allele_symbol, allele_FBal, phenotype, 'FBrf']).
 column_names(fbal_to_fbgn,             ['AlleleID', 'AlleleSymbol', 'GeneID', 'GeneSymbol']).
 column_names(genotype_phenotype_data, [listOf(genotype_symbols, [/, ' ']), listOf(genotype_FBids, [/, ' ']), phenotype_name, phenotype_id, listOf(qualifier_names, ['|']), listOf(qualifier_ids, ['|']), reference]).
-%                                        #genotype_symbols           	genotype_FBids	phenotype_name	phenotype_id	qualifier_names	qualifier_ids	reference
+%                                        #genotype_symbols              genotype_FBids  phenotype_name  phenotype_id    qualifier_names qualifier_ids   reference
 column_names(automated_gene_summaries, [primary_FBgn, summary_text]).
 column_names(best_gene_summary, ['FBgn', 'Gene_Symbol', 'Summary_Source', 'Summary']).
 column_names(cDNA_clone_data, ['FBcl', organism_abbreviation, clone_name, dataset_metadata_name, listOf(cDNA_accession), listOf('EST_accession')]).
@@ -3217,8 +3217,8 @@ datalog_to_termlog(File):-
    fbug(datalog_to_termlog(File)),
   if_m2(atom_concat(File,'.metta',M)),
    setup_call_cleanup((open(File,read,In,[encoding(utf8)]),
-					   open(File2,write,Out,[encoding(utf8)]), 
-					   if_m2(open(M,write,OutM,[encoding(utf8)]))),
+                       open(File2,write,Out,[encoding(utf8)]),
+                       if_m2(open(M,write,OutM,[encoding(utf8)]))),
   (repeat,
    read_term(In,Term,[]),
    (Term==end_of_file -> ! ; (process_datalog(Out,OutM,Term),fail))),
