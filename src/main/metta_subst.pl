@@ -119,7 +119,7 @@ subst_args(Depth,Space,X,Y):-subst_args('=',_RetType,
 subst_args0(Eq,RetType,_Dpth,_Slf,X,Y):- self_subst(X),!,Y=X.
 subst_args0(Eq,RetType,Depth,Self,X,Y):-
   Depth2 is Depth-1,
-  trace_eval(subst_args1(Eq,RetType),((e;subst_args;true)),Depth,Self,X,M),
+  trace_eval(subst_args1(Eq,RetType),((e2;e)),Depth,Self,X,M),
   (M\=@=X ->subst_args0(Eq,RetType,Depth2,Self,M,Y);Y=X).
 
 subst_args11(Eq,RetType,Depth,Self,X,Y):- \+ is_debugging((subst_args)),!,
