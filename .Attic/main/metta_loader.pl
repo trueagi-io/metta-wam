@@ -1,65 +1,8 @@
-/*
- * Project: MeTTaLog - A MeTTa to Prolog Transpiler/Interpreter
- * Description: This file is part of the source code for a transpiler designed to convert
- *              MeTTa language programs into Prolog, utilizing the SWI-Prolog compiler for
- *              optimizing and transforming function/logic programs. It handles different
- *              logical constructs and performs conversions between functions and predicates.
- *
- * Author: Douglas R. Miles
- * Contact: logicmoo@gmail.com / dmiles@logicmoo.org
- * License: LGPL
- * Repository: https://github.com/trueagi-io/metta-wam
- *             https://github.com/logicmoo/hyperon-wam
- * Created Date: 8/23/2023
- * Last Modified: $LastChangedDate$  # You will replace this with Git automation
- *
- * Usage: This file is a part of the transpiler that transforms MeTTa programs into Prolog. For details
- *        on how to contribute or use this project, please refer to the repository README or the project documentation.
- *
- * Contribution: Contributions are welcome! For contributing guidelines, please check the CONTRIBUTING.md
- *               file in the repository.
- *
- * Notes:
- * - Ensure you have SWI-Prolog installed and properly configured to use this transpiler.
- * - This project is under active development, and we welcome feedback and contributions.
- *
- * Acknowledgments: Special thanks to all contributors and the open source community for their support and contributions.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the
- *    distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
-
-
-
-
 
 :- multifile(user:asserted_metta_pred/2).
 :- dynamic(user:asserted_metta_pred/2).
 
 exists_virtually(corelib).
-exists_virtually(stdlib).
 
 % Process a file or directory path with a given predicate.
 with_wild_path(Fnicate, Dir) :- extreme_debug(fbug(with_wild_path(Fnicate, Dir))),fail.
@@ -68,17 +11,11 @@ with_wild_path(_Fnicate, Virtual) :- exists_virtually(Virtual),!.
 with_wild_path(Fnicate, Virtual) :- var(Virtual),!,throw(var_with_wild_path(Fnicate, Virtual)).
 with_wild_path(Fnicate, Dir) :-  is_scryer, symbol(Dir), !, must_det_ll((path_chars(Dir,Chars), with_wild_path(Fnicate, Chars))).
 with_wild_path(Fnicate, Chars) :-  \+ is_scryer, \+ symbol(Chars), !, must_det_ll((name(Atom,Chars), with_wild_path(Fnicate, Atom))).
-with_wild_path(Fnicate, FileC) :- symbol(FileC),
-  symbol_contains(FileC, ':'),
-   \+ exists_file(FileC), \+ exists_directory(FileC),
-   symbol_list_concat(FileL,':',FileC),
-   symbol_list_concat(FileL,'/',File),!,
-   with_wild_path_swi(Fnicate, File).
 
 with_wild_path(Fnicate, File) :- exists_file(File), !, must_det_ll(( call(Fnicate, File))).
 
 with_wild_path(Fnicate, Dir) :-  exists_directory(Dir),
-  absolute_file_name_from('__init__.py', PyFile, [access(read), file_errors(fail), relative_to(Dir)]),
+  absolute_file_name('__init__.py', PyFile, [access(read), file_errors(fail), relative_to(Dir)]),
   with_wild_path(Fnicate, PyFile).
 
 with_wild_path(Fnicate, File) :- !, with_wild_path_swi(Fnicate, File).
@@ -95,15 +32,20 @@ path_chars(A,C):- symbol_chars(A,C).
 
 with_wild_path_swi(Fnicate, File) :-
   compound(File),
-  absolute_file_name_from(File, Dir, [access(read), file_errors(fail), file_type(directory)]),
+  absolute_file_name(File, Dir, [access(read), file_errors(fail), file_type(directory)]),
   '\\=@='(Dir, File), !,
   with_wild_path(Fnicate, Dir).
 with_wild_path_swi(Fnicate, File) :-
   compound(File), !,
-  absolute_file_name_from(File, Dir, [access(read), file_errors(fail), file_type(['csv', 'tsv', ''])]),
+  absolute_file_name(File, Dir, [access(read), file_errors(fail), file_type(['csv', 'tsv', ''])]),
   '\\=@='(Dir, File), !,
   with_wild_path(Fnicate, Dir).
 
+with_wild_path_swi(Fnicate, FileC) :-
+  symbol_contains(FileC, ':'),
+   symbol_list_concat(FileL,':',FileC),
+   symbol_list_concat(FileL,'/',File),!,
+   with_wild_path_swi(Fnicate, File).
 with_wild_path_swi(Fnicate, File) :-
   symbol_contains(File, '*'),
   expand_file_name(File, List), !,
@@ -119,7 +61,7 @@ with_wild_path_swi(Fnicate, File) :-
   \+ exists_directory(File), \+ exists_file(File), symbol_contains(File,'..'),
   extension_search_order(Ext),
   symbolic_list_concat([File|Ext],MeTTafile0),
-  absolute_file_name_from(MeTTafile0, MeTTafile, [access(read), file_errors(fail)]),
+  absolute_file_name(MeTTafile0, MeTTafile, [access(read), file_errors(fail)]),
   exists_file(MeTTafile),
   call(Fnicate, MeTTafile).
 
@@ -138,20 +80,6 @@ load_metta_file(Self,Filemask):- symbol_concat(_,'.metta',Filemask),!, load_mett
 load_metta_file(_Slf,Filemask):- load_flybase(Filemask).
 :- endif.
 
-absolute_file_name_from(RelFilename,Filename):-
-  absolute_file_name_from(RelFilename,Filename,[]).
-
-absolute_file_name_from(RelFilename,Filename,Opts):-
-   select(relative_to(RelFrom),Opts,NewOpts),
-   absolute_file_name_from(RelFrom,RelFromNew,NewOpts),
-   absolute_file_name(RelFilename,Filename,[relative_to(RelFromNew)|NewOpts]).
-absolute_file_name_from(RelFilename,Filename,Opts):-
-   is_metta_module_path(ModPath),
-   absolute_file_name(RelFilename,Filename,[relative_to(ModPath)|Opts]).
-
-:- dynamic(is_metta_module_path/1).
-is_metta_module_path('.').
-
 load_metta(Filename):-
  %clear_spaces,
  load_metta('&self',Filename).
@@ -163,7 +91,7 @@ load_metta(Self,Filename):-
 load_metta(Self,RelFilename):-
  atom(RelFilename),
  exists_file(RelFilename),!,
-   absolute_file_name_from(RelFilename,Filename),
+ absolute_file_name(RelFilename,Filename),
  track_load_into_file(Filename,
    include_metta(Self,RelFilename)).
 
@@ -174,7 +102,7 @@ include_metta(Self,RelFilename):-
   must_det_ll((
      symbol(RelFilename),
      exists_file(RelFilename),!,
-     absolute_file_name_from(RelFilename,Filename),
+     absolute_file_name(RelFilename,Filename),
      directory_file_path(Directory, _, Filename),
      assert_new(metta_file(Self,Filename,Directory)),
      assert_new(user:loaded_into_kb(Self,Filename)),

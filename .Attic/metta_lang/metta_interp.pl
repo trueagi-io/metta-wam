@@ -1,3 +1,56 @@
+/*
+ * Project: MeTTaLog - A MeTTa to Prolog Transpiler/Interpreter
+ * Description: This file is part of the source code for a transpiler designed to convert
+ *              MeTTa language programs into Prolog, utilizing the SWI-Prolog compiler for
+ *              optimizing and transforming function/logic programs. It handles different
+ *              logical constructs and performs conversions between functions and predicates.
+ *
+ * Author: Douglas R. Miles
+ * Contact: logicmoo@gmail.com / dmiles@logicmoo.org
+ * License: LGPL
+ * Repository: https://github.com/trueagi-io/metta-wam
+ *             https://github.com/logicmoo/hyperon-wam
+ * Created Date: 8/23/2023
+ * Last Modified: $LastChangedDate$  # You will replace this with Git automation
+ *
+ * Usage: This file is a part of the transpiler that transforms MeTTa programs into Prolog. For details
+ *        on how to contribute or use this project, please refer to the repository README or the project documentation.
+ *
+ * Contribution: Contributions are welcome! For contributing guidelines, please check the CONTRIBUTING.md
+ *               file in the repository.
+ *
+ * Notes:
+ * - Ensure you have SWI-Prolog installed and properly configured to use this transpiler.
+ * - This project is under active development, and we welcome feedback and contributions.
+ *
+ * Acknowledgments: Special thanks to all contributors and the open source community for their support and contributions.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
 :- encoding(utf8).
 :- set_prolog_flag(encoding, utf8).
 :- nb_setval(cmt_override,lse('; ',' !(" ',' ") ')).
@@ -48,6 +101,9 @@ metta_dir(Dir):- getenv('METTA_DIR',Dir),!.
 :- ensure_loaded(metta_debug).
 
 is_metta_flag(What):- notrace(is_flag0(What)).
+
+true_flag.
+false_flag:- fail.
 
 is_tRuE(TF):- TF=='True',!.
 is_tRuE(TF):- TF=='true',!.
@@ -666,7 +722,7 @@ start_html_of(_Filename):-
 
 save_html_of(_Filename):- \+ tee_file(_TEE_FILE),!.
 save_html_of(_):- \+ has_loonit_results, \+ option_value('html',true).
-save_html_of(_):- !, writeln('<br/> <a href="#" onclick="window.history.back(); return false;">Return to summaries</a><br/>').
+save_html_of(_):- loonit_report, !, writeln('<br/> <a href="#" onclick="window.history.back(); return false;">Return to summaries</a><br/>').
 save_html_of(_Filename):-!.
 save_html_of(Filename):-
  must_det_ll((
@@ -920,15 +976,16 @@ do_show_options_values:-
   forall((nb_current(N,V), \+((symbol(N),symbol_concat('$',_,N)))),write_src_nl(['pragma!',N,V])),
   do_show_option_switches.
 
-op_decl('pragma!', [ 'Atom', 'Atom'], 'EmptyType').
+op_decl('pragma!', [ 'Atom', 'Atom'], [->]).
+op_decl('=', [ 'Atom', 'Atom'], '%Undefined%').
 
 op_decl('match', [ 'hyperon::space::DynSpace', 'Atom', 'Atom'], '%Undefined%').
-op_decl('remove-atom', [ 'hyperon::space::DynSpace', 'Atom'], 'EmptyType').
-op_decl('add-atom', [ 'hyperon::space::DynSpace', 'Atom'], 'EmptyType').
+op_decl('remove-atom', [ 'hyperon::space::DynSpace', 'Atom'], [->]).
+op_decl('add-atom', [ 'hyperon::space::DynSpace', 'Atom'], [->]).
 op_decl('get-atoms', [ 'hyperon::space::DynSpace' ], 'Atom').
 
 op_decl('get-state', [[ 'StateMonad', Type]],Type).
-op_decl('change-state!', [[ 'StateMonad',Type],Type],'EmptyType').
+%op_decl('change-state!', [[ 'StateMonad',Type],Type],[->]).
 op_decl('new-state', [Type], ['StateMonad',Type ]).
 
 op_decl('car-atom', [ 'Expression' ], 'Atom').
@@ -972,8 +1029,8 @@ op_decl('-', [ 'Number', 'Number' ], 'Number').
 op_decl('+', [ 'Number', 'Number' ], 'Number').
 op_decl(combine, [ X, X], X).
 
-op_decl('bind!', ['Symbol','%Undefined%'], 'EmptyType').
-op_decl('import!', ['hyperon::space::DynSpace','Atom'], 'EmptyType').
+op_decl('bind!', ['Symbol','%Undefined%'], [->]).
+op_decl('import!', ['hyperon::space::DynSpace','Atom'], [->]).
 op_decl('get-type', ['Atom'], 'Type').
 
 type_decl('Any').
@@ -1002,6 +1059,7 @@ metta_atom_stdlib(['PredicateArity','PredicateArity',2]).
 metta_atom_stdlib(['PredicateArity',':',2]).
 metta_atom_stdlib([=,[':',R,'P1'],['PredicateArity',R,1]]).
 metta_atom_stdlib(X):- metta_atom_stdlib_types(X).
+metta_atom_stdlib(X):- metta_atom_corelib(X).
 
 metta_atom_stdlib_types([':', Type, 'Type']):- type_decl(Type).
 metta_atom_stdlib_types([':', Op, [->|List]]):- % symbol(Op),
@@ -1020,6 +1078,8 @@ metta_atom_stdlib_types([':','If',[->,'Bool','Atom','Atom']]).
 %get_metta_atom(Eq,KB, [F|List]):- KB='&flybase',fb_pred(F, Len), length(List,Len),apply(F,List).
 
 
+get_metta_atom_from(KB,Atom):- metta_atom(KB,Atom).
+
 get_metta_atom(Eq,Space, Atom):- metta_atom(Space, Atom), \+ (Atom =[EQ,_,_], EQ==Eq).
 
 metta_atom(Atom):- current_self(KB),metta_atom(KB,Atom).
@@ -1029,6 +1089,13 @@ metta_atom(KB, [F, A| List]):- KB=='&flybase',fb_pred_nr(F, Len),current_predica
 metta_atom(KB,Atom):- KB=='&corelib', metta_atom_stdlib(Atom).
 metta_atom(KB,Atom):- metta_atom_in_file( KB,Atom).
 metta_atom(KB,Atom):- metta_atom_asserted( KB,Atom).
+
+metta_atom_asserted('&self','&corelib').
+metta_atom_asserted('&self','&stdlib').
+metta_atom_asserted('&stdlib','&corelib').
+metta_atom_asserted('&flybase','&corelib').
+:- ensure_loaded(metta_corelib).
+
 
 %metta_atom_asserted_fallback( KB,Atom):- metta_atom_stdlib(KB,Atom)
 
@@ -1338,9 +1405,10 @@ do_metta(From,exec,Self,TermV,Out):- !, do_metta_exec(From,Self,TermV,Out).
 
 do_metta_exec(From,Self,TermV,FOut):-
   Output = X,
-  not_compatio(write_exec(TermV)),
+ ignore(catch(((not_compatio(write_exec(TermV)),
    notrace(into_metta_callable(Self,TermV,Term,X,NamedVarsList,Was)),!,
-   user:interactively_do_metta_exec(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut),!.
+   user:interactively_do_metta_exec(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut))),
+   give_up(Why),pp_m(red,gave_up(Why)))),!.
 
 
 call_for_term_variables(TermV,catch_red(show_failure(Term)),NamedVarsList,X):-
@@ -1434,7 +1502,7 @@ call_max_time(Goal, MaxTime, Else) :-
     catch(if_or_else(call_with_time_limit(MaxTime, Goal),Else), time_limit_exceeded, Else).
 
 
-catch_err(G,E,C):- catch(G,E,(notrace(if_t(symbol(E),throw(E))),C)).
+catch_err(G,E,C):- catch(G,E,(notrace(if_t(always_rethrow(E),throw(E))),C)).
 
 load_and_trim_history:-
  notrace((
@@ -1461,7 +1529,8 @@ repl2:-
      garbage_collect,
      %set_prolog_flag(gc,false),
      %with_option(not_a_reload,true,make),
-      ignore(catch(once(repl3),restart_reading,true)),
+      ignore(catch((ignore(catch(once(repl3),restart_reading,true))),
+          give_up(Why),pp_m(red,gave_up(Why)))),
       %set_prolog_flag(gc,true),
       fail.
 repl3:-
@@ -1711,7 +1780,8 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,Output,F
        (Complete\==true, \+ WasInteractive, Control = contrl(Max,leap)) -> true ;
         (((Complete==true ->! ; true)))))
                     *-> (ignore(Result = res(FOut)),ignore(Output = (FOut)))
-                    ; (flag(result_num,ResNum,ResNum),(ResNum==0->(not_compatio(format('~N<no-results>~n~n')),!,true);true))),
+                    ; (flag(result_num,ResNum,ResNum),(ResNum==0->
+      (only_compatio(write('[')),not_compatio(format('~N<no-results>~n~n')),!,true);true))),
                     only_compatio(write(']')),user_io(nl),
    ignore(Result = res(FOut)).
 

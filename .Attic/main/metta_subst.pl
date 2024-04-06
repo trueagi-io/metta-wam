@@ -1,56 +1,3 @@
-/*
- * Project: MeTTaLog - A MeTTa to Prolog Transpiler/Interpreter
- * Description: This file is part of the source code for a transpiler designed to convert
- *              MeTTa language programs into Prolog, utilizing the SWI-Prolog compiler for
- *              optimizing and transforming function/logic programs. It handles different
- *              logical constructs and performs conversions between functions and predicates.
- *
- * Author: Douglas R. Miles
- * Contact: logicmoo@gmail.com / dmiles@logicmoo.org
- * License: LGPL
- * Repository: https://github.com/trueagi-io/metta-wam
- *             https://github.com/logicmoo/hyperon-wam
- * Created Date: 8/23/2023
- * Last Modified: $LastChangedDate$  # You will replace this with Git automation
- *
- * Usage: This file is a part of the transpiler that transforms MeTTa programs into Prolog. For details
- *        on how to contribute or use this project, please refer to the repository README or the project documentation.
- *
- * Contribution: Contributions are welcome! For contributing guidelines, please check the CONTRIBUTING.md
- *               file in the repository.
- *
- * Notes:
- * - Ensure you have SWI-Prolog installed and properly configured to use this transpiler.
- * - This project is under active development, and we welcome feedback and contributions.
- *
- * Acknowledgments: Special thanks to all contributors and the open source community for their support and contributions.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the
- *    distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
-
 %self_subst(X):- var(X),!.
 %self_subst(X):- string(X),!.
 %self_subst(X):- number(X),!.
@@ -106,7 +53,7 @@ subst_args(Eq,RetType,Depth,Self,X,Y):-
    mnotrace(( \+ (Y\=YY))).
 */
 
-subst_args(X,Y):- subst_args('&self',X,Y). %'
+subst_args(X,Y):- subst_args('&self',X,Y). %' 
 subst_args(Space,X,Y):- subst_args(100,Space,X,Y).
 
 subst_args(Depth,Space,X,Y):-subst_args('=',_RetType,
@@ -119,7 +66,7 @@ subst_args(Depth,Space,X,Y):-subst_args('=',_RetType,
 subst_args0(Eq,RetType,_Dpth,_Slf,X,Y):- self_subst(X),!,Y=X.
 subst_args0(Eq,RetType,Depth,Self,X,Y):-
   Depth2 is Depth-1,
-  trace_eval(subst_args1(Eq,RetType),((e2;e)),Depth,Self,X,M),
+  subst_args11(Eq,RetType,Depth,Self,X,M),
   (M\=@=X ->subst_args0(Eq,RetType,Depth2,Self,M,Y);Y=X).
 
 subst_args11(Eq,RetType,Depth,Self,X,Y):- \+ is_debugging((subst_args)),!,
@@ -182,13 +129,13 @@ subst_args1(Eq,RetType,Depth,Self,['let*',[[Var,Val]|LetRest],Body],RetVal):- !,
     is_sl_op('>').  is_sl_op('<'). %  is_sl_op('>').
     is_sl_op('\\=@=').
 
-subst_args1(Eq,RetType,Depth,Self,[OP,N1,N2],TF):- fail,  is_sl_op(OP), !,
+subst_args1(Eq,RetType,Depth,Self,[OP,N1,N2],TF):-  is_sl_op(OP), !,
   ((subst_args(Eq,RetType,Depth,Self,N1,N1Res),subst_args(Eq,RetType,Depth,Self,N2,N2Res),
      ((N1,N2)\=@=(N1Res,N2Res)),subst_args1(Eq,RetType,Depth,Self,[OP,N1Res,N2Res],TF))
      *->true;
       subst_selfless([OP,N1,N2],TF)).
 
-%subst_args1(Eq,RetType,Depth,Self,O,O):-!.
+
 
 subst_args1(Eq,RetType,_Dpth,_Slf,['repl!'],'True'):- !, repl.
 subst_args1(Eq,RetType,Depth,Self,['!',Cond],Res):- !, call(subst_args(Eq,RetType,Depth,Self,Cond,Res)).
@@ -338,10 +285,10 @@ subst_args1_hide(Depth,Self,X,Res):-
       ((member(Match-Value,Cases),AA=@=Match)->true;
         (member(Match-Value,Cases),AA = Match)))).
 
-        %into_case_l1t_list([[C|ASES0]],CASES):-  is_list(C),!, into_case_l1t_list([C|ASES0],CASES),!.
-    into_case_l1t_list(CASES,CASES):- is_list(CASES),!.
-        is_case_l1t(AA,[AA,Value],Value):-!.
-        is_case_l1t(AA,[AA|Value],Value).
+		%into_case_l1t_list([[C|ASES0]],CASES):-  is_list(C),!, into_case_l1t_list([C|ASES0],CASES),!.
+	into_case_l1t_list(CASES,CASES):- is_list(CASES),!.
+		is_case_l1t(AA,[AA,Value],Value):-!.
+		is_case_l1t(AA,[AA|Value],Value).
 
    maybe_special_key_l1ts(Depth,Self,[K-V|KVI],[AK-V|KVO]):-
      subst_args(Eq,RetType,Depth,Self,K,AK), K\=@=AK,!,
@@ -761,9 +708,8 @@ last_element(T,E):- compound_name_arguments(T,_,List),last_element(List,E),!.
 %as_tf(G,TF):- catch_nowarn((call(G)*->TF='True';TF='False')).
 */
 subst_selfless(['==',X,Y],TF):- as_tf(X=:=Y,TF),!.
-subst_selfless(['==',X,Y],TF):- as_tf(X=Y,TF),!.
-subst_selfless(X,Y):- !,eval_selfless(_,_,_,_,X,Y).
-/*subst_selfless(['=',X,Y],TF):-!,as_tf(X=Y,TF).
+subst_selfless(['==',X,Y],TF):- as_tf(X=@=Y,TF),!.
+subst_selfless(['=',X,Y],TF):-!,as_tf(X=Y,TF).
 subst_selfless(['>',X,Y],TF):-!,as_tf(X>Y,TF).
 subst_selfless(['<',X,Y],TF):-!,as_tf(X<Y,TF).
 subst_selfless(['=>',X,Y],TF):-!,as_tf(X>=Y,TF).
@@ -773,7 +719,7 @@ subst_selfless(['%',X,Y],TF):-!,subst_selfless(['mod',X,Y],TF).
 subst_selfless(LIS,Y):-  mnotrace((
    LIS=[F,_,_], atom(F), catch_warn(current_op(_,yfx,F)),
    catch_err((LIS\=[_], s2p(LIS,IS), Y is IS),_,fail))),!.
-*/
+
 % less Macro-ey Functions
 
 
@@ -939,13 +885,10 @@ subst_args40(Eq,Depth,Self,[F|X],FY):- is_function(F), \+ is_special_op(F), is_l
   maplist(subst_args(Eq,RetType,Depth,Self),X,Y),!,subst_args5(Depth,Self,[F|Y],FY).
 subst_args40(Eq,Depth,Self,FX,FY):- subst_args5(Depth,Self,FX,FY).
 
-%subst_args5(_Dpth,_Slf,[F|LESS],Res):- once(subst_selfless([F|LESS],Res)),mnotrace(([F|LESS]\==Res)),!.
-subst_args5(Depth,Self,[AE|More],TF):- eval_selfless(_,_,Depth,Self,[AE|More],TF).
+subst_args5(_Dpth,_Slf,[F|LESS],Res):- once(subst_selfless([F|LESS],Res)),mnotrace(([F|LESS]\==Res)),!.
 subst_args5(Depth,Self,[AE|More],TF):- is_system_pred(AE), length(More,Len),
-  (is_syspred(AE,Len,Pred),catch_warn(as_tf(apply(Pred,More),TF)))*->true;
- subst_args6(Depth,Self,[AE|More],TF).
-subst_args6(_Dpth,_Slf,[AE|More],TF):- is_system_pred(AE),length([AE|More],Len),
- is_syspred(AE,Len,Pred),append(More,[TF],Args),!,catch_warn(apply(Pred,Args)).
+  (is_syspred(AE,Len,Pred),catch_warn(as_tf(apply(Pred,More),TF)))*->true;subst_args6(Depth,Self,[AE|More],TF).
+subst_args6(_Dpth,_Slf,[AE|More],TF):- is_system_pred(AE),length([AE|More],Len), is_syspred(AE,Len,Pred),append(More,[TF],Args),!,catch_warn(apply(Pred,Args)).
 
 %subst_args40(Eq,Depth,Self,[X1|[F2|X2]],[Y1|Y2]):- is_function(F2),!,subst_args(Eq,RetType,Depth,Self,[F2|X2],Y2),subst_args(Eq,RetType,Depth,Self,X1,Y1).
 
