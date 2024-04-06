@@ -46,7 +46,7 @@ pp_metta(P):- pretty_numbervars(P,PP),with_option(concepts=false,pp_fb(PP)).
 
 string_height(Pt1,H1):- split_string(Pt1,"\r\n", "\s\t\n\n", L),length(L,H1).
 
-:- dynamic(just_printed/1). 
+:- dynamic(just_printed/1).
 % 'print_pl_source' rule is responsible for printing the source of a Prolog term.
 
 
@@ -60,10 +60,10 @@ run_pl_source(G):- ignore(rtrace(G)), trace.
 print_pl_source0(_):- notrace(is_compatio),!.
 print_pl_source0(_):- notrace(silent_loading),!.
 print_pl_source0(P):- notrace((just_printed(PP), PP=@=P)),!.
-print_pl_source0(P):- 
+print_pl_source0(P):-
     Actions = [print_tree, portray_clause, pp_fb1_e], % List of actions to apply
-    findall(H-Pt, 
-      (member(Action, Actions), 
+    findall(H-Pt,
+      (member(Action, Actions),
        must_det_ll((
          run_pl_source(with_output_to(string(Pt), call(Action, P))),
         string_height(Pt, H)))), HeightsAndOutputs),
@@ -74,7 +74,7 @@ print_pl_source0(P):-
 
 
 pp_fb1_a(P):- format("~N "),  \+ \+ (numbervars_w_singles(P), pp_fb1_e(P)), format("~N "),flush_output.
-  
+
 pp_fb1_e(P):- pp_fb2(print_tree,P).
 pp_fb1_e(P):- pp_fb2(pp_ilp,P).
 pp_fb1_e(P):- pp_fb2(pp_as,P).
@@ -105,8 +105,8 @@ write_val(V):- write('"'),write(V),write('"').
 
 
 % Handling the final write when the value is a variable or a '$VAR' structure.
-is_final_write(V):- var(V), !, write_dvar(V),!. 
-is_final_write('$VAR'(S)):-  !, write_dvar(S),!. 
+is_final_write(V):- var(V), !, write_dvar(V),!.
+is_final_write('$VAR'(S)):-  !, write_dvar(S),!.
 is_final_write([VAR,V|T]):- '$VAR'==VAR, T==[], !, write_dvar(V).
 is_final_write('[|]'):- write('Cons'),!.
 is_final_write([]):- !, write('()').
@@ -126,7 +126,7 @@ write_dname(S):- write('$'),write(S).
 pp_as(V) :- \+ \+ pp_sex(V),flush_output.
 pp_sex_nc(V):- with_no_quoting_symbols(true,pp_sex(V)),!.
 
-unlooped_fbug(Mesg):- 
+unlooped_fbug(Mesg):-
  fbug_message_hook(fbug_message_hook,fbug(Mesg)).
 
 into_hyphens(D,U):- atom(D),!,always_dash_functor(D,U).
@@ -135,7 +135,7 @@ into_hyphens(D,U):- descend_and_transform(into_hyphens,D,U),!.
 
 unlooped_fbug(W,Mesg):- nb_current(W,true),!,
   print(Mesg),nl,bt,break.
-unlooped_fbug(W,Mesg):- 
+unlooped_fbug(W,Mesg):-
   setup_call_cleanup(nb_setval(W,true),
     once(Mesg),nb_setval(W,false)),nb_setval(W,false).
 
@@ -178,7 +178,7 @@ pp_sexi(V) :- no_src_indents,!,pp_sex_c(V).
 pp_sexi(V) :- w_proper_indent(2,w_in_p(pp_sex_c(V))).
 
 write_mobj(H,_):- \+ symbol(H),!,fail.
-write_mobj('$VAR',[S]):- write_dvar(S). 
+write_mobj('$VAR',[S]):- write_dvar(S).
 write_mobj(exec,[V]):- !, write('!'),write_src(V).
 write_mobj('$OBJ',[_,S]):- write('['),write_src(S),write(' ]').
 write_mobj('{}',[S]):- write('{'),write_src(S),write(' }').
@@ -197,13 +197,13 @@ pp_sexi_l([F|V]):- integer(F), is_codelist([F|V]),!,format("|~s|",[[F|V]]).
 pp_sexi_l([F|V]):- symbol(F), is_list(V),write_mobj(F,V),!.
 pp_sexi_l([H|T]):-T ==[],!,write('('), pp_sex_nc(H),write(')').
 pp_sexi_l([H,H2]):- write('('), pp_sex_nc(H), write(' '), with_indents(false,print_list_as_sexpression([H2])), write(')'),!.
-pp_sexi_l([H|T]):- write('('), 
+pp_sexi_l([H|T]):- write('('),
   pp_sex_nc(H), write(' '), print_list_as_sexpression(T), write(')'),!.
 
 pp_sexi_l([H,S]):-H=='[...]', write('['),print_items_list(S),write(' ]').
 pp_sexi_l([H,S]):-H=='{...}', write('{'),print_items_list(S),write(' }').
-%pp_sex_l(X):- \+ compound(X),!,write_src(X).  
-%pp_sex_l('$VAR'(S))):- 
+%pp_sex_l(X):- \+ compound(X),!,write_src(X).
+%pp_sex_l('$VAR'(S))):-
 pp_sexi_l([=,H,B]):- pp_sexi_hb(H,B),!.
 
 pp_sexi_l([H|T]) :- \+ no_src_indents, symbol(H),member(H,['If','cond','let','let*']),!,
@@ -220,14 +220,14 @@ pp_sexi_l([H|T]) :- is_list(T),symbol(H),upcase_atom(H,U),downcase_atom(H,U),!,
 
 %pp_sex([H,B,C|T]) :- T==[],!,
 %  with_indents(false,(write('('), pp_sex(H), print_list_as_sexpression([B,C]), write(')'))).
-*/    
+*/
 
 pp_sexi_hb(H,B):-
   write('(= '), with_indents(false,pp_sex(H)), write('  '),
         ((is_list(B),maplist(is_list,B))
-	  ->with_indents(true,maplist(write_src_inl,B))
-	  ;with_indents(true,pp_sex(B))),
-	write(')').
+      ->with_indents(true,maplist(write_src_inl,B))
+      ;with_indents(true,pp_sex(B))),
+    write(')').
 
 write_src_inl(B):- nl, write('    '),pp_sex(B).
 
@@ -256,7 +256,7 @@ pp_sexi_c('='(N,V)):- allow_concepts, !, format("~N;; ~w == ~n",[N]),!,pp_sex(V)
 pp_sexi_c(Term) :- compound_name_arity(Term,F,0),!,pp_sex_c([F]).
 pp_sexi_c(Term) :- Term =.. [Functor|Args], always_dash_functor(Functor,DFunctor), format('(~w ',[DFunctor]), write_args_as_sexpression(Args), write(')'),!.
 pp_sexi_c(Term) :- allow_concepts, Term =.. [Functor|Args], format('(EvaluationLink (PredicateNode "~w") (ListLink ',[Functor]), write_args_as_sexpression(Args), write('))'),!.
-pp_sexi_c(Term) :- 
+pp_sexi_c(Term) :-
   Term =.. [Functor|Args],
    always_dash_functor(Functor,DFunctor), format('(~w ',[DFunctor]),
      write_args_as_sexpression(Args), write(')'),!.
@@ -285,13 +285,13 @@ dash_functor(A,C):- \+ symbol(A),!,C=A.
 % dash_functor(A,C):- p2m(A,B),A\==B,!,always_dash_functor(B,C).
 dash_functor(ASymbolProc,O):- fail, symbol_contains(ASymbolProc,'_'),
     symbol_contains(ASymbolProc,'atom'),
-    current_predicate(system:ASymbolProc/_),    
-	symbolic_list_concat(LS,'atom',ASymbolProc),
-	symbolic_list_concat(LS,'symbol',SymbolProc),
-	always_dash_functor(SymbolProc,O),!.
+    current_predicate(system:ASymbolProc/_),
+    symbolic_list_concat(LS,'atom',ASymbolProc),
+    symbolic_list_concat(LS,'symbol',SymbolProc),
+    always_dash_functor(SymbolProc,O),!.
 dash_functor(ASymbolProc,O):- symbol_concat('$',LS,ASymbolProc),!,
-	symbol_concat('%',LS,SymbolProc),
-	always_dash_functor(SymbolProc,O).
+    symbol_concat('%',LS,SymbolProc),
+    always_dash_functor(SymbolProc,O).
 
 dash_functor(Functor,DFunctor):- fail,
    symbolic_list_concat(L,'_',Functor), L\=[_],

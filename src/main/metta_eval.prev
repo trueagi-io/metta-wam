@@ -233,7 +233,7 @@ eval_15(Eq,RetType,Depth,Self,X,Y):-
 :- discontiguous eval_40/6.
 %:- discontiguous eval_30fz/5.
 %:- discontiguous eval_31/5.
-%:- discontiguous eval_60/5.
+%:- discontiguous eval_defn/5.
 
 eval_20(Eq,RetType,_Dpth,_Slf,Name,Y):-
     atom(Name), !,
@@ -1214,7 +1214,7 @@ eval_40(Eq,RetType,_Dpth,_Slf,['make_list',List],MettaList):- !, into_metta_cons
 % user defined function
 eval_40(Eq,RetType,Depth,Self,[H|PredDecl],Res):-
    mnotrace(is_user_defined_head(Self,H)),!,
-   eval_60(Eq,RetType,Depth,Self,[H|PredDecl],Res).
+   eval_defn(Eq,RetType,Depth,Self,[H|PredDecl],Res).
 
 eval_40(Eq,RetType,_Dpth,_Slf,['==',X,Y],Res):-  !,
     suggest_type(RetType,'Bool'),
@@ -1421,7 +1421,7 @@ is_metta_builtin('pragma!').
 
 call_ndet(Goal,DET):- call(Goal),deterministic(DET).
 
-eval_60(Eq,RetType,Depth,Self,H,B):-
+eval_defn(Eq,RetType,Depth,Self,H,B):-
    (eval_64(Eq,RetType,Depth,Self,H,B)*->true;
      (fail,eval_67(Eq,RetType,Depth,Self,H,B))).
 
@@ -1463,7 +1463,7 @@ eval_67(Eq,RetType,Depth,Self,[H1|Args],Res):-
    mnotrace((append(Left,[[H2|H2Args]|Rest],Args), H2==H1)),!,
    eval(Eq,RetType,Depth,Self,[H2|H2Args],ArgRes),
    mnotrace((ArgRes\==[H2|H2Args], append(Left,[ArgRes|Rest],NewArgs))),
-   eval_60(Eq,RetType,Depth,Self,[H1|NewArgs],Res).
+   eval_defn(Eq,RetType,Depth,Self,[H1|NewArgs],Res).
 
 eval_67(Eq,RetType,Depth,Self,[[H|Start]|T1],Y):-
    mnotrace((is_user_defined_head_f(Self,H),is_list(Start))),
@@ -1477,7 +1477,7 @@ eval_67(Eq,RetType,Depth,Self,[F|PredDecl],Res):- fail,
    mnotrace((ground(SSub),SSub=[_|Sub], is_list(Sub),maplist(atomic,SSub))),
    eval(Eq,RetType,Depth,Self,SSub,Repl),
    mnotrace((SSub\=Repl,subst(PredDecl,SSub,Repl,Temp))),
-   eval_60(Eq,RetType,Depth,Self,[F|Temp],Res).
+   eval_defn(Eq,RetType,Depth,Self,[F|Temp],Res).
 
 %eval_67(Eq,RetType,Depth,Self,X,Y):- (eval_68(Eq,RetType,Depth,Self,X,Y)*->true;metta_atom_iter(Depth,Self,[=,X,Y])).
 /*
@@ -1506,11 +1506,11 @@ eval_67_fail(Depth,Self,PredDecl,Res):- fail,
 /*
 eval_80(Eq,RetType,Depth,Self,[F|X],FY):- is_function(F),  \+ is_special_op(F), is_list(X),
   maplist(eval(Eq,ArgTypes,Depth,Self),X,Y),!,
-  eval_85(Depth,Self,[F|Y],FY).
+  eval_maybe_subst(Depth,Self,[F|Y],FY).
 
-eval_80(Eq,RetType,Depth,Self,FX,FY):- eval_85(Depth,Self,FX,FY).
+eval_80(Eq,RetType,Depth,Self,FX,FY):- eval_maybe_subst(Depth,Self,FX,FY).
 
-eval_85(Depth,Self,[AE|More],TF):- length(More,Len),
+eval_maybe_subst(Depth,Self,[AE|More],TF):- length(More,Len),
   (is_syspred(AE,Len,Pred),catch_warn(as_tf(apply(Pred,More),TF)))*->true;eval_86(Depth,Self,[AE|More],TF).
 eval_86(_Dpth,_Slf,[AE|More],TF):- length([AE|More],Len), is_syspred(AE,Len,Pred),append(More,[TF],Args),!,catch_warn(apply(Pred,Args)).
 */

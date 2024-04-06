@@ -552,14 +552,14 @@ sexpr0((Expr))                 -->  `.{`, read_string_until(S,`}.`), swhite,
   {prolog_readable_term(Expr,S,_)}.
 
 
-sexpr0(['#'(quote),E])             --> `'`, !, sexpr(E). % '
+sexpr0(['#'(quote),E])             --> {\+ is_metta}, `'`, !, sexpr(E). % '
 sexpr0(['#'(hbackquote),E])         --> {is_scm}, `#```, !, sexpr(E).
-sexpr0(['#'(backquote),E])         --> ````, !, sexpr(E).
-sexpr0(['#BQ-COMMA-ELIPSE',E])     --> `,@`, !, sexpr(E).
+sexpr0(['#'(backquote),E])         --> {\+ is_metta}, ````, !, sexpr(E).
+sexpr0(['#BQ-COMMA-ELIPSE',E])     --> {\+ is_metta}, `,@`, !, sexpr(E).
 sexpr0(['#COMMA',E])               --> { is_common_lisp }, `,`, !, sexpr(E).
 sexpr0(['#HCOMMA',E])               --> {is_scm}, `#,`, !, sexpr(E).
 
-
+sexpr0('#\\'(A))--> { is_metta}, `'`,[C],`'`,{C>=32},!, {atom_codes(A,[C])}.
 
 % sexpr_metta('$STRING'(S))             --> s_string(S),!.
 

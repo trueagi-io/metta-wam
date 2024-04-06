@@ -282,7 +282,8 @@ get_dict_type(Val,_,TypeO):- get_dict(Val,types,TypeL),
 
 %get_type_cmpd(_Dpth,Self,Op,Type):- copy_term(Op,Copy),
 %  metta_type(Self,Op,Type), Op=@=Copy.
-
+get_type_cmpd(Depth,Self,NC,Type,nc):- \+ compound(NC),!, get_type(Depth,Self,NC,Type).
+get_type_cmpd(_Dpth,_Slf,Val,Type,char):- Val='#\\'(_),Type='Char'.
 get_type_cmpd(_Dpth,_Slf,Val,Type,dict):- is_dict(Val,Type),
   get_dict_type(Val,Type,TypeO).
 
@@ -302,41 +303,48 @@ get_type_cmpd(Depth,Self,[Op|Args],Type,ac(Op,[P|Arams],RetType)):- symbol(Op),
   len_or_unbound(Args,Len),
   get_operator_typedef1(Self,Op,Len,[P|Arams],RetType),
   % Fills in type variables when possible
-  args_conform(Depth,Self,Args,[P|Arams]),
+  ignored_args_conform(Depth,Self,Args,[P|Arams]),
   % \+ maplist(var,Arams),
   % unitests:  arg violations should return ()
   (\+ args_violation(Depth,Self,Args,[P|Arams])),
   Type=RetType.
 
-
 get_type_cmpd(_Dpth,_Slf,Cmpd,Type,typed_list):-
   typed_list(Cmpd,Type,_List).
 
-get_type_cmpd(_Dpth,_Slf,_Cmpd,[],unknown).
-
-/*
-get_type_cmpd(Depth,Self,[Op|Expr],Type,not_bat):-
-  symbol(Op),
-  maplist(get_type(Depth,Self),Expr,Types),
-  [Op|Types]\=@=[Op|Expr],
-  \+ badly_typed_expression(Depth,Self,[Op|Expr]),
-  metta_type(Self,[Op|Types],Type).
-
-get_type_cmpd(Depth,Self,List,Types,maplist(get_type)):-
-  List\==[],
-  \+ badly_typed_expression(Depth,Self,List),
-  is_list(List),
-  Depth2 is Depth-1,
-  maplist(get_type(Depth2,Self),List,Types),
-  \+ badly_typed_expression(Depth,Self,Types).
-
-*/
+    /*
+    get_type_cmpd(Depth,Self,[Op|Expr],Type,not_bat):-
+      symbol(Op),
+      maplist(get_type(Depth,Self),Expr,Types),
+      [Op|Types]\=@=[Op|Expr],
+      \+ badly_typed_expression(Depth,Self,[Op|Expr]),
+      metta_type(Self,[Op|Types],Type).
+    */
 get_type_cmpd(Depth,Self,EvalMe,Type,eval_first):-
     needs_eval(EvalMe),
     Depth2 is Depth-1,
     eval_args(Depth2,Self,EvalMe,Val),
     \+ needs_eval(Val),
     get_type(Depth2,Self,Val,Type).
+
+get_type_cmpd(Depth,Self,List,Types,maplist(get_type)):- fail,
+  List\==[],
+  is_list(List),
+  Depth2 is Depth-1,
+  maplist(get_type_no_fn_or_self(Depth2,Self),List,Types),
+  List \=@= Types.
+
+get_type_cmpd(_Dpth,_Slf,_Cmpd,[],unknown).
+
+non_param_spec(Type):- var(Type), attvar(Type), !.
+non_param_spec(Type):- var(Type), !, freeze(Type,non_param_spec(Type)).
+non_param_spec([H|_]):- !, H \== '->'.
+non_param_spec(_).
+
+get_type_no_fn_or_self(Depth2,Self,Val,Type):-
+  non_param_spec(Type),get_type(Depth2,Self,Val,Type),!.
+get_type_no_fn_or_self(_Dpth,_Slf,Val,Val).
+
 
 
 state_decltype(Expr,Type):- functor(Expr,_,A),
