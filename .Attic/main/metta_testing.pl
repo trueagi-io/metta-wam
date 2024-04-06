@@ -60,7 +60,7 @@ make_test_name(FilePath0, Number, TestName) :-
 
 %color_g_mesg(_,_):- is_compatio,!.
 %color_g_mesg(_,_):- silent_loading,!.
-color_g_mesg(C,G):- 
+color_g_mesg(C,G):-
   notrace((nop(check_silent_loading),
     color_g_mesg_ok(C,G))).
 color_g_mesg_ok(_,G):- is_compatio,!,call(G).
@@ -157,7 +157,7 @@ loonit_asserts1(TestSrc,Pre,G) :-
 :- dynamic(gave_loonit_report/0).
 loonit_report:- gave_loonit_report,!.
 loonit_report :-
-%    assert(gave_loonit_report),
+    assert(gave_loonit_report),
     flag(loonit_success, Successes, Successes),
     flag(loonit_failure, Failures, Failures),
     loonit_report(Successes,Failures).
