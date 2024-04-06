@@ -1,3 +1,58 @@
+/*
+ * Project: MeTTaLog - A MeTTa to Prolog Transpiler/Interpreter
+ * Description: This file is part of the source code for a transpiler designed to convert
+ *              MeTTa language programs into Prolog, utilizing the SWI-Prolog compiler for
+ *              optimizing and transforming function/logic programs. It handles different
+ *              logical constructs and performs conversions between functions and predicates.
+ *
+ * Author: Douglas R. Miles
+ * Contact: logicmoo@gmail.com / dmiles@logicmoo.org
+ * License: LGPL
+ * Repository: https://github.com/trueagi-io/metta-wam
+ *             https://github.com/logicmoo/hyperon-wam
+ * Created Date: 8/23/2023
+ * Last Modified: $LastChangedDate$  # You will replace this with Git automation
+ *
+ * Usage: This file is a part of the transpiler that transforms MeTTa programs into Prolog. For details
+ *        on how to contribute or use this project, please refer to the repository README or the project documentation.
+ *
+ * Contribution: Contributions are welcome! For contributing guidelines, please check the CONTRIBUTING.md
+ *               file in the repository.
+ *
+ * Notes:
+ * - Ensure you have SWI-Prolog installed and properly configured to use this transpiler.
+ * - This project is under active development, and we welcome feedback and contributions.
+ *
+ * Acknowledgments: Special thanks to all contributors and the open source community for their support and contributions.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+
 :- encoding(iso_latin_1).
 :- flush_output.
 :- setenv('RUST_BACKTRACE',full).
@@ -72,8 +127,8 @@ skip(_).
        dout(space,['type-method',Type,Method,SpaceNameOrInstance,Atom])),
     call(Method,SpaceNameOrInstance,Atom))).
 % Add Atom
-'add-atom'(Environment, AtomDeclaration, Result):- 
-	  eval_args(['add-atom', Environment, AtomDeclaration], Result).
+'add-atom'(Environment, AtomDeclaration, Result):-
+      eval_args(['add-atom', Environment, AtomDeclaration], Result).
 
 % remove an atom from the space
 'remove-atom'(SpaceNameOrInstance, Atom) :-
@@ -143,15 +198,18 @@ space_query_vars(SpaceNameOrInstance, Query, Vars) :- is_as_nb_space(SpaceNameOr
     call_metta(Space,Query,Vars).
 */ :- dynamic(was_asserted_space/1).
 
-was_asserted_space('&flybase').
 was_asserted_space('&self').
+was_asserted_space('&stdlib').
+was_asserted_space('&corelib').
+was_asserted_space('&flybase').
+/*
 was_asserted_space('&attentional_focus').
 was_asserted_space('&belief_events').
 was_asserted_space('&goal_events').
 was_asserted_space('&tempset').
 was_asserted_space('&concepts').
 was_asserted_space('&belief_events').
-
+*/
 is_asserted_space(X):- was_asserted_space(X).
 is_asserted_space(X):-          \+ is_as_nb_space(X), \+ py_named_space(X),!.
 
@@ -176,13 +234,13 @@ is_nb_space(G):- nonvar(G), is_as_nb_space(G).
 % Pattern Matching with an else branch
 'match'(Environment, Pattern, Template, ElseBranch, Result):- eval_args(['match', Environment, Pattern, Template, ElseBranch], Result).
 % Pattern Matching without an else branch
-'match'(Environment, Pattern, Template, Result):- 
+'match'(Environment, Pattern, Template, Result):-
   eval_args(['match', Environment, Pattern, Template], Result).
 %'match'(_Environment, Pattern, Template, Result):- callable(Pattern),!, call(Pattern),Result=Template.
 %'match'(_Environment, Pattern, Template, Result):- !, is_True(Pattern),Result=Template.
 
 
-'new-space'(Space):- gensym('hyperon::space::DynSpace@_',Name), 
+'new-space'(Space):- gensym('hyperon::space::DynSpace@_',Name),
    fetch_or_create_space(Name, Space).
 
 :- dynamic(is_python_space/1).
@@ -315,19 +373,19 @@ space_type_method(is_asserted_space,atom_iter,metta_assertdb_iter).
 %for_metta(_,T):- fb_pred(F,A),functor(T,F,A),call(T).
 metta_assertdb_ls(KB):-
      AMA = metta_atom_asserted,
-     decl_m_fb_pred(user,AMA,2),   
+     decl_m_fb_pred(user,AMA,2),
      MP =.. [AMA,KB,_],
   listing(MP).
 
-metta_assertdb_add(KB,AtomIn):- 
+metta_assertdb_add(KB,AtomIn):-
  must_det_ll((subst_vars(AtomIn,Atom),
      AMA = metta_atom_asserted,
-     decl_m_fb_pred(user,AMA,2),   
+     decl_m_fb_pred(user,AMA,2),
      MP =.. [AMA,KB,Atom],
   assert_new(MP))).
 metta_assertdb_rem(KB,Old):- metta_assertdb_del(KB,Old).
 metta_assertdb_del(KB,Atom):- subst_vars(Atom,Old),
-  decl_m_fb_pred(user,metta_atom_asserted,2), 
+  decl_m_fb_pred(user,metta_atom_asserted,2),
    MP = metta_atom(KB,Old),
   copy_term(MP,Copy), clause(MP,true,Ref), MP=@= Copy, !, erase(Ref). % ,metta_assertdb('DEL',Old).
 metta_assertdb_replace(KB,Old,New):- metta_assertdb_del(KB,Old), metta_assertdb_add(KB,New).
@@ -348,7 +406,7 @@ atom_count_provider(Self,Count):-
 atom_count_provider(KB,Count):-
  must_det_ll((
   AMA = metta_atom_asserted,
-  decl_m_fb_pred(user,AMA,2),   
+  decl_m_fb_pred(user,AMA,2),
   MP =.. [AMA,KB,_],
   predicate_property(MP,number_of_clauses(SL2)),
   predicate_property(MP,number_of_rules(SL3)),
@@ -363,7 +421,7 @@ metta_assertdb_count(KB,Count):-
 
 
 %metta_assertdb_count(KB,Count):- writeln(metta_assertdb_count_in(KB,Count)), findall(Atom,for_metta(KB,Atom),AtomsL),length(AtomsL,Count),writeln(metta_assertdb_count_out(KB,Count)).
-metta_assertdb_iter(KB,Atoms):- 
+metta_assertdb_iter(KB,Atoms):-
      MP =.. [metta_atom,KB,Atoms],
      call(MP).
 
@@ -388,12 +446,12 @@ space_query_vars(KB,Query,Vars):- is_asserted_space(KB),!,
     dout('RES',space_query_vars(KB,Query,Vars)).
 
 
-metta_assertdb_get_atoms(KB,AtomsL):- 
+metta_assertdb_get_atoms(KB,AtomsL):-
   decl_m_fb_pred(user,metta_atom_asserted,2),
   findall(Atom,metta_atom(KB,Atom),AtomsL).
 /*
 
-%metta_assertdb_iter_bind(KB,Query,Template,AtomsL):- 
+%metta_assertdb_iter_bind(KB,Query,Template,AtomsL):-
 decl_m_fb_pred(user,metta_atom_asserted,2), findall(Template,metta_atom(KB,Query),AtomsL).
 metta_assertdb_iter_bind(KB,Query,Vars):-
   ignore(term_variables(Query,Vars)),
@@ -431,7 +489,7 @@ merge_named(N,V,[N|VarNames],[V|Vars]):-
 call_metta( KB,Query,_Vars):- metta_atom(KB,Query).
 call_metta(_KB,Query,_Vars):- metta_to_pyswip([],Query,Call),!,
   %print(user:Call),nl,
-	user:call(Call).
+    user:call(Call).
 
 metta_to_pyswip(_PS,Query,Call):- var(Query),!,Call=Query.
 metta_to_pyswip(_PS,Query,Call):- \+ compound(Query),!,Call=Query,!.

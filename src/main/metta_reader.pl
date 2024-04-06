@@ -1,57 +1,3 @@
-/*
- * Project: MeTTaLog - A MeTTa to Prolog Transpiler/Interpreter
- * Description: This file is part of the source code for a transpiler designed to convert
- *              MeTTa language programs into Prolog, utilizing the SWI-Prolog compiler for
- *              optimizing and transforming function/logic programs. It handles different
- *              logical constructs and performs conversions between functions and predicates.
- *
- * Author: Douglas R. Miles
- * Contact: logicmoo@gmail.com / dmiles@logicmoo.org
- * License: LGPL
- * Repository: https://github.com/trueagi-io/metta-wam
- *             https://github.com/logicmoo/hyperon-wam
- * Created Date: 8/23/2023
- * Last Modified: $LastChangedDate$  # You will replace this with Git automation
- *
- * Usage: This file is a part of the transpiler that transforms MeTTa programs into Prolog. For details
- *        on how to contribute or use this project, please refer to the repository README or the project documentation.
- *
- * Contribution: Contributions are welcome! For contributing guidelines, please check the CONTRIBUTING.md
- *               file in the repository.
- *
- * Notes:
- * - Ensure you have SWI-Prolog installed and properly configured to use this transpiler.
- * - This project is under active development, and we welcome feedback and contributions.
- *
- * Acknowledgments: Special thanks to all contributors and the open source community for their support and contributions.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the
- *    distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
-
-
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
    Parsing
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
@@ -230,8 +176,8 @@ with_kif_not_ok(G):-
  ?,?).
 
 
-    :- dynamic user:file_search_path/2.
-    :- multifile user:file_search_path/2.
+	:- dynamic user:file_search_path/2.
+	:- multifile user:file_search_path/2.
 
 :- thread_local(t_l:s_reader_info/1).
 
@@ -346,7 +292,7 @@ with_kifvars(Goal):-
 parse_sexpr(S, Expr) :- quietly_sreader(parse_meta_term(
       file_sexpr_with_comments, S, Expr)),
      nb_setval('$parser_last_read',Expr).
-
+   
 
 %% parse_sexpr_ascii( +Codes, -Expr) is det.
 %
@@ -371,7 +317,7 @@ parse_sexpr_string(S,Expr):-
 %
 % Parse S-expression from a Stream
 %
-parse_sexpr_stream(S,Expr):-
+parse_sexpr_stream(S,Expr):- 
   quietly_sreader(parse_meta_stream(file_sexpr_with_comments,S,Expr)),!,
   nb_setval('$parser_last_read',Expr).
 
@@ -565,9 +511,9 @@ sexpr0(['#HCOMMA',E])               --> {is_scm}, `#,`, !, sexpr(E).
 
 
 
-sexpr_metta(O) --> dcg_peek(dcg_not( ( `(` ; `)` ; ` ` ;
+sexpr_metta(O) --> dcg_peek(dcg_not( ( `(` ; `)` ; ` ` ; 
    sblank_ch) )),
-  (read_string_until(Text, dcg_peek( ( `(` ; `)` ; ` ` ;
+  (read_string_until(Text, dcg_peek( ( `(` ; `)` ; ` ` ; 
    sblank_ch) ))),!,{atom_string(O,Text)}.
 
 
@@ -695,19 +641,19 @@ swhite --> [].
 
 
 sexpr_lazy_list_character_count(Location, Stream, Here, Here) :-
-    sexpr_lazy_list_character_count(Here, Location, Stream).
+	sexpr_lazy_list_character_count(Here, Location, Stream).
 
 sexpr_lazy_list_character_count(Here, CharNo, Stream) :-
-    '$skip_list'(Skipped, Here, Tail),
-    (   attvar(Tail)
-    ->  frozen(Tail,
-           pure_input:read_to_input_stream(Stream, _PrevPos, Pos, _List)),
-        stream_position_data(char_count, Pos, EndRecordCharNo),
-        CharNo is EndRecordCharNo - Skipped
-    ;   Tail == []
-    ->  CharNo = end_of_file-Skipped
-    ;   type_error(lazy_list, Here)
-    ).
+	'$skip_list'(Skipped, Here, Tail),
+	(   attvar(Tail)
+	->  frozen(Tail,
+		   pure_input:read_to_input_stream(Stream, _PrevPos, Pos, _List)),
+	    stream_position_data(char_count, Pos, EndRecordCharNo),
+	    CharNo is EndRecordCharNo - Skipped
+	;   Tail == []
+	->  CharNo = end_of_file-Skipped
+	;   type_error(lazy_list, Here)
+	).
 
 
 
@@ -744,7 +690,7 @@ sexpr_rest([]) --> `)`, !.
 % allow dotcons/improper lists.. but also allow dot in the middle of the list (non-CL)
 sexpr_rest(E) --> `.`, [C], {\+ sym_char(C)}, sexpr(E,C), `)` , ! .
 sexpr_rest(E) --> {kif_ok}, `@`, rsymbol(`?`,E), `)`.
-sexpr_rest([Car|Cdr]) --> sexpr(Car), !,
+sexpr_rest([Car|Cdr]) --> sexpr(Car), !, 
   %maybe_throw_reader_error(Car),
    sexpr_rest(Cdr),!.
 
@@ -755,7 +701,7 @@ maybe_throw_reader_error(Car,I,O):- Car=='',lazy_list_location(Info,I,O),!,
 maybe_throw_reader_error(Car,I,I):-  Car=='', !,
   ignore(sexpr_lazy_list_character_count(I,CharPos,Stream)),!,
   Info= ics(I,CharPos,Stream),
-  write_src(Info),
+  write_src(Info), 
   throw(ll_read_error(Info)).
 maybe_throw_reader_error(_,I,I).
 
@@ -883,7 +829,7 @@ sexpr(E,C,X,Z) :- swhite([C|X],Y), sexpr(E,Y,Z),!.
 
 sym_char(C):- bx(C =<  32),!,fail.
 %sym_char(44). % allow comma in middle of symbol
-sym_char(C):- memberchk(C,`"()```),!,fail.
+sym_char(C):- memberchk(C,`"()```),!,fail.  
 % maybe 44 ? comma maybe not # or ; ? ' `'`'````'"
 %sym_char(C):- nb_current('$maybe_string',t),memberchk(C,`,.:;!%`),!,fail.
 sym_char(_):- !.
