@@ -1,0 +1,8 @@
+(loaded sample_kb_v2.metta into GroundingSpace-top:rules adding (- (atom-count GroundingSpace-top:rules) (atom-count GroundingSpace-top:rules)) atoms before-after (atom-count GroundingSpace-top:rules) (atom-count GroundingSpace-top:rules))
+"Importing Done...running inference"
+[()]
+[()]
+[()]
+[]
+0.18user 0.01system 0:00.23elapsed 85%CPU (0avgtext+0avgdata 38356maxresident)k
+36216inputs+0outputs (245major+4603minor)pagefaults 0swaps

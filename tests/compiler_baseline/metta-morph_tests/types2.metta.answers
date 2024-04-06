@@ -1,0 +1,7 @@
+[Lion]
+[childlion]
+[Cat]
+[Cat]
+[(-> Lion Lion Lion)]
+0.04user 0.01system 0:00.05elapsed 96%CPU (0avgtext+0avgdata 33596maxresident)k
+0inputs+0outputs (0major+3627minor)pagefaults 0swaps

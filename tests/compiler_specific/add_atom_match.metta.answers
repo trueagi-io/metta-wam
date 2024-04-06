@@ -1,0 +1,6 @@
+[(Error (assertEqualToResult (sequential ((add-atom GroundingSpace-top (man mortal)) (match GroundingSpace-top ($M mortal) (mortal $M)))) ((mortal man))) 
+Expected: [(mortal man)]
+Got: [(), (mortal man)]
+Excessive result: ())]
+0.04user 0.01system 0:00.06elapsed 87%CPU (0avgtext+0avgdata 33704maxresident)k
+5408inputs+0outputs (31major+3637minor)pagefaults 0swaps

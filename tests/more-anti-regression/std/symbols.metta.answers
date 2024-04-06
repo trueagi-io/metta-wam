@@ -1,0 +1,16 @@
+(Sam the frog)
+(Sophia the robot)
+(Tom the cat)
+(Sam is really green)
+(Eats-flies Sam)
+(Green Sam)
+(Sam might be Frog)
+(Sam is definitely Frog)
+[(), (), ()]
+[()]
+[(), ()]
+[()]
+[()]
+[(gene "D"), (gene "A"), ()]
+0.09user 0.01system 0:00.11elapsed 99%CPU (0avgtext+0avgdata 34104maxresident)k
+0inputs+0outputs (0major+3692minor)pagefaults 0swaps

@@ -87,11 +87,11 @@ process_file() {
 
         ) || true
         stty sane
-	DEBUG ""
-        trap - SIGINT
+	DEBUG ""        
 
         set -e
 
+       trap - SIGINT
     else
         DEBUG "Comparing: $file.answers"
     fi
@@ -153,7 +153,7 @@ process_file() {
         IF_REALLY_DO touch "$file_html"
 
         TEST_CMD="./MeTTa '--output=$METTALOG_OUTPUT' --timeout=$METTALOG_MAX_TIME --html --repl=false ${extra_args[@]} ${passed_along_to_mettalog[@]} \"$file\" --halt=true"
-        do_DEBUG "${BOLD}$TEST_CMD${NC}"
+        # DEBUG "${BOLD}$TEST_CMD${NC}"
 
         IF_REALLY_DO "$TEST_CMD"
         TEST_EXIT_CODE=$?
@@ -426,7 +426,6 @@ function add_test_units_dir() {
 }
 
 
-
 generate_final_MeTTaLog() {
     # Change to the script directory
     cd "$METTALOG_DIR" || exit 1
@@ -559,7 +558,19 @@ sort_directories_by_depth() {
 }
 
 
+PYSWIP_VERSION="main"
 
+# Check if the file exists and Read the first line from the file
+VERSION_FILE="$METTALOG_DIR/src/version-config"
+if [ -f "$VERSION_FILE" ]; then    
+    read -r FIRST_LINE < "$VERSION_FILE"
+    FIRST_LINE="${FIRST_LINE%"${FIRST_LINE##*[![:space:]]}"}" 
+    if [ ! -z "$FIRST_LINE" ]; then
+	if [ -d "$METTALOG_DIR/src/$FIRST_LINE/" ]; then
+	    PYSWIP_VERSION="$FIRST_LINE"
+	fi
+    fi
+fi
 
 cd "$METTALOG_DIR"
 
@@ -578,6 +589,7 @@ while [ "$#" -gt 0 ]; do
         --dry-run) dry_run=1 ;;
         --test) dry_run=0 ; add_to_list "$1" passed_along_to_mettalog ;;	    
         --fresh) fresh=1 ;;
+        --v=*) PYSWIP_VERSION="${1#*=}" ; add_to_list "$1" passed_along_to_mettalog ;;
         --exclude=*) EXTRA_FIND_ARGS+=" ! -path ${1#*=}"; CANT_HAVE="${1#*=}" ;;
         --include=*) EXTRA_FIND_ARGS+=" -path ${1#*=}"; MUST_HAVE="${1#*=}" ;;
         -h|--help) DEBUG "Usage: $0 [options] [directory] [extra args]"; show_help=1; dry_run=1 ;;
@@ -630,6 +642,20 @@ else
     REPLY=$run_tests_auto_reply
 fi
 
+# Directory containing the .pl files
+if [ -f "$PYSWIP_VERSION/metta_interp.pl" ]; then
+  INTERP_SRC_DIR="$PYSWIP_VERSION"
+else 
+  INTERP_SRC_DIR="$METTALOG_DIR/src/$PYSWIP_VERSION"
+fi
+INTERP_SRC_DIR="$(realpath "${INTERP_SRC_DIR}")"
+
+DEBUG "INTERP_SRC_DIR=$INTERP_SRC_DIR"
+
+mkdir -p "${METTALOG_OUTPUT}/src/"
+cp -af "${INTERP_SRC_DIR}/"* "${METTALOG_OUTPUT}/src/"
+
+#{ return 0 2>/dev/null || exit 0; }
 
 # Run tests and generate MeTTaLog report
 if [[ $REPLY =~ ^[Yy]$ ]]; then
@@ -638,6 +664,8 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
 else
     DEBUG "Skipping test run."
 fi
+
+find $METTALOG_OUTPUT -type f  -name "*.metta.html" -exec sed -i 's/">/"\n>/g' {} \;
 
 IF_REALLY_DO generate_final_MeTTaLog
 cat $METTALOG_OUTPUT/TEST_LINKS.md

@@ -1,0 +1,6 @@
+[()]
+[(), (ift False (add-atom GroundingSpace-0x561062b3cae8 (Green Fritz)))]
+[Sam]
+[True]
+0.04user 0.01system 0:00.06elapsed 100%CPU (0avgtext+0avgdata 34116maxresident)k
+0inputs+0outputs (0major+3675minor)pagefaults 0swaps

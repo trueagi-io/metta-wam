@@ -7,7 +7,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (= (new-goal-status! $goal $status)
     (let $new-state (new-state $status)
-         (add-atom &self (= (status (Goal $goal)) $new-state))
+         (add-atom &self
+		   (= (status (Goal $goal)) $new-state))
     )
 )
 

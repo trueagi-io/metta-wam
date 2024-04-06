@@ -1,0 +1,6 @@
+[(Error (assertEqual (hyperpose (1 2)) (superpose (1 2))) 
+Expected: [1, 2]
+Got: [(hyperpose (1 2))]
+Missed result: 1)]
+0.04user 0.01system 0:00.05elapsed 100%CPU (0avgtext+0avgdata 33900maxresident)k
+0inputs+0outputs (0major+3635minor)pagefaults 0swaps

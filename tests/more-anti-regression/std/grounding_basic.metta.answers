@@ -1,0 +1,7 @@
+[1, 4, 16]
+[2, 3, 4]
+[25]
+[(:: 1 (:: 0 (:: 1 nil)))]
+[]
+0.54user 0.01system 0:00.55elapsed 99%CPU (0avgtext+0avgdata 34244maxresident)k
+0inputs+0outputs (0major+3775minor)pagefaults 0swaps
