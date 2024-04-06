@@ -7,8 +7,8 @@
 set -v -x -e
 cd ../hyperon-experimental
 
-
-python -m pip install -r python/requirements.txt
+python -m pip install -r python/hyperon/exts/das_gate/requirements.txt
+#python -m pip install -r python/requirements.txt
 
 # Prepare environment
 rustup update stable
