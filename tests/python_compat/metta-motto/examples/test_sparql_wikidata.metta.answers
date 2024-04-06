@@ -1,0 +1,7 @@
+[()]
+[]
+[["Patrick Modiano", "Boulogne-Billancourt", "2014-01-01T00:00:00Z"]]
+[["http://www.wikidata.org/entity/Q130992", "Mia Talerico"], ["http://www.wikidata.org/entity/Q235682", "Madison De La Garza"]]
+[["http://www.wikidata.org/entity/Q24666180", "Berlin dankt Frankreich", "Germany", "Berlin-Mitte", "1994", "Point(13.3262 52.5614)", "http://commons.wikimedia.org/wiki/Special:FilePath/Wedding%20Kurt-Schumacher-Damm%20Berlin%20dankt%20Frankreich.jpg"], ["http://www.wikidata.org/entity/Q24666180", "Berlin dankt Frankreich", "Germany", "Berlin-Mitte", "1994", "Point(13.3262 52.5614)", "http://commons.wikimedia.org/wiki/Special:FilePath/Wedding%20Kurt-Schumacher-Damm%20Berlin%20dankt%20Frankreich.jpg"], ["http://www.wikidata.org/entity/Q24650120", "Bildsäule", "Germany", "Hadern", "1983", "Point(11.4672 48.1123)", "http://commons.wikimedia.org/wiki/Special:FilePath/Max%20Bill%20o.T.%201978-83%20Klinikum%20Gro%C3%9Fhadern%20Muenchen-2.jpg"]]
+0.52user 0.09system 0:22.91elapsed 2%CPU (0avgtext+0avgdata 128576maxresident)k
+8inputs+8outputs (1major+28417minor)pagefaults 0swaps

@@ -1,0 +1,7 @@
+[()]
+["Hello! How can I assist you today?"]
+["How can I assist you today?"]
+["I don't know!"]
+[(func ("What is my surname?") (Messages (system "Always perform the function call") (user "What is my surname?")))]
+0.53user 0.06system 0:02.98elapsed 20%CPU (0avgtext+0avgdata 128820maxresident)k
+0inputs+8outputs (0major+28648minor)pagefaults 0swaps

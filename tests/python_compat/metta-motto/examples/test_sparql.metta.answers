@@ -1,0 +1,13 @@
+/usr/local/lib/python3.11/dist-packages/SPARQLWrapper/Wrapper.py:794: RuntimeWarning: Sending Accept header '*/*' because unexpected returned format 'json' in a 'DESCRIBE' SPARQL query form
+  warnings.warn(
+[()]
+[["", "1892-06-25", "1945-04-13", "http://dbpedia.org/resource/Paul_Hinkler"], ["", "1894-12-27", "1981-10-20", "http://dbpedia.org/resource/Annot_(artist)"], ["", "1887-02-27", "1976-05-13", "http://dbpedia.org/resource/Ludwig_Föppl"]]
+[["http://dbpedia.org/resource/Adama_Sawadogo", "http://dbpedia.org/resource/Burkina_Faso", "http://dbpedia.org/resource/FC_105_Libreville", "http://dbpedia.org/resource/Gabon", "40000"], ["http://dbpedia.org/resource/Adrián_Chávez", "http://dbpedia.org/resource/Mexico", "http://dbpedia.org/resource/Atlético_Español_F.C.", "http://dbpedia.org/resource/México", "114600"], ["http://dbpedia.org/resource/Andrés_Prieto_(footballer,_born_1993)", "http://dbpedia.org/resource/Spain", "http://dbpedia.org/resource/FC_Dinamo_Tbilisi", "http://dbpedia.org/resource/Georgia_(country)", "54549"]]
+[["Carmel Cryan", "1949-07-08"], ["Roland Manookian", "1980-03-21"], ["Rosalind Mabel C. Halstead", "1984-07-18"]]
+[["Carmel Cryan", "1949-07-08"], ["Roland Manookian", "1980-03-21"], ["Rosalind Mabel C. Halstead", "1984-07-18"]]
+[["Phil Scott (boxer)", "1900-01-03"], ["Harry Kernoff", "1900-01-09"], ["Violette Cordery", "1900-01-10"]]
+[["http://dbpedia.org/resource/Volkswagen_Group", "11"], ["http://dbpedia.org/resource/Sony_Mobile", "21"], ["http://dbpedia.org/resource/Toyota", "65"]]
+[]
+[["Barry Murphy", "1959-04-01|1985-06-12"], ["Catherine Murphy", "1953-09-01"], ["Clelia Murphy", "1975-12-05"]]
+0.83user 0.09system 0:11.13elapsed 8%CPU (0avgtext+0avgdata 129132maxresident)k
+400inputs+8outputs (0major+28171minor)pagefaults 0swaps
