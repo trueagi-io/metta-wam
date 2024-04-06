@@ -102,25 +102,45 @@ _mettalog_autocomplete() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     # echo "COMP_WORDS: ${COMP_WORDS[@]} COMP_CWORD: ${COMP_CWORD} cur: ${cur} prev: ${prev}" > /dev/null
+#            -g -t -G -T
+#        --abi-version --help --version --arch --dump-runtime-variables
+#        -c -O --code=
+#        -o    --home=    --quiet --prolog   --breakable   --debug 
     opts="
-        --log --html --debug --quiet
-        -g -t -G -T
-        --abi-version --help --version --arch --dump-runtime-variables
-        -c -O 
-        -o        
-         --prolog  --repl --home= --stack-limit=300M --table-space=300M --code=
+        --log --html
+        --repl --stack-limit=30G --table-space=20G 
         --shared-table-space=2000M --pce=false --packs --pldoc=8040 --python=false --tty=false 
-        --test --fresh
+        --test --fresh --clean 
+	--failures --regressions --continue 
         --timeout=90
 	--docker=false
-        --exec=skip --eval=debug --case=debug --signals=false --threads=false ---load=
+        --exec=skip --eval=debug --case=debug --signals=false --threads=false 
+	--output=./
+	--v=src/
         ---eval=nodebug
-        --debug-on-interrupt=false --breakable
+        --debug-on-interrupt=false
         --on-error= 
         --on-warning="
 
     compopt -o nospace
     
+
+    if [[ ${cur} == --v=* ]]; then
+	local was_out_path="$METTALOG_DIR/src/"
+	local subdirs=$(find "${was_path}" -mindepth 1 -maxdepth 1 -type d)
+	# Remove the path prefix from each subdir for the completion
+	COMPREPLY=( $(compgen -W "${subdirs//"$was_out_path"/}" -- "${cur#--v=}") )
+	return 0
+    fi
+
+    if [[ ${cur} == --output=* ]]; then
+	local was_out_path="."
+	local subdirs=$(find "${was_path}" -mindepth 1 -maxdepth 1 -type d)
+	# Remove the path prefix from each subdir for the completion
+	COMPREPLY=( $(compgen -W "${subdirs//"$was_out_path"/}" -- "${cur#--output=}") )
+	return 0
+    fi
+
     # Handle comppleion for -g -t 
     if [[ ${prev} == "-g" || ${prev} == "-t" ]]; then
         COMPREPLY=( '"repl"' )
@@ -174,7 +194,6 @@ _mettalog_autocomplete() {
         compopt -o nospace
         return 0
     fi
-
 
     if [[ ${cur} == -* ]]; then
         compopt -o nospace

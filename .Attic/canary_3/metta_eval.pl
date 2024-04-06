@@ -174,7 +174,7 @@ subst_args_h(_Eq,_RetType,Depth,Self,PredDecl,Res):- !, finish_eval(Depth,Self,P
 :- discontiguous eval_40/6.
 %:- discontiguous eval_30fz/5.
 %:- discontiguous eval_31/5.
-%:- discontiguous eval_60/5.
+%:- discontiguous eval_defn/5.
 
 eval_20(Eq,RetType,_Dpth,_Slf,Name,Y):-
     atom(Name), !,
@@ -1608,12 +1608,12 @@ eval_20(Eq,RetType,Depth,Self,[AE|More],Res):- often_fail, allow_host_functions,
 % user defined function
 %eval_20(Eq,RetType,Depth,Self,[H|PredDecl],Res):-
  %  fake_notrace(is_user_defined_head(Self,H)),!,
- %  eval_60(Eq,RetType,Depth,Self,[H|PredDecl],Res).
+ %  eval_defn(Eq,RetType,Depth,Self,[H|PredDecl],Res).
 
-/*eval_84(Eq,RetType,Depth,Self,PredDecl,Res):-    
-    eval_60(Eq,RetType,Depth,Self,PredDecl,Res).
+/*eval_maybe_defn(Eq,RetType,Depth,Self,PredDecl,Res):-    
+    eval_defn(Eq,RetType,Depth,Self,PredDecl,Res).
 
-eval_85(Eq,RetType,Depth,Self,PredDecl,Res):-
+eval_maybe_subst(Eq,RetType,Depth,Self,PredDecl,Res):-
     subst_args_h(Eq,RetType,Depth,Self,PredDecl,Res).
 */
 
@@ -1711,20 +1711,20 @@ get_attrlib(XX,clpr):- sub_var(clpr,XX),!.
 call_ndet(Goal,DET):- call(Goal),deterministic(DET),(DET==true->!;true).
 
 /*
-eval_60(Eq,_RetT,Depth,Self,[H|Args0],B):-
+eval_defn(Eq,_RetT,Depth,Self,[H|Args0],B):-
    \+ get_operator_typedef1(Self,H,_ParamTypes,_RType),!,
    maplist(eval_99(Eq,_,Depth,Self),Args0,Args),
    eval_65(Eq,RetType,Depth,Self,[H|Args],B),!.
 */
 /*
-eval_60(Eq,_RetT,Depth,Self,[H|Args0],B):- symbol(H),
+eval_defn(Eq,_RetT,Depth,Self,[H|Args0],B):- symbol(H),
   \+ fake_notrace((is_user_defined_head_f(Self,H))),
    \+ get_operator_typedef1(Self,H,_ParamTypes,_RType),!,
    maplist(eval_99(Eq,_,Depth,Self),Args0,Args),
    eval_65(Eq,RetType,Depth,Self,[H|Args],B),!.
 */
 /*
-eval_60(Eq,RetType,Depth,Self,H,B):-
+eval_defn(Eq,RetType,Depth,Self,H,B):-
    (eval_64(Eq,RetType,Depth,Self,H,B)*->true;
      (fail,eval_67(Eq,RetType,Depth,Self,H,B))).
 */
@@ -1733,7 +1733,7 @@ eval_20(Eq,RetType,Depth,Self,[AE|More],NewRes):-
   no_repeats_var(YY),!,
    ((
       adjust_args_9(Eq,RetType,Res,NewRes,Depth,Self,AE,More,Adjusted),
-      if_or_else(eval_60(Eq,RetType,Depth,Self,[AE|Adjusted],Res), 
+      if_or_else(eval_defn(Eq,RetType,Depth,Self,[AE|Adjusted],Res), 
 			   eval_failed(Depth,Self,[AE|Adjusted],Res)),	  
 	  check_returnval(Eq,RetType,NewRes))),
 	(is_det_pred(AE) -> ! ; true),
@@ -1741,7 +1741,7 @@ eval_20(Eq,RetType,Depth,Self,[AE|More],NewRes):-
 
 is_det_pred(_):- !, fail.
 
-eval_60(Eq,RetType,Depth,Self,X,Y):- can_be_ok(eval_60,X),!,
+eval_defn(Eq,RetType,Depth,Self,X,Y):- can_be_ok(eval_defn,X),!,
 	  trace_eval(eval_61(Eq,RetType),' find_defn ',Depth,Self,X,Y).
 
 eval_61(Eq,RetType,Depth,Self,X,Y):-
@@ -1827,7 +1827,7 @@ eval_67(Eq,RetType,Depth,Self,[H1|Args],Res):- throw(eval_67),
    fake_notrace((append(Left,[[H2|H2Args]|Rest],Args), H2==H1)),!,
    eval(Eq,RetType,Depth,Self,[H2|H2Args],ArgRes),
    fake_notrace((ArgRes\==[H2|H2Args], append(Left,[ArgRes|Rest],NewArgs))),
-   eval_60(Eq,RetType,Depth,Self,[H1|NewArgs],Res).
+   eval_defn(Eq,RetType,Depth,Self,[H1|NewArgs],Res).
 
 eval_67(Eq,RetType,Depth,Self,[[H|Start]|T1],Y):-
    fake_notrace((is_user_defined_head_f(Self,H),is_list(Start))),
@@ -1841,7 +1841,7 @@ eval_67(Eq,RetType,Depth,Self,[F|PredDecl],Res):- fail,
    fake_notrace((ground(SSub),SSub=[_|Sub], is_list(Sub),maplist(atomic,SSub))),
    eval(Eq,RetType,Depth,Self,SSub,Repl),
    fake_notrace((SSub\=Repl,subst(PredDecl,SSub,Repl,Temp))),
-   eval_60(Eq,RetType,Depth,Self,[F|Temp],Res).
+   eval_defn(Eq,RetType,Depth,Self,[F|Temp],Res).
 
 
 

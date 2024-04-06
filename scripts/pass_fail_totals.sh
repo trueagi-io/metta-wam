@@ -52,9 +52,9 @@ find "$start_dir" -type d -not -path '*/__pycache__*' | while read -r dir; do
 done
 
 tput rmam
-
-echo "| Pass | Fail |Miss|Percent| Module | Directory |"
-echo "|------|------|----|-------|--------|-----------|"
+echo ""
+echo "|Pass|Fail|Miss|Percent| Module | Directory |"
+echo "|----|----|----|-------|--------|-----------|"
 
 # Find all directories under the specified start directory and loop through them
 sort -k1,1r -k2,2nr  "$temp_file" | while read -r dir slash_count; do
@@ -94,7 +94,7 @@ sort -k1,1r -k2,2nr  "$temp_file" | while read -r dir slash_count; do
                   missing="${files_no_totals}"
             fi
 	    mdir="$(convert_path $dir)"
-           printf "| %5d| %5d| %2s |  %3d%% | %s                                                           |%s |\n" "$total_pass" "$total_fail" "$missing" "$dir_percent" "$(reverse_path $mdir)" "$mdir"
+           printf "|%4d|%4d| %2s |  %3d%% | %s                                                           |%s |\n" "$total_pass" "$total_fail" "$missing" "$dir_percent" "$(reverse_path $mdir)" "$mdir"
 
        fi
     fi
@@ -176,4 +176,59 @@ sort -k2,2n "$temp_file" | while read -r dir slash_count; do
     fi
 done
 
+
+
+
+
+echo "|Pass|Fail|Miss|Percent| Module | Directory |"
+echo "|----|----|----|-------|--------|-----------|"
+
+# Find all directories under the specified start directory and loop through them
+sort -k1,1r -k2,2nr  "$temp_file" | while read -r dir slash_count; do
+    total_pass=0
+    total_fail=0
+    files_no_totals=0
+
+    # Process each .metta.html file in the directory
+    while read -r file; do
+            # Extract successes and failures
+       pass=$(tac "$file" | grep -oP 'Successes: \K\d+' | head -n 1 | bc || echo 0)
+       fail=$(tac "$file" | grep -oP 'Failures: \K\d+' | head -n 1 | bc || echo 0)
+
+            # Add to totals
+            total_pass=$((total_pass + pass))
+            total_fail=$((total_fail + fail))
+
+            # Calculate and print the file percentage
+            total_file_tests=$((pass + fail))
+            if [ "$total_file_tests" -ne 0 ]; then
+                had_files=true
+                file_percent=$((100 * pass / total_file_tests))
+            else
+               files_no_totals=$((files_no_totals + 1))
+            fi
+    done < <(find "$dir" -name "*.metta.html" -type f)
+
+    # Calculate and print the directory percentage
+    dir_percent=0
+    total_tests=$((total_pass + total_fail))
+    if [ "$total_tests" -ne 0 ]; then
+       if [ "$total_pass" -ne 0 ]; then
+           missing=" "
+           total_tests=$((total_pass + total_fail + files_no_totals))
+           dir_percent=$((100 * total_pass / total_tests))
+            if [ "$files_no_totals" -ne 0 ]; then
+                  missing="${files_no_totals}"
+            fi
+	    mdir="$(convert_path $dir)"
+           printf "|%4d|%4d| %2s |  %3d%% | %s                                                           |%s |\n" "$total_pass" "$total_fail" "$missing" "$dir_percent" "$(reverse_path $mdir)" "$mdir"
+
+       fi
+    fi
+
+done
+
 tput smam
+
+
+

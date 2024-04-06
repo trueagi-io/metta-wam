@@ -250,3 +250,21 @@ Module loading
 
 
 
+To get comparable Interp vs Compiler statistics in one Output
+```
+clear ; mettalog --test --v=./src/canary --log --html --compile=false tests/baseline_compat/ \
+  --output=4-06-compile_both --clean
+
+clear ; mettalog --test --v=./src/canary --log --html --compile=full tests/*compile* \
+  --output=4-06-compile_both --clean
+```
+
+Vs for diffing
+```
+clear ; mettalog --test --v=./src/canary --log --html --compile=full tests/baseline_compat/ \
+  --output=4-06-compile_full --clean
+
+clear ; mettalog --test --v=./src/canary --log --html --compile=false tests/baseline_compat/ \
+  --output=4-06-compile_false --clean
+```
+

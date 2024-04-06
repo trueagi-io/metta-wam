@@ -15,7 +15,9 @@ should_compile=0
 never_compile=0
 compatio=false
 #compatio=false
+RC_OPTIONS=()
 TIMEOUT=0
+verbose="${VERBOSE:-0}"  # Use the VERBOSE environment variable or default to '0' (not verbose)
 export OUTPUT_DIR="./"
 
 use_docker=auto
@@ -182,11 +184,11 @@ do_DEBUG() {
 DEBUG() {
   if [ "$debug_this_script" == "true" ]; then
      do_DEBUG "$@"
-  else 
-     if [ "$dry_run" -eq 1 ]; then
-	do_DEBUG "$@"
+  elif [ "$dry_run" -eq 1 ]; then
+		do_DEBUG "$@"
+	 elif [ "$verbose" -gt 1 ]; then
+		do_DEBUG "$@"
      fi
-  fi
 }
 
 IF_REALLY_DO() {
@@ -249,9 +251,12 @@ done
 
 function load_rc_file {
     local file="$1"  # Use the argument as the file
-    local METTALOG_OPTIONS_LOCAL=()
     local multiline_accumulator=""
-    local verbose="${VERBOSE:-0}"  # Use the VERBOSE environment variable or default to '0' (not verbose)
+
+    if [[ ! -f "$file" ]]; then
+        [[ "$verbose" -gt 0 ]] && DEBUG "$file does not exist, returning."
+		return
+	fi
 
     if [[ -f "$file" ]]; then
         DEBUG "reading $file"
@@ -273,16 +278,30 @@ function load_rc_file {
 
             [[ $line =~ ^# ]] && continue # Skip lines that start with a comment
 
-            METTALOG_OPTIONS_LOCAL+=("$line")
+	    # Check if the option is already in $@
+	    local skip=0
+	    for arg in "$@"; do
+		if [[ "$arg" == "$line" ]]; then
+		    skip=1
+		    break
+		fi
+	    done
+	    if [[ "$skip" -eq 1 ]]; then
+		[[ "$verbose" == "1" ]] && DEBUG "Skipping option already in \$@: $line"
+		continue
+	    fi
 
-            # Verbose logging
-            [[ "$verbose" == "1" ]] && DEBUG "Loaded option: $line"
+
+            RC_OPTIONS+=("$line")
+            
+            [[ "$verbose" -gt 0 ]] && DEBUG "Loaded option: $line"
+
         done < "$file"
     fi
 
-    local do_args="${METTALOG_OPTIONS_LOCAL[@]}"
+    local do_args="${RC_OPTIONS[@]}"
     [[ -z "$do_args" ]] && return
-    DEBUG "handle_args ${do_args}"
+    DEBUG "load_rc_file $file: ${do_args}"
     handle_args "${do_args}"
 }
 
@@ -368,7 +387,7 @@ cat << EOF
      This script reads options from the ~/.mettalogrc file, one option per line.
      Options specified in ~/.mettalogrc are processed before command-line arguments.
 
-  WAS: ${MeTTa} ${SWI_OPTIONS[*]} -l $METTALOG_DIR/src/$PYSWIP_VERSION/metta_interp.pl -- --python=$python_flag ${PRE_METTALOG_OPTIONS[*]} ${METTALOG_OPTIONS[*]} \\
+  WAS: ${MeTTa} ${SWI_OPTIONS[*]} -l $INTERP_SRC_DIR/metta_interp.pl -- --python=$python_flag ${PRE_METTALOG_OPTIONS[*]} ${METTALOG_OPTIONS[*]} \\
 	     $METTA_CMD
 
 
@@ -379,6 +398,7 @@ EOF
 # Initialize variables
 SWI_OPTIONS=()
 METTALOG_OPTIONS=()
+METTALOG_OPTIONS_LAST=()
 if [[ "$compatio" == "true" && ! ( $* == *--compatio* ) ]]; then
   METTALOG_OPTIONS=("--compatio")
 fi
@@ -407,6 +427,7 @@ fi
 
 DefaultSav="Sav.$(hostname).MeTTaLog"
 
+
 function handle_args {
     SWI_FLAG_WITH_ARG=false
     METTA_FLAG_WITH_ARG=false
@@ -414,15 +435,16 @@ function handle_args {
     NEXT_ARG_IS_RC_FILE=false
     PrevDir="${RPWD:-$(pwd)}"  # Default to current directory if PrevDir is not set
 
-    for arg in "$@"; do
+    for arg0 in "$@"; do
 
-        arg=$(remove_quotes "$arg")  # Remove the quotes
+        arg=$(remove_quotes "$arg0")  # Remove the quotes
 
         # Check if the previous argument was --rc
         if [[ "$NEXT_ARG_IS_RC_FILE" == true ]]; then
             rc_file_path="$PrevDir/$arg"  # Resolve file path relative to PrevDir
             rc_file_path="$(realpath "$rc_file_path")"  # Resolve to absolute path
             load_rc_file "$rc_file_path"
+	    use_rc_file=""
             NEXT_ARG_IS_RC_FILE=false
             continue
         fi
@@ -438,7 +460,7 @@ function handle_args {
         fi
 
         if [[ "$arg" == "--" ]]; then
-	          METTALOG_OPTIONS+=("$arg")
+	    METTALOG_OPTIONS+=("$arg")
             SKIP_TO_METTALOG_OPTIONS=true
             continue
         fi
@@ -476,6 +498,7 @@ function handle_args {
              ;;
             --halt*)
              contains_halt=true
+	     use_test_script=0
              ;;
         esac
 
@@ -488,26 +511,34 @@ function handle_args {
         fi
 
         if [[ "$arg" =~ ^--timeout=([0-9]+)$ ]]; then
-            export TIMEOUT="${BASH_REMATCH[1]}"
-	    #DEBUG "$0 TIMEOUT=$TIMEOUT"
-	    #TIMEOUT=$TIMEOUT
-	    METTALOG_OPTIONS=("--timeout=$TIMEOUT" "${METTALOG_OPTIONS[@]}")
+            parsed="${BASH_REMATCH[1]}"
+	    #do_DEBUG "TIMEOUT=$TIMEOUT PARSED=$parsed"
+	    TIMEOUT=$parsed
+	    export TIMEOUT
+	    #METTALOG_OPTIONS=("--timeout=$TIMEOUT" "${METTALOG_OPTIONS[@]}")
+	    #add_to_list "$arg" METTALOG_OPTIONS
 	    continue
 	elif [[ "$arg" =~ ^--python=(enable|false)$ ]]; then
             python_flag="${BASH_REMATCH[1]}"
+	    continue
         elif [[ "$arg" == "--python" ]]; then
             python_flag=enable
+	    continue
         elif [[ "$arg" == "--no-python" ]]; then
             python_flag=false
         elif [[ "$arg" == "--repl" ]]; then
-            add_to_list "$arg" METTALOG_OPTIONS
+            #add_to_list "$arg" METTALOG_OPTIONS_LAST
             repl_flag=true
+	    continue
         elif [[ "$arg" == "--repl=true" ]]; then
             repl_flag=true
+	    continue
         elif [[ "$arg" == "--repl=false" ]]; then
             repl_flag=false
+	    continue
         elif [[ "$arg" == "--no-repl" ]]; then
             repl_flag=false
+	    continue
         elif [[ "$arg" == "--html" ]]; then
             add_to_list "$arg" METTALOG_OPTIONS
             html_flag=enable
@@ -535,8 +566,7 @@ function handle_args {
                 continue
                 ;;
 
-           --v*)
-                PYSWIP_VERSION="${arg#*v}"
+           --v=*) PYSWIP_VERSION="${arg#*=}"
 		rm -f "${DefaultSav}"
 		never_compile=1
                 continue
@@ -561,13 +591,13 @@ function handle_args {
                 ;;
 
             ---*)
-		    DASH2="-${arg#*---}"
-                   METTALOG_OPTIONS=("$DASH2" "${METTALOG_OPTIONS[@]}")
+		DASH2="-${arg#*---}"
+                PRE_METTALOG_OPTIONS=("$DASH2" "${PRE_METTALOG_OPTIONS[@]}")
                 continue
                 ;;
 
             *)
-            		    add_to_list "$arg" METTALOG_OPTIONS
+                add_to_list "$arg" METTALOG_OPTIONS
 		if [[ -f "$arg" || -d "$arg" ]]; then
 		    arg_realpath="$(realpath "$arg")"
 		    if [[ -f "$arg_realpath" || -d "$arg_realpath" ]]; then
@@ -580,11 +610,7 @@ function handle_args {
 }
 
 
-# First process arguments from ~/.mettalogrc
-
-# Then process actual command-line arguments
-#handle_args "$@"
-
+# pre process command-line arguments
 for arg in "$@"; do
     arg=$(remove_quotes "$arg")  # Remove the quotes
 
@@ -593,13 +619,9 @@ for arg in "$@"; do
 	if [[ -f "$arg_realpath" || -d "$arg_realpath" ]]; then
 	    add_to_list "$arg_realpath" LIST_OF_FILE_ARGS
 	fi
-    elif [[ "$arg" =~ ^--rc=(.*) ]]; then
-	use_rc_file=""
-	continue
     fi
 done
 
-# Then process actual command-line arguments
 
 #DEBUG "LIST_OF_FILE_ARGS[0]=${LIST_OF_FILE_ARGS[0]}"
 DIRNAME="${LIST_OF_FILE_ARGS[0]}"
@@ -614,32 +636,47 @@ else
 fi
 DIR_RC="$DIRNAME/.mettalogrc"
 #DEBUG "DIR_RC=$DIR_RC"
-if [[ -z "${use_rc_file}" ]]; then
-    :
-elif [[ -f "$DIR_RC" ]]; then
+
+if [[ -f "$DIR_RC" ]]; then
     use_rc_file="${DIR_RC}"
 else
-   : # DEBUG "No RC file (.mettalogrc) for directory: $DIRNAME"
+   : #use_rc_file="~/.mettalogrc"
 fi
 
+# maybe process arguments from ~/.mettalogrc ?
+#load_rc_file "~/.mettalogrc"
+
+# process actual command-line arguments
 handle_args "$@"
 
-load_rc_file $use_rc_file
+# process specific RC file
+if [[ -f "${use_rc_file}" ]]; then
+   load_rc_file "${use_rc_file}"
+fi
+
 
 # Decide on enabling the REPL
 if [[ "$repl_flag" != "false" ]]; then
-  [[ ${#LIST_OF_FILE_ARGS[@]} -eq 0 ]] && repl_flag=true && add_to_list "--repl" METTALOG_OPTIONS ||  true
+  [[ ${#LIST_OF_FILE_ARGS[@]} -eq 0 ]] && repl_flag=true && add_to_list "--repl" METTALOG_OPTIONS_LAST ||  true
 fi
 
 if [[ "$repl_flag" == "true" ]]; then
   TIMEOUT=0
+  add_to_list "--repl" METTALOG_OPTIONS_LAST
+fi
+
+if [[ -n "$TIMEOUT" && "$TIMEOUT" -gt 0 ]]; then
+    add_to_list "--timeout==$TIMEOUT" PRE_METTALOG_OPTIONS
 fi
 
 
-# Execute the test script if the condition is met
+# Execute the test script *INSTEAD* if the condition is met
 if [[ "$use_test_script" -eq 1 ]]; then
     #if [[ "$contains_halt" == "false" ]]; then
-	exec $METTALOG_DIR/scripts/test_in_metta.sh -y --report=n $(quote_args_if_needed $@)
+	#WILL_CALL=" -y --report=n $(quote_args_if_needed ${PRE_METTALOG_OPTIONS[*]}) $(quote_args_if_needed ${METTALOG_OPTIONS[*]}) $(quote_args_if_needed ${METTALOG_OPTIONS_LAST[*]})"
+	WILL_CALL=" -y --report=n $(quote_args_if_needed ${RC_OPTIONS[*]}) $(quote_args_if_needed $@)"
+	echo -e "${GREEN}test_in_metta.sh $WILL_CALL${NC}\n"
+	exec $METTALOG_DIR/scripts/test_in_metta.sh $WILL_CALL
     #fi
 fi
 
@@ -724,8 +761,19 @@ fi
 
 export RUST_BACKTRACE=full
 
+
+PYSWIP_VERSION="${PYSWIP_VERSION%/}"
 # Directory containing the .pl files
-pl_directory="src/$PYSWIP_VERSION"
+if [ -f "$PYSWIP_VERSION/metta_interp.pl" ]; then
+  INTERP_SRC_DIR="$PYSWIP_VERSION"
+else 
+  INTERP_SRC_DIR="$METTALOG_DIR/src/$PYSWIP_VERSION"
+fi
+
+INTERP_SRC_DIR="$(realpath "${INTERP_SRC_DIR}")"
+
+DEBUG "INTERP_SRC_DIR=$INTERP_SRC_DIR"
+
 
 # Initialize a flag to check if any file is newer or if reference file is missing
 
@@ -742,9 +790,9 @@ if [[ $never_compile -eq 0 ]]; then
 	should_compile=1
     else
 	# Iterate over each .pl file to check if it's newer
-	for pl_file in "$pl_directory"/*_*.pl; do
+	for pl_file in "$INTERP_SRC_DIR"/*_*.pl; do
 	    if [[ ! -e "$pl_file" ]]; then
-		DEBUG "No matching .pl files found in $pl_directory."
+		DEBUG "No matching .pl files found in $INTERP_SRC_DIR."
 		#exit 1
 	    fi
 
@@ -787,10 +835,10 @@ if [[ -f "$reference_file" ]]; then
        MLOG="swipl -x $reference_file  ${SWI_OPTIONS[*]} --"
   fi
   if [[ "$never_compile" -eq 1 ]]; then
-       MLOG="swipl ${SWI_OPTIONS[*]} -l $METTALOG_DIR/src/$PYSWIP_VERSION/metta_interp.pl --"
+       MLOG="swipl ${SWI_OPTIONS[*]} -l $INTERP_SRC_DIR/metta_interp.pl --"
   fi
 else
-  MLOG="swipl ${SWI_OPTIONS[*]} -l $METTALOG_DIR/src/$PYSWIP_VERSION/metta_interp.pl --"
+  MLOG="swipl ${SWI_OPTIONS[*]} -l $INTERP_SRC_DIR/metta_interp.pl --"
 fi
 
 if [[ "$stdout_is_to_file" == true ]]; then
@@ -801,7 +849,7 @@ fi
 #html_flag=enable
 #add_to_list "--html" METTALOG_OPTIONS
 
-METTA_CMD="$MLOG --python=$python_flag ${PRE_METTALOG_OPTIONS[*]} ${METTALOG_OPTIONS[*]}"
+METTA_CMD="$MLOG --python=$python_flag ${PRE_METTALOG_OPTIONS[*]} ${METTALOG_OPTIONS[*]} ${METTALOG_OPTIONS_LAST[*]}"
 
 OS=$(uname)
 TIMEOUT_CMD="timeout"
@@ -848,11 +896,12 @@ cleanup() {
 }
 
 # Trap exit signal to execute cleanup function
-trap 'cleanup' EXIT
 
 #DEBUG "TIMEOUT=$TIMEOUT"
 
-if [[ -n "$TIMEOUT" && "$TIMEOUT" -gt 0 ]]; then
+
+if [[ -n "$TIMEOUT" && "$TIMEOUT" -gt 0 ]]; then  
+  export TIMEOUT
   METTA_CMD="$TIMEOUT_CMD --preserve-status --signal=SIGTERM --kill-after=5s $TIMEOUT ${METTA_CMD}"
 fi
 
@@ -862,7 +911,6 @@ function escape_quotes {
 }
 
 cd "${RPWD}"
-export TIMEOUT
 set +e
 
 # Conditional to check if html_flag is enabled
@@ -892,25 +940,27 @@ if [[ "$html_flag" == "enable" ]]; then
     DEBUG ""
     [[ -n "${EXIT_SCRIPT+x}" ]] && { [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
 
-    (
+    #(
         IF_REALLY_DO "touch '$TEE_FILE'"
         IF_REALLY_DO "chmod 777 '$TEE_FILE'"
         IF_REALLY_DO "cat /dev/null > '$TEE_FILE'"
         if [[ "$contains_halt" == "true" ]]; then
 	   do_DEBUG "METTA_CMD: $METTA_CMD"
 	fi
+	trap 'cleanup' EXIT
         eval "$METTA_CMD"
         echo $? > "$TEMP_EXIT_CODE_FILE"
-    )
+    #)
 else
     [[ "$wants_print_help" == "1" ]] && { print_help; [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
     [[ -n "${EXIT_SCRIPT+x}" ]] && { [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
     if [[ "$contains_halt" == "true" ]]; then
        do_DEBUG "METTA_CMD: $METTA_CMD"
     fi
-    (
+    #(
+        trap 'cleanup' EXIT
         IF_REALLY_DO eval "$METTA_CMD"
         IF_REALLY_DO "echo $? > '$TEMP_EXIT_CODE_FILE'"
-    )
+    #)
 fi
 
