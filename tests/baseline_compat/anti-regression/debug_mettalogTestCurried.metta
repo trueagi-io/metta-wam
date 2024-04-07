@@ -239,6 +239,7 @@
    (let* (($cres (collapse (fc $prms $depth)))
           ($dummy (add-atoms-nodup &kb $cres)))
      (ifc (superpose $cres) $depth $k)))
+
 ;;;;;;;;;;
 ;; Test ;;
 ;;;;;;;;;;

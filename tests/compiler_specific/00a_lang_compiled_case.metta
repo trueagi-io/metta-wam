@@ -1,7 +1,4 @@
 
-!(pragma! compile full)
-
-
 
 ; cases are processed sequentially
 !(assertEqual
@@ -83,10 +80,10 @@
 
 
 ; %void% can be used to capture empty results
-!(assertEqual (case (match &self ($rel B $x) ($rel $x))
+!(assertEqualToResult (case (match &self ($rel B $x) ($rel $x))
     (((Rel-P $y) (P $y))
     ((Rel-Q $y) (Q $y))
     (%void% no-match
      )))
-     no-match )
+     (no-match ))
 
