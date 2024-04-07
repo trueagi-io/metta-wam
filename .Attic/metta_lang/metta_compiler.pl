@@ -624,9 +624,8 @@ optimize_body(_HB,Body,BodyNew):- is_nsVar(Body),!,Body=BodyNew.
 %optimize_body( HB,u_assign(VT,R),u_assign(VT,R)):-!, must_optimize_body(HB,VT,VTT).
 optimize_body( HB,with_space(V,T),with_space(V,TT)):-!, must_optimize_body(HB,T,TT).
 optimize_body( HB,limit(V,T),limit(V,TT)):-!, must_optimize_body(HB,T,TT).
-optimize_body( HB,findall_ne(V,T,R),findall(V,TT,R)):-!,
- expand_to_hb(HB,H,_),
- must_optimize_body((H:-findall_ne(V,T,R)),T,TT).
+optimize_body( HB,findall_ne(V,T,R),findall_ne(V,TT,R)):-!,
+ expand_to_hb(HB,H,_), must_optimize_body((H:-findall_ne(V,T,R)),T,TT).
 optimize_body( HB,findall(V,T,R),findall(V,TT,R)):-!,
  expand_to_hb(HB,H,_),
  must_optimize_body((H:-findall(V,T,R)),T,TT).
