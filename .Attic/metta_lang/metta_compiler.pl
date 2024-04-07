@@ -624,11 +624,17 @@ optimize_body(_HB,Body,BodyNew):- is_nsVar(Body),!,Body=BodyNew.
 %optimize_body( HB,u_assign(VT,R),u_assign(VT,R)):-!, must_optimize_body(HB,VT,VTT).
 optimize_body( HB,with_space(V,T),with_space(V,TT)):-!, must_optimize_body(HB,T,TT).
 optimize_body( HB,limit(V,T),limit(V,TT)):-!, must_optimize_body(HB,T,TT).
+optimize_body( HB,findall_ne(V,T,R),findall(V,TT,R)):-!,
+ expand_to_hb(HB,H,_),
+ must_optimize_body((H:-findall_ne(V,T,R)),T,TT).
 optimize_body( HB,findall(V,T,R),findall(V,TT,R)):-!,
  expand_to_hb(HB,H,_),
  must_optimize_body((H:-findall(V,T,R)),T,TT).
 optimize_body( HB,loonit_assert_source_tf(V,T,R3,R4),
   loonit_assert_source_tf(V,TT,R3,R4)):-!,
+  must_optimize_body(HB,T,TT).
+optimize_body( HB,loonit_assert_source_empty(V,X,Y,T,R3,R4),
+  loonit_assert_source_empty(V,X,Y,TT,R3,R4)):-!,
   must_optimize_body(HB,T,TT).
 
 optimize_body( HB,(B1*->B2;B3),(BN1*->BN2;BN3)):-!, must_optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2), optimize_body(HB,B3,BN3).
@@ -961,7 +967,7 @@ compile_let_star(Depth,HeadIs,RetType,NV,Converted):-
 f2q(Depth,HeadIs,RetType,RetResult,Convert, Converted) :-
     Convert =~ ['superpose',COL],compound_equals(COL,'collapse'(Value1)), !,
     f2p(Depth,HeadIs,RetType,ResValue1,Value1,CodeForValue1),
-    Converted = (findall(ResValue1,CodeForValue1,Gathered),member(RetResult,Gathered)).
+    Converted = (find_ne(ResValue1,CodeForValue1,Gathered),member(RetResult,Gathered)).
 
 f2q(Depth,HeadIs,RetType,RetResult,Convert, Converted) :-
    Convert =~ ['sequential'|ValueL],
@@ -1052,16 +1058,20 @@ f2q(Depth,HeadIs,RetType,RetResult,Convert, Converted) :-
     f2p(Depth,HeadIs,RetType,ResValue2,Value2,CodeForValue2),
     Converted =
               (Src = Convert,
-               loonit_assert_source_tf(Src,
-                (findall(ResValue1,CodeForValue1,L1),
-                 findall(ResValue2,CodeForValue2,L2)),
-                 equal_enough(L1,L2),RetResult)).
+               loonit_assert_source_tf_empty(Src,L1,L2,
+                (findall_ne(ResValue1,CodeForValue1,L1),
+                 findall_ne(ResValue2,CodeForValue2,L2)),
+                 equal_enough_for_test(L1,L2),RetResult)).
+
 f2q(Depth,HeadIs,RetType,RetResult,Convert, Converted) :-
     Convert =~ ['assertEqualToResult',Value1,Value2],!,
     f2p(Depth,HeadIs,RetType,ResValue1,Value1,CodeForValue1),
-    Converted = loonit_assert_source_tf(Convert,
-                findall(ResValue1,CodeForValue1,L1),
-                 equal_enough(L1,Value2),RetResult).
+    Src = Convert,
+    Goal = findall_ne(ResValue1,CodeForValue1,L1),
+    Converted = (
+                loonit_assert_source_tf_empty(Src,L1,Value2,
+                     Goal,
+                     equal_enough_for_test(L1,Value2),RetResult)).
 
 maybe_unlistify([UValueL],ValueL,RetResult,[URetResult]):- fail, is_list(UValueL),!,
   maybe_unlistify(UValueL,ValueL,RetResult,URetResult).
@@ -1175,7 +1185,7 @@ compound_equals1(COL1,COL2):- compound(COL1),!,compound(COL2), COL1=COL2.
 f2q(Depth,HeadIs,RetType,RetResult,Convert, Converted) :-
     Convert =~ ['collapse',Value1],!,
     f2p(Depth,HeadIs,RetType,ResValue1,Value1,CodeForValue1),
-    Converted = (findall(ResValue1,CodeForValue1,RetResult)).
+    Converted = (findall_ne(ResValue1,CodeForValue1,RetResult)).
 
 f2q(Depth,HeadIs,RetType,RetResult,Convert, Converted) :-
     Convert =~ ['compose',Value1],!,

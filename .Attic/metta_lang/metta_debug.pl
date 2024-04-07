@@ -239,8 +239,8 @@ is_debugging((A,B)):- !, (is_debugging(A) , is_debugging(B) ).
 is_debugging(not(Flag)):- !,  \+ is_debugging(Flag).
 is_debugging(Flag):- Flag== false,!,fail.
 is_debugging(Flag):- Flag== true,!.
-is_debugging(e):- is_testing, \+ option_value(compile,'full'),!.
-%is_debugging(eval):- is_testing,!.
+%is_debugging(e):- is_testing, \+ option_value(compile,'full'),!.
+is_debugging(e):- is_testing,!.
 is_debugging(Flag):- option_value(Flag,'debug'),!.
 is_debugging(Flag):- option_value(Flag,'trace'),!.
 is_debugging(Flag):- debugging(metta(Flag),TF),!,TF==true.
