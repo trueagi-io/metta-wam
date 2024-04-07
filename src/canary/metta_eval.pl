@@ -490,27 +490,32 @@ eval_20(_Eq,_OuterRetType,_Depth,_Self,[P,_,B],_):-P=='/',B==0,!,fail.
 eval_20(Eq,RetType,Depth,Self,['assertTrue', X],TF):- !, eval(Eq,RetType,Depth,Self,['assertEqual',X,'True'],TF).
 eval_20(Eq,RetType,Depth,Self,['assertFalse',X],TF):- !, eval(Eq,RetType,Depth,Self,['assertEqual',X,'False'],TF).
 
-eval_20(Eq,RetType,Depth,Self,['assertEqual',X,Y],RetVal):- !,
-   loonit_assert_source_tf(
-        ['assertEqual',X,Y],
-        (bagof_eval(Eq,RetType,Depth,Self,X,XX), bagof_eval(Eq,RetType,Depth,Self,Y,YY)),
-         equal_enough_for_test(XX,YY), TF),
-  (TF=='True'->make_empty(RetType,RetVal);RetVal=['Error'(XX,expected(YY))]).
+eval_20(Eq,_RetType,Depth,Self,['assertEqual',X,Y],RetVal):- !,
+   loonit_assert_source_tf_empty(
+        ['assertEqual',X,Y],XX,YY,
+        (bagof_eval(Eq,_ARetType,Depth,Self,X,XX),
+(Eq,_BRetType,Depth,Self,Y,YY)),
+         equal_enough_for_test(XX,YY), RetVal).
 
-eval_20(Eq,RetType,Depth,Self,['assertNotEqual',X,Y],RetVal):- !,
-   loonit_assert_source_tf(
-        ['assertEqual',X,Y],
-        (bagof_eval(Eq,RetType,Depth,Self,X,XX), bagof_eval(Eq,RetType,Depth,Self,Y,YY)),
-         ( \+ equal_enough(XX,YY)), TF),
-  (TF=='True'->make_empty(RetType,RetVal);RetVal=['Error'(XX,expected(YY))]).
+eval_20(Eq,_RetType,Depth,Self,['assertNotEqual',X,Y],RetVal):- !,
+   loonit_assert_source_tf_empty(
+        ['assertEqual',X,Y],XX,YY,
+        (bagof_eval(Eq,_ARetType,Depth,Self,X,XX), bagof_eval(Eq,_BRetType,Depth,Self,Y,YY)),
+         ( \+ equal_enough(XX,YY)), RetVal).
 
-eval_20(Eq,RetType,Depth,Self,['assertEqualToResult',X,Y],RetVal):- !,
-   loonit_assert_source_tf(
-        ['assertEqualToResult',X,Y],
-        (bagof_eval(Eq,RetType,Depth,Self,X,XX), sort(Y,YY)),
-         equal_enough_for_test(XX,YY), TF),
-  (TF=='True'->make_empty(RetType,RetVal);RetVal=['Error'(XX,expected(YY))]).
+eval_20(Eq,_RetType,Depth,Self,['assertEqualToResult',X,Y],RetVal):- !,
+   loonit_assert_source_tf_empty(
+        ['assertEqualToResult',X,Y],XX,YY,
+        (bagof_eval(Eq,_ARetType,Depth,Self,X,XX), =(Y,YY)),
+         equal_enough_for_test(XX,YY), RetVal).
 
+
+loonit_assert_source_tf_empty(Src,XX,YY,Goal,Check,RetVal):-
+    loonit_assert_source_tf(Src,Goal,Check,TF),
+    tf_to_empty(TF,RetVal,['Error'(got(XX),expected(YY))]).
+
+tf_to_empty(TF,Else,RetVal):-
+  (TF=='True'->make_empty(_RetType,RetVal);RetVal=Else).
 
 loonit_assert_source_tf(_Src,Goal,Check,TF):- \+ is_testing,!,
     reset_eval_num,
@@ -1427,15 +1432,16 @@ suggest_type(_RetType,_Bool).
 naive_eval_args:-
     false.
 
-eval_40(Eq,RetType,Depth,Self,[AE|More],Res):- 
+eval_40(_Eq,_RetType,_Depth,Self,[AE|More],Res):-
   len_or_unbound(More,Len), Pred = AE,
   metta_compiled_predicate(AE,Arity),
+  Arity = Len,
   current_predicate(AE,Len),!,
   maplist(as_prolog, More , Adjusted),
-  if_trace(host;prolog,print_tree(apply(Pred,Adjusted))),
+  if_trace((host;prolog),print_tree(apply(Pred,Adjusted))),
   catch_warn(efbug(show_call,eval_call(apply(Pred,Adjusted),TF))),
   check_returnval(Eq,RetType,TF).
-  
+
 
 eval_40(Eq,RetType,Depth,Self,[AE|More],Res):- naive_eval_args,!,
   maplist(must_eval_args(Eq,_,Depth,Self),More,Adjusted),
@@ -1492,18 +1498,18 @@ must_eval_args(Eq,RetType,Depth,Self,More,Adjusted):-
            %nl,writeq(eval_args(Eq,RetType,Depth,Self,More,Adjusted)),writeln('.'),
              (More=Adjusted -> true ;
                 (trace, throw(must_eval_args(Eq,RetType,Depth,Self,More,Adjusted))))))).
-               
+
 
 eval_maybe_subst(Eq,RetType,Depth,Self,PredDecl,Res):- !,
   subst_args(Eq,RetType,Depth,Self,PredDecl,Res).
 
 
-eval_maybe_subst(_Eq,_RetType,_Depth,_Self,[H|PredDecl],Res):- fail,
+eval_maybe_subst(_Eq,_RetType,_Dpth,_Slf,[H|PredDecl],Res):- fail,
   is_rust_operation([H|PredDecl]),!, % run
   must_det_ll((rust_metta_run(exec([H|PredDecl]),Res),
   nop(write_src(res(Res))))).
 
-eval_maybe_subst(Eq,RetType,Depth,Self,Res,Res):- nb_current(eval_maybe_subst,false),!.
+eval_maybe_subst(_Eq,_RetType,_Dpth,_Slf,Res,Res):- nb_current(eval_maybe_subst,false),!.
 eval_maybe_subst(Eq,RetType,Depth,Self,PredDecl,Res):-
   locally(nb_setval(eval_maybe_subst,false),
    finish_eval(Eq,RetType,Depth,Self,PredDecl,Res)).
@@ -1886,9 +1892,13 @@ setof_eval(Depth,Self,X,L):- setof_eval('=',_RT,Depth,Self,X,L).
 setof_eval(Eq,RetType,Depth,Self,X,S):- bagof_eval(Eq,RetType,Depth,Self,X,L),
    sort(L,S).
 
+findall_ne(E,X,L):-
+   findall(E,(X, is_returned(E)),L).
 
 eval_ne(Eq,RetType,Depth,Self,X,E):-
-  eval(Eq,RetType,Depth,Self,X,E), \+ var(E), \+ is_empty(E).
+  eval(Eq,RetType,Depth,Self,X,E), is_returned(E).
+
+is_returned(E):- \+ var(E), \+ is_empty(E).
 
 
 :- ensure_loaded(metta_subst).
