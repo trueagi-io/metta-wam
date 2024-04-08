@@ -63,7 +63,7 @@ temp_file=$(mktemp)
 find "$start_dir" -type d -not -path '*/__pycache__*' | while read -r dir; do
     # Count the number of slashes in the directory path
     slash_count=$(tr -cd '/' <<< "$dir" | wc -c)
-    echo "$dir $slash_count" >> "$temp_file"
+    echo "$dir $slash_count $(reverse_path $dir)" >> "$temp_file"
 done
 
 
@@ -73,7 +73,7 @@ chart1=$(mktemp)
 tput rmam
 
 # Find all directories under the specified start directory and loop through them
-sort -k1,1r -k2,2nr  "$temp_file" | while read -r dir slash_count; do
+sort -k1,1r -k2,2nr  "$temp_file" | while read -r dir slash_count rvdir; do
     total_pass=0
     total_fail=0
     files_no_totals=0
@@ -145,8 +145,9 @@ echo ""
 
 base_url="https://logicmoo.org/public/metta/"
 
-# Sort the directories by slash_count count in reverse order
-sort -k2,2n "$temp_file" | while read -r dir slash_count; do
+# Sort the directories by slash count in reverse order
+sort -k3,3 -k2,2nr "$temp_file" | while read -r dir slash_count rvdir; do
+
     total_pass=0
     total_fail=0
     cat /dev/null > $file_info_tmp
@@ -193,7 +194,7 @@ sort -k2,2n "$temp_file" | while read -r dir slash_count; do
            echo  "|-------|-------|----------|----------------------------------------------------------------------------------------------------|"
            printf "|       |       |          |%-80s|\n" ""
            printf "|       |       |          |%-80s|\n" " Dir: ./$mdir"
-           printf "|       |       |          |%-80s|\n" " Mod: $(reverse_path $mdir)"
+           printf "|       |       |          |%-80s|\n" " Mod: $(convert_mod $mdir)"
            printf "|       |       |          |%-80s|\n" ""
            cat $file_info_tmp
            printf "|       |       |          |%-80s|\n" ""
@@ -215,12 +216,14 @@ awk -F '|' '{
 }' $chart1 | sort -k1,1n | cut -d '|' -f2-
 
 echo ""
+echo ""
 echo "|Pass|EFail|Totl|Percent| Module | Directory |"
 echo "|----|-----|----|-------|--------|-----------|"
 cat $chart1
 
 rm -f $chart1
 rm -f $file_info_tmp
+rm -f $temp_file
 
 tput smam
 

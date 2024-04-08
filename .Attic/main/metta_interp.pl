@@ -938,8 +938,15 @@ load_hook(Load,Hooked):-
    ignore(( \+ ((forall(load_hook0(Load,Hooked),true))))),!.
 
 
-rtrace_on_error(G):- catch(G,_,fail),!.
-rtrace_on_error(G):-rtrace(G),!.
+%rtrace_on_error(G):- catch(G,_,fail).
+rtrace_on_error(G):-
+  catch_err(G,E,
+   (notrace,
+    write_src_uo(E=G),
+    %catch(rtrace(G),E,throw(E)),
+    catch(rtrace(G),E,throw(give_up(E=G))),
+    throw(E))).
+
 assertion_hb(metta_defn(Eq,Self,H,B),Self,Eq,H,B):-!.
 assertion_hb(metta_atom_asserted(KB,HB),Self,Eq,H,B):- !, assertion_hb(metta_atom(KB,HB),Self,Eq,H,B).
 assertion_hb(metta_atom(Self,[Eq,H,B]),Self,Eq,H,B):- assert_type_cl(Eq),!.
@@ -1389,7 +1396,7 @@ do_metta(From,call,Self,TermV,FOut):- !,
    Output = NamedVarsList,
    user:interactively_do_metta_exec(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut).
 do_metta(_File,Load,Self,Src,Out):- Load\==exec, !,
-     as_tf(asserted_do_metta(Self,Load,Src),Out).
+     dont_give_up(as_tf(asserted_do_metta(Self,Load,Src),Out)).
 
 do_metta(file(Filename),exec,Self,TermV,Out):-
    must_det_ll((inc_exec_num(Filename),
@@ -1400,13 +1407,14 @@ do_metta(file(Filename),exec,Self,TermV,Out):-
      file_answers(Filename, Nth, Ans),
      check_answers_for(TermV,Ans))),!,
      must_det_ll((
-      color_g_mesg_ok('#ffa509',
+      ensure_increments((color_g_mesg_ok('#ffa509',
        (writeln(';; In file as:  '),
         color_g_mesg([bold,fg('#FFEE58')], write_src(exec(TermV))),
         write(';; To unit test case:'))),!,
-        do_metta_exec(file(Filename),Self,['assertEqualToResult',TermV,Ans],Out))).
+        do_metta_exec(file(Filename),Self,['assertEqualToResult',TermV,Ans],Out))))).
 
-do_metta(From,exec,Self,TermV,Out):- !, do_metta_exec(From,Self,TermV,Out).
+do_metta(From,exec,Self,TermV,Out):- !, 
+    dont_give_up(do_metta_exec(From,Self,TermV,Out)).
 
 do_metta_exec(From,Self,TermV,FOut):-
   Output = X,
@@ -1508,6 +1516,7 @@ call_max_time(Goal, MaxTime, Else) :-
 
 
 catch_err(G,E,C):- catch(G,E,(notrace(if_t(always_rethrow(E),throw(E))),C)).
+dont_give_up(G):- catch(G,give_up(E),write_src_uo(dont_give_up(E))).
 
 load_and_trim_history:-
  notrace((

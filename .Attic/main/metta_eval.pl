@@ -490,27 +490,36 @@ eval_20(_Eq,_OuterRetType,_Depth,_Self,[P,_,B],_):-P=='/',B==0,!,fail.
 eval_20(Eq,RetType,Depth,Self,['assertTrue', X],TF):- !, eval(Eq,RetType,Depth,Self,['assertEqual',X,'True'],TF).
 eval_20(Eq,RetType,Depth,Self,['assertFalse',X],TF):- !, eval(Eq,RetType,Depth,Self,['assertEqual',X,'False'],TF).
 
-eval_20(Eq,RetType,Depth,Self,['assertEqual',X,Y],RetVal):- !,
-   loonit_assert_source_tf(
-        ['assertEqual',X,Y],
-        (bagof_eval(Eq,RetType,Depth,Self,X,XX), bagof_eval(Eq,RetType,Depth,Self,Y,YY)),
-         equal_enough_for_test(XX,YY), TF),
-  (TF=='True'->make_empty(RetType,RetVal);RetVal=['Error'(XX,expected(YY))]).
+eval_20(Eq,_RetType,Depth,Self,['assertEqual',X,Y],RetVal):- !,
+   loonit_assert_source_tf_empty(
+        ['assertEqual',X,Y],XX,YY,
+        (bagof_eval(Eq,_ARetType,Depth,Self,X,XX),
+         bagof_eval(Eq,_BRetType,Depth,Self,Y,YY)),
+         equal_enough_for_test(XX,YY), RetVal).
 
-eval_20(Eq,RetType,Depth,Self,['assertNotEqual',X,Y],RetVal):- !,
-   loonit_assert_source_tf(
-        ['assertEqual',X,Y],
-        (bagof_eval(Eq,RetType,Depth,Self,X,XX), bagof_eval(Eq,RetType,Depth,Self,Y,YY)),
-         ( \+ equal_enough(XX,YY)), TF),
-  (TF=='True'->make_empty(RetType,RetVal);RetVal=['Error'(XX,expected(YY))]).
+eval_20(Eq,_RetType,Depth,Self,['assertNotEqual',X,Y],RetVal):- !,
+   loonit_assert_source_tf_empty(
+        ['assertNotEqual',X,Y],XX,YY,
+        (bagof_eval(Eq,_ARetType,Depth,Self,X,XX),
+         bagof_eval(Eq,_BRetType,Depth,Self,Y,YY)),
+         ( \+ equal_enough(XX,YY)), RetVal).
 
-eval_20(Eq,RetType,Depth,Self,['assertEqualToResult',X,Y],RetVal):- !,
-   loonit_assert_source_tf(
-        ['assertEqualToResult',X,Y],
-        (bagof_eval(Eq,RetType,Depth,Self,X,XX), sort(Y,YY)),
-         equal_enough_for_test(XX,YY), TF),
-  (TF=='True'->make_empty(RetType,RetVal);RetVal=['Error'(XX,expected(YY))]).
+eval_20(Eq,_RetType,Depth,Self,['assertEqualToResult',X,Y],RetVal):- !,
+   loonit_assert_source_tf_empty(
+        ['assertEqualToResult',X,Y],XX,YY,
+        (bagof_eval(Eq,_ARetType,Depth,Self,X,XX),
+         val_sort(Y,YY)),
+         equal_enough_for_test(XX,YY), RetVal).
 
+loonit_assert_source_tf_empty(Src,XX,YY,Goal,Check,RetVal):-
+    loonit_assert_source_tf(Src,Goal,Check,TF),
+    tf_to_empty(TF,RetVal,['Error'(got(XX),expected(YY))]).
+
+tf_to_empty(TF,Else,RetVal):-
+  (TF=='True'->make_empty(_RetType,RetVal);RetVal=Else).
+  
+val_sort(Y,YY):- is_list(Y),!,sort(Y,YY).
+val_sort(Y,[Y]).
 
 loonit_assert_source_tf(_Src,Goal,Check,TF):- \+ is_testing,!,
     reset_eval_num,

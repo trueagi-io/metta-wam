@@ -24,7 +24,7 @@ cleanup_debug:-
 :- export(plain_var/1).
 plain_var(V):- notrace((var(V), \+ attvar(V), \+ get_attr(V,ci,_))).
 catch_nolog(G):- ignore(catch(notrace(G),E,once(true;nop(u_dmsg(E=G))))).
-catch_log(G):- ignore(catch(notrace(G),E,((u_dmsg(E=G),ugtrace(error(E),G))))).
+catch_log(G):- ignore(catch((G),E,((u_dmsg(E=G),ugtrace(G))))).
 % catch_log(G):- ignore(catch(notrace(G),E,((writeln(E=G),catch_nolog(ds))))).
 
 get_user_error(UE):- stream_property(UE,file_no(2)),!.

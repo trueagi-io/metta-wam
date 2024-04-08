@@ -1112,8 +1112,9 @@ f2q(Depth,HeadIs,RetType,RetResult,Convert, Converted) :-
     Converted =
         (( AllCases = Cases,
            once((member(caseOption(MatchVar,MatchCode,BodyResult,BodyCode),AllCases),
-                 (MatchCode,unify_enough(Value,MatchVar)))),
-           (BodyCode),
+                 (rtrace_on_error(MatchCode),
+                    unify_enough(Value,MatchVar)))),
+           rtrace_on_error(BodyCode),
            BodyResult=RetResult)))).
 
 f2q(Depth,HeadIs,RetType,RetResult,Convert, Converted) :-

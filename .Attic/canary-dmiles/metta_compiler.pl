@@ -1123,9 +1123,10 @@ f2q(Depth,HeadIs,RetType,RetResult,Convert, Converted) :-
              select_case(AllCases,Value,RetResult)))).
 
 select_case(AllCases,Value,BodyResult):-
-    member(caseOption(MatchVar,MatchCode,BodyResult,BodyCode),AllCases),
-    ((rtrace_on_error(MatchCode),unify_enough(Value,MatchVar))) 
-        -> rtrace_on_error(BodyCode).
+       once((member(caseOption(MatchVar,MatchCode,BodyResult,BodyCode),AllCases),
+             rtrace_on_error(MatchCode),unify_enough(Value,MatchVar)))
+             ,!,
+       rtrace_on_error(BodyCode).
 
 
 f2q(Depth,HeadIs,RetType,RetResult,Convert, Converted) :-
@@ -1327,13 +1328,13 @@ f2q(_Depth,_HeadIs,_RetType,RetResult, Convert, Converted) :- Convert =(H:-B),!,
   RetResult=(H:-B), Converted = true.
 
 % If Convert is a "," (and) function, we convert it to the equivalent "," (and) predicate.
-f2q(Depth,HeadIs,RetType,RetResult,SOR,[',',AsPredO, Converted]) :-
-      SOR =~ [',', AsPredI, Convert],
+f2q(Depth,HeadIs,RetType,RetResult,SOR,[Comma,AsPredO, Converted]) :-
+      SOR =~ [Comma, AsPredI, Convert], ',' == Comma,
       must_det_ll((f2p(Depth,HeadIs,RetType,RetResult,AsPredI, AsPredO),
                    f2p(Depth,HeadIs,RetType,RetResult,Convert, Converted))),!.
 
 f2q(Depth,HeadIs,RetType,RetResult,SOR,(AsPredO, Converted)) :-
-      SOR =~ ['and', AsPredI, Convert],
+      SOR =~ [Comma, AsPredI, Convert], 'and' == Comma,
       must_det_ll((f2p(Depth,HeadIs,RetType,RetResult,AsPredI, AsPredO),
                    f2p(Depth,HeadIs,RetType,RetResult,Convert, Converted))),!.
 
@@ -1411,7 +1412,6 @@ non_simple_arg(E):- compound(E),!, \+ is_ftVar(E).
 
 
 f2q(Depth,HeadIs,RetType,RetResult,Converting, (PreArgs,Converted)):-
-      fail,
      as_functor_args(Converting,F,A,Args),
         \+ \+ (member(E,Args), non_simple_arg(E)),
           cname_var('Self',Self),

@@ -508,7 +508,7 @@ eval_20(Eq,_RetType,Depth,Self,['assertEqualToResult',X,Y],RetVal):- !,
    loonit_assert_source_tf_empty(
         ['assertEqualToResult',X,Y],XX,YY,
         (bagof_eval(Eq,_ARetType,Depth,Self,X,XX),
-         =(Y,YY)),
+         val_sort(Y,YY)),
          equal_enough_for_test(XX,YY), RetVal).
 
 
@@ -518,6 +518,9 @@ loonit_assert_source_tf_empty(Src,XX,YY,Goal,Check,RetVal):-
 
 tf_to_empty(TF,Else,RetVal):-
   (TF=='True'->make_empty(_RetType,RetVal);RetVal=Else).
+
+val_sort(Y,YY):- is_list(Y),!,sort(Y,YY).
+val_sort(Y,[Y]).
 
 loonit_assert_source_tf(_Src,Goal,Check,TF):- \+ is_testing,!,
     reset_eval_num,
@@ -539,15 +542,13 @@ sort_result([T,And|Res1],Res):- is_and(And),!,sort_result([T|Res1],Res).
 sort_result([H|T],[HH|TT]):- !, sort_result(H,HH),sort_result(T,TT).
 sort_result(Res,Res).
 
-unify_enough(L,L):-!.
-unify_enough(L,C):- compound(L),compound(C),
-  into_list_args(L,LL),into_list_args(C,CC),!,
-  unify_lists(CC,LL).
+unify_enough(L,L).
+unify_enough(L,C):- into_list_args(L,LL),into_list_args(C,CC),unify_lists(CC,LL).
 
-unify_lists(C,L):- \+ compound(C),!,L=C.
-unify_lists(L,C):- \+ compound(C),!,L=C.
-unify_lists([C|CC],[L|LL]):- !, unify_enough(L,C),!,unify_lists(CC,LL).
+%unify_lists(C,L):- \+ compound(C),!,L=C.
+%unify_lists(L,C):- \+ compound(C),!,L=C.
 unify_lists(L,L):-!.
+unify_lists([C|CC],[L|LL]):- unify_enough(L,C),!,unify_lists(CC,LL).
 
 %s_empty(X):- var(X),!.
 s_empty(X):- var(X),!,fail.
@@ -1438,7 +1439,7 @@ naive_eval_args:-
 
 eval_40(_Eq,_RetType,Depth,Self,[AE|More],Res):-
   len_or_unbound(More,Len), Pred = AE,
-  metta_compiled_predicate(AE, Arity),!,
+  metta_compiled_predicate(AE,Arity),
   indentq2(Depth,metta_compiled_predicate(AE, Arity,Len)),
   Arity = Len,
   current_predicate(AE,Len),!,
@@ -1590,22 +1591,24 @@ eval_maybe_host_predicate(Eq,RetType,_Depth,_Self,[AE|More],TF):- allow_host_fun
 show_ndet(G):- call(G).
 %show_ndet(G):- call_ndet(G,DET),(DET==true -> ! ; fbug(show_ndet(G))).
 
-:- if( \+  current_predicate( is_user_defined_goal / 2 )).
-is_user_defined_goal(Self,Head):- is_user_defined_head(Self,Head).
+:- if( \+  current_predicate( adjust_args / 2 )).
+
+   :- discontiguous eval_80/6.
+
+is_user_defined_goal(Self,Head):-
+  is_user_defined_head(Self,Head).
+
 :- endif.
 
+adjust_args_mp(_Eq,_RetType,Res,Res,_Depth,_Self,_Pred,_Len,_AE,Args,Adjusted):- Args==[],!,Adjusted=Args.
+adjust_args_mp(Eq,RetType,Res,NewRes,Depth,Self,Pred,Len,AE,Args,Adjusted):-
 
-
-adjust_args_mp(_Eq,_RetType,Res,NewRes,_Depth,_Self,_Pred,_Len,_AE,Args,Adjusted):- 
-  Args==[],!,Adjusted=Args, NewRes = Res.
-
-adjust_args_mp(Eq,RetType,Res,NewRes,Depth,Self,Pred,Len,AE,Args,Adjusted):- integer(Len),
-   atom(Pred),
-   Len> 0 , functor(P,Pred,Len), predicate_property(P,meta_predicate(Needs)),
+   functor(P,Pred,Len), 
+   predicate_property(P,meta_predicate(Needs)),
    account_needs(1,Needs,Args,More),!,
-   adjust_args_9(Eq,RetType,Res,NewRes,Depth,Self,AE,More,Adjusted).
+   adjust_args(Eq,RetType,Res,NewRes,Depth,Self,AE,More,Adjusted).
 adjust_args_mp(Eq,RetType,Res,NewRes,Depth,Self,_Pred,_Len,AE,Args,Adjusted):-
-   adjust_args_9(Eq,RetType,Res,NewRes,Depth,Self,AE,Args,Adjusted).
+   adjust_args(Eq,RetType,Res,NewRes,Depth,Self,AE,Args,Adjusted).
 
 acct(0,A,call(eval(A,_))).
 acct(':',A,call(eval(A,_))).
@@ -1643,10 +1646,9 @@ eval_maybe_host_function(Eq,RetType,_Depth,_Self,[AE|More],Res):- allow_host_fun
   %adjust_args(Depth,Self,AE,More,Adjusted),!,
   %Len1 is Len+1,
   %current_predicate(Pred/Len1),
-  %maplist(as_prolog,More,Adjusted),
-  adjust_args_mp(Eq,RetType,Res,NewRes,Depth,Self,Pred,Len,AE,More,Adjusted),
-  append(Adjusted,[NewRes],Args),
-  if_trace(host;prolog,print_tree(apply(Pred,Args))),!,
+  maplist(as_prolog,More,Adjusted),
+  append(Adjusted,[Res],Args),!,
+  if_trace(host;prolog,print_tree(apply(Pred,Args))),
   efbug(show_call,catch_warn(apply(Pred,Args))),
   check_returnval(Eq,RetType,Res).
 

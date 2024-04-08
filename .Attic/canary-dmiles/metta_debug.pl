@@ -241,6 +241,7 @@ is_debugging(Flag):- Flag== false,!,fail.
 is_debugging(Flag):- Flag== true,!.
 %is_debugging(e):- is_testing, \+ option_value(compile,'full'),!.
 is_debugging(e):- is_testing,!.
+%is_debugging(eval):- is_testing,!.
 is_debugging(Flag):- option_value(Flag,'debug'),!.
 is_debugging(Flag):- option_value(Flag,'trace'),!.
 is_debugging(Flag):- debugging(metta(Flag),TF),!,TF==true.
@@ -252,6 +253,7 @@ is_debugging(Flag):- once(flag_to_var(Flag,Var)),
 % overflow = fail
 % overflow = continue
 % overflow = debug
+
 %trace_eval(P4,_TN,D1,Self,X,Y):- is_fast_mode,!, call(P4,D1,Self,X,Y).
 %trace_eval(P4,TN,D1,Self,X,Y):- \+ is_debugging(TN),!, call(P4,D1,Self,X,Y).
 trace_eval(P4,TNT,D1,Self,X,Y):-
