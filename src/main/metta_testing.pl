@@ -160,7 +160,9 @@ loonit_report :-
     assert(gave_loonit_report),
     flag(loonit_success, Successes, Successes),
     flag(loonit_failure, Failures, Failures),
-    loonit_report(Successes,Failures).
+    loonit_report(Successes,Failures),
+    if_t((Successes==0;Failures>0),
+      if_t(option_value(repl,failures);option_value(frepl,true),repl)).
 
 :- at_halt(loonit_report).
 

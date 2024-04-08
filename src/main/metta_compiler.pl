@@ -78,6 +78,9 @@
 % =======================================
 %:- set_option_value(encoding,utf8).
 
+:- dynamic(metta_compiled_predicate/2).
+:- multifile(metta_compiled_predicate/2).
+
 % Meta-predicate that ensures that for every instance where G1 holds, G2 also holds.
 :- meta_predicate(for_all(0,0)).
 for_all(G1,G2):- forall(G1,G2).
@@ -490,6 +493,13 @@ compile_for_assert_0(Which,HeadC,_Nth,CodeForHeadArgs,Result,AsBodyFn, Converted
 
 
 
+compile_for_assert_eq('=',HeadInC, AsBodyFnC, Converted):-
+    subst_vars(['=',HeadInC, AsBodyFnC],['=',HeadIn, AsBodyFn],NamedVarsList),
+    maplist(cname_var,NamedVarsList),!,
+    compile_for_assert(HeadIn, AsBodyFn, Converted).
+compile_for_assert_eq(':-',HeadIn, BodyIn, Converted):-
+    Converted=(H:-B), s2p(HeadIn,H), s2p(BodyIn,B),!.
+
 
 compile_for_assert(HeadInC, AsBodyFn, Converted):-
  must_det_ll(
@@ -528,7 +538,7 @@ compile_for_assert_01(HeadIn, AsBodyFn, Converted) :-
 
 compile_for_assert_02(HResult,HeadIs,RetType, AsBodyFn, Converted)
  :- is_nsVar(AsBodyFn),
-     AsFunction = HeadIs,RetType,!,
+     AsFunction = HeadIs,!,
      must_det_ll((
      Converted = (HeadC :- BodyC),  % Create a rule with Head as the converted AsFunction and NextBody as the converted AsBodyFn
      %funct_with_result_is_nth_of_pred(HeadIs,RetType,AsFunction, Result, _Nth, Head),
@@ -537,7 +547,7 @@ compile_for_assert_02(HResult,HeadIs,RetType, AsBodyFn, Converted)
        funct_with_result_is_nth_of_pred(HeadIs,RetType,AsFunction, Result, _Nth, Head)),
      NextBody = u_assign(AsBodyFn,Result),
    optimize_head_and_body(Head,NextBody,HeadC,BodyC),
-     nop(ignore(Result = '$VAR'('HeadRes'))))),!.
+     cname_var('HEAD_RES',Result))),!.
 
 compile_for_assert_02(HResult,HeadIs,RetType, AsBodyFn, Converted) :-
     ar2p(HeadIs,RetType,HResult,NewHead),
@@ -556,7 +566,7 @@ compile_for_assert_02(HResult,HeadIs,RetType, AsBodyFn, Converted) :-
    %fbug([convert(Convert),optimize_head_and_body(HeadC:-NextBodyC)]),
      %if_t(((Head:-NextBody)\=@=(HeadC:-NextBodyC)),fbug(was(Head:-NextBody))),
 
-     nop(ignore(Result = '$VAR'('HeadRes'))))),!.
+     cname_var('HEAD_RES',Result))),!.
 
 % If Convert is of the form (AsFunction=AsBodyFn), we perform conversion to obtain the equivalent predicate.
 compile_for_assert_02(HResult,HeadIs,RetType, AsBodyFn, Converted) :-
@@ -613,12 +623,19 @@ metta_predicate(match(space,matchable,template,eachvar)).
 optimize_body(_HB,Body,BodyNew):- is_nsVar(Body),!,Body=BodyNew.
 %optimize_body( HB,u_assign(VT,R),u_assign(VT,R)):-!, must_optimize_body(HB,VT,VTT).
 optimize_body( HB,with_space(V,T),with_space(V,TT)):-!, must_optimize_body(HB,T,TT).
+optimize_body( HB,call(T),call(TT)):-!, must_optimize_body(HB,T,TT).
+optimize_body( HB,rtrace_on_error(T),rtrace_on_error(TT)):-!, must_optimize_body(HB,T,TT).
 optimize_body( HB,limit(V,T),limit(V,TT)):-!, must_optimize_body(HB,T,TT).
+optimize_body( HB,findall_ne(V,T,R),findall_ne(V,TT,R)):-!,
+ expand_to_hb(HB,H,_), must_optimize_body((H:-findall_ne(V,T,R)),T,TT).
 optimize_body( HB,findall(V,T,R),findall(V,TT,R)):-!,
  expand_to_hb(HB,H,_),
  must_optimize_body((H:-findall(V,T,R)),T,TT).
 optimize_body( HB,loonit_assert_source_tf(V,T,R3,R4),
   loonit_assert_source_tf(V,TT,R3,R4)):-!,
+  must_optimize_body(HB,T,TT).
+optimize_body( HB,loonit_assert_source_empty(V,X,Y,T,R3,R4),
+  loonit_assert_source_empty(V,X,Y,TT,R3,R4)):-!,
   must_optimize_body(HB,T,TT).
 
 optimize_body( HB,(B1*->B2;B3),(BN1*->BN2;BN3)):-!, must_optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2), optimize_body(HB,B3,BN3).
@@ -1021,7 +1038,11 @@ f2q(Depth,HeadIs,RetType,RetResult,Convert, Converted) :- % dif_functors(HeadIs,
     f2p(Depth,HeadIs,RetType,ResValue2,Value2,CodeForValue2),
   compile_test_then_else(Depth,RetResult,(CodeForValue1,CodeForValue2,Test),Then,Else,Converted).
 
-cname_var(Sym,Src):-  gensym(Sym,SrcV),Src='$VAR'(SrcV).
+cname_var(Sym,_Src):- var(Sym),!.
+cname_var(Sym,Src):-  var(Src),!,must_det_ll((gensym(Sym,SrcV),Src='$VAR'(SrcV))).
+cname_var(Sym,Src):-  Src='$VAR'(_),!,must_det_ll((gensym(Sym,SrcV),nb_setarg(1,Src,SrcV))).
+cname_var(_Sym,_Src).
+cname_var(Name=Var):- cname_var(Name,Var).
 f2q(Depth,HeadIs,RetType,RetResult,Convert, Converted) :-
     Convert =~ ['assertEqual',Value1,Value2],!,
     cname_var('Src_',Src),
@@ -1078,7 +1099,7 @@ f2q(Depth,HeadIs,RetType,RetResult,Convert, keep(Converted)) :-
 
 f2q(Depth,HeadIs,RetType,RetResult,Convert, (ValueCode, Converted)) :-
   Convert =~ ['case',Value|Options], \+ is_nsVar(Value),!,
-  cname_var('CASE_EVAL_',ValueResult),
+  cname_var('CASE_VAR_',ValueResult),
   f2q(Depth,HeadIs,RetType,RetResult,['case',ValueResult|Options], Converted),
   f2p(Depth,HeadIs,RetType,ValueResult,Value,ValueCode).
 
@@ -1086,9 +1107,11 @@ f2q(Depth,HeadIs,RetType,RetResult,Convert, Converted) :-
   Convert =~ ['case',Value,Options],!,
    must_det_ll((
     maplist(compile_case_bodies(Depth,HeadIs,RetType),Options,Cases),
+    cname_var('SWITCH_',AllCases),
+    cname_var('CASE_RESULT_',RetResult),
     Converted =
         (( AllCases = Cases,
-           once((member(caseStruct(MatchVar,MatchCode,BodyResult,BodyCode),AllCases),
+           once((member(caseOption(MatchVar,MatchCode,BodyResult,BodyCode),AllCases),
                  (MatchCode,unify_enough(Value,MatchVar)))),
            (BodyCode),
            BodyResult=RetResult)))).
@@ -1096,7 +1119,7 @@ f2q(Depth,HeadIs,RetType,RetResult,Convert, Converted) :-
 f2q(Depth,HeadIs,RetType,RetResult,Convert, Converted) :-
   Convert =~ ['case',Value,[Opt|Options]],nonvar(Opt),!,
    must_det_ll((
-    compile_case_bodies(Depth,HeadIs,RetType,Opt,caseStruct(Value,If,RetResult,Then)),
+    compile_case_bodies(Depth,HeadIs,RetType,Opt,caseOption(Value,If,RetResult,Then)),
     Converted = ( If -> Then ; Else ),
     ConvertCases =~ ['case',Value,Options],
     f2q(Depth,HeadIs,RetType,RetResult,ConvertCases,Else))).
@@ -1109,7 +1132,7 @@ f2q(Depth,HeadIs,RetType,RetResult,Convert, Converted) :-
     maplist(compile_case_bodies(Depth,HeadIs,RetType),Options,Cases),
     Converted =
         (( AllCases = Cases,
-           once((member(caseStruct(MatchVar,MatchCode,BodyResult,BodyCode),AllCases),
+           once((member(caseOption(MatchVar,MatchCode,BodyResult,BodyCode),AllCases),
                  (MatchCode,unify_enough(Value,MatchVar)))),
            (BodyCode),
            BodyResult=RetResult)))).
@@ -1122,7 +1145,7 @@ f2q(Depth,HeadIs,RetType,_,Convert, Converted) :-
     Converted =
         (( AllCases = Cases,
            call(ValueCode),
-           once((member(caseStruct(MatchVar,MatchCode,BodyResult,BodyCode),AllCases),
+           once((member(caseOption(MatchVar,MatchCode,BodyResult,BodyCode),AllCases),
                  both_of(ValueResult,MatchCode,unify_enough(ValueResult,MatchVar)))),
            call(BodyCode),
            BodyResult=RetResult)))).
@@ -1133,9 +1156,9 @@ both_of(_Var,G1,G2):- call(G1),call(G2).
 
 */
 
-compile_case_bodies(Depth,HeadIs,RetType,[Match,Body],caseStruct(_,true,BodyResult,BodyCode)):- Match == '%void%',!,
+compile_case_bodies(Depth,HeadIs,RetType,[Match,Body],caseOption(_,true,BodyResult,BodyCode)):- Match == '%void%',!,
       f2p(Depth,HeadIs,RetType,BodyResult,Body,BodyCode).
-compile_case_bodies(Depth,HeadIs,RetType,[Match,Body],caseStruct(MatchResult,If,BodyResult,BodyCode)):- !,
+compile_case_bodies(Depth,HeadIs,RetType,[Match,Body],caseOption(MatchResult,If,BodyResult,BodyCode)):- !,
       f2p(Depth,HeadIs,RetType,MatchResultV,Match,MatchCode),
       combine_code(MatchCode,unify_enough(MatchResult,MatchResultV),If),
       f2p(Depth,HeadIs,RetType,BodyResult,Body,BodyCode).
@@ -1373,7 +1396,7 @@ non_simple_arg(E):- compound(E),!, \+ is_ftVar(E).
 f2q(Depth,HeadIs,RetType,RetResult,Converting, (PreArgs,Converted)):-
      as_functor_args(Converting,F,A,Args),
         \+ \+ (member(E,Args), non_simple_arg(E)),
-          Self = '$VAR'('Self'),
+          cname_var('Self',Self),
           %Self = '$VAR'('RetType'),
           maplist(type_fit_childs('=',Depth,Self),_RetTypes1,ArgsCode,Args,NewArgs),
             list_to_conjunction(ArgsCode,PreArgs),
@@ -1842,7 +1865,7 @@ preds_to_functs0((Head:-Body), Converted) :- !,
   % The rule is converted by transforming Head to a function AsFunction and the Body to ConvertedBody
  (
    pred_to_funct(Head, AsFunction, Result),
-   %ignore(Result = '$VAR'('HeadRes')),
+   cname_var('HEAD_RES',Result),
    conjuncts_to_list(Body,List),
    reverse(List,RevList),append(Left,[BE|Right],RevList),
    compound(BE),arg(Nth,BE,ArgRes),sub_var(Result,ArgRes),

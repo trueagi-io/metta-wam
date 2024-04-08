@@ -1,3 +1,57 @@
+/*
+ * Project: MeTTaLog - A MeTTa to Prolog Transpiler/Interpreter
+ * Description: This file is part of the source code for a transpiler designed to convert
+ *              MeTTa language programs into Prolog, utilizing the SWI-Prolog compiler for
+ *              optimizing and transforming function/logic programs. It handles different
+ *              logical constructs and performs conversions between functions and predicates.
+ *
+ * Author: Douglas R. Miles
+ * Contact: logicmoo@gmail.com / dmiles@logicmoo.org
+ * License: LGPL
+ * Repository: https://github.com/trueagi-io/metta-wam
+ *             https://github.com/logicmoo/hyperon-wam
+ * Created Date: 8/23/2023
+ * Last Modified: $LastChangedDate$  # You will replace this with Git automation
+ *
+ * Usage: This file is a part of the transpiler that transforms MeTTa programs into Prolog. For details
+ *        on how to contribute or use this project, please refer to the repository README or the project documentation.
+ *
+ * Contribution: Contributions are welcome! For contributing guidelines, please check the CONTRIBUTING.md
+ *               file in the repository.
+ *
+ * Notes:
+ * - Ensure you have SWI-Prolog installed and properly configured to use this transpiler.
+ * - This project is under active development, and we welcome feedback and contributions.
+ *
+ * Acknowledgments: Special thanks to all contributors and the open source community for their support and contributions.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
    Parsing
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
@@ -498,14 +552,14 @@ sexpr0((Expr))                 -->  `.{`, read_string_until(S,`}.`), swhite,
   {prolog_readable_term(Expr,S,_)}.
 
 
-sexpr0(['#'(quote),E])             --> `'`, !, sexpr(E).
+sexpr0(['#'(quote),E])             --> {\+ is_metta}, `'`, !, sexpr(E). % '
 sexpr0(['#'(hbackquote),E])         --> {is_scm}, `#```, !, sexpr(E).
-sexpr0(['#'(backquote),E])         --> ````, !, sexpr(E).
-sexpr0(['#BQ-COMMA-ELIPSE',E])     --> `,@`, !, sexpr(E).
+sexpr0(['#'(backquote),E])         --> {\+ is_metta}, ````, !, sexpr(E).
+sexpr0(['#BQ-COMMA-ELIPSE',E])     --> {\+ is_metta}, `,@`, !, sexpr(E).
 sexpr0(['#COMMA',E])               --> { is_common_lisp }, `,`, !, sexpr(E).
 sexpr0(['#HCOMMA',E])               --> {is_scm}, `#,`, !, sexpr(E).
 
-
+sexpr0('#\\'(A))--> { is_metta}, `'`,[C],`'`,{C>=32},!, {atom_codes(A,[C])}.
 
 % sexpr_metta('$STRING'(S))             --> s_string(S),!.
 
@@ -553,7 +607,7 @@ sexpr0('$S'(C)) -->                  (`#`, ci(`s`),`(`),!,zalwayzz(sexpr_list(C)
 sexpr0('$COMPLEX'(R,I)) -->         (`#`, ci(`c`),`(`),!,zalwayzz(sexpr_list([R,I])),swhite,!.
 sexpr0('$OBJ'(claz_bitvector,C)) --> `#*`,radix_digits(2,C),swhite,!.
 
-sexpr0(function(E))                 --> `#\'`, sexpr(E), !. %, swhite.
+sexpr0(function(E))                 --> `#\'`, sexpr(E), !. %, swhite. % '
 sexpr0('$OBJ'(claz_vector,V))                 --> `#(`, !, zalwayzz(sexpr_vector(V,`)`)),!, swhite,!.
 
 sexpr0(Number) --> `#`,integer(Radix),ci(`r`),!,zalwayzz((signed_radix_2(Radix,Number0),extend_radix(Radix,Number0,Number))),!.

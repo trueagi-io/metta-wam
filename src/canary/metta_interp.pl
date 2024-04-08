@@ -938,8 +938,14 @@ load_hook(Load,Hooked):-
    ignore(( \+ ((forall(load_hook0(Load,Hooked),true))))),!.
 
 
-rtrace_on_error(G):- catch(G,_,fail),!.
-rtrace_on_error(G):-rtrace(G),!.
+%rtrace_on_error(G):-!,call(G).
+rtrace_on_error(G):- 
+  catch_err(G,E,
+   (notrace,
+    write_src_uo(E=G),
+    %rtrace(G),
+    throw(E))).
+
 assertion_hb(metta_defn(Eq,Self,H,B),Self,Eq,H,B):-!.
 assertion_hb(metta_atom_asserted(KB,HB),Self,Eq,H,B):- !, assertion_hb(metta_atom(KB,HB),Self,Eq,H,B).
 assertion_hb(metta_atom(Self,[Eq,H,B]),Self,Eq,H,B):- assert_type_cl(Eq),!.
@@ -2097,7 +2103,7 @@ give_time(What,Seconds):-
 
 timed_call(Goal,Seconds):-
     statistics(cputime, Start),
-    ( \+ rtrace_this(Goal)->call(Goal);rtrace(Goal)),
+    ( \+ rtrace_this(Goal)->rtrace_on_error(Goal);rtrace(Goal)),
     statistics(cputime, End),
     Seconds is End - Start.
 

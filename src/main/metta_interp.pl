@@ -940,10 +940,15 @@ load_hook(Load,Hooked):-
 
 rtrace_on_error(G):- catch(G,_,fail),!.
 rtrace_on_error(G):-rtrace(G),!.
-assertion_hb(metta_defn(=,Self,H,B),Self,H,B).
-assertion_hb(metta_atom_asserted(Self,[=,H,B]),Self,H,B).
-assertion_hb(metta_atom_asserted(Self,[=,H,B]),Self,H,B).
-assertion_hb(metta_atom(Self,[=,H,B]),Self,H,B).
+assertion_hb(metta_defn(Eq,Self,H,B),Self,Eq,H,B):-!.
+assertion_hb(metta_atom_asserted(KB,HB),Self,Eq,H,B):- !, assertion_hb(metta_atom(KB,HB),Self,Eq,H,B).
+assertion_hb(metta_atom(Self,[Eq,H,B]),Self,Eq,H,B):- assert_type_cl(Eq),!.
+assertion_hb(metta_atom(Self,[Eq,H|B]),Self,Eq,H,B):- assert_type_cl(Eq),!.
+
+assert_type_cl(Eq):- \+ symbol(Eq),!,fail.
+assert_type_cl('=').
+assert_type_cl(':-').
+
 
 load_hook0(_,_):- \+ show_transpiler, \+ is_transpiling, !.
 load_hook0(Load,Assertion):- fail,
@@ -951,8 +956,8 @@ load_hook0(Load,Assertion):- fail,
        functs_to_preds([=,H,B],Preds),
        assert_preds(Self,Load,Preds).
 load_hook0(Load,Assertion):-
-     assertion_hb(Assertion,Self,H,B),
-     rtrace_on_error(compile_for_assert(H, B, Preds)),!,
+     assertion_hb(Assertion,Self, Eq, H,B),
+     rtrace_on_error(compile_for_assert_eq(Eq, H, B, Preds)),!,
      rtrace_on_error(assert_preds(Self,Load,Preds)).
 load_hook0(_,_):- \+ current_prolog_flag(metta_interp,ready),!.
 /*
@@ -2092,7 +2097,7 @@ give_time(What,Seconds):-
 
 timed_call(Goal,Seconds):-
     statistics(cputime, Start),
-    ( \+ rtrace_this(Goal)->call(Goal);rtrace(Goal)),
+    ( \+ rtrace_this(Goal)->rtrace_on_error(Goal);rtrace(Goal)),
     statistics(cputime, End),
     Seconds is End - Start.
 

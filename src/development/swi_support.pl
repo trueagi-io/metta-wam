@@ -72,7 +72,7 @@ set_option_value0(N,V):-
    p2mE(V,VV),!,
    catch(nb_setval(N,VV),E,fbug(E)),
    p2mE(PV,VV),!,
-   catch(create_prolog_flag(N,PV,[keep(true),access(read_write), type(term)]),E2,fbug(E2)),
+   catch(create_prolog_flag(N,PV,[keep(false),access(read_write), type(term)]),E2,fbug(E2)),
    catch(set_prolog_flag(N,PV),E3,fbug(E3)),!.
 
 kaggle_arc:- \+ exists_directory('/opt/logicmoo_workspace/packs_sys/logicmoo_agi/prolog/kaggle_arc/'), !.
@@ -109,13 +109,13 @@ symbolic(A):-atomic(A).
 symbolic_concat(A,B,C):-atomic_concat(A,B,C).
 symbolic_concat(A,B,C,D):-atomic_concat(A,B,C,D).
 symbolic_list_concat(A,B):-atomic_list_concat(A,B).
-symbolic_list_concat(A,B,C):-atomic_list_concat(A,B,C).
+symbolic_list_concat(A,B,C):- atomic_list_concat(A,B,C).
 symbolic_to_string(A,B):-atomic_to_string(A,B).
 symbolics_to_string(A,B):-atomics_to_string(A,B).
 symbolics_to_string(A,B,C):-atomics_to_string(A,B,C).
 upcase_symbol(A,B):-upcase_atom(A,B).
 :- prolog_load_context(directory, File),
-   ignore((
+   ignore(( 
      absolute_file_name('../../data/ftp.flybase.org/releases/current/',Dir,[relative_to(File),
      file_type(directory), file_errors(fail)]),
     asserta(ftp_data(Dir)))).
