@@ -1,6 +1,0 @@
-[(Vec Number (S (S Z)))]
-[(Vec Number Z)]
-[(VecN Number 3)]
-[(VecN Number -1)]
-0.06user 0.00system 0:00.06elapsed 100%CPU (0avgtext+0avgdata 33664maxresident)k
-0inputs+0outputs (0major+3619minor)pagefaults 0swaps
