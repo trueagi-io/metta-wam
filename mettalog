@@ -441,16 +441,21 @@ function handle_args {
 
         # Check if the previous argument was --rc
         if [[ "$NEXT_ARG_IS_RC_FILE" == true ]]; then
+	    NEXT_ARG_IS_RC_FILE=false
             rc_file_path="$PrevDir/$arg"  # Resolve file path relative to PrevDir
             rc_file_path="$(realpath "$rc_file_path")"  # Resolve to absolute path
             load_rc_file "$rc_file_path"
 	    use_rc_file=""
-            NEXT_ARG_IS_RC_FILE=false
             continue
         fi
         # Add support for --rc followed by a file
         if [[ "$arg" == "--rc" ]]; then
             NEXT_ARG_IS_RC_FILE=true
+            continue
+        fi
+
+        if [[ "$arg" == "--norc" ]]; then
+            use_rc_file=""
             continue
         fi
 
@@ -638,14 +643,13 @@ DIR_RC="$DIRNAME/.mettalogrc"
 #DEBUG "DIR_RC=$DIR_RC"
 
 if [[ -f "$DIR_RC" ]]; then
-    use_rc_file="${DIR_RC}"
+   use_rc_file="${DIR_RC}"
 else
-   : #use_rc_file="~/.mettalogrc"
+   use_rc_file="~/.mettalogrc"
 fi
 
 # maybe process arguments from ~/.mettalogrc ?
 #load_rc_file "~/.mettalogrc"
-
 # process actual command-line arguments
 handle_args "$@"
 
