@@ -39,7 +39,22 @@ convert_path() {
     echo "$modified_path"
 }
 
-
+convert_mod() {
+    # Remove the leading './' from the path
+        local mod=${1#./}
+	mod="${mod%/}"
+	mod="${mod//baseline/ }"
+	mod="${mod//scripts/ }"	    	    
+	mod="${mod//\_/ }"
+	mod="${mod//\// }"
+	mod="${mod//  / }"
+	mod="${mod//  / }"
+	mod="${mod//  / }"
+	mod="${mod//  / }"
+	mod="${mod//tests compiler/C }"
+	mod="${mod//tests compat/I }"
+     echo "$mod"
+}
 
 # Create a temporary file for storing directory and file count
 temp_file=$(mktemp)
@@ -51,10 +66,11 @@ find "$start_dir" -type d -not -path '*/__pycache__*' | while read -r dir; do
     echo "$dir $slash_count" >> "$temp_file"
 done
 
+
+file_info_tmp=$(mktemp)
+chart1=$(mktemp)
+
 tput rmam
-echo ""
-echo "|Pass|Fail|Miss|Percent| Module | Directory |"
-echo "|----|----|----|-------|--------|-----------|"
 
 # Find all directories under the specified start directory and loop through them
 sort -k1,1r -k2,2nr  "$temp_file" | while read -r dir slash_count; do
@@ -87,22 +103,33 @@ sort -k1,1r -k2,2nr  "$temp_file" | while read -r dir slash_count; do
     total_tests=$((total_pass + total_fail))
     if [ "$total_tests" -ne 0 ]; then
        if [ "$total_pass" -ne 0 ]; then
-           missing=" "
-           total_tests=$((total_pass + total_fail + files_no_totals))
+       	   total_pass_fail=$((total_pass + total_fail))
+	   show_total_as="${total_pass_fail}"
+	   missing=" "
+           total_tests=$((total_pass_fail + files_no_totals))
            dir_percent=$((100 * total_pass / total_tests))
             if [ "$files_no_totals" -ne 0 ]; then
-                  missing="${files_no_totals}"
+                  show_total_as="${show_total_as}"
+		  missing="${files_no_totals}"
             fi
 	    mdir="$(convert_path $dir)"
-           printf "|%4d|%4d| %2s |  %3d%% | %s                                                           |%s |\n" "$total_pass" "$total_fail" "$missing" "$dir_percent" "$(reverse_path $mdir)" "$mdir"
+	    mod="$(convert_mod $mdir)"
+           printf "|%4d|%-2s%3d|%4s|  %3d%% | %-30s | %s |\n" "$total_pass" "$missing" "$total_fail" "$show_total_as" "$dir_percent" "$mod" "$mdir"  >> $chart1
 
        fi
     fi
 
 done
 
-
-
+echo ""
+echo "|Pass|EFail|Totl|Percent| Module | Directory |"
+echo "|----|-----|----|-------|--------|-----------|"
+awk -F '|' '{ 
+    # Extract the 5th column and the "subfield" for sorting
+    #split($5, module_parts, "|"); 
+    # Print the sort keys followed by the original line
+    print $4 " |" $0; 
+}' $chart1 | sort -k1,1n | cut -d '|' -f2-
 
 
 
@@ -111,17 +138,18 @@ echo ""
 echo ""
 echo ""
 echo ""
+
 
 
 
 
 base_url="https://logicmoo.org/public/metta/"
 
-# Sort the directories by file count in reverse order
+# Sort the directories by slash_count count in reverse order
 sort -k2,2n "$temp_file" | while read -r dir slash_count; do
     total_pass=0
     total_fail=0
-    cat /dev/null > file_info.tmp
+    cat /dev/null > $file_info_tmp
     had_files=false
 
     # Process each .metta.html file in the directory
@@ -149,7 +177,7 @@ sort -k2,2n "$temp_file" | while read -r dir slash_count; do
             fi
             relative_path=$(echo "$file" | sed 's/^\.\///' | sed -e 's|examples|reports|g' -e 's|-reports|-examples|g')
             github_link="${base_url}${relative_path}"
-            printf "| %5d | %5d |  %5d%%  | [%s](%s) |\n" "$pass" "$fail" "$file_percent" "$(basename "${file%.html}")" "$github_link" >> file_info.tmp
+            printf "| %5d | %5d |  %5d%%  | [%s](%s) |\n" "$pass" "$fail" "$file_percent" "$(basename "${file%.html}")" "$github_link" >> $file_info_tmp
         fi
     done < <(find "$dir" -name "*.metta.html" -type f -maxdepth 1)
 
@@ -161,72 +189,38 @@ sort -k2,2n "$temp_file" | while read -r dir slash_count; do
         dir_percent=$((100 * total_pass / total_tests))
         if [ "$had_files" == "true" ]; then
            echo ""
-           echo  "|  Pass |  Fail |  Percent | File/Module/Directory Information                                                                              |"
+           echo  "|  Pass |  Fail |  Percent | File/Module/Directory Information                                                                              |" 
            echo  "|-------|-------|----------|----------------------------------------------------------------------------------------------------|"
-           printf "|       |       |          |                                                                                                    |\n"
-           printf "|       |       |          | Dir: ./%s                 |\n" "$mdir"
-           printf "|       |       |          | Mod: %s                 |\n" "$(reverse_path $mdir)"
-           printf "|       |       |          |                                                                                                    |\n"
-           cat file_info.tmp
-           printf "|       |       |          |                                                                                                    |\n"
-           printf "| %5d | %5d |  %5d%%  | Total                                                                                              |\n" "$total_pass" "$total_fail" "$dir_percent"
-           printf "|       |       |          |                                                                                                    |\n"
+           printf "|       |       |          |%-80s|\n" ""
+           printf "|       |       |          |%-80s|\n" " Dir: ./$mdir"
+           printf "|       |       |          |%-80s|\n" " Mod: $(reverse_path $mdir)"
+           printf "|       |       |          |%-80s|\n" ""
+           cat $file_info_tmp
+           printf "|       |       |          |%-80s|\n" ""
+           printf      "| %5d | %5d |  %5d%%  |%-80s|\n" "$total_pass" "$total_fail" "$dir_percent" " Total"
+           printf "|       |       |          |%-80s|\n" ""
            echo ""
         fi
     fi
 done
 
+echo ""
+echo "|Pass|EFail|Totl|Percent| Module | Directory |"
+echo "|----|-----|----|-------|--------|-----------|"
+awk -F '|' '{ 
+    # Extract the 5th column and the "subfield" for sorting
+    #split($5, module_parts, "|"); 
+    # Print the sort keys followed by the original line
+    print $4 " |" $0; 
+}' $chart1 | sort -k1,1n | cut -d '|' -f2-
 
+echo ""
+echo "|Pass|EFail|Totl|Percent| Module | Directory |"
+echo "|----|-----|----|-------|--------|-----------|"
+cat $chart1
 
-
-
-echo "|Pass|Fail|Miss|Percent| Module | Directory |"
-echo "|----|----|----|-------|--------|-----------|"
-
-# Find all directories under the specified start directory and loop through them
-sort -k1,1r -k2,2nr  "$temp_file" | while read -r dir slash_count; do
-    total_pass=0
-    total_fail=0
-    files_no_totals=0
-
-    # Process each .metta.html file in the directory
-    while read -r file; do
-            # Extract successes and failures
-       pass=$(tac "$file" | grep -oP 'Successes: \K\d+' | head -n 1 | bc || echo 0)
-       fail=$(tac "$file" | grep -oP 'Failures: \K\d+' | head -n 1 | bc || echo 0)
-
-            # Add to totals
-            total_pass=$((total_pass + pass))
-            total_fail=$((total_fail + fail))
-
-            # Calculate and print the file percentage
-            total_file_tests=$((pass + fail))
-            if [ "$total_file_tests" -ne 0 ]; then
-                had_files=true
-                file_percent=$((100 * pass / total_file_tests))
-            else
-               files_no_totals=$((files_no_totals + 1))
-            fi
-    done < <(find "$dir" -name "*.metta.html" -type f)
-
-    # Calculate and print the directory percentage
-    dir_percent=0
-    total_tests=$((total_pass + total_fail))
-    if [ "$total_tests" -ne 0 ]; then
-       if [ "$total_pass" -ne 0 ]; then
-           missing=" "
-           total_tests=$((total_pass + total_fail + files_no_totals))
-           dir_percent=$((100 * total_pass / total_tests))
-            if [ "$files_no_totals" -ne 0 ]; then
-                  missing="${files_no_totals}"
-            fi
-	    mdir="$(convert_path $dir)"
-           printf "|%4d|%4d| %2s |  %3d%% | %s                                                           |%s |\n" "$total_pass" "$total_fail" "$missing" "$dir_percent" "$(reverse_path $mdir)" "$mdir"
-
-       fi
-    fi
-
-done
+rm -f $chart1
+rm -f $file_info_tmp
 
 tput smam
 
