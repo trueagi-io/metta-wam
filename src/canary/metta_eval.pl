@@ -508,9 +508,8 @@ eval_20(Eq,_RetType,Depth,Self,['assertEqualToResult',X,Y],RetVal):- !,
    loonit_assert_source_tf_empty(
         ['assertEqualToResult',X,Y],XX,YY,
         (bagof_eval(Eq,_ARetType,Depth,Self,X,XX),
-         =(Y,YY)),
+         val_sort(Y,YY)),
          equal_enough_for_test(XX,YY), RetVal).
-
 
 loonit_assert_source_tf_empty(Src,XX,YY,Goal,Check,RetVal):-
     loonit_assert_source_tf(Src,Goal,Check,TF),
@@ -518,6 +517,9 @@ loonit_assert_source_tf_empty(Src,XX,YY,Goal,Check,RetVal):-
 
 tf_to_empty(TF,Else,RetVal):-
   (TF=='True'->make_empty(_RetType,RetVal);RetVal=Else).
+
+val_sort(Y,YY):- is_list(Y),!,sort(Y,YY).
+val_sort(Y,[Y]).
 
 loonit_assert_source_tf(_Src,Goal,Check,TF):- \+ is_testing,!,
     reset_eval_num,
@@ -539,15 +541,13 @@ sort_result([T,And|Res1],Res):- is_and(And),!,sort_result([T|Res1],Res).
 sort_result([H|T],[HH|TT]):- !, sort_result(H,HH),sort_result(T,TT).
 sort_result(Res,Res).
 
-unify_enough(L,L):-!.
-unify_enough(L,C):- compound(L),compound(C),
-  into_list_args(L,LL),into_list_args(C,CC),!,
-  unify_lists(CC,LL).
+unify_enough(L,L).
+unify_enough(L,C):- into_list_args(L,LL),into_list_args(C,CC),unify_lists(CC,LL).
 
-unify_lists(C,L):- \+ compound(C),!,L=C.
-unify_lists(L,C):- \+ compound(C),!,L=C.
-unify_lists([C|CC],[L|LL]):- !, unify_enough(L,C),!,unify_lists(CC,LL).
+%unify_lists(C,L):- \+ compound(C),!,L=C.
+%unify_lists(L,C):- \+ compound(C),!,L=C.
 unify_lists(L,L):-!.
+unify_lists([C|CC],[L|LL]):- unify_enough(L,C),!,unify_lists(CC,LL).
 
 %s_empty(X):- var(X),!.
 s_empty(X):- var(X),!,fail.
@@ -1602,7 +1602,9 @@ is_user_defined_goal(Self,Head):-
 
 adjust_args_mp(_Eq,_RetType,Res,Res,_Depth,_Self,_Pred,_Len,_AE,Args,Adjusted):- Args==[],!,Adjusted=Args.
 adjust_args_mp(Eq,RetType,Res,NewRes,Depth,Self,Pred,Len,AE,Args,Adjusted):-
-   functor(P,Pred,Len), predicate_property(P,meta_predicate(Needs)),
+    
+   functor(P,Pred,Len), 
+   predicate_property(P,meta_predicate(Needs)),
    account_needs(1,Needs,Args,More),!,
    adjust_args(Eq,RetType,Res,NewRes,Depth,Self,AE,More,Adjusted).
 adjust_args_mp(Eq,RetType,Res,NewRes,Depth,Self,_Pred,_Len,AE,Args,Adjusted):-
@@ -1651,11 +1653,16 @@ eval_maybe_host_function(Eq,RetType,_Depth,_Self,[AE|More],Res):- allow_host_fun
   check_returnval(Eq,RetType,Res).
 
 % user defined function
-%eval_40(Eq,RetType,Depth,Self,[H|PredDecl],Res):-
+%eval_20(Eq,RetType,Depth,Self,[H|PredDecl],Res):-
  %  fake_notrace(is_user_defined_head(Self,H)),!,
- %  eval_maybe_defn(Eq,RetType,Depth,Self,[H|PredDecl],Res).
+ %  eval_defn(Eq,RetType,Depth,Self,[H|PredDecl],Res).
 
+/*eval_maybe_defn(Eq,RetType,Depth,Self,PredDecl,Res):-    
+    eval_defn(Eq,RetType,Depth,Self,PredDecl,Res).
 
+eval_maybe_subst(Eq,RetType,Depth,Self,PredDecl,Res):-
+    subst_args_h(Eq,RetType,Depth,Self,PredDecl,Res).
+*/
 
 
 

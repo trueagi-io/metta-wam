@@ -287,10 +287,10 @@ get_type_cmpd(_Dpth,_Slf,Val,Type,dict):- is_dict(Val,Type),
   get_dict_type(Val,Type,TypeO).
 
 % Curried Op
-get_type_cmpd(Depth,Self,[[Op|Args]|Arg],Type,curried):-
+get_type_cmpd(Depth,Self,[[Op|Args]|Arg],Type,curried(W)):-
  symbol(Op),
  Depth2 is Depth-1,
- get_type_cmpd(Depth2,Self,[Op|Args],Type1),
+ get_type_cmpd(Depth2,Self,[Op|Args],Type1,W),
  get_type(Depth2,Self,Arg,ArgType),
  ignore(sub_var(ArgType,Type1)->true;
    (sub_term(ST,Type1),var(ST),ST=ArgType)),
