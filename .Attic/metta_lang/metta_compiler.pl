@@ -538,7 +538,7 @@ compile_for_assert_01(HeadIn, AsBodyFn, Converted) :-
 
 compile_for_assert_02(HResult,HeadIs,RetType, AsBodyFn, Converted)
  :- is_nsVar(AsBodyFn),
-     AsFunction = HeadIs,RetType,!,
+     AsFunction = HeadIs,!,
      must_det_ll((
      Converted = (HeadC :- BodyC),  % Create a rule with Head as the converted AsFunction and NextBody as the converted AsBodyFn
      %funct_with_result_is_nth_of_pred(HeadIs,RetType,AsFunction, Result, _Nth, Head),
@@ -547,7 +547,7 @@ compile_for_assert_02(HResult,HeadIs,RetType, AsBodyFn, Converted)
        funct_with_result_is_nth_of_pred(HeadIs,RetType,AsFunction, Result, _Nth, Head)),
      NextBody = u_assign(AsBodyFn,Result),
    optimize_head_and_body(Head,NextBody,HeadC,BodyC),
-     nop(cname_var('HEAD_RES',Result)))),!.
+     cname_var('HEAD_RES',Result))),!.
 
 compile_for_assert_02(HResult,HeadIs,RetType, AsBodyFn, Converted) :-
     ar2p(HeadIs,RetType,HResult,NewHead),
@@ -566,7 +566,7 @@ compile_for_assert_02(HResult,HeadIs,RetType, AsBodyFn, Converted) :-
    %fbug([convert(Convert),optimize_head_and_body(HeadC:-NextBodyC)]),
      %if_t(((Head:-NextBody)\=@=(HeadC:-NextBodyC)),fbug(was(Head:-NextBody))),
 
-     nop(cname_var('HEAD_RES',Result)))),!.
+     cname_var('HEAD_RES',Result))),!.
 
 % If Convert is of the form (AsFunction=AsBodyFn), we perform conversion to obtain the equivalent predicate.
 compile_for_assert_02(HResult,HeadIs,RetType, AsBodyFn, Converted) :-
@@ -620,9 +620,12 @@ metta_predicate(limit(number,matchable)).
 metta_predicate(findall(template,matchable,listvar)).
 metta_predicate(match(space,matchable,template,eachvar)).
 
+
 optimize_body(_HB,Body,BodyNew):- is_nsVar(Body),!,Body=BodyNew.
 %optimize_body( HB,u_assign(VT,R),u_assign(VT,R)):-!, must_optimize_body(HB,VT,VTT).
 optimize_body( HB,with_space(V,T),with_space(V,TT)):-!, must_optimize_body(HB,T,TT).
+optimize_body( HB,call(T),call(TT)):-!, must_optimize_body(HB,T,TT).
+optimize_body( HB,rtrace_on_error(T),rtrace_on_error(TT)):-!, must_optimize_body(HB,T,TT).
 optimize_body( HB,limit(V,T),limit(V,TT)):-!, must_optimize_body(HB,T,TT).
 optimize_body( HB,findall_ne(V,T,R),findall_ne(V,TT,R)):-!,
  expand_to_hb(HB,H,_), must_optimize_body((H:-findall_ne(V,T,R)),T,TT).
@@ -1122,8 +1125,9 @@ f2q(Depth,HeadIs,RetType,RetResult,Convert, Converted) :-
 
 select_case(AllCases,Value,BodyResult):-
        once((member(caseOption(MatchVar,MatchCode,BodyResult,BodyCode),AllCases),
-             call(MatchCode),unify_enough(Value,MatchVar))),
-       call(BodyCode).
+             rtrace_on_error(MatchCode),unify_enough(Value,MatchVar)))
+             ,!,
+       rtrace_on_error(BodyCode).
 
 
 f2q(Depth,HeadIs,RetType,RetResult,Convert, Converted) :-
@@ -1881,7 +1885,7 @@ preds_to_functs0((Head:-Body), Converted) :- !,
   % The rule is converted by transforming Head to a function AsFunction and the Body to ConvertedBody
  (
    pred_to_funct(Head, AsFunction, Result),
-   %cname_var('HEAD_RES',Result),
+   cname_var('HEAD_RES',Result),
    conjuncts_to_list(Body,List),
    reverse(List,RevList),append(Left,[BE|Right],RevList),
    compound(BE),arg(Nth,BE,ArgRes),sub_var(Result,ArgRes),

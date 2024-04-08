@@ -1,3 +1,32 @@
+/*
+ * Project: MeTTaLog - A MeTTa to Prolog Transpiler/Interpeter
+ * Description: This file is part of the source code for a transpiler designed to convert
+ *              MeTTa language programs into Prolog, utilizing the SWI-Prolog compiler for
+ *              optimizing and transforming functional/logic programs. It handles different
+ *              logical constructs and performs conversions between functions and predicates.
+ *
+ * Author: Douglas R. Miles
+ * Contact: logicmoo@gmail.com / dmiles@logicmoo.org
+ * License: LGPL
+ * Repository: https://github.com/trueagi-io/metta-wam
+ *             https://github.com/logicmoo/hyperon-wam
+ * Created Date: 8/23/2023
+ * Last Modified: $LastChangedDate$  # You will replace this with Git automation
+ *
+ * Usage: This file is a part of the transpiler that transforms MeTTa programs into Prolog. For details
+ *        on how to contribute or use this project, please refer to the repository README or the project documentation.
+ *
+ * Contribution: Contributions are welcome! For contributing guidelines, please check the CONTRIBUTING.md
+ *               file in the repository.
+ *
+ * Notes:
+ * - Ensure you have SWI-Prolog installed and properly configured to use this transpiler.
+ * - This project is under active development, and we welcome feedback and contributions.
+ *
+ * Acknowledgments: Special thanks to all contributors and the open source community for their support and contributions.
+ */
+
+
 :- encoding(iso_latin_1).
 :- flush_output.
 :- setenv('RUST_BACKTRACE',full).
@@ -124,7 +153,7 @@ sexpr_s2p(_Fn,_Nth,'#'(S),P):- iz_exact_symbol(S,P),!.
 sexpr_s2p(_Fn,_Nth,VAR,'$VAR'(Name)):- atom(VAR),svar(VAR,Name),!.
 sexpr_s2p(Fn,Nth,S,P):- S==[], iz_fun_argz(Fn,Nth),!,P=S.
 
-sexpr_s2p(Fn,Nth,S,P):- expects_type(Fn,Nth,Type),will_become_type(Type,S,P),!.
+%sexpr_s2p(Fn,Nth,S,P):- expects_type(Fn,Nth,Type),will_become_type(Type,S,P),!.
 
 sexpr_s2p(_Fn,_Nth,[F|SList],P):- is_list(SList), length(SList,Len),is_syspred(F,Len,Pred), sexpr_s2p_arglist(F,1,SList,PList), !, P=..[Pred|PList].
 :- style_check(-singleton).

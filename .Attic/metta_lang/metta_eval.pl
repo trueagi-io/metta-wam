@@ -494,19 +494,21 @@ eval_20(Eq,_RetType,Depth,Self,['assertEqual',X,Y],RetVal):- !,
    loonit_assert_source_tf_empty(
         ['assertEqual',X,Y],XX,YY,
         (bagof_eval(Eq,_ARetType,Depth,Self,X,XX),
-(Eq,_BRetType,Depth,Self,Y,YY)),
+         bagof_eval(Eq,_BRetType,Depth,Self,Y,YY)),
          equal_enough_for_test(XX,YY), RetVal).
 
 eval_20(Eq,_RetType,Depth,Self,['assertNotEqual',X,Y],RetVal):- !,
    loonit_assert_source_tf_empty(
-        ['assertEqual',X,Y],XX,YY,
-        (bagof_eval(Eq,_ARetType,Depth,Self,X,XX), bagof_eval(Eq,_BRetType,Depth,Self,Y,YY)),
+        ['assertNotEqual',X,Y],XX,YY,
+        (bagof_eval(Eq,_ARetType,Depth,Self,X,XX),
+         bagof_eval(Eq,_BRetType,Depth,Self,Y,YY)),
          ( \+ equal_enough(XX,YY)), RetVal).
 
 eval_20(Eq,_RetType,Depth,Self,['assertEqualToResult',X,Y],RetVal):- !,
    loonit_assert_source_tf_empty(
         ['assertEqualToResult',X,Y],XX,YY,
-        (bagof_eval(Eq,_ARetType,Depth,Self,X,XX), =(Y,YY)),
+        (bagof_eval(Eq,_ARetType,Depth,Self,X,XX),
+         =(Y,YY)),
          equal_enough_for_test(XX,YY), RetVal).
 
 
@@ -537,13 +539,15 @@ sort_result([T,And|Res1],Res):- is_and(And),!,sort_result([T|Res1],Res).
 sort_result([H|T],[HH|TT]):- !, sort_result(H,HH),sort_result(T,TT).
 sort_result(Res,Res).
 
-unify_enough(L,L).
-unify_enough(L,C):- into_list_args(L,LL),into_list_args(C,CC),unify_lists(CC,LL).
+unify_enough(L,L):-!.
+unify_enough(L,C):- compound(L),compound(C),
+  into_list_args(L,LL),into_list_args(C,CC),!,
+  unify_lists(CC,LL).
 
-%unify_lists(C,L):- \+ compound(C),!,L=C.
-%unify_lists(L,C):- \+ compound(C),!,L=C.
+unify_lists(C,L):- \+ compound(C),!,L=C.
+unify_lists(L,C):- \+ compound(C),!,L=C.
+unify_lists([C|CC],[L|LL]):- !, unify_enough(L,C),!,unify_lists(CC,LL).
 unify_lists(L,L):-!.
-unify_lists([C|CC],[L|LL]):- unify_enough(L,C),!,unify_lists(CC,LL).
 
 %s_empty(X):- var(X),!.
 s_empty(X):- var(X),!,fail.
@@ -1432,9 +1436,10 @@ suggest_type(_RetType,_Bool).
 naive_eval_args:-
     false.
 
-eval_40(_Eq,_RetType,_Depth,Self,[AE|More],Res):-
+eval_40(_Eq,_RetType,Depth,Self,[AE|More],Res):-
   len_or_unbound(More,Len), Pred = AE,
   metta_compiled_predicate(AE,Arity),
+  indentq2(Depth,metta_compiled_predicate(AE, Arity,Len)),
   Arity = Len,
   current_predicate(AE,Len),!,
   maplist(as_prolog, More , Adjusted),
@@ -1885,18 +1890,18 @@ cwtl(DL,Goal):- catch(call_with_time_limit(DL,Goal),time_limit_exceeded(_),fail)
 
 %bagof_eval(Eq,RetType,Depth,Self,X,S):- bagof(E,eval_ne(Eq,RetType,Depth,Self,X,E),S)*->true;S=[].
 bagof_eval(_Eq,_RetType,_Dpth,_Slf,X,L):- typed_list(X,_Type,L),!.
-bagof_eval(Eq,RetType,Depth,Self,X,L):-
-   findall(E,eval_ne(Eq,RetType,Depth,Self,X,E),L).
+bagof_eval(Eq,RetType,Depth,Self,Funcall,L):-
+   findall_ne(E,eval(Eq,RetType,Depth,Self,Funcall,E),L).
 
-setof_eval(Depth,Self,X,L):- setof_eval('=',_RT,Depth,Self,X,L).
-setof_eval(Eq,RetType,Depth,Self,X,S):- bagof_eval(Eq,RetType,Depth,Self,X,L),
+setof_eval(Depth,Self,Funcall,L):- setof_eval('=',_RT,Depth,Self,Funcall,L).
+setof_eval(Eq,RetType,Depth,Self,Funcall,S):- bagof_eval(Eq,RetType,Depth,Self,Funcall,L),
    sort(L,S).
 
-findall_ne(E,X,L):-
-   findall(E,(X, is_returned(E)),L).
+findall_ne(E,Call,L):-
+   findall(E,(rtrace_on_error(Call), is_returned(E)),L).
 
-eval_ne(Eq,RetType,Depth,Self,X,E):-
-  eval(Eq,RetType,Depth,Self,X,E), is_returned(E).
+eval_ne(Eq,RetType,Depth,Self,Funcall,E):-
+  eval(Eq,RetType,Depth,Self,Funcall,E).
 
 is_returned(E):- \+ var(E), \+ is_empty(E).
 
