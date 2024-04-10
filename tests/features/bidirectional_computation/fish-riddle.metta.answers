@@ -1,0 +1,6 @@
+thread 'main' panicked at repl/src/metta_shim.rs:156:20:
+called `Result::unwrap()` on an `Err` value: PyErr { type: <class 'RuntimeError'>, value: RuntimeError('Unexpected end of expression'), traceback: Some(<traceback object at 0x7fda044af100>) }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+Command exited with non-zero status 101
+0.07user 0.00system 0:00.07elapsed 98%CPU (0avgtext+0avgdata 34940maxresident)k
+0inputs+0outputs (0major+3868minor)pagefaults 0swaps

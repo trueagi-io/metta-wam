@@ -46,34 +46,34 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(: bc (-> $a Nat $a))
+(: bc (-> $a Nat hyperon::space::DynSpace $a))
 ;; Base case
-(= (bc (: $prf $ccln) $_1) (match &kb (: $prf $ccln) (: $prf $ccln)))
+(= (bc (: $prf $ccln) $space $_1) (match $space (: $prf $ccln) (: $prf $ccln)))
 ;; if conclusion equals (⍃ $X $Y), then return (: CPU (⍃ $X $Y)) 
 ;; if $x and $Y are fully grounded and (< $X $Y)
-(= (bc (: CPU (⍃ $X $Y)) $_2) 
+(= (bc (: CPU (⍃ $X $Y)) $space $_2) 
 	(if (and (and (is-closed $X) (is-closed $Y)) (< $X $Y))
 		(: CPU (⍃ $X $Y))
 		(empty)))
 
 ;; Recursive step
-(= (bc (: ($prfabs $prfarg) $ccln) (S $k))
+(= (bc (: ($prfabs $prfarg) $ccln) $space (S $k))
    (let* (((: $prfabs (-> $prms $ccln)) 
-			          (bc (: $prfabs (-> $prms $ccln)) $k))
+			          (bc (: $prfabs (-> $prms $ccln)) $space $k))
           ((: $prfarg $prms) 
-			          (bc (: $prfarg $prms) $k)))
+			          (bc (: $prfarg $prms) $space $k)))
 		   
      (: ($prfabs $prfarg) $ccln)))
 
 
 ; Test
-!(bc (: CPU (⍃ 2 3)) Z)
-!(bc (: CPU (⍃ 4 3)) Z)
+!(bc (: CPU (⍃ 2 3)) &kb Z)
+!(bc (: CPU (⍃ 4 3)) &kb Z)
 
 ; !(pragma! eval debug)
 
 ;! ( rtrace! (bc (: $prf (less $x $y)) (S (S (S Z)))))
 
-!(bc (: $prf (less $x $y)) (S (S (S Z))))
+!(bc (: $prf (less $x $y)) &kb (S (S (S Z))))
 
 

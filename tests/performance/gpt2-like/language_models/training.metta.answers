@@ -1,0 +1,7 @@
+[(module pllm Nil)]
+[((= $X (, (/ is-word 1) (/ is-word 2) (/ ngram 5) (/ ngram 6) (/ trigram 3) (/ trigram 4) (/ tok-split 3))) (dynamic $X) (multifile $X))]
+[(ensure-loaded utils-pllm)]
+[(add-history compile-corpus)]
+[(Error (if (not (prolog-load-context reloading True))) IncorrectNumberOfArguments)]
+0.08user 0.02system 0:00.11elapsed 99%CPU (0avgtext+0avgdata 36160maxresident)k
+0inputs+0outputs (0major+4094minor)pagefaults 0swaps

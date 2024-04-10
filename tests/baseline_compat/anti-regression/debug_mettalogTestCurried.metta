@@ -123,7 +123,7 @@
 !(bind! &kb (new-space))
 ;; Import a lookup file for ⍃
 !("loading succAtoms into kb2")
-!(import! &kb2 succAxiom.metta)
+!(import! &kb2 succAxiom)
 !(match &kb2 $1 (add-atom &kb $1))
 
 ;; !(get-atoms &kb)

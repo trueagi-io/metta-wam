@@ -1,0 +1,41 @@
+"Importing gencode"
+(loaded /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/extended_compat/bio-atomspace/gencode/nodes.metta into GroundingSpace-top:rules adding (- (atom-count GroundingSpace-top:rules) (atom-count GroundingSpace-top:rules)) atoms before-after (atom-count GroundingSpace-top:rules) (atom-count GroundingSpace-top:rules))
+(loaded /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/extended_compat/bio-atomspace/gencode/edges.metta into GroundingSpace-top:rules adding (- (atom-count GroundingSpace-top:rules) (atom-count GroundingSpace-top:rules)) atoms before-after (atom-count GroundingSpace-top:rules) (atom-count GroundingSpace-top:rules))
+"Importing uniprot"
+(loaded /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/extended_compat/bio-atomspace/uniprot/nodes.metta into GroundingSpace-top:rules adding (- (atom-count GroundingSpace-top:rules) (atom-count GroundingSpace-top:rules)) atoms before-after (atom-count GroundingSpace-top:rules) (atom-count GroundingSpace-top:rules))
+(loaded /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/extended_compat/bio-atomspace/uniprot/edges.metta into GroundingSpace-top:rules adding (- (atom-count GroundingSpace-top:rules) (atom-count GroundingSpace-top:rules)) atoms before-after (atom-count GroundingSpace-top:rules) (atom-count GroundingSpace-top:rules))
+"Importing onotology"
+(loaded /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/extended_compat/bio-atomspace/onotology/nodes.metta into GroundingSpace-top:rules adding (- (atom-count GroundingSpace-top:rules) (atom-count GroundingSpace-top:rules)) atoms before-after (atom-count GroundingSpace-top:rules) (atom-count GroundingSpace-top:rules))
+(loaded /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/extended_compat/bio-atomspace/onotology/edges.metta into GroundingSpace-top:rules adding (- (atom-count GroundingSpace-top:rules) (atom-count GroundingSpace-top:rules)) atoms before-after (atom-count GroundingSpace-top:rules) (atom-count GroundingSpace-top:rules))
+"Importing gtex"
+(loaded /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/extended_compat/bio-atomspace/gtex/eqtl/edges.metta into GroundingSpace-top:rules adding (- (atom-count GroundingSpace-top:rules) (atom-count GroundingSpace-top:rules)) atoms before-after (atom-count GroundingSpace-top:rules) (atom-count GroundingSpace-top:rules))
+"Importing co-expression"
+(loaded /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/extended_compat/bio-atomspace/cellxgene/edges.metta into GroundingSpace-top:rules adding (- (atom-count GroundingSpace-top:rules) (atom-count GroundingSpace-top:rules)) atoms before-after (atom-count GroundingSpace-top:rules) (atom-count GroundingSpace-top:rules))
+"Importing gaf"
+(loaded /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/extended_compat/bio-atomspace/gaf/edges.metta into GroundingSpace-top:rules adding (- (atom-count GroundingSpace-top:rules) (atom-count GroundingSpace-top:rules)) atoms before-after (atom-count GroundingSpace-top:rules) (atom-count GroundingSpace-top:rules))
+"Importing tadmap"
+(loaded /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/extended_compat/bio-atomspace/tadmap/edges.metta into GroundingSpace-top:rules adding (- (atom-count GroundingSpace-top:rules) (atom-count GroundingSpace-top:rules)) atoms before-after (atom-count GroundingSpace-top:rules) (atom-count GroundingSpace-top:rules))
+"Importing refseq"
+(loaded /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/extended_compat/bio-atomspace/refseq/edges.metta into GroundingSpace-top:rules adding (- (atom-count GroundingSpace-top:rules) (atom-count GroundingSpace-top:rules)) atoms before-after (atom-count GroundingSpace-top:rules) (atom-count GroundingSpace-top:rules))
+"Importing Done...running inference"
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]

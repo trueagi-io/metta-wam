@@ -127,7 +127,7 @@
     (add-atom &kb $atom))
 
 ;; Import a lookup file for ⍃
-!(import! &kb2 succAxiom.metta)
+!(import! &kb2 succAxiom)
 !(match &kb2 $1 (add-atom &kb $1))
 
 ;; add specialization of most abstract patterns
@@ -298,14 +298,15 @@
 		 ($depth (fromNumber 8)))
 	(fc $atom $depth))))
 
-; !(eachfc)
+
+!(eachfc)
 
 ; !(expected)
 
-;!(let $expected (expected)
-;  (assertEqualToResult
-;   (let $aptrn (Inheritance (VarIdx Z) (VarIdx (S Z)))
-;	  (fc (: (supportwitness $aptrn) 
-;			 (supportOf $aptrn (countNat $aptrn))) (fromNumber 8))) 
-;	$expected))
+!(let $expected (expected)
+  (assertEqualToResult
+   (let $aptrn (Inheritance (VarIdx Z) (VarIdx (S Z)))
+	  (fc (: (supportwitness $aptrn) 
+			 (supportOf $aptrn (countNat $aptrn))) (fromNumber 8))) 
+	$expected))
 

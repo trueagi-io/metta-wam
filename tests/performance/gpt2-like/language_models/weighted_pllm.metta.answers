@@ -1,0 +1,5 @@
+[(include training-bi)]
+[(dynamic (/ used-cl 1))]
+[(Error (- singleton) IncorrectNumberOfArguments)]
+0.07user 0.01system 0:00.09elapsed 100%CPU (0avgtext+0avgdata 35172maxresident)k
+0inputs+0outputs (0major+3897minor)pagefaults 0swaps
