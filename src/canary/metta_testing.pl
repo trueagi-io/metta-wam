@@ -80,22 +80,22 @@ print_current_test:-
 % Increment loonit counters based on goal evaluation
 
 ensure_increments(Goal):-
-	setup_call_cleanup(
-	get_pass_fail(_,_,TotalStart),
-	Goal,
-	((get_pass_fail(_,_,TotalEnd),
-	if_t(TotalEnd==TotalStart,
-		flag(loonit_failure,Failures,Failures+1))))).
+    setup_call_cleanup(
+    get_pass_fail(_,_,TotalStart),
+    Goal,
+    ((get_pass_fail(_,_,TotalEnd),
+    if_t(TotalEnd==TotalStart,
+        flag(loonit_failure,Failures,Failures+1))))).
 
 get_pass_fail(Successes,Failures,Total):-
-	flag(loonit_success,Successes,Successes),
-	flag(loonit_failure,Failures,Failures),!,
+    flag(loonit_success,Successes,Successes),
+    flag(loonit_failure,Failures,Failures),!,
     Total is Successes+Failures.
 
 
 loonit_asserts(S,Pre,G):-
    ensure_increments(loonit_asserts0(S,Pre,G)).
-   
+
 loonit_asserts0(S,Pre,G):-
   flag(loonit_test_number,X,X+1),
   copy_term(Pre,Pro),
@@ -320,7 +320,7 @@ load_answer_stream(Nth, StoredAs, String, Stream):- % string_concat("[",_,String
     fbug(Nth = String),
     parse_answer_string(String,Metta),!,
     %if_t(sub_var(',',Metta),rtrace(parse_answer_string(String,_Metta2))),
-    assert(file_answers(StoredAs,Nth,Metta)),
+    pfcAdd_Now(file_answers(StoredAs,Nth,Metta)),
     skip(must_det_ll(\+ sub_var(',',Metta))),
     Nth2 is Nth+1,load_answer_stream(Nth2, StoredAs, Stream).
 

@@ -452,31 +452,6 @@ eval_20(Eq,RetType,Depth,Self,['println!'|Cond],Res):- !,
     make_empty(RetType,Res).
 println_impl(X):- nl,with_indents(false,write_src(X)),nl.
 
-eval_20(_Eq,RetType,_Depth,_Self,['compile-easy!'],Res):-
-  make_empty(RetType,Res),!, ignore(do_compile_easy).
-
-
-do_compile_easy:- pfcAdd(compile_easy).
-
-%eval_20(Eq,RetType,_Dpth,_Slf,['trace!',A],A):- !, format('~N'),fbug(A),format('~N').
-
-eval_20(Eq,RetType,_Dpth,_Slf,List,YY):- is_list(List),maplist(self_eval,List),List=[H|_], \+ atom(H), !,Y=List,do_expander(Eq,RetType,Y,YY).
-
-eval_20(Eq,_ListOfRetType,Depth,Self,['TupleConcat',A,B],OO):- fail, !,
-    eval(Eq,RetType,Depth,Self,A,AA),
-    eval(Eq,RetType,Depth,Self,B,BB),
-    append(AA,BB,OO).
-eval_20(Eq,OuterRetType,Depth,Self,['range',A,B],OO):- (is_list(A);is_list(B)),
-  ((eval(Eq,RetType,Depth,Self,A,AA),
-    eval(Eq,RetType,Depth,Self,B,BB))),
-    ((AA+BB)\=@=(A+B)),
-    eval_20(Eq,OuterRetType,Depth,Self,['range',AA,BB],OO),!.
-
-
-%eval_20(Eq,RetType,Depth,Self,['colapse'|List], Flat):- !, maplist(eval(Eq,RetType,Depth,Self),List,Res),flatten(Res,Flat).
-
-eval_20(_Eq,_OuterRetType,_Depth,_Self,[P,_,B],_):-P=='/',B==0,!,fail.
-
 
 % =================================================================
 % =================================================================
@@ -487,8 +462,10 @@ eval_20(_Eq,_OuterRetType,_Depth,_Self,[P,_,B],_):-P=='/',B==0,!,fail.
 % =================================================================
 
 
-eval_20(Eq,RetType,Depth,Self,['assertTrue', X],TF):- !, eval(Eq,RetType,Depth,Self,['assertEqual',X,'True'],TF).
-eval_20(Eq,RetType,Depth,Self,['assertFalse',X],TF):- !, eval(Eq,RetType,Depth,Self,['assertEqual',X,'False'],TF).
+eval_20(Eq,RetType,Depth,Self,['assertTrue', X],TF):- !,
+  eval_20(Eq,RetType,Depth,Self,['assertEqual',X,'True'],TF).
+eval_20(Eq,RetType,Depth,Self,['assertFalse',X],TF):- !,
+ eval_20(Eq,RetType,Depth,Self,['assertEqual',X,'False'],TF).
 
 eval_20(Eq,_RetType,Depth,Self,['assertEqual',X,Y],RetVal):- !,
    loonit_assert_source_tf_empty(
@@ -777,31 +754,6 @@ eval_case(Eq,CaseRetType,Depth,Self,A,KVs,Res):-
 eval_20(Eq,RetType,Depth,Self,['collapse',List],Res):-!,
  bagof_eval(Eq,RetType,Depth,Self,List,Res).
 
-eval_20(Eq,RetType,Depth,Self,PredDecl,Res):-
-  Do_more_defs = do_more_defs(true),
-  clause(eval_21(Eq,RetType,Depth,Self,PredDecl,Res),Body),
-  Do_more_defs == do_more_defs(true),
-  call_ndet(Body,DET),
-  nb_setarg(1,Do_more_defs,false),
- (DET==true -> ! ; true).
-
-eval_21(_Eq,_RetType,_Depth,_Self,['fb-member',Res,List],TF):-!, as_tf(fb_member(Res,List),TF).
-eval_21(_Eq,_RetType,_Depth,_Self,['fb-member',List],Res):-!, fb_member(Res,List).
-
-
-eval_21(Eq,RetType,Depth,Self,['CollapseCardinality',List],Len):-!,
- bagof_eval(Eq,RetType,Depth,Self,List,Res),
- length(Res,Len).
-/*
-eval_21(_Eq,_RetType,_Depth,_Self,['TupleCount', [N]],N):- number(N),!.
-
-
-*/
-eval_21(Eq,_RetType,Depth,Self,['Tuple-Count',List],Len):-!,
- (\+ is_list(List)->bagof_eval(Eq,_,Depth,Self,List,Res);Res=List),!,
- length(Res,Len).
-eval_21(_Eq,_RetType,_Depth,_Self,['tuple-count',List],Len):-!,
- length(List,Len).
 
 %[superpose,[1,2,3]]
 eval_20(_Eq,RetType,_Depth,_Self,['superpose',List],Res):- List==[], !,
@@ -868,6 +820,11 @@ eval_20(Eq,RetType,Depth,Self,['do',Expr], Empty):- !,
 
 eval_20(_Eq,_RetType1,_Depth,_Self,['call!',S], TF):- !, eval_call(S,TF).
 eval_20(_Eq,_RetType1,_Depth,_Self,['call-fn!',S], R):- !, eval_call_fn(S,R).
+eval_20(_Eq,_RetType1,_Depth,_Self,['call-fn-nth!',Nth,S], R):-
+    length(Left,Nth),
+    append(Left,Right,S),
+    append(Left,[R|Right],NewS),!,
+    eval_call(NewS,_).
 
 max_counting(F,Max):- flag(F,X,X+1),  X<Max ->  true; (flag(F,_,10),!,fail).
 % =================================================================
@@ -1077,9 +1034,9 @@ eval_20(Eq,RetType,Depth,Self,['length',L],Res):- !, eval(Eq,RetType,Depth,Self,
 eval_20(Eq,RetType,Depth,Self,['CountElement',L],Res):- !, eval(Eq,RetType,Depth,Self,L,LL), !, (is_list(LL)->length(LL,Res);Res=1).
 
 eval_20(_Eq,_RetType,_Depth,_Self,['get-metatype',Val],TypeO):- !,
-  get_metatype(Val,TypeO).
+  'get-metatype'(Val,TypeO).
 
-get_metatype(Val,Type):- get_metatype0(Val,Was),!,Type=Was.
+'get-metatype'(Val,Type):- get_metatype0(Val,Was),!,Type=Was.
     get_metatype0(Val,'Variable'):- var(Val),!.
     get_metatype0(Val,Type):- symbol(Val), !, get_symbol_metatype(Val,Type).
     get_metatype0(Val,'Expression'):- is_list(Val),!.
@@ -1087,7 +1044,7 @@ get_metatype0(_Val,'Grounded').
 
 get_symbol_metatype(Val,Type):- get_type(Val,Want),get_symbol_metatype(Val,Want,Type).
 get_symbol_metatype(_Vl,'Bool','Grounded').
-get_symbol_metatype(Val,_Want,Type):- nb_current(Val,NewVal),get_metatype(NewVal,Type).
+get_symbol_metatype(Val,_Want,Type):- nb_current(Val,NewVal),'get-metatype'(NewVal,Type).
 get_symbol_metatype(_Vl,'%Undefined%','Symbol').
 get_symbol_metatype(_Vl,_Want,'Grounded').
 
@@ -1132,31 +1089,7 @@ eval_20(Eq,RetType,Depth,Self,['pragma!',Other,Expr],RetVal):- !,
 eval_20(Eq,RetType,_Dpth,Self,['transfer!',File],RetVal):- !, must_det_ll((include_metta(Self,File),
    make_empty(RetType,Self,RetVal),check_returnval(Eq,RetType,RetVal))).
 
-
-fromNumber(Var1,Var2):- var(Var1),var(Var2),!,
-   freeze(Var1,fromNumber(Var1,Var2)),
-   freeze(Var2,fromNumber(Var1,Var2)).
-fromNumber(0,'Z'):-!.
-fromNumber(N,['S',Nat]):- integer(N), M is N -1,!,fromNumber(M,Nat).
-
-eval_20(Eq,RetType,Depth,Self,['fromNumber',NE],RetVal):- !,
-   eval('=','Number',Depth,Self,NE,N),
-    fromNumber(N,RetVal), check_returnval(Eq,RetType,RetVal).
-
-eval_20(Eq,RetType,Depth,Self,['dedup!',Eval],RetVal):- !,
-   term_variables(Eval+RetVal,Vars),
-   no_repeats_var(YY),!,
-   eval_20(Eq,RetType,Depth,Self,Eval,RetVal),YY=Vars.
-
-
 nd_ignore(Goal):- call(Goal)*->true;true.
-
-
-
-
-
-
-
 
 
 % =================================================================
@@ -1320,11 +1253,6 @@ finish_eval(_Eq,_RetType,Depth,Self,T,TT):- eval(Depth,Self,T,TT).
 % =================================================================
 
 
-eval_20(Eq,RetType,_Dpth,_Slf,['predicate-arity',F,A],TF):- !,as_tf(current_predicate(F/A),TF),check_returnval(Eq,RetType,TF).
-eval_20(Eq,RetType,Depth,Self,['CountElement',L],Res):- !, eval(Eq,RetType,Depth,Self,L,LL), !, (is_list(LL)->length(LL,Res);Res=1),check_returnval(Eq,RetType,Res).
-eval_20(Eq,RetType,_Dpth,_Slf,['make_list',List],MettaList):- !, into_metta_cons(List,MettaList),check_returnval(Eq,RetType,MettaList).
-
-
 eval_20(Eq,RetType,Depth,Self,['maplist!',Pred,ArgL1],ResL):- !,
       maplist(eval_pred(Eq,RetType,Depth,Self,Pred),ArgL1,ResL).
 eval_20(Eq,RetType,Depth,Self,['maplist!',Pred,ArgL1,ArgL2],ResL):- !,
@@ -1355,6 +1283,109 @@ eval_20(Eq,RetType,Depth,Self,['concurrent-forall!',Gen,Test|Options],Empty):- !
 
 eval_20(Eq,RetType,Depth,Self,['hyperpose',ArgL],Res):- !, metta_hyperpose(Eq,RetType,Depth,Self,ArgL,Res).
 
+
+% =================================================================
+% =================================================================
+% =================================================================
+%  METTLOG COMPILER PREDEFS
+% =================================================================
+% =================================================================
+% =================================================================
+
+
+eval_20(_Eq,_RetType,_Dpth,_Slf,['predicate-arity',F],A):- !,
+   eval_for('Symbol',F,FF),
+   predicate_arity(FF,A).
+eval_20(_Eq,_RetType,_Dpth,_Slf,['function-arity',F],A):- !,
+   eval_for('Symbol',F,FF),
+   function_arity(FF,A).
+
+
+eval_20(_Eq,RetType,_Depth,_Self,['compile-easy!'],Res):-
+    make_empty(RetType,Res),!, ignore(do_compile_easy).
+
+eval_20(_Eq,RetType,_Depth,_Self,['compile!',X],Res):- symbol(X),
+    compile_easy(X), make_empty(RetType,Res),!.
+
+compile_easy(X):-
+    ignore(pfcRemove(do_compile_easy(X))),
+    pfcAdd_Now(do_compile_easy(X)),listing(X).
+
+do_compile_easy:- pfcAdd(compile_easy).
+
+% =================================================================
+% =================================================================
+% =================================================================
+%  METTLOG EXTRA PREDEFS
+% =================================================================
+% =================================================================
+% =================================================================
+
+%eval_20(Eq,RetType,_Dpth,_Slf,['trace!',A],A):- !, format('~N'),fbug(A),format('~N').
+
+eval_20(Eq,RetType,_Dpth,_Slf,List,YY):- is_list(List),maplist(self_eval,List),List=[H|_], \+ atom(H), !,Y=List,do_expander(Eq,RetType,Y,YY).
+
+eval_20(Eq,_ListOfRetType,Depth,Self,['TupleConcat',A,B],OO):- fail, !,
+    eval(Eq,RetType,Depth,Self,A,AA),
+    eval(Eq,RetType,Depth,Self,B,BB),
+    append(AA,BB,OO).
+eval_20(Eq,OuterRetType,Depth,Self,['range',A,B],OO):- (is_list(A);is_list(B)),
+  ((eval(Eq,RetType,Depth,Self,A,AA),
+    eval(Eq,RetType,Depth,Self,B,BB))),
+    ((AA+BB)\=@=(A+B)),
+    eval_20(Eq,OuterRetType,Depth,Self,['range',AA,BB],OO),!.
+
+
+fromNumber(Var1,Var2):- var(Var1),var(Var2),!,
+   freeze(Var1,fromNumber(Var1,Var2)),
+   freeze(Var2,fromNumber(Var1,Var2)).
+fromNumber(0,'Z'):-!.
+fromNumber(N,['S',Nat]):- integer(N), M is N -1,!,fromNumber(M,Nat).
+
+eval_20(Eq,RetType,Depth,Self,['fromNumber',NE],RetVal):- !,
+   eval('=','Number',Depth,Self,NE,N),
+    fromNumber(N,RetVal), check_returnval(Eq,RetType,RetVal).
+
+eval_20(Eq,RetType,Depth,Self,['dedup!',Eval],RetVal):- !,
+   term_variables(Eval+RetVal,Vars),
+   no_repeats_var(YY),!,
+   eval_20(Eq,RetType,Depth,Self,Eval,RetVal),YY=Vars.
+
+
+eval_20(Eq,RetType,Depth,Self,PredDecl,Res):-
+  Do_more_defs = do_more_defs(true),
+  clause(eval_21(Eq,RetType,Depth,Self,PredDecl,Res),Body),
+  Do_more_defs == do_more_defs(true),
+  call_ndet(Body,DET),
+  nb_setarg(1,Do_more_defs,false),
+ (DET==true -> ! ; true).
+
+eval_21(_Eq,_RetType,_Depth,_Self,['fb-member',Res,List],TF):-!, as_tf(fb_member(Res,List),TF).
+eval_21(_Eq,_RetType,_Depth,_Self,['fb-member',List],Res):-!, fb_member(Res,List).
+
+
+eval_21(Eq,RetType,Depth,Self,['CollapseCardinality',List],Len):-!,
+ bagof_eval(Eq,RetType,Depth,Self,List,Res),
+ length(Res,Len).
+/*
+eval_21(_Eq,_RetType,_Depth,_Self,['TupleCount', [N]],N):- number(N),!.
+
+
+*/
+eval_21(Eq,_RetType,Depth,Self,['Tuple-Count',List],Len):-!,
+ (\+ is_list(List)->bagof_eval(Eq,_,Depth,Self,List,Res);Res=List),!,
+ length(Res,Len).
+eval_21(_Eq,_RetType,_Depth,_Self,['tuple-count',List],Len):-!,
+ length(List,Len).
+
+
+%eval_20(Eq,RetType,Depth,Self,['colapse'|List], Flat):- !, maplist(eval(Eq,RetType,Depth,Self),List,Res),flatten(Res,Flat).
+
+eval_20(_Eq,_OuterRetType,_Depth,_Self,[P,_,B],_):-P=='/',B==0,!,fail.
+
+
+eval_20(Eq,RetType,Depth,Self,['CountElement',L],Res):- !, eval(Eq,RetType,Depth,Self,L,LL), !, (is_list(LL)->length(LL,Res);Res=1),check_returnval(Eq,RetType,Res).
+eval_20(Eq,RetType,_Dpth,_Slf,['make_list',List],MettaList):- !, into_metta_cons(List,MettaList),check_returnval(Eq,RetType,MettaList).
 
 simple_math(Var):- attvar(Var),!,fail.
 simple_math([F|XY]):- !, atom(F),atom_length(F,1), is_list(XY),maplist(simple_math,XY).
@@ -1436,13 +1467,16 @@ suggest_type(_RetType,_Bool).
 naive_eval_args:-
     false.
 
-eval_40(_Eq,_RetType,Depth,Self,[AE|More],Res):-
+eval_40(Eq,RetType,Depth,_Self,[AE|More],Res):-
   len_or_unbound(More,Len), Pred = AE,
   metta_compiled_predicate(AE,Arity),
+  current_predicate(AE,Arity),
   indentq2(Depth,metta_compiled_predicate(AE, Arity,Len)),
-  Arity = Len,
-  current_predicate(AE,Len),!,
-  maplist(as_prolog, More , Adjusted),
+   trace,
+  ((Arity is Len + 1)
+     -> append(More,[Res],Adjusted)
+      ; (More=Adjusted,Res=TF)),
+  maplist(as_prolog, More , Adjusted),!,
   if_trace((host;prolog),print_tree(apply(Pred,Adjusted))),
   catch_warn(efbug(show_call,eval_call(apply(Pred,Adjusted),TF))),
   check_returnval(Eq,RetType,TF).
@@ -1602,8 +1636,8 @@ is_user_defined_goal(Self,Head):-
 
 adjust_args_mp(_Eq,_RetType,Res,Res,_Depth,_Self,_Pred,_Len,_AE,Args,Adjusted):- Args==[],!,Adjusted=Args.
 adjust_args_mp(Eq,RetType,Res,NewRes,Depth,Self,Pred,Len,AE,Args,Adjusted):-
-    
-   functor(P,Pred,Len), 
+
+   functor(P,Pred,Len),
    predicate_property(P,meta_predicate(Needs)),
    account_needs(1,Needs,Args,More),!,
    adjust_args(Eq,RetType,Res,NewRes,Depth,Self,AE,More,Adjusted).
@@ -1657,7 +1691,7 @@ eval_maybe_host_function(Eq,RetType,_Depth,_Self,[AE|More],Res):- allow_host_fun
  %  fake_notrace(is_user_defined_head(Self,H)),!,
  %  eval_defn(Eq,RetType,Depth,Self,[H|PredDecl],Res).
 
-/*eval_maybe_defn(Eq,RetType,Depth,Self,PredDecl,Res):-    
+/*eval_maybe_defn(Eq,RetType,Depth,Self,PredDecl,Res):-
     eval_defn(Eq,RetType,Depth,Self,PredDecl,Res).
 
 eval_maybe_subst(Eq,RetType,Depth,Self,PredDecl,Res):-

@@ -85,9 +85,9 @@
  op(1199,fx,('==>')),
  set_prolog_flag(access_level,Was).
 
-:- style_check(-discontiguous).
+%:- style_check(-discontiguous).
 %:- enable_mpred_expansion.
-:- expects_dialect(pfc).
+%:- expects_dialect(pfc).
 
 /*
 :- dynamic   lmcache:session_io/4, lmcache:session_agent/2, lmcache:agent_session/2,   telnet_fmt_shown/3,   agent_action_queue/3).
@@ -99,10 +99,77 @@
 :- set_prolog_flag(runtime_safety, 2).
 :- set_prolog_flag(runtime_debug, 2).
 :- set_prolog_flag(unsafe_speedups, false).
-
 :- set_prolog_flag(expect_pfc_file,always).
 
+
+
+:- set_prolog_flag(pfc_term_expansion,false).
+params_and_return_type([Ar|TypeList],Len,Params,Ret):-
+   if_t(integer(Len),length(Params,Len)),
+   Ar = (->),
+   append(Params,[Ret], TypeList),
+   if_t(var(Len),length(Params,Len)).
 :- set_prolog_flag(pfc_term_expansion,true).
+
+
+((properties(A,B)/(member(E,B),nonvar(E)))==>property(A,E)).
+property(Op,E) ==> (form_op(Op),form_prop(E)).
+
+((property(S,PA),p_arity(PA,A)) ==> (predicate_arity(S,A))).
+((property(S,FA),f_arity(FA,A)) ==> (functional_arity(S,A))).
+
+
+% (metta_compiled_predicate(F,A)==>predicate_arity(F,A)).
+
+
+
+(metta_atom_asserted(KB,[C,I,T])/(C==':')) ==> metta_type(KB,I,T).
+(metta_atom_asserted(KB,[C,I,T|Nil])/(Nil==[],C=='=',I=II)) ==> metta_defn(KB,II,T).
+(metta_atom_asserted(KB,[C,I,A1,A2|AL])/(C=='=')) ==> metta_defn(KB,I,[A1,A2|AL]).
+
+
+(metta_defn(_KB,[F|Args],_)/length(Args,Len))==>src_code_for(F,Len).
+
+(src_code_for(F,Len)==>function_arity(F,Len)).
+
+(metta_type(KB,S,TypeList),{params_and_return_type(TypeList,Len,Params,Ret)}) ==>
+  metta_params_and_return_type(KB,S,Len,Params,Ret).
+
+metta_params_and_return_type(KB,S,Len,_Params,Ret),{nonvar(Ret)}==>
+   metta_return_type(KB,S,Len,Ret).
+
+
+(need_corelib_types,op_decl(S,Params,Ret),{nonvar(Ret),length(Params,Len)})==>
+   metta_params_and_return_type('&corelib',S,Len,Params,Ret).
+
+
+((metta_return_type(_KB,F,Len,Ret)/ ( \+ is_absorbed_return(Ret))),{Len1 is Len+1})
+   ==>(function_arity(F,Len),is_non_absorbed_return(F,Len,Ret),predicate_arity(F,Len1)).
+
+(metta_return_type(_KB,F,Len,Ret)/is_absorbed_return(Ret))
+   ==>(function_arity(F,Len),is_absorbed_return(F,Len,Ret),predicate_arity(F,Len)).
+
+:- dynamic(need_corelib_types/0).
+(please_do_corelib_types, { \+ need_corelib_types }) ==> need_corelib_types.
+
+ensure_corelib_types:- time(pfcAdd(please_do_corelib_types)).
+%(need_corelib_types, metta_atom_corelib(Term)) ==> metta_atom_asserted('&corelib', Term).
+(need_corelib_types, metta_atom(KB,Atom)) ==> metta_atom_asserted(KB, Atom).
+
+
+:- dynamic(can_compile/2).
+
+src_code_for(F,Len) ==>  ( \+ metta_compiled_predicate(F,Len) ==> can_compile(F,Len)).
+
+(do_compile_easy(F)==>
+ ((metta_defn(KB,[F|Args],BM),
+ { must_det_ll((compile_for_assert([F|Args],BM,Clause),
+   assert_if_new(Clause),
+   length(Args,Len),
+   pfcAdd(metta_compiled_predicate(F,Len)),
+   add_assertion(KB,Clause)))}) ==> (\+ can_compile(F,Len),compiled_clauses(KB,F,Clause)))).
+
+
 
 
 
@@ -115,14 +182,15 @@
 % Establishes a logical framework to equate the conceptual roles of predicates and functions based on arity.
 % This equivalence bridges the functional programming and logical (declarative) paradigms within Prolog,
 % allowing a unified approach to defining operations and assertions.
+
 (equivalentTypes(PredType,FunctType) ==>
-  (in(FunctorObject,PredType)
+  ( property(FunctorObject,PredType)
     <==>
-   in(FunctorObject,FunctType))).
+    property(FunctorObject,FunctType))).
 % Automatically generating equivalency rules based on the arity of predicates and functions.
 % This facilitates a dynamic and flexible understanding of function and predicate equivalences,
 % enhancing Prolog's expressive power and semantic richness.
-(((p_arity(PredType,PA), plus(FA,1,PA), f_arity(FunctType,FA)))
+(((p_arity(PredType,PA), {plus(FA,1,PA), FA>=0}, f_arity(FunctType,FA)))
   ==> equivalentTypes(PredType,FunctType)).
 
 p_arity('NullaryPredicate', 0).  % No arguments.
@@ -147,16 +215,6 @@ f_arity('SenaryFunction', 6).
 f_arity('SeptenaryFunction', 7).
 f_arity('OctaryFunction', 8).
 f_arity('NonaryFunction', 9).
-
-
-
-
-property(Op,E) ==> (form_op(Op),form_prop(E)).
-
-((properties(A,B),{member(E,B)})==>property(A,E)).
-
-
-
 
 
 % "Nondeterministic" - Can produce more than one result for the same inputs.
@@ -295,7 +353,7 @@ properties('rtrace!', [debugging, qhelp("Enables tracing for debugging."), trace
 properties('println!', [output, qhelp("Prints text with newline to output."), text_printing]).
 properties('with-output-to!', [output, qhelp("Redirects output to a specified target."), redirection]).
 properties('print', [output, qhelp("Prints text to output."), text_printing]).
-properties('assertTrue', [testing, qhelp("Asserts a condition is true."), assertion]).
+properties('assertEqual', [testing, qhelp("Asserts a condition is true."), assertion]).
 properties('assertFalse', [testing, qhelp("Asserts a condition is false."), assertion]).
 properties('assertEqual', [testing, qhelp("Asserts two values are equal."), assertion]).
 properties('assertNotEqual', [testing, qhelp("Asserts two values are not equal."), assertion]).
@@ -319,9 +377,43 @@ properties('tuple-count', [data_structures, qhelp("Counts tuples within a struct
 %properties('collapseCardinality', [data_structures, qhelp("Collapses structures with cardinality consideration."), manipulation, cardinality]).
 
 
-:- ensure_loaded('metta_ontology_level_1.pfc').
 
+%:- ensure_loaded('metta_ontology_level_1.pfc').
+
+
+
+
+a==>b.
+b==>bb.
+
+a.
+:- b.
+:- bb.
+
+%:- pfcWhy1(a).
+%:- pfcWhy1(b).
 
 :- set_prolog_flag(expect_pfc_file,never).
 :- set_prolog_flag(pfc_term_expansion,false).
 
+
+test_fwc:-
+  pfcAdd_Now(c(X)==>d(X)),
+  pfcAdd_Now(c(1)),
+  c(_),
+  d(_),
+  pfcWhy1(c(_)),
+  pfcWhy1(d(_)),
+  pfcAdd(e(2)),
+  e(_),
+  pfcAdd(e(X)<==>f(X)),
+  f(_),
+  pfcWhy1(e(_)),
+  pfcWhy1(f(_)).
+
+
+%:- forall(==>(X,Y),pfcFwd(==>(X,Y))).
+
+%:- break.
+
+%:- must_det_ll(property('length',list_operations)).

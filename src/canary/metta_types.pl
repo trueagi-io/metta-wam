@@ -346,7 +346,7 @@ state_decltype(Expr,Type):- functor(Expr,_,A),
 get_value_type(_Dpth,_Slf,Var,'%Undefined%'):- var(Var),!.
 get_value_type(_Dpth,_Slf,Val,'Number'):- number(Val),!.
 get_value_type(_Dpth,_Slf,Val,T):- get_type(_Dpth,_Slf,Val,T), T\==[], T\=='%Undefined%',!.
-get_value_type(_Dpth,_Slf,Val,T):- get_metatype(Val,T).
+get_value_type(_Dpth,_Slf,Val,T):- 'get-metatype'(Val,T).
 
 /*
 

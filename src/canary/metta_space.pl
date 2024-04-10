@@ -545,7 +545,7 @@ is_an_arg_type(S,T):- flybase_identifier(S,T),!.
 has_type(S,Type):- sub_atom(S,0,4,Aft,FB),flybase_identifier(FB,Type),!,Aft>0.
 
 
-call_sexpr(S):- writeln(call=S).
+call_sexpr(S):- once_writeq_ln(call_sexpr(S)).
 %call_sexpr(Space,Expr,Result):-
 
 :- dynamic(fb_pred/2).

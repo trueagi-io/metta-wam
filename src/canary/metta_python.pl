@@ -115,7 +115,7 @@ import_metta(Self,RelFilename):-
      exists_file(RelFilename),
      absolute_file_name(RelFilename,Filename),
      directory_file_path(Directory, _, Filename),
-     assert(metta_file(Self,Filename,Directory)),
+     pfcAdd_Now(metta_file(Self,Filename,Directory)),
      include_metta_directory_file(Self,Directory, Filename))).
 
 
@@ -464,7 +464,7 @@ on_restore1:- ensure_mettalog_py.
 :- prolog_load_context(directory, ChildDir),
    file_directory_name(ChildDir, ParentDir),
    file_directory_name(ParentDir, GParentDir),
-   assert(want_py_lib_dir(GParentDir)).
+   pfcAdd_Now(want_py_lib_dir(GParentDir)).
 
 want_py_lib_dir:-
    with_safe_argv((forall(want_py_lib_dir(GParentDir),

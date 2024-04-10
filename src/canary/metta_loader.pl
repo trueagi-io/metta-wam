@@ -176,10 +176,10 @@ include_metta(Self,RelFilename):-
      exists_file(RelFilename),!,
      absolute_file_name_from(RelFilename,Filename),
      directory_file_path(Directory, _, Filename),
-     assert_new(metta_file(Self,Filename,Directory)),
-     assert_new(user:loaded_into_kb(Self,Filename)),
+     pfcAdd_Now(metta_file(Self,Filename,Directory)),
+     pfcAdd_Now(user:loaded_into_kb(Self,Filename)),
      include_metta_directory_file(Self,Directory, Filename))),
-     assert_new(user:loaded_into_kb(Self,Filename)),
+     pfcAdd_Now(user:loaded_into_kb(Self,Filename)),
      nop(listing(user:loaded_into_kb/2)).
 
 
@@ -210,7 +210,7 @@ include_metta_directory_file_prebuilt(Self, _Directory, Filename):-
     time_file(Filename, MettaTime),
     time_file(QlfFile, QLFTime),
     QLFTime > MettaTime,!, % Ensure QLF file is newer than the METTA file
-    assert_new(user:loaded_into_kb(Self,Filename)),
+    pfcAdd_Now(user:loaded_into_kb(Self,Filename)),
     ensure_loaded(QlfFile),!.
 
 
@@ -226,7 +226,7 @@ include_metta_directory_file_prebuilt(Self,_Directory, Filename):- just_load_dat
     % Ensure the size of the Datalog file is at least 25% of the METTA file
     DatalogSize >= 0.25 * MettaSize,
     !, % Cut to prevent backtracking
-  assert_new(user:loaded_into_kb(Self,Filename)),
+  pfcAdd_Now(user:loaded_into_kb(Self,Filename)),
   ensure_loaded(DatalogFile),!.
 
 include_metta_directory_file_prebuilt(Self,_Directory, Filename):-
@@ -240,7 +240,7 @@ include_metta_directory_file_prebuilt(Self,_Directory, Filename):-
     !, % Cut to prevent backtracking
   convert_datalog_to_loadable(DatalogFile,QlfFile),!,
   exists_file(QlfFile),!,
-  assert_new(user:loaded_into_kb(Self,Filename)),
+  pfcAdd_Now(user:loaded_into_kb(Self,Filename)),
   ensure_loaded(QlfFile),!.
 
 
@@ -251,7 +251,7 @@ include_metta_directory_file(Self,_Directory, Filename):-
   count_lines_up_to(2000,Filename, Count), Count > 1980,
   once(convert_metta_to_loadable(Filename,QlfFile)),
   exists_file(QlfFile),!,
-  assert_new(user:loaded_into_kb(Self,Filename)),
+  pfcAdd_Now(user:loaded_into_kb(Self,Filename)),
   ensure_loaded(QlfFile).
 
 include_metta_directory_file(Self,Directory,Filename):-
@@ -460,7 +460,7 @@ accept_line(Self,I):- normalize_space(string(Str),I),!,accept_line2(Self,Str),!.
 
 accept_line2(_Self,S):- string_concat(";",_,S),!,writeln(S).
 accept_line2(Self,S):- string_concat('(',RS,S),string_concat(M,')',RS),!,
-  symbolic_list_concat([F|LL],' ',M),PL =..[F,Self|LL],assert(PL),!,flag(next_assert,X,X+1),
+  symbolic_list_concat([F|LL],' ',M),PL =..[F,Self|LL],pfcAdd_Now(PL),!,flag(next_assert,X,X+1),
   if_t((0 is X mod 10_000_000),(writeln(X=PL),statistics)).
 accept_line2(Self,S):- fbug(accept_line2(Self,S)),!.
 
@@ -513,7 +513,7 @@ load_metta_buffer(Self,Filename):-
    set_exec_num(Filename,1),
    load_answer_file(Filename),
    set_exec_num(Filename,0),
-   assert_new(user:loaded_into_kb(Self,Filename)),
+   pfcAdd_Now(user:loaded_into_kb(Self,Filename)),
    forall(metta_file_buffer(Mode,Expr,NamedVarsList,Filename,_LineCount),
        (maplist(maybe_assign,NamedVarsList),
         must_det_ll((((do_metta(file(Filename),Mode,Self,Expr,_O)))
