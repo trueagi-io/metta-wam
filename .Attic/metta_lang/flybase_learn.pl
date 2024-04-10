@@ -347,7 +347,7 @@ into_len(A,L+A):- symbol_length(A,L1), (L1 == 11 -> L = 0 ; L is - L1).
 
 assert_progress(Concept,Atom):- Atom=..[OP,A1,A2], A1@>A2,!,AtomSwp=..[OP,A2,A1],!,assert_progress(Concept,AtomSwp).
 assert_progress(Concept,Atom):- call(Atom),!,pp_fb(already(Concept)=Atom).
-assert_progress(Concept,Atom):- pp_fb(assert_progress(Concept)=Atom),assert(Atom).
+assert_progress(Concept,Atom):- pp_fb(assert_progress(Concept)=Atom),pfcAdd_Now(Atom).
 
 
 

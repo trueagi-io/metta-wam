@@ -77,9 +77,11 @@
 :- nodebug(metta(load)).
 :- nodebug(metta(prolog)).
 
+:- dynamic(function_arity/2).
+:- dynamic(predicate_arity/2).
 
-    :-multifile(user:metta_file/3).
-    :-dynamic(user:metta_file/3).
+:-multifile(user:metta_file/3).
+:-dynamic(user:metta_file/3).
 
 
 :-multifile(user:asserted_metta_pred/2).
@@ -94,6 +96,13 @@
 
 user:file_search_path(mettalog,Dir):- metta_dir(Dir).
 
+once_writeq_ln(P):- nb_current('$once_writeq_ln',W),W=@=P,!.
+once_writeq_ln(P):- format('~N~q.~n',[P]),nb_setval('$once_writeq_ln',P),!.
+% TODO uncomment this next line but it is breaking the curried chainer
+% pfcAdd_Now(P):- pfcAdd(P),!.
+pfcAdd_Now(P):- current_predicate(pfcAdd/1),!, once_writeq_ln(pfcAdd(P)),pfcAdd(P).
+pfcAdd_Now(P):- trace,once_writeq_ln(asssert(P)),assert(P).
+%:- endif.
 
 metta_dir(Dir):- user:is_metta_dir(Dir),!.
 metta_dir(Dir):- getenv('METTA_DIR',Dir),!.
@@ -240,12 +249,7 @@ current_self(Self):- ((nb_current(self_space,Self),Self\==[])->true;Self='&self'
 %:- set_prolog_flag(encoding,octet).
 
 
-:- ensure_loaded(metta_compiler).
-:- ensure_loaded(metta_convert).
-:- ensure_loaded(metta_types).
-:- include(metta_data).
-:- ensure_loaded(metta_space).
-:- ensure_loaded(metta_eval).
+
 /*
 Now PASSING NARS.TEC:\opt\logicmoo_workspace\packs_sys\logicmoo_opencog\MeTTa\hyperon-wam\src\pyswip\metta_interp.pl
 C:\opt\logicmoo_workspace\packs_sys\logicmoo_opencog\MeTTa\hyperon-wam\src\pyswip1\metta_interp.pl
@@ -411,6 +415,15 @@ show_options_values:-
 :- prolog_load_context(source,File), assert(interpreter_source_file(File)).
 
 
+:- ensure_loaded(metta_utils).
+:- ensure_loaded(metta_data).
+:- ensure_loaded(mettalog('metta_ontology.pfc.pl')).
+:- ensure_loaded(metta_compiler).
+:- ensure_loaded(metta_convert).
+:- ensure_loaded(metta_types).
+:- ensure_loaded(metta_space).
+:- ensure_loaded(metta_eval).
+
 % ============================
 % %%%% Arithmetic Operations
 % ============================
@@ -491,12 +504,12 @@ show_options_values:-
 % Example: `assertNotEqual(5, 6, Result).` would succeed, setting Result to true (or some success indicator).
 'assertNotEqual'(Expected, Actual, Result):- eval_H(['assertNotEqual', Expected, Actual], Result).
 
-% `assertTrue` Predicate
+% `assertEqual` Predicate
 % This predicate is used to assert that the evaluation of EvalThis is true.
 % EvalThis: The expression that is being evaluated and checked for truth.
 % Result: The result of the evaluation.
-% Example: `assertTrue((2 > 1), Result).` would succeed, setting Result to true (or some success indicator), as 2 > 1 is true.
-'assertTrue'(EvalThis, Result):- eval_H(['assertTrue', EvalThis], Result).
+% Example: `assertEqual((2 > 1), Result).` would succeed, setting Result to true (or some success indicator), as 2 > 1 is true.
+'assertEqual'(EvalThis, Result):- eval_H(['assertEqual', EvalThis], Result).
 
 % `rtrace` Predicate
 % This predicate is likely used for debugging; possibly for tracing the evaluation of Condition.
@@ -675,7 +688,7 @@ cmdline_load_metta(Phase,Self,[M|Rest]):-
   cmdline_load_metta(Phase,Self,Rest).
 
 install_ontology:- !.
-
+load_ontology:- ensure_loaded(mettalog('metta_ontology.pfc.pl')).
 
 %cmdline_load_file(Self,Filemask):- is_converting,!,
 
@@ -988,103 +1001,13 @@ do_show_options_values:-
   forall((nb_current(N,V), \+((symbol(N),symbol_concat('$',_,N)))),write_src_nl(['pragma!',N,V])),
   do_show_option_switches.
 
-op_decl('pragma!', [ 'Atom', 'Atom'], [->]).
-op_decl('=', [ 'Atom', 'Atom'], '%Undefined%').
-
-op_decl('match', [ 'hyperon::space::DynSpace', 'Atom', 'Atom'], '%Undefined%').
-op_decl('remove-atom', [ 'hyperon::space::DynSpace', 'Atom'], [->]).
-op_decl('add-atom', [ 'hyperon::space::DynSpace', 'Atom'], [->]).
-op_decl('get-atoms', [ 'hyperon::space::DynSpace' ], 'Atom').
-
-op_decl('get-state', [[ 'StateMonad', Type]],Type).
-%op_decl('change-state!', [[ 'StateMonad',Type],Type],[->]).
-op_decl('new-state', [Type], ['StateMonad',Type ]).
-
-op_decl('car-atom', [ 'Expression' ], 'Atom').
-op_decl('cdr-atom', [ 'Expression' ], 'Expression').
-
-op_decl(let, [ 'Atom', '%Undefined%', 'Atom' ], 'Atom').
-op_decl('let*', [ 'Expression', 'Atom' ], 'Atom').
-
-op_decl(and, [ 'Bool', 'Bool' ], 'Bool').
-op_decl(or, [ 'Bool', 'Bool' ], 'Bool').
-op_decl(case, [ 'Expression', 'Atom' ], 'Atom').
-/*
-op_decl(apply, [ 'Atom', 'Variable', 'Atom' ], 'Atom').
-op_decl(chain, [ 'Atom', 'Variable', 'Atom' ], 'Atom').
-op_decl('filter-atom', [ 'Expression', 'Variable', 'Atom' ], 'Expression').
-op_decl('foldl-atom', [ 'Expression', 'Atom', 'Variable', 'Variable', 'Atom' ], 'Atom').
-op_decl('map-atom', [ 'Expression', 'Variable', 'Atom' ], 'Expression').
-op_decl(quote, [ 'Atom' ], 'Atom').
-op_decl('if-decons', [ 'Atom', 'Variable', 'Variable', 'Atom', 'Atom' ], 'Atom').
-op_decl('if-empty', [ 'Atom', 'Atom', 'Atom' ], 'Atom').
-op_decl('if-error', [ 'Atom', 'Atom', 'Atom' ], 'Atom').
-op_decl('if-non-empty-expression', [ 'Atom', 'Atom', 'Atom' ], 'Atom').
-op_decl('if-not-reducible', [ 'Atom', 'Atom', 'Atom' ], 'Atom').
-op_decl(return, [ 'Atom' ], 'ReturnType').
-op_decl('return-on-error', [ 'Atom', 'Atom'], 'Atom').
-op_decl(unquote, [ '%Undefined%'], '%Undefined%').
-op_decl(cons, [ 'Atom', 'Atom' ], 'Atom').
-op_decl(decons, [ 'Atom' ], 'Atom').
-op_decl(empty, [], '%Undefined%').
-op_decl('Error', [ 'Atom', 'Atom' ], 'ErrorType').
-op_decl(function, [ 'Atom' ], 'Atom').
-op_decl(id, [ 'Atom' ], 'Atom').
-op_decl(unify, [ 'Atom', 'Atom', 'Atom', 'Atom' ], 'Atom').
-*/
-op_decl(eval, [ 'Atom' ], 'Atom').
-op_decl(unify, [ 'Atom', 'Atom', 'Atom', 'Atom'], '%Undefined%').
-op_decl(if, [ 'Bool', 'Atom', 'Atom'], _T).
-op_decl('%', [ 'Number', 'Number' ], 'Number').
-op_decl('*', [ 'Number', 'Number' ], 'Number').
-op_decl('-', [ 'Number', 'Number' ], 'Number').
-op_decl('+', [ 'Number', 'Number' ], 'Number').
-op_decl(combine, [ X, X], X).
-
-op_decl('bind!', ['Symbol','%Undefined%'], [->]).
-op_decl('import!', ['hyperon::space::DynSpace','Atom'], [->]).
-op_decl('get-type', ['Atom'], 'Type').
-
-type_decl('Any').
-type_decl('Atom').
-type_decl('Bool').
-type_decl('ErrorType').
-type_decl('Expression').
-type_decl('Number').
-type_decl('ReturnType').
-type_decl('hyperon::space::DynSpace').
-type_decl('Symbol').
-type_decl('StateMonad').
-type_decl('Type').
-type_decl('%Undefined%').
-type_decl('Variable').
-
-%:- dynamic(get_metta_atom/2).
 :- dynamic(metta_atom_asserted/2).
-%:- multifile(asserted_metta/4).
-%:- dynamic(asserted_metta/4).
-% metta_atom_stdlib(_):-!,fail.
-metta_atom_stdlib([=,['If','True',_then],_then]).
-metta_atom_stdlib([=,['If','False',_Then],[let,X,0,[let,X,1,X]]]).
-metta_atom_stdlib([=,['If',_cond,_then,_else],[if,_cond,_then,_else]]).
-metta_atom_stdlib(['PredicateArity','PredicateArity',2]).
-metta_atom_stdlib(['PredicateArity',':',2]).
-metta_atom_stdlib([=,[':',R,'P1'],['PredicateArity',R,1]]).
-metta_atom_stdlib(X):- metta_atom_stdlib_types(X).
-metta_atom_stdlib(X):- metta_atom_corelib(X).
-
-metta_atom_stdlib_types([':', Type, 'Type']):- type_decl(Type).
-metta_atom_stdlib_types([':', Op, [->|List]]):- % symbol(Op),
-     op_decl(Op,Params,ReturnType),
-     append(Params,[ReturnType],List).
-
-metta_atom_stdlib_types([':',':','SrcPredicate']).
-metta_atom_stdlib_types([':','PredicateArity',[->,'Symbol','Number']]).
-metta_atom_stdlib_types([':','If','SrcFunction']).
-metta_atom_stdlib_types([':','If',[->,'Bool','Atom','Atom','Atom']]).
-metta_atom_stdlib_types([':','If',[->,'Bool','Atom','Atom']]).
-%   'If'(_cond, _then, _else, A) ':'- eval_true(_cond) *-> eval(_then, A); eval(_else, A).
-%   'If'(_cond, _then, A) ':'- eval_true(_cond), eval(_then, A).
+:- multifile(metta_atom_asserted/2).
+:- dynamic(metta_atom_asserted_deduced/2).
+:- multifile(metta_atom_asserted_deduced/2).
+metta_atom_asserted(X,Y):-
+    metta_atom_asserted_deduced(X,Y),
+    \+ clause(metta_atom_asserted(X,Y),true).
 
 
 %get_metta_atom(Eq,KB, [F|List]):- KB='&flybase',fb_pred(F, Len), length(List,Len),apply(F,List).
@@ -1098,7 +1021,7 @@ metta_atom(Atom):- current_self(KB),metta_atom(KB,Atom).
 %metta_atom([Superpose,ListOf], Atom):- Superpose == 'superpose',is_list(ListOf),!,member(KB,ListOf),get_metta_atom_from(KB,Atom).
 metta_atom(Space, Atom):- typed_list(Space,_,L),!, member(Atom,L).
 metta_atom(KB, [F, A| List]):- KB=='&flybase',fb_pred_nr(F, Len),current_predicate(F/Len), length([A|List],Len),apply(F,[A|List]).
-metta_atom(KB,Atom):- KB=='&corelib', metta_atom_stdlib(Atom).
+metta_atom(KB,Atom):- KB=='&corelib',!, metta_atom_corelib(Atom).
 metta_atom(KB,Atom):- metta_atom_in_file( KB,Atom).
 metta_atom(KB,Atom):- metta_atom_asserted( KB,Atom).
 
@@ -1117,13 +1040,10 @@ is_metta_space(Space):- \+ \+ is_space_type(Space,_Test).
 
 metta_defn(KB,Head,Body):- metta_defn(_Eq,KB,Head,Body).
 metta_defn(Eq,KB,Head,Body):- ignore(Eq = '='), metta_atom(KB,[Eq,Head,Body]).
-metta_type(S,H,B):- if_or_else(metta_atom(S,[':',H,B]),metta_atom_stdlib([':',H,B])).
+metta_type(KB,H,B):- if_or_else(metta_atom(KB,[':',H,B]),metta_atom_corelib([':',H,B])).
 %metta_type(S,H,B):- S == '&corelib', metta_atom_stdlib_types([':',H,B]).
 %typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_arguments(Cmpd,Type,[List|_]),is_list(List).
 
-:- if( \+ current_predicate(pfcAdd/1 )).
-pfcAdd(P):- assert(P).
-:- endif.
 
 %maybe_xform(metta_atom(KB,[F,A|List]),metta_atom(KB,F,A,List)):- is_list(List),!.
 maybe_xform(metta_defn(Eq,KB,Head,Body),metta_atom(KB,[Eq,Head,Body])).
@@ -1160,9 +1080,6 @@ metta_anew1(unload_all,OBO):- subst_vars(OBO,Cl),load_hook(unload_all,OBO),
                ->(erase(Ref),pp_m(unload_all(Cl)))
                ;(pp_m(unload_all(Cl,(Head+Body)\=@=(Head2+Body2))))))).
 
-% TODO uncomment this next line but it is breaking the curried chainer
-% pfcAdd_Now(P):- pfcAdd(P),!.
-pfcAdd_Now(P):- assertz(P),!.
 
 metta_anew2(Load,_OBO):- var(Load),trace,!.
 metta_anew2(Load,OBO):- maybe_xform(OBO,XForm),!,metta_anew2(Load,XForm).
@@ -1240,7 +1157,7 @@ asserted_do_metta(Space,Load,Src):- Load==exec,!,do_metta_exec(python,Space,Src,
 asserted_do_metta(Space,Load,Src):- asserted_do_metta2(Space,Load,Src,Src).
 
 asserted_do_metta2(Space,Ch,Info,Src):- nonvar(Ch), metta_interp_mode(Ch,Mode), !, asserted_do_metta2(Space,Mode,Info,Src).
-
+/*
 asserted_do_metta2(Self,Load,[TypeOp,Fn,Type], Src):- TypeOp == ':',  \+ is_list(Type),!,
  must_det_ll((
   color_g_mesg_ok('#ffa501',metta_anew(Load,Src,metta_atom(Self,[':',Fn,Type]))))),!.
@@ -1253,6 +1170,7 @@ asserted_do_metta2(Self,Load,[TypeOp,Fn,TypeDecL], Src):- TypeOp == ':',!,
   arg_types(TypeDecL,[],EachArg),
   metta_anew1(Load,metta_params(Self,Fn,EachArg)),!,
   metta_anew1(Load,metta_last(Self,Fn,LE)))).
+*/
 /*
 asserted_do_metta2(Self,Load,[TypeOp,Fn,TypeDecL,RetType], Src):- TypeOp == ':',!,
  must_det_ll((
@@ -1270,15 +1188,15 @@ asserted_do_metta2(Self,Load,[TypeOp,Fn,TypeDecL,RetType], Src):- TypeOp == ':',
    ignore((Body == 'True',!,do_metta(File,Self,Load,Head))),
    nop((fn_append(Head,X,Head), fn_append(PredDecl,X,Body),
    metta_anew((Head:- Body)))),!.*/
-
+/*
 asserted_do_metta2(Self,Load,[EQ,Head,Result], Src):- EQ=='=', !,
  color_g_mesg_ok('#ffa504',must_det_ll((
     discover_head(Self,Load,Head),
     metta_anew(Load,Src,metta_defn(EQ,Self,Head,Result)),
     discover_body(Self,Load,Result)))).
-
+*/
 asserted_do_metta2(Self,Load,PredDecl, Src):-
-   ignore(discover_head(Self,Load,PredDecl)),
+   %ignore(discover_head(Self,Load,PredDecl)),
    color_g_mesg_ok('#ffa505',metta_anew(Load,Src,metta_atom(Self,PredDecl))).
 
 
@@ -1407,8 +1325,8 @@ do_metta(file(Filename),exec,Self,TermV,Out):-
      is_synthing_unit_tests,
      file_answers(Filename, Nth, Ans),
      check_answers_for(TermV,Ans))),!,
-     
-     
+
+
      must_det_ll((
       ensure_increments((color_g_mesg_ok('#ffa509',
        (writeln(';; In file as:  '),
@@ -1416,7 +1334,7 @@ do_metta(file(Filename),exec,Self,TermV,Out):-
         write(';; To unit test case:'))),!,
         do_metta_exec(file(Filename),Self,['assertEqualToResult',TermV,Ans],Out))))).
 
-do_metta(From,exec,Self,TermV,Out):- !, 
+do_metta(From,exec,Self,TermV,Out):- !,
     dont_give_up(do_metta_exec(From,Self,TermV,Out)).
 
 do_metta_exec(From,Self,TermV,FOut):-

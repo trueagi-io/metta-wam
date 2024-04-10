@@ -62,6 +62,9 @@
 :- set_prolog_flag(pfc_shared_module,user).
 %:- set_prolog_flag(pfc_shared_module,baseKB).
 
+must_ex(X):- catch(X,E,rtrace(E))*->true;rtrace(X).
+quietly_ex(X):-call(X).
+
 
 control_arg_types(A,B):- once(control_arg_types1([],A,B)),A\==B,!.
 
@@ -126,7 +129,7 @@ pfcStateTerm(F/A):-
 %:- pfc_lib:use_module(pfc_lib).
 :- if( \+  current_prolog_flag(xref,true)).
 :- current_prolog_flag(pfc_shared_module,BaseKB),
-   must(retract(BaseKB:'wusing_pfc'(M,CM,SM,pfc_rt))),
+   must_ex(retract(BaseKB:'wusing_pfc'(M,CM,SM,pfc_rt))),
    nop(fbugio(BaseKB:'chusing_pfc'(M,CM,SM,pfc_rt))),
    (M==SM ->
      (nop(maybe_ensure_abox(SM)),nop((M:ain(genlMt(SM,BaseKB)))));
@@ -173,15 +176,14 @@ clause_u(H,B):- clause(H,B).
 mpred_ain(P):- arc_assert(P).
 arc_assert(P:-True):- True==true,!,arc_assert(P).
 arc_assert(P):-  % fbugio(arc_assert(P)),
-  must(current_why_UU(UU)),nop(fbugio(pfcAdd(P, UU))),!, pfcAdd(P, UU),asserta_if_new(P).
+  must_ex(current_why_UU(UU)),nop(fbugio(pfcAdd(P, UU))),!,
+(P, UU),asserta_if_new(P).
 
 pfc_retract(P):- fbugio(pfc_retract(P)),pfcRetract(P).
 pfc_retractall(P):- fbugio(pfc_retractall(P)),pfcRetractAll(P).
 
 :- dynamic((~)/1).
 ~(_):- fail.
-must_ex(X):-must(X).
-quietly_ex(X):-call(X).
 
 add(X):- pfcAdd(X).
 
@@ -223,7 +225,7 @@ show_child_info(P,L):- list_to_set(L,S),
 mpred_why(X):- mpred_test_why(X).
 
 mpred_test_why(X):-
-  pfcCallSystem(X)*->pfcTF1(X);pfcTF1(X).
+  pfcCallSystem(X)*->pfcTF1(X);(pfcTF1(X),!,fail).
 
 mpred_literal(X):- pfcLiteral(X).
 mpred_positive_literal(X):- pfcPositiveLiteral(X).
@@ -256,7 +258,7 @@ call_in_thread(MG):- strip_module(MG,M,G), notrace((copy_term(M:G,GG,_),numberva
   dmsg_pretty(call_in_thread(TN,M,G)).
 
 call_in_thread(TN,M,G):- thread_property(_,alias(TN)),!,dmsg_pretty(already_queued(M,G)).
-call_in_thread(TN,M,G):- must(current_why(Why)), thread_create_in_pool(ain_pool,call_in_thread_code(M,G,Why,TN),_Id,[alias(TN)]).
+call_in_thread(TN,M,G):- must_ex(current_why(Why)), thread_create_in_pool(ain_pool,call_in_thread_code(M,G,Why,TN),_Id,[alias(TN)]).
 
 call_in_thread_code(M,G,Why,TN):-
  with_only_current_why(Why,
@@ -319,7 +321,7 @@ pfcLoad.
 
 will_table_as(Stuff,As):- pfctmp:knows_will_table_as(Stuff,As),!.
 will_table_as(Stuff,As):- assert(pfctmp:knows_will_table_as(Stuff,As)),
-   must(react_tabling(Stuff,As)),!,fail.
+   must_ex(react_tabling(Stuff,As)),!,fail.
 
 react_tabling(Stuff,_):- dynamic(Stuff).
 
@@ -445,7 +447,10 @@ pfcDefault(GeneralTerm,Default) :-
 
 % %  pfcAdd(P,S) asserts P into the dataBase with support from S.
 
-pfcAdd(P) :-  must(current_why_UU(UU)), with_current_why(P, pfcAdd(P, UU)).
+pfcAdd(P) :- must_ex(current_why_UU(UU)),
+  pfcAdd(P, UU).
+
+%pfcAdd(P) :- must_ex(current_why_UU(UU)),%with_current_why(pfcAdd(P), pfcAdd(P, UU)).
 
 pfcAdd((==>P),S) :- !, pfcAdd(P,S).
 
@@ -477,15 +482,25 @@ pfcPost1(Fact,S) :- control_arg_types(Fact,Fixed),!,pfcPost1(Fixed,S).
 pfcPost1(P,S) :-
   % %  db pfcAddDbToHead(P,P2),
   % pfcRemoveOldVersion(P),
-  must(pfcAddSupport(P,S)),
-  (pfcUnique(post, P)-> pfcPost2(P,S) ; true).
+  must_ex(pfcAddSupport(P,S)),
+  (pfcUnique(post, P)-> pfcPost2(P,S) ; nop(pfcWarn(not_pfcUnique(post, P)))).
 
 pfcPost2(P,S):-
-  must(assert(P)),
-  must(pfcTraceAdd(P,S)),
+  must_ex(once(is_asserted(P);assert(P))),
+  must_ex(pfcTraceAdd(P,S)),
   !,
-  must(pfcEnqueue(P,S)),
+  must_ex(pfcEnqueue(P,S)),
   !.
+
+
+is_asserted(MHB):-
+    strip_module(MHB,M,HB),
+         expand_to_hb(HB,H,B),
+   M=MM,
+        (MM:clause(M:H,B,Ref)*->true; M:clause(MM:H,B,Ref)),
+        %clause_ref_module(Ref),
+        clause_property(Ref,module(MM)).
+
 
 %pfcPost1(_,_).
 %pfcPost1(P,S) :-
@@ -525,14 +540,17 @@ pfcSetSearch(Mode):- pfcSetVal(pfcSearch(Mode)).
 
 pfcGetSearch(Mode):- (t_l:pfcSearchTL(ModeT)->true;pfcSearch(ModeT))->Mode=ModeT.
 
-pfcEnqueue(P,S) :-
-  pfcGetSearch(Mode)
-    -> (Mode=direct  -> pfcFwd(P) ;
-    Mode=thread   -> pfcThreadFwd(P,S) ;
+pfcEnqueue(P,S) :- pfcGetSearch(Mode),!,
+   pfcEnqueue(Mode,P,S).
+pfcEnqueue(P,S) :- pfcWarn("No pfcSearch mode"),
+   pfcEnqueue(direct,P,S).
+
+pfcEnqueue(Mode,P,S):-
+    Mode=direct  -> pfcFwd(P) ;
+    Mode=thread  -> pfcThreadFwd(P,S) ;
     Mode=depth   -> pfcAsserta(pfcQueue(P),S) ;
     Mode=breadth -> pfcAssert(pfcQueue(P),S) ;
-    true         -> pfcWarn("Unrecognized pfcSearch mode: ~p", Mode))
-     ; pfcWarn("No pfcSearch mode").
+    true         -> pfcWarn("Unrecognized pfcSearch mode: ~p", Mode),pfcEnqueue(direct,P,S).
 
 
 
@@ -960,7 +978,7 @@ removeIfUnsupported(P) :-
 % %  depends on the TMS mode selected.
 
 fcSupported(P) :-
-  must(fcTmsMode(Mode)),
+  must_ex(fcTmsMode(Mode)),
   supported(Mode,P).
 
 supported(local,P) :- !, pfcGetSupport(P,_).
@@ -1048,7 +1066,7 @@ may_cheat:- true_flag.
 % %  pfcFwd(X) forward chains from a fact or a list of facts X.
 % %
 pfcFwd(Fact) :- control_arg_types(Fact,Fixed),!,pfcFwd(Fixed).
-pfcFwd(Fact) :- is_list(List)->my_maplist(pfcFwd1,List);pfcFwd1(Fact).
+pfcFwd(Fact) :- is_list(List)->my_maplist(pfcFwd,List);pfcFwd1(Fact).
 
 % fc1(+P) forward chains for a single fact.
 
@@ -1164,7 +1182,7 @@ push_current_choice:- prolog_current_choice(CP),push_current_choice(CP),!.
 push_current_choice(CP):- nb_current('$pfc_current_choice',Was)->b_setval('$pfc_current_choice',[CP|Was]);b_setval('$pfc_current_choice',[CP]).
 
 cut_c:- current_prolog_flag(pfc_support_cut,false),!.
-cut_c:- must(nb_current('$pfc_current_choice',[CP|_WAS])),prolog_cut_to(CP).
+cut_c:- must_ex(nb_current('$pfc_current_choice',[CP|_WAS])),prolog_cut_to(CP).
 
 
 % % 
@@ -1231,7 +1249,9 @@ pfc_eval_rhs1([X|Xrest],Support) :-
 
 pfc_eval_rhs1(Assertion,Support) :-
  % an assertion to be added.
- (must(pfcPost1(Assertion,Support))*->true ; pfcWarn("Malformed rhs of a rule: ~p",[Assertion])).
+  once_writeq_ln(pfcRHS(Assertion)),
+ (must_ex(pfcPost1(Assertion,Support))*->true ;
+   pfcWarn("Malformed rhs of a rule: ~p",[Assertion])).
 
 
 % %
@@ -1573,6 +1593,7 @@ buildTrigger([V|Triggers],Consequent,'$pt$'(V,X)) :-
   var(V),
   !,
   buildTrigger(Triggers,Consequent,X).
+
 
 buildTrigger([(T1/Test)|Triggers],Consequent,'$nt$'(T2,Test2,X)) :-
   pfc_unnegate(T1,T2),
@@ -2176,12 +2197,12 @@ pfcDescendants(P,L) :-
 
 
 /*
-current_why_U(U):- must(current_why(Why)), U = user(Why).
+current_why_U(U):- must_ex(current_why(Why)), U = user(Why).
 current_why_UU(UU):- current_why_U(U), UU= (U,U).
 matches_why_U(U):-  freeze(U,U=user(_)).
 matches_why_UU(UU):- matches_why_U(U1),matches_why_U(U2), freeze(UU,UU=(U1,U2)).
 */
-current_why_U(U):-  get_why_uu((U,_)).% must(current_why(Why)), U = user(Why).
+current_why_U(U):-  get_why_uu((U,_)).% must_ex(current_why(Why)), U = user(Why).
 current_why_UU(UU):- get_why_uu(UU). % current_why_U(U), UU= (U,U).
 matches_why_U(U):-  nop((current_why_U(Y), freeze(U,\+ \+ (U=Y;true)))).
 matches_why_UU(UU):- nop(only_is_user_reason(UU)). % matches_why_U(U1),matches_why_U(U2),freeze(UU,UU=(U1,U2)).
@@ -2207,11 +2228,11 @@ pfc_spft(P,F,T) :- pfcCallSystem('$spft$'(P,F,T)).
 % where some of the arguments are not bound but at least one is.
 
 pfcRemOneSupport(P,(Fact,Trigger)) :-
-  must(callable(P);callable(Fact);callable(Trigger)),
+  must_ex(callable(P);callable(Fact);callable(Trigger)),
   pfcRetractOrWarn('$spft$'(P,Fact,Trigger)).
 
 pfcRemOneSupportOrQuietlyFail(P,(Fact,Trigger)) :-
-  must(callable(P);callable(Fact);callable(Trigger)),
+  must_ex(callable(P);callable(Fact);callable(Trigger)),
   pfcRetractOrQuietlyFail('$spft$'(P,Fact,Trigger)).
 
 
@@ -2341,17 +2362,22 @@ pfcShowJustifications(P,Js) :-
   pfcShowJustification1(Js,1),!,
   printLine.
 
-pfcShowJustification1([],_):-!.
 pfcShowJustification1([J|Js],N) :- !,
   % show one justification and recurse.
   %reset_shown_justs,
-  pfcShowSingleJust(N,step(1),J),!,
+  pfcShowSingleJustStep(N,J),!,
   N2 is N+1,
   pfcShowJustification1(Js,N2).
 
 pfcShowJustification1(J,N) :-
   %reset_shown_justs, % nl,
+  pfcShowSingleJustStep(N,J),!.
+
+
+pfcShowSingleJustStep(N,J):-
   pfcShowSingleJust(N,step(1),J),!.
+pfcShowSingleJustStep(N,J):-
+  pp(pfcShowSingleJustStep(N,J)),!.
 
 incrStep(StepNo,Step):- compound(StepNo),arg(1,StepNo,Step),X is Step+1,nb_setarg(1,StepNo,X).
 
@@ -2392,7 +2418,9 @@ pfcShowSingleJust(JustNo,StepNo,'$pt$'(P,Body)):- !,
 pfcShowSingleJust(JustNo,StepNo,C):-
  pfcShowSingleJust1(JustNo,StepNo,C).
 
-fmt_cl(P):- \+ \+ (pretty_numbervars(P,PP),numbervars(PP,126,_,[attvar(skip),singletons(true)]), write_term(PP,[portray(true),portray_goal(fmt_cl)])),write('.').
+fmt_cl(P):- \+ \+ (numbervars(P,666,_,[attvars(skip),singletons(true)]),write_src(P)),!.
+fmt_cl(P):- \+ \+ (pretty_numbervars(P,PP),numbervars(PP,126,_,[attvar(skip),singletons(true)]),
+   write_term(PP,[portray(true),portray_goal(fmt_cl)])),write('.').
 fmt_cl(S,_):- term_is_ansi(S), !, write_keeping_ansi(S).
 fmt_cl(G,_):- is_grid(G),write('"'),user:print_grid(G),write('"'),!.
 % fmt_cl(P,_):- catch(arc_portray(P),_,fail),!.
@@ -2410,16 +2438,19 @@ unwrap_litr0(C,C).
 
 :- thread_local t_l:shown_why/1.
 
-pfcShowSingleJust1(_,_,MFL):- is_mfl(MFL),!.
+pfcShowSingleJust1(JustNo,_,MFL):- is_mfl(MFL), JustNo \== 1,!.
 pfcShowSingleJust1(JustNo,StepNo,C):- unwrap_litr(C,CC),!,pfcShowSingleJust4(JustNo,StepNo,C,CC).
-pfcShowSingleJust4(_,_,_,MFL):- is_mfl(MFL),!.
+
 pfcShowSingleJust4(_,_,_,CC):- t_l:shown_why(C),C=@=CC,!.
+pfcShowSingleJust4(_,_,_,MFL):- is_mfl(MFL),!.
 pfcShowSingleJust4(JustNo,StepNo,C,CC):- assert(t_l:shown_why(CC)),!,
    incrStep(StepNo,Step),
    ansi_format([fg(cyan)],"~N    ~w.~w ~@ ",[JustNo,Step,user:fmt_cl(C)]),
-   pfcShowSingleJust_C(C),!,
+   %write('<'),
+   pfcShowSingleJust_C(C),!,%write('>'),
    format('~N'),
    ignore((maybe_more_c(C))),
+   assert(t_l:shown_why(C)),
    format('~N'),!.
 
 is_mfl(MFL):- compound(MFL), MFL = mfl4(_,_,_,_).
@@ -2602,6 +2633,40 @@ pp_facts(P,C) :-
 
 %=
 
+% %  pp_deds is semidet.
+%
+% Pretty Print Deds.
+%
+pp_deds :- pp_deds(_,true).
+
+
+%=
+
+% %  pp_deds( ?Pattern) is semidet.
+%
+% Pretty Print Deds.
+%
+pp_deds(Pattern) :- pp_deds(Pattern,true).
+
+
+%=
+
+% %  pp_deds( ?P, ?C) is semidet.
+%
+% Pretty Print Deds.
+%
+pp_deds(P,C) :-
+  pfcFacts(P,C,L),
+  pfc_classify_facts(L,_User,Pfc,_Rule),
+  draw_line,
+  fmt("Pfc added facts:",[]),
+  pp_items(system,Pfc),
+  draw_line.
+
+
+
+%=
+
 % %  pp_items( ?Type, :TermH) is semidet.
 %
 % Pretty Print Items.
@@ -2644,9 +2709,9 @@ pp_item(MM,H):- \+ \+ (( get_clause_vars_for_print(H,HH),fmt("~w ~p~N",[MM,HH]))
 % Get Clause Variables For Print.
 %
 get_clause_vars_for_print(HB,HB):- ground(HB),!.
-get_clause_vars_for_print(I,I):- is_listing_hidden(skipVarnames),!.
-get_clause_vars_for_print(H0,MHB):- get_clause_vars_copy(H0,MHB),!.
-get_clause_vars_for_print(HB,HB).
+get_clause_vars_for_print(I,I):- is_listing_hidden(skipVarnames),fail.
+get_clause_vars_for_print(H0,MHB):- get_clause_vars_copy(H0,MHB),H0\=@=MHB,!.
+get_clause_vars_for_print(HB,HB):- numbervars(HB,0,_,[singletons(true),attvars(skip)]),!.
 
 %=
 
@@ -3152,7 +3217,7 @@ u_to_uu(U,(U,ax)):-!.
 % Get Source Ref (Current file or User)
 %
 :- module_transparent((get_source_uu)/1).
-get_source_uu(UU):- must(((get_source_ref1(U),u_to_uu(U,UU)))),!.
+get_source_uu(UU):- must_ex(((get_source_ref1(U),u_to_uu(U,UU)))),!.
 
 get_source_ref1(U):- quietly_ex(((current_why(U),nonvar(U)));ground(U)),!.
 get_source_ref1(U):- quietly_ex(((get_source_mfl(U)))),!.
@@ -3375,7 +3440,7 @@ if_missing_n_mask(Q,N,R,Test):-
 /*
 Old version
 if_missing_mask(Q,N,R,dif:dif(Was,NEW)):-
- must((is_ftNonvar(Q),acyclic_term(Q),acyclic_term(R),functor(Q,F,A),functor(R,F,A))),
+ must_ex((is_ftNonvar(Q),acyclic_term(Q),acyclic_term(R),functor(Q,F,A),functor(R,F,A))),
   (singleValuedInArg(F,N) ->
     (get_assertion_head_arg(N,Q,Was),replace_arg(Q,N,NEW,R));
     ((get_assertion_head_arg(N,Q,Was),is_ftNonvar(Was)) -> replace_arg(Q,N,NEW,R);
@@ -3388,7 +3453,7 @@ if_missing_mask(Q,N,R,dif:dif(Was,NEW)):-
 % Which Missing Argnum.
 %
 which_missing_argnum(Q,N):- compound(Q),\+ compound_name_arity(Q,_,0),
- must((acyclic_term(Q),is_ftCompound(Q),get_functor(Q,F,A))),
+ must_ex((acyclic_term(Q),is_ftCompound(Q),get_functor(Q,F,A))),
  F\=t,
   (call_u(singleValuedInArg(F,N)) -> true; which_missing_argnum(Q,F,A,N)).
 
@@ -3397,14 +3462,22 @@ which_missing_argnum(Q,_F,A,N):- between(A,1,N),get_assertion_head_arg(N,Q,Was),
 
 :- set_prolog_flag(pfc_term_expansion,false).
 
-:- multifile(system:term_expansion/4).
-system:term_expansion(I,S0,O,S1):- %use_pfc_term_expansion, % trace,
+pfc_system_term_expansion(I,S0,O,S1):- %use_pfc_term_expansion, % trace,
  ( \+ current_prolog_flag(pfc_term_expansion,false),
-  ( \+ \+ (source_location(File,_), atom_concat(_,'.pfc.pl',File)) ; current_prolog_flag(pfc_term_expansion,true))) ->
- prolog_load_context('term',T)->(T==I->pfc_term_expansion(I,O)-> I\=@=O->S0=S1, fbugio(I-->O)).
+  ( \+ \+ (source_location(File,_), atom_concat(_,'.pfc.pl',File))
+    ; current_prolog_flag(pfc_term_expansion,true))) ->
+       once((prolog_load_context('term',T),nop(writeln(T)),T=@=I))
+         ->(pfc_term_expansion(I,O)-> I\=@=O->S0=S1, fbugio(I-->O)).
 
+
+:- multifile(system:term_expansion/4).
+:- asserta((system:term_expansion(I,S0,O,S1):-
+           pfc_system_term_expansion(I,S0,O,S1))).
+%:- listing(term_expansion/4).
 
 % :- endif.
+
+
 
 end_of_file.
 
@@ -3470,7 +3543,7 @@ same_functors(Head1,Head2):-must_det(get_unnegated_functor(Head1,F1,A1)),must_de
 %
 mpred_update_literal(P,N,Q,R):-
     get_assertion_head_arg(N,P,UPDATE),call(replace_arg(P,N,Q_SLOT,Q)),
-    must(call_u(Q)),update_value(Q_SLOT,UPDATE,NEW),
+    must_ex(call_u(Q)),update_value(Q_SLOT,UPDATE,NEW),
     replace_arg(Q,N,NEW,R).
 
 
@@ -3539,7 +3612,7 @@ map_literals(_,H,_):-is_ftVar(H),!. % skip over it
 map_literals(_,[],_) :- !.
 map_literals(Pred,(H,T),S):-!, apply(Pred,[H|S]), map_literals(Pred,T,S).
 map_literals(Pred,[H|T],S):-!, apply(Pred,[H|S]), map_literals(Pred,T,S).
-map_literals(Pred,H,S):- mpred_literal(H),must(apply(Pred,[H|S])),!.
+map_literals(Pred,H,S):- mpred_literal(H),must_ex(apply(Pred,[H|S])),!.
 map_literals(_Pred,H,_S):- \+ is_ftCompound(H),!. % skip over it
 map_literals(Pred,H,S):-H=..List,!,map_literals(Pred,List,S),!.
 
@@ -3634,8 +3707,8 @@ correctify_support(U,(U,ax)).
 % Clause Asserted Local.
 %
 clause_asserted_local(MCL):-
-  strip_mz(MCL,MZ,CL),
-  must(CL='$spft'(MZ,P,Fact,Trigger )),!,
+  must_ex(strip_mz(MCL,MZ,CL)),
+  must_ex(CL='$spft'(MZ,P,Fact,Trigger )),!,
   clause_u('$spft'(MZ,P,Fact,Trigger),true,Ref),
   clause_u('$spft'(MZ,UP,UFact,UTrigger),true,Ref),
   (((UP=@=P,UFact=@=Fact,UTrigger=@=Trigger))).
@@ -3647,7 +3720,7 @@ clause_asserted_local(MCL):-
 % If Is A Already Supported.
 %
 is_already_supported(P,(S,T),(S,T)):- clause_asserted_local('$spft'(_MZ,P,S,T)),!.
-is_already_supported(P,_S,UU):- clause_asserted_local('$spft'(_MZ,P,US,UT)),must(get_source_uu(UU)),UU=(US,UT).
+is_already_supported(P,_S,UU):- clause_asserted_local('$spft'(_MZ,P,US,UT)),must_ex(get_source_uu(UU)),UU=(US,UT).
 
 % TOO UNSAFE
 % is_already_supported(P,_S):- copy_term_and_varnames(P,PC),sp ftY(PC,_,_),P=@=PC,!.

@@ -57,8 +57,8 @@ real_assert(OBO):-
 real_assert1(OBO):- all_metta_to(Out),!,with_output_to(Out,print_src(OBO)).
 real_assert2(OBO):- all_data_to(Out),!,write_canonical(Out,OBO),!,writeln(Out,'.').
 real_assert2(OBO):- is_converting,!,throw(real_assert2(OBO)).
-real_assert2(OBO):- call(OBO),!.
-real_assert2(OBO):- assert(OBO).
+%real_assert2(OBO):- call(OBO),!.
+real_assert2(OBO):- pfcAdd_Now(OBO).
 
 print_src(OBO):- format('~N'), uncompound(OBO,Src),!, write_srcH(Src).
 write_srcH([F|Args]):- write('( '),write_src(F),maplist(write_srcE,Args),writeln(' )').
@@ -957,7 +957,7 @@ fix_columns_with_arg(Arg):-
   forall(fb_arg_table_n(Arg,Fn,N),
     fix_columns_n(Fn,N)).
 fix_columns_n(Fn,N):-
-  assert_new(fix_columns_nth(Fn,N)).
+  pfcAdd_Now(fix_columns_nth(Fn,N)).
 
 
 load_fb_mask(Filename):- is_scryer,symbol(Filename),name(Filename,Chars),!,load_fb_mask(Chars).
@@ -1116,7 +1116,7 @@ maybe_sample( Fn, Args):- assert_arg_samples(Fn,1,Args).
 
 :- dynamic(fb_arg/1).
 :- dynamic(fb_arg_table_n/3).
-assert_arg_table_n(A,Fn,N):-    assert_new(fb_arg(A)), assert_new(fb_arg_table_n(A,Fn,N)).
+assert_arg_table_n(A,Fn,N):-    pfcAdd_Now(fb_arg(A)), pfcAdd_Now(fb_arg_table_n(A,Fn,N)).
 
 assert_arg_samples(Fn,N,[A|Args]):-
    (dont_sample(A)->true;assert_arg_table_n(A,Fn,N)),
@@ -1370,8 +1370,8 @@ assert_type_of(_Term,_Fn,_N,_Type,_Arg):- \+ should_sample,!.
 assert_type_of(Term,Fn,N,Type,Arg):- is_list(Arg),!,maplist(assert_type_of(Term,Fn,N,Type),Arg).
 assert_type_of(_Term,Fn,N,_Type,Arg):-
  must_det_ll((
-   assert_new(fb_arg(Arg)),
-   assert_new(fb_arg_table_n(Arg,Fn,N)))).
+   pfcAdd_Now(fb_arg(Arg)),
+   pfcAdd_Now(fb_arg_table_n(Arg,Fn,N)))).
 
 :- dynamic(fb_arg_type/1).
 :- dynamic(table_n_type/3).
@@ -1380,8 +1380,8 @@ add_table_n_types(Fn,1,[N|ArgTypes]):- number(N),!,
    add_table_n_types(Fn,1,ArgTypes).
 add_table_n_types(Fn,N,[Type|ArgTypes]):-!,
   sub_term(Sub,Type),symbol(Sub),!,
-  assert_new(fb_arg_type(Sub)),
-  assert_new(table_n_type(Fn,N,Sub)),
+  pfcAdd_Now(fb_arg_type(Sub)),
+  pfcAdd_Now(table_n_type(Fn,N,Sub)),
   N2 is N+1, add_table_n_types(Fn,N2,ArgTypes),!.
 add_table_n_types(_Fn,_,[]).
 
@@ -1396,7 +1396,7 @@ is_valuesymbol(Fn,N,Type):- arg_table_n_type(Arg,Fn,N,Type),symbol_number(Arg,_)
 :- dynamic(numeric_value_p_n/3).
 fis_valuesymbol(PNList,Len):- findall(P-N,is_valuesymbol(P,N,_Type),PNList),length(PNList,Len).
 
-save_value_symbol_cols:- for_all(is_valuesymbol(Fn,N,Type),assert_new(numeric_value_p_n(Fn,N,Type))),
+save_value_symbol_cols:- for_all(is_valuesymbol(Fn,N,Type),pfcAdd_Now(numeric_value_p_n(Fn,N,Type))),
   listing(numeric_value_p_n/3).
 
 
