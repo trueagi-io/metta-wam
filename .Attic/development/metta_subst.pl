@@ -1,3 +1,56 @@
+/*
+ * Project: MeTTaLog - A MeTTa to Prolog Transpiler/Interpreter
+ * Description: This file is part of the source code for a transpiler designed to convert
+ *              MeTTa language programs into Prolog, utilizing the SWI-Prolog compiler for
+ *              optimizing and transforming function/logic programs. It handles different
+ *              logical constructs and performs conversions between functions and predicates.
+ *
+ * Author: Douglas R. Miles
+ * Contact: logicmoo@gmail.com / dmiles@logicmoo.org
+ * License: LGPL
+ * Repository: https://github.com/trueagi-io/metta-wam
+ *             https://github.com/logicmoo/hyperon-wam
+ * Created Date: 8/23/2023
+ * Last Modified: $LastChangedDate$  # You will replace this with Git automation
+ *
+ * Usage: This file is a part of the transpiler that transforms MeTTa programs into Prolog. For details
+ *        on how to contribute or use this project, please refer to the repository README or the project documentation.
+ *
+ * Contribution: Contributions are welcome! For contributing guidelines, please check the CONTRIBUTING.md
+ *               file in the repository.
+ *
+ * Notes:
+ * - Ensure you have SWI-Prolog installed and properly configured to use this transpiler.
+ * - This project is under active development, and we welcome feedback and contributions.
+ *
+ * Acknowledgments: Special thanks to all contributors and the open source community for their support and contributions.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
 %self_subst(X):- var(X),!.
 %self_subst(X):- string(X),!.
 %self_subst(X):- number(X),!.
@@ -9,12 +62,12 @@ self_subst(X):- is_list(X),!,fail.
 %self_subst(X):- compound(X),!.
 %self_subst(X):- is_ref(X),!,fail.
 self_subst(X):- atom(X),!, \+ nb_current(X,_),!.
-self_subst('True'). self_subst('False'). self_subst('F').
+self_subst('True'). self_subst('False'). self_subst('F'). %'
 
 
-:- nb_setval(self_space, '&self').
+:- nb_setval(self_space, '&self'). % '
 substs_to(XX,Y):- Y==XX,!.
-substs_to(XX,Y):- Y=='True',!, is_True(XX),!.
+substs_to(XX,Y):- Y=='True',!, is_True(XX),!. %'
 
 %current_self(Space):- nb_current(self_space,Space).
 /*
@@ -26,7 +79,7 @@ subst_args(Eq,RetType,A,AA):-
 */
 
 subst_args(Eq,RetType,Depth,Self,X,Y):- atom(Eq),  ( Eq \== ('=')),  ( Eq \== ('match')) ,!,
-   call(Eq,'=',RetType,Depth,Self,X,Y).
+   call(Eq,'=',RetType,Depth,Self,X,Y). % '
 
  :- style_check(-singleton).
 
@@ -35,11 +88,13 @@ subst_args(Eq,RetType,Depth,Self,X,Y):- atom(Eq),  ( Eq \== ('=')),  ( Eq \== ('
 %subst_args(Eq,RetType,_Dpth,_Slf,X,Y):- nonvar(Y),X=Y,!.
 %subst_args(Eq,RetType,Depth,Self,X,Y):- nonvar(Y),!,subst_args(Eq,RetType,Depth,Self,X,XX),substs_to(XX,Y).
 subst_args(Eq,RetType,_Dpth,_Slf,X,Y):- self_subst(X),!,Y=X.
-subst_args(Eq,RetType,_Dpth,_Slf,[X|T],Y):- T==[], \+ callable(X),!,Y=[X].
+subst_args(Eq,RetType,_Dpth,_Slf,[X|T],Y):- 
+  % !, fail,
+     T==[], \+ callable(X),!,Y=[X].
 
 subst_args(Eq,RetType,Depth,Self,[F|X],Y):-
- % (F=='superpose' ; ( option_value(no_repeats,false))),
-  mnotrace((D1 is Depth-1)),!,
+ % (F=='superpose' ; ( option_value(no_repeats,false))),  %'
+  notrace((D1 is Depth-1)),!,
   subst_args0(Eq,RetType,D1,Self,[F|X],Y).
 
 subst_args(Eq,RetType,Depth,Self,X,Y):- subst_args0(Eq,RetType,Depth,Self,X,Y).
@@ -51,121 +106,21 @@ subst_args(Eq,RetType,Depth,Self,X,Y):-
    mnotrace(( \+ (Y\=YY))).
 */
 
+subst_args(X,Y):- subst_args('&self',X,Y). %' 
+subst_args(Space,X,Y):- subst_args(100,Space,X,Y).
 
+subst_args(Depth,Space,X,Y):-subst_args('=',_RetType,
+  Depth,Space,X,Y).
 
 :- nodebug(metta(eval)).
 
-/*
-debugging_metta(G):-is_debugging((eval))->ignore(G);true.
-w_indent(Depth,Goal):-
-  \+ \+ mnotrace(ignore(((
-    format('~N'),
-    setup_call_cleanup(forall(between(Depth,101,_),write('  ')),Goal, format('~N')))))).
-indentq(DR,EX,Term):-
-  \+ \+ mnotrace(ignore(((
-    format('~N'),
-    setup_call_cleanup(forall(between(Depth,101,_),write('  ')),format('~q',[Term]),
-    format('~N')))))).
 
-
-with_debug(Flag,Goal):- is_debugging(Flag),!, call(Goal).
-with_debug(Flag,Goal):- flag(eval_num,_,0),
-  setup_call_cleanup(set_debug(Flag,true),call(Goal),set_debug(Flag,flase)).
-
-flag_to_var(Flag,Var):- atom(Flag), \+ atom_concat('trace-on-',_,Flag),!,atom_concat('trace-on-',Flag,Var).
-flag_to_var(metta(Flag),Var):- !, nonvar(Flag), flag_to_var(Flag,Var).
-flag_to_var(Flag,Var):- Flag=Var.
-
-set_debug(Flag,Val):- \+ atom(Flag), flag_to_var(Flag,Var), atom(Var),!,set_debug(Var,Val).
-set_debug(Flag,true):- !, debug(metta(Flag)),flag_to_var(Flag,Var),set_option_value(Var,true).
-set_debug(Flag,false):- nodebug(metta(Flag)),flag_to_var(Flag,Var),set_option_value(Var,false).
-if_trace((Flag;true),Goal):- !, notrace(( catch_err(ignore((Goal)),E,wdmsg(E-->if_trace((Flag;true),Goal))))).
-if_trace(Flag,Goal):- notrace((catch_err(ignore((is_debugging(Flag),Goal)),E,wdmsg(E-->if_trace(Flag,Goal))))).
-
-
-%maybe_efbug(SS,G):- efbug(SS,G)*-> if_trace(eval,wdmsg(SS=G)) ; fail.
-maybe_efbug(_,G):- call(G).
-%efbug(P1,G):- call(P1,G).
-efbug(_,G):- call(G).
-
-
-
-is_debugging(Flag):- var(Flag),!,fail.
-is_debugging((A;B)):- !, (is_debugging(A) ; is_debugging(B) ).
-is_debugging((A,B)):- !, (is_debugging(A) , is_debugging(B) ).
-is_debugging(not(Flag)):- !,  \+ is_debugging(Flag).
-is_debugging(Flag):- Flag== false,!,fail.
-is_debugging(Flag):- Flag== true,!.
-is_debugging(Flag):- debugging(metta(Flag),TF),!,TF==true.
-is_debugging(Flag):- debugging(Flag,TF),!,TF==true.
-is_debugging(Flag):- flag_to_var(Flag,Var),
-   (option_value(Var,true)->true;(Flag\==Var -> is_debugging(Var))).
-
-:- nodebug(metta(overflow)).
-
-*/
-
-%subst_args0(Eq,RetType,Depth,_Slf,X,Y):- Depth<1,!,X=Y, (\+ trace_on_overflow-> true; flag(eval_num,_,0),debug(metta(eval))).
+%subst_args0(Eq,RetType,Depth,_Slf,X,Y):- Depth<1,!,X=Y, (\+ trace_on_overflow-> true; reset_eval_num,debug(metta(eval))).
 subst_args0(Eq,RetType,_Dpth,_Slf,X,Y):- self_subst(X),!,Y=X.
 subst_args0(Eq,RetType,Depth,Self,X,Y):-
   Depth2 is Depth-1,
-  subst_args11(Eq,RetType,Depth,Self,X,M),
+  trace_eval(subst_args1(Eq,RetType),((e2;e)),Depth,Self,X,M),
   (M\=@=X ->subst_args0(Eq,RetType,Depth2,Self,M,Y);Y=X).
-
-subst_args11(Eq,RetType,Depth,Self,X,Y):- \+ is_debugging((subst_args)),!,
-  D1 is Depth-1,
-  subst_args1(Eq,RetType,D1,Self,X,Y).
-subst_args11(Eq,RetType,Eq,RetType,Depth,Self,X,Y):-
- notrace((
-
-  flag(subst_args_num,EX,EX+1),
-  D1 is Depth-1,
-  DR is 99-D1,
-  PrintRet = _,
-  option_else('trace-length',Max,100),
-  if_t((EX>Max), (set_debug(subst_args,false),MaxP1 is Max+1, set_debug(overflow,false),
-      format('; Switched off tracing. For a longer trace: !(pragma! trace-length ~w)',[MaxP1]))),
-  nop(notrace(no_repeats_var(YY))),
-
-  if_t(DR<10,if_trace((subst_args),(PrintRet=1, indentq(DR,EX, '-->',subst(X))))),
-  Ret=retval(fail))),
-
-  call_cleanup((
-    (subst_args1(Eq,RetType,D1,Self,X,Y)),
-    notrace(( \+ (Y\=YY), nb_setarg(1,Ret,Y)))),
-
-    (PrintRet==1 -> indentq(DR,EX,'<--',Ret) ;
-    mnotrace(ignore(((Y\=@=X,
-      if_t(DR<10,if_trace((subst_args),indentq(DR,EX,'<--',s(Ret)))))))))),
-
-  (Ret\=@=retval(fail)->true;(rtrace(subst_args_00(Eq,RetType,D1,Self,X,Y)),fail)).
-
-/*
-
-subst_args11(Eq,RetType,_Dpth,_Slf,X,Y):- self_subst(X),!,Y=X.
-subst_args11(Eq,RetType,Depth,Self,X,Y):- \+ debugging(metta(eval)),!, subst_args1(Eq,RetType,Depth,Self,X,Y).
-subst_args11(Eq,RetType,Depth,Self,X,Y):-
-
-notrace((
-
-  flag(eval_num,EX,EX+1),
-  D1 is Depth-1,
-  DR is 99-D1,
-  PrintRet = _,
-  option_else('trace-length',Max,100),
-  if_t((EX>Max), (set_debug(eval,false),MaxP1 is Max+1, set_debug(overflow,false),
-      format('; Switched off tracing. For a longer trace: !(pragma! trace-length ~w)',[MaxP1]))),
-  nop(notrace(no_repeats_var(YY))),
-
-  if_t(DR<10,if_trace((eval),(PrintRet=1, indentq(DR,EX,'-->'(subst_args(Self,X,'$VAR'('RET'))))))),
-  Ret=retval(fail))),
-
-  call_cleanup((
-    subst_args1(Eq,RetType,D1,Self,X,Y),
-    mnotrace(( \+ (Y\=YY), nb_setarg(1,Ret,Y)))),
-    mnotrace(ignore(((Y\=@=X,if_trace(metta(eval),indentq(DR,EX,'<--'(Ret)))))))),
-  (Ret\=@=retval(fail)->true;(rtrace(subst_args0(Eq,RetType,D1,Self,X,Y)),fail)).
-*/
 
 :- discontiguous subst_args1/6.
 :- discontiguous subst_args2/6.
@@ -197,13 +152,15 @@ subst_args1(Eq,RetType,Depth,Self,['let*',[[Var,Val]|LetRest],Body],RetVal):- !,
     is_sl_op('>').  is_sl_op('<'). %  is_sl_op('>').
     is_sl_op('\\=@=').
 
-subst_args1(Eq,RetType,Depth,Self,[OP,N1,N2],TF):-  is_sl_op(OP), !,
+subst_args1(Eq,RetType,Depth,Self,[OP,N1,N2],TF):- 
+   fail,
+  is_sl_op(OP), !,
   ((subst_args(Eq,RetType,Depth,Self,N1,N1Res),subst_args(Eq,RetType,Depth,Self,N2,N2Res),
      ((N1,N2)\=@=(N1Res,N2Res)),subst_args1(Eq,RetType,Depth,Self,[OP,N1Res,N2Res],TF))
      *->true;
       subst_selfless([OP,N1,N2],TF)).
 
-
+%subst_args1(Eq,RetType,Depth,Self,O,O):-!.
 
 subst_args1(Eq,RetType,_Dpth,_Slf,['repl!'],'True'):- !, repl.
 subst_args1(Eq,RetType,Depth,Self,['!',Cond],Res):- !, call(subst_args(Eq,RetType,Depth,Self,Cond,Res)).
@@ -225,7 +182,7 @@ subst_args1(Eq,RetType,Depth,Self,['assertEqual',X0,Y0],RetVal):- !,
         (bagof_subst(Depth,Self,X,XX),
          bagof_subst(Depth,Self,Y,YY)),
          equal_enough_for_test(XX,YY), TF),
-  (TF=='True'->return_empty(RetVal);RetVal=[got,XX,expected,YY]).
+  (TF=='True'->make_empty(RetVal);RetVal=[got,XX,expected,YY]).
 
 subst_args1(Eq,RetType,Depth,Self,['assertNotEqual',X0,Y0],RetVal):- !,
   subst_vars(X0,X),subst_vars(Y0,Y),
@@ -233,7 +190,7 @@ subst_args1(Eq,RetType,Depth,Self,['assertNotEqual',X0,Y0],RetVal):- !,
         ['assertNotEqual',X0,Y0],
         (setof_subst(Depth,Self,X,XX), setof_subst(Depth,Self,Y,YY)),
          \+ equal_enough(XX,YY), TF),
-  (TF=='True'->return_empty(RetVal);RetVal=[got,XX,expected,not,YY]).
+  (TF=='True'->make_empty(RetVal);RetVal=[got,XX,expected,not,YY]).
 
 subst_args1(Eq,RetType,Depth,Self,['assertEqualToResult',X0,Y0],RetVal):- !,
   subst_vars(X0,X),subst_vars(Y0,Y),
@@ -241,7 +198,7 @@ subst_args1(Eq,RetType,Depth,Self,['assertEqualToResult',X0,Y0],RetVal):- !,
         ['assertEqualToResult',X0,Y0],
         (bagof_subst(Depth,Self,X,XX), =(Y,YY)),
          equal_enough_for_test(XX,YY), TF),
-  (TF=='True'->return_empty(RetVal);RetVal=[got,XX,expected,YY]),!.
+  (TF=='True'->make_empty(RetVal);RetVal=[got,XX,expected,YY]),!.
 
 
 l1t_loonit_assert_source_tf(Src,Goal,Check,TF):-
@@ -308,6 +265,7 @@ is_space_op('match').
 is_space_op('get-atoms').
 is_space_op('add-atom').
 is_space_op('remove-atom').
+%is_space_op('replace-atom').
 is_space_op('atom-count').
 is_space_op('atom-replace').
 
@@ -400,11 +358,11 @@ sub_sterm1(Sub,Term):- arg(_,Term,SL),sub_sterm(Sub,SL).
 subst_args1(Eq,RetType,_Depth,_Self,['nop'],                 _ ):- !, fail.
 subst_args1(Eq,RetType,Depth,Self,['nop',Expr], Empty):- !,
   ignore(subst_args(Eq,RetType,Depth,Self,Expr,_)),
-  return_empty([], Empty).
+  make_empty([], Empty).
 
 subst_args1(Eq,RetType,Depth,Self,['do',Expr], Empty):- !,
   forall(subst_args(Eq,RetType,Depth,Self,Expr,_),true),
-  return_empty([],Empty).
+  make_empty([],Empty).
 
 subst_args1(Eq,RetType,_Depth,_Self,['call',S], TF):- !, eval_call(S,TF).
 
@@ -678,16 +636,16 @@ subst_args1(Eq,RetType,Depth,Self,[F|Args],Res):- is_list(F),
 subst_args1(Eq,RetType,Depth,Self,[F|Args],Res):- is_list(F), Args\==[],
   append(F,Args,FArgs),!,subst_args(Eq,RetType,Depth,Self,FArgs,Res).
 */
-subst_args1(Eq,RetType,_Dpth,Self,['import!',Other,File],RetVal):- into_space(Self,Other,Space),!, include_metta(Space,File),!,return_empty(Space,RetVal). %RetVal=[].
+subst_args1(Eq,RetType,_Dpth,Self,['import!',Other,File],RetVal):- into_space(Self,Other,Space),!, include_metta(Space,File),!,make_empty(Space,RetVal). %RetVal=[].
 subst_args1(Eq,RetType,Depth,Self,['bind!',Other,Expr],RetVal):-
-   into_name(Self,Other,Name),!,subst_args(Eq,RetType,Depth,Self,Expr,Value),nb_setval(Name,Value),  return_empty(Value,RetVal).
+   into_name(Self,Other,Name),!,subst_args(Eq,RetType,Depth,Self,Expr,Value),nb_setval(Name,Value),  make_empty(Value,RetVal).
 subst_args1(Eq,RetType,Depth,Self,['pragma!',Other,Expr],RetVal):-
-   into_name(Self,Other,Name),!,subst_args(Eq,RetType,Depth,Self,Expr,Value),set_option_value(Name,Value),  return_empty(Value,RetVal).
-subst_args1(Eq,RetType,_Dpth,Self,['transfer!',File],RetVal):- !, include_metta(Self,File),  return_empty(Self,RetVal).
+   into_name(Self,Other,Name),!,subst_args(Eq,RetType,Depth,Self,Expr,Value),set_option_value(Name,Value),  make_empty(Value,RetVal).
+subst_args1(Eq,RetType,_Dpth,Self,['transfer!',File],RetVal):- !, include_metta(Self,File),  make_empty(Self,RetVal).
 
 
 
-%l_l1t_args1(Depth,Self,['nop',Expr],Empty):- !,  subst_args(Eq,RetType,Depth,Self,Expr,_), return_empty([],Empty).
+%l_l1t_args1(Depth,Self,['nop',Expr],Empty):- !,  subst_args(Eq,RetType,Depth,Self,Expr,_), make_empty([],Empty).
 
 /*
 is_True(T):- T\=='False',T\=='F',T\==[].
@@ -775,8 +733,9 @@ last_element(T,E):- compound_name_arguments(T,_,List),last_element(List,E),!.
 %as_tf(G,TF):- catch_nowarn((call(G)*->TF='True';TF='False')).
 */
 subst_selfless(['==',X,Y],TF):- as_tf(X=:=Y,TF),!.
-subst_selfless(['==',X,Y],TF):- as_tf(X=@=Y,TF),!.
-subst_selfless(['=',X,Y],TF):-!,as_tf(X=Y,TF).
+subst_selfless(['==',X,Y],TF):- as_tf(X=Y,TF),!.
+subst_selfless(X,Y):- !,eval_selfless(_,_,_,_,X,Y).
+/*subst_selfless(['=',X,Y],TF):-!,as_tf(X=Y,TF).
 subst_selfless(['>',X,Y],TF):-!,as_tf(X>Y,TF).
 subst_selfless(['<',X,Y],TF):-!,as_tf(X<Y,TF).
 subst_selfless(['=>',X,Y],TF):-!,as_tf(X>=Y,TF).
@@ -786,7 +745,7 @@ subst_selfless(['%',X,Y],TF):-!,subst_selfless(['mod',X,Y],TF).
 subst_selfless(LIS,Y):-  mnotrace((
    LIS=[F,_,_], atom(F), catch_warn(current_op(_,yfx,F)),
    catch_err((LIS\=[_], s2p(LIS,IS), Y is IS),_,fail))),!.
-
+*/
 % less Macro-ey Functions
 
 
@@ -952,10 +911,13 @@ subst_args40(Eq,Depth,Self,[F|X],FY):- is_function(F), \+ is_special_op(F), is_l
   maplist(subst_args(Eq,RetType,Depth,Self),X,Y),!,subst_args5(Depth,Self,[F|Y],FY).
 subst_args40(Eq,Depth,Self,FX,FY):- subst_args5(Depth,Self,FX,FY).
 
-subst_args5(_Dpth,_Slf,[F|LESS],Res):- once(subst_selfless([F|LESS],Res)),mnotrace(([F|LESS]\==Res)),!.
+%subst_args5(_Dpth,_Slf,[F|LESS],Res):- once(subst_selfless([F|LESS],Res)),mnotrace(([F|LESS]\==Res)),!.
+subst_args5(Depth,Self,[AE|More],TF):- eval_selfless(_,_,Depth,Self,[AE|More],TF),!.
 subst_args5(Depth,Self,[AE|More],TF):- is_system_pred(AE), length(More,Len),
-  (is_syspred(AE,Len,Pred),catch_warn(as_tf(apply(Pred,More),TF)))*->true;subst_args6(Depth,Self,[AE|More],TF).
-subst_args6(_Dpth,_Slf,[AE|More],TF):- is_system_pred(AE),length([AE|More],Len), is_syspred(AE,Len,Pred),append(More,[TF],Args),!,catch_warn(apply(Pred,Args)).
+  (is_syspred(AE,Len,Pred),catch_warn(as_tf(apply(Pred,More),TF)))*->true;
+ subst_args6(Depth,Self,[AE|More],TF).
+subst_args6(_Dpth,_Slf,[AE|More],TF):- is_system_pred(AE),length([AE|More],Len),
+ is_syspred(AE,Len,Pred),append(More,[TF],Args),!,catch_warn(apply(Pred,Args)).
 
 %subst_args40(Eq,Depth,Self,[X1|[F2|X2]],[Y1|Y2]):- is_function(F2),!,subst_args(Eq,RetType,Depth,Self,[F2|X2],Y2),subst_args(Eq,RetType,Depth,Self,X1,Y1).
 

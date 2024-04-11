@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-print(";; ...doing...",__name__)
+#if __name__ != "mettalog":f
 
 # Version Space Candidate Elimination inside of MeTTa
 # This implementation focuses on bringing this machine learning algorithm into the MeTTa relational programming environment.
@@ -8,69 +8,26 @@ print(";; ...doing...",__name__)
 
 # Standard Library Imports
 import atexit, io, inspect, json, os, re, subprocess, sys, traceback
+import sys
+import os
+import importlib.util
+import importlib
+import inspect
+import types
+import inspect
+import ast
+from typing import *
+from typing import List, Dict, Set, Callable
+from typing_extensions import *
+from typing import get_type_hints
 from collections import Counter
 from glob import glob
 from time import monotonic_ns, time
+import traceback
 
-# Global Variables
-VSPACE_VERBOSE = os.environ.get("VSPACE_VERBOSE")
-# 0 = for scripts/demos
-# 1 = developer
-# 2 = debugger
-verbose = 1
-if VSPACE_VERBOSE is not None:
- try: verbose = int(VSPACE_VERBOSE) # Convert it to an integer
- except ValueError: ""
+from mettalog import *
 
-
-def timeFrom(w, t0):
-    elapsed_ns = monotonic_ns() - t0
-    elapsed_s = elapsed_ns / 1e9
-    elapsed_ms = elapsed_ns / 1e6
-    elapsed_us = elapsed_ns / 1e3
-
-    if elapsed_s >= 1:
-        print_cmt(f"{w} took {elapsed_s:.5f} seconds")
-    elif elapsed_ms >= 1:
-        print_cmt(f"{w} took {elapsed_ms:.5f} milliseconds")
-    else:
-        print_cmt(f"{w} took {elapsed_us:.5f} microseconds")
-
-
-
-
-def redirect_stdout(inner_function):
-    old_stdout = sys.stdout # Save the current stdout stream
-    new_stdout = io.StringIO() # Create a new StringIO buffer
-    sys.stdout = new_stdout # Redirect stdout to the new buffer
-    try:
-        inner_function() # Execute the inner function
-    finally:
-        sys.stdout = old_stdout # Restore the original stdout stream
-    output = new_stdout.getvalue() # Retrieve the output from the new buffer
-    new_stdout.close() # Close the new buffer
-    return output
-
-
-
-def flush_console():
-    try:
-      if sys.__stdout__ is not None: sys.__stdout__.flush()
-    except Exception: ""
-    try:
-      if sys.__stderr__ is not None: sys.__stderr__.flush()
-    except Exception: ""
-    try:
-      if sys.stderr is not None and not (sys.stderr is sys.__stderr__): sys.sys.stderr.flush()
-    except Exception: ""
-    try:
-      if sys.stdout is not None and not (sys.stdout is sys.__stdout__): sys.sys.stdout.flush()
-    except Exception: ""
-
-
-# Exporting to another CSV (for demonstration)
-#df.to_csv("exported.csv", index=False)
-#print_cmt("\n### Data Exported to 'exported.csv' ###")
+print_l_cmt(2, f";; ...doing {__file__}...{__package__} name={__name__}")
 
 
 import os
@@ -83,56 +40,6 @@ def detect_encoding(file_path, sample_size=20000):
     with open(file_path, 'rb') as f:
         raw = f.read(sample_size)
     return chardet.detect(raw)['encoding']
-
-from collections.abc import Iterable
-
-def is_lisp_dashed(s):
-    pattern = re.compile('^[A-Za-z0-9-_:]+$')
-    return bool(pattern.match(s))
-
-def item_string(lst, functor=""):
-    if isinstance(lst, str):
-        if len(lst) == 0:
-            return '""'
-        if any(char in lst for char in [' ', '"', "'", "(", ")", ".", "\\"]):
-            return json.dumps(lst)
-        if isinstance(lst, (int, float)):
-            return repr(lst)
-        if is_float_string(lst):
-            return repr(float(lst))
-        if lst.isdigit():
-            return repr(int(lst))
-        if lst.isalnum():
-            if lst[0].isdigit(): return json.dumps(lst)
-            return lst
-        if lst=="#":
-            return lst
-        if is_lisp_dashed(lst):
-            return lst
-        return json.dumps(lst)
-
-    try:
-        if isinstance(lst, Iterable):
-            return '(' + functor + ' '.join([item_string(vv) for vv in lst]) + ')'
-        else:
-            return str(lst)
-    except TypeError:
-        return str(lst)
-
-def list_string(lst, functor="# "):
-    try:
-        if isinstance(lst, Iterable) and not isinstance(lst, str):
-            if len(lst) == 0:
-                return '()'
-            return '(' + functor + ' '.join([item_string(vv) for vv in lst]) + ')'
-        else:
-            return item_string(lst)
-    except TypeError:
-        return item_string(lst)
-
-def is_float_string(s):
-    return bool(re.fullmatch(r'[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?', s))
-
 import pandas as pd
 
 def update_dataframe_skipping_first_row(df):
@@ -266,8 +173,8 @@ def analyze_csv(base_name, file_path, sep=None):
 
     def metta_read(str):
         print(str)
-#        res = the_python_runner.run(json.dumps(str))
-#        if len(res) != 0: print_cmt(";;;="+ repr(res))
+        res = get_metta().run(json.dumps(str))
+        if len(res) != 0: print_cmt(";;;=" + repr(res))
 
     metta_read(f"!(file-name {base_name}  {file_path})")
     metta_read(f"(num-columns {base_name} {df.shape[1]})")
@@ -307,134 +214,5 @@ def analyze_csv(base_name, file_path, sep=None):
 
     #metta_read(f"(data-types {base_name} {col} {col.dtype} )")
 
-
-
-def import_metta_file(string):
-    global argmode
-    if argmode=="mettalog":
-        load_vspace()
-        swip_exec(f"load_metta_file('{selected_space_name}','{string}')")
-    else: the_python_runner.import_file(string)
-
-
-
-import os
-import sys
-
-def vspace_main(*args):
-    is_init=False
-    #os.system('clear')
-    t0 = monotonic_ns()
-    flush_console()
-    #if is_init==False: load_vspace()
-    #if is_init==False: load_flybase()
-    #if is_init==False:
-
-    if isinstance(args, str):
-        handle_arg(args)
-    elif isinstance(args, list):
-        for arg in args:
-            if isinstance(arg, str):
-                if len(arg) > 1: handle_arg(arg)
-
-    flush_console()
-    global argmode
-    #the_python_runner.repl(mode=argmode)
-    flush_console()
-    if verbose>1: timeFrom("main", t0)
-    flush_console()
-
-def vspace_main_from_python(sysargv1toN):
-    vspace_main(sysargv1toN)
-
-def handle_arg(string, skip_filetypes=['.metta', '.md','.pl', '.png', '.jpg', '.obo']):
-
-        lower = string.lower()
-
-        if lower in ["--metta","--mettalog","--python"]:
-            global argmode
-            argmode = lower.lstrip('-')
-            if verbose>0: print("; argmode=", argmode)
-            return
-
-        if os.path.isfile(string):
-            if lower.endswith('.metta'):
-                if verbose>0: print("; import_metta_file=", string)
-                #import_metta_file(string)
-                return
-
-        global needed_Skip
-        if string=="--analyze": sys.exit(needed_Skip)
-
-        if os.path.isdir(string):
-            # If it's a directory, traverse it
-            for root, _, files in os.walk(string):
-                for file in files:
-                    try:
-                        if any(file.endswith(ext) for ext in skip_filetypes):
-                            if verbose>0: print_cmt(f"Skipping file: {file}")
-                            continue
-                        handle_arg([os.path.join(root, file)], skip_filetypes)
-                    except Exception as e:
-                        print_cmt(f"An error occurred while processing {string}: {e}")
-            return
-
-        elif os.path.isfile(string):
-            if lower.endswith('.csv'):
-                analyze_csv_basename(string, sep=',')
-                return
-            elif lower.endswith('.tsv'):
-                analyze_csv_basename(string, sep='\t')
-                return
-            else:
-                # Read only the first few lines
-                try:
-                    analyze_csv_basename(string)
-                except UnicodeDecodeError:
-                    print_cmt(f"Passing in file: {string}")
-                    with open(string, 'r') as file:
-                        for i, line in enumerate(file):
-                            if i >= 10:
-                                break
-                            print_cmt(line.strip())
-                return
-
-        print_cmt(f"Skipping: {string}")
-
-def print_cmt(*args, prefix=";; "):
-   for arg in args:
-       println(arg, prefix=prefix)
-       flush_console()
-
-def println(orig, prefix=""):
-    """
-    Prints the given object and returns it.
-
-    Args:
-        orig: The object to be printed.
-
-    Returns:
-        The same object that was passed in.
-    """
-    try:
-      prefix_print(prefix, orig)
-    except Exception as e:
-      if verbose>0: print_cmt(f"println-Error: {e}")
-    flush_console()
-    return orig
-
-def prefix_print(prefix, orig):
-
-    obj = orig
-
-    if isinstance(obj, str):
-        objlns = obj.splitlines()
-        for r in objlns:
-            print(prefix, r)
-        return
-
-is_init=False
-
-if __name__ == "__main__":
-    vspace_main_from_python(sys.argv[1:])
+print_l_cmt(2, f";; ...did {__file__}...{__package__} name={__name__}")
 

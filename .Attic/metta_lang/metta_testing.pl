@@ -27,8 +27,8 @@ loonit_number(FS) :-
 
 
 string_replace(Original, Search, Replace, Replaced) :-
-    atomic_list_concat(Split, Search, Original),
-    atomic_list_concat(Split, Replace, Replaced),!.
+    symbolic_list_concat(Split, Search, Original),
+    symbolic_list_concat(Split, Replace, Replaced),!.
 
 get_test_name(Number,TestName) :-
    ((nb_current(loading_file,FilePath),FilePath\==[])->true; FilePath='SOME/UNIT-TEST'),
@@ -60,7 +60,7 @@ make_test_name(FilePath0, Number, TestName) :-
 
 %color_g_mesg(_,_):- is_compatio,!.
 %color_g_mesg(_,_):- silent_loading,!.
-color_g_mesg(C,G):- 
+color_g_mesg(C,G):-
   notrace((nop(check_silent_loading),
     color_g_mesg_ok(C,G))).
 color_g_mesg_ok(_,G):- is_compatio,!,call(G).
@@ -78,7 +78,25 @@ print_current_test:-
    get_test_name(Number,TestName),format(';<h3 id="~w">;; ~w</h3>~n',[TestName,TestName]).
 
 % Increment loonit counters based on goal evaluation
+
+ensure_increments(Goal):-
+    setup_call_cleanup(
+    get_pass_fail(_,_,TotalStart),
+    Goal,
+    ((get_pass_fail(_,_,TotalEnd),
+    if_t(TotalEnd==TotalStart,
+        flag(loonit_failure,Failures,Failures+1))))).
+
+get_pass_fail(Successes,Failures,Total):-
+    flag(loonit_success,Successes,Successes),
+    flag(loonit_failure,Failures,Failures),!,
+    Total is Successes+Failures.
+
+
 loonit_asserts(S,Pre,G):-
+   ensure_increments(loonit_asserts0(S,Pre,G)).
+
+loonit_asserts0(S,Pre,G):-
   flag(loonit_test_number,X,X+1),
   copy_term(Pre,Pro),
   print_current_test,
@@ -104,7 +122,7 @@ write_pass_fail([P,C,_],PASS_FAIL,G):-
 write_pass_fail(TestName,P,C,PASS_FAIL,G1,G2):-
     ignore(((
    (nb_current(loading_file,FilePath),FilePath\==[])->true; FilePath='SOME/UNIT-TEST.metta'),
-    atomic_list_concat([_,R],'tests/',FilePath),
+    symbolic_list_concat([_,R],'tests/',FilePath),
     file_name_extension(Base, _, R))),
       nop(format('<h3 id="~w">;; ~w</h3>',[TestName,TestName])),
 
@@ -157,10 +175,12 @@ loonit_asserts1(TestSrc,Pre,G) :-
 :- dynamic(gave_loonit_report/0).
 loonit_report:- gave_loonit_report,!.
 loonit_report :-
-%    assert(gave_loonit_report),
+    assert(gave_loonit_report),
     flag(loonit_success, Successes, Successes),
     flag(loonit_failure, Failures, Failures),
-    loonit_report(Successes,Failures).
+    loonit_report(Successes,Failures),
+    if_t((Successes==0;Failures>0),
+      if_t(option_value(repl,failures);option_value(frepl,true),repl)).
 
 :- at_halt(loonit_report).
 
@@ -279,7 +299,7 @@ load_answer_file(AnsFile,StoredAs):-
 
 :- debug(metta(answers)).
 load_answer_stream(_Nth, StoredAs, Stream):- at_end_of_stream(Stream),!,
-  if_trace(metta(answers),
+  if_trace((answers),
     prolog_only(listing(file_answers(StoredAs,_,_)))).
 load_answer_stream(Nth, StoredAs, Stream):-
     read_line_to_string(Stream, String),
@@ -300,7 +320,7 @@ load_answer_stream(Nth, StoredAs, String, Stream):- % string_concat("[",_,String
     fbug(Nth = String),
     parse_answer_string(String,Metta),!,
     %if_t(sub_var(',',Metta),rtrace(parse_answer_string(String,_Metta2))),
-    assert(file_answers(StoredAs,Nth,Metta)),
+    pfcAdd_Now(file_answers(StoredAs,Nth,Metta)),
     skip(must_det_ll(\+ sub_var(',',Metta))),
     Nth2 is Nth+1,load_answer_stream(Nth2, StoredAs, Stream).
 
@@ -333,7 +353,7 @@ parse_answer_str(Inner,[C|Metta]):-
     parse_sexpr_metta(Str,CMettaC), CMettaC=[C|MettaC],
    ((remove_m_commas(MettaC,Metta),
      \+ sub_var(',',rc(Metta)))).
-parse_answer_str(Inner0,Metta):- atomic_list_concat(InnerL,' , ',Inner0), maplist(atom_string,InnerL,Inner), maplist(parse_sexpr_metta,Inner,Metta),skip((must_det_ll(( \+ sub_var(',',rc2(Metta)))))),!.
+parse_answer_str(Inner0,Metta):- symbolic_list_concat(InnerL,' , ',Inner0), maplist(atom_string,InnerL,Inner), maplist(parse_sexpr_metta,Inner,Metta),skip((must_det_ll(( \+ sub_var(',',rc2(Metta)))))),!.
 parse_answer_str(Inner0,Metta):-
    (( replace_in_string([' , '=' '],Inner0,Inner),
    atomics_to_string(["(",Inner,")"],Str),!,
@@ -390,7 +410,7 @@ quick_test:-
 
 */
 % :- debug(term_expansion).
-:- if(debugging(term_expansion)).
+:- if(( false, debugging(term_expansion))).
 :- enable_arc_expansion.
 :- style_check(-singleton).
 dte:- set(_X.local) = val.

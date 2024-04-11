@@ -105,7 +105,7 @@ querymaker2(CrossType,Inst,[Type1,V1],[Type2,V2],Query):-
    maplist(arg(1),SortedR,Sorted1),
    maplist(arg(2),SortedR,Sorted2),
 
-   atomic_list_concat(Sorted1,'-',QPD),
+   symbolic_list_concat(Sorted1,'-',QPD),
    into_hyphens(QPD,QP),
 
    Self = '&self',
@@ -147,7 +147,7 @@ querymaker(CrossType,Inst,[Type1,V1],[Type2,V2],Query):-
    reverse(Sorted,SortedR),
    maplist(arg(1),SortedR,Sorted1),
    maplist(arg(2),SortedR,Sorted2),
-   atomic_list_concat(Sorted1,'-',QPD),
+   symbolic_list_concat(Sorted1,'-',QPD),
    into_hyphens(QPD,QP),
 
    Self = '&self',
@@ -184,7 +184,7 @@ querymaker3(CrossType,Inst,[Type1,V1],[Type2,V2],Query):-
    table_colnum_type(T2,Nth2,Type2),Type2\==CrossType,Type1\==Type2,
    sort([Type1,CrossType,Type2],Sorted),
    reverse(Sorted,SortedR),
-   atomic_list_concat(SortedR,'-',QPD),
+   symbolic_list_concat(SortedR,'-',QPD),
    into_hyphens(QPD,QP),
 
    Self = '&self',
@@ -463,9 +463,9 @@ fbgn_exons2affy1_overlaps_start_end(Gene,Start,End):-
 into_start_end(s_e(S,E),S,E):- nonvar(S),!.
 into_start_end('..'(S,E),S,E):- nonvar(S),!.
 into_start_end(at(S,E),S,E):- nonvar(S),!.
-into_start_end(At,S,E):- atomic_list_concat([SS,EE],'..',At),
+into_start_end(At,S,E):- symbolic_list_concat([SS,EE],'..',At),
    into_number_or_symbol(SS,S), into_number_or_symbol(EE,E).
-into_start_end(At,S,E):- atomic_list_concat([SS,EE],'_at_',At),
+into_start_end(At,S,E):- symbolic_list_concat([SS,EE],'_at_',At),
    into_number_or_symbol(SS,S), into_number_or_symbol(EE,E).
 
 
@@ -476,7 +476,7 @@ into_fb_term(Atom,Term):- into_number_or_symbol(Atom,Term),!.
 
 fb_member(E,L):- as_list([],L,LL),member(E,LL).
 
-into_number_or_symbol(Atom,Term):- atomic_list_concat(List,'|',Atom),List\=[_],!,maplist(into_fb_term,List,Term).
+into_number_or_symbol(Atom,Term):- symbolic_list_concat(List,'|',Atom),List\=[_],!,maplist(into_fb_term,List,Term).
 %into_number_or_symbol(Atom,Term):- atom_number(Atom, Term),!,Term= Term.
 into_number_or_symbol(Atom,Term):- catch(atom_to_term(Atom,Term,Vars),_,fail),maplist(a2t_assign_var,Vars).
 into_number_or_symbol(Atom,Term):- Term=Atom.
