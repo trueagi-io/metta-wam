@@ -1,6 +1,6 @@
-!(pragma! compile False)
-!(pragma! test True)
 !(pragma! load debug)
+!(pragma! log True)
+
 
 (: is-variable (-> Atom Bool))
 (= (is-variable $x) 
@@ -62,8 +62,8 @@
 ;;
 ;; (= (bc $X $space $_1)
 ;;     (match $space $X   $X))
-(:- (bc (: $prf $ccln) $space $_1 (: $prf $ccln)) 
-   (get-atoms $space (: $prf $ccln)))
+(:- (bc (: $prf $ccln) $space $_ $OUT) 
+   (match $space (: $prf $ccln) (: $prf $ccln) $OUT))
 
 
 ;; if conclusion equals (⍃ $X $Y), then return (: CPU (⍃ $X $Y)) 
@@ -73,7 +73,8 @@
 ;		(: CPU (⍃ $X $Y))
 ;		(empty)))
 (:- (bc (: CPU (⍃ $X $Y)) $space $_ (: CPU (⍃ $X $Y))) 
-   (is-closed $X) (is-closed $Y) (< $X $Y))
+     (is-closed $X) (is-closed $Y) (!) (< $X $Y))
+   
 
 
 ;; Recursive step
@@ -111,13 +112,15 @@
 
 ; !(pfcWatch!)
 
-!(compile! bc)
 !(compile! is-variable)
 !(compile! is-expression)
 ;; !(compile! lazy-or)
 !(compile! is-closed)
+!(compile! bc)
+!(listing! metta_compiled_predicate)
 
-
+!(pragma! log False)
+!(pragma! compatio True)
 
 ; Test
 !(bc (: CPU (⍃ 2 3)) &kb Z)

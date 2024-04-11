@@ -1,6 +1,5 @@
-!(pragma! compile False)
-!(pragma! test True)
 !(pragma! load debug)
+!(pragma! log True)
 
 (: is-variable (-> Atom Bool))
 (= (is-variable $x) (== (get-metatype $x) Variable))
@@ -76,11 +75,19 @@
 
 ;; load the compile ontology
 !(ensure-compiler!)
+
+; !(pfcWatch!)
+
 !(compile! is-variable)
 !(compile! is-expression)
-;;!(compile! lazy-or)
+;; !(compile! lazy-or)
 !(compile! is-closed)
 !(compile! bc)
+!(listing! metta_compiled_predicate)
+
+!(pragma! log False)
+!(pragma! compatio True)
+
 
 ; Test
 !(bc (: CPU (⍃ 2 3)) &kb Z)
@@ -91,4 +98,5 @@
 ;! ( rtrace! (bc (: $prf (less $x $y)) (S (S (S Z)))))
 
 !(bc (: $prf (less $x $y)) &kb (S (S (S Z))))
+
 

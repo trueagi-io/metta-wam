@@ -162,8 +162,9 @@ skip(_).
     dout(space,['get-atoms',SpaceNameOrInstance]),
     space_type_method(Type,get_atoms,Method), call(Type,SpaceNameOrInstance),!,
     call(Method,SpaceNameOrInstance, AtomsL),
-    length(AtomsL,Count),
-    dout(space,['type-method-result',Type,Method,Count]).
+    %dout(space,['type-method-result',Type,Method,Count]).
+    %length(AtomsL,Count),
+    true.
 % Get Atoms
 'get-atoms'(Environment, Atoms):- eval_args(['get-atoms', Environment], Atoms).
 
@@ -232,7 +233,8 @@ is_nb_space(G):- nonvar(G), is_as_nb_space(G).
 % %%%% Pattern Matching
 % ============================
 % Pattern Matching with an else branch
-'match'(Environment, Pattern, Template, ElseBranch, Result):- eval_args(['match', Environment, Pattern, Template, ElseBranch], Result).
+%'match'(Environment, Pattern, Template, ElseBranch, Result):-
+%  eval_args(['match', Environment, Pattern, Template, ElseBranch], Result).
 % Pattern Matching without an else branch
 'match'(Environment, Pattern, Template, Result):-
   eval_args(['match', Environment, Pattern, Template], Result).
@@ -446,9 +448,7 @@ space_query_vars(KB,Query,Vars):- is_asserted_space(KB),!,
     dout('RES',space_query_vars(KB,Query,Vars)).
 
 
-metta_assertdb_get_atoms(KB,AtomsL):-
-  decl_m_fb_pred(user,metta_atom_asserted,2),
-  findall(Atom,metta_atom(KB,Atom),AtomsL).
+metta_assertdb_get_atoms(KB,Atom):- metta_atom(KB,Atom).
 /*
 
 %metta_assertdb_iter_bind(KB,Query,Template,AtomsL):-

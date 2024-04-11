@@ -571,6 +571,15 @@ function handle_args {
                 continue
                 ;;
 
+
+           --log=*)
+	        add_to_list "$arg" PRE_METTALOG_OPTIONS
+		compatio=false
+		html=true
+                continue
+                ;;
+
+
            --v=*) PYSWIP_VERSION="${arg#*=}"
 		rm -f "${DefaultSav}"
 		never_compile=1

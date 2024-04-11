@@ -581,7 +581,7 @@ compile_for_assert_eq(':-',HeadIn, BodyIn, Converted):-
 
 
 
-is_f('S').
+is_f('S'):- fail.
 is_mf(','). is_mf(';'). is_mf('call').
 is_lf(':').
 
@@ -589,7 +589,7 @@ is_lf(':').
 s2c(Args,true):- Args==[],!.
 s2c(Args,call(Args)):- \+ iz_conz(Args),!.
 s2c([F|Args],C):- \+ symbol(F), !, C=[F|Args].
-s2c([F|Args],C):- is_lf(F), !, C=Args.
+s2c([F|Args],C):- is_lf(F), !, C=[F|Args].
 s2c([At,F|Args],C):- symbol(F), At== '@', is_list(Args),!,maplist(s2c,Args,ArgsL), compound_name_arguments(C,F,ArgsL).
 s2c([F|Args],C):- is_f(F), is_list(Args),!,maplist(s2ca,Args,ArgsL), compound_name_arguments(C,F,ArgsL).
 s2c([F|Args],C):- is_mf(F), is_list(Args),!,maplist(s2c,Args,ArgsL), compound_name_arguments(C,F,ArgsL).
@@ -599,7 +599,7 @@ s2c(C,call(C)).
 
 s2ca(Args,Args):- \+ iz_conz(Args),!.
 s2ca([H|T],[HH|TT]):- \+ symbol(H), !, s2ca(H,HH),s2ca(T,TT).
-s2ca([F|Args],C):- is_lf(F), !, C=Args.
+s2ca([F|Args],C):- is_lf(F), !, C=[F|Args].
 s2ca([At,F|Args],C):- symbol(F), At== '@', is_list(Args),!,maplist(s2ca,Args,ArgsL), compound_name_arguments(C,F,ArgsL).
 s2ca([F|Args],C):- is_f(F), is_list(Args),!,maplist(s2ca,Args,ArgsL), compound_name_arguments(C,F,ArgsL).
 s2ca([F|Args],C):- is_mf(F), is_list(Args),!,maplist(s2c,Args,ArgsL), compound_name_arguments(C,F,ArgsL).
@@ -1529,24 +1529,25 @@ call5(G):- call(G).
 
 trace_break:- trace,break.
 
-:- table(u_assign/2).
-u_assign(FList,R):- is_list(FList),!,u_assign(FList,R).
+%:- table(u_assign/2).
+%u_assign(FList,R):- is_list(FList),!,u_assign(FList,R).
 u_assign(FList,R):- var(FList),nonvar(R), !, u_assign(R,FList).
 u_assign(FList,R):- FList=@=R,!,FList=R.
-u_assign(FList,R):- number(FList), var(R),!,R=FList.
-u_assign(FList,R):- self_eval(FList), var(R),!,R=FList.
-u_assign(FList,R):- var(FList),!,/*trace,*/freeze(FList,u_assign(FList,R)).
+u_assign([F|List],[F|R]):-  List=R, !.
+%u_assign(FList,R):- number(FList), var(R),!,R=FList.
 u_assign(FList,R):- \+ compound(FList), var(R),!,R=FList.
-u_assign([F|List],R):- F == ':-',!, trace_break,as_tf(clause(F,List),R).
+u_assign(FList,R):- self_eval(FList), var(R),!,R=FList.
 u_assign(FList,RR):- (compound_non_cons(FList),u_assign_c(FList,RR))*->true;FList=~RR.
-u_assign(FList,RR):-
-  u_assign_list1(FList,RR)*->true;u_assign_list2(FList,RR).
+u_assign(FList,R):- FList =~ R, !.
+u_assign(FList,R):- var(FList),!,/*trace,*/freeze(FList,u_assign(FList,R)).
+u_assign([F|List],R):- F == ':-',!, trace_break,as_tf(clause(F,List),R).
+%u_assign(FList,RR):- u_assign_list1(FList,RR)*->true;u_assign_list2(FList,RR).
 
-u_assign_list1([F|List],R):- u_assign([F|List],R), nonvar(R), R\=@=[F|List].
+u_assign_list1([F|List],R):- fail,u_assign([F|List],R), nonvar(R), R\=@=[F|List].
 u_assign_list2([F|List],R):- symbol(F),append(List,[R],ListR),
   catch(quietly(apply(F,ListR)),error(existence_error(procedure,F/_),_),
      catch(quietly(as_tf(apply(F,List),R)),error(existence_error(procedure,F/_),_),
-        quietly(catch(u_assign([F|List],R),_, R=[F|List])))).
+        (fail, quietly(catch(u_assign([F|List],R),_, R=[F|List]))))).
 
 %u_assign([V|VI],[V|VO]):- nonvar(V),is_metta_data_functor(_Eq,V),!,maplist(u_assign,VI,VO).
 

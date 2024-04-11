@@ -155,7 +155,7 @@ metta_params_and_return_type(_KB,F,Len,Params,Ret),
 'ensure-compiler':-
   ensure_corelib_types.
 
-ensure_corelib_types:- time(pfcAdd(please_do_corelib_types)).
+ensure_corelib_types:- pfcAdd(please_do_corelib_types).
 %(need_corelib_types, metta_atom_corelib(Term)) ==> metta_atom_asserted('&corelib', Term).
 (need_corelib_types, metta_atom(KB,Atom)) ==> metta_atom_asserted(KB, Atom).
 
