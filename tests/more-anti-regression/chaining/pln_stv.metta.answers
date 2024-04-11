@@ -1,0 +1,5 @@
+[(stv 0.3 0.8)]
+[(stv 0.95 0.85)]
+[(stv 0.783 0.68)]
+0.10user 0.00system 0:00.11elapsed 100%CPU (0avgtext+0avgdata 34484maxresident)k
+0inputs+0outputs (0major+3761minor)pagefaults 0swaps

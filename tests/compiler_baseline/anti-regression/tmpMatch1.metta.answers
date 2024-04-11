@@ -1,0 +1,13 @@
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[(Error (assertEqualToResult (miner GroundingSpace-0x55cb4d1ffce8 (ms) (depth)) (() () () () () () () () () () (candidate (Inheritance (VarIdx Z) E) 2) (candidate (Inheritance (VarIdx Z) A) 2) (candidate (Inheritance B (VarIdx (S Z))) 1) (candidate (Inheritance C (VarIdx (S Z))) 2) (candidate (Inheritance D (VarIdx (S Z))) 1))) 
+Expected: [(), (), (), (), (), (), (), (), (), (), (candidate (Inheritance (VarIdx Z) E) 2), (candidate (Inheritance (VarIdx Z) A) 2), (candidate (Inheritance B (VarIdx (S Z))) 1), (candidate (Inheritance C (VarIdx (S Z))) 2), (candidate (Inheritance D (VarIdx (S Z))) 1)]
+Got: [(), (), (), (), (), (), (), (), (), ()]
+Missed result: (candidate (Inheritance (VarIdx Z) E) 2))]
+14.60user 0.01system 0:14.61elapsed 99%CPU (0avgtext+0avgdata 38584maxresident)k
+0inputs+0outputs (0major+4791minor)pagefaults 0swaps

@@ -1,0 +1,68 @@
+[()]
+[()]
+[(repl!)]
+[()]
+[(";; NAL-3")]
+[(";; NAL-4")]
+[(";; NAL-5")]
+[(";;!Multi-conditional inference:
+;;!Multi-conditional inference:
+(= (|- ((($S && $P) ==> $M) $T1) (($S ==> $M) $T2)) ($P (Truth_Abduction $T1 $T2)))
+(= (|- ((($C && $M) ==> $P) $T1) (($S ==> $M) $T2)) ((($C && $S) ==> $P) (Truth_Deduction $T1 $T2)))
+(= (|- ((($C && $P) ==> $M) $T1) ((($C && $S) ==> $M) $T2)) (($S ==> $P) (Truth_Abduction $T1 $T2)))
+(= (|- ((($C && $M) ==> $P) $T1) (($M ==> $S) $T2)) ((($C && $S) ==> $P) (Truth_Induction $T1 $T2)))
+;;!Rules for equivalence:
+(= (|- (($S <=> $P) $T)) (($P <=> $S) (Truth_StructuralIntersection $T)))
+(= (|- (($S ==> $P) $T1) (($P ==> $S) $T2)) (($S <=> $P) (Truth_Intersection $T1 $T2)))
+(= (|- (($P ==> $M) $T1) (($S ==> $M) $T2)) (($S <=> $P) (Truth_Comparison $T1 $T2)))
+(= (|- (($M ==> $P) $T1) (($M ==> $S) $T2)) (($S <=> $P) (Truth_Comparison $T1 $T2)))
+(= (|- (($M ==> $P) $T1) (($S <=> $M) $T2)) (($S ==> $P) (Truth_Analogy $T1 $T2)))
+(= (|- (($P ==> $M) $T1) (($S <=> $M) $T2)) (($P ==> $S) (Truth_Analogy $T1 $T2)))
+(= (|- (($M <=> $P) $T1) (($S <=> $M) $T2)) (($S <=> $P) (Truth_Resemblance $T1 $T2)))
+;;!Higher-order decomposition
+(= (|- ($A $T1) (($A ==> $B) $T2)) ($B (Truth_Deduction $T1 $T2)))
+(= (|- ($A $T1) ((($A && $B) ==> $C) $T2)) (($B ==> $C) (Truth_Deduction $T1 $T2)))
+(= (|- ($B $T1) (($A ==> $B) $T2)) ($A (Truth_Abduction $T1 $T2)))
+(= (|- ($A $T1) (($A <=> $B) $T2)) ($B (Truth_Analogy $T1 $T2)))
+;;NAL term reductions
+;;!Extensional intersection, union, conjunction reductions:
+;;NAL term reductions
+
+(: ($A & $A) Atom))
+(: ($A | $A) Atom))
+(: ($A && $A) Atom))
+(: ($A || $A) Atom))
+
+(= ($A & $A) $A)
+(= ($A | $A) $A)
+(= ($A && $A) $A)
+(= ($A || $A) $A)
+
+
+;;!Extensional set reductions:
+(= (({ $A }) | ({ $B })) ({ $A $B }))
+(= (({ $A $B }) | ({ $C })) ({ ($A . $B) $C }))
+(= (({ $C }) | ({ $A $B }) ) ({ $C ($A . $B) }))
+
+;;!Intensional set reductions:
+(= (([ $A ]) & ([ $B ])) ([ $A $B ]) )
+(= (([ $A $B ]) & ([ $C ])) ([ ($A . $B) $C ]))
+(= (([ $A ]) & ([ $B $C ])) ([ $A ($B . $C) ]))
+
+;;!Reduction for set element copula:
+(= ({ ( $A . $B ) }) ({ $A $B }))
+(= ([ ( $A . $B ) ]) ([ $A $B ]))
+")]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+0.29user 0.01system 0:00.30elapsed 99%CPU (0avgtext+0avgdata 38808maxresident)k
+0inputs+0outputs (0major+4945minor)pagefaults 0swaps

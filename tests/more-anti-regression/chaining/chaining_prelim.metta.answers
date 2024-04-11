@@ -1,0 +1,5 @@
+[(K x (K x))]
+[(Add (S (S Z)) (S (S Z)))]
+[(S Z)]
+0.05user 0.00system 0:00.05elapsed 100%CPU (0avgtext+0avgdata 33720maxresident)k
+0inputs+0outputs (0major+3647minor)pagefaults 0swaps

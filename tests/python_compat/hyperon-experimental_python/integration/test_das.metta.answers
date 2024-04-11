@@ -1,0 +1,12 @@
+[()]
+[()]
+[()]
+[()]
+[()]
+[(This Test works), (This Best works)]
+[(This 2 works), (This (Test 2) works), (This 2 works)]
+[()]
+[()]
+[(Test (Test 2)), (Best (Test 2))]
+0.32user 0.07system 0:00.39elapsed 99%CPU (0avgtext+0avgdata 75620maxresident)k
+152inputs+280outputs (0major+18135minor)pagefaults 0swaps

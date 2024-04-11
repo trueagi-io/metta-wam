@@ -5,9 +5,9 @@
 [()]
 [()]
 [()]
-[(Error (assertEqualToResult (miner GroundingSpace-0x55cf6bdce478 (ms) (depth)) (() () () () () () () () () () (candidate (Inheritance (VarIdx Z) E) 2) (candidate (Inheritance (VarIdx Z) A) 2) (candidate (Inheritance B (VarIdx (S Z))) 1) (candidate (Inheritance C (VarIdx (S Z))) 2) (candidate (Inheritance D (VarIdx (S Z))) 1))) 
+[(Error (assertEqualToResult (miner GroundingSpace-0x558597776388 (ms) (depth)) (() () () () () () () () () () (candidate (Inheritance (VarIdx Z) E) 2) (candidate (Inheritance (VarIdx Z) A) 2) (candidate (Inheritance B (VarIdx (S Z))) 1) (candidate (Inheritance C (VarIdx (S Z))) 2) (candidate (Inheritance D (VarIdx (S Z))) 1))) 
 Expected: [(), (), (), (), (), (), (), (), (), (), (candidate (Inheritance (VarIdx Z) E) 2), (candidate (Inheritance (VarIdx Z) A) 2), (candidate (Inheritance B (VarIdx (S Z))) 1), (candidate (Inheritance C (VarIdx (S Z))) 2), (candidate (Inheritance D (VarIdx (S Z))) 1)]
-Got: [(), (), (), (), (), (), (), (), (), (), (candidate (Inheritance (VarIdx Z) A) 3), (candidate (Inheritance (VarIdx Z) E) 3), (candidate (Inheritance B (VarIdx (S Z))) 3), (candidate (Inheritance C (VarIdx (S Z))) 3), (candidate (Inheritance D (VarIdx (S Z))) 3)]
+Got: [(), (), (), (), (), (), (), (), (), (), (candidate (Inheritance (VarIdx Z) A) 3), (candidate (Inheritance (VarIdx Z) E) 3), (candidate (Inheritance B (VarIdx (S Z))) 3), (candidate (Inheritance D (VarIdx (S Z))) 3), (candidate (Inheritance C (VarIdx (S Z))) 3)]
 Missed result: (candidate (Inheritance (VarIdx Z) E) 2))]
-0.69user 0.02system 0:00.72elapsed 99%CPU (0avgtext+0avgdata 35148maxresident)k
-0inputs+0outputs (0major+4050minor)pagefaults 0swaps
+0.69user 0.00system 0:00.70elapsed 100%CPU (0avgtext+0avgdata 35500maxresident)k
+0inputs+0outputs (0major+4052minor)pagefaults 0swaps

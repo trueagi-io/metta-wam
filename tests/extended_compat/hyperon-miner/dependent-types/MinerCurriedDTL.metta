@@ -24,7 +24,7 @@
 !(add-atom &kb (: ms_Threshold (ms_threshold (msNat))))
 
 ;; Import a lookup file for ⍃
-!(import! &kb succAxiom.metta)
+!(import! &kb succAxiom)
 
 ;; or apply the following rule
 ; !(add-atom &kb (: ZeroLTSucc (⍃ Z (S $k))))

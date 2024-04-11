@@ -2,7 +2,7 @@
 ;; will only be fast enough (for our 10 second limit) if compiled anyways?
 !(pragma! compiler full)
 
-!(import! &self NARS.metta)
+!(import! &self NARS)
 
 
 !(pragma! trace-on-pass False)

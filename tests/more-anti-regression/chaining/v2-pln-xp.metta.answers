@@ -1,0 +1,10 @@
+(loaded sample_kb_v2.metta into GroundingSpace-top:rules adding (- (atom-count GroundingSpace-top:rules) (atom-count GroundingSpace-top:rules)) atoms before-after (atom-count GroundingSpace-top:rules) (atom-count GroundingSpace-top:rules))
+"Importing Done...running inference"
+[()]
+[(atom-count GroundingSpace-top:rules)]
+[()]
+[(bc-fn (: $prf (in_tad_with (sequence_variant rs15) (gene d))) (S (S (S (S Z)))))]
+[(bc-fn (: $prf (in_tad_with (sequence_variant rs15) (gene d))) (S (S (S (S Z)))))]
+[]
+0.27user 0.00system 0:00.28elapsed 100%CPU (0avgtext+0avgdata 38948maxresident)k
+0inputs+0outputs (0major+4776minor)pagefaults 0swaps

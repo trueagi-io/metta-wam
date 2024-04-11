@@ -1,0 +1,534 @@
+ !(bind! &space (new-space))
+ !(load-ascii &space bio_ai/data_subset/gencode/edges.metta)
+ !(load-ascii &space bio_ai/data_subset//gencode/nodes.metta)
+ !(load-ascii &space bio_ai/data_subset/gaf/edges.metta)
+ !(load-ascii &space bio_ai/data_subset/gtex/eqtl/edges.metta)
+ !(load-ascii &space bio_ai/data_subset/ontology/edges.metta)
+ !(load-ascii &space bio_ai/data_subset/ontology/nodes.metta)
+ !(load-ascii &space bio_ai/data_subset/reactome/edges.metta)
+ !(load-ascii &space bio_ai/data_subset/reactome/nodes.metta)
+ !(load-ascii &space bio_ai/data_subset/uniprot/edges.metta)
+ !(load-ascii &space bio_ai/data_subset/uniprot/nodes.metta)
+
+ (= (add-explanation-to-message)
+    (let $phrase (match &self (= (messages)(user $message)) $message)
+      (if ( == (and (== (contains-str $phrase "gene") True) (== (contains-str $phrase "ensg") False)) True)
+         (user (concat-str $phrase " (use the gene HGNC symbol instead of ensembl id)"))
+         (user $phrase)
+      )
+    )
+ )
+
+!(Response
+   (_eval
+   (llm (Agent (chat-gpt "gpt-3.5-turbo"))
+        (system "Generate queries in Scheme according to user question.
+        There are some examples user's queries converted to Scheme:
+
+        ;Get properties of gene ENSG00000177508
+        (match &space
+            ($prop (gene ENSG00000177508) $val)
+            ($prop $val)
+        )
+
+
+
+        ;Get properties of gene ENSG00000279994
+        (match &space
+            ($prop (gene ENSG00000279994) $val)
+            ($prop $val)
+        )
+
+
+       
+        ;Get properties of gene PPID (use the gene HGNC symbol instead of ensembl id)
+        (match &space
+            (,
+                (gene_name (gene $ens) PPID)
+                ($prop (gene $ens) $val)
+            )
+            ($prop $val)
+        )
+
+        ;Get properties of gene DDX11L1 (use the gene HGNC symbol instead of ensembl id)
+        (match &space
+            (,
+                (gene_name (gene $ens) DDX11L1)
+                ($prop (gene $ens) $val)
+            )
+            ($prop $val)
+        )
+
+
+       
+        ;Find the transcripts of gene ENSG00000177508
+        (match &space
+            (transcribed_to (gene ENSG00000177508) $transcript)
+            $transcript
+        )
+
+
+
+        ;Find the transcripts of gene ENSG00000164733
+        (match &space
+            (transcribed_to (gene ENSG00000164733) $transcript)
+            $transcript
+        )
+
+        
+        ;Find the transcripts of gene MIR1302-2 (use the gene HGNC symbol instead of ensembl id)
+        (match &space
+            (,
+                (gene_name (gene $ens) MIR1302-2)
+                (transcribed_to (gene $ens) $transcript)
+            )
+            $transcript
+        )
+
+
+        ;Find the transcripts of gene RNU6-1199P (use the gene HGNC symbol instead of ensembl id)
+        (match &space
+            (,
+                (gene_name (gene $ens) RNU6-1199P)
+                (transcribed_to (gene $ens) $transcript)
+            )
+            $transcript
+        )
+       
+
+        ;What are the proteins that gene ENSG00000177508 codes for
+        (match &space
+            (,
+                (transcribed_to (gene ENSG00000177508) $transcript)
+                (translates_to $transcript $protein)
+            )
+            $protein
+        )
+
+
+
+        ;What are the proteins that gene ENSG00000052795 codes for
+        (match &space
+            (,
+                (transcribed_to (gene ENSG00000052795) $transcript)
+                (translates_to $transcript $protein)
+            )
+            $protein
+        )
+       
+        ;What are the proteins that gene HBA1 codes for (use the gene HGNC symbol instead of ensembl id)
+        (match &space
+            (,
+                (gene_name (gene $ens) HBA1)
+                (transcribed_to (gene $ens) $transcript)
+                (translates_to $transcript $protein)
+            )
+            $protein
+        )
+
+        ;What are the proteins that gene ARHGDIG codes for (use the gene HGNC symbol instead of ensembl id)
+        (match &space
+            (,
+                (gene_name (gene $ens) ARHGDIG)
+                (transcribed_to (gene $ens) $transcript)
+                (translates_to $transcript $protein)
+            )
+            $protein
+        )
+
+        ;What are the proteins that gene MRPL28 codes for (use the gene HGNC symbol instead of ensembl id)
+        (match &space
+            (,
+                (gene_name (gene $ens) MRPL28)
+                (transcribed_to (gene $ens) $transcript)
+                (translates_to $transcript $protein)
+            )
+            $protein
+        )
+
+        ;Find the Gene Ontology (GO) categories associated with protein P78415
+        (match &space
+            (
+                go_gene_product $ontology (protein P78415)
+            )
+            $ontology
+        )
+
+        ;Find the Gene Ontology (GO) categories associated with protein O43155
+        (match &space
+            (
+                go_gene_product $ontology (protein O43155)
+            )
+            $ontology
+        )
+
+        ;Find the Gene Ontology (GO) categories associated with protein A6NIX2
+        (match &space
+            (
+                go_gene_product $ontology (protein A6NIX2)
+            )
+            $ontology
+        )
+        ;Find the  Gene Ontology (GO) categories associated with gene ENSG00000177508
+        (match &space
+            (,
+                (transcribed_to (gene ENSG00000177508) $transcript)
+                (translates_to $transcript $protein)
+                (go_gene_product $ontology $protein)
+            )
+            $ontology
+        )
+
+        ;Find the GO categories associated with gene ENSG00000185070
+        (match &space
+            (,
+                (transcribed_to (gene ENSG00000185070) $transcript)
+                (translates_to $transcript $protein)
+                (go_gene_product $ontology $protein)
+            )
+            $ontology
+        )
+
+        ;Find the GO categories associated with gene ENSG00000052795
+        (match &space
+            (,
+                (transcribed_to (gene ENSG00000052795) $transcript)
+                (translates_to $transcript $protein)
+                (go_gene_product $ontology $protein)
+            )
+            $ontology
+        )
+
+
+        ;Find the Gene Ontology (GO) categories associated with gene FLRT2 (use the gene HGNC symbol instead of ensembl id)
+        (match &space
+            (,
+                (gene_name (gene $ens) FLRT2)
+                (transcribed_to (gene $ens) $transcript)
+                (translates_to $transcript $protein)
+                (go_gene_product $ontology $protein)
+            )
+            $ontology
+        )
+
+        ;Find the GO categories associated with gene FNIP2 (use the gene HGNC symbol instead of ensembl id)
+        (match &space
+            (,
+                (gene_name (gene $ens) FNIP2)
+                (transcribed_to (gene $ens) $transcript)
+                (translates_to $transcript $protein)
+                (go_gene_product $ontology $protein)
+            )
+            $ontology
+        )
+
+        ;Find biological process GO categories associated with gene ENSG00000052795
+        (match &space
+            (,
+                (transcribed_to (gene ENSG00000052795) $transcript)
+                (translates_to $transcript $protein)
+                (go_gene_product $ontology $protein)
+                (subontology $ontology biological_process)
+            )
+            $ontology
+        )
+
+        ;Find biological process GO categories associated with gene ENSG00000185070
+        (match &space
+            (,
+                (transcribed_to (gene ENSG00000185070) $transcript)
+                (translates_to $transcript $protein)
+                (go_gene_product $ontology $protein)
+                (subontology $ontology biological_process)
+            )
+            $ontology
+        )
+
+        ;Find biological process GO categories associated with gene ENSG00000052795
+        (match &space
+            (,
+                (transcribed_to (gene ENSG00000052795) $transcript)
+                (translates_to $transcript $protein)
+                (go_gene_product $ontology $protein)
+                (subontology $ontology biological_process)
+            )
+            $ontology
+        )
+
+        ;Find biological process Gene Ontology (GO) categories associated with gene FLRT2 (use the gene HGNC symbol instead of ensembl id)
+        (match &space
+            (,
+                (gene_name (gene $ens) FLRT2)
+                (transcribed_to (gene $ens) $transcript)
+                (translates_to $transcript $protein)
+                (go_gene_product $ontology $protein)
+                (subontology $ontology biological_process)
+            )
+            $ontology
+        )
+
+        ;Find biological process GO categories associated with gene FNIP2 (use the gene HGNC symbol instead of ensembl id)
+        (match &space
+            (,
+                (gene_name (gene $ens) FNIP2)
+                (transcribed_to (gene $ens) $transcript)
+                (translates_to $transcript $protein)
+                (go_gene_product $ontology $protein)
+                (subontology $ontology biological_process)
+            )
+            $ontology
+        )
+
+
+        ;Find pathways that gene ENSG00000177508 is a subset of
+        (match &space
+            (genes_pathways (gene ENSG00000177508) $p)
+            $p
+        )
+
+
+        ;Find pathways that gene ENSG00000000938 is a subset of
+        (match &space
+            (genes_pathways (gene ENSG00000000938) $p)
+            $p
+        )
+
+        ;Find pathways that gene IRX3 is a subset of (use the gene HGNC symbol instead of ensembl id)
+        (match &space
+            (,
+                (gene_name (gene $ens) IRX3)
+                (genes_pathways (gene $ens) $p)
+            )
+            $p
+        )
+
+        ;Find pathways that gene FGR is a subset of
+        (match &space
+            (,
+                (gene_name (gene $ens) FGR)
+                (genes_pathways (gene $ens) $p)
+            )
+            $p
+        )
+
+
+        ;Find parent pathways of the pathways that gene IRX3 is a subset of (use the gene HGNC symbol instead of ensembl id)
+        (match &space
+            (,
+                (gene_name (gene $ens) IRX3)
+                (genes_pathways (gene $ens) $p1)
+                (parent_pathway_of $p2 $p1)
+            )
+            $p2
+        )
+
+        ;Find parent pathways of the pathways that gene FGR is a subset of (use the gene HGNC symbol instead of ensembl id)
+        (match &space
+            (,
+                (gene_name (gene $ens) FGR)
+                (genes_pathways (gene $ens) $p1)
+                (parent_pathway_of $p2 $p1)
+            )
+            $p2
+        )
+
+        ;Find parent pathways of the pathways that gene TFAP2A is a subset of (use the gene HGNC symbol instead of ensembl id)
+        (match &space
+            (,
+                (gene_name (gene $ens) TFAP2A)
+                (genes_pathways (gene $ens) $p1)
+                (parent_pathway_of $p2 $p1)
+            )
+            $p2
+        )
+
+
+        ;What variants have eqtl association with gene IRX3 (use the gene HGNC symbol instead of ensembl id)
+        (match &space
+            (,
+                (gene_name (gene $ens) IRX3)
+                (eqtl $seq (gene $ens))
+            )
+            $seq
+        )
+
+        ;What variants have eqtl association with gene ARL6IP1 (use the gene HGNC symbol instead of ensembl id)
+        (match &space
+            (,
+                (gene_name (gene $ens) ARL6IP1)
+                (eqtl $seq (gene $ens))
+            )
+            $seq
+        )
+
+        ;What variants have eqtl association with gene POLR3K (use the gene HGNC symbol instead of ensembl id)
+        (match &space
+            (,
+                (gene_name (gene $ens) POLR3K)
+                (eqtl $seq (gene $ens))
+            )
+            $seq
+        )
+
+        ;What variants have eqtl association with gene IRX3 (use the gene HGNC symbol instead of ensembl id) and return the properties of the association
+        (match &space
+            (,
+                (gene_name  $ens IRX3)
+                (eqtl $seq $ens)
+                ($prop (eqtl $seq $ens) $val)
+            )
+            ($prop (eqtl $seq $ens) $val)
+        )
+
+
+        ;What variants have eqtl association with gene ARL6IP1 (use the gene HGNC symbol instead of ensembl id) and return the properties of the association
+        (match &space
+            (,
+                (gene_name $ens ARL6IP1)
+                (eqtl $seq $ens)
+                ($prop (eqtl $seq $ens) $val)
+            )
+            ($prop (eqtl $seq $ens) $val)
+       )
+
+        ;What variants have eqtl association with gene ENSG00000161980 and return the properties of the association
+        (match &space
+            (,
+                (eqtl $seq (gene ENSG00000161980))
+                ($prop (eqtl $seq (gene ENSG00000161980)) $val)
+            )
+                ($prop (eqtl $seq (gene ENSG00000161980)) $val)
+        )
+
+        ;What variants have eqtl association with gene ENSG00000170540 and return the properties of the association
+        (match &space
+            (,
+                (eqtl $seq (gene ENSG00000170540))
+                ($prop (eqtl $seq (gene ENSG00000170540)) $val)
+            )
+            ($prop (eqtl $seq (gene ENSG00000170540)) $val)
+        )
+
+
+        ;Find molecular function Gene Ontology (GO) categories associated with gene FLRT2 (use the gene HGNC symbol instead of ensembl id)
+        (match &space
+            (,
+                (gene_name (gene $ens) FLRT2)
+                (transcribed_to (gene $ens) $transcript)
+                (translates_to $transcript $protein)
+                (go_gene_product $ontology $protein)
+                (subontology $ontology molecular_function)
+            )
+            $ontology
+        )
+
+
+        ;Find molecular function Gene Ontology (GO) categories associated with gene ENSG00000052795
+        (match &space
+            (,
+                (transcribed_to (gene ENSG00000052795) $transcript)
+                (translates_to $transcript $protein)
+                (go_gene_product $ontology $protein)
+                (subontology $ontology molecular_function)
+            )
+            $ontology
+        )
+
+        ;Find cellular component Gene Ontology (GO) categories associated with gene FLRT2 (use the gene HGNC symbol instead of ensembl id)
+        (match &space
+            (,
+                (gene_name (gene $ens) FLRT2)
+                (transcribed_to (gene $ens) $transcript)
+                (translates_to $transcript $protein)
+                (go_gene_product $ontology $protein)
+                (subontology $ontology cellular_component)
+            )
+            $ontology
+        )
+
+        ;Find cellular component Gene Ontology (GO) categories associated with gene ENSG00000185070
+        (match &space
+            (,
+                (transcribed_to (gene ENSG00000185070) $transcript)
+                (translates_to $transcript $protein)
+                (go_gene_product $ontology $protein)
+                (subontology $ontology cellular_component)
+            )
+            $ontology
+        )
+
+        ;Please provide the properties of the eqtl association involving the rs224167 variant and the gene ENSG00000234769
+        (match &space
+            (,
+                ($prop (eqtl  (sequence_variant rs224167) (gene ENSG00000234769)) $val)
+            )
+           ($prop (eqtl (sequence_variant rs224167) (gene ENSG00000234769)) $val)
+        )
+        ;Please provide the properties of the eqtl association involving the rs2239739 variant and the gene ENSG00000167930
+        (match &space
+            (,
+                ($prop (eqtl (sequence_variant rs2239739) (gene ENSG00000167930)) $val)
+            )
+            ($prop (eqtl (sequence_variant rs2239739) (gene ENSG00000167930)) $val)
+        )
+        ;Please provide the slope of the eqtl association involving the rs224167 variant and the gene ENSG00000234769
+        (match &space
+            (,
+                (slope (eqtl  (sequence_variant rs224167) (gene ENSG00000234769)) $val)
+            )
+           (slope (eqtl (sequence_variant rs224167) (gene ENSG00000234769)) $val)
+        )
+
+       ;Please provide the p-value of the eqtl association involving the rs2239739 variant and the gene ENSG00000167930
+        (match &space
+            (,
+                (p_value (eqtl (sequence_variant rs2239739) (gene ENSG00000167930)) $val)
+            )
+            (p_value (eqtl (sequence_variant rs2239739) (gene ENSG00000167930)) $val)
+        )
+
+        ;Please provide the Minor Allele Frequency of the eqtl association involving the rs2239739 variant and the gene ENSG00000167930
+        (match &space
+            (,
+                (maf (eqtl (sequence_variant rs2239739) (gene ENSG00000167930)) $val)
+            )
+            (maf (eqtl (sequence_variant rs2239739) (gene ENSG00000167930)) $val)
+        )
+
+
+        ;Please provide the biological context of the eqtl association involving the rs2239739 variant and the gene ENSG00000167930
+        (match &space
+            (,
+                (biological_context (eqtl (sequence_variant rs2239739) (gene ENSG00000167930)) $val)
+            )
+            (biological_context (eqtl (sequence_variant rs2239739) (gene ENSG00000167930)) $val)
+        )
+
+        ;What genes have eqtl association with  variant rs2239739, return the properties of the association
+        (match &space
+            (,
+                (eqtl (sequence_variant rs2239739)  $ens)
+                ($prop (eqtl (sequence_variant rs2239739) $ens) $val)
+            )
+            ($prop (eqtl (sequence_variant rs2239739) $ens) $val)
+        )
+
+        ;What biological process does  ontology term GO:0000001 represent?
+         (match &space
+            (,
+                (subontology (ontology_term GO:0000001) biological_process)
+                (term_name (ontology_term GO:0000001) $val)
+            )
+            $val
+         )
+
+         ;What type of evidence supports the association between the protein identified as P18146 and the Gene Ontology term  GO:0005654?
+         (match &space
+            (evidence (go_gene_product (ontology_term GO:0005654) (protein P18146)) $val)
+            $val
+         )
+
+
+     Return only query,  no explanation and other texts")
+            (add-explanation-to-message))
+   ))

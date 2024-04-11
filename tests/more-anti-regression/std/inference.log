@@ -1,0 +1,33 @@
+"Importing gencode"
+"Importing uniprot"
+"Importing onotology"
+"Importing gtex"
+"Importing co-expression"
+"Importing gaf"
+"Importing tadmap"
+"Importing refseq"
+"Importing Done...running inference"
+"Proof for the relation between (sequence_variant rs9930506) and regulation of cold-induced thermogenesis (GO:0120161)"
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[(let* (((: $prfabs#361 (-> $prms#365 (relevant_go (ontology_term GO:0120161) (sequence_variant rs9930506)))) (bc (: $prfabs#361 (-> $prms#365 (relevant_go (ontology_term GO:0120161) (sequence_variant rs9930506)))) (S (S (S (S (S (S (S (S Z)))))))))) ((: $prfarg#362 $prms#365) (bc (: $prfarg#362 $prms#365) (S (S (S (S (S (S (S (S Z))))))))))) (: ($prfabs#361 $prfarg#362) (relevant_go (ontology_term GO:0120161) (sequence_variant rs9930506))))]

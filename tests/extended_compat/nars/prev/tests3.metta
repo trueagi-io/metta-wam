@@ -1,4 +1,4 @@
-!(import! &self NARS.metta)
+!(import! &self NARS)
 
 !(AddBeliefEvent (((corridorIn &/ (^ forward)) =/> doorAt) (1.0 0.9)))
 !(AddBeliefEvent (((windowAt &/ (^ open)) =/> Outside) (1.0 0.9)))

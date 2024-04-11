@@ -1,0 +1,13 @@
+[(-> Number Number)]
+[Number]
+[(-> Number Number)]
+[3]
+[(Something 7)]
+[(Cons 7 (Cons 6 (Cons 5 Nil)))]
+[2]
+[-2]
+[(Cons 4 (Cons 3 (Cons 2 (Cons 1 Nil))))]
+[(Cons 1 (Cons 2 (Cons 3 Nil)))]
+[John]
+0.36user 0.00system 0:00.36elapsed 100%CPU (0avgtext+0avgdata 35132maxresident)k
+0inputs+0outputs (0major+3838minor)pagefaults 0swaps

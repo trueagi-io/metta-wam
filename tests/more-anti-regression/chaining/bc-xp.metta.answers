@@ -1,0 +1,18 @@
+(⊷ bc-chain (:- (path a $y#208) ()) (S Z))
+(⊷ bc-chain (:- (path a $y#409) ()) Z)
+(⊷ bc-chain (:- (link $y#409 $y#208) ()) Z)
+(⊷ bc-chain (:- (link $y#409 $y#208) ()) Z)
+(⊷ bc-chain (:- (path a $y#208) $premises#304) (S Z))
+(⊷ bc-chain (:- (path a $y#208) $premises#304) (S Z))
+(⊷ bc-chain (:- (link $y#208 c) ()) (S Z))
+(⊷ bc-chain (:- (link $y#208 c) $s#210) (S Z))
+(⊷ bc-chain (:- (path a c) $prf) (S (S Z)))
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[(:- (path a c) ((:- (path a b) ()) (:- (path a $y#208) ((:- (path a b) ()) (:- (link b c) ()) (:- (link a b) ()))) (:- (path a b) ((Error Z NoValidAlternatives))) (:- (link b c) ()) (:- (link b c) ((Error Z NoValidAlternatives)))))]
+0.26user 0.01system 0:00.27elapsed 100%CPU (0avgtext+0avgdata 34660maxresident)k
+0inputs+0outputs (0major+3803minor)pagefaults 0swaps

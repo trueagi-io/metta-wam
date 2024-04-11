@@ -1,0 +1,29 @@
+(.: ((((sheep --> (IntSet see)) &/ (^ count)) =/> (sheep --> (IntSet counted))) (1.0 0.9)))
+(time := 1)
+(time := 2)
+(.: ((sheep --> (IntSet white)) (1.0 0.9)))
+(time := 3)
+(.: (((ExtSet instance1) --> (IntSet white)) (1.0 0.9)))
+(time := 4)
+(.: (((ExtSet instance1) --> (IntSet see)) (1.0 0.9)))
+(time := 5)
+(!: ((sheep --> (IntSet counted)) (1.0 0.9)))
+(time := 6)
+[()]
+[()]
+[]
+[((concepts ()) (attentional_focus ((Concept (((sheep --> (IntSet see)) &/ (^ count)) =/> (sheep --> (IntSet counted))) (Event ((((sheep --> (IntSet see)) &/ (^ count)) =/> (sheep --> (IntSet counted))) (1.0 0.4736842105263158)) (eternal (1) (0 0.0))) (Event ((((sheep --> (IntSet see)) &/ (^ count)) =/> (sheep --> (IntSet counted))) (1.0 0.9)) (1 (1) (1 1.0))) (1 1.0)))) (currentTime 2) (evidentialBase 2) (FIFO ((Event ((((sheep --> (IntSet see)) &/ (^ count)) =/> (sheep --> (IntSet counted))) (1.0 0.9)) (1 (1) (1 1.0))))) (tempbest (Event ((((sheep --> (IntSet see)) &/ (^ count)) =/> (sheep --> (IntSet counted))) (1.0 0.9)) (1 (1) (1 1.0)))) (belief_events ()) (goal_events ()))]
+[]
+[((concepts ()) (attentional_focus ((Concept (((sheep --> (IntSet see)) &/ (^ count)) =/> (sheep --> (IntSet counted))) (Event ((((sheep --> (IntSet see)) &/ (^ count)) =/> (sheep --> (IntSet counted))) (1.0 0.4736842105263158)) (eternal (1) (0 0.0))) (Event ((((sheep --> (IntSet see)) &/ (^ count)) =/> (sheep --> (IntSet counted))) (1.0 0.9)) (1 (1) (1 1.0))) (1 1.0)))) (currentTime 3) (evidentialBase 3) (FIFO ((Event ((((sheep --> (IntSet see)) &/ (^ count)) =/> (sheep --> (IntSet counted))) (1.0 0.9)) (1 (1) (1 1.0))))) (tempbest ()) (belief_events ()) (goal_events ()))]
+[]
+[((concepts ()) (attentional_focus ((Concept (((sheep --> (IntSet see)) &/ (^ count)) =/> (sheep --> (IntSet counted))) (Event ((((sheep --> (IntSet see)) &/ (^ count)) =/> (sheep --> (IntSet counted))) (1.0 0.4736842105263158)) (eternal (1) (0 0.0))) (Event ((((sheep --> (IntSet see)) &/ (^ count)) =/> (sheep --> (IntSet counted))) (1.0 0.9)) (1 (1) (1 1.0))) (1 1.0)))) (currentTime 4) (evidentialBase 4) (FIFO ((Event ((sheep --> (IntSet white)) (1.0 0.9)) (3 (3) (3 1.0))) (Event ((((sheep --> (IntSet see)) &/ (^ count)) =/> (sheep --> (IntSet counted))) (1.0 0.9)) (1 (1) (1 1.0))))) (tempbest (Event ((sheep --> (IntSet white)) (1.0 0.9)) (3 (3) (3 1.0)))) (belief_events ()) (goal_events ()))]
+[]
+[((concepts ()) (attentional_focus ((Concept (((sheep --> (IntSet see)) &/ (^ count)) =/> (sheep --> (IntSet counted))) (Event ((((sheep --> (IntSet see)) &/ (^ count)) =/> (sheep --> (IntSet counted))) (1.0 0.4736842105263158)) (eternal (1) (0 0.0))) (Event ((((sheep --> (IntSet see)) &/ (^ count)) =/> (sheep --> (IntSet counted))) (1.0 0.9)) (1 (1) (1 1.0))) (1 1.0)))) (currentTime 5) (evidentialBase 5) (FIFO ((Event (((ExtSet instance1) --> (IntSet white)) (1.0 0.9)) (4 (4) (4 1.0))) (Event ((sheep --> (IntSet white)) (1.0 0.9)) (3 (3) (3 1.0))) (Event ((((sheep --> (IntSet see)) &/ (^ count)) =/> (sheep --> (IntSet counted))) (1.0 0.9)) (1 (1) (1 1.0))))) (tempbest (Event (((ExtSet instance1) --> (IntSet white)) (1.0 0.9)) (4 (4) (4 1.0)))) (belief_events ()) (goal_events ()))]
+[]
+[((concepts ()) (attentional_focus ((Concept (((sheep --> (IntSet see)) &/ (^ count)) =/> (sheep --> (IntSet counted))) (Event ((((sheep --> (IntSet see)) &/ (^ count)) =/> (sheep --> (IntSet counted))) (1.0 0.4736842105263158)) (eternal (1) (0 0.0))) (Event ((((sheep --> (IntSet see)) &/ (^ count)) =/> (sheep --> (IntSet counted))) (1.0 0.9)) (1 (1) (1 1.0))) (1 1.0)))) (currentTime 6) (evidentialBase 6) (FIFO ((Event (((ExtSet instance1) --> (IntSet see)) (1.0 0.9)) (5 (5) (5 1.0))) (Event (((ExtSet instance1) --> (IntSet white)) (1.0 0.9)) (4 (4) (4 1.0))) (Event ((sheep --> (IntSet white)) (1.0 0.9)) (3 (3) (3 1.0))))) (tempbest (Event (((ExtSet instance1) --> (IntSet see)) (1.0 0.9)) (5 (5) (5 1.0)))) (belief_events ()) (goal_events ()))]
+[()]
+[()]
+[]
+[((concepts ()) (attentional_focus ((Concept (((sheep --> (IntSet see)) &/ (^ count)) =/> (sheep --> (IntSet counted))) (Event ((((sheep --> (IntSet see)) &/ (^ count)) =/> (sheep --> (IntSet counted))) (1.0 0.4736842105263158)) (eternal (1) (0 0.0))) (Event ((((sheep --> (IntSet see)) &/ (^ count)) =/> (sheep --> (IntSet counted))) (1.0 0.9)) (1 (1) (1 1.0))) (1 1.0)))) (currentTime 7) (evidentialBase 7) (FIFO ((Event (((ExtSet instance1) --> (IntSet see)) (1.0 0.9)) (5 (5) (5 1.0))) (Event (((ExtSet instance1) --> (IntSet white)) (1.0 0.9)) (4 (4) (4 1.0))) (Event ((sheep --> (IntSet white)) (1.0 0.9)) (3 (3) (3 1.0))))) (tempbest ()) (belief_events ()) (goal_events ()))]
+4.73user 0.01system 0:04.74elapsed 99%CPU (0avgtext+0avgdata 48840maxresident)k
+0inputs+0outputs (0major+7184minor)pagefaults 0swaps

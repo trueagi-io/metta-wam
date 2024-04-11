@@ -57,8 +57,8 @@ real_assert(OBO):-
 real_assert1(OBO):- all_metta_to(Out),!,with_output_to(Out,print_src(OBO)).
 real_assert2(OBO):- all_data_to(Out),!,write_canonical(Out,OBO),!,writeln(Out,'.').
 real_assert2(OBO):- is_converting,!,throw(real_assert2(OBO)).
-real_assert2(OBO):- call(OBO),!.
-real_assert2(OBO):- assert(OBO).
+%real_assert2(OBO):- call(OBO),!.
+real_assert2(OBO):- pfcAdd_Now(OBO).
 
 print_src(OBO):- format('~N'), uncompound(OBO,Src),!, write_srcH(Src).
 write_srcH([F|Args]):- write('( '),write_src(F),maplist(write_srcE,Args),writeln(' )').
@@ -889,7 +889,8 @@ pad_number(Number, N) :-
   sformat(S,"~t~D~*|", [Number,N]),symbolic_list_concat(L,',',S),
   symbolic_list_concat(L,'_',SS),write(SS).
 
-exists_virtually(corlib).
+/*
+    exists_virtually(corelib).
 
 % Process a file or directory path with a given predicate.
 with_wild_path(Fnicate, Dir) :- extreme_debug(fbug(with_wild_path(Fnicate, Dir))),fail.
@@ -900,6 +901,11 @@ with_wild_path(Fnicate, Dir) :-  is_scryer, symbol(Dir), !, must_det_ll((path_ch
 with_wild_path(Fnicate, Chars) :-  \+ is_scryer, \+ symbol(Chars), !, must_det_ll((name(Atom,Chars), with_wild_path(Fnicate, Atom))).
 
 with_wild_path(Fnicate, File) :- exists_file(File), !, must_det_ll(( call(Fnicate, File))).
+
+with_wild_path(Fnicate, Dir) :-  exists_directory(Dir),
+  absolute_file_name('__init__.py', PyFile, [access(read), file_errors(fail), relative_to(Dir)]),
+  with_wild_path(Fnicate, PyFile).
+
 with_wild_path(Fnicate, File) :- !, with_wild_path_swi(Fnicate, File).
 with_wild_path(Fnicate, Dir) :-  exists_directory(Dir), !,
   must_det_ll((directory_files(Dir, Files),
@@ -925,10 +931,10 @@ with_wild_path_swi(Fnicate, File) :-
   symbol_contains(File, '*'),
   expand_file_name(File, List), !,
   maplist(with_wild_path(Fnicate), List).
-with_wild_path_swi(Fnicate, File) :- 
+with_wild_path_swi(Fnicate, File) :-
   \+ exists_directory(File), \+ exists_file(File), \+ symbol_contains(File,'.'),
   extension_search_order(Ext),
-  atomic_list_concat([File|Ext],MeTTafile),
+  symbolic_list_concat([File|Ext],MeTTafile),
   exists_file(MeTTafile),
   call(Fnicate, MeTTafile).
 with_wild_path_swi(Fnicate, File) :-
@@ -939,7 +945,7 @@ with_wild_path_swi(Fnicate, File) :-
 
 extension_search_order(['.metta']).
 extension_search_order(['.py']).
-
+*/
 :- dynamic(fix_columns_nth/2).
 needs_fixed(X,Y):- (var(X)->fb_arg(X);true),fix_concept(X,L),(L\=@=[X],L\=@=X),(L=[Y]->true;Y=L).
 mine_args_that_need_reduced:-
@@ -951,7 +957,7 @@ fix_columns_with_arg(Arg):-
   forall(fb_arg_table_n(Arg,Fn,N),
     fix_columns_n(Fn,N)).
 fix_columns_n(Fn,N):-
-  assert_new(fix_columns_nth(Fn,N)).
+  pfcAdd_Now(fix_columns_nth(Fn,N)).
 
 
 load_fb_mask(Filename):- is_scryer,symbol(Filename),name(Filename,Chars),!,load_fb_mask(Chars).
@@ -993,8 +999,8 @@ track_load_into_file0(Filename,Goal):-
 rename_tmp_files(_Filename):- \+ is_converting,!.
 rename_tmp_files(Filename):- rename_tmp_files(Filename,'.metta'),rename_tmp_files(Filename,'.metta.datalog').
 
-rename_tmp_files(Filename,NonTmp):- atomic_list_concat([Filename,NonTmp,'.tmp'],From),
-   atomic_list_concat([Filename,NonTmp],To),
+rename_tmp_files(Filename,NonTmp):- symbolic_list_concat([Filename,NonTmp,'.tmp'],From),
+   symbolic_list_concat([Filename,NonTmp],To),
    fbug(rename_file(From,To)),
    ignore((exists_file(From),rename_file(From,To))).
 
@@ -1110,7 +1116,7 @@ maybe_sample( Fn, Args):- assert_arg_samples(Fn,1,Args).
 
 :- dynamic(fb_arg/1).
 :- dynamic(fb_arg_table_n/3).
-assert_arg_table_n(A,Fn,N):-    assert_new(fb_arg(A)), assert_new(fb_arg_table_n(A,Fn,N)).
+assert_arg_table_n(A,Fn,N):-    pfcAdd_Now(fb_arg(A)), pfcAdd_Now(fb_arg_table_n(A,Fn,N)).
 
 assert_arg_samples(Fn,N,[A|Args]):-
    (dont_sample(A)->true;assert_arg_table_n(A,Fn,N)),
@@ -1180,7 +1186,7 @@ fb_assert(Term) :-
 
 :- dynamic(done_reading/1).
 
-use_metta_x:- fail.
+use_metta_x:- fail_flag.
 
 load_fb_cache(_File,OutputFile,_Fn):- exists_file(OutputFile),!,ensure_loaded(OutputFile),!.
 load_fb_cache(File,_OutputFile,_Fn):- load_files([File],[qcompile(large)]).
@@ -1364,8 +1370,8 @@ assert_type_of(_Term,_Fn,_N,_Type,_Arg):- \+ should_sample,!.
 assert_type_of(Term,Fn,N,Type,Arg):- is_list(Arg),!,maplist(assert_type_of(Term,Fn,N,Type),Arg).
 assert_type_of(_Term,Fn,N,_Type,Arg):-
  must_det_ll((
-   assert_new(fb_arg(Arg)),
-   assert_new(fb_arg_table_n(Arg,Fn,N)))).
+   pfcAdd_Now(fb_arg(Arg)),
+   pfcAdd_Now(fb_arg_table_n(Arg,Fn,N)))).
 
 :- dynamic(fb_arg_type/1).
 :- dynamic(table_n_type/3).
@@ -1374,8 +1380,8 @@ add_table_n_types(Fn,1,[N|ArgTypes]):- number(N),!,
    add_table_n_types(Fn,1,ArgTypes).
 add_table_n_types(Fn,N,[Type|ArgTypes]):-!,
   sub_term(Sub,Type),symbol(Sub),!,
-  assert_new(fb_arg_type(Sub)),
-  assert_new(table_n_type(Fn,N,Sub)),
+  pfcAdd_Now(fb_arg_type(Sub)),
+  pfcAdd_Now(table_n_type(Fn,N,Sub)),
   N2 is N+1, add_table_n_types(Fn,N2,ArgTypes),!.
 add_table_n_types(_Fn,_,[]).
 
@@ -1390,7 +1396,7 @@ is_valuesymbol(Fn,N,Type):- arg_table_n_type(Arg,Fn,N,Type),symbol_number(Arg,_)
 :- dynamic(numeric_value_p_n/3).
 fis_valuesymbol(PNList,Len):- findall(P-N,is_valuesymbol(P,N,_Type),PNList),length(PNList,Len).
 
-save_value_symbol_cols:- for_all(is_valuesymbol(Fn,N,Type),assert_new(numeric_value_p_n(Fn,N,Type))),
+save_value_symbol_cols:- for_all(is_valuesymbol(Fn,N,Type),pfcAdd_Now(numeric_value_p_n(Fn,N,Type))),
   listing(numeric_value_p_n/3).
 
 
@@ -1618,7 +1624,7 @@ process_metta_x_file(MXFile):-
     ((repeat,
        read_line_to_string(In,Chars),
        (In == end_of_file -> ! ;
-        once((atomic_list_concat(Row0,'\t', Chars),
+        once((symbolic_list_concat(Row0,'\t', Chars),
           maplist(fast_column,Row0,Row),
           assert_MeTTa([Fn|Row])))))),
      close(In)).
@@ -2124,7 +2130,7 @@ column_names(allele_genetic_interactions, [allele_symbol, allele_FBal, interacti
 column_names(allele_phenotypic,           [allele_symbol, allele_FBal, phenotype, 'FBrf']).
 column_names(fbal_to_fbgn,             ['AlleleID', 'AlleleSymbol', 'GeneID', 'GeneSymbol']).
 column_names(genotype_phenotype_data, [listOf(genotype_symbols, [/, ' ']), listOf(genotype_FBids, [/, ' ']), phenotype_name, phenotype_id, listOf(qualifier_names, ['|']), listOf(qualifier_ids, ['|']), reference]).
-%                                        #genotype_symbols           	genotype_FBids	phenotype_name	phenotype_id	qualifier_names	qualifier_ids	reference
+%                                        #genotype_symbols              genotype_FBids  phenotype_name  phenotype_id    qualifier_names qualifier_ids   reference
 column_names(automated_gene_summaries, [primary_FBgn, summary_text]).
 column_names(best_gene_summary, ['FBgn', 'Gene_Symbol', 'Summary_Source', 'Summary']).
 column_names(cDNA_clone_data, ['FBcl', organism_abbreviation, clone_name, dataset_metadata_name, listOf(cDNA_accession), listOf('EST_accession')]).
@@ -3211,8 +3217,8 @@ datalog_to_termlog(File):-
    fbug(datalog_to_termlog(File)),
   if_m2(atom_concat(File,'.metta',M)),
    setup_call_cleanup((open(File,read,In,[encoding(utf8)]),
-					   open(File2,write,Out,[encoding(utf8)]), 
-					   if_m2(open(M,write,OutM,[encoding(utf8)]))),
+                       open(File2,write,Out,[encoding(utf8)]),
+                       if_m2(open(M,write,OutM,[encoding(utf8)]))),
   (repeat,
    read_term(In,Term,[]),
    (Term==end_of_file -> ! ; (process_datalog(Out,OutM,Term),fail))),
@@ -3235,7 +3241,7 @@ process_datalog(Out,OutM,F,Args):-
 
    % Split a string or atom by a specified delimiter.
 split_by_delimiter(Input, Delimiter, Parts) :-
-    atomic_list_concat(Parts, Delimiter, Input),
+    symbolic_list_concat(Parts, Delimiter, Input),
     Parts = [_,_|_].  % Ensure that there's more than one part.
 
 always_delistify(A,A):- \+ compound(A),!.
@@ -3262,7 +3268,7 @@ is_FB_input([xti("FB", upper), xti(_,lower), xti(_, digit)]):-!.
 cb_better_args([_],_):-!,fail.
 cb_better_args(X,_):- is_FB_input(X),!,fail.
 cb_better_args(CB,Parts):-cb_better_args_ni(CB,Parts),!.
-cb_better_args_ni([A,B,C|L],[I|Parts]):- is_FB_input([A,B,C]),maplist(arg(1),[A,B,C],ABC),atomic_list_concat(ABC,I),cb_better_args_ni(L,Parts).
+cb_better_args_ni([A,B,C|L],[I|Parts]):- is_FB_input([A,B,C]),maplist(arg(1),[A,B,C],ABC),symbolic_list_concat(ABC,I),cb_better_args_ni(L,Parts).
 cb_better_args_ni([XTI|L],[I|Parts]):-arg(1,XTI,S),string_to_syms,!,atom_string(I,S),cb_better_args_ni(L,Parts).
 cb_better_args_ni([],[]):-!.
 datalog_to_termlog:-

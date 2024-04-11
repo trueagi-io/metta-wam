@@ -1,0 +1,45 @@
+Agent (Error (retrieval-agent "./data/texts_for_retrieval" 200 1 "data") Exception caught:
+ModuleNotFoundError: No module named 'chromadb'
+
+At:
+  /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/python_compat/metta-motto/examples/motto/agents/retrieval_agent.py(43): __init__
+  /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/python_compat/hyperon-experimental_python/hyperon/atoms.py(341): execute
+  /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/python_compat/hyperon-experimental_python/hyperon/atoms.py(176): _priv_call_execute_on_grounded_atom
+  /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/python_compat/hyperon-experimental_python/hyperon/runner.py(31): run_step
+  (17): run_step
+) is not identified
+[()]
+[()]
+[()]
+[(Error (llm (Agent (Error (retrieval-agent "./data/texts_for_retrieval" 200 1 "data") Exception caught:
+ModuleNotFoundError: No module named 'chromadb'
+
+At:
+  /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/python_compat/metta-motto/examples/motto/agents/retrieval_agent.py(43): __init__
+  /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/python_compat/hyperon-experimental_python/hyperon/atoms.py(341): execute
+  /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/python_compat/hyperon-experimental_python/hyperon/atoms.py(176): _priv_call_execute_on_grounded_atom
+  /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/python_compat/hyperon-experimental_python/hyperon/runner.py(31): run_step
+  (17): run_step
+)) (user "Cold Winter has begun his reign already!")) Exception caught:
+TypeError: Agent (Error (retrieval-agent "./data/texts_for_retrieval" 200 1 "data") Exception caught:
+ModuleNotFoundError: No module named 'chromadb'
+
+At:
+  /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/python_compat/metta-motto/examples/motto/agents/retrieval_agent.py(43): __init__
+  /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/python_compat/hyperon-experimental_python/hyperon/atoms.py(341): execute
+  /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/python_compat/hyperon-experimental_python/hyperon/atoms.py(176): _priv_call_execute_on_grounded_atom
+  /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/python_compat/hyperon-experimental_python/hyperon/runner.py(31): run_step
+  (17): run_step
+) is not identified
+
+At:
+  /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/python_compat/metta-motto/examples/motto/llm_gate.py(161): get_llm_args
+  /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/python_compat/metta-motto/examples/motto/llm_gate.py(193): llm
+  /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/python_compat/metta-motto/examples/motto/llm_gate.py(240): <lambda>
+  /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/python_compat/hyperon-experimental_python/hyperon/atoms.py(346): execute
+  /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/python_compat/hyperon-experimental_python/hyperon/atoms.py(176): _priv_call_execute_on_grounded_atom
+  /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/python_compat/hyperon-experimental_python/hyperon/runner.py(31): run_step
+  (17): run_step
+)]
+0.47user 0.07system 0:00.55elapsed 99%CPU (0avgtext+0avgdata 129448maxresident)k
+0inputs+8outputs (0major+29131minor)pagefaults 0swaps

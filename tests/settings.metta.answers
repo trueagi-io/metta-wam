@@ -1,6 +1,0 @@
-Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-wam/reports/settings.metta
-[()]
-[(like-metta-in-rust)]
-[()]
-0.08user 0.01system 0:00.10elapsed 100%CPU (0avgtext+0avgdata 33268maxresident)k
-0inputs+0outputs (0major+3697minor)pagefaults 0swaps

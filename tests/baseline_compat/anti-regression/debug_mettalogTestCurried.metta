@@ -123,7 +123,7 @@
 !(bind! &kb (new-space))
 ;; Import a lookup file for ⍃
 !("loading succAtoms into kb2")
-!(import! &kb2 succAxiom.metta)
+!(import! &kb2 succAxiom)
 !(match &kb2 $1 (add-atom &kb $1))
 
 ;; !(get-atoms &kb)
@@ -239,6 +239,7 @@
    (let* (($cres (collapse (fc $prms $depth)))
           ($dummy (add-atoms-nodup &kb $cres)))
      (ifc (superpose $cres) $depth $k)))
+
 ;;;;;;;;;;
 ;; Test ;;
 ;;;;;;;;;;
@@ -298,13 +299,16 @@
 				   (sp_witness (Inheritance D (VarIdx (S Z)))))) ms_Threshold)
        (-> (⍃ (S Z) (S Z)) (minsup (Inheritance D (VarIdx (S Z))))))))
 
+
+!(pragma! test true)
+
 (= (eachfc)
   (collapse 
    (let $aptrn (Inheritance (VarIdx Z) (VarIdx (S Z)))
 	(fc (: (supportwitness $aptrn) (supportOf $aptrn (countNat $aptrn))) (fromNumber 8)))))
 
-!(pragma! test true)
-!(eachfc)
+
+; !(eachfc)
 
 ; !(expected)
 

@@ -1,0 +1,10 @@
+[()]
+[()]
+[()]
+[()]
+[()]
+[(: CPU (? 2 3))]
+[]
+[(: ((rule (rule1 axiom)) CPU) (less 2 3))]
+25.91user 0.01system 0:25.92elapsed 99%CPU (0avgtext+0avgdata 37760maxresident)k
+0inputs+0outputs (0major+4579minor)pagefaults 0swaps

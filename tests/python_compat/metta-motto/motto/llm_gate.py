@@ -2,6 +2,7 @@ from hyperon import *
 from hyperon.ext import register_atoms
 from .agents import *
 import json
+from .utils import *
 
 import logging
 logger = logging.getLogger(__name__)
@@ -142,7 +143,7 @@ def get_llm_args(metta: MeTTa, prompt_space: SpaceRef, *args):
                         prompt_space = ch[1].get_object()
                     else:
                         # TODO: a better way to load a script?
-                        m = MeTTa()
+                        m = MeTTaLog()
                         # TODO: asserts
                         m.run("!(import! &self motto)")
                         with open(atom2msg(ch[1])) as f:
@@ -231,6 +232,9 @@ def llm(metta: MeTTa, *args):
 
 @register_atoms(pass_metta=True)
 def llmgate_atoms(metta):
+    ret = llmgate_atoms_for_ra(metta)
+    return ret
+def llmgate_atoms_for_ra(metta):
     global __default_agent
     __default_agent = ChatGPTAgent()
     llmAtom = OperationAtom('llm', lambda *args: llm(metta, *args), unwrap=False)
@@ -244,10 +248,15 @@ def llmgate_atoms(metta):
                     lambda x: [ValueAtom(DialogAgent(code=x) if isinstance(x, ExpressionAtom) else \
                                          DialogAgent(path=x))], unwrap=False)
     retrievalAgentAtom = OperationAtom('retrieval-agent', RetrievalAgent, unwrap=True)
+
+    containsStrAtom = OperationAtom('contains-str', lambda a, b: [ValueAtom(contains_str(a, b))], unwrap=False)
+
+    concatStrAtom = OperationAtom('concat-str', lambda a, b: [ValueAtom(concat_str(a, b))], unwrap=False)
     return {
         r"llm": llmAtom,
         r"atom2msg": msgAtom,
         r"chat-gpt": chatGPTAtom,
+        r"anthropic-agent": OperationAtom('anthropic-agent', AnthropicAgent),
         r"EchoAgent": echoAgentAtom,
         r"metta-chat": mettaChatAtom,
         r"retrieval-agent": retrievalAgentAtom,
@@ -256,6 +265,8 @@ def llmgate_atoms(metta):
         r"_eval": OperationAtom("_eval",
             lambda atom: metta.run("! " + atom.get_object().value)[0],
             unwrap=False),
+        r"contains-str": containsStrAtom,
+        r"concat-str":  concatStrAtom,
     }
 
 
@@ -264,6 +275,8 @@ def str_find_all(str, values):
 
 @register_atoms
 def postproc_atoms():
+    return postproc_atoms_for_ra()
+def postproc_atoms_for_ra():
     strfindAtom = OperationAtom('str-find-all', str_find_all)
     return {
         r"str-find-all": strfindAtom,

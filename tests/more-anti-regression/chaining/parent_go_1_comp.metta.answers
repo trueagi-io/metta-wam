@@ -1,0 +1,5 @@
+[()]
+[()]
+[(: ((go-level go_parent-d-c) ((go-level go_parent-c-b) (go-level go_gene-b-g))) (member (gene g) (ontology_term d) (S (S Z)))), (: ((go-level go_parent-c-b) (go-level go_gene-b-g)) (member (gene g) (ontology_term c) (S Z))), (: (go-level go_gene-b-g) (member (gene g) (ontology_term b) Z)), (: (go-level go_gene-a-g) (member (gene g) (ontology_term a) Z))]
+0.40user 0.00system 0:00.40elapsed 100%CPU (0avgtext+0avgdata 36108maxresident)k
+0inputs+0outputs (0major+4161minor)pagefaults 0swaps
