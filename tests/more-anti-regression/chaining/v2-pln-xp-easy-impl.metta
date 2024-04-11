@@ -66,7 +66,7 @@
    ($_ (println! (expected (: ((tad-eqtl (((snp-gene-tad in_tad_region-chr16_53550000_55450000_GRCh38-ENSG00000140718) in_tad_region-chr16_5355000    0_55450000_GRCh38-ENSG00000177508) closest_gene-rs1421085-ENSG00000140718)) eqtl-rs1421085-ENSG00000177508-Pancreas) (relevant_gene (gene ENSG00000177508) (sequence_variant rs1421085))))))
 	) $res))
 
-;!(test1)
+!(test1)
 
 !(bc-i (: $prf (in_tad_with (sequence_variant rs15) (gene d))) (S (S (S (S Z)))))
 

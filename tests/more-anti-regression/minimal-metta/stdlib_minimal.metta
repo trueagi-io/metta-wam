@@ -271,7 +271,8 @@
 
 (: let (-> Atom %Undefined% Atom Atom))
 (= (let $pattern $atom $template)
-  (unify $atom $pattern $template Empty))
+  (
+	 $atom $pattern $template Empty))
 
 (: let* (-> Expression Atom Atom))
 (= (let* $pairs $template)

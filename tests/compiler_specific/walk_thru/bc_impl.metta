@@ -1,4 +1,6 @@
 !(pragma! compile False)
+!(pragma! test True)
+!(pragma! load debug)
 
 (: is-variable (-> Atom Bool))
 (= (is-variable $x) 
@@ -22,8 +24,8 @@
 			   (let $tail (cdr-atom $x) (is-closed $tail)))
 		  True))))
 
-% function
-:(X,Y, [:,X,Y]).
+; function
+; :(X,Y, [:,X,Y]).
 
 ;; KB
 !(bind! &kb (new-space))
@@ -50,15 +52,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; DTL Backward chaining Curried ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-!(pragma! test True)
 
 (: bc (-> $a Nat hyperon::space::DynSpace $a))
 
 ;; Base case
 ;; (= (bc (: $prf $ccln) $space $_1)
-;;     (match $space (: $prf $ccln)
-;     (: $prf $ccln)))
-
+;;   (match $space (: $prf $ccln)
+;;                 (: $prf $ccln)))
+;;
 ;; (= (bc $X $space $_1)
 ;;     (match $space $X   $X))
 (:- (bc (: $prf $ccln) $space $_1 (: $prf $ccln)) 
@@ -71,12 +72,7 @@
 ;	(if (and (and (is-closed $X) (is-closed $Y)) (< $X $Y))
 ;		(: CPU (⍃ $X $Y))
 ;		(empty)))
-(:- (bc (: CPU (⍃ $X $Y)) $space $_2 (: CPU (⍃ $X $Y))) 
-
-   (is-closed $X) (is-closed $Y) (< $X $Y))
-
-
-(= (:- (bc ..... ))
+(:- (bc (: CPU (⍃ $X $Y)) $space $_ (: CPU (⍃ $X $Y))) 
    (is-closed $X) (is-closed $Y) (< $X $Y))
 
 
@@ -88,12 +84,12 @@
 ;					  (bc (: $prfarg $prms) $space $k)))
 ;	 (: ($prfabs $prfarg) $ccln)))
 
-(:- (bc (: ($prfabs $prfarg) $ccln) $space (S $k) $RES)
-   (=! $RES (: ($prfabs $prfarg) $ccln))
-   (=! $OUT (: $prfabs (-> $prms $ccln))) 
-          (bc (: $prfabs (-> $prms $ccln)) $space $k $OUT)   
-   (=! $OUT2 (: $prfarg $prms))
-          (bc (: $prfarg $prms) $space $k $OUT2))
+;(:- (bc (: ($prfabs $prfarg) $ccln) $space (S $k) $RES)
+;   (=! $RES (: ($prfabs $prfarg) $ccln))
+;   (=! $OUT (: $prfabs (-> $prms $ccln))) 
+;          (bc (: $prfabs (-> $prms $ccln)) $space $k $OUT)   
+;   (=! $OUT2 (: $prfarg $prms))
+;          (bc (: $prfarg $prms) $space $k $OUT2))
 
 
 ;; Recursive step
@@ -103,9 +99,8 @@
 
 
 
-
-function(A,B,C) = O
-predicate(A,B,C)
+; function(A,B,C) = O
+; predicate(A,B,C)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; make things compiled
@@ -113,21 +108,25 @@ predicate(A,B,C)
 
 ;; load the compile ontology
 !(ensure-compiler!)
-!(pfcWatch!)
+
+; !(pfcWatch!)
+
+!(compile! bc)
 !(compile! is-variable)
 !(compile! is-expression)
-!(compile! lazy-or)
+;; !(compile! lazy-or)
 !(compile! is-closed)
-!(compile! bc)
+
+
 
 ; Test
-!(bc-fn (: CPU (⍃ 2 3)) &kb Z)
-!(bc-fn (: CPU (⍃ 4 3)) &kb Z)
+!(bc (: CPU (⍃ 2 3)) &kb Z)
+!(bc (: CPU (⍃ 4 3)) &kb Z)
 
 ; !(pragma! eval debug)
 
 ;! ( rtrace! (bc (: $prf (less $x $y)) (S (S (S Z)))))
 
-!(bc-fn (: $prf (less $x $y)) &kb (S (S (S Z))))
+!(bc (: $prf (less $x $y)) &kb (S (S (S Z))))
 
 

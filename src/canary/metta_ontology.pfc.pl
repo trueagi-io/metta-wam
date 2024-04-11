@@ -126,31 +126,34 @@ property(Op,E) ==> (form_op(Op),form_prop(E)).
 (metta_atom_asserted(KB,[C,I,T])/(C==':')) ==> metta_type(KB,I,T).
 (metta_atom_asserted(KB,[C,I,T|Nil])/(Nil==[],C=='=',I=II)) ==> metta_defn(KB,II,T).
 (metta_atom_asserted(KB,[C,I,A1,A2|AL])/(C=='=')) ==> metta_defn(KB,I,[A1,A2|AL]).
+(metta_atom_asserted(KB,[C,I|AL])/(C==':-')) ==> metta_defn(KB,I,['wam-body'|AL]).
 
 
 (metta_defn(_KB,[F|Args],_)/length(Args,Len))==>src_code_for(F,Len).
 
 (src_code_for(F,Len)==>function_arity(F,Len)).
 
-(metta_type(KB,S,TypeList),{params_and_return_type(TypeList,Len,Params,Ret)}) ==>
-  metta_params_and_return_type(KB,S,Len,Params,Ret).
+(metta_type(KB,F,TypeList),{params_and_return_type(TypeList,Len,Params,Ret)}) ==>
+  metta_params_and_return_type(KB,F,Len,Params,Ret).
 
-metta_params_and_return_type(KB,S,Len,_Params,Ret),{nonvar(Ret)}==>
-   metta_return_type(KB,S,Len,Ret).
-
-
-(need_corelib_types,op_decl(S,Params,Ret),{nonvar(Ret),length(Params,Len)})==>
-   metta_params_and_return_type('&corelib',S,Len,Params,Ret).
-
-
-((metta_return_type(_KB,F,Len,Ret)/ ( \+ is_absorbed_return(Ret))),{Len1 is Len+1})
-   ==>(function_arity(F,Len),is_non_absorbed_return(F,Len,Ret),predicate_arity(F,Len1)).
-
-(metta_return_type(_KB,F,Len,Ret)/is_absorbed_return(Ret))
+metta_params_and_return_type(_KB,F,Len,Params,Ret),
+  {is_absorbed_return_type(Params,Ret)}
    ==>(function_arity(F,Len),is_absorbed_return(F,Len,Ret),predicate_arity(F,Len)).
+
+metta_params_and_return_type(_KB,F,Len,Params,Ret),
+ { is_non_absorbed_return_type(Params,Ret),  Len1 is Len+1}
+  ==>(function_arity(F,Len),is_non_absorbed_return(F,Len,Ret),predicate_arity(F,Len1)).
+
+
+(need_corelib_types,op_decl(F,Params,Ret),{nonvar(Ret),length(Params,Len)})==>
+   metta_params_and_return_type('&corelib',F,Len,Params,Ret).
+
 
 :- dynamic(need_corelib_types/0).
 (please_do_corelib_types, { \+ need_corelib_types }) ==> need_corelib_types.
+
+'ensure-compiler':-
+  ensure_corelib_types.
 
 ensure_corelib_types:- time(pfcAdd(please_do_corelib_types)).
 %(need_corelib_types, metta_atom_corelib(Term)) ==> metta_atom_asserted('&corelib', Term).
@@ -162,14 +165,8 @@ ensure_corelib_types:- time(pfcAdd(please_do_corelib_types)).
 src_code_for(F,Len) ==>  ( \+ metta_compiled_predicate(F,Len) ==> can_compile(F,Len)).
 
 (do_compile_easy(F)==>
- ((metta_defn(KB,[F|Args],BM),
- { must_det_ll((compile_for_assert([F|Args],BM,Clause),
-   assert_if_new(Clause),
-   length(Args,Len),
-   pfcAdd(metta_compiled_predicate(F,Len)),
-   add_assertion(KB,Clause)))}) ==> (\+ can_compile(F,Len),compiled_clauses(KB,F,Clause)))).
-
-
+ ((metta_defn(KB,[F|Args],BodyFn)/compile_metta_defn(KB,F,_Len,Args,BodyFn,Clause))
+    ==> (compiled_clauses(KB,F,Clause)))).
 
 
 

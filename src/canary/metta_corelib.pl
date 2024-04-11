@@ -114,13 +114,16 @@ metta_atom_corelib0( [=, [switch, A, B], [chain, [decons, B], C, [eval, ['switch
 metta_atom_corelib0( [=, [switch, A, B], [function, [chain, [decons, B], C, [chain, [eval, ['switch-internal', A, C]], D, [chain, [eval, ['if-not-reducible', D, 'Empty', D]], E, [return, E]]]]]]).
 metta_atom_corelib0( [=, [unquote, [quote, A]], A]).
 
-is_absorbed_return(Var):- \+ ground(Var),!,fail.
-is_absorbed_return([->]).
-is_absorbed_return('EmptyType').
-is_absorbed_return('Bool').
-is_absorbed_return('ReturnType').
-is_absorbed_return(X):- is_self_return(X).
+is_absorbed_return_type(Params,Var):- var(Var),!, \+ sub_var(Var,Params).
+is_absorbed_return_type(_,'Bool').
+is_absorbed_return_type(_,[Ar]):- !, Ar == (->).
+is_absorbed_return_type(_,'EmptyType').
+is_absorbed_return_type(_,'ReturnType').
+is_absorbed_return_type(_,X):- is_self_return(X).
 is_self_return('ErrorType').
+
+is_non_absorbed_return_type(Params,Var):-
+   \+ is_absorbed_return_type(Params,Var).
 
 metta_atom_corelib0( [:, 'ErrorType', 'Type']).
 metta_atom_corelib0( [:, 'ReturnType', 'Type']).

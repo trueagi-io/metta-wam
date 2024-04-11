@@ -2043,7 +2043,7 @@ pfcPrintf(Where,Msg,Args) :-
   format(Where,Msg,Args).
 
 
-
+pfcWatch :- clause(pfcTraceExecution,true),!.
 pfcWatch :- assert(pfcTraceExecution).
 
 pfcNoWatch :-  retractall(pfcTraceExecution).

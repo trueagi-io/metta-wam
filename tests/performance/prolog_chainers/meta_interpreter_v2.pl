@@ -15,20 +15,24 @@ list_length_([_|Ls], L0, L) :-
     list_length_(Ls, L1, L).
 
 mi(true, true).
-mi((A, B), (PA, PB)) :-
-    mi(A, PA), mi(B, PB).
+% basecase 1
+mi(G, s(K), P => G) :-
+    G \= true,
+    G \=  (_,_),
+    clause(G, Body), mi(Body, K,  P).
 
-mi((A; B), (PA; PB)) :-
-    mi(A, PA); mi(B, PB).
+% recurse
+mi((A, B), s(K), (PA, PB)) :-
+    mi(A,K, PA), mi(B,K, PB).
 
-mi(Goal, built_in(Goal)) :- % Check if the goal is a built-in predicate.
+mi((A; B), SK, (PA; PB)) :-
+    mi(A, SK, PA); mi(B, SK, PB).
+
+% basecase 2
+mi(Goal, _, built_in(Goal)) :- % Check if the goal is a built-in predicate.
     predicate_property(Goal, built_in),!,
     call(Goal). % Directly call the built-in predicate.
 
-mi(G, P => G) :-
-    G \= true,
-    G \=  (_,_),
-    clause(G, Body), mi(Body, P).
 
 mi2(true, {name: true, children: []}).
 mi2((A, B), {name: and, children: [PA, PB]}) :-

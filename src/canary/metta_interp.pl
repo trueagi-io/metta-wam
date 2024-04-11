@@ -96,12 +96,15 @@
 
 user:file_search_path(mettalog,Dir):- metta_dir(Dir).
 
+once_writeq_ln(_):- \+ clause(pfcTraceExecution,true),!.
 once_writeq_ln(P):- nb_current('$once_writeq_ln',W),W=@=P,!.
-once_writeq_ln(P):- format('~N~q.~n',[P]),nb_setval('$once_writeq_ln',P),!.
+once_writeq_ln(P):-
+ \+ \+ (numbervars(P,444,_,[attvar(skip),singletons(true)]),
+ ansi_format([fg(cyan)],'~N~q.~n',[P])),nb_setval('$once_writeq_ln',P),!.
 % TODO uncomment this next line but it is breaking the curried chainer
 % pfcAdd_Now(P):- pfcAdd(P),!.
 pfcAdd_Now(P):- current_predicate(pfcAdd/1),!, once_writeq_ln(pfcAdd(P)),pfcAdd(P).
-pfcAdd_Now(P):- trace,once_writeq_ln(asssert(P)),assert(P).
+pfcAdd_Now(P):- once_writeq_ln(asssert(P)),assert(P).
 %:- endif.
 
 metta_dir(Dir):- user:is_metta_dir(Dir),!.

@@ -1,4 +1,6 @@
 !(pragma! compile False)
+!(pragma! test True)
+!(pragma! load debug)
 
 (: is-variable (-> Atom Bool))
 (= (is-variable $x) (== (get-metatype $x) Variable))
@@ -74,10 +76,9 @@
 
 ;; load the compile ontology
 !(ensure-compiler!)
-!(pfcWatch!)
 !(compile! is-variable)
 !(compile! is-expression)
-!(compile! lazy-or)
+;;!(compile! lazy-or)
 !(compile! is-closed)
 !(compile! bc)
 
