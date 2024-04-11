@@ -9,7 +9,9 @@ DEBUG_WHY() {
 
 process_file() {
 
-    [[ $SHOULD_EXIT -eq 1 ]] && return
+    if [ $SHOULD_EXIT -eq 1 ]; then
+	return
+    fi
 
     #local file=$(find_override_file "$1")
     local file="$1"
@@ -50,7 +52,7 @@ process_file() {
     fi
 
     local take_test=0
-    local TEST_EXIT_CODE=0
+    local TEST_EXIT_CODE=999
 
     # Combined condition check
     if [[ "$fresh" -eq 1 ]] || [ ! -f "${file}.answers" ] || ([ "${file}" -nt "${file}.answers" ] && [ -s "${file}.answers" ]); then
@@ -87,11 +89,11 @@ process_file() {
 
         ) || true
         stty sane
-	DEBUG ""        
+	DEBUG ""
+        trap - SIGINT
 
         set -e
 
-       trap - SIGINT
     else
         DEBUG "Comparing: $file.answers"
     fi
@@ -145,32 +147,33 @@ process_file() {
             DEBUG_WHY "Results present, not taking test."
         fi
     fi
-
-    set +e
+    
 
     if [ "$take_test" -eq 1 ]; then
         sleep 0.1
         IF_REALLY_DO touch "$file_html"
 
         TEST_CMD="./MeTTa '--output=$METTALOG_OUTPUT' --timeout=$METTALOG_MAX_TIME --html --repl=false ${extra_args[@]} ${passed_along_to_mettalog[@]} \"$file\" --halt=true"
-        # DEBUG "${BOLD}$TEST_CMD${NC}"
+        do_DEBUG "${BOLD}$TEST_CMD${NC}"
 
-        IF_REALLY_DO "$TEST_CMD"
-        TEST_EXIT_CODE=$?
+     
+	IF_REALLY_DO "$TEST_CMD"
+	TEST_EXIT_CODE=$?
+
 
         if [ $TEST_EXIT_CODE -eq 124 ]; then
             DEBUG "${RED}Killed (definitely due to timeout) (EXITCODE=$TEST_EXIT_CODE) after $METTALOG_MAX_TIME seconds: ${TEST_CMD}${NC}"
             IF_REALLY_DO [ "$if_failures" -eq 1 ] && rm -f "$file_html"
-        elif [[ $TEST_EXIT_CODE -eq 4 ]] || [[ $TEST_EXIT_CODE -eq 134 ]]; then
-            DEBUG "${RED}Stopping tests (EXITCODE=$TEST_EXIT_CODE) under $METTALOG_MAX_TIME seconds: ${TEST_CMD}${NC}"     
-            SHOULD_EXIT=1
+	elif [[ $TEST_EXIT_CODE -eq 4 ]] || [[ $TEST_EXIT_CODE -eq 134 ]]; then
+            DEBUG "${RED}Stopping tests (EXITCODE=$TEST_EXIT_CODE) under $METTALOG_MAX_TIME seconds: ${TEST_CMD}${NC}"	    
+	    SHOULD_EXIT=1
         elif [ $TEST_EXIT_CODE -ne 7 ]; then
             DEBUG "${YELLOW}Completed (EXITCODE=$TEST_EXIT_CODE) under $METTALOG_MAX_TIME seconds: ${TEST_CMD}${NC}"
         else
             DEBUG "${GREEN}Completed successfully (EXITCODE=$TEST_EXIT_CODE) under $METTALOG_MAX_TIME seconds: ${TEST_CMD}${NC}"
         fi
-        return $TEST_EXIT_CODE
         #set -e
+	return $TEST_EXIT_CODE
     fi
 }
 
@@ -251,6 +254,7 @@ DEBUG() {
 IF_REALLY_DO() {
     if [ "$dry_run" -eq 1 ]; then
         do_DEBUG "${BOLD}Dry Run:${NC} $*"
+	return 0
     else
         DEBUG "${GREEN}Doing:${NC} $*"
         eval "$@" 
@@ -426,36 +430,25 @@ function add_test_units_dir() {
 }
 
 
+
 generate_final_MeTTaLog() {
     # Change to the script directory
-    cd "$METTALOG_DIR" || exit 1
-
+    cd "$METTALOG_DIR" || return 1
 
     # Calculate the number of passed and failed tests
     passed=$(grep -c "| PASS |" /tmp/SHARED.UNITS)
     failed=$(grep -c "| FAIL |" /tmp/SHARED.UNITS)
     total=$((passed + failed))
-
-    # Check if total is zero to avoid divide by zero error
-    if [ "$total" -eq 0 ]; then
-        percent_passed="N/A" # Or set to 0.00 or some default value
-    else
-        percent_passed=$(awk -v passed="$passed" -v total="$total" 'BEGIN { printf "%.2f", (passed/total)*100 }')
-    fi
+    percent_passed=$(awk -v passed="$passed" -v total="$total" 'BEGIN { printf "%.2f", (passed/total)*100 }')
 
     # Create a markdown file with test links and headers
-    {   echo "| STATUS | TEST NAME | TEST CONDITION | ACTUAL RESULT | EXPECTED RESULT |"
+    {  echo "| STATUS | TEST NAME | TEST CONDITION | ACTUAL RESULT | EXPECTED RESULT |"
         echo "|--------|-----------|----------------|---------------|-----------------|"
-        cat /tmp/SHARED.UNITS | awk -F'\\(|\\) \\| \\(' '{ print $2 " " $0 }' | sort | cut -d' ' -f2- | tac | awk '!seen[$0]++' | tac
+        cat /tmp/SHARED.UNITS | awk -F'\\(|\\) \\| \\(' '{ print $2 " " $0 }'  | sort | cut -d' ' -f2- | tac | awk '!seen[$0]++' | tac
     } > ./$METTALOG_OUTPUT/PASS_FAIL.md
 
 
    ./scripts/pass_fail_totals.sh $METTALOG_OUTPUT/ > $METTALOG_OUTPUT/TEST_LINKS.md
-   printf '%s\n' "${@}" > "$METTALOG_OUTPUT/_REPORT_.md"
-   cat $METTALOG_OUTPUT/TEST_LINKS.md | sed -e "s|$METTALOG_OUTPUT|reports|g" \
-   | sed -e "s|Directory:     ./reports/tests/|D: |g" >> "$METTALOG_OUTPUT/_REPORT_.md"
-   ./scripts/html_pass_fail.sh $METTALOG_OUTPUT/ > $METTALOG_OUTPUT/REPORT.html
-
 }
 
 
@@ -470,14 +463,25 @@ delete_html_files() {
 
 # Function to check if a file is in an array
 run_tests() {
+    local TEST_EXIT=0
     for file in "${files_to_test[@]}"; do
-	[[ $SHOULD_EXIT -eq 1 ]] && return
+	if [ $SHOULD_EXIT -eq 1 ]; then
+	# For a script, use exit
+	# exit 4
+	# For a function, use return
+	    return 1
+	fi
+
         if [ -f "${file}" ]; then
-            process_file "$file"
+            TEST_EXIT=$(process_file "$file")
+	    if [ "$TEST_EXIT" -eq 4 ]; then
+		return 1
+	    fi
         else
             do_DEBUG "${RED}File does not exist:${NC} $file"
         fi
     done
+    return 0
 }
 
 
@@ -558,19 +562,7 @@ sort_directories_by_depth() {
 }
 
 
-PYSWIP_VERSION="main"
 
-# Check if the file exists and Read the first line from the file
-VERSION_FILE="$METTALOG_DIR/src/version-config"
-if [ -f "$VERSION_FILE" ]; then    
-    read -r FIRST_LINE < "$VERSION_FILE"
-    FIRST_LINE="${FIRST_LINE%"${FIRST_LINE##*[![:space:]]}"}" 
-    if [ ! -z "$FIRST_LINE" ]; then
-	if [ -d "$METTALOG_DIR/src/$FIRST_LINE/" ]; then
-	    PYSWIP_VERSION="$FIRST_LINE"
-	fi
-    fi
-fi
 
 cd "$METTALOG_DIR"
 
@@ -589,7 +581,6 @@ while [ "$#" -gt 0 ]; do
         --dry-run) dry_run=1 ;;
         --test) dry_run=0 ; add_to_list "$1" passed_along_to_mettalog ;;	    
         --fresh) fresh=1 ;;
-        --v=*) PYSWIP_VERSION="${1#*=}" ; add_to_list "$1" passed_along_to_mettalog ;;
         --exclude=*) EXTRA_FIND_ARGS+=" ! -path ${1#*=}"; CANT_HAVE="${1#*=}" ;;
         --include=*) EXTRA_FIND_ARGS+=" -path ${1#*=}"; MUST_HAVE="${1#*=}" ;;
         -h|--help) DEBUG "Usage: $0 [options] [directory] [extra args]"; show_help=1; dry_run=1 ;;
@@ -631,7 +622,6 @@ fi
 # Delete HTML files if the clean flag is set
 if [ $clean -eq 1 ]; then
   delete_html_files
-  cat /dev/null > /tmp/SHARED.UNITS
 fi
 
 # Prompt user to rerun all tests if run_tests_auto_reply is not set
@@ -642,20 +632,6 @@ else
     REPLY=$run_tests_auto_reply
 fi
 
-# Directory containing the .pl files
-if [ -f "$PYSWIP_VERSION/metta_interp.pl" ]; then
-  INTERP_SRC_DIR="$PYSWIP_VERSION"
-else 
-  INTERP_SRC_DIR="$METTALOG_DIR/src/$PYSWIP_VERSION"
-fi
-INTERP_SRC_DIR="$(realpath "${INTERP_SRC_DIR}")"
-
-DEBUG "INTERP_SRC_DIR=$INTERP_SRC_DIR"
-
-mkdir -p "${METTALOG_OUTPUT}/src/"
-cp -af "${INTERP_SRC_DIR}/"* "${METTALOG_OUTPUT}/src/"
-
-#{ return 0 2>/dev/null || exit 0; }
 
 # Run tests and generate MeTTaLog report
 if [[ $REPLY =~ ^[Yy]$ ]]; then
@@ -664,8 +640,6 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
 else
     DEBUG "Skipping test run."
 fi
-
-find $METTALOG_OUTPUT -type f  -name "*.metta.html" -exec sed -i 's/">/"\n>/g' {} \;
 
 IF_REALLY_DO generate_final_MeTTaLog
 cat $METTALOG_OUTPUT/TEST_LINKS.md
