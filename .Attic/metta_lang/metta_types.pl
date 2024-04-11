@@ -209,7 +209,7 @@ get_type_each(_Dpth,Self,Var,Type):- var(Var),!,
 get_type_each(Depth,Self,Val,Type):- \+ compound(Val),!, get_type_nc(Depth,Self,Val,Type).
 
 get_type_each(Depth,Self,Val,Type):-
- ignore(check_bad_type(Depth,Self,Val)),
+ %ignore(check_bad_type(Depth,Self,Val)),
  if_or_else((get_type_cmpd(Depth,Self,Val,Type,How),trace_get_type(How,Type,gt(Val))),
     (trace_get_type('FAILED','',gt(Val)),fail)).
 

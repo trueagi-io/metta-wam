@@ -627,9 +627,9 @@ eval_space(Eq,RetType,Depth,Self,['match',Other,Goal,Template,Else],Template):- 
        \+ make_empty(RetType,[],Template))*->true;Template=Else).
 % Match-TEMPLATE
 
-eval_space(Eq,_RetType,Depth,Self,['match',Other,Goal,Template],Res):- !,
+eval_space(Eq,RetType,Depth,Self,['match',Other,Goal,Template],Res):- !,
    metta_atom_iter(Eq,Depth,Self,Other,Goal),
-   Template=Res.
+   eval_args(Eq,RetType,Depth,Self,Template,Res).
 
 %metta_atom_iter(Eq,_Depth,_Slf,Other,[Equal,[F|H],B]):- Eq == Equal,!,  % trace,
 %   metta_defn(Eq,Other,[F|H],B).
@@ -1321,9 +1321,10 @@ eval_20(_Eq,RetType,_Depth,_Self,['compile!',X],Res):- symbol(X),
 
 do_compile_easy:- pfcAdd(compile_easy).
 
+empty('Empty').
 ':'(A,B,[':',A,B]).
-'<'(A,B,TF):- as_tf(X<Y,TF).
-'>'(A,B,TF):- as_tf(X>Y,TF).
+'<'(A,B,TFO):- as_tf(A<B,TF),!,TF=TFO.
+'>'(A,B,TFO):- as_tf(A<B,TF),!,TF=TFO.
 
 % =================================================================
 % =================================================================
@@ -1479,21 +1480,6 @@ suggest_type(_RetType,_Bool).
 naive_eval_args:-
     false.
 
-eval_40(Eq,RetType,Depth,_Self,[AE|More],Res):-
-  len_or_unbound(More,Len), Pred = AE,
-  metta_compiled_predicate(AE,Arity),
-  current_predicate(AE,Arity),
-  indentq2(Depth,metta_compiled_predicate(AE, Arity,Len)),
-   trace,
-  ((Arity is Len + 1)
-     -> append(More,[Res],Adjusted)
-      ; (More=Adjusted,Res=TF)),
-  maplist(as_prolog, More , Adjusted),!,
-  if_trace((host;prolog),print_tree(apply(Pred,Adjusted))),
-  catch_warn(efbug(show_call,eval_call(apply(Pred,Adjusted),TF))),
-  check_returnval(Eq,RetType,TF).
-
-
 eval_40(Eq,RetType,Depth,Self,[AE|More],Res):- naive_eval_args,!,
   maplist(must_eval_args(Eq,_,Depth,Self),More,Adjusted),
   eval_70(Eq,RetType,Depth,Self,[AE|Adjusted],Res),
@@ -1619,6 +1605,20 @@ eval_maybe_python(Eq, RetType, _Depth, Self, [MyFun|More], RetVal) :-
 
 
 %eval_80(_Eq,_RetType,_Dpth,_Slf,LESS,Res):- fake_notrace((once((eval_selfless(LESS,Res),fake_notrace(LESS\==Res))))),!.
+
+eval_maybe_host_predicate(Eq,RetType,Depth,_Self,[AE|More],Res):-
+  len_or_unbound(More,Len), Pred = AE,
+  metta_compiled_predicate(AE,_),
+  current_predicate(AE/Arity),
+  %indentq2(2,metta_compiled_predicate(AE, Len-> Arity)),
+  must_det_ll((((Arity > Len) -> append(More,[Res],AdjustedM) ; (More=AdjustedM,Res=TF)))),
+  maplist(as_prolog, AdjustedM , Adjusted),!,
+  Call =.. [Pred|Adjusted],
+  %indentq2(2,call_pl(Call)),
+  catch_warn(efbug(show_call,eval_call(
+     call_cleanup((rtrace_on_error(((Call,notrace)))),notrace),TF))),
+  nonvar(Res),
+  check_returnval(Eq,RetType,Res).
 
 % predicate inherited by system
 eval_maybe_host_predicate(Eq,RetType,_Depth,_Self,[AE|More],TF):- allow_host_functions,

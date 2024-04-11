@@ -963,6 +963,14 @@ rtrace_on_error(G):-
     catch(rtrace(G),E,throw(give_up(E=G))),
     throw(E))).
 
+rtrace_on_failure(G):-
+  catch_err((G*->true;rtrace(G)),E,
+   (notrace,
+    write_src_uo(E=G),
+    %catch(rtrace(G),E,throw(E)),
+    catch(rtrace(G),E,throw(give_up(E=G))),
+    throw(E))).
+
 assertion_hb(metta_defn(Eq,Self,H,B),Self,Eq,H,B):-!.
 assertion_hb(metta_atom_asserted(KB,HB),Self,Eq,H,B):- !, assertion_hb(metta_atom(KB,HB),Self,Eq,H,B).
 assertion_hb(metta_atom(Self,[Eq,H,B]),Self,Eq,H,B):- assert_type_cl(Eq),!.
