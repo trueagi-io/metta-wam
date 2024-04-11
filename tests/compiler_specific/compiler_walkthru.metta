@@ -105,7 +105,7 @@
 !(compile-easy!)
 !(listing! can_compile)
 !(listing! metta_compiled_predicate)
-!(repl!)
+
 
 !(pragma! eval trace)
 

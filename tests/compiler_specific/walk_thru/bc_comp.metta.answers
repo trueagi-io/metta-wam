@@ -1,10 +1,17 @@
 [()]
+[(compile! is-variable)]
+[(compile! lazy-or)]
 [()]
 [()]
 [()]
 [()]
-[(: CPU (? 2 3))]
-[]
-[(: ((rule (rule1 axiom)) CPU) (less 2 3))]
-25.91user 0.01system 0:25.92elapsed 99%CPU (0avgtext+0avgdata 37760maxresident)k
-0inputs+0outputs (0major+4579minor)pagefaults 0swaps
+[(ensure-compiler!)]
+[(pfcWatch!)]
+[(compile! is-variable)]
+[(compile! is-expression)]
+[(compile! lazy-or)]
+[(compile! is-closed)]
+[(compile! bc)]
+[(Error GroundingSpace-0x558d3eced368 BadType)]
+1.88user 0.01system 0:01.89elapsed 100%CPU (0avgtext+0avgdata 35232maxresident)k
+0inputs+0outputs (0major+3963minor)pagefaults 0swaps

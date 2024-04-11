@@ -1,13 +1,14 @@
-
-
-!(pragma! compile full)
+!(pragma! compile False)
 
 (: is-variable (-> Atom Bool))
 (= (is-variable $x) (== (get-metatype $x) Variable))
+!(compile! is-variable)
+
 
 (: lazy-or (-> Bool Atom Bool))
 (= (lazy-or False $x) $x)
 (= (lazy-or True $x) True)
+!(compile! lazy-or)
 
 (: is-expression (-> Atom Bool))
 (= (is-expression $x) (== (get-metatype $x) Expression))
@@ -47,7 +48,6 @@
 ;; DTL Backward chaining Curried ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
 (: bc (-> $a Nat hyperon::space::DynSpace $a))
 ;; Base case
 (= (bc (: $prf $ccln) $space $_1) (match $space (: $prf $ccln) (: $prf $ccln)))
@@ -68,6 +68,19 @@
      (: ($prfabs $prfarg) $ccln)))
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; make things compiled
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; load the compile ontology
+!(ensure-compiler!)
+!(pfcWatch!)
+!(compile! is-variable)
+!(compile! is-expression)
+!(compile! lazy-or)
+!(compile! is-closed)
+!(compile! bc)
+
 ; Test
 !(bc (: CPU (⍃ 2 3)) &kb Z)
 !(bc (: CPU (⍃ 4 3)) &kb Z)
@@ -77,5 +90,4 @@
 ;! ( rtrace! (bc (: $prf (less $x $y)) (S (S (S Z)))))
 
 !(bc (: $prf (less $x $y)) &kb (S (S (S Z))))
-
 
