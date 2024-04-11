@@ -746,7 +746,7 @@ print_directive((:- Directive)):-
 
 write_pl_metta(STerm):-
     \+ \+ write_pl_metta_0(STerm).
-  write_pl_metta_0(STerm):- numbervars(STerm,0,_,[singletons(true)]),
+  write_pl_metta_0(STerm):- numbervars(STerm,0,_,[singletons(true),attvar(skip)]),
    write_src(STerm).
 
 

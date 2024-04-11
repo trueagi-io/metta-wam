@@ -1305,13 +1305,25 @@ eval_20(_Eq,RetType,_Depth,_Self,['compile-easy!'],Res):-
     make_empty(RetType,Res),!, ignore(do_compile_easy).
 
 eval_20(_Eq,RetType,_Depth,_Self,['compile!',X],Res):- symbol(X),
-    compile_easy(X), make_empty(RetType,Res),!.
+    'compile!'(X), make_empty(RetType,Res),!.
 
-compile_easy(X):-
-    ignore(pfcRemove(do_compile_easy(X))),
-    pfcAdd_Now(do_compile_easy(X)),listing(X).
+'compile!'(X,Res):-
+    'compile!'(X),
+    Res = 'True'.
+
+'compile!'(X):-
+    ((ignore(pfcRemove(do_compile_easy(X))),
+   % pfcWatch,
+    pfcAdd_Now(do_compile_easy(X)),
+    % pfcNoWatch,
+    true)),
+     catch((wdmsg(?-listing(X)),listing(X)),E,write_src(E)),!.
 
 do_compile_easy:- pfcAdd(compile_easy).
+
+':'(A,B,[':',A,B]).
+'<'(A,B,TF):- as_tf(X<Y,TF).
+'>'(A,B,TF):- as_tf(X>Y,TF).
 
 % =================================================================
 % =================================================================

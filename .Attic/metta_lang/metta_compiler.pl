@@ -67,6 +67,7 @@
 :- setenv('RUST_BACKTRACE',full).
 % Loading various library files
 :- ensure_loaded(swi_support).
+:- ensure_loaded(metta_mizer).
 :- ensure_loaded(metta_testing).
 :- ensure_loaded(metta_utils).
 :- ensure_loaded(metta_reader).
@@ -88,8 +89,69 @@ for_all(G1,G2):- forall(G1,G2).
 :- op(700,xfx,'=~').
 :- op(690,xfx, =~ ).
 
+:- dynamic(is_absorbed_return/3).
+:- dynamic(is_non_absorbed_return/3).
+
 compound_non_cons(B):-  compound(B),  \+ B = [_|_].
 iz_conz(B):- compound(B), B=[_|_].
+
+
+
+compile_metta_defn(_KB,_F,_Len,Args,_BodyFn,_Clause):- \+ is_list(Args),!,fail.
+compile_metta_defn(_KB,_F,_Len,_Args,BodyFn,_Clause):- var(BodyFn),!,fail.
+compile_metta_defn(KB,F,Len,Args,[WB|AL],ClauseU):-
+   'wam-body'==WB,!,
+  must_det_ll((
+    if_t(var(Len),length(Args,Len)),
+    Clause=(H:-B), s2c([F|Args],H), maplist(s2c,AL,ALB),
+    list_to_conjuncts(ALB,B),
+    %nl,print_tree(Clause),nl,
+    add_unnumbered_clause(KB,F,Len,Clause,ClauseU))).
+compile_metta_defn(KB,F,Len,Args,BodyFn,ClauseU):-
+   must_det_ll((
+        if_t(var(Len),length(Args,Len)),
+   %is_non_absorbed_return(F,Len, _Bool),
+        compile_for_assert([F|Args],BodyFn,Clause),
+        add_unnumbered_clause(KB,F,Len,Clause,ClauseU))).
+
+add_unnumbered_clause(KB,F,Len,ClauseN,Clause):-
+    must_det_ll((
+       unnumbervars(ClauseN,Clause),
+       if_t(\+ clause_asserted(Clause), assertz(Clause)),
+       pfcAdd(metta_compiled_predicate(F,Len)),
+       add_assertion(KB,Clause))),!.
+
+
+compile_for_assert(HeadInC, AsBodyFn, ConvertedO):-
+ must_det_ll((call(ensure_corelib_types),
+ compile_for_assert_now(HeadInC, AsBodyFn, Converted),
+ continue_opimize(Converted,ConvertedO))).
+
+compile_for_assert_now(HeadInC, AsBodyFn, Converted):-
+    r2p(boolean,HeadInC,ResultV,HeadInP),
+    as_functor_args(HeadInP,F,A,PArgs),
+    compile_head_for_assert([F|PArgs], [F|NewFArgs],
+       CodeForHeadArgs),
+    as_functor_args(HeadC,F,A,NewFArgs),
+    compile_for_assert_0(boolean,HeadC,
+      -1,(ResultV = Result, CodeForHeadArgs),Result,AsBodyFn, Converted),!.
+
+compile_for_assert_now(HeadInC, AsBodyFn, Converted):-
+ must_det_ll(
+   (r2p(Which,HeadInC,Result,HeadInP),
+    as_functor_args(HeadInP,F,A,PArgs),
+    once((nth1(Nth,PArgs,Arg,FArgs), Arg == Result)),
+    compile_head_for_assert([F|FArgs], [F|NewFArgs], CodeForHeadArgs),
+    nth1(Nth, NewPArgs, Arg, NewFArgs),
+    as_functor_args(HeadC,F,A,NewPArgs),
+    compile_for_assert_0(Which,HeadC,Nth,CodeForHeadArgs,Result,AsBodyFn, Converted))).
+
+
+compile_for_assert(HeadIs,RetType, AsBodyFn, ConvertedO) :-
+  compile_for_assert_01(HeadIs,RetType, AsBodyFn, Convert),
+  fix_equals_in_head(Convert,Converted),
+  continue_opimize(Converted,ConvertedO).
+
 
 %'=~'(A,B):- var(A),iz_conz(B),!,A=B.
 %'=~'(A,B):- iz_conz(A),var(B),!,A=B.
@@ -329,6 +391,7 @@ functs_to_preds0(I,OO):-
 
 % ?- compile_for_exec(RetResult, is(pi+pi), Converted).
 
+
 compile_for_exec(Res,I,O):-
    %ignore(Res='$VAR'('RetResult')),
    compile_for_exec0(Res,I,O),!.
@@ -517,45 +580,41 @@ compile_for_assert_eq(':-',HeadIn, BodyIn, Converted):-
     Converted=(H:-B), s2p(HeadIn,H), s2p(BodyIn,B),!.
 
 
-compile_for_assert(HeadInC, AsBodyFn, ConvertedO):-
- call(ensure_corelib_types),
- compile_for_assert_now(HeadInC, AsBodyFn, Converted),
- continue_opimize(Converted,ConvertedO).
 
-compile_for_assert_now(HeadInC, AsBodyFn, Converted):-
-    r2p(boolean,HeadInC,ResultV,HeadInP),
-    as_functor_args(HeadInP,F,A,PArgs),
-    compile_head_for_assert([F|PArgs], [F|NewFArgs],
-       CodeForHeadArgs),
-    as_functor_args(HeadC,F,A,NewFArgs),
-    compile_for_assert_0(boolean,HeadC,
-      -1,(ResultV = Result, CodeForHeadArgs),Result,AsBodyFn, Converted).
-
-compile_for_assert_now(HeadInC, AsBodyFn, Converted):-
- must_det_ll(
-   (r2p(Which,HeadInC,Result,HeadInP),
-    as_functor_args(HeadInP,F,A,PArgs),
-    once((nth1(Nth,PArgs,Arg,FArgs), Arg == Result)),
-    compile_head_for_assert([F|FArgs], [F|NewFArgs], CodeForHeadArgs),
-    nth1(Nth, NewPArgs, Arg, NewFArgs),
-    as_functor_args(HeadC,F,A,NewPArgs),
-    compile_for_assert_0(Which,HeadC,Nth,CodeForHeadArgs,Result,AsBodyFn, Converted))).
+is_f('S').
+is_mf(','). is_mf(';'). is_mf('call').
+is_lf(':').
 
 
-compile_for_assert(HeadIs,RetType, AsBodyFn, ConvertedO) :-
-  compile_for_assert_01(HeadIs,RetType, AsBodyFn, Convert),
-  fix_equals_in_head(Convert,Converted),
-  continue_opimize(Converted,ConvertedO).
+s2c(Args,true):- Args==[],!.
+s2c(Args,call(Args)):- \+ iz_conz(Args),!.
+s2c([F|Args],C):- \+ symbol(F), !, C=[F|Args].
+s2c([F|Args],C):- is_lf(F), !, C=Args.
+s2c([At,F|Args],C):- symbol(F), At== '@', is_list(Args),!,maplist(s2c,Args,ArgsL), compound_name_arguments(C,F,ArgsL).
+s2c([F|Args],C):- is_f(F), is_list(Args),!,maplist(s2ca,Args,ArgsL), compound_name_arguments(C,F,ArgsL).
+s2c([F|Args],C):- is_mf(F), is_list(Args),!,maplist(s2c,Args,ArgsL), compound_name_arguments(C,F,ArgsL).
+s2c([F|Args],C):- is_list(Args),!,maplist(s2ca,Args,ArgsL), compound_name_arguments(C,F,ArgsL).
+s2c(C,call(C)).
+
+
+s2ca(Args,Args):- \+ iz_conz(Args),!.
+s2ca([H|T],[HH|TT]):- \+ symbol(H), !, s2ca(H,HH),s2ca(T,TT).
+s2ca([F|Args],C):- is_lf(F), !, C=Args.
+s2ca([At,F|Args],C):- symbol(F), At== '@', is_list(Args),!,maplist(s2ca,Args,ArgsL), compound_name_arguments(C,F,ArgsL).
+s2ca([F|Args],C):- is_f(F), is_list(Args),!,maplist(s2ca,Args,ArgsL), compound_name_arguments(C,F,ArgsL).
+s2ca([F|Args],C):- is_mf(F), is_list(Args),!,maplist(s2c,Args,ArgsL), compound_name_arguments(C,F,ArgsL).
+s2ca([H|T],[HH|TT]):- s2ca(H,HH),s2ca(T,TT).
+
 
 compile_for_assert_01(HeadIs,RetType, AsBodyFn, Converted) :-
-     (AsBodyFn =@= HeadIs,RetType ; AsBodyFn == []), !,/*trace,*/
-   compile_fact_for_assert(HeadIs,RetType,Converted).
+  ( AsBodyFn =@= HeadIs ; AsBodyFn == [] ), !,
+    compile_fact_for_assert(HeadIs,RetType,Converted).
 
 % If Convert is of the form (AsFunction=AsBodyFn), we perform conversion to obtain the equivalent predicate.
 
 compile_for_assert_01(Head, AsBodyFn, Converted) :-
    once(compile_head_variablization(Head, HeadC, CodeForHeadArgs)),
-   \+(atomic(CodeForHeadArgs)), !,
+   \+ atomic(CodeForHeadArgs), !,
    compile_for_assert_01(HeadC,
       (CodeForHeadArgs,AsBodyFn), Converted).
 
@@ -569,15 +628,15 @@ compile_for_assert_01(HeadIn, AsBodyFn, Converted) :-
 
 compile_for_assert_02(HResult,HeadIs,RetType, AsBodyFn, Converted)
  :- is_nsVar(AsBodyFn),
-     AsFunction = HeadIs,!,
-     must_det_ll((
+    AsFunction = HeadIs,!,
+    must_det_ll((
      Converted = (HeadC :- BodyC),  % Create a rule with Head as the converted AsFunction and NextBody as the converted AsBodyFn
      %funct_with_result_is_nth_of_pred(HeadIs,RetType,AsFunction, Result, _Nth, Head),
      f2p(HeadIs,RetType,HResult,AsFunction,HHead),
      (var(HResult) -> (Result = HResult, HHead = Head) ;
        funct_with_result_is_nth_of_pred(HeadIs,RetType,AsFunction, Result, _Nth, Head)),
      NextBody = u_assign(AsBodyFn,Result),
-   optimize_head_and_body(Head,NextBody,HeadC,BodyC),
+     optimize_head_and_body(Head,NextBody,HeadC,BodyC),
      cname_var('HEAD_RES',Result))),!.
 
 compile_for_assert_02(HResult,HeadIs,RetType, AsBodyFn, Converted) :-
@@ -609,248 +668,6 @@ compile_for_assert_02(HResult,HeadIs,RetType, AsBodyFn, Converted) :-
    combine_code(CodeForHeadArgs,NextBody,BodyC),!,
    optimize_head_and_body(HeadC,BodyC,HeadCC,BodyCC),!.
 
-/*
-*/
-optimize_head_and_body(Head,Body,HeadNewest,BodyNewest):-
-   label_body_singles(Head,Body),
-   (merge_and_optimize_head_and_body(Head,Body,HeadNew,BodyNew),
-      (((Head,Body)=@=(HeadNew,BodyNew))
-      ->  (HeadNew=HeadNewest,BodyNew=BodyNewest)
-      ;
-
-  (color_g_mesg('#404064',print_pl_source(( HeadNew :- BodyNew))),
-    optimize_head_and_body(HeadNew,BodyNew,HeadNewest,BodyNewest)))).
-
-continue_opimize(HB,(H:-BB)):- expand_to_hb(HB,H,B), must_optimize_body(HB,B,BB),!.
-continue_opimize(Converted,Converted).
-
-
-
-merge_and_optimize_head_and_body(Head,Converted,HeadO,Body):- nonvar(Head),
-   Head = (PreHead,True),!,
-   merge_and_optimize_head_and_body(PreHead,(True,Converted),HeadO,Body).
-merge_and_optimize_head_and_body(AHead,Body,Head,BodyNew):-
-    assertable_head(AHead,Head),
-   must_optimize_body(Head,Body,BodyNew).
-
-assertable_head(u_assign(FList,R),Head):- FList =~ [F|List],
-   append(List,[R],NewArgs), symbol(F), Head=..[F|NewArgs],!.
-assertable_head(Head,Head).
-
-label_body_singles(Head,Body):-
-   term_singletons(Body+Head,BodyS),
-   maplist(label_body_singles_2(Head),BodyS).
-label_body_singles_2(Head,Var):- sub_var(Var,Head),!.
-label_body_singles_2(_,Var):- ignore(Var='$VAR'('_')).
-
-
-
-metta_predicate(u_assign(evaluable,eachvar)).
-metta_predicate(eval_true(matchable)).
-metta_predicate(with_space(space,matchable)).
-metta_predicate(limit(number,matchable)).
-metta_predicate(findall(template,matchable,listvar)).
-metta_predicate(match(space,matchable,template,eachvar)).
-
-
-must_optimize_body(A,B,CC):- once(optimize_body(A,B,C)), C \=@= B,!, must_optimize_body(A,C,CC).
-must_optimize_body(_,B,C):- B =C.
-
-optimize_body(_HB,Body,BodyNew):- is_nsVar(Body),!,Body=BodyNew.
-%optimize_body( HB,u_assign(VT,R),u_assign(VT,R)):-!, must_optimize_body(HB,VT,VTT).
-optimize_body( HB,with_space(V,T),with_space(V,TT)):-!, must_optimize_body(HB,T,TT).
-optimize_body( HB,call(T),call(TT)):-!, must_optimize_body(HB,T,TT).
-optimize_body( HB,rtrace_on_error(T),rtrace_on_error(TT)):-!, must_optimize_body(HB,T,TT).
-optimize_body( HB,limit(V,T),limit(V,TT)):-!, must_optimize_body(HB,T,TT).
-optimize_body( HB,findall_ne(V,T,R),findall_ne(V,TT,R)):-!,
- expand_to_hb(HB,H,_), must_optimize_body((H:-findall_ne(V,T,R)),T,TT).
-optimize_body( HB,findall(V,T,R),findall(V,TT,R)):-!,
- expand_to_hb(HB,H,_),
- must_optimize_body((H:-findall(V,T,R)),T,TT).
-optimize_body( HB,loonit_assert_source_tf(V,T,R3,R4),
-  loonit_assert_source_tf(V,TT,R3,R4)):-!,
-  must_optimize_body(HB,T,TT).
-optimize_body( HB,loonit_assert_source_empty(V,X,Y,T,R3,R4),
-  loonit_assert_source_empty(V,X,Y,TT,R3,R4)):-!,
-  must_optimize_body(HB,T,TT).
-
-optimize_body( HB,(B1*->B2;B3),(BN1*->BN2;BN3)):-!, must_optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2), optimize_body(HB,B3,BN3).
-optimize_body( HB,(B1->B2;B3),(BN1->BN2;BN3)):-!, must_optimize_body(HB,B1,BN1), must_optimize_body(HB,B2,BN2), must_optimize_body(HB,B3,BN3).
-optimize_body( HB,(B1:-B2),(BN1:-BN2)):-!, optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2).
-optimize_body( HB,(B1*->B2),(BN1*->BN2)):-!, must_optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2).
-optimize_body( HB,(B1->B2),(BN1*->BN2)):-!, must_optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2).
-optimize_body( HB,(B1;B2),(BN1;BN2)):-!, optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2).
-optimize_body( HB,(B1,B2),(BN1)):- optimize_conjuncts(HB,(B1,B2),BN1).
-%optimize_body(_HB,==(Var, C), Var=C):- self_eval(C),!.
-optimize_body( HB,u_assign(A,B),R):- optimize_u_assign_1(HB,A,B,R),!.
-optimize_body( HB,eval(A,B),R):- optimize_u_assign_1(HB,A,B,R),!.
-%optimize_body(_HB,u_assign(A,B),u_assign(AA,B)):- p2s(A,AA),!.
-optimize_body(_HB,Body,BodyNew):- optimize_body_unit(Body,BodyNew).
-
-optimize_body_unit(I,O):-
-   copy_term(I,II),
-   optimize_unit1(I,Opt),I=@=II,!,
-   optimize_body_unit(Opt,O).
-optimize_body_unit(O,O).
-
-
-ok_to_append('$VAR'):- !, fail.
-ok_to_append(_).
-
-number_wang(A,B,C):-
-  (numeric(C);numeric(A);numeric(B)),!,
-  maplist(numeric_or_var,[A,B,C]),
-  maplist(decl_numeric,[A,B,C]),!.
-
-optimize_u_assign_1(_,Var,_,_):- is_nsVar(Var),!,fail.
-
-
-optimize_u_assign_1(_HB,[H|T],R,Code):- symbol(H),length([H|T],Arity),
-   predicate_arity(F,A),Arity==A, \+ (predicate_arity(F,A2),A2\=A),
-    append([H|T],[R],ArgsR),Code=..ArgsR,!.
-optimize_u_assign_1(HB,Compound,R,Code):- \+ compound(Compound),!, optimize_u_assign(HB,Compound,R,Code).
-optimize_u_assign_1(HB,[H|T],R,Code):- !, optimize_u_assign(HB,[H|T],R,Code).
-optimize_u_assign_1(_ ,Compound,R,Code):-
-   is_list(R),var(Compound),
-   into_u_assign(R,Compound,Code),!.
-
-optimize_u_assign_1(_,Compound,R,Code):- ar2p(Compound,R,Code),!.
-optimize_u_assign_1(_,Compound,R,Code):-
-  compound(Compound),
-  as_functor_args(Compound,F,N0), N is N0 +1,
-  (predicate_arity(F,N); functional_predicate_arg(F, N, N)),
-   append_term_or_call(Compound,R,Code).
-optimize_u_assign_1(HB,Compound,R,Code):- p2s(Compound,MeTTa),   optimize_u_assign(HB,MeTTa,R,Code).
-%optimize_u_assign_1(_,[Pred| ArgsL], R, u_assign([Pred| ArgsL],R)).
-
-append_term_or_call([F|Compound],R,Code):- symbol(F),
-  is_list(Compound),append(Compound,[R],CodeL),
-            Code=..[F|CodeL],!.
-append_term_or_call(F,R,Code):- symbol(F),!, Code=..[F,R].
-append_term_or_call(F,R,Code):- append_term(F,R,Code),!.
-append_term_or_call(F,R,call(F,R)).
-
-
-optimize_unit1(
-  eval_true([==, ['get-metatype', A], 'Expression']),
-  call('get-metatype',A,'Expression')).
-
-optimize_unit1( eval_true([==, [GM, Eval], Val]), call(GM,Eval,Val)):-
-    symbol(GM), predicate_arity(GM,2), \+ predicate_arity(GM,1),
-    symbol(Val),var(Eval),!.
-
-optimize_unit1( ==([GM,Eval],Val,C), call(GM,Eval,Val)):- C==Eval,
-    symbol(GM), predicate_arity(GM,2), \+ predicate_arity(GM,1),
-    symbol(Val),var(Eval),!.
-
-optimize_u_assign(_,[Var|_],_,_):- is_nsVar(Var),!,fail.
-optimize_u_assign(_,[Empty], _, (!,fail)):-  Empty == empty,!.
-optimize_u_assign(_,[EqEq,[GM,Eval],Val],C, call(GM,Eval,Val)):-
-    EqEq == '==',C==Eval,
-    symbol(GM), predicate_arity(GM,2), \+ predicate_arity(GM,1),
-    symbol(Val),var(Eval),!.
-
-
-optimize_u_assign(_,[+, A, B], C, plus(A , B, C)):- number_wang(A,B,C), !.
-optimize_u_assign(_,[-, A, B], C, plus(B , C, A)):- number_wang(A,B,C), !.
-optimize_u_assign(_,[+, A, B], C, +(A , B, C)):- !.
-optimize_u_assign(_,[-, A, B], C, +(B , C, A)):- !.
-optimize_u_assign(_,[*, A, B], C, *(A , B, C)):- number_wang(A,B,C), !.
-optimize_u_assign(_,['/', A, B], C, *(B , C, A)):- number_wang(A,B,C), !.
-optimize_u_assign(_,[*, A, B], C, *(A , B, C)):- !.
-optimize_u_assign(_,['/', A, B], C, *(B , C, A)):- !.
-optimize_u_assign(_,[fib, B], C, fib(B, C)):- !.
-optimize_u_assign(_,[fib1, A,B,C,D], R, fib1(A, B, C, D, R)):- !.
-optimize_u_assign(_,['pragma!',N,V],Empty,set_option_value_interp(N,V)):-
-   nonvar(N),ignore((fail,Empty='Empty')), !.
-optimize_u_assign((H:-_),Filter,A,filter_head_arg(A,Filter)):- fail, compound(H), arg(_,H,HV),
-  HV==A, is_list(Filter),!.
-optimize_u_assign(_,[+, A, B], C, '#='(C , A + B)):- number_wang(A,B,C), !.
-optimize_u_assign(_,[-, A, B], C, '#='(C , A - B)):- number_wang(A,B,C), !.
-optimize_u_assign(_,[match,KB,Query,Template], R, Code):-  match(KB,Query,Template,R) = Code.
-
-optimize_u_assign(HB,MeTTaEvalP, R, Code):- \+ is_nsVar(MeTTaEvalP),
-  compound_non_cons(MeTTaEvalP), p2s(MeTTaEvalP,MeTTa),
-  MeTTa\=@=MeTTaEvalP,!, optimize_body(HB, u_assign(MeTTa, R), Code).
-
-% optimize_u_assign(_,_,_,_):- !,fail.
-optimize_u_assign((H:-_),[Pred| ArgsL], R, Code):- var(R), symbol(Pred), ok_to_append(Pred),
-  append([Pred| ArgsL],[R], PrednArgs),Code=..PrednArgs,
-  (H=..[Pred|_] -> nop(set_option_value('tabling',true)) ; current_predicate(_,Code)),!.
-
-p2s(P,S):- into_list_args(P,S).
-
-get_decl_type(N,DT):- attvar(N),get_atts(N,AV),sub_term(DT,AV),symbol(DT).
-
-numeric(N):- number(N),!.
-numeric(N):- get_attr(N,'Number','Number').
-numeric(N):- get_decl_type(N,DT),(DT=='Int',DT=='Number').
-decl_numeric(N):- numeric(N),!.
-decl_numeric(N):- ignore((var(N),put_attr(N,'Number','Number'))).
-numeric_or_var(N):- var(N),!.
-numeric_or_var(N):- numeric(N),!.
-numeric_or_var(N):- \+ compound(N),!,fail.
-numeric_or_var('$VAR'(_)).
-
-non_compound(S):- \+ compound(S).
-
-did_optimize_conj(Head,B1,B2,B12):- optimize_conj(Head,B1,B2,B12), B12\=@=(B1,B2),!.
-
-optimize_conjuncts(Head,(B1,B2,B3),BN):- B3\=(_,_),
-  did_optimize_conj(Head,B2,B3,B23),
-  must_optimize_body(Head,(B1,B23),BN), !.
-optimize_conjuncts(Head,(B1,B2,B3),BN):-
-  did_optimize_conj(Head,B1,B2,B12),
-  must_optimize_body(Head,(B12,B3),BN),!.
-%optimize_conjuncts(Head,(B1,B2),BN1):- optimize_conj(Head,B1,B2,BN1).
-optimize_conjuncts(Head,(B1,B2),BN1):- did_optimize_conj(Head,B1,B2,BN1),!.
-optimize_conjuncts(Head,(B1*->B2),(BN1*->BN2)):- !,
-  optimize_conjuncts(Head,B1,BN1),
-  optimize_conjuncts(Head,B2,BN2).
-optimize_conjuncts(Head,(B1->B2),(BN1->BN2)):- !,
-  optimize_conjuncts(Head,B1,BN1),
-  optimize_conjuncts(Head,B2,BN2).
-optimize_conjuncts(Head,(B1;B2),(BN1;BN2)):- !,
-  optimize_conjuncts(Head,B1,BN1),
-  optimize_conjuncts(Head,B2,BN2).
-optimize_conjuncts(Head,(B1,B2),(BN1,BN2)):- !,
-   must_optimize_body(Head,B1,BN1), must_optimize_body(Head,B2,BN2).
-optimize_conjuncts(_,A,A).
-
-optimize_conj(_Head, B1,B2,eval_true(E)):-
-        B2 = is_True(True_Eval),
-        B1 = eval(E,True_Eval1),
-        True_Eval1 == True_Eval,!.
-
-optimize_conj(HB, RR, C=A, RR):- compound(RR),is_nsVar(C),is_nsVar(A),
-  as_functor_args(RR,_,_,Args),is_list(Args), member(CC,Args),var(CC), CC==C,
-    count_var(HB,C,N),N=2,C=A,!.
-
-optimize_conj(_, u_assign(Term, C), u_assign(True,CC), eval_true(Term)):-
-   'True'==True, CC==C.
-optimize_conj(_, u_assign(Term, C), is_True(CC), eval_true(Term)):- CC==C, !.
-optimize_conj(HB, u_assign(Term, C), C=A, u_assign(Term,A)):- is_ftVar(C),is_ftVar(A),count_var(HB,C,N),N=2,!.
-optimize_conj(_, u_assign(Term, C), is_True(CC), eval_true(Term)):- CC==C, !.
-optimize_conj(HB, B1,BT,B1):- assumed_true(HB,BT),!.
-optimize_conj(HB, BT,B1,B1):- assumed_true(HB,BT),!.
-%optimize_conj(Head, u_assign(Term, C), u_assign(True,CC), Term):- 'True'==True,
-%     optimize_conj(Head, u_assign(Term, C), is_True(CC), CTerm).
-%optimize_conj(Head,B1,BT,BN1):- assumed_true(HB,BT),!, optimize_body(Head,B1,BN1).
-%optimize_conj(Head,BT,B1,BN1):- assumed_true(HB,BT),!, optimize_body(Head,B1,BN1).
-optimize_conj(Head,B1,B2,(BN1,BN2)):-
-   optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2).
-
-assumed_true(_ ,B2):- var(B2),!,fail.
-assumed_true(HB,eval_true(B2)):-!,assumed_true(HB,B2).
-assumed_true(_ ,B2):- B2==is_True('True').
-assumed_true(_ ,B2):- B2=='True'.
-assumed_true(_ ,B2):- B2== true,!.
-assumed_true(_ ,B2):- B2==u_assign('True', '$VAR'('_')),!.
-assumed_true(HB,X==Y):- !, assumed_true(HB,X=Y).
-assumed_true( _,X=Y):- X==Y,!.
-assumed_true(HB,X=Y):- is_nsVar(X),is_nsVar(Y),
-  ( \+ (X\=Y)),(count_var(HB,Y,2);count_var(HB,X,2)),
-  X=Y,!.
 
 filter_head_arg(H,F):- var(H),!,H=F.
 filter_head_arge(H,F):- H = F.
@@ -924,8 +741,8 @@ f2q(_Depth,_HeadIs,_RetType,RetResult,Convert, Converted) :- % HeadIs,RetType\=@
 f2q(_Depth,_HeadIs,_RetType,RetResult,Convert,eval_true(Convert)):-
    %nl,print(Convert),nl,
    as_functor_args(Convert,F,A,Args),
-   \+ maplist(is_list,Args),
-   is_absorbed_return_value(F,A,_Bool,RResult),RResult=RetResult.
+   \+ (member(Arg,Args),is_list(Arg)),
+   is_absorbed_return_value(F,A,RResult),RResult=RetResult.
 
 
 f2q(Depth,HeadIs,RetType,RetResult,Convert,Converted) :- %dif_functors(HeadIs,Convert),
@@ -1778,9 +1595,9 @@ ar2p(MeTTa,Result,IsPred):- ar2p(_,MeTTa,Result,IsPred).
 absorbed_default('Bool',_AsPred,'True').
 absorbed_default(_,_AsPred,_).
 
-is_absorbed_return_value(F,A,Bool,Result):-
+is_absorbed_return_value(F,A,Result):-
   is_absorbed_return(F,A,Bool),
-  nonvar(Bool),absorbed_default(Bool,_AsPred,Result).
+  absorbed_default(Bool,_AsPred,Result).
 
 ar2p(boolean,AsPred,Result,IsPred):-
     as_functor_args(AsPred,F,A,Args),
@@ -2183,20 +2000,32 @@ transform(OneHead, NewHead, Body, NewBody):- create_unifier(OneHead,NewHead,Guar
 
 
 
-
 % ===============================
 %  Compile in memory buffer
 % ===============================
 add_assertion(Space,List):- is_list(List),!,maplist(add_assertion(Space),List).
+add_assertion(_Space,NewAssertion):- clause_asserted(NewAssertion),!.
 add_assertion(_Space,NewAssertion) :-
      expand_to_hb(NewAssertion,H,_),
      as_functor_args(H,F,A), as_functor_args(HH,F,A),
-     assert(NewAssertion),
+    % assert(NewAssertion),
     % Get the current clauses of my_predicate/1
     findall(HH:-B,clause(HH,B),Prev),
+    copy_term(Prev,CPrev,_),
     % Create a temporary file and add the new assertion along with existing clauses
     abolish(F/A),
-    create_and_consult_temp_file(F/A, Prev).
+    append(CPrev,[NewAssertion],NewList),
+    cl_list_to_set(NewList,Set),
+    %wdmsg(list_to_set(Set)),
+    create_and_consult_temp_file(F/A, Set).
+
+
+cl_list_to_set([New|List],Set):-
+  member(E,List),New=@=E,!,
+  cl_list_to_set(List,Set).
+cl_list_to_set([New|List],[New|Set]):-!,
+  cl_list_to_set(List,Set).
+cl_list_to_set(List,Set):- list_to_set(List,Set).
 
 
 % Predicate to create a temporary file and write the tabled predicate
@@ -2207,7 +2036,7 @@ create_and_consult_temp_file(PredName/Arity, PredClauses) :-
     format(TempFileStream, ':- multifile((~q)/~w).~n', [PredName, Arity]),
     format(TempFileStream, ':- dynamic((~q)/~w).~n', [PredName, Arity]),
     %if_t( \+ option_value('tabling',false),
-    if_t(option_value('tabling','True'),format(TempFileStream,':- ~q.~n',[table(PredName/Arity)])),
+   % if_t(option_value('tabling','True'),format(TempFileStream,':- ~q.~n',[table(PredName/Arity)])),
     maplist(write_clause(TempFileStream), PredClauses),
     % Close the temporary file
     close(TempFileStream),
