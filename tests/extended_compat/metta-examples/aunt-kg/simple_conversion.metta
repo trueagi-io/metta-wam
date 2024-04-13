@@ -3,7 +3,7 @@
 ; !(import! &self royal92.metta)
 
 ; https://github.com/kennethreitz/context/blob/master/gedcom/biblical/adameve.ged
-!(import! &self adameve.metta)
+!(import! &self adameve)
 
 ; https://github.com/Jisco/gedcom.json/blob/master/examples/lordOfTheRings.json
 ; !(import! &self lordOfTheRings.metta)

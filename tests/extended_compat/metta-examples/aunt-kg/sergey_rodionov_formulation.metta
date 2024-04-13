@@ -1,6 +1,6 @@
 ; !(import! &self toy_simple.metta)
 ; !(import! &self royal92_simple.metta)
-!(import! &self adameve_simple.metta)
+!(import! &self adameve_simple)
 ; !(import! &self lordOfTheRings_simple.metta)
 ; !(import! &self simpsons_simple.metta)
 
