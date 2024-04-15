@@ -518,6 +518,10 @@ sort_result([T,And|Res1],Res):- is_and(And),!,sort_result([T|Res1],Res).
 sort_result([H|T],[HH|TT]):- !, sort_result(H,HH),sort_result(T,TT).
 sort_result(Res,Res).
 
+
+unify_case(A,B):- A=@=B,!,A=B.
+unify_case(A,B):- A=B,!.
+
 unify_enough(L,L).
 unify_enough(L,C):- into_list_args(L,LL),into_list_args(C,CC),unify_lists(CC,LL).
 
@@ -527,22 +531,23 @@ unify_lists(L,L):-!.
 unify_lists([C|CC],[L|LL]):- unify_enough(L,C),!,unify_lists(CC,LL).
 
 %s_empty(X):- var(X),!.
-s_empty(X):- var(X),!,fail.
+is_empty(X):- var(X),!,fail.
 is_empty('Empty').
 is_empty([]).
 is_empty([X]):-!,is_empty(X).
 has_let_star(Y):- sub_var('let*',Y).
 
-
+sort_univ(L,S):- cl_list_to_set(L,E),sort(E,S).
 % !(pragma! unit-tests tollerant) ; tollerant or exact
 is_tollerant:- \+ option_value('unit-tests','exact').
 
 equal_enough_for_test(X,Y):- is_empty(X),!,is_empty(Y).
 equal_enough_for_test(X,Y):- has_let_star(Y),!,\+ is_empty(X).
-equal_enough_for_test(X,Y):- must_det_ll((subst_vars(X,XX),subst_vars(Y,YY))),!,equal_enough_for_test2(XX,YY),!.
+equal_enough_for_test(X,Y):- must_det_ll((subst_vars(X,XX),subst_vars(Y,YY))),!,
+  equal_enough_for_test2(XX,YY),!.
 equal_enough_for_test2(X,Y):- equal_enough(X,Y).
 
-equal_enough(R,V):- is_list(R),is_list(V),sort(R,RR),sort(V,VV),!,equal_enouf(RR,VV),!.
+equal_enough(R,V):- is_list(R),is_list(V),sort_univ(R,RR),sort_univ(V,VV),!,equal_enouf(RR,VV),!.
 equal_enough(R,V):- copy_term(R,RR),copy_term(V,VV),equal_enouf(R,V),!,R=@=RR,V=@=VV.
 equal_enouf(R,V):- is_ftVar(R), is_ftVar(V), R=V,!.
 equal_enouf(X,Y):- is_empty(X),!,is_empty(Y).
@@ -1301,30 +1306,75 @@ eval_20(_Eq,_RetType,_Dpth,_Slf,['function-arity',F],A):- !,
    function_arity(FF,A).
 
 
-eval_20(_Eq,RetType,_Depth,_Self,['compile-easy!'],Res):-
-    make_empty(RetType,Res),!, ignore(do_compile_easy).
 
-eval_20(_Eq,RetType,_Depth,_Self,['compile!',X],Res):- symbol(X),
-    'compile!'(X), make_empty(RetType,Res),!.
+eval_20(_Eq,RetType,_Depth,_Self,['compile-space!'],Res):- !,
+    as_empty('compile-space!'(_), Res).
 
-'compile!'(X,Res):-
-    'compile!'(X),
-    Res = 'True'.
+eval_20(_Eq,RetType,_Depth,_Self,['compile-space!',Space],Res):- !,
+    as_empty('compile-space!'(Space), Res).
+
+'compile-space!'(X,Res):-
+   as_tf('compile-space!'(X), TF).
+
+'compile-space!'(X):-
+    %((ignore(pfcRemove(do_compile_space(X))),
+   % pfcWatch,
+    pfcAdd_Now(do_compile_space(X)),
+
+    % pfcNoWatch,
+    true,!.
+
+
+eval_20(_Eq,RetType,_Depth,_Self,['compile!'],Res):- !,
+    as_empty('compile!'(_), Res).
+
+eval_20(_Eq,RetType,_Depth,_Self,['compile!',Space],Res):- !,
+    as_empty('compile!'(Space), Res).
+
+'compile!'(X,TF):-
+   as_tf('compile!'(X), TF).
 
 'compile!'(X):-
-    ((ignore(pfcRemove(do_compile_easy(X))),
+    current_self(KB),
+    %((ignore(pfcRemove(do_compile(KB,X,_))),
    % pfcWatch,
-    pfcAdd_Now(do_compile_easy(X)),
+    pfcAdd_Now(do_compile(KB,X,_)),
     % pfcNoWatch,
-    true)),
-     catch((wdmsg(?-listing(X)),listing(X)),E,write_src(E)),!.
+    true,!,
+     catch((wdmsg(?-listing(X)),listing(X)),E,
+    (!,write_src(E),fail)),!.
 
-do_compile_easy:- pfcAdd(compile_easy).
 
 empty('Empty').
+','(A,B,(AA,BB)):- eval(A,AA),eval(B,BB).
 ':'(A,B,[':',A,B]).
 '<'(A,B,TFO):- as_tf(A<B,TF),!,TF=TFO.
 '>'(A,B,TFO):- as_tf(A<B,TF),!,TF=TFO.
+minus(A,B,C):- plus(B,C,A).
+
+
+eval_20(Eq,RetType,Depth,Self,[AE|More],Res):-
+    metta_compiled_predicate(Self,AE,Len),
+    len_or_unbound(More,Len), Pred = AE,
+    current_predicate(AE/Arity),
+    maplist(as_prolog, More , Adjusted),!,
+    eval_201(Eq,RetType,Depth,Self,Pred,Adjusted,Arity,Len,Res),
+    nonvar(Res),
+    check_returnval(Eq,RetType,Res).
+
+
+eval_201(Eq,RetType,Depth,Self,Pred,AdjustedM1,Arity,Len,Res):- Arity > Len,!,
+    append(AdjustedM1,[Res],Adjusted),
+    Call =.. [Pred|Adjusted],
+    %indentq2(2,call_pl_rv(Call)),
+    catch_warn(efbug(show_call,rtrace_on_error(Call))).
+
+eval_201(Eq,RetType,Depth,Self,Pred,Adjusted,Arity,Len,Res):-
+    Call =.. [Pred|Adjusted],
+    %indentq2(2,call_pl_tf(Call)),
+    catch_warn(efbug(show_call,eval_call(rtrace_on_error(Call),Res))).
+
+
 
 % =================================================================
 % =================================================================
@@ -1349,7 +1399,8 @@ eval_20(Eq,OuterRetType,Depth,Self,['range',A,B],OO):- (is_list(A);is_list(B)),
     eval_20(Eq,OuterRetType,Depth,Self,['range',AA,BB],OO),!.
 
 
-fromNumber(Var1,Var2):- var(Var1),var(Var2),!,
+/*
+  fromNumber(Var1,Var2):- var(Var1),var(Var2),!,
    freeze(Var1,fromNumber(Var1,Var2)),
    freeze(Var2,fromNumber(Var1,Var2)).
 fromNumber(0,'Z'):-!.
@@ -1358,6 +1409,7 @@ fromNumber(N,['S',Nat]):- integer(N), M is N -1,!,fromNumber(M,Nat).
 eval_20(Eq,RetType,Depth,Self,['fromNumber',NE],RetVal):- !,
    eval('=','Number',Depth,Self,NE,N),
     fromNumber(N,RetVal), check_returnval(Eq,RetType,RetVal).
+*/
 
 eval_20(Eq,RetType,Depth,Self,['dedup!',Eval],RetVal):- !,
    term_variables(Eval+RetVal,Vars),
@@ -1410,6 +1462,13 @@ eval_20(_Eq,_RetType,_Depth,_Self,['call-string!',Str],Empty):- !,'call-string!'
 'call-string!'(Str,Empty):-
                read_term_from_atom(Str,Term,[variables(Vars)]),!,
                call(Term),Empty=Vars.
+
+
+
+
+
+
+
 eval_20(Eq,RetType,Depth,Self,X,Y):-
   (eval_40(Eq,RetType,Depth,Self,X,M)*-> M=Y ;
      % finish_eval(Depth,Self,M,Y);
@@ -1603,22 +1662,7 @@ eval_maybe_python(Eq, RetType, _Depth, Self, [MyFun|More], RetVal) :-
     check_returnval(Eq, RetType, RetVal).
 
 
-
 %eval_80(_Eq,_RetType,_Dpth,_Slf,LESS,Res):- fake_notrace((once((eval_selfless(LESS,Res),fake_notrace(LESS\==Res))))),!.
-
-eval_maybe_host_predicate(Eq,RetType,Depth,_Self,[AE|More],Res):-
-  len_or_unbound(More,Len), Pred = AE,
-  metta_compiled_predicate(AE,_),
-  current_predicate(AE/Arity),
-  %indentq2(2,metta_compiled_predicate(AE, Len-> Arity)),
-  must_det_ll((((Arity > Len) -> append(More,[Res],AdjustedM) ; (More=AdjustedM,Res=TF)))),
-  maplist(as_prolog, AdjustedM , Adjusted),!,
-  Call =.. [Pred|Adjusted],
-  %indentq2(2,call_pl(Call)),
-  catch_warn(efbug(show_call,eval_call(
-     call_cleanup((rtrace_on_error(((Call,notrace)))),notrace),TF))),
-  nonvar(Res),
-  check_returnval(Eq,RetType,Res).
 
 % predicate inherited by system
 eval_maybe_host_predicate(Eq,RetType,_Depth,_Self,[AE|More],TF):- allow_host_functions,
@@ -1735,6 +1779,7 @@ catch_nowarn(G):- quietly(catch_err(G,error(_,_),fail)).
 % less Macro-ey Functions
 
 
+as_empty(G,Empty):-  G\=[_|_], rtrace_on_failure(G),!,empty(Empty).
 as_tf(G,TF):-  G\=[_|_], catch_nowarn((call(G)*->TF='True';TF='False')).
 as_tf_tracabe(G,TF):-  G\=[_|_], ((call(G)*->TF='True';TF='False')).
 %eval_selfless_1(['==',X,Y],TF):- as_tf(X=:=Y,TF),!.
