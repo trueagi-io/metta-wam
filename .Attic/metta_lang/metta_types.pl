@@ -154,11 +154,7 @@ type_conform(T,L):- T=L,!.
 type_conform(T,L):- \+ \+ (is_nonspecific_type(T);is_nonspecific_type(L)),!.
 type_conform(T,L):- can_assign(T,L).
 
-is_nonspecific_type(Var):- var(Var),!.
-is_nonspecific_type('%Undefined%').
-is_nonspecific_type([]).
-is_nonspecific_type('Atom').
-is_nonspecific_type('Any').
+
 
 get_types(Depth,Self,Var,TypeSet):-
    setof(Type,get_type_each(Depth,Self,Var,Type),TypeSet).
@@ -463,6 +459,8 @@ add_type(_Depth,Self,_Var,TypeL,Type):-
   put_attr(Var,metta_type,Self=TypeList).
 
 
+
+
 can_assign(Was,Type):- Was=Type,!.
 can_assign(Was,Type):- (is_nonspecific_type(Was);is_nonspecific_type(Type)),!.
 can_assign(Was,Type):- \+ cant_assign_to(Was,Type).
@@ -474,8 +472,14 @@ cant_assign(A,B):- \+ A \= B, !, fail.
 cant_assign(Number,String):- formated_data_type(Number),formated_data_type(String), Number\==String.
 cant_assign(Number,Other):- formated_data_type(Number), symbol(Other), Number\==Other.
 
-is_non_eval_kind(Type):- is_nonspecific_type(Type),!.
+is_non_eval_kind(Type):- nonvar(Type),Type\=='Any', is_nonspecific_type(Type),!.
 is_non_eval_kind('Atom').
+
+is_nonspecific_type(Var):- var(Var),!.
+is_nonspecific_type('%Undefined%').
+is_nonspecific_type([]).
+is_nonspecific_type('Atom').
+is_nonspecific_type('Any').
 
 formated_data_type('Number').
 formated_data_type('Symbol').
@@ -483,6 +487,33 @@ formated_data_type('Bool').
 formated_data_type('Char').
 formated_data_type('String').
 formated_data_type([List|_]):- List=='List'.
+
+is_nonspecific_any(Any):- Any=='Any'.
+is_nonspecific_any(Any):- Any=='AnyRet'.
+is_nonspecific_type_na(NotAtom):- NotAtom\=='Atom', is_nonspecific_type(NotAtom).
+narrow_types(RetType,RetType,RetType):- !.
+narrow_types(Any,RetType,RetType):- nonvar(Any),is_nonspecific_any(Any),!.
+narrow_types(Any,RetType,RetType):- nonvar(Any),is_nonspecific_any(Any),!.
+narrow_types(Any,RetType,RetType):- nonvar(Any),is_nonspecific_type_na(Any),!.
+narrow_types(RetType,Any,RetType):- nonvar(Any),is_nonspecific_type_na(Any),!.
+narrow_types(RetType,Any,RetType):- is_type_list(Any,List),!,narrow_types([RetType|List],Out).
+narrow_types(Any,RetType,RetType):- is_type_list(Any,List),!,narrow_types([RetType|List],Out).
+narrow_types(Fmt,Fmt1,Fmt):- formated_data_type(Fmt),formated_data_type(Fmt1).
+narrow_types(Fmt,Fmt1,Fmt):- formated_data_type(Fmt),!.
+narrow_types(Fmt1,Fmt,Fmt):- formated_data_type(Fmt),!.
+narrow_types(Fmt1,Fmt2,'NarrowTypeFn'(Fmt1,Fmt2)).
+
+is_type_list('NarrowTypeFn'(Fmt1,Fmt2),List):- get_type_list('NarrowTypeFn'(Fmt1,Fmt2),List).
+
+get_type_list('NarrowTypeFn'(Fmt1,Fmt2),List):- !,
+   get_type_list(Fmt1,List1),get_type_list(Fmt2,List2),
+   append(List1,List2,List).
+get_type_list(A,[A]).
+
+narrow_types(NL,Out):- \+ is_list(NL),!, Out=[NL].
+narrow_types([A|List],Out):- var(A),!,narrow_types(List,LT),Out='NarrowTypeFn'(A,LT).
+narrow_types([A,B|List],Out):- narrow_types([B|L],BL),narrow_types(A,BL,Out).
+narrow_types([A],A).
 
 is_pro_eval_kind(SDT):- formated_data_type(SDT).
 
@@ -545,12 +576,12 @@ get_operator_typedef1(Self,Op,Len,ParamTypes,RetType):-
    if_t(var(ParamTypes),append(ParamTypes,[RetType],List)),
    assert(get_operator_typedef0(Self,Op,Len,ParamTypes,RetType)).
 get_operator_typedef2(Self,Op,Len,ParamTypes,RetType):-
-  ignore('Any'=RetType),
+  ignore('AnyRet'=RetType),
   maplist(is_eval_kind,ParamTypes),
-  assert(get_operator_typedef0(Self,Op,Len,ParamTypes,'Any2')).
+  assert(get_operator_typedef0(Self,Op,Len,ParamTypes,RetType)).
   %nop(wdmsg(missing(get_operator_typedef2(Self,Op,ParamTypes,RetType)))),!,fail.
 
-is_eval_kind(ParamType):- ignore(ParamType='Any3').
+is_eval_kind(ParamType):- ignore(ParamType='Any').
 
 is_metta_data_functor(Eq,F):-
   current_self(Self),is_metta_data_functor(Eq,Self,F).

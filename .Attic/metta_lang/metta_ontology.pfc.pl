@@ -18,38 +18,8 @@
  *
  * Contribution: Contributions are welcome! For contributing guidelines, please check the CONTRIBUTING.md
  *               file in the repository.
- *
- * Notes:
- * - Ensure you have SWI-Prolog installed and properly configured to use this transpiler.
- * - This project is under active development, and we welcome feedback and contributions.
- *
- * Acknowledgments: Special thanks to all contributors and the open source community for their support and contributions.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the
- *    distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
  */
+
 
 %:- multifile(baseKB:agent_action_queue/3).
 %:- dynamic(baseKB:agent_action_queue/3).
@@ -104,69 +74,127 @@
 
 
 :- set_prolog_flag(pfc_term_expansion,false).
-params_and_return_type([Ar|TypeList],Len,Params,Ret):-
-   if_t(integer(Len),length(Params,Len)),
-   Ar = (->),
+
+:- dynamic(done_once/1).
+do_once(G):-
+  ((done_once(GG),GG=@=G) -> true
+  ;(assert(done_once(G)),(once(@(G,user))->true;retract(done_once(G))))).
+
+params_and_return_type([->|TypeList],Len,Params,Ret):-
    append(Params,[Ret], TypeList),
-   if_t(var(Len),length(Params,Len)).
+   length(Params,Len).
+
+merge_fp(_,_,N) :- N<1.
+merge_fp(T1,T2,N) :-
+  N>0,
+  arg(N,T1,X),
+  arg(N,T2,X),
+  N1 is N-1,
+  merge_fp(T1,T2,N1).
+
 :- set_prolog_flag(pfc_term_expansion,true).
 
-
-((properties(A,B)/(member(E,B),nonvar(E)))==>property(A,E)).
-property(Op,E) ==> (form_op(Op),form_prop(E)).
-
-((property(S,PA),p_arity(PA,A)) ==> (predicate_arity(S,A))).
-((property(S,FA),f_arity(FA,A)) ==> (functional_arity(S,A))).
-
-
-% (metta_compiled_predicate(F,A)==>predicate_arity(F,A)).
-
+'functional-predicate'(Name,Arity) ==>
+  {functor(P1,Name,Arity),
+   functor(P2,Name,Arity),
+   arg(Arity,P1,PV1),
+   arg(Arity,P2,PV2),
+   N is Arity-1,
+   merge_fp(P1,P2,N)},
+  (P1,{P2,PV1\==PV2} ==> ~P2).
 
 
-(metta_atom_asserted(KB,[C,I,T])/(C==':')) ==> metta_type(KB,I,T).
-(metta_atom_asserted(KB,[C,I,T|Nil])/(Nil==[],C=='=',I=II)) ==> metta_defn(KB,II,T).
-(metta_atom_asserted(KB,[C,I,A1,A2|AL])/(C=='=')) ==> metta_defn(KB,I,[A1,A2|AL]).
-(metta_atom_asserted(KB,[C,I|AL])/(C==':-')) ==> metta_defn(KB,I,['wam-body'|AL]).
+==> 'functional-predicate'('next-operation',1).
+==> 'functional-predicate'('previous-operation',1).
+
+:- dynamic('op-complete'/1).
+
+'previous-operation'(none).
+
+('next-operation'(Current),
+   {
+    if_t( retract('previous-operation'(Previous)),
+      (if_t(Previous==Current,
+             nop(wdmsg(continue(Previous)))),
+       if_t(Previous\=@=Current,
+        if_t( \+ 'op-complete'(Previous),
+           (nop(wdmsg(begun(op_complete(Previous)))),
+            pfcAdd('op-complete'(Previous)),
+            nop(wdmsg(ended(op_complete(Previous))))))))),
+    nop(wdmsg(op_next(Current))),
+    assert('previous-operation'(Current))}
+   ==>
+   'seen-operation'(Current)).
 
 
-(metta_defn(_KB,[F|Args],_)/length(Args,Len))==>src_code_for(F,Len).
+% ==> 'next-operation'(next).
 
-(src_code_for(F,Len)==>function_arity(F,Len)).
 
-(metta_type(KB,F,TypeList),{params_and_return_type(TypeList,Len,Params,Ret)}) ==>
-  metta_params_and_return_type(KB,F,Len,Params,Ret).
+((properties(KB,A,B),{member(E,B),nonvar(E)})==>property(KB,A,E)).
+property(_,Op,E) ==> (form_op(Op),form_prop(E)).
 
-metta_params_and_return_type(_KB,F,Len,Params,Ret),
+((property(KB,F,PA),p_arity(PA,A)) ==> (predicate_arity(KB,F,A))).
+((property(KB,F,FA),f_arity(FA,A)) ==> (functional_arity(KB,F,A))).
+
+
+% (metta_compiled_predicate(KB,F,A)==>predicate_arity(KB,F,A)).
+
+
+
+(metta_atom_asserted(KB,[C,H,T])/(C==':')) ==> metta_type(KB,H,T).
+(metta_atom_asserted(KB,[C,H,T|Nil])/(Nil==[],C=='=',H=II)) ==> metta_defn(KB,II,T).
+(metta_atom_asserted(KB,[C,H,A1,A2|AL])/(C=='=')) ==> metta_defn(KB,H,[A1,A2|AL]).
+(metta_atom_asserted(KB,[C,H|AL])/(C==':-')) ==> metta_defn(KB,H,['wam-body'|AL]).
+
+
+
+'op-complete'(op(+,'=',F)),
+  metta_defn(KB,[F|Args],_)/length(Args,Len)
+  ==>src_code_for(KB,F,Len),{dedupe_ls(/*'&self':*/F)}.
+
+(src_code_for(KB,F,Len)==>function_arity(KB,F,Len)).
+
+('op-complete'(op(+,':',F))
+ ==>
+ (( metta_type(KB,F,TypeList)/is_list(TypeList),
+  {params_and_return_type(TypeList,Len,Params,Ret)}) ==>
+  metta_params_and_return_type(KB,F,Len,Params,Ret),{do_once(show_deds_w(F))})).
+
+metta_params_and_return_type(KB,F,Len,Params,Ret),
   {is_absorbed_return_type(Params,Ret)}
-   ==>(function_arity(F,Len),is_absorbed_return(F,Len,Ret),predicate_arity(F,Len)).
+   ==>(function_arity(KB,F,Len),is_absorbed_return(KB,F,Len,Ret),predicate_arity(KB,F,Len)).
 
-metta_params_and_return_type(_KB,F,Len,Params,Ret),
+metta_params_and_return_type(KB,F,Len,Params,Ret),
  { is_non_absorbed_return_type(Params,Ret),  Len1 is Len+1}
-  ==>(function_arity(F,Len),is_non_absorbed_return(F,Len,Ret),predicate_arity(F,Len1)).
-
+  ==>(function_arity(KB,F,Len),is_non_absorbed_return(KB,F,Len,Ret),predicate_arity(KB,F,Len1)).
 
 (need_corelib_types,op_decl(F,Params,Ret),{nonvar(Ret),length(Params,Len)})==>
    metta_params_and_return_type('&corelib',F,Len,Params,Ret).
 
 
-:- dynamic(need_corelib_types/0).
-(please_do_corelib_types, { \+ need_corelib_types }) ==> need_corelib_types.
-
-'ensure-compiler':-
-  ensure_corelib_types.
-
 ensure_corelib_types:- pfcAdd(please_do_corelib_types).
 %(need_corelib_types, metta_atom_corelib(Term)) ==> metta_atom_asserted('&corelib', Term).
 (need_corelib_types, metta_atom(KB,Atom)) ==> metta_atom_asserted(KB, Atom).
+:- dynamic(need_corelib_types/0).
+(please_do_corelib_types, { \+ need_corelib_types }) ==> need_corelib_types.
+'ensure-compiler!':- ensure_corelib_types.
+if(Cond,Then,Else,Result):- eval_true(Cond)*-> eval(Then,Result); eval(Else,Result).
+
 
 
 :- dynamic(can_compile/2).
 
-src_code_for(F,Len) ==>  ( \+ metta_compiled_predicate(F,Len) ==> can_compile(F,Len)).
+src_code_for(KB,F,Len) ==>  ( \+ metta_compiled_predicate(KB,F,Len) ==> can_compile(KB,F,Len)).
 
-(do_compile_easy(F)==>
- ((metta_defn(KB,[F|Args],BodyFn)/compile_metta_defn(KB,F,_Len,Args,BodyFn,Clause))
-    ==> (compiled_clauses(KB,F,Clause)))).
+do_compile_space(KB) ==> (src_code_for(KB,F,Len) ==> do_compile(KB,F,Len)).
+
+do_compile_space('&self').
+
+do_compile(KB,F,Len),src_code_for(KB,F,Len) ==>
+ ((metta_defn(KB,[F|Args],BodyFn)/compile_metta_defn(KB,F,Len,Args,BodyFn,Clause))
+    ==> (compiled_clauses(KB,F,Clause))).
+
+
 
 
 
@@ -181,13 +209,13 @@ src_code_for(F,Len) ==>  ( \+ metta_compiled_predicate(F,Len) ==> can_compile(F,
 % allowing a unified approach to defining operations and assertions.
 
 (equivalentTypes(PredType,FunctType) ==>
-  ( property(FunctorObject,PredType)
+  ( property(KB,FunctorObject,PredType)
     <==>
-    property(FunctorObject,FunctType))).
+    property(KB,FunctorObject,FunctType))).
 % Automatically generating equivalency rules based on the arity of predicates and functions.
 % This facilitates a dynamic and flexible understanding of function and predicate equivalences,
 % enhancing Prolog's expressive power and semantic richness.
-(((p_arity(PredType,PA), {plus(FA,1,PA), FA>=0}, f_arity(FunctType,FA)))
+(((p_arity(PredType,PA), {plus(KB,FA,1,PA), FA>=0}, f_arity(KB,FunctType,FA)))
   ==> equivalentTypes(PredType,FunctType)).
 
 p_arity('NullaryPredicate', 0).  % No arguments.
@@ -257,121 +285,121 @@ form_prop('ArityMinMax', 'Integer', 'Integer'). % Min Max
 %(: S TypeConstructor)
 
 % --- Control Flow and Conditional Execution ---
-properties('if', [flow_control, qhelp("Conditional execution."), conditional_execution]).
-properties('case', [flow_control, qhelp("Case selection."), conditional_execution]).
-properties('let', [variable_assignment, qhelp("Variable assignment.")]).
-properties('let*', [variable_assignment, qhelp("Sequential variable assignment."), sequential]).
-properties('function', [function_definition, qhelp("Function block.")]).
-properties('return', [function_definition, qhelp("Return value of a function block."), return_value]).
-properties('Error', [error_handling, qhelp("Defines or triggers an error.")]).
+properties('&corelib','if', [flow_control, qhelp("Conditional execution."), conditional_execution]).
+properties('&corelib','case', [flow_control, qhelp("Case selection."), conditional_execution]).
+properties('&corelib','let', [variable_assignment, qhelp("Variable assignment.")]).
+properties('&corelib','let*', [variable_assignment, qhelp("Sequential variable assignment."), sequential]).
+properties('&corelib','function', [function_definition, qhelp("Function block.")]).
+properties('&corelib','return', [function_definition, qhelp("Return value of a function block."), return_value]).
+properties('&corelib','Error', [error_handling, qhelp("Defines or triggers an error.")]).
 
 % --- Error Handling and Advanced Control Flow ---
-properties('catch', [error_handling, qhelp("Catches exceptions."), exception_handling]).
-properties('throw', [error_handling, qhelp("Throws exceptions."), exception_handling]).
+properties('&corelib','catch', [error_handling, qhelp("Catches exceptions."), exception_handling]).
+properties('&corelib','throw', [error_handling, qhelp("Throws exceptions."), exception_handling]).
 
 % --- Data Structures and Manipulation ---
-properties('collapse', [data_structures, qhelp("Collapses a structure."), manipulation]).
-properties('sequential', [data_structures, qhelp("Sequentially applies operations."), sequential_operations]).
-properties('superpose', [data_structures, qhelp("Superposes data structures."), manipulation]).
+properties('&corelib','collapse', [data_structures, qhelp("Collapses a structure."), manipulation]).
+properties('&corelib','sequential', [data_structures, qhelp("Sequentially applies operations."), sequential_operations]).
+properties('&corelib','superpose', [data_structures, qhelp("Superposes data structures."), manipulation]).
 
 % --- Iteration and Loop Control ---
-properties('dedup!', [iteration_control, qhelp("Removes duplicate elements from iteration."), manipulation]).
-properties('nth!', [iteration_control, qhelp("Allows only the Nth iteration."), manipulation]).
-properties('limit!', [iteration_control, qhelp("Limits the number of iterations.")]).
-properties('time-limit!', [iteration_control, qhelp("Sets a time limit for operations."), time_management]).
-properties('offset!', [iteration_control, qhelp("Adjusts the starting point of iteration.")]).
-properties('number-of', [iteration_control, qhelp("Returns iteration count.")]).
-properties('nop', [iteration_control, qhelp("Suppresses iteration result."), suppression]).
-properties('do', [iteration_control, qhelp("Suppresses iteration result."), suppression]).
+properties('&corelib','dedup!', [iteration_control, qhelp("Removes duplicate elements from iteration."), manipulation]).
+properties('&corelib','nth!', [iteration_control, qhelp("Allows only the Nth iteration."), manipulation]).
+properties('&corelib','limit!', [iteration_control, qhelp("Limits the number of iterations.")]).
+properties('&corelib','time-limit!', [iteration_control, qhelp("Sets a time limit for operations."), time_management]).
+properties('&corelib','offset!', [iteration_control, qhelp("Adjusts the starting point of iteration.")]).
+properties('&corelib','number-of', [iteration_control, qhelp("Returns iteration count.")]).
+properties('&corelib','nop', [iteration_control, qhelp("Suppresses iteration result."), suppression]).
+properties('&corelib','do', [iteration_control, qhelp("Suppresses iteration result."), suppression]).
 
 % --- Compiler Directives and Optimization ---
-properties('pragma!', [compiler_directive, qhelp("Compiler directive for optimizations/settings."), optimization]).
-properties('include!', [code_inclusion, qhelp("Includes code from another file or context.")]).
-properties('load-ascii', [file_handling, qhelp("Loads ASCII file content.")]).
-properties('extend-py!', [integration, qhelp("Extends integration with Python."), python]).
-properties('registered-python-function', [integration, qhelp("Interacts with Python functions."), python]).
-properties('import!', [module_import, qhelp("Imports an external module or file.")]).
+properties('&corelib','pragma!', [compiler_directive, qhelp("Compiler directive for optimizations/settings."), optimization]).
+properties('&corelib','include!', [code_inclusion, qhelp("Includes code from another file or context.")]).
+properties('&corelib','load-ascii', [file_handling, qhelp("Loads ASCII file content.")]).
+properties('&corelib','extend-py!', [integration, qhelp("Extends integration with Python."), python]).
+properties('&corelib','registered-python-function', [integration, qhelp("Interacts with Python functions."), python]).
+properties('&corelib','import!', [module_import, qhelp("Imports an external module or file.")]).
 
 % --- Evaluation and Dynamic Calls ---
-properties('eval', [evaluation, qhelp("Evaluates an expression.")]).
-properties('eval-for', [evaluation, qhelp("Evaluates assuming a return type."), type_assumption]).
-properties('call!', [dynamic_call, qhelp("Tries to dynamically guess if predicate or function.")]).
-properties('call-p!', [dynamic_call, qhelp("Dynamically calls a predicate."), predicate]).
-properties('predicate-arity', [function_definition, qhelp("Defines the arity of predicates/functions."), arity]).
-properties('call-fn!', [dynamic_call, qhelp("Calls a function dynamically."), function]).
-properties('pyr!', [integration, qhelp("Call python."), python]).
-properties('call-string!', [evaluation, qhelp("Evaluates a string of Prolog code."), prolog_code]).
+properties('&corelib','eval', [evaluation, qhelp("Evaluates an expression.")]).
+properties('&corelib','eval-for', [evaluation, qhelp("Evaluates assuming a return type."), type_assumption]).
+properties('&corelib','call!', [dynamic_call, qhelp("Tries to dynamically guess if predicate or function.")]).
+properties('&corelib','call-p!', [dynamic_call, qhelp("Dynamically calls a predicate."), predicate]).
+properties('&corelib','predicate-arity', [function_definition, qhelp("Defines the arity of predicates/functions."), arity]).
+properties('&corelib','call-fn!', [dynamic_call, qhelp("Calls a function dynamically."), function]).
+properties('&corelib','pyr!', [integration, qhelp("Call python."), python]).
+properties('&corelib','call-string!', [evaluation, qhelp("Evaluates a string of Prolog code."), prolog_code]).
 
 % --- Miscellaneous and Newly Included Properties ---
-properties('match', [pattern_matching, qhelp("Matches patterns within structures or data.")]).
-properties('get-atoms', [data_retrieval, qhelp("Retrieves atoms from a structure.")]).
-properties('new-space', [memory_allocation, qhelp("Allocates new space or memory region.")]).
-properties('remove-atom', [manipulation, qhelp("Removes an atom from a structure.")]).
-properties('add-atom', [manipulation, qhelp("Replaces an atom within a structure.")]).
-properties(',', [logical_operation, qhelp("Conjunction; and."), conjunction]).
-properties(';', [logical_operation, qhelp("Disjunction; or."), disjunction]).
-properties('replace-atom', [manipulation, qhelp("Replaces an atom within a structure.")]).
-properties('transfer!', [memory_management, qhelp("Transfers space content to another space.")]).
+properties('&corelib','match', [pattern_matching, qhelp("Matches patterns within structures or data.")]).
+properties('&corelib','get-atoms', [data_retrieval, qhelp("Retrieves atoms from a structure.")]).
+properties('&corelib','new-space', [memory_allocation, qhelp("Allocates new space or memory region.")]).
+properties('&corelib','remove-atom', [manipulation, qhelp("Removes an atom from a structure.")]).
+properties('&corelib','add-atom', [manipulation, qhelp("Replaces an atom within a structure.")]).
+properties('&corelib',',', [logical_operation, qhelp("Conjunction; and."), conjunction]).
+properties('&corelib',';', [logical_operation, qhelp("Disjunction; or."), disjunction]).
+properties('&corelib','replace-atom', [manipulation, qhelp("Replaces an atom within a structure.")]).
+properties('&corelib','transfer!', [memory_management, qhelp("Transfers space content to another space.")]).
 
 % --- Symbolic Arithmetic and Type Conversion ---
-properties('S', [arithmetic, qhelp("Successor in Peano arithmetic."), peano_arithmetic]).
-properties('Z', [arithmetic, qhelp("Zero in Peano arithmetic."), peano_arithmetic]).
-properties('fromNumber', [type_conversion, qhelp("Converts from a numeric type to another type.")]).
-properties('coerce', [type_conversion, qhelp("Forces argument types for compatibility."), compatibility]).
+properties('&corelib','S', [arithmetic, qhelp("Successor in Peano arithmetic."), peano_arithmetic]).
+properties('&corelib','Z', [arithmetic, qhelp("Zero in Peano arithmetic."), peano_arithmetic]).
+properties('&corelib','fromNumber', [type_conversion, qhelp("Converts from a numeric type to another type.")]).
+properties('&corelib','coerce', [type_conversion, qhelp("Forces argument types for compatibility."), compatibility]).
 
 % --- Arithmetic Operations ---
-properties('+', [arithmetic, qhelp("Addition."), addition]).
-properties('-', [arithmetic, qhelp("Subtraction."), subtraction]).
-properties('*', [arithmetic, qhelp("Multiplication."), multiplication]).
-properties('mod', [arithmetic, qhelp("Modulus operation."), modulus]).
-properties('<', [comparison, qhelp("Less than."), less_than]).
-properties('>=', [comparison, qhelp("Greater than or equal to."), greater_than_or_equal]).
-properties('=>', [comparison, qhelp("Greater than or equal to."), greater_than_or_equal]).
-properties('<=', [comparison, qhelp("Less than or equal to."), less_than_or_equal]).
-properties('=<', [comparison, qhelp("Less than or equal to."), less_than_or_equal]).
-properties('>', [comparison, qhelp("Greater than."), greater_than]).
+properties('&corelib','+', [arithmetic, qhelp("Addition."), addition]).
+properties('&corelib','-', [arithmetic, qhelp("Subtraction."), subtraction]).
+properties('&corelib','*', [arithmetic, qhelp("Multiplication."), multiplication]).
+properties('&corelib','mod', [arithmetic, qhelp("Modulus operation."), modulus]).
+properties('&corelib','<', [comparison, qhelp("Less than."), less_than]).
+properties('&corelib','>=', [comparison, qhelp("Greater than or equal to."), greater_than_or_equal]).
+properties('&corelib','=>', [comparison, qhelp("Greater than or equal to."), greater_than_or_equal]).
+properties('&corelib','<=', [comparison, qhelp("Less than or equal to."), less_than_or_equal]).
+properties('&corelib','=<', [comparison, qhelp("Less than or equal to."), less_than_or_equal]).
+properties('&corelib','>', [comparison, qhelp("Greater than."), greater_than]).
 
 % --- Logic Comparison and Evaluation Control ---
-properties('=', [logic, qhelp("Equality/unification operator."), equality]).
-properties('\\=', [logic, qhelp("Inequality test."), inequality]).
-properties('==', [logic, qhelp("Equality test."), equality_test]).
-properties('or', [logic, qhelp("Logical OR."), logical_or]).
-properties('and', [logic, qhelp("Logical AND."), logical_and]).
-properties('not', [logic, qhelp("Logical NOT."), logical_not]).
-properties('quote', [evaluation_control, qhelp("Prevents evaluation, treating input as literal.")]).
-properties('unquote', [evaluation_control, qhelp("Retrieves value of a quote."), retrieval]).
+properties('&corelib','=', [logic, qhelp("Equality/unification operator."), equality]).
+properties('&corelib','\\=', [logic, qhelp("Inequality test."), inequality]).
+properties('&corelib','==', [logic, qhelp("Equality test."), equality_test]).
+properties('&corelib','or', [logic, qhelp("Logical OR."), logical_or]).
+properties('&corelib','and', [logic, qhelp("Logical AND."), logical_and]).
+properties('&corelib','not', [logic, qhelp("Logical NOT."), logical_not]).
+properties('&corelib','quote', [evaluation_control, qhelp("Prevents evaluation, treating input as literal.")]).
+properties('&corelib','unquote', [evaluation_control, qhelp("Retrieves value of a quote."), retrieval]).
 
 % --- Debugging, Output, and Assertions ---
-properties('repl!', [debugging, qhelp("Interactive read-eval-print loop."), interactive]).
-properties('time!', [execution_timing, qhelp("Execution timing.")]).
-properties('trace!', [debugging, qhelp("Prints some debug information."), information_printing]).
-properties('no-rtrace!', [debugging, qhelp("Disables tracing for debugging."), trace_control]).
-properties('rtrace!', [debugging, qhelp("Enables tracing for debugging."), trace_control]).
-properties('println!', [output, qhelp("Prints text with newline to output."), text_printing]).
-properties('with-output-to!', [output, qhelp("Redirects output to a specified target."), redirection]).
-properties('print', [output, qhelp("Prints text to output."), text_printing]).
-properties('assertEqual', [testing, qhelp("Asserts a condition is true."), assertion]).
-properties('assertFalse', [testing, qhelp("Asserts a condition is false."), assertion]).
-properties('assertEqual', [testing, qhelp("Asserts two values are equal."), assertion]).
-properties('assertNotEqual', [testing, qhelp("Asserts two values are not equal."), assertion]).
-properties('assertEqualToResult', [testing, qhelp("Asserts equality to a result."), assertion]).
+properties('&corelib','repl!', [debugging, qhelp("Interactive read-eval-print loop."), interactive]).
+properties('&corelib','time!', [execution_timing, qhelp("Execution timing.")]).
+properties('&corelib','trace!', [debugging, qhelp("Prints some debug information."), information_printing]).
+properties('&corelib','no-rtrace!', [debugging, qhelp("Disables tracing for debugging."), trace_control]).
+properties('&corelib','rtrace!', [debugging, qhelp("Enables tracing for debugging."), trace_control]).
+properties('&corelib','println!', [output, qhelp("Prints text with newline to output."), text_printing]).
+properties('&corelib','with-output-to!', [output, qhelp("Redirects output to a specified target."), redirection]).
+properties('&corelib','print', [output, qhelp("Prints text to output."), text_printing]).
+properties('&corelib','assertEqual', [testing, qhelp("Asserts a condition is true."), assertion]).
+properties('&corelib','assertFalse', [testing, qhelp("Asserts a condition is false."), assertion]).
+properties('&corelib','assertEqual', [testing, qhelp("Asserts two values are equal."), assertion]).
+properties('&corelib','assertNotEqual', [testing, qhelp("Asserts two values are not equal."), assertion]).
+properties('&corelib','assertEqualToResult', [testing, qhelp("Asserts equality to a result."), assertion]).
 
 % --- System Integration and State Management ---
-properties('change-state!', [state_management, qhelp("Changes the state of a system component."), system_integration]).
-properties('set-state', [state_management, qhelp("Sets the state of a component or system.")]).
-properties('get-state', [state_management, qhelp("Gets the state of a component or system."), data_retrieval]).
+properties('&corelib','change-state!', [state_management, qhelp("Changes the state of a system component."), system_integration]).
+properties('&corelib','set-state', [state_management, qhelp("Sets the state of a component or system.")]).
+properties('&corelib','get-state', [state_management, qhelp("Gets the state of a component or system."), data_retrieval]).
 
 % --- List Operations ---
-properties('car-atom', [list_operations, qhelp("Retrieves the head of a list."), head_retrieval]).
-properties('cdr-atom', [list_operations, qhelp("Retrieves the tail of a list."), tail_retrieval]).
-properties('range', [list_operations, qhelp("Generates a range of numbers."), range_generation]).
-properties('make_list', [list_operations, qhelp("Creates a list with specified elements."), creation]).
-properties('Cons', [list_operations, qhelp("Constructs a list."), construction]).
-properties('length', [list_operations, qhelp("Determines the length of a list."), length_determination]).
-properties('countElement', [list_operations, qhelp("Counts occurrences of an element."), element_counting]).
-properties('tuple-count', [data_structures, qhelp("Counts tuples within a structure."), counting]).
-%properties('TupleConcat', [data_structures, qhelp("Concatenates tuples."), concatenation]).
-%properties('collapseCardinality', [data_structures, qhelp("Collapses structures with cardinality consideration."), manipulation, cardinality]).
+properties('&corelib','car-atom', [list_operations, qhelp("Retrieves the head of a list."), head_retrieval]).
+properties('&corelib','cdr-atom', [list_operations, qhelp("Retrieves the tail of a list."), tail_retrieval]).
+properties('&corelib','range', [list_operations, qhelp("Generates a range of numbers."), range_generation]).
+properties('&corelib','make_list', [list_operations, qhelp("Creates a list with specified elements."), creation]).
+properties('&corelib','Cons', [list_operations, qhelp("Constructs a list."), construction]).
+properties('&corelib','length', [list_operations, qhelp("Determines the length of a list."), length_determination]).
+properties('&corelib','countElement', [list_operations, qhelp("Counts occurrences of an element."), element_counting]).
+properties('&corelib','tuple-count', [data_structures, qhelp("Counts tuples within a structure."), counting]).
+%properties('&corelib','TupleConcat', [data_structures, qhelp("Concatenates tuples."), concatenation]).
+%properties('&corelib','collapseCardinality', [data_structures, qhelp("Collapses structures with cardinality consideration."), manipulation, cardinality]).
 
 
 

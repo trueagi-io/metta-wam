@@ -56,6 +56,9 @@ run_pl_source(G):- catch(G,E,(fail,write_src_uo(G=E),rtrace(G))).
 print_pl_source0(_):- notrace(is_compatio),!.
 print_pl_source0(_):- notrace(silent_loading),!.
 print_pl_source0(P):- notrace((just_printed(PP), PP=@=P)),!.
+    print_pl_source0((A:-B)):-!, portray_clause((A:-B)).
+    print_pl_source0((:-B)):-!, portray_clause((:-B)).
+print_pl_source0(P):- format('~N'), print_tree(P),format('~N'),!.
 print_pl_source0(P):-
     Actions = [print_tree, portray_clause, pp_fb1_e], % List of actions to apply
     findall(H-Pt,

@@ -62,7 +62,7 @@
 :- set_prolog_flag(pfc_shared_module,user).
 %:- set_prolog_flag(pfc_shared_module,baseKB).
 
-must_ex(X):- catch(X,E,rtrace(E))*->true;rtrace(X).
+must_ex(X):- catch(X,E,rtrace(E))*->true;(dmsg(failed(must_ex(X))),rtrace(X)).
 quietly_ex(X):-call(X).
 
 
@@ -479,7 +479,9 @@ pfcPost_rev(S,Term) :-
 
 pfcPost1(Fact,S) :- control_arg_types(Fact,Fixed),!,pfcPost1(Fixed,S).
 
-pfcPost1(P,S) :-
+
+pfcPost1(P,S):- catch(pfcPost11(P,S),E,(notrace,trace,wdmsg(E))).
+pfcPost11(P,S) :-
   % %  db pfcAddDbToHead(P,P2),
   % pfcRemoveOldVersion(P),
   must_ex(pfcAddSupport(P,S)),
@@ -1112,7 +1114,7 @@ fc_rule_check(_).
 
 fcpt(Fact,F) :-
   pfcGetTriggerQuick('$pt$'(F,Body)),
-  pfcTraceMsg('      Found positive trigger(+): ~p~n       body: ~p~n',
+  pfcTraceMsg('\n Found positive trigger(+):\n    ~p~n       body: ~p~n',
         [F,Body]),
   pfcGetSupport('$pt$'(F,Body),Support), %fbugio(pfcGetSupport('$pt$'(F,Body),Support)),
   with_current_why(Support,with_current_why(Fact,fcEvalLHS(Body,(Fact,'$pt$'(F,Body))))),
@@ -1772,11 +1774,11 @@ pfcDatabaseItem(Term:-Body) :-
 
 pfcRetractOrWarn(X) :-  retract(X), !.
 pfcRetractOrWarn(X) :-
-  pfcWarn("Couldn't retract ~p.",[X]),dumpST,pfcWarn("Couldn't retract ~p.",[X]),!.
+  pfcWarn("Couldn't retract ~p.",[X]),trace,nop((dumpST,pfcWarn("Couldn't retract ~p.",[X]))),!.
 
 pfcRetractOrQuietlyFail(X) :-  retract(X), !.
 pfcRetractOrQuietlyFail(X) :-
-  nop((pfcTraceMsg("Trace: Couldn't retract ~p.",[X]),dumpST,pfcWarn("Couldn't retract ~p.",[X]))),
+  nop((pfcTraceMsg("Trace: Couldn't retract ~p.",[X]),nop((dumpST,pfcWarn("Couldn't retract ~p.",[X]))))),
   !,fail.
 
 
@@ -1821,7 +1823,7 @@ pfcPrintFacts(P,C) :-
   pfcPrintf("User added facts:~n",[]),
   pfcPrintitems(User),
   printLine,
-  pfcPrintf("Pfc added facts:~n",[]),
+  pfcPrintf("MettaLog-Pfc added facts:~n",[]),
   pfcPrintitems(Pfc),
   printLine,!.
 
@@ -2040,7 +2042,8 @@ pfcPrintf(Msg,Args) :-
 
 pfcPrintf(Where,Msg,Args) :-
   format(Where,'~N',[]),
-  format(Where,Msg,Args).
+  with_output_to(Where,
+    color_g_mesg_ok(blue,format(Msg,Args))).
 
 
 pfcWatch :- clause(pfcTraceExecution,true),!.
@@ -2625,7 +2628,7 @@ pp_facts(P,C) :-
   pp_items(user,User),
   draw_line,
   draw_line,
-  fmt("Pfc added facts:",[]),
+  fmt("MettaLog-Pfc added facts:",[]),
   pp_items(system,Pfc),
   draw_line.
 
@@ -2659,11 +2662,41 @@ pp_deds(P,C) :-
   pfcFacts(P,C,L),
   pfc_classify_facts(L,_User,Pfc,_Rule),
   draw_line,
-  fmt("Pfc added facts:",[]),
+  fmt("MettaLog-Pfc added facts:",[]),
   pp_items(system,Pfc),
   draw_line.
 
 
+show_deds_w(F):-
+    pfcFacts(_,true,L),
+    pfc_classify_facts(L,_User,Pfc,_Rule),
+    draw_line,
+    fmt("MettaLog-Pfc added facts with ~q:",[F]),
+    include(sub_functor(F),Pfc,Incl),
+    pp_items(system,Incl),
+    draw_line.
+
+
+
+pp_about(F) :-
+    pfcFacts(_,true,L),
+    include(sub_functor(F),L,FL),
+    pfc_classify_facts(FL,User,Pfc,_Rule),
+    draw_line,
+    fmt("User added facts with ~q:",[F]),
+    pp_items(user,User),
+    draw_line,
+    draw_line,
+    fmt("MettaLog-Pfc added facts with ~q:",[F]),
+    pp_items(system,Pfc),
+    draw_line.
+
+
+sub_functor(F-UnF,Term):- !, sub_functor(F,Term), \+ sub_functor(UnF,Term).
+sub_functor(F,Term):- var(F),!,sub_var(F,Term),!.
+sub_functor(F/A,Term):- !,sub_term(E,Term),compound(E),compound_name_arity(E,F,A).
+sub_functor(F,Term):- sub_term(E,Term),E=@=F,!.
+sub_functor(F,Term):- sub_term(E,Term),compound(E),compound_name_arity(E,FF,AA),(AA==F;FF==F).
 
 %=
 
