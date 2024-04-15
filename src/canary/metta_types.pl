@@ -246,8 +246,9 @@ badly_typed_expression(Depth,Self,[Op|Args]):-
   !.
 
 trace_get_type(How,Type,Val):-
+  if_trace(types,
     color_g_mesg('#7f2f2f',
-       w_indent(3,format('<-- ~@ <- ~@ < ~@',[wsf(How),wsf(Type),wsf(Val)]))),!.
+       w_indent(3,format('<-- ~@ <- ~@ < ~@',[wsf(How),wsf(Type),wsf(Val)])))),!.
 wsf(T):- with_indents(false,write_src(T)).
 
 get_type_nc(_Dpth,Self,Op,Type):- metta_type(Self,Op,Type).

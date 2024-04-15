@@ -1,9 +1,10 @@
 
 
 eval_for(_,Var,B,C):- var(Var),!, B=C.
+eval_for(b_C, A, B, C):- eval_for(A,B,C),get_type(C,CT),!,can_assign(CT,A).
 eval_for(_,_,B,C):- \+ callable(B),!, B= C.
-eval_for(_,'Atom',B,C):- !, B=C.
 eval_for(_,'Any',B,C):- !, eval(B,C).
+eval_for(_,'Atom',B,C):- !, B=C.
 eval_for(_,A,B,C):- eval_for(A,B,C).
 
 why_call(_,Goal):- %println(Y),trace,

@@ -146,11 +146,12 @@ property(_,Op,E) ==> (form_op(Op),form_prop(E)).
 (metta_atom_asserted(KB,[C,H,A1,A2|AL])/(C=='=')) ==> metta_defn(KB,H,[A1,A2|AL]).
 (metta_atom_asserted(KB,[C,H|AL])/(C==':-')) ==> metta_defn(KB,H,['wam-body'|AL]).
 
-
+metta_defn(KB,[F|Args],_)/length(Args,Len)
+  ==>src_code_for(KB,F,Len).
 
 'op-complete'(op(+,'=',F)),
   metta_defn(KB,[F|Args],_)/length(Args,Len)
-  ==>src_code_for(KB,F,Len),{dedupe_ls(/*'&self':*/F)}.
+  ==>src_code_for(KB,F,Len),{nop(dedupe_cl(/*'&self':*/F))}.
 
 (src_code_for(KB,F,Len)==>function_arity(KB,F,Len)).
 
