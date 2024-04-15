@@ -357,7 +357,7 @@ compile_for_exec0(Res,I,BB):- fail,
 
 
 compile_metta_defn(_KB,_F,_Len,Args,_BodyFn,_Clause):- \+ is_list(Args),!,fail.
-compile_metta_defn(_KB,_F,_Len,_Args,BodyFn,_Clause):- var(BodyFn),!,fail.
+%compile_metta_defn(_KB,_F,_Len,_Args,BodyFn,_Clause):- var(BodyFn),!,fail.
 compile_metta_defn(KB,F,Len,Args,[WB|AL],ClauseU):- 'wam-body'==WB,!,
   must_det_ll((
     if_t(var(Len), ignore((function_arity(KB,F,Len)))),
@@ -471,12 +471,11 @@ merge_structures([F|HeadAsFunction0], AsBodyFn0,A,B,(=(NewVar,Cept),C)):- fail,
 merge_structures(A,B,A,B,true).
 
 compile_for_assert(HeadAsFunction0, AsBodyFn0, ConvertedO) :-
+ must_det_ll((
     call(ensure_corelib_types),
     merge_structures(HeadAsFunction0, AsBodyFn0,HeadAsFunction, AsBodyFn,PreCode),
     as_functor_args(HeadAsFunction,_F,Len),
-
     h2p(Which,HeadAsFunction,ResultToHead,HeadAsPred),
-
     compile_head_for_assert(Which,HeadAsPred,HeadC,_SupposedRT,
            Len, NarrowRetType,ResultToHead, ResultFromBody,HeadCode,ResultCode),
     f2p(HeadC,NarrowRetType,ResultFromBody,AsBodyFn,NextBody),
@@ -484,9 +483,7 @@ compile_for_assert(HeadAsFunction0, AsBodyFn0, ConvertedO) :-
     optimize_head_and_body(HeadC,BodyC,HeadCC,BodyCC),
     Convert = (HeadCC :- BodyCC),
     fix_equals_in_head(Convert,Converted),!,
-    continue_opimize(Converted,ConvertedO).
-
-
+    continue_opimize(Converted,ConvertedO))).
 
 
 compile_head_for_assert(Which,Head, NewHead, SupposedRT, Len, NarrowRetType,ResultToHead,ResultFromBody,PreBodyCode,ResultCode):-
@@ -498,6 +495,7 @@ compile_head_for_assert(Which,Head, NewHead, SupposedRT, Len, NarrowRetType,Resu
 compile_head_for_assert(_Which,HeadAsPred,NewestHead,SupposedRT,Len,NarrowRetType,
     ResultToHead,ResultFromBody,
     PreBodyCode,ResultCode):-
+ must_det_ll((
  HeadAsPred=[F|PredArgs],
  length(PredArgs,Arity),
  length(NewPredArgs,Arity),
@@ -512,7 +510,8 @@ compile_head_for_assert(_Which,HeadAsPred,NewestHead,SupposedRT,Len,NarrowRetTyp
  FutureHead = [F|NewPredArgs],
  compile_head_variablization(FutureHead, NewestHead, VHeadCode),
  combine_code([ParamCode,VHeadCode],PreBodyCode),
- ResultCode = eval_for(ret,BodyRetType,ResultFromBody,ResultToHead).
+ ResultCode = eval_for(ret,BodyRetType,ResultFromBody,ResultToHead))).
+
 
 compile_head_variablization(Head, NewHead, PreBodyCode) :-
    must_det_ll(
