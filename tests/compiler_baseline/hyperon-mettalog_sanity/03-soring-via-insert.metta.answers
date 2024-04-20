@@ -1,8 +1,8 @@
-[(-> $a#2 (List $a#2) (List $a#2))]
+[(-> $a#419 (List $a#419) (List $a#419))]
 [()]
 [()]
 [()]
 [()]
 [()]
-0.08user 0.00system 0:00.08elapsed 100%CPU (0avgtext+0avgdata 33888maxresident)k
-0inputs+0outputs (0major+3683minor)pagefaults 0swaps
+2.38user 0.01system 0:02.39elapsed 99%CPU (0avgtext+0avgdata 35560maxresident)k
+0inputs+0outputs (0major+4022minor)pagefaults 0swaps

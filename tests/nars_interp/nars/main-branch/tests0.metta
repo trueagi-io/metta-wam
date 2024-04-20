@@ -1,6 +1,4 @@
 
-!(nop (pragma! load silent))
-
 !(import! &self NARS)
 
 

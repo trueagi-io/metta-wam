@@ -1,4 +1,6 @@
-[(10 4), (10 5)]
+[(pfcWatch!)]
+[(compile! wuza)]
+[(10 5), (10 4)]
 [()]
-0.04user 0.01system 0:00.05elapsed 98%CPU (0avgtext+0avgdata 34284maxresident)k
-0inputs+0outputs (0major+3653minor)pagefaults 0swaps
+2.64user 0.00system 0:02.64elapsed 99%CPU (0avgtext+0avgdata 35996maxresident)k
+0inputs+0outputs (0major+4106minor)pagefaults 0swaps

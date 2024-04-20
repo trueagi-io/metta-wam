@@ -1,4 +1,4 @@
-; !(nop (pragma! load silent))
+
 !(import! &self NARS)
 
 !(AddBeliefEvent (((ExtSet garfield) --> cat) (1.0 0.9)))

@@ -1,9 +1,9 @@
-[(a b c e f g)]
+[(e f g a b c)]
 [(e f g)]
 [(a b c)]
 [()]
-[(1 2)]
-[(2 3 4 5)]
-[(1 2 3 4 5 6 7 8 9)]
-0.53user 0.00system 0:00.54elapsed 99%CPU (0avgtext+0avgdata 36092maxresident)k
-0inputs+0outputs (0major+4225minor)pagefaults 0swaps
+[(2 1)]
+[(5 4 3 2)]
+[(9 8 7 6 5 4 3 2 1)]
+21.27user 0.02system 0:21.30elapsed 99%CPU (0avgtext+0avgdata 37228maxresident)k
+0inputs+0outputs (0major+4410minor)pagefaults 0swaps

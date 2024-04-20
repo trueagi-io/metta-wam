@@ -1,4 +1,4 @@
-!(nop (pragma! load silent))
+
 !(import! &self NARS)
 
 !(AddBeliefEvent ((((sheep --> (IntSet see)) &/ (^ count)) =/> (sheep --> (IntSet counted))) (1.0 0.9)))

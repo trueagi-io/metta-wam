@@ -46,3 +46,4 @@
 ;[8]
 !(TupleCount (collapse (CountElement (get-atoms &concepts))))
 ;[100]
+

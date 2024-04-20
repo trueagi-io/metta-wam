@@ -9,7 +9,7 @@
 (= (TupleConcat $Ev1 $Ev2) (collapse (superpose ((superpose $Ev1) (superpose $Ev2)))))
 (= (max $1 $2) (If (> $1 $2) $1 $2))
 (= (min $1 $2) (If (< $1 $2) $1 $2))
-(= (abs $x) (If (< $x 0) (- 0 $x) $x))
+(= (Abs $x) (If (< $x 0) (- 0 $x) $x))
 (: sequential (-> Expression %Undefined% ))
 (= (sequential $1) (superpose $1))
 (: do (-> Expression %Undefined% ))
@@ -343,7 +343,7 @@
 (= (ReasonWithTask (Event $S1 ($time1 $ev1 $prio1)) $t)
    (let ($Belief $CPrio) (case (get-atoms &attentional_focus)
                                (((Concept $Term (Event $SE2 ($timeE2 $evE2 $prioE2)) (Event $S2 ($time2 $ev2 $prio2)) $CPrio)
-                                 (If (and (not (== $time1 eternal)) (> (abs (- $time1 $time2)) 20))
+                                 (If (and (not (== $time1 eternal)) (> (Abs (- $time1 $time2)) 20))
                                      ((Event $SE2 ($timeE2 $evE2 $prioE2)) $Cprio)
                                      ((Event $S2 ($time2 $ev2 $prio2)) $CPrio)))))
         (case (Conclude (Event $S1 ($time1 $ev1 $prio1)) (TemporallyAlignedBelief $time1 $Belief) $CPrio $t)
@@ -365,7 +365,7 @@
 
 ;use evidence of an event at a slightly different moment in time
 (= (Projection (Event ($Term ($f $c)) ($Time $Evidence $EPrio)) $TargetTime)
-   (Event ($Term ($f (* $c (min 1 (/ 1 (abs (- $Time $TargetTime))))))) ($TargetTime $Evidence $EPrio)))
+   (Event ($Term ($f (* $c (min 1 (/ 1 (Abs (- $Time $TargetTime))))))) ($TargetTime $Evidence $EPrio)))
 
 ;make the belief occurrence time compatible with the task's
 (= (TemporallyAlignedBelief $TaskTime $Belief) (If (== $TaskTime eternal)
