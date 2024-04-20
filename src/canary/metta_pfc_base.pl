@@ -65,31 +65,35 @@
 must_ex(X):- catch(X,E,rtrace(E))*->true;(dmsg(failed(must_ex(X))),rtrace(X)).
 quietly_ex(X):-call(X).
 
+% @TODO undisable when we have defined into_type/3 to not fail
+control_arg_types(A,B):- fail, once(control_arg_types1(20,[],A,B)),A\==B,!.
 
-control_arg_types(A,B):- once(control_arg_types1([],A,B)),A\==B,!.
+%:- listing(control_arg_types/3).
 
-%:- listing(control_arg_types/2).
-
-control_arg_types1(_,A,B):- \+ compound(A),!,A=B.
-control_arg_types1(_,A,B):- (current_predicate(check_args/2)->check_args(A,B)->A\=@=B),!.
-control_arg_types1(Pre,A,B):-
+control_arg_types1( Max,_,A,B):- Max<1,!,A=B.
+control_arg_types1(_Max,_,A,B):- \+ compound(A),!,A=B.
+control_arg_types1(_Max,_,A,B):- iz_conz(A), \+ is_list(A),!, A = B.
+control_arg_types1(_Max,_,A,B):- (current_predicate(check_args/2)->check_args(A,B)->A\=@=B),!.
+%control_arg_types1(Max,Pre,A,B):- is_list(A), !, maplist(control_arg_types1(Max,Pre),A,B).
+control_arg_types1( Max,Pre,A,B):- Max0 is Max-1,
  compound_name_arguments(A,F,AA),
  length(AA,N),
- do_control_arg_types1(F/N,1,Pre,AA,BB),
+ do_control_arg_types1(Max0,F/N,1,Pre,AA,BB),
  compound_name_arguments(B,F,BB).
 
-do_control_arg_types1(_FofN,_ArgNp1,_Pre,[],[]):-!.
-do_control_arg_types1(FofN,ArgN,Pre,[A|AA],[B|BB]):-
-  do_control_1arg_type(FofN,ArgN,Pre,A,B),
+do_control_arg_types1(_Max,_FofN,_ArgNp1,_Pre,[],[]):-!.
+do_control_arg_types1( Max,FofN,ArgN,Pre,[A|AA],[B|BB]):-
+  do_control_1arg_type(Max,FofN,ArgN,Pre,A,B),
   ArgNp1 is ArgN+1,
-  do_control_arg_types1(FofN,ArgNp1,Pre,AA,BB).
+  do_control_arg_types1(Max,FofN,ArgNp1,Pre,AA,BB).
 
-do_control_1arg_type(_FN,_N,_Pre,A,B):- var(A),!,B=A.
-do_control_1arg_type(F/_, N,_Pre,A,B):- arg_n_isa(F,N,ISA),into_type(ISA,A,B),!.
-do_control_1arg_type(FofN,_,Pre,A,B):- control_arg_types1([FofN|Pre],A,B).
+do_control_1arg_type(_Max,_FN,_N,_Pre,A,B):- var(A),!,B=A.
+do_control_1arg_type(_Max,F/_, N,_Pre,A,B):- arg_n_isa(F,N,ISA),into_type(ISA,A,B),!.
+do_control_1arg_type(Max,FofN,_,Pre,A,B):-
+   Max0 is Max-1, control_arg_types1(Max0,[FofN|Pre],A,B).
 
 
-arg_n_isa(_F,_N,_ISA):- fail.
+%arg_n_isa(_F,_N,_ISA):- fail.
 arg_n_isa(F,N,ISA):- clause_b(argIsa(F,N,ISA)).
 
 save_pfc_state:-
@@ -480,7 +484,10 @@ pfcPost_rev(S,Term) :-
 pfcPost1(Fact,S) :- control_arg_types(Fact,Fixed),!,pfcPost1(Fixed,S).
 
 
-pfcPost1(P,S):- catch(pfcPost11(P,S),E,(notrace,trace,wdmsg(E))).
+pfcPost1(P,S):-
+  locally(set_prolog_flag(occurs_check, true),
+    catch(pfcPost11(P,S),E,(notrace,wdmsg(P => E),trace))).
+
 pfcPost11(P,S) :-
   % %  db pfcAddDbToHead(P,P2),
   % pfcRemoveOldVersion(P),
@@ -488,20 +495,29 @@ pfcPost11(P,S) :-
   (pfcUnique(post, P)-> pfcPost2(P,S) ; nop(pfcWarn(not_pfcUnique(post, P)))).
 
 pfcPost2(P,S):-
-  must_ex(once(is_asserted(P);assert(P))),
+  must_ex(once(\+ \+ is_asserted_exact(P);assert(P))),
   must_ex(pfcTraceAdd(P,S)),
   !,
   must_ex(pfcEnqueue(P,S)),
   !.
 
+is_asserted_exact(MH,B):-
+  strip_module(MH,M,H),
+  is_asserted_exact(M,H,B).
+is_asserted_exact(MHB):-
+  strip_module(MHB,M,HB),
+  expand_to_hb(HB,H,B),
+  is_asserted_exact(M,H,B).
+is_asserted_exact(M,H,B):-
+    M=MM,
+    (MM:clause(M:H,B,Ref)*->true; M:clause(MM:H,B,Ref)),
+    %clause_ref_module(Ref),
+    clause_property(Ref,module(MM)),
+  %module_checks_out
+   is_asserted_exact(MM,H,B,Ref).
+is_asserted_exact(_,H,B,Ref):-
+    clause(CH,CB,Ref),strip_m(CH,HH),HH=@=H,strip_m(CB,BB),cl(HH,BB)=@=cl(H,B).
 
-is_asserted(MHB):-
-    strip_module(MHB,M,HB),
-         expand_to_hb(HB,H,B),
-   M=MM,
-        (MM:clause(M:H,B,Ref)*->true; M:clause(MM:H,B,Ref)),
-        %clause_ref_module(Ref),
-        clause_property(Ref,module(MM)).
 
 
 %pfcPost1(_,_).
@@ -527,11 +543,21 @@ pfcCurrentDb(true).
 % is true if there is no assertion X in the prolog db.
 %
 
-pfcUnique(_Type,(Head:-Tail)) :-
-  !,
-  \+ clause(Head,Tail).
-pfcUnique(_Type, P) :-
-  \+ clause(P,true).
+pfcUnique(Type,(Head:-Tail)) :- !,pfcUnique(Type,Head,Tail).
+pfcUnique(Type, P) :- pfcUnique(Type,P,true).
+
+%pfcUnique(post,Head,Tail):- !, \+ is_clause_asserted(Head,Tail).
+pfcUnique(_,Head,Tail):- \+ is_asserted_exact(Head,Tail),!.
+/*
+pfcUnique(_,H,B):- \+ is_asserted(H,B),!.
+pfcUnique(_,H,B):- \+ (
+    clause(H, B, Ref),
+    clause(HH, BB, Ref),
+    strip_m(HH, HHH),
+    HHH=@=H,
+    strip_m(BB, BBB),
+    BBB=@=B).
+*/
 
 
 % %  pfcEnqueue(P,Q) is det.
@@ -1068,7 +1094,8 @@ may_cheat:- true_flag.
 % %  pfcFwd(X) forward chains from a fact or a list of facts X.
 % %
 pfcFwd(Fact) :- control_arg_types(Fact,Fixed),!,pfcFwd(Fixed).
-pfcFwd(Fact) :- is_list(List)->my_maplist(pfcFwd,List);pfcFwd1(Fact).
+pfcFwd(Fact):- locally(set_prolog_flag(occurs_check,true), pfcFwd0(Fact)).
+pfcFwd0(Fact) :- is_list(List)->my_maplist(pfcFwd0,List);pfcFwd1(Fact).
 
 % fc1(+P) forward chains for a single fact.
 
@@ -1774,7 +1801,7 @@ pfcDatabaseItem(Term:-Body) :-
 
 pfcRetractOrWarn(X) :-  retract(X), !.
 pfcRetractOrWarn(X) :-
-  pfcWarn("Couldn't retract ~p.",[X]),trace,nop((dumpST,pfcWarn("Couldn't retract ~p.",[X]))),!.
+  pfcWarn("Couldn't retract ~p.",[X]),nop((dumpST,pfcWarn("Couldn't retract ~p.",[X]))),!.
 
 pfcRetractOrQuietlyFail(X) :-  retract(X), !.
 pfcRetractOrQuietlyFail(X) :-

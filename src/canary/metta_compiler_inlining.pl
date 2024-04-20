@@ -1,13 +1,17 @@
 
 
 eval_for(_,Var,B,C):- var(Var),!, B=C.
-eval_for(b_C, A, B, C):- !, eval_for1(A,B,C), \+ \+ ((get_type(C,CT),can_assign(CT,A))).
-eval_for(_, A, B, C):- eval_for1(A,B,C).
+eval_for(_, _, B, C):- B==C,!.
+eval_for(b_C, A, B, C):- !, eval_for1(b_C,A,B,C), \+ \+ ((get_type(C,CT),can_assign(CT,A))).
+eval_for(Why, A, B, C):- eval_for1(Why,A,B,C).
 
-eval_for1(_,B,C):- \+ callable(B),!, B= C.
-eval_for1('Any',B,C):- !, eval(B,C).
-eval_for1('Atom',B,C):- !, B=C.
-eval_for1(A,B,C):- eval_for(A,B,C).
+eval_for1(_Why,_,B,C):- \+ callable(B),!, B= C.
+eval_for1(_Why,_,B,C):- compound(B),compound(C),B=C,!.
+eval_for1(_Why,'Any',B,C):- !, eval(B,C).
+eval_for1(_Why,'AnyRet',B,C):- !, eval(B,C).
+eval_for1(b_6,'Atom',B,C):- !, eval(B,C).
+eval_for1(_,'Atom',B,C):- !, B=C.
+eval_for1(_Why,A,B,C):- eval_for(A,B,C).
 
 why_call(_,Goal):- %println(Y),trace,
    call(Goal).
@@ -779,15 +783,18 @@ f2q(Depth,HeadIs,RetType,RetResult,Convert, Converted) :- % dif_functors(HeadIs,
     Eval = eval_args(['bind!',Var,ValueResult],RetResult),
    combine_code(ValueCode,Eval,Converted).
 
-f2q(_Depth,_HeadIs,_RetType,RetResult,Convert, Converted) :-
-     Convert =~ 'add-atom'(Where,What), !,
-     =(What,WhatP),
-     Converted = as_tf('add-atom'(Where,WhatP),RetResult).
+
+returns_empty('add-atom').
+returns_empty('remove-atom').
 
 f2q(_Depth,_HeadIs,_RetType,RetResult,Convert, Converted) :-
-     Convert =~ 'add-atom'(Where,What,RetResult), !,
-     =(What,WhatP),
-     Converted = as_tf('add-atom'(Where,WhatP),RetResult).
+     (Convert =~ [EmptyResultFunction,Where,What,RetResult];
+        Convert =~ [EmptyResultFunction,Where,What]),
+     nonvar(EmptyResultFunction),
+     returns_empty(EmptyResultFunction),
+     current_predicate(EmptyResultFunction/2),
+     =(What,WhatP),!,
+     Converted = as_nop(call(EmptyResultFunction,Where,WhatP),RetResult).
 
 f2q(Depth,HeadIs,RetType,RetResult,Convert,Converted) :-
   Convert =~ ['println!',Value],!,

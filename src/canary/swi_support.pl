@@ -30,7 +30,12 @@ is_scryer:- \+  current_prolog_flag(libswipl,_).
 :- create_prolog_flag(max_disk_cache,inf,[keep(true),access(read_write),type(term)]).
 :- create_prolog_flag(samples_per_million,inf,[keep(true),access(read_write),type(term)]).
 
-with_cwd(Dir,Goal):- Dir == '.',!,setup_call_cleanup(working_directory(X, X), Goal, working_directory(_,X)).
+with_cwd(Dir,Goal):- Dir == '.',!,setup_call_cleanup(working_directory(X, X), Goal,
+  working_directory(_,X)).
+with_cwd(Dir,Goal):- var(Dir),X=Dir,!,setup_call_cleanup(working_directory(X, X), Goal,
+  working_directory(_,X)).
+
+with_cwd(Dir,Goal):- \+ exists_directory(Dir),!,throw(with_cwd(Dir,Goal)),!.
 with_cwd(Dir,Goal):- setup_call_cleanup(working_directory(X, Dir), Goal, working_directory(_,X)).
 
 with_option([],G):-!,call(G).
@@ -115,7 +120,7 @@ symbolics_to_string(A,B):-atomics_to_string(A,B).
 symbolics_to_string(A,B,C):-atomics_to_string(A,B,C).
 upcase_symbol(A,B):-upcase_atom(A,B).
 :- prolog_load_context(directory, File),
-   ignore(( 
+   ignore((
      absolute_file_name('../../data/ftp.flybase.org/releases/current/',Dir,[relative_to(File),
      file_type(directory), file_errors(fail)]),
     asserta(ftp_data(Dir)))).

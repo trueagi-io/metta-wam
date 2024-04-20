@@ -141,7 +141,7 @@ ensure_mettalog_py(MettaLearner):- is_mettalog(MettaLearner),!.
 ensure_mettalog_py(MettaLearner):-
    with_safe_argv(
    (want_py_lib_dir,
-    py_call('mettalog',MettaLearner),
+    %py_call('mettalog',MettaLearner),
     %py_call('motto',_),
     %py_call('motto.sparql_gate':'sql_space_atoms'(),Res1),pybug(Res1),
     %py_call('motto.llm_gate':'llmgate_atoms'(MeTTa),Res2),pybug(Res2),
