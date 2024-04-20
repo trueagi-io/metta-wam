@@ -480,7 +480,7 @@ is_nonspecific_type(Var):- var(Var),!.
 is_nonspecific_type('%Undefined%').
 is_nonspecific_type([]).
 is_nonspecific_type('Atom').
-is_nonspecific_type('Any').
+is_nonspecific_type(Any):- is_nonspecific_any(Any).
 
 formated_data_type('Number').
 formated_data_type('Symbol').

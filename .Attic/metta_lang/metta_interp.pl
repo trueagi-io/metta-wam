@@ -427,7 +427,7 @@ show_options_values:-
 
 :- ensure_loaded(metta_utils).
 :- ensure_loaded(metta_data).
-:- ensure_loaded(mettalog('metta_ontology.pfc.pl')).
+%:- ensure_loaded(mettalog('metta_ontology.pfc.pl')).
 :- ensure_loaded(metta_compiler).
 :- ensure_loaded(metta_convert).
 :- ensure_loaded(metta_types).
@@ -698,6 +698,7 @@ cmdline_load_metta(Phase,Self,[M|Rest]):-
   cmdline_load_metta(Phase,Self,Rest).
 
 install_ontology:- !.
+load_ontology:- option_value(compile,false),!.
 load_ontology:- ensure_loaded(mettalog('metta_ontology.pfc.pl')).
 
 %cmdline_load_file(Self,Filemask):- is_converting,!,
@@ -726,7 +727,7 @@ m_opt0(M,Opt):- symbol_concat('--no-',Opt,M),!.
 m_opt0(M,Opt):- symbol_concat('--',Opt,M),!.
 m_opt0(M,Opt):- symbol_concat('-',Opt,M),!.
 
-:- set_prolog_flag(occurs_check,true).
+:- set_prolog_flag(occurs_check,error).
 
 start_html_of(_Filename):- \+ tee_file(_TEE_FILE),!.
 start_html_of(_Filename):-!.
@@ -1213,9 +1214,14 @@ write_pass_fail_result_c(TestName,exec,Exec,PASS_FAIL,Ans,Val):-
 is_unit_test_exec(Exec):- sformat(S,'~w',[Exec]),sub_atom(S,_,_,_,'assert').
 is_unit_test_exec(Exec):- sformat(S,'~q',[Exec]),sub_atom(S,_,_,_,"!',").
 
-make_empty('Empty').
-make_empty(_,Empty):- make_empty(Empty).
-make_empty(_RetType,_,Empty):- make_empty(Empty).
+make_empty(Empty):- 'Empty'=Empty.
+make_empty(_,Empty):- make_nop(Empty).
+make_empty(_RetType,_,Empty):- make_nop(Empty).
+
+
+make_nop(Nop):- []=Nop.
+make_nop(_,Nop):- make_nop(Nop).
+make_nop(_RetType,_,Nop):- make_nop(Nop).
 
 
 convert_tax(_How,Self,Tax,Expr,NewHow):-
@@ -1635,11 +1641,11 @@ do_loon:-
    %if_t(is_compiled,ensure_mettalog_py),
           install_readline_editline,
    nts,
-   install_ontology,
+   %install_ontology,
    metta_final,
    nop(load_history),
    set_prolog_flag(history, 3),
-   ensure_corelib_types,
+   % ensure_corelib_types,
    set_output_stream,
    if_t(is_compiled,update_changed_files),
    run_cmd_args,
@@ -1806,7 +1812,7 @@ fix_message_hook:-
 :- set_prolog_flag(metta_interp,ready).
 
 :- use_module(library(clpr)). % Import the CLP(R) library
-:- ensure_loaded('metta_ontology.pfc.pl').
+%:- ensure_loaded('metta_ontology.pfc.pl').
 
 % Define a predicate to relate the likelihoods of three events
 complex_relationship3_ex(Likelihood1, Likelihood2, Likelihood3) :-

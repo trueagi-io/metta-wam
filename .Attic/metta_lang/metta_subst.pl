@@ -182,7 +182,7 @@ subst_args1(Eq,RetType,Depth,Self,['assertEqual',X0,Y0],RetVal):- !,
         (bagof_subst(Depth,Self,X,XX),
          bagof_subst(Depth,Self,Y,YY)),
          equal_enough_for_test(XX,YY), TF),
-  (TF=='True'->make_empty(RetVal);RetVal=[got,XX,expected,YY]).
+  (TF=='True'->make_nop(RetVal);RetVal=[got,XX,expected,YY]).
 
 subst_args1(Eq,RetType,Depth,Self,['assertNotEqual',X0,Y0],RetVal):- !,
   subst_vars(X0,X),subst_vars(Y0,Y),
@@ -190,7 +190,7 @@ subst_args1(Eq,RetType,Depth,Self,['assertNotEqual',X0,Y0],RetVal):- !,
         ['assertNotEqual',X0,Y0],
         (setof_subst(Depth,Self,X,XX), setof_subst(Depth,Self,Y,YY)),
          \+ equal_enough(XX,YY), TF),
-  (TF=='True'->make_empty(RetVal);RetVal=[got,XX,expected,not,YY]).
+  (TF=='True'->make_nop(RetVal);RetVal=[got,XX,expected,not,YY]).
 
 subst_args1(Eq,RetType,Depth,Self,['assertEqualToResult',X0,Y0],RetVal):- !,
   subst_vars(X0,X),subst_vars(Y0,Y),
@@ -198,7 +198,7 @@ subst_args1(Eq,RetType,Depth,Self,['assertEqualToResult',X0,Y0],RetVal):- !,
         ['assertEqualToResult',X0,Y0],
         (bagof_subst(Depth,Self,X,XX), =(Y,YY)),
          equal_enough_for_test(XX,YY), TF),
-  (TF=='True'->make_empty(RetVal);RetVal=[got,XX,expected,YY]),!.
+  (TF=='True'->make_nop(RetVal);RetVal=[got,XX,expected,YY]),!.
 
 
 l1t_loonit_assert_source_tf(Src,Goal,Check,TF):-
@@ -358,11 +358,11 @@ sub_sterm1(Sub,Term):- arg(_,Term,SL),sub_sterm(Sub,SL).
 subst_args1(Eq,RetType,_Depth,_Self,['nop'],                 _ ):- !, fail.
 subst_args1(Eq,RetType,Depth,Self,['nop',Expr], Empty):- !,
   ignore(subst_args(Eq,RetType,Depth,Self,Expr,_)),
-  make_empty([], Empty).
+  make_nop([], Empty).
 
 subst_args1(Eq,RetType,Depth,Self,['do',Expr], Empty):- !,
   forall(subst_args(Eq,RetType,Depth,Self,Expr,_),true),
-  make_empty([],Empty).
+  make_nop([],Empty).
 
 subst_args1(Eq,RetType,_Depth,_Self,['call',S], TF):- !, eval_call(S,TF).
 
@@ -636,16 +636,16 @@ subst_args1(Eq,RetType,Depth,Self,[F|Args],Res):- is_list(F),
 subst_args1(Eq,RetType,Depth,Self,[F|Args],Res):- is_list(F), Args\==[],
   append(F,Args,FArgs),!,subst_args(Eq,RetType,Depth,Self,FArgs,Res).
 */
-subst_args1(Eq,RetType,_Dpth,Self,['import!',Other,File],RetVal):- into_space(Self,Other,Space),!, include_metta(Space,File),!,make_empty(Space,RetVal). %RetVal=[].
+subst_args1(Eq,RetType,_Dpth,Self,['import!',Other,File],RetVal):- into_space(Self,Other,Space),!, include_metta(Space,File),!,make_nop(Space,RetVal). %RetVal=[].
 subst_args1(Eq,RetType,Depth,Self,['bind!',Other,Expr],RetVal):-
-   into_name(Self,Other,Name),!,subst_args(Eq,RetType,Depth,Self,Expr,Value),nb_setval(Name,Value),  make_empty(Value,RetVal).
+   into_name(Self,Other,Name),!,subst_args(Eq,RetType,Depth,Self,Expr,Value),nb_setval(Name,Value),  make_nop(Value,RetVal).
 subst_args1(Eq,RetType,Depth,Self,['pragma!',Other,Expr],RetVal):-
-   into_name(Self,Other,Name),!,subst_args(Eq,RetType,Depth,Self,Expr,Value),set_option_value(Name,Value),  make_empty(Value,RetVal).
-subst_args1(Eq,RetType,_Dpth,Self,['transfer!',File],RetVal):- !, include_metta(Self,File),  make_empty(Self,RetVal).
+   into_name(Self,Other,Name),!,subst_args(Eq,RetType,Depth,Self,Expr,Value),set_option_value(Name,Value),  make_nop(Value,RetVal).
+subst_args1(Eq,RetType,_Dpth,Self,['transfer!',File],RetVal):- !, include_metta(Self,File),  make_nop(Self,RetVal).
 
 
 
-%l_l1t_args1(Depth,Self,['nop',Expr],Empty):- !,  subst_args(Eq,RetType,Depth,Self,Expr,_), make_empty([],Empty).
+%l_l1t_args1(Depth,Self,['nop',Expr],Empty):- !,  subst_args(Eq,RetType,Depth,Self,Expr,_), make_nop([],Empty).
 
 /*
 is_True(T):- T\=='False',T\=='F',T\==[].

@@ -1186,7 +1186,7 @@ fb_assert(Term) :-
 
 :- dynamic(done_reading/1).
 
-use_metta_x:- fail_flag.
+use_metta_x:- fail, fail_flag.
 
 load_fb_cache(_File,OutputFile,_Fn):- exists_file(OutputFile),!,ensure_loaded(OutputFile),!.
 load_fb_cache(File,_OutputFile,_Fn):- load_files([File],[qcompile(large)]).

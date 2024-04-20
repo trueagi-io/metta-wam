@@ -75,10 +75,7 @@
 
 :- set_prolog_flag(pfc_term_expansion,false).
 
-:- dynamic(done_once/1).
-do_once(G):-
-  ((done_once(GG),GG=@=G) -> true
-  ;(assert(done_once(G)),(once(@(G,user))->true;retract(done_once(G))))).
+:- break.
 
 params_and_return_type([->|TypeList],Len,Params,Ret):-
    append(Params,[Ret], TypeList),
@@ -185,16 +182,28 @@ if(Cond,Then,Else,Result):- eval_true(Cond)*-> eval(Then,Result); eval(Else,Resu
 
 :- dynamic(can_compile/2).
 
-src_code_for(KB,F,Len) ==>  ( \+ metta_compiled_predicate(KB,F,Len) ==> can_compile(KB,F,Len)).
+src_code_for(KB,F,Len) ==>  ( \+ metta_compiled_predicate(KB,F,Len) ==> do_compile(KB,F,Len)).
 
 do_compile_space(KB) ==> (src_code_for(KB,F,Len) ==> do_compile(KB,F,Len)).
 
-do_compile_space('&self').
+%do_compile_space('&self').
 
-do_compile(KB,F,Len),src_code_for(KB,F,Len) ==>
- ((metta_defn(KB,[F|Args],BodyFn)/compile_metta_defn(KB,F,Len,Args,BodyFn,Clause))
-    ==> (compiled_clauses(KB,F,Clause))).
+do_compile(KB,F,Len),src_code_for(KB,F,Len) ==> really_compile(KB,F,Len).
 
+
+metta_defn(KB,[F|Args],BodyFn),really_compile(KB,F,Len)/length(Args,Len)==>
+   really_compile_src(KB,F,Len,Args,BodyFn),{dedupe_ls(F)}.
+
+really_compile_src(KB,F,Len,Args,BodyFn),
+   {compile_metta_defn(KB,F,Len,Args,BodyFn,Clause)}
+       ==> (compiled_clauses(KB,F,Clause)).
+
+
+/*
+    really_compile(KB,F,Len)==>
+      ((metta_defn(KB,[F|Args],BodyFn)/compile_metta_defn(KB,F,Len,Args,BodyFn,Clause))
+        ==> (compiled_clauses(KB,F,Clause))).
+*/
 
 
 
