@@ -1,0 +1,160 @@
+!(pragma! compile full)
+
+;;NAL-1
+;;!Syllogistic rules for Inheritance:
+(= (|- (($a --> $b) $T1) (($b --> $c) $T2)) (($a --> $c) (Truth_Deduction $T1 $T2)))
+(= (|- (($a --> $b) $T1) (($a --> $c) $T2)) (($c --> $b) (Truth_Induction $T1 $T2)))
+(= (|- (($a --> $c) $T1) (($b --> $c) $T2)) (($b --> $a) (Truth_Abduction $T1 $T2)))
+(= (|- (($a --> $b) $T1) (($b --> $c) $T2)) (($c --> $a) (Truth_Exemplification $T1 $T2)))
+;;NAL-2
+;;!Rules for Similarity:
+(= (|- (($S <-> $P) $T)) (($P <-> $S) (Truth_StructuralIntersection $T)))
+(= (|- (($M <-> $P) $T1) (($S <-> $M) $T2)) (($S <-> $P) (Truth_Resemblance $T1 $T2)))
+(= (|- (($P --> $M) $T1) (($S --> $M) $T2)) (($S <-> $P) (Truth_Comparison $T1 $T2)))
+(= (|- (($M --> $P) $T1) (($M --> $S) $T2)) (($S <-> $P) (Truth_Comparison $T1 $T2)))
+(= (|- (($M --> $P) $T1) (($S <-> $M) $T2)) (($S --> $P) (Truth_Analogy $T1 $T2)))
+(= (|- (($P --> $M) $T1) (($S <-> $M) $T2)) (($P --> $S) (Truth_Analogy $T1 $T2)))
+;;!Dealing with properties and instances:
+(= (|- (($S --> (ExtSet $P)) $T)) (($S <-> (ExtSet $P)) (Truth_StructuralIntersection $T)))
+(= (|- (((IntSet $S) --> $P) $T)) (((IntSet $S) <-> $P) (Truth_StructuralIntersection $T)))
+(= (|- (((ExtSet $M) --> $P) $T1) (($S <-> $M) $T2)) (((ExtSet $S) --> $P) (Truth_Analogy $T1 $T2)))
+(= (|- (($P --> (IntSet $M)) $T1) (($S <-> $M) $T2)) (($P --> (IntSet $S)) (Truth_Analogy $T1 $T2)))
+(= (|- (((ExtSet $A) <-> (ExtSet $B)))) (($A <-> $B) (Truth_StructuralIntersection $T)))
+(= (|- (((IntSet $A) <-> (IntSet $B)))) (($A <-> $B) (Truth_StructuralIntersection $T)))
+;;NAL-3
+;;!Set decomposition:
+(= (|- (((ExtSet $A $B) --> $M) $T)) (((ExtSet $A) --> $M) (Truth_StructuralDeduction $T)))
+(= (|- (((ExtSet $A $B) --> $M) $T)) (((ExtSet $B) --> $M) (Truth_StructuralDeduction $T)))
+(= (|- ((M --> (IntSet $A $B)) $T)) ((M --> (IntSet $A)) (Truth_StructuralDeduction $T)))
+(= (|- ((M --> (IntSet $A $B)) $T)) ((M --> (IntSet $B)) (Truth_StructuralDeduction $T)))
+;;!Extensional and intensional intersection decomposition:
+(= (|- ((($S | $P) --> $M) $T)) (($S --> $M) (Truth_StructuralDeduction $T)))
+(= (|- (($M --> ($S & $P)) $T)) (($M --> $S) (Truth_StructuralDeduction $T)))
+(= (|- ((($S | $P) --> $M) $T)) (($P --> $M) (Truth_StructuralDeduction $T)))
+(= (|- (($M --> ($S & $P)) $T)) (($M --> $P) (Truth_StructuralDeduction $T)))
+(= (|- ((($A ~ $S) --> $M) $T)) (($A --> $M) (Truth_StructuralDeduction $T)))
+(= (|- (($M --> ($B - $S)) $T)) (($M --> $B) (Truth_StructuralDeduction $T)))
+(= (|- ((($A ~ $S) --> $M) $T)) (($S --> $M) (Truth_StructuralDeductionNegated $T)))
+(= (|- (($M --> ($B - $S)) $T)) (($M --> $S) (Truth_StructuralDeductionNegated $T)))
+;;!Extensional and intensional intersection composition: (sets via reductions)
+;(= (|- (($P --> $M) $T1) (($S --> $M) $T2)) ((($P | $S) --> $M) (Truth_Intersection $T1 $T2)))
+;(= (|- (($P --> $M) $T1) (($S --> $M) $T2)) ((($P & $S) --> $M) (Truth_Union $T1 $T2)))
+;(= (|- (($P --> $M) $T1) (($S --> $M) $T2)) ((($P ~ $S) --> $M) (Truth_Difference $T1 $T2)))
+;(= (|- (($M --> $P) $T1) (($M --> $S) $T2)) (($M --> ($P & $S)) (Truth_Intersection $T1 $T2)))
+;(= (|- (($M --> $P) $T1) (($M --> $S) $T2)) (($M --> ($P | $S)) (Truth_Union $T1 $T2)))
+;(= (|- (($M --> $P) $T1) (($M --> $S) $T2)) (($M --> ($P - $S)) (Truth_Difference $T1 $T2)))
+;;!Extensional and intensional intersection decomposition:
+(= (|- (($S --> $M) $T1) ((($S | $P) --> $M) $T2)) (($P --> $M) (Truth_DecomposePNN $T1 $T2)))
+(= (|- (($P --> $M) $T1) ((($S | $P) --> $M) $T2)) (($S --> $M) (Truth_DecomposePNN $T1 $T2)))
+(= (|- (($S --> $M) $T1) ((($S & $P) --> $M) $T2)) (($P --> $M) (Truth_DecomposeNPP $T1 $T2)))
+(= (|- (($P --> $M) $T1) ((($S & $P) --> $M) $T2)) (($S --> $M) (Truth_DecomposeNPP $T1 $T2)))
+(= (|- (($S --> $M) $T1) ((($S ~ $P) --> $M) $T2)) (($P --> $M) (Truth_DecomposePNP $T1 $T2)))
+(= (|- (($S --> $M) $T1) ((($P ~ $S) --> $M) $T2)) (($P --> $M) (Truth_DecomposeNNN $T1 $T2)))
+(= (|- (($M --> $S) $T1) (($M --> ($S & $P)) $T2)) (($M --> $P) (Truth_DecomposePNN $T1 $T2)))
+(= (|- (($M --> $P) $T1) (($M --> ($S & $P)) $T2)) (($M --> $S) (Truth_DecomposePNN $T1 $T2)))
+(= (|- (($M --> $S) $T1) (($M --> ($S | $P)) $T2)) (($M --> $P) (Truth_DecomposeNPP $T1 $T2)))
+(= (|- (($M --> $P) $T1) (($M --> ($S | $P)) $T2)) (($M --> $S) (Truth_DecomposeNPP $T1 $T2)))
+(= (|- (($M --> $S) $T1) (($M --> ($S - $P)) $T2)) (($M --> $P) (Truth_DecomposePNP $T1 $T2)))
+(= (|- (($M --> $S) $T1) (($M --> ($P - $S)) $T2)) (($M --> $P) (Truth_DecomposeNNN $T1 $T2)))
+;; NAL-4
+;;!Transformation rules between product and image:
+(= (|- ((($A x $B) --> $R) $T)) (($A --> ($R /1 $B)) (Truth_StructuralIntersection $T)))
+(= (|- ((($A x $B) --> $R) $T)) (($B --> ($R /2 $A)) (Truth_StructuralIntersection $T)))
+(= (|- (($R --> ($A x $B)) $T)) ((($R \1 $B) --> $A) (Truth_StructuralIntersection $T)))
+(= (|- (($R --> ($A x $B)) $T)) ((($R \2 $A) --> $B) (Truth_StructuralIntersection $T)))
+;;other direction of same rules (as these are bi-directional)
+;(= (|- (($A --> ($R /1 $B)) $T)) ((($A x $B) --> $R) (Truth_StructuralIntersection $T)))
+;(= (|- (($B --> ($R /2 $A)) $T)) ((($A x $B) --> $R) (Truth_StructuralIntersection $T)))
+;(= (|- ((($R \1 $B) --> $A) $T)) (($R --> ($A x $B)) (Truth_StructuralIntersection $T)))
+;(= (|- ((($R \2 $A) --> $B) $T)) (($R --> ($A x $B)) (Truth_StructuralIntersection $T)))
+;;!Comparative relations
+;(= (|- ((({ $R }) |-> ([ $P ])) $T1) ((({ $S }) |-> ([ $P ])) $T2)) (((({ $R }) x ({ $S })) --> (>>> $P )) (Truth_FrequencyGreater $T1 $T2)))
+;(= (|- ((($A x $B) --> (>>> $P)) $T1) ((($B x $C) --> (>>> $P)) $T2)) ((($A x $C) --> (>>> $P)) (Truth_Deduction $T1 $T2)))
+;(= (|- ((({ $R }) |-> ([ $P ])) $T1) ((({ $S }) |-> ([ $P ])) $T2)) (((({ $R }) x ({ $S })) --> (=== $P)) (Truth_FrequencyEqual $T1 $T2)))
+;(= (|- ((($A x $B) --> (=== $P)) $T1) ((($B x $C) --> (=== $P)) $T2)) ((($A x $C) --> (=== $P)) (Truth_Deduction $T1 $T2)))
+;(= (|- ((($A x $B) --> (=== $P)) $T)) ((($B x $A) --> (=== $P)) (Truth_StructuralIntersection $T)))
+;;!Optional rules for more efficient reasoning about relation components:
+(= (|- ((($A x $B) --> $R) $T1) ((($C x $B) --> $R) $T2)) (($C --> $A) (Truth_Abduction $T1 $T2)))
+(= (|- ((($A x $B) --> $R) $T1) ((($A x $C) --> $R) $T2)) (($C --> $B) (Truth_Abduction $T1 $T2)))
+(= (|- (($R --> ($A x $B)) $T1) (($R --> ($C x $B)) $T2)) (($C --> $A) (Truth_Induction $T1 $T2)))
+(= (|- (($R --> ($A x $B)) $T1) (($R --> ($A x $C)) $T2)) (($C --> $B) (Truth_Induction $T1 $T2)))
+(= (|- ((($A x $B) --> $R) $T1) (($C --> $A) $T2)) ((($C x $B) --> $R) (Truth_Deduction $T1 $T2)))
+(= (|- ((($A x $B) --> $R) $T1) (($A --> $C) $T2)) ((($C x $B) --> $R) (Truth_Induction $T1 $T2)))
+(= (|- ((($A x $B) --> $R) $T1) (($C <-> $A) $T2)) ((($C x $B) --> $R) (Truth_Analogy $T1 $T2)))
+(= (|- ((($A x $B) --> $R) $T1) (($C --> $B) $T2)) ((($A x $C) --> $R) (Truth_Deduction $T1 $T2)))
+(= (|- ((($A x $B) --> $R) $T1) (($B --> $C) $T2)) ((($A x $C) --> $R) (Truth_Induction $T1 $T2)))
+(= (|- ((($A x $B) --> $R) $T1) (($C <-> $B) $T2)) ((($A x $C) --> $R) (Truth_Analogy $T1 $T2)))
+(= (|- (($R --> ($A x $B)) $T1) (($A --> $C) $T2)) (($R --> ($C x $B)) (Truth_Deduction $T1 $T2)))
+(= (|- (($R --> ($A x $B)) $T1) (($C --> $A) $T2)) (($R --> ($C x $B)) (Truth_Abduction $T1 $T2)))
+(= (|- (($R --> ($A x $B)) $T1) (($C <-> $A) $T2)) (($R --> ($C x $B)) (Truth_Analogy $T1 $T2)))
+(= (|- (($R --> ($A x $B)) $T1) (($B --> $C) $T2)) (($R --> ($A x $C)) (Truth_Deduction $T1 $T2)))
+(= (|- (($R --> ($A x $B)) $T1) (($C --> $B) $T2)) (($R --> ($A x $C)) (Truth_Abduction $T1 $T2)))
+(= (|- (($R --> ($A x $B)) $T1) (($C <-> $B) $T2)) (($R --> ($A x $C)) (Truth_Analogy $T1 $T2)))
+(= (|- ((($A x $B) --> $R) $T1) ((($C x $B) --> $R) $T2)) (($A <-> $C) (Truth_Comparison $T1 $T2)))
+(= (|- ((($A x $B) --> $R) $T1) ((($A x $C) --> $R) $T2)) (($B <-> $C) (Truth_Comparison $T1 $T2)))
+(= (|- (($R --> ($A x $B)) $T1) (($R --> ($C x $B)) $T2)) (($A <-> $C) (Truth_Comparison $T1 $T2)))
+(= (|- (($R --> ($A x $B)) $T1) (($R --> ($A x $C)) $T2)) (($B <-> $C) (Truth_Comparison $T1 $T2)))
+;;NAL-5
+;;!Negation conjunction and disjunction decomposition:
+(= (|- ((neg $A) $T)) ($A (Truth_Negation $T)))
+(= (|- (($A && $B) $T)) ($A (Truth_StructuralDeduction $T)))
+(= (|- (($A && $B) $T)) ($B (Truth_StructuralDeduction $T)))
+(= (|- (($A && $B) $T)) (($B && $A) (Truth_StructuralIntersection $T)))
+(= (|- ($S $T1) (($S && $A) $T2)) ($A (Truth_DecomposePNN $T1 $T2)))
+(= (|- ($S $T1) (($S || $A) $T2)) ($A (Truth_DecomposeNPP $T1 $T2)))
+(= (|- ($S $T1) (((neg $S) && $A) $T2)) ($A (Truth_DecomposeNNN $T1 $T2)))
+(= (|- ($S $T1) (((neg $S) || $A) $T2)) ($A (Truth_DecomposePPP $T1 $T2)))
+;;!Syllogistic rules for Implication:
+(= (|- (($A ==> $B) $T1) (($B ==> $C) $T2)) (($A ==> $C) (Truth_Deduction $T1 $T2)))
+(= (|- (($A ==> $B) $T1) (($A ==> $C) $T2)) (($C ==> $B) (Truth_Induction $T1 $T2)))
+(= (|- (($A ==> $C) $T1) (($B ==> $C) $T2)) (($B ==> $A) (Truth_Abduction $T1 $T2)))
+(= (|- (($A ==> $B) $T1) (($B ==> $C) $T2)) (($C ==> $A) (Truth_Exemplification $T1 $T2)))
+;;!Conditional composition for conjunction and disjunction:
+(= (|- (($A ==> $C) $T1) (($B ==> $C) $T2)) ((($A && $B) ==> $C) (Truth_Union $T1 $T2)))
+(= (|- (($A ==> $C) $T1) (($B ==> $C) $T2)) ((($A || $B) ==> $C) (Truth_Intersection $T1 $T2)))
+(= (|- (($C ==> $A) $T1) (($C ==> $B) $T2)) (($C ==> ($A && $B)) (Truth_Intersection $T1 $T2)))
+(= (|- (($C ==> $A) $T1) (($C ==> $B) $T2)) (($C ==> ($A || $B)) (Truth_Union $T1 $T2)))
+;;!Multi-conditional inference:
+(= (|- ((($S && $P) ==> $M) $T1) (($S ==> $M) $T2)) ($P (Truth_Abduction $T1 $T2)))
+(= (|- ((($C && $M) ==> $P) $T1) (($S ==> $M) $T2)) ((($C && $S) ==> $P) (Truth_Deduction $T1 $T2)))
+(= (|- ((($C && $P) ==> $M) $T1) ((($C && $S) ==> $M) $T2)) (($S ==> $P) (Truth_Abduction $T1 $T2)))
+(= (|- ((($C && $M) ==> $P) $T1) (($M ==> $S) $T2)) ((($C && $S) ==> $P) (Truth_Induction $T1 $T2)))
+;;!Rules for equivalence:
+(= (|- (($S <=> $P) $T)) (($P <=> $S) (Truth_StructuralIntersection $T)))
+(= (|- (($S ==> $P) $T1) (($P ==> $S) $T2)) (($S <=> $P) (Truth_Intersection $T1 $T2)))
+(= (|- (($P ==> $M) $T1) (($S ==> $M) $T2)) (($S <=> $P) (Truth_Comparison $T1 $T2)))
+(= (|- (($M ==> $P) $T1) (($M ==> $S) $T2)) (($S <=> $P) (Truth_Comparison $T1 $T2)))
+(= (|- (($M ==> $P) $T1) (($S <=> $M) $T2)) (($S ==> $P) (Truth_Analogy $T1 $T2)))
+(= (|- (($P ==> $M) $T1) (($S <=> $M) $T2)) (($P ==> $S) (Truth_Analogy $T1 $T2)))
+(= (|- (($M <=> $P) $T1) (($S <=> $M) $T2)) (($S <=> $P) (Truth_Resemblance $T1 $T2)))
+;;!Higher-order decomposition
+(= (|- ($A $T1) (($A ==> $B) $T2)) ($B (Truth_Deduction $T1 $T2)))
+(= (|- ($A $T1) ((($A && $B) ==> $C) $T2)) (($B ==> $C) (Truth_Deduction $T1 $T2)))
+(= (|- ($B $T1) (($A ==> $B) $T2)) ($A (Truth_Abduction $T1 $T2)))
+(= (|- ($A $T1) (($A <=> $B) $T2)) ($B (Truth_Analogy $T1 $T2)))
+;;NAL term reductions
+;;!Extensional intersection, union, conjunction reductions:
+(= (reduced ($A & $A)) $A)
+(= (reduced ($A | $A)) $A)
+(= (reduced ($A && $A)) $A)
+(= (reduced ($A || $A)) $A)
+;;!Extensional set reductions:
+(= (reduced ((ExtSet $A) | (ExtSet $B))) (ExtSet $A $B))
+(= (reduced ((ExtSet $A $B) | (ExtSet $C))) (ExtSet ($A SetElement $B) $C))
+(= (reduced ((ExtSet $C) | (ExtSet $A $B) )) (ExtSet $C ($A SetElement $B)))
+;;!Intensional set reductions:
+(= (reduced ((IntSet $A) & (IntSet $B))) (IntSet $A $B) )
+(= (reduced ((IntSet $A $B) & (IntSet $C))) (IntSet ($A SetElement $B) $C))
+(= (reduced ((IntSet $A) & (IntSet $B $C))) (IntSet $A ($B SetElement $C)))
+;;!Reduction for set element copula:
+(= (reduced (ExtSet ( $A SetElement $B ))) (ExtSet $A $B))
+(= (reduced (IntSet ( $A SetElement $B ))) (IntSet $A $B))
+;params
+(= (BeliefEventsMax) 10)
+(= (GoalEventsMax) 10)
+
+;states
+!(bind! &currentTime (new-state 1))
+!(bind! &evidentialBase (new-state 1))
+
+
