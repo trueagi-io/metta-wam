@@ -1,5 +1,3 @@
-!(pragma! load silent)
-
 (: (WitnessOf (⍃ (S Z) (S (S Z)))) 
     (⍃ (S Z) (S (S Z))))
 (: (WitnessOf (⍃ (S Z) (S (S (S Z))))) 
