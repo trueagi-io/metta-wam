@@ -28,30 +28,24 @@
 :- dynamic eqtl/2.
 :- dynamic go_gene_product/2.
 
-maybe_specialization(likes(X,Y), likes(X,X)).
-maybe_specialization(likes(X,dogs), likes(X,X)).
-maybe_specialization(likes(X,dogs), likes(X,Y)).
-maybe_specialization(likes(joe,dogs), likes(X,X)).
-maybe_specialization(likes(joe,dogs), likes(X,Y)).
-maybe_specialization(likes(joe,dogs), likes(joe,dogs)).
+specialization_sample(likes(joe,dogs)).
+specialization_sample(likes(X,X)).
+specialization_sample(likes(_,dogs)).
+specialization_sample(likes(joe,_)).
+specialization_sample(likes(_,_)).
 
-specialization_sample(X):- maybe_specialization(X,_).
-specialization_sample(X):- maybe_specialization(_,X).
-
-so_specialization_sample(X):-
-  findall(X,no_repeats(specialization_sample(X)),L),
-  member(X,L).
-
-so_sample(X,Y):-
-  so_specialization_sample(X),
-  so_specialization_sample(Y).
+specialization_sample(X,Y):-
+  no_repeats(specialization_sample(X)),
+  no_repeats(specialization_sample(Y)),
+  X \== Y.
+specialization_sample(likes(A,B),likes(B,A)).
+specialization_sample(likes(joe,B),likes(B,B)).
+% invert fact/2s of this predicate`
+specialization_sample(A,B):- clause(specialization_sample(B,A),true).
 
 whch_check:-
-  forall(so_sample(X,Y),
-        forall(test_specializationOf(X,Y),true)).
-
-test_specializationOf(X,Y):- check_specializationOf(X,Y).
-%test_specializationOf(X,Y):- check_specializationOf(Y,X).
+  forall(no_repeats(specialization_sample(X,Y)),
+        forall(check_specializationOf(X,Y),true)).
 
 check_specializationOf(T1,T2):-
   (specializationOf(T1, T2) ->
@@ -68,7 +62,7 @@ specializationOf(T1, T2):-
     copy_term(T1+T2, C1+C2),         % Duplicate T1 and T2 as C1 and C2 respectively to work with fresh variables.
     numbervars(C1, 0, N1, [attvar(bind)]), % Enumerate variables in C1 starting from 0, treating attributed vars as bound.
     numbervars(C2, 0, N2, [attvar(bind)]), % Same for C2, ensuring they are treated independently with same conditions.
-    % N1 =< N2,
+    nop( N1 =< N2),
     \+ C1 \= T2,                     % Try unifying C1 with T2 to test specialization.
     C2 \= T1,                        % Ensure C2 does not unify with T1 to confirm the direction of specialization.
     !.                               % Cut to prevent backtracking once a match is found.
@@ -280,7 +274,7 @@ tr(triple(A, P, B))              --> np(A), [is, a], tr(P), [of], np(B).
 tr(eqtl(A, B))                   --> [there, being, an, eQTL, between], np(A), [and], np(B).
 tr(go_gene_product(A, B))        --> np(A), [being, a, 'GO gene product', for], np(B).
 tr(P)                            --> { safe_p_univ(P, [F, A, B]) }, tr(pso(F, A, B)).
-tr(pso(F, A, B))                 --> { atomic_list_concat(WordList, ' ', F) },
+tr(pso(F, A, B))                 --> { split_functor_string(F,WordList) },
                                     np(A), WordList, np(B).
 tr(P)                            --> { safe_p_univ(P, [F, A]) }, typed_np(F, A).
 tr(P)                            --> { sformat(S, '~q', [P]) }, [a, logical, atom, S].
@@ -288,7 +282,9 @@ tr(P)                            --> { sformat(S, '~q', [P]) }, [a, logical, ato
 
 
 
-
+split_functor_string(F,WordList):- atomic_list_concat(WordList, ' ', F),WordList=[_,_|_],!.
+split_functor_string(F,WordList):- atomic_list_concat(WordList, '_', F),WordList=[_,_|_],!.
+split_functor_string(F,WordList):- atomic_list_concat(WordList, '-', F).
 
 
 
