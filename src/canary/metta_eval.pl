@@ -1086,12 +1086,13 @@ eval_20(Eq,RetType,Depth,Self,['register-module!',Name,Dir],RetVal):- !,
 
 
 eval_20(Eq,RetType,Depth,Self,['include!',Other,File],RetVal):- !,
-     (( into_space(Depth,Self,Other,Space), include_metta(Space,File),!,make_nop(RetType,Space,RetVal))),
+     (( into_space(Depth,Self,Other,Space), include_metta(Space,File),!,make_nop(RetType,RetVal))),
      check_returnval(Eq,RetType,RetVal). %RetVal=[].
 eval_20(Eq,RetType,Depth,Self,['load-ascii',Other,File],RetVal):- !,
-     (( into_space(Depth,Self,Other,Space), include_metta(Space,File),!,make_nop(RetType,Space,RetVal))),
+     (( into_space(Depth,Self,Other,Space), include_metta(Space,File),!,make_nop(RetType,RetVal))),
      check_returnval(Eq,RetType,RetVal). %RetVal=[].
-eval_20(Eq,RetType,_Depth,_Slf,['bind!',Other,['new-space']],RetVal):- atom(Other),!,assert(was_asserted_space(Other)),
+eval_20(Eq,RetType,_Depth,_Slf,['bind!',Other,['new-space']],RetVal):- atom(Other),!,
+  assert(was_asserted_space(Other)),
   make_nop(RetType,[],RetVal), check_returnval(Eq,RetType,RetVal).
 eval_20(Eq,RetType,Depth,Self,['bind!',Other,Expr],RetVal):- !,
    must_det_ll((into_name(Self,Other,Name),!,eval(Eq,RetType,Depth,Self,Expr,Value),
@@ -1103,6 +1104,12 @@ eval_20(Eq,RetType,Depth,Self,['pragma!',Other,Expr],RetVal):- !,
     check_returnval(Eq,RetType,RetVal))).
 eval_20(Eq,RetType,_Dpth,Self,['transfer!',File],RetVal):- !, must_det_ll((include_metta(Self,File),
    make_nop(RetType,Self,RetVal),check_returnval(Eq,RetType,RetVal))).
+
+
+eval_20(Eq,RetType,Depth,Self,['save-space!',Other,File],RetVal):- !,
+     (( into_space(Depth,Self,Other,Space), 'save-space!'(Space,File),!,make_nop(RetType,RetVal))),
+     check_returnval(Eq,RetType,RetVal). %RetVal=[].
+
 
 nd_ignore(Goal):- call(Goal)*->true;true.
 

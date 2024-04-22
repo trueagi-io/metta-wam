@@ -3,7 +3,8 @@
    set_prolog_flag(verbose_load,false),
    ensure_loaded(library(logicmoo_common)).
 :- use_module(library(logicmoo_utils)).
-:- abolish('$exported_op'/3).
+:- dynamic('$exported_op'/3).
+'$exported_op'(_,_,_):- fail.
 
 :- op(500, xfy, =>).
 :- use_module(library(clpfd)).
@@ -634,5 +635,6 @@ mt_body(HeadC, BodyC, Goal, Body, (proven(Goal), (rule(HeadC):-BodyC), Proof)):-
   % Recurse into the body of the rule for proof.
   mt(Body, Proof).
 
-
+:- dynamic('$exported_op'/3).
+'$exported_op'(_,_,_):- fail.
 :- demo_e.
