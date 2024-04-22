@@ -100,7 +100,9 @@
 :- prolog_load_context(directory,Dir),
    retractall(user:is_metta_dir(_)),asserta(user:is_metta_dir(Dir)).
 
+user:file_search_path(library,Dir):- metta_dir(Dir).
 user:file_search_path(mettalog,Dir):- metta_dir(Dir).
+
 
 once_writeq_ln(_):- \+ clause(pfcTraceExecution,true),!.
 once_writeq_ln(P):- nb_current('$once_writeq_ln',W),W=@=P,!.
@@ -113,8 +115,12 @@ pfcAdd_Now(P):- current_predicate(pfcAdd/1),!, once_writeq_ln(pfcAdd(P)),pfcAdd(
 pfcAdd_Now(P):- once_writeq_ln(asssert(P)),assert(P).
 %:- endif.
 
-metta_dir(Dir):- user:is_metta_dir(Dir),!.
-metta_dir(Dir):- getenv('METTA_DIR',Dir),!.
+metta_dir(Dir):- metta_dir0(Dir).
+metta_dir(Dir):- metta_dir0(Value), absolute_file_name('../flybase/',Dir,[relative_to(Value)]).
+metta_dir(Dir):- metta_dir0(Value), absolute_file_name('../../library/',Dir,[relative_to(Value)]).
+metta_dir(Dir):- metta_dir0(Value), absolute_file_name('../../library/genome/',Dir,[relative_to(Value)]).
+metta_dir0(Dir):- user:is_metta_dir(Dir).
+metta_dir0(Dir):- getenv('METTA_DIR',Dir),!.
 
 :- ensure_loaded(metta_debug).
 
@@ -409,7 +415,6 @@ with_output_to_s(Out,G):- current_output(COut),
 not_compat_io(G):- not_compatio(G).
 non_compat_io(G):- not_compatio(G).
 
-:- set_is_unit_test(false).
 
 trace_on_fail:-     option_value('trace-on-fail',true).
 trace_on_overflow:- option_value('trace-on-overflow',true).
@@ -434,9 +439,12 @@ show_options_values:-
 :- ensure_loaded(metta_space).
 :- ensure_loaded(metta_eval).
 
+:- set_is_unit_test(false).
+
 % ============================
 % %%%% Arithmetic Operations
 % ============================
+
 
 % Addition
 %'+'(A, B, Sum):- \+ any_floats([A, B, Sum]),!,Sum #= A+B .
@@ -1750,7 +1758,7 @@ qsave_program:-  ensure_mettalog_system, next_save_name(Name),
     !.
 
 
-:- ensure_loaded(flybase_main).
+:- ensure_loaded(library(flybase_main)).
 :- ensure_loaded(metta_server).
 :- initialization(update_changed_files,restore).
 :- set_prolog_flag(history, 3).
@@ -1823,3 +1831,4 @@ complex_relationship3_ex(Likelihood1, Likelihood2, Likelihood3) :-
 
 % Example query to find the likelihoods that satisfy the constraints
 %?- complex_relationship(L1, L2, L3).
+

@@ -8,7 +8,7 @@
 
 fbug(_):- is_compatio,!.
 fbug(P) :- format("~N"), current_predicate(write_src/1),
-  with_output_to(user_error,in_cmt(pp_fb(P))),!.
+  with_output_to(user_error,in_cmt(write_src(P))),!.
 fbug(N=V) :- nonvar(N), !, fbdebug1(N:-V).
 fbug(V) :- compound(V),functor(V,F,_A),!,fbdebug1(F:-V).
 fbug(V) :- fbdebug1(debug:-V).
