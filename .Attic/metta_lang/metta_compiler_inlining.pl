@@ -798,7 +798,7 @@ f2q(_Depth,_HeadIs,_RetType,RetResult,Convert, Converted) :-
 
 f2q(Depth,HeadIs,RetType,RetResult,Convert,Converted) :-
   Convert =~ ['println!',Value],!,
-  Converted = (ValueCode,eval2(['println!',ValueResult], RetResult)),
+  Converted = (ValueCode,eval(['println!',ValueResult], RetResult)),
   f2p(Depth,HeadIs,RetType,ValueResult,Value,ValueCode).
 
 

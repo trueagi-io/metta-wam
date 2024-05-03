@@ -971,9 +971,9 @@ if [[ "$html_flag" == "enable" ]]; then
         IF_REALLY_DO "touch '$TEE_FILE'"
         IF_REALLY_DO "chmod 777 '$TEE_FILE'"
         IF_REALLY_DO "cat /dev/null > '$TEE_FILE'"
-        if [[ "$contains_halt" == "true" ]]; then
-	   do_DEBUG "METTA_CMD: $METTA_CMD"
-	fi
+        #if [[ "$contains_halt" == "true" ]]; then
+	   DEBUG "METTA_CMD: $METTA_CMD"
+	#fi
 	trap 'cleanup' EXIT
         eval "$METTA_CMD"
         echo $? > "$TEMP_EXIT_CODE_FILE"

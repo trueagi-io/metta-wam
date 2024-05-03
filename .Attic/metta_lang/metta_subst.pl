@@ -152,8 +152,8 @@ subst_args1(Eq,RetType,Depth,Self,['let*',[[Var,Val]|LetRest],Body],RetVal):- !,
     is_sl_op('>').  is_sl_op('<'). %  is_sl_op('>').
     is_sl_op('\\=@=').
 
-subst_args1(Eq,RetType,Depth,Self,[OP,N1,N2],TF):- 
-  fail,  
+subst_args1(Eq,RetType,Depth,Self,[OP,N1,N2],TF):-
+  fail,
   is_sl_op(OP), !,
   ((subst_args(Eq,RetType,Depth,Self,N1,N1Res),subst_args(Eq,RetType,Depth,Self,N2,N2Res),
      ((N1,N2)\=@=(N1Res,N2Res)),subst_args1(Eq,RetType,Depth,Self,[OP,N1Res,N2Res],TF))
@@ -560,6 +560,7 @@ needs_subst(EvalMe):- is_list(EvalMe),!.
 
 get_type_l1t(_Dpth,_Slf,Var,'%Undefined%'):- var(Var),!.
 get_type_l1t(_Dpth,_Slf,Val,'Number'):- number(Val),!.
+get_type_l1t(_Dpth,_Slf,Val,'String'):- string(Val),!.
 get_type_l1t(Depth,Self,Expr,['StateMonad',Type]):- is_valid_nb_state(Expr),'get-state'(Expr,Val),!,
    get_type_l1t(Depth,Self,Val,Type).
 

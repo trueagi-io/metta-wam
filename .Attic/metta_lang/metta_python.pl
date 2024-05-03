@@ -104,20 +104,6 @@ py_call_c(G,R):- py_catch(py_call(G,R)).
 
 py_is_module(M):-notrace((with_safe_argv(catch((py_call(M,X),py_type(X,module)),_,fail)))).
 
-import_metta(Self,Module):- py_is_module(Module),!,
- must_det_ll(self_extend_py(Self,Module)),!.
-import_metta(Self,Filename):-
-  (\+ symbol(Filename); \+ exists_file(Filename)),!,
-  must_det_ll(with_wild_path(import_metta(Self),Filename)),!.
-import_metta(Self,RelFilename):-
-  must_det_ll((
-     symbol(RelFilename),
-     exists_file(RelFilename),
-     absolute_file_name(RelFilename,Filename),
-     directory_file_path(Directory, _, Filename),
-     pfcAdd_Now(metta_file(Self,Filename,Directory)),
-     include_metta_directory_file(Self,Directory, Filename))).
-
 
 ensure_space_py(Space,GSpace):- py_is_object(Space),!,GSpace=Space.
 ensure_space_py(Space,GSpace):- var(Space),ensure_primary_metta_space(GSpace), Space=GSpace.

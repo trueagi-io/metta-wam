@@ -92,6 +92,7 @@
 				<F N="src/canary/metta_pfc_support.pl"/>
 				<F N="src/canary/metta_printer.pl"/>
 				<F N="src/canary/metta_python.pl"/>
+				<F N="src/canary/metta_repl.pl"/>
 				<F N="src/canary/metta_space.pl"/>
 				<F N="src/canary/metta_testing.pl"/>
 				<F N="src/canary/metta_types.pl"/>

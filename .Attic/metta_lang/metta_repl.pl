@@ -29,6 +29,7 @@ repl2:-
       fail.
 repl3:-
     notrace(( reset_eval_num,
+     write_answer_output,
      current_self(Self),
      current_read_mode(repl,Mode),
      %ignore(shell('stty sane ; stty echo')),
@@ -176,10 +177,20 @@ current_read_mode(file,Mode):- ((nb_current(file_mode,Mode),Mode\==[])->true;Mod
 
 
 
-eval(all(Form)):- nonvar(Form), !, forall(eval(Form,_),true).
+eval(all(Form)):- nonvar(Form), !, forall(eval(Form),true).
 eval(Form):-   current_self(Self),   do_metta(true,exec,Self,Form,_Out).
-eval(Form,Out):-current_self(Self),eval(Self,Form,Out).
+
+eval(Form,Out):-current_self(Self),eval_H(100,Self,Form,Out).
 eval(Self,Form,Out):- eval_H(100,Self,Form,Out).
+
+eval_I(Self,Form,OOut):-
+    eval_H(100,Self,Form,Out),
+    trace,
+    xform_out(Out,OOut).
+
+xform_out(Out,OOut):- is_returned(Out),!,OOut=Out.
+xform_out(_Out,'Empty').
+
 
 name_vars(P):- ignore(name_vars0(P)).
 name_vars0(X=Y):- X==Y,!.
@@ -199,7 +210,7 @@ interactively_do_metta_exec01(file(_), Self, _TermV, Term, X, _NamedVarsList, _W
     file_hides_results(Term), !,
     eval_args(Self, Term, X).
 
-interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,Output,FOut):-
+interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,FOut):-
   notrace((
     reset_eval_num,
     Result = res(FOut),
@@ -226,7 +237,8 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,Output,F
              )
         ; GG =      %$ locally(set_prolog_flag(gc,false),
            (
-                             ((  (Term),deterministic(Complete), nb_setarg(1,Result,Output)))),
+                             ((  (Term),deterministic(Complete),
+                                xform_out(VOutput,Output), nb_setarg(1,Result,Output)))),
     !, % metta_toplevel
    flag(result_num,_,0),
    PL=eval(Self,BaseEval,X),
@@ -247,6 +259,8 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,Output,F
       prolog_only((color_g_mesg('#da70d6', (write('% DEBUG:   '), writeq(PL),writeln('.'))))),
       true))))),
 
+   in_answer_io(format('~N[')),!,
+
    (forall_interactive(
     From, WasInteractive,Complete, %may_rtrace
      (timed_call(GG,Seconds)),
@@ -265,19 +279,23 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,Output,F
            ( Complete==true -> (not_compatio(format('~NLast Result(~w): ',[ResNum])),! );
                                not_compatio(format('~NNDet Result(~w): ',[ResNum]))))),
       ignore(((
-            not_compatio(if_t( \+ symbolic(Output), nl)),
-            if_t(ResNum==1,only_compatio(format('~N['))),
-            only_compatio(if_t((Prev\=@=prev_result('Empty')),write(', '))),
+            not_compatio(if_t( \+ symbolic(Output), nop(nl))),
+            %if_t(ResNum==1,in_answer_io(format('~N['))),
+            in_answer_io(if_t((Prev\=@=prev_result('Empty')),write(', '))),
             nb_setarg(1,Prev,Output),
-            user_io(with_indents(is_mettalog,
+            once(with_indents(is_mettalog,
              color_g_mesg_ok(yellow,
-              \+ \+ ( maplist(maybe_assign,NamedVarsList),
-                write_asrc(Output)))))  ))),
+              \+ \+
+               (maplist(maybe_assign,NamedVarsList),
+                not_compatio(write_asrc(Output)),
+                in_answer_io(write_asrc(Output))))))  ))),
 
       not_compatio(with_output_to(user_error,give_time('Execution',Seconds))),
       %not_compatio(give_time('Execution',Seconds),
        color_g_mesg(green,
-           ignore((NamedVarsList \=@= Was ->(not_compatio(( maplist(print_var,NamedVarsList), nl))) ; true))))),
+           ignore((NamedVarsList \=@= Was ->(not_compatio((
+                reverse(NamedVarsList,NamedVarsListR),
+                maplist(print_var,NamedVarsListR), nop(nl)))) ; true))))),
        (
          (Complete \== true, WasInteractive, DoLeap \== leap,
                 LeashResults > ResNum, ResNum < Max) ->
@@ -297,8 +315,8 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,Output,F
         (((Complete==true ->! ; true)))))
                     *-> (ignore(Result = res(FOut)),ignore(Output = (FOut)))
                     ; (flag(result_num,ResNum,ResNum),(ResNum==0->
-      (only_compatio(write('[')),not_compatio(format('~N<no-results>~n~n')),!,true);true))),
-                    only_compatio(write(']')),user_io(nl),
+      (in_answer_io(nop(write('['))),not_compatio(format('~N<no-results>~n~n')),!,true);true))),
+                    in_answer_io(write(']\n')),
    ignore(Result = res(FOut)).
 
 maybe_assign(N=V):- ignore(V='$VAR'(N)).
@@ -341,6 +359,79 @@ write_bsrc(Var,[]):- write_src(Var).
 write_bsrc(Var,[G|Goals]):- write_src(Var), write(' { '),write_src(G),maplist(write_src_space,Goals),writeln(' } ').
 
 write_src_space(Goal):- write(' '),write_src(Goal).
+
+
+get_term_variables(Term, DontCaresN, CSingletonsN, CNonSingletonsN) :-
+    term_variables(Term, AllVars),
+    get_global_varnames(VNs),
+    writeqln(term_variables(Term, AllVars)=VNs),
+    term_singletons(Term, Singletons),
+    term_dont_cares(Term, DontCares),
+    include(not_in_eq(Singletons), AllVars, NonSingletons),
+    include(not_in_eq(DontCares), NonSingletons, CNonSingletons),
+    include(not_in_eq(DontCares), Singletons, CSingletons),
+    maplist(into_named_vars,[DontCares, CSingletons,  CNonSingletons],
+                           [DontCaresN, CSingletonsN, CNonSingletonsN]),
+    writeqln([DontCaresN, CSingletonsN, CNonSingletonsN]).
+
+term_dont_cares(Term, DontCares):-
+  term_variables(Term, AllVars),
+  get_global_varnames(VNs),
+  include(has_sub_var(AllVars),VNs,HVNs),
+  include(underscore_vars,HVNs,DontCareNs),
+  maplist(arg(2),DontCareNs,DontCares).
+
+into_named_vars(Vars,L):- is_list(Vars), !, maplist(name_for_var_vn,Vars,L).
+into_named_vars(Vars,L):- term_variables(Vars,VVs),!,into_named_vars(VVs,L).
+
+has_sub_var(AllVars,_=V):- sub_var(V,AllVars).
+underscore_vars(V):- var(V),!,name_for_var(V,N),!,underscore_vars(N).
+underscore_vars(N=_):- !, symbolic(N),!,underscore_vars(N).
+underscore_vars(N):- symbolic(N),!,symbol_concat('_',_,N).
+
+get_global_varnames(VNs):- nb_current('variable_names',VNs),VNs\==[],!.
+get_global_varnames(VNs):- prolog_load_context(variable_names,VNs),!.
+maybe_set_var_names(List):- List==[],!.
+maybe_set_var_names(List):- % fbug(maybe_set_var_names(List)),
+   is_list(List),!,nb_linkval(variable_names,List).
+maybe_set_var_names(_).
+
+name_for_var_vn(V,N=V):- name_for_var(V,N).
+
+name_for_var(V,N):- var(V),!,get_global_varnames(VNs),member(N=VV,VNs),VV==V,!.
+name_for_var(N=_,N):- !.
+name_for_var(V,N):- term_to_atom(V,N),!.
+
+
+really_trace:- once(option_value('exec',rtrace);option_value('eval',rtrace);is_debugging((exec));
+  is_debugging((eval))).
+% !(pragma! exec rtrace)
+may_rtrace(Goal):- really_trace,!,  really_rtrace(Goal).
+may_rtrace(Goal):- Goal*->true;( \+ tracing, trace,really_rtrace(Goal)).
+really_rtrace(Goal):- is_transpiling,!,rtrace(call(Goal)).
+really_rtrace(Goal):- with_debug((e),with_debug((exec),Goal)).
+
+rtrace_on_existence_error(G):- !, catch_err(G,E, (fbug(E=G),  \+ tracing, trace, rtrace(G))).
+%rtrace_on_existence_error(G):- catch(G,error(existence_error(procedure,W),Where),rtrace(G)).
+
+%prolog_only(Goal):- !,Goal.
+prolog_only(Goal):- if_trace(prolog,Goal).
+
+write_compiled_exec(Exec,Goal):-
+%  ignore(Res = '$VAR'('ExecRes')),
+  compile_for_exec(Res,Exec,Goal),
+  notrace((color_g_mesg('#114411',print_pl_source(answer2(Res):-Goal)))).
+
+verbose_unify(Term):- verbose_unify(trace,Term).
+verbose_unify(What,Term):- term_variables(Term,Vars),maplist(verbose_unify0(What),Vars),!.
+verbose_unify0(What,Var):- put_attr(Var,verbose_unify,What).
+verbose_unify:attr_unify_hook(Attr, Value) :-
+    format('~N~q~n',[verbose_unify:attr_unify_hook(Attr, Value)]),
+    vu(Attr,Value).
+vu(_Attr,Value):- is_ftVar(Value),!.
+vu(fail,_Value):- !, fail.
+vu(true,_Value):- !.
+vu(trace,_Value):- trace.
 
 
 % Entry point for the user to call with tracing enabled

@@ -162,7 +162,7 @@ op_decl('add-atom', [ 'hyperon::space::DynSpace', 'Atom'], [->]).
 op_decl('get-atoms', [ 'hyperon::space::DynSpace' ], 'Atom').
 
 op_decl('get-state', [[ 'StateMonad', Type]],Type).
-%op_decl('change-state!', [[ 'StateMonad',Type],Type],[->]).
+op_decl('change-state!', [[ 'StateMonad',Type],Type],[ 'StateMonad',Type]).
 op_decl('new-state', [Type], ['StateMonad',Type ]).
 
 op_decl('car-atom', [ 'Expression' ], 'Atom').
