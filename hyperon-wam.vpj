@@ -70,6 +70,36 @@
 	<List Name="RTE">
 	</List>
 	<Files AutoFolders="DirectoryView">
+		<Folder Name="t:/">
+			<Folder Name="root">
+				<Folder Name=".local">
+					<Folder Name="share">
+						<Folder Name="swi-prolog">
+							<Folder Name="pack">
+								<Folder Name="function_expansion">
+									<F
+										N="t:/root/.local/share/swi-prolog/pack/function_expansion/*.*"
+										Recurse="1"
+										Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"/>
+								</Folder>
+								<Folder Name="prolog_graphviz">
+									<F
+										N="t:/root/.local/share/swi-prolog/pack/prolog_graphviz/*.*"
+										Recurse="1"
+										Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"/>
+								</Folder>
+								<Folder Name="prolog_library_collection">
+									<F
+										N="t:/root/.local/share/swi-prolog/pack/prolog_library_collection/*.*"
+										Recurse="1"
+										Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"/>
+								</Folder>
+							</Folder>
+						</Folder>
+					</Folder>
+				</Folder>
+			</Folder>
+		</Folder>
 		<Folder Name="../hyperon-experimental">
 			<F
 				N="../hyperon-experimental/*.*"

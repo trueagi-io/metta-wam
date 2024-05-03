@@ -193,26 +193,28 @@ flag_to_var(Flag,Var):- atom(Flag), \+ atom_concat('trace-on-',_,Flag),!,atom_co
 flag_to_var(metta(Flag),Var):- !, nonvar(Flag), flag_to_var(Flag,Var).
 flag_to_var(Flag,Var):- Flag=Var.
 
-set_debug(Flag,Val):- \+ atom(Flag), flag_to_var(Flag,Var), atom(Var),!,set_debug(Var,Val).
-set_debug(Flag,true):- !, debug(metta(Flag)),flag_to_var(Flag,Var),set_option_value(Var,true).
-set_debug(Flag,false):- nodebug(metta(Flag)),flag_to_var(Flag,Var),set_option_value(Var,false).
+set_debug(metta(Flag),TF):- nonvar(Flag),!,set_debug(Flag,TF).
+%set_debug(Flag,Val):- \+ atom(Flag), flag_to_var(Flag,Var), atom(Var),!,set_debug(Var,Val).
+set_debug(Flag,true):- !, debug(metta(Flag)). %,flag_to_var(Flag,Var),set_fast_option_value(Var,true).
+set_debug(Flag,false):- nodebug(metta(Flag)). %,flag_to_var(Flag,Var),set_fast_option_value(Var,false).
 
 if_trace(Flag,Goal):-
    real_notrace((catch_err(ignore((is_debugging(Flag),Goal)),E,
          fbug(E-->if_trace(Flag,Goal))))).
 
 
-is_showing(Flag):- option_value(Flag,'silent'),!,fail.
+is_showing(Flag):- fast_option_value(Flag,'silent'),!,fail.
 is_showing(Flag):- is_verbose(Flag),!.
-is_showing(Flag):- option_value(Flag,'show'),!.
+is_showing(Flag):- fast_option_value(Flag,'show'),!.
 
 if_show(Flag,Goal):- real_notrace((catch_err(ignore((is_showing(Flag),Goal)),E,
                         fbug(E-->if_show(Flag,Goal))))).
 
 
+fast_option_value(N,V):- nb_current(N,V).
 
-is_verbose(Flag):- option_value(Flag,'silent'),!,fail.
-is_verbose(Flag):- option_value(Flag,'verbose'),!.
+is_verbose(Flag):- fast_option_value(Flag,'silent'),!,fail.
+is_verbose(Flag):- fast_option_value(Flag,'verbose'),!.
 is_verbose(Flag):- is_debugging(Flag),!.
 
 if_verbose(Flag,Goal):- real_notrace((catch_err(ignore((is_verbose(Flag),Goal)),E,
@@ -232,22 +234,22 @@ efbug(_,G):- call(G).
 
 is_debugging_always(_Flag):-!.
 
-
+is_debugging(_):-!,fail.
 is_debugging(Flag):- var(Flag),!,fail.
 is_debugging((A;B)):- !, (is_debugging(A) ; is_debugging(B) ).
 is_debugging((A,B)):- !, (is_debugging(A) , is_debugging(B) ).
 is_debugging(not(Flag)):- !,  \+ is_debugging(Flag).
 is_debugging(Flag):- Flag== false,!,fail.
 is_debugging(Flag):- Flag== true,!.
-%is_debugging(e):- is_testing, \+ option_value(compile,'full'),!.
+%is_debugging(e):- is_testing, \+ fast_option_value(compile,'full'),!.
 %is_debugging(e):- is_testing,!.
 %is_debugging(eval):- is_testing,!.
-is_debugging(Flag):- option_value(Flag,'debug'),!.
-is_debugging(Flag):- option_value(Flag,'trace'),!.
+is_debugging(Flag):- fast_option_value(Flag,'debug'),!.
+is_debugging(Flag):- fast_option_value(Flag,'trace'),!.
 is_debugging(Flag):- debugging(metta(Flag),TF),!,TF==true.
-is_debugging(Flag):- debugging(Flag,TF),!,TF==true.
-is_debugging(Flag):- once(flag_to_var(Flag,Var)),
-   (option_value(Var,true)->true;(Flag\==Var -> is_debugging(Var))).
+%is_debugging(Flag):- debugging(Flag,TF),!,TF==true.
+%is_debugging(Flag):- once(flag_to_var(Flag,Var)),
+%  (fast_option_value(Var,true)->true;(Flag\==Var -> is_debugging(Var))).
 
 % overflow = trace
 % overflow = fail

@@ -75,7 +75,6 @@
 
 :- set_prolog_flag(pfc_term_expansion,false).
 
-:- break.
 
 params_and_return_type([->|TypeList],Len,Params,Ret):-
    append(Params,[Ret], TypeList),
@@ -197,6 +196,54 @@ metta_defn(KB,[F|Args],BodyFn),really_compile(KB,F,Len)/length(Args,Len)==>
 really_compile_src(KB,F,Len,Args,BodyFn),
    {compile_metta_defn(KB,F,Len,Args,BodyFn,Clause)}
        ==> (compiled_clauses(KB,F,Clause)).
+
+
+
+%:- ensure_loaded('metta_ontology_level_1.pfc').
+
+
+
+
+a==>b.
+b==>bb.
+
+a.
+:- b.
+:- bb.
+
+%:- pfcWhy1(a).
+%:- pfcWhy1(b).
+
+:- set_prolog_flag(expect_pfc_file,never).
+:- set_prolog_flag(pfc_term_expansion,false).
+
+
+test_fwc:-
+  pfcAdd_Now(c(X)==>d(X)),
+  pfcAdd_Now(c(1)),
+  c(_),
+  d(_),
+  pfcWhy1(c(_)),
+  pfcWhy1(d(_)),
+  pfcAdd(e(2)),
+  e(_),
+  pfcAdd(e(X)<==>f(X)),
+  f(_),
+  pfcWhy1(e(_)),
+  pfcWhy1(f(_)).
+
+
+%:- forall(==>(X,Y),pfcFwd(==>(X,Y))).
+
+%:- break.
+
+%:- must_det_ll(property('length',list_operations)).
+
+
+
+
+end_of_file.
+
 
 
 /*
@@ -412,43 +459,3 @@ properties('&corelib','tuple-count', [data_structures, qhelp("Counts tuples with
 %properties('&corelib','collapseCardinality', [data_structures, qhelp("Collapses structures with cardinality consideration."), manipulation, cardinality]).
 
 
-
-%:- ensure_loaded('metta_ontology_level_1.pfc').
-
-
-
-
-a==>b.
-b==>bb.
-
-a.
-:- b.
-:- bb.
-
-%:- pfcWhy1(a).
-%:- pfcWhy1(b).
-
-:- set_prolog_flag(expect_pfc_file,never).
-:- set_prolog_flag(pfc_term_expansion,false).
-
-
-test_fwc:-
-  pfcAdd_Now(c(X)==>d(X)),
-  pfcAdd_Now(c(1)),
-  c(_),
-  d(_),
-  pfcWhy1(c(_)),
-  pfcWhy1(d(_)),
-  pfcAdd(e(2)),
-  e(_),
-  pfcAdd(e(X)<==>f(X)),
-  f(_),
-  pfcWhy1(e(_)),
-  pfcWhy1(f(_)).
-
-
-%:- forall(==>(X,Y),pfcFwd(==>(X,Y))).
-
-%:- break.
-
-%:- must_det_ll(property('length',list_operations)).

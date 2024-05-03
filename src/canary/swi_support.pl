@@ -57,15 +57,14 @@ option_else0( N,V,_Else):- was_option_value(N,VV),!,VV=V.
 option_else0(_N,V, Else):- !,V=Else.
 
 %option_value( N,V):- var(V), !, notrace(once(((option_value0(N,V))))).
-option_value(N,V):- var(V), !, option_value0( N,VV), once((p2m(VV,V2),p2m(V,V1))), V1=V2.
+option_value(N,V):- var(V), !, was_option_value( N,VV), once((p2mE(VV,V2),p2mE(V,V1))), V1=V2.
 option_value(N,V):- V==true,option_value0(N,'True'),!.
 option_value(N,V):- V==false,option_value0(N,'False'),!.
-option_value(N,V):- notrace(once(((p2mE(V,VV),option_value0(N,VV))))).
+option_value(N,V):- notrace(option_value0(N,V)).
 
 
-option_value0( N,V):- var(V), !,  was_option_value( N,V).
-option_value0( N,V):- nonvar(V), option_value0( N,VV), once((p2m(VV,V2),p2m(V,V1))), V1=V2.
-option_value0( N,V):- option_else0( N,V ,[]).
+option_value0( N,V):- was_option_value( N,VV), once((p2mE(VV,V2),p2mE(V,V1))), V1=V2.
+option_value0(_N,[]).
 
 p2mE(NA,NA):- \+ atom(NA),!.
 p2mE(false,'False').
@@ -80,7 +79,8 @@ set_option_value0(N,V):-
    catch(create_prolog_flag(N,PV,[keep(false),access(read_write), type(term)]),E2,fbug(E2)),
    catch(set_prolog_flag(N,PV),E3,fbug(E3)),!.
 
-kaggle_arc:- \+ exists_directory('/opt/logicmoo_workspace/packs_sys/logicmoo_agi/prolog/kaggle_arc/'), !.
+kaggle_arc:- \+ exists_directory('/opt/logicmoo_workspace/packs_sys/logicmoo_agi/prolog/kaggle_arc/'),
+ !.
 %kaggle_arc:- !.
 kaggle_arc:-
    with_option(argv,['--libonly'],

@@ -205,7 +205,7 @@ get_type_each(_Dpth,Self,Var,Type):- var(Var),!,
 get_type_each(Depth,Self,Val,Type):- \+ compound(Val),!, get_type_nc(Depth,Self,Val,Type).
 
 get_type_each(Depth,Self,Val,Type):-
- %ignore(check_bad_type(Depth,Self,Val)),
+ if_t(option_value('type-check',auto),check_bad_type(Depth,Self,Val)),
  if_or_else((get_type_cmpd(Depth,Self,Val,Type,How),trace_get_type(How,Type,gt(Val))),
     (trace_get_type('FAILED','',gt(Val)),fail)).
 
@@ -245,6 +245,8 @@ badly_typed_expression(Depth,Self,[Op|Args]):-
   args_violation(Depth,Self,Args,ArgTypes),
   !.
 
+:- nodebug(metta(types)).
+:- nodebug(types).
 trace_get_type(How,Type,Val):-
   if_trace(types,
     color_g_mesg('#7f2f2f',
@@ -342,6 +344,7 @@ state_decltype(Expr,Type):- functor(Expr,_,A),
 
 get_value_type(_Dpth,_Slf,Var,'%Undefined%'):- var(Var),!.
 get_value_type(_Dpth,_Slf,Val,'Number'):- number(Val),!.
+get_value_type(_Dpth,_Slf,Val,'String'):- string(Val),!.
 get_value_type(_Dpth,_Slf,Val,T):- get_type(_Dpth,_Slf,Val,T), T\==[], T\=='%Undefined%',!.
 get_value_type(_Dpth,_Slf,Val,T):- 'get-metatype'(Val,T).
 
@@ -458,8 +461,6 @@ add_type(_Depth,_Self,_Var,TypeL,Type):-
 add_type(_Depth,Self,_Var,TypeL,Type):-
     append([Type],TypeL,TypeList),
   put_attr(Var,metta_type,Self=TypeList).
-
-
 
 
 can_assign(Was,Type):- Was=Type,!.
