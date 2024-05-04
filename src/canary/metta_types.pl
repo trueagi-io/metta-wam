@@ -463,6 +463,8 @@ add_type(_Depth,Self,_Var,TypeL,Type):-
   put_attr(Var,metta_type,Self=TypeList).
 
 
+
+
 can_assign(Was,Type):- Was=Type,!.
 can_assign(Was,Type):- (is_nonspecific_type(Was);is_nonspecific_type(Type)),!.
 can_assign(Was,Type):- \+ cant_assign_to(Was,Type).

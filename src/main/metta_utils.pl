@@ -14,6 +14,13 @@
 %:- ensure_loaded(library(dictoo)).
 :- endif.
 
+
+
+:- dynamic(done_once/1).
+do_once(G):-
+  ((done_once(GG),GG=@=G) -> true
+  ;(assert(done_once(G)),(once(@(G,user))->true;retract(done_once(G))))).
+
 cleanup_debug:-
   forall(
     (clause(prolog_debug:debugging(A1,B,C),Body,Cl1), 
@@ -332,18 +339,19 @@ main_debug:- main_thread,current_prolog_flag(debug,true).
 cant_rrtrace:- nb_setval(cant_rrtrace,t).
 can_rrtrace:- nb_setval(cant_rrtrace,f).
 %md_failed(P1,X):- predicate_property(X,number_of_clauses(1)),clause(X,(A,B,C,Body)), (B\==!),!,must_det_ll(A),must_det_ll((B,C,Body)).
-md_failed(P1,G):- never_rrtrace,!,notrace,/*notrace*/(u_dmsg(md_failed(P1,G))),!,throw(md_failed(P1,G,2)).
+
+md_failed(P1,X):- notrace((write_src_uo(failed(P1,X)),fail)).
+md_failed(P1,X):- tracing,visible_rtrace([-all,+fail,+call,+exception],call(P1,X)).
+md_failed(P1,X):- \+ tracing, !, visible_rtrace([-all,+fail,+exit,+call,+exception],call(P1,X)).
+md_failed(P1,G):- is_cgi, \+ main_debug, !, u_dmsg(arc_html(md_failed(P1,G))),fail.
 md_failed(_P1,G):- option_value(testing,true),!,
   T='FAILEDDDDDDDDDDDDDDDDDDDDDDDDDD!!!!!!!!!!!!!'(G),
   write_src_uo(T), give_up(T,G).
-
+md_failed(P1,G):- never_rrtrace,!,notrace,/*notrace*/(u_dmsg(md_failed(P1,G))),!,throw(md_failed(P1,G,2)).
+%md_failed(P1,G):- tracing,call(P1,G).
 md_failed(_,_):- never_rrtrace,!,fail.
-md_failed(P1,G):- tracing,/*notrace*/(u_dmsg(md_failed(P1,G))),!,fail.
+md_failed(P1,X):- notrace,is_guitracer,u_dmsg(failed(X))/*,arcST*/,nortrace,atrace,call(P1,X).
 md_failed(P1,G):- main_debug,/*notrace*/(write_src_uo(md_failed(P1,G))),!,throw(md_failed(P1,G,2)).
-md_failed(P1,G):- is_cgi,!, u_dmsg(arc_html(md_failed(P1,G))).
-md_failed(P1,X):- notrace,is_guitracer,u_dmsg(failed(X))/*,arcST*/,nortrace,atrace, call(P1,X).
-md_failed(P1,X):-  /*,arcST*/nortrace,write_src_uo(failed(P1,X)),atrace, %stack_dump,
- trace,visible_rtrace([-all,+fail,+call,+exception],X).
 % must_det_ll(X):- must_det_ll(X),!.
 
 write_src_uo(G):-

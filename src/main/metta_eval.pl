@@ -490,36 +490,27 @@ eval_20(_Eq,_OuterRetType,_Depth,_Self,[P,_,B],_):-P=='/',B==0,!,fail.
 eval_20(Eq,RetType,Depth,Self,['assertTrue', X],TF):- !, eval(Eq,RetType,Depth,Self,['assertEqual',X,'True'],TF).
 eval_20(Eq,RetType,Depth,Self,['assertFalse',X],TF):- !, eval(Eq,RetType,Depth,Self,['assertEqual',X,'False'],TF).
 
-eval_20(Eq,_RetType,Depth,Self,['assertEqual',X,Y],RetVal):- !,
-   loonit_assert_source_tf_empty(
-        ['assertEqual',X,Y],XX,YY,
-        (bagof_eval(Eq,_ARetType,Depth,Self,X,XX),
-         bagof_eval(Eq,_BRetType,Depth,Self,Y,YY)),
-         equal_enough_for_test(XX,YY), RetVal).
+eval_20(Eq,RetType,Depth,Self,['assertEqual',X,Y],RetVal):- !,
+   loonit_assert_source_tf(
+        ['assertEqual',X,Y],
+        (bagof_eval(Eq,RetType,Depth,Self,X,XX), bagof_eval(Eq,RetType,Depth,Self,Y,YY)),
+         equal_enough_for_test(XX,YY), TF),
+  (TF=='True'->make_empty(RetType,RetVal);RetVal=['Error'(XX,expected(YY))]).
 
-eval_20(Eq,_RetType,Depth,Self,['assertNotEqual',X,Y],RetVal):- !,
-   loonit_assert_source_tf_empty(
-        ['assertNotEqual',X,Y],XX,YY,
-        (bagof_eval(Eq,_ARetType,Depth,Self,X,XX),
-         bagof_eval(Eq,_BRetType,Depth,Self,Y,YY)),
-         ( \+ equal_enough(XX,YY)), RetVal).
+eval_20(Eq,RetType,Depth,Self,['assertNotEqual',X,Y],RetVal):- !,
+   loonit_assert_source_tf(
+        ['assertEqual',X,Y],
+        (bagof_eval(Eq,RetType,Depth,Self,X,XX), bagof_eval(Eq,RetType,Depth,Self,Y,YY)),
+         ( \+ equal_enough(XX,YY)), TF),
+  (TF=='True'->make_empty(RetType,RetVal);RetVal=['Error'(XX,expected(YY))]).
 
-eval_20(Eq,_RetType,Depth,Self,['assertEqualToResult',X,Y],RetVal):- !,
-   loonit_assert_source_tf_empty(
-        ['assertEqualToResult',X,Y],XX,YY,
-        (bagof_eval(Eq,_ARetType,Depth,Self,X,XX),
-         val_sort(Y,YY)),
-         equal_enough_for_test(XX,YY), RetVal).
+eval_20(Eq,RetType,Depth,Self,['assertEqualToResult',X,Y],RetVal):- !,
+   loonit_assert_source_tf(
+        ['assertEqualToResult',X,Y],
+        (bagof_eval(Eq,RetType,Depth,Self,X,XX), sort(Y,YY)),
+         equal_enough_for_test(XX,YY), TF),
+  (TF=='True'->make_empty(RetType,RetVal);RetVal=['Error'(XX,expected(YY))]).
 
-loonit_assert_source_tf_empty(Src,XX,YY,Goal,Check,RetVal):-
-    loonit_assert_source_tf(Src,Goal,Check,TF),
-    tf_to_empty(TF,RetVal,['Error'(got(XX),expected(YY))]).
-
-tf_to_empty(TF,Else,RetVal):-
-  (TF=='True'->make_empty(_RetType,RetVal);RetVal=Else).
-  
-val_sort(Y,YY):- is_list(Y),!,sort(Y,YY).
-val_sort(Y,[Y]).
 
 loonit_assert_source_tf(_Src,Goal,Check,TF):- \+ is_testing,!,
     reset_eval_num,
@@ -549,26 +540,34 @@ unify_enough(L,C):- into_list_args(L,LL),into_list_args(C,CC),unify_lists(CC,LL)
 unify_lists(L,L):-!.
 unify_lists([C|CC],[L|LL]):- unify_enough(L,C),!,unify_lists(CC,LL).
 
-%s_empty(X):- var(X),!.
-s_empty(X):- var(X),!,fail.
-is_empty('Empty').
-is_empty([]).
-is_empty([X]):-!,is_empty(X).
+is_blank(X):- var(X),!,fail.
+is_blank('Empty').
+is_blank([]).
+is_blank([X]):-!,is_blank(X).
 has_let_star(Y):- sub_var('let*',Y).
 
-
+sort_univ(L,S):- list_to_set(L,E),sort(E,S).
 % !(pragma! unit-tests tollerant) ; tollerant or exact
 is_tollerant:- \+ option_value('unit-tests','exact').
 
-equal_enough_for_test(X,Y):- is_empty(X),!,is_empty(Y).
-equal_enough_for_test(X,Y):- has_let_star(Y),!,\+ is_empty(X).
-equal_enough_for_test(X,Y):- must_det_ll((subst_vars(X,XX),subst_vars(Y,YY))),!,equal_enough_for_test2(XX,YY),!.
+equal_enough_for_test(X,Y):- X==Y,!.
+equal_enough_for_test(X,Y):- X=@=Y,!.
+equal_enough_for_test(X,Y):- is_blank(X),!,is_blank(Y).
+equal_enough_for_test(X,Y):- has_let_star(Y),!,\+ is_blank(X).
+equal_enough_for_test(X,Y):- is_list(X),is_list(Y),
+   Y=[YY],X=[XX],!,equal_enough_for_test(XX,YY).
+   %length(XX,XL),length(YY,YL),
+
+%equal_enough_for_test(X,Y):-!,fail.
+
+equal_enough_for_test(X,Y):- must_det_ll((subst_vars(X,XX),subst_vars(Y,YY))),!,
+  equal_enough_for_test2(XX,YY),!.
 equal_enough_for_test2(X,Y):- equal_enough(X,Y).
 
-equal_enough(R,V):- is_list(R),is_list(V),sort(R,RR),sort(V,VV),!,equal_enouf(RR,VV),!.
+equal_enough(R,V):- is_list(R),is_list(V),sort_univ(R,RR),sort_univ(V,VV),!,equal_enouf(RR,VV),!.
 equal_enough(R,V):- copy_term(R,RR),copy_term(V,VV),equal_enouf(R,V),!,R=@=RR,V=@=VV.
 equal_enouf(R,V):- is_ftVar(R), is_ftVar(V), R=V,!.
-equal_enouf(X,Y):- is_empty(X),!,is_empty(Y).
+equal_enouf(X,Y):- is_blank(X),!,is_blank(Y).
 equal_enouf(X,Y):- symbol(X),symbol(Y),atom_concat('&',_,X),atom_concat('Grounding',_,Y).
 equal_enouf(R,V):- R=@=V, R=V, !.
 equal_enouf(_,V):- V=@='...',!.
@@ -1788,6 +1787,8 @@ setof_eval(Eq,RetType,Depth,Self,X,S):- bagof_eval(Eq,RetType,Depth,Self,X,L),
 
 eval_ne(Eq,RetType,Depth,Self,X,E):-
   eval(Eq,RetType,Depth,Self,X,E), \+ var(E), \+ is_empty(E).
+
+is_empty(E):- nonvar(E), sub_var('Empty',E),!.
 
 
 :- ensure_loaded(metta_subst).
