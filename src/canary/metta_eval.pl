@@ -195,7 +195,7 @@ eval(Eq,RetType,Depth,Self,X,Y):- atom(Eq),  ( Eq \== ('='),  Eq \== ('match')) 
 
 %eval(_Eq,_RetType,_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
 eval(Eq,RetType,Depth,Self,X,Y):- 
-  eval_00(Eq,RetType,Depth,Self,X,Y).
+  eval_ret(Eq,RetType,Depth,Self,X,Y).
 
 eval_ret(Eq,RetType,Depth,Self,X,Y):-
   eval_00(Eq,RetType,Depth,Self,X,Y), is_returned(Y).
@@ -211,16 +211,16 @@ allow_repeats_eval_f('collapse').
 
 :- nodebug(metta(overflow)).
 eval_00(_Eq,_RetType,_Depth,_Slf,X,Y):- self_eval(X),!,X=Y.
-eval_00(Eq,RetType,Depth,Self,X,YO):- eval_01(Eq,RetType,Depth,Self,X,YO).
+eval_00(Eq,RetType,Depth,Self,X,YO):- 
+  eval_01(Eq,RetType,Depth,Self,X,YO). %, is_returned(YO).
 eval_01(Eq,RetType,Depth,Self,X,YO):-
     if_t((Depth<1, trace_on_overflow),
-      debug(metta(eval))),debug(metta(e)),
-   notrace((Depth2 is Depth-1,
-   copy_term(X, XX))),
+         (debug(metta(eval)),debug(metta(e)))),         
+   notrace((Depth2 is Depth-1,copy_term_g(X, XX))),
     trace_eval(eval_20(Eq,RetType),e,Depth2,Self,X,M),
-   (self_eval(M)-> YO=M ;
-   (((M=@=XX)-> Y=M
-      ;eval_01(Eq,RetType,Depth2,Self,M,Y)),
+   (self_eval(M)
+    -> YO=M ;
+   (((M=@=XX)-> Y=M ;eval_01(Eq,RetType,Depth2,Self,M,Y)),
    eval_02(Eq,RetType,Depth2,Self,Y,YO))).
 
 eval_02(Eq,RetType,Depth2,Self,Y,YO):-
@@ -1302,7 +1302,9 @@ finish_eval(_Eq,_RetType,_Dpth,_Slf,[],[]):-!.
 finish_eval(Eq,RetType,Depth,Self,[F|LESS],Res):-
      once(eval_selfless(Eq,RetType,Depth,Self,[F|LESS],Res)),fake_notrace([F|LESS]\==Res),!.
 %finish_eval(Eq,RetType,Depth,Self,[V|Nil],[O]):- Nil==[], once(eval(Eq,RetType,Depth,Self,V,O)),V\=@=O,!.
-finish_eval(Eq,RetType,Depth,Self,[H|T],[HH|TT]):- !, eval(Depth,Self,H,HH), finish_eval(Eq,RetType,Depth,Self,T,TT).
+finish_eval(Eq,RetType,Depth,Self,[H|T],[HH|TT]):- !, 
+   eval(Depth,Self,H,HH),
+   finish_eval(Eq,RetType,Depth,Self,T,TT).
 finish_eval(_Eq,_RetType,Depth,Self,T,TT):- eval(Depth,Self,T,TT).
 
    %eval(Eq,RetType,Depth,Self,X,Y):- eval_20(Eq,RetType,Depth,Self,X,Y)*->true;Y=[].
@@ -2078,7 +2080,8 @@ findall_ne(E,Call,L):-
    findall(E,(rtrace_on_error(Call), is_returned(E)),L).
 
 eval_ne(Eq,RetType,Depth,Self,Funcall,E):-
-  eval(Eq,RetType,Depth,Self,Funcall,E).
+  ((eval(Eq,RetType,Depth,Self,Funcall,E))
+    *-> is_returned(E);(fail,E=Funcall)).
 
 is_returned(E):- \+ is_empty(E).
 is_empty(E):- nonvar(E), sub_var('Empty',E),!.
