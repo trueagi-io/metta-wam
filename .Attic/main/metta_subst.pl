@@ -122,6 +122,36 @@ subst_args0(Eq,RetType,Depth,Self,X,Y):-
   trace_eval(subst_args1(Eq,RetType),((e2;e)),Depth,Self,X,M),
   (M\=@=X ->subst_args0(Eq,RetType,Depth2,Self,M,Y);Y=X).
 
+subst_args11(Eq,RetType,Depth,Self,X,Y):- \+ is_debugging((subst_args)),!,
+  D1 is Depth-1,
+  subst_args1(Eq,RetType,D1,Self,X,Y).
+subst_args11(Eq,RetType,Eq,RetType,Depth,Self,X,Y):-
+ notrace((
+
+  flag(subst_args_num,EX,EX+1),
+  D1 is Depth-1,
+  DR is 99-D1,
+  PrintRet = _,
+  option_else('trace-length',Max,100),
+  if_t((EX>Max), (set_debug(subst_args,false),MaxP1 is Max+1, set_debug(overflow,false),
+      format('; Switched off tracing. For a longer trace: !(pragma! trace-length ~w)',[MaxP1]))),
+  nop(notrace(no_repeats_var(YY))),
+
+  if_t(DR<10,if_trace((subst_args),(PrintRet=1, indentq(DR,EX, '-->',subst(X))))),
+  Ret=retval(fail))),
+
+  call_cleanup((
+    (subst_args1(Eq,RetType,D1,Self,X,Y)),
+    notrace(( \+ (Y\=YY), nb_setarg(1,Ret,Y)))),
+
+    (PrintRet==1 -> indentq(DR,EX,'<--',Ret) ;
+    mnotrace(ignore(((Y\=@=X,
+      if_t(DR<10,if_trace((subst_args),indentq(DR,EX,'<--',s(Ret)))))))))),
+
+  (Ret\=@=retval(fail)->true;(rtrace(subst_args_00(Eq,RetType,D1,Self,X,Y)),fail)).
+
+
+
 :- discontiguous subst_args1/6.
 :- discontiguous subst_args2/6.
 
@@ -152,9 +182,7 @@ subst_args1(Eq,RetType,Depth,Self,['let*',[[Var,Val]|LetRest],Body],RetVal):- !,
     is_sl_op('>').  is_sl_op('<'). %  is_sl_op('>').
     is_sl_op('\\=@=').
 
-subst_args1(Eq,RetType,Depth,Self,[OP,N1,N2],TF):- 
-  fail,  
-  is_sl_op(OP), !,
+subst_args1(Eq,RetType,Depth,Self,[OP,N1,N2],TF):- fail,  is_sl_op(OP), !,
   ((subst_args(Eq,RetType,Depth,Self,N1,N1Res),subst_args(Eq,RetType,Depth,Self,N2,N2Res),
      ((N1,N2)\=@=(N1Res,N2Res)),subst_args1(Eq,RetType,Depth,Self,[OP,N1Res,N2Res],TF))
      *->true;

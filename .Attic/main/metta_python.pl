@@ -104,20 +104,6 @@ py_call_c(G,R):- py_catch(py_call(G,R)).
 
 py_is_module(M):-notrace((with_safe_argv(catch((py_call(M,X),py_type(X,module)),_,fail)))).
 
-import_metta(Self,Module):- py_is_module(Module),!,
- must_det_ll(self_extend_py(Self,Module)),!.
-import_metta(Self,Filename):-
-  (\+ symbol(Filename); \+ exists_file(Filename)),!,
-  must_det_ll(with_wild_path(import_metta(Self),Filename)),!.
-import_metta(Self,RelFilename):-
-  must_det_ll((
-     symbol(RelFilename),
-     exists_file(RelFilename),
-     absolute_file_name(RelFilename,Filename),
-     directory_file_path(Directory, _, Filename),
-     assert(metta_file(Self,Filename,Directory)),
-     include_metta_directory_file(Self,Directory, Filename))).
-
 
 ensure_space_py(Space,GSpace):- py_is_object(Space),!,GSpace=Space.
 ensure_space_py(Space,GSpace):- var(Space),ensure_primary_metta_space(GSpace), Space=GSpace.
@@ -141,7 +127,7 @@ ensure_mettalog_py(MettaLearner):- is_mettalog(MettaLearner),!.
 ensure_mettalog_py(MettaLearner):-
    with_safe_argv(
    (want_py_lib_dir,
-    py_call('mettalog',MettaLearner),
+    %py_call('mettalog',MettaLearner),
     %py_call('motto',_),
     %py_call('motto.sparql_gate':'sql_space_atoms'(),Res1),pybug(Res1),
     %py_call('motto.llm_gate':'llmgate_atoms'(MeTTa),Res2),pybug(Res2),
@@ -464,7 +450,7 @@ on_restore1:- ensure_mettalog_py.
 :- prolog_load_context(directory, ChildDir),
    file_directory_name(ChildDir, ParentDir),
    file_directory_name(ParentDir, GParentDir),
-   assert(want_py_lib_dir(GParentDir)).
+   pfcAdd_Now(want_py_lib_dir(GParentDir)).
 
 want_py_lib_dir:-
    with_safe_argv((forall(want_py_lib_dir(GParentDir),
