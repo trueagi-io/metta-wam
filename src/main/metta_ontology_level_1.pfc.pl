@@ -42,7 +42,7 @@
 
 :- style_check(-discontiguous).
 %:- enable_mpred_expansion.
-:- expects_dialect(pfc).
+%:- expects_dialect(pfc).
 
 /*
 :- dynamic   lmcache:session_io/4, lmcache:session_agent/2, lmcache:agent_session/2,   telnet_fmt_shown/3,   agent_action_queue/3).
@@ -99,7 +99,7 @@ f_arity('NonaryFunction', 9).
 % Automatically generating equivalency rules based on the arity of predicates and functions.
 % This facilitates a dynamic and flexible understanding of function and predicate equivalences,
 % enhancing Prolog's expressive power and semantic richness.
-(((p_arity(PredType,PA), plus(FA,1,PA), f_arity(FunctType,FA)))
+(((p_arity(PredType,PA), {plus(FA,1,PA), FA>=0}, f_arity(FunctType,FA)))
   ==> equivalentTypes(PredType,FunctType)).
 
 
