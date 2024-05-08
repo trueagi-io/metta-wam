@@ -83,6 +83,8 @@
 :-multifile(user:metta_file/3).
 :-dynamic(user:metta_file/3).
 
+:- multifile(reset_cache/0).
+
     :-multifile(metta_type/3).
     :-dynamic(metta_type/3).
 
@@ -523,13 +525,6 @@ show_options_values:-
 % Example: If Actual evaluates to the Expected value, this would succeed, setting Result to true (or some success indicator).
 'assertEqualToResult'(Expected, Actual, Result):- eval_H(['assertEqualToResult', Expected, Actual], Result).
 
-% `assertFalse` Predicate
-% This predicate is used to assert that the evaluation of EvalThis is false.
-% EvalThis: The expression that is being evaluated and checked for falsehood.
-% Result: The result of the evaluation.
-% Example: `assertFalse((1 > 2), Result).` would succeed, setting Result to true (or some success indicator), as 1 > 2 is false.
-'assertFalse'(EvalThis, Result):- eval_H(['assertFalse', EvalThis], Result).
-
 % `assertNotEqual` Predicate
 % This predicate asserts that the Expected value is not equal to the Actual value.
 % Expected: The value that is expected not to match the Actual value.
@@ -538,12 +533,20 @@ show_options_values:-
 % Example: `assertNotEqual(5, 6, Result).` would succeed, setting Result to true (or some success indicator).
 'assertNotEqual'(Expected, Actual, Result):- eval_H(['assertNotEqual', Expected, Actual], Result).
 
-% `assertEqual` Predicate
+
+% `assertFalse` Predicate
+% This predicate is used to assert that the evaluation of EvalThis is false.
+% EvalThis: The expression that is being evaluated and checked for falsehood.
+% Result: The result of the evaluation.
+% Example: `assertFalse((1 > 2), Result).` would fail, setting Result to False (or some success indicator), as 1 > 2 is false.
+'assertFalse'(EvalThis, Result):- eval_H(['assertFalse', EvalThis], Result).
+
+% `assertTrue` Predicate
 % This predicate is used to assert that the evaluation of EvalThis is true.
 % EvalThis: The expression that is being evaluated and checked for truth.
 % Result: The result of the evaluation.
-% Example: `assertEqual((2 > 1), Result).` would succeed, setting Result to true (or some success indicator), as 2 > 1 is true.
-'assertEqual'(EvalThis, Result):- eval_H(['assertEqual', EvalThis], Result).
+% Example: `assertTrue((2 > 1), Result).` would succeed, setting Result to true (or some success indicator), as 2 > 1 is true.
+'assertTrue'(EvalThis, Result):- eval_H(['assertTrue', EvalThis], Result).
 
 % `rtrace` Predicate
 % This predicate is likely used for debugging; possibly for tracing the evaluation of Condition.
@@ -936,8 +939,24 @@ rtrace_on_error(G):-
     catch(rtrace(G),E,throw(give_up(E=G))),
     throw(E))).
 
+rtrace_on_failure(G):- tracing,!,call(G).
 rtrace_on_failure(G):-
-  catch_err((G*->true;rtrace(G)),E,
+  catch_err((G*->true;(write_src_uo(rtrace_on_failure(G)),
+                       ignore(rtrace(G)),
+                       write_src_uo(rtrace_on_failure(G)),
+                       !,fail)),E,
+   (notrace,
+    write_src_uo(E=G),
+    %catch(rtrace(G),E,throw(E)),
+    catch(rtrace(G),E,throw(give_up(E=G))),
+    throw(E))).
+
+rtrace_on_failure_and_break(G):- tracing,!,call(G).
+rtrace_on_failure_and_break(G):-
+  catch_err((G*->true;(write_src(rtrace_on_failure(G)),
+                       ignore(rtrace(G)),
+                       write_src(rtrace_on_failure(G)),
+                       !,break,fail)),E,
    (notrace,
     write_src_uo(E=G),
     %catch(rtrace(G),E,throw(E)),
@@ -1397,8 +1416,8 @@ into_metta_callable(Self,TermV,CALL,X,NamedVarsList,Was):-!,
 eval_S(Self,Form):- nonvar(Form),
   current_self(SelfS),SelfS==Self,!,
   do_metta(true,exec,Self,Form,_Out).
-eval_H(Term,X):- eval_args(Term,X).
-eval_H(StackMax,Self,Term,X):-  eval_args('=',_,StackMax,Self,Term,X).
+eval_H(Term,X):- catch_metta_return(eval_args(Term,X),X).
+eval_H(StackMax,Self,Term,X):-  catch_metta_return(eval_args('=',_,StackMax,Self,Term,X),X).
 /*
 eval_H(StackMax,Self,Term,X).
 
@@ -1438,7 +1457,7 @@ call_max_time(Goal, MaxTime, Else) :-
     catch(if_or_else(call_with_time_limit(MaxTime, Goal),Else), time_limit_exceeded, Else).
 
 
-catch_err(G,E,C):- catch(G,E,(notrace(if_t(always_rethrow(E),throw(E))),C)).
+catch_err(G,E,C):- catch(G,E,(always_rethrow(E)->(throw(E));C)).
 dont_give_up(G):- catch(G,give_up(E),write_src_uo(dont_give_up(E))).
 
 not_in_eq(List, Element) :-
