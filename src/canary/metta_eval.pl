@@ -1266,7 +1266,9 @@ finish_eval(_Eq,_RetType,_Dpth,_Slf,[],[]):-!.
 finish_eval(Eq,RetType,Depth,Self,[F|LESS],Res):-
      once(eval_selfless(Eq,RetType,Depth,Self,[F|LESS],Res)),fake_notrace([F|LESS]\==Res),!.
 %finish_eval(Eq,RetType,Depth,Self,[V|Nil],[O]):- Nil==[], once(eval(Eq,RetType,Depth,Self,V,O)),V\=@=O,!.
-finish_eval(Eq,RetType,Depth,Self,[H|T],[HH|TT]):- !, eval(Depth,Self,H,HH), finish_eval(Eq,RetType,Depth,Self,T,TT).
+finish_eval(Eq,RetType,Depth,Self,[H|T],[HH|TT]):- !, 
+    eval(Depth,Self,H,HH), 
+    finish_eval(Eq,RetType,Depth,Self,T,TT).
 finish_eval(_Eq,_RetType,Depth,Self,T,TT):- eval(Depth,Self,T,TT).
 
    %eval(Eq,RetType,Depth,Self,X,Y):- eval_20(Eq,RetType,Depth,Self,X,Y)*->true;Y=[].
