@@ -135,27 +135,6 @@ not_arg_violation(Depth,Self,Arg,Type):-
    \+ arg_violation(Depth,Self,Arg,Type).
 
 
-ignored_args_conform(Depth,Self,A,L):- ( \+ iz_conz(Args); \+ iz_conz(List)), !.
-ignored_args_conform(Depth,Self,A,L):- maplist(ignored_arg_conform(Depth,Self),A,L).
-ignored_arg_conform(Depth,Self,A,L):- nonvar(L), is_nonspecific_type(L),!.
-ignored_arg_conform(Depth,Self,A,L):- get_type(Depth,Self,A,T), type_conform(T,L),!.
-ignored_arg_conform(Depth,Self,_,_):- !.
-
-args_conform(_Dpth,_Slf,Args,List):- ( \+ iz_conz(Args); \+ iz_conz(List)), !.
-args_conform(Depth,Self,[A|Args],[L|List]):-
-  arg_conform(Depth,Self,A,L), args_conform(Depth,Self,Args,List).
-
-arg_conform(_Dpth,_Slf,_A,L):- nonvar(L), is_nonspecific_type(L),!.
-    arg_conform(Depth,Self,A,L):- get_type(Depth,Self,A,T), type_conform(T,L),!.
-%arg_conform(_Dpth,_Slf,_,_).
-%arg_conform(Depth,Self,A,_):- get_type(Depth,Self,A,_),!.
-
-type_conform(T,L):- T=L,!.
-type_conform(T,L):- \+ \+ (is_nonspecific_type(T);is_nonspecific_type(L)),!.
-type_conform(T,L):- can_assign(T,L).
-
-
-
 get_types(Depth,Self,Var,TypeSet):-
    setof(Type,get_type_each(Depth,Self,Var,Type),TypeSet).
 
@@ -423,6 +402,52 @@ adjust_argsB(_Eq,_RetType,Res,Res,Depth,Self,_,X,Y):- as_prolog(Depth,Self,X,Y),
 eval_1_arg(Eq,ReturnType,Depth,Self,Arg,Adjusted):-
   if_or_else(eval(Eq,ReturnType,Depth,Self,Arg,Adjusted),Arg=Adjusted).
 
+
+
+
+get_operator_typedef(Self,Op,ParamTypes,RetType):-
+  len_or_unbound(ParamTypes,Len),
+  get_operator_typedef(Self,Op,Len,ParamTypes,RetType).
+
+:- dynamic(get_operator_typedef0/5).
+get_operator_typedef(Self,Op,Len,ParamTypes,RetType):-
+ len_or_unbound(ParamTypes,Len),
+ if_or_else(get_operator_typedef0(Self,Op,Len,ParamTypes,RetType),
+ if_or_else(get_operator_typedef1(Self,Op,Len,ParamTypes,RetType),
+            get_operator_typedef2(Self,Op,Len,ParamTypes,RetType))).
+
+get_operator_typedef1(Self,Op,Len,ParamTypes,RetType):-
+   len_or_unbound(ParamTypes,Len),
+   if_t(nonvar(ParamTypes),append(ParamTypes,[RetType],List)),
+   metta_type(Self,Op,['->'|List]),
+   if_t(var(ParamTypes),append(ParamTypes,[RetType],List)),
+   assert(get_operator_typedef0(Self,Op,Len,ParamTypes,RetType)).
+get_operator_typedef2(Self,Op,Len,ParamTypes,RetType):-
+  ignore('AnyRet'=RetType),
+  maplist(is_eval_kind,ParamTypes),
+  assert(get_operator_typedef0(Self,Op,Len,ParamTypes,RetType)).
+  %nop(wdmsg(missing(get_operator_typedef2(Self,Op,ParamTypes,RetType)))),!,fail.
+
+ignored_args_conform(Depth,Self,A,L):- ( \+ iz_conz(Args); \+ iz_conz(List)), !.
+ignored_args_conform(Depth,Self,A,L):- maplist(ignored_arg_conform(Depth,Self),A,L).
+ignored_arg_conform(Depth,Self,A,L):- nonvar(L), is_nonspecific_type(L),!.
+ignored_arg_conform(Depth,Self,A,L):- get_type(Depth,Self,A,T), type_conform(T,L),!.
+ignored_arg_conform(Depth,Self,_,_):- !.
+
+args_conform(_Dpth,_Slf,Args,List):- ( \+ iz_conz(Args); \+ iz_conz(List)), !.
+args_conform(Depth,Self,[A|Args],[L|List]):-
+  arg_conform(Depth,Self,A,L), args_conform(Depth,Self,Args,List).
+
+arg_conform(_Dpth,_Slf,_A,L):- nonvar(L), is_nonspecific_type(L),!.
+    arg_conform(Depth,Self,A,L):- get_type(Depth,Self,A,T), type_conform(T,L),!.
+%arg_conform(_Dpth,_Slf,_,_).
+%arg_conform(Depth,Self,A,_):- get_type(Depth,Self,A,_),!.
+
+type_conform(T,L):- T=L,!.
+type_conform(T,L):- \+ \+ (is_nonspecific_type(T);is_nonspecific_type(L)),!.
+type_conform(T,L):- can_assign(T,L).
+
+
 into_typed_args(_Dpth,_Slf,T,M,Y):- (\+ iz_conz(T); \+ iz_conz(M)),!, M=Y.
 into_typed_args(Depth,Self,[T|TT],[M|MM],[Y|YY]):-
   into_typed_arg(Depth,Self,T,M,Y),
@@ -559,31 +584,6 @@ is_special_op(_Slf,F):- \+ atom(F), \+ var(F), !, fail.
 %is_special_op(Self,Op):- get_operator_typedef(Self,Op,Params,_RetType),
 %   maplist(is_non_eval_kind,Params).
 is_special_op(_Slf,Op):- is_special_builtin(Op).
-
-
-
-get_operator_typedef(Self,Op,ParamTypes,RetType):-
-  len_or_unbound(ParamTypes,Len),
-  get_operator_typedef(Self,Op,Len,ParamTypes,RetType).
-
-:- dynamic(get_operator_typedef0/5).
-get_operator_typedef(Self,Op,Len,ParamTypes,RetType):-
- len_or_unbound(ParamTypes,Len),
- if_or_else(get_operator_typedef0(Self,Op,Len,ParamTypes,RetType),
- if_or_else(get_operator_typedef1(Self,Op,Len,ParamTypes,RetType),
-            get_operator_typedef2(Self,Op,Len,ParamTypes,RetType))).
-
-get_operator_typedef1(Self,Op,Len,ParamTypes,RetType):-
-   len_or_unbound(ParamTypes,Len),
-   if_t(nonvar(ParamTypes),append(ParamTypes,[RetType],List)),
-   metta_type(Self,Op,['->'|List]),
-   if_t(var(ParamTypes),append(ParamTypes,[RetType],List)),
-   assert(get_operator_typedef0(Self,Op,Len,ParamTypes,RetType)).
-get_operator_typedef2(Self,Op,Len,ParamTypes,RetType):-
-  ignore('AnyRet'=RetType),
-  maplist(is_eval_kind,ParamTypes),
-  assert(get_operator_typedef0(Self,Op,Len,ParamTypes,RetType)).
-  %nop(wdmsg(missing(get_operator_typedef2(Self,Op,ParamTypes,RetType)))),!,fail.
 
 is_eval_kind(ParamType):- ignore(ParamType='Any').
 

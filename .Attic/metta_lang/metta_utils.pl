@@ -300,7 +300,8 @@ md(P1,X):-
 must_det_ll1(P1,X):- tracing,!,must_not_error(call(P1,X)),!.
 must_det_ll1(P1,once(A)):- !, once(md(P1,A)).
 must_det_ll1(P1,X):-
-  strip_module(X,M,P),functor(P,F,A),setup_call_cleanup(nop(trace(M:F/A,+fail)),(must_not_error(call(P1,X))*->true;md_failed(P1,X)),
+  strip_module(X,M,P),functor(P,F,A),
+  setup_call_cleanup(nop(trace(M:F/A,+fail)),(must_not_error(call(P1,X))*->true;md_failed(P1,X)),
     nop(trace(M:F/A,-fail))),!.
 
 
@@ -319,6 +320,7 @@ must_not_error(X):- ncatch(X,E,(rethrow_abort(E);(/*arcST,*/writeq(E=X),pp(etrac
 always_rethrow('$aborted').
 always_rethrow(md_failed(_,_,_)).
 always_rethrow(return(_)).
+always_rethrow(metta_return(_)).
 always_rethrow(give_up(_)).
 always_rethrow(time_limit_exceeded(_)).
 always_rethrow(depth_limit_exceeded).
@@ -360,7 +362,7 @@ write_src_uo(G):-
      (format('~N~n~n',[]),
       write_src(G),
       format('~N~n~n'))),!,
- stack_dump,
+ %stack_dump,
  stream_property(S2,file_no(2)),
     with_output_to(S2,
      (format('~N~n~n',[]),
@@ -371,7 +373,7 @@ write_src_uo(G):-
 rrtrace(X):- rrtrace(etrace,X).
 
 stack_dump:-  ignore(catch(bt,_,true)). %,ignore(catch(dumpST,_,true)),ignore(catch(bts,_,true)).
-ugtrace(error(Why),G):- !, notrace,write_src_uo(Why),rtrace(G).
+ugtrace(error(Why),G):- !, notrace,write_src_uo(Why),stack_dump,write_src_uo(Why),rtrace(G).
 ugtrace(Why,G):-  tracing,!,notrace,write_src(Why),rtrace(G).
 ugtrace(Why,_):-  is_testing, !, ignore(give_up(Why,5)),throw('$aborted').
 ugtrace(_Why,G):-  ggtrace(G),throw('$aborted').

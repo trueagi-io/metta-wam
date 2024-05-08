@@ -204,6 +204,11 @@ op_decl('%', [ 'Number', 'Number' ], 'Number').
 op_decl('*', [ 'Number', 'Number' ], 'Number').
 op_decl('-', [ 'Number', 'Number' ], 'Number').
 op_decl('+', [ 'Number', 'Number' ], 'Number').
+op_decl('<', [ 'Number', 'Number' ], 'Bool').
+op_decl('>', [ 'Number', 'Number' ], 'Bool').
+op_decl('<=', [ 'Number', 'Number' ], 'Bool').
+op_decl('>=', [ 'Number', 'Number' ], 'Bool').
+
 op_decl(combine, [ X, X], X).
 
 op_decl('bind!', ['Symbol','%Undefined%'], [->]).
