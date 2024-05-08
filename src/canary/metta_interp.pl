@@ -1041,7 +1041,7 @@ metta_anew1(Ch,OBO):-  metta_interp_mode(Ch,Mode), !, metta_anew1(Mode,OBO).
 metta_anew1(Load,OBO):- maybe_xform(OBO,XForm),!,metta_anew1(Load,XForm).
 metta_anew1(load,OBO):- OBO= metta_atom(Space,Atom),!,'add-atom'(Space, Atom).
 metta_anew1(unload,OBO):- OBO= metta_atom(Space,Atom),!,'remove-atom'(Space, Atom).
-metta_anew1(unload_all,OBO):- OBO= forall(metta_atom(Space,Atom),ignore('remove-atom'(Space, Atom))).
+metta_anew1(unload_all,OBO):- OBO= metta_atom(Space,Atom),!,forall('remove-atom'(Space, Atom),true).
 
 metta_anew1(load,OBO):- !,
   must_det_ll((load_hook(load,OBO),
