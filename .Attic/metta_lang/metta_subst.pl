@@ -152,8 +152,8 @@ subst_args1(Eq,RetType,Depth,Self,['let*',[[Var,Val]|LetRest],Body],RetVal):- !,
     is_sl_op('>').  is_sl_op('<'). %  is_sl_op('>').
     is_sl_op('\\=@=').
 
-subst_args1(Eq,RetType,Depth,Self,[OP,N1,N2],TF):- 
-  fail,  
+subst_args1(Eq,RetType,Depth,Self,[OP,N1,N2],TF):-
+  fail,
   is_sl_op(OP), !,
   ((subst_args(Eq,RetType,Depth,Self,N1,N1Res),subst_args(Eq,RetType,Depth,Self,N2,N2Res),
      ((N1,N2)\=@=(N1Res,N2Res)),subst_args1(Eq,RetType,Depth,Self,[OP,N1Res,N2Res],TF))
@@ -166,9 +166,9 @@ subst_args1(Eq,RetType,_Dpth,_Slf,['repl!'],'True'):- !, repl.
 subst_args1(Eq,RetType,Depth,Self,['!',Cond],Res):- !, call(subst_args(Eq,RetType,Depth,Self,Cond,Res)).
 subst_args1(Eq,RetType,Depth,Self,['rtrace',Cond],Res):- !, rtrace(subst_args(Eq,RetType,Depth,Self,Cond,Res)).
 subst_args1(Eq,RetType,Depth,Self,['time',Cond],Res):- !, time(subst_args(Eq,RetType,Depth,Self,Cond,Res)).
-subst_args1(Eq,RetType,Depth,Self,['print',Cond],Res):- !, subst_args(Eq,RetType,Depth,Self,Cond,Res),format('~N'),print(Res),format('~N').
+%subst_args1(Eq,RetType,Depth,Self,['print',Cond],Res):- !, subst_args(Eq,RetType,Depth,Self,Cond,Res),format('~N'),print(Res),format('~N').
 % !(println! $1)
-subst_args1(Eq,RetType,Depth,Self,['println!',Cond],Res):- !, subst_args(Eq,RetType,Depth,Self,Cond,Res),format('~N'),print(Res),format('~N').
+subst_args1(Eq,RetType,Depth,Self,['println!',Cond],[]):- !, subst_args(Eq,RetType,Depth,Self,Cond,Res),format('~N'),print(Res),format('~N').
 
 subst_args1(Eq,RetType,_Dpth,_Slf,List,Y):- is_list(List),maplist(self_subst,List),List=[H|_], \+ atom(H), !,Y=List.
 

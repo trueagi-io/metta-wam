@@ -20,6 +20,7 @@ repl2:-
    load_and_trim_history,
    repeat,
      %set_prolog_flag(gc,true),
+     reset_caches,
      garbage_collect,
      %set_prolog_flag(gc,false),
      %with_option(not_a_reload,true,make),
@@ -196,7 +197,11 @@ name_vars(P):- ignore(name_vars0(P)).
 name_vars0(X=Y):- X==Y,!.
 name_vars0(X='$VAR'(X)).
 
+reset_cache.
+reset_caches:- forall(clause(reset_cache,Body),forall(rtrace_on_error(Body),true)).
+
 interactively_do_metta_exec(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut):-
+  reset_caches,
   catch(interactively_do_metta_exec00(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut),
          Error,write_src(error(Error,From,TermV))).
 

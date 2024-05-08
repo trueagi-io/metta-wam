@@ -76,7 +76,7 @@ cached_call(ForSeconds, Call) :-
 
 
 
-debugging_metta(G):- fake_notrace((is_debugging((eval))->ignore(G);true)).
+debugging_metta(G):- notrace((is_debugging((eval))->ignore(G);true)).
 
 
 :- nodebug(metta(eval)).
@@ -195,6 +195,10 @@ flag_to_var(Flag,Var):- Flag=Var.
 
 set_debug(metta(Flag),TF):- nonvar(Flag),!,set_debug(Flag,TF).
 %set_debug(Flag,Val):- \+ atom(Flag), flag_to_var(Flag,Var), atom(Var),!,set_debug(Var,Val).
+
+
+set_debug(Flag,TF):- TF == 'True',!,set_debug(Flag,true).
+set_debug(Flag,TF):- TF == 'False',!,set_debug(Flag,false).
 set_debug(Flag,true):- !, debug(metta(Flag)). %,flag_to_var(Flag,Var),set_fast_option_value(Var,true).
 set_debug(Flag,false):- nodebug(metta(Flag)). %,flag_to_var(Flag,Var),set_fast_option_value(Var,false).
 
@@ -234,7 +238,6 @@ efbug(_,G):- call(G).
 
 is_debugging_always(_Flag):-!.
 
-%is_debugging(_):-!,fail.
 is_debugging(Flag):- var(Flag),!,fail.
 is_debugging((A;B)):- !, (is_debugging(A) ; is_debugging(B) ).
 is_debugging((A,B)):- !, (is_debugging(A) , is_debugging(B) ).
@@ -244,6 +247,7 @@ is_debugging(Flag):- Flag== true,!.
 %is_debugging(e):- is_testing, \+ fast_option_value(compile,'full'),!.
 %is_debugging(e):- is_testing,!.
 %is_debugging(eval):- is_testing,!.
+%is_debugging(_):-!,fail.
 is_debugging(Flag):- fast_option_value(Flag,'debug'),!.
 is_debugging(Flag):- fast_option_value(Flag,'trace'),!.
 is_debugging(Flag):- debugging(metta(Flag),TF),!,TF==true.
@@ -271,7 +275,7 @@ trace_eval(P4,TNT,D1,Self,X,Y):-
          %set_debug(overflow,false),
          nop(format('; Switched off tracing. For a longer trace: !(pragma! trace-length ~w)',[MaxP1])),
          nop((start_rtrace,rtrace)))))),
-   nop(notrace(no_repeats_var(YY))))),
+   nop(notrace(no_repeats_var(NoRepeats))))),
 
    ((sub_term(TN,TNT),TNT\=TN)-> true ; TNT=TN),
    %if_t(DR<DMax, )
@@ -288,10 +292,10 @@ trace_eval(P4,TNT,D1,Self,X,Y):-
    call_cleanup((
       (call(P4,D1,Self,X,Y)*->nb_setarg(1,Ret,Y);
         (fail,trace,(call(P4,D1,Self,X,Y)))),
-      ignore((fake_notrace(( \+ (Y\=YY), nb_setarg(1,Ret,Y)))))),
+      ignore((notrace(( \+ (Y\=NoRepeats), nb_setarg(1,Ret,Y)))))),
     % cleanup
       ignore((PrintRet==1 -> ignore(Display) ;
-       (fake_notrace(ignore((( % Y\=@=X,
+       (notrace(ignore((( % Y\=@=X,
          if_t(DR<DMax,if_trace((eval;TN),ignore(Display))))))))))),
    Ret\=@=retval(fail).
 
