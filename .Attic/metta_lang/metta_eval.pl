@@ -227,7 +227,7 @@ eval_02(Eq,RetType,Depth2,Self,Y,YO):-
 
 
 
-:- nodebug(mettfa(e)).
+:- nodebug(metta(e)).
 
 :- discontiguous eval_20/6.
 :- discontiguous eval_40/6.
@@ -441,18 +441,24 @@ eval_20(Eq,RetType,Depth,Self,['rtrace!',Cond],Res):- !, rtrace(eval(Eq,RetType,
 eval_20(Eq,RetType,Depth,Self,['no-rtrace!',Cond],Res):- !, quietly(eval(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(Eq,RetType,Depth,Self,['trace!',A,B],C):- !, % writeln(trace(A)),
      stream_property(S,file_no(2)),!,
-     eval(Eq,_RetType,Depth,Self,A,AA),
-     with_output_to(S,(format('~N'), write_src(AA),format('~N'))),
-     eval(Eq,RetType,Depth,Self,B,C).
+     eval(Eq,RetType,Depth,Self,B,C),
+     ignore((eval(Eq,_RetType,Depth,Self,A,AA),
+     with_output_to(S,(format('~N'), write_src(AA),format('~N'))))).
 eval_20(Eq,RetType,Depth,Self,['trace',Cond],Res):- !, with_debug(eval,eval(Eq,RetType,Depth,Self,Cond,Res)).
+eval_20(Eq,RetType,Depth,Self,['profile!',Cond],Res):- !, time_eval(profile(Cond),profile(eval(Eq,RetType,Depth,Self,Cond,Res))).
 eval_20(Eq,RetType,Depth,Self,['time!',Cond],Res):- !, time_eval(eval(Cond),eval(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(Eq,RetType,Depth,Self,['print',Cond],Res):- !, eval(Eq,RetType,Depth,Self,Cond,Res),format('~N'),print(Res),format('~N').
 % !(println! $1)
-eval_20(Eq,RetType,Depth,Self,['println!'|Cond],[]):- !,
-  maplist(eval(Eq,RetType,Depth,Self),Cond,[Res|Out]),
-  maplist(println_impl,[Res|Out]).
+eval_20(Eq,RetType,Depth,Self,['println!'|Cond],Res):- !,
+  maplist(eval(Eq,RetType,Depth,Self),Cond,Out),
+  maplist(println_impl,Out),
+  make_nop(RetType,[],Res),check_returnval(Eq,RetType,Res).
 
-println_impl(X):- user_io((ansi_format(fg('#c7ea46'),"~N~@~N",[with_indents(false,write_src(X))]))).
+
+println_impl(X):- user_io((ansi_format(fg('#c7ea46'),"~N~@~N",[write_sln(X)]))).
+
+write_sln(X):- string(X), !, write(X).
+write_sln(X):- with_indents(false,write_src(X)).
 
 
 % =================================================================
