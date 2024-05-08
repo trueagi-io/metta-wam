@@ -234,7 +234,7 @@ efbug(_,G):- call(G).
 
 is_debugging_always(_Flag):-!.
 
-is_debugging(_):-!,fail.
+%is_debugging(_):-!,fail.
 is_debugging(Flag):- var(Flag),!,fail.
 is_debugging((A;B)):- !, (is_debugging(A) ; is_debugging(B) ).
 is_debugging((A,B)):- !, (is_debugging(A) , is_debugging(B) ).
