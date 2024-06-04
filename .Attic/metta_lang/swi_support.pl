@@ -48,8 +48,8 @@ with_option(N,V,G):-  (was_option_value(N,W)->true;W=[]),
   setup_call_cleanup(set_option_value(N,V),G, set_option_value(N,W)).
 
 
-was_option_value(N,V):- nb_current(N,VV), VV\==[], !,V=VV.
-%was_option_value(N,V):- current_prolog_flag(N,VV),!,V=VV.
+%was_option_value(N,V):- nb_current(N,VV), VV\==[], !,V=VV.
+was_option_value(N,V):- current_prolog_flag(N,VV),!,V=VV.
 was_option_value(N,V):- prolog_load_context(N,VV),!,V=VV.
 
 option_else(N,V,Else):- notrace(option_else0(N,V,Else)).
@@ -74,7 +74,7 @@ set_option_value(N,V):-
   set_option_value0(N,V).
 set_option_value0(N,V):-
    p2mE(V,VV),!,
-   catch(nb_setval(N,VV),E,fbug(E)),
+   %catch(nb_setval(N,VV),E,fbug(E)),
    p2mE(PV,VV),!,
    catch(create_prolog_flag(N,PV,[keep(false),access(read_write), type(term)]),E2,fbug(E2)),
    catch(set_prolog_flag(N,PV),E3,fbug(E3)),!.

@@ -754,7 +754,7 @@ m_opt0(M,Opt):- symbol_concat('--no-',Opt,M),!.
 m_opt0(M,Opt):- symbol_concat('--',Opt,M),!.
 m_opt0(M,Opt):- symbol_concat('-',Opt,M),!.
 
-:- set_prolog_flag(occurs_check,error).
+:- set_prolog_flag(occurs_check,true).
 
 start_html_of(_Filename):- \+ tee_file(_TEE_FILE),!.
 start_html_of(_Filename):-!.
@@ -1518,7 +1518,7 @@ timed_call(Goal,Seconds):-
     statistics(cputime, End),
     Seconds is End - Start.
 
-rtrace_this(eval_H(500, _, P , _)):- compound(P), !, rtrace_this(P).
+rtrace_this(eval_H(_, _, P , _)):- compound(P), !, rtrace_this(P).
 rtrace_this([P|_]):- P == 'pragma!',!,fail.
 rtrace_this([P|_]):- P == 'import!',!,fail.
 rtrace_this([P|_]):- P == 'rtrace!',!.

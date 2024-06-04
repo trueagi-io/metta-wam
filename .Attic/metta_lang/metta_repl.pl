@@ -173,7 +173,7 @@ inside_assert( ?-(I), O):- !, inside_assert(I,O).
 inside_assert( :-(I), O):- !, inside_assert(I,O).
 inside_assert(Var,Var).
 
-current_read_mode(repl,Mode):- ((nb_current(repl_mode,Mode),Mode\==[])->true;Mode='+'),!.
+current_read_mode(repl,Mode):- ((option_value(repl_mode,Mode),Mode\==[])->true;Mode='+'),!.
 current_read_mode(file,Mode):- ((nb_current(file_mode,Mode),Mode\==[])->true;Mode='+').
 
 
@@ -181,11 +181,11 @@ current_read_mode(file,Mode):- ((nb_current(file_mode,Mode),Mode\==[])->true;Mod
 eval(all(Form)):- nonvar(Form), !, forall(eval(Form),true).
 eval(Form):-   current_self(Self),   do_metta(true,exec,Self,Form,_Out).
 
-eval(Form,Out):-current_self(Self),eval_H(100,Self,Form,Out).
-eval(Self,Form,Out):- eval_H(100,Self,Form,Out).
+eval(Form,Out):-current_self(Self),eval_H(500,Self,Form,Out).
+eval(Self,Form,Out):- eval_H(500,Self,Form,Out).
 
 eval_I(Self,Form,OOut):-
-    eval_H(100,Self,Form,Out),
+    eval_H(500,Self,Form,Out),
     trace,
     xform_out(Out,OOut).
 
@@ -235,7 +235,7 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,
                %Output =
                 %FOut = "Skipped",
                 Skipping = 1,!,
-                %color_g_mesg('#da70d6', (write('% SKIPPING: '), writeq(eval_H(100,Self,BaseEval,X)),writeln('.'))),
+                %color_g_mesg('#da70d6', (write('% SKIPPING: '), writeq(eval_H(500,Self,BaseEval,X)),writeln('.'))),
                 % color_g_mesg('#fa90f6', (writeln('; SKIPPING'), with_indents(true,write_src(exec(BaseEval))))),
                %  if_t(is_list(BaseEval),add_history_src(exec(TermV))),
                  true

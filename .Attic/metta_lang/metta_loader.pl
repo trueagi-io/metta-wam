@@ -194,6 +194,12 @@ find_top_dirs(Top,Dir):- current_self(Self),space_name(Self,SpaceName), find_top
 
 find_top_dirs(SpaceName,Top,Abs):- is_metta_module_path(SpaceName,Top,Abs).
 find_top_dirs(SpaceName,Top,Dir):- is_metta_module_path(SpaceName,'%top%',Root),absolute_dir(Top,Root,Dir).
+find_top_dirs(SpaceName,Top,Dir):- working_directory(PWD,PWD),
+   parent_dir_of(PWD,Top,Dir), assert(is_metta_module_path(SpaceName,Top,Dir)).
+
+parent_dir_of(PWD,Top,Dir):- directory_file_path(Parent,TTop,PWD),
+   (TTop==Top->Dir=PWD;parent_dir_of(Parent,Top,Dir)).
+
 
 space_name(Space,SpaceName):- symbol(Space),!,SpaceName = Space,!.
 space_name(Space,SpaceName):- is_space_name(SpaceName), same_space(SpaceName,Space),!.
@@ -208,6 +214,7 @@ absolute_dir(Dir,From,AbsDir):- afn(Dir, AbsDir, [relative_to(From),access(read)
 
 
 
+:- dynamic(is_metta_module_path/3).
 :- dynamic(is_metta_module_path/1).
 is_metta_module_path('.').
 
