@@ -64,7 +64,7 @@ print_pl_source0(P):-
     findall(H-Pt,
       (member(Action, Actions),
        must_det_ll((
-         run_pl_source(with_output_to(string(Pt), call(Action, P))),
+          run_pl_source(with_output_to(string(Pt), call(Action, P))),
             catch(string_height(Pt, H),_,H=0)))), HeightsAndOutputs),
     sort(HeightsAndOutputs, Lst), last(Lst, _-Pt), writeln(Pt),
     retractall(just_printed(_)),

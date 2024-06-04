@@ -58,8 +58,6 @@
 :- set_prolog_flag(expect_pfc_file,always).
 
 
-
-
 % Predicate and Function Arity Definitions:
 % Specifies the number of arguments (arity) for predicates and functions, which is fundamental
 % for understanding the complexity and capabilities of various logical constructs. Predicates are defined

@@ -53,7 +53,8 @@
 
 
 
-
+when_tracing(Goal):- tracing,!,notrace(Goal),!.
+when_tracing(_).
 
 :- multifile(user:asserted_metta_pred/2).
 :- dynamic(user:asserted_metta_pred/2).
@@ -61,73 +62,99 @@
 exists_virtually(corelib).
 exists_virtually(stdlib).
 
-% Process a file or directory path with a given predicate.
-with_wild_path(Fnicate, Dir) :- extreme_debug(fbug(with_wild_path(Fnicate, Dir))),fail.
-with_wild_path(_Fnicate, []) :- !.
-with_wild_path(_Fnicate, Virtual) :- exists_virtually(Virtual),!.
-with_wild_path(Fnicate, Virtual) :- var(Virtual),!,throw(var_with_wild_path(Fnicate, Virtual)).
-with_wild_path(Fnicate, Dir) :-  is_scryer, symbol(Dir), !, must_det_ll((path_chars(Dir,Chars), with_wild_path(Fnicate, Chars))).
-with_wild_path(Fnicate, Chars) :-  \+ is_scryer, \+ symbol(Chars), !, must_det_ll((name(Atom,Chars), with_wild_path(Fnicate, Atom))).
-with_wild_path(Fnicate, FileC) :- symbol(FileC),
-  symbol_contains(FileC, ':'),
-   \+ exists_file(FileC), \+ exists_directory(FileC),
-   symbol_list_concat(FileL,':',FileC),
-   symbol_list_concat(FileL,'/',File),!,
-   with_wild_path_swi(Fnicate, File).
-
-with_wild_path(Fnicate, File) :- exists_file(File), !, must_det_ll(( call(Fnicate, File))).
-
-with_wild_path(Fnicate, Dir) :-  exists_directory(Dir),
-  absolute_file_name_from('__init__.py', PyFile, [access(read), file_errors(fail), relative_to(Dir)]),
-  with_wild_path(Fnicate, PyFile).
-
-with_wild_path(Fnicate, File) :- !, with_wild_path_swi(Fnicate, File).
-with_wild_path(Fnicate, Dir) :-  exists_directory(Dir), !,
-  must_det_ll((directory_files(Dir, Files),
-  maplist(directory_file_path(Dir,Files),Paths),
-  maplist(path_chars,Paths,CharPaths),
-  maplist(with_wild_path(Fnicate), CharPaths))), !.
-with_wild_path(Fnicate, File) :- is_list(File), !,
-   must_det_ll((maplist(with_wild_path(Fnicate), File))).
-with_wild_path(Fnicate, File) :- must_det_ll((call(Fnicate, File))).
-
 path_chars(A,C):- symbol_chars(A,C).
 
-with_wild_path_swi(Fnicate, File) :-
-  compound(File),
-  absolute_file_name_from(File, Dir, [access(read), file_errors(fail), file_type(directory)]),
-  '\\=@='(Dir, File), !,
-  with_wild_path(Fnicate, Dir).
-with_wild_path_swi(Fnicate, File) :-
-  compound(File), !,
-  absolute_file_name_from(File, Dir, [access(read), file_errors(fail), file_type(['csv', 'tsv', ''])]),
-  '\\=@='(Dir, File), !,
-  with_wild_path(Fnicate, Dir).
+with_wild_path(Fnicate, Dir):-
+  working_directory(PWD,PWD),
+  wwp(Fnicate, Dir).
 
-with_wild_path_swi(Fnicate, File) :-
+inner_compound(Inner,'.',Inner):- \+ compound(Inner),!.
+inner_compound(Cmpd,Outter,Inner):-
+    compound_name_arguments(Cmpd,F,[X|Args]),
+    compound_name_arguments(Outter,F,[Midder|Args]),
+    inner_compound(X,Midder,Inner).
+
+afn(A,B):- quietly(absolute_file_name(A,B)).
+afn(A,B,C):- quietly(absolute_file_name(A,B,C)).
+
+% Process a file or directory path with a given predicate.
+wwp(Fnicate, Dir) :- extreme_debug(fbug(wwp(Fnicate, Dir))),fail.
+wwp(_Fnicate, []) :- !.
+wwp(_Fnicate, Virtual) :- exists_virtually(Virtual),!.
+wwp(Fnicate, Virtual) :- var(Virtual),!,throw(var_wwp(Fnicate, Virtual)).
+wwp(Fnicate, Dir) :-  is_scryer, symbol(Dir), !, must_det_ll((path_chars(Dir,Chars), wwp(Fnicate, Chars))).
+
+
+wwp(Fnicate, File) :- is_list(File), !,
+   must_det_ll((maplist(wwp(Fnicate), File))).
+
+wwp(Fnicate, Cmpd):- compound(Cmpd),
+  inner_compound(Cmpd,Outter,Inner),!,
+  afn(Outter, Dir,[solutions(all), access(read), file_errors(fail)]),
+  with_cwd(Dir,wwp(Fnicate, Inner)),!.
+
+wwp(Fnicate, Chars) :-  \+ is_scryer, \+ symbol(Chars), !, must_det_ll((name(Atom,Chars), wwp(Fnicate, Atom))).
+
+wwp(Fnicate, File) :- exists_file(File), !, must_det_ll(( call(Fnicate, File))).
+
+wwp(Fnicate, ColonS) :- fail, symbolic(ColonS), symbol_contains(ColonS, ':'),!,
+  symbolic_list_concat([Top|Rest],':',ColonS),
+  symbolic_list_concat(Rest,':',FileNext),
+  when_tracing(listing(is_metta_module_path)),
+  find_top_dirs(Top,Dir),
+  ((fail,symbol_length(FileNext,0))
+   -> wwp(Fnicate, Dir)
+   ; (exists_directory(Dir)
+       -> with_cwd(Dir,wwp(Fnicate, FileNext))
+       ; fail)),!.
+
+wwp(Fnicate, ColonS) :- symbolic(ColonS), symbol_contains(ColonS, ':'),!,
+  symbolic_list_concat([Top|Rest],':',ColonS),
+  symbolic_list_concat(Rest,':',FileNext),!,
+  when_tracing(listing(is_metta_module_path)),
+  must_det_ll((call((
+  quietly(find_top_dirs(Top,Dir)),
+  exists_directory(Dir),
+  with_cwd(Dir,wwp(Fnicate, FileNext)))))),!.
+
+wwp(Fnicate, File) :-
   symbol_contains(File, '*'),
-  expand_file_name(File, List), !,
-  maplist(with_wild_path(Fnicate), List).
-with_wild_path_swi(Fnicate, File) :-
+  expand_file_name(File, List),
+  maplist(wwp(Fnicate), List),!.
+
+wwp(Fnicate, Dir) :-  exists_directory(Dir),
+  quietly(afn_from('__init__.py', PyFile, [access(read), file_errors(fail), relative_to(Dir)])),
+  wwp(Fnicate, PyFile).
+
+
+wwp(Fnicate, File) :-
   \+ exists_directory(File), \+ exists_file(File), %\+ symbol_contains(File,'.'),
   extension_search_order(Ext),
   symbolic_list_concat([File|Ext],MeTTafile),
   exists_file(MeTTafile),
   call(Fnicate, MeTTafile).
 
-with_wild_path_swi(Fnicate, File) :-
+wwp(Fnicate, File) :-
   \+ exists_directory(File), \+ exists_file(File), symbol_contains(File,'..'),
   extension_search_order(Ext),
   symbolic_list_concat([File|Ext],MeTTafile0),
-  absolute_file_name_from(MeTTafile0, MeTTafile, [access(read), file_errors(fail)]),
+  afn_from(MeTTafile0, MeTTafile, [access(read), file_errors(fail)]),
   exists_file(MeTTafile),
   call(Fnicate, MeTTafile).
 
-with_wild_path_swi(Fnicate, File) :-
+wwp(Fnicate, File) :-
   exists_directory(File),
   directory_file_path(File, '*.*sv', Wildcard),
   expand_file_name(Wildcard, List), !,
   maplist(Fnicate, List).
+
+wwp(Fnicate, Dir) :-  exists_directory(Dir), !,
+  must_det_ll((directory_files(Dir, Files),
+  maplist(directory_file_path(Dir,Files),Paths),
+  maplist(path_chars,Paths,CharPaths),
+  maplist(wwp(Fnicate), CharPaths))), !.
+
+wwp(Fnicate, File) :- must_det_ll((call(Fnicate, File))).
 
 extension_search_order(['.metta']).
 extension_search_order(['.py']).
@@ -138,17 +165,56 @@ load_metta_file(Self,Filemask):- symbol_concat(_,'.metta',Filemask),!, load_mett
 load_metta_file(_Slf,Filemask):- load_flybase(Filemask).
 :- endif.
 
-absolute_file_name_from(RelFilename,Filename):-
-  absolute_file_name_from(RelFilename,Filename,[]).
+afn_from(RelFilename,Filename):-
+  afn_from(RelFilename,Filename,[]).
 
-absolute_file_name_from(RelFilename,Filename,Opts):-
+afn_from(RelFilename,Filename,Opts):-
    select(relative_to(RelFrom),Opts,NewOpts),
-   absolute_file_name_from(RelFrom,RelFromNew,NewOpts),
-   absolute_file_name(RelFilename,Filename,[relative_to(RelFromNew)|NewOpts]).
-absolute_file_name_from(RelFilename,Filename,Opts):-
+   afn_from(RelFrom,RelFromNew,NewOpts),
+   quietly(afn(RelFilename,Filename,[relative_to(RelFromNew)|NewOpts])).
+afn_from(RelFilename,Filename,Opts):-
    is_metta_module_path(ModPath),
-   absolute_file_name(RelFilename,Filename,[relative_to(ModPath)|Opts]).
+   quietly(afn(RelFilename,Filename,[relative_to(ModPath)|Opts])).
 
+register_module(Dir):- current_self(Space), register_module(Space,Dir).
+
+register_module(Space,Path):-
+    register_module(Space,'%top%',Path),
+    file_directory_name(Path,Dir),
+    file_base_name(Path, ModuleName),
+    register_module(Space,ModuleName,Dir).
+
+register_module(Space,ModuleName,Dir):-
+    space_name(Space,SpaceName),
+    absolute_dir(Dir,AbsDir),
+    asserta(is_metta_module_path(SpaceName,ModuleName,AbsDir)).
+
+
+find_top_dirs(Top,Dir):- current_self(Self),space_name(Self,SpaceName), find_top_dirs(SpaceName,Top,Dir).
+
+find_top_dirs(SpaceName,Top,Abs):- is_metta_module_path(SpaceName,Top,Abs).
+find_top_dirs(SpaceName,Top,Dir):- is_metta_module_path(SpaceName,'%top%',Root),absolute_dir(Top,Root,Dir).
+find_top_dirs(SpaceName,Top,Dir):- working_directory(PWD,PWD),
+   parent_dir_of(PWD,Top,Dir), assert(is_metta_module_path(SpaceName,Top,Dir)).
+
+parent_dir_of(PWD,Top,Dir):- directory_file_path(Parent,TTop,PWD),
+   (TTop==Top->Dir=PWD;parent_dir_of(Parent,Top,Dir)).
+
+
+space_name(Space,SpaceName):- symbol(Space),!,SpaceName = Space,!.
+space_name(Space,SpaceName):- is_space_name(SpaceName), same_space(SpaceName,Space),!.
+space_name(Space,SpaceName):- 'get-atoms'(Space,['space-symbol',SpaceName]),!.
+
+same_space(Space1,Space2):- Space1=Space2.
+same_space(SpaceName1,Space2):- symbol(SpaceName1),eval(SpaceName1,Space1),!,same_space(Space2,Space1).
+
+absolute_dir(Dir,AbsDir):- afn(Dir, AbsDir, [access(read), file_errors(fail), file_type(directory)]).
+absolute_dir(Dir,From,AbsDir):- afn(Dir, AbsDir, [relative_to(From),access(read), file_errors(fail), file_type(directory)]),!.
+
+
+
+
+:- dynamic(is_metta_module_path/3).
 :- dynamic(is_metta_module_path/1).
 is_metta_module_path('.').
 
@@ -163,7 +229,7 @@ load_metta(Self,Filename):-
 load_metta(Self,RelFilename):-
  atom(RelFilename),
  exists_file(RelFilename),!,
-   absolute_file_name_from(RelFilename,Filename),
+   afn_from(RelFilename,Filename),
  track_load_into_file(Filename,
    include_metta(Self,RelFilename)).
 
@@ -189,12 +255,12 @@ include_metta(Self,RelFilename):-
   must_det_ll((
      symbol(RelFilename),
      exists_file(RelFilename),!,
-     absolute_file_name_from(RelFilename,Filename),
+     afn_from(RelFilename,Filename),
      directory_file_path(Directory, _, Filename),
-     assert_new(metta_file(Self,Filename,Directory)),
-     assert_new(user:loaded_into_kb(Self,Filename)),
+     pfcAdd_Now(metta_file(Self,Filename,Directory)),
+     pfcAdd_Now(user:loaded_into_kb(Self,Filename)),
      include_metta_directory_file(Self,Directory, Filename))),
-     assert_new(user:loaded_into_kb(Self,Filename)),
+     pfcAdd_Now(user:loaded_into_kb(Self,Filename)),
      nop(listing(user:loaded_into_kb/2)).
 
 
@@ -225,7 +291,7 @@ include_metta_directory_file_prebuilt(Self, _Directory, Filename):-
     time_file(Filename, MettaTime),
     time_file(QlfFile, QLFTime),
     QLFTime > MettaTime,!, % Ensure QLF file is newer than the METTA file
-    assert_new(user:loaded_into_kb(Self,Filename)),
+    pfcAdd_Now(user:loaded_into_kb(Self,Filename)),
     ensure_loaded(QlfFile),!.
 
 
@@ -241,7 +307,7 @@ include_metta_directory_file_prebuilt(Self,_Directory, Filename):- just_load_dat
     % Ensure the size of the Datalog file is at least 25% of the METTA file
     DatalogSize >= 0.25 * MettaSize,
     !, % Cut to prevent backtracking
-  assert_new(user:loaded_into_kb(Self,Filename)),
+  pfcAdd_Now(user:loaded_into_kb(Self,Filename)),
   ensure_loaded(DatalogFile),!.
 
 include_metta_directory_file_prebuilt(Self,_Directory, Filename):-
@@ -255,7 +321,7 @@ include_metta_directory_file_prebuilt(Self,_Directory, Filename):-
     !, % Cut to prevent backtracking
   convert_datalog_to_loadable(DatalogFile,QlfFile),!,
   exists_file(QlfFile),!,
-  assert_new(user:loaded_into_kb(Self,Filename)),
+  pfcAdd_Now(user:loaded_into_kb(Self,Filename)),
   ensure_loaded(QlfFile),!.
 
 
@@ -266,7 +332,7 @@ include_metta_directory_file(Self,_Directory, Filename):-
   count_lines_up_to(2000,Filename, Count), Count > 1980,
   once(convert_metta_to_loadable(Filename,QlfFile)),
   exists_file(QlfFile),!,
-  assert_new(user:loaded_into_kb(Self,Filename)),
+  pfcAdd_Now(user:loaded_into_kb(Self,Filename)),
   ensure_loaded(QlfFile).
 
 include_metta_directory_file(Self,Directory,Filename):-
@@ -475,7 +541,7 @@ accept_line(Self,I):- normalize_space(string(Str),I),!,accept_line2(Self,Str),!.
 
 accept_line2(_Self,S):- string_concat(";",_,S),!,writeln(S).
 accept_line2(Self,S):- string_concat('(',RS,S),string_concat(M,')',RS),!,
-  symbolic_list_concat([F|LL],' ',M),PL =..[F,Self|LL],assert(PL),!,flag(next_assert,X,X+1),
+  symbolic_list_concat([F|LL],' ',M),PL =..[F,Self|LL],pfcAdd_Now(PL),!,flag(next_assert,X,X+1),
   if_t((0 is X mod 10_000_000),(writeln(X=PL),statistics)).
 accept_line2(Self,S):- fbug(accept_line2(Self,S)),!.
 
@@ -528,7 +594,7 @@ load_metta_buffer(Self,Filename):-
    set_exec_num(Filename,1),
    load_answer_file(Filename),
    set_exec_num(Filename,0),
-   assert_new(user:loaded_into_kb(Self,Filename)),
+   pfcAdd_Now(user:loaded_into_kb(Self,Filename)),
    forall(metta_file_buffer(Mode,Expr,NamedVarsList,Filename,_LineCount),
        (maplist(maybe_assign,NamedVarsList),
         must_det_ll((((do_metta(file(Filename),Mode,Self,Expr,_O)))
