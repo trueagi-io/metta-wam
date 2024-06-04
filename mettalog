@@ -188,6 +188,8 @@ DEBUG() {
 		do_DEBUG "$@"
 	 elif [ "$verbose" -gt 1 ]; then
 		do_DEBUG "$@"
+     elif [[ "$contains_halt" == "true" ]]; then
+     	do_DEBUG "$@"
      fi
 }
 
@@ -618,7 +620,7 @@ function handle_args {
                 ;;
 
             ---*)
-		DASH2="${arg#*--}"
+		DASH2="${arg#-}"
 		PRE_METTALOG_OPTIONS=("$DASH2" "${PRE_METTALOG_OPTIONS[@]}")
                 continue
                 ;;
