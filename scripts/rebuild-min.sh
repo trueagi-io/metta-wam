@@ -12,12 +12,14 @@ else
     echo "The build directory of the sourced script is: $BUILD_DIR"
 fi
 
+deactivate
+python -m venv venv8-min --clear --symlinks --system-site-packages
 # Temporarily change directory and run build operations in a subshell
 (
   set -e -x -v  # Enable error exit, command echo, and verbose output
   cd "$BUILD_DIR"  # Change to the build directory
   # Execute build commands inside the virtual environment
-  source "./venv8/bin/activate"  # Activate the virtual environment
+  source "./venv8-min/bin/activate"  # Activate the virtual environment
 
 python -m pip install -r python/hyperon/exts/das_gate/requirements.txt
 #python -m pip install -r python/requirements.txt
@@ -58,7 +60,7 @@ cd ..
 # Install python library and executables
 pip install -v -e ./python[dev]
 #python3 -m pip install -v -e ./python[dev]
-#python3 -m venv venv8 -e .
+#python3 -m venv venv8-min -e .
 
 # Build Hyperon MeTTa-REPL
 (
@@ -67,14 +69,14 @@ cargo doc --no-deps
 cargo install --path=. 
 cd ..
 
-cp -f ~/.cargo/bin/metta ${BUILD_DIR}/venv8/bin/meta-repl 
+cp -f ~/.cargo/bin/metta ${BUILD_DIR}/venv8-min/bin/meta-repl 
 mv -f ~/.cargo/bin/metta ~/.cargo/bin/metta-repl-min 
 )
 
 (
 export SCRIPT=~/.cargo/bin/metta-min
 echo '#!/bin/bash' > $SCRIPT
-echo "source ${BUILD_DIR}/venv8/bin/activate" >> $SCRIPT
+echo "source ${BUILD_DIR}/venv8-min/bin/activate" >> $SCRIPT
 echo 'if [ $# -eq 0 ]; then' >> $SCRIPT
 echo '  metta-repl' >> $SCRIPT
 echo 'else' >> $SCRIPT
@@ -95,7 +97,7 @@ cd ..
 )
 
 # After subshell, reactivate the virtual environment for interactive use
-source "$BUILD_DIR/venv8/bin/activate"
+source "$BUILD_DIR/venv8-min/bin/activate"
 echo "Virtual environment reactivated for continued use."
 return 0
 
