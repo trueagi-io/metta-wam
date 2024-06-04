@@ -52,21 +52,20 @@ string_height(Pt1,H1):- split_string(Pt1,"\r\n", "\s\t\n\n", L),length(L,H1).
 
 print_pl_source(P):- run_pl_source(print_pl_source0(P)).
 
-
-run_pl_source(G):- notrace(catch(G,_,fail)),!.
-run_pl_source(G):- ignore(rtrace(G)), trace.
-
-
+run_pl_source(G):- catch(G,E,(fail,write_src_uo(G=E),rtrace(G))).
 print_pl_source0(_):- notrace(is_compatio),!.
 print_pl_source0(_):- notrace(silent_loading),!.
 print_pl_source0(P):- notrace((just_printed(PP), PP=@=P)),!.
+    print_pl_source0((A:-B)):-!, portray_clause((A:-B)).
+    print_pl_source0((:-B)):-!, portray_clause((:-B)).
+print_pl_source0(P):- format('~N'), print_tree(P),format('~N'),!.
 print_pl_source0(P):-
     Actions = [print_tree, portray_clause, pp_fb1_e], % List of actions to apply
     findall(H-Pt,
       (member(Action, Actions),
        must_det_ll((
-         run_pl_source(with_output_to(string(Pt), call(Action, P))),
-        string_height(Pt, H)))), HeightsAndOutputs),
+          run_pl_source(with_output_to(string(Pt), call(Action, P))),
+            catch(string_height(Pt, H),_,H=0)))), HeightsAndOutputs),
     sort(HeightsAndOutputs, Lst), last(Lst, _-Pt), writeln(Pt),
     retractall(just_printed(_)),
     assert(just_printed(P)),

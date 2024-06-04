@@ -253,6 +253,14 @@ sexpr_s2p_pre_list(_Fn,_,STERM,STERM).
 % The first argument is the input in Prolog syntax,
 % and the second argument is the output converted to MeTTa syntax.
 
+p2m(I):-forall(
+  no_repeats(current_predicate(I/A)),
+   (functor(P,I,A),
+   forall(clause(P,Body),
+     (numbervars(P+Body,0,_,[]),
+     write_src(=(P,'call!'(Body))))))).
+
+
 
 p2m(I,O):- p2m([progn],I,O).
 
@@ -746,7 +754,7 @@ print_directive((:- Directive)):-
 
 write_pl_metta(STerm):-
     \+ \+ write_pl_metta_0(STerm).
-  write_pl_metta_0(STerm):- numbervars(STerm,0,_,[singletons(true)]),
+  write_pl_metta_0(STerm):- numbervars(STerm,0,_,[singletons(true),attvar(skip)]),
    write_src(STerm).
 
 

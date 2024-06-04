@@ -8,7 +8,7 @@
 
 fbug(_):- is_compatio,!.
 fbug(P) :- format("~N"), current_predicate(write_src/1),
-  with_output_to(user_error,in_cmt(pp_fb(P))),!.
+  with_output_to(user_error,in_cmt(write_src(P))),!.
 fbug(N=V) :- nonvar(N), !, fbdebug1(N:-V).
 fbug(V) :- compound(V),functor(V,F,_A),!,fbdebug1(F:-V).
 fbug(V) :- fbdebug1(debug:-V).
@@ -30,7 +30,12 @@ is_scryer:- \+  current_prolog_flag(libswipl,_).
 :- create_prolog_flag(max_disk_cache,inf,[keep(true),access(read_write),type(term)]).
 :- create_prolog_flag(samples_per_million,inf,[keep(true),access(read_write),type(term)]).
 
-with_cwd(Dir,Goal):- Dir == '.',!,setup_call_cleanup(working_directory(X, X), Goal, working_directory(_,X)).
+with_cwd(Dir,Goal):- Dir == '.',!,setup_call_cleanup(working_directory(X, X), Goal,
+  working_directory(_,X)).
+with_cwd(Dir,Goal):- var(Dir),X=Dir,!,setup_call_cleanup(working_directory(X, X), Goal,
+  working_directory(_,X)).
+
+with_cwd(Dir,Goal):- \+ exists_directory(Dir),!,throw(with_cwd(Dir,Goal)),!.
 with_cwd(Dir,Goal):- setup_call_cleanup(working_directory(X, Dir), Goal, working_directory(_,X)).
 
 with_option([],G):-!,call(G).
@@ -43,8 +48,8 @@ with_option(N,V,G):-  (was_option_value(N,W)->true;W=[]),
   setup_call_cleanup(set_option_value(N,V),G, set_option_value(N,W)).
 
 
-was_option_value(N,V):- nb_current(N,VV), VV\==[], !,V=VV.
-%was_option_value(N,V):- current_prolog_flag(N,VV),!,V=VV.
+%was_option_value(N,V):- nb_current(N,VV), VV\==[], !,V=VV.
+was_option_value(N,V):- current_prolog_flag(N,VV),!,V=VV.
 was_option_value(N,V):- prolog_load_context(N,VV),!,V=VV.
 
 option_else(N,V,Else):- notrace(option_else0(N,V,Else)).
@@ -52,15 +57,14 @@ option_else0( N,V,_Else):- was_option_value(N,VV),!,VV=V.
 option_else0(_N,V, Else):- !,V=Else.
 
 %option_value( N,V):- var(V), !, notrace(once(((option_value0(N,V))))).
-option_value(N,V):- var(V), !, option_value0( N,VV), once((p2m(VV,V2),p2m(V,V1))), V1=V2.
+option_value(N,V):- var(V), !, was_option_value( N,VV), once((p2mE(VV,V2),p2mE(V,V1))), V1=V2.
 option_value(N,V):- V==true,option_value0(N,'True'),!.
 option_value(N,V):- V==false,option_value0(N,'False'),!.
-option_value(N,V):- notrace(once(((p2mE(V,VV),option_value0(N,VV))))).
+option_value(N,V):- notrace(option_value0(N,V)).
 
 
-option_value0( N,V):- var(V), !,  was_option_value( N,V).
-option_value0( N,V):- nonvar(V), option_value0( N,VV), once((p2m(VV,V2),p2m(V,V1))), V1=V2.
-option_value0( N,V):- option_else0( N,V ,[]).
+option_value0( N,V):- was_option_value( N,VV), once((p2mE(VV,V2),p2mE(V,V1))), V1=V2.
+option_value0(_N,[]).
 
 p2mE(NA,NA):- \+ atom(NA),!.
 p2mE(false,'False').
@@ -70,12 +74,13 @@ set_option_value(N,V):-
   set_option_value0(N,V).
 set_option_value0(N,V):-
    p2mE(V,VV),!,
-   catch(nb_setval(N,VV),E,fbug(E)),
+   %catch(nb_setval(N,VV),E,fbug(E)),
    p2mE(PV,VV),!,
    catch(create_prolog_flag(N,PV,[keep(false),access(read_write), type(term)]),E2,fbug(E2)),
    catch(set_prolog_flag(N,PV),E3,fbug(E3)),!.
 
-kaggle_arc:- \+ exists_directory('/opt/logicmoo_workspace/packs_sys/logicmoo_agi/prolog/kaggle_arc/'), !.
+kaggle_arc:- \+ exists_directory('/opt/logicmoo_workspace/packs_sys/logicmoo_agi/prolog/kaggle_arc/'),
+ !.
 %kaggle_arc:- !.
 kaggle_arc:-
    with_option(argv,['--libonly'],
@@ -115,7 +120,7 @@ symbolics_to_string(A,B):-atomics_to_string(A,B).
 symbolics_to_string(A,B,C):-atomics_to_string(A,B,C).
 upcase_symbol(A,B):-upcase_atom(A,B).
 :- prolog_load_context(directory, File),
-   ignore(( 
+   ignore((
      absolute_file_name('../../data/ftp.flybase.org/releases/current/',Dir,[relative_to(File),
      file_type(directory), file_errors(fail)]),
     asserta(ftp_data(Dir)))).

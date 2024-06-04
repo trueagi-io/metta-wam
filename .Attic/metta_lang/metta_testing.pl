@@ -100,12 +100,12 @@ loonit_asserts0(S,Pre,G):-
   flag(loonit_test_number,X,X+1),
   copy_term(Pre,Pro),
   print_current_test,
-  once(Pre),
+  once(Pre),!,
   ((nb_current(exec_src,Exec),Exec\==[])->true;S=Exec),
  % wots(S,((((nb_current(exec_src,WS),WS\==[])->writeln(WS);write_src(exec(TestSrc)))))),
   once(loonit_asserts1(Exec,Pro,G)).
 
-give_pass_credit(TestSrc,_Pre,_G):-
+give_pass_credit(TestSrc,_Pre,_G):- fail,
      inside_assert(TestSrc,BaseEval),
     always_exec(BaseEval),!.
 give_pass_credit(TestSrc,_Pre,G):-
@@ -146,28 +146,27 @@ trim_gstring(Goal, MaxLen) :-
     ),
     write(Trimmed).
 
-loonit_asserts1(TestSrc,Pre,G) :- nop(Pre),
-    call(G), !,
+loonit_asserts1(TestSrc,Pre,G) :- _=nop(Pre),call(G),
   give_pass_credit(TestSrc,Pre,G),!.
 
-loonit_asserts1(TestSrc,Pre,G) :-
+/*
+loonit_asserts1(TestSrc,Pre,G) :-  fail,
     sub_var('BadType',TestSrc), \+ check_type,!,
     write('\n!check_type (not considering this a failure)\n'),
     color_g_mesg('#D8BFD8',write_src(loonit_failureR(G))),!,
     ignore(((
        option_value('on-fail','trace'),
        setup_call_cleanup(debug(metta(eval)),call((Pre,G)),nodebug(metta(eval)))))).
-
+*/
 
 loonit_asserts1(TestSrc,Pre,G) :-
+   must_det_ll((
+    color_g_mesg(red,write_src(loonit_failureR(G))),
     write_pass_fail(TestSrc,'FAIL',G),
-    ((sub_var('BadType',TestSrc), \+ check_type) -> write('\n!check_type (not considering this a failure)\n') ;
-      flag(loonit_failure, X, X+1)), !,
-    color_g_mesg(red,write_src(loonit_failureR(G))),!,
+    flag(loonit_failure, X, X+1),
      %itrace, G.
-    ignore(((
-      % repl
-       option_value('on-fail','trace'),
+    if_t(option_value('on-fail','repl'),repl),
+    if_t(option_value('on-fail','trace'),
        setup_call_cleanup(debug(metta(eval)),call((Pre,G)),nodebug(metta(eval)))))).
     %(thread_self(main)->trace;sleep(0.3))
 

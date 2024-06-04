@@ -104,7 +104,7 @@ build_swi_prolog_from_src() {
     sudo apt-get update
     # Install build dependencies
     echo -e "${BLUE}Installing build dependencies...${NC}"
-    local build_deps="build-essential autoconf git libgmp-dev libssl-dev unixodbc-dev \
+    local build_deps="build-essential autoconf git cmake libpython3-dev libgmp-dev libssl-dev unixodbc-dev \
         libreadline-dev zlib1g-dev libarchive-dev libossp-uuid-dev libxext-dev \
         libice-dev libjpeg-dev libxinerama-dev libxft-dev libxpm-dev libxt-dev \
         pkg-config libdb-dev libpcre3-dev libyaml-dev"
