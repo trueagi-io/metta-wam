@@ -11,5 +11,5 @@
 [29]
 [(State 30)]
 [30]
-0.16user 0.00system 0:00.16elapsed 99%CPU (0avgtext+0avgdata 34096maxresident)k
-0inputs+0outputs (0major+3678minor)pagefaults 0swaps
+0.08user 0.00system 0:00.08elapsed 100%CPU (0avgtext+0avgdata 31100maxresident)k
+0inputs+0outputs (0major+3696minor)pagefaults 0swaps

@@ -1,9 +1,10 @@
 [(a b c e f g)]
 [(e f g)]
 [(a b c)]
+[(a b c)]
 [()]
 [(1 2)]
 [(2 3 4 5)]
 [(1 2 3 4 5 6 7 8 9)]
-0.53user 0.00system 0:00.54elapsed 99%CPU (0avgtext+0avgdata 36092maxresident)k
-0inputs+0outputs (0major+4225minor)pagefaults 0swaps
+0.40user 0.00system 0:00.41elapsed 99%CPU (0avgtext+0avgdata 33572maxresident)k
+0inputs+0outputs (0major+4247minor)pagefaults 0swaps

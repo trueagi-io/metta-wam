@@ -7,6 +7,8 @@
 !(|- ((Garfield --> cat) (1.0 0.9)) ((cat --> animal) (1.0 0.9)))
 ;expected: [((animal --> Garfield) (1.0 0.44751381215469616)), ((Garfield --> animal) (1.0 0.81))]
 
+!(check-state)
+
 !(|- ((Garfield --> carnivore) (1.0 0.9)) (((Garfield --> cat) ==> (Garfield --> carnivore)) (1.0 0.9)))
 ;expected: [((Garfield --> cat) (1.0 0.44751381215469616))]
 

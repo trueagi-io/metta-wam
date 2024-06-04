@@ -3,8 +3,7 @@
    set_prolog_flag(verbose_load,false),
    ensure_loaded(library(logicmoo_common)).
 :- use_module(library(logicmoo_utils)).
-:- dynamic('$exported_op'/3).
-'$exported_op'(_,_,_):- fail.
+:- abolish('$exported_op'/3).
 
 :- op(500, xfy, =>).
 :- use_module(library(clpfd)).
@@ -29,60 +28,6 @@
 :- dynamic eqtl/2.
 :- dynamic go_gene_product/2.
 
-specialization_sample(likes(joe,dogs)).
-specialization_sample(likes(X,X)).
-specialization_sample(likes(_,dogs)).
-specialization_sample(likes(joe,_)).
-specialization_sample(likes(_,_)).
-
-specialization_sample(X,Y):-
-  no_repeats(specialization_sample(X)),
-  no_repeats(specialization_sample(Y)),
-  X \== Y.
-specialization_sample(likes(A,B),likes(B,A)).
-specialization_sample(likes(joe,B),likes(B,B)).
-% invert fact/2s of this predicate`
-specialization_sample(A,B):- clause(specialization_sample(B,A),true).
-
-whch_check:-
-  forall(no_repeats(specialization_sample(X,Y)),
-        forall(check_specializationOf(X,Y),true)).
-
-check_specializationOf(T1,T2):-
-  (specializationOf(T1, T2) ->
-  R = specializationOf(T1, T2);
-  ( R= not(specializationOf(T1, T2)))),
-  pwriteln(R),
-  show_english(R).
-  %pptree(R).
-
-
- % Defines specialization between two facts T1 and T2.
-specializationOf(T1, T2):-
-    unifiable(T1, T2, R), R \== [],  % Ensure T1 and T2 can unify with some residual difference (not identical).
-    copy_term(T1+T2, C1+C2),         % Duplicate T1 and T2 as C1 and C2 respectively to work with fresh variables.
-    numbervars(C1, 0, N1, [attvar(bind)]), % Enumerate variables in C1 starting from 0, treating attributed vars as bound.
-    numbervars(C2, 0, N2, [attvar(bind)]), % Same for C2, ensuring they are treated independently with same conditions.
-    nop( N1 =< N2),
-    \+ C1 \= T2,                     % Try unifying C1 with T2 to test specialization.
-    C2 \= T1,                        % Ensure C2 does not unify with T1 to confirm the direction of specialization.
-    !.                               % Cut to prevent backtracking once a match is found.
-
-% Defines specialization for cases where S is a conjunction and every part of S must specialize either A or B.
-specializationOf((S1, S2), (A, B)):-
-    !,                               % Cut to prevent further matching in simpler cases.
-    specializationOf(S1, (A, B)),    % Each part of the conjunction in S must specialize either A or B.
-    specializationOf(S2, (A, B)).
-specializationOf(S, (A, B)):-
-    S \= (_, _),                    % If S is not a conjunction, proceed with basic checks.
-    (specializationOf(S, A) ;       % S is a specialization of A, or
-     specializationOf(S, B)).       % S is a specialization of B.
-
-
-% Special case rule to handle the constant 'True'.
-% True less often than "True" except if True is "True"
-specializationOf(True, 'True'):-
-    True \== 'True'.                % True is not literally the value 'True'.
 
 solve(Solve):-
   once(mi(Solve,Proof)),
@@ -103,40 +48,27 @@ pppt(Proof):-
   %print_tree(Proof),nl,nl,
   show_english(Proof).
 
-pptree(Proof):-
-   \+ \+ (numbervars(Proof,0,_,[attvars(bind), singletons(true)]),
-  % pretty_numbervars(X1, X), ?
-   print_tree(Proof)).
-
-pwriteln(Proof):-
-   \+ \+ (numbervars(Proof,0,_,[attvars(bind), singletons(true)]),
-   writeln(Proof)).
-
-show_two_englishes(P1):-
- forall(call(P1,Head),
+show_english_f:- forall(fact_head(Head),
   forall(two_versions(Head),show_english(Head))).
 
-rule((Head:-Body)):-
-  rule_head(Head),clause(Head,Body).
+show_english_r:- forall(rule_head(Head),
+  forall(two_versions(Head),show_english(Head))).
 
 show_english_rc:-
  forall(rule_head(Head),
   forall(clause(Head,Body),
-   forall(once(Body),
+   forall(two_versions(Body),
     show_english(Body=>Head)))).
 
 two_versions(_). % show what happens when all vars
 two_versions(Head):- once(Head).
 
 demo_e:-
- show_two_englishes(fact_head),
- show_two_englishes(rule_head),
- show_english_rc,
- forall(tests,true),
- listing(used),
- show_two_englishes(used),
- whch_check.
-
+    show_english_r,
+    show_english_f,
+    show_english_rc,
+    forall(tests,true),
+    listing(used).
 
 % Example queries/tests that demonstrate how to use the defined predicates and facts.
 tests :- solve(relevant_go(ontology_term(go_0045598), sequence_variant(rs1421085))).
@@ -158,14 +90,13 @@ record_used((X1=>X2)):- !,   record_used(X1),   record_used(X2).
 record_used((X1;X2)):- !,   record_used(X1),   record_used(X2).
 record_used(X1):- sub_term(E,X1),atomic_or_ftVar(E),
    subst(X1,E,_,X2),record_used(X2).
-record_used(X2):- !, assert_used(X2).
 record_used(X2):-
   forall((sub_term(E,X2),compound(E)), assert_used(E)).
 
 :- dynamic(used/1).
 %assert_used(X2):- functor(X2,F,A),functor(X1,F,A),X1\=@=X2,!,assert_used(X1).
 assert_used(X1):- \+ \+ (used(X2),X1=@=X2),!.
-assert_used(X2):- assert(used(X2)),!.
+assert_used(X2):- retractall(assert(used(X2)), assert(used(X2)),!.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -174,118 +105,119 @@ assert_used(X2):- assert(used(X2)),!.
 % SHOW ENGLISH
 draw_tty_line :- format('~N=============================================~n').
 draw_tty_line_s :- format('~N     ==============================~n').
-
 % Define the entry point for the translation
-show_english(X) :-
-    %writeq(X), draw_tty_line_s,
-    once(translate_to_english(X, Y)),
-    writeln(Y),
-    !,
-    draw_tty_line.
+show_english(X):-%writeq(X),draw_tty_line_s,
+  once(translate_to_english(X,Y)),writeln(Y),!,
+  draw_tty_line.
 
 translate_to_english(X0, English) :-
-    copy_term(X0, X1),
-    (ground(X0) -> record_used(X1); true),
-    phrase_to_string(tr(X1), English).
+  copy_term(X0,X1),
+  record_used(X1),
+  phrase_to_string(tr(X1), English).
 
+%pretty_numbervars(X1,X),
+phrase_to_string(DCG,English):-
+  phrase(DCG, EnglishList),
+  atomics_to_string(EnglishList, " ", English),!.
 
-phrase_to_string(DCG, English) :-
-    phrase(DCG, EnglishList),
-    atomics_to_string(EnglishList, " ", English),
-    !.
-
-quote(DCG) -->
-    { phrase_to_string(DCG, Eng),
-      atomics_to_string(['"', Eng, '"'], String) },
-    [String].
-
+quote(DCG) --> 
+  {phrase_to_string(DCG,Eng),
+    atomics_to_string(['"',Eng,'"'],String)},[String].
+  
 w_nl(DCG) --> DCG, ['\n'].
+ 
 
-% Typed Noun Phrase
-typed_np(Name, G) --> { toPropercase(Name, FF), Name \== FF }, !, typed_np(FF, G).
-typed_np(Name, G) --> { var(G), gensym("#", G) }, [Name, G].
-typed_np(Name, G) --> { atom(G) }, [Name, G].
-typed_np(Name, G) --> [Name, with, symbol], np(G).
+% Typed Noun Phase
 
-% Noun Phrase
-np(Var)            --> { var(Var) }, !, typed_np('Something', Var).
-np(gene(G))        --> typed_np('Gene', G).
-np(sequence_variant(G)) --> typed_np('SNP', G).
-np(ontology_term(C))    --> np(C).
+typed_np(Name, G)          --> {toPropercase(Name,FF),Name\==FF},!,typed_np(FF, G).
+typed_np(Name, G)          --> {var(G), gensym("#", G)}, [Name, G].
+typed_np(Name, G)          --> {atom(G)}, [Name, G].
+typed_np(Name, G)          --> [Name, with, symbol], np(G).
+
+% Noun Phase
+np(Var)                --> {var(Var)},!, typed_np('Something', Var).
+np(gene(G))            --> typed_np('Gene', G).
+np(sequence_variant(G))--> typed_np('SNP', G).
+np(ontology_term(C))       --> np(C).
 % thunk
-np(X)              --> tr(X).
+np(X)                  --> tr(X).
 
-safe_p_univ(P, [F|Args]) :- compound(P), !, compound_name_arguments(P, F, Args).
-safe_p_univ(P, [P]).
+safe_p_univ(P,[F|Args]):- compound(P),!,compound_name_arguments(P,F,Args).
+safe_p_univ(P,[P]).
 
-compound_remove_if(C, P1, R) :-
-    compound(C),
-    safe_p_univ(C, [F|Args]), Args = [_, _|_],
-    exclude(P1, Args, NewArgs), Args \== NewArgs, !,
-    (NewArgs == [] -> R = [];
-     (NewArgs = [R] -> true;
-      compound_name_arguments(R, F, NewArgs))).
+compound_remove_if(C,P1,R):- compound(C),
+   safe_p_univ(C,[F|Args]), Args = [_,_|_],
+   exclude(P1,Args,NewArgs),  Args\==NewArgs,!,
+ ((NewArgs==[] -> R=[];
+  (NewArgs=[R] -> true;
+   compound_name_arguments(R,F,NewArgs)))).
 
-hide_calls(V) :- var(V), !, fail.
+hide_calls(V):- var(V),!,fail.
 hide_calls(hidden(_)).
 hide_calls(py_call(_)).
-hide_calls(py_call(_, _)).
+hide_calls(py_call(_,_)).
 
 % Translation rules for logical operators and structures
-tr(Var)              --> { var(Var) }, !, typed_np('Something', Var).
-tr(Const)            --> { atom(Const) }, [Const].
-tr(String)           --> { \+ callable(String) }, !, [String].
-tr(hidden(_))        --> [].
+tr(Var)                --> {var(Var)},!, typed_np('Something', Var).
+tr(Const)              --> {atom(Const)}, [Const].
+tr(String)              --> {\+ callable(String)},!,[String].
+tr(hidden(_))         --> [].
 
-% Unwraps
-tr(built_in(C))      --> tr(C).
-tr(ontology_term(C)) --> tr(C).
+% unwraps
+tr(built_in(C))       --> tr(C).
+tr(ontology_term(C))       --> tr(C).
 
-tr(C)                --> { compound_remove_if(C, hide_calls, R) }, tr(R).       % Logical AND
-tr((A, B))           --> w_nl(tr(A)), w_nl(([and], tr(B))).                     % Logical AND
-tr((A; B))           --> tr(A), [or], tr(B).                                     % Logical OR
-tr(not(A))           --> [untrue, that], tr(A).                                  % Logical NOT
-tr(\+(A))            --> [not, provable], tr(A).                                 % Negation as failure (NAF)
+tr(C)                 --> {compound_remove_if(C,hide_calls,R)}, tr(R).  % Logical AND
+tr((A, B))            --> w_nl(tr(A)), w_nl(([and], tr(B))).  % Logical AND
+tr((A; B))            --> tr(A), [or], tr(B).   % Logical OR
+tr(not(A))            --> [not], tr(A).         % Logical NOT
+tr(\+(A))             --> [not, provable], tr(A). % Negation as failure (NAF)
 
-tr(:-(A, B))         --> tr(B => A).
-tr((B => A))         --> ["The statement"], w_nl(quote(tr(A))), [is, proved, by], w_nl((tr(B), ['.'])).
+tr(:-(A, B))          --> tr(B=>A).
+tr((B => A))          --> ["The statement"], w_nl(quote(tr(A))), [is, proved, by], w_nl((tr(B),['.'])).
 
 % Translation rules for different predicates and structures
-tr(member(A, B, C))              --> np(A), [being, a, member, of], np(B), [at, level], np(C).
-tr(member_nat(A, B, C))          --> tr(member(A, B, C)).
-tr(relevant_go(A, B))            --> np(A), [being, relevant, to], np(B).
-tr(relevant_gene(A, B))          --> np(A), [being, relevant, to], np(B).
-tr(relevant_gene_coexpression(A, B)) --> np(A), [being, coexpressed, with, a, gene, relevant, to], np(B).
-tr(in_tad_with(A, B))            --> np(A), [being, in, a, 'TAD', with], np(B).
-tr(codes_for(A, B))              --> np(A), [codes, for], np(B).
-tr(gene(A))                      --> np(A), [is, a, gene].
-tr(fact(A))                      --> [the, fact], tr(A).
-tr(closest_gene(A, B))           --> np(A), [being, the, closest, gene, to], np(B).
-tr(in_tad_region(A, B))          --> np(A), [being, in, 'TAD region'], np(B).
-tr(transcribed_to(A, B))         --> np(A), [being, transcribed, to], np(B).
-tr(translates_to(A, B))          --> np(A), [translates, to], np(B).
+tr(member(A, B, C))   --> np(A), [being, a, member, of], np(B), [at, level], np(C).
+tr(member_nat(A, B, C)) --> tr(member(A, B, C)).
+tr(relevant_go(A, B)) --> np(A), [being, relevant, to], np(B), [through, gene, ontology].
+tr(relevant_gene(A, B)) --> np(A), [being, relevant, to], np(B).
+tr(relevant_gene_coexpression(A, B))
+                      --> np(A), [being, coexpressed, with, a, gene, relevant, to], np(B).
+tr(in_tad_with(A, B)) --> np(A), [being, in, a, 'TAD', with], np(B).
+tr(codes_for(A, B))   --> np(A), [codes, for], np(B).
+tr(gene(A))           --> np(A), [is, a, gene].
+tr(fact(A))           --> [the, fact], tr(A).
+tr(closest_gene(A, B))--> np(A), [being, the, closest, gene, to], np(B).
+tr(in_tad_region(A, B))
+                      --> np(A), [being, in, 'TAD region'], np(B).
+tr(transcribed_to(A, B))
+                      --> np(A), [being, transcribed, to], np(B).
+tr(translates_to(A, B))      --> np(A), [translates, to], np(B).
 
-tr(specializationOf(A, B))       --> quote(tr(A)), [is, specialization, of], quote(tr(B)).
+tr(rel_type(ontology_relationship(ontology_term(A), ontology_term(B)), P))
+                                -->  tr(triple(A,P,B)).   
+tr(rel_type(ontology_relationship(A,B),P)) -->  tr(triple(A,P,B)).
+tr(rel_type(A, B))    --> [the], np(A), [is], np(B).
 
-tr(rel_type(ontology_relationship(ontology_term(A), ontology_term(B)), P)) --> tr(triple(A, P, B)).
-tr(rel_type(ontology_relationship(A, B), P)) --> tr(triple(A, P, B)).
-tr(rel_type(A, B))               --> [the], np(A), [is], np(B).
+tr(triple(A,P,B))  -->  np(A),[is,a],tr(P),[of],np(B).
+  
+tr(eqtl(A, B))        --> [there, being, an, eQTL, between], np(A), [and], np(B).
+tr(go_gene_product(A, B))
+                      --> np(A), [being, a, 'GO gene product', for], np(B).
 
-tr(triple(A, P, B))              --> np(A), [is, a], tr(P), [of], np(B).
-tr(eqtl(A, B))                   --> [there, being, an, eQTL, between], np(A), [and], np(B).
-tr(go_gene_product(A, B))        --> np(A), [being, a, 'GO gene product', for], np(B).
-tr(P)                            --> { safe_p_univ(P, [F, A, B]) }, tr(pso(F, A, B)).
-tr(pso(F, A, B))                 --> { split_functor_string(F,WordList) },
-                                    np(A), WordList, np(B).
-tr(P)                            --> { safe_p_univ(P, [F, A]) }, typed_np(F, A).
-tr(P)                            --> { sformat(S, '~q', [P]) }, [a, logical, atom, S].
+tr(P)                 --> {safe_p_univ(P,[F,A,B])}, tr(pso(F,A,B)).
+
+tr(pso(F,A,B))        -->
+                          {atomic_list_concat(WordList,' ',F)},
+                             np(A),WordList,np(B).
+
+tr(P)                 --> {safe_p_univ(P,[F,A])}, typed_np(F, A).
+
+tr(P)                 --> {sformat(S,'~q',[P])}, [a,logical,atom,S].
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 
-split_functor_string(F,WordList):- atomic_list_concat(WordList, ' ', F),WordList=[_,_|_],!.
-split_functor_string(F,WordList):- atomic_list_concat(WordList, '_', F),WordList=[_,_|_],!.
-split_functor_string(F,WordList):- atomic_list_concat(WordList, '-', F).
 
 
 
@@ -635,6 +567,5 @@ mt_body(HeadC, BodyC, Goal, Body, (proven(Goal), (rule(HeadC):-BodyC), Proof)):-
   % Recurse into the body of the rule for proof.
   mt(Body, Proof).
 
-:- dynamic('$exported_op'/3).
-'$exported_op'(_,_,_):- fail.
+
 :- demo_e.

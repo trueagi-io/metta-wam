@@ -12,5 +12,5 @@
 Expected: []
 Got: [()]
 Excessive result: ())]
-0.06user 0.00system 0:00.07elapsed 100%CPU (0avgtext+0avgdata 33776maxresident)k
-0inputs+0outputs (0major+3603minor)pagefaults 0swaps
+0.05user 0.00system 0:00.06elapsed 97%CPU (0avgtext+0avgdata 30948maxresident)k
+0inputs+0outputs (0major+3671minor)pagefaults 0swaps

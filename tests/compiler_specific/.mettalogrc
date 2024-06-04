@@ -1,2 +1,3 @@
---compile=full
+# --compile=full
+--compile=false
 

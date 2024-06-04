@@ -1,3 +1,4 @@
+!(pragma! compile full)
 
 ;!(nop (pragma! load silent))
 ;spaces
@@ -28,7 +29,9 @@
 ;   (let $T (collapse (superpose (1 (superpose $TOld))))
 ;        (superpose ((add-atom &self (= (TupleCount $T) (+ $C 2)))
 ;                    (If (< $C $N) (BuildTupleCounts $T (+ $C 1) $N))))))*/
-(= (TupleCount $list) (length $list))
+;(= (TupleCount $list) (length $list))
+(= (TupleCount $tuple) (if (== $tuple ()) 0 (+ 1 (TupleCount (cdr-atom $tuple)))))
+
 (: CountElement (-> Expression Number))
 (= (CountElement $x) (case $x (($y 1))))
 ;; Useful interop functions for querying when MeTTa-NARS is compiled as a library to be used via Mettamorph
@@ -369,7 +372,8 @@
 (= (ReasonWithTask (Event $S1 ($time1 $ev1 $prio1)) $t)
    (let ($Belief $CPrio) (case (get-atoms &attentional_focus)
                                (((Concept $Term (Event $SE2 ($timeE2 $evE2 $prioE2)) (Event $S2 ($time2 $ev2 $prio2)) $CPrio)
-                                 (If (and (not (== $time1 eternal)) (> (abs (- $time1 $time2)) 20))
+                                 (If (and (not (== $time1 eternal)) 
+									     (> (abs (- $time1 $time2)) 20))
                                      ((Event $SE2 ($timeE2 $evE2 $prioE2)) $Cprio)
                                      ((Event $S2 ($time2 $ev2 $prio2)) $CPrio)))))
         (case (Conclude (Event $S1 ($time1 $ev1 $prio1)) (TemporallyAlignedBelief $time1 $Belief)
@@ -391,9 +395,12 @@
                          (If (== $Time eternal) $Ev
                              (Event ($Term (Truth_Eternalize $TV)) (eternal $Evidence (0 0.0))))))
 
+
 ;use evidence of an event at a slightly different moment in time
 (= (Projection (Event ($Term ($f $c)) ($Time $Evidence $EPrio)) $TargetTime)
-   (Event ($Term ($f (* $c (min 1 (/ 1 (abs (- $Time $TargetTime))))))) ($TargetTime $Evidence $EPrio)))
+   (Event ($Term ($f (* $c (min 1 (/ 1 (max 1 (abs (- $Time $TargetTime))))))))
+	  ($TargetTime $Evidence $EPrio)))
+
 
 ;make the belief occurrence time compatible with the task's
 (= (TemporallyAlignedBelief $TaskTime $Belief) (If (== $TaskTime eternal)
@@ -406,6 +413,8 @@
 (= (EventWithFIFO3 $New ($1 $2)) ($New $1 $2))
 (= (EventWithFIFO3 $New ($1)) ($New $1))
 (= (EventWithFIFO3 $New ()) ($New))
+
+; !(set-debug! e)
 
 ;Add event to FIFO
 (= (EventToFIFO $Ev)
@@ -529,16 +538,28 @@
                       (GoalCycle $t)))))
 
 
+(: checkEqualToResult (-> Atom Atom Atom))
+(= (checkEqualToResult $eval $results)
+  (let $was (collapse $eval)
+	 (if (== $was $results) ()
+	   (let $q (quote (Expected: $results  Got: $was ))
+		   (let () (println! $q) $q)))))
+  
+
+(= (name-list $name $list)
+	 (let $len (TupleCount $list) 
+	   (___ $name $len $list)))
+
 
 (= (check-state)
- ((concepts (collapse (get-atoms &concepts)))
-  (attentional_focus (collapse (get-atoms &attentional_focus)))
-  (currentTime (get-state &currentTime))
-  (evidentialBase (get-state &evidentialBase))
-  (FIFO (get-state &FIFO))
-  (tempbest (get-state &tempbest))
-  (belief_events (collapse (get-atoms &belief_events)))
-  (goal_events (collapse (get-atoms &goal_events)))))
+ ((___ currentTime (get-state &currentTime))
+  (___ evidentialBase (get-state &evidentialBase))
+  (name-list concepts (collapse (get-atoms &concepts)))
+  (name-list attentional_focus (collapse (get-atoms &attentional_focus)))
+  (name-list FIFO (get-state &FIFO))
+  (___ tempbest (get-state &tempbest))
+  (name-list belief_events (collapse (get-atoms &belief_events)))
+  (name-list goal_events (collapse (get-atoms &goal_events)))))
 
 
 !(compile-easy!)

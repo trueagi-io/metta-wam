@@ -1,11 +1,11 @@
 [()]
-[()]
-[((Garfield --> animal) (1.0 0.81)), ((animal --> Garfield) (1.0 0.44751381215469616))]
+[((animal --> Garfield) (1.0 0.44751381215469616)), ((Garfield --> animal) (1.0 0.81))]
+[((currentTime 1) (evidentialBase 1) (concepts ()) (attentional_focus ()) (FIFO ()) (tempbest ()) (belief_events ()) (goal_events ()))]
 [((Garfield --> cat) (1.0 0.44751381215469616))]
 [(((ExtSet b) --> mwawa) (1.0 0.81)), (((ExtSet a) --> mwawa) (1.0 0.81))]
-[((b --> (R /2 a)) (1.0 0.81)), ((a --> (R /1 b)) (1.0 0.81))]
-[(((R \2 a) --> b) (1.0 0.81)), (((R \1 b) --> a) (1.0 0.81))]
+[((a --> (R /1 b)) (1.0 0.81)), ((b --> (R /2 a)) (1.0 0.81))]
+[(((R \1 b) --> a) (1.0 0.81)), (((R \2 a) --> b) (1.0 0.81))]
 [((B --> A) (1.0 0.44751381215469616)), ((B <-> A) (1.0 0.44751381215469616)), ((B <-> A) (1.0 0.44751381215469616))]
-[((Garfield --> being) (1.0 0.7290000000000001)), ((being --> Garfield) (1.0 0.42163100057836905)), ((being --> Garfield) (1.0 0.28712091374556914)), ((being <-> Garfield) (1.0 0.28712091374556914)), ((being <-> Garfield) (1.0 0.28712091374556914))]
-0.83user 0.00system 0:00.84elapsed 99%CPU (0avgtext+0avgdata 40192maxresident)k
-0inputs+0outputs (0major+5261minor)pagefaults 0swaps
+[((being <-> Garfield) (1.0 0.28712091374556914)), ((being <-> Garfield) (1.0 0.28712091374556914)), ((being --> Garfield) (1.0 0.28712091374556914)), ((being --> Garfield) (1.0 0.42163100057836905)), ((Garfield --> being) (1.0 0.7290000000000001))]
+0.24user 0.00system 0:00.25elapsed 100%CPU (0avgtext+0avgdata 37224maxresident)k
+0inputs+0outputs (0major+5246minor)pagefaults 0swaps

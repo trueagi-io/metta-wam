@@ -24,7 +24,15 @@
 ; This is not just functional programming,
 ; because we can do inference
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (= (ift T $then) $then)
+
+!(set-debug! e)
+;!(rtrace! (ift (green $x) $x))
+;!(break!)
+; !(rtrace! (, (green $x) (println! $x)))
+
+
 !(assertEqual
   (ift (green $x) $x)
   Fritz)

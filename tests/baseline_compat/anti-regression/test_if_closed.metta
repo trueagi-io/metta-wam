@@ -24,6 +24,9 @@
 
 ;!(pragma! eval trace)
 
+!(is-variable $x) ; rust/mettalog True
+!(is-variable 1) ; rust/mettalog False
+
 
 !(is-expression $x) ; rust/mettalog False
 !(is-expression (⍃ 4 3)) ; rust/mettalog True

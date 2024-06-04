@@ -1,5 +1,4 @@
 !(pragma! compile full)
-
 ;!(nop (pragma! load silent))
 ;spaces
 !(bind! &concepts (new-space))
@@ -8,6 +7,8 @@
 ;spaces
 !(bind! &belief_events (new-space))
 !(bind! &goal_events (new-space))
+!(bind! &currentTime (new-state 1))
+!(bind! &evidentialBase (new-state 1))
 
 ;; stdlib extension
 (: If (-> Bool Atom Atom))
@@ -224,8 +225,6 @@
 (= (GoalEventsMax) 10)
 
 ;states
-!(bind! &currentTime (new-state 1))
-!(bind! &evidentialBase (new-state 1))
 (= (increment $atom) (sequential ((change-state! $atom (+ 1 (get-state $atom))))))
 (= (UpdateReasonerState) (sequential ((trace! (time := (get-state &currentTime)) 42) 
                                         (increment &currentTime) (increment &evidentialBase))))
@@ -394,7 +393,9 @@
 
 ;use evidence of an event at a slightly different moment in time
 (= (Projection (Event ($Term ($f $c)) ($Time $Evidence $EPrio)) $TargetTime)
-   (Event ($Term ($f (* $c (min 1 (/ 1 (abs (- $Time $TargetTime))))))) ($TargetTime $Evidence $EPrio)))
+  (let () (println! (Projection (Event ($Term ($f $c)) ($Time $Evidence $EPrio)) $TargetTime))
+   (Event ($Term ($f (* $c (min 1 (/ 1 (abs (- $Time $TargetTime))))))) 
+	   ($TargetTime $Evidence $EPrio))))
 
 ;make the belief occurrence time compatible with the task's
 (= (TemporallyAlignedBelief $TaskTime $Belief) (If (== $TaskTime eternal)
@@ -543,5 +544,6 @@
 
 
 !(compile-easy!)
+
 
 

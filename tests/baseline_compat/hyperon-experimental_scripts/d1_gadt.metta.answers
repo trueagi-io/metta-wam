@@ -12,5 +12,5 @@
 [()]
 [()]
 [()]
-2.45user 0.01system 0:02.46elapsed 100%CPU (0avgtext+0avgdata 35464maxresident)k
-0inputs+0outputs (0major+3960minor)pagefaults 0swaps
+0.05user 0.01system 0:00.06elapsed 100%CPU (0avgtext+0avgdata 30956maxresident)k
+0inputs+0outputs (0major+3669minor)pagefaults 0swaps
