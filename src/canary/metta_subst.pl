@@ -61,7 +61,7 @@ self_subst(X):- is_valid_nb_state(X),!.
 self_subst(X):- is_list(X),!,fail.
 %self_subst(X):- compound(X),!.
 %self_subst(X):- is_ref(X),!,fail.
-self_subst(X):- atom(X),!, \+ nb_current(X,_),!.
+self_subst(X):- atom(X),!, \+ nb_bound(X,_),!.
 self_subst('True'). self_subst('False'). self_subst('F'). %'
 
 
@@ -69,7 +69,7 @@ self_subst('True'). self_subst('False'). self_subst('F'). %'
 substs_to(XX,Y):- Y==XX,!.
 substs_to(XX,Y):- Y=='True',!, is_True(XX),!. %'
 
-%current_self(Space):- nb_current(self_space,Space).
+%current_self(Space):- nb_bound(self_space,Space).
 /*
 subst_args(Eq,RetType,A,AA):-
   current_self(Space),
@@ -119,7 +119,7 @@ subst_args(Depth,Space,X,Y):-subst_args('=',_RetType,
 subst_args0(Eq,RetType,_Dpth,_Slf,X,Y):- self_subst(X),!,Y=X.
 subst_args0(Eq,RetType,Depth,Self,X,Y):-
   Depth2 is Depth-1,
-  trace_eval(subst_args1(Eq,RetType),((e2;e)),Depth,Self,X,M),
+  trace_eval(subst_args1(Eq,RetType),(false,(e2;e)),Depth,Self,X,M),
   (M\=@=X ->subst_args0(Eq,RetType,Depth2,Self,M,Y);Y=X).
 
 :- discontiguous subst_args1/6.
@@ -129,7 +129,7 @@ subst_args1(Eq,RetType,Depth,Self,X,Y):-
   var(Eq) -> (!,subst_args1('=',RetType,Depth,Self,X,Y));
     (atom(Eq),  ( Eq \== ('='), Eq \== ('match')) ,!, call(Eq,'=',RetType,Depth,Self,X,Y)).
 
-subst_args1(Eq,RetType,_Dpth,_Slf,Name,Value):- atom(Name), nb_current(Name,Value),!.
+subst_args1(Eq,RetType,_Dpth,_Slf,Name,Value):- atom(Name), nb_bound(Name,Value),!.
 
 subst_args1(Eq,RetType,Depth,Self,[V|VI],VVO):-  \+ is_list(VI),!,
  subst_args(Eq,RetType,Depth,Self,VI,VM),
@@ -460,7 +460,7 @@ subst_args1(Eq,RetType,Depth,Self,['get-state',StateExpr],Value):- !,
 :- dynamic(is_registered_state/1).
 
 is_nb_state(G):-  is_valid_nb_state(G) -> true ;
-                 is_registered_state(G),nb_current(G,S),is_valid_nb_state(S).
+                 is_registered_state(G),nb_bound(G,S),is_valid_nb_state(S).
 
 
 :- multifile(state_type_method/3).
@@ -497,7 +497,7 @@ is_valid_nb_state(State):- compound(State),functor(State,'State',_).
 % Find the original name of a given state
 state_original_name(State, Name) :-
     is_registered_state(Name),
-    nb_current(Name, State).
+    nb_bound(Name, State).
 
 % Register and initialize a new state
 init_state(Name) :-
@@ -529,9 +529,9 @@ fetch_or_create_state(State, State) :- is_valid_nb_state(State),!.
 fetch_or_create_state(NameOrInstance, State) :-
     (   atom(NameOrInstance)
     ->  (is_registered_state(NameOrInstance)
-        ->  nb_current(NameOrInstance, State)
+        ->  nb_bound(NameOrInstance, State)
         ;   init_state(NameOrInstance),
-            nb_current(NameOrInstance, State))
+            nb_bound(NameOrInstance, State))
     ;   is_valid_nb_state(NameOrInstance)
     ->  State = NameOrInstance
     ;   writeln('Error: Invalid input.')
@@ -683,8 +683,8 @@ subst_args2_failed(_Dpth,_Slf,[F|LESS],Res):- once(subst_selfless([F|LESS],Res))
 subst_args2_failed(Depth,Self,[H|T],[HH|TT]):- !,
   subst_args(Eq,RetType,Depth,Self,H,HH),
   subst_args2_failed(Depth,Self,T,TT).
-
-subst_args2_failed(Depth,Self,T,TT):- subst_args(Eq,RetType,Depth,Self,T,TT).
+subst_args2_failed(Depth,Self,T,T):-!.
+%subst_args2_failed(Depth,Self,T,TT):- subst_args(Eq,RetType,Depth,Self,T,TT).
 
    %subst_args(Eq,RetType,Depth,Self,X,Y):- subst_args1(Eq,RetType,Depth,Self,X,Y)*->true;Y=[].
 
@@ -699,7 +699,7 @@ subst_args2_failed(Depth,Self,T,TT):- subst_args(Eq,RetType,Depth,Self,T,TT).
 into_values(List,Many):- List==[],!,Many=[].
 into_values([X|List],Many):- List==[],is_list(X),!,Many=X.
 into_values(Many,Many).
-subst_args2(Eq,_Dpth,_Slf,Name,Value):- atom(Name), nb_current(Name,Value),!.
+subst_args2(Eq,_Dpth,_Slf,Name,Value):- atom(Name), nb_bound(Name,Value),!.
 */
 % Macro Functions
 %subst_args1(Eq,RetType,Depth,_,_,_):- Depth<1,!,fail.
@@ -733,6 +733,7 @@ last_element(T,E):- compound_name_arguments(T,_,List),last_element(List,E),!.
 
 %as_tf(G,TF):- catch_nowarn((call(G)*->TF='True';TF='False')).
 */
+subst_selfless([O|_],_):- var(O),!,fail.
 subst_selfless(['==',X,Y],TF):- as_tf(X=:=Y,TF),!.
 subst_selfless(['==',X,Y],TF):- as_tf(X=Y,TF),!.
 subst_selfless(X,Y):- !,eval_selfless(_,_,_,_,X,Y).

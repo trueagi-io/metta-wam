@@ -137,6 +137,8 @@ metta_atom_corelib_types( [:, unify, [->, 'Atom', 'Atom', 'Atom', 'Atom', 'Atom'
 metta_atom_corelib_types( [:, unquote, [->, '%Undefined%', '%Undefined%']]).
 
 metta_atom_corelib_types( [:, 'get-metatype', [->, 'Atom', 'Atom']]).
+metta_atom_corelib_types( [:, 'get-type0', [->, 'Atom', 'Atom']]).
+metta_atom_corelib_types( [:, 'get-ftype', [->, 'Atom', 'Atom']]).
 metta_atom_corelib_types( [:, 'get-type', [->, 'Atom', 'Atom']]).
 metta_atom_corelib_types( [:, 'get-type', [->, 'Atom', 'Atom', 'Atom']]).
 metta_atom_corelib_types( [:, '==', [->, T, T, 'Bool']]).

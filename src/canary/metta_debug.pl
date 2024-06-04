@@ -123,7 +123,7 @@ indentq_d(Depth,Prefix4, Message):-
 indentq(_DR,_EX,_AR,_Term):- is_fast_mode,!.
 indentq(DR,EX,AR,retval(Term)):-nonvar(Term),!,indentq(DR,EX,AR,Term).
 indentq(DR,EX,AR,[E,Term]):- E==e,!,indentq(DR,EX,AR,Term).
-indentq(_DR,_EX,_AR,_Term):- flag(trace_output_len,X,X+1), XX is (X mod 1000), XX>100,!.
+%indentq(_DR,_EX,_AR,_Term):- flag(trace_output_len,X,X+1), XX is (X mod 1000), XX>100,!.
 
 indentq(DR,EX,AR,ste(S,Term,E)):- !, indentq(DR,EX,AR,S,Term,E).
 indentq(DR,EX,AR,Term):- indentq(DR,EX,AR,'',Term,'').
@@ -131,10 +131,16 @@ indentq(DR,EX,AR,Term):- indentq(DR,EX,AR,'',Term,'').
 indentq(DR,EX,AR,S,Term,E):-
         setup_call_cleanup(
              notrace(format('~N;')),
+   (wots(Str,indentq0(DR,EX,AR,S,Term,E)),
+    newlines_to_spaces(Str,SStr),write(SStr)),
+   notrace(format('~N'))).
+newlines_to_spaces(Str,SStr):- atomics_to_string(L,'\n',Str),atomics_to_string(L,' ',SStr).
+
+indentq0(DR,EX,AR,S,Term,E):-
              as_trace((
                print_padded(EX, DR, AR),format(S,[]),with_indents(false,write_src(Term)),
-               format(E,[]))),
-        notrace(format('~N'))).
+               format(E,[]))).
+
 
 reset_eval_num:- flag(eval_num,_,0),flag(trace_output_len,_,0).
 reset_only_eval_num:- flag(eval_num,_,0).
@@ -203,8 +209,8 @@ set_debug(Flag,true):- !, debug(metta(Flag)). %,flag_to_var(Flag,Var),set_fast_o
 set_debug(Flag,false):- nodebug(metta(Flag)). %,flag_to_var(Flag,Var),set_fast_option_value(Var,false).
 
 if_trace(Flag,Goal):-
-   real_notrace((catch_err(ignore((is_debugging(Flag),Goal)),E,
-         fbug(E-->if_trace(Flag,Goal))))).
+   notrace(real_notrace((catch_err(ignore((is_debugging(Flag),Goal)),E,
+         fbug(E-->if_trace(Flag,Goal)))))).
 
 
 is_showing(Flag):- fast_option_value(Flag,'silent'),!,fail.
@@ -215,7 +221,7 @@ if_show(Flag,Goal):- real_notrace((catch_err(ignore((is_showing(Flag),Goal)),E,
                         fbug(E-->if_show(Flag,Goal))))).
 
 
-fast_option_value(N,V):- nb_current(N,V).
+fast_option_value(N,V):- atom(N),current_prolog_flag(N,V).
 
 is_verbose(Flag):- fast_option_value(Flag,'silent'),!,fail.
 is_verbose(Flag):- fast_option_value(Flag,'verbose'),!.
