@@ -1,6 +1,6 @@
+[c, b, a]
 [a, b, c]
-[a, b, c]
-[a, b, c, x, y, z]
-[a, b, c, x, y, z]
-0.04user 0.00system 0:00.05elapsed 98%CPU (0avgtext+0avgdata 33868maxresident)k
-0inputs+0outputs (0major+3634minor)pagefaults 0swaps
+[x, y, z, a, b, c]
+[z, y, x, a, b, c]
+0.82user 0.01system 0:00.83elapsed 99%CPU (0avgtext+0avgdata 34956maxresident)k
+0inputs+0outputs (0major+3900minor)pagefaults 0swaps

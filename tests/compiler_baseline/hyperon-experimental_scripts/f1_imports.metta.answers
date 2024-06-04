@@ -3,5 +3,5 @@
 Expected: [(hyperon::space::DynSpace)]
 Got: [(hyperon::space::DynSpace), (hyperon::space::DynSpace)]
 Excessive result: (hyperon::space::DynSpace))]
-0.34user 0.00system 0:00.34elapsed 100%CPU (0avgtext+0avgdata 35320maxresident)k
-0inputs+0outputs (0major+3941minor)pagefaults 0swaps
+0.32user 0.01system 0:00.33elapsed 100%CPU (0avgtext+0avgdata 35264maxresident)k
+0inputs+0outputs (0major+3947minor)pagefaults 0swaps

@@ -3,6 +3,8 @@ from hyperon.ext import register_atoms
 from .agents import *
 import json
 from .utils import *
+import importlib.util
+
 
 import logging
 logger = logging.getLogger(__name__)
@@ -107,7 +109,7 @@ def get_llm_args(metta: MeTTa, prompt_space: SpaceRef, *args):
 
     for atom in args:
         # We first interpret the atom argument in the context of the main metta space.
-        # If the prompt template is in a separate file and contains some external 
+        # If the prompt template is in a separate file and contains some external
         # symbols like (user-query) or (chat-gpt model), they will be resolved here.
         # It is useful for messages, agents, as well as arbitrary code, which relies
         # on information from the agent.
@@ -143,7 +145,7 @@ def get_llm_args(metta: MeTTa, prompt_space: SpaceRef, *args):
                         prompt_space = ch[1].get_object()
                     else:
                         # TODO: a better way to load a script?
-                        m = MeTTaLog()
+                        m = MeTTa()
                         # TODO: asserts
                         m.run("!(import! &self motto)")
                         with open(atom2msg(ch[1])) as f:
@@ -232,9 +234,6 @@ def llm(metta: MeTTa, *args):
 
 @register_atoms(pass_metta=True)
 def llmgate_atoms(metta):
-    ret = llmgate_atoms_for_ra(metta)
-    return ret
-def llmgate_atoms_for_ra(metta):
     global __default_agent
     __default_agent = ChatGPTAgent()
     llmAtom = OperationAtom('llm', lambda *args: llm(metta, *args), unwrap=False)
@@ -247,36 +246,41 @@ def llmgate_atoms_for_ra(metta):
     mettaChatAtom = OperationAtom('metta-chat',
                     lambda x: [ValueAtom(DialogAgent(code=x) if isinstance(x, ExpressionAtom) else \
                                          DialogAgent(path=x))], unwrap=False)
-    retrievalAgentAtom = OperationAtom('retrieval-agent', RetrievalAgent, unwrap=True)
-
     containsStrAtom = OperationAtom('contains-str', lambda a, b: [ValueAtom(contains_str(a, b))], unwrap=False)
 
     concatStrAtom = OperationAtom('concat-str', lambda a, b: [ValueAtom(concat_str(a, b))], unwrap=False)
-    return {
+    result = {
         r"llm": llmAtom,
         r"atom2msg": msgAtom,
         r"chat-gpt": chatGPTAtom,
-        r"anthropic-agent": OperationAtom('anthropic-agent', AnthropicAgent),
         r"EchoAgent": echoAgentAtom,
         r"metta-chat": mettaChatAtom,
-        r"retrieval-agent": retrievalAgentAtom,
         # FIXME: We add this function here, so we can explicitly evaluate results of LLMs, but
         # we may either expect that this function appear in core MeTTa or need a special safe eval
         r"_eval": OperationAtom("_eval",
-            lambda atom: metta.run("! " + atom.get_object().value)[0],
-            unwrap=False),
+                                lambda atom: metta.run("! " + atom.get_object().value)[0],
+                                unwrap=False),
         r"contains-str": containsStrAtom,
-        r"concat-str":  concatStrAtom,
+        r"concat-str": concatStrAtom,
+
     }
+    if importlib.util.find_spec('anthropic') is not None:
+        result[r"anthropic-agent"] = OperationAtom('anthropic-agent', AnthropicAgent)
+    if (importlib.util.find_spec('bs4') is not None) \
+            and (importlib.util.find_spec('tiktoken') is not None) \
+            and (importlib.util.find_spec('markdown') is not None):
+        result[r"retrieval-agent"]: OperationAtom('retrieval-agent', RetrievalAgent, unwrap=True)
+
+    return result
+
 
 
 def str_find_all(str, values):
     return list(filter(lambda v: v in str, values))
 
+
 @register_atoms
 def postproc_atoms():
-    return postproc_atoms_for_ra()
-def postproc_atoms_for_ra():
     strfindAtom = OperationAtom('str-find-all', str_find_all)
     return {
         r"str-find-all": strfindAtom,

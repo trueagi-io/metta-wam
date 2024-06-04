@@ -5,9 +5,9 @@
 
 !(bind! &retrieval_folder (retrieval-agent "./data/texts_for_retrieval" 200 1 "data"))
 !(llm (Agent &retrieval_folder)
-      (user "Cold Winter has begun his reign already!"))
+      (user "Who made significant advancements in the fields of electromagnetism?"))
 !(llm (Agent &retrieval_folder (doc_name "story1.txt"))
-      (user "Cold Winter has begun his reign already!"))
+      (user  "Who made significant advancements in the fields of electromagnetism?"))
 
 !(let $question "Can I publish service without using grpc?"
   (llm

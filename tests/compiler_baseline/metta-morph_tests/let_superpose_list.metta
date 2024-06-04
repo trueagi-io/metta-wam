@@ -1,7 +1,17 @@
+; !(pragma! compile True)
+
+; !(compile-space! &self)
+
+!(pfcWatch!)
+
+; (: waza (-> $a (List $a)))
+
 (= (wuza $x)
    (let* (($y (* 2 $x))
-          ($z (superpose (4 5))))
-          ($y $z)))
+		  ($z (superpose (4 5))))
+		 ($y $z)))
+
+!(compile! wuza)
 
 !(wuza 5)
 

@@ -1,6 +1,6 @@
 !(import! &self ../../hyperon-pln/metta/synthesis/Synthesize.metta)
 ; !(import! &self ../utils/MinerUtils.metta)
-!(import! &succ succAxiom)
+!(import! &succ succAxiom.metta)
 
 (= (succ-axiom) (match &succ $x $x))
 

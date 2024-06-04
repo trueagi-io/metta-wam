@@ -1,6 +1,8 @@
+import os
+import sys
 def get_string_value(atom) -> str:
     item = repr(atom)
-    if len(item) > 2 and item[0] == '"' and item[-1] == '"':
+    if len(item) > 2 and (item[0] == '"' and item[-1] == '"') :
         item = item[1:-1]
     return item
 
@@ -15,3 +17,6 @@ def concat_str(left, right) -> str:
     str1 = get_string_value(left)
     str2 = get_string_value(right)
     return str1 + str2
+
+# convert nested tuples to nested python tuples or lists
+

@@ -61,7 +61,7 @@ self_subst(X):- is_valid_nb_state(X),!.
 self_subst(X):- is_list(X),!,fail.
 %self_subst(X):- compound(X),!.
 %self_subst(X):- is_ref(X),!,fail.
-self_subst(X):- atom(X),!, \+ nb_current(X,_),!.
+self_subst(X):- atom(X),!, \+ nb_bound(X,_),!.
 self_subst('True'). self_subst('False'). self_subst('F'). %'
 
 
@@ -69,7 +69,7 @@ self_subst('True'). self_subst('False'). self_subst('F'). %'
 substs_to(XX,Y):- Y==XX,!.
 substs_to(XX,Y):- Y=='True',!, is_True(XX),!. %'
 
-%current_self(Space):- nb_current(self_space,Space).
+%current_self(Space):- nb_bound(self_space,Space).
 /*
 subst_args(Eq,RetType,A,AA):-
   current_self(Space),
@@ -119,7 +119,7 @@ subst_args(Depth,Space,X,Y):-subst_args('=',_RetType,
 subst_args0(Eq,RetType,_Dpth,_Slf,X,Y):- self_subst(X),!,Y=X.
 subst_args0(Eq,RetType,Depth,Self,X,Y):-
   Depth2 is Depth-1,
-  trace_eval(subst_args1(Eq,RetType),((e2;e)),Depth,Self,X,M),
+  trace_eval(subst_args1(Eq,RetType),(false,(e2;e)),Depth,Self,X,M),
   (M\=@=X ->subst_args0(Eq,RetType,Depth2,Self,M,Y);Y=X).
 
 :- discontiguous subst_args1/6.
@@ -129,7 +129,7 @@ subst_args1(Eq,RetType,Depth,Self,X,Y):-
   var(Eq) -> (!,subst_args1('=',RetType,Depth,Self,X,Y));
     (atom(Eq),  ( Eq \== ('='), Eq \== ('match')) ,!, call(Eq,'=',RetType,Depth,Self,X,Y)).
 
-subst_args1(Eq,RetType,_Dpth,_Slf,Name,Value):- atom(Name), nb_current(Name,Value),!.
+subst_args1(Eq,RetType,_Dpth,_Slf,Name,Value):- atom(Name), nb_bound(Name,Value),!.
 
 subst_args1(Eq,RetType,Depth,Self,[V|VI],VVO):-  \+ is_list(VI),!,
  subst_args(Eq,RetType,Depth,Self,VI,VM),
@@ -152,8 +152,8 @@ subst_args1(Eq,RetType,Depth,Self,['let*',[[Var,Val]|LetRest],Body],RetVal):- !,
     is_sl_op('>').  is_sl_op('<'). %  is_sl_op('>').
     is_sl_op('\\=@=').
 
-subst_args1(Eq,RetType,Depth,Self,[OP,N1,N2],TF):- 
-  fail,  
+subst_args1(Eq,RetType,Depth,Self,[OP,N1,N2],TF):-
+  fail,
   is_sl_op(OP), !,
   ((subst_args(Eq,RetType,Depth,Self,N1,N1Res),subst_args(Eq,RetType,Depth,Self,N2,N2Res),
      ((N1,N2)\=@=(N1Res,N2Res)),subst_args1(Eq,RetType,Depth,Self,[OP,N1Res,N2Res],TF))
@@ -166,9 +166,9 @@ subst_args1(Eq,RetType,_Dpth,_Slf,['repl!'],'True'):- !, repl.
 subst_args1(Eq,RetType,Depth,Self,['!',Cond],Res):- !, call(subst_args(Eq,RetType,Depth,Self,Cond,Res)).
 subst_args1(Eq,RetType,Depth,Self,['rtrace',Cond],Res):- !, rtrace(subst_args(Eq,RetType,Depth,Self,Cond,Res)).
 subst_args1(Eq,RetType,Depth,Self,['time',Cond],Res):- !, time(subst_args(Eq,RetType,Depth,Self,Cond,Res)).
-subst_args1(Eq,RetType,Depth,Self,['print',Cond],Res):- !, subst_args(Eq,RetType,Depth,Self,Cond,Res),format('~N'),print(Res),format('~N').
+%subst_args1(Eq,RetType,Depth,Self,['print',Cond],Res):- !, subst_args(Eq,RetType,Depth,Self,Cond,Res),format('~N'),print(Res),format('~N').
 % !(println! $1)
-subst_args1(Eq,RetType,Depth,Self,['println!',Cond],Res):- !, subst_args(Eq,RetType,Depth,Self,Cond,Res),format('~N'),print(Res),format('~N').
+subst_args1(Eq,RetType,Depth,Self,['println!',Cond],[]):- !, subst_args(Eq,RetType,Depth,Self,Cond,Res),format('~N'),print(Res),format('~N').
 
 subst_args1(Eq,RetType,_Dpth,_Slf,List,Y):- is_list(List),maplist(self_subst,List),List=[H|_], \+ atom(H), !,Y=List.
 
@@ -182,7 +182,7 @@ subst_args1(Eq,RetType,Depth,Self,['assertEqual',X0,Y0],RetVal):- !,
         (bagof_subst(Depth,Self,X,XX),
          bagof_subst(Depth,Self,Y,YY)),
          equal_enough_for_test(XX,YY), TF),
-  (TF=='True'->make_empty(RetVal);RetVal=[got,XX,expected,YY]).
+  (TF=='True'->make_nop(RetVal);RetVal=[got,XX,expected,YY]).
 
 subst_args1(Eq,RetType,Depth,Self,['assertNotEqual',X0,Y0],RetVal):- !,
   subst_vars(X0,X),subst_vars(Y0,Y),
@@ -190,7 +190,7 @@ subst_args1(Eq,RetType,Depth,Self,['assertNotEqual',X0,Y0],RetVal):- !,
         ['assertNotEqual',X0,Y0],
         (setof_subst(Depth,Self,X,XX), setof_subst(Depth,Self,Y,YY)),
          \+ equal_enough(XX,YY), TF),
-  (TF=='True'->make_empty(RetVal);RetVal=[got,XX,expected,not,YY]).
+  (TF=='True'->make_nop(RetVal);RetVal=[got,XX,expected,not,YY]).
 
 subst_args1(Eq,RetType,Depth,Self,['assertEqualToResult',X0,Y0],RetVal):- !,
   subst_vars(X0,X),subst_vars(Y0,Y),
@@ -198,7 +198,7 @@ subst_args1(Eq,RetType,Depth,Self,['assertEqualToResult',X0,Y0],RetVal):- !,
         ['assertEqualToResult',X0,Y0],
         (bagof_subst(Depth,Self,X,XX), =(Y,YY)),
          equal_enough_for_test(XX,YY), TF),
-  (TF=='True'->make_empty(RetVal);RetVal=[got,XX,expected,YY]),!.
+  (TF=='True'->make_nop(RetVal);RetVal=[got,XX,expected,YY]),!.
 
 
 l1t_loonit_assert_source_tf(Src,Goal,Check,TF):-
@@ -358,11 +358,11 @@ sub_sterm1(Sub,Term):- arg(_,Term,SL),sub_sterm(Sub,SL).
 subst_args1(Eq,RetType,_Depth,_Self,['nop'],                 _ ):- !, fail.
 subst_args1(Eq,RetType,Depth,Self,['nop',Expr], Empty):- !,
   ignore(subst_args(Eq,RetType,Depth,Self,Expr,_)),
-  make_empty([], Empty).
+  make_nop([], Empty).
 
 subst_args1(Eq,RetType,Depth,Self,['do',Expr], Empty):- !,
   forall(subst_args(Eq,RetType,Depth,Self,Expr,_),true),
-  make_empty([],Empty).
+  make_nop([],Empty).
 
 subst_args1(Eq,RetType,_Depth,_Self,['call',S], TF):- !, eval_call(S,TF).
 
@@ -460,7 +460,7 @@ subst_args1(Eq,RetType,Depth,Self,['get-state',StateExpr],Value):- !,
 :- dynamic(is_registered_state/1).
 
 is_nb_state(G):-  is_valid_nb_state(G) -> true ;
-                 is_registered_state(G),nb_current(G,S),is_valid_nb_state(S).
+                 is_registered_state(G),nb_bound(G,S),is_valid_nb_state(S).
 
 
 :- multifile(state_type_method/3).
@@ -497,7 +497,7 @@ is_valid_nb_state(State):- compound(State),functor(State,'State',_).
 % Find the original name of a given state
 state_original_name(State, Name) :-
     is_registered_state(Name),
-    nb_current(Name, State).
+    nb_bound(Name, State).
 
 % Register and initialize a new state
 init_state(Name) :-
@@ -529,9 +529,9 @@ fetch_or_create_state(State, State) :- is_valid_nb_state(State),!.
 fetch_or_create_state(NameOrInstance, State) :-
     (   atom(NameOrInstance)
     ->  (is_registered_state(NameOrInstance)
-        ->  nb_current(NameOrInstance, State)
+        ->  nb_bound(NameOrInstance, State)
         ;   init_state(NameOrInstance),
-            nb_current(NameOrInstance, State))
+            nb_bound(NameOrInstance, State))
     ;   is_valid_nb_state(NameOrInstance)
     ->  State = NameOrInstance
     ;   writeln('Error: Invalid input.')
@@ -560,6 +560,7 @@ needs_subst(EvalMe):- is_list(EvalMe),!.
 
 get_type_l1t(_Dpth,_Slf,Var,'%Undefined%'):- var(Var),!.
 get_type_l1t(_Dpth,_Slf,Val,'Number'):- number(Val),!.
+get_type_l1t(_Dpth,_Slf,Val,'String'):- string(Val),!.
 get_type_l1t(Depth,Self,Expr,['StateMonad',Type]):- is_valid_nb_state(Expr),'get-state'(Expr,Val),!,
    get_type_l1t(Depth,Self,Val,Type).
 
@@ -636,16 +637,16 @@ subst_args1(Eq,RetType,Depth,Self,[F|Args],Res):- is_list(F),
 subst_args1(Eq,RetType,Depth,Self,[F|Args],Res):- is_list(F), Args\==[],
   append(F,Args,FArgs),!,subst_args(Eq,RetType,Depth,Self,FArgs,Res).
 */
-subst_args1(Eq,RetType,_Dpth,Self,['import!',Other,File],RetVal):- into_space(Self,Other,Space),!, include_metta(Space,File),!,make_empty(Space,RetVal). %RetVal=[].
+subst_args1(Eq,RetType,_Dpth,Self,['import!',Other,File],RetVal):- into_space(Self,Other,Space),!, include_metta(Space,File),!,make_nop(Space,RetVal). %RetVal=[].
 subst_args1(Eq,RetType,Depth,Self,['bind!',Other,Expr],RetVal):-
-   into_name(Self,Other,Name),!,subst_args(Eq,RetType,Depth,Self,Expr,Value),nb_setval(Name,Value),  make_empty(Value,RetVal).
+   into_name(Self,Other,Name),!,subst_args(Eq,RetType,Depth,Self,Expr,Value),nb_setval(Name,Value),  make_nop(Value,RetVal).
 subst_args1(Eq,RetType,Depth,Self,['pragma!',Other,Expr],RetVal):-
-   into_name(Self,Other,Name),!,subst_args(Eq,RetType,Depth,Self,Expr,Value),set_option_value(Name,Value),  make_empty(Value,RetVal).
-subst_args1(Eq,RetType,_Dpth,Self,['transfer!',File],RetVal):- !, include_metta(Self,File),  make_empty(Self,RetVal).
+   into_name(Self,Other,Name),!,subst_args(Eq,RetType,Depth,Self,Expr,Value),set_option_value(Name,Value),  make_nop(Value,RetVal).
+subst_args1(Eq,RetType,_Dpth,Self,['transfer!',File],RetVal):- !, include_metta(Self,File),  make_nop(Self,RetVal).
 
 
 
-%l_l1t_args1(Depth,Self,['nop',Expr],Empty):- !,  subst_args(Eq,RetType,Depth,Self,Expr,_), make_empty([],Empty).
+%l_l1t_args1(Depth,Self,['nop',Expr],Empty):- !,  subst_args(Eq,RetType,Depth,Self,Expr,_), make_nop([],Empty).
 
 /*
 is_True(T):- T\=='False',T\=='F',T\==[].
@@ -682,8 +683,8 @@ subst_args2_failed(_Dpth,_Slf,[F|LESS],Res):- once(subst_selfless([F|LESS],Res))
 subst_args2_failed(Depth,Self,[H|T],[HH|TT]):- !,
   subst_args(Eq,RetType,Depth,Self,H,HH),
   subst_args2_failed(Depth,Self,T,TT).
-
-subst_args2_failed(Depth,Self,T,TT):- subst_args(Eq,RetType,Depth,Self,T,TT).
+subst_args2_failed(Depth,Self,T,T):-!.
+%subst_args2_failed(Depth,Self,T,TT):- subst_args(Eq,RetType,Depth,Self,T,TT).
 
    %subst_args(Eq,RetType,Depth,Self,X,Y):- subst_args1(Eq,RetType,Depth,Self,X,Y)*->true;Y=[].
 
@@ -698,7 +699,7 @@ subst_args2_failed(Depth,Self,T,TT):- subst_args(Eq,RetType,Depth,Self,T,TT).
 into_values(List,Many):- List==[],!,Many=[].
 into_values([X|List],Many):- List==[],is_list(X),!,Many=X.
 into_values(Many,Many).
-subst_args2(Eq,_Dpth,_Slf,Name,Value):- atom(Name), nb_current(Name,Value),!.
+subst_args2(Eq,_Dpth,_Slf,Name,Value):- atom(Name), nb_bound(Name,Value),!.
 */
 % Macro Functions
 %subst_args1(Eq,RetType,Depth,_,_,_):- Depth<1,!,fail.
@@ -732,6 +733,7 @@ last_element(T,E):- compound_name_arguments(T,_,List),last_element(List,E),!.
 
 %as_tf(G,TF):- catch_nowarn((call(G)*->TF='True';TF='False')).
 */
+subst_selfless([O|_],_):- var(O),!,fail.
 subst_selfless(['==',X,Y],TF):- as_tf(X=:=Y,TF),!.
 subst_selfless(['==',X,Y],TF):- as_tf(X=Y,TF),!.
 subst_selfless(X,Y):- !,eval_selfless(_,_,_,_,X,Y).

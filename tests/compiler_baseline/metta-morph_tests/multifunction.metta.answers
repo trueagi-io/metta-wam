@@ -1,3 +1,8 @@
+[(pfcWatch!)]
+[(listing! g)]
 [1764, 1764]
-0.04user 0.01system 0:00.05elapsed 98%CPU (0avgtext+0avgdata 33992maxresident)k
-0inputs+0outputs (0major+3652minor)pagefaults 0swaps
+[()]
+[()]
+[(listing! g)]
+1.17user 0.00system 0:01.17elapsed 99%CPU (0avgtext+0avgdata 35428maxresident)k
+0inputs+0outputs (0major+3958minor)pagefaults 0swaps

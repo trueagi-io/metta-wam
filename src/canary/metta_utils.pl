@@ -14,9 +14,16 @@
 %:- ensure_loaded(library(dictoo)).
 :- endif.
 
+
+
+:- dynamic(done_once/1).
+do_once(G):-
+  ((done_once(GG),GG=@=G) -> true
+  ;(assert(done_once(G)),(once(@(G,user))->true;retract(done_once(G))))).
+
 cleanup_debug:-
   forall(
-    (clause(prolog_debug:debugging(A1,B,C),Body,Cl1), 
+    (clause(prolog_debug:debugging(A1,B,C),Body,Cl1),
      clause(prolog_debug:debugging(A2,B,C),Body,Cl2),
      A1=@=A2,Cl1\==Cl2),
      erase(Cl2)).
@@ -221,8 +228,8 @@ compound_name_arg(G,MD,Goal):- compound(G),!, compound_name_arguments(G,MD,[Goal
 :- multifile(user:message_hook/3).
 :- dynamic(user:message_hook/3).
 %user:message_hook(Term, Kind, Lines):- error==Kind, itrace,fbug(user:message_hook(Term, Kind, Lines)),trace,fail.
-user:message_hook(Term, Kind, Lines):- 
-   fail, error==Kind,  
+user:message_hook(Term, Kind, Lines):-
+   fail, error==Kind,
    fbug(message_hook(Term, Kind, Lines)),fail.
 
 :- meta_predicate(must_det_ll(0)).
@@ -293,7 +300,8 @@ md(P1,X):-
 must_det_ll1(P1,X):- tracing,!,must_not_error(call(P1,X)),!.
 must_det_ll1(P1,once(A)):- !, once(md(P1,A)).
 must_det_ll1(P1,X):-
-  strip_module(X,M,P),functor(P,F,A),setup_call_cleanup(nop(trace(M:F/A,+fail)),(must_not_error(call(P1,X))*->true;md_failed(P1,X)),
+  strip_module(X,M,P),functor(P,F,A),
+  setup_call_cleanup(nop(trace(M:F/A,+fail)),(must_not_error(call(P1,X))*->true;md_failed(P1,X)),
     nop(trace(M:F/A,-fail))),!.
 
 
@@ -312,6 +320,7 @@ must_not_error(X):- ncatch(X,E,(rethrow_abort(E);(/*arcST,*/writeq(E=X),pp(etrac
 always_rethrow('$aborted').
 always_rethrow(md_failed(_,_,_)).
 always_rethrow(return(_)).
+always_rethrow(metta_return(_)).
 always_rethrow(give_up(_)).
 always_rethrow(time_limit_exceeded(_)).
 always_rethrow(depth_limit_exceeded).
@@ -332,18 +341,19 @@ main_debug:- main_thread,current_prolog_flag(debug,true).
 cant_rrtrace:- nb_setval(cant_rrtrace,t).
 can_rrtrace:- nb_setval(cant_rrtrace,f).
 %md_failed(P1,X):- predicate_property(X,number_of_clauses(1)),clause(X,(A,B,C,Body)), (B\==!),!,must_det_ll(A),must_det_ll((B,C,Body)).
-md_failed(P1,G):- never_rrtrace,!,notrace,/*notrace*/(u_dmsg(md_failed(P1,G))),!,throw(md_failed(P1,G,2)).
-md_failed(_P1,G):- option_value(testing,true),!,
-  T='FAILEDDDDDDDDDDDDDDDDDDDDDDDDDD!!!!!!!!!!!!!'(G),
-  write_src_uo(T), give_up(T,G).
 
+md_failed(P1,X):- notrace((write_src_uo(failed(P1,X)),fail)).
+md_failed(P1,X):- tracing,visible_rtrace([-all,+fail,+call,+exception],call(P1,X)).
+md_failed(P1,X):- \+ tracing, !, visible_rtrace([-all,+fail,+exit,+call,+exception],call(P1,X)).
+md_failed(P1,G):- is_cgi, \+ main_debug, !, u_dmsg(arc_html(md_failed(P1,G))),fail.
+md_failed(_P1,G):- option_value(testing,true),!,
+      T='FAILEDDDDDDDDDDDDDDDDDDDDDDDDDD!!!!!!!!!!!!!'(G),
+      write_src_uo(T), give_up(T,G).
+md_failed(P1,G):- never_rrtrace,!,notrace,/*notrace*/(u_dmsg(md_failed(P1,G))),!,throw(md_failed(P1,G,2)).
+%md_failed(P1,G):- tracing,call(P1,G).
 md_failed(_,_):- never_rrtrace,!,fail.
-md_failed(P1,G):- tracing,/*notrace*/(u_dmsg(md_failed(P1,G))),!,fail.
+md_failed(P1,X):- notrace,is_guitracer,u_dmsg(failed(X))/*,arcST*/,nortrace,atrace,call(P1,X).
 md_failed(P1,G):- main_debug,/*notrace*/(write_src_uo(md_failed(P1,G))),!,throw(md_failed(P1,G,2)).
-md_failed(P1,G):- is_cgi,!, u_dmsg(arc_html(md_failed(P1,G))).
-md_failed(P1,X):- notrace,is_guitracer,u_dmsg(failed(X))/*,arcST*/,nortrace,atrace, call(P1,X).
-md_failed(P1,X):-  /*,arcST*/nortrace,write_src_uo(failed(P1,X)),atrace, %stack_dump,
- trace,visible_rtrace([-all,+fail,+call,+exception],X).
 % must_det_ll(X):- must_det_ll(X),!.
 
 write_src_uo(G):-
@@ -352,7 +362,7 @@ write_src_uo(G):-
      (format('~N~n~n',[]),
       write_src(G),
       format('~N~n~n'))),!,
- stack_dump,
+ %stack_dump,
  stream_property(S2,file_no(2)),
     with_output_to(S2,
      (format('~N~n~n',[]),
@@ -363,7 +373,7 @@ write_src_uo(G):-
 rrtrace(X):- rrtrace(etrace,X).
 
 stack_dump:-  ignore(catch(bt,_,true)). %,ignore(catch(dumpST,_,true)),ignore(catch(bts,_,true)).
-ugtrace(error(Why),G):- !, notrace,write_src_uo(Why),rtrace(G).
+ugtrace(error(Why),G):- !, notrace,write_src_uo(Why),stack_dump,write_src_uo(Why),rtrace(G).
 ugtrace(Why,G):-  tracing,!,notrace,write_src(Why),rtrace(G).
 ugtrace(Why,_):-  is_testing, !, ignore(give_up(Why,5)),throw('$aborted').
 ugtrace(_Why,G):-  ggtrace(G),throw('$aborted').

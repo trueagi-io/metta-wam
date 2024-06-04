@@ -55,9 +55,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; &state-token was initialized with state of type (A B), so
 ; it cannot be changed to int
+;!(rtrace!
 !(assertEqual
   (change-state! &state-token 1)
   (Error 1 BadType))
+   ;)
 
 ; the new state here is int, so it cannot be changed to string
 !(assertEqual

@@ -1729,6 +1729,7 @@ update_packs:-
 % :- update_packs.
 :- system:use_module(library(prolog_pack)).
 :- export(pack_upgrade_soft/1).
+/*
 pack_upgrade_soft(Which) :- which_pack(Which,Pack)-> Which\==Pack,!, pack_upgrade_soft(Pack).
 pack_upgrade_soft(Pack) :-
   prolog_pack:(
@@ -1767,7 +1768,7 @@ pack_upgrade_soft(Pack) :-
                      ])
     ;   print_message(informational, pack(up_to_date(Pack)))
     )).
-
+*/
 
 pack_upgrade_soft(Pack) :-
     print_message(warning, pack(no_upgrade_info(Pack))).
@@ -1785,7 +1786,7 @@ fix_deps(Pack-_Why):-
   !.
 
 correct_unsatisfied_dependencies:-
-  prolog_pack:unsatisfied_dependencies(List),reverse(List,R),maplist(fix_deps,R).
+  call(call,prolog_pack:unsatisfied_dependencies(List)),reverse(List,R),maplist(fix_deps,R).
 correct_unsatisfied_dependencies:-!.
 
 ensure_this_pack_installed_correctly:-

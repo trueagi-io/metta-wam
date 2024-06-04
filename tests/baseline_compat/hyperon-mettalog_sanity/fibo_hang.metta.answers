@@ -1,2 +1,11 @@
-Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-mettalog_sanity/fibo_hang.metta
 144
+354224848179261915075
+23416728348467685
+23416728348467685
+[()]
+[()]
+[()]
+[()]
+[()]
+63.08user 0.07system 1:03.16elapsed 99%CPU (0avgtext+0avgdata 288896maxresident)k
+0inputs+0outputs (0major+89168minor)pagefaults 0swaps

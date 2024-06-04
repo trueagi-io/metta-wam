@@ -6,5 +6,5 @@
 [(: CPU (⍃ 2 3))]
 []
 [(: ((rule (rule1 axiom)) CPU) (less 2 3))]
-0.46user 0.00system 0:00.46elapsed 99%CPU (0avgtext+0avgdata 35148maxresident)k
-0inputs+0outputs (0major+3990minor)pagefaults 0swaps
+25.78user 0.00system 0:25.78elapsed 99%CPU (0avgtext+0avgdata 38036maxresident)k
+0inputs+0outputs (0major+4633minor)pagefaults 0swaps

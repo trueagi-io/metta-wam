@@ -188,6 +188,8 @@ DEBUG() {
 		do_DEBUG "$@"
 	 elif [ "$verbose" -gt 1 ]; then
 		do_DEBUG "$@"
+     elif [[ "$contains_halt" == "true" ]]; then
+     	do_DEBUG "$@"
      fi
 }
 
@@ -314,6 +316,15 @@ add_to_list() {
     fi
 }
 
+add_to_front() {
+    local item="$1"
+    local -n list_ref="$2"
+    if [[ ! " ${list_ref[*]} " =~ " $item " ]]; then
+        #PRE_METTALOG_OPTIONS=("--html" "${PRE_METTALOG_OPTIONS[@]}")
+	list_ref=("$item" "${list_ref[@]}")
+    fi
+}
+
 function print_help {
     echo " Usage: ${MeTTa} [options] <metta-files|directories> ... [-- arg ...passed to your program...]"
     echo "        ${MeTTa} --help         Display this message"
@@ -436,7 +447,9 @@ function handle_args {
     PrevDir="${RPWD:-$(pwd)}"  # Default to current directory if PrevDir is not set
 
     for arg0 in "$@"; do
-
+      process_arg=true
+      while [ "$process_arg" == "true" ]; do
+        process_arg=false
         arg=$(remove_quotes "$arg0")  # Remove the quotes
 
         # Check if the previous argument was --rc
@@ -572,10 +585,12 @@ function handle_args {
                 ;;
 
 
-           --log=*)
+           --log)
 	        add_to_list "$arg" PRE_METTALOG_OPTIONS
+	        add_to_front "--html" PRE_METTALOG_OPTIONS
+	        add_to_front "--debug" PRE_METTALOG_OPTIONS
 		compatio=false
-		html=true
+		html_flag=enable
                 continue
                 ;;
 
@@ -605,8 +620,8 @@ function handle_args {
                 ;;
 
             ---*)
-		DASH2="-${arg#*---}"
-                PRE_METTALOG_OPTIONS=("$DASH2" "${PRE_METTALOG_OPTIONS[@]}")
+		DASH2="${arg#-}"
+		PRE_METTALOG_OPTIONS=("$DASH2" "${PRE_METTALOG_OPTIONS[@]}")
                 continue
                 ;;
 
@@ -620,6 +635,7 @@ function handle_args {
 		fi
                 ;;
         esac
+      done
     done
 }
 
@@ -957,9 +973,9 @@ if [[ "$html_flag" == "enable" ]]; then
         IF_REALLY_DO "touch '$TEE_FILE'"
         IF_REALLY_DO "chmod 777 '$TEE_FILE'"
         IF_REALLY_DO "cat /dev/null > '$TEE_FILE'"
-        if [[ "$contains_halt" == "true" ]]; then
-	   do_DEBUG "METTA_CMD: $METTA_CMD"
-	fi
+        #if [[ "$contains_halt" == "true" ]]; then
+	   DEBUG "METTA_CMD: $METTA_CMD"
+	#fi
 	trap 'cleanup' EXIT
         eval "$METTA_CMD"
         echo $? > "$TEMP_EXIT_CODE_FILE"

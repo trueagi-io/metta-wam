@@ -1,21 +1,22 @@
 !(pragma! load debug)
 !(pragma! log True)
 
-(: is-variable (-> Atom Bool))
-(= (is-variable $x) (== (get-metatype $x) Variable))
-!(compile! is-variable)
 
+(: is-variable (-> Atom Bool))
+(= (is-variable $x) 
+    (== (get-metatype $x) Variable))
 
 (: lazy-or (-> Bool Atom Bool))
 (= (lazy-or False $x) $x)
 (= (lazy-or True $x) True)
-!(compile! lazy-or)
 
 (: is-expression (-> Atom Bool))
-(= (is-expression $x) (== (get-metatype $x) Expression))
+(= (is-expression $x) 
+   (== (get-metatype $x) Expression))
 
 (: is-closed (-> Atom Bool))
-(= (is-closed $x) (if (is-variable $x)
+(= (is-closed $x) 
+  (if (is-variable $x)
 					  False
 					  (if (== () $x) True
 					  (if (is-expression $x)
@@ -23,6 +24,8 @@
 							   (let $tail (cdr-atom $x) (is-closed $tail)))
 						  True))))
 
+; function
+; :(X,Y, [:,X,Y]).
 
 ;; KB
 !(bind! &kb (new-space))
@@ -45,13 +48,16 @@
 ;             (-> (rule1output $x $y)
 ;                 (less $x $y)))))
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; DTL Backward chaining Curried ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(: bc (-> $a Nat hyperon::space::DynSpace $a))
+(: bc (-> $a hyperon::space::DynSpace Nat $a))
+
 ;; Base case
-(= (bc (: $prf $ccln) $space $_1) (match $space (: $prf $ccln) (: $prf $ccln)))
+(= (bc (: $prf $ccln) $space $_1) 
+  (match $space (: $prf $ccln) (: $prf $ccln)))
 ;; if conclusion equals (⍃ $X $Y), then return (: CPU (⍃ $X $Y)) 
 ;; if $x and $Y are fully grounded and (< $X $Y)
 (= (bc (: CPU (⍃ $X $Y)) $space $_2) 
@@ -68,6 +74,8 @@
 		   
      (: ($prfabs $prfarg) $ccln)))
 
+; function(A,B,C) = O
+; predicate(A,B,C,O)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; make things compiled
@@ -87,7 +95,6 @@
 
 !(pragma! log False)
 !(pragma! compatio True)
-
 
 ; Test
 !(bc (: CPU (⍃ 2 3)) &kb Z)

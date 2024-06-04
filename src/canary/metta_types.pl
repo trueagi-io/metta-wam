@@ -135,31 +135,6 @@ not_arg_violation(Depth,Self,Arg,Type):-
    \+ arg_violation(Depth,Self,Arg,Type).
 
 
-ignored_args_conform(Depth,Self,A,L):- ( \+ iz_conz(Args); \+ iz_conz(List)), !.
-ignored_args_conform(Depth,Self,A,L):- maplist(ignored_arg_conform(Depth,Self),A,L).
-ignored_arg_conform(Depth,Self,A,L):- nonvar(L), is_nonspecific_type(L),!.
-ignored_arg_conform(Depth,Self,A,L):- get_type(Depth,Self,A,T), type_conform(T,L),!.
-ignored_arg_conform(Depth,Self,_,_):- !.
-
-args_conform(_Dpth,_Slf,Args,List):- ( \+ iz_conz(Args); \+ iz_conz(List)), !.
-args_conform(Depth,Self,[A|Args],[L|List]):-
-  arg_conform(Depth,Self,A,L), args_conform(Depth,Self,Args,List).
-
-arg_conform(_Dpth,_Slf,_A,L):- nonvar(L), is_nonspecific_type(L),!.
-    arg_conform(Depth,Self,A,L):- get_type(Depth,Self,A,T), type_conform(T,L),!.
-%arg_conform(_Dpth,_Slf,_,_).
-%arg_conform(Depth,Self,A,_):- get_type(Depth,Self,A,_),!.
-
-type_conform(T,L):- T=L,!.
-type_conform(T,L):- \+ \+ (is_nonspecific_type(T);is_nonspecific_type(L)),!.
-type_conform(T,L):- can_assign(T,L).
-
-is_nonspecific_type(Var):- var(Var),!.
-is_nonspecific_type('%Undefined%').
-is_nonspecific_type([]).
-is_nonspecific_type('Atom').
-is_nonspecific_type('Any').
-
 get_types(Depth,Self,Var,TypeSet):-
    setof(Type,get_type_each(Depth,Self,Var,Type),TypeSet).
 
@@ -187,11 +162,10 @@ is_dynaspace(S):- var(S),!,fail.
 is_dynaspace(S):- was_asserted_space(S).
 is_dynaspace(S):- py_named_space(S).
 is_dynaspace(S):- typed_list(S,'hyperon::space::DynSpace',_).
-%  notrace( is_space_type(Expr,_)),!.
+%  fake_notrace( is_space_type(Expr,_)),!.
 
 
-
-get_type_each(_Dpth,_Slf,Expr,'hyperon::space::DynSpace'):- is_dynaspace(Expr),!.
+get_type_each(_, _, Nil, UD):- Nil==[],!,UD='%Undefined%'.
 get_type_each(Depth,Self,Val,Type):- \+ integer(Depth),!,get_type_each(10,Self,Val,Type).
 get_type_each(Depth,_Slf,_Type,_):- Depth<1,!, fail.
 %get_type(Depth,Self,Val,Type):- is_debugging(eval),
@@ -206,14 +180,15 @@ get_type_each(Depth,Self,Expr,['StateMonad',Type]):-
 get_type_each(_Dpth,Self,Var,Type):- var(Var),!,
  get_attr(Var,metta_type,Self=TypeList),member(Type,TypeList).
 
+get_type_each(_Dpth,_Slf,Expr,'hyperon::space::DynSpace'):- is_dynaspace(Expr),!.
 get_type_each(Depth,Self,Val,Type):- \+ compound(Val),!, get_type_nc(Depth,Self,Val,Type).
 
 get_type_each(Depth,Self,Val,Type):-
- %ignore(check_bad_type(Depth,Self,Val)),
+ if_t(option_value('type-check',auto),check_bad_type(Depth,Self,Val)),
  if_or_else((get_type_cmpd(Depth,Self,Val,Type,How),trace_get_type(How,Type,gt(Val))),
     (trace_get_type('FAILED','',gt(Val)),fail)).
 
-
+/*
 have_some_defs(Depth,Self,Val):-
   \+ \+
  ([H|Args] = Val,
@@ -234,11 +209,11 @@ check_bad_type(Depth,Self,Val):-
 check_bad_type2(Depth,Self,Val):- Val= [Op|Args],
   typed_expression(Depth,Self,[Op|Args],ArgTypes,RType),
    trace_get_type(type_sig(Op),ArgTypes,RType),
-   ignored_args_conform(Depth,Self,Args,ArgTypes),
+   args_conform(Depth,Self,Args,ArgTypes),
    (args_violation(Depth,Self,Args,ArgTypes) ->
     (trace_get_type(bad_type,args_violation(Args,ArgTypes),check),fail);
     (trace_get_type(conformed,no_args_violation(Args,ArgTypes),check),true)).
-
+*/
 typed_expression(Depth,Self,[Op|Args],ArgTypes,RType):-
    len_or_unbound(Args,Len),
    get_operator_typedef1(Self,Op,Len,ArgTypes,RType).
@@ -249,9 +224,12 @@ badly_typed_expression(Depth,Self,[Op|Args]):-
   args_violation(Depth,Self,Args,ArgTypes),
   !.
 
+:- nodebug(metta(types)).
+:- nodebug(types).
 trace_get_type(How,Type,Val):-
+  if_trace(types,
     color_g_mesg('#7f2f2f',
-       w_indent(3,format('<-- ~@ <- ~@ < ~@',[wsf(How),wsf(Type),wsf(Val)]))),!.
+       w_indent(3,format('<-- ~@ <- ~@ < ~@',[wsf(How),wsf(Type),wsf(Val)])))),!.
 wsf(T):- with_indents(false,write_src(T)).
 
 get_type_nc(_Dpth,Self,Op,Type):- metta_type(Self,Op,Type).
@@ -283,7 +261,7 @@ get_dict_type(Val,_,TypeO):- get_dict(Val,types,TypeL),
 %get_type_cmpd(_Dpth,Self,Op,Type):- copy_term(Op,Copy),
 %  metta_type(Self,Op,Type), Op=@=Copy.
 
-get_type_cmpd(_Dpth,_Slf,Val,Type,dict):- is_dict(Val,Type),
+get_type_cmpd(_Dpth,_Slf,Val,Type,dict):- is_dict(Val,Type),!,
   get_dict_type(Val,Type,TypeO).
 
 % Curried Op
@@ -345,7 +323,8 @@ state_decltype(Expr,Type):- functor(Expr,_,A),
 
 get_value_type(_Dpth,_Slf,Var,'%Undefined%'):- var(Var),!.
 get_value_type(_Dpth,_Slf,Val,'Number'):- number(Val),!.
-get_value_type(_Dpth,_Slf,Val,T):- get_type(_Dpth,_Slf,Val,T), T\==[], T\=='%Undefined%',!.
+get_value_type(_Dpth,_Slf,Val,'String'):- string(Val),!.
+get_value_type(Depth,Self,Val,T):- get_type(Depth,Self,Val,T), T\==[], T\=='%Undefined%',!.
 get_value_type(_Dpth,_Slf,Val,T):- 'get-metatype'(Val,T).
 
 /*
@@ -423,6 +402,59 @@ adjust_argsB(_Eq,_RetType,Res,Res,Depth,Self,_,X,Y):- as_prolog(Depth,Self,X,Y),
 eval_1_arg(Eq,ReturnType,Depth,Self,Arg,Adjusted):-
   if_or_else(eval(Eq,ReturnType,Depth,Self,Arg,Adjusted),Arg=Adjusted).
 
+
+get_operator_typedef(Self,Op,ParamTypes,RetType):-
+  len_or_unbound(ParamTypes,Len),
+  get_operator_typedef(Self,Op,Len,ParamTypes,RetType).
+
+reset_cache:- retractall(get_operator_typedef0(_,_,_,_,_)).
+
+:- dynamic(get_operator_typedef0/5).
+get_operator_typedef(Self,Op,Len,ParamTypes,RetType):-
+ len_or_unbound(ParamTypes,Len),
+ if_or_else(get_operator_typedef0(Self,Op,Len,ParamTypes,RetType),
+ if_or_else(get_operator_typedef1(Self,Op,Len,ParamTypes,RetType),
+            get_operator_typedef2(Self,Op,Len,ParamTypes,RetType))).
+
+get_operator_typedef1(Self,Op,Len,ParamTypes,RetType):-
+   len_or_unbound(ParamTypes,Len),
+   if_t(nonvar(ParamTypes),append(ParamTypes,[RetType],List)),
+   metta_type(Self,Op,['->'|List]),
+   if_t(var(ParamTypes),append(ParamTypes,[RetType],List)),
+   assert(get_operator_typedef0(Self,Op,Len,ParamTypes,RetType)).
+get_operator_typedef2(Self,Op,Len,ParamTypes,RetType):-
+  ignore('AnyRet'=RetType),
+  maplist(is_eval_kind,ParamTypes),
+  assert(get_operator_typedef0(Self,Op,Len,ParamTypes,RetType)).
+  %nop(wdmsg(missing(get_operator_typedef2(Self,Op,ParamTypes,RetType)))),!,fail.
+
+
+ignored_args_conform(Depth,Self,A,L):- ( \+ iz_conz(Args); \+ iz_conz(List)), !.
+ignored_args_conform(Depth,Self,A,L):- maplist(ignored_arg_conform(Depth,Self),A,L).
+ignored_arg_conform(Depth,Self,A,L):- nonvar(L), is_nonspecific_type(L),!.
+ignored_arg_conform(Depth,Self,A,L):- get_type(Depth,Self,A,T), type_conform(T,L),!.
+ignored_arg_conform(Depth,Self,_,_):- !.
+
+args_conform(_Dpth,_Slf,Args,List):- ( \+ iz_conz(Args); \+ iz_conz(List)), !.
+args_conform(Depth,Self,[A|Args],[L|List]):-
+  arg_conform(Depth,Self,A,L), args_conform(Depth,Self,Args,List).
+
+arg_conform(_Dpth,_Slf,_A,L):- nonvar(L), is_nonspecific_type(L),!.
+    arg_conform(Depth,Self,A,L):- get_type(Depth,Self,A,T), type_conform(T,L),!.
+%arg_conform(_Dpth,_Slf,_,_).
+%arg_conform(Depth,Self,A,_):- get_type(Depth,Self,A,_),!.
+
+type_conform(T,L):- T=L,!.
+type_conform(T,L):- \+ \+ (is_nonspecific_type(T);is_nonspecific_type(L)),!.
+type_conform(T,L):- can_assign(T,L).
+
+
+:- dynamic(thrown_metta_return/1).
+throw_metta_return(L):-
+   asserta(thrown_metta_return(L)),
+    (throw(metta_return(L))).
+    
+
 into_typed_args(_Dpth,_Slf,T,M,Y):- (\+ iz_conz(T); \+ iz_conz(M)),!, M=Y.
 into_typed_args(Depth,Self,[T|TT],[M|MM],[Y|YY]):-
   into_typed_arg(Depth,Self,T,M,Y),
@@ -437,13 +469,14 @@ into_typed_arg0(Depth,Self,T,M,Y):- var(T), !,
 
 into_typed_arg0(Depth,Self,T,M,Y):- is_pro_eval_kind(T),!,eval_args(Depth,Self,M,Y).
 into_typed_arg0(Depth,Self,T,M,Y):- ground(M),!, \+ arg_violation(Depth,Self,M,T),Y=M.
-into_typed_arg0(_Dpth,_Slf,T,M,Y):- is_non_eval_kind(T),!,M=Y.
+into_typed_arg0(_Dpth,_Slf,T,M,Y):- nonvar(T), is_non_eval_kind(T),!,M=Y.
 into_typed_arg0(Depth,Self,_,M,Y):- eval_args(Depth,Self,M,Y).
 
 wants_eval_kind(T):- nonvar(T), is_pro_eval_kind(T),!.
 wants_eval_kind(_):- true.
 
-metta_type:attr_unify_hook(Self=TypeList,NewValue):- attvar(NewValue),!,put_attr(NewValue,metta_type,Self=TypeList).
+metta_type:attr_unify_hook(Self=TypeList,NewValue):- 
+ attvar(NewValue),!,put_attr(NewValue,metta_type,Self=TypeList).
 metta_type:attr_unify_hook(Self=TypeList,NewValue):-
    get_type(20,Self,NewValue,Was),
    can_assign(Was,Type).
@@ -463,19 +496,31 @@ add_type(_Depth,Self,_Var,TypeL,Type):-
   put_attr(Var,metta_type,Self=TypeList).
 
 
-can_assign(Was,Type):- Was=Type,!.
-can_assign(Was,Type):- (is_nonspecific_type(Was);is_nonspecific_type(Type)),!.
-can_assign(Was,Type):- \+ cant_assign_to(Was,Type).
-%can_assign(_Ws,_Typ).
 
+
+can_assign(Was,Type):- (is_nonspecific_type(Was);is_nonspecific_type(Type)),!.
+can_assign(Was,Type):- Was=Type,!.
+%can_assign(Was,Type):- (Was=='Nat';Type=='Nat'),!,fail.
+%can_assign(Was,Type):- \+ cant_assign_to(Was,Type).
+%can_assign(_Ws,_Typ).
+/*
 cant_assign_to(Was,Type):- cant_assign(Was,Type),!.
 cant_assign_to(Type,Was):- cant_assign(Was,Type),!.
 cant_assign(A,B):- \+ A \= B, !, fail.
 cant_assign(Number,String):- formated_data_type(Number),formated_data_type(String), Number\==String.
 cant_assign(Number,Other):- formated_data_type(Number), symbol(Other), Number\==Other.
-
-is_non_eval_kind(Type):- is_nonspecific_type(Type),!.
+*/
+is_non_eval_kind(Var):- var(Var),!.
+is_non_eval_kind(Type):- nonvar(Type),Type\=='Any', is_nonspecific_type(Type),!.
 is_non_eval_kind('Atom').
+
+is_nonspecific_type(Any):- notrace(is_nonspecific_type0(Any)),!.
+is_nonspecific_type0(Var):- var(Var),!,fail.
+is_nonspecific_type0('%Undefined%').
+is_nonspecific_type0('ErrorType').
+%is_nonspecific_type([]).
+is_nonspecific_type0('Atom').
+is_nonspecific_type0(Any):- is_nonspecific_any(Any).
 
 formated_data_type('Number').
 formated_data_type('Symbol').
@@ -484,7 +529,44 @@ formated_data_type('Char').
 formated_data_type('String').
 formated_data_type([List|_]):- List=='List'.
 
+is_nonspecific_any(Any):- notrace(is_nonspecific_any0(Any)),!.
+
+is_nonspecific_any0(Any):- Any=='Any'.
+is_nonspecific_any0(Any):- Any=='%Undefined%'.
+%is_nonspecific_any0(Any):- Any=='Type'.
+is_nonspecific_any0(Any):- Any=='AnyRet'.
+
+
+is_nonspecific_type_na(NotAtom):- NotAtom\=='Atom', is_nonspecific_type(NotAtom).
+narrow_types(RetType,RetType,RetType):- !.
+narrow_types(Any,RetType,RetType):- nonvar(Any),is_nonspecific_any(Any),!.
+narrow_types(Any,RetType,RetType):- nonvar(Any),is_nonspecific_any(Any),!.
+narrow_types(Any,RetType,RetType):- nonvar(Any),is_nonspecific_type_na(Any),!.
+narrow_types(RetType,Any,RetType):- nonvar(Any),is_nonspecific_type_na(Any),!.
+narrow_types(RetType,Any,RetType):- is_type_list(Any,List),!,narrow_types([RetType|List],Out).
+narrow_types(Any,RetType,RetType):- is_type_list(Any,List),!,narrow_types([RetType|List],Out).
+narrow_types(Fmt,Fmt1,Fmt):- formated_data_type(Fmt),formated_data_type(Fmt1).
+narrow_types(Fmt,Fmt1,Fmt):- formated_data_type(Fmt),!.
+narrow_types(Fmt1,Fmt,Fmt):- formated_data_type(Fmt),!.
+narrow_types(Fmt1,Fmt2,'NarrowTypeFn'(Fmt1,Fmt2)).
+
+is_type_list('NarrowTypeFn'(Fmt1,Fmt2),List):- get_type_list('NarrowTypeFn'(Fmt1,Fmt2),List).
+
+get_type_list('NarrowTypeFn'(Fmt1,Fmt2),List):- !,
+   get_type_list(Fmt1,List1),get_type_list(Fmt2,List2),
+   append(List1,List2,List).
+get_type_list(A,[A]).
+
+narrow_types(NL,Out):- \+ is_list(NL),!, Out=[NL].
+narrow_types([A|List],Out):- var(A),!,narrow_types(List,LT),Out='NarrowTypeFn'(A,LT).
+narrow_types([A,B|List],Out):- narrow_types([B|List],BL),narrow_types(A,BL,Out).
+narrow_types([A],A).
+
+is_pro_eval_kind(Var):- var(Var),!.
 is_pro_eval_kind(SDT):- formated_data_type(SDT).
+is_pro_eval_kind(A):- A=='Atom',!,fail.
+is_pro_eval_kind(A):- A=='%Undefined%',!,fail.
+is_pro_eval_kind(A):- is_nonspecific_any(A),!.
 
 is_feo_f('Cons').
 
@@ -523,34 +605,9 @@ is_special_op(Op):-  current_self(Self),is_special_op(Self,Op).
 is_special_op(_Slf,F):- \+ atom(F), \+ var(F), !, fail.
 %is_special_op(Self,Op):- get_operator_typedef(Self,Op,Params,_RetType),
 %   maplist(is_non_eval_kind,Params).
-is_special_op(_Slf,Op):- is_special_builtin(Op).
+%is_special_op(_Slf,Op):- is_special_builtin(Op).
 
-
-
-get_operator_typedef(Self,Op,ParamTypes,RetType):-
-  len_or_unbound(ParamTypes,Len),
-  get_operator_typedef(Self,Op,Len,ParamTypes,RetType).
-
-:- dynamic(get_operator_typedef0/5).
-get_operator_typedef(Self,Op,Len,ParamTypes,RetType):-
- len_or_unbound(ParamTypes,Len),
- if_or_else(get_operator_typedef0(Self,Op,Len,ParamTypes,RetType),
- if_or_else(get_operator_typedef1(Self,Op,Len,ParamTypes,RetType),
-            get_operator_typedef2(Self,Op,Len,ParamTypes,RetType))).
-
-get_operator_typedef1(Self,Op,Len,ParamTypes,RetType):-
-   len_or_unbound(ParamTypes,Len),
-   if_t(nonvar(ParamTypes),append(ParamTypes,[RetType],List)),
-   metta_type(Self,Op,['->'|List]),
-   if_t(var(ParamTypes),append(ParamTypes,[RetType],List)),
-   assert(get_operator_typedef0(Self,Op,Len,ParamTypes,RetType)).
-get_operator_typedef2(Self,Op,Len,ParamTypes,RetType):-
-  ignore('Any'=RetType),
-  maplist(is_eval_kind,ParamTypes),
-  assert(get_operator_typedef0(Self,Op,Len,ParamTypes,'Any2')).
-  %nop(wdmsg(missing(get_operator_typedef2(Self,Op,ParamTypes,RetType)))),!,fail.
-
-is_eval_kind(ParamType):- ignore(ParamType='Any3').
+is_eval_kind(ParamType):- ignore(ParamType='Any').
 
 is_metta_data_functor(Eq,F):-
   current_self(Self),is_metta_data_functor(Eq,Self,F).
@@ -572,10 +629,10 @@ get_operator_typedef(Self,Op,_,ParamTypes,RetType):-
 
 
 is_special_builtin('case').
-is_special_builtin(':').
+%is_special_builtin(':').
 
 %is_special_builtin('=').
-is_special_builtin('->').
+%is_special_builtin('->').
 is_special_builtin('bind!').
 %is_special_builtin('new-space').
 is_special_builtin('let').

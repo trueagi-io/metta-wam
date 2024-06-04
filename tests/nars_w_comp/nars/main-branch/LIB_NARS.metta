@@ -1,219 +1,78 @@
-
-
 !(pragma! compile full)
 
-(: Arity (-> Symbol Number))
-(Arity Arity 2)
-(Arity : 2)
-(: :  SrcPredicate)
-(= (: $R P1) (Arity $R 1))
-(= (: $R P2) (Arity $R 2))
-(= (: $R P3) (Arity $R 3))
+;!(nop (pragma! load silent))
+;spaces
+!(bind! &concepts (new-space))
+!(bind! &attentional_focus (new-space))
 
-;; We do this because the Arity is variable (it can be 3 or 4)
-;; Treat "If" as a function (missing an arg wheneever we see it in src)
-(: If SrcFunction)
-
+;spaces
+!(bind! &belief_events (new-space))
+!(bind! &goal_events (new-space))
 
 ;; stdlib extension
 (: If (-> Bool Atom Atom))
 (= (If True $then) $then)
-(= (If False $then) (let $x 0 (let $x 1 $x)))
+(= (If False $then) ())
 (: If (-> Bool Atom Atom Atom))
 (= (If $cond $then $else) (if $cond $then $else))
-
-(: TupleConcat (-> List List List))
-(Arity TupleConcat 3)
 (= (TupleConcat $Ev1 $Ev2) (collapse (superpose ((superpose $Ev1) (superpose $Ev2)))))
-
-(: max (-> Number Number Number))
-(Arity max 3)
 (= (max $1 $2) (If (> $1 $2) $1 $2))
-
-!(assertEqual (max 4 3) 4)
-
-(: min (-> Number Number Number))
-(Arity min 3)
 (= (min $1 $2) (If (< $1 $2) $1 $2))
-
-(: abs (-> Number Number))
-(Arity abs 2)
 (= (abs $x) (If (< $x 0) (- 0 $x) $x))
-
-;; we will try sequential-do in NARS to maintain bindings and not return anything 
-(: maplist! (-> P1 List))
-(: maplist! (-> P2 List List))
-(: maplist! (-> P3 List List List))
-;; Treat "sequential-do" as a Predicate (NOT missing an arg whenever we see it in src)
-(: sequential-do SrcPredicate)
-(: sequential-do (-> (ListOf Expression)))
-(= (sequential-do $1) (maplist! do $1))
-
-(: sequential (-> Expression %Undefined%))
-(Arity sequential 2)
+(: sequential (-> Expression %Undefined% ))
 (= (sequential $1) (superpose $1))
-
-
-; was (: do (-> Expression %Undefined%))
-(: do SrcPredicate)
-(: do (-> Expression))
-(Arity do 1)
+(: do (-> Expression %Undefined% ))
 (= (do $1) (case $1 ()))
-
-;; turn off compiler while we call into the REPL
-
-(: TupleCount (-> List Number))
-(: TupleCount BinaryPredicate)
-(Arity TupleCount 2)
-
-(= (TupleConcat $Ev1 $Ev2) 
-  (collapse (superpose ((superpose $Ev1) (superpose $Ev2)))))
-  
-(= (TupleCount $tuple) (If (== $tuple ()) 0 (+ 1 (TupleCount (cdr-atom $tuple)))))
-
-!(assertEqual (TupleCount (2 4 3)) 3)
-
-
-
+;(= (TupleCount ()) 0)
+;(= (TupleCount (1)) 1)
+;(= (BuildTupleCounts $TOld $C $N)
+;   (let $T (collapse (superpose (1 (superpose $TOld))))
+;        (superpose ((add-atom &self (= (TupleCount $T) (+ $C 2)))
+;                    (If (< $C $N) (BuildTupleCounts $T (+ $C 1) $N))))))*/
+(= (TupleCount $list) (length $list))
 (: CountElement (-> Expression Number))
-(Arity CountElement 2)
 (= (CountElement $x) (case $x (($y 1))))
 ;; Useful interop functions for querying when MeTTa-NARS is compiled as a library to be used via Mettamorph
-(: add-morph-atoms (-> Space Atom))
 (= (add-morph-atom $space $entry) (add-atom $space $entry))
-(: get-morph-atoms (-> Space Atom))
 (= (get-morph-atoms $space) (get-atoms $space))
-(: get-concept-terms (-> Atom))
 (= (get-concept-terms) (match (superpose (&attentional_focus &concepts)) (Concept $TermX $Belief $BeliefEvent $CPrio) $TermX))
-(: get-concept-beliefs (-> Atom))
 (= (get-concept-beliefs) (match (superpose (&attentional_focus &concepts)) (Concept $TermX $Belief $BeliefEvent $CPrio) $Belief))
-(: get-concept-terms-of-positive-beliefs (-> Atom))
 (= (get-concept-terms-of-positive-beliefs) (match (superpose (&attentional_focus &concepts)) (Concept $TermX (Event ($term ($f $c)) ($occT $Ev $Prio)) $BeliefEvent $CPrio) 
    (If (> $f 0.5) ($term (confidence: $c)))))
-(: get-concept-terms-of-positive-temporal-beliefs (-> Atom))
 (= (get-concept-terms-of-positive-temporal-beliefs) (match (superpose (&attentional_focus &concepts)) (Concept $TermX $EternalEvent (Event ($term ($f $c)) ($occT $Ev $Prio)) $CPrio) 
    (If (> $f 0.5) ($term (time: $occT) (confidence: $c)))))
 ;; Truth functions
-
-(: Truth_c2w (-> Number  Number))
-(Arity Truth_c2w 2)
 (= (Truth_c2w $c) (/ $c (- 1 $c)))
-
-(: Truth_w2c (->  Number  Number))
-(Arity Truth_w2c 2)
 (= (Truth_w2c $w) (/ $w (+ $w 1)))
-
-(: Truth_Deduction (-> TruthValue TruthValue TruthValue))
-(Arity Truth_Deduction 3)
 (= (Truth_Deduction ($f1 $c1) ($f2 $c2)) ((* $f1 $f2) (* (* $f1 $f2) (* $c1 $c2))))
-
-(: Truth_Abduction (-> TruthValue TruthValue TruthValue))
-(Arity Truth_Abduction 3)
 (= (Truth_Abduction ($f1 $c1) ($f2 $c2)) ($f2 (Truth_w2c (* (* $f1 $c1) $c2))))
-
-(: Truth_Induction (-> TruthValue TruthValue TruthValue))
-(Arity Truth_Induction 3)
 (= (Truth_Induction $T1 $T2) (Truth_Abduction $T2 $T1))
-
-(: Truth_Exemplification (-> TruthValue TruthValue TruthValue))
-(Arity Truth_Exemplification 3)
 (= (Truth_Exemplification ($f1 $c1) ($f2 $c2)) (1.0 (Truth_w2c (* (* $f1 $f2) (* $c1 $c2)))))
-
-(: Truth_StructuralDeduction (-> TruthValue TruthValue))
-(Arity Truth_StructuralDeduction 2)
 (= (Truth_StructuralDeduction $T) (Truth_Deduction $T (1.0 0.9)))
-
-(:  Truth_Negation (-> TruthValue TruthValue))
-(Arity Truth_Negation 2)
 (= (Truth_Negation ($f $c)) ((- 1 $f) $c))
-
-(:  Truth_StructuralDeductionNegated (-> TruthValue TruthValue))
-(Arity Truth_StructuralDeductionNegated 2)
 (= (Truth_StructuralDeductionNegated $T) (Truth_Negation (Truth_StructuralDeduction $T)))
-
-(: Truth_Intersection (-> TruthValue TruthValue TruthValue))
-(Arity Truth_Intersection 3)
 (= (Truth_Intersection ($f1 $c1) ($f2 $c2)) ((* $f1 $f2) (* $c1 $c2)))
-
-(: Truth_StructuralIntersection (-> TruthValue TruthValue))
-(Arity Truth_StructuralIntersection 2)
 (= (Truth_StructuralIntersection $T) (Truth_Intersection $T (1.0 0.9)))
-
-(: Truth_or (-> TruthValue TruthValue Number))
-(Arity Truth_or 3)
 (= (Truth_or $a $b) (- 1 (* (- 1 $a) (- 1 $b))))
-
-(: Truth_Comparison (-> TruthValue TruthValue TruthValue))
-(Arity Truth_Comparison 3)
 (= (Truth_Comparison ($f1 $c1) ($f2 $c2)) (let $f0 (Truth_or $f1 $f2) ((If (== $f0 0.0) 0.0 (/ (* $f1 $f2) $f0)) (Truth_w2c (* $f0 (* $c1 $c2))))))
-
-(: Truth_Analogy (-> TruthValue TruthValue TruthValue))
-(Arity Truth_Analogy 3)
 (= (Truth_Analogy ($f1 $c1) ($f2 $c2)) ((* $f1 $f2) (* (* $c1 $c2) $f2)))
-
-(: Truth_Resemblance (-> TruthValue TruthValue TruthValue))
-(Arity Truth_Resemblance 3)
 (= (Truth_Resemblance ($f1 $c1) ($f2 $c2)) ((* $f1 $f2) (* (* $c1 $c2) (Truth_or $f1 $f2))))
-
-(: Truth_Union (-> TruthValue TruthValue TruthValue))
-(Arity Truth_Union 3)
 (= (Truth_Union ($f1 $c1) ($f2 $c2)) ((Truth_or $f1 $f2) (* $c1 $c2)))
-
-(: Truth_Difference (-> TruthValue TruthValue TruthValue))
-(Arity Truth_Difference 3)
 (= (Truth_Difference ($f1 $c1) ($f2 $c2)) ((* $f1 (- 1 $f2)) (* $c1 $c2)))
-
-(: Truth_DecomposePNN (-> TruthValue TruthValue TruthValue))
-(Arity Truth_DecomposePNN 3)
 (= (Truth_DecomposePNN ($f1 $c1) ($f2 $c2)) (let $fn (* $f1 (- 1 $f2)) ((- 1 $fn) (* $fn (* $c1 $c2)))))
-
-(: Truth_DecomposeNPP (-> TruthValue TruthValue TruthValue))
-(Arity Truth_DecomposeNPP 3)
 (= (Truth_DecomposeNPP ($f1 $c1) ($f2 $c2)) (let $f (* (- 1 $f1) $f2) ($f (* $f (* $c1 $c2)))))
-
-(: Truth_DecomposePNP (-> TruthValue TruthValue TruthValue))
-(Arity Truth_DecomposePNP 3)
 (= (Truth_DecomposePNP ($f1 $c1) ($f2 $c2)) (let $f (* $f1 (- 1 $f2)) ($f (* $f (* $c1 $c2)))))
-
-(: Truth_DecomposePPP (-> TruthValue TruthValue TruthValue))
-(Arity Truth_DecomposePPP 3)
 (= (Truth_DecomposePPP $v1 $v2) (Truth_DecomposeNPP (Truth_Negation $v1) $v2))
-
-(: Truth_DecomposeNNN (-> TruthValue TruthValue TruthValue))
-(Arity Truth_DecomposeNNN 3)
 (= (Truth_DecomposeNNN ($f1 $c1) ($f2 $c2)) (let $fn (* (- 1 $f1) (- 1 $f2)) ((- 1 $fn) (* $fn (* $c1 $c2)))))
-
-(: Truth_Eternalize (-> TruthValue TruthValue))
-(Arity Truth_Eternalize 2)
 (= (Truth_Eternalize ($f $c)) ($f (Truth_w2c $c)))
-
-(: Truth_Revision (-> TruthValue TruthValue TruthValue))
-(Arity Truth_Revision 3)
 (= (Truth_Revision ($f1 $c1) ($f2 $c2)) 
    (let* (($w1 (Truth_c2w $c1)) ($w2 (Truth_c2w $c2)) ($w  (+ $w1 $w2))
           ($f (/ (+ (* $w1 $f1) (* $w2 $f2)) $w)) ($c (Truth_w2c $w)))
           ((min 1.00 $f) (min 0.99 (max (max $c $c1) $c2)))))
-(: Truth_Expectation (-> TruthValue TruthValue))
-(Arity Truth_Expectation 2)
 (= (Truth_Expectation ($f $c)) (+ (* $c (- $f 0.5)) 0.5))
-
-
-(: |- (-> Any Any Expression))
-(Arity |- 3)
-
-(: IntSet (-> Atom Expression))
-(: ExtSet (-> Atom Expression))
-
 ;;NAL-1
 ;;!Syllogistic rules for Inheritance:
 (= (|- (($a --> $b) $T1) (($b --> $c) $T2)) (($a --> $c) (Truth_Deduction $T1 $T2)))
-
-
-(DataFunctor IntSet $_)
-(DataFunctor ExtSet $_)
-(DataFunctor neg 1)
-
-
 (= (|- (($a --> $b) $T1) (($a --> $c) $T2)) (($c --> $b) (Truth_Induction $T1 $T2)))
 (= (|- (($a --> $c) $T1) (($b --> $c) $T2)) (($b --> $a) (Truth_Abduction $T1 $T2)))
 (= (|- (($a --> $b) $T1) (($b --> $c) $T2)) (($c --> $a) (Truth_Exemplification $T1 $T2)))
@@ -268,7 +127,6 @@
 (= (|- (($M --> $S) $T1) (($M --> ($S - $P)) $T2)) (($M --> $P) (Truth_DecomposePNP $T1 $T2)))
 (= (|- (($M --> $S) $T1) (($M --> ($P - $S)) $T2)) (($M --> $P) (Truth_DecomposeNNN $T1 $T2)))
 ;; NAL-4
-!(";; NAL-4")
 ;;!Transformation rules between product and image:
 (= (|- ((($A x $B) --> $R) $T)) (($A --> ($R /1 $B)) (Truth_StructuralIntersection $T)))
 (= (|- ((($A x $B) --> $R) $T)) (($B --> ($R /2 $A)) (Truth_StructuralIntersection $T)))
@@ -307,7 +165,6 @@
 (= (|- (($R --> ($A x $B)) $T1) (($R --> ($C x $B)) $T2)) (($A <-> $C) (Truth_Comparison $T1 $T2)))
 (= (|- (($R --> ($A x $B)) $T1) (($R --> ($A x $C)) $T2)) (($B <-> $C) (Truth_Comparison $T1 $T2)))
 ;;NAL-5
-!(";; NAL-5")
 ;;!Negation conjunction and disjunction decomposition:
 (= (|- ((neg $A) $T)) ($A (Truth_Negation $T)))
 (= (|- (($A && $B) $T)) ($A (Truth_StructuralDeduction $T)))
@@ -347,8 +204,6 @@
 (= (|- ($A $T1) (($A <=> $B) $T2)) ($B (Truth_Analogy $T1 $T2)))
 ;;NAL term reductions
 ;;!Extensional intersection, union, conjunction reductions:
-
-(Arity reduced 2)
 (= (reduced ($A & $A)) $A)
 (= (reduced ($A | $A)) $A)
 (= (reduced ($A && $A)) $A)
@@ -365,46 +220,23 @@
 (= (reduced (ExtSet ( $A SetElement $B ))) (ExtSet $A $B))
 (= (reduced (IntSet ( $A SetElement $B ))) (IntSet $A $B))
 ;params
-(: Beleif (-> Number))
-(Arity BeliefEventsMax 1)
 (= (BeliefEventsMax) 10)
-(: GoalEventsMax (-> Number))
-(Arity GoalEventsMax 1)
 (= (GoalEventsMax) 10)
-
-
-;spaces
-!(bind! &belief_events (new-space))
-!(bind! &goal_events (new-space))
 
 ;states
 !(bind! &currentTime (new-state 1))
 !(bind! &evidentialBase (new-state 1))
-
-(: increment (-> MonadicState)) 
-(Arity increment 1)
 (= (increment $atom) (sequential ((change-state! $atom (+ 1 (get-state $atom))))))
-(: UpdateReasonerState (-> Expression))
-(Arity UpdateReasonerState 1) ;; Required in this case so we dont make a return value?
-(= (UpdateReasonerState) (sequential ((trace! (time := (get-state &currentTime)) 42) (increment &currentTime) (increment &evidentialBase))))
-(: GetReasonerState (-> Any))
-(Arity GetReasonerState 1)
+(= (UpdateReasonerState) (sequential ((trace! (time := (get-state &currentTime)) 42) 
+                                        (increment &currentTime) (increment &evidentialBase))))
 (= (GetReasonerState) ((get-state &currentTime) ((get-state &evidentialBase))))
 
 ;priority of events
-(: EventPriorityNow (-> Atom Atom Number))
-(Arity EventPriorityNow 3)
 (= (EventPriorityNow ($T $P) $t) (* $P (/ 1 (+ 1 (- $t $T)))))
 
 ;retrieve the best candidate (allows to use tuples / collapse results / spaces as a PQ)
 !(bind! &tempbest (new-state ()))
 !(bind! &tempbestscore (new-state 0))
-
-
-
-;retrieve the best candidathe
-(: BestCandidate (-> List Atom TruthValue MonadicState))
-(Arity BestCandidate 4)
 (= (BestCandidate $tuple $evaluateCandidateFunction $t)
    (sequential ((do (change-state! &tempbestscore 0))
                 (do (change-state! &tempbest ()))
@@ -415,31 +247,17 @@
                                                            (change-state! &tempbestscore $fx))))))))
                 (get-state &tempbest))))
 
-
-
 ;functions to select highest-priority events in belief and goal PQ
-(: PriorityOf (-> EventWithTruthValue TruthValue Number)) 
-(Arity PriorityOf 3)
 (= (PriorityOf (Event $Sentence ($occT $Ev $Prio)) $t) (EventPriorityNow $Prio $t))
-
-(: SelectHighestPriorityEvent (-> Space TruthValue MonadicState))
-(Arity SelectHighestPriorityEvent 3)
 (= (SelectHighestPriorityEvent $collection $t)
    (BestCandidate (collapse (get-atoms $collection)) PriorityOf $t))
 
 ;a belief event to process, which demands adding it to the PQ and updating its concept
-(: SelectHighestPriorityEvent (-> EventWithTruthValue TruthValue MonadicState))
-(Arity ProcessBeliefEvent 3)
 (= (ProcessBeliefEvent $Ev $t)
    (sequential ((add-atom &belief_events $Ev)
                 (UpdateConcept $Ev $t))))
 
-
-(: Event DataFunctor)
-(: Event (-> Atom Atom Event))
-
 ;bound the size of the attentional focus for tasks / events
-(Arity BoundEvents 5)
 (= (BoundEvents $collection $Threshold $Increment $TargetAmount $t)
    (sequential ((do (let* (($Ev (get-atoms $collection))
                             ((Event $Sentence ($Time $Evidence $EPrio)) $Ev))
@@ -449,15 +267,10 @@
                      (If (> $CurrentAmount $TargetAmount)
                          (BoundEvents $collection (+ $Threshold $Increment) $Increment $TargetAmount $t))))))
 ;params
-(Arity AttentionalFocusConceptsMax 1)
 (= (AttentionalFocusConceptsMax) 10)
 
-;spaces
-!(bind! &concepts (new-space))
-!(bind! &attentional_focus (new-space))
 
 ;priority of concepts
-(Arity ConceptPriorityNow 3)
 (= (ConceptPriorityNow ($T $P) $t) (* $P (/ 1 (+ 1 (- $t $T)))))
 
 ;Whether evidence was just counted once
@@ -468,64 +281,66 @@
                                ($y (superpose $Ev2)))
                               (case (== $x $y) ((True overlap))))))))
 
-(= (StampDisjoint-saner $Ev1 $Ev2)
-   (== () (collapse (let* (($x (superpose $Ev1))
-                           ($y (superpose $Ev2)))
-                          (case (== $x $y) ((True overlap)))))))
-
 ;revise if there is no evidential overlap, else use higher-confident candidate
-(Arity RevisionAndChoice 2)
-(= (RevisionAndChoice (Event ($Term1 ($f1 $c1)) (eternal $ev1 $EPrio1)) (Event ($Term2 ($f2 $c2)) (eternal $ev2 $EPrio2)))
-   (let $ConclusionStamp (TupleConcat $ev1 $ev2)
-        (If (StampDisjoint $ev1 $ev2)
-            (Event ($Term1 (Truth_Revision ($f1 $c1) ($f2 $c2))) (eternal $ConclusionStamp (0 0.0)))
-            (If (> $c1 $c2)
-                (Event ($Term1 ($f1 $c1)) (eternal $ev1 (0 0.0)))
-                (Event ($Term2 ($f2 $c2)) (eternal $ev2 (0 0.0)))))))
+(=
+    (RevisionAndChoice
+      (Event ($Term1 ($f1 $c1)) (eternal $ev1 $EPrio1))
+      (Event ($Term2 ($f2 $c2)) (eternal $ev2 $EPrio2)))
+    (let $ConclusionStamp
+      (TupleConcat $ev1 $ev2)
+      (If
+        (StampDisjoint $ev1 $ev2)
+        (Event
+          ($Term1 (Truth_Revision ($f1 $c1) ($f2 $c2)))
+          (eternal $ConclusionStamp (0 0.0)))
+        (If
+          (> $c1 $c2)
+          (Event ($Term1 ($f1 $c1)) (eternal $ev1 (0 0.0)))
+          (Event ($Term2 ($f2 $c2)) (eternal $ev2 (0 0.0)))))))
+
 
 ;update beliefs in existing concept with the new event or create new concept to enter the new evidence
-(Arity UpdateConcept 2)
 (= (UpdateConcept $NewEvent $t)
    (let* (((Event ($Term $TV) ($Time $Evidence $EPrio)) $NewEvent)
           ($NewEventEternalized (Eternalize $NewEvent)))
-                      (case (match &attentional_focus (Concept $TermX $Belief $BeliefEvent $CPrio) 
-                                                       (If (== $TermX $Term) (Concept $TermX $Belief $BeliefEvent $CPrio)))
-                            (((Concept $TermX $Belief $BeliefEvent $CPrio) (sequential ((remove-atom &attentional_focus (Concept $TermX $Belief $BeliefEvent $CPrio))
-                                                                                         (let* (((Event $RevSentence $Metadata) (RevisionAndChoice $Belief $NewEventEternalized))
-                                                                                                ($RevisedBelief (Event (trace! (@ $RevSentence) $RevSentence) $Metadata))
-                                                                                                ($MaxPrio (If (> (EventPriorityNow $EPrio $t) (ConceptPriorityNow $CPrio $t))
-                                                                                                              $EPrio $CPrio)))
-                                                                                               (add-atom &attentional_focus (Concept $Term $RevisedBelief $NewEvent $MaxPrio))))))
-                             (%void% (case (match &concepts (Concept $TermX2 $Belief2 $BeliefEvent2 $CPrio2)
-                                           (If (== $TermX2 $Term) (Concept $TermX2 $Belief2 $BeliefEvent2 $CPrio2)))
-                                               (((Concept $TermX2 $Belief2 $BeliefEvent2 $CPrio2) (sequential ((remove-atom &concepts (Concept $TermX2 $Belief2 $BeliefEvent2 $CPrio2))
-                                                                                                                (add-atom &attentional_focus (Concept $TermX2 $Belief2 $BeliefEvent2 $CPrio2))
-                                                                                                                (UpdateConcept $NewEvent $t))))
-                                               (%void% (sequential ((add-atom &attentional_focus (Concept $Term $NewEventEternalized $NewEvent $EPrio))))))))))))
+			(case (match &attentional_focus (Concept $TermX $Belief $BeliefEvent $CPrio) 
+ 					       (If (== $TermX $Term) (Concept $TermX $Belief $BeliefEvent $CPrio)))
+			  (((Concept $TermX $Belief $BeliefEvent $CPrio) (sequential ((remove-atom &attentional_focus (Concept $TermX $Belief $BeliefEvent $CPrio))
+				   (let* (((Event $RevSentence $Metadata) (RevisionAndChoice $Belief $NewEventEternalized))
+						  ($RevisedBelief (Event (trace! (@ $RevSentence) $RevSentence) $Metadata))
+						  ($MaxPrio (If (> (EventPriorityNow $EPrio $t) (ConceptPriorityNow $CPrio $t))
+										$EPrio $CPrio)))
+						 (add-atom &attentional_focus (Concept $Term $RevisedBelief $NewEvent $MaxPrio))))))
+			   (%void% (case (match &concepts (Concept $TermX2 $Belief2 $BeliefEvent2 $CPrio2)
+							 (If (== $TermX2 $Term) (Concept $TermX2 $Belief2 $BeliefEvent2 $CPrio2)))
+								 (((Concept $TermX2 $Belief2 $BeliefEvent2 $CPrio2) (sequential ((remove-atom &concepts (Concept $TermX2 $Belief2 $BeliefEvent2 $CPrio2))
+									  (add-atom &attentional_focus (Concept $TermX2 $Belief2 $BeliefEvent2 $CPrio2))
+									  (UpdateConcept $NewEvent $t))))
+								 (%void% (sequential ((add-atom &attentional_focus (Concept $Term $NewEventEternalized $NewEvent $EPrio))))))))))))
 
 ;bound the size of attentional focus of concepts
-(Arity BoundAttention 4)
 (= (BoundAttention $Threshold $Increment $TargetAmount $t)
    (sequential ((do (let* (($C (get-atoms &attentional_focus))
                            ((Concept $Term (Event $Sentence $Metadata) $BeliefEvent $CPrio) $C))
-                          (If (< (ConceptPriorityNow $CPrio $t) $Threshold) (sequential ((remove-atom &attentional_focus $C)
-                                                                                         (add-atom &concepts $C))))))
-                (let $CurrentAmount (TupleCount (collapse (CountElement (get-atoms &attentional_focus))))
+					      (let $CPN (ConceptPriorityNow $CPrio $t)
+                            (If (< $CPN $Threshold) 
+							    (sequential 
+							     ((remove-atom &attentional_focus $C)
+                                  (add-atom &concepts $C))))) ))
+                (let $CurrentAmount 
+				     (TupleCount (collapse (CountElement (get-atoms &attentional_focus))))
                      (If (> $CurrentAmount $TargetAmount)
                          (BoundAttention (+ $Threshold $Increment) $Increment $TargetAmount $t))))))
 
 ;get eternal belief of concept
 (: EternalQuestion (-> Expression %Undefined%))
-(Arity EternalQuestion 2)
 (= (EternalQuestion $Term) (case (match (superpose (&attentional_focus &concepts)) (Concept $TermX $Belief $BeliefEvent $CPrio) (If (== $Term $TermX) $Belief))
                                  (($Ev $Ev) (%void% (Event (None (0.5 0.0)) (eternal () 0.0))))))
 
 (: HowAchieveQuestion (-> Expression %Undefined%))
-(Arity HowAchieveQuestion 2)
 (= (HowAchieveQuestion $Cons) (case (match (superpose (&attentional_focus &concepts)) (Concept (($Prec &/ (^ $Op)) =/> $ConsX) $Belief $BeliefEvent $CPrio) (If (== $Cons $ConsX) $Belief))
                                     (($Ev $Ev) (%void% (Event (None (0.5 0.0)) (eternal () 0.0))))))
 
-(Arity WhatWillHappenQuestion 2)
 (: WhatWillHappenQuestion (-> Expression %Undefined%))
 (= (WhatWillHappenQuestion $Prec) (case (match (superpose (&attentional_focus &concepts)) (Concept ($PrecX =/> $Cons) $Belief $BeliefEvent $CPrio) (If (== $Prec $PrecX) $Belief))
                                     (($Ev $Ev) (%void% (Event (None (0.5 0.0)) (eternal () 0.0))))))
@@ -533,17 +348,14 @@
 
 ;get event belief of concept
 (: EventQuestion (-> Expression %Undefined%))
-(Arity EventQuestion 2)
 (= (EventQuestion $Term) (case (match (superpose (&attentional_focus &concepts)) (Concept $TermX $Belief $BeliefEvent $CPrio) (If (== $TermX $Term) $BeliefEvent))
                                (($Ev $Ev) (%void% (Event (None (0.5 0.0)) (0 () 0.0))))))
 ;;Declarative inference (deriving events and knowledge from observed events)
 
 ;Derived belief event priority
-(Arity ConclusionPriority 4)
 (= (ConclusionPriority $EPrio $CPrio $ConcTV) (* (* $EPrio $CPrio) (Truth_Expectation $ConcTV)))
 
 ;making declarative inferences on two events (task from PQ and belief from concept)
-(Arity Conclude 4)
 (= (Conclude (Event $S1 ($time1 $ev1 $prio1)) (Event $S2 ($time2 $ev2 $prio2)) $CPrio $t)
    (let $ConclusionStamp (TupleConcat $ev1 $ev2)
         (If (StampDisjoint $ev1 $ev2)
@@ -555,18 +367,18 @@
                                                         $ConcTV))))))))
 
 ;find a belief for the task to generate conclusions with
-(Arity ReasonWithTask 2)
 (= (ReasonWithTask (Event $S1 ($time1 $ev1 $prio1)) $t)
    (let ($Belief $CPrio) (case (get-atoms &attentional_focus)
                                (((Concept $Term (Event $SE2 ($timeE2 $evE2 $prioE2)) (Event $S2 ($time2 $ev2 $prio2)) $CPrio)
                                  (If (and (not (== $time1 eternal)) (> (abs (- $time1 $time2)) 20))
                                      ((Event $SE2 ($timeE2 $evE2 $prioE2)) $Cprio)
                                      ((Event $S2 ($time2 $ev2 $prio2)) $CPrio)))))
-        (case (Conclude (Event $S1 ($time1 $ev1 $prio1)) (TemporallyAlignedBelief $time1 $Belief) $CPrio $t)
-              (((Event $1 $2) (ProcessBeliefEvent (Event (trace! (.: $1) $1) $2) $t))))))
+        (case (Conclude (Event $S1 ($time1 $ev1 $prio1)) (TemporallyAlignedBelief $time1 $Belief)
+				 $CPrio $t)
+              (((Event $1 $2) 
+				  (ProcessBeliefEvent (Event (trace! (.: $1) $1) $2) $t))))))
 
 ;select the highest priority belief event from the PQ and use it for reasoning
-(Arity BeliefCycle 1)
 (= (BeliefCycle $t) (do (sequential ((let $Ev (SelectHighestPriorityEvent &belief_events $t)
                                           (sequential ((remove-atom &belief_events $Ev)
                                                        (ReasonWithTask $Ev $t))))
@@ -576,60 +388,49 @@
 ;;Temporal inference (sequence and implication formation based on FIFO)
 
 ;use the event's evidence to induce a time-independent belief which can be used in the future
-(Arity Eternalize 2)
 (= (Eternalize $Ev) (let (Event ($Term $TV) ($Time $Evidence $EPrio)) $Ev
                          (If (== $Time eternal) $Ev
                              (Event ($Term (Truth_Eternalize $TV)) (eternal $Evidence (0 0.0))))))
 
 ;use evidence of an event at a slightly different moment in time
-(Arity Projection 3)
 (= (Projection (Event ($Term ($f $c)) ($Time $Evidence $EPrio)) $TargetTime)
-   (Event ($Term ($f (* $c (min 1 (/ 1 (abs (- $Time $TargetTime)))))))
-	    ($TargetTime $Evidence $EPrio)))
+   (Event ($Term ($f (* $c (min 1 (/ 1 (abs (- $Time $TargetTime))))))) ($TargetTime $Evidence $EPrio)))
 
 ;make the belief occurrence time compatible with the task's
-(Arity TemporallyAlignedBelief 3)
 (= (TemporallyAlignedBelief $TaskTime $Belief) (If (== $TaskTime eternal)
                                                    (Eternalize $Belief)
                                                    (Projection $Belief $TaskTime)))
 
 ;FIFO max. size bound
 !(bind! &FIFO (new-state ()))
-(Arity EventWithFIFO3 3)
 (= (EventWithFIFO3 $New ($1 $2 $3)) ($New $1 $2))
 (= (EventWithFIFO3 $New ($1 $2)) ($New $1 $2))
 (= (EventWithFIFO3 $New ($1)) ($New $1))
 (= (EventWithFIFO3 $New ()) ($New))
 
 ;Add event to FIFO
-(Arity EventToFIFO 1)
 (= (EventToFIFO $Ev)
    (let $newlist (EventWithFIFO3 $Ev (get-state &FIFO))
         (change-state! &FIFO $newlist)))
 
 ;Form a sequence of two events
-(Arity TemporalSequence 3)
 (= (TemporalSequence $Ev1 (Event ($Term2 $Truth2) ($Time2 $Evidence2 $EPrio2)))
-   (let (Event ($Term1 $Truth1) ($Time1 $Evidence1 $EPrio1)) 
-     (Projection $Ev1 $Time2)
+   (let (Event ($Term1 $Truth1) ($Time1 $Evidence1 $EPrio1)) (Projection $Ev1 $Time2)
         (Event (($Term1 &/ $Term2) (Truth_Intersection $Truth1 $Truth2)) ($Time2 (TupleConcat $Evidence1 $Evidence2) (0 0.0)))))
 
 ;Form a temporal implication between two events
-(Arity TemporalImplication 3)
 (= (TemporalImplication $Ev1 (Event ($Term2 $Truth2) ($Time2 $Evidence2 $EPrio2)))
    (let (Event ($Term1 $Truth1) ($Time1 $Evidence1 $EPrio1)) (Projection $Ev1 $Time2)
         (trace! (.: (($Term1 =/> $Term2) (Truth_Induction $Truth1 $Truth2)))
                 (Event (($Term1 =/> $Term2) (Truth_Induction $Truth1 $Truth2)) ($Time2 (TupleConcat $Evidence1 $Evidence2) (0 0.0))))))
 
 ;Whether an event's term is an operation
-(Arity IsOp 1)
 (= (IsOp (Event ($Term $Truth) $Metadata))
    (case $Term (((^ $Opname) True)
                 ($Otherwise False))))
 
 ;Find implications in the event FIFO:
 ;procedural implications
-(Arity TemporalImplicationInduction 2)
 (= (TemporalImplicationInduction ($Cons $Op $Prec))
    (If (and (IsOp $Op) (and (not (IsOp $Cons)) (not (IsOp $Prec))))
        (let $PrecOp (TemporalSequence $Prec $Op)
@@ -640,7 +441,6 @@
 ;       (TemporalImplication $Prec $Cons)))
 
 ;Add negative evidence for implications which predicted the input unsuccessfully
-(Arity NegConfirmation 3)
 (= (NegConfirmation $PrecTerm $ObservedCons $t)
    (let (Event (($PrecTerm =/> $PredictedCons) $ImpTV) $ImpMetadata) (WhatWillHappenQuestion $PrecTerm)
         (If (not (== $ObservedCons $PredictedCons))
@@ -652,7 +452,6 @@
 ;          ((Event ($PosTerm $PosTV) $PosMetadata) $Pos))
 ;         (If (not (IsOp $Pre))
 ;             (NegConfirmation $PreTerm $PosTerm $t))))
-(Arity Anticipate 3)
 (= (Anticipate ($Pos $Op $Pre) $t)
    (let* (((Event ($PreTerm $PreTV) $PreMetadata) $Pre)
           ((Event ($OpTerm $OpTV) $OpMetadata) $Op)
@@ -661,12 +460,16 @@
              (NegConfirmation ($PreTerm &/ $OpTerm) $PosTerm $t))))
 
 ;Input procedure
-(Arity AddBeliefEvent 1)
+;(: AddBeliefEvent (-> Atom Atom))
+;(= (AddBeliefEvent $Sentence) 
+;    ((AddBeliefEvent0 $Sentence) (check-state-r)))
+
+;(: AddBeliefEvent (-> Atom %Undefined%))
 (= (AddBeliefEvent $Sentence)
-   (let* ((($t $evidentialBase) (GetReasonerState))
+  (let* ((($t $evidentialBase) (GetReasonerState))
           ($InputEvent (Event (trace! (.: $Sentence) $Sentence) ($t $evidentialBase ($t 1.0))))
           ($notAnOperation (not (IsOp $InputEvent))))
-          (do (sequential ((EventToFIFO $InputEvent)
+         (do (sequential ((EventToFIFO $InputEvent)
                            (Anticipate (get-state &FIFO) $t)
                            (If $notAnOperation
                                (sequential ((let $InducedHypothesis (TemporalImplicationInduction (get-state &FIFO))
@@ -674,29 +477,26 @@
                                             (ProcessBeliefEvent $InputEvent $t)
                                             (BeliefCycle $t)))
                                (UpdateReasonerState)))))))
+	    
+
 ;;Procedural inference (decision making with operation execution and subgoaling)
 
 ;Derived goal event priority
-(Arity SubgoalPriority 3)
 (= (SubgoalPriority $EPrio $ConcTV) (* $EPrio (Truth_Expectation $ConcTV)))
 
 ;Expectation of an operation is the truth expectation of its desire value
-(Arity OpExpectation 3)
 (= (OpExpectation (Decision ($Opname $DVOp) $Subgoal) $t) (Truth_Expectation $DVOp))
 
 ;Inject executed operation as an event and return its name
-(Arity Execute 2)
 (= (Execute $Opname) (superpose ((AddBeliefEvent ($Opname (1.0 0.9))) $Opname)))
 
 ;Add subgoals to the PQ
-(Arity DeriveSubgoals 1)
 (= (DeriveSubgoals $Options)
    (do (let (Decision $Op (Event $S $Metadata)) (superpose $Options)
             (let $Subgoal (Event (trace! (!: $S) $S) $Metadata)
                  (add-atom &goal_events $Subgoal)))))
 
 ;execute the operation which most likely gets the goal achieved in current contexts, and if contexts are not yet fulfilled, derive them as subgoals
-(Arity BestDecision 2)
 (= (BestDecision $t (Event ($Term $DV) ($GoalTime $GoalEvBase $GoalPrio)))
    (let $Options (collapse (let* (((Event ((($Prec &/ (^ $Op)) =/> $Term) $ImpTV) ($ImpTime $ImpEvBase $ImpPrio))
                                    (HowAchieveQuestion $Term))
@@ -710,14 +510,12 @@
                                  (If (StampDisjoint $GoalEvBase $ImpEvBase)
                                      (Decision ((^ $Op) $DVOp) (Event ($Prec $DVPrec)
                                                                       ($t $SubgoalStamp ($t $SubgoalPrio)))))))
-        (let (Decision ($Opname $DVOp) $Subgoal)
-            (BestCandidate $Options OpExpectation $t)
+        (let (Decision ($Opname $DVOp) $Subgoal) (BestCandidate $Options OpExpectation $t)
              (If (> (Truth_Expectation $DVOp) 0.5)
                  (Execute $Opname)
                  (DeriveSubgoals $Options)))))
 
 ;select the highest priority goal event from the PQ and use it for decision making
-(Arity GoalCycle 1)
 (= (GoalCycle $t) (sequential ((let $Ev (SelectHighestPriorityEvent &goal_events $t)
                                     (sequential ((do (remove-atom &goal_events $Ev))
                                                  (BestDecision $t $Ev))))
@@ -725,7 +523,6 @@
                                (do (BoundEvents &goal_events 0.0 0.1 (GoalEventsMax) $t)))))
 
 ;Input procedure
-(Arity AddGoalEvent 1)
 (= (AddGoalEvent $Sentence)
    (let* ((($t $evidentialBase) (GetReasonerState))
           ($InputEvent (Event (trace! (!: $Sentence) $Sentence) ($t $evidentialBase ($t 1.0)))))
@@ -734,3 +531,15 @@
 
 
 
+(= (check-state)
+ ((concepts (collapse (get-atoms &concepts)))
+  (attentional_focus (collapse (get-atoms &attentional_focus)))
+  (currentTime (get-state &currentTime))
+  (evidentialBase (get-state &evidentialBase))
+  (FIFO (get-state &FIFO))
+  (tempbest (get-state &tempbest))
+  (belief_events (collapse (get-atoms &belief_events)))
+  (goal_events (collapse (get-atoms &goal_events)))))
+
+
+!(compile-easy!)

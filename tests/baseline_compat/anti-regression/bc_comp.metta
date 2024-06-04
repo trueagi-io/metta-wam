@@ -46,7 +46,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(: bc (-> $a Nat hyperon::space::DynSpace $a))
+(: bc (-> $a hyperon::space::DynSpace Nat $a))
 ;; Base case
 (= (bc (: $prf $ccln) $space $_1) (match $space (: $prf $ccln) (: $prf $ccln)))
 ;; if conclusion equals (⍃ $X $Y), then return (: CPU (⍃ $X $Y)) 
@@ -65,6 +65,8 @@
 		   
      (: ($prfabs $prfarg) $ccln)))
 
+!(pragma! e trace)
+!(pragma! e-args debug)
 
 ; Test
 !(bc (: CPU (⍃ 2 3)) &kb Z)

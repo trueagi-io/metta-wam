@@ -13,7 +13,7 @@
 ;; 6. Repeat till termination
 
 ;; Import utils
-!(import! &self ../utils/MinerUtils.metta)
+; !(import! &self ../utils/MinerUtils.metta)
 
 ;; Get candidate patterns depth zero
 (= (get-candidate Z $linkType $ms)

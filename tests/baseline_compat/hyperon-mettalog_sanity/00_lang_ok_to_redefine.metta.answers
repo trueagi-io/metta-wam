@@ -1,3 +1,2 @@
-Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/00_lang_ok_to_redefine.metta
-0.04user 0.01system 0:00.05elapsed 100%CPU (0avgtext+0avgdata 33036maxresident)k
-0inputs+0outputs (0major+3599minor)pagefaults 0swaps
+0.04user 0.01system 0:00.06elapsed 100%CPU (0avgtext+0avgdata 31128maxresident)k
+0inputs+0outputs (0major+3744minor)pagefaults 0swaps

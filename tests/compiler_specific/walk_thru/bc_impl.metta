@@ -53,7 +53,7 @@
 ;; DTL Backward chaining Curried ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(: bc (-> $a Nat hyperon::space::DynSpace $a))
+(: bc (-> $a hyperon::space::DynSpace Nat $a))
 
 ;; Base case
 ;; (= (bc (: $prf $ccln) $space $_1)
@@ -101,7 +101,7 @@
 
 
 ; function(A,B,C) = O
-; predicate(A,B,C)
+; predicate(A,B,C,O)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; make things compiled

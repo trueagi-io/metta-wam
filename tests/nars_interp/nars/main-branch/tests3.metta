@@ -1,5 +1,5 @@
 
-!(nop (pragma! load silent))
+
 !(import! &self NARS)
 
 !(AddBeliefEvent (((corridorIn &/ (^ forward)) =/> doorAt) (1.0 0.9)))

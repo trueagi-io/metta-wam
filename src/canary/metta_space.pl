@@ -59,7 +59,7 @@
 :- ensure_loaded(metta_compiler).
 %:- ensure_loaded(metta_compiler).
 % TODO move non flybase specific code between here and the compiler
-:- ensure_loaded(flybase_main).
+%:- ensure_loaded(flybase_main).
 
 :- multifile(is_pre_statistic/2).
 :- dynamic(is_pre_statistic/2).
@@ -73,6 +73,14 @@ term_number(T,N):- sub_term(N,T),number(N).
 call_match([G]):-!, call(G).
 call_match([G|GG]):- !, call(G), call_match(GG).
 call_match(G):- call(G).
+
+'save-space!'(Space,File):-
+ setup_call_cleanup(
+  open(File,write,Out,[]),
+  with_output_to(Out,
+   forall(get_atoms(Space,Atom),
+      write_src(Atom))),
+  close(Out)).
 
 
 :- dynamic(repeats/1).

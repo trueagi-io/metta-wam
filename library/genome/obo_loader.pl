@@ -6,7 +6,7 @@
 % requires:  assert_MeTTa/1, track_load_into_file/2
 
 :- use_module(library(logicmoo_utils)).
-:- ensure_loaded(flybase_main).
+    :- ensure_loaded(library(metta_interp)).
 
 assert_OBO(P,X,Y):- assert_OBO(ontology_info(P,X,Y)).
 

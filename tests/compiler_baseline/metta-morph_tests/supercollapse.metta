@@ -6,6 +6,8 @@
 
 (= (TupleConcat $Ev1 $Ev2) (collapse (superpose ((superpose $Ev1) (superpose $Ev2)))))
 
+(: TupleConcat (-> Any Any Expression))
+
 !(TupleConcat (a b c) (e f g))
 !(TupleConcat () (e f g))
 !(TupleConcat (a b c) ())

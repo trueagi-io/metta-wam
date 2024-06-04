@@ -7,5 +7,5 @@
 [()]
 [()]
 [()]
-1.92user 0.01system 0:01.93elapsed 99%CPU (0avgtext+0avgdata 35272maxresident)k
-0inputs+0outputs (0major+3982minor)pagefaults 0swaps
+0.05user 0.00system 0:00.06elapsed 100%CPU (0avgtext+0avgdata 30916maxresident)k
+0inputs+0outputs (0major+3661minor)pagefaults 0swaps

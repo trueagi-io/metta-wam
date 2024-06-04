@@ -1,3 +1,3 @@
 [()]
-0.04user 0.00system 0:00.05elapsed 100%CPU (0avgtext+0avgdata 34172maxresident)k
-0inputs+0outputs (0major+3648minor)pagefaults 0swaps
+0.04user 0.01system 0:00.06elapsed 100%CPU (0avgtext+0avgdata 30952maxresident)k
+0inputs+0outputs (0major+3668minor)pagefaults 0swaps

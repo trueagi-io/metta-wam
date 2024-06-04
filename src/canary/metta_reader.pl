@@ -744,7 +744,7 @@ sexpr_rest([]) --> `)`, !.
 % allow dotcons/improper lists.. but also allow dot in the middle of the list (non-CL)
 sexpr_rest(E) --> `.`, [C], {\+ sym_char(C)}, sexpr(E,C), `)` , ! .
 sexpr_rest(E) --> {kif_ok}, `@`, rsymbol(`?`,E), `)`.
-sexpr_rest([Car|Cdr]) --> sexpr(Car), !,
+sexpr_rest([Car|Cdr]) --> sexpr(Car), !, {Car\==''},
   %maybe_throw_reader_error(Car),
    sexpr_rest(Cdr),!.
 
