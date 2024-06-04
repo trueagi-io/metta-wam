@@ -109,6 +109,8 @@ _mettalog_autocomplete() {
     opts="
         --log --html
         --repl --stack-limit=30G --table-space=20G 
+	--on-fail=repl
+	--e=trace
         --shared-table-space=2000M --pce=false --packs --pldoc=8040 --python=false --tty=false 
         --test --fresh --clean 
 	--failures --regressions --continue 
