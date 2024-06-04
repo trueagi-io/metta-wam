@@ -538,16 +538,16 @@ initialise_prolog :-
 :- if(current_prolog_flag(apple,true)).
 apple_set_working_directory :-
     (   expand_file_name('~', [Dir]),
-	exists_directory(Dir)
+    exists_directory(Dir)
     ->  working_directory(_, Dir)
     ;   true
     ).
 
 apple_set_locale :-
     (   getenv('LC_CTYPE', 'UTF-8'),
-	apple_current_locale_identifier(LocaleID),
-	atom_concat(LocaleID, '.UTF-8', Locale),
-	catch(setlocale(ctype, _Old, Locale), _, fail)
+    apple_current_locale_identifier(LocaleID),
+    atom_concat(LocaleID, '.UTF-8', Locale),
+    catch(setlocale(ctype, _Old, Locale), _, fail)
     ->  setenv('LANG', Locale),
         unsetenv('LC_CTYPE')
     ;   true
@@ -555,7 +555,7 @@ apple_set_locale :-
 
 apple_setup_app :-
     current_prolog_flag(apple, true),
-    current_prolog_flag(console_menu, true),	% SWI-Prolog.app on MacOS
+    current_prolog_flag(console_menu, true),    % SWI-Prolog.app on MacOS
     apple_set_working_directory,
     apple_set_locale.
 :- endif.
@@ -1202,7 +1202,7 @@ toplevel_call(Goal) :-
 no_lco.
 
 %!  write_bindings(+Bindings, +ResidueVars, +Delays, +DetOrChp)
-%!	is semidet.
+%!  is semidet.
 %
 %   Write   bindings   resulting   from   a     query.    The   flag
 %   prompt_alternatives_on determines whether the   user is prompted
@@ -1716,10 +1716,10 @@ answer_respons(-1, _, show_again) :-
 answer_respons(Char, _, again) :-
     print_message(query, no_action(Char)).
 
-print_predicate(0'w, [write], [ quoted(true),
+print_predicate(0'w, [write], [ quoted(true), %'
                                 spacing(next_argument)
                               ]).
-print_predicate(0'p, [print], [ quoted(true),
+print_predicate(0'p, [print], [ quoted(true), %'
                                 portray(true),
                                 max_depth(10),
                                 spacing(next_argument)
