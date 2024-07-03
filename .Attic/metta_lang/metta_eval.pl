@@ -87,6 +87,7 @@ self_eval0(X):- is_valid_nb_state(X),!.
 %self_eval0(X):- number(X),!.
 %self_eval0([]).
 self_eval0(X):- is_metta_declaration(X),!.
+self_eval0([_,Ar,_]):- (Ar=='-->';Ar=='<->';Ar=='<--'),!.
 self_eval0([F|X]):- !, is_list(X),length(X,Len),!,nonvar(F), is_self_eval_l_fa(F,Len),!.
 self_eval0(X):- typed_list(X,_,_),!.
 %self_eval0(X):- compound(X),!.

@@ -109,7 +109,7 @@ symbol_contains(A,B):- atom_contains(A,B).
 symbol_length(A,B):- atom_length(A,B).
 symbol_number(A,B):- atom_number(A,B).
 symbol_string(A,B):- atom_string(A,B).
-symbol_upper(A,B):-atom_upper(A,B).
+symbol_upper(A,B):- upcase_atom(A,B).
 symbolic(A):-atomic(A).
 symbolic_concat(A,B,C):-atomic_concat(A,B,C).
 symbolic_concat(A,B,C,D):-atomic_concat(A,B,C,D).
