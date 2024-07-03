@@ -51,14 +51,14 @@ process_file() {
 
     local take_test=0
     local TEST_EXIT_CODE=0
+        set -e
 
     # Combined condition check
     if [[ "$fresh" -eq 1 ]] || [ ! -f "${file}.answers" ] || ([ "${file}" -nt "${file}.answers" ] && [ -s "${file}.answers" ]); then
         DEBUG_WHY "${YELLOW}Regenerating answers: $file.answers${NC}"
         #IF_REALLY_DO cat /dev/null > "${file}.answers"
         IF_REALLY_DO rm -f "${file}.answers"
-        git checkout "${file}.answers"
-        set +e
+       # git checkout "${file}.answers"
 
         # Function to handle SIGINT
         handle_sigint() {
