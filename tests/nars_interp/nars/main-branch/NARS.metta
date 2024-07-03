@@ -8,6 +8,8 @@
 ;spaces
 !(bind! &belief_events (new-space))
 !(bind! &goal_events (new-space))
+!(bind! &currentTime (new-state 1))
+!(bind! &evidentialBase (new-state 1))
 
 ;; stdlib extension
 (: If (-> Bool Atom Atom))
@@ -29,7 +31,7 @@
 ;   (let $T (collapse (superpose (1 (superpose $TOld))))
 ;        (superpose ((add-atom &self (= (TupleCount $T) (+ $C 2)))
 ;                    (If (< $C $N) (BuildTupleCounts $T (+ $C 1) $N))))))*/
-;(= (TupleCount $list) (length $list))
+; (= (TupleCount $list) (length! $list))
 (= (TupleCount $tuple) (if (== $tuple ()) 0 (+ 1 (TupleCount (cdr-atom $tuple)))))
 
 (: CountElement (-> Expression Number))
@@ -226,8 +228,6 @@
 (= (GoalEventsMax) 10)
 
 ;states
-!(bind! &currentTime (new-state 1))
-!(bind! &evidentialBase (new-state 1))
 (= (increment $atom) (sequential ((change-state! $atom (+ 1 (get-state $atom))))))
 (= (UpdateReasonerState) (sequential ((trace! (time := (get-state &currentTime)) 42) 
                                         (increment &currentTime) (increment &evidentialBase))))
@@ -548,16 +548,16 @@
 
 (= (name-list $name $list)
 	 (let $len (TupleCount $list) 
-	   (___ $name $len $list)))
+	   ($len $name $list)))
 
 
 (= (check-state)
- ((___ currentTime (get-state &currentTime))
-  (___ evidentialBase (get-state &evidentialBase))
+ ((n=v currentTime (get-state &currentTime))
+  (n=v evidentialBase (get-state &evidentialBase))
   (name-list concepts (collapse (get-atoms &concepts)))
   (name-list attentional_focus (collapse (get-atoms &attentional_focus)))
   (name-list FIFO (get-state &FIFO))
-  (___ tempbest (get-state &tempbest))
+  (n=v tempbest (get-state &tempbest))
   (name-list belief_events (collapse (get-atoms &belief_events)))
   (name-list goal_events (collapse (get-atoms &goal_events)))))
 
