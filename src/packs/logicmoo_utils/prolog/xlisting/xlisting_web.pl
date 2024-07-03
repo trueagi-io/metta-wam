@@ -195,7 +195,7 @@ hide_xpce_library_directory.
 :- system:use_module(thread_httpd:library(http/http_dispatch)).
 :- system:use_module(library(http/http_dispatch)).
 %:- use_module(library(http/http_dispatch))
-:- system:use_module(swi(library/http/html_head)).
+:- system:use_module(library(http/html_head)).
 :- system:use_module(library(http/http_path)).
 :- system:use_module(library(http/http_log)).
 :- system:use_module(library(http/http_client)).
