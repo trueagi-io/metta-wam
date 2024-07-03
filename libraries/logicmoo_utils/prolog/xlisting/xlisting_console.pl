@@ -17,11 +17,11 @@
           use_listing_vars/1,
           use_xlisting/0,
           use_xlisting/1,
-          get_print_mode/1,               
+          get_print_mode/1,
           xlisting_1/1,
            is_listing_hidden/1,
             bad_pred/1,
-            blob_info/3,            
+            blob_info/3,
             bookeepingPredicateXRef/1,
             buggery_ok/0,
             %prolog_listing_portray_clause/3,
@@ -47,7 +47,7 @@
             maybe_separate/2,
             maybe_separate_0/2,
             mmake/0,
-            mp/3,            
+            mp/3,
             mpred_match_listing/1,
             mpred_match_listing_skip_pi/3,
             mstatistics/0,
@@ -88,7 +88,7 @@
             synth_clause_ref/5,
             synth_in_listing/1,
             term_matches_hb/3,
-         
+
             term_matches_unify/3,
             unify_in_thread/2,
             unify_in_thread_tl/2,
@@ -106,15 +106,15 @@
     ]).
 
 /** <module> Utility LOGICMOO XLISTING CONSOLE
-Cross references predicates from the command line. 
+Cross references predicates from the command line.
 
 - @author Douglas R. Miles
-- @license LGPL 
+- @license LGPL
 */
 
 :- dynamic((xlisting:'$exported_op'/3)).
 
-:- multifile     
+:- multifile
         baseKB:shared_hide_data/1,
         synth_clause_for/5.
 :- meta_predicate maybe_separate(*,0).
@@ -146,7 +146,7 @@ Cross references predicates from the command line.
         get_matcher_code/4,
         get_search_ref/2,
         get_search_ref0/2,
-        get_search_ref_tl/2,        
+        get_search_ref_tl/2,
         is_listing_hidden_00/2,
         is_listing_hidden/1,
         m_clause/4,
@@ -162,7 +162,7 @@ Cross references predicates from the command line.
         maybe_separate_0/2,
         mmake/0,
         mp/3,
-        mpred_match_listing/1,        
+        mpred_match_listing/1,
         mstatistics/0,
         new_atoms/2,
         nonvar_search/1,
@@ -200,7 +200,7 @@ Cross references predicates from the command line.
         synth_clause_for_large/6,
         synth_clause_ref/5,
         synth_in_listing/1,
-        term_matches_hb/3,       
+        term_matches_hb/3,
         term_matches_unify/3,
         unmake_search_key/2,
         update_changed_files/0,
@@ -263,7 +263,7 @@ Cross references predicates from the command line.
 
 :- prolog_load_context(directory,Dir),asserta(baseKB:mpred_loader_dir(Dir)).
 
-%= 	 	 
+%=
 
 %% mstatistics is semidet.
 %
@@ -286,7 +286,7 @@ mstatistics:-
   ((number(NA),NA<1000)->fmt(L);true).
 
 
-%= 	 	 
+%=
 
 %% current_atom_or_blob( ?X, ?VALUE2) is semidet.
 %
@@ -299,7 +299,7 @@ current_atom_or_blob(X,key):-current_key(X).
 current_atom_or_blob(X,flag):-current_key(X).
 
 
-%= 	 	 
+%=
 
 %% blob_info( ?A, :TermARG2, :TermA) is semidet.
 %
@@ -319,7 +319,7 @@ blob_info(A,blob(T),blob(A,T)).
 :- dynamic(tlbugger:saved_current_atom/2).
 :- export(new_atoms/2).
 
-%= 	 	 
+%=
 
 %% new_atoms( ?X, ?Type) is semidet.
 %
@@ -328,7 +328,7 @@ blob_info(A,blob(T),blob(A,T)).
 new_atoms(X,Type):-current_atom_or_blob(X,Type),\+(tlbugger:saved_current_atom(X,Type)).
 :- export(save_atoms/0).
 
-%= 	 	 
+%=
 
 %% save_atoms is semidet.
 %
@@ -337,7 +337,7 @@ new_atoms(X,Type):-current_atom_or_blob(X,Type),\+(tlbugger:saved_current_atom(X
 save_atoms:-forall(new_atoms(X,Type),assert(tlbugger:saved_current_atom(X,Type))).
 :- export(blob_count/2).
 
-%= 	 	 
+%=
 
 %% blob_count( ?L, ?NA) is semidet.
 %
@@ -345,37 +345,37 @@ save_atoms:-forall(new_atoms(X,Type),assert(tlbugger:saved_current_atom(X,Type))
 %
 blob_count(L,NA):-findall(W,(new_atoms(X,Type),once(blob_info(X,Type,W))),LL),list_to_set(LL,L),length(L,NA).
 
-%= 	 	 
+%=
 
 %% print_record_properties( ?Record, ?Out) is semidet.
 %
 % Print Record Properties.
 %
 print_record_properties(Record, Out) :-
-	format(Out, 'Record reference ~w~n', [Record]),
-	(   recorded(Key, Value, Record)
-	->  format(Out, ' Key:   ~p~n', [Key]),
-	    format(Out, ' Value: ~p~n', [Value])
-	;   format(Out, ' <erased>~n', [])
-	).
+    format(Out, 'Record reference ~w~n', [Record]),
+    (   recorded(Key, Value, Record)
+    ->  format(Out, ' Key:   ~p~n', [Key]),
+        format(Out, ' Value: ~p~n', [Value])
+    ;   format(Out, ' <erased>~n', [])
+    ).
 
 
-%= 	 	 
+%=
 
 %% print_clause_properties( ?REF, ?Out) is semidet.
 %
 % Print Clause Properties.
 %
 print_clause_properties(REF, Out) :-
-	format(Out, 'Clause reference ~w~n', [REF]),
-	(   m_clause(_,Head, Body, REF)
-	->  nl(Out),
-	    portray_clause(Out, (Head:-Body))
-	;   format(Out, '\t<erased>~n', [])
-	).
+    format(Out, 'Clause reference ~w~n', [REF]),
+    (   m_clause(_,Head, Body, REF)
+    ->  nl(Out),
+        portray_clause(Out, (Head:-Body))
+    ;   format(Out, '\t<erased>~n', [])
+    ).
 
 
-%= 	 	 
+%=
 
 %% make_searchable_index( ?PI) is semidet.
 %
@@ -386,25 +386,25 @@ make_searchable_index(PI):- forall(to_matcher_pi(PI,H),forall(clause(H,B,Ref),ma
 to_matcher_pi(I,O):- strip_module(I,M,P),to_matcher_pi(M,P,O).
 to_matcher_pi(M,I,O):-var(I),!,trace_or_throw(var_to_matcher_pi(M,I,O)).
 to_matcher_pi(_,M:PI, M:Head) :- !,
-	to_matcher_pi(M,PI, Head).
+    to_matcher_pi(M,PI, Head).
 to_matcher_pi(M,Name, M:Head) :- atom(Name), !, current_predicate(M:Name/Arity),functor(Head, Name, Arity).
 to_matcher_pi(M,Name/Arity, Head) :- var(Arity),!, current_predicate(M:Name/Arity),
-	functor(Head, Name, Arity).
-to_matcher_pi(M,Name//DCGArity, M:Term) :- 
+    functor(Head, Name, Arity).
+to_matcher_pi(M,Name//DCGArity, M:Term) :-
         var(DCGArity),!,
         current_predicate(Name/Arity), integer(Arity), Arity>=2,
-	functor(Term, Name, Arity).
-to_matcher_pi(M,Name//DCGArity, M:Term) :- 
+    functor(Term, Name, Arity).
+to_matcher_pi(M,Name//DCGArity, M:Term) :-
         between(0,40,DCGArity),!,
         current_predicate(Name/Arity),
-	plus(DCGArity,2,Arity),
-	functor(Term, Name, Arity).
+    plus(DCGArity,2,Arity),
+    functor(Term, Name, Arity).
 to_matcher_pi(M,Head, M:Head).
 
 
 
 
-%= 	 	 
+%=
 
 %% m_clause( ?M, ?H, ?B, ?R) is semidet.
 %
@@ -412,7 +412,7 @@ to_matcher_pi(M,Head, M:Head).
 %
 m_clause(M,H,B,R):- catch(m_clause0(M,H,B,R),E,R=missing(M,H,B,E)).
 
-%= 	 	 
+%=
 
 %% m_clause_no_missing( ?M, ?H, ?B, ?R) is semidet.
 %
@@ -421,7 +421,7 @@ m_clause(M,H,B,R):- catch(m_clause0(M,H,B,R),E,R=missing(M,H,B,E)).
 m_clause_no_missing(M,H,B,R):- catch(m_clause0(M,H,B,R),_,fail).
 
 
-%= 	 	 
+%=
 
 %% m_clause0( ?M, ?H, ?B, ?R) is semidet.
 %
@@ -429,11 +429,11 @@ m_clause_no_missing(M,H,B,R):- catch(m_clause0(M,H,B,R),_,fail).
 %
 m_clause0(M,H,B,R):- atom(M),!, clause(M:H,B,R)*->true;M:clause(H,B,R).
 m_clause0(_,H,B,R):- clause(H,B,R).
-                              
+
 :- thread_local(t_l:tl_hide_data/1).
 
 
-%= 	 	 
+%=
 
 %% clause_ref( ?HB, ?Ref) is semidet.
 %
@@ -442,7 +442,7 @@ m_clause0(_,H,B,R):- clause(H,B,R).
 clause_ref(HB,Ref):-as_clause_w_m( HB, M, H, B),m_clause_no_missing(M,H,B,Ref).
 
 
-%= 	 	 
+%=
 
 %% make_searchable( ?HB) is semidet.
 %
@@ -450,7 +450,7 @@ clause_ref(HB,Ref):-as_clause_w_m( HB, M, H, B),m_clause_no_missing(M,H,B,Ref).
 %
 make_searchable(HB):- must(clause_ref(HB,Ref)),make_searchable_ref(HB,Ref).
 
-%= 	 	 
+%=
 
 %% make_searchable_ref( ?HB, ?Ref) is semidet.
 %
@@ -458,7 +458,7 @@ make_searchable(HB):- must(clause_ref(HB,Ref)),make_searchable_ref(HB,Ref).
 %
 make_searchable_ref(HB,Ref):-searchable_of_clause(HB,List),make_searchable_list_ref(List,Ref).
 
-%= 	 	 
+%=
 
 %% make_searchable_list_ref( ?List, ?Ref) is semidet.
 %
@@ -467,7 +467,7 @@ make_searchable_ref(HB,Ref):-searchable_of_clause(HB,List),make_searchable_list_
 make_searchable_list_ref(List,Ref):- maplist(save_search_ref(Ref),List).
 
 
-%= 	 	 
+%=
 
 %% searchable_of_clause( :TermH, ?List) is semidet.
 %
@@ -480,7 +480,7 @@ searchable_of_clause(':-'(H,B),List):-!,searchable_of_clause_1(H,[B],List).
 searchable_of_clause(H,List):-searchable_of_clause_0(H,List).
 
 
-%= 	 	 
+%=
 
 %% searchable_of_clause_0( ?C, :TermARG2) is semidet.
 %
@@ -493,7 +493,7 @@ searchable_of_clause_0([H|T],[F|List]):- L=[H|T],!,functor(L,F,_),searchable_of_
 searchable_of_clause_0(C,[funct(F,A),F|List]):- C=..[F,H|T],functor(C,F,A),searchable_of_clause_1(H,T,List).
 
 
-%= 	 	 
+%=
 
 %% searchable_of_clause_1( :TermH, ?List) is semidet.
 %
@@ -503,7 +503,7 @@ searchable_of_clause_1([],[]).
 searchable_of_clause_1([H|T],List):-searchable_of_clause_1(H,T,List).
 
 
-%= 	 	 
+%=
 
 %% searchable_of_clause_1( ?H, ?T, ?List) is semidet.
 %
@@ -513,7 +513,7 @@ searchable_of_clause_1(H,T,[H|List]):-atomic(H),searchable_of_clause_1(T,List).
 searchable_of_clause_1(H,T,List):-searchable_of_clause_0(H,List1),searchable_of_clause_1(T,List2),append(List1,List2,List).
 
 :- dynamic(search_refs_use_recorded/0).
-	 
+
 
 
 % load statistics to keep ifprolog from overriding time/1 ?
@@ -521,7 +521,7 @@ searchable_of_clause_1(H,T,List):-searchable_of_clause_0(H,List1),searchable_of_
 %:- abolish(time/1).
 %:- abolish(ifprolog:time,1).
 %:- use_module(library(statistics),[time/1]).
-	 	 
+
 
 %% searchable_terms( ?T) is semidet.
 %
@@ -540,7 +540,7 @@ searchable_terms_tl(T):- nb_current(GName, _),(atomic_list_concat([_,Name],(':')
 
 
 
-%= 	 	 
+%=
 
 %% make_search_key( ?E, ?Atomic) is semidet.
 %
@@ -548,7 +548,7 @@ searchable_terms_tl(T):- nb_current(GName, _),(atomic_list_concat([_,Name],(':')
 %
 make_search_key(E,Atomic):-E=..L,atomic_list_concat(['$search'|L],'%',Atomic).
 
-%= 	 	 
+%=
 
 %% unmake_search_key( ?Atomic, ?E) is semidet.
 %
@@ -557,7 +557,7 @@ make_search_key(E,Atomic):-E=..L,atomic_list_concat(['$search'|L],'%',Atomic).
 unmake_search_key(Atomic,E):-atomic_list_concat(['$search'|L],'%',Atomic)->E=..L;(E=Atomic).
 
 
-%= 	 	 
+%=
 
 %% get_search_ref( ?E, ?Results) is semidet.
 %
@@ -566,7 +566,7 @@ unmake_search_key(Atomic,E):-atomic_list_concat(['$search'|L],'%',Atomic)->E=..L
 get_search_ref(E,Results):-make_search_key(E,Atomic),get_search_ref0(Atomic,Results).
 
 
-%= 	 	 
+%=
 
 %% get_search_ref0( ?Atomic, ?Results) is semidet.
 %
@@ -577,7 +577,7 @@ get_search_ref0(Atomic,Results):- unify_in_thread(main,once(get_search_ref_tl(At
 
 
 
-%= 	 	 
+%=
 
 %% unify_in_thread( +Thread, :Goal) is semidet.
 %
@@ -587,13 +587,13 @@ unify_in_thread(Thread,once(Goal)):- !,
       message_queue_create(Id),
        call_cleanup((thread_signal(Thread,unify_in_thread_tl(Id,Goal)),thread_get_message(Id,Message),process_unify_in_thread(Message,Goal),!),
          message_queue_destroy(Id)).
-unify_in_thread(Thread,Goal):- 
+unify_in_thread(Thread,Goal):-
       message_queue_create(Id),
        call_cleanup((thread_signal(Thread,unify_in_thread_tl(Id,Goal)),thread_get_message(Id,Message),process_unify_in_thread(Message,Goal)),
          message_queue_destroy(Id)).
 
 
-%= 	 	 
+%=
 
 %% process_unify_in_thread( ?Message, ?Goal) is semidet.
 %
@@ -605,7 +605,7 @@ process_unify_in_thread(result(Goal0),Goal1):-!,Goal0=Goal1.
 process_unify_in_thread(Message,Goal):-throw(unknown_process_unify_in_thread(Message,Goal)).
 
 
-%= 	 	 
+%=
 
 %% unify_in_thread_tl( ?Id, :Goal) is semidet.
 %
@@ -614,7 +614,7 @@ process_unify_in_thread(Message,Goal):-throw(unknown_process_unify_in_thread(Mes
 unify_in_thread_tl(Id,Goal):- catch((forall(Goal,thread_send_message(Id,result(Goal))),thread_send_message(Id,failed(Goal))), E,thread_send_message(Id,thrown(E))).
 
 
-%= 	 	 
+%=
 
 %% get_search_ref_tl( ?Atomic, ?Refs) is semidet.
 %
@@ -623,7 +623,7 @@ unify_in_thread_tl(Id,Goal):- catch((forall(Goal,thread_send_message(Id,result(G
 get_search_ref_tl(Atomic,Refs):- nb_current(Atomic,Refs)->true;Refs=[].
 
 
-%= 	 	 
+%=
 
 %% save_search_ref( ?Ref, ?E) is semidet.
 %
@@ -632,7 +632,7 @@ get_search_ref_tl(Atomic,Refs):- nb_current(Atomic,Refs)->true;Refs=[].
 save_search_ref(Ref,E):-make_search_key(E,Atomic),save_search_ref_0(Ref,Atomic).
 
 
-%= 	 	 
+%=
 
 %% save_search_ref_0( ?Ref, ?Atomic) is semidet.
 %
@@ -642,7 +642,7 @@ save_search_ref_0(Ref,Atomic):- search_refs_use_recorded,!, save_search_ref_reco
 save_search_ref_0(Ref,Atomic):- thread_signal(main,save_search_ref_tl(Ref,Atomic)).
 
 
-%= 	 	 
+%=
 
 %% save_search_ref_recorded( ?Ref, ?Atomic) is semidet.
 %
@@ -652,7 +652,7 @@ save_search_ref_recorded(Ref,Atomic):-recorded(Atomic,Ref),!.
 save_search_ref_recorded(Ref,Atomic):-recordz(Atomic,Ref).
 
 
-%= 	 	 
+%=
 
 %% save_search_ref_tl( ?Ref, ?Atomic) is semidet.
 %
@@ -671,7 +671,7 @@ save_search_ref_tl(Ref,Atomic):-nb_setval(Atomic,[Ref]).
 
 
 
-%= 	 	 
+%=
 
 %% shared_hide_data( ?VALUE1) is semidet.
 %
@@ -683,7 +683,7 @@ baseKB:shared_hide_data(wid):- is_listing_hidden(metaInfo).
 baseKB:shared_hide_data( Head:- True):- nonvar(Head), True==true, baseKB:shared_hide_data( Head ).
 
 
-%= 	 	 
+%=
 
 %% is_listing_hidden( ?P) is semidet.
 %
@@ -696,7 +696,7 @@ is_listing_hidden(MP):- \+ \+ nquietly((strip_module(MP,M,P),is_listing_hidden_0
 
 nquietly(G):- call(G).
 %nquietly(G):- quietly(G).
-%= 	 	 
+%=
 
 %% is_listing_hidden_00(_, :TermP) is semidet.
 %
@@ -724,7 +724,7 @@ is_meta_info_pred(_):- fail.
 
 :- meta_predicate unify_listing(:).
 
-%= 	 	 
+%=
 
 %% unify_listing( ?Cntxt) is semidet.
 %
@@ -735,7 +735,7 @@ unify_listing(Cntxt:Pred):-functor_safe(Pred,F,A),unify_listing(Cntxt:Pred,F,A),
 
 :- meta_predicate unify_listing_header(:).
 
-%= 	 	 
+%=
 
 %% unify_listing_header( ?Pred) is semidet.
 %
@@ -746,7 +746,7 @@ unify_listing_header(Pred):-functor_safe(Pred,F,A),unify_listing_header(Pred,F,A
 
 :- meta_predicate unify_listing_header(:,?,?).
 
-%= 	 	 
+%=
 
 %% unify_listing_header( ?CntxtPred, ?F, ?A) is semidet.
 %
@@ -758,14 +758,14 @@ unify_listing_header(M:_P,F,A):- module_property(M,exports(List)),member(F/A,Lis
 unify_listing_header(M:P,F,A):- predicate_property(system:P,imported_from(M)),format(':- system:import(~q).~n',[M:F/A]),fail.
 unify_listing_header(M:P,F,A):- predicate_property(M:P,transparent),format(':- ~q:module_transparent(~q).~n',[M,F/A]),fail.
 unify_listing_header(M:P,_,_):- predicate_property(M:P,meta_predicate(P)),format(':- ~q:meta_predicate(~q).~n',[M,P]),fail.
-unify_listing_header(M:P,F,A):- unify_listing_header_item(Dynamic), 
+unify_listing_header(M:P,F,A):- unify_listing_header_item(Dynamic),
   predicate_property(M:P,Dynamic),format(':- ~q:~q(~q).~n',[M,Dynamic,F/A]),fail.
 unify_listing_header(_M_FileMatch,_F,_A):- format('~n',[]).
 
 unify_listing_header_item(Dynamic):- arg(_,v(public,dynamic, multifile,discontiguous,volatile,thread_local,nodebug),Dynamic).
 :- meta_predicate unify_listing(:,?,?).
 
-%= 	 	 
+%=
 
 %% unify_listing( ?Cntxt, ?F, ?A) is semidet.
 %
@@ -774,7 +774,7 @@ unify_listing_header_item(Dynamic):- arg(_,v(public,dynamic, multifile,discontig
 unify_listing(Cntxt:Pred,F,A):- unify_listing_header(Cntxt:Pred,F,A), Cntxt:printAll(Pred).
 
 
-%= 	 	 
+%=
 
 %% printAll( :Goal) is semidet.
 %
@@ -782,7 +782,7 @@ unify_listing(Cntxt:Pred,F,A):- unify_listing_header(Cntxt:Pred,F,A), Cntxt:prin
 %
 printAll(Call):-printAll(Call,Call).
 
-%= 	 	 
+%=
 
 %% printAll( :Goal, ?Print) is semidet.
 %
@@ -812,7 +812,7 @@ xlisting:- xlisting([]).
 
 :- create_prolog_flag(retry_undefined,default,[type(term),keep(true)]).
 
-%= 	 	 
+%=
 :- thread_local(etmp:last_s_l/2).
 
 %% xlisting( ?Match) is semidet.
@@ -820,7 +820,7 @@ xlisting:- xlisting([]).
 % Xlisting.
 %
 xlisting(Match):-
-  retractall(etmp:last_s_l(_,_)), 
+  retractall(etmp:last_s_l(_,_)),
   retractall(lmcache:completely_expanded(_,_)),
   retractall(t_l:no_xlisting(_)),
   xlisting_0(Match).
@@ -828,20 +828,20 @@ xlisting(Match):-
 xlisting_0(Match):- \+ \+ t_l:no_xlisting(Match),!.
 xlisting_0([]):- '$current_source_module'(M),!,listing(M:_),'$current_typein_module'(TM),(TM==M->true;listing(TM:_)),!.
 xlisting_0(Match):- is_list(Match),!,must_maplist(xlisting_0,Match),!.
-xlisting_0(M:P):- atom(M),'$current_source_module'(W), 
+xlisting_0(M:P):- atom(M),'$current_source_module'(W),
    locally(before_after('$set_source_module'(M),
                     '$set_source_module'(W)),
           xlisting_0a(P)),!.
-xlisting_0(Match):- 
+xlisting_0(Match):-
    xlisting_0a(Match).
 
 
-xlisting_0a(Match):- 
+xlisting_0a(Match):-
  % maybe_scan_for_varnames,
  locally(t_l:no_xlisting(Match),
   locally(set_prolog_flag(verbose_autoload,false),
    locally(set_prolog_flag(retry_undefined, none),
-    locally(set_prolog_flag(verbose_load,false), 
+    locally(set_prolog_flag(verbose_load,false),
      xlisting_1(Match))))).
 
 
@@ -857,7 +857,7 @@ xlisting_1(Match):- mpred_match_listing_skip_pi(portray_hbr,Match,[]),!. % ,loca
 :- export(plisting/1).
 :- module_transparent(plisting/1).
 
-%= 	 	 
+%=
 
 %% plisting( ?Match) is semidet.
 %
@@ -865,7 +865,7 @@ xlisting_1(Match):- mpred_match_listing_skip_pi(portray_hbr,Match,[]),!. % ,loca
 %
 plisting(Match):- locally(t_l:no_xlisting(Match),xlisting:plisting_0(Match)).
 
-%= 	 	 
+%=
 
 %% plisting_0( ?Match) is semidet.
 %
@@ -879,7 +879,7 @@ plisting_0(Match):- findall(G,to_mpi_matcher(Match,G),Gs),
 
 :- export(mpred_match_listing/1).
 
-%= 	 	 
+%=
 
 %% mpred_match_listing( ?Match) is semidet.
 %
@@ -887,15 +887,15 @@ plisting_0(Match):- findall(G,to_mpi_matcher(Match,G),Gs),
 %
 mpred_match_listing(Match):- mpred_match_listing_skip_pi(portray_hbr,Match,[]).
 :- export(mpred_match_listing_skip_pi/3).
-:- meta_predicate(mpred_match_listing_skip_pi(+,+,+)).           
+:- meta_predicate(mpred_match_listing_skip_pi(+,+,+)).
 
-%= 	 	 
+%=
 
 %% mpred_match_listing_skip_pi(+How, +Match, +SkipPI) is semidet.
 %
 % Managed Predicate Match Listing Skip Predicate Indicator.
 %
-mpred_match_listing_skip_pi(How,Match,SkipPI):- 
+mpred_match_listing_skip_pi(How,Match,SkipPI):-
   locally(t_l:no_xlisting(Match),
  (
   % format('~N/* mpred_matches(~q) => ~n',[Match]),
@@ -905,7 +905,7 @@ mpred_match_listing_skip_pi(How,Match,SkipPI):-
 
 
 
-%= 	 	 
+%=
 
 %% get_matcher_code( ?Match, ?H, ?B, ?MATCHER) is semidet.
 %
@@ -916,7 +916,7 @@ get_matcher_code(Match,H,B,MATCHER):-  MATCHER = notrace(term_matches_term(Match
 
 :- meta_predicate xlisting_inner(3,+,+).
 
-%= 	 	 
+%=
 
 trans_mask(cyc,kb0988).
 trans_mask(wn,wnframes).
@@ -929,11 +929,11 @@ mymatch_excludes_module(L-M1,M2,O):- trans_mask(M1,M), !,mymatch_excludes_module
 
 mymatch_excludes_module(L-M1,M2,L2-M1):- !,mymatch_excludes_module(L,M2,L2),freeze(M2,M1\==M2),!.
 mymatch_excludes_module(L+M1,M2,L2+M1):- !, mymatch_excludes_module(L,M2,L2),
-  ignore((frozen(M2,Goals),subst(Goals,M1\==M2,true,NewGoals),del_attr(M2,freeze),freeze(M2,NewGoals))),!.  
+  ignore((frozen(M2,Goals),subst(Goals,M1\==M2,true,NewGoals),del_attr(M2,freeze),freeze(M2,NewGoals))),!.
 
 mymatch_excludes_module(MM,M2,MM):- dif(kb0988,M2),dif(wnframes,M2),dif(tmp,M2),dif('$syspreds',M2).
 
-pre_init_matcher(_Match,M:_H,_B):-   
+pre_init_matcher(_Match,M:_H,_B):-
   current_module(M).
 
 
@@ -943,29 +943,29 @@ pre_init_matcher(_Match,M:_H,_B):-
 %
 xlisting_inner(_,portray_phbr(PW,Match),SkipPI):-!,
   xlisting_inner(portray_phbr(PW),Match,SkipPI).
- 
-xlisting_inner(Printer,Match0,SkipPI):-  
+
+xlisting_inner(Printer,Match0,SkipPI):-
  must_det_l((
    ignore(mymatch_excludes_module(Match0,M,Match)),
    H=M:_,
-   get_matcher_code(Match,H,B,MATCHER),!,   
-   PRINT = must(ignore((once(call(Printer,H,B,Ref))))),   
+   get_matcher_code(Match,H,B,MATCHER),!,
+   PRINT = must(ignore((once(call(Printer,H,B,Ref))))),
    PREDZ = ( (pre_init_matcher(Match,H,B),
               synth_clause_for(H,B,Ref,Size,SYNTH)), \+member(H,SkipPI), \+is_listing_hidden(H)),
    forall(PREDZ,
-     must(( 
+     must((
       (is_listing_hidden(wholePreds),integer(Size),Size<100)
-        -> 
-          ( \+ \+ ((SYNTH,MATCHER)) -> (forall(SYNTH,PRINT)) ; true) 
-         ; 
+        ->
+          ( \+ \+ ((SYNTH,MATCHER)) -> (forall(SYNTH,PRINT)) ; true)
+         ;
 
         ((forall(SYNTH,(MATCHER->PRINT;true))))))))),!.
- 
-      
+
+
 
 :- multifile user:prolog_list_goal/1.
 
-%= 	 	 
+%=
 
 %% prolog_list_goal( :TermGoal) is semidet.
 %
@@ -981,7 +981,7 @@ user:prolog_list_goal(Goal):- nquietly(xlisting(Goal)). % writeq(hello(prolog_li
 :- dynamic(baseKB:no_buggery/0).
 
 
-%= 	 	 
+%=
 
 %% buggery_ok is semidet.
 %
@@ -995,7 +995,7 @@ buggery_ok :- \+ compiling, current_predicate(_:logicmoo_bugger_loaded/0), \+ ba
 
 % bookeepingPredicate(M:G):- member(M:F/A,[M:'$exported_op'/3]),current_module(M),functor(G,F,A),once(predicate_property(M:G,_)).
 
-%= 	 	 
+%=
 
 %% bookeepingPredicateXRef( :TermARG1) is semidet.
 %
@@ -1005,7 +1005,7 @@ bookeepingPredicateXRef(user:file_search_path(_,_)).
 %bookeepingPredicateXRef_never(wordnet:wn_s(_,_,_ ,_,_,_)).
 %bookeepingPredicateXRef(_:G):-member(F/A,[xref_defined/3,xref_called/3,xref_exported/2]),functor(G,F,A).
 
-%= 	 	 
+%=
 
 %% predicateUsesCall( :TermARG1) is semidet.
 %
@@ -1017,7 +1017,7 @@ predicateUsesCall(_:G):-
   functor(G,F,A).
 
 
-%= 	 	 
+%=
 
 %% sourceTextPredicate( ?M) is semidet.
 %
@@ -1033,7 +1033,7 @@ sourceTextPredicate(M:G):- fail, M=el_assertions, source_file((M:el_holds(_,_,_,
 sourceTextPredicate(_):-fail.
 
 
-%= 	 	 
+%=
 
 %% sourceTextPredicateSource( ?VALUE1) is semidet.
 %
@@ -1044,7 +1044,7 @@ sourceTextPredicateSource(_):-fail.
 :- thread_local(t_l:large_predicates/2).
 
 
-%= 	 	 
+%=
 
 %% plisting_1 is semidet.
 %
@@ -1053,43 +1053,43 @@ sourceTextPredicateSource(_):-fail.
 plisting_1:-plisting('$spft'(_,_,_,_)).
 
 
-%= 	 	 
+%=
 
 %% synth_clause_for(MyMatch, ?G, ?B, :GoalRef, :PRED222Size, ?SYNTH) is semidet.
 %
 % Synth Clause For.
 %
 :- multifile(xlisting_config:xlisting_always/1).
-:- dynamic(xlisting_config:xlisting_always/1).  
+:- dynamic(xlisting_config:xlisting_always/1).
 
-synth_clause_for(G,true,0,222, SYNTH):- 
+synth_clause_for(G,true,0,222, SYNTH):-
    G=M:H, xlisting_config:xlisting_always(G),
    SYNTH = m_clause(M,H,_B,_Ref).
    %SYNTH = on_x_fail(G).
 
-synth_clause_for(G,true,0,244,SYNTH):-  bookeepingPredicateXRef(G), 
+synth_clause_for(G,true,0,244,SYNTH):-  bookeepingPredicateXRef(G),
   nquietly(( \+ is_listing_hidden(metaInfo))), SYNTH=on_x_fail(G).
 
-synth_clause_for(G,B,Ref,Size,SYNTH):- cur_predicate(_,G), (((nquietly(( \+ bookeepingPredicateXRef(G), \+ sourceTextPredicate(G), 
-                                                                \+ is_listing_hidden(G))))), 
+synth_clause_for(G,B,Ref,Size,SYNTH):- cur_predicate(_,G), (((nquietly(( \+ bookeepingPredicateXRef(G), \+ sourceTextPredicate(G),
+                                                                \+ is_listing_hidden(G))))),
                                                                 SYNTH = (synth_clause_ref(G,B,Ref,Size,SYNTH2),SYNTH2)).
 synth_clause_for(G,true,0,223, SYNTH):-  sourceTextPredicate(G), \+ is_listing_hidden(G), SYNTH = on_x_fail(G).
-synth_clause_for(G,  B, Ref,Size, SYNTH):- !, 
+synth_clause_for(G,  B, Ref,Size, SYNTH):- !,
   gripe_time(10,synth_clause_for_l2(G,B,Ref,Size,SYNTH)).
- 
 
-%= 	 	 
+
+%=
 
 %% synth_clause_for_l2( :TermM, ?B, ?Ref, ?Size, ?SYNTH) is semidet.
 %
 % Synth Clause For (list Version) Extended Helper.
 %
-synth_clause_for_l2(M:H,B,Ref,Size,SYNTH):- 
+synth_clause_for_l2(M:H,B,Ref,Size,SYNTH):-
   findall((Size- (M:H)),retract(t_l:large_predicates(M:H,Size)),KeyList),keysort(KeyList,KeySorted),!,
   synth_clause_for_large(M:H,B,Ref,KeySorted,Size,SYNTH).
 
 
-%= 	 	 
+%=
 
 %% synth_clause_for_large( ?M, ?B, ?Ref, :TermKeySorted, :GoalSize, ?M) is semidet.
 %
@@ -1097,13 +1097,13 @@ synth_clause_for_l2(M:H,B,Ref,Size,SYNTH):-
 %
 synth_clause_for_large(_,_,_,[   ],0,(!,fail)):-!.
 synth_clause_for_large(_,_,_,[_|_],0,(!,fail)):- is_listing_hidden(skipLarge),!.
-synth_clause_for_large(M:H,B,Ref,KeySorted,Size,m_clause(M,H,B,Ref)):-   
+synth_clause_for_large(M:H,B,Ref,KeySorted,Size,m_clause(M,H,B,Ref)):-
     %  format('~N% Synthesizing the larger preds now ~q .~n',[KeySorted]),!,
       member( (Size- (M:H)) , KeySorted) *-> \+ is_listing_hidden(M:H).
 
 :- export((synth_clause_ref/5)).
 
-%= 	 	 
+%=
 
 %% synth_clause_ref( :TermARG1, ?B, ?Ref, ?Size, ?CALL) is semidet.
 %
@@ -1113,28 +1113,28 @@ synth_clause_ref(_:no_xlisting(_),_B,_Ref, _Size, _CALL):-!,fail.
 synth_clause_ref(_:in_prolog_listing(_),_B,_Ref, _Size, _CALL):-!,fail.
 synth_clause_ref(_:varname_info(_,_,_,_),_B,_Ref,_Size, _CALL):- \+ is_listing_hidden(showAll),!,fail.
 
-synth_clause_ref(M:H,'$info'(B),Ref, 250, SYNTH):- \+ is_listing_hidden(metaInfo), 
+synth_clause_ref(M:H,'$info'(B),Ref, 250, SYNTH):- \+ is_listing_hidden(metaInfo),
   SYNTH= (findall(PP,predicate_property(M:H,PP),PPL),Ref=0,
   %CPPL=..['$'|PPL],
   CPPL=PPL,
   B=M:('$predicate_property'(H,CPPL))).
-synth_clause_ref(MHG,B,Ref, 213, SYNTH):- predicateUsesCall(MHG),synth_in_listing(MHG), !, 
+synth_clause_ref(MHG,B,Ref, 213, SYNTH):- predicateUsesCall(MHG),synth_in_listing(MHG), !,
   SYNTH= (on_x_fail(MHG),Ref=0,B='$info'(predicateUsedCall)).
 
-synth_clause_ref(M:H,B,Ref, 200, SYNTH):-     
+synth_clause_ref(M:H,B,Ref, 200, SYNTH):-
     xlisting_config:xlisting_always(M:H),!, SYNTH= m_clause(M,H,B,Ref).
 
-synth_clause_ref(M:H,B,Ref, Size, SYNTH):- 
-    predicate_property(M:H,number_of_clauses(Size)),!, 
+synth_clause_ref(M:H,B,Ref, Size, SYNTH):-
+    predicate_property(M:H,number_of_clauses(Size)),!,
     SYNTH= m_clause(M,H,B,Ref).
 
 
-synth_clause_ref(M:H,B,Ref, Size, SYNTH):- 
-    predicate_property(M:H,number_of_clauses(Size)),synth_in_listing(M:H),!, 
+synth_clause_ref(M:H,B,Ref, Size, SYNTH):-
+    predicate_property(M:H,number_of_clauses(Size)),synth_in_listing(M:H),!,
     xlisting_config:xlisting_always(M:H), SYNTH= m_clause(M,H,B,Ref).
 
-synth_clause_ref(M:H,B,Ref, Size, SYNTH):- 
-    predicate_property(M:H,number_of_clauses(Size)),synth_in_listing(M:H),!, 
+synth_clause_ref(M:H,B,Ref, Size, SYNTH):-
+    predicate_property(M:H,number_of_clauses(Size)),synth_in_listing(M:H),!,
     SYNTH= m_clause(M,H,B,Ref).
 
 /*
@@ -1146,7 +1146,7 @@ synth_clause_ref(M:H,B,Ref,Size, SYNTH):- predicate_property(M:H,number_of_claus
 */
 
 
-%= 	 	 
+%=
 
 %% synth_in_listing( ?MH) is semidet.
 %
@@ -1159,7 +1159,7 @@ synth_in_listing(MH):- ( \+ is_listing_hidden(MH), \+ sourceTextPredicateSource(
 
 
 
-%= 	 	 
+%=
 
 %% term_matches_hb( ?HO, ?H, ?B) is semidet.
 %
@@ -1167,7 +1167,7 @@ synth_in_listing(MH):- ( \+ is_listing_hidden(MH), \+ sourceTextPredicateSource(
 %
 term_matches_term(HO,HB):-term_matches_hb(999,HO,HB),!.
 
-%= 	 	 
+%=
 
 %% term_matches_hb( ?VALUE1, :TermVar, ?VALUE3, ?VALUE4) is semidet.
 %
@@ -1204,7 +1204,7 @@ term_matches_hb(D,F/A,HB):-var(F),var(A),!,fail,term_matches_hb(D,call1(compound
 term_matches_hb(_,contains(HO),HB):- !, my_wildcard_match(HO,HB,false).
 term_matches_hb(_,match(HO),HB):- !, my_wildcard_match(HO,HB,true).
 term_matches_hb(D,HO,HB):- expand_to_hb(HB,H,B),
- (term_matches_unify(D,HO,H); 
+ (term_matches_unify(D,HO,H);
    (B\==H,B\==true,term_matches_unify(D,HO,B))).
 
 
@@ -1212,17 +1212,17 @@ term_matches_hb(D,HO,HB):- expand_to_hb(HB,H,B),
 
 :- export(term_matches_unify/3).
 
-my_wildcard_match(HO,HB,TF):- 
+my_wildcard_match(HO,HB,TF):-
   nonvar(HO),any_to_string(HO,HS),!, with_output_to(string(H1B1),write_canonical((HB))),!,
   my_wildcard_match_1(HS,H1B1,TF).
 
 my_wildcard_match_1(HS,H1B1,false):- !, (sub_atom_icasechk(HS,_,H1B1);sub_atom_icasechk(H1B1,_,HS)),!.
 my_wildcard_match_1(HS,H1B1,TF):- wildcard_match(HS,H1B1,[case_sensitive(TF)]),!.
-%= 	 	 
+%=
 
 term_matches_module(M,F):- atom(F),!,current_predicate(M:F/A),
  compound_name_arity(HB,F,A), \+ predicate_property(M:HB, imported_from(_)).
-term_matches_module(M,HB):- compound(HB),!,compound_name_arity(HB,F,A), 
+term_matches_module(M,HB):- compound(HB),!,compound_name_arity(HB,F,A),
   \+ predicate_property(M:HB, imported_from(_)), current_predicate(M:F/A).
 
 %% term_matches_unify( :GoalR, ?V, ?V) is semidet.
@@ -1252,7 +1252,7 @@ xin_range(A,R):- number(R),!,A == R.
 xin_range(A,between(L,H)):- !, between(L,H,A).
 xin_range(A,R):- R=..[F|List],C=..[F,A|List],call(C),!.
 
-%= 	 	 
+%=
 
 %% nonvar_search( :TermV) is semidet.
 %
@@ -1269,7 +1269,7 @@ nonvar_search(F/A):-!,nonvar(F),nonvar(A).
 :- export((cur_predicate)/2).
 
 
-%= 	 	 
+%=
 
 %% cur_predicate( :TermM, :TermM) is semidet.
 %
@@ -1290,20 +1290,20 @@ cur_predicate(M,MFA,MP):-nonvar(M),
 cur_predicate(SM,MFA,MP):-
    (
 
- %nonvar_search(MFA) -> SEARCH=MFA ; 
+ %nonvar_search(MFA) -> SEARCH=MFA ;
  %nonvar_search(MP) -> SEARCH=MP ;
-    
+
   nonvar(MFA) ->    (current_predicate(MFA),SEARCH=MFA);
-    
+
   nonvar(MP) ->     (current_predicate(_,MP),SEARCH=MP);
-   
+
    nonvar(SM) ->  (SM:current_predicate(SF/SA),SEARCH=M:SF/SA);
-                      
+
     current_predicate(SEARCH)),
   no_repeats(M:F/A,(match_predicates(SEARCH,MFAs),
-   
+
   member(M:F/A,MFAs))),
-   
+
    must_det_l((
   once(two_mfa(MFA, M,F,A)),
 
@@ -1327,7 +1327,7 @@ to_mp(P,_,P):-nonvar(P),!.
 
 :- export(ok_show/1).
 
-%= 	 	 
+%=
 
 %% ok_show( ?P) is semidet.
 %
@@ -1342,7 +1342,7 @@ ok_show(P):-not(bad_pred(P)).
 % we redfine list_undefined/1 .. this is the old version
 :- export(scansrc_list_undefined/1).
 
-%= 	 	 
+%=
 
 %% scansrc_list_undefined( ?A) is semidet.
 %
@@ -1358,7 +1358,7 @@ scansrc_list_undefined(A):- real_list_undefined(A).
 
 :- export(real_list_undefined/1).
 
-%= 	 	 
+%=
 
 %% real_list_undefined( ?A) is semidet.
 %
@@ -1461,13 +1461,13 @@ Warning:        /home/norights/.local/share/swi-prolog/pack/logicmoo_utils/prolo
 
 :- export(mmake/0).
 :- system:import(mmake).
-%= 	 	 
+%=
 
 %% mmake is semidet.
 %
 % Mmake.
 %
-% 
+%
 
 % mmake:- lmcache:thread_main(user,Main), \+ thread_self(Main), !.
 % mmake:- lmcache:thread_main(user,Main),!,thread_signal(Main,catch(((ignore(update_changed_files), ignore(if_defined(mpred_update_changed_files,true)))),_,true)).
@@ -1476,7 +1476,7 @@ mmake:- thread_signal(main,catch(((ignore(update_changed_files), ignore(if_defin
 
 :- export(update_changed_files/0).
 
-%= 	 	 
+%=
 
 %% update_changed_files is semidet.
 %
@@ -1486,7 +1486,7 @@ update_changed_files:- thread_self(main),!,update_changed_files1.
 update_changed_files:- !.
 update_changed_files:- !,thread_signal(main,update_changed_files0).
 
-%= 	 	 
+%=
 
 %% update_changed_files0 is semidet.
 %
@@ -1494,17 +1494,17 @@ update_changed_files:- !,thread_signal(main,update_changed_files0).
 %
 update_changed_files0 :- get_main_error_stream(Err),!,with_output_to(Err,update_changed_files1).
 
-%= 	 	 
+%=
 
 %% update_changed_files1 is semidet.
 %
 % Update Changed Files Secondary Helper.
 %
-update_changed_files1 :- 
+update_changed_files1 :-
  current_prolog_flag(verbose_load,VL),
  locally(set_prolog_flag(verbose_load,VL),
-   with_no_dmsg(make:((        
-        '$update_library_index',
+   with_no_dmsg(make:((
+       % '$update_library_index',
     findall(File, make:modified_file(File), Reload0),
     list_to_set(Reload0, Reload),
     (   prolog:make_hook(before, Reload)
@@ -1519,12 +1519,12 @@ update_changed_files1 :-
     ;   nop(list_undefined),
         nop(list_void_declarations)
     ))))).
-    
+
 
 :- export(remove_undef_search/0).
 % check:list_undefined:-real_list_undefined([]).
 
-%= 	 	 
+%=
 
 %% remove_undef_search is semidet.
 %
@@ -1532,7 +1532,7 @@ update_changed_files1 :-
 %
 
 % remove_undef_search:- !.
-remove_undef_search:- 
+remove_undef_search:-
  once((
  '@'(use_module(library(check)),'user'),
  redefine_system_predicate(check:list_undefined(_)),
@@ -1551,7 +1551,7 @@ remove_undef_search:-
 /*
 :- multifile(check:list_undefined/1).
 :- dynamic(check:list_undefined/1).
-:- system:use_module(library(make)), system:use_module(library(check)), 
+:- system:use_module(library(make)), system:use_module(library(check)),
    redefine_system_predicate(check:list_undefined/1).
 :- asserta((check:list_undefined(Stuff):- Stuff==[], dmsg(list_undefined(Stuff)),!)).
 */
@@ -1579,7 +1579,7 @@ real_list_void_declarations :-
     )).
 
 
-%= 	 	 
+%=
 
 %% mp( ?M, ?P, ?MP) is semidet.
 %
@@ -1591,13 +1591,13 @@ mp(_,P,MP):-MP=P.
 
 :- export(bad_pred/1).
 
-%= 	 	 
+%=
 
 %% bad_pred( :TermM) is semidet.
 %
 % Bad Predicate.
 %
-bad_pred(M:P):-!,atom(M),bad_pred(P). 
+bad_pred(M:P):-!,atom(M),bad_pred(P).
 %bad_pred(P):-functor(P,F,A),arg(_,v(cur_predicates/_,mpred_op/_,mpred_op00/_,mpred_op0/_,mpred_op_loop/_,do_expand_args_l/3),F/A).
 %bad_pred(P):-predicate_property(P,autoloaded(_)).
 %bad_pred(P):-not(predicate_property(P,number_of_clauses(_))).
@@ -1608,7 +1608,7 @@ bad_pred(M:P):-!,atom(M),bad_pred(P).
 :- export(portray_hbr/3).
 :- export(portray_hb/2).
 
-%= 	 	 
+%=
 
 %% portray_phbr(PW, :TermH, :TermB, ?R) is semidet.
 %
@@ -1635,10 +1635,10 @@ portray_phbr(PW,H,B,in_cmt(NV)):- in_cmt(portray_phbr(PW,H,B,NV)),!.
 
 portray_phbr(_,H,B,Ref) :- nonvar(Ref),
     catch(clause_property(Ref,module(M)),_,fail),
-    once((on_x_fail(((prolog_listing_list_clause((M:(H:-B)),Ref,_,[source(true)])))); 
-          (on_x_fail((prolog_listing_list_clause(_,Ref,_,[source(true)])))))).          
+    once((on_x_fail(((prolog_listing_list_clause((M:(H:-B)),Ref,_,[source(true)]))));
+          (on_x_fail((prolog_listing_list_clause(_,Ref,_,[source(true)])))))).
 
-portray_phbr(PW,H,B,Ref):- 
+portray_phbr(PW,H,B,Ref):-
  portray_refinfo(Ref),portray_hb1(PW,H,B).
 
 clause_u_here(H,B,Ref):- catch(call(call,clause_u(H,B,Ref)),_,clause(H,B,Ref)).
@@ -1650,7 +1650,7 @@ portray_refinfo(R):- source_file_info(R,Info), ignore((Info\=unk:_, in_cmt(forma
 portray_refinfo(R):- in_cmt(format('Ref: ~q',[R])),!,format('~N',[]).
 
 source_file_info(R,F:L):- (clause_property(R,line_count(L));L= (-1)), (clause_property(R,file(F));clause_property(R,source(F));F=unk).
-%= 	 	 
+%=
 
 %% portray_hb( ?H, ?B) is semidet.
 %
@@ -1703,7 +1703,7 @@ portray_one_line2(_PW,H):- display(H),!,write('.'),nl.
 
 :- thread_local t_l:last_portray_key/1.
 
-%= 	 	 
+%=
 
 %% maybe_separate( ?H, :GoalHow) is semidet.
 %
@@ -1711,7 +1711,7 @@ portray_one_line2(_PW,H):- display(H),!,write('.'),nl.
 %
 maybe_separate(H,How):-make_headkey(H,HK),maybe_separate_0(HK,How).
 
-%= 	 	 
+%=
 
 %% maybe_separate_0( ?NK, :GoalHow) is semidet.
 %
@@ -1721,13 +1721,13 @@ maybe_separate_0(NK,How):- \+ t_l:last_portray_key(_), asserta(t_l:last_portray_
 maybe_separate_0(NK,How):- retract(t_l:last_portray_key(OK)),!,
    ( ( \+ OK=NK) ->  How ; true),!,asserta(t_l:last_portray_key(NK)),!.
 
-maybe_separate_0(NK,How):- 
-  (t_l:last_portray_key(LK) -> 
+maybe_separate_0(NK,How):-
+  (t_l:last_portray_key(LK) ->
          ((LK = NK) -> true ; (How,retractall(t_l:last_portray_key(LK)),asserta(t_l:last_portray_key(NK)),How));
          asserta(t_l:last_portray_key(NK))),!.
 
 
-%= 	 	 
+%=
 
 %% make_headkey( :TermH, :TermNK) is semidet.
 %
@@ -1745,7 +1745,7 @@ make_headkey(H,NK):-copy_term_nat(H,NK),numbervars(NK, 0, _,[ singletons(true)])
 
 
 
-%= 	 	 
+%=
 
 %% pp_listing( ?Pred) is semidet.
 %
@@ -1758,7 +1758,7 @@ pp_listing(Pred):- functor_safe(Pred,F,A),functor_safe(FA,F,A),findall(NV,predic
 
 
 
-%= 	 	 
+%=
 
 %% use_xlisting is semidet.
 %
@@ -1766,7 +1766,7 @@ pp_listing(Pred):- functor_safe(Pred,F,A),functor_safe(FA,F,A),findall(NV,predic
 %
 use_xlisting:- use_xlisting(true).
 
-%= 	 	 
+%=
 
 %% use_xlisting( ?TF) is semidet.
 %
@@ -1776,7 +1776,7 @@ use_xlisting(TF):-var(TF),!,(current_prolog_flag(xlisting,TF)->true;TF=false).
 use_xlisting(TF):-set_prolog_flag(xlisting,TF).
 
 
-%= 	 	 
+%=
 
 %% use_listing_vars is semidet.
 %
@@ -1784,7 +1784,7 @@ use_xlisting(TF):-set_prolog_flag(xlisting,TF).
 %
 use_listing_vars:- use_listing_vars(true),scan_for_varnames.
 
-%= 	 	 
+%=
 
 %% use_listing_vars( ?TF) is semidet.
 %
@@ -1812,7 +1812,7 @@ get_print_mode(text).
 :- use_module(library(http/http_wrapper)). % ([is_cgi_stream/1,cgi_property/2]).
 this_http_current_request(Request) :-
     current_output(CGI),
-    http_stream:((is_cgi_stream(CGI), 
+    http_stream:((is_cgi_stream(CGI),
     cgi_property(CGI, request(Request)))).
 
 
