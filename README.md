@@ -220,19 +220,29 @@ Module loading
 
 ## MeTTaLog Extras
 
-
-(Imported member/2 1 superpose)
+```
 ; For the compiler to know that the member function will be a predicate 
-(Compiled member/2)
+(: member/2 Compiled)
+
 ; Declare member/2
 (: member/2 Nondeterministic)
 
 
+; Allow rewrites of member to invert using superpose
+(: member/2 (Inverted 1 superpose))
+
+
+```
+
+```
 ; MeTTa file loading
-`!(include! &self ../path/to/motto/test_llm_gate.metta)`
+!(include! &self ../path/to/motto/test_llm_gate.metta)
 
 ; Http Files
-`!(include! &self https://somewhere/test_llm_gate.metta)`
+!(include! &self https://somewhere/test_llm_gate.metta)
+```
+
+
 
 ```
 ; interfacing to Prolog
