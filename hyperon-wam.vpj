@@ -107,10 +107,16 @@
 				Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"
 				L="1"/>
 		</Folder>
+		<Folder Name="src">
+			<F
+				N="src/*.*"
+				Recurse="1"
+				Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"
+				L="1"/>
+		</Folder>
 		<F
 			N="*.*"
 			Recurse="1"
-			Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"
-			L="1"/>
+			Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"/>
 	</Files>
 </Project>

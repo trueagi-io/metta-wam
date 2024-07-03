@@ -1,7 +1,6 @@
 
 
-!(import! &self NARS.metta)
-
+!(import! &self NARS)
 
 ;;NARS test
 !(AddBeliefEvent (((ExtSet garfield) --> cat) (1.0 0.9)))
