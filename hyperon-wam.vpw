@@ -4,5 +4,6 @@
 		<Project File="compiler-project.vpj"/>
 		<Project File="hyperon-wam.vpj"/>
 		<Project File="../../../../logicmoo_workspace.vpj"/>
+		<Project File="../../arcprize/PrologARC.vpj"/>
 	</Projects>
 </Workspace>

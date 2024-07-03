@@ -28,24 +28,38 @@ repl2:-
           give_up(Why),pp_m(red,gave_up(Why)))),
       %set_prolog_flag(gc,true),
       fail.
+
+write_metta_prompt:-
+     flush_output(current_output),
+     format('~Nmetta',[]),
+     current_read_mode(repl,Mode),write(Mode),
+     current_self(Self),(Self=='&self' -> true ; write(Self)),
+     write('>'),flush_output(current_output).
+
+
 repl3:-
-    notrace(( reset_eval_num,
+     with_output_to(atom(P),write_metta_prompt),
+     setup_call_cleanup(
+        notrace(prompt(Was,P)),
+        ((ttyflush,repl4,ttyflush)),
+        notrace(prompt(_,Was))).
+
+repl4:-
+    (( reset_eval_num,
      write_answer_output,
-     current_self(Self),
-     current_read_mode(repl,Mode),
      %ignore(shell('stty sane ; stty echo')),
      %current_input(In),
-      'format'(atom(P),'metta ~w ~w> ',[Self, Mode]))),
-      setup_call_cleanup(
-         notrace(prompt(Was,P)),
-         notrace((ttyflush,repl_read(Expr),ttyflush)),
-         notrace(prompt(_,Was))),
-      if_trace(replt,fbug(repl_read(Mode,Expr))),
-      %fbug(repl_read(Expr)),
-      notrace(if_t(Expr==end_of_file,throw(end_of_input))),
+      %if_trace(repl,fbug(repl_read(Mode,Expr))),
+      repl_read(Expr),
+      notrace(if_t((Expr==end_of_file;(is_win64,Expr=='')),throw(end_of_input))),
       %ignore(shell('stty sane ; stty echo')),
+      ttyflush,
       notrace(ignore(check_has_directive(Expr))),
-      once(do_metta(repl_true,Mode,Self,Expr,_)).
+      current_self(Self), current_read_mode(repl,Mode),
+       nop(writeqln(repl_read(Expr))),!,
+      ignore(once((do_metta(repl_true,Mode,Self,Expr,O)))),!,
+      nop((write_src(O),nl)),
+      notrace(throw(restart_reading)))).
 
 
 
@@ -120,6 +134,7 @@ repl_read(Accumulated, Line, Expr) :- symbolics_to_string([Accumulated," ",Line]
 repl_read(O2):- clause(t_l:s_reader_info(O2),_,Ref),erase(Ref).
 repl_read(Expr) :- repeat,
   remove_pending_buffer_codes(_,Was),text_to_string(Was,Str),
+      write_metta_prompt,
       repl_read(Str, Expr),
         % once(((symbol(Expr1),symbol_concat('@',_,Expr1), \+ atom_contains(Expr1,"="), repl_read(Expr2)) -> Expr=[Expr1,Expr2] ; Expr1 = Expr)),
         % this cutrs the repeat/0
@@ -153,9 +168,9 @@ call_for_term_variables5(Term,_,SVars,Vars,call_nth(Term,Count),[Vars,SVars],Cou
 
 
 is_interactive(From):- notrace(is_interactive0(From)).
+is_interactive0(From):- From==repl_true,!.
 is_interactive0(From):- From==false,!,fail.
 is_interactive0(From):- symbolic(From),is_stream(From),!, \+ stream_property(From,filename(_)).
-is_interactive0(From):- From = repl_true,!.
 is_interactive0(From):- From = true,!.
 
 
@@ -179,9 +194,9 @@ current_read_mode(file,Mode):- ((nb_current(file_mode,Mode),Mode\==[])->true;Mod
 
 
 eval(all(Form)):- nonvar(Form), !, forall(eval(Form),true).
-eval(Form):-   current_self(Self),   do_metta(true,exec,Self,Form,_Out).
+eval(Form):-   current_self(Self),   do_metta(true,exec,Self,Form,Out),write_src(Out).
 
-eval(Form,Out):-current_self(Self),eval_H(500,Self,Form,Out).
+eval(Form,Out):- current_self(Self),eval(Self,Form,Out).
 eval(Self,Form,Out):- eval_H(500,Self,Form,Out).
 
 eval_I(Self,Form,OOut):-

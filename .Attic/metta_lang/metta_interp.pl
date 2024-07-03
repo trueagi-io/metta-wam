@@ -65,12 +65,20 @@
 :- set_prolog_flag(debug_on_interrupt,true).
 :- set_prolog_flag(debug_on_error,true).
 %:- set_prolog_flag(compile_meta_arguments,control).
-:- prolog_load_context(directory, Value), absolute_file_name('../packs/',Dir,[relative_to(Value)]),
+:- (prolog_load_context(directory, Value);Value='.'), absolute_file_name('../packs/',Dir,[relative_to(Value)]),
     symbol_concat(Dir,'predicate_streams',PS),
     symbol_concat(Dir,'logicmoo_utils',LU),
+    attach_packs(Dir,[duplicate(replace),search(first)]),
     pack_attach(PS,[duplicate(replace),search(first)]),
     pack_attach(LU,[duplicate(replace),search(first)]).
 %   :- attach_packs.
+%:- ensure_loaded(metta_interp).
+is_win64:- current_prolog_flag(windows,_).
+is_win64_ui:- is_win64,current_prolog_flag(hwnd,_).
+
+
+:- is_win64 -> ensure_loaded(library(logicmoo_utils)) ; true.
+
 %   :- initialization(attach_packs).
 :- nodebug(metta(eval)).
 :- nodebug(metta(exec)).
@@ -79,6 +87,7 @@
 
 :- dynamic(function_arity/2).
 :- dynamic(predicate_arity/2).
+
 
 :-multifile(user:metta_file/3).
 :-dynamic(user:metta_file/3).
@@ -166,6 +175,7 @@ is_converting:- is_metta_flag('convert').
 
 is_compat:- is_metta_flag('compat').
 
+is_mettalog:- is_win64,!.
 is_mettalog:- is_metta_flag('log').
 
 is_synthing_unit_tests:- notrace(is_synthing_unit_tests0).
@@ -182,8 +192,8 @@ is_html:- is_metta_flag('html').
 
 :- nodebug(metta('trace-on-eval')).
 
-% is_compatio:- !,fail.
 is_compatio:- notrace(is_compatio0).
+is_compatio0:- is_win64,!,fail.
 is_compatio0:- is_testing,!,fail.
 is_compatio0:- is_flag0('compatio').
 is_compatio0:- is_mettalog,!,fail.
@@ -191,6 +201,7 @@ is_compatio0:- is_mettalog,!,fail.
 is_compatio0:- !.
 
 keep_output:- !.
+keep_output:- is_win64,!.
 keep_output:- is_mettalog,!.
 keep_output:- is_testing,!.
 keep_output:- is_compatio,!,fail.
@@ -216,8 +227,8 @@ nullify_output:- nullify_output_really.
 nullify_output_really:- current_output(MFS), null_user_output(OUT),  MFS==OUT, !.
 nullify_output_really:- null_user_output(MFS), set_prolog_IO(user_input,MFS,MFS).
 
-set_output_stream :- !.
-set_output_stream :- keep_output -> nullify_output;  unnullify_output.
+%set_output_stream :- !.
+set_output_stream :- \+ keep_output -> nullify_output;  unnullify_output.
 :- set_output_stream.
 % :- nullify_output.
 
@@ -646,7 +657,7 @@ get_flag_value(_,true).
    nop((forall(option_value_def(Opt,Default),set_option_value_interp(Opt,Default))))))).
 
 %process_option_value_def:- \+ option_value('python',false), skip(ensure_loaded(metta_python)).
-process_option_value_def:- \+ option_value('python',false), ensure_loaded(mettalog(metta_python)),
+process_option_value_def:- fail, \+ option_value('python',false), ensure_loaded(mettalog(metta_python)),
   real_notrace((ensure_mettalog_py)).
 process_option_value_def.
 
@@ -693,7 +704,7 @@ cmdline_load_metta(Phase,Self,['--args'|Rest]):- !,
   set_metta_argv(Before),
   cmdline_load_metta(Phase,Self,NewRest).
 
-  cmdline_load_metta(Phase,Self,['--repl'|Rest]):- !,
+cmdline_load_metta(Phase,Self,['--repl'|Rest]):- !,
   if_phase(Phase,execute,repl),
   cmdline_load_metta(Phase,Self,Rest).
 cmdline_load_metta(Phase,Self,['--log'|Rest]):- !,
@@ -1081,7 +1092,7 @@ metta_anew1(unload_all,OBO):- subst_vars(OBO,Cl),load_hook(unload_all,OBO),
   forall(
     (clause(Head,Body,Ref),clause(Head2,Body2,Ref)),
     must_det_ll((((Head+Body)=@=(Head2+Body2))
-               ->(erase(Ref),pp_m(unload_all(Ref,Cl)))
+               ->(erase(Ref),nop(pp_m(unload_all(Ref,Cl))))
                ;(pp_m(unload_all_diff(Cl,(Head+Body)\=@=(Head2+Body2))))))).
 
 
@@ -1646,11 +1657,13 @@ pre_halt2:-  need_interaction, set_option_value('had_interaction',true),call_cle
 %maybe_halt(Seven):- option_value('prolog',true),!,call_cleanup(prolog,(set_option_value_interp('prolog',false),maybe_halt(Seven))).
 %maybe_halt(Seven):- option_value('repl',true),!,call_cleanup(repl,(set_option_value_interp('repl',false),maybe_halt(Seven))).
 %maybe_halt(Seven):- option_value('repl',true),!,halt(Seven).
+
 maybe_halt(_):- once(pre_halt1), fail.
 maybe_halt(Seven):- option_value('repl',false),!,halt(Seven).
 maybe_halt(Seven):- option_value('halt',true),!,halt(Seven).
 maybe_halt(_):- once(pre_halt2), fail.
 maybe_halt(Seven):- fbugio(maybe_halt(Seven)), fail.
+maybe_halt(_):- !.
 maybe_halt(H):- halt(H).
 
 
@@ -1685,13 +1698,13 @@ ensure_mettalog_system:-
     system:use_module(library(nb_set)),
     system:use_module(library(assoc)),
     system:use_module(library(pairs)),
-    user:use_module(library(swi_ide)),
+    if_t(exists_source(library(swi_ide)),user:use_module(library(swi_ide))),
     user:use_module(library(prolog_profile)),
     %metta_python,
     %ensure_loaded('./src/main/flybase_convert'),
     %ensure_loaded('./src/main/flybase_main'),
-    ensure_loaded(library(flybase_convert)),
-    ensure_loaded(library(flybase_main)),
+    %ensure_loaded(library(flybase_convert)),
+    %ensure_loaded(library(flybase_main)),
     autoload_all,
     make,
     autoload_all,

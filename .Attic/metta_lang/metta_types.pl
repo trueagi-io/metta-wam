@@ -375,19 +375,17 @@ try_adjust_arg_types(_Eq,RetType,Depth,Self,Params,X,Y):-
   args_conform(Depth,Self,M,Params),!,
   set_type(Depth,Self,Y,RetType),
   into_typed_args(Depth,Self,Params,M,Y).
-%adjust_args(Eq,RetType,Depth,Self,_,X,Y):- is_list(X), !, maplist(eval_args(Depth,Self),X,Y).
-%adjust_args(Eq,RetType,Depth,Self,_,X,Y):- is_list(X), !, maplist(as_prolog(Depth,Self),X,Y),!.
+%adjust_args(Else,Eq,RetType,Depth,Self,_,X,Y):- is_list(X), !, maplist(eval_args(Depth,Self),X,Y).
+%adjust_args(Else,Eq,RetType,Depth,Self,_,X,Y):- is_list(X), !, maplist(as_prolog(Depth,Self),X,Y),!.
 
-adjust_args_9(Eq,RetType,Res,NewRes,Depth,Self,Op,X,Y):-
-   adjust_args(Eq,RetType,Res,NewRes,Depth,Self,Op,X,Y).
 
-adjust_args(_Eq,_RetType,Res,Res,_Dpth,Self,F,X,Y):- (X==[] ;
+adjust_args(Else,_Eq,_RetType,Res,Res,_Dpth,Self,F,X,Y):- (X==[] ;
     is_special_op(Self,F); \+ iz_conz(X)),!,Y=X.
-adjust_args(Eq,RetType,Res,NewRes,Depth,Self,Op,X,Y):-
-    if_or_else(adjust_argsA(Eq,RetType,Res,NewRes,Depth,Self,Op,X,Y),
-       adjust_argsB(Eq,RetType,Res,NewRes,Depth,Self,Op,X,Y)).
+adjust_args(Else,Eq,RetType,Res,NewRes,Depth,Self,Op,X,Y):-
+    if_or_else(adjust_argsA(Else,Eq,RetType,Res,NewRes,Depth,Self,Op,X,Y),
+       adjust_argsB(Else,Eq,RetType,Res,NewRes,Depth,Self,Op,X,Y)).
 
-adjust_argsA(Eq,RetType,Res,NewRes,Depth,Self,Op,X,Y):-
+adjust_argsA(Else,Eq,RetType,Res,NewRes,Depth,Self,Op,X,Y):-
   len_or_unbound(X,Len),
   get_operator_typedef(Self,Op,Len,ParamTypes,RRetType),
   (nonvar(NewRes)->CRes=NewRes;CRes=Res),
@@ -395,12 +393,12 @@ adjust_argsA(Eq,RetType,Res,NewRes,Depth,Self,Op,X,Y):-
   args_conform(Depth,Self,[CRes|X],[RRetType|ParamTypes]),
   into_typed_args(Depth,Self,[RRetType|ParamTypes],[Res|X],[NewRes|Y]).
 
-adjust_argsB(Eq,_RetType,Res,Res,Depth,Self,_,Args,Adjusted):- is_list(Args),!,
-  maplist(eval_1_arg(Eq,_,Depth,Self),Args,Adjusted).
-adjust_argsB(_Eq,_RetType,Res,Res,Depth,Self,_,X,Y):- as_prolog(Depth,Self,X,Y),!.
+adjust_argsB(Else,Eq,_RetType,Res,Res,Depth,Self,_,Args,Adjusted):- is_list(Args),!,
+  maplist(eval_1_arg(Else,Eq,_,Depth,Self),Args,Adjusted).
+adjust_argsB(Else,_Eq,_RetType,Res,Res,Depth,Self,_,X,Y):- call(Else,X,Y). % as_prolog(Depth,Self,X,Y),!.
 
-eval_1_arg(Eq,ReturnType,Depth,Self,Arg,Adjusted):-
-  if_or_else(eval(Eq,ReturnType,Depth,Self,Arg,Adjusted),Arg=Adjusted).
+eval_1_arg(Else,Eq,ReturnType,Depth,Self,Arg,Adjusted):-
+  must_det_ll(if_or_else(eval(Eq,ReturnType,Depth,Self,Arg,Adjusted),call(Else,Arg,Adjusted))).
 
 
 get_operator_typedef(Self,Op,ParamTypes,RetType):-
