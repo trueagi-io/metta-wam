@@ -49,13 +49,19 @@ Once inside the container you may enter the MeTTaLog REPL with the
 following command
 
 ```bash
-MeTTa --repl
+mettalog --repl
 ```
 
 or run a metta script as follows
 
 ```bash
-MeTTa myprg.metta
+mettalog myprg.metta
+```
+
+or run/load a metta script and debug in the repl
+
+```bash
+mettalog myprg.metta --repl
 ```
 
 
@@ -73,19 +79,19 @@ Interact directly with MeTTaLog through the REPL:
 ```bash
 mettalog --repl
 
-metta &self +> !(+ 1 1)
+metta+> !(+ 1 1)
 !(+ 1 1)
 
 Deterministic: 2
 
 ; Execution took 0.000105 secs. (105.29 microseconds)
-metta &self +>
+metta+>
 ```
 Exit the REPL with `ctrl-D`.
 
 **To run a script:**
 ```bash
-MeTTa tests/baseline_compat/hyperon-experimental_scripts/b0_chaining_prelim.metta
+mettalog tests/baseline_compat/hyperon-experimental_scripts/b0_chaining_prelim.metta
 ```
 
 **Note:** Remember, the `MeTTa` script's name is case-sensitive. Do not confuse it with `metta`, which refers to the MeTTa Interpreter written in Rust.
