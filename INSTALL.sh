@@ -237,6 +237,7 @@ function ensure_pip() {
     fi
 }
 
+
 # Assuming SWI-Prolog 9.1 is installed successfully
 # Install Janus for SWI-Prolog
 echo -e "${BLUE}Checking if Janus Python support is already installed${NC}..."
@@ -293,7 +294,6 @@ if false && ! swipl -g "use_module(library(predicate_streams)), halt(0)." -t "ha
 else
     echo -e "${GREEN}Pack predicate_streams is already installed${NC}."
 fi
-
 
 
 if false && ! swipl -g  "use_module(library(logicmoo_utils)), halt(0)." -t "halt(1)" 2>/dev/null; then

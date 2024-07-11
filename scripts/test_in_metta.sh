@@ -152,7 +152,7 @@ process_file() {
         sleep 0.1
         IF_REALLY_DO touch "$file_html"
 
-        TEST_CMD="./MeTTa '--output=$METTALOG_OUTPUT' --timeout=$METTALOG_MAX_TIME --html --repl=false ${extra_args[@]} ${passed_along_to_mettalog[@]} \"$file\" --halt=true"
+        TEST_CMD="./mettalog '--output=$METTALOG_OUTPUT' --timeout=$METTALOG_MAX_TIME --html --repl=false ${extra_args[@]} ${passed_along_to_mettalog[@]} \"$file\" --halt=true"
         # DEBUG "${BOLD}$TEST_CMD${NC}"
 
         IF_REALLY_DO "$TEST_CMD"
@@ -607,6 +607,7 @@ while [ "$#" -gt 0 ]; do
     shift
 done
 
+python3 -m pip install ansi2html
 
 extract_all_parent_directories
 
