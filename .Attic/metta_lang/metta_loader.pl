@@ -342,7 +342,7 @@ include_metta_directory_file(Self,Directory,Filename):-
 
 convert_metta_to_datalog(Filename,DatalogFile):-
     % Generate the Datalog file name
-  symbol_concat(Filename,'.datalog',DatalogFile),
+  ignore(symbol_concat(Filename,'.datalog',DatalogFile)),
     % Open the METTA file for reading
     setup_call_cleanup(
         open(Filename, read, Input, [encoding(utf8)]),

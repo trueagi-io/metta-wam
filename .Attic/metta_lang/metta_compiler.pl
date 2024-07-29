@@ -113,6 +113,29 @@ into_list_args0(holds(A),AA):- !, into_list_args(A,AA),!.
 into_list_args0(C,[F|Args]):- compound_name_arguments(C,F,Args),!.
 
 
+:- use_module(library(filesex)). % Ensure you have the necessary module for file time operations
+
+metta2pl(File) :-
+  file_name_extension(Name, _, File),
+  file_name_extension(Name, pl, PlFile),
+  metta2pl(File, PlFile).
+
+metta2pl(File, PlFile) :-
+  (   exists_file(PlFile),
+      time_file(PlFile, PlTime),
+      time_file(File, FileTime),
+      PlTime > FileTime
+  ->  true  % PLFile is newer, no need to convert
+  ;   convert_metta_to_pl(File, PlFile)  % Replace this with your actual conversion logic
+  ).
+
+convert_metta_to_pl(File, PlFile) :-
+  % Your conversion logic here
+  % For example:
+  format('Converting ~w to ~w~n', [File, PlFile]),
+  convert_metta_to_datalog(File,PlFile).
+
+
 
 compound_name_list(AsPred,FP,PredArgs):- var(AsPred),!,AsPred=[FP|PredArgs].
 compound_name_list(AsPred,FP,PredArgs):- iz_conz(AsPred),!,AsPred=[FP|PredArgs].
