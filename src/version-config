@@ -1,4 +1,5 @@
-main
+canary
+#main
 #
 # the mettalog interpreter script uses the 
 # first line of this file to decide witch subdir or src/ to 
