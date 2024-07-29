@@ -6,6 +6,6 @@
 [()]
 [()]
 [()]
-[(: PROOFTrace (supportOf (Inheritance B (VarIdx (S Z))) (S Z))), (: PROOFTrace (-> (specializationOf $sptrn#49290 (Inheritance (VarIdx Z) (VarIdx (S Z)))) (supportOf $sptrn#49290 (countNat $sptrn#49290)))), (: PROOFTrace (minsup (Inheritance (VarIdx Z) (VarIdx (S Z)))))]
-11.69user 0.02system 0:11.72elapsed 99%CPU (0avgtext+0avgdata 36468maxresident)k
-0inputs+0outputs (0major+5081minor)pagefaults 0swaps
+[(: PROOFTrace (minsup (Inheritance (VarIdx Z) (VarIdx (S Z))))), (: PROOFTrace (-> (specializationOf $sptrn#463 (Inheritance (VarIdx Z) (VarIdx (S Z)))) (supportOf $sptrn#463 (countNat $sptrn#463)))), (: PROOFTrace (supportOf (Inheritance B (VarIdx (S Z))) (S Z)))]
+0.13user 0.00system 0:00.14elapsed 99%CPU (0avgtext+0avgdata 25572maxresident)k
+0inputs+0outputs (0major+3131minor)pagefaults 0swaps

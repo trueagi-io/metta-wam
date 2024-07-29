@@ -5,6 +5,9 @@
 [()]
 [()]
 [()]
-[()]
-0.23user 0.01system 0:00.24elapsed 99%CPU (0avgtext+0avgdata 32456maxresident)k
-0inputs+0outputs (0major+4047minor)pagefaults 0swaps
+[(Error (assertEqualToResult (miner GroundingSpace-0x626f11d21ce8 (ms) (depth)) (() () () () () () () () () () (candidate (Inheritance (VarIdx Z) E) 2) (candidate (Inheritance (VarIdx Z) A) 2) (candidate (Inheritance B (VarIdx (S Z))) 1) (candidate (Inheritance C (VarIdx (S Z))) 2) (candidate (Inheritance D (VarIdx (S Z))) 1))) 
+Expected: [(), (), (), (), (), (), (), (), (), (), (candidate (Inheritance (VarIdx Z) E) 2), (candidate (Inheritance (VarIdx Z) A) 2), (candidate (Inheritance B (VarIdx (S Z))) 1), (candidate (Inheritance C (VarIdx (S Z))) 2), (candidate (Inheritance D (VarIdx (S Z))) 1)]
+Got: [(), (), (), (), (Error (get-candidate Z $link#78 1) NoValidAlternatives)]
+Missed result: ())]
+0.02user 0.00system 0:00.02elapsed 100%CPU (0avgtext+0avgdata 25088maxresident)k
+0inputs+0outputs (0major+2940minor)pagefaults 0swaps
