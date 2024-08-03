@@ -9,53 +9,7 @@ export METTALOG_DIR=$(dirname "$MeTTa")
 export PIP_BREAK_SYSTEM_PACKAGES=1
 # cd "$METTALOG_DIR" || { echo "Failed to navigate to $METTALOG_DIR"; [[ "$IS_SOURCED" == "1" ]] && return 1 || exit 1; }
 
-#!/bin/bash
-
-# Name of the virtual environment directory
-VENV_DIR="venv"
-
-# Function to activate the virtual environment
-activate_venv() {
-    echo "Activating the virtual environment..."
-    source "$VENV_DIR/bin/activate"
-}
-
-# Function to check if we are inside a virtual environment
-is_inside_venv() {
-    if [[ "$VIRTUAL_ENV" != "" ]]
-    then
-        return 0  # True, script is running inside a virtual environment
-    else
-        return 1  # False, script is not running inside a virtual environment
-    fi
-}
-
-# Function to create a virtual environment
-create_venv() {
-    if [ ! -d "$VENV_DIR" ]; then
-        echo "Creating a virtual environment..."
-        python3 -m venv "$VENV_DIR"
-    else
-        echo "Virtual environment already exists."
-    fi
-}
-
-# Main logic of the script
-if is_inside_venv; then
-    echo "Script is running inside a virtual environment."
-else
-    echo "Script is not running inside a virtual environment."
-    create_venv
-    activate_venv
-
-    # Relaunch the script inside the virtual environment
-    echo "Relaunching the script inside the virtual environment..."
-    exec "$0" "$@"
-fi
-
-# Place your script's main execution logic here
-echo "Executing the main script logic..."
-
+. scripts/ensure_venv
 
 (cd $METTALOG_DIR ; git update-index --assume-unchanged .bash_history) || true
 
