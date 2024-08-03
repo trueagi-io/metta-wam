@@ -9,12 +9,11 @@ export METTALOG_DIR=$(dirname "$MeTTa")
 export PIP_BREAK_SYSTEM_PACKAGES=1
 # cd "$METTALOG_DIR" || { echo "Failed to navigate to $METTALOG_DIR"; [[ "$IS_SOURCED" == "1" ]] && return 1 || exit 1; }
 
-. scripts/ensure_venv
-
 (cd $METTALOG_DIR ; git update-index --assume-unchanged .bash_history) || true
 
 # Run this file with ./INSTALL.md
 # ```
+. ./scripts/ensure_venv
 
 # Function to prompt for user confirmation with 'N' as the default
 confirm_with_default() {
