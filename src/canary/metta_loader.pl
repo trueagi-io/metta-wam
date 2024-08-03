@@ -233,7 +233,7 @@ load_metta(Self,RelFilename):-
  track_load_into_file(Filename,
    include_metta(Self,RelFilename)).
 
-import_metta(Self,Module):- py_is_module(Module),!,
+import_metta(Self,Module):- current_predicate(py_is_module/1),py_is_module(Module),!,
  must_det_ll(self_extend_py(Self,Module)),!.
 import_metta(Self,Filename):-
   (\+ symbol(Filename); \+ exists_file(Filename)),!,
