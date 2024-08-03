@@ -202,31 +202,83 @@ atoms_iter_from_space(Space, Atoms) :-
     true.
 :- endif.
 
-py_to_pl(I,O):- py_to_pl(_,I,O).
-py_to_pl(VL,I,O):- ignore(VL=[vars]), py_to_pl(VL,[],[],_,I,O),!.
-is_var_or_nil(I):- var(I),!.
-is_var_or_nil([]).
 %py_to_pl(VL,Par,_Cir,_,L,_):- pybug(py_to_pl(VL,Par,L)),fail.
-py_to_pl(_VL,_Par,Cir,Cir,L,E):- var(L),!,E=L.
-py_to_pl(VL,Par,Cir,CirO,O,E):- py_is_object(O),py_class(O,Cl),!,pyo_to_pl(VL,Par,[O=E|Cir],CirO,Cl,O,E).
-py_to_pl(_VL,_Par,Cir,Cir,L,E):- L ==[],!,E=L.
-py_to_pl(_VL,_Par,Cir,Cir,L,E):- member(N-NE,Cir), N==L, !, (E=L;NE=E), !.
-py_to_pl(_VL,_Par,Cir,Cir, LORV:B,LORV:B):- is_var_or_nil(LORV),  !.
-py_to_pl(_VL,_Par,Cir,Cir, LORV:_B:_C,LORV):- is_var_or_nil(LORV),  !.
-py_to_pl(VL,Par,Cir,CirO,[H|T]:B:C,[HH|TT]):-  py_to_pl(VL,Par,Cir,CirM,H:B:C,HH), py_to_pl(VL,Par,CirM,CirO,T:B:C,TT).
-py_to_pl(VL,Par,Cir,CirO,[H|T]:B,[HH|TT]):-  py_to_pl(VL,Par,Cir,CirM,H:B,HH), py_to_pl(VL,Par,CirM,CirO,T:B,TT).
-py_to_pl(VL,Par,Cir,CirO,A:B:C,AB):-  py_is_object(A),callable(B),py_call(A:B,R),py_to_pl(VL,Par,Cir,CirO,R:C,AB).
-py_to_pl(VL,Par,Cir,CirO,A:B,AB):-  py_is_object(A),callable(B),py_call(A:B,R),py_to_pl(VL,Par,Cir,CirO,R,AB).
-py_to_pl(VL,Par,Cir,CirO,A:B,AA:BB):-  !, py_to_pl(VL,Par,Cir,CirM,A,AA),py_to_pl(VL,Par,CirM,CirO,B,BB).
-py_to_pl(VL,Par,Cir,CirO,A-B,AA-BB):- !, py_to_pl(VL,Par,Cir,CirM,A,AA),py_to_pl(VL,Par,CirM,CirO,B,BB).
-py_to_pl(_VL,_Par,Cir,Cir,L,E):- atom(L),!,E=L.
-py_to_pl(VL,Par,Cir,CirO,[H|T],[HH|TT]):- !, py_to_pl(VL,Par,Cir,CirM,H,HH), py_to_pl(VL,Par,CirM,CirO,T,TT).
-py_to_pl(VL,Par,Cir,CirO,L,E):- is_dict(L,F),!,dict_pairs(L,F,NV),!,py_to_pl(VL,Par,Cir,CirO,NV,NVL),dict_pairs(E,F,NVL).
-py_to_pl(_VL,_Par,Cir,Cir,L,E):- \+ callable(L),!,E=L.
-%py_to_pl(VL,Par,Cir,CirO,A:B:C,AB):-  py_is_object(A),callable(B),py_call(A:B,R),!, py_to_pl(VL,Par,[A:B-AB|Cir],CirO,R:C,AB).
-%py_to_pl(VL,Par,Cir,CirO,A:B,AB):-  py_is_object(A),callable(B),py_call(A:B,R),!, py_to_pl(VL,Par,[A:B-AB|Cir],CirO,R,AB).
-py_to_pl(VL,Par,Cir,CirO,A,AA):- compound(A),!,compound_name_arguments(A,F,L),py_to_pl(VL,Par,Cir,CirO,L,LL),compound_name_arguments(AA,F,LL).
-py_to_pl(_VL,_Par,Cir,Cir,E,E).
+% py_to_pl/2 - Converts a Python object to a Prolog term.
+py_to_pl(I, O) :- py_to_pl(_, I, O).
+
+% py_to_pl/3 - Calls py_to_pl/6 with initial parameters.
+py_to_pl(VL, I, O) :- ignore(VL = [vars]), py_to_pl(VL, [], [], _, I, O), !.
+
+% is_var_or_nil/1 - Checks if the input is a variable or an empty list.
+is_var_or_nil(I) :- var(I), !.
+is_var_or_nil([]).
+
+% py_to_pl/6 - Main conversion predicate.
+% If L is a variable, E is unified with L.
+py_to_pl(_VL, _Par, Cir, Cir, L, E) :- var(L), !, E = L.
+% If O is an object, convert it to Prolog.
+py_to_pl(VL, Par, Cir, CirO, O, E) :- py_is_object(O), py_class(O, Cl), !,
+    pyo_to_pl(VL, Par, [O = E | Cir], CirO, Cl, O, E).
+% If L is an empty list, unify E with L.
+py_to_pl(_VL, _Par, Cir, Cir, L, E) :- L == [], !, E = L.
+% If L is in the Cir list, unify E with L.
+py_to_pl(_VL, _Par, Cir, Cir, L, E) :- member(N-NE, Cir), N == L, !, (E = L; NE = E), !.
+% If LORV is a variable or nil, unify it directly.
+py_to_pl(_VL, _Par, Cir, Cir, LORV:B, LORV:B) :- is_var_or_nil(LORV), !.
+py_to_pl(_VL, _Par, Cir, Cir, LORV:_B:_C, LORV) :- is_var_or_nil(LORV), !.
+% Convert lists with annotations.
+py_to_pl(VL, Par, Cir, CirO, [H|T]:B:C, [HH|TT]) :-
+    py_to_pl(VL, Par, Cir, CirM, H:B:C, HH),
+    py_to_pl(VL, Par, CirM, CirO, T:B:C, TT).
+py_to_pl(VL, Par, Cir, CirO, [H|T]:B, [HH|TT]) :-
+    py_to_pl(VL, Par, Cir, CirM, H:B, HH),
+    py_to_pl(VL, Par, CirM, CirO, T:B, TT).
+% Handle objects with callable methods.
+py_to_pl(VL, Par, Cir, CirO, A:B:C, AB) :-
+    py_is_object(A),
+    callable(B),
+    py_call(A:B, R),
+    py_to_pl(VL, Par, Cir, CirO, R:C, AB).
+py_to_pl(VL, Par, Cir, CirO, A:B, AB) :-
+    py_is_object(A),
+    callable(B),
+    py_call(A:B, R),
+    py_to_pl(VL, Par, Cir, CirO, R, AB).
+
+% Convert compound terms.
+py_to_pl(VL, Par, Cir, CirO, A:B, AA:BB) :- !,
+    py_to_pl(VL, Par, Cir, CirM, A, AA),
+    py_to_pl(VL, Par, CirM, CirO, B, BB).
+py_to_pl(VL, Par, Cir, CirO, A-B, AA-BB) :- !,
+    py_to_pl(VL, Par, Cir, CirM, A, AA),
+    py_to_pl(VL, Par, CirM, CirO, B, BB).
+
+% If L is an atom, unify E with L.
+py_to_pl(_VL, _Par, Cir, Cir, L, E) :- atom(L), !, E = L.
+
+% Convert lists.
+py_to_pl(VL, Par, Cir, CirO, [H|T], [HH|TT]) :- !,
+    py_to_pl(VL, Par, Cir, CirM, H, HH),
+    py_to_pl(VL, Par, CirM, CirO, T, TT).
+
+% Handle dictionaries.
+py_to_pl(VL, Par, Cir, CirO, L, E) :-  is_dict(L, F), !,
+    dict_pairs(L, F, NV), !,
+    py_to_pl(VL, Par, Cir, CirO, NV, NVL),
+    dict_pairs(E, F, NVL).
+
+% If L is not callable, unify E with L.
+py_to_pl(_VL, _Par, Cir, Cir, L, E) :- \+ callable(L), !, E = L.
+
+% Convert compound terms using compound_name_arguments/3.
+py_to_pl(VL, Par, Cir, CirO, A, AA) :- compound(A), !,
+    compound_name_arguments(A, F, L),
+    py_to_pl(VL, Par, Cir, CirO, L, LL),
+    compound_name_arguments(AA, F, LL).
+
+% Default case: unify E with E.
+py_to_pl(_VL, _Par, Cir, Cir, E, E).
+
 /*
 varname_to_real_var(RL,E):- upcase_atom(RL,R),varname_to_real_var0(R,E).
 varname_to_real_var0(R,E):- nb_current('cvariable_names',VL),!,varname_to_real_var0(R,VL,E).

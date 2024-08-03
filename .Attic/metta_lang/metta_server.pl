@@ -63,6 +63,7 @@ parse_service_port(Peer,DefaultPort, Server, Port) :-
     ).
 
 
+
 service_running(Alias):- thread_property(VSS,TS),VSS=Alias,TS=status(running),!.
 
 % Start interpreter service with MSpace = &self

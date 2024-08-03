@@ -209,8 +209,8 @@ set_debug(Flag,true):- !, debug(metta(Flag)). %,flag_to_var(Flag,Var),set_fast_o
 set_debug(Flag,false):- nodebug(metta(Flag)). %,flag_to_var(Flag,Var),set_fast_option_value(Var,false).
 
 if_trace(Flag,Goal):-
-   notrace(real_notrace((catch_err(ignore((is_debugging(Flag),Goal)),E,
-         fbug(E-->if_trace(Flag,Goal)))))).
+  notrace(real_notrace((catch_err(ignore((is_debugging(Flag),Goal)),E,
+        fbug(E-->if_trace(Flag,Goal)))))).
 
 
 is_showing(Flag):- fast_option_value(Flag,'silent'),!,fail.
@@ -269,13 +269,13 @@ is_debugging(Flag):- debugging(metta(Flag),TF),!,TF==true.
 %trace_eval(P4,_TN,D1,Self,X,Y):- is_fast_mode,!, call(P4,D1,Self,X,Y).
 %trace_eval(P4,TN,D1,Self,X,Y):- \+ is_debugging(TN),!, call(P4,D1,Self,X,Y).
 trace_eval(P4,TNT,D1,Self,X,Y):-
-   must_det_ll((
-   notrace((
-   flag(eval_num,EX0,EX0+1),
-   EX is EX0 mod 500,
-   DR is 99 - (D1 mod 100),
-   PrintRet = _,
-   option_else('trace-length',Max,500),
+  must_det_ll((
+  notrace((
+  flag(eval_num,EX0,EX0+1),
+  EX is EX0 mod 500,
+  DR is 99 - (D1 mod 100),
+  PrintRet = _,
+  option_else('trace-length',Max,500),
    option_else('trace-depth',DMax,30))),
    quietly((if_t((nop(stop_rtrace),EX>Max), (set_debug(eval,false),MaxP1 is Max+1,
          %set_debug(overflow,false),
