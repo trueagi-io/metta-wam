@@ -10,14 +10,17 @@ See [Tests](tests/) for MeTTa as well as [Results](reports/TEST_LINKS.md)
 ### :toolbox: Installation
 Clone and set up MeTTaLog with the following commands:
 ```
-git clone https://github.com/trueagi-io/hyperon-wam # currently git clone https://github.com/logicmoo/hyperon-wam
+git clone https://github.com/trueagi-io/metta-wam
 
-cd hyperon-wam
-
+cd metta-wam
+. scripts/ensure_venv  # ensures we are runing in a python venv
+pip install ansi2html   # needed for running tests
+pip install hyperon  # needed for running tests
 chmod +x INSTALL.sh  # Make sure the script is executable
-./INSTALL.sh # Follow the prompts
+. ./INSTALL.sh # Follow the default prompts 
+
 ```
-The setup script handles the installation of essential components and updates:
+The INSTALL.sh script handles the installation of essential components and updates:
 #### Python Packages
 - Ensures Python's `pip` is installed or installs it.
 - **Installs mettalog**: Allows Rust MeTTa use extra functionality found in mettalog
