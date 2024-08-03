@@ -293,9 +293,9 @@ if ! swipl -g "use_module(library(janus)), halt(0)." -t "halt(1)" 2>/dev/null; t
     # janus not installed, prompt the user
     if [ "${easy_install}" == "Y" ] || confirm_with_default "Y" "Would you like to install Python (Janus) support"; then
 	    echo "Installing Janus for SWI-Prolog..."
-	    ensure_pip
-	    sudo pip install git+https://github.com/SWI-Prolog/packages-swipy.git
 	    sudo apt install libpython3-dev
+	    ensure_pip
+	    pip install git+https://github.com/SWI-Prolog/packages-swipy.git	    
 	    if [ $? -ne 0 ]; then
 		echo -e "${RED}Failed to install Janus. Exiting script${NC}."
 		exit 1
@@ -317,7 +317,7 @@ if ! python3 -c "import pyswip" &> /dev/null; then
     if [ "${easy_install}" == "Y" ] || confirm_with_default "Y" "Would you like to install Pyswip"; then
         echo -e "${BLUE}Installing Pyswip..${NC}."
 	ensure_pip
-        sudo pip install git+https://github.com/logicmoo/pyswip.git
+        pip install git+https://github.com/logicmoo/pyswip.git
         echo -e "${GREEN}Pyswip installation complete${NC}."
     else
         echo -e "${YELLOW}Skipping Pyswip installation${NC}."
