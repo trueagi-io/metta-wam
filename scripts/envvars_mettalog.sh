@@ -75,8 +75,8 @@ add_py_dirs_to_pythonpath() {
 }
 
 # Resolve the absolute path and pass it to the function
-add_py_dirs_to_pythonpath "$(realpath "$METTALOG_DIR/../hyperon-experimental/python/sandbox")"
-add_py_dirs_to_pythonpath "$(realpath "$METTALOG_DIR/tests/")"
+#add_py_dirs_to_pythonpath "$(realpath "$METTALOG_DIR/../hyperon-experimental/python/sandbox")"
+#add_py_dirs_to_pythonpath "$(realpath "$METTALOG_DIR/tests/")"
 
 
 # Prepend METTALOG_DIR/src to PYTHONPATH if it's not already included
