@@ -527,7 +527,7 @@ f2q(Depth,HeadIs,RetType,_,Convert, Converted) :-
         (( AllCases = Cases,
            call(ValueCode),
            once((member(caseOption(MatchVar,MatchCode,BodyResult,BodyCode),AllCases),
-                 both_of(ValueResult,MatchCode,unify_enough(ValueResult,MatchVar)))),
+                both_of(ValueResult,MatchCode,unify_enough(ValueResult,MatchVar)))),
            call(BodyCode),
            BodyResult=RetResult)))).
 

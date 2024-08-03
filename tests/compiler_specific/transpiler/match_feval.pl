@@ -24,4 +24,6 @@ r_match_feval_1722089450_8934128(1,=,t(f,_x),t(*,2,_x)).
 :-eval_Line([match,'&self',[=,[f,_x],_y],_y],r_match_feval_1722089450_8934128,1).
 
 
-t(f, _x, _retval):- _retval #= 2 * _x.
+
+t(f, _x, A):-
+   A #= 2 * _x.

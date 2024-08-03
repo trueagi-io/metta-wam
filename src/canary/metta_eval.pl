@@ -247,7 +247,7 @@ eval_02(Eq,RetType,Depth2,Self,Y,YO):-
 
 subst_args_here(Eq,RetType,Depth2,Self,Y,YO):-
   subst_args(Eq,RetType,Depth2,Self,Y,YO),
-  notrace(if_t(Y\=@=YO,wdmsg(subst_args(Y,YO)))).
+  nop(notrace(if_t(Y\=@=YO,wdmsg(subst_args(Y,YO))))).
 
 finish_eval_here(Eq,RetType,Depth2,Self,Y,YO):-
   finish_eval(Eq,RetType,Depth2,Self,Y,YO),

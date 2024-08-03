@@ -56,7 +56,7 @@ w_cl(P1,P):- call(P1,P).
 
 dedupe_p1(P):- current_predicate(_,P),
   forall((copy_term(P,P2),
-     clause(P,Bd,Ref),
+    clause(P,Bd,Ref),
      clause(P2,Bd2,Ref2), Ref@<Ref2,
      a2(P,Bd)=@=a2(P2,Bd2),
      erase(Ref2), fail),true).
