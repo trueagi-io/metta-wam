@@ -82,31 +82,9 @@
     (return $template)
     (chain (eval (switch $atom $tail)) $ret (return $ret)) )))
 
-; TODO: Type is used here, but there is no definition for the -> type
-; constructor for instance, thus in practice it matches because -> has
-; %Undefined% type. We need to assign proper type to -> and other type
-; constructors but it is not possible until we support vararg types.
-(: is-function (-> Type Bool))
-(= (is-function $type)
-  (function (chain (eval (get-metatype $type)) $meta
-    (eval (switch ($type $meta) (
-      (($type Expression)
-        (eval (if-decons-expr $type $head $_tail
-          (unify $head -> (return True) (return False))
-          (return (Error (is-function $type) "is-function non-empty expression as an argument")) )))
-      (($type $meta) (return False))
-    ))))))
 
-(= (type-cast $atom $type $space)
-  (function (chain (eval (get-metatype $atom)) $meta
-    (eval (if-equal $type $meta
-      (return $atom)
-      (chain (eval (collapse-bind (eval (get-type $atom $space)))) $collapsed
-        (chain (eval (map-atom $collapsed $pair (eval (first-from-pair $pair)))) $actual-types
-            (chain (eval (foldl-atom $actual-types False $a $b (eval (match-type-or $a $b $type)))) $is-some-comp
-              (eval (if $is-some-comp
-                (return $atom)
-                (return (Error $atom BadType)) ))))))))))
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; MeTTa interpreter implementation ;

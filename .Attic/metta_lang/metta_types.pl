@@ -381,6 +381,8 @@ try_adjust_arg_types(_Eq,RetType,Depth,Self,Params,X,Y):-
 %adjust_args(Else,Eq,RetType,Depth,Self,_,X,Y):- is_list(X), !, maplist(eval_args(Depth,Self),X,Y).
 %adjust_args(Else,Eq,RetType,Depth,Self,_,X,Y):- is_list(X), !, maplist(as_prolog(Depth,Self),X,Y),!.
 
+adjust_args_9(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted):-
+  adjust_args(eval,Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted).
 
 adjust_args(Else,_Eq,_RetType,Res,Res,_Dpth,Self,F,X,Y):- (X==[] ;
     is_special_op(Self,F); \+ iz_conz(X)),!,Y=X.
