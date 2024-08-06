@@ -443,7 +443,7 @@
 
 (= (mod-space! top) &self)
 (= (get-type-space $space $atom)
-    (get-type $atom))
+    (get-type $atom $space))
 
 (: get-doc (-> Atom Atom))
 (= (get-doc $atom)
