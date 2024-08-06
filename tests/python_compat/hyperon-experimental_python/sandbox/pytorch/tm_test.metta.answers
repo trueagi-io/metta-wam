@@ -1,0 +1,4 @@
+[2024-03-30T05:25:19Z ERROR hyperonc::util] Python error loading MeTTa module 'torchme'. ModuleNotFoundError("No module named 'torch'")
+[(Error (import! GroundingSpace-top torchme) Failed to resolve module torchme)]
+0.08user 0.02system 0:00.11elapsed 98%CPU (0avgtext+0avgdata 37036maxresident)k
+424inputs+40outputs (0major+4489minor)pagefaults 0swaps

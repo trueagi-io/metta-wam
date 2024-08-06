@@ -1,4 +1,3 @@
-Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-experimental_scripts/d3_deptypes.metta
 [()]
 [()]
 [()]
@@ -6,5 +5,5 @@ Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/lo
 [()]
 [()]
 [()]
-0.06user 0.00system 0:00.06elapsed 100%CPU (0avgtext+0avgdata 32676maxresident)k
-0inputs+0outputs (0major+3518minor)pagefaults 0swaps
+0.06user 0.00system 0:00.06elapsed 100%CPU (0avgtext+0avgdata 31160maxresident)k
+0inputs+0outputs (0major+3680minor)pagefaults 0swaps

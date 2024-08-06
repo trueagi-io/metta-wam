@@ -24,6 +24,10 @@ class Agent:
 
 class EchoAgent(Agent):
 
+    def __init__(self):
+        self.agentType="echo-er"
+        pass
+
     def __call__(self, messages, functions=[]):
         msg = list(map(lambda m: m['role'] + ' ' + m['content'], messages))
         msg = '\n'.join(msg)

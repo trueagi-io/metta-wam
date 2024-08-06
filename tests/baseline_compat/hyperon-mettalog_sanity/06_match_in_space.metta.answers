@@ -1,4 +1,3 @@
-Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-mettalog_sanity/06_match_in_space.metta
 [()]
 [()]
 [()]
@@ -6,5 +5,5 @@ Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/lo
 [()]
 [()]
 [()]
-0.04user 0.00system 0:00.05elapsed 98%CPU (0avgtext+0avgdata 32732maxresident)k
-0inputs+0outputs (0major+3489minor)pagefaults 0swaps
+0.05user 0.00system 0:00.05elapsed 98%CPU (0avgtext+0avgdata 30912maxresident)k
+0inputs+0outputs (0major+3658minor)pagefaults 0swaps

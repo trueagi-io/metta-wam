@@ -1,3 +1,6 @@
+; !(register-module! ../../hyperon-miner)
+!(import! &self hyperon-miner:utils:DeBruijnIndex)
+
 ;;;;;;;;;
 ;; Nat ;;
 ;;;;;;;;;
@@ -27,9 +30,9 @@
 (= (min $x $y) (if (< $x $y) $x $y))
 
 ;; Tuple count grounded python function
-;; !(extend-py! ../utils/helper.py)
+;;!(extend-py! ../utils/helper.py)
 ;; This is very slow, use the grounded python function instead
-(= (tuple-count2 $tuple) (if (== $tuple ()) 0 (+ 1 (tuple-count2 (cdr-atom $tuple)))))
+(= (tuple-count $tuple) (if (== $tuple ()) 0 (+ 1 (tuple-count (cdr-atom $tuple)))))
 
 !(bind! &specializations (new-space))
 !(bind! &abstractions (new-space))
@@ -42,30 +45,40 @@
                 (add-atom &self (= (highsurp) $highsurp))
                 (get-universe-size $db))))
 
-(= (init-miner $db $msup $highsurp $target-link)
-    (superpose ((extract-valuation $db $target-link)
+(= (init-miner $db $kb $msup $highsurp)
+    (superpose ((extract-valuation $db $kb)
                 (add-atom &self (= (refdb) $db))
-                (add-atom &self (= (msNat) (fromNumber $msup)))
-                (add-atom &self (= (highsurp) $highsurp))
+                (add-atom $kb (: msT (ms_threshold $msup)))
+                (add-atom $kb (: hsT (hs_threshold $highsurp)))
                 (get-universe-size $db))))
 
-;; Search for Triplets in DB
+;; Search for Triplets in DB 
 ;; collect valuation sets and generate specializations
 (= (extract-valuation $db)
-  (match $db ($link $x $y)
+   ;(match $db (: $p ($link $x $y)) ;; To ignore type definition in bio-as
+   (match $db ($link $x $y) 
     (superpose ((build-specialization ($link $x (VarIdx (S Z))))
                 (build-specialization ($link (VarIdx Z) $y))
                 (add-abstractions ($link (VarIdx Z) (VarIdx (S Z))))))))
 
-;; Given target link
-(= (extract-valuation $db $target-link)
-   (match $db ($target-link $x $y)
-    (superpose ((build-specialization ($target-link $x (VarIdx (S Z))))
-                (build-specialization ($target-link (VarIdx Z) $y))))))
+(= (extract-valuation $db $kb)
+   ;(match $db (: $p ($link $x $y)) ;; To ignore type definition in bio-as
+   (match $db ($link $x $y) 
+    (superpose ((build-specialization ($link $x (VarIdx (S Z))) $kb)
+                (build-specialization ($link (VarIdx Z) $y) $kb)
+                (add-abstractions ($link (VarIdx Z) (VarIdx (S Z))))))))
 
 (= (build-specialization $sp)
-   (case (match &specializations $sp $sp)
-        ((%void% (add-atom &specializations $sp)))))
+   (case (match &specializations (specializationOf $sp $aptrn) $sp)
+        ((%void% (let* ((($link $x $y) $sp)
+                        ($aptrn ($link (VarIdx Z) (VarIdx (S Z)))))
+                    (add-atom &specializations (specializationOf $sp $aptrn)))))))
+
+(= (build-specialization $sp $kb)
+   (case (match $kb (: $wt (specializationOf $sp $aptrn)) $sp)
+        ((%void% (let* ((($link $x $y) $sp)
+                        ($aptrn ($link (VarIdx Z) (VarIdx (S Z)))))
+                    (add-atom $kb (: (sp_witness $sp) (specializationOf $sp $aptrn))))))))
 
 (= (add-abstractions $aptrn)
    (case (match &abstractions $aptrn $aptrn)
@@ -76,51 +89,30 @@
 
 ;; Get abstract patterns
 (= (abstract-patterns) (match &abstractions $aptrn $aptrn))
+(= (abstract-patterns $link) ($link (VarIdx Z) (VarIdx (S Z))))
 
 ;; Specialize a pattern
-(= (specialize $link) (match &specializations ($link $x $y) ($link $x $y)))
+(= (specialize $link) 
+    (let $aptrn ($link (VarIdx Z) (VarIdx (S Z))) 
+     (match &specializations (specializationOf $sp $aptrn) $sp)))
 
 ;; all Specializations
 (= (all-specialization) (match &specializations $x $x))
 
-;; Todo: implement Debruijn index
-;; Define DeBruijn Index
-(: DeBruijn Type)
-(: VarIdx (-> Nat DeBruijn))
-(= (fromDeb $pattern $Xvar $Yvar)
-      (case ((get-metatype $pattern) $pattern)
-         (((Variable $_) $pattern)
-          (($_ $pattern)
-            (let ($link $a $b) $pattern
-                (case ($link (get-type $a) (get-type $b))
-                  ((($link DeBruijn %Undefined%) ($link $Xvar $b))
-                   (($link %Undefined% DeBruijn) ($link $a $Yvar))
-                   (($link DeBruijn DeBruijn) ($link $Xvar $Yvar))
-                   ($_ $pattern)))))
-          ($_ $pattern))))
-
-(= (fromDebruijn $ptrn $Xvar $Yvar)
-    (case $ptrn (
-      ((, $p1 $p2) (, (fromDeb $p1 $Xvar $Yvar) (fromDeb $p2 $Xvar $Yvar)))
-      ((, $p1 $p2 $p3) (, (fromDeb $p1 $Xvar $Yvar) (fromDeb $p2 $Xvar $Yvar) (fromDeb $p3 $Xvar $Yvar)))
-      ($_ (fromDeb $ptrn $Xvar $Yvar)))))
-
 ; Count the number of instances of a given pattern
 (= (count $pattern)
-    (let $result
-      (case (match &self (= (refdb) $db) $db)
-          (($db (let $dptrn (fromDebruijn $pattern $Xvar $Yvar) (collapse (match $db $dptrn $dptrn))))
-           (%void% ())))
-      (tuple-count $result)))
+    (let* (($dptrn (Deb2var $pattern (Cons $Xvar (Cons $Yvar Nil))))
+           ($result (collapse (match (refdb) $dptrn $dptrn))))
+        (tuple-count $result)))
 
 (= (countNat $pattern) (fromNumber (count $pattern)))
 
-;; Return candidate patterns in the format (candidate pattern count)
+;; Return candidate patterns in the format (candidate pattern count) 
 ;; for patterns with a support value >= the minimum support.
 ;; the count here will later be used for calculating surprisingness.
 (= (support $pattern $minsup)
     (let $cnt (count $pattern)
-      (if (> (+ $cnt 1) $minsup) (candidate $pattern $cnt)  (superpose ()))))
+      (if (> (+ $cnt 1) $minsup) (candidate $pattern $cnt) (superpose ()))))
 
 ;; Extract a pattern from a Candidate pattern of form
 ;; (candidate pattern count)
@@ -129,15 +121,15 @@
 
 ;; flatten combination
 ;; TODO: apply reduction rule
-(= (flatten $pattern)
-    (case $pattern
+(= (flattenPattern $pattern)
+    (case $pattern 
         (((, (, $a $b) $c) (, $a $b $c))
          ((, $a (, $b $c)) (, $a $b $c))
          ($_ $pattern))))
 
 ;; Get universe size of a given db
-(= (get-universe-size $dbspace)
-    (add-atom &self
+(= (get-universe-size $dbspace) 
+    (add-atom &self 
       (= (universe-size) (let $u (collapse (match $dbspace $x 1)) (tuple-count $u)))))
 
 ;; Probability formula
@@ -149,7 +141,7 @@
       ((candidate (, $p1 $p2) $cnt)
       (let* (($pp1 (prob (count $p1)))
           ($pp2 (prob (count $p2)))
-          ($p1p2 (* $pp1 $pp2)) ;; probability estimate
+          ($p1p2 (* $pp1 $pp2)) ;; probability estimate 
           ($p (prob $cnt))) ;; empirical
           (/ (max (- $p $p1p2) (- $p1p2 $p)) $p)))
       ((candidate (, $p1 $p2 $p3) $cnt)

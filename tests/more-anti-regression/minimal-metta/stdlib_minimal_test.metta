@@ -1,0 +1,413 @@
+
+!(include! &corelib stdlib_minimal)
+
+;;;;;;;;;;;;;;;;;;;;;;
+; Metta GetTypeOp
+;;;;;;;;;;;;;;;;;;;;;;
+;; #[test]
+;; fn get_type_op() {
+;;     let space = DynSpace::new(metta_space("
+(: B Type)
+(: C Type)
+(: A B)
+(: A C)
+;;     "));
+;;
+;;     let get_type_op = GetTypeOp::new(space.clone());
+;;     assert_eq_no_order!(get_type_op.execute(&mut vec![sym!("A"), expr!({space.clone()})]).unwrap(),
+;;         vec![sym!("B"), sym!("C")]);
+;; }
+;; Defines a type space and checks if A belongs to types B and C using GetTypeOp.
+!(assertEqualNoOrder (eval (get-type A space)) (B C))
+
+;;;;;;;;;;;;;;;;;;;;;;
+; Metta GetTypeOp Non-Valid Atom
+;;;;;;;;;;;;;;;;;;;;;;
+;; #[test]
+;; fn get_type_op_non_valid_atom() {
+;;     let space = DynSpace::new(metta_space("
+(: f (-> Number String))
+(: 42 Number)
+(: "test" String)
+;;     "));
+;;
+;;     let get_type_op = GetTypeOp::new(space.clone());
+;;     assert_eq_no_order!(get_type_op.execute(&mut vec![expr!("f" "42"), expr!({space.clone()})]).unwrap(),
+;;         vec![sym!("String")]);
+;;     assert_eq_no_order!(get_type_op.execute(&mut vec![expr!("f" "\"test\""), expr!({space.clone()})]).unwrap(),
+;;         vec![EMPTY_SYMBOL]);
+;; }
+!(assertEqualNoOrder (eval (get-type (f 42) space)) (String))
+!(assertEqualNoOrder (eval (get-type (f "test") space)) (Empty))
+
+;;;;;;;;;;;;;;;;;;;;;;
+; Metta Switch
+;;;;;;;;;;;;;;;;;;;;;;
+;; #[test]
+;; fn metta_switch() {
+;;     let result = run_program("!(eval (switch (A $b) ( (($a B) ($b $a)) ((B C) (C B)) )))");
+;;     assert_eq!(result, Ok(vec![vec![expr!("B" "A")]]));
+;;     let result = run_program("!(eval (switch (A $b) ( ((B C) (C B)) (($a B) ($b $a)) )))");
+;;     assert_eq!(result, Ok(vec![vec![expr!("B" "A")]]));
+;;     let result = run_program("!(eval (switch (A $b) ( ((B C) (C B)) ((D E) (E B)) )))");
+;;     assert_eq!(result, Ok(vec![vec![]]));
+;; }
+;; Tests the switch operation with various patterns and variables.
+!(assertEqual (eval (switch (A $b) (((B C) (C B)) (($a B) ($b $a))))) (B A))
+!(assertEqual (eval (switch (A $b) (((B C) (C B)) (($a B) ($b $a))))) (B A))
+!(assertEqual (eval (switch (A $b) (((B C) (C B)) ((D E) (E B))))) ())
+
+;;;;;;;;;;;;;;;;;;;;;;
+; Metta Case Empty
+;;;;;;;;;;;;;;;;;;;;;;
+;; #[test]
+;; fn metta_case_empty() {
+;;     let result = run_program("!(case Empty ( (ok ok) (%void% nok) ))");
+;;     assert_eq!(result, Ok(vec![vec![expr!("nok")]]));
+;;     let result = run_program("!(case (unify (C B) (C B) ok Empty) ( (ok ok) (%void% nok) ))");
+;;     assert_eq!(result, Ok(vec![vec![expr!("ok")]]));
+;;     let result = run_program("!(case (unify (B C) (C B) ok nok) ( (ok ok) (nok nok) ))");
+;;     assert_eq!(result, Ok(vec![vec![expr!("nok")]]));
+;;     let result = run_program("!(case (unify (B C) (C B) ok Empty) ( (ok ok) (%void% nok) ))");
+;;     assert_eq!(result, Ok(vec![vec![expr!("nok")]]));
+;; }
+;; Demonstrates case operations with various scenarios, including empty cases and unification.
+!(assertEqual (eval (case Empty ((ok ok) (%void% nok)))) nok)
+!(assertEqual (eval (case (unify (C B) (C B) ok Empty) ((ok ok) (%void% nok)))) ok)
+!(assertEqual (eval (case (unify (B C) (C B) ok nok) ((ok ok) (nok nok)))) nok)
+!(assertEqual (eval (case (unify (B C) (C B) ok Empty) ((ok ok) (%void% nok)))) nok)
+
+;;;;;;;;;;;;;;;;;;;;;;
+; Metta Is-Function
+;;;;;;;;;;;;;;;;;;;;;;
+;; #[test]
+;; fn metta_is_function() {
+;;     let result = run_program("!(eval (is-function (-> $t)))");
+;;     assert_eq!(result, Ok(vec![vec![expr!({Bool(true)})]]));
+;;     let result = run_program("!(eval (is-function (A $t)))");
+;;     assert_eq!(result, Ok(vec![vec![expr!({Bool(false)})]]));
+;;     let result = run_program("!(eval (is-function %Undefined%))");
+;;     assert_eq!(result, Ok(vec![vec![expr!({Bool(false)})]]));
+;; }
+;; Evaluates if given expressions are recognized as functions.
+!(assertEqual (eval (is-function (-> $t))) (Bool True))
+!(assertEqual (eval (is-function (A $t))) (Bool False))
+!(assertEqual (eval (is-function %Undefined%)) (Bool False))
+
+;;;;;;;;;;;;;;;;;;;;;;
+; Metta Type-Cast
+;;;;;;;;;;;;;;;;;;;;;;
+;; #[test]
+;; fn metta_type_cast() {
+;;     assert_eq!(run_program("(: a A) !(eval (type-cast a A &self))"), Ok(vec![vec![expr!("a")]]));
+;;     assert_eq!(run_program("(: a A) !(eval (type-cast a B &self))"), Ok(vec![vec![expr!("Error" "a" "BadType")]]));
+;;     assert_eq!(run_program("(: a A) !(eval (type-cast a %Undefined% &self))"), Ok(vec![vec![expr!("a")]]));
+;;     assert_eq!(run_program("!(eval (type-cast a B &self))"), Ok(vec![vec![expr!("a")]]));
+;;     assert_eq!(run_program("!(eval (type-cast 42 Number &self))"), Ok(vec![vec![expr!({(42)})]]));
+;;     assert_eq!(run_program("!(eval (type-cast 42 %Undefined% &self))"), Ok(vec![vec![expr!({(42)})]]));
+;;     assert_eq!(run_program("(: a A) !(eval (type-cast a Atom &self))"), Ok(vec![vec![expr!("a")]]));
+;;     assert_eq!(run_program("(: a A) !(eval (type-cast a Symbol &self))"), Ok(vec![vec![expr!("a")]]));
+;;     assert_eq!(run_program("!(eval (type-cast 42 Grounded &self))"), Ok(vec![vec![expr!({(42)})]]));
+;;     assert_eq!(run_program("!(eval (type-cast () Expression &self))"), Ok(vec![vec![expr!()]]));
+;;     assert_eq!(run_program("!(eval (type-cast (a b) Expression &self))"), Ok(vec![vec![expr!("a" "b")]]));
+;; }
+;; Type-cast operations with various types and validation checks.
+!(assertEqual (eval (type-cast a B &self)) (Error "a" "BadType"))
+!(assertEqual (eval (type-cast 42 Number &self)) 42)
+!(assertEqual (eval (type-cast 42 %Undefined% &self)) 42)
+!(assertEqual (eval (type-cast 42 Grounded &self)) 42)
+!(assertEqual (eval (type-cast () Expression &self)) ())
+!(assertEqual (eval (type-cast (a b) Expression &self)) (a b))
+(: a A)
+!(assertEqual (eval (type-cast a A &self)) a)
+!(assertEqual (eval (type-cast a B &self)) (Error "a" "BadType"))
+!(assertEqual (eval (type-cast a %Undefined% &self)) a)
+!(assertEqual (eval (type-cast a Atom &self)) a)
+!(assertEqual (eval (type-cast a Symbol &self)) a)
+
+;;;;;;;;;;;;;;;;;;;;;;
+; Metta Filter-Atom
+;;;;;;;;;;;;;;;;;;;;;;
+;; Filtering atoms based on a conditional check.
+;; #[test]
+;; fn metta_filter_atom() {
+;;     assert_eq!(run_program("!(eval (filter-atom () $x (eval (if-error $x False True))))"), Ok(vec![vec![expr!()]]));
+;;     assert_eq!(run_program("!(eval (filter-atom (a (b) $c) $x (eval (if-error $x False True))))"), Ok(vec![vec![expr!("a" ("b") c)]]));
+;;     assert_eq!(run_program("!(eval (filter-atom (a (Error (b) \"Test error\") $c) $x (eval (if-error $x False True))))"), Ok(vec![vec![expr!("a" c)]]));
+;; }
+!(assertEqual (eval (filter-atom () $x (eval (if-error $x False True)))) ())
+!(assertEqual (eval (filter-atom (a (b) $c) $x (eval (if-error $x False True)))) (a (b) c))
+!(assertEqual (eval (filter-atom (a (Error (b) "Test error") $c) $x (eval (if-error $x False True)))) (a c))
+
+;;;;;;;;;;;;;;;;;;;;;;
+; Metta Map-Atom
+;;;;;;;;;;;;;;;;;;;;;;
+;; #[test]
+;; fn metta_map_atom() {
+;;     assert_eq!(run_program("!(eval (map-atom () $x ($x mapped)))"), Ok(vec![vec![expr!()]]));
+;;     assert_eq!(run_program("!(eval (map-atom (a (b) $c) $x (mapped $x)))"), Ok(vec![vec![expr!(("mapped" "a") ("mapped" ("b")) ("mapped" c))]]));
+;; }
+;; Applying a function to each atom in a list and returning a new list with the results.
+!(assertEqual (eval (map-atom () $x ($x 'mapped))) ())
+!(assertEqual (eval (map-atom (a (b) $c) $x (mapped $x))) (("mapped" a) ("mapped" (b)) ("mapped" c)))
+
+;;;;;;;;;;;;;;;;;;;;;;
+; Metta Foldl-Atom
+;;;;;;;;;;;;;;;;;;;;;;
+;; #[test]
+;; fn metta_foldl_atom() {
+;;     assert_eq!(run_program("!(eval (foldl-atom () 1 $a $b (eval (+ $a $b))))"), Ok(vec![vec![expr!({(1)})]]));
+;;     assert_eq!(run_program("!(eval (foldl-atom (1 2 3) 0 $a $b (eval (+ $a $b))))"), Ok(vec![vec![expr!({(6)})]]));
+;; }
+;; Folding (reducing) a list from the left with a function.
+!(assertEqual (eval (foldl-atom () 1 $a $b (eval (+ $a $b)))) (1))
+!(assertEqual (eval (foldl-atom (1 2 3) 0 $a $b (eval (+ $a $b)))) (6))
+
+;;;;;;;;;;;;;;;;;;;;;;
+; Metta Interpret Single Atom As Atom
+;;;;;;;;;;;;;;;;;;;;;;
+;; #[test]
+;; fn metta_interpret_single_atom_as_atom() {
+;;     let result = run_program("!(eval (interpret A Atom &self))");
+;;     assert_eq!(result, Ok(vec![vec![expr!("A")]]));
+;; }
+;; Checking if a single atom is correctly interpreted as itself.
+!(assertEqual (eval (interpret A Atom &self)) A)
+
+;;;;;;;;;;;;;;;;;;;;;;
+; Metta Interpret Single Atom As Meta-Type
+;;;;;;;;;;;;;;;;;;;;;;
+;; #[test]
+;; fn metta_interpret_single_atom_as_meta_type() {
+;;     assert_eq!(run_program("!(eval (interpret A Symbol &self))"), Ok(vec![vec![expr!("A")]]));
+;;     assert_eq!(run_program("!(eval (interpret $x Variable &self))"), Ok(vec![vec![expr!(x)]]));
+;;     assert_eq!(run_program("!(eval (interpret (A B) Expression &self))"), Ok(vec![vec![expr!("A" "B")]]));
+;;     assert_eq!(run_program("!(eval (interpret 42 Grounded &self))"), Ok(vec![vec![expr!({(42)})]]));
+;; }
+;; Interpreting single atoms as different types and verifying the outcomes.
+!(assertEqual (eval (interpret A Symbol &self)) A)
+!(assertEqual (eval (interpret $x Variable &self)) x)
+!(assertEqual (eval (interpret (A B) Expression &self)) (A B))
+!(assertEqual (eval (interpret 42 Grounded &self)) 42)
+
+;;;;;;;;;;;;;;;;;;;;;;
+; Metta Interpret Symbol or Grounded Value As Type
+;;;;;;;;;;;;;;;;;;;;;;
+;; #[test]
+;; fn metta_interpret_symbol_or_grounded_value_as_type() {
+;;     assert_eq!(run_program("(: a A) !(eval (interpret a A &self))"), Ok(vec![vec![expr!("a")]]));
+;;     assert_eq!(run_program("(: a A) !(eval (interpret a B &self))"), Ok(vec![vec![expr!("Error" "a" "BadType")]]));
+;;     assert_eq!(run_program("!(eval (interpret 42 Number &self))"), Ok(vec![vec![expr!({(42)})]]));
+;; }
+;; Interpreting symbols or grounded values as specified types.
+(: a A)
+!(assertEqual (eval (interpret a A &self)) a)
+!(assertEqual (eval (interpret a B &self)) (Error "a" "BadType"))
+!(assertEqual (eval (interpret 42 Number &self)) 42)
+
+;;;;;;;;;;;;;;;;;;;;;;
+; Metta Interpret Variable As Type
+;;;;;;;;;;;;;;;;;;;;;;
+;; #[test]
+;; fn metta_interpret_variable_as_type() {
+;;     assert_eq!(run_program("!(eval (interpret $x %Undefined% &self))"), Ok(vec![vec![expr!(x)]]));
+;;     assert_eq!(run_program("!(eval (interpret $x SomeType &self))"), Ok(vec![vec![expr!(x)]]));
+;; }
+;; Interpreting variables as unspecified or specific types.
+!(assertEqual (eval (interpret $x %Undefined% &self)) $x)
+!(assertEqual (eval (interpret $x SomeType &self)) $x)
+
+;;;;;;;;;;;;;;;;;;;;;;
+; Metta Interpret Empty Expression As Type
+;;;;;;;;;;;;;;;;;;;;;;
+;; #[test]
+;; fn metta_interpret_empty_expression_as_type() {
+;;     assert_eq!(run_program("!(eval (interpret () %Undefined% &self))"), Ok(vec![vec![expr!(())]]));
+;;     assert_eq!(run_program("!(eval (interpret () SomeType &self))"), Ok(vec![vec![expr!(())]]));
+;; }
+;; Interpreting an empty expression as unspecified or a specific type.
+!(assertEqual (eval (interpret () %Undefined% &self)) ())
+!(assertEqual (eval (interpret () SomeType &self)) ())
+
+;;;;;;;;;;;;;;;;;;;;;;
+; Metta Interpret Single Atom As Variable Type
+;;;;;;;;;;;;;;;;;;;;;;
+;; #[test]
+;; fn metta_interpret_single_atom_as_variable_type() {
+;;     let result = run_program("
+(: S Int)
+;;         !(chain (eval (interpret S $t &self)) $res (: $res $t))
+;;     ");
+;;     assert_eq!(result, Ok(vec![vec![expr!(":" "S" "Int")]]));
+;; }
+!(assertEqual (chain (eval (interpret S $t &self)) $res (: $res $t)) (: S Int))
+
+;;;;;;;;;;;;;;;;;;;;;;
+; Metta Interpret Func
+;;;;;;;;;;;;;;;;;;;;;;
+;; #[test]
+;; fn metta_interpret_func() {
+;;     let result = run_program("
+(: a T)
+(: foo (-> T T))
+(= (foo $x) $x)
+(= (bar $x) $x)
+;;         !(eval (interpret (foo (bar a)) %Undefined% &self))
+;;     ");
+;;     assert_eq!(result, Ok(vec![vec![expr!("a")]]));
+!(assertEqual (eval (interpret (foo (bar a)) %Undefined% &self)) a)
+(reset-program) ;; Assuming a way to clear previous definitions
+;;     let result = run_program("
+(: b B)
+(: foo (-> T T))
+(= (foo $x) $x)
+;;         !(eval (interpret (foo b) %Undefined% &self))
+;;     ");
+;;     assert_eq!(result, Ok(vec![vec![expr!("Error" "b" "BadType")]]));
+!(assertEqual (eval (interpret (foo b) %Undefined% &self)) (Error "b" "BadType"))
+;;     let result = run_program("
+(: Nil (List $t))
+(: Z Nat)
+(: S (-> Nat Nat))
+(: Cons (-> $t (List $t) (List $t)))
+;;         !(eval (interpret (Cons S (Cons Z Nil)) %Undefined% &self))
+;;     ");
+;;     assert_eq!(result, Ok(vec![vec![expr!("Error" ("Cons" "Z" "Nil") "BadType")]]));
+;; }
+!(assertEqual (eval (interpret (Cons S (Cons Z Nil)) %Undefined% &self)) (Error ("Cons" "Z" "Nil") "BadType"))
+
+;;;;;;;;;;;;;;;;;;;;;;
+; Metta Interpret Tuple
+;;;;;;;;;;;;;;;;;;;;;;
+;; #[test]
+;; fn metta_interpret_tuple() {
+;;     assert_eq!(run_program("!(eval (interpret-tuple () &self))"), Ok(vec![vec![expr!(())]]));
+;;     assert_eq!(run_program("!(eval (interpret-tuple (a) &self))"), Ok(vec![vec![expr!(("a"))]]));
+;;     assert_eq!(run_program("!(eval (interpret-tuple (a b) &self))"), Ok(vec![vec![expr!(("a" "b"))]]));
+;; Interpreting tuples as specified types.
+!(assertEqual (eval (interpret-tuple () &self)) ())
+!(assertEqual (eval (interpret-tuple (a) &self)) (a))
+!(assertEqual (eval (interpret-tuple (a b) &self)) (a b))
+;;     let result = run_program("
+(= (foo $x) (bar $x))
+(= (bar $x) (baz $x))
+(= (baz $x) $x)
+;;         !(eval (interpret-tuple ((foo A) (foo B)) &self))
+;;     ");
+;;     assert_eq!(result, Ok(vec![vec![expr!("A" "B")]]));
+;; }
+!(assertEqual (eval (interpret-tuple ((foo A) (foo B)) &self)) (A B))
+
+;;;;;;;;;;;;;;;;;;;;;;
+; Metta Interpret Expression As Type
+;;;;;;;;;;;;;;;;;;;;;;
+;; #[test]
+;; fn metta_interpret_expression_as_type() {
+;;     assert_eq!(run_program("(= (foo $x) $x) !(eval (interpret (foo a) %Undefined% &self))"), Ok(vec![vec![expr!("a")]]));
+;;     assert_eq!(run_program("!(eval (interpret (foo a) %Undefined% &self))"), Ok(vec![vec![expr!("foo" "a")]]));
+;;     assert_eq!(run_program("!(eval (interpret () SomeType &self))"), Ok(vec![vec![expr!(())]]));
+;; }
+;; Testing the interpretation of expressions as a type, with variable resetting for clean state.
+(= (foo $x) $x)
+!(assertEqual (eval (interpret (foo a) %Undefined% &self)) a)
+(reset-program)
+!(assertEqual (eval (interpret (foo a) %Undefined% &self)) (foo a))
+!(assertEqual (eval (interpret () SomeType &self)) ())
+
+;;;;;;;;;;;;;;;;;;;;;;
+; Metta Interpret Single Atom With Two Types
+;;;;;;;;;;;;;;;;;;;;;;
+;; #[test]
+;; fn metta_interpret_single_atom_with_two_types() {
+;;     let result = run_program("
+(: a A) (: a B) 
+;;     !(eval (interpret a %Undefined% &self))");
+;;     assert_eq!(result, Ok(vec![vec![expr!("a")]]));
+;; }
+;; Handling the case where a single atom can be interpreted as having multiple types.
+!(assertEqual (eval (interpret a %Undefined% &self)) a)
+
+;;;;;;;;;;;;;;;;;;;;;;
+; Metta Assert Equal Op
+;;;;;;;;;;;;;;;;;;;;;;
+;; #[test]
+;; fn metta_assert_equal_op() {
+;;     let metta = Metta::new(Some(EnvBuilder::test_env()));
+;;     let assert = AssertEqualOp::new(metta.space().clone());
+;;     let program = "
+(= (foo $x) $x)
+(= (bar $x) $x)
+;;     ";
+;;     assert_eq!(metta.run(SExprParser::new(program)), Ok(vec![]));
+;;     assert_eq!(metta.run(SExprParser::new("!(assertEqual (foo A) (bar A))")), Ok(vec![
+;;         vec![UNIT_ATOM()],
+;;     ]));
+;;     assert_eq!(metta.run(SExprParser::new("!(assertEqual (foo A) (bar B))")), Ok(vec![
+;;         vec![expr!("Error" ({assert.clone()} ("foo" "A") ("bar" "B")) "\nExpected: [B]\nGot: [A]\nMissed result: B")],
+;;     ]));
+;;     assert_eq!(metta.run(SExprParser::new("!(assertEqual (foo A) Empty)")), Ok(vec![
+;;         vec![expr!("Error" ({assert.clone()} ("foo" "A") "Empty") "\nExpected: []\nGot: [A]\nExcessive result: A")]
+;;     ]));
+;; }
+!(assertEqual (eval (assertEqual (foo A) (bar A))) ())
+!(assertEqual (eval (assertEqual (foo A) (bar B))) (Error "Expected: [B] Got: [A] Missed result: B"))
+!(assertEqual (eval (assertEqual (foo A) Empty)) (Error "Expected: [] Got: [A] Excessive result: A"))
+
+;;;;;;;;;;;;;;;;;;;;;;
+; Metta Assert Equal To Result Op
+;;;;;;;;;;;;;;;;;;;;;;
+;; #[test]
+;; fn metta_assert_equal_to_result_op() {
+;;     let metta = Metta::new(Some(EnvBuilder::test_env()));
+;;     let assert = AssertEqualToResultOp::new(metta.space().clone());
+;;     let program = "
+(= (foo) A)
+(= (foo) B)
+(= (bar) C)
+(= (baz) D)
+(= (baz) D)
+;;     ";
+;;     assert_eq!(metta.run(SExprParser::new(program)), Ok(vec![]));
+;;     assert_eq!(metta.run(SExprParser::new("!(assertEqualToResult (foo) (A B))")), Ok(vec![
+;;         vec![UNIT_ATOM()],
+;;     ]));
+;;     assert_eq!(metta.run(SExprParser::new("!(assertEqualToResult (bar) (A))")), Ok(vec![
+;;         vec![expr!("Error" ({assert.clone()} ("bar") ("A")) "\nExpected: [A]\nGot: [C]\nMissed result: A")],
+;;     ]));
+;;     assert_eq!(metta.run(SExprParser::new("!(assertEqualToResult (baz) (D))")), Ok(vec![
+;;         vec![expr!("Error" ({assert.clone()} ("baz") ("D")) "\nExpected: [D]\nGot: [D, D]\nExcessive result: D")]
+;;     ]));
+;; }
+;; More granular assertion comparing operation results to expected outcomes.
+!(assertEqualToResult (foo) (A B) (()))
+!(assertEqualToResult (bar) (A) (Error "Expected: [A] Got: [C] Missed result: A"))
+!(assertEqualToResult (baz) (D) (Error "Expected: [D] Got: [D, D] Excessive result: D"))
+
+;;;;;;;;;;;;;;;;;;;;;;
+; Test Pragma Interpreter Bare Minimal
+;;;;;;;;;;;;;;;;;;;;;;
+;; #[test]
+;; fn test_pragma_interpreter_bare_minimal() {
+;;     let program = "
+(= (bar) baz)
+(= (foo) (bar))
+;;         !(eval (foo))
+;;         !(pragma! interpreter bare-minimal)
+;;         !(eval (foo))
+;;     ";
+;;     assert_eq!(metta_results!(run_program(program)),
+;;         Ok(vec![
+;;             vec![expr!("baz")],
+;;             vec![UNIT_ATOM()],
+;;             vec![expr!(("bar"))],
+;;         ]));
+;; }
+!(assertEqual (eval (foo)) baz)
+!(assertEqual (pragma! interpreter bare-minimal) ())
+!(assertEqual (eval (foo)) bar)
+
+;;;; tref.register_token(regex(r"if-equal"), move |_| { is_equivalent.clone() });
+;;;; tref.register_token(regex(r"register-module!"), move |_| { register_module_op.clone() });
+;;;; tref.register_token(regex(r"mod-space!"), move |_| { mod_space_op.clone() });
+;;;; tref.register_token(regex(r"print-mods!"), move |_| { print_mods_op.clone() });
+

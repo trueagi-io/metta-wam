@@ -1,0 +1,37 @@
+(.: (((corridorIn &/ (^ forward)) =/> doorAt) (1.0 0.9)))
+(time := 1)
+(.: (((windowAt &/ (^ open)) =/> Outside) (1.0 0.9)))
+(time := 2)
+(.: (((doorAt &/ (^ open)) =/> Outside) (1.0 0.9)))
+(time := 3)
+(.: (corridorIn (1.0 0.9)))
+(time := 4)
+(!: (Outside (1.0 0.9)))
+(time := 5)
+(time := 6)
+(time := 7)
+(.: (doorAt (1.0 0.9)))
+(time := 8)
+(!: (Outside (1.0 0.9)))
+(time := 9)
+[()]
+[]
+[((___ currentTime 2) (___ evidentialBase 2) (___ concepts 0 ()) (___ attentional_focus 0 ()) (___ FIFO 1 ((Event (((corridorIn &/ (^ forward)) =/> doorAt) (1.0 0.9)) (1 (1) (1 1.0))))) (___ tempbest (Event (((corridorIn &/ (^ forward)) =/> doorAt) (1.0 0.9)) (1 (1) (1 1.0)))) (___ belief_events 0 ()) (___ goal_events 0 ()))]
+[]
+[((___ currentTime 3) (___ evidentialBase 3) (___ concepts 0 ()) (___ attentional_focus 0 ()) (___ FIFO 2 ((Event (((windowAt &/ (^ open)) =/> Outside) (1.0 0.9)) (2 (2) (2 1.0))) (Event (((corridorIn &/ (^ forward)) =/> doorAt) (1.0 0.9)) (1 (1) (1 1.0))))) (___ tempbest (Event (((windowAt &/ (^ open)) =/> Outside) (1.0 0.9)) (2 (2) (2 1.0)))) (___ belief_events 0 ()) (___ goal_events 0 ()))]
+[]
+[((___ currentTime 4) (___ evidentialBase 4) (___ concepts 0 ()) (___ attentional_focus 0 ()) (___ FIFO 3 ((Event (((doorAt &/ (^ open)) =/> Outside) (1.0 0.9)) (3 (3) (3 1.0))) (Event (((windowAt &/ (^ open)) =/> Outside) (1.0 0.9)) (2 (2) (2 1.0))) (Event (((corridorIn &/ (^ forward)) =/> doorAt) (1.0 0.9)) (1 (1) (1 1.0))))) (___ tempbest (Event (((doorAt &/ (^ open)) =/> Outside) (1.0 0.9)) (3 (3) (3 1.0)))) (___ belief_events 0 ()) (___ goal_events 0 ()))]
+[]
+[((___ currentTime 5) (___ evidentialBase 5) (___ concepts 0 ()) (___ attentional_focus 0 ()) (___ FIFO 3 ((Event (corridorIn (1.0 0.9)) (4 (4) (4 1.0))) (Event (((doorAt &/ (^ open)) =/> Outside) (1.0 0.9)) (3 (3) (3 1.0))) (Event (((windowAt &/ (^ open)) =/> Outside) (1.0 0.9)) (2 (2) (2 1.0))))) (___ tempbest (Event (corridorIn (1.0 0.9)) (4 (4) (4 1.0)))) (___ belief_events 0 ()) (___ goal_events 0 ()))]
+[]
+[((___ currentTime 6) (___ evidentialBase 6) (___ concepts 0 ()) (___ attentional_focus 0 ()) (___ FIFO 3 ((Event (corridorIn (1.0 0.9)) (4 (4) (4 1.0))) (Event (((doorAt &/ (^ open)) =/> Outside) (1.0 0.9)) (3 (3) (3 1.0))) (Event (((windowAt &/ (^ open)) =/> Outside) (1.0 0.9)) (2 (2) (2 1.0))))) (___ tempbest ()) (___ belief_events 0 ()) (___ goal_events 0 ()))]
+[(BestDecision 6 ())]
+[((___ currentTime 7) (___ evidentialBase 7) (___ concepts 0 ()) (___ attentional_focus 0 ()) (___ FIFO 3 ((Event (corridorIn (1.0 0.9)) (4 (4) (4 1.0))) (Event (((doorAt &/ (^ open)) =/> Outside) (1.0 0.9)) (3 (3) (3 1.0))) (Event (((windowAt &/ (^ open)) =/> Outside) (1.0 0.9)) (2 (2) (2 1.0))))) (___ tempbest ()) (___ belief_events 0 ()) (___ goal_events 0 ()))]
+[(BestDecision 7 ())]
+[((___ currentTime 8) (___ evidentialBase 8) (___ concepts 0 ()) (___ attentional_focus 0 ()) (___ FIFO 3 ((Event (corridorIn (1.0 0.9)) (4 (4) (4 1.0))) (Event (((doorAt &/ (^ open)) =/> Outside) (1.0 0.9)) (3 (3) (3 1.0))) (Event (((windowAt &/ (^ open)) =/> Outside) (1.0 0.9)) (2 (2) (2 1.0))))) (___ tempbest ()) (___ belief_events 0 ()) (___ goal_events 0 ()))]
+[]
+[((___ currentTime 9) (___ evidentialBase 9) (___ concepts 0 ()) (___ attentional_focus 0 ()) (___ FIFO 3 ((Event (doorAt (1.0 0.9)) (8 (8) (8 1.0))) (Event (corridorIn (1.0 0.9)) (4 (4) (4 1.0))) (Event (((doorAt &/ (^ open)) =/> Outside) (1.0 0.9)) (3 (3) (3 1.0))))) (___ tempbest (Event (doorAt (1.0 0.9)) (8 (8) (8 1.0)))) (___ belief_events 0 ()) (___ goal_events 0 ()))]
+[]
+[((___ currentTime 10) (___ evidentialBase 10) (___ concepts 0 ()) (___ attentional_focus 0 ()) (___ FIFO 3 ((Event (doorAt (1.0 0.9)) (8 (8) (8 1.0))) (Event (corridorIn (1.0 0.9)) (4 (4) (4 1.0))) (Event (((doorAt &/ (^ open)) =/> Outside) (1.0 0.9)) (3 (3) (3 1.0))))) (___ tempbest ()) (___ belief_events 0 ()) (___ goal_events 0 ()))]
+3.29user 0.01system 0:03.30elapsed 100%CPU (0avgtext+0avgdata 49152maxresident)k
+0inputs+0outputs (0major+6539minor)pagefaults 0swaps

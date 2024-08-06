@@ -1,29 +1,14 @@
-Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-experimental_scripts/b5_types_prelim.metta
+[()]
+[(set-debug! e)]
 [()]
 [()]
 [()]
 [()]
 [()]
 [()]
-[()]
-[()]
-[()]
-[()]
-[()]
-[()]
-[()]
-[()]
-[()]
-[()]
-[()]
-[()]
-[()]
-[()]
-[()]
-[()]
-[()]
-[()]
-[()]
-[()]
-0.13user 0.00system 0:00.14elapsed 99%CPU (0avgtext+0avgdata 32732maxresident)k
-0inputs+0outputs (0major+3522minor)pagefaults 0swaps
+[(Error (assertEqualToResult (Cons S (Cons Z Nil)) ((Error (Cons Z Nil) BadType))) 
+Expected: [(Error (Cons Z Nil) BadType)]
+Got: [(Error Z BadType)]
+Missed result: (Error (Cons Z Nil) BadType))]
+0.05user 0.00system 0:00.06elapsed 100%CPU (0avgtext+0avgdata 31116maxresident)k
+0inputs+0outputs (0major+3666minor)pagefaults 0swaps

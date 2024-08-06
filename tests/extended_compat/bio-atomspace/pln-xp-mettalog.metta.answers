@@ -1,0 +1,25 @@
+"loading rules"
+(loaded rules.metta into GroundingSpace-0x556f4bfaa548 adding (- (atom-count GroundingSpace-0x556f4bfaa548) (atom-count GroundingSpace-0x556f4bfaa548)) atoms)
+"Importing gencode"
+(loaded gencode/edges.metta into GroundingSpace-0x556f4bfaa548 adding (- (atom-count GroundingSpace-0x556f4bfaa548) (atom-count GroundingSpace-0x556f4bfaa548)) atoms)
+"Importing uniprot"
+(loaded uniprot/nodes.metta into GroundingSpace-0x556f4bfaa548 adding (- (atom-count GroundingSpace-0x556f4bfaa548) (atom-count GroundingSpace-0x556f4bfaa548)) atoms)
+(loaded uniprot/edges.metta into GroundingSpace-0x556f4bfaa548 adding (- (atom-count GroundingSpace-0x556f4bfaa548) (atom-count GroundingSpace-0x556f4bfaa548)) atoms)
+"Importing onotology"
+(loaded onotology/nodes.metta into GroundingSpace-0x556f4bfaa548 adding (- (atom-count GroundingSpace-0x556f4bfaa548) (atom-count GroundingSpace-0x556f4bfaa548)) atoms)
+(loaded onotology/edges.metta into GroundingSpace-0x556f4bfaa548 adding (- (atom-count GroundingSpace-0x556f4bfaa548) (atom-count GroundingSpace-0x556f4bfaa548)) atoms)
+"Importing gtex"
+(loaded gtex/eqtl/edges.metta into GroundingSpace-0x556f4bfaa548 adding (- (atom-count GroundingSpace-0x556f4bfaa548) (atom-count GroundingSpace-0x556f4bfaa548)) atoms)
+"Importing co-expression"
+(loaded cellxgene/edges.metta into GroundingSpace-0x556f4bfaa548 adding (- (atom-count GroundingSpace-0x556f4bfaa548) (atom-count GroundingSpace-0x556f4bfaa548)) atoms)
+"Importing gaf"
+(loaded gaf/edges.metta into GroundingSpace-0x556f4bfaa548 adding (- (atom-count GroundingSpace-0x556f4bfaa548) (atom-count GroundingSpace-0x556f4bfaa548)) atoms)
+"Importing tadmap"
+(loaded tadmap/edges.metta into GroundingSpace-0x556f4bfaa548 adding (- (atom-count GroundingSpace-0x556f4bfaa548) (atom-count GroundingSpace-0x556f4bfaa548)) atoms)
+"Importing refseq"
+(loaded refseq/edges.metta into GroundingSpace-0x556f4bfaa548 adding (- (atom-count GroundingSpace-0x556f4bfaa548) (atom-count GroundingSpace-0x556f4bfaa548)) atoms)
+"gene_name query"
+"limit 5 gene_name query"
+thread 'main' panicked at repl/src/metta_shim.rs:156:20:
+called `Result::unwrap()` on an `Err` value: PyErr { type: <class 'RuntimeError'>, value: RuntimeError('Unexpected right bracket'), traceback: Some(<traceback object at 0x7eff78f013c0>) }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

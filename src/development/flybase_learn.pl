@@ -105,7 +105,7 @@ querymaker2(CrossType,Inst,[Type1,V1],[Type2,V2],Query):-
    maplist(arg(1),SortedR,Sorted1),
    maplist(arg(2),SortedR,Sorted2),
 
-   atomic_list_concat(Sorted1,'-',QPD),
+   symbolic_list_concat(Sorted1,'-',QPD),
    into_hyphens(QPD,QP),
 
    Self = '&self',
@@ -147,7 +147,7 @@ querymaker(CrossType,Inst,[Type1,V1],[Type2,V2],Query):-
    reverse(Sorted,SortedR),
    maplist(arg(1),SortedR,Sorted1),
    maplist(arg(2),SortedR,Sorted2),
-   atomic_list_concat(Sorted1,'-',QPD),
+   symbolic_list_concat(Sorted1,'-',QPD),
    into_hyphens(QPD,QP),
 
    Self = '&self',
@@ -184,7 +184,7 @@ querymaker3(CrossType,Inst,[Type1,V1],[Type2,V2],Query):-
    table_colnum_type(T2,Nth2,Type2),Type2\==CrossType,Type1\==Type2,
    sort([Type1,CrossType,Type2],Sorted),
    reverse(Sorted,SortedR),
-   atomic_list_concat(SortedR,'-',QPD),
+   symbolic_list_concat(SortedR,'-',QPD),
    into_hyphens(QPD,QP),
 
    Self = '&self',
@@ -438,16 +438,16 @@ numbervars_w_singles(P):- term_singletons(P, Vars),
   numbervars(P,14,_,[attvar(bind),singletons(true)]).
 
 
-/*
-pp_fb(P):- format("~N "),  \+ \+ (numbervars_w_singles(P), pp_fb1(P)), format("~N "),flush_output.
-pp_fb1(P):- pp_fb2(print_tree,P).
-pp_fb1(P):- pp_fb2(pp_ilp,P).
-pp_fb1(P):- pp_fb2(pp_as,P).
-pp_fb1(P):- pp_fb2(print,P).
-pp_fb1(P):- pp_fb2(print,P).
-pp_fb1(P):- pp_fb2(fbdebug1,P).
-pp_fb2(F,P):- current_predicate(F/1), call(F,P).
-*/
+
+pp_fb(P):- format("~N "),  \+ \+ (numbervars_w_singles(P), pp_fb1(P)),flush_output.
+pp_fb1(P):- write_src(P),!,nl.
+:- if(current_predicate(pp_ilp/1)).
+pp_fb1(P):- pp_as(P),!,format("~N"),pp_ilp(P),!.
+:- endif.
+pp_fb1(P):- pp_as(P),!.
+pp_fb1(P):- print(P),!,nl.
+pp_fb1(P):- fbdebug1(P),!,nl.
+
 
 fbgn_exons2affy1_overlaps_each(Gene,At):-
    fb_pred_nr(fbgn_exons2affy1_overlaps, Arity),
@@ -463,9 +463,9 @@ fbgn_exons2affy1_overlaps_start_end(Gene,Start,End):-
 into_start_end(s_e(S,E),S,E):- nonvar(S),!.
 into_start_end('..'(S,E),S,E):- nonvar(S),!.
 into_start_end(at(S,E),S,E):- nonvar(S),!.
-into_start_end(At,S,E):- atomic_list_concat([SS,EE],'..',At),
+into_start_end(At,S,E):- symbolic_list_concat([SS,EE],'..',At),
    into_number_or_symbol(SS,S), into_number_or_symbol(EE,E).
-into_start_end(At,S,E):- atomic_list_concat([SS,EE],'_at_',At),
+into_start_end(At,S,E):- symbolic_list_concat([SS,EE],'_at_',At),
    into_number_or_symbol(SS,S), into_number_or_symbol(EE,E).
 
 
@@ -476,7 +476,7 @@ into_fb_term(Atom,Term):- into_number_or_symbol(Atom,Term),!.
 
 fb_member(E,L):- as_list([],L,LL),member(E,LL).
 
-into_number_or_symbol(Atom,Term):- atomic_list_concat(List,'|',Atom),List\=[_],!,maplist(into_fb_term,List,Term).
+into_number_or_symbol(Atom,Term):- symbolic_list_concat(List,'|',Atom),List\=[_],!,maplist(into_fb_term,List,Term).
 %into_number_or_symbol(Atom,Term):- atom_number(Atom, Term),!,Term= Term.
 into_number_or_symbol(Atom,Term):- catch(atom_to_term(Atom,Term,Vars),_,fail),maplist(a2t_assign_var,Vars).
 into_number_or_symbol(Atom,Term):- Term=Atom.

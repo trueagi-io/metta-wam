@@ -196,6 +196,9 @@
 (= (fmap-i $f Nil) Nil)
 (= (fmap-i $f (Cons $x $xs))
    (Cons ($f $x) (fmap-i $f $xs)))
+
+!(set-debug! defn)
+
 !(assertEqual
   (fmap-i (curry-a * 2) (Cons 3 (Cons 4 Nil)))
   (Cons 6 (Cons 8 Nil)))

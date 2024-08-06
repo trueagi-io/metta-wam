@@ -92,6 +92,7 @@ symbol_string(S,N):- atom_string(S,N).
 symbol_chars(S,N):- atom_chars(S,N).
 symbol_length(S,N):- atom_length(S,N).
 symbol_concat(A,B,C):- atom_concat(A,B,C).
+symbolic_list_concat(A,C):- atomic_list_concat(A,C).
 symbolic_list_concat(A,B,C):- atomic_list_concat(A,B,C).
 symbol_contains(T,TT):- atom_contains(T,TT).
 

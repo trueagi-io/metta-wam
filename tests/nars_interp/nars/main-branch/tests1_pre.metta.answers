@@ -1,0 +1,14 @@
+(.: (((ExtSet garfield) --> cat) (1.0 0.9)))
+(time := 1)
+(.: (((cat x sky) --> like) (1.0 0.9)))
+(time := 2)
+[()]
+[]
+[((n=v currentTime 2) (n=v evidentialBase 2) (0 concepts ()) (0 attentional_focus ()) (1 FIFO ((Event (((ExtSet garfield) --> cat) (1.0 0.9)) (1 (1) (1 1.0))))) (n=v tempbest (Event (((ExtSet garfield) --> cat) (1.0 0.9)) (1 (1) (1 1.0)))) (0 belief_events ()) (0 goal_events ()))]
+[]
+[((n=v currentTime 3) (n=v evidentialBase 3) (0 concepts ()) (0 attentional_focus ()) (2 FIFO ((Event (((cat x sky) --> like) (1.0 0.9)) (2 (2) (2 1.0))) (Event (((ExtSet garfield) --> cat) (1.0 0.9)) (1 (1) (1 1.0))))) (n=v tempbest (Event (((cat x sky) --> like) (1.0 0.9)) (2 (2) (2 1.0)))) (0 belief_events ()) (0 goal_events ()))]
+[0]
+[0]
+[0]
+0.80user 0.01system 0:00.82elapsed 99%CPU (0avgtext+0avgdata 43776maxresident)k
+0inputs+0outputs (0major+5200minor)pagefaults 0swaps

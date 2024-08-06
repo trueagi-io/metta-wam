@@ -1,0 +1,5 @@
+[((mortal $x#13) proven by ((human $x#13) proven by (And (philosopher Plato) (likes-to-wrestle Plato))))]
+[(And False True)]
+[(True)]
+0.04user 0.01system 0:00.06elapsed 98%CPU (0avgtext+0avgdata 34112maxresident)k
+0inputs+0outputs (0major+3696minor)pagefaults 0swaps

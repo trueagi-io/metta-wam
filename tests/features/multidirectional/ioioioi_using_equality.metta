@@ -1,9 +1,7 @@
 
 ;; Test if we can implemnt Multidirectional append
 
-; append([], L, L).
-(= (append Nil $L $L) True)
-; append([H|T], L, [H|R]) :- append(T, L, R).
+(= (append Nil $L) $L)
 (= (append (Cons $H $T) $L (Cons $H $R)) (append $T $L $R))
 
 

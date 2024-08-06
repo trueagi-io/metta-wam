@@ -1,0 +1,4 @@
+[2024-03-30T05:22:03Z ERROR hyperonc::util] Python error loading MeTTa module 'bhv_binding'. ModuleNotFoundError("No module named 'bhv'")
+[(Error (import! GroundingSpace-top bhv_binding) Failed to resolve module bhv_binding)]
+0.07user 0.01system 0:00.09elapsed 100%CPU (0avgtext+0avgdata 34804maxresident)k
+0inputs+8outputs (0major+3903minor)pagefaults 0swaps

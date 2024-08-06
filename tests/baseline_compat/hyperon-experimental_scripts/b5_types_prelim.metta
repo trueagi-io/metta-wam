@@ -23,8 +23,12 @@
 ; `Nat` is a custom symbol
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (: Z Nat)
+; (: S Oper)
 (: S (-> Nat Nat))
 (: Add (-> Nat Nat Nat))
+
+!(set-debug! e)
+
 ; Now the result of its evaluation will be a error expression, because `S` is not `Nat`
 !(assertEqualToResult
   (Add S Z)
@@ -86,7 +90,7 @@
 ; This list is badly typed, because S and Z are not the same type
 !(assertEqualToResult
   (Cons S (Cons Z Nil))
-  ((Error  Z  BadType)))
+  ((Error (Cons Z Nil) BadType)))
 ;; We uncomment this because it still works in MeTTaLog !
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -143,6 +147,7 @@
 !(assertEqualToResult
   (of-same-type Green Color)
   ((Error Color BadType)))
+
 !(assertEqualToResult
   (of-same-type Green Circle)
   ((Error Circle BadType)))

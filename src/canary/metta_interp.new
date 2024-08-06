@@ -405,7 +405,7 @@ clear_spaces:- clear_space(_).
 clear_space(S):-
    %retractall(metta_defn(_,S,_,_)),
    nop(retractall(metta_type(S,_,_))),
-   retractall(asserted_metta_atom(S,_)).
+   retractall(metta_atom_asserted(S,_)).
 
 
 lsm:- lsm(_).
@@ -856,7 +856,7 @@ type_decl('%Undefined%').
 type_decl('Variable').
 
 :- dynamic(get_metta_atom/2).
-:- dynamic(asserted_metta_atom/2).
+:- dynamic(metta_atom_asserted/2).
 metta_atom_stdlib([:, Type, 'Type']):- type_decl(Type).
 metta_atom_stdlib([:, Op, [->|List]]):- op_decl(Op,Params,ReturnType),append(Params,[ReturnType],List).
 
@@ -869,10 +869,10 @@ get_metta_atom_from(KB, [F, A| List]):- KB='&flybase',fb_pred(F, Len), length([A
 get_metta_atom_from([Superpose,ListOf], Atom):- Superpose == 'superpose',is_list(ListOf),!,member(KB,ListOf),get_metta_atom_from(KB,Atom).
 get_metta_atom_from(Space, Atom):- typed_list(Space,_,L),!, member(Atom,L).
 get_metta_atom_from(KB,Atom):- (KB=='&self'; KB='&stdlib'), metta_atom_stdlib(Atom).
-get_metta_atom_from(KB,Atom):- if_or_else(asserted_metta_atom( KB,Atom),asserted_metta_atom_fallback( KB,Atom)).
+get_metta_atom_from(KB,Atom):- if_or_else(metta_atom_asserted( KB,Atom),metta_atom_asserted_fallback( KB,Atom)).
 
-asserted_metta_atom_fallback( KB,Atom):- fail, is_list(KB),!, member(Atom,KB).
-%asserted_metta_atom_fallback( KB,Atom):- get_metta_atom_from(KB,Atom)
+metta_atom_asserted_fallback( KB,Atom):- fail, is_list(KB),!, member(Atom,KB).
+%metta_atom_asserted_fallback( KB,Atom):- get_metta_atom_from(KB,Atom)
 
 %metta_atom(KB,[F,A|List]):- metta_atom(KB,F,A,List), F \== '=',!.
 metta_defn(Eq,KB,Head,Body):- ignore(Eq = '='), get_metta_atom_from(KB,[Eq,Head,Body]).
@@ -883,7 +883,7 @@ metta_type(S,H,B):- get_metta_atom_from(S,[':',H,B]).
 %maybe_xform(metta_atom(KB,[F,A|List]),metta_atom(KB,F,A,List)):- is_list(List),!.
 maybe_xform(metta_defn(Eq,KB,Head,Body),metta_atom(KB,[Eq,Head,Body])).
 maybe_xform(metta_type(KB,Head,Body),metta_atom(KB,[':',Head,Body])).
-maybe_xform(metta_atom(KB,HeadBody),asserted_metta_atom(KB,HeadBody)).
+maybe_xform(metta_atom(KB,HeadBody),metta_atom_asserted(KB,HeadBody)).
 maybe_xform(_OBO,_XForm):- !, fail.
 
 metta_anew1(Load,_OBO):- var(Load),trace,!.
@@ -1139,6 +1139,7 @@ is_unit_test_exec(Exec):- sformat(S,'~q',[Exec]),sub_atom(S,_,_,_,"!',").
 
 return_empty('Empty').
 return_empty(_,Empty):- return_empty(Empty).
+return_empty(_RetType,_,Empty):- return_empty(Empty).
 
 convert_tax(_How,Self,Tax,Expr,NewHow):-
   metta_interp_mode(Ch,Mode),

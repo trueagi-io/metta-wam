@@ -12,6 +12,13 @@ git clone git@github.com:zarqa-ai/metta-motto.git
 cd metta-motto
 ```
 
+### Using-pip
+
+Run the following command to install the project using pip:
+```bash
+pip install metta-motto
+```
+
 ## Usage
 
 The package can be used both as a Python package

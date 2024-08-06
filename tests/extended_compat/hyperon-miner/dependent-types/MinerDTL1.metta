@@ -1,6 +1,6 @@
 !(import! &self ../../hyperon-pln/metta/synthesis/Synthesize.metta)
 !(import! &self ../utils/MinerUtils.metta)
-!(import! &succ succAxiom.metta)
+!(import! &succ succAxiom)
 
 (= (get-witness $x) (: (WitnessOf $x) $x))
 (= (sourcedb) (match &self (= (refdb) $db) (match $db $x (axiom $x))))

@@ -1,3 +1,57 @@
+/*
+ * Project: MeTTaLog - A MeTTa to Prolog Transpiler/Interpreter
+ * Description: This file is part of the source code for a transpiler designed to convert
+ *              MeTTa language programs into Prolog, utilizing the SWI-Prolog compiler for
+ *              optimizing and transforming function/logic programs. It handles different
+ *              logical constructs and performs conversions between functions and predicates.
+ *
+ * Author: Douglas R. Miles
+ * Contact: logicmoo@gmail.com / dmiles@logicmoo.org
+ * License: LGPL
+ * Repository: https://github.com/trueagi-io/metta-wam
+ *             https://github.com/logicmoo/hyperon-wam
+ * Created Date: 8/23/2023
+ * Last Modified: $LastChangedDate$  # You will replace this with Git automation
+ *
+ * Usage: This file is a part of the transpiler that transforms MeTTa programs into Prolog. For details
+ *        on how to contribute or use this project, please refer to the repository README or the project documentation.
+ *
+ * Contribution: Contributions are welcome! For contributing guidelines, please check the CONTRIBUTING.md
+ *               file in the repository.
+ *
+ * Notes:
+ * - Ensure you have SWI-Prolog installed and properly configured to use this transpiler.
+ * - This project is under active development, and we welcome feedback and contributions.
+ *
+ * Acknowledgments: Special thanks to all contributors and the open source community for their support and contributions.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
    Parsing
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
@@ -133,10 +187,10 @@ escape_char_metta(`t`,"\t").
 escape_char_metta(C,S):- sformat(S,'~s',[[C]]).
 
 symbol_metta(S, Until) --> metta_wspace,!,symbol_metta(S, Until).
-symbol_metta(S, Until) --> string_until_metta(SChars,(dcg_peek(metta_white); Until)), { atomic_list_concat(SChars, S) }.
+symbol_metta(S, Until) --> string_until_metta(SChars,(dcg_peek(metta_white); Until)), { symbolic_list_concat(SChars, S) }.
 
 %comment --> `;`,!,comment_chars_metta(S).
-comment_chars_metta(S) --> string_until_metta(SChars,`\n`), { atomic_list_concat(SChars, S) }.
+comment_chars_metta(S) --> string_until_metta(SChars,`\n`), { symbolic_list_concat(SChars, S) }.
 
 %e_o_s --> file_eof,!.
 e_o_s --> \+ [_|_].
@@ -176,8 +230,8 @@ with_kif_not_ok(G):-
  ?,?).
 
 
-:- dynamic user:file_search_path/2.
-:- multifile user:file_search_path/2.
+	:- dynamic user:file_search_path/2.
+	:- multifile user:file_search_path/2.
 
 :- thread_local(t_l:s_reader_info/1).
 
@@ -217,9 +271,9 @@ read_pending_whitespace(In):- repeat, peek_char(In,Code),
 
 
 make_tmpfile_name(Name,Temp):-
-  atomic_list_concat(List1,'/',Name),atomic_list_concat(List1,'_',Temp1),
-  atomic_list_concat(List2,'.',Temp1),atomic_list_concat(List2,'_',Temp2),
-  atomic_list_concat(List3,'\\',Temp2),atomic_list_concat(List3,'_',Temp3),
+  symbolic_list_concat(List1,'/',Name),symbolic_list_concat(List1,'_',Temp1),
+  symbolic_list_concat(List2,'.',Temp1),symbolic_list_concat(List2,'_',Temp2),
+  symbolic_list_concat(List3,'\\',Temp2),symbolic_list_concat(List3,'_',Temp3),
   atom_concat_or_rtrace(Temp3,'.tmp',Temp),!.
 
 
@@ -290,7 +344,9 @@ with_kifvars(Goal):-
 %
 
 parse_sexpr(S, Expr) :- quietly_sreader(parse_meta_term(
-      file_sexpr_with_comments, S, Expr)).
+      file_sexpr_with_comments, S, Expr)),
+     nb_setval('$parser_last_read',Expr).
+   
 
 %% parse_sexpr_ascii( +Codes, -Expr) is det.
 %
@@ -315,7 +371,9 @@ parse_sexpr_string(S,Expr):-
 %
 % Parse S-expression from a Stream
 %
-parse_sexpr_stream(S,Expr):- quietly_sreader(parse_meta_stream(file_sexpr_with_comments,S,Expr)),!.
+parse_sexpr_stream(S,Expr):- 
+  quietly_sreader(parse_meta_stream(file_sexpr_with_comments,S,Expr)),!,
+  nb_setval('$parser_last_read',Expr).
 
 :- export('//'(file_sexpr,1)).
 :- export('//'(sexpr,1)).
@@ -483,6 +541,10 @@ ugly_sexpr_cont('$OBJ'(sugly,S))                 -->  read_string_until(S,`>`), 
 sexpr(X,H,T):- zalwayzz(sexpr0(X),H,M),zalwayzz(swhite,M,T), nop(if_debugging(sreader,(fbug(sexpr(X))))),!.
 %sexpr(X,H,T):- zalwayzz(sexpr0(X,H,T)),!,swhite.
 is_common_lisp:- fail.
+is_scm:- fail.
+is_metta:- true.
+
+:- discontiguous(sexpr0/3).
 
 sexpr0(L)                      --> sblank,!,sexpr(L),!.
 sexpr0(L)                      --> `(`, !, swhite, zalwayzz(sexpr_list(L)),!, swhite.
@@ -490,12 +552,25 @@ sexpr0((Expr))                 -->  `.{`, read_string_until(S,`}.`), swhite,
   {prolog_readable_term(Expr,S,_)}.
 
 
-sexpr0(['#'(quote),E])             --> `'`, !, sexpr(E).
+sexpr0(['#'(quote),E])             --> {\+ is_metta}, `'`, !, sexpr(E). % '
 sexpr0(['#'(hbackquote),E])         --> {is_scm}, `#```, !, sexpr(E).
-sexpr0(['#'(backquote),E])         --> ````, !, sexpr(E).
-sexpr0(['#BQ-COMMA-ELIPSE',E])     --> `,@`, !, sexpr(E).
+sexpr0(['#'(backquote),E])         --> {\+ is_metta}, ````, !, sexpr(E).
+sexpr0(['#BQ-COMMA-ELIPSE',E])     --> {\+ is_metta}, `,@`, !, sexpr(E).
 sexpr0(['#COMMA',E])               --> { is_common_lisp }, `,`, !, sexpr(E).
 sexpr0(['#HCOMMA',E])               --> {is_scm}, `#,`, !, sexpr(E).
+
+sexpr0('#\\'(A))--> { is_metta}, `'`,[C],`'`,{C>=32},!, {atom_codes(A,[C])}.
+
+% sexpr_metta('$STRING'(S))             --> s_string(S),!.
+
+
+
+sexpr_metta(O) --> dcg_peek(dcg_not( ( `(` ; `)` ; ` ` ; 
+   sblank_ch) )),
+  (read_string_until(Text, dcg_peek( ( `(` ; `)` ; ` ` ; 
+   sblank_ch) ))),!,{atom_string(O,Text)}.
+
+
 sexpr0('$OBJ'(claz_bracket_vector,V))                 --> `[`, sexpr_vector(V,`]`),!, swhite.
 
 % MeTTA/NARS % sexpr0('#'(A))              --> `|`, !, read_string_until(S,`|`), swhite,{quietly_sreader(((atom_string(A,S))))}.
@@ -532,7 +607,7 @@ sexpr0('$S'(C)) -->                  (`#`, ci(`s`),`(`),!,zalwayzz(sexpr_list(C)
 sexpr0('$COMPLEX'(R,I)) -->         (`#`, ci(`c`),`(`),!,zalwayzz(sexpr_list([R,I])),swhite,!.
 sexpr0('$OBJ'(claz_bitvector,C)) --> `#*`,radix_digits(2,C),swhite,!.
 
-sexpr0(function(E))                 --> `#\'`, sexpr(E), !. %, swhite.
+sexpr0(function(E))                 --> `#\'`, sexpr(E), !. %, swhite. % '
 sexpr0('$OBJ'(claz_vector,V))                 --> `#(`, !, zalwayzz(sexpr_vector(V,`)`)),!, swhite,!.
 
 sexpr0(Number) --> `#`,integer(Radix),ci(`r`),!,zalwayzz((signed_radix_2(Radix,Number0),extend_radix(Radix,Number0,Number))),!.
@@ -550,13 +625,14 @@ sexpr0(OBJ)--> `#<`,!,zalwayzz(ugly_sexpr_cont(OBJ)),!.
 
 /*********END HASH ***********/
 
+sexpr0(L)--> { is_metta }, sexpr_metta(L),!.
+
 sexpr0(E)    --> sym_or_num(E), swhite,!.
 sexpr0(Sym) --> `#`,integer(N123), swhite,!, {atom_concat('#',N123,Sym)}.
 sexpr0(C) -->  s_line_metta(C) ,swhite, !. %s_line_metta(C), !.
 sexpr0(C) -->  s_item_metta(C, e_o_s), swhite. %s_line_metta(C), !.
 sexpr0(E)                      --> !,zalwayzz(sym_or_num(E)), swhite,!.
 
-is_scm:- fail.
 
 % c:/opt/logicmoo_workspace/packs_sys/logicmoo_opencog/guile/module/ice-9/and-let-star.scm
 
@@ -600,8 +676,11 @@ dcg_xor(_,DCG2,S,E):- phrase(DCG2,S,E),!.
 %sblank --> [C], {var(C)},!.
 
 % sblank --> comment_expr(S,I,CP),!,{assert(t_l:s_reader_info('$COMMENT'(S,I,CP)))},!,swhite.
-sblank --> comment_expr(CMT),!,{assert(t_l:s_reader_info(CMT))},!,swhite.
-sblank --> [C], {nonvar(C),charvar(C),!,bx(C =< 32)},!,swhite.
+sblank --> sblank_char, comment_expr(CMT),!,{assert(t_l:s_reader_info(CMT))},!,swhite.
+sblank --> sblank_ch.
+sblank_ch --> sblank_char,!,swhite.
+
+sblank_char --> [C], {nonvar(C),charvar(C),!,bx(C =< 32)}.
 
 sblank_line --> eoln,!.
 sblank_line --> [C],{bx(C =< 32)},!, sblank_line.
@@ -609,7 +688,7 @@ sblank_line --> [C],{bx(C =< 32)},!, sblank_line.
 s_string(Text)                 --> sexpr_string(Text).
 s_string(Text)                 --> {kif_ok},`'`, !, zalwayzz(read_string_until(Text,`'`)),!.
 
-
+:- export(sblank_ch/2).
 
 swhite --> sblank,!.
 swhite --> [].
@@ -665,7 +744,20 @@ sexpr_rest([]) --> `)`, !.
 % allow dotcons/improper lists.. but also allow dot in the middle of the list (non-CL)
 sexpr_rest(E) --> `.`, [C], {\+ sym_char(C)}, sexpr(E,C), `)` , ! .
 sexpr_rest(E) --> {kif_ok}, `@`, rsymbol(`?`,E), `)`.
-sexpr_rest([Car|Cdr]) --> sexpr(Car), !, sexpr_rest(Cdr),!.
+sexpr_rest([Car|Cdr]) --> sexpr(Car), !,
+  %maybe_throw_reader_error(Car),
+   sexpr_rest(Cdr),!.
+
+maybe_throw_reader_error(Car,I,O):- Car=='',lazy_list_location(Info,I,O),!,
+  write_src(Info),
+  if_t(nb_current('$parser_last_read',V),write_src('$parser_last_read'=V)),
+  throw(ll_read_error(Info)).
+maybe_throw_reader_error(Car,I,I):-  Car=='', !,
+  ignore(sexpr_lazy_list_character_count(I,CharPos,Stream)),!,
+  Info= ics(I,CharPos,Stream),
+  write_src(Info), 
+  throw(ll_read_error(Info)).
+maybe_throw_reader_error(_,I,I).
 
 sexpr_vector(O,End) --> zalwayzz(sexpr_vector0(IO,End)),!,{zalwayzz(O=IO)}.
 
@@ -697,7 +789,7 @@ maybe_string(E,ES):- nb_current('$maybe_string',t),!,text_to_string_safe(E,ES),!
 maybe_string(E,E).
 
 sym_continue([H|T]) --> [H], {sym_char(H)},!, sym_continue(T).
-sym_continue([39]) --> `'`, peek_symbol_breaker,!.
+sym_continue([39]) --> `'`, peek_symbol_breaker,!. % '
 sym_continue([]) --> peek_symbol_breaker,!.
 sym_continue([]) --> [].
 
@@ -791,7 +883,8 @@ sexpr(E,C,X,Z) :- swhite([C|X],Y), sexpr(E,Y,Z),!.
 
 sym_char(C):- bx(C =<  32),!,fail.
 %sym_char(44). % allow comma in middle of symbol
-sym_char(C):- memberchk(C,`"()```),!,fail.  % maybe 44 ? comma maybe not # or ; ? '
+sym_char(C):- memberchk(C,`"()```),!,fail.  
+% maybe 44 ? comma maybe not # or ; ? ' `'`'````'"
 %sym_char(C):- nb_current('$maybe_string',t),memberchk(C,`,.:;!%`),!,fail.
 sym_char(_):- !.
 

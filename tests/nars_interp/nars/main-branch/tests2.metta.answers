@@ -1,0 +1,85 @@
+(.: (ballleft (1.0 0.9)))
+(time := 1)
+(.: ((^ left) (1.0 0.9)))
+(time := 2)
+(.: (ballhit (1.0 0.9)))
+(.: (((ballleft &/ (^ left)) =/> ballhit) (1.0 0.42163100057836905)))
+(time := 3)
+(.: (ballleft (1.0 0.9)))
+(time := 4)
+(.: ((^ left) (1.0 0.9)))
+(time := 5)
+(.: (ballright (1.0 0.9)))
+(.: (((ballleft &/ (^ left)) =/> ballright) (1.0 0.42163100057836905)))
+(time := 6)
+(.: ((^ left) (1.0 0.9)))
+(time := 7)
+(.: (ballhit (1.0 0.9)))
+(.: (((ballright &/ (^ left)) =/> ballhit) (1.0 0.42163100057836905)))
+(time := 8)
+(.: (ballright (1.0 0.9)))
+(time := 9)
+(.: ((^ right) (1.0 0.9)))
+(time := 10)
+(.: (ballhit (1.0 0.9)))
+(.: (((ballright &/ (^ right)) =/> ballhit) (1.0 0.42163100057836905)))
+(time := 11)
+(.: (ballright (1.0 0.9)))
+(time := 12)
+(.: ((^ right) (1.0 0.9)))
+(time := 13)
+(.: (ballhit (1.0 0.9)))
+(.: (((ballright &/ (^ right)) =/> ballhit) (1.0 0.42163100057836905)))
+(time := 14)
+(.: (ballleft (1.0 0.9)))
+(time := 15)
+(!: (ballhit (1.0 0.9)))
+(time := 16)
+(.: (ballright (1.0 0.9)))
+(time := 17)
+(!: (ballhit (1.0 0.9)))
+(time := 18)
+[()]
+[()]
+[]
+[((___ currentTime 2) (___ evidentialBase 2) (___ concepts 0 ()) (___ attentional_focus 0 ()) (___ FIFO 1 ((Event (ballleft (1.0 0.9)) (1 (1) (1 1.0))))) (___ tempbest (Event (ballleft (1.0 0.9)) (1 (1) (1 1.0)))) (___ belief_events 0 ()) (___ goal_events 0 ()))]
+[]
+[((___ currentTime 3) (___ evidentialBase 3) (___ concepts 0 ()) (___ attentional_focus 0 ()) (___ FIFO 2 ((Event ((^ left) (1.0 0.9)) (2 (2) (2 1.0))) (Event (ballleft (1.0 0.9)) (1 (1) (1 1.0))))) (___ tempbest (Event (ballleft (1.0 0.9)) (1 (1) (1 1.0)))) (___ belief_events 0 ()) (___ goal_events 0 ()))]
+[]
+[((___ currentTime 4) (___ evidentialBase 4) (___ concepts 0 ()) (___ attentional_focus 0 ()) (___ FIFO 3 ((Event (ballhit (1.0 0.9)) (3 (3) (3 1.0))) (Event ((^ left) (1.0 0.9)) (2 (2) (2 1.0))) (Event (ballleft (1.0 0.9)) (1 (1) (1 1.0))))) (___ tempbest (Event (ballhit (1.0 0.9)) (3 (3) (3 1.0)))) (___ belief_events 0 ()) (___ goal_events 0 ()))]
+[]
+[((___ currentTime 5) (___ evidentialBase 5) (___ concepts 0 ()) (___ attentional_focus 0 ()) (___ FIFO 3 ((Event (ballleft (1.0 0.9)) (4 (4) (4 1.0))) (Event (ballhit (1.0 0.9)) (3 (3) (3 1.0))) (Event ((^ left) (1.0 0.9)) (2 (2) (2 1.0))))) (___ tempbest (Event (ballleft (1.0 0.9)) (4 (4) (4 1.0)))) (___ belief_events 0 ()) (___ goal_events 0 ()))]
+[]
+[((___ currentTime 6) (___ evidentialBase 6) (___ concepts 0 ()) (___ attentional_focus 0 ()) (___ FIFO 3 ((Event ((^ left) (1.0 0.9)) (5 (5) (5 1.0))) (Event (ballleft (1.0 0.9)) (4 (4) (4 1.0))) (Event (ballhit (1.0 0.9)) (3 (3) (3 1.0))))) (___ tempbest (Event (ballleft (1.0 0.9)) (4 (4) (4 1.0)))) (___ belief_events 0 ()) (___ goal_events 0 ()))]
+[]
+[((___ currentTime 7) (___ evidentialBase 7) (___ concepts 0 ()) (___ attentional_focus 0 ()) (___ FIFO 3 ((Event (ballright (1.0 0.9)) (6 (6) (6 1.0))) (Event ((^ left) (1.0 0.9)) (5 (5) (5 1.0))) (Event (ballleft (1.0 0.9)) (4 (4) (4 1.0))))) (___ tempbest (Event (ballright (1.0 0.9)) (6 (6) (6 1.0)))) (___ belief_events 0 ()) (___ goal_events 0 ()))]
+[]
+[((___ currentTime 8) (___ evidentialBase 8) (___ concepts 0 ()) (___ attentional_focus 0 ()) (___ FIFO 3 ((Event ((^ left) (1.0 0.9)) (7 (7) (7 1.0))) (Event (ballright (1.0 0.9)) (6 (6) (6 1.0))) (Event ((^ left) (1.0 0.9)) (5 (5) (5 1.0))))) (___ tempbest (Event (ballright (1.0 0.9)) (6 (6) (6 1.0)))) (___ belief_events 0 ()) (___ goal_events 0 ()))]
+[]
+[((___ currentTime 9) (___ evidentialBase 9) (___ concepts 0 ()) (___ attentional_focus 0 ()) (___ FIFO 3 ((Event (ballhit (1.0 0.9)) (8 (8) (8 1.0))) (Event ((^ left) (1.0 0.9)) (7 (7) (7 1.0))) (Event (ballright (1.0 0.9)) (6 (6) (6 1.0))))) (___ tempbest (Event (ballhit (1.0 0.9)) (8 (8) (8 1.0)))) (___ belief_events 0 ()) (___ goal_events 0 ()))]
+[]
+[((___ currentTime 10) (___ evidentialBase 10) (___ concepts 0 ()) (___ attentional_focus 0 ()) (___ FIFO 3 ((Event (ballright (1.0 0.9)) (9 (9) (9 1.0))) (Event (ballhit (1.0 0.9)) (8 (8) (8 1.0))) (Event ((^ left) (1.0 0.9)) (7 (7) (7 1.0))))) (___ tempbest (Event (ballright (1.0 0.9)) (9 (9) (9 1.0)))) (___ belief_events 0 ()) (___ goal_events 0 ()))]
+[]
+[((___ currentTime 11) (___ evidentialBase 11) (___ concepts 0 ()) (___ attentional_focus 0 ()) (___ FIFO 3 ((Event ((^ right) (1.0 0.9)) (10 (10) (10 1.0))) (Event (ballright (1.0 0.9)) (9 (9) (9 1.0))) (Event (ballhit (1.0 0.9)) (8 (8) (8 1.0))))) (___ tempbest (Event (ballright (1.0 0.9)) (9 (9) (9 1.0)))) (___ belief_events 0 ()) (___ goal_events 0 ()))]
+[]
+[((___ currentTime 12) (___ evidentialBase 12) (___ concepts 0 ()) (___ attentional_focus 0 ()) (___ FIFO 3 ((Event (ballhit (1.0 0.9)) (11 (11) (11 1.0))) (Event ((^ right) (1.0 0.9)) (10 (10) (10 1.0))) (Event (ballright (1.0 0.9)) (9 (9) (9 1.0))))) (___ tempbest (Event (ballhit (1.0 0.9)) (11 (11) (11 1.0)))) (___ belief_events 0 ()) (___ goal_events 0 ()))]
+[]
+[((___ currentTime 13) (___ evidentialBase 13) (___ concepts 0 ()) (___ attentional_focus 0 ()) (___ FIFO 3 ((Event (ballright (1.0 0.9)) (12 (12) (12 1.0))) (Event (ballhit (1.0 0.9)) (11 (11) (11 1.0))) (Event ((^ right) (1.0 0.9)) (10 (10) (10 1.0))))) (___ tempbest (Event (ballright (1.0 0.9)) (12 (12) (12 1.0)))) (___ belief_events 0 ()) (___ goal_events 0 ()))]
+[]
+[((___ currentTime 14) (___ evidentialBase 14) (___ concepts 0 ()) (___ attentional_focus 0 ()) (___ FIFO 3 ((Event ((^ right) (1.0 0.9)) (13 (13) (13 1.0))) (Event (ballright (1.0 0.9)) (12 (12) (12 1.0))) (Event (ballhit (1.0 0.9)) (11 (11) (11 1.0))))) (___ tempbest (Event (ballright (1.0 0.9)) (12 (12) (12 1.0)))) (___ belief_events 0 ()) (___ goal_events 0 ()))]
+[]
+[((___ currentTime 15) (___ evidentialBase 15) (___ concepts 0 ()) (___ attentional_focus 0 ()) (___ FIFO 3 ((Event (ballhit (1.0 0.9)) (14 (14) (14 1.0))) (Event ((^ right) (1.0 0.9)) (13 (13) (13 1.0))) (Event (ballright (1.0 0.9)) (12 (12) (12 1.0))))) (___ tempbest (Event (ballhit (1.0 0.9)) (14 (14) (14 1.0)))) (___ belief_events 0 ()) (___ goal_events 0 ()))]
+[]
+[((___ currentTime 15) (___ evidentialBase 15) (___ concepts 0 ()) (___ attentional_focus 0 ()) (___ FIFO 3 ((Event (ballhit (1.0 0.9)) (14 (14) (14 1.0))) (Event ((^ right) (1.0 0.9)) (13 (13) (13 1.0))) (Event (ballright (1.0 0.9)) (12 (12) (12 1.0))))) (___ tempbest (Event (ballhit (1.0 0.9)) (14 (14) (14 1.0)))) (___ belief_events 0 ()) (___ goal_events 0 ()))]
+[]
+[((___ currentTime 15) (___ evidentialBase 15) (___ concepts 0 ()) (___ attentional_focus 0 ()) (___ FIFO 3 ((Event (ballhit (1.0 0.9)) (14 (14) (14 1.0))) (Event ((^ right) (1.0 0.9)) (13 (13) (13 1.0))) (Event (ballright (1.0 0.9)) (12 (12) (12 1.0))))) (___ tempbest (Event (ballhit (1.0 0.9)) (14 (14) (14 1.0)))) (___ belief_events 0 ()) (___ goal_events 0 ()))]
+[]
+[((___ currentTime 16) (___ evidentialBase 16) (___ concepts 0 ()) (___ attentional_focus 0 ()) (___ FIFO 3 ((Event (ballleft (1.0 0.9)) (15 (15) (15 1.0))) (Event (ballhit (1.0 0.9)) (14 (14) (14 1.0))) (Event ((^ right) (1.0 0.9)) (13 (13) (13 1.0))))) (___ tempbest (Event (ballleft (1.0 0.9)) (15 (15) (15 1.0)))) (___ belief_events 0 ()) (___ goal_events 0 ()))]
+[]
+[((___ currentTime 17) (___ evidentialBase 17) (___ concepts 0 ()) (___ attentional_focus 0 ()) (___ FIFO 3 ((Event (ballleft (1.0 0.9)) (15 (15) (15 1.0))) (Event (ballhit (1.0 0.9)) (14 (14) (14 1.0))) (Event ((^ right) (1.0 0.9)) (13 (13) (13 1.0))))) (___ tempbest ()) (___ belief_events 0 ()) (___ goal_events 0 ()))]
+[]
+[((___ currentTime 18) (___ evidentialBase 18) (___ concepts 0 ()) (___ attentional_focus 0 ()) (___ FIFO 3 ((Event (ballright (1.0 0.9)) (17 (17) (17 1.0))) (Event (ballleft (1.0 0.9)) (15 (15) (15 1.0))) (Event (ballhit (1.0 0.9)) (14 (14) (14 1.0))))) (___ tempbest (Event (ballright (1.0 0.9)) (17 (17) (17 1.0)))) (___ belief_events 0 ()) (___ goal_events 0 ()))]
+[]
+[((___ currentTime 19) (___ evidentialBase 19) (___ concepts 0 ()) (___ attentional_focus 0 ()) (___ FIFO 3 ((Event (ballright (1.0 0.9)) (17 (17) (17 1.0))) (Event (ballleft (1.0 0.9)) (15 (15) (15 1.0))) (Event (ballhit (1.0 0.9)) (14 (14) (14 1.0))))) (___ tempbest ()) (___ belief_events 0 ()) (___ goal_events 0 ()))]
+8.51user 0.00system 0:08.51elapsed 99%CPU (0avgtext+0avgdata 59848maxresident)k
+0inputs+0outputs (0major+9180minor)pagefaults 0swaps

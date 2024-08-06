@@ -1,0 +1,12 @@
+(GroundingSpace-0x564714d95f18 = space GroundingSpace-0x564714d95f18)
+(GroundingSpace-0x564714d95f18 = 1)
+(GroundingSpace-0x564714d95f18 = 2)
+"done"
+[()]
+[()]
+[()]
+[()]
+[(), (), ()]
+[()]
+0.14user 0.00system 0:00.14elapsed 99%CPU (0avgtext+0avgdata 34704maxresident)k
+0inputs+0outputs (0major+3826minor)pagefaults 0swaps

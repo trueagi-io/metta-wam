@@ -1,4 +1,3 @@
-Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-experimental_scripts/d2_higherfunc.metta
 [()]
 [()]
 [()]
@@ -22,9 +21,10 @@ Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/lo
 [()]
 [()]
 [()]
+[(set-debug! defn)]
 [()]
 [()]
 [()]
 [()]
-0.19user 0.01system 0:00.21elapsed 99%CPU (0avgtext+0avgdata 33684maxresident)k
-0inputs+0outputs (0major+3664minor)pagefaults 0swaps
+0.11user 0.01system 0:00.13elapsed 99%CPU (0avgtext+0avgdata 31788maxresident)k
+0inputs+0outputs (0major+3819minor)pagefaults 0swaps

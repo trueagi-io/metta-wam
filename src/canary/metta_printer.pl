@@ -46,27 +46,26 @@ pp_metta(P):- pretty_numbervars(P,PP),with_option(concepts=false,pp_fb(PP)).
 
 string_height(Pt1,H1):- split_string(Pt1,"\r\n", "\s\t\n\n", L),length(L,H1).
 
-:- dynamic(just_printed/1). 
+:- dynamic(just_printed/1).
 % 'print_pl_source' rule is responsible for printing the source of a Prolog term.
 
 
 print_pl_source(P):- run_pl_source(print_pl_source0(P)).
 
-
-run_pl_source(G):- notrace(catch(G,_,fail)),!.
-run_pl_source(G):- ignore(rtrace(G)), trace.
-
-
+run_pl_source(G):- catch(G,E,(fail,write_src_uo(G=E),rtrace(G))).
 print_pl_source0(_):- notrace(is_compatio),!.
 print_pl_source0(_):- notrace(silent_loading),!.
 print_pl_source0(P):- notrace((just_printed(PP), PP=@=P)),!.
-print_pl_source0(P):- 
+    print_pl_source0((A:-B)):-!, portray_clause((A:-B)).
+    print_pl_source0((:-B)):-!, portray_clause((:-B)).
+print_pl_source0(P):- format('~N'), print_tree(P),format('~N'),!.
+print_pl_source0(P):-
     Actions = [print_tree, portray_clause, pp_fb1_e], % List of actions to apply
-    findall(H-Pt, 
-      (member(Action, Actions), 
+    findall(H-Pt,
+      (member(Action, Actions),
        must_det_ll((
-         run_pl_source(with_output_to(string(Pt), call(Action, P))),
-        string_height(Pt, H)))), HeightsAndOutputs),
+          run_pl_source(with_output_to(string(Pt), call(Action, P))),
+            catch(string_height(Pt, H),_,H=0)))), HeightsAndOutputs),
     sort(HeightsAndOutputs, Lst), last(Lst, _-Pt), writeln(Pt),
     retractall(just_printed(_)),
     assert(just_printed(P)),
@@ -74,7 +73,7 @@ print_pl_source0(P):-
 
 
 pp_fb1_a(P):- format("~N "),  \+ \+ (numbervars_w_singles(P), pp_fb1_e(P)), format("~N "),flush_output.
-  
+
 pp_fb1_e(P):- pp_fb2(print_tree,P).
 pp_fb1_e(P):- pp_fb2(pp_ilp,P).
 pp_fb1_e(P):- pp_fb2(pp_as,P).
@@ -92,7 +91,8 @@ pp_sax(S) :- is_englishy(S),!,print_concept("StringValue",S).
 pp_sax(S) :- symbol_length(S,1),symbol_string(S,SS),!,print_concept("StringValue",SS).
 pp_sax(S) :- is_an_arg_type(S,T),!,print_concept("TypeNode",T).
 pp_sax(S) :- has_type(S,T),!,format('(~wValueNode "~w")',[T,S]).
-pp_sax(S) :- sub_atom(S,0,4,Aft,FB),flybase_identifier(FB,Type),!,(Aft>0->format('(~wValueNode "~w")',[Type,S]);format('(TypeNode "~w")',[Type])).
+pp_sax(S) :- sub_atom(S,0,4,Aft,FB),flybase_identifier(FB,Type),!,
+ (Aft>0->format('(~wValueNode "~w")',[Type,S]);'format'('(TypeNode "~w")',[Type])).
 pp_sax(S) :- print_concept("ConceptNode",S).
 
 %print_concept( CType,V):- allow_concepts, !, write("("),write(CType),write(" "),ignore(with_concepts(false,write_src(V))),write(")").
@@ -104,8 +104,8 @@ write_val(V):- write('"'),write(V),write('"').
 
 
 % Handling the final write when the value is a variable or a '$VAR' structure.
-is_final_write(V):- var(V), !, write_dvar(V),!. 
-is_final_write('$VAR'(S)):-  !, write_dvar(S),!. 
+is_final_write(V):- var(V), !, write_dvar(V),!.
+is_final_write('$VAR'(S)):-  !, write_dvar(S),!.
 is_final_write([VAR,V|T]):- '$VAR'==VAR, T==[], !, write_dvar(V).
 is_final_write('[|]'):- write('Cons'),!.
 is_final_write([]):- !, write('()').
@@ -116,8 +116,8 @@ write_dvar(S):- S=='_', !, write_dname(S).
 write_dvar(S):- S=='__', !, write('$').
 write_dvar(S):- var(S), get_var_name(S,N),write_dname(N),!.
 write_dvar(S):- var(S), !, format('$~p',[S]).
-write_dvar(S):- atom(S), atom_concat('_',N,S),write_dname(N).
-write_dvar(S):- string(S), atom_concat('_',N,S),write_dname(N).
+write_dvar(S):- atom(S), symbol_concat('_',N,S),write_dname(N).
+write_dvar(S):- string(S), symbol_concat('_',N,S),write_dname(N).
 %write_dvar(S):- number(S), write_dname(S).
 write_dvar(S):- write_dname(S).
 write_dname(S):- write('$'),write(S).
@@ -125,26 +125,29 @@ write_dname(S):- write('$'),write(S).
 pp_as(V) :- \+ \+ pp_sex(V),flush_output.
 pp_sex_nc(V):- with_no_quoting_symbols(true,pp_sex(V)),!.
 
-unlooped_fbug(Mesg):- 
+unlooped_fbug(Mesg):-
  fbug_message_hook(fbug_message_hook,fbug(Mesg)).
 
-into_hyphens(D,U):- atom(D),!,atomic_list_concat(L,'_',D),atomic_list_concat(L,'-',U).
+into_hyphens(D,U):- atom(D),!,always_dash_functor(D,U).
 into_hyphens(D,U):- descend_and_transform(into_hyphens,D,U),!.
 
 
 unlooped_fbug(W,Mesg):- nb_current(W,true),!,
   print(Mesg),nl,bt,break.
-unlooped_fbug(W,Mesg):- 
+unlooped_fbug(W,Mesg):-
   setup_call_cleanup(nb_setval(W,true),
     once(Mesg),nb_setval(W,false)),nb_setval(W,false).
 
+py_is_enabled:- fail.
 
-write_src(V):- quietly(pp_sex(V)),!.
+write_src(V):- \+ \+ quietly(pp_sex(V)),!.
 
 pp_sex(V):- pp_sexi(V),!.
 % Various 'write_src' and 'pp_sex' rules are handling the writing of the source,
 % dealing with different types of values, whether they are lists, atoms, numbers, strings, compounds, or symbols.
 pp_sexi(V):- is_final_write(V),!.
+pp_sexi(V):- atomic(V),py_is_enabled,py_is_object(V),py_pp(V),!.
+pp_sexi(V):- py_is_enabled,once((py_is_object(V),py_to_pl(V,PL))),V\=@=PL,!,print(PL).
 pp_sexi(V):- is_dict(V),!,print(V).
 pp_sexi((USER:Body)) :- USER==user,!, pp_sex(Body).
 pp_sexi(V):- allow_concepts,!,with_concepts('False',pp_sex(V)),flush_output.
@@ -175,7 +178,7 @@ pp_sexi(V) :- no_src_indents,!,pp_sex_c(V).
 pp_sexi(V) :- w_proper_indent(2,w_in_p(pp_sex_c(V))).
 
 write_mobj(H,_):- \+ symbol(H),!,fail.
-write_mobj('$VAR',[S]):- write_dvar(S). 
+write_mobj('$VAR',[S]):- write_dvar(S).
 write_mobj(exec,[V]):- !, write('!'),write_src(V).
 write_mobj('$OBJ',[_,S]):- write('['),write_src(S),write(' ]').
 write_mobj('{}',[S]):- write('{'),write_src(S),write(' }').
@@ -190,25 +193,25 @@ print_items_list(X):- write_src(X).
 
 pp_sex_l(V):- pp_sexi_l(V),!.
 pp_sexi_l(V) :- is_final_write(V),!.
+%pp_sexi_l([F|V]):- integer(F), is_codelist([F|V]),!,format("|~s|",[[F|V]]).
 pp_sexi_l([F|V]):- symbol(F), is_list(V),write_mobj(F,V),!.
 pp_sexi_l([H|T]):-T ==[],!,write('('), pp_sex_nc(H),write(')').
 pp_sexi_l([H,H2]):- write('('), pp_sex_nc(H), write(' '), with_indents(false,print_list_as_sexpression([H2])), write(')'),!.
-pp_sexi_l([H|T]):- write('('), 
+pp_sexi_l([H|T]):- write('('),
   pp_sex_nc(H), write(' '), print_list_as_sexpression(T), write(')'),!.
 
 pp_sexi_l([H,S]):-H=='[...]', write('['),print_items_list(S),write(' ]').
 pp_sexi_l([H,S]):-H=='{...}', write('{'),print_items_list(S),write(' }').
-%pp_sex_l(X):- \+ compound(X),!,write_src(X).  
-%pp_sex_l('$VAR'(S))):- 
-pp_sexi_l([=,H,B]):-
-  write('(= '), with_indents(false,write_src(H)), nl, write('  '),
-        with_indents(true,write_src(B)),write(')').
+%pp_sex_l(X):- \+ compound(X),!,write_src(X).
+%pp_sex_l('$VAR'(S))):-
+pp_sexi_l([=,H,B]):- pp_sexi_hb(H,B),!.
+
 pp_sexi_l([H|T]) :- \+ no_src_indents, symbol(H),member(H,['If','cond','let','let*']),!,
   with_indents(true,w_proper_indent(2,w_in_p(pp_sex([H|T])))).
 
 pp_sexi_l([H|T]) :- is_list(T), length(T,Args),Args =< 2, fail,
    wots(SS,((with_indents(false,(write('('), pp_sex_nc(H), write(' '), print_list_as_sexpression(T), write(')')))))),
-   ((atom_length(SS,Len),Len < 20) ->write(SS);
+   ((symbol_length(SS,Len),Len < 20) ->write(SS);
       with_indents(true,w_proper_indent(2,w_in_p(pp_sex_c([H|T]))))),!.
 /*
 
@@ -217,7 +220,16 @@ pp_sexi_l([H|T]) :- is_list(T),symbol(H),upcase_atom(H,U),downcase_atom(H,U),!,
 
 %pp_sex([H,B,C|T]) :- T==[],!,
 %  with_indents(false,(write('('), pp_sex(H), print_list_as_sexpression([B,C]), write(')'))).
-*/    
+*/
+
+pp_sexi_hb(H,B):-
+  write('(= '), with_indents(false,pp_sex(H)), write('  '),
+        ((is_list(B),maplist(is_list,B))
+      ->with_indents(true,maplist(write_src_inl,B))
+      ;with_indents(true,pp_sex(B))),
+    write(')').
+
+write_src_inl(B):- nl, write('    '),pp_sex(B).
 
 pp_sex_c(V):- pp_sexi_c(V),!.
 pp_sexi_c(V) :- is_final_write(V),!.
@@ -228,7 +240,7 @@ pp_sexi_c(!([H|T])) :- is_list(T),!,write('!'),pp_sex_l([H|T]).
 pp_sexi_c([H|T]) :- is_list(T),!,pp_sex_l([H|T]).
 %pp_sexi_c(V) :- print(V),!.
 
-pp_sexi_c(=(H,B)):- !, pp_sex_l([=,H,B]).
+pp_sexi_c(=(H,B)):- !, pp_sexi_hb(H,B),!.
 pp_sexi_c(V):- compound_name_list(V,F,Args),write_mobj(F,Args),!.
 % Compound terms.
 %pp_sex(Term) :- compound(Term), Term =.. [Functor|Args], write('('),format('(~w ',[Functor]), write_args_as_sexpression(Args), write(')').
@@ -244,7 +256,7 @@ pp_sexi_c('='(N,V)):- allow_concepts, !, format("~N;; ~w == ~n",[N]),!,pp_sex(V)
 pp_sexi_c(Term) :- compound_name_arity(Term,F,0),!,pp_sex_c([F]).
 pp_sexi_c(Term) :- Term =.. [Functor|Args], always_dash_functor(Functor,DFunctor), format('(~w ',[DFunctor]), write_args_as_sexpression(Args), write(')'),!.
 pp_sexi_c(Term) :- allow_concepts, Term =.. [Functor|Args], format('(EvaluationLink (PredicateNode "~w") (ListLink ',[Functor]), write_args_as_sexpression(Args), write('))'),!.
-pp_sexi_c(Term) :- 
+pp_sexi_c(Term) :-
   Term =.. [Functor|Args],
    always_dash_functor(Functor,DFunctor), format('(~w ',[DFunctor]),
      write_args_as_sexpression(Args), write(')'),!.
@@ -268,18 +280,22 @@ w_in_p(G):- setup_call_cleanup(flag(w_in_p,X,X+1),G,flag(w_in_p,_,X)).
 always_dash_functor(A,B):- once(dash_functor(A,B)),A\=@=B,!.
 always_dash_functor(A,A).
 
+
 dash_functor(A,C):- \+ symbol(A),!,C=A.
-dash_functor(A,C):- A=='[|]',!,C='Cons'.
-%dash_functor(A,C):- p2m(A,B),A\==B,!,always_dash_functor(B,C).
-dash_functor(Functor,DFunctor):-
-   symbol(Functor), atomic_list_concat(L,'-',Functor), L\=[_],maplist(always_dash_functor,L,LL),
-   atomic_list_concat(LL,'-',DFunctor).
+% dash_functor(A,C):- p2m(A,B),A\==B,!,always_dash_functor(B,C).
+dash_functor(ASymbolProc,O):- fail, symbol_contains(ASymbolProc,'_'),
+    symbol_contains(ASymbolProc,'atom'),
+    current_predicate(system:ASymbolProc/_),
+    symbolic_list_concat(LS,'atom',ASymbolProc),
+    symbolic_list_concat(LS,'symbol',SymbolProc),
+    always_dash_functor(SymbolProc,O),!.
+dash_functor(ASymbolProc,O):- symbol_concat('$',LS,ASymbolProc),!,
+    symbol_concat('%',LS,SymbolProc),
+    always_dash_functor(SymbolProc,O).
+
 dash_functor(Functor,DFunctor):- fail,
-   symbol(Functor), atomic_list_concat(L,'_',Functor), L\=[_],maplist(always_dash_functor,L,LL),
-   atomic_list_concat(LL,'-',DFunctor).
-dash_functor(Functor,DFunctor):-
-   symbol(Functor), atomic_list_concat(L,'_',Functor), L\=[_],maplist(always_dash_functor,L,LL),
-   atomic_list_concat(LL,'_',DFunctor).
+   symbolic_list_concat(L,'_',Functor), L\=[_],
+   symbolic_list_concat(L,'-',DFunctor).
 
 % Print arguments of a compound term.
 write_args_as_sexpression([]).
@@ -324,15 +340,15 @@ with_concepts(TF, Goal) :-
     with_option(concepts, TF, Goal).
 
 % Rules for determining when a symbol needs to be quoted in metta.
-dont_quote(Atom):- atom_length(Atom,1), !, char_type(Atom,punct).
+dont_quote(Atom):- symbol_length(Atom,1), !, char_type(Atom,punct).
 dont_quote(Atom):- symbol(Atom),upcase_atom(Atom,Atom),downcase_atom(Atom,Atom).
 
 should_quote(Atom) :- \+ symbol(Atom), \+ string(Atom),!,fail.
 should_quote(Atom) :-
    \+ dont_quote(Atom),
    % symbol(Atom),  % Ensure that the input is an symbol
-    atom_chars(Atom, Chars),
-    once(should_quote_chars(Chars);should_quote_atom_chars(Atom,Chars)).
+    symbol_chars(Atom, Chars),
+    once(should_quote_chars(Chars);should_quote_symbol_chars(Atom,Chars)).
 
 contains_unescaped_quote(['"']):- !, fail. % End with a quote
 contains_unescaped_quote(['"'|_]) :- !.
@@ -349,8 +365,8 @@ should_quote_chars(Chars) :-
     %  member('/', Chars);         % Contains slash
       member(',', Chars);         % Contains comma
       (fail,member('|', Chars)).         % Contains pipe
-%should_quote_atom_chars(Atom,_) :- atom_number(Atom,_),!.
-should_quote_atom_chars(Atom,[Digit|_]) :- fail, char_type(Digit, digit), \+ atom_number(Atom,_).
+%should_quote_symbol_chars(Atom,_) :- symbol_number(Atom,_),!.
+should_quote_symbol_chars(Atom,[Digit|_]) :- fail, char_type(Digit, digit), \+ symbol_number(Atom,_).
 
 % Example usage:
 % ?- should_quote('123abc').

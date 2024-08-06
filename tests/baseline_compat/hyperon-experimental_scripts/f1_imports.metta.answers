@@ -1,11 +1,7 @@
-Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-experimental_scripts/f1_imports.metta
 [hyperon::space::DynSpace]
-[()]
-[()]
-[()]
-[(Error (assertEqual (match GroundingSpace-0x5651ed96c608 (= (f 2) $x) $x) (g 3)) 
-Expected: [(g 3)]
-Got: []
-Missed result: (g 3))]
-0.04user 0.00system 0:00.05elapsed 98%CPU (0avgtext+0avgdata 33284maxresident)k
-0inputs+0outputs (0major+3648minor)pagefaults 0swaps
+[(Error (assertEqual ((let $x (get-atoms GroundingSpace-top) (get-type $x))) ((get-type GroundingSpace-top))) 
+Expected: [(hyperon::space::DynSpace)]
+Got: [(hyperon::space::DynSpace), (hyperon::space::DynSpace)]
+Excessive result: (hyperon::space::DynSpace))]
+0.05user 0.00system 0:00.05elapsed 96%CPU (0avgtext+0avgdata 30952maxresident)k
+0inputs+0outputs (0major+3659minor)pagefaults 0swaps

@@ -1,0 +1,22 @@
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[(assertTrue ())]
+[(assertFalse ())]
+[()]
+[()]
+[()]
+[()]
+[()]
+[(assertTrue (replace-atom GroundingSpace-0x55e3291173b8 2.0 4.0))]
+[(Error (assertEqualToResult (get-atoms GroundingSpace-0x55e3291173b8) (1.0 4.0 3.0)) 
+Expected: [1.0, 4.0, 3.0]
+Got: [1.0, 2.0, 3.0]
+Missed result: 4.0)]
+0.08user 0.02system 0:00.10elapsed 100%CPU (0avgtext+0avgdata 34580maxresident)k
+0inputs+0outputs (0major+3821minor)pagefaults 0swaps

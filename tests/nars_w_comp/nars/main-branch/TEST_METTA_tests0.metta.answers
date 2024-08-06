@@ -1,0 +1,6 @@
+[(Error (assertEqual (max 4 3) 4) 
+Expected: [4]
+Got: [4, 4, 4, 4]
+Excessive result: 4)]
+0.05user 0.00system 0:00.05elapsed 98%CPU (0avgtext+0avgdata 33480maxresident)k
+0inputs+0outputs (0major+3631minor)pagefaults 0swaps

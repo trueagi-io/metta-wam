@@ -2,7 +2,7 @@
 !(pragma! trace-on-fail True)
 !(pragma! trace-on-pass True)
 
-!(import! &self NARS.metta)
+!(import! &self NARS)
 
 ;;NAL tests
 

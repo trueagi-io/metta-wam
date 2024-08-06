@@ -75,7 +75,7 @@ simple_first(R,AA,BB):-!, compare(R,AA,BB).
 prefix_key([O|_],Kee,Key):- atom(O), !,
   prefix_key(O,Kee,Key).
 prefix_key(O,Kee,Key) :- atom(O),
-  O\==Kee, O\==data,atomic_list_concat([O,'_',Kee],Key),!.
+  O\==Kee, O\==data,symbolic_list_concat([O,'_',Kee],Key),!.
 prefix_key(_,Key,Key).
 
 

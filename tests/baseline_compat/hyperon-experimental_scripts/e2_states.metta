@@ -34,6 +34,7 @@
 !(assertEqual
   (get-type (new-state 2))
   (StateMonad Number))
+
 !(assertEqual
   (get-type (change-state! (new-state "S") "V"))
   (StateMonad String))
@@ -42,6 +43,7 @@
 !(assertEqual
   (let $v (new-state 1) (get-type $v))
   (StateMonad Number))
+
 ; atm, meta-types for states of non-grounded types are used
 !(assertEqual
   (get-type &state-token)
@@ -53,9 +55,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; &state-token was initialized with state of type (A B), so
 ; it cannot be changed to int
+;!(rtrace!
 !(assertEqual
   (change-state! &state-token 1)
   (Error 1 BadType))
+   ;)
 
 ; the new state here is int, so it cannot be changed to string
 !(assertEqual

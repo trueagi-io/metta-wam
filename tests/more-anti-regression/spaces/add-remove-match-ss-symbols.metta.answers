@@ -1,0 +1,22 @@
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[(assertTrue ())]
+[(assertFalse ())]
+[()]
+[()]
+[()]
+[()]
+[()]
+[(assertTrue (replace-atom GroundingSpace-0x5604536653b8 (S b) (S d)))]
+[(Error (assertEqualToResult (get-atoms GroundingSpace-0x5604536653b8) ((S a) (S d) (S c))) 
+Expected: [(S a), (S d), (S c)]
+Got: [(S a), (S b), (S c)]
+Missed result: (S d))]
+0.10user 0.00system 0:00.10elapsed 100%CPU (0avgtext+0avgdata 34076maxresident)k
+0inputs+0outputs (0major+3668minor)pagefaults 0swaps

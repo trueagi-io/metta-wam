@@ -1,0 +1,10 @@
+[(pp-about! get-metatype)]
+[()]
+[()]
+[()]
+[()]
+[(: CPU (⍃ 2 3))]
+[]
+[(: ((rule (rule1 axiom)) CPU) (less 2 3))]
+26.75user 0.03system 0:26.78elapsed 99%CPU (0avgtext+0avgdata 37764maxresident)k
+4344inputs+0outputs (28major+4609minor)pagefaults 0swaps

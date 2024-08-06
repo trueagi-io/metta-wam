@@ -1,6 +1,5 @@
-Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-experimental_scripts/e1_kb_write.metta
 [()]
 [()]
 [()]
-0.04user 0.00system 0:00.04elapsed 100%CPU (0avgtext+0avgdata 32460maxresident)k
-0inputs+0outputs (0major+3510minor)pagefaults 0swaps
+0.05user 0.00system 0:00.05elapsed 98%CPU (0avgtext+0avgdata 30956maxresident)k
+0inputs+0outputs (0major+3669minor)pagefaults 0swaps

@@ -1,4 +1,3 @@
-Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/metta-morph_tests/match_void.metta
 [()]
 [()]
 []
@@ -12,5 +11,5 @@ Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/lo
 [()]
 [()]
 [()]
-0.06user 0.00system 0:00.06elapsed 100%CPU (0avgtext+0avgdata 32792maxresident)k
-0inputs+0outputs (0major+3503minor)pagefaults 0swaps
+0.05user 0.00system 0:00.05elapsed 98%CPU (0avgtext+0avgdata 30820maxresident)k
+0inputs+0outputs (0major+3667minor)pagefaults 0swaps

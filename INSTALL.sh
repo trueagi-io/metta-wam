@@ -13,6 +13,7 @@ export PIP_BREAK_SYSTEM_PACKAGES=1
 
 # Run this file with ./INSTALL.md
 # ```
+. ./scripts/ensure_venv
 
 # Function to prompt for user confirmation with 'N' as the default
 confirm_with_default() {
@@ -104,7 +105,7 @@ build_swi_prolog_from_src() {
     sudo apt-get update
     # Install build dependencies
     echo -e "${BLUE}Installing build dependencies...${NC}"
-    local build_deps="build-essential autoconf git libgmp-dev libssl-dev unixodbc-dev \
+    local build_deps="build-essential autoconf git cmake libpython3-dev libgmp-dev libssl-dev unixodbc-dev \
         libreadline-dev zlib1g-dev libarchive-dev libossp-uuid-dev libxext-dev \
         libice-dev libjpeg-dev libxinerama-dev libxft-dev libxpm-dev libxt-dev \
         pkg-config libdb-dev libpcre3-dev libyaml-dev"
@@ -237,6 +238,7 @@ function ensure_pip() {
     fi
 }
 
+
 # Assuming SWI-Prolog 9.1 is installed successfully
 # Install Janus for SWI-Prolog
 echo -e "${BLUE}Checking if Janus Python support is already installed${NC}..."
@@ -244,9 +246,9 @@ if ! swipl -g "use_module(library(janus)), halt(0)." -t "halt(1)" 2>/dev/null; t
     # janus not installed, prompt the user
     if [ "${easy_install}" == "Y" ] || confirm_with_default "Y" "Would you like to install Python (Janus) support"; then
 	    echo "Installing Janus for SWI-Prolog..."
-	    ensure_pip
-	    sudo pip install git+https://github.com/SWI-Prolog/packages-swipy.git
 	    sudo apt install libpython3-dev
+	    ensure_pip
+	    pip install git+https://github.com/SWI-Prolog/packages-swipy.git	    
 	    if [ $? -ne 0 ]; then
 		echo -e "${RED}Failed to install Janus. Exiting script${NC}."
 		exit 1
@@ -268,7 +270,7 @@ if ! python3 -c "import pyswip" &> /dev/null; then
     if [ "${easy_install}" == "Y" ] || confirm_with_default "Y" "Would you like to install Pyswip"; then
         echo -e "${BLUE}Installing Pyswip..${NC}."
 	ensure_pip
-        sudo pip install git+https://github.com/logicmoo/pyswip.git
+        pip install git+https://github.com/logicmoo/pyswip.git
         echo -e "${GREEN}Pyswip installation complete${NC}."
     else
         echo -e "${YELLOW}Skipping Pyswip installation${NC}."
@@ -293,7 +295,6 @@ if false && ! swipl -g "use_module(library(predicate_streams)), halt(0)." -t "ha
 else
     echo -e "${GREEN}Pack predicate_streams is already installed${NC}."
 fi
-
 
 
 if false && ! swipl -g  "use_module(library(logicmoo_utils)), halt(0)." -t "halt(1)" 2>/dev/null; then

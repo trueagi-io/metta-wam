@@ -1,4 +1,15 @@
-Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_opencog/hyperon-wam/examples/baseline_compat/hyperon-experimental_scripts/d4_type_prop.metta
+[()]
+[()]
+[()]
+[("sameTypes" (Mortal Socrates) (Mortal Socrates))]
+[()]
+[("sameTypes" Type Type)]
+[()]
+[("!sameTypes" (Mortal Socrates) (Mortal Plato))]
+[()]
+[("!sameTypes" (Human Socrates) ! (Human Plato))]
+[()]
+[("!sameTypes" (Human Socrates) (Mortal Socrates))]
 [()]
 [()]
 [()]
@@ -10,12 +21,5 @@ Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/lo
 [()]
 [()]
 [()]
-[()]
-[()]
-[()]
-[()]
-[()]
-[()]
-[()]
-0.08user 0.00system 0:00.09elapsed 98%CPU (0avgtext+0avgdata 32792maxresident)k
-0inputs+0outputs (0major+3522minor)pagefaults 0swaps
+0.07user 0.00system 0:00.07elapsed 98%CPU (0avgtext+0avgdata 30892maxresident)k
+0inputs+0outputs (0major+3683minor)pagefaults 0swaps

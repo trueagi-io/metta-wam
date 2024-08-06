@@ -1,0 +1,15 @@
+[()]
+[3, 2]
+[6, 5, 4]
+[7, 8, 9]
+[13, 14, 15, 10, 11, 12]
+[21, 20, 19, 16, 17, 18]
+[]
+[27]
+[28]
+[29]
+[29]
+[(State 30)]
+[30]
+15.89user 0.00system 0:15.90elapsed 99%CPU (0avgtext+0avgdata 35800maxresident)k
+0inputs+0outputs (0major+4040minor)pagefaults 0swaps

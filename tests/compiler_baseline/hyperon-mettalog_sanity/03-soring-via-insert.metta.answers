@@ -1,0 +1,8 @@
+[(-> $a#419 (List $a#419) (List $a#419))]
+[()]
+[()]
+[()]
+[()]
+[()]
+2.38user 0.01system 0:02.39elapsed 99%CPU (0avgtext+0avgdata 35560maxresident)k
+0inputs+0outputs (0major+4022minor)pagefaults 0swaps

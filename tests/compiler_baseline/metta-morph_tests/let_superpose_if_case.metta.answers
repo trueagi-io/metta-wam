@@ -1,0 +1,7 @@
+[(1 1), (1 1), (42 42), (42 42)]
+[(Error (assertEqualToResult (let $y (superpose (3 4 5)) (If (> $y 3) (case (1 $y) (((1 3) (f 0)) ((1 4) (42 42)) ($else (1 1)))))) ((42 42) (1 1))) 
+Expected: [(42 42), (1 1)]
+Got: [(1 1), (1 1), (42 42), (42 42)]
+Excessive result: (42 42))]
+4.72user 0.00system 0:04.72elapsed 99%CPU (0avgtext+0avgdata 35792maxresident)k
+0inputs+0outputs (0major+4059minor)pagefaults 0swaps
