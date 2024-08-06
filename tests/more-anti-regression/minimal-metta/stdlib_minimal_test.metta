@@ -1,5 +1,5 @@
 
-!(include! &corelb stdlib_minimal)
+!(include! &corelib stdlib_minimal)
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ; Metta GetTypeOp

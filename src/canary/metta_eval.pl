@@ -364,10 +364,12 @@ eval_20(Eq,RetType,Depth,Self,[Comma,X,Y],Res):- is_progn(Comma),!, eval_args(Eq
 eval_20(Eq,RetType,Depth,Self,[Comma,X|Y],Res):- is_progn(Comma),!, eval_args(Eq,_,Depth,Self,X,_),
   eval_args(Eq,RetType,Depth,Self,[Comma|Y],Res).
 
+eval_20(Eq,RetType,Depth,Self,['chain',Atom,Var|Y],TF):-  eval_args(Eq,_RetType,Depth,Self,Atom,Var),
+                                                      eval_args(Eq,RetType,Depth,Self,['chain-body'|Y],TF).
 
-eval_20(Eq,RetType,Depth,Self,['chain',X],TF):-
+eval_20(Eq,RetType,Depth,Self,['chain-body',X],TF):-
    eval_args(Eq,RetType,Depth,Self,X,TF).
-eval_20(Eq,RetType,Depth,Self,['chain',X|Y],TF):-  eval_args(Eq,RetType,Depth,Self,X,_), eval_args(Eq,RetType,Depth,Self,[chain|Y],TF).
+eval_20(Eq,RetType,Depth,Self,['chain-body',X|Y],TF):-  eval_args(Eq,RetType,Depth,Self,X,_), eval_args(Eq,RetType,Depth,Self,['chain-body'|Y],TF).
 
 eval_20(Eq,RetType,Depth,Self,['eval',X],TF):- !,
    eval_args(Eq,RetType,Depth,Self,X, TF).
@@ -908,6 +910,12 @@ max_counting(F,Max):- flag(F,X,X+1),  X<Max ->  true; (flag(F,_,10),!,fail).
 % =================================================================
 % =================================================================
 
+
+eval_20(Eq,RetType,Depth,Self,['if-equal',X,Y,Then,Else],Res):- !,
+   eval_args(Eq,'Bool',Depth,Self,['==',X,Y],TF),
+   (is_True(TF)
+     -> eval_args(Eq,RetType,Depth,Self,Then,Res)
+     ;  eval_args(Eq,RetType,Depth,Self,Else,Res)).
 
 
 eval_20(Eq,RetType,Depth,Self,['if',Cond,Then,Else],Res):- !,
