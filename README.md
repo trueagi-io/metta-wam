@@ -124,7 +124,7 @@ mettalog --test --clean ./tests/baseline-compat
 Thanks to the Hyperon Experimental MeTTa, PySWIP teams, and Flybase for their contributions to this project.
 
 ## :phone: Support
-For queries or suggestions, please open an issue on our [GitHub repository](https://github.com/trueagi-io/hyperon-wam/issues).
+For queries or suggestions, please open an issue on our [GitHub Issues Page](https://github.com/trueagi-io/metta-wam/issues).
 
 ## :scroll: License
 MeTTaLog is distributed under the LGPL License, facilitating open collaboration and use.
@@ -215,11 +215,13 @@ Module loading
 ; Single methods is python files
 `!(pyr! &self ../path/to/motto/test_llm_gate.py "run_tests" ((= verbose True)))`
 
+```
 ; Can define a shortcut
 (: run-llm-tests (-> Bool Ratio))
 (= 
   (run-llm-tests $verbose)
   (pyr! &self ../path/to/motto/test_llm_gate.py "run_tests" ((= verbose $verbose))))
+```
 
 ## MeTTaLog Extras
 
