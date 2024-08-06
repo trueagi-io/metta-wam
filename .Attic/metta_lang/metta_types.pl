@@ -185,9 +185,12 @@ get_type_each(Depth,Self,Val,Type):- \+ compound(Val),!, get_type_nc(Depth,Self,
 
 get_type_each(Depth,Self,Val,Type):-
  if_t(option_value('type-check',auto),check_bad_type(Depth,Self,Val)),
- if_or_else((get_type_cmpd(Depth,Self,Val,Type,How),trace_get_type(How,Type,gt(Val))),
+ if_or_else((get_type_cmpd_2nd_non_nil(Depth,Self,Val,Type,How),trace_get_type(How,Type,gt(Val))),
     (trace_get_type('FAILED','',gt(Val)),fail)).
 
+get_type_cmpd_2nd_non_nil(Depth,Self,Val,Type,How):-
+  call_nth(get_type_cmpd(Depth,Self,Val,Type,How),Nth),
+  (Nth>1 -> Type\==[] ; true).
 /*
 have_some_defs(Depth,Self,Val):-
   \+ \+

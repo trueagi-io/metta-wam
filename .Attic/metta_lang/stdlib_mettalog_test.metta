@@ -1,6 +1,29 @@
 
 ; !(include! &corelib stdlib_mettalog)
 !(import! &self stdlib_mettalog)
+
+
+;;;;;;;;;;;;;;;;;;;;;;
+; Unify
+;;;;;;;;;;;;;;;;;;;;;;
+!(assertEqual (eval (unify (a $b 1 (d)) (a $a 1 (d)) ok nok)) (ok))
+!(assertEqual (eval (unify (a $b c) (a b $c) (ok $b $c) nok)) (ok b c))
+!(assertEqual (eval (unify $a (a b c) (ok $a) nok)) (ok (a b c)))
+!(assertEqual (eval (unify (a b c) $a (ok $a) nok)) (ok (a b c)))
+!(assertEqual (eval (unify (a b c) (a b d) ok nok)) (nok))
+!(assertEqual (eval (unify ($x a) (b $x) ok nok)) (nok))
+
+
+!(assertEqual (decons-atom (a b c)) (a (b c)))
+!(assertEqual (decons-atom (a b)) (a (b)))
+!(assertEqual (decons-atom (a)) (a ()))
+;> !(decons-atom ())
+;[(Error (decons-atom ()) expected: (decons-atom (: <expr> Expression)), found: (decons-atom ()))]
+
+
+
+
+
 ;;;;;;;;;;;;;;;;;;;;;;
 ; Metta GetTypeOp
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -19,8 +42,6 @@
 ;; }
 ;; Defines a type space and checks if A belongs to types B and C using GetTypeOp.
 !(assertEqualToResult (eval (get-type A &self)) (B C))
-
-!(break!)
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ; Metta GetTypeOp Non-Valid Atom
@@ -55,9 +76,10 @@
 ;;     assert_eq!(result, Ok(vec![vec![]]));
 ;; }
 ;; Tests the switch operation with various patterns and variables.
-!(assertEqual (eval (switch (A $b) (((B C) (C B)) (($a B) ($b $a))))) (B A))
-!(assertEqual (eval (switch (A $b) (((B C) (C B)) (($a B) ($b $a))))) (B A))
-!(assertEqual (eval (switch (A $b) (((B C) (C B)) ((D E) (E B))))) ())
+!(break!)
+!(assertEqual (eval (switch (A $b) ( (($a B) ($b $a)) ((B C) (C B)) ))) (B A))
+!(assertEqual (eval (switch (A $b) ( ((B C) (C B)) (($a B) ($b $a)) ))) (B A))
+!(assertEqual (eval (switch (A $b) ( ((B C) (C B)) ((D E) (E B)) ))) ())
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ; Metta Case Empty
@@ -78,6 +100,7 @@
 !(assertEqual (eval (case (unify (C B) (C B) ok Empty) ((ok ok) (%void% nok)))) ok)
 !(assertEqual (eval (case (unify (B C) (C B) ok nok) ((ok ok) (nok nok)))) nok)
 !(assertEqual (eval (case (unify (B C) (C B) ok Empty) ((ok ok) (%void% nok)))) nok)
+
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ; Metta Is-Function

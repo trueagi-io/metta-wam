@@ -50,27 +50,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*
 
- @TODO make this test
-
-            !(unify (a $b 1 (d)) (a $a 1 (d)) ok nok)
-            !(unify (a $b c) (a b $c) (ok $b $c) nok)
-            !(unify $a (a b c) (ok $a) nok)
-            !(unify (a b c) $a (ok $a) nok)
-            !(unify (a b c) (a b d) ok nok)
-            !(unify ($x a) (b $x) ok nok)
-        ");
-
-        assert_eq_metta_results!(metta.run(parser),
-            Ok(vec![
-                vec![expr!("ok")],
-                vec![expr!("ok" "b" "c")],
-                vec![expr!("ok" ("a" "b" "c"))],
-                vec![expr!("ok" ("a" "b" "c"))],
-                vec![expr!("nok")],
-                vec![expr!("nok")]
-*/
 %
 % post match modew
 %:- style_check(-singleton).
@@ -916,6 +896,13 @@ max_counting(F,Max):- flag(F,X,X+1),  X<Max ->  true; (flag(F,_,10),!,fail).
 % =================================================================
 % =================================================================
 % =================================================================
+
+eval_20(_Eq,_RetType,_Depth,_Self,['decons-atom',[H|T]],[H,T]):- !.
+
+eval_20(Eq,RetType,Depth,Self,['unify',X,Y,Then,Else],Res):- !,
+   (X=Y
+     -> eval_args(Eq,RetType,Depth,Self,Then,Res)
+     ;  eval_args(Eq,RetType,Depth,Self,Else,Res)).
 
 
 eval_20(Eq,RetType,Depth,Self,['if-equal',X,Y,Then,Else],Res):- !,
