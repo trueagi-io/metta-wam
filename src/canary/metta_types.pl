@@ -150,7 +150,7 @@ get_type(Depth,Self,Val,TypeO):-
    Type=TypeO,
    (return_only_first_type->!;true).
 
-return_only_first_type:- true_flag.
+return_only_first_type:- fail,true_flag.
 
 is_space_type(Space,is_asserted_space):- was_asserted_space(Space),!.
 is_space_type(Space,Test):- no_repeats(Test,space_type_method(Test,_,_)),call(Test,Space),!.
@@ -451,7 +451,7 @@ type_conform(T,L):- can_assign(T,L).
 throw_metta_return(L):-
    asserta(thrown_metta_return(L)),
     (throw(metta_return(L))).
-    
+
 
 into_typed_args(_Dpth,_Slf,T,M,Y):- (\+ iz_conz(T); \+ iz_conz(M)),!, M=Y.
 into_typed_args(Depth,Self,[T|TT],[M|MM],[Y|YY]):-
@@ -473,7 +473,7 @@ into_typed_arg0(Depth,Self,_,M,Y):- eval_args(Depth,Self,M,Y).
 wants_eval_kind(T):- nonvar(T), is_pro_eval_kind(T),!.
 wants_eval_kind(_):- true.
 
-metta_type:attr_unify_hook(Self=TypeList,NewValue):- 
+metta_type:attr_unify_hook(Self=TypeList,NewValue):-
  attvar(NewValue),!,put_attr(NewValue,metta_type,Self=TypeList).
 metta_type:attr_unify_hook(Self=TypeList,NewValue):-
    get_type(20,Self,NewValue,Was),

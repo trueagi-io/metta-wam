@@ -1113,6 +1113,16 @@ fetch_or_create_state(NameOrInstance, State) :-
 eval_20(_Eq,_RetType,Depth,Self,['get-types',Val],TypeO):- !,
     get_types(Depth,Self,Val,TypeO).
 
+
+% use default self
+eval_20(Eq,RetType,Depth,Self,['get-type',Val,Self],Type):- current_self(Self), !,
+    eval_20(Eq,RetType,Depth,Self,['get-type',Val],Type).
+
+% use other space
+eval_20(Eq,RetType,Depth,Self,['get-type',Val,Other],Type):- !,
+    into_space(Depth,Self,Other,Space),
+    eval_20(Eq,RetType,Depth,Space,['get-type',Val],Type).
+
 eval_20(_Eq,_RetType,Depth,Self,['get-type',Val],Type):- is_list(Val), !,
     catch_metta_return(get_type(Depth,Self,Val,Type),TypeM),
     var(TypeM).

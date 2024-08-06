@@ -20,6 +20,8 @@
 ;; Defines a type space and checks if A belongs to types B and C using GetTypeOp.
 !(assertEqualToResult (eval (get-type A &self)) (B C))
 
+!(break!)
+
 ;;;;;;;;;;;;;;;;;;;;;;
 ; Metta GetTypeOp Non-Valid Atom
 ;;;;;;;;;;;;;;;;;;;;;;
