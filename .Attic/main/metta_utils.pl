@@ -14,9 +14,16 @@
 %:- ensure_loaded(library(dictoo)).
 :- endif.
 
+
+
+:- dynamic(done_once/1).
+do_once(G):-
+  ((done_once(GG),GG=@=G) -> true
+  ;(assert(done_once(G)),(once(@(G,user))->true;retract(done_once(G))))).
+
 cleanup_debug:-
   forall(
-    (clause(prolog_debug:debugging(A1,B,C),Body,Cl1), 
+    (clause(prolog_debug:debugging(A1,B,C),Body,Cl1),
      clause(prolog_debug:debugging(A2,B,C),Body,Cl2),
      A1=@=A2,Cl1\==Cl2),
      erase(Cl2)).
@@ -24,7 +31,7 @@ cleanup_debug:-
 :- export(plain_var/1).
 plain_var(V):- notrace((var(V), \+ attvar(V), \+ get_attr(V,ci,_))).
 catch_nolog(G):- ignore(catch(notrace(G),E,once(true;nop(u_dmsg(E=G))))).
-catch_log(G):- ignore(catch(notrace(G),E,((u_dmsg(E=G),ugtrace(G))))).
+catch_log(G):- ignore(catch((G),E,((u_dmsg(E=G),ugtrace(G))))).
 % catch_log(G):- ignore(catch(notrace(G),E,((writeln(E=G),catch_nolog(ds))))).
 
 get_user_error(UE):- stream_property(UE,file_no(2)),!.
@@ -221,8 +228,8 @@ compound_name_arg(G,MD,Goal):- compound(G),!, compound_name_arguments(G,MD,[Goal
 :- multifile(user:message_hook/3).
 :- dynamic(user:message_hook/3).
 %user:message_hook(Term, Kind, Lines):- error==Kind, itrace,fbug(user:message_hook(Term, Kind, Lines)),trace,fail.
-user:message_hook(Term, Kind, Lines):- 
-   fail, error==Kind,  
+user:message_hook(Term, Kind, Lines):-
+   fail, error==Kind,
    fbug(message_hook(Term, Kind, Lines)),fail.
 
 :- meta_predicate(must_det_ll(0)).
@@ -287,18 +294,16 @@ md(P1,X):-
   ncatch(must_det_ll1(P1,X),
   md_failed(P1,G,N), % <- ExceptionTerm
    % bubble up and start running
-  ((M is N -1, M>0)->throw(md_failed(P1,G,M));(ugtrace(X),throw('$aborted')))),!.
+  ((M is N -1, M>0)->throw(md_failed(P1,G,M));(ugtrace(md_failed(P1,G,M),X),throw('$aborted')))),!.
 %must_det_ll(X):- must_det_ll1(P1,X),!.
 
 must_det_ll1(P1,X):- tracing,!,must_not_error(call(P1,X)),!.
 must_det_ll1(P1,once(A)):- !, once(md(P1,A)).
 must_det_ll1(P1,X):-
-  strip_module(X,M,P),functor(P,F,A),setup_call_cleanup(nop(trace(M:F/A,+fail)),(must_not_error(call(P1,X))*->true;md_failed(P1,X)),
+  strip_module(X,M,P),functor(P,F,A),
+  setup_call_cleanup(nop(trace(M:F/A,+fail)),(must_not_error(call(P1,X))*->true;md_failed(P1,X)),
     nop(trace(M:F/A,-fail))),!.
 
-ugtrace(_):-  is_testing, !, ignore(give_up(5)), throw('$aborted').
-ugtrace(G):-  notrace,trace,rtrace(G).
-%ugtrace(G):- ggtrace(G).
 
 %must_not_error(G):- must(once(G)).
 
@@ -306,14 +311,21 @@ must_not_error(G):- (tracing;never_rrtrace),!,call(G).
 must_not_error(G):- notrace(is_cgi),!, ncatch((G),E,((u_dmsg(E=G)))).
 %must_not_error(X):- is_guitracer,!, call(X).
 %must_not_error(G):- !, call(G).
-must_not_error(X):- !,ncatch(X,E,(fbug(E=X),ugtrace(X))).
+must_not_error(X):- !,ncatch(X,E,(fbug(E=X),ugtrace(error(E),X))).
 must_not_error(X):- ncatch(X,E,(rethrow_abort(E);(/*arcST,*/writeq(E=X),pp(etrace=X),
   trace,
   rrtrace(visible_rtrace([-all,+exception]),X)))).
 
-always_rethrow(E):- never_rrtrace,!,throw(E).
+
 always_rethrow('$aborted').
 always_rethrow(md_failed(_,_,_)).
+always_rethrow(return(_)).
+always_rethrow(metta_return(_)).
+always_rethrow(give_up(_)).
+always_rethrow(time_limit_exceeded(_)).
+always_rethrow(depth_limit_exceeded).
+always_rethrow(restart_reading).
+always_rethrow(E):- never_rrtrace,!,throw(E).
 
 %catch_non_abort(Goal):- cant_rrtrace(Goal).
 catch_non_abort(Goal):- catch(cant_rrtrace(Goal),E,rethrow_abort(E)),!.
@@ -329,20 +341,47 @@ main_debug:- main_thread,current_prolog_flag(debug,true).
 cant_rrtrace:- nb_setval(cant_rrtrace,t).
 can_rrtrace:- nb_setval(cant_rrtrace,f).
 %md_failed(P1,X):- predicate_property(X,number_of_clauses(1)),clause(X,(A,B,C,Body)), (B\==!),!,must_det_ll(A),must_det_ll((B,C,Body)).
+
+md_failed(P1,X):- notrace((write_src_uo(failed(P1,X)),fail)).
+md_failed(P1,X):- tracing,visible_rtrace([-all,+fail,+call,+exception],call(P1,X)).
+md_failed(P1,X):- \+ tracing, !, visible_rtrace([-all,+fail,+exit,+call,+exception],call(P1,X)).
+md_failed(P1,G):- is_cgi, \+ main_debug, !, u_dmsg(arc_html(md_failed(P1,G))),fail.
+md_failed(_P1,G):- option_value(testing,true),!,
+      T='FAILEDDDDDDDDDDDDDDDDDDDDDDDDDD!!!!!!!!!!!!!'(G),
+      write_src_uo(T), give_up(T,G).
 md_failed(P1,G):- never_rrtrace,!,notrace,/*notrace*/(u_dmsg(md_failed(P1,G))),!,throw(md_failed(P1,G,2)).
-md_failed(_P1,_G):- option_value(testing,true),!,give_up(6).
+%md_failed(P1,G):- tracing,call(P1,G).
 md_failed(_,_):- never_rrtrace,!,fail.
-md_failed(P1,G):- tracing,/*notrace*/(u_dmsg(md_failed(P1,G))),!,fail.
-md_failed(P1,G):- main_debug,/*notrace*/(u_dmsg(md_failed(P1,G))),!,throw(md_failed(P1,G,2)).
-md_failed(P1,G):- is_cgi,!, u_dmsg(arc_html(md_failed(P1,G))).
-md_failed(P1,X):- notrace,is_guitracer,u_dmsg(failed(X))/*,arcST*/,nortrace,atrace, call(P1,X).
-md_failed(P1,X):-  u_dmsg(failed(P1,X))/*,arcST*/,nortrace,atrace,
- trace,visible_rtrace([-all,+fail,+call,+exception],X).
+md_failed(P1,X):- notrace,is_guitracer,u_dmsg(failed(X))/*,arcST*/,nortrace,atrace,call(P1,X).
+md_failed(P1,G):- main_debug,/*notrace*/(write_src_uo(md_failed(P1,G))),!,throw(md_failed(P1,G,2)).
 % must_det_ll(X):- must_det_ll(X),!.
+
+write_src_uo(G):-
+ stream_property(S,file_no(1)),
+    with_output_to(S,
+     (format('~N~n~n',[]),
+      write_src(G),
+      format('~N~n~n'))),!,
+ %stack_dump,
+ stream_property(S2,file_no(2)),
+    with_output_to(S2,
+     (format('~N~n~n',[]),
+      write_src(G),
+      format('~N~n~n'))),!.
 
 :- meta_predicate(rrtrace(0)).
 rrtrace(X):- rrtrace(etrace,X).
-give_up(_):- throw('$aborted').
+
+stack_dump:-  ignore(catch(bt,_,true)). %,ignore(catch(dumpST,_,true)),ignore(catch(bts,_,true)).
+ugtrace(error(Why),G):- !, notrace,write_src_uo(Why),stack_dump,write_src_uo(Why),rtrace(G).
+ugtrace(Why,G):-  tracing,!,notrace,write_src(Why),rtrace(G).
+ugtrace(Why,_):-  is_testing, !, ignore(give_up(Why,5)),throw('$aborted').
+ugtrace(_Why,G):-  ggtrace(G),throw('$aborted').
+%ugtrace(Why,G):- ggtrace(G).
+
+give_up(Why,_):- is_testing,!,write_src_uo(Why),!, throw(give_up(Why)).
+give_up(Why,N):- is_testing,!,write_src_uo(Why),!, halt(N).
+give_up(Why,_):- write_src_uo(Why),throw('$aborted').
 
 is_guitracer:- getenv('DISPLAY',_), current_prolog_flag(gui_tracer,true).
 :- meta_predicate(rrtrace(1,0)).
@@ -1271,7 +1310,9 @@ end_of_file.
 
 %:- autoload(library(http/html_write),[html/3,print_html/1]).
 
+
 is_debugging(M):- \+ \+ debugging(M),!.
+is_debugging(_):- is_testing,!.
 %is_debugging(_):- menu_or_upper('B').
 
 debug_m(_,Tiny):- display_length(Tiny,Len),Len<30,!,pp(Tiny).
@@ -2480,13 +2521,13 @@ to_prop_name(Name,UName):- compound(Name),compound_name_arity(Name,F,_),!,to_pro
 to_prop_name(Name,UName):- to_case_breaks(Name,Breaks),xtis_to_atomic(Breaks,UName).
 
 xtis_to_atomic([xti(Str,upper),xti(StrL,lower)|Breaks],StrO):- string_upper(Str,Str),
-   atom_chars(Str,CharsList),append(Left,[U],CharsList),
-   name(S1,Left),atomic_list_concat([S1,'_',U,StrL],'',StrUL),!,
+   symbol_chars(Str,CharsList),append(Left,[U],CharsList),
+   name(S1,Left),symbolic_list_concat([S1,'_',U,StrL],'',StrUL),!,
    xtis_to_atomic([xti(StrUL,lower)|Breaks],StrO).
 xtis_to_atomic([],'').
 xtis_to_atomic([xti(Str,_)],Lower):- downcase_atom(Str,Lower).
 xtis_to_atomic([XTI|Breaks],Atomic):-
-  xtis_to_atomic([XTI],S1),xtis_to_atomic(Breaks,S2),!,atomic_list_concat([S1,S2],'_',Atomic).
+  xtis_to_atomic([XTI],S1),xtis_to_atomic(Breaks,S2),!,symbolic_list_concat([S1,S2],'_',Atomic).
 
 share_vars(Vs,Name=Value):- member(VName=VValue,Vs),VName==Name,!,(Value=VValue->true;trace_or_throw(cant(share_vars(Vs,Name=Value)))).
 share_vars(_,Name=_):- string_concat('_',_,Name),!. % Hide some vars

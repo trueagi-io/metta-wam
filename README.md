@@ -10,14 +10,17 @@ See [Tests](tests/) for MeTTa as well as [Results](reports/TEST_LINKS.md)
 ### :toolbox: Installation
 Clone and set up MeTTaLog with the following commands:
 ```
-git clone https://github.com/trueagi-io/hyperon-wam # currently git clone https://github.com/logicmoo/hyperon-wam
+git clone https://github.com/trueagi-io/metta-wam
 
-cd hyperon-wam
-
+cd metta-wam
+. scripts/ensure_venv  # ensures we are runing in a python venv
+pip install ansi2html   # needed for running tests
+pip install hyperon  # needed for running tests
 chmod +x INSTALL.sh  # Make sure the script is executable
-./INSTALL.sh # Follow the prompts
+. ./INSTALL.sh # Follow the default prompts 
+
 ```
-The setup script handles the installation of essential components and updates:
+The INSTALL.sh script handles the installation of essential components and updates:
 #### Python Packages
 - Ensures Python's `pip` is installed or installs it.
 - **Installs mettalog**: Allows Rust MeTTa use extra functionality found in mettalog
@@ -49,13 +52,19 @@ Once inside the container you may enter the MeTTaLog REPL with the
 following command
 
 ```bash
-MeTTa --repl
+mettalog --repl
 ```
 
 or run a metta script as follows
 
 ```bash
-MeTTa myprg.metta
+mettalog myprg.metta
+```
+
+or run/load a metta script and debug in the repl
+
+```bash
+mettalog myprg.metta --repl
 ```
 
 
@@ -73,29 +82,25 @@ Interact directly with MeTTaLog through the REPL:
 ```bash
 mettalog --repl
 
-metta &self +> !(+ 1 1)
+metta+> !(+ 1 1)
 !(+ 1 1)
 
 Deterministic: 2
 
 ; Execution took 0.000105 secs. (105.29 microseconds)
-metta &self +>
+metta+>
 ```
 Exit the REPL with `ctrl-D`.
 
 **To run a script:**
 ```bash
-MeTTa tests/baseline_compat/hyperon-experimental_scripts/b0_chaining_prelim.metta
+mettalog tests/baseline_compat/hyperon-experimental_scripts/b0_chaining_prelim.metta
 ```
 
-**Note:** Remember, the `MeTTa` script's name is case-sensitive. Do not confuse it with `metta`, which might refer to a different tool written in Rust.
+**Note:** Remember, the `MeTTa` script's name is case-sensitive. Do not confuse it with `metta`, which refers to the MeTTa Interpreter written in Rust.
 
 
-**To run a metta file normally:**
 
-```bash
-MeTTa tests/baseline_compat/hyperon-experimental_scripts/b0_chaining_prelim.metta
-```
 
 ** Launch Jupyter notebook: (in progress) **
  - Contains a Jupyter Kernel for MeTTa (allows runing of MeTTa scripts remotely)
@@ -119,13 +124,13 @@ mettalog --test --clean ./tests/baseline-compat
 Thanks to the Hyperon Experimental MeTTa, PySWIP teams, and Flybase for their contributions to this project.
 
 ## :phone: Support
-For queries or suggestions, please open an issue on our [GitHub repository](https://github.com/trueagi-io/hyperon-wam/issues).
+For queries or suggestions, please open an issue on our [GitHub Issues Page](https://github.com/trueagi-io/metta-wam/issues).
 
 ## :scroll: License
 MeTTaLog is distributed under the LGPL License, facilitating open collaboration and use.
 
 
-## :gear: Prerequisites for using in Rust 
+## :gear: Prerequisites for using MeTTaLog in Rust 
 
 - A build of [Hyperon Experimental](https://github.com/trueagi-io/hyperon-experimental) is required.
 ```bash
@@ -133,7 +138,15 @@ MeTTaLog is distributed under the LGPL License, facilitating open collaboration 
   metta> !(import-py! mettalog)
   metta> !(mettalog:repl)
   metta@&self +> !(ensure-loaded! whole_flybase)
-  metta@&self +> !(, (fbgn_fbtr_fbpp_expanded! $GeneID $TranscriptType $TranscriptID $GeneSymbol $GeneFullName $AnnotationID $28 $29 $30 $31 $32) (dmel_unique_protein_isoforms! $ProteinID $ProteinSymbol $TranscriptSymbol $33) (dmel_paralogs! $ParalogGeneID $ProteinSymbol $34 $35 $36 $37 $38 $39 $40 $41 $42) (gene_map_table! $MapTableID $OrganismAbbreviation $ParalogGeneID $RecombinationLoc $CytogeneticLoc $SequenceLoc) (synonym! $SynonymID $MapTableID $CurrentSymbol $CurrentFullName $43 $44))
+
+  metta@&self +> !(let $query 
+                     (, (fbgn_fbtr_fbpp_expanded $GeneID $TranscriptType $TranscriptID $GeneSymbol $GeneFullName $AnnotationID $_ $_ $_ $_ $_) 
+					    (dmel_unique_protein_isoforms $ProteinID $ProteinSymbol $TranscriptSymbol $_) 
+						(dmel_paralogs $ParalogGeneID $ProteinSymbol $_ $_ $_ $_ $_ $_ $_ $_ $_) 
+						(gene_map_table $MapTableID $OrganismAbbreviation $ParalogGeneID $RecombinationLoc $CytogeneticLoc $SequenceLoc) 
+						(synonym $SynonymID $MapTableID $CurrentSymbol $CurrentFullName $_ $_))
+					(match &self $query $query))
+                    
 ```
 
 
@@ -186,162 +199,95 @@ Pass Test:(Values same: [[B]] == [[B]])
 ```
 
 
-# MeTTa Execution Modes
-[These are inherited from SWI-Prolog](https://www.swi-prolog.org/pldoc/man?section=cmdline)
 
-MeTTa can be executed in one of the following modes:
+## Python interaction
 
-- `mettalog [option ...] script-file [arg ...]`
-Arguments after the script file are made available in the MeTTa flag `argv`.
+Module loading
+; using the python default module resolver $PYTHONPATH
+`!(import! &self motto.llm_gate)` 
+; using the python path
+`!(import! &self ../path/to/motto/llm_gate.py)`
+; Rust way (was the only way to load llm_gate functions from Rust)
+`!(import! &self motto)` 
 
-- `mettalog [option ...] metta-file ... [[--] arg ...]`
-This is the normal way to start MeTTa. The MeTTa flag `argv` provides access to `arg ...`. If the options are followed by one or more MeTTa file names (i.e., names with extension .metta), these files are loaded. The first file is registered in the MeTTa flag `associated_file`.
+; Script running
+`!(pymain! &self ../path/to/motto/test_llm_gate.py ( arg1 arg2 ))`
+; Single methods is python files
+`!(pyr! &self ../path/to/motto/test_llm_gate.py "run_tests" ((= verbose True)))`
 
-- `mettalog -o output -c metta-file ...`
-The `-c` option is used to compile a set of MeTTa files into an executable.
-
-- `mettalog -o output -b prolog-bootfile metta-file ...`
-Bootstrap compilation.
-
-
-### Command Line Options for Running MeTTa
-[These are inherited from SWI-Prolog](https://www.swi-prolog.org/pldoc/man?section=cmdline)
-
-Boolean options may be written as `--name` (true), `--noname` or `--no-name` (false).
-
-- `--debug-on-interrupt`
-Enable debugging on an interrupt signal immediately.
-
-- `--home[=DIR]`
-Use `DIR` as home directory.
-
-- `--quiet`
-Set the MeTTa flag `verbose` to `silent`, suppressing informational and banner messages. Also available as `-q`.
-
-- `--no-debug`
-Disable debugging.
-
-- `--no-signals`
-Inhibit any signal handling by MeTTa, a property that is sometimes desirable for embedded applications. This option sets the flag signals to false. Note that the handler to unblock system calls is still installed. This can be prevented using `--sigalert=0` additionally.
-
-- `--no-threads`
-Disable threading for the multi-threaded version at runtime. See also the flags `threads` and `gc_thread`.
-
-- `--no-packs`
-Do not attach extension packages (add-ons).
-
-- `--no-pce`
-Enable/disable the xpce GUI subsystem. Using `--pce` loads the xpce system in user space and `--no-pce` makes it unavailable in the session.
-
-- `--on-error=style`
-How to handle errors.
-
-- `--on-warning=style`
-How to handle warnings.
-
-- `--pldoc[=port]`
-Start the PlDoc documentation system on a free network port. If port is specified, the server is started at the given port and the browser is not launched.
-
-- `--sigalert=NUM`
-Use signal NUM (1 ... 31) for alerting a thread. If NUM is 0 (zero), this handler is not installed.
-
-- `--no-tty`
-Unix only. Switches controlling the terminal.
-
-- `-O`
-Optimised compilation.
-
-- `-l file.metta`
-Load file.metta.
-
-- `-s file.metta`
-Use file.metta as a script file.
-
-- `-f file.metta`
-Use file.metta as initialisation file instead of the default `init.metta`.
-
-- `-F script`
-Select a startup script from the MeTTa home directory.
-
-- `-x prolog-bootfile`
-Boot from prolog-bootfile instead of the system''s default boot file.
-
-- `-p alias=path1[:path2 ...]`
-Define a path alias for file_search_path.
-
-- `--`
-Stops scanning for more arguments.
-
-
-### Controlling the Stack Sizes
-
-```shell
-$ mettalog --stack-limit=32g
+```
+; Can define a shortcut
+(: run-llm-tests (-> Bool Ratio))
+(= 
+  (run-llm-tests $verbose)
+  (pyr! &self ../path/to/motto/test_llm_gate.py "run_tests" ((= verbose $verbose))))
 ```
 
-- `--stack-limit=size[bkmg]`
-Limit the combined size of the MeTTa stacks to the indicated size.
+## MeTTaLog Extras
 
-- `--table-space=size[bkmg]`
-Limit for the table space.
+```
+; For the compiler to know that the member function will be a predicate 
+(: member/2 Compiled)
 
-- `--shared-table-space=size[bkmg]`
-Limit for the table space for shared tables.
+; Declare member/2
+(: member/2 Nondeterministic)
 
-### Running Goals from the Command Line
 
-- `-g goal`
-Goal is executed just before entering the top level.
+; Allow rewrites of member to invert using superpose
+(: member/2 (Inverted 1 superpose))
 
-```shell
-% mettalog <options> -g (go) -g (quit)
+
 ```
 
-- `-t (goal)`
-Use goal as an interactive top level instead of the default goal `!(repl!)`.
+```
+; MeTTa file loading
+!(include! &self ../path/to/motto/test_llm_gate.metta)
 
-### Compilation Options
-[MeTTa Code is tranliterated to SWI-Prolog code and compiled](https://www.swi-prolog.org/pldoc/man?section=runtime)
-
-- `-c file.metta ...`
-Compile files into an intermediate code file.
-
-- `-o output`
-Used in combination with `-c` to determine the output file for compilation.
-
-
-### Informational Command Line Options
-
-- `--arch`
-When given as the only option, it prints the architecture identifier (see MeTTa flag `arch`) and exits. See also `--dump-runtime-variables`.
-
-- `--dump-runtime-variables [=format]`
-When given as the only option, it prints a sequence of variable settings that can be used in shell scripts to deal with MeTTa parameters.
-
-```shell
-eval `mettalog --dump-runtime-variables`
-cc -I$PLBASE/include -L$PLBASE/lib/$PLARCH ...
+; Http Files
+!(include! &self https://somewhere/test_llm_gate.metta)
 ```
 
-- `--help`
-When given as the only option, it summarises the most important options.
-
-- `--version`
-When given as the only option, it summarises the version and the architecture identifier.
-
-- `--abi-version`
-Print a key (string) that represents the binary compatibility on a number of aspects.
 
 
-### Maintenance Options
-[These are inherited from SWI-Prolog](https://www.swi-prolog.org/pldoc/man?section=cmdline)
+```
+; interfacing to Prolog
+(:> OptionsList (List (^ Expresson (Arity 2))))
+(:> ThreadOptions OptionsList)
+(:> ThreadId Number)
+(: make-thread (-> Expression ThreadOptions ThreadId))
+(: thread_create/3 Deterministic)
+;; (add-atom &self (Imported thread_create/3 2 make-thread))
+(= 
+  (make-thread $goal $options)
+  (let True 
+    (as-tf (thread_create! $goal $result $options))
+	$result))
 
-- `-b initfile.metta ...-c file.metta ...`
-Boot compilation.
+; returns a number and keeps going
+!(make-thread (shell! "xeyes") ((detached False)))
 
-- `-d token1,token2,...`
-Print debug messages for DEBUG statements.
+```
+
+To get comparable Interp vs Compiler statistics in one Main Output
+```
+clear ; mettalog --test --v=./src/main --log --html tests/*baseline*/ \
+  --output=4-06-main-both --clean
+clear ; mettalog --test --v=./src/canary-lng --log --html tests/*baseline*/ \
+  --output=4-06-canary-lng-both --clean
+clear ; mettalog --test --v=./src/canary --log --html tests/*baseline*/ \
+  --output=4-06-canary-wd-both --clean
+```
 
 
 
+Vs for diffing
+```
+
+clear ; mettalog --test --v=./src/canary --log --html --compile=full tests/baseline_compat/ \
+  --output=4-06-compile_full --clean
+
+clear ; mettalog --test --v=./src/canary --log --html --compile=false tests/baseline_compat/ \
+  --output=4-06-compile_false --clean
+
+```
 

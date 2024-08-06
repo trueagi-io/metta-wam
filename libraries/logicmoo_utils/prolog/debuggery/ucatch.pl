@@ -70,11 +70,11 @@
             fresh_line_to_err/0,
             functor_catch/3,
             functor_safe/3,
-            
+
             ib_multi_transparent33/1,
             if_defined/1,if_defined/2,
             input_key/1,
-            is_ftCompound/1,%ftCompound/1, 
+            is_ftCompound/1,%ftCompound/1,
             not_ftCompound/1,
             is_ftNameArity/2,
             is_ftNonvar/1, % ftNonvar/1,ftVar/1,
@@ -210,24 +210,24 @@ hide_non_user_console:-current_input(In),stream_property(In, close_on_exec(true)
 :- meta_predicate
 
 
-		block3(+, :, ?),
-		catchv(0, ?, 0),
+        block3(+, :, ?),
+        catchv(0, ?, 0),
 
-		if_defined(:),
-		if_defined(+, 0),
-		ddmsg_call(0),
+        if_defined(:),
+        if_defined(+, 0),
+        ddmsg_call(0),
 
                 on_xf_log_cont(0),
 
-		skip_failx_u(0),
-		on_xf_log_cont_l(0),
-		on_x_log_throw(0),
+        skip_failx_u(0),
+        on_xf_log_cont_l(0),
+        on_x_log_throw(0),
                 with_current_why(*,0),
                 with_only_current_why(*,0),
 
 
-		on_x_log_cont(0),
-		on_x_log_fail(0),
+        on_x_log_cont(0),
+        on_x_log_fail(0),
 
 
         % must(0),
@@ -238,7 +238,7 @@ hide_non_user_console:-current_input(In),stream_property(In, close_on_exec(true)
 
         must_det_l(0),
         must_det_l_pred(1,+),
-        call_must_det(1,+),       
+        call_must_det(1,+),
         call_each_det(1,+),
         call_each(1,+),
         p_call(*,+),
@@ -449,12 +449,12 @@ with_current_io(Goal):-
 % with_no_output(Goal):- !, Goal.
 with_no_output(Goal):-
  locally_tl(hide_dmsg,
-  with_output_to(string(_), 
+  with_output_to(string(_),
      with_some_output_to(main_error,
       current_output,
        with_user_error_to(current_output,
         locally_tl(thread_local_error_stream(current_output),
-         with_user_output_to(current_output, 
+         with_user_output_to(current_output,
           with_dmsg_to_main(Goal))))))).
 
 with_user_error_to(Where,Goal):-
@@ -466,11 +466,11 @@ with_user_output_to(Where,Goal):-
 into_stream_alias(Some,Alias):- into_stream(Some,S),stream_property(S,alias(Alias)),!.
 into_stream_alias(Some,Some).
 
-with_some_output_to(SomeAlias,Where,Goal):- 
-   into_stream_alias(SomeAlias,Alias), 
+with_some_output_to(SomeAlias,Where,Goal):-
+   into_stream_alias(SomeAlias,Alias),
    with_alias_output_to(Alias,Where,Goal).
 
-with_alias_output_to(Alias,Where,Goal):- 
+with_alias_output_to(Alias,Where,Goal):-
    stream_property(ErrWas,alias(Alias)),
    new_memory_file(MF), open_memory_file(MF,write,Stream),
    scce_orig(set_stream(Stream,alias(Alias)),Goal,set_stream(ErrWas,alias(Alias))),
@@ -486,7 +486,7 @@ with_dmsg_to_main(Goal):-
 
 with_error_to_main(Goal):-
   get_main_error_stream(Err),current_error_stream_ucatch(ErrWas),Err==ErrWas,!,Goal.
-with_error_to_main(Goal):- 
+with_error_to_main(Goal):-
   get_main_error_stream(Err),current_error_stream_ucatch(ErrWas),
    locally_tl(thread_local_error_stream(Err),
    scce_orig(set_stream(Err,alias(user_error)),Goal,set_stream(ErrWas,alias(user_error)))).
@@ -498,7 +498,7 @@ with_error_to_main(Goal):-
 %
 % Thread Current Error Stream.
 %
-                                           
+
 set_thread_error_stream(Id,Err):-
    ( \+ atom(Err)->asserta_new(lmcache:thread_current_error_stream(Id,Err));true),
    (thread_self(Id)->asserta(t_l:thread_local_error_stream(Err));true).
@@ -549,7 +549,7 @@ get_main_error_stream(Err):- thread_call_blocking_one(main,get_thread_current_er
 
 thread_call_blocking_one(Thread,G):- thread_self(Self),
   thread_signal(Thread,
-   catch(( (G,deterministic(YN),true) 
+   catch(( (G,deterministic(YN),true)
     -> thread_send_message(Self,thread_call_blocking_one(Thread,G,fail,true))
      ; thread_send_message(Self,thread_call_blocking_one(Thread,G,true,YN))),
      E,thread_send_message(Self,thread_call_blocking_one(Thread,G,throw(E),true)))),
@@ -591,7 +591,7 @@ save_streams:- thread_self(ID),save_streams(ID),!.
 set_mains:-
        stream_property(In, alias(user_input)),set_stream(In,alias(main_input)),
        stream_property(Out, alias(user_output)),set_stream(Out,alias(main_output)),
-       find_main_eror(Err),set_stream(Err,alias(main_error)), 
+       find_main_eror(Err),set_stream(Err,alias(main_error)),
        set_stream(Err,alias(current_error)),set_stream(Err, alias(user_error)).
 
 find_main_eror(Err):-stream_property(Err, file_no(2)).
@@ -766,7 +766,7 @@ to_mpi_matcher(Name/Arity, Matcher) :- atom(Name),integer(Arity),functor(Head, N
 to_mpi_matcher(M:P,M:P):- var(M),!,to_mpi_matcher(P,M:P).
 %to_mpi_matcher(M:P,MP):- var(P),!,to_mpi_matcher(M:P,MP).
 
-to_mpi_matcher(CFind,WPI):- 
+to_mpi_matcher(CFind,WPI):-
  strip_module(CFind,SC,Find),
  (CFind==Find -> C = any ; C = SC),
  locally(set_prolog_flag(runtime_debug,0),
@@ -776,13 +776,13 @@ to_mpi_matcher(CFind,WPI):-
       functor(PI,F,A),
      (predicate_property(M:PI,imported_from(W)) -> true ; W=M),
       visible_import_module(C,W),
-      WPI = W:PI, 
+      WPI = W:PI,
       \+ predicate_property(WPI,imported_from(_)))),
      Remaining)))),
      Remaining=[_|_],!,
-     sort(Remaining,Set),     
+     sort(Remaining,Set),
      member(WPI,Set).
-     
+
 
 %to_mpi_matcher(M:Find,MPI):-context_modulez(M),to_pi0(M,Find,MPI).
 %to_mpi_matcher(M:PI, Head) :- !, to_mpi_matcher(PI, Head).
@@ -849,7 +849,7 @@ sl_to_filename(W,To):-nonvar(To),To=(W:_),atom(W),!.
 
 
 
-                 
+
 
 
 %=
@@ -908,7 +908,7 @@ current_why(mfl4(VarNameZ,M,F,L)):- notrace(current_mfl4(VarNameZ,M,F,L)).
 
 current_mfl4(VarNameZ,M,F,L):- current_mfl(M,F,L),ignore(varnames_load_context(VarNameZ)).
 
-current_mfl(M,F,L):- 
+current_mfl(M,F,L):-
  current_source_file(F:L),!,
  calc_source_module(M),
   ignore((var(L),L=module(M))).
@@ -922,7 +922,7 @@ calc_source_module(M):- source_module(M).
 current_why_data(Why):- nb_current('$current_why',wp(Why,_P)).
 current_why_data(Why):- t_l:current_why_source(Why).
 
-varnames_load_context(VarNameZ):- 
+varnames_load_context(VarNameZ):-
   prolog_load_context(variable_names,Vars),
   varnames_to_lazy_unifiable(Vars,VarNameZ).
 
@@ -937,8 +937,8 @@ can_maybe_varname(Vars1,Vars2):- ignore(Vars1=Vars2).
 %
 % Restart and Save the Well-founded Semantic Reason while executing code.
 %
-with_only_current_why(Why,Prolog):- 
-  (nb_current('$current_why',WAS);WAS=[])-> 
+with_only_current_why(Why,Prolog):-
+  (nb_current('$current_why',WAS);WAS=[])->
    setup_call_cleanup(b_setval('$current_why',wp(Why,Prolog)),
     (call(Prolog),b_setval('$current_why',WAS)),
      b_setval('$current_why',WAS)).
@@ -949,14 +949,14 @@ with_only_current_why(Why,Prolog):-
 %
 with_current_why(S,Call):-
   current_why(UU),
-  (s_in_why(S,UU) -> Call;  with_only_current_why((S,UU),Call)).
+  ( ( \+ \+ s_in_why(S,UU)) -> Call;  with_only_current_why((S,UU),Call)).
 
-s_in_why(S,UU):- S=@=UU,!.
-s_in_why(_,UU):- \+ compound(UU),!,fail.
+s_in_why(S,UU):- \+ S \= UU,!.
+%s_in_why(_,UU):- \+ compound(UU),!,fail.
+%s_in_why(S,[U1|U2]):- !, (s_in_why(S,U1);s_in_why(S,U2)).
 s_in_why(S,(U1,U2)):- !, (s_in_why(S,U1);s_in_why(S,U2)).
-s_in_why(S,[U1|U2]):- !, (s_in_why(S,U1);s_in_why(S,U2)).
-s_in_why(S,UU):- sub_goal(U,UU),S=@=U,!.
-sub_goal(U,UU):- sub_term(U,UU),nonvar(U), U\==UU.
+%s_in_why(S,UU):- sub_goal(U,UU),S=@=U,!.
+%sub_goal(U,UU):- sub_term(E,UU),nonvar(E), U\==UU.
 
 :- thread_initialization(nb_setval('$current_why',[])).
 
@@ -1038,7 +1038,7 @@ uexecute_goal_vs0(Vs):- notrace(catch(ucatch_parent_goal('$toplevel':'$execute_g
 :-export( show_source_location/0).
 show_source_location:- current_prolog_flag(dmsg_level,never),!.
 %show_source_location:- quietly((tlbugger:no_slow_io)),!.
-show_source_location:- get_source_location(FL)->show_new_src_location(FL),!. 
+show_source_location:- get_source_location(FL)->show_new_src_location(FL),!.
 show_source_location:- if_interactive((dumpST,dtrace)).
 
 :- thread_local(t_l:last_shown_current_source_location/1).
@@ -1051,7 +1051,7 @@ show_current_source_location(FL):- t_l:last_shown_current_source_location(FL),!,
 show_current_source_location(FL):- retractall(t_l:last_shown_current_source_location(_)),
                                    asserta(t_l:last_shown_current_source_location(FL)),!,
                                    public_file_link(FL,FLO),
-                                   format_to_error('~N%~~ FIlE: ~w ~N',[FLO]),!. 
+                                   format_to_error('~N%~~ FIlE: ~w ~N',[FLO]),!.
 
 get_source_location(FL):- current_source_file(FL),nonvar(FL),!.
 get_source_location(F:L):- source_location(F,L),!.
@@ -1251,8 +1251,8 @@ strip_f_module(P,P).
 %
 %  Like catch/3 but rethrows block/2 and $abort/0.
 %
-catchv(Goal,E,Recovery):- 
-   nonvar(E) 
+catchv(Goal,E,Recovery):-
+   nonvar(E)
    -> catch(Goal,E,Recovery); % normal mode (the user knows what they want)
    catch(Goal,E,(rethrow_bubbled(E),Recovery)). % prevents promiscous mode
 
@@ -1327,7 +1327,7 @@ functor_safe_compound(P,F,A):- strip_f_module(P,P0),strip_f_module(F,F0),!,funct
 %
 % Block.
 %
-block3(Name, Goal, Var) :- Goal, keep(Name, Var).	% avoid last-call and GC
+block3(Name, Goal, Var) :- Goal, keep(Name, Var).   % avoid last-call and GC
 
 %=
 
@@ -1347,7 +1347,7 @@ set_block_exit(Name, Value) :-  prolog_current_frame(Frame),  prolog_frame_attri
 
 
 :- export(ucatch_parent_goal/1).
-ucatch_parent_goal(M:Goal):- 
+ucatch_parent_goal(M:Goal):-
   prolog_current_frame(F),
   prolog_frame_attribute(F, parent, FP),
   prolog_frame_attribute(FP, parent_goal, M:Goal).
@@ -1670,7 +1670,7 @@ errx:-on_x_debug((ain(tlbugger:dont_skip_bugger),do_gc,dumpST(10))),!.
 
 /*
 
-A value 0 means that the corresponding quality is totally unimportant, and 3 that the quality is extremely important; 
+A value 0 means that the corresponding quality is totally unimportant, and 3 that the quality is extremely important;
 1 and 2 are intermediate values, with 1 the neutral value. (quality 3) can be abbreviated to quality.
 
 */
@@ -1689,12 +1689,12 @@ compute_q_value(N,V):- compound(N), catch(V is N,_,fail).
 
 Name                        Meaning
 ---------------------       --------------------------------
-logicmoo_compilation_speed  speed of the compilation process   
+logicmoo_compilation_speed  speed of the compilation process
 
-runtime_debug              ease of debugging                  
-logicmoo_space              both code size and run-time space  
+runtime_debug              ease of debugging
+logicmoo_space              both code size and run-time space
 
-runtime_safety             run-time error checking            
+runtime_safety             run-time error checking
 runtime_speed              speed of the object code
 
 unsafe_speedups      speed up that are possibily

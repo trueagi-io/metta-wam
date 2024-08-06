@@ -68,8 +68,8 @@ hide_xpce_library_directory.
 
 */
 %:- ensure_loaded(library(logicmoo_swilib)).
-:- system:use_module(swi(library/http/html_head)).
-
+%:- system:use_module(swi(library/http/html_head)).
+:- system:use_module(library(http/html_head)).
 :- system:use_module(library(http/http_path)).
 :- system:use_module(library(http/http_log)).
 :- system:use_module(library(http/http_client)).
