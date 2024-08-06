@@ -6,12 +6,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;
 ; Unify
 ;;;;;;;;;;;;;;;;;;;;;;
-!(assertEqual (eval (unify (a $b 1 (d)) (a $a 1 (d)) ok nok)) (ok))
+!(assertEqual (eval (unify (a $b 1 (d)) (a $a 1 (d)) ok nok)) ok)
 !(assertEqual (eval (unify (a $b c) (a b $c) (ok $b $c) nok)) (ok b c))
 !(assertEqual (eval (unify $a (a b c) (ok $a) nok)) (ok (a b c)))
 !(assertEqual (eval (unify (a b c) $a (ok $a) nok)) (ok (a b c)))
-!(assertEqual (eval (unify (a b c) (a b d) ok nok)) (nok))
-!(assertEqual (eval (unify ($x a) (b $x) ok nok)) (nok))
+!(assertEqual (eval (unify (a b c) (a b d) ok nok)) nok)
+!(assertEqual (eval (unify ($x a) (b $x) ok nok)) nok)
 
 
 !(assertEqual (decons-atom (a b c)) (a (b c)))

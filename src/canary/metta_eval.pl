@@ -354,9 +354,6 @@ eval_20(Eq,RetType,Depth,Self,['chain-body',X|Y],Res):-  eval_args(Eq,RetType,De
 eval_20(Eq,RetType,Depth,Self,['eval',X],Res):- !,
    eval_args(Eq,RetType,Depth,Self,X, Res).
 
-eval_20(Eq,RetType,Depth,Self,['eval'|X],Res):- !,
-   eval_args(Eq,RetType,Depth,Self,X, Res).
-
 
 eval_20(Eq,RetType,Depth,Self,['eval-for',Type,X],Res):- !,
     ignore(Type=RetType),
@@ -510,21 +507,21 @@ eval_20(Eq,RetType,Depth,Self,['assertFalse',X],TF):- !,
 eval_20(Eq,_RetType,Depth,Self,['assertEqual',X,Y],RetVal):- !,
    loonit_assert_source_tf_empty(
         ['assertEqual',X,Y],XX,YY,
-        (bagof_eval(Eq,_ARetType,Depth,Self,X,XX),
-         bagof_eval(Eq,_BRetType,Depth,Self,Y,YY)),
+        (findall_eval(Eq,_ARetType,Depth,Self,X,XX),
+         findall_eval(Eq,_BRetType,Depth,Self,Y,YY)),
          equal_enough_for_test(XX,YY), RetVal).
 
 eval_20(Eq,_RetType,Depth,Self,['assertNotEqual',X,Y],RetVal):- !,
    loonit_assert_source_tf_empty(
         ['assertNotEqual',X,Y],XX,YY,
-        (bagof_eval(Eq,_ARetType,Depth,Self,X,XX),
-         bagof_eval(Eq,_BRetType,Depth,Self,Y,YY)),
+        (findall_eval(Eq,_ARetType,Depth,Self,X,XX),
+         findall_eval(Eq,_BRetType,Depth,Self,Y,YY)),
          ( \+ equal_enough(XX,YY)), RetVal).
 
 eval_20(Eq,_RetType,Depth,Self,['assertEqualToResult',X,Y],RetVal):- !,
    loonit_assert_source_tf_empty(
         ['assertEqualToResult',X,Y],XX,YY,
-        (bagof_eval(Eq,_ARetType,Depth,Self,X,XX),
+        (findall_eval(Eq,_ARetType,Depth,Self,X,XX),
          =(Y,YY)),
          equal_enough_for_test(XX,YY), RetVal).
 
@@ -805,11 +802,25 @@ eval_case(Eq,CaseRetType,Depth,Self,A,KVs,Res):-
 % =================================================================
 % =================================================================
 
+%;; collapse-bind because `collapse` doesnt guarentee shared bindings
+eval_20(Eq,RetType,Depth,Self,['collapse-bind',List],Res):-!,
+ maplist_ok_fails(eval_ne(Eq,RetType,Depth,Self),List,Res).
+
+maplist_ok_fails(Pred2,[A|AA],BBB):- !,
+ (call(Pred2,A,B) -> (BBB=[B|BB], maplist_ok_fails(Pred2,AA,BB))
+   ; maplist_ok_fails(Pred2,AA,BBB)).
+maplist_ok_fails(_Pred2,[],[]).
+
+%;; superpose-bind because `superpose` doesnt guarentee shared bindings
+% @TODO  need to keep bindings
+eval_20(Eq,RetType,Depth,Self,['superpose-bind',List],Res):- !,
+       member(E,List),
+       eval_ret(Eq,RetType,Depth,Self,E,Res).
 
 
 %[collapse,[1,2,3]]
 eval_20(Eq,RetType,Depth,Self,['collapse',List],Res):-!,
- bagof_eval(Eq,RetType,Depth,Self,List,Res).
+ findall_eval(Eq,RetType,Depth,Self,List,Res).
 
 
 eval_20(Eq,RetType,Depth,Self,['superpose',List],Res):- !,
@@ -855,7 +866,7 @@ sub_sterm1(Sub,Term):- arg(_,Term,SL),sub_sterm(Sub,SL).
 eval20_failed_2(Eq,RetType,Depth,Self, Term, Res):-
    notrace(( get_sa_p1(setarg,ST,Term,P1),
    compound(ST), ST = [F,List],F=='collapse',nonvar(List), %maplist(atomic,List),
-   call(P1,Var))), !, bagof_eval(Eq,RetType,Depth,Self,List,Var),
+   call(P1,Var))), !, findall_eval(Eq,RetType,Depth,Self,List,Var),
    eval_args(Eq,RetType,Depth,Self, Term, Res).
 
 
@@ -889,6 +900,27 @@ eval_20(_Eq,_RetType1,_Depth,_Self,['call-fn-nth!',Nth,S], R):-
     eval_call(NewS,_).
 
 max_counting(F,Max):- flag(F,X,X+1),  X<Max ->  true; (flag(F,_,10),!,fail).
+
+
+% =================================================================
+% =================================================================
+% =================================================================
+%  CONS/DECONS
+% =================================================================
+% =================================================================
+% =================================================================
+
+must_unify(A,A):-!.
+must_unify(A,B):- throw('Error-last-form'(must_unify(A,B))). % @TODO
+
+% OLD
+eval_20(_Eq,_RetType,_Depth,_Self,['decons-atom',OneArg],[H,T]):- !, must_unify(OneArg,[H|T]).
+eval_20(_Eq,_RetType,_Depth,_Self,['cons-atom'|TwoArgs],[H|T]):-!, must_unify(TwoArgs,[H,T]).
+% NEW
+eval_20(_Eq,_RetType,_Depth,_Self,['decons',OneArg],[H,T]):- !, must_unify(OneArg,[H|T]).
+eval_20(_Eq,_RetType,_Depth,_Self,['cons'|TwoArgs],[H|T]):-!, must_unify(TwoArgs,[H,T]).
+
+
 % =================================================================
 % =================================================================
 % =================================================================
@@ -896,8 +928,6 @@ max_counting(F,Max):- flag(F,X,X+1),  X<Max ->  true; (flag(F,_,10),!,fail).
 % =================================================================
 % =================================================================
 % =================================================================
-
-eval_20(_Eq,_RetType,_Depth,_Self,['decons-atom',[H|T]],[H,T]):- !.
 
 eval_20(Eq,RetType,Depth,Self,['unify',X,Y,Then,Else],Res):- !,
    (X=Y
@@ -1267,11 +1297,11 @@ eval_20(Eq,_TRetType,Depth,Self,['throw',X],_):- !,
 % ================================================
 
 eval_20(Eq,RetType,Depth,Self,['number-of',X],N):- !,
-   bagof_eval(Eq,RetType,Depth,Self,X,ResL),
+   findall_eval(Eq,RetType,Depth,Self,X,ResL),
    length(ResL,N), ignore(RetType='Number').
 
 eval_20(Eq,RetType,Depth,Self,['number-of',X,N],TF):- !,
-   bagof_eval(Eq,RetType,Depth,Self,X,ResL),
+   findall_eval(Eq,RetType,Depth,Self,X,ResL),
    length(ResL,N), true_type(Eq,RetType,TF).
 
 eval_20(Eq,RetType,Depth,Self,['findall!',Template,X],ResL):- !,
@@ -1553,7 +1583,7 @@ eval_21(_Eq,_RetType,_Depth,_Self,['fb-member',List],Res):-!, fb_member(Res,List
 
 
 eval_21(Eq,RetType,Depth,Self,['CollapseCardinality',List],Len):-!,
- bagof_eval(Eq,RetType,Depth,Self,List,Res),
+ findall_eval(Eq,RetType,Depth,Self,List,Res),
  length(Res,Len).
 /*
 eval_21(_Eq,_RetType,_Depth,_Self,['TupleCount', [N]],N):- number(N),!.
@@ -1561,7 +1591,7 @@ eval_21(_Eq,_RetType,_Depth,_Self,['TupleCount', [N]],N):- number(N),!.
 
 */
 eval_21(Eq,_RetType,Depth,Self,['Tuple-Count',List],Len):- fail,!,
- (\+ is_list(List)->bagof_eval(Eq,_,Depth,Self,List,Res);Res=List),!,
+ (\+ is_list(List)->findall_eval(Eq,_,Depth,Self,List,Res);Res=List),!,
  length(Res,Len).
 eval_21(_Eq,_RetType,_Depth,_Self,['tuple-count',List],Len):-!,
  length(List,Len).
@@ -2126,19 +2156,29 @@ cwdl(DL,Goal):- call_with_depth_limit(Goal,DL,R), (R==depth_limit_exceeded->(!,f
 
 cwtl(DL,Goal):- catch(call_with_time_limit(DL,Goal),time_limit_exceeded(_),fail).
 
+
+%findall_eval(Eq,RetType,Depth,Self,X,L):- findall_eval(Eq,RetType,_RT,Depth,Self,X,L).
+%findall_eval(Eq,RetType,Depth,Self,X,S):- findall(E,eval_ne(Eq,RetType,Depth,Self,X,E),S)*->true;S=[].
+findall_eval(_Eq,_RetType,_Dpth,_Slf,X,L):- self_eval(X),!,L=[X].
+findall_eval(_Eq,_RetType,_Dpth,_Slf,X,L):- typed_list(X,_Type,L),!.
+findall_eval(Eq,RetType,Depth,Self,Funcall,L):-
+   findall_ne(E,
+    catch_metta_return(eval_args(Eq,RetType,Depth,Self,Funcall,E),E),L).
+
 %bagof_eval(Eq,RetType,Depth,Self,X,L):- bagof_eval(Eq,RetType,_RT,Depth,Self,X,L).
-
-
 %bagof_eval(Eq,RetType,Depth,Self,X,S):- bagof(E,eval_ne(Eq,RetType,Depth,Self,X,E),S)*->true;S=[].
 bagof_eval(_Eq,_RetType,_Dpth,_Slf,X,L):- self_eval(X),!,L=[X].
 bagof_eval(_Eq,_RetType,_Dpth,_Slf,X,L):- typed_list(X,_Type,L),!.
 bagof_eval(Eq,RetType,Depth,Self,Funcall,L):-
-   findall_ne(E,
+   bagof_ne(E,
     catch_metta_return(eval_args(Eq,RetType,Depth,Self,Funcall,E),E),L).
 
 setof_eval(Depth,Self,Funcall,L):- setof_eval('=',_RT,Depth,Self,Funcall,L).
-setof_eval(Eq,RetType,Depth,Self,Funcall,S):- bagof_eval(Eq,RetType,Depth,Self,Funcall,L),
+setof_eval(Eq,RetType,Depth,Self,Funcall,S):- findall_eval(Eq,RetType,Depth,Self,Funcall,L),
    sort(L,S).
+
+bagof_ne(E,Call,L):-
+   bagof(E,(rtrace_on_error(Call), is_returned(E)),L).
 
 findall_ne(E,Call,L):-
    findall(E,(rtrace_on_error(Call), is_returned(E)),L).

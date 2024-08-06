@@ -8,15 +8,22 @@
 (: eval (-> Atom Atom))
 (: chain (-> Atom Variable Atom Atom))
 (: unify (-> Atom Atom Atom Atom Atom))
-(: cons (-> Atom Atom Atom))
-(: decons (-> Atom Atom))
-(: collapse-bind (-> Atom Atom))
-(: superpose-bind (-> Atom Atom))
 
-; We specialize them but leaving the old defs in case
+(: cons (-> Atom Atom Atom))
+; We specialize but leaving the old defs in case
 (: cons-atom (-> Atom Expression Expression))
+(: decons (-> Atom Atom))
+; We specialize but leaving the old defs in case
 (: decons-atom (-> Expression Expression))
+
+;; collapse-bind because `collapse` doesnt guarentee shared bindings
+(: collapse-bind (-> Atom Atom))
+; We specialize but leaving the old defs in case
 (: collapse-bind (-> Atom Expression))
+
+;; superpose-bind because `superpose` doesnt guarentee shared bindings
+(: superpose-bind (-> Atom Atom))
+; We specialize but leaving the old defs in case
 (: superpose-bind (-> Expression Atom))
 
 (: id (-> Atom Atom))
