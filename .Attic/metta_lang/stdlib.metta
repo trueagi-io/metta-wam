@@ -1,3 +1,12 @@
+(@doc = 
+  (@desc "A symbol used to define reduction rules for expressions.")
+  (@params (
+    (@param "Pattern to be matched against expression to be reduced")
+    (@param "Result of reduction or transformation of the first pattern") )
+  (@return "Not reduced itself unless custom equalities over equalities are added") )
+)
+(: = (-> $t $t Atom))
+
 (@doc if
   (@desc "Replace itself by one of the arguments depending on condition.")
   (@params (
@@ -30,10 +39,16 @@
     (@param "Atomspace to add atom into")
     (@param "Atom to add")))
   (@return "Unit atom"))
-(: add-reduct (-> Space %Undefined% (->)))
+(: add-reduct (-> hyperon::space::DynSpace %Undefined% (->)))
 (= (add-reduct $dst $atom)  (add-atom $dst $atom))
 
 (@doc add-reduct
+  (@desc "Prevents atom from being reduced")
+  (@params (
+    (@param "Atom")))
+  (@return "Quoted atom"))
+
+(@doc quote
   (@desc "Prevents atom from being reduced")
   (@params (
     (@param "Atom")))
@@ -45,7 +60,7 @@
 (: unify (-> Atom Atom Atom Atom %Undefined%))
 (= (unify $a $a $then $else) $then)
 (= (unify $a $b $then $else)
-  (case (unify-or-empty $a $b) ((%void%  $else))) )
+  (case (unify-or-empty $a $b) ((Empty $else))) )
 (: unify-or-empty (-> Atom Atom Atom))
 (= (unify-or-empty $a $a) unified)
 (= (unify-or-empty $a $b) (empty))
