@@ -364,20 +364,27 @@ eval_20(Eq,RetType,Depth,Self,[Comma,X,Y],Res):- is_progn(Comma),!, eval_args(Eq
 eval_20(Eq,RetType,Depth,Self,[Comma,X|Y],Res):- is_progn(Comma),!, eval_args(Eq,_,Depth,Self,X,_),
   eval_args(Eq,RetType,Depth,Self,[Comma|Y],Res).
 
-eval_20(Eq,RetType,Depth,Self,['chain',Atom,Var|Y],TF):-  eval_args(Eq,_RetType,Depth,Self,Atom,Var),
-                                                      eval_args(Eq,RetType,Depth,Self,['chain-body'|Y],TF).
+eval_20(Eq,RetType,Depth,Self,['chain',Atom,Var|Y],Res):-  eval_args(Eq,_RetType,Depth,Self,Atom,Var),
+                                                      eval_args(Eq,RetType,Depth,Self,['chain-body'|Y],Res).
 
-eval_20(Eq,RetType,Depth,Self,['chain-body',X],TF):-
-   eval_args(Eq,RetType,Depth,Self,X,TF).
-eval_20(Eq,RetType,Depth,Self,['chain-body',X|Y],TF):-  eval_args(Eq,RetType,Depth,Self,X,_), eval_args(Eq,RetType,Depth,Self,['chain-body'|Y],TF).
+eval_20(Eq,RetType,Depth,Self,['chain-body',X],Res):-
+   eval_args(Eq,RetType,Depth,Self,X,Res).
+eval_20(Eq,RetType,Depth,Self,['chain-body',X|Y],Res):-  eval_args(Eq,RetType,Depth,Self,X,_), eval_args(Eq,RetType,Depth,Self,['chain-body'|Y],Res).
 
-eval_20(Eq,RetType,Depth,Self,['eval',X],TF):- !,
-   eval_args(Eq,RetType,Depth,Self,X, TF).
+eval_20(Eq,RetType,Depth,Self,['eval',X],Res):- !,
+   eval_args(Eq,RetType,Depth,Self,X, Res).
+
+eval_20(Eq,RetType,Depth,Self,['eval'|X],Res):- !,
+   eval_args(Eq,RetType,Depth,Self,X, Res).
 
 
-eval_20(Eq,RetType,Depth,Self,['eval-for',Type,X],TF):- !,
+eval_20(Eq,RetType,Depth,Self,['eval-for',Type,X],Res):- !,
     ignore(Type=RetType),
-    eval_args(Eq,Type,Depth,Self,X, TF).
+    eval_args(Eq,Type,Depth,Self,X, Res).
+
+eval_20(Eq,RetType,Depth,Self,['eval-for',_Why,Type,X],Res):- !,
+    ignore(Type=RetType),
+    eval_args(Eq,Type,Depth,Self,X, Res).
 
 
 % =================================================================
