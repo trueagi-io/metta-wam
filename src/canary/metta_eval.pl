@@ -339,17 +339,15 @@ is_progn('chain-body').
 is_progn('progn').
 
 eval_20(Eq,RetType,Depth,Self,[Comma,X  ],Res):- is_progn(Comma),!, eval_args(Eq,RetType,Depth,Self,X,Res).
-eval_20(Eq,RetType,Depth,Self,[Comma,X,Y],Res):- is_progn(Comma),!, eval_args(Eq,_,Depth,Self,X,_),
-  eval_args(Eq,RetType,Depth,Self,Y,Res).
+%eval_20(Eq,RetType,Depth,Self,[Comma,X,Y],Res):- is_progn(Comma),!, eval_args(Eq,_,Depth,Self,X,_),eval_args(Eq,RetType,Depth,Self,Y,Res).
 eval_20(Eq,RetType,Depth,Self,[Comma,X|Y],Res):- is_progn(Comma),!, eval_args(Eq,_,Depth,Self,X,_),
   eval_args(Eq,RetType,Depth,Self,[Comma|Y],Res).
 
-eval_20(Eq,RetType,Depth,Self,['chain',Atom,Var|Y],Res):-  eval_args(Eq,_RetType,Depth,Self,Atom,Var),
-                                                      eval_args(Eq,RetType,Depth,Self,['chain-body'|Y],Res).
+eval_20(Eq,RetType,Depth,Self,['chain',Atom,Var|Y],Res):-  !,  eval_args(Eq,_RetType,Depth,Self,Atom,R),
+  Var = R, eval_args(Eq,RetType,Depth,Self,['chain-body'|Y],Res).
 
-eval_20(Eq,RetType,Depth,Self,['chain-body',X],Res):-
-   eval_args(Eq,RetType,Depth,Self,X,Res).
-eval_20(Eq,RetType,Depth,Self,['chain-body',X|Y],Res):-  eval_args(Eq,RetType,Depth,Self,X,_), eval_args(Eq,RetType,Depth,Self,['chain-body'|Y],Res).
+%eval_20(Eq,RetType,Depth,Self,['chain-body',X],Res):- !,eval_args(Eq,RetType,Depth,Self,X,Res).
+%eval_20(Eq,RetType,Depth,Self,['chain-body',X|Y],Res):-  !, eval_args(Eq,RetType,Depth,Self,X,_), eval_args(Eq,RetType,Depth,Self,['chain-body'|Y],Res).
 
 eval_20(Eq,RetType,Depth,Self,['eval',X],Res):- !,
    eval_args(Eq,RetType,Depth,Self,X, Res).
@@ -740,6 +738,9 @@ cant_be_ok(_,[Let|_]):- Let==let.
 % Macro: case
 :- nodebug(metta(case)).
 
+eval_20(Eq,RetType,Depth,Self,['switch',A,CL|T],Res):- !,
+  eval_20(Eq,RetType,Depth,Self,['case',A,CL|T],Res).
+
 eval_20(Eq,RetType,Depth,Self,[P,X|More],YY):- is_list(X),X=[_,_,_],simple_math(X),
    eval_selfless_2(X,XX),X\=@=XX,!, eval_20(Eq,RetType,Depth,Self,[P,XX|More],YY).
 % if there is only a void then always return nothing for each Case
@@ -753,14 +754,19 @@ eval_20(Eq,RetType,Depth,Self,['case',A,[]],NoResult):- !,
   once(eval_args(Eq,_RetType2,Depth,Self,A,_)),
   make_nop(RetType,[],NoResult).
 
+
+into_case_keys(_,[],[]).
+into_case_keys(Nth,[Case0|CASES],[Key-Value|KVs]):-
+  Nth1 is Nth+1,
+  is_case(Key,Case0,Value),
+  if_trace((case),(format('~N'),writeqln(c(Nth,Key)=Value))),
+  into_case_keys(Nth1,CASES,KVs).
+
 % Macro: case
 eval_20(Eq,RetType,Depth,Self,['case',A,CL|T],Res):- !,
    must_det_ll(T==[]),
    into_case_list(CL,CASES),
-   findall(Key-Value,
-     (nth0(Nth,CASES,Case0),
-       (is_case(Key,Case0,Value),
-        if_trace((case),(format('~N'),writeqln(c(Nth,Key)=Value))))),KVs),!,
+   into_case_keys(1,CASES,KVs),
    eval_case(Eq,RetType,Depth,Self,A,KVs,Res).
 
 eval_case(Eq,CaseRetType,Depth,Self,A,KVs,Res):-
@@ -777,6 +783,7 @@ eval_case(Eq,CaseRetType,Depth,Self,A,KVs,Res):-
        (best_key(AA,CasES,Value) -> true ;
         (member(Void -Value,CasES),Void=='%void%')))).
 
+  best_key(AA,Cases,Value):- member(Match-Value,Cases),AA = Match,!.
   best_key(AA,Cases,Value):-
      ((member(Match-Value,Cases),AA ==Match)->true;
       ((member(Match-Value,Cases),AA=@=Match)->true;
@@ -911,9 +918,10 @@ max_counting(F,Max):- flag(F,X,X+1),  X<Max ->  true; (flag(F,_,10),!,fail).
 % =================================================================
 
 must_unify(A,A):-!.
-must_unify(A,B):- throw('Error-last-form'(must_unify(A,B))). % @TODO
+must_unify(A,B):- fail, throw('Error-last-form'(must_unify(A,B))). % @TODO
 
 % OLD
+eval_20(_Eq,_RetType,_Depth,_Self,['decons-atom',OneArg],[H,T]):- OneArg==[], !, fail. %H=[],T=[],!.
 eval_20(_Eq,_RetType,_Depth,_Self,['decons-atom',OneArg],[H,T]):- !, must_unify(OneArg,[H|T]).
 eval_20(_Eq,_RetType,_Depth,_Self,['cons-atom'|TwoArgs],[H|T]):-!, must_unify(TwoArgs,[H,T]).
 % NEW

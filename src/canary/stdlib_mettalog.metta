@@ -1,3 +1,11 @@
+(@doc = 
+  (@desc "A symbol used to define reduction rules for expressions.")
+  (@params (
+    (@param "Pattern to be matched against expression to be reduced")
+    (@param "Result of reduction or transformation of the first pattern") )
+  (@return "Not reduced itself unless custom equalities over equalities are added") )
+)
+(: = (-> $t $t Atom))
 
 (@doc ErrorType (@desc "Type of the atom which contains error"))
 (: ErrorType Type)
@@ -33,6 +41,10 @@
 (= (apply $atom $var $templ)
   (function (chain (eval (id $atom)) $var (return $templ))) )
 
+(: atom-subst (-> Atom Variable Atom Atom))
+(= (atom-subst $atom $var $templ)
+  (function (chain (eval (id $atom)) $var (return $templ))) )
+
 (: if-decons-expr (-> Expression Variable Variable Atom Atom Atom))
 (= (if-decons-expr $atom $head $tail $then $else)
   (function (eval (if-equal $atom ()
@@ -58,7 +70,24 @@
     (eval (if-error $atom (return (return $atom))
       (return $then) ))))))
 
-(: switch (-> %Undefined% Expression Atom))
+
+; Difference between `switch` and `case` is a way how they interpret `Empty`
+; result. `CaseOp` interprets first argument inside itself and then manually
+; checks whether result is empty. `switch` is interpreted in a context of
+; main interpreter. Minimal interpreter correctly passes `Empty` as an
+; argument to the `switch` but when `switch` is called from MeTTa interpreter
+; (for example user evaluates `!(switch (unify A B ok Empty) ...)` then
+; emptiness of the first argument is checked by interpreter and it will
+; break execution when `Empty` is returned.
+
+
+(: switch (-> Atom Atom Atom))
+
+(: (
+(= (switch $atom $list) (case (eval $atom) $list))
+
+
+
 (= (switch $atom $cases)
   (function (chain (decons-atom $cases) $list
     (chain (eval (switch-internal $atom $list)) $res
@@ -68,6 +97,11 @@
   (function (unify $atom $pattern
     (return $template)
     (chain (eval (switch $atom $tail)) $ret (return $ret)) )))
+
+) Comment)
+
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; MeTTa interpreter implementation ;
@@ -106,6 +140,7 @@
                 (return $atom)
                 (return (Error $atom BadType)) ))))))))))
 
+
 ; TODO: Type is used here, but there is no definition for the -> type
 ; constructor for instance, thus in practice it matches because -> has
 ; %Undefined% type. We need to assign proper type to -> and other type
@@ -125,7 +160,7 @@
 (= (filter-atom $list $var $filter)
   (function (eval (if-decons-expr $list $head $tail
     (chain (eval (filter-atom $tail $var $filter)) $tail-filtered
-      (chain (eval (apply $head $var $filter)) $filter-expr
+      (chain (eval (atom-subst $head $var $filter)) $filter-expr
         (chain $filter-expr $is-filtered
           (eval (if $is-filtered
             (chain (cons-atom $head $tail-filtered) $res (return $res))
@@ -136,7 +171,7 @@
 (= (map-atom $list $var $map)
   (function (eval (if-decons-expr $list $head $tail
     (chain (eval (map-atom $tail $var $map)) $tail-mapped
-      (chain (eval (apply $head $var $map)) $map-expr
+      (chain (eval (atom-subst $head $var $map)) $map-expr
         (chain $map-expr $head-mapped
           (chain (cons-atom $head-mapped $tail-mapped) $res (return $res)) )))
     (return ()) ))))
@@ -144,8 +179,8 @@
 (: foldl-atom (-> Expression Atom Variable Variable Atom Atom))
 (= (foldl-atom $list $init $a $b $op)
   (function (eval (if-decons-expr $list $head $tail
-    (chain (eval (apply $init $a $op)) $op-init
-      (chain (eval (apply $head $b $op-init)) $op-head
+    (chain (eval (atom-subst $init $a $op)) $op-init
+      (chain (eval (atom-subst $head $b $op-init)) $op-head
         (chain $op-head $head-folded
           (chain (eval (foldl-atom $tail $head-folded $a $b $op)) $res (return $res)) )))
     (return $init) ))))
