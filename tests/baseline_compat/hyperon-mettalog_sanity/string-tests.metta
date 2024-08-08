@@ -1,12 +1,12 @@
-!(stringToChars "xyzzy")
+!(assertEqual (stringToChars "xyzzy") ('x' 'y' 'z' 'z' 'y'))
 
-!(charsToString ('x' 'y' 'z' 'z' 'y'))
+!(assertEqual (charsToString ('x' 'y' 'z' 'z' 'y')) "xyzzy")
 
-!(stringToChars "")
+!(assertEqual (stringToChars "") ())
 
-!(charsToString ())
+!(assertEqual (charsToString ()) "")
 
 ;; this one works differently in metta and mettalog
-!(charsToString (stringToChars "xyzzy"))
+!(assertEqual (charsToString (stringToChars "xyzzy")) "xyzzy")
 
-!(stringToChars (charsToString ('x' 'y' 'z' 'z' 'y')))
+!(assertEqual (stringToChars (charsToString ('x' 'y' 'z' 'z' 'y'))) ('x' 'y' 'z' 'z' 'y'))
