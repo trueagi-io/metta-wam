@@ -106,6 +106,7 @@ write_val(V):- write('"'),write(V),write('"').
 % Handling the final write when the value is a variable or a '$VAR' structure.
 is_final_write(V):- var(V), !, write_dvar(V),!.
 is_final_write('$VAR'(S)):-  !, write_dvar(S),!.
+is_final_write('#\\'(S)):-  !, format("'~w'",[S]).
 is_final_write([VAR,V|T]):- '$VAR'==VAR, T==[], !, write_dvar(V).
 is_final_write('[|]'):- write('Cons'),!.
 is_final_write([]):- !, write('()').
