@@ -19,3 +19,5 @@
 !(assertEqual (charsToString (' ')) " ")
 
 !(assertEqual (stringToChars " ") (' '))
+
+!(assertEqual (stringToChars (superpose ("ab" "cd" "ef"))) (superpose (('a' 'b') ('c' 'd') ('e' 'f'))))
