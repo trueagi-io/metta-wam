@@ -1178,8 +1178,8 @@ get_symbol_metatype(_Vl,_Want,'Grounded').
 
 as_metta_char(X,'#\\'(X)).
 
-eval_20(Eq,RetType,Depth,Self,['stringToChars',String],Chars):- !, eval_args(Eq,RetType,Depth,Self,String,SS), !, string_chars(SS,Chars0),maplist(as_metta_char,Chars0,Chars).
-eval_20(Eq,RetType,Depth,Self,['charsToString',Chars],String):- !, eval_args(Eq,RetType,Depth,Self,Chars,CC), !, maplist(as_metta_char,CC0,CC),string_chars(String,CC0).
+eval_20(Eq,RetType,Depth,Self,['stringToChars',String],Chars):- !, eval_args(Eq,RetType,Depth,Self,String,SS), string_chars(SS,Chars0), maplist(as_metta_char,Chars0,Chars).
+eval_20(Eq,RetType,Depth,Self,['charsToString',Chars],String):- !, eval_args(Eq,RetType,Depth,Self,Chars,CC), maplist(as_metta_char,CC0,CC), string_chars(String,CC0).
 
 
 % =================================================================
