@@ -458,4 +458,7 @@ properties('&corelib','tuple-count', [data_structures, qhelp("Counts tuples with
 %properties('&corelib','TupleConcat', [data_structures, qhelp("Concatenates tuples."), concatenation]).
 %properties('&corelib','collapseCardinality', [data_structures, qhelp("Collapses structures with cardinality consideration."), manipulation, cardinality]).
 
+% --- String and Character manipulation ---
+properties('&corelib','stringToChars', [string_operations, qhelp("Convert a string to a list of chars."), string_to_chars]).
+properties('&corelib','charsToString', [string_operations, qhelp("Convert a list of chars to a string."), chars_to_string]).
 
