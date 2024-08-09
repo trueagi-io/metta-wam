@@ -1181,6 +1181,52 @@ as_metta_char(X,'#\\'(X)).
 eval_20(Eq,RetType,Depth,Self,['stringToChars',String],Chars):- !, eval_args(Eq,RetType,Depth,Self,String,SS), string_chars(SS,Chars0), maplist(as_metta_char,Chars0,Chars).
 eval_20(Eq,RetType,Depth,Self,['charsToString',Chars],String):- !, eval_args(Eq,RetType,Depth,Self,Chars,CC), maplist(as_metta_char,CC0,CC), string_chars(String,CC0).
 
+% =================================================================
+% =================================================================
+% =================================================================
+%  FORMAT-ARGS
+% =================================================================
+% =================================================================
+% =================================================================
+
+% We deal with indexing, but not formatting (the stuff following the ':')(yet)
+% https://doc.rust-lang.org/std/fmt/ used as a reference
+
+format_args_get_index([C|FormatRest1], FormatRest2, Index2) :- char_code(C, Ccode), Ccode >= 48, Ccode =< 57, !, % in the range ['0'..'9']
+    Index1 is Ccode-48,
+    format_args_get_index1(FormatRest1, FormatRest2, Index1, Index2).
+format_args_get_index(FormatRest, FormatRest, none).
+
+% have at least one digit already. This is separate from format_args_get_index to distinguish {} and {0} cases
+format_args_get_index1([C|FormatRest1], FormatRest2, Index1, Index3) :- char_code(C, Ccode), Ccode >= 48, Ccode =< 57, !, % in the range ['0'..'9']
+    Index2 is (Index1*10)+(Ccode-48),
+    format_args_get_index1(FormatRest1, FormatRest2, Index2, Index3).
+format_args_get_index1(FormatRest, FormatRest, Index, Index).
+
+% Placeholder to deal with formatting {<n>:<format>} later
+format_args_get_format(FormatRest, FormatRest, _).
+
+format_args_write(Arg,_) :- write_src_woi(Arg).
+
+format_args([], _, _).
+format_args(['{'|FormatRest1], Iterator1, Args) :-
+    format_args_get_index(FormatRest1, FormatRest2, Index),
+    format_args_get_format(FormatRest2, ['}'|FormatRest3], Format),
+    % The Rust behaviour of advancing the iterator if an index is not specified
+    (Index == none ->
+        nth0(Iterator1,Args,Arg),Iterator2 is Iterator1+1
+    ;
+        nth0(Index,Args,Arg), Iterator2 is Iterator1
+    ),
+    format_args_write(Arg,Format),
+    format_args(FormatRest3, Iterator2, Args).
+format_args([C|FormatRest], Iterator, Args) :- put(C), format_args(FormatRest, Iterator, Args).
+
+eval_20(Eq,RetType,Depth,Self,['format-args',Format,Args],Result):- !,
+   eval_args(Eq,RetType,Depth,Self,Format,EFormat),
+   eval_args(Eq,RetType,Depth,Self,Args,EArgs),
+   string_chars(EFormat, FormatChars), user_io(with_output_to(string(Result), format_args(FormatChars, 0, EArgs))).
+%   string_chars(EFormat, FormatChars), wots(Result, format_args(FormatChars, 0, EArgs)).
 
 % =================================================================
 % =================================================================
