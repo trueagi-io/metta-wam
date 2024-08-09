@@ -10,3 +10,12 @@
 !(assertEqual (charsToString (stringToChars "xyzzy")) "xyzzy")
 
 !(assertEqual (stringToChars (charsToString ('x' 'y' 'z' 'z' 'y'))) ('x' 'y' 'z' 'z' 'y'))
+
+;; metta gets all these wrong
+!(assertEqual (charsToString ('x' 'y' ' ' 'z' 'y')) "xy zy")
+
+!(assertEqual (stringToChars "xy zy") ('x' 'y' ' ' 'z' 'y'))
+
+!(assertEqual (charsToString (' ')) " ")
+
+!(assertEqual (stringToChars " ") (' '))
