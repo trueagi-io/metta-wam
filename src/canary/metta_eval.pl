@@ -1211,13 +1211,17 @@ format_args_write('#\\'(Arg),_) :- !, write(Arg).
 format_args_write(Arg,_) :- write_src_woi(Arg).
 
 format_args([], _, _).
+format_args(['{','{'|FormatRest], Iterator, Args) :- !, put('{'), format_args(FormatRest, Iterator, Args). % escaped
+format_args(['}','}'|FormatRest], Iterator, Args) :- !, put('}'), format_args(FormatRest, Iterator, Args). % escaped
 format_args(['{'|FormatRest1], Iterator1, Args) :-
     format_args_get_index(FormatRest1, FormatRest2, Index),
     format_args_get_format(FormatRest2, ['}'|FormatRest3], Format),
+    % check that the closing '}' is not escaped with another '}'
+    ((FormatRest3=[] ; ((FormatRest3=[C|_],C\='}')) )),
     % The Rust behaviour of advancing the iterator if an index is not specified
     (((Index == none))
-    -> ((nth0(Iterator1,Args,Arg),Iterator2 is Iterator1+1))
-    ; ((nth0(Index,Args,Arg), Iterator2 is Iterator1))),
+        -> ((nth0(Iterator1,Args,Arg),Iterator2 is Iterator1+1))
+        ; ((nth0(Index,Args,Arg), Iterator2 is Iterator1))),
     format_args_write(Arg,Format),
     format_args(FormatRest3, Iterator2, Args).
 format_args([C|FormatRest], Iterator, Args) :- put(C), format_args(FormatRest, Iterator, Args).
