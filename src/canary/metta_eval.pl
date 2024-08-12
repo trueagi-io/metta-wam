@@ -1206,6 +1206,8 @@ format_args_get_index1(FormatRest, FormatRest, Index, Index).
 % Placeholder to deal with formatting {<n>:<format>} later
 format_args_get_format(FormatRest, FormatRest, _).
 
+format_args_write(Arg,_) :- string(Arg), !, write(Arg).
+format_args_write('#\\'(Arg),_) :- !, write(Arg).
 format_args_write(Arg,_) :- write_src_woi(Arg).
 
 format_args([], _, _).
@@ -1213,11 +1215,9 @@ format_args(['{'|FormatRest1], Iterator1, Args) :-
     format_args_get_index(FormatRest1, FormatRest2, Index),
     format_args_get_format(FormatRest2, ['}'|FormatRest3], Format),
     % The Rust behaviour of advancing the iterator if an index is not specified
-    (Index == none ->
-        nth0(Iterator1,Args,Arg),Iterator2 is Iterator1+1
-    ;
-        nth0(Index,Args,Arg), Iterator2 is Iterator1
-    ),
+    (((Index == none))
+    -> ((nth0(Iterator1,Args,Arg),Iterator2 is Iterator1+1))
+    ; ((nth0(Index,Args,Arg), Iterator2 is Iterator1))),
     format_args_write(Arg,Format),
     format_args(FormatRest3, Iterator2, Args).
 format_args([C|FormatRest], Iterator, Args) :- put(C), format_args(FormatRest, Iterator, Args).
