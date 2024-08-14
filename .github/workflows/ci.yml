@@ -1,4 +1,4 @@
-name: CI Job to Generate JUnit Reports
+name: CI Job to Generate JUnit Reports with Diff
 
 on:
   push:
@@ -37,12 +37,12 @@ jobs:
         python scripts/into_junit.py /tmp/SHARED.UNITS > junit.xml
 
     - name: Convert JUnit XML to Standard HTML Report
-      continue-on-error: true  # Continue even if this step fails
+      continue-on-error: true  # Continue to the next step even if this one fails
       run: |
         junit2html junit.xml junit-standard-report.html
 
     - name: Convert JUnit XML to Matrix HTML Report
-      continue-on-error: true  # Continue even if this step fails
+      continue-on-error: true  # Continue to the next step even if this one fails
       run: |
         junit2html --report-matrix junit-matrix-report.html junit.xml
 
@@ -72,6 +72,29 @@ jobs:
         reporter: 'java-junit'  # Correct reporter type for JUnit XML
         fail-on-error: false  # Do not fail the job if tests fail
 
+    - name: Download Previous JUnit Results
+      uses: actions/download-artifact@v3
+      with:
+        name: junit-report
+        path: previous-junit.xml  # Save as previous-junit.xml
+
+    - name: Install ReportGenerator
+      run: |
+        dotnet tool install -g dotnet-reportgenerator-globaltool
+
+    - name: Compare JUnit Test Results with ReportGenerator
+      run: |
+        reportgenerator \
+          -reports:"previous-junit.xml;junit.xml" \
+          -targetdir:"./comparison-report" \
+          -reporttypes:"HtmlSummary;HtmlChart"
+
+    - name: Upload JUnit Comparison Report
+      uses: actions/upload-artifact@v3
+      with:
+        name: junit-comparison-html-report
+        path: ./comparison-report
+
     - name: Display HTML Report Information
       run: |
-        echo "Both standard and matrix HTML reports are available as artifacts."
+        echo "Standard, matrix, and comparison HTML reports are available as artifacts."
