@@ -72,26 +72,25 @@ jobs:
         reporter: 'java-junit'  # Correct reporter type for JUnit XML
         fail-on-error: false  # Do not fail the job if tests fail
 
-    - name: Compare JUnit Test Results with mikepenz
-      uses: mikepenz/action-junit-report@v3
+    - name: Download Previous JUnit Results
+      uses: actions/download-artifact@v3
       with:
-        report_paths: junit.xml
-        compare_to_previous: true
-        fail_on_failure: false  # Do not fail the job if tests fail
+        name: junit-report
+        path: previous-junit.xml  # Save as previous-junit.xml
 
-    - name: Diff JUnit Test Results
-      uses: Juit/junit-diff@v1.0.2
+    - name: Compare JUnit Test Results with ReportGenerator
+      uses: danielpalme/reportgenerator-action@5.1.10
       with:
-        base-junit: junit-report/base.xml  # Adjust to your previous report location
-        head-junit: junit.xml  # The current test report
-        output: junit-diff-report.html
+        reports: 'previous-junit.xml;junit.xml'
+        targetdir: './comparison-report'
+        reporttypes: 'HtmlSummary;HtmlChart'
 
-    - name: Upload JUnit Diff Report
+    - name: Upload JUnit Comparison Report
       uses: actions/upload-artifact@v3
       with:
-        name: junit-diff-html-report
-        path: junit-diff-report.html
+        name: junit-comparison-html-report
+        path: ./comparison-report
 
     - name: Display HTML Report Information
       run: |
-        echo "Standard, matrix, and diff HTML reports are available as artifacts. JUnit test comparison reports are also available."
+        echo "Standard, matrix, and comparison HTML reports are available as artifacts."
