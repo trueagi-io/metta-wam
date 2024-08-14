@@ -5,7 +5,10 @@ import re
 def create_testcase_element(testclass, testname, stdout, identifier, got, expected, status, url):
     testcase = ET.Element("testcase", classname=testclass, name=testname)
     
-    description = f"Test {identifier} with URL: {url}"
+    # Add properties with test description
+    properties = ET.SubElement(testcase, "properties")
+    property_element = ET.SubElement(properties, "property", name="test_description")
+    property_element.text = stdout
     
     if status == "PASS":
         system_out = ET.SubElement(testcase, "system-out")
