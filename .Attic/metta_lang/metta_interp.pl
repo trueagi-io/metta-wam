@@ -612,6 +612,7 @@ show_options_values:-
 % conversion between String and List of Chars
 'stringToChars'(String, Chars) :- eval_H(['stringToChars', String], Chars).
 'charsToString'(Chars, String) :- eval_H(['charsToString', Chars], String).
+'format-args'(Format, Args, Result) :- eval_H(['format-args', Format, Args], Result).
 
 % ============================
 % %%%% Random Utilities
