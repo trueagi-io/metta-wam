@@ -1,3 +1,4 @@
+; Public MeTTa
 (@doc = 
   (@desc "A symbol used to define reduction rules for expressions.")
   (@params (
@@ -7,9 +8,12 @@
 (: = (-> $t $t Atom))
 ;; Implemented from Interpreters
 
+; Public MeTTa
 (@doc ErrorType (@desc "Type of the atom which contains error"))
 (: ErrorType Type)
+;; Implemented from Interpreters
 
+; Public MeTTa
 (@doc Error
   (@desc "Error constructor")
   (@params (
@@ -19,6 +23,7 @@
 (: Error (-> Atom Atom ErrorType))
 ;; Implemented from Interpreters
 
+; Public MinimalMeTTa
 (@doc return
   (@desc "Returns value from the (function ...) expression")
   (@params (
@@ -27,6 +32,7 @@
 (: return (-> $t $t))
 ;; Implemented from Interpreters
 
+; Public MinimalMeTTa
 (@doc function
   (@desc "Evaluates the argument until it becomes (return <result>). Then (function (return <result>)) is reduced to the <result>.")
   (@params (
@@ -35,6 +41,7 @@
 (: function (-> Atom Atom))
 ;; Implemented from Interpreters
 
+; Public MinimalMeTTa
 (@doc eval
   (@desc "Evaluates input atom, makes one step of the evaluation")
   (@params (
@@ -43,6 +50,7 @@
 (: eval (-> Atom Atom))
 ;; Implemented from Interpreters
 
+; Public MinimalMeTTa
 (@doc chain
   (@desc "Evaluates first argument, binds it to the variable (second argument) and then evaluates third argument which contains (or not) mentioned variable")
   (@params (
@@ -53,7 +61,7 @@
 (: chain (-> Atom Variable Atom Atom))
 ;; Implemented from Interpreters
 
-;; Heler
+;; Helper MinimalMeTTa
 (@doc if-unify
   (@desc "Matches two first arguments and returns third argument if they are matched and forth argument otherwise")
   (@params (
@@ -69,12 +77,13 @@
 (ALT= (if-unify $a $b $then $else)
   (case (if-unify-or-empty $a $b) ((Empty $else))) )
 
+;; Helper MinimalMeTTa
 (: if-unify-or-empty (-> Atom Atom Atom))
 (= (if-unify-or-empty $a $a) unified)
 (= (if-unify-or-empty $a $b) (empty))
 
 
-;; Public
+;; Public MeTTa
 (@doc unify
   (@desc "Like Match ....")
   (@params (
@@ -86,7 +95,7 @@
 (: unify (-> Atom Atom Atom Atom Atom))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc cons-atom
   (@desc "Constructs an expression using two arguments")
   (@params (
@@ -97,7 +106,7 @@
 ;; Implemented from Interpreters
 ; AKA? (: cons (-> Atom Atom Atom))
 
-;; Public
+;; Public MeTTa
 (@doc decons-atom
   (@desc "Works as a reverse to cons-atom function. It gets Expression as an input and returns it splitted to head and tail, e.g. (decons-atom (Cons X Nil)) -> (Cons (X Nil))")
   (@params (
@@ -107,7 +116,7 @@
 ;; Implemented from Interpreters
 ; AKA? (: decons (-> Atom Atom))
 
-;; Public
+;; Public MeTTa
 (@doc collapse-bind
   (@desc "Evaluates the Atom (first argument) and returns an expression which contains all alternative evaluations in a form (Atom Bindings). Bindings are represented in a form of a grounded atom.")
   (@params (
@@ -118,7 +127,7 @@
 (: collapse-bind (-> Atom Expression))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc superpose-bind
   (@desc "Complement to the collapse-bind. It takes result of collapse-bind (first argument) and returns only result atoms without bindings")
   (@params (
@@ -129,7 +138,7 @@
 (: superpose-bind (-> Expression Atom))
 ;; Implemented from Interpreters
 
-; Helper for Minimal Metta?
+; Helper Minimal Metta?
 (@doc metta
   (@desc "Run MeTTa interpreter on atom.")
   (@params (
@@ -140,7 +149,7 @@
 (: metta (-> Atom Type Grounded Atom))
 ;; Implemented from Interpreters
 
-;; Public?
+;; Public MinimalMeTTa?
 (@doc id
   (@desc "Returns its argument")
   (@params (
@@ -149,7 +158,7 @@
 (: id (-> Atom Atom))
 (= (id $x) $x)
 
-;; Public?
+;; Public MeTTa?
 (@doc atom-subst
   (@desc "Substitutes variable passed as a second argument in the third argument by the first argument")
   (@params (
@@ -162,7 +171,7 @@
 (= (atom-subst $atom $var $templ)
   (function (chain (eval (id $atom)) $var (return $templ))) )
 
-;; Helper or Public?
+;; Helper MinimalMeTTa
 (@doc if-decons-expr
   (@desc "Checks if first argument is non empty expression. If so gets tail and head from the first argument and returns forth argument using head and tail values. Returns fifth argument otherwise.")
   (@params (
@@ -180,7 +189,7 @@
     (chain (decons-atom $atom) $list
       (if-unify $list ($head $tail) (return $then) (return $else)) )))))
 
-;; Helper or Public?
+;; Helper MinimalMeTTa
 (@doc if-error
   (@desc "Checks if first argument is an error atom. Returns second argument if so or third argument otherwise.")
   (@params (
@@ -201,7 +210,7 @@
             (return $else) ))))
       (return $else) )))))
 
-;; Helper or Public?
+;; Helper MinimalMeTTa
 (@doc return-on-error
   (@desc "Returns first argument if it is Empty or an error. Returns second argument otherwise.")
   (@params (
@@ -223,7 +232,8 @@
 ; (for example user evaluates `!(switch (if-unify A B ok Empty) ...)` then
 ; emptiness of the first argument is checked by interpreter and it will
 ; break execution when `Empty` is returned.
-;; Helper or Public?
+
+;; Helper MinimalMeTTa
 (@doc switch
   (@desc "Subsequently tests multiple pattern-matching conditions (second argument) for the given value (first argument)")
   (@params (
@@ -238,17 +248,15 @@
 
 
 
-; BEGIN Yes, Douglas turned this sourcecode form into a a Value with the type Comment
+; BEGIN - Yes, Douglas turned this sourcecode form into a a Value with the type Comment
 (: (
-
 (: switch (-> %Undefined% Expression Atom))
-
 (= (switch $atom $cases)
   (function (chain (decons-atom $cases) $list
     (chain (eval (switch-internal $atom $list)) $res
       (chain (eval (if-equal $res NotReducible Empty $res)) $x (return $x)) ))))
 
-; Helper only
+; Helper MinimalMeTTa
 (@doc switch-internal
   (@desc "This function is being called inside switch function to test one of the cases and it calls switch once again if current condition is not met")
   (@params (
@@ -261,12 +269,11 @@
     (chain (eval (switch $atom $tail)) $ret (return $ret)) )))
 
 ) Comment)  
-; END 
-;  Yes, Douglas turned this sourcecode form into a a Value with the type Comment
+; ENDOF - Yes, Douglas turned this sourcecode form into a a Value with the type Comment
 
 
 
-
+; Helper MinimalMeTTa
 ; TODO: Type is used here, but there is no definition for the -> type
 ; constructor for instance, thus in practice it matches because -> has
 ; %Undefined% type. We need to assign proper type to -> and other type
@@ -288,7 +295,7 @@
       (($type $meta) (return False))
     ))))))
 
-;; Public
+;; Public MeTTa
 (@doc type-cast
   (@desc "Casts atom passed as a first argument to the type passed as a second argument using space as a context")
   (@params (
@@ -308,7 +315,7 @@
                 (return $atom)
                 (return (Error $atom BadType)) ))))))))))
 
-;; Public
+;; Public MeTTa
 (@doc match-types
   (@desc "Checks if two types can be unified and returns third argument if so, fourth - otherwise")
   (@params (
@@ -328,7 +335,7 @@
           (return $then)
           (if-unify $type1 $type2 (return $then) (return $else)) ))))))))))
 
-; Helper only?
+; Helper MinimalMeTTa?
 (@doc first-from-pair
   (@desc "Gets a pair as a first argument and returns first atom from pair")
   (@params (
@@ -340,7 +347,7 @@
       (return $first)
       (return (Error (first-from-pair $pair) "incorrect pair format")))))
 
-; Helper only?
+; Helper MinimalMeTTa?
 (@doc match-type-or
   (@desc "Checks if two types (second and third arguments) can be unified and returns result of OR operation between first argument and type checking result")
   (@params (
@@ -353,7 +360,7 @@
     (chain (eval (match-types $next $type True False)) $matched
       (chain (eval (or $folded $matched)) $or (return $or)) )))
 
-;; Public
+;; Public MeTTa
 (@doc filter-atom
   (@desc "Function takes list of atoms (first argument), variable (second argument) and filter predicate (third argument) and returns list with items which passed filter. E.g. (filter-atom (1 2 3 4) $v (eval (> $v 2))) will give (3 4)")
   (@params (
@@ -372,7 +379,7 @@
             (return $tail-filtered) )))))
     (return ()) ))))
 
-;; Public
+;; Public MeTTa
 (@doc map-atom
   (@desc "Function takes list of atoms (first argument), variable to be used inside (second variable) and an expression which will be evaluated for each atom in list (third argument). Expression should contain variable. So e.g. (map-atom (1 2 3 4) $v (eval (+ $v 1))) will give (2 3 4 5)")
   (@params (
@@ -389,7 +396,7 @@
           (chain (cons-atom $head-mapped $tail-mapped) $res (return $res)) )))
     (return ()) ))))
 
-;; Public
+;; Public MeTTa
 (@doc foldl-atom
   (@desc "Function takes list of values (first argument), initial value (second argument) and operation (fifth argument) and applies it consequently to the list of values, using init value as a start. It also takes two variables (third and fourth argument) to use them inside")
   (@params (
@@ -408,7 +415,7 @@
           (chain (eval (foldl-atom $tail $head-folded $a $b $op)) $res (return $res)) )))
     (return $init) ))))
 
-;; Helper only
+;; Helper MinimalMeTTa
 (: separate-errors (-> Expression Expression Expression))
 (= (separate-errors $succ-err $res)
   (function (if-unify $succ-err ($suc $err)
@@ -419,7 +426,7 @@
       (return $succ-err))
     (return $succ-err) )))
 
-;; Helper only
+;; Helper MinimalMeTTa
 (= (check-alternatives $atom)
   (function
     (chain (collapse-bind $atom) $collapsed
@@ -431,7 +438,7 @@
             (chain (superpose-bind $filtered) $ret (return $ret)) )
           (return (Error (check-alternatives $atom) "list of results was not filtered correctly")) )))))
 
-;; Public
+;; Public MeTTa
 (= (interpret $atom $type $space)
   (function (chain (eval (get-metatype $atom)) $meta
     (eval (if-equal $type Atom
@@ -448,7 +455,7 @@
             (chain (eval (check-alternatives (eval (interpret-expression $atom $type $space)))) $ret (return $ret)))
         ))))))))))
 
-;; Helper only
+;; Helper MinimalMeTTa
 (= (interpret-expression $atom $type $space)
   (function (eval (if-decons-expr $atom $op $args
     (chain (eval (get-type $op $space)) $op-type
@@ -460,7 +467,7 @@
             (chain (eval (metta-call $reduced-atom $type $space)) $ret (return $ret)) ))))
     (chain (eval (type-cast $atom $type $space)) $ret (return $ret)) ))))
 
-;; Helper only
+;; Helper MinimalMeTTa
 (= (interpret-func $expr $type $ret-type $space)
   (function (eval (if-decons-expr $expr $op $args
     (chain (eval (interpret $op $type $space)) $reduced-op
@@ -472,7 +479,7 @@
           (return (Error $type "Function type expected")) )))))
     (return (Error $expr "Non-empty expression atom is expected")) ))))
 
-;; Helper only
+;; Helper MinimalMeTTa
 (= (interpret-args $atom $args $arg-types $ret-type $space)
   (function (if-unify $args ()
     (eval (if-decons-expr $arg-types $actual-ret-type $type-tail
@@ -495,13 +502,13 @@
         (return (Error $atom BadType)) ))
       (return (Error (interpret-atom $atom $args $arg-types $space) "Non-empty expression atom is expected")) )))))
 
-;; Helper only
+;; Helper MinimalMeTTa
 (= (interpret-args-tail $atom $head $args-tail $args-tail-types $ret-type $space)
   (function (chain (eval (interpret-args $atom $args-tail $args-tail-types $ret-type $space)) $reduced-tail
     (eval (return-on-error $reduced-tail
       (chain (cons-atom $head $reduced-tail) $ret (return $ret)) )))))
 
-;; Helper only
+;; Helper MinimalMeTTa
 (= (interpret-tuple $atom $space)
   (function (if-unify $atom ()
     (return $atom)
@@ -513,7 +520,7 @@
               (chain (cons-atom $rhead $rtail) $ret (return $ret)) ))))))
       (return (Error (interpret-tuple $atom $space) "Non-empty expression atom is expected as an argument")) )))))
 
-;; Helper only?
+;; Helper MinimalMeTTa?
 (= (metta-call $atom $type $space)
   (function (eval (if-error $atom (return $atom)
     (chain (eval $atom) $result
@@ -526,7 +533,7 @@
 ; Standard library written in MeTTa ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Public or Helper?
+;; Public MinimalMeTTa?
 (@doc if-equal
   (@desc "Checks if first two arguments are equal and evaluates third argument if equal, fourth argument - otherwise")
   (@params (
@@ -535,12 +542,13 @@
     (@param "Atom to be evaluated if arguments are equal")
     (@param "Atom to be evaluated if arguments are not equal")))
   (@return "Evaluated third or fourth argument"))
+;; Implemented from Interpreters
   
 ; TODO: Type is used here, but there is no definition for the -> type
 ; constructor for instance, thus in practice it matches because -> has
 ; %Undefined% type. We need to assign proper type to -> and other type
 ; constructors but it is not possible until we support vararg types.
-;; Public or Helper?
+;; Public MeTTa or Helper?
 (@doc is-function-type
   (@desc "Function checks if input type is a function type")
   (@params (
@@ -560,13 +568,7 @@
 ; MeTTa interpreter implementation ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Public or Helper?
-(: apply (-> Atom Variable Atom Atom))
-(= (apply $atom $var $templ)
-  (function (chain (eval (id $atom)) $var (return $templ))) )
-
-
-;; Public
+;; Public MeTTa
 (@doc if
   (@desc "Replace itself by one of the arguments depending on condition.")
   (@params (
@@ -575,28 +577,30 @@
     (@param "Result when condition is False")))
   (@return "Second or third argument") )
 (: if (-> Bool Atom Atom $t))
-(= (if True $then $else) $then)
-(= (if False $then $else) $else)
+;; Implemented from Interpreters
+(ALT= (if True $then $else) $then)
+(ALT= (if False $then $else) $else)
 ;`$then`, `$else` should be of `Atom` type to avoid evaluation
 ; and infinite cycle in inference
 
 
-;; Public
+;; Public MeTTa
 (@doc xor
   (@desc "Exclusive disjunction of two arguments")
   (@params (
     (@param "First argument")
     (@param "Second argument")))
   (@return "Return values are the same as logical disjunction, but when both arguments are True xor will return False"))
+;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc flip
   (@desc "Produces random boolean value")
   (@params ())
   (@return "Random boolean value"))
+;; Implemented from Interpreters
 
-
-;; Public
+;; Public MeTTa
 (@doc or
   (@desc "Logical disjunction of two arguments")
   (@params (
@@ -604,12 +608,13 @@
     (@param "Second argument")))
   (@return "True if any of input arguments is True, False - otherwise"))
 (: or (-> Bool Bool Bool))
-(= (or False False) False)
-(= (or False True) True)
-(= (or True False) True)
-(= (or True True) True)
+;; Implemented from Interpreters
+(ALT= (or False False) False)
+(ALT= (or False True) True)
+(ALT= (or True False) True)
+(ALT= (or True True) True)
 
-;; Public
+;; Public MeTTa
 (@doc and
   (@desc "Logical conjunction of two arguments")
   (@params (
@@ -617,22 +622,24 @@
     (@param "Second argument")))
   (@return "Returns True if both arguments are True, False - otherwise"))
 (: and (-> Bool Bool Bool))
-(= (and False False) False)
-(= (and False True) False)
-(= (and True False) False)
-(= (and True True) True)
+;; Implemented from Interpreters
+(ALT= (and False False) False)
+(ALT= (and False True) False)
+(ALT= (and True False) False)
+(ALT= (and True True) True)
 
-;; Public
+;; Public MeTTa
 (@doc not
   (@desc "Logical negation")
   (@params (
     (@param "Argument")))
   (@return "Negates boolean input argument (False -> True, True -> False)"))
 (: not (-> Bool Bool))
-(= (not True) False)
-(= (not False) True)
+;; Implemented from Interpreters
+(ALT= (not True) False)
+(ALT= (not False) True)
 
-;; Public
+;; Public MeTTa
 (@doc let
   (@desc "Let function is utilized to establish temporary variable bindings within an expression. It allows introducing variables (first argument), assign values to them (second argument), and then use these values within the scope of the let block")
   (@params (
@@ -641,12 +648,13 @@
     (@param "Expression which will be reduced and in which variable (first argument) could be used")))
   (@return "Result of third argument's evaluation"))
 
-; Public
+;; Public MeTTa
 (: let (-> Atom %Undefined% Atom Atom))
-(= (let $pattern $atom $template)
+;; Implemented from Interpreters
+(ALT= (let $pattern $atom $template)
   (if-unify $atom $pattern $template Empty))
 
-; Public
+;; Public MeTTa
 (@doc let*
   (@desc "Same as let, but first argument is a tuple containing tuples of variables and their bindings, e.g. (($v (+ 1 2)) ($v2 (* 5 6)))")
   (@params (
@@ -654,96 +662,104 @@
     (@param "Expression which will be reduced and in which variable (first argument) could be used")))
   (@return "Result of second argument's evaluation"))
 (: let* (-> Expression Atom Atom))
-(= (let* $pairs $template)
+;; Implemented from Interpreters
+(ALT= (let* $pairs $template)
   (eval (if-decons-expr $pairs ($pattern $atom) $tail
     (let $pattern $atom (let* $tail $template))
     $template )))
 
 
-; Public?
+;; Public MeTTa?
 (:> Space Grounded)
 
-; Public
+;; Public MeTTa
 (@doc add-reduct
   (@desc "Prevents atom from being reduced")
   (@params (
     (@param "Atom")))
   (@return "Quoted atom"))
-(@doc add-reduct-nm
+;; Implemented from Interpreters
+(@doc add-reduct-rust1
   (@desc "Adds atom into the atomspace reducing it first")
   (@params (
     (@param "Atomspace to add atom into")
     (@param "Atom to add")))
   (@return "Unit atom"))
   
-(: add-reduct-nm (-> Space %Undefined% (->)))
+(: add-reduct-rust1 (-> Space %Undefined% (->)))
 (= (add-reduct-minimal $dst $atom) (add-atom $dst $atom))
-; Public
+;; Public MeTTa
 (: add-reduct (-> Grounded %Undefined% (->)))
 (= (add-reduct $dst $atom) (add-atom $dst $atom))
 
-; Public
+;; Public MeTTa
 (@doc car-atom
   (@desc "Extracts the first atom of an expression as a tuple")
   (@params (
     (@param "Expression")))
   (@return "First atom of an expression"))
+;; Implemented from Interpreters
 (: car-atom (-> Expression Atom))
 (= (car-atom $atom)
   (eval (if-decons-expr $atom $head $_
     $head
     (Error (car-atom $atom) "car-atom expects a non-empty expression as an argument") )))
 
-; Public
+;; Public MeTTa
 (@doc cdr-atom
   (@desc "Extracts the tail of an expression (all except first atom)")
   (@params (
     (@param "Expression")))
   (@return "Tail of an expression"))
 (: cdr-atom (-> Expression Expression))
+;; Implemented from Interpreters
 (= (cdr-atom $atom)
   (eval (if-decons-expr $atom $_ $tail
     $tail
     (Error (cdr-atom $atom) "cdr-atom expects a non-empty expression as an argument") )))
 
-; Public
+;; Public MeTTa
 (@doc quote
   (@desc "Prevents atom from being reduced")
   (@params (
     (@param "Atom")))
   (@return "Quoted atom"))
+;; Implemented from Interpreters
 (: quote (-> Atom Atom))
 (= (quote $atom) NotReducible)
 
-; Public
+;; Public MeTTa
 (@doc unquote
   (@desc "Unquotes quoted atom, e.g. (unquote (quote $x)) returns $x")
   (@params (
     (@param "Quoted atom")))
   (@return "Unquoted atom"))
+;; Implemented from Interpreters
 (: unquote (-> %Undefined% %Undefined%))
 (= (unquote (quote $atom)) $atom)
 
 ; TODO: there is no way to define operation which consumes any number of
 ; arguments  and returns unit
-; Public
+;; Public MeTTa
 (@doc nop
   (@desc "Outputs unit atom for any input")
   (@params (
     (@param "Anything")))
   (@return "Unit atom"))
+;; Implemented from Interpreters
 (= (nop) ())
 (= (nop $x) ())
 
-; Public
+;; Public MeTTa
 (@doc empty
   (@desc "Cuts evaluation of the non-deterministic branch and removes it from the result")
   (@params ())
   (@return "Nothing"))
 (: empty (-> %Undefined%))
+;; Implemented from Interpreters
 (= (empty) (let a b never-happens))
 
-(= (empty-nm) (let a b never-happens))
+(= (empty-rust1) (let a b never-happens))
 ; TODO: MINIMAL added for compatibility, remove after migration
 (= (empty-minimal) Empty)
 
@@ -751,7 +767,7 @@
 ; Documentation formatting functions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Public
+;; Public MeTTa
 (@doc @doc
   (@desc "Used for documentation purposes. Function documentation starts with @doc")
   (@params (
@@ -763,7 +779,7 @@
 (: @doc (-> Atom DocDescription DocInformal))
 (: @doc (-> Atom DocDescription DocParameters DocReturnInformal DocInformal))
 
-; Public
+;; Public MeTTa
 (@doc @desc
   (@desc "Used for documentation purposes. Description of function starts with @desc as a part of @doc")
   (@params (
@@ -771,7 +787,7 @@
   (@return "Function description"))
 (: @desc (-> String DocDescription))
 
-; Public
+;; Public MeTTa
 (@doc @param
   (@desc "Used for documentation purposes. Description of function parameter starts with @param as a part of @params which is a part of @doc")
   (@params (
@@ -780,7 +796,7 @@
 (: @param (-> String DocParameterInformal))
 (: @param (-> DocType DocDescription DocParameter))
 
-; Public
+;; Public MeTTa
 (@doc @return
   (@desc "Used for documentation purposes. Description of function return value starts with @return as a part of @doc")
   (@params (
@@ -789,7 +805,7 @@
 (: @return (-> String DocReturnInformal))
 (: @return (-> DocType DocDescription DocReturn))
 
-; Public
+;; Public MeTTa
 (@doc @doc-formal
   (@desc "Used for documentation purposes. get-doc returns documentation starting with @doc-formal symbol. @doc-formal contains 6 or 4 parameters depending on the entity being described (functions being described using 6 parameters, atoms - 4 parameters)")
   (@params (
@@ -803,7 +819,7 @@
 (: @doc-formal (-> DocItem DocKindFunction DocType DocDescription DocParameters DocReturn DocFormal))
 (: @doc-formal (-> DocItem DocKindAtom DocType DocDescription DocFormal))
 
-; Public
+;; Public MeTTa
 (@doc @item
   (@desc "Used for documentation purposes. Converts atom/function's name to DocItem")
   (@params (
@@ -814,17 +830,17 @@
 ; TODO: help! gives two outputs
 ;Atom (@kind function): (%Undefined% (-> Atom Atom)) Used for documentation purposes. Shows type of entity to be documented. (@kind function) in this case
 ;Atom (@kind function): DocKindFunction Used for documentation purposes. Shows type of entity to be documented. (@kind function) in this case
-; Public
+;; Public MeTTa
 (@doc (@kind function)
   (@desc "Used for documentation purposes. Shows type of entity to be documented. (@kind function) in this case"))
 (: (@kind function) DocKindFunction)
 
-; Public
+;; Public MeTTa
 (@doc (@kind atom)
   (@desc "Used for documentation purposes. Shows type of entity to be documented. (@kind atom) in this case"))
 (: (@kind atom) DocKindAtom)
 
-; Public
+;; Public MeTTa
 (@doc @type
   (@desc "Used for documentation purposes. Converts atom/function's type to DocType")
   (@params (
@@ -832,7 +848,7 @@
   (@return "(@type Type) entity"))
 (: @type (-> Type DocType))
 
-; Public
+;; Public MeTTa
 (@doc @params
   (@desc "Used for function documentation purposes. Contains several @param entities with description of each @param")
   (@params (
@@ -840,7 +856,7 @@
   (@return "DocParameters containing description of all parameters of function in form of (@params ((@param ...) (@param ...) ...))"))
 (: @params (-> Expression DocParameters))
 
-; Public
+;; Public MeTTa
 (@doc get-doc
   (@desc "Returns documentation for the given Atom/Function")
   (@params (
@@ -853,7 +869,7 @@
       (Expression (get-doc-atom $atom))
       ($_ (get-doc-single-atom $atom)) ))))
 
-;; Helper
+;; Helper Library
 (@doc get-doc-single-atom
   (@desc "Function used by get-doc to get documentation on either function or atom. It checks if input name is the name of function or atom and calls correspondent function")
   (@params (
@@ -867,7 +883,7 @@
       (get-doc-function $atom $type)
       (get-doc-atom $atom) ))))
 
-;; Helper
+;; Helper Library
 (@doc get-doc-function
   (@desc "Function used by get-doc-single-atom to get documentation on a function. It returns documentation on a function if it exists or default documentation with no description otherwise")
   (@params (
@@ -883,7 +899,7 @@
       (@doc-formal (@item $name) (@kind function) (@type $type) $desc (@params $params') $ret')))
     (@doc-formal (@item $name) (@kind function) (@type $type) (@desc "No documentation")) )))
 
-;; Helper
+;; Helper Library
 (@doc undefined-doc-function-type
   (@desc "Function used by get-doc-single-atom in case of absence of function's type notation")
   (@params (
@@ -896,7 +912,7 @@
     (let $tail (undefined-doc-function-type $params-tail)
       (cons-atom %Undefined% $tail) ))))
 
-;; Helper
+;; Helper Library
 (@doc get-doc-params
   (@desc "Function used by get-doc-function to get function's parameters documentation (including return value)")
   (@params (
@@ -917,7 +933,7 @@
         (let $result-params (cons-atom (@param (@type $head-type) (@desc $param-desc)) $params')
           ($result-params $result-ret) ))))))))
 
-;; Helper
+;; Helper Library
 (@doc get-doc-atom
   (@desc "Function used by get-doc (in case of input type Expression) and get-doc-single-atom (in case input value is not a function) to get documentation on input value")
   (@params (
@@ -933,7 +949,7 @@
         (get-doc-function $atom %Undefined%)
         (@doc-formal (@item $atom) (@kind atom) (@type $type) (@desc "No documentation")) )))))
 
-;; Public
+;; Public MeTTa
 (@doc help!
   (@desc "Function prints documentation for the input atom.")
   (@params (
@@ -958,7 +974,7 @@
       () ))
     ($other (Error $other "Cannot match @doc-formal structure") ))))
 
-;; Helper
+;; Helper Library
 (@doc help-param!
   (@desc "Function used by function help! to output parameters using println!")
   (@params (
@@ -969,7 +985,7 @@
   (let (@param (@type $type) (@desc $desc)) $param
     (println! (format-args "  {} {}" ((type $type) $desc))) ))
 
-;; Helper
+;; Helper Library
 (@doc for-each-in-atom
   (@desc "Applies function passed as a second argument to each atom inside first argument")
   (@params (
@@ -985,7 +1001,7 @@
       (let $_ ($func $head)
       (for-each-in-atom $tail $func) )))))
 
-;; Helper
+;; Helper Library
 (@doc noreduce-eq
   (@desc "Checks equality of two atoms without reducing them")
   (@params (
@@ -999,7 +1015,7 @@
 ; Grounded function's documentation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Public
+;; Public MeTTa
 (@doc add-atom
   (@desc "Adds atom into the atomspace without reducing it")
   (@params (
@@ -1008,14 +1024,14 @@
   (@return "Unit atom"))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc new-space
   (@desc "Creates new Atomspace which could be used further in the program as a separate from &self Atomspace")
   (@params ())
   (@return "Reference to a new space"))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc remove-atom
   (@desc "Removes atom from the input Atomspace")
   (@params (
@@ -1024,7 +1040,7 @@
   (@return "Unit atom"))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc get-atoms
   (@desc "Shows all atoms in the input Atomspace")
   (@params (
@@ -1032,7 +1048,7 @@
   (@return "List of all atoms in the input space"))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc new-state
   (@desc "Creates a new state atom wrapping its argument")
   (@params (
@@ -1040,7 +1056,7 @@
   (@return "Returns (State $value) where $value is an argument to a new-state"))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc change-state!
   (@desc "Changes input state's wrapped atom to another value (second argument). E.g. (change-state! (State 5) 6) -> (State 6)")
   (@params (
@@ -1049,7 +1065,7 @@
   (@return "State with replaced wrapped atom"))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc get-state
   (@desc "Gets a state as an argument and returns its wrapped atom. E.g. (get-state (State 5)) -> 5")
   (@params (
@@ -1057,7 +1073,7 @@
   (@return "Atom wrapped by state"))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc get-type
   (@desc "Returns type notation of input atom")
   (@params (
@@ -1065,7 +1081,7 @@
   (@return "Type notation or %Undefined% if there is no type for input Atom"))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc get-type-space
   (@desc "Returns type notation of input Atom (second argument) relative to a specified atomspace (first argument)")
   (@params (
@@ -1076,7 +1092,7 @@
 (ALT= (get-type-space $space $atom)
 	(get-type $atom $space))
 
-;; Public
+;; Public MeTTa
 (@doc get-metatype
   (@desc "Returns metatype of the input atom")
   (@params (
@@ -1084,7 +1100,7 @@
   (@return "Metatype of input atom"))
 ;; Implemented from Interpreters  
 
-;; Public
+;; Public MeTTa
 (@doc match
   (@desc "Searches for all declared atoms corresponding to the given pattern (second argument) and produces the output pattern (third argument)")
   (@params (
@@ -1097,7 +1113,7 @@
 ;(= (match $space $pattern $template)
 ;  (if-unify $pattern $space $template Empty))
 
-;; Public
+;; Public MeTTa
 (@doc register-module!
   (@desc "Takes a file system path (first argument) and loads the module into the runner")
   (@params (
@@ -1105,7 +1121,7 @@
   (@return "Unit atom"))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc mod-space!
   (@desc "Returns the space of the module (first argument) and tries to load the module if it is not loaded into the module system")
   (@params (
@@ -1116,14 +1132,14 @@
 (= (mod-space! corelib) &corelib)
 (= (mod-space! stdlib) &stdlib)
 
-;; Public
+;; Public MeTTa
 (@doc print-mods!
   (@desc "Prints all modules with their correspondent spaces")
   (@params ())
   (@return "Unit atom"))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc assertEqual
   (@desc "Compares (sets of) results of evaluation of two expressions")
   (@params (
@@ -1132,7 +1148,7 @@
   (@return "Unit atom if both expression after evaluation is equal, error - otherwise"))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc assertEqualToResult
   (@desc "Same as assertEqual but it doesn't evaluate second argument. Second argument is considered as a set of values of the first argument's evaluation")
   (@params (
@@ -1141,7 +1157,7 @@
   (@return "Unit atom if both expression after evaluation is equal, error - otherwise"))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc collapse
   (@desc "Converts a nondeterministic result into a tuple")
   (@params (
@@ -1149,7 +1165,7 @@
   (@return "Tuple"))
 ;; Implemented from Interpreters
   
-;; Public
+;; Public MeTTa
 (@doc capture
   (@desc "Wraps an atom and capture the current space")
   (@params (
@@ -1157,7 +1173,7 @@
   (@return "Function"))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc case
   (@desc "Subsequently tests multiple pattern-matching conditions (second argument) for the given value (first argument)")
   (@params (
@@ -1166,7 +1182,7 @@
   (@return "Result of evaluating of Atom bound to met condition"))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc superpose
   (@desc "Turns a tuple (first argument) into a nondeterministic result")
   (@params (
@@ -1174,7 +1190,7 @@
   (@return "Argument converted to nondeterministic result"))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc pragma!
   (@desc "Changes global key's (first argument) value to a new one (second argument)")
   (@params (
@@ -1183,7 +1199,7 @@
   (@return "Unit atom"))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc import!
   (@desc "Imports module using its relative path (second argument) and binds it to the token (first argument) which will represent imported atomspace. If first argument is &self then everything will be imported to current atomspace")
   (@params (
@@ -1192,7 +1208,7 @@
   (@return "Unit atom"))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc include
   (@desc "Works just like import! but with &self as a first argument. So everything from input file will be included in the current atomspace and evaluated")
   (@params (
@@ -1200,7 +1216,7 @@
   (@return "Unit atom"))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc bind!
   (@desc "Registers a new token which is replaced with an atom during the parsing of the rest of the program")
   (@params (
@@ -1209,7 +1225,7 @@
   (@return "Unit atom"))
 ;; Implemented from Interpreters
   
-;; Public
+;; Public MeTTa
 (@doc trace!
   (@desc "Prints its first argument and returns second. Both arguments will be evaluated before processing")
   (@params (
@@ -1218,7 +1234,7 @@
   (@return "Evaluated second input"))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc println!
   (@desc "Prints a line of text to the console")
   (@params (
@@ -1226,7 +1242,7 @@
   (@return "Unit atom"))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc format-args
   (@desc "Fills {} symbols in the input expression with atoms from the second expression. E.g. (format-args (Probability of {} is {}%) (head 50)) gives [(Probability of head is 50%)]. Atoms in the second input value could be variables")
   (@params (
@@ -1235,7 +1251,7 @@
   (@return "Expression with replaced {} with atoms"))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc sealed
   (@desc "Replaces all occurrences of any var from var list (first argument) inside atom (second argument) by unique variable. Can be used to create a locally scoped variables")
   (@params (
@@ -1254,7 +1270,7 @@
 
 ; TODO: help! not working for operations which are defined in both Python and
 ; Rust standard library: +, -, *, /, %, <, >, <=, >=, ==
-;; Public
+;; Public MeTTa
 (@doc +
   (@desc "Sums two numbers")
   (@params (
@@ -1263,7 +1279,7 @@
   (@return "Sum"))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc -
   (@desc "Subtracts second argument from first one")
   (@params (
@@ -1272,7 +1288,7 @@
   (@return "Difference"))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc *
   (@desc "Multiplies two numbers")
   (@params (
@@ -1281,7 +1297,7 @@
   (@return "Product"))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc /
   (@desc "Divides first argument by second one")
   (@params (
@@ -1290,7 +1306,7 @@
   (@return "Fraction"))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc %
   (@desc "Modulo operator. It returns remainder of dividing first argument by second argument")
   (@params (
@@ -1299,7 +1315,7 @@
   (@return "Remainder"))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc <
   (@desc "Less than. Checks if first argument is less than second one")
   (@params (
@@ -1308,7 +1324,7 @@
   (@return "True if first argument is less than second, False - otherwise"))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc >
   (@desc "Greater than. Checks if first argument is greater than second one")
   (@params (
@@ -1317,7 +1333,7 @@
   (@return "True if first argument is greater than second, False - otherwise"))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc <=
   (@desc "Less than or equal. Checks if first argument is less than or equal to second one")
   (@params (
@@ -1326,7 +1342,7 @@
   (@return "True if first argument is less than or equal to second, False - otherwise"))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc >=
   (@desc "Greater than or equal. Checks if first argument is greater than or equal to second one")
   (@params (
@@ -1335,7 +1351,7 @@
   (@return "True if first argument is greater than or equal to second, False - otherwise"))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc ==
   (@desc "Checks equality for two arguments of the same type")
   (@params (
@@ -1344,7 +1360,7 @@
   (@return "Returns True if two arguments are equal, False - otherwise. If arguments are of different type function returns Error currently"))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc unique
   (@desc "Function takes non-deterministic input (first argument) and returns only unique entities. E.g. (unique (superpose (a b c d d))) -> [a, b, c, d]")
   (@params (
@@ -1352,7 +1368,7 @@
   (@return "Unique values from input set"))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc union
   (@desc "Function takes two non-deterministic inputs (first and second argument) and returns their union. E.g. (union (superpose (a b b c)) (superpose (b c c d))) -> [a, b, b, c, b, c, c, d]")
   (@params (
@@ -1361,7 +1377,7 @@
   (@return "Union of sets"))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc intersection
   (@desc "Function takes two non-deterministic inputs (first and second argument) and returns their intersection. E.g. (intersection (superpose (a b c c)) (superpose (b c c c d))) -> [b, c, c]")
   (@params (
@@ -1370,7 +1386,7 @@
   (@return "Intersection of sets"))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc subtraction
   (@desc "Function takes two non-deterministic inputs (first and second argument) and returns their subtraction. E.g. !(subtraction (superpose (a b b c)) (superpose (b c c d))) -> [a, b]")
   (@params (
@@ -1379,7 +1395,7 @@
   (@return "Subtraction of sets"))
 ;; Implemented from Interpreters
 
-;; Public
+;; Public MeTTa
 (@doc git-module!
   (@desc "Provides access to module in a remote git repo, from within MeTTa code. Similar to `register-module!`, this op will bypass the catalog search")
   (@params (
