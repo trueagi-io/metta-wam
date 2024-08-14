@@ -65,12 +65,12 @@ jobs:
         path: junit-matrix-report.html
 
     - name: Display JUnit Test Results
-      continue-on-error: true  # Continue even if this step fails
       uses: dorny/test-reporter@v1
       with:
         name: 'JUnit Results'
         path: 'junit.xml'
         reporter: 'java-junit'  # Correct reporter type for JUnit XML
+        fail-on-error: false  # Do not fail the job if tests fail
 
     - name: Display HTML Report Information
       run: |
