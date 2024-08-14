@@ -1,4 +1,4 @@
-name: CI Job to Generate JUnit Report
+name: CI Job to Generate JUnit Reports
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  generate-report:
+  generate-reports:
     runs-on: ubuntu-latest
 
     steps:
@@ -20,6 +20,10 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.x'
+
+    - name: Install junit2html
+      run: |
+        pip install junit2html
 
     - name: Make Shell Script Executable
       run: chmod +x scripts/run_commit_tests.sh
@@ -32,11 +36,31 @@ jobs:
       run: |
         python scripts/into_junit.py /tmp/SHARED.UNITS > junit.xml
 
-    - name: Upload JUnit Report
+    - name: Convert JUnit XML to Standard HTML Report
+      run: |
+        junit2html junit.xml junit-standard-report.html
+
+    - name: Convert JUnit XML to Matrix HTML Report
+      run: |
+        junit2html junit.xml junit-matrix-report.html --report-matrix
+
+    - name: Upload JUnit XML Report
       uses: actions/upload-artifact@v3
       with:
         name: junit-report
         path: junit.xml
+    
+    - name: Upload Standard HTML Report
+      uses: actions/upload-artifact@v3
+      with:
+        name: junit-standard-html-report
+        path: junit-standard-report.html
+
+    - name: Upload Matrix HTML Report
+      uses: actions/upload-artifact@v3
+      with:
+        name: junit-matrix-html-report
+        path: junit-matrix-report.html
     
     - name: Display JUnit Test Results
       uses: dorny/test-reporter@v1
@@ -44,3 +68,7 @@ jobs:
         name: 'JUnit Results'
         path: 'junit.xml'
         reporter: 'java-junit'  # Correct reporter type for JUnit XML
+
+    - name: Display HTML Report Information
+      run: |
+        echo "Both standard and matrix HTML reports are available as artifacts."
