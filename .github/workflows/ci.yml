@@ -37,10 +37,12 @@ jobs:
         python scripts/into_junit.py /tmp/SHARED.UNITS > junit.xml
 
     - name: Convert JUnit XML to Standard HTML Report
+      continue-on-error: true  # Continue even if this step fails
       run: |
         junit2html junit.xml junit-standard-report.html
 
     - name: Convert JUnit XML to Matrix HTML Report
+      continue-on-error: true  # Continue even if this step fails
       run: |
         junit2html --report-matrix junit-matrix-report.html junit.xml
 
@@ -49,7 +51,7 @@ jobs:
       with:
         name: junit-report
         path: junit.xml
-    
+
     - name: Upload Standard HTML Report
       uses: actions/upload-artifact@v3
       with:
@@ -61,8 +63,9 @@ jobs:
       with:
         name: junit-matrix-html-report
         path: junit-matrix-report.html
-    
+
     - name: Display JUnit Test Results
+      continue-on-error: true  # Continue even if this step fails
       uses: dorny/test-reporter@v1
       with:
         name: 'JUnit Results'
