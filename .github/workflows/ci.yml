@@ -1,4 +1,4 @@
-name: CI Job to Generate JUnit Report
+name: CI Job to Generate JUnit Reports with Diff and Allure Reports
 
 on:
   push:
@@ -8,8 +8,12 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+  checks: write
+
 jobs:
-  generate-report:
+  generate-reports:
     runs-on: ubuntu-latest
 
     steps:
@@ -21,26 +25,113 @@ jobs:
       with:
         python-version: '3.x'
 
+    - name: Install junit2html
+      run: |
+        pip install junit2html
+
     - name: Make Shell Script Executable
-      run: chmod +x scripts/generate_input.sh
+      run: chmod +x scripts/run_commit_tests.sh
 
     - name: Run Shell Script to Generate Input File
+      continue-on-error: true  # extra: Continue even if this step fails
       run: |
         ./scripts/run_commit_tests.sh
 
     - name: Run JUnit Report Generation Script
+      continue-on-error: true  # extra: Continue even if this step fails
       run: |
         python scripts/into_junit.py /tmp/SHARED.UNITS > junit.xml
 
-    - name: Upload JUnit Report
+    - name: Convert JUnit XML to Standard HTML Report
+      continue-on-error: true  # extra: Continue even if this step fails
+      run: |
+        junit2html junit.xml junit-standard-report.html
+
+    - name: Convert JUnit XML to Matrix HTML Report
+      continue-on-error: true  # extra: Continue even if this step fails
+      run: |
+        junit2html --report-matrix junit-matrix-report.html junit.xml
+
+    - name: Upload JUnit XML Report
+      continue-on-error: true  # extra: Continue even if this step fails
       uses: actions/upload-artifact@v3
       with:
         name: junit-report
         path: junit.xml
-    
+
+    - name: Upload Standard HTML Report
+      continue-on-error: true  # extra: Continue even if this step fails
+      uses: actions/upload-artifact@v3
+      with:
+        name: junit-standard-html-report
+        path: junit-standard-report.html
+
+    - name: Upload Matrix HTML Report
+      continue-on-error: true  # extra: Continue even if this step fails
+      uses: actions/upload-artifact@v3
+      with:
+        name: junit-matrix-html-report
+        path: junit-matrix-report.html
+
     - name: Display JUnit Test Results
       uses: dorny/test-reporter@v1
       with:
         name: 'JUnit Results'
         path: 'junit.xml'
-        reporter: 'junit'
+        reporter: 'java-junit'  # Correct reporter type for JUnit XML
+        fail-on-error: false  # Do not fail the job if tests fail
+
+    - name: Download Previous JUnit Results
+      continue-on-error: true  # extra: Continue even if this step fails
+      uses: actions/download-artifact@v3
+      with:
+        name: junit-report
+        path: previous-junit.xml
+
+    - name: Install ReportGenerator
+      run: |
+        dotnet tool install -g dotnet-reportgenerator-globaltool
+
+    - name: Compare JUnit Test Results with ReportGenerator
+      run: |
+        reportgenerator \
+          -reports:"previous-junit.xml;junit.xml" \
+          -targetdir:"./comparison-report" \
+          -reporttypes:"HtmlSummary;HtmlChart"
+
+    - name: Upload JUnit Comparison Report
+      continue-on-error: true  # extra: Continue even if this step fails
+      uses: actions/upload-artifact@v3
+      with:
+        name: junit-comparison-html-report
+        path: ./comparison-report
+
+    - name: Install Allure
+      run: |
+        curl -sLo allure-2.17.2.tgz https://github.com/allure-framework/allure2/releases/download/2.17.2/allure-2.17.2.tgz
+        tar -zxvf allure-2.17.2.tgz
+        sudo mv allure-2.17.2 /opt/allure
+        sudo ln -s /opt/allure/bin/allure /usr/bin/allure
+
+    - name: Prepare Allure Results Directory
+      run: |
+        mkdir -p ./allure-results
+        cp junit.xml ./allure-results/
+        if [ -f "previous-junit.xml" ]; then
+          cp previous-junit.xml ./allure-results/
+        fi
+
+    - name: Generate Allure Report
+      run: |
+        allure generate --clean --output ./allure-report ./allure-results
+
+    - name: Upload Allure Report as Artifact
+      continue-on-error: true  # extra: Continue even if this step fails
+      uses: actions/upload-artifact@v3
+      with:
+        name: allure-html-report
+        path: ./allure-report
+
+    - name: Provide Report Links
+      run: |
+        echo "JUnit reports, Allure report, and test comparison reports are available as artifacts."

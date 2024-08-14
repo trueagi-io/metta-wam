@@ -8,12 +8,14 @@ See [Tests](tests/) for MeTTa as well as [Results](reports/TEST_LINKS.md)
 ## :package: Getting Started
 
 ### :toolbox: Installation
+
+_Before you get started make sure `pip` and `venv` are working good._
+
 Clone and set up MeTTaLog with the following commands:
 ```
 git clone https://github.com/trueagi-io/metta-wam
-
 cd metta-wam
-. scripts/ensure_venv  # ensures we are runing in a python venv
+. scripts/ensure_venv  # ensures we are running in a python venv
 pip install ansi2html   # needed for running tests
 pip install hyperon  # needed for running tests
 pip install junit2html # needed for test report generation
@@ -301,5 +303,6 @@ clear ; mettalog --test --v=./src/canary --log --html --compile=false tests/base
 | `functionA`    | - [ ]       | - [ ]        | - [ ]                | - [ ]               | - [ ]              |
 | `functionB`    | - [ ]       | - [ ]        | - [ ]                | - [ ]               | - [ ]              |
 | `functionC`    | - [ ]       | - [ ]        | - [ ]                | - [ ]               | - [ ]              |
+
 
 
