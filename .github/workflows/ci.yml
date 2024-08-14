@@ -43,4 +43,4 @@ jobs:
       with:
         name: 'JUnit Results'
         path: 'junit.xml'
-        reporter: 'junit'
+        reporter: 'junitxml'
