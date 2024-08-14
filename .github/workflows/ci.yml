@@ -42,7 +42,7 @@ jobs:
 
     - name: Convert JUnit XML to Matrix HTML Report
       run: |
-        junit2html junit.xml --report-matrix junit-matrix-report.html
+        junit2html --report-matrix junit-matrix-report.html junit.xml
 
     - name: Upload JUnit XML Report
       uses: actions/upload-artifact@v3
