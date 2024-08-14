@@ -1177,18 +1177,18 @@ get_symbol_metatype(Val,_Want,Type):- nb_current(Val,NewVal),'get-metatype'(NewV
 get_symbol_metatype(_Vl,'%Undefined%','Symbol').
 get_symbol_metatype(_Vl,_Want,'Grounded').
 
+% =================================================================
+% =================================================================
+% =================================================================
+%  STRINGS
+% =================================================================
+% =================================================================
+% =================================================================
+
 as_metta_char(X,'#\\'(X)).
 
 eval_20(Eq,RetType,Depth,Self,['stringToChars',String],Chars):- !, eval_args(Eq,RetType,Depth,Self,String,SS), string_chars(SS,Chars0), maplist(as_metta_char,Chars0,Chars).
 eval_20(Eq,RetType,Depth,Self,['charsToString',Chars],String):- !, eval_args(Eq,RetType,Depth,Self,Chars,CC), maplist(as_metta_char,CC0,CC), string_chars(String,CC0).
-
-% =================================================================
-% =================================================================
-% =================================================================
-%  FORMAT-ARGS
-% =================================================================
-% =================================================================
-% =================================================================
 
 % We deal with indexing, but not formatting (the stuff following the ':')(yet)
 % https://doc.rust-lang.org/std/fmt/ used as a reference
@@ -1227,10 +1227,14 @@ format_args(['{'|FormatRest1], Iterator1, Args) :-
     format_args(FormatRest3, Iterator2, Args).
 format_args([C|FormatRest], Iterator, Args) :- put(C), format_args(FormatRest, Iterator, Args).
 
-eval_20(Eq,RetType,Depth,Self,['format-args',Format,Args],Result):- !,
+eval_20(Eq,RetType,Depth,Self,['format-args',Format,Args],Result):-
    eval_args(Eq,RetType,Depth,Self,Format,EFormat),
    eval_args(Eq,RetType,Depth,Self,Args,EArgs),
-   is_list(EArgs),string_chars(EFormat, FormatChars), user_io(with_output_to(string(Result), format_args(FormatChars, 0, EArgs))).
+   is_list(EArgs),string_chars(EFormat, FormatChars), !,
+   user_io(with_output_to(string(Result), format_args(FormatChars, 0, EArgs))).
+eval_20(Eq,RetType,Depth,Self,['format-args',_Fmt,Args],_Result) :-
+   eval_args(Eq,RetType,Depth,Self,Args,EArgs),
+   \+ is_list(EArgs),!,throw_metta_return(['Error',Args,'BadType']).
 
 eval_20(Eq,RetType,_Depth,_Self,['flip'],Bool):-
    ignore(RetType='Bool'), !, as_tf(random(0,2,0),Bool),
