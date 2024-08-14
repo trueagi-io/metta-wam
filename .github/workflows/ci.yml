@@ -22,7 +22,7 @@ jobs:
         python-version: '3.x'
 
     - name: Make Shell Script Executable
-      run: chmod +x scripts/generate_input.sh
+      run: chmod +x scripts/run_commit_tests.sh
 
     - name: Run Shell Script to Generate Input File
       run: |
