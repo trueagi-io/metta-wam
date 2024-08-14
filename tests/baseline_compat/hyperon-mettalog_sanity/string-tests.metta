@@ -1,3 +1,5 @@
+;; String <=> List of Characters
+
 !(assertEqual (stringToChars "xyzzy") ('x' 'y' 'z' 'z' 'y'))
 
 !(assertEqual (charsToString ('x' 'y' 'z' 'z' 'y')) "xyzzy")
@@ -21,3 +23,26 @@
 !(assertEqual (stringToChars " ") (' '))
 
 !(assertEqual (stringToChars (superpose ("ab" "cd" "ef"))) (superpose (('a' 'b') ('c' 'd') ('e' 'f'))))
+
+;; format-args
+
+!(assertEqual (format-args "" (1 2 3)) "")
+
+!(assertEqual (format-args " " (1 2 3)) " ")
+
+!(assertEqual (format-args "{}" (1 2 3)) "1")
+
+!(assertEqual (format-args "{}}" (1 2 3)) "{}")
+
+!(assertEqual (format-args "xyz zy" (1 2 3)) "xyz zy")
+
+!(assertEqual (format-args "Indexed {1} {} {0} {}" (1 2 3)) "Indexed 2 1 1 2")
+
+!(assertEqual (format-args "Different types {} {} {} {} {} {}" (1 "2" 'c' -0.5 atom (1 2 c -0.5 atom))) "Different types 1 2 c -0.5 atom (1 2 c -0.5 atom)")
+
+!(assertEqual (format-args "Two digit index={11}" (0 1 2 3 4 5 6 7 8 9 10 "eleven")) "Two digit index=eleven")
+
+;; malformed examples
+!(assertEqual (format-args "Bad args list {1} {} {0} {}" x) "Bad args list {1} {} {0} {}")
+
+!(assertEqual (format-args "Malformed format}{{}{{{}{} {4} { } {-1} {x} {{{{{{}}}}}}{{{{{}}}}}" ("success1" "success2")) "Malformed format}{}{success1success2 {4} { } {-1} {x} {{{}}}{{{}}}")
