@@ -1230,8 +1230,7 @@ format_args([C|FormatRest], Iterator, Args) :- put(C), format_args(FormatRest, I
 eval_20(Eq,RetType,Depth,Self,['format-args',Format,Args],Result):- !,
    eval_args(Eq,RetType,Depth,Self,Format,EFormat),
    eval_args(Eq,RetType,Depth,Self,Args,EArgs),
-   string_chars(EFormat, FormatChars), user_io(with_output_to(string(Result), format_args(FormatChars, 0, EArgs))).
-%   string_chars(EFormat, FormatChars), wots(Result, format_args(FormatChars, 0, EArgs)).
+   is_list(EArgs),string_chars(EFormat, FormatChars), user_io(with_output_to(string(Result), format_args(FormatChars, 0, EArgs))).
 
 eval_20(Eq,RetType,_Depth,_Self,['flip'],Bool):-
    ignore(RetType='Bool'), !, as_tf(random(0,2,0),Bool),
