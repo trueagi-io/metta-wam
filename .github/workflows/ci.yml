@@ -1,4 +1,4 @@
-name: CI Job to Generate JUnit Reports
+name: CI Job to Generate JUnit Reports with Diff
 
 on:
   push:
@@ -72,6 +72,13 @@ jobs:
         reporter: 'java-junit'  # Correct reporter type for JUnit XML
         fail-on-error: false  # Do not fail the job if tests fail
 
+    - name: Compare JUnit Test Results
+      uses: mikepenz/action-junit-report@v3
+      with:
+        report_paths: junit.xml
+        compare_to_previous: true
+        fail_on_failure: false
+
     - name: Display HTML Report Information
       run: |
-        echo "Both standard and matrix HTML reports are available as artifacts."
+        echo "Both standard and matrix HTML reports are available as artifacts. JUnit test comparison report is also available."
