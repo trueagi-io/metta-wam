@@ -8,6 +8,10 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+  checks: write
+
 jobs:
   generate-reports:
     runs-on: ubuntu-latest
