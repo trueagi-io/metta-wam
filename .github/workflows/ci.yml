@@ -37,12 +37,12 @@ jobs:
         python scripts/into_junit.py /tmp/SHARED.UNITS > junit.xml
 
     - name: Convert JUnit XML to Standard HTML Report
-      continue-on-error: true  # Continue even if this step fails
+      continue-on-error: true  # Continue to the next step even if this one fails
       run: |
         junit2html junit.xml junit-standard-report.html
 
     - name: Convert JUnit XML to Matrix HTML Report
-      continue-on-error: true  # Continue even if this step fails
+      continue-on-error: true  # Continue to the next step even if this one fails
       run: |
         junit2html --report-matrix junit-matrix-report.html junit.xml
 
@@ -72,13 +72,26 @@ jobs:
         reporter: 'java-junit'  # Correct reporter type for JUnit XML
         fail-on-error: false  # Do not fail the job if tests fail
 
-    - name: Compare JUnit Test Results
+    - name: Compare JUnit Test Results with mikepenz
       uses: mikepenz/action-junit-report@v3
       with:
         report_paths: junit.xml
         compare_to_previous: true
-        fail_on_failure: false
+        fail_on_failure: false  # Do not fail the job if tests fail
+
+    - name: Diff JUnit Test Results
+      uses: Juit/junit-diff@v1.0.2
+      with:
+        base-junit: junit-report/base.xml  # Adjust to your previous report location
+        head-junit: junit.xml  # The current test report
+        output: junit-diff-report.html
+
+    - name: Upload JUnit Diff Report
+      uses: actions/upload-artifact@v3
+      with:
+        name: junit-diff-html-report
+        path: junit-diff-report.html
 
     - name: Display HTML Report Information
       run: |
-        echo "Both standard and matrix HTML reports are available as artifacts. JUnit test comparison report is also available."
+        echo "Standard, matrix, and diff HTML reports are available as artifacts. JUnit test comparison reports are also available."
