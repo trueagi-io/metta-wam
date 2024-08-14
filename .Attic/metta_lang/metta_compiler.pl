@@ -56,7 +56,7 @@ w_cl(P1,P):- call(P1,P).
 
 dedupe_p1(P):- current_predicate(_,P),
   forall((copy_term(P,P2),
-    clause(P,Bd,Ref),
+     clause(P,Bd,Ref),
      clause(P2,Bd2,Ref2), Ref@<Ref2,
      a2(P,Bd)=@=a2(P2,Bd2),
      erase(Ref2), fail),true).
@@ -111,29 +111,6 @@ into_list_args0([H|T],[H|T]):-!.
 into_list_args0(u_assign(List, A),[H|T]):- append(List,[A],[H|T]),!.
 into_list_args0(holds(A),AA):- !, into_list_args(A,AA),!.
 into_list_args0(C,[F|Args]):- compound_name_arguments(C,F,Args),!.
-
-
-:- use_module(library(filesex)). % Ensure you have the necessary module for file time operations
-
-metta2pl(File) :-
-  file_name_extension(Name, _, File),
-  file_name_extension(Name, pl, PlFile),
-  metta2pl(File, PlFile).
-
-metta2pl(File, PlFile) :-
-  (   exists_file(PlFile),
-      time_file(PlFile, PlTime),
-      time_file(File, FileTime),
-      PlTime > FileTime
-  ->  true  % PLFile is newer, no need to convert
-  ;   convert_metta_to_pl(File, PlFile)  % Replace this with your actual conversion logic
-  ).
-
-convert_metta_to_pl(File, PlFile) :-
-  % Your conversion logic here
-  % For example:
-  format('Converting ~w to ~w~n', [File, PlFile]),
-  convert_metta_to_datalog(File,PlFile).
 
 
 

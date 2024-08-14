@@ -461,4 +461,4 @@ properties('&corelib','tuple-count', [data_structures, qhelp("Counts tuples with
 % --- String and Character manipulation ---
 properties('&corelib','stringToChars', [string_operations, qhelp("Convert a string to a list of chars."), string_to_chars]).
 properties('&corelib','charsToString', [string_operations, qhelp("Convert a list of chars to a string."), chars_to_string]).
-
+properties('&corelib','flip', [random, qhelp("Return a random boolean."), random_boolean]).

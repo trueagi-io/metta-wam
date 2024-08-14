@@ -339,7 +339,8 @@ is_progn('chain-body').
 is_progn('progn').
 
 eval_20(Eq,RetType,Depth,Self,[Comma,X  ],Res):- is_progn(Comma),!, eval_args(Eq,RetType,Depth,Self,X,Res).
-%eval_20(Eq,RetType,Depth,Self,[Comma,X,Y],Res):- is_progn(Comma),!, eval_args(Eq,_,Depth,Self,X,_),eval_args(Eq,RetType,Depth,Self,Y,Res).
+%eval_20(Eq,RetType,Depth,Self,[Comma,X,Y],Res):- is_progn(Comma),!, eval_args(Eq,_,Depth,Self,X,_),
+%  eval_args(Eq,RetType,Depth,Self,Y,Res).
 eval_20(Eq,RetType,Depth,Self,[Comma,X|Y],Res):- is_progn(Comma),!, eval_args(Eq,_,Depth,Self,X,_),
   eval_args(Eq,RetType,Depth,Self,[Comma|Y],Res).
 
@@ -1180,6 +1181,11 @@ as_metta_char(X,'#\\'(X)).
 
 eval_20(Eq,RetType,Depth,Self,['stringToChars',String],Chars):- !, eval_args(Eq,RetType,Depth,Self,String,SS), string_chars(SS,Chars0), maplist(as_metta_char,Chars0,Chars).
 eval_20(Eq,RetType,Depth,Self,['charsToString',Chars],String):- !, eval_args(Eq,RetType,Depth,Self,Chars,CC), maplist(as_metta_char,CC0,CC), string_chars(String,CC0).
+
+
+eval_20(Eq,RetType,_Depth,_Self,['flip'],Bool):-
+   ignore(RetType='Bool'), !, as_tf(random(0,2,0),Bool),
+   check_returnval(Eq,RetType,Bool).
 
 
 % =================================================================

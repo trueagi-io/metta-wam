@@ -582,26 +582,30 @@ test_clr_my_kb22 :-
     'atom-count'('&kb22', Count2), writeln(Count2),
     'get-atoms'('&kb22', Atoms2), writeln(Atoms2).
 
+  %a:- !, be(B), (iF(A,B)  -> tHEN(A) ).
+  %a:- !, be(B), (iF(A,B) *-> tHEN(A) ; eLSE(B)  ).
+
+
 % Test the code
 test_my_kb2:-
    fetch_or_create_space('&kb1', InstanceOfKB),
-   \+ \+ ('add-atom'('&kb1', a)),
-   \+ \+ ('add-atom'('&kb1', b)),
+   \+ \+ ('add-atom'('&kb1', a, Out), writeln(Out)),
+   \+ \+ ('add-atom'('&kb1', b, Out), writeln(Out)),
    \+ \+ ('atom-count'('&kb1', Count), writeln(Count)),
    \+ \+ ('get-atoms'('&kb1', Atoms), writeln(Atoms)),
-   \+ \+ ('remove-atom'(InstanceOfKB, a)),
+   \+ \+ ('remove-atom'(InstanceOfKB, a, Out), writeln(Out)),
    \+ \+ ('get-atoms'('&kb1', NewAtoms), writeln(NewAtoms)),
-   \+ \+ ('replace-atom'('&kb1', b, c)),
+   \+ \+ ('replace-atom'('&kb1', b, c, Out), writeln(Out)),
    \+ \+ ('get-atoms'('&kb1', FinalAtoms), writeln(FinalAtoms)),
    \+ \+ (space_original_name(InstanceOfKB, OriginalName), writeln(OriginalName)),
    \+ \+ (fetch_or_create_space('&kb2',_)),  % Creating a new space with a different name
-   \+ \+ ('add-atom'('&kb2', a)),
-   \+ \+ ('add-atom'('&kb2', b)),
+   \+ \+ ('add-atom'('&kb2', a, Out), writeln(Out)),
+   \+ \+ ('add-atom'('&kb2', b, Out), writeln(Out)),
    \+ \+ ('atom-count'('&kb2', Count), writeln(Count)),
    \+ \+ ('get-atoms'('&kb2', Atoms), writeln(Atoms)),
-   \+ \+ ('remove-atom'('&kb2', a)),
+   \+ \+ ('remove-atom'('&kb2', a, Out), writeln(Out)),
    \+ \+ ('get-atoms'('&kb2', NewAtoms), writeln(NewAtoms)),
-   \+ \+ ('replace-atom'('&kb2', b, c)),
+   \+ \+ ('replace-atom'('&kb2', b, c, Out), writeln(Out)),
    \+ \+ ('get-atoms'('&kb2', FinalAtoms), writeln(FinalAtoms)).
 
 
