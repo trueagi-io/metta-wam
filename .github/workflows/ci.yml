@@ -43,4 +43,4 @@ jobs:
       with:
         name: 'JUnit Results'
         path: 'junit.xml'
-        reporter: 'junitxml'
+        reporter: 'java-junit'  # Correct reporter type for JUnit XML
