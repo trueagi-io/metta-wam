@@ -130,13 +130,17 @@ write_pass_fail(TestName,P,C,PASS_FAIL,G1,G2):-
       (%atom_concat(TEE_FILE,'.UNITS',UNITS),
       UNITS = '/tmp/SHARED.UNITS',
       open(UNITS, append, Stream,[encoding(utf8)]),
-      format(Stream,'| ~w | [~w](https://logicmoo.org/public/metta/reports/~w.metta.html#~w) | ~@ | ~@ | ~@ |~n',
-      [PASS_FAIL,TestName,Base,TestName,trim_gstring(with_indents(false,write_src([P,C])),200),
-        trim_gstring(with_indents(false,write_src(G1)),100),with_indents(false,write_src(G2))]),!,
+      once(getenv('HTML_FILE',HTML_OUT);sformat(HTML_OUT,'~w.metta.html',[Base])),
+      format(Stream,'| ~w | ~w |[~w](https://logicmoo.org/public/metta/reports/~w#~w) | ~@ | ~@ | ~@ |~n',
+      [TestName,PASS_FAIL,TestName,HTML_OUT,TestName,
+        trim_gstring_bar_I(write_src_woi([P,C]),200),
+        trim_gstring_bar_I(write_src_woi(G1),100),
+        trim_gstring_bar_I(write_src_woi(G2),100)]),!,
       close(Stream))).
 
-trim_gstring(Goal, MaxLen) :-
-    wots(String,Goal),
+trim_gstring_bar_I(Goal, MaxLen) :-
+    wots(String0,Goal),
+    string_replace(String0,'|','I',String),
     atom_length(String, Len),
     (   Len =< MaxLen
     ->  Trimmed = String
@@ -582,26 +586,30 @@ test_clr_my_kb22 :-
     'atom-count'('&kb22', Count2), writeln(Count2),
     'get-atoms'('&kb22', Atoms2), writeln(Atoms2).
 
+  %a:- !, be(B), (iF(A,B)  -> tHEN(A) ).
+  %a:- !, be(B), (iF(A,B) *-> tHEN(A) ; eLSE(B)  ).
+
+
 % Test the code
 test_my_kb2:-
    fetch_or_create_space('&kb1', InstanceOfKB),
-   \+ \+ ('add-atom'('&kb1', a)),
-   \+ \+ ('add-atom'('&kb1', b)),
+   \+ \+ ('add-atom'('&kb1', a, Out), writeln(Out)),
+   \+ \+ ('add-atom'('&kb1', b, Out), writeln(Out)),
    \+ \+ ('atom-count'('&kb1', Count), writeln(Count)),
    \+ \+ ('get-atoms'('&kb1', Atoms), writeln(Atoms)),
-   \+ \+ ('remove-atom'(InstanceOfKB, a)),
+   \+ \+ ('remove-atom'(InstanceOfKB, a, Out), writeln(Out)),
    \+ \+ ('get-atoms'('&kb1', NewAtoms), writeln(NewAtoms)),
-   \+ \+ ('replace-atom'('&kb1', b, c)),
+   \+ \+ ('replace-atom'('&kb1', b, c, Out), writeln(Out)),
    \+ \+ ('get-atoms'('&kb1', FinalAtoms), writeln(FinalAtoms)),
    \+ \+ (space_original_name(InstanceOfKB, OriginalName), writeln(OriginalName)),
    \+ \+ (fetch_or_create_space('&kb2',_)),  % Creating a new space with a different name
-   \+ \+ ('add-atom'('&kb2', a)),
-   \+ \+ ('add-atom'('&kb2', b)),
+   \+ \+ ('add-atom'('&kb2', a, Out), writeln(Out)),
+   \+ \+ ('add-atom'('&kb2', b, Out), writeln(Out)),
    \+ \+ ('atom-count'('&kb2', Count), writeln(Count)),
    \+ \+ ('get-atoms'('&kb2', Atoms), writeln(Atoms)),
-   \+ \+ ('remove-atom'('&kb2', a)),
+   \+ \+ ('remove-atom'('&kb2', a, Out), writeln(Out)),
    \+ \+ ('get-atoms'('&kb2', NewAtoms), writeln(NewAtoms)),
-   \+ \+ ('replace-atom'('&kb2', b, c)),
+   \+ \+ ('replace-atom'('&kb2', b, c, Out), writeln(Out)),
    \+ \+ ('get-atoms'('&kb2', FinalAtoms), writeln(FinalAtoms)).
 
 

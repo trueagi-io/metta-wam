@@ -1,0 +1,46 @@
+name: CI Job to Generate JUnit Report
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  generate-report:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Make Shell Script Executable
+      run: chmod +x scripts/generate_input.sh
+
+    - name: Run Shell Script to Generate Input File
+      run: |
+        ./scripts/run_commit_tests.sh
+
+    - name: Run JUnit Report Generation Script
+      run: |
+        python scripts/into_junit.py /tmp/SHARED.UNITS > junit.xml
+
+    - name: Upload JUnit Report
+      uses: actions/upload-artifact@v3
+      with:
+        name: junit-report
+        path: junit.xml
+    
+    - name: Display JUnit Test Results
+      uses: dorny/test-reporter@v1
+      with:
+        name: 'JUnit Results'
+        path: 'junit.xml'
+        reporter: 'junit'

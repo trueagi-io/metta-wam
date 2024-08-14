@@ -1,0 +1,29 @@
+Windows Registry Editor Version 5.00
+
+; Associate .metta files with run-metta.cmd
+[HKEY_CLASSES_ROOT\.metta]
+@="MettaFile"
+
+[HKEY_CLASSES_ROOT\MettaFile]
+@="Metta Script File"
+
+; Set a system icon for .metta files
+[HKEY_CLASSES_ROOT\MettaFile\DefaultIcon]
+@="%SystemRoot%\\regedit.exe,0"
+
+[HKEY_CLASSES_ROOT\MettaFile\shell]
+@="open"
+
+; Default action (open)
+[HKEY_CLASSES_ROOT\MettaFile\shell\open]
+@="Run with Metta"
+
+[HKEY_CLASSES_ROOT\MettaFile\shell\open\command]
+@="\"H:\\opt\\hyperon\\metta-wam\\mettalog.cmd\" \"%1\""
+
+; Add 'Edit with Notepad' to the context menu
+[HKEY_CLASSES_ROOT\MettaFile\shell\edit]
+@="Edit with Notepad"
+
+[HKEY_CLASSES_ROOT\MettaFile\shell\edit\command]
+@="notepad.exe \"%1\""
