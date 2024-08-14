@@ -102,6 +102,7 @@ mettalog tests/baseline_compat/hyperon-experimental_scripts/b0_chaining_prelim.m
 
 
 
+
 ** Launch Jupyter notebook: (in progress) **
  - Contains a Jupyter Kernel for MeTTa (allows runing of MeTTa scripts remotely)
 ```
@@ -290,4 +291,14 @@ clear ; mettalog --test --v=./src/canary --log --html --compile=false tests/base
   --output=4-06-compile_false --clean
 
 ```
+
+
+# Metta Functions Task List
+
+| Function Name  | Doc. (@doc) | Test Created | Impl. in Interpreter | Impl. in Transpiler | Arg Types Declared |
+|----------------|-------------|--------------|----------------------|---------------------|--------------------|
+| `functionA`    | - [ ]       | - [ ]        | - [ ]                | - [ ]               | - [ ]              |
+| `functionB`    | - [ ]       | - [ ]        | - [ ]                | - [ ]               | - [ ]              |
+| `functionC`    | - [ ]       | - [ ]        | - [ ]                | - [ ]               | - [ ]              |
+
 
