@@ -16,6 +16,7 @@ cd metta-wam
 . scripts/ensure_venv  # ensures we are runing in a python venv
 pip install ansi2html   # needed for running tests
 pip install hyperon  # needed for running tests
+pip install junit2html # needed for test report generation
 chmod +x INSTALL.sh  # Make sure the script is executable
 . ./INSTALL.sh # Follow the default prompts 
 
@@ -98,6 +99,7 @@ mettalog tests/baseline_compat/hyperon-experimental_scripts/b0_chaining_prelim.m
 ```
 
 **Note:** Remember, the `MeTTa` script's name is case-sensitive. Do not confuse it with `metta`, which refers to the MeTTa Interpreter written in Rust.
+
 
 
 
@@ -290,4 +292,14 @@ clear ; mettalog --test --v=./src/canary --log --html --compile=false tests/base
   --output=4-06-compile_false --clean
 
 ```
+
+
+# Metta Functions Task List
+
+| Function Name  | Doc. (@doc) | Test Created | Impl. in Interpreter | Impl. in Transpiler | Arg Types Declared |
+|----------------|-------------|--------------|----------------------|---------------------|--------------------|
+| `functionA`    | - [ ]       | - [ ]        | - [ ]                | - [ ]               | - [ ]              |
+| `functionB`    | - [ ]       | - [ ]        | - [ ]                | - [ ]               | - [ ]              |
+| `functionC`    | - [ ]       | - [ ]        | - [ ]                | - [ ]               | - [ ]              |
+
 

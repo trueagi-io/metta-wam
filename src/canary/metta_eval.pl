@@ -339,7 +339,8 @@ is_progn('chain-body').
 is_progn('progn').
 
 eval_20(Eq,RetType,Depth,Self,[Comma,X  ],Res):- is_progn(Comma),!, eval_args(Eq,RetType,Depth,Self,X,Res).
-%eval_20(Eq,RetType,Depth,Self,[Comma,X,Y],Res):- is_progn(Comma),!, eval_args(Eq,_,Depth,Self,X,_),eval_args(Eq,RetType,Depth,Self,Y,Res).
+%eval_20(Eq,RetType,Depth,Self,[Comma,X,Y],Res):- is_progn(Comma),!, eval_args(Eq,_,Depth,Self,X,_),
+%  eval_args(Eq,RetType,Depth,Self,Y,Res).
 eval_20(Eq,RetType,Depth,Self,[Comma,X|Y],Res):- is_progn(Comma),!, eval_args(Eq,_,Depth,Self,X,_),
   eval_args(Eq,RetType,Depth,Self,[Comma|Y],Res).
 
@@ -1231,6 +1232,11 @@ eval_20(Eq,RetType,Depth,Self,['format-args',Format,Args],Result):- !,
    eval_args(Eq,RetType,Depth,Self,Args,EArgs),
    string_chars(EFormat, FormatChars), user_io(with_output_to(string(Result), format_args(FormatChars, 0, EArgs))).
 %   string_chars(EFormat, FormatChars), wots(Result, format_args(FormatChars, 0, EArgs)).
+
+eval_20(Eq,RetType,_Depth,_Self,['flip'],Bool):-
+   ignore(RetType='Bool'), !, as_tf(random(0,2,0),Bool),
+   check_returnval(Eq,RetType,Bool).
+
 
 % =================================================================
 % =================================================================

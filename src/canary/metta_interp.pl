@@ -605,6 +605,7 @@ show_options_values:-
 % Get Type of Value
 'get-type'(Value, Type):- eval_H(['get-type', Value], Type).
 
+
 % ============================
 % %%%% String Utilities
 % ============================
@@ -612,6 +613,13 @@ show_options_values:-
 'stringToChars'(String, Chars) :- eval_H(['stringToChars', String], Chars).
 'charsToString'(Chars, String) :- eval_H(['charsToString', Chars], String).
 'format-args'(Format, Args, Result) :- eval_H(['format-args', Format, Args], Result).
+
+% ============================
+% %%%% Random Utilities
+% ============================
+'flip'(Bool) :- eval_H(['flip'], Bool). % see `flip` in metta_eval.pl as `eval_20/6`
+
+
 
 metta_argv(Args):- current_prolog_flag(metta_argv, Args),!.
 metta_argv(Before):- current_prolog_flag(os_argv,OSArgv), append(_,['--args'|AArgs],OSArgv),

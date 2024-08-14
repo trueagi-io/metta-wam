@@ -954,6 +954,7 @@ if [[ "$html_flag" == "enable" ]]; then
         if [ ! -z "$OUTPUT_DIR" ] ;then
             HTML_OUT="${OUTPUT_DIR}/${HTML_OUT}"
         fi
+	export HTML_FILE="${HTML_OUT}"
     fi
 
     export TYPESCRIPT=1
