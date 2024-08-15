@@ -134,3 +134,9 @@ jobs:
     - name: Provide Report Links
       run: |
         echo "JUnit reports, Allure report, and test comparison reports are available as artifacts."
+
+    - name: Auto-Approve the Pull Request
+      if: github.event_name == 'pull_request'
+      uses: hmarr/auto-approve-action@v3
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
