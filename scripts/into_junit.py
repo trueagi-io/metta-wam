@@ -7,17 +7,20 @@ def create_testcase_element(testclass, testname, stdout, identifier, got, expect
     # Create the testcase XML element with the class and test name attributes
     testcase = ET.Element("testcase", classname=testclass, name=testname)
 
+    test_res = f"Assertion: {stdout}\nExpected: {expected}\nActual: {got}"
+    sys_out_text = f"<![CDATA[\n<a href=\"{url}\">Test Report</a>\n\n{test_res}\n]]>"
+
     if status == "PASS":
         # If the test passed, add system-out with a clickable link and details
         system_out = ET.SubElement(testcase, "system-out")
-        system_out.text = f"<![CDATA[\n<a href=\"{url}\">Test Report</a>\n\nAssertion: {stdout}\nExpected: {expected}\nActual: {got}\n]]>"
+        system_out.text = sys_out_text        
     else:  # status == "FAIL"
         # If the test failed, add a failure element with details and a clickable link
         failure_message = f"Test failed: Expected '{expected}' but got '{got}'"
         failure = ET.SubElement(testcase, "failure", message=failure_message, type="AssertionError")
-        failure.text = f"<![CDATA[\nAssertionError: {failure_message}\n]]>"
+        failure.text = f"AssertionError: {failure_message}"
         system_out = ET.SubElement(testcase, "system-out")
-        system_out.text = f"<![CDATA[\n<a href=\"{url}\">Test Report</a>\n\nAssertion: {stdout}\nExpected: {expected}\nActual: {got}\n]]>"
+        system_out.text = sys_out_text
 
     return testcase
 
