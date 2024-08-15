@@ -1678,7 +1678,7 @@ maybe_halt(Seven):- option_value('repl',false),!,halt(Seven).
 maybe_halt(Seven):- option_value('halt',true),!,halt(Seven).
 maybe_halt(_):- once(pre_halt2), fail.
 maybe_halt(Seven):- fbugio(maybe_halt(Seven)), fail.
-maybe_halt(_):- !.
+%maybe_halt(_):- !.
 maybe_halt(H):- halt(H).
 
 
