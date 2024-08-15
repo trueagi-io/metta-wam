@@ -9,8 +9,9 @@ on:
       - main
 
 permissions:
-  contents: write
-  checks: write
+  contents: write  # Grant write permissions for contents
+  checks: write    # Grant write permissions for checks
+  pull-requests: write  # Explicitly grant write permissions for pull requests
 
 jobs:
   generate-reports:
@@ -50,7 +51,7 @@ jobs:
     - name: Convert JUnit XML to Matrix HTML Report
       continue-on-error: true  # extra: Continue even if this step fails
       run: |
-        junit2html --report-matrix junit-matrix-report.html junit.xml
+        junit2html --report-matrix junit.xml junit-matrix-report.html
 
     - name: Upload JUnit XML Report
       continue-on-error: true  # extra: Continue even if this step fails
@@ -78,7 +79,7 @@ jobs:
       with:
         name: 'JUnit Results'
         path: 'junit.xml'
-        reporter: 'java-junit'  # Correct reporter type for JUnit XML
+        reporter: 'java-junit'
         fail-on-error: false  # Do not fail the job if tests fail
 
     - name: Download Previous JUnit Results
@@ -94,10 +95,7 @@ jobs:
 
     - name: Compare JUnit Test Results with ReportGenerator
       run: |
-        reportgenerator \
-          -reports:"previous-junit.xml;junit.xml" \
-          -targetdir:"./comparison-report" \
-          -reporttypes:"HtmlSummary;HtmlChart"
+        reportgenerator           -reports:"previous-junit.xml;junit.xml"           -targetdir:"./comparison-report"           -reporttypes:"HtmlSummary;HtmlChart"
 
     - name: Upload JUnit Comparison Report
       continue-on-error: true  # extra: Continue even if this step fails
