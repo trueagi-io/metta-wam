@@ -51,7 +51,7 @@ jobs:
     - name: Convert JUnit XML to Matrix HTML Report
       continue-on-error: true
       run: |
-        junit2html --report-matrix junit.xml junit-matrix-report.html
+        junit2html --report-matrix junit-matrix-report.html junit.xml
 
     - name: Upload JUnit XML Report
       continue-on-error: true
