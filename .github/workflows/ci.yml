@@ -9,8 +9,9 @@ on:
       - main
 
 permissions:
-  contents: write
-  checks: write
+  contents: write  # Grant write permissions for contents
+  checks: write    # Grant write permissions for checks, only effective on push
+  pull-requests: write  # Explicitly grant write permissions for pull requests
 
 jobs:
   generate-reports:
@@ -33,56 +34,57 @@ jobs:
       run: chmod +x scripts/run_commit_tests.sh
 
     - name: Run Shell Script to Generate Input File
-      continue-on-error: true  # extra: Continue even if this step fails
+      continue-on-error: true
       run: |
         ./scripts/run_commit_tests.sh
 
     - name: Run JUnit Report Generation Script
-      continue-on-error: true  # extra: Continue even if this step fails
+      continue-on-error: true
       run: |
         python scripts/into_junit.py /tmp/SHARED.UNITS > junit.xml
 
     - name: Convert JUnit XML to Standard HTML Report
-      continue-on-error: true  # extra: Continue even if this step fails
+      continue-on-error: true
       run: |
         junit2html junit.xml junit-standard-report.html
 
     - name: Convert JUnit XML to Matrix HTML Report
-      continue-on-error: true  # extra: Continue even if this step fails
+      continue-on-error: true
       run: |
-        junit2html --report-matrix junit-matrix-report.html junit.xml
+        junit2html --report-matrix junit.xml junit-matrix-report.html
 
     - name: Upload JUnit XML Report
-      continue-on-error: true  # extra: Continue even if this step fails
+      continue-on-error: true
       uses: actions/upload-artifact@v3
       with:
         name: junit-report
         path: junit.xml
 
     - name: Upload Standard HTML Report
-      continue-on-error: true  # extra: Continue even if this step fails
+      continue-on-error: true
       uses: actions/upload-artifact@v3
       with:
         name: junit-standard-html-report
         path: junit-standard-report.html
 
     - name: Upload Matrix HTML Report
-      continue-on-error: true  # extra: Continue even if this step fails
+      continue-on-error: true
       uses: actions/upload-artifact@v3
       with:
         name: junit-matrix-html-report
         path: junit-matrix-report.html
 
     - name: Display JUnit Test Results
+      if: github.event_name == 'push'  # Only run this step on pushes to main
       uses: dorny/test-reporter@v1
       with:
         name: 'JUnit Results'
         path: 'junit.xml'
-        reporter: 'java-junit'  # Correct reporter type for JUnit XML
-        fail-on-error: false  # Do not fail the job if tests fail
+        reporter: 'java-junit'
+        fail-on-error: false
 
     - name: Download Previous JUnit Results
-      continue-on-error: true  # extra: Continue even if this step fails
+      continue-on-error: true
       uses: actions/download-artifact@v3
       with:
         name: junit-report
@@ -94,13 +96,10 @@ jobs:
 
     - name: Compare JUnit Test Results with ReportGenerator
       run: |
-        reportgenerator \
-          -reports:"previous-junit.xml;junit.xml" \
-          -targetdir:"./comparison-report" \
-          -reporttypes:"HtmlSummary;HtmlChart"
+        reportgenerator           -reports:"previous-junit.xml;junit.xml"           -targetdir:"./comparison-report"           -reporttypes:"HtmlSummary;HtmlChart"
 
     - name: Upload JUnit Comparison Report
-      continue-on-error: true  # extra: Continue even if this step fails
+      continue-on-error: true
       uses: actions/upload-artifact@v3
       with:
         name: junit-comparison-html-report
@@ -126,7 +125,7 @@ jobs:
         allure generate --clean --output ./allure-report ./allure-results
 
     - name: Upload Allure Report as Artifact
-      continue-on-error: true  # extra: Continue even if this step fails
+      continue-on-error: true
       uses: actions/upload-artifact@v3
       with:
         name: allure-html-report
