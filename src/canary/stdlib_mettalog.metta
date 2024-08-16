@@ -778,6 +778,7 @@
   (@return "Function documentation using @doc-formal"))
 (: @doc (-> Atom DocDescription DocInformal))
 (: @doc (-> Atom DocDescription DocParameters DocReturnInformal DocInformal))
+;; Is Data Functor
 
 ;; Public MeTTa
 (@doc @desc
@@ -786,6 +787,7 @@
     (@param "String containing function description")))
   (@return "Function description"))
 (: @desc (-> String DocDescription))
+;; Is Data Functor
 
 ;; Public MeTTa
 (@doc @param
@@ -795,6 +797,7 @@
   (@return "Parameter description"))
 (: @param (-> String DocParameterInformal))
 (: @param (-> DocType DocDescription DocParameter))
+;; Is Data Functor
 
 ;; Public MeTTa
 (@doc @return
@@ -804,6 +807,7 @@
   (@return "Return value description"))
 (: @return (-> String DocReturnInformal))
 (: @return (-> DocType DocDescription DocReturn))
+;; Is Data Functor
 
 ;; Public MeTTa
 (@doc @doc-formal
@@ -818,6 +822,7 @@
   (@return "Expression containing full documentation on function"))
 (: @doc-formal (-> DocItem DocKindFunction DocType DocDescription DocParameters DocReturn DocFormal))
 (: @doc-formal (-> DocItem DocKindAtom DocType DocDescription DocFormal))
+;; Is Data Functor
 
 ;; Public MeTTa
 (@doc @item
@@ -826,6 +831,7 @@
     (@param "Atom/Function name to be documented")))
   (@return "(@item Atom) entity"))
 (: @item (-> Atom DocItem))
+;; Is Data Functor
 
 ; TODO: help! gives two outputs
 ;Atom (@kind function): (%Undefined% (-> Atom Atom)) Used for documentation purposes. Shows type of entity to be documented. (@kind function) in this case
@@ -834,11 +840,13 @@
 (@doc (@kind function)
   (@desc "Used for documentation purposes. Shows type of entity to be documented. (@kind function) in this case"))
 (: (@kind function) DocKindFunction)
+;; Is Data Functor
 
 ;; Public MeTTa
 (@doc (@kind atom)
   (@desc "Used for documentation purposes. Shows type of entity to be documented. (@kind atom) in this case"))
 (: (@kind atom) DocKindAtom)
+;; Is Data Functor
 
 ;; Public MeTTa
 (@doc @type
@@ -847,6 +855,7 @@
     (@param "Atom/Function type to be documented")))
   (@return "(@type Type) entity"))
 (: @type (-> Type DocType))
+;; Is Data Functor
 
 ;; Public MeTTa
 (@doc @params
@@ -855,6 +864,7 @@
     (@param "Several (@param ...) entities")))
   (@return "DocParameters containing description of all parameters of function in form of (@params ((@param ...) (@param ...) ...))"))
 (: @params (-> Expression DocParameters))
+;; Is Data Functor
 
 ;; Public MeTTa
 (@doc get-doc
@@ -893,7 +903,7 @@
 (: get-doc-function (-> Atom Type Atom))
 (= (get-doc-function $name $type)
   (let $top-space (mod-space! top)
-  (if-unify $top-space (@doc $name $desc (@params $params) $ret)
+  (unify $top-space (@doc $name $desc (@params $params) $ret)
     (let $type' (if (== $type %Undefined%) (undefined-doc-function-type $params) (cdr-atom $type))
     (let ($params' $ret') (get-doc-params $params $ret $type')
       (@doc-formal (@item $name) (@kind function) (@type $type) $desc (@params $params') $ret')))
@@ -943,9 +953,9 @@
 (= (get-doc-atom $atom)
   (let $top-space (mod-space! top)
   (let $type (get-type-space $top-space $atom)
-    (if-unify $top-space (@doc $atom $desc)
+    (unify $top-space (@doc $atom $desc)
       (@doc-formal (@item $atom) (@kind atom) (@type $type) $desc)
-      (if-unify $top-space (@doc $atom $desc' (@params $params) $ret)
+      (unify $top-space (@doc $atom $desc' (@params $params) $ret)
         (get-doc-function $atom %Undefined%)
         (@doc-formal (@item $atom) (@kind atom) (@type $type) (@desc "No documentation")) )))))
 
@@ -1089,7 +1099,7 @@
     (@param "Atom to get type for")))
   (@return "Type notation or %Undefined% if there is no type for input Atom in provided atomspace"))
 ;; Implemented from Interpreters?
-(ALT= (get-type-space $space $atom)
+(= (get-type-space $space $atom)
 	(get-type $atom $space))
 
 ;; Public MeTTa
@@ -1111,7 +1121,7 @@
 (: match (-> Atom Atom Atom %Undefined%))
 ;; Implemented from Interpreters
 ;(= (match $space $pattern $template)
-;  (if-unify $pattern $space $template Empty))
+;  (unify $space $pattern $template Empty))
 
 ;; Public MeTTa
 (@doc register-module!
