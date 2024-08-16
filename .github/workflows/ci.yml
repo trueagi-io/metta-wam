@@ -140,3 +140,29 @@ jobs:
       uses: hmarr/auto-approve-action@v3
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
+  
+    - name: Upload Allure Report as Pages Artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: ./allure-report
+
+  deploy-allure-report:
+    runs-on: ubuntu-latest
+    needs: generate-reports
+
+    permissions:
+      pages: write     # Allow deployment to GitHub Pages
+      id-token: write
+
+    environment:
+      # environment created automatically by GitHub
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
