@@ -641,7 +641,8 @@ eval_20(Eq,RetType,_Dpth,_Slf,['new-space'],Space):- !, 'new-space'(Space),check
 
 eval_20(Eq,RetType,Depth,Self,[Op,Space|Args],Res):- is_space_op(Op),!,
   eval_space_start(Eq,RetType,Depth,Self,[Op,Space|Args],Res).
-
+eval_20(Eq,RetType,Depth,Self,['unify',Space|Args],Res):- !,
+  eval_space_start(Eq,RetType,Depth,Self,['match',Space|Args],Res).
 
 eval_space_start(Eq,RetType,_Depth,_Self,[_Op,_Other,Atom],Res):-
   (Atom == [] ;  Atom =='Empty';  Atom =='Nil'),!,make_nop(RetType,'False',Res),check_returnval(Eq,RetType,Res).
