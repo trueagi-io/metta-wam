@@ -604,6 +604,7 @@ show_options_values:-
 % ============================
 % Get Type of Value
 'get-type'(Value, Type):- eval_H(['get-type', Value], Type).
+% 'get-type-space'(Space, Value, Type):- eval_H(['get-type', Space, Value], Type).
 
 
 % ============================
