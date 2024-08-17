@@ -148,15 +148,4 @@ In Prolog, the cut (`!`) is used to commit to a specific choice, preventing Prol
 - **Selective Clause Activation**: When you have multiple versions of a predicate, you can use a cut to activate only one version while leaving the others in place for future comparison.
 - **Deferred Cleanup**: Before permanently deleting old or deprecated clauses, you can disable them with a cut while ensuring the code remains functional.
 
-### Potential Pitfalls:
-
-- **Unintended Behavior**: The cut completely blocks backtracking, so if the first clause fails, Prolog won’t attempt any of the remaining clauses. This can lead to unexpected failures if you forget the cut is in place.
-- **Hidden Logic**: The clauses below the cut are still in your code, which can be confusing for others (or even yourself) if it’s not clear why they aren’t being executed.
-
-### Best Practices:
-
-- Clearly document the use of this technique, especially if it’s temporary. Add comments explaining why the cut is used and when the blocked clauses should be reactivated or removed.
-- If the cut is being used for debugging, consider removing it once the debugging phase is complete to avoid leaving inactive code in the project.
-- Using a cut (`!`) at the start of a clause is a clever way to "comment out" all lower clauses temporarily. It’s a practical technique for incremental development, controlled testing, and delaying the decision to delete code until you’re sure it’s no longer needed.
-
 
