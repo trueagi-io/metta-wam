@@ -65,11 +65,11 @@
 (@doc if-unify
   (@desc "Matches two first arguments and returns third argument if they are matched and forth argument otherwise")
   (@params (
-	(@param "First atom to if-unify with")
-	(@param "Second atom to if-unify with")
+	(@param "First atom to unify with")
+	(@param "Second atom to unify with")
 	(@param "Result if two atoms unified successfully")
 	(@param "Result otherwise")))
-  (@return "Third argument when first two atoms are matched of forth one otherwise"))
+  (@return "Third argument when first two atoms are unifiable or forth one otherwise"))
 (: if-unify (-> Atom Atom Atom Atom %Undefined%))
 ;; Implemented from Interpreters
 
@@ -82,18 +82,6 @@
 (= (if-unify-or-empty $a $a) unified)
 (= (if-unify-or-empty $a $b) (empty))
 
-
-;; Public MeTTa
-(@doc unify
-  (@desc "Like Match ....")
-  (@params (
-	(@param "The collection or space to match")
-	(@param "Second atom to unify with")
-	(@param "Result if two atoms unified successfully")
-	(@param "Result otherwise")))
-  (@return "Third argument when found or forth one otherwise"))
-(: unify (-> Atom Atom Atom Atom Atom))
-;; Implemented from Interpreters
 
 ;; Public MeTTa
 (@doc cons-atom
@@ -134,8 +122,8 @@
     (@param "Expression in form (Atom Binding)")))
   (@return "Non-deterministic list of Atoms"))
 ;; superpose-bind because `superpose` doesnt guarentee shared bindings
-(: superpose-bind (-> Atom Atom)) ; We specialize them but leaving the old defs in case
 (: superpose-bind (-> Expression Atom))
+(: superpose-bind (-> Atom Atom)) ; We specialize them but leaving the old defs in case
 ;; Implemented from Interpreters
 
 ; Helper Minimal Metta?
@@ -241,7 +229,7 @@
     (@param "Tuple of pairs mapping condition patterns to results")))
   (@return "Result which corresponds to the pattern which is matched with the passed atom first"))
 
-;; Dumb MeTTaLog unwill we implent it
+;; Dumb MeTTaLog? will we implement it?
 (: switch (-> Atom Atom Atom))
 (= (switch $atom $list) (case (eval $atom) $list))
 
@@ -303,8 +291,9 @@
     (@param "Type to cast atom to")
     (@param "Context atomspace")))
   (@return "Atom if casting is successful, (Error ... BadType) otherwise"))
+(: type-cast (-> Atom Atom Atom Atom))
 ;; This impl is old and maybe not sufficiant?
-(= (type-cast $atom $type $space)
+(ALT= (type-cast $atom $type $space)
   (function (chain (eval (get-metatype $atom)) $meta
     (eval (if-equal $type $meta
       (return $atom)
@@ -324,6 +313,7 @@
     (@param "Atom to be returned if types can be unified")
     (@param "Atom to be returned if types cannot be unified")))
   (@return "Third or fourth argument"))
+(: match-types (-> Atom Atom Atom Atom Atom))
 (= (match-types $type1 $type2 $then $else)
   (function (eval (if-equal $type1 %Undefined%
     (return $then)
@@ -746,9 +736,11 @@
   (@params (
     (@param "Anything")))
   (@return "Unit atom"))
+(: nop (-> Atom (->)))
 ;; Implemented from Interpreters
-(= (nop) ())
-(= (nop $x) ())
+(ALT= (nop $x) ())
+(: nop (-> EmptyType))
+(ALT= (nop) ())
 
 ;; Public MeTTa
 (@doc empty
@@ -757,11 +749,13 @@
   (@return "Nothing"))
 (: empty (-> %Undefined%))
 ;; Implemented from Interpreters
-(= (empty) (let a b never-happens))
+(ALT= (empty) (let a b never-happens))
+;For testing
+;(= (empty) Empty)
 
-(= (empty-rust1) (let a b never-happens))
+;(= (empty-rust1) (let a b never-happens))
 ; TODO: MINIMAL added for compatibility, remove after migration
-(= (empty-minimal) Empty)
+;(= (empty-minimal) Empty)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Documentation formatting functions
@@ -1032,6 +1026,7 @@
     (@param "Atomspace to add atom into")
     (@param "Atom to add")))
   (@return "Unit atom"))
+(: add-atom (-> hyperon::space::DynSpace Atom (->)))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1039,6 +1034,7 @@
   (@desc "Creates new Atomspace which could be used further in the program as a separate from &self Atomspace")
   (@params ())
   (@return "Reference to a new space"))
+(: new-space (-> hyperon::space::DynSpace Atom))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1048,6 +1044,7 @@
     (@param "Reference to the space from which the Atom needs to be removed")
     (@param "Atom to be removed")))
   (@return "Unit atom"))
+(: remove-atom (-> hyperon::space::DynSpace Atom (->)))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1056,6 +1053,7 @@
   (@params (
     (@param "Reference to the space")))
   (@return "List of all atoms in the input space"))
+(get-atoms (-> hyperon::space::DynSpace Atom))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1064,6 +1062,7 @@
   (@params (
     (@param "Atom to be wrapped")))
   (@return "Returns (State $value) where $value is an argument to a new-state"))
+(: new-state (-> $tnso (StateMonad $tnso)))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1073,6 +1072,7 @@
     (@param "State created by new-state function")
     (@param "Atom which will replace wrapped atom in the input state")))
   (@return "State with replaced wrapped atom"))
+(: change-state! (-> (StateMonad $tcso) $tcso (StateMonad $tcso)))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1081,6 +1081,7 @@
   (@params (
     (@param "State")))
   (@return "Atom wrapped by state"))
+(: get-state (-> (StateMonad $tgso) $tgso))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1089,6 +1090,8 @@
   (@params (
     (@param "Atom to get type for")))
   (@return "Type notation or %Undefined% if there is no type for input Atom"))
+(: get-type (-> Atom Atom))
+(: get-type (-> Atom Atom Atom))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1099,6 +1102,7 @@
     (@param "Atom to get type for")))
   (@return "Type notation or %Undefined% if there is no type for input Atom in provided atomspace"))
 ;; Implemented from Interpreters?
+(: get-type-space (-> Atom Atom Atom))
 (= (get-type-space $space $atom)
 	(get-type $atom $space))
 
@@ -1108,7 +1112,20 @@
   (@params (
     (@param "Atom to get metatype for")))
   (@return "Metatype of input atom"))
+(: get-metatype (-> Atom Atom))
 ;; Implemented from Interpreters  
+
+;; Public MeTTa
+(@doc unify
+  (@desc "Like Match but allows any sort of container for the first argument. (Match only allows MeTTa spaces.)")
+  (@params (
+	(@param "The collection or space to match")
+	(@param "Second atom to unify with")
+	(@param "Result if two atoms unified successfully")
+	(@param "Result otherwise")))
+  (@return "Third argument when found or forth one otherwise"))
+(: unify (-> Atom Atom Atom Atom Atom))
+;; Implemented from Interpreters
 
 ;; Public MeTTa
 (@doc match
@@ -1120,7 +1137,7 @@
   (@return "If match was successfull it outputs pattern (third argument) with filled variables (if any were present in pattern) using matched pattern (second argument). Nothing - otherwise"))
 (: match (-> Atom Atom Atom %Undefined%))
 ;; Implemented from Interpreters
-;(= (match $space $pattern $template)
+;(ALT= (match $space $pattern $template)
 ;  (unify $space $pattern $template Empty))
 
 ;; Public MeTTa
@@ -1129,6 +1146,7 @@
   (@params (
     (@param "File system path")))
   (@return "Unit atom"))
+(: register-module! (-> Atom (->)))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1137,16 +1155,19 @@
   (@params (
     (@param "Module name")))
   (@return "Space name"))
+(: mod-space! (-> Atom hyperon::space::DynSpace))
 ;; Implement from Interpreter!
 (= (mod-space! top) &self)
 (= (mod-space! corelib) &corelib)
 (= (mod-space! stdlib) &stdlib)
+
 
 ;; Public MeTTa
 (@doc print-mods!
   (@desc "Prints all modules with their correspondent spaces")
   (@params ())
   (@return "Unit atom"))
+(: print-mods! (-> (->)))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1156,6 +1177,7 @@
     (@param "First expression")
     (@param "Second expression")))
   (@return "Unit atom if both expression after evaluation is equal, error - otherwise"))
+(: assertEqual (-> Atom Atom Atom))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1165,6 +1187,7 @@
     (@param "First expression (it will be evaluated)")
     (@param "Second expression (it won't be evaluated)")))
   (@return "Unit atom if both expression after evaluation is equal, error - otherwise"))
+(: assertEqualToResult (-> Atom Atom Atom))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1173,6 +1196,7 @@
   (@params (
     (@param "Atom which will be evaluated")))
   (@return "Tuple"))
+(: collapse (-> Atom Atom))
 ;; Implemented from Interpreters
   
 ;; Public MeTTa
@@ -1181,6 +1205,7 @@
   (@params (
     (@param "Function name which space need to be captured")))
   (@return "Function"))
+(: capture (-> Atom Atom))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1190,6 +1215,7 @@
     (@param "Atom (it will be evaluated)")
     (@param "Tuple of pairs mapping condition patterns to results")))
   (@return "Result of evaluating of Atom bound to met condition"))
+(: case (-> Atom Expression Atom))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1198,6 +1224,7 @@
   (@params (
     (@param "Tuple to be converted")))
   (@return "Argument converted to nondeterministic result"))
+(: superpose (-> Expression %Undefined%))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1207,6 +1234,7 @@
     (@param "Key's name")
     (@param "New value")))
   (@return "Unit atom"))
+(: pragma! (-> Symbol %Undefined% (->)))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1217,6 +1245,7 @@
     (@param "Module name")))
   (@return "Unit atom"))
 ;; Implemented from Interpreters
+(: import! (-> Atom Atom (->)))
 
 ;; Public MeTTa
 (@doc include
@@ -1224,6 +1253,7 @@
   (@params (
     (@param "Name of metta script to import")))
   (@return "Unit atom"))
+(: include (-> Atom Atom))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1233,6 +1263,7 @@
     (@param "Token name")
     (@param "Atom, which is associated with the token after reduction")))
   (@return "Unit atom"))
+(: bind! (-> Symbol %Undefined% (->)))
 ;; Implemented from Interpreters
   
 ;; Public MeTTa
@@ -1242,6 +1273,7 @@
     (@param "Atom to print")
     (@param "Atom to return")))
   (@return "Evaluated second input"))
+(: trace! (-> %Undefined% $a $a))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1250,6 +1282,7 @@
   (@params (
     (@param "Expression/atom to be printed out")))
   (@return "Unit atom"))
+(: println! (-> %Undefined% (->)))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1259,6 +1292,7 @@
     (@param "Expression with {} symbols to be replaced")
     (@param "Atoms to be placed inside expression instead of {}")))
   (@return "Expression with replaced {} with atoms"))
+(: format-args (-> String Expresson String))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1268,6 +1302,7 @@
 	(@param "Variable list e.g. ($x $y)")
 	(@param "Atom which uses those variables")))
   (@return "Second argument but with variables being replaced with unique variables"))
+(: sealed (-> Expression Atom Atom))
 ;; Implemented from Interpreters
 
 
@@ -1287,6 +1322,7 @@
     (@param "Addend")
     (@param "Augend")))
   (@return "Sum"))
+(: + (-> Number Number Number))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1296,6 +1332,7 @@
     (@param "Minuend")
     (@param "Deductible")))
   (@return "Difference"))
+(: - (-> Number Number Number))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1305,6 +1342,7 @@
     (@param "Multiplier")
     (@param "Multiplicand")))
   (@return "Product"))
+(: * (-> Number Number Number))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1314,6 +1352,7 @@
     (@param "Dividend")
     (@param "Divisor")))
   (@return "Fraction"))
+(: / (-> Number Number Number))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1323,6 +1362,7 @@
     (@param "Dividend")
     (@param "Divisor")))
   (@return "Remainder"))
+(: % (-> Number Number Number))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1332,6 +1372,7 @@
     (@param "First number")
     (@param "Second number")))
   (@return "True if first argument is less than second, False - otherwise"))
+(: < (-> Number Number Bool))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1341,6 +1382,7 @@
     (@param "First number")
     (@param "Second number")))
   (@return "True if first argument is greater than second, False - otherwise"))
+(: > (-> Number Number Bool))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1350,6 +1392,7 @@
     (@param "First number")
     (@param "Second number")))
   (@return "True if first argument is less than or equal to second, False - otherwise"))
+(: <= (-> Number Number Bool))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1359,6 +1402,7 @@
     (@param "First number")
     (@param "Second number")))
   (@return "True if first argument is greater than or equal to second, False - otherwise"))
+(: >= (-> Number Number Bool))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1368,6 +1412,7 @@
     (@param "First argument")
     (@param "Second argument")))
   (@return "Returns True if two arguments are equal, False - otherwise. If arguments are of different type function returns Error currently"))
+(: == (-> $t $t Bool))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1376,6 +1421,7 @@
   (@params (
     (@param "Non-deterministic set of values")))
   (@return "Unique values from input set"))
+(: unique (-> Atom Atom))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1385,6 +1431,7 @@
     (@param "Non-deterministic set of values")
     (@param "Another non-deterministic set of values")))
   (@return "Union of sets"))
+(: union (-> Atom Atom Atom))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1394,6 +1441,7 @@
     (@param "Non-deterministic set of values")
     (@param "Another non-deterministic set of values")))
   (@return "Intersection of sets"))
+(: intersection (-> Atom Atom Atom))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1403,6 +1451,7 @@
     (@param "Non-deterministic set of values")
     (@param "Another non-deterministic set of values")))
   (@return "Subtraction of sets"))
+(: subtraction (-> Atom Atom Atom))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1411,4 +1460,6 @@
   (@params (
     (@param "URL to github repo")))
   (@return "Unit atom"))
-;; Implemented from Interpreters
+(: git-module! (-> Atom (->)))
+;; Implemented from Interpreters	
+
