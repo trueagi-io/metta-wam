@@ -97,12 +97,6 @@ When Prolog encounters `fail/0` in a clause, it stops evaluating the remaining g
 - **Prototyping**: When you’re unsure about the behavior of a specific clause or want to delay its execution until later, using `fail/0` allows you to keep it in the codebase without it being active.
 - **Conditional Logic**: In some cases, you may want to programmatically control whether a clause should be active or not. By conditionally including or excluding `fail/0`, you can switch between enabling and disabling a clause.
 
-### Potential Pitfalls:
-
-- Be cautious when using this technique, as leaving `fail/0` in place for too long can lead to forgotten or outdated code being left inactive in your project.
-- It’s easy to forget why a clause was disabled with `fail/0`, so consider adding a comment explaining the reason if it’s a temporary measure.
-- While `fail/0` is an effective tool, if you simply want to disable a single goal rather than the entire clause, traditional line comments using `%` might be more appropriate.
-
 ---
 
 
