@@ -50,5 +50,5 @@ In SWI-Prolog, when you use `call(some_pred(stuff))` and `some_pred/1` is not ye
 
 ### When to Use It:
 
-- When you’re building code that evolves over time, and you want to define certain predicates later.
 - For scenarios where predicates are loaded dynamically, such as in modular or plugin-based systems.
+- When you’re building code that evolves over time, and you want to define certain predicates later, use `nop/1` instead.
