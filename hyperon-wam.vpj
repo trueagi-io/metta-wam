@@ -100,6 +100,12 @@
 				</Folder>
 			</Folder>
 		</Folder>
+		<Folder Name="docs">
+			<F
+				N="docs/*.*"
+				Recurse="1"
+				Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"/>
+		</Folder>
 		<Folder Name="../hyperon-experimental">
 			<F
 				N="../hyperon-experimental/*.*"
@@ -165,6 +171,13 @@
 		<Folder Name="tests">
 			<F
 				N="tests/*.*"
+				Recurse="1"
+				Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"
+				L="1"/>
+		</Folder>
+		<Folder Name="wiki">
+			<F
+				N="wiki/*.*"
 				Recurse="1"
 				Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"
 				L="1"/>
