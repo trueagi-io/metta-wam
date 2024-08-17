@@ -1,5 +1,3 @@
-# Strange Prolog Coder Hacks
-
 Prolog programmers often develop creative and unconventional solutions to work around limitations or achieve specific goals in their code. One such hack involves using a dummy predicate like `nop/1` to create more readable, flexible, and maintainable code.
 
 ## Example Hack: The `nop/1` Predicate
