@@ -75,7 +75,7 @@ our_ansi_format(C, Fmt,Args):- our_ansi_format([fg(C)], Fmt,Args).
 
 print_current_test:-
    loonit_number(Number),
-   get_test_name(Number,TestName),format(';<h3 id="~w">;; ~w</h3>~n',[TestName,TestName]).
+   get_test_name(Number,TestName),format('~N~n;<h3 id="~w">;; ~w</h3>~n',[TestName,TestName]).
 
 % Increment loonit counters based on goal evaluation
 
