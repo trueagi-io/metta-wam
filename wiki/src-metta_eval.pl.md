@@ -97,7 +97,7 @@ In MeTTaLog, different evaluation modes (eval_20, eval_40, and eval_70) provide 
 
 # String Functions and eval_70
 
-String functions implemented by Roy would ideally fit into `eval_70` because they involve straightforward pre-evaluated argument handling. However, there’s an important technical limitation: explicit type information is required for a function to operate within `eval_70`. 
+String functions implemented by @royward would ideally fit into `eval_70` because they involve straightforward pre-evaluated argument handling. However, there’s an important technical limitation: explicit type information is required for a function to operate within `eval_70`. 
 
 ### Why String Functions Should Be in eval_70
 - **eval_70** is ideal for functions like string operations that don’t require special argument handling. Instead, they work well with pre-evaluated arguments.
@@ -139,6 +139,4 @@ Operations like `intersection`, `unique`, and `union` require fine-grained, lazy
 
 ---
 
-This wiki page provides a detailed overview of key concepts in MeTT
-
-aLog's evaluation process, guiding developers through the rationale behind different evaluation modes and their applications.
+This wiki page provides a detailed overview of key concepts in MeTTaLog's evaluation process, guiding developers through the rationale behind different evaluation modes and their applications.
