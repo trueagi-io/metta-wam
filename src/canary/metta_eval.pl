@@ -1635,11 +1635,16 @@ eval_20(Eq,RetType,Depth,Self,['fromNumber',NE],RetVal):- !,
     fromNumber(N,RetVal), check_returnval(Eq,RetType,RetVal).
 */
 
+
 eval_20(Eq,RetType,Depth,Self,['dedup!',Eval],RetVal):- !,
    term_variables(Eval+RetVal,Vars),
-   no_repeats_var(YY),!,
+   no_repeats_var(YY),
    eval_20(Eq,RetType,Depth,Self,Eval,RetVal),YY=Vars.
 
+% Like dedup!, but only looks at the RetVal
+eval_20(Eq,RetType,Depth,Self,['unique',Eval],RetVal):- !,
+   no_repeats_var(YY),
+   eval_args(Eq,RetType,Depth,Self,Eval,RetVal),YY=RetVal.
 
 eval_20(Eq,RetType,Depth,Self,PredDecl,Res):-
   Do_more_defs = do_more_defs(true),
