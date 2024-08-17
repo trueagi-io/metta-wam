@@ -823,9 +823,11 @@ maplist_ok_fails(_Pred2,[],[]).
 %;; superpose-bind because `superpose` doesnt guarentee shared bindings
 % @TODO  need to keep bindings
 eval_20(Eq,RetType,Depth,Self,['superpose-bind',List],Res):- !,
-       member(E,List),
+       re_member(Res,E,List),
        eval_ret(Eq,RetType,Depth,Self,E,Res).
 
+re_member(Res,E,List):- term_variables(Res+E+List,TV),copy_term(TV,Copy),
+    member(E,List),TV=Copy.
 
 %[collapse,[1,2,3]]
 eval_20(Eq,RetType,Depth,Self,['collapse',List],Res):-!,
@@ -1636,15 +1638,10 @@ eval_20(Eq,RetType,Depth,Self,['fromNumber',NE],RetVal):- !,
 */
 
 
-eval_20(Eq,RetType,Depth,Self,['dedup!',Eval],RetVal):- !,
+eval_20(Eq,RetType,Depth,Self,['unique',Eval],RetVal):- !,
    term_variables(Eval+RetVal,Vars),
    no_repeats_var(YY),
    eval_20(Eq,RetType,Depth,Self,Eval,RetVal),YY=Vars.
-
-% Like dedup!, but only looks at the RetVal
-eval_20(Eq,RetType,Depth,Self,['unique',Eval],RetVal):- !,
-   no_repeats_var(YY),
-   eval_args(Eq,RetType,Depth,Self,Eval,RetVal),YY=RetVal.
 
 eval_20(Eq,RetType,Depth,Self,PredDecl,Res):-
   Do_more_defs = do_more_defs(true),
