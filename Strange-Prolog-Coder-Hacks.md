@@ -105,15 +105,8 @@ When Prolog encounters `fail/0` in a clause, it stops evaluating the remaining g
 
 ---
 
-Here’s an addition to the **Strange_Prolog_Coder_Hacks** wiki page that explains using a cut (`!`) in the first clause to temporarily comment out all clauses below it:
 
----
-
-# Strange Prolog Coder Hacks
-
-Prolog provides a number of powerful tools that, when used creatively, can lead to clever solutions for common development challenges. One such hack involves using a cut (`!`) at the beginning of a clause to temporarily prevent other clauses from being considered.
-
-## Hack 2: Using a Cut (`!`) to Temporarily Disable Clauses Below It
+## Using a Cut (`!`) to Temporarily Disable Clauses Below It
 
 ### Example:
 
