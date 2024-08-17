@@ -100,6 +100,12 @@
 				</Folder>
 			</Folder>
 		</Folder>
+		<Folder Name="docs">
+			<F
+				N="docs/*.*"
+				Recurse="1"
+				Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"/>
+		</Folder>
 		<Folder Name="../hyperon-experimental">
 			<F
 				N="../hyperon-experimental/*.*"
