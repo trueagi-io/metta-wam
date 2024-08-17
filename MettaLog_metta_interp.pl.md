@@ -139,6 +139,4 @@ Operations like `intersection`, `unique`, and `union` require fine-grained, lazy
 
 ---
 
-This wiki page provides a detailed overview of key concepts in MeTT
-
-aLog's evaluation process, guiding developers through the rationale behind different evaluation modes and their applications.
+This wiki page provides a detailed overview of key concepts in MeTTaLog's evaluation process, guiding developers through the rationale behind different evaluation modes and their applications.
