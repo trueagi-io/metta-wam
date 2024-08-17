@@ -1,4 +1,4 @@
-Prolog programmers often use creative and unconventional techniques to handle scenarios like undefined predicates, conditional execution, or prototyping code. This page explores some of these clever hacks that demonstrate Prolog's flexibility.
+Prolog programmers often unconventional techniques to handle scenarios like undefined predicates, conditional execution, or prototyping code. This page explores some of those tricks.
 
 ## Hack 1: The `nop/1` Predicate
 
