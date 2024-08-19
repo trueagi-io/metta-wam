@@ -421,7 +421,7 @@ properties('&corelib','=', [logic, qhelp("Equality/unification operator."), equa
 properties('&corelib','\\=', [logic, qhelp("Inequality test."), inequality]).
 properties('&corelib','==', [logic, qhelp("Equality test."), equality_test]).
 properties('&corelib','or', [logic, qhelp("Logical OR."), logical_or]).
-properties('&corelib','xor', [logic, qhelp("Logical XOR."), logical_or])
+properties('&corelib','xor', [logic, qhelp("Logical XOR."), logical_xor])
 properties('&corelib','and', [logic, qhelp("Logical AND."), logical_and]).
 properties('&corelib','not', [logic, qhelp("Logical NOT."), logical_not]).
 properties('&corelib','quote', [evaluation_control, qhelp("Prevents evaluation, treating input as literal.")]).
