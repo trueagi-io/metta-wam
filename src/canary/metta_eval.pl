@@ -54,8 +54,6 @@
 %
 % post match modew
 %:- style_check(-singleton).
-:- multifile(nop/1).
-:- meta_predicate(nop(0)).
 :- multifile(fake_notrace/1).
 :- meta_predicate(fake_notrace(0)).
 :- meta_predicate(color_g_mesg(+,0)).
@@ -237,6 +235,7 @@ finish_eval_here(Eq,RetType,Depth2,Self,Y,YO):-
 
 :- discontiguous eval_20/6.
 :- discontiguous eval_40/6.
+:- discontiguous eval_70/6.
 %:- discontiguous eval_30fz/5.
 %:- discontiguous eval_31/5.
 %:- discontiguous eval_maybe_defn/5.
@@ -1766,12 +1765,12 @@ suggest_type(_RetType,_Bool).
 naive_eval_args:-
     false.
 
-eval_40(Eq,RetType,Depth,Self,[AE|More],Res):- naive_eval_args,!,
+eval_41(Eq,RetType,Depth,Self,[AE|More],Res):- naive_eval_args,!,
   maplist(must_eval_args(Eq,_,Depth,Self),More,Adjusted),
   eval_70(Eq,RetType,Depth,Self,[AE|Adjusted],Res),
   check_returnval(Eq,RetType,Res).
 
-eval_40(Eq,RetType,Depth,Self,AEMore,ResOut):- \+ naive_eval_args,!,
+eval_41(Eq,RetType,Depth,Self,AEMore,ResOut):- \+ naive_eval_args,!,
   eval_adjust_args(Eq,RetType,ResIn,ResOut,Depth,Self,AEMore,AEAdjusted),
   if_trace((e;args),
      (AEMore\==AEAdjusted -> color_g_mesg('#773733',indentq2(Depth,AEMore -> AEAdjusted))
@@ -1779,6 +1778,12 @@ eval_40(Eq,RetType,Depth,Self,AEMore,ResOut):- \+ naive_eval_args,!,
   eval_70(Eq,RetType,Depth,Self,AEAdjusted,ResIn),
   check_returnval(Eq,RetType,ResOut).
 
+
+eval_20(Eq,RetType,Depth,Self,X,Y):-
+  (eval_40(Eq,RetType,Depth,Self,X,M)*-> M=Y ;
+     % finish_eval(Depth,Self,M,Y);
+    (eval_failed(Depth,Self,X,Y)*->true;X=Y)).
+eval_40(Eq,RetType,Depth,Self,AEMore,ResOut):- eval_41(Eq,RetType,Depth,Self,AEMore,ResOut).
 eval_70(Eq,RetType,Depth,Self,PredDecl,Res):-
     if_or_else(eval_maybe_python(Eq,RetType,Depth,Self,PredDecl,Res),
     if_or_else(eval_maybe_host_predicate(Eq,RetType,Depth,Self,PredDecl,Res),
