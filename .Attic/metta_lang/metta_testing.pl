@@ -102,6 +102,7 @@ loonit_asserts0(S,Pre,G):-
   print_current_test,
   once(Pre),!,
   ((nb_current(exec_src,Exec),Exec\==[])->true;S=Exec),
+  write_src(exec(Exec)),nl,nl,
  % wots(S,((((nb_current(exec_src,WS),WS\==[])->writeln(WS);write_src(exec(TestSrc)))))),
   once(loonit_asserts1(Exec,Pro,G)).
 

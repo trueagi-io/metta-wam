@@ -1034,7 +1034,7 @@
   (@desc "Creates new Atomspace which could be used further in the program as a separate from &self Atomspace")
   (@params ())
   (@return "Reference to a new space"))
-(: new-space (-> hyperon::space::DynSpace Atom))
+(: new-space (-> hyperon::space::DynSpace))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1420,7 +1420,7 @@
   (@desc "Function takes non-deterministic input (first argument) and returns only unique entities. E.g. (unique (superpose (a b c d d))) -> [a, b, c, d]")
   (@params (
     (@param "Non-deterministic set of values")))
-  (@return "Unique values from input set"))
+  (@return "Unique non-deterministic values from input set"))
 (: unique (-> Atom Atom))
 ;; Implemented from Interpreters
 
@@ -1430,7 +1430,7 @@
   (@params (
     (@param "Non-deterministic set of values")
     (@param "Another non-deterministic set of values")))
-  (@return "Union of sets"))
+  (@return "Non-deterministic Union of sets"))
 (: union (-> Atom Atom Atom))
 ;; Implemented from Interpreters
 
@@ -1440,7 +1440,7 @@
   (@params (
     (@param "Non-deterministic set of values")
     (@param "Another non-deterministic set of values")))
-  (@return "Intersection of sets"))
+  (@return "Non-deterministic Intersection of sets"))
 (: intersection (-> Atom Atom Atom))
 ;; Implemented from Interpreters
 
@@ -1450,7 +1450,7 @@
   (@params (
     (@param "Non-deterministic set of values")
     (@param "Another non-deterministic set of values")))
-  (@return "Subtraction of sets"))
+  (@return "Non-deterministic Subtraction of sets"))
 (: subtraction (-> Atom Atom Atom))
 ;; Implemented from Interpreters
 
@@ -1463,3 +1463,5 @@
 (: git-module! (-> Atom (->)))
 ;; Implemented from Interpreters	
 
+; !(import! &corelib "src/canary/stdlib_mettalog.metta")
+!(println! "!(import! &corelib \"src/canary/stdlib_mettalog.metta\")")
