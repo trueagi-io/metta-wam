@@ -1989,7 +1989,7 @@ dumpST_error(Msg):- notrace((ddmsg(error,Msg),dumpST,wdmsg(error,Msg))).
 :- initialization(save_streams,now).
 :- initialization(save_streams,after_load).
 :- initialization(save_streams,restore).
-:- thread_initialization(save_streams).
+% :- thread_initialization(save_streams).
 
 
 :- setup_call_cleanup(true,set_main_error,notrace).

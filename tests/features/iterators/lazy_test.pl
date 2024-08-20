@@ -47,7 +47,7 @@ space_iter(Iter,L) :-
 
 get_next_atom(_,Space,Atom):- metta_atom(Space,Atom).
 
-    
+
 lazy_iter(Iter,Next,L) :-
     lazy_list(lazy_iter(Iter,Next), state(0), L).
 
