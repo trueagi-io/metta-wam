@@ -144,6 +144,9 @@ metta_atom_corelib_types( [:, unquote, [->, '%Undefined%', '%Undefined%']]).
 % metta_atom_corelib_types( [:, charsToString [-> 'Expression' 'Atom']]).
 % metta_atom_corelib_types( [:, format-args [-> 'Atom' 'Expression' 'Atom']]).
 
+metta_atom_corelib_types( [:, 'unique', [->, 'Atom', 'Atom']]).
+metta_atom_corelib_types( [:, 'subtraction', [->, 'Atom', 'Atom', 'Atom']]).
+
 metta_atom_corelib_types( [:, 'get-metatype', [->, 'Atom', 'Atom']]).
 metta_atom_corelib_types( [:, 'get-type0', [->, 'Atom', 'Atom']]).
 metta_atom_corelib_types( [:, 'get-ftype', [->, 'Atom', 'Atom']]).
