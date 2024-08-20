@@ -1809,7 +1809,10 @@ fix_message_hook:-
 %:- ensure_loaded(metta_python).
 
 
+:- initialization(use_corelib_file).
+
 :- ignore(((
+   use_corelib_file,
    (is_testing -> UNIT_TEST=true; UNIT_TEST=false),
    set_is_unit_test(UNIT_TEST),
    \+ prolog_load_context(reloading,true),

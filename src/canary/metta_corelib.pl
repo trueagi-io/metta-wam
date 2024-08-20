@@ -22,6 +22,9 @@
 
 :- discontiguous metta_atom_corelib_types/1.
 
+:- dynamic(using_corelib_file/0).
+
+
 metta_atom_corelib_defn( [=, ['car-atom', A], [eval, ['if-decons', A, B, _, B, ['Error', ['car-atom', A], "car-atom expects a non-empty expression as an argument"]]]]).
 metta_atom_corelib_defn( [=, ['cdr-atom', A], [eval, ['if-decons', A, _, B, B, ['Error', ['cdr-atom', A], "cdr-atom expects a non-empty expression as an argument"]]]]).
 metta_atom_corelib_defn( [=, ['filter-atom', A, B, C], [function, [eval, ['if-decons', A, D, E, [chain, [eval, ['filter-atom', E, B, C]], F, [chain, [eval, [apply, D, B, C]], G, [chain, G, H, [eval, [if, H, [chain, [cons, D, F], I, [return, I]], [return, F]]]]]], [return, []]]]]]).
@@ -279,5 +282,16 @@ metta_atom_corelib2([':','If',[->,'Bool','Atom','Atom']]).
 :- dynamic(metta_atom_asserted_deduced/2).
 :- multifile(metta_atom_asserted_deduced/2).
 metta_atom_asserted_deduced('&corelib', Term):- metta_atom_corelib_types(Term).
+
+use_corelib_file:- using_corelib_file,!.
+use_corelib_file:- asserta(using_corelib_file), fail.
+use_corelib_file:- !.
+use_corelib_file:- is_metta_dir(Dir), really_use_corelib_file(Dir,'corelib.metta'),!.
+use_corelib_file:- is_metta_dir(Dir), really_use_corelib_file(Dir,'stdlib_mettalog.metta'),!.
+% !(import! &corelib "src/canary/stdlib_mettalog.metta")
+really_use_corelib_file(Dir,File):- absolute_file_name(File,Filename,[relative_to(Dir)]),
+  include_metta_directory_file('&corelib',Dir,Filename).
+
+%:- initialization(use_corelib_file).
 
 

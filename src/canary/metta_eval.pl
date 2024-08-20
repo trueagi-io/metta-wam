@@ -2135,6 +2135,7 @@ len_or_unbound(_,_).
 
 
 :-if(true).
+:- nodebug(metta('defn')).
 
 eval_maybe_defn(Eq,RetType,Depth,Self,X,Res):-
    \+  \+ (curried_arity(X,F,A),
@@ -2145,7 +2146,7 @@ eval_maybe_defn(Eq,RetType,Depth,Self,X,Res):-
    \+ fail_on_constructor,
    eval_constructor(Eq,RetType,Depth,Self,X,Res).
 eval_maybe_defn(Eq,RetType,Depth,Self,X,Y):- can_be_ok(eval_maybe_defn,X),!,
-      trace_eval(eval_defn_choose_candidates(Eq,RetType),' find_defn ',Depth,Self,X,Y).
+      trace_eval(eval_defn_choose_candidates(Eq,RetType),'defn',Depth,Self,X,Y).
 
 eval_constructor(Eq,RetType,Depth,Self,X,Res):-
    eval_maybe_subst(Eq,RetType,Depth,Self,X,Res).
@@ -2185,7 +2186,7 @@ eval_defn_failure(_Eq,_RetType,Depth,_Self,X,Res):-
 
 :-else.
 eval_maybe_defn(Eq,RetType,Depth,Self,X,Y):- can_be_ok(eval_maybe_defn,X),!,
-      trace_eval(eval_defn_choose_candidates(Eq,RetType),' find_defn ',Depth,Self,X,Y).
+      trace_eval(eval_defn_choose_candidates(Eq,RetType),'defn',Depth,Self,X,Y).
 
 eval_defn_choose_candidates(Eq,RetType,Depth,Self,X,Y):-
     findall((XX->B0),get_defn_expansions(Eq,RetType,Depth,Self,X,XX,B0),XXB0L),
