@@ -684,11 +684,11 @@ eval_space(Eq,RetType,Depth,Self,['match',Other,Goal,Template],Res):- !,
    eval_args(Eq,RetType,Depth,Self,Template,Res).
 
 %metta_atom_iter(Eq,_Depth,_Slf,Other,[Equal,[F|H],B]):- Eq == Equal,!,  % trace,
-%   metta_defn(Eq,Other,[F|H],B).
+%   metta_eq_def(Eq,Other,[F|H],B).
 
 /*
 metta_atom_iter(Eq,Depth,Self,Other,[Equal,[F|H],B]):- Eq == Equal,!,  % trace,
-   metta_defn(Eq,Other,[F|H],BB),
+   metta_eq_def(Eq,Other,[F|H],BB),
    eval_sometimes(Eq,_RetType,Depth,Self,B,BB).
 */
 
@@ -708,9 +708,9 @@ metta_atom_true(_Eq,Depth,Self,Other,H):-
       into_space(Depth,Self,Other,Space),
       metta_atom(Space,H).
 % is this OK?
-%metta_atom_true(Eq,Depth,Self,Other,H):- nonvar(H), metta_defn(Eq,Other,H,B), D2 is Depth -1, eval_args_true(Eq,_,D2,Self,B).
+%metta_atom_true(Eq,Depth,Self,Other,H):- nonvar(H), metta_eq_def(Eq,Other,H,B), D2 is Depth -1, eval_args_true(Eq,_,D2,Self,B).
 % is this OK?
-%metta_atom_true(Eq,Depth,Self,Other,H):- Other\==Self, nonvar(H), metta_defn(Eq,Other,H,B), D2 is Depth -1, eval_args_true(Eq,_,D2,Other,B).
+%metta_atom_true(Eq,Depth,Self,Other,H):- Other\==Self, nonvar(H), metta_eq_def(Eq,Other,H,B), D2 is Depth -1, eval_args_true(Eq,_,D2,Other,B).
 
 
 
@@ -1348,8 +1348,8 @@ eval_20(Eq,RetType,Depth,Self,['or',X,Y],TF):- !,
 eval_20(Eq,RetType,Depth,Self,['xor',X,Y],TF):- !,
   as_tf(  (eval_args_true(Eq,RetType,Depth,Self,X)),  XTF),  % evaluate X
   as_tf(  (eval_args_true(Eq,RetType,Depth,Self,Y)),  YTF),  % evaluate Y
-  as_tf(  (bool_xor(XTF,YTF))			   ,   TF).   
- 
+  as_tf(  (bool_xor(XTF,YTF))              ,   TF).
+
 
 eval_20(Eq,RetType,Depth,Self,['not',X],TF):- !,
    as_tf(( \+ eval_args_true(Eq,RetType,Depth,Self,X)), TF).
@@ -1670,7 +1670,7 @@ lazy_subtraction(E1^Call1, E2^Call2, E1) :-
     lazy_findall(E2, Call2, List2),
     % Step 3: Perform the subtraction logic
     % Only return E1 if it is not a member of List2
-    \+ (member(E2, List2), E1 = E2).
+    \+ (member(E2, List2), E1 =@= E2).
 
 
 eval_20(Eq,RetType,Depth,Self,PredDecl,Res):-
@@ -2191,7 +2191,7 @@ eval_defn_choose_candidates(Eq,RetType,Depth,Self,X,Y):-
     findall((XX->B0),get_defn_expansions(Eq,RetType,Depth,Self,X,XX,B0),XXB0L),
     XXB0L\=[],!,
         Depth2 is Depth-1,
-    if_trace((metta_defn),
+    if_trace((defn;metta_defn),
         maplist(print_templates(Depth,'   '),XXB0L)),!,
     member(XX->B0,XXB0L), X=XX, Y=B0, X\=@=B0,
     %(X==B0 -> trace; eval_args(Eq,RetType,Depth,Self,B0,Y)).
@@ -2208,20 +2208,20 @@ pl_clause_num(Head,Body,Ref,Index):-
 same_len_copy(Args,NewArgs):- length(Args,N),length(NewArgs,N).
 
 get_defn_expansions(Eq,_RetType,_Depth,Self,[H|Args],[H|NewArgs],B0):- same_len_copy(Args,NewArgs),
-   metta_defn(Eq,Self,[H|NewArgs],B0).
+   metta_eq_def(Eq,Self,[H|NewArgs],B0).
 
 get_defn_expansions(Eq,RetType,Depth,Self,[[H|Start]|T1],[[H|NewStart]|NewT1],[Y|T1]):- is_list(Start),
     same_len_copy(Start,NewStart),
     X = [H|NewStart],
     findall((XX->B0),get_defn_expansions(Eq,RetType,Depth,Self,X,XX,B0),XXB0L),
-    XXB0L\=[], if_trace((metta_defn;eval_args),maplist(print_templates(Depth,'curry 1'),XXB0L)),!,
+    XXB0L\=[], if_trace((defn;metta_defn;eval_args),maplist(print_templates(Depth,'curry 1'),XXB0L)),!,
     member(XX->B0,XXB0L), X=XX, Y=B0, X\=@=B0,
     light_eval(Eq,RetType,Depth,Self,B0,Y),
     same_len_copy(T1,NewT1).
 
 get_defn_expansions(Eq,RetType,Depth,Self,[[H|Start]|T1],RW,Y):- is_list(Start), append(Start,T1,Args),
   get_defn_expansions(Eq,RetType,Depth,Self,[H|Args],RW,Y),
-  if_trace((metta_defn;eval_args),indentq_d(Depth,'curry 2 ', [[[H|Start]|T1] ,'----->', RW])).
+  if_trace((defn;metta_defn;eval_args),indentq_d(Depth,'curry 2 ', [[[H|Start]|T1] ,'----->', RW])).
 
 print_templates(Depth,_T,guarded_defn(Types,XX,B0)):-!,
    Depth2 is Depth+2,

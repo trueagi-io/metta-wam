@@ -65,7 +65,7 @@ is_metta_data_functor(_Eq,_Othr,H):-
 is_metta_data_functor(Eq,Other,H):- H\=='Right', H\=='Something',
  % metta_type(Other,H,_), % fail,
   \+ get_metta_atom(Eq,Other,[H|_]),
-  \+ metta_defn(Eq,Other,[H|_],_),
+  \+ metta_eq_def(Eq,Other,[H|_],_),
   \+ is_metta_builtin(H),
   \+ is_comp_op(H,_),
   \+ is_math_op(H,_,_).
@@ -456,7 +456,7 @@ type_conform(T,L):- can_assign(T,L).
 throw_metta_return(L):-
    asserta(thrown_metta_return(L)),
     (throw(metta_return(L))).
-    
+
 
 into_typed_args(_Dpth,_Slf,T,M,Y):- (\+ iz_conz(T); \+ iz_conz(M)),!, M=Y.
 into_typed_args(Depth,Self,[T|TT],[M|MM],[Y|YY]):-
@@ -478,7 +478,7 @@ into_typed_arg0(Depth,Self,_,M,Y):- eval_args(Depth,Self,M,Y).
 wants_eval_kind(T):- nonvar(T), is_pro_eval_kind(T),!.
 wants_eval_kind(_):- true.
 
-metta_type:attr_unify_hook(Self=TypeList,NewValue):- 
+metta_type:attr_unify_hook(Self=TypeList,NewValue):-
  attvar(NewValue),!,put_attr(NewValue,metta_type,Self=TypeList).
 metta_type:attr_unify_hook(Self=TypeList,NewValue):-
    get_type(20,Self,NewValue,Was),
@@ -598,7 +598,7 @@ is_user_defined_head_f(Eq,Other,H):- is_user_defined_head_f1(Eq,Other,[H|_]).
 %is_user_defined_head_f1(Eq,Other,H):- metta_type(Other,H,_).
 %s_user_defined_head_f1(Other,H):- get_metta_atom(Eq,Other,[H|_]).
 is_user_defined_head_f1(Other,H):- is_user_defined_head_f1(=,Other,H).
-is_user_defined_head_f1(Eq,Other,H):- metta_defn(Eq,Other,[H|_],_).
+is_user_defined_head_f1(Eq,Other,H):- metta_eq_def(Eq,Other,[H|_],_).
 %is_user_defined_head_f(Eq,_,H):- is_metta_builtin(H).
 
 
