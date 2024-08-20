@@ -77,6 +77,10 @@ metta_atom_corelib_defn( [=, [or, 'False', 'False'], 'False']).
 metta_atom_corelib_defn( [=, [or, 'False', 'True'], 'True']).
 metta_atom_corelib_defn( [=, [or, 'True', 'False'], 'True']).
 metta_atom_corelib_defn( [=, [or, 'True', 'True'], 'True']).
+metta_atom_corelib_defn( [=, [xor, 'False', 'False'], 'False']).
+metta_atom_corelib_defn( [=, [xor, 'False', 'True'], 'True']).
+metta_atom_corelib_defn( [=, [xor, 'True', 'False'], 'True']).
+metta_atom_corelib_defn( [=, [xor, 'True', 'True'], 'False']).
 metta_atom_corelib_defn( [=, [quote, _], 'NotReducible']).
 metta_atom_corelib_defn( [=, [reduce, A, B, C], [chain, [eval, A], D, [eval, ['if-error', D, D, [eval, ['if-empty', D, [eval, [subst, A, B, C]], [eval, [reduce, D, B, C]]]]]]]]).
 metta_atom_corelib_defn( [=, [subst, A, B, C], [match, A, B, C, ['Error', [subst, A, B, C], "subst expects a variable as a second argument"]]]).
@@ -129,6 +133,7 @@ metta_atom_corelib_types( [:, if, [->, 'Bool', 'Atom', 'Atom', _]]).
 metta_atom_corelib_types( [:, let, [->, 'Atom', '%Undefined%', 'Atom', 'Atom']]).
 metta_atom_corelib_types( [:, match, [->, 'Atom', 'Atom', 'Atom', '%Undefined%']]).
 metta_atom_corelib_types( [:, or, [->, 'Bool', 'Bool', 'Bool']]).
+metta_atom_corelib_types( [:, xor, [->, 'Bool', 'Bool', 'Bool']]).
 metta_atom_corelib_types( [:, quote, [->, 'Atom', 'Atom']]).
 metta_atom_corelib_types( [:, return, [->, 'Atom', 'ReturnType']]).
 metta_atom_corelib_types( [:, switch, [->, '%Undefined%', 'Expression', 'Atom']]).
@@ -178,6 +183,7 @@ op_decl('let*', [ 'Expression', 'Atom' ], 'Atom').
 
 op_decl(and, [ 'Bool', 'Bool' ], 'Bool').
 op_decl(or, [ 'Bool', 'Bool' ], 'Bool').
+op_decl(xor, [ 'Bool', 'Bool' ], 'Bool').
 op_decl(case, [ 'Expression', 'Atom' ], 'Atom').
 
 op_decl(apply, [ 'Atom', 'Variable', 'Atom' ], 'Atom').
