@@ -1334,6 +1334,8 @@ is_comma(C):- var(C),!,fail.
 is_comma(',').
 is_comma('{}').
 
+bool_xor(A,B) :- (A == 'True'; B == 'True'), \+ (A == B).
+
 eval_20(Eq,RetType,Depth,Self,['and',X,Y],TF):- !,
     as_tf(( (eval_args_true(Eq,RetType,Depth,Self,X),
              eval_args_true(Eq,RetType,Depth,Self,Y))), TF).
@@ -1342,6 +1344,12 @@ eval_20(Eq,RetType,Depth,Self,['and',X,Y],TF):- !,
 eval_20(Eq,RetType,Depth,Self,['or',X,Y],TF):- !,
   as_tf(( (eval_args_true(Eq,RetType,Depth,Self,X);
            eval_args_true(Eq,RetType,Depth,Self,Y))), TF).
+
+eval_20(Eq,RetType,Depth,Self,['xor',X,Y],TF):- !,
+  as_tf(  (eval_args_true(Eq,RetType,Depth,Self,X)),  XTF),  % evaluate X
+  as_tf(  (eval_args_true(Eq,RetType,Depth,Self,Y)),  YTF),  % evaluate Y
+  as_tf(  (bool_xor(XTF,YTF))			   ,   TF).   
+ 
 
 eval_20(Eq,RetType,Depth,Self,['not',X],TF):- !,
    as_tf(( \+ eval_args_true(Eq,RetType,Depth,Self,X)), TF).
