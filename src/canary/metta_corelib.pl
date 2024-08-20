@@ -22,6 +22,9 @@
 
 :- discontiguous metta_atom_corelib_types/1.
 
+:- dynamic(using_corelib_file/0).
+
+
 metta_atom_corelib_defn( [=, ['car-atom', A], [eval, ['if-decons', A, B, _, B, ['Error', ['car-atom', A], "car-atom expects a non-empty expression as an argument"]]]]).
 metta_atom_corelib_defn( [=, ['cdr-atom', A], [eval, ['if-decons', A, _, B, B, ['Error', ['cdr-atom', A], "cdr-atom expects a non-empty expression as an argument"]]]]).
 metta_atom_corelib_defn( [=, ['filter-atom', A, B, C], [function, [eval, ['if-decons', A, D, E, [chain, [eval, ['filter-atom', E, B, C]], F, [chain, [eval, [apply, D, B, C]], G, [chain, G, H, [eval, [if, H, [chain, [cons, D, F], I, [return, I]], [return, F]]]]]], [return, []]]]]]).
@@ -77,6 +80,10 @@ metta_atom_corelib_defn( [=, [or, 'False', 'False'], 'False']).
 metta_atom_corelib_defn( [=, [or, 'False', 'True'], 'True']).
 metta_atom_corelib_defn( [=, [or, 'True', 'False'], 'True']).
 metta_atom_corelib_defn( [=, [or, 'True', 'True'], 'True']).
+metta_atom_corelib_defn( [=, [xor, 'False', 'False'], 'False']).
+metta_atom_corelib_defn( [=, [xor, 'False', 'True'], 'True']).
+metta_atom_corelib_defn( [=, [xor, 'True', 'False'], 'True']).
+metta_atom_corelib_defn( [=, [xor, 'True', 'True'], 'False']).
 metta_atom_corelib_defn( [=, [quote, _], 'NotReducible']).
 metta_atom_corelib_defn( [=, [reduce, A, B, C], [chain, [eval, A], D, [eval, ['if-error', D, D, [eval, ['if-empty', D, [eval, [subst, A, B, C]], [eval, [reduce, D, B, C]]]]]]]]).
 metta_atom_corelib_defn( [=, [subst, A, B, C], [match, A, B, C, ['Error', [subst, A, B, C], "subst expects a variable as a second argument"]]]).
@@ -129,6 +136,7 @@ metta_atom_corelib_types( [:, if, [->, 'Bool', 'Atom', 'Atom', _]]).
 metta_atom_corelib_types( [:, let, [->, 'Atom', '%Undefined%', 'Atom', 'Atom']]).
 metta_atom_corelib_types( [:, match, [->, 'Atom', 'Atom', 'Atom', '%Undefined%']]).
 metta_atom_corelib_types( [:, or, [->, 'Bool', 'Bool', 'Bool']]).
+metta_atom_corelib_types( [:, xor, [->, 'Bool', 'Bool', 'Bool']]).
 metta_atom_corelib_types( [:, quote, [->, 'Atom', 'Atom']]).
 metta_atom_corelib_types( [:, return, [->, 'Atom', 'ReturnType']]).
 metta_atom_corelib_types( [:, switch, [->, '%Undefined%', 'Expression', 'Atom']]).
@@ -138,6 +146,9 @@ metta_atom_corelib_types( [:, unquote, [->, '%Undefined%', '%Undefined%']]).
 % metta_atom_corelib_types( [:, stringToChars [-> 'Atom' 'Expression']]).
 % metta_atom_corelib_types( [:, charsToString [-> 'Expression' 'Atom']]).
 % metta_atom_corelib_types( [:, format-args [-> 'Atom' 'Expression' 'Atom']]).
+
+metta_atom_corelib_types( [:, 'unique', [->, 'Atom', 'Atom']]).
+metta_atom_corelib_types( [:, 'subtraction', [->, 'Atom', 'Atom', 'Atom']]).
 
 metta_atom_corelib_types( [:, 'get-metatype', [->, 'Atom', 'Atom']]).
 metta_atom_corelib_types( [:, 'get-type0', [->, 'Atom', 'Atom']]).
@@ -178,6 +189,7 @@ op_decl('let*', [ 'Expression', 'Atom' ], 'Atom').
 
 op_decl(and, [ 'Bool', 'Bool' ], 'Bool').
 op_decl(or, [ 'Bool', 'Bool' ], 'Bool').
+op_decl(xor, [ 'Bool', 'Bool' ], 'Bool').
 op_decl(case, [ 'Expression', 'Atom' ], 'Atom').
 
 op_decl(apply, [ 'Atom', 'Variable', 'Atom' ], 'Atom').
@@ -270,5 +282,16 @@ metta_atom_corelib2([':','If',[->,'Bool','Atom','Atom']]).
 :- dynamic(metta_atom_asserted_deduced/2).
 :- multifile(metta_atom_asserted_deduced/2).
 metta_atom_asserted_deduced('&corelib', Term):- metta_atom_corelib_types(Term).
+
+use_corelib_file:- using_corelib_file,!.
+use_corelib_file:- asserta(using_corelib_file), fail.
+use_corelib_file:- !.
+use_corelib_file:- is_metta_dir(Dir), really_use_corelib_file(Dir,'corelib.metta'),!.
+use_corelib_file:- is_metta_dir(Dir), really_use_corelib_file(Dir,'stdlib_mettalog.metta'),!.
+% !(import! &corelib "src/canary/stdlib_mettalog.metta")
+really_use_corelib_file(Dir,File):- absolute_file_name(File,Filename,[relative_to(Dir)]),
+  include_metta_directory_file('&corelib',Dir,Filename).
+
+%:- initialization(use_corelib_file).
 
 

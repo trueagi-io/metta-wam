@@ -18,13 +18,9 @@
 [()]
 [()]
 [()]
-[()]
-[()]
-[()]
-[(set-debug! defn)]
-[()]
-[()]
-[()]
-[()]
-0.11user 0.01system 0:00.13elapsed 99%CPU (0avgtext+0avgdata 31788maxresident)k
-0inputs+0outputs (0major+3819minor)pagefaults 0swaps
+[(Error (assertEqualToResult (get-type (fmap (curry-a + 2) (UntypedC "5"))) ()) 
+Expected: []
+Got: [($F#3275 Number)]
+Excessive result: ($F#3275 Number))]
+0.04user 0.00system 0:00.04elapsed 100%CPU (0avgtext+0avgdata 25248maxresident)k
+0inputs+0outputs (0major+2929minor)pagefaults 0swaps

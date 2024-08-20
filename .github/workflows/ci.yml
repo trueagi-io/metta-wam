@@ -19,10 +19,10 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.x'
 
@@ -55,21 +55,21 @@ jobs:
 
     - name: Upload JUnit XML Report
       continue-on-error: true
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: junit-report
         path: junit.xml
 
     - name: Upload Standard HTML Report
       continue-on-error: true
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: junit-standard-html-report
         path: junit-standard-report.html
 
     - name: Upload Matrix HTML Report
       continue-on-error: true
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: junit-matrix-html-report
         path: junit-matrix-report.html
@@ -85,7 +85,7 @@ jobs:
 
     - name: Download Previous JUnit Results
       continue-on-error: true
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: junit-report
         path: previous-junit.xml
@@ -100,7 +100,7 @@ jobs:
 
     - name: Upload JUnit Comparison Report
       continue-on-error: true
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: junit-comparison-html-report
         path: ./comparison-report
@@ -126,7 +126,7 @@ jobs:
 
     - name: Upload Allure Report as Artifact
       continue-on-error: true
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: allure-html-report
         path: ./allure-report
@@ -140,3 +140,29 @@ jobs:
       uses: hmarr/auto-approve-action@v3
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
+  
+    - name: Upload Allure Report as Pages Artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: ./allure-report
+
+  deploy-allure-report:
+    runs-on: ubuntu-latest
+    needs: generate-reports
+
+    permissions:
+      pages: write     # Allow deployment to GitHub Pages
+      id-token: write
+
+    environment:
+      # environment created automatically by GitHub
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
