@@ -55,8 +55,8 @@
 :- set_prolog_flag(encoding, utf8).
 :- nb_setval(cmt_override,lse('; ',' !(" ',' ") ')).
 :- ensure_loaded(swi_support).
-:- set_prolog_flag(history, 10).
-:- set_prolog_flag(save_history, true).
+%:- set_prolog_flag(history, 10).
+%:- set_prolog_flag(save_history, true).
 :- set_prolog_flag(backtrace,true).
 :- set_prolog_flag(backtrace_depth,100).
 :- set_prolog_flag(backtrace_goal_dept,100).
@@ -270,9 +270,9 @@ current_self(Self):- ((nb_current(self_space,Self),Self\==[])->true;Self='&self'
 :- nb_setval(repl_mode, '+').
 
 %:- set_stream(user_input,tty(true)).
-:- if(exists_source(library(readline))).
-:- use_module(library(readline)).
-:- endif.
+%:- if(exists_source(library(readline))).
+%:- use_module(library(readline)).
+%:- endif.
 %:- use_module(library(editline)).
 :- set_prolog_flag(encoding,iso_latin_1).
 :- set_prolog_flag(encoding,utf8).
@@ -1647,8 +1647,8 @@ do_loon:-
    nts,
    %install_ontology,
    metta_final,
-   nop(load_history),
-   set_prolog_flag(history, 3),
+   %nop(load_history),
+   %set_prolog_flag(history, 3),
    % ensure_corelib_types,
    set_output_stream,
    if_t(is_compiled,update_changed_files),
@@ -1760,7 +1760,7 @@ qsave_program:-  ensure_mettalog_system, next_save_name(Name),
 :- ensure_loaded(library(flybase_main)).
 :- ensure_loaded(metta_server).
 :- initialization(update_changed_files,restore).
-:- set_prolog_flag(history, 3).
+%:- set_prolog_flag(history, 3).
 
 nts:- !.
 nts:-  redefine_system_predicate(system:notrace/1),
