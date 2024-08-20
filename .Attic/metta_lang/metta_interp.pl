@@ -788,7 +788,7 @@ start_html_of(_Filename):-!.
 start_html_of(_Filename):-
  must_det_ll((
   S = _,
-  %retractall(metta_defn(Eq,S,_,_)),
+  %retractall(metta_eq_def(Eq,S,_,_)),
   nop(retractall(metta_type(S,_,_))),
   %retractall(get_metta_atom(Eq,S,_,_,_)),
   loonit_reset,
@@ -820,7 +820,7 @@ tee_file(TEE_FILE):- metta_dir(Dir),directory_file_path(Dir,'TEE.ansi',TEE_FILE)
 clear_spaces:- clear_space(_).
 clear_space(S):-
    retractall(user:loaded_into_kb(S,_)),
-   %retractall(metta_defn(_,S,_,_)),
+   %retractall(metta_eq_def(_,S,_,_)),
    nop(retractall(metta_type(S,_,_))),
    retractall(metta_atom_asserted(S,_)).
 
@@ -896,7 +896,7 @@ is_metta_data_functor(Eq,F):-
 is_metta_data_functor(Eq,Other,H):-
   metta_type(Other,H,_),
   \+ get_metta_atom(Eq,Other,[H|_]),
-  \+ metta_defn(Eq,Other,[H|_],_).
+  \+ metta_eq_def(Eq,Other,[H|_],_).
 */
 is_function(F):- symbol(F).
 
@@ -990,7 +990,8 @@ rtrace_on_failure_and_break(G):-
     catch(rtrace(G),E,throw(give_up(E=G))),
     throw(E))).
 
-assertion_hb(metta_defn(Eq,Self,H,B),Self,Eq,H,B):-!.
+assertion_hb(metta_eq_def(Eq,Self,H,B),Self,Eq,H,B):-!.
+assertion_hb(metta_defn(Self,H,B),Self,'=',H,B):-!.
 assertion_hb(metta_atom_asserted(KB,HB),Self,Eq,H,B):- !, assertion_hb(metta_atom(KB,HB),Self,Eq,H,B).
 assertion_hb(metta_atom(Self,[Eq,H,B]),Self,Eq,H,B):- assert_type_cl(Eq),!.
 assertion_hb(metta_atom(Self,[Eq,H|B]),Self,Eq,H,B):- assert_type_cl(Eq),!.
@@ -1069,15 +1070,17 @@ metta_atom_asserted('&flybase','&corelib').
 %metta_atom(KB,[F,A|List]):- metta_atom(KB,F,A,List), F \== '=',!.
 is_metta_space(Space):- \+ \+ is_space_type(Space,_Test).
 
-metta_defn(KB,Head,Body):- metta_defn(_Eq,KB,Head,Body).
-metta_defn(Eq,KB,Head,Body):- ignore(Eq = '='), metta_atom(KB,[Eq,Head,Body]).
+metta_eq_def(Eq,KB,Head,Body):- ignore(Eq = '='), metta_atom(KB,[Eq,Head,Body]).
+
+metta_defn(KB,Head,Body):- metta_eq_def(_Eq,KB,Head,Body).
 metta_type(KB,H,B):- if_or_else(metta_atom(KB,[':',H,B]),metta_atom_corelib([':',H,B])).
 %metta_type(S,H,B):- S == '&corelib', metta_atom_stdlib_types([':',H,B]).
 %typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_arguments(Cmpd,Type,[List|_]),is_list(List).
 
 
 %maybe_xform(metta_atom(KB,[F,A|List]),metta_atom(KB,F,A,List)):- is_list(List),!.
-maybe_xform(metta_defn(Eq,KB,Head,Body),metta_atom(KB,[Eq,Head,Body])).
+maybe_xform(metta_eq_def(Eq,KB,Head,Body),metta_atom(KB,[Eq,Head,Body])).
+maybe_xform(metta_defn(KB,Head,Body),metta_atom(KB,['=',Head,Body])).
 maybe_xform(metta_type(KB,Head,Body),metta_atom(KB,[':',Head,Body])).
 maybe_xform(metta_atom(KB,HeadBody),metta_atom_asserted(KB,HeadBody)).
 maybe_xform(_OBO,_XForm):- !, fail.
@@ -1216,7 +1219,7 @@ asserted_do_metta2(Self,Load,[TypeOp,Fn,TypeDecL,RetType], Src):- TypeOp == ':',
 */
 /*do_metta(File,Self,Load,PredDecl, Src):-fail,
    metta_anew(Load,Src,metta_atom(Self,PredDecl)),
-   ignore((PredDecl=['=',Head,Body], metta_anew(Load,Src,metta_defn(Eq,Self,Head,Body)))),
+   ignore((PredDecl=['=',Head,Body], metta_anew(Load,Src,metta_eq_def(Eq,Self,Head,Body)))),
    ignore((Body == 'True',!,do_metta(File,Self,Load,Head))),
    nop((fn_append(Head,X,Head), fn_append(PredDecl,X,Body),
    metta_anew((Head:- Body)))),!.*/
@@ -1224,7 +1227,7 @@ asserted_do_metta2(Self,Load,[TypeOp,Fn,TypeDecL,RetType], Src):- TypeOp == ':',
 asserted_do_metta2(Self,Load,[EQ,Head,Result], Src):- EQ=='=', !,
  color_g_mesg_ok('#ffa504',must_det_ll((
     discover_head(Self,Load,Head),
-    metta_anew(Load,Src,metta_defn(EQ,Self,Head,Result)),
+    metta_anew(Load,Src,metta_eq_def(EQ,Self,Head,Result)),
     discover_body(Self,Load,Result)))).
 */
 asserted_do_metta2(Self,Load,PredDecl, Src):-
@@ -1807,7 +1810,10 @@ fix_message_hook:-
 %:- ensure_loaded(metta_python).
 
 
+:- initialization(use_corelib_file).
+
 :- ignore(((
+   use_corelib_file,
    (is_testing -> UNIT_TEST=true; UNIT_TEST=false),
    set_is_unit_test(UNIT_TEST),
    \+ prolog_load_context(reloading,true),
