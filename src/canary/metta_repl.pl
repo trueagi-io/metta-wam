@@ -1,3 +1,29 @@
+:- at_halt(save_history).
+
+history_file_location(Filename) :- expand_file_name('~/.config/metta/repl_history.txt',[Filename]). % for Linux, Windows might be different
+
+check_directory_exists(''). % Check all the terminating cases for the base of a directory tree. Might need more for Windows.
+check_directory_exists('/').
+check_directory_exists('.').
+check_directory_exists('~').
+check_directory_exists('..').
+check_directory_exists(Dir) :-
+    file_directory_name(Dir,Parent),
+    check_directory_exists(Parent),
+    (exists_directory(Dir) -> true ; make_directory(Dir)).
+
+check_file_exists_for_append(HistoryFile) :- exists_file(HistoryFile),access_file(HistoryFile,append), !.
+check_file_exists_for_append(HistoryFile) :-
+    file_directory_name(HistoryFile,Dir),
+    check_directory_exists(Dir),
+    open(HistoryFile,write,Stream,[create([read,write])]), !,
+    close(Stream).
+check_file_exists_for_append(HistoryFile) :- write("Error opening history file: "),writeln(HistoryFile),halt(1).
+
+save_history :-
+    history_file_location(HistoryFile),
+    el_write_history(user_input,HistoryFile).
+
 load_and_trim_history:-
  notrace((
   current_input(In), %catch(load_history,_,true),
@@ -35,7 +61,6 @@ write_metta_prompt:-
      current_read_mode(repl,Mode),write(Mode),
      current_self(Self),(Self=='&self' -> true ; write(Self)),
      write('>'),flush_output(current_output).
-
 
 repl3:-
      with_output_to(atom(P),write_metta_prompt),
@@ -124,7 +149,7 @@ repl_read(NewAccumulated, Expr):- string_chars(NewAccumulated, Chars),
     add_history_string(Renew).
 repl_read(Accumulated, Expr) :- read_line_to_string(current_input, Line), repl_read(Accumulated, Line, Expr).
 
-repl_read(_, end_of_file, end_of_file):- throw(end_of_input).
+repl_read(_, end_of_file, end_of_file):- writeln(""),throw(end_of_input).
 
 repl_read(Accumulated, "", Expr):- !, repl_read(Accumulated, Expr).
 repl_read(_Accumulated, Line, Expr):- Line == end_of_file, !, Expr = Line.
@@ -134,13 +159,13 @@ repl_read(Accumulated, Line, Expr) :- symbolics_to_string([Accumulated," ",Line]
 repl_read(O2):- clause(t_l:s_reader_info(O2),_,Ref),erase(Ref).
 repl_read(Expr) :- repeat,
   remove_pending_buffer_codes(_,Was),text_to_string(Was,Str),
-      write_metta_prompt,
+      %write_metta_prompt,
       repl_read(Str, Expr),
         % once(((symbol(Expr1),symbol_concat('@',_,Expr1), \+ atom_contains(Expr1,"="), repl_read(Expr2)) -> Expr=[Expr1,Expr2] ; Expr1 = Expr)),
         % this cutrs the repeat/0
         ((peek_pending_codes(_,Peek),Peek==[])->!;true).
 
-add_history_string(Str):- notrace(ignore(add_history01(Str))),!.
+add_history_string(Str):- notrace(ignore(el_add_history(user_input,Str))),!.
 
 add_history_src(Exec):- notrace(ignore((Exec\=[],with_output_to(string(H),with_indents(false,write_src(Exec))),add_history_string(H)))).
 
@@ -174,7 +199,7 @@ is_interactive0(From):- symbolic(From),is_stream(From),!, \+ stream_property(Fro
 is_interactive0(From):- From = true,!.
 
 
-:- set_prolog_flag(history, 3).
+%:- set_prolog_flag(history, 3).
 
 inside_assert(Var,Var):- \+ compound(Var),!.
 inside_assert([H,IA,_],IA):- symbol(H),symbol_concat('assert',_,H),!.
@@ -489,22 +514,43 @@ interact(Variables, Goal, Tracing) :-
 :- volatile(is_installed_readline_editline/1).
 install_readline_editline:- current_input(Input), install_readline(Input),!.
 
-install_readline(Input):- is_installed_readline_editline(Input),!.
-install_readline(_):- is_compatio,!.
-install_readline(_):-!.
-install_readline(Input):-
-   assert(is_installed_readline_editline(Input)),
-   install_readline_editline1,
-   use_module(library(readline)),
-   use_module(library(editline)),
-   nop(catch(load_history,_,true)),
-    add_history_string("!(pfb3)"),
-    add_history_string("!(load-flybase-full)"),
-    add_history_string("!(obo-alt-id $X BS:00063)"),
-    add_history_string("!(and (total-rows $T TR$) (unique-values $T2 $Col $TR))"),
-    nop(ignore(editline:el_wrap)),
-    nop(ignore(editline:add_prolog_commands(Input))).
+% Write our own el_wrap rather than using the default one as do not want all the prolog completions.
+% Can add mettalog completions later using add_prolog_commands/1 of swi_prolog:packages/libedit/editline.pl as template
+el_wrap_metta(Input) :-
+    el_wrapped(Input),
+    !.
+el_wrap_metta(Input) :-
+    stream_property(Input, tty(true)), !,
+    editline:el_wrap(swipl, Input, user_output, user_error),
+    add_metta_commands(Input),
+    forall(editline:el_setup(Input), true).
+el_wrap_metta.
 
+add_metta_commands(Input) :-
+    editline:el_addfn(Input, electric, 'Indicate matching bracket', editline:electric),
+    editline:el_addfn(Input, isearch_history, 'Incremental search in history', editline:isearch_history),
+    editline:el_bind(Input, ["^R", isearch_history]),
+    editline:bind_electric(Input),
+    editline:el_source(Input, _).
+
+install_readline(Input):- is_installed_readline_editline(Input),!.
+%install_readline(_):- is_compatio,!.
+%install_readline(_):-!.
+install_readline(Input):-
+    assert(is_installed_readline_editline(Input)),
+    install_readline_editline1,
+    %use_module(library(readline)),
+    use_module(library(editline)),
+    %nop(catch(load_history,_,true)),
+    %add_history_string("!(pfb3)"),
+    %add_history_string("!(load-flybase-full)"),
+    %add_history_string("!(obo-alt-id $X BS:00063)"),
+    %add_history_string("!(and (total-rows $T TR$) (unique-values $T2 $Col $TR))"),
+    ignore(el_unwrap(user_input)), % unwrap the prolog wrapper so we can use our own.
+    ignore(el_wrap_metta(Input)),
+    history_file_location(HistoryFile),
+    check_file_exists_for_append(HistoryFile),
+    el_read_history(user_input,HistoryFile).
 
 :- dynamic  setup_done/0.
 :- volatile setup_done/0.
@@ -513,23 +559,23 @@ install_readline_editline1 :-
    setup_done,
    !.
 install_readline_editline1 :-
-   asserta(setup_done),
-  '$toplevel':(
-   '$clean_history',
-   apple_setup_app,
-   '$run_initialization',
-   '$load_system_init_file',
-   set_toplevel,
-   '$set_file_search_paths',
-   init_debug_flags,
-   start_pldoc,
-   opt_attach_packs,
-   load_init_file,
-   catch(setup_backtrace, E1, print_message(warning, E1)),
-   catch(setup_readline,  E2, print_message(warning, E2)),
-   catch(setup_history,   E3, print_message(warning, E3)),
-   catch(setup_colors, E4, print_message(warning, E4))),
-   install_readline(user_input).
+   asserta(setup_done).
+%   '$toplevel':(
+%    '$clean_history',
+%    apple_setup_app,
+%    '$run_initialization',
+%    '$load_system_init_file',
+%    set_toplevel,
+%    '$set_file_search_paths',
+%    init_debug_flags,
+%    start_pldoc,
+%    opt_attach_packs,
+%    load_init_file,
+%    catch(setup_backtrace, E1, print_message(warning, E1)),
+%    %catch(setup_readline,  E2, print_message(warning, E2)),
+%    %catch(setup_history,   E3, print_message(warning, E3)),
+%    catch(setup_colors, E4, print_message(warning, E4))),
+%   install_readline(user_input).
 
 
 % Command descriptions
