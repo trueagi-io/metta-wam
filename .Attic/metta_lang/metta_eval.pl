@@ -1720,17 +1720,6 @@ eval_20(_Eq,_RetType,_Depth,_Self,['call-string!',Str],NoResult):- !,'call-strin
                call(Term),NoResult=Vars.
 
 
-
-
-
-
-
-eval_20(Eq,RetType,Depth,Self,X,Y):-
-  (eval_40(Eq,RetType,Depth,Self,X,M)*-> M=Y ;
-     % finish_eval(Depth,Self,M,Y);
-    (eval_failed(Depth,Self,X,Y)*->true;X=Y)).
-
-
 /*
 into_values(List,Many):- List==[],!,Many=[].
 into_values([X|List],Many):- List==[],is_list(X),!,Many=X.
