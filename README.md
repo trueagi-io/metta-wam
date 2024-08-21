@@ -126,7 +126,7 @@ mettalog --test --clean ./tests/baseline-compat
 
 ### Troubleshooting
 
-## Some prolog commands not found
+#### Some prolog commands not found
 
 If already have a recent enough version of swi-prolog installed, that will be used instead of mettalog installing its own. Some of the packages might not be installed, and mettalog might give an error such as:
 
