@@ -1141,7 +1141,6 @@ fetch_or_create_state(NameOrInstance, State) :-
 eval_20(_Eq,_RetType,Depth,Self,['get-types',Val],TypeO):- !,
     get_types(Depth,Self,Val,TypeO).
 
-
 % use default self
 eval_20(Eq,RetType,Depth,Self,['get-type',Val,Self],Type):- current_self(Self), !,
     eval_20(Eq,RetType,Depth,Self,['get-type',Val],Type).
@@ -1160,6 +1159,10 @@ eval_20(Eq,RetType,Depth,Self,['get-type',Val],TypeO):- !,
     %term_singletons(Type,[]),
     %Type\==[], Type\==Val,!,
     do_expander(Eq,RetType,Type,TypeO).
+
+% eval_20(Eq,RetType,Depth,Self,['get-type-space',Other,Val],Type):- !,
+%    into_space(Depth,Self,Other,Space),
+%    eval_20(Eq,RetType,Depth,Space,['get-type',Val],Type).
 
 eval_20(Eq,RetType,Depth,Self,['length',L],Res):- !, eval_args(Eq,RetType,Depth,Self,L,LL), !, (is_list(LL)->length(LL,Res);Res=1).
 eval_20(Eq,RetType,Depth,Self,['CountElement',L],Res):- !, eval_args(Eq,RetType,Depth,Self,L,LL), !, (is_list(LL)->length(LL,Res);Res=1).
