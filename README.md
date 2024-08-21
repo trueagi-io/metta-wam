@@ -152,7 +152,7 @@ ninja
 ctest -j $(nproc) --output-on-failure
 ninja install
 ```
-If you installed swi-prolog as a package from your linux distribition and run into issues, it is likely that you will need to `apt remove` it and then either
+If you installed swi-prolog as a package from your Linux distribition and run into issues, it is likely that you will need to `apt remove` it and then either
 * build SWI-prolog from source making sure that all the operating system packages are installed first, or
 * rerun the metta-wam `INSTALL.sh` script.
 
