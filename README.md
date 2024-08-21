@@ -124,6 +124,36 @@ The output is saved as an HTML file in the same directory.
 mettalog --test --clean ./tests/baseline-compat
 ```
 
+### Troubleshooting
+
+## Some prolog commands not found
+
+If already have a recent enough version of swi-prolog installed, that will be used instead of mettalog installing its own. Some of the packages might not be installed, and mettalog might give an error such as:
+
+```
+ERROR: save_history/0: Unknown procedure el_write_history/2
+```
+
+In that case, you need rebuild your swi-prolog installation to include the missing packages. The most reliable way to do this is to make sure the following Debian/Ubuntu packages are installed using:
+
+```
+sudo apt install build-essential autoconf git cmake libpython3-dev libgmp-dev libssl-dev unixodbc-dev \
+        libreadline-dev zlib1g-dev libarchive-dev libossp-uuid-dev libxext-dev \
+        libice-dev libjpeg-dev libxinerama-dev libxft-dev libxpm-dev libxt-dev \
+        pkg-config libdb-dev libpcre3-dev libyaml-dev libedit-dev
+```
+
+then rebuild swi-prolog using the instructions from The [SWI-Prolog -- Installation on Linux, *BSD (Unix)](https://www.swi-prolog.org/build/unix.html). The main part of this (assuming that you are in the `swipl` or `swipl-devel` directory) is:
+
+```
+cmake -DCMAKE_INSTALL_PREFIX=$HOME -DCMAKE_BUILD_TYPE=PGO -G Ninja ..
+ninja
+ctest -j $(nproc) --output-on-failure
+ninja install
+
+```
+If you installed swi-prolog as a package from your linux distribition and run into issues, it is likely that you will need to `apt remove` it and then either build from source or rerun the `INSTALL.sh` script.
+
 ## :raised_hands: Acknowledgments
 Thanks to the Hyperon Experimental MeTTa, PySWIP teams, and Flybase for their contributions to this project.
 
