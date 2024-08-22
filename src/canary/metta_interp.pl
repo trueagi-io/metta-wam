@@ -475,6 +475,9 @@ show_options_values:-
 % %%%% Arithmetic Operations
 % ============================
 
+'repr'( Atomx, String_metta ):- eval_H( [ repr, Atomx ], String_metta ).
+'parse'( Strx, Atom_metta ):- eval_H( [ parse, Strx ], Atom_metta ).
+
 % Addition
 %'+'(A, B, Sum):- \+ any_floats([A, B, Sum]),!,Sum #= A+B .
 %'+'(A, B, Sum):- notrace(catch_err(plus(A, B, Sum),_,fail)),!.
@@ -492,6 +495,8 @@ show_options_values:-
 'exp'(Base, Exponent, Result):- eval_H(['exp', Base, Exponent], Result).
 % Square Root
 'sqrt'(Number, Root):- eval_H(['sqrt', Number], Root).
+
+% 'substraction'( Lx1, Lx2 , Lx_intersct ):- !, eval_H( [ 'substraction', Lx1, Lx2 ], Lx_intersct ).
 
 % ============================
 % %%%% List Operations
