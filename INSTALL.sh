@@ -351,6 +351,9 @@ if false && confirm_with_default "N" "Show README.md"; then
     echo -en "${NC}"
 fi
 
+
+cd $RPWD
+
 # End of the script
 
 # ```
