@@ -2,6 +2,7 @@
 ; intersection
 
 !(intersection (superpose (a b (+ 2 3 ) c)) (superpose (b c (+ 2 3) c c d)))
+!
 ; assertEqualToResults doesnt work
 
 
