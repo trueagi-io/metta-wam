@@ -1,8 +1,14 @@
 #!/bin/bash
+set -e # stop if any step fails
 
-# This script generates the input file used by the Python script.
-# Replace the following lines with the actual commands to generate the input file.
+# install mettalog
+chmod +x INSTALL.sh  # Make sure the script is executable
+. ./INSTALL.sh --easy
 
-#echo "| ANTI-REGRESSION.BC-COMP.01 | PASS |(https://example.com/test-report) | (assertEqualToResult (add-atom &kb (: axiom (nums 2 3)))) | (()) | (()) |" > /tmp/SHARED.UNITS
-cat ./reports/SHARED.UNITS.PREV.md > /tmp/SHARED.UNITS
-# You can add more lines or commands to generate additional input data
+# generate the output directory with timestamp
+timestamp=$(date +"%Y-%m-%dT%H:%M:%S")
+output=reports/tests_output/baseline-compat-$timestamp/
+
+# run the tests
+echo Running baseline_compat tests to $output
+mettalog --output=$output tests/baseline_compat > /dev/null 2>&1
