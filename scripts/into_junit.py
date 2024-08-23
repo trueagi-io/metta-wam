@@ -2,6 +2,7 @@ import xml.etree.ElementTree as ET
 import sys
 import re
 from collections import defaultdict
+import datetime
 
 def create_testcase_element(testclass, testname, stdout, identifier, got, expected, status, url, time):
     # Create the testcase XML element with the class and test name attributes
@@ -50,6 +51,8 @@ def parse_test_line(line):
     return testpackage, testname, stdout, full_identifier, got, expected, status, url, time
 
 def generate_junit_xml(input_file, timestamp):
+    dt = datetime.datetime.fromisoformat(timestamp)
+    timestamps_dict = {}
     packages_dict = defaultdict(list)  # Dictionary to group test cases by their testpackage
 
     with open(input_file, 'r') as file:
@@ -60,6 +63,9 @@ def generate_junit_xml(input_file, timestamp):
                     parts = re.split(r'\s*\|\s*(?![^()]*\))', line.strip())
                     testpackage, testname, stdout, full_identifier, got, expected, status, url, time = parse_test_line(line)
                     testcase = create_testcase_element(testpackage, testname, stdout, full_identifier, got, expected, status, url, time)
+                    dt += datetime.timedelta(seconds=float(time))
+                    if testpackage not in timestamps_dict:
+                        timestamps_dict[testpackage] = dt
                     packages_dict[testpackage].append(testcase)
                     print(f"Processing {testpackage}.{testname}: {status}", file=sys.stderr)
                 except ValueError as e:
@@ -69,7 +75,8 @@ def generate_junit_xml(input_file, timestamp):
     testsuites = ET.Element("testsuites", timestamp=timestamp)
     testsuites_time = 0.0
     for testpackage, testcases in packages_dict.items():
-        testsuite = ET.Element("testsuite", name=testpackage)
+        testsuite_timestamp = timestamps_dict[testpackage].isoformat(timespec='seconds')
+        testsuite = ET.Element("testsuite", name=testpackage, timestamp=testsuite_timestamp)
         testsuite_time = 0.0
         for testcase in testcases:
             testsuite_time += float(testcase.get('time'))
