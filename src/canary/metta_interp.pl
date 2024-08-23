@@ -77,6 +77,29 @@ is_win64:- current_prolog_flag(windows,_).
 is_win64_ui:- is_win64,current_prolog_flag(hwnd,_).
 
 
+
+:- dynamic(user:is_metta_src_dir/1).
+:- prolog_load_context(directory,Dir),
+  retractall(user:is_metta_src_dir(_)),
+  asserta(user:is_metta_src_dir(Dir)).
+
+metta_root_dir(Dir):- is_metta_src_dir(Value), absolute_file_name('../../',Dir,[relative_to(Value)]).
+metta_root_dir(Dir):- getenv('METTA_DIR',Dir),!.
+
+metta_library_dir(Dir):- metta_root_dir(Value), absolute_file_name('./library/',Dir,[relative_to(Value)]).
+
+metta_dir(Dir):- metta_library_dir(Value), absolute_file_name('./genome/',Dir,[relative_to(Value)]).
+metta_dir(Dir):- is_metta_src_dir(Dir).  
+metta_dir(Dir):- metta_library_dir(Dir).
+metta_dir(Dir):- metta_root_dir(Dir).
+metta_dir(Dir):- is_metta_src_dir(Value), absolute_file_name('../flybase/',Dir,[relative_to(Value)]).
+
+:- dynamic user:file_search_path/2.
+:- multifile user:file_search_path/2.
+user:file_search_path(library,Dir):- metta_dir(Dir).
+user:file_search_path(mettalog,Dir):- metta_dir(Dir).
+
+
 :- is_win64 -> ensure_loaded(library(logicmoo_utils)) ; true.
 
 %   :- initialization(attach_packs).
@@ -1070,11 +1093,13 @@ metta_atom_asserted('&catalog','&corelib').
 metta_atom_asserted('&catalog','&stdlib').
 :- ensure_loaded(metta_corelib).
 
+/*
 'mod-space'(top,'&self').
 'mod-space'(catalog,'&catalog').
 'mod-space'(corelib,'&corelib').
 'mod-space'(stdlib,'&stdlib').
 'mod-space'(Top,'&self'):- Top == self.
+*/
 
 %metta_atom_asserted_fallback( KB,Atom):- metta_atom_stdlib(KB,Atom)
 
