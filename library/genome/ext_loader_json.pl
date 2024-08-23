@@ -53,7 +53,7 @@ note_doing(P):- wdmsg_json(P),!,call(user:P).
 assert_JSON(P):- note_doing(assert_OBO(P)).
 
 :- ensure_loaded(flybase_main).
-:- ensure_loaded(obo_loader).
+:- ensure_loaded(ext_loader_obo).
 
 %:- listing(assert_OBO/1).
 

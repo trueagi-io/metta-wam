@@ -54,6 +54,8 @@ find . -type f -exec wc -l {} \; | awk -F'/' '{
 
 
 */
+:- discontiguous column_names/2.
+
 load_data_fb_data:-
    load_data(              64, fb_current('./chado-xml/chado_FBim.dtd')),
    load_data(              76, fb_current('./chado-xml/chado_FBst.dtd')),
@@ -204,9 +206,8 @@ load_data_fb_data:-
     !.
 
 
-:- ensure_loaded(obo_loader).
-:- ensure_loaded(graphml_loader).
-
+%:- ensure_loaded(obo_loader).
+%
 create_flybase_qlf:-
    shell('swipl -g "qcompile(whole_flybase)').
 
@@ -1030,7 +1031,7 @@ rename_tmp_files(Filename,NonTmp):- symbolic_list_concat([Filename,NonTmp,'.tmp'
 :- dynamic(is_loaded_from_file_count/2).
 
 :- use_module(library(http/json)).
-:- ensure_loaded(json_loader).
+%:- ensure_loaded(json_loader).
 load_fb_json(Fn,File):- fbug(load_fb_json(Fn,File)),
   current_predicate(load_flybase_json/2),
      absolute_file_name(File,Filename),
