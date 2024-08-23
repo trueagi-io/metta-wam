@@ -150,7 +150,7 @@ jobs:
 
     - name: Auto-Approve the Pull Request
       if: github.event_name == 'pull_request_target'
-      uses: hmarr/auto-approve-action@v3
+      uses: hmarr/auto-approve-action@v4
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
 
