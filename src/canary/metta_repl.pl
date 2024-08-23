@@ -21,8 +21,8 @@ check_file_exists_for_append(HistoryFile) :-
 check_file_exists_for_append(HistoryFile) :- write("Error opening history file: "),writeln(HistoryFile),halt(1).
 
 save_history :-
-    history_file_location(HistoryFile),
-    el_write_history(user_input,HistoryFile).
+    current_input(Input),
+    (((stream_property(Input, tty(true)))) -> ((history_file_location(HistoryFile),el_write_history(Input,HistoryFile))) ; true).
 
 load_and_trim_history:-
  notrace((
@@ -164,7 +164,7 @@ repl_read(Expr) :- repeat,
         % this cutrs the repeat/0
         ((peek_pending_codes(_,Peek),Peek==[])->!;true).
 
-add_history_string(Str):- notrace(ignore(el_add_history(user_input,Str))),!.
+add_history_string(Str):- current_input(Input),(((stream_property(Input, tty(true)))) -> ((notrace(ignore(el_add_history(Input,Str))))) ; true),!.
 
 add_history_src(Exec):- notrace(ignore((Exec\=[],with_output_to(string(H),with_indents(false,write_src(Exec))),add_history_string(H)))).
 
@@ -373,7 +373,7 @@ mqd:-
 
 
 get_single_char_key(O):- get_single_char(C),get_single_char_key(C,O).
-get_single_char_key(27,esc(A,[27|O])):- !,read_pending_codes(user_input,O,[]),name(A,O).
+get_single_char_key(27,esc(A,[27|O])):- !,current_input(Input),read_pending_codes(Input,O,[]),name(A,O).
 get_single_char_key(C,A):- name(A,[C]).
 
 forall_interactive(file(_),false,Complete,Goal,After):- !,   Goal, (Complete==true ->  ( After,!)  ;  (  \+  After )).
@@ -537,23 +537,22 @@ add_metta_commands(Input) :-
 
 install_readline(Input):- is_installed_readline_editline(Input),!.
 %install_readline(_):- is_compatio,!.
-install_readline(Input):-
+install_readline(Input):- stream_property(Input,tty(true)),
     assert(is_installed_readline_editline(Input)),
     install_readline_editline1,
     %use_module(library(readline)),
     use_module(library(editline)),
     %nop(catch(load_history,_,true)),
-    ignore(el_unwrap(user_input)), % unwrap the prolog wrapper so we can use our own.
+    ignore(el_unwrap(Input)), % unwrap the prolog wrapper so we can use our own.
     ignore(el_wrap_metta(Input)),
     history_file_location(HistoryFile),
     check_file_exists_for_append(HistoryFile),
-    el_read_history(user_input,HistoryFile),
+    el_read_history(Input,HistoryFile),
     %add_history_string("!(load-flybase-full)"),
     %add_history_string("!(pfb3)"),
     %add_history_string("!(obo-alt-id $X BS:00063)"),
-    %add_history_string("!(and (total-rows $T TR$) (unique-values $T2 $Col $TR))"),
-  !.
-
+    %add_history_string("!(and (total-rows $T TR$) (unique-values $T2 $Col $TR))"),!.
+install_readline(_NoTTY). % For non-tty(true) clients over SWISH/Http/Rest server
 
 :- dynamic  setup_done/0.
 :- volatile setup_done/0.
@@ -579,7 +578,7 @@ install_readline_editline1 :-
 %    %catch(setup_readline,  E2, print_message(warning, E2)),
 %    %catch(setup_history,   E3, print_message(warning, E3)),
 %    catch(setup_colors, E4, print_message(warning, E4))),
-%   install_readline(user_input).
+%   install_readline(Input).
 
 
 % Command descriptions
