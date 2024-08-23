@@ -55,9 +55,7 @@ jobs:
     - name: Run JUnit Report Generation Script
       continue-on-error: true
       run: |
-        echo $TIMESTAMP
-        cat /tmp/SHARED.UNITS
-        python scripts/into_junit.py /tmp/SHARED.UNITS > junit.xml
+        python scripts/into_junit.py /tmp/SHARED.UNITS $TIMESTAMP > junit.xml
 
     - name: Convert JUnit XML to Standard HTML Report
       continue-on-error: true
