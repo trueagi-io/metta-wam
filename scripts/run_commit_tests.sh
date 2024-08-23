@@ -1,7 +1,23 @@
 #!/bin/bash
 
+# parse arguments
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -t|--timestamp)
+      timestamp="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    *)
+      # Ignore unknown options
+      ;;
+  esac
+done
+
 # generate the output directory with timestamp
-timestamp=$(date +"%Y-%m-%dT%H:%M:%S")
+if [ -z $timestamp ]; then
+    timestamp=$(date +"%Y-%m-%dT%H:%M:%S")
+fi
 output=reports/tests_output/baseline-compat-$timestamp/
 
 # run the tests
