@@ -134,6 +134,7 @@ jobs:
           cp previous-junit.xml ./allure-results/
         fi
         python scripts/generate_allure_environment.py ${{ github.sha }} ${{ github.ref_name }} > ./allure-results/environment.properties
+        python scripts/generate_allure_executor.py ${{ github.server_url }} ${{ github.repository }} ${{ github.run_id }} > ./allure-results/executor.json
 
     - name: Generate Allure Report
       run: |
