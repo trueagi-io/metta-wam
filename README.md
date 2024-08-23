@@ -126,15 +126,15 @@ mettalog --test --clean ./tests/baseline-compat
 
 ### Troubleshooting
 
-## Some prolog commands not found
+#### Some prolog commands not found
 
-If already have a recent enough version of swi-prolog installed, that will be used instead of mettalog installing its own. Some of the packages might not be installed, and mettalog might give an error such as:
+If you already have a recent enough version of SWI-prolog installed, that will be used instead of mettalog installing its own. Some of the packages might not be installed, and mettalog might give an error such as:
 
 ```
 ERROR: save_history/0: Unknown procedure el_write_history/2
 ```
 
-In that case, you need rebuild your swi-prolog installation to include the missing packages. The most reliable way to do this is to make sure the following Debian/Ubuntu packages are installed using:
+In that case, you need rebuild your SWI-prolog installation to include the missing packages. The most reliable way to do this is to make sure the following Debian/Ubuntu packages are installed using:
 
 ```
 sudo apt install build-essential autoconf git cmake libpython3-dev libgmp-dev libssl-dev unixodbc-dev \
@@ -146,13 +146,15 @@ sudo apt install build-essential autoconf git cmake libpython3-dev libgmp-dev li
 then rebuild swi-prolog using the instructions from The [SWI-Prolog -- Installation on Linux, *BSD (Unix)](https://www.swi-prolog.org/build/unix.html). The main part of this (assuming that you are in the `swipl` or `swipl-devel` directory) is:
 
 ```
+cd build
 cmake -DCMAKE_INSTALL_PREFIX=$HOME -DCMAKE_BUILD_TYPE=PGO -G Ninja ..
 ninja
 ctest -j $(nproc) --output-on-failure
 ninja install
-
 ```
-If you installed swi-prolog as a package from your linux distribition and run into issues, it is likely that you will need to `apt remove` it and then either build from source or rerun the `INSTALL.sh` script.
+If you installed swi-prolog as a package from your Linux distribition and run into issues, it is likely that you will need to `apt remove` it and then either
+* build SWI-prolog from source making sure that all the operating system packages are installed first, or
+* rerun the metta-wam `INSTALL.sh` script.
 
 ## :raised_hands: Acknowledgments
 Thanks to the Hyperon Experimental MeTTa, PySWIP teams, and Flybase for their contributions to this project.

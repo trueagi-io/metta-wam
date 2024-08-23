@@ -108,12 +108,12 @@ metta_atom_corelib_types( [:, 'ReturnType', 'Type']).
 
 metta_atom_corelib_types( [:, 'Error', [->, 'Atom', 'Atom', 'ErrorType']]).
 
-metta_atom_corelib_types( [:, 'add-atom', [->, 'Space', 'Atom', [->]]]).
+metta_atom_corelib_types( [:, 'add-atom', [->, 'hyperon::space::DynSpace', 'Atom', [->]]]).
 metta_atom_corelib_types( [:, 'car-atom', [->, 'Expression', 'Atom']]).
 metta_atom_corelib_types( [:, 'cdr-atom', [->, 'Expression', 'Expression']]).
 metta_atom_corelib_types( [:, 'filter-atom', [->, 'Expression', 'Variable', 'Atom', 'Expression']]).
 metta_atom_corelib_types( [:, 'foldl-atom', [->, 'Expression', 'Atom', 'Variable', 'Variable', 'Atom', 'Atom']]).
-metta_atom_corelib_types( [:, 'get-atoms', [->, 'Space', 'Atom']]).
+metta_atom_corelib_types( [:, 'get-atoms', [->, 'hyperon::space::DynSpace', 'Atom']]).
 metta_atom_corelib_types( [:, 'if-decons', [->, 'Atom', 'Variable', 'Variable', 'Atom', 'Atom', 'Atom']]).
 metta_atom_corelib_types( [:, 'if-empty', [->, 'Atom', 'Atom', 'Atom', 'Atom']]).
 metta_atom_corelib_types( [:, 'if-error', [->, 'Atom', 'Atom', 'Atom', 'Atom']]).
@@ -121,7 +121,7 @@ metta_atom_corelib_types( [:, 'if-non-empty-expression', [->, 'Atom', 'Atom', 'A
 metta_atom_corelib_types( [:, 'if-not-reducible', [->, 'Atom', 'Atom', 'Atom', 'Atom']]).
 metta_atom_corelib_types( [:, 'let*', [->, 'Expression', 'Atom', 'Atom']]).
 metta_atom_corelib_types( [:, 'map-atom', [->, 'Expression', 'Variable', 'Atom', 'Expression']]).
-metta_atom_corelib_types( [:, 'remove-atom', [->, 'Space', 'Atom', [->]]]).
+metta_atom_corelib_types( [:, 'remove-atom', [->, 'hyperon::space::DynSpace', 'Atom', [->]]]).
 metta_atom_corelib_types( [:, 'return-on-error', [->, 'Atom', 'Atom', 'Atom']]).
 metta_atom_corelib_types( [:, and, [->, 'Bool', 'Bool', 'Bool']]).
 metta_atom_corelib_types( [:, apply, [->, 'Atom', 'Variable', 'Atom', 'Atom']]).
@@ -285,12 +285,14 @@ metta_atom_asserted_deduced('&corelib', Term):- metta_atom_corelib_types(Term).
 
 use_corelib_file:- using_corelib_file,!.
 use_corelib_file:- asserta(using_corelib_file), fail.
-use_corelib_file:- !.
-use_corelib_file:- is_metta_dir(Dir), really_use_corelib_file(Dir,'corelib.metta'),!.
-use_corelib_file:- is_metta_dir(Dir), really_use_corelib_file(Dir,'stdlib_mettalog.metta'),!.
+use_corelib_file:- load_corelib_file.
+load_corelib_file:- is_metta_src_dir(Dir), really_use_corelib_file(Dir,'corelib.metta'),!.
+load_corelib_file:- is_metta_src_dir(Dir), really_use_corelib_file(Dir,'stdlib_mettalog.metta'),!.
 % !(import! &corelib "src/canary/stdlib_mettalog.metta")
 really_use_corelib_file(Dir,File):- absolute_file_name(File,Filename,[relative_to(Dir)]),
-  include_metta_directory_file('&corelib',Dir,Filename).
+ locally(nb_setval(may_use_fast_buffer,t),
+   locally(nb_setval(suspend_answers,true),
+     with_output_to(string(_),include_metta_directory_file('&corelib',Dir,Filename)))).
 
 %:- initialization(use_corelib_file).
 

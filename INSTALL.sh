@@ -180,7 +180,7 @@ install_or_update_swipl() {
     #sudo apt-get remove -y swi-prolog??* 
     #sudo apt-get install -y swi-prolog
     swi_prolog_version=$(swipl_version)
-    required_version="9.1"
+    required_version="9.3.8"
     if version_ge $swi_prolog_version $required_version; then
         echo -e "${GREEN}SWI-Prolog version $swi_prolog_version is installed and meets the required version $required_version or higher.${NC}"
     else
@@ -196,9 +196,9 @@ install_or_update_swipl() {
 
 }
 
-# Check if SWI-Prolog is installed
-if ! command -v swipl &> /dev/null; then
-    if confirm_with_default "Y" "SWI-Prolog is not installed. Would you like to install it?"; then
+# Check if SWI-Prolog is installed with Janus
+if ! command -v swipl &> /dev/null || ! swipl -g "use_module(library(janus)), halt(0)." -t "halt(1)" 2>/dev/null; then
+    if confirm_with_default "Y" "SWI-Prolog is not installed with Janus support. Would you like to install it?"; then
         install_or_update_swipl
     else
         echo -e "${RED}SWI-Prolog installation aborted. Exiting script${NC}."
@@ -206,7 +206,7 @@ if ! command -v swipl &> /dev/null; then
     fi
 else
     swi_prolog_version=$(swipl_version)
-    required_version="9.1"
+    required_version="9.3.8"
     if version_ge $swi_prolog_version $required_version; then
         echo -e "${GREEN}SWI-Prolog version $swi_prolog_version is installed and meets the required version $required_version or higher.${NC}"
     else
@@ -239,7 +239,7 @@ function ensure_pip() {
 }
 
 
-# Assuming SWI-Prolog 9.1 is installed successfully
+# Assuming SWI-Prolog 9.3.9 is installed successfully
 # Install Janus for SWI-Prolog
 echo -e "${BLUE}Checking if Janus Python support is already installed${NC}..."
 if ! swipl -g "use_module(library(janus)), halt(0)." -t "halt(1)" 2>/dev/null; then
@@ -350,6 +350,9 @@ if false && confirm_with_default "N" "Show README.md"; then
     cat README.md
     echo -en "${NC}"
 fi
+
+
+cd $RPWD
 
 # End of the script
 

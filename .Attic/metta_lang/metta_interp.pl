@@ -64,8 +64,8 @@
 :- set_prolog_flag(debug_on_error,true).
 %:- set_prolog_flag(compile_meta_arguments,control).
 :- (prolog_load_context(directory, Value);Value='.'), absolute_file_name('../packs/',Dir,[relative_to(Value)]),
-    symbol_concat(Dir,'predicate_streams',PS),
-    symbol_concat(Dir,'logicmoo_utils',LU),
+    atom_concat(Dir,'predicate_streams',PS),
+    atom_concat(Dir,'logicmoo_utils',LU),
     attach_packs(Dir,[duplicate(replace),search(first)]),
     pack_attach(PS,[duplicate(replace),search(first)]),
     pack_attach(LU,[duplicate(replace),search(first)]).
@@ -73,6 +73,29 @@
 %:- ensure_loaded(metta_interp).
 is_win64:- current_prolog_flag(windows,_).
 is_win64_ui:- is_win64,current_prolog_flag(hwnd,_).
+
+
+
+:- dynamic(user:is_metta_src_dir/1).
+:- prolog_load_context(directory,Dir),
+  retractall(user:is_metta_src_dir(_)),
+  asserta(user:is_metta_src_dir(Dir)).
+
+metta_root_dir(Dir):- is_metta_src_dir(Value), absolute_file_name('../../',Dir,[relative_to(Value)]).
+metta_root_dir(Dir):- getenv('METTA_DIR',Dir),!.
+
+metta_library_dir(Dir):- metta_root_dir(Value), absolute_file_name('./library/',Dir,[relative_to(Value)]).
+
+metta_dir(Dir):- metta_library_dir(Value), absolute_file_name('./genome/',Dir,[relative_to(Value)]).
+metta_dir(Dir):- is_metta_src_dir(Dir).
+metta_dir(Dir):- metta_library_dir(Dir).
+metta_dir(Dir):- metta_root_dir(Dir).
+metta_dir(Dir):- is_metta_src_dir(Value), absolute_file_name('../flybase/',Dir,[relative_to(Value)]).
+
+:- dynamic user:file_search_path/2.
+:- multifile user:file_search_path/2.
+user:file_search_path(library,Dir):- metta_dir(Dir).
+user:file_search_path(mettalog,Dir):- metta_dir(Dir).
 
 
 :- is_win64 -> ensure_loaded(library(logicmoo_utils)) ; true.
@@ -104,13 +127,6 @@ is_win64_ui:- is_win64,current_prolog_flag(hwnd,_).
 :-multifile(user:loaded_into_kb/2).
 :-dynamic(user:loaded_into_kb/2).
 :- dynamic(user:is_metta_dir/1).
-:- dynamic user:file_search_path/2.
-:- multifile user:file_search_path/2.
-:- prolog_load_context(directory,Dir),
-   retractall(user:is_metta_dir(_)),asserta(user:is_metta_dir(Dir)).
-
-user:file_search_path(library,Dir):- metta_dir(Dir).
-user:file_search_path(mettalog,Dir):- metta_dir(Dir).
 
 once_writeq_ln(_):- \+ clause(pfcTraceExecution,true),!.
 once_writeq_ln(P):- nb_current('$once_writeq_ln',W),W=@=P,!.
@@ -122,13 +138,6 @@ once_writeq_ln(P):-
 pfcAdd_Now(P):- current_predicate(pfcAdd/1),!, once_writeq_ln(pfcAdd(P)),pfcAdd(P).
 pfcAdd_Now(P):- once_writeq_ln(asssert(P)),assert(P).
 %:- endif.
-
-metta_dir(Dir):- metta_dir0(Dir).
-metta_dir(Dir):- metta_dir0(Value), absolute_file_name('../flybase/',Dir,[relative_to(Value)]).
-metta_dir(Dir):- metta_dir0(Value), absolute_file_name('../../library/',Dir,[relative_to(Value)]).
-metta_dir(Dir):- metta_dir0(Value), absolute_file_name('../../library/genome/',Dir,[relative_to(Value)]).
-metta_dir0(Dir):- user:is_metta_dir(Dir).
-metta_dir0(Dir):- getenv('METTA_DIR',Dir),!.
 
 system:copy_term_g(I,O):- ground(I),!,I=O.
 system:copy_term_g(I,O):- copy_term(I,O).
@@ -411,6 +420,7 @@ real_notrace(Goal) :-
 
 :- dynamic(is_answer_output_stream/2).
 answer_output(Stream):- is_testing,original_user_output(Stream),!.
+answer_output(Stream):- !,original_user_output(Stream),!.
 answer_output(Stream):- is_answer_output_stream(_,Stream),!.
 answer_output(Stream):- tmp_file('answers',File),
    open(File,write,Stream,[encoding(utf8)]),
@@ -470,6 +480,9 @@ show_options_values:-
 % %%%% Arithmetic Operations
 % ============================
 
+'repr'( Atomx, String_metta ):- eval_H( [ repr, Atomx ], String_metta ).
+'parse'( Strx, Atom_metta ):- eval_H( [ parse, Strx ], Atom_metta ).
+
 % Addition
 %'+'(A, B, Sum):- \+ any_floats([A, B, Sum]),!,Sum #= A+B .
 %'+'(A, B, Sum):- notrace(catch_err(plus(A, B, Sum),_,fail)),!.
@@ -487,6 +500,8 @@ show_options_values:-
 'exp'(Base, Exponent, Result):- eval_H(['exp', Base, Exponent], Result).
 % Square Root
 'sqrt'(Number, Root):- eval_H(['sqrt', Number], Root).
+
+% 'substraction'( Lx1, Lx2 , Lx_intersct ):- !, eval_H( [ 'substraction', Lx1, Lx2 ], Lx_intersct ).
 
 % ============================
 % %%%% List Operations
@@ -1048,16 +1063,29 @@ metta_atom(Atom):- current_self(KB),metta_atom(KB,Atom).
 %metta_atom([Superpose,ListOf], Atom):- Superpose == 'superpose',is_list(ListOf),!,member(KB,ListOf),get_metta_atom_from(KB,Atom).
 metta_atom(Space, Atom):- typed_list(Space,_,L),!, member(Atom,L).
 metta_atom(KB, [F, A| List]):- KB=='&flybase',fb_pred_nr(F, Len),current_predicate(F/Len), length([A|List],Len),apply(F,[A|List]).
-metta_atom(KB,Atom):- KB=='&corelib',!, metta_atom_corelib(Atom).
+%metta_atom(KB,Atom):- KB=='&corelib',!, metta_atom_corelib(Atom).
 metta_atom(KB,Atom):- metta_atom_in_file( KB,Atom).
 metta_atom(KB,Atom):- metta_atom_asserted( KB,Atom).
+metta_atom(KB,Atom):- KB \== '&corelib', !, should_inherit_from_corelib(Atom), metta_atom('&corelib',Atom).
+should_inherit_from_corelib([H|_]):- nonvar(H),should_inherit_op_from_corelib(H).
+should_inherit_op_from_corelib('=').
+should_inherit_op_from_corelib(':').
 
 metta_atom_asserted('&self','&corelib').
 metta_atom_asserted('&self','&stdlib').
 metta_atom_asserted('&stdlib','&corelib').
 metta_atom_asserted('&flybase','&corelib').
+metta_atom_asserted('&catalog','&corelib').
+metta_atom_asserted('&catalog','&stdlib').
 :- ensure_loaded(metta_corelib).
 
+/*
+'mod-space'(top,'&self').
+'mod-space'(catalog,'&catalog').
+'mod-space'(corelib,'&corelib').
+'mod-space'(stdlib,'&stdlib').
+'mod-space'(Top,'&self'):- Top == self.
+*/
 
 %metta_atom_asserted_fallback( KB,Atom):- metta_atom_stdlib(KB,Atom)
 
@@ -1065,13 +1093,15 @@ metta_atom_asserted('&flybase','&corelib').
 %metta_atom(KB,[F,A|List]):- metta_atom(KB,F,A,List), F \== '=',!.
 is_metta_space(Space):- \+ \+ is_space_type(Space,_Test).
 
-metta_eq_def(Eq,KB,Head,Body):- ignore(Eq = '='), metta_atom(KB,[Eq,Head,Body]).
+metta_eq_def(Eq,KB,H,B):- ignore(Eq = '='),if_or_else(metta_atom(KB,[Eq,H,B]),metta_atom_corelib(KB,[Eq,H,B])).
 
-metta_defn(KB,Head,Body):- metta_eq_def(_Eq,KB,Head,Body).
-metta_type(KB,H,B):- if_or_else(metta_atom(KB,[':',H,B]),metta_atom_corelib([':',H,B])).
+%metta_defn(KB,Head,Body):- metta_eq_def(_Eq,KB,Head,Body).
+metta_defn(KB,H,B):- metta_eq_def('=',KB,H,B).
+metta_type(KB,H,B):- metta_eq_def(':',KB,H,B).
 %metta_type(S,H,B):- S == '&corelib', metta_atom_stdlib_types([':',H,B]).
 %typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_arguments(Cmpd,Type,[List|_]),is_list(List).
 
+metta_atom_corelib(KB,Atom):- KB\='&corelib',!,metta_atom('&corelib',Atom).
 
 %maybe_xform(metta_atom(KB,[F,A|List]),metta_atom(KB,F,A,List)):- is_list(List),!.
 maybe_xform(metta_eq_def(Eq,KB,Head,Body),metta_atom(KB,[Eq,Head,Body])).
@@ -1801,6 +1831,7 @@ fix_message_hook:-
 
 %:- ensure_loaded(metta_python).
 
+%:- ensure_loaded('../../library/genome/flybase_loader').
 
 :- initialization(use_corelib_file).
 
