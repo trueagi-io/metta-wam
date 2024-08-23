@@ -159,7 +159,6 @@ repl_read(Accumulated, Line, Expr) :- symbolics_to_string([Accumulated," ",Line]
 repl_read(O2):- clause(t_l:s_reader_info(O2),_,Ref),erase(Ref).
 repl_read(Expr) :- repeat,
   remove_pending_buffer_codes(_,Was),text_to_string(Was,Str),
-      %write_metta_prompt,
       repl_read(Str, Expr),
         % once(((symbol(Expr1),symbol_concat('@',_,Expr1), \+ atom_contains(Expr1,"="), repl_read(Expr2)) -> Expr=[Expr1,Expr2] ; Expr1 = Expr)),
         % this cutrs the repeat/0
@@ -198,8 +197,6 @@ is_interactive0(From):- From==false,!,fail.
 is_interactive0(From):- symbolic(From),is_stream(From),!, \+ stream_property(From,filename(_)).
 is_interactive0(From):- From = true,!.
 
-
-%:- set_prolog_flag(history, 3).
 
 inside_assert(Var,Var):- \+ compound(Var),!.
 inside_assert([H,IA,_],IA):- symbol(H),symbol_concat('assert',_,H),!.
