@@ -46,6 +46,7 @@ jobs:
     - name: Run Test Script to Generate Input File
       continue-on-error: true
       run: |
+        TERM=xterm-256color
         ./scripts/run_commit_tests.sh
 
     - name: Run JUnit Report Generation Script
