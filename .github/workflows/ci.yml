@@ -32,10 +32,16 @@ jobs:
         pip install hyperon
         pip install junit2html
 
-    - name: Make Shell Script Executable
+    - name: Make Install Script Executable
+      run: chmod +x INSTALL.sh
+
+    - name: Run Install Script to install Mettalog
+      run: . ./INSTALL.sh --easy
+
+    - name: Make Test Script Executable
       run: chmod +x scripts/run_commit_tests.sh
 
-    - name: Run Shell Script to Generate Input File
+    - name: Run Test Script to Generate Input File
       continue-on-error: true
       run: |
         ./scripts/run_commit_tests.sh
