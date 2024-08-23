@@ -9,7 +9,8 @@
  */
 
  :- module(read_graphml, [read_graphml/2,
-    rgml/0,
+    rgml/0,rgml2/0,
+    load_graphml/2,
     load_fb_graphml/2]).
 
 
@@ -34,15 +35,22 @@ load_fb_graphml(Fn,Filename):-
 
 
 load_fb_graphml_read(Id,In):- is_list(In),!,maplist(load_fb_graphml_read(Id),In).
-load_fb_graphml_read(Id,In):- wdmsg(Id=In),!.
+load_fb_graphml_read(Id,In):- In=..[P|InL],Save=..[P,Id|InL],assert_OBO(Save),writeln(Save).
 
 s_list_assert(S,List,Assert):-
     must_det_ll((into_name_values(List,Ns,Vs),
     atomic_list_concat([S|Ns],'_',Pred),
     Assert=..[Pred|Vs])).
 
-elements_are_kv(Data,element(Data,[id=Key],Value),Key=Value).
-elements_are_kv(Data,element(Data,[key=Key],Value),Key=Value).
+fix_value(X,Y):- \+ callable(X),X=Y.
+fix_value([X],Y):- !, fix_value(X,Y).
+fix_value(X,Y):- is_list(X),!,maplist(fix_value,X,Y).
+fix_value(X,Y):- \+ atom(X),!,X=Y.
+fix_value(X,Y):- atom_number(X,Y),!.
+fix_value(X,X).
+
+elements_are_kv(Data,element(Data,[id=Key],LValue),Key=Value):- fix_value(LValue,Value).
+elements_are_kv(Data,element(Data,[key=Key],LValue),Key=Value):- fix_value(LValue,Value).
 %elements_are_kv(S2,Content,List2):- maplist(elements_are_kv(S2),Content,List2).
 
 restructure_graphml(Term_list,Terms):- is_list(Term_list),!,maplist(restructure_graphml,Term_list,Terms).
@@ -52,10 +60,10 @@ restructure_graphml(element(graph,[id='G'|_],Term_list),Terms):-!,restructure_gr
 restructure_graphml(element(S,[ source=B,target=E],Term_list),Assert):- S == edge,
    %atomic_list_concat([B,E],'_',Id),
    maplist(elements_are_kv(data),Term_list,NVList),
-   findall(edge_prop(B,E,N,V),(member(N=V,NVList), \+ member(V,[['false'],['None']])),Assert).
+   findall(edge_prop(B,E,N,V),(member(N=V,NVList), \+ member(V,['false','None'])),Assert).
 restructure_graphml(element(S,[id=Id],Term_list),Assert):- S == node,
    maplist(elements_are_kv(data),Term_list,NVList),
-   findall(node_prop(Id,N,V),(member(N=V,NVList), \+ member(V,[['false'],['None']])),Assert).
+   findall(node_prop(Id,N,V),(member(N=V,NVList), \+ member(V,['false','None'])),Assert).
 restructure_graphml(IO,IO).
 
 %! read_graphml(+File_basename:atom, -Term_list:list) is det
@@ -293,18 +301,23 @@ afd(Assert):- wdmsg(Assert).
 
 into_name_values([],[],[]):-!.
 into_name_values([N=V|List],[FN|Ns],[FV|Vs]):-
-  fix_name(N,FN),fix_name(V,FV),into_name_values(List,Ns,Vs).
+  fix_name(N,FN),fix_value(V,FV),into_name_values(List,Ns,Vs).
 
 fix_name(N,FN):- \+ atom(N),!,FN=N.
 fix_name(N,FN):- atom_concat('attr.',FFN,N),!,fix_name(FFN,FN).
-fix_name(N,FN):- atom_concat('v_',FFN,N),!,fix_name(FFN,FN).
-fix_name(N,FN):- atom_concat('e_',FFN,N),!,fix_name(FFN,FN).
+%fix_name(N,FN):- atom_concat('v_',FFN,N),!,fix_name(FFN,FN).
+%fix_name(N,FN):- atom_concat('n_',FFN,N),!,fix_name(FFN,FN).
+%fix_name(N,FN):- atom_concat('e_',FFN,N),!,fix_name(FFN,FN).
 fix_name(N,FN):- atom_concat('_',FFN,N),!,fix_name(FFN,FN).
 fix_name(N,N).
 
-rgml:-
-  read_graphml('tests/performance/knowledge_graphs/graphml_csv/cml/ckg_neighbors_cml_graph_n15612_e21425.graphml',S),
-   load_fb_graphml_read('CKG_N',S).
+rgml:-  load_graphml('CKG_N','tests/performance/knowledge_graphs/graphml_csv/cml/ckg_neighbors_cml_graph_n15612_e21425.graphml').
+rgml2:- load_graphml('&self','library/graphml/tests/*.graphml').
+
+load_graphml(KB,Paths):- atom(Paths),expand_file_name(Paths,List),List\==[Paths],!,maplist(load_graphml(KB),List).
+load_graphml(KB,Paths):- is_list(Paths),!,maplist(load_graphml(KB),Paths).
+load_graphml(KB,Paths):- read_graphml(Paths,To),!,load_fb_graphml_read(KB,To).
+
 
 
 

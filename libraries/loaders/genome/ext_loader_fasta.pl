@@ -1,7 +1,7 @@
 % ==============================
 % FA/FASTA Reader
 % ==============================
-:- ensure_loaded(gff_loader).  % parse_and_store_attributes/2
+:- ensure_loaded(ext_loader_gff).  % parse_and_store_attributes/2
 
 load_fb_fa(Fn,Filename):-
  track_load_into_file(Filename,
