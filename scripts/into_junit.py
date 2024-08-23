@@ -3,9 +3,9 @@ import sys
 import re
 from collections import defaultdict
 
-def create_testcase_element(testclass, testname, stdout, identifier, got, expected, status, url):
+def create_testcase_element(testclass, testname, stdout, identifier, got, expected, status, url, time):
     # Create the testcase XML element with the class and test name attributes
-    testcase = ET.Element("testcase", classname=testclass, name=testname)
+    testcase = ET.Element("testcase", classname=testclass, name=testname, time=time)
 
     test_res = f"Assertion: {stdout}\nExpected: {expected}\nActual: {got}"
     sys_out_text = f"<![CDATA[\n<a href=\"{url}\">Test Report</a>\n\n{test_res}\n]]>"
@@ -44,11 +44,12 @@ def parse_test_line(line):
             raise ValueError("Test package or test name is empty after splitting.")
     except ValueError as e:
         raise ValueError(f"Identifier does not contain the expected format: {full_identifier}. Error: {str(e)}")
+    
+    time = '.01' # bogus time until tests actually note their runtime
 
-    return testpackage, testname, stdout, full_identifier, got, expected, status, url
+    return testpackage, testname, stdout, full_identifier, got, expected, status, url, time
 
 def generate_junit_xml(input_file, timestamp):
-    testsuites = ET.Element("testsuites", timestamp=timestamp)
     packages_dict = defaultdict(list)  # Dictionary to group test cases by their testpackage
 
     with open(input_file, 'r') as file:
@@ -57,19 +58,26 @@ def generate_junit_xml(input_file, timestamp):
             if line.startswith("|"):
                 try:
                     parts = re.split(r'\s*\|\s*(?![^()]*\))', line.strip())
-                    testpackage, testname, stdout, full_identifier, got, expected, status, url = parse_test_line(line)
-                    testcase = create_testcase_element(testpackage, testname, stdout, full_identifier, got, expected, status, url)
+                    testpackage, testname, stdout, full_identifier, got, expected, status, url, time = parse_test_line(line)
+                    testcase = create_testcase_element(testpackage, testname, stdout, full_identifier, got, expected, status, url, time)
                     packages_dict[testpackage].append(testcase)
                     print(f"Processing {testpackage}.{testname}: {status}", file=sys.stderr)
                 except ValueError as e:
                     print(f"Skipping line due to error: {e}\nLine: {line}\nParts: {parts}", file=sys.stderr)
 
     # Create a testsuite for each testpackage group
+    testsuites = ET.Element("testsuites", timestamp=timestamp)
+    testsuites_time = 0.0
     for testpackage, testcases in packages_dict.items():
         testsuite = ET.Element("testsuite", name=testpackage)
+        testsuite_time = 0.0
         for testcase in testcases:
+            testsuite_time += float(testcase.get('time'))
             testsuite.append(testcase)
+        testsuites_time += testsuite_time
+        testsuite.set('time', str(testsuite_time))
         testsuites.append(testsuite)
+    testsuites.set('time', str(testsuites_time))
 
     # Generate the XML tree and return it as a string
     tree = ET.ElementTree(testsuites)
