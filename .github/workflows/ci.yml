@@ -46,13 +46,16 @@ jobs:
     - name: Run Test Script to Generate Input File
       continue-on-error: true
       run: |
-        ./scripts/run_commit_tests.sh
+        TIMESTAMP=$(date +"%Y-%m-%dT%H:%M:%S")
+        ./scripts/run_commit_tests.sh -t $TIMESTAMP
+        echo "TIMESTAMP=$(echo $TIMESTAMP)" >> $GITHUB_ENV
       env:
         TERM: xterm-256color
 
     - name: Run JUnit Report Generation Script
       continue-on-error: true
       run: |
+        echo $TIMESTAMP
         cat /tmp/SHARED.UNITS
         python scripts/into_junit.py /tmp/SHARED.UNITS > junit.xml
 
