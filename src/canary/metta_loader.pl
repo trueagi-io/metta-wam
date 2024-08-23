@@ -564,8 +564,12 @@ load_metta_file_stream(Filename,Self,In):-
       set_exec_num(Filename,0))),
   load_metta_file_stream_fast(Size,P2,Filename,Self,In)))).
 
-% use_fast_buffer makes tmp .buffer.pl files that get around long load times
+% use_fast_buffer makes tmp .buffer files that get around long load times
 use_fast_buffer:- nb_current(may_use_fast_buffer,t).
+
+:- dynamic(metta_file_buffer/5).
+:- multifile(metta_file_buffer/5).
+
 
 load_metta_file_stream_fast(_Size,_P2,Filename,Self,S):- fail,
  symbolic_list_concat([_,_,_|_],'.',Filename),
@@ -576,12 +580,9 @@ load_metta_file_stream_fast(_Size,_P2,Filename,Self,S):- fail,
   accept_line(Self,I),
   I==end_of_file,!.
 
-:- dynamic(metta_file_buffer/5).
-:- multifile(metta_file_buffer/5).
-
 load_metta_file_stream_fast(_Size, _P2, Filename, Self, _In) :-
     use_fast_buffer,
-    symbol_concat(Filename, '.buffer.pl', BufferFile),
+    symbol_concat(Filename, '.buffer~', BufferFile),
     exists_file(BufferFile),
     time_file(Filename, FileTime),
     time_file(BufferFile, BufferFileTime),
@@ -592,7 +593,7 @@ load_metta_file_stream_fast(_Size, _P2, Filename, Self, _In) :-
 
 load_metta_file_stream_fast(_Size,P2,Filename,Self,In):-
       if_t(use_fast_buffer,
-         ((symbol_concat(Filename, '.buffer.pl', BufferFile),
+         ((symbol_concat(Filename, '.buffer~', BufferFile),
           fbugio(creating(BufferFile)),
           write_bf(BufferFile, ( :- dynamic(metta_file_buffer/5))),
           write_bf(BufferFile, ( :- multifile(metta_file_buffer/5)))))),

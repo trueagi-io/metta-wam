@@ -8,6 +8,8 @@
 (: = (-> $t $t Atom))
 ;; Implemented from Interpreters
 
+(: ALT= (-> Atom Atom Atom))
+
 ; Public MeTTa
 (@doc ErrorType (@desc "Type of the atom which contains error"))
 (: ErrorType Type)
@@ -660,7 +662,7 @@
 
 
 ;; Public MeTTa?
-(:> Space Grounded)
+(:> hyperon::space::DynSpace Grounded)
 
 ;; Public MeTTa
 (@doc add-reduct
@@ -676,7 +678,7 @@
     (@param "Atom to add")))
   (@return "Unit atom"))
   
-(: add-reduct-rust1 (-> Space %Undefined% (->)))
+(: add-reduct-rust1 (-> hyperon::space::DynSpace %Undefined% (->)))
 (= (add-reduct-minimal $dst $atom) (add-atom $dst $atom))
 ;; Public MeTTa
 (: add-reduct (-> Grounded %Undefined% (->)))
