@@ -285,12 +285,12 @@ metta_atom_asserted_deduced('&corelib', Term):- metta_atom_corelib_types(Term).
 
 use_corelib_file:- using_corelib_file,!.
 use_corelib_file:- asserta(using_corelib_file), fail.
-use_corelib_file:- !.
 use_corelib_file:- is_metta_dir(Dir), really_use_corelib_file(Dir,'corelib.metta'),!.
 use_corelib_file:- is_metta_dir(Dir), really_use_corelib_file(Dir,'stdlib_mettalog.metta'),!.
 % !(import! &corelib "src/canary/stdlib_mettalog.metta")
 really_use_corelib_file(Dir,File):- absolute_file_name(File,Filename,[relative_to(Dir)]),
-  include_metta_directory_file('&corelib',Dir,Filename).
+ locally(nb_setval(may_use_fast_buffer,t), 
+     include_metta_directory_file('&corelib',Dir,Filename)).
 
 %:- initialization(use_corelib_file).
 
