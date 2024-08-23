@@ -36,7 +36,9 @@ jobs:
       run: chmod +x INSTALL.sh
 
     - name: Run Install Script to install Mettalog
-      run: . ./INSTALL.sh --easy
+      run: |
+        . ./INSTALL.sh --easy
+        echo $PATH >> $GITHUB_PATH
 
     - name: Make Test Script Executable
       run: chmod +x scripts/run_commit_tests.sh
