@@ -72,6 +72,7 @@ simple_first('<',AA,BB):- BB=json(_),AA\=json(_),!.
 simple_first('>',AA,BB):- AA=json(_),BB\=json(_),!.
 simple_first(R,AA,BB):-!, compare(R,AA,BB).
 
+
 prefix_key([O|_],Kee,Key):- atom(O), !,
   prefix_key(O,Kee,Key).
 prefix_key(O,Kee,Key) :- atom(O),

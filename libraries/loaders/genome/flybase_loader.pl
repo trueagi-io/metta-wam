@@ -205,6 +205,7 @@ load_data_fb_data:-
 
 
 :- ensure_loaded(obo_loader).
+:- ensure_loaded(graphml_loader).
 
 create_flybase_qlf:-
    shell('swipl -g "qcompile(whole_flybase)').
@@ -1150,6 +1151,9 @@ load_flybase(Ext,File,Fn):-
   load_flybase_ext(Ext,File,Fn),
   ignore(retract(load_state(File,loading))),
   assert(load_state(File,loaded)),fb_stats)).
+
+
+lfbm:- load_flybase('tests/performance/knowledge_graphs/graphml_csv/cml/ckg_neighbors_cml_edges_e21425.csv',csv).
 
 load_flybase_ext(_Ext,File,_Fn):- use_metta_x,  atom_concat(File,'.metta_x',MFile),
   exists_file(MFile), \+ is_converting, % Ext \== 'obo',
