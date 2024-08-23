@@ -133,6 +133,7 @@ jobs:
         if [ -f "previous-junit.xml" ]; then
           cp previous-junit.xml ./allure-results/
         fi
+        python scripts/generate_allure_environment.py ${{ github.sha }} ${{ github.ref_name }} > ./allure-results/environment.properties
 
     - name: Generate Allure Report
       run: |
