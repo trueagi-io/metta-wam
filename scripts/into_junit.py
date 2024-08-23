@@ -47,8 +47,8 @@ def parse_test_line(line):
 
     return testpackage, testname, stdout, full_identifier, got, expected, status, url
 
-def generate_junit_xml(input_file):
-    testsuites = ET.Element("testsuites")
+def generate_junit_xml(input_file, timestamp):
+    testsuites = ET.Element("testsuites", timestamp=timestamp)
     packages_dict = defaultdict(list)  # Dictionary to group test cases by their testpackage
 
     with open(input_file, 'r') as file:
@@ -76,10 +76,11 @@ def generate_junit_xml(input_file):
     return ET.tostring(testsuites, encoding="utf-8", xml_declaration=True).decode("utf-8")
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python scripts/into_junit.py <input_file>")
+    if len(sys.argv) != 3:
+        print("Usage: python scripts/into_junit.py <input_file> <timestamp>")
         sys.exit(1)
 
     input_file = sys.argv[1]
-    junit_xml = generate_junit_xml(input_file)
+    timestamp = sys.argv[2]
+    junit_xml = generate_junit_xml(input_file, timestamp)
     print(junit_xml)
