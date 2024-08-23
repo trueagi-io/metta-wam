@@ -26,8 +26,10 @@ jobs:
       with:
         python-version: '3.x'
 
-    - name: Install junit2html
+    - name: Install python packages
       run: |
+        pip install ansi2html
+        pip install hyperon
         pip install junit2html
 
     - name: Make Shell Script Executable
