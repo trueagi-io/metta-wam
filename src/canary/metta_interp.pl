@@ -89,7 +89,7 @@ metta_root_dir(Dir):- getenv('METTA_DIR',Dir),!.
 metta_library_dir(Dir):- metta_root_dir(Value), absolute_file_name('./library/',Dir,[relative_to(Value)]).
 
 metta_dir(Dir):- metta_library_dir(Value), absolute_file_name('./genome/',Dir,[relative_to(Value)]).
-metta_dir(Dir):- is_metta_src_dir(Dir).  
+metta_dir(Dir):- is_metta_src_dir(Dir).
 metta_dir(Dir):- metta_library_dir(Dir).
 metta_dir(Dir):- metta_root_dir(Dir).
 metta_dir(Dir):- is_metta_src_dir(Value), absolute_file_name('../flybase/',Dir,[relative_to(Value)]).
@@ -129,13 +129,6 @@ user:file_search_path(mettalog,Dir):- metta_dir(Dir).
 :-multifile(user:loaded_into_kb/2).
 :-dynamic(user:loaded_into_kb/2).
 :- dynamic(user:is_metta_dir/1).
-:- dynamic user:file_search_path/2.
-:- multifile user:file_search_path/2.
-:- prolog_load_context(directory,Dir),
-   retractall(user:is_metta_dir(_)),asserta(user:is_metta_dir(Dir)).
-
-user:file_search_path(library,Dir):- metta_dir(Dir).
-user:file_search_path(mettalog,Dir):- metta_dir(Dir).
 
 once_writeq_ln(_):- \+ clause(pfcTraceExecution,true),!.
 once_writeq_ln(P):- nb_current('$once_writeq_ln',W),W=@=P,!.
@@ -147,13 +140,6 @@ once_writeq_ln(P):-
 pfcAdd_Now(P):- current_predicate(pfcAdd/1),!, once_writeq_ln(pfcAdd(P)),pfcAdd(P).
 pfcAdd_Now(P):- once_writeq_ln(asssert(P)),assert(P).
 %:- endif.
-
-metta_dir(Dir):- metta_dir0(Dir).
-metta_dir(Dir):- metta_dir0(Value), absolute_file_name('../flybase/',Dir,[relative_to(Value)]).
-metta_dir(Dir):- metta_dir0(Value), absolute_file_name('../../library/',Dir,[relative_to(Value)]).
-metta_dir(Dir):- metta_dir0(Value), absolute_file_name('../../library/genome/',Dir,[relative_to(Value)]).
-metta_dir0(Dir):- user:is_metta_dir(Dir).
-metta_dir0(Dir):- getenv('METTA_DIR',Dir),!.
 
 system:copy_term_g(I,O):- ground(I),!,I=O.
 system:copy_term_g(I,O):- copy_term(I,O).
