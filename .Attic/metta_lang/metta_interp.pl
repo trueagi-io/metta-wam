@@ -66,8 +66,8 @@
 :- set_prolog_flag(debug_on_error,true).
 %:- set_prolog_flag(compile_meta_arguments,control).
 :- (prolog_load_context(directory, Value);Value='.'), absolute_file_name('../packs/',Dir,[relative_to(Value)]),
-    symbol_concat(Dir,'predicate_streams',PS),
-    symbol_concat(Dir,'logicmoo_utils',LU),
+    atom_concat(Dir,'predicate_streams',PS),
+    atom_concat(Dir,'logicmoo_utils',LU),
     attach_packs(Dir,[duplicate(replace),search(first)]),
     pack_attach(PS,[duplicate(replace),search(first)]),
     pack_attach(LU,[duplicate(replace),search(first)]).
@@ -1066,8 +1066,15 @@ metta_atom_asserted('&self','&corelib').
 metta_atom_asserted('&self','&stdlib').
 metta_atom_asserted('&stdlib','&corelib').
 metta_atom_asserted('&flybase','&corelib').
+metta_atom_asserted('&catalog','&corelib').
+metta_atom_asserted('&catalog','&stdlib').
 :- ensure_loaded(metta_corelib).
 
+'mod-space'(top,'&self').
+'mod-space'(catalog,'&catalog').
+'mod-space'(corelib,'&corelib').
+'mod-space'(stdlib,'&stdlib').
+'mod-space'(Top,'&self'):- Top == self.
 
 %metta_atom_asserted_fallback( KB,Atom):- metta_atom_stdlib(KB,Atom)
 
@@ -1814,6 +1821,7 @@ fix_message_hook:-
 
 %:- ensure_loaded(metta_python).
 
+%:- ensure_loaded('../../library/genome/flybase_loader').
 
 :- initialization(use_corelib_file).
 

@@ -92,7 +92,7 @@ set_list_value(Value,Result):- nb_setarg(1,Value,echo),nb_setarg(1,Value,[Result
 %is_self_eval_l_fa('S',1). % cheat to comment
 
 % these should get uncomented with a flag
-%is_self_eval_l_fa(':',2)
+%is_self_eval_l_fa(':',2).
 % is_self_eval_l_fa('=',2).
 % eval_20(Eq,RetType,Depth,Self,['quote',Eval],RetVal):- !, Eval = RetVal, check_returnval(Eq,RetType,RetVal).
 is_self_eval_l_fa('quote',_).
@@ -1725,12 +1725,6 @@ eval_21(_Eq,_RetType,_Depth,_Self,['tuple-count',List],Len):-!,
 
 eval_20(_Eq,_OuterRetType,_Depth,_Self,[P,_,B],_):-P=='/',B==0,!,fail.
 
-eval_20( Eq, RetType, Depth, Self, [ 'repr' , L ] , Stringx ):- 
-    eval_args( Eq, RetType, Depth, Self, L, Ato ), atom( Ato ), !, atom_string( Ato, Stringx ).
- 
-eval_20( Eq, RetType, Depth, Self, [ 'parse' , L ] , Atox ):- 
-    eval_args( Eq, RetType, Depth, Self, L, Str ), string( Str ), !, atom_string( Atox, Str ).
-
 
 eval_20(Eq,RetType,Depth,Self,['CountElement',L],Res):- !, eval_args(Eq,RetType,Depth,Self,L,LL), !, (is_list(LL)->length(LL,Res);Res=1),check_returnval(Eq,RetType,Res).
 eval_20(Eq,RetType,_Dpth,_Slf,['make_list',List],MettaList):- !, into_metta_cons(List,MettaList),check_returnval(Eq,RetType,MettaList).
@@ -1782,7 +1776,10 @@ eval_40(Eq,RetType,Depth,Self,['-',N1,N2],N):- number(N1),
 eval_40(Eq,RetType,Depth,Self,['*',N1,N2],N):- number(N1),
    eval_args(Eq,RetType,Depth,Self,N2,N2Res), fake_notrace(catch_err(N is N1*N2Res,_E,(set_last_error(['Error',N2Res,'Number']),fail))).
 
-eval_40(_Eq,_RetType,_Depth,_Self,['pyr',PredDecl],Res):-
+eval_20(_Eq,_RetType,_Depth,_Self,['rust',PredDecl],Res):- !,
+  must_det_ll((rust_metta_run(PredDecl,Res),
+  nop(write_src(res(Res))))).
+eval_20(_Eq,_RetType,_Depth,_Self,['rust!',PredDecl],Res):- !,
   must_det_ll((rust_metta_run(exec(PredDecl),Res),
   nop(write_src(res(Res))))).
 

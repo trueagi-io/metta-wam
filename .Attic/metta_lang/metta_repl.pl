@@ -344,7 +344,7 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,
        (
          (Complete \== true, WasInteractive, DoLeap \== leap,
                 LeashResults > ResNum, ResNum < Max) ->
-         (write("press ';' for more solutions "),get_single_char_key(C),
+         (write("~npress ';' for more solutions "),get_single_char_key(C),
            not_compatio((writeq(key=C),nl)),
          (C=='b' -> (once(repl),fail) ;
          (C=='m' -> make ;
@@ -524,33 +524,39 @@ el_wrap_metta(Input) :-
     editline:el_wrap(swipl, Input, user_output, user_error),
     add_metta_commands(Input),
     forall(editline:el_setup(Input), true).
-el_wrap_metta.
+el_wrap_metta(_NoTTY). % For non-tty(true) clients over SWISH/Http/Rest server
 
 add_metta_commands(Input) :-
+    % TODO: It be nice for completion on file names but not prolog atoms
+    %editline:el_addfn(Input,complete,'Complete atoms and files',editline:complete),
+    %editline:el_addfn(Input,show_completions,'List completions',editline:show_completions),
     editline:el_addfn(Input, electric, 'Indicate matching bracket', editline:electric),
     editline:el_addfn(Input, isearch_history, 'Incremental search in history', editline:isearch_history),
+    %editline:el_bind(Input,["^I",complete]),
+    %editline:el_bind(Input,["^[?",show_completions]),
     editline:el_bind(Input, ["^R", isearch_history]),
     editline:bind_electric(Input),
     editline:el_source(Input, _).
 
 install_readline(Input):- is_installed_readline_editline(Input),!.
 %install_readline(_):- is_compatio,!.
-%install_readline(_):-!.
 install_readline(Input):-
     assert(is_installed_readline_editline(Input)),
     install_readline_editline1,
     %use_module(library(readline)),
     use_module(library(editline)),
     %nop(catch(load_history,_,true)),
-    %add_history_string("!(pfb3)"),
-    %add_history_string("!(load-flybase-full)"),
-    %add_history_string("!(obo-alt-id $X BS:00063)"),
-    %add_history_string("!(and (total-rows $T TR$) (unique-values $T2 $Col $TR))"),
     ignore(el_unwrap(user_input)), % unwrap the prolog wrapper so we can use our own.
     ignore(el_wrap_metta(Input)),
     history_file_location(HistoryFile),
     check_file_exists_for_append(HistoryFile),
-    el_read_history(user_input,HistoryFile).
+    el_read_history(user_input,HistoryFile),
+    %add_history_string("!(load-flybase-full)"),
+    %add_history_string("!(pfb3)"),
+    %add_history_string("!(obo-alt-id $X BS:00063)"),
+    %add_history_string("!(and (total-rows $T TR$) (unique-values $T2 $Col $TR))"),
+  !.
+
 
 :- dynamic  setup_done/0.
 :- volatile setup_done/0.
@@ -560,6 +566,7 @@ install_readline_editline1 :-
    !.
 install_readline_editline1 :-
    asserta(setup_done).
+% Most all of these were overkill
 %   '$toplevel':(
 %    '$clean_history',
 %    apple_setup_app,

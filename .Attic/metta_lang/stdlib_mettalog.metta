@@ -1156,10 +1156,12 @@
     (@param "Module name")))
   (@return "Space name"))
 (: mod-space! (-> Atom hyperon::space::DynSpace))
-;; Implement from Interpreter!
+;; Implemented from Interpreters
+(= (mod-space! self) &self)
 (= (mod-space! top) &self)
 (= (mod-space! corelib) &corelib)
 (= (mod-space! stdlib) &stdlib)
+(= (mod-space! catalog) &catalog)
 
 
 ;; Public MeTTa
@@ -1464,4 +1466,4 @@
 ;; Implemented from Interpreters	
 
 ; !(import! &corelib "src/canary/stdlib_mettalog.metta")
-!(println! "!(import! &corelib \"src/canary/stdlib_mettalog.metta\")")
+;!(println! "!(import! &corelib \"src/canary/stdlib_mettalog.metta\")")

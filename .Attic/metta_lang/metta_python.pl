@@ -104,6 +104,260 @@ py_call_c(G,R):- py_catch(py_call(G,R)).
 
 py_is_module(M):-notrace((with_safe_argv(catch((py_call(M,X),py_type(X,module)),_,fail)))).
 
+% Evaluations and Iterations
+load_builtin_module:- py_module(builtin_module,
+'
+import sys
+#import numpy
+
+the_modules_and_globals=None
+
+def eval_string(s):
+    global the_modules_and_globals
+    global_vars = the_modules_and_globals
+    local_vars = locals()
+    return eval(s,global_vars,local_vars)
+
+def exec_string(s):
+    global the_modules_and_globals
+    global_vars = the_modules_and_globals
+    local_vars = locals()
+    return exec(s,global_vars,local_vars)
+
+def get_globals():
+    return globals()
+
+def merge_modules_and_globals():
+    # Get all currently loaded modules
+    loaded_modules = sys.modules
+
+    # Get all global variables
+    global_vars = globals()
+
+    # Prepare a combined dictionary
+    global the_modules_and_globals
+    combined_dict = the_modules_and_globals
+    if combined_dict is None:
+        combined_dict = {}
+
+    # Add modules with a prefix or special key to distinguish them
+    for mod_name, mod_obj in loaded_modules.items():
+        combined_dict[f"module_{mod_name}"] = mod_obj
+        combined_dict[f"{mod_name}"] = mod_obj
+
+    # Add global variables with a prefix or special key
+    for var_name, var_value in global_vars.items():
+        combined_dict[f"global_{var_name}"] = var_value
+        combined_dict[f"{var_name}"] = var_value
+
+    the_modules_and_globals = combined_dict
+    return combined_dict
+
+def get_locals():
+    return locals()
+
+def iter_collection(s):
+    return iter(s)
+
+def string_conversion(s):
+    return str(s)
+
+def string_representation(s):
+    return repr(s)
+
+def get_length(s):
+    return len(s)
+
+def absolute_value(num):
+    return abs(num)
+
+def all_true(iterable):
+    return all(iterable)
+
+def any_true(iterable):
+    return any(iterable)
+
+def as_ascii(s):
+    return ascii(s)
+
+def binary_conversion(num):
+    return bin(num)
+
+def boolean_conversion(val):
+    return bool(val)
+
+def chr_conversion(num):
+    return chr(num)
+
+def hexadecimal_conversion(num):
+    return hex(num)
+
+def octal_conversion(num):
+    return oct(num)
+
+# Arithmetic and Conversion
+def int_conversion(s):
+    return int(s)
+
+def float_conversion(s):
+    return float(s)
+
+def complex_conversion(real, imag=0):
+    return complex(real, imag)
+
+def divmod_func(a, b):
+    return divmod(a, b)
+
+def pow_func(base, exp):
+    return pow(base, exp)
+
+# Collection Handling
+def sorted_iterable(iterable, key=None, reverse=False):
+    return sorted(iterable, key=key, reverse=reverse)
+
+def sum_iterable(iterable, start=0):
+    return sum(iterable, start)
+
+def min_value(*args, key=None):
+    return min(*args, key=key)
+
+def max_value(*args, key=None):
+    return max(*args, key=key)
+
+# Type and Attribute Handling
+def type_of(obj):
+    return type(obj)
+
+def isinstance_of(obj, classinfo):
+    return isinstance(obj, classinfo)
+
+def issubclass_of(sub, superclass):
+    return issubclass(sub, superclass)
+
+def getattr_func(obj, name, default=None):
+    return getattr(obj, name, default)
+
+def setattr_func(obj, name, value):
+    setattr(obj, name, value)
+
+def hasattr_func(obj, name):
+    return hasattr(obj, name)
+
+# File and I/O
+def open_file(filename, mode="r", buffering=-1):
+    return open(filename, mode, buffering)
+
+# Exception Handling
+def raise_exception(exctype, msg=None):
+    if msg:
+        raise exctype(msg)
+    else:
+        raise exctype()
+
+# Miscellaneous
+def callable_check(obj):
+    return callable(obj)
+
+def id_func(obj):
+    return id(obj)
+
+def help_func(obj):
+    help(obj)  # This will print the help to the standard output
+
+import inspect
+
+def get_str_rep(func):
+    if not inspect.isfunction(func):
+        return func
+    if func.__module__ == "__main__":
+        return func.__name__
+    return f"{func.__module__}.{func.__name__}"
+
+the_modules_and_globals = merge_modules_and_globals()
+
+').
+
+
+
+% Evaluations and Iterations
+load_hyperon_module:- py_module(hyperon_module,
+'
+from hyperon.base import Atom
+from hyperon.atoms import OperationAtom, E
+from hyperon.ext import register_tokens
+from hyperon.ext import register_atoms
+from hyperon.atoms import G, AtomType
+from hyperon.runner import MeTTa
+
+import hyperonpy as hp
+
+import sys
+import readline
+import os
+import atexit
+
+class MeTTaVS(MeTTa):
+    def copy(self):
+        return self
+
+runner = MeTTaVS()
+
+def rust_metta_run(obj):
+    return runner.run(obj)
+').
+
+
+py_mcall(I,O):- catch(py_call(I,M,[py_object(false),py_string_as(string),py_dict_as({})]),error(_,_),fail),!,O=M.
+
+get_str_rep(I,O):- py_mcall(builtin_module:get_str_rep(I),O),!.
+
+py_atom(I,O):- var(I),!,O=I.
+py_atom([I|Is],O):-!, py_dot(I,II),py_dot_from(II,Is,O).
+py_atom(I,O):- atomic(I),!,py_atomic(I,O).
+py_atom(I,O):- py_mcall(I,O),!.
+py_atom(I,O):- I=O.
+
+py_atom_type(I,_Type,O):- var(I),!,O=I.
+py_atom_type([I|Is],_Type,O):-!, py_dot(I,II),py_dot_from(II,Is,O).
+py_atom_type(I,_Type,O):- atomic(I),!,py_atomic(I,O).
+py_atom_type(I,_Type,O):- py_mcall(I,O),!.
+py_atom_type(I,_Type,O):- I=O.
+
+py_atomic([],O):-py_mcall("[]",O),!.
+py_atomic(I,O):- py_is_object(I),!,O=I.
+py_atomic(I,O):- py_mcall(I,O),!.
+py_atomic(I,O):- string(I),py_eval(I,O),!.
+py_atomic(I,O):- py_eval(I,O),!.
+py_atomic(I,O):- \+ symbol_contains(I,'('),atomic_list_concat([A,B|C],'.',I),py_dot([A,B|C],O),!.
+py_atomic(I,O):- string(I), py_dot(I,O),!.
+py_atomic(I,O):- I=O.
+
+get_globals(O):- py_mcall(builtin_module:get_globals(),O).
+get_locals(O):- py_mcall(builtin_module:get_locals(),O).
+merge_modules_and_globals(O):- py_mcall(builtin_module:merge_modules_and_globals(),O).
+py_eval(I,O):- py_mcall(builtin_module:eval_string(I),O).
+py_eval(I):- py_eval(I,O),pybug(O).
+py_exec(I,O):- py_mcall(builtin_module:exec_string(I),O).
+py_exec(I):- py_exec(I,O),pybug(O).
+
+py_dot(I,O):- string(I),atom_string(A,I),py_atom(A,O),A\==O,!.
+py_dot(I,O):- py_atom(I,O).
+
+py_dot_from(From,I,O):- I==[],!,O=From.
+py_dot_from(From,[I|Is],O):- !, py_dot_from(From,I,M),py_dot_from(M,Is,O).
+py_dot_from(From,I,O):- atomic_list_concat([A,B|C],'.',I),!,py_dot_from(From,[A,B|C],O).
+py_dot_from(From,I,O):- py_dot(From,I,O).
+
+py_eval_object([V|VI],VO):-
+  py_eval_from(V,VI,VO).
+
+py_eval_from(From,I,O):- I==[],!,py_dot(From,O).
+py_eval_from(From,[I],O):- !, py_fcall(From,I,O).
+py_eval_from(From,[I|Is],O):- !, py_dot_from(From,I,M),py_eval_from(M,Is,O).
+py_eval_from(From,I,O):- atomic_list_concat([A,B|C],'.',I),!,py_eval_from(From,[A,B|C],O).
+py_eval_from(From,I,O):- py_fcall(From,I,O).
+
+py_fcall(From,I,O):- py_mcall(From:I,O).
 
 ensure_space_py(Space,GSpace):- py_is_object(Space),!,GSpace=Space.
 ensure_space_py(Space,GSpace):- var(Space),ensure_primary_metta_space(GSpace), Space=GSpace.
@@ -136,6 +390,8 @@ ensure_mettalog_py(MettaLearner):-
    asserta(is_mettalog(MettaLearner)))).
 
 ensure_mettalog_py:-
+  load_builtin_module,
+  load_hyperon_module,
   setenv('VSPACE_VERBOSE',0),
   with_safe_argv(ensure_mettalog_py(_)),!.
 
@@ -202,6 +458,10 @@ atoms_iter_from_space(Space, Atoms) :-
     true.
 :- endif.
 
+metta_py_pp(V):- py_is_enabled,once((py_is_object(V),py_to_pl(V,PL))),V\=@=PL,!,metta_py_pp(PL).
+metta_py_pp(V):- atomic(V),py_is_enabled,py_is_object(V),py_pp(V),!.
+metta_py_pp(V):- format('~p',[V]),!.
+
 % py_to_pl/2 - Converts a Python object to a Prolog term.
 py_to_pl(I,O):- py_to_pl(_,I,O).
 
@@ -217,20 +477,23 @@ is_var_or_nil([]).
 %py_to_pl(VL,Par,_Cir,_,L,_):- pybug(py_to_pl(VL,Par,L)),fail.
 % If L is a variable, E is unified with L.
 py_to_pl(_VL,_Par,Cir,Cir,L,E):- var(L),!,E=L.
+% If L is an empty list, unify E with L.
+py_to_pl(_VL,_Par,Cir,Cir,L,E):- L ==[],!,E=L.
+
 % If O is an object, convert it to Prolog.
 py_to_pl(VL, Par, Cir, CirO, O, E) :- py_is_object(O), py_class(O, Cl), !,
     pyo_to_pl(VL, Par, [O = E | Cir], CirO, Cl, O, E).
-% If L is an empty list, unify E with L.
-py_to_pl(_VL,_Par,Cir,Cir,L,E):- L ==[],!,E=L.
 % If L is in the Cir list, unify E with L.
 py_to_pl(_VL,_Par,Cir,Cir,L,E):- member(N-NE,Cir), N==L, !, (E=L;NE=E), !.
 % If LORV is a variable or nil, unify it directly.
 py_to_pl(_VL,_Par,Cir,Cir, LORV:B,LORV:B):- is_var_or_nil(LORV),  !.
 py_to_pl(_VL,_Par,Cir,Cir, LORV:_B:_C,LORV):- is_var_or_nil(LORV),  !.
+% If L is not callable, unify E with L.
+py_to_pl(_VL,_Par,Cir,Cir,L,E):- \+ callable(L),!,E=L.
 % Convert lists with annotations.
 py_to_pl(VL, Par, Cir, CirO, [H|T]:B:C, [HH|TT]) :-
     py_to_pl(VL, Par, Cir, CirM, H:B:C, HH),
-    py_to_pl(VL, Par, CirM, CirO, T:B:C, TT).
+    py_to_pl(VL, Par, CirM, CirO, T:B:C, TT),!.
 py_to_pl(VL, Par, Cir, CirO, [H|T]:B, [HH|TT]) :-
     py_to_pl(VL, Par, Cir, CirM, H:B, HH),
     py_to_pl(VL, Par, CirM, CirO, T:B, TT).
@@ -253,6 +516,8 @@ py_to_pl(VL, Par, Cir, CirO, A:B, AA:BB) :- !,
 py_to_pl(VL, Par, Cir, CirO, A-B, AA-BB) :- !,
     py_to_pl(VL, Par, Cir, CirM, A, AA),
     py_to_pl(VL, Par, CirM, CirO, B, BB).
+
+py_to_pl(_VL,_Par,Cir,Cir,L,E):- \+ callable(L),!,E=L.
 
 % If L is an atom, unify E with L.
 py_to_pl(_VL,_Par,Cir,Cir,L,E):- atom(L),!,E=L.
@@ -309,6 +574,9 @@ pyo_to_pl(VL,Par,Cir,CirO,Cl,O,E):- class_to_pl(Par,Cl,M), % pybug(class_to_pl(P
    py_member_values(O,M,R), !, py_to_pl(VL,[Cl|Par],Cir,CirO,R,E).
 pyo_to_pl(VL,Par,Cir,CirO,Cl,O,E):- catch(py_obj_dir(O,L),_,fail),pybug(py_obj_dir(O,L)),py_decomp(M),meets_dir(L,M),pybug(py_decomp(M)),
   py_member_values(O,M,R), member(N-_,Cir), R\==N, !, py_to_pl(VL,[Cl|Par],Cir,CirO,R,E),!.
+    % If L is not callable, unify E with L.
+%pyo_to_pl(_VL,_Par,Cir,Cir,Cl,O,E):- get_str_rep(O,Str), E=..[Cl,Str].
+pyo_to_pl(_VL,_Par,Cir,Cir,_Cl,O,E):- O = E,!.
 
 pl_to_py(Var,Py):- pl_to_py(_VL,Var,Py).
 pl_to_py(VL,Var,Py):- var(VL),!,ignore(VL=[vars]),pl_to_py(VL,Var,Py).
@@ -439,12 +707,13 @@ self_extend_py(Self,Module,File,R):-
   true)),!.
 
 %import_module_to_rust(ToPython):- sformat(S,'!(import! &self ~w)',[ToPython]),rust_metta_run(S).
-
-
-rust_metta_run(S,Run):- % run
+rust_metta_run(S,Run):- var(S),!,freeze(S,rust_metta_run(S,Run)).
+rust_metta_run(exec(S),Run):- \+ callable(S), string_concat('!',S,SS),!,rust_metta_run(SS,Run).
+rust_metta_run(S,Run):- \+ string(S),coerce_string(S,R),!,rust_metta_run(R,Run).
+rust_metta_run(I,O):- !, py_mcall(hyperon_module:rust_metta_run(I),O),!.
+rust_metta_run(R,Run):- % run
   with_safe_argv((((
   %ensure_rust_metta(MeTTa),
-  s_to_run(S,R),
   py_call(mettalog:rust_metta_run(R),Run))))).
 
 rust_metta_run(S):-
@@ -454,9 +723,9 @@ rust_metta_run(S):-
 print_py(Py):-
   py_to_pl(Py,R), print(R),nl.
 
-s_to_run(S,R):- atom(S), sformat(R,'~w',[S]),!.
-s_to_run(S,R):- string(S),!,S=R.
-s_to_run(S,R):- with_output_to(string(R),write_src(S)),!.
+coerce_string(S,R):- atom(S), sformat(R,'~w',[S]),!.
+coerce_string(S,R):- string(S),!,S=R.
+coerce_string(S,R):- with_output_to(string(R),write_src(S)),!.
 
 load_functions_motto:- load_functions_motto(Def),pypp(Def).
 load_functions_motto(Def):-
@@ -536,9 +805,11 @@ get_list_arity(_Args,-1).
 :- set_prolog_flag(py_backtrace_depth,50).
 :- set_prolog_flag(py_backtrace, true).
 :- set_prolog_flag(py_argv , []).
-%:- initialization(on_restore1,restore).
-%:- initialization(on_restore2,restore).
+:- initialization(on_restore1,restore).
+:- initialization(on_restore2,restore).
 
 
 
 % py_initialize(, +Argv, +Options)
+:- load_builtin_module.
+%:- load_hyperon_module.

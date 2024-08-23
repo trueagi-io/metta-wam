@@ -472,8 +472,13 @@ write_metta_datalog_term(Output,exec(Term),MangleP2,Lineno):-
 % write asserted terms
 write_metta_datalog_term(Output,STerm,MangleP2,Lineno):-
   s2t_iz(MangleP2,P,STerm,Term),
-  Data =..[P,Lineno|Term],
+  relistify(Term,TermL),
+  Data =..[P,Lineno|TermL],
   format(Output,"~q.~n",[Data]).
+
+relistify(Term,TermL):- is_list(Term),!,TermL=Term.
+relistify([H|T],TermL):- flatten([H|T],TermL),!.
+relistify(Term,[Term]).
 
 eval_Line(A,B,C):- format('~N'),
   write_src(eval_Line(A,B,C)),nl.
@@ -559,6 +564,8 @@ load_metta_file_stream(Filename,Self,In):-
       set_exec_num(Filename,0))),
   load_metta_file_stream_fast(Size,P2,Filename,Self,In)))).
 
+% use_fast_buffer makes tmp .buffer.pl files that get around long load times
+use_fast_buffer:- nb_current(may_use_fast_buffer,t).
 
 load_metta_file_stream_fast(_Size,_P2,Filename,Self,S):- fail,
  symbolic_list_concat([_,_,_|_],'.',Filename),
@@ -570,17 +577,43 @@ load_metta_file_stream_fast(_Size,_P2,Filename,Self,S):- fail,
   I==end_of_file,!.
 
 :- dynamic(metta_file_buffer/5).
+:- multifile(metta_file_buffer/5).
+
+load_metta_file_stream_fast(_Size, _P2, Filename, Self, _In) :-
+    use_fast_buffer,
+    symbol_concat(Filename, '.buffer.pl', BufferFile),
+    exists_file(BufferFile),
+    time_file(Filename, FileTime),
+    time_file(BufferFile, BufferFileTime),
+    (   (BufferFileTime > FileTime)
+    ->  (fbugio(using(BufferFile)),ensure_loaded(BufferFile), !, load_metta_buffer(Self, Filename))
+    ;   (fbugio(deleting(BufferFile)),delete_file(BufferFile), fail)
+    ).
+
 load_metta_file_stream_fast(_Size,P2,Filename,Self,In):-
+      if_t(use_fast_buffer,
+         ((symbol_concat(Filename, '.buffer.pl', BufferFile),
+          fbugio(creating(BufferFile)),
+          write_bf(BufferFile, ( :- dynamic(metta_file_buffer/5))),
+          write_bf(BufferFile, ( :- multifile(metta_file_buffer/5)))))),
       repeat,
             my_line_count(In, LineCount),
             current_read_mode(file,Mode),
             must_det_ll(call(P2, In,Expr)), %write_src(read_metta=Expr),nl,
             subst_vars(Expr, Term, [], NamedVarsList),
-            assertz(metta_file_buffer(Mode,Term,NamedVarsList,Filename,LineCount)),
+            BufferTerm = metta_file_buffer(Mode,Term,NamedVarsList,Filename,LineCount),
+            assertz(BufferTerm),
+            if_t(use_fast_buffer,write_bf(BufferFile,BufferTerm)),
+
       flush_output,
       at_end_of_stream(In),!,
       %listing(metta_file_buffer/5),
       load_metta_buffer(Self,Filename).
+
+write_bf(BufferFile,BufferTerm):-
+  setup_call_cleanup(open(BufferFile,append,Out),
+       format(Out,'~q.~n',[BufferTerm]),
+       close(Out)).
 
 
 my_line_count(In, seek($,0,current,CC)):-
