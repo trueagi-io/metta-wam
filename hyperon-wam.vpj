@@ -67,6 +67,8 @@
 			Name="Other Files"
 			Filters=""></Folder>
 	</CustomFolders>
+	<List Name="RTE">
+	</List>
 	<Files AutoFolders="DirectoryView">
 		<Folder Name="t:/">
 			<Folder Name="root">
@@ -114,6 +116,13 @@
 				N="../hyperon-experimental/*.*"
 				Recurse="1"
 				Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"
+				L="1"/>
+		</Folder>
+		<Folder Name="library">
+			<F
+				N="library/*.*"
+				Recurse="1"
+				Excludes=".git/;*.metta.html;*.bak;build/;/;*~*/"
 				L="1"/>
 		</Folder>
 		<Folder Name="reports">
@@ -201,6 +210,4 @@
 			Recurse="1"
 			Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"/>
 	</Files>
-	<List Name="RTE">
-	</List>
 </Project>

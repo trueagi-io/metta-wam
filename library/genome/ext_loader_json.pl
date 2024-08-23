@@ -53,7 +53,7 @@ note_doing(P):- wdmsg_json(P),!,call(user:P).
 assert_JSON(P):- note_doing(assert_OBO(P)).
 
 :- ensure_loaded(flybase_main).
-:- ensure_loaded(obo_loader).
+:- ensure_loaded(ext_loader_obo).
 
 %:- listing(assert_OBO/1).
 
@@ -71,6 +71,7 @@ simple_first(R,_=AA,_=BB):-!, simple_first(R,AA,BB).
 simple_first('<',AA,BB):- BB=json(_),AA\=json(_),!.
 simple_first('>',AA,BB):- AA=json(_),BB\=json(_),!.
 simple_first(R,AA,BB):-!, compare(R,AA,BB).
+
 
 prefix_key([O|_],Kee,Key):- atom(O), !,
   prefix_key(O,Kee,Key).

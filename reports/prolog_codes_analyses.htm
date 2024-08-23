@@ -1,0 +1,591 @@
+
+<html> <head> 
+
+<script> 
+function open_div(xid){ document.getElementById(xid).style.display = 'block'; }
+function close_div(xid){ document.getElementById(xid).style.display = 'none'; }
+
+</script> 
+
+</head> 
+
+<body style="font-family: arial; font-size: 12pt;"> 
+ reset file to empty 
+
+
+<h2>  <pre> </pre> </h2><h2> in directory: 
+</h2><h2>H:/metta-wam-main/src/canary/</h2> <hr>
+
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> metta_eval.pl</i></b> <b> &nbsp &nbsp &nbsp canary</b> &nbsp &nbsp &nbsp src
+H:/metta-wam-main/src/canary
+<a onclick="prompt('copy path','H:/metta-wam-main/src/canary/metta_eval.pl');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('srccanarymetta_eval.pl')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('srccanarymetta_eval.pl')" style="cursor:pointer">  Close </a>
+
+<div id="srccanarymetta_eval.pl" style="border: 1px solid black; " >  
+echo
+  &nbsp  &nbsp coerce
+  &nbsp  &nbsp let*
+  &nbsp  &nbsp chain
+  &nbsp  &nbsp eval-for
+  &nbsp  &nbsp let
+  &nbsp  &nbsp stringToChars
+ <br> &nbsp <br>
+charsToString
+ <br> &nbsp <br>
+repl!
+  &nbsp  &nbsp rtrace!
+  &nbsp  &nbsp no-rtrace!
+  &nbsp  &nbsp trace!
+  &nbsp  &nbsp trace
+  &nbsp  &nbsp profile!
+  &nbsp  &nbsp time!
+  &nbsp  &nbsp print
+  &nbsp  &nbsp println!
+  &nbsp  &nbsp assertTrue
+  &nbsp  &nbsp assertFalse
+  &nbsp  &nbsp assertEqual
+  &nbsp  &nbsp assertNotEqual
+ <br> &nbsp <br>
+assertEqualToResult
+ <br> &nbsp <br>
+new-space
+  &nbsp  &nbsp case
+  &nbsp  &nbsp collapse
+  &nbsp  &nbsp superpose
+  &nbsp  &nbsp sequential
+  &nbsp  &nbsp nop
+  &nbsp  &nbsp empty
+  &nbsp  &nbsp do
+  &nbsp  &nbsp call!
+  &nbsp  &nbsp call-fn!
+  &nbsp  &nbsp call-fn-nth!
+ <br> &nbsp <br>
+if
+  &nbsp  &nbsp If
+  &nbsp  &nbsp car-atom
+  &nbsp  &nbsp cdr-atom
+  &nbsp  &nbsp Cons
+  &nbsp  &nbsp change-state!
+ <br> &nbsp <br>
+new-state
+  &nbsp  &nbsp get-state
+  &nbsp  &nbsp get-types
+  &nbsp  &nbsp get-type
+  &nbsp  &nbsp length
+  &nbsp  &nbsp CountElement
+ <br> &nbsp <br>
+get-metatype
+ <br> &nbsp <br>
+extend-py!
+  &nbsp  &nbsp register-module!
+ <br> &nbsp <br>
+include!
+  &nbsp  &nbsp include
+  &nbsp  &nbsp load-ascii
+  &nbsp  &nbsp import!
+  &nbsp  &nbsp load-file!
+  &nbsp  &nbsp bind!
+  &nbsp  &nbsp pragma!
+  &nbsp  &nbsp transfer!
+  &nbsp  &nbsp save-space!
+  &nbsp  &nbsp and
+  &nbsp  &nbsp or
+  &nbsp  &nbsp not
+  &nbsp  &nbsp function
+  &nbsp  &nbsp return
+  &nbsp  &nbsp catch
+  &nbsp  &nbsp throw
+  &nbsp  &nbsp number-of
+  &nbsp  &nbsp findall!
+  &nbsp  &nbsp limit!
+  &nbsp  &nbsp limit
+  &nbsp  &nbsp offset!
+  &nbsp  &nbsp offset
+  &nbsp  &nbsp max-time!
+  &nbsp  &nbsp max-time
+  &nbsp  &nbsp call-cleanup!
+ <br> &nbsp <br>
+setup-call-cleanup!
+ <br> &nbsp <br>
+with-output-to!
+ <br> &nbsp <br>
+maplist!
+  &nbsp  &nbsp concurrent-maplist!
+ <br> &nbsp <br>
+concurrent-forall!
+ <br> &nbsp <br>
+hyperpose
+  &nbsp  &nbsp predicate-arity
+ <br> &nbsp <br>
+function-arity
+ <br> &nbsp <br>
+compile-space!
+ <br> &nbsp <br>
+compile!
+  &nbsp  &nbsp TupleConcat
+  &nbsp  &nbsp range
+  &nbsp  &nbsp dedup!
+  &nbsp  &nbsp intersect
+  &nbsp  &nbsp make_list
+  &nbsp  &nbsp call-string!
+ <br> &nbsp <br>
+
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> metta_interp.pl</i></b> <b> &nbsp &nbsp &nbsp canary</b> &nbsp &nbsp &nbsp src
+H:/metta-wam-main/src/canary
+<a onclick="prompt('copy path','H:/metta-wam-main/src/canary/metta_interp.pl');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('srccanarymetta_interp.pl')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('srccanarymetta_interp.pl')" style="cursor:pointer">  Close </a>
+
+<div id="srccanarymetta_interp.pl" style="border: 1px solid black; " >  
+'intersect'( Lx1, Lx2 , Lx_intersct ):- !, eval_H( [ 'intersect', Lx1, Lx2 ], Lx_intersct ).'intersect'
+ <br> &nbsp <br>
+'car-atom'(List, Head):- eval_H(['car-atom', List], Head).'car-atom'
+ <br> &nbsp <br>
+'cdr-atom'(List, Tail):- eval_H(['cdr-atom', List], Tail).'cdr-atom'
+ <br> &nbsp <br>
+'collapse'(List, CollapsedList):- eval_H(['collapse', List], CollapsedList).'collapse'
+ <br> &nbsp <br>
+'superpose'(List, SuperposedList):- eval_H(['superpose', List], SuperposedList).'superpose'
+ <br> &nbsp <br>
+'assertEqual'(Expected, Actual, Result):- ignore(Expected=Actual), eval_H(['assertEqual', Expected, Actual], Result).'assertEqual'
+ <br> &nbsp <br>
+'assertEqualToResult'(Expected, Actual, Result):- eval_H(['assertEqualToResult', Expected, Actual], Result).'assertEqualToResult'
+ <br> &nbsp <br>
+'assertNotEqual'(Expected, Actual, Result):- eval_H(['assertNotEqual', Expected, Actual], Result).'assertNotEqual'
+ <br> &nbsp <br>
+'assertFalse'(EvalThis, Result):- eval_H(['assertFalse', EvalThis], Result).'assertFalse'
+ <br> &nbsp <br>
+'assertTrue'(EvalThis, Result):- eval_H(['assertTrue', EvalThis], Result).'assertTrue'
+ <br> &nbsp <br>
+'rtrace!'(Condition, EvalResult):- eval_H(['rtrace', Condition], EvalResult).'rtrace!'
+ <br> &nbsp <br>
+'time!'(EvalThis, EvalResult):- eval_H(['time', EvalThis], EvalResult).'time!'
+ <br> &nbsp <br>
+'repl!'(EvalResult):- eval_H(['repl!'], EvalResult).'repl!'
+ <br> &nbsp <br>
+'import!'(Environment, Filename, Namespace):- eval_H(['import!', Environment, Filename], Namespace).'import!'
+ <br> &nbsp <br>
+'pragma!'(Environment, Expression, EvalValue):- eval_H(['pragma!', Environment, Expression], EvalValue).'pragma!'
+ <br> &nbsp <br>
+'print'(Message, EvalResult):- eval_H(['print', Message], EvalResult).'print'
+ <br> &nbsp <br>
+'nop'(Expression, EvalResult):- eval_H(['nop', Expression], EvalResult).'nop'
+ <br> &nbsp <br>
+'bind!'(Environment, Variable, Value):- eval_H(['bind!', Environment, Variable], Value).'bind!'
+ <br> &nbsp <br>
+'let'(Variable, Expression, Body, Result):- eval_H(['let', Variable, Expression, Body], Result).'let'
+ <br> &nbsp <br>
+'let*'(Bindings, Body, Result):- eval_H(['let*', Bindings, Body], Result).'let*'
+ <br> &nbsp <br>
+'get-type'(Value, Type):- eval_H(['get-type', Value], Type).'get-type'
+ <br> &nbsp <br>
+
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> metta_ontology.pfc.pl</i></b> <b> &nbsp &nbsp &nbsp canary</b> &nbsp &nbsp &nbsp src
+H:/metta-wam-main/src/canary
+<a onclick="prompt('copy path','H:/metta-wam-main/src/canary/metta_ontology.pfc.pl');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('srccanarymetta_ontology.pfc.pl')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('srccanarymetta_ontology.pfc.pl')" style="cursor:pointer">  Close </a>
+
+<div id="srccanarymetta_ontology.pfc.pl" style="border: 1px solid black; " >  
+properties('&corelib','if', [flow_control, qhelp("Conditional execution."), conditional_execution]).'if'
+ <br> &nbsp <br>
+properties('&corelib','case', [flow_control, qhelp("Case selection."), conditional_execution]).'case'
+ <br> &nbsp <br>
+properties('&corelib','let', [variable_assignment, qhelp("Variable assignment.")]).'let'
+ <br> &nbsp <br>
+properties('&corelib','let*', [variable_assignment, qhelp("Sequential variable assignment."), sequential]).'let*'
+ <br> &nbsp <br>
+properties('&corelib','function', [function_definition, qhelp("Function block.")]).'function'
+ <br> &nbsp <br>
+properties('&corelib','return', [function_definition, qhelp("Return value of a function block."), return_value]).'return'
+ <br> &nbsp <br>
+properties('&corelib','catch', [error_handling, qhelp("Catches exceptions."), exception_handling]).'catch'
+ <br> &nbsp <br>
+properties('&corelib','throw', [error_handling, qhelp("Throws exceptions."), exception_handling]).'throw'
+ <br> &nbsp <br>
+properties('&corelib','collapse', [data_structures, qhelp("Collapses a structure."), manipulation]).'collapse'
+ <br> &nbsp <br>
+properties('&corelib','sequential', [data_structures, qhelp("Sequentially applies operations."), sequential_operations]).'sequential'
+ <br> &nbsp <br>
+properties('&corelib','superpose', [data_structures, qhelp("Superposes data structures."), manipulation]).'superpose'
+ <br> &nbsp <br>
+properties('&corelib','dedup!', [iteration_control, qhelp("Removes duplicate elements from iteration."), manipulation]).'dedup!'
+ <br> &nbsp <br>
+properties('&corelib','limit!', [iteration_control, qhelp("Limits the number of iterations.")]).'limit!'
+ <br> &nbsp <br>
+properties('&corelib','offset!', [iteration_control, qhelp("Adjusts the starting point of iteration.")]).'offset!'
+ <br> &nbsp <br>
+properties('&corelib','number-of', [iteration_control, qhelp("Returns iteration count.")]).'number-of'
+ <br> &nbsp <br>
+properties('&corelib','nop', [iteration_control, qhelp("Suppresses iteration result."), suppression]).'nop'
+ <br> &nbsp <br>
+properties('&corelib','do', [iteration_control, qhelp("Suppresses iteration result."), suppression]).'do'
+ <br> &nbsp <br>
+properties('&corelib','pragma!', [compiler_directive, qhelp("Compiler directive for optimizations/settings."), optimization]).'pragma!'
+ <br> &nbsp <br>
+properties('&corelib','include!', [code_inclusion, qhelp("Includes code from another file or context.")]).'include!'
+ <br> &nbsp <br>
+properties('&corelib','load-ascii', [file_handling, qhelp("Loads ASCII file content.")]).'load-ascii'
+ <br> &nbsp <br>
+properties('&corelib','extend-py!', [integration, qhelp("Extends integration with Python."), python]).'extend-py!'
+ <br> &nbsp <br>
+properties('&corelib','import!', [module_import, qhelp("Imports an external module or file.")]).'import!'
+ <br> &nbsp <br>
+properties('&corelib','eval-for', [evaluation, qhelp("Evaluates assuming a return type."), type_assumption]).'eval-for'
+ <br> &nbsp <br>
+properties('&corelib','call!', [dynamic_call, qhelp("Tries to dynamically guess if predicate or function.")]).'call!'
+ <br> &nbsp <br>
+properties('&corelib','predicate-arity', [function_definition, qhelp("Defines the arity of predicates/functions."), arity]).'predicate-arity'
+ <br> &nbsp <br>
+properties('&corelib','call-fn!', [dynamic_call, qhelp("Calls a function dynamically."), function]).'call-fn!'
+ <br> &nbsp <br>
+properties('&corelib','call-string!', [evaluation, qhelp("Evaluates a string of Prolog code."), prolog_code]).'call-string!'
+ <br> &nbsp <br>
+properties('&corelib','new-space', [memory_allocation, qhelp("Allocates new space or memory region.")]).'new-space'
+ <br> &nbsp <br>
+properties('&corelib','transfer!', [memory_management, qhelp("Transfers space content to another space.")]).'transfer!'
+ <br> &nbsp <br>
+properties('&corelib','coerce', [type_conversion, qhelp("Forces argument types for compatibility."), compatibility]).'coerce'
+ <br> &nbsp <br>
+properties('&corelib','or', [logic, qhelp("Logical OR."), logical_or]).'or'
+ <br> &nbsp <br>
+properties('&corelib','and', [logic, qhelp("Logical AND."), logical_and]).'and'
+ <br> &nbsp <br>
+properties('&corelib','not', [logic, qhelp("Logical NOT."), logical_not]).'not'
+ <br> &nbsp <br>
+properties('&corelib','repl!', [debugging, qhelp("Interactive read-eval-print loop."), interactive]).'repl!'
+ <br> &nbsp <br>
+properties('&corelib','time!', [execution_timing, qhelp("Execution timing.")]).'time!'
+ <br> &nbsp <br>
+properties('&corelib','trace!', [debugging, qhelp("Prints some debug information."), information_printing]).'trace!'
+ <br> &nbsp <br>
+properties('&corelib','no-rtrace!', [debugging, qhelp("Disables tracing for debugging."), trace_control]).'no-rtrace!'
+ <br> &nbsp <br>
+properties('&corelib','rtrace!', [debugging, qhelp("Enables tracing for debugging."), trace_control]).'rtrace!'
+ <br> &nbsp <br>
+properties('&corelib','println!', [output, qhelp("Prints text with newline to output."), text_printing]).'println!'
+ <br> &nbsp <br>
+properties('&corelib','with-output-to!', [output, qhelp("Redirects output to a specified target."), redirection]).'with-output-to!'
+ <br> &nbsp <br>
+properties('&corelib','print', [output, qhelp("Prints text to output."), text_printing]).'print'
+ <br> &nbsp <br>
+properties('&corelib','assertEqual', [testing, qhelp("Asserts a condition is true."), assertion]).'assertEqual'
+ <br> &nbsp <br>
+properties('&corelib','assertFalse', [testing, qhelp("Asserts a condition is false."), assertion]).'assertFalse'
+ <br> &nbsp <br>
+properties('&corelib','assertEqual', [testing, qhelp("Asserts two values are equal."), assertion]).'assertEqual'
+ <br> &nbsp <br>
+properties('&corelib','assertNotEqual', [testing, qhelp("Asserts two values are not equal."), assertion]).'assertNotEqual'
+ <br> &nbsp <br>
+properties('&corelib','assertEqualToResult', [testing, qhelp("Asserts equality to a result."), assertion]).'assertEqualToResult'
+ <br> &nbsp <br>
+properties('&corelib','change-state!', [state_management, qhelp("Changes the state of a system component."), system_integration]).'change-state!'
+ <br> &nbsp <br>
+properties('&corelib','get-state', [state_management, qhelp("Gets the state of a component or system."), data_retrieval]).'get-state'
+ <br> &nbsp <br>
+properties('&corelib','car-atom', [list_operations, qhelp("Retrieves the head of a list."), head_retrieval]).'car-atom'
+ <br> &nbsp <br>
+properties('&corelib','cdr-atom', [list_operations, qhelp("Retrieves the tail of a list."), tail_retrieval]).'cdr-atom'
+ <br> &nbsp <br>
+properties('&corelib','range', [list_operations, qhelp("Generates a range of numbers."), range_generation]).'range'
+ <br> &nbsp <br>
+properties('&corelib','make_list', [list_operations, qhelp("Creates a list with specified elements."), creation]).'make_list'
+ <br> &nbsp <br>
+properties('&corelib','Cons', [list_operations, qhelp("Constructs a list."), construction]).'Cons'
+ <br> &nbsp <br>
+properties('&corelib','length', [list_operations, qhelp("Determines the length of a list."), length_determination]).'length'
+ <br> &nbsp <br>
+
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> reverse-arithmetic.metta</i></b> <b> &nbsp &nbsp &nbsp bidirectional_computation</b> &nbsp &nbsp &nbsp features
+H:/metta-wam-main/tests/features/bidirectional_computation
+<a onclick="prompt('copy path','H:/metta-wam-main/tests/features/bidirectional_computation/reverse-arithmetic.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('featuresbidirectional_computationreverse-arithmetic.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('featuresbidirectional_computationreverse-arithmetic.metta')" style="cursor:pointer">  Close </a>
+
+<div id="featuresbidirectional_computationreverse-arithmetic.metta" style="border: 1px solid black; " >  
+;; probes whether functions can be executed in reverse. This involves inferring the
+;; input values from given output values through inverse operations or pattern matching,
+
+!(pragma! compile full)
+!(pragma! table false)
+
+(= (f $x) (* 2 $x))
+
+!(print (match &self (= (f 1) $y) $y))
+!(assertEqual (match &self (= (f 1) $y) $y) (superpose (2)))
+; Expected Output: [2]
+
+!(print (match &self (= (f $x) 2) $x))
+!(assertEqual (match &self (= (f $x) 2) $x) (superpose (1)))
+; Expected Output: [1]
+
+
+
+(print
+ <br> &nbsp <br>
+
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> hyperon_experimental_issue_481.metta.answers</i></b> <b> &nbsp &nbsp &nbsp debugging</b> &nbsp &nbsp &nbsp features
+H:/metta-wam-main/tests/features/debugging
+<a onclick="prompt('copy path','H:/metta-wam-main/tests/features/debugging/hyperon_experimental_issue_481.metta.answers');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('featuresdebugginghyperon_experimental_issue_481.metta.answers')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('featuresdebugginghyperon_experimental_issue_481.metta.answers')" style="cursor:pointer">  Close </a>
+
+<div id="featuresdebugginghyperon_experimental_issue_481.metta.answers" style="border: 1px solid black; " >  
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-wam/reports/features/debugging/hyperon_experimental_issue_481.metta
+[False]
+[((Error (superpose Empty) superpose expects single expression as an argument))]
+[(Empty)]
+0.07user 0.01system 0:00.08elapsed 100%CPU (0avgtext+0avgdata 33308maxresident)k
+0inputs+0outputs (0major+3635minor)pagefaults 0swaps
+(superpose
+ <br> &nbsp <br>
+
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> use-one-server.metta</i></b> <b> &nbsp &nbsp &nbsp distributed-processing</b> &nbsp &nbsp &nbsp features
+H:/metta-wam-main/tests/features/distributed-processing
+<a onclick="prompt('copy path','H:/metta-wam-main/tests/features/distributed-processing/use-one-server.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('featuresdistributed-processinguse-one-server.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('featuresdistributed-processinguse-one-server.metta')" style="cursor:pointer">  Close </a>
+
+<div id="featuresdistributed-processinguse-one-server.metta" style="border: 1px solid black; " >  
+
+
+
+!(bind! &ps1
+  (eval-for $pid (process-create! (bash) (:: -c "MeTTa server1-with-some-data.metta server2-with-some-data.metta -G \'(create-vspace-server &self 3021)\')")) (:: (process $pid))))
+
+!(assertEqualToResult
+  (remote-eval "localhost:3021"
+   (match &self
+    (, ($obj is $prop)
+       ($prop is-a Color)
+       ($obj is-a Planet))
+    (Color of Planet $obj is $prop))
+  ((Color of Planet Mars is Red)))
+
+!(process-kill! &ps1)
+
+
+(eval-for
+ <br> &nbsp <br>
+
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> ioioioi_using_equality.metta.answers</i></b> <b> &nbsp &nbsp &nbsp multidirectional</b> &nbsp &nbsp &nbsp features
+H:/metta-wam-main/tests/features/multidirectional
+<a onclick="prompt('copy path','H:/metta-wam-main/tests/features/multidirectional/ioioioi_using_equality.metta.answers');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('featuresmultidirectionalioioioi_using_equality.metta.answers')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('featuresmultidirectionalioioioi_using_equality.metta.answers')" style="cursor:pointer">  Close </a>
+
+<div id="featuresmultidirectionalioioioi_using_equality.metta.answers" style="border: 1px solid black; " >  
+[(Error (assertEqualToResult (let $_ (append (Cons 1 (Cons 2 Nil)) (Cons 3 (Cons 4 Nil)) $Out) $Out) ((Cons 1 (Cons 2 (Cons 3 (Cons 4 Nil)))))) 
+Expected: [(Cons 1 (Cons 2 (Cons 3 (Cons 4 Nil))))]
+Got: [(Cons 1 (Cons 2 $R#36))]
+Missed result: (Cons 1 (Cons 2 (Cons 3 (Cons 4 Nil)))))]
+0.06user 0.01system 0:00.08elapsed 98%CPU (0avgtext+0avgdata 34488maxresident)k
+0inputs+0outputs (0major+3839minor)pagefaults 0swaps
+(let
+ <br> &nbsp <br>
+
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> composing.metta</i></b> <b> &nbsp &nbsp &nbsp structures</b> &nbsp &nbsp &nbsp features
+H:/metta-wam-main/tests/features/structures
+<a onclick="prompt('copy path','H:/metta-wam-main/tests/features/structures/composing.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('featuresstructurescomposing.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('featuresstructurescomposing.metta')" style="cursor:pointer">  Close </a>
+
+<div id="featuresstructurescomposing.metta" style="border: 1px solid black; " >  
+
+
+; insert an argument into a compound term..  0= functor, 1 = arg1 etc
+(= (insert-at $nth $item $list)
+    (collapse 
+         (limit $nth (superpose $list)) 
+         $item 
+         (ofset $nth (superpose $list))))
+                               
+
+
+
+; call a relation making $nth the return value
+(= (renth $nth $list)
+  (let $call (insert-at $nth $retval $list)
+    (match &self (call! $call) $ret)))
+
+(let
+ <br> &nbsp <br>
+
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> enforced-types.metta</i></b> <b> &nbsp &nbsp &nbsp typed-variables</b> &nbsp &nbsp &nbsp features
+H:/metta-wam-main/tests/features/typed-variables
+<a onclick="prompt('copy path','H:/metta-wam-main/tests/features/typed-variables/enforced-types.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('featurestyped-variablesenforced-types.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('featurestyped-variablesenforced-types.metta')" style="cursor:pointer">  Close </a>
+
+<div id="featurestyped-variablesenforced-types.metta" style="border: 1px solid black; " >  
+
+; =============================================================
+; Purpose: Define predicate 'is-even' to check if a number is even.
+; Operation: Uses modulo operator to determine if a number is divisible by 2 without remainder.
+; Usage: General utility function for checking evenness of numbers.
+; =============================================================
+; Define 'is-even' predicate
+(: is-even (-> Number Bool))
+(= (is-even $X) (== (% $X 2) 0))
+
+
+(= (: $v EvenNumber) (if (is-even $v) () (empty)))
+
+!(assertEqual 
+ (sequential 
+  ((== (get-type $even) EvenNumber)
+   (let $even (superpose (1 2 3 4 5 6)) $even))
+ (superpose (2 4 6)))
+(let
+ <br> &nbsp <br>
+
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> even-number.metta</i></b> <b> &nbsp &nbsp &nbsp typed-variables</b> &nbsp &nbsp &nbsp features
+H:/metta-wam-main/tests/features/typed-variables
+<a onclick="prompt('copy path','H:/metta-wam-main/tests/features/typed-variables/even-number.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('featurestyped-variableseven-number.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('featurestyped-variableseven-number.metta')" style="cursor:pointer">  Close </a>
+
+<div id="featurestyped-variableseven-number.metta" style="border: 1px solid black; " >  
+
+
+(: is-even (-> Number Bool))
+(= (is-even $X) (== (% $X 2) 0))
+
+(= (fail-not-even $v) (if (is-even $v) () (empty)))
+
+!(superpose
+   ; using nop to hide results
+   (nop (freeze! $even fail-not-even))  ; freeze (terible name chosen by Furtwidth))
+       (assertEqual                                    ;  nondetermisticaly implants coide that will accept or reject bindings
+             (let $even (superpose (1 2 3 4 5 6)) $even)
+             (superpose (2 4 6))))
+
+(let
+ <br> &nbsp <br>
+
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> even-number.metta.answers</i></b> <b> &nbsp &nbsp &nbsp typed-variables</b> &nbsp &nbsp &nbsp features
+H:/metta-wam-main/tests/features/typed-variables
+<a onclick="prompt('copy path','H:/metta-wam-main/tests/features/typed-variables/even-number.metta.answers');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('featurestyped-variableseven-number.metta.answers')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('featurestyped-variableseven-number.metta.answers')" style="cursor:pointer">  Close </a>
+
+<div id="featurestyped-variableseven-number.metta.answers" style="border: 1px solid black; " >  
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-wam/reports/features/typed-variables/even-number.metta
+[(Error (superpose (nop (freeze! $even fail-not-even)) (assertEqual (let $even (superpose (1 2 3 4 5 6)) $even) (superpose (2 4 6)))) IncorrectNumberOfArguments)]
+0.06user 0.01system 0:00.07elapsed 98%CPU (0avgtext+0avgdata 33400maxresident)k
+0inputs+0outputs (0major+3654minor)pagefaults 0swaps
+(let
+ <br> &nbsp <br>
+
+  </div>
+</pre>

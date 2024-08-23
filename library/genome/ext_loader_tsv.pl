@@ -261,22 +261,42 @@ load_flybase_sv(Sep,File,Stream,Fn):- at_end_of_stream(Stream),!,
 load_flybase_sv(Sep,File,Stream,Fn):-
  must_det_ll((
   flag(loaded_from_file_count,_,0),
-  ignore(once((table_columns(File,Header);table_columns(Fn,Header)))),
-  fix_header_names(Fn,Header,ArgTypes),
-  forall((table_columns(File,ColInfo),ArgTypes\==ColInfo),pp_fb(odd_table_columns(File,ColInfo))),
-  forall((table_columns(Fn,ColInfo),ArgTypes\==ColInfo),pp_fb(odd_table_columns(Fn,ColInfo))),
-  ((primary_column(Fn,Name),nth1(N,ArgTypes,Name))->NArgTypes=[N|ArgTypes];NArgTypes=[1|ArgTypes]),
-  if_t(is_list(ArgTypes),add_table_n_types(Fn,1,ArgTypes)),
-  ground(NArgTypes),
+  notrace(ignore(attempt_header_names(Sep,File,Stream,Fn,ArgTypes))),
+  ArgTypes=[N|_],
+  ignore(N=1),
   if_t(is_list(ArgTypes),ignore((length(ArgTypes,A),decl_fb_pred(Fn,A)))),
+  read_line_to_chars(Stream, Chars0), wdmsg(Chars0), once(load_flybase_chars(ArgTypes,File,Stream,Fn,Sep,Chars0)),!,
+  %\+ reached_file_max,
+  % \+ done_reading(File),
+  %\+ at_end_of_stream(Stream),
   time((repeat,
+        read_line_to_chars(Stream, Chars), wdmsg(Chars),
+        once(load_flybase_chars(ArgTypes,File,Stream,Fn,Sep,Chars)),
+       once(reached_file_max;
+         % done_reading(File);
+         at_end_of_stream(Stream)),!,
+      once(load_fb_data(ArgTypes,File,Stream,Fn,Sep,end_of_file)))),
+      loaded_from_file_count(X),!,
+      metta_stats(Fn),
+      pl_stats(File,X))),!.
+
+
+
+attempt_header_names(Sep,File,_Stream,Fn,NArgTypes):-
+  ((
+    ignore(once((table_columns(File,Header);table_columns(Fn,Header)))),
+    if_t(nonvar(Header),fix_header_names(Fn,Header,ArgTypes)),
+    forall((table_columns(File,ColInfo),ArgTypes\==ColInfo),pp_fb(odd_table_columns(File,ColInfo))),
+    forall((table_columns(Fn,ColInfo),ArgTypes\==ColInfo),pp_fb(odd_table_columns(Fn,ColInfo))),
+    ((primary_column(Fn,Name),nth1(N,ArgTypes,Name))->NArgTypes=[N|ArgTypes];NArgTypes=[1|ArgTypes]),
+    if_t(is_list(ArgTypes),add_table_n_types(Fn,1,ArgTypes)))),
+    ground(NArgTypes),
+    wdmsg(fix_header_names(Sep,File,Fn,Header,ArgTypes,N,NArgTypes,A)), nonvar(A), A>0,!.
+
+attempt_header_names(Sep,File,Stream,Fn,NArgTypes):- fail,
   read_line_to_chars(Stream, Chars),
   once(load_flybase_chars(NArgTypes,File,Stream,Fn,Sep,Chars)),
-  once(reached_file_max;done_reading(File);at_end_of_stream(Stream)),!,
-  once(load_fb_data(NArgTypes,File,Stream,Fn,Sep,end_of_file)))),
-  loaded_from_file_count(X),!,
-  metta_stats(Fn),
-  pl_stats(File,X))),!.
+  wdmsg(load_flybase_chars(NArgTypes,File,Stream,Fn,Sep,Chars)).
 
 
 %save_conversion_data(ArgTypes,Fn,OutputStream,Data):- maplist(write_flybase_data(ArgTypes,ArgTypes,Fn,OutputStream),Data).
@@ -295,7 +315,7 @@ read_csv_stream(Sep,CharsStream,Header):-
   csv_read_row(CharsStream, HeaderRow, CompiledHeaderOptions),
   HeaderRow=..[_|Header],!.
 
-read_csv(Sep,Chars,Header):- \+ option_value(full_canon,[]),!, split_string(Chars, Sep, "\s\t\n", Header).
+%read_csv(Sep,Chars,Header):- \+ option_value(full_canon,[]),!, split_string(Chars, Sep, "\s\t\n", Header).
 read_csv(Sep,Chars,Header):-
   open_string(Chars,CharsStream),read_csv_stream(Sep,CharsStream,Header).
 

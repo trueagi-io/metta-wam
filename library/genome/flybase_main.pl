@@ -16,8 +16,8 @@ fb_stats:- metta_stats,!.
 % OBO LOADER
 % ==============
 :- set_option_value(encoding,utf8).
-:- ensure_loaded('./obo_loader').
-:- ensure_loaded(json_loader).
+%:- ensure_loaded('./obo_loader').
+%:- ensure_loaded(json_loader).
 
 :- ensure_loaded(library(metta_interp)).
 
@@ -1494,4 +1494,9 @@ fb_pred('transposon_sequence_set',9).
 %:- ensure_loaded(metta_python).
 
 
+ping_file_loaders:-
+  expand_file_name('library/*/ext_loader_*.pl',List),
+  maplist(absolute_file_name,List,AList),
+  maplist(ensure_loaded,AList).
+:- ping_file_loaders.
 
