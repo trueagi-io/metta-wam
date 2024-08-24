@@ -196,6 +196,26 @@ install_or_update_swipl() {
 
 }
 
+
+# Check if SWI-Prolog is NOT installed with Janus and on GITHUB ACTIONS
+if [ -n "$GITHUB_ACTIONS" ]; then
+    echo "This script is running in a GitHub Actions environment."
+    if ! command -v swipl &> /dev/null || ! swipl -g "use_module(library(janus)), halt(0)." -t "halt(1)" 2>/dev/null; then
+      : #
+    else
+	swi_prolog_version=$(swipl_version)
+	required_version="9.3.8"
+	if version_ge $swi_prolog_version $required_version; then
+	    echo -e "${GREEN}SWI-Prolog version $swi_prolog_version is installed and meets the required version $required_version or higher.${NC}"
+	else
+		sudo add-apt-repository ppa:swi-prolog/devel -y
+		sudo apt update
+		sudo install swi-prolog
+	fi
+    fi
+fi
+
+
 # Check if SWI-Prolog is installed with Janus
 if ! command -v swipl &> /dev/null || ! swipl -g "use_module(library(janus)), halt(0)." -t "halt(1)" 2>/dev/null; then
     if confirm_with_default "Y" "SWI-Prolog is not installed with Janus support. Would you like to install it?"; then
