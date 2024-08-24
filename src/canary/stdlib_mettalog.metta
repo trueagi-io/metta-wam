@@ -664,6 +664,11 @@
 ;; Public MeTTa?
 (:> hyperon::space::DynSpace Grounded)
 
+(: stringToChars (-> String Expression))
+(: charsToString (-> Expression String))
+(: parse (-> String Atom))
+(: repr (-> Atom String))
+
 ;; Public MeTTa
 (@doc add-reduct
   (@desc "Prevents atom from being reduced")
