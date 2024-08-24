@@ -21,6 +21,7 @@ fi
 output=reports/tests_output/baseline-compat-$timestamp/
 
 # run the tests
+mkdir -p $output
 echo Running baseline_compat tests to $output
 #cat ./reports/SHARED.UNITS.PREV.md > /tmp/SHARED.UNITS
 cat /dev/null > /tmp/SHARED.UNITS

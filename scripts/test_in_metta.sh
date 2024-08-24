@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SHOULD_EXIT=0
-SHARED_UNITS=/tmp/SHARED.UNITS
+export SHARED_UNITS=/tmp/SHARED.UNITS
 
 DEBUG_WHY() {
    DEBUG "${GREEN}WHY: ${BOLD}${*}${NC}"
@@ -189,7 +189,7 @@ METTALOG_MAX_TIME=75
 SCRIPT_NAME=$(basename "$0")
 run_tests_auto_reply=""
 generate_report_auto_reply=""
-METTALOG_OUTPUT="tests_output/testrun_$(date +%Y%m%d_%H%M%S)"
+METTALOG_OUTPUT="reports/tests_output/testrun_$(date +%Y%m%d_%H%M%S)"
 fresh=0
 clean=0  # 0 means don't clean, 1 means do clean
 if_failures=0
@@ -431,12 +431,13 @@ generate_final_MeTTaLog() {
     # Change to the script directory
     cd "$METTALOG_DIR" || exit 1
 
-    python3 ./scripts/into_junit.py "${SHARED_UNITS}" > "$METTALOG_OUTPUT/junit.xml"
+    if [ 1 -eq 0 ]; then
+	python3 ./scripts/into_junit.py "${SHARED_UNITS}" > "$METTALOG_OUTPUT/junit.xml"
 
-    junit2html "$METTALOG_OUTPUT/junit.xml"
-    junit2html "$METTALOG_OUTPUT/junit.xml" --summary-matrix
-    echo "saved to $METTALOG_OUTPUT/junit.xml.html"
-
+	junit2html "$METTALOG_OUTPUT/junit.xml"
+	junit2html "$METTALOG_OUTPUT/junit.xml" --summary-matrix
+	echo "saved to $METTALOG_OUTPUT/junit.xml.html"
+    fi
 
     # Calculate the number of passed and failed tests
     passed=$(grep -c "| PASS |" "${SHARED_UNITS}")
