@@ -38,33 +38,39 @@ fi
 
 
 # Capture original auto margins setting and terminal size
-original_automargins=$(stty -a | grep -o 'onlcr' || echo 'off')
-original_size=$(stty size)
-original_rows=$(echo $original_size | cut -d ' ' -f1)
-original_cols=$(echo $original_size | cut -d ' ' -f2)
+if [ -t 0 ] ; then
+    original_automargins=$(stty -a | grep -o 'onlcr' || echo 'off')
+    original_size=$(stty size)
+    original_rows=$(echo $original_size | cut -d ' ' -f1)
+    original_cols=$(echo $original_size | cut -d ' ' -f2)
+fi
 
 # Function to reset auto margins and terminal size to their original state
 reset_settings() {
-    # Reset auto margins to original state
-    if [ "$original_automargins" == "on" ]; then
-        stty onlcr
-    else
-        stty -onlcr
-    fi
+    if [ -t 0 ] ; then
+        # Reset auto margins to original state
+        if [ "$original_automargins" == "on" ]; then
+            stty onlcr
+        else
+            stty -onlcr
+        fi
 
-    # Reset terminal size to original
-    echo -ne "\e[8;${original_rows};${original_cols}t"
-    stty cols "$original_cols"
-    tput smam
-    echo "Settings reset to original."
+        # Reset terminal size to original
+        echo -ne "\e[8;${original_rows};${original_cols}t"
+        stty cols "$original_cols"
+        tput smam
+        echo "Settings reset to original."
+    fi
 }
 
 # Function to disable auto margins and set terminal width to 999 columns
 disable_automargins() {
-    stty -onlcr  # Disable auto margins
-    tput rmam
-    stty cols 999  # Set columns to a large number to prevent wrapping
-    echo "Auto margins disabled, terminal width set to 999 columns."
+    if [ -t 0 ] ; then
+        stty -onlcr  # Disable auto margins
+        tput rmam
+        stty cols 999  # Set columns to a large number to prevent wrapping
+        echo "Auto margins disabled, terminal width set to 999 columns."
+    fi
 }
 
 # Function to set traps for clean exit and interruption
@@ -901,7 +907,9 @@ TEMP_EXIT_CODE_FILE="$(mktemp)"
 
 # Set a trap to ensure stty sane is run on script exit or interruption
 cleanup() {
-    stty sane
+    if [ -t 0 ] ; then
+        stty sane
+    fi
     if [[ -f "$TEMP_EXIT_CODE_FILE" ]]; then
         METTA_CMD_EXIT_STATUS=$(<"$TEMP_EXIT_CODE_FILE")        
     else
