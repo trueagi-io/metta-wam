@@ -6,14 +6,12 @@ IS_SOURCED=$( [[ "${BASH_SOURCE[0]}" != "${0}" ]] && echo 1 || echo 0)
 if [ "$IS_SOURCED" -eq "0" ]; then SCRIPT=$(readlink -f "$0"); else SCRIPT=$(readlink -f "${BASH_SOURCE[0]}"); fi
 export MeTTa=$(realpath "$SCRIPT")
 export METTALOG_DIR=$(dirname "$MeTTa")
-export PIP_BREAK_SYSTEM_PACKAGES=1
 # cd "$METTALOG_DIR" || { echo "Failed to navigate to $METTALOG_DIR"; [[ "$IS_SOURCED" == "1" ]] && return 1 || exit 1; }
 
-(cd $METTALOG_DIR ; git update-index --assume-unchanged .bash_history) || true
+#(cd $METTALOG_DIR ; git update-index --assume-unchanged .bash_history) || true
 
 # Run this file with ./INSTALL.md
 # ```
-. ./scripts/ensure_venv
 
 # Function to prompt for user confirmation with 'N' as the default
 confirm_with_default() {
@@ -36,7 +34,6 @@ confirm_with_default() {
         esac
     done
 }
-
 
 # Function to prompt for input with a default value
 prompt_for_input() {
@@ -74,23 +71,6 @@ do
     esac
 done
 
-# Ask the user if easy_install is still '?'
-if [ "$easy_install" == "?" ]; then
-    if confirm_with_default "Y" "Would you like to use easy installation mode?"; then
-        easy_install="Y"
-    else
-        easy_install="N"
-    fi
-fi
-
-if [ -f /.dockerenv ]; then
-    inside_docker="-y"
-else
-    inside_docker=""
-fi
-
-
-echo -e "${BLUE}Starting the installation process..${NC}."
 
 # Function to compare versions
 version_ge() {
@@ -180,7 +160,7 @@ install_or_update_swipl() {
     #sudo apt-get remove -y swi-prolog??* 
     #sudo apt-get install -y swi-prolog
     swi_prolog_version=$(swipl_version)
-    required_version="9.3.8"
+    required_version="9.3.9"
     if version_ge $swi_prolog_version $required_version; then
         echo -e "${GREEN}SWI-Prolog version $swi_prolog_version is installed and meets the required version $required_version or higher.${NC}"
     else
@@ -196,24 +176,55 @@ install_or_update_swipl() {
 
 }
 
+# Is a Docker VM Allow more System modifications
+if [ -f /.dockerenv ] || grep -qa docker /proc/1/cgroup; then
+    export PIP_BREAK_SYSTEM_PACKAGES=1
+    export ALLOW_MODIFY_SYSTEM=1
+    INSTALL_TYPE=docker_vm
+    if [ "$easy_install" == "?" ]; then
+	easy_install="Y"
+    fi
+else
+    INSTALL_TYPE=non_docker
+fi
 
-# Check if SWI-Prolog is NOT installed with Janus and on GITHUB ACTIONS
+echo "INSTALL_TYPE=$INSTALL_TYPE"
+
+# Is a Github VM
 if [ -n "$GITHUB_ACTIONS" ]; then
-    echo "This script is running in a GitHub Actions environment."
-    if ! command -v swipl &> /dev/null || ! swipl -g "use_module(library(janus)), halt(0)." -t "halt(1)" 2>/dev/null; then
-      : #
+
+    INSTALL_TYPE=github_vm
+    export PIP_BREAK_SYSTEM_PACKAGES=1
+    export ALLOW_MODIFY_SYSTEM=1
+    echo "INSTALL_TYPE=$INSTALL_TYPE"
+
+    if [ "$easy_install" == "?" ]; then
+	easy_install="Y"
+    fi
+    sudo add-apt-repository ppa:swi-prolog/devel -y
+    sudo apt update
+    sudo apt install -y swi-prolog
+    #bsdutils: /usr/bin/script
+    sudo apt install -y time libedit-dev bsdutils
+    sudo apt install -y build-essential autoconf git cmake libpython3-dev libgmp-dev libssl-dev unixodbc-dev \
+        libreadline-dev zlib1g-dev libarchive-dev libossp-uuid-dev libxext-dev \
+        libice-dev libjpeg-dev libxinerama-dev libxft-dev libxpm-dev libxt-dev \
+        pkg-config libdb-dev libpcre3-dev libyaml-dev libedit-dev
+
+fi
+
+# Ask the user if easy_install is still '?'
+if [ "$easy_install" == "?" ]; then
+    if confirm_with_default "Y" "Would you like to use easy installation mode?"; then
+        easy_install="Y"
     else
-	swi_prolog_version=$(swipl_version)
-	required_version="9.3.8"
-	if version_ge $swi_prolog_version $required_version; then
-	    echo -e "${GREEN}SWI-Prolog version $swi_prolog_version is installed and meets the required version $required_version or higher.${NC}"
-	else
-		sudo add-apt-repository ppa:swi-prolog/devel -y
-		sudo apt update
-		sudo install swi-prolog
-	fi
+        easy_install="N"
     fi
 fi
+
+echo -e "${BLUE}Starting the installation process..${NC}."
+
+. ./scripts/ensure_venv
 
 
 # Check if SWI-Prolog is installed with Janus
@@ -226,7 +237,7 @@ if ! command -v swipl &> /dev/null || ! swipl -g "use_module(library(janus)), ha
     fi
 else
     swi_prolog_version=$(swipl_version)
-    required_version="9.3.8"
+    required_version="9.3.9"
     if version_ge $swi_prolog_version $required_version; then
         echo -e "${GREEN}SWI-Prolog version $swi_prolog_version is installed and meets the required version $required_version or higher.${NC}"
     else
@@ -360,7 +371,7 @@ check_metalog_in_path() {
 # Call the function to perform the check and update
 check_metalog_in_path
 
-which swipl
+echo "SWIPL executable is: `which swipl`"
 
 echo -e "${GREEN}Installation and setup complete!${NC}."
 
