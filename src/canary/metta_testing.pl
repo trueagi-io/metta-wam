@@ -132,16 +132,45 @@ write_pass_fail(TestName,P,C,PASS_FAIL,G1,G2):-
       UNITS = '/tmp/SHARED.UNITS',
       open(UNITS, append, Stream,[encoding(utf8)]),
       once(getenv('HTML_FILE',HTML_OUT);sformat(HTML_OUT,'~w.metta.html',[Base])),
-      format(Stream,'| ~w | ~w |[~w](https://logicmoo.org/public/metta/reports/~w#~w) | ~@ | ~@ | ~@ |~n',
+      compute_html_out_per_test(HTML_OUT,TEE_FILE,TestName,HTML_OUT_PerTest),
+      get_last_call_duration(Duration),
+      format(Stream,'| ~w | ~w |[~w](https://logicmoo.org/public/metta/reports/~w#~w) | ~@ | ~@ | ~@ | ~w | ~w |~n',
       [TestName,PASS_FAIL,TestName,HTML_OUT,TestName,
-        trim_gstring_bar_I(write_src_woi([P,C]),200),
-        trim_gstring_bar_I(write_src_woi(G1),100),
-        trim_gstring_bar_I(write_src_woi(G2),100)]),!,
+        trim_gstring_bar_I(write_src_woi([P,C]),400),
+        trim_gstring_bar_I(write_src_woi(G1),200),
+        trim_gstring_bar_I(write_src_woi(G2),200),
+        Duration,
+        HTML_OUT_PerTest]),!,
       close(Stream))).
+
+% currently in a shared file per TestCase class..
+%   but we might make each test dump its stuffg to its own html file for easier spotting why test failed
+compute_html_out_per_test(HTML_OUT,_TEE_FILE,_TestName,HTML_OUT_PerTest):-
+   HTML_OUT=HTML_OUT_PerTest.
+
+% Executes Goal and records the execution duration in '$last_call_duration'.
+% The duration is recorded regardless of whether Goal succeeds or fails.
+record_call_duration(Goal) :-
+    nb_setval('$last_call_duration', 120),
+    statistics(cputime, Start),  % Get the start CPU time
+    (   call(Goal)               % Call the Goal
+    *-> EndResult = true         % If Goal succeeds, proceed
+    ;   EndResult = false        % If Goal fails, record it but proceed
+    ),
+    statistics(cputime, End),    % Get the end CPU time
+    Duration is End - Start,     % Calculate the CPU duration
+    nb_setval('$last_call_duration', Duration),  % Set the global variable non-backtrackably
+    EndResult.                   % Preserve the result of the Goal
+
+% Helper to retrieve the last call duration stored in the global variable.
+get_last_call_duration(Duration) :-
+    nb_getval('$last_call_duration', Duration),!.
+
 
 trim_gstring_bar_I(Goal, MaxLen) :-
     wots(String0,Goal),
-    string_replace(String0,'|','I',String),
+    string_replace(String0,'|','I',String1),
+    string_replace(String1,'\n','\\n',String),
     atom_length(String, Len),
     (   Len =< MaxLen
     ->  Trimmed = String
@@ -151,7 +180,7 @@ trim_gstring_bar_I(Goal, MaxLen) :-
     ),
     write(Trimmed).
 
-loonit_asserts1(TestSrc,Pre,G) :- _=nop(Pre),call(G),
+loonit_asserts1(TestSrc,Pre,G) :- _=nop(Pre),record_call_duration(call(G)),
   give_pass_credit(TestSrc,Pre,G),!.
 
 /*
