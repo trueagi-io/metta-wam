@@ -1,8 +1,27 @@
 #!/bin/bash
 
-# This script generates the input file used by the Python script.
-# Replace the following lines with the actual commands to generate the input file.
+# parse arguments
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -t|--timestamp)
+      timestamp="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    *)
+      # Ignore unknown options
+      ;;
+  esac
+done
 
-#echo "| ANTI-REGRESSION.BC-COMP.01 | PASS |(https://example.com/test-report) | (assertEqualToResult (add-atom &kb (: axiom (nums 2 3)))) | (()) | (()) |" > /tmp/SHARED.UNITS
+# generate the output directory with timestamp
+if [ -z $timestamp ]; then
+    timestamp=$(date +"%Y-%m-%dT%H:%M:%S")
+fi
+output=reports/tests_output/baseline-compat-$timestamp/
+
+# run the tests
+echo Running baseline_compat tests to $output
 cat ./reports/SHARED.UNITS.PREV.md > /tmp/SHARED.UNITS
-# You can add more lines or commands to generate additional input data
+#cat /dev/null> /tmp/SHARED.UNITS
+#mettalog --output=$output --test --clean tests/baseline_compat/anti-regression/comma_is_not_special.metta
