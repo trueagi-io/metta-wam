@@ -60,6 +60,8 @@
 :- multifile(color_g_mesg/2).
 
 self_eval0(X):- \+ callable(X),!.
+self_eval0(X):- py_is_object(X),!.
+self_eval0(X):- py_type(X,List), List\==list,!.
 self_eval0(X):- is_valid_nb_state(X),!.
 %self_eval0(X):- string(X),!.
 %self_eval0(X):- number(X),!.
@@ -273,6 +275,16 @@ eval_20(Eq,RetType,_Dpth,_Slf,[X|T],Y):- T==[], \+ callable(X),!, do_expander(Eq
 
 eval_20(Eq,RetType,Depth,Self,X,Y):- atom(Eq),  ( Eq \== ('=')) ,!,
    call(Eq,'=',RetType,Depth,Self,X,Y).
+
+
+eval_20(_Eq,_RetType,_Depth,_Self,[V|VI],VO):-  atomic(V), py_is_object(V),!,
+  is_list(VI),!, py_eval_object([V|VI],VO).
+
+eval_20(Eq,RetType,Depth,Self,[V|VI],VO):- is_list(V), V \== [],
+  eval_20(Eq,_FRype,Depth,Self,V,VV), V\==VV, atomic(VV), !,
+  eval_20(Eq,RetType,Depth,Self,[VV|VI],VO).
+
+
 
 % DMILES @ TODO make sure this isnt an implicit curry
 eval_20(Eq,_RetType,Depth,Self,[V|VI],VO):-  \+ callable(V), is_list(VI),!,
@@ -1659,8 +1671,8 @@ eval_20(Eq,RetType,Depth,Self,['subtraction',Eval1,Eval2],RetVal):- !,
                   RetVal2^eval_args(Eq,RetType,Depth,Self,Eval2,RetVal2),
                   RetVal).
 
-eval_20(Eq,RetType,_Dpth,_Slf,['py-list',Atom_list],CDR_Y):- 
- !, Atom=[_|CDR],!,do_expander(Eq,RetType,Atom_list, CDR_Y ).
+%eval_20(Eq,RetType,_Dpth,_Slf,['py-list',Atom_list],CDR_Y):-
+% !, Atom=[_|CDR],!,do_expander(Eq,RetType,Atom_list, CDR_Y ).
 
 eval_20(Eq,RetType,Depth,Self,['intersection',Eval1,Eval2],RetVal):- !,
     lazy_intersection(RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
@@ -1782,6 +1794,19 @@ eval_20(_Eq,_RetType,_Depth,_Self,['rust',PredDecl],Res):- !,
 eval_20(_Eq,_RetType,_Depth,_Self,['rust!',PredDecl],Res):- !,
   must_det_ll((rust_metta_run(exec(PredDecl),Res),
   nop(write_src(res(Res))))).
+
+eval_70(_Eq,_RetType,_Depth,_Self,['py-atom',Arg],Res):- !,
+  must_det_ll((py_atom(Arg,Res))).
+eval_40(_Eq,_RetType,_Depth,_Self,['py-atom',Arg,Type],Res):- !,
+  must_det_ll((py_atom_type(Arg,Type,Res))).
+eval_40(_Eq,_RetType,_Depth,_Self,['py-dot',Arg1,Arg2],Res):- !,
+  must_det_ll((py_dot([Arg1,Arg2],Res))).
+eval_40(_Eq,_RetType,_Depth,_Self,['py-list',Arg],Res):- !,
+  must_det_ll((py_list(Arg,Res))).
+eval_40(_Eq,_RetType,_Depth,_Self,['py-dict',Arg],Res):- !,
+  must_det_ll((py_dict(Arg,Res))).
+eval_40(_Eq,_RetType,_Depth,_Self,['py-tuple',Arg],Res):- !,
+  must_det_ll((py_tuple(Arg,Res))).
 
 eval_40(Eq,RetType,Depth,Self,['length',L],Res):- !, eval_args(Depth,Self,L,LL),
    (is_list(LL)->length(LL,Res);Res=1),
