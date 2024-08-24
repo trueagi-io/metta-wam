@@ -5,4 +5,5 @@
 .*~*/
 .*/
 .*
+performance/knowledge_graphs/graphml/cml/
 __pycache__

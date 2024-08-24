@@ -1,0 +1,1356 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns
+         http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+<!-- Created by igraph -->
+  <key id="v_name" for="node" attr.name="name" attr.type="string"/>
+  <key id="v_type" for="node" attr.name="type" attr.type="string"/>
+  <key id="v_deprecated" for="node" attr.name="deprecated" attr.type="double"/>
+  <key id="v_label" for="node" attr.name="label" attr.type="string"/>
+  <key id="v_provided_by" for="node" attr.name="provided_by" attr.type="string"/>
+  <key id="v_same_as" for="node" attr.name="same_as" attr.type="double"/>
+  <key id="e_type" for="edge" attr.name="type" attr.type="string"/>
+  <key id="e_knowledge_level" for="edge" attr.name="knowledge_level" attr.type="string"/>
+  <key id="e_category" for="edge" attr.name="category" attr.type="string"/>
+  <key id="e_id" for="edge" attr.name="id" attr.type="string"/>
+  <key id="e_aggregator_knowledge_source" for="edge" attr.name="aggregator_knowledge_source" attr.type="string"/>
+  <key id="e_negated" for="edge" attr.name="negated" attr.type="double"/>
+  <key id="e_has_total" for="edge" attr.name="has_total" attr.type="double"/>
+  <key id="e_qualifiers" for="edge" attr.name="qualifiers" attr.type="double"/>
+  <key id="e_provided_by" for="edge" attr.name="provided_by" attr.type="string"/>
+  <key id="e_sex_qualifier" for="edge" attr.name="sex_qualifier" attr.type="double"/>
+  <key id="e_has_count" for="edge" attr.name="has_count" attr.type="double"/>
+  <key id="e_onset_qualifier" for="edge" attr.name="onset_qualifier" attr.type="double"/>
+  <key id="e_stage_qualifier" for="edge" attr.name="stage_qualifier" attr.type="double"/>
+  <key id="e_primary_knowledge_source" for="edge" attr.name="primary_knowledge_source" attr.type="string"/>
+  <key id="e_has_quotient" for="edge" attr.name="has_quotient" attr.type="double"/>
+  <key id="e_has_percentage" for="edge" attr.name="has_percentage" attr.type="double"/>
+  <key id="e_agent_type" for="edge" attr.name="agent_type" attr.type="string"/>
+  <graph id="G" edgedefault="directed">
+    <node id="n0">
+      <data key="v_name">HGNC:76</data>
+      <data key="v_type">biolink:Gene</data>
+      <data key="v_label">ABL1</data>
+      <data key="v_provided_by">hgnc_gene_nodes</data>
+    </node>
+    <node id="n1">
+      <data key="v_name">HGNC:1014</data>
+      <data key="v_type">biolink:Gene</data>
+      <data key="v_label">BCR</data>
+      <data key="v_provided_by">hgnc_gene_nodes</data>
+    </node>
+    <node id="n2">
+      <data key="v_name">HGNC:10471</data>
+      <data key="v_type">biolink:Gene</data>
+      <data key="v_label">RUNX1</data>
+      <data key="v_provided_by">hgnc_gene_nodes</data>
+    </node>
+    <node id="n3">
+      <data key="v_name">HP:0001442</data>
+      <data key="v_type">biolink:PhenotypicFeature</data>
+      <data key="v_label">Typified by somatic mosaicism</data>
+      <data key="v_provided_by">phenio_nodes</data>
+    </node>
+    <node id="n4">
+      <data key="v_name">HP:0001744</data>
+      <data key="v_type">biolink:PhenotypicFeature</data>
+      <data key="v_label">Splenomegaly</data>
+      <data key="v_provided_by">phenio_nodes</data>
+    </node>
+    <node id="n5">
+      <data key="v_name">HP:0001871</data>
+      <data key="v_type">biolink:PhenotypicFeature</data>
+      <data key="v_label">Abnormality of blood and blood-forming tissues</data>
+      <data key="v_provided_by">phenio_nodes</data>
+    </node>
+    <node id="n6">
+      <data key="v_name">HP:0001873</data>
+      <data key="v_type">biolink:PhenotypicFeature</data>
+      <data key="v_label">Thrombocytopenia</data>
+      <data key="v_provided_by">phenio_nodes</data>
+    </node>
+    <node id="n7">
+      <data key="v_name">HP:0001894</data>
+      <data key="v_type">biolink:PhenotypicFeature</data>
+      <data key="v_label">Thrombocytosis</data>
+      <data key="v_provided_by">phenio_nodes</data>
+    </node>
+    <node id="n8">
+      <data key="v_name">HP:0001911</data>
+      <data key="v_type">biolink:PhenotypicFeature</data>
+      <data key="v_label">Abnormal granulocyte morphology</data>
+      <data key="v_provided_by">phenio_nodes</data>
+    </node>
+    <node id="n9">
+      <data key="v_name">HP:0001912</data>
+      <data key="v_type">biolink:PhenotypicFeature</data>
+      <data key="v_label">Abnormal basophil morphology</data>
+      <data key="v_provided_by">phenio_nodes</data>
+    </node>
+    <node id="n10">
+      <data key="v_name">HP:0001945</data>
+      <data key="v_type">biolink:PhenotypicFeature</data>
+      <data key="v_label">Fever</data>
+      <data key="v_provided_by">phenio_nodes</data>
+    </node>
+    <node id="n11">
+      <data key="v_name">HP:0001974</data>
+      <data key="v_type">biolink:PhenotypicFeature</data>
+      <data key="v_label">Leukocytosis</data>
+      <data key="v_provided_by">phenio_nodes</data>
+    </node>
+    <node id="n12">
+      <data key="v_name">HP:0004396</data>
+      <data key="v_type">biolink:PhenotypicFeature</data>
+      <data key="v_label">Poor appetite</data>
+      <data key="v_provided_by">phenio_nodes</data>
+    </node>
+    <node id="n13">
+      <data key="v_name">HP:0004848</data>
+      <data key="v_type">biolink:PhenotypicFeature</data>
+      <data key="v_label">Ph-positive acute lymphoblastic leukemia</data>
+      <data key="v_provided_by">phenio_nodes</data>
+    </node>
+    <node id="n14">
+      <data key="v_name">HP:0004852</data>
+      <data key="v_type">biolink:PhenotypicFeature</data>
+      <data key="v_label">Reduced leukocyte alkaline phosphatase</data>
+      <data key="v_provided_by">phenio_nodes</data>
+    </node>
+    <node id="n15">
+      <data key="v_name">HP:0005506</data>
+      <data key="v_type">biolink:PhenotypicFeature</data>
+      <data key="v_label">Chronic myelogenous leukemia</data>
+      <data key="v_provided_by">phenio_nodes</data>
+    </node>
+    <node id="n16">
+      <data key="v_name">HP:0005547</data>
+      <data key="v_type">biolink:PhenotypicFeature</data>
+      <data key="v_label">Myeloproliferative disorder</data>
+      <data key="v_provided_by">phenio_nodes</data>
+    </node>
+    <node id="n17">
+      <data key="v_name">HP:0012378</data>
+      <data key="v_type">biolink:PhenotypicFeature</data>
+      <data key="v_label">Fatigue</data>
+      <data key="v_provided_by">phenio_nodes</data>
+    </node>
+    <node id="n18">
+      <data key="v_name">MONDO:0004643</data>
+      <data key="v_type">biolink:Disease</data>
+      <data key="v_label">myeloid leukemia</data>
+      <data key="v_provided_by">phenio_nodes</data>
+    </node>
+    <node id="n19">
+      <data key="v_name">MONDO:0006115</data>
+      <data key="v_type">biolink:Disease</data>
+      <data key="v_label">blast phase chronic myelogenous leukemia, BCR-ABL1 positive</data>
+      <data key="v_provided_by">phenio_nodes</data>
+    </node>
+    <node id="n20">
+      <data key="v_name">MONDO:0010809</data>
+      <data key="v_type">biolink:Disease</data>
+      <data key="v_label">familial chronic myelocytic leukemia-like syndrome</data>
+      <data key="v_provided_by">phenio_nodes</data>
+    </node>
+    <node id="n21">
+      <data key="v_name">MONDO:0011996</data>
+      <data key="v_type">biolink:Disease</data>
+      <data key="v_label">chronic myelogenous leukemia, BCR-ABL1 positive</data>
+      <data key="v_provided_by">phenio_nodes</data>
+    </node>
+    <node id="n22">
+      <data key="v_name">MONDO:0021367</data>
+      <data key="v_type">biolink:Disease</data>
+      <data key="v_label">leukemia, myeloid, accelerated-phase</data>
+      <data key="v_provided_by">phenio_nodes</data>
+    </node>
+    <node id="n23">
+      <data key="v_name">MONDO:0023603</data>
+      <data key="v_type">biolink:Disease</data>
+      <data key="v_label">hereditary disorder of connective tissue</data>
+      <data key="v_provided_by">phenio_nodes</data>
+    </node>
+    <node id="n24">
+      <data key="v_name">MGI:3574536</data>
+      <data key="v_type">biolink:Genotype</data>
+      <data key="v_label">Dok1&lt;sup&gt;tm1Yyam&lt;/sup&gt;/Dok1&lt;sup&gt;tm1Yyam&lt;/sup&gt; Dok2&lt;sup&gt;tm1Yyam&lt;/sup&gt;/Dok2&lt;sup&gt;tm1Yyam&lt;/sup&gt;  [background:] B6.129-Dok1&lt;sup&gt;tm1Yyam&lt;/sup&gt; Dok2&lt;sup&gt;tm1Yyam&lt;/sup&gt;</data>
+      <data key="v_provided_by">alliance_genotype_nodes</data>
+    </node>
+    <node id="n25">
+      <data key="v_name">MGI:3574537</data>
+      <data key="v_type">biolink:Genotype</data>
+      <data key="v_label">Dok1&lt;sup&gt;tm1Yyam&lt;/sup&gt;/Dok1&lt;sup&gt;tm1Yyam&lt;/sup&gt; Tg(Tec-BCR/ABL1)5Hhi/0  [background:] involves: C57BL/6</data>
+      <data key="v_provided_by">alliance_genotype_nodes</data>
+    </node>
+    <node id="n26">
+      <data key="v_name">MGI:3574538</data>
+      <data key="v_type">biolink:Genotype</data>
+      <data key="v_label">Dok1&lt;sup&gt;tm1Yyam&lt;/sup&gt;/Dok1&lt;sup&gt;tm1Yyam&lt;/sup&gt; Dok2&lt;sup&gt;tm1Yyam&lt;/sup&gt;/Dok2&lt;sup&gt;tm1Yyam&lt;/sup&gt; Tg(Tec-BCR/ABL1)5Hhi/0  [background:] involves: C57BL/6</data>
+      <data key="v_provided_by">alliance_genotype_nodes</data>
+    </node>
+    <node id="n27">
+      <data key="v_name">MGI:3574539</data>
+      <data key="v_type">biolink:Genotype</data>
+      <data key="v_label">Dok2&lt;sup&gt;tm1Yyam&lt;/sup&gt;/Dok2&lt;sup&gt;tm1Yyam&lt;/sup&gt; Tg(Tec-BCR/ABL1)5Hhi/0  [background:] involves: C57BL/6</data>
+      <data key="v_provided_by">alliance_genotype_nodes</data>
+    </node>
+    <node id="n28">
+      <data key="v_name">MGI:3574541</data>
+      <data key="v_type">biolink:Genotype</data>
+      <data key="v_label">Dok1&lt;sup&gt;tm1Ppp&lt;/sup&gt;/Dok1&lt;sup&gt;tm1Ppp&lt;/sup&gt; Tg(Tec-BCR/ABL1)5Hhi/0  [background:] involves: 129S1/Sv</data>
+      <data key="v_provided_by">alliance_genotype_nodes</data>
+    </node>
+    <node id="n29">
+      <data key="v_name">MGI:3574543</data>
+      <data key="v_type">biolink:Genotype</data>
+      <data key="v_label">Dok1&lt;sup&gt;tm1Ppp&lt;/sup&gt;/Dok1&lt;sup&gt;tm1Ppp&lt;/sup&gt; Dok2&lt;sup&gt;tm1Ppp&lt;/sup&gt;/Dok2&lt;sup&gt;tm1Ppp&lt;/sup&gt;  [background:] 129S1/Sv-Dok1&lt;sup&gt;tm1Ppp&lt;/sup&gt; Dok2&lt;sup&gt;tm1Ppp&lt;/sup&gt;</data>
+      <data key="v_provided_by">alliance_genotype_nodes</data>
+    </node>
+    <node id="n30">
+      <data key="v_name">MGI:3574544</data>
+      <data key="v_type">biolink:Genotype</data>
+      <data key="v_label">Dok2&lt;sup&gt;tm1Ppp&lt;/sup&gt;/Dok2&lt;sup&gt;tm1Ppp&lt;/sup&gt; Tg(Tec-BCR/ABL1)5Hhi/0  [background:] involves: 129S1/Sv</data>
+      <data key="v_provided_by">alliance_genotype_nodes</data>
+    </node>
+    <node id="n31">
+      <data key="v_name">MGI:3574545</data>
+      <data key="v_type">biolink:Genotype</data>
+      <data key="v_label">Dok1&lt;sup&gt;tm1Ppp&lt;/sup&gt;/Dok1&lt;sup&gt;+&lt;/sup&gt; Tg(Tec-BCR/ABL1)5Hhi/0  [background:] involves: 129S1/Sv</data>
+      <data key="v_provided_by">alliance_genotype_nodes</data>
+    </node>
+    <node id="n32">
+      <data key="v_name">MGI:3574546</data>
+      <data key="v_type">biolink:Genotype</data>
+      <data key="v_label">Dok2&lt;sup&gt;tm1Ppp&lt;/sup&gt;/Dok2&lt;sup&gt;+&lt;/sup&gt; Tg(Tec-BCR/ABL1)5Hhi/0  [background:] involves: 129S1/Sv</data>
+      <data key="v_provided_by">alliance_genotype_nodes</data>
+    </node>
+    <node id="n33">
+      <data key="v_name">MGI:3575736</data>
+      <data key="v_type">biolink:Genotype</data>
+      <data key="v_label">Sipa1&lt;sup&gt;tm1Nm&lt;/sup&gt;/Sipa1&lt;sup&gt;tm1Nm&lt;/sup&gt;  [background:] involves: 129P2/OlaHsd * C57BL/6</data>
+      <data key="v_provided_by">alliance_genotype_nodes</data>
+    </node>
+    <node id="n34">
+      <data key="v_name">MGI:3575737</data>
+      <data key="v_type">biolink:Genotype</data>
+      <data key="v_label">Sipa1&lt;sup&gt;tm1Nm&lt;/sup&gt;/Sipa1&lt;sup&gt;+&lt;/sup&gt;  [background:] involves: 129P2/OlaHsd * C57BL/6</data>
+      <data key="v_provided_by">alliance_genotype_nodes</data>
+    </node>
+    <node id="n35">
+      <data key="v_name">MGI:3693373</data>
+      <data key="v_type">biolink:Genotype</data>
+      <data key="v_label">Tg(tetO-BCR/ABL1)2Dgt/0 Tg(Tal1-tTA)19Dgt/0  [background:] involves: C57BL/6 * DBA/2 * FVB/N</data>
+      <data key="v_provided_by">alliance_genotype_nodes</data>
+    </node>
+    <node id="n36">
+      <data key="v_name">MGI:3834481</data>
+      <data key="v_type">biolink:Genotype</data>
+      <data key="v_label">Tg(Ly6a-BCR/ABL1)IS1AIsg/0  [background:] involves: C57BL/6J * CBA</data>
+      <data key="v_provided_by">alliance_genotype_nodes</data>
+    </node>
+    <node id="n37">
+      <data key="v_name">MGI:3834482</data>
+      <data key="v_type">biolink:Genotype</data>
+      <data key="v_label">Tg(Ly6a-BCR/ABL1)IS1BIsg/0  [background:] involves: C57BL/6J * CBA</data>
+      <data key="v_provided_by">alliance_genotype_nodes</data>
+    </node>
+    <node id="n38">
+      <data key="v_name">MGI:3834483</data>
+      <data key="v_type">biolink:Genotype</data>
+      <data key="v_label">Tg(Ly6a-TK,-BCR/ABL1)IS9AIsg/0  [background:] involves: C57BL/6J * CBA</data>
+      <data key="v_provided_by">alliance_genotype_nodes</data>
+    </node>
+    <node id="n39">
+      <data key="v_name">MGI:5009036</data>
+      <data key="v_type">biolink:Genotype</data>
+      <data key="v_label">Ncstn&lt;sup&gt;tm1.1Akli&lt;/sup&gt;/Ncstn&lt;sup&gt;tm1.1Akli&lt;/sup&gt; Tg(Mx1-cre)1Cgn/0  [background:] involves: 129 * C57BL/6 * CBA * SJL</data>
+      <data key="v_provided_by">alliance_genotype_nodes</data>
+    </node>
+    <node id="n40">
+      <data key="v_name">MGI:5009037</data>
+      <data key="v_type">biolink:Genotype</data>
+      <data key="v_label">Ncstn&lt;sup&gt;tm1.1Akli&lt;/sup&gt;/Ncstn&lt;sup&gt;tm1.1Akli&lt;/sup&gt; Tg(VAV1-cre)1Graf/0  [background:] involves: 129 * C57BL/6 * SJL</data>
+      <data key="v_provided_by">alliance_genotype_nodes</data>
+    </node>
+    <node id="n41">
+      <data key="v_name">MGI:5296515</data>
+      <data key="v_type">biolink:Genotype</data>
+      <data key="v_label">Sh2b3&lt;sup&gt;tm1Paw&lt;/sup&gt;/Sh2b3&lt;sup&gt;tm1Paw&lt;/sup&gt;  [background:] involves: 129S1/Sv * 129X1/SvJ</data>
+      <data key="v_provided_by">alliance_genotype_nodes</data>
+    </node>
+    <node id="n42">
+      <data key="v_name">MGI:5644329</data>
+      <data key="v_type">biolink:Genotype</data>
+      <data key="v_label">Chordc1&lt;sup&gt;tm1Mbra&lt;/sup&gt;/Chordc1&lt;sup&gt;+&lt;/sup&gt;  [background:] involves: 129 * C57BL/6</data>
+      <data key="v_provided_by">alliance_genotype_nodes</data>
+    </node>
+    <node id="n43">
+      <data key="v_name">MGI:5806781</data>
+      <data key="v_type">biolink:Genotype</data>
+      <data key="v_label">Gt(ROSA)26Sor&lt;sup&gt;tm4(CAG-hsb5)Nki&lt;/sup&gt;/Gt(ROSA)26Sor&lt;sup&gt;+&lt;/sup&gt; Tg(Mx1-cre)1Cgn/0 Tg(Tal1-tTA)19Dgt/0 Tg(tetO-BCR/ABL1)2Dgt/0 TgTn(pb-sb-GrOnc)#aGsva/0  [background:] involves: 129P2/OlaHsd * C57BL/6 * CBA/J * DBA/2 * FVB/N</data>
+      <data key="v_provided_by">alliance_genotype_nodes</data>
+    </node>
+    <edge source="n0" target="n0">
+      <data key="e_type">biolink:interacts_with</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:PairwiseGeneToGeneInteraction</data>
+      <data key="e_id">uuid:f83fa7ca-4004-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">biogrid_edges</data>
+      <data key="e_primary_knowledge_source">infores:biogrid</data>
+      <data key="e_agent_type">not_provided</data>
+    </edge>
+    <edge source="n0" target="n0">
+      <data key="e_type">biolink:interacts_with</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:PairwiseGeneToGeneInteraction</data>
+      <data key="e_id">uuid:ab07c0bc-4004-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">biogrid_edges</data>
+      <data key="e_primary_knowledge_source">infores:biogrid</data>
+      <data key="e_agent_type">not_provided</data>
+    </edge>
+    <edge source="n0" target="n0">
+      <data key="e_type">biolink:interacts_with</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:PairwiseGeneToGeneInteraction</data>
+      <data key="e_id">uuid:92a3cb0e-4004-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">biogrid_edges</data>
+      <data key="e_primary_knowledge_source">infores:biogrid</data>
+      <data key="e_agent_type">not_provided</data>
+    </edge>
+    <edge source="n0" target="n1">
+      <data key="e_type">biolink:interacts_with</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:PairwiseGeneToGeneInteraction</data>
+      <data key="e_id">uuid:93cb859b-4004-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">biogrid_edges</data>
+      <data key="e_primary_knowledge_source">infores:biogrid</data>
+      <data key="e_agent_type">not_provided</data>
+    </edge>
+    <edge source="n0" target="n1">
+      <data key="e_type">biolink:interacts_with</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:PairwiseGeneToGeneInteraction</data>
+      <data key="e_id">uuid:93cb8598-4004-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">biogrid_edges</data>
+      <data key="e_primary_knowledge_source">infores:biogrid</data>
+      <data key="e_agent_type">not_provided</data>
+    </edge>
+    <edge source="n0" target="n1">
+      <data key="e_type">biolink:interacts_with</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:PairwiseGeneToGeneInteraction</data>
+      <data key="e_id">uuid:92a3ca8c-4004-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">biogrid_edges</data>
+      <data key="e_primary_knowledge_source">infores:biogrid</data>
+      <data key="e_agent_type">not_provided</data>
+    </edge>
+    <edge source="n0" target="n1">
+      <data key="e_type">biolink:interacts_with</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:PairwiseGeneToGeneInteraction</data>
+      <data key="e_id">uuid:0c19f838-4011-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">string_protein_links_edges</data>
+      <data key="e_primary_knowledge_source">infores:string</data>
+      <data key="e_agent_type">not_provided</data>
+    </edge>
+    <edge source="n0" target="n2">
+      <data key="e_type">biolink:interacts_with</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:PairwiseGeneToGeneInteraction</data>
+      <data key="e_id">uuid:0c19f82a-4011-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">string_protein_links_edges</data>
+      <data key="e_primary_knowledge_source">infores:string</data>
+      <data key="e_agent_type">not_provided</data>
+    </edge>
+    <edge source="n0" target="n3">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:69ea4a6c-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n0" target="n4">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:69ea4a9b-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n0" target="n5">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:69ea4a9f-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n0" target="n6">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:69ea4aa0-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n0" target="n7">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:69ea4a9e-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n0" target="n8">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:69ea4a7a-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n0" target="n9">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:69ea4a7b-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n0" target="n10">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:69ea4a79-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n0" target="n11">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:69ea4a78-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n0" target="n12">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:69ea4a7f-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n0" target="n13">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:69ea4a73-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n0" target="n14">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:69ea4a72-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n0" target="n15">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:69ea4a76-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n0" target="n16">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:69ea4a77-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n0" target="n17">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:69ea4a8c-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n0" target="n21">
+      <data key="e_type">biolink:gene_associated_with_condition</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:CorrelatedGeneToDiseaseAssociation</data>
+      <data key="e_id">uuid:63838510-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_disease_edges</data>
+      <data key="e_primary_knowledge_source">infores:orphanet</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n0" target="n21">
+      <data key="e_type">biolink:causes</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:CausalGeneToDiseaseAssociation</data>
+      <data key="e_id">uuid:631aa762-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative|infores:medgen</data>
+      <data key="e_provided_by">hpoa_gene_to_disease_edges</data>
+      <data key="e_primary_knowledge_source">infores:omim</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n1" target="n0">
+      <data key="e_type">biolink:interacts_with</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:PairwiseGeneToGeneInteraction</data>
+      <data key="e_id">uuid:cd7adcd1-4004-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">biogrid_edges</data>
+      <data key="e_primary_knowledge_source">infores:biogrid</data>
+      <data key="e_agent_type">not_provided</data>
+    </edge>
+    <edge source="n1" target="n0">
+      <data key="e_type">biolink:interacts_with</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:PairwiseGeneToGeneInteraction</data>
+      <data key="e_id">uuid:92a3ca01-4004-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">biogrid_edges</data>
+      <data key="e_primary_knowledge_source">infores:biogrid</data>
+      <data key="e_agent_type">not_provided</data>
+    </edge>
+    <edge source="n1" target="n3">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:6a512ea9-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n1" target="n3">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:6a512ea8-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n1" target="n4">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:6a5a889a-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n1" target="n5">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:6a5a88a3-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n1" target="n6">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:6a5a88a4-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n1" target="n7">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:6a5a88a2-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n1" target="n8">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:6a512ebb-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n1" target="n9">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:6a512ebc-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n1" target="n10">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:6a512eba-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n1" target="n11">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:6a512eb9-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n1" target="n12">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:6a512ebf-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n1" target="n13">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:6a512eb2-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n1" target="n14">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:6a512eb1-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n1" target="n15">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:6a512eb6-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n1" target="n16">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:6a512eb8-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n1" target="n17">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:6a512eca-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n1" target="n21">
+      <data key="e_type">biolink:gene_associated_with_condition</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:CorrelatedGeneToDiseaseAssociation</data>
+      <data key="e_id">uuid:6383850f-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_disease_edges</data>
+      <data key="e_primary_knowledge_source">infores:orphanet</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n1" target="n21">
+      <data key="e_type">biolink:causes</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:CausalGeneToDiseaseAssociation</data>
+      <data key="e_id">uuid:631aa763-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative|infores:medgen</data>
+      <data key="e_provided_by">hpoa_gene_to_disease_edges</data>
+      <data key="e_primary_knowledge_source">infores:omim</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n2" target="n2">
+      <data key="e_type">biolink:interacts_with</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:PairwiseGeneToGeneInteraction</data>
+      <data key="e_id">uuid:a714356a-4004-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">biogrid_edges</data>
+      <data key="e_primary_knowledge_source">infores:biogrid</data>
+      <data key="e_agent_type">not_provided</data>
+    </edge>
+    <edge source="n2" target="n2">
+      <data key="e_type">biolink:interacts_with</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:PairwiseGeneToGeneInteraction</data>
+      <data key="e_id">uuid:9c116ced-4004-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">biogrid_edges</data>
+      <data key="e_primary_knowledge_source">infores:biogrid</data>
+      <data key="e_agent_type">not_provided</data>
+    </edge>
+    <edge source="n2" target="n3">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:6a894222-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n2" target="n4">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:6a894255-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n2" target="n5">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:6a894259-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n2" target="n6">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:6a89425f-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n2" target="n6">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:6a89425e-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n2" target="n6">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:6a89425d-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n2" target="n7">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:6a894258-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n2" target="n8">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:6a89423d-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n2" target="n9">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:6a89423e-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n2" target="n10">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:6a89423a-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n2" target="n11">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:6a894239-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n2" target="n11">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:6a894238-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n2" target="n12">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:6a89423f-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n2" target="n16">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:6a894236-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n2" target="n17">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:6a894253-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n2" target="n17">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">logical_entailment</data>
+      <data key="e_category">biolink:GeneToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:6a894252-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">automated_agent</data>
+    </edge>
+    <edge source="n2" target="n21">
+      <data key="e_type">biolink:gene_associated_with_condition</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:CorrelatedGeneToDiseaseAssociation</data>
+      <data key="e_id">uuid:63838511-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_gene_to_disease_edges</data>
+      <data key="e_primary_knowledge_source">infores:orphanet</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n9" target="n8">
+      <data key="e_type">biolink:subclass_of</data>
+      <data key="e_knowledge_level">not_provided</data>
+      <data key="e_category">biolink:Association</data>
+      <data key="e_id">urn:uuid:86aa11d7-185a-4820-8bb1-14c7d36bacdf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative|infores:phenio</data>
+      <data key="e_provided_by">phenio_edges</data>
+      <data key="e_primary_knowledge_source">infores:hp</data>
+      <data key="e_agent_type">not_provided</data>
+    </edge>
+    <edge source="n19" target="n21">
+      <data key="e_type">biolink:subclass_of</data>
+      <data key="e_knowledge_level">not_provided</data>
+      <data key="e_category">biolink:Association</data>
+      <data key="e_id">urn:uuid:ad7c3cef-0c9b-4621-a3d0-6e9001b65ba8</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative|infores:phenio</data>
+      <data key="e_provided_by">phenio_edges</data>
+      <data key="e_primary_knowledge_source">infores:mondo</data>
+      <data key="e_agent_type">not_provided</data>
+    </edge>
+    <edge source="n20" target="n15">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:DiseaseToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:20b7ceb3-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_disease_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n20" target="n21">
+      <data key="e_type">biolink:subclass_of</data>
+      <data key="e_knowledge_level">not_provided</data>
+      <data key="e_category">biolink:Association</data>
+      <data key="e_id">urn:uuid:d5297016-bba1-4929-898a-e4894c8b8877</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative|infores:phenio</data>
+      <data key="e_provided_by">phenio_edges</data>
+      <data key="e_primary_knowledge_source">infores:mondo</data>
+      <data key="e_agent_type">not_provided</data>
+    </edge>
+    <edge source="n21" target="n3">
+      <data key="e_type">biolink:has_mode_of_inheritance</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:DiseaseOrPhenotypicFeatureToGeneticInheritanceAssociation</data>
+      <data key="e_id">uuid:672a2e4f-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_disease_mode_of_inheritance_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n21" target="n4">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:DiseaseToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:27ea0d9d-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_disease_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n21" target="n5">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:DiseaseToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:27ea0d9e-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_disease_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n21" target="n6">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:DiseaseToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:27ea0d9f-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_disease_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n21" target="n7">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:DiseaseToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:27ea0da0-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_disease_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n21" target="n8">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:DiseaseToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:27ea0da1-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_disease_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n21" target="n9">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:DiseaseToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:27ea0da2-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_disease_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n21" target="n10">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:DiseaseToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:27ea0da3-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_disease_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n21" target="n11">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:DiseaseToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:27ea0da4-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_disease_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n21" target="n12">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:DiseaseToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:27ea0da5-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_disease_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n21" target="n13">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:DiseaseToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:2078a60b-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_disease_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n21" target="n14">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:DiseaseToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:2078a60a-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_disease_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n21" target="n15">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:DiseaseToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:2078a60c-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_disease_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n21" target="n16">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:DiseaseToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:27ea0d9c-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_disease_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n21" target="n17">
+      <data key="e_type">biolink:has_phenotype</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:DiseaseToPhenotypicFeatureAssociation</data>
+      <data key="e_id">uuid:27ea0da6-400a-11ef-89e7-6fe0be41fbbf</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative</data>
+      <data key="e_provided_by">hpoa_disease_to_phenotype_edges</data>
+      <data key="e_primary_knowledge_source">infores:hpo-annotations</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n21" target="n18">
+      <data key="e_type">biolink:subclass_of</data>
+      <data key="e_knowledge_level">not_provided</data>
+      <data key="e_category">biolink:Association</data>
+      <data key="e_id">urn:uuid:efbdf1a4-95b5-41cc-8cfa-0d488664d1ac</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative|infores:phenio</data>
+      <data key="e_provided_by">phenio_edges</data>
+      <data key="e_primary_knowledge_source">infores:mondo</data>
+      <data key="e_agent_type">not_provided</data>
+    </edge>
+    <edge source="n21" target="n23">
+      <data key="e_type">biolink:subclass_of</data>
+      <data key="e_knowledge_level">not_provided</data>
+      <data key="e_category">biolink:Association</data>
+      <data key="e_id">urn:uuid:c1ebbf07-827c-44a1-b115-1d07b8ea28f9</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative|infores:phenio</data>
+      <data key="e_provided_by">phenio_edges</data>
+      <data key="e_primary_knowledge_source">infores:mondo</data>
+      <data key="e_agent_type">not_provided</data>
+    </edge>
+    <edge source="n22" target="n21">
+      <data key="e_type">biolink:subclass_of</data>
+      <data key="e_knowledge_level">not_provided</data>
+      <data key="e_category">biolink:Association</data>
+      <data key="e_id">urn:uuid:c30b9b10-c7a8-4b2d-8409-65e7d151963f</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative|infores:phenio</data>
+      <data key="e_provided_by">phenio_edges</data>
+      <data key="e_primary_knowledge_source">infores:mondo</data>
+      <data key="e_agent_type">not_provided</data>
+    </edge>
+    <edge source="n24" target="n21">
+      <data key="e_type">biolink:model_of</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:GenotypeToDiseaseAssociation</data>
+      <data key="e_id">9649c27b-3a20-11ef-b982-c3fd19cce226</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative|infores:agrkb</data>
+      <data key="e_provided_by">alliance_disease_edges</data>
+      <data key="e_primary_knowledge_source">infores:mgi</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n25" target="n21">
+      <data key="e_type">biolink:model_of</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:GenotypeToDiseaseAssociation</data>
+      <data key="e_id">961ae4bb-3a20-11ef-b982-c3fd19cce226</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative|infores:agrkb</data>
+      <data key="e_provided_by">alliance_disease_edges</data>
+      <data key="e_primary_knowledge_source">infores:mgi</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n26" target="n21">
+      <data key="e_type">biolink:model_of</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:GenotypeToDiseaseAssociation</data>
+      <data key="e_id">9649c18d-3a20-11ef-b982-c3fd19cce226</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative|infores:agrkb</data>
+      <data key="e_provided_by">alliance_disease_edges</data>
+      <data key="e_primary_knowledge_source">infores:mgi</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n27" target="n21">
+      <data key="e_type">biolink:model_of</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:GenotypeToDiseaseAssociation</data>
+      <data key="e_id">965bae41-3a20-11ef-b982-c3fd19cce226</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative|infores:agrkb</data>
+      <data key="e_provided_by">alliance_disease_edges</data>
+      <data key="e_primary_knowledge_source">infores:mgi</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n28" target="n21">
+      <data key="e_type">biolink:model_of</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:GenotypeToDiseaseAssociation</data>
+      <data key="e_id">9626a353-3a20-11ef-b982-c3fd19cce226</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative|infores:agrkb</data>
+      <data key="e_provided_by">alliance_disease_edges</data>
+      <data key="e_primary_knowledge_source">infores:mgi</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n29" target="n21">
+      <data key="e_type">biolink:model_of</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:GenotypeToDiseaseAssociation</data>
+      <data key="e_id">96326a3a-3a20-11ef-b982-c3fd19cce226</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative|infores:agrkb</data>
+      <data key="e_provided_by">alliance_disease_edges</data>
+      <data key="e_primary_knowledge_source">infores:mgi</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n30" target="n21">
+      <data key="e_type">biolink:model_of</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:GenotypeToDiseaseAssociation</data>
+      <data key="e_id">961ae2f7-3a20-11ef-b982-c3fd19cce226</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative|infores:agrkb</data>
+      <data key="e_provided_by">alliance_disease_edges</data>
+      <data key="e_primary_knowledge_source">infores:mgi</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n31" target="n21">
+      <data key="e_type">biolink:model_of</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:GenotypeToDiseaseAssociation</data>
+      <data key="e_id">966a3e54-3a20-11ef-b982-c3fd19cce226</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative|infores:agrkb</data>
+      <data key="e_provided_by">alliance_disease_edges</data>
+      <data key="e_primary_knowledge_source">infores:mgi</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n32" target="n21">
+      <data key="e_type">biolink:model_of</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:GenotypeToDiseaseAssociation</data>
+      <data key="e_id">963e1c6e-3a20-11ef-b982-c3fd19cce226</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative|infores:agrkb</data>
+      <data key="e_provided_by">alliance_disease_edges</data>
+      <data key="e_primary_knowledge_source">infores:mgi</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n33" target="n21">
+      <data key="e_type">biolink:model_of</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:GenotypeToDiseaseAssociation</data>
+      <data key="e_id">9649c3f7-3a20-11ef-b982-c3fd19cce226</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative|infores:agrkb</data>
+      <data key="e_provided_by">alliance_disease_edges</data>
+      <data key="e_primary_knowledge_source">infores:mgi</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n34" target="n21">
+      <data key="e_type">biolink:model_of</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:GenotypeToDiseaseAssociation</data>
+      <data key="e_id">960efa3b-3a20-11ef-b982-c3fd19cce226</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative|infores:agrkb</data>
+      <data key="e_provided_by">alliance_disease_edges</data>
+      <data key="e_primary_knowledge_source">infores:mgi</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n35" target="n21">
+      <data key="e_type">biolink:model_of</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:GenotypeToDiseaseAssociation</data>
+      <data key="e_id">966a3e36-3a20-11ef-b982-c3fd19cce226</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative|infores:agrkb</data>
+      <data key="e_provided_by">alliance_disease_edges</data>
+      <data key="e_primary_knowledge_source">infores:mgi</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n36" target="n21">
+      <data key="e_type">biolink:model_of</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:GenotypeToDiseaseAssociation</data>
+      <data key="e_id">963268ab-3a20-11ef-b982-c3fd19cce226</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative|infores:agrkb</data>
+      <data key="e_provided_by">alliance_disease_edges</data>
+      <data key="e_primary_knowledge_source">infores:mgi</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n37" target="n21">
+      <data key="e_type">biolink:model_of</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:GenotypeToDiseaseAssociation</data>
+      <data key="e_id">965badb0-3a20-11ef-b982-c3fd19cce226</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative|infores:agrkb</data>
+      <data key="e_provided_by">alliance_disease_edges</data>
+      <data key="e_primary_knowledge_source">infores:mgi</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n38" target="n21">
+      <data key="e_type">biolink:model_of</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:GenotypeToDiseaseAssociation</data>
+      <data key="e_id">9649c28b-3a20-11ef-b982-c3fd19cce226</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative|infores:agrkb</data>
+      <data key="e_provided_by">alliance_disease_edges</data>
+      <data key="e_primary_knowledge_source">infores:mgi</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n39" target="n21">
+      <data key="e_type">biolink:model_of</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:GenotypeToDiseaseAssociation</data>
+      <data key="e_id">963269a1-3a20-11ef-b982-c3fd19cce226</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative|infores:agrkb</data>
+      <data key="e_provided_by">alliance_disease_edges</data>
+      <data key="e_primary_knowledge_source">infores:mgi</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n40" target="n21">
+      <data key="e_type">biolink:model_of</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:GenotypeToDiseaseAssociation</data>
+      <data key="e_id">96326805-3a20-11ef-b982-c3fd19cce226</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative|infores:agrkb</data>
+      <data key="e_provided_by">alliance_disease_edges</data>
+      <data key="e_primary_knowledge_source">infores:mgi</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n41" target="n21">
+      <data key="e_type">biolink:model_of</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:GenotypeToDiseaseAssociation</data>
+      <data key="e_id">963269d0-3a20-11ef-b982-c3fd19cce226</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative|infores:agrkb</data>
+      <data key="e_provided_by">alliance_disease_edges</data>
+      <data key="e_primary_knowledge_source">infores:mgi</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n42" target="n21">
+      <data key="e_type">biolink:model_of</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:GenotypeToDiseaseAssociation</data>
+      <data key="e_id">9649c0d8-3a20-11ef-b982-c3fd19cce226</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative|infores:agrkb</data>
+      <data key="e_provided_by">alliance_disease_edges</data>
+      <data key="e_primary_knowledge_source">infores:mgi</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+    <edge source="n43" target="n21">
+      <data key="e_type">biolink:model_of</data>
+      <data key="e_knowledge_level">knowledge_assertion</data>
+      <data key="e_category">biolink:GenotypeToDiseaseAssociation</data>
+      <data key="e_id">9649c30c-3a20-11ef-b982-c3fd19cce226</data>
+      <data key="e_aggregator_knowledge_source">infores:monarchinitiative|infores:agrkb</data>
+      <data key="e_provided_by">alliance_disease_edges</data>
+      <data key="e_primary_knowledge_source">infores:mgi</data>
+      <data key="e_agent_type">manual_agent</data>
+    </edge>
+  </graph>
+</graphml>
