@@ -1,11 +1,21 @@
 #!/bin/bash
 
 # Name of the virtual environment directory
+# Check if VENV_DIR is not set or is empty
+if [ -z "$VENV_DIR" ]; then
+    # Then check if VIRTUAL_ENV is set and points to a valid directory
+    if [ -n "$VIRTUAL_ENV" ] && [ -d "$VIRTUAL_ENV" ]; then
+        # If VIRTUAL_ENV is valid, use it for VENV_DIR
+        VENV_DIR="$VIRTUAL_ENV"
+    else
+        # Otherwise, default to 'venv'
 VENV_DIR="venv"
+    fi
+fi
 
 # Function to activate the virtual environment
 activate_venv() {
-    echo "Activating the virtual environment..."
+    echo "Activating the virtual environment: $VENV_DIR"
     source "$VENV_DIR/bin/activate"
 }
 
@@ -22,16 +32,31 @@ is_inside_venv() {
 # Function to create a virtual environment
 create_venv() {
     if [ ! -d "$VENV_DIR" ]; then
-        echo "Creating a virtual environment..."
+        echo "Creating a virtual environment: $VENV_DIR"
         python3 -m venv "$VENV_DIR"
+        # Assuming the script is run from a virtual environment with useful packages
+        if [ -n "$VIRTUAL_ENV" ] && [ -d "$VIRTUAL_ENV" ]; then
+            echo "Inheriting packages from existing environment: $VIRTUAL_ENV"
+            source "$VIRTUAL_ENV/bin/activate"
+            pip freeze > /tmp/requirements.txt
+            deactivate
+            activate_venv
+            pip install -r /tmp/requirements.txt
+            rm /tmp/requirements.txt
+        fi
+	if [ -f "requirements.txt" ]; then
+	    : 
+	    #echo "Found local requirements.txt, installing packages..."
+	    #pip install -r requirements.txt
+	fi
     else
-        echo "Virtual environment already exists."
+        echo "Virtual environment already exists: $VENV_DIR"
     fi
 }
 
 # Main logic of the script
 if is_inside_venv; then
-    echo "Script is running inside a virtual environment."
+    echo "Script is running inside a virtual environment: $VIRTUAL_ENV"
 else
     echo "Script is not running inside a virtual environment."
     create_venv
