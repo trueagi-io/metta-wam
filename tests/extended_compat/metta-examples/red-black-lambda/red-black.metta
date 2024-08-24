@@ -5,6 +5,7 @@
 (= (RedLambda $RV $BLC) (RTheory (match &LC (LambdaTheory ($RV $BLC) $rhs) $rhs)))
 (= (BlackLambda $BV $RLC) (BTheory (match &LC (LambdaTheory ($BV $RLC) $rhs) $rhs)))
 
+!(RedLambda BTheory String)
 !(assertEqualToResult
    (RedLambda BTheory String)
    ((RTheory (: equivalent (-> Term (-> Term Bool))))
@@ -20,6 +21,7 @@
 (= (objectify (RTheory $x)) (RC $x))
 (= (objectify (BTheory $x)) (BC $x))
 
+!(objectify (RedLambda String BTheory))
 !(assertEqualToResult 
    (objectify (RedLambda String BTheory))
    ((RC (: equivalent (-> Term (-> Term Bool))))
@@ -32,6 +34,7 @@
 	(RC (= (reduce $t_44935) ???))
 	(RC (: Term Type))))
 
+!(objectify (BlackLambda String RTheory))
 !(assertEqualToResult
    (objectify (BlackLambda String RTheory))
    ((BC (: equivalent (-> Term (-> Term Bool))))
