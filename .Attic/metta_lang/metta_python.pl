@@ -124,6 +124,12 @@ def exec_string(s):
     local_vars = locals()
     return exec(s,global_vars,local_vars)
 
+def py_nth(s,nth):
+    return s[nth]
+
+def identity(s):
+    return s
+
 def get_globals():
     return globals()
 
@@ -165,8 +171,26 @@ def string_conversion(s):
 def string_representation(s):
     return repr(s)
 
-def get_length(s):
+def py_len(s):
     return len(s)
+
+def py_list(s):
+    return list(s)
+
+def py_dict(s):
+    return dict(s)
+
+def py_dict0():
+    return dict()
+
+def py_map(s):
+    return map(s)
+
+def py_tuple(s):
+    return tuple(s)
+
+def py_set(s):
+    return set(s)
 
 def absolute_value(num):
     return abs(num)
@@ -231,6 +255,9 @@ def type_of(obj):
 def isinstance_of(obj, classinfo):
     return isinstance(obj, classinfo)
 
+def print_nonl(sub):
+    return print(sub, end="")
+
 def issubclass_of(sub, superclass):
     return issubclass(sub, superclass)
 
@@ -277,7 +304,23 @@ the_modules_and_globals = merge_modules_and_globals()
 
 ').
 
+pych_chars(Chars,P):- \+ is_list(Chars), !, P = Chars.
+pych_chars(Chars,P):- append(O,`\r@(none)`,Chars),!,pych_chars(O,P).
+pych_chars(Chars,P):- append(O,`\n@(none)`,Chars),!,pych_chars(O,P).
+pych_chars(Chars,P):- append(O,`@(none)`,Chars),!,pych_chars(O,P).
+pych_chars(Chars,P):- append(O,[WS],Chars),code_type(WS,new_line),!,pych_chars(O,P).
+pych_chars(Chars,P):- append(O,[WS],Chars),code_type(WS,end_of_line),!,pych_chars(O,P).
+pych_chars(P,P).
 
+
+py_ppp(V):-flush_output, with_output_to(codes(Chars), once(py_pp(V))),
+ pych_chars(Chars,P),!,format('~s',[P]),!,flush_output.
+
+%atom_codes(Codes,P),writeq(Codes),
+%py_ppp(V):- !, flush_output, py_mbi(print_nonl(V),_),!,flush_output.
+%py_ppp(V):- writeq(py(V)),!.
+%py_ppp(V):-once((py_is_object(V),py_to_pl(V,PL))),V\=@=PL,!,print(PL).
+%py_ppp(V):-metta_py_pp(V).
 
 % Evaluations and Iterations
 load_hyperon_module:- py_module(hyperon_module,
@@ -308,11 +351,18 @@ def rust_metta_run(obj):
 
 
 py_mcall(I,O):- catch(py_call(I,M,[py_object(false),py_string_as(string),py_dict_as({})]),error(_,_),fail),!,O=M.
+py_scall(I,O):- catch(py_call(I,M,[py_string_as(string)]),error(_,_),fail),!,O=M.
+py_acall(I,O):- catch(py_call(I,M,[py_string_as(atom)]),error(_,_),fail),!,O=M.
+py_ocall(I,O):- catch(py_call(I,M,[py_object(true),py_string_as(string)]),error(_,_),fail),!,O=M.
 
-get_str_rep(I,O):- py_mcall(builtin_module:get_str_rep(I),O),!.
+py_bi(I,O,Opts):- catch(py_call(builtin_module:I,M,Opts),error(_,_),fail),!,O=M.
+py_obi(I,O):- py_ocall(builtin_module:I,O).
+py_mbi(I,O):- py_mcall(builtin_module:I,O).
+%?- py_call(type(hi-there), P),py_pp(P).
+get_str_rep(I,O):- py_mbi(get_str_rep(I),O),!.
 
 py_atom(I,O):- var(I),!,O=I.
-py_atom([I|Is],O):-!, py_dot(I,II),py_dot_from(II,Is,O).
+py_atom([I|Is],O):-!, py_dot(I,II),py_dot_from(II,Is,O),!.
 py_atom(I,O):- atomic(I),!,py_atomic(I,O).
 py_atom(I,O):- py_mcall(I,O),!.
 py_atom(I,O):- I=O.
@@ -332,12 +382,12 @@ py_atomic(I,O):- \+ symbol_contains(I,'('),atomic_list_concat([A,B|C],'.',I),py_
 py_atomic(I,O):- string(I), py_dot(I,O),!.
 py_atomic(I,O):- I=O.
 
-get_globals(O):- py_mcall(builtin_module:get_globals(),O).
-get_locals(O):- py_mcall(builtin_module:get_locals(),O).
-merge_modules_and_globals(O):- py_mcall(builtin_module:merge_modules_and_globals(),O).
-py_eval(I,O):- py_mcall(builtin_module:eval_string(I),O).
+get_globals(O):- py_mbi(get_globals(),O).
+get_locals(O):- py_mbi(get_locals(),O).
+merge_modules_and_globals(O):- py_mbi(merge_modules_and_globals(),O).
+py_eval(I,O):- py_mbi(eval_string(I),O).
 py_eval(I):- py_eval(I,O),pybug(O).
-py_exec(I,O):- py_mcall(builtin_module:exec_string(I),O).
+py_exec(I,O):- py_mbi(exec_string(I),O).
 py_exec(I):- py_exec(I,O),pybug(O).
 
 py_dot(I,O):- string(I),atom_string(A,I),py_atom(A,O),A\==O,!.
@@ -484,6 +534,8 @@ py_to_pl(_VL,_Par,Cir,Cir,L,E):- L ==[],!,E=L.
 py_to_pl(VL, Par, Cir, CirO, O, E) :- py_is_object(O), py_class(O, Cl), !,
     pyo_to_pl(VL, Par, [O = E | Cir], CirO, Cl, O, E).
 % If L is in the Cir list, unify E with L.
+
+%py_to_pl(_VL,_Par,Cir,Cir,L,E):- py_is_dict(L),!,py_mbi(identity(L),E).
 py_to_pl(_VL,_Par,Cir,Cir,L,E):- member(N-NE,Cir), N==L, !, (E=L;NE=E), !.
 % If LORV is a variable or nil, unify it directly.
 py_to_pl(_VL,_Par,Cir,Cir, LORV:B,LORV:B):- is_var_or_nil(LORV),  !.
@@ -578,17 +630,55 @@ pyo_to_pl(VL,Par,Cir,CirO,Cl,O,E):- catch(py_obj_dir(O,L),_,fail),pybug(py_obj_d
 %pyo_to_pl(_VL,_Par,Cir,Cir,Cl,O,E):- get_str_rep(O,Str), E=..[Cl,Str].
 pyo_to_pl(_VL,_Par,Cir,Cir,_Cl,O,E):- O = E,!.
 
+pl_to_rust(Var,Py):- pl_to_rust(_VL,Var,Py).
+pl_to_rust(VL,Var,Py):- var(VL),!,ignore(VL=[vars]),pl_to_rust(VL,Var,Py).
+
+pl_to_rust(_VL,Sym,Py):- is_list(Sym),!, maplist(pl_to_rust,Sym,PyL), py_call(src:'mettalog':'MkExpr'(PyL),Py),!.
+pl_to_rust(VL,Var,Py):- var(Var), !, real_VL_var(Sym,VL,Var), py_call('hyperon.atoms':'V'(Sym),Py),!.
+pl_to_rust(VL,'$VAR'(Sym),Py):- !, real_VL_var(Sym,VL,_),py_call('hyperon.atoms':'V'(Sym),Py),!.
+pl_to_rust(VL,DSym,Py):- atom(DSym),atom_concat('$',VName,DSym), rinto_varname(VName,Sym),!, pl_to_rust(VL,'$VAR'(Sym),Py).
+pl_to_rust(_VL,Sym,Py):- atom(Sym),!, py_call('hyperon.atoms':'S'(Sym),Py),!.
+%pl_to_rust(VL,Sym,Py):- is_list(Sym), maplist(pl_to_rust,Sym,PyL), py_call('hyperon.atoms':'E'(PyL),Py),!.
+pl_to_rust(_VL,Sym,Py):- string(Sym),!, py_call('hyperon.atoms':'ValueAtom'(Sym),Py),!.
+pl_to_rust(_VL,Sym,Py):- py_is_object(Sym),py_call('hyperon.atoms':'ValueAtom'(Sym),Py),!.
+pl_to_rust(_VL,Sym,Py):- py_call('hyperon.atoms':'ValueAtom'(Sym),Py),!.
+
+py_list(MeTTa,PyList):- pl_to_py(MeTTa,PyList).
+py_tuple(O,Py):- py_mcall(tuple(O),Py),!.
+py_tuple(O,Py):- py_mbi(py_tuple(O),Py),!.
+py_dict(O,Py):- py_mcall(dict(O),Py),!.
+py_dict(O,Py):- catch(py_is_dict(O),_,fail),!,O=Py.
+
+% ?- py_list([1, 2.0, "string"], X),py_type(X,Y).
+% ?- py_list_index([1, 2.0, "string"], X),py_type(X,Y).
+py_nth(L,Nth,E):- py_mbi(py_nth(L,Nth),E).
+py_len(L,E):- py_mbi(py_len(L),E).
+py_o(O,Py):- py_obi(identity(O),Py),!.
+py_m(O,Py):- py_mbi(identity(O),Py),!.
 pl_to_py(Var,Py):- pl_to_py(_VL,Var,Py).
 pl_to_py(VL,Var,Py):- var(VL),!,ignore(VL=[vars]),pl_to_py(VL,Var,Py).
-pl_to_py(_VL,Sym,Py):- is_list(Sym),!, maplist(pl_to_py,Sym,PyL), py_call(src:'mettalog':'MkExpr'(PyL),Py),!.
+pl_to_py(_VL,Sym,Py):- py_is_object(Sym),!,Sym=Py.
+%pl_to_py(_VL,O,Py):- py_is_dict(O),!,py_obi(identity(O),Py).
+pl_to_py(_VL,MeTTa,Python):- float(MeTTa), !, py_obi(float_conversion(MeTTa),Python).
+pl_to_py(_VL,MeTTa,Python):- string(MeTTa), !, py_obi(string_conversion(MeTTa),Python).
+pl_to_py(_VL,MeTTa,Python):- integer(MeTTa), !, py_obi(int_conversion(MeTTa),Python).
+pl_to_py(VL,Sym,Py):- is_list(Sym),!, maplist(pl_to_py(VL),Sym,PyL), py_obi(py_list(PyL),Py).
 pl_to_py(VL,Var,Py):- var(Var), !, real_VL_var(Sym,VL,Var), py_call('hyperon.atoms':'V'(Sym),Py),!.
 pl_to_py(VL,'$VAR'(Sym),Py):- !, real_VL_var(Sym,VL,_),py_call('hyperon.atoms':'V'(Sym),Py),!.
-pl_to_py(VL,DSym,Py):- atom(DSym),atom_concat('$',VName,DSym), rinto_varname(VName,Sym),!, pl_to_py(VL,'$VAR'(Sym),Py).
-pl_to_py(_VL,Sym,Py):- atom(Sym),!, py_call('hyperon.atoms':'S'(Sym),Py),!.
-pl_to_py(_VL,Sym,Py):- string(Sym),!, py_call('hyperon.atoms':'S'(Sym),Py),!.
+pl_to_py(_VL,O,Py):- py_type(O,_),!,O=Py.
+% % %pl_to_py(_VL,O,Py):- py_is_dict(O),!,O=Py.
+%pl_to_py(VL,DSym,Py):- atom(DSym),atom_concat('$',VName,DSym), rinto_varname(VName,Sym),!, pl_to_py(VL,'$VAR'(Sym),Py).
+%pl_to_py(_VL,Sym,Py):- atom(Sym),!, py_call('hyperon.atoms':'S'(Sym),Py),!.
+%pl_to_py(_VL,Sym,Py):- string(Sym),!, py_call('hyperon.atoms':'S'(Sym),Py),!.
 %pl_to_py(VL,Sym,Py):- is_list(Sym), maplist(pl_to_py,Sym,PyL), py_call('hyperon.atoms':'E'(PyL),Py),!.
-pl_to_py(_VL,Sym,Py):- py_is_object(Sym),py_call('hyperon.atoms':'ValueAtom'(Sym),Py),!.
-pl_to_py(_VL,Sym,Py):- py_call('hyperon.atoms':'ValueAtom'(Sym),Py),!.
+%pl_to_py(_VL,Sym,Py):- py_is_object(Sym),py_call('hyperon.atoms':'ValueAtom'(Sym),Py),!.
+pl_to_py(_VL,MeTTa,MeTTa).
+%pl_to_py(_VL,Sym,Py):- py_call('hyperon.atoms':'ValueAtom'(Sym),Py),!.
+
+py_key(O,I):- py_m(O,M),key(M,I).
+py_items(O,I):- py_m(O,M),items(M,I).
+%py_values(O,K,V):- py_m(O,M),values(M,K,V).
+py_values(O,K,V):- py_items(O,L),member(K:V,L).
 
 %elements(Atoms,E):- is_list(Atoms),!,
 meets_dir(L,M):- atom(M),!,member(M,L),!.
@@ -606,7 +696,7 @@ py_to_str(PyObj,Str):-
    with_output_to(string(Str),py_pp(PyObj,[nl(false)])).
 
  tafs:-
-    atoms_from_space(Space, _),py_to_pl(VL,Space,AA), print_tree(aa(Pl,aa)),pl_to_py(VL,AA,Py), print_tree(py(Pl,py)),pl_to_py(VL,Py,Pl),print_tree(pl(Pl,pl))
+    atoms_from_space(Space, _),py_to_pl(VL,Space,AA), print_tree(aa(Pl,aa)),pl_to_rust(VL,AA,Py), print_tree(py(Pl,py)),pl_to_rust(VL,Py,Pl),print_tree(pl(Pl,pl))
     ,
     atoms_from_space(Space, [A]),py_to_pl(VL,A,AA),
     atoms_from_space(Space, [A]),py_obj_dir(A,D),writeq(D),!,py_to_pl(VL,D:get_object(),AA),writeq(AA),!,fail.
