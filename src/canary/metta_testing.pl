@@ -134,7 +134,7 @@ write_pass_fail(TestName,P,C,PASS_FAIL,G1,G2):-
       once(getenv('HTML_FILE',HTML_OUT);sformat(HTML_OUT,'~w.metta.html',[Base])),
       compute_html_out_per_test(HTML_OUT,TEE_FILE,TestName,HTML_OUT_PerTest),
       get_last_call_duration(Duration),
-      format(Stream,'| ~w | ~w |[~w](https://logicmoo.org/public/metta/reports/~w#~w) | ~@ | ~@ | ~@ | ~w | ~w |~n',
+      format(Stream,'| ~w | ~w |[~w](https://logicmoo.org/public/metta/~w#~w) | ~@ | ~@ | ~@ | ~w | ~w |~n',
       [TestName,PASS_FAIL,TestName,HTML_OUT,TestName,
         trim_gstring_bar_I(write_src_woi([P,C]),400),
         trim_gstring_bar_I(write_src_woi(G1),200),
