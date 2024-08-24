@@ -74,7 +74,7 @@
 is_win64:- current_prolog_flag(windows,_).
 is_win64_ui:- is_win64,current_prolog_flag(hwnd,_).
 
-
+dont_change_streams:- true.
 
 :- dynamic(user:is_metta_src_dir/1).
 :- prolog_load_context(directory,Dir),
@@ -208,6 +208,7 @@ is_compatio0:- is_mettalog,!,fail.
 is_compatio0:- !.
 
 keep_output:- !.
+keep_output:- dont_change_streams,!.
 keep_output:- is_win64,!.
 keep_output:- is_mettalog,!.
 keep_output:- is_testing,!.
@@ -222,6 +223,7 @@ original_user_error(X):- stream_property(X,file_no(2)).
 unnullify_output:- current_output(MFS),  original_user_output(OUT), MFS==OUT, !.
 unnullify_output:- original_user_output(MFS), set_prolog_IO(user_input,MFS,user_error).
 
+null_output(MFS):- dont_change_streams,!, original_user_output(MFS),!.
 null_output(MFS):- use_module(library(memfile)),
   new_memory_file(MF),open_memory_file(MF,append,MFS).
 :- dynamic(null_user_output/1).
@@ -230,11 +232,12 @@ null_output(MFS):- use_module(library(memfile)),
 
 
 nullify_output:- keep_output,!.
+nullify_output:- dont_change_streams,!.
 nullify_output:- nullify_output_really.
 nullify_output_really:- current_output(MFS), null_user_output(OUT),  MFS==OUT, !.
 nullify_output_really:- null_user_output(MFS), set_prolog_IO(user_input,MFS,MFS).
 
-%set_output_stream :- !.
+set_output_stream :- dont_change_streams,!.
 set_output_stream :- \+ keep_output -> nullify_output;  unnullify_output.
 :- set_output_stream.
 % :- nullify_output.
@@ -970,7 +973,7 @@ load_hook(Load,Hooked):-
 %rtrace_on_error(G):- catch(G,_,fail).
 rtrace_on_error(G):-
   catch_err(G,E,
-   (notrace,
+   (%notrace,
     write_src_uo(E=G),
     %catch(rtrace(G),E,throw(E)),
     catch(rtrace(G),E,throw(give_up(E=G))),
@@ -982,7 +985,7 @@ rtrace_on_failure(G):-
                        ignore(rtrace(G)),
                        write_src_uo(rtrace_on_failure(G)),
                        !,fail)),E,
-   (notrace,
+   (%notrace,
     write_src_uo(E=G),
     %catch(rtrace(G),E,throw(E)),
     catch(rtrace(G),E,throw(give_up(E=G))),
@@ -994,7 +997,7 @@ rtrace_on_failure_and_break(G):-
                        ignore(rtrace(G)),
                        write_src(rtrace_on_failure(G)),
                        !,break,fail)),E,
-   (notrace,
+   (%notrace,
     write_src_uo(E=G),
     %catch(rtrace(G),E,throw(E)),
     catch(rtrace(G),E,throw(give_up(E=G))),
@@ -1787,17 +1790,19 @@ qsave_program:-  ensure_mettalog_system, next_save_name(Name),
 :- ensure_loaded(metta_server).
 :- initialization(update_changed_files,restore).
 
-nts:- !.
+%nts:- !.
 nts:-  redefine_system_predicate(system:notrace/1),
   abolish(system:notrace/1),
   meta_predicate(system:notrace(0)),
   asserta((system:notrace(G):- (!,once(G)))).
 nts:- !.
 
+:- nts.
+
 nts0:-  redefine_system_predicate(system:notrace/0),
   abolish(system:notrace/0),
   asserta((system:notrace:- wdmsg(notrace))).
-
+%:- nts0.
 
 override_portray:-
     forall(
@@ -1833,6 +1838,7 @@ fix_message_hook:-
 
 %:- ensure_loaded('../../library/genome/flybase_loader').
 
+:- ensure_loaded(metta_python).
 :- initialization(use_corelib_file).
 
 :- ignore(((
