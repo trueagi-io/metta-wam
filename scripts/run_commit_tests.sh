@@ -29,7 +29,7 @@ echo Running baseline_compat tests to $output
 #cat ./reports/SHARED.UNITS.PREV.md > /tmp/SHARED.UNITS
 cat /dev/null > /tmp/SHARED.UNITS
 #mettalog --output=$output --test --clean tests/baseline_compat/anti-regression/comma_is_not_special.metta
-( mettalog --test --clean --output=$output  tests/baseline_compat/module-system/ )
+mettalog --test --clean --output=$output  tests/baseline_compat/module-system/
 # Stuff just generated
 cat $SHARED_UNITS >> /tmp/SHARED.UNITS
 # Tests ran locally by developer (temporary to see what a nightly with 1000+ tests looks like)
