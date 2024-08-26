@@ -14,6 +14,11 @@ process_file() {
     #local file=$(find_override_file "$1")
     local file="$1"
 
+    # Check if the file path contains a tilde
+    if [[ "$file" == *"~"* ]]; then
+       return 7
+    fi
+
     local absfile=$(readlink -f "$file")
 
     local extra_args="${@:2}"
@@ -32,6 +37,10 @@ process_file() {
     DEBUG "Testing: $file"
     cd "$METTALOG_DIR"
     DEBUG "Output: $file_html"
+    # Check if the file path contains a tilde
+    if [[ "$absfile" == *"~"* ]]; then
+       DEBUG "${RED}Warn on tilda'd path?${NC}"
+    fi
     DEBUG ""
     DEBUG ""
     DEBUG "${BLUE}${BOLD}===========================================================================${NC}"
@@ -674,7 +683,6 @@ while [ "$#" -gt 0 ]; do
 done
 
 source ./scripts/ensure_venv
-python3 -m pip install ansi2html
 
 extract_all_parent_directories
 
