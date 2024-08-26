@@ -1,1 +1,10 @@
-timeout: failed to run command 'time': No such file or directory
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 61 time metta /opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/hyperon-wam/reports/extended_compat/metta-examples/recursion-schemes/src/examples/expression.metta
+[()]
+[(evalExpr (mapExpr (cata mapExpr evalExpr) (unFix (Fix (Plus (Fix (Plus (Fix (Var X)) (Fix (Const 2)))) (Fix (Const 40)))))))]
+[(Fix (Plus (Fix (Const 2)) (Fix (Const 2))))]
+[9]
+[(diff (mapExpr (para_pair mapExpr diff) (unFix (Fix (Plus (Fix (Var X)) (Fix (Const 1)))))))]
+[(Fix $Y), (1p $x#537), (2t $x#538)]
+[(Fix (Plus (Fix (Plus (Fix (Const 1)) (Fix (Var X)))) (Fix (Plus (Fix (Const 1)) (Fix (Var X))))))]
+0.34user 0.01system 0:00.35elapsed 100%CPU (0avgtext+0avgdata 33712maxresident)k
+0inputs+0outputs (0major+3839minor)pagefaults 0swaps
