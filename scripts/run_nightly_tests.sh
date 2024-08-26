@@ -16,29 +16,42 @@ done
 
 # generate the output directory with timestamp
 if [ -z $timestamp ]; then
-    timestamp=$(date +"%Y-%m-%dT%H:%M:%S")
+    timestamp=$(date +"%Y-%m-%d")
 fi
-output=./reports/tests_output/baseline-compat-$timestamp/
+output=./reports/BY_DATE/$timestamp
+export METTALOG_OUTPUT=$(realpath $output)
+export SHARED_UNITS=$METTALOG_OUTPUT/SHARED.UNITS
+
+if [ ! -d $output ]; then
+    mkdir -p $output
+fi
+
+touch $SHARED_UNITS
 
 # run the tests
-mkdir -p $output
-echo "Running Precommit tests to $output"
+
+echo "Running nightly tests to $output with SHARED_UNITS=$SHARED_UNITS"
 
 #cat ./reports/SHARED.UNITS.PREV.md > /tmp/SHARED.UNITS
 
 
 # this function hides output without the command being aware of the redirection
 run_mettalog_tests() {
-    
+
+    local max_time_per_test=$1
     local test_dir=$2
     shift 2  # Shift the first two arguments so the rest can be captured as additional arguments
 
     # Capture the rest of the arguments
     local rest_args="$@"
 
-    # Run the command with script, using tee and grep for filtered output
-    script -q -c "mettalog --continue --output=$output --test --timeout=$max_time_per_test $test_dir $rest_args" /dev/null | \
-       tee >(grep -Ei --line-buffered '_CMD:|es[:] ' >&2) > /dev/null
+    # Run the command
+    eval "mettalog --continue --output=$output --test --timeout=$max_time_per_test $test_dir $rest_args"
+
+    if [ $? -eq 4 ]; then
+	exit 4
+    fi
+
 }
 
 
@@ -121,30 +134,28 @@ run_single_timed_unit() {
 #IF_REALLY_DO return run_single_timed_unit "$TEST_CMD" "$file_html" "$file" "Under $METTALOG_MAX_TIME seconds"
 
 
-cat /dev/null > /tmp/SHARED.UNITS
-
-SKIP_LONG=1
+SKIP_LONG=0
 
 # 23+ tests (~30 seconds)
 run_mettalog_tests 40 tests/baseline_compat/module-system/
 
 # 200+ tests (~4 minutes)
 run_mettalog_tests 40 tests/baseline_compat/hyperon-experimental_scripts/
-
 run_mettalog_tests 40 tests/baseline_compat/hyperon-mettalog_sanity/
 
 # 50+ tests (~2 minutes)
 run_mettalog_tests 40 tests/baseline_compat/metta-morph_tests/
 
-
 # Check if SKIP_LONG is not set to 1
 if [ "$SKIP_LONG" != "1" ]; then
+
 
     # 50+ tests (~2 minutes)
     run_mettalog_tests 40 tests/baseline_compat/anti-regression/
 
     # 400+ tests (~7 minutes)
     run_mettalog_tests 40 tests/baseline_compat/
+
 
     run_mettalog_tests 40 tests/nars_interp/
 
@@ -159,7 +170,7 @@ if [ "$SKIP_LONG" != "1" ]; then
     # run_mettalog_tests 40 tests/python_compat/
 fi
 
-cat /tmp/SHARED.UNITS
+cat $SHARED_UNITS > /tmp/SHARED.UNITS
 
 # if ran locally on our systme we might want to commit these
 cat /tmp/SHARED.UNITS > ./reports/SHARED.UNITS.PREV.md

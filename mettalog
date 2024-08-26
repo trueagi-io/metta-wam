@@ -1,5 +1,6 @@
 #!/bin/bash
 
+source ./scripts/ensure_venv
 generate_junit_report=0
 junit_report_file=""
 start_time=0
@@ -18,7 +19,7 @@ compatio=false
 RC_OPTIONS=()
 TIMEOUT=0
 verbose="${VERBOSE:-0}"  # Use the VERBOSE environment variable or default to '0' (not verbose)
-export OUTPUT_DIR="./"
+OUTPUT_DIR="${METTALOG_OUTPUT}"
 
 use_docker=auto
 repl_flag=auto
@@ -655,6 +656,7 @@ function handle_args {
 	        add_to_list "$arg" METTALOG_OPTIONS
 		if [[ "$arg" =~ ^--output=(.*)$ ]]; then
 		    OUTPUT_DIR="${BASH_REMATCH[1]}"
+		    export METTALOG_OUTPUT="${OUTPUT_DIR}"
 		fi
                 continue
                 ;;
@@ -1083,6 +1085,7 @@ if [[ "$html_flag" == "enable" ]]; then
     if [ ! -z "$HTML_OUT" ];then
         HTML_OUT=$(realpath --relative-to="$(pwd)" "$HTML_OUT")
         if [ ! -z "$OUTPUT_DIR" ] ;then
+	    export METTALOG_OUTPUT="${OUTPUT_DIR}"
             HTML_OUT="${OUTPUT_DIR}/${HTML_OUT}"
         fi
 	export HTML_FILE="${HTML_OUT}"
@@ -1112,6 +1115,9 @@ if [[ "$html_flag" == "enable" ]]; then
 else
 	[[ "$wants_print_help" == "1" ]] && { print_help; [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
 	[[ -n "${EXIT_SCRIPT+x}" ]] && { [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
+        if [ ! -z "$OUTPUT_DIR" ] ;then
+	    export METTALOG_OUTPUT="${OUTPUT_DIR}"
+        fi
 	if [[ "$contains_halt" == "true" ]]; then
 		do_DEBUG "METTA_CMD: $METTA_CMD"
 	fi

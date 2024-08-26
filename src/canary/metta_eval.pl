@@ -136,7 +136,7 @@ evals_to(XX,Y):- Y=='True',!, is_True(XX),!.
 do_expander('=',_,X,X):-!.
 do_expander(':',_,X,Y):- !, get_type(X,Y)*->X=Y.
 
-'get_type'(Arg,Type):- 'get-type'(Arg,Type).
+get_type(Arg,Type):- eval_H(['get-type',Arg],Type).
 
 
 eval_true(X):- \+ iz_conz(X), callable(X), call(X).
