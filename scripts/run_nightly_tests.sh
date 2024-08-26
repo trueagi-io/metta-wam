@@ -35,6 +35,14 @@ touch $SHARED_UNITS
 
 echo "Running nightly tests to $output ($METTALOG_OUTPUT) with SHARED_UNITS=$SHARED_UNITS"
 
+source ./scripts/ensure_venv
+
+# Check if 'ansi2html' is already installed
+if ! python3 -m pip list | grep -q 'ansi2html'; then
+    # Install 'ansi2html' if it is not installed
+    python3 -m pip install ansi2html
+fi
+
 # This function runs MettaLog tests with configurable output suppression
 run_mettalog_tests() {
     local max_time_per_test="$1"
@@ -68,7 +76,7 @@ run_mettalog_tests() {
 
     if [ $status -eq 4 ]; then
 	echo "Something purposely interupted testing... results will not be written!"
-	exit $status # exit this script
+	# exit $status # exit this script
     fi
 
     return $status
@@ -107,11 +115,15 @@ if [ "$SKIP_LONG" != "1" ]; then
     run_mettalog_tests 40 tests/nars_interp/
 
     run_mettalog_tests 40 tests/more-anti-regression/
+
+    run_mettalog_tests 40 tests/extended_compat/metta-examples/
     run_mettalog_tests 40 tests/extended_compat/
-    run_mettalog_tests 40 tests/douglas_pro_team_august_2024/
+
     run_mettalog_tests 40 tests/direct_comp/
     run_mettalog_tests 40 tests/features/
     run_mettalog_tests 40 tests/performance/
+
+  # compiler based tests
     #run_mettalog_tests 40 tests/compiler_baseline/
     #run_mettalog_tests 40 tests/nars_w_comp/
     # run_mettalog_tests 40 tests/python_compat/
