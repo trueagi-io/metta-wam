@@ -346,8 +346,12 @@ py_ppp(V):-flush_output, with_output_to(codes(Chars), once(py_pp(V))),
 %py_ppp(V):-metta_py_pp(V).
 
 % Evaluations and Iterations
-load_hyperon_module:- py_module(hyperon_module,
-'
+:- volatile(did_load_hyperon_module/0).
+:- dynamic(did_load_hyperon_module/0).
+load_hyperon_module:- did_load_hyperon_module,!.
+load_hyperon_module:- assert(did_load_hyperon_module),
+ py_module(hyperon_module,'
+
 from hyperon.base import Atom
 from hyperon.atoms import OperationAtom, E
 from hyperon.ext import register_tokens
@@ -370,6 +374,7 @@ runner = MeTTaVS()
 
 def rust_metta_run(obj):
     return runner.run(obj)
+
 ').
 
 
@@ -836,7 +841,7 @@ file_to_modname(Filename,ModName):- replace_in_string(["/"="."],Filename,ModName
 rust_metta_run(S,Run):- var(S),!,freeze(S,rust_metta_run(S,Run)).
 rust_metta_run(exec(S),Run):- \+ callable(S), string_concat('!',S,SS),!,rust_metta_run(SS,Run).
 rust_metta_run(S,Run):- \+ string(S),coerce_string(S,R),!,rust_metta_run(R,Run).
-rust_metta_run(I,O):- !, py_ocall(hyperon_module:rust_metta_run(I),O),!.
+rust_metta_run(I,O):- load_hyperon_module, !, py_ocall(hyperon_module:rust_metta_run(I),O),!.
 rust_metta_run(R,Run):- % run
   with_safe_argv((((
   %ensure_rust_metta(MeTTa),
