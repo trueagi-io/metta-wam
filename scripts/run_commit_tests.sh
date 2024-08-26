@@ -19,13 +19,13 @@ if [ -z $timestamp ]; then
     timestamp=$(date +"%Y-%m-%dT%H:%M:%S")
 fi
 output=./reports/tests_output/baseline-compat-$timestamp/
-export METTALOG_OUTPUT=$(realpath $output)
-export SHARED_UNITS=$METTALOG_OUTPUT/SHARED.UNITS
 
 # run the tests
 mkdir -p $output
+export METTALOG_OUTPUT=$(realpath $output)
+export SHARED_UNITS=$METTALOG_OUTPUT/SHARED.UNITS
 touch $SHARED_UNITS
-echo Running baseline_compat tests to $output
+echo Running baseline_compat tests to $output with METTALOG_OUTPUT=$METTALOG_OUTPUT and SHARED_UNITS=$SHARED_UNITS
 #cat ./reports/SHARED.UNITS.PREV.md > /tmp/SHARED.UNITS
 cat /dev/null > /tmp/SHARED.UNITS
 #mettalog --output=$output --test --clean tests/baseline_compat/anti-regression/comma_is_not_special.metta
