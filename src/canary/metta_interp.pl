@@ -411,10 +411,12 @@ set_is_unit_test(TF):-
  % if_t( \+ TF , set_prolog_flag(debug_on_interrupt,true)),
   !.
 
-fake_notrace(G):- tracing,!,notrace(G).
+:- meta_predicate fake_notrace(0).
+fake_notrace(G):- tracing,!,real_notrace(G).
 fake_notrace(G):- !,once(G).
+% `quietly/1` allows breaking in and inspection (real `no_trace/1` does not)
 fake_notrace(G):- quietly(G),!.
-real_notrace(Goal):-!,notrace(Goal).
+:- meta_predicate real_notrace(0).
 real_notrace(Goal) :-
     setup_call_cleanup('$notrace'(Flags, SkipLevel),
                        once(Goal),
@@ -423,7 +425,7 @@ real_notrace(Goal) :-
 
 :- dynamic(is_answer_output_stream/2).
 answer_output(Stream):- is_testing,original_user_output(Stream),!.
-answer_output(Stream):- !,original_user_output(Stream),!.
+answer_output(Stream):- !,original_user_output(Stream),!. % yes, the cut is on purpose
 answer_output(Stream):- is_answer_output_stream(_,Stream),!.
 answer_output(Stream):- tmp_file('answers',File),
    open(File,write,Stream,[encoding(utf8)]),
@@ -1617,7 +1619,7 @@ do_loon:-
 
    %if_t(is_compiled,ensure_mettalog_py),
           install_readline_editline,
-   nts,
+   %nts1,
    %install_ontology,
    metta_final,
    % ensure_corelib_types,
@@ -1732,14 +1734,16 @@ qsave_program:-  ensure_mettalog_system, next_save_name(Name),
 :- ensure_loaded(metta_server).
 :- initialization(update_changed_files,restore).
 
-%nts:- !.
-nts:-  redefine_system_predicate(system:notrace/1),
+nts1:- !. % disable redefinition
+nts1:-  redefine_system_predicate(system:notrace/1),
+  %listing(system:notrace/1),
   abolish(system:notrace/1),
+  dynamic(system:notrace/1),
   meta_predicate(system:notrace(0)),
   asserta((system:notrace(G):- (!,once(G)))).
-nts:- !.
+nts1:- !.
 
-:- nts.
+:- nts1.
 
 nts0:-  redefine_system_predicate(system:notrace/0),
   abolish(system:notrace/0),
@@ -1789,7 +1793,7 @@ fix_message_hook:-
    set_is_unit_test(UNIT_TEST),
    \+ prolog_load_context(reloading,true),
     initialization(loon(restore),restore),
-   % nts,
+   % nts1,
    metta_final
     ))).
 
