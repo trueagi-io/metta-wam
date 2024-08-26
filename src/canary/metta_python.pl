@@ -806,17 +806,28 @@ self_extend_py(Self,Module,File,R):-
   (nonvar(File)-> Use=File ; Use=Module),
   pybug('extend-py!'(Use)),
    %py_call(mettalog:use_mettalog()),
-  (Use==mettalog->true;(py_call(mettalog:load_functions(Use),R),pybug(R))),
+  (Use==mettalog->true;py_load_modfile(Use)),
   %listing(ensure_rust_metta/1),
   %ensure_mettalog_py,
   nb_setval('$py_ready','true'),
   %working_directory(PWD,PWD), py_add_lib_dir(PWD),
   %replace_in_string(["/"="."],Module,ToPython),
-  %py_call(mettalog:import_module_to_rust(ToPython)),
-  %sformat(S,'!(import! &self ~w)',[ToPython]),rust_metta_run(S),
+  %py_mcall(mettalog:import_module_to_rust(ToPython)),
+  %sformat(S,'!(import! &self ~w)',[Use]),rust_metta_run(S,R),
+  R = [],
   %py_module_exists(Module),
   %py_call(MeTTa:load_py_module(ToPython),Result),
   true)),!.
+
+py_load_modfile(Use):- py_mcall(mettalog:load_functions(Use),R),!,pybug(R).
+py_load_modfile(Use):- exists_directory(Use),!,directory_file_path(Use,'_init_.py',File),py_load_modfile(File).
+py_load_modfile(Use):- file_to_modname(Use,Mod),read_file_to_string(Use,Src),!,py_module(Mod,Src).
+
+file_to_modname(Filename,ModName):- symbol_concat('../',Name,Filename),!,file_to_modname(Name,ModName).
+file_to_modname(Filename,ModName):- symbol_concat('./',Name,Filename),!,file_to_modname(Name,ModName).
+file_to_modname(Filename,ModName):- symbol_concat(Name,'/_init_.py',Filename),!,file_to_modname(Name,ModName).
+file_to_modname(Filename,ModName):- symbol_concat(Name,'.py',Filename),!,file_to_modname(Name,ModName).
+file_to_modname(Filename,ModName):- replace_in_string(["/"="."],Filename,ModName).
 
 %import_module_to_rust(ToPython):- sformat(S,'!(import! &self ~w)',[ToPython]),rust_metta_run(S).
 rust_metta_run(S,Run):- var(S),!,freeze(S,rust_metta_run(S,Run)).
