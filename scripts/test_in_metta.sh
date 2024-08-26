@@ -2,10 +2,6 @@
 
 SHOULD_EXIT=0
 
-if [ -z "$SHARED_UNITS" ]; then
-export SHARED_UNITS=/tmp/SHARED.UNITS
-fi
-
 DEBUG_WHY() {
    DEBUG "${GREEN}WHY: ${BOLD}${*}${NC}"
 }
@@ -24,6 +20,8 @@ process_file() {
     shift
 
     export file_html="${METTALOG_OUTPUT}/${file}.html"
+
+    export METTALOG_OUTPUT="${METTALOG_OUTPUT}"
 
     export HTML_OUT="${file}.html"
 
@@ -182,10 +180,15 @@ process_file() {
                 DEBUG_MESSAGE="${RED}Killed (definitely due to timeout) (EXITCODE=$TEST_EXIT_CODE) after $EXTRA_INFO seconds: $TEST_CMD${NC}"
                 [ "$if_failures" -eq 1 ] && SHOULD_DELETE_HTML=1
                 PASS_OR_FAIL="FAIL"
-        elif [[ $TEST_EXIT_CODE -eq 4 ]] || [[ $TEST_EXIT_CODE -eq 134 ]]; then
+        elif [ $TEST_EXIT_CODE -eq 134 ]; then
+                DEBUG_MESSAGE="${RED}Test aborted by user (EXITCODE=$TEST_EXIT_CODE) $EXTRA_INFO: $TEST_CMD${NC}"
+                SHOULD_DELETE_HTML=1
+                PASS_OR_FAIL="FAIL"
+        elif [ $TEST_EXIT_CODE -eq 4 ]; then
                 DEBUG_MESSAGE="${RED}Stopping tests (EXITCODE=$TEST_EXIT_CODE) $EXTRA_INFO: $TEST_CMD${NC}"
                 SHOULD_DELETE_HTML=1
                 PASS_OR_FAIL="FAIL"
+		exit 4
         elif [ $TEST_EXIT_CODE -ne 7 ]; then
                 DEBUG_MESSAGE="${YELLOW}Completed (EXITCODE=$TEST_EXIT_CODE) $EXTRA_INFO: $TEST_CMD${NC}"
                 PASS_OR_FAIL="FAIL"
@@ -216,8 +219,8 @@ process_file() {
             # Redirect debug messages to both the logfile and console
             echo "$DEBUG_MESSAGE" | tee -a "$LOGFILE"
 
-            # Write the line to /tmp/SHARED.UNITS
-            echo "| $TEST_NAME | $PASS_OR_FAIL | [$TEST_NAME]($HTML_LINK) | $TEST_CMD | $TEST_EXIT_CODE | 7 | $ELAPSED_TIME | $LOGFILE |" >> /tmp/SHARED.UNITS
+            # Write the line to "$SHARED_UNITS"
+            echo "| $TEST_NAME | $PASS_OR_FAIL | [$TEST_NAME]($HTML_LINK) | $TEST_CMD | $TEST_EXIT_CODE | 7 | $ELAPSED_TIME | $LOGFILE |" >> "${SHARED_UNITS}"
 
             # Delete the HTML file if it was planned for deletion
             if [ $SHOULD_DELETE_HTML -eq 1 ]; then
@@ -670,6 +673,7 @@ while [ "$#" -gt 0 ]; do
     shift
 done
 
+source ./scripts/ensure_venv
 python3 -m pip install ansi2html
 
 extract_all_parent_directories
@@ -691,6 +695,13 @@ done
 if [ $show_help -eq 1 ]; then
   show_help
 fi
+
+if [ -z "$SHARED_UNITS" ]; then
+    if [ -d "$METTALOG_OUTPUT" ]; then
+	export SHARED_UNITS=$(realpath $METTALOG_OUTPUT)/SHARED.UNITS
+    fi
+fi
+touch $SHARED_UNITS
 
 # Delete HTML files if the clean flag is set
 if [ $clean -eq 1 ]; then
@@ -716,6 +727,7 @@ INTERP_SRC_DIR="$(realpath "${INTERP_SRC_DIR}")"
 
 DEBUG "INTERP_SRC_DIR=$INTERP_SRC_DIR"
 DEBUG "METTALOG_OUTPUT=$METTALOG_OUTPUT"
+DEBUG "SHARED_UNITS=$SHARED_UNITS"
 
 if [[ ! -f "${METTALOG_OUTPUT}/src/" ]]; then
   :
