@@ -63,7 +63,7 @@ fi
 echo "$DEBUG_MESSAGE" | tee -a "$LOGFILE"
 
 # Write the line to /tmp/SHARED.UNITS
-echo "| $TEST_NAME | $PASS_OR_FAIL | [$TEST_NAME]($HTML_LINK) | $TEST_CMD | $TEST_EXIT_CODE | 7 | $ELAPSED_TIME seconds | $LOGFILE |" >> /tmp/SHARED.UNITS
+echo "| $TEST_NAME | $PASS_OR_FAIL | [$TEST_NAME]($HTML_LINK) | $TEST_CMD | $TEST_EXIT_CODE | 7 | $ELAPSED_TIME | $LOGFILE |" >> /tmp/SHARED.UNITS
 
 # Delete the HTML file if it was planned for deletion
 if [ $SHOULD_DELETE_HTML -eq 1 ]; then
