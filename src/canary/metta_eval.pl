@@ -1826,7 +1826,9 @@ eval_40(_Eq,_RetType,_Depth,_Self,['py-list',Arg],Res):- !,
 eval_40(_Eq,_RetType,_Depth,_Self,['py-dict',Arg],Res):- !,
   must_det_ll((py_dict(Arg,Res))).
 eval_40(_Eq,_RetType,_Depth,_Self,['py-tuple',Arg],Res):- !,
-  must_det_ll((py_tuple(Arg,Res))).
+    must_det_ll((py_tuple(Arg,Res))).
+eval_40(_Eq,_RetType,_Depth,_Self,['py-eval',Arg],Res):- !,
+    must_det_ll((py_eval(Arg,Res))).
 
 eval_40(Eq,RetType,Depth,Self,['length',L],Res):- !, eval_args(Depth,Self,L,LL),
    (is_list(LL)->length(LL,Res);Res=1),

@@ -387,19 +387,19 @@ get_str_rep(I,O):- py_mbi(get_str_rep(I),O),!.
 py_atom(I,O):- var(I),!,O=I.
 py_atom([I|Is],O):-!, py_dot(I,II),py_dot_from(II,Is,O),!.
 py_atom(I,O):- atomic(I),!,py_atomic(I,O).
-py_atom(I,O):- py_mcall(I,O),!.
+py_atom(I,O):- py_ocall(I,O),!.
 py_atom(I,O):- I=O.
 
 py_atom_type(I,_Type,O):- var(I),!,O=I.
 py_atom_type([I|Is],_Type,O):-!, py_dot(I,II),py_dot_from(II,Is,O).
 py_atom_type(I,_Type,O):- atomic(I),!,py_atomic(I,O).
-py_atom_type(I,_Type,O):- py_mcall(I,O),!.
+py_atom_type(I,_Type,O):- py_ocall(I,O),!.
 py_atom_type(I,_Type,O):- I=O.
 
-py_atomic([],O):-py_mcall("[]",O),!.
+py_atomic([],O):-py_ocall("[]",O),!.
 py_atomic(I,O):- py_is_object(I),!,O=I.
-py_atomic(I,O):- py_mcall(I,O),!.
 py_atomic(I,O):- string(I),py_eval(I,O),!.
+py_atomic(I,O):- py_ocall(I,O),!.
 py_atomic(I,O):- py_eval(I,O),!.
 py_atomic(I,O):- \+ symbol_contains(I,'('),atomic_list_concat([A,B|C],'.',I),py_dot([A,B|C],O),!.
 py_atomic(I,O):- string(I), py_dot(I,O),!.
@@ -408,7 +408,7 @@ py_atomic(I,O):- I=O.
 get_globals(O):- py_mbi(get_globals(),O).
 get_locals(O):- py_mbi(get_locals(),O).
 merge_modules_and_globals(O):- py_mbi(merge_modules_and_globals(),O).
-py_eval(I,O):- py_mbi(eval_string(I),O).
+py_eval(I,O):- py_obi(eval_string(I),O).
 py_eval(I):- py_eval(I,O),pybug(O).
 py_exec(I,O):- py_mbi(exec_string(I),O).
 py_exec(I):- py_exec(I,O),pybug(O).
@@ -430,7 +430,7 @@ py_eval_from(From,[I|Is],O):- !, py_dot_from(From,I,M),py_eval_from(M,Is,O).
 py_eval_from(From,I,O):- atomic_list_concat([A,B|C],'.',I),!,py_eval_from(From,[A,B|C],O).
 py_eval_from(From,I,O):- py_fcall(From,I,O).
 
-py_fcall(From,I,O):- py_mcall(From:I,O).
+py_fcall(From,I,O):- py_ocall(From:I,O).
 
 ensure_space_py(Space,GSpace):- py_is_object(Space),!,GSpace=Space.
 ensure_space_py(Space,GSpace):- var(Space),ensure_primary_metta_space(GSpace), Space=GSpace.
@@ -669,14 +669,14 @@ pl_to_rust(_VL,Sym,Py):- py_call('hyperon.atoms':'ValueAtom'(Sym),Py),!.
 py_list(MeTTa,PyList):- pl_to_py(MeTTa,PyList).
 
 py_tuple(O,Py):- py_ocall(tuple(O),Py),!.
-%py_tuple(O,Py):- py_mbi(py_tuple(O),Py),!.
+py_tuple(O,Py):- py_obi(py_tuple(O),Py),!.
 
-%py_dict(O,Py):- catch(py_is_dict(O),_,fail),!,O=Py.
-py_dict(O,Py):- py_mcall(dict(O),Py),!.
+py_dict(O,Py):- catch(py_is_py_dict(O),_,fail),!,O=Py.
+py_dict(O,Py):- py_ocall(dict(O),Py),!.
 
 % ?- py_list([1, 2.0, "string"], X),py_type(X,Y).
 % ?- py_list_index([1, 2.0, "string"], X),py_type(X,Y).
-py_nth(L,Nth,E):- py_mbi(py_nth(L,Nth),E).
+py_nth(L,Nth,E):- py_obi(py_nth(L,Nth),E).
 py_len(L,E):- py_mbi(py_len(L),E).
 py_o(O,Py):- py_obi(identity(O),Py),!.
 py_m(O,Py):- py_mbi(identity(O),Py),!.
@@ -822,7 +822,7 @@ self_extend_py(Self,Module,File,R):-
   %py_call(MeTTa:load_py_module(ToPython),Result),
   true)),!.
 
-py_load_modfile(Use):- py_mcall(mettalog:load_functions(Use),R),!,pybug(R).
+py_load_modfile(Use):- py_ocall(mettalog:load_functions(Use),R),!,pybug(R).
 py_load_modfile(Use):- exists_directory(Use),!,directory_file_path(Use,'_init_.py',File),py_load_modfile(File).
 py_load_modfile(Use):- file_to_modname(Use,Mod),read_file_to_string(Use,Src,[]),!,py_module(Mod,Src).
 
@@ -836,7 +836,7 @@ file_to_modname(Filename,ModName):- replace_in_string(["/"="."],Filename,ModName
 rust_metta_run(S,Run):- var(S),!,freeze(S,rust_metta_run(S,Run)).
 rust_metta_run(exec(S),Run):- \+ callable(S), string_concat('!',S,SS),!,rust_metta_run(SS,Run).
 rust_metta_run(S,Run):- \+ string(S),coerce_string(S,R),!,rust_metta_run(R,Run).
-rust_metta_run(I,O):- !, py_mcall(hyperon_module:rust_metta_run(I),O),!.
+rust_metta_run(I,O):- !, py_ocall(hyperon_module:rust_metta_run(I),O),!.
 rust_metta_run(R,Run):- % run
   with_safe_argv((((
   %ensure_rust_metta(MeTTa),
