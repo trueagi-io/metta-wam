@@ -102,7 +102,29 @@ py_dump:- py_call(traceback:print_exc()).
 py_call_c(G):- py_catch(py_call(G)).
 py_call_c(G,R):- py_catch(py_call(G,R)).
 
-py_is_module(M):-notrace((with_safe_argv(catch((py_call(M,X),py_type(X,module)),_,fail)))).
+py_is_module(M):-notrace((with_safe_argv(py_is_module_unsafe(M)))).
+
+py_is_module_unsafe(M):- py_is_object(M),!,py_type(M,module).
+py_is_module_unsafe(M):- catch((py_call(M,X),py_type(X,module)),_,fail).
+
+py_is_py(_):- \+ py_is_enabled, !, fail.
+py_is_py(V):- var(V),!, get_attr(V,pyobj,_),!.
+py_is_py(V):- atomic(V), !, py_is_object(V),!.
+py_is_py(V):- \+ callable(V),!,fail.
+py_is_py(V):- is_list(V),!,fail.
+py_is_py(V):- py_is_tuple(V),!.
+py_is_py(V):- py_is_py_dict(V),!.
+py_is_py(V):- py_is_list(V),!.
+
+py_resolve(V,Py):- var(V),!, get_attr(V,pyobj,Py),!.
+py_resolve(V,Py):- \+ compound(V),!,py_is_object(V),Py=V.
+py_resolve(V,Py):- is_list(V),!,fail,maplist(py_resolve,V,Py).
+py_resolve(V,Py):- V=Py.
+
+py_is_tuple(X):- py_resolve(X,V), py_tuple(V,T),py_tuple(T,TT),T==TT, \+ py_type(V,str).
+py_is_py_dict(X):- py_resolve(X,V), py_dict(V,T), py_dict(T,TT), T==TT.
+py_is_list(X):- py_resolve(X,V), py_type(V,list).
+%py_is_list(V):- py_is_tuple(V).
 
 % Evaluations and Iterations
 load_builtin_module:- py_module(builtin_module,

@@ -140,19 +140,7 @@ unlooped_fbug(W,Mesg):-
     once(Mesg),nb_setval(W,false)),nb_setval(W,false).
 
 :- dynamic(py_is_enabled/0).
-py_is_enabled:- predicate_property(py_is_object(_),foreign), asserta((py_is_enabled:-!)).
-
-py_is_py(_):- \+ py_is_enabled, !, fail.
-py_is_py(V):-var(V), get_attr(V,pyobj,X),!,nonvar(X),!.
-py_is_py(V):-atom(V), py_is_object(V),!.
-py_is_py(V):- is_list(V),!,fail.
-py_is_py(V):-py_is_tuple(V),!.
-py_is_py(V):-py_is_pdict(V),!.
-
-py_is_tuple(V):- \+ var(V), \+ is_list(V), py_tuple(V,T),py_tuple(T,TT),T==TT, \+ py_type(V,str).
-py_is_pdict(V):- \+ var(V),  py_dict(V,T),py_dict(T,TT),T==TT.
-py_is_list(V):-  \+ var(V), \+ is_list(V),py_type(V,list).
-%py_is_list(V):- py_is_tuple(V).
+py_is_enabled:- predicate_property(py_ppp(_),foreign), asserta((py_is_enabled:-!)).
 
 %write_src(V):-  !, \+ \+ quietly(pp_sex(V)),!.
 write_src(V):- \+ \+ notrace(pp_sex(V)),!.
@@ -161,7 +149,7 @@ pp_sex(V):- pp_sexi(V),!.
 % Various 'write_src' and 'pp_sex' rules are handling the writing of the source,
 % dealing with different types of values, whether they are lists, atoms, numbers, strings, compounds, or symbols.
 pp_sexi(V):- is_final_write(V),!.
-pp_sexi(V):- py_is_py(V),!,py_ppp(V),!.
+pp_sexi(V):- py_is_enabled,py_is_py(V),!,py_ppp(V),!.
 pp_sexi(V):- is_dict(V),!,print(V).
 pp_sexi((USER:Body)) :- USER==user,!, pp_sex(Body).
 pp_sexi(V):- allow_concepts,!,with_concepts('False',pp_sex(V)),flush_output.
