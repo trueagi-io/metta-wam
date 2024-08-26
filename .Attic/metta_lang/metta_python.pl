@@ -122,7 +122,8 @@ py_resolve(V,Py):- is_list(V),!,fail,maplist(py_resolve,V,Py).
 py_resolve(V,Py):- V=Py.
 
 py_is_tuple(X):- py_resolve(X,V), py_tuple(V,T),py_tuple(T,TT),T==TT, \+ py_type(V,str).
-py_is_py_dict(X):- py_resolve(X,V), py_dict(V,T), py_dict(T,TT), T==TT.
+py_is_py_dict(X):- atomic(X),py_is_object(X),py_type(X,dict).
+%py_is_py_dict(X):- py_resolve(X,V), py_dict(V,T), py_dict(T,TT), T==TT.
 py_is_list(X):- py_resolve(X,V), py_type(V,list).
 %py_is_list(V):- py_is_tuple(V).
 
@@ -666,10 +667,12 @@ pl_to_rust(_VL,Sym,Py):- py_is_object(Sym),py_call('hyperon.atoms':'ValueAtom'(S
 pl_to_rust(_VL,Sym,Py):- py_call('hyperon.atoms':'ValueAtom'(Sym),Py),!.
 
 py_list(MeTTa,PyList):- pl_to_py(MeTTa,PyList).
-py_tuple(O,Py):- py_mcall(tuple(O),Py),!.
-py_tuple(O,Py):- py_mbi(py_tuple(O),Py),!.
+
+py_tuple(O,Py):- py_ocall(tuple(O),Py),!.
+%py_tuple(O,Py):- py_mbi(py_tuple(O),Py),!.
+
+%py_dict(O,Py):- catch(py_is_dict(O),_,fail),!,O=Py.
 py_dict(O,Py):- py_mcall(dict(O),Py),!.
-py_dict(O,Py):- catch(py_is_dict(O),_,fail),!,O=Py.
 
 % ?- py_list([1, 2.0, "string"], X),py_type(X,Y).
 % ?- py_list_index([1, 2.0, "string"], X),py_type(X,Y).
@@ -821,7 +824,7 @@ self_extend_py(Self,Module,File,R):-
 
 py_load_modfile(Use):- py_mcall(mettalog:load_functions(Use),R),!,pybug(R).
 py_load_modfile(Use):- exists_directory(Use),!,directory_file_path(Use,'_init_.py',File),py_load_modfile(File).
-py_load_modfile(Use):- file_to_modname(Use,Mod),read_file_to_string(Use,Src),!,py_module(Mod,Src).
+py_load_modfile(Use):- file_to_modname(Use,Mod),read_file_to_string(Use,Src,[]),!,py_module(Mod,Src).
 
 file_to_modname(Filename,ModName):- symbol_concat('../',Name,Filename),!,file_to_modname(Name,ModName).
 file_to_modname(Filename,ModName):- symbol_concat('./',Name,Filename),!,file_to_modname(Name,ModName).
