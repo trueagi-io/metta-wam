@@ -56,7 +56,7 @@ create_venv() {
 
 # Main logic of the script
 if is_inside_venv; then
-    echo "Script is running inside a virtual environment: $VIRTUAL_ENV"
+    : #echo "Script is running inside a virtual environment: $VIRTUAL_ENV"
 else
     echo "Script is not running inside a virtual environment."
     create_venv
