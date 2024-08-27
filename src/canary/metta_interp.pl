@@ -54,7 +54,7 @@
 :- encoding(utf8).
 :- set_prolog_flag(encoding, utf8).
 :- nb_setval(cmt_override,lse('; ',' !(" ',' ") ')).
-:- ensure_loaded(swi_support).
+:- set_prolog_flag(source_search_working_directory,true).
 :- set_prolog_flag(backtrace,true).
 :- set_prolog_flag(backtrace_depth,100).
 :- set_prolog_flag(backtrace_goal_dept,100).
@@ -62,6 +62,7 @@
 :- set_prolog_flag(write_attributes,portray).
 :- set_prolog_flag(debug_on_interrupt,true).
 :- set_prolog_flag(debug_on_error,true).
+:- ensure_loaded(swi_support).
 %:- set_prolog_flag(compile_meta_arguments,control).
 :- (prolog_load_context(directory, Value);Value='.'), absolute_file_name('../packs/',Dir,[relative_to(Value)]),
     atom_concat(Dir,'predicate_streams',PS),
