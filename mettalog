@@ -960,7 +960,7 @@ STDIO_OPTIONS=()
 set_io_flags STDIO_OPTIONS
 
 # Generate the final command
-METTA_CMD="$MLOG --python=$python_flag ${PRE_METTALOG_OPTIONS[*]} ${METTALOG_OPTIONS[*]} ${METTALOG_OPTIONS_LAST[*]} ${STDIO_OPTIONS[*]}"
+METTA_CMD="$MLOG -- --python=$python_flag ${PRE_METTALOG_OPTIONS[*]} ${METTALOG_OPTIONS[*]} ${METTALOG_OPTIONS_LAST[*]} ${STDIO_OPTIONS[*]}"
 
 
 OS=$(uname)
