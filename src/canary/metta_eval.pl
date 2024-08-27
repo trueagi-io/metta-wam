@@ -1849,6 +1849,15 @@ eval_40(Eq,RetType,_Dpth,_Slf,[EQ,X,Y],Res):- EQ=='==', !,
     suggest_type(RetType,'Bool'),
     eq_unify(Eq,_SharedType, X, Y, Res).
 
+eval_20(_Eq,RetType,_Dpth,_Slf,[EQ,X,Y],TF):- EQ=='===', !,
+    suggest_type(RetType,'Bool'),
+    as_tf(X==Y,TF).
+
+eval_20(_Eq,RetType,_Dpth,_Slf,[EQ,X,Y],TF):- EQ=='====', !,
+    suggest_type(RetType,'Bool'),
+    as_tf(same_terms(X,Y),TF).
+
+
 eq_unify(_Eq,_SharedType, X, Y, TF):- as_tf(X=:=Y,TF),!.
 eq_unify(_Eq,_SharedType, X, Y, TF):- as_tf( '#='(X,Y),TF),!.
 eq_unify( Eq,  SharedType, X, Y, TF):- as_tf(eval_until_unify(Eq,SharedType, X, Y), TF).
