@@ -353,12 +353,12 @@ load_hyperon_module:- assert(did_load_hyperon_module),
  py_module(hyperon_module,'
 
 from hyperon.base import Atom
-from hyperon.atoms import OperationAtom, E
+from hyperon.atoms import OperationAtom, E, GroundedAtom, GroundedObject
 from hyperon.ext import register_tokens
 from hyperon.ext import register_atoms
 from hyperon.atoms import G, AtomType
 from hyperon.runner import MeTTa
-
+from hyperon.atoms import *
 import hyperonpy as hp
 
 import sys
@@ -374,6 +374,22 @@ runner = MeTTaVS()
 
 def rust_metta_run(obj):
     return runner.run(obj)
+
+def rust_unwrap(obj):
+    if isinstance(obj,GroundedAtom):
+        return obj.get_object()
+    if isinstance(obj,GroundedObject):
+        return obj.content
+    if isinstance(obj,ExpressionAtom):
+        return obj.get_children()
+    return obj
+
+def rust_deref(obj):
+  while True:
+    undone = rust_unwrap(obj)
+    if undone is obj: return obj
+    if undone is None: return obj
+    obj = undone
 
 ').
 
@@ -426,8 +442,14 @@ py_dot_from(From,[I|Is],O):- !, py_dot_from(From,I,M),py_dot_from(M,Is,O).
 py_dot_from(From,I,O):- atomic_list_concat([A,B|C],'.',I),!,py_dot_from(From,[A,B|C],O).
 py_dot_from(From,I,O):- py_dot(From,I,O).
 
-py_eval_object([V|VI],VO):-
-  py_eval_from(V,VI,VO).
+py_eval_object(Var,VO):- var(Var),!,VO=Var.
+py_eval_object([V|VI],VO):- py_is_function(V),!,py_eval_from(V,VI,VO).
+py_eval_object([V|VI],VO):- maplist(py_eval_object,[V|VI],VO).
+py_eval_object(VO,VO).
+
+py_is_function(O):- \+ py_is_object(O),!,fail.
+py_is_function(O):- py_type(O, function),!.
+%py_is_function(O):- py_type(O, method),!.
 
 py_eval_from(From,I,O):- I==[],!,py_dot(From,O).
 py_eval_from(From,[I],O):- !, py_fcall(From,I,O).
@@ -839,13 +861,28 @@ file_to_modname(Filename,ModName):- replace_in_string(["/"="."],Filename,ModName
 
 %import_module_to_rust(ToPython):- sformat(S,'!(import! &self ~w)',[ToPython]),rust_metta_run(S).
 rust_metta_run(S,Run):- var(S),!,freeze(S,rust_metta_run(S,Run)).
-rust_metta_run(exec(S),Run):- \+ callable(S), string_concat('!',S,SS),!,rust_metta_run(SS,Run).
-rust_metta_run(S,Run):- \+ string(S),coerce_string(S,R),!,rust_metta_run(R,Run).
-rust_metta_run(I,O):- load_hyperon_module, !, py_ocall(hyperon_module:rust_metta_run(I),O),!.
-rust_metta_run(R,Run):- % run
+%rust_metta_run(exec(S),Run):- \+ callable(S), string_concat('!',S,SS),!,rust_metta_run(SS,Run).
+rust_metta_run(S,Run):- coerce_string(S,R),!,rust_metta_run1(R,Run).
+%rust_metta_run(I,O):-
+rust_metta_run1(I,O):- load_hyperon_module, !, py_ocall(hyperon_module:rust_metta_run(I),M),!,py_iter(M,R),delist1(R,R1),rust_to_pl(R1,O).
+rust_metta_run1(R,Run):- % run
   with_safe_argv((((
   %ensure_rust_metta(MeTTa),
   py_call(mettalog:rust_metta_run(R),Run))))).
+
+delist1([R],R):-!.
+delist1(R,R). % Maybe warn here?
+
+rust_to_pl(L,P):- var(L),!,L=P.
+rust_to_pl(L,P):- is_list(L),!,maplist(rust_to_pl,L,P).
+rust_to_pl(R,P):- py_type(R,'ExpressionAtom'),py_mcall(R:get_children(),L),!,maplist(rust_to_pl,L,P).
+rust_to_pl(R,P):- py_type(R,'GroundedAtom'),py_ocall(R:get_object(),L),!,rust_to_pl(L,P).
+rust_to_pl(R,P):- py_type(R,'SymbolAtom'),py_acall(R:get_name(),P),!.
+rust_to_pl(R,P):- py_type(R,'SpaceRef'),P=R. %py_acall(R:get_payload(),P),!.
+rust_to_pl(R,P):- py_is_list(R),py_m(R,L),R\==L,!,rust_to_pl(L,P).
+rust_to_pl(R,P):-
+  load_hyperon_module, !, py_ocall(hyperon_module:rust_deref(R),M),!,
+  (R\==M -> rust_to_pl(M,P) ; M=P).
 
 rust_metta_run(S):-
   rust_metta_run(S,Py),
@@ -854,7 +891,7 @@ rust_metta_run(S):-
 print_py(Py):-
   py_to_pl(Py,R), print(R),nl.
 
-coerce_string(S,R):- atom(S), sformat(R,'~w',[S]),!.
+%coerce_string(S,R):- atom(S), sformat(R,'~w',[S]),!.
 coerce_string(S,R):- string(S),!,S=R.
 coerce_string(S,R):- with_output_to(string(R),write_src(S)),!.
 
