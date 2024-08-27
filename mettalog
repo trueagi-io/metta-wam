@@ -1,6 +1,5 @@
 #!/bin/bash
 
-source ./scripts/ensure_venv
 generate_junit_report=0
 junit_report_file=""
 start_time=0
@@ -20,6 +19,10 @@ RC_OPTIONS=()
 TIMEOUT=0
 verbose="${VERBOSE:-0}"  # Use the VERBOSE environment variable or default to '0' (not verbose)
 OUTPUT_DIR="${METTALOG_OUTPUT}"
+
+cd $METTALOG_DIR
+source ./scripts/ensure_venv
+cd $RPWD
 
 use_docker=auto
 repl_flag=auto
@@ -49,9 +52,9 @@ set_io_flags() {
         input_filename=$(readlink /proc/self/fd/0)
         add_to_list "--stdin=file" STDIO_OPTIONS
         add_to_list "--input-filename=${input_filename}" STDIO_OPTIONS
-	else
-        add_to_list "--stdin=tty" STDIO_OPTIONS
-	fi
+    else
+	add_to_list "--stdin=tty" STDIO_OPTIONS
+    fi
 
     # Handle stdout flags
     if [ ! -t 1 ]; then
