@@ -15,7 +15,7 @@ fi
 
 # Function to activate the virtual environment
 activate_venv() {
-    echo "Activating the virtual environment: $VENV_DIR"
+    echo "Activating the virtual environment: $(realpath $VENV_DIR)"
     source "$VENV_DIR/bin/activate"
 }
 
@@ -50,7 +50,7 @@ create_venv() {
 	    #pip install -r requirements.txt
 	fi
     else
-        echo "Virtual environment already exists: $VENV_DIR"
+        : # echo "Virtual environment already exists: $VENV_DIR"
     fi
 }
 
@@ -58,7 +58,7 @@ create_venv() {
 if is_inside_venv; then
     : #echo "Script is running inside a virtual environment: $VIRTUAL_ENV"
 else
-    echo "Script is not running inside a virtual environment."
+    # echo "Script is not running inside a virtual environment."
     create_venv
     activate_venv
 
