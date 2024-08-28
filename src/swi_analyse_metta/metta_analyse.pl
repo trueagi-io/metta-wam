@@ -1,5 +1,5 @@
 
-:- dynamic found_search_result/4.
+:- dynamic found_search_result/5.
 
 :- use_module(library(dcg/basics)).
 
@@ -336,25 +336,6 @@ read_all_singularity_files(Is_file_type,_Tp, Zk, _Isalways_copy, _Is_update, Dx,
 read_all_singularity_files( _, _, _, _, _, _, _ , _):-  !.
 
 
-
-
-% hier dus zelf de mappen aanpassen  voor waar je naartoe wilt kopieeren 
-% htm_new_dir(0, is_mk_update, 'G:/htdoc_mk_update/'):-!.
-% htm_new_dir(0, _, 'G:/htdoc_mk/'):-!.
-% htm_new_dir(1, _, 'G:/htdoc_xm_app/'):-!.
-
-prolog_new_dir(0, is_mk_update, 'F:/htdoc_mk_update/'):-!.
-prolog_new_dir(0, _, 'F:/htdoc_mk/'):-!.
-prolog_new_dir(1, _, 'F:/htdoc_xm_app/'):-!.
-
-% aanroep: vb : start_analyse(0, '20210608', is_mk_update).
-% aanroep: vb : start_analyse(0, '20210810', is_mk_update).
-% aanroep: vb : start_analyse(0, '20211010', is_mk_update).
-% aanroep: vb : start_analyse(0, '', is_mk_update).
-
-% C:\Users\Renee\Documents\jdklog\sources\PR_12_NvoDesign\tools
-
-
 match_date_atom( _ , _ ):- !.
 % MATCH ALL  Prolog JDKlog
 match_date_atom( _Dat, '' ):- !.
@@ -395,21 +376,6 @@ search_o_y(Lx, Zk):- !,
  string_lower( Lx, Lx2 ),
    split_string(Zk, ",", "", Lis_or),
    search_or(Lx2, Lis_or).
-
- %  sub_string( Lx2, _, _, _, Zk ),!,
-
-%prolog_src_dir( 'C:/Users/Renee/Documents/jdklog/sources/PR_12_NvoDesign/tools/' ):- !.
-% prolog_src_dir( 'C:/Users/Renee/Documents/jdklog/sources/PR_12_NvoDesign/' ):- !.
-
-%   C:/Users/Renee/Documents/jdklog/swi_pilote_analyse_upd_prolog
-%  [prolog_analyse_update].
-%  start_analyse( 0, '', is_mk_update ).
-
-% k_div
-%string_lower( Lx, Lx2 ),
- %  sub_string( Lx2, _, _, _, Zk ),!,
-
-
 
 
 
@@ -501,15 +467,14 @@ omz_fw_slash(_Pa4z, '/'):-!.
 
 
 %---
-% we dont want all the assertEqual etc here 
-is_metta_function( Tag ):- string_lower( Tag, Tag_lower ), sub_string( Tag_lower, _,_,_, "assert" ), !, fail.
 
-is_metta_function( Tag ):-
-  string_length( Tag, Lex ), Lex > 1,  Tag \= "eval", !.
 
 %-----
 :- dynamic eval_tag/1.
+:- dynamic eval_tag_found/1.
 
+assert_eval_tag_found( Tag ):- eval_tag_found( Tag ), !.
+assert_eval_tag_found( Tag ):- !, assert( eval_tag_found( Tag ) ).
 
 %  sub_str_between( Lx, "['", "'", Tag ),
 
@@ -517,44 +482,52 @@ search_o_y_and_assert( 1, Lx, _Zk, F, Level, Linum , is_leading ):-
   sub_atom( F, _,_,_, 'metta_eval'),  search_o_y( Lx, "eval_20&:-" ),
   try_read_find_eval20_tag_in_string( Lx , Tag ),  is_metta_function( Tag ),
   not( eval_tag( Tag ) ),  assert( eval_tag( Tag ) ),  !,
-  asserta( found_search_result( Level, Linum, F, Tag ) ).
+  asserta( found_search_result( Level, Linum, F, Lx, Tag ) ).
 
 search_o_y_and_assert( 1, Lx, _Zk, F, Level, Linum , is_not_leading ):-
   sub_atom( F, _,_,_, 'metta_eval'),  search_o_y( Lx, "eval_20&:-" ),
   try_read_find_eval20_tag_in_string( Lx , Tag ),
-  eval_tag( Tag ),  
+  eval_tag( Tag ),  !,
+  assert_eval_tag_found( Tag ),
   % sub_string( Lx, _, _, _ , Tag ), 
-  string_concat( Lx, " ** <b>" , Cx ), string_concat( Cx, Tag, Cp ), string_concat( Cp, " </b> " , C3 ), 
-  assert( found_search_result( Level, Linum, F, C3 ) ).
+  % string_concat( Lx, " ** <b>" , Cx ), string_concat( Cx, Tag, Cp ), string_concat( Cp, " </b> " , C3 ), 
+  assert( found_search_result( Level, Linum, F, Lx, Tag ) ).
+
 
 search_o_y_and_assert( 1, Lx, _Zk, F, Level, Linum , _Isleading):-
   sub_atom( F, _,_,_, 'metta_interp'),  search_o_y( Lx, "eval_h(&:-" ),  eval_tag( Tag_s ),
-  string_concat("'", Tag_s, C1 ), string_concat( C1, "'", C2 ),  sub_string( Lx, _, _, _ , C2 ), 
-  string_concat( Lx, " ** <b>" , Cx ), string_concat( Cx, C2, Cp ), string_concat( Cp, " </b> " , C3 ),   !,
-  assert( found_search_result( Level, Linum, F, C3 ) ).
+  metta_interp_tag( Tag_from, Tag_til ),
+  string_concat( Tag_from, Tag_s, C1 ), string_concat( C1, Tag_til, C2 ),  sub_string( Lx, _, _, _ , C2 ), !,
+  assert_eval_tag_found( Tag_s ),
+  assert( found_search_result( Level, Linum, F, Lx, Tag_s ) ).
 
 
 search_o_y_and_assert( 1, Lx, _Zk, F, Level, Linum , _Isleading):-
   sub_atom( F, _, _, _, 'metta_ontology.pfc' ),  search_o_y( Lx, "properties(" ),  eval_tag( Tag_s ),
-  string_concat("'", Tag_s, C1 ), string_concat( C1, "'", C2 ),
-  sub_string( Lx, _, _, _ , C2 ), 
-  string_concat( Lx, " ** <b>" , Cx ), string_concat( Cx, C1, Cp ), string_concat( Cp, " </b> " , C3 ),   !,
-  assert( found_search_result( Level, Linum, F, C3 ) ).
+  metta_ontology_tag( Tag_from, Tag_til ),
+  string_concat( Tag_from, Tag_s, C1 ), string_concat( C1, Tag_til, C2 ),
+  sub_string( Lx, _, _, _ , C2 ), !,
+  assert_eval_tag_found( Tag_s ),
+  assert( found_search_result( Level, Linum, F, Lx, Tag_s ) ).
 
 %  search_o_y( Lx, "assertequaltoresult&" ),
 % (@doc intersection
 
 search_o_y_and_assert( 1, Lx, _Zk, F, Level, Linum , is_not_leading ):-
-  sub_atom( F, _, _, _, '.metta' ),  eval_tag( Tag_s ),  string_concat( "(", Tag_s, C1 ), 
-  sub_string( Lx, _, _, _ , C1 ), 
-  string_concat( Lx, " ** <b>" , Cx ), string_concat( Cx, C1, Cp ), string_concat( Cp, " </b> " , C2 ),   !,
-  assert( found_search_result( Level, Linum, F, C2  ) ).
+  sub_atom( F, _, _, _, '.metta' ),  eval_tag( Tag_s ),  
+  metta_file_tag( Tag_from, Tag_til ),
+  string_concat( Tag_from, Tag_s, C1 ),   string_concat( C1, Tag_til, C4 ), 
+  sub_string( Lx, _, _, _ , C4 ), !,
+  assert_eval_tag_found( Tag_s ),
+  assert( found_search_result( Level, Linum, F, Lx, Tag_s  ) ).
 
 search_o_y_and_assert( 1, Lx, _Zk, F, Level, Linum ,  is_not_leading ):-
-  sub_atom( F, _, _, _, '.metta' ),  eval_tag( Tag_s ),  string_concat( "(@doc ", Tag_s, C1 ), 
-  sub_string( Lx, _, _, _ , C1 ), 
-  string_concat( Lx, " ** <b>" , Cx ), string_concat( Cx, C1, Cp ), string_concat( Cp, " </b> " , C2 ),   !,
-  assert( found_search_result( Level, Linum, F, C2  ) ).
+  sub_atom( F, _, _, _, '.metta' ),  eval_tag( Tag_s ),  
+  metta_docfile_tag( Tag_from, Tag_til ),
+  string_concat( Tag_from, Tag_s, C1 ), string_concat( C1, Tag_til, C4 ),
+  sub_string( Lx, _, _, _ , C4 ), !,
+  assert_eval_tag_found( Tag_s ),
+  assert( found_search_result( Level, Linum, F, Lx, Tag_s  ) ).
 
 
 %search_o_y_and_assert( 1, Lx, _Zk, F, Level, Linum ):-
@@ -565,24 +538,29 @@ search_o_y_and_assert( 1, Lx, _Zk, F, Level, Linum ,  is_not_leading ):-
 %  assert( found_search_result( Level, Linum, F, C2  ) ).
 
 
-search_o_y_and_assert( 1, Lx, _Zk, F, Level, Linum , is_not_leading):-
+search_o_y_and_assert( 1, Lx, _Zk, F, Level, Linum , is_not_leading ):-
   % sub_atom( F, _, _, _, '.rs' ),  
   % file_base_name( From2 , Fnx ),  
   file_name_extension( _, Ext, F ), Ext == 'rs',
   eval_tag( Tag_s ),  
   % string_concat( "new(\"!(", Tag_s, C1 ), 
-  string_concat( "regex(r\"", Tag_s, C1 ), 
-  sub_string( Lx, _, _, _ , C1 ), !,
-  string_concat( Lx, " ** <b>" , Cx ), string_concat( Cx, C1, Cp ), string_concat( Cp, " </b> " , C2 ),   !,
-  assert( found_search_result( Level, Linum, F, C2  ) ).
+  %  assert_eq!(expr!("A" a {1}).iter().collect::<Vec<&Atom>>(),
+  rust_detect_tag( Tag_from, Tag_til ),
+  string_concat( Tag_from, Tag_s, C1 ), string_concat( C1, Tag_til, C4 ), 
+  sub_string( Lx, _, _, _ , C4 ), !,
+  assert_eval_tag_found( Tag_s ),
+  % string_concat( Lx, " ** <b>" , Cx ), string_concat( Cx, C1, Cp ), string_concat( Cp, " </b> " , C2 ),   !,
+  assert( found_search_result( Level, Linum, F, Lx, Tag_s  ) ).
 
 % kopie 
 search_o_y_and_assert( 1, Lx, _Zk, F, Level, Linum , is_leading ):-
   file_name_extension( _, Ext, F ), Ext == 'rs',
   % sub_str_between( Lx, "new(\"!(", " ", Subz ),
-  sub_str_between( Lx, "regex(r\"", "\"", Subz ),
-  not( eval_tag( Subz ) ),  assert( eval_tag( Subz ) ),  
-  asserta( found_search_result( Level, Linum, F, Subz  ) ).
+  rust_detect_tag( Tag_from, Tag_til ),
+  sub_str_between( Lx, Tag_from, Tag_til, Subz ),
+  is_metta_function( Subz ), 
+  not( eval_tag( Subz ) ), !, assert( eval_tag( Subz ) ),  
+  asserta( found_search_result( Level, Linum, F, Lx, Subz  ) ).
 
 
 
@@ -590,18 +568,20 @@ search_o_y_and_assert( 1, Lx, _Zk, F, Level, Linum , is_not_leading ):-
   sub_atom( F, _, _, _, '.py' ),  
   eval_tag( Tag_s ),  string_length( Tag_s, Lex ), Lex > 3, 
   % assert_eq 
-  concat( "metta.run('!(", Tag_s, C1 ), 
-  sub_string( Lx, _, _, _ , C1 ), 
-  string_concat( Lx, " ** <b>" , Cx ), string_concat( Cx, C1, Cp ), string_concat( Cp, " </b> " , C2 ),   !,
-  assert( found_search_result( Level, Linum, F, C2  ) ).
+  python_detect_tag( Tag_from, Tag_til ),
+  string_concat( Tag_from, Tag_s, C1 ),  string_concat( C1, Tag_til, C4 ), 
+  sub_string( Lx, _, _, _ , C4 ), !, 
+  assert_eval_tag_found( Tag_s ),
+  assert( found_search_result( Level, Linum, F, Lx, Tag_s  ) ).
 
 % kopie 
 search_o_y_and_assert( 1, Lx, _Zk, F, Level, Linum , is_leading ):-
   sub_atom( F, _, _, _, '.py' ),  
-%  eval_tag( Tag_s ),  string_length( Tag_s, Lex ), Lex > 3, 
-  sub_str_between( Lx, "metta.run('!(", " ", Subz ), !,
-  not( eval_tag( Subz ) ),  assert( eval_tag( Subz ) ),  
-  asserta( found_search_result( Level, Linum, F, Subz  ) ).
+  python_detect_tag( Tag_from, Tag_til ),
+  sub_str_between( Lx, Tag_from, Tag_til, Subz ),
+  is_metta_function( Subz ),  
+  not( eval_tag( Subz ) ),  !, assert( eval_tag( Subz ) ),  
+  asserta( found_search_result( Level, Linum, F, Lx, Subz  ) ).
 
 
 
@@ -714,8 +694,8 @@ is_relevant_file(_, From ):-  downcase_atom( From, From2 ),
 is_relevant_file(_, _From ):-   !, fail.
 
 
-%  [prolog_analyse_update].
-%  start_analyse( 0, '', is_mk_update ).
+
+
 dir_path_to_num_up( Fpa , 0, Fpa):- !.
 
 dir_path_to_num_up( Filepath , N, Dir2):-
@@ -769,67 +749,77 @@ if_small_no_newline( _Lex ) :-   write( " <br> &nbsp <br>" ), nl.
 
 
 
-fresults_par_file( Lp2, Lp, Fnx,  Filepath , Zk ):-
+%----- 
+nondeterm_found_search_result( 'display_per_file', Filewithpath, TxLine1, Txtline, Filewithpath ):-
+  retract( found_search_result(  _Level, _Lnum, Filewithpath, TxLine1, Txtline ) ).
+nondeterm_found_search_result( 'display_per_tag', Filetag, TxLine1, Filetag, Filewithpath ):-
+  retract( found_search_result(  _Level, _Lnum, Filewithpath, TxLine1, Filetag ) ).
+%---
+show_file_also( 'display_per_tag', Filewithpath ):- !,
+  write( " " ),  write( Filewithpath ), write( " " ), write( " <br> \n" ), !.
+show_file_also( _ , _Filewithpath ):- !.
+%----
+fresults_par_file( Display_per_file_or_per_tag, Lp2, Lp, Fnx,  Filepath , _Zk ):-
  write_copy_link( Filepath, Fnx ),
  write( "\n<br> <a onclick=\"open_div('"), write(Lp2), write(Lp),  write(Fnx), write("')\"  style=\"cursor:pointer\">  Open </a>" ), nl,
  write( "\n <a onclick=\"close_div('"), write(Lp2), write(Lp),  write(Fnx), write("')\" style=\"cursor:pointer\">  Close </a>" ), nl,
  write( "\n<div id=\""), write(Lp2), write(Lp),  write(Fnx), 
  write("\" style=\"border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 \" >  " ), 
  nl,
- found_search_result( _Level, _Lnum, Filepath, Txtline ),
- write_line_with_tag_colors( Txtline, Zk ), 
- write( "\n" ),
+ nondeterm_found_search_result( Display_per_file_or_per_tag, Filepath, TxLine1, Txtline, Filewithpath ),
+
+ color_for_file_type( Filewithpath, Htm_color_string ),
+ write( " <div style=\"color: " ), write( Htm_color_string ), write( "\"> " ),
+
+ show_file_also( Display_per_file_or_per_tag, Filewithpath ),
+ 
+ write_line_with_tag_colors( TxLine1, Txtline ), 
+ 
+% write( "<b> <i>" ),  write( Txtline ), write( " </i> </b>" ), write( " <br> \n" ),
+ write( " " ),  write( Txtline ), write( "  " ), write( " <br> \n" ),
  string_length( Txtline, Lex ), if_small_no_newline( Lex ) ,
+ write( " </div>" ),
  fail, ! .
 
-fresults_par_file( _, _, _Fnx, _ , _):- !, write( "\n  </div>\n" ).
+fresults_par_file( _, _, _, _Fnx, _ , _):- !, write( "\n  </div>\n" ).
 
 
- 
-%display_found_sresults( _Zk, _Dirx ):-
-%  write("\n\n###results INCLUDE "), nl,
-%  file_includes( File_map, Linum, File_van_map_file ),
-%  write_term( file_includes( File_map, Linum, File_van_map_file ), [ quoted(true) ] ), nl,
-%  fail,!.
 
-% ###results for searching:
 
 :- dynamic per_file/1.
 
+file_characteristics( File_with_path , Fnx , Lp, Lpx2 , Dir ):-
+  sub_atom( File_with_path, _, _, _, '/' ),
+  file_base_name( File_with_path , Fnx ),
+  dir_get_last_path( File_with_path , Lp ),  dir_get_last_path2( File_with_path , Lpx2 ), 
+  file_directory_name( File_with_path , Dir ), !.
 
-display_metta_sresults( _Zk, _Dirx ):-  retractall( per_file( _ ) ) ,
-  found_search_result( _, _, Fpz, _ ),
-  not( per_file( Fpz ) ),  assert( per_file( Fpz ) ), fail.
+file_characteristics( _File_with_path , '','','','' ):- !. 
 
 
-display_metta_sresults( Zk, _Dirx ):-
- write("\n\n<h2>  <pre> "),
- % str_code_replace( Zk, 60, 32, Zkx5), str_code_replace( Zkx5, 62, 32, Zkx6),
- % write( Zkx6 ), 
-  write("</pre> </h2>"),  
- % write("<h2>"),write(" in directory: \n"), write("</h2>"),
- % write("<h2>"), write( Dirx ), write("</h2> <hr>"), nl, nl,
- % findall( Fpz,  found_search_result( _, _, Fpz, _ ), Fpzl),
-  findall( Fpz,  per_file(  Fpz ), Fpzl ),
-  % sort( Fpzl , Fpzl2 ), 
-   member( Filepath, Fpzl ), 
-   file_base_name( Filepath , Fnx ),
-   dir_get_last_path( Filepath , Lp),  dir_get_last_path2( Filepath , Lpx2), file_base_name( Filepath , Fnx ),
- write("\n<br> &nbsp <br> \n"), write("\n<br> &nbsp <br> \n"),
- nl,nl,nl, write("***"), write(" <i><b> "), write( Fnx ), write("</i></b> <b> &nbsp &nbsp &nbsp "), 
- write(Lp), write("</b> &nbsp &nbsp &nbsp "), write(Lpx2), nl,
- % display_if_via_include( Filepath ), 
- file_directory_name( Filepath , Dir ), write( Dir ), nl,
- fresults_par_file( Lpx2, Lp, Fnx, Filepath, Zk ),
- fail, !.
+display_metta_sresults( 'display_per_file', _Zk, _Dirx ):-  retractall( per_file( _ ) ) ,
+  found_search_result( _, _, Fpz, _, _ ),  not( per_file( Fpz ) ),  assert( per_file( Fpz ) ), fail.
+display_metta_sresults( 'display_per_file',  Zk, _Dirx ):-
+   findall( Fpz,  per_file(  Fpz ), Fpzl ),      member( File_with_path, Fpzl ), 
+   file_characteristics( File_with_path , Fnx , Lp, Lpx2 , Dir ),
+   write( "\n<br> &nbsp <br> \n" ), write( "\n<br> &nbsp <br> \n" ),
+   nl,nl,nl, write( "***" ), write( " <i><b> " ), write( Fnx ), write( "</i></b> <b> &nbsp &nbsp &nbsp " ), 
+   write( Lp ), write( "</b> &nbsp &nbsp &nbsp " ), write( Lpx2 ), nl,   write( Dir ), nl,
+   fresults_par_file( 'display_per_file', Lpx2, Lp, Fnx, File_with_path, Zk ),   fail, !.
 
- display_metta_sresults(_, _):-  write("</pre>"), !.
+display_metta_sresults( 'display_per_tag', _Zk, _Dirx ):-  retractall( per_file( _ ) ) ,
+  found_search_result( _, _, _Fpz, _, Tag ),  not( per_file( Tag ) ),  assert( per_file( Tag ) ), fail.
+display_metta_sresults( 'display_per_tag',  Zk, _Dirx ):-
+   findall( Fpz,  per_file(  Fpz ), Tags0 ), sort( Tags0, Tags ),     member( Tag, Tags ), 
+   write( "\n<br> &nbsp <br> \n" ), write( "\n<br> &nbsp <br> \n" ),
+   nl,nl,nl, write( "***" ), write( " <i><b> " ), write( Tag ), write( "</i></b>  " ), 
+   fresults_par_file( 'display_per_tag', '', '', '', Tag, Zk ),   fail, !.
+
+
+% display_metta_sresults( _, _ ):-  write("</pre>"), !.
+display_metta_sresults( _, _, _ ):-  write(" "), !.
+
 %---
-
-
-
-
-
 
 lis_und_concat( [], Hs,  Hs ):- !.
 lis_und_concat( [ _ ], Hs,  P2 ):- string_concat( Hs, "_", P2).
@@ -849,22 +839,10 @@ str_to_und_score( A_args, A_args2 ):-
 
 
 
-%display_pred_used():- nl,write("<br> &nbsp <br> &nbsp <br>  &nbsp <br>  <h1> <b> LOADING: </b> </h1> <hr>\n "), nl,
-% findall( F, pred_is_called_from( _, _, _, 0, _, F, _,_ ), Flis ),
-% sort( Flis, Flis2 ), member( Xel , Flis2 ), file_base_name( Xel, Fb), write(" <h2> <b>"), write(Fb), write("</b> </h2>"),
-% wri_load_list(Xel),
-%  fail,!.
 
 numspace(Tel):- Tel > 0, !, write("&nbsp"), Tel2 is Tel - 1, numspace(Tel2).
 numspace(_):- !.
 
-%find_reverse_pad( Zk, "", Tel):-  Tel < 20,
-% write(" <br> &nbsp <br> "), nl, 
-% write(Zk), write("( <br>"), nl,
-% pred_is_called_from( Ph, Pred_nm ), sub_string( Pred_nm, _, _, _, Zk), !,
-% Tel2 is Tel + 1,
-%   numspace(Tel), write(Ph), write("( <br>"), nl,
-% find_reverse_pad( Zk, Ph, Tel2).
 
 write_line_with_tag_colors( Head2, Zk ):-
  concat( Zk, "", Zk2 ), concat( "<b>", Zk2, C1 ), concat( C1, "</b>", C2 ),
@@ -949,89 +927,106 @@ search_rust_files_hyperon( Tp, _Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, Isleading 
   read_all_singularity_files( is_utf8, Tp, Zk, only_copy_files, Is_mk_update, Dirx_zz_5, 1 , Isleading).
 
 %---
+short_code_metta( include_metta_files, 'inc' ):-!.
+short_code_metta( _Inc_Metta, 'notinc' ):-!.
 
-search_all_files_with_prolog_leading( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi ):-
+%---
+also_search_metta_files( include_metta_files , Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi ):-
+  search_metta_files( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, is_not_leading ),
+  search_metta_files_hyperon( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, is_not_leading ), !.
+also_search_metta_files( _, _,_,_, _,_,_ ):- !.
+
+%--
+% ( i
+search_all_files_with_leading( 'prolog_leading', Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi , Inc_Metta ):-
   search_prolog_files( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, is_leading ),
-%  search_metta_files( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, is_not_leading ),
-%  search_metta_files_hyperon( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, is_not_leading ),
   search_python_files_hyperon( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, is_not_leading ),
-  search_rust_files_hyperon( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, is_not_leading ), !.
+  search_rust_files_hyperon( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, is_not_leading ), 
+  also_search_metta_files( Inc_Metta, Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi ),
+  %search_metta_files( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, is_not_leading ),
+  %search_metta_files_hyperon( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, is_not_leading ),
+  
+  
+  !.
 
 
-search_all_files_with_python_leading( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi ):-
+search_all_files_with_leading( 'python_leading', Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi , Inc_Metta ):-
   search_python_files_hyperon( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, is_leading ),
   search_prolog_files( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, is_not_leading ),
-%  search_metta_files( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, is_not_leading ),
-%  search_metta_files_hyperon( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, is_not_leading ),
-  search_rust_files_hyperon( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, is_not_leading ), !.
+  search_rust_files_hyperon( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, is_not_leading ), 
+  also_search_metta_files( Inc_Metta, Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi ),
+  %search_metta_files( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, is_not_leading ),
+  %search_metta_files_hyperon( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, is_not_leading ),
+  !.
 
-search_all_files_with_rust_leading( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi ):-
+search_all_files_with_leading( 'rust_leading' , Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi , Inc_Metta ):-
   search_rust_files_hyperon( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, is_leading ), 
   search_prolog_files( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, is_not_leading ),
-  search_python_files_hyperon( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, is_not_leading ),!.
+  search_python_files_hyperon( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, is_not_leading ),
+  also_search_metta_files( Inc_Metta, Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi ),
+  %search_metta_files( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, is_not_leading ),
+  %search_metta_files_hyperon( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, is_not_leading ),
+
+  !.
 
 
 %  search_metta_files( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, is_not_leading ),
 %  search_metta_files_hyperon( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, is_not_leading ),
 
 
-reset_htm( ResTag ):-
-  atomic_list_concat([ 'result/prolog_codes_analyses_', ResTag, '.htm' ], Htmfile ),
-  tell(Htmfile),
+reset_htm( Display_per_file_or_per_tag, LeadingTag, Inc_Metta, Htmfile ):-
+  tell( Htmfile ),
   write("\n<html> <head> \n"),
   write("\n<script> \n"),
   write("function open_div(xid){ document.getElementById(xid).style.display = 'block'; }\n"),
   write("function close_div(xid){ document.getElementById(xid).style.display = 'none'; }\n"),
   write("\n</script> \n"),
   write("\n</head> \n"),
-  write("\n<body style=\"font-family: arial; font-size: 12pt;\"> \n"),
+  write("\n<body style=\"font-family: arial; font-size: 12pt; background-color: #E5E5E5\"> \n"),
 
-
-  write(" <H2> \n"), write( ResTag ), 
-  write(" </H2> \n"),
+  write(" <H2> \n"), write( Inc_Metta ),   write(" </H2> \n"),
+  write(" <H2> \n"), write( Display_per_file_or_per_tag ),   write(" </H2> \n"),
+  write(" <H2> \n"), write( LeadingTag ),   write(" </H2> \n"),
   told().
-
-
 
 %---
 
-start_analyse_metta( Tp, MdfKeyaft, Is_mk_update,  _X ):- !,
+display_tags_not_found():-
+   eval_tag_found( Tag  ),   retract( eval_tag( Tag  ) ), fail , !.
+
+display_tags_not_found():-
+  write( "Tags not found - uncovered <br>" ), nl,
+  eval_tag( Tag  ),
+  write( "<b>  " ) , write( Tag ), write( "</b> <br> " ), nl, fail, !.
+display_tags_not_found():- !.
+
+%---
+start_analyse_metta( Display_per_file_or_per_tag, LeadingTag, Tp, MdfKeyaft, Is_mk_update,  _X , Inc_Metta  ):- !,
   retractall( eval_tag( _ ) ),
-  retractall( found_search_result( _, _, _, _ ) ),
-  % ResTag = 'prolog_leading', 
-  ResTag = 'python_leading', 
-  % ResTag = 'rust_leading', 
-  reset_htm( ResTag ),
+  retractall( eval_tag_found( _ ) ),
+   
+  retractall( found_search_result( _, _, _, _, _ ) ),
+  retractall( per_file( _ ) ),
 %  retractall( extra_string_to_search( _ ) ), 
    % assert( extra_string_to_search( "count" ) ),
-  chercher_a( Zk ),  today_key( Dk ), write( "today key " ), write( Dk ),
-  Xfi = 'data/htm_file_list.pl',
- 
+  chercher_a( Zk ),  today_key( Dk ), write( "today key " ), write( Dk ),  Xfi = 'data/htm_file_list.pl',
+  short_code_metta( Inc_Metta, Short_code ),
+  atomic_list_concat([ 'result/analyse_result_', LeadingTag, '_', Display_per_file_or_per_tag, '_', Short_code, '.htm' ], Htmfile ),
+  reset_htm( Display_per_file_or_per_tag, LeadingTag, Inc_Metta,  Htmfile ),
   % search_all_files_with_prolog_leading( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi  ),
-  search_all_files_with_python_leading( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi ),
+  search_all_files_with_leading( LeadingTag, Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi , Inc_Metta ),
   % search_all_files_with_rust_leading( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi ),
-  atomic_list_concat([ 'result/prolog_codes_analyses_', ResTag, '.htm' ], Htmfile ),
+  
   append( Htmfile ),
-  display_metta_sresults( Zk, 'dummyxxaaq' ),
+  display_metta_sresults( Display_per_file_or_per_tag , Zk, 'dummyxxaaq' ),
+  display_tags_not_found(),
+%  retractall( eval_tag_found( _ ) ),
   told(),
 
   write( "analyses result written to file: \n" ),
   write( Htmfile ), nl.
 
-
-
-% aanroep: vb : start_analyse(0, '20210608', is_mk_update).
-% aanroep: vb : start_analyse(0, '20210810', is_mk_update).
-% aanroep: vb : start_analyse(0, '20211010', is_mk_update).
-% aanroep: vb : start_analyse(0, '', is_mk_update).
-% .pl
-% H:/metta-wam-main/src/swi_analyse_metta/
-%  working_directory(_,'H:/metta-wam-main/src/swi_analyse_metta/').
-%  [metta_analyse].
-%  start_analyse( 0, '', is_mk_update ).
-
-
-% 
+ 
 test11():- atom_codes( '42 times' , Codes ),   
  phrase( integer( X ), Codes, _Res ),
  write( X ), nl .
@@ -1078,54 +1073,53 @@ try_read_find_eval20_tag_in_string( Str , Result_tag ):-
 
 % eval_20(Eq,RetType,_Dpth,_Slf,['cdr-atom',Atom],CDR_Y):- !, Atom=[_|CDR],!,do_expander(Eq,RetType,CDR,CDR_Y).
 test12():-
-% phrase(commands(Commands), `bar 1 2 foo quux bloop`),
-   % string_codes( "eval_20( _Zxs , _Pa foo quux bloop", Codes_x ),
-
-%   string_codes( "eval_20( _Zxs , Pq , _Za , Qe, ['jajaj',Atom],CDR_Y):- !, Atom=[_|CDR],!,do_expander(Eq,RetType,CDR,CDR_Y).", Codes_x ),
-%   phrase( tag_list( Tags_tokens ),  Codes_x ), 
-%   Tags_tokens = [ Xres ],   Xres = eval20(  Result_tag  ) ,    !,
+ % phrase(commands(Commands), `bar 1 2 foo quux bloop`),
+ % string_codes( "eval_20( _Zxs , _Pa foo quux bloop", Codes_x ),
+ %   string_codes( "eval_20( _Zxs , Pq , _Za , Qe, ['jajaj',Atom],CDR_Y):- !, Atom=[_|CDR],!,do_expander(Eq,RetType,CDR,CDR_Y).", Codes_x ),
+ %   phrase( tag_list( Tags_tokens ),  Codes_x ), 
+ %   Tags_tokens = [ Xres ],   Xres = eval20(  Result_tag  ) ,    !,
    try_read_find_eval20_tag_in_string( "eval_20( _Zxs , Pq , _Za , Qe, ['jajaj',Atom],CDR_Y):- !, Atom=[_|CDR],!,do_expander(Eq,RetType,CDR,CDR_Y)." , Result_tagx ),
 
 %   maplist( writeln, Tags_tokens ).
    write_term( Result_tagx , [] ).
-
-
-
 %----
-  %retractall( chercher_a( _ ) ), assert( chercher_a( "eval_20&:-" ) ),
-  %retractall( current_file_extension( _ ) ), assert( current_file_extension( '.pl' ) ),
-  %retractall( singularity_src_dir_perform( _ ) ),  assert( singularity_src_dir_perform( 'H:/metta-wam-main/src/canary/' ) ),
+% README HERE:  USAGE: 
+% first consult the prolog file with this :
+%  [metta_analyse].
+% THEN call as below :
+% Calling examples : 
+%  start_analyse( 'display_per_file', 'python_leading', 0, '', is_dummy_tag, not_include_metta_files ).
+%  start_analyse( 'display_per_file', 'rust_leading', 0, '', is_dummy_tag , not_include_metta_files).
+%  start_analyse( 'display_per_file', 'python_leading', 0, '', is_dummy_tag , not_include_metta_files ).
+
+% HERE ALL the config 
+
+color_for_file_type( Fn , "#ECED99" ):-  sub_atom( Fn, _, _, _, '.metta' ), !. 
+color_for_file_type( Fn , "#A7E3A7" ):-  sub_atom( Fn, _, _, _, '.py' ), !. 
+color_for_file_type( Fn , "#D3D4FF" ):-  sub_atom( Fn, _, _, _, '.pl' ), !.
+color_for_file_type( Fn , "#D89800" ):-  sub_atom( Fn, _, _, _, '.rs' ), !.
+
+color_for_file_type( _Filewithpath, "#E7E7E7" ):- !.
+
+% we dont want all the assertEqual etc here 
+is_metta_function( Tag ):- string_lower( Tag, Tag_lower ), sub_string( Tag_lower, _,_,_, "assert" ), !, fail.
+is_metta_function( "superpose" ):- !, fail.
+is_metta_function( Tag ):-  string_length( Tag, Lex ), Lex > 3,  Tag \= "eval", !.
 
 
-start_analyse(Tp, MdfKeyaft, Is_mk_update ):-
+rust_detect_tag( "regex(r\"", "\"" ):- !.
+python_detect_tag( "metta.run('!(", " " ):-!.
+metta_interp_tag( "'", "'" ):-!.
+metta_ontology_tag( "'", "'" ):-!.
+metta_file_tag( "(", "" ):-!.
+metta_docfile_tag( "(@doc ", "" ):-!.
 
-  retractall( file_includes( _, _, _ ) ),
-  retractall( has_db_clause( _, _, _, _, _, _, _, _ ) ),
-  retractall( pred_is_called_from( _, _  ) ),
-  retractall(  last_phead(_)),
-  
-  write("EMPTY file: \n"),
-  write("\n<br> &nbsp <br> \n"),
-  write("result/prolog_codes_analyses.htm\n"),
-  
-%  start_analyse00(Tp, MdfKeyaft, Is_mk_update, Dirx_zz ), 
-  start_analyse_metta(Tp, MdfKeyaft, Is_mk_update, 'xdummy' ), 
+
+start_analyse( Display_per_tag_or_file, LeadingTag, Tp, MdfKeyaft, Is_mk_update , Inc_metta ):-
+  start_analyse_metta( Display_per_tag_or_file, LeadingTag, Tp, MdfKeyaft, Is_mk_update, 'xdummy' , Inc_metta ), 
   fail, !.
 
-start_analyse(_Tp, _MdfKeyaft, _Is_mk_update ):- 
-%  append('result/prolog_codes_analyses.htm'),
-%  display_pred_used(),
-%  told(),
-%  tell('result/prolog_code_db.pro'),
-%  display_prolog_database_calls(),
-%  told(),
-
-!.
-%---*******************
-
-% ,
-
-%------
+start_analyse( _, _, _Tp, _MdfKeyaft, _Is_mk_update , _ ):-  !.
 
 
 
