@@ -107,6 +107,8 @@ write_val(V):- write('"'),write(V),write('"').
 is_final_write(V):- var(V), !, write_dvar(V),!.
 is_final_write('$VAR'(S)):-  !, write_dvar(S),!.
 is_final_write('#\\'(S)):-  !, format("'~w'",[S]).
+is_final_write(V):- py_is_enabled,py_is_py(V),!,py_ppp(V),!.
+
 is_final_write([VAR,V|T]):- '$VAR'==VAR, T==[], !, write_dvar(V).
 is_final_write('[|]'):- write('Cons'),!.
 is_final_write([]):- !, write('()').
@@ -140,7 +142,7 @@ unlooped_fbug(W,Mesg):-
     once(Mesg),nb_setval(W,false)),nb_setval(W,false).
 
 :- dynamic(py_is_enabled/0).
-py_is_enabled:- predicate_property(py_ppp(_),foreign), asserta((py_is_enabled:-!)).
+py_is_enabled:- predicate_property(py_ppp(_),defined), asserta((py_is_enabled:-!)).
 
 %write_src(V):-  !, \+ \+ quietly(pp_sex(V)),!.
 write_src(V):- \+ \+ notrace(pp_sex(V)),!.
@@ -149,7 +151,6 @@ pp_sex(V):- pp_sexi(V),!.
 % Various 'write_src' and 'pp_sex' rules are handling the writing of the source,
 % dealing with different types of values, whether they are lists, atoms, numbers, strings, compounds, or symbols.
 pp_sexi(V):- is_final_write(V),!.
-pp_sexi(V):- py_is_enabled,py_is_py(V),!,py_ppp(V),!.
 pp_sexi(V):- is_dict(V),!,print(V).
 pp_sexi((USER:Body)) :- USER==user,!, pp_sex(Body).
 pp_sexi(V):- allow_concepts,!,with_concepts('False',pp_sex(V)),flush_output.

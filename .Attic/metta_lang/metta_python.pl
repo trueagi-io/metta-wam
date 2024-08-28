@@ -107,11 +107,12 @@ py_is_module(M):-notrace((with_safe_argv(py_is_module_unsafe(M)))).
 py_is_module_unsafe(M):- py_is_object(M),!,py_type(M,module).
 py_is_module_unsafe(M):- catch((py_call(M,X),py_type(X,module)),_,fail).
 
-py_is_py(_):- \+ py_is_enabled, !, fail.
+%py_is_py(_):- \+ py_is_enabled, !, fail.
 py_is_py(V):- var(V),!, get_attr(V,pyobj,_),!.
-py_is_py(V):- atomic(V), !, py_is_object(V),!.
-py_is_py(V):- \+ callable(V),!,fail.
+py_is_py(V):- compound(V),!,fail.
 py_is_py(V):- is_list(V),!,fail.
+py_is_py(V):- atomic(V), !, \+ atom(V), py_is_object(V),!.
+py_is_py(V):- \+ callable(V),!,fail.
 py_is_py(V):- py_is_tuple(V),!.
 py_is_py(V):- py_is_py_dict(V),!.
 py_is_py(V):- py_is_list(V),!.
@@ -376,12 +377,14 @@ def rust_metta_run(obj):
     return runner.run(obj)
 
 def rust_unwrap(obj):
-    if isinstance(obj,GroundedAtom):
-        return obj.get_object()
-    if isinstance(obj,GroundedObject):
-        return obj.content
+    if isinstance(obj,SymbolAtom):
+        return obj.get_name()
     if isinstance(obj,ExpressionAtom):
         return obj.get_children()
+    if isinstance(obj,GroundedAtom):
+        return __repr__(obj.get_object())
+    if isinstance(obj,GroundedObject):
+        return obj.content
     return obj
 
 def rust_deref(obj):
@@ -864,22 +867,34 @@ rust_metta_run(S,Run):- var(S),!,freeze(S,rust_metta_run(S,Run)).
 %rust_metta_run(exec(S),Run):- \+ callable(S), string_concat('!',S,SS),!,rust_metta_run(SS,Run).
 rust_metta_run(S,Run):- coerce_string(S,R),!,rust_metta_run1(R,Run).
 %rust_metta_run(I,O):-
-rust_metta_run1(I,O):- load_hyperon_module, !, py_ocall(hyperon_module:rust_metta_run(I),M),!,py_iter(M,R),delist1(R,R1),rust_to_pl(R1,O).
+rust_metta_run1(I,O):- load_hyperon_module, !, py_ocall(hyperon_module:rust_metta_run(I),M),!,rust_return(M,O).
 rust_metta_run1(R,Run):- % run
   with_safe_argv((((
   %ensure_rust_metta(MeTTa),
   py_call(mettalog:rust_metta_run(R),Run))))).
 
+rust_return(M,O):- (py_iter(M,R,[py_object(true)]),py_iter(R,R1,[py_object(true)]))*->rust_to_pl(R1,O);(fail,rust_to_pl(M,O)).
+%rust_return(M,O):- rust_to_pl(M,O).
+%rust_return(M,O):- py_iter(M,R,[py_object(true)]),rust_to_pl(R,O).
+%rust_return(M,O):- py_iter(M,O). %,delist1(R,O).
 delist1([R],R):-!.
 delist1(R,R). % Maybe warn here?
 
 rust_to_pl(L,P):- var(L),!,L=P.
+%rust_to_pl([],P):- !, P=[].
 rust_to_pl(L,P):- is_list(L),!,maplist(rust_to_pl,L,P).
+rust_to_pl(R,P):- compound(R),!,compound_name_arguments(R,F,RR),maplist(rust_to_pl,RR,PP),compound_name_arguments(P,F,PP).
+rust_to_pl(R,P):- \+ py_is_object(R),!,P=R.
 rust_to_pl(R,P):- py_type(R,'ExpressionAtom'),py_mcall(R:get_children(),L),!,maplist(rust_to_pl,L,P).
-rust_to_pl(R,P):- py_type(R,'GroundedAtom'),py_ocall(R:get_object(),L),!,rust_to_pl(L,P).
 rust_to_pl(R,P):- py_type(R,'SymbolAtom'),py_acall(R:get_name(),P),!.
-rust_to_pl(R,P):- py_type(R,'SpaceRef'),P=R. %py_acall(R:get_payload(),P),!.
+rust_to_pl(R,P):- py_type(R,'VariableAtom'),py_acall(R:'__repr__'(),P),!.
+rust_to_pl(R,P):- py_type(R,'VariableAtom'),py_acall(R:get_name(),N),!,atom_concat('$',N,P).
+rust_to_pl(R,P):- py_type(R,'SpaceRef'),!,py_scall(R:'__str__'(),P),!.
+%rust_to_pl(R,P):- py_type(R,'ValueObject'),py_acall(R:'__repr__'(),P),!.
+rust_to_pl(R,PT):- py_type(R,'GroundedAtom'),py_ocall(R:get_grounded_type(),T),rust_to_pl(T,TT),py_ocall(R:get_object(),L),!,rust_to_pl(L,P),comnbine_term_l(TT,P,PT).
 rust_to_pl(R,P):- py_is_list(R),py_m(R,L),R\==L,!,rust_to_pl(L,P).
+rust_to_pl(R,PT):- py_acall(R:'__repr__'(),P),py_type(R,T),!,PT=..[T,P].
+rust_to_pl(R,P):- py_acall(R:'__repr__'(),P),!.
 rust_to_pl(R,P):-
   load_hyperon_module, !, py_ocall(hyperon_module:rust_deref(R),M),!,
   (R\==M -> rust_to_pl(M,P) ; M=P).
@@ -890,6 +905,8 @@ rust_metta_run(S):-
 
 print_py(Py):-
   py_to_pl(Py,R), print(R),nl.
+
+comnbine_term_l(T,P,ga(P,T)).
 
 %coerce_string(S,R):- atom(S), sformat(R,'~w',[S]),!.
 coerce_string(S,R):- string(S),!,S=R.
