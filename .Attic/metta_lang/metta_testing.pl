@@ -126,22 +126,30 @@ write_pass_fail(TestName,P,C,PASS_FAIL,G1,G2):-
     symbolic_list_concat([_,R],'tests/',FilePath),
     file_name_extension(Base, _, R))),
       nop(format('<h3 id="~w">;; ~w</h3>',[TestName,TestName])),
-
-      if_t( (tee_file(TEE_FILE)->true;'TEE.ansi'=TEE_FILE),
-      (%atom_concat(TEE_FILE,'.UNITS',UNITS),
-      UNITS = '/tmp/SHARED.UNITS',
+      must_det_ll((
+      (tee_file(TEE_FILE)->true;'TEE.ansi'=TEE_FILE),
+      (( %atom_concat(TEE_FILE,'.UNITS',UNITS),
+      shared_units(UNITS),
       open(UNITS, append, Stream,[encoding(utf8)]),
       once(getenv('HTML_FILE',HTML_OUT);sformat(HTML_OUT,'~w.metta.html',[Base])),
       compute_html_out_per_test(HTML_OUT,TEE_FILE,TestName,HTML_OUT_PerTest),
       get_last_call_duration(Duration),
-      format(Stream,'| ~w | ~w |[~w](https://logicmoo.org/public/metta/reports/~w#~w) | ~@ | ~@ | ~@ | ~w | ~w |~n',
+      format(Stream,'| ~w | ~w |[~w](https://logicmoo.org/public/metta/~w#~w) | ~@ | ~@ | ~@ | ~w | ~w |~n',
       [TestName,PASS_FAIL,TestName,HTML_OUT,TestName,
         trim_gstring_bar_I(write_src_woi([P,C]),400),
         trim_gstring_bar_I(write_src_woi(G1),200),
         trim_gstring_bar_I(write_src_woi(G2),200),
         Duration,
         HTML_OUT_PerTest]),!,
-      close(Stream))).
+      close(Stream))))).
+
+% Needs not to be absolute and not relative to CWD (since tests like all .metta files change their local CWD at least while "loading")
+output_directory(OUTPUT_DIR):- getenv('METTALOG_OUTPUT',OUTPUT_DIR),!.
+output_directory(OUTPUT_DIR):- getenv('OUTPUT_DIR',OUTPUT_DIR),!.
+
+shared_units(UNITS):- getenv('SHARED_UNITS',UNITS),!.  % Needs not to be relative to CWD
+shared_units(UNITS):- output_directory(OUTPUT_DIR),!,directory_file_path(OUTPUT_DIR,'SHARED.UNITS',UNITS).
+shared_units(UNITS):- UNITS = '/tmp/SHARED.UNITS'.
 
 % currently in a shared file per TestCase class..
 %   but we might make each test dump its stuffg to its own html file for easier spotting why test failed

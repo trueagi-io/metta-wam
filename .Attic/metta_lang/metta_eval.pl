@@ -60,6 +60,8 @@
 :- multifile(color_g_mesg/2).
 
 self_eval0(X):- \+ callable(X),!.
+self_eval0(X):- py_is_py(X),!.
+%self_eval0(X):- py_type(X,List), List\==list,!.
 self_eval0(X):- is_valid_nb_state(X),!.
 %self_eval0(X):- string(X),!.
 %self_eval0(X):- number(X),!.
@@ -134,7 +136,7 @@ evals_to(XX,Y):- Y=='True',!, is_True(XX),!.
 do_expander('=',_,X,X):-!.
 do_expander(':',_,X,Y):- !, get_type(X,Y)*->X=Y.
 
-'get_type'(Arg,Type):- 'get-type'(Arg,Type).
+get_type(Arg,Type):- eval_H(['get-type',Arg],Type).
 
 
 eval_true(X):- \+ iz_conz(X), callable(X), call(X).
@@ -273,6 +275,19 @@ eval_20(Eq,RetType,_Dpth,_Slf,[X|T],Y):- T==[], \+ callable(X),!, do_expander(Eq
 
 eval_20(Eq,RetType,Depth,Self,X,Y):- atom(Eq),  ( Eq \== ('=')) ,!,
    call(Eq,'=',RetType,Depth,Self,X,Y).
+
+
+eval_20(_Eq,_RetType,_Depth,_Self,[V|VI],VO):-  atomic(V), py_is_object(V),!,
+  is_list(VI),!, py_eval_object([V|VI],VO).
+
+eval_20(Eq,RetType,Depth,Self,[V|VI],VO):- is_list(V), V \== [],
+  eval_20(Eq,_FRype,Depth,Self,V,VV), V\==VV, atomic(VV), !,
+  eval_20(Eq,RetType,Depth,Self,[VV|VI],VO).
+
+eval_20(Eq,RetType,Depth,Self,[F,[Eval,V]|VI],VO):- Eval == eval,!,
+  ((eval_args(Eq,_FRype,Depth,Self,V,VV), V\=@=VV)*-> true; VV = V),
+  eval_20(Eq,RetType,Depth,Self,[F,VV|VI],VO).
+
 
 % DMILES @ TODO make sure this isnt an implicit curry
 eval_20(Eq,_RetType,Depth,Self,[V|VI],VO):-  \+ callable(V), is_list(VI),!,
@@ -475,18 +490,27 @@ eval_20(Eq,RetType,Depth,Self,['trace',Cond],Res):- !, with_debug(eval_args,eval
 eval_20(Eq,RetType,Depth,Self,['profile!',Cond],Res):- !, time_eval(profile(Cond),profile(eval_args(Eq,RetType,Depth,Self,Cond,Res))).
 eval_20(Eq,RetType,Depth,Self,['time!',Cond],Res):- !, time_eval(eval_args(Cond),eval_args(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(Eq,RetType,Depth,Self,['print',Cond],Res):- !, eval_args(Eq,RetType,Depth,Self,Cond,Res),format('~N'),print(Res),format('~N').
+% !(print! $1)
+eval_20(Eq,RetType,Depth,Self,['princ!'|Cond],Res):- !,
+  maplist(eval_args(Eq,RetType,Depth,Self),Cond,Out),
+  maplist(princ_impl,Out),
+  make_nop(RetType,[],Res),check_returnval(Eq,RetType,Res).
 % !(println! $1)
 eval_20(Eq,RetType,Depth,Self,['println!'|Cond],Res):- !,
   maplist(eval_args(Eq,RetType,Depth,Self),Cond,Out),
   maplist(println_impl,Out),
   make_nop(RetType,[],Res),check_returnval(Eq,RetType,Res).
 
-
+println_impl(X):- format("~N~@~N",[write_sln(X)]),!.
 println_impl(X):- user_io((ansi_format(fg('#c7ea46'),"~N~@~N",[write_sln(X)]))).
 
-write_sln(X):- string(X), !, write(X).
-write_sln(X):- with_indents(false,write_src(X)).
+princ_impl(X):- format("~@",[write_sln(X)]),!.
 
+write_sln(X):- string(X), !, write(X).
+write_sln(X):- write_src_woi(X).
+
+with_output_to_str( Sxx , Goal ):-
+  wots( Sxx , Goal ).
 
 % =================================================================
 % =================================================================
@@ -795,8 +819,6 @@ cant_be_ok(_,[Let|_]):- Let==let.
 eval_20(Eq,RetType,Depth,Self,['switch',A,CL|T],Res):- !,
   eval_20(Eq,RetType,Depth,Self,['case',A,CL|T],Res).
 
-eval_20(Eq,RetType,Depth,Self,[P,X|More],YY):- is_list(X),X=[_,_,_],simple_math(X),
-   eval_selfless_2(X,XX),X\=@=XX,!, eval_20(Eq,RetType,Depth,Self,[P,XX|More],YY).
 % if there is only a void then always return nothing for each Case
 eval_20(Eq,_RetType,Depth,Self,['case',A,[[Void,_]]],Res):-
    '%void%' == Void,
@@ -1269,10 +1291,10 @@ format_args_write(Arg,_) :- string(Arg), !, write(Arg).
 format_args_write('#\\'(Arg),_) :- !, write(Arg).
 format_args_write(Arg,_) :- write_src_woi(Arg).
 
-format_args([], _, _).
-format_args(['{','{'|FormatRest], Iterator, Args) :- !, put('{'), format_args(FormatRest, Iterator, Args). % escaped
-format_args(['}','}'|FormatRest], Iterator, Args) :- !, put('}'), format_args(FormatRest, Iterator, Args). % escaped
-format_args(['{'|FormatRest1], Iterator1, Args) :-
+format_nth_args([], _, _).
+format_nth_args(['{','{'|FormatRest], Iterator, Args) :- !, put('{'), format_nth_args(FormatRest, Iterator, Args). % escaped
+format_nth_args(['}','}'|FormatRest], Iterator, Args) :- !, put('}'), format_nth_args(FormatRest, Iterator, Args). % escaped
+format_nth_args(['{'|FormatRest1], Iterator1, Args) :-
     format_args_get_index(FormatRest1, FormatRest2, Index),
     format_args_get_format(FormatRest2, ['}'|FormatRest3], Format),
     % check that the closing '}' is not escaped with another '}'
@@ -1282,14 +1304,14 @@ format_args(['{'|FormatRest1], Iterator1, Args) :-
         -> ((nth0(Iterator1,Args,Arg),Iterator2 is Iterator1+1))
         ; ((nth0(Index,Args,Arg), Iterator2 is Iterator1))),
     format_args_write(Arg,Format),
-    format_args(FormatRest3, Iterator2, Args).
-format_args([C|FormatRest], Iterator, Args) :- put(C), format_args(FormatRest, Iterator, Args).
+    format_nth_args(FormatRest3, Iterator2, Args).
+format_nth_args([C|FormatRest], Iterator, Args) :- put(C), format_nth_args(FormatRest, Iterator, Args).
 
 eval_20(Eq,RetType,Depth,Self,['format-args',Format,Args],Result):-
    eval_args(Eq,RetType,Depth,Self,Format,EFormat),
    eval_args(Eq,RetType,Depth,Self,Args,EArgs),
    is_list(EArgs),string_chars(EFormat, FormatChars), !,
-   user_io(with_output_to(string(Result), format_args(FormatChars, 0, EArgs))).
+   user_io(with_output_to_str( Result, format_nth_args(FormatChars, 0, EArgs))).
 eval_20(Eq,RetType,Depth,Self,['format-args',_Fmt,Args],_Result) :-
    eval_args(Eq,RetType,Depth,Self,Args,EArgs),
    \+ is_list(EArgs),!,throw_metta_return(['Error',Args,'BadType']).
@@ -1298,6 +1320,16 @@ eval_20(Eq,RetType,_Depth,_Self,['flip'],Bool):-
    ignore(RetType='Bool'), !, as_tf(random(0,2,0),Bool),
    check_returnval(Eq,RetType,Bool).
 
+eval_20( Eq, RetType, Depth, Self, [ 'parse' , L ] , Exp ):- !,
+    eval_args( Eq, RetType, Depth, Self, L, Str ),
+    once(parse_sexpr_metta1( Str, Exp )).
+
+eval_20( _Eq, _RetType, _Depth, _Self, [ 'repr' , L ] , Sxx ):- !,
+   %eval_args( Eq, RetType, Depth, Self, L, Lis2 ),
+    with_output_to_str( Sxx , write_src_woi( L ) ).
+
+eval_20( Eq, RetType, Depth, Self, [ 'output-to-string' , L ] , Sxx ):- !,
+   with_output_to_str( Sxx , eval_args( Eq, RetType, Depth, Self, L, _ )).
 
 % =================================================================
 % =================================================================
@@ -1712,8 +1744,8 @@ eval_20(Eq,RetType,Depth,Self,['subtraction',Eval1,Eval2],RetVal):- !,
                   RetVal2^eval_args(Eq,RetType,Depth,Self,Eval2,RetVal2),
                   RetVal).
 
-eval_20(Eq,RetType,_Dpth,_Slf,['py-list',Atom_list],CDR_Y):- 
- !, Atom=[_|CDR],!,do_expander(Eq,RetType,Atom_list, CDR_Y ).
+%eval_20(Eq,RetType,_Dpth,_Slf,['py-list',Atom_list],CDR_Y):-
+% !, Atom=[_|CDR],!,do_expander(Eq,RetType,Atom_list, CDR_Y ).
 
 eval_20(Eq,RetType,Depth,Self,['intersection',Eval1,Eval2],RetVal):- !,
     lazy_intersection(RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
@@ -1836,10 +1868,28 @@ eval_20(_Eq,_RetType,_Depth,_Self,['rust!',PredDecl],Res):- !,
   must_det_ll((rust_metta_run(exec(PredDecl),Res),
   nop(write_src(res(Res))))).
 
+eval_70(_Eq,_RetType,_Depth,_Self,['py-atom',Arg],Res):- !,
+  must_det_ll((py_atom(Arg,Res))).
+eval_40(_Eq,_RetType,_Depth,_Self,['py-atom',Arg,Type],Res):- !,
+  must_det_ll((py_atom_type(Arg,Type,Res))).
+eval_40(_Eq,_RetType,_Depth,_Self,['py-dot',Arg1,Arg2],Res):- !,
+  must_det_ll((py_dot([Arg1,Arg2],Res))).
+eval_40(_Eq,_RetType,_Depth,_Self,['py-list',Arg],Res):- !,
+  must_det_ll((py_list(Arg,Res))).
+eval_40(_Eq,_RetType,_Depth,_Self,['py-dict',Arg],Res):- !,
+  must_det_ll((py_dict(Arg,Res))).
+eval_40(_Eq,_RetType,_Depth,_Self,['py-tuple',Arg],Res):- !,
+    must_det_ll((py_tuple(Arg,Res))).
+eval_40(_Eq,_RetType,_Depth,_Self,['py-eval',Arg],Res):- !,
+    must_det_ll((py_eval(Arg,Res))).
+
 eval_40(Eq,RetType,Depth,Self,['length',L],Res):- !, eval_args(Depth,Self,L,LL),
    (is_list(LL)->length(LL,Res);Res=1),
    check_returnval(Eq,RetType,Res).
 
+
+eval_20(Eq,RetType,Depth,Self,[P,X|More],YY):- is_list(X),X=[_,_,_],simple_math(X),
+       eval_selfless_2(X,XX),X\=@=XX,!, eval_20(Eq,RetType,Depth,Self,[P,XX|More],YY).
 
 /*
 eval_40(Eq,RetType,Depth,Self,[P,A,X|More],YY):- is_list(X),X=[_,_,_],simple_math(X),
@@ -1851,6 +1901,15 @@ eval_40(Eq,RetType,Depth,Self,[P,A,X|More],YY):- is_list(X),X=[_,_,_],simple_mat
 eval_40(Eq,RetType,_Dpth,_Slf,[EQ,X,Y],Res):- EQ=='==', !,
     suggest_type(RetType,'Bool'),
     eq_unify(Eq,_SharedType, X, Y, Res).
+
+eval_20(_Eq,RetType,_Dpth,_Slf,[EQ,X,Y],TF):- EQ=='===', !,
+    suggest_type(RetType,'Bool'),
+    as_tf(X==Y,TF).
+
+eval_20(_Eq,RetType,_Dpth,_Slf,[EQ,X,Y],TF):- EQ=='====', !,
+    suggest_type(RetType,'Bool'),
+    as_tf(same_terms(X,Y),TF).
+
 
 eq_unify(_Eq,_SharedType, X, Y, TF):- as_tf(X=:=Y,TF),!.
 eq_unify(_Eq,_SharedType, X, Y, TF):- as_tf( '#='(X,Y),TF),!.
