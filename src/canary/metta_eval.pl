@@ -643,10 +643,7 @@ eval_20(Eq, RetType, Depth, Self, ['sealed', InputVarList, Expr], Result) :-
     maplist(create_unique_var, InputVarList, UniqueVarMap),
     % create lookup table [sealed --> local]
     LocalVarLookup = [InputVarList, UniqueVarMap],
-    write("lookup>"),writeln(LocalVarLookup),
-    write("input expr>"),writeln(Expr),
-    replace_vars_in_expr(Expr, LocalVarLookup, Result),
-    write("new expr>"),writeln(Result).
+    replace_vars_in_expr(Expr, LocalVarLookup, Result).
 
 % create temp local variables for each variable in VarList
 create_unique_var(InVar, OutVarUnique) :- 
@@ -658,9 +655,8 @@ create_unique_var(InVar, OutVarUnique) :-
 
 % lookup if we need to use a local variable
 check_replace_with_local_var(VarCheckIn, [VarKeys|[VarValues]], VarCheckOut) :-
-    nth1(Index, VarKeys, VarCheckIn),write(" KeyIn>"),write(VarCheckIn),
-    nth1(Index, VarValues, VarCheckOut),write(" ValOut>"),write(VarCheckOut)
-    .
+    nth1(Index, VarKeys, VarCheckIn),
+    nth1(Index, VarValues, VarCheckOut).
 
 % --> replace_vars_in_expr( input expression list, local variable map, output expression with temp local)
 
