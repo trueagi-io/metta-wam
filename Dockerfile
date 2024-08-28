@@ -6,6 +6,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN apt update
 RUN apt install -y python3 python3-pip libpython3-dev git
 RUN apt install -y sudo git curl gcc cmake
+RUN apt install -y python3-venv time wget vim bc
 
 # Create user
 ENV USER=user
@@ -29,6 +30,8 @@ WORKDIR ${METTALOG_DIR}
 # This COPY is in case we have made local changes 
 #         so we dont have to commit to Github to test them out
 COPY ./ ./
+# get rid of copied venv that is probably using a whole different python anyways
+RUN rm -rf ./venv/  
 COPY ./INSTALL.sh ./INSTALL.sh
 RUN ./INSTALL.sh --easy
 

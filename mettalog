@@ -18,7 +18,11 @@ compatio=false
 RC_OPTIONS=()
 TIMEOUT=0
 verbose="${VERBOSE:-0}"  # Use the VERBOSE environment variable or default to '0' (not verbose)
-export OUTPUT_DIR="./"
+OUTPUT_DIR="${METTALOG_OUTPUT}"
+
+cd $METTALOG_DIR
+source ./scripts/ensure_venv
+cd $RPWD
 
 use_docker=auto
 repl_flag=auto
@@ -26,15 +30,82 @@ use_rc_file=~/.mettalogrc
 debug_this_script=false
 contains_halt=false
 dry_run=0
-#debug_this_script=true
-stdout_is_to_file=false
-if [ -t 1 ]; then
-    #echo "stdout is connected to a terminal"
-    stdout_is_to_file=false
-else
-    #echo "stdout is being piped or redirected"
-    stdout_is_to_file=true
-fi
+
+# Function to add a flag to a list
+add_to_list() {
+    local flag=$1
+    local -n options=$2
+    if [[ -n "$flag" ]]; then
+        options+=("$flag")
+    fi
+}
+
+# Function to set input, output, and error flags based on the I/O sources
+set_io_flags() {
+    #local -n STDIO_OPTIONS=$1
+
+    # Handle stdin flags
+    if [ -p /dev/stdin ]; then
+        add_to_list "--stdin=pipe" STDIO_OPTIONS
+    elif [ -f /dev/stdin ]; then
+        local input_filename
+        input_filename=$(readlink /proc/self/fd/0)
+        add_to_list "--stdin=file" STDIO_OPTIONS
+        add_to_list "--input-filename=${input_filename}" STDIO_OPTIONS
+    else
+	add_to_list "--stdin=tty" STDIO_OPTIONS
+    fi
+
+    # Handle stdout flags
+    if [ ! -t 1 ]; then
+        if [ -p /dev/stdout ]; then
+            add_to_list "--stdout=pipe" STDIO_OPTIONS
+        elif [ -f /dev/stdout ]; then
+            local output_filename
+            output_filename=$(readlink /proc/self/fd/1)
+            add_to_list "--stdout=file" STDIO_OPTIONS
+            add_to_list "--output-filename=${output_filename}" STDIO_OPTIONS
+        fi
+    else
+        add_to_list "--stdout=tty" STDIO_OPTIONS
+    fi
+
+    # Handle stderr flags
+    if [ ! -t 2 ]; then
+        if [ -p /dev/stderr ]; then
+            add_to_list "--stderr=pipe" STDIO_OPTIONS
+        elif [ -f /dev/stderr ]; then
+            local error_filename
+            error_filename=$(readlink /proc/self/fd/2)
+            add_to_list "--stderr=file" STDIO_OPTIONS
+            add_to_list "--error-filename=${error_filename}" STDIO_OPTIONS
+        fi
+    else
+        add_to_list "--stderr=tty" STDIO_OPTIONS
+    fi
+}
+
+# Initialize the STDIO_OPTIONS array
+STDIO_OPTIONS=()
+
+# Set the input, output, and error flags
+set_io_flags
+
+# Function to check if SWI-Prolog is installed
+check_swipl_installed() {
+    if ! command -v swipl &> /dev/null; then
+        echo -e "\033[0;31mError: SWI-Prolog is not installed. Please install it and try again.\033[0m"
+        exit 1
+    fi
+}
+
+# Function to check if SWI-Prolog has Janus support (optional, based on your needs)
+check_janus_support() {
+    if ! swipl -g "use_module(library(janus)), halt(0)." -t "halt(1)" 2>/dev/null; then
+        echo -e "\033[0;31mError: SWI-Prolog does not have Janus support. Please install Janus and try again.\033[0m"
+        python_flag=disable
+    fi
+}
 
 
 # Capture original auto margins setting and terminal size
@@ -168,7 +239,6 @@ do_DEBUG() {
     local screen_width=$(tput cols)
     local threshold=$((screen_width * 74 / 100))
 
-    # Construct the debug message
     # Construct the debug message
     local msg="; ${YELLOW}DEBUG${NC} $*"
 
@@ -422,6 +492,8 @@ fi
 PRE_METTALOG_OPTIONS=()
 SWI_FLAG_WITH_ARG=false
 python_flag=enable
+# Optional: Check if SWI-Prolog has Janus support
+check_janus_support
 LIST_OF_FILE_ARGS=()
 
 wants_print_help=0
@@ -542,14 +614,15 @@ function handle_args {
 	    #METTALOG_OPTIONS=("--timeout=$TIMEOUT" "${METTALOG_OPTIONS[@]}")
 	    #add_to_list "$arg" METTALOG_OPTIONS
 	    continue
-	elif [[ "$arg" =~ ^--python=(enable|false)$ ]]; then
+	elif [[ "$arg" =~ ^--python=(enable|disable|false)$ ]]; then
             python_flag="${BASH_REMATCH[1]}"
-	    continue
+	    	continue
         elif [[ "$arg" == "--python" ]]; then
             python_flag=enable
-	    continue
+	    	continue
         elif [[ "$arg" == "--no-python" ]]; then
             python_flag=false
+            continue
         elif [[ "$arg" == "--repl" ]]; then
             #add_to_list "$arg" METTALOG_OPTIONS_LAST
             repl_flag=true
@@ -586,6 +659,7 @@ function handle_args {
 	        add_to_list "$arg" METTALOG_OPTIONS
 		if [[ "$arg" =~ ^--output=(.*)$ ]]; then
 		    OUTPUT_DIR="${BASH_REMATCH[1]}"
+		    export METTALOG_OUTPUT="${OUTPUT_DIR}"
 		fi
                 continue
                 ;;
@@ -861,30 +935,33 @@ if [[ -z "$reference_file" ]]; then
 fi
 
 if [[ -f "$reference_file" ]]; then
-   : # rm -f $reference_file
+   : # Placeholder in case something needs to be done here
+   # rm -f $reference_file
 fi
 
 if [[ -f "$reference_file" ]]; then
-  MLOG="$reference_file --"
+  MLOG="$reference_file"
+
   if [[ "${#SWI_OPTIONS[@]}" -gt 0 ]]; then
-       MLOG="swipl -x $reference_file  ${SWI_OPTIONS[*]} --"
+       MLOG="swipl -x $reference_file  ${SWI_OPTIONS[*]}"
   fi
   if [[ "$never_compile" -eq 1 ]]; then
-       MLOG="swipl ${SWI_OPTIONS[*]} -l $INTERP_SRC_DIR/metta_interp.pl --"
+       MLOG="swipl ${SWI_OPTIONS[*]} $INTERP_SRC_DIR/metta_interp.pl"
   fi
 else
-  MLOG="swipl ${SWI_OPTIONS[*]} -l $INTERP_SRC_DIR/metta_interp.pl --"
-fi
-
-if [[ "$stdout_is_to_file" == true ]]; then
-   add_to_list "--piped" METTALOG_OPTIONS
+  MLOG="swipl ${SWI_OPTIONS[*]} $INTERP_SRC_DIR/metta_interp.pl"
 fi
 
 #add_to_list "--log" METTALOG_OPTIONS
 #html_flag=enable
 #add_to_list "--html" METTALOG_OPTIONS
 
-METTA_CMD="$MLOG --python=$python_flag ${PRE_METTALOG_OPTIONS[*]} ${METTALOG_OPTIONS[*]} ${METTALOG_OPTIONS_LAST[*]}"
+STDIO_OPTIONS=()
+set_io_flags STDIO_OPTIONS
+
+# Generate the final command
+METTA_CMD="$MLOG -- --python=$python_flag ${PRE_METTALOG_OPTIONS[*]} ${METTALOG_OPTIONS[*]} ${METTALOG_OPTIONS_LAST[*]} ${STDIO_OPTIONS[*]}"
+
 
 OS=$(uname)
 TIMEOUT_CMD="timeout"
@@ -915,7 +992,7 @@ cleanup() {
     else
         METTA_CMD_EXIT_STATUS=${METTA_CMD_EXIT_STATUS:-$?}
     fi
-    DEBUG "Exit code of METTA_CMD: $METTA_CMD_EXIT_STATUS"
+    do_DEBUG "Exit code of METTA_CMD: $METTA_CMD_EXIT_STATUS"
 
     if [ ! -z "$TEE_FILE" ];then
         if [ ! -z "$HTML_OUT" ];then
@@ -933,13 +1010,11 @@ cleanup() {
 }
 
 # Trap exit signal to execute cleanup function
-
-#DEBUG "TIMEOUT=$TIMEOUT"
-
+trap cleanup EXIT
 
 if [[ -n "$TIMEOUT" && "$TIMEOUT" -gt 0 ]]; then  
   export TIMEOUT
-  METTA_CMD="$TIMEOUT_CMD --preserve-status --signal=SIGTERM --kill-after=5s $TIMEOUT ${METTA_CMD}"
+  METTA_CMD="$TIMEOUT_CMD --preserve-status --foreground --signal=SIGTERM --kill-after=5s $TIMEOUT ${METTA_CMD}"
 fi
 
 function escape_quotes {
@@ -949,6 +1024,59 @@ function escape_quotes {
 
 cd "${RPWD}"
 set +e
+
+# Function to execute the command with the appropriate redirections
+execute_with_pipes() {
+    local input_redirection=""
+    local output_redirection=""
+    local error_redirection=""
+
+    # Handle stdin redirection
+    if [[ "${STDIO_OPTIONS[*]}" =~ "--stdin=file" ]]; then
+        input_file=$(echo "${STDIO_OPTIONS[*]}" | grep -oP '(?<=--input-filename=)[^ ]+')
+        input_redirection="<\"$input_file\""
+    elif [[ "${STDIO_OPTIONS[*]}" =~ "--stdin=pipe" ]]; then
+        # stdin is already a pipe, no action needed
+        :
+    else
+        # stdin is a tty, no redirection needed
+        :
+    fi
+
+    # Handle stdout redirection
+    if [[ "${STDIO_OPTIONS[*]}" =~ "--stdout=file" ]]; then
+        output_file=$(echo "${STDIO_OPTIONS[*]}" | grep -oP '(?<=--output-filename=)[^ ]+')
+        output_redirection=">\"$output_file\""
+    elif [[ "${STDIO_OPTIONS[*]}" =~ "--stdout=pipe" ]]; then
+        # stdout is already a pipe, no action needed
+        :
+    else
+        # stdout is a tty, no redirection needed
+        :
+    fi
+
+    # Handle stderr redirection
+    if [[ "${STDIO_OPTIONS[*]}" =~ "--stderr=file" ]]; then
+        error_file=$(echo "${STDIO_OPTIONS[*]}" | grep -oP '(?<=--error-filename=)[^ ]+')
+        error_redirection="2>\"$error_file\""
+    elif [[ "${STDIO_OPTIONS[*]}" =~ "--stderr=pipe" ]]; then
+        # stderr is already a pipe, no action needed
+        :
+    else
+        # stderr is a tty, no redirection needed
+        :
+    fi
+
+    # Construct the full command with all necessary redirections
+    local full_command="eval \"$METTA_CMD\" $input_redirection $output_redirection $error_redirection"
+
+    # Check if SWI-Prolog is installed
+    check_swipl_installed
+
+    # Execute the command using IF_REALLY_DO
+    IF_REALLY_DO "$full_command"
+}
+
 
 # Conditional to check if html_flag is enabled
 if [[ "$html_flag" == "enable" ]]; then
@@ -960,6 +1088,7 @@ if [[ "$html_flag" == "enable" ]]; then
     if [ ! -z "$HTML_OUT" ];then
         HTML_OUT=$(realpath --relative-to="$(pwd)" "$HTML_OUT")
         if [ ! -z "$OUTPUT_DIR" ] ;then
+	    export METTALOG_OUTPUT="${OUTPUT_DIR}"
             HTML_OUT="${OUTPUT_DIR}/${HTML_OUT}"
         fi
 	export HTML_FILE="${HTML_OUT}"
@@ -967,38 +1096,36 @@ if [[ "$html_flag" == "enable" ]]; then
 
     export TYPESCRIPT=1
     if [[ "$OS" == "Darwin" ]]; then # macOS
-        METTA_CMD="/usr/bin/script -q -f -a \"$TEE_FILE\" \"${METTA_CMD//\"/\\\"}\""
+        METTA_CMD="/usr/bin/script -q -f -a \"$TEE_FILE\" -c \\\"$(printf '%q ' ${METTA_CMD[@]})\\\""
     else # Assume Linux
-        METTA_CMD="/usr/bin/script -q -f --force -e -a \"$TEE_FILE\" -c \"${METTA_CMD//\"/\\\"}\""
+        METTA_CMD="/usr/bin/script -q -f --force -e -a \"$TEE_FILE\" -c \\\"$(echo "${METTA_CMD}" | sed 's/"/\\"/g')\\\""
     fi
 
-    [[ "$wants_print_help" == "1" ]] && { print_help; }
-    DEBUG ""
-    DEBUG "Afterwhich ansi2html -u < $TEE_FILE > '$HTML_OUT'"
-    DEBUG ""
-    [[ -n "${EXIT_SCRIPT+x}" ]] && { [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
-
-    #(
-        IF_REALLY_DO "touch '$TEE_FILE'"
-        IF_REALLY_DO "chmod 777 '$TEE_FILE'"
-        IF_REALLY_DO "cat /dev/null > '$TEE_FILE'"
-        #if [[ "$contains_halt" == "true" ]]; then
-	   DEBUG "METTA_CMD: $METTA_CMD"
-	#fi
-	trap 'cleanup' EXIT
-        eval "$METTA_CMD"
-        echo $? > "$TEMP_EXIT_CODE_FILE"
-    #)
+	[[ "$wants_print_help" == "1" ]] && { print_help; }
+	DEBUG ""
+	DEBUG "Afterwhich ansi2html -u < $TEE_FILE > '$HTML_OUT'"
+	DEBUG ""
+	[[ -n "${EXIT_SCRIPT+x}" ]] && { [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
+	
+	IF_REALLY_DO "touch '$TEE_FILE'"
+	IF_REALLY_DO "chmod 777 '$TEE_FILE'"
+	IF_REALLY_DO "cat /dev/null > '$TEE_FILE'"
+	if [[ "$contains_halt" == "true" ]]; then
+		do_DEBUG "METTA_CMD: $METTA_CMD"
+	fi
+	execute_with_pipes
+	echo $? > "$TEMP_EXIT_CODE_FILE"
 else
-    [[ "$wants_print_help" == "1" ]] && { print_help; [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
-    [[ -n "${EXIT_SCRIPT+x}" ]] && { [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
-    if [[ "$contains_halt" == "true" ]]; then
-       do_DEBUG "METTA_CMD: $METTA_CMD"
-    fi
-    #(
-        trap 'cleanup' EXIT
-        IF_REALLY_DO eval "$METTA_CMD"
-        IF_REALLY_DO "echo $? > '$TEMP_EXIT_CODE_FILE'"
-    #)
+	[[ "$wants_print_help" == "1" ]] && { print_help; [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
+	[[ -n "${EXIT_SCRIPT+x}" ]] && { [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
+        if [ ! -z "$OUTPUT_DIR" ] ;then
+	    export METTALOG_OUTPUT="${OUTPUT_DIR}"
+        fi
+	if [[ "$contains_halt" == "true" ]]; then
+		do_DEBUG "METTA_CMD: $METTA_CMD"
+	fi
+	execute_with_pipes
+	IF_REALLY_DO "echo $? > '$TEMP_EXIT_CODE_FILE'"
 fi
 
+cd "${RPWD}"

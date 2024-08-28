@@ -122,7 +122,7 @@
 			<F
 				N="library/*.*"
 				Recurse="1"
-				Excludes=".git/;*.metta.html;*.bak;build/;/;*~*/"
+				Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"
 				L="1"/>
 		</Folder>
 		<Folder Name="reports">

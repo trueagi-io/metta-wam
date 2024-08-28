@@ -285,7 +285,12 @@ metta_atom_asserted_deduced('&corelib', Term):- metta_atom_corelib_types(Term).
 
 use_corelib_file:- using_corelib_file,!.
 use_corelib_file:- asserta(using_corelib_file), fail.
-use_corelib_file:- load_corelib_file.
+use_corelib_file:- load_corelib_file, generate_interpreter_stubs.
+
+generate_interpreter_stubs:-
+   forall(metta_type('&corelib',Symb,Def),
+        gen_interp_stubs('&corelib',Symb,Def)).
+
 load_corelib_file:- is_metta_src_dir(Dir), really_use_corelib_file(Dir,'corelib.metta'),!.
 load_corelib_file:- is_metta_src_dir(Dir), really_use_corelib_file(Dir,'stdlib_mettalog.metta'),!.
 % !(import! &corelib "src/canary/stdlib_mettalog.metta")

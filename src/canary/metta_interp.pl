@@ -54,7 +54,7 @@
 :- encoding(utf8).
 :- set_prolog_flag(encoding, utf8).
 :- nb_setval(cmt_override,lse('; ',' !(" ',' ") ')).
-:- ensure_loaded(swi_support).
+:- set_prolog_flag(source_search_working_directory,true).
 :- set_prolog_flag(backtrace,true).
 :- set_prolog_flag(backtrace_depth,100).
 :- set_prolog_flag(backtrace_goal_dept,100).
@@ -62,6 +62,7 @@
 :- set_prolog_flag(write_attributes,portray).
 :- set_prolog_flag(debug_on_interrupt,true).
 :- set_prolog_flag(debug_on_error,true).
+:- ensure_loaded(swi_support).
 %:- set_prolog_flag(compile_meta_arguments,control).
 :- (prolog_load_context(directory, Value);Value='.'), absolute_file_name('../packs/',Dir,[relative_to(Value)]),
     atom_concat(Dir,'predicate_streams',PS),
@@ -74,7 +75,7 @@
 is_win64:- current_prolog_flag(windows,_).
 is_win64_ui:- is_win64,current_prolog_flag(hwnd,_).
 
-
+dont_change_streams:- true.
 
 :- dynamic(user:is_metta_src_dir/1).
 :- prolog_load_context(directory,Dir),
@@ -208,6 +209,7 @@ is_compatio0:- is_mettalog,!,fail.
 is_compatio0:- !.
 
 keep_output:- !.
+keep_output:- dont_change_streams,!.
 keep_output:- is_win64,!.
 keep_output:- is_mettalog,!.
 keep_output:- is_testing,!.
@@ -222,6 +224,7 @@ original_user_error(X):- stream_property(X,file_no(2)).
 unnullify_output:- current_output(MFS),  original_user_output(OUT), MFS==OUT, !.
 unnullify_output:- original_user_output(MFS), set_prolog_IO(user_input,MFS,user_error).
 
+null_output(MFS):- dont_change_streams,!, original_user_output(MFS),!.
 null_output(MFS):- use_module(library(memfile)),
   new_memory_file(MF),open_memory_file(MF,append,MFS).
 :- dynamic(null_user_output/1).
@@ -230,11 +233,12 @@ null_output(MFS):- use_module(library(memfile)),
 
 
 nullify_output:- keep_output,!.
+nullify_output:- dont_change_streams,!.
 nullify_output:- nullify_output_really.
 nullify_output_really:- current_output(MFS), null_user_output(OUT),  MFS==OUT, !.
 nullify_output_really:- null_user_output(MFS), set_prolog_IO(user_input,MFS,MFS).
 
-%set_output_stream :- !.
+set_output_stream :- dont_change_streams,!.
 set_output_stream :- \+ keep_output -> nullify_output;  unnullify_output.
 :- set_output_stream.
 % :- nullify_output.
@@ -408,10 +412,12 @@ set_is_unit_test(TF):-
  % if_t( \+ TF , set_prolog_flag(debug_on_interrupt,true)),
   !.
 
-fake_notrace(G):- tracing,!,notrace(G).
+:- meta_predicate fake_notrace(0).
+fake_notrace(G):- tracing,!,real_notrace(G).
 fake_notrace(G):- !,once(G).
+% `quietly/1` allows breaking in and inspection (real `no_trace/1` does not)
 fake_notrace(G):- quietly(G),!.
-real_notrace(Goal):-!,notrace(Goal).
+:- meta_predicate real_notrace(0).
 real_notrace(Goal) :-
     setup_call_cleanup('$notrace'(Flags, SkipLevel),
                        once(Goal),
@@ -420,7 +426,7 @@ real_notrace(Goal) :-
 
 :- dynamic(is_answer_output_stream/2).
 answer_output(Stream):- is_testing,original_user_output(Stream),!.
-answer_output(Stream):- !,original_user_output(Stream),!.
+answer_output(Stream):- !,original_user_output(Stream),!. % yes, the cut is on purpose
 answer_output(Stream):- is_answer_output_stream(_,Stream),!.
 answer_output(Stream):- tmp_file('answers',File),
    open(File,write,Stream,[encoding(utf8)]),
@@ -476,159 +482,101 @@ show_options_values:-
 
 :- set_is_unit_test(false).
 
-% ============================
-% %%%% Arithmetic Operations
-% ============================
+extract_prolog_arity([Arrow|ParamTypes],PrologArity):-
+    Arrow == ('->'),!,
+    len_or_unbound(ParamTypes,PrologArity).
 
-'repr'( Atomx, String_metta ):- eval_H( [ repr, Atomx ], String_metta ).
-'parse'( Strx, Atom_metta ):- eval_H( [ parse, Strx ], Atom_metta ).
+add_prolog_code(_KB,AssertZIfNew):-
+  fbug(writeln(AssertZIfNew)),
+  assertz_if_new(AssertZIfNew).
+gen_interp_stubs(KB,Symb,Def):-
+  ignore((is_list(Def),
+ must_det_ll((
+     extract_prolog_arity(Def,PrologArity),
+       symbol(Symb),
+       symbol_concat('i_',Symb,Tramp),
+       length(PrologArgs,PrologArity),
+       append(MeTTaArgs,[RetVal],PrologArgs),
+       TrampH =.. [Tramp|PrologArgs],
+       add_prolog_code(KB,
+           (TrampH :- eval_H([Symb|MeTTaArgs], RetVal))))))).
 
-% Addition
-%'+'(A, B, Sum):- \+ any_floats([A, B, Sum]),!,Sum #= A+B .
-%'+'(A, B, Sum):- notrace(catch_err(plus(A, B, Sum),_,fail)),!.
-'+'(A, B, Sum):- eval_H([+,A,B],Sum).
-% Subtraction
-'-'( A, B, Sum):- eval_H([-,A,B],Sum).
-% Multiplication
-'*'(A, B, Product):- eval_H([*,A,B],Product).
-% Division
-'/'(Dividend, Divisor, Quotient):- eval_H(['/',Dividend, Divisor], Quotient).   %{Dividend = Quotient * Divisor}.
-% Modulus
-'mod'(Dividend, Divisor, Remainder):- eval_H(['mod',Dividend, Divisor], Remainder).
-'%'(Dividend, Divisor, Remainder):- eval_H(['mod',Dividend, Divisor], Remainder).
-% Exponentiation
-'exp'(Base, Exponent, Result):- eval_H(['exp', Base, Exponent], Result).
-% Square Root
-'sqrt'(Number, Root):- eval_H(['sqrt', Number], Root).
+% 'int_fa_format-args'(FormatArgs, Result):- eval_H(['format-args'|FormatArgs], Result).
+% 'ext_fa_format-args'([EFormat, EArgs], Result):- int_format-args'(EFormat, EArgs, Result)
+/*
 
-% 'substraction'( Lx1, Lx2 , Lx_intersct ):- !, eval_H( [ 'substraction', Lx1, Lx2 ], Lx_intersct ).
+'ext_format-args'(Shared,Format, Args, EResult):-
+    pred_in('format-args',Shared,3),
+      argn_in(1,Shared,Format,EFormat),
+      argn_in(2,Shared,Args,EArgs),
+      argn_in(3,Shared,EResult,Result),
+    int_format-args'(Shared,EFormat, EArgs, Result),
+      arg_out(1,Shared,EFormat,Format),
+      arg_out(2,Shared,EArgs,Args),
+      arg_out(3,Shared,Result,EResult).
 
-% ============================
-% %%%% List Operations
-% ============================
-% Retrieve Head of the List
-'car-atom'(List, Head):- eval_H(['car-atom', List], Head).
-% Retrieve Tail of the List
-'cdr-atom'(List, Tail):- eval_H(['cdr-atom', List], Tail).
-% Construct a List
-'Cons'(Element, List, 'Cons'(Element, List)):- !.
-% Collapse List
-'collapse'(List, CollapsedList):- eval_H(['collapse', List], CollapsedList).
-% Count Elements in List
-%'CountElement'(List, Count):- eval_H(['CountElement', List], Count).
-% Find Length of List
-%'length'(List, Length):- eval_H(['length', List], Length).
+ you are goign to create the clause based on the first 2 args
 
-% ============================
-% %%%% Nondet Opteration
-% ============================
-% Superpose a List
-'superpose'(List, SuperposedList):- eval_H(['superpose', List], SuperposedList).
+?-  gen_form_body('format-args',3, HrnClause).
 
-% ============================
-% %%%% Testing
-% ============================
+HrnClause =
+   ('ext_format-args'(Shared, Arg1, Arg2, EResult):-
+    pred_in('format-args',Shared,3),
+      argn_in(1,Shared,Arg1,EArg1),
+      argn_in(2,Shared,Arg2,EArg2),
+      argn_in(3,Shared,EResult,Result),
+    'int_format-args'(Shared,EArg1, EArg2, Result),
+      arg_out(1,Shared,EArg1,Arg1),
+      arg_out(2,Shared,EArg2,Arg2),
+      arg_out(3,Shared,Result,EResult)).
 
-% `assertEqual` Predicate
-% This predicate is used for asserting that the Expected value is equal to the Actual value.
-% Expected: The value that is expected.
-% Actual: The value that is being checked against the Expected value.
-% Result: The result of the evaluation of the equality.
-% Example: `assertEqual(5, 5, Result).` would succeed, setting Result to true (or some success indicator).
-%'assertEqual'(Expected, Actual, Result):- use_metta_compiler,!,as_tf((Expected=Actual),Result).
-'assertEqual'(Expected, Actual, Result):- ignore(Expected=Actual), eval_H(['assertEqual', Expected, Actual], Result).
-
-% `assertEqualToResult` Predicate
-% This predicate asserts that the Expected value is equal to the Result of evaluating Actual.
-% Expected: The value that is expected.
-% Actual: The expression whose evaluation is being checked against the Expected value.
-% Result: The result of the evaluation of the equality.
-% Example: If Actual evaluates to the Expected value, this would succeed, setting Result to true (or some success indicator).
-'assertEqualToResult'(Expected, Actual, Result):- eval_H(['assertEqualToResult', Expected, Actual], Result).
-
-% `assertNotEqual` Predicate
-% This predicate asserts that the Expected value is not equal to the Actual value.
-% Expected: The value that is expected not to match the Actual value.
-% Actual: The value that is being checked against the Expected value.
-% Result: The result of the evaluation of the inequality.
-% Example: `assertNotEqual(5, 6, Result).` would succeed, setting Result to true (or some success indicator).
-'assertNotEqual'(Expected, Actual, Result):- eval_H(['assertNotEqual', Expected, Actual], Result).
+*/
 
 
-% `assertFalse` Predicate
-% This predicate is used to assert that the evaluation of EvalThis is false.
-% EvalThis: The expression that is being evaluated and checked for falsehood.
-% Result: The result of the evaluation.
-% Example: `assertFalse((1 > 2), Result).` would fail, setting Result to False (or some success indicator), as 1 > 2 is false.
-'assertFalse'(EvalThis, Result):- eval_H(['assertFalse', EvalThis], Result).
 
-% `assertTrue` Predicate
-% This predicate is used to assert that the evaluation of EvalThis is true.
-% EvalThis: The expression that is being evaluated and checked for truth.
-% Result: The result of the evaluation.
-% Example: `assertTrue((2 > 1), Result).` would succeed, setting Result to true (or some success indicator), as 2 > 1 is true.
-'assertTrue'(EvalThis, Result):- eval_H(['assertTrue', EvalThis], Result).
+% Helper to generate head of the clause
+generate_head(Shared,Arity, FormName, Args, Head) :-
+    atom_concat('ext_', FormName, ExtFormName),
+    number_string(Arity, ArityStr),
+    atom_concat(ExtFormName, ArityStr, FinalFormName), % Append arity to form name for uniqueness
+    append([FinalFormName, Shared | Args], HeadArgs),
+    Head =.. HeadArgs.
 
-% `rtrace` Predicate
-% This predicate is likely used for debugging; possibly for tracing the evaluation of Condition.
-% Condition: The condition/expression being traced.
-% EvalResult: The result of the evaluation of Condition.
-% Example: `rtrace((2 + 2), EvalResult).` would trace the evaluation of 2 + 2 and store its result in EvalResult.
-'rtrace!'(Condition, EvalResult):- eval_H(['rtrace', Condition], EvalResult).
+% Helper to generate body of the clause, swapping arguments
+generate_body(Shared,Arity, FormName, Args, EArgs, Body) :-
+    atom_concat('int_', FormName, IntFormName),
+    number_string(Arity, ArityStr),
+    atom_concat(IntFormName, ArityStr, FinalIntFormName), % Append arity to internal form name for uniqueness
+    reverse(EArgs, ReversedEArgs), % Reverse the order of evaluated arguments for internal processing
+    % Generate predicates for input handling
+    findall(argn_in(Index, Shared, Arg, EArg),
+            (nth1(Index, Args, Arg), nth1(Index, EArgs, EArg)), ArgIns),
+    % Internal processing call with reversed arguments
+    append([Shared | ReversedEArgs], IntArgs),
+    InternalCall =.. [FinalIntFormName | IntArgs],
+    % Generate predicates for output handling
+    findall(arg_out(Index, Shared, EArg, Arg),
+            (nth1(Index, EArgs, EArg), nth1(Index, Args, Arg)), ArgOuts),
+    % Combine predicates
+    PredIn = pred_in(FormName, Shared, Arity),
+    append([PredIn | ArgIns], [InternalCall | ArgOuts], BodyParts),
+    list_to_conjunction(BodyParts, Body).
 
-% `time` Predicate
-% This predicate is used to measure the time taken to evaluate EvalThis.
-% EvalThis: The expression whose evaluation time is being measured.
-% EvalResult: The result of the evaluation of EvalThis.
-% Example: `time((factorial(5)), EvalResult).` would measure the time taken to evaluate factorial(5) and store its result in EvalResult.
-'time!'(EvalThis, EvalResult):- eval_H(['time', EvalThis], EvalResult).
-
-% ============================
-% %%%% Debugging, Printing and Utility Operations
-% ============================
-% REPL Evaluation
-'repl!'(EvalResult):- eval_H(['repl!'], EvalResult).
-% Condition Evaluation
-'!'(Condition, EvalResult):- eval_H(['!', Condition], EvalResult).
-% Import File into Environment
-'import!'(Environment, Filename, Namespace):- eval_H(['import!', Environment, Filename], Namespace).
-% Evaluate Expression with Pragma
-'pragma!'(Environment, Expression, EvalValue):- eval_H(['pragma!', Environment, Expression], EvalValue).
-% Print Message to Console
-'print'(Message, EvalResult):- eval_H(['print', Message], EvalResult).
-% No Operation, Returns EvalResult unchanged
-'nop'(Expression, EvalResult):- eval_H(['nop', Expression], EvalResult).
-
-% ============================
-% %%%% Variable Bindings
-% ============================
-% Bind Variables
-'bind!'(Environment, Variable, Value):- eval_H(['bind!', Environment, Variable], Value).
-% Let binding for single variable
-'let'(Variable, Expression, Body, Result):- eval_H(['let', Variable, Expression, Body], Result).
-% Sequential let binding
-'let*'(Bindings, Body, Result):- eval_H(['let*', Bindings, Body], Result).
-
-% ============================
-% %%%% Reflection
-% ============================
-% Get Type of Value
-'get-type'(Value, Type):- eval_H(['get-type', Value], Type).
-% 'get-type-space'(Space, Value, Type):- eval_H(['get-type', Space, Value], Type).
+% Main predicate to generate form body clause
+gen_form_body(FormName, Arity, Clause) :-
+    length(Args,Arity),
+    length(EArgs,Arity),
+    generate_head(Shared,Arity, FormName, Args, Head),
+    generate_body(Shared,Arity, FormName, Args, EArgs, Body),
+    Clause = (Head :- Body).
 
 
-% ============================
-% %%%% String Utilities
-% ============================
-% conversion between String and List of Chars
-'stringToChars'(String, Chars) :- eval_H(['stringToChars', String], Chars).
-'charsToString'(Chars, String) :- eval_H(['charsToString', Chars], String).
-'format-args'(Format, Args, Result) :- eval_H(['format-args', Format, Args], Result).
+% Helper to format atoms
+format_atom(Format, N, Atom) :- format(atom(Atom), Format, [N]).
 
-% ============================
-% %%%% Random Utilities
-% ============================
-'flip'(Bool) :- eval_H(['flip'], Bool). % see `flip` in metta_eval.pl as `eval_20/6`
+
+% 'int_format-args'(Shared,Format, Args, Result):-
+%    .... actual impl ....
 
 
 
@@ -970,7 +918,7 @@ load_hook(Load,Hooked):-
 %rtrace_on_error(G):- catch(G,_,fail).
 rtrace_on_error(G):-
   catch_err(G,E,
-   (notrace,
+   (%notrace,
     write_src_uo(E=G),
     %catch(rtrace(G),E,throw(E)),
     catch(rtrace(G),E,throw(give_up(E=G))),
@@ -982,7 +930,7 @@ rtrace_on_failure(G):-
                        ignore(rtrace(G)),
                        write_src_uo(rtrace_on_failure(G)),
                        !,fail)),E,
-   (notrace,
+   (%notrace,
     write_src_uo(E=G),
     %catch(rtrace(G),E,throw(E)),
     catch(rtrace(G),E,throw(give_up(E=G))),
@@ -994,7 +942,7 @@ rtrace_on_failure_and_break(G):-
                        ignore(rtrace(G)),
                        write_src(rtrace_on_failure(G)),
                        !,break,fail)),E,
-   (notrace,
+   (%notrace,
     write_src_uo(E=G),
     %catch(rtrace(G),E,throw(E)),
     catch(rtrace(G),E,throw(give_up(E=G))),
@@ -1672,7 +1620,7 @@ do_loon:-
 
    %if_t(is_compiled,ensure_mettalog_py),
           install_readline_editline,
-   nts,
+   %nts1,
    %install_ontology,
    metta_final,
    % ensure_corelib_types,
@@ -1787,17 +1735,21 @@ qsave_program:-  ensure_mettalog_system, next_save_name(Name),
 :- ensure_loaded(metta_server).
 :- initialization(update_changed_files,restore).
 
-nts:- !.
-nts:-  redefine_system_predicate(system:notrace/1),
+nts1:- !. % disable redefinition
+nts1:-  redefine_system_predicate(system:notrace/1),
+  %listing(system:notrace/1),
   abolish(system:notrace/1),
+  dynamic(system:notrace/1),
   meta_predicate(system:notrace(0)),
   asserta((system:notrace(G):- (!,once(G)))).
-nts:- !.
+nts1:- !.
+
+:- nts1.
 
 nts0:-  redefine_system_predicate(system:notrace/0),
   abolish(system:notrace/0),
   asserta((system:notrace:- wdmsg(notrace))).
-
+%:- nts0.
 
 override_portray:-
     forall(
@@ -1833,6 +1785,7 @@ fix_message_hook:-
 
 %:- ensure_loaded('../../library/genome/flybase_loader').
 
+:- ensure_loaded(metta_python).
 :- initialization(use_corelib_file).
 
 :- ignore(((
@@ -1841,7 +1794,7 @@ fix_message_hook:-
    set_is_unit_test(UNIT_TEST),
    \+ prolog_load_context(reloading,true),
     initialization(loon(restore),restore),
-   % nts,
+   % nts1,
    metta_final
     ))).
 
