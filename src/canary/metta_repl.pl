@@ -551,7 +551,8 @@ install_readline(Input):- stream_property(Input,tty(true)),
     %add_history_string("!(load-flybase-full)"),
     %add_history_string("!(pfb3)"),
     %add_history_string("!(obo-alt-id $X BS:00063)"),
-    %add_history_string("!(and (total-rows $T TR$) (unique-values $T2 $Col $TR))"),!.
+    %add_history_string("!(and (total-rows $T TR$) (unique-values $T2 $Col $TR))"),
+    !.
 install_readline(_NoTTY). % For non-tty(true) clients over SWISH/Http/Rest server
 
 :- dynamic  setup_done/0.

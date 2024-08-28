@@ -78,6 +78,7 @@ self_eval0([]).
 self_eval0('%Undefined%').
 self_eval0(X):- atom(X),!, \+ nb_bound(X,_),!.
 
+
 nb_bound(Name,X):- atom(Name), atom_concat('&', _, Name),
   nb_current(Name, X).
 
@@ -127,7 +128,11 @@ is_metta_declaration_f(F,H):- F == '=', !, is_list(H),  \+ (current_self(Space),
 
 % is_metta_declaration([F|T]):- is_list(T), is_user_defined_head([F]),!.
 
+% Sets the current self space to '&self'. This is likely used to track the current context or scope during the evaluation of Metta code.
 :- nb_setval(self_space, '&self').
+
+%! eval_to(+X,+Y) is semidet.
+% checks if X evals to Y
 evals_to(XX,Y):- Y=@=XX,!.
 evals_to(XX,Y):- Y=='True',!, is_True(XX),!.
 
@@ -139,6 +144,10 @@ do_expander(':',_,X,Y):- !, get_type(X,Y)*->X=Y.
 get_type(Arg,Type):- eval_H(['get-type',Arg],Type).
 
 
+%! eval_true(+X) is semidet.
+% Evaluates the given term X and succeeds if X is not a constraint (i.e. \+ iz_conz(X)) and is callable, and calling X succeeds.
+%
+% If X is not callable, this predicate will attempt to evaluate the arguments of X (using eval_args/2) and succeed if the result is not False.
 eval_true(X):- \+ iz_conz(X), callable(X), call(X).
 eval_true(X):- eval_args(X,Y), once(var(Y) ; \+ is_False(Y)).
 
@@ -154,6 +163,8 @@ eval_args(Eq,RetTyp e,Depth,Self,X,Y):-
      eval(Eq,RetType,Depth,Self,X,Y))).
 */
 
+
+%! eval_args(+X,-Y) is semidet.
 eval_args(X,Y):- current_self(Self), eval_args(500,Self,X,Y).
 %eval_args(Eq,RetType,Depth,_Self,X,_Y):- forall(between(6,Depth,_),write(' ')),writeqln(eval_args(Eq,RetType,X)),fail.
 eval_args(Depth,Self,X,Y):- eval_args('=',_RetType,Depth,Self,X,Y).
@@ -168,7 +179,6 @@ eval_args(Eq,RetType,Depth,Self,X,Y):-
     eval_args(Eq,RetType,Depth,Self,X,Y).
 eval_args(Eq,RetType,Depth,Self,X,Y):- notrace(nonvar(Y)),!,
    eval_args(Eq,RetType,Depth,Self,X,XX),evals_to(XX,Y).
-
 
 eval_args(Eq,RetType,_Dpth,_Slf,[X|T],Y):- T==[], number(X),!, do_expander(Eq,RetType,X,YY),Y=[YY].
 
