@@ -1808,12 +1808,12 @@ eval_40(Eq,RetType,Depth,Self,['-',N1,N2],N):- number(N1),
 eval_40(Eq,RetType,Depth,Self,['*',N1,N2],N):- number(N1),
    eval_args(Eq,RetType,Depth,Self,N2,N2Res), fake_notrace(catch_err(N is N1*N2Res,_E,(set_last_error(['Error',N2Res,'Number']),fail))).
 
+eval_20(_Eq,_RetType,_Depth,_Self,['rust',Bang,PredDecl],Res):- Bang == '!', !,
+    rust_metta_run(exec(PredDecl),Res), nop(write_src(res(Res))).
 eval_20(_Eq,_RetType,_Depth,_Self,['rust',PredDecl],Res):- !,
-  must_det_ll((rust_metta_run(PredDecl,Res),
-  nop(write_src(res(Res))))).
+    rust_metta_run((PredDecl),Res), nop(write_src(res(Res))).
 eval_20(_Eq,_RetType,_Depth,_Self,['rust!',PredDecl],Res):- !,
-  must_det_ll((rust_metta_run(exec(PredDecl),Res),
-  nop(write_src(res(Res))))).
+    rust_metta_run(exec(PredDecl),Res), nop(write_src(res(Res))).
 
 eval_70(_Eq,_RetType,_Depth,_Self,['py-atom',Arg],Res):- !,
   must_det_ll((py_atom(Arg,Res))).
