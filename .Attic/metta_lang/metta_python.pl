@@ -129,7 +129,12 @@ py_is_list(X):- py_resolve(X,V), py_type(V,list).
 %py_is_list(V):- py_is_tuple(V).
 
 % Evaluations and Iterations
-load_builtin_module:- py_module(builtin_module,
+:- thread_local(did_load_builtin_module/0).
+:- volatile(did_load_builtin_module/0).
+:- dynamic(did_load_builtin_module/0).
+load_builtin_module:- did_load_builtin_module,!.
+load_builtin_module:- assert(did_load_builtin_module),
+py_module(builtin_module,
 '
 import sys
 #import numpy
@@ -347,6 +352,7 @@ py_ppp(V):-flush_output, with_output_to(codes(Chars), once(py_pp(V))),
 %py_ppp(V):-metta_py_pp(V).
 
 % Evaluations and Iterations
+:- thread_local(did_load_hyperon_module/0).
 :- volatile(did_load_hyperon_module/0).
 :- dynamic(did_load_hyperon_module/0).
 load_hyperon_module:- did_load_hyperon_module,!.
@@ -382,7 +388,7 @@ def rust_unwrap(obj):
     if isinstance(obj,ExpressionAtom):
         return obj.get_children()
     if isinstance(obj,GroundedAtom):
-        return __repr__(obj.get_object())
+        return obj.get_object()
     if isinstance(obj,GroundedObject):
         return obj.content
     return obj
@@ -402,9 +408,10 @@ py_scall(I,O):- catch(py_call(I,M,[py_string_as(string)]),error(_,_),fail),!,O=M
 py_acall(I,O):- catch(py_call(I,M,[py_string_as(atom)]),error(_,_),fail),!,O=M.
 py_ocall(I,O):- catch(py_call(I,M,[py_object(true),py_string_as(string)]),error(_,_),fail),!,O=M.
 
-py_bi(I,O,Opts):- catch(py_call(builtin_module:I,M,Opts),error(_,_),fail),!,O=M.
-py_obi(I,O):- py_ocall(builtin_module:I,O).
-py_mbi(I,O):- py_mcall(builtin_module:I,O).
+
+py_bi(I,O,Opts):- load_builtin_module,catch(py_call(builtin_module:I,M,Opts),error(_,_),fail),!,O=M.
+py_obi(I,O):- load_builtin_module,py_ocall(builtin_module:I,O).
+py_mbi(I,O):- load_builtin_module,py_mcall(builtin_module:I,O).
 %?- py_call(type(hi-there), P),py_pp(P).
 get_str_rep(I,O):- py_mbi(get_str_rep(I),O),!.
 
@@ -493,8 +500,8 @@ ensure_mettalog_py(MettaLearner):-
    asserta(is_mettalog(MettaLearner)))).
 
 ensure_mettalog_py:-
-  load_builtin_module,
-  load_hyperon_module,
+  %load_builtin_module,
+  %load_hyperon_module,
   setenv('VSPACE_VERBOSE',0),
   with_safe_argv(ensure_mettalog_py(_)),!.
 
@@ -888,13 +895,14 @@ rust_to_pl(R,P):- \+ py_is_object(R),!,P=R.
 rust_to_pl(R,P):- py_type(R,'ExpressionAtom'),py_mcall(R:get_children(),L),!,maplist(rust_to_pl,L,P).
 rust_to_pl(R,P):- py_type(R,'SymbolAtom'),py_acall(R:get_name(),P),!.
 rust_to_pl(R,P):- py_type(R,'VariableAtom'),py_acall(R:'__repr__'(),P),!.
-rust_to_pl(R,P):- py_type(R,'VariableAtom'),py_acall(R:get_name(),N),!,atom_concat('$',N,P).
-rust_to_pl(R,P):- py_type(R,'SpaceRef'),!,py_scall(R:'__str__'(),P),!.
-%rust_to_pl(R,P):- py_type(R,'ValueObject'),py_acall(R:'__repr__'(),P),!.
-rust_to_pl(R,PT):- py_type(R,'GroundedAtom'),py_ocall(R:get_grounded_type(),T),rust_to_pl(T,TT),py_ocall(R:get_object(),L),!,rust_to_pl(L,P),comnbine_term_l(TT,P,PT).
+%rust_to_pl(R,P):- py_type(R,'VariableAtom'),py_acall(R:get_name(),N),!,atom_concat('$',N,P).
+rust_to_pl(R,N):- py_type(R,'OperationObject'),py_acall(R:name(),N),!,cache_op(N,R).
+rust_to_pl(R,P):- py_type(R,'SpaceRef'),!,P=R. % py_scall(R:'__str__'(),P),!.
+rust_to_pl(R,P):- py_type(R,'ValueObject'),py_ocall(R:'value'(),L),!,rust_to_pl(L,P).
+rust_to_pl(R,PT):- py_type(R,'GroundedAtom'),py_ocall(R:get_grounded_type(),T),rust_to_pl(T,TT),py_ocall(R:get_object(),L),!,rust_to_pl(L,P),combine_term_l(TT,P,PT).
 rust_to_pl(R,P):- py_is_list(R),py_m(R,L),R\==L,!,rust_to_pl(L,P).
-rust_to_pl(R,PT):- py_acall(R:'__repr__'(),P),py_type(R,T),!,PT=..[T,P].
-rust_to_pl(R,P):- py_acall(R:'__repr__'(),P),!.
+rust_to_pl(R,PT):- py_type(R,T),combine_term_l(T,R,PT),!.
+%rust_to_pl(R,P):- py_acall(R:'__repr__'(),P),!.
 rust_to_pl(R,P):-
   load_hyperon_module, !, py_ocall(hyperon_module:rust_deref(R),M),!,
   (R\==M -> rust_to_pl(M,P) ; M=P).
@@ -903,10 +911,19 @@ rust_metta_run(S):-
   rust_metta_run(S,Py),
   print_py(Py).
 
+:- volatile(cached_py_op/2).
+cache_op(N,R):- asserta_if_new(cached_py_op(N,R)).
+
 print_py(Py):-
   py_to_pl(Py,R), print(R),nl.
 
-comnbine_term_l(T,P,ga(P,T)).
+combine_term_l('OperationObject',P,P):-!.
+combine_term_l('Number',P,P):-!.
+combine_term_l('Bool',P,P):-!.
+combine_term_l('ValueObject',R,P):-R=P,!. %rust_to_pl(R,P),!.
+combine_term_l('%Undefined%',R,P):-rust_to_pl(R,P),!.
+combine_term_l('hyperon::space::DynSpace',P,P):-!.
+combine_term_l(T,P,ga(P,T)).
 
 %coerce_string(S,R):- atom(S), sformat(R,'~w',[S]),!.
 coerce_string(S,R):- string(S),!,S=R.
@@ -952,7 +969,6 @@ To integrate VSpace with the existing Python and Rust components, similar interf
 */
 
 %:- ensure_loaded(metta_interp).
-on_restore1:- ensure_mettalog_py.
 
 :- dynamic(want_py_lib_dir/1).
 :- prolog_load_context(directory, ChildDir),
@@ -996,5 +1012,7 @@ get_list_arity(_Args,-1).
 
 
 % py_initialize(, +Argv, +Options)
-:- load_builtin_module.
+on_restore1:- ensure_mettalog_py.
+on_restore2:- !.
+%on_restore2:- load_builtin_module.
 %:- load_hyperon_module.

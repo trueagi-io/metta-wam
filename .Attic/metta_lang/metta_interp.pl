@@ -227,6 +227,7 @@ unnullify_output:- original_user_output(MFS), set_prolog_IO(user_input,MFS,user_
 null_output(MFS):- dont_change_streams,!, original_user_output(MFS),!.
 null_output(MFS):- use_module(library(memfile)),
   new_memory_file(MF),open_memory_file(MF,append,MFS).
+:- volatile(null_user_output/1).
 :- dynamic(null_user_output/1).
 :- null_user_output(_)->true;(null_output(MFS),
    asserta(null_user_output(MFS))).

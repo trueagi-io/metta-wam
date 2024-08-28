@@ -794,7 +794,6 @@ call_fr(G,Result,_):- Result=G.
 %
 % Example:
 % funct_with_result_is_nth_of_pred(HeadIs,+(1, 2), Result, 3, +(1, 2, Result)).
-
 into_callable(Pred,AsPred):- is_ftVar(Pred),!,AsPred=holds(Pred).
 into_callable(Pred,AsPred):- Pred=AsPred,!.
 into_callable(Pred,AsPred):- iz_conz(Pred), !,AsPred=holds(Pred).
