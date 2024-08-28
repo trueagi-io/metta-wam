@@ -628,6 +628,63 @@ has_unicode(A):- atom_codes(A,Cs),member(N,Cs),N>127,!.
 
 set_last_error(_).
 
+
+% =================================================================
+% =================================================================
+% =================================================================
+%  SCOPING
+% =================================================================
+% =================================================================
+% =================================================================
+
+eval_20(Eq, RetType, Depth, Self, ['sealed', InputVarList, Expr], Result) :-
+    is_list(InputVarList),
+    % second argument is a list of variables to be sealed. Create a temporary variable to use for each.
+    maplist(create_unique_var, InputVarList, UniqueVarMap),
+    % create lookup table [sealed --> local]
+    LocalVarLookup = [InputVarList, UniqueVarMap],
+    write("lookup>"),writeln(LocalVarLookup),
+    write("input expr>"),writeln(Expr),
+    replace_vars_in_expr(Expr, LocalVarLookup, Result),
+    write("new expr>"),writeln(Result).
+
+% create temp local variables for each variable in VarList
+create_unique_var(InVar, OutVarUnique) :- 
+    random(0, 1000000, Num),
+    atom_concat('_', Num, NumbVar),
+    atom_concat('$Local',NumbVar,OutVarUnique).
+
+% --> Swap in the local variables if found in the input MeTTa Expr
+
+% lookup if we need to use a local variable
+check_replace_with_local_var(VarCheckIn, [VarKeys|[VarValues]], VarCheckOut) :-
+    nth1(Index, VarKeys, VarCheckIn),write(" KeyIn>"),write(VarCheckIn),
+    nth1(Index, VarValues, VarCheckOut),write(" ValOut>"),write(VarCheckOut)
+    .
+
+% --> replace_vars_in_expr( input expression list, local variable map, output expression with temp local)
+
+% Base case: empty list
+replace_vars_in_expr([], _, []).
+
+% Base case: return Atom if Atom
+replace_vars_in_expr(Atom,_,Atom) :-
+     atomic(Atom).
+
+% If variable, check if we need to swap in sealed local variable
+replace_vars_in_expr([H|T], LocalVarLookup, Result) :-
+    var(H),  % trap on unbound variable
+    check_replace_with_local_var(H, LocalVarLookup, VarCheckedOut),
+    replace_vars_in_expr(T, LocalVarLookup, ResultRest),
+    Result = [VarCheckedOut|ResultRest].
+
+% All other cases...
+replace_vars_in_expr([H|T], LocalVarLookup, Result) :-
+    replace_vars_in_expr(H, LocalVarLookup, ResultHead),
+    replace_vars_in_expr(T, LocalVarLookup, ResultTail),
+    Result = [ ResultHead | ResultTail ].
+
+
 % =================================================================
 % =================================================================
 % =================================================================
