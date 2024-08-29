@@ -662,48 +662,55 @@ set_last_error(_).
 % =================================================================
 
 eval_20(Eq, RetType, Depth, Self, ['sealed', InputVarList, Expr], Result) :-
-    is_list(InputVarList),
-    % second argument is a list of variables to be sealed. Create a temporary variable to use for each.
-    maplist(create_unique_var, InputVarList, UniqueVarMap),
-    % create lookup table [sealed --> local]
-    LocalVarLookup = [InputVarList, UniqueVarMap],
-    replace_vars_in_expr(Expr, LocalVarLookup, Result).
+    % sanitize input variables and expression (omit numbers)
+    term_variables(InputVarList, SanitizedSealedVars),
+    term_variables(Expr, SanitizedExprVars),
+    strict_intersection(SanitizedSealedVars,SanitizedExprVars,SealedVars),
+    check_replace_with_local_var(SealedVars, Expr, Result).
 
-% create temp local variables for each variable in VarList
-create_unique_var(InVar, OutVarUnique) :- 
-    random(0, 1000000, Num),
-    atom_concat('_', Num, NumbVar),
-    atom_concat('$Local',NumbVar,OutVarUnique).
+% Strict member check needed for variables:
+strict_member(X, [H|_]) :-
+    X == H.
+strict_member(X, [_|T]) :-
+    strict_member(X, T).
 
-% --> Swap in the local variables if found in the input MeTTa Expr
+% Strict intersection of two lists
+strict_intersection([], _, []).
+strict_intersection([H|T], List2, [H|Result]) :-
+    strict_member(H, List2),
+    !,
+    strict_intersection(T, List2, Result).
+strict_intersection([_|T], List2, Result) :-
+    strict_intersection(T, List2, Result).
 
-% lookup if we need to use a local variable
-check_replace_with_local_var(VarCheckIn, [VarKeys|[VarValues]], VarCheckOut) :-
-    nth1(Index, VarKeys, VarCheckIn),
-    nth1(Index, VarValues, VarCheckOut).
+% Boundary case -- no remaining variables to process, just return expression.
+check_replace_with_local_var([], Expr, Result) :- 
+    Result = Expr.
 
-% --> replace_vars_in_expr( input expression list, local variable map, output expression with temp local)
+% General case -- replace sealed variable with a new variable
+check_replace_with_local_var([VarHead|VarTail], Expr, Result) :- 
+    % '_' gives us a prolog variable
+    subst(Expr, VarHead, _, NewExpr),
+    check_replace_with_local_var(VarTail, NewExpr, Result).
 
-% Base case: empty list
-replace_vars_in_expr([], _, []).
+%! subst(+Term, +OldTerm, +NewTerm, -ResultTerm) is det.
+%
+% Recursively substitutes occurrences of OldTerm with NewTerm within a Prolog term (Term),
+% producing a new term (ResultTerm). This predicate handles both simple and compound terms, including lists.
 
-% Base case: return Atom if Atom
-replace_vars_in_expr(Atom,_,Atom) :-
-     atomic(Atom).
-
-% If variable, check if we need to swap in sealed local variable
-replace_vars_in_expr([H|T], LocalVarLookup, Result) :-
-    var(H),  % trap on unbound variable
-    check_replace_with_local_var(H, LocalVarLookup, VarCheckedOut),
-    replace_vars_in_expr(T, LocalVarLookup, ResultRest),
-    Result = [VarCheckedOut|ResultRest].
-
-% All other cases...
-replace_vars_in_expr([H|T], LocalVarLookup, Result) :-
-    replace_vars_in_expr(H, LocalVarLookup, ResultHead),
-    replace_vars_in_expr(T, LocalVarLookup, ResultTail),
-    Result = [ ResultHead | ResultTail ].
-
+% If the current term (Term) exactly matches OldTerm (Like identical variables), it is replaced by NewTerm.
+subst(Term, OldTerm, NewTerm, NewTerm) :- OldTerm == Term, !.
+% If the current term is not a compound term (like an atom, number or the wrong variable) it stays the same
+subst(Term, _, _, Term) :- \+ compound(Term), !.
+% If the current term is a list, it processes each element of the list recursively.
+subst([Old|Structure], OldTerm, NewTerm, [New|StructureO]) :- !,
+    subst(Old, OldTerm, NewTerm, New),
+    subst(Structure, OldTerm, NewTerm, StructureO).
+% Compound Terms are decomposed and reconstructed with the possibly modified arguments.
+subst(OldStructure, OldTerm, NewTerm, NewStructure) :-
+    OldStructure =.. [Functor|Args],
+    subst(Args, OldTerm, NewTerm, NewArgs),
+    NewStructure =.. [Functor|NewArgs].
 
 % =================================================================
 % =================================================================
