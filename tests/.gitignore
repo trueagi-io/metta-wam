@@ -5,5 +5,7 @@
 .*~*/
 .*/
 .*
+*Zone.Identifier
+*.metta.answers
 performance/knowledge_graphs/graphml/cml/
 __pycache__
