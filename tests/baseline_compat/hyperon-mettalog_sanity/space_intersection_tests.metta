@@ -30,7 +30,7 @@
 (add-atom &space2 (superpose ((= (foo $a $b) (+ $a $b)) (foo 1 2) (foo 5 6) (foo 5 10) (foo 9 9) (foo (foo 1 2) 3))))
 !(assertEqual
   (intersection (get-atoms &space1) (get-atoms &space2))
-  (superpose ((foo 1 2) (foo (foo 1 2) 3)))
+  (superpose ((= (foo $x $y) (+ $x $y)) (foo 1 2) (foo (foo 1 2) 3)))
 )
 
 ;; Test intersection with a space having a unique atom
