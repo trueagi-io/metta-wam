@@ -894,7 +894,7 @@ rust_to_pl(R,P):- compound(R),!,compound_name_arguments(R,F,RR),maplist(rust_to_
 rust_to_pl(R,P):- \+ py_is_object(R),!,P=R.
 rust_to_pl(R,P):- py_type(R,'ExpressionAtom'),py_mcall(R:get_children(),L),!,maplist(rust_to_pl,L,P).
 rust_to_pl(R,P):- py_type(R,'SymbolAtom'),py_acall(R:get_name(),P),!.
-rust_to_pl(R,P):- py_type(R,'VariableAtom'),py_acall(R:'__repr__'(),P),!.
+rust_to_pl(R,P):- py_type(R,'VariableAtom'),py_scall(R:get_name(),N),!,as_var(N,P),!.
 %rust_to_pl(R,P):- py_type(R,'VariableAtom'),py_acall(R:get_name(),N),!,atom_concat('$',N,P).
 rust_to_pl(R,N):- py_type(R,'OperationObject'),py_acall(R:name(),N),!,cache_op(N,R).
 rust_to_pl(R,P):- py_type(R,'SpaceRef'),!,P=R. % py_scall(R:'__str__'(),P),!.
@@ -906,6 +906,9 @@ rust_to_pl(R,PT):- py_type(R,T),combine_term_l(T,R,PT),!.
 rust_to_pl(R,P):-
   load_hyperon_module, !, py_ocall(hyperon_module:rust_deref(R),M),!,
   (R\==M -> rust_to_pl(M,P) ; M=P).
+
+as_var('_',_):-!.
+as_var(N,'$VAR'(S)):-sformat(S,'_~w',[N]),!.
 
 rust_metta_run(S):-
   rust_metta_run(S,Py),
