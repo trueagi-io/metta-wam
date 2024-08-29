@@ -912,7 +912,9 @@ rust_metta_run(S):-
   print_py(Py).
 
 :- volatile(cached_py_op/2).
-cache_op(N,R):- asserta_if_new(cached_py_op(N,R)).
+cache_op(N,R):- asserta_if_new(cached_py_op(N,R)),fbug(cached_py_op(N,R)).
+:- volatile(cached_py_type/2).
+cache_type(N,R):- asserta_if_new(cached_py_type(N,R)),fbug(cached_py_type(N,R)).
 
 print_py(Py):-
   py_to_pl(Py,R), print(R),nl.
@@ -923,6 +925,7 @@ combine_term_l('Bool',P,P):-!.
 combine_term_l('ValueObject',R,P):-R=P,!. %rust_to_pl(R,P),!.
 combine_term_l('%Undefined%',R,P):-rust_to_pl(R,P),!.
 combine_term_l('hyperon::space::DynSpace',P,P):-!.
+combine_term_l([Ar|Stuff],Op,Op):- Ar == (->), !, cache_type(Op,[Ar|Stuff]).
 combine_term_l(T,P,ga(P,T)).
 
 %coerce_string(S,R):- atom(S), sformat(R,'~w',[S]),!.
@@ -1016,3 +1019,18 @@ on_restore1:- ensure_mettalog_py.
 on_restore2:- !.
 %on_restore2:- load_builtin_module.
 %:- load_hyperon_module.
+
+
+
+% grab the 1st variable Var
+subst_each_var([Var|RestOfVars],Term,Output):- !,
+    % replace all occurences of Var with _ (Which is a new anonymous variable)
+    subst(Term, Var, _ ,Mid),
+    % Do the RestOfVars
+    subst_each_var(RestOfVars,Mid,Output).
+% no more vars left to replace
+subst_each_var(_, TermIO, TermIO).
+
+
+
+
