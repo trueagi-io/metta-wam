@@ -1689,15 +1689,54 @@ eval_20(Eq,RetType,Depth,Self,['fromNumber',NE],RetVal):- !,
     fromNumber(N,RetVal), check_returnval(Eq,RetType,RetVal).
 */
 
+%% lazy_union(+E1_Call1, +E2_Call2, -E) is nondet.
+%  - Performs a union operation using lazy evaluation
+% Arguments:
+%  - E1^Call1: The first goal (Call1) generating elements (E1)
+%  - E2^Call2: The second goal (Call2) generating elements (E2)
+%  - E: The resulting element that is part of the union of the two sets
+lazy_union(P2, E1^Call1, E2^Call2, E) :-
+    % Step 1: Use lazy_findall/3 to declare that all elements satisfying Call1 are supposedly in List1
+    lazy_findall(E1, Call1, List1),
+    % Step 2: Use lazy_findall/3 to declare that all elements satisfying Call2 are supposedly in List2
+    lazy_findall(E2, Call2, List2),
+    % Step 3: Perform the union logic
+    (   % Case 1: If E is a member of List1, include it in the result
+        member(E, List1)
+        % Case 2: Otherwise, check if E is a member of List2
+        % Additionally, ensure that E does not already exist in List1
+        ; (member(E, List2), \+ (member(E1, List1), call(P2, E1, E)))
+    ).
+
 
 eval_20(Eq,RetType,Depth,Self,['unique',Eval],RetVal):- !,
    term_variables(Eval+RetVal,Vars),
    no_repeats_var(YY),
    eval_20(Eq,RetType,Depth,Self,Eval,RetVal),YY=Vars.
 
+eval_20(Eq,RetType,Depth,Self,['pred-unique',P2,Eval],RetVal):- !,
+   term_variables(Eval+RetVal,Vars),
+   no_repeats_var(P2,YY),
+   eval_20(Eq,RetType,Depth,Self,Eval,RetVal),YY=Vars.
+
 
 eval_20(Eq,RetType,Depth,Self,['subtraction',Eval1,Eval2],RetVal):- !,
-    lazy_subtraction(RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
+    lazy_subtraction(=@=,RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
+                  RetVal2^eval_args(Eq,RetType,Depth,Self,Eval2,RetVal2),
+                  RetVal).
+
+eval_20(Eq,RetType,Depth,Self,['pred-subtraction',P2,Eval1,Eval2],RetVal):- !,
+    lazy_subtraction(P2,RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
+                  RetVal2^eval_args(Eq,RetType,Depth,Self,Eval2,RetVal2),
+                  RetVal).
+
+eval_20(Eq,RetType,Depth,Self,['union',Eval1,Eval2],RetVal):- !,
+    lazy_union(=@=,RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
+                  RetVal2^eval_args(Eq,RetType,Depth,Self,Eval2,RetVal2),
+                  RetVal).
+
+eval_20(Eq,RetType,Depth,Self,['pred-union',P2,Eval1,Eval2],RetVal):- !,
+    lazy_union(P2,RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
                   RetVal2^eval_args(Eq,RetType,Depth,Self,Eval2,RetVal2),
                   RetVal).
 
@@ -1705,18 +1744,23 @@ eval_20(Eq,RetType,Depth,Self,['subtraction',Eval1,Eval2],RetVal):- !,
 % !, Atom=[_|CDR],!,do_expander(Eq,RetType,Atom_list, CDR_Y ).
 
 eval_20(Eq,RetType,Depth,Self,['intersection',Eval1,Eval2],RetVal):- !,
-    lazy_intersection(RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
+    lazy_intersection(=@=,RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
                   RetVal2^eval_args(Eq,RetType,Depth,Self,Eval2,RetVal2),
                   RetVal).
 
-lazy_intersection(E1^Call1, E2^Call2, E1) :-
+eval_20(Eq,RetType,Depth,Self,['pred-intersection',P2,Eval1,Eval2],RetVal):- !,
+    lazy_intersection(P2,RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
+                  RetVal2^eval_args(Eq,RetType,Depth,Self,Eval2,RetVal2),
+                  RetVal).
+
+lazy_intersection(P2, E1^Call1, E2^Call2, E1) :-
     % Step 1: Evaluate Call1 to generate E1
     call(Call1),
     % Step 2: Use lazy_findall/3 to declare that all elements satisfying Call2 are supposedly in List2
     lazy_findall(E2, Call2, List2),
     % Step 3: Perform the subtraction logic
     % Only return E1 if it is not a member of List2
-    member(E2, List2), E1 == E2.
+    member(E2, List2), call(P2,E1,E2).
 
 
 %% lazy_subtraction(+E1_Call1, +E2_Call2, -E) is nondet.
@@ -1726,14 +1770,14 @@ lazy_intersection(E1^Call1, E2^Call2, E1) :-
 %  - E1^Call1: The first goal (Call1) generating elements (E1).
 %  - E2^Call2: The second goal (Call2) generating elements (E2).
 %  - E: The resulting element after subtracting elements of the second set from the first set.
-lazy_subtraction(E1^Call1, E2^Call2, E1) :-
+lazy_subtraction(P2,E1^Call1, E2^Call2, E1) :-
     % Step 1: Evaluate Call1 to generate E1
     call(Call1),
     % Step 2: Use lazy_findall/3 to declare that all elements satisfying Call2 are supposedly in List2
     lazy_findall(E2, Call2, List2),
     % Step 3: Perform the subtraction logic
     % Only return E1 if it is not a member of List2
-    \+ (member(E2, List2), E1 =@= E2).
+    \+ (member(E2, List2), call(P2, E1, E2)).
 
 
 eval_20(Eq,RetType,Depth,Self,PredDecl,Res):-
