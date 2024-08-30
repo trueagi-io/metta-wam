@@ -662,66 +662,6 @@ has_unicode(A):- atom_codes(A,Cs),member(N,Cs),N>127,!.
 
 set_last_error(_).
 
-
-% =================================================================
-% =================================================================
-% =================================================================
-%  SCOPING
-% =================================================================
-% =================================================================
-% =================================================================
-
-eval_20(Eq, RetType, Depth, Self, ['sealed', InputVarList, Expr], Result) :-
-    % sanitize input variables and expression (omit numbers)
-    term_variables(InputVarList, SanitizedSealedVars),
-    term_variables(Expr, SanitizedExprVars),
-    strict_intersection(SanitizedSealedVars,SanitizedExprVars,SealedVars),
-    check_replace_with_local_var(SealedVars, Expr, Result).
-
-% Strict member check needed for variables:
-strict_member(X, [H|_]) :-
-    X == H.
-strict_member(X, [_|T]) :-
-    strict_member(X, T).
-
-% Strict intersection of two lists
-strict_intersection([], _, []).
-strict_intersection([H|T], List2, [H|Result]) :-
-    strict_member(H, List2),
-    !,
-    strict_intersection(T, List2, Result).
-strict_intersection([_|T], List2, Result) :-
-    strict_intersection(T, List2, Result).
-
-% Boundary case -- no remaining variables to process, just return expression.
-check_replace_with_local_var([], Expr, Result) :- 
-    Result = Expr.
-
-% General case -- replace sealed variable with a new variable
-check_replace_with_local_var([VarHead|VarTail], Expr, Result) :- 
-    % '_' gives us a prolog variable
-    subst(Expr, VarHead, _, NewExpr),
-    check_replace_with_local_var(VarTail, NewExpr, Result).
-
-%! subst(+Term, +OldTerm, +NewTerm, -ResultTerm) is det.
-%
-% Recursively substitutes occurrences of OldTerm with NewTerm within a Prolog term (Term),
-% producing a new term (ResultTerm). This predicate handles both simple and compound terms, including lists.
-
-% If the current term (Term) exactly matches OldTerm (Like identical variables), it is replaced by NewTerm.
-subst(Term, OldTerm, NewTerm, NewTerm) :- OldTerm == Term, !.
-% If the current term is not a compound term (like an atom, number or the wrong variable) it stays the same
-subst(Term, _, _, Term) :- \+ compound(Term), !.
-% If the current term is a list, it processes each element of the list recursively.
-subst([Old|Structure], OldTerm, NewTerm, [New|StructureO]) :- !,
-    subst(Old, OldTerm, NewTerm, New),
-    subst(Structure, OldTerm, NewTerm, StructureO).
-% Compound Terms are decomposed and reconstructed with the possibly modified arguments.
-subst(OldStructure, OldTerm, NewTerm, NewStructure) :-
-    OldStructure =.. [Functor|Args],
-    subst(Args, OldTerm, NewTerm, NewArgs),
-    NewStructure =.. [Functor|NewArgs].
-
 % =================================================================
 % =================================================================
 % =================================================================

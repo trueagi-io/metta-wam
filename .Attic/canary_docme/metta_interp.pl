@@ -129,15 +129,15 @@ user:file_search_path(mettalog,Dir):- metta_dir(Dir).
 :-dynamic(user:loaded_into_kb/2).
 :- dynamic(user:is_metta_dir/1).
 
-once_writeq_nl(_):- \+ clause(pfcTraceExecution,true),!.
-once_writeq_nl(P):- nb_current('$once_writeq_ln',W),W=@=P,!.
-once_writeq_nl(P):-
+once_writeq_ln(_):- \+ clause(pfcTraceExecution,true),!.
+once_writeq_ln(P):- nb_current('$once_writeq_ln',W),W=@=P,!.
+once_writeq_ln(P):-
  \+ \+ (numbervars(P,444,_,[attvar(skip),singletons(true)]),
  ansi_format([fg(cyan)],'~N~q.~n',[P])),nb_setval('$once_writeq_ln',P),!.
 % TODO uncomment this next line but it is breaking the curried chainer
 % pfcAdd_Now(P):- pfcAdd(P),!.
-pfcAdd_Now(P):- current_predicate(pfcAdd/1),!, once_writeq_nl(pfcAdd(P)),pfcAdd(P).
-pfcAdd_Now(P):- once_writeq_nl(asssert(P)),assert(P).
+pfcAdd_Now(P):- current_predicate(pfcAdd/1),!, once_writeq_ln(pfcAdd(P)),pfcAdd(P).
+pfcAdd_Now(P):- once_writeq_ln(asssert(P)),assert(P).
 %:- endif.
 
 system:copy_term_g(I,O):- ground(I),!,I=O.
