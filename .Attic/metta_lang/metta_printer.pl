@@ -145,9 +145,13 @@ unlooped_fbug(W,Mesg):-
 py_is_enabled:- predicate_property(py_ppp(_),defined), asserta((py_is_enabled:-!)).
 
 %write_src(V):-  !, \+ \+ quietly(pp_sex(V)),!.
-write_src(V):- \+ \+ notrace(pp_sex(V)),!.
-write_src_woi_ln(X):-
-  format('~N'),write_src_woi(X),format('~N').
+write_src(V):- \+ \+ notrace((
+  guess_metta_vars(V),pp_sex(V))),!.
+write_src_woi(Term):-
+  notrace((with_indents(false,write_src(Term)))).
+write_src_woi_nl(X):- \+ \+
+ notrace((guess_metta_vars(X),
+    format('~N'),write_src_woi(X),format('~N'))).
 
 
 pp_sex(V):- pp_sexi(V),!.

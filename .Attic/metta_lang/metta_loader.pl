@@ -461,8 +461,6 @@ translate_metta_file_to_datalog_io(Filename,Input,Output):-
   format(user_error,'~N; Done translating ~w forms: ~q.',
                            [TF,asserted_metta_pred(MangleP2,Filename)]))).
 
-write_src_woi(Term):- with_indents(false,write_src(Term)).
-
 % write comments
 write_metta_datalog_term(Output,'$COMMENT'(Term,_,_),_MangleP2,_Lineno):-
   format(Output,"/* ~w */~n",[Term]).

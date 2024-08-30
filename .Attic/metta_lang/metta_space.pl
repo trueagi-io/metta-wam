@@ -553,7 +553,7 @@ is_an_arg_type(S,T):- flybase_identifier(S,T),!.
 has_type(S,Type):- sub_atom(S,0,4,Aft,FB),flybase_identifier(FB,Type),!,Aft>0.
 
 
-call_sexpr(S):- once_writeq_ln(call_sexpr(S)).
+call_sexpr(S):- once_writeq_nl(call_sexpr(S)).
 %call_sexpr(Space,Expr,Result):-
 
 :- dynamic(fb_pred/2).
@@ -666,4 +666,24 @@ symbolic_list_concat(A,B,C):- atomic_list_concat(A,B,C).
 symbolic_list_concat(A,B):- atomic_list_concat(A,B).
 symbol_contains(T,TT):- atom_contains(T,TT).
 */
+search_for1(X):-
+  forall((metta_atom(_Where,What),contains_var(X,What)),
+    write_src_nl(What)).
 
+search_for2(X):-
+  forall((metta_src(_Where,What),contains_var(X,What)),
+   write_src_woi_nl(What)).
+
+
+metta_src(Where,What):-
+  loaded_into_kb(Where,File), metta_file_buffer(_,What,Vars,File,_Loc),
+  ignore(maplist(name_the_var,Vars)).
+
+
+name_the_var(N=V):- ignore((atom_concat('_',NV,N),V='$VAR'(NV))).
+guess_metta_vars(What):-
+  ignore(once((metta_file_buffer(_,What0,Vars,_File,_Loc),
+     alpha_unif(What,What0),
+     maplist(name_the_var,Vars)))).
+
+alpha_unif(What,What0):- What=@=What0,What=What0.
