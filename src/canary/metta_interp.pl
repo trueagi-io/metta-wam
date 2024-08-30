@@ -473,8 +473,9 @@ show_options_values:-
 
 
 :- ensure_loaded(metta_utils).
-:- ensure_loaded(metta_data).
 %:- ensure_loaded(mettalog('metta_ontology.pfc.pl')).
+:- ensure_loaded(metta_pfc_base).
+:- ensure_loaded(metta_pfc_support).
 :- ensure_loaded(metta_compiler).
 :- ensure_loaded(metta_convert).
 :- ensure_loaded(metta_types).
@@ -1000,7 +1001,6 @@ metta_atom_asserted(X,Y):-
     metta_atom_asserted_deduced(X,Y),
     \+ clause(metta_atom_asserted(X,Y),true).
 
-
 %get_metta_atom(Eq,KB, [F|List]):- KB='&flybase',fb_pred(F, Len), length(List,Len),apply(F,List).
 
 
@@ -1026,7 +1026,6 @@ metta_atom_asserted('&stdlib','&corelib').
 metta_atom_asserted('&flybase','&corelib').
 metta_atom_asserted('&catalog','&corelib').
 metta_atom_asserted('&catalog','&stdlib').
-:- ensure_loaded(metta_corelib).
 
 /*
 'mod-space'(top,'&self').
