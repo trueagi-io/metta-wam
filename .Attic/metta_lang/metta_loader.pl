@@ -1151,3 +1151,22 @@ progress_bar_example :-
     fail. % Continue looping until between/3 fails
 progress_bar_example.
 
+:- dynamic(using_corelib_file/0).
+
+
+use_corelib_file:- using_corelib_file,!.
+use_corelib_file:- asserta(using_corelib_file), fail.
+use_corelib_file:- load_corelib_file, generate_interpreter_stubs.
+
+generate_interpreter_stubs:-
+   forall(metta_type('&corelib',Symb,Def),
+        gen_interp_stubs('&corelib',Symb,Def)).
+
+load_corelib_file:- is_metta_src_dir(Dir), really_use_corelib_file(Dir,'corelib.metta'),!.
+load_corelib_file:- is_metta_src_dir(Dir), really_use_corelib_file(Dir,'stdlib_mettalog.metta'),!.
+% !(import! &corelib "src/canary/stdlib_mettalog.metta")
+really_use_corelib_file(Dir,File):- absolute_file_name(File,Filename,[relative_to(Dir)]),
+ locally(nb_setval(may_use_fast_buffer,t),
+   locally(nb_setval(suspend_answers,true),
+     with_output_to(string(_),include_metta_directory_file('&corelib',Dir,Filename)))).
+

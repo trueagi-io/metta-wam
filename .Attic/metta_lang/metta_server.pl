@@ -140,7 +140,10 @@ connect_to_service(HostPort, Stream) :-
     tcp_open_socket(Socket, Stream).
 
 % Helper to send goal and receive response
-send_term(Stream, MeTTa) :-  write_canonical(Stream, MeTTa),writeln(Stream, '.'), flush_output(Stream).
+send_term(Stream, MeTTa) :-  
+  write_canonical(Stream, MeTTa),
+  writeln(Stream, '.'), 
+  flush_output(Stream).
 recv_term(Stream, MeTTa) :-  read_term(Stream, MeTTa, []).
 
 
