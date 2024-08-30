@@ -671,20 +671,18 @@ set_last_error(_).
 % =================================================================
 % =================================================================
 
-eval_20(Eq, RetType, Depth, Self, ['sealed', InputVarList, Expr], Result) :-
-    % sanitize input variables and expression (omit numbers)
-    term_variables(InputVarList, SanitizedSealedVars),
-    term_variables(Expr, SanitizedExprVars),
-    strict_intersection(SanitizedSealedVars,SanitizedExprVars,SealedVars),
+eval_20(Eq, RetType, Depth, Self, ['sealed', InputVarList, Expr], Result) :- !,
+    strict_intersection(InputVarList,Expr,SealedVars),
     check_replace_with_local_var(SealedVars, Expr, Result).
 
-% Strict member check needed for variables:
+% strict_member(+Term, +List)
 strict_member(X, [H|_]) :-
-    X == H.
+    same_term(X,H).
 strict_member(X, [_|T]) :-
     strict_member(X, T).
 
 % Strict intersection of two lists
+% strict_intersection(+List1, +List2, -Intersection).
 strict_intersection([], _, []).
 strict_intersection([H|T], List2, [H|Result]) :-
     strict_member(H, List2),
@@ -693,6 +691,7 @@ strict_intersection([H|T], List2, [H|Result]) :-
 strict_intersection([_|T], List2, Result) :-
     strict_intersection(T, List2, Result).
 
+% check_replace_with_local_var(+Sealed-Variables, +Expression, -NewExpression)
 % Boundary case -- no remaining variables to process, just return expression.
 check_replace_with_local_var([], Expr, Result) :- 
     Result = Expr.
@@ -708,8 +707,8 @@ check_replace_with_local_var([VarHead|VarTail], Expr, Result) :-
 % Recursively substitutes occurrences of OldTerm with NewTerm within a Prolog term (Term),
 % producing a new term (ResultTerm). This predicate handles both simple and compound terms, including lists.
 
-% If the current term (Term) exactly matches OldTerm (Like identical variables), it is replaced by NewTerm.
-subst(Term, OldTerm, NewTerm, NewTerm) :- OldTerm == Term, !.
+% If the current term (Term) exactly matches OldTerm it is replaced by NewTerm.
+subst(Term, OldTerm, NewTerm, NewTerm) :- same_term(OldTerm, Term), !.
 % If the current term is not a compound term (like an atom, number or the wrong variable) it stays the same
 subst(Term, _, _, Term) :- \+ compound(Term), !.
 % If the current term is a list, it processes each element of the list recursively.
