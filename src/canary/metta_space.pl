@@ -668,22 +668,23 @@ symbol_contains(T,TT):- atom_contains(T,TT).
 */
 search_for1(X):-
   forall((metta_atom(_Where,What),contains_var(X,What)),
-    write_src_nl(What)).
+    (nl,write_src_nl(What))).
 
 search_for2(X):-
-  forall((metta_src(_Where,What),contains_var(X,What)),
-   write_src_woi_nl(What)).
+  forall((metta_file_src(_Where,What),contains_var(X,What)),
+    (nl,write_src_nl(What))).
 
 
-metta_src(Where,What):-
+metta_file_src(Where,What):-
   loaded_into_kb(Where,File), metta_file_buffer(_,What,Vars,File,_Loc),
   ignore(maplist(name_the_var,Vars)).
 
 
-name_the_var(N=V):- ignore((atom_concat('_',NV,N),V='$VAR'(NV))).
 guess_metta_vars(What):-
   ignore(once((metta_file_buffer(_,What0,Vars,_File,_Loc),
-     alpha_unif(What,What0),
+     alpha_unify(What,What0),
      maplist(name_the_var,Vars)))).
+name_the_var(N=V):- ignore((atom_concat('_',NV,N),V='$VAR'(NV))).
 
-alpha_unif(What,What0):- What=@=What0,What=What0.
+alpha_unify(What,What0):- What=@=What0,(nonvar(What)->What=What0;What==What0).
+
