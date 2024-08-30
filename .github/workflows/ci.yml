@@ -101,6 +101,16 @@ jobs:
       run: |
         echo "JUnit reports are available as artifacts."
 
+    - name: Generate environment.properties
+      run: |
+        python scripts/generate_allure_environment.py ${{ github.sha }} ${{ github.ref_name }} > environment.properties
+
+    - name: Upload environment.properties
+      uses: actions/upload-artifact@v4
+      with:
+        name: environment
+        path: environment.properties
+
     - name: Get Allure history
       uses: actions/checkout@v4
       with:
@@ -111,6 +121,12 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: junit-report
+        path: build/allure-results
+
+    - name: Include environment properties
+      uses: actions/download-artifact@v4
+      with:
+        name: environment
         path: build/allure-results
 
     - name: Generate Allure Report
