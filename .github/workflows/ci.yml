@@ -176,12 +176,9 @@ jobs:
     environment:
       # environment created automatically by GitHub
       name: github-pages
-      url: ${{ steps.change-page-url.outputs.new_page_url }}
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-      - name: Override page_url
-        id: change-page-url
-        run: echo "new_page_url=${{ steps.deployment.outputs.page_url }}${{ github.run_number }}/" >> $GITHUB_OUTPUT
