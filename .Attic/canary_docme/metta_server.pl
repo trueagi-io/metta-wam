@@ -55,7 +55,7 @@
 :- use_module(library(thread)).  % Provides predicates for multi-threading
 
 % Predicate to execute a goal and determine if it was deterministic
-%!  call_wdet(+Goal, -WasDet) is semidet.
+%!  call_wdet(+Goal, -WasDet) is nondet.
 %
 %   Calls the given Goal and checks if it was deterministic.
 %
@@ -125,12 +125,14 @@ start_vspace_service(MSpace,Port):-
     % Start the VSpace service with the generated Alias, MSpace, and Port
       start_vspace_service(Alias,MSpace,Port).
 
-% Skip starting the service if it is already running
-%!  start_vspace_service(+Alias, +_Space, +_Port) is det.
+%!  start_vspace_service(+Alias, +Space, +Port) is det.
 %
 %   Starts the VSpace service only if it is not already running under the given Alias.
 %
 %   @arg Alias is the alias to check for an existing service.
+
+
+% Skip starting the service if it is already running
 start_vspace_service(Alias,_Space,_Port):-  
     % If the service is already running under Alias, do nothing
  service_running(Alias),
@@ -219,6 +221,8 @@ accept_vspace_connections(MSpace,ListenFd) :-
        setup_call_cleanup(
             % Open the socket as a stream
             tcp_open_socket(RemoteFd, Stream),
+    		% Generate a unique symbol for the thread alias
+            nb_setval(self_space,MSpace),
             % Handle the connection by processing incoming goals
             ignore(handle_vspace_peer(Stream)),
             % Ensure the stream is closed when done
