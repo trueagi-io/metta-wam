@@ -37,6 +37,7 @@ def parse_test_line(line):
     stdout = parts[4].strip()  # The fifth field contains the assertion
     got = parts[5].strip()  # The sixth field contains the actual result
     expected = parts[6].strip()  # The seventh field contains the expected result
+    time = parts[7].strip() # The eighth field contains how long it took to run the test
 
     try:
         # Split the identifier into the package, class, and test names
@@ -45,8 +46,6 @@ def parse_test_line(line):
             raise ValueError("Test package or test name is empty after splitting.")
     except ValueError as e:
         raise ValueError(f"Identifier does not contain the expected format: {full_identifier}. Error: {str(e)}")
-    
-    time = '.01' # bogus time until tests actually note their runtime
 
     return testpackage, testname, stdout, full_identifier, got, expected, status, url, time
 
