@@ -134,15 +134,6 @@ jobs:
       with:
         name: environment
         path: build/allure-results
-    
-    - name: Determine subfolder
-      run: |
-        if [ ${{ github.event_name }} == 'schedule' ]; then
-          SUBFOLDER="nightly"
-        else
-          SUBFOLDER="ci"
-        fi        
-        echo "SUBFOLDER=$(echo $SUBFOLDER)" >> $GITHUB_ENV
 
     - name: Generate Allure Report
       uses: simple-elf/allure-report-action@master
@@ -155,6 +146,8 @@ jobs:
         allure_history: allure-history
         subfolder: ${{ env.SUBFOLDER }}
         keep_reports: 20
+      env:
+        SUBFOLDER: ${{ github.event_name == 'schedule' && 'nightly' || 'ci' }}
 
     - name: Deploy report to Github Pages
       if: always()
