@@ -316,6 +316,10 @@ optimize_conjuncts(Head,(B1,B2,B3),BN):-
   did_optimize_conj(Head,B1,B2,B12),
   must_optimize_body(Head,(B12,B3),BN),!.
 %optimize_conjuncts(Head,(B1,B2),BN1):- optimize_conj(Head,B1,B2,BN1).
+
+
+
+
 optimize_conjuncts(Head,(B1,B2),BN1):- did_optimize_conj(Head,B1,B2,BN1),!.
 optimize_conjuncts(Head,(B1*->B2),(BN1*->BN2)):- !,
   optimize_conjuncts(Head,B1,BN1),

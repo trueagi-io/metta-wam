@@ -583,6 +583,19 @@ is_seo_f('Event').
 is_seo_f('Concept').
 is_seo_f(N):- number(N),!.
 
+is_absorbed_return_type(Params,Var):- var(Var),!, \+ sub_var(Var,Params).
+is_absorbed_return_type(_,'Bool').
+is_absorbed_return_type(_,[Ar]):- !, Ar == (->).
+is_absorbed_return_type(_,'EmptyType').
+is_absorbed_return_type(_,'ReturnType').
+is_absorbed_return_type(_,X):- is_self_return(X).
+
+is_self_return('ErrorType').
+
+is_non_absorbed_return_type(Params,Var):-
+   \+ is_absorbed_return_type(Params,Var).
+
+
 %is_user_defined_goal(Self,[H|_]):- is_user_defined_head(Eq,Self,H).
 
 is_user_defined_head(Other,H):- is_user_defined_head(=,Other,H).
