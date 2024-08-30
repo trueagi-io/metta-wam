@@ -50,200 +50,69 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-% Load the socket and thread libraries for networking and concurrency
-:- use_module(library(socket)).  % Provides predicates for socket operations
-:- use_module(library(thread)).  % Provides predicates for multi-threading
 
-% Predicate to execute a goal and determine if it was deterministic
-%!  call_wdet(+Goal, -WasDet) is nondet.
-%
-%   Calls the given Goal and checks if it was deterministic.
-%
-%   @arg Goal is the goal to execute.
-%   @arg WasDet is true if the Goal was deterministic, false otherwise.
-call_wdet(Goal,WasDet):- 
-    % Execute the provided Goal
-	call(Goal),
-    % Check if the goal was deterministic and unify the result with WasDet
-	deterministic(WasDet).
+:- use_module(library(socket)).
+:- use_module(library(thread)).
 
-% Helper to parse Server and Port from Peer, using a DefaultPort if needed
-%!  parse_service_port(+Peer, +DefaultPort, -Server, -Port) is det.
-%
-%   Parses the service and port from Peer input. Defaults to localhost
-%   and DefaultPort if not specified.
-%
-%   @arg Peer is the input that could be in the form of Server:Port or just a Port.
-%   @arg DefaultPort is the port to use if Peer does not specify it.
-%   @arg Server is the output server address.
-%   @arg Port is the output port number.
+call_wdet(Goal,WasDet):- call(Goal),deterministic(WasDet).
+% Helper to parse Server and Port
 parse_service_port(Peer,DefaultPort, Server, Port) :-
-    % Check if Peer is in the form Server:Port
     (   Peer = Server:Port -> true
-    ;   % If Peer is an integer, assume it's a port with localhost as the server
-        integer(Peer) -> Server = localhost, Port = Peer
-    ;   % Otherwise, use Peer as the server and DefaultPort as the port
-        Server = Peer, Port = DefaultPort
+    ;   integer(Peer) -> Server = localhost, Port = Peer
+    ;   Server = Peer, Port = DefaultPort  % Default port if none specified
     ).
 
-% Predicate to check if a service is running under a specific alias
-%!  service_running(+Alias) is semidet.
-%
-%   Checks if a thread with the given Alias is currently running.
-%
-%   @arg Alias is the alias of the thread to check.
-service_running(Alias):-
-    % Get the properties of the thread VSS and check if its status is running
-   thread_property(VSS,TS),
-    VSS = Alias, 
-    TS = status(running), 
-    !.
 
-% Start the interpreter service using the current self (MSpace)
-%!  start_vspace_service(+Port) is det.
-%
-%   Starts the VSpace service on the specified Port, using the current self as MSpace.
-%
-%   @arg Port is the port number on which the service will be started.
+service_running(Alias):- thread_property(VSS,TS),VSS=Alias,TS=status(running),!.
+
+% Start interpreter service with MSpace = &self
 start_vspace_service(Port):-
-%Getthecurrentself(MSpace)
-    current_self(MSpace), 
-    % Start the VSpace service with the current MSpace and specified Port
-    start_vspace_service(MSpace,Port).
-
-% Start the VSpace service with a specific alias, MSpace, and Port
-%!  start_vspace_service(+Alias, +MSpace, +Port) is det.
-%
-%   Starts the VSpace service with a specified Alias, MSpace, and Port.
-%
-%   @arg Alias is the alias to assign to the service thread.
-%   @arg MSpace is the memory space in which the service will operate.
-%   @arg Port is the port number on which the service will be started.
+    current_self(MSpace), start_vspace_service(MSpace,Port).
+% see amples of using this https://github.com/logicmoo/hyperon-wam/blob/main/examples/features/distributed-processing/create-server.metta
 start_vspace_service(MSpace,Port):-
-    % Concatenate 'vspace_service', MSpace, and Port into an Alias string
       symbolic_list_concat([vspace_service,MSpace,Port],'_',Alias),
-    % Start the VSpace service with the generated Alias, MSpace, and Port
       start_vspace_service(Alias,MSpace,Port).
 
-%!  start_vspace_service(+Alias, +Space, +Port) is det.
-%
-%   Starts the VSpace service only if it is not already running under the given Alias.
-%
-%   @arg Alias is the alias to check for an existing service.
-
-
-% Skip starting the service if it is already running
-start_vspace_service(Alias,_Space,_Port):-  
-    % If the service is already running under Alias, do nothing
- service_running(Alias),
- !.
-
-% Create a new thread to run the VSpace service if not already running
+start_vspace_service(Alias,_Space,_Port):-  service_running(Alias),!.
 start_vspace_service(Alias,MSpace,Port):-
-    % Create a new thread to run the VSpace service with the given MSpace and Port
       thread_create(run_vspace_service(MSpace,Port),_,[detached(true),alias(Alias)]).
 
-% Predicate to handle the situation when a port is already in use
-%!  handle_port_in_use(+MSpace, +Port) is det.
-%
-%   Handles the error when the specified Port is already in use by trying another port.
-%
-%   @arg MSpace is the memory space in which the service operates.
-%   @arg Port is the port number that is in use.
+
+:- dynamic(was_vspace_port_in_use/2).
+
 handle_port_in_use(MSpace,Port):-
-    % Record that the port was in use for MSpace
    assert(was_vspace_port_in_use(MSpace,Port)),
-    % Try starting the service on Port + 100
-   Port100 is Port +100,
-   run_vspace_service(MSpace,Port100).
+   Port100 is Port +100,run_vspace_service(MSpace,Port100).
 
 
-% Run the VSpace service, handling the case where the port is already in use
-%!  run_vspace_service(+MSpace, +Port) is det.
-%
-%   Runs the VSpace service on the specified Port, retrying on a different port if necessary.
-%
-%   @arg MSpace is the memory space in which the service operates.
-%   @arg Port is the port number on which the service will be started.
 run_vspace_service(MSpace,Port):-
-    % Attempt to run the service, catching the error if the port is in use
     catch(
       run_vspace_service_unsafe(MSpace,Port),
       error(socket_error(eaddrinuse,_),_),
-        % If the port is in use, handle the situation
-        handle_port_in_use(MSpace, Port)
-    ).
+      handle_port_in_use(MSpace,Port)).
 
-% Unsafe version of running the VSpace service that doesn't handle errors
-%!  run_vspace_service_unsafe(+MSpace, +Port) is det.
-%
-%   Unsafe version of running the VSpace service on the specified Port.
-%   This version does not handle errors related to the port being in use.
-%
-%   @arg MSpace is the memory space in which the service operates.
-%   @arg Port is the port number on which the service will be started.
 run_vspace_service_unsafe(MSpace,Port) :-
-    % Create a TCP socket
     tcp_socket(Socket),
-    % Bind the socket to the specified port
     tcp_bind(Socket, Port),
-    % Listen on the socket with a backlog of 5 connections
-    tcp_listen(Socket, 5), 
-    % Open the socket for listening
-    tcp_open_socket(Socket, ListenFd),
-    % Perform any compatibility checks (not_compatio is assumed to be a custom predicate)
+    tcp_listen(Socket, 5), tcp_open_socket(Socket, ListenFd),
     not_compatio(fbugio(run_vspace_service(MSpace,Port))),
-    % Remove any existing vspace_port facts
     retractall(vspace_port(_)),
-    % Assert the current port as the vspace_port
     assert(vspace_port(Port)),
-    % Start accepting connections on the listening socket
     accept_vspace_connections(MSpace,ListenFd).
 
-% Accept connections to the VSpace service and create a thread for each connection
-%!  accept_vspace_connections(+MSpace, +ListenFd) is det.
-%
-%   Accepts incoming connections to the VSpace service and creates a thread for each connection.
-%
-%   @arg MSpace is the memory space in which the service operates.
-%   @arg ListenFd is the file descriptor for the listening socket.
 accept_vspace_connections(MSpace,ListenFd) :-
-    % Accept an incoming connection, returning a file descriptor and remote address
     tcp_accept(ListenFd, RemoteFd, RemoteAddr),
-    % Set the current memory space for the thread
     nb_setval(self_space,MSpace),
-    % Create a unique thread alias based on the remote address and file descriptor
     format(atom(ThreadAlias0), 'peer_~w_~w_~w_', [RemoteAddr,RemoteFd,MSpace]),
-    % Generate a unique symbol for the thread alias
     gensym(ThreadAlias0,ThreadAlias),
-    % Create a new thread to handle the connection
-    thread_create(
-       setup_call_cleanup(
-            % Open the socket as a stream
+    thread_create(setup_call_cleanup(
             tcp_open_socket(RemoteFd, Stream),
-    		% Generate a unique symbol for the thread alias
-            nb_setval(self_space,MSpace),
-            % Handle the connection by processing incoming goals
             ignore(handle_vspace_peer(Stream)),
-            % Ensure the stream is closed when done
-            catch(close(Stream),_,true)
-            ), 
-             _,
-             [detached(true), alias(ThreadAlias)] 
-             ),
-    % Continue accepting more connections
+            catch(close(Stream),_,true)), _, [detached(true), alias(ThreadAlias)] ),
     accept_vspace_connections(MSpace,ListenFd).
 
-% Handle a peer connection by receiving and processing goals
-%!  handle_vspace_peer(+Stream) is det.
-%
-%   Handles a peer connection by receiving and executing goals sent over the Stream.
-%
-%   @arg Stream is the input/output stream connected to the peer.
 handle_vspace_peer(Stream) :-
-    % Receive a Prolog term (goal) from the stream
     recv_term(Stream, Goal),
-    % If the received term is not the end of file
     (   Goal \= end_of_file
     ->  (   catch(call_wdet(Goal,WasDet), Error, true)
              *->  (   var(Error) ->  send_term(Stream, success(Goal,WasDet)) ;   send_term(Stream,error(Error)))
@@ -263,41 +132,18 @@ start_vspace_service:-  get_vspace_port(Port), start_vspace_service(Port),!.
 
 
 
-
-
-
-% Helper to establish a connection to the VSpace service
-%!  connect_to_service(+HostPort, -Stream) is det.
-%
-%   Connects to the VSpace service on the specified Host and Port and returns the Stream.
-%
-%   @arg HostPort is the Host:Port combination or just a port number.
-%   @arg Stream is the output stream connected to the service.
+% Helper to establish connection
 connect_to_service(HostPort, Stream) :-
-    % Parse the Host and Port from the input HostPort
     parse_service_port(HostPort, 3023, Host, Port),
-    % Create a TCP socket
     tcp_socket(Socket),
-    % Connect the socket to the specified Host and Port
     tcp_connect(Socket, Host:Port),
-    % Open the socket as a stream for communication
     tcp_open_socket(Socket, Stream).
 
-% Helper to send a Prolog term and receive a response
-%!  send_term(+Stream, +MeTTa) is det.
-%
-%   Sends a Prolog term (MeTTa) over the Stream.
-%
-%   @arg Stream is the output stream to send the term through.
-%   @arg MeTTa is the Prolog term to send.
-send_term(Stream, MeTTa) :-
-    % Write the term in canonical form to the stream
-    write_canonical(Stream, MeTTa),
-    % Write a period to indicate the end of the term
-    writeln(Stream, '.'),
-    % Flush the output to ensure the term is sent immediately
-    flush_output(Stream).
-    
+% Helper to send goal and receive response
+send_term(Stream, MeTTa) :-  
+  write_canonical(Stream, MeTTa),
+  writeln(Stream, '.'), 
+  flush_output(Stream).
 recv_term(Stream, MeTTa) :-  read_term(Stream, MeTTa, []).
 
 
@@ -330,41 +176,14 @@ metta> !(remote-eval!  localhost (match &self $Code $Code))
 
 */
 
-% Declare remote_code/4 as a dynamic predicate to allow runtime modification
+
 :- dynamic remote_code/4.  % Maps  MeTTa-Space and function to Service address
 
-% Get the current address of the service (Host:Port)
-%!  our_address(-HostPort) is det.
-%
-%   Retrieves the current Host and Port of this service instance.
-%
-%   @arg HostPort is the output in the form Host:Port.
-our_address(Host:Port):- 
-    % Get the hostname of the current machine
-  gethostname(Host),
-    % Retrieve the port number currently in use by this service
-  vspace_port(Port).
+our_address(Host:Port):- gethostname(Host),vspace_port(Port).
+we_exist(Addr):- our_address(Addr).
 
-% Check if this service instance exists at a given address
-%!  we_exist(+Addr) is det.
-%
-%   Determines if the current service instance exists at the specified Addr.
-%
-%   @arg Addr is the address to check (Host:Port).
-we_exist(Addr):-
-    % Get the current address and unify it with Addr
-  our_address(Addr).
-
-% Check if another service exists at the specified address
-%!  they_exist(+Addr) is det.
-%
-%   Determines if another service exists at the specified Addr.
-%
-%   @arg Addr is the address to check (Host:Port).
 they_exist(Addr):-
-    % Get the current service address
    our_address(Ours),
-    % Ensure Addr is different from the current service address
    diff(Addr,Ours),
    execute_goal(we_exist(Addr)), \+ our_address(Addr).
 
@@ -395,41 +214,23 @@ register_remote_code(MSpace,EntryPoint, NonDet, Server) :-
 unregister_remote_code(MSpace,EntryPoint, Server) :-
    retractall(remote_code(MSpace,EntryPoint, _, Server)).
 
-% Execute a goal in the current memory space
-%!  execute_goal(+Goal) is det.
-%
-%   Executes the specified goal in the current memory space.
-%
-%   @arg Goal is the goal to execute.
+
+
 execute_goal(Goal):-
-    % Get the current memory space (MSpace)
     current_self(MSpace),
-    % Execute the goal in the current memory space and determine if it was deterministic
     execute_goal(MSpace,Goal, IsDet),
-    % If the goal was deterministic, cut to prevent backtracking
     (was_t(IsDet) -> ! ; true).
 
-% Always succeed if the goal is 'true'
 execute_goal(_Self,true, _) :- !.
 % Meta-interpreter with cut handling
-%!  execute_goal(+MSpace, +Goal, -IsDet) is det.
-%
-%   Executes the specified goal within the given memory space, handling cuts and determinism.
-%
-%   @arg MSpace is the memory space in which the goal will be executed.
-%   @arg Goal is the goal to execute.
-%   @arg IsDet is true if the goal was deterministic.
 execute_goal(MSpace,Goal, IsDet) :-
-    remote_code(MSpace,Goal, NonDet, Peer),    
-    % If the goal is registered for a service, call remotely
+    remote_code(MSpace,Goal, NonDet, Peer),    % If the goal is registered for a service, call remotely
     (was_t(NonDet) -> true ; !),
     remote_call(Peer, execute_goal(MSpace,Goal,IsDet)).
 
 execute_goal(_Self,!, IsDet) :- !,  IsDet = true.  % Handle cuts
-execute_goal(_Self,fail, IsDet) :- !, 
-  (was_t(IsDet)->throw(cut_fail); fail).
-execute_goal(MSpace,Goal, _) :-
-  predicate_property(Goal,number_of_clauses(_)),!,
+execute_goal(_Self,fail, IsDet) :- !, (was_t(IsDet)->throw(cut_fail); fail).
+execute_goal(MSpace,Goal, _) :- predicate_property(Goal,number_of_clauses(_)),!,
     clause(Goal, Body),  % Retrieve the clause body for the goal
     catch(execute_goal(MSpace,Body, IsDet),cut_fail,(!,fail)),
     (was_t(IsDet)-> !; true).
