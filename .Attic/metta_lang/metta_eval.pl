@@ -672,31 +672,24 @@ set_last_error(_).
 % =================================================================
 
 eval_20(Eq, RetType, Depth, Self, ['sealed', InputVarList, Expr], Result) :- !,
-    strict_intersection(InputVarList,Expr,SealedVars),
-    check_replace_with_local_var(SealedVars, Expr, Result).
+    omit_atoms(InputVarList,OutputVarList),
+    check_replace_with_local_var(OutputVarList, Expr, Result).
 
-% strict_member(+Term, +List)
-strict_member(X, [H|_]) :-
-    same_term(X,H).
-strict_member(X, [_|T]) :-
-    strict_member(X, T).
-
-% Strict intersection of two lists
-% strict_intersection(+List1, +List2, -Intersection).
-strict_intersection([], _, []).
-strict_intersection([H|T], List2, [H|Result]) :-
-    strict_member(H, List2),
+% omit_atoms(+input variables, -variables less atoms)
+omit_atoms([], []).
+omit_atoms([Head|Tail], Result) :-
+    atomic(Head),
     !,
-    strict_intersection(T, List2, Result).
-strict_intersection([_|T], List2, Result) :-
-    strict_intersection(T, List2, Result).
+    omit_atoms(Tail, Result).
+omit_atoms([Head|Tail], [Head|Result]) :-
+    omit_atoms(Tail, Result).
 
 % check_replace_with_local_var(+Sealed-Variables, +Expression, -NewExpression)
 % Boundary case -- no remaining variables to process, just return expression.
 check_replace_with_local_var([], Expr, Result) :- 
     Result = Expr.
 
-% General case -- replace sealed variable with a new variable
+% General case -- replace sealed variable with a new variable 
 check_replace_with_local_var([VarHead|VarTail], Expr, Result) :- 
     % '_' gives us a prolog variable
     subst(Expr, VarHead, _, NewExpr),
@@ -707,14 +700,21 @@ check_replace_with_local_var([VarHead|VarTail], Expr, Result) :-
 % Recursively substitutes occurrences of OldTerm with NewTerm within a Prolog term (Term),
 % producing a new term (ResultTerm). This predicate handles both simple and compound terms, including lists.
 
-% If the current term (Term) exactly matches OldTerm it is replaced by NewTerm.
-subst(Term, OldTerm, NewTerm, NewTerm) :- same_term(OldTerm, Term), !.
+% Note: Matching is done with the SWI same_term predicate which states that terms are equal if the
+% condition "the same variable, equivalent atomic data or a compound term allocated at the same address"
+% If the current term (Term) exactly matches OldTerm (with above criteria).
+subst(Term, OldTerm, NewTerm, NewTerm) :- 
+   same_term(OldTerm, Term),
+   !.
+
 % If the current term is not a compound term (like an atom, number or the wrong variable) it stays the same
 subst(Term, _, _, Term) :- \+ compound(Term), !.
+
 % If the current term is a list, it processes each element of the list recursively.
 subst([Old|Structure], OldTerm, NewTerm, [New|StructureO]) :- !,
     subst(Old, OldTerm, NewTerm, New),
     subst(Structure, OldTerm, NewTerm, StructureO).
+    
 % Compound Terms are decomposed and reconstructed with the possibly modified arguments.
 subst(OldStructure, OldTerm, NewTerm, NewStructure) :-
     OldStructure =.. [Functor|Args],
