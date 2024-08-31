@@ -676,6 +676,7 @@ eval_20(Eq, RetType, Depth, Self, ['sealed', InputVarList, Expr], Result) :- !,
     check_replace_with_local_var(OutputVarList, Expr, Result).
 
 % omit_atoms(+input variables, -variables less atoms)
+% If there are already bound values passed to sealed, no need for replacement 
 omit_atoms([], []).
 omit_atoms([Head|Tail], Result) :-
     atomic(Head),
