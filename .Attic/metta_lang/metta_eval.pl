@@ -662,6 +662,66 @@ has_unicode(A):- atom_codes(A,Cs),member(N,Cs),N>127,!.
 
 set_last_error(_).
 
+
+% =================================================================
+% =================================================================
+% =================================================================
+%  SCOPING
+% =================================================================
+% =================================================================
+% =================================================================
+
+eval_20(Eq, RetType, Depth, Self, ['sealed', InputVarList, Expr], Result) :- !,
+    omit_atoms(InputVarList,OutputVarList),
+    check_replace_with_local_var(OutputVarList, Expr, Result).
+
+% omit_atoms(+input variables, -variables less atoms)
+% If there are already bound values passed to sealed, no need for replacement 
+omit_atoms([], []).
+omit_atoms([Head|Tail], Result) :-
+    atomic(Head),
+    !,
+    omit_atoms(Tail, Result).
+omit_atoms([Head|Tail], [Head|Result]) :-
+    omit_atoms(Tail, Result).
+
+% check_replace_with_local_var(+Sealed-Variables, +Expression, -NewExpression)
+% Boundary case -- no remaining variables to process, just return expression.
+check_replace_with_local_var([], Expr, Result) :- 
+    Result = Expr.
+
+% General case -- replace sealed variable with a new variable 
+check_replace_with_local_var([VarHead|VarTail], Expr, Result) :- 
+    % '_' gives us a prolog variable
+    subst(Expr, VarHead, _, NewExpr),
+    check_replace_with_local_var(VarTail, NewExpr, Result).
+
+%! subst(+Term, +OldTerm, +NewTerm, -ResultTerm) is det.
+%
+% Recursively substitutes occurrences of OldTerm with NewTerm within a Prolog term (Term),
+% producing a new term (ResultTerm). This predicate handles both simple and compound terms, including lists.
+
+% Note: Matching is done with the SWI same_term predicate which states that terms are equal if the
+% condition "the same variable, equivalent atomic data or a compound term allocated at the same address"
+% If the current term (Term) exactly matches OldTerm (with above criteria).
+subst(Term, OldTerm, NewTerm, NewTerm) :- 
+   same_term(OldTerm, Term),
+   !.
+
+% If the current term is not a compound term (like an atom, number or the wrong variable) it stays the same
+subst(Term, _, _, Term) :- \+ compound(Term), !.
+
+% If the current term is a list, it processes each element of the list recursively.
+subst([Old|Structure], OldTerm, NewTerm, [New|StructureO]) :- !,
+    subst(Old, OldTerm, NewTerm, New),
+    subst(Structure, OldTerm, NewTerm, StructureO).
+    
+% Compound Terms are decomposed and reconstructed with the possibly modified arguments.
+subst(OldStructure, OldTerm, NewTerm, NewStructure) :-
+    OldStructure =.. [Functor|Args],
+    subst(Args, OldTerm, NewTerm, NewArgs),
+    NewStructure =.. [Functor|NewArgs].
+
 % =================================================================
 % =================================================================
 % =================================================================
