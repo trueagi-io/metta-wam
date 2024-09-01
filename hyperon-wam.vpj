@@ -67,6 +67,8 @@
 			Name="Other Files"
 			Filters=""></Folder>
 	</CustomFolders>
+	<List Name="RTE">
+	</List>
 	<Files AutoFolders="DirectoryView">
 		<Folder Name="t:/">
 			<Folder Name="root">
@@ -103,6 +105,17 @@
 				<F N=".github/workflows/ci.yml"/>
 			</Folder>
 		</Folder>
+		<Folder Name="../.vscode">
+			<Folder Name="extensions">
+				<Folder Name="royward.metta-lsp-0.0.2">
+					<F
+						N="../.vscode/extensions/royward.metta-lsp-0.0.2/*.*"
+						Recurse="1"
+						Excludes=".git/;*.metta.html;*.bak;build/"
+						L="1"/>
+				</Folder>
+			</Folder>
+		</Folder>
 		<Folder Name="docs">
 			<F
 				N="docs/*.*"
@@ -112,6 +125,12 @@
 		<Folder Name="../hyperon-experimental">
 			<F
 				N="../hyperon-experimental/*.*"
+				Recurse="1"
+				Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"/>
+		</Folder>
+		<Folder Name="library">
+			<F
+				N="library/*.*"
 				Recurse="1"
 				Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"
 				L="1"/>
@@ -201,6 +220,4 @@
 			Recurse="1"
 			Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"/>
 	</Files>
-	<List Name="RTE">
-	</List>
 </Project>

@@ -461,8 +461,6 @@ translate_metta_file_to_datalog_io(Filename,Input,Output):-
   format(user_error,'~N; Done translating ~w forms: ~q.',
                            [TF,asserted_metta_pred(MangleP2,Filename)]))).
 
-write_src_woi(Term):- with_indents(false,write_src(Term)).
-
 % write comments
 write_metta_datalog_term(Output,'$COMMENT'(Term,_,_),_MangleP2,_Lineno):-
   format(Output,"/* ~w */~n",[Term]).
@@ -472,8 +470,13 @@ write_metta_datalog_term(Output,exec(Term),MangleP2,Lineno):-
 % write asserted terms
 write_metta_datalog_term(Output,STerm,MangleP2,Lineno):-
   s2t_iz(MangleP2,P,STerm,Term),
-  Data =..[P,Lineno|Term],
+  relistify(Term,TermL),
+  Data =..[P,Lineno|TermL],
   format(Output,"~q.~n",[Data]).
+
+relistify(Term,TermL):- is_list(Term),!,TermL=Term.
+relistify([H|T],TermL):- flatten([H|T],TermL),!.
+relistify(Term,[Term]).
 
 eval_Line(A,B,C):- format('~N'),
   write_src(eval_Line(A,B,C)),nl.
@@ -559,6 +562,12 @@ load_metta_file_stream(Filename,Self,In):-
       set_exec_num(Filename,0))),
   load_metta_file_stream_fast(Size,P2,Filename,Self,In)))).
 
+% use_fast_buffer makes tmp .buffer files that get around long load times
+use_fast_buffer:- nb_current(may_use_fast_buffer,t).
+
+:- dynamic(metta_file_buffer/5).
+:- multifile(metta_file_buffer/5).
+
 
 load_metta_file_stream_fast(_Size,_P2,Filename,Self,S):- fail,
  symbolic_list_concat([_,_,_|_],'.',Filename),
@@ -569,18 +578,41 @@ load_metta_file_stream_fast(_Size,_P2,Filename,Self,S):- fail,
   accept_line(Self,I),
   I==end_of_file,!.
 
-:- dynamic(metta_file_buffer/5).
+load_metta_file_stream_fast(_Size, _P2, Filename, Self, _In) :-
+    use_fast_buffer,
+    symbol_concat(Filename, '.buffer~', BufferFile),
+    exists_file(BufferFile),
+    time_file(Filename, FileTime),
+    time_file(BufferFile, BufferFileTime),
+    (   (BufferFileTime > FileTime)
+    ->  (fbugio(using(BufferFile)),ensure_loaded(BufferFile), !, load_metta_buffer(Self, Filename))
+    ;   (fbugio(deleting(BufferFile)),delete_file(BufferFile), fail)
+    ).
+
 load_metta_file_stream_fast(_Size,P2,Filename,Self,In):-
+      if_t(use_fast_buffer,
+         ((symbol_concat(Filename, '.buffer~', BufferFile),
+          fbugio(creating(BufferFile)),
+          write_bf(BufferFile, ( :- dynamic(metta_file_buffer/5))),
+          write_bf(BufferFile, ( :- multifile(metta_file_buffer/5)))))),
       repeat,
             my_line_count(In, LineCount),
             current_read_mode(file,Mode),
             must_det_ll(call(P2, In,Expr)), %write_src(read_metta=Expr),nl,
             subst_vars(Expr, Term, [], NamedVarsList),
-            assertz(metta_file_buffer(Mode,Term,NamedVarsList,Filename,LineCount)),
+            BufferTerm = metta_file_buffer(Mode,Term,NamedVarsList,Filename,LineCount),
+            assertz(BufferTerm),
+            if_t(use_fast_buffer,write_bf(BufferFile,BufferTerm)),
+
       flush_output,
       at_end_of_stream(In),!,
       %listing(metta_file_buffer/5),
       load_metta_buffer(Self,Filename).
+
+write_bf(BufferFile,BufferTerm):-
+  setup_call_cleanup(open(BufferFile,append,Out),
+       format(Out,'~q.~n',[BufferTerm]),
+       close(Out)).
 
 
 my_line_count(In, seek($,0,current,CC)):-
@@ -1116,4 +1148,23 @@ progress_bar_example :-
     sleep(0.00001),  % Adjust sleep time as needed for demonstration
     fail. % Continue looping until between/3 fails
 progress_bar_example.
+
+:- dynamic(using_corelib_file/0).
+
+
+use_corelib_file:- using_corelib_file,!.
+use_corelib_file:- asserta(using_corelib_file), fail.
+use_corelib_file:- load_corelib_file, generate_interpreter_stubs.
+
+generate_interpreter_stubs:-
+   forall(metta_type('&corelib',Symb,Def),
+        gen_interp_stubs('&corelib',Symb,Def)).
+
+load_corelib_file:- is_metta_src_dir(Dir), really_use_corelib_file(Dir,'corelib.metta'),!.
+load_corelib_file:- is_metta_src_dir(Dir), really_use_corelib_file(Dir,'stdlib_mettalog.metta'),!.
+% !(import! &corelib "src/canary/stdlib_mettalog.metta")
+really_use_corelib_file(Dir,File):- absolute_file_name(File,Filename,[relative_to(Dir)]),
+ locally(nb_setval(may_use_fast_buffer,t),
+   locally(nb_setval(suspend_answers,true),
+     with_output_to(string(_),include_metta_directory_file('&corelib',Dir,Filename)))).
 
