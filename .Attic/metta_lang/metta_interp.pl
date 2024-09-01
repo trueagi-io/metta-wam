@@ -415,6 +415,7 @@ set_is_unit_test(TF):-
 
 :- meta_predicate fake_notrace(0).
 fake_notrace(G):- tracing,!,real_notrace(G).
+fake_notrace(G):- !,notrace(G).
 fake_notrace(G):- !,once(G).
 % `quietly/1` allows breaking in and inspection (real `no_trace/1` does not)
 fake_notrace(G):- quietly(G),!.
@@ -582,7 +583,11 @@ format_atom(Format, N, Atom) :- format(atom(Atom), Format, [N]).
 
 
 
+mettalog_rt_args(Args):- current_prolog_flag(mettalog_rt_args, Args),!.
+mettalog_rt_args(['--repl=false']).
+
 metta_argv(Args):- current_prolog_flag(metta_argv, Args),!.
+metta_argv(Args):- current_prolog_flag(mettalog_rt, true),!,mettalog_rt_args(Args).
 metta_argv(Before):- current_prolog_flag(os_argv,OSArgv), append(_,['--args'|AArgs],OSArgv),
     before_arfer_dash_dash(AArgs,Before,_),!,set_metta_argv(Before).
 argv_metta(Nth,Value):- metta_argv(Args),nth1(Nth,Args,Value).
@@ -591,6 +596,8 @@ set_metta_argv(Before):-  maplist(read_argv,Before,Args),set_prolog_flag(metta_a
 read_argv(AArg,Arg):- \+ symbol(AArg),!,AArg=Arg.
 read_argv(AArg,Arg):- atom_string(AArg,S),read_metta(S,Arg),!.
 
+
+metta_cmd_args(Args):- current_prolog_flag(mettalog_rt, true),!,mettalog_rt_args(Args).
 metta_cmd_args(Rest):- current_prolog_flag(late_metta_opts,Rest),!.
 metta_cmd_args(Rest):- current_prolog_flag(os_argv,P),append(_,['--'|Rest],P),!.
 metta_cmd_args(Rest):- current_prolog_flag(argv,P),append(_,['--'|Rest],P),!.
@@ -1015,10 +1022,13 @@ metta_atom(KB, [F, A| List]):- KB=='&flybase',fb_pred_nr(F, Len),current_predica
 %metta_atom(KB,Atom):- KB=='&corelib',!, metta_atom_corelib(Atom).
 metta_atom(KB,Atom):- metta_atom_in_file( KB,Atom).
 metta_atom(KB,Atom):- metta_atom_asserted( KB,Atom).
-metta_atom(KB,Atom):- KB \== '&corelib', !, should_inherit_from_corelib(Atom), metta_atom('&corelib',Atom).
-should_inherit_from_corelib([H|_]):- nonvar(H),should_inherit_op_from_corelib(H).
+metta_atom(KB,Atom):- KB \== '&corelib', !,
+   \+ \+ (metta_atom_asserted(KB,'&corelib');should_inherit_from_corelib(Atom)), !, metta_atom('&corelib',Atom).
+should_inherit_from_corelib([H|_]):- nonvar(H), \+ \+ should_inherit_op_from_corelib(H).
 should_inherit_op_from_corelib('=').
 should_inherit_op_from_corelib(':').
+should_inherit_op_from_corelib('@doc').
+should_inherit_op_from_corelib(_).
 
 metta_atom_asserted('&self','&corelib').
 metta_atom_asserted('&self','&stdlib').
@@ -1619,7 +1629,7 @@ do_loon:-
   maplist(catch_red_ignore,[
 
    %if_t(is_compiled,ensure_mettalog_py),
-          install_readline_editline,
+   install_readline_editline,
    %nts1,
    %install_ontology,
    metta_final,
@@ -1653,7 +1663,7 @@ maybe_halt(Seven):- option_value('repl',false),!,halt(Seven).
 maybe_halt(Seven):- option_value('halt',true),!,halt(Seven).
 maybe_halt(_):- once(pre_halt2), fail.
 maybe_halt(Seven):- fbugio(maybe_halt(Seven)), fail.
-%maybe_halt(_):- !.
+maybe_halt(_):- current_prolog_flag(mettalog_rt,true),!.
 maybe_halt(H):- halt(H).
 
 
@@ -1792,6 +1802,7 @@ fix_message_hook:-
    use_corelib_file,
    (is_testing -> UNIT_TEST=true; UNIT_TEST=false),
    set_is_unit_test(UNIT_TEST),
+   %trace,
    \+ prolog_load_context(reloading,true),
     initialization(loon(restore),restore),
    % nts1,
