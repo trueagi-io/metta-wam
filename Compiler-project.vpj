@@ -1,0 +1,922 @@
+<!DOCTYPE Project SYSTEM "http://www.slickedit.com/dtd/vse/10.0/vpj.dtd">
+<Project
+	Version="10.0"
+	VendorName="SlickEdit"
+	TemplateName="(Other)"
+	WorkingDir="."
+	TagFile="None">
+	<Config
+		Name="Release"
+		OutputFile=""
+		CompilerConfigName="">
+		<Menu>
+			<Target
+				Name="Compile"
+				MenuCaption="&amp;Compile"
+				CaptureOutputWith="ProcessBuffer"
+				SaveOption="SaveCurrent"
+				RunFromDir="%rw">
+				<Exec/>
+			</Target>
+			<Target
+				Name="Build"
+				MenuCaption="&amp;Build"
+				CaptureOutputWith="ProcessBuffer"
+				SaveOption="SaveWorkspaceFiles"
+				RunFromDir="%rw">
+				<Exec/>
+			</Target>
+			<Target
+				Name="Rebuild"
+				MenuCaption="&amp;Rebuild"
+				CaptureOutputWith="ProcessBuffer"
+				SaveOption="SaveWorkspaceFiles"
+				RunFromDir="%rw">
+				<Exec/>
+			</Target>
+			<Target
+				Name="Debug"
+				MenuCaption="&amp;Debug"
+				SaveOption="SaveNone"
+				RunFromDir="%rw">
+				<Exec/>
+			</Target>
+			<Target
+				Name="Execute"
+				MenuCaption="E&amp;xecute"
+				SaveOption="SaveNone"
+				RunFromDir="%rw">
+				<Exec CmdLine='"compiler-project.exe"'/>
+			</Target>
+		</Menu>
+	</Config>
+	<CustomFolders>
+		<Folder
+			Name="Source Files"
+			Filters="*.c;*.C;*.cc;*.cpp;*.cp;*.cxx;*.c++;*.prg;*.pas;*.dpr;*.asm;*.s;*.bas;*.java;*.cs;*.sc;*.scala;*.e;*.cob;*.html;*.rc;*.tcl;*.py;*.pl;*.d;*.m;*.mm;*.go;*.groovy;*.gsh"
+			GUID="{3F1E2EAD-4069-499C-BBA0-5743C6E10148}"></Folder>
+		<Folder
+			Name="Header Files"
+			Filters="*.h;*.H;*.hh;*.hpp;*.hxx;*.h++;*.inc;*.sh;*.cpy;*.if"
+			GUID="{1F74540B-C46A-4ECE-A3B5-F2321C549B4C}"/>
+		<Folder
+			Name="Resource Files"
+			Filters="*.ico;*.cur;*.dlg"
+			GUID="{2D87B983-3551-42E5-BC37-778F732B6C56}"/>
+		<Folder
+			Name="Bitmaps"
+			Filters="*.bmp"
+			GUID="{FECF8F3C-CC06-4490-BFAB-59EE3E4920B9}"/>
+		<Folder
+			Name="Other Files"
+			Filters=""
+			GUID="{5BB17C1C-B7AC-4E20-A88A-FB0E514087FF}"></Folder>
+	</CustomFolders>
+	<Files AutoFolders="DirectoryView">
+		<Folder Name="../.local">
+			<Folder Name="share">
+				<Folder Name="swi-prolog">
+					<Folder Name="pack">
+						<Folder Name="lsp_server">
+							<Folder Name="prolog">
+								<F N="../.local/share/swi-prolog/pack/lsp_server/prolog/lsp_changes.pl"/>
+								<F N="../.local/share/swi-prolog/pack/lsp_server/prolog/lsp_checking.pl"/>
+								<F N="../.local/share/swi-prolog/pack/lsp_server/prolog/lsp_colours.pl"/>
+								<F N="../.local/share/swi-prolog/pack/lsp_server/prolog/lsp_completion.pl"/>
+								<F N="../.local/share/swi-prolog/pack/lsp_server/prolog/lsp_parser.pl"/>
+								<F N="../.local/share/swi-prolog/pack/lsp_server/prolog/lsp_server.pl"/>
+								<F N="../.local/share/swi-prolog/pack/lsp_server/prolog/lsp_utils.pl"/>
+							</Folder>
+							<F
+								N="../.local/share/swi-prolog/pack/lsp_server/*.*"
+								Recurse="1"
+								Excludes=".git/;*.metta.html;*.bak;build"/>
+						</Folder>
+						<Folder Name="prolog_lsp">
+							<Folder Name=".devcontainer">
+								<F N="../.local/share/swi-prolog/pack/prolog_lsp/.devcontainer/devcontainer.json"/>
+								<F N="../.local/share/swi-prolog/pack/prolog_lsp/.devcontainer/Dockerfile"/>
+							</Folder>
+							<Folder Name=".vscode">
+								<F N="../.local/share/swi-prolog/pack/prolog_lsp/.vscode/settings.json"/>
+							</Folder>
+							<Folder Name="prolog">
+								<Folder Name="jsonrpc">
+									<Folder Name="connectors">
+										<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/jsonrpc/connectors/stdio.pl"/>
+										<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/jsonrpc/connectors/tcp.pl"/>
+									</Folder>
+									<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/jsonrpc/client.pl"/>
+									<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/jsonrpc/client.plt"/>
+									<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/jsonrpc/connectors.pl"/>
+									<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/jsonrpc/errors.pl"/>
+									<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/jsonrpc/hooks.pl"/>
+									<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/jsonrpc/methods.pl"/>
+									<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/jsonrpc/protocol.pl"/>
+									<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/jsonrpc/protocol.plt"/>
+									<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/jsonrpc/server.pl"/>
+								</Folder>
+								<Folder Name="pls_index">
+									<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/pls_index/completions.pl"/>
+									<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/pls_index/definitions.pl"/>
+									<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/pls_index/docs.pl"/>
+									<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/pls_index/documents.pl"/>
+									<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/pls_index/indexing.pl"/>
+									<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/pls_index/indexing.plt"/>
+									<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/pls_index/lines.pl"/>
+									<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/pls_index/lines.plt"/>
+									<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/pls_index/profiles.pl"/>
+									<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/pls_index/references.pl"/>
+									<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/pls_index/terms.pl"/>
+								</Folder>
+								<Folder Name="samples">
+									<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/samples/bad_json.txt"/>
+									<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/samples/crash.txt"/>
+									<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/samples/echo.txt"/>
+									<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/samples/echo_content_type.txt"/>
+									<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/samples/invalid_request.txt"/>
+									<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/samples/missing.txt"/>
+								</Folder>
+								<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/base_language_profile.pl"/>
+								<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/capabilities.pl"/>
+								<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/errors.pl"/>
+								<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/hover.pl"/>
+								<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/language_client.pl"/>
+								<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/language_client.plt"/>
+								<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/language_server.pl"/>
+								<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/methods.pl"/>
+								<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/pls_index.pl"/>
+								<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/prolog_lsp.pl"/>
+								<F N="../.local/share/swi-prolog/pack/prolog_lsp/prolog/symbols.pl"/>
+							</Folder>
+							<Folder Name="test">
+								<F N="../.local/share/swi-prolog/pack/prolog_lsp/test/connectors.pl"/>
+								<F N="../.local/share/swi-prolog/pack/prolog_lsp/test/methods.pl"/>
+								<F N="../.local/share/swi-prolog/pack/prolog_lsp/test/servers.pl"/>
+							</Folder>
+							<F N="../.local/share/swi-prolog/pack/prolog_lsp/.gitignore"/>
+							<F N="../.local/share/swi-prolog/pack/prolog_lsp/LICENSE"/>
+							<F N="../.local/share/swi-prolog/pack/prolog_lsp/load.pl"/>
+							<F N="../.local/share/swi-prolog/pack/prolog_lsp/pack.pl"/>
+							<F N="../.local/share/swi-prolog/pack/prolog_lsp/README.md"/>
+							<F N="../.local/share/swi-prolog/pack/prolog_lsp/run.pl"/>
+							<F N="../.local/share/swi-prolog/pack/prolog_lsp/status.db"/>
+							<F N="../.local/share/swi-prolog/pack/prolog_lsp/test.pl"/>
+						</Folder>
+					</Folder>
+				</Folder>
+			</Folder>
+		</Folder>
+		<Folder Name="../.vscode">
+			<Folder Name="extensions">
+				<Folder Name="galileos.logical-english-extension-0.0.6">
+					<Folder Name="logicalenglish">
+						<Folder Name="prolog">
+							<Folder Name="spacy">
+								<F N="../.vscode/extensions/galileos.logical-english-extension-0.0.6/logicalenglish/prolog/spacy/spacy.pl"/>
+							</Folder>
+							<Folder Name="tokenize">
+								<Folder Name="prolog">
+									<F N="../.vscode/extensions/galileos.logical-english-extension-0.0.6/logicalenglish/prolog/tokenize/prolog/tokenize.pl"/>
+									<F N="../.vscode/extensions/galileos.logical-english-extension-0.0.6/logicalenglish/prolog/tokenize/prolog/tokenize_opts.pl"/>
+								</Folder>
+							</Folder>
+							<F N="../.vscode/extensions/galileos.logical-english-extension-0.0.6/logicalenglish/prolog/drafter.pl"/>
+							<F N="../.vscode/extensions/galileos.logical-english-extension-0.0.6/logicalenglish/prolog/kp_loader.pl"/>
+							<F N="../.vscode/extensions/galileos.logical-english-extension-0.0.6/logicalenglish/prolog/le_answer.pl"/>
+							<F N="../.vscode/extensions/galileos.logical-english-extension-0.0.6/logicalenglish/prolog/le_input.pl"/>
+							<F N="../.vscode/extensions/galileos.logical-english-extension-0.0.6/logicalenglish/prolog/le_local.pl"/>
+							<F N="../.vscode/extensions/galileos.logical-english-extension-0.0.6/logicalenglish/prolog/reasoner.pl"/>
+							<F N="../.vscode/extensions/galileos.logical-english-extension-0.0.6/logicalenglish/prolog/syntax.pl"/>
+						</Folder>
+						<F N="../.vscode/extensions/galileos.logical-english-extension-0.0.6/logicalenglish/LICENSE.txt"/>
+						<F N="../.vscode/extensions/galileos.logical-english-extension-0.0.6/logicalenglish/pack.pl"/>
+						<F N="../.vscode/extensions/galileos.logical-english-extension-0.0.6/logicalenglish/README.md"/>
+					</Folder>
+					<Folder Name="out">
+						<F N="../.vscode/extensions/galileos.logical-english-extension-0.0.6/out/extension.js"/>
+						<F N="../.vscode/extensions/galileos.logical-english-extension-0.0.6/out/extension.js.LICENSE.txt"/>
+					</Folder>
+					<F N="../.vscode/extensions/galileos.logical-english-extension-0.0.6/.vsixmanifest"/>
+					<F N="../.vscode/extensions/galileos.logical-english-extension-0.0.6/CHANGELOG.md"/>
+					<F N="../.vscode/extensions/galileos.logical-english-extension-0.0.6/italiano-logico.tmLanguage.json"/>
+					<F N="../.vscode/extensions/galileos.logical-english-extension-0.0.6/language-configuration.json"/>
+					<F N="../.vscode/extensions/galileos.logical-english-extension-0.0.6/LICENSE.txt"/>
+					<F N="../.vscode/extensions/galileos.logical-english-extension-0.0.6/logical-english.tmLanguage.json"/>
+					<F N="../.vscode/extensions/galileos.logical-english-extension-0.0.6/package.json"/>
+					<F N="../.vscode/extensions/galileos.logical-english-extension-0.0.6/prolog.tmLanguage.json"/>
+					<F N="../.vscode/extensions/galileos.logical-english-extension-0.0.6/README.md"/>
+				</Folder>
+				<Folder Name="hargettp.pure-prolog-language-support-0.0.7">
+					<Folder Name=".devcontainer">
+						<F N="../.vscode/extensions/hargettp.pure-prolog-language-support-0.0.7/.devcontainer/devcontainer.json"/>
+						<F N="../.vscode/extensions/hargettp.pure-prolog-language-support-0.0.7/.devcontainer/Dockerfile"/>
+					</Folder>
+					<Folder Name=".github">
+						<Folder Name="workflows">
+							<F N="../.vscode/extensions/hargettp.pure-prolog-language-support-0.0.7/.github/workflows/main.yml"/>
+						</Folder>
+					</Folder>
+					<Folder Name="dist">
+						<F N="../.vscode/extensions/hargettp.pure-prolog-language-support-0.0.7/dist/extension.js"/>
+					</Folder>
+					<Folder Name="languages">
+						<Folder Name="prolog">
+							<F N="../.vscode/extensions/hargettp.pure-prolog-language-support-0.0.7/languages/prolog/prolog.configuration.json"/>
+							<F N="../.vscode/extensions/hargettp.pure-prolog-language-support-0.0.7/languages/prolog/prolog.tmLanguage.json"/>
+						</Folder>
+					</Folder>
+					<Folder Name="prolog">
+						<F N="../.vscode/extensions/hargettp.pure-prolog-language-support-0.0.7/prolog/run.pl"/>
+					</Folder>
+					<F N="../.vscode/extensions/hargettp.pure-prolog-language-support-0.0.7/.gitignore"/>
+					<F N="../.vscode/extensions/hargettp.pure-prolog-language-support-0.0.7/.vsixmanifest"/>
+					<F N="../.vscode/extensions/hargettp.pure-prolog-language-support-0.0.7/extension.ts"/>
+					<F N="../.vscode/extensions/hargettp.pure-prolog-language-support-0.0.7/LICENSE.txt"/>
+					<F N="../.vscode/extensions/hargettp.pure-prolog-language-support-0.0.7/package.json"/>
+					<F N="../.vscode/extensions/hargettp.pure-prolog-language-support-0.0.7/README.md"/>
+				</Folder>
+				<Folder Name="lilr.swi-lsp-1.0.7">
+					<Folder Name="client">
+						<Folder Name="node_modules">
+							<Folder Name="balanced-match">
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/balanced-match/.npmignore"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/balanced-match/index.js"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/balanced-match/LICENSE.md"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/balanced-match/package.json"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/balanced-match/README.md"/>
+							</Folder>
+							<Folder Name="brace-expansion">
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/brace-expansion/index.js"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/brace-expansion/LICENSE"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/brace-expansion/package.json"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/brace-expansion/README.md"/>
+							</Folder>
+							<Folder Name="concat-map">
+								<Folder Name="example">
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/concat-map/example/map.js"/>
+								</Folder>
+								<Folder Name="test">
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/concat-map/test/map.js"/>
+								</Folder>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/concat-map/.travis.yml"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/concat-map/index.js"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/concat-map/LICENSE"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/concat-map/package.json"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/concat-map/README.markdown"/>
+							</Folder>
+							<Folder Name="lru-cache">
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/lru-cache/index.js"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/lru-cache/LICENSE"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/lru-cache/package.json"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/lru-cache/README.md"/>
+							</Folder>
+							<Folder Name="minimatch">
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/minimatch/LICENSE"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/minimatch/minimatch.js"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/minimatch/package.json"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/minimatch/README.md"/>
+							</Folder>
+							<Folder Name="semver">
+								<Folder Name="bin">
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/bin/semver.js"/>
+								</Folder>
+								<Folder Name="classes">
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/classes/comparator.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/classes/index.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/classes/range.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/classes/semver.js"/>
+								</Folder>
+								<Folder Name="functions">
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/functions/clean.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/functions/cmp.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/functions/coerce.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/functions/compare-build.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/functions/compare-loose.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/functions/compare.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/functions/diff.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/functions/eq.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/functions/gt.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/functions/gte.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/functions/inc.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/functions/lt.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/functions/lte.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/functions/major.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/functions/minor.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/functions/neq.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/functions/parse.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/functions/patch.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/functions/prerelease.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/functions/rcompare.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/functions/rsort.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/functions/satisfies.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/functions/sort.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/functions/valid.js"/>
+								</Folder>
+								<Folder Name="internal">
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/internal/constants.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/internal/debug.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/internal/identifiers.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/internal/parse-options.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/internal/re.js"/>
+								</Folder>
+								<Folder Name="ranges">
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/ranges/gtr.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/ranges/intersects.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/ranges/ltr.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/ranges/max-satisfying.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/ranges/min-satisfying.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/ranges/min-version.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/ranges/outside.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/ranges/simplify.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/ranges/subset.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/ranges/to-comparators.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/ranges/valid.js"/>
+								</Folder>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/CHANGELOG.md"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/index.js"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/LICENSE"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/package.json"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/preload.js"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/range.bnf"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/semver/README.md"/>
+							</Folder>
+							<Folder Name="vscode-jsonrpc">
+								<Folder Name="lib">
+									<Folder Name="browser">
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/browser/main.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/browser/main.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/browser/ril.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/browser/ril.js"/>
+									</Folder>
+									<Folder Name="common">
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/common/api.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/common/api.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/common/cancellation.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/common/cancellation.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/common/connection.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/common/connection.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/common/disposable.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/common/disposable.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/common/encoding.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/common/encoding.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/common/events.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/common/events.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/common/is.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/common/is.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/common/linkedMap.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/common/linkedMap.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/common/messageBuffer.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/common/messageBuffer.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/common/messageReader.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/common/messageReader.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/common/messages.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/common/messages.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/common/messageWriter.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/common/messageWriter.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/common/ral.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/common/ral.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/common/semaphore.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/common/semaphore.js"/>
+									</Folder>
+									<Folder Name="node">
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/node/main.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/node/main.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/node/ril.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/lib/node/ril.js"/>
+									</Folder>
+								</Folder>
+								<Folder Name="typings">
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/typings/thenable.d.ts"/>
+								</Folder>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/browser.d.ts"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/browser.js"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/License.txt"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/node.cmd"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/node.d.ts"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/node.js"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/package.json"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/README.md"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-jsonrpc/thirdpartynotices.txt"/>
+							</Folder>
+							<Folder Name="vscode-languageclient">
+								<Folder Name="lib">
+									<Folder Name="browser">
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/browser/main.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/browser/main.js"/>
+									</Folder>
+									<Folder Name="common">
+										<Folder Name="utils">
+											<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/utils/async.d.ts"/>
+											<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/utils/async.js"/>
+											<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/utils/is.d.ts"/>
+											<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/utils/is.js"/>
+											<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/utils/uuid.d.ts"/>
+											<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/utils/uuid.js"/>
+										</Folder>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/api.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/api.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/callHierarchy.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/callHierarchy.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/client.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/client.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/codeConverter.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/codeConverter.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/colorProvider.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/colorProvider.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/commonClient.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/commonClient.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/configuration.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/configuration.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/declaration.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/declaration.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/fileOperations.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/fileOperations.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/foldingRange.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/foldingRange.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/implementation.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/implementation.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/linkedEditingRange.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/linkedEditingRange.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/progress.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/progress.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/progressPart.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/progressPart.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/protocolCallHierarchyItem.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/protocolCallHierarchyItem.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/protocolCodeAction.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/protocolCodeAction.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/protocolCodeLens.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/protocolCodeLens.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/protocolCompletionItem.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/protocolCompletionItem.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/protocolConverter.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/protocolConverter.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/protocolDiagnostic.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/protocolDiagnostic.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/protocolDocumentLink.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/protocolDocumentLink.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/selectionRange.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/selectionRange.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/semanticTokens.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/semanticTokens.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/typeDefinition.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/typeDefinition.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/workspaceFolders.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/common/workspaceFolders.js"/>
+									</Folder>
+									<Folder Name="node">
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/node/main.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/node/main.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/node/processes.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/node/processes.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/lib/node/terminateProcess.sh"/>
+									</Folder>
+								</Folder>
+								<Folder Name="typings">
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/typings/vscode-proposed.d.ts"/>
+								</Folder>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/browser.d.ts"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/browser.js"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/License.txt"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/node.cmd"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/node.d.ts"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/node.js"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/package.json"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/README.md"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageclient/thirdpartynotices.txt"/>
+							</Folder>
+							<Folder Name="vscode-languageserver-protocol">
+								<Folder Name="lib">
+									<Folder Name="browser">
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/browser/main.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/browser/main.js"/>
+									</Folder>
+									<Folder Name="common">
+										<Folder Name="utils">
+											<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/utils/is.d.ts"/>
+											<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/utils/is.js"/>
+										</Folder>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/api.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/api.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/connection.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/connection.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/messages.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/messages.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/protocol.callHierarchy.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/protocol.callHierarchy.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/protocol.colorProvider.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/protocol.colorProvider.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/protocol.configuration.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/protocol.configuration.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/protocol.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/protocol.declaration.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/protocol.declaration.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/protocol.fileOperations.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/protocol.fileOperations.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/protocol.foldingRange.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/protocol.foldingRange.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/protocol.implementation.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/protocol.implementation.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/protocol.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/protocol.linkedEditingRange.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/protocol.linkedEditingRange.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/protocol.moniker.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/protocol.moniker.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/protocol.progress.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/protocol.progress.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/protocol.selectionRange.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/protocol.selectionRange.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/protocol.semanticTokens.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/protocol.semanticTokens.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/protocol.showDocument.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/protocol.showDocument.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/protocol.typeDefinition.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/protocol.typeDefinition.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/protocol.workspaceFolders.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/common/protocol.workspaceFolders.js"/>
+									</Folder>
+									<Folder Name="node">
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/node/main.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/lib/node/main.js"/>
+									</Folder>
+								</Folder>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/browser.d.ts"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/browser.js"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/License.txt"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/node.cmd"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/node.d.ts"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/node.js"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/package.json"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/README.md"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-protocol/thirdpartynotices.txt"/>
+							</Folder>
+							<Folder Name="vscode-languageserver-types">
+								<Folder Name="lib">
+									<Folder Name="esm">
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-types/lib/esm/main.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-types/lib/esm/main.js"/>
+									</Folder>
+									<Folder Name="umd">
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-types/lib/umd/main.d.ts"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-types/lib/umd/main.js"/>
+									</Folder>
+								</Folder>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-types/License.txt"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-types/package.json"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/vscode-languageserver-types/README.md"/>
+							</Folder>
+							<Folder Name="yallist">
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/yallist/iterator.js"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/yallist/LICENSE"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/yallist/package.json"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/yallist/README.md"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/node_modules/yallist/yallist.js"/>
+							</Folder>
+						</Folder>
+						<Folder Name="out">
+							<Folder Name="test">
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/out/test/completion.test.js"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/out/test/diagnostics.test.js"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/out/test/helper.js"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/out/test/index.js"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/out/test/runTest.js"/>
+							</Folder>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/out/extension.js"/>
+						</Folder>
+						<Folder Name="testFixture">
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/testFixture/completion.txt"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/testFixture/diagnostics.txt"/>
+						</Folder>
+						<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/package-lock.json"/>
+						<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/client/package.json"/>
+					</Folder>
+					<Folder Name="scripts">
+						<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/scripts/e2e.sh"/>
+					</Folder>
+					<Folder Name="server">
+						<Folder Name="node_modules">
+							<Folder Name=".bin">
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/.bin/installServerIntoExtension"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/.bin/installServerIntoExtension.cmd"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/.bin/installServerIntoExtension.ps1"/>
+							</Folder>
+							<Folder Name="@types">
+								<Folder Name="moo">
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/@types/moo/LICENSE"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/@types/moo/package.json"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/@types/moo/README.md"/>
+								</Folder>
+							</Folder>
+							<Folder Name="moo">
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/moo/LICENSE"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/moo/moo.js"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/moo/package.json"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/moo/README.md"/>
+							</Folder>
+							<Folder Name="ts-pattern">
+								<Folder Name="dist">
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/ts-pattern/dist/index.cjs"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/ts-pattern/dist/index.modern.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/ts-pattern/dist/index.module.js"/>
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/ts-pattern/dist/index.umd.js"/>
+								</Folder>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/ts-pattern/LICENSE"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/ts-pattern/package.json"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/ts-pattern/README.md"/>
+							</Folder>
+							<Folder Name="vscode-jsonrpc">
+								<Folder Name="lib">
+									<Folder Name="browser">
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-jsonrpc/lib/browser/main.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-jsonrpc/lib/browser/ril.js"/>
+									</Folder>
+									<Folder Name="common">
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-jsonrpc/lib/common/api.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-jsonrpc/lib/common/cancellation.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-jsonrpc/lib/common/connection.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-jsonrpc/lib/common/disposable.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-jsonrpc/lib/common/encoding.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-jsonrpc/lib/common/events.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-jsonrpc/lib/common/is.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-jsonrpc/lib/common/linkedMap.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-jsonrpc/lib/common/messageBuffer.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-jsonrpc/lib/common/messageReader.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-jsonrpc/lib/common/messages.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-jsonrpc/lib/common/messageWriter.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-jsonrpc/lib/common/ral.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-jsonrpc/lib/common/semaphore.js"/>
+									</Folder>
+									<Folder Name="node">
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-jsonrpc/lib/node/main.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-jsonrpc/lib/node/ril.js"/>
+									</Folder>
+								</Folder>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-jsonrpc/browser.js"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-jsonrpc/License.txt"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-jsonrpc/node.cmd"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-jsonrpc/node.js"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-jsonrpc/package.json"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-jsonrpc/README.md"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-jsonrpc/thirdpartynotices.txt"/>
+							</Folder>
+							<Folder Name="vscode-languageserver">
+								<Folder Name="bin">
+									<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver/bin/installServerIntoExtension"/>
+								</Folder>
+								<Folder Name="lib">
+									<Folder Name="browser">
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver/lib/browser/main.js"/>
+									</Folder>
+									<Folder Name="common">
+										<Folder Name="utils">
+											<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver/lib/common/utils/is.js"/>
+											<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver/lib/common/utils/uuid.js"/>
+										</Folder>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver/lib/common/api.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver/lib/common/callHierarchy.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver/lib/common/configuration.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver/lib/common/fileOperations.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver/lib/common/linkedEditingRange.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver/lib/common/moniker.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver/lib/common/progress.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver/lib/common/semanticTokens.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver/lib/common/server.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver/lib/common/showDocument.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver/lib/common/workspaceFolders.js"/>
+									</Folder>
+									<Folder Name="node">
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver/lib/node/files.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver/lib/node/main.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver/lib/node/resolve.js"/>
+									</Folder>
+								</Folder>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver/browser.js"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver/License.txt"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver/node.cmd"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver/node.js"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver/package.json"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver/README.md"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver/thirdpartynotices.txt"/>
+							</Folder>
+							<Folder Name="vscode-languageserver-protocol">
+								<Folder Name="lib">
+									<Folder Name="browser">
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-protocol/lib/browser/main.js"/>
+									</Folder>
+									<Folder Name="common">
+										<Folder Name="utils">
+											<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-protocol/lib/common/utils/is.js"/>
+										</Folder>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-protocol/lib/common/api.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-protocol/lib/common/connection.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-protocol/lib/common/messages.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-protocol/lib/common/protocol.callHierarchy.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-protocol/lib/common/protocol.colorProvider.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-protocol/lib/common/protocol.configuration.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-protocol/lib/common/protocol.declaration.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-protocol/lib/common/protocol.fileOperations.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-protocol/lib/common/protocol.foldingRange.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-protocol/lib/common/protocol.implementation.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-protocol/lib/common/protocol.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-protocol/lib/common/protocol.linkedEditingRange.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-protocol/lib/common/protocol.moniker.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-protocol/lib/common/protocol.progress.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-protocol/lib/common/protocol.selectionRange.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-protocol/lib/common/protocol.semanticTokens.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-protocol/lib/common/protocol.showDocument.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-protocol/lib/common/protocol.typeDefinition.js"/>
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-protocol/lib/common/protocol.workspaceFolders.js"/>
+									</Folder>
+									<Folder Name="node">
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-protocol/lib/node/main.js"/>
+									</Folder>
+								</Folder>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-protocol/browser.js"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-protocol/License.txt"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-protocol/node.cmd"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-protocol/node.js"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-protocol/package.json"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-protocol/README.md"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-protocol/thirdpartynotices.txt"/>
+							</Folder>
+							<Folder Name="vscode-languageserver-textdocument">
+								<Folder Name="lib">
+									<Folder Name="esm">
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-textdocument/lib/esm/main.js"/>
+									</Folder>
+									<Folder Name="umd">
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-textdocument/lib/umd/main.js"/>
+									</Folder>
+								</Folder>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-textdocument/License.txt"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-textdocument/package.json"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-textdocument/README.md"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-textdocument/thirdpartynotices.txt"/>
+							</Folder>
+							<Folder Name="vscode-languageserver-types">
+								<Folder Name="lib">
+									<Folder Name="esm">
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-types/lib/esm/main.js"/>
+									</Folder>
+									<Folder Name="umd">
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-types/lib/umd/main.js"/>
+									</Folder>
+								</Folder>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-types/License.txt"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-types/package.json"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-languageserver-types/README.md"/>
+							</Folder>
+							<Folder Name="vscode-uri">
+								<Folder Name="lib">
+									<Folder Name="esm">
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-uri/lib/esm/index.js"/>
+									</Folder>
+									<Folder Name="umd">
+										<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-uri/lib/umd/index.js"/>
+									</Folder>
+								</Folder>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-uri/LICENSE.md"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-uri/package.json"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-uri/README.md"/>
+								<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/node_modules/vscode-uri/SECURITY.md"/>
+							</Folder>
+						</Folder>
+						<Folder Name="out">
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/AST.js"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/astNode.js"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/context_flags.js"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/cst.js"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/cst2.js"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/dict.js"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/DocObj.js"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/fileState.js"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/getFunctorName.js"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/getSymbols.js"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/globalVars.cjs"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/globalVars.js"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/graph.js"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/index.js"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/indexer.js"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/kind.js"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/lexer-by-moo.js"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/lexer-dec10.js"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/lexer-eclipse.js"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/lexer.js"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/Maps.js"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/newLexer.js"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/op_table.js"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/operators.js"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/parser-dec10-det.js"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/parser-dec10-nondet.js"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/parser-eclipse.js"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/parser-on-moo.js"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/parser.js"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/pushDiagnostic.js"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/ruleEval.js"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/server.js"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/syntax-tree.js"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/text.js"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/types.js"/>
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/out/utils.js"/>
+						</Folder>
+						<Folder Name="src">
+							<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/src/mybat.bat"/>
+						</Folder>
+						<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/package-lock.json"/>
+						<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/server/package.json"/>
+					</Folder>
+					<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/.eslintignore"/>
+					<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/.vsixmanifest"/>
+					<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/package.json"/>
+					<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/README.md"/>
+					<F N="../.vscode/extensions/lilr.swi-lsp-1.0.7/test.pl"/>
+				</Folder>
+				<Folder Name="pepebecker.vscode-lsp-config-0.1.0">
+					<Folder Name="dist">
+						<F N="../.vscode/extensions/pepebecker.vscode-lsp-config-0.1.0/dist/extension.js"/>
+					</Folder>
+					<F N="../.vscode/extensions/pepebecker.vscode-lsp-config-0.1.0/.eslintignore"/>
+					<F N="../.vscode/extensions/pepebecker.vscode-lsp-config-0.1.0/.vsixmanifest"/>
+					<F N="../.vscode/extensions/pepebecker.vscode-lsp-config-0.1.0/icon.png"/>
+					<F N="../.vscode/extensions/pepebecker.vscode-lsp-config-0.1.0/LICENSE.txt"/>
+					<F N="../.vscode/extensions/pepebecker.vscode-lsp-config-0.1.0/package.json"/>
+					<F N="../.vscode/extensions/pepebecker.vscode-lsp-config-0.1.0/README.md"/>
+				</Folder>
+				<Folder Name="rebornix.prolog-0.0.4">
+					<Folder Name=".vscode">
+						<F N="../.vscode/extensions/rebornix.prolog-0.0.4/.vscode/launch.json"/>
+					</Folder>
+					<Folder Name="images">
+						<F N="../.vscode/extensions/rebornix.prolog-0.0.4/images/prolog.png"/>
+					</Folder>
+					<Folder Name="snippets">
+						<F N="../.vscode/extensions/rebornix.prolog-0.0.4/snippets/snippets.json"/>
+					</Folder>
+					<Folder Name="syntaxes">
+						<F N="../.vscode/extensions/rebornix.prolog-0.0.4/syntaxes/prolog.tmLanguage"/>
+					</Folder>
+					<F N="../.vscode/extensions/rebornix.prolog-0.0.4/.vsixmanifest"/>
+					<F N="../.vscode/extensions/rebornix.prolog-0.0.4/package.json"/>
+					<F N="../.vscode/extensions/rebornix.prolog-0.0.4/prolog.configuration.json"/>
+					<F N="../.vscode/extensions/rebornix.prolog-0.0.4/README.md"/>
+					<F N="../.vscode/extensions/rebornix.prolog-0.0.4/vsc-extension-quickstart.md"/>
+				</Folder>
+				<F
+					N="../.vscode/extensions/*.*"
+					Recurse="1"
+					Excludes=""
+					L="1"/>
+				<F N="../.vscode/extensions/extensions.json"/>
+			</Folder>
+		</Folder>
+		<Folder Name="src">
+			<Folder Name="canary">
+				<F N="src/canary/metta_compiler.pl"/>
+				<F N="src/canary/metta_compiler_inlining.pl"/>
+				<F N="src/canary/metta_convert.pl"/>
+				<F N="src/canary/metta_corelib.pl"/>
+				<F N="src/canary/metta_data.pl"/>
+				<F N="src/canary/metta_debug.pl"/>
+				<F N="src/canary/metta_eval.pl"/>
+				<F N="src/canary/metta_interp.pl"/>
+				<F N="src/canary/metta_loader.pl"/>
+				<F N="src/canary/metta_mizer.pl"/>
+				<F N="src/canary/metta_ontology.pfc.pl"/>
+				<F N="src/canary/metta_pfc_base.pl"/>
+				<F N="src/canary/metta_pfc_support.pl"/>
+				<F N="src/canary/metta_printer.pl"/>
+				<F N="src/canary/metta_python.pl"/>
+				<F N="src/canary/metta_repl.pl"/>
+				<F N="src/canary/metta_space.pl"/>
+				<F N="src/canary/metta_testing.pl"/>
+				<F N="src/canary/metta_types.pl"/>
+				<F N="src/canary/metta_utils.pl"/>
+			</Folder>
+		</Folder>
+		<Folder Name="tests">
+			<Folder Name="compiler_specific">
+				<F
+					N="tests/compiler_specific/*.*"
+					Recurse="1"
+					Excludes=".git/;*.metta.html;*.bak;target/;build/"/>
+			</Folder>
+			<Folder Name="extended_compat">
+				<F
+					N="tests/extended_compat/*.*"
+					Recurse="1"
+					Excludes=".git/;*.metta.html;*.bak;target/;build/;.*/;*~*/"
+					L="1"/>
+			</Folder>
+			<Folder Name="more-anti-regression">
+				<F
+					N="tests/more-anti-regression/*.*"
+					Recurse="1"
+					Excludes=".git/;*.metta.html;*.bak;target/;build/"
+					L="1"/>
+			</Folder>
+		</Folder>
+	</Files>
+	<List Name="RTE">
+	</List>
+</Project>

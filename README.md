@@ -1,13 +1,17 @@
-
 # :rocket: An Implementation of MeTTa designed to run on the Warren Abstract Machine (WAM)
 
-Info at [./docs/OVERVIEW.md](docs/OVERVIEW.md) in this repository.
+## Quick Links
+- [Getting Started](#getting-started)
+  - [Installation](#installation)
+- [Running MeTTaLog](#neckbeard-running-mettalog)
+  - [With Docker](#whale-running-mettalog-with-docker)
+- [Test Reports](https://trueagi-io.github.io/metta-wam/)
+- [Tests](tests/) and [Result Links](reports/TEST_LINKS.md)
+- [Overview Documentation](./docs/OVERVIEW.md).
 
-See [Tests](tests/) for MeTTa as well as [Results](reports/TEST_LINKS.md)
+## Getting Started
 
-## :package: Getting Started
-
-### :toolbox: Installation
+### :gear: Installation
 
 _Before you get started make sure `pip` and `venv` are working good._
 
@@ -15,126 +19,104 @@ Clone and set up MeTTaLog with the following commands:
 ```
 git clone https://github.com/trueagi-io/metta-wam
 cd metta-wam
-. scripts/ensure_venv  # ensures we are running in a python venv
-pip install ansi2html   # needed for running tests
-pip install hyperon  # needed for running tests
-pip install junit2html # needed for test report generation
-chmod +x INSTALL.sh  # Make sure the script is executable
-. ./INSTALL.sh # Follow the default prompts 
-
+source ./INSTALL.sh # Follow the default prompts 
 ```
-The INSTALL.sh script handles the installation of essential components and updates:
-#### Python Packages
+#### The INSTALL.sh script handles the installation of essential components and updates:
 - Ensures Python's `pip` is installed or installs it.
-- **Installs mettalog**: Allows Rust MeTTa use extra functionality found in mettalog
-- **Installs mettalog-jupyter-kernal**: Work with metta files in Jupyter Notebooks
-- **Installs metakernal**: (No relation!) but allows our Jypter Kernel to work
-- **Checks** if SWI-Prolog is already installed.
-- **Installs or Updates** to ensure version 9.1 or higher is present.
+- **Installs or Updates SWI-Prolog** to ensure version 9.3.9 or higher is present.
 - **Installs janus**: A Python package that interfaces with SWI-Prolog.
-- **Installs pyswip**: Another Python package that provides further integration
+- **Installs pyswip**: Another Python package that provides further integration.
+- **Installs hyperon**: Hyperon pip package needed for running compatibility tests.
+- **Installs ansi2html**: Unit Test Visibility.
+- **Installs junit2html**: Unit Test Reporting.
+- **Installs mettalog-vspace**: Allows Rust MeTTa use extra functionality found in mettalog.
+- **Installs mettalog-jupyter-kernel**: Work with metta files in Jupyter Notebooks.
+- **Installs metakernel**: (No relation!) but allows our Jupyter Kernel to work.
+
 **Note**: Running this script modifies software configurations and installs packages. Ensure you're prepared for these changes.
 
-## :whale: Docker
+## :whale: Running MeTTaLog with Docker
 
-To build a docker image containing MeTTaLog readily available run the
-following command
+<details>
+  <summary>This section guides you through using Docker to set up</summary>
+
+Ensures that MeTTaLog is isolated from your local filesystem and operates in a controlled environment.
+
+### Building the Docker Image
+
+To create a Docker image with MeTTaLog installed, use the following command:
 
 ```bash
 docker build -t mettalog .
 ```
 
-You may then enter a corresponding containter with the following
-command
+This command constructs a Docker image named `mettalog` based on the Dockerfile in the current directory.
+
+### Interacting with MeTTaLog in Docker
+
+After building the image, you can run MeTTaLog inside a Docker container. This isolates it from your local filesystem, which means it won't have direct access to your local files unless explicitly configured to do so.
+
+To start an interactive container with a bash shell, use:
 
 ```bash
-docker run -it --entrypoint 'bash -i' mettalog
+docker run -it mettalog bash -l
 ```
 
-Once inside the container you may enter the MeTTaLog REPL with the
-following command
+Once inside the container, you have several options to interact with MeTTaLog. See [Running MeTTaLog](#neckbeard-running-mettalog).
 
-```bash
-mettalog --repl
-```
+### Transferring Files to and from the Container
 
-or run a metta script as follows
+Docker allows you to copy files between the host and the container, which can be useful for moving scripts or data into the container before running them, or extracting results afterward. Refer to the Docker documentation on [copying files](https://docs.docker.com/engine/reference/commandline/container_cp/) for more details.
 
-```bash
-mettalog myprg.metta
-```
+For comprehensive information about Docker's capabilities, consult the [Docker manuals](https://docs.docker.com/manuals/) and [reference documentation](https://docs.docker.com/reference/).
 
-or run/load a metta script and debug in the repl
+</details>
 
-```bash
-mettalog myprg.metta --repl
-```
-
-
-Docker has a rich functionality set.  In particular it allows you to
-[copy](https://docs.docker.com/engine/reference/commandline/container_cp/)
-files back and forth between the host and the container.  For more
-information about Docker you may refer to its
-[manuals](https://docs.docker.com/manuals/) and its [reference
-documentation](https://docs.docker.com/reference/).
-
-
-## :computer: Usage and Demos
+## :neckbeard: Running MeTTaLog
 
 Interact directly with MeTTaLog through the REPL:
 ```bash
 mettalog --repl
 
 metta+> !(+ 1 1)
-!(+ 1 1)
-
 Deterministic: 2
 
 ; Execution took 0.000105 secs. (105.29 microseconds)
-metta+>
+metta+>^D   # Exit the REPL with `ctrl-D`.
 ```
-Exit the REPL with `ctrl-D`.
 
-**To run a script:**
+To run a script:
 ```bash
-mettalog tests/baseline_compat/hyperon-experimental_scripts/b0_chaining_prelim.metta
+mettalog tests/baseline_compat/metta-morph_tests/nalifier.metta
 ```
 
-**Note:** Remember, the `MeTTa` script's name is case-sensitive. Do not confuse it with `metta`, which refers to the MeTTa Interpreter written in Rust.
-
-
-
-
-
-** Launch Jupyter notebook: (in progress) **
- - Contains a Jupyter Kernel for MeTTa (allows runing of MeTTa scripts remotely)
-```
-./scripts/start_jupyter.sh
+To run a script and then enter the repl:
+```bash
+mettalog tests/baseline_compat/metta-morph_tests/nalifier.metta --repl
 ```
 
-### Running Tests
 Execute a unit test:
 ```bash
-mettalog --test --clean tests/baseline_compat/hyperon-experimental_scripts/00_lang_case.metta
+# The output is saved as an HTML file in the same directory.
+mettalog --test tests/baseline_compat/metta-morph_tests/tests0.metta 
 ```
-The output is saved as an HTML file in the same directory.
-
-- Execute baseline sanity tests:
-```
-mettalog --test --clean ./tests/baseline-compat
+Execute baseline sanity tests:
+```bash
+mettalog --test --clean ./tests/baseline_compat/
 ```
 
-### Troubleshooting
+## :toolbox: Troubleshooting
 
-#### Some prolog commands not found
+<details>
+  <summary>Some prolog commands not found</summary>
 
-If you already have a recent enough version of SWI-prolog installed, that will be used instead of mettalog installing its own. Some of the packages might not be installed, and mettalog might give an error such as:
+If you already have a recent enough version of SWI-Prolog installed, that will be used instead of mettalog installing its own. Some of the packages might not be installed, and mettalog might give an error such as:
 
 ```
 ERROR: save_history/0: Unknown procedure el_write_history/2
 ```
 
-In that case, you need rebuild your SWI-prolog installation to include the missing packages. The most reliable way to do this is to make sure the following Debian/Ubuntu packages are installed using:
+In that case, you need to rebuild your SWI-Prolog installation to include the missing packages. The most reliable way to do this is to make sure the following Debian/Ubuntu packages are installed using:
 
 ```
 sudo apt install build-essential autoconf git cmake libpython3-dev libgmp-dev libssl-dev unixodbc-dev \
@@ -143,7 +125,7 @@ sudo apt install build-essential autoconf git cmake libpython3-dev libgmp-dev li
         pkg-config libdb-dev libpcre3-dev libyaml-dev libedit-dev
 ```
 
-then rebuild swi-prolog using the instructions from The [SWI-Prolog -- Installation on Linux, *BSD (Unix)](https://www.swi-prolog.org/build/unix.html). The main part of this (assuming that you are in the `swipl` or `swipl-devel` directory) is:
+then rebuild SWI-Prolog using the instructions from the [SWI-Prolog -- Installation on Linux, *BSD (Unix)](https://www.swi-prolog.org/build/unix.html). The main part of this (assuming that you are in the `swipl` or `swipl-devel` directory) is:
 
 ```
 cd build
@@ -152,9 +134,11 @@ ninja
 ctest -j $(nproc) --output-on-failure
 ninja install
 ```
-If you installed swi-prolog as a package from your Linux distribition and run into issues, it is likely that you will need to `apt remove` it and then either
-* build SWI-prolog from source making sure that all the operating system packages are installed first, or
+If you installed SWI-Prolog as a package from your Linux distribution and run into issues, it is likely that you will need to `apt remove` it and then either
+* build SWI-Prolog from source making sure that all the operating system packages are installed first, or
 * rerun the metta-wam `INSTALL.sh` script.
+
+</details>
 
 ## :raised_hands: Acknowledgments
 Thanks to the Hyperon Experimental MeTTa, PySWIP teams, and Flybase for their contributions to this project.
@@ -165,8 +149,8 @@ For queries or suggestions, please open an issue on our [GitHub Issues Page](htt
 ## :scroll: License
 MeTTaLog is distributed under the LGPL License, facilitating open collaboration and use.
 
-
-## :gear: Prerequisites for using MeTTaLog in Rust 
+<details>
+  <summary>Prerequisites for using MeTTaLog in Rust</summary>
 
 - A build of [Hyperon Experimental](https://github.com/trueagi-io/hyperon-experimental) is required.
 ```bash
@@ -184,7 +168,6 @@ MeTTaLog is distributed under the LGPL License, facilitating open collaboration 
 					(match &self $query $query))
                     
 ```
-
 
 ```shell
 metta> !(test_custom_v_space)
@@ -206,7 +189,9 @@ Pass Test:(remove_atom on a missing atom should return false)
 ; (get-atoms &vspace_9)
 Pass Test:( [a, c] == [a, c] )
 ; (add-atom &vspace_10 a)
-; (add-atom &vspace_10 b)
+; (add-atom &v
+
+space_10 b)
 ; (add-atom &vspace_10 c)
 ; (atom-replace &vspace_10 b d)
 ; (add-atom &vspace_10 d)
@@ -234,9 +219,10 @@ Pass Test:( [ { $v <- B } ] == [{v: B}] )
 Pass Test:(Values same: [[B]] == [[B]])
 ```
 
+</details>
 
-
-## Python interaction
+<details>
+  <summary>Python interaction</summary>
 
 Module loading
 ; using the python default module resolver $PYTHONPATH
@@ -259,7 +245,10 @@ Module loading
   (pyr! &self ../path/to/motto/test_llm_gate.py "run_tests" ((= verbose $verbose))))
 ```
 
-## MeTTaLog Extras
+</details>
+
+<details>
+  <summary>MeTTaLog Extras</summary>
 
 ```
 ; For the compiler to know that the member function will be a predicate 
@@ -282,8 +271,6 @@ Module loading
 ; Http Files
 !(include! &self https://somewhere/test_llm_gate.metta)
 ```
-
-
 
 ```
 ; interfacing to Prolog
@@ -314,8 +301,6 @@ clear ; mettalog --test --v=./src/canary --log --html tests/*baseline*/ \
   --output=4-06-canary-wd-both --clean
 ```
 
-
-
 Vs for diffing
 ```
 
@@ -327,8 +312,10 @@ clear ; mettalog --test --v=./src/canary --log --html --compile=false tests/base
 
 ```
 
+</details>
 
-# Metta Functions Task List
+<details>
+  <summary>Metta Functions Task List</summary>
 
 | Function Name  | Doc. (@doc) | Test Created | Impl. in Interpreter | Impl. in Transpiler | Arg Types Declared |
 |----------------|-------------|--------------|----------------------|---------------------|--------------------|
@@ -336,5 +323,12 @@ clear ; mettalog --test --v=./src/canary --log --html --compile=false tests/base
 | `functionB`    | - [ ]       | - [ ]        | - [ ]                | - [ ]               | - [ ]              |
 | `functionC`    | - [ ]       | - [ ]        | - [ ]                | - [ ]               | - [ ]              |
 
+</details>
 
-
+<details>
+  <summary>Launch Jupyter notebook</summary>
+ - Contains a Jupyter Kernel for MeTTa (in-progress)
+```
+./scripts/start_jupyter.sh
+```
+</details>
