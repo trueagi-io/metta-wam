@@ -232,8 +232,8 @@ eval_02(Eq,RetType,Depth2,Self,Y,YO):-
         Y=YO))).
 
 
- subst_args_here(Eq,RetType,Depth2,Self,Y,YO):-
-   Y =@= [ house, _59198,_59204,==,fish,fish],!,break.
+% subst_args_here(Eq,RetType,Depth2,Self,Y,YO):-
+%   Y =@= [ house, _59198,_59204,==,fish,fish],!,break.
 
 subst_args_here(Eq,RetType,Depth2,Self,Y,YO):-
   subst_args(Eq,RetType,Depth2,Self,Y,YO),
@@ -291,12 +291,17 @@ eval_20(_Eq,_RetType,_Depth,_Self,[V|VI],VO):-  atomic(V), py_is_object(V),!,
   is_list(VI),!, py_eval_object([V|VI],VO).
 
 eval_20(Eq,RetType,Depth,Self,[V|VI],VO):- is_list(V), V \== [],
-  eval_20(Eq,_FRype,Depth,Self,V,VV), V\==VV, atomic(VV), !,
-  eval_20(Eq,RetType,Depth,Self,[VV|VI],VO).
+  eval_args(Eq,_FRype,Depth,Self,V,VV), V\==VV, atomic(VV), !,
+  eval_args(Eq,RetType,Depth,Self,[VV|VI],VO).
 
 eval_20(Eq,RetType,Depth,Self,[F,[Eval,V]|VI],VO):- Eval == eval,!,
   ((eval_args(Eq,_FRype,Depth,Self,V,VV), V\=@=VV)*-> true; VV = V),
-  eval_20(Eq,RetType,Depth,Self,[F,VV|VI],VO).
+  eval_args(Eq,RetType,Depth,Self,[F,VV|VI],VO).
+
+eval_20(Eq,RetType,Depth,Self,[[Eval,V]|VI],VO):- Eval == eval,!,
+  ((eval_args(Eq,_FRype,Depth,Self,V,VV), V\=@=VV)*-> true; VV = V),
+  eval_args(Eq,RetType,Depth,Self,[VV|VI],VO).
+
 
 
 % DMILES @ TODO make sure this isnt an implicit curry
@@ -386,6 +391,51 @@ eval_20(Eq,RetType,Depth,Self,['eval-for',_Why,Type,X],Res):- !,
     ignore(Type=RetType),
     eval_args(Eq,Type,Depth,Self,X, Res).
 
+
+
+/* Function takes list of atoms (first argument), variable (second argument) and filter predicate (third argument) and returns list with items which passed filter.
+     E.g. (filter-atom (1 2 3 4) $v (eval (> $v 2))) will give (3 4)") */
+
+eval_20(Eq,RetType,Depth,Self,['filter-atom',List,Var,Pred],Res):- !,
+   call_filter_atom(Eq,RetType,Depth,Self,List,Var,Pred,Res).
+
+call_filter_atom(_Eq,_RetType,_Depth,_Self,[],_Var,_Pred1,[]):-!.
+call_filter_atom(Eq,RetType,Depth,Self,[E|List],Var,Pred,Out):-
+    (( \+ \+ (E = Var, eval_args_true(Eq,RetType,Depth,Self,Pred))) -> Out = [E|Res] ; Out = Res),
+    call_filter_atom(Eq,RetType,Depth,Self,List,Var,Pred,Res).
+
+% "Function takes list of atoms (first argument), variable to be used inside (second variable) and an expression which will be evaluated for each atom in list (third argument). Expression should contain variable. So e.g. (map-atom (1 2 3 4) $v (eval (+ $v 1))) will give (2 3 4 5)"
+eval_20(Eq,RetType,Depth,Self,['map-atom',List,V,Eval],Res):- !,
+   call_map_atom(Eq,RetType,Depth,Self,List,V,Eval,Res).
+
+call_map_atom(Eq,RetType,Depth,Self,[E|List],V,Eval,[CR|Res]):- !, faster_replace(V,E,Eval,CEval),
+    eval_args(Eq,RetType,Depth,Self,CEval,CR),
+    call_map_atom(Eq,RetType,Depth,Self,List,V,Eval,Res).
+call_map_atom(_Eq,_RetType,_Depth,_Self,[],_V,_Pred,[]):-!.
+
+% which is faster?
+%faster_replace(B,E,Eval,CEval):- subst0011a(B,E,Eva2,CEval).
+faster_replace(B,E,Eval,CEval):-  copy_term(B+Eval,CB+CEval), E = CB.
+%faster_replace(A,Init,B,E,Eval,CEval):- copy_term(A+B+Eval,CA+CB+CEval), CA = Init, CB = E.
+
+
+% Function takes list of values (first argument), initial value (second argument) and operation (fifth argument) and applies it consequently to the list of values, using init value as a start. It also takes two variables (third and fourth argument) to use them inside
+eval_20(Eq,RetType,Depth,Self,['foldl-atom',List,Init,A,B,Eval],Res):- !,
+   call_foldl_atom(Eq,RetType,Depth,Self,List,Init,A,B,Eval,Res).
+
+% Last Cail
+call_foldl_atom(Eq,RetType,Depth,Self,[E],Init,A,B,Eval,Res):- !, A = Init, B = E,
+  eval_args(Eq,RetType,Depth,Self,Eval,Res).
+% Recursive Cail
+call_foldl_atom(Eq,RetType,Depth,Self,[E|List],Init,A,B,Eval,Res):- !, faster_replace(A,Init,B,E,Eval,CEval),
+     eval_args(Eq,RetType,Depth,Self,CEval,CR),
+     call_foldl_atom(Eq,RetType,Depth,Self,List,CR,A,B,Eval,Res).
+% Empty List
+call_foldl_atom(_Eq,_RetType,_Depth,_Self,[],Init,_A,_B,_Eval,Init):-!.
+
+% which is faster?
+faster_replace(A,Init,B,E,Eval,CEval):- subst0011a(A,Init,Eval,Eva2), subst0011a(B,E,Eva2,CEval).
+%faster_replace(A,Init,B,E,Eval,CEval):- copy_term(A+B+Eval,CA+CB+CEval), CA = Init, CB = E.
 
 % =================================================================
 % =================================================================
@@ -734,8 +784,11 @@ eval_20(Eq,RetType,_Dpth,_Slf,['new-space'],Space):- !, 'new-space'(Space),check
 
 eval_20(Eq,RetType,Depth,Self,[Op,Space|Args],Res):- is_space_op(Op),!,
   eval_space_start(Eq,RetType,Depth,Self,[Op,Space|Args],Res).
-eval_20(Eq,RetType,Depth,Self,['unify',Space|Args],Res):- !,
-  eval_space_start(Eq,RetType,Depth,Self,['match',Space|Args],Res).
+eval_20(Eq,RetType,Depth,Self,['unify',V,V2|Args],Res):- !,
+  ((is_list(V),eval_args(Eq,_FRype,Depth,Self,V,VV), V\=@=VV)*-> true; VV = V),
+  (is_dynaspace(VV)-> eval_space_start(Eq,RetType,Depth,Self,['match',VV,V2|Args],Res);
+     eval_20(Eq,RetType,Depth,Self,['if-unify',V,V2|Args],Res)).
+
 
 eval_space_start(Eq,RetType,_Depth,_Self,[_Op,_Other,Atom],Res):-
   (Atom == [] ;  Atom =='Empty';  Atom =='Nil'),!,make_nop(RetType,'False',Res),check_returnval(Eq,RetType,Res).
@@ -1016,7 +1069,7 @@ must_unify(A,A):-!.
 must_unify(A,B):- fail, throw('Error-last-form'(must_unify(A,B))). % @TODO
 
 % OLD
-eval_20(_Eq,_RetType,_Depth,_Self,['decons-atom',OneArg],[H,T]):- OneArg==[], !, fail. %H=[],T=[],!.
+eval_20(_Eq,_RetType,_Depth,_Self,['decons-atom',OneArg],_):- OneArg==[], !, fail. %H=[],T=[],!.
 eval_20(_Eq,_RetType,_Depth,_Self,['decons-atom',OneArg],[H,T]):- !, must_unify(OneArg,[H|T]).
 eval_20(_Eq,_RetType,_Depth,_Self,['cons-atom'|TwoArgs],[H|T]):-!, must_unify(TwoArgs,[H,T]).
 % NEW
@@ -1229,6 +1282,35 @@ fetch_or_create_state(NameOrInstance, State) :-
 % =================================================================
 % =================================================================
 % =================================================================
+type_cast(Depth,Self,Val,Into,Casted):-
+get_type(Depth,Self,Val,From),
+(type_accepted_from(Into,From)
+->Casted=Val
+;Casted=['Error',Val,'BadType',Into]).
+
+type_accepted_from(Into,From):-Into=From,!.
+type_accepted_from(Into,From):-wdmsg(type_accepted_from(Into,From)).
+
+
+%usedefaultself
+eval_20(Eq,RetCasted,Depth,Self,['type-cast',Val,Into,Self],Casted):-current_self(Self),!,
+eval_20(Eq,RetCasted,Depth,Self,['type-cast',Val,Into],Casted).
+
+%useotherspace
+eval_20(Eq,RetCasted,Depth,Self,['type-cast',Val,Into,Other],Casted):-!,
+into_space(Depth,Self,Other,Space),
+eval_20(Eq,RetCasted,Depth,Space,['type-cast',Val,Into],Casted).
+
+eval_20(_Eq,_RetCasted,Depth,Self,['type-cast',Val,Into],Casted):-is_list(Val),!,
+catch_metta_return(type_cast(Depth,Self,Val,Into,Casted),CastedM),
+var(CastedM).
+
+eval_20(Eq,RetCasted,Depth,Self,['type-cast',Val,Into],CastedO):-!,
+if_or_else(type_cast(Depth,Self,Val,Into,Casted),Casted=Val),
+%term_singletons(Casted,[]),
+%Casted\==[],Casted\==Val,Into,!,
+do_expander(Eq,RetCasted,Casted,CastedO).
+
 
 eval_20(_Eq,_RetType,Depth,Self,['get-types',Val],TypeO):- !,
     get_types(Depth,Self,Val,TypeO).
