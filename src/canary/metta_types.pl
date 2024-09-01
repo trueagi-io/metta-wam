@@ -267,6 +267,8 @@ get_dict_type(Val,_,TypeO):- get_dict(Val,types,TypeL),
 get_type_cmpd(_Dpth,_Slf,Val,Type,dict):- is_dict(Val,Type),!,
   get_dict_type(Val,Type,TypeO).
 
+get_type_cmpd(_Dpth,_Slf,'#\\'(_),'Char',functgor):- !.
+
 % Curried Op
 get_type_cmpd(Depth,Self,[[Op|Args]|Arg],Type,curried(W)):-
  symbol(Op),
