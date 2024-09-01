@@ -1,3 +1,50 @@
+(: Any Type)
+(: Atom Type)
+(: Bool Type)
+(: Expression Type)
+(: Number Type)
+(: hyperon::space::DynSpace Type)
+(: ReturnType Type)
+(: Symbol Type)
+(: StateMonad Type)
+(: Type Type)
+(: %Undefined% Type)
+(: Variable Type)
+(: if-decons (-> Atom Variable Variable Atom Atom Atom))
+(: if-empty (-> Atom Atom Atom Atom))
+(: if-non-empty-expression (-> Atom Atom Atom Atom))
+(: if-not-reducible (-> Atom Atom Atom Atom))
+;(: apply (-> Atom Variable Atom Atom))
+;(: cons (-> Atom Atom Atom))
+;(: decons (-> Atom Atom))
+(: xor (-> Bool Bool Bool))
+(: return (-> Atom ReturnType))
+(: switch (-> %Undefined% Expression Atom))
+(: unify (-> Atom Atom Atom Atom %Undefined%))
+(: get-type0 (-> Atom Atom))
+(: get-ftype (-> Atom Atom))
+(: : %Undefined%)
+(: function-arity (-> Symbol Number))
+(: predicate-arity (-> Symbol Number))
+(: pragma! (-> Atom Atom (->)))
+(: = (-> Atom Atom %Undefined%))
+(: match (-> hyperon::space::DynSpace Atom Atom %Undefined%))
+(: case (-> Expression Atom Atom))
+(: combine (-> $_4082 $_4082 $_4082))
+(: import! (-> hyperon::space::DynSpace Atom (->)))
+(: get-type (-> Atom Type))
+(: PredicateArity (-> Symbol Number))
+(: If (-> Bool Atom Atom Atom))
+(: If (-> Bool Atom Atom))
+(= (If True $_3800) $_3800)
+(= (If False $_3710) (let $_3728 0 (let $_3728 1 $_3728)))
+(= (If $_3632 $_3638 $_3644) (if $_3632 $_3638 $_3644))
+(PredicateArity PredicateArity 2)
+(PredicateArity : 2)
+(= (: $_3524 P1) (PredicateArity $_3524 1))
+(: : SrcPredicate)
+(: If SrcFunction)
+
 ; Public MeTTa
 (@doc = 
   (@desc "A symbol used to define reduction rules for expressions.")
@@ -8,7 +55,7 @@
 (: = (-> $t $t Atom))
 ;; Implemented from Interpreters
 
-(: ALT= (-> Atom Atom Atom))
+(: = (-> Atom Atom Atom))
 
 ; Public MeTTa
 (@doc ErrorType (@desc "Type of the atom which contains error"))
@@ -664,6 +711,11 @@
 ;; Public MeTTa?
 (:> hyperon::space::DynSpace Grounded)
 
+(: stringToChars (-> String Expression))
+(: charsToString (-> Expression String))
+(: parse (-> String Atom))
+(: repr (-> Atom String))
+
 ;; Public MeTTa
 (@doc add-reduct
   (@desc "Prevents atom from being reduced")
@@ -1055,7 +1107,9 @@
   (@params (
     (@param "Reference to the space")))
   (@return "List of all atoms in the input space"))
-(get-atoms (-> hyperon::space::DynSpace Atom))
+
+(: get-atoms (-> hyperon::space::DynSpace Atom))
+
 ;; Implemented from Interpreters
 
 ;; Public MeTTa

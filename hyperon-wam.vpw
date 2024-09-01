@@ -2,9 +2,8 @@
 <Workspace Version="10.0" VendorName="SlickEdit">
 	<Projects>
 		<Project File="compiler-project.vpj"/>
+		<Project File="hyperon-experimental.vpj"/>
 		<Project File="hyperon-wam.vpj"/>
-		<Project File="../../../../logicmoo_workspace.vpj"/>
-		<Project File="../../arcprize/PrologARC.vpj"/>
 		<Project File="Test-files.vpj"/>
 	</Projects>
 </Workspace>

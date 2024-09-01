@@ -1,4 +1,5 @@
-!(transfer! "../schemes.metta")
+; !(transfer! "../schemes.metta")
+!(transfer! "schemes.metta")
 ; A standard benchmark to test (naive) recursion scheme performance
 
 (= (mapExpr $f (Plus $x $y)) (Plus ($f $x) ($f $y)))

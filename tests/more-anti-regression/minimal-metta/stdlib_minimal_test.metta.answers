@@ -1,4 +1,4 @@
-[(include! &corelb stdlib_minimal)]
+[(include! &corelib stdlib_minimal)]
 [(assertEqualNoOrder (Error (get-type A space) match expects a space as the first argument) (B C))]
 [(assertEqualNoOrder (Error (get-type (f 42) space) match expects a space as the first argument) (String))]
 []
@@ -8,5 +8,5 @@
 Expected: [()]
 Got: []
 Missed result: ())]
-0.84user 0.01system 0:00.85elapsed 99%CPU (0avgtext+0avgdata 35076maxresident)k
-0inputs+0outputs (0major+3959minor)pagefaults 0swaps
+0.01user 0.00system 0:00.03elapsed 90%CPU (0avgtext+0avgdata 25044maxresident)k
+0inputs+0outputs (0major+3023minor)pagefaults 0swaps

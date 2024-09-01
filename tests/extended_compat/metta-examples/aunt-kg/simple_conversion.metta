@@ -3,7 +3,7 @@
 ; !(import! &self royal92.metta)
 
 ; https://github.com/kennethreitz/context/blob/master/gedcom/biblical/adameve.ged
-!(import! &self adameve)
+!(import! &self adameve.metta)
 
 ; https://github.com/Jisco/gedcom.json/blob/master/examples/lordOfTheRings.json
 ; !(import! &self lordOfTheRings.metta)
@@ -42,16 +42,13 @@
 )
 
 !(transform_ (,
-        (Individuals $i (Id $id))
         (Relations $r (Husband $id))
-        (Relations $r (Children $lci $cid))
-        (Individuals $ci (Id $cid)))
+        (Relations $r (Children $lci $cid)))
     (parent $id $cid)
 )
 
 !(transform_ (,
         (Relations $r (Wife $id))
-        (Relations $r (Children $lci $cid))
-        (Individuals $ci (Id $cid)))
+        (Relations $r (Children $lci $cid)))
     (parent $id $cid)
 )

@@ -1,7 +1,6 @@
 #!/bin/bash
 
 SHOULD_EXIT=0
-SHARED_UNITS=/tmp/SHARED.UNITS
 
 DEBUG_WHY() {
    DEBUG "${GREEN}WHY: ${BOLD}${*}${NC}"
@@ -15,12 +14,19 @@ process_file() {
     #local file=$(find_override_file "$1")
     local file="$1"
 
+    # Check if the file path contains a tilde
+    if [[ "$file" == *"~"* ]]; then
+       return 7
+    fi
+
     local absfile=$(readlink -f "$file")
 
     local extra_args="${@:2}"
     shift
 
     export file_html="${METTALOG_OUTPUT}/${file}.html"
+
+    export METTALOG_OUTPUT="${METTALOG_OUTPUT}"
 
     export HTML_OUT="${file}.html"
 
@@ -31,6 +37,10 @@ process_file() {
     DEBUG "Testing: $file"
     cd "$METTALOG_DIR"
     DEBUG "Output: $file_html"
+    # Check if the file path contains a tilde
+    if [[ "$absfile" == *"~"* ]]; then
+       DEBUG "${RED}Warn on tilda'd path?${NC}"
+    fi
     DEBUG ""
     DEBUG ""
     DEBUG "${BLUE}${BOLD}===========================================================================${NC}"
@@ -156,20 +166,76 @@ process_file() {
         TEST_CMD="./mettalog '--output=$METTALOG_OUTPUT' --timeout=$METTALOG_MAX_TIME --html --repl=false ${extra_args[@]} ${passed_along_to_mettalog[@]} \"$file\" --halt=true"
         # DEBUG "${BOLD}$TEST_CMD${NC}"
 
-        IF_REALLY_DO "$TEST_CMD"
-        TEST_EXIT_CODE=$?
+
+            EXTRA_INFO="Under $METTALOG_MAX_TIME seconds"
+
+            # Start the timer
+            local START_TIME=$(date +%s)
+
+            # Run the test command using eval to handle the single string properly
+            IF_REALLY_DO eval "$TEST_CMD"
+            local TEST_EXIT_CODE=$?
+
+            # Stop the timer and calculate elapsed time
+            local END_TIME=$(date +%s)
+            local ELAPSED_TIME=$((END_TIME - START_TIME))
+
+            # Determine the test status based on the exit code
+            local DEBUG_MESSAGE
+            local PASS_OR_FAIL
+            local SHOULD_DELETE_HTML=0
 
         if [ $TEST_EXIT_CODE -eq 124 ]; then
-            DEBUG "${RED}Killed (definitely due to timeout) (EXITCODE=$TEST_EXIT_CODE) after $METTALOG_MAX_TIME seconds: ${TEST_CMD}${NC}"
-            IF_REALLY_DO [ "$if_failures" -eq 1 ] && rm -f "$file_html"
-        elif [[ $TEST_EXIT_CODE -eq 4 ]] || [[ $TEST_EXIT_CODE -eq 134 ]]; then
-            DEBUG "${RED}Stopping tests (EXITCODE=$TEST_EXIT_CODE) under $METTALOG_MAX_TIME seconds: ${TEST_CMD}${NC}"     
-            SHOULD_EXIT=1
+                DEBUG_MESSAGE="${RED}Killed (definitely due to timeout) (EXITCODE=$TEST_EXIT_CODE) after $EXTRA_INFO seconds: $TEST_CMD${NC}"
+                [ "$if_failures" -eq 1 ] && SHOULD_DELETE_HTML=1
+                PASS_OR_FAIL="FAIL"
+        elif [ $TEST_EXIT_CODE -eq 134 ]; then
+                DEBUG_MESSAGE="${RED}Test aborted by user (EXITCODE=$TEST_EXIT_CODE) $EXTRA_INFO: $TEST_CMD${NC}"
+                SHOULD_DELETE_HTML=1
+                PASS_OR_FAIL="FAIL"
+        elif [ $TEST_EXIT_CODE -eq 4 ]; then
+                DEBUG_MESSAGE="${RED}Stopping tests (EXITCODE=$TEST_EXIT_CODE) $EXTRA_INFO: $TEST_CMD${NC}"
+                SHOULD_DELETE_HTML=1
+                PASS_OR_FAIL="FAIL"
+		exit 4
         elif [ $TEST_EXIT_CODE -ne 7 ]; then
-            DEBUG "${YELLOW}Completed (EXITCODE=$TEST_EXIT_CODE) under $METTALOG_MAX_TIME seconds: ${TEST_CMD}${NC}"
+                DEBUG_MESSAGE="${YELLOW}Completed (EXITCODE=$TEST_EXIT_CODE) $EXTRA_INFO: $TEST_CMD${NC}"
+                PASS_OR_FAIL="FAIL"
         else
-            DEBUG "${GREEN}Completed successfully (EXITCODE=$TEST_EXIT_CODE) under $METTALOG_MAX_TIME seconds: ${TEST_CMD}${NC}"
+                DEBUG_MESSAGE="${GREEN}Completed successfully (EXITCODE=$TEST_EXIT_CODE) $EXTRA_INFO: $TEST_CMD${NC}"
+                PASS_OR_FAIL="PASS"
         fi
+
+            # Generate the test name in the format WHOLE-TESTS.ParentDirectory.File
+            local PARENT_DIR=$(basename "$(dirname "$file")")
+            local BASE_FILE=$(basename "$file" .metta)  # Replace .metta with the correct file extension
+            local TEST_NAME="WHOLE-TESTS.$PARENT_DIR.$BASE_FILE"
+
+            # Generate the HTML link
+            local HTML_LINK="file://$file_html#${TEST_NAME}"
+
+            # Determine if the HTML file should be used as the logfile or a separate .log file should be created
+            local LOGFILE
+            if [ $SHOULD_DELETE_HTML -eq 1 ]; then
+                # Create a separate .log file since the HTML file is planned for deletion
+                LOGFILE="${file_html}.log"
+                cp "$file_html" "$LOGFILE"
+            else
+                # Use the HTML file as the logfile since it won't be deleted
+                LOGFILE="$file_html"
+            fi
+
+            # Redirect debug messages to both the logfile and console
+            echo "$DEBUG_MESSAGE" | tee -a "$LOGFILE"
+
+            # Write the line to "$SHARED_UNITS"
+            echo "| $TEST_NAME | $PASS_OR_FAIL | [$TEST_NAME]($HTML_LINK) | $TEST_CMD | $TEST_EXIT_CODE | 7 | $ELAPSED_TIME | $LOGFILE |" >> "${SHARED_UNITS}"
+
+            # Delete the HTML file if it was planned for deletion
+            if [ $SHOULD_DELETE_HTML -eq 1 ]; then
+                rm -f "$file_html"
+            fi
+
         return $TEST_EXIT_CODE
         #set -e
     fi
@@ -184,12 +250,12 @@ IS_SOURCED=$( [[ "${BASH_SOURCE[0]}" != "${0}" ]] && echo 1 || echo 0)
 METTALOG_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd .. && pwd )"
 
 passed_along_to_mettalog=()
-METTALOG_MAX_TIME=75
+METTALOG_MAX_TIME=45
 
 SCRIPT_NAME=$(basename "$0")
 run_tests_auto_reply=""
 generate_report_auto_reply=""
-METTALOG_OUTPUT="tests_output/testrun_$(date +%Y%m%d_%H%M%S)"
+METTALOG_OUTPUT="reports/tests_output/testrun_$(date +%Y%m%d_%H%M%S)"
 fresh=0
 clean=0  # 0 means don't clean, 1 means do clean
 if_failures=0
@@ -431,12 +497,13 @@ generate_final_MeTTaLog() {
     # Change to the script directory
     cd "$METTALOG_DIR" || exit 1
 
-    python3 ./scripts/into_junit.py "${SHARED_UNITS}" > "$METTALOG_OUTPUT/junit.xml"
+    if [ 1 -eq 0 ]; then
+	python3 ./scripts/into_junit.py "${SHARED_UNITS}" > "$METTALOG_OUTPUT/junit.xml"
 
-    junit2html "$METTALOG_OUTPUT/junit.xml"
-    junit2html "$METTALOG_OUTPUT/junit.xml" --summary-matrix
-    echo "saved to $METTALOG_OUTPUT/junit.xml.html"
-
+	junit2html "$METTALOG_OUTPUT/junit.xml"
+	junit2html "$METTALOG_OUTPUT/junit.xml" --summary-matrix
+	echo "saved to $METTALOG_OUTPUT/junit.xml.html"
+    fi
 
     # Calculate the number of passed and failed tests
     passed=$(grep -c "| PASS |" "${SHARED_UNITS}")
@@ -615,7 +682,7 @@ while [ "$#" -gt 0 ]; do
     shift
 done
 
-python3 -m pip install ansi2html
+source ./scripts/ensure_venv
 
 extract_all_parent_directories
 
@@ -636,6 +703,13 @@ done
 if [ $show_help -eq 1 ]; then
   show_help
 fi
+
+if [ -z "$SHARED_UNITS" ]; then
+    if [ -d "$METTALOG_OUTPUT" ]; then
+	export SHARED_UNITS=$(realpath $METTALOG_OUTPUT)/SHARED.UNITS
+    fi
+fi
+touch $SHARED_UNITS
 
 # Delete HTML files if the clean flag is set
 if [ $clean -eq 1 ]; then
@@ -661,9 +735,11 @@ INTERP_SRC_DIR="$(realpath "${INTERP_SRC_DIR}")"
 
 DEBUG "INTERP_SRC_DIR=$INTERP_SRC_DIR"
 DEBUG "METTALOG_OUTPUT=$METTALOG_OUTPUT"
+DEBUG "SHARED_UNITS=$SHARED_UNITS"
 
 if [[ ! -f "${METTALOG_OUTPUT}/src/" ]]; then
-  cat /dev/null > "${SHARED_UNITS}"
+  :
+  #cat /dev/null > "${SHARED_UNITS}"
 fi
 
 mkdir -p "${METTALOG_OUTPUT}/src/"

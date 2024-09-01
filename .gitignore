@@ -16,6 +16,9 @@ ftp.flybase.net/**
 *~
 *.buffer.pl
 *.metta.pl
+*.mine
+venv/
+src/canary-*/
 .*
 *.qlf
 *.datalog

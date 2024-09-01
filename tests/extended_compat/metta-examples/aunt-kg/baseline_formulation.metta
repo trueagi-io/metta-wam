@@ -1,14 +1,14 @@
-; !(import! &self toy_simple.metta)
-; !(import! &self royal92_simple.metta)
-!(import! &self adameve_simple)
-; !(import! &self lordOfTheRings_simple.metta)
-; !(import! &self simpsons_simple.metta)
+!(import! &self toy)
+; !(import! &self royal92_simple)
+; !(import! &self adameve_simple)
+; !(import! &self lordOfTheRings_simple)
+; !(import! &self simpsons_simple)
 
 ; UTILITY
 (= (different $x $y) (if (== $x $y) (empty) $x))
 
 ; GENERATE EXTRA INDICES
-!(match &self (parent $x $y) (child $y $x))
+!(match &self (parent $x $y) (add-atom &self (child $y $x)))
 
 !(match &self (male $x) (add-atom &self (person $x)))
 !(match &self (female $x) (add-atom &self (person $x)))
