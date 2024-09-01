@@ -1,0 +1,51 @@
+{
+  "name": "metta-lsp",
+  "displayName": "metta-lsp",
+  "description": "A language server for MeTTa",
+  "author": "Roy Ward",
+  "license": "LGPL-3.0",
+  "publisher": "RoyWard",
+  "version": "0.0.2",
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "mettalog"
+  ],
+  "engines": {
+    "vscode": "^1.54.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/royward/lsp_server_metta"
+  },
+  "activationEvents": [
+    "onLanguage:metta"
+  ],
+  "main": "./extension",
+  "contributes": {
+    "languages": [
+      {
+        "id": "metta",
+        "aliases": [
+          "metta",
+          "mettalog",
+          "MeTTa",
+          "MeTTaLog",
+          "meTTa",
+          "meTTaLog"
+        ],
+        "configuration": "./metta.config.json",
+        "extensions": [
+          ".metta"
+        ]
+      }
+    ]
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "vscode": "^1.1.6"
+  }
+}
