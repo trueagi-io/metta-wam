@@ -803,7 +803,7 @@
   (@return "Nothing"))
 (: empty (-> %Undefined%))
 ;; Implemented from Interpreters
-(ALT= (empty) (let a b never-happens))
+; (ALT= (empty) (let a b never-happens))
 ;For testing
 ;(= (empty) Empty)
 

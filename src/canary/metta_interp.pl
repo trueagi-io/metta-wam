@@ -1023,7 +1023,7 @@ metta_atom(KB, [F, A| List]):- KB=='&flybase',fb_pred_nr(F, Len),current_predica
 metta_atom(KB,Atom):- metta_atom_in_file( KB,Atom).
 metta_atom(KB,Atom):- metta_atom_asserted( KB,Atom).
 metta_atom(KB,Atom):- KB \== '&corelib', !,
-   \+ \+ (metta_atom_asserted(KB,'&corelib');should_inherit_from_corelib(Atom)), !, metta_atom('&corelib',Atom).
+   \+ \+ (metta_atom_asserted(KB,'&corelib');should_inherit_from_corelib(Atom)), !, /* nonvar(Atom), */ metta_atom('&corelib',Atom).
 should_inherit_from_corelib([H|_]):- nonvar(H), \+ \+ should_inherit_op_from_corelib(H).
 should_inherit_op_from_corelib('=').
 should_inherit_op_from_corelib(':').

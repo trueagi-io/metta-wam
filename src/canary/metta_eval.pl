@@ -79,7 +79,7 @@ self_eval0('%Undefined%').
 self_eval0(X):- atom(X),!, \+ nb_bound(X,_),!.
 
 
-nb_bound(Name,X):- atom(Name), atom_concat('&', _, Name),
+nb_bound(Name,X):- atom(Name), % atom_concat('&', _, Name),
   nb_current(Name, X).
 
 
@@ -721,12 +721,12 @@ set_last_error(_).
 % =================================================================
 % =================================================================
 
-eval_20(Eq, RetType, Depth, Self, ['sealed', InputVarList, Expr], Result) :- !,
+eval_20(_Eq, _RetType, _Depth, _Self, ['sealed', InputVarList, Expr], Result) :- !,
     omit_atoms(InputVarList,OutputVarList),
     check_replace_with_local_var(OutputVarList, Expr, Result).
 
 % omit_atoms(+input variables, -variables less atoms)
-% If there are already bound values passed to sealed, no need for replacement 
+% If there are already bound values passed to sealed, no need for replacement
 omit_atoms([], []).
 omit_atoms([Head|Tail], Result) :-
     atomic(Head),
@@ -737,16 +737,22 @@ omit_atoms([Head|Tail], [Head|Result]) :-
 
 % check_replace_with_local_var(+Sealed-Variables, +Expression, -NewExpression)
 % Boundary case -- no remaining variables to process, just return expression.
-check_replace_with_local_var([], Expr, Result) :- 
+check_replace_with_local_var([], Expr, Result) :-
     Result = Expr.
 
-% General case -- replace sealed variable with a new variable 
-check_replace_with_local_var([VarHead|VarTail], Expr, Result) :- 
+% General case -- replace sealed variable with a new variable
+check_replace_with_local_var([VarHead|VarTail], Expr, Result) :-
     % '_' gives us a prolog variable
-    subst(Expr, VarHead, _, NewExpr),
+    replace_by_value(VarHead,Replacement),
+    subst_same(Expr, VarHead, Replacement, NewExpr),
     check_replace_with_local_var(VarTail, NewExpr, Result).
 
-%! subst(+Term, +OldTerm, +NewTerm, -ResultTerm) is det.
+% change the variable into an new anonymous one (but copy attributes)
+replace_by_value(Var,Replacement):- var(Var),!,copy_term(Var,Replacement).
+% creates a deep copy that allows caller to destructively change it
+replace_by_value(Var,Replacement):- duplicate_term(Var,Replacement).
+
+%! subst_same(+Term, +OldTerm, +NewTerm, -ResultTerm) is det.
 %
 % Recursively substitutes occurrences of OldTerm with NewTerm within a Prolog term (Term),
 % producing a new term (ResultTerm). This predicate handles both simple and compound terms, including lists.
@@ -754,22 +760,22 @@ check_replace_with_local_var([VarHead|VarTail], Expr, Result) :-
 % Note: Matching is done with the SWI same_term predicate which states that terms are equal if the
 % condition "the same variable, equivalent atomic data or a compound term allocated at the same address"
 % If the current term (Term) exactly matches OldTerm (with above criteria).
-subst(Term, OldTerm, NewTerm, NewTerm) :- 
+subst_same(Term, OldTerm, NewTerm, NewTerm) :-
    same_term(OldTerm, Term),
    !.
 
 % If the current term is not a compound term (like an atom, number or the wrong variable) it stays the same
-subst(Term, _, _, Term) :- \+ compound(Term), !.
+subst_same(Term, _, _, Term) :- \+ compound(Term), !.
 
 % If the current term is a list, it processes each element of the list recursively.
-subst([Old|Structure], OldTerm, NewTerm, [New|StructureO]) :- !,
-    subst(Old, OldTerm, NewTerm, New),
-    subst(Structure, OldTerm, NewTerm, StructureO).
-    
+subst_same([Old|Structure], OldTerm, NewTerm, [New|StructureO]) :- !,
+    subst_same(Old, OldTerm, NewTerm, New),
+    subst_same(Structure, OldTerm, NewTerm, StructureO).
+
 % Compound Terms are decomposed and reconstructed with the possibly modified arguments.
-subst(OldStructure, OldTerm, NewTerm, NewStructure) :-
+subst_same(OldStructure, OldTerm, NewTerm, NewStructure) :-
     OldStructure =.. [Functor|Args],
-    subst(Args, OldTerm, NewTerm, NewArgs),
+    subst_same(Args, OldTerm, NewTerm, NewArgs),
     NewStructure =.. [Functor|NewArgs].
 
 % =================================================================
@@ -825,11 +831,14 @@ eval_space(Eq,RetType,Depth,Self,['match',Other,Goal,Template,Else],Template):- 
   ((eval_space(Eq,RetType,Depth,Self,['match',Other,Goal,Template],Template),
        \+ make_nop(RetType,[],Template))*->true;Template=Else).
 % Match-TEMPLATE
+eval_space(Eq,_RetType,Depth,Self,['match',Other,Goal,Template],Template):- !,
+   metta_atom_iter(Eq,Depth,Self,Other,Goal).
 
-eval_space(Eq,RetType,Depth,Self,['match',Other,Goal,Template],Res):- !,
-   metta_atom_iter(Eq,Depth,Self,Other,Goal),
-   eval_args(Eq,RetType,Depth,Self,Template,Res).
-
+/*
+    eval_space(Eq,RetType,Depth,Self,['match',Other,Goal,Template],Res):- !,
+       metta_atom_iter(Eq,Depth,Self,Other,Goal),
+       eval_args(Eq,RetType,Depth,Self,Template,Res).
+*/
 %metta_atom_iter(Eq,_Depth,_Slf,Other,[Equal,[F|H],B]):- Eq == Equal,!,  % trace,
 %   metta_eq_def(Eq,Other,[F|H],B).
 
@@ -848,7 +857,7 @@ metta_atom_iter(Eq,Depth,Self,Other,[And|Y]):- atom(And), is_comma(And),!,
 %metta_atom_iter(Eq,Depth,_Slf,Other,X):- dcall0000000000(eval_args_true(Eq,_RetType,Depth,Other,X)).
 metta_atom_iter(Eq,Depth,Self,Other,X):-
   %copy_term(X,XX),
-  dcall0000000000(metta_atom_true(Eq,Depth,Self,Other,XX)), X=XX.
+  dcall0000000000(metta_atom_true(Eq,Depth,Self,Other,X)). %, X=XX.
 
 metta_atom_true(_Eq,Depth,Self,Other,H):-
       can_be_ok(metta_atom_true,H),
@@ -1283,33 +1292,33 @@ fetch_or_create_state(NameOrInstance, State) :-
 % =================================================================
 % =================================================================
 type_cast(Depth,Self,Val,Into,Casted):-
-get_type(Depth,Self,Val,From),
-(type_accepted_from(Into,From)
-->Casted=Val
-;Casted=['Error',Val,'BadType',Into]).
+    get_type(Depth,Self,Val,From),
+    (type_accepted_from(Into,From)
+     ->Casted=Val
+      ;Casted=['Error',Val,'BadType',Into]).
 
 type_accepted_from(Into,From):-Into=From,!.
 type_accepted_from(Into,From):-wdmsg(type_accepted_from(Into,From)).
 
 
-%usedefaultself
+%use default self
 eval_20(Eq,RetCasted,Depth,Self,['type-cast',Val,Into,Self],Casted):-current_self(Self),!,
 eval_20(Eq,RetCasted,Depth,Self,['type-cast',Val,Into],Casted).
 
-%useotherspace
+%use other space
 eval_20(Eq,RetCasted,Depth,Self,['type-cast',Val,Into,Other],Casted):-!,
-into_space(Depth,Self,Other,Space),
-eval_20(Eq,RetCasted,Depth,Space,['type-cast',Val,Into],Casted).
+    into_space(Depth,Self,Other,Space),
+    eval_20(Eq,RetCasted,Depth,Space,['type-cast',Val,Into],Casted).
 
 eval_20(_Eq,_RetCasted,Depth,Self,['type-cast',Val,Into],Casted):-is_list(Val),!,
-catch_metta_return(type_cast(Depth,Self,Val,Into,Casted),CastedM),
-var(CastedM).
+    catch_metta_return(type_cast(Depth,Self,Val,Into,Casted),CastedM),
+    var(CastedM).
 
 eval_20(Eq,RetCasted,Depth,Self,['type-cast',Val,Into],CastedO):-!,
-if_or_else(type_cast(Depth,Self,Val,Into,Casted),Casted=Val),
-%term_singletons(Casted,[]),
-%Casted\==[],Casted\==Val,Into,!,
-do_expander(Eq,RetCasted,Casted,CastedO).
+    if_or_else(type_cast(Depth,Self,Val,Into,Casted),Casted=Val),
+    %term_singletons(Casted,[]),
+    %Casted\==[],Casted\==Val,Into,!,
+    do_expander(Eq,RetCasted,Casted,CastedO).
 
 
 eval_20(_Eq,_RetType,Depth,Self,['get-types',Val],TypeO):- !,
@@ -1985,7 +1994,7 @@ eval_20(_Eq,_RetType,_Depth,_Self,['call-string!',Str],NoResult):- !,'call-strin
 into_values(List,Many):- List==[],!,Many=[].
 into_values([X|List],Many):- List==[],is_list(X),!,Many=X.
 into_values(Many,Many).
-eval_40(Eq,RetType,_Dpth,_Slf,Name,Value):- atom(Name), nb_current(Name,Value),!.
+    eval_40(Eq,RetType,_Dpth,_Slf,Name,Value):- atom(Name), nb_current(Name,Value),!.
 */
 % Macro Functions
 %eval_20(Eq,RetType,Depth,_,_,_):- Depth<1,!,fail.
@@ -1996,7 +2005,7 @@ eval_40(Eq,RetType,Depth,Self,[F|PredDecl],Res):-
    Depth>1,
    fake_notrace((sub_sterm1(SSub,PredDecl), ground(SSub),SSub=[_|Sub], is_list(Sub), maplist(atomic,SSub))),
    eval_args(Eq,RetType,Depth,Self,SSub,Repl),
-   fake_notrace((SSub\=Repl, subst(PredDecl,SSub,Repl,Temp))),
+   fake_notrace((SSub\=Repl, subst_same(PredDecl,SSub,Repl,Temp))),
    eval_args(Eq,RetType,Depth,Self,[F|Temp],Res).
 */
 % =================================================================

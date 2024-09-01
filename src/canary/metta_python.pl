@@ -387,8 +387,12 @@ def rust_unwrap(obj):
         return obj.get_name()
     if isinstance(obj,ExpressionAtom):
         return obj.get_children()
+    if isinstance(obj,ValueAtom):
+        return obj.value()
     if isinstance(obj,GroundedAtom):
-        return obj.get_object()
+        if obj.get_object_type()==AtomType.UNDEFINED:
+        	return obj.get_object()
+    # if isinstance(obj,GroundedAtom): return obj.get_object()
     if isinstance(obj,GroundedObject):
         return obj.content
     return obj
