@@ -1,7 +1,7 @@
 # Aunt Knowledge Graph
 
 An exploration in knowledge graphs, raised by
-[https://github.com/trueagi-io/metta-examples/issues/40]()
+[https://github.com/trueagi-io/metta-examples/issues/40](https://github.com/trueagi-io/metta-examples/issues/40)
 
 The goal is to evaluate how expressive, intuitive, and performant MeTTa is for dealing with regular labeled graphs.
 
@@ -26,6 +26,7 @@ Using the MeTTa script [simple_conversion.metta]().
 The benchmark is to do every query (parent, mother, sister, aunt, predecessor) for every person.
 
 ### Hyperon-Experimental
+WARNING: Outdated
 
 Simpsons Dataset (11 people)  
 [simple_conversion.metta]() 0m0.113s  

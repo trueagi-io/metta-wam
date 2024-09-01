@@ -16,6 +16,7 @@
 (: ($F Application) (-> ($F Term) (-> ($F Term) ($F Term))))
 )))
 
+; !(LambdaTheoryF RC BTheory String)
 !(assertEqualToResult  
   (LambdaTheoryF RC BTheory String)
   ((: (RC Application) (-> (RC Term) (-> (RC Term) (RC Term))))

@@ -411,3 +411,194 @@
 ;;;; tref.register_token(regex(r"mod-space!"), move |_| { mod_space_op.clone() });
 ;;;; tref.register_token(regex(r"print-mods!"), move |_| { print_mods_op.clone() });
 
+
+
+    #[derive(Clone, PartialEq, Debug)]
+    pub struct SomeGndAtom { }
+
+    impl Display for SomeGndAtom {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            write!(f, "some-gnd-atom")
+        }
+    }
+
+    impl Grounded for SomeGndAtom {
+        fn type_(&self) -> Atom {
+            Atom::expr([ARROW_SYMBOL, sym!("Arg1Type"), sym!("Arg2Type"), sym!("RetType")])
+        }
+    }
+
+    #[test]
+    fn test_get_doc_func() {
+        let metta = Metta::new(Some(EnvBuilder::test_env()));
+        let parser = SExprParser::new(r#"
+            (: Arg1Type Type)
+            (: Arg2Type Type)
+            (: RetType Type)
+            (: some-func (-> Arg1Type Arg2Type RetType))
+            (@doc some-func
+              (@desc "Test function")
+              (@params (
+                (@param "First argument")
+                (@param "Second argument")
+              ))
+              (@return "Return value")
+            )
+            
+            !(get-doc some-func)
+        "#);
+
+        assert_eq_metta_results!(metta.run(parser), Ok(vec![
+            vec![expr!("@doc-formal"
+                ("@item" "some-func")
+                ("@kind" "function")
+                ("@type" ("->" "Arg1Type" "Arg2Type" "RetType"))
+                ("@desc" {Str::from_str("Test function")})
+                ("@params" (
+                    ("@param" ("@type" "Arg1Type") ("@desc" {Str::from_str("First argument")}))
+                    ("@param" ("@type" "Arg2Type") ("@desc" {Str::from_str("Second argument")})) ))
+                ("@return" ("@type" "RetType") ("@desc" {Str::from_str("Return value")})) )],
+        ]));
+    }
+
+    #[test]
+    fn test_get_doc_atom() {
+        let metta = Metta::new(Some(EnvBuilder::test_env()));
+        let parser = SExprParser::new(r#"
+            (: SomeAtom SomeType)
+            (@doc SomeAtom (@desc "Test symbol atom having specific type"))
+
+            !(get-doc SomeAtom)
+        "#);
+
+        assert_eq_metta_results!(metta.run(parser), Ok(vec![
+            vec![expr!("@doc-formal"
+                ("@item" "SomeAtom")
+                ("@kind" "atom")
+                ("@type" "SomeType")
+                ("@desc" {Str::from_str("Test symbol atom having specific type")}) )],
+        ]));
+    }
+
+    #[test]
+    fn test_get_doc_gnd_func() {
+        let metta = Metta::new(Some(EnvBuilder::test_env()));
+        metta.tokenizer().borrow_mut()
+            .register_token(regex::Regex::new(r"some-gnd-atom").unwrap(), |_| Atom::gnd(SomeGndAtom{}));
+        let parser = SExprParser::new(r#"
+            (@doc some-gnd-atom
+              (@desc "Test function")
+              (@params (
+                (@param "First argument")
+                (@param "Second argument")
+              ))
+              (@return "Return value")
+            )
+            !(get-doc some-gnd-atom)
+        "#);
+
+        assert_eq_metta_results!(metta.run(parser), Ok(vec![
+            vec![expr!("@doc-formal"
+                ("@item" {SomeGndAtom{}})
+                ("@kind" "function")
+                ("@type" ("->" "Arg1Type" "Arg2Type" "RetType"))
+                ("@desc" {Str::from_str("Test function")})
+                ("@params" (
+                    ("@param" ("@type" "Arg1Type") ("@desc" {Str::from_str("First argument")}))
+                    ("@param" ("@type" "Arg2Type") ("@desc" {Str::from_str("Second argument")})) ))
+                ("@return" ("@type" "RetType") ("@desc" {Str::from_str("Return value")})) )],
+        ]));
+    }
+
+    #[test]
+    fn test_get_doc_no_doc() {
+        let metta = Metta::new(Some(EnvBuilder::test_env()));
+        let parser = SExprParser::new(r#"
+            !(get-doc NoSuchAtom)
+        "#);
+
+        assert_eq_metta_results!(metta.run(parser), Ok(vec![
+            vec![expr!("@doc-formal"
+                ("@item" "NoSuchAtom")
+                ("@kind" "atom")
+                ("@type" "%Undefined%")
+                ("@desc" {Str::from_str("No documentation")}) )],
+        ]));
+    }
+
+    #[test]
+    fn test_get_doc_function_call() {
+        let metta = Metta::new(Some(EnvBuilder::test_env()));
+        let parser = SExprParser::new(r#"
+            (: Arg1Type Type)
+            (: Arg2Type Type)
+            (: RetType Type)
+            (: some-func (-> Arg1Type Arg2Type RetType))
+            (@doc some-func
+              (@desc "Test function")
+              (@params (
+                (@param "First argument")
+                (@param "Second argument")
+              ))
+              (@return "Return value")
+            )
+
+            !(get-doc (some-func arg1 arg2))
+        "#);
+
+        assert_eq_metta_results!(metta.run(parser), Ok(vec![
+            vec![expr!("@doc-formal"
+                ("@item" ("some-func" "arg1" "arg2"))
+                ("@kind" "atom")
+                ("@type" "RetType")
+                ("@desc" {Str::from_str("No documentation")}) )],
+        ]));
+    }
+
+    #[test]
+    fn test_get_doc_no_type() {
+        let metta = Metta::new(Some(EnvBuilder::test_env()));
+        let parser = SExprParser::new(r#"
+            (@doc some-func-no-type
+              (@desc "Test function")
+              (@params (
+                (@param "First argument")
+                (@param "Second argument")
+              ))
+              (@return "Return value")
+            )
+
+            !(get-doc some-func-no-type)
+        "#);
+
+        assert_eq_metta_results!(metta.run(parser), Ok(vec![
+            vec![expr!("@doc-formal"
+                ("@item" "some-func-no-type")
+                ("@kind" "function")
+                ("@type" "%Undefined%")
+                ("@desc" {Str::from_str("Test function")})
+                ("@params" (
+                    ("@param" ("@type" "%Undefined%") ("@desc" {Str::from_str("First argument")}))
+                    ("@param" ("@type" "%Undefined%") ("@desc" {Str::from_str("Second argument")})) ))
+                ("@return" ("@type" "%Undefined%") ("@desc" {Str::from_str("Return value")})) )],
+        ]));
+    }
+
+    #[test]
+    fn test_error_is_used_as_an_argument() {
+        let metta = Metta::new(Some(EnvBuilder::test_env()));
+        let parser = SExprParser::new(r#"
+            !(get-type Error)
+            !(get-metatype Error)
+            !(get-type (Error Foo Boo))
+            !(Error (+ 1 2) (+ 1 +))
+        "#);
+
+        assert_eq_metta_results!(metta.run(parser), Ok(vec![
+            vec![expr!("->" "Atom" "Atom" "ErrorType")],
+            vec![expr!("Symbol")],
+            vec![expr!("ErrorType")],
+            vec![expr!("Error" ({SumOp{}} {Number::Integer(1)} {Number::Integer(2)}) ({SumOp{}} {Number::Integer(1)} {SumOp{}}))],
+        ]));
+    }
+

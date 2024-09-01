@@ -267,6 +267,8 @@ get_dict_type(Val,_,TypeO):- get_dict(Val,types,TypeL),
 get_type_cmpd(_Dpth,_Slf,Val,Type,dict):- is_dict(Val,Type),!,
   get_dict_type(Val,Type,TypeO).
 
+get_type_cmpd(_Dpth,_Slf,'#\\'(_),'Char',functgor):- !.
+
 % Curried Op
 get_type_cmpd(Depth,Self,[[Op|Args]|Arg],Type,curried(W)):-
  symbol(Op),
@@ -582,6 +584,19 @@ is_seo_f('State').
 is_seo_f('Event').
 is_seo_f('Concept').
 is_seo_f(N):- number(N),!.
+
+is_absorbed_return_type(Params,Var):- var(Var),!, \+ sub_var(Var,Params).
+is_absorbed_return_type(_,'Bool').
+is_absorbed_return_type(_,[Ar]):- !, Ar == (->).
+is_absorbed_return_type(_,'EmptyType').
+is_absorbed_return_type(_,'ReturnType').
+is_absorbed_return_type(_,X):- is_self_return(X).
+
+is_self_return('ErrorType').
+
+is_non_absorbed_return_type(Params,Var):-
+   \+ is_absorbed_return_type(Params,Var).
+
 
 %is_user_defined_goal(Self,[H|_]):- is_user_defined_head(Eq,Self,H).
 

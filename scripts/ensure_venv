@@ -1,18 +1,56 @@
 #!/bin/bash
 
-# Name of the virtual environment directory
-VENV_DIR="venv"
+# Ensure the script is being sourced
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    echo "Warning: This script should be sourced, not executed directly." >&2
+    exit 1  # Exit the script if it's not being sourced
+fi
+
+# Get the directory of the script
+SCRIPT_DIR=$(dirname "$(realpath "${BASH_SOURCE[0]}")")
+# Set VENV_DIR to one directory above the script's directory
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
+VENV_DIR="$PARENT_DIR/venv"
+
+# Default verbosity level (0: quiet, 1: normal, 2: verbose)
+VERBOSITY=1
+
+# Parse command-line options
+for arg in "$@"; do
+    case $arg in
+        -v|--verbose)
+            VERBOSITY=2
+            ;;
+        -q|--quiet)
+            VERBOSITY=0
+            ;;
+        *)
+            #echo "Usage: source $0 [-v|--verbose] [-q|--quiet]" >&2
+            #exit 1
+            ;;
+    esac
+done
+
+# echo "VERBOSITY=$VERBOSITY"
+
+# Function to print messages based on verbosity level
+log() {
+    local level="$1"
+    shift
+    if [ "$level" -le "$VERBOSITY" ]; then
+        echo "$@" >&2
+    fi
+}
 
 # Function to activate the virtual environment
 activate_venv() {
-    echo "Activating the virtual environment..."
+    log 2 "Activating the virtual environment: $(realpath $VENV_DIR)"
     source "$VENV_DIR/bin/activate"
 }
 
 # Function to check if we are inside a virtual environment
 is_inside_venv() {
-    if [[ "$VIRTUAL_ENV" != "" ]]
-    then
+    if [[ "$VIRTUAL_ENV" != "" ]]; then
         return 0  # True, script is running inside a virtual environment
     else
         return 1  # False, script is not running inside a virtual environment
@@ -22,26 +60,46 @@ is_inside_venv() {
 # Function to create a virtual environment
 create_venv() {
     if [ ! -d "$VENV_DIR" ]; then
-        echo "Creating a virtual environment..."
+        log 1 "Creating a virtual environment: $VENV_DIR"
         python3 -m venv "$VENV_DIR"
+        # Assuming the script is run from a virtual environment with useful packages
+        if [ -n "$VIRTUAL_ENV" ] && [ -d "$VIRTUAL_ENV" ]; then
+            log 2 "Inheriting packages from existing environment: $VIRTUAL_ENV"
+            source "$VIRTUAL_ENV/bin/activate"
+            pip freeze > /tmp/requirements.txt
+            deactivate
+            activate_venv
+            pip install -r /tmp/requirements.txt
+            rm /tmp/requirements.txt
+        fi
+        if [ -f "requirements.txt" ]; then
+            : 
+            #log 2 "Found local requirements.txt, installing packages..."
+            #pip install -r requirements.txt
+        fi
     else
-        echo "Virtual environment already exists."
+        log 2 "Virtual environment already exists: $VENV_DIR"
     fi
 }
 
 # Main logic of the script
 if is_inside_venv; then
-    echo "Script is running inside a virtual environment."
+    if [ "$VIRTUAL_ENV" != "$(realpath $VENV_DIR)" ]; then
+        log 1 "Reusing virtual environment: $VIRTUAL_ENV"
+        #log 1 "Expected virtual environment: $(realpath $VENV_DIR)"
+    else
+        log 2 "Script is running inside the expected virtual environment: $VENV_DIR"
+    fi
 else
-    echo "Script is not running inside a virtual environment."
+    log 2 "Script is not running inside a virtual environment."
     create_venv
     activate_venv
 
     # Relaunch the script inside the virtual environment
-    # echo "Relaunching the script inside the virtual environment..."
-    # exec "$0" "$@"
+    #log 2 "Relaunching the script inside the virtual environment..."
+    #exec "$0" "$@"
 fi
 
 # Place your script's main execution logic here
-# echo "Executing the main script logic..."
+#log 2 "Executing the main script logic..."
 

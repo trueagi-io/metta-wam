@@ -43,6 +43,6 @@
 !(assertEqual (format-args "Two digit index={11}" (0 1 2 3 4 5 6 7 8 9 10 "eleven")) "Two digit index=eleven")
 
 ;; malformed examples
-!(assertEqual (format-args "Bad args list {1} {} {0} {}" x) (format-args "Bad args list {1} {} {0} {}" x))
+!(assertEqual (format-args "Bad args list {1} {} {0} {}" x) (Error x BadType))
 
 !(assertEqual (format-args "Malformed format}{{}{{{}{} {4} { } {-1} {x} {{{{{{}}}}}}{{{{{}}}}}" ("success1" "success2")) "Malformed format}{}{success1success2 {4} { } {-1} {x} {{{}}}{{{}}}")

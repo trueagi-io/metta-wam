@@ -1,0 +1,5063 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns
+         http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+<!-- Created by igraph -->
+  <key id="v_name" for="node" attr.name="name" attr.type="string"/>
+  <key id="v_type" for="node" attr.name="type" attr.type="string"/>
+  <key id="v_numbers of articles" for="node" attr.name="numbers of articles" attr.type="double"/>
+  <key id="v_MeSH ID" for="node" attr.name="MeSH ID" attr.type="string"/>
+  <key id="v_alias names" for="node" attr.name="alias names" attr.type="string"/>
+  <key id="v_description" for="node" attr.name="description" attr.type="string"/>
+  <key id="v_relation" for="node" attr.name="relation" attr.type="boolean"/>
+  <key id="v_aging biomarker" for="node" attr.name="aging biomarker" attr.type="boolean"/>
+  <key id="v_longevity biomarker" for="node" attr.name="longevity biomarker" attr.type="boolean"/>
+  <key id="v_url" for="node" attr.name="url" attr.type="string"/>
+  <key id="v_mutation position" for="node" attr.name="mutation position" attr.type="string"/>
+  <key id="v_official full name" for="node" attr.name="official full name" attr.type="string"/>
+  <key id="v_mutation alleles" for="node" attr.name="mutation alleles" attr.type="string"/>
+  <key id="e_type" for="edge" attr.name="type" attr.type="string"/>
+  <graph id="G" edgedefault="directed">
+    <node id="n0">
+      <data key="v_name">ABL1</data>
+      <data key="v_type">Gene</data>
+      <data key="v_numbers of articles">36</data>
+      <data key="v_MeSH ID"></data>
+      <data key="v_alias names">ABL; JTK7; p150; c-ABL; v-abl; CHDSKM; c-ABL1; BCR-ABL; bcr/abl</data>
+      <data key="v_description">This gene is a protooncogene that encodes a protein tyrosine kinase involved in a variety of cellular processes, including cell division, adhesion, differentiation, and response to stress.</data>
+      <data key="v_relation">true</data>
+      <data key="v_aging biomarker">false</data>
+      <data key="v_longevity biomarker">false</data>
+      <data key="v_url">https://www.ncbi.nlm.nih.gov/gene/25</data>
+      <data key="v_mutation position"></data>
+      <data key="v_official full name">ABL proto-oncogene 1, non-receptor tyrosine kinase</data>
+      <data key="v_mutation alleles"></data>
+    </node>
+    <node id="n1">
+      <data key="v_name">SIRT7</data>
+      <data key="v_type">Gene</data>
+      <data key="v_numbers of articles">54</data>
+      <data key="v_MeSH ID"></data>
+      <data key="v_alias names">SIR2L7</data>
+      <data key="v_description">This gene encodes a member of the sirtuin family of proteins, homologs to the yeast Sir2 protein.</data>
+      <data key="v_relation">true</data>
+      <data key="v_aging biomarker">true</data>
+      <data key="v_longevity biomarker">true</data>
+      <data key="v_url">https://www.ncbi.nlm.nih.gov/gene/51547</data>
+      <data key="v_mutation position"></data>
+      <data key="v_official full name">sirtuin 7</data>
+      <data key="v_mutation alleles"></data>
+    </node>
+    <node id="n2">
+      <data key="v_name">Glucose</data>
+      <data key="v_type">Carbohydrate</data>
+      <data key="v_numbers of articles">3900</data>
+      <data key="v_MeSH ID">D005947</data>
+      <data key="v_alias names"></data>
+      <data key="v_description">A primary source of energy for living organisms.</data>
+      <data key="v_relation">true</data>
+      <data key="v_aging biomarker">true</data>
+      <data key="v_longevity biomarker">true</data>
+      <data key="v_url">https://www.ncbi.nlm.nih.gov/mesh/68005947</data>
+      <data key="v_mutation position"></data>
+      <data key="v_official full name">None</data>
+      <data key="v_mutation alleles"></data>
+    </node>
+    <node id="n3">
+      <data key="v_name">Ceramides</data>
+      <data key="v_type">Carbohydrate</data>
+      <data key="v_numbers of articles">151</data>
+      <data key="v_MeSH ID">D002518</data>
+      <data key="v_alias names"></data>
+      <data key="v_description">Members of the class of neutral glycosphingolipids.</data>
+      <data key="v_relation">true</data>
+      <data key="v_aging biomarker">true</data>
+      <data key="v_longevity biomarker">true</data>
+      <data key="v_url">https://www.ncbi.nlm.nih.gov/mesh/68002518</data>
+      <data key="v_mutation position"></data>
+      <data key="v_official full name">None</data>
+      <data key="v_mutation alleles"></data>
+    </node>
+    <node id="n4">
+      <data key="v_name">Sphingolipids</data>
+      <data key="v_type">Lipid</data>
+      <data key="v_numbers of articles">84</data>
+      <data key="v_MeSH ID">D013107</data>
+      <data key="v_alias names"></data>
+      <data key="v_description">A class of membrane lipids that have a polar head and two nonpolar tails.</data>
+      <data key="v_relation">true</data>
+      <data key="v_aging biomarker">true</data>
+      <data key="v_longevity biomarker">true</data>
+      <data key="v_url">https://www.ncbi.nlm.nih.gov/mesh/68013107</data>
+      <data key="v_mutation position"></data>
+      <data key="v_official full name">None</data>
+      <data key="v_mutation alleles"></data>
+    </node>
+    <node id="n5">
+      <data key="v_name">Death</data>
+      <data key="v_type">Disease</data>
+      <data key="v_numbers of articles">39038</data>
+      <data key="v_MeSH ID">D003643</data>
+      <data key="v_alias names"></data>
+      <data key="v_description">Irreversible cessation of all bodily functions, manifested by absence of spontaneous breathing and total loss of cardiovascular and cerebral functions.</data>
+      <data key="v_relation">true</data>
+      <data key="v_aging biomarker">false</data>
+      <data key="v_longevity biomarker">false</data>
+      <data key="v_url">https://www.ncbi.nlm.nih.gov/mesh/68003643</data>
+      <data key="v_mutation position"></data>
+      <data key="v_official full name">None</data>
+      <data key="v_mutation alleles"></data>
+    </node>
+    <node id="n6">
+      <data key="v_name">Renal Insufficiency, Chronic</data>
+      <data key="v_type">Disease</data>
+      <data key="v_numbers of articles">2083</data>
+      <data key="v_MeSH ID">D051436</data>
+      <data key="v_alias names"></data>
+      <data key="v_description">Conditions in which the KIDNEYS perform below the normal level for more than three months.</data>
+      <data key="v_relation">true</data>
+      <data key="v_aging biomarker">false</data>
+      <data key="v_longevity biomarker">false</data>
+      <data key="v_url">https://www.ncbi.nlm.nih.gov/mesh/68051436</data>
+      <data key="v_mutation position"></data>
+      <data key="v_official full name">None</data>
+      <data key="v_mutation alleles"></data>
+    </node>
+    <node id="n7">
+      <data key="v_name">Neoplasms</data>
+      <data key="v_type">Disease</data>
+      <data key="v_numbers of articles">22646</data>
+      <data key="v_MeSH ID">D009369</data>
+      <data key="v_alias names"></data>
+      <data key="v_description">New abnormal growth of tissue.</data>
+      <data key="v_relation">true</data>
+      <data key="v_aging biomarker">false</data>
+      <data key="v_longevity biomarker">false</data>
+      <data key="v_url">https://www.ncbi.nlm.nih.gov/mesh/68009369</data>
+      <data key="v_mutation position"></data>
+      <data key="v_official full name">None</data>
+      <data key="v_mutation alleles"></data>
+    </node>
+    <node id="n8">
+      <data key="v_name">Anemia</data>
+      <data key="v_type">Disease</data>
+      <data key="v_numbers of articles">1603</data>
+      <data key="v_MeSH ID">D000740</data>
+      <data key="v_alias names"></data>
+      <data key="v_description">A reduction in the number of circulating ERYTHROCYTES or in the quantity of HEMOGLOBIN.</data>
+      <data key="v_relation">true</data>
+      <data key="v_aging biomarker">false</data>
+      <data key="v_longevity biomarker">false</data>
+      <data key="v_url">https://www.ncbi.nlm.nih.gov/mesh/68000740</data>
+      <data key="v_mutation position"></data>
+      <data key="v_official full name">None</data>
+      <data key="v_mutation alleles"></data>
+    </node>
+    <node id="n9">
+      <data key="v_name">Leukemia, Myeloid, Acute</data>
+      <data key="v_type">Disease</data>
+      <data key="v_numbers of articles">586</data>
+      <data key="v_MeSH ID">D015470</data>
+      <data key="v_alias names"></data>
+      <data key="v_description">Clonal expansion of myeloid blasts in bone marrow, blood, and other tissue.</data>
+      <data key="v_relation">true</data>
+      <data key="v_aging biomarker">false</data>
+      <data key="v_longevity biomarker">false</data>
+      <data key="v_url">https://www.ncbi.nlm.nih.gov/mesh/68015470</data>
+      <data key="v_mutation position"></data>
+      <data key="v_official full name">None</data>
+      <data key="v_mutation alleles"></data>
+    </node>
+    <node id="n10">
+      <data key="v_name">Drug-Related Side Effects and Adverse Reactions</data>
+      <data key="v_type">Disease</data>
+      <data key="v_numbers of articles">3599</data>
+      <data key="v_MeSH ID">D064420</data>
+      <data key="v_alias names"></data>
+      <data key="v_description">Disorders that result from the intended use of PHARMACEUTICAL PREPARATIONS.</data>
+      <data key="v_relation">true</data>
+      <data key="v_aging biomarker">false</data>
+      <data key="v_longevity biomarker">false</data>
+      <data key="v_url">https://www.ncbi.nlm.nih.gov/mesh/68064420</data>
+      <data key="v_mutation position"></data>
+      <data key="v_official full name">None</data>
+      <data key="v_mutation alleles"></data>
+    </node>
+    <node id="n11">
+      <data key="v_name">Chronic Disease</data>
+      <data key="v_type">Disease</data>
+      <data key="v_numbers of articles">6274</data>
+      <data key="v_MeSH ID">D002908</data>
+      <data key="v_alias names"></data>
+      <data key="v_description">Diseases which have one or more of the following characteristics: they are permanent, leave residual disability, are caused by nonreversible pathological alteration, require special training of the patient for rehabilitation, or may be expected to require a long period of supervision, observation, or care (Dictionary of Health Services Management, 2d ed).</data>
+      <data key="v_relation">true</data>
+      <data key="v_aging biomarker">false</data>
+      <data key="v_longevity biomarker">false</data>
+      <data key="v_url">https://www.ncbi.nlm.nih.gov/mesh/68002908</data>
+      <data key="v_mutation position"></data>
+      <data key="v_official full name">None</data>
+      <data key="v_mutation alleles"></data>
+    </node>
+    <node id="n12">
+      <data key="v_name">Leukemia</data>
+      <data key="v_type">Disease</data>
+      <data key="v_numbers of articles">519</data>
+      <data key="v_MeSH ID">D007938</data>
+      <data key="v_alias names"></data>
+      <data key="v_description">A progressive, malignant disease of the blood-forming organs, characterized by distorted proliferation and development of leukocytes and their precursors in the blood and bone marrow.</data>
+      <data key="v_relation">true</data>
+      <data key="v_aging biomarker">false</data>
+      <data key="v_longevity biomarker">false</data>
+      <data key="v_url">https://www.ncbi.nlm.nih.gov/mesh/68007938</data>
+      <data key="v_mutation position"></data>
+      <data key="v_official full name">None</data>
+      <data key="v_mutation alleles"></data>
+    </node>
+    <node id="n13">
+      <data key="v_name">Diabetes Mellitus, Type 2</data>
+      <data key="v_type">Disease</data>
+      <data key="v_numbers of articles">1872</data>
+      <data key="v_MeSH ID">D003924</data>
+      <data key="v_alias names"></data>
+      <data key="v_description">A subclass of DIABETES MELLITUS that is not INSULIN-responsive or dependent (NIDDM).</data>
+      <data key="v_relation">true</data>
+      <data key="v_aging biomarker">false</data>
+      <data key="v_longevity biomarker">false</data>
+      <data key="v_url">https://www.ncbi.nlm.nih.gov/mesh/68003924</data>
+      <data key="v_mutation position"></data>
+      <data key="v_official full name">None</data>
+      <data key="v_mutation alleles"></data>
+    </node>
+    <node id="n14">
+      <data key="v_name">Sleep Initiation and Maintenance Disorders</data>
+      <data key="v_type">Disease</data>
+      <data key="v_numbers of articles">1255</data>
+      <data key="v_MeSH ID">D007319</data>
+      <data key="v_alias names"></data>
+      <data key="v_description">Disorders characterized by impairment of the ability to initiate or maintain sleep.</data>
+      <data key="v_relation">true</data>
+      <data key="v_aging biomarker">false</data>
+      <data key="v_longevity biomarker">false</data>
+      <data key="v_url">https://www.ncbi.nlm.nih.gov/mesh/68007319</data>
+      <data key="v_mutation position"></data>
+      <data key="v_official full name">None</data>
+      <data key="v_mutation alleles"></data>
+    </node>
+    <node id="n15">
+      <data key="v_name">Liver Failure</data>
+      <data key="v_type">Disease</data>
+      <data key="v_numbers of articles">502</data>
+      <data key="v_MeSH ID">D017093</data>
+      <data key="v_alias names"></data>
+      <data key="v_description">Severe inability of the LIVER to perform its normal metabolic functions, as evidenced by severe JAUNDICE and abnormal serum levels of AMMONIA; BILIRUBIN; ALKALINE PHOSPHATASE; ASPARTATE AMINOTRANSFERASE; LACTATE DEHYDROGENASES; and albumin/globulin ratio.</data>
+      <data key="v_relation">true</data>
+      <data key="v_aging biomarker">false</data>
+      <data key="v_longevity biomarker">false</data>
+      <data key="v_url">https://www.ncbi.nlm.nih.gov/mesh/68017093</data>
+      <data key="v_mutation position"></data>
+      <data key="v_official full name">None</data>
+      <data key="v_mutation alleles"></data>
+    </node>
+    <node id="n16">
+      <data key="v_name">Multiple Myeloma</data>
+      <data key="v_type">Disease</data>
+      <data key="v_numbers of articles">466</data>
+      <data key="v_MeSH ID">D009101</data>
+      <data key="v_alias names"></data>
+      <data key="v_description">A malignancy of mature PLASMA CELLS engaging in monoclonal immunoglobulin production.</data>
+      <data key="v_relation">true</data>
+      <data key="v_aging biomarker">false</data>
+      <data key="v_longevity biomarker">false</data>
+      <data key="v_url">https://www.ncbi.nlm.nih.gov/mesh/68009101</data>
+      <data key="v_mutation position"></data>
+      <data key="v_official full name">None</data>
+      <data key="v_mutation alleles"></data>
+    </node>
+    <node id="n17">
+      <data key="v_name">Adrenocortical Hyperfunction</data>
+      <data key="v_type">Disease</data>
+      <data key="v_numbers of articles">9</data>
+      <data key="v_MeSH ID">D000308</data>
+      <data key="v_alias names"></data>
+      <data key="v_description">Excess production of ADRENAL CORTEX HORMONES such as ALDOSTERONE; HYDROCORTISONE; DEHYDROEPIANDROSTERONE; and/or ANDROSTENEDIONE.</data>
+      <data key="v_relation">true</data>
+      <data key="v_aging biomarker">false</data>
+      <data key="v_longevity biomarker">false</data>
+      <data key="v_url">https://www.ncbi.nlm.nih.gov/mesh/68000308</data>
+      <data key="v_mutation position"></data>
+      <data key="v_official full name">None</data>
+      <data key="v_mutation alleles"></data>
+    </node>
+    <node id="n18">
+      <data key="v_name">Leukemia, Lymphocytic, Chronic, B-Cell</data>
+      <data key="v_type">Disease</data>
+      <data key="v_numbers of articles">168</data>
+      <data key="v_MeSH ID">D015451</data>
+      <data key="v_alias names"></data>
+      <data key="v_description">A chronic leukemia characterized by abnormal B-lymphocytes and often generalized lymphadenopathy.</data>
+      <data key="v_relation">true</data>
+      <data key="v_aging biomarker">false</data>
+      <data key="v_longevity biomarker">false</data>
+      <data key="v_url">https://www.ncbi.nlm.nih.gov/mesh/68015451</data>
+      <data key="v_mutation position"></data>
+      <data key="v_official full name">None</data>
+      <data key="v_mutation alleles"></data>
+    </node>
+    <node id="n19">
+      <data key="v_name">Neoplastic Syndromes, Hereditary</data>
+      <data key="v_type">Disease</data>
+      <data key="v_numbers of articles">97</data>
+      <data key="v_MeSH ID">D009386</data>
+      <data key="v_alias names"></data>
+      <data key="v_description">The condition of a pattern of malignancies within a family, but not every individual&apos;s necessarily having the same neoplasm.</data>
+      <data key="v_relation">true</data>
+      <data key="v_aging biomarker">false</data>
+      <data key="v_longevity biomarker">false</data>
+      <data key="v_url">https://www.ncbi.nlm.nih.gov/mesh/68009386</data>
+      <data key="v_mutation position"></data>
+      <data key="v_official full name">None</data>
+      <data key="v_mutation alleles"></data>
+    </node>
+    <node id="n20">
+      <data key="v_name">Hematoma, Subdural</data>
+      <data key="v_type">Disease</data>
+      <data key="v_numbers of articles">137</data>
+      <data key="v_MeSH ID">D006408</data>
+      <data key="v_alias names"></data>
+      <data key="v_description">Accumulation of blood in the SUBDURAL SPACE between the DURA MATER and the arachnoidal layer of the MENINGES.</data>
+      <data key="v_relation">true</data>
+      <data key="v_aging biomarker">false</data>
+      <data key="v_longevity biomarker">false</data>
+      <data key="v_url">https://www.ncbi.nlm.nih.gov/mesh/68006408</data>
+      <data key="v_mutation position"></data>
+      <data key="v_official full name">None</data>
+      <data key="v_mutation alleles"></data>
+    </node>
+    <node id="n21">
+      <data key="v_name">Myeloproliferative Disorders</data>
+      <data key="v_type">Disease</data>
+      <data key="v_numbers of articles">92</data>
+      <data key="v_MeSH ID">D009196</data>
+      <data key="v_alias names"></data>
+      <data key="v_description">Conditions which cause proliferation of hemopoietically active tissue or of tissue which has embryonic hemopoietic potential.</data>
+      <data key="v_relation">true</data>
+      <data key="v_aging biomarker">false</data>
+      <data key="v_longevity biomarker">false</data>
+      <data key="v_url">https://www.ncbi.nlm.nih.gov/mesh/68009196</data>
+      <data key="v_mutation position"></data>
+      <data key="v_official full name">None</data>
+      <data key="v_mutation alleles"></data>
+    </node>
+    <node id="n22">
+      <data key="v_name">Bone Marrow Failure Disorders</data>
+      <data key="v_type">Disease</data>
+      <data key="v_numbers of articles">115</data>
+      <data key="v_MeSH ID">D000080983</data>
+      <data key="v_alias names"></data>
+      <data key="v_description">Inherited or acquired diseases characterized by insufficient and/or dysplastic blood cells.</data>
+      <data key="v_relation">true</data>
+      <data key="v_aging biomarker">false</data>
+      <data key="v_longevity biomarker">false</data>
+      <data key="v_url">https://www.ncbi.nlm.nih.gov/mesh/2031040</data>
+      <data key="v_mutation position"></data>
+      <data key="v_official full name">None</data>
+      <data key="v_mutation alleles"></data>
+    </node>
+    <node id="n23">
+      <data key="v_name">Primary Myelofibrosis</data>
+      <data key="v_type">Disease</data>
+      <data key="v_numbers of articles">95</data>
+      <data key="v_MeSH ID">D055728</data>
+      <data key="v_alias names"></data>
+      <data key="v_description">A de novo myeloproliferation arising from an abnormal stem cell.</data>
+      <data key="v_relation">true</data>
+      <data key="v_aging biomarker">false</data>
+      <data key="v_longevity biomarker">false</data>
+      <data key="v_url">https://www.ncbi.nlm.nih.gov/mesh/68055728</data>
+      <data key="v_mutation position"></data>
+      <data key="v_official full name">None</data>
+      <data key="v_mutation alleles"></data>
+    </node>
+    <node id="n24">
+      <data key="v_name">Leukemia, Myelogenous, Chronic, BCR-ABL Positive</data>
+      <data key="v_type">Disease</data>
+      <data key="v_numbers of articles">161</data>
+      <data key="v_MeSH ID">D015464</data>
+      <data key="v_alias names"></data>
+      <data key="v_description">Clonal hematopoetic disorder caused by an acquired genetic defect in PLURIPOTENT STEM CELLS.</data>
+      <data key="v_relation">true</data>
+      <data key="v_aging biomarker">false</data>
+      <data key="v_longevity biomarker">false</data>
+      <data key="v_url">https://www.ncbi.nlm.nih.gov/mesh/68015464</data>
+      <data key="v_mutation position"></data>
+      <data key="v_official full name">None</data>
+      <data key="v_mutation alleles"></data>
+    </node>
+    <node id="n25">
+      <data key="v_name">Cholestasis</data>
+      <data key="v_type">Disease</data>
+      <data key="v_numbers of articles">84</data>
+      <data key="v_MeSH ID">D002779</data>
+      <data key="v_alias names"></data>
+      <data key="v_description">Impairment of bile flow due to obstruction in small bile ducts (INTRAHEPATIC CHOLESTASIS) or obstruction in large bile ducts (EXTRAHEPATIC CHOLESTASIS).</data>
+      <data key="v_relation">true</data>
+      <data key="v_aging biomarker">false</data>
+      <data key="v_longevity biomarker">false</data>
+      <data key="v_url">https://www.ncbi.nlm.nih.gov/mesh/68002779</data>
+      <data key="v_mutation position"></data>
+      <data key="v_official full name">None</data>
+      <data key="v_mutation alleles"></data>
+    </node>
+    <node id="n26">
+      <data key="v_name">Thrombocythemia, Essential</data>
+      <data key="v_type">Disease</data>
+      <data key="v_numbers of articles">54</data>
+      <data key="v_MeSH ID">D013920</data>
+      <data key="v_alias names"></data>
+      <data key="v_description">A clinical syndrome characterized by repeated spontaneous hemorrhages and a remarkable increase in the number of circulating platelets.</data>
+      <data key="v_relation">true</data>
+      <data key="v_aging biomarker">false</data>
+      <data key="v_longevity biomarker">false</data>
+      <data key="v_url">https://www.ncbi.nlm.nih.gov/mesh/68013920</data>
+      <data key="v_mutation position"></data>
+      <data key="v_official full name">None</data>
+      <data key="v_mutation alleles"></data>
+    </node>
+    <node id="n27">
+      <data key="v_name">Polycythemia Vera</data>
+      <data key="v_type">Disease</data>
+      <data key="v_numbers of articles">74</data>
+      <data key="v_MeSH ID">D011087</data>
+      <data key="v_alias names"></data>
+      <data key="v_description">A myeloproliferative disorder of unknown etiology, characterized by abnormal proliferation of all hematopoietic bone marrow elements and an absolute increase in red cell mass and total blood volume, associated frequently with splenomegaly, leukocytosis, and thrombocythemia.</data>
+      <data key="v_relation">true</data>
+      <data key="v_aging biomarker">false</data>
+      <data key="v_longevity biomarker">false</data>
+      <data key="v_url">https://www.ncbi.nlm.nih.gov/mesh/68011087</data>
+      <data key="v_mutation position"></data>
+      <data key="v_official full name">None</data>
+      <data key="v_mutation alleles"></data>
+    </node>
+    <node id="n28">
+      <data key="v_name">Androgen-Insensitivity Syndrome</data>
+      <data key="v_type">Disease</data>
+      <data key="v_numbers of articles">6</data>
+      <data key="v_MeSH ID">D013734</data>
+      <data key="v_alias names"></data>
+      <data key="v_description">A disorder of sexual development transmitted as an X-linked recessive trait.</data>
+      <data key="v_relation">true</data>
+      <data key="v_aging biomarker">false</data>
+      <data key="v_longevity biomarker">false</data>
+      <data key="v_url">https://www.ncbi.nlm.nih.gov/mesh/68013734</data>
+      <data key="v_mutation position"></data>
+      <data key="v_official full name">None</data>
+      <data key="v_mutation alleles"></data>
+    </node>
+    <edge source="n0" target="n24">
+      <data key="e_type">improve</data>
+    </edge>
+    <edge source="n1" target="n2">
+      <data key="e_type">activate</data>
+    </edge>
+    <edge source="n1" target="n2">
+      <data key="e_type">involve</data>
+    </edge>
+    <edge source="n1" target="n7">
+      <data key="e_type">increase</data>
+    </edge>
+    <edge source="n1" target="n7">
+      <data key="e_type">make</data>
+    </edge>
+    <edge source="n1" target="n7">
+      <data key="e_type">proposed</data>
+    </edge>
+    <edge source="n1" target="n7">
+      <data key="e_type">function</data>
+    </edge>
+    <edge source="n1" target="n7">
+      <data key="e_type">control</data>
+    </edge>
+    <edge source="n1" target="n7">
+      <data key="e_type">stabilize</data>
+    </edge>
+    <edge source="n1" target="n7">
+      <data key="e_type">promote</data>
+    </edge>
+    <edge source="n1" target="n7">
+      <data key="e_type">suggest</data>
+    </edge>
+    <edge source="n1" target="n7">
+      <data key="e_type">observed</data>
+    </edge>
+    <edge source="n1" target="n7">
+      <data key="e_type">reduce</data>
+    </edge>
+    <edge source="n1" target="n7">
+      <data key="e_type">associate</data>
+    </edge>
+    <edge source="n1" target="n7">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n1" target="n7">
+      <data key="e_type">comprise</data>
+    </edge>
+    <edge source="n1" target="n7">
+      <data key="e_type">downregulated</data>
+    </edge>
+    <edge source="n1" target="n7">
+      <data key="e_type">lead</data>
+    </edge>
+    <edge source="n1" target="n9">
+      <data key="e_type">localize</data>
+    </edge>
+    <edge source="n1" target="n9">
+      <data key="e_type">detected</data>
+    </edge>
+    <edge source="n1" target="n24">
+      <data key="e_type">detected</data>
+    </edge>
+    <edge source="n2" target="n1">
+      <data key="e_type">target</data>
+    </edge>
+    <edge source="n2" target="n5">
+      <data key="e_type">differ</data>
+    </edge>
+    <edge source="n2" target="n5">
+      <data key="e_type">linked</data>
+    </edge>
+    <edge source="n2" target="n5">
+      <data key="e_type">prime</data>
+    </edge>
+    <edge source="n2" target="n5">
+      <data key="e_type">correlate</data>
+    </edge>
+    <edge source="n2" target="n5">
+      <data key="e_type">tend</data>
+    </edge>
+    <edge source="n2" target="n5">
+      <data key="e_type">forecast</data>
+    </edge>
+    <edge source="n2" target="n5">
+      <data key="e_type">slow</data>
+    </edge>
+    <edge source="n2" target="n5">
+      <data key="e_type">reduce</data>
+    </edge>
+    <edge source="n2" target="n5">
+      <data key="e_type">correlated</data>
+    </edge>
+    <edge source="n2" target="n5">
+      <data key="e_type">induce</data>
+    </edge>
+    <edge source="n2" target="n5">
+      <data key="e_type">increase</data>
+    </edge>
+    <edge source="n2" target="n5">
+      <data key="e_type">indicate</data>
+    </edge>
+    <edge source="n2" target="n5">
+      <data key="e_type">act</data>
+    </edge>
+    <edge source="n2" target="n5">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n2" target="n5">
+      <data key="e_type">associate</data>
+    </edge>
+    <edge source="n2" target="n5">
+      <data key="e_type">produce</data>
+    </edge>
+    <edge source="n2" target="n5">
+      <data key="e_type">considered</data>
+    </edge>
+    <edge source="n2" target="n5">
+      <data key="e_type">identify</data>
+    </edge>
+    <edge source="n2" target="n5">
+      <data key="e_type">calculate</data>
+    </edge>
+    <edge source="n2" target="n5">
+      <data key="e_type">predict</data>
+    </edge>
+    <edge source="n2" target="n5">
+      <data key="e_type">potentiate</data>
+    </edge>
+    <edge source="n2" target="n5">
+      <data key="e_type">investigate</data>
+    </edge>
+    <edge source="n2" target="n5">
+      <data key="e_type">undergo</data>
+    </edge>
+    <edge source="n2" target="n5">
+      <data key="e_type">followed</data>
+    </edge>
+    <edge source="n2" target="n5">
+      <data key="e_type">expose</data>
+    </edge>
+    <edge source="n2" target="n5">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n2" target="n6">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n2" target="n7">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n2" target="n7">
+      <data key="e_type">monitor</data>
+    </edge>
+    <edge source="n2" target="n7">
+      <data key="e_type">reverse</data>
+    </edge>
+    <edge source="n2" target="n7">
+      <data key="e_type">decrease</data>
+    </edge>
+    <edge source="n2" target="n7">
+      <data key="e_type">proposed</data>
+    </edge>
+    <edge source="n2" target="n7">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n2" target="n7">
+      <data key="e_type">exhibit</data>
+    </edge>
+    <edge source="n2" target="n7">
+      <data key="e_type">link</data>
+    </edge>
+    <edge source="n2" target="n7">
+      <data key="e_type">focus</data>
+    </edge>
+    <edge source="n2" target="n7">
+      <data key="e_type">become</data>
+    </edge>
+    <edge source="n2" target="n7">
+      <data key="e_type">restrain</data>
+    </edge>
+    <edge source="n2" target="n7">
+      <data key="e_type">used</data>
+    </edge>
+    <edge source="n2" target="n7">
+      <data key="e_type">provide</data>
+    </edge>
+    <edge source="n2" target="n11">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n2" target="n13">
+      <data key="e_type">use</data>
+    </edge>
+    <edge source="n2" target="n13">
+      <data key="e_type">correlated</data>
+    </edge>
+    <edge source="n2" target="n13">
+      <data key="e_type">suffer</data>
+    </edge>
+    <edge source="n2" target="n13">
+      <data key="e_type">protect</data>
+    </edge>
+    <edge source="n2" target="n13">
+      <data key="e_type">implicated</data>
+    </edge>
+    <edge source="n2" target="n13">
+      <data key="e_type">clamped</data>
+    </edge>
+    <edge source="n2" target="n13">
+      <data key="e_type">determine</data>
+    </edge>
+    <edge source="n2" target="n13">
+      <data key="e_type">reduce</data>
+    </edge>
+    <edge source="n2" target="n13">
+      <data key="e_type">render</data>
+    </edge>
+    <edge source="n2" target="n13">
+      <data key="e_type">diagnosed</data>
+    </edge>
+    <edge source="n2" target="n13">
+      <data key="e_type">prevent</data>
+    </edge>
+    <edge source="n2" target="n13">
+      <data key="e_type">detect</data>
+    </edge>
+    <edge source="n2" target="n13">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n2" target="n13">
+      <data key="e_type">increase</data>
+    </edge>
+    <edge source="n2" target="n13">
+      <data key="e_type">increasing</data>
+    </edge>
+    <edge source="n2" target="n13">
+      <data key="e_type">show</data>
+    </edge>
+    <edge source="n2" target="n13">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n2" target="n13">
+      <data key="e_type">improve</data>
+    </edge>
+    <edge source="n2" target="n13">
+      <data key="e_type">complement</data>
+    </edge>
+    <edge source="n2" target="n13">
+      <data key="e_type">display</data>
+    </edge>
+    <edge source="n3" target="n2">
+      <data key="e_type">reduce</data>
+    </edge>
+    <edge source="n3" target="n4">
+      <data key="e_type">quantified</data>
+    </edge>
+    <edge source="n3" target="n4">
+      <data key="e_type">assess</data>
+    </edge>
+    <edge source="n3" target="n4">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n3" target="n5">
+      <data key="e_type">predict</data>
+    </edge>
+    <edge source="n3" target="n5">
+      <data key="e_type">stimulate</data>
+    </edge>
+    <edge source="n3" target="n5">
+      <data key="e_type">protect</data>
+    </edge>
+    <edge source="n3" target="n5">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n3" target="n7">
+      <data key="e_type">measured</data>
+    </edge>
+    <edge source="n3" target="n7">
+      <data key="e_type">play</data>
+    </edge>
+    <edge source="n3" target="n7">
+      <data key="e_type">down-regulated</data>
+    </edge>
+    <edge source="n3" target="n8">
+      <data key="e_type">create</data>
+    </edge>
+    <edge source="n3" target="n13">
+      <data key="e_type">characterize</data>
+    </edge>
+    <edge source="n3" target="n13">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n3" target="n24">
+      <data key="e_type">upregulate</data>
+    </edge>
+    <edge source="n4" target="n3">
+      <data key="e_type">show</data>
+    </edge>
+    <edge source="n4" target="n3">
+      <data key="e_type">generate</data>
+    </edge>
+    <edge source="n4" target="n3">
+      <data key="e_type">manipulate</data>
+    </edge>
+    <edge source="n4" target="n3">
+      <data key="e_type">investigate</data>
+    </edge>
+    <edge source="n4" target="n3">
+      <data key="e_type">known</data>
+    </edge>
+    <edge source="n4" target="n3">
+      <data key="e_type">promote</data>
+    </edge>
+    <edge source="n4" target="n5">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n4" target="n7">
+      <data key="e_type">play</data>
+    </edge>
+    <edge source="n4" target="n24">
+      <data key="e_type">increase</data>
+    </edge>
+    <edge source="n5" target="n2">
+      <data key="e_type">tend</data>
+    </edge>
+    <edge source="n5" target="n2">
+      <data key="e_type">mediated</data>
+    </edge>
+    <edge source="n5" target="n2">
+      <data key="e_type">prevented</data>
+    </edge>
+    <edge source="n5" target="n2">
+      <data key="e_type">base</data>
+    </edge>
+    <edge source="n5" target="n2">
+      <data key="e_type">fast</data>
+    </edge>
+    <edge source="n5" target="n2">
+      <data key="e_type">predict</data>
+    </edge>
+    <edge source="n5" target="n2">
+      <data key="e_type">associate</data>
+    </edge>
+    <edge source="n5" target="n2">
+      <data key="e_type">be reasons for</data>
+    </edge>
+    <edge source="n5" target="n2">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n5" target="n3">
+      <data key="e_type">replicate</data>
+    </edge>
+    <edge source="n5" target="n3">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n5" target="n4">
+      <data key="e_type">reflected</data>
+    </edge>
+    <edge source="n5" target="n4">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n5" target="n6">
+      <data key="e_type">consider</data>
+    </edge>
+    <edge source="n5" target="n6">
+      <data key="e_type">influence</data>
+    </edge>
+    <edge source="n5" target="n6">
+      <data key="e_type">associate</data>
+    </edge>
+    <edge source="n5" target="n6">
+      <data key="e_type">compare</data>
+    </edge>
+    <edge source="n5" target="n6">
+      <data key="e_type">combined</data>
+    </edge>
+    <edge source="n5" target="n6">
+      <data key="e_type">follow</data>
+    </edge>
+    <edge source="n5" target="n6">
+      <data key="e_type">be in</data>
+    </edge>
+    <edge source="n5" target="n6">
+      <data key="e_type">conferred</data>
+    </edge>
+    <edge source="n5" target="n6">
+      <data key="e_type">enhanced</data>
+    </edge>
+    <edge source="n5" target="n6">
+      <data key="e_type">predict</data>
+    </edge>
+    <edge source="n5" target="n6">
+      <data key="e_type">reduce</data>
+    </edge>
+    <edge source="n5" target="n6">
+      <data key="e_type">linked</data>
+    </edge>
+    <edge source="n5" target="n6">
+      <data key="e_type">investigated</data>
+    </edge>
+    <edge source="n5" target="n6">
+      <data key="e_type">attributed</data>
+    </edge>
+    <edge source="n5" target="n6">
+      <data key="e_type">note</data>
+    </edge>
+    <edge source="n5" target="n6">
+      <data key="e_type">remain</data>
+    </edge>
+    <edge source="n5" target="n6">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n5" target="n6">
+      <data key="e_type">investigate</data>
+    </edge>
+    <edge source="n5" target="n6">
+      <data key="e_type">indicate</data>
+    </edge>
+    <edge source="n5" target="n6">
+      <data key="e_type">observed</data>
+    </edge>
+    <edge source="n5" target="n6">
+      <data key="e_type">implicate in</data>
+    </edge>
+    <edge source="n5" target="n6">
+      <data key="e_type">related</data>
+    </edge>
+    <edge source="n5" target="n6">
+      <data key="e_type">increase</data>
+    </edge>
+    <edge source="n5" target="n6">
+      <data key="e_type">occur</data>
+    </edge>
+    <edge source="n5" target="n6">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">trail</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">treated</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">range</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">find</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">display</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">remove</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">detect</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">escape</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">contribute</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">shown</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">elevated</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">calculate</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">registered</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">covered</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">identify</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">reflect</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">missed</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">characterized</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">select</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">lose</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">raise</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">incorporate</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">lowered</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">determined</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">lost</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">adjusted</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">demonstrate</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">accounted</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">customize</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">guide</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">listed</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">improve</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">represent</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">involve</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">suggest</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">screen</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">given</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">investigated</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">validated</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">modelled</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">consider</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">comprise</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">correlate</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">Patients with</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">dominated</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">observe</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">patients with</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">preclude</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">fit</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">attribute</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">treat</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">yield</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">gratified</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">constitute</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">surpass</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">bias</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">encountered</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">used</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">chart</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">fell</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">reveal</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">connected</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">legitimize</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">exhibit</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">cross-tabulate</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">become</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">affect</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">standardize</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">excluded</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">ensue</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">derived</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">target</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">promoted</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">computed</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">validate</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">live</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">standardized</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">prevented</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">presented</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">give</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">underlie</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">rising</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">expect</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">followed</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">examined</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">fill</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">augmented</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">assigned</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">occupy</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">employ</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">enable</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">reanalyzed</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">included</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">based</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">underestimated</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">considered</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">account</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">appear</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">acquire</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">investigate</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">point</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">follow</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">developed</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">assess</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">delete</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">predicted</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">describe</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">provide</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">driven</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">meet</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">distributed</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">reduce</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">list</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">delivered</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">classified</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">indicate</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">succumb</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">emerge</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">control</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">ascribed</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">play</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">decrease</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">explained</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">incur</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">prevent</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">document</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">defined</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">mean</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">notified</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">continue</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">assessed</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">linked</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">documented</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">estimated</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">measure</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">put</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">diagnosed</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">get</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">monitored</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">observed</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">ranked</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">vary</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">receive</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">caused</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">take</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">experience</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">attributed</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">seen</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">induce</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">identified</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">result</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">taken</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">highlight</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">remain</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">performed</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">focus</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">reported</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">compared</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">influence</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">came</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">rank</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">report</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">apply</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">predict</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">occur</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">decline</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">offset</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">use</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">compare</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">calculated</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">obtained</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">obtain</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">extracted</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">associate</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">undergo</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">recorded</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">analysed</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">reduced</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">categorized</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">cause</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">increase</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">suffer</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">show</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">elicit</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">lead</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">related</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">estimate</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n5" target="n8">
+      <data key="e_type">related</data>
+    </edge>
+    <edge source="n5" target="n8">
+      <data key="e_type">suffer</data>
+    </edge>
+    <edge source="n5" target="n8">
+      <data key="e_type">contribute</data>
+    </edge>
+    <edge source="n5" target="n8">
+      <data key="e_type">implicate</data>
+    </edge>
+    <edge source="n5" target="n8">
+      <data key="e_type">thrive</data>
+    </edge>
+    <edge source="n5" target="n8">
+      <data key="e_type">increased</data>
+    </edge>
+    <edge source="n5" target="n8">
+      <data key="e_type">conferred</data>
+    </edge>
+    <edge source="n5" target="n8">
+      <data key="e_type">predicted</data>
+    </edge>
+    <edge source="n5" target="n8">
+      <data key="e_type">occur</data>
+    </edge>
+    <edge source="n5" target="n8">
+      <data key="e_type">use</data>
+    </edge>
+    <edge source="n5" target="n8">
+      <data key="e_type">cause</data>
+    </edge>
+    <edge source="n5" target="n8">
+      <data key="e_type">represent</data>
+    </edge>
+    <edge source="n5" target="n8">
+      <data key="e_type">identified</data>
+    </edge>
+    <edge source="n5" target="n8">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n5" target="n8">
+      <data key="e_type">predict</data>
+    </edge>
+    <edge source="n5" target="n8">
+      <data key="e_type">increase</data>
+    </edge>
+    <edge source="n5" target="n8">
+      <data key="e_type">prevent</data>
+    </edge>
+    <edge source="n5" target="n8">
+      <data key="e_type">acknowledged</data>
+    </edge>
+    <edge source="n5" target="n8">
+      <data key="e_type">associate</data>
+    </edge>
+    <edge source="n5" target="n8">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n5" target="n8">
+      <data key="e_type">computed</data>
+    </edge>
+    <edge source="n5" target="n9">
+      <data key="e_type">constitute</data>
+    </edge>
+    <edge source="n5" target="n9">
+      <data key="e_type">come</data>
+    </edge>
+    <edge source="n5" target="n9">
+      <data key="e_type">coded</data>
+    </edge>
+    <edge source="n5" target="n9">
+      <data key="e_type">decline</data>
+    </edge>
+    <edge source="n5" target="n9">
+      <data key="e_type">observed</data>
+    </edge>
+    <edge source="n5" target="n9">
+      <data key="e_type">defined</data>
+    </edge>
+    <edge source="n5" target="n9">
+      <data key="e_type">related</data>
+    </edge>
+    <edge source="n5" target="n9">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n5" target="n9">
+      <data key="e_type">cause</data>
+    </edge>
+    <edge source="n5" target="n10">
+      <data key="e_type">minimize</data>
+    </edge>
+    <edge source="n5" target="n10">
+      <data key="e_type">account</data>
+    </edge>
+    <edge source="n5" target="n10">
+      <data key="e_type">use</data>
+    </edge>
+    <edge source="n5" target="n10">
+      <data key="e_type">discussed</data>
+    </edge>
+    <edge source="n5" target="n10">
+      <data key="e_type">benefit</data>
+    </edge>
+    <edge source="n5" target="n10">
+      <data key="e_type">attributed</data>
+    </edge>
+    <edge source="n5" target="n10">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n5" target="n10">
+      <data key="e_type">caused</data>
+    </edge>
+    <edge source="n5" target="n10">
+      <data key="e_type">reduce</data>
+    </edge>
+    <edge source="n5" target="n10">
+      <data key="e_type">related</data>
+    </edge>
+    <edge source="n5" target="n10">
+      <data key="e_type">linked</data>
+    </edge>
+    <edge source="n5" target="n10">
+      <data key="e_type">promote</data>
+    </edge>
+    <edge source="n5" target="n10">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">calculate</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">contributed</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">contribute</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">directed</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">construct</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">reported</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">do</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">observed</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">suffer</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">maintain</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">influenced</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">result</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">describe</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">Individuals with</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">follow</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">change</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">afflicted</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">came</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">controlled</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">shifted</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">involve</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">noted</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">need</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">identify</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">compared</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">prevent</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">compare</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">study</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">worsen</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">diagnosed</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">adjusted</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">suggest</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">driven</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">provide</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">increase</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">cause</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">exclude</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">assess</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">predict</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">tested</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">limit</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">implement</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">related</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">associate</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">increased</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">observe</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">focused</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">examine</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">affected</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">occur</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">affect</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">attributed</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">use</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n5" target="n12">
+      <data key="e_type">calculated</data>
+    </edge>
+    <edge source="n5" target="n12">
+      <data key="e_type">fell</data>
+    </edge>
+    <edge source="n5" target="n12">
+      <data key="e_type">included</data>
+    </edge>
+    <edge source="n5" target="n12">
+      <data key="e_type">coded</data>
+    </edge>
+    <edge source="n5" target="n12">
+      <data key="e_type">related</data>
+    </edge>
+    <edge source="n5" target="n12">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n5" target="n13">
+      <data key="e_type">calculate</data>
+    </edge>
+    <edge source="n5" target="n13">
+      <data key="e_type">estimate</data>
+    </edge>
+    <edge source="n5" target="n13">
+      <data key="e_type">use</data>
+    </edge>
+    <edge source="n5" target="n13">
+      <data key="e_type">compared</data>
+    </edge>
+    <edge source="n5" target="n13">
+      <data key="e_type">used</data>
+    </edge>
+    <edge source="n5" target="n13">
+      <data key="e_type">predict</data>
+    </edge>
+    <edge source="n5" target="n13">
+      <data key="e_type">predicted</data>
+    </edge>
+    <edge source="n5" target="n13">
+      <data key="e_type">associate</data>
+    </edge>
+    <edge source="n5" target="n13">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n5" target="n13">
+      <data key="e_type">evaluated</data>
+    </edge>
+    <edge source="n5" target="n13">
+      <data key="e_type">followed</data>
+    </edge>
+    <edge source="n5" target="n14">
+      <data key="e_type">define</data>
+    </edge>
+    <edge source="n5" target="n14">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n5" target="n14">
+      <data key="e_type">associate</data>
+    </edge>
+    <edge source="n5" target="n14">
+      <data key="e_type">follow</data>
+    </edge>
+    <edge source="n5" target="n14">
+      <data key="e_type">offer</data>
+    </edge>
+    <edge source="n5" target="n14">
+      <data key="e_type">compare</data>
+    </edge>
+    <edge source="n5" target="n14">
+      <data key="e_type">alter</data>
+    </edge>
+    <edge source="n5" target="n14">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n5" target="n15">
+      <data key="e_type">cause</data>
+    </edge>
+    <edge source="n5" target="n15">
+      <data key="e_type">caused</data>
+    </edge>
+    <edge source="n5" target="n15">
+      <data key="e_type">exceed</data>
+    </edge>
+    <edge source="n5" target="n15">
+      <data key="e_type">preexist</data>
+    </edge>
+    <edge source="n5" target="n15">
+      <data key="e_type">result</data>
+    </edge>
+    <edge source="n5" target="n15">
+      <data key="e_type">show</data>
+    </edge>
+    <edge source="n5" target="n15">
+      <data key="e_type">occur</data>
+    </edge>
+    <edge source="n5" target="n15">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n5" target="n16">
+      <data key="e_type">rose</data>
+    </edge>
+    <edge source="n5" target="n16">
+      <data key="e_type">observed</data>
+    </edge>
+    <edge source="n5" target="n16">
+      <data key="e_type">listed</data>
+    </edge>
+    <edge source="n5" target="n16">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n5" target="n16">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n5" target="n18">
+      <data key="e_type">reach</data>
+    </edge>
+    <edge source="n5" target="n18">
+      <data key="e_type">related</data>
+    </edge>
+    <edge source="n5" target="n19">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n5" target="n19">
+      <data key="e_type">appear</data>
+    </edge>
+    <edge source="n5" target="n20">
+      <data key="e_type">undergo</data>
+    </edge>
+    <edge source="n5" target="n21">
+      <data key="e_type">find</data>
+    </edge>
+    <edge source="n5" target="n22">
+      <data key="e_type">lead</data>
+    </edge>
+    <edge source="n5" target="n23">
+      <data key="e_type">constitute</data>
+    </edge>
+    <edge source="n5" target="n24">
+      <data key="e_type">balance</data>
+    </edge>
+    <edge source="n5" target="n24">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n5" target="n24">
+      <data key="e_type">decrease</data>
+    </edge>
+    <edge source="n5" target="n24">
+      <data key="e_type">related</data>
+    </edge>
+    <edge source="n5" target="n24">
+      <data key="e_type">compare</data>
+    </edge>
+    <edge source="n5" target="n25">
+      <data key="e_type">occur</data>
+    </edge>
+    <edge source="n5" target="n26">
+      <data key="e_type">followed</data>
+    </edge>
+    <edge source="n5" target="n27">
+      <data key="e_type">followed</data>
+    </edge>
+    <edge source="n6" target="n2">
+      <data key="e_type">control</data>
+    </edge>
+    <edge source="n6" target="n2">
+      <data key="e_type">enrolled</data>
+    </edge>
+    <edge source="n6" target="n2">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n6" target="n2">
+      <data key="e_type">defined</data>
+    </edge>
+    <edge source="n6" target="n2">
+      <data key="e_type">examine</data>
+    </edge>
+    <edge source="n6" target="n2">
+      <data key="e_type">achieve</data>
+    </edge>
+    <edge source="n6" target="n2">
+      <data key="e_type">provided</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">correlate</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">reported</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">marked</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">associate</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">developed</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">simulate</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">follow</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">be lead cause of</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">estimated</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">appear</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">remain</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">profile</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">known</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">emerge</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">analyzed</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">reduce</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">treat</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">coupled</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">exhibit</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">entail</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">evaluated</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">identify</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">become</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">impact</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">live</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">included</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">followed</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">present</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">lead</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">contribute</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">identified</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">accumulate</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">examine</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">reclassified</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">use</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">base</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">demonstrate</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">study</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">predict</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">investigate</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">increase</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">affect</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">cause</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">compare</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">represent</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">focus</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">face</data>
+    </edge>
+    <edge source="n6" target="n5">
+      <data key="e_type">show</data>
+    </edge>
+    <edge source="n6" target="n7">
+      <data key="e_type">summarize</data>
+    </edge>
+    <edge source="n6" target="n7">
+      <data key="e_type">exist</data>
+    </edge>
+    <edge source="n6" target="n7">
+      <data key="e_type">undergo</data>
+    </edge>
+    <edge source="n6" target="n7">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n6" target="n8">
+      <data key="e_type">suffer</data>
+    </edge>
+    <edge source="n6" target="n8">
+      <data key="e_type">accompanied</data>
+    </edge>
+    <edge source="n6" target="n8">
+      <data key="e_type">adjusted</data>
+    </edge>
+    <edge source="n6" target="n8">
+      <data key="e_type">predispose</data>
+    </edge>
+    <edge source="n6" target="n8">
+      <data key="e_type">exhibit</data>
+    </edge>
+    <edge source="n6" target="n8">
+      <data key="e_type">lead</data>
+    </edge>
+    <edge source="n6" target="n8">
+      <data key="e_type">increase</data>
+    </edge>
+    <edge source="n6" target="n8">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n6" target="n10">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n6" target="n11">
+      <data key="e_type">suffer</data>
+    </edge>
+    <edge source="n6" target="n11">
+      <data key="e_type">relate</data>
+    </edge>
+    <edge source="n6" target="n11">
+      <data key="e_type">relate to</data>
+    </edge>
+    <edge source="n6" target="n11">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n6" target="n11">
+      <data key="e_type">transfer</data>
+    </edge>
+    <edge source="n6" target="n13">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n6" target="n13">
+      <data key="e_type">defined</data>
+    </edge>
+    <edge source="n6" target="n13">
+      <data key="e_type">affect</data>
+    </edge>
+    <edge source="n6" target="n13">
+      <data key="e_type">estimated</data>
+    </edge>
+    <edge source="n6" target="n13">
+      <data key="e_type">seen</data>
+    </edge>
+    <edge source="n6" target="n13">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n6" target="n14">
+      <data key="e_type">offer</data>
+    </edge>
+    <edge source="n6" target="n15">
+      <data key="e_type">carried</data>
+    </edge>
+    <edge source="n7" target="n1">
+      <data key="e_type">associate</data>
+    </edge>
+    <edge source="n7" target="n1">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n7" target="n2">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n7" target="n2">
+      <data key="e_type">observed</data>
+    </edge>
+    <edge source="n7" target="n2">
+      <data key="e_type">metabolize</data>
+    </edge>
+    <edge source="n7" target="n2">
+      <data key="e_type">pose</data>
+    </edge>
+    <edge source="n7" target="n2">
+      <data key="e_type">utilize</data>
+    </edge>
+    <edge source="n7" target="n2">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n7" target="n3">
+      <data key="e_type">decrease</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">proposed</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">balanced</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">compete</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">drive</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">multiplied</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">confer</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">multiply</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">define</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">cure</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">metastasize</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">project</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">emerge</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">accept</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">undergo</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">eliminate</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">function</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">protect</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">known</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">limit</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">assigned</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">progress</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">exist</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">dialyse</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">bear</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">viewed</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">expected</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">determine</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">sedated</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">coupled</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">hospitalized</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">foreshadow</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">struggle</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">minimize</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">indicate</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">perform</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">vary</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">compensated</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">demonstrate</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">short</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">listed</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">interfere</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">included</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">characterized</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">set</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">recorded</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">exclude</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">plagued</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">link</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">delay</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">assumed</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">exhibit</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">ensue</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">be third main cause of</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">be with</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">face</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">be major cause of</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">describe</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">give</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">live</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">censored</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">be lead cause of</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">be significant independent predictor of</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">be second common cause of</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">near</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">observed</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">implicated</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">utilize</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">presented</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">misattributed</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">withhold</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">dominate</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">analyzed</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">chart</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">confined</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">obtained</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">involved</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">overcome</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">differ</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">extend</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">offer</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">begin</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">rising</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">based</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">suffer</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">followed</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">treated</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">characterised</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">receive</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">combined</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">defined</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">determined</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">exceed</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">evaluated</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">improve</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">stabilize</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">view</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">adjusted</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">change</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">move</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">coded</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">predominate</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">pose</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">equal</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">do</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">found</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">stabilized</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">surpass</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">increased</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">promote</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">informed</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">meet</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">resemble</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">classify</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">prevent</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">develop</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">outweigh</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">mentioned</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">delivered</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">calculated</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">alter</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">caused</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">base</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">decline</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">divide</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">transformed</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">impact</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">reflect</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">reported</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">rank</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">correlated</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">grow</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">comprise</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">enhance</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">implement</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">evaluate</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">diagnosed</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">compared</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">created</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">explain</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">expand</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">rise</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">underlie</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">recommend</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">maintain</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">identified</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">inform</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">calculate</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">decreasing</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">identify</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">accounted</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">hast</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">provide</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">contribute</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">reveal</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">afflict</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">reduced</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">focused</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">reach</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">show</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">trigger</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">discuss</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">induce</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">be underlying cause of</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">increasing</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">suggest</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">considered</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">declining</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">represent</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">performed</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">use</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">estimated</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">cause</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">enroll</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">delineate</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">impose</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">carry</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">stratify</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">influence</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">continue</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">affect</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">account</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">assessed</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">underestimated</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">examined</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">experience</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">derived</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">lead</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">reduce</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">report</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">occur</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">undertreated</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">associate</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">obtain</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">accelerate</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">remain</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">follow</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">predict</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">document</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">achieve</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">display</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">increase</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">linked</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">compare</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">challenge</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">used</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">related</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">become</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">estimate</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">collected</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">decrease</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">result</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n7" target="n5">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n7" target="n6">
+      <data key="e_type">begin</data>
+    </edge>
+    <edge source="n7" target="n6">
+      <data key="e_type">compete</data>
+    </edge>
+    <edge source="n7" target="n6">
+      <data key="e_type">identified</data>
+    </edge>
+    <edge source="n7" target="n6">
+      <data key="e_type">seen</data>
+    </edge>
+    <edge source="n7" target="n6">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n7" target="n8">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n7" target="n8">
+      <data key="e_type">increased</data>
+    </edge>
+    <edge source="n7" target="n8">
+      <data key="e_type">result</data>
+    </edge>
+    <edge source="n7" target="n8">
+      <data key="e_type">identified</data>
+    </edge>
+    <edge source="n7" target="n8">
+      <data key="e_type">rule</data>
+    </edge>
+    <edge source="n7" target="n8">
+      <data key="e_type">make</data>
+    </edge>
+    <edge source="n7" target="n8">
+      <data key="e_type">show</data>
+    </edge>
+    <edge source="n7" target="n8">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n7" target="n9">
+      <data key="e_type">yield</data>
+    </edge>
+    <edge source="n7" target="n9">
+      <data key="e_type">prevent</data>
+    </edge>
+    <edge source="n7" target="n9">
+      <data key="e_type">treated</data>
+    </edge>
+    <edge source="n7" target="n9">
+      <data key="e_type">identified</data>
+    </edge>
+    <edge source="n7" target="n9">
+      <data key="e_type">sequenced</data>
+    </edge>
+    <edge source="n7" target="n9">
+      <data key="e_type">provide</data>
+    </edge>
+    <edge source="n7" target="n9">
+      <data key="e_type">correlated</data>
+    </edge>
+    <edge source="n7" target="n9">
+      <data key="e_type">evolve</data>
+    </edge>
+    <edge source="n7" target="n9">
+      <data key="e_type">confer</data>
+    </edge>
+    <edge source="n7" target="n9">
+      <data key="e_type">lead</data>
+    </edge>
+    <edge source="n7" target="n9">
+      <data key="e_type">show</data>
+    </edge>
+    <edge source="n7" target="n9">
+      <data key="e_type">altered</data>
+    </edge>
+    <edge source="n7" target="n9">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">burdened</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">potentiate</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">exhibit</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">ruine</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">document</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">involve</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">extend</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">range</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">limited</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">lead</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">consider</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">integrated</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">documented</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">affected</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">comply</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">attributed</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">impact</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">become</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">take</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">extracted</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">collected</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">induce</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">diminish</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">paid</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">continued</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">recognize</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">assess</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">result</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">given</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">focused</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">investigate</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">increase</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">weighed</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">inhibit</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">administered</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">cause</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">show</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">obtain</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">use</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">enter</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">mitigate</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">developed</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">improve</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">involved</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">let</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">avoid</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">reserved</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">exert</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">promote</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">reduce</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">develop</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">remain</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">minimize</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">suffer</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">identify</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">treated</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">utilize</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">experience</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">predict</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">used</data>
+    </edge>
+    <edge source="n7" target="n10">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n7" target="n11">
+      <data key="e_type">find</data>
+    </edge>
+    <edge source="n7" target="n11">
+      <data key="e_type">exhibit</data>
+    </edge>
+    <edge source="n7" target="n11">
+      <data key="e_type">vary</data>
+    </edge>
+    <edge source="n7" target="n11">
+      <data key="e_type">become</data>
+    </edge>
+    <edge source="n7" target="n11">
+      <data key="e_type">experience</data>
+    </edge>
+    <edge source="n7" target="n11">
+      <data key="e_type">reduce</data>
+    </edge>
+    <edge source="n7" target="n11">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n7" target="n11">
+      <data key="e_type">turned</data>
+    </edge>
+    <edge source="n7" target="n11">
+      <data key="e_type">see</data>
+    </edge>
+    <edge source="n7" target="n11">
+      <data key="e_type">screen</data>
+    </edge>
+    <edge source="n7" target="n11">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n7" target="n12">
+      <data key="e_type">followed</data>
+    </edge>
+    <edge source="n7" target="n12">
+      <data key="e_type">cause</data>
+    </edge>
+    <edge source="n7" target="n12">
+      <data key="e_type">prolong</data>
+    </edge>
+    <edge source="n7" target="n12">
+      <data key="e_type">evaluate</data>
+    </edge>
+    <edge source="n7" target="n12">
+      <data key="e_type">differ</data>
+    </edge>
+    <edge source="n7" target="n12">
+      <data key="e_type">bear</data>
+    </edge>
+    <edge source="n7" target="n12">
+      <data key="e_type">observed</data>
+    </edge>
+    <edge source="n7" target="n12">
+      <data key="e_type">exceed</data>
+    </edge>
+    <edge source="n7" target="n12">
+      <data key="e_type">represent</data>
+    </edge>
+    <edge source="n7" target="n12">
+      <data key="e_type">noted</data>
+    </edge>
+    <edge source="n7" target="n12">
+      <data key="e_type">enter</data>
+    </edge>
+    <edge source="n7" target="n12">
+      <data key="e_type">silenced</data>
+    </edge>
+    <edge source="n7" target="n12">
+      <data key="e_type">use</data>
+    </edge>
+    <edge source="n7" target="n12">
+      <data key="e_type">compare</data>
+    </edge>
+    <edge source="n7" target="n12">
+      <data key="e_type">confirm</data>
+    </edge>
+    <edge source="n7" target="n12">
+      <data key="e_type">harbor</data>
+    </edge>
+    <edge source="n7" target="n12">
+      <data key="e_type">develop</data>
+    </edge>
+    <edge source="n7" target="n12">
+      <data key="e_type">needed</data>
+    </edge>
+    <edge source="n7" target="n13">
+      <data key="e_type">proposed</data>
+    </edge>
+    <edge source="n7" target="n13">
+      <data key="e_type">investigate</data>
+    </edge>
+    <edge source="n7" target="n13">
+      <data key="e_type">tailored</data>
+    </edge>
+    <edge source="n7" target="n13">
+      <data key="e_type">thought</data>
+    </edge>
+    <edge source="n7" target="n13">
+      <data key="e_type">seen</data>
+    </edge>
+    <edge source="n7" target="n13">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n7" target="n14">
+      <data key="e_type">improve</data>
+    </edge>
+    <edge source="n7" target="n14">
+      <data key="e_type">excluded</data>
+    </edge>
+    <edge source="n7" target="n14">
+      <data key="e_type">increase</data>
+    </edge>
+    <edge source="n7" target="n14">
+      <data key="e_type">treat</data>
+    </edge>
+    <edge source="n7" target="n14">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n7" target="n14">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n7" target="n14">
+      <data key="e_type">present</data>
+    </edge>
+    <edge source="n7" target="n15">
+      <data key="e_type">result</data>
+    </edge>
+    <edge source="n7" target="n15">
+      <data key="e_type">underlie</data>
+    </edge>
+    <edge source="n7" target="n15">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n7" target="n15">
+      <data key="e_type">cause</data>
+    </edge>
+    <edge source="n7" target="n15">
+      <data key="e_type">induce</data>
+    </edge>
+    <edge source="n7" target="n15">
+      <data key="e_type">focus</data>
+    </edge>
+    <edge source="n7" target="n16">
+      <data key="e_type">implicated</data>
+    </edge>
+    <edge source="n7" target="n16">
+      <data key="e_type">isolated</data>
+    </edge>
+    <edge source="n7" target="n16">
+      <data key="e_type">classify</data>
+    </edge>
+    <edge source="n7" target="n16">
+      <data key="e_type">reported</data>
+    </edge>
+    <edge source="n7" target="n16">
+      <data key="e_type">studied</data>
+    </edge>
+    <edge source="n7" target="n16">
+      <data key="e_type">observed</data>
+    </edge>
+    <edge source="n7" target="n16">
+      <data key="e_type">metastasize</data>
+    </edge>
+    <edge source="n7" target="n16">
+      <data key="e_type">rose</data>
+    </edge>
+    <edge source="n7" target="n16">
+      <data key="e_type">differ</data>
+    </edge>
+    <edge source="n7" target="n16">
+      <data key="e_type">exist</data>
+    </edge>
+    <edge source="n7" target="n16">
+      <data key="e_type">rising</data>
+    </edge>
+    <edge source="n7" target="n16">
+      <data key="e_type">reduce</data>
+    </edge>
+    <edge source="n7" target="n16">
+      <data key="e_type">seen</data>
+    </edge>
+    <edge source="n7" target="n16">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n7" target="n16">
+      <data key="e_type">decrease</data>
+    </edge>
+    <edge source="n7" target="n16">
+      <data key="e_type">deleted</data>
+    </edge>
+    <edge source="n7" target="n16">
+      <data key="e_type">quantify</data>
+    </edge>
+    <edge source="n7" target="n18">
+      <data key="e_type">discovered</data>
+    </edge>
+    <edge source="n7" target="n18">
+      <data key="e_type">compare</data>
+    </edge>
+    <edge source="n7" target="n18">
+      <data key="e_type">fight</data>
+    </edge>
+    <edge source="n7" target="n18">
+      <data key="e_type">composed</data>
+    </edge>
+    <edge source="n7" target="n18">
+      <data key="e_type">register</data>
+    </edge>
+    <edge source="n7" target="n18">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n7" target="n19">
+      <data key="e_type">found</data>
+    </edge>
+    <edge source="n7" target="n19">
+      <data key="e_type">increase</data>
+    </edge>
+    <edge source="n7" target="n19">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n7" target="n19">
+      <data key="e_type">be in</data>
+    </edge>
+    <edge source="n7" target="n20">
+      <data key="e_type">misdiagnosed</data>
+    </edge>
+    <edge source="n7" target="n21">
+      <data key="e_type">abrogated</data>
+    </edge>
+    <edge source="n7" target="n22">
+      <data key="e_type">classified</data>
+    </edge>
+    <edge source="n7" target="n23">
+      <data key="e_type">present</data>
+    </edge>
+    <edge source="n7" target="n23">
+      <data key="e_type">witness</data>
+    </edge>
+    <edge source="n7" target="n24">
+      <data key="e_type">assess</data>
+    </edge>
+    <edge source="n7" target="n24">
+      <data key="e_type">maintain</data>
+    </edge>
+    <edge source="n8" target="n2">
+      <data key="e_type">provide</data>
+    </edge>
+    <edge source="n8" target="n3">
+      <data key="e_type">paralleled</data>
+    </edge>
+    <edge source="n8" target="n5">
+      <data key="e_type">estimate</data>
+    </edge>
+    <edge source="n8" target="n5">
+      <data key="e_type">linked</data>
+    </edge>
+    <edge source="n8" target="n5">
+      <data key="e_type">occur</data>
+    </edge>
+    <edge source="n8" target="n5">
+      <data key="e_type">explore</data>
+    </edge>
+    <edge source="n8" target="n5">
+      <data key="e_type">be relevant comorbidities with</data>
+    </edge>
+    <edge source="n8" target="n5">
+      <data key="e_type">compared</data>
+    </edge>
+    <edge source="n8" target="n5">
+      <data key="e_type">ascertained</data>
+    </edge>
+    <edge source="n8" target="n5">
+      <data key="e_type">serve</data>
+    </edge>
+    <edge source="n8" target="n5">
+      <data key="e_type">seen</data>
+    </edge>
+    <edge source="n8" target="n5">
+      <data key="e_type">define</data>
+    </edge>
+    <edge source="n8" target="n5">
+      <data key="e_type">remain</data>
+    </edge>
+    <edge source="n8" target="n5">
+      <data key="e_type">demonstrated</data>
+    </edge>
+    <edge source="n8" target="n5">
+      <data key="e_type">compare</data>
+    </edge>
+    <edge source="n8" target="n5">
+      <data key="e_type">affect</data>
+    </edge>
+    <edge source="n8" target="n5">
+      <data key="e_type">fail</data>
+    </edge>
+    <edge source="n8" target="n5">
+      <data key="e_type">correlated</data>
+    </edge>
+    <edge source="n8" target="n5">
+      <data key="e_type">impact</data>
+    </edge>
+    <edge source="n8" target="n5">
+      <data key="e_type">followed</data>
+    </edge>
+    <edge source="n8" target="n5">
+      <data key="e_type">show</data>
+    </edge>
+    <edge source="n8" target="n5">
+      <data key="e_type">cause</data>
+    </edge>
+    <edge source="n8" target="n5">
+      <data key="e_type">identify</data>
+    </edge>
+    <edge source="n8" target="n5">
+      <data key="e_type">predict</data>
+    </edge>
+    <edge source="n8" target="n5">
+      <data key="e_type">improve</data>
+    </edge>
+    <edge source="n8" target="n5">
+      <data key="e_type">classify</data>
+    </edge>
+    <edge source="n8" target="n5">
+      <data key="e_type">related</data>
+    </edge>
+    <edge source="n8" target="n5">
+      <data key="e_type">contribute</data>
+    </edge>
+    <edge source="n8" target="n5">
+      <data key="e_type">decrease</data>
+    </edge>
+    <edge source="n8" target="n5">
+      <data key="e_type">reduce</data>
+    </edge>
+    <edge source="n8" target="n5">
+      <data key="e_type">increase</data>
+    </edge>
+    <edge source="n8" target="n5">
+      <data key="e_type">associate</data>
+    </edge>
+    <edge source="n8" target="n5">
+      <data key="e_type">identified</data>
+    </edge>
+    <edge source="n8" target="n5">
+      <data key="e_type">recognized</data>
+    </edge>
+    <edge source="n8" target="n5">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n8" target="n5">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n8" target="n6">
+      <data key="e_type">found</data>
+    </edge>
+    <edge source="n8" target="n6">
+      <data key="e_type">occur</data>
+    </edge>
+    <edge source="n8" target="n6">
+      <data key="e_type">result</data>
+    </edge>
+    <edge source="n8" target="n6">
+      <data key="e_type">excluded</data>
+    </edge>
+    <edge source="n8" target="n6">
+      <data key="e_type">remain</data>
+    </edge>
+    <edge source="n8" target="n6">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n8" target="n6">
+      <data key="e_type">treat</data>
+    </edge>
+    <edge source="n8" target="n6">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n8" target="n7">
+      <data key="e_type">impact</data>
+    </edge>
+    <edge source="n8" target="n7">
+      <data key="e_type">summarize</data>
+    </edge>
+    <edge source="n8" target="n7">
+      <data key="e_type">provide</data>
+    </edge>
+    <edge source="n8" target="n7">
+      <data key="e_type">treat</data>
+    </edge>
+    <edge source="n8" target="n7">
+      <data key="e_type">raise</data>
+    </edge>
+    <edge source="n8" target="n7">
+      <data key="e_type">occur</data>
+    </edge>
+    <edge source="n8" target="n7">
+      <data key="e_type">range</data>
+    </edge>
+    <edge source="n8" target="n7">
+      <data key="e_type">increase</data>
+    </edge>
+    <edge source="n8" target="n7">
+      <data key="e_type">generated</data>
+    </edge>
+    <edge source="n8" target="n7">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n8" target="n7">
+      <data key="e_type">investigated</data>
+    </edge>
+    <edge source="n8" target="n7">
+      <data key="e_type">related</data>
+    </edge>
+    <edge source="n8" target="n7">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n8" target="n9">
+      <data key="e_type">progress</data>
+    </edge>
+    <edge source="n8" target="n10">
+      <data key="e_type">interrogate</data>
+    </edge>
+    <edge source="n8" target="n10">
+      <data key="e_type">improve</data>
+    </edge>
+    <edge source="n8" target="n10">
+      <data key="e_type">increase</data>
+    </edge>
+    <edge source="n8" target="n10">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n8" target="n10">
+      <data key="e_type">avoid</data>
+    </edge>
+    <edge source="n8" target="n11">
+      <data key="e_type">underlie</data>
+    </edge>
+    <edge source="n8" target="n11">
+      <data key="e_type">attributed</data>
+    </edge>
+    <edge source="n8" target="n11">
+      <data key="e_type">reviewed</data>
+    </edge>
+    <edge source="n8" target="n11">
+      <data key="e_type">caused</data>
+    </edge>
+    <edge source="n8" target="n11">
+      <data key="e_type">concern</data>
+    </edge>
+    <edge source="n8" target="n11">
+      <data key="e_type">manage</data>
+    </edge>
+    <edge source="n8" target="n11">
+      <data key="e_type">predict</data>
+    </edge>
+    <edge source="n8" target="n11">
+      <data key="e_type">aggravate</data>
+    </edge>
+    <edge source="n8" target="n11">
+      <data key="e_type">contribute</data>
+    </edge>
+    <edge source="n8" target="n11">
+      <data key="e_type">assess</data>
+    </edge>
+    <edge source="n8" target="n11">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n8" target="n11">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n8" target="n11">
+      <data key="e_type">related</data>
+    </edge>
+    <edge source="n8" target="n11">
+      <data key="e_type">focus</data>
+    </edge>
+    <edge source="n8" target="n14">
+      <data key="e_type">linked</data>
+    </edge>
+    <edge source="n8" target="n16">
+      <data key="e_type">indicate</data>
+    </edge>
+    <edge source="n8" target="n16">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n8" target="n18">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n8" target="n22">
+      <data key="e_type">appear</data>
+    </edge>
+    <edge source="n9" target="n1">
+      <data key="e_type">restore</data>
+    </edge>
+    <edge source="n9" target="n5">
+      <data key="e_type">perform</data>
+    </edge>
+    <edge source="n9" target="n5">
+      <data key="e_type">improve</data>
+    </edge>
+    <edge source="n9" target="n5">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n9" target="n5">
+      <data key="e_type">cause</data>
+    </edge>
+    <edge source="n9" target="n5">
+      <data key="e_type">used</data>
+    </edge>
+    <edge source="n9" target="n5">
+      <data key="e_type">lead</data>
+    </edge>
+    <edge source="n9" target="n5">
+      <data key="e_type">increase</data>
+    </edge>
+    <edge source="n9" target="n5">
+      <data key="e_type">carry</data>
+    </edge>
+    <edge source="n9" target="n5">
+      <data key="e_type">suffer</data>
+    </edge>
+    <edge source="n9" target="n5">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n9" target="n7">
+      <data key="e_type">reduce</data>
+    </edge>
+    <edge source="n9" target="n7">
+      <data key="e_type">considered</data>
+    </edge>
+    <edge source="n9" target="n7">
+      <data key="e_type">investigate</data>
+    </edge>
+    <edge source="n9" target="n7">
+      <data key="e_type">used</data>
+    </edge>
+    <edge source="n9" target="n7">
+      <data key="e_type">attributed</data>
+    </edge>
+    <edge source="n9" target="n7">
+      <data key="e_type">reported</data>
+    </edge>
+    <edge source="n9" target="n7">
+      <data key="e_type">find</data>
+    </edge>
+    <edge source="n9" target="n7">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n9" target="n7">
+      <data key="e_type">diagnosed</data>
+    </edge>
+    <edge source="n9" target="n7">
+      <data key="e_type">occur</data>
+    </edge>
+    <edge source="n9" target="n7">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n9" target="n8">
+      <data key="e_type">show</data>
+    </edge>
+    <edge source="n9" target="n10">
+      <data key="e_type">balanced</data>
+    </edge>
+    <edge source="n9" target="n10">
+      <data key="e_type">offset</data>
+    </edge>
+    <edge source="n9" target="n10">
+      <data key="e_type">show</data>
+    </edge>
+    <edge source="n9" target="n10">
+      <data key="e_type">increase</data>
+    </edge>
+    <edge source="n9" target="n10">
+      <data key="e_type">identify</data>
+    </edge>
+    <edge source="n9" target="n10">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n9" target="n12">
+      <data key="e_type">follow</data>
+    </edge>
+    <edge source="n9" target="n12">
+      <data key="e_type">drive</data>
+    </edge>
+    <edge source="n9" target="n12">
+      <data key="e_type">recognized</data>
+    </edge>
+    <edge source="n9" target="n12">
+      <data key="e_type">suffer</data>
+    </edge>
+    <edge source="n9" target="n12">
+      <data key="e_type">account</data>
+    </edge>
+    <edge source="n9" target="n12">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n9" target="n12">
+      <data key="e_type">develop</data>
+    </edge>
+    <edge source="n9" target="n12">
+      <data key="e_type">eradicate</data>
+    </edge>
+    <edge source="n9" target="n16">
+      <data key="e_type">occur</data>
+    </edge>
+    <edge source="n9" target="n19">
+      <data key="e_type">inherit</data>
+    </edge>
+    <edge source="n9" target="n22">
+      <data key="e_type">suffer</data>
+    </edge>
+    <edge source="n9" target="n22">
+      <data key="e_type">lead</data>
+    </edge>
+    <edge source="n9" target="n22">
+      <data key="e_type">present</data>
+    </edge>
+    <edge source="n9" target="n22">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n9" target="n27">
+      <data key="e_type">occur</data>
+    </edge>
+    <edge source="n10" target="n5">
+      <data key="e_type">emerge</data>
+    </edge>
+    <edge source="n10" target="n5">
+      <data key="e_type">represent</data>
+    </edge>
+    <edge source="n10" target="n5">
+      <data key="e_type">measure</data>
+    </edge>
+    <edge source="n10" target="n5">
+      <data key="e_type">surface</data>
+    </edge>
+    <edge source="n10" target="n5">
+      <data key="e_type">observed</data>
+    </edge>
+    <edge source="n10" target="n5">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n10" target="n5">
+      <data key="e_type">included</data>
+    </edge>
+    <edge source="n10" target="n5">
+      <data key="e_type">reported</data>
+    </edge>
+    <edge source="n10" target="n5">
+      <data key="e_type">occur</data>
+    </edge>
+    <edge source="n10" target="n5">
+      <data key="e_type">uncover</data>
+    </edge>
+    <edge source="n10" target="n5">
+      <data key="e_type">given</data>
+    </edge>
+    <edge source="n10" target="n5">
+      <data key="e_type">encountered</data>
+    </edge>
+    <edge source="n10" target="n5">
+      <data key="e_type">avoid</data>
+    </edge>
+    <edge source="n10" target="n5">
+      <data key="e_type">predict</data>
+    </edge>
+    <edge source="n10" target="n5">
+      <data key="e_type">lead</data>
+    </edge>
+    <edge source="n10" target="n5">
+      <data key="e_type">reduce</data>
+    </edge>
+    <edge source="n10" target="n5">
+      <data key="e_type">result</data>
+    </edge>
+    <edge source="n10" target="n5">
+      <data key="e_type">arise</data>
+    </edge>
+    <edge source="n10" target="n5">
+      <data key="e_type">investigate</data>
+    </edge>
+    <edge source="n10" target="n5">
+      <data key="e_type">contribute</data>
+    </edge>
+    <edge source="n10" target="n5">
+      <data key="e_type">assess</data>
+    </edge>
+    <edge source="n10" target="n5">
+      <data key="e_type">determined</data>
+    </edge>
+    <edge source="n10" target="n6">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n10" target="n6">
+      <data key="e_type">revealed</data>
+    </edge>
+    <edge source="n10" target="n6">
+      <data key="e_type">manage</data>
+    </edge>
+    <edge source="n10" target="n6">
+      <data key="e_type">demonstrate</data>
+    </edge>
+    <edge source="n10" target="n6">
+      <data key="e_type">accelerate</data>
+    </edge>
+    <edge source="n10" target="n7">
+      <data key="e_type">prevent</data>
+    </edge>
+    <edge source="n10" target="n7">
+      <data key="e_type">accompanied</data>
+    </edge>
+    <edge source="n10" target="n7">
+      <data key="e_type">involved</data>
+    </edge>
+    <edge source="n10" target="n7">
+      <data key="e_type">defined</data>
+    </edge>
+    <edge source="n10" target="n7">
+      <data key="e_type">evaluate</data>
+    </edge>
+    <edge source="n10" target="n7">
+      <data key="e_type">surface</data>
+    </edge>
+    <edge source="n10" target="n7">
+      <data key="e_type">compromise</data>
+    </edge>
+    <edge source="n10" target="n7">
+      <data key="e_type">tolerated</data>
+    </edge>
+    <edge source="n10" target="n7">
+      <data key="e_type">implicated</data>
+    </edge>
+    <edge source="n10" target="n7">
+      <data key="e_type">compare</data>
+    </edge>
+    <edge source="n10" target="n7">
+      <data key="e_type">result</data>
+    </edge>
+    <edge source="n10" target="n7">
+      <data key="e_type">obtained</data>
+    </edge>
+    <edge source="n10" target="n7">
+      <data key="e_type">inhibit</data>
+    </edge>
+    <edge source="n10" target="n7">
+      <data key="e_type">related</data>
+    </edge>
+    <edge source="n10" target="n7">
+      <data key="e_type">minimize</data>
+    </edge>
+    <edge source="n10" target="n7">
+      <data key="e_type">induce</data>
+    </edge>
+    <edge source="n10" target="n7">
+      <data key="e_type">exploited</data>
+    </edge>
+    <edge source="n10" target="n7">
+      <data key="e_type">focus</data>
+    </edge>
+    <edge source="n10" target="n7">
+      <data key="e_type">considered</data>
+    </edge>
+    <edge source="n10" target="n7">
+      <data key="e_type">shown</data>
+    </edge>
+    <edge source="n10" target="n7">
+      <data key="e_type">define</data>
+    </edge>
+    <edge source="n10" target="n7">
+      <data key="e_type">improve</data>
+    </edge>
+    <edge source="n10" target="n7">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n10" target="n7">
+      <data key="e_type">develop</data>
+    </edge>
+    <edge source="n10" target="n7">
+      <data key="e_type">contribute</data>
+    </edge>
+    <edge source="n10" target="n7">
+      <data key="e_type">use</data>
+    </edge>
+    <edge source="n10" target="n7">
+      <data key="e_type">become</data>
+    </edge>
+    <edge source="n10" target="n7">
+      <data key="e_type">make</data>
+    </edge>
+    <edge source="n10" target="n7">
+      <data key="e_type">show</data>
+    </edge>
+    <edge source="n10" target="n7">
+      <data key="e_type">observed</data>
+    </edge>
+    <edge source="n10" target="n7">
+      <data key="e_type">predict</data>
+    </edge>
+    <edge source="n10" target="n7">
+      <data key="e_type">suggest</data>
+    </edge>
+    <edge source="n10" target="n7">
+      <data key="e_type">receive</data>
+    </edge>
+    <edge source="n10" target="n7">
+      <data key="e_type">undergo</data>
+    </edge>
+    <edge source="n10" target="n7">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n10" target="n8">
+      <data key="e_type">experience</data>
+    </edge>
+    <edge source="n10" target="n8">
+      <data key="e_type">entail</data>
+    </edge>
+    <edge source="n10" target="n8">
+      <data key="e_type">registered</data>
+    </edge>
+    <edge source="n10" target="n8">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n10" target="n8">
+      <data key="e_type">observed</data>
+    </edge>
+    <edge source="n10" target="n8">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n10" target="n8">
+      <data key="e_type">consist</data>
+    </edge>
+    <edge source="n10" target="n9">
+      <data key="e_type">result</data>
+    </edge>
+    <edge source="n10" target="n9">
+      <data key="e_type">complicate</data>
+    </edge>
+    <edge source="n10" target="n9">
+      <data key="e_type">performed</data>
+    </edge>
+    <edge source="n10" target="n9">
+      <data key="e_type">develop</data>
+    </edge>
+    <edge source="n10" target="n9">
+      <data key="e_type">represent</data>
+    </edge>
+    <edge source="n10" target="n9">
+      <data key="e_type">given</data>
+    </edge>
+    <edge source="n10" target="n9">
+      <data key="e_type">combined</data>
+    </edge>
+    <edge source="n10" target="n9">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n10" target="n12">
+      <data key="e_type">evaluate</data>
+    </edge>
+    <edge source="n10" target="n12">
+      <data key="e_type">investigate</data>
+    </edge>
+    <edge source="n10" target="n12">
+      <data key="e_type">bear</data>
+    </edge>
+    <edge source="n10" target="n13">
+      <data key="e_type">exert</data>
+    </edge>
+    <edge source="n10" target="n15">
+      <data key="e_type">occur</data>
+    </edge>
+    <edge source="n10" target="n16">
+      <data key="e_type">performed</data>
+    </edge>
+    <edge source="n10" target="n16">
+      <data key="e_type">balance</data>
+    </edge>
+    <edge source="n10" target="n24">
+      <data key="e_type">experience</data>
+    </edge>
+    <edge source="n11" target="n2">
+      <data key="e_type">show</data>
+    </edge>
+    <edge source="n11" target="n2">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n11" target="n2">
+      <data key="e_type">decrease</data>
+    </edge>
+    <edge source="n11" target="n2">
+      <data key="e_type">characterized</data>
+    </edge>
+    <edge source="n11" target="n2">
+      <data key="e_type">use</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">accelerate</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">burdened</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">tend</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">attribute</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">improve</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">known</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">be lead cause of</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">become</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">withhold</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">deteriorate</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">reduce</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">remain</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">characterized</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">added</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">approach</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">employ</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">show</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">analyzed</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">delay</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">lose</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">likened</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">cause</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">decrease</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">account</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">postpone</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">drive</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">appear</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">provide</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">confer</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">increase</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">explore</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">publish</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">associate</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">experience</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">live</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">complete</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">base</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">give</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">overlap</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">result</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">predict</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">affect</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">affected</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">challenge</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">understand</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">contribute</data>
+    </edge>
+    <edge source="n11" target="n5">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n11" target="n6">
+      <data key="e_type">linked</data>
+    </edge>
+    <edge source="n11" target="n6">
+      <data key="e_type">lead</data>
+    </edge>
+    <edge source="n11" target="n7">
+      <data key="e_type">increase</data>
+    </edge>
+    <edge source="n11" target="n7">
+      <data key="e_type">worsen</data>
+    </edge>
+    <edge source="n11" target="n7">
+      <data key="e_type">become</data>
+    </edge>
+    <edge source="n11" target="n7">
+      <data key="e_type">obtained</data>
+    </edge>
+    <edge source="n11" target="n7">
+      <data key="e_type">protect</data>
+    </edge>
+    <edge source="n11" target="n7">
+      <data key="e_type">affect</data>
+    </edge>
+    <edge source="n11" target="n7">
+      <data key="e_type">explore</data>
+    </edge>
+    <edge source="n11" target="n7">
+      <data key="e_type">use</data>
+    </edge>
+    <edge source="n11" target="n7">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n11" target="n7">
+      <data key="e_type">live</data>
+    </edge>
+    <edge source="n11" target="n7">
+      <data key="e_type">seem</data>
+    </edge>
+    <edge source="n11" target="n7">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n11" target="n7">
+      <data key="e_type">evaluated</data>
+    </edge>
+    <edge source="n11" target="n7">
+      <data key="e_type">range</data>
+    </edge>
+    <edge source="n11" target="n7">
+      <data key="e_type">related</data>
+    </edge>
+    <edge source="n11" target="n8">
+      <data key="e_type">show</data>
+    </edge>
+    <edge source="n11" target="n8">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n11" target="n8">
+      <data key="e_type">related</data>
+    </edge>
+    <edge source="n11" target="n12">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n11" target="n13">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n11" target="n14">
+      <data key="e_type">mention</data>
+    </edge>
+    <edge source="n11" target="n14">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n11" target="n14">
+      <data key="e_type">increase</data>
+    </edge>
+    <edge source="n11" target="n14">
+      <data key="e_type">suffer</data>
+    </edge>
+    <edge source="n12" target="n5">
+      <data key="e_type">compare</data>
+    </edge>
+    <edge source="n12" target="n5">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n12" target="n5">
+      <data key="e_type">help</data>
+    </edge>
+    <edge source="n12" target="n5">
+      <data key="e_type">coded</data>
+    </edge>
+    <edge source="n12" target="n5">
+      <data key="e_type">included</data>
+    </edge>
+    <edge source="n12" target="n5">
+      <data key="e_type">show</data>
+    </edge>
+    <edge source="n12" target="n7">
+      <data key="e_type">observed</data>
+    </edge>
+    <edge source="n12" target="n7">
+      <data key="e_type">account</data>
+    </edge>
+    <edge source="n12" target="n7">
+      <data key="e_type">treat</data>
+    </edge>
+    <edge source="n12" target="n7">
+      <data key="e_type">feed</data>
+    </edge>
+    <edge source="n12" target="n7">
+      <data key="e_type">used</data>
+    </edge>
+    <edge source="n12" target="n7">
+      <data key="e_type">altered</data>
+    </edge>
+    <edge source="n12" target="n7">
+      <data key="e_type">cause</data>
+    </edge>
+    <edge source="n12" target="n7">
+      <data key="e_type">registered</data>
+    </edge>
+    <edge source="n12" target="n7">
+      <data key="e_type">arose</data>
+    </edge>
+    <edge source="n12" target="n7">
+      <data key="e_type">use</data>
+    </edge>
+    <edge source="n12" target="n7">
+      <data key="e_type">up-regulated</data>
+    </edge>
+    <edge source="n12" target="n7">
+      <data key="e_type">included</data>
+    </edge>
+    <edge source="n12" target="n7">
+      <data key="e_type">inhibit</data>
+    </edge>
+    <edge source="n12" target="n7">
+      <data key="e_type">delay</data>
+    </edge>
+    <edge source="n12" target="n7">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n12" target="n8">
+      <data key="e_type">identified</data>
+    </edge>
+    <edge source="n12" target="n9">
+      <data key="e_type">ameliorate</data>
+    </edge>
+    <edge source="n12" target="n9">
+      <data key="e_type">account</data>
+    </edge>
+    <edge source="n12" target="n9">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n12" target="n9">
+      <data key="e_type">cover</data>
+    </edge>
+    <edge source="n12" target="n9">
+      <data key="e_type">coded</data>
+    </edge>
+    <edge source="n12" target="n9">
+      <data key="e_type">study</data>
+    </edge>
+    <edge source="n12" target="n9">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n12" target="n9">
+      <data key="e_type">related</data>
+    </edge>
+    <edge source="n12" target="n9">
+      <data key="e_type">play</data>
+    </edge>
+    <edge source="n12" target="n9">
+      <data key="e_type">classified</data>
+    </edge>
+    <edge source="n12" target="n9">
+      <data key="e_type">evolve</data>
+    </edge>
+    <edge source="n12" target="n9">
+      <data key="e_type">employed</data>
+    </edge>
+    <edge source="n12" target="n10">
+      <data key="e_type">withstand</data>
+    </edge>
+    <edge source="n12" target="n10">
+      <data key="e_type">yield</data>
+    </edge>
+    <edge source="n12" target="n10">
+      <data key="e_type">used</data>
+    </edge>
+    <edge source="n12" target="n11">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n12" target="n16">
+      <data key="e_type">treated</data>
+    </edge>
+    <edge source="n12" target="n16">
+      <data key="e_type">delayed</data>
+    </edge>
+    <edge source="n12" target="n18">
+      <data key="e_type">account</data>
+    </edge>
+    <edge source="n12" target="n23">
+      <data key="e_type">labeled</data>
+    </edge>
+    <edge source="n12" target="n27">
+      <data key="e_type">apply</data>
+    </edge>
+    <edge source="n13" target="n2">
+      <data key="e_type">define</data>
+    </edge>
+    <edge source="n13" target="n2">
+      <data key="e_type">ameliorate</data>
+    </edge>
+    <edge source="n13" target="n2">
+      <data key="e_type">lower</data>
+    </edge>
+    <edge source="n13" target="n2">
+      <data key="e_type">detected</data>
+    </edge>
+    <edge source="n13" target="n2">
+      <data key="e_type">control</data>
+    </edge>
+    <edge source="n13" target="n2">
+      <data key="e_type">provide</data>
+    </edge>
+    <edge source="n13" target="n2">
+      <data key="e_type">arise</data>
+    </edge>
+    <edge source="n13" target="n2">
+      <data key="e_type">controlled</data>
+    </edge>
+    <edge source="n13" target="n2">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n13" target="n2">
+      <data key="e_type">use</data>
+    </edge>
+    <edge source="n13" target="n2">
+      <data key="e_type">determined</data>
+    </edge>
+    <edge source="n13" target="n2">
+      <data key="e_type">defined</data>
+    </edge>
+    <edge source="n13" target="n2">
+      <data key="e_type">characterized</data>
+    </edge>
+    <edge source="n13" target="n2">
+      <data key="e_type">decrease</data>
+    </edge>
+    <edge source="n13" target="n2">
+      <data key="e_type">share</data>
+    </edge>
+    <edge source="n13" target="n2">
+      <data key="e_type">facilitate</data>
+    </edge>
+    <edge source="n13" target="n2">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n13" target="n2">
+      <data key="e_type">undergo</data>
+    </edge>
+    <edge source="n13" target="n2">
+      <data key="e_type">manage</data>
+    </edge>
+    <edge source="n13" target="n2">
+      <data key="e_type">contribute</data>
+    </edge>
+    <edge source="n13" target="n2">
+      <data key="e_type">followed</data>
+    </edge>
+    <edge source="n13" target="n2">
+      <data key="e_type">classified</data>
+    </edge>
+    <edge source="n13" target="n2">
+      <data key="e_type">base</data>
+    </edge>
+    <edge source="n13" target="n3">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n13" target="n5">
+      <data key="e_type">estimate</data>
+    </edge>
+    <edge source="n13" target="n5">
+      <data key="e_type">show</data>
+    </edge>
+    <edge source="n13" target="n5">
+      <data key="e_type">represent</data>
+    </edge>
+    <edge source="n13" target="n5">
+      <data key="e_type">followed</data>
+    </edge>
+    <edge source="n13" target="n5">
+      <data key="e_type">carry</data>
+    </edge>
+    <edge source="n13" target="n5">
+      <data key="e_type">remain</data>
+    </edge>
+    <edge source="n13" target="n5">
+      <data key="e_type">emerge</data>
+    </edge>
+    <edge source="n13" target="n5">
+      <data key="e_type">become</data>
+    </edge>
+    <edge source="n13" target="n5">
+      <data key="e_type">lead</data>
+    </edge>
+    <edge source="n13" target="n5">
+      <data key="e_type">type</data>
+    </edge>
+    <edge source="n13" target="n5">
+      <data key="e_type">predict</data>
+    </edge>
+    <edge source="n13" target="n5">
+      <data key="e_type">increase</data>
+    </edge>
+    <edge source="n13" target="n5">
+      <data key="e_type">associate</data>
+    </edge>
+    <edge source="n13" target="n5">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n13" target="n5">
+      <data key="e_type">live</data>
+    </edge>
+    <edge source="n13" target="n5">
+      <data key="e_type">cause</data>
+    </edge>
+    <edge source="n13" target="n5">
+      <data key="e_type">confer</data>
+    </edge>
+    <edge source="n13" target="n6">
+      <data key="e_type">estimate</data>
+    </edge>
+    <edge source="n13" target="n6">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n13" target="n6">
+      <data key="e_type">manage</data>
+    </edge>
+    <edge source="n13" target="n7">
+      <data key="e_type">display</data>
+    </edge>
+    <edge source="n13" target="n7">
+      <data key="e_type">recognized</data>
+    </edge>
+    <edge source="n13" target="n7">
+      <data key="e_type">linked</data>
+    </edge>
+    <edge source="n13" target="n7">
+      <data key="e_type">diagnose</data>
+    </edge>
+    <edge source="n13" target="n7">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n13" target="n11">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n13" target="n14">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n13" target="n24">
+      <data key="e_type">correlated</data>
+    </edge>
+    <edge source="n14" target="n5">
+      <data key="e_type">receive</data>
+    </edge>
+    <edge source="n14" target="n5">
+      <data key="e_type">tolerate</data>
+    </edge>
+    <edge source="n14" target="n5">
+      <data key="e_type">associate</data>
+    </edge>
+    <edge source="n14" target="n5">
+      <data key="e_type">live</data>
+    </edge>
+    <edge source="n14" target="n5">
+      <data key="e_type">increase</data>
+    </edge>
+    <edge source="n14" target="n5">
+      <data key="e_type">move</data>
+    </edge>
+    <edge source="n14" target="n5">
+      <data key="e_type">fall</data>
+    </edge>
+    <edge source="n14" target="n5">
+      <data key="e_type">defined</data>
+    </edge>
+    <edge source="n14" target="n5">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n14" target="n7">
+      <data key="e_type">achieve</data>
+    </edge>
+    <edge source="n14" target="n7">
+      <data key="e_type">experienced</data>
+    </edge>
+    <edge source="n14" target="n7">
+      <data key="e_type">form</data>
+    </edge>
+    <edge source="n14" target="n7">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n14" target="n8">
+      <data key="e_type">indicate</data>
+    </edge>
+    <edge source="n14" target="n8">
+      <data key="e_type">compare</data>
+    </edge>
+    <edge source="n14" target="n8">
+      <data key="e_type">bother</data>
+    </edge>
+    <edge source="n14" target="n11">
+      <data key="e_type">suffer</data>
+    </edge>
+    <edge source="n14" target="n11">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n14" target="n11">
+      <data key="e_type">work</data>
+    </edge>
+    <edge source="n14" target="n13">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n14" target="n24">
+      <data key="e_type">start</data>
+    </edge>
+    <edge source="n15" target="n2">
+      <data key="e_type">decrease</data>
+    </edge>
+    <edge source="n15" target="n5">
+      <data key="e_type">lead</data>
+    </edge>
+    <edge source="n15" target="n5">
+      <data key="e_type">consist</data>
+    </edge>
+    <edge source="n15" target="n5">
+      <data key="e_type">accelerate</data>
+    </edge>
+    <edge source="n15" target="n5">
+      <data key="e_type">represent</data>
+    </edge>
+    <edge source="n15" target="n5">
+      <data key="e_type">account</data>
+    </edge>
+    <edge source="n15" target="n5">
+      <data key="e_type">influence</data>
+    </edge>
+    <edge source="n15" target="n5">
+      <data key="e_type">result</data>
+    </edge>
+    <edge source="n15" target="n5">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n15" target="n5">
+      <data key="e_type">produce</data>
+    </edge>
+    <edge source="n15" target="n5">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n15" target="n5">
+      <data key="e_type">predict</data>
+    </edge>
+    <edge source="n15" target="n7">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n16" target="n5">
+      <data key="e_type">require</data>
+    </edge>
+    <edge source="n16" target="n5">
+      <data key="e_type">characterized</data>
+    </edge>
+    <edge source="n16" target="n5">
+      <data key="e_type">contribute</data>
+    </edge>
+    <edge source="n16" target="n5">
+      <data key="e_type">categorized</data>
+    </edge>
+    <edge source="n16" target="n5">
+      <data key="e_type">affect</data>
+    </edge>
+    <edge source="n16" target="n5">
+      <data key="e_type">focus</data>
+    </edge>
+    <edge source="n16" target="n5">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n16" target="n5">
+      <data key="e_type">cause</data>
+    </edge>
+    <edge source="n16" target="n6">
+      <data key="e_type">occur</data>
+    </edge>
+    <edge source="n16" target="n7">
+      <data key="e_type">ignored</data>
+    </edge>
+    <edge source="n16" target="n7">
+      <data key="e_type">suggest</data>
+    </edge>
+    <edge source="n16" target="n7">
+      <data key="e_type">found</data>
+    </edge>
+    <edge source="n16" target="n7">
+      <data key="e_type">account</data>
+    </edge>
+    <edge source="n16" target="n7">
+      <data key="e_type">remain</data>
+    </edge>
+    <edge source="n16" target="n7">
+      <data key="e_type">monitored</data>
+    </edge>
+    <edge source="n16" target="n7">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n16" target="n7">
+      <data key="e_type">inhibit</data>
+    </edge>
+    <edge source="n16" target="n7">
+      <data key="e_type">use</data>
+    </edge>
+    <edge source="n16" target="n7">
+      <data key="e_type">assess</data>
+    </edge>
+    <edge source="n16" target="n7">
+      <data key="e_type">extracted</data>
+    </edge>
+    <edge source="n16" target="n8">
+      <data key="e_type">suspected</data>
+    </edge>
+    <edge source="n16" target="n8">
+      <data key="e_type">enable</data>
+    </edge>
+    <edge source="n16" target="n8">
+      <data key="e_type">cause</data>
+    </edge>
+    <edge source="n16" target="n10">
+      <data key="e_type">treated</data>
+    </edge>
+    <edge source="n16" target="n10">
+      <data key="e_type">identify</data>
+    </edge>
+    <edge source="n16" target="n10">
+      <data key="e_type">take</data>
+    </edge>
+    <edge source="n16" target="n10">
+      <data key="e_type">influenced</data>
+    </edge>
+    <edge source="n16" target="n10">
+      <data key="e_type">prevent</data>
+    </edge>
+    <edge source="n16" target="n10">
+      <data key="e_type">balance</data>
+    </edge>
+    <edge source="n16" target="n10">
+      <data key="e_type">trigger</data>
+    </edge>
+    <edge source="n16" target="n10">
+      <data key="e_type">show</data>
+    </edge>
+    <edge source="n16" target="n18">
+      <data key="e_type">follow</data>
+    </edge>
+    <edge source="n16" target="n24">
+      <data key="e_type">exist</data>
+    </edge>
+    <edge source="n17" target="n7">
+      <data key="e_type">proposed</data>
+    </edge>
+    <edge source="n18" target="n5">
+      <data key="e_type">tend</data>
+    </edge>
+    <edge source="n18" target="n5">
+      <data key="e_type">undergo</data>
+    </edge>
+    <edge source="n18" target="n5">
+      <data key="e_type">underlie</data>
+    </edge>
+    <edge source="n18" target="n5">
+      <data key="e_type">documented</data>
+    </edge>
+    <edge source="n18" target="n5">
+      <data key="e_type">report</data>
+    </edge>
+    <edge source="n18" target="n5">
+      <data key="e_type">occur</data>
+    </edge>
+    <edge source="n18" target="n7">
+      <data key="e_type">result</data>
+    </edge>
+    <edge source="n18" target="n7">
+      <data key="e_type">define</data>
+    </edge>
+    <edge source="n18" target="n7">
+      <data key="e_type">stand</data>
+    </edge>
+    <edge source="n18" target="n7">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n18" target="n7">
+      <data key="e_type">present</data>
+    </edge>
+    <edge source="n18" target="n7">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n18" target="n7">
+      <data key="e_type">reduce</data>
+    </edge>
+    <edge source="n18" target="n8">
+      <data key="e_type">identified</data>
+    </edge>
+    <edge source="n18" target="n10">
+      <data key="e_type">achieve</data>
+    </edge>
+    <edge source="n18" target="n10">
+      <data key="e_type">identified</data>
+    </edge>
+    <edge source="n18" target="n10">
+      <data key="e_type">encounter</data>
+    </edge>
+    <edge source="n18" target="n17">
+      <data key="e_type">improve</data>
+    </edge>
+    <edge source="n19" target="n5">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n19" target="n7">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n19" target="n7">
+      <data key="e_type">affected</data>
+    </edge>
+    <edge source="n19" target="n10">
+      <data key="e_type">influence</data>
+    </edge>
+    <edge source="n19" target="n24">
+      <data key="e_type">undergo</data>
+    </edge>
+    <edge source="n20" target="n5">
+      <data key="e_type">reported</data>
+    </edge>
+    <edge source="n20" target="n5">
+      <data key="e_type">carry</data>
+    </edge>
+    <edge source="n21" target="n7">
+      <data key="e_type">develop</data>
+    </edge>
+    <edge source="n21" target="n8">
+      <data key="e_type">characterized</data>
+    </edge>
+    <edge source="n21" target="n12">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n21" target="n23">
+      <data key="e_type">comprise</data>
+    </edge>
+    <edge source="n21" target="n23">
+      <data key="e_type">studied</data>
+    </edge>
+    <edge source="n21" target="n23">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n21" target="n23">
+      <data key="e_type">characterised</data>
+    </edge>
+    <edge source="n21" target="n23">
+      <data key="e_type">characterized</data>
+    </edge>
+    <edge source="n21" target="n24">
+      <data key="e_type">studied</data>
+    </edge>
+    <edge source="n21" target="n27">
+      <data key="e_type">comprise</data>
+    </edge>
+    <edge source="n21" target="n27">
+      <data key="e_type">studied</data>
+    </edge>
+    <edge source="n21" target="n27">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n22" target="n5">
+      <data key="e_type">account</data>
+    </edge>
+    <edge source="n22" target="n7">
+      <data key="e_type">develop</data>
+    </edge>
+    <edge source="n22" target="n7">
+      <data key="e_type">evolve</data>
+    </edge>
+    <edge source="n22" target="n8">
+      <data key="e_type">appear</data>
+    </edge>
+    <edge source="n22" target="n9">
+      <data key="e_type">worsen</data>
+    </edge>
+    <edge source="n22" target="n12">
+      <data key="e_type">transform</data>
+    </edge>
+    <edge source="n23" target="n7">
+      <data key="e_type">arose</data>
+    </edge>
+    <edge source="n23" target="n8">
+      <data key="e_type">characterized</data>
+    </edge>
+    <edge source="n23" target="n10">
+      <data key="e_type">achieve</data>
+    </edge>
+    <edge source="n23" target="n12">
+      <data key="e_type">develop</data>
+    </edge>
+    <edge source="n23" target="n21">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n23" target="n21">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n23" target="n22">
+      <data key="e_type">feature</data>
+    </edge>
+    <edge source="n23" target="n24">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n23" target="n26">
+      <data key="e_type">show</data>
+    </edge>
+    <edge source="n23" target="n26">
+      <data key="e_type">distinguished</data>
+    </edge>
+    <edge source="n23" target="n26">
+      <data key="e_type">reveal</data>
+    </edge>
+    <edge source="n23" target="n26">
+      <data key="e_type">shorten</data>
+    </edge>
+    <edge source="n23" target="n26">
+      <data key="e_type">occur</data>
+    </edge>
+    <edge source="n23" target="n27">
+      <data key="e_type">decrease</data>
+    </edge>
+    <edge source="n23" target="n27">
+      <data key="e_type">progress</data>
+    </edge>
+    <edge source="n23" target="n27">
+      <data key="e_type">occur</data>
+    </edge>
+    <edge source="n24" target="n1">
+      <data key="e_type">restore</data>
+    </edge>
+    <edge source="n24" target="n2">
+      <data key="e_type">assessed</data>
+    </edge>
+    <edge source="n24" target="n4">
+      <data key="e_type">target</data>
+    </edge>
+    <edge source="n24" target="n5">
+      <data key="e_type">sensitize</data>
+    </edge>
+    <edge source="n24" target="n5">
+      <data key="e_type">short</data>
+    </edge>
+    <edge source="n24" target="n5">
+      <data key="e_type">associated</data>
+    </edge>
+    <edge source="n24" target="n5">
+      <data key="e_type">follow</data>
+    </edge>
+    <edge source="n24" target="n5">
+      <data key="e_type">included</data>
+    </edge>
+    <edge source="n24" target="n6">
+      <data key="e_type">quantified</data>
+    </edge>
+    <edge source="n24" target="n7">
+      <data key="e_type">develop</data>
+    </edge>
+    <edge source="n24" target="n7">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n24" target="n7">
+      <data key="e_type">considered</data>
+    </edge>
+    <edge source="n24" target="n7">
+      <data key="e_type">serve</data>
+    </edge>
+    <edge source="n24" target="n7">
+      <data key="e_type">treated</data>
+    </edge>
+    <edge source="n24" target="n7">
+      <data key="e_type">reduce</data>
+    </edge>
+    <edge source="n24" target="n8">
+      <data key="e_type">experience</data>
+    </edge>
+    <edge source="n24" target="n9">
+      <data key="e_type">marked</data>
+    </edge>
+    <edge source="n24" target="n9">
+      <data key="e_type">progress</data>
+    </edge>
+    <edge source="n24" target="n10">
+      <data key="e_type">demonstrate</data>
+    </edge>
+    <edge source="n24" target="n10">
+      <data key="e_type">overcome</data>
+    </edge>
+    <edge source="n24" target="n11">
+      <data key="e_type">viewed</data>
+    </edge>
+    <edge source="n24" target="n11">
+      <data key="e_type">develop</data>
+    </edge>
+    <edge source="n24" target="n11">
+      <data key="e_type">transform</data>
+    </edge>
+    <edge source="n24" target="n11">
+      <data key="e_type">elevated</data>
+    </edge>
+    <edge source="n24" target="n12">
+      <data key="e_type">fail</data>
+    </edge>
+    <edge source="n24" target="n12">
+      <data key="e_type">represent</data>
+    </edge>
+    <edge source="n24" target="n12">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n24" target="n15">
+      <data key="e_type">assess</data>
+    </edge>
+    <edge source="n24" target="n16">
+      <data key="e_type">marked</data>
+    </edge>
+    <edge source="n24" target="n17">
+      <data key="e_type">improve</data>
+    </edge>
+    <edge source="n24" target="n18">
+      <data key="e_type">develop</data>
+    </edge>
+    <edge source="n24" target="n18">
+      <data key="e_type">followed</data>
+    </edge>
+    <edge source="n24" target="n20">
+      <data key="e_type">linked</data>
+    </edge>
+    <edge source="n24" target="n22">
+      <data key="e_type">discriminated</data>
+    </edge>
+    <edge source="n24" target="n25">
+      <data key="e_type">expressed</data>
+    </edge>
+    <edge source="n24" target="n28">
+      <data key="e_type">develop</data>
+    </edge>
+    <edge source="n25" target="n5">
+      <data key="e_type">lead</data>
+    </edge>
+    <edge source="n25" target="n5">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n25" target="n15">
+      <data key="e_type">progress</data>
+    </edge>
+    <edge source="n26" target="n21">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n26" target="n21">
+      <data key="e_type">express</data>
+    </edge>
+    <edge source="n26" target="n23">
+      <data key="e_type">reveal</data>
+    </edge>
+    <edge source="n26" target="n23">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n26" target="n23">
+      <data key="e_type">exclude</data>
+    </edge>
+    <edge source="n26" target="n24">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n26" target="n27">
+      <data key="e_type">reveal</data>
+    </edge>
+    <edge source="n26" target="n27">
+      <data key="e_type">consider</data>
+    </edge>
+    <edge source="n26" target="n27">
+      <data key="e_type">precede</data>
+    </edge>
+    <edge source="n26" target="n27">
+      <data key="e_type">reduced</data>
+    </edge>
+    <edge source="n27" target="n5">
+      <data key="e_type">impact</data>
+    </edge>
+    <edge source="n27" target="n12">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n27" target="n21">
+      <data key="e_type">share</data>
+    </edge>
+    <edge source="n27" target="n21">
+      <data key="e_type">classified</data>
+    </edge>
+    <edge source="n27" target="n21">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n27" target="n21">
+      <data key="e_type">express</data>
+    </edge>
+    <edge source="n27" target="n21">
+      <data key="e_type">belong</data>
+    </edge>
+    <edge source="n27" target="n23">
+      <data key="e_type">observed</data>
+    </edge>
+    <edge source="n27" target="n23">
+      <data key="e_type">labeled</data>
+    </edge>
+    <edge source="n27" target="n23">
+      <data key="e_type">see</data>
+    </edge>
+    <edge source="n27" target="n23">
+      <data key="e_type">complicated</data>
+    </edge>
+    <edge source="n27" target="n24">
+      <data key="e_type">include</data>
+    </edge>
+    <edge source="n27" target="n26">
+      <data key="e_type">express</data>
+    </edge>
+    <edge source="n28" target="n2">
+      <data key="e_type">investigated</data>
+    </edge>
+  </graph>
+</graphml>

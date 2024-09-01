@@ -1,6 +1,6 @@
 
 ; !(include! &corelib stdlib_mettalog)
-!(import! &self stdlib_mettalog)
+; !(import! &self stdlib_mettalog)
 
 
 ; This script demonstrates how one can document MeTTa code and get
@@ -16,8 +16,8 @@
 			  (@param "First argument")
 			  (@param "Second argument")
 			  ))
-	 (@return "Return value")
-	 )
+	 (@return "Return value"))
+
 ; Function type is required to document the function
 (: Arg1Type Type)
 (: Arg2Type Type)
@@ -123,6 +123,83 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Converted Rust Tests with Original Source
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Original:
+;; #[test]
+;; fn test_error_is_used_as_an_argument() {
+;;     let metta = Metta::new(Some(EnvBuilder::test_env()));
+;;     let parser = SExprParser::new(r#"
+;;!(get-type Error)
+;;!(get-metatype Error)
+;;!(get-type (Error Foo Boo))
+;;!(Error (+ 1 2) (+ 1 +))
+;;     "#);
+;;     assert_eq_metta_results!(metta.run(parser), Ok(vec![
+;;         vec![expr!("->" "Atom" "Atom" "ErrorType")],
+;;         vec![expr!("Symbol")],
+;;         vec![expr!("ErrorType")],
+;;         vec![expr!("Error" ({SumOp{}} {Number::Integer(1)} {Number::Integer(2)}) ({SumOp{}} {Number::Integer(1)} {SumOp{}}))],
+;;     ]));
+;; }
+;; Converted:
+!(assertEqualToResults (get-type Error) (-> Atom Atom ErrorType))
+!(assertEqualToResults (get-metatype Error) (Symbol))
+!(assertEqualToResults (get-type (Error Foo Boo)) (ErrorType))
+!(assertEqualToResults (Error (+ 1 2) (+ 1 +)) (Error ({SumOp{}} {Number::Integer(1)} {Number::Integer(2)}) ({SumOp{}} {Number::Integer(1)} {SumOp{}})))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ;;;;;;;;;;;;;;;;;;;;;;
 ; Unify
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -181,7 +258,44 @@
 ;;         vec![EMPTY_SYMBOL]);
 ;; }
 !(assertEqualToResult (eval (get-type (f 42) &self)) (String))
-!(assertEqual (eval (get-type (f "test") &self)) (Empty))
+!(assertEqual (eval (get-type (f "test") &self)) (empty))
+
+;; Original:
+;; #[test]
+;; fn metta_car_atom() {
+;;     let result = run_program("!(eval (car-atom (A $b)))");
+;;     assert_eq!(result, Ok(vec![vec![expr!("A")]]));
+;;     let result = run_program("!(eval (car-atom ($a B)))");
+;;     assert_eq!(result, Ok(vec![vec![expr!(a)]]));
+;;     let result = run_program("!(eval (car-atom ()))");
+;;     assert_eq!(result, Ok(vec![vec![expr!("Error" ("car-atom" ()) {Str::from_str("car-atom expects a non-empty expression as an argument")})]]));
+;;     let result = run_program("!(eval (car-atom A))");
+;;     assert_eq!(result, Ok(vec![vec![expr!("Error" ("car-atom" "A") {Str::from_str("car-atom expects a non-empty expression as an argument")})]]));
+;; }
+
+;; Converted:
+!(assertEqual (eval (car-atom (A $b))) (A))
+!(assertEqual (eval (car-atom ($a B))) (a))
+!(assertEqual (eval (car-atom ())) (Error (car-atom ()) "car-atom expects a non-empty expression as an argument"))
+!(assertEqual (eval (car-atom A)) (Error (car-atom "A") "car-atom expects a non-empty expression as an argument"))
+
+;; Original:
+;; #[test]
+;; fn metta_cdr_atom() {
+;;     assert_eq!(run_program(&format!("!(cdr-atom (a b c))")), Ok(vec![vec![expr!("b" "c")]]));
+;;     assert_eq!(run_program(&format!("!(cdr-atom ($a b $c))")), Ok(vec![vec![expr!("b" c)]]));
+;;     assert_eq!(run_program(&format!("!(cdr-atom ())")), Ok(vec![vec![expr!("Error" ("cdr-atom" ()) {Str::from_str("cdr-atom expects a non-empty expression as an argument")})]]));
+;;     assert_eq!(run_program(&format!("!(cdr-atom a)")), Ok(vec![vec![expr!("Error" ("cdr-atom" "a") {Str::from_str("cdr-atom expects a non-empty expression as an argument")})]]));
+;;     assert_eq!(run_program(&format!("!(cdr-atom $a)")), Ok(vec![vec![expr!("Error" ("cdr-atom" a) {Str::from_str("cdr-atom expects a non-empty expression as an argument")})]]));
+;; }
+
+;; Converted:
+!(assertEqual (eval (cdr-atom (a b c))) (b c))
+!(assertEqual (eval (cdr-atom ($a b $c))) (b c))
+!(assertEqual (eval (cdr-atom ())) (Error (cdr-atom ()) "cdr-atom expects a non-empty expression as an argument"))
+!(assertEqual (eval (cdr-atom a)) (Error (cdr-atom "a") "cdr-atom expects a non-empty expression as an argument"))
+!(assertEqual (eval (cdr-atom $a)) (Error (cdr-atom a) "cdr-atom expects a non-empty expression as an argument"))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ; Metta Switch
@@ -204,6 +318,7 @@
 ;!(assertEqualToResult (switch (A $b) ( (($a B) ($b $a)) ((B C) (C B)) )) ((B A)(B A)(B A)(B A)))
 ;!(assertEqualToResult (case (A $b) ( (($a B) ($b $a)) ((B C) (C B)) )) ((B A)(B A)(B A)(B A)))
 
+!(assertEqual (eval (switch (A $b) ( ((B C) (C B)) (($a B) ($b $a))) )) (B A))
 !(assertEqual (eval (switch (A $b) ( (($a B) ($b $a)) ((B C) (C B)) ))) (B A))
 !(assertEqual (eval (switch (A $b) ( ((B C) (C B)) (($a B) ($b $a)) ))) (B A))
 !(assertEqual (eval (switch (A $b) ( ((B C) (C B)) ((D E) (E B)) ))) ())
@@ -242,15 +357,9 @@
 ;;     assert_eq!(result, Ok(vec![vec![expr!({Bool(false)})]]));
 ;; }
 ;; Evaluates if given expressions are recognized as functions.
-
-(= (Bool $x) $x)
-
-!(assertEqual (eval (is-function (-> $t))) (Bool True))
-!(assertEqual (eval (is-function (A $t))) (Bool False))
-!(assertEqual (eval (is-function %Undefined%)) (Bool False))
-
-
-!(halt!)
+!(assertEqual (eval (is-function (-> $t))) True)
+!(assertEqual (eval (is-function (A $t))) False)
+!(assertEqual (eval (is-function %Undefined%)) False)
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ; Metta Type-Cast
@@ -268,9 +377,12 @@
 ;;     assert_eq!(run_program("!(eval (type-cast 42 Grounded &self))"), Ok(vec![vec![expr!({(42)})]]));
 ;;     assert_eq!(run_program("!(eval (type-cast () Expression &self))"), Ok(vec![vec![expr!()]]));
 ;;     assert_eq!(run_program("!(eval (type-cast (a b) Expression &self))"), Ok(vec![vec![expr!("a" "b")]]));
+;; NEW TODO     assert_eq!(run_program("!(eval (type-cast $v Variable &self))"), Ok(vec![vec![expr!(v)]]));
+;; NEW TODO     assert_eq!(run_program("(: a A) (: b B) !(eval (type-cast (a b) (A B) &self))"), Ok(vec![vec![expr!("a" "b")]]));
+;; NEW TODO     assert_eq!(run_program("(: a A) (: a B) !(eval (type-cast a A &self))"), Ok(vec![vec![expr!("a")]]));
 ;; }
 ;; Type-cast operations with various types and validation checks.
-; !(assertEqual (eval (type-cast a B &self)) (Error "a" "BadType"))
+!(assertEqual (eval (type-cast a B &self)) (Error a BadType))
 !(assertEqual (eval (type-cast 42 Number &self)) 42)
 !(assertEqual (eval (type-cast 42 %Undefined% &self)) 42)
 !(assertEqual (eval (type-cast 42 Grounded &self)) 42)
@@ -278,10 +390,17 @@
 !(assertEqual (eval (type-cast (a b) Expression &self)) (a b))
 (: a A)
 !(assertEqual (eval (type-cast a A &self)) a)
-!(assertEqual (eval (type-cast a B &self)) (Error "a" "BadType"))
+!(assertEqual (eval (type-cast a B &self)) (Error a BadType))
 !(assertEqual (eval (type-cast a %Undefined% &self)) a)
 !(assertEqual (eval (type-cast a Atom &self)) a)
 !(assertEqual (eval (type-cast a Symbol &self)) a)
+
+;; NEW TODOs
+!(assertEqual (eval (type-cast $v Variable &self)) $v)
+(: a A) (: b B)
+!(assertEqual (eval (type-cast (a b) (A B) &self)) (a b))
+(: a A) (: a B)
+!(assertEqual (eval (type-cast a A &self)) a)
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ; Metta Filter-Atom
@@ -307,7 +426,7 @@
 ;; }
 ;; Applying a function to each atom in a list and returning a new list with the results.
 !(assertEqual (eval (map-atom () $x ($x 'mapped))) ())
-!(assertEqual (eval (map-atom (a (b) $c) $x (mapped $x))) (("mapped" a) ("mapped" (b)) ("mapped" c)))
+!(assertEqual (eval (map-atom (a (b) $c) $x (mapped $x))) ((mapped a) (mapped (b)) (mapped c)))
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ; Metta Foldl-Atom
@@ -541,9 +660,206 @@
 !(assertEqualToResult (bar) (A) (Error "Expected: [A] Got: [C] Missed result: A"))
 !(assertEqualToResult (baz) (D) (Error "Expected: [D] Got: [D, D] Excessive result: D"))
 
+
+
+
+
+;; Original:
+;; #[test]
+;; fn test_variable_keeps_value_in_different_sub_expressions() {
+;;     let program = "
+;;      (= (eq $x $x) True)
+;;      (= (plus Z $y) $y)
+;;      (= (plus (S $k) $y) (S (plus $k $y)))
+;;      
+;;      !(metta (eq (plus Z $n) $n) %Undefined% &self)
+;;      !(metta (eq (plus (S Z) $n) $n) %Undefined% &self)
+;;     ";
+;;     assert_eq_metta_results!(run_program(program),
+;;         Ok(vec![vec![expr!({Bool(true)})], vec![expr!("eq" ("S" n) n)]]));
+;; }
+
+;; Converted:
+(= (eq $x $x) True)
+(= (plus Z $y) $y)
+(= (plus (S $k) $y) (S (plus $k $y)))
+!(assertEqual (metta (eq (plus Z $n) $n) %Undefined% &self) (True))
+!(assertEqual (metta (eq (plus (S Z) $n) $n) %Undefined% &self) ("eq" ("S" n) n))
+
+;; Original:
+;; #[test]
+;; fn test_variable_defined_via_variable() {
+;;     let program = "
+;;      (= (myif T $y) $y)
+;;      (= (mynot F) T)
+;;      (= (a $z) (mynot (b $z)))
+;;      (= (b d) F)
+;;      
+;;      !(metta (myif (a $x) $x) %Undefined% &self)
+;;     ";
+;;     assert_eq_metta_results!(run_program(program),
+;;         Ok(vec![vec![expr!("d")]]));
+;; }
+
+;; Converted:
+(= (myif T $y) $y)
+(= (mynot F) T)
+(= (a $z) (mynot (b $z)))
+(= (b d) F)
+!(assertEqual (metta (myif (a $x) $x) %Undefined% &self) d)
+
+;; Original:
+;; #[test]
+;; fn test_variable_name_conflict() {
+;;     let program = "
+;;      (= (a ($W)) True)
+;;      
+;;      !(metta (a $W) %Undefined% &self)
+;;     ";
+;;     assert_eq_metta_results!(run_program(program),
+;;         Ok(vec![vec![expr!({Bool(true)})]]));
+;; }
+
+;; Converted:
+(= (a ($W)) True)
+!(assertEqual (metta (a $W) %Undefined% &self) True)
+
+;; Original:
+;; #[test]
+;; fn test_variable_name_conflict_renaming() {
+;;     let program = "
+;;      (= (b ($x $y)) (c $x $y))
+;;      
+;;      !(metta (a (b $a) $x $y) %Undefined% &self)
+;;     ";
+;;     let result = run_program(program);
+;;     assert!(result.is_ok_and(|res| res.len() == 1 && res[0].len() == 1 &&
+;;         atoms_are_equivalent(&res[0][0], &expr!("a" ("c" a b) c d))));
+;; }
+
+;; Converted:
+(= (b ($x $y)) (c $x $y))
+!(assertEqual (metta (a (b $a) $x $y) %Undefined% &self) (a (c a b) c d))
+
+;; Original:
+;; #[test]
+;; fn test_operation_is_expression() {
+;;     let program = "
+;;      (: foo (-> (-> A A)))
+;;      (: a A)
+;;      (= (foo) bar)
+;;      (= (bar $x) $x)
+;;      
+;;      !(metta ((foo) a) %Undefined% &self)
+;;     ";
+;;     assert_eq_metta_results!(run_program(program), Ok(vec![vec![expr!("a")]]));
+;; }
+
+;; Converted:
+(: foo (-> (-> A A)))
+(: a A)
+(= (foo) bar)
+(= (bar $x) $x)
+!(assertEqual (metta ((foo) a) %Undefined% &self) a)
+
+;; Original:
+;; static ID_NUM: &Operation = &Operation{
+;;     name: "id_num",
+;;     execute: |_, args| {
+;;         let arg_error = || ExecError::from("id_num expects one argument: number");
+;;         let num = args.get(0).ok_or_else(arg_error)?;
+;;         Ok(vec![num.clone()])
+;;     },
+;;     typ: "(-> Number Number)",
+;; };
+
+;; Converted:
+;; (Not directly translatable to MeTTa, as it's Rust-specific operation)
+
+;; Original:
+;; #[test]
+;; fn test_return_bad_type_error() {
+;;     let program1 = "
+;;      (: myAtom myType)
+;;      (: id_a (-> A A))
+;;      (= (id_a $a) $a)
+;;      
+;;      !(metta (id_a myAtom) %Undefined% &self)
+;;     ";
+;;     let metta = Metta::new(Some(EnvBuilder::test_env()));
+;;     metta.tokenizer().borrow_mut().register_token(Regex::new("id_num").unwrap(),
+;;         |_| Atom::gnd(ID_NUM));
+;;     assert_eq!(metta.run(SExprParser::new(program1)),
+;;         Ok(vec![vec![expr!("Error" "myAtom" "BadType")]]));
+;;     let program2 = "
+;;      !(metta (id_num myAtom) %Undefined% &self)
+;;     ";
+;;     assert_eq!(metta.run(SExprParser::new(program2)),
+;;         Ok(vec![vec![expr!("Error" "myAtom" "BadType")]]));
+;; }
+
+;; Converted:
+(: myAtom myType)
+(: id_a (-> A A))
+(= (id_a $a) $a)
+!(assertEqual (metta (id_a myAtom) %Undefined% &self) (Error myAtom BadType))
+!(assertEqual (metta (id_num myAtom) %Undefined% &self) (Error myAtom BadType))
+
+;; Original:
+;; #[test]
+;; fn test_return_incorrect_number_of_args_error() {
+;;     let program1 = "
+;;      (: a A)
+;;      (: b B)
+;;      (: c C)
+;;      (: foo (-> A B C))
+;;      (= (foo $a $b) c)
+;;      
+;;      !(metta (foo a b) %Undefined% &self)
+;;     ";
+;;     let metta = Metta::new(Some(EnvBuilder::test_env()));
+;;     metta.tokenizer().borrow_mut().register_token(Regex::new("id_num").unwrap(),
+;;         |_| Atom::gnd(ID_NUM));
+;;     assert_eq!(metta.run(SExprParser::new(program1)),
+;;         Ok(vec![vec![expr!("c")]]));
+
+;;     let program2 = "!(metta (foo a) %Undefined% &self)";
+
+;;     assert_eq!(metta.run(SExprParser::new(program2)),
+;;         Ok(vec![vec![expr!("Error" ("foo" "a") "IncorrectNumberOfArguments")]]));
+
+;;     let program3 = "!(metta (foo a b c) %Undefined% &self)";
+
+;;     assert_eq!(metta.run(SExprParser::new(program3)),
+;;         Ok(vec![vec![expr!("Error" ("foo" "a" "b" "c") "IncorrectNumberOfArguments")]]));
+;; }
+
+;; Converted:
+(: a A)
+(: b B)
+(: c C)
+(: foo (-> A B C))
+(= (foo $a $b) c)
+!(assertEqual (metta (foo a b) %Undefined% &self) c)
+!(assertEqual (metta (foo a) %Undefined% &self) (Error (foo a) IncorrectNumberOfArguments))
+!(assertEqual (metta (foo a b c) %Undefined% &self) (Error (foo a b c) IncorrectNumberOfArguments))
+
+;; Original:
+;; #[test]
+;; fn use_sealed_to_make_scoped_variable() {
+;;     assert_eq!(run_program("!(let $x (input $x) (output $x))"), Ok(vec![vec![]]));
+;;     assert_eq!(run_program("!(let (quote ($sv $st)) (sealed ($x) (quote ($x (output $x))))
+;;            (let $sv (input $x) $st))"), Ok(vec![vec![expr!("output" ("input" x))]]));
+;; }
+
+;; Converted:
+!(assertEqual (let $x (input $x) (output $x)) ())
+!(assertEqual (let (quote ($sv $st)) (sealed ($x) (quote ($x (output $x)))) (let $sv (input $x) $st)) ("output" ("input" x)))
+
 ;;;;;;;;;;;;;;;;;;;;;;
 ; Test Pragma Interpreter Bare Minimal
 ;;;;;;;;;;;;;;;;;;;;;;
+
 ;; #[test]
 ;; fn test_pragma_interpreter_bare_minimal() {
 ;;     let program = "
@@ -568,5 +884,280 @@
 ;;;; tref.register_token(regex(r"register-module!"), move |_| { register_module_op.clone() });
 ;;;; tref.register_token(regex(r"mod-space!"), move |_| { mod_space_op.clone() });
 ;;;; tref.register_token(regex(r"print-mods!"), move |_| { print_mods_op.clone() });
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Un-commented Rust Tests with Original Source
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; Original: 
+;; #[test]
+;; fn println_op() {
+;;     assert_eq!(PrintlnOp{}.execute(&mut vec![sym!("A")]), unit_result());
+;; }
+;; Converted:
+!(assertEqual (println! "A") ())
 
+;; Original: 
+;; #[test]
+;; fn trace_op() {
+;;     assert_eq!(TraceOp{}.execute(&mut vec![sym!("\"Here?\""), sym!("42")]),
+;;                Ok(vec![sym!("42")]));
+;; }
+;; Converted:
+!(assertEqual (trace! "Here?" 42) 42)
+
+;; Original:
+;; #[test]
+;; fn nop_op() {
+;;     assert_eq!(NopOp{}.execute(&mut vec![]), unit_result());
+;; }
+;; Converted:
+!(assertEqual (nop) ())
+
+;; Original:
+;; #[test]
+;; fn let_op() {
+;;     assert_eq!(LetOp{}.execute(&mut vec![expr!(a b), expr!("A" "B"), expr!(b a)]),
+;;         Ok(vec![expr!("B" "A")]));
+;; }
+;; Converted:
+!(assertEqual (($a $b) (A B) ($b $a)) (B A))
+
+;; Original:
+;; #[test]
+;; fn let_op_external_vars_at_right_are_kept_untouched() {
+;;     assert_eq!(LetOp{}.execute(&mut vec![expr!(t), expr!(ext), expr!(t)]),
+;;         Ok(vec![expr!(ext)]));
+;;     assert_eq!(LetOp{}.execute(&mut vec![expr!(t), expr!(ext "A"), expr!(t)]),
+;;         Ok(vec![expr!(ext "A")]));
+;; }
+;; Converted:
+!(assertEqual ($t $ext $t) $ext)
+!(assertEqual ($t ("ext" "A") $t) ("ext" "A"))
+
+;; Original:
+;; #[test]
+;; fn let_op_internal_variables_has_priority_in_template() {
+;;     assert_eq!(LetOp{}.execute(&mut vec![expr!(x), expr!(x "A"), expr!(x)]),
+;;         Ok(vec![expr!(x "A")]));
+;; }
+;; Converted:
+!(assertEqual ($x ($x A) $x) ($x A))
+
+;; Original:
+;; #[test]
+;; fn let_op_keep_variables_equalities_issue290() {
+;;     assert_eq_metta_results!(run_program("!(let* (($f f) ($f $x)) $x)"), Ok(vec![vec![expr!("f")]]));
+;;     assert_eq_metta_results!(run_program("!(let* (($f $x) ($f f)) $x)"), Ok(vec![vec![expr!("f")]]));
+;;     assert_eq_metta_results!(run_program("!(let (quote ($x $x)) (quote ($z $y)) (let $y A ($z $y)))"), Ok(vec![vec![expr!("A" "A")]]));
+;;     assert_eq_metta_results!(run_program("!(let (quote ($x $x)) (quote ($z $y)) (let $z A ($z $y)))"), Ok(vec![vec![expr!("A" "A")]]));
+;; }
+;; Converted:
+!(assertEqualToResults (let* (($f f) ($f $x)) $x) (f))
+!(assertEqualToResults (let* (($f $x) ($f f)) $x) (f))
+!(assertEqualToResults (let ((quote ($x $x))) ((quote ($z $y))) (let $y A ($z $y))) (A A))
+!(assertEqualToResults (let ((quote ($x $x))) ((quote ($z $y))) (let $z A ($z $y))) (A A))
+
+;; Original:
+;; #[test]
+;; fn let_op_variables_visibility_pr262() {
+;;     let program = "
+;;         ;; Knowledge
+;;            (? P Q)
+;;            (? Q R)
+;;
+;;         ;; Rule
+;;            (= (rule (? $p $q) (? $q $r)) (? $p $r))
+;;
+;;         ;; Query (does not work as expected)
+;;    (= (query $kb)
+;;               (let* (($pq (? $p $q))
+;;                      ($qr (? $q $r)))
+;;              (match $kb
+;;                ;; Premises
+;;                (, $pq $qr)
+;;                ;; Conclusion
+;;                (rule $pq $qr))))
+;;
+;;         ;; Call
+;;         !(query &self)
+;;            ;; [(? P R)]
+;;     ";
+;;        assert_eq_metta_results!(run_program(program), Ok(vec![vec![expr!("?" "P" "R")]]));
+;; }
+;; Converted:
+(let* (($pq (? $p $q)) ($qr (? $q $r)))
+    (match $kb
+      (, $pq $qr)
+      (rule $pq $qr)))
+!(assertEqualToResults (run_program program) (? P R))
+
+;; Original:
+;; #[test]
+;; fn let_var_op() {
+;;     assert_eq!(LetVarOp{}.execute(&mut vec![expr!(), sym!("B")]),
+;;         Ok(vec![sym!("B")]));
+;;     assert_eq!(LetVarOp{}.execute(&mut vec![expr!(((a "A"))), expr!(a)]),
+;;         Ok(vec![expr!({LetOp{}} a "A" a)]));
+;;     assert_eq!(LetVarOp{}.execute(&mut vec![expr!((a "A") (b "B")), expr!(b a)]),
+;;         Ok(vec![expr!({LetOp{}} a "A" ({LetVarOp{}} ((b "B")) (b a)))]));
+;; }
+;; Converted:
+!(assertEqual (let* () B) B)
+!(assertEqual (let* (($a A)) $a) (let $a A $a))
+!(assertEqual (let* (($a A) ($b B)) ($b $a)) (let $a A (let* (($b B)) ($b $a))))
+
+;; Original:
+;; #[test]
+;; fn state_ops() {
+;;     let result = NewStateOp{}.execute(&mut vec![expr!("A" "B")]).unwrap();
+;;     let old_state = result.get(0).ok_or("error").unwrap();
+;;     assert_eq!(old_state, &Atom::gnd(StateAtom::new(expr!("A" "B"))));
+;;     let result = ChangeStateOp{}.execute(&mut vec!(old_state.clone(), expr!("C" "D"))).unwrap();
+;;     let new_state = result.get(0).ok_or("error").unwrap();
+;;     assert_eq!(old_state, new_state);
+;;     assert_eq!(new_state, &Atom::gnd(StateAtom::new(expr!("C" "D"))));
+;;     let result = GetStateOp{}.execute(&mut vec![new_state.clone()]);
+;;     assert_eq!(result, Ok(vec![expr!("C" "D")]))
+;; }
+;; Converted:
+!(assertEqual (new_state! "A" "B") (state! "A" "B"))
+!(assertEqual (change_state! (state! "A" "B") ("C" "D")) (state! "C" "D"))
+!(assertEqual (get_state! (state! "C" "D")) ("C" "D"))
+
+;; Original:
+;; #[test]
+;; fn test_stdlib_uses_rust_grounded_tokens() {
+;;     assert_eq!(run_program("!(if True ok nok)"), Ok(vec![vec![Atom::sym("ok")]]));
+;; }
+;; Converted:
+!(assertEqualToResults (if True ok nok) (ok))
+
+;; Original:
+;; #[test]
+;; fn test_let_op_inside_other_operation() {
+;;     assert_eq!(run_program("!(and True (let $x False $x))"), Ok(vec![vec![expr!({Bool(false)})]]));
+;; }
+;; Converted:
+!(assertEqualToResults (and True (let $x False $x)) (Bool(false)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Converted Rust Tests with Original Source
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Original:
+;; #[test]
+;; fn test_quote() {
+;;     let metta = Metta::new(Some(EnvBuilder::test_env()));
+;;     let parser = SExprParser::new("
+;;         (= (foo) a)
+;;         (= (foo) b)
+;;         !(foo)
+;;         !(quote (foo))
+;;     ");
+;;     assert_eq_metta_results!(metta.run(parser),
+;;         Ok(vec![
+;;             vec![expr!("a"), expr!("b")],
+;;             vec![expr!("quote" ("foo"))],
+;;         ]));
+;; }
+;; Converted:
+(= (foo) a)
+(= (foo) b)
+!(assertEqualToResults (foo) (a b))
+!(assertEqualToResults (quote (foo)) (quote (foo)))
+
+;; Original:
+;; #[test]
+;; fn test_unify() {
+;;     let metta = Metta::new(Some(EnvBuilder::test_env()));
+;;     let parser = SExprParser::new("
+;;         !(unify (a $b 1 (d)) (a $a 1 (d)) ok nok)
+;;         !(unify (a $b c) (a b $c) (ok $b $c) nok)
+;;         !(unify $a (a b c) (ok $a) nok)
+;;         !(unify (a b c) $a (ok $a) nok)
+;;         !(unify (a b c) (a b d) ok nok)
+;;         !(unify ($x a) (b $x) ok nok)
+;;     ");
+;;
+;;     assert_eq_metta_results!(metta.run(parser),
+;;         Ok(vec![
+;;             vec![expr!("ok")],
+;;             vec![expr!("ok" "b" "c")],
+;;             vec![expr!("ok" ("a" "b" "c"))],
+;;             vec![expr!("ok" ("a" "b" "c"))],
+;;             vec![expr!("nok")],
+;;             vec![expr!("nok")]
+;;         ]));
+;; }
+;; Converted:
+!(assertEqualToResults (unify (a $b 1 (d)) (a $a 1 (d)) ok nok) (ok))
+!(assertEqualToResults (unify (a $b c) (a b $c) (ok $b $c) nok) (ok b c))
+!(assertEqualToResults (unify $a (a b c) (ok $a) nok) (ok (a b c)))
+!(assertEqualToResults (unify (a b c) $a (ok $a) nok) (ok (a b c)))
+!(assertEqualToResults (unify (a b c) (a b d) ok nok) (nok))
+!(assertEqualToResults (unify ($x a) (b $x) ok nok) (nok))
+
+;; Original:
+;; #[test]
+;; fn test_empty() {
+;;     let metta = Metta::new(Some(EnvBuilder::test_env()));
+;;     let parser = SExprParser::new("
+;;         !(empty)
+;;     ");
+;;
+;;     assert_eq_metta_results!(metta.run(parser),
+;;         Ok(vec![vec![]]));
+;; }
+
+;; Converted:
+!(assertEqual (empty) ())
+
+;; Original:
+;; #[test]
+;; fn sealed_op_runner() {
+;;     let nested = run_program("!(sealed ($x) (sealed ($a $b) (quote (= ($a $x $c) ($b)))))");
+;;     let simple_replace = run_program("!(sealed ($x $y) (quote (= ($y $z))))");
+;;
+;;     assert!(crate::atom::matcher::atoms_are_equivalent(&nested.unwrap()[0][0], &expr!("quote" ("=" (a b c) (z)))));
+;;     assert!(crate::atom::matcher::atoms_are_equivalent(&simple_replace.unwrap()[0][0], &expr!("quote" ("=" (y z)))));
+;; }
+
+;; Converted:
+!(assertEqual (sealed ($x) (sealed ($a $b) (quote (= ($a $x $c) ($b))))) (quote (= (a b c) (z))))
+!(assertEqual (sealed ($x $y) (quote (= ($y $z)))) (quote (= (y z))))
+
+;; Original:
+;; #[test]
+;; fn sealed_op_execute() {
+;;     let val = SealedOp{}.execute(&mut vec![expr!(x y), expr!("="(y z))]);
+;;     assert!(crate::atom::matcher::atoms_are_equivalent(&val.unwrap()[0], &expr!("="(y z))));
+;; }
+
+;; Converted:
+!(assertEqual (sealedOpExecute (x y) (= (y z))) (= (y z)))
+
+;; Original:
+;; #[test]
+;; fn use_sealed_to_make_scoped_variable() {
+;;     assert_eq!(run_program("!(let $x (input $x) (output $x))"), Ok(vec![vec![expr!("output" ("input" x))]]));
+;;     assert_eq!(run_program("!(let (quote ($sv $st)) (sealed ($x) (quote ($x (output $x))))
+;;            (let $sv (input $x) $st))"), Ok(vec![vec![expr!("output" ("input" x))]]));
+;; }
+
+;; Converted:
+!(assertEqual (let $x (input $x) (output $x)) ("output" ("input" x)))
+!(assertEqual (let (quote ($sv $st)) (sealed ($x) (quote ($x (output $x)))) (let $sv (input $x) $st)) ("output" ("input" x)))
+
+;; #[derive(Clone, PartialEq, Debug)]
+;; pub struct SomeGndAtom { }
+
+;; impl Display for SomeGndAtom {
+;;     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+;;         write!(f, "some-gnd-atom")
+;;     }
+;; }
+
+;; impl Grounded for SomeGndAtom {
+;;     fn type_(&self) -> Atom {
+;;         Atom::expr([ARROW_SYMBOL, sym!("Arg1Type"), sym!("Arg2Type"), sym!("ReturnType")])
+;;     }
+;; }
