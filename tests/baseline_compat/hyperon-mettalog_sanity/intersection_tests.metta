@@ -141,15 +141,22 @@
 
 ;; Test intersection with expressions that evaluate to a value
 ;; This ensures that expressions like (+ 1 2) that unify with 3 are handled correctly.
-!(assertEqual
-  (intersection (superpose (($x (+ 1 2)) (3 4))) (superpose ((3 $y) (4 (+ 1 2)))))
-  (superpose ((3 4)))
+!(assertEqualToResult
+  (pred-intersection unified (superpose (($x (+ 1 2)) (3 4))) (superpose ((3 $y) (4 (+ 1 2)))))
+  ((3 4) (4 3))
 )
 
 ;; Test intersection with nested structures and expressions
 ;; This checks that variables and expressions are correctly intersected within nested structures.
 !(assertEqual
   (intersection (superpose ((foo (+ 1 2)) (bar $y))) (superpose ((foo 3) (bar baz))))
+  (superpose ((foo 3)))
+)
+
+;; Test intersection with nested structures and expressions
+;; This checks that variables and expressions are correctly intersected within nested structures.
+!(assertNotEqual
+  (pred-intersection unified (superpose ((foo (+ 1 2)) (bar $y))) (superpose ((foo 3) (bar baz))))
   (superpose ((foo 3) (bar $y)))
 )
 
@@ -168,11 +175,43 @@
   (superpose ())
 )
 
+;; Test intersection with self-referential structures
+;; This test ensures that self-referential structures correctly intersect when they should.
+!(assertEqual
+  (intersection (superpose ($y (f $x))) (superpose ($a (f $b))))
+  (superpose ((f $x)))
+)
+
+;; Test intersection with self-referential structures
+;; This test ensures that self-referential structures correctly intersect when they should.
+!(assertEqual
+  (intersection (superpose ((f $x) $y )) (superpose ((f $b) $a )))
+  (superpose ((f $x)))
+)
+
+;; once alpha equivalence is established then the ideities take hold
+!(assertEqual 
+  (intersection (superpose ((f $x) $x )) (superpose ((f $a) $a )))
+  (superpose ((f $x) $x))
+)
+
+;; Reversed: alpha equivalence is established too late?
+!(assertEqual
+  (intersection (superpose ($x (f $x) )) (superpose ($a (f $a))))
+  (superpose ($x (f $x)))
+)
 
 ;; Test intersection with potential variable misidentification
 ;; This test ensures that variables are correctly identified and don't lead to erroneous unifications.
 !(assertEqual
-  (intersection (superpose ($x (f $y))) (superpose ((f $x) $y)))
-  (superpose ())
+  (intersection (superpose ($y (f $x))) (superpose ($x (f $x))))
+  (superpose ((f $x)))
+)
+
+;; Test intersection with potential variable misidentification
+;; This test ensures that variables are correctly identified and don't lead to erroneous unifications.
+!(assertEqual
+  (intersection (superpose ($x (f $y))) (superpose ((f $y) $x)))
+  (superpose ($x (f $y)))
 )
 

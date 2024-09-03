@@ -299,19 +299,19 @@
        (-> (⍃ (S Z) (S Z)) (minsup (Inheritance D (VarIdx (S Z))))))))
 
 (= (eachfc)
-  (collapse 
    (let $aptrn (Inheritance (VarIdx Z) (VarIdx (S Z)))
-	(fc (: (supportwitness $aptrn) (supportOf $aptrn (countNat $aptrn))) (fromNumber 8)))))
+	(fc (: (supportwitness $aptrn) (supportOf $aptrn (countNat $aptrn))) (fromNumber 8))))
 
 !(pragma! test true)
-!(eachfc)
+
+;!(eachfc)
 
 ; !(expected)
 
-;!(let $expected (expected)
-;  (assertEqualToResult
-;   (let $aptrn (Inheritance (VarIdx Z) (VarIdx (S Z)))
-;	  (fc (: (supportwitness $aptrn) 
-;			 (supportOf $aptrn (countNat $aptrn))) (fromNumber 8))) 
-;	$expected))
+!(let $expected (expected)
+  (assertEqualToResult
+   (let $aptrn (Inheritance (VarIdx Z) (VarIdx (S Z)))
+	  (fc (: (supportwitness $aptrn) 
+			 (supportOf $aptrn (countNat $aptrn))) (fromNumber 8))) 
+	$expected))
 
