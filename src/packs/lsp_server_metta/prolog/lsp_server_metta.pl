@@ -127,7 +127,7 @@ server_capabilities(
       % documentLinkProvider: false,
       % colorProvider: true,
       foldingRangeProvider: false,
-      executeCommandProvider: _{commands: ["query", "assert"]},
+      %executeCommandProvider: _{commands: ["query", "assert"]},
       semanticTokensProvider: _{legend: _{tokenTypes: TokenTypes,
                                           tokenModifiers: TokenModifiers},
                                 range: true,
