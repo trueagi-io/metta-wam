@@ -538,10 +538,10 @@ add_metta_commands(Input) :-
 install_readline(Input):- is_installed_readline_editline(Input),!.
 %install_readline(_):- is_compatio,!.
 install_readline(Input):- stream_property(Input,tty(true)),
-    assert(is_installed_readline_editline(Input)),
-    install_readline_editline1,
+   assert(is_installed_readline_editline(Input)),
+   install_readline_editline1,
     %use_module(library(readline)),
-    use_module(library(editline)),
+   use_module(library(editline)),
     %nop(catch(load_history,_,true)),
     ignore(el_unwrap(Input)), % unwrap the prolog wrapper so we can use our own.
     ignore(el_wrap_metta(Input)),
@@ -551,7 +551,8 @@ install_readline(Input):- stream_property(Input,tty(true)),
     %add_history_string("!(load-flybase-full)"),
     %add_history_string("!(pfb3)"),
     %add_history_string("!(obo-alt-id $X BS:00063)"),
-    %add_history_string("!(and (total-rows $T TR$) (unique-values $T2 $Col $TR))"),!.
+    %add_history_string("!(and (total-rows $T TR$) (unique-values $T2 $Col $TR))"),
+    !.
 install_readline(_NoTTY). % For non-tty(true) clients over SWISH/Http/Rest server
 
 :- dynamic  setup_done/0.

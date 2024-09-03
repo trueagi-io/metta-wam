@@ -292,14 +292,16 @@
        (-> (⍃ (S Z) (S Z)) (minsup (Inheritance D (VarIdx (S Z))))))))
 
 (= (eachfc)
-  (collapse (let* (($aptrn (Inheritance (VarIdx Z) (VarIdx (S Z))))
+  (let* (($aptrn (Inheritance (VarIdx Z) (VarIdx (S Z))))
 		 ($cnt   (countNat $aptrn))
 		 ($atom  (: (supportwitness $aptrn) (supportOf $aptrn $cnt)))
 		 ($depth (fromNumber 8)))
-	(fc $atom $depth))))
+	(fc $atom $depth)))
 
 
-!(eachfc)
+;; !(eachfc)
+!(let $expected (expectedHedras)
+  (assertEqualToResult (eachfc) $expected))
 
 ; !(expected)
 

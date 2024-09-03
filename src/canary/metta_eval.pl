@@ -60,6 +60,8 @@
 :- multifile(color_g_mesg/2).
 
 self_eval0(X):- \+ callable(X),!.
+self_eval0(X):- py_is_py(X),!.
+%self_eval0(X):- py_type(X,List), List\==list,!.
 self_eval0(X):- is_valid_nb_state(X),!.
 %self_eval0(X):- string(X),!.
 %self_eval0(X):- number(X),!.
@@ -125,7 +127,11 @@ is_metta_declaration_f(F,H):- F == '=', !, is_list(H),  \+ (current_self(Space),
 
 % is_metta_declaration([F|T]):- is_list(T), is_user_defined_head([F]),!.
 
+% Sets the current self space to '&self'. This is likely used to track the current context or scope during the evaluation of Metta code.
 :- nb_setval(self_space, '&self').
+
+%! eval_to(+X,+Y) is semidet.
+% checks if X evals to Y
 evals_to(XX,Y):- Y=@=XX,!.
 evals_to(XX,Y):- Y=='True',!, is_True(XX),!.
 
@@ -134,9 +140,13 @@ evals_to(XX,Y):- Y=='True',!, is_True(XX),!.
 do_expander('=',_,X,X):-!.
 do_expander(':',_,X,Y):- !, get_type(X,Y)*->X=Y.
 
-'get_type'(Arg,Type):- 'get-type'(Arg,Type).
+get_type(Arg,Type):- eval_H(['get-type',Arg],Type).
 
 
+%! eval_true(+X) is semidet.
+% Evaluates the given term X and succeeds if X is not a constraint (i.e. \+ iz_conz(X)) and is callable, and calling X succeeds.
+%
+% If X is not callable, this predicate will attempt to evaluate the arguments of X (using eval_args/2) and succeed if the result is not False.
 eval_true(X):- \+ iz_conz(X), callable(X), call(X).
 eval_true(X):- eval_args(X,Y), once(var(Y) ; \+ is_False(Y)).
 
@@ -152,6 +162,8 @@ eval_args(Eq,RetTyp e,Depth,Self,X,Y):-
      eval(Eq,RetType,Depth,Self,X,Y))).
 */
 
+
+%! eval_args(+X,-Y) is semidet.
 eval_args(X,Y):- current_self(Self), eval_args(500,Self,X,Y).
 %eval_args(Eq,RetType,Depth,_Self,X,_Y):- forall(between(6,Depth,_),write(' ')),writeqln(eval_args(Eq,RetType,X)),fail.
 eval_args(Depth,Self,X,Y):- eval_args('=',_RetType,Depth,Self,X,Y).
@@ -220,9 +232,10 @@ eval_02(Eq,RetType,Depth2,Self,Y,YO):-
         Y=YO))).
 
 
- subst_args_here(Eq,RetType,Depth2,Self,Y,YO):-
-   Y =@= [ house, _59198,_59204,==,fish,fish],!,break.
+% subst_args_here(Eq,RetType,Depth2,Self,Y,YO):-
+%   Y =@= [ house, _59198,_59204,==,fish,fish],!,break.
 
+subst_args_here(Eq,RetType,Depth2,Self,Y,YO):- !, Y=YO.
 subst_args_here(Eq,RetType,Depth2,Self,Y,YO):-
   subst_args(Eq,RetType,Depth2,Self,Y,YO),
   nop(notrace(if_t(Y\=@=YO,wdmsg(subst_args(Y,YO))))).
@@ -274,6 +287,13 @@ eval_20(Eq,RetType,_Dpth,_Slf,[X|T],Y):- T==[], \+ callable(X),!, do_expander(Eq
 eval_20(Eq,RetType,Depth,Self,X,Y):- atom(Eq),  ( Eq \== ('=')) ,!,
    call(Eq,'=',RetType,Depth,Self,X,Y).
 
+eval_20(Eq,RetType,Depth,Self,[F,[Eval,V]|VI],VO):- Eval == eval,!,
+  ((eval_args(Eq,_FRype,Depth,Self,V,VV), V\=@=VV)*-> true; VV = V),
+  eval_args(Eq,RetType,Depth,Self,[F,VV|VI],VO).
+
+eval_20(Eq,RetType,Depth,Self,[[Eval,V]|VI],VO):- Eval == eval,!,
+  ((eval_args(Eq,_FRype,Depth,Self,V,VV), V\=@=VV)*-> true; VV = V),
+  eval_args(Eq,RetType,Depth,Self,[VV|VI],VO).
 % DMILES @ TODO make sure this isnt an implicit curry
 eval_20(Eq,_RetType,Depth,Self,[V|VI],VO):-  \+ callable(V), is_list(VI),!,
   maplist(eval_ret(Eq,_ArgRetType,Depth,Self),[V|VI],VOO),VO=VOO.
@@ -362,6 +382,51 @@ eval_20(Eq,RetType,Depth,Self,['eval-for',_Why,Type,X],Res):- !,
     eval_args(Eq,Type,Depth,Self,X, Res).
 
 
+
+/* Function takes list of atoms (first argument), variable (second argument) and filter predicate (third argument) and returns list with items which passed filter.
+     E.g. (filter-atom (1 2 3 4) $v (eval (> $v 2))) will give (3 4)") */
+
+eval_20(Eq,RetType,Depth,Self,['filter-atom',List,Var,Pred],Res):- !,
+   call_filter_atom(Eq,RetType,Depth,Self,List,Var,Pred,Res).
+
+call_filter_atom(_Eq,_RetType,_Depth,_Self,[],_Var,_Pred1,[]):-!.
+call_filter_atom(Eq,RetType,Depth,Self,[E|List],Var,Pred,Out):-
+    (( \+ \+ (E = Var, eval_args_true(Eq,RetType,Depth,Self,Pred))) -> Out = [E|Res] ; Out = Res),
+    call_filter_atom(Eq,RetType,Depth,Self,List,Var,Pred,Res).
+
+% "Function takes list of atoms (first argument), variable to be used inside (second variable) and an expression which will be evaluated for each atom in list (third argument). Expression should contain variable. So e.g. (map-atom (1 2 3 4) $v (eval (+ $v 1))) will give (2 3 4 5)"
+eval_20(Eq,RetType,Depth,Self,['map-atom',List,V,Eval],Res):- !,
+   call_map_atom(Eq,RetType,Depth,Self,List,V,Eval,Res).
+
+call_map_atom(Eq,RetType,Depth,Self,[E|List],V,Eval,[CR|Res]):- !, faster_replace(V,E,Eval,CEval),
+    eval_args(Eq,RetType,Depth,Self,CEval,CR),
+    call_map_atom(Eq,RetType,Depth,Self,List,V,Eval,Res).
+call_map_atom(_Eq,_RetType,_Depth,_Self,[],_V,_Pred,[]):-!.
+
+% which is faster?
+%faster_replace(B,E,Eval,CEval):- subst0011a(B,E,Eva2,CEval).
+faster_replace(B,E,Eval,CEval):-  copy_term(B+Eval,CB+CEval), E = CB.
+%faster_replace(A,Init,B,E,Eval,CEval):- copy_term(A+B+Eval,CA+CB+CEval), CA = Init, CB = E.
+
+
+% Function takes list of values (first argument), initial value (second argument) and operation (fifth argument) and applies it consequently to the list of values, using init value as a start. It also takes two variables (third and fourth argument) to use them inside
+eval_20(Eq,RetType,Depth,Self,['foldl-atom',List,Init,A,B,Eval],Res):- !,
+   call_foldl_atom(Eq,RetType,Depth,Self,List,Init,A,B,Eval,Res).
+
+% Last Cail
+call_foldl_atom(Eq,RetType,Depth,Self,[E],Init,A,B,Eval,Res):- !, A = Init, B = E,
+  eval_args(Eq,RetType,Depth,Self,Eval,Res).
+% Recursive Cail
+call_foldl_atom(Eq,RetType,Depth,Self,[E|List],Init,A,B,Eval,Res):- !, faster_replace(A,Init,B,E,Eval,CEval),
+     eval_args(Eq,RetType,Depth,Self,CEval,CR),
+     call_foldl_atom(Eq,RetType,Depth,Self,List,CR,A,B,Eval,Res).
+% Empty List
+call_foldl_atom(_Eq,_RetType,_Depth,_Self,[],Init,_A,_B,_Eval,Init):-!.
+
+% which is faster?
+faster_replace(A,Init,B,E,Eval,CEval):- subst0011a(A,Init,Eval,Eva2), subst0011a(B,E,Eva2,CEval).
+%faster_replace(A,Init,B,E,Eval,CEval):- copy_term(A+B+Eval,CA+CB+CEval), CA = Init, CB = E.
+
 % =================================================================
 % =================================================================
 % =================================================================
@@ -370,7 +435,10 @@ eval_20(Eq,RetType,Depth,Self,['eval-for',_Why,Type,X],Res):- !,
 % =================================================================
 % =================================================================
 
-
+unified(X,Y):- X=@=Y,X=Y,!.
+unified(X,Y):- X=Y,!.
+unified(X,Y):- eval(X,XX),X\=@=XX,unified(Y,XX).
+unified(X,Y):- eval(Y,YY),Y\=@=YY,unified(YY,X).
 
 eval_until_unify(_Eq,_RetType,_Dpth,_Slf,X,X):- !.
 eval_until_unify(Eq,RetType,Depth,Self,X,Y):- eval_until_eq(Eq,RetType,Depth,Self,X,Y),!.
@@ -475,18 +543,27 @@ eval_20(Eq,RetType,Depth,Self,['trace',Cond],Res):- !, with_debug(eval_args,eval
 eval_20(Eq,RetType,Depth,Self,['profile!',Cond],Res):- !, time_eval(profile(Cond),profile(eval_args(Eq,RetType,Depth,Self,Cond,Res))).
 eval_20(Eq,RetType,Depth,Self,['time!',Cond],Res):- !, time_eval(eval_args(Cond),eval_args(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(Eq,RetType,Depth,Self,['print',Cond],Res):- !, eval_args(Eq,RetType,Depth,Self,Cond,Res),format('~N'),print(Res),format('~N').
+% !(print! $1)
+eval_20(Eq,RetType,Depth,Self,['princ!'|Cond],Res):- !,
+  maplist(eval_args(Eq,RetType,Depth,Self),Cond,Out),
+  maplist(princ_impl,Out),
+  make_nop(RetType,[],Res),check_returnval(Eq,RetType,Res).
 % !(println! $1)
 eval_20(Eq,RetType,Depth,Self,['println!'|Cond],Res):- !,
   maplist(eval_args(Eq,RetType,Depth,Self),Cond,Out),
   maplist(println_impl,Out),
   make_nop(RetType,[],Res),check_returnval(Eq,RetType,Res).
 
-
+println_impl(X):- format("~N~@~N",[write_sln(X)]),!.
 println_impl(X):- user_io((ansi_format(fg('#c7ea46'),"~N~@~N",[write_sln(X)]))).
 
-write_sln(X):- string(X), !, write(X).
-write_sln(X):- with_indents(false,write_src(X)).
+princ_impl(X):- format("~@",[write_sln(X)]),!.
 
+write_sln(X):- string(X), !, write(X).
+write_sln(X):- write_src_woi(X).
+
+with_output_to_str( Sxx , Goal ):-
+  wots( Sxx , Goal ).
 
 % =================================================================
 % =================================================================
@@ -535,13 +612,13 @@ val_sort(Y,[Y]).
 
 loonit_assert_source_tf(_Src,Goal,Check,TF):- fail, \+ is_testing,!,
     reset_eval_num,
-    call(Goal),
+    tst_call_limited(Goal),
     as_tf(Check,TF),!.
 
 loonit_assert_source_tf(Src,Goal,Check,TF):-
     copy_term(Goal,OrigGoal),
     reset_eval_num,
-   call_cleanup(loonit_asserts(Src, time_eval('\n; EVAL TEST\n;',Goal), Check),
+   call_cleanup(loonit_asserts(Src, time_eval('\n; EVAL TEST\n;',(tst_call_limited(Goal))), Check),
    (as_tf(notrace(Check),TF),!,
   ignore((
           once((TF='True', trace_on_pass);(TF='False', trace_on_fail)),
@@ -628,6 +705,72 @@ has_unicode(A):- atom_codes(A,Cs),member(N,Cs),N>127,!.
 
 set_last_error(_).
 
+
+% =================================================================
+% =================================================================
+% =================================================================
+%  SCOPING
+% =================================================================
+% =================================================================
+% =================================================================
+
+eval_20(_Eq, _RetType, _Depth, _Self, ['sealed', InputVarList, Expr], Result) :- !,
+    omit_atoms(InputVarList,OutputVarList),
+    check_replace_with_local_var(OutputVarList, Expr, Result).
+
+% omit_atoms(+input variables, -variables less atoms)
+% If there are already bound values passed to sealed, no need for replacement
+omit_atoms([], []).
+omit_atoms([Head|Tail], Result) :-
+    atomic(Head),
+    !,
+    omit_atoms(Tail, Result).
+omit_atoms([Head|Tail], [Head|Result]) :-
+    omit_atoms(Tail, Result).
+
+% check_replace_with_local_var(+Sealed-Variables, +Expression, -NewExpression)
+% Boundary case -- no remaining variables to process, just return expression.
+check_replace_with_local_var([], Expr, Result) :-
+    Result = Expr.
+
+% General case -- replace sealed variable with a new variable
+check_replace_with_local_var([VarHead|VarTail], Expr, Result) :-
+    % '_' gives us a prolog variable
+    replace_by_value(VarHead,Replacement),
+    subst_same(Expr, VarHead, Replacement, NewExpr),
+    check_replace_with_local_var(VarTail, NewExpr, Result).
+
+% change the variable into an new anonymous one (but copy attributes)
+replace_by_value(Var,Replacement):- var(Var),!,copy_term(Var,Replacement).
+% creates a deep copy that allows caller to destructively change it
+replace_by_value(Var,Replacement):- duplicate_term(Var,Replacement).
+
+%! subst_same(+Term, +OldTerm, +NewTerm, -ResultTerm) is det.
+%
+% Recursively substitutes occurrences of OldTerm with NewTerm within a Prolog term (Term),
+% producing a new term (ResultTerm). This predicate handles both simple and compound terms, including lists.
+
+% Note: Matching is done with the SWI same_term predicate which states that terms are equal if the
+% condition "the same variable, equivalent atomic data or a compound term allocated at the same address"
+% If the current term (Term) exactly matches OldTerm (with above criteria).
+subst_same(Term, OldTerm, NewTerm, NewTerm) :-
+   same_term(OldTerm, Term),
+   !.
+
+% If the current term is not a compound term (like an atom, number or the wrong variable) it stays the same
+subst_same(Term, _, _, Term) :- \+ compound(Term), !.
+
+% If the current term is a list, it processes each element of the list recursively.
+subst_same([Old|Structure], OldTerm, NewTerm, [New|StructureO]) :- !,
+    subst_same(Old, OldTerm, NewTerm, New),
+    subst_same(Structure, OldTerm, NewTerm, StructureO).
+
+% Compound Terms are decomposed and reconstructed with the possibly modified arguments.
+subst_same(OldStructure, OldTerm, NewTerm, NewStructure) :-
+    OldStructure =.. [Functor|Args],
+    subst_same(Args, OldTerm, NewTerm, NewArgs),
+    NewStructure =.. [Functor|NewArgs].
+
 % =================================================================
 % =================================================================
 % =================================================================
@@ -678,10 +821,13 @@ eval_space(Eq,RetType,Depth,Self,['match',Other,Goal,Template,Else],Template):- 
   ((eval_space(Eq,RetType,Depth,Self,['match',Other,Goal,Template],Template),
        \+ make_nop(RetType,[],Template))*->true;Template=Else).
 % Match-TEMPLATE
-
+eval_space(Eq,_RetType,Depth,Self,['match',Other,Goal,Template],Template):-!,
+  metta_atom_iter(Eq,Depth,Self,Other,Goal).
+/*
 eval_space(Eq,RetType,Depth,Self,['match',Other,Goal,Template],Res):- !,
    metta_atom_iter(Eq,Depth,Self,Other,Goal),
    eval_args(Eq,RetType,Depth,Self,Template,Res).
+*/
 
 %metta_atom_iter(Eq,_Depth,_Slf,Other,[Equal,[F|H],B]):- Eq == Equal,!,  % trace,
 %   metta_eq_def(Eq,Other,[F|H],B).
@@ -701,7 +847,7 @@ metta_atom_iter(Eq,Depth,Self,Other,[And|Y]):- atom(And), is_comma(And),!,
 %metta_atom_iter(Eq,Depth,_Slf,Other,X):- dcall0000000000(eval_args_true(Eq,_RetType,Depth,Other,X)).
 metta_atom_iter(Eq,Depth,Self,Other,X):-
   %copy_term(X,XX),
-  dcall0000000000(metta_atom_true(Eq,Depth,Self,Other,XX)), X=XX.
+  dcall0000000000(metta_atom_true(Eq,Depth,Self,Other,X)). %, X=XX.
 
 metta_atom_true(_Eq,Depth,Self,Other,H):-
       can_be_ok(metta_atom_true,H),
@@ -812,7 +958,7 @@ eval_case(Eq,CaseRetType,Depth,Self,A,KVs,Res):-
 
 %;; collapse-bind because `collapse` doesnt guarentee shared bindings
 eval_20(Eq,RetType,Depth,Self,['collapse-bind',List],Res):-!,
- maplist_ok_fails(eval_ne(Eq,RetType,Depth,Self),List,Res).
+ maplist_ok_fails(eval_ne(Eq,RetType,Depth,Self),List,Res), !.
 
 maplist_ok_fails(Pred2,[A|AA],BBB):- !,
  (call(Pred2,A,B) -> (BBB=[B|BB], maplist_ok_fails(Pred2,AA,BB))
@@ -830,7 +976,7 @@ re_member(Res,E,List):- term_variables(Res+E+List,TV),copy_term(TV,Copy),
 
 %[collapse,[1,2,3]]
 eval_20(Eq,RetType,Depth,Self,['collapse',List],Res):-!,
- findall_eval(Eq,RetType,Depth,Self,List,Res).
+ findall_eval(Eq,RetType,Depth,Self,List,Res), !.
 
 
 eval_20(Eq,RetType,Depth,Self,['superpose',List],Res):- !,
@@ -924,7 +1070,7 @@ must_unify(A,A):-!.
 must_unify(A,B):- fail, throw('Error-last-form'(must_unify(A,B))). % @TODO
 
 % OLD
-eval_20(_Eq,_RetType,_Depth,_Self,['decons-atom',OneArg],[H,T]):- OneArg==[], !, fail. %H=[],T=[],!.
+eval_20(_Eq,_RetType,_Depth,_Self,['decons-atom',OneArg],_):- OneArg==[], !, fail. %H=[],T=[],!.
 eval_20(_Eq,_RetType,_Depth,_Self,['decons-atom',OneArg],[H,T]):- !, must_unify(OneArg,[H|T]).
 eval_20(_Eq,_RetType,_Depth,_Self,['cons-atom'|TwoArgs],[H|T]):-!, must_unify(TwoArgs,[H,T]).
 % NEW
@@ -1015,7 +1161,7 @@ typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_argumen
 %eval_20(Eq,RetType,Depth,Self,['flatten'|List], Flat):- !, maplist(eval_args(Eq,RetType,Depth,Self),List,Res),flatten(Res,Flat).
 
 
-eval_20(Eq,RetType,_Dpth,_Slf,['car-atom',Atom],CAR_Y):- !, Atom=[CAR|_],!,do_expander(Eq,RetType,CAR,CAR_Y).
+eval_20(Eq,RetType,_Dpth,_Slf,['car-atom',Atom],CAR_Y):- trace, !, Atom=[CAR|_],!,do_expander(Eq,RetType,CAR,CAR_Y).
 eval_20(Eq,RetType,_Dpth,_Slf,['cdr-atom',Atom],CDR_Y):- !, Atom=[_|CDR],!,do_expander(Eq,RetType,CDR,CDR_Y).
 
 eval_20(Eq,RetType,Depth,Self,['Cons', A, B ],['Cons', AA, BB]):- no_cons_reduce, !,
@@ -1038,9 +1184,9 @@ eval_20(Eq,RetType,Depth,Self,['Cons', A, B ],[AA|BB]):- \+ no_cons_reduce, !,
 % =================================================================
 
 eval_20(Eq,RetType,Depth,Self,['change-state!',StateExpr, UpdatedValue], Ret):- !,
- call_in_shared_space(((eval_args(Eq,RetType,Depth,Self,StateExpr,StateMonad),
-  eval_args(Eq,RetType,Depth,Self,UpdatedValue,Value),
-  catch_metta_return('change-state!'(Depth,Self,StateMonad, Value, Ret),Ret)))).
+ call_in_shared_space(((eval_args(Eq,StateRetType,Depth,Self,StateExpr,StateMonad),
+                        eval_args(Eq,RetType,Depth,Self,UpdatedValue,Value),
+          catch_metta_return('change-state!'(Depth,Self,StateMonad, Value, Ret),Ret)))).
 eval_20(Eq,RetType,Depth,Self,['new-state',UpdatedValue],StateMonad):- !,
   call_in_shared_space(((eval_args(Eq,RetType,Depth,Self,UpdatedValue,Value),  'new-state'(Depth,Self,Value,StateMonad)))).
 eval_20(Eq,RetType,Depth,Self,['get-state',StateExpr],Value):- !,
@@ -1137,9 +1283,39 @@ fetch_or_create_state(NameOrInstance, State) :-
 % =================================================================
 % =================================================================
 % =================================================================
+type_cast(Depth,Self,Val,Into,Casted):-
+    get_type(Depth,Self,Val,From),
+    (type_accepted_from(Into,From)
+     ->Casted=Val
+      ;Casted=['Error',Val,'BadType',Into]).
+
+type_accepted_from(Into,From):-Into=From,!.
+type_accepted_from(Into,From):-wdmsg(type_accepted_from(Into,From)).
+
+
+%use default self
+eval_20(Eq,RetCasted,Depth,Self,['type-cast',Val,Into,Self],Casted):-current_self(Self),!,
+eval_20(Eq,RetCasted,Depth,Self,['type-cast',Val,Into],Casted).
+
+%use other space
+eval_20(Eq,RetCasted,Depth,Self,['type-cast',Val,Into,Other],Casted):-!,
+    into_space(Depth,Self,Other,Space),
+    eval_20(Eq,RetCasted,Depth,Space,['type-cast',Val,Into],Casted).
+
+eval_20(_Eq,_RetCasted,Depth,Self,['type-cast',Val,Into],Casted):-is_list(Val),!,
+    catch_metta_return(type_cast(Depth,Self,Val,Into,Casted),CastedM),
+    var(CastedM).
+
+eval_20(Eq,RetCasted,Depth,Self,['type-cast',Val,Into],CastedO):-!,
+    if_or_else(type_cast(Depth,Self,Val,Into,Casted),Casted=Val),
+    %term_singletons(Casted,[]),
+    %Casted\==[],Casted\==Val,Into,!,
+    do_expander(Eq,RetCasted,Casted,CastedO).
+
 
 eval_20(_Eq,_RetType,Depth,Self,['get-types',Val],TypeO):- !,
     get_types(Depth,Self,Val,TypeO).
+
 
 % use default self
 eval_20(Eq,RetType,Depth,Self,['get-type',Val,Self],Type):- current_self(Self), !,
@@ -1160,9 +1336,9 @@ eval_20(Eq,RetType,Depth,Self,['get-type',Val],TypeO):- !,
     %Type\==[], Type\==Val,!,
     do_expander(Eq,RetType,Type,TypeO).
 
-% eval_20(Eq,RetType,Depth,Self,['get-type-space',Other,Val],Type):- !,
-%    into_space(Depth,Self,Other,Space),
-%    eval_20(Eq,RetType,Depth,Space,['get-type',Val],Type).
+eval_20(Eq,RetType,Depth,Self,['get-type-space',Other,Val],Type):- !,
+   into_space(Depth,Self,Other,Space),
+   eval_20(Eq,RetType,Depth,Space,['get-type',Val],Type).
 
 eval_20(Eq,RetType,Depth,Self,['length',L],Res):- !, eval_args(Eq,RetType,Depth,Self,L,LL), !, (is_list(LL)->length(LL,Res);Res=1).
 eval_20(Eq,RetType,Depth,Self,['CountElement',L],Res):- !, eval_args(Eq,RetType,Depth,Self,L,LL), !, (is_list(LL)->length(LL,Res);Res=1).
@@ -1216,10 +1392,10 @@ format_args_write(Arg,_) :- string(Arg), !, write(Arg).
 format_args_write('#\\'(Arg),_) :- !, write(Arg).
 format_args_write(Arg,_) :- write_src_woi(Arg).
 
-format_args([], _, _).
-format_args(['{','{'|FormatRest], Iterator, Args) :- !, put('{'), format_args(FormatRest, Iterator, Args). % escaped
-format_args(['}','}'|FormatRest], Iterator, Args) :- !, put('}'), format_args(FormatRest, Iterator, Args). % escaped
-format_args(['{'|FormatRest1], Iterator1, Args) :-
+format_nth_args([], _, _).
+format_nth_args(['{','{'|FormatRest], Iterator, Args) :- !, put('{'), format_nth_args(FormatRest, Iterator, Args). % escaped
+format_nth_args(['}','}'|FormatRest], Iterator, Args) :- !, put('}'), format_nth_args(FormatRest, Iterator, Args). % escaped
+format_nth_args(['{'|FormatRest1], Iterator1, Args) :-
     format_args_get_index(FormatRest1, FormatRest2, Index),
     format_args_get_format(FormatRest2, ['}'|FormatRest3], Format),
     % check that the closing '}' is not escaped with another '}'
@@ -1229,14 +1405,14 @@ format_args(['{'|FormatRest1], Iterator1, Args) :-
         -> ((nth0(Iterator1,Args,Arg),Iterator2 is Iterator1+1))
         ; ((nth0(Index,Args,Arg), Iterator2 is Iterator1))),
     format_args_write(Arg,Format),
-    format_args(FormatRest3, Iterator2, Args).
-format_args([C|FormatRest], Iterator, Args) :- put(C), format_args(FormatRest, Iterator, Args).
+    format_nth_args(FormatRest3, Iterator2, Args).
+format_nth_args([C|FormatRest], Iterator, Args) :- put(C), format_nth_args(FormatRest, Iterator, Args).
 
 eval_20(Eq,RetType,Depth,Self,['format-args',Format,Args],Result):-
    eval_args(Eq,RetType,Depth,Self,Format,EFormat),
    eval_args(Eq,RetType,Depth,Self,Args,EArgs),
    is_list(EArgs),string_chars(EFormat, FormatChars), !,
-   user_io(with_output_to(string(Result), format_args(FormatChars, 0, EArgs))).
+   user_io(with_output_to_str( Result, format_nth_args(FormatChars, 0, EArgs))).
 eval_20(Eq,RetType,Depth,Self,['format-args',_Fmt,Args],_Result) :-
    eval_args(Eq,RetType,Depth,Self,Args,EArgs),
    \+ is_list(EArgs),!,throw_metta_return(['Error',Args,'BadType']).
@@ -1245,6 +1421,16 @@ eval_20(Eq,RetType,_Depth,_Self,['flip'],Bool):-
    ignore(RetType='Bool'), !, as_tf(random(0,2,0),Bool),
    check_returnval(Eq,RetType,Bool).
 
+eval_20( Eq, RetType, Depth, Self, [ 'parse' , L ] , Exp ):- !,
+    eval_args( Eq, RetType, Depth, Self, L, Str ),
+    once(parse_sexpr_metta1( Str, Exp )).
+
+eval_20( _Eq, _RetType, _Depth, _Self, [ 'repr' , L ] , Sxx ):- !,
+   %eval_args( Eq, RetType, Depth, Self, L, Lis2 ),
+    with_output_to_str( Sxx , write_src_woi( L ) ).
+
+eval_20( Eq, RetType, Depth, Self, [ 'output-to-string' , L ] , Sxx ):- !,
+   with_output_to_str( Sxx , eval_args( Eq, RetType, Depth, Self, L, _ )).
 
 % =================================================================
 % =================================================================
@@ -1647,51 +1833,107 @@ eval_20(Eq,RetType,Depth,Self,['fromNumber',NE],RetVal):- !,
     fromNumber(N,RetVal), check_returnval(Eq,RetType,RetVal).
 */
 
+%% lazy_union(:P2, +E1_Call1, +E2_Call2, -E) is nondet.
+%  - Performs a union operation using lazy evaluation
+% Arguments:
+%  - P2: Any arity 2 predicate
+%  - E1^Call1: The first goal (Call1) generating elements (E1)
+%  - E2^Call2: The second goal (Call2) generating elements (E2)
+%  - E: The resulting element that is part of the union of the two sets
+lazy_union(P2, E1^Call1, E2^Call2, E) :-
+    % Step 1: Use lazy_findall/3 to declare that all elements satisfying Call1 are supposedly in List1
+    lazy_findall(E1, Call1, List1),
+    % Step 2: Use lazy_findall/3 to declare that all elements satisfying Call2 are supposedly in List2
+    lazy_findall(E2, Call2, List2),
+    % Step 3: Perform the union logic
+    (   % Case 1: If E is a member of List1, include it in the result
+        member(E, List1)
+        % Case 2: Otherwise, check if E is a member of List2
+        % Additionally, ensure that E does not already exist in List1
+        ; (member(E, List2), \+ (member(E1, List1), call(P2, E1, E)))
+    ).
+
+
+variant_by_type(X,Y):- var(X),!,X==Y.
+variant_by_type(X,Y):- X=@=Y.
 
 eval_20(Eq,RetType,Depth,Self,['unique',Eval],RetVal):- !,
    term_variables(Eval+RetVal,Vars),
    no_repeats_var(YY),
    eval_20(Eq,RetType,Depth,Self,Eval,RetVal),YY=Vars.
 
+eval_20(Eq,RetType,Depth,Self,['pred-unique',P2,Eval],RetVal):- !,
+   no_repeats_var(P2,YY),
+   eval_20(Eq,RetType,Depth,Self,Eval,RetVal),YY=RetVal.
+
 
 eval_20(Eq,RetType,Depth,Self,['subtraction',Eval1,Eval2],RetVal):- !,
-    lazy_subtraction(RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
+    lazy_subtraction(variant_by_type,RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
                   RetVal2^eval_args(Eq,RetType,Depth,Self,Eval2,RetVal2),
                   RetVal).
 
-eval_20(Eq,RetType,_Dpth,_Slf,['py-list',Atom_list],CDR_Y):- 
- !, Atom=[_|CDR],!,do_expander(Eq,RetType,Atom_list, CDR_Y ).
+eval_20(Eq,RetType,Depth,Self,['pred-subtraction',P2,Eval1,Eval2],RetVal):- !,
+    lazy_subtraction(P2,RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
+                  RetVal2^eval_args(Eq,RetType,Depth,Self,Eval2,RetVal2),
+                  RetVal).
+
+eval_20(Eq,RetType,Depth,Self,['union',Eval1,Eval2],RetVal):- !,
+    lazy_union(variant_by_type,RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
+                  RetVal2^eval_args(Eq,RetType,Depth,Self,Eval2,RetVal2),
+                  RetVal).
+
+eval_20(Eq,RetType,Depth,Self,['pred-union',P2,Eval1,Eval2],RetVal):- !,
+    lazy_union(P2,RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
+                  RetVal2^eval_args(Eq,RetType,Depth,Self,Eval2,RetVal2),
+                  RetVal).
+
+%eval_20(Eq,RetType,_Dpth,_Slf,['py-list',Atom_list],CDR_Y):-
+% !, Atom=[_|CDR],!,do_expander(Eq,RetType,Atom_list, CDR_Y ).
 
 eval_20(Eq,RetType,Depth,Self,['intersection',Eval1,Eval2],RetVal):- !,
-    lazy_intersection(RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
+    lazy_intersection(variant_by_type,RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
                   RetVal2^eval_args(Eq,RetType,Depth,Self,Eval2,RetVal2),
                   RetVal).
 
-lazy_intersection(E1^Call1, E2^Call2, E1) :-
-    % Step 1: Evaluate Call1 to generate E1
-    call(Call1),
-    % Step 2: Use lazy_findall/3 to declare that all elements satisfying Call2 are supposedly in List2
-    lazy_findall(E2, Call2, List2),
-    % Step 3: Perform the subtraction logic
-    % Only return E1 if it is not a member of List2
-    member(E2, List2), E1 == E2.
+eval_20(Eq,RetType,Depth,Self,['pred-intersection',P2,Eval1,Eval2],RetVal):- !,
+    lazy_intersection(P2,RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
+                  RetVal2^eval_args(Eq,RetType,Depth,Self,Eval2,RetVal2),
+                  RetVal).
 
-
-%% lazy_subtraction(+E1_Call1, +E2_Call2, -E) is nondet.
-%  - Performs a subtraction operation using lazy evaluation.
-%  - It subtracts elements generated by Call2 from those generated by Call1.
+%% lazy_intersection(:P2, +E1_Call1, +E2_Call2, -E) is nondet.
+%  - Performs a intersection operation using lazy evaluation.
+%  - It intersects elements generated by Call2 from those generated by Call1.
 % Arguments:
+%  - P2: Any arity 2 predicate
 %  - E1^Call1: The first goal (Call1) generating elements (E1).
 %  - E2^Call2: The second goal (Call2) generating elements (E2).
 %  - E: The resulting element after subtracting elements of the second set from the first set.
-lazy_subtraction(E1^Call1, E2^Call2, E1) :-
+lazy_intersection(P2, E1^Call1, E2^Call2, E1) :-
+    % Step 1: Evaluate Call1 to generate E1
+    call(Call1),
+    % Step 2: Use lazy_findall/3 to declare that all elements satisfying Call2 are supposedly in List2
+    lazy_findall(E2, Call2, List2),
+    % Step 3: Perform the intersection logic
+    % Only return E1 if it is not a member of List2
+    member(E2, List2), call(P2,E1,E2).
+
+
+%% lazy_subtraction(:P2, +E1_Call1, +E2_Call2, -E) is nondet.
+%  - Performs a subtraction operation using lazy evaluation.
+%  - It subtracts elements generated by Call2 from those generated by Call1.
+% Arguments:
+%  - P2: Any arity 2 predicate
+%  - E1^Call1: The first goal (Call1) generating elements (E1).
+%  - E2^Call2: The second goal (Call2) generating elements (E2).
+%  - E: The resulting element after subtracting elements of the second set from the first set.
+lazy_subtraction(P2,E1^Call1, E2^Call2, E1) :-
     % Step 1: Evaluate Call1 to generate E1
     call(Call1),
     % Step 2: Use lazy_findall/3 to declare that all elements satisfying Call2 are supposedly in List2
     lazy_findall(E2, Call2, List2),
     % Step 3: Perform the subtraction logic
     % Only return E1 if it is not a member of List2
-    \+ (member(E2, List2), E1 =@= E2).
+    \+ (member(E2, List2), call(P2, E1, E2)).
 
 
 eval_20(Eq,RetType,Depth,Self,PredDecl,Res):-
@@ -1711,9 +1953,9 @@ eval_21(Eq,RetType,Depth,Self,['CollapseCardinality',List],Len):-!,
  length(Res,Len).
 /*
 eval_21(_Eq,_RetType,_Depth,_Self,['TupleCount', [N]],N):- number(N),!.
-
-
 */
+
+
 eval_21(Eq,_RetType,Depth,Self,['Tuple-Count',List],Len):- fail,!,
  (\+ is_list(List)->findall_eval(Eq,_,Depth,Self,List,Res);Res=List),!,
  length(Res,Len).
@@ -1776,17 +2018,35 @@ eval_40(Eq,RetType,Depth,Self,['-',N1,N2],N):- number(N1),
 eval_40(Eq,RetType,Depth,Self,['*',N1,N2],N):- number(N1),
    eval_args(Eq,RetType,Depth,Self,N2,N2Res), fake_notrace(catch_err(N is N1*N2Res,_E,(set_last_error(['Error',N2Res,'Number']),fail))).
 
+eval_20(_Eq,_RetType,_Depth,_Self,['rust',Bang,PredDecl],Res):- Bang == '!', !,
+    rust_metta_run(exec(PredDecl),Res), nop(write_src(res(Res))).
 eval_20(_Eq,_RetType,_Depth,_Self,['rust',PredDecl],Res):- !,
-  must_det_ll((rust_metta_run(PredDecl,Res),
-  nop(write_src(res(Res))))).
+    rust_metta_run((PredDecl),Res), nop(write_src(res(Res))).
 eval_20(_Eq,_RetType,_Depth,_Self,['rust!',PredDecl],Res):- !,
-  must_det_ll((rust_metta_run(exec(PredDecl),Res),
-  nop(write_src(res(Res))))).
+    rust_metta_run(exec(PredDecl),Res), nop(write_src(res(Res))).
+
+eval_70(_Eq,_RetType,_Depth,_Self,['py-atom',Arg],Res):- !,
+  must_det_ll((py_atom(Arg,Res))).
+eval_40(_Eq,_RetType,_Depth,_Self,['py-atom',Arg,Type],Res):- !,
+  must_det_ll((py_atom_type(Arg,Type,Res))).
+eval_40(_Eq,_RetType,_Depth,_Self,['py-dot',Arg1,Arg2],Res):- !,
+  must_det_ll((py_dot([Arg1,Arg2],Res))).
+eval_40(_Eq,_RetType,_Depth,_Self,['py-list',Arg],Res):- !,
+  must_det_ll((py_list(Arg,Res))).
+eval_40(_Eq,_RetType,_Depth,_Self,['py-dict',Arg],Res):- !,
+  must_det_ll((py_dict(Arg,Res))).
+eval_40(_Eq,_RetType,_Depth,_Self,['py-tuple',Arg],Res):- !,
+    must_det_ll((py_tuple(Arg,Res))).
+eval_40(_Eq,_RetType,_Depth,_Self,['py-eval',Arg],Res):- !,
+    must_det_ll((py_eval(Arg,Res))).
 
 eval_40(Eq,RetType,Depth,Self,['length',L],Res):- !, eval_args(Depth,Self,L,LL),
    (is_list(LL)->length(LL,Res);Res=1),
    check_returnval(Eq,RetType,Res).
 
+
+eval_20(Eq,RetType,Depth,Self,[P,X|More],YY):- is_list(X),X=[_,_,_],simple_math(X),
+       eval_selfless_2(X,XX),X\=@=XX,!, eval_20(Eq,RetType,Depth,Self,[P,XX|More],YY).
 
 /*
 eval_40(Eq,RetType,Depth,Self,[P,A,X|More],YY):- is_list(X),X=[_,_,_],simple_math(X),
@@ -1798,6 +2058,15 @@ eval_40(Eq,RetType,Depth,Self,[P,A,X|More],YY):- is_list(X),X=[_,_,_],simple_mat
 eval_40(Eq,RetType,_Dpth,_Slf,[EQ,X,Y],Res):- EQ=='==', !,
     suggest_type(RetType,'Bool'),
     eq_unify(Eq,_SharedType, X, Y, Res).
+
+eval_20(_Eq,RetType,_Dpth,_Slf,[EQ,X,Y],TF):- EQ=='===', !,
+    suggest_type(RetType,'Bool'),
+    as_tf(X==Y,TF).
+
+eval_20(_Eq,RetType,_Dpth,_Slf,[EQ,X,Y],TF):- EQ=='====', !,
+    suggest_type(RetType,'Bool'),
+    as_tf(same_terms(X,Y),TF).
+
 
 eq_unify(_Eq,_SharedType, X, Y, TF):- as_tf(X=:=Y,TF),!.
 eq_unify(_Eq,_SharedType, X, Y, TF):- as_tf( '#='(X,Y),TF),!.

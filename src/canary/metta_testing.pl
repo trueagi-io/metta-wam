@@ -126,22 +126,60 @@ write_pass_fail(TestName,P,C,PASS_FAIL,G1,G2):-
     symbolic_list_concat([_,R],'tests/',FilePath),
     file_name_extension(Base, _, R))),
       nop(format('<h3 id="~w">;; ~w</h3>',[TestName,TestName])),
-
-      if_t( (tee_file(TEE_FILE)->true;'TEE.ansi'=TEE_FILE),
-      (%atom_concat(TEE_FILE,'.UNITS',UNITS),
-      UNITS = '/tmp/SHARED.UNITS',
+      must_det_ll((
+      (tee_file(TEE_FILE)->true;'TEE.ansi'=TEE_FILE),
+      (( %atom_concat(TEE_FILE,'.UNITS',UNITS),
+      shared_units(UNITS),
       open(UNITS, append, Stream,[encoding(utf8)]),
       once(getenv('HTML_FILE',HTML_OUT);sformat(HTML_OUT,'~w.metta.html',[Base])),
-      format(Stream,'| ~w | ~w |[~w](https://logicmoo.org/public/metta/reports/~w#~w) | ~@ | ~@ | ~@ |~n',
+      compute_html_out_per_test(HTML_OUT,TEE_FILE,TestName,HTML_OUT_PerTest),
+      get_last_call_duration(Duration),
+      DurationX1000 is Duration * 1000,
+      format(Stream,'| ~w | ~w |[~w](https://logicmoo.org/public/metta/~w#~w) | ~@ | ~@ | ~@ | ~w | ~w |~n',
       [TestName,PASS_FAIL,TestName,HTML_OUT,TestName,
-        trim_gstring_bar_I(write_src_woi([P,C]),200),
-        trim_gstring_bar_I(write_src_woi(G1),100),
-        trim_gstring_bar_I(write_src_woi(G2),100)]),!,
-      close(Stream))).
+        trim_gstring_bar_I(write_src_woi([P,C]),400),
+        trim_gstring_bar_I(write_src_woi(G1),200),
+        trim_gstring_bar_I(write_src_woi(G2),200),
+        DurationX1000,
+        HTML_OUT_PerTest]),!,
+      close(Stream))))).
+
+% Needs not to be absolute and not relative to CWD (since tests like all .metta files change their local CWD at least while "loading")
+output_directory(OUTPUT_DIR):- getenv('METTALOG_OUTPUT',OUTPUT_DIR),!.
+output_directory(OUTPUT_DIR):- getenv('OUTPUT_DIR',OUTPUT_DIR),!.
+
+shared_units(UNITS):- getenv('SHARED_UNITS',UNITS),!.  % Needs not to be relative to CWD
+shared_units(UNITS):- output_directory(OUTPUT_DIR),!,directory_file_path(OUTPUT_DIR,'SHARED.UNITS',UNITS).
+shared_units(UNITS):- UNITS = '/tmp/SHARED.UNITS'.
+
+% currently in a shared file per TestCase class..
+%   but we might make each test dump its stuffg to its own html file for easier spotting why test failed
+compute_html_out_per_test(HTML_OUT,_TEE_FILE,_TestName,HTML_OUT_PerTest):-
+   HTML_OUT=HTML_OUT_PerTest.
+
+% Executes Goal and records the execution duration in '$last_call_duration'.
+% The duration is recorded regardless of whether Goal succeeds or fails.
+record_call_duration(Goal) :-
+    nb_setval('$last_call_duration', 120),
+    statistics(cputime, Start),  % Get the start CPU time
+    (   call(Goal)               % Call the Goal
+    *-> EndResult = true         % If Goal succeeds, proceed
+    ;   EndResult = false        % If Goal fails, record it but proceed
+    ),
+    statistics(cputime, End),    % Get the end CPU time
+    Duration is End - Start,     % Calculate the CPU duration
+    nb_setval('$last_call_duration', Duration),  % Set the global variable non-backtrackably
+    EndResult.                   % Preserve the result of the Goal
+
+% Helper to retrieve the last call duration stored in the global variable.
+get_last_call_duration(Duration) :-
+    nb_getval('$last_call_duration', Duration),!.
+
 
 trim_gstring_bar_I(Goal, MaxLen) :-
     wots(String0,Goal),
-    string_replace(String0,'|','I',String),
+    string_replace(String0,'|','I',String1),
+    string_replace(String1,'\n','\\n',String),
     atom_length(String, Len),
     (   Len =< MaxLen
     ->  Trimmed = String
@@ -151,7 +189,169 @@ trim_gstring_bar_I(Goal, MaxLen) :-
     ),
     write(Trimmed).
 
-loonit_asserts1(TestSrc,Pre,G) :- _=nop(Pre),call(G),
+
+%! tst_cwdl(+Goal, +MaxDepth) is det.
+%
+%  Call Goal with a depth limit of MaxDepth. If the depth limit is exceeded,
+%  an exception `over_test_resource_limit(depth_limit, MaxDepth, 1)` is thrown.
+%
+%  @param Goal The Prolog goal to be called.
+%  @param MaxDepth The maximum depth allowed for the call.
+%
+%  @throws over_test_resource_limit(depth_limit, MaxDepth, 1)
+%  If the depth limit is exceeded.
+%
+%  @example
+%    % Successful call within depth limit
+%    ?- tst_cwdl(member(X, [1,2,3]), 3).
+%    X = 1 ;
+%    X = 2 ;
+%    X = 3.
+%
+%  @example
+%    % Call exceeding depth limit
+%    ?- tst_cwdl(member(X, [1,2,3]), 0).
+%    ERROR: Unhandled exception: over_test_resource_limit(depth_limit, 0, 1)
+%
+tst_cwdl(Goal, _MaxDepth) :- !, call(Goal).
+tst_cwdl(Goal, MaxDepth) :-
+    call_with_depth_limit(Goal, MaxDepth, Result),
+    cwdl_handle_result(Result, MaxDepth).
+
+% Processes the result of the depth-limited call.
+cwdl_handle_result(depth_limit_exceeded,MaxDepth) :- !,
+    throw(over_test_resource_limit(depth_limit, MaxDepth, 1)).
+cwdl_handle_result(_, _).
+
+
+
+%! tst_cwil(+Goal, +MaxInference) is det.
+%
+%  Call Goal with a inference limit of MaxInference. If the inference limit is exceeded,
+%  an exception `over_test_resource_limit(inference_limit, MaxInference, 1)` is thrown.
+%
+%  @param Goal The Prolog goal to be called.
+%  @param MaxInference The maximum inference allowed for the call.
+%
+%  @throws over_test_resource_limit(inference_limit, MaxInference, 1)
+%  If the inference limit is exceeded.
+%
+%  @example
+%    % Successful call within inference limit
+%    ?- tst_cwil(member(X, [1,2,3]), 3).
+%    X = 1 ;
+%    X = 2 ;
+%    X = 3.
+%
+%  @example
+%    % Call exceeding inference limit
+%    ?- tst_cwil(member(X, [1,2,3]), 0).
+%    ERROR: Unhandled exception: over_test_resource_limit(inference_limit, 0, 1)
+%
+tst_cwil(Goal, _MaxInference) :- !, call(Goal).
+tst_cwil(Goal, MaxInference) :-
+    call_with_inference_limit(Goal, MaxInference, Result),
+    cwil_handle_result(Result, MaxInference).
+
+% Processes the result of the inference-limited call.
+cwil_handle_result(inference_limit_exceeded,MaxInference) :- !,
+    throw(over_test_resource_limit(inference_limit, MaxInference, 1)).
+cwil_handle_result(_, _).
+
+
+%! tst_cwtl(+Goal, +TimeLimit) is det.
+%
+%  Call Goal with a time limit of TimeLimit seconds. If the time limit is exceeded,
+%  an exception `over_test_resource_limit(time_limit, TimeLimit, exceeded)` is thrown.
+%
+%  @param Goal The Prolog goal to be called.
+%  @param TimeLimit The maximum time allowed for the call in seconds.
+%
+%  @throws over_test_resource_limit(time_limit, TimeLimit, exceeded)
+%  If the time limit is exceeded.
+%
+%  @example
+%    % Successful call within time limit
+%    ?- tst_cwtl((sleep(1), writeln('Completed')), 2).
+%    Completed
+%    true.
+%
+%  @example
+%    % Call exceeding time limit
+%    ?- tst_cwtl((sleep(2), writeln('Completed')), 1).
+%    ERROR: Unhandled exception: over_test_resource_limit(time_limit, 1, exceeded)
+%
+tst_cwtl(Goal, TimeLimit) :-
+    catch(call_with_time_limit(TimeLimit,Goal),time_limit_exceeded,throw(over_test_resource_limit(time_limit, TimeLimit, exceeded))).
+
+test_alarm:- !.
+test_alarm:- time(catch((call_with_time_limit(0.5,(forall(between(1,15,_),sleep(0.1)),wdmsg(failed_test_alarm)))),time_limit_exceeded,wdmsg(passed_test_alarm))).
+
+loonit_divisor(TestNumber) :-
+    loonit_number(TN), ( TN > 0 -> TestNumber = TN ; TestNumber = 1), !.
+
+%! compute_available_time(-ActualTimeout) is det.
+%
+%  Computes the actual timeout based on the available timeout and test number,
+%  ensuring it is at least 4 seconds.
+%
+%  @param ActualTimeout The computed timeout value, ensuring a minimum of 4 seconds.
+%
+%  @example
+%    % Assuming `loonit_number/1` returns 3 and available timeout is 120 seconds:
+%    ?- compute_available_time(ActualTimeout).
+%    ActualTimeout = 38.0.
+%
+%  @example
+%    % With a smaller available timeout:
+%    ?- option_else(timeout, "20", _), compute_available_time(ActualTimeout).
+%    ActualTimeout = 4.0.
+%
+compute_available_time(4.0) :- !.
+compute_available_time(ActualTimeout) :-
+    loonit_divisor(TestNumber),
+    option_else(timeout, AvailableTimeoutStr, "120"),
+    break,
+    into_number(AvailableTimeoutStr, AvailableTimeout),
+    ComputedTimeout is (AvailableTimeout / TestNumber) - 2,
+    max_min(4, ComputedTimeout, _, ActualTimeout), !.
+
+%! tst_call_limited(+Goal) is det.
+%
+%  Calls the Goal with a depth limit of 1000 and a time limit calculated based on
+%  the available timeout divided by the test number, ensuring the timeout is at least 4 seconds.
+%
+%  @param Goal The Prolog goal to be called.
+%
+%  @throws over_test_resource_limit(time_limit, ActualTimeout, exceeded)
+%  if the time limit is exceeded.
+%  @throws over_test_resource_limit(depth_limit, 1000, 1)
+%  if the depth limit is exceeded.
+%
+%  @example
+%    % Run a goal within the calculated limits:
+%    ?- tst_call_limited(member(X, [1,2,3])).
+%    X = 1 ;
+%    X = 2 ;
+%    X = 3.
+%
+%  @example
+%    % Run a goal that exceeds the calculated time limit:
+%    ?- tst_call_limited(sleep(20)).
+%    red: Exception: over_test_resource_limit(sleep(20), time_limit, 4, exceeded)
+%    false.
+%
+tst_call_limited(Goal) :-
+    % notrace(wdmsg(tst_call_limited(Goal))),
+    compute_available_time(ActualTimeout),
+    catch(
+        % Apply the time limit, depth limit, inference limit
+        tst_cwtl(tst_cwil(tst_cwdl(Goal, 300), 1_000_000_000), ActualTimeout),
+        Exception,
+        (ansi_format([fg(red)],'~n~n~q~n~n',[failing(Goal, Exception)]), !, fail)
+    ).
+
+loonit_asserts1(TestSrc,Pre,G) :- _=nop(Pre),record_call_duration((G)),
   give_pass_credit(TestSrc,Pre,G),!.
 
 /*

@@ -267,6 +267,8 @@ get_dict_type(Val,_,TypeO):- get_dict(Val,types,TypeL),
 get_type_cmpd(_Dpth,_Slf,Val,Type,dict):- is_dict(Val,Type),!,
   get_dict_type(Val,Type,TypeO).
 
+get_type_cmpd(_Dpth,_Slf,'#\\'(_),'Char',functor):- !.
+
 % Curried Op
 get_type_cmpd(Depth,Self,[[Op|Args]|Arg],Type,curried(W)):-
  symbol(Op),
@@ -293,7 +295,6 @@ get_type_cmpd(Depth,Self,[Op|Args],Type,ac(Op,[P|Arams],RetType)):- symbol(Op),
 get_type_cmpd(_Dpth,_Slf,Cmpd,Type,typed_list):-
   typed_list(Cmpd,Type,_List).
 
-get_type_cmpd(_Dpth,_Slf,_Cmpd,[],unknown).
 
 /*
 get_type_cmpd(Depth,Self,[Op|Expr],Type,not_bat):-
@@ -318,6 +319,8 @@ get_type_cmpd(Depth,Self,EvalMe,Type,eval_first):-
     eval_args(Depth2,Self,EvalMe,Val),
     \+ needs_eval(Val),
     get_type(Depth2,Self,Val,Type).
+
+get_type_cmpd(_Dpth,_Slf,_Cmpd,[],unknown).
 
 
 state_decltype(Expr,Type):- functor(Expr,_,A),
@@ -582,6 +585,21 @@ is_seo_f('State').
 is_seo_f('Event').
 is_seo_f('Concept').
 is_seo_f(N):- number(N),!.
+
+:- if( \+ current_predicate(is_absorbed_return_type/2)).
+is_absorbed_return_type(Params,Var):- var(Var),!, \+ sub_var(Var,Params).
+is_absorbed_return_type(_,'Bool').
+is_absorbed_return_type(_,[Ar]):- !, Ar == (->).
+is_absorbed_return_type(_,'EmptyType').
+is_absorbed_return_type(_,'ReturnType').
+is_absorbed_return_type(_,X):- is_self_return(X).
+
+is_self_return('ErrorType').
+
+is_non_absorbed_return_type(Params,Var):-
+   \+ is_absorbed_return_type(Params,Var).
+
+:- endif.
 
 %is_user_defined_goal(Self,[H|_]):- is_user_defined_head(Eq,Self,H).
 
