@@ -290,7 +290,6 @@ include_metta_directory_file_prebuilt(Self, _Directory, Filename):-
     exists_file(QlfFile),
     time_file(Filename, MettaTime),
     time_file(QlfFile, QLFTime),
-    \+ always_rebuild_temp,
     QLFTime > MettaTime,!, % Ensure QLF file is newer than the METTA file
     pfcAdd_Now(user:loaded_into_kb(Self,Filename)),
     ensure_loaded(QlfFile),!.
@@ -302,13 +301,11 @@ include_metta_directory_file_prebuilt(Self,_Directory, Filename):- just_load_dat
   exists_file(DatalogFile),
   time_file(Filename, MettaTime),
   time_file(DatalogFile, DatalogTime),
-  DatalogTime > MettaTime, \+ always_rebuild_temp, !, % Ensure Datalog file is newer than the METTA file
+  DatalogTime > MettaTime, !, % Ensure Datalog file is newer than the METTA file
     size_file(Filename, MettaSize),
     size_file(DatalogFile, DatalogSize),
     % Ensure the size of the Datalog file is at least 25% of the METTA file
     DatalogSize >= 0.25 * MettaSize,
- % always rebuild
-  delete_file(DatalogFile),fail,
     !, % Cut to prevent backtracking
   pfcAdd_Now(user:loaded_into_kb(Self,Filename)),
   ensure_loaded(DatalogFile),!.
@@ -321,8 +318,6 @@ include_metta_directory_file_prebuilt(Self,_Directory, Filename):-
     size_file(DatalogFile, DatalogSize),
     % Ensure the size of the Datalog file is at least 25% of the METTA file
     DatalogSize >= 0.25 * MettaSize,
-% always rebuild
-  delete_file(DatalogFile),fail,
     !, % Cut to prevent backtracking
   convert_datalog_to_loadable(DatalogFile,QlfFile),!,
   exists_file(QlfFile),!,
@@ -333,22 +328,17 @@ include_metta_directory_file_prebuilt(Self,_Directory, Filename):-
 
 include_metta_directory_file(Self,Directory, Filename):-
   include_metta_directory_file_prebuilt(Self,Directory, Filename),!.
-include_metta_directory_file(Self, Directory, Filename):-
-  count_lines_up_to(2000,Filename, Count), Count > 1980, \+ use_fast_buffer,
-  include_large_metta_directory_file(Self, Directory, Filename), !.
-include_metta_directory_file(Self,Directory,Filename):-
-  with_cwd(Directory,must_det_ll(setup_call_cleanup(open(Filename,read,In, [encoding(utf8)]),
-    must_det_ll( load_metta_file_stream(Filename,Self,In)),
-    close(In)))).
-
-include_large_metta_directory_file(Self, Directory, Filename):- \+ use_fast_buffer, !,
-  locally(nb_setval(may_use_fast_buffer,t), include_metta_directory_file(Self,Directory, Filename)).
-include_large_metta_directory_file(Self,_Directory, Filename):-
+include_metta_directory_file(Self,_Directory, Filename):-
+  count_lines_up_to(2000,Filename, Count), Count > 1980,
   once(convert_metta_to_loadable(Filename,QlfFile)),
   exists_file(QlfFile),!,
   pfcAdd_Now(user:loaded_into_kb(Self,Filename)),
   ensure_loaded(QlfFile).
 
+include_metta_directory_file(Self,Directory,Filename):-
+  with_cwd(Directory,must_det_ll(setup_call_cleanup(open(Filename,read,In, [encoding(utf8)]),
+    must_det_ll( load_metta_file_stream(Filename,Self,In)),
+    close(In)))).
 
 convert_metta_to_datalog(Filename,DatalogFile):-
     % Generate the Datalog file name
@@ -424,7 +414,6 @@ translate_metta_file_to_datalog_io(Filename,Input,Output):-
   filename_to_mangled_pred(Filename,MangleP2),
     mangle_iz(MangleP2,MangleIZ),
 
-  format(Output,':- style_check(-singleton). ~n',[]),
   format(Output,':- style_check(-discontiguous). ~n',[]),
   format(Output,':- dynamic((~q)/2). ~n',[MangleP2]),
   format(Output,':- dynamic((~q)/3). ~n',[MangleP2]),
@@ -472,6 +461,8 @@ translate_metta_file_to_datalog_io(Filename,Input,Output):-
   format(user_error,'~N; Done translating ~w forms: ~q.',
                            [TF,asserted_metta_pred(MangleP2,Filename)]))).
 
+write_src_woi(Term):- with_indents(false,write_src(Term)).
+
 % write comments
 write_metta_datalog_term(Output,'$COMMENT'(Term,_,_),_MangleP2,_Lineno):-
   format(Output,"/* ~w */~n",[Term]).
@@ -489,10 +480,8 @@ relistify(Term,TermL):- is_list(Term),!,TermL=Term.
 relistify([H|T],TermL):- flatten([H|T],TermL),!.
 relistify(Term,[Term]).
 
-eval_Line(A,_B,_C):-
-  test_alarm,
-  format('~N'), nl, % write_src(eval_Line(A,B,C)),nl,
-  eval(A,R),nl,wdmsg(R).
+eval_Line(A,B,C):- format('~N'),
+  write_src(eval_Line(A,B,C)),nl.
 
 translate_metta_datalog(Input,Output):- translate_metta_datalog('',Input,Output),!.
 
@@ -534,7 +523,7 @@ read_chars_until(StopsBefore, '\\', Input, [Code|Codes]):- get_char(Input,Code),
 read_chars_until(StopsBefore, Char, Input, [Char|Codes]):- get_char(Input,_),
   read_chars_until(StopsBefore, Input, Codes).
 
-  just_load_datalog:-!, true.
+  just_load_datalog:-!, fail.
 convert_datalog_to_loadable(DatalogFile,DatalogFile):-just_load_datalog,!.
 convert_datalog_to_loadable(DatalogFile,QlfFile):-
   sformat(S,'swipl -g "qcompile(~q)" -t halt',[DatalogFile]),
@@ -542,7 +531,6 @@ convert_datalog_to_loadable(DatalogFile,QlfFile):-
   file_name_extension(Base, _, DatalogFile),
   file_name_extension(Base,'qlf',QlfFile).
 
-convert_metta_to_loadable(_Filename,_QlfFile):- use_fast_buffer,!, fail.
 convert_metta_to_loadable(Filename,QlfFile):-
   must_det_ll((
   convert_metta_to_datalog(Filename,DatalogFile),
@@ -579,22 +567,8 @@ load_metta_file_stream(Filename,Self,In):-
 % use_fast_buffer makes tmp .buffer files that get around long load times
 use_fast_buffer:- nb_current(may_use_fast_buffer,t).
 
-%:- nb_setval(may_use_fast_buffer,t).
-%:- use_fast_buffer.
-
 :- dynamic(metta_file_buffer/5).
 :- multifile(metta_file_buffer/5).
-
-prefer_temp(Filename,BufferFile):- \+ exists_file(Filename),!, exists_file(BufferFile).
-prefer_temp(Filename,BufferFile):-
-    time_file(Filename, FileTime),
-    time_file(BufferFile, BufferFileTime),
-    BufferFileTime > FileTime,
-    size_file(Filename, MettaSize),
-    size_file(BufferFile, BufferSize),
-    % not truncated ?
-    BufferSize >= 0.25 * MettaSize.
-
 
 
 load_metta_file_stream_fast(_Size,_P2,Filename,Self,S):- fail,
@@ -607,16 +581,17 @@ load_metta_file_stream_fast(_Size,_P2,Filename,Self,S):- fail,
   I==end_of_file,!.
 
 load_metta_file_stream_fast(_Size, _P2, Filename, Self, _In) :-
+    use_fast_buffer,
     symbol_concat(Filename, '.buffer~', BufferFile),
     exists_file(BufferFile),
-    (   prefer_temp(Filename,BufferFile)
-    ->  (use_fast_buffer, fbugio(using(BufferFile)),ensure_loaded(BufferFile), !, load_metta_buffer(Self, Filename))
+    time_file(Filename, FileTime),
+    time_file(BufferFile, BufferFileTime),
+    (   (BufferFileTime > FileTime)
+    ->  (fbugio(using(BufferFile)),ensure_loaded(BufferFile), !, load_metta_buffer(Self, Filename))
     ;   (fbugio(deleting(BufferFile)),delete_file(BufferFile), fail)
     ).
 
 load_metta_file_stream_fast(_Size,P2,Filename,Self,In):-
-  % maybe time this
-  ((
       if_t(use_fast_buffer,
          ((symbol_concat(Filename, '.buffer~', BufferFile),
           fbugio(creating(BufferFile)),
@@ -632,11 +607,9 @@ load_metta_file_stream_fast(_Size,P2,Filename,Self,In):-
             if_t(use_fast_buffer,write_bf(BufferFile,BufferTerm)),
 
       flush_output,
-      at_end_of_stream(In),!)),!,
+      at_end_of_stream(In),!,
       %listing(metta_file_buffer/5),
       load_metta_buffer(Self,Filename).
-
-always_rebuild_temp:- true.
 
 write_bf(BufferFile,BufferTerm):-
   setup_call_cleanup(open(BufferFile,append,Out),
@@ -1183,21 +1156,11 @@ progress_bar_example.
 
 use_corelib_file:- using_corelib_file,!.
 use_corelib_file:- asserta(using_corelib_file), fail.
-use_corelib_file:- !.
 use_corelib_file:- load_corelib_file, generate_interpreter_stubs.
 
-:- dynamic(did_generate_interpreter_stubs/0).
-generate_interpreter_stubs:- did_generate_interpreter_stubs,!.
 generate_interpreter_stubs:-
-   asserta(did_generate_interpreter_stubs),
    forall(metta_type('&corelib',Symb,Def),
         gen_interp_stubs('&corelib',Symb,Def)).
-
-:- dynamic(metta_atom_asserted_deduced/2).
-:- multifile(metta_atom_asserted_deduced/2).
-metta_atom_asserted_deduced('&corelib', Term):- \+ did_generate_interpreter_stubs,
-   metta_atom_corelib_types(Term).
-
 
 load_corelib_file:- is_metta_src_dir(Dir), really_use_corelib_file(Dir,'corelib.metta'),!.
 load_corelib_file:- is_metta_src_dir(Dir), really_use_corelib_file(Dir,'stdlib_mettalog.metta'),!.

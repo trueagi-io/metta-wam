@@ -538,10 +538,10 @@ add_metta_commands(Input) :-
 install_readline(Input):- is_installed_readline_editline(Input),!.
 %install_readline(_):- is_compatio,!.
 install_readline(Input):- stream_property(Input,tty(true)),
-   assert(is_installed_readline_editline(Input)),
-   install_readline_editline1,
+    assert(is_installed_readline_editline(Input)),
+    install_readline_editline1,
     %use_module(library(readline)),
-   use_module(library(editline)),
+    use_module(library(editline)),
     %nop(catch(load_history,_,true)),
     ignore(el_unwrap(Input)), % unwrap the prolog wrapper so we can use our own.
     ignore(el_wrap_metta(Input)),

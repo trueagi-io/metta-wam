@@ -129,15 +129,15 @@ user:file_search_path(mettalog,Dir):- metta_dir(Dir).
 :-dynamic(user:loaded_into_kb/2).
 :- dynamic(user:is_metta_dir/1).
 
-once_writeq_nl(_):- \+ clause(pfcTraceExecution,true),!.
-once_writeq_nl(P):- nb_current('$once_writeq_ln',W),W=@=P,!.
-once_writeq_nl(P):-
+once_writeq_ln(_):- \+ clause(pfcTraceExecution,true),!.
+once_writeq_ln(P):- nb_current('$once_writeq_ln',W),W=@=P,!.
+once_writeq_ln(P):-
  \+ \+ (numbervars(P,444,_,[attvar(skip),singletons(true)]),
  ansi_format([fg(cyan)],'~N~q.~n',[P])),nb_setval('$once_writeq_ln',P),!.
 % TODO uncomment this next line but it is breaking the curried chainer
 % pfcAdd_Now(P):- pfcAdd(P),!.
-pfcAdd_Now(P):- current_predicate(pfcAdd/1),!, once_writeq_nl(pfcAdd(P)),pfcAdd(P).
-pfcAdd_Now(P):- once_writeq_nl(asssert(P)),assert(P).
+pfcAdd_Now(P):- current_predicate(pfcAdd/1),!, once_writeq_ln(pfcAdd(P)),pfcAdd(P).
+pfcAdd_Now(P):- once_writeq_ln(asssert(P)),assert(P).
 %:- endif.
 
 system:copy_term_g(I,O):- ground(I),!,I=O.
@@ -366,8 +366,7 @@ option_value_def('initial-result-count',10).
 
 
 
-%fbugio(TF,P):-!, ignore(( TF,!,wdmsg(fbug(P)))).
-%fbugio(_,_):- is_compatio,!.
+fbugio(_,_):- is_compatio,!.
 fbugio(TF,P):-!, ignore(( TF,!,fbug(P))).
 fbugio(IO):-fbugio(true,IO).
 
@@ -416,7 +415,6 @@ set_is_unit_test(TF):-
 
 :- meta_predicate fake_notrace(0).
 fake_notrace(G):- tracing,!,real_notrace(G).
-fake_notrace(G):- !,notrace(G).
 fake_notrace(G):- !,once(G).
 % `quietly/1` allows breaking in and inspection (real `no_trace/1` does not)
 fake_notrace(G):- quietly(G),!.
@@ -485,6 +483,7 @@ show_options_values:-
 :- ensure_loaded(metta_eval).
 
 :- set_is_unit_test(false).
+
 extract_prolog_arity([Arrow|ParamTypes],PrologArity):-
     Arrow == ('->'),!,
     len_or_unbound(ParamTypes,PrologArity).
@@ -582,17 +581,8 @@ format_atom(Format, N, Atom) :- format(atom(Atom), Format, [N]).
 %    .... actual impl ....
 
 
-% ============================
-% %%%% Missing Arithmetic Operations
-% ============================
-'%'(Dividend, Divisor, Remainder):- eval_H(['mod',Dividend, Divisor], Remainder).
-
-
-mettalog_rt_args(Args):- current_prolog_flag(mettalog_rt_args, Args),!.
-mettalog_rt_args(['--repl=false']).
 
 metta_argv(Args):- current_prolog_flag(metta_argv, Args),!.
-metta_argv(Args):- current_prolog_flag(mettalog_rt, true),!,mettalog_rt_args(Args).
 metta_argv(Before):- current_prolog_flag(os_argv,OSArgv), append(_,['--args'|AArgs],OSArgv),
     before_arfer_dash_dash(AArgs,Before,_),!,set_metta_argv(Before).
 argv_metta(Nth,Value):- metta_argv(Args),nth1(Nth,Args,Value).
@@ -601,8 +591,6 @@ set_metta_argv(Before):-  maplist(read_argv,Before,Args),set_prolog_flag(metta_a
 read_argv(AArg,Arg):- \+ symbol(AArg),!,AArg=Arg.
 read_argv(AArg,Arg):- atom_string(AArg,S),read_metta(S,Arg),!.
 
-
-metta_cmd_args(Args):- current_prolog_flag(mettalog_rt, true),!,mettalog_rt_args(Args).
 metta_cmd_args(Rest):- current_prolog_flag(late_metta_opts,Rest),!.
 metta_cmd_args(Rest):- current_prolog_flag(os_argv,P),append(_,['--'|Rest],P),!.
 metta_cmd_args(Rest):- current_prolog_flag(argv,P),append(_,['--'|Rest],P),!.
@@ -1013,7 +1001,6 @@ metta_atom_asserted(X,Y):-
     metta_atom_asserted_deduced(X,Y),
     \+ clause(metta_atom_asserted(X,Y),true).
 
-
 %get_metta_atom(Eq,KB, [F|List]):- KB='&flybase',fb_pred(F, Len), length(List,Len),apply(F,List).
 
 
@@ -1028,19 +1015,10 @@ metta_atom(KB, [F, A| List]):- KB=='&flybase',fb_pred_nr(F, Len),current_predica
 %metta_atom(KB,Atom):- KB=='&corelib',!, metta_atom_corelib(Atom).
 metta_atom(KB,Atom):- metta_atom_in_file( KB,Atom).
 metta_atom(KB,Atom):- metta_atom_asserted( KB,Atom).
-metta_atom(KB,Atom):- KB \== '&corelib', !,
-   \+ \+ (metta_atom_asserted(KB,'&corelib'),
-          should_inherit_from_corelib(Atom)), !,
-   metta_atom('&corelib',Atom).
-
-should_inherit_from_corelib([H,A,B|_]):- nonvar(H),
-    (nonvar(A);nonvar(B)),!,
-     \+ \+ should_inherit_op_from_corelib(H).
-
+metta_atom(KB,Atom):- KB \== '&corelib', !, should_inherit_from_corelib(Atom), metta_atom('&corelib',Atom).
+should_inherit_from_corelib([H|_]):- nonvar(H),should_inherit_op_from_corelib(H).
 should_inherit_op_from_corelib('=').
 should_inherit_op_from_corelib(':').
-should_inherit_op_from_corelib('@doc').
-%should_inherit_op_from_corelib(_).
 
 metta_atom_asserted('&self','&corelib').
 metta_atom_asserted('&self','&stdlib').
@@ -1048,7 +1026,6 @@ metta_atom_asserted('&stdlib','&corelib').
 metta_atom_asserted('&flybase','&corelib').
 metta_atom_asserted('&catalog','&corelib').
 metta_atom_asserted('&catalog','&stdlib').
-:- ensure_loaded(metta_corelib).
 
 /*
 'mod-space'(top,'&self').
@@ -1064,9 +1041,7 @@ metta_atom_asserted('&catalog','&stdlib').
 %metta_atom(KB,[F,A|List]):- metta_atom(KB,F,A,List), F \== '=',!.
 is_metta_space(Space):- \+ \+ is_space_type(Space,_Test).
 
-%metta_eq_def(Eq,KB,H,B):- ignore(Eq = '='),if_or_else(metta_atom(KB,[Eq,H,B]), metta_atom_corelib(KB,[Eq,H,B])).
-metta_eq_def(Eq,KB,H,B):-  ignore(Eq = '='),
-   metta_atom(KB,[Eq,H,B]).
+metta_eq_def(Eq,KB,H,B):- ignore(Eq = '='),if_or_else(metta_atom(KB,[Eq,H,B]),metta_atom_corelib(KB,[Eq,H,B])).
 
 %metta_defn(KB,Head,Body):- metta_eq_def(_Eq,KB,Head,Body).
 metta_defn(KB,H,B):- metta_eq_def('=',KB,H,B).
@@ -1074,7 +1049,7 @@ metta_type(KB,H,B):- metta_eq_def(':',KB,H,B).
 %metta_type(S,H,B):- S == '&corelib', metta_atom_stdlib_types([':',H,B]).
 %typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_arguments(Cmpd,Type,[List|_]),is_list(List).
 
-%metta_atom_corelib(KB,Atom):- KB\='&corelib',!,metta_atom('&corelib',Atom).
+metta_atom_corelib(KB,Atom):- KB\='&corelib',!,metta_atom('&corelib',Atom).
 
 %maybe_xform(metta_atom(KB,[F,A|List]),metta_atom(KB,F,A,List)):- is_list(List),!.
 maybe_xform(metta_eq_def(Eq,KB,Head,Body),metta_atom(KB,[Eq,Head,Body])).
@@ -1651,7 +1626,6 @@ do_loon:-
    % ensure_corelib_types,
    set_output_stream,
    if_t(is_compiled,update_changed_files),
-   test_alarm,
    run_cmd_args,
    write_answer_output,
    maybe_halt(7)]))),!.
@@ -1679,7 +1653,7 @@ maybe_halt(Seven):- option_value('repl',false),!,halt(Seven).
 maybe_halt(Seven):- option_value('halt',true),!,halt(Seven).
 maybe_halt(_):- once(pre_halt2), fail.
 maybe_halt(Seven):- fbugio(maybe_halt(Seven)), fail.
-maybe_halt(_):- current_prolog_flag(mettalog_rt,true),!.
+%maybe_halt(_):- !.
 maybe_halt(H):- halt(H).
 
 
@@ -1691,6 +1665,8 @@ maybe_halt(H):- halt(H).
 
 :- initialization(show_os_argv).
 
+:- initialization(loon(program),program).
+:- initialization(loon(default)).
 
 ensure_mettalog_system_compilable:-
     %ensure_loaded(library(metta_python)),
@@ -1759,7 +1735,6 @@ qsave_program:-  ensure_mettalog_system, next_save_name(Name),
 :- ensure_loaded(metta_server).
 :- initialization(update_changed_files,restore).
 
-nts :- nts1.
 nts1:- !. % disable redefinition
 nts1:-  redefine_system_predicate(system:notrace/1),
   %listing(system:notrace/1),
@@ -1812,31 +1787,21 @@ fix_message_hook:-
 
 :- ensure_loaded(metta_python).
 :- initialization(use_corelib_file).
+
 :- ignore(((
-   %wdmsg(init_prog),
    use_corelib_file,
    (is_testing -> UNIT_TEST=true; UNIT_TEST=false),
    set_is_unit_test(UNIT_TEST),
-   %trace,
    \+ prolog_load_context(reloading,true),
-   initialization(loon(restore),restore),
-   % should fail (if tested from here https://swi-prolog.discourse.group/t/call-with-time-limit-2-not-enforcing-time-limit-as-expected/7755)
-   %test_alarm,
+    initialization(loon(restore),restore),
    % nts1,
-   metta_final,
-   true))).
+   metta_final
+    ))).
 
-:- initialization(use_corelib_file).
-%:- initialization(loon(program),program).
-%:- initialization(loon(default)).
 :- set_prolog_flag(metta_interp,ready).
-:- set_prolog_flag(gc,false).
 
 :- use_module(library(clpr)). % Import the CLP(R) library
 %:- ensure_loaded('metta_ontology.pfc.pl').
-%:- initialization(loon_main, main).
-:- initialization(loon(main), main).
-
 
 % Define a predicate to relate the likelihoods of three events
 complex_relationship3_ex(Likelihood1, Likelihood2, Likelihood3) :-

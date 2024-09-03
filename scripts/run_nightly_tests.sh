@@ -22,11 +22,11 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# generate the output directory with timestamp
-if [ -z $timestamp ]; then
-    timestamp=$(date +"%Y-%m-%dT%H:%M:%S")
+# Generate the output directory with timestamp
+if [ -z "$timestamp" ]; then
+    timestamp=$(date +"%Y-%m-%d")
 fi
-output=./reports/tests_output/baseline-compat-$timestamp/
+output=./reports/BY_DATE/$timestamp
 
 # run the tests
 mkdir -p $output
@@ -64,13 +64,13 @@ run_mettalog_tests() {
     fi
 
     if [ "$SHOW_ALL_OUTPUT" = true ]; then
-	# Execute the command and capture the status
-	"${cmd[@]}"
-	local status=$?
+        # Execute the command and capture the status
+        "${cmd[@]}"
+        local status=$?
     else
-	# Execute the command silently and filter output, capturing status
+        # Execute the command silently and filter output, capturing status
 	script -q -c "${cmd[*]}" /dev/null | tee >(grep -Ei --line-buffered '_CMD:|warning|es[:] ' >&2) > /dev/null
-	local status=$?
+        local status=$?
     fi
 
 
@@ -112,6 +112,22 @@ if [ "$SKIP_LONG" != "1" ]; then
     # Gets the rest
     run_mettalog_tests 15 tests/baseline_compat/
 
+
+    run_mettalog_tests 40 tests/nars_interp/
+
+    run_mettalog_tests 40 tests/more-anti-regression/
+
+    run_mettalog_tests 40 tests/extended_compat/metta-examples/
+    run_mettalog_tests 40 tests/extended_compat/
+
+    run_mettalog_tests 40 tests/direct_comp/
+    run_mettalog_tests 40 tests/features/
+    run_mettalog_tests 40 tests/performance/
+
+  # compiler based tests
+    #run_mettalog_tests 40 tests/compiler_baseline/
+    #run_mettalog_tests 40 tests/nars_w_comp/
+    # run_mettalog_tests 40 tests/python_compat/
 fi
 
 
@@ -119,9 +135,9 @@ fi
 cat $SHARED_UNITS >> /tmp/SHARED.UNITS
 
 # Tests ran locally by developer together
-cat ./reports/SHARED.UNITS.LOCAL.md >> /tmp/SHARED.UNITS
+cat ./reports/SHARED.UNITS.LOCAL.md >> /tmp/SHARED.UNITS 
 
 # if ran locally on our system we might want to commit these
-cat /tmp/SHARED.UNITS > ./reports/SHARED.UNITS.PREV.md
+cat /tmp/SHARED.UNITS > ./reports/SHARED.UNITS.PREV.md 
 
 echo "DID run tests to $output ($METTALOG_OUTPUT) with SHARED_UNITS=$SHARED_UNITS"

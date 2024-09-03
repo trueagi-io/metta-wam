@@ -1278,7 +1278,7 @@ pfc_eval_rhs1([X|Xrest],Support) :-
 
 pfc_eval_rhs1(Assertion,Support) :-
  % an assertion to be added.
-  once_writeq_nl(pfcRHS(Assertion)),
+  once_writeq_ln(pfcRHS(Assertion)),
  (must_ex(pfcPost1(Assertion,Support))*->true ;
    pfcWarn("Malformed rhs of a rule: ~p",[Assertion])).
 

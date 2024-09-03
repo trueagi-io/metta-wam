@@ -24,11 +24,12 @@ The main entry point for the Language Server implementation.
 %                            file_range_colours/4,
                             token_types/1,
                             token_modifiers/1]).
+:- use_module(lsp_metta_xref).
 
 main :-
     set_prolog_flag(debug_on_error, false),
     set_prolog_flag(report_error, true),
-    set_prolog_flag(toplevel_prompt, ''),
+    set_prolog_flag(toplevel_prompt, ''),    
     current_prolog_flag(argv, Args),
     debug(server),
     debug(server(high)),
