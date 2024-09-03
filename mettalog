@@ -775,7 +775,7 @@ if [[ "$repl_flag" == "true" ]]; then
 fi
 
 if [[ -n "$TIMEOUT" && "$TIMEOUT" -gt 0 ]]; then
-    add_to_list "--timeout==$TIMEOUT" PRE_METTALOG_OPTIONS
+    add_to_list "--timeout=$TIMEOUT" PRE_METTALOG_OPTIONS
 fi
 
 
