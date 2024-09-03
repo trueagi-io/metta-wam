@@ -1033,15 +1033,15 @@ metta_atom(KB,Atom):- KB \== '&corelib', !,
           should_inherit_from_corelib(Atom)), !,
    metta_atom('&corelib',Atom).
 
-should_inherit_from_corelib([H,A,B|_]):- nonvar(H),
-    (nonvar(A);nonvar(B)),!,
-     \+ \+ should_inherit_op_from_corelib(H).
+should_inherit_from_corelib([H,A|_]):- (H == ':';H == '='),!,nonvar(A).
+should_inherit_from_corelib([H|_]):- H == '@doc', !.
 
+/*
 should_inherit_op_from_corelib('=').
 should_inherit_op_from_corelib(':').
 should_inherit_op_from_corelib('@doc').
 %should_inherit_op_from_corelib(_).
-
+*/
 metta_atom_asserted('&self','&corelib').
 metta_atom_asserted('&self','&stdlib').
 metta_atom_asserted('&stdlib','&corelib').
@@ -1065,8 +1065,7 @@ metta_atom_asserted('&catalog','&stdlib').
 is_metta_space(Space):- \+ \+ is_space_type(Space,_Test).
 
 %metta_eq_def(Eq,KB,H,B):- ignore(Eq = '='),if_or_else(metta_atom(KB,[Eq,H,B]), metta_atom_corelib(KB,[Eq,H,B])).
-metta_eq_def(Eq,KB,H,B):-  ignore(Eq = '='),
-   metta_atom(KB,[Eq,H,B]).
+metta_eq_def(Eq,KB,H,B):-  ignore(Eq = '='),metta_atom(KB,[Eq,H,B]).
 
 %metta_defn(KB,Head,Body):- metta_eq_def(_Eq,KB,Head,Body).
 metta_defn(KB,H,B):- metta_eq_def('=',KB,H,B).
@@ -1530,7 +1529,7 @@ time_eval(What,Goal) :-
     timed_call(Goal,Seconds),
     give_time(What,Seconds).
 
-give_time(_What,_Seconds):- is_compatio,!.
+%give_time(_What,_Seconds):- is_compatio,!.
 give_time(What,Seconds):-
     Milliseconds is Seconds * 1_000,
     (Seconds > 2
