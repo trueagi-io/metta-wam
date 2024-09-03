@@ -9,8 +9,8 @@ The main entry point for the Language Server implementation.
 :- use_module(library(apply), [maplist/2]).
 :- use_module(library(debug), [debug/3, debug/1]).
 :- use_module(library(http/json), [atom_json_dict/3]).
-:- use_module(library(prolog_xref)).
-:- use_module(library(prolog_source), [directory_source_files/3]).
+%:- use_module(library(prolog_xref)).
+%:- use_module(library(prolog_source), [directory_source_files/3]).
 :- use_module(library(utf8), [utf8_codes//1]).
 :- use_module(library(yall)).
 
@@ -29,7 +29,7 @@ The main entry point for the Language Server implementation.
 main :-
     set_prolog_flag(debug_on_error, false),
     set_prolog_flag(report_error, true),
-    set_prolog_flag(toplevel_prompt, ''),    
+    set_prolog_flag(toplevel_prompt, ''),
     current_prolog_flag(argv, Args),
     debug(server),
     debug(server(high)),
@@ -174,8 +174,7 @@ handle_msg("textDocument/hover", Msg, _{id: Id, result: Response}) :-
 % OUT: {id:1,result:[
 %    {kind:12,location:{range:{end:{character:0,line:37},start:{character:1,line:35}},uri:file://<FILEPATH>},name:called_at/4},
 %    {kind:12,location:{range:{end:{character:0,line:66},start:{character:1,line:64}},uri:file://<FILEPATH>},},name:defined_at/3} ... ]}
-handle_msg("textDocument/documentSymbol", Msg, _{id: Id, result: []}) :-
-     _{id: Id, params: _{textDocument: _{uri: Doc}}} :< Msg.
+handle_msg("textDocument/documentSymbol", Msg, _{id: Msg.id, result: []}) :- !. % FIXME
 % handle_msg("textDocument/documentSymbol", Msg, _{id: Id, result: Symbols}) :-
 %     _{id: Id, params: _{textDocument: _{uri: Doc}}} :< Msg,
 %     atom_concat('file://', Path, Doc), !,
@@ -197,8 +196,9 @@ handle_msg("textDocument/documentSymbol", Msg, _{id: Id, result: []}) :-
 %         Symbols).
 
 % CALL: method:textDocument/definition
-% IN: params:{position:{character:55,line:174},textDocument:{uri:file://<FILE_PATH>}}}
-% OUT: {id:42,result:null} % need to find a better example
+% IN: params:{position:{character:55,line:174},textDocument:{uri:file://<FILEPATH>}}
+% OUT: {id:42,result:null}
+% OUT: {id:37,result:{range:{end:{character:0,line:62},start:{character:1,line:60}},uri:file://<FILEPATH>}}
 % handle_msg("textDocument/definition", Msg, _{id: Id, result: Location}) :-
 %     _{id: Id, params: Params} :< Msg,
 %     _{textDocument: _{uri: Doc},
@@ -207,8 +207,12 @@ handle_msg("textDocument/documentSymbol", Msg, _{id: Id, result: []}) :-
 %     succ(Line0, Line1),
 %     clause_in_file_at_position(Name/Arity, Path, line_char(Line1, Char0)),
 %     defined_at(Path, Name/Arity, Location).
-% handle_msg("textDocument/definition", Msg, _{id: Msg.id, result: null}) :- !.
+handle_msg("textDocument/definition", Msg, _{id: Msg.id, result: null}) :- !.
 
+% CALL: method:textDocument/references
+% IN: params:{context:{includeDeclaration:false},position:{character:9,line:81},textDocument:{uri:file://<FILEPATH>}}
+% OUT: {id:42,result:null}
+% OUT: {id:54,result:[{range:{end:{character:0,line:96},start:{character:29,line:95}},uri:file://<FILEPATH>},{range:{end:{character:0,line:100},start:{character:10,line:99}},uri:file://<FILEPATH>}]}
 % handle_msg("textDocument/references", Msg, _{id: Id, result: Locations}) :-
 %     _{id: Id, params: Params} :< Msg,
 %     _{textDocument: _{uri: Uri},
@@ -224,8 +228,28 @@ handle_msg("textDocument/documentSymbol", Msg, _{id: Id, result: []}) :-
 %           relative_ref_location(DocUri, Caller, Loc, Location)
 %         ),
 %         Locations), !.
-% handle_msg("textDocument/references", Msg, _{id: Msg.id, result: null}) :- !.
+handle_msg("textDocument/references", Msg, _{id: Msg.id, result: null}) :- !.
 
+% CALL: method:textDocument/implementation
+% IN: params:{position:{character:11,line:22},textDocument:{uri:file://<FILEPATH>}}
+% No example from prolog FIXME
+handle_msg("textDocument/implementation", Msg, _{id: Msg.id, result: null}) :- !.
+
+% CALL: method:textDocument/declaration
+% IN: params:{position:{character:11,line:22},textDocument:{uri:file://<FILEPATH>}}
+% No example from prolog FIXME
+handle_msg("textDocument/declaration", Msg, _{id: Msg.id, result: null}) :- !.
+
+% CALL: method:textDocument/completion
+% IN: params:{context:{triggerKind:1},position:{character:1,line:88},textDocument:{uri:file://<FILEPATH>}}
+% OUT: {id:120,result:[
+%    {insertText:handle_requests(${1:_}, ${2:_}, ${3:_})$0,insertTextFormat:2,label:handle_requests/3},
+%    {insertText:handle_request(${1:_}, ${2:_}, ${3:_})$0,insertTextFormat:2,label:handle_request/3},
+%    {insertText:handle_msg(${1:_}, ${2:_}, ${3:_})$0,insertTextFormat:2,label:handle_msg/3},
+%    {insertText:help_at_position(${1:_}, ${2:_}, ${3:_}, ${4:_})$0,insertTextFormat:2,label:help_at_position/4},
+%    {insertText:handle_doc_changes(${1:_}, ${2:_})$0,insertTextFormat:2,label:handle_doc_changes/2}]}
+% OUT: {id:123,result:[]}
+handle_msg("textDocument/completion", Msg, _{id: Msg.id, result: []}) :- !. % FIXME
 % handle_msg("textDocument/completion", Msg, _{id: Id, result: Completions}) :-
 %     _{id: Id, params: Params} :< Msg,
 %     _{textDocument: _{uri: Uri},
@@ -236,6 +260,11 @@ handle_msg("textDocument/documentSymbol", Msg, _{id: Id, result: []}) :-
 
 handle_msg("textDocument/semanticTokens", Msg, Response) :-
     handle_msg("textDocument/semanticTokens/full", Msg, Response).
+
+% CALL: textDocument/semanticTokens/full
+% IN: params:{textDocument:{uri:file://<FILEPATH>}}
+% No Example from Prolog yet FIXME
+handle_msg("textDocument/semanticTokens/full", Msg, _{id: Msg.id, result: []}) :- !. % FIXME
 % handle_msg("textDocument/semanticTokens/full", Msg,
 %            _{id: Id, result: _{data: Highlights}}) :-
 %     _{id: Id, params: Params} :< Msg,
@@ -244,6 +273,10 @@ handle_msg("textDocument/semanticTokens", Msg, Response) :-
 %     xref_source(Path),
 %     file_colours(Path, Highlights).
 
+% CALL: textDocument/semanticTokens/range
+% IN: {range:{end:{character:0,line:40},{character:0,line:0}},textDocument:{uri:file://<FILE_PATH>}}
+% No Example from Prolog yet FIXME
+handle_msg("textDocument/semanticTokens/range", Msg, _{id: Msg.id, result: []}) :- !. % FIXME
 % handle_msg("textDocument/semanticTokens/range", Msg,
 %            _{id: Id, result: _{data: Highlights}}) :-
 %     _{id: Id, params: Params} :< Msg,
