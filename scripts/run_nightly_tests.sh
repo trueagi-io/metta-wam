@@ -27,15 +27,16 @@ if [ -z "$timestamp" ]; then
     timestamp=$(date +"%Y-%m-%d")
 fi
 output=./reports/BY_DATE/$timestamp
+
+# run the tests
+mkdir -p $output
 export METTALOG_OUTPUT=$(realpath $output)
 export SHARED_UNITS=$METTALOG_OUTPUT/SHARED.UNITS
-
-mkdir -p $output
 touch $SHARED_UNITS
 
-echo "Running nightly tests to $output ($METTALOG_OUTPUT) with SHARED_UNITS=$SHARED_UNITS"
+echo "Will run tests to $output ($METTALOG_OUTPUT) with SHARED_UNITS=$SHARED_UNITS"
 
-source ./scripts/ensure_venv
+source ./scripts/ensure_venv -v
 
 # Check if 'ansi2html' is already installed
 if ! python3 -m pip list | grep -q 'ansi2html'; then
@@ -62,17 +63,16 @@ run_mettalog_tests() {
         clean=false  # Reset or remove the clean option after using it
     fi
 
-    local SHOW_ALL_OUTPUT=true # Set to false normally, true for debugging
-
-    if [ "$SHOW_ALL_OUTPUT" ]; then
+    if [ "$SHOW_ALL_OUTPUT" = true ]; then
         # Execute the command and capture the status
         "${cmd[@]}"
         local status=$?
     else
         # Execute the command silently and filter output, capturing status
-        script -q -c "${cmd[*]}" /dev/null | tee >(grep -Ei --line-buffered '_CMD:|es[:] ' >&2) > /dev/null
+	script -q -c "${cmd[*]}" /dev/null | tee >(grep -Ei --line-buffered '_CMD:|warning|es[:] ' >&2) > /dev/null
         local status=$?
     fi
+
 
     if [ $status -eq 4 ]; then
 	echo "Something purposely interupted testing... results will not be written!"
@@ -82,15 +82,14 @@ run_mettalog_tests() {
     return $status
 }
 
-
-# Actual test calls and logic to manage test conditions
+echo Running tests METTALOG_OUTPUT=$METTALOG_OUTPUT and SHARED_UNITS=$SHARED_UNITS
 SKIP_LONG=0
 
-# Construct the TEST_CMD string
-#TEST_CMD="mettalog --output=$METTALOG_OUTPUT --timeout=$METTALOG_MAX_TIME --html --repl=false ${extra_args[*]} ${passed_along_to_mettalog[*]} \"$file\" --halt=true"
+#blank out the shared units
+cat /dev/null > /tmp/SHARED.UNITS
 
-# Call the function with the constructed command and other variables
-#IF_REALLY_DO return run_single_timed_unit "$TEST_CMD" "$file_html" "$file" "Under $METTALOG_MAX_TIME seconds"
+SHOW_ALL_OUTPUT=false # Set to false normally, true for debugging
+
 
 # 23+ tests (~30 seconds)
 run_mettalog_tests 40 tests/baseline_compat/module-system/
@@ -106,10 +105,12 @@ run_mettalog_tests 40 tests/baseline_compat/metta-morph_tests/
 if [ "$SKIP_LONG" != "1" ]; then
 
     # 50+ tests (~2 minutes)
-    run_mettalog_tests 40 tests/baseline_compat/anti-regression/
+    #run_mettalog_tests 15 tests/baseline_compat/anti-regression/
 
     # 400+ tests (~7 minutes)
-    run_mettalog_tests 40 tests/baseline_compat/
+    #SHOW_ALL_OUTPUT=true # Set to false normally, true for debugging
+    # Gets the rest
+    run_mettalog_tests 15 tests/baseline_compat/
 
 
     run_mettalog_tests 40 tests/nars_interp/
@@ -129,8 +130,14 @@ if [ "$SKIP_LONG" != "1" ]; then
     # run_mettalog_tests 40 tests/python_compat/
 fi
 
-cat $SHARED_UNITS > /tmp/SHARED.UNITS
 
-# if ran locally on our systme we might want to commit these
-cat /tmp/SHARED.UNITS > ./reports/SHARED.UNITS.PREV.md
+# Stuff just generated
+cat $SHARED_UNITS >> /tmp/SHARED.UNITS
 
+# Tests ran locally by developer together
+cat ./reports/SHARED.UNITS.LOCAL.md >> /tmp/SHARED.UNITS 
+
+# if ran locally on our system we might want to commit these
+cat /tmp/SHARED.UNITS > ./reports/SHARED.UNITS.PREV.md 
+
+echo "DID run tests to $output ($METTALOG_OUTPUT) with SHARED_UNITS=$SHARED_UNITS"
