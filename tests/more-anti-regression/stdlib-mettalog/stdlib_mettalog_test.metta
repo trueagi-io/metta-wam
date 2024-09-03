@@ -1481,8 +1481,8 @@
 ;;        assert!(crate::atom::matcher::atoms_are_equivalent(&simple_replace.unwrap()[0][0], &expr!("quote" ("=" (y z)))));
 ;;    }
 ;; Converted:
-!(assertEqual (sealed ($x) (sealed ($a $b) (quote (= ($a $x $c) ($b))))) (quote (= (a b c) (z))))
-!(assertEqual (sealed ($x $y) (quote (= ($y $z)))) (quote (= (y z))))
+!(assertEqual (sealed ($x) (sealed ($a $b) (quote (= ($a $x $c) ($b))))) (quote (= ($a $b $c) ($z))))
+!(assertEqual (sealed ($x $y) (quote (= ($y $z)))) (quote (= ($y $z))))
 
 ;; Original:
 ;;    #[test]
