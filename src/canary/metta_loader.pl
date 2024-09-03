@@ -1179,12 +1179,15 @@ progress_bar_example :-
 progress_bar_example.
 
 :- dynamic(using_corelib_file/0).
+:- dynamic(really_using_corelib_file/0).
 
 
 use_corelib_file:- using_corelib_file,!.
 use_corelib_file:- asserta(using_corelib_file), fail.
+use_corelib_file:- really_use_corelib_file, !.
 use_corelib_file:- !.
-use_corelib_file:- load_corelib_file, generate_interpreter_stubs.
+%use_corelib_file:- really_use_corelib_file,!.
+really_use_corelib_file:- load_corelib_file, generate_interpreter_stubs.
 
 :- dynamic(did_generate_interpreter_stubs/0).
 generate_interpreter_stubs:- did_generate_interpreter_stubs,!.
@@ -1195,10 +1198,12 @@ generate_interpreter_stubs:-
 
 :- dynamic(metta_atom_asserted_deduced/2).
 :- multifile(metta_atom_asserted_deduced/2).
-metta_atom_asserted_deduced('&corelib', Term):- \+ did_generate_interpreter_stubs,
+metta_atom_asserted_deduced('&corelib', Term):- 
+  %\+ did_generate_interpreter_stubs,
    metta_atom_corelib_types(Term).
 
-
+load_corelib_file:- really_using_corelib_file,!.
+load_corelib_file:- asserta(really_using_corelib_file), fail.
 load_corelib_file:- is_metta_src_dir(Dir), really_use_corelib_file(Dir,'corelib.metta'),!.
 load_corelib_file:- is_metta_src_dir(Dir), really_use_corelib_file(Dir,'stdlib_mettalog.metta'),!.
 % !(import! &corelib "src/canary/stdlib_mettalog.metta")
