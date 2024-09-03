@@ -2,8 +2,16 @@
 ;;  MeTTaLog
 ;
 ; deb12user@DEBIAN12B:~/metta-wam$ time mettalog tests/baseline_compat/hyperon-mettalog_sanity/first_answer_long.metta
-; [(: a A), (: a B), (: abc (Implication (AndLink A B) C)), (: cde (Implication (OrLink C D) E)), (: (ConjunctionEliminationLeft (ConjunctionIntroduction a a)) A), (: (ConjunctionEliminationLeft (ConjunctionIntroduction a a)) A)]
-; % 626,695 inferences, 0.194 CPU in 0.199 seconds (97% CPU, 3231083 Lips)
+; [(: a A)
+ (: a B)
+ (: abc (Implication (AndLink A B) C))
+ (: cde (Implication (OrLink C D) E))
+ (: (ConjunctionEliminationLeft (ConjunctionIntroduction a a)) A)
+ (: (ConjunctionEliminationLeft (ConjunctionIntroduction a a)) A)]
+; % 626
+695 inferences
+ 0.194 CPU in 0.199 seconds (97% CPU
+ 3231083 Lips)
 ; ; DEBUG Exit code of METTA_CMD: 7
 ;
 ; real    0m2.132s
@@ -14,7 +22,12 @@
 ;;  MeTTa in Rust
 ; 
 ; deb12user@DEBIAN12B:~/metta-wam$ time metta tests/baseline_compat/hyperon-mettalog_sanity/first_answer_long.metta
-; [(: cde (Implication (OrLink C D) E)), (: abc (Implication (AndLink A B) C)), (: (ConjunctionEliminationRight (ConjunctionIntroduction cde cde)) (Implication (OrLink C D) E)), (: (ConjunctionEliminationRight (ConjunctionIntroduction cde a)) B), (: a A), (: a B)]
+; [(: cde (Implication (OrLink C D) E))
+ (: abc (Implication (AndLink A B) C))
+ (: (ConjunctionEliminationRight (ConjunctionIntroduction cde cde)) (Implication (OrLink C D) E))
+ (: (ConjunctionEliminationRight (ConjunctionIntroduction cde a)) B)
+ (: a A)
+ (: a B)]
 ;
 ; real    2m37.504s
 ; user    2m36.943s
@@ -137,7 +150,13 @@
 
 
 ; !(limit 1 (synthesize (: $term $type) kb rb (S (S Z))))
-!(limit 6 (synthesize (: $term $type) kb rb (S (S Z))))
+; !(limit 6 (synthesize (: $term $type) kb rb (S (S Z))))
+!(limit 6 (unique (synthesize (: $term $type) kb rb (S (S Z)))))
 
 
-
+; (: a A)
+; (: a B)
+; (: abc (Implication (AndLink A B) C))
+; (: cde (Implication (OrLink C D) E))
+; (: (ConjunctionEliminationLeft (ConjunctionIntroduction a a)) A)
+; (: (ConjunctionEliminationLeft (ConjunctionIntroduction a a)) A)

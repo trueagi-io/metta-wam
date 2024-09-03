@@ -332,15 +332,20 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,
                 not_compatio(write_asrc(Output)),
                 in_answer_io(write_asrc(Output))))))  ))),
 
-      not_compatio(with_output_to(user_error,give_time('Execution',Seconds))),
+      ((Complete \== true, WasInteractive, DoLeap \== leap,
+                LeashResults > ResNum, ResNum < Max) -> Stepping = true ; Stepping = false),
+
+      %if_debugging(time,with_output_to(user_error,give_time('Execution',Seconds))),
+      if_t((Stepping==true;Complete==true),if_trace(time,color_g_mesg_ok(yellow,(user_io(give_time('Execution',Seconds)))))),
+      %with_output_to(user_error,give_time('Execution',Seconds)),
+      %user_io(give_time('Execution',Seconds)),
       %not_compatio(give_time('Execution',Seconds),
        color_g_mesg(green,
            ignore((NamedVarsList \=@= Was ->(not_compatio((
                 reverse(NamedVarsList,NamedVarsListR),
                 maplist(print_var,NamedVarsListR), nop(nl)))) ; true))))),
        (
-         (Complete \== true, WasInteractive, DoLeap \== leap,
-                LeashResults > ResNum, ResNum < Max) ->
+         (Stepping==true) ->
          (write("~npress ';' for more solutions "),get_single_char_key(C),
            not_compatio((writeq(key=C),nl)),
          (C=='b' -> (once(repl),fail) ;
@@ -362,6 +367,8 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,
    ignore(Result = res(FOut)).
 
 maybe_assign(N=V):- ignore(V='$VAR'(N)).
+
+:- nodebug(metta(time)).
 
 mqd:-
   forall(metta_atom(_KB,['query-info',E,T,Q]),

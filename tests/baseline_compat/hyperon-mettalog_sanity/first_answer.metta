@@ -116,6 +116,6 @@
 
 !(limit 1 (synthesize (: $term $type) kb rb (S Z)))
 
-!(limit 2 (synthesize (: $term $type) kb rb (S Z)))
+!(limit 6 (synthesize (: $term $type) kb rb (S Z)))
 
 

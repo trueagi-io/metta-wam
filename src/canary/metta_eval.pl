@@ -1161,7 +1161,7 @@ typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_argumen
 %eval_20(Eq,RetType,Depth,Self,['flatten'|List], Flat):- !, maplist(eval_args(Eq,RetType,Depth,Self),List,Res),flatten(Res,Flat).
 
 
-eval_20(Eq,RetType,_Dpth,_Slf,['car-atom',Atom],CAR_Y):- trace, !, Atom=[CAR|_],!,do_expander(Eq,RetType,CAR,CAR_Y).
+eval_20(Eq,RetType,_Dpth,_Slf,['car-atom',Atom],CAR_Y):- !, Atom=[CAR|_],!,do_expander(Eq,RetType,CAR,CAR_Y).
 eval_20(Eq,RetType,_Dpth,_Slf,['cdr-atom',Atom],CDR_Y):- !, Atom=[_|CDR],!,do_expander(Eq,RetType,CDR,CDR_Y).
 
 eval_20(Eq,RetType,Depth,Self,['Cons', A, B ],['Cons', AA, BB]):- no_cons_reduce, !,
