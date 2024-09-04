@@ -8,6 +8,7 @@ The `examples` directory houses a variety of sub-directories, each focusing on s
 
 
 - **[`flybase`](../flybase)**: Focused on the Flybase module, the examples here are designed to provide insights into how this specific component works and can be used.
+   - [`flybase-new-feature.metta`](flybase/flybase-new-feature.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/flybase/flybase-new-feature.metta.html): New feature demonstration for Flybase.
    - [`flybase-deduced-queries.metta`](flybase/flybase-deduced-queries.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/flybase/flybase-deduced-queries.metta.html): Contains queries deduced from Flybase data analysis.
    - [`flybase-loader-size-estimates.metta`](flybase/flybase-loader-size-estimates.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/flybase/flybase-loader-size-estimates.metta.html): Size estimates and optimizations for the Flybase loader.
    - [`flybase-loader.metta`](flybase/flybase-loader.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/flybase/flybase-loader.metta.html): Loader script for Flybase datasets.
@@ -40,6 +41,10 @@ The `examples` directory houses a variety of sub-directories, each focusing on s
 
 
 ## Hyperon Miner Examples
+
+- **[`new_directory`](../new_directory/):** New directory for additional examples
+    - [`example1.metta`](new_directory/example1.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/new_directory/example1.metta.html): Example 1 for new directory.
+    - [`example2.metta`](new_directory/example2.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/new_directory/example2.metta.html): Example 2 for new directory.
 
 - **[`extended_compat/hyperon-miner/`](../extended_compat/hyperon-miner/):** Hyperon miner directory
     - [`data/sample.metta`](extended_compat/hyperon-miner/data/sample.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/hyperon-miner/data/sample.metta.html): Sample data for Hyperon miner testing.
