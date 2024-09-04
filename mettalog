@@ -408,13 +408,16 @@ function print_help {
 cat << EOF
 
      -x state                 Start from state (must be first)
-     -g goal                  Run goal (may be repeated)
+     -g goal                  Run Prolog-style goal (may be repeated)
+     -G goal                  Run MeTTa goal (may be repeated)
      -t toplevel              Toplevel goal
      -f file                  User initialisation file
      -F file                  Site initialisation file
-     -l file                  Script source file
-     -s file                  Script source file
+     -l file                  MeTTa script source file
+     -s file                  MeTTa script source file
      -p alias=path            Define file search path 'alias'
+
+Note: A bare filename is equivalent to using the -s option for MeTTa scripts.
 
     Compilation:
 
@@ -706,7 +709,7 @@ function handle_args {
                 continue
                 ;;
 
-            -x|-g|-t|-f|-F|-l|-s|-p|--on-error|--on-warning|--home|--stack-limit|--table-space|--shared-table-space|--pldoc)
+            -x|-g|-G|-t|-f|-F|-l|-s|-p|--on-error|--on-warning|--home|--stack-limit|--table-space|--shared-table-space|--pldoc)
                 SWI_OPTIONS+=("$arg")
                 SWI_FLAG_WITH_ARG=true
                 continue
