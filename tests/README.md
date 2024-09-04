@@ -7,7 +7,7 @@ The `examples` directory houses a variety of sub-directories, each focusing on s
 
 
 
-- **[`flybase`](./flybase)**: Focused on the Flybase module, the examples here are designed to provide insights into how this specific component works and can be used.
+- **[`flybase`](../flybase)**: Focused on the Flybase module, the examples here are designed to provide insights into how this specific component works and can be used.
    - [`flybase-deduced-queries.metta`](flybase/flybase-deduced-queries.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/flybase/flybase-deduced-queries.metta.html): Contains queries deduced from Flybase data analysis.
    - [`flybase-loader-size-estimates.metta`](flybase/flybase-loader-size-estimates.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/flybase/flybase-loader-size-estimates.metta.html): Size estimates and optimizations for the Flybase loader.
    - [`flybase-loader.metta`](flybase/flybase-loader.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/flybase/flybase-loader.metta.html): Loader script for Flybase datasets.
@@ -41,7 +41,7 @@ The `examples` directory houses a variety of sub-directories, each focusing on s
 
 ## Hyperon Miner Examples
 
-- **[`extended_compat/hyperon-miner/`](extended_compat/hyperon-miner/):** Hyperon miner directory
+- **[`extended_compat/hyperon-miner/`](../extended_compat/hyperon-miner/):** Hyperon miner directory
     - [`data/sample.metta`](extended_compat/hyperon-miner/data/sample.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/hyperon-miner/data/sample.metta.html): Sample data for Hyperon miner testing.
     - [`utils/MinerUtils.metta`](extended_compat/hyperon-miner/utils/MinerUtils.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/hyperon-miner/utils/MinerUtils.metta.html): Utility functions for Hyperon mining operations.
    - [`match/MinerMatchTest.metta`](extended_compat/hyperon-miner/match/MinerMatchTest.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/hyperon-miner/match/MinerMatchTest.metta.html): Test cases for Hyperon miner matching algorithms.
@@ -51,37 +51,37 @@ The `examples` directory houses a variety of sub-directories, each focusing on s
 ## Extended Compatibility Examples
 
 ### Combinator Logic Experiments
-- **[`extended_compat/metta-examples/combinator_logic_experiments/`](extended_compat/metta-examples/combinator_logic_experiments/):** Combinator Logic Experiments Directory
+- **[`extended_compat/metta-examples/combinator_logic_experiments/`](../extended_compat/metta-examples/combinator_logic_experiments/):** Combinator Logic Experiments Directory
    - [`y_comb_examples.metta`](extended_compat/metta-examples/combinator_logic_experiments/y_comb_examples.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/metta-examples/combinator_logic_experiments/y_comb_examples.metta.html): Examples and experiments with Y combinators.
 
 ### Logic
-- **[`extended_compat/metta-examples/logic/`](extended_compat/metta-examples/logic/):** Metta Logic Directory
+- **[`extended_compat/metta-examples/logic/`](../extended_compat/metta-examples/logic/):** Metta Logic Directory
    - [`puzzle.metta`](extended_compat/metta-examples/logic/puzzle.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/metta-examples/logic/puzzle.metta.html): Logic puzzles and solutions in Metta.
    - [`all_any.metta`](extended_compat/metta-examples/logic/all_any.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/metta-examples/logic/all_any.metta.html): Implementations of universal and existential quantifiers.
    - [`memb.metta`](extended_compat/metta-examples/logic/memb.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/metta-examples/logic/memb.metta.html): Member checking functions in logical expressions.
 
 ### SICP Book Examples
-- **[`extended_compat/metta-examples/SICP_book/`](extended_compat/metta-examples/SICP_book/):** SICP Book Examples in Metta
+- **[`extended_compat/metta-examples/SICP_book/`](../extended_compat/metta-examples/SICP_book/):** SICP Book Examples in Metta
   - [Chapter 1.1](extended_compat/metta-examples/SICP_book/chapter_1_1.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/metta-examples/SICP_book/chapter_1_1.metta.html)
   - [Chapter 1.2](extended_compat/metta-examples/SICP_book/chapter_1_2.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/metta-examples/SICP_book/chapter_1_2.metta.html)
   - [Chapter 1.3](extended_compat/metta-examples/SICP_book/chapter_1_3.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/metta-examples/SICP_book/chapter_1_3.metta.html)
 
 ### Recursion Schemes
-- **[`extended_compat/metta-examples/recursion-schemes/src/`](extended_compat/metta-examples/recursion-schemes/src/):** Recursion Schemes in Metta
+- **[`extended_compat/metta-examples/recursion-schemes/src/`](../extended_compat/metta-examples/recursion-schemes/src/):** Recursion Schemes in Metta
    - [`schemes.metta`](extended_compat/metta-examples/recursion-schemes/src/schemes.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/metta-examples/recursion-schemes/src/schemes.metta.html): Various recursion schemes implemented in Metta.
    - [`base.metta`](extended_compat/metta-examples/recursion-schemes/src/base.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/metta-examples/recursion-schemes/src/base.metta.html): Base functions and utilities for recursion schemes.
    - [`expression.metta`](extended_compat/metta-examples/recursion-schemes/src/expression.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/metta-examples/recursion-schemes/src/expression.metta.html): Expression handling in recursion schemes.
    - [`benchmark.metta`](extended_compat/metta-examples/recursion-schemes/src/benchmark.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/metta-examples/recursion-schemes/src/benchmark.metta.html): Benchmark tests for recursion scheme implementations.
 
 ### Probabilistic Dependent Types
-- **[`extended_compat/metta-examples/prob-dep-types/`](extended_compat/metta-examples/prob-dep-types/):** Probabilistic Dependent Types in Metta
+- **[`extended_compat/metta-examples/prob-dep-types/`](../extended_compat/metta-examples/prob-dep-types/):** Probabilistic Dependent Types in Metta
    - [`prob_dep_types.metta`](extended_compat/metta-examples/prob-dep-types/prob_dep_types.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/metta-examples/prob-dep-types/prob_dep_types.metta.html): Definitions and examples of probabilistic dependent types.
    - [`inf_order_probs.metta`](extended_compat/metta-examples/prob-dep-types/inf_order_probs.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/metta-examples/prob-dep-types/inf_order_probs.metta.html): Infinite order probabilities and their applications.
 
 ## NARS (Non-Axiomatic Reasoning System)
 
 #### **NARS - Current Version**
-- **[`nars/current`](./extended_compat/nars/current)**: The current iteration of the Non-Axiomatic Reasoning System (NARS) showcasing the latest features and tests.
+- **[`nars/current`](../extended_compat/nars/current)**: The current iteration of the Non-Axiomatic Reasoning System (NARS) showcasing the latest features and tests.
   - [`NARS.metta`](extended_compat/nars/current/NARS.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/nars/current/NARS.metta.html): Main script for the current version of NARS.
   - [`tests0.metta`](extended_compat/nars/current/tests0.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/nars/current/tests0.metta.html): Basic tests for the current NARS version.
   - [`tests1.metta`](extended_compat/nars/current/tests1.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/nars/current/tests1.metta.html): Comprehensive level tests for NARS functionalities.
@@ -91,22 +91,22 @@ The `examples` directory houses a variety of sub-directories, each focusing on s
   - [`tests5.metta`](extended_compat/nars/current/tests5.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/nars/current/tests5.metta.html): Simple test for complex reasoning in NARS.
 
 #### **NARS - New Developments**
-- **[`nars/new`](./extended_compat/nars/new)**: Houses the latest developments and experimental features in NARS.
+- **[`nars/new`](../extended_compat/nars/new)**: Houses the latest developments and experimental features in NARS.
   - [`NARS.metta`](extended_compat/nars/new/NARS.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/nars/new/NARS.metta.html)[`tests0.metta`](extended_compat/nars/new/tests0.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/nars/new/tests0.metta.html)[`tests1.metta`](extended_compat/nars/new/tests1.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/nars/new/tests1.metta.html)[`tests2.metta`](extended_compat/nars/new/tests2.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/nars/new/tests2.metta.html)[`tests3.metta`](extended_compat/nars/new/tests3.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/nars/new/tests3.metta.html)[`tests4.metta`](extended_compat/nars/new/tests4.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/nars/new/tests4.metta.html)[`tests5.metta`](extended_compat/nars/new/tests5.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/nars/new/tests5.metta.html): Reflects ongoing experiments and cutting-edge features in NARS development.
 
 #### **NARS Extras**
-- **[`nars/nars_extras`](./extended_compat/nars/nars_extras)**: Additional scripts and utilities for NARS.
+- **[`nars/nars_extras`](../extended_compat/nars/nars_extras)**: Additional scripts and utilities for NARS.
   - [`NARS_BuildTupleCounts.metta`](extended_compat/nars/nars_extras/NARS_BuildTupleCounts.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/nars/nars_extras/NARS_BuildTupleCounts.metta.html): Script for building tuple counts in NARS.
   - [`RUN_minnars.metta`](extended_compat/nars/nars_extras/RUN_minnars.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/nars/nars_extras/RUN_minnars.metta.html): Execution script for MinNARS, a minimalistic version of NARS.
   - [`RUN_minnars_trimmed.metta`](extended_compat/nars/nars_extras/RUN_minnars_trimmed.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/nars/nars_extras/RUN_minnars_trimmed.metta.html): Trimmed version of the MinNARS execution script.
   - [`TestNARS_listing.metta`](extended_compat/nars/nars_extras/TestNARS_listing.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/nars/nars_extras/TestNARS_listing.metta.html): Comprehensive test listings and scripts for NARS.
 
 #### **NARS - Previous Versions**
-- **[`nars/prev`](./extended_compat/nars/prev)**: Includes tests and scripts from previous versions of NARS, showcasing the evolution of the system.
+- **[`nars/prev`](../extended_compat/nars/prev)**: Includes tests and scripts from previous versions of NARS, showcasing the evolution of the system.
   - [`NARS.metta`](extended_compat/nars/prev/NARS.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/nars/prev/NARS.metta.html)[`tests0.metta`](extended_compat/nars/prev/tests0.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/nars/prev/tests0.metta.html)[`tests1.metta`](extended_compat/nars/prev/tests1.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/nars/prev/tests1.metta.html)[`tests2.metta`](extended_compat/nars/prev/tests2.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/nars/prev/tests2.metta.html)[`tests3.metta`](extended_compat/nars/prev/tests3.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/nars/prev/tests3.metta.html)[`tests4.metta`](extended_compat/nars/prev/tests4.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/nars/prev/tests4.metta.html)[`tests5.metta`](extended_compat/nars/prev/tests5.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/nars/prev/tests5.metta.html): Provides a historical perspective on the progression and updates in NARS.
 
 #### **NARS Version 0**
-- **[`nars/nars_v0`](./extended_compat/nars/nars_v0)**: The original version of NARS, preserving the initial features and tests.
+- **[`nars/nars_v0`](../extended_compat/nars/nars_v0)**: The original version of NARS, preserving the initial features and tests.
   - [`NARS.metta`](extended_compat/nars/nars_v0/NARS.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/nars/nars_v0/NARS.metta.html): Main script for the original NARS version.
   - [`NARS-old.metta`](extended_compat/nars/nars_v0/NARS-old.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/nars/nars_v0/NARS-old.metta.html): Older version of the NARS main script.
   - [`tests0.metta`](extended_compat/nars/nars_v0/tests0.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/nars/nars_v0/tests0.metta.html)[`tests1.metta`](extended_compat/nars/nars_v0/tests1.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/nars/nars_v0/tests1.metta.html)[`tests2.metta`](extended_compat/nars/nars_v0/tests2.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/nars/nars_v0/tests2.metta.html)[`tests3.metta`](extended_compat/nars/nars_v0/tests3.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/nars/nars_v0/tests3.metta.html)[`tests4.metta`](extended_compat/nars/nars_v0/tests4.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/nars/nars_v0/tests4.metta.html)[`tests5.metta`](extended_compat/nars/nars_v0/tests5.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/nars/nars_v0/tests5.metta.html) A series of tests ranging from basic to comprehensive for the original NARS version.
@@ -116,7 +116,7 @@ The `examples` directory houses a variety of sub-directories, each focusing on s
 
 ## Python Compatibility - Hyperon Experimental Python
 
-- **[`python_compat/hyperon-experimental_python/sandbox/`](python_compat/hyperon-experimental_python/sandbox/):** Hyperon Experimental Python Sandbox
+- **[`python_compat/hyperon-experimental_python/sandbox/`](../python_compat/hyperon-experimental_python/sandbox/):** Hyperon Experimental Python Sandbox
    - [`resolve/r.metta`](python_compat/hyperon-experimental_python/sandbox/resolve/r.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/python_compat/hyperon-experimental_python/sandbox/resolve/r.metta.html): Resolution algorithms in Hyperon Python sandbox.
    - [`sql_space/sql_space_test.metta`](python_compat/hyperon-experimental_python/sandbox/sql_space/sql_space_test.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/python_compat/hyperon-experimental_python/sandbox/sql_space/sql_space_test.metta.html): Test scripts for SQL space integration in Hyperon.
    - [`neurospace/test_assist.metta`](python_compat/hyperon-experimental_python/sandbox/neurospace/test_assist.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/python_compat/hyperon-experimental_python/sandbox/neurospace/test_assist.metta.html): Assistant scripts for neurospace simulations.
@@ -124,7 +124,7 @@ The `examples` directory houses a variety of sub-directories, each focusing on s
    - [`numpy/nm_test.metta`](python_compat/hyperon-experimental_python/sandbox/numpy/nm_test.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/python_compat/hyperon-experimental_python/sandbox/numpy/nm_test.metta.html): Numpy integration tests in Hyperon Python environment.
    - [`das_gate/test_das.metta`](python_compat/hyperon-experimental_python/sandbox/das_gate/test_das.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/python_compat/hyperon-experimental_python/sandbox/das_gate/test_das.metta.html): Test scripts for DAS gate functionality in Hyperon.
 
-- **[`python_compat/extend/`](python_compat/extend/):** Metta-Morph Python Compatibility Layer for NARS
+- **[`python_compat/extend/`](../python_compat/extend/):** Metta-Morph Python Compatibility Layer for NARS
 	   - [`example6.metta`](python_compat/extend/example6.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/python_compat/extend/example6.metta.html): Example script 6 for Python compatibility layer.
 	   - [`compileme.metta`](python_compat/extend/compileme.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/python_compat/extend/compileme.metta.html): Compilation scripts for Python compatibility extensions.
 	   - [`example2.metta`](python_compat/extend/example2.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/python_compat/extend/example2.metta.html): Example script 2 for extended functionalities.
@@ -139,15 +139,15 @@ The `examples` directory houses a variety of sub-directories, each focusing on s
 #### **Synthesis and Logic Group**
 
 This group of directories explores various representational methods for porting PLN to MeTTa.
-- **[`extended_compat/hyperon-pln/metta/`](extended_compat/hyperon-pln/metta/):** Hyperon PLN Metta Base Compatibility
+- **[`extended_compat/hyperon-pln/metta/`](../extended_compat/hyperon-pln/metta/):** Hyperon PLN Metta Base Compatibility
 
-- **[`entail`](./extended_compat/hyperon-pln/metta/entail)**: Here, rules are expressed with the symbol `?`.
+- **[`entail`](../extended_compat/hyperon-pln/metta/entail)**: Here, rules are expressed with the symbol `?`.
    - [`DeductionEntailTest.metta`](extended_compat/hyperon-pln/metta/entail/DeductionEntailTest.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/hyperon-pln/metta/entail/DeductionEntailTest.metta.html): Tests for deduction entailment in MeTTa.
    - [`ImplicationDirectIntroductionEntail.metta`](extended_compat/hyperon-pln/metta/entail/ImplicationDirectIntroductionEntail.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/hyperon-pln/metta/entail/ImplicationDirectIntroductionEntail.metta.html): Direct implication introduction entailment logic.
    - [`ImplicationDirectIntroductionEntailTest.metta`](extended_compat/hyperon-pln/metta/entail/ImplicationDirectIntroductionEntailTest.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/hyperon-pln/metta/entail/ImplicationDirectIntroductionEntailTest.metta.html): Tests for direct implication introduction entailment.
    - [`DeductionEntail.metta`](extended_compat/hyperon-pln/metta/entail/DeductionEntail.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/hyperon-pln/metta/entail/DeductionEntail.metta.html): Logic for deduction entailment in MeTTa.
 
-- **[`common`](./extended_compat/hyperon-pln/metta/common)**: Contains common definitions for PLN in MeTTa.
+- **[`common`](../extended_compat/hyperon-pln/metta/common)**: Contains common definitions for PLN in MeTTa.
    - [`Num.metta`](extended_compat/hyperon-pln/metta/common/Num.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/hyperon-pln/metta/common/Num.metta.html): Numerical utilities and definitions.
    - [`Record.metta`](extended_compat/hyperon-pln/metta/common/Record.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/hyperon-pln/metta/common/Record.metta.html): Record structures and related logic.
    - [`DeductionFormula.metta`](extended_compat/hyperon-pln/metta/common/formula/DeductionFormula.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/hyperon-pln/metta/common/formula/DeductionFormula.metta.html): Formulae for logical deduction.
@@ -174,12 +174,12 @@ This group of directories explores various representational methods for porting 
    - [`InTest.metta`](extended_compat/hyperon-pln/metta/common/InTest.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/hyperon-pln/metta/common/InTest.metta.html): Tests for element inclusion logic.
    - [`BelieveMe.metta`](extended_compat/hyperon-pln/metta/common/BelieveMe.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/hyperon-pln/metta/common/BelieveMe.metta.html): Logic for belief representation.
 
-- **[`HOL`](./extended_compat/hyperon-pln/metta/hol)**: Showcases HOL (Higher-Order Logic) operations.
+- **[`HOL`](../extended_compat/hyperon-pln/metta/hol)**: Showcases HOL (Higher-Order Logic) operations.
    - [`ListTest.metta`](extended_compat/hyperon-pln/metta/hol/ListTest.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/hyperon-pln/metta/hol/ListTest.metta.html): Test cases for list operations in HOL.
    - [`NatTest.metta`](extended_compat/hyperon-pln/metta/hol/NatTest.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/hyperon-pln/metta/hol/NatTest.metta.html): Test cases for natural number operations in HOL.
    - [`NatSimpleTest.metta`](extended_compat/hyperon-pln/metta/hol/NatSimpleTest.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/hyperon-pln/metta/hol/NatSimpleTest.metta.html): Simplified tests for natural numbers in HOL.
 
-- **[`dependent-types`](./extended_compat/hyperon-pln/metta/dependent-types)**: Concentrates on representing rules as type constructors.
+- **[`dependent-types`](../extended_compat/hyperon-pln/metta/dependent-types)**: Concentrates on representing rules as type constructors.
    - [`ModusPonensDTLTest.metta`](extended_compat/hyperon-pln/metta/dependent-types/ModusPonensDTLTest.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/hyperon-pln/metta/dependent-types/ModusPonensDTLTest.metta.html): Test cases for modus ponens in dependent type logic.
    - [`ImplicationDirectIntroductionDTL.metta`](extended_compat/hyperon-pln/metta/dependent-types/ImplicationDirectIntroductionDTL.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/hyperon-pln/metta/dependent-types/ImplicationDirectIntroductionDTL.metta.html): Direct implication introduction in dependent type logic.
    - [`DeductionImplicationDirectIntroductionDTLTest.metta`](extended_compat/hyperon-pln/metta/dependent-types/DeductionImplicationDirectIntroductionDTLTest.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/hyperon-pln/metta/dependent-types/DeductionImplicationDirectIntroductionDTLTest.metta.html): Tests for deduction and direct implication introduction.
@@ -188,15 +188,15 @@ This group of directories explores various representational methods for porting 
    - [`DeductionDTLTest.metta`](extended_compat/hyperon-pln/metta/dependent-types/DeductionDTLTest.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/hyperon-pln/metta/dependent-types/DeductionDTLTest.metta.html): Tests for deduction in dependent type language.
    - [`ModusPonensDTL.metta`](extended_compat/hyperon-pln/metta/dependent-types/ModusPonensDTL.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/hyperon-pln/metta/dependent-types/ModusPonensDTL.metta.html): Modus ponens implementation in dependent type language.
 
-- **[`forward-chainer`](./extended_compat/hyperon-pln/metta/forward-chainer)**: Focuses on forward-chaining logic.
+- **[`forward-chainer`](../extended_compat/hyperon-pln/metta/forward-chainer)**: Focuses on forward-chaining logic.
    - [`forward-chainer-test.metta`](extended_compat/hyperon-pln/metta/forward-chainer/forward-chainer-test.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/hyperon-pln/metta/forward-chainer/forward-chainer-test.metta.html): Test cases for forward-chaining logic.
    - [`forward-chainer-xp.metta`](extended_compat/hyperon-pln/metta/forward-chainer/forward-chainer-xp.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/hyperon-pln/metta/forward-chainer/forward-chainer-xp.metta.html): Experimental forward-chaining implementations.
 
-- **[`subtyping`](./extended_compat/hyperon-pln/metta/subtyping)**: Showcases subtyping operations.
+- **[`subtyping`](../extended_compat/hyperon-pln/metta/subtyping)**: Showcases subtyping operations.
    - [`rule-base.metta`](extended_compat/hyperon-pln/metta/subtyping/rule-base.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/hyperon-pln/metta/subtyping/rule-base.metta.html): Base rules for subtyping operations.
    - [`subtyping-test.metta`](extended_compat/hyperon-pln/metta/subtyping/subtyping-test.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/hyperon-pln/metta/subtyping/subtyping-test.metta.html): Test cases for subtyping.
 
-- **[`sumo`](./extended_compat/hyperon-pln/metta/sumo)**: Houses SUMO (Suggested Upper Merged Ontology) examples.
+- **[`sumo`](../extended_compat/hyperon-pln/metta/sumo)**: Houses SUMO (Suggested Upper Merged Ontology) examples.
     - [`load-suo-kif.metta`](extended_compat/hyperon-pln/metta/sumo/load-suo-kif.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/hyperon-pln/metta/sumo/load-suo-kif.metta.html): Logic for loading SUMO KIF files.
     - [`rule-base.metta`](extended_compat/hyperon-pln/metta/sumo/rule-base.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/hyperon-pln/metta/sumo/rule-base.metta.html): Base rules for SUMO logic.
    - **[`sumo/john-carry-flower`](./extended_compat/hyperon-pln/metta/sumo/john-carry-flower)**: Narrative logic examples.
@@ -212,7 +212,7 @@ This group of directories explores various representational methods for porting 
 
 #### **Synthesis Experiments**
 
-- **[`synthesis/experiments`](./extended_compat/hyperon-pln/metta/synthesis/experiments)**: Experiments in program synthesis.
+- **[`synthesis/experiments`](../extended_compat/hyperon-pln/metta/synthesis/experiments)**: Experiments in program synthesis.
    - [`synthesize-via-unify-test.metta`](extended_compat/hyperon-pln/metta/synthesis/experiments/synthesize-via-unify-test.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/hyperon-pln/metta/synthesis/experiments/synthesize-via-unify-test.metta.html): Tests for synthesis through unification.
    - [`unify-via-case.metta`](extended_compat/hyperon-pln/metta/synthesis/experiments/unify-via-case.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/hyperon-pln/metta/synthesis/experiments/unify-via-case.metta.html): Unification via `case` operator construct.
    - [`synthesize-via-case.metta`](extended_compat/hyperon-pln/metta/synthesis/experiments/synthesize-via-case.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/hyperon-pln/metta/synthesis/experiments/synthesize-via-case.metta.html): Synthesis through `case` operator construct.
@@ -229,7 +229,7 @@ This group of directories explores various representational methods for porting 
 
 #### **Match and Unify Operations**
 
-- **[`match`](./extended_compat/hyperon-pln/metta/match)**: Logic for matching and unification.
+- **[`match`](../extended_compat/hyperon-pln/metta/match)**: Logic for matching and unification.
    - [`DeductionImplicationDirectIntroductionMatchTest.metta`](extended_compat/hyperon-pln/metta/match/DeductionImplicationDirectIntroductionMatchTest.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/hyperon-pln/metta/match/DeductionImplicationDirectIntroductionMatchTest.metta.html): Tests for matching in deduction and direct implication introduction.
    - [`DeductionMatch.metta`](extended_compat/hyperon-pln/metta/match/DeductionMatch.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/hyperon-pln/metta/match/DeductionMatch.metta.html): Logic for deduction matching.
    - [`ImplicationDirectIntroductionMatchTest.metta`](extended_compat/hyperon-pln/metta/match/ImplicationDirectIntroductionMatchTest.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/extended_compat/hyperon-pln/metta/match/ImplicationDirectIntroductionMatchTest.metta.html): Tests for direct implication introduction matching.
@@ -238,7 +238,7 @@ This group of directories explores various representational methods for porting 
 
 #### **Metta-Morph Tests**
 
-- **[`metta-morph_tests`](./baseline_compat/metta-morph_tests)**: Test cases exploring various features and functionalities in MeTTa.
+- **[`metta-morph_tests`](../baseline_compat/metta-morph_tests)**: Test cases exploring various features and functionalities in MeTTa.
    - [`minnars.metta`](baseline_compat/metta-morph_tests/minnars.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/baseline_compat/metta-morph_tests/minnars.metta.html): Tests and examples for MinNARS implementation.
    - [`sequential_nested.metta`](baseline_compat/metta-morph_tests/sequential_nested.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/baseline_compat/metta-morph_tests/sequential_nested.metta.html): Experiments with sequential and nested structures.
    - [`peano.metta`](baseline_compat/metta-morph_tests/peano.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/baseline_compat/metta-morph_tests/peano.metta.html): Implementations and tests for Peano arithmetic.
@@ -268,7 +268,7 @@ This group of directories explores various representational methods for porting 
 
 #### **MeTTaLog Sanity Tests**
 
-- **[`hyperon-mettalog_sanity`](./baseline_compat/hyperon-mettalog_sanity)**: Sanity checks and basic tests for Hyperon Mettalog.
+- **[`hyperon-mettalog_sanity`](../baseline_compat/hyperon-mettalog_sanity)**: Sanity checks and basic tests for Hyperon Mettalog.
    - [`02-curried-plus.metta`](baseline_compat/hyperon-mettalog_sanity/02-curried-plus.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/baseline_compat/hyperon-mettalog_sanity/02-curried-plus.metta.html): Implementations and tests for curried addition functions.
    - [`00_lang_case.metta`](baseline_compat/hyperon-mettalog_sanity/00_lang_case.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/baseline_compat/hyperon-mettalog_sanity/00_lang_case.metta.html): Case studies in language design and implementation.
    - [`01_lang_inc.metta`](baseline_compat/hyperon-mettalog_sanity/01_lang_inc.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/baseline_compat/hyperon-mettalog_sanity/01_lang_inc.metta.html): Increment functions and their usage in language testing.
@@ -299,7 +299,7 @@ This group of directories explores various representational methods for porting 
 
 #### **Hyperon Mettalog Sanity Checks**
 
-- **[`hyperon-mettalog_sanity`](./baseline_compat/hyperon-mettalog_sanity)**: Sanity checks and basic tests for Hyperon Mettalog.
+- **[`hyperon-mettalog_sanity`](../baseline_compat/hyperon-mettalog_sanity)**: Sanity checks and basic tests for Hyperon Mettalog.
    - [`02-curried-plus.metta`](baseline_compat/hyperon-mettalog_sanity/02-curried-plus.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/baseline_compat/hyperon-mettalog_sanity/02-curried-plus.metta.html): Implementations and tests for curried addition functions.
    - [`00_lang_case.metta`](baseline_compat/hyperon-mettalog_sanity/00_lang_case.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/baseline_compat/hyperon-mettalog_sanity/00_lang_case.metta.html): Case studies in language design and implementation.
    - [`01_lang_inc.metta`](baseline_compat/hyperon-mettalog_sanity/01_lang_inc.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/baseline_compat/hyperon-mettalog_sanity/01_lang_inc.metta.html): Increment functions and their usage in language testing.
@@ -307,7 +307,7 @@ This group of directories explores various representational methods for porting 
 
 #### **Hyperon/MeTTa base Unit Tests**
 
-- **[`hyperon-experimental_scripts`](./baseline_compat/hyperon-experimental_scripts)**: Scripts for experimenting with advanced concepts in Hyperon.
+- **[`hyperon-experimental_scripts`](../baseline_compat/hyperon-experimental_scripts)**: Scripts for experimenting with advanced concepts in Hyperon.
    - [`_e2_states_dia.metta`](baseline_compat/hyperon-experimental_scripts/_e2_states_dia.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/baseline_compat/hyperon-experimental_scripts/_e2_states_dia.metta.html): State diagrams and their representation.
    - [`a1_symbols.metta`](baseline_compat/hyperon-experimental_scripts/a1_symbols.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/baseline_compat/hyperon-experimental_scripts/a1_symbols.metta.html): Exploration of symbol usage and manipulation.
    - [`d4_type_prop.metta`](baseline_compat/hyperon-experimental_scripts/d4_type_prop.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/baseline_compat/hyperon-experimental_scripts/d4_type_prop.metta.html): Type properties and their applications in logic.
@@ -339,38 +339,38 @@ This group of directories explores various representational methods for porting 
 ### **Feature Demonstrations**
 
 #### **Bidirectional Computation**
-- **[`features/bidirectional_computation`](./features/bidirectional_computation)**: Demonstrates bidirectional computation, showcasing how operations can be reversed.
+- **[`features/bidirectional_computation`](../features/bidirectional_computation)**: Demonstrates bidirectional computation, showcasing how operations can be reversed.
   - [`reverse-arithmetic.metta`](features/bidirectional_computation/reverse-arithmetic.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/features/bidirectional_computation/reverse-arithmetic.metta.html): Implements reverse arithmetic operations.
   - [`reverse-functions.metta`](features/bidirectional_computation/reverse-functions.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/features/bidirectional_computation/reverse-functions.metta.html): Demonstrates functions operating in reverse.
   - [`send-more.metta`](features/bidirectional_computation/send-more.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/features/bidirectional_computation/send-more.metta.html): Solves the SEND+MORE cryptarithmetic puzzle.
   - [`send-more-money.metta`](features/bidirectional_computation/send-more-money.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/features/bidirectional_computation/send-more-money.metta.html): Tackles the SEND+MORE=MONEY problem with bidirectional computation.
 
 #### **Containers as Spaces**
-- **[`features/containers_are_spaces`](./features/containers_are_spaces)**: Illustrates how containers can act as spatial structures in computation.
+- **[`features/containers_are_spaces`](../features/containers_are_spaces)**: Illustrates how containers can act as spatial structures in computation.
   - [`04_match_list_like_space.metta`](features/containers_are_spaces/04_match_list_like_space.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/features/containers_are_spaces/04_match_list_like_space.metta.html): Demonstrates list-like space matching.
   - [`05_match_superpose_element_like_space.metta`](features/containers_are_spaces/05_match_superpose_element_like_space.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/features/containers_are_spaces/05_match_superpose_element_like_space.metta.html): Shows superposition in element-like spaces.
 
 #### **Host Language Features**
-- **[`features/host_language`](./features/host_language)**: Features leveraging the host programming language(s) capabilities.
+- **[`features/host_language`](../features/host_language)**: Features leveraging the host programming language(s) capabilities.
   - **[`compiler`](./features/host_language/compiler)**: Compiler-specific features and demonstrations.
     - [`00a_lang_compiled_case.metta`](features/host_language/compiler/00a_lang_compiled_case.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/features/host_language/compiler/00a_lang_compiled_case.metta.html): Explores compiled language case studies.
     - [`define_if_like.metta`](features/host_language/compiler/define_if_like.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/features/host_language/compiler/define_if_like.metta.html): Introduces compiler features for defining 'if'-like structures.
   - [`httpclient.metta`](features/host_language/httpclient.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/features/host_language/httpclient.metta.html): Implements a basic HTTP client.
 
 #### **Loop Checks**
-- **[`features/loop-checks`](./features/loop-checks)**: Experiments and tests to check for loops in computations.
+- **[`features/loop-checks`](../features/loop-checks)**: Experiments and tests to check for loops in computations.
   - [`06_loop_0.metta`](features/loop-checks/06_loop_0.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/features/loop-checks/06_loop_0.metta.html): Basic loop checking.
   - [`06_loop_1.metta`](features/loop-checks/06_loop_1.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/features/loop-checks/06_loop_1.metta.html): Intermediate loop checking.
   - [`06_loop_2.metta`](features/loop-checks/06_loop_2.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/features/loop-checks/06_loop_2.metta.html): Advanced loop checking.
 
 #### **Parallelism**
-- **[`features/parallelism`](./features/parallelism)**: Showcases parallel computing with various algorithms and examples.
+- **[`features/parallelism`](../features/parallelism)**: Showcases parallel computing with various algorithms and examples.
   - [`builtins.metta`](features/parallelism/builtins.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/features/parallelism/builtins.metta.html): Built-in parallel computing functions.
 
 
 #### **Performance Testing and Benchmarking**
 
-- **[`performance`](./performance)**: Performance tests and benchmarks showcasing optimization and efficiency.
+- **[`performance`](../performance)**: Performance tests and benchmarks showcasing optimization and efficiency.
   - [`factorial.metta`](performance/basic/factorial.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/performance/basic/factorial.metta.html): Factorial function implementation and performance testing.
   - [`factorial.pl`](./performance/basic/factorial.pl)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/performance/basic/factorial.pl.html): Hand-coded optimized version of the factorial function for speed.
   - [`fibo-as-pred.metta`](performance/basic/fibo-as-pred.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/performance/basic/fibo-as-pred.metta.html): Fibonacci sequence implementation as predicates.
@@ -399,7 +399,7 @@ This group of directories explores various representational methods for porting 
 
       known for its pure functional runtime, lazy evaluation, non-garbage collection, and massive parallelism. HVM's beta-optimality allows it, in certain higher-order computations, to be exponentially faster than alternatives, including Haskell's GHC.
 
-- **[`features/hvm`](./features/hvm)**: Demonstrates the capabilities of the Higher-order Virtual Machine (HVM),
+- **[`features/hvm`](../features/hvm)**: Demonstrates the capabilities of the Higher-order Virtual Machine (HVM),
 
   - **[`bugs`](./features/hvm/bugs)**: Bug demonstrations in HVM computations.
     - [`fib_dups.hvm`](features/hvm/bugs/fib_dups.hvm)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/features/hvm/bugs/fib_dups.hvm.html): Illustrates duplication issues in Fibonacci sequence calculation.
