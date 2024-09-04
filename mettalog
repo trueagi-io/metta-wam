@@ -550,6 +550,38 @@ function handle_args {
             continue
         fi
 
+
+	arg_realpath="$arg"
+        # track file paths but keep going
+        if [[ -f "$arg" || -d "$arg" ]]; then
+            arg_realpath="$(realpath "$arg")"
+            if [[ -f "$arg_realpath" || -d "$arg_realpath" ]]; then
+                add_to_list "$arg_realpath" LIST_OF_FILE_ARGS
+            fi
+        fi
+
+	if [ "$SWI_FLAG_WITH_ARG" = true ]; then
+	    add_to_list "$arg_realpath" SWI_OPTIONS
+	    SWI_FLAG_WITH_ARG=false  # Reset the flag
+	    continue
+	fi
+
+	case "$arg" in
+	    --stack-limit=*|--stack_limit=*|--table-space=*|--shared-table-space=*|--pce=*|--pldoc=*|--tty=*|--packs=*|--signals=*|--sigalert=*|--threads=*|--debug=*|--debug-on-interrupt=*|--quiet=*|--traditional|--home=*|--on-error=*|--on-warning=*)
+		add_to_list "$arg" SWI_OPTIONS
+		#continue
+		;;
+	    -D*=*|-O)
+		add_to_list "$arg" SWI_OPTIONS
+		continue
+		;;
+	    -x|-g|-t|-f|-F|-l|-s|-p|-D)  # For options that require an argument in the next round
+		add_to_list "$arg" SWI_OPTIONS
+		SWI_FLAG_WITH_ARG=true
+		continue
+		;;
+	esac
+
         if [[ $SKIP_TO_METTALOG_OPTIONS == true ]]; then
             METTALOG_OPTIONS+=("$arg")
             continue
@@ -598,13 +630,6 @@ function handle_args {
              ;;
         esac
 
-        # track file paths but keep going
-        if [[ -f "$arg" || -d "$arg" ]]; then
-            arg_realpath="$(realpath "$arg")"
-            if [[ -f "$arg_realpath" || -d "$arg_realpath" ]]; then
-                add_to_list "$arg_realpath" LIST_OF_FILE_ARGS
-            fi
-        fi
 
         if [[ "$arg" =~ ^--timeout=([0-9]+)$ ]]; then
             parsed="${BASH_REMATCH[1]}"
