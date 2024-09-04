@@ -915,13 +915,13 @@
 ;; Is Data Functor
 
 ;; Public MeTTa
-(@doc get-doc
+(@doc metta-get-doc
   (@desc "Returns documentation for the given Atom/Function")
   (@params (
     (@param "Atom/Function name for which documentation is needed")))
   (@return "Documentation for the given atom/function"))
-(: get-doc (-> Atom Atom))
-(= (get-doc $atom)
+(: metta-get-doc (-> Atom Atom))
+(= (metta-get-doc $atom)
   (let $meta-type (get-metatype $atom)
     (case $meta-type (
       (Expression (get-doc-atom $atom))
@@ -1008,13 +1008,13 @@
         (@doc-formal (@item $atom) (@kind atom) (@type $type) (@desc "No documentation")) )))))
 
 ;; Public MeTTa
-(@doc help!
+(@doc metta-help!
   (@desc "Function prints documentation for the input atom.")
   (@params (
     (@param "Input to get documentation for")))
   (@return "Unit atom"))
-(: help! (-> Atom (->)))
-(= (help! $atom)
+(: metta-help! (-> Atom (->)))
+(= (metta-help! $atom)
   (case (get-doc $atom) (
     ((@doc-formal (@item $item) (@kind function) (@type $type) (@desc $descr)
                  (@params $params)

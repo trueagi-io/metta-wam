@@ -235,7 +235,7 @@ eval_02(Eq,RetType,Depth2,Self,Y,YO):-
 % subst_args_here(Eq,RetType,Depth2,Self,Y,YO):-
 %   Y =@= [ house, _59198,_59204,==,fish,fish],!,break.
 
-subst_args_here(Eq,RetType,Depth2,Self,Y,YO):- !, Y=YO.
+%subst_args_here(Eq,RetType,Depth2,Self,Y,YO):- !, Y=YO.
 subst_args_here(Eq,RetType,Depth2,Self,Y,YO):-
   subst_args(Eq,RetType,Depth2,Self,Y,YO),
   nop(notrace(if_t(Y\=@=YO,wdmsg(subst_args(Y,YO))))).
@@ -443,6 +443,8 @@ unified(X,Y):- eval(Y,YY),Y\=@=YY,unified(YY,X).
 eval_until_unify(_Eq,_RetType,_Dpth,_Slf,X,X):- !.
 eval_until_unify(Eq,RetType,Depth,Self,X,Y):- eval_until_eq(Eq,RetType,Depth,Self,X,Y),!.
 
+eval_until_eq(_Eq,_RetType,_Dpth,_Slf,X,Y):- catch_nowarn(X=:=Y),!.
+eval_until_eq(_Eq,_RetType,_Dpth,_Slf,X,Y):- catch_nowarn('#='(X,Y)),!.
 eval_until_eq(Eq,RetType,_Dpth,_Slf,X,Y):-  X=Y,check_returnval(Eq,RetType,Y).
 %eval_until_eq(Eq,RetType,Depth,Self,X,Y):- var(Y),!,eval_in_steps_or_same(Eq,RetType,Depth,Self,X,XX),Y=XX.
 %eval_until_eq(Eq,RetType,Depth,Self,Y,X):- var(Y),!,eval_in_steps_or_same(Eq,RetType,Depth,Self,X,XX),Y=XX.
@@ -1078,6 +1080,13 @@ eval_20(_Eq,_RetType,_Depth,_Self,['decons',OneArg],[H,T]):- !, must_unify(OneAr
 eval_20(_Eq,_RetType,_Depth,_Self,['cons'|TwoArgs],[H|T]):-!, must_unify(TwoArgs,[H,T]).
 
 
+eval_20(Eq,RetType,Depth,Self,['get-doc'|Args],Res):- !,with_all_spaces(eval_args(Eq,RetType,Depth,Self,['metta-get-doc'|Args],Res)).
+eval_20(Eq,RetType,Depth,Self,['help!'|Args],Res):-!,with_all_spaces(eval_args(Eq,RetType,Depth,Self,['metta-help!'|Args],Res)).
+
+with_all_spaces(Goal):-
+ locally(nb_setval(with_all_spaces,t),Goal).
+using_all_spaces:- nb_current(with_all_spaces,t).
+
 % =================================================================
 % =================================================================
 % =================================================================
@@ -1086,15 +1095,16 @@ eval_20(_Eq,_RetType,_Depth,_Self,['cons'|TwoArgs],[H|T]):-!, must_unify(TwoArgs
 % =================================================================
 % =================================================================
 
-eval_20(Eq,RetType,Depth,Self,['unify',X,Y,Then,Else],Res):- !,
-   (X=Y
+eval_20(Eq,RetType,Depth,Self,['if-unify',X,Y,Then,Else],Res):- !,
+   eval_args(Eq,'Bool',Depth,Self,['==',X,Y],TF),
+   (is_True(TF)
      -> eval_args(Eq,RetType,Depth,Self,Then,Res)
      ;  eval_args(Eq,RetType,Depth,Self,Else,Res)).
 
 
 eval_20(Eq,RetType,Depth,Self,['if-equal',X,Y,Then,Else],Res):- !,
-   eval_args(Eq,'Bool',Depth,Self,['==',X,Y],TF),
-   (is_True(TF)
+
+   ( \+ \+ (eval_args(Eq,'Bool',Depth,Self,['==',X,Y],TF),is_True(TF))
      -> eval_args(Eq,RetType,Depth,Self,Then,Res)
      ;  eval_args(Eq,RetType,Depth,Self,Else,Res)).
 
@@ -2055,9 +2065,9 @@ eval_40(Eq,RetType,Depth,Self,[P,A,X|More],YY):- is_list(X),X=[_,_,_],simple_mat
 */
 %eval_40(Eq,RetType,_Dpth,_Slf,['==',X,Y],Res):-  !, subst_args(Eq,RetType,_Dpth,_Slf,['==',X,Y],Res).
 
-eval_40(Eq,RetType,_Dpth,_Slf,[EQ,X,Y],Res):- EQ=='==', !,
+eval_20(Eq,RetType,Depth,Self,[EQ, X,Y],Res):- EQ=='==', !,
     suggest_type(RetType,'Bool'),
-    eq_unify(Eq,_SharedType, X, Y, Res).
+    as_tf(eval_until_unify(Eq,_SharedType,Depth,Self,X,Y),Res).
 
 eval_20(_Eq,RetType,_Dpth,_Slf,[EQ,X,Y],TF):- EQ=='===', !,
     suggest_type(RetType,'Bool'),
@@ -2066,11 +2076,6 @@ eval_20(_Eq,RetType,_Dpth,_Slf,[EQ,X,Y],TF):- EQ=='===', !,
 eval_20(_Eq,RetType,_Dpth,_Slf,[EQ,X,Y],TF):- EQ=='====', !,
     suggest_type(RetType,'Bool'),
     as_tf(same_terms(X,Y),TF).
-
-
-eq_unify(_Eq,_SharedType, X, Y, TF):- as_tf(X=:=Y,TF),!.
-eq_unify(_Eq,_SharedType, X, Y, TF):- as_tf( '#='(X,Y),TF),!.
-eq_unify( Eq,  SharedType, X, Y, TF):- as_tf(eval_until_unify(Eq,SharedType, X, Y), TF).
 
 
 suggest_type(_RetType,_Bool).

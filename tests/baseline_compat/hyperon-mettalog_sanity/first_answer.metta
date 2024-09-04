@@ -108,7 +108,8 @@
   (if (== $n 0) (let n o p)
    (if (== $n 1)
 	  (car-atom $a) 
-      (let $t (cdr-atom $a) (superpose ((car-atom $a) (first-few (- $n 1) $t)))))))
+	  (let $t (cdr-atom $a) (superpose ((car-atom $a) (first-few (- $n 1) $t)))))))
+
 (: limit (-> Number Atom Atom))
 (= (limit $n $x) (let $a (collapse $x) (first-few $n $a)))
 

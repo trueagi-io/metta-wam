@@ -1028,13 +1028,23 @@ metta_atom(KB, [F, A| List]):- KB=='&flybase',fb_pred_nr(F, Len),current_predica
 %metta_atom(KB,Atom):- KB=='&corelib',!, metta_atom_corelib(Atom).
 metta_atom(KB,Atom):- metta_atom_in_file( KB,Atom).
 metta_atom(KB,Atom):- metta_atom_asserted( KB,Atom).
+
+%metta_atom(KB,Atom):- KB == '&corelib', !, metta_atom_asserted('&self',Atom).
+metta_atom(KB,Atom):- KB \== '&corelib', using_all_spaces,!, metta_atom('&corelib',Atom).
 metta_atom(KB,Atom):- KB \== '&corelib', !,
    \+ \+ (metta_atom_asserted(KB,'&corelib'),
           should_inherit_from_corelib(Atom)), !,
    metta_atom('&corelib',Atom).
 
-%should_inherit_from_corelib([H,A|_]):- (H == ':';H == '='),!,nonvar(A).
+should_inherit_from_corelib(_):- using_all_spaces,!.
+should_inherit_from_corelib([H,A|_]):- H == ':',!,nonvar(A).
 should_inherit_from_corelib([H|_]):- H == '@doc', !.
+should_inherit_from_corelib([H,A|T]):- fail,
+  H == '=',wdmsg(try([H,A|T])),!,is_list(A),
+  A=[F|_],nonvar(F), F \==':',
+  \+ metta_atom_asserted('&self',[:,F|_]),
+  % \+ \+ metta_atom_asserted('&corelib',[=,[F|_]|_]),
+  wdmsg([H,A|T]).
 
 /*
 should_inherit_op_from_corelib('=').
@@ -1070,10 +1080,10 @@ metta_eq_def(Eq,KB,H,B):-  ignore(Eq = '='),metta_atom(KB,[Eq,H,B]).
 %metta_eq_def(Eq,KB,H,B):-  ignore(Eq = '='), if_or_else(metta_atom(KB,[Eq,H,B]),not_metta_atom_corelib(KB,[Eq,H,B])).
 
 %metta_defn(KB,Head,Body):- metta_eq_def(_Eq,KB,Head,Body).
-metta_defn(KB,H,B):- if_or_else(metta_atom(KB,['=',H,B]),not_metta_atom_corelib(KB,['=',H,B])).
-%metta_defn(KB,H,B):- metta_eq_def('=',KB,H,B).
-metta_defn(KB,H,B):- if_or_else(metta_atom(KB,[':',H,B]),not_metta_atom_corelib(KB,[':',H,B])).
-%metta_type(KB,H,B):- metta_eq_def(':',KB,H,B).
+%metta_defn(KB,H,B):- if_or_else(metta_atom(KB,['=',H,B]),not_metta_atom_corelib(KB,['=',H,B])).
+metta_defn(KB,H,B):- metta_eq_def('=',KB,H,B).
+%metta_type(KB,H,B):- if_or_else(metta_atom(KB,[':',H,B]),not_metta_atom_corelib(KB,[':',H,B])).
+metta_type(KB,H,B):- metta_eq_def(':',KB,H,B).
 %metta_type(S,H,B):- S == '&corelib', metta_atom_stdlib_types([':',H,B]).
 %typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_arguments(Cmpd,Type,[List|_]),is_list(List).
 
