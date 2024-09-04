@@ -651,22 +651,28 @@ tests
 |   |       `-- cml
 |   |-- nondet_unify
 |   `-- prolog_chainers
-`-- python_compat
-    |-- extend
-    |-- hyperon-experimental_python
-    |   |-- hyperon
-    |   |   `-- exts
-    |   |       `-- das_gate
-    |   |-- integration
-    |   |-- sandbox
-    |   |   |-- bhv_binding
-    |   |   |-- das_gate
-    |   |   |-- neurospace
-    |   |   |-- numpy
-    |   |   |-- pytorch
-    |   |   |-- repl
-    |   |   |-- resolve
-    |   |   `-- sql_space
-    |-- janus
-    |-- metta-motto-app-tests
+|-- python_compat
+|   |-- extend
+|   |-- hyperon-experimental_python
+|   |   |-- hyperon
+|   |   |   `-- exts
+|   |   |       `-- das_gate
+|   |   |-- integration
+|   |   |-- sandbox
+|   |   |   |-- bhv_binding
+|   |   |   |-- das_gate
+|   |   |   |-- neurospace
+|   |   |   |-- numpy
+|   |   |   |-- pytorch
+|   |   |   |-- repl
+|   |   |   |-- resolve
+|   |   |   `-- sql_space
+|   |-- janus
+|   |-- metta-motto-app-tests
+|-- new_directory_1
+|   |-- sub_directory_a
+|   |-- sub_directory_b
+|-- new_directory_2
+|   |-- sub_directory_c
+|   |-- sub_directory_d
 
