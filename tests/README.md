@@ -12,6 +12,8 @@ The `examples` directory houses a variety of sub-directories, each focusing on s
   - [`reverse-functions.metta`](features/bidirectional_computation/reverse-functions.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/features/bidirectional_computation/reverse-functions.metta.html): Demonstrates functions operating in reverse.
   - [`send-more.metta`](features/bidirectional_computation/send-more.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/features/bidirectional_computation/send-more.metta.html): Solves the SEND+MORE cryptarithmetic puzzle.
   - [`send-more-money.metta`](features/bidirectional_computation/send-more-money.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/features/bidirectional_computation/send-more-money.metta.html): Tackles the SEND+MORE=MONEY problem with bidirectional computation.
+  - [`new-file1.metta`](features/bidirectional_computation/new-file1.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/features/bidirectional_computation/new-file1.metta.html): Description of new-file1.
+  - [`new-file2.metta`](features/bidirectional_computation/new-file2.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/features/bidirectional_computation/new-file2.metta.html): Description of new-file2.
 
 ### Containers as Spaces
 - **[`features/containers_are_spaces`](./features/containers_are_spaces)**: Illustrates how containers can act as spatial structures in computation.
