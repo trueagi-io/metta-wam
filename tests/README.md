@@ -445,4 +445,228 @@ This group of directories explores various representational methods for porting 
       - [`main.hvm`](features/hvm/sort/radix/main.hvm)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/features/hvm/sort/radix/main.hvm.html): Main script for radix sort.
       - [`main.hs`](features/hvm/sort/radix/main.hs)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/features/hvm/sort/radix/main.hs.html): Haskell version of radix sort.
 
+tests
+|-- baseline_compat
+|   |-- anti-regression
+|   |-- hyperon-experimental_scripts
+|   |-- hyperon-mettalog_sanity
+|   |   `-- synth_buffer
+|   |-- metta-morph_tests
+|   `-- module-system
+|-- compiler_baseline
+|   |-- anti-regression
+|   |-- hyperon-experimental_scripts
+|   |-- hyperon-mettalog_sanity
+|   |-- metta-morph_tests
+|   `-- module-system
+|-- direct_comp
+|   |-- transpiler
+|   `-- walk_thru
+|-- extended_compat
+|   |-- ai-service
+|   |-- bio-atomspace
+|   |   |-- cellxgene
+|   |   |-- gaf
+|   |   |-- gencode
+|   |   |-- gtex
+|   |   |   `-- eqtl
+|   |   |-- onotology
+|   |   |-- pln
+|   |   |-- query
+|   |   |-- reactome
+|   |   |-- refseq
+|   |   |-- tadmap
+|   |   `-- uniprot
+|   |-- check_types
+|   |   `-- check_types-temp
+|   |-- hyperon-miner
+|   |   |-- data
+|   |   |-- dependent-types
+|   |   |-- match
+|   |   `-- utils
+|   |-- hyperon-pln
+|   |   `-- metta
+|   |       |-- backward-chainer
+|   |       |-- backward-chaining
+|   |       |-- common
+|   |       |   |-- formula
+|   |       |   `-- truthvalue
+|   |       |-- curried-chaining
+|   |       |-- dependent-types
+|   |       |-- entail
+|   |       |-- equal
+|   |       |-- forward-chainer
+|   |       |-- forward-chaining
+|   |       |-- hol
+|   |       |-- inference-control
+|   |       |-- iterative-chaining
+|   |       |-- match
+|   |       |-- pln
+|   |       |   |-- dependent-types
+|   |       |   |-- entail
+|   |       |   |-- equal
+|   |       |   `-- match
+|   |       |-- polyward-chaining
+|   |       |-- subtyping
+|   |       |-- sumo
+|   |       |   |-- john-carry-flower
+|   |       |   |-- located
+|   |       |   |-- orientation
+|   |       |   `-- route-between
+|   |       `-- synthesis
+|   |           `-- experiments
+|   |-- metta-examples
+|   |   |-- SICP_book
+|   |   |-- aunt-kg
+|   |   |-- child_ai
+|   |   |-- collatz
+|   |   |-- combinator-calculi
+|   |   |-- combinator_logic_experiments
+|   |   |-- edges-to-edges
+|   |   |-- fizzbuzz
+|   |   |-- game_of_clue
+|   |   |-- logic
+|   |   |-- metta_amr
+|   |   |   |-- amr_matching
+|   |   |   |-- amr_processing
+|   |   |   |-- amr_templates
+|   |   |   |-- experiments
+|   |   |   |-- metta_space
+|   |   |   `-- metta_to_amr
+|   |   |-- perfect-numbers
+|   |   |-- prob-dep-types
+|   |   |-- python_from_metta
+|   |   |-- recursion-schemes
+|   |   |   `-- src
+|   |   |       `-- examples
+|   |   |-- red-black-lambda
+|   |   |-- stack-based
+|   |   |-- strips
+|   |   |   |-- blocks
+|   |   |   |-- logistics
+|   |   |   |-- strips-to-metta-flat
+|   |   |   `-- strips-to-metta-improved
+|   |   |-- traverser
+|   |   `-- tutorials
+|   |       `-- debug_py_script_launched_from_metta
+|   `-- nars
+|       |-- current
+|       |-- nars_extras
+|       |-- nars_v0
+|       |-- new
+|       |-- prev
+|-- features
+|   |-- bidirectional_computation
+|   |-- containers_are_spaces
+|   |-- debugging
+|   |-- distributed-processing
+|   |-- exception_handling
+|   |-- host_language
+|   |-- hvm
+|   |   |-- IO
+|   |   |-- bugs
+|   |   |-- callcc
+|   |   |-- hello
+|   |   |-- lambda
+|   |   |   |-- multiplication
+|   |   |   |-- padic_clifford
+|   |   |   `-- varbase
+|   |   |-- queue
+|   |   |-- sort
+|   |   |   |-- bitonic
+|   |   |   |-- bubble
+|   |   |   |-- quick
+|   |   |   `-- radix
+|   |   `-- work
+|   |-- io
+|   |-- iterators
+|   |-- loop-checks
+|   |-- metta_convert
+|   |   |-- aq1 -> ../../../../metta-src-conversions/aq1/
+|   |   |-- arch1 -> ../../../../metta-src-conversions/arch1/
+|   |   |-- arch2 -> ../../../../metta-src-conversions/arch2/
+|   |   |-- attdsc -> ../../../../metta-src-conversions/attdsc/
+|   |   |-- cobweb -> ../../../../metta-src-conversions/cobweb/
+|   |   |-- discr -> ../../../../metta-src-conversions/discr/
+|   |   |-- ebg -> ../../../../metta-src-conversions/ebg/
+|   |   |-- foil -> ../../../../metta-src-conversions/foil/
+|   |   |-- idt -> ../../../../metta-src-conversions/idt/
+|   |   |-- index -> ../../../../metta-src-conversions/index/
+|   |   |-- invers -> ../../../../metta-src-conversions/invers/
+|   |   |-- logic -> ../../../../metta-src-conversions/logic/
+|   |   |-- metagame -> ../../../../metta-src-conversions/metagame/
+|   |   |-- miles -> ../../../../metta-src-conversions/miles/
+|   |   |-- multagnt -> ../../../../metta-src-conversions/multagnt/
+|   |   |-- nars_lp -> ../../../../metta-src-conversions/nars_lp/
+|   |   |-- occam -> ../../../../metta-src-conversions/occam/
+|   |   |-- sldr_dl -> ../../../../metta-src-conversions/sldr_dl/
+|   |   |-- sre_dna -> ../../../../metta-src-conversions/sre_dna/
+|   |   |-- sxx_machine -> ../../../../metta-src-conversions/sxx_machine/
+|   |   `-- vs -> ../../../../metta-src-conversions/vs/
+|   |-- multidirectional
+|   |-- parallelism
+|   |   `-- _results_
+|   |-- planner
+|   |-- polymorphic-types
+|   |-- possibly_wrong
+|   |-- structures
+|   `-- typed-variables
+|-- flybase
+|   |-- extra
+|   |-- from_das
+|   |-- from_rust
+|   |-- from_vspace
+|   `-- sanity
+|-- more-anti-regression
+|   |-- chaining
+|   |-- constraint
+|   |-- introspect
+|   |-- minimal-metta
+|   |-- spaces
+|   |-- std
+|   |-- stdlib-mettalog
+|   `-- target
+|-- nars_interp
+|   `-- nars
+|       `-- main-branch
+|-- nars_w_comp
+|   `-- nars
+|       `-- main-branch
+|-- performance
+|   |-- basic
+|   |-- comparisons
+|   |-- gpt2-like
+|   |   |-- corpus
+|   |   |   |-- bigram-sentence-evaluator
+|   |   |   |   |-- output
+|   |   |   |   `-- sentence-tagging
+|   |   |   |-- fairy_tales
+|   |   |   |-- self_dialogue_corpus
+|   |   |   |   `-- old
+|   |   |   |-- soap_opera_corpus
+|   |   |   `-- tmpdata
+|   |   `-- language_models
+|   |-- knowledge_graphs
+|   |   `-- graphml
+|   |       `-- cml
+|   |-- nondet_unify
+|   `-- prolog_chainers
+`-- python_compat
+    |-- extend
+    |-- hyperon-experimental_python
+    |   |-- hyperon
+    |   |   `-- exts
+    |   |       `-- das_gate
+    |   |-- integration
+    |   |-- sandbox
+    |   |   |-- bhv_binding
+    |   |   |-- das_gate
+    |   |   |-- neurospace
+    |   |   |-- numpy
+    |   |   |-- pytorch
+    |   |   |-- repl
+    |   |   |-- resolve
+    |   |   `-- sql_space
+    |-- janus
+    |-- metta-motto-app-tests
 
