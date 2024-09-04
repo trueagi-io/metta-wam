@@ -17,7 +17,7 @@
 ;(: apply (-> Atom Variable Atom Atom))
 ;(: cons (-> Atom Atom Atom))
 ;(: decons (-> Atom Atom))
-(: xor (-> Bool Bool Bool))
+
 (: return (-> Atom ReturnType))
 (: switch (-> %Undefined% Expression Atom))
 (: unify (-> Atom Atom Atom Atom %Undefined%))
@@ -631,6 +631,7 @@
     (@param "Second argument")))
   (@return "Return values are the same as logical disjunction, but when both arguments are True xor will return False"))
 ;; Implemented from Interpreters
+(: xor (-> Bool Bool Bool))
 
 ;; Public MeTTa
 (@doc flip
