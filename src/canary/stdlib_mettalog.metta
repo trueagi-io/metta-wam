@@ -1350,7 +1350,7 @@
     (@param "Expression with {} symbols to be replaced")
     (@param "Atoms to be placed inside expression instead of {}")))
   (@return "Expression with replaced {} with atoms"))
-(: format-args (-> String Expresson String))
+(: format-args (-> String Atom String))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa

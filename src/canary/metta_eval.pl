@@ -1420,7 +1420,8 @@ format_nth_args([C|FormatRest], Iterator, Args) :- put(C), format_nth_args(Forma
 
 eval_20(Eq,RetType,Depth,Self,['format-args',Format,Args],Result):-
    eval_args(Eq,RetType,Depth,Self,Format,EFormat),
-   eval_args(Eq,RetType,Depth,Self,Args,EArgs),
+   %eval_args(Eq,'Expression',Depth,Self,Args,EArgs),
+   Args=EArgs,
    is_list(EArgs),string_chars(EFormat, FormatChars), !,
    user_io(with_output_to_str( Result, format_nth_args(FormatChars, 0, EArgs))).
 eval_20(Eq,RetType,Depth,Self,['format-args',_Fmt,Args],_Result) :-
