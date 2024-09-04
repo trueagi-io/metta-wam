@@ -711,13 +711,13 @@ function handle_args {
                 continue
                 ;;
 
-            -x|-g|-G|-t|-f|-F|-l|-L|-s|-S|-p|--on-error|--on-warning|--home|--stack-limit|--table-space|--shared-table-space|--pldoc)
+            -x|-g|-t|-f|-F|-l|-s|-p|--on-error|--on-warning|--home|--stack-limit|--table-space|--shared-table-space|--pldoc)
                 SWI_OPTIONS+=("$arg")
                 SWI_FLAG_WITH_ARG=true
                 continue
                 ;;
 
-            -G|-L|-F)
+            -G|-L|-S)
                 METTALOG_OPTIONS+=("$arg")
                 METTA_FLAG_WITH_ARG=true
                 continue
