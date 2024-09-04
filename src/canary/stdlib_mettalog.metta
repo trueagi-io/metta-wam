@@ -1363,6 +1363,33 @@
 (: sealed (-> Expression Atom Atom))
 ;; Implemented from Interpreters
 
+(:> ValueAtom Atom)
+(:> ValueAtom Grounded)
+(:> ForeignObject ValueAtom)
+(:> PyObject ForeignObject)
+
+;; Public MeTTa
+(@doc py-list
+  (@desc "Converts a MeTTa Expression into a Python list and returns it as a PyObject.")
+  (@params (
+    (@param (@type Expression) (@desc "A MeTTa List that will be converted into a Python list"))
+  ))
+  (@return (@type PyObject) (@desc "A Python list object that represents the given MeTTa Expression as a PyObject"))
+)
+(: py-list (-> Expression PyObject))
+;; Implemented from Interpreters
+
+;; Public MeTTa
+(@doc py-eval
+  (@desc "Evaluates a Python expression from a string and returns the result as a PyObject.")
+  (@params (
+    (@param (@type String) (@desc "A string representing a Python expression that will be evaluated"))
+  ))
+  (@return (@type PyObject) (@desc "The result of evaluating the Python expression as a PyObject"))
+)
+(: py-eval (-> String PyObject))
+;; Implemented from Interpreters
+
 
 ; TODO: Segmentation fault (core dumped) when calling !(help &self)
 ; TODO: help! not working for &self (segmentation fault)
