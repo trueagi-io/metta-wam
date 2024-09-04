@@ -445,234 +445,1160 @@ This group of directories explores various representational methods for porting 
       - [`main.hvm`](features/hvm/sort/radix/main.hvm)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/features/hvm/sort/radix/main.hvm.html): Main script for radix sort.
       - [`main.hs`](features/hvm/sort/radix/main.hs)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/features/hvm/sort/radix/main.hs.html): Haskell version of radix sort.
 
-tests
+
+.
+|-- autoexec.metta
 |-- baseline_compat
 |   |-- anti-regression
+|   |   |-- bc_comp.metta
+|   |   |-- bchain.metta
+|   |   |-- bchain_comp.metta
+|   |   |-- comma_is_not_special.metta
+|   |   |-- debug_mettalogTestCurried.metta
+|   |   |-- mettalogTestCurried.metta
+|   |   |-- mettalogTestCurried2.metta
+|   |   |-- succAxiom.metta
+|   |   |-- system_proofTestCurried.metta
+|   |   |-- test_if_closed.metta
+|   |   |-- tmpMatch1.metta
+|   |   `-- tmpMatch2.metta
 |   |-- hyperon-experimental_scripts
+|   |   |-- _e2_states_dia.metta
+|   |   |-- a1_symbols.metta
+|   |   |-- a2_opencoggy.metta
+|   |   |-- a3_twoside.metta
+|   |   |-- b0_chaining_prelim.metta
+|   |   |-- b1_equal_chain.metta
+|   |   |-- b2_backchain.metta
+|   |   |-- b3_direct.metta
+|   |   |-- b4_nondeterm.metta
+|   |   |-- b5_types_prelim.metta
+|   |   |-- c1_grounded_basic.metta
+|   |   |-- c2_spaces.metta
+|   |   |-- c2_spaces_kb.metta
+|   |   |-- c3_pln_stv.metta
+|   |   |-- d1_gadt.metta
+|   |   |-- d2_higherfunc.metta
+|   |   |-- d3_deptypes.metta
+|   |   |-- d4_type_prop.metta
+|   |   |-- d5_auto_types.metta
+|   |   |-- e1_kb_write.metta
+|   |   |-- e2_states.metta
+|   |   |-- e3_match_states.metta
+|   |   |-- f1_imports.metta
+|   |   |-- f1_moduleA.metta
+|   |   |-- f1_moduleB.metta
+|   |   `-- f1_moduleC.metta
 |   |-- hyperon-mettalog_sanity
-|   |   `-- synth_buffer
+|   |   |-- 00_lang_case.metta
+|   |   |-- 00_lang_ok_to_redefine.metta
+|   |   |-- 01_lang_inc.metta
+|   |   |-- 02-curried-plus.metta
+|   |   |-- 03-soring-via-insert.metta
+|   |   |-- 06_match_in_space.metta
+|   |   |-- base_test_repr_parse_intersection.metta
+|   |   |-- fibo_hang.metta
+|   |   |-- first_answer.metta
+|   |   |-- first_answer_long.metta
+|   |   |-- intersection_tests.metta
+|   |   |-- is_space.metta
+|   |   |-- represent_and_parse_tests.metta
+|   |   |-- space_intersection_tests.metta
+|   |   |-- space_subtraction_tests.metta
+|   |   |-- string-tests.metta
+|   |   |-- structure-tests.metta
+|   |   |-- subtraction_test.metta
+|   |   |-- synth_buffer
+|   |   |   |-- synthesize.metta
+|   |   |   |-- synthesize.py
+|   |   |   |-- time_synthesize.metta
+|   |   |   |-- time_synthesize_long.metta
+|   |   |   `-- time_synthesize_short.metta
+|   |   |-- unique_test.metta
+|   |   `-- xor_test.metta
 |   |-- metta-morph_tests
+|   |   |-- NARS.metta
+|   |   |-- add_atom_match.metta
+|   |   |-- and_or.metta
+|   |   |-- collapse.metta
+|   |   |-- factorial.metta
+|   |   |-- hyperpose.metta
+|   |   |-- identity.metta
+|   |   |-- if.metta
+|   |   |-- let_superpose_if_case.metta
+|   |   |-- let_superpose_list.metta
+|   |   |-- let_superpose_list2.metta
+|   |   |-- letlet.metta
+|   |   |-- match_feval.metta
+|   |   |-- match_superposed_spaces.metta
+|   |   |-- match_void.metta
+|   |   |-- minnars.metta
+|   |   |-- multifunction.metta
+|   |   |-- nalifier.metta
+|   |   |-- nested_parameters.metta
+|   |   |-- peano.metta
+|   |   |-- sequential_nested.metta
+|   |   |-- states_spaces.metta
+|   |   |-- supercollapse.metta
+|   |   |-- superpose_nested.metta
+|   |   |-- tests0.metta
+|   |   |-- types.metta
+|   |   |-- types2.metta
+|   |   |-- types3.metta
+|   |   `-- zeroargs.metta
 |   `-- module-system
+|       |-- c2_spaces.metta
+|       |-- c2_spaces_kb.metta
+|       |-- f1_imports.metta
+|       |-- f1_moduleA.metta
+|       |-- f1_moduleB.metta
+|       `-- f1_moduleC.metta
 |-- compiler_baseline
 |   |-- anti-regression
+|   |   |-- bc_comp.metta
+|   |   |-- bchain.metta
+|   |   |-- bchain_comp.metta
+|   |   |-- comma_is_not_special.metta
+|   |   |-- debug_mettalogTestCurried.metta
+|   |   |-- mettalogTestCurried.metta
+|   |   |-- mettalogTestCurried2.metta
+|   |   |-- succAxiom.metta
+|   |   |-- system_proofTestCurried.metta
+|   |   |-- test_if_closed.metta
+|   |   |-- tmpMatch1.metta
+|   |   `-- tmpMatch2.metta
 |   |-- hyperon-experimental_scripts
+|   |   |-- _e2_states_dia.metta
+|   |   |-- a1_symbols.metta
+|   |   |-- a2_opencoggy.metta
+|   |   |-- a3_twoside.metta
+|   |   |-- b0_chaining_prelim.metta
+|   |   |-- b1_equal_chain.metta
+|   |   |-- b2_backchain.metta
+|   |   |-- b3_direct.metta
+|   |   |-- b4_nondeterm.metta
+|   |   |-- b5_types_prelim.metta
+|   |   |-- c1_grounded_basic.metta
+|   |   |-- c2_spaces.metta
+|   |   |-- c2_spaces_kb.metta
+|   |   |-- c3_pln_stv.metta
+|   |   |-- d1_gadt.metta
+|   |   |-- d2_higherfunc.metta
+|   |   |-- d3_deptypes.metta
+|   |   |-- d4_type_prop.metta
+|   |   |-- d5_auto_types.metta
+|   |   |-- e1_kb_write.metta
+|   |   |-- e2_states.metta
+|   |   |-- e3_match_states.metta
+|   |   |-- f1_imports.metta
+|   |   |-- f1_moduleA.metta
+|   |   |-- f1_moduleB.metta
+|   |   `-- f1_moduleC.metta
 |   |-- hyperon-mettalog_sanity
+|   |   |-- 00_lang_case.metta
+|   |   |-- 00_lang_ok_to_redefine.metta
+|   |   |-- 01_lang_inc.metta
+|   |   |-- 02-curried-plus.metta
+|   |   |-- 03-soring-via-insert.metta
+|   |   |-- 06_match_in_space.metta
+|   |   |-- fibo_hang.metta
+|   |   `-- structure-tests.metta
 |   |-- metta-morph_tests
+|   |   |-- NARS.metta
+|   |   |-- add_atom_match.metta
+|   |   |-- and_or.metta
+|   |   |-- collapse.metta
+|   |   |-- factorial.metta
+|   |   |-- hyperpose.metta
+|   |   |-- identity.metta
+|   |   |-- if.metta
+|   |   |-- let_superpose_if_case.metta
+|   |   |-- let_superpose_list.metta
+|   |   |-- let_superpose_list2.metta
+|   |   |-- letlet.metta
+|   |   |-- match_feval.metta
+|   |   |-- match_superposed_spaces.metta
+|   |   |-- match_void.metta
+|   |   |-- minnars.metta
+|   |   |-- multifunction.metta
+|   |   |-- nalifier.metta
+|   |   |-- nested_parameters.metta
+|   |   |-- peano.metta
+|   |   |-- sequential_nested.metta
+|   |   |-- states_spaces.metta
+|   |   |-- supercollapse.metta
+|   |   |-- superpose_nested.metta
+|   |   |-- tests0.metta
+|   |   |-- types.metta
+|   |   |-- types2.metta
+|   |   |-- types3.metta
+|   |   `-- zeroargs.metta
 |   `-- module-system
+|       |-- c2_spaces.metta
+|       |-- c2_spaces_kb.metta
+|       |-- f1_imports.metta
+|       |-- f1_moduleA.metta
+|       |-- f1_moduleB.metta
+|       `-- f1_moduleC.metta
 |-- direct_comp
+|   |-- 00a_lang_compiled_case.metta
+|   |-- add_atom_match.metta
+|   |-- compiler_walkthru.metta
+|   |-- define_if_like.metta
 |   |-- transpiler
+|   |   |-- identity.metta
+|   |   |-- let_superpose_if_case.metta
+|   |   |-- let_superpose_list.metta
+|   |   |-- let_superpose_list2.metta
+|   |   |-- letlet.metta
+|   |   |-- match_feval.metta
+|   |   `-- peano.metta
 |   `-- walk_thru
+|       |-- bc_comp.metta
+|       |-- bc_impl.metta
+|       |-- bchain.metta
+|       |-- bchain_comp.metta
+|       |-- comma_is_not_special.metta
+|       |-- debug_mettalogTestCurried.metta
+|       |-- impl_mettalogTestCurried.metta
+|       |-- mettalogTestCurried.metta
+|       |-- mettalogTestCurried2.metta
+|       |-- succAxiom.metta
+|       |-- system_proofTestCurried.metta
+|       |-- test_if_closed.metta
+|       |-- tmpMatch1.metta
+|       `-- tmpMatch2.metta
 |-- extended_compat
 |   |-- ai-service
+|   |   |-- ai-service-composition-easy.metta
+|   |   |-- ai-service-composition-hard.metta
+|   |   `-- ai-service-composition-sanity.metta
 |   |-- bio-atomspace
 |   |   |-- cellxgene
-|   |   |-- gaf
+|   |   |   `-- edges.metta
 |   |   |-- gencode
+|   |   |   `-- edges.metta
 |   |   |-- gtex
 |   |   |   `-- eqtl
+|   |   |       `-- edges.metta
 |   |   |-- onotology
+|   |   |   |-- edges.metta
+|   |   |   `-- nodes.metta
 |   |   |-- pln
+|   |   |   |-- curried-chainer.metta
+|   |   |   `-- gene-pln-xp.metta
+|   |   |-- pln-xp-mettalog.metta
+|   |   |-- pln-xp.metta
 |   |   |-- query
+|   |   |   `-- gene-query.metta
 |   |   |-- reactome
-|   |   |-- refseq
+|   |   |   `-- nodes.metta
+|   |   |-- rules.metta
+|   |   |-- sample_kb_v2.metta
 |   |   |-- tadmap
+|   |   |   `-- edges.metta
+|   |   |-- type_defs.metta
 |   |   `-- uniprot
+|   |       |-- edges.metta
+|   |       `-- nodes.metta
 |   |-- check_types
-|   |   `-- check_types-temp
+|   |   |-- check_types-temp
+|   |   |   |-- b5_types_prelim.metta
+|   |   |   |-- c1_grounded_basic.metta
+|   |   |   |-- soring-via-insert.metta
+|   |   |   `-- type_prop.metta
+|   |   |-- d1_gadt.metta
+|   |   |-- d2_higherfunc.metta
+|   |   |-- d3_deptypes.metta
+|   |   |-- d4_type_prop.metta
+|   |   |-- d5_auto_types.metta
+|   |   `-- e2_states.metta
 |   |-- hyperon-miner
 |   |   |-- data
+|   |   |   `-- sample.metta
 |   |   |-- dependent-types
+|   |   |   |-- MinerCurriedDTL.metta
+|   |   |   |-- MinerCurriedDTLTest.metta
+|   |   |   |-- MinerDTL.metta
+|   |   |   |-- MinerDTL1.metta
+|   |   |   |-- MinerDTL1Test.metta
+|   |   |   |-- MinerDTL2.metta
+|   |   |   |-- MinerDTL2Test.metta
+|   |   |   |-- MinerDTL3.metta
+|   |   |   |-- MinerDTL3Test.metta
+|   |   |   |-- MinerDTLTest.metta
+|   |   |   |-- SupportRuleExp.metta
+|   |   |   |-- bchain.metta
+|   |   |   |-- chainer.metta
+|   |   |   `-- succAxiom.metta
 |   |   |-- match
+|   |   |   |-- MinerMatch.metta
+|   |   |   |-- MinerMatchTest.metta
+|   |   |   |-- result.metta
+|   |   |   `-- tmpMatch.metta
+|   |   |-- result.metta
 |   |   `-- utils
+|   |       |-- DeBruijnIndex.metta
+|   |       |-- MinerUtils.metta
+|   |       |-- MinerUtils~OLD.metta
+|   |       |-- helper.py
+|   |       `-- utils-test.metta
 |   |-- hyperon-pln
 |   |   `-- metta
 |   |       |-- backward-chainer
+|   |       |   `-- backward-chainer-xp.metta
 |   |       |-- backward-chaining
+|   |       |   `-- bc-xp.metta
 |   |       |-- common
+|   |       |   |-- BelieveMe.metta
+|   |       |   |-- EqualityType.metta
+|   |       |   |-- EqualityTypeTest.metta
+|   |       |   |-- In.metta
+|   |       |   |-- InTest.metta
+|   |       |   |-- List.metta
+|   |       |   |-- ListTest.metta
+|   |       |   |-- Maybe.metta
+|   |       |   |-- MaybeTest.metta
+|   |       |   |-- Num.metta
+|   |       |   |-- Num8.metta
+|   |       |   |-- NumTest.metta
+|   |       |   |-- OrderedSet.metta
+|   |       |   |-- OrderedSetTest.metta
+|   |       |   |-- Record.metta
 |   |       |   |-- formula
+|   |       |   |   |-- DeductionFormula.metta
+|   |       |   |   |-- DeductionFormulaTest.metta
+|   |       |   |   |-- ImplicationDirectIntroductionFormula.metta
+|   |       |   |   `-- ModusPonensFormula.metta
 |   |       |   `-- truthvalue
+|   |       |       |-- EvidentialTruthValue.metta
+|   |       |       |-- EvidentialTruthValueTest.metta
+|   |       |       |-- MeasEq.metta
+|   |       |       |-- TemporalTruthValue.metta
+|   |       |       |-- TruthValue.metta
+|   |       |       `-- TruthValueTest.metta
 |   |       |-- curried-chaining
+|   |       |   `-- curried-chainer.metta
 |   |       |-- dependent-types
+|   |       |   |-- DeductionDTL.metta
+|   |       |   |-- DeductionDTLTest.metta
+|   |       |   |-- DeductionImplicationDirectIntroductionDTLTest.metta
+|   |       |   |-- ImplicationDirectIntroductionDTL.metta
+|   |       |   |-- ImplicationDirectIntroductionDTLTest.metta
+|   |       |   |-- ModusPonensDTL.metta
+|   |       |   `-- ModusPonensDTLTest.metta
 |   |       |-- entail
+|   |       |   |-- DeductionEntail.metta
+|   |       |   |-- DeductionEntailTest.metta
+|   |       |   |-- ImplicationDirectIntroductionEntail.metta
+|   |       |   `-- ImplicationDirectIntroductionEntailTest.metta
 |   |       |-- equal
+|   |       |   |-- DeductionEqual.metta
+|   |       |   |-- DeductionEqualTest.metta
+|   |       |   |-- ImplicationDirectIntroductionEqual.metta
+|   |       |   `-- ImplicationDirectIntroductionEqualTest.metta
 |   |       |-- forward-chainer
+|   |       |   |-- forward-chainer-test.metta
+|   |       |   `-- forward-chainer-xp.metta
 |   |       |-- forward-chaining
+|   |       |   `-- fc-xp.metta
 |   |       |-- hol
+|   |       |   |-- ListTest.metta
+|   |       |   |-- NatDTLTest.metta
+|   |       |   |-- NatParityTest.metta
+|   |       |   |-- NatSimpleTest.metta
+|   |       |   |-- NatSimpleTest~OLD.metta
+|   |       |   |-- NatStandaloneTest.metta
+|   |       |   |-- NatTest.metta
+|   |       |   `-- NatTest~OLD.metta
 |   |       |-- inference-control
+|   |       |   |-- inf-ctl-month-bc-cont-xp.metta
+|   |       |   |-- inf-ctl-month-bc-xp.metta
+|   |       |   |-- inf-ctl-month-xp.metta
+|   |       |   `-- inf-ctl-xp.metta
 |   |       |-- iterative-chaining
+|   |       |   |-- ibc-xp.metta
+|   |       |   `-- ifc-xp.metta
 |   |       |-- match
+|   |       |   |-- DeductionImplicationDirectIntroductionMatchTest.metta
+|   |       |   |-- DeductionMatch.metta
+|   |       |   |-- DeductionMatchTest.metta
+|   |       |   |-- ImplicationDirectIntroductionMatch.metta
+|   |       |   `-- ImplicationDirectIntroductionMatchTest.metta
 |   |       |-- pln
 |   |       |   |-- dependent-types
+|   |       |   |   |-- DeductionDTL.metta
+|   |       |   |   |-- DeductionDTLTest.metta
+|   |       |   |   |-- DeductionImplicationDirectIntroductionDTLTest.metta
+|   |       |   |   |-- ImplicationDirectIntroductionDTL.metta
+|   |       |   |   |-- ImplicationDirectIntroductionDTLTest.metta
+|   |       |   |   |-- ModusPonensDTL.metta
+|   |       |   |   `-- ModusPonensDTLTest.metta
 |   |       |   |-- entail
+|   |       |   |   |-- DeductionEntail.metta
+|   |       |   |   |-- DeductionEntailTest.metta
+|   |       |   |   |-- ImplicationDirectIntroductionEntail.metta
+|   |       |   |   `-- ImplicationDirectIntroductionEntailTest.metta
 |   |       |   |-- equal
+|   |       |   |   |-- DeductionEqual.metta
+|   |       |   |   |-- DeductionEqualTest.metta
+|   |       |   |   |-- ImplicationDirectIntroductionEqual.metta
+|   |       |   |   `-- ImplicationDirectIntroductionEqualTest.metta
 |   |       |   `-- match
+|   |       |       |-- DeductionImplicationDirectIntroductionMatchTest.metta
+|   |       |       |-- DeductionMatch.metta
+|   |       |       |-- DeductionMatchTest.metta
+|   |       |       |-- ImplicationDirectIntroductionMatch.metta
+|   |       |       `-- ImplicationDirectIntroductionMatchTest.metta
 |   |       |-- polyward-chaining
+|   |       |   `-- pc-xp.metta
 |   |       |-- subtyping
+|   |       |   |-- rule-base.metta
+|   |       |   `-- subtyping-test.metta
 |   |       |-- sumo
 |   |       |   |-- john-carry-flower
+|   |       |   |   |-- john-carry-flower-test.metta
+|   |       |   |   `-- john-carry-flower.kif.metta
+|   |       |   |-- load-suo-kif.metta
 |   |       |   |-- located
+|   |       |   |   |-- located-test.metta
+|   |       |   |   `-- located.kif.metta
 |   |       |   |-- orientation
-|   |       |   `-- route-between
+|   |       |   |   |-- orientation-test.metta
+|   |       |   |   `-- orientation.kif.metta
+|   |       |   `-- rule-base.metta
 |   |       `-- synthesis
+|   |           |-- Synthesize.metta
+|   |           |-- SynthesizeTest.metta
+|   |           |-- Unify.metta
+|   |           |-- UnifyTest.metta
 |   |           `-- experiments
+|   |               |-- non-determinism.metta
+|   |               |-- self-contained-synthesize.metta
+|   |               |-- synthesize-via-case-test.metta
+|   |               |-- synthesize-via-case.metta
+|   |               |-- synthesize-via-let-test.metta
+|   |               |-- synthesize-via-let.metta
+|   |               |-- synthesize-via-superpose.metta
+|   |               |-- synthesize-via-type-checking.metta
+|   |               |-- synthesize-via-unify-test-longer.metta
+|   |               |-- synthesize-via-unify-test.metta
+|   |               |-- synthesize-via-unify.metta
+|   |               |-- unify-via-case.metta
+|   |               `-- unify-via-let.metta
 |   |-- metta-examples
 |   |   |-- SICP_book
+|   |   |   |-- additional_funcs.py
+|   |   |   |-- chapter_1_1.metta
+|   |   |   |-- chapter_1_2.metta
+|   |   |   |-- chapter_1_3.metta
+|   |   |   |-- chapter_1_3_2.metta
+|   |   |   |-- chapter_2_1.metta
+|   |   |   |-- chapter_2_2.metta
+|   |   |   |-- chapter_2_3.metta
+|   |   |   |-- chapter_2_4.metta
+|   |   |   `-- draw_line.py
 |   |   |-- aunt-kg
+|   |   |   |-- adameve.metta
+|   |   |   |-- adameve_simple.metta
+|   |   |   |-- baseline_formulation.metta
+|   |   |   |-- introduction.metta
+|   |   |   |-- json_to_metta.py
+|   |   |   |-- lordOfTheRings.metta
+|   |   |   |-- lordOfTheRings_simple.metta
+|   |   |   |-- royal92.metta
+|   |   |   |-- royal92_simple.metta
+|   |   |   |-- sergey_rodionov_formulation.metta
+|   |   |   |-- simple_conversion.metta
+|   |   |   |-- simpsons.metta
+|   |   |   |-- simpsons_simple.metta
+|   |   |   `-- toy.metta
 |   |   |-- child_ai
+|   |   |   `-- child_ai.py
 |   |   |-- collatz
+|   |   |   |-- classical.metta
+|   |   |   `-- peano.metta
 |   |   |-- combinator-calculi
+|   |   |   |-- tree.metta
+|   |   |   `-- y_comb_examples.metta
 |   |   |-- combinator_logic_experiments
+|   |   |   `-- y_comb_examples.metta
 |   |   |-- edges-to-edges
+|   |   |   |-- InteractiveDisneyStrategy.metta
+|   |   |   |-- json_to_metta.py
+|   |   |   `-- nte.metta
 |   |   |-- fizzbuzz
+|   |   |   |-- classical.metta
+|   |   |   |-- constructive.metta
+|   |   |   `-- simple.metta
 |   |   |-- game_of_clue
+|   |   |   `-- game_of_clue.metta
 |   |   |-- logic
+|   |   |   |-- all_any.metta
+|   |   |   |-- memb.metta
+|   |   |   |-- puzzle.metta
+|   |   |   `-- puzzle.py
 |   |   |-- metta_amr
 |   |   |   |-- amr_matching
+|   |   |   |   |-- __init__.py
+|   |   |   |   |-- amr_matcher.py
+|   |   |   |   `-- amr_template_instance.py
 |   |   |   |-- amr_processing
-|   |   |   |-- amr_templates
+|   |   |   |   |-- __init__.py
+|   |   |   |   |-- amr_processor.py
+|   |   |   |   |-- triple_processor.py
+|   |   |   |   `-- type_detector.py
 |   |   |   |-- experiments
+|   |   |   |   |-- amr_template_nlu.py
+|   |   |   |   |-- loader_test.py
+|   |   |   |   |-- matcher_tests.py
+|   |   |   |   |-- performance_tests.py
+|   |   |   |   |-- test_spec_amrmatcher.py
+|   |   |   |   `-- unit_tests.py
 |   |   |   |-- metta_space
+|   |   |   |   |-- __init__.py
+|   |   |   |   |-- metta_space.py
+|   |   |   |   `-- pattern_parser.py
 |   |   |   `-- metta_to_amr
+|   |   |       |-- amr-connect.metta
+|   |   |       |-- dep-types.metta
+|   |   |       |-- instances.metta
+|   |   |       |-- user.metta
+|   |   |       `-- utterance.py
 |   |   |-- perfect-numbers
+|   |   |   `-- basic.metta
 |   |   |-- prob-dep-types
+|   |   |   |-- inf_order_probs.metta
+|   |   |   `-- prob_dep_types.metta
 |   |   |-- python_from_metta
+|   |   |   |-- default.metta
+|   |   |   |-- fs.metta
+|   |   |   `-- requests.metta
 |   |   |-- recursion-schemes
+|   |   |   |-- base.py
+|   |   |   |-- run.py
 |   |   |   `-- src
-|   |   |       `-- examples
+|   |   |       |-- base.metta
+|   |   |       |-- examples
+|   |   |       |   |-- benchmark.metta
+|   |   |       |   `-- expression.metta
+|   |   |       `-- schemes.metta
 |   |   |-- red-black-lambda
+|   |   |   |-- lambda-theory.metta
+|   |   |   `-- red-black.metta
 |   |   |-- stack-based
+|   |   |   |-- interpreter.metta
+|   |   |   `-- rewrites.metta
 |   |   |-- strips
-|   |   |   |-- blocks
-|   |   |   |-- logistics
 |   |   |   |-- strips-to-metta-flat
+|   |   |   |   |-- blocks-domain_flat.metta
+|   |   |   |   |-- logistics-i-1_flat.metta
+|   |   |   |   |-- queries_flat.metta
+|   |   |   |   `-- strips_to_metta_flat.py
 |   |   |   `-- strips-to-metta-improved
-|   |   |-- traverser
-|   |   `-- tutorials
-|   |       `-- debug_py_script_launched_from_metta
+|   |   |       |-- blocks-i-0.metta
+|   |   |       |-- blocks-i-1.metta
+|   |   |       |-- logistics-i-1.metta
+|   |   |       |-- queries.metta
+|   |   |       `-- strips_to_metta.py
+|   |   `-- traverser
+|   |       |-- basic.metta
+|   |       |-- creation.metta
+|   |       |-- json_to_metta.py
+|   |       `-- tinkerpop-modern.metta
 |   `-- nars
 |       |-- current
+|       |   |-- NARS.metta
+|       |   |-- tests0.metta
+|       |   |-- tests1.metta
+|       |   |-- tests2.metta
+|       |   |-- tests3.metta
+|       |   |-- tests4.metta
+|       |   `-- tests5.metta
 |       |-- nars_extras
+|       |   |-- NARS_BuildTupleCounts.metta
+|       |   |-- RUN_minnars.metta
+|       |   |-- RUN_minnars_trimmed.metta
+|       |   `-- TestNARS_listing.metta
 |       |-- nars_v0
+|       |   |-- NARS-old.metta
+|       |   |-- NARS.metta
+|       |   |-- tests0.metta
+|       |   |-- tests1.metta
+|       |   |-- tests2.metta
+|       |   |-- tests3.metta
+|       |   |-- tests4.metta
+|       |   `-- tests5.metta
 |       |-- new
+|       |   |-- NARS.metta
+|       |   |-- tests0.metta
+|       |   |-- tests1.metta
+|       |   |-- tests2.metta
+|       |   |-- tests3.metta
+|       |   |-- tests4.metta
+|       |   `-- tests5.metta
 |       |-- prev
+|       |   |-- NARS.metta
+|       |   |-- tests0.metta
+|       |   |-- tests1.metta
+|       |   |-- tests2.metta
+|       |   |-- tests3.metta
+|       |   |-- tests4.metta
+|       |   `-- tests5.metta
 |-- features
 |   |-- bidirectional_computation
+|   |   |-- fish-riddle.metta
+|   |   |-- relative-arithmetic.metta
+|   |   |-- reverse-arithmetic.metta
+|   |   |-- reverse-functions.metta
+|   |   |-- send-more-money.metta
+|   |   `-- send-more.metta
 |   |-- containers_are_spaces
+|   |   |-- 04_match_list_like_space.metta
+|   |   `-- 05_match_superpose_element_like_space.metta
 |   |-- debugging
+|   |   |-- debug_none.metta
+|   |   |-- debug_some_more.metta
+|   |   |-- hyperon_experimental_issue_481.metta
+|   |   |-- hyperon_experimental_issue_492.metta
+|   |   |-- hyperon_experimental_issue_500.metta
+|   |   |-- hyperon_experimental_issue_514.metta
+|   |   |-- hyperon_experimental_issue_516.metta
+|   |   |-- hyperon_experimental_issue_516_redduced.metta
+|   |   `-- hyperon_experimental_issue_530.metta
 |   |-- distributed-processing
+|   |   |-- create-server.metta
+|   |   |-- server-with-memberchk.metta
+|   |   |-- server1-with-some-data.metta
+|   |   |-- server2-with-some-data.metta
+|   |   |-- use-one-server.metta
+|   |   `-- use-two-servers.metta
 |   |-- exception_handling
+|   |   |-- catch_throw_1.metta
+|   |   |-- catch_throw_2.metta
+|   |   `-- catch_throw_3.metta
 |   |-- host_language
-|   |-- hvm
-|   |   |-- IO
-|   |   |-- bugs
-|   |   |-- callcc
-|   |   |-- hello
-|   |   |-- lambda
-|   |   |   |-- multiplication
-|   |   |   |-- padic_clifford
-|   |   |   `-- varbase
-|   |   |-- queue
-|   |   |-- sort
-|   |   |   |-- bitonic
-|   |   |   |-- bubble
-|   |   |   |-- quick
-|   |   |   `-- radix
-|   |   `-- work
+|   |   |-- fallback_functions.metta
+|   |   `-- httpclient.metta
+|   |-- intersection_tests.metta
 |   |-- io
+|   |   `-- file-output.metta
 |   |-- iterators
+|   |   |-- combined.metta
+|   |   `-- lazy_test.metta
 |   |-- loop-checks
-|   |-- metta_convert
-|   |   |-- aq1 -> ../../../../metta-src-conversions/aq1/
-|   |   |-- arch1 -> ../../../../metta-src-conversions/arch1/
-|   |   |-- arch2 -> ../../../../metta-src-conversions/arch2/
-|   |   |-- attdsc -> ../../../../metta-src-conversions/attdsc/
-|   |   |-- cobweb -> ../../../../metta-src-conversions/cobweb/
-|   |   |-- discr -> ../../../../metta-src-conversions/discr/
-|   |   |-- ebg -> ../../../../metta-src-conversions/ebg/
-|   |   |-- foil -> ../../../../metta-src-conversions/foil/
-|   |   |-- idt -> ../../../../metta-src-conversions/idt/
-|   |   |-- index -> ../../../../metta-src-conversions/index/
-|   |   |-- invers -> ../../../../metta-src-conversions/invers/
-|   |   |-- logic -> ../../../../metta-src-conversions/logic/
-|   |   |-- metagame -> ../../../../metta-src-conversions/metagame/
-|   |   |-- miles -> ../../../../metta-src-conversions/miles/
-|   |   |-- multagnt -> ../../../../metta-src-conversions/multagnt/
-|   |   |-- nars_lp -> ../../../../metta-src-conversions/nars_lp/
-|   |   |-- occam -> ../../../../metta-src-conversions/occam/
-|   |   |-- sldr_dl -> ../../../../metta-src-conversions/sldr_dl/
-|   |   |-- sre_dna -> ../../../../metta-src-conversions/sre_dna/
-|   |   |-- sxx_machine -> ../../../../metta-src-conversions/sxx_machine/
-|   |   `-- vs -> ../../../../metta-src-conversions/vs/
+|   |   |-- 06_loop_0.metta
+|   |   |-- 06_loop_1.metta
+|   |   `-- 06_loop_2.metta
 |   |-- multidirectional
+|   |   |-- append.metta
+|   |   |-- append_using_equality.metta
+|   |   |-- ioioioi.metta
+|   |   |-- ioioioi_using_equality.metta
+|   |   |-- mfm_ioio.metta
+|   |   |-- obif.metta
+|   |   |-- obif_clp.metta
+|   |   `-- obif_easy.metta
 |   |-- parallelism
-|   |   `-- _results_
+|   |   `-- builtins.metta
 |   |-- planner
+|   |   |-- monkey-banana-v1.metta
+|   |   |-- monkey-banana-v2.metta
+|   |   `-- project-task-managment.metta
 |   |-- polymorphic-types
+|   |   |-- examples-objects.metta
+|   |   `-- examples-quants.metta
 |   |-- possibly_wrong
+|   |   `-- too_eager_math.metta
+|   |-- represent_and_parse_tests.metta
 |   |-- structures
+|   |   `-- composing.metta
 |   `-- typed-variables
+|       |-- enforced-types.metta
+|       |-- even-number.metta
+|       `-- variable-pattern.metta
 |-- flybase
 |   |-- extra
+|   |   |-- nodes_med.metta
+|   |   |-- nodes_sm.metta
+|   |   |-- pmquery.metta
+|   |   `-- proofexample.metta
+|   |-- flybase-deduced-connections.metta
+|   |-- flybase-deduced-queries.metta
+|   |-- flybase-deduced-types.metta
+|   |-- flybase-loader-size-estimates.metta
+|   |-- flybase-loader.metta
+|   |-- flybase-vspace.metta
 |   |-- from_das
+|   |   |-- flybase_rust_uses_python_das.metta
+|   |   |-- mettalog_das_client.py
+|   |   |-- mettalog_inserts_to_das.metta
+|   |   |-- mettalog_uses_das.metta
+|   |   `-- script_example_BIO.py
 |   |-- from_rust
+|   |   `-- flybase_rust_only.metta
 |   |-- from_vspace
+|   |   `-- flybase_rust_uses_python_vspace.metta
+|   |-- output~
+|   |   |-- flybase-deduced.metta
+|   |   |-- flybase-mined-flat.metta
+|   |   `-- flybase-mined.metta
 |   `-- sanity
+|       |-- download_file.metta
+|       |-- load_all_of_flybase.metta
+|       |-- simple_query1.metta
+|       `-- simple_query2_llm.metta
 |-- more-anti-regression
 |   |-- chaining
+|   |   |-- backward_chain.metta
+|   |   |-- bc-xp.metta
+|   |   |-- bc_comp_1.metta
+|   |   |-- bc_comp_2.metta
+|   |   |-- chaining_prelim.metta
+|   |   |-- go_rel.metta
+|   |   |-- parent_go.metta
+|   |   |-- parent_go_1.metta
+|   |   |-- parent_go_1_comp.metta
+|   |   |-- parent_go_comp.metta
+|   |   |-- pln-xp-local_v2.metta
+|   |   |-- pln-xp.metta
+|   |   |-- pln_stv.metta
+|   |   |-- rules.metta
+|   |   |-- rules_v2.metta
+|   |   |-- sample_kb.metta
+|   |   |-- sample_kb_v2.metta
+|   |   |-- sample_kb_v2_coexpressed_both.metta
+|   |   |-- sample_kb_v2_coexpressed_once.metta
+|   |   |-- sample_kb_v2_tiny.metta
+|   |   |-- tadmap_edges.metta
+|   |   |-- type_prop.metta
+|   |   |-- types_prelim.metta
+|   |   |-- util.py
+|   |   |-- v2-pln-xp-easy-impl.metta
+|   |   |-- v2-pln-xp-sys-impl.metta
+|   |   `-- v2-pln-xp.metta
 |   |-- constraint
+|   |   `-- types.metta
 |   |-- introspect
+|   |   |-- exam-spaces.metta
+|   |   |-- show-space-self.metta
+|   |   |-- show-space.metta
+|   |   `-- show-type.metta
 |   |-- minimal-metta
+|   |   |-- stdlib_minimal.metta
+|   |   `-- stdlib_minimal_test.metta
 |   |-- spaces
+|   |   |-- add-remove-match-float.metta
+|   |   |-- add-remove-match-integer.metta
+|   |   |-- add-remove-match-mix-float-integer.metta
+|   |   |-- add-remove-match-s-strings.metta
+|   |   |-- add-remove-match-s-symbols.metta
+|   |   |-- add-remove-match-ss-strings.metta
+|   |   |-- add-remove-match-ss-symbols.metta
+|   |   |-- add-remove-match-strings.metta
+|   |   `-- add-remove-match-symbols.metta
 |   |-- std
-|   |-- stdlib-mettalog
-|   `-- target
+|   |   |-- animals.metta
+|   |   |-- example_pm_queries.metta
+|   |   |-- gadt.metta
+|   |   |-- get-atoms-test.metta
+|   |   |-- grounded_basic.metta
+|   |   |-- higher_order_funcs.metta
+|   |   |-- kb_write.metta
+|   |   |-- lte.metta
+|   |   |-- nondeterm.metta
+|   |   |-- spaces_kb.metta
+|   |   `-- symbols.metta
+|   `-- stdlib-mettalog
+|       |-- interpreter_minimal.rs.metta
+|       |-- stdlib.rs.metta
+|       |-- stdlib_mettalog_test.metta
+|       `-- stdlib_mettalog_test_pt2.metta
 |-- nars_interp
 |   `-- nars
 |       `-- main-branch
+|           |-- NARS.metta
+|           |-- NARS_Prev.metta
+|           |-- minnars_Prev.metta
+|           |-- nalifier_Prev.metta
+|           |-- prereqs.metta
+|           |-- tests0.metta
+|           |-- tests0_Prev.metta
+|           |-- tests1.metta
+|           |-- tests1_pre.metta
+|           |-- tests2.metta
+|           |-- tests3.metta
+|           |-- tests4.metta
+|           `-- tests5.metta
 |-- nars_w_comp
 |   `-- nars
 |       `-- main-branch
+|           |-- LIB_NARS.metta
+|           |-- LIB_NARS_COMP_1.metta
+|           |-- NARS.metta
+|           |-- NARS_OPT.metta
+|           |-- TEST_METTA_tests0.metta
+|           |-- TEST_METTA_tests1.metta
+|           |-- TEST_METTA_tests2.metta
+|           |-- TEST_METTA_tests3.metta
+|           |-- TEST_METTA_tests4.metta
+|           |-- TEST_METTA_tests5.metta
+|           |-- tests0.metta
+|           |-- tests1.metta
+|           |-- tests2.metta
+|           |-- tests3.metta
+|           |-- tests4.metta
+|           `-- tests5.metta
 |-- performance
 |   |-- basic
+|   |   |-- cml-unshared.metta
+|   |   |-- coins.metta
+|   |   |-- factorial.metta
+|   |   |-- fibo-as-pred.metta
+|   |   |-- fibo.metta
+|   |   |-- fibonacci.metta
+|   |   |-- fwgc.metta
+|   |   |-- fwgc1.metta
+|   |   |-- fwgc2.metta
+|   |   |-- fwgc3.metta
+|   |   |-- hanoi-one-space.metta
+|   |   |-- hanoi-peg-space.metta
+|   |   |-- hyperposing-shared.metta
+|   |   |-- hyperposing-unshared.metta
+|   |   |-- hyperposing.metta
+|   |   |-- key-lookups-many.metta
+|   |   |-- pathfinding-easy-f.metta
+|   |   |-- pathfinding-easy.metta
+|   |   |-- pathfinding-edge.metta
+|   |   |-- pathfinding-hard-f.metta
+|   |   |-- pathfinding-hard.metta
+|   |   |-- pathfinding-med-f.metta
+|   |   |-- state_types.metta
+|   |   |-- talk80.metta
+|   |   |-- test_infer_function_application_type.metta
+|   |   `-- test_list_concatenation.metta
 |   |-- comparisons
+|   |   |-- add-atom-naive-fib.metta
+|   |   |-- fibo_10i.metta
+|   |   |-- fibo_20i.metta
+|   |   |-- fibo_444444c.metta
+|   |   |-- fibo_80c.metta
+|   |   |-- fibo_900c.metta
+|   |   |-- fibo_Arg1i.metta
+|   |   |-- fibo_arg1c.metta
+|   |   |-- fibo_hang_900.metta
+|   |   |-- inf-ctl-month-xp-long.metta
+|   |   |-- inf-ctl-month-xp-short.metta
+|   |   |-- inf-ctl-month-xp-short_1.metta
+|   |   |-- inf-ctl-month-xp-short_3.metta
+|   |   |-- inf-ctl-month-xp-short_5.metta
+|   |   |-- inf-ctl-month-xp-short_6.metta
+|   |   |-- naive-fib.metta
+|   |   |-- nils_if_control_test_10.metta
+|   |   |-- nils_if_control_test_2.metta
+|   |   |-- nils_if_control_test_3.metta
+|   |   |-- nils_if_control_test_4.metta
+|   |   |-- nils_if_control_test_5.metta
+|   |   `-- nils_if_control_test_6.metta
 |   |-- gpt2-like
 |   |   |-- corpus
 |   |   |   |-- bigram-sentence-evaluator
-|   |   |   |   |-- output
-|   |   |   |   `-- sentence-tagging
-|   |   |   |-- fairy_tales
+|   |   |   |   |-- bigram_model.metta
+|   |   |   |   |-- bigrams.metta
+|   |   |   |   |-- calc_similarity.metta
+|   |   |   |   |-- hmm_tagger.metta
+|   |   |   |   |-- sigmas.metta
+|   |   |   |   |-- tags_count.metta
+|   |   |   |   |-- taus.metta
+|   |   |   |   |-- trigramModel.metta
+|   |   |   |   |-- unigrams.metta
+|   |   |   |   `-- wordVectors.metta
 |   |   |   |-- self_dialogue_corpus
-|   |   |   |   `-- old
+|   |   |   |   |-- old
+|   |   |   |   |   `-- get_data.py
+|   |   |   |   `-- train_from_topic_harry_potter.txt.metta
 |   |   |   |-- soap_opera_corpus
+|   |   |   |   `-- so_convert.metta
 |   |   |   `-- tmpdata
-|   |   `-- language_models
+|   |   |       |-- checkpoint_is_word_1.metta
+|   |   |       |-- checkpoint_is_word_2.metta
+|   |   |       |-- checkpoint_ngram_5.metta
+|   |   |       |-- checkpoint_ngram_6.metta
+|   |   |       |-- checkpoint_tok_split_3.metta
+|   |   |       |-- checkpoint_tok_split_4.metta
+|   |   |       |-- checkpoint_training_3.metta
+|   |   |       |-- checkpoint_trigram_3.metta
+|   |   |       |-- checkpoint_trigram_4.metta
+|   |   |       |-- done_$toplevel_converting_3.metta
+|   |   |       |-- done_pllm_is_word_1.metta
+|   |   |       |-- done_pllm_is_word_2.metta
+|   |   |       |-- done_pllm_ngram_5.metta
+|   |   |       |-- done_pllm_ngram_6.metta
+|   |   |       |-- done_pllm_ngram_7.metta
+|   |   |       |-- done_pllm_ngram_8.metta
+|   |   |       |-- done_pllm_ngram_9.metta
+|   |   |       |-- done_pllm_tok_split_3.metta
+|   |   |       |-- done_pllm_tok_split_4.metta
+|   |   |       |-- done_pllm_training_3.metta
+|   |   |       |-- done_pllm_training_4.metta
+|   |   |       |-- done_pllm_trigram_3.metta
+|   |   |       |-- done_pllm_trigram_4.metta
+|   |   |       |-- done_so_convert_converting_3.metta
+|   |   |       |-- done_so_convert_is_word_1.metta
+|   |   |       |-- done_so_convert_is_word_2.metta
+|   |   |       |-- done_so_convert_ngram_5.metta
+|   |   |       |-- done_so_convert_ngram_6.metta
+|   |   |       |-- done_so_convert_tok_split_3.metta
+|   |   |       |-- done_so_convert_tok_split_4.metta
+|   |   |       |-- done_so_convert_trigram_3.metta
+|   |   |       |-- done_so_convert_trigram_4.metta
+|   |   |       |-- done_tmp_buffer_training_2.metta
+|   |   |       |-- done_training_3.metta
+|   |   |       |-- done_user_is_word_1.metta
+|   |   |       |-- done_user_is_word_2.metta
+|   |   |       |-- done_user_ngram_5.metta
+|   |   |       |-- done_user_ngram_6.metta
+|   |   |       |-- done_user_ngram_7.metta
+|   |   |       |-- done_user_ngram_8.metta
+|   |   |       |-- done_user_ngram_9.metta
+|   |   |       |-- done_user_tok_split_4.metta
+|   |   |       |-- done_user_training_3.metta
+|   |   |       |-- done_user_training_4.metta
+|   |   |       |-- done_user_trigram_4.metta
+|   |   |       `-- more_pllm_training_3.metta
+|   |   |-- language_models
+|   |   |   |-- pllm_drs.metta
+|   |   |   |-- pllm_lps.metta
+|   |   |   |-- pllm_penntree.metta
+|   |   |   |-- plm.metta
+|   |   |   |-- training.metta
+|   |   |   |-- training_bi.metta
+|   |   |   |-- training_logicmoo.metta
+|   |   |   |-- training_terms.metta
+|   |   |   |-- trains_trigrams.metta
+|   |   |   |-- unweighted_pllm.metta
+|   |   |   |-- utils_pllm.metta
+|   |   |   `-- weighted_pllm.metta
+|   |   `-- logicmoo_pllm.metta
 |   |-- knowledge_graphs
 |   |   `-- graphml
-|   |       `-- cml
-|   |-- nondet_unify
-|   `-- prolog_chainers
+|   |       |-- graphml_csv_test.metta
+|   |       `-- graphml_test.metta
+|   `-- nondet_unify
+|       |-- boyer.metta
+|       |-- browse.metta
+|       |-- chat_parser.metta
+|       |-- crypt.metta
+|       |-- derive.metta
+|       |-- divide10.metta
+|       |-- fast_mu.metta
+|       |-- flatten.metta
+|       |-- log10.metta
+|       |-- meta_qsort.metta
+|       |-- mu.metta
+|       |-- nand.metta
+|       |-- nreverse.metta
+|       |-- ops8.metta
+|       |-- perfect.metta
+|       |-- poly_10.metta
+|       |-- prover.metta
+|       |-- qsort.metta
+|       |-- queens_8.metta
+|       |-- query.metta
+|       |-- reducer.metta
+|       |-- run.metta
+|       |-- sendmore.metta
+|       |-- serialise.metta
+|       |-- simple_analyzer.metta
+|       |-- tak.metta
+|       |-- times10.metta
+|       |-- unify.metta
+|       `-- zebra.metta
 |-- python_compat
 |   |-- extend
+|   |   |-- TEMP.metta
+|   |   |-- compileme.metta
+|   |   |-- example1.metta
+|   |   |-- example2.metta
+|   |   |-- example3.metta
+|   |   |-- example4.metta
+|   |   |-- example5.metta
+|   |   |-- example6.metta
+|   |   |-- mettamorph.py
+|   |   `-- test.py
 |   |-- hyperon-experimental_python
-|   |   |-- hyperon
-|   |   |   `-- exts
-|   |   |       `-- das_gate
 |   |   |-- integration
+|   |   |   |-- test_das.metta
+|   |   |   `-- test_torch.py
 |   |   |-- sandbox
 |   |   |   |-- bhv_binding
+|   |   |   |   |-- 01_example_majority.metta
+|   |   |   |   |-- 02_example_perm.metta
+|   |   |   |   |-- 03_example_dict.metta
+|   |   |   |   |-- 04_example_dollar_of_mexico.metta
+|   |   |   |   `-- bhv_binding.py
 |   |   |   |-- das_gate
+|   |   |   |   |-- dasgate.py
+|   |   |   |   `-- test_das.metta
 |   |   |   |-- neurospace
+|   |   |   |   |-- llm_gate.py
+|   |   |   |   |-- neurospace.py
+|   |   |   |   |-- test_assist.metta
+|   |   |   |   `-- test_nspace.metta
 |   |   |   |-- numpy
+|   |   |   |   |-- nm_test.metta
+|   |   |   |   `-- numme.py
 |   |   |   |-- pytorch
+|   |   |   |   |-- kwargsme.py
+|   |   |   |   |-- parse_torch_func_signatures.py
+|   |   |   |   |-- parsing_exceptions.py
+|   |   |   |   |-- tm_test.metta
+|   |   |   |   |-- tm_test.py
+|   |   |   |   `-- torchme.py
 |   |   |   |-- repl
+|   |   |   |   `-- metta_repl.py
 |   |   |   |-- resolve
+|   |   |   |   |-- r.metta
+|   |   |   |   |-- r.py
+|   |   |   |   `-- resolve.py
 |   |   |   `-- sql_space
+|   |   |       |-- sql_space.py
+|   |   |       `-- sql_space_test.metta
+|   |   `-- tests
+|   |       |-- error_pyext.py
+|   |       |-- ext_dir
+|   |       |   |-- __init__.py
+|   |       |   `-- ext.py
+|   |       |-- extension.py
+|   |       |-- pyfile_test_mod.py
+|   |       |-- test_atom.py
+|   |       |-- test_atom_type.py
+|   |       |-- test_bindings.py
+|   |       |-- test_common.py
+|   |       |-- test_custom_space.py
+|   |       |-- test_environment.py
+|   |       |-- test_examples.py
+|   |       |-- test_extend.py
+|   |       |-- test_grounded_type.py
+|   |       |-- test_grounding_space.py
+|   |       |-- test_load.metta
+|   |       |-- test_load.py
+|   |       |-- test_metta.py
+|   |       |-- test_minecraft.py
+|   |       |-- test_minelogy.py
+|   |       |-- test_modules.py
+|   |       |-- test_pln_tv.py
+|   |       |-- test_run_metta.py
+|   |       |-- test_sexparser.py
+|   |       `-- test_stdlib.py
 |   |-- janus
-|   |-- metta-motto-app-tests
-|-- new_directory_1
-|   |-- sub_directory_a
-|   |-- sub_directory_b
-|-- new_directory_2
-|   |-- sub_directory_c
-|   |-- sub_directory_d
+|   |   |-- janus_api.metta
+|   |   |-- metta_calls_python_in_janus.metta
+|   |   |-- mymodule.py
+|   |   `-- python_calls_metta_in_janus.metta
+|   |-- metta-motto
+|   |   |-- examples
+|   |   |   |-- __init__.py
+|   |   |   |-- answer_cache
+|   |   |   |   `-- example1.py
+|   |   |   |-- bio_ai
+|   |   |   |   |-- bio-ai.metta
+|   |   |   |   |-- data_subset
+|   |   |   |   |   |-- gaf
+|   |   |   |   |   |   `-- edges.metta
+|   |   |   |   |   |-- gencode
+|   |   |   |   |   |   |-- edges.metta
+|   |   |   |   |   |   `-- nodes.metta
+|   |   |   |   |   |-- gtex
+|   |   |   |   |   |   `-- eqtl
+|   |   |   |   |   |       `-- edges.metta
+|   |   |   |   |   |-- ontology
+|   |   |   |   |   |   |-- edges.metta
+|   |   |   |   |   |   `-- nodes.metta
+|   |   |   |   |   |-- reactome
+|   |   |   |   |   |   |-- edges.metta
+|   |   |   |   |   |   `-- nodes.metta
+|   |   |   |   |   `-- uniprot
+|   |   |   |   |       |-- edges.metta
+|   |   |   |   |       `-- nodes.metta
+|   |   |   |   |-- lobo_test_bio_agent.py
+|   |   |   |   |-- mettalog-bio-ai.metta
+|   |   |   |   |-- mlog_test_bio_agent.py
+|   |   |   |   |-- override-bio-ai.metta
+|   |   |   |   `-- test_bio_agent.py
+|   |   |   |-- langchain_examples
+|   |   |   |   |-- test_langchain_agent.metta
+|   |   |   |   `-- test_langchain_tools_agent.metta
+|   |   |   |-- test_anthropic.metta
+|   |   |   |-- test_assist.metta
+|   |   |   |-- test_guide.metta
+|   |   |   |-- test_guide_func.metta
+|   |   |   |-- test_guide_with_history.metta
+|   |   |   |-- test_llms.py
+|   |   |   |-- test_open_router_agent.metta
+|   |   |   |-- test_retrieval.metta
+|   |   |   |-- test_sparql.metta
+|   |   |   `-- test_sparql_wikidata.metta
+|   |   |-- motto
+|   |   |   |-- __init__.py
+|   |   |   |-- agents
+|   |   |   |   |-- __init__.py
+|   |   |   |   |-- agent.py
+|   |   |   |   |-- anthropic_agent.py
+|   |   |   |   |-- data_processors
+|   |   |   |   |   |-- __init__.py
+|   |   |   |   |   |-- doc_processor.py
+|   |   |   |   |   `-- embedings_getters.py
+|   |   |   |   |-- gpt_agent.py
+|   |   |   |   |-- messages_processor.py
+|   |   |   |   |-- metta_agent.py
+|   |   |   |   |-- openrouter_agent.py
+|   |   |   |   `-- retrieval_agent.py
+|   |   |   |-- langchain_agents
+|   |   |   |   |-- __init__.py
+|   |   |   |   |-- langchain_agent.py
+|   |   |   |   `-- langchain_states.metta
+|   |   |   |-- llm_gate.py
+|   |   |   |-- sparql_gate
+|   |   |   |   |-- __init__.py
+|   |   |   |   `-- sparql_gate.py
+|   |   |   `-- utils.py
+|   |   |-- setup.py
+|   |   |-- tests
+|   |   |   |-- basic_agent_call.metta
+|   |   |   |-- basic_agent_script.metta
+|   |   |   |-- basic_agent_stateful.metta
+|   |   |   |-- basic_direct_call.metta
+|   |   |   |-- basic_function_call.metta
+|   |   |   |-- basic_script_call.metta
+|   |   |   |-- metta_chat.metta
+|   |   |   |-- nested_dialog_call.metta
+|   |   |   |-- nested_script_direct.metta
+|   |   |   |-- sparql_functions_test.metta
+|   |   |   |-- test_custom_agent.py
+|   |   |   |-- test_python_direct.py
+|   |   |   |-- test_scripts.py
+|   |   |   `-- test_sparql_select.py
+|   |   `-- tutorial
+|   |       |-- 00_basic_chatpgt.py
+|   |       |-- 01_basic_chatgpt.metta
+|   |       |-- 02_metta_agent.py
+|   |       |-- 03_agent_call.metta
+|   |       |-- 04_prompt_call.metta
+|   |       |-- 05_call_prompt.py
+|   |       |-- 06_logic.py
+|   |       |-- 06b_reason.metta
+|   |       |-- 07_dialog.metta
+|   |       |-- 07_dialog.py
+|   |       |-- 08_nested_dialog.py
+|   |       |-- 09_agent_stateful.py
+|   |       |-- 09_generate_query_dbpedia.metta
+|   |       |-- 10_generate_query_wikidata.metta
+|   |       |-- app1_generate_query_dbpedia.metta
+|   |       `-- app2_generate_query_wikidata.metta
+|   |-- mettamorph.metta
+|   `-- timing
+|       |-- timing.metta
+|       `-- timing.py
+`-- settings.metta
 
