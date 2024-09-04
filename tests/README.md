@@ -47,7 +47,38 @@ The `examples` directory houses a variety of sub-directories, each focusing on s
     - [`pmquery.metta`](flybase/extra/pmquery.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/flybase/extra/pmquery.metta.html): PM query examples.
     - [`proofexample.metta`](flybase/extra/proofexample.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/flybase/extra/proofexample.metta.html): Proof examples.
 
-### Flybase Integration with DAS and VSPACE
+### More Anti-Regression
+
+- **[`more-anti-regression/chaining`](../more-anti-regression/chaining/):** Chaining examples and tests
+  - [`backward_chain.metta`](more-anti-regression/chaining/backward_chain.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/more-anti-regression/chaining/backward_chain.metta.html): Backward chaining logic.
+  - [`bc-xp.metta`](more-anti-regression/chaining/bc-xp.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/more-anti-regression/chaining/bc-xp.metta.html): Experimental backward chaining.
+  - [`bc_comp_1.metta`](more-anti-regression/chaining/bc_comp_1.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/more-anti-regression/chaining/bc_comp_1.metta.html): Backward chaining compilation example 1.
+  - [`bc_comp_2.metta`](more-anti-regression/chaining/bc_comp_2.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/more-anti-regression/chaining/bc_comp_2.metta.html): Backward chaining compilation example 2.
+
+- **[`more-anti-regression/constraint`](../more-anti-regression/constraint/):** Constraint logic examples
+  - [`types.metta`](more-anti-regression/constraint/types.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/more-anti-regression/constraint/types.metta.html): Type constraints and logic.
+
+- **[`more-anti-regression/introspect`](../more-anti-regression/introspect/):** Introspection examples
+  - [`exam-spaces.metta`](more-anti-regression/introspect/exam-spaces.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/more-anti-regression/introspect/exam-spaces.metta.html): Examining spaces logic.
+  - [`show-space-self.metta`](more-anti-regression/introspect/show-space-self.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/more-anti-regression/introspect/show-space-self.metta.html): Self space display logic.
+  - [`show-space.metta`](more-anti-regression/introspect/show-space.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/more-anti-regression/introspect/show-space.metta.html): Space display logic.
+  - [`show-type.metta`](more-anti-regression/introspect/show-type.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/more-anti-regression/introspect/show-type.metta.html): Type display logic.
+
+- **[`more-anti-regression/minimal-metta`](../more-anti-regression/minimal-metta/):** Minimal Metta examples
+  - [`stdlib_minimal.metta`](more-anti-regression/minimal-metta/stdlib_minimal.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/more-anti-regression/minimal-metta/stdlib_minimal.metta.html): Minimal standard library.
+  - [`stdlib_minimal_test.metta`](more-anti-regression/minimal-metta/stdlib_minimal_test.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/more-anti-regression/minimal-metta/stdlib_minimal_test.metta.html): Tests for minimal standard library.
+
+- **[`more-anti-regression/spaces`](../more-anti-regression/spaces/):** Space manipulation examples
+  - [`add-remove-match-float.metta`](more-anti-regression/spaces/add-remove-match-float.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/more-anti-regression/spaces/add-remove-match-float.metta.html): Float space manipulation.
+  - [`add-remove-match-integer.metta`](more-anti-regression/spaces/add-remove-match-integer.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/more-anti-regression/spaces/add-remove-match-integer.metta.html): Integer space manipulation.
+
+- **[`more-anti-regression/std`](../more-anti-regression/std/):** Standard examples
+  - [`animals.metta`](more-anti-regression/std/animals.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/more-anti-regression/std/animals.metta.html): Animal logic examples.
+  - [`example_pm_queries.metta`](more-anti-regression/std/example_pm_queries.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/more-anti-regression/std/example_pm_queries.metta.html): Example PM queries.
+
+- **[`more-anti-regression/stdlib-mettalog`](../more-anti-regression/stdlib-mettalog/):** MettaLog standard library
+  - [`interpreter_minimal.rs.metta`](more-anti-regression/stdlib-mettalog/interpreter_minimal.rs.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/more-anti-regression/stdlib-mettalog/interpreter_minimal.rs.metta.html): Minimal interpreter.
+  - [`stdlib.rs.metta`](more-anti-regression/stdlib-mettalog/stdlib.rs.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/more-anti-regression/stdlib-mettalog/stdlib.rs.metta.html): Standard library for MettaLog.
 
 #### **Flybase with Distributed Atomspace (DAS) Integration**
 - **[`flybase/from_das`](./flybase/from_das)**: Showcases the integration of Flybase with Distributed Atomspace (DAS), a system for managing and processing distributed atom-based data.
