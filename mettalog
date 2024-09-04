@@ -463,7 +463,8 @@ Note: A bare filename is equivalent to using the -s option for MeTTa scripts.
 
    Debugging:
      --exec=skip              Skip over !exec dirrectives
-     --eval=debug             Recursively trace Evaluation
+     --e=debug                Recursively trace Evaluation
+     --time=debug             Provide detailed debug-level timing information
      --case=debug             Show extra debug info about case statements
      --signals[=bool]         Do (not) modify signal handling
      --threads[=bool]         Do (not) allow for threads
