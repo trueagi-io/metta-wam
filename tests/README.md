@@ -8,6 +8,21 @@ The `examples` directory houses a variety of sub-directories, each focusing on s
 
 
 - **[`flybase`](../flybase)**: Focused on the Flybase module, the examples here are designed to provide insights into how this specific component works and can be used.
+  - **[`extra`](./flybase/extra)**: Additional Flybase examples and tests.
+    - [`nodes_med.metta`](flybase/extra/nodes_med.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/flybase/extra/nodes_med.metta.html): Medium-sized node examples.
+    - [`nodes_sm.metta`](flybase/extra/nodes_sm.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/flybase/extra/nodes_sm.metta.html): Small node examples.
+    - [`pmquery.metta`](flybase/extra/pmquery.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/flybase/extra/pmquery.metta.html): PM query examples.
+    - [`proofexample.metta`](flybase/extra/proofexample.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/flybase/extra/proofexample.metta.html): Proof examples.
+  - **[`from_das`](./flybase/from_das)**: Showcases the integration of Flybase with Distributed Atomspace (DAS).
+    - [`flybase_rust_uses_python_das.metta`](flybase/from_das/flybase_rust_uses_python_das.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/flybase/from_das/flybase_rust_uses_python_das.metta.html): Demonstrates how Flybase utilizes Python and Rust to interact with DAS.
+    - [`mettalog_das_client.py`](flybase/from_das/mettalog_das_client.py): Python client for DAS integration.
+    - [`mettalog_inserts_to_das.metta`](flybase/from_das/mettalog_inserts_to_das.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/flybase/from_das/mettalog_inserts_to_das.metta.html): Inserts data into DAS.
+    - [`mettalog_uses_das.metta`](flybase/from_das/mettalog_uses_das.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/flybase/from_das/mettalog_uses_das.metta.html): Uses DAS for data processing.
+    - [`script_example_BIO.py`](flybase/from_das/script_example_BIO.py): Example script for biological data processing.
+  - **[`from_rust`](./flybase/from_rust)**: Features Flybase loaded exclusively in Rust.
+    - [`flybase_rust_only.metta`](flybase/from_rust/flybase_rust_only.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/flybase/from_rust/flybase_rust_only.metta.html): Illustrates the pure Rust implementation of Flybase.
+  - **[`from_vspace`](./flybase/from_vspace)**: Using Rust to access Flybase with VSPACE.
+    - [`flybase_rust_uses_python_vspace.metta`](flybase/from_vspace/flybase_rust_uses_python_vspace.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/flybase/from_vspace/flybase_rust_uses_python_vspace.metta.html): Showcases Flybase leveraging Python VSPACE within a Rust environment.
    - [`flybase-deduced-connections.metta`](flybase/flybase-deduced-connections.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/flybase/flybase-deduced-connections.metta.html): Mapping and connections deduced in Flybase.
    - [`flybase-deduced-queries.metta`](flybase/flybase-deduced-queries.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/flybase/flybase-deduced-queries.metta.html): Contains queries deduced from Flybase data analysis.
    - [`flybase-deduced-types.metta`](flybase/flybase-deduced-types.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/flybase/flybase-deduced-types.metta.html): Type definitions and structures deduced in Flybase.
