@@ -308,6 +308,8 @@ This group of directories explores various representational methods for porting 
    - [`structure-tests.metta`](baseline_compat/hyperon-mettalog_sanity/structure-tests.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/baseline_compat/hyperon-mettalog_sanity/structure-tests.metta.html): Structural tests for sanity checking.
    - [`05_match_superpose_element_like_space.metta`](baseline_compat/hyperon-mettalog_sanity/05_match_superpose_element_like_space.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/baseline_compat/hyperon-mettalog_sanity/05_match_superpose_element_like_space.metta.html): Matching tests with superposition in element-like spaces.
    - [`00_lang_ok_to_redefine.metta`](baseline_compat/hyperon-mettalog_sanity/00_lang_ok_to_redefine.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/baseline_compat/hyperon-mettalog_sanity/00_lang_ok_to_redefine.metta.html): Tests for language redefinition capabilities.
+   - [`new_test1.metta`](baseline_compat/hyperon-mettalog_sanity/new_test1.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/baseline_compat/hyperon-mettalog_sanity/new_test1.metta.html): Description of new test 1.
+   - [`new_test2.metta`](baseline_compat/hyperon-mettalog_sanity/new_test2.metta)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/baseline_compat/hyperon-mettalog_sanity/new_test2.metta.html): Description of new test 2.
 
 #### **Hyperon Mettalog Sanity Checks**
 
