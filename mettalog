@@ -413,8 +413,10 @@ cat << EOF
      -t toplevel              Toplevel goal
      -f file                  User initialisation file
      -F file                  Site initialisation file
-     -l file                  MeTTa script source file
-     -s file                  MeTTa script source file
+     -l file                  Prolog-style script source file
+     -L file                  MeTTa script source file
+     -s file                  Prolog-style script source file
+     -S file                  MeTTa script source file
      -p alias=path            Define file search path 'alias'
 
 Note: A bare filename is equivalent to using the -s option for MeTTa scripts.
@@ -709,7 +711,7 @@ function handle_args {
                 continue
                 ;;
 
-            -x|-g|-G|-t|-f|-F|-l|-s|-p|--on-error|--on-warning|--home|--stack-limit|--table-space|--shared-table-space|--pldoc)
+            -x|-g|-G|-t|-f|-F|-l|-L|-s|-S|-p|--on-error|--on-warning|--home|--stack-limit|--table-space|--shared-table-space|--pldoc)
                 SWI_OPTIONS+=("$arg")
                 SWI_FLAG_WITH_ARG=true
                 continue
