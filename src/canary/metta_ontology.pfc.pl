@@ -346,6 +346,7 @@ properties('&corelib','if', [flow_control, qhelp("Conditional execution."), cond
 properties('&corelib','case', [flow_control, qhelp("Case selection."), conditional_execution]).
 properties('&corelib','let', [variable_assignment, qhelp("Variable assignment.")]).
 properties('&corelib','let*', [variable_assignment, qhelp("Sequential variable assignment."), sequential]).
+properties('&corelib','sealed', [variable_assignment, qhelp("Variable assignment.")]).
 properties('&corelib','function', [function_definition, qhelp("Function block.")]).
 properties('&corelib','return', [function_definition, qhelp("Return value of a function block."), return_value]).
 properties('&corelib','Error', [error_handling, qhelp("Defines or triggers an error.")]).
