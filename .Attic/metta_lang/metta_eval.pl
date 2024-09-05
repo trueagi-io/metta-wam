@@ -1354,7 +1354,7 @@ eval_20(Eq,RetType,Depth,Self,['get-type',Val,Other],Type):- !,
 
 eval_20(_Eq,_RetType,Depth,Self,['get-type',Val],Type):- is_list(Val), !,
     catch_metta_return(get_type(Depth,Self,Val,Type),TypeM),
-    var(TypeM).
+    var(TypeM), Type \== '%Undefined%'.
 
 eval_20(Eq,RetType,Depth,Self,['get-type',Val],TypeO):- !,
     if_or_else(get_type(Depth,Self,Val,Type),Type='%Undefined%'),
