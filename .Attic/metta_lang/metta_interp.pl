@@ -1031,11 +1031,10 @@ metta_atom(KB,Atom):- metta_atom_asserted( KB,Atom).
 
 %metta_atom(KB,Atom):- KB == '&corelib', !, metta_atom_asserted('&self',Atom).
 metta_atom(KB,Atom):- KB \== '&corelib', using_all_spaces,!, metta_atom('&corelib',Atom).
-metta_atom(KB,Atom):- KB \== '&corelib', !,
+metta_atom(KB,Atom):- KB \== '&corelib', !, 
    \+ \+ (metta_atom_asserted(KB,'&corelib'),
           should_inherit_from_corelib(Atom)), !,
    metta_atom('&corelib',Atom).
-
 should_inherit_from_corelib(_):- using_all_spaces,!.
 should_inherit_from_corelib([H,A|_]):- H == ':',!,nonvar(A).
 should_inherit_from_corelib([H|_]):- H == '@doc', !.
@@ -1075,19 +1074,15 @@ not_metta_atom_corelib(A,N):-  A \== '&corelib' , metta_atom('&corelib',N).
 %metta_atom(KB,[F,A|List]):- metta_atom(KB,F,A,List), F \== '=',!.
 is_metta_space(Space):- \+ \+ is_space_type(Space,_Test).
 
-%metta_eq_def(Eq,KB,H,B):- ignore(Eq = '='),if_or_else(metta_atom(KB,[Eq,H,B]), metta_atom_corelib(KB,[Eq,H,B])).
-metta_eq_def(Eq,KB,H,B):-  ignore(Eq = '='),metta_atom(KB,[Eq,H,B]).
-%metta_eq_def(Eq,KB,H,B):-  ignore(Eq = '='), if_or_else(metta_atom(KB,[Eq,H,B]),not_metta_atom_corelib(KB,[Eq,H,B])).
+metta_eq_def(Eq,KB,H,B):- ignore(Eq = '='),if_or_else(metta_atom(KB,[Eq,H,B]),metta_atom_corelib(KB,[Eq,H,B])).
 
 %metta_defn(KB,Head,Body):- metta_eq_def(_Eq,KB,Head,Body).
-%metta_defn(KB,H,B):- if_or_else(metta_atom(KB,['=',H,B]),not_metta_atom_corelib(KB,['=',H,B])).
 metta_defn(KB,H,B):- metta_eq_def('=',KB,H,B).
-%metta_type(KB,H,B):- if_or_else(metta_atom(KB,[':',H,B]),not_metta_atom_corelib(KB,[':',H,B])).
 metta_type(KB,H,B):- metta_eq_def(':',KB,H,B).
 %metta_type(S,H,B):- S == '&corelib', metta_atom_stdlib_types([':',H,B]).
 %typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_arguments(Cmpd,Type,[List|_]),is_list(List).
 
-%metta_atom_corelib(KB,Atom):- KB\='&corelib',!,metta_atom('&corelib',Atom).
+metta_atom_corelib(KB,Atom):- KB\='&corelib',!,metta_atom('&corelib',Atom).
 
 %maybe_xform(metta_atom(KB,[F,A|List]),metta_atom(KB,F,A,List)):- is_list(List),!.
 maybe_xform(metta_eq_def(Eq,KB,Head,Body),metta_atom(KB,[Eq,Head,Body])).
@@ -1825,6 +1820,7 @@ fix_message_hook:-
 
 :- ensure_loaded(metta_python).
 :- initialization(use_corelib_file).
+
 :- ignore(((
    %wdmsg(init_prog),
    use_corelib_file,
