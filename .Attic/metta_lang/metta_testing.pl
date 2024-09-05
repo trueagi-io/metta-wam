@@ -307,7 +307,8 @@ loonit_divisor(TestNumber) :-
 %    ?- option_else(timeout, "20", _), compute_available_time(ActualTimeout).
 %    ActualTimeout = 4.0.
 %
-compute_available_time(4.0) :- !.
+compute_available_time(ActualTimeout) :-
+    option_else(timeout, Was, fake), Was == fake,!,ActualTimeout=3600.
 compute_available_time(ActualTimeout) :-
     loonit_divisor(TestNumber),
     option_else(timeout, AvailableTimeoutStr, "120"),
