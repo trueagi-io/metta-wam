@@ -296,8 +296,8 @@ get_type_cmpd(Depth,Self,[Op|Args],Type,ac(Op,[P|Arams],RetType)):- symbol(Op),
 get_type_cmpd(_Dpth,_Slf,Cmpd,Type,typed_list):-
   typed_list(Cmpd,Type,_List).
 
-% commenting this fails two tests 
-get_type_cmpd(_Dpth,_Slf,_Cmpd,[],unknown).
+% commenting this fails two tests
+get_type_cmpd(_Dpth,_Slf,_Cmpd,[],unknown):-!.
 
 /*
 get_type_cmpd(Depth,Self,[Op|Expr],Type,not_bat):-
@@ -316,23 +316,23 @@ get_type_cmpd(Depth,Self,List,Types,maplist(get_type)):-
   \+ badly_typed_expression(Depth,Self,Types).
 
 */
-get_type_cmpd(Depth,Self,EvalMe,Type,Eval_First):- 
+get_type_cmpd(Depth,Self,EvalMe,Type,Eval_First):-
     needs_eval(EvalMe),
     Depth2 is Depth-1,
     eval_args(Depth2,Self,EvalMe,Val),
     get_type_cmpd_eval(Depth2,Self,EvalMe,Val,Type,Eval_First).
 
 get_type_cmpd(_Dpth,_Slf,_Cmpd,[],unknown).
-    
+
 
 get_type_cmpd_eval(Depth2,Self,EvalMe,Val,Type,maplist(get_type)):- !,
-    EvalMe =@=Val, 
+    EvalMe =@=Val,
     maplist(get_type(Depth2,Self),List,Type),
     \+ badly_typed_expression(Depth,Self,Type).
 
 get_type_cmpd_eval(Depth2,Self,EvalMe,Val,Type,eval_first):- !,
     \+ needs_eval(Val), get_type(Depth2,Self,Val,Type).
-    
+
 get_type_cmpd_eval(Depth2,Self,_EvalMe,Val,Type,eval_first_reduced):- !,
     get_type(Depth2,Self,Val,Type).
 
