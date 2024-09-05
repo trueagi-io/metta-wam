@@ -620,7 +620,7 @@ loonit_assert_source_tf(_Src,Goal,Check,TF):- fail, \+ is_testing,!,
 loonit_assert_source_tf(Src,Goal,Check,TF):-
     copy_term(Goal,OrigGoal),
     reset_eval_num,
-   call_cleanup(loonit_asserts(Src, time_eval('\n; EVAL TEST\n;',(tst_call_limited(Goal))), Check),
+   call_cleanup(loonit_asserts(Src, time_eval('\n; EVAL TEST\n;',Goal), Check),
    (as_tf(notrace(Check),TF),!,
   ignore((
           once((TF='True', trace_on_pass);(TF='False', trace_on_fail)),
@@ -823,13 +823,10 @@ eval_space(Eq,RetType,Depth,Self,['match',Other,Goal,Template,Else],Template):- 
   ((eval_space(Eq,RetType,Depth,Self,['match',Other,Goal,Template],Template),
        \+ make_nop(RetType,[],Template))*->true;Template=Else).
 % Match-TEMPLATE
-eval_space(Eq,_RetType,Depth,Self,['match',Other,Goal,Template],Template):-!,
-  metta_atom_iter(Eq,Depth,Self,Other,Goal).
-/*
+
 eval_space(Eq,RetType,Depth,Self,['match',Other,Goal,Template],Res):- !,
    metta_atom_iter(Eq,Depth,Self,Other,Goal),
    eval_args(Eq,RetType,Depth,Self,Template,Res).
-*/
 
 %metta_atom_iter(Eq,_Depth,_Slf,Other,[Equal,[F|H],B]):- Eq == Equal,!,  % trace,
 %   metta_eq_def(Eq,Other,[F|H],B).
@@ -849,7 +846,7 @@ metta_atom_iter(Eq,Depth,Self,Other,[And|Y]):- atom(And), is_comma(And),!,
 %metta_atom_iter(Eq,Depth,_Slf,Other,X):- dcall0000000000(eval_args_true(Eq,_RetType,Depth,Other,X)).
 metta_atom_iter(Eq,Depth,Self,Other,X):-
   %copy_term(X,XX),
-  dcall0000000000(metta_atom_true(Eq,Depth,Self,Other,X)). %, X=XX.
+  dcall0000000000(metta_atom_true(Eq,Depth,Self,Other,XX)), X=XX.
 
 metta_atom_true(_Eq,Depth,Self,Other,H):-
       can_be_ok(metta_atom_true,H),
@@ -960,7 +957,7 @@ eval_case(Eq,CaseRetType,Depth,Self,A,KVs,Res):-
 
 %;; collapse-bind because `collapse` doesnt guarentee shared bindings
 eval_20(Eq,RetType,Depth,Self,['collapse-bind',List],Res):-!,
- maplist_ok_fails(eval_ne(Eq,RetType,Depth,Self),List,Res), !.
+ maplist_ok_fails(eval_ne(Eq,RetType,Depth,Self),List,Res).
 
 maplist_ok_fails(Pred2,[A|AA],BBB):- !,
  (call(Pred2,A,B) -> (BBB=[B|BB], maplist_ok_fails(Pred2,AA,BB))
@@ -978,7 +975,7 @@ re_member(Res,E,List):- term_variables(Res+E+List,TV),copy_term(TV,Copy),
 
 %[collapse,[1,2,3]]
 eval_20(Eq,RetType,Depth,Self,['collapse',List],Res):-!,
- findall_eval(Eq,RetType,Depth,Self,List,Res), !.
+ findall_eval(Eq,RetType,Depth,Self,List,Res).
 
 
 eval_20(Eq,RetType,Depth,Self,['superpose',List],Res):- !,
@@ -1194,9 +1191,9 @@ eval_20(Eq,RetType,Depth,Self,['Cons', A, B ],[AA|BB]):- \+ no_cons_reduce, !,
 % =================================================================
 
 eval_20(Eq,RetType,Depth,Self,['change-state!',StateExpr, UpdatedValue], Ret):- !,
- call_in_shared_space(((eval_args(Eq,StateRetType,Depth,Self,StateExpr,StateMonad),
-                        eval_args(Eq,RetType,Depth,Self,UpdatedValue,Value),
-          catch_metta_return('change-state!'(Depth,Self,StateMonad, Value, Ret),Ret)))).
+ call_in_shared_space(((eval_args(Eq,RetType,Depth,Self,StateExpr,StateMonad),
+  eval_args(Eq,RetType,Depth,Self,UpdatedValue,Value),
+  catch_metta_return('change-state!'(Depth,Self,StateMonad, Value, Ret),Ret)))).
 eval_20(Eq,RetType,Depth,Self,['new-state',UpdatedValue],StateMonad):- !,
   call_in_shared_space(((eval_args(Eq,RetType,Depth,Self,UpdatedValue,Value),  'new-state'(Depth,Self,Value,StateMonad)))).
 eval_20(Eq,RetType,Depth,Self,['get-state',StateExpr],Value):- !,
@@ -1325,7 +1322,6 @@ eval_20(Eq,RetCasted,Depth,Self,['type-cast',Val,Into],CastedO):-!,
 
 eval_20(_Eq,_RetType,Depth,Self,['get-types',Val],TypeO):- !,
     get_types(Depth,Self,Val,TypeO).
-
 
 % use default self
 eval_20(Eq,RetType,Depth,Self,['get-type',Val,Self],Type):- current_self(Self), !,
@@ -2056,9 +2052,6 @@ eval_40(Eq,RetType,Depth,Self,['length',L],Res):- !, eval_args(Depth,Self,L,LL),
    check_returnval(Eq,RetType,Res).
 
 
-eval_20(Eq,RetType,Depth,Self,[P,X|More],YY):- is_list(X),X=[_,_,_],simple_math(X),
-       eval_selfless_2(X,XX),X\=@=XX,!, eval_20(Eq,RetType,Depth,Self,[P,XX|More],YY).
-
 /*
 eval_40(Eq,RetType,Depth,Self,[P,A,X|More],YY):- is_list(X),X=[_,_,_],simple_math(X),
    eval_selfless_2(X,XX),X\=@=XX,!,
@@ -2066,9 +2059,14 @@ eval_40(Eq,RetType,Depth,Self,[P,A,X|More],YY):- is_list(X),X=[_,_,_],simple_mat
 */
 %eval_40(Eq,RetType,_Dpth,_Slf,['==',X,Y],Res):-  !, subst_args(Eq,RetType,_Dpth,_Slf,['==',X,Y],Res).
 
-eval_20(Eq,RetType,Depth,Self,[EQ, X,Y],Res):- EQ=='==', !,
+eval_40(Eq,RetType,_Dpth,_Slf,[EQ,X,Y],Res):- EQ=='==', !,
     suggest_type(RetType,'Bool'),
-    as_tf(eval_until_unify(Eq,_SharedType,Depth,Self,X,Y),Res).
+    eq_unify(Eq,_SharedType, X, Y, Res).
+
+eq_unify(_Eq,_SharedType, X, Y, TF):- as_tf(X=:=Y,TF),!.
+eq_unify(_Eq,_SharedType, X, Y, TF):- as_tf( '#='(X,Y),TF),!.
+eq_unify( Eq,  SharedType, X, Y, TF):- as_tf(eval_until_unify(Eq,SharedType, X, Y), TF).
+
 
 eval_20(_Eq,RetType,_Dpth,_Slf,[EQ,X,Y],TF):- EQ=='===', !,
     suggest_type(RetType,'Bool'),

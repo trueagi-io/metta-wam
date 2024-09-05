@@ -707,7 +707,9 @@ function handle_args {
 
 
            --v=*) PYSWIP_VERSION="${arg#*=}"
-		rm -f "${DefaultSav}"
+	        if [ -f "${DefaultSav}" ]; then
+		    rm -f "${DefaultSav}"
+		fi
 		never_compile=1
                 continue
                 ;;
@@ -907,7 +909,11 @@ PYSWIP_VERSION="${PYSWIP_VERSION%/}"
 if [ -f "$PYSWIP_VERSION/metta_interp.pl" ]; then
   INTERP_SRC_DIR="$PYSWIP_VERSION"
 else 
-  INTERP_SRC_DIR="$METTALOG_DIR/src/$PYSWIP_VERSION"
+    if [ -f "$PYSWIP_VERSION/src/canary/metta_interp.pl" ]; then
+      INTERP_SRC_DIR="$PYSWIP_VERSION/src/canary"
+    else 
+      INTERP_SRC_DIR="$METTALOG_DIR/src/$PYSWIP_VERSION"
+    fi
 fi
 
 INTERP_SRC_DIR="$(realpath "${INTERP_SRC_DIR}")"
