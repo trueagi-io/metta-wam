@@ -235,10 +235,27 @@ eval_02(Eq,RetType,Depth2,Self,Y,YO):-
 % subst_args_here(Eq,RetType,Depth2,Self,Y,YO):-
 %   Y =@= [ house, _59198,_59204,==,fish,fish],!,break.
 
-%subst_args_here(Eq,RetType,Depth2,Self,Y,YO):- !, Y=YO.
+% %  this needs to test itself for when it can be skipped
+% %  uncommented causes 7% failure but a 10x speedup
+% subst_args_here(Eq,RetType,Depth2,Self,Y,YO):- Y=YO.
+% %  this next one at least causes no failures and 5x speedup
+subst_args_here(Eq,RetType,Depth2,Self,Y,YO):- wont_need_subst(Y),!, Y=YO.
 subst_args_here(Eq,RetType,Depth2,Self,Y,YO):-
   subst_args(Eq,RetType,Depth2,Self,Y,YO),
-  nop(notrace(if_t(Y\=@=YO,wdmsg(subst_args(Y,YO))))).
+  notrace(if_t_else((wont_need_subst(Y),Y\=@=YO),
+     (wdmsg(red,needed_subst_args(Y,YO)),bt,sleep(1.0)),
+  nop(wdmsg(unneeded_subst_args(Y))))).
+
+wont_need_subst([_,A|_]):- number(A),!,fail.
+wont_need_subst([F|_]):-atom(F), \+ need_subst_f(F).
+need_subst_f('==').
+% ['Mortal','Socrates'] -> 'T'
+need_subst_f('Mortal').
+need_subst_f('*'). need_subst_f('+').
+need_subst_f('-'). need_subst_f('/').
+need_subst_f('<'). need_subst_f('=<').
+
+if_t_else(If,Then,Else):- If -> Then ; Else.
 
 finish_eval_here(Eq,RetType,Depth2,Self,Y,YO):-
   finish_eval(Eq,RetType,Depth2,Self,Y,YO),
@@ -823,10 +840,13 @@ eval_space(Eq,RetType,Depth,Self,['match',Other,Goal,Template,Else],Template):- 
   ((eval_space(Eq,RetType,Depth,Self,['match',Other,Goal,Template],Template),
        \+ make_nop(RetType,[],Template))*->true;Template=Else).
 % Match-TEMPLATE
-
+eval_space(Eq,_RetType,Depth,Self,['match',Other,Goal,Template],Template):-!,
+  metta_atom_iter(Eq,Depth,Self,Other,Goal).
+/*
 eval_space(Eq,RetType,Depth,Self,['match',Other,Goal,Template],Res):- !,
    metta_atom_iter(Eq,Depth,Self,Other,Goal),
    eval_args(Eq,RetType,Depth,Self,Template,Res).
+*/
 
 %metta_atom_iter(Eq,_Depth,_Slf,Other,[Equal,[F|H],B]):- Eq == Equal,!,  % trace,
 %   metta_eq_def(Eq,Other,[F|H],B).
@@ -846,7 +866,7 @@ metta_atom_iter(Eq,Depth,Self,Other,[And|Y]):- atom(And), is_comma(And),!,
 %metta_atom_iter(Eq,Depth,_Slf,Other,X):- dcall0000000000(eval_args_true(Eq,_RetType,Depth,Other,X)).
 metta_atom_iter(Eq,Depth,Self,Other,X):-
   %copy_term(X,XX),
-  dcall0000000000(metta_atom_true(Eq,Depth,Self,Other,XX)), X=XX.
+  dcall0000000000(metta_atom_true(Eq,Depth,Self,Other,X)). %, X=XX.
 
 metta_atom_true(_Eq,Depth,Self,Other,H):-
       can_be_ok(metta_atom_true,H),
@@ -2058,6 +2078,10 @@ eval_40(Eq,RetType,Depth,Self,[P,A,X|More],YY):- is_list(X),X=[_,_,_],simple_mat
    eval_40(Eq,RetType,Depth,Self,[P,A,XX|More],YY).
 */
 %eval_40(Eq,RetType,_Dpth,_Slf,['==',X,Y],Res):-  !, subst_args(Eq,RetType,_Dpth,_Slf,['==',X,Y],Res).
+
+eval_40(Eq,RetType,Depth,Self,[EQ, X,Y],Res):- EQ=='==', using_all_spaces, !,
+    suggest_type(RetType,'Bool'),
+    as_tf(eval_until_unify(Eq,_SharedType,Depth,Self,X,Y),Res).
 
 eval_40(Eq,RetType,_Dpth,_Slf,[EQ,X,Y],Res):- EQ=='==', !,
     suggest_type(RetType,'Bool'),
