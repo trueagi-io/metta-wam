@@ -1031,11 +1031,10 @@ metta_atom(KB,Atom):- metta_atom_asserted( KB,Atom).
 
 %metta_atom(KB,Atom):- KB == '&corelib', !, metta_atom_asserted('&self',Atom).
 metta_atom(KB,Atom):- KB \== '&corelib', using_all_spaces,!, metta_atom('&corelib',Atom).
-metta_atom(KB,Atom):- KB \== '&corelib', !,
+metta_atom(KB,Atom):- KB \== '&corelib', !, 
    \+ \+ (metta_atom_asserted(KB,'&corelib'),
           should_inherit_from_corelib(Atom)), !,
    metta_atom('&corelib',Atom).
-
 should_inherit_from_corelib(_):- using_all_spaces,!.
 should_inherit_from_corelib([H,A|_]):- H == ':',!,nonvar(A).
 should_inherit_from_corelib([H|_]):- H == '@doc', !.
@@ -1825,6 +1824,7 @@ fix_message_hook:-
 
 :- ensure_loaded(metta_python).
 :- initialization(use_corelib_file).
+
 :- ignore(((
    %wdmsg(init_prog),
    use_corelib_file,
@@ -1843,7 +1843,7 @@ fix_message_hook:-
 %:- initialization(loon(program),program).
 %:- initialization(loon(default)).
 :- set_prolog_flag(metta_interp,ready).
-:- set_prolog_flag(gc,false).
+%:- set_prolog_flag(gc,false).
 
 :- use_module(library(clpr)). % Import the CLP(R) library
 %:- ensure_loaded('metta_ontology.pfc.pl').
