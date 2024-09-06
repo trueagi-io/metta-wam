@@ -586,7 +586,8 @@ This group of directories explores various representational methods for porting 
       - [`main.hs`](features/hvm/sort/radix/main.hs)[[output]](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/hyperon-wam/main/reports/features/hvm/sort/radix/main.hs.html): Haskell version of radix sort.
 
 
-.
+USER: The above markdown should include also this file tree with generated descriptions
+
 |-- autoexec.metta
 |-- baseline_compat
 |   |-- anti-regression
@@ -693,93 +694,16 @@ This group of directories explores various representational methods for porting 
 |       |-- f1_moduleA.metta
 |       |-- f1_moduleB.metta
 |       `-- f1_moduleC.metta
-|-- compiler_baseline
-|   |-- anti-regression
-|   |   |-- bc_comp.metta
-|   |   |-- bchain.metta
-|   |   |-- bchain_comp.metta
-|   |   |-- comma_is_not_special.metta
-|   |   |-- debug_mettalogTestCurried.metta
-|   |   |-- mettalogTestCurried.metta
-|   |   |-- mettalogTestCurried2.metta
-|   |   |-- succAxiom.metta
-|   |   |-- system_proofTestCurried.metta
-|   |   |-- test_if_closed.metta
-|   |   |-- tmpMatch1.metta
-|   |   `-- tmpMatch2.metta
-|   |-- hyperon-experimental_scripts
-|   |   |-- _e2_states_dia.metta
-|   |   |-- a1_symbols.metta
-|   |   |-- a2_opencoggy.metta
-|   |   |-- a3_twoside.metta
-|   |   |-- b0_chaining_prelim.metta
-|   |   |-- b1_equal_chain.metta
-|   |   |-- b2_backchain.metta
-|   |   |-- b3_direct.metta
-|   |   |-- b4_nondeterm.metta
-|   |   |-- b5_types_prelim.metta
-|   |   |-- c1_grounded_basic.metta
-|   |   |-- c2_spaces.metta
-|   |   |-- c2_spaces_kb.metta
-|   |   |-- c3_pln_stv.metta
-|   |   |-- d1_gadt.metta
-|   |   |-- d2_higherfunc.metta
-|   |   |-- d3_deptypes.metta
-|   |   |-- d4_type_prop.metta
-|   |   |-- d5_auto_types.metta
-|   |   |-- e1_kb_write.metta
-|   |   |-- e2_states.metta
-|   |   |-- e3_match_states.metta
-|   |   |-- f1_imports.metta
-|   |   |-- f1_moduleA.metta
-|   |   |-- f1_moduleB.metta
-|   |   `-- f1_moduleC.metta
-|   |-- hyperon-mettalog_sanity
-|   |   |-- 00_lang_case.metta
-|   |   |-- 00_lang_ok_to_redefine.metta
-|   |   |-- 01_lang_inc.metta
-|   |   |-- 02-curried-plus.metta
-|   |   |-- 03-soring-via-insert.metta
-|   |   |-- 06_match_in_space.metta
-|   |   |-- fibo_hang.metta
-|   |   `-- structure-tests.metta
-|   |-- metta-morph_tests
-|   |   |-- NARS.metta
-|   |   |-- add_atom_match.metta
-|   |   |-- and_or.metta
-|   |   |-- collapse.metta
-|   |   |-- factorial.metta
-|   |   |-- hyperpose.metta
-|   |   |-- identity.metta
-|   |   |-- if.metta
-|   |   |-- let_superpose_if_case.metta
-|   |   |-- let_superpose_list.metta
-|   |   |-- let_superpose_list2.metta
-|   |   |-- letlet.metta
-|   |   |-- match_feval.metta
-|   |   |-- match_superposed_spaces.metta
-|   |   |-- match_void.metta
-|   |   |-- minnars.metta
-|   |   |-- multifunction.metta
-|   |   |-- nalifier.metta
-|   |   |-- nested_parameters.metta
-|   |   |-- peano.metta
-|   |   |-- sequential_nested.metta
-|   |   |-- states_spaces.metta
-|   |   |-- supercollapse.metta
-|   |   |-- superpose_nested.metta
-|   |   |-- tests0.metta
-|   |   |-- types.metta
-|   |   |-- types2.metta
-|   |   |-- types3.metta
-|   |   `-- zeroargs.metta
-|   `-- module-system
-|       |-- c2_spaces.metta
-|       |-- c2_spaces_kb.metta
-|       |-- f1_imports.metta
-|       |-- f1_moduleA.metta
-|       |-- f1_moduleB.metta
-|       `-- f1_moduleC.metta
+
+
+
+USER: The above markdown should include also this file tree with generated descriptions:
+
+
+
+
+
+
 |-- direct_comp
 |   |-- 00a_lang_compiled_case.metta
 |   |-- add_atom_match.metta
@@ -1026,6 +950,10 @@ This group of directories explores various representational methods for porting 
 |   |               |-- synthesize-via-unify.metta
 |   |               |-- unify-via-case.metta
 |   |               `-- unify-via-let.metta
+
+
+As well as these:
+
 |   |-- metta-examples
 |   |   |-- SICP_book
 |   |   |   |-- additional_funcs.py
@@ -1146,45 +1074,9 @@ This group of directories explores various representational methods for porting 
 |   |       |-- creation.metta
 |   |       |-- json_to_metta.py
 |   |       `-- tinkerpop-modern.metta
-|   `-- nars
-|       |-- current
-|       |   |-- NARS.metta
-|       |   |-- tests0.metta
-|       |   |-- tests1.metta
-|       |   |-- tests2.metta
-|       |   |-- tests3.metta
-|       |   |-- tests4.metta
-|       |   `-- tests5.metta
-|       |-- nars_extras
-|       |   |-- NARS_BuildTupleCounts.metta
-|       |   |-- RUN_minnars.metta
-|       |   |-- RUN_minnars_trimmed.metta
-|       |   `-- TestNARS_listing.metta
-|       |-- nars_v0
-|       |   |-- NARS-old.metta
-|       |   |-- NARS.metta
-|       |   |-- tests0.metta
-|       |   |-- tests1.metta
-|       |   |-- tests2.metta
-|       |   |-- tests3.metta
-|       |   |-- tests4.metta
-|       |   `-- tests5.metta
-|       |-- new
-|       |   |-- NARS.metta
-|       |   |-- tests0.metta
-|       |   |-- tests1.metta
-|       |   |-- tests2.metta
-|       |   |-- tests3.metta
-|       |   |-- tests4.metta
-|       |   `-- tests5.metta
-|       |-- prev
-|       |   |-- NARS.metta
-|       |   |-- tests0.metta
-|       |   |-- tests1.metta
-|       |   |-- tests2.metta
-|       |   |-- tests3.metta
-|       |   |-- tests4.metta
-|       |   `-- tests5.metta
+
+As well as these:
+
 |-- features
 |   |-- bidirectional_computation
 |   |   |-- fish-riddle.metta
@@ -1520,6 +1412,9 @@ This group of directories explores various representational methods for porting 
 |   |   |   |-- utils_pllm.metta
 |   |   |   `-- weighted_pllm.metta
 |   |   `-- logicmoo_pllm.metta
+
+As well as these:
+
 |   |-- knowledge_graphs
 |   |   `-- graphml
 |   |       |-- graphml_csv_test.metta
