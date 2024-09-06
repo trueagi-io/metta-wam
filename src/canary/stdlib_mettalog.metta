@@ -17,7 +17,7 @@
 ;(: apply (-> Atom Variable Atom Atom))
 ;(: cons (-> Atom Atom Atom))
 ;(: decons (-> Atom Atom))
-(: xor (-> Bool Bool Bool))
+
 (: return (-> Atom ReturnType))
 (: switch (-> %Undefined% Expression Atom))
 (: unify (-> Atom Atom Atom Atom %Undefined%))
@@ -30,18 +30,18 @@
 (: = (-> Atom Atom %Undefined%))
 (: match (-> hyperon::space::DynSpace Atom Atom %Undefined%))
 (: case (-> Expression Atom Atom))
-(: combine (-> $_4082 $_4082 $_4082))
+(: combine (-> $t $t $t))
 (: import! (-> hyperon::space::DynSpace Atom (->)))
 (: get-type (-> Atom Type))
 (: PredicateArity (-> Symbol Number))
 (: If (-> Bool Atom Atom Atom))
 (: If (-> Bool Atom Atom))
-(= (If True $_3800) $_3800)
-(= (If False $_3710) (let $_3728 0 (let $_3728 1 $_3728)))
-(= (If $_3632 $_3638 $_3644) (if $_3632 $_3638 $_3644))
+(= (If True $then) $then)
+(= (If False $then) (let $n 0 (let $n 1 $n)))
+(= (If $cond $then $else) (if $cond $then $else))
 (PredicateArity PredicateArity 2)
 (PredicateArity : 2)
-(= (: $_3524 P1) (PredicateArity $_3524 1))
+(= (: $F P1) (PredicateArity $F 1))
 (: : SrcPredicate)
 (: If SrcFunction)
 
@@ -631,6 +631,7 @@
     (@param "Second argument")))
   (@return "Return values are the same as logical disjunction, but when both arguments are True xor will return False"))
 ;; Implemented from Interpreters
+(: xor (-> Bool Bool Bool))
 
 ;; Public MeTTa
 (@doc flip
@@ -803,7 +804,7 @@
   (@return "Nothing"))
 (: empty (-> %Undefined%))
 ;; Implemented from Interpreters
-(ALT= (empty) (let a b never-happens))
+; (ALT= (empty) (let a b never-happens))
 ;For testing
 ;(= (empty) Empty)
 
@@ -915,13 +916,13 @@
 ;; Is Data Functor
 
 ;; Public MeTTa
-(@doc get-doc
+(@doc metta-get-doc
   (@desc "Returns documentation for the given Atom/Function")
   (@params (
     (@param "Atom/Function name for which documentation is needed")))
   (@return "Documentation for the given atom/function"))
-(: get-doc (-> Atom Atom))
-(= (get-doc $atom)
+(: metta-get-doc (-> Atom Atom))
+(= (metta-get-doc $atom)
   (let $meta-type (get-metatype $atom)
     (case $meta-type (
       (Expression (get-doc-atom $atom))
@@ -1008,13 +1009,13 @@
         (@doc-formal (@item $atom) (@kind atom) (@type $type) (@desc "No documentation")) )))))
 
 ;; Public MeTTa
-(@doc help!
+(@doc metta-help!
   (@desc "Function prints documentation for the input atom.")
   (@params (
     (@param "Input to get documentation for")))
   (@return "Unit atom"))
-(: help! (-> Atom (->)))
-(= (help! $atom)
+(: metta-help! (-> Atom (->)))
+(= (metta-help! $atom)
   (case (get-doc $atom) (
     ((@doc-formal (@item $item) (@kind function) (@type $type) (@desc $descr)
                  (@params $params)
@@ -1350,7 +1351,7 @@
     (@param "Expression with {} symbols to be replaced")
     (@param "Atoms to be placed inside expression instead of {}")))
   (@return "Expression with replaced {} with atoms"))
-(: format-args (-> String Expresson String))
+(: format-args (-> String Atom String))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
@@ -1361,6 +1362,33 @@
 	(@param "Atom which uses those variables")))
   (@return "Second argument but with variables being replaced with unique variables"))
 (: sealed (-> Expression Atom Atom))
+;; Implemented from Interpreters
+
+(:> ValueAtom Atom)
+(:> ValueAtom Grounded)
+(:> ForeignObject ValueAtom)
+(:> PyObject ForeignObject)
+
+;; Public MeTTa
+(@doc py-list
+  (@desc "Converts a MeTTa Expression into a Python list and returns it as a PyObject.")
+  (@params (
+    (@param (@type Expression) (@desc "A MeTTa List that will be converted into a Python list"))
+  ))
+  (@return (@type PyObject) (@desc "A Python list object that represents the given MeTTa Expression as a PyObject"))
+)
+(: py-list (-> Expression PyObject))
+;; Implemented from Interpreters
+
+;; Public MeTTa
+(@doc py-eval
+  (@desc "Evaluates a Python expression from a string and returns the result as a PyObject.")
+  (@params (
+    (@param (@type String) (@desc "A string representing a Python expression that will be evaluated"))
+  ))
+  (@return (@type PyObject) (@desc "The result of evaluating the Python expression as a PyObject"))
+)
+(: py-eval (-> String PyObject))
 ;; Implemented from Interpreters
 
 

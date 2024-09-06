@@ -408,13 +408,18 @@ function print_help {
 cat << EOF
 
      -x state                 Start from state (must be first)
-     -g goal                  Run goal (may be repeated)
+     -g goal                  Run Prolog-style goal (may be repeated)
+     -G goal                  Run MeTTa goal (may be repeated)
      -t toplevel              Toplevel goal
      -f file                  User initialisation file
      -F file                  Site initialisation file
-     -l file                  Script source file
-     -s file                  Script source file
+     -l file                  Prolog-style script source file
+     -L file                  MeTTa script source file
+     -s file                  Prolog-style script source file
+     -S file                  MeTTa script source file
      -p alias=path            Define file search path 'alias'
+
+Note: A bare filename is equivalent to using the -s option for MeTTa scripts.
 
     Compilation:
 
@@ -458,7 +463,8 @@ cat << EOF
 
    Debugging:
      --exec=skip              Skip over !exec dirrectives
-     --eval=debug             Recursively trace Evaluation
+     --e=debug                Recursively trace Evaluation
+     --time=debug             Provide detailed debug-level timing information
      --case=debug             Show extra debug info about case statements
      --signals[=bool]         Do (not) modify signal handling
      --threads[=bool]         Do (not) allow for threads
@@ -550,6 +556,38 @@ function handle_args {
             continue
         fi
 
+
+	arg_realpath="$arg"
+        # track file paths but keep going
+        if [[ -f "$arg" || -d "$arg" ]]; then
+            arg_realpath="$(realpath "$arg")"
+            if [[ -f "$arg_realpath" || -d "$arg_realpath" ]]; then
+                add_to_list "$arg_realpath" LIST_OF_FILE_ARGS
+            fi
+        fi
+
+	if [ "$SWI_FLAG_WITH_ARG" = true ]; then
+	    add_to_list "$arg_realpath" SWI_OPTIONS
+	    SWI_FLAG_WITH_ARG=false  # Reset the flag
+	    continue
+	fi
+
+	case "$arg" in
+	    --stack-limit=*|--stack_limit=*|--table-space=*|--shared-table-space=*|--pce=*|--pldoc=*|--tty=*|--packs=*|--signals=*|--sigalert=*|--threads=*|--debug=*|--debug-on-interrupt=*|--quiet=*|--traditional|--home=*|--on-error=*|--on-warning=*)
+		add_to_list "$arg" SWI_OPTIONS
+		#continue
+		;;
+	    -D*=*|-O)
+		add_to_list "$arg" SWI_OPTIONS
+		continue
+		;;
+	    -x|-g|-t|-f|-F|-l|-s|-p|-D)  # For options that require an argument in the next round
+		add_to_list "$arg" SWI_OPTIONS
+		SWI_FLAG_WITH_ARG=true
+		continue
+		;;
+	esac
+
         if [[ $SKIP_TO_METTALOG_OPTIONS == true ]]; then
             METTALOG_OPTIONS+=("$arg")
             continue
@@ -598,13 +636,6 @@ function handle_args {
              ;;
         esac
 
-        # track file paths but keep going
-        if [[ -f "$arg" || -d "$arg" ]]; then
-            arg_realpath="$(realpath "$arg")"
-            if [[ -f "$arg_realpath" || -d "$arg_realpath" ]]; then
-                add_to_list "$arg_realpath" LIST_OF_FILE_ARGS
-            fi
-        fi
 
         if [[ "$arg" =~ ^--timeout=([0-9]+)$ ]]; then
             parsed="${BASH_REMATCH[1]}"
@@ -676,7 +707,9 @@ function handle_args {
 
 
            --v=*) PYSWIP_VERSION="${arg#*=}"
-		rm -f "${DefaultSav}"
+	        if [ -f "${DefaultSav}" ]; then
+		    rm -f "${DefaultSav}"
+		fi
 		never_compile=1
                 continue
                 ;;
@@ -687,7 +720,7 @@ function handle_args {
                 continue
                 ;;
 
-            -G|-L|-F)
+            -G|-L|-S)
                 METTALOG_OPTIONS+=("$arg")
                 METTA_FLAG_WITH_ARG=true
                 continue
@@ -775,7 +808,7 @@ if [[ "$repl_flag" == "true" ]]; then
 fi
 
 if [[ -n "$TIMEOUT" && "$TIMEOUT" -gt 0 ]]; then
-    add_to_list "--timeout==$TIMEOUT" PRE_METTALOG_OPTIONS
+    add_to_list "--timeout=$TIMEOUT" PRE_METTALOG_OPTIONS
 fi
 
 
@@ -876,7 +909,11 @@ PYSWIP_VERSION="${PYSWIP_VERSION%/}"
 if [ -f "$PYSWIP_VERSION/metta_interp.pl" ]; then
   INTERP_SRC_DIR="$PYSWIP_VERSION"
 else 
-  INTERP_SRC_DIR="$METTALOG_DIR/src/$PYSWIP_VERSION"
+    if [ -f "$PYSWIP_VERSION/src/canary/metta_interp.pl" ]; then
+      INTERP_SRC_DIR="$PYSWIP_VERSION/src/canary"
+    else 
+      INTERP_SRC_DIR="$METTALOG_DIR/src/$PYSWIP_VERSION"
+    fi
 fi
 
 INTERP_SRC_DIR="$(realpath "${INTERP_SRC_DIR}")"

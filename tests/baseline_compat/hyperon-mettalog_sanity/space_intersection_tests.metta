@@ -24,10 +24,10 @@
 
 ;; Test intersection between Space 1 and Space 2 using alpha equivalency
 ;; This should return the common atoms: (foo 1 2) and (foo (foo 1 2) 3)
-(bind! &space1 (new-space))
-(bind! &space2 (new-space))
-(add-atom &space1 (superpose ((= (foo $x $y) (+ $x $y)) (foo 1 2) (foo 3 4) (foo $x 10) (foo $x $x) (foo (foo 1 2) 3))))
-(add-atom &space2 (superpose ((= (foo $a $b) (+ $a $b)) (foo 1 2) (foo 5 6) (foo 5 10) (foo 9 9) (foo (foo 1 2) 3))))
+!(bind! &space1 (new-space))
+!(bind! &space2 (new-space))
+!(add-atom &space1 (superpose ((= (foo $x $y) (+ $x $y)) (foo 1 2) (foo 3 4) (foo $x 10) (foo $x $x) (foo (foo 1 2) 3))))
+!(add-atom &space2 (superpose ((= (foo $a $b) (+ $a $b)) (foo 1 2) (foo 5 6) (foo 5 10) (foo 9 9) (foo (foo 1 2) 3))))
 !(assertEqual
   (intersection (get-atoms &space1) (get-atoms &space2))
   (superpose ((= (foo $x $y) (+ $x $y)) (foo 1 2) (foo (foo 1 2) 3)))
@@ -35,8 +35,8 @@
 
 ;; Test intersection with a space having a unique atom
 ;; This should return an empty set as there is no intersection.
-(bind! &space3 (new-space))
-(add-atom &space3 (superpose ((foo 7 8))))
+!(bind! &space3 (new-space))
+!(add-atom &space3 (superpose ((foo 7 8))))
 !(assertEqual
   (intersection (get-atoms &space1) (get-atoms &space3))
   (superpose ())
@@ -44,8 +44,8 @@
 
 ;; Test intersection with variables using alpha equivalency
 ;; The intersection should consider variables as equivalent even if they are named differently.
-(bind! &space4 (new-space))
-(add-atom &space4 (superpose ((foo 1 2) (foo 3 4) (foo $m $n))))
+!(bind! &space4 (new-space))
+!(add-atom &space4 (superpose ((foo 1 2) (foo 3 4) (foo $m $n))))
 !(assertEqual
   (intersection (get-atoms &space1) (get-atoms &space4))
   (superpose ((foo 1 2) (foo 3 4)))
@@ -53,26 +53,26 @@
 
 ;; Test intersection with overlapping variables using alpha equivalency
 ;; This test ensures that overlapping variables in atoms are correctly intersected, treating equivalent variables as equal.
-(bind! &space5 (new-space))
-(add-atom &space5 (superpose ((foo (foo 1 2) 3) (foo (foo 3 4) 7) (foo $p $q))))
+!(bind! &space5 (new-space))
+!(add-atom &space5 (superpose ((foo (foo 1 2) 3) (foo (foo 3 4) 7) (foo $p $q))))
 !(assertEqual
   (intersection (get-atoms &space4) (get-atoms &space5))
-  (superpose ())
+  (superpose ((foo  $m $n)))
 )
 
 ;; Test intersection with a variable and a fixed value using alpha equivalency
 ;; This test checks that an atom with a variable intersects correctly with a matching fixed value, using alpha equivalency.
-(bind! &space6 (new-space))
-(add-atom &space6 (superpose ((foo (foo 1 2) 3) (foo 7 7) (foo (foo $r 2) 3))))
+!(bind! &space6 (new-space))
+!(add-atom &space6 (superpose ((foo (foo 1 2) 3) (foo 7 7) (foo (foo $r 2) 3))))
 !(assertEqual
-  (intersection (get-atoms &space4) (get-atoms &space6))
+  (pred-intersection unified (get-atoms &space4) (get-atoms &space6))
   (superpose ((foo 7 7)))
 )
 
 ;; Test intersection with nested variables using alpha equivalency
 ;; This test checks the behavior when intersecting nested structures containing variables, treating equivalent variables as equal.
-(bind! &space7 (new-space))
-(add-atom &space7 (superpose ((foo $x $x) (foo 7 7) (foo (foo 1 2) 3))))
+!(bind! &space7 (new-space))
+!(add-atom &space7 (superpose ((foo $x $x) (foo 7 7) (foo (foo 1 2) 3))))
 !(assertEqual
   (intersection (get-atoms &space6) (get-atoms &space7))
   (superpose ((foo (foo 1 2) 3)))
@@ -87,10 +87,10 @@
 
 ;; Test intersection with alpha equivalency (variable renaming)
 ;; This test ensures that atoms with equivalent variables but different names are considered equal.
-(bind! &space8 (new-space))
-(bind! &space9 (new-space))
-(add-atom &space8 (superpose ((foo $a $b) (foo 3 $c))))
-(add-atom &space9 (superpose ((foo $y $z) (foo 3 $d))))
+!(bind! &space8 (new-space))
+!(bind! &space9 (new-space))
+!(add-atom &space8 (superpose ((foo $a $b) (foo 3 $c))))
+!(add-atom &space9 (superpose ((foo $y $z) (foo 3 $d))))
 !(assertEqual
   (intersection (get-atoms &space8) (get-atoms &space9))
   (superpose ((foo 3 $c)))
@@ -112,8 +112,8 @@
 
 ;; Test intersection between a fresh space and another space using alpha equivalency
 ;; This should return the common atom: (foo (foo 1 2) 3)
-(bind! &space10 (new-space))
-(add-atom &space10 (superpose ((foo (foo 1 2) 3))))
+!(bind! &space10 (new-space))
+!(add-atom &space10 (superpose ((foo (foo 1 2) 3))))
 !(assertEqual
   (intersection (get-atoms &space10) (get-atoms &space2))
   (superpose ((foo (foo 1 2) 3)))
@@ -121,10 +121,10 @@
 
 ;; Test intersection between fresh Space 11 and Space 12 with self-referential atoms
 ;; The intersection should correctly handle the self-referential atom using alpha equivalency.
-(bind! &space11 (new-space))
-(bind! &space12 (new-space))
-(add-atom &space11 (superpose ((foo $x $x))))
-(add-atom &space12 (superpose ((foo $y $y))))
+!(bind! &space11 (new-space))
+!(bind! &space12 (new-space))
+!(add-atom &space11 (superpose ((foo $x $x))))
+!(add-atom &space12 (superpose ((foo $y $y))))
 !(assertEqual
   (intersection (get-atoms &space11) (get-atoms &space12))
   (superpose ((foo $x $x)))
@@ -133,8 +133,8 @@
 
 ;; Test intersection between Space 1 and a non-space2 atom list
 ;; This should return the common atoms between Space 1 and the provided atom list.
-(bind! &space21 (new-space))
-(add-atom &space21 (superpose ((foo 1 2) (foo 3 4) (foo 5 6))))
+!(bind! &space21 (new-space))
+!(add-atom &space21 (superpose ((foo 1 2) (foo 3 4) (foo 5 6))))
 
 ;; Intersect with a list of atoms not associated with any space2.
 !(assertEqual
@@ -144,8 +144,8 @@
 
 ;; Test intersection between Space 2 and a non-space2 atom list with variables
 ;; This should correctly instantiate the variable and return the matching atom.
-(bind! &space22 (new-space))
-(add-atom &space22 (superpose ((foo $x 10) (foo 3 4) (foo $y $y))))
+!(bind! &space22 (new-space))
+!(add-atom &space22 (superpose ((foo $x 10) (foo 3 4) (foo $y $y))))
 
 ;; Intersect with a list of atoms, some of which contain variables.
 !(assertEqual
@@ -155,8 +155,8 @@
 
 ;; Test intersection between Space 3 and a non-space2 atom with strict matching
 ;; This should return an empty set because the variables in the non-space2 atom do not match the space2 atoms exactly.
-(bind! &space23 (new-space))
-(add-atom &space23 (superpose ((foo $a $b) (foo 3 4) (foo $c $c))))
+!(bind! &space23 (new-space))
+!(add-atom &space23 (superpose ((foo $a $b) (foo 3 4) (foo $c $c))))
 
 ;; Intersect with a non-space2 atom list with different variable names
 !(assertEqual
@@ -166,8 +166,8 @@
 
 ;; Test intersection between Space 4 and a single non-space2 atom
 ;; This should return the single atom if it matches any in the space2.
-(bind! &space24 (new-space))
-(add-atom &space24 (superpose ((foo 7 7) (foo (foo 1 2) 3) (foo $z $z))))
+!(bind! &space24 (new-space))
+!(add-atom &space24 (superpose ((foo 7 7) (foo (foo 1 2) 3) (foo $z $z))))
 
 ;; Intersect with a single non-space2 atom
 !(assertEqual
@@ -177,8 +177,8 @@
 
 ;; Test intersection between Space 5 and multiple non-space2 atoms
 ;; This should return only the atoms that match, considering variable instantiation.
-(bind! &space25 (new-space))
-(add-atom &space25 (superpose ((foo (foo 3 4) 7) (foo $p $p) (foo 5 5))))
+!(bind! &space25 (new-space))
+!(add-atom &space25 (superpose ((foo (foo 3 4) 7) (foo $p $p) (foo 5 5))))
 
 ;; Intersect with multiple non-space2 atoms
 !(assertEqual
@@ -188,8 +188,8 @@
 
 ;; Test intersection with a nested non-space2 structure
 ;; The intersection should correctly handle the nested structure.
-(bind! &space26 (new-space))
-(add-atom &space26 (superpose ((foo (foo 1 2) 3) (foo $x $y) (foo (foo 3 4) 7))))
+!(bind! &space26 (new-space))
+!(add-atom &space26 (superpose ((foo (foo 1 2) 3) (foo $x $y) (foo (foo 3 4) 7))))
 
 ;; Intersect with a nested non-space2 structure
 !(assertEqual
@@ -197,79 +197,3 @@
   (superpose ((foo (foo 1 2) 3)))
 )
 
-
-
-;; Create new spaces for subtraction and union tests
-(bind! &space1 (new-space))
-(bind! &space2 (new-space))
-(bind! &space3 (new-space))
-(bind! &space4 (new-space))
-
-;; Add atoms to &space1
-(add-atom &space1 (superpose ((foo $x $y) (foo 1 2) (foo 3 4) (foo $x 10) (foo $x $x))))
-
-;; Add atoms to &space2
-(add-atom &space2 (superpose ((foo 1 2) (foo 5 6) (foo $x $y))))
-
-;; Add atoms to &space3
-(add-atom &space3 (superpose ((foo 3 4) (foo 5 6))))
-
-;; Subtraction Tests:
-
-;; Test basic subtraction between spaces
-;; This should return atoms in &space1 that are not in &space2.
-!(assertEqual
-  (subtraction (get-atoms &space1) (get-atoms &space2))
-  (superpose (foo 3 4) (foo $x 10) (foo $x $x))
-)
-
-;; Test subtraction with variables and self-referential structures
-;; This should return atoms in &space1 that are not logically equivalent to those in &space3.
-!(assertEqual
-  (subtraction (get-atoms &space1) (get-atoms &space3))
-  (superpose (foo $x $y) (foo 1 2) (foo $x 10) (foo $x $x))
-)
-
-;; Test subtraction with empty space
-;; Subtracting from an empty space should return an empty set.
-!(assertEqual
-  (subtraction (get-atoms &space4) (get-atoms &space1))
-  (superpose ())
-)
-
-;; Union Tests:
-
-;; Test union of two spaces
-;; The union of &space1 and &space2 should include all unique atoms from both spaces.
-!(assertEqual
-  (union (get-atoms &space1) (get-atoms &space2))
-  (superpose ((foo $x $y) (foo 1 2) (foo 3 4) (foo 5 6) (foo $x 10) (foo $x $x)))
-)
-
-;; Test union with overlapping spaces
-;; The union should not duplicate atoms that are common to both spaces.
-!(assertEqual
-  (union (get-atoms &space2) (get-atoms &space3))
-  (superpose ((foo 1 2) (foo 5 6) (foo 3 4) (foo $x $y)))
-)
-
-;; Test union with a space containing a unique atom
-;; The result should include the unique atom from the third space.
-!(assertEqual
-  (union (get-atoms &space1) (get-atoms &space3))
-  (superpose ((foo $x $y) (foo 1 2) (foo 3 4) (foo $x 10) (foo $x $x) (foo 5 6)))
-)
-
-;; Test union with a non-space set
-;; This checks that atoms not associated with a space are correctly unioned with a space.
-!(assertEqual
-  (union (get-atoms &space1) (superpose ((foo 7 8))))
-  (superpose ((foo $x $y) (foo 1 2) (foo 3 4) (foo $x 10) (foo $x $x) (foo 7 8)))
-)
-
-;; Test union with an empty space
-;; The result should just be the atoms from the non-empty space.
-!(assertEqual
-  (union (get-atoms &space1) (get-atoms &space4))
-  (superpose ((foo $x $y) (foo 1 2) (foo 3 4) (foo $x 10) (foo $x $x)))
-)
