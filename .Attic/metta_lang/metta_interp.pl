@@ -1843,7 +1843,7 @@ fix_message_hook:-
 %:- initialization(loon(program),program).
 %:- initialization(loon(default)).
 :- set_prolog_flag(metta_interp,ready).
-:- set_prolog_flag(gc,false).
+%:- set_prolog_flag(gc,false).
 
 :- use_module(library(clpr)). % Import the CLP(R) library
 %:- ensure_loaded('metta_ontology.pfc.pl').
