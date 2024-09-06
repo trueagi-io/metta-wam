@@ -729,9 +729,16 @@ fi
 if [ -f "$PYSWIP_VERSION/metta_interp.pl" ]; then
   INTERP_SRC_DIR="$PYSWIP_VERSION"
 else 
-  INTERP_SRC_DIR="$METTALOG_DIR/src/$PYSWIP_VERSION"
+    if [ -f "$PYSWIP_VERSION/src/canary/metta_interp.pl" ]; then
+      INTERP_SRC_DIR="$PYSWIP_VERSION/src/canary"
+    else 
+	if [ -f "$METTALOG_DIR/src/$PYSWIP_VERSION/metta_interp.pl" ]; then
+	  INTERP_SRC_DIR="$METTALOG_DIR/src/$PYSWIP_VERSION"
+	else 
+	  INTERP_SRC_DIR="$METTALOG_DIR/src/canary"
+	fi
+    fi
 fi
-INTERP_SRC_DIR="$(realpath "${INTERP_SRC_DIR}")"
 
 DEBUG "INTERP_SRC_DIR=$INTERP_SRC_DIR"
 DEBUG "METTALOG_OUTPUT=$METTALOG_OUTPUT"

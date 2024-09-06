@@ -105,6 +105,17 @@
 				<F N=".github/workflows/ci.yml"/>
 			</Folder>
 		</Folder>
+		<Folder Name="../.vscode">
+			<Folder Name="extensions">
+				<Folder Name="royward.metta-lsp-0.0.2">
+					<F
+						N="../.vscode/extensions/royward.metta-lsp-0.0.2/*.*"
+						Recurse="1"
+						Excludes=".git/;*.metta.html;*.bak;build/"
+						L="1"/>
+				</Folder>
+			</Folder>
+		</Folder>
 		<Folder Name="docs">
 			<F
 				N="docs/*.*"
@@ -115,8 +126,7 @@
 			<F
 				N="../hyperon-experimental/*.*"
 				Recurse="1"
-				Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"
-				L="1"/>
+				Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"/>
 		</Folder>
 		<Folder Name="library">
 			<F
