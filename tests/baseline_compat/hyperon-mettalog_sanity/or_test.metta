@@ -1,3 +1,10 @@
+!(bind! &evaluated (new-state False))
+(: set-evaluated (-> Bool))  ; this must return boolean
+(= (set-evaluated)
+   ((change-state! &evaluated True) True))
+!(or True (set-evaluated))
+!(assertEqual (get-state &evaluated) False)
+
 ;; Basic or Logic
 !(assertEqual (or True False) True)
 !(assertEqual (or False True) True)
