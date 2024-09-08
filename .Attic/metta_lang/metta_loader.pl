@@ -1166,6 +1166,7 @@ mfix_vars1(I,O):- compound(I),!,compound_name_arguments(I,F,II),F\=='$VAR',mapli
 mfix_vars1(I,O):- \+ symbol(I),!,I=O.
 mfix_vars1(I,I).
 
+string_to_syms:- fail.
 no_cons_reduce.
 svar_fixvarname_dont_capitalize(O,O):-!.
 svar_fixvarname_dont_capitalize(M,O):- svar_fixvarname(M,O),!.
