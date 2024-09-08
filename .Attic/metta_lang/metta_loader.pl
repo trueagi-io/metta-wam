@@ -227,11 +227,12 @@ load_metta(Self,Filename):-
   (\+ symbol(Filename); \+ exists_file(Filename)),!,
   with_wild_path(load_metta(Self),Filename),!,loonit_report.
 load_metta(Self,RelFilename):-
- atom(RelFilename),
+ must_det_ll((atom(RelFilename),
  exists_file(RelFilename),!,
    afn_from(RelFilename,Filename),
- track_load_into_file(Filename,
-   include_metta(Self,RelFilename)).
+ locally(set_prolog_flag(gc,true),
+   track_load_into_file(Filename,
+     include_metta(Self,RelFilename))))).
 
 import_metta(Self,Module):- current_predicate(py_is_module/1),py_is_module(Module),!,
  must_det_ll(self_extend_py(Self,Module)),!.
@@ -243,10 +244,14 @@ import_metta(Self,RelFilename):-
      symbol(RelFilename),
      exists_file(RelFilename),
      absolute_file_name(RelFilename,Filename),
+     gen_tmp_file(fail, Filename),
      directory_file_path(Directory, _, Filename),
      pfcAdd_Now(metta_file(Self,Filename,Directory)),
      locally(nb_setval(suspend_answers,true),
         include_metta_directory_file(Self,Directory, Filename)))).
+
+:- ensure_loaded(metta_persists).
+%:- ensure_loaded(metta_parser).
 
 include_metta(Self,Filename):-
   (\+ symbol(Filename); \+ exists_file(Filename)),!,
@@ -256,6 +261,8 @@ include_metta(Self,RelFilename):-
      symbol(RelFilename),
      exists_file(RelFilename),!,
      afn_from(RelFilename,Filename),
+     % true = foced, false = generate only if needed
+     gen_tmp_file(false,Filename),
      directory_file_path(Directory, _, Filename),
      pfcAdd_Now(metta_file(Self,Filename,Directory)),
      pfcAdd_Now(user:loaded_into_kb(Self,Filename)),
@@ -334,15 +341,15 @@ include_metta_directory_file_prebuilt(Self,_Directory, Filename):-
 include_metta_directory_file(Self,Directory, Filename):-
   include_metta_directory_file_prebuilt(Self,Directory, Filename),!.
 include_metta_directory_file(Self, Directory, Filename):-
-  count_lines_up_to(2000,Filename, Count), Count > 1980, \+ use_fast_buffer,
+  count_lines_up_to(2000,Filename, Count), Count > 1980, % \+ use_fast_buffer,
   include_large_metta_directory_file(Self, Directory, Filename), !.
 include_metta_directory_file(Self,Directory,Filename):-
   with_cwd(Directory,must_det_ll(setup_call_cleanup(open(Filename,read,In, [encoding(utf8)]),
     must_det_ll( load_metta_file_stream(Filename,Self,In)),
     close(In)))).
 
-include_large_metta_directory_file(Self, Directory, Filename):- \+ use_fast_buffer, !,
-  locally(nb_setval(may_use_fast_buffer,t), include_metta_directory_file(Self,Directory, Filename)).
+
+% include_large_metta_directory_file(Self, Directory, Filename):- \+ use_fast_buffer, !, locally(nb_setval(may_use_fast_buffer,t), include_metta_directory_file(Self,Directory, Filename)).
 include_large_metta_directory_file(Self,_Directory, Filename):-
   once(convert_metta_to_loadable(Filename,QlfFile)),
   exists_file(QlfFile),!,
@@ -358,11 +365,11 @@ convert_metta_to_datalog(Filename,DatalogFile):-
         open(Filename, read, Input, [encoding(utf8)]),
         % Open the Datalog file for writing
         setup_call_cleanup(
-            open(DatalogFile, write, Output, [encoding(utf8)]),
+           open(DatalogFile, write, Output, [encoding(utf8)]),
             % Perform the conversion
-      translate_metta_file_to_datalog_io(Filename,Input,Output),
+            translate_metta_file_to_datalog_io(Filename,Input,Output),
             % Cleanup: Close the Datalog file
-            close(Output)
+           close(Output)
         ),
         % Cleanup: Close the METTA file
         close(Input)
@@ -412,7 +419,7 @@ trim_to_last_nchars(Len, Atom, TrimmedAtom) :-
     ).
 
 
-translate_metta_file_to_datalog_io(Filename,Input,Output):-
+translate_metta_file_to_datalog_io(Filename,Input,Output):- may_use_datalog,
   must_det_ll((
   %write header
   write(Output,'/* '),write(Output,Filename),writeln(Output,' */'),
@@ -534,7 +541,9 @@ read_chars_until(StopsBefore, '\\', Input, [Code|Codes]):- get_char(Input,Code),
 read_chars_until(StopsBefore, Char, Input, [Char|Codes]):- get_char(Input,_),
   read_chars_until(StopsBefore, Input, Codes).
 
-  just_load_datalog:-!, true.
+just_load_datalog:-!, true.
+may_use_datalog:-!, true.
+
 convert_datalog_to_loadable(DatalogFile,DatalogFile):-just_load_datalog,!.
 convert_datalog_to_loadable(DatalogFile,QlfFile):-
   sformat(S,'swipl -g "qcompile(~q)" -t halt',[DatalogFile]),
@@ -543,6 +552,8 @@ convert_datalog_to_loadable(DatalogFile,QlfFile):-
   file_name_extension(Base,'qlf',QlfFile).
 
 convert_metta_to_loadable(_Filename,_QlfFile):- use_fast_buffer,!, fail.
+convert_metta_to_loadable(_Filename,_QlfFile):- \+ may_use_datalog, !.
+
 convert_metta_to_loadable(Filename,QlfFile):-
   must_det_ll((
   convert_metta_to_datalog(Filename,DatalogFile),
@@ -647,7 +658,7 @@ write_bf(BufferFile,BufferTerm):-
 my_line_count(In, seek($,0,current,CC)):-
    stream_property(In,reposition(true)),
    seek(In,0,current,CC),fail.
-my_line_count(In,position(Pos)):-
+my_line_count(In,/*position*/(Pos)):-
    stream_property(In,position(Pos)).
 
 
@@ -670,11 +681,16 @@ read_metta(I,O):- string(I),normalize_space(string(M),I),!,parse_sexpr_metta1(M,
 read_metta(In,Expr):- current_input(In0),In==In0,!, repl_read(Expr).
 read_metta(In,Expr):- read_metta1(In,Expr).
 
+read_metta1(S,F1):- use_new_parse_sexpr_metta_IO(S),!,new_parse_sexpr_metta_IO(S,F1).
 read_metta1(In,Expr):- is_file_stream_and_size(In, Size) , Size>10240,!,read_sform1([],In,Expr).
 read_metta1(In,Expr):- read_metta2(In,Expr).
 
 read_metta2(_,O):- clause(t_l:s_reader_info(O),_,Ref),erase(Ref).
+read_metta2(S,F1):- use_new_parse_sexpr_metta_IO(S),!,new_parse_sexpr_metta_IO(S,F1).
 read_metta2(In,Expr):- peek_char(In,Char), read_metta2(In,Char,Expr).
+
+read_metta2(S,_,F1):- use_new_parse_sexpr_metta_IO(S),!,new_parse_sexpr_metta_IO(S,F1).
+
 read_metta2(In,Char,Expr):- char_type(Char,space),get_char(In,Char),not_compatio(put(Char)),!,read_metta2(In,Expr).
 %read_metta2(In,'"',Expr):- read_sform2(In,Expr),!.
 %read_metta2(In,'\'',Expr):- read_sform2(In,Expr),!.
@@ -741,6 +757,7 @@ maybe_read_sform_line_pos(Stream, Line, Pos, P2, Form):-
 
 %read_line_to_sexpr(Stream,UnTyped),
 read_sform(Str,F):- string(Str),open_string(Str,S),!,read_sform(S,F).
+read_sform(S,F1):- use_new_parse_sexpr_metta_IO(S),!,new_parse_sexpr_metta_IO(S,F1).
 read_sform(S,F):-
   read_sform1([],S,F1),
   ( F1\=='!' -> F=F1 ;
@@ -748,6 +765,7 @@ read_sform(S,F):-
 
 
 %read_sform2(S,F1):- !, read_metta2(S,F1).
+read_sform2(S,F1):- use_new_parse_sexpr_metta_IO(S),!,new_parse_sexpr_metta_IO(S,F1).
 read_sform2(S,F1):- read_sform1([],S,F1).
 
 read_sform1(_,_,O):- clause(t_l:s_reader_info(O),_,Ref),erase(Ref).
@@ -822,6 +840,20 @@ cont_list(_AoS,End,End1,_,[]):- End==End1, !.
 cont_list( AoS,C,End,S,[F|List]):- read_sform3(AoS,[End],C,S,F),!,collect_list_until(AoS,S,End,List).
 
 
+use_new_parse_sexpr_metta_IO(S):- \+ string(S).
+
+new_parse_sexpr_metta_IO1(S,F1):- at_end_of_stream(S),!,F1=end_of_file.
+new_parse_sexpr_metta_IO1(S,F1):- peek_char(S,Char),char_type(Char,space),!,
+  get_char(S,Char), parse_sexpr_metta_IO(S,F1).
+new_parse_sexpr_metta_IO1(S,_F1):- S = InStream,
+   once((
+    read_position(InStream, Line, Col, CharPos_Item, Position),  % Retrieve line, column, and character position.
+    read_sexpr(InStream, Item),  % Read an S-expression or comment from the input stream.
+    assertz(metta_file_comment(Line, Col, CharPos_Item, Item, Position)))),
+    fail.
+new_parse_sexpr_metta_IO1(_S,F1):- retract(metta_file_comment(_Line, _Col, _CharPos, M, _Pos)), trly(untyped_to_metta,M,F1).
+
+new_parse_sexpr_metta_IO(S,F1):- new_parse_sexpr_metta_IO1(S,F1), nop(wdmsg(new_parse_sexpr_metta_IO1(S,F1))).
 
 in2_stream(N1,S1):- integer(N1),!,stream_property(S1,file_no(N1)),!.
 in2_stream(N1,S1):- atom(N1),stream_property(S1,alias(N1)),!.
@@ -839,6 +871,8 @@ parse_sexpr_metta(S,F1):- parse_sexpr_metta_IO(S,F1),!.
 parse_sexpr_metta_IO(S,F1):- at_end_of_stream(S),!,F1=end_of_file.
 parse_sexpr_metta_IO(S,F1):- peek_char(S,Char),char_type(Char,space),!,
   get_char(S,Char), parse_sexpr_metta_IO(S,F1).
+parse_sexpr_metta_IO(S,F1):- use_new_parse_sexpr_metta_IO(S),!,new_parse_sexpr_metta_IO(S,F1).
+
 parse_sexpr_metta_IO(S,F1):-
     %line_count(S, LineNumber),
     % Get the character position within the current line
@@ -880,11 +914,13 @@ metta_atom_in_file(Self,STerm,Filename,Lineno):-
     %s2t_iz(Mangle,P,CTerm,Term),
     %CTerm=Term,Mangle=P,
     current_predicate(Mangle/Arity),
+
     notrace((length(STerm,Arity),
     term_variables(STerm,SVs),
     copy_term(STerm+SVs,CTerm+CVs),
     Data =..[Mangle,Lineno|CTerm])),
     %write_src_woi(Data),
+    current_predicate(_,Data),
     call(Data),
     maplist(mapvar,CVs,SVs).
 
@@ -1198,7 +1234,7 @@ generate_interpreter_stubs:-
 
 :- dynamic(metta_atom_asserted_deduced/2).
 :- multifile(metta_atom_asserted_deduced/2).
-metta_atom_asserted_deduced('&corelib', Term):- 
+metta_atom_asserted_deduced('&corelib', Term):-
   %\+ did_generate_interpreter_stubs,
    metta_atom_corelib_types(Term).
 
@@ -1211,4 +1247,6 @@ really_use_corelib_file(Dir,File):- absolute_file_name(File,Filename,[relative_t
  locally(nb_setval(may_use_fast_buffer,t),
    locally(nb_setval(suspend_answers,true),
      with_output_to(string(_),include_metta_directory_file('&corelib',Dir,Filename)))).
+
+
 
