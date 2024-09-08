@@ -15,7 +15,7 @@ ftp.flybase.net/**
 .*/
 *~
 *.buffer.pl
-*.metta.pl
+#*.metta.pl
 *.mine
 venv/
 src/canary-*/
