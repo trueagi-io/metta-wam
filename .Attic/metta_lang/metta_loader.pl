@@ -212,7 +212,44 @@ absolute_dir(Dir,AbsDir):- afn(Dir, AbsDir, [access(read), file_errors(fail), fi
 absolute_dir(Dir,From,AbsDir):- afn(Dir, AbsDir, [relative_to(From),access(read), file_errors(fail), file_type(directory)]),!.
 
 
-
+%!  without_circular_error(+Key, :Goal, :Item) is det.
+%
+%   Ensures that a goal is executed without causing circular dependencies.
+%   This predicate manages a non-backtrackable global variable (Key) to track
+%   recursion and prevents circular dependencies by checking if the current item
+%   is already being processed.
+%
+%   @arg Key   The name of the global variable to track recursion (e.g., '$importing_metta_files').
+%   @arg Goal  The goal to execute if no circular dependencies are detected.
+%   @arg Item  The item being processed (e.g., the file name).
+%
+%   @throws An error if a circular dependency is detected.
+%
+without_circular_error(Key, Goal, Item, Error) :-
+    % Retrieve the current list of items from the global variable.
+    (nb_current(Key, CurrentItems) -> true; CurrentItems = []),
+    % Check if the item is already in the list (circular dependency).
+    (   member(Item, CurrentItems)
+    ->  % Throw an error if the item is already being processed.
+        throw(error(Error, _))
+    ;   % Otherwise, add the item to the list.
+        nb_setval(Key, [Item | CurrentItems]),
+        % Run the actual goal within the circularity check.
+        (   call(Goal)
+        ->  true
+        ;   % If the goal fails, ensure we remove the item from the list.
+            nb_current(Key, UpdatedItems),
+            select(Item, UpdatedItems, RemainingItems),
+            nb_setval(Key, RemainingItems),
+            fail
+        ),
+        % After the goal completes, remove the item from the list.
+        nb_current(Key, UpdatedItems),
+        select(Item, UpdatedItems, RemainingItems),
+        nb_setval(Key, RemainingItems)
+    ).
+without_circular_error(Goal, Error):-
+  without_circular_error('$circular_goals', Goal, Goal, Error).
 
 :- dynamic(is_metta_module_path/3).
 :- dynamic(is_metta_module_path/1).
@@ -222,11 +259,29 @@ load_metta(Filename):-
  %clear_spaces,
  load_metta('&self',Filename).
 
+%!  load_metta(+Self, +Filename) is det.
+%
+%   Loads a Metta file and handles circular dependencies.
+%   The predicate checks if the Filename is already in the list of currently
+%   loaded files (to avoid circular loads). If it is, an error is thrown.
+%   If not, it adds the Filename to the list, proceeds with the load, and
+%   finally removes the Filename after the load is complete.
+%
+%   @arg Self The current module or context performing the load.
+%   @arg Filename The name of the file to be loaded.
+%
+%   @throws An error if the file is already in the list of currently loaded files.
+%
 load_metta(_Self,Filename):- Filename=='--repl',!,repl.
-load_metta(Self,Filename):-
+load_metta(Self, Filename):-
+    % Use without_circular_error/2 to handle circular dependencies for loading files.
+    without_circular_error(load_metta1(Self, Filename),
+        missing_exception(load_metta(Self, Filename))).
+
+load_metta1(Self,Filename):-
   (\+ symbol(Filename); \+ exists_file(Filename)),!,
   with_wild_path(load_metta(Self),Filename),!,loonit_report.
-load_metta(Self,RelFilename):-
+load_metta1(Self,RelFilename):-
  must_det_ll((atom(RelFilename),
  exists_file(RelFilename),!,
    afn_from(RelFilename,Filename),
@@ -234,12 +289,30 @@ load_metta(Self,RelFilename):-
    track_load_into_file(Filename,
      include_metta(Self,RelFilename))))).
 
-import_metta(Self,Module):- current_predicate(py_is_module/1),py_is_module(Module),!,
+%!  import_metta(+Self, +Filename) is det.
+%
+%   Imports a Metta file and handles circular dependencies.
+%   The predicate checks if the Filename is already in the list of currently
+%   imported files (to avoid circular imports). If it is, an error is thrown.
+%   If not, it adds the Filename to the list, proceeds with the import, and
+%   finally removes the Filename after the import is complete.
+%
+%   @arg Self The current module or context performing the import.
+%   @arg Filename The name of the file to be imported.
+%
+%   @throws An error if the file is already in the list of currently imported files.
+%
+import_metta(Self, Filename):-
+    % Use without_circular_error/2 to handle circular dependencies for importing files.
+    without_circular_error(import_metta1(Self, Filename),
+        missing_exception(import_metta(Self, Filename))).
+
+import_metta1(Self,Module):- current_predicate(py_is_module/1),py_is_module(Module),!,
  must_det_ll(self_extend_py(Self,Module)),!.
-import_metta(Self,Filename):-
+import_metta1(Self,Filename):-
   (\+ symbol(Filename); \+ exists_file(Filename)),!,
   must_det_ll(with_wild_path(import_metta(Self),Filename)),!.
-import_metta(Self,RelFilename):-
+import_metta1(Self,RelFilename):-
   must_det_ll((
      symbol(RelFilename),
      exists_file(RelFilename),
@@ -253,15 +326,33 @@ import_metta(Self,RelFilename):-
 :- ensure_loaded(metta_persists).
 :- ensure_loaded(metta_parser).
 
-include_metta(Self,Filename):-
+%!  include_metta(+Self, +Filename) is det.
+%
+%   Includes a Metta file and handles circular dependencies.
+%   The predicate checks if the Filename is already in the list of currently
+%   includeed files (to avoid circular includes). If it is, an error is thrown.
+%   If not, it adds the Filename to the list, proceeds with the include, and
+%   finally removes the Filename after the include is complete.
+%
+%   @arg Self The current module or context performing the include.
+%   @arg Filename The name of the file to be includeed.
+%
+%   @throws An error if the file is already in the list of currently includeed files.
+%
+include_metta(Self, Filename):-
+    % Use without_circular_error/2 to handle circular dependencies for including files.
+    without_circular_error(include_metta1(Self, Filename),
+        missing_exception(include_metta(Self, Filename))).
+
+include_metta1(Self,Filename):-
   (\+ symbol(Filename); \+ exists_file(Filename)),!,
   must_det_ll(with_wild_path(include_metta(Self),Filename)),!.
-include_metta(Self,RelFilename):-
+include_metta1(Self,RelFilename):-
   must_det_ll((
      symbol(RelFilename),
      exists_file(RelFilename),!,
      afn_from(RelFilename,Filename),
-     % true = foced, false = generate only if needed
+     % true = forced, false = generate only if needed
      gen_tmp_file(false,Filename),
      directory_file_path(Directory, _, Filename),
      pfcAdd_Now(metta_file(Self,Filename,Directory)),
@@ -269,8 +360,6 @@ include_metta(Self,RelFilename):-
      include_metta_directory_file(Self,Directory, Filename))),
      pfcAdd_Now(user:loaded_into_kb(Self,Filename)),
      nop(listing(user:loaded_into_kb/2)).
-
-
 
 % count_lines_up_to(TwoK,Filename, Count).
 count_lines_up_to(TwoK,Filename, Count) :-
