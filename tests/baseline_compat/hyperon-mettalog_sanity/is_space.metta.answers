@@ -1,0 +1,7 @@
+[()]
+[(Error (assertEqual (is-space &corelib) True) 
+Expected: [True]
+Got: [False]
+Missed result: True)]
+0.02user 0.00system 0:00.03elapsed 81%CPU (0avgtext+0avgdata 25008maxresident)k
+0inputs+0outputs (1major+3069minor)pagefaults 0swaps

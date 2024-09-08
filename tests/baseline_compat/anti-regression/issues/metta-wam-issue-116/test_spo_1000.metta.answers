@@ -1,0 +1,3 @@
+[(Error (import! &hald1000 hald_spo_1000.metta) Illegal module name: hald_spo_1000.metta)]
+0.06user 0.00system 0:00.07elapsed 87%CPU (0avgtext+0avgdata 34064maxresident)k
+0inputs+0outputs (0major+3538minor)pagefaults 0swaps

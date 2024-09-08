@@ -1,0 +1,6 @@
+[(Error (assertEqualToResult (sealed ($x) (sealed ($a $b) (quote (= ($a $x $c) ($b))))) ((quote (= ($a $x $c) ($b))))) 
+Expected: [(quote (= ($a $x $c) ($b)))]
+Got: [(quote (= ($a#57 $x#37 $c) ($b#58)))]
+Missed result: (quote (= ($a $x $c) ($b))))]
+0.06user 0.00system 0:00.06elapsed 92%CPU (0avgtext+0avgdata 34576maxresident)k
+0inputs+0outputs (0major+3550minor)pagefaults 0swaps

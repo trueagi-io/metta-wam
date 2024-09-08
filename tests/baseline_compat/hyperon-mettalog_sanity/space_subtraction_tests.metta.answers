@@ -1,0 +1,13 @@
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[(Error (assertEqual (subtraction (get-atoms GroundingSpace-0x136f678) (get-atoms GroundingSpace-0x148a0c8)) (superpose ((foo 3 4) (foo $x 10) (foo $x $x)))) 
+Expected: [(foo 3 4), (foo $x 10), (foo $x $x)]
+Got: [(foo $x#254 $y#255), (foo 1 2), (foo 3 4), (foo $x#254 10), (foo $x#254 $x#254)]
+Missed result: (foo $x 10))]
+0.02user 0.00system 0:00.05elapsed 52%CPU (0avgtext+0avgdata 24984maxresident)k
+23984inputs+0outputs (145major+2970minor)pagefaults 0swaps
