@@ -212,44 +212,51 @@ absolute_dir(Dir,AbsDir):- afn(Dir, AbsDir, [access(read), file_errors(fail), fi
 absolute_dir(Dir,From,AbsDir):- afn(Dir, AbsDir, [relative_to(From),access(read), file_errors(fail), file_type(directory)]),!.
 
 
-%!  without_circular_error(+Key, :Goal, :Item) is det.
+%!  when_circular(+Key, :Goal, +Item, :DoThis) is semidet.
 %
-%   Ensures that a goal is executed without causing circular dependencies.
-%   This predicate manages a non-backtrackable global variable (Key) to track
-%   recursion and prevents circular dependencies by checking if the current item
-%   is already being processed.
+%   Executes a goal while preventing circular dependencies by tracking processed items.
+%   If the current item (e.g., a file or goal) is already in the list of currently processed
+%   items (tracked by Key), it executes the provided DoThis action and fails. Otherwise, it
+%   proceeds with the goal, ensuring that the item is properly tracked. The item is automatically
+%   removed from the tracking list after execution, using `setup_call_cleanup/3` for cleanup.
 %
-%   @arg Key   The name of the global variable to track recursion (e.g., '$importing_metta_files').
+%   @arg Key   The name of the non-backtrackable global variable to track circular dependencies.
 %   @arg Goal  The goal to execute if no circular dependencies are detected.
-%   @arg Item  The item being processed (e.g., the file name).
+%   @arg Item  The item being processed (e.g., a file name or goal).
+%   @arg DoThis The action to take when a circular dependency is detected (e.g., throwing an error).
 %
-%   @throws An error if a circular dependency is detected.
-%
-without_circular_error(Key, Goal, Item, Error) :-
-    % Retrieve the current list of items from the global variable.
+when_circular(Key, Goal, Item, DoThis) :-
+    % Retrieve the current list of items from the global variable (if it exists).
     (nb_current(Key, CurrentItems) -> true; CurrentItems = []),
-    % Check if the item is already in the list (circular dependency).
+    % Check if the item is already in the list (indicating a circular dependency).
     (   member(Item, CurrentItems)
-    ->  % Throw an error if the item is already being processed.
-        throw(error(Error, _))
-    ;   % Otherwise, add the item to the list.
-        nb_setval(Key, [Item | CurrentItems]),
-        % Run the actual goal within the circularity check.
-        (   call(Goal)
-        ->  true
-        ;   % If the goal fails, ensure we remove the item from the list.
-            nb_current(Key, UpdatedItems),
-            select(Item, UpdatedItems, RemainingItems),
-            nb_setval(Key, RemainingItems),
-            fail
-        ),
-        % After the goal completes, remove the item from the list.
-        nb_current(Key, UpdatedItems),
-        select(Item, UpdatedItems, RemainingItems),
-        nb_setval(Key, RemainingItems)
+    ->  % If circular, execute the custom action (e.g., throw an error or handle it some other way).
+        call(DoThis)
+    ;   % Otherwise, use setup_call_cleanup to ensure the item is removed after execution.
+        setup_call_cleanup(
+            % Setup: Add the item to the list of currently processed items.
+            nb_setval(Key, [Item | CurrentItems]),
+            % Call the goal.
+            call(Goal),
+            % Cleanup: After the goal completes, remove the item from the list.
+            (nb_current(Key, UpdatedItems),
+             select(Item, UpdatedItems, RemainingItems),
+             nb_setval(Key, RemainingItems))
+        )
     ).
-without_circular_error(Goal, Error):-
-  without_circular_error('$circular_goals', Goal, Goal, Error).
+
+%!  without_circular_error(:Goal, +Error) is det.
+%
+%   Executes a goal while avoiding circular dependencies. If a circular dependency
+%   is detected, an error is thrown.
+%
+%   @arg Goal  The goal to execute if no circular dependencies are detected.
+%   @arg Error The error term to throw in case of circular dependency.
+%
+without_circular_error(Goal, Error) :-
+    % Use when_circular/4 to handle circular dependencies and throw an error when detected.
+    when_circular('$circular_goals', Goal, Goal, throw(error(Error, _))).
+
 
 :- dynamic(is_metta_module_path/3).
 :- dynamic(is_metta_module_path/1).
@@ -303,9 +310,12 @@ load_metta1(Self,RelFilename):-
 %   @throws An error if the file is already in the list of currently imported files.
 %
 import_metta(Self, Filename):-
-    % Use without_circular_error/2 to handle circular dependencies for importing files.
-    without_circular_error(import_metta1(Self, Filename),
-        missing_exception(import_metta(Self, Filename))).
+    About = import_metta1(Self, Filename),
+    % Use when_circular/4 to handle circular dependencies for importing files.
+    when_circular('$circular_goals', About, About, complain_if_missing(Filename,About)).
+
+complain_if_missing(Filename,About):- \+ exists_file(Filename), !, write_src_nl(missing_exception(About)).
+complain_if_missing( _ ,About):- write_src_nl(circular_exception(About)).
 
 import_metta1(Self,Module):- current_predicate(py_is_module/1),py_is_module(Module),!,
  must_det_ll(self_extend_py(Self,Module)),!.
