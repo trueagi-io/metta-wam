@@ -30,6 +30,303 @@ handling of lists and individual items.s * *
 */
 
 
+
+%!  parse_sexpr_untyped(+Input, -Output) is det.
+%
+%   Parses an untyped S-expression from the input.
+%
+%   This predicate acts as a wrapper around `parse_sexpr/2`, which performs
+%   the actual parsing of S-expressions.
+%
+%   @arg Input  The input from which the S-expression is parsed.
+%   @arg Output The parsed S-expression.
+parse_sexpr_untyped(I, O) :-
+    % Call the helper predicate to parse the S-expression.
+    parse_sexpr(I, O).
+
+%!  parse_sexpr(+Input, -Output) is det.
+%
+%   Parses an S-expression from the input.
+%
+%   This predicate reads the S-expression using `read_sexpr/2`.
+%
+%   @arg Input  The input from which the S-expression is read.
+%   @arg Output The parsed S-expression.
+parse_sexpr(I, O) :-
+    % Use read_sexpr/2 to parse the input into an S-expression.
+    read_sexpr(I, O).
+
+:- export(extract_lvars/3).
+
+%=
+
+%!  extract_lvars(?A, ?B, ?After) is det.
+%
+%   Extract L-vars (logical variables).
+%
+%   This predicate extracts logical variables by processing the initial list
+%   of variables (if any), removing incomplete variables, and copying them
+%   into the output.
+%
+%   @arg A      The first term from which to extract logical variables.
+%   @arg B      The list of variables to process.
+%   @arg After  The resulting list after processing.
+%
+extract_lvars(A,B,After):-
+    % Retrieve the variable list, if available, otherwise initialize to an empty list.
+     (get_varname_list(Before)->true;Before=[]),
+    % Remove incomplete variables from the list.
+     remove_incompletes(Before,CBefore),!,
+    % Copy the logical variables from the input.
+     copy_lvars(A,CBefore,B,After),!.
+
+
+%!  copy_lvars(:TermVAR, ?Vars, :TermNV, ?NVars) is det.
+%
+%   Copy logical variables.
+%
+%   This predicate copies logical variables from the first term, passing
+%   through a list of variables, and outputs the copied result.
+%
+%   @arg TermVAR The term with logical variables to copy.
+%   @arg Vars    The list of current variables.
+%   @arg TermNV  The output term after copying logical variables.
+%   @arg NVars   The updated list of variables after copying.
+%
+
+% Removed as it was commented out in the original code.
+% copy_lvars( VAR,Vars,VAR,Vars):- var(VAR),!.
+
+copy_lvars(Term, Vars, Out, VarsO) :-
+    % If the term is an empty list, directly return it and pass along Vars.
+    Term == [], !,
+    must_det_ll((Out = Term, VarsO = Vars)).
+copy_lvars(VAR, Vars, Out, VarsO) :-
+    % If the term is a variable, return it unchanged and pass along Vars.
+    var(VAR), !,
+    must_det_ll((Out = VAR, VarsO = Vars)).
+copy_lvars([H|T], Vars, [NH|NT], VarsO) :-
+    % If the term is a list, recursively process the head and tail.
+    !, copy_lvars(H, Vars, NH, SVars), !,
+    copy_lvars(T, SVars, NT, VarsO).
+copy_lvars('?'(Inner), Vars, Out, VarsO) :-
+    % If the term is a '?'-prefixed variable, process the inner term and handle accordingly.
+    !, copy_lvars(Inner, Vars, NInner, VarsO),
+    must_det_ll((atom(NInner) -> atom_concat_or_rtrace('?', NInner, Out) ; Out = '?'(NInner))), !.
+copy_lvars(VAR, Vars, Out, VarsO) :-
+    % If the term is a logical variable, register it and return the new variable list.
+    svar(VAR, Name) -> must_det_ll(atom(Name)), !,
+    must_det_ll(register_var(Name = Out, Vars, VarsO)).
+copy_lvars(VAR, Vars, Out, VarsO) :-
+    % If the term is atomic (non-compound), return it unchanged.
+    \+ compound(VAR), !,
+    must_det_ll((Out = VAR, VarsO = Vars)).
+copy_lvars(Term,Vars,NTerm,VarsO):-
+    % If the term is compound, decompose it and process the arguments.
+    Term =.. [F | Args],
+    (svar(F,_)-> copy_lvars( [F|Args],Vars,NTerm,VarsO);
+        % Reconstruct the term after copying the arguments.
+       (copy_lvars(Args,Vars,NArgs,VarsO), NTerm=..[F|NArgs])),!.
+
+
+
+%=
+
+%!  svar(?Var, ?NameU) is det.
+%
+%   Checks if this is a KIF (Knowledge Interchange Format) variable and converts it to a name suitable for Prolog.
+%
+%   @arg Var   The variable to check.
+%   @arg NameU The name of the variable after conversion.
+%
+svar(SVAR, UP) :-
+    % Handle the case where the name is already bound.
+    nonvar(UP), !, trace_or_throw(nonvar_svar(SVAR, UP)).
+svar(Var, Name) :-
+    % If the variable is unbound, fix its name.
+    var(Var), !, must_det_ll(svar_fixvarname(Var, Name)).
+svar('$VAR'(Var), Name) :-
+    % Handle Prolog internal variables.
+    number(Var), Var > -1, !,
+    must_det_ll(format(atom(Name), '~w', ['$VAR'(Var)])), !.
+svar('$VAR'(Name), VarName) :-
+    % Process '$VAR' variables.
+    !, must_det_ll(svar_fixvarname(Name, VarName)).
+svar('?'(Name), NameU) :-
+    % Handle variables prefixed by '?'.
+    svar_fixvarname(Name, NameU), !.
+svar(_, _) :-
+    % Fail if not in a valid KIF context.
+    \+ kif_ok, !, fail.
+svar(VAR, Name) :-
+    % If the variable starts with '?', fix its name.
+    atom(VAR), atom_concat_or_rtrace('?', A, VAR), non_empty_atom(A),
+    svar_fixvarname(VAR, Name), !.
+svar([], _) :-
+    % Fail if the variable is an empty list.
+    !, fail.
+svar('#'(Name), NameU) :-
+    % Handle variables prefixed by '#'.
+    !, svar(Name, NameU), !.
+svar('@'(Name), NameU) :-
+    % Handle variables prefixed by '@'.
+    svar_fixvarname(Name, NameU), !.
+svar(VAR, Name) :-
+    % If the variable starts with '@', fix its name.
+    atom(VAR), atom_concat_or_rtrace('@', A, VAR), non_empty_atom(A),
+    svar_fixvarname(VAR, Name), !.
+
+:- export(svar_fixvarname/2).
+
+%=
+
+%!  svar_fixvarname(?SVARIN, ?UP) is det.
+%
+%   Fix the variable name.
+%
+%   @arg SVARIN The input variable name.
+%   @arg UP     The fixed variable name.
+%
+svar_fixvarname(SVAR, UP) :-
+    % If the name is already bound, throw an error.
+    nonvar(UP), !, trace_or_throw(nonvar_svar_fixvarname(SVAR, UP)).
+svar_fixvarname(SVAR, UP) :-
+    % Fix the name if it follows certain conventions.
+    svar_fixname(SVAR, UP), !.
+svar_fixvarname(SVAR, UP) :-
+    % If fixing fails, throw an error.
+    fail, trace_or_throw(svar_fixname(SVAR, UP)).
+
+%!  svar_fixname(?Var, ?NameO) is det.
+%
+%   Fix the name of the variable if needed.
+%
+%   @arg Var    The variable to fix.
+%   @arg NameO  The output variable name.
+%
+svar_fixname(Var, NameO) :-
+    % If the variable is unbound, get its name.
+    var(Var), !,
+    variable_name_or_ref(Var, Name), sanity(nonvar(Name)), !,
+    svar_fixvarname(Name, NameO).
+svar_fixname('$VAR'(Name), UP) :-
+    % Process Prolog internal '$VAR' variables.
+    !, svar_fixvarname(Name, UP).
+svar_fixname('@'(Name), UP) :-
+    % Handle variables prefixed by '@'.
+    !, svar_fixvarname(Name, UP).
+svar_fixname('?'(Name), UP) :-
+    % Handle variables prefixed by '?'.
+    !, svar_fixvarname(Name, UP).
+svar_fixname('block'(Name), UP) :-
+    % Handle 'block' variables.
+    !, svar_fixvarname(Name, UP).
+svar_fixname(SVAR, SVARO) :-
+    % If the name is already valid, return it as is.
+    ok_var_name(SVAR), !, SVARO = SVAR.
+svar_fixname('??', '_') :-
+    % Special case for '??'.
+    !.
+svar_fixname(QA, AU) :-
+    % Handle variables starting with '??'.
+    atom_concat_or_rtrace('??', A, QA), non_empty_atom(A), !,
+    svar_fixvarname(A, AO), atom_concat_or_rtrace('_', AO, AU).
+svar_fixname(QA, AO) :-
+    % Handle variables starting with '?'.
+    atom_concat_or_rtrace('?', A, QA), non_empty_atom(A), !,
+    svar_fixvarname(A, AO).
+svar_fixname(QA, AO) :-
+    % Handle variables starting with '@'.
+    atom_concat_or_rtrace('@', A, QA), non_empty_atom(A), !,
+    svar_fixvarname(A, AO).
+svar_fixname(NameU, NameU) :-
+    % Handle variables starting with '_', followed by numbers.
+    atom_concat_or_rtrace('_', Name, NameU),
+    non_empty_atom(Name), atom_number(Name, _), !.
+svar_fixname(NameU, NameUO) :-
+    % Handle variables starting with '_', followed by a non-number.
+    atom_concat_or_rtrace('_', Name, NameU), non_empty_atom(Name),
+ \+ atom_number(Name,_),!,svar_fixvarname(Name,NameO),atom_concat_or_rtrace('_',NameO,NameUO).
+svar_fixname(I,O):-
+    % Perform final adjustments on the variable name by replacing special characters.
+ notrace((
+  notrace(catch(fix_varcase(I,M0),_,fail)),
+  atom_subst(M0,'@','_AT_',M1),
+  atom_subst(M1,'?','_Q_',M2),
+  atom_subst(M2,':','_C_',M3),
+  atom_subst(M3,'-','_',O),
+  ok_var_name(O))),!.
+
+%=
+
+%!  fix_varcase(?I, ?O) is det.
+%
+%   Fix the case of a variable name.
+%
+%   @arg I  The input variable name.
+%   @arg O  The output variable name after case adjustment.
+%
+fix_varcase(Word, Word) :-
+    % If the word starts with '_', leave it unchanged.
+    atom_concat_or_rtrace('_', _, Word), !.
+fix_varcase(Word, WordC) :-
+    % Convert the first letter to uppercase.
+    !, atom_codes(Word, [F | R]), to_upper(F, U), atom_codes(WordC, [U | R]).
+fix_varcase(Word, Word) :-
+    % If the word is already uppercase, leave it unchanged.
+    upcase_atom(Word, UC), UC = Word, !.
+fix_varcase(Word, WordC) :-
+    % Convert the first letter to uppercase if the word is lowercase.
+    downcase_atom(Word, UC), UC = Word, !,
+    atom_codes(Word, [F | R]), to_upper(F, U), atom_codes(WordC, [U | R]).
+fix_varcase(Word, Word).  % Handle mixed-case words.
+
+:- export(ok_varname_or_int/1).
+
+%!  ok_varname_or_int(?Name) is det.
+%
+%   Checks if a name is a valid variable name or an integer.
+%
+%   @arg Name The name to check.
+%
+ok_varname_or_int(Name) :-
+    % Check if the name is a valid atom.
+    atom(Name), !, ok_var_name(Name).
+ok_varname_or_int(Name) :-
+    % Check if the name is a number.
+    number(Name).
+
+%!  ok_var_name(?Name) is det.
+%
+%   Checks if the name is a valid variable name.
+%
+%   @arg Name The name to validate.
+%
+ok_var_name(Name):-
+    % Ensure the name follows valid Prolog variable naming rules.
+ notrace((
+  quietly_sreader(( atom(Name),atom_codes(Name,[C|_List]),char_type(C,prolog_var_start),
+      notrace(catch(read_term_from_atom(Name,Term,[variable_names(Vs)]),_,fail)),
+      !,var(Term),Vs=[RName=RVAR],!,RVAR==Term,RName==Name)))).
+
+%:- export(ok_codes_in_varname/1).
+%ok_codes_in_varname([]).
+%ok_codes_in_varname([C|List]):-!,ok_in_varname(C),ok_codes_in_varname(List).
+
+%:- export(ok_in_varname/1).
+%ok_in_varname(C):-sym_char(C),\+member(C,`!@#$%^&*?()`).
+
+
+
+%=
+
+%% atom_upper( ?A, ?U) is det.
+%
+% Atom Upper.
+%
+atom_upper(A,U):-string_upper(A,S),quietly_sreader(((atom_string(U,S)))).
+
+
 %!  io_to_err(+Goal) is det.
 %
 %   Redirects the output of the given Goal to the user_error stream.
@@ -424,6 +721,7 @@ write_readably(OutStream, Item) :-
 % Throws an error with stream position if the S-expression cannot be parsed.
 % @arg Stream Stream from which to read.
 % @arg Item The item read from the stream.
+read_sexpr(I,O):- string(I), open_string(I,S),!,read_sexpr(S,O).
 read_sexpr(Stream, Item) :-
     skip_spaces(Stream),  % Ignore whitespace before reading the expression.
     get_char(Stream, Char),
