@@ -692,7 +692,7 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,
     (((From = file(_Filename), option_value('exec',skip), \+ always_exec(BaseEval)))
      -> (
          % Skip execution if conditions are met
-         GG = (skip(Term),deterministic(Complete)),
+         GgGgGgGgGgG = (skip(Term),deterministic(Complete)),
          % Mark as skipped
          Skipping = 1,!,
          % Previously: Output = "Skipped"
@@ -700,7 +700,7 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,
          true
         )
         ; % Otherwise, execute the goal interactively
-        GG = (
+        GgGgGgGgGgG = (
             % Execute Term and capture the result
             ((  (Term),deterministic(Complete),
                 % Transform output for display and store it in the result
@@ -739,7 +739,7 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,
    % Interactive looping with possible timing and stepping control
    (forall_interactive(
     From, WasInteractive,Complete, %may_rtrace
-     (timed_call(GG,Seconds)),
+     (timed_call(GgGgGgGgGgG,Seconds)),
   ((((((Complete==true->!;true),
        %repeat,
        set_option_value(interactive,WasInteractive),
