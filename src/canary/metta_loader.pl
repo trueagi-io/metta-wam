@@ -84,6 +84,8 @@ wwp(_Fnicate, Virtual) :- exists_virtually(Virtual),!.
 wwp(Fnicate, Virtual) :- var(Virtual),!,throw(var_wwp(Fnicate, Virtual)).
 wwp(Fnicate, Dir) :-  is_scryer, symbol(Dir), !, must_det_ll((path_chars(Dir,Chars), wwp(Fnicate, Chars))).
 
+% catches charlist and codelist filenames
+wwp(Fnicate, Chars) :- is_list(Chars), catch(name(File,Chars),_,fail), Chars\==File,!, wwp(Fnicate, File).
 
 wwp(Fnicate, File) :- is_list(File), !,
    must_det_ll((maplist(wwp(Fnicate), File))).
@@ -93,6 +95,7 @@ wwp(Fnicate, Cmpd):- compound(Cmpd),
   afn(Outter, Dir,[solutions(all), access(read), file_errors(fail)]),
   with_cwd(Dir,wwp(Fnicate, Inner)),!.
 
+% this is what captures string in SWI-Prolog
 wwp(Fnicate, Chars) :-  \+ is_scryer, \+ symbol(Chars), !, must_det_ll((name(Atom,Chars), wwp(Fnicate, Atom))).
 
 wwp(Fnicate, File) :- exists_file(File), !, must_det_ll(( call(Fnicate, File))).
@@ -298,8 +301,8 @@ load_metta1(Self, Filename):-
     % Call loonit_report (likely for logging or reporting purposes).
     loonit_report.
 load_metta1(Self, RelFilename):-
-    % Ensure that the relative filename is an atom and exists as a valid file.
-    must_det_ll((atom(RelFilename),
+    % Ensure that the relative filename is a path and exists as a valid file.
+    must_det_ll((symbol(RelFilename), % @TODO or a string?
     exists_file(RelFilename),!,
     % Convert the relative filename to an absolute filename.
     afn_from(RelFilename, Filename),
