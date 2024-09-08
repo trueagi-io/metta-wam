@@ -312,10 +312,9 @@ compute_available_time(ActualTimeout) :-
 compute_available_time(ActualTimeout) :-
     loonit_divisor(TestNumber),
     option_else(timeout, AvailableTimeoutStr, "120"),
-    break,
     into_number(AvailableTimeoutStr, AvailableTimeout),
     ComputedTimeout is (AvailableTimeout / TestNumber) - 2,
-    max_min(4, ComputedTimeout, _, ActualTimeout), !.
+    max_min(4, ComputedTimeout, ActualTimeout, _), !.
 
 %! tst_call_limited(+Goal) is det.
 %
@@ -628,6 +627,38 @@ dte(set(E.v)):- set(E.that)=v.
 :- disable_arc_expansion.
 :- listing(dte).
 :- endif.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1346,12 +1377,6 @@ fn test_types_in_metta() {
     assert_eq!(interpret(&space, &expr!("fac" {1})), Ok(vec![expr!({1})]));
     assert_eq!(interpret(&space, &expr!("fac" {3})), Ok(vec![expr!({6})]));
 }
-
-
-
-
-
-
 
 
     #[test]

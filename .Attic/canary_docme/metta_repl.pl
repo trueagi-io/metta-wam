@@ -159,6 +159,7 @@ repl3 :-
         ((ttyflush, repl4, ttyflush)),
         % After execution, restore the previous terminal prompt.
         notrace(prompt(_, Was))).
+
 %! repl4 is det.
 %   Executes the REPL logic by reading the input, processing expressions, and handling directives or commands.
 %   The loop is managed through exceptions (e.g., restarting or ending input).
@@ -414,33 +415,31 @@ add_history_pl(Exec) :-
 % Directive to set a global variable for variable names.
 :- nb_setval(variable_names, []).
 
-% Predicate to handle various cases for calling term variables.
 %! call_for_term_variables5(+Term, +DC, +Vars1, +Vars2, -CallTerm, -DCVars, -TF) is det.
 %   Processes term variables and generates a call for the term, handling specific cases for grounding and different variables.
-call_for_term_variables5(Term,[],[],[],as_tf(Term,TF),[],TF) :-
+%
+
     % If the term is ground, return the as_tf form.
-    ground(Term), !.
-call_for_term_variables5(Term,DC,[],[],call_nth(Term,TF),DC,TF) :-
+call_for_term_variables5(Term,[],[],[],as_tf(Term,TF),[],TF) :- ground(Term), !.
     % If the term is ground, create a call_nth with the term.
-    ground(Term), !.
+call_for_term_variables5(Term,DC,[],[],call_nth(Term,TF),DC,TF) :- ground(Term), !.
 % If there is one variable, set the term to call_nth.
 call_for_term_variables5(Term,_,[],[_=Var],call_nth(Term,Count),['Count'=Count],Var).
 % Similar case when the variable is reversed in arguments.
 call_for_term_variables5(Term,_,[_=Var],[],call_nth(Term,Count),['Count'=Count],Var).
-    % If both term variables and equal variable are present, pass them along.
+% If both term variables and equal variable are present, pass them along.
 call_for_term_variables5(Term,_,Vars,[_=Var],Term,Vars,Var).
 % Same case but with the variables reversed.
 call_for_term_variables5(Term,_,[_=Var],Vars,Term,Vars,Var).
 % Handle case with more than one variable, generating a call_nth.
 call_for_term_variables5(Term,_,SVars,Vars,call_nth(Term,Count),[Vars,SVars],Count).
 
-% Predicate to check if the source is interactive.
 %! is_interactive(+From) is semidet.
 %   Checks if input is from an interactive source such as the REPL.
-is_interactive(From) :-
-    % Delegate to the internal helper predicate.
-    notrace(is_interactive0(From)).
-%! is_interactive0(+From) is semidet.
+
+% Delegate to the internal helper predicate.
+is_interactive(From) :- notrace(is_interactive0(From)).
+
 %   Internal helper for checking if the source is interactive.
 is_interactive0(From) :-
     % Check if the source is repl_true, meaning it's interactive.
@@ -455,7 +454,10 @@ is_interactive0(From) :-
     % If the source is true, it's interactive.
     From = true, !.
 
+% ==================================================
 % Predicate to check and process assertions within terms.
+% ==================================================
+
 %! inside_assert(+Var, -Result) is det.
 %   Processes and identifies terms that involve assertions, extracting information from them.
 inside_assert(Var,Var) :-
@@ -485,7 +487,10 @@ inside_assert(:-(I),O) :-
     % Default case where the variable is unchanged.
 inside_assert(Var,Var).
 
+% ==================================================
 % Predicate to retrieve the current reading mode (REPL or file).
+% ==================================================
+
 %! current_read_mode(+Source, -Mode) is det.
 %   Retrieves the current mode based on whether the source is the REPL or a file.
 current_read_mode(repl,Mode) :-
@@ -553,15 +558,16 @@ xform_out(Out, OOut) :-
 % If the output is not a return value, set OOut to 'Empty'.
 xform_out(_Out, 'Empty').
 
-%! name_vars(+P) is det.
+%! name_vars(+Equality) is det.
 %   Assigns names to variables in the given term.
 %   @arg P is the term containing variables to be named.
-name_vars(P) :-
+name_vars(Equality) :-
     % Ignore failures when naming variables.
-    ignore(name_vars0(P)).
-%! name_vars0(+X=Y) is det.
+    ignore(name_vars0(Equality)).
+    
+%! name_vars0(+Equality) is det.
 %   Helper predicate that assigns names to variables if necessary.
-%   @arg X=Y is a term containing variables.
+%   @arg Equality is a term containing variables.
 name_vars0(X=Y) :-
     % If X and Y are identical, do nothing.
     X == Y, !.
@@ -734,7 +740,7 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,
    (forall_interactive(
     From, WasInteractive,Complete, %may_rtrace
      (timed_call(GG,Seconds)),
-     ((Complete==true->!;true),
+  ((((((Complete==true->!;true),
        %repeat,
        set_option_value(interactive,WasInteractive),
        Control = contrl(Max,DoLeap),
@@ -744,22 +750,30 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,
        flag(result_num,R,R+1),
        flag(result_num,ResNum,ResNum),
        reset_eval_num,
+       %not_compatio(format('~N')), maybe more space between answers?
+
+     user_io((
+       in_answer_io(if_t((Prev\=@=prev_result('Empty')),write(', '))),
+          nb_setarg(1,Prev,Output))),
+
+
      if_t(ResNum=<Max,
-         ((((ResNum==1,Complete==true)->(not_compatio(format('~NDeterministic: ',  [])), !);          %or Nondet
+         ((((ResNum==1,Complete==true)->(not_compatio(format('~N~nDeterministic: ',  [])), !);          %or Nondet
          /* previously: handle deterministic result output */
-         (Complete==true -> (not_compatio(format('~NLast Result(~w): ',[ResNum])),! );
-          not_compatio(format('~NNDet Result(~w): ',[ResNum]))))),
+         (Complete==true -> (not_compatio(format('~N~nLast Result(~w): ',[ResNum])),! );
+          not_compatio(format('~N~nNDet Result(~w): ',[ResNum]))))),
       ignore(((
             not_compatio(if_t( \+ symbolic(Output), nop(nl))),
             %if_t(ResNum==1,in_answer_io(format('~N['))),
-            in_answer_io(if_t((Prev\=@=prev_result('Empty')),write(', '))),
-            nb_setarg(1,Prev,Output),
              user_io(with_indents(is_mettalog,
              color_g_mesg_ok(yellow,
               \+ \+
                (maplist(maybe_assign,NamedVarsList),
-                not_compatio(write_asrc(Output)),
-                in_answer_io(write_asrc(Output))))))  ))),
+                not_compatio(write_bsrc(Output)),                
+                true)))) )) ))),
+     in_answer_io(write_asrc(Output)),
+
+       not_compatio(format('~N')),  % Just in case, add some virt space between answers
 
       ((Complete \== true, WasInteractive, DoLeap \== leap,
                 LeashResults > ResNum, ResNum < Max) -> Stepping = true ; Stepping = false),
@@ -787,15 +801,16 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,
          (C=='l' -> nb_setarg(2, Control, leap) ;
          (((C=='\n');(C=='\r')) -> (!,fail);
          (!,fail))))))))))));
+
        (Complete\==true, \+ WasInteractive, Control = contrl(Max,leap)) -> true ;
-        (((Complete==true ->! ; true)))))
+        (((Complete==true ->! ; true))))), format('~N~n')))
                     *-> (ignore(Result = res(FOut)),ignore(Output = (FOut)))
                     ; (flag(result_num,ResNum,ResNum),(ResNum==0->
       (in_answer_io(nop(write('['))),not_compatio(format('~N<no-results>~n~n')),!,true);true))),
                     in_answer_io(write(']\n')),
    ignore(Result = res(FOut)).
 
-%! maybe_assign(+N=V) is det.
+%! maybe_assign(+N_V) is det.
 %
 %   Attempts to assign variable V to the variable name N, if V is unbound.
 %
@@ -925,20 +940,28 @@ write_asrc(Var):- write_bsrc(Var),!.  % Otherwise, write the variable.
 %
 %   @arg Var is the variable to be written.
 write_bsrc(Var):- Var=='Empty',!,write(Var).  % Special case: write 'Empty' directly.
-write_bsrc(Var):- ground(Var),!,write_src(Var).  % If the variable is ground, write it directly.
+write_bsrc(Var):- ground(Var),!,write_bsrc1(Var).  % If the variable is ground, write it directly.
 write_bsrc(Var):- copy_term(Var,Copy,Goals),Var=Copy,write_bsrc(Var,Goals).  % For non-ground terms, handle goals.
-write_bsrc(Var,[]):- write_src(Var).  % Write the variable if no goals are present.
-write_bsrc(Var,[G|Goals]):-
+write_bsrc_goal(Var,[]):- write_src(Var).  % Write the variable if no goals are present.
+write_bsrc_goal(Var,[G|Goals]):-
     % Write the variable.
-    write_src(Var),
+    write_bsrc1(Var),
     % Write the opening brace for goals.
     write(' { '),
     % Write the first goal.
-    write_src(G),
+    write_bsrc1(G),
     % Write the remaining goals, separated by spaces.
     maplist(write_src_space, Goals),
     % Write the closing brace and newline.
     writeln(' } ').
+
+%!  write_bsrc1(+Var) is det.
+%
+%   Writes the value of a variable (often not indenting it)
+%
+%   @arg Var is the variable to be written.
+write_bsrc1(Var):- is_list(Var), member(E, Var), is_list(E), !, write_src(Var).
+write_bsrc1(Var):- write_src_woi(Var).
 
 %!  write_src_space(+Goal) is det.
 %
@@ -949,7 +972,7 @@ write_src_space(Goal):-
     % Write a space before the goal.
     write(' '),
     % Write the goal.
-    write_src(Goal).
+    write_bsrc1(Goal).
 
 %!  get_term_variables(+Term, -DontCaresN, -CSingletonsN, -CNonSingletonsN) is det.
 %
@@ -1028,12 +1051,12 @@ into_named_vars(Vars,L):-
     into_named_vars(VVs,L).
 
 
-%!  has_sub_var(+AllVars, +_=V) is semidet.
+%!  has_sub_var(+AllVars, +Equality) is semidet.
 %
 %   Succeeds if V is a sub-variable of any of the variables in AllVars.
 %
 %   @arg AllVars is the list of variables to search in.
-%   @arg V is the variable to check as a sub-variable.
+%   @arg Equality is the variable to check as a sub-variable.
 has_sub_var(AllVars,_=V):-
     % Check if V is a sub-variable of any variable in AllVars.
     sub_var(V,AllVars).
@@ -1087,12 +1110,12 @@ maybe_set_var_names(List):-
 maybe_set_var_names(_).
 
 
-%!  name_for_var_vn(+V, -N=V) is det.
+%!  name_for_var_vn(+V, -EqualityPair) is det.
 %
 %   Maps a variable V to a named variable pair N=V.
 %
 %   @arg V is the input variable.
-%   @arg N=V is the resulting named variable pair.
+%   @arg EqualityPair is the resulting named variable pair.
 name_for_var_vn(V,N=V):-
     % Retrieve the name for the variable V.
     name_for_var(V,N).
@@ -1381,7 +1404,7 @@ el_wrap_metta(_NoTTY) :-
 %
 /* previously: It would be nice to include file name completion here, but it was skipped for atom completion */
 add_metta_commands(Input) :-
-    % TODO: File name completion would be useful, but it’s currently skipped for Prolog atom completion.
+    % TODO: File name completion would be useful, but it is currently skipped for Prolog atom completion.
     % Bind a function for atom and file completion. Commented out.
     % editline:el_addfn(Input,complete,'Complete atoms and files',editline:complete),
     % Bind a function to list completions. Also commented out.
@@ -1444,7 +1467,9 @@ install_readline(Input):-
     %add_history_string("!(load-flybase-full)"),
     %add_history_string("!(pfb3)"),
     %add_history_string("!(obo-alt-id $X BS:00063)"),
-    %add_history_string("!(and (total-rows $T TR$) (unique-values $T2 $Col $TR))"),!.
+    %add_history_string("!(and (total-rows $T TR$) (unique-values $T2 $Col $TR))"),
+    !.
+    
 % Clause to handle non-tty(true) clients, like SWISH or HTTP server requests.
 install_readline(_NoTTY). % For non-tty(true) clients over SWISH/Http/Rest server
 

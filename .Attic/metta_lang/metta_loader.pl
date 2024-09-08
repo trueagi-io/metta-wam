@@ -511,7 +511,7 @@ convert_metta_to_datalog(Filename,DatalogFile):-
         setup_call_cleanup(
            open(DatalogFile, write, Output, [encoding(utf8)]),
             % Perform the conversion
-            translate_metta_file_to_datalog_io(Filename,Input,Output),
+             must_det_ll(translate_metta_file_to_datalog_io(Filename,Input,Output)),
             % Cleanup: Close the Datalog file
            close(Output)
         ),
@@ -519,13 +519,14 @@ convert_metta_to_datalog(Filename,DatalogFile):-
         close(Input)
     ),
     % Ensure the generated Datalog file is at least 50% the size of the METTA file
-    size_file(Filename, MettaSize),
-    size_file(DatalogFile, DatalogSize),
+   must_det_ll((
+   (size_file(Filename, MettaSize),
+    size_file(DatalogFile, DatalogSize)),
     (
         DatalogSize >= 0.5 * MettaSize
     ->  true  % If the size condition is met, succeed
     ;   delete_file(DatalogFile), fail  % If not, delete the Datalog file and fail
-    ),
+    ))),
     !.  % Prevent backtracking
 
 % atom_subst(+Source, +Replacements, -Result)
@@ -566,15 +567,16 @@ trim_to_last_nchars(Len, Atom, TrimmedAtom) :-
 translate_metta_file_to_datalog_io(Filename,Input,Output):- may_use_datalog,
   must_det_ll((
   %write header
+ notrace((
   write(Output,'/* '),write(Output,Filename),writeln(Output,' */'),
   % write the translation time and date
   get_time(Time),stamp_date_time(Time,Date,'UTC'),
   format_time(string(DateStr),'%FT%T%z',Date),
-  write(Output,'/* '),write(Output,DateStr),writeln(Output,' */'),
+  write(Output,'/* '),write(Output,DateStr),writeln(Output,' */'))),
   % make the predicate dynamic/multifile
   filename_to_mangled_pred(Filename,MangleP2),
     mangle_iz(MangleP2,MangleIZ),
-
+ notrace((
   format(Output,':- style_check(-singleton). ~n',[]),
   format(Output,':- style_check(-discontiguous). ~n',[]),
   format(Output,':- dynamic((~q)/2). ~n',[MangleP2]),
@@ -592,7 +594,7 @@ translate_metta_file_to_datalog_io(Filename,Input,Output):- may_use_datalog,
   writeln(Output,':- dynamic(user:asserted_metta_pred/2).'),
   writeln(Output,':- multifile(user:asserted_metta_pred/2).'),
   format(Output,'user:asserted_metta_pred(~q,~q). ~n',[MangleP2,Filename]),
-  with_output_to(Output,produce_iz(MangleP2)),
+  with_output_to(Output,produce_iz(MangleP2)))),
   %format(Output,':- user:register_asserted_metta_pred(~q,~q). ~n',[MangleP2,Filename]),
   flag(translated_forms,_,0),
   LastTime = t(Time),
