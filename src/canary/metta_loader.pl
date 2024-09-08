@@ -251,7 +251,7 @@ import_metta(Self,RelFilename):-
         include_metta_directory_file(Self,Directory, Filename)))).
 
 :- ensure_loaded(metta_persists).
-%:- ensure_loaded(metta_parser).
+:- ensure_loaded(metta_parser).
 
 include_metta(Self,Filename):-
   (\+ symbol(Filename); \+ exists_file(Filename)),!,
