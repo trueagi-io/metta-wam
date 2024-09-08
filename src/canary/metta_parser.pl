@@ -112,10 +112,10 @@ copy_lvars([H|T], Vars, [NH|NT], VarsO) :-
 copy_lvars('?'(Inner), Vars, Out, VarsO) :-
     % If the term is a '?'-prefixed variable, process the inner term and handle accordingly.
     !, copy_lvars(Inner, Vars, NInner, VarsO),
-    must_det_ll((atom(NInner) -> atom_concat_or_rtrace('?', NInner, Out) ; Out = '?'(NInner))), !.
+    must_det_ll((symbol(NInner) -> atom_concat_or_rtrace('?', NInner, Out) ; Out = '?'(NInner))), !.
 copy_lvars(VAR, Vars, Out, VarsO) :-
     % If the term is a logical variable, register it and return the new variable list.
-    svar(VAR, Name) -> must_det_ll(atom(Name)), !,
+    svar(VAR, Name) -> must_det_ll(symbol(Name)), !,
     must_det_ll(register_var(Name = Out, Vars, VarsO)).
 copy_lvars(VAR, Vars, Out, VarsO) :-
     % If the term is atomic (non-compound), return it unchanged.
@@ -160,7 +160,7 @@ svar(_, _) :-
     \+ kif_ok, !, fail.
 svar(VAR, Name) :-
     % If the variable starts with '?', fix its name.
-    atom(VAR), atom_concat_or_rtrace('?', A, VAR), non_empty_atom(A),
+    symbol(VAR), atom_concat_or_rtrace('?', A, VAR), non_empty_atom(A),
     svar_fixvarname(VAR, Name), !.
 svar([], _) :-
     % Fail if the variable is an empty list.
@@ -173,7 +173,7 @@ svar('@'(Name), NameU) :-
     svar_fixvarname(Name, NameU), !.
 svar(VAR, Name) :-
     % If the variable starts with '@', fix its name.
-    atom(VAR), atom_concat_or_rtrace('@', A, VAR), non_empty_atom(A),
+    symbol(VAR), atom_concat_or_rtrace('@', A, VAR), non_empty_atom(A),
     svar_fixvarname(VAR, Name), !.
 
 :- export(svar_fixvarname/2).
@@ -291,7 +291,7 @@ fix_varcase(Word, Word).  % Handle mixed-case words.
 %
 ok_varname_or_int(Name) :-
     % Check if the name is a valid atom.
-    atom(Name), !, ok_var_name(Name).
+    symbol(Name), !, ok_var_name(Name).
 ok_varname_or_int(Name) :-
     % Check if the name is a number.
     number(Name).
@@ -305,7 +305,7 @@ ok_varname_or_int(Name) :-
 ok_var_name(Name):-
     % Ensure the name follows valid Prolog variable naming rules.
  notrace((
-  quietly_sreader(( atom(Name),atom_codes(Name,[C|_List]),char_type(C,prolog_var_start),
+  quietly_sreader(( symbol(Name),atom_codes(Name,[C|_List]),char_type(C,prolog_var_start),
       notrace(catch(read_term_from_atom(Name,Term,[variable_names(Vs)]),_,fail)),
       !,var(Term),Vs=[RName=RVAR],!,RVAR==Term,RName==Name)))).
 
@@ -315,10 +315,6 @@ ok_var_name(Name):-
 
 %:- export(ok_in_varname/1).
 %ok_in_varname(C):-sym_char(C),\+member(C,`!@#$%^&*?()`).
-
-
-
-%=
 
 %% atom_upper( ?A, ?U) is det.
 %
@@ -722,17 +718,27 @@ write_readably(OutStream, Item) :-
 % @arg Stream Stream from which to read.
 % @arg Item The item read from the stream.
 read_sexpr(I,O):- string(I), open_string(I,S),!,read_sexpr(S,O).
-read_sexpr(Stream, Item) :-
+read_sexpr(I,O):- cont_sexpr(')', I,O).
+%! cont_sexpr(+EndChar:atom, +Stream:stream, -Item) is det.
+%
+% Reads a single item (S-expression or comment) from the specified stream, handling different formats and encodings.
+% Throws an error with stream position if the S-expression cannot be parsed.
+% @arg EndChar Character that denotes the end of a symbol.
+% @arg Stream Stream from which to read.
+% @arg Item The item read from the stream.
+cont_sexpr(EndChar, Stream, Item) :-
     skip_spaces(Stream),  % Ignore whitespace before reading the expression.
     get_char(Stream, Char),
-    (   Char = '(' -> read_list(Stream, Item)  % If '(', read an S-expression list.
+    (   Char = '(' -> read_list(')', Stream, Item)  % If '(', read an S-expression list.
+    ;   Char = '[' -> (read_list(']', Stream, It3m), Item = ['[...]',It3m])  % If '[', read an S-expression list.
+    ;   Char = '{' -> (read_list('}', Stream, It3m), Item = ['{...}',It3m])  % If '{', read an S-expression list.
     ;   Char = '"' -> read_quoted_string(Stream, '"', Item)  % Read a quoted string.
     ;   Char = '!' -> (read_sexpr(Stream, Subr), Item = exec(Subr))  % Read called directive
     ;   Char = '\'' -> read_quoted_symbol(Stream, '\'', Item)  % Read a quoted symbol.
     ;   Char = '`' -> read_quoted_symbol(Stream, '`', Item)  % Read a backquoted symbol.
     ;   Char = end_of_file -> Item = end_of_file  % If EOF, set Item to 'end_of_file'.
-    ; read_symbolic(Stream, Char, Item)            % Otherwise, read a symbolic expression.
-    ).
+    ; read_symbolic(EndChar, Stream, Char, Item)            % Otherwise, read a symbolic expression.
+    ), !.
 
 %! throw_stream_error(+Stream:stream, +Reason:term) is det.
 %
@@ -749,7 +755,7 @@ throw_stream_error(Stream, Reason) :-
 % A comment starts with ';' and continues to the end of the line.
 % @arg Stream The input stream from which to read.
 read_comment(Stream) :-
-    get_char(Stream, _),  % Skip the ';' character.
+    % get_char(Stream, _),  % Skip the ';' character.
     read_position(Stream, Line, Col, CharPos, Pos),
     read_until_eol(Stream, Comment),
     assertz(metta_file_comment(Line, Col, CharPos, '$COMMENT'(Comment,Line, Col), Pos)).
@@ -761,9 +767,9 @@ read_comment(Stream) :-
 % @arg Comment The comment text read from the stream.
 read_until_eol(Stream, Comment) :-
     get_char(Stream, Char),
-    (   Char = '\n' -> Comment = ''  % End of line reached, terminate the comment.
-    ;   Char = end_of_file -> Comment = ''  % End of file reached, terminate the comment.
-    ;   read_until_eol(Stream, RestComment), atom_concat(Char, RestComment, Comment)  % Read more characters recursively.
+    (   char_type(Char,end_of_line) -> Comment = ""  % End of line reached, terminate the comment.
+    ;   Char = end_of_file -> Comment = ""  % End of file reached, terminate the comment.
+    ;   read_until_eol(Stream, RestComment), string_concat(Char, RestComment, Comment)  % Read more characters recursively.
     ).
 
 %! read_position(+Stream:stream, -Line:integer, -Col:integer, -CharPos:integer) is det.
@@ -787,30 +793,37 @@ read_position(Stream, Line, Col, CharPos,Position) :-
 % @arg Stream Stream from which to skip spaces.
 skip_spaces(Stream) :-
     peek_char(Stream, Char),
-    (   Char = ';' -> read_comment(Stream)  % If the character is ';', read a single-line comment.
-    ;   char_type(Char, space) -> get_char(Stream, _), skip_spaces(Stream)  % Consume the space and continue.
+    (   Char = ';' -> (read_comment(Stream), skip_spaces(Stream))  % If the character is ';', read a single-line comment.
+    ;   is_like_space(Char) -> (get_char(Stream, _), skip_spaces(Stream))  % Consume the space and continue.
     ;   true  % Non-space character found; stop skipping.
-    ).
+    ), !.
 
-%! read_list(+Stream:stream, -List:list) is det.
+
+is_like_space(Char):- char_type(Char,white),!.
+is_like_space(Char):- char_type(Char,end_of_line),!.
+is_like_space(Char):- char_type(Char,space),!.
+is_like_space(Char):- char_type(Char,cntrl),!.
+
+%! read_list(+EndChar:atom, +Stream:stream, -List:list) is det.
 %
 % Reads a list from the stream until the closing parenthesis is encountered.
 % It skips comments while reading the list but asserts them with their positions.
 % Throws an error with stream position if the list cannot be parsed correctly.
 % @arg Stream Stream from which to read.
 % @arg List The list read from the stream.
-read_list(Stream, List) :-
+% @arg EndChar Character that denotes the end of the list.
+read_list(EndChar, Stream, List) :-
     skip_spaces(Stream),  % Skip any leading spaces before reading.
-    peek_char(Stream, Char),
-    ( Char = ')' ->  % Closing parenthesis signals the end of the list.
+    peek_char(Stream, Char), !,
+    ( Char = EndChar ->  % Closing parenthesis signals the end of the list.
         get_char(Stream, _),  % Consume the closing parenthesis.
         List = []
     ; Char = end_of_file ->  % Unexpected end of file inside the list.
         throw_stream_error(Stream, syntax_error(unexpected_end_of_file, "Unexpected end of file in list"))
-    ; read_sexpr(Stream, Element),  % Read the next S-expression.
-        read_list(Stream, Rest),  % Continue reading the rest of the list.
+    ; cont_sexpr(EndChar, Stream, Element),  % Read the next S-expression.
+        read_list(EndChar, Stream, Rest),  % Continue reading the rest of the list.
         List = [Element | Rest]  % Add the element to the result list.
-    ).
+    ), !.
 
 %! read_quoted_string(+Stream:stream, +EndChar:atom, -String:atom) is det.
 %
@@ -855,15 +868,16 @@ read_until_char(Stream, EndChar, Chars) :-
         Chars = [Char | RestChars]
     ).
 
-%! read_symbolic(+Stream:stream, +FirstChar:atom, -Symbolic:atom) is det.
+%! read_symbolic(+EndChar:atom, +Stream:stream, +FirstChar:atom, -Symbolic:atom) is det.
 %
 % Reads a symbolic expression starting with a specific character, possibly incorporating more complex syntaxes.
 % Throws an error with stream position if the symbolic expression cannot be parsed.
+% @arg EndChar Character that indicates the end of the reading unless escaped.
 % @arg Stream Stream from which to read.
 % @arg FirstChar The first character of the symbolic expression.
 % @arg Symbolic The complete symbolic expression read.
-read_symbolic(Stream, FirstChar, Symbolic) :-
-    read_symbolic_cont(Stream, RestChars),
+read_symbolic(EndChar, Stream, FirstChar, Symbolic) :-
+    read_symbolic_cont(EndChar, Stream, RestChars),
     classify_and_convert_charseq(FirstChar, RestChars, Symbolic).
 
 %! classify_and_convert_charseq(+FirstChar:atom, +RestChars:list, -Symbolic:term) is det.
@@ -878,24 +892,26 @@ classify_and_convert_charseq(FirstChar, RestChars, Symbolic) :-
     notrace(catch(read_from_chars([FirstChar | RestChars], Symbolic), _, fail)), atomic(Symbolic), !.
 classify_and_convert_charseq(FirstChar, RestChars, Symbolic) :- atom_chars(Symbolic, [FirstChar | RestChars]).
 
-%! read_symbolic_cont(+Stream:stream, -Chars:list) is det.
+%! read_symbolic_cont(+EndChar:atom, +Stream:stream, -Chars:list) is det.
 %
 % Continues reading symbolic characters from the stream until a delimiter is encountered.
 % If a backslash is followed by a delimiter, the delimiter is added as a regular character.
+% @arg EndChar Character that indicates the end of the reading unless escaped.
 % @arg Stream Stream from which to read.
 % @arg Chars List of characters read, forming part of a symbolic expression.
-read_symbolic_cont(Stream, Chars) :-
+read_symbolic_cont(EndChar, Stream, Chars) :-
     peek_char(Stream, NextChar),
     (   is_delimiter(NextChar) -> Chars = []  % Stop when a delimiter is found.
-    ;   get_char(Stream, NextChar),
+    ;   EndChar == NextChar -> Chars = []  % Stop when an EndChar is found.
+    ; ( get_char(Stream, NextChar),
         (   NextChar = '\\' ->  % If it's a backslash, read the next char.
-            get_char(Stream, EscapedChar),
-            read_symbolic_cont(Stream, RestChars),
-            Chars = [EscapedChar | RestChars]  % Add the escaped char normally.
-        ;   read_symbolic_cont(Stream, RestChars),
-            Chars = [NextChar | RestChars]  % Continue reading the symbolic characters.
-        )
-    ).
+          ( get_char(Stream, EscapedChar),
+            read_symbolic_cont(EndChar, Stream, RestChars),
+            Chars = [EscapedChar | RestChars] ) % Add the escaped char normally.
+        ; ( read_symbolic_cont(EndChar, Stream, RestChars),
+            Chars = [NextChar | RestChars] ) % Continue reading the symbolic characters.
+        ))
+    ), !.
 
 
 %! is_delimiter(+Char:atom) is semidet.

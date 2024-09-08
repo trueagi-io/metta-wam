@@ -23,16 +23,16 @@
 ;!(pragma! eval trace)
 
 
-!(is-expression $x) ; rust/mettalog False
-!(is-expression (⍃ 4 3)) ; rust/mettalog True
-!(is-expression (⍃ 4 $x)) ; rust/mettalog True
-!(is-expression 4) ; rust/mettalog False
+!(assertEqual (is-expression $x) False) ; rust/mettalog False
+!(assertEqual (is-expression (⍃ 4 3)) True)  ; rust/mettalog True
+!(assertEqual (is-expression (⍃ 4 $x)) True) ; rust/mettalog True
+!(assertEqual (is-expression 4) False) ; rust/mettalog False
 
-!(is-closed $x) ; rust/mettalog False
-!(is-closed 4) ; rust/mettalog True
-!(is-closed (⍃ $y 3)) ; rust gets stuck / mettalog false
-!(is-closed (⍃ 4 $x)) ; rust gets stuck / mettalog false
-!(is-closed (⍃ 4 3)) ; rust gets stuck / mettalog true
+!(assertEqual (is-closed $x) False) ; rust/mettalog False
+!(assertEqual (is-closed 4) True) ; rust/mettalog True
+!(assertEqual (is-closed (⍃ $y 3)) False) ; rust gets stuck / mettalog false
+!(assertEqual (is-closed (⍃ 4 $x)) False) ; rust gets stuck / mettalog false
+!(assertEqual (is-closed (⍃ 4 3)) True) ; rust gets stuck / mettalog true
 
 
 

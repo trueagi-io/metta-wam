@@ -230,6 +230,8 @@
            Nat                           ; Number of iterations
            $a))                          ; Conclusion
 
+
+
 ;; Base case.  For now it terminates at exactly iteration Z to avoid
 ;; collecting too many redundant results.
 (= (ifc $prms $depth Z) $prms)
@@ -300,10 +302,12 @@
        (-> (⍃ (S Z) (S Z)) (minsup (Inheritance D (VarIdx (S Z))))))))
 
 
+
+
 !(pragma! test true)
 
 (= (eachfc)
-  
+
    (let $aptrn (Inheritance (VarIdx Z) (VarIdx (S Z)))
 	(fc (: (supportwitness $aptrn) (supportOf $aptrn (countNat $aptrn))) (fromNumber 8))))
 
@@ -311,12 +315,15 @@
 !(let $expected (expected)
   (assertEqualToResult (eachfc) $expected))
 
-; !(expected)
+!a
 
-;!(let $expected (expected)
+!"
+; !(expected)
+; !(let $expected (expected)
 ;  (assertEqualToResult
 ;   (let $aptrn (Inheritance (VarIdx Z) (VarIdx (S Z)))
 ;	  (fc (: (supportwitness $aptrn) 
 ;			 (supportOf $aptrn (countNat $aptrn))) (fromNumber 8))) 
 ;	$expected))
+"
 
