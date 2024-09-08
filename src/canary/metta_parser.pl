@@ -740,7 +740,7 @@ read_sexpr(Stream, Item) :-
 % @arg Stream The input stream.
 % @arg Reason The reason for the error.
 throw_stream_error(Stream, Reason) :-
-    read_position(Stream, Line, Col, CharPos),
+    read_position(Stream, Line, Col, CharPos, _),
     throw(error(stream_error(Line:Col:CharPos, Reason))).
 
 %! read_comment(+Stream:stream) is det.
@@ -773,6 +773,7 @@ read_until_eol(Stream, Comment) :-
 % @arg Line The current line number.
 % @arg Col The current column number.
 % @arg CharPos The current character position in the stream.
+% @arg Position The current $postion/3 Term of the stream.
 read_position(Stream, Line, Col, CharPos,Position) :-
     stream_property(Stream, position(Position)),  % Get the current position from the stream.
     stream_position_data(line_count, Position, Line),  % Extract the line number.
