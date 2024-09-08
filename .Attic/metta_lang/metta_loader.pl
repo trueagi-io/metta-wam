@@ -211,6 +211,12 @@ same_space(SpaceName1,Space2):- symbol(SpaceName1),eval(SpaceName1,Space1),!,sam
 absolute_dir(Dir,AbsDir):- afn(Dir, AbsDir, [access(read), file_errors(fail), file_type(directory)]).
 absolute_dir(Dir,From,AbsDir):- afn(Dir, AbsDir, [relative_to(From),access(read), file_errors(fail), file_type(directory)]),!.
 
+:- dynamic(is_metta_module_path/3).
+:- dynamic(is_metta_module_path/1).
+is_metta_module_path('.').
+
+
+
 
 %!  when_circular(+Key, :Goal, +Item, :DoThis) is semidet.
 %
@@ -226,19 +232,19 @@ absolute_dir(Dir,From,AbsDir):- afn(Dir, AbsDir, [relative_to(From),access(read)
 %   @arg DoThis The action to take when a circular dependency is detected (e.g., throwing an error).
 %
 when_circular(Key, Goal, Item, DoThis) :-
-    % Retrieve the current list of items from the global variable (if it exists).
+    % Retrieve the current list of items being processed from the global variable (if it exists).
     (nb_current(Key, CurrentItems) -> true; CurrentItems = []),
-    % Check if the item is already in the list (indicating a circular dependency).
+    % Check if the current item is already in the list of processed items, indicating a circular dependency.
     (   member(Item, CurrentItems)
-    ->  % If circular, execute the custom action (e.g., throw an error or handle it some other way).
+    ->  % If a circular dependency is detected, execute the DoThis action (e.g., throw an error).
         call(DoThis)
-    ;   % Otherwise, use setup_call_cleanup to ensure the item is removed after execution.
+    ;   % Otherwise, proceed with setup_call_cleanup to track and cleanup the processing list.
         setup_call_cleanup(
-            % Setup: Add the item to the list of currently processed items.
+            % Setup: Add the current item to the list of processed items.
             nb_setval(Key, [Item | CurrentItems]),
-            % Call the goal.
+            % Call the main goal to be executed.
             call(Goal),
-            % Cleanup: After the goal completes, remove the item from the list.
+            % Cleanup: Remove the current item from the processed list after the goal completes.
             (nb_current(Key, UpdatedItems),
              select(Item, UpdatedItems, RemainingItems),
              nb_setval(Key, RemainingItems))
@@ -254,17 +260,13 @@ when_circular(Key, Goal, Item, DoThis) :-
 %   @arg Error The error term to throw in case of circular dependency.
 %
 without_circular_error(Goal, Error) :-
-    % Use when_circular/4 to handle circular dependencies and throw an error when detected.
+    % Use when_circular/4 to check for circular dependencies and throw an error when detected.
     when_circular('$circular_goals', Goal, Goal, throw(error(Error, _))).
 
-
-:- dynamic(is_metta_module_path/3).
-:- dynamic(is_metta_module_path/1).
-is_metta_module_path('.').
-
+% Predicate to load a Metta file.
 load_metta(Filename):-
- %clear_spaces,
- load_metta('&self',Filename).
+    % Call load_metta with the context `&self` and the provided Filename.
+    load_metta('&self', Filename).
 
 %!  load_metta(+Self, +Filename) is det.
 %
@@ -279,22 +281,33 @@ load_metta(Filename):-
 %
 %   @throws An error if the file is already in the list of currently loaded files.
 %
-load_metta(_Self,Filename):- Filename=='--repl',!,repl.
+load_metta(_Self, Filename):-
+    % Special case: if the Filename is '--repl', start the REPL instead of loading a file.
+    Filename == '--repl', !, repl.
 load_metta(Self, Filename):-
-    % Use without_circular_error/2 to handle circular dependencies for loading files.
+    % Call without_circular_error/2 to prevent circular dependencies when loading files.
     without_circular_error(load_metta1(Self, Filename),
         missing_exception(load_metta(Self, Filename))).
 
-load_metta1(Self,Filename):-
-  (\+ symbol(Filename); \+ exists_file(Filename)),!,
-  with_wild_path(load_metta(Self),Filename),!,loonit_report.
-load_metta1(Self,RelFilename):-
- must_det_ll((atom(RelFilename),
- exists_file(RelFilename),!,
-   afn_from(RelFilename,Filename),
- locally(set_prolog_flag(gc,true),
-   track_load_into_file(Filename,
-     include_metta(Self,RelFilename))))).
+% Helper predicate for actually loading the Metta file.
+load_metta1(Self, Filename):-
+    % Check if the Filename is not a valid symbol or the file does not exist.
+    (\+ symbol(Filename); \+ exists_file(Filename)),!,
+    % Use with_wild_path to handle wildcard paths and load the file if it matches.
+    with_wild_path(load_metta(Self), Filename), !,
+    % Call loonit_report (likely for logging or reporting purposes).
+    loonit_report.
+load_metta1(Self, RelFilename):-
+    % Ensure that the relative filename is an atom and exists as a valid file.
+    must_det_ll((atom(RelFilename),
+    exists_file(RelFilename),!,
+    % Convert the relative filename to an absolute filename.
+    afn_from(RelFilename, Filename),
+    % Set a local flag for garbage collection and track the file loading process.
+    locally(set_prolog_flag(gc, true),
+    track_load_into_file(Filename,
+        % Include the file into the current module.
+        include_metta(Self, RelFilename))))).
 
 %!  import_metta(+Self, +Filename) is det.
 %
@@ -310,29 +323,47 @@ load_metta1(Self,RelFilename):-
 %   @throws An error if the file is already in the list of currently imported files.
 %
 import_metta(Self, Filename):-
+    % Define the goal for importing the Metta file.
     About = import_metta1(Self, Filename),
-    % Use when_circular/4 to handle circular dependencies for importing files.
-    when_circular('$circular_goals', About, About, complain_if_missing(Filename,About)).
+    % Use when_circular/4 to handle circular dependencies during imports.
+    when_circular('$circular_goals', About, About, complain_if_missing(Filename, About)).
 
-complain_if_missing(Filename,About):- \+ exists_file(Filename), !, write_src_nl(missing_exception(About)).
-complain_if_missing( _ ,About):- write_src_nl(circular_exception(About)).
+% Predicate to complain if a file is missing or circular dependency is found.
+complain_if_missing(Filename, About):-
+    % If the file does not exist, print a missing exception message.
+    \+ exists_file(Filename), !, write_src_nl(missing_exception(About)).
+complain_if_missing(_, About):-
+    % If a circular dependency is found, print a circular exception message.
+    write_src_nl(circular_exception(About)).
 
-import_metta1(Self,Module):- current_predicate(py_is_module/1),py_is_module(Module),!,
- must_det_ll(self_extend_py(Self,Module)),!.
-import_metta1(Self,Filename):-
-  (\+ symbol(Filename); \+ exists_file(Filename)),!,
-  must_det_ll(with_wild_path(import_metta(Self),Filename)),!.
-import_metta1(Self,RelFilename):-
-  must_det_ll((
-     symbol(RelFilename),
-     exists_file(RelFilename),
-     absolute_file_name(RelFilename,Filename),
-     gen_tmp_file(fail, Filename),
-     directory_file_path(Directory, _, Filename),
-     pfcAdd_Now(metta_file(Self,Filename,Directory)),
-     locally(nb_setval(suspend_answers,true),
-        include_metta_directory_file(Self,Directory, Filename)))).
+% Helper predicate for actually importing the Metta file.
+import_metta1(Self, Module):-
+    % If the Module is a valid Python module, extend the current Prolog context with Python.
+    current_predicate(py_is_module/1), py_is_module(Module),!,
+    must_det_ll(self_extend_py(Self, Module)),!.
+import_metta1(Self, Filename):-
+    % If the Filename is not a valid symbol or the file does not exist, use wildcards for import.
+    (\+ symbol(Filename); \+ exists_file(Filename)),!,
+    must_det_ll(with_wild_path(import_metta(Self), Filename)),!.
+import_metta1(Self, RelFilename):-
+    % Ensure that the relative filename is a symbol and the file exists.
+    must_det_ll((
+    symbol(RelFilename),
+    exists_file(RelFilename),
+    % Convert the relative filename to an absolute path.
+    absolute_file_name(RelFilename, Filename),
+    % Generate a temporary file based on the absolute filename.
+    gen_tmp_file(fail, Filename),
+    % Extract the directory path from the filename.
+    directory_file_path(Directory, _, Filename),
+    % Register the file in the Prolog knowledge base as being part of the Metta context.
+    pfcAdd_Now(metta_file(Self, Filename, Directory)),
+    % Suspend Prolog answers during the inclusion of the Metta file.
+    locally(nb_setval(suspend_answers, true),
+    % Include the file and load its content into the directory.
+    include_metta_directory_file(Self, Directory, Filename)))).
 
+% Ensure Metta persistency and parsing functionalities are loaded.
 :- ensure_loaded(metta_persists).
 :- ensure_loaded(metta_parser).
 
@@ -340,36 +371,47 @@ import_metta1(Self,RelFilename):-
 %
 %   Includes a Metta file and handles circular dependencies.
 %   The predicate checks if the Filename is already in the list of currently
-%   includeed files (to avoid circular includes). If it is, an error is thrown.
+%   included files (to avoid circular includes). If it is, an error is thrown.
 %   If not, it adds the Filename to the list, proceeds with the include, and
 %   finally removes the Filename after the include is complete.
 %
 %   @arg Self The current module or context performing the include.
-%   @arg Filename The name of the file to be includeed.
+%   @arg Filename The name of the file to be included.
 %
-%   @throws An error if the file is already in the list of currently includeed files.
+%   @throws An error if the file is already in the list of currently included files.
 %
 include_metta(Self, Filename):-
     % Use without_circular_error/2 to handle circular dependencies for including files.
     without_circular_error(include_metta1(Self, Filename),
         missing_exception(include_metta(Self, Filename))).
 
-include_metta1(Self,Filename):-
-  (\+ symbol(Filename); \+ exists_file(Filename)),!,
-  must_det_ll(with_wild_path(include_metta(Self),Filename)),!.
-include_metta1(Self,RelFilename):-
-  must_det_ll((
-     symbol(RelFilename),
-     exists_file(RelFilename),!,
-     afn_from(RelFilename,Filename),
-     % true = forced, false = generate only if needed
-     gen_tmp_file(false,Filename),
-     directory_file_path(Directory, _, Filename),
-     pfcAdd_Now(metta_file(Self,Filename,Directory)),
-     pfcAdd_Now(user:loaded_into_kb(Self,Filename)),
-     include_metta_directory_file(Self,Directory, Filename))),
-     pfcAdd_Now(user:loaded_into_kb(Self,Filename)),
-     nop(listing(user:loaded_into_kb/2)).
+% Helper predicate for actually including the Metta file.
+include_metta1(Self, Filename):-
+    % If the filename is not a valid symbol or the file does not exist, handle wildcards for includes.
+    (\+ symbol(Filename); \+ exists_file(Filename)),!,
+    must_det_ll(with_wild_path(include_metta(Self), Filename)),!.
+include_metta1(Self, RelFilename):-
+    % Ensure that the relative filename is a valid symbol and exists.
+    must_det_ll((
+    symbol(RelFilename),
+    exists_file(RelFilename),!,
+    % Convert the relative filename to an absolute path.
+    afn_from(RelFilename, Filename),
+    % Generate a temporary file (if necessary) based on the absolute filename.
+    gen_tmp_file(false, Filename),
+    % Extract the directory path from the filename.
+    directory_file_path(Directory, _, Filename),
+    % Register the file in the Prolog knowledge base as being loaded into the current module.
+    pfcAdd_Now(metta_file(Self, Filename, Directory)),
+    % Register the file as being loaded into the knowledge base.
+    pfcAdd_Now(user:loaded_into_kb(Self, Filename)),
+    % Include the file's directory content into the current module.
+    include_metta_directory_file(Self, Directory, Filename))),
+    % Mark the file as loaded into the knowledge base and optionally list its status.
+    pfcAdd_Now(user:loaded_into_kb(Self, Filename)),
+    nop(listing(user:loaded_into_kb/2)).
+
+
 
 % count_lines_up_to(TwoK,Filename, Count).
 count_lines_up_to(TwoK,Filename, Count) :-
