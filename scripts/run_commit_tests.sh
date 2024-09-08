@@ -69,7 +69,7 @@ run_mettalog_tests() {
 	local status=$?
     else
 	# Execute the command silently and filter output, capturing status
-	script -q -c "${cmd[*]}" /dev/null | tee >(grep -Ei --line-buffered '_CMD:|warning|es[:] ' >&2) > /dev/null
+	script -q -c "${cmd[*]}" /dev/null | tee >(grep -Ei --line-buffered '_CMD:|h3 id|loonit_|warning|es[:] ' >&2) > /dev/null
 	local status=$?
     fi
 
