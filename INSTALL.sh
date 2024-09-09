@@ -190,6 +190,13 @@ fi
 
 echo "INSTALL_TYPE=$INSTALL_TYPE"
 
+if [ ! -z "$JENKINS_URL" ]; then
+  echo "This script is running in a Jenkins environment."
+  INSTALL_TYPE=jenkins_ci
+else
+  echo "This script is not running in a Jenkins environment."
+fi
+
 # Is a Github VM
 if [ -n "$GITHUB_ACTIONS" ]; then
 

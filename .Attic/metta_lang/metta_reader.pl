@@ -51,6 +51,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+end_of_file.
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
    Parsing

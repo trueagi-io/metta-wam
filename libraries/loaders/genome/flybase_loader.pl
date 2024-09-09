@@ -507,6 +507,7 @@ load_flybase_obo_files:-
 
 937_381_148
 */
+:- ensure_loaded(ext_loader_tsv).
 
 
 /*
@@ -1177,7 +1178,7 @@ load_flybase_ext(Ext,File, Fn):-  file_to_sep(Ext,Sep),!,
     setup_call_cleanup(open(File,read,Stream),
        must_det_ll(load_flybase_sv(Sep,File,Stream,Fn)),
         close(Stream))),!.
-load_flybase_ext(Ext,File, Fn):-  fbug(missed_loading_flybase(Ext,File,Fn)),!.
+load_flybase_ext(Ext,File, Fn):-  fbug(missed_loading_flybase(Ext,File,Fn)),!,fail.
 
 %load_flybase_metta(File):- !, load_metta('&flybase',File).
 load_flybase_metta(File):-
