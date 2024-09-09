@@ -20,7 +20,9 @@
 (= (mprogn $code1 $code2) (let $_ (eval $code1) (eval $code2)))
 
 ;; or with Side Effects to Ensure Both Expressions Are Evaluated
-!(assertEqual (or (mprogn (println! "First") True) (mprogn (println! "Second") False)) True)
-!(assertEqual (or (mprogn (println! "First") True) (mprogn (println! "Second") True)) True)
-!(assertEqual (or (mprogn (println! "First") False) (mprogn (println! "Second") True)) True)
-!(assertEqual (or (mprogn (println! "First") False) (mprogn (println! "Second") False)) False)
+!(assertEqualToResult 
+     (or (mprogn (println! "First") True) (mprogn (println! "Second") False)) (True))
+
+!(assertEqualToResult (or (mprogn (println! "First") True) (mprogn (println! "Second") True)) (True))
+!(assertEqualToResult (or (mprogn (println! "First") False) (mprogn (println! "Second") True)) (True))
+!(assertEqualToResult (or (mprogn (println! "First") False) (mprogn (println! "Second") False)) (False))
