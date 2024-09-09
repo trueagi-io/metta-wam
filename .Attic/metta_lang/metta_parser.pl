@@ -847,7 +847,7 @@ read_quoted_string(Stream, EndChar, String) :-
 read_quoted_symbol(Stream, EndChar, Symbol) :-
     read_until_char(Stream, EndChar, Chars),
     ((EndChar == '\'', Chars = [Char])
-             -> Symbol='\\#'(Char); atom_chars(Symbol, Chars)).
+             -> Symbol='#\\'(Char); atom_chars(Symbol, Chars)).
 
 %! read_until_char(+Stream:stream, +EndChar:atom, -Chars:list) is det.
 %
