@@ -1,0 +1,20 @@
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[(Error (assertEqualToResult (== 4 (+ ln 2)) ((Error ln BadType))) 
+Expected: [(Error ln BadType)]
+Got: [(Error (+ ln 2) BadType)]
+Missed result: (Error ln BadType))]
+0.01user 0.00system 0:00.03elapsed 73%CPU (0avgtext+0avgdata 24992maxresident)k
+0inputs+0outputs (0major+3031minor)pagefaults 0swaps

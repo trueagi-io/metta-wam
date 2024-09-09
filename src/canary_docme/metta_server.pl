@@ -54,7 +54,6 @@
 :- use_module(library(socket)).  % Provides predicates for socket operations
 :- use_module(library(thread)).  % Provides predicates for multi-threading
 
-% Predicate to execute a goal and determine if it was deterministic
 %!  call_wdet(+Goal, -WasDet) is nondet.
 %
 %   Calls the given Goal and checks if it was deterministic.
@@ -67,7 +66,6 @@ call_wdet(Goal,WasDet):-
     % Check if the goal was deterministic and unify the result with WasDet
 	deterministic(WasDet).
 
-% Helper to parse Server and Port from Peer, using a DefaultPort if needed
 %!  parse_service_port(+Peer, +DefaultPort, -Server, -Port) is det.
 %
 %   Parses the service and port from Peer input. Defaults to localhost
@@ -86,7 +84,6 @@ parse_service_port(Peer,DefaultPort, Server, Port) :-
         Server = Peer, Port = DefaultPort
     ).
 
-% Predicate to check if a service is running under a specific alias
 %!  service_running(+Alias) is semidet.
 %
 %   Checks if a thread with the given Alias is currently running.
@@ -99,7 +96,6 @@ service_running(Alias):-
     TS = status(running), 
     !.
 
-% Start the interpreter service using the current self (MSpace)
 %!  start_vspace_service(+Port) is det.
 %
 %   Starts the VSpace service on the specified Port, using the current self as MSpace.
@@ -111,7 +107,6 @@ start_vspace_service(Port):-
     % Start the VSpace service with the current MSpace and specified Port
     start_vspace_service(MSpace,Port).
 
-% Start the VSpace service with a specific alias, MSpace, and Port
 %!  start_vspace_service(+Alias, +MSpace, +Port) is det.
 %
 %   Starts the VSpace service with a specified Alias, MSpace, and Port.
@@ -130,9 +125,8 @@ start_vspace_service(MSpace,Port):-
 %   Starts the VSpace service only if it is not already running under the given Alias.
 %
 %   @arg Alias is the alias to check for an existing service.
-
-
-% Skip starting the service if it is already running
+%   @arg Space is the memory space in which the service operates.
+%   @arg Port is the port number on which the service will be started.
 start_vspace_service(Alias,_Space,_Port):-  
     % If the service is already running under Alias, do nothing
  service_running(Alias),
@@ -143,7 +137,6 @@ start_vspace_service(Alias,MSpace,Port):-
     % Create a new thread to run the VSpace service with the given MSpace and Port
       thread_create(run_vspace_service(MSpace,Port),_,[detached(true),alias(Alias)]).
 
-% Predicate to handle the situation when a port is already in use
 %!  handle_port_in_use(+MSpace, +Port) is det.
 %
 %   Handles the error when the specified Port is already in use by trying another port.
@@ -157,8 +150,6 @@ handle_port_in_use(MSpace,Port):-
    Port100 is Port +100,
    run_vspace_service(MSpace,Port100).
 
-
-% Run the VSpace service, handling the case where the port is already in use
 %!  run_vspace_service(+MSpace, +Port) is det.
 %
 %   Runs the VSpace service on the specified Port, retrying on a different port if necessary.
@@ -174,7 +165,6 @@ run_vspace_service(MSpace,Port):-
         handle_port_in_use(MSpace, Port)
     ).
 
-% Unsafe version of running the VSpace service that doesn't handle errors
 %!  run_vspace_service_unsafe(+MSpace, +Port) is det.
 %
 %   Unsafe version of running the VSpace service on the specified Port.
@@ -200,7 +190,6 @@ run_vspace_service_unsafe(MSpace,Port) :-
     % Start accepting connections on the listening socket
     accept_vspace_connections(MSpace,ListenFd).
 
-% Accept connections to the VSpace service and create a thread for each connection
 %!  accept_vspace_connections(+MSpace, +ListenFd) is det.
 %
 %   Accepts incoming connections to the VSpace service and creates a thread for each connection.
@@ -234,7 +223,6 @@ accept_vspace_connections(MSpace,ListenFd) :-
     % Continue accepting more connections
     accept_vspace_connections(MSpace,ListenFd).
 
-% Handle a peer connection by receiving and processing goals
 %!  handle_vspace_peer(+Stream) is det.
 %
 %   Handles a peer connection by receiving and executing goals sent over the Stream.
@@ -283,7 +271,6 @@ connect_to_service(HostPort, Stream) :-
     % Open the socket as a stream for communication
     tcp_open_socket(Socket, Stream).
 
-% Helper to send a Prolog term and receive a response
 %!  send_term(+Stream, +MeTTa) is det.
 %
 %   Sends a Prolog term (MeTTa) over the Stream.
@@ -476,7 +463,7 @@ register_gone :-
     % Ignore any potential failures during the unregister process.
     ignore((
     % Currently fails to skip the operation; modify as needed.
-        fail,  
+      %  fail,
         % Retrieve our own service address.
         our_address(Ours),
         % For each known remote service, inform them of our departure.

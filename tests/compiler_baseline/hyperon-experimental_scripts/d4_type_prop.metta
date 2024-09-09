@@ -79,7 +79,7 @@
   ())
 
 
-!("!sameTypes" (get-type SocratesIsHuman) !(get-type PlatoIsHuman))
+!("!sameTypes" (get-type SocratesIsHuman) (get-type PlatoIsHuman))
 ; Wrong equalities
 !(assertEqualToResult
   (get-type (= SocratesIsHuman PlatoIsHuman))

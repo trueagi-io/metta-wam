@@ -1,0 +1,8 @@
+[()]
+[(or True ((State True) True))]
+[(Error (assertEqual (get-state (State True)) False) 
+Expected: [False]
+Got: [True]
+Missed result: False)]
+0.04user 0.01system 0:00.06elapsed 90%CPU (0avgtext+0avgdata 34900maxresident)k
+960inputs+0outputs (5major+3560minor)pagefaults 0swaps

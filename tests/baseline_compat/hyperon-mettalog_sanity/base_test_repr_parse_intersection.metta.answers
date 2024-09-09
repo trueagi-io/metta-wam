@@ -1,0 +1,6 @@
+[(Error (assertEqualToResult (intersection (superpose (a b (+ 2 3) c)) (superpose (b c (+ 2 3) c c d))) (b 5 c)) 
+Expected: [b, 5, c]
+Got: []
+Missed result: b)]
+0.00user 0.00system 0:00.02elapsed 58%CPU (0avgtext+0avgdata 24864maxresident)k
+0inputs+0outputs (2major+2986minor)pagefaults 0swaps

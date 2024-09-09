@@ -71,6 +71,8 @@
 			Filters=""
 			GUID="{6067A70F-D8B4-48B4-8254-E9D08E339303}"/>
 	</CustomFolders>
+	<List Name="RTE">
+	</List>
 	<Files AutoFolders="DirectoryView">
 		<Folder Name="tests">
 			<F
@@ -79,6 +81,4 @@
 				Excludes=".git/;*.metta.html;*.bak;build/;*~*/"/>
 		</Folder>
 	</Files>
-	<List Name="RTE">
-	</List>
 </Project>

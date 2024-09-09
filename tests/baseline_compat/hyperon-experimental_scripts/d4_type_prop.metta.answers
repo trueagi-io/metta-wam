@@ -2,24 +2,9 @@
 [()]
 [()]
 [("sameTypes" (Mortal Socrates) (Mortal Socrates))]
-[()]
-[("sameTypes" Type Type)]
-[()]
-[("!sameTypes" (Mortal Socrates) (Mortal Plato))]
-[()]
-[("!sameTypes" (Human Socrates) ! (Human Plato))]
-[()]
-[("!sameTypes" (Human Socrates) (Mortal Socrates))]
-[()]
-[()]
-[()]
-[()]
-[()]
-[()]
-[()]
-[()]
-[()]
-[()]
-[()]
-0.07user 0.00system 0:00.07elapsed 98%CPU (0avgtext+0avgdata 30892maxresident)k
-0inputs+0outputs (0major+3683minor)pagefaults 0swaps
+[(Error (assertEqual (get-type (= SocratesIsMortal (HumansAreMortal SocratesIsHuman))) Type) 
+Expected: [Type]
+Got: [Atom, Type]
+Excessive result: Atom)]
+0.08user 0.00system 0:00.15elapsed 58%CPU (0avgtext+0avgdata 34516maxresident)k
+53528inputs+0outputs (328major+3416minor)pagefaults 0swaps

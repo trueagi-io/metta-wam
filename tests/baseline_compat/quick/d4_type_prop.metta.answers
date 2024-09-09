@@ -1,0 +1,10 @@
+[()]
+[()]
+[()]
+[("sameTypes" (Mortal Socrates) (Mortal Socrates))]
+[(Error (assertEqual (get-type (= SocratesIsMortal (HumansAreMortal SocratesIsHuman))) Type) 
+Expected: [Type]
+Got: [Atom, Type]
+Excessive result: Atom)]
+0.06user 0.00system 0:00.07elapsed 87%CPU (0avgtext+0avgdata 34240maxresident)k
+0inputs+0outputs (0major+3568minor)pagefaults 0swaps

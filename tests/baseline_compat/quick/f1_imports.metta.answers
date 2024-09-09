@@ -1,0 +1,7 @@
+[hyperon::space::DynSpace]
+[(Error (assertEqual ((let $x (get-atoms GroundingSpace-top) (get-type $x))) ((get-type GroundingSpace-top))) 
+Expected: [(hyperon::space::DynSpace)]
+Got: [(hyperon::space::DynSpace), (hyperon::space::DynSpace)]
+Excessive result: (hyperon::space::DynSpace))]
+0.05user 0.00system 0:00.05elapsed 96%CPU (0avgtext+0avgdata 30952maxresident)k
+0inputs+0outputs (0major+3659minor)pagefaults 0swaps

@@ -1,0 +1,10 @@
+[()]
+[()]
+[()]
+[()]
+[(Error (assertEqual (intersection (get-atoms GroundingSpace-0x1c96418) (get-atoms GroundingSpace-0x1c9a4a8)) (superpose ((= (foo $x $y) (+ $x $y)) (foo 1 2) (foo (foo 1 2) 3)))) 
+Expected: [(= (foo $x $y) (+ $x $y)), (foo 1 2), (foo (foo 1 2) 3)]
+Got: []
+Missed result: (= (foo $x $y) (+ $x $y)))]
+0.01user 0.00system 0:00.02elapsed 82%CPU (0avgtext+0avgdata 25168maxresident)k
+536inputs+0outputs (5major+3046minor)pagefaults 0swaps

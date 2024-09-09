@@ -31,6 +31,8 @@
 ;; This is very slow, use the grounded python function instead
 (= (tuple-count $tuple) (if (== $tuple ()) 0 (+ 1 (tuple-count (cdr-atom $tuple)))))
 
+
+
 !(bind! &specializations (new-space))
 !(bind! &abstractions (new-space))
 
@@ -125,6 +127,7 @@
 !("loading succAtoms into kb2")
 !(import! &kb2 succAxiom)
 !(match &kb2 $1 (add-atom &kb $1))
+
 
 ;; !(get-atoms &kb)
 

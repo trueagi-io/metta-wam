@@ -84,6 +84,8 @@ wwp(_Fnicate, Virtual) :- exists_virtually(Virtual),!.
 wwp(Fnicate, Virtual) :- var(Virtual),!,throw(var_wwp(Fnicate, Virtual)).
 wwp(Fnicate, Dir) :-  is_scryer, symbol(Dir), !, must_det_ll((path_chars(Dir,Chars), wwp(Fnicate, Chars))).
 
+% catches charlist and codelist filenames
+wwp(Fnicate, Chars) :- is_list(Chars), catch(name(File,Chars),_,fail), Chars\==File,!, wwp(Fnicate, File).
 
 wwp(Fnicate, File) :- is_list(File), !,
    must_det_ll((maplist(wwp(Fnicate), File))).
@@ -93,6 +95,7 @@ wwp(Fnicate, Cmpd):- compound(Cmpd),
   afn(Outter, Dir,[solutions(all), access(read), file_errors(fail)]),
   with_cwd(Dir,wwp(Fnicate, Inner)),!.
 
+% this is what captures string in SWI-Prolog
 wwp(Fnicate, Chars) :-  \+ is_scryer, \+ symbol(Chars), !, must_det_ll((name(Atom,Chars), wwp(Fnicate, Atom))).
 
 wwp(Fnicate, File) :- exists_file(File), !, must_det_ll(( call(Fnicate, File))).
@@ -211,57 +214,205 @@ same_space(SpaceName1,Space2):- symbol(SpaceName1),eval(SpaceName1,Space1),!,sam
 absolute_dir(Dir,AbsDir):- afn(Dir, AbsDir, [access(read), file_errors(fail), file_type(directory)]).
 absolute_dir(Dir,From,AbsDir):- afn(Dir, AbsDir, [relative_to(From),access(read), file_errors(fail), file_type(directory)]),!.
 
-
-
-
 :- dynamic(is_metta_module_path/3).
 :- dynamic(is_metta_module_path/1).
 is_metta_module_path('.').
 
+
+
+
+%!  when_circular(+Key, :Goal, +Item, :DoThis) is semidet.
+%
+%   Executes a goal while preventing circular dependencies by tracking processed items.
+%   If the current item (e.g., a file or goal) is already in the list of currently processed
+%   items (tracked by Key), it executes the provided DoThis action and fails. Otherwise, it
+%   proceeds with the goal, ensuring that the item is properly tracked. The item is automatically
+%   removed from the tracking list after execution, using `setup_call_cleanup/3` for cleanup.
+%
+%   @arg Key   The name of the non-backtrackable global variable to track circular dependencies.
+%   @arg Goal  The goal to execute if no circular dependencies are detected.
+%   @arg Item  The item being processed (e.g., a file name or goal).
+%   @arg DoThis The action to take when a circular dependency is detected (e.g., throwing an error).
+%
+when_circular(Key, Goal, Item, DoThis) :-
+    % Retrieve the current list of items being processed from the global variable (if it exists).
+    (nb_current(Key, CurrentItems) -> true; CurrentItems = []),
+    % Check if the current item is already in the list of processed items, indicating a circular dependency.
+    (   member(Item, CurrentItems)
+    ->  % If a circular dependency is detected, execute the DoThis action (e.g., throw an error).
+        call(DoThis)
+    ;   % Otherwise, proceed with setup_call_cleanup to track and cleanup the processing list.
+        setup_call_cleanup(
+            % Setup: Add the current item to the list of processed items.
+            nb_setval(Key, [Item | CurrentItems]),
+            % Call the main goal to be executed.
+            call(Goal),
+            % Cleanup: Remove the current item from the processed list after the goal completes.
+            (nb_current(Key, UpdatedItems),
+             select(Item, UpdatedItems, RemainingItems),
+             nb_setval(Key, RemainingItems))
+        )
+    ).
+
+%!  without_circular_error(:Goal, +Error) is det.
+%
+%   Executes a goal while avoiding circular dependencies. If a circular dependency
+%   is detected, an error is thrown.
+%
+%   @arg Goal  The goal to execute if no circular dependencies are detected.
+%   @arg Error The error term to throw in case of circular dependency.
+%
+without_circular_error(Goal, Error) :-
+    % Use when_circular/4 to check for circular dependencies and throw an error when detected.
+    when_circular('$circular_goals', Goal, Goal, throw(error(Error, _))).
+
+% Predicate to load a Metta file.
 load_metta(Filename):-
- %clear_spaces,
- load_metta('&self',Filename).
+    % Call load_metta with the context `&self` and the provided Filename.
+    load_metta('&self', Filename).
 
-load_metta(_Self,Filename):- Filename=='--repl',!,repl.
-load_metta(Self,Filename):-
-  (\+ symbol(Filename); \+ exists_file(Filename)),!,
-  with_wild_path(load_metta(Self),Filename),!,loonit_report.
-load_metta(Self,RelFilename):-
- atom(RelFilename),
- exists_file(RelFilename),!,
-   afn_from(RelFilename,Filename),
- track_load_into_file(Filename,
-   include_metta(Self,RelFilename)).
+%!  load_metta(+Self, +Filename) is det.
+%
+%   Loads a Metta file and handles circular dependencies.
+%   The predicate checks if the Filename is already in the list of currently
+%   loaded files (to avoid circular loads). If it is, an error is thrown.
+%   If not, it adds the Filename to the list, proceeds with the load, and
+%   finally removes the Filename after the load is complete.
+%
+%   @arg Self The current module or context performing the load.
+%   @arg Filename The name of the file to be loaded.
+%
+%   @throws An error if the file is already in the list of currently loaded files.
+%
+load_metta(_Self, Filename):-
+    % Special case: if the Filename is '--repl', start the REPL instead of loading a file.
+    Filename == '--repl', !, repl.
+load_metta(Self, Filename):-
+    % Call without_circular_error/2 to prevent circular dependencies when loading files.
+    without_circular_error(load_metta1(Self, Filename),
+        missing_exception(load_metta(Self, Filename))).
 
-import_metta(Self,Module):- current_predicate(py_is_module/1),py_is_module(Module),!,
- must_det_ll(self_extend_py(Self,Module)),!.
-import_metta(Self,Filename):-
-  (\+ symbol(Filename); \+ exists_file(Filename)),!,
-  must_det_ll(with_wild_path(import_metta(Self),Filename)),!.
-import_metta(Self,RelFilename):-
-  must_det_ll((
-     symbol(RelFilename),
-     exists_file(RelFilename),
-     absolute_file_name(RelFilename,Filename),
-     directory_file_path(Directory, _, Filename),
-     pfcAdd_Now(metta_file(Self,Filename,Directory)),
-     locally(nb_setval(suspend_answers,true),
-        include_metta_directory_file(Self,Directory, Filename)))).
+% Helper predicate for actually loading the Metta file.
+load_metta1(Self, Filename):-
+    % Check if the Filename is not a valid symbol or the file does not exist.
+    (\+ symbol(Filename); \+ exists_file(Filename)),!,
+    % Use with_wild_path to handle wildcard paths and load the file if it matches.
+    with_wild_path(load_metta(Self), Filename), !,
+    % Call loonit_report (likely for logging or reporting purposes).
+    loonit_report.
+load_metta1(Self, RelFilename):-
+    % Ensure that the relative filename is a path and exists as a valid file.
+    must_det_ll((symbol(RelFilename), % @TODO or a string?
+    exists_file(RelFilename),!,
+    % Convert the relative filename to an absolute filename.
+    afn_from(RelFilename, Filename),
+    % Set a local flag for garbage collection and track the file loading process.
+    locally(set_prolog_flag(gc, true),
+    track_load_into_file(Filename,
+        % Include the file into the current module.
+        include_metta(Self, RelFilename))))).
 
-include_metta(Self,Filename):-
-  (\+ symbol(Filename); \+ exists_file(Filename)),!,
-  must_det_ll(with_wild_path(include_metta(Self),Filename)),!.
-include_metta(Self,RelFilename):-
-  must_det_ll((
-     symbol(RelFilename),
-     exists_file(RelFilename),!,
-     afn_from(RelFilename,Filename),
-     directory_file_path(Directory, _, Filename),
-     pfcAdd_Now(metta_file(Self,Filename,Directory)),
-     pfcAdd_Now(user:loaded_into_kb(Self,Filename)),
-     include_metta_directory_file(Self,Directory, Filename))),
-     pfcAdd_Now(user:loaded_into_kb(Self,Filename)),
-     nop(listing(user:loaded_into_kb/2)).
+%!  import_metta(+Self, +Filename) is det.
+%
+%   Imports a Metta file and handles circular dependencies.
+%   The predicate checks if the Filename is already in the list of currently
+%   imported files (to avoid circular imports). If it is, an error is thrown.
+%   If not, it adds the Filename to the list, proceeds with the import, and
+%   finally removes the Filename after the import is complete.
+%
+%   @arg Self The current module or context performing the import.
+%   @arg Filename The name of the file to be imported.
+%
+%   @throws An error if the file is already in the list of currently imported files.
+%
+import_metta(Self, Filename):-
+    % Define the goal for importing the Metta file.
+    About = import_metta1(Self, Filename),
+    % Use when_circular/4 to handle circular dependencies during imports.
+    when_circular('$circular_goals', About, About, complain_if_missing(Filename, About)).
+
+% Predicate to complain if a file is missing or circular dependency is found.
+complain_if_missing(Filename, About):-
+    % If the file does not exist, print a missing exception message.
+    \+ exists_file(Filename), !, write_src_nl(missing_exception(About)).
+complain_if_missing(_, About):-
+    % If a circular dependency is found, print a circular exception message.
+    write_src_nl(circular_exception(About)).
+
+% Helper predicate for actually importing the Metta file.
+import_metta1(Self, Module):-
+    % If the Module is a valid Python module, extend the current Prolog context with Python.
+    current_predicate(py_is_module/1), py_is_module(Module),!,
+    must_det_ll(self_extend_py(Self, Module)),!.
+import_metta1(Self, Filename):-
+    % If the Filename is not a valid symbol or the file does not exist, use wildcards for import.
+    (\+ symbol(Filename); \+ exists_file(Filename)),!,
+    must_det_ll(with_wild_path(import_metta(Self), Filename)),!.
+import_metta1(Self, RelFilename):-
+    % Ensure that the relative filename is a symbol and the file exists.
+    must_det_ll((
+    symbol(RelFilename),
+    exists_file(RelFilename),
+    % Convert the relative filename to an absolute path.
+    absolute_file_name(RelFilename, Filename),
+    % Generate a temporary file based on the absolute filename.
+    gen_tmp_file(fail, Filename),
+    % Extract the directory path from the filename.
+    directory_file_path(Directory, _, Filename),
+    % Register the file in the Prolog knowledge base as being part of the Metta context.
+    pfcAdd_Now(metta_file(Self, Filename, Directory)),
+    % Suspend Prolog answers during the inclusion of the Metta file.
+    locally(nb_setval(suspend_answers, true),
+    % Include the file and load its content into the directory.
+    include_metta_directory_file(Self, Directory, Filename)))).
+
+% Ensure Metta persistency and parsing functionalities are loaded.
+:- ensure_loaded(metta_persists).
+:- ensure_loaded(metta_parser).
+
+%!  include_metta(+Self, +Filename) is det.
+%
+%   Includes a Metta file and handles circular dependencies.
+%   The predicate checks if the Filename is already in the list of currently
+%   included files (to avoid circular includes). If it is, an error is thrown.
+%   If not, it adds the Filename to the list, proceeds with the include, and
+%   finally removes the Filename after the include is complete.
+%
+%   @arg Self The current module or context performing the include.
+%   @arg Filename The name of the file to be included.
+%
+%   @throws An error if the file is already in the list of currently included files.
+%
+include_metta(Self, Filename):-
+    % Use without_circular_error/2 to handle circular dependencies for including files.
+    without_circular_error(include_metta1(Self, Filename),
+        missing_exception(include_metta(Self, Filename))).
+
+% Helper predicate for actually including the Metta file.
+include_metta1(Self, Filename):-
+    % If the filename is not a valid symbol or the file does not exist, handle wildcards for includes.
+    (\+ symbol(Filename); \+ exists_file(Filename)),!,
+    must_det_ll(with_wild_path(include_metta(Self), Filename)),!.
+include_metta1(Self, RelFilename):-
+    % Ensure that the relative filename is a valid symbol and exists.
+    must_det_ll((
+    symbol(RelFilename),
+    exists_file(RelFilename),!,
+    % Convert the relative filename to an absolute path.
+    afn_from(RelFilename, Filename),
+    % Generate a temporary file (if necessary) based on the absolute filename.
+    gen_tmp_file(false, Filename),
+    % Extract the directory path from the filename.
+    directory_file_path(Directory, _, Filename),
+    % Register the file in the Prolog knowledge base as being loaded into the current module.
+    pfcAdd_Now(metta_file(Self, Filename, Directory)),
+    % Register the file as being loaded into the knowledge base.
+    pfcAdd_Now(user:loaded_into_kb(Self, Filename)),
+    % Include the file's directory content into the current module.
+    include_metta_directory_file(Self, Directory, Filename))),
+    % Mark the file as loaded into the knowledge base and optionally list its status.
+    pfcAdd_Now(user:loaded_into_kb(Self, Filename)),
+    nop(listing(user:loaded_into_kb/2)).
 
 
 
@@ -334,15 +485,15 @@ include_metta_directory_file_prebuilt(Self,_Directory, Filename):-
 include_metta_directory_file(Self,Directory, Filename):-
   include_metta_directory_file_prebuilt(Self,Directory, Filename),!.
 include_metta_directory_file(Self, Directory, Filename):-
-  count_lines_up_to(2000,Filename, Count), Count > 1980, \+ use_fast_buffer,
+  count_lines_up_to(2000,Filename, Count), Count > 1980, % \+ use_fast_buffer,
   include_large_metta_directory_file(Self, Directory, Filename), !.
 include_metta_directory_file(Self,Directory,Filename):-
   with_cwd(Directory,must_det_ll(setup_call_cleanup(open(Filename,read,In, [encoding(utf8)]),
     must_det_ll( load_metta_file_stream(Filename,Self,In)),
     close(In)))).
 
-include_large_metta_directory_file(Self, Directory, Filename):- \+ use_fast_buffer, !,
-  locally(nb_setval(may_use_fast_buffer,t), include_metta_directory_file(Self,Directory, Filename)).
+
+% include_large_metta_directory_file(Self, Directory, Filename):- \+ use_fast_buffer, !, locally(nb_setval(may_use_fast_buffer,t), include_metta_directory_file(Self,Directory, Filename)).
 include_large_metta_directory_file(Self,_Directory, Filename):-
   once(convert_metta_to_loadable(Filename,QlfFile)),
   exists_file(QlfFile),!,
@@ -358,23 +509,24 @@ convert_metta_to_datalog(Filename,DatalogFile):-
         open(Filename, read, Input, [encoding(utf8)]),
         % Open the Datalog file for writing
         setup_call_cleanup(
-            open(DatalogFile, write, Output, [encoding(utf8)]),
+           open(DatalogFile, write, Output, [encoding(utf8)]),
             % Perform the conversion
-      translate_metta_file_to_datalog_io(Filename,Input,Output),
+             must_det_ll(translate_metta_file_to_datalog_io(Filename,Input,Output)),
             % Cleanup: Close the Datalog file
-            close(Output)
+           close(Output)
         ),
         % Cleanup: Close the METTA file
         close(Input)
     ),
     % Ensure the generated Datalog file is at least 50% the size of the METTA file
-    size_file(Filename, MettaSize),
-    size_file(DatalogFile, DatalogSize),
+   must_det_ll((
+   (size_file(Filename, MettaSize),
+    size_file(DatalogFile, DatalogSize)),
     (
         DatalogSize >= 0.5 * MettaSize
     ->  true  % If the size condition is met, succeed
     ;   delete_file(DatalogFile), fail  % If not, delete the Datalog file and fail
-    ),
+    ))),
     !.  % Prevent backtracking
 
 % atom_subst(+Source, +Replacements, -Result)
@@ -412,18 +564,19 @@ trim_to_last_nchars(Len, Atom, TrimmedAtom) :-
     ).
 
 
-translate_metta_file_to_datalog_io(Filename,Input,Output):-
+translate_metta_file_to_datalog_io(Filename,Input,Output):- may_use_datalog,
   must_det_ll((
   %write header
+ notrace((
   write(Output,'/* '),write(Output,Filename),writeln(Output,' */'),
   % write the translation time and date
   get_time(Time),stamp_date_time(Time,Date,'UTC'),
   format_time(string(DateStr),'%FT%T%z',Date),
-  write(Output,'/* '),write(Output,DateStr),writeln(Output,' */'),
+  write(Output,'/* '),write(Output,DateStr),writeln(Output,' */'))),
   % make the predicate dynamic/multifile
   filename_to_mangled_pred(Filename,MangleP2),
     mangle_iz(MangleP2,MangleIZ),
-
+ notrace((
   format(Output,':- style_check(-singleton). ~n',[]),
   format(Output,':- style_check(-discontiguous). ~n',[]),
   format(Output,':- dynamic((~q)/2). ~n',[MangleP2]),
@@ -441,7 +594,7 @@ translate_metta_file_to_datalog_io(Filename,Input,Output):-
   writeln(Output,':- dynamic(user:asserted_metta_pred/2).'),
   writeln(Output,':- multifile(user:asserted_metta_pred/2).'),
   format(Output,'user:asserted_metta_pred(~q,~q). ~n',[MangleP2,Filename]),
-  with_output_to(Output,produce_iz(MangleP2)),
+  with_output_to(Output,produce_iz(MangleP2)))),
   %format(Output,':- user:register_asserted_metta_pred(~q,~q). ~n',[MangleP2,Filename]),
   flag(translated_forms,_,0),
   LastTime = t(Time),
@@ -534,7 +687,9 @@ read_chars_until(StopsBefore, '\\', Input, [Code|Codes]):- get_char(Input,Code),
 read_chars_until(StopsBefore, Char, Input, [Char|Codes]):- get_char(Input,_),
   read_chars_until(StopsBefore, Input, Codes).
 
-  just_load_datalog:-!, true.
+just_load_datalog:-!, true.
+may_use_datalog:-!, true.
+
 convert_datalog_to_loadable(DatalogFile,DatalogFile):-just_load_datalog,!.
 convert_datalog_to_loadable(DatalogFile,QlfFile):-
   sformat(S,'swipl -g "qcompile(~q)" -t halt',[DatalogFile]),
@@ -543,6 +698,8 @@ convert_datalog_to_loadable(DatalogFile,QlfFile):-
   file_name_extension(Base,'qlf',QlfFile).
 
 convert_metta_to_loadable(_Filename,_QlfFile):- use_fast_buffer,!, fail.
+convert_metta_to_loadable(_Filename,_QlfFile):- \+ may_use_datalog, !.
+
 convert_metta_to_loadable(Filename,QlfFile):-
   must_det_ll((
   convert_metta_to_datalog(Filename,DatalogFile),
@@ -647,7 +804,7 @@ write_bf(BufferFile,BufferTerm):-
 my_line_count(In, seek($,0,current,CC)):-
    stream_property(In,reposition(true)),
    seek(In,0,current,CC),fail.
-my_line_count(In,position(Pos)):-
+my_line_count(In,/*position*/(Pos)):-
    stream_property(In,position(Pos)).
 
 
@@ -670,11 +827,16 @@ read_metta(I,O):- string(I),normalize_space(string(M),I),!,parse_sexpr_metta1(M,
 read_metta(In,Expr):- current_input(In0),In==In0,!, repl_read(Expr).
 read_metta(In,Expr):- read_metta1(In,Expr).
 
+read_metta1(S,F1):- use_new_parse_sexpr_metta_IO(S),!,new_parse_sexpr_metta_IO(S,F1).
 read_metta1(In,Expr):- is_file_stream_and_size(In, Size) , Size>10240,!,read_sform1([],In,Expr).
 read_metta1(In,Expr):- read_metta2(In,Expr).
 
 read_metta2(_,O):- clause(t_l:s_reader_info(O),_,Ref),erase(Ref).
+read_metta2(S,F1):- use_new_parse_sexpr_metta_IO(S),!,new_parse_sexpr_metta_IO(S,F1).
 read_metta2(In,Expr):- peek_char(In,Char), read_metta2(In,Char,Expr).
+
+read_metta2(S,_,F1):- use_new_parse_sexpr_metta_IO(S),!,new_parse_sexpr_metta_IO(S,F1).
+
 read_metta2(In,Char,Expr):- char_type(Char,space),get_char(In,Char),not_compatio(put(Char)),!,read_metta2(In,Expr).
 %read_metta2(In,'"',Expr):- read_sform2(In,Expr),!.
 %read_metta2(In,'\'',Expr):- read_sform2(In,Expr),!.
@@ -741,6 +903,7 @@ maybe_read_sform_line_pos(Stream, Line, Pos, P2, Form):-
 
 %read_line_to_sexpr(Stream,UnTyped),
 read_sform(Str,F):- string(Str),open_string(Str,S),!,read_sform(S,F).
+read_sform(S,F1):- use_new_parse_sexpr_metta_IO(S),!,new_parse_sexpr_metta_IO(S,F1).
 read_sform(S,F):-
   read_sform1([],S,F1),
   ( F1\=='!' -> F=F1 ;
@@ -748,6 +911,7 @@ read_sform(S,F):-
 
 
 %read_sform2(S,F1):- !, read_metta2(S,F1).
+read_sform2(S,F1):- use_new_parse_sexpr_metta_IO(S),!,new_parse_sexpr_metta_IO(S,F1).
 read_sform2(S,F1):- read_sform1([],S,F1).
 
 read_sform1(_,_,O):- clause(t_l:s_reader_info(O),_,Ref),erase(Ref).
@@ -822,6 +986,20 @@ cont_list(_AoS,End,End1,_,[]):- End==End1, !.
 cont_list( AoS,C,End,S,[F|List]):- read_sform3(AoS,[End],C,S,F),!,collect_list_until(AoS,S,End,List).
 
 
+use_new_parse_sexpr_metta_IO(S):- \+ string(S).
+
+new_parse_sexpr_metta_IO1(S,F1):- at_end_of_stream(S),!,F1=end_of_file.
+new_parse_sexpr_metta_IO1(S,F1):- peek_char(S,Char),char_type(Char,space),!,
+  get_char(S,Char), parse_sexpr_metta_IO(S,F1).
+new_parse_sexpr_metta_IO1(S,_F1):- S = InStream,
+   once((
+    read_position(InStream, Line, Col, CharPos_Item, Position),  % Retrieve line, column, and character position.
+    read_sexpr(InStream, Item),  % Read an S-expression or comment from the input stream.
+    assertz(metta_file_comment(Line, Col, CharPos_Item, Item, Position)))),
+    fail.
+new_parse_sexpr_metta_IO1(_S,F1):- retract(metta_file_comment(_Line, _Col, _CharPos, M, _Pos)), trly(untyped_to_metta,M,F1).
+
+new_parse_sexpr_metta_IO(S,F1):- new_parse_sexpr_metta_IO1(S,F1), nop(wdmsg(new_parse_sexpr_metta_IO1(S,F1))).
 
 in2_stream(N1,S1):- integer(N1),!,stream_property(S1,file_no(N1)),!.
 in2_stream(N1,S1):- atom(N1),stream_property(S1,alias(N1)),!.
@@ -839,6 +1017,8 @@ parse_sexpr_metta(S,F1):- parse_sexpr_metta_IO(S,F1),!.
 parse_sexpr_metta_IO(S,F1):- at_end_of_stream(S),!,F1=end_of_file.
 parse_sexpr_metta_IO(S,F1):- peek_char(S,Char),char_type(Char,space),!,
   get_char(S,Char), parse_sexpr_metta_IO(S,F1).
+parse_sexpr_metta_IO(S,F1):- use_new_parse_sexpr_metta_IO(S),!,new_parse_sexpr_metta_IO(S,F1).
+
 parse_sexpr_metta_IO(S,F1):-
     %line_count(S, LineNumber),
     % Get the character position within the current line
@@ -880,11 +1060,13 @@ metta_atom_in_file(Self,STerm,Filename,Lineno):-
     %s2t_iz(Mangle,P,CTerm,Term),
     %CTerm=Term,Mangle=P,
     current_predicate(Mangle/Arity),
+
     notrace((length(STerm,Arity),
     term_variables(STerm,SVs),
     copy_term(STerm+SVs,CTerm+CVs),
     Data =..[Mangle,Lineno|CTerm])),
     %write_src_woi(Data),
+    current_predicate(_,Data),
     call(Data),
     maplist(mapvar,CVs,SVs).
 
@@ -986,6 +1168,7 @@ mfix_vars1(I,O):- compound(I),!,compound_name_arguments(I,F,II),F\=='$VAR',mapli
 mfix_vars1(I,O):- \+ symbol(I),!,I=O.
 mfix_vars1(I,I).
 
+string_to_syms:- fail.
 no_cons_reduce.
 svar_fixvarname_dont_capitalize(O,O):-!.
 svar_fixvarname_dont_capitalize(M,O):- svar_fixvarname(M,O),!.
@@ -1198,7 +1381,7 @@ generate_interpreter_stubs:-
 
 :- dynamic(metta_atom_asserted_deduced/2).
 :- multifile(metta_atom_asserted_deduced/2).
-metta_atom_asserted_deduced('&corelib', Term):- 
+metta_atom_asserted_deduced('&corelib', Term):-
   %\+ did_generate_interpreter_stubs,
    metta_atom_corelib_types(Term).
 
@@ -1211,4 +1394,6 @@ really_use_corelib_file(Dir,File):- absolute_file_name(File,Filename,[relative_t
  locally(nb_setval(may_use_fast_buffer,t),
    locally(nb_setval(suspend_answers,true),
      with_output_to(string(_),include_metta_directory_file('&corelib',Dir,Filename)))).
+
+
 

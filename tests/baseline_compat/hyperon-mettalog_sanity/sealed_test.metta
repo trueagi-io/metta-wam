@@ -2,11 +2,13 @@
 
 !(assertEqualToResult (sealed ($x $y) (quote (= ($y $z)))) ((quote (= ($y $z)))))
 
-; !(assertEqualToResult (let $x (input $x) (output $x)) (output (input $x)))
+!(assertEqualToResult (let $x (input $y) (output $x)) ((output (input $y))))
 
-; !(assertEqualToResult (let (quote ($sv $st)) (sealed ($x) (quote ($x (output $x)))) (let $sv (input $x) $st)) (output (input $x)))
+!(assertEqual (let (quote ($sv $st)) (sealed ($x) (quote ($x (output $x)))) 
+    (let $sv (input $x) $st)) (output (input $x)))
 
 (: callsealer (-> Number  Number Expression))
+
 (= (callsealer $a $b) (sealed () (quote ((* (+ 40 $a) (/ 100 $b))))))
 
 !(assertEqualToResult (callsealer  $x $y) ((quote ((* (+ 40 $x) (/ 100 $y))))))  ; no sealing

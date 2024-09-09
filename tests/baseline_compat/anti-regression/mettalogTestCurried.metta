@@ -300,7 +300,7 @@
 
 
 ;; !(eachfc)
-!(let $expected (expectedHedras)
+!(let $expected (expected)
   (assertEqualToResult (eachfc) $expected))
 
 ; !(expected)
