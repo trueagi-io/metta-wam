@@ -189,9 +189,9 @@ pfcRemOneSupportOrQuietlyFail(P, (Fact, Trigger)) :-
 %     ?- pfc_collect_supports(Triples).
 %     Triples = [triple1, triple2, triple3].
 %
-pfc_collect_supports(Triples) :-
+pfc_collect_supports(Tripples) :-
   % Use bagof/3 to collect all triples that satisfy pfc_support_relation/1.
-  bagof(Triple, pfc_support_relation(Triple), Triples_),
+  bagof(Tripple, pfc_support_relation(Tripple), Tripples),
   !.  % Cut to ensure deterministic behavior after collecting the triples.
 
 % If bagof/3 fails (i.e., no triples are found), return an empty list.
@@ -748,7 +748,7 @@ clause_match(H, B, Ref) :-
 clause_match(H, B, Ref) :-
     % Copy the head `H` to a temporary variable `HH` and check for clause matching.
     % Ensure that `H` is structurally equal to `HH` (using `=@=`) and that the body is not reserved.
-    (copy_term(H, HH), clause(H, B, Ref), H =@= HH) -> true ; clause(H, B, Ref),
+    ((copy_term(H, HH), clause(H, B, Ref), H =@= HH) *-> true ; clause(H, B, Ref)),
     \+ reserved_body_helper(B).
 
 %!  find_mfl(+C, -MFL) is det.
@@ -1037,6 +1037,8 @@ which_missing_argnum(Q, _F, A, N) :-
     get_assertion_head_arg(N, Q, Was),
     is_ftNonvar(Was).
 
+:-use_module(library(lists)).
+
 %!  justification(+F, -J) is semidet.
 %
 %   Retrieves a justification `J` for a fact `F`. A justification typically represents
@@ -1089,7 +1091,7 @@ base(F, L) :-
 %   @arg L1 The list of conclusions (facts) whose base facts are being sought.
 %   @arg L2 The resulting list of base facts.
 %
-bases([], []) :- !.
+bases([], []).
 
 bases([X | Rest], L) :-
     % Recursively find the base facts for `X`.
@@ -1166,7 +1168,7 @@ assumptions(X, L) :-
 %   @arg Js The list of justifications.
 %   @arg L  The resulting list of assumptions.
 %
-assumptions1([], []) :- !.
+assumptions1([], []).
 
 assumptions1([X | Rest], L) :-
     % Recursively get assumptions for each justification `X`.
@@ -1244,7 +1246,7 @@ pfcDescendant1(P, Q, Seen) :-
     % Check if `X` is an immediate justifier for `Q`.
     pfcChild(X, Q),
     % Ensure `X` has not been visited before.
-    \+ member(X, Seen),
+    (\+ member(X, Seen)),
     % Either `P` is `X` or continue recursively checking ancestors.
     (P = X ; pfcDescendant1(P, X, [X | Seen])).
 
@@ -1320,10 +1322,8 @@ matterialize_support_term(S, Sup) :-
     term_attvars(S, Atts), 
     Atts \== [] -> 
     % If attached variables exist, copy `S` and gather the associated goals.
-    copy_term(S, _, Goals), Sup = S + Goals, !;
-    % If no attached variables exist, return `S` unchanged.
-    matterialize_support_term(S, S).
-
+    copy_term(S, _, Goals), Sup = S + Goals, !.
+    
 % %  matterialize_support_term(+SS, -SS) is det.
 %
 %   This predicate is a fallback when the term `SS` has no attached variables, ensuring
@@ -1346,10 +1346,10 @@ matterialize_support_term(SS, SS).
 %
 pfc_system_term_expansion(I, S0, O, S1) :-
     % Check if the 'pfc_term_expansion' flag is not set to false.
-    \+ current_prolog_flag(pfc_term_expansion, false),
+    (\+ current_prolog_flag(pfc_term_expansion, false),
     % Check if the file is a '.pfc.pl' file or if 'pfc_term_expansion' is true.
     ( \+ \+ (source_location(File, _), atom_concat(_, '.pfc.pl', File)) ;
-      current_prolog_flag(pfc_term_expansion, true)
+      current_prolog_flag(pfc_term_expansion, true))
     ) ->
     % If term expansion is enabled, attempt to expand the input term `I`.
     once((
@@ -1492,7 +1492,7 @@ mpred_update_literal(P, N, Q, R):-
 %   @arg P The predicate whose argument needs updating.
 %   @arg N The argument position to update.
 %
-:- module_transparent(update_single_valued_arg/3).
+:- module_transparent((update_single_valued_arg)/3).
 
 update_single_valued_arg(M, M:Pred, N):- !, update_single_valued_arg(M, Pred, N).
 update_single_valued_arg(_, M:Pred, N):- !, update_single_valued_arg(M, Pred, N).
