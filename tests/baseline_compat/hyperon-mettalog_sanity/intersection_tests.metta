@@ -33,8 +33,7 @@
   (intersection (superpose (1 2 3 foo bar)) (superpose (2 foo)))
   (superpose (2 foo))
 )
-
-;; Test intersection with duplicates
+Test intersection with duplicates
 ;; This test ensures that duplicates are treated correctly in the intersection.
 !(assertEqual
   (intersection (superpose (a b b c d)) (superpose (b c)))
@@ -215,3 +214,28 @@
   (superpose ($x (f $y)))
 )
 
+
+;(= (intersection-element $x $y)  (intersection (superpose $x) (superpose $y)))
+;!(assertEqual (intersection-element (1 2 3 foo bar) (2 foo)) (superpose (2 foo)))
+;
+; (= (intersection $x $y) (superpose (intersection-element (collapse $x) (collapse $y))))
+
+"
+
+!(bind! &ctx1 (make-space (f1 f2 f3)))
+!(bind! &ctx2 (make-space (f1 f2 f3 f4 f5)))
+(intersection (get-atoms &ctx1) (get-atoms &ctx2)) 
+    
+!(get-atoms &ctx1) -> 1 2 3 4 5 6 7 ... .. ... 
+!(get-atoms &ctx2) -> 1 2 3 4 5 6 7 ... .. ... 
+  
+(= (intersection $x $y) (superpose (intersection-element (collapse $x) (collapse $y))))
+
+(intersection (get-atoms &ctx1) (get-atoms &ctx2)) 
+ 1 2 3 4 5 ... 
+
+ - Rust Prolog
+ - Sicstus CLP(FD) 1000x 
+ - GNUProlog
+ - XSB-Prolog
+"

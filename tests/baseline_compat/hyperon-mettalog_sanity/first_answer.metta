@@ -115,8 +115,9 @@
 
 
 
-!(limit 1 (synthesize (: $term $type) kb rb (S Z)))
+!(assertEqualToResult (limit 1 (synthesize (: $term $type) kb rb (S Z))) ((: a A)))
 
-!(limit 6 (synthesize (: $term $type) kb rb (S Z)))
+!(assertEqualToResult (limit 6 (synthesize (: $term $type) kb rb (S Z))) ((: a A) (: a B) (: abc (Implication (AndLink A B) C)) 
+	 (: cde (Implication (OrLink C D) E)) (: (ConjunctionIntroduction a a) (AndLink A A)) (: (ConjunctionIntroduction a a) (AndLink A B))))
 
 
