@@ -1,0 +1,11 @@
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[(: PROOFTrace (-> (specializationOf $sptrn#7252 (Inheritance (VarIdx Z) (VarIdx (S Z)))) (supportOf $sptrn#7252 (countNat $sptrn#7252)))), (: PROOFTrace (supportOf (Inheritance B (VarIdx (S Z))) (S Z))), (: PROOFTrace (minsup (Inheritance (VarIdx Z) (VarIdx (S Z)))))]
+0.16user 0.00system 0:00.18elapsed 86%CPU (0avgtext+0avgdata 27880maxresident)k
+24464inputs+0outputs (152major+3718minor)pagefaults 0swaps
