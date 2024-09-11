@@ -1,0 +1,7 @@
+[(compile! f)]
+[42]
+[6]
+[(compile! fs)]
+[(Error 42 BadType)]
+0.00user 0.00system 0:00.02elapsed 69%CPU (0avgtext+0avgdata 24952maxresident)k
+0inputs+0outputs (2major+2994minor)pagefaults 0swaps

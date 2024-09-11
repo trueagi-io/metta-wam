@@ -1,0 +1,6 @@
+[(Error (assertEqualToResult (let $_ (== $Out (append (Cons 1 (Cons 2 Nil)) (Cons 3 (Cons 4 Nil)))) $Out) ((Cons 1 (Cons 2 (Cons 3 (Cons 4 Nil)))))) 
+Expected: [(Cons 1 (Cons 2 (Cons 3 (Cons 4 Nil))))]
+Got: [$Out]
+Missed result: (Cons 1 (Cons 2 (Cons 3 (Cons 4 Nil)))))]
+0.02user 0.00system 0:00.02elapsed 88%CPU (0avgtext+0avgdata 24872maxresident)k
+0inputs+0outputs (0major+3025minor)pagefaults 0swaps

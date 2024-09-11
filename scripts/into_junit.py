@@ -1,5 +1,6 @@
 import xml.etree.ElementTree as ET
 import sys
+import os
 import re
 from collections import defaultdict
 import datetime
@@ -8,7 +9,11 @@ def create_testcase_element(testclass, testname, stdout, identifier, got, expect
     # Create the testcase XML element with the class and test name attributes
     testcase = ET.Element("testcase", classname=testclass, name=testname, time=time)
 
-    test_res = f"Assertion: {stdout}\nExpected: {expected}\nActual: {got}"
+    test_res = f"Assertion: {stdout}\nExpected: {expected}\nActual: {got}"    
+    url = url.replace("/./","/").replace("//","/").replace(":/","://")
+    GITHUB_REPOSITORY_OWNER = os.getenv("GITHUB_REPOSITORY_OWNER", 'trueagi-io')
+    if GITHUB_REPOSITORY_OWNER is not None:  # Correct checking against None
+        url = url.replace('trueagi-io', GITHUB_REPOSITORY_OWNER.lower())  # Correct method to lower case
     sys_out_text = f"<![CDATA[\n<a href=\"{url}\">Test Report</a>\n\n{test_res}\n]]>"
 
     if status == "PASS":
