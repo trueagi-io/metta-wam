@@ -564,7 +564,7 @@ xform_out(_Out, 'Empty').
 name_vars(Equality) :-
     % Ignore failures when naming variables.
     ignore(name_vars0(Equality)).
-    
+
 %! name_vars0(+Equality) is det.
 %   Helper predicate that assigns names to variables if necessary.
 %   @arg Equality is a term containing variables.
@@ -692,7 +692,7 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,
     (((From = file(_Filename), option_value('exec',skip), \+ always_exec(BaseEval)))
      -> (
          % Skip execution if conditions are met
-         GG = (skip(Term),deterministic(Complete)),
+         GgGgGgGgGgG = (skip(Term),deterministic(Complete)),
          % Mark as skipped
          Skipping = 1,!,
          % Previously: Output = "Skipped"
@@ -700,7 +700,7 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,
          true
         )
         ; % Otherwise, execute the goal interactively
-        GG = (
+        GgGgGgGgGgG = (
             % Execute Term and capture the result
             ((  (Term),deterministic(Complete),
                 % Transform output for display and store it in the result
@@ -739,7 +739,7 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,
    % Interactive looping with possible timing and stepping control
    (forall_interactive(
     From, WasInteractive,Complete, %may_rtrace
-     (timed_call(GG,Seconds)),
+     (timed_call(GgGgGgGgGgG,Seconds)),
   ((((((Complete==true->!;true),
        %repeat,
        set_option_value(interactive,WasInteractive),
@@ -769,7 +769,7 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,
              color_g_mesg_ok(yellow,
               \+ \+
                (maplist(maybe_assign,NamedVarsList),
-                not_compatio(write_bsrc(Output)),                
+                not_compatio(write_bsrc(Output)),
                 true)))) )) ))),
      in_answer_io(write_asrc(Output)),
 
@@ -941,7 +941,7 @@ write_asrc(Var):- write_bsrc(Var),!.  % Otherwise, write the variable.
 %   @arg Var is the variable to be written.
 write_bsrc(Var):- Var=='Empty',!,write(Var).  % Special case: write 'Empty' directly.
 write_bsrc(Var):- ground(Var),!,write_bsrc1(Var).  % If the variable is ground, write it directly.
-write_bsrc(Var):- copy_term(Var,Copy,Goals),Var=Copy,write_bsrc(Var,Goals).  % For non-ground terms, handle goals.
+write_bsrc(Var):- copy_term(Var,Copy,Goals),Var=Copy,write_bsrc_goal(Var,Goals).  % For non-ground terms, handle goals.
 write_bsrc_goal(Var,[]):- write_src(Var).  % Write the variable if no goals are present.
 write_bsrc_goal(Var,[G|Goals]):-
     % Write the variable.
@@ -1469,7 +1469,7 @@ install_readline(Input):-
     %add_history_string("!(obo-alt-id $X BS:00063)"),
     %add_history_string("!(and (total-rows $T TR$) (unique-values $T2 $Col $TR))"),
     !.
-    
+
 % Clause to handle non-tty(true) clients, like SWISH or HTTP server requests.
 install_readline(_NoTTY). % For non-tty(true) clients over SWISH/Http/Rest server
 

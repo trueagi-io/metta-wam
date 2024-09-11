@@ -525,7 +525,7 @@ report_progress(FileName, InStream, TotalLines, StartTime) :-
     repeat,
     ( stop_reporting(FileName, InStream, TotalLines, StartTime)
       -> log_progress('~t - Stopping reporting on ~w progress.~n', [FileName])
-      ; (once(report_progress_so_far(FileName, InStream, TotalLines, StartTime, TimeLeft)),
+      ; (once(report_progress_so_far(FileName, get_percent_done(InStream, TotalLines), StartTime, TimeLeft)),
          ((number(TimeLeft), HalfTimeLeft is TimeLeft / 2, HalfTimeLeft < TimeBetweenReports, n_max(HalfTimeLeft,2,MinTime)) -> sleep(MinTime) ; sleep(TimeBetweenReports)),  % Sleep for HalfTime seconds between progress reports
          fail)).  % And Continue reporting
 
@@ -546,28 +546,64 @@ stop_reporting(FileName, InStream, _TotalLines, _StartTime):-
         log_error('Info: Stream closed.', [])
     ; fail ).  % Continue reporting if none of the above conditions are met
 
-%! report_progress_so_far(FileName, +InStream:stream, +TotalLines:int, +StartTime:float) is det.
+
+
+%! remaining_time(+PercentDone: float, +StartTime: float, -RemainingTime: integer) is det.
 %
-% Calculates and logs the progress and estimated time remaining.
-report_progress_so_far(FileName, InStream, TotalLines, StartTime, EstimatedTimeRemaining):-
+% Calculate the remaining time required to complete a task based on the percentage of the task already completed and the start time.
+% This predicate calculates the elapsed time from the start time to the current time, then uses this along with the task completion percentage to compute the remaining time.
+%
+% @param PercentDone The percentage of the task that has been completed, expressed as a float (e.g., 50.0 for 50%).
+% @param StartTime The start time of the task, expressed in epoch seconds.
+% @param RemainingTime The computed remaining time to complete the task, also in seconds.
+%
+% This predicate assumes that PercentDone is a positive value greater than zero. If it is zero or negative, a default remaining time of 60 seconds is returned to avoid division by zero or other meaningless calculations.
+%
+remaining_time(PercentDone, StartTime, RemainingTime) :-
+    PercentDone > 0,   % Ensure that PercentDone is greater than 0 to avoid division by zero
+    get_time(CurrentTime),
+    ElapsedTime is CurrentTime - StartTime,  % Calculate the time elapsed since the start
+    TotalTime is ElapsedTime / (PercentDone / 100),  % Estimate total time based on current progress
+    RemainingTime is TotalTime - ElapsedTime, !.  % Compute remaining time
+remaining_time(_, _, 60).  % Return a default remaining time if PercentDone is not greater than 0
+
+
+%! get_percent_done(+InStream: stream, +TotalLines: int, -Percent: float) is det.
+%
+% Calculates and logs the percentage of lines processed so far in a stream based on the total number of lines. This predicate not only calculates the percentage but also logs the progress directly.
+%
+% @param InStream The input stream from which lines are being read.
+% @param TotalLines The total number of lines in the stream.
+% @param Percent The percentage of lines processed thus far, calculated and used for logging.
+%
+get_percent_done(InStream, TotalLines, Percent):-
     stream_property(InStream, position(Position)),
     stream_position_data(line_count, Position, CurrentLine),  % Get the current line number being processed
-    PercentDone is (CurrentLine / TotalLines) * 100,  % Calculate the percentage completed
+    Percent is (CurrentLine / TotalLines) * 100,  % Calculate the percentage completed
+    log_progress('Info: Processing progress:\t ~2f% (Now ~d of ~d lines) ', [Percent, CurrentLine, TotalLines]).
 
-    % Calculate elapsed time and estimated remaining time
-    get_time(CurrentTime),
-    ElapsedTime is CurrentTime - StartTime,  % Time elapsed since the start
-    (   CurrentLine > 0 ->  % Avoid division by zero
-        ProcessingSpeed is CurrentLine / ElapsedTime,  % Lines processed per second
-        RemainingLines is TotalLines - CurrentLine,
-        EstimatedTimeRemaining is RemainingLines / ProcessingSpeed,  % Estimated time remaining in seconds
-        format_time_remaining(EstimatedTimeRemaining, TimeLeft)
-    ;   TimeLeft = 'N/A'  % If no lines have been processed, time left is unknown
+
+%! report_progress_so_far(+FileName: string, +CalcPercent: predicate, +StartTime: float, -RemainingTime: float) is det.
+%
+% Reports the progress and the estimated time remaining for processing a file, based on a percentage calculation predicate provided.
+%
+% @param FileName The name of the file being processed.
+% @param CalcPercent A lambda that when called, computes the percentage of the task completed. It should have a signature like `calc_percent_done(-Percent: float)`.
+% @param StartTime The start time of the file processing, typically captured using `get_time/1`.
+% @param RemainingTime The computed remaining time to complete the task, also in seconds.
+%
+% This predicate assumes the `CalcPercent` predicate handles all necessary file stream interactions to determine the progress.
+%
+report_progress_so_far(FileName, CalcPercent, StartTime, RemainingTime):-
+    call(CalcPercent, PercentDone),  % Call the provided predicate to calculate the percentage completed
+    remaining_time(PercentDone, StartTime, RemainingTime),
+    (   number(RemainingTime) ->
+        format_time_remaining(RemainingTime, TimeLeft)  % Convert estimated time into a human-readable format
+    ;   TimeLeft = 'N/A'  % If no lines have been processed, or an error occurred, time left is unknown
     ),
+    % Log the progress and estimated time remaining
+    log_progress('\tProcessing file ~w: ~2f% complete. \tEstimated time remaining: ~w', [FileName, PercentDone, TimeLeft]).
 
-    % Print the progress and estimated time remaining
-    log_progress('Info: Processing progress:\t ~2f% (Now ~@ of ~@ lines) ~w ', [PercentDone, scaled_units(CurrentLine), scaled_units(TotalLines), FileName]),
-    log_progress('\t - Estimated time remaining: ~w~n', [TimeLeft]).
 
 %! scaled_units(+Number:int) is det.
 %
@@ -718,7 +754,7 @@ write_readably(OutStream, Item) :-
 % @arg Stream Stream from which to read.
 % @arg Item The item read from the stream.
 read_sexpr(I,O):- string(I), open_string(I,S),!,read_sexpr(S,O).
-read_sexpr(I,O):- cont_sexpr(')', I,O).
+read_sexpr(I,O):- cont_sexpr(')', I, O).
 %! cont_sexpr(+EndChar:atom, +Stream:stream, -Item) is det.
 %
 % Reads a single item (S-expression or comment) from the specified stream, handling different formats and encodings.
