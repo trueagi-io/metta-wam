@@ -135,11 +135,11 @@ write_pass_fail(TestName,P,C,PASS_FAIL,G1,G2):-
       compute_html_out_per_test(HTML_OUT,TEE_FILE,TestName,HTML_OUT_PerTest),
       get_last_call_duration(Duration),
       DurationX1000 is Duration * 1000,
-      format(Stream,'| ~w | ~w |[~w](https://logicmoo.org/public/metta/~w#~w) | ~@ | ~@ | ~@ | ~w | ~w |~n',
+      format(Stream,'| ~w | ~w |[~w](https://trueagi-io.github.io/metta-wam/~w#~w) | ~@ | ~@ | ~@ | ~w | ~w |~n',
       [TestName,PASS_FAIL,TestName,HTML_OUT,TestName,
-        trim_gstring_bar_I(write_src_woi([P,C]),400),
-        trim_gstring_bar_I(write_src_woi(G1),200),
-        trim_gstring_bar_I(write_src_woi(G2),200),
+        trim_gstring_bar_I(write_src_woi([P,C]),600),
+        trim_gstring_bar_I(write_src_woi(G1),600),
+        trim_gstring_bar_I(write_src_woi(G2),600),
         DurationX1000,
         HTML_OUT_PerTest]),!,
       close(Stream))))).
@@ -183,9 +183,8 @@ trim_gstring_bar_I(Goal, MaxLen) :-
     atom_length(String, Len),
     (   Len =< MaxLen
     ->  Trimmed = String
-    ;   SubLen is MaxLen,
-        sub_atom(String, 0, SubLen, _, SubStr),
-        string_concat(SubStr, "...", Trimmed)
+    ;  (sub_string(String, 0, MaxLen, LeftOver, SubStr),
+        format(string(Trimmed),'~w...(~w)',[SubStr,LeftOver]))
     ),
     write(Trimmed).
 
