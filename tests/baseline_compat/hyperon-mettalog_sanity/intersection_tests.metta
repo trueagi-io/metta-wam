@@ -215,10 +215,13 @@ Test intersection with duplicates
 )
 
 
-;(= (intersection-element $x $y)  (intersection (superpose $x) (superpose $y)))
-;!(assertEqual (intersection-element (1 2 3 foo bar) (2 foo)) (superpose (2 foo)))
+
 ;
-; (= (intersection $x $y) (superpose (intersection-element (collapse $x) (collapse $y))))
+; (= (intersection $x $y) (superpose (intersect-elements (collapse $x) (collapse $y))))
+
+; A Test to show we can define a function to be used like how normal people are imagining
+(= (intersect-elements $x $y) (collapse (intersection (superpose $x) (superpose $y))))
+!(assertEqual (intersect-elements (1 2 3 foo bar) (2 foo)) (2 foo))
 
 "
 
