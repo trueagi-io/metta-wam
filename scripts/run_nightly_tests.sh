@@ -22,11 +22,11 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# Generate the output directory with timestamp
-if [ -z "$timestamp" ]; then
-    timestamp=$(date +"%Y-%m-%d")
+# generate the output directory with timestamp
+if [ -z $timestamp ]; then
+    timestamp=$(date +"%Y-%m-%dT%H:%M:%S")
 fi
-output=./reports/BY_DATE/$timestamp
+output=./reports/tests_output/baseline-compat-$timestamp/
 
 # run the tests
 mkdir -p $output
@@ -69,7 +69,7 @@ run_mettalog_tests() {
         local status=$?
     else
         # Execute the command silently and filter output, capturing status
-	script -q -c "${cmd[*]}" /dev/null | tee >(grep -Ei --line-buffered '_CMD:|warning|es[:] ' >&2) > /dev/null
+	script -q -c "${cmd[*]}" /dev/null | tee >(grep -Ei --line-buffered '_CMD:|h3 id|loonit_|warning|es[:] ' >&2) > /dev/null
         local status=$?
     fi
 
