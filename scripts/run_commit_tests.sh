@@ -83,7 +83,7 @@ run_mettalog_tests() {
 }
 
 echo Running tests METTALOG_OUTPUT=$METTALOG_OUTPUT and SHARED_UNITS=$SHARED_UNITS
-SKIP_LONG=1
+SKIP_LONG=0
 
 #blank out the shared units
 cat /dev/null > /tmp/SHARED.UNITS
