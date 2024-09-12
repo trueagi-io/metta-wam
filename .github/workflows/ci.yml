@@ -19,6 +19,8 @@ jobs:
   generate-reports:
     runs-on: ubuntu-latest
 
+    if: (github.repository == 'trueagi-io/metta-wam') || (github.event_name != 'schedule')
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
