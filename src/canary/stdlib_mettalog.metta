@@ -1552,6 +1552,16 @@
 ; !(import! &corelib "src/canary/stdlib_mettalog.metta")
 ;!(println! "!(import! &corelib \"src/canary/stdlib_mettalog.metta\")")
 
+;; Public MeTTa
+(@doc findall!
+  (@desc "Takes a Template and a Goal. Returns the list resulting from substituting all bindings from solving Goal into Template.
+  See Prolog's built-in predicate findall/3.")
+  (@params (
+    (@param "Template")
+    (@param "Goal")))
+  (@return "Result list of all bindings for Goal substituted into Template"))
+(: findall! (-> Expression Expression Expression))
+
 ;; Functional Programming
 (@doc maplist!
   (@desc "Takes a function F and one to three lists; Returns the result of applying F to each item in the list(s). 
