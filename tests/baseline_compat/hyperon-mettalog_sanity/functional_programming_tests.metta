@@ -13,6 +13,10 @@
 (: plus-ternary (-> Number Number Number Number))
 (= (plus-ternary $N1 $N2 $N3) (+ $N1 (+ $N2 $N3)))
 
+; =============================================================
+; maplist! tests
+; =============================================================
+
 ;; test maplist! with unary function
 
 !(assertEqualToResult (maplist! is-even (1 2 3)) ((False True False)))
@@ -35,3 +39,30 @@
 (= (my-list) (1 2 3))
 
 !(assertEqualToResult (maplist! get-type (my-list)) (((-> Expression))))
+
+; =============================================================
+; concurrent-maplist! tests
+; =============================================================
+
+;; test concurrent-maplist! with unary function
+
+;!(assertEqualToResult (concurrent-maplist! is-even (1 2 3)) ((False True False)))
+
+;; test concurrent-maplist! with binary function
+
+;!(assertEqualToResult (concurrent-maplist! < (1 2 3) (2 2 2)) ((True False False)))
+
+;; test concurrent-maplist! with ternary function
+
+;!(assertEqualToResult (concurrent-maplist! plus-ternary (1 2 3) (4 5 6) (7 8 9)) ((12 15 18)))
+
+;; test recursive concurrent-maplist!
+
+;!(assertEqual (concurrent-maplist! concurrent-maplist! (< >) ((1 2 3) (1 2 3)) ((2 2 2) (2 2 2))) ((True False False) (False False True)))
+
+;; the arguments are not evaluated
+
+(: my-list (-> Expression))
+(= (my-list) (1 2 3))
+
+;!(assertEqualToResult (concurrent-maplist! get-type (my-list)) (((-> Expression))))
