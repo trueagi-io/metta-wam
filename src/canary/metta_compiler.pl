@@ -30,7 +30,7 @@
 :- ensure_loaded(swi_support).
 :- ensure_loaded(metta_testing).
 :- ensure_loaded(metta_utils).
-:- ensure_loaded(metta_reader).
+:- ensure_loaded(metta_parser).
 :- ensure_loaded(metta_interp).
 :- ensure_loaded(metta_space).
 :- ensure_loaded(metta_compiler_inlining).

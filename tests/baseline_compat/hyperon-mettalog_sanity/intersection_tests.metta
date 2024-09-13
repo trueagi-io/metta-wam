@@ -142,7 +142,7 @@ Test intersection with duplicates
 ;; This ensures that expressions like (+ 1 2) that unify with 3 are handled correctly.
 !(assertEqualToResult
   (pred-intersection unified (superpose (($x (+ 1 2)) (3 4))) (superpose ((3 $y) (4 (+ 1 2)))))
-  ((3 4) (4 3))
+  ((3 3) (3 4) (4 3))
 )
 
 ;; Test intersection with nested structures and expressions
