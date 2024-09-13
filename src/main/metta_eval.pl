@@ -1348,6 +1348,16 @@ finish_eval(_Eq,_RetType,Depth,Self,T,TT):- eval_args(Depth,Self,T,TT).
 % =================================================================
 % =================================================================
 
+/*
+maplist! 
+ Takes a function F and one to three lists
+ Returns the result of applying F to each item in the list(s)
+ 
+ The provided lists are not evaluated (this matches the behavior of e.g. cons-atom)
+ F must have the number of lists provided as a valid arity (i.e. unary for one list, binary for two, ternary for three)
+ Use concurrent-maplist! for a multi-threaded, nondeterministic version
+ See Prolog's built-in predicate maplist
+*/
 
 eval_20(Eq,RetType,Depth,Self,['maplist!',Pred,ArgL1],ResL):- !,
       maplist(eval_pred(Eq,RetType,Depth,Self,Pred),ArgL1,ResL).
@@ -1362,6 +1372,18 @@ eval_20(Eq,RetType,Depth,Self,['maplist!',Pred,ArgL1,ArgL2,ArgL3],ResL):- !,
       eval_args(Eq,RetType,Depth,Self,[Pred,Arg1,Arg2],Res).
   eval_pred(Eq,RetType,Depth,Self,Pred,Arg1,Arg2,Arg3,Res):-
       eval_args(Eq,RetType,Depth,Self,[Pred,Arg1,Arg2,Arg3],Res).
+
+/*
+concurrent-maplist! 
+ Takes a function F and one to three lists 
+ Returns the result of applying F to each item in the list(s)
+ 
+ The provided lists are not evaluated (this matches the behavior of e.g. cons-atom)
+ F must have the number of lists provided as a valid arity (i.e. unary for one list, binary for two, ternary for three)
+ The applications of F to the list items are processed in parallel. Because of the overhead of this approach, a speedup is only likely if F is expensive to evaluate.
+ Use maplist! for a single-threaded, deterministic version
+ See Prolog's built-in predicate concurrent-maplist
+*/
 
 eval_20(Eq,RetType,Depth,Self,['concurrent-maplist!',Pred,ArgL1],ResL):- !,
       metta_concurrent_maplist(eval_pred(Eq,RetType,Depth,Self,Pred),ArgL1,ResL).
