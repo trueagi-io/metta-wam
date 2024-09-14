@@ -729,6 +729,42 @@ metta_concurrent_maplist(P2, InList, OutList) :-
     % Fallback to standard maplist if threading isn't used.
     maplist(P2, InList, OutList).
 
+
+metta_concurrent_maplist(Goal, List1, List2, List3, List4) :-
+    same_length_4(List1, List2, List3, List4),
+    workers(List1, WorkerCount),
+    !, maplist(ml_goal_4(Goal), List1, List2, List3, List4, Goals),
+    concurrent(WorkerCount, Goals, []).
+metta_concurrent_maplist(M:Goal, List1, List2, List3, List4) :- maplist(once_in_module_4(M, Goal), List1, List2, List3, List4).
+same_length_4([], [], [], []).
+same_length_4([_|T1], [_|T2], [_|T3], [_|T4]) :- same_length_4(T1, T2, T3, T4).
+ml_goal_4(Goal, Elem1, Elem2, Elem3, Elem4, call(Goal, Elem1, Elem2, Elem3, Elem4)).
+once_in_module_4(M, Goal, Arg1, Arg2, Arg3, Arg4) :- call(M:Goal, Arg1, Arg2, Arg3, Arg4), !.
+
+
+metta_concurrent_maplist(Goal, E1, E2, E3, E4, E5) :-
+    same_length_5(E1, E2, E3, E4, E5),
+    workers(E1, WorkerCount),
+    !, maplist(ml_goal_5(Goal), E1, E2, E3, E4, E5, Goals),
+    concurrent(WorkerCount, Goals, []).
+metta_concurrent_maplist(M:Goal, E1, E2, E3, E4, E5) :- maplist(once_in_module_5(M, Goal), E1, E2, E3, E4, E5).
+same_length_5([], [], [], [], []).
+same_length_5([_|E1], [_|E2], [_|E3], [_|E4], [_|E5]) :- same_length_5(E1, E2, E3, E4, E5).
+ml_goal_5(Goal, E1, E2, E3, E4, E5, call(Goal, E1, E2, E3, E4, E5)).
+once_in_module_5(M, Goal, E1, E2, E3, E4, E5) :- call(M:Goal, E1, E2, E3, E4, E5), !.
+
+metta_concurrent_maplist(Goal, E1, E2, E3, E4, E5, E6) :-
+    same_length_6(E1, E2, E3, E4, E5, E6),
+    workers(E1, WorkerCount),
+    !, maplist(ml_goal_6(Goal), E1, E2, E3, E4, E5, E6, Goals),
+    concurrent(WorkerCount, Goals, []).
+metta_concurrent_maplist(M:Goal, E1, E2, E3, E4, E5, E6) :- maplist(once_in_module_6(M, Goal), E1, E2, E3, E4, E5, E6).
+same_length_6([], [], [], [], [], []).
+same_length_6([_|E1], [_|E2], [_|E3], [_|E4], [_|E5], [_|E6]) :- same_length_6(E1, E2, E3, E4, E5, E6).
+ml_goal_6(Goal, E1, E2, E3, E4, E5, E6, call(Goal, E1, E2, E3, E4, E5, E6)).
+once_in_module_6(M, Goal, E1, E2, E3, E4, E5, E6) :- call(M:Goal, E1, E2, E3, E4, E5, E6), !.
+
+
 %!  metta_hyperpose(:Eq, :RetType, +Depth, +MSpace, +InList, -Res) is det.
 %
 %   Concurrently applies a function, leveraging threading to optimize processing,
