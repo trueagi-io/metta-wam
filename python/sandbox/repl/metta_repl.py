@@ -11,6 +11,7 @@ import sys
 import readline
 import os
 import atexit
+import traceback  # Importing traceback to print the full stack trace
 histfile = os.path.join(os.path.expanduser("~"), ".metta_history")
 
 try:
@@ -136,6 +137,7 @@ class REPL:
             # If there's an error, print it
             except Exception as e:
                 print(f"Error: {e}")
+                traceback.print_exc()  # This will print the deep stack trace
 
 if __name__ == "__main__":
     repl = REPL()

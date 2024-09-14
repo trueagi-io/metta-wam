@@ -5,11 +5,11 @@ requires = ["setuptools==68.0.0", "conan==2.5.0", "cmake==3.24", "setuptools_scm
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "hyperon"
+name = "mettalog"
 description = "Hyperon API in Python"
 readme = "README.md"
 requires-python = ">=3.7"
-keywords = ["metta", "hyperon", "opencog"]
+keywords = ["metta", "mettalog", "hyperon", "opencog"]
 license = {text = "MIT License"}
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -24,8 +24,7 @@ dynamic = [
 ]
 
 [project.scripts]
-metta = "hyperon.metta:main"
-metta-py = "hyperon.metta:main"
+mettalog-py = "hyperon.metta:main"
 
 [project.optional-dependencies]
 dev = [
