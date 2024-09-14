@@ -1,0 +1,27 @@
++ '[' 0 -eq 1 ']'
++ echo 'Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/python_compat/hyperon-experimental_python/sandbox/numpy/nm_test.metta'
+Doing: timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/python_compat/hyperon-experimental_python/sandbox/numpy/nm_test.metta
++ eval 'timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/python_compat/hyperon-experimental_python/sandbox/numpy/nm_test.metta'
+++ timeout --foreground --kill-after=5 --signal=SIGINT 121 time metta /opt/logicmoo_opencog/hyperon-wam/examples/python_compat/hyperon-experimental_python/sandbox/numpy/nm_test.metta
+[]
+[()]
+[()]
+[()]
+[()]
+[array(['1', 'S'], dtype='<U21')]
+[array([3, 4, 5])]
+[True]
+[False]
+[False]
+[array([[7, 3],
+       [8, 4],
+       [9, 5]])]
+[array([[6, 1],
+       [7, 2]])]
+[[np.add, (array([[6, 1],
+       [7, 2],
+       [8, 3]]), $x)]]
+[[np.add, ($x#36, $y2#37)]]
+["X"]
+0.55user 0.04system 0:00.59elapsed 99%CPU (0avgtext+0avgdata 52492maxresident)k
+0inputs+0outputs (0major+6376minor)pagefaults 0swaps
