@@ -30,7 +30,7 @@
 :- ensure_loaded(swi_support).
 :- ensure_loaded(metta_testing).
 :- ensure_loaded(metta_utils).
-:- ensure_loaded(metta_parser).
+:- ensure_loaded(metta_reader).
 :- ensure_loaded(metta_interp).
 :- ensure_loaded(metta_space).
 :- ensure_loaded(metta_compiler_inlining).
@@ -40,6 +40,8 @@
 %:- ensure_loaded(flybase_main).
 % =======================================
 %:- set_option_value(encoding,utf8).
+
+eopfc:- ensure_loaded(mettalog('metta_ontology.pfc.pl')).
 
 :- dynamic(metta_compiled_predicate/2).
 :- multifile(metta_compiled_predicate/2).
@@ -390,11 +392,11 @@ compile_for_assert_eq('=',HeadInC, AsBodyFnC, Converted):-
     maplist(cname_var,NamedVarsList),!,
     compile_for_assert(HeadIn, AsBodyFn, Converted).
 compile_for_assert_eq(':-',HeadIn, BodyIn, Converted):-
-    call(ensure_corelib_types),
+    call(ensure_compiler_ready),
     Converted=(H:-B), s2p(HeadIn,H), s2p(BodyIn,B),!.
 
-
-
+ensure_compiler_ready:- ensure_loaded(mettalog('metta_ontology.pfc.pl')), ensure_corelib_types.
+%ensure_compiler_ready:- eopfc.
 /*
 compile_for_assert_01(HeadIs, AsBodyFn, Converted) :-
   ( AsBodyFn =@= HeadIs ; AsBodyFn == [] ), !,
@@ -472,7 +474,7 @@ merge_structures(A,B,A,B,true).
 
 compile_for_assert(HeadAsFunction0, AsBodyFn0, ConvertedO) :-
  must_det_ll((
-    call(ensure_corelib_types),
+    call(ensure_compiler_ready),
     merge_structures(HeadAsFunction0, AsBodyFn0,HeadAsFunction, AsBodyFn,PreCode),
     as_functor_args(HeadAsFunction,_F,Len),
     h2p(Which,HeadAsFunction,ResultToHead,HeadAsPred),
