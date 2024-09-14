@@ -2547,7 +2547,10 @@ atom_count_from_space(Count) :-
     atom_count_from_space(metta_self, Count).
 
 :-dynamic(want_py_lib_dir/1).
-:-prolog_load_context(directory,ChildDir),file_directory_name(ChildDir,ParentDir),file_directory_name(ParentDir,GParentDir),pfcAdd_Now(want_py_lib_dir(GParentDir)).
+:-prolog_load_context(directory,ChildDir),
+    file_directory_name(ChildDir,ParentDir),
+    file_directory_name(ParentDir,GParentDir),
+    pfcAdd_Now(want_py_lib_dir(GParentDir)).
 
 %:- .
 %:- ensure_rust_metta.
@@ -2555,19 +2558,24 @@ atom_count_from_space(Count) :-
 /*
 Rust: The core of MeTTa is implemented in Rust, which provides performance and safety features.
 
-Python Extensions: Python is used for extending the core functionalities. Python communicates with Rust via a Foreign Function Interface (FFI) or similar mechanisms.
+Python Extensions: Python is used for extending the core functionalities. Python communicates with 
+Rust via a Foreign Function Interface (FFI) or similar mechanisms.
 
-Prolog: The Prolog code is an additional layer that allows you to extend or customize parts of MeTTa using Python and Rust. It maintains the system's extensibility.
+Prolog: The Prolog code is an additional layer that allows you to extend or customize parts of 
+MeTTa using Python and Rust. It maintains the system's extensibility.
 
+VSpace is a space with its backend in Prolog, it implies that you're using Prolog's logic 
+programming capabilities to manage and manipulate a particular domain, which in this context 
+is referred to as a "space" (possibly akin to the GroundingSpace in Python, but implemented in Prolog).
 
-VSpace is a space with its backend in Prolog, it implies that you're using Prolog's logic programming capabilities to manage and manipulate a particular domain, which in this context is referred to as a "space" (possibly akin to the GroundingSpace in Python, but implemented in Prolog).
-
-To integrate VSpace with the existing Python and Rust components, similar interfacing techniques could be used. You could expose Prolog predicates as functions that can be called from Python or Rust, and likewise, call Python or Rust functions from within Prolog.
+To integrate VSpace with the existing Python and Rust components, similar interfacing 
+techniques could be used. You could expose Prolog predicates as functions that can be 
+called from Python or Rust, and likewise, call Python or Rust functions from within Prolog.
 
 
 */
 
-%:- ensure_loaded(metta_interp).
+%:- ensurze_loaded(metta_interp).
 %!  want_py_lib_dir is det.
 %
 %   Ensures that Python library directories are added to the Python path.
