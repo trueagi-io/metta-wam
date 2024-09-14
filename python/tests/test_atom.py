@@ -12,7 +12,7 @@ class AtomTest(unittest.TestCase):
         self.assertEqual(str(S("a")), "a")
 
     def test_symbol_type(self):
-        self.assertEqual(S("a").get_type(), AtomKind.SYMBOL)
+        self.assertEqual(S("a").get_metatype(), AtomKind.SYMBOL)
 
     def test_symbol_get_symbol(self):
         self.assertEqual(S("a").get_name(), "a")
@@ -28,7 +28,7 @@ class AtomTest(unittest.TestCase):
         self.assertEqual(str(V("x")), "$x")
 
     def test_variable_type(self):
-        self.assertEqual(V("x").get_type(), AtomKind.VARIABLE)
+        self.assertEqual(V("x").get_metatype(), AtomKind.VARIABLE)
 
     def test_variable_get_name(self):
         self.assertEqual(V("x").get_name(), "x")
@@ -42,7 +42,7 @@ class AtomTest(unittest.TestCase):
         self.assertEqual(str(ValueAtom("1.0")), '"1.0"')
 
     def test_grounded_type(self):
-        self.assertEqual(ValueAtom(1.0).get_type(), AtomKind.GROUNDED)
+        self.assertEqual(ValueAtom(1.0).get_metatype(), AtomKind.GROUNDED)
 
     def test_grounded_grounded_type(self):
         atom = G(GroundedObject(None), S("Float"))
@@ -74,7 +74,7 @@ class AtomTest(unittest.TestCase):
         self.assertEqual(str(E(x2Atom, ValueAtom(1.0))), "(*2 1.0)")
 
     def test_expr_type(self):
-        self.assertEqual(E(x2Atom, ValueAtom(1.0)).get_type(), AtomKind.EXPR)
+        self.assertEqual(E(x2Atom, ValueAtom(1.0)).get_metatype(), AtomKind.EXPR)
 
     def test_expr_get_children(self):
         self.assertEqual(E(x2Atom, ValueAtom(1.0)).get_children(),
@@ -92,8 +92,8 @@ class AtomTest(unittest.TestCase):
 
     def test_interpret(self):
         space = GroundingSpaceRef()
-        self.assertEqual(interpret(space, E(x2Atom, ValueAtom(1))),
-                [ValueAtom(2)])
+        x2 = E(Atoms.METTA, E(x2Atom, ValueAtom(1)), AtomType.UNDEFINED, G(space))
+        self.assertEqual(interpret(space, x2), [ValueAtom(2)])
 
     def test_grounded_returns_python_value_unwrap_false(self):
         def x2_op(atom):
@@ -102,7 +102,7 @@ class AtomTest(unittest.TestCase):
         expr = E(x2Atom, ValueAtom(1))
 
         space = GroundingSpaceRef()
-        self.assertEqual(interpret(space, expr),
+        self.assertEqual(interpret(space, E(Atoms.METTA, expr, AtomType.UNDEFINED, G(space))),
                 [E(S('Error'), expr, S('Grounded operation which is defined using unwrap=False should return atom instead of Python type'))])
 
     def test_grounded_no_return(self):
@@ -111,19 +111,17 @@ class AtomTest(unittest.TestCase):
             print(input)
 
         printExpr = E(OperationAtom('print', print_op, type_names=["Atom", "->"], unwrap=False), S("test"))
+        printExpr = E(Atoms.METTA, printExpr, AtomType.UNDEFINED, G(space))
         self.assertTrue(atom_is_error(interpret(space, printExpr)[0]))
         printExpr = E(OperationAtom('print', print_op, type_names=["Atom", "->"], unwrap=True), ValueAtom("test"))
+        printExpr = E(Atoms.METTA, printExpr, AtomType.UNDEFINED, G(space))
         self.assertEqual(interpret(space, printExpr), [E()])
-
-    def test_plan(self):
-        space = GroundingSpaceRef()
-        interpreter = Interpreter(space, E(x2Atom, ValueAtom(1)))
-        self.assertEqual(str(interpreter.get_step_result()),
-                "return [(-> int int)] then form alternative plans for expression (*2 1) using types")
 
     def test_no_reduce(self):
         space = GroundingSpaceRef()
-        self.assertEqual(interpret(space, E(noReduceAtom, ValueAtom(1))),
+        expr = E(Atoms.METTA, E(noReduceAtom, ValueAtom(1)),
+                 AtomType.UNDEFINED, G(space))
+        self.assertEqual(interpret(space, expr),
                 [E(noReduceAtom, ValueAtom(1))])
 
     def test_match_(self):
@@ -154,7 +152,7 @@ class GroundedNoCopy:
 
 class MatchableObjectTest(MatchableObject):
     def match_(self, atom):
-        return [{'atom_type': S(atom.get_children()[0].get_type().name)}]
+        return [{'atom_type': S(atom.get_children()[0].get_metatype().name)}]
 
 def MatchableAtomTest(value, type_name=None, atom_id=None):
     return G(MatchableObjectTest(value, atom_id), AtomType.UNDEFINED)

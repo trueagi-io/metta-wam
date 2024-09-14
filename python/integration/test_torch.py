@@ -34,7 +34,7 @@ class TorchDiffTest(unittest.TestCase):
         It's purpose is to make sure that gradient information is not lost, when
         the results are wrapped into atoms and passed to grounded functions.
         '''
-        metta = MeTTaLog()
+        metta = MeTTa()
         model = DummyModel()
         optimizer = torch.optim.RMSprop(model.parameters(), lr=0.1)
         loss_fn = torch.nn.CrossEntropyLoss()
