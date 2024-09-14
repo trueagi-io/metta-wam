@@ -717,7 +717,7 @@ write_readably(OutStream, Item) :-
 % Throws an error with stream position if the S-expression cannot be parsed.
 % @arg Stream Stream from which to read.
 % @arg Item The item read from the stream.
-read_sexpr(I,O):- string(I), open_string(I,S),!,read_sexpr(S,O).
+ (I,O):- string(I), open_string(I,S),!,read_sexpr(S,O).
 read_sexpr(I,O):- cont_sexpr(')', I,O).
 %! cont_sexpr(+EndChar:atom, +Stream:stream, -Item) is det.
 %

@@ -661,20 +661,21 @@ interactively_do_metta_exec01(file(_), Self, _TermV, Term, X, _NamedVarsList, _W
     eval_args(Self, Term, X).
 
 % Reset evaluation counter
-interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,FOut):-
+interactively_do_metta_exec01(From, Self, _TermV, Term, X, NamedVarsList, Was, VOutput, FOut):-
+    % Disable tracing to improve performance
     notrace((
 
-    % Reset evaluation counters for a fresh start
-    reset_eval_num,
+        % Reset evaluation counters for a fresh start
+        reset_eval_num,
 
-    % Initialize the result variable, with FOut to hold the final output
-    Result = res(FOut),
+        % Initialize the result variable, with FOut to hold the final output
+        Result = res(FOut),
 
-    % Placeholder for a previous result, starting with 'Empty'
-    Prev = prev_result('Empty'),
+        % Placeholder for a previous result, starting with 'Empty'
+        Prev = prev_result('Empty'),
 
-    % Assert the current term into a base evaluation
-    inside_assert(Term,BaseEval),
+        % Assert the current term for base evaluation
+        inside_assert(Term, BaseEval),
 
     % If compatible, determine the evaluation mode (either 'leap' or 'each')
     (is_compatio -> option_else(answer,Leap,leap) ; option_else(answer,Leap,each)),
@@ -684,9 +685,10 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,
     option_else('initial-result-count',LeashResults,10),
 
     % Control variable initialized with max result count and leap control
-    Control = contrl(MaxResults,Leap),
-    Skipping = _,
+        Control = contrl(MaxResults, Leap),
+        Skipping = _,
 
+    %GG = interact(['Result'=X|NamedVarsList],Term,trace_off),
     % Commented code for interactive control, previously enabled for file skipping
     /* previously: if From = file(_Filename), option_value('exec',skip),  \+ always_exec(BaseEval) */
     (((From = file(_Filename), option_value('exec',skip), \+ always_exec(BaseEval)))
@@ -695,10 +697,12 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,
          GG = (skip(Term),deterministic(Complete)),
          % Mark as skipped
          Skipping = 1,!,
-         % Previously: Output = "Skipped"
-         /* previously: color_g_mesg('#da70d6', (write('% SKIPPING: '), writeq(eval_H(500,Self,BaseEval,X)),writeln('.'))) */
+                %color_g_mesg('#da70d6', (write('% SKIPPING: '), writeq(eval_H(500,Self,BaseEval,X)),writeln('.'))),
+                % color_g_mesg('#fa90f6', (writeln('; SKIPPING'), with_indents(true,write_src(exec(BaseEval))))),
+               %  if_t(is_list(BaseEval),add_history_src(exec(TermV))),
          true
         )
+        %$ locally(set_prolog_flag(gc,false),
         ; % Otherwise, execute the goal interactively
         GG = (
             % Execute Term and capture the result
@@ -707,20 +711,22 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,
                 xform_out(VOutput,Output), nb_setarg(1,Result,Output)))),
     !, % Ensure the top-level metta evaluation is completed
 
-    % Reset result number flag
+    % Reset the result number counter
     flag(result_num,_,0),
 
-    % Prepare evaluation for the base term
+    % Create an evaluation term for further processing
     PL=eval(Self,BaseEval,X),
 
-    % Apply mappings and assignments, track result history if necessary
+        % Apply variable mappings and handle interactive cases, track result history if necessary
     ( % with_indents(true,
   \+ \+ (user:maplist(name_vars,NamedVarsList),
      user:name_vars('OUT'=X),
      /* previously: add_history_src(exec(BaseEval)) */
+     % Print 'Skipping' message if applicable
      if_t(Skipping==1,writeln(' ; SKIPPING')),
      /* previously: if_t(TermV\=BaseEval,color_g_mesg('#fa90f6', (write('; '), with_indents(false,write_src(exec(BaseEval)))))) */
 
+     % Track history if in interactive or non-interactive modes
      % Handle interactive result output or non-interactive result history
      if_t((is_interactive(From);Skipping==1),
           (
@@ -730,32 +736,42 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,
             if_t(option_value(repl,true), add_history_src(exec(BaseEval))))),
 
       % Debug output in interactive mode, showing evaluated terms and results
-      prolog_only((color_g_mesg('#da70d6', (write('% DEBUG:   '), writeq(PL),writeln('.'))))),
-      true))))),
+            prolog_only((color_g_mesg('#da70d6', (write('% DEBUG:   '), writeq(PL), writeln('.'))))),
+            true))))),
 
-   % Print formatted answer output
-   in_answer_io(format('~N[')),!,
+       % Print the formatted answer bracket for output display
+       in_answer_io(format('~N[')), !,
 
-   % Interactive looping with possible timing and stepping control
-   (forall_interactive(
-    From, WasInteractive,Complete, %may_rtrace
-     (timed_call(GG,Seconds)),
+       % Handle interactive execution, managing timing and stepping controls
+       (forall_interactive(
+        From, WasInteractive, Complete, %may_rtrace
+        % Measure the time taken for the goal execution
+        (timed_call(GG, Seconds)),
   ((((((Complete==true->!;true),
-       %repeat,
-       set_option_value(interactive,WasInteractive),
-       Control = contrl(Max,DoLeap),
-       nb_setarg(1,Result,Output),
-       current_input(CI),
-       read_pending_codes(CI,_,[]),
-       flag(result_num,R,R+1),
-       flag(result_num,ResNum,ResNum),
-       reset_eval_num,
-       %not_compatio(format('~N')), maybe more space between answers?
+        % Post-execution checks for completion or continuation
+        (((Complete == true -> ! ; true),
 
+          % repeat
+          % Reset interactive status and update control structure
+          set_option_value(interactive, WasInteractive),
+          Control = contrl(Max, DoLeap),
+          nb_setarg(1, Result, Output),
+
+          % Check for pending input codes (flush input)
+          current_input(CI),
+          read_pending_codes(CI, _, []),
+
+          % Increment the result number counter
+          flag(result_num, R, R + 1),
+          flag(result_num, ResNum, ResNum),
+
+          % Reset evaluation counter for next execution
+          reset_eval_num,
+       %not_compatio(format('~N')), maybe more space between answers?
+       % Handle variable naming for result tracking
      user_io((
        in_answer_io(if_t((Prev\=@=prev_result('Empty')),write(', '))),
           nb_setarg(1,Prev,Output))),
-
 
      if_t(ResNum=<Max,
          ((((ResNum==1,Complete==true)->(not_compatio(format('~N~nDeterministic: ',  [])), !);          %or Nondet
@@ -765,50 +781,57 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,
       ignore(((
             not_compatio(if_t( \+ symbolic(Output), nop(nl))),
             %if_t(ResNum==1,in_answer_io(format('~N['))),
+            % XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+	    % ROY - did these two lines get dropped by accident?
+	    %in_answer_io(if_t((Prev \=@= prev_result('Empty')), write(', '))),
+            %nb_setarg(1,Prev,Output),
              user_io(with_indents(is_mettalog,
              color_g_mesg_ok(yellow,
               \+ \+
                (maplist(maybe_assign,NamedVarsList),
-                not_compatio(write_bsrc(Output)),                
-                true)))) )) ))),
-     in_answer_io(write_asrc(Output)),
+                not_compatio(write_asrc(Output)),
+                % Write the final output to the screen
+                in_answer_io(write_asrc(Output))))))  ))),
 
-       not_compatio(format('~N')),  % Just in case, add some virt space between answers
+          % Add space between answers
+          not_compatio(format('~N')),
 
-      ((Complete \== true, WasInteractive, DoLeap \== leap,
-                LeashResults > ResNum, ResNum < Max) -> Stepping = true ; Stepping = false),
+          % Handle stepping control based on result counts and user input
+          ((Complete \== true, WasInteractive, DoLeap \== leap,
+            LeashResults > ResNum, ResNum < Max) -> Stepping = true ; Stepping = false),
 
-      %if_debugging(time,with_output_to(user_error,give_time('Execution',Seconds))),
-      if_t((Stepping==true;Complete==true),if_trace(time,color_g_mesg_ok(yellow,(user_io(give_time('Execution',Seconds)))))),
-      %with_output_to(user_error,give_time('Execution',Seconds)),
-      %user_io(give_time('Execution',Seconds)),
-      %not_compatio(give_time('Execution',Seconds),
-       color_g_mesg(green,
-           ignore((NamedVarsList \=@= Was ->(not_compatio((
-                reverse(NamedVarsList,NamedVarsListR),
-                maplist(print_var,NamedVarsListR), nop(nl)))) ; true))))),
-       (
-         (Stepping==true) ->
-         (write("~npress ';' for more solutions "),get_single_char_key(C),
-           not_compatio((writeq(key=C),nl)),
-         (C=='b' -> (once(repl),fail) ;
-         (C=='m' -> make ;
-         (C=='t' -> (nop(set_debug(eval,true)),rtrace) ;
-         (C=='T' -> (set_debug(eval,true));
-         (C==';' -> true ;
-         (C==esc('[A',[27,91,65]) -> nb_setarg(2, Control, leap) ;
-         (C=='L' -> nb_setarg(1, Control, ResNum) ;
-         (C=='l' -> nb_setarg(2, Control, leap) ;
-         (((C=='\n');(C=='\r')) -> (!,fail);
-         (!,fail))))))))))));
+          % Display execution time in debugging mode if stepping or completed
+          if_t((Stepping == true; Complete == true),
+              if_trace(time, color_g_mesg_ok(yellow, (user_io(give_time('Execution', Seconds)))))),
 
-       (Complete\==true, \+ WasInteractive, Control = contrl(Max,leap)) -> true ;
+          % Interactive stepping: wait for user input to continue or exit
+          (Stepping == true ->
+           (write("~npress ';' for more solutions "), get_single_char_key(C),
+            not_compatio((writeq(key = C), nl)),
+            % Handle specific key inputs to control stepping behavior
+            (C == 'b' -> (once(repl), fail) ;
+             (C == 'm' -> make ;
+             (C == 't' -> (nop(set_debug(eval, true)), rtrace) ;
+             (C == 'T' -> set_debug(eval, true) ;
+             (C == ';' -> true ;
+             (C == esc('[A', [27, 91, 65]) -> nb_setarg(2, Control, leap) ;
+             (C == 'L' -> nb_setarg(1, Control, ResNum) ;
+             (C == 'l' -> nb_setarg(2, Control, leap) ;
+             % Handle newline and carriage return for stepping
+             ((C == '\n'; C == '\r') -> (!, fail); (!, fail))))))))))))),
+
+          % Final checks for leap mode or non-interactive completion
+          (Complete \== true, \+ WasInteractive, Control = contrl(Max, leap)) -> true ;
         (((Complete==true ->! ; true))))), format('~N~n')))
-                    *-> (ignore(Result = res(FOut)),ignore(Output = (FOut)))
-                    ; (flag(result_num,ResNum,ResNum),(ResNum==0->
-      (in_answer_io(nop(write('['))),not_compatio(format('~N<no-results>~n~n')),!,true);true))),
-                    in_answer_io(write(']\n')),
-   ignore(Result = res(FOut)).
+
+        % Handle output formatting and ensure output is captured properly
+        *-> (ignore(Result = res(FOut)), ignore(Output = (FOut)))
+        ; % If no results are available, print <no-results>
+          (flag(result_num, ResNum, ResNum), (ResNum == 0 ->
+          (in_answer_io(nop(write('['))), not_compatio(format('~N<no-results>~n~n')), !, true); true))),
+        % Close the output bracket for formatted output
+        in_answer_io(write(']\n')),
+    ignore(Result = res(FOut)).
 
 %! maybe_assign(+N_V) is det.
 %
