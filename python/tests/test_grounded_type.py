@@ -24,12 +24,6 @@ class GroundedTypeTest(unittest.TestCase):
         self.assertEqual(
             metta.run("!(untop)")[0][0],
             metta.parse_single("()"))
-        self.assertEqual(
-            metta.run("!(untop)")[0][0].get_grounded_type(),
-            metta.parse_single("untyped").get_grounded_type())
-        self.assertNotEqual(
-            metta.run("!(untop)")[0][0].get_grounded_type(),
-            metta.run("!(+ 1 1)")[0][0].get_grounded_type())
         self.assertNotEqual(
             metta.run("!(> 1 1)")[0][0].get_grounded_type(),
             metta.run("!(+ 1 1)")[0][0].get_grounded_type())
@@ -143,18 +137,6 @@ class GroundedTypeTest(unittest.TestCase):
         metta.register_atom("untop", OperationAtom("untop", lambda: None))
         self.assertNotEqual(metta.parse_single("untop").get_grounded_type(),
                 metta.parse_single("untyped").get_grounded_type())
-
-    def test_number_conversion(self):
-        num = Atom._from_catom(hp.number_into_gnd(123))
-        self.assertEqual(type(num), GroundedAtom)
-        self.assertEqual(hp.gnd_get_int(num.catom), 123)
-
-        num = Atom._from_catom(hp.number_into_gnd(123.456))
-        self.assertEqual(type(num), GroundedAtom)
-        self.assertTrue(abs(hp.gnd_get_float(num.catom) - 123.456) < 0.0001)
-
-        self.assertEqual(hp.gnd_get_int(S("sym").catom), None)
-        self.assertEqual(hp.gnd_get_float(S("sym").catom), None)
 
 if __name__ == "__main__":
     unittest.main()

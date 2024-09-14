@@ -3,8 +3,9 @@ The Python wrapper for Hyperon Atom Rust types
 """
 
 import hyperonpy as hp
-from hyperonpy import AtomKind
+from hyperonpy import AtomKind, SerialResult, Serializer
 from typing import Union
+from hyperon.conversion import ConvertingSerializer
 
 class Atom:
     """Represents an Atom of any type"""
@@ -26,9 +27,9 @@ class Atom:
         """Renders a human-readable text description of the Atom."""
         return hp.atom_to_str(self.catom)
 
-    def get_type(self):
-        """Gets the type of the current Atom instance"""
-        return hp.atom_get_type(self.catom)
+    def get_metatype(self):
+        """Gets the metatype (kind) of the current Atom instance"""
+        return hp.atom_get_metatype(self.catom)
 
     def iterate(self):
         """Performs a depth-first exhaustive iteration of an Atom and all its children recursively."""
@@ -45,7 +46,7 @@ class Atom:
     @staticmethod
     def _from_catom(catom):
         """Constructs an Atom by wrapping a C Atom"""
-        type = hp.atom_get_type(catom)
+        type = hp.atom_get_metatype(catom)
         if type == AtomKind.SYMBOL:
             return SymbolAtom(catom)
         elif type == AtomKind.VARIABLE:
@@ -85,6 +86,12 @@ class VariableAtom(Atom):
         """Returns the name of the Atom."""
         return hp.atom_get_name(self.catom)
 
+    @staticmethod
+    def parse_name(name):
+        """Construct new VariableAtom instance from VariableAtom.get_name()
+        method results."""
+        return VariableAtom(hp.atom_var_parse_name(name))
+
 def V(name):
     """A convenient method to construct a VariableAtom"""
     return VariableAtom(hp.atom_var(name))
@@ -122,6 +129,7 @@ class Atoms:
 
     EMPTY = Atom._from_catom(hp.CAtoms.EMPTY)
     UNIT = Atom._from_catom(hp.CAtoms.UNIT)
+    METTA = Atom._from_catom(hp.CAtoms.METTA)
 
 class GroundedAtom(Atom):
     """
@@ -143,21 +151,40 @@ class GroundedAtom(Atom):
         """Returns the GroundedAtom object, or the Space wrapped inside a GroundedAtom,
            or convert supported Rust grounded objects into corresponding ValueObjects
         """
+        # TODO: Here code assumes CGrounded object is always Python object.
+        # This is not true in general case. To make code universal we need to
+        # keep kind of the original runtime in CGrounded structure.
         if hp.atom_is_cgrounded(self.catom):
             return hp.atom_get_object(self.catom)
-        typ = self.get_grounded_type()
-        if typ == AtomType.GROUNDED_SPACE:
-            from .base import SpaceRef
-            return SpaceRef._from_cspace(hp.atom_get_space(self.catom))
-        # NOTE: Rust and Python may have the same grounded type names, but we already
-        # distiguished them above
-        elif typ == S('Bool'):
-            return ValueObject(hp.gnd_get_bool(self.catom))
-        raise TypeError("Cannot get_object of unsupported non-C {self.catom}")
+        else:
+            return _priv_gnd_get_object(self)
 
     def get_grounded_type(self):
         """Retrieve the grounded type of the GroundedAtom."""
         return Atom._from_catom(hp.atom_get_grounded_type(self.catom))
+
+def _priv_gnd_get_object(atom):
+    """
+    Tries to convert grounded object into a one of the standard Python values.
+    This implementation is used to automatically convert values from other
+    runtimes to Python.
+    """
+    typ = atom.get_grounded_type()
+    # TODO: GroundedSpace is a special case right now, but it could be
+    # implemented using serializer as well
+    if typ == AtomType.GROUNDED_SPACE:
+        from .base import SpaceRef
+        return SpaceRef._from_cspace(hp.atom_get_space(atom.catom))
+    elif typ == S('Bool') or typ == S('Number'):
+        converter = ConvertingSerializer()
+        hp.atom_gnd_serialize(atom.catom, converter)
+        if converter.value is None:
+            raise RuntimeError(f"Could not convert atom {atom}")
+        else:
+            return ValueObject(converter.value)
+    else:
+        raise TypeError(f"Cannot get_object of unsupported non-C {atom}")
+
 
 def G(object, type=AtomType.UNDEFINED):
     """A convenient method to construct a GroundedAtom"""
@@ -170,7 +197,7 @@ def _priv_call_execute_on_grounded_atom(gnd, typ, args):
     Executes grounded Atoms.
     """
     # ... if hp.atom_to_str(typ) == AtomType.UNDEFINED
-    res_typ = AtomType.UNDEFINED if hp.atom_get_type(typ) != AtomKind.EXPR \
+    res_typ = AtomType.UNDEFINED if hp.atom_get_metatype(typ) != AtomKind.EXPR \
         else Atom._from_catom(hp.atom_get_children(typ)[-1])
     args = [Atom._from_catom(catom) for catom in args]
     return gnd.execute(*args, res_typ=res_typ)
@@ -182,14 +209,24 @@ def _priv_call_match_on_grounded_atom(gnd, catom):
     """
     return gnd.match_(Atom._from_catom(catom))
 
+def _priv_call_serialize_on_grounded_atom(gnd, serializer):
+    """
+    Private glue for Hyperonpy implementation.
+    Serializes grounded atoms
+    """
+    return gnd.serialize(serializer)
+
 def _priv_compare_value_atom(gnd, catom):
     """
     Private glue for Hyperonpy implementation.
     Tests for equality between a grounded value atom and another atom
     """
-    if hp.atom_get_type(catom) == AtomKind.GROUNDED:
+    if hp.atom_get_metatype(catom) == AtomKind.GROUNDED:
         atom = GroundedAtom(catom)
-        return gnd == atom.get_object()
+        try:
+            return gnd == atom.get_object()
+        except TypeError:
+            return False
     else:
         return False
 
@@ -251,8 +288,27 @@ class ValueObject(GroundedObject):
         # TODO: ?typecheck for the contents
         return isinstance(other, ValueObject) and self.content == other.content
 
+    def serialize(self, serializer):
+        """
+        Serialize standard Python values. This implementation is used to
+        pass Python values into the foreign runtime.
+        """
+        if isinstance(self.content, bool):
+            return serializer.serialize_bool(self.content)
+        elif isinstance(self.content, int):
+            return serializer.serialize_int(self.content)
+        elif isinstance(self.content, float):
+            return serializer.serialize_float(self.content)
+        else:
+            return SerialResult.NOT_SUPPORTED
+
 class NoReduceError(Exception):
     """Custom exception; raised when a reduction operation cannot be performed."""
+    pass
+
+class MettaError(Exception):
+    """Custom exception; raised when a error should be returned from OperationAtom,
+       , but we don't want to output Python error stack."""
     pass
 
 class OperationObject(GroundedObject):
@@ -308,7 +364,7 @@ class OperationObject(GroundedObject):
         """Returns the identifier name for this operation object."""
         return self.id
 
-    def execute(self, *args, res_typ=AtomType.UNDEFINED):
+    def execute(self, *atoms, res_typ=AtomType.UNDEFINED):
         """
         Executes the operation with the provided arguments.
 
@@ -329,21 +385,43 @@ class OperationObject(GroundedObject):
         """
         # type-check?
         if self.unwrap:
-            for arg in args:
-                if not isinstance(arg, GroundedAtom):
-                    # REM:
+            args = []
+            kwargs = {}
+            for a in atoms:
+                if isinstance(a, ExpressionAtom):
+                    ch = a.get_children()
+                    if len(ch) > 0 and repr(ch[0]) == "Kwargs":
+                        for c in ch[1:]:
+                            try:
+                                kwarg = c.get_children()
+                                assert len(kwarg) == 2
+                            except:
+                                raise RuntimeError(f"Incorrect kwarg format {kwarg}")
+                            try:
+                                kwargs[get_string_value(kwarg[0])] = kwarg[1].get_object().content
+                            except:
+                                raise NoReduceError()
+                        continue
+                try:
+                    args.append(a.get_object().content)
+                except:
+                    # NOTE:
                     # Currently, applying grounded operations to pure atoms is not reduced.
                     # If we want, we can raise an exception, or form an error expression instead,
                     # so a MeTTa program can catch and analyze it.
                     # raise RuntimeError("Grounded operation " + self.name + " with unwrap=True expects only grounded arguments")
                     raise NoReduceError()
-            args = [arg.get_object().content for arg in args]
-            result = self.op(*args)
+            try:
+                result = self.op(*args, **kwargs)
+            except MettaError as e:
+                return [E(S('Error'), *e.args)]
             if result is None:
                 return [Atoms.UNIT]
-            return [G(ValueObject(result), res_typ)]
+            if callable(result):
+                return [OperationAtom(repr(result), result, unwrap=True)]
+            return [ValueAtom(result, res_typ)]
         else:
-            result = self.op(*args)
+            result = self.op(*atoms)
             if not isinstance(result, list):
                 raise RuntimeError("Grounded operation `" + self.name + "` should return list")
             return result
@@ -500,12 +578,9 @@ class Bindings:
         """Merges with another Bindings instance, into a Bindings Set."""
         return BindingsSet(hp.bindings_merge(self.cbindings, other.cbindings))
 
-    def add_var_binding(self, var: Union[str, Atom], atom: Atom) -> bool:
+    def add_var_binding(self, var: VariableAtom, atom: Atom) -> bool:
         """Adds a binding between a variable and an Atom."""
-        if isinstance(var, Atom):
-            return hp.bindings_add_var_binding(self.cbindings, var.get_name(), atom.catom)
-        else:
-            return hp.bindings_add_var_binding(self.cbindings, var, atom.catom)
+        return hp.bindings_add_var_binding(self.cbindings, var.catom, atom.catom)
 
     def is_empty(self) -> bool:
         """Checks if a bindings contains no associations."""
@@ -519,18 +594,15 @@ class Bindings:
         hp.bindings_narrow_vars(self.cbindings, cvars)
         hp.atom_vec_free(cvars)
 
-    def resolve(self, var_name: str) -> Union[Atom, None]:
-        """Finds the atom for a given variable name"""
-        raw_atom = hp.bindings_resolve(self.cbindings, var_name)
+    def resolve(self, var: VariableAtom) -> Union[Atom, None]:
+        """Finds the atom for a given variable"""
+        raw_atom = hp.bindings_resolve(self.cbindings, var.catom)
         return None if raw_atom is None else Atom._from_catom(raw_atom)
 
     def iterator(self):
         """Returns an iterator over the variable-atom pairs in the bindings"""
         res = hp.bindings_list(self.cbindings)
-        result = []
-        for r in res:
-            result.append((r[0], Atom._from_catom(r[1])))
-
+        result = [(Atom._from_catom(r[0]), Atom._from_catom(r[1])) for r in res]
         return iter(result)
 
 class BindingsSet:
@@ -616,15 +688,12 @@ class BindingsSet:
         self.shadow_list = None
         hp.bindings_set_push(self.c_set, bindings.cbindings)
 
-    def add_var_binding(self, var: Union[str, Atom], value: Atom) -> bool:
+    def add_var_binding(self, var: VariableAtom, value: Atom) -> bool:
         """Adds a new variable to atom association to every Bindings frame in a
         BindingsSet.
         """
         self.shadow_list = None
-        if isinstance(var, Atom):
-            return hp.bindings_set_add_var_binding(self.c_set, var.catom, value.catom)
-        else:
-            return hp.bindings_set_add_var_binding(self.c_set, V(var), value.catom)
+        return hp.bindings_set_add_var_binding(self.c_set, var.catom, value.catom)
 
     def add_var_equality(self, a: Atom, b: Atom) -> bool:
         """Asserts equality between two Variable atoms in a BindingsSet."""
@@ -635,15 +704,20 @@ class BindingsSet:
         """Merges the contents of another BindingsSet or Bindings frame."""
         self.shadow_list = None
         if isinstance(input, BindingsSet):
-            hp.bindings_set_merge_into(self.c_set, input.c_set);
+            hp.bindings_set_merge_into(self.c_set, input.c_set)
         else:
-            new_set = BindingsSet(input);
-            hp.bindings_set_merge_into(self.c_set, new_set.c_set);
+            new_set = BindingsSet(input)
+            hp.bindings_set_merge_into(self.c_set, new_set.c_set)
 
     def iterator(self):
         """Returns an iterator over all Bindings frames"""
         res = hp.bindings_set_list(self.c_set)
-        result = []
-        for r in res:
-            result.append(Bindings(r))
+        result = [Bindings(r) for r in res]
         return iter(result)
+
+def get_string_value(value) -> str:
+    if not isinstance(value, str):
+        value = repr(value)
+    if len(value) > 2 and ("\"" == value[0]) and ("\"" == value[-1]):
+        return value[1:-1]
+    return value

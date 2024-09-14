@@ -1,8 +1,12 @@
 import unittest
 
 from hyperon import *
+from test_common import change_dir_to_parent_of
 
 class ExtendTest(unittest.TestCase):
+
+    def setUp(self):
+        change_dir_to_parent_of(__file__)
 
     def test_extend(self):
         '''
@@ -11,7 +15,7 @@ class ExtendTest(unittest.TestCase):
         metta = MeTTa(env_builder=Environment.custom_env(working_dir=os.getcwd(), disable_config=True, is_test=True))
         self.assertEqual(
             metta.run('''
-              !(extend-py! extension)
+              !(import! &self extension)
               !(get-by-key &my-dict "A")
               !(get-by-key &my-dict 6)
             '''),
@@ -31,6 +35,43 @@ class ExtendTestDirMod(unittest.TestCase):
         self.assertEqual(
             metta.run('''
               !(import! &self ext_dir)
+              !(get-by-key &my-dict "A")
+              !(get-by-key &my-dict 6)
+            '''),
+            [[E()],
+             [ValueAtom(5)],
+             [ValueAtom('B')]])
+        self.assertEqual(
+              metta.run('! &runner')[0][0].get_object().value, metta)
+
+    #LP-TODO-Next:  Temporarily disabled as I change the way modules that are in the process of being
+    # loaded are accessed by name.  See comments around `relative_submodule_import_test`
+    #
+    # def test_extend_subdir_pymod(self):
+    #     '''
+    #     This test verifies that importing from a module that imports its own sub-module also works
+    #     '''
+    #     metta = MeTTa(env_builder=Environment.custom_env(working_dir=os.getcwd(), disable_config=True, is_test=True))
+    #     self.assertEqual(
+    #         metta.run('''
+    #           !(import! &self ext_sub)
+    #           !(get-by-key &my-dict "A")
+    #           !(get-by-key &my-dict 6)
+    #         '''),
+    #         [[E()],
+    #          [ValueAtom(5)],
+    #          [ValueAtom('B')]])
+    #     self.assertEqual(
+    #           metta.run('! &runner')[0][0].get_object().value, metta)
+
+    def test_extend_recursive_pymod(self):
+        '''
+        This test verifies that importing from a sub-module will cause the necessary parents to be imported as well
+        '''
+        metta = MeTTa(env_builder=Environment.custom_env(working_dir=os.getcwd(), disable_config=True, is_test=True))
+        self.assertEqual(
+            metta.run('''
+              !(import! &self ext_recursive:level-2:ext_nested)
               !(get-by-key &my-dict "A")
               !(get-by-key &my-dict 6)
             '''),
@@ -71,12 +112,8 @@ class ExtendErrorTest(unittest.TestCase):
         This test verifies that an error from a Python extension is properly propagated
         '''
         metta = MeTTa(env_builder=Environment.custom_env(working_dir=os.getcwd(), disable_config=True, is_test=True))
-        try:
-          metta.run("!(import! &self error_pyext)")
-        except Exception as err:
-            pass
-        else:
-            raise Exception('error_pyext.py should raise an error when loading, so no-err is an error')
+        result = metta.run("!(import! &self error_pyext)")
+        self.assertEqual(S('Error'), result[0][0].get_children()[0])
 
 if __name__ == "__main__":
     unittest.main()
