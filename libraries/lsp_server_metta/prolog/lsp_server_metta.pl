@@ -17,7 +17,7 @@ The main entry point for the Language Server implementation.
 :- use_module(lsp_metta_utils).
 :- use_module(lsp_metta_checking, [check_errors/2]).
 :- use_module(lsp_metta_parser, [lsp_metta_request//1]).
-:- use_module(lsp_metta_changes, [handle_doc_changes/2]).
+:- use_module(lsp_metta_changes, [handle_doc_changes/2, doc_text/2]).
 :- use_module(lsp_metta_completion, [completions_at/3]).
 :- use_module(lsp_metta_colours, [
 %                            file_colours/2,
@@ -26,6 +26,8 @@ The main entry point for the Language Server implementation.
                             token_modifiers/1]).
 :- use_module(lsp_metta_xref).
 
+:- dynamic doc_text/2.
+
 main :-
     set_prolog_flag(debug_on_error, false),
     set_prolog_flag(report_error, true),
@@ -33,6 +35,7 @@ main :-
     current_prolog_flag(argv, Args),
     debug(server),
     debug(server(high)),
+    load_mettalog_xref,
     start(Args).
 
 start([stdio]) :- !,
@@ -293,6 +296,8 @@ handle_msg("textDocument/semanticTokens/range", Msg, _{id: Msg.id, result: []}) 
 
 % notifications (no response)
 
+create_line_entry_helper(S,d(1,S,false)).
+
 % CALL: textDocument/didOpen
 % IN: params:{textDocument:{languageId:prolog,text:<FILE_CONTENTS>,uri:file://<FILEPATH>,version:1}}
 % OUT: {method:textDocument/publishDiagnostics,params:{diagnostics:[
@@ -302,7 +307,13 @@ handle_msg("textDocument/semanticTokens/range", Msg, _{id: Msg.id, result: []}) 
 handle_msg("textDocument/didOpen", Msg, Resp) :-
     _{params: _{textDocument: TextDoc}} :< Msg,
     _{uri: FileUri} :< TextDoc,
+    _{text: FullText} :< TextDoc,
+    split_string(FullText, "\n", "\r", SplitText0),
+    maplist(create_line_entry_helper,SplitText0,SplitText),
+    %debug(server,SplitText,[]),
     atom_concat('file://', Path, FileUri),
+    retractall(doc_text(Path, _)),
+    assertz(doc_text(Path, SplitText)),
     ( loaded_source(Path) ; assertz(loaded_source(Path)) ),
     check_errors_resp(FileUri, Resp).
 

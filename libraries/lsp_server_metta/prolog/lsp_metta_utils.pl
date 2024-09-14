@@ -11,7 +11,9 @@
                         ]).
 :- use_module(library(debug), [debug/3]).
 :- use_module(lsp_metta_xref).
-:- use_module(metta_eval, [eval_args/6]).
+:- use_module(lsp_metta_changes, [handle_doc_changes/2, doc_text/2]).
+
+:- dynamic doc_text/2.
 
 % /** <module> LSP Utils
 %
@@ -20,10 +22,6 @@
 %
 % @author James Cash
 % */
-%! help_at_position(+Path:atom, +Line:integer, +Char:integer, -Help:string) is det.
-%
-%  =Help= is the documentation for the term under the cursor at line
-%  =Line=, character =Char= in the file =Path=.
 
 %!  linechar_offset(+Stream:stream, +Position:line_char, -Offset:int) is det.
 %
@@ -50,13 +48,13 @@ linechar_offset(Stream, line_char(Line1, Char0), Offset, PreChars) :-
 accumulating_pre_seek(_Stream, 0, CharList, CharList) :- !.
 accumulating_pre_seek(Stream, N, CharListIn, CharListOut) :- N>0,
     get_char(Stream, Char),
-    ((char_type(Char,csym);Char='-';Char='$') -> append(CharListIn,[Char],Current) ; Current=[]),
+    ((\+ char_type(Char,white),Char\='(',Char\=')') -> append(CharListIn,[Char],Current) ; Current=[]),
     Nnext is N-1,
     accumulating_pre_seek(Stream, Nnext, Current, CharListOut).
 
 accumulating_post_seek(Stream, CharListIn, CharListOut) :-
     get_char(Stream, Char),
-    ((char_type(Char,csym);Char='-') ->
+    ((\+ char_type(Char,white),Char\='(',Char\=')') ->
         (append(CharListIn,[Char],Current),
         accumulating_post_seek(Stream,Current,CharListOut))
     ; CharListOut=CharListIn).
@@ -83,13 +81,117 @@ seek_to_line(Stream, N) :-
 % Base case: If N is 1, we have reached the desired line.
 seek_to_line(_, _).
 
-% help_at_position(_Path, _Line1, _Char0, "blah blah blah") :- !. % clause_in_file_at_position(Clause, Path, line_char(Line1, Char0)), !.
+%! help_at_position(+Path:atom, +Line:integer, +Char:integer, -Help:string) is det.
+%
+%  =Help= is the documentation for the term under the cursor at line
+%  =Line=, character =Char= in the file =Path=.
 help_at_position(Path, Line1, Char0, S) :-
     debug(server,"help_at_position",[]),
     clause_in_file_at_position(Clause, Path, line_char(Line1, Char0)),
-    S=Clause.
+    % TODO - add this in when I can import eval_args
+    atom_string(Atom,Clause),
+    predicate_help(Path,Atom,S).
+
+predicate_help(_,Term,S) :-
+    metta_atom(_KB,['@doc',Term|Help]),!,
+    debug(server,"clause1 ~w",[Help]),
+    format_metta_doc(Term,Help,S).
+predicate_help(_,'',"") :- !.
+predicate_help(_,Term,S) :- atom_string(Term,T),string_chars(T,['$'|_]),!,format(string(S),"Variable: ~w",[Term]).
+predicate_help(_,Term,S) :- format(string(S),"Unknown: ~w",[Term]).
+
+format_metta_doc(Term,[['@desc',Description], ['@params', Params], ['@return', Return]],String) :-
+    maplist(format_metta_Param,Params,Params_formatted),
+    atomic_list_concat(Params_formatted,'\n',Params_formattednl),
+    format(string(String),"~w: ~w\n~w\nReturns: ~w",[Term,Description,Params_formattednl,Return]).
+
+format_metta_Param(['@param',P],Pf) :- format(string(Pf),"Param: ~w",[P]).
+
+%format_help(HelpFull, Help) :-
+%    split_string(HelpFull, "\n", " ", Lines0),
+%    exclude([Line]>>string_concat("Availability: ", _, Line),
+%            Lines0, Lines1),
+%    exclude([""]>>true, Lines1, Lines2),
+%    Lines2 = [HelpShort|_],
+%    split_string(HelpFull, "\n", "", HelpLines),
+%    selectchk(HelpShort, HelpLines, "", HelpLines0),
+%    append([HelpShort], HelpLines0, HelpLines1),
+%    atomic_list_concat(HelpLines1, "\n", Help).
+
+%    S=Clause.
 %     predicate_help(Path, Clause, S0),
 %     format_help(S0, S).
+
+annotated_read_sexpr_list(Stream,[]) :- at_end_of_stream(Stream).
+annotated_read_sexpr_list(Stream,[Item|L]) :-
+    annotated_read_sexpr(Stream,Item),
+    annotated_read_sexpr_list(Stream,L).
+
+annotated_read_sexpr(I,O):- annotated_cont_sexpr(')', I,O).
+
+%! annotated_cont_sexpr(+EndChar:atom, +Stream:stream, -Item) is det.
+%
+% Reads a single item (S-expression or comment) from the specified stream, handling different formats and encodings.
+% Throws an error with stream position if the S-expression cannot be parsed.
+% @arg EndChar Character that denotes the end of a symbol.
+% @arg Stream Stream from which to read.
+% @arg Item The item read from the stream.
+annotated_cont_sexpr(EndChar, Stream, Item) :-
+    skip_spaces(Stream),  % Ignore whitespace before reading the expression.
+    get_char(Stream, Char),
+    (   Char = '(' -> annotated_read_list(')', Stream, Item)  % If '(', read an S-expression list.
+    ;   Char = '[' -> (annotated_read_list(']', Stream, It3m), Item = ['[...]',It3m])  % If '[', read an S-expression list.
+    ;   Char = '{' -> (annotated_read_list('}', Stream, It3m), Item = ['{...}',It3m])  % If '{', read an S-expression list.
+    ;   Char = '"' -> read_quoted_string(Stream, '"', Item)  % Read a quoted string.
+    ;   Char = '!' -> (annotated_read_sexpr(Stream, Subr), Item = exec(Subr))  % Read called directive
+    ;   Char = '\'' -> read_quoted_symbol(Stream, '\'', Item)  % Read a quoted symbol.
+    ;   Char = '`' -> read_quoted_symbol(Stream, '`', Item)  % Read a backquoted symbol.
+    ;   Char = end_of_file -> Item = end_of_file  % If EOF, set Item to 'end_of_file'.
+    ; read_symbolic(EndChar, Stream, Char, Item)            % Otherwise, read a symbolic expression.
+    ), !.
+
+%! annotated_read_list(+EndChar:atom, +Stream:stream, -List:list) is det.
+%
+% Reads a list from the stream until the closing parenthesis is encountered.
+% It skips comments while reading the list but asserts them with their positions.
+% Throws an error with stream position if the list cannot be parsed correctly.
+% @arg Stream Stream from which to read.
+% @arg List The list read from the stream.
+% @arg EndChar Character that denotes the end of the list.
+annotated_read_list(EndChar, Stream, List) :-
+    skip_spaces(Stream),  % Skip any leading spaces before reading.
+    peek_char(Stream, Char), !,
+    ( Char = EndChar ->  % Closing parenthesis signals the end of the list.
+        get_char(Stream, _),  % Consume the closing parenthesis.
+        List = []
+    ; Char = end_of_file ->  % Unexpected end of file inside the list.
+        List = [incomplete]
+    ; annotated_cont_sexpr(EndChar, Stream, Element),  % Read the next S-expression.
+        annotated_read_list(EndChar, Stream, Rest),  % Continue reading the rest of the list.
+        List = [Element | Rest]  % Add the element to the result list.
+    ), !.
+
+%! annotated_skip_spaces(+Stream:stream) is det.
+%
+% Skips whitespace characters in the input stream.
+% If a comment is encountered, reads the comment and asserts it.
+% @arg Stream Stream from which to skip spaces.
+annotated_skip_spaces(Stream) :-
+    peek_char(Stream, Char),
+    (   Char = ';' -> (annotated_read_comment(Stream), annotated_skip_spaces(Stream))  % If the character is ';', read a single-line comment.
+    ;   is_like_space(Char) -> (get_char(Stream, _), annotated_skip_spaces(Stream))  % Consume the space and continue.
+    ;   true  % Non-space character found; stop skipping.
+    ), !.
+
+%! annotated_read_comment(+Stream:stream) is det.
+%
+% Reads a single-line comment from the stream and asserts it with the position.
+% A comment starts with ';' and continues to the end of the line.
+% @arg Stream The input stream from which to read.
+annotated_read_comment(Stream) :-
+    % get_char(Stream, _),  % Skip the ';' character.
+    read_position(Stream, Line, Col, CharPos, Pos),
+    read_until_eol(Stream, Comment).
 
 %!  clause_in_file_at_position(-Clause, +Path, +Position) is det.
 %
@@ -103,16 +205,40 @@ help_at_position(Path, Line1, Char0, S) :-
 %       ?- clause_in_file_at_position(Clause, 'file.pl', line_char(5, 10)).
 %       Clause = (some_prolog_fact :- some_prolog_goal).
 %
-clause_in_file_at_position(Clause, Path, Position) :-
+clause_in_file_at_position(Clause, Path, line_char(Line1, Char)) :-
     % Setup a stream to read the file and find the clause at the specified position.
-    debug(server,"clause_in_file_at_position",[]),
-    setup_call_cleanup(
-        open(Path, read, Stream, []),
-        % Call clause_at_position to extract the clause at the given position.
-        clause_at_position(Stream, Clause, Position),
-        % Close the stream once the operation is done.
-        close(Stream)
-    ).
+    doc_text(Path,SplitText),
+    split_document_get_section_only(Line1,LinesLeft,SplitText,d(_,Text,_)),
+    %debug(server,"~w",[d(_,Text,_)]),
+    open_string(Text,Stream),
+    annotated_read_sexpr_list(Stream,ItemList),
+    close(Stream),
+    debug(server,"~w",[ItemList]),
+    Clause="blah".
+
+%    %setup_call_cleanup(
+%        open_string(FullText, Stream),
+%        % Call clause_at_position to extract the clause at the given position.
+%        clause_at_position(Stream, Clause, Position),
+%        % Close the stream once the operation is done.
+%        close(Stream)
+%    %)
+%    .
+
+split_document_get_section(N,N,[],[],d(0,"",false),[]).
+split_document_get_section(N,M,[d(L,Body,Meta)|SplitText],[],d(L,Body,Meta),SplitText) :- L>=N,M is L-N,!.
+split_document_get_section(N,M,[d(L,Body,Meta)|SplitText],[d(L,Body,Meta)|Pre],This,Post) :- L<N,!,
+    N1 is N-L,
+    split_document_get_section(N1,M1,SplitText,Pre,This,Post),
+    M is M1+L.
+
+split_document_get_section_only(N,N,[],d(0,"",false)).
+split_document_get_section_only(N,M,[d(L,Body,Meta)|_],d(L,Body,Meta)) :- L>=N,M is L-N,!.
+split_document_get_section_only(N,M,[d(L,Body,Meta)|SplitText],This) :- L<N,!,
+    N1 is N-L,
+    %debug(server,"split_document_get_section_only ~w ~w",[N1,SplitText]),
+    split_document_get_section_only(N1,M1,SplitText,This),
+    M is M1+L.
 
 %!  clause_at_position(+Stream, -Clause, +Start) is det.
 %
@@ -131,15 +257,7 @@ clause_at_position(Stream, Clause, Start) :-
     % Convert the line/character position into an offset within the stream.
     linechar_offset(Stream, Start, Offset, Prechars),!,
     accumulating_post_seek(Stream,Prechars,Chars),
-    string_chars(String,Chars),
-    Clause=String.
-    % TODO - add this in when I can import eval_args
-    %atom_string(Atom,String),
-    %debug(server,"clause ~w",[Atom]),
-    %eval_args(=,_RetType,499,'&self',['help!',Atom],['Error',_,Clause]).
-
-    % Call clause_at_position with the computed offset.
-    %clause_at_position(Stream, Clause, Start, Offset).
+    string_chars(Clause,Chars).
 
 %!  clause_at_position(+Stream, -Clause, +Start, +Here) is det.
 %
