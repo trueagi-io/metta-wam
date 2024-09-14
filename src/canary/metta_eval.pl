@@ -1704,6 +1704,10 @@ eval_20(Eq,RetType,Depth,Self,['maplist!',Pred,ArgL1,ArgL2],ResL):- !,
       maplist(eval_pred(Eq,RetType,Depth,Self,Pred),ArgL1,ArgL2,ResL).
 eval_20(Eq,RetType,Depth,Self,['maplist!',Pred,ArgL1,ArgL2,ArgL3],ResL):- !,
       maplist(eval_pred(Eq,RetType,Depth,Self,Pred),ArgL1,ArgL2,ArgL3,ResL).
+eval_20(Eq,RetType,Depth,Self,['maplist!',Pred,ArgL1,ArgL2,ArgL3,ArgL4],ResL):- !,
+      maplist(eval_pred(Eq,RetType,Depth,Self,Pred),ArgL1,ArgL2,ArgL3,ArgL4,ResL).
+eval_20(Eq,RetType,Depth,Self,['maplist!',Pred,ArgL1,ArgL2,ArgL3,ArgL4,ArgL5],ResL):- !,
+      maplist(eval_pred(Eq,RetType,Depth,Self,Pred),ArgL1,ArgL2,ArgL3,ArgL4,ArgL5,ResL).
 
   eval_pred(Eq,RetType,Depth,Self,Pred,Arg1,Res):-
       eval_args(Eq,RetType,Depth,Self,[Pred,Arg1],Res).
@@ -1711,13 +1715,24 @@ eval_20(Eq,RetType,Depth,Self,['maplist!',Pred,ArgL1,ArgL2,ArgL3],ResL):- !,
       eval_args(Eq,RetType,Depth,Self,[Pred,Arg1,Arg2],Res).
   eval_pred(Eq,RetType,Depth,Self,Pred,Arg1,Arg2,Arg3,Res):-
       eval_args(Eq,RetType,Depth,Self,[Pred,Arg1,Arg2,Arg3],Res).
+  eval_pred(Eq,RetType,Depth,Self,Pred,Arg1,Arg2,Arg3,Arg4,Res):-
+      eval_args(Eq,RetType,Depth,Self,[Pred,Arg1,Arg2,Arg3,Arg4],Res).
+  eval_pred(Eq,RetType,Depth,Self,Pred,Arg1,Arg2,Arg3,Arg4,Arg5,Res):-
+      eval_args(Eq,RetType,Depth,Self,[Pred,Arg1,Arg2,Arg3,Arg4,Arg5],Res).
+
 
 eval_20(Eq,RetType,Depth,Self,['concurrent-maplist!',Pred,ArgL1],ResL):- !,
       metta_concurrent_maplist(eval_pred(Eq,RetType,Depth,Self,Pred),ArgL1,ResL).
 eval_20(Eq,RetType,Depth,Self,['concurrent-maplist!',Pred,ArgL1,ArgL2],ResL):- !,
       concurrent_maplist(eval_pred(Eq,RetType,Depth,Self,Pred),ArgL1,ArgL2,ResL).
 eval_20(Eq,RetType,Depth,Self,['concurrent-maplist!',Pred,ArgL1,ArgL2,ArgL3],ResL):- !,
-      concurrent_maplist(eval_pred(Eq,RetType,Depth,Self,Pred),ArgL1,ArgL2,ArgL3,ResL).
+    metta_concurrent_maplist(eval_pred(Eq,RetType,Depth,Self,Pred),ArgL1,ArgL2,ArgL3,ResL).
+eval_20(Eq,RetType,Depth,Self,['concurrent-maplist!',Pred,ArgL1,ArgL2,ArgL3,ArgL4],ResL):- !,
+    metta_concurrent_maplist(eval_pred(Eq,RetType,Depth,Self,Pred),ArgL1,ArgL2,ArgL3,ArgL4,ResL).
+eval_20(Eq,RetType,Depth,Self,['concurrent-maplist!',Pred,ArgL1,ArgL2,ArgL3,ArgL4,ArgL5],ResL):- !,
+    metta_concurrent_maplist(eval_pred(Eq,RetType,Depth,Self,Pred),ArgL1,ArgL2,ArgL3,ArgL4,ArgL5,ResL).
+
+
 eval_20(Eq,RetType,Depth,Self,['concurrent-forall!',Gen,Test|Options],NoResult):- !,
       maplist(s2p,Options,POptions),
       call(thread:concurrent_forall(
@@ -2059,20 +2074,20 @@ eval_20(_Eq,_RetType,_Depth,_Self,['rust',PredDecl],Res):- !,
 eval_20(_Eq,_RetType,_Depth,_Self,['rust!',PredDecl],Res):- !,
     rust_metta_run(exec(PredDecl),Res), nop(write_src(res(Res))).
 
-eval_70(_Eq,_RetType,_Depth,_Self,['py-atom',Arg],Res):- !,
+eval_20(_Eq,_RetType,_Depth,_Self,['py-list',Arg],Res):- !,
+  must_det_ll((py_list(Arg,Res))).
+eval_20(_Eq,_RetType,_Depth,_Self,['py-dict',Arg],Res):- !,
+  must_det_ll((py_dict(Arg,Res))).
+eval_20(_Eq,_RetType,_Depth,_Self,['py-tuple',Arg],Res):- !,
+  must_det_ll((py_tuple(Arg,Res))).
+eval_40(_Eq,_RetType,_D7epth,_Self,['py-atom',Arg],Res):- !,
   must_det_ll((py_atom(Arg,Res))).
 eval_40(_Eq,_RetType,_Depth,_Self,['py-atom',Arg,Type],Res):- !,
   must_det_ll((py_atom_type(Arg,Type,Res))).
 eval_40(_Eq,_RetType,_Depth,_Self,['py-dot',Arg1,Arg2],Res):- !,
   must_det_ll((py_dot([Arg1,Arg2],Res))).
-eval_40(_Eq,_RetType,_Depth,_Self,['py-list',Arg],Res):- !,
-  must_det_ll((py_list(Arg,Res))).
-eval_40(_Eq,_RetType,_Depth,_Self,['py-dict',Arg],Res):- !,
-  must_det_ll((py_dict(Arg,Res))).
-eval_40(_Eq,_RetType,_Depth,_Self,['py-tuple',Arg],Res):- !,
-    must_det_ll((py_tuple(Arg,Res))).
-eval_40(_Eq,_RetType,_Depth,_Self,['py-eval',Arg],Res):- !,
-    must_det_ll((py_eval(Arg,Res))).
+eval_70(_Eq,_RetType,_Depth,_Self,['py-eval',Arg],Res):- !,
+  must_det_ll((py_eval(Arg,Res))).
 
 eval_40(Eq,RetType,Depth,Self,['length',L],Res):- !, eval_args(Depth,Self,L,LL),
    (is_list(LL)->length(LL,Res);Res=1),
