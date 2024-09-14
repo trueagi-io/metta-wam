@@ -786,7 +786,11 @@ def rust_deref(obj):
 %   @arg O Output term that unifies with the result of the Python call.
 %
 py_mcall(I,O):- 
-    catch(py_call(I,M,[py_object(false),py_string_as(string),py_dict_as({})]), error(_,_), fail), !, O = M.
+    catch(py_call(I,M,[py_object(false),
+        py_string_as(string),py_dict_as({})]), 
+        error(_,_), fail), 
+    !, 
+    O = M.
 
 %!  py_scall(+I, -O) is semidet.
 %
@@ -2651,8 +2655,10 @@ get_list_arity(Args, Arity) :-
     length(Args, Arity).
 get_list_arity(_Args, -1).
 
-:-set_prolog_flag(debugger_write_options,[quoted(true),portray(true),max_depth(60),attributes(portray),spacing(next_argument)]).
-:-set_prolog_flag(answer_write_options,[quoted(true),portray(true),max_depth(60),attributes(portray),spacing(next_argument)]).
+:-set_prolog_flag(debugger_write_options,[quoted(true),portray(true),max_depth(60),
+        attributes(portray),spacing(next_argument)]).
+:-set_prolog_flag(answer_write_options,[quoted(true),portray(true),max_depth(60),
+        attributes(portray),spacing(next_argument)]).
 :-set_prolog_flag(py_backtrace_depth,50).
 :-set_prolog_flag(py_backtrace,true).
 :-set_prolog_flag(py_argv,[]).
