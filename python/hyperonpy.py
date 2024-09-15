@@ -407,7 +407,7 @@ def atom_error_message(atom: CAtom) -> str:
         return ""
 
 def atom_free(atom: CAtom):
-    trace_msg(f"Freeing atom: {atom}")
+    mesg(TRACE,f"Freeing atom: {atom}")
 
 def atom_get_metatype(atom: CAtom) -> AtomKind:
     if not isinstance(atom, CAtom):
@@ -707,42 +707,6 @@ def space_subst(space: CSpace, pattern: CAtom, templ: CAtom) -> List[CAtom]:
 def space_iterate(space: CSpace) -> Optional[List[CAtom]]:
     return space.atoms
 
-# Adjusted "free" functions with trace_msg
-def tokenizer_free(tokenizer: 'CTokenizer'):
-    trace_msg(f"Freeing tokenizer: {tokenizer}")
-
-def syntax_node_free(cnode: 'CSyntaxNode'):
-    trace_msg(f"Freeing syntax node: {cnode}")
-
-def sexpr_parse_free(parser: 'CSExprParser'):
-    trace_msg(f"Freeing S-expression parser: {parser}")
-
-def metta_free(cmetta: 'CMetta'):
-    trace_msg(f"Freeing MeTTa interpreter: {cmetta}")
-
-def runner_state_free(runner_state: 'CRunnerState'):
-    trace_msg(f"Freeing RunnerState: {runner_state}")
-
-def env_builder_free(env_builder: 'EnvBuilder'):
-    trace_msg(f"Freeing EnvBuilder: {env_builder}")
-
-def bindings_free(bindings: 'CBindings'):
-    trace_msg(f"Freeing bindings: {bindings}")
-
-def bindings_set_free(bindings_set: 'CBindingsSet'):
-    trace_msg(f"Freeing bindings set: {bindings_set}")
-
-def serializer_free(serializer: 'Serializer'):
-    trace_msg(f"Freeing serializer: {serializer}")
-
-def step_result_free(step_result: 'CStepResult'):
-    trace_msg(f"Freeing step result: {step_result}")
-
-def atom_vec_free(atom_vec: 'CVecAtom'):
-    trace_msg(f"Freeing atom vector: {atom_vec}")
-
-def module_id_free(module_id: 'ModuleId'):
-    trace_msg(f"Freeing ModuleId: {module_id}")
 
 # Functions that may throw errors if mock_throw_error is True
 def load_ascii(name: str, space: CSpace):
@@ -1791,7 +1755,7 @@ def atom_match(a: CAtom, b: CAtom) -> CBindingsSet:
 
 def demo1():
     # Create a grounding space
-    space = space_new_grounding()
+    space = CSpace()
 
     # Create atoms
     atom1 = CAtom.atom_sym("X")
@@ -2038,7 +2002,7 @@ def process_args():
         arg = sys.argv[i]
 
         if arg in ("--demo"):
-            demo0()
+            # demo0()
             demo1()
             demo2()
 
