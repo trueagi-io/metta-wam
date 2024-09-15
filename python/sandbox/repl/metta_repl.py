@@ -186,7 +186,8 @@ class REPL:
 
 # Main function
 def main():
-    runner = hyperon.MeTTa(env_builder=hyperon.Environment.custom_env(working_dir=os.path.dirname(".")))
+    cb = hyperon.Environment.custom_env(working_dir=os.path.dirname("."))
+    runner = hyperon.MeTTa(env_builder=cb)
 
     # Process command-line arguments and track if REPL or files were handled
     wont_need_repl = process_args(runner)
