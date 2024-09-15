@@ -1,7 +1,9 @@
 [build-system]
 # setuptools >68.0.0 is incompatible with macos-13
 # setuptools_scm >7.1.0 is incompatible with Python 3.7
-requires = ["setuptools==68.0.0", "conan==2.5.0", "cmake==3.24", "setuptools_scm[toml]==7.1.0"]
+# Specify only what's necessary for the build process
+# requires = ["setuptools==68.0.0", "conan==2.5.0", "cmake==3.24", "setuptools_scm[toml]==7.1.0"]
+requires = ["setuptools==68.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -25,6 +27,7 @@ dynamic = [
 
 [project.scripts]
 mettalog-py = "hyperon.metta:main"
+mettalog-repl = "mettalog_sandbox.repl.metta_repl:main"
 
 [project.optional-dependencies]
 dev = [
@@ -33,13 +36,14 @@ dev = [
 ]
 
 [tool.setuptools]
-packages = [ "hyperon" ]
-package-dir = { "hyperon" = "hyperon" }
+packages = ["hyperon", "mettalog", "mettalog_sandbox"]
+package-dir = { "hyperon" = "hyperon", "mettalog" = "../src/mettalog", "mettalog_sandbox" = "sandbox"  }
+# Specify hyperonpy.py as a py_modules entry
+py-modules = ["hyperonpy","mettalogpy"]
 
 [tool.cibuildwheel]
 before-all = "sh -c ./python/install-hyperonc.sh"
-# There is no Rust toolchain is available for musllinux-i686 environment.
-# Other musllinux platforms are opted out to decrease the build time.
 skip = "*musllinux*"
 test-requires = ["pytest==7.3.2"]
 test-command = "pytest {project}/python/tests"
+
