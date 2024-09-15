@@ -6,7 +6,7 @@
 ; and can be parameterized by expressions, which should be defined outside
 (topic)
 
-; Ordinary Metta expressions will be also evaluated by `llm`
+; Ordinary Metta expressions will be also evaluated by metta-motto
 (if (== (story) None)
     ()
     (assistant (story)))

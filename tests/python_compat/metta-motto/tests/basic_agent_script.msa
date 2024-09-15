@@ -1,0 +1,12 @@
+; this agent is supposed to be metta-script-agent
+; its code is executed on each call, so its space
+; is not preserved, but the agent can do
+; imperative computations more conveniently
+
+! (bind! &result
+    (case (messages)
+      (((user "Hello") "Hi there")
+       ((user $x) $x)
+       ($_ "Incorrect call"))))
+
+(= (response) &result)

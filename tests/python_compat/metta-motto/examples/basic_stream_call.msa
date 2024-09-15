@@ -1,0 +1,4 @@
+(= (respond)
+   ((chat-gpt-agent (model_name) (is_stream) True) (Messages (history) (system (system_msg)) (media (media_msg)) (messages)))
+)
+(= (response) (respond))

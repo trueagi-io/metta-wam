@@ -1,0 +1,48 @@
+!(import! &self motto)
+(= (doc get_current_weather)
+  (Doc
+    (description "Get the current weather for the city")
+    (parameters
+      (location "the city: " ("Tokyo" "New York" "London"))
+    ))
+)
+
+(= (doc get_area)
+  (Doc
+    (description "Get area for the city (km ^ 2)")
+    (parameters
+      (city "the city: " ("Tokyo" "New York" "London"))
+    ))
+)
+
+(= (get_current_weather ($arg) $msgs)
+   (if (== (contains-str $arg "Tokyo") True)
+       "the temperature in Tokyo is 75 fahrenheit"
+       (if (== (contains-str $arg "New York") True)
+           "The temperature in New York is 80 fahrenheit"
+           (concat-str (concat-str "The temperature in " $arg) " is 70 fahrenheit" )
+       )
+  )
+)
+
+(= (get_area ($arg) $msgs)
+   (if (== (contains-str $arg "Tokyo") True)
+       "The area of New York Tokyo is 2194 km^2"
+       (if (== (contains-str $arg "New York") True)
+           "The area of New York  is 778 km^2"
+           (concat-str (concat-str "The area of " $arg) " is 1,572 km^2" )
+       )
+  )
+)
+
+!((chat-gpt-agent "gpt-3.5-turbo")
+   (user "What is the current weather in London and tell me the area of New York?")
+   (Function get_current_weather)
+   (Function get_area)
+)
+
+!((chat-gpt-agent "gpt-3.5-turbo")
+   (user "What is the current weather in New York and Tokyo?")
+   (Function get_current_weather)
+   (Function get_area)
+)

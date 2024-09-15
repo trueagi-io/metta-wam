@@ -1,10 +1,10 @@
 !(import! &self motto)
 
-; We can call ChatGPT Agent from MeTTa using generic llm function
-! (llm (Agent (chat-gpt)) (user "Hello"))
+; We can call ChatGPT Agent from MeTTa
+!((chat-gpt-agent) (user "Hello"))
 ; With additional messages emulating the dialog history,
 ; the output will be different
-! (llm (Agent (chat-gpt))
+!((chat-gpt-agent)
   (Messages (assistant "Hello") (user "Hello")))
 
 ; We can also pass function call to ChatGPT from MeTTa.
@@ -22,14 +22,14 @@
 
 ; The result of llm will be a MeTTa expression, which will be evaluated futher
 ; The output "I don't know!" indicates that `func` was called
-!(llm (Agent (chat-gpt))
+!((chat-gpt-agent)
   (Messages (system "Always perform the function call")
             (user "What is my name?"))
   (Functions func))
 
 ; The result can remain unreduced as well meaning that
 ; reduction happens on the MeTTa side (not LLM)
-!(llm (Agent (chat-gpt))
+!((chat-gpt-agent)
   (Messages (system "Always perform the function call")
             (user "What is my surname?"))
   (Functions func))

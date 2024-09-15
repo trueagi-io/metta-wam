@@ -5,25 +5,27 @@
 
 ; Messages can be wrapped into `Messages` constructor
 !(assertEqual
-   (llm
-     (Agent EchoAgent)
-     (Messages (user "Test")))
+   ((echo-agent)
+    (Messages (user "Test")))
 "user Test")
 
 ; Messages can be recognized by their roles without `Messages` constructor
 !(assertEqual
-   (llm
-     (Agent EchoAgent)
-     (system "Ping") (user "Pong"))
+   ((echo-agent)
+    (system "Ping") (user "Pong"))
 "system Ping
 user Pong")
 
 ; Messages can be wrapped recursively
 !(assertEqual
-   (llm
-     (Agent EchoAgent)
-     (Messages (system "Ping")
-               (Messages (user "Pong") (assistant "Catch"))))
+   ((echo-agent)
+    (Messages (system "Ping")
+              (Messages (user "Pong") (assistant "Catch"))))
 "system Ping
 user Pong
 assistant Catch")
+
+!(assertEqual
+  ((echo-agent) (Kwargs (user_name "John")) (user "Test"))
+"user Test
+your name is John")

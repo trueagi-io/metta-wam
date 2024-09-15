@@ -1,0 +1,41 @@
+; this should be metta-agent (or dialog-agent), which is loaded only once
+
+; This is prior info
+(= (friend Sam) Liz)
+(= (friend Tom) Pat)
+
+! (add-reduct &self (= (user) (new-state Unknown)))
+
+; this function is called to change the state of the user name
+; and then call chat-gpt for the textual answer
+(= (doc reg_name)
+   (Doc
+      (description "Call this function to memorize the user name")
+      (parameters
+        ((: user_name Atom) "User name")
+      ))
+)
+(= (reg_name ($user-name) $msgs)
+   (let $_ (change-state! (user) $user-name)
+        ((chat-gpt-agent) $msgs))
+)
+
+; this function is called to retrieve the name of the current user
+; and then call chat-gpt for the textual answer
+(= (doc recall_friend)
+   (Doc
+      (description "Call this function when you need to recall user's friend name")
+      (parameters
+        ((: user_name Atom) "User name")
+      ))
+)
+(= (recall_friend ($user-name) $msgs)
+   (let $friend (friend (get-state (user)))
+        ((chat-gpt-agent)
+            (assistant ("User's friend is " $friend))
+            $msgs))
+)
+
+; main entry point to the agent
+(= (response) ((chat-gpt-agent) (messages)
+    (Functions reg_name recall_friend)))

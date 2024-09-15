@@ -1,3 +1,9 @@
+; This agent is supposed to be metta-script-agent, since it
+; does some work not within `response` function, but in
+; commands (!), which are executed at load time.
+; The whole code of metta-script-agent is evaluated each time
+; the agent is called. Its space is not kept between calls.
+
 ; We can define a function expected by the prompt template
 ; after importing it, because the template will be evaluated by `llm`
 (= (topic)
@@ -10,14 +16,15 @@
 (= (story) (get-state &story))
 
 ; Let's generate the first part
-!(change-state! &story (llm (Script 05_nested_prompt.mps)))
+!(change-state! &story ((chat-gpt-agent) (Script 05_nested_prompt.mps)))
 
 !(println! "======== STORY ========")
 !(println! (story))
 
 ; Now, let's generate the next piece
 !(println! "======== LOCATION ========")
-!(println! (llm (Script 05_nested_prompt.mps)
+!(println! ((chat-gpt-agent)
+                (Script 05_nested_prompt.mps)
                 (user "Please compose a very short description of the first location of the adventure")))
 
-!(Response "DONE")
+(= (response) "DONE")

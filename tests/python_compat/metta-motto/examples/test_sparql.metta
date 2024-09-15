@@ -38,7 +38,7 @@
 ;takes into account cases where the occupation is given as a plain string
 
 !(select ((fields ($name $birth)) (where (($person dbo:birthPlace dbr:London) ($person foaf:name $name)
-(union (($person dbo:occupation dbr:Actor) ($person dbp:occupation $occupation)
+(sparql_union (($person dbo:occupation dbr:Actor) ($person dbp:occupation $occupation)
 (filter (or (contains (str $occupation) 'Actor')  (contains (str $occupation) 'Actress') ) )
 ))
 ($person dbo:birthDate $birth)

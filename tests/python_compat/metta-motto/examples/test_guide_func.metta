@@ -15,4 +15,4 @@
 
 (= (user-query) "What is the result of 111102 + 18333?")
 
-!(llm (Script test_guide_prompt.mps))
+!((chat-gpt-agent) (Script test_guide_prompt.mps))

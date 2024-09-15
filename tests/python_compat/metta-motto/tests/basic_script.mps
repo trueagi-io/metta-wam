@@ -1,9 +1,7 @@
 ; This is an example of passive script - it doesn't execute
 ; any code, but only stores the parameters for the llm call.
 ; This is an ordinary MeTTa code, but it is supposed to be passed
-; to `llm`, thus we use a different extension, mps (MeTTa prompt script)
-
-(Agent EchoAgent)
+; to other agents, thus we use a different extension, mps (MeTTa prompt script)
 
 ; `user-query` is not defined in the script, but it will be evaluated
 ; in the context of the parent script, where it is expected to be defined

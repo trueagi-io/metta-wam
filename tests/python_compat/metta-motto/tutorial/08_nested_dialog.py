@@ -6,23 +6,25 @@ def reply_and_print(agent, msg):
 
 agent = DialogAgent(code='''
     !(bind! &internal
-       (metta-chat
-         ; inline definitions should be single quoted Response expression
-         (quote (Response (llm (Agent (chat-gpt)) (history) (messages))))
+       (dialog-agent
+         ; inline definitions should be a quoted expression for response function
+         (quote (= (response) ((chat-gpt-agent) (history) (messages))))
        )
      )
     ; Checking if the agent is required to return its history
-    !(if (== (messages) (system HISTORY))
-         (Response (history))
+    (= (response)
+       (if (== (messages) (system HISTORY))
+         (history)
          (superpose (
            (println! "======== PRELIMINARY ANSWER ========")
            ; We first execute the agent with the system and user message.
-           (println! (llm (Agent &internal)
+           (println! (&internal
               (system "Try to break down the problem into parts and perform the first step of reasoning. Do not provide the final answer - only the breakdown.")
               (messages)))
            ; This agent call relies on the history, because the original message is not passed
-           (Response (llm (Agent &internal) (user "Continue your reasoning and provide the final answer")))
+           (&internal (user "Continue your reasoning and provide the final answer"))
          ))
+    )
     )
 ''')
 
@@ -31,7 +33,7 @@ agent = DialogAgent(code='''
 #     and a city of knights who always tell the truth.
 #     The traveler met one of them at a fork in the road.
 #     What should he ask to find out which road leads to the city of knights?")''')
-reply_and_print(agent, '(user "Calculate (100 + 3) * (100 -3)")')
+reply_and_print(agent, '(user "Calculate (100 + 3) * (100 - 3)")')
 
 # The reply will be the history containing only `user` and `assistant` messages
 # of the top level DialogAgent

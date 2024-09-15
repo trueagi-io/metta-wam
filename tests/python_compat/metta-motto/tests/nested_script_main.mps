@@ -4,10 +4,9 @@
 ; instead of binding it to a token
 
 ; This will actually be evaluated during `llm` call.
-; `task` will be resolved and `if` will be reduced to
-; one of the imported spaces. This space will be considered
-; as a prompt template similar to the call `(llm &script)`,
-; and its messages will be in the common list of messages.
+; `task` will be resolved and `if` will be reduced to one of the
+; imported spaces. This space will be considered as a prompt
+; template, and its messages will be in the common list of messages.
 (if (== (task) ORDER)
     (Script nested_script_order.mps)
     (Script nested_script_greet.mps))

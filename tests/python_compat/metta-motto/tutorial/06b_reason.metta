@@ -11,9 +11,11 @@
 
 ; And we process them with the use of ChatGPT-based MeTTa-agent
 ; to put parsed statements into the space of this script
+; Check the output to see if all the facts are processed correctly
 !(match &self (Fact $fact)
-   (let $expr (llm (Agent 06b_reason.msa) (user $fact))
-        (add-atom &self $expr)))
+   (let* (($expr ((metta-agent "06b_reason.msa") (user $fact)))
+          (() (println! (Adding: $expr)))) ; print what is added
+         (add-atom &self $expr)))
 
 ; Statements are processed into a functional form for the sake of simplicity -
 ; no full-fledged reasoning engine is used, so the example is limited.
@@ -31,5 +33,5 @@
 
 ; Or we can transform natural language questions into MeTTa expressions
 ; and evaluate them
-!(llm (Agent 06b_reason.msa) (system "Question") (user "Is Sam a helicopter?"))
-!(llm (Agent 06b_reason.msa) (user "Is Sam a frog?"))
+!((metta-agent "06b_reason.msa") (system "Question") (user "Is Sam a helicopter?"))
+!((metta-agent "06b_reason.msa") (user "Is Sam a frog?"))

@@ -1,0 +1,5 @@
+;read from db
+!(bind! &db ((py-atom langchain_chroma.Chroma)
+   (Kwargs (embedding_function ((py-atom langchain_openai.OpenAIEmbeddings))) (persist_directory "./data/chroma_db"))))
+!(bind! &result ((py-dot  &db similarity_search) "Who made significant advancements in the fields of electromagnetism?") )
+!(py-dot ((py-atom "lambda x: x[0]") &result) page_content)
