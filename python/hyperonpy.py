@@ -67,7 +67,19 @@ from enum import Enum
 from typing import Any, List, Optional, Dict, Callable, Union, Tuple
 
 # Log messages based on verbosity level
-def logm(level, message):
+def mlog(level, message, m2, m3):
+    if METTALOG_VERBOSE >= level:
+        print(message, m2, m3)
+
+def mlog2(level, message, m2):
+    if METTALOG_VERBOSE >= level:
+        print(message, m2)
+
+def mlog(level, message, m2):
+    if METTALOG_VERBOSE >= level:
+        print(message, m2)
+
+def mlog(level, message):
     if METTALOG_VERBOSE >= level:
         print(message)
 
@@ -76,7 +88,7 @@ def set_verbosity(level):
     global METTALOG_VERBOSE
     if level in [SILENT, USER, DEBUG, TRACE]:
         METTALOG_VERBOSE = level
-        logm(USER, f"Verbosity set to level {level}")
+        #mlog(DEBUG, f"Verbosity set to level {level}")
     else:
         print(f"Invalid verbosity level '{level}' provided. Defaulting to USER level.")
         METTALOG_VERBOSE = USER
@@ -85,7 +97,7 @@ try:
     verbosity_level = int(os.getenv("METTALOG_VERBOSE", USER))
     set_verbosity(verbosity_level)
 except (ValueError, IndexError):
-    logm(USER, "Invalid verbosity level. Defaulting to USER.")
+    mlog(USER, "Invalid verbosity level. Defaulting to USER.")
     set_verbosity(USER)
 
 # Enums for AtomKind, SerialResult, SyntaxNodeType
@@ -99,6 +111,7 @@ class SerialResult(Enum):
     OK = 0
     NOT_SUPPORTED = 1
 
+# SyntaxNodeType Enum
 class SyntaxNodeType(Enum):
     COMMENT = "COMMENT"
     VARIABLE_TOKEN = "VARIABLE_TOKEN"
@@ -111,6 +124,17 @@ class SyntaxNodeType(Enum):
     EXPRESSION_GROUP = "EXPRESSION_GROUP"
     ERROR_GROUP = "ERROR_GROUP"
 
+# Mock CStruct equivalent
+class CStruct:
+    def __init__(self, obj=None):
+        self.obj = obj
+    def __init__(self, l2, **kwargs):
+        self.__dict__.update(kwargs)
+
+    def ptr(self):
+        return self.obj
+
+
 # Placeholder for AtomType
 class AtomType:
     SYMBOL = 'Symbol'
@@ -121,7 +145,7 @@ class AtomType:
 
 # Global variable for tracing messages
 def trace_msg(msg: str):
-    logm(DEBUG,f"TRACE: {msg}")
+    mlog(DEBUG,f"TRACE: {msg}")
 
 # Global variable to control whether to throw errors in mocks
 mock_throw_error = False
@@ -773,6 +797,7 @@ class CSExprParser:
         self.text = text
         self.tokens = self.tokenize(text)
         self.position = 0
+        self.cparser = self 
         self.error_message = None
 
     def tokenize(self, text: str) -> List[str]:
@@ -814,6 +839,22 @@ class CSExprParser:
 
     def parse_to_syntax_tree(self) -> CSyntaxNode:
         return CSyntaxNode(node=self.text)  # Placeholder
+
+    def sexpr_parser_err_str(self):
+        """Returns the error string from the parser or None if no error."""
+        err_str = self.error_message
+        if err_str:
+        	return err_str
+        if self.cparser is not None and self.cparser is not self:
+        	err_str = self.cparser.sexpr_parser_err_str()
+        if err_str is None:
+            mlog(DEBUG,"No error in SExprParser")
+            return None
+        else:
+            print(f"SExprParser error: {err_str}")
+            return err_str
+
+
 
 def sexpr_parse_new(text: str) -> CSExprParser:
     return CSExprParser(text)
@@ -891,6 +932,35 @@ def metta_run(cmetta: CMetta, parser: CSExprParser) -> List[List[CAtom]]:
 def metta_evaluate_atom(cmetta: CMetta, catom: CAtom) -> List[CAtom]:
     return cmetta.evaluate_atom(catom)
 
+
+
+# CRunContext Mock Class
+class CRunContext:
+    """Mock class for run context."""
+    def get_space(self):
+        return CSpace()
+
+
+# CModuleDescriptor Mock
+class CModuleDescriptor:
+    """Describes a module with metadata."""
+    def __init__(self, name, description):
+        self.name = name
+        self.description = description
+
+    def __str__(self):
+        return f"Module: {self.name}, Description: {self.description}"
+
+
+# ModuleId Mock Class
+class ModuleId(CStruct):
+    def __init__(self, mod_id: int):
+        super().__init__(mod_id)
+
+    def is_valid(self):
+        return self.obj is not None
+
+
 # ------------------ RunnerState Class ------------------
 
 class CRunnerState:
@@ -953,6 +1023,10 @@ class EnvBuilder:
     def set_config_dir(self, path: str):
         self.config_dir = path
 
+    def use_test_env(self):
+        """Set the environment to be used for testing."""
+        self.is_test_env = True
+
     def create_config_dir(self, should_create: bool):
         if should_create:
             os.makedirs(self.config_dir, exist_ok=True)
@@ -968,6 +1042,16 @@ class EnvBuilder:
 
     def push_fs_module_format(self, interface: Any, fmt_id: int):
         pass  # Placeholder
+
+    def build(self) -> Dict[str, Any]:
+        """Finalize the environment setup and return the environment context."""
+        return {
+            'working_dir': self.working_dir,
+            'config_dir': self.config_dir,
+            'include_paths': self.include_paths,
+            'is_test_env': self.is_test_env
+        }
+        
 
 def environment_config_dir() -> str:
     return os.getcwd()
@@ -1053,16 +1137,6 @@ def serializer_free(serializer: Serializer):
 def serializer_get_serialized_data(serializer: PythonToCSerializer) -> str:
     return serializer.get_serialized_data()
 
-# ------------------ Logging Functions ------------------
-
-def log_error(msg: str):
-    warnings.warn(f"ERROR: {msg}")
-
-def log_warn(msg: str):
-    warnings.warn(f"WARNING: {msg}")
-
-def log_info(msg: str):
-    logm(DEBUG,f"INFO: {msg}")
 
 # ------------------ Module Handling ------------------
 
@@ -1193,111 +1267,6 @@ def set_no_mock_objects_flag(flag: bool):
 def get_no_mock_objects_flag() -> bool:
     return mock_throw_error
 # Testing and Examples
-def demo2():
-    # Create a space
-    space = CSpace()
-
-    # Create atoms
-    symbol_atom = CAtom.atom_sym("X")
-    variable_atom = CAtom.atom_var("Y")
-    grounded_type = CAtom.atom_sym("Int")
-    grounded_atom = CAtom.atom_gnd(42, grounded_type)
-
-    # Add atoms to the space
-    space.add(symbol_atom)
-    space.add(variable_atom)
-    space.add(grounded_atom)
-
-    # Query the space
-    query_atom = CAtom.atom_sym("X")
-    query_result = space.query(query_atom)
-    logm(DEBUG,"Query result:", [str(binding.bindings) for binding in query_result.list()])
-
-    # Replace an atom
-    new_atom = CAtom.atom_sym("Z")
-    space.replace(symbol_atom, new_atom)
-    logm(DEBUG,"Space after replacement:", space)
-
-    # Interpret an expression
-    expr_atom = CAtom.atom_expr([variable_atom, grounded_atom])
-    interpreter = Interpreter(space, expr_atom)
-
-    while interpreter.has_next():
-        interpreter.next()
-        logm(DEBUG,"Step result:", interpreter.get_step_result())
-
-    # Final result from interpreter
-    logm(DEBUG,"Final interpretation result:", interpreter.get_result())
-
-    # Example: Vector of Atoms
-    atom_vector = CVecAtom([])
-    atom_vector.push(CAtom.atom_sym("Hydrogen"))
-    atom_vector.push(CAtom.atom_sym("Oxygen"))
-
-    logm(DEBUG,"Atoms in Vector:")
-    for atom in atom_vector:
-        logm(DEBUG,atom)
-
-    # Example: Module Descriptor
-    mod_desc = CModuleDescriptor(name="Physics", description="Physics simulation module")
-    logm(DEBUG,mod_desc)
-
-    # Example: Expression Parser
-    expr_parser = CSExprParser("(2 + (3 * 5))")
-    result = expr_parser.parse()
-    logm(DEBUG,"Parsed Expression Result:", result)
-
-    # Example: Space with Atoms
-    space2 = CSpace()
-    space2.add(CAtom.atom_sym("Proton"))
-    space2.add(CAtom.atom_sym("Neutron"))
-    logm(DEBUG,"Items in Space2:")
-    for item in space2.atoms:
-        logm(DEBUG,item)
-
-    # Example: Interpreter usage
-    interpreter2 = Interpreter(space2, CAtom.atom_sym("sample_expr"))
-    while interpreter2.has_next():
-        interpreter2.next()
-        logm(DEBUG,"Interpreter2 Step result:", interpreter2.get_step_result())
-
-    logm(DEBUG,"Final Interpretation Result:", interpreter2.get_result())
-
-    # Example: Logging
-    log_info("This is an informational message.")
-    log_warn("This is a warning message.")
-    log_error("This is an error message.")
-
-    # Example: Environment Builder
-    env_builder = EnvBuilder()
-    env_builder.set_working_dir("/path/to/working/dir")
-    env_builder.set_config_dir("/path/to/config/dir")
-    env_builder.push_include_path("/path/to/include")
-    env_builder.use_test_env()
-    environment = env_builder.build()
-    logm(DEBUG,"Environment:", environment)
-
-    # Example: Runner State
-    metta = CMetta(space)
-    runner_state = CRunnerState(metta, expr_parser)
-    while not runner_state.is_complete():
-        runner_state.step()
-        logm(DEBUG,"Runner State Current Results:", runner_state.current_results())
-
-    # Example: Atom Matching
-    pattern = CAtom.atom_expr([CAtom.atom_var("Var1"), CAtom.atom_sym("B")])
-    expression = CAtom.atom_expr([CAtom.atom_sym("A"), CAtom.atom_sym("B")])
-
-    bindings_set = atom_match_atom(expression, pattern)
-    if not bindings_set.is_empty():
-        for bindings in bindings_set.list():
-            logm(DEBUG,"Match found with bindings:", bindings.bindings)
-    else:
-        logm(DEBUG,"No match found.")
-
-    # Example: Using atom_get_metatype
-    metatype = atom_get_metatype(symbol_atom)
-    logm(DEBUG,"Metatype of symbol_atom:", metatype)
 
 
 
@@ -1549,7 +1518,7 @@ def log_warn(msg: str):
     warnings.warn(f"WARNING: {msg}")
 
 def log_info(msg: str):
-    logm(DEBUG,f"INFO: {msg}")
+    print(f"INFO: {msg}")
 
 # ------------------ Example Classes for Grounded Objects ------------------
 
@@ -1570,7 +1539,7 @@ class AddGroundedObject:
 
 # ------------------ Example Usage ------------------
 
-def example_usage():
+def demo0():
     # Create a space
     space = CSpace()
 
@@ -1587,7 +1556,7 @@ def example_usage():
 
     # Query the space
     result = space.query(atom2)
-    logm(DEBUG,"Query result:", result)
+    mlog2(DEBUG,"Query result:", result)
 
     # Create an expression
     expr = CAtom.atom_expr([grounded_atom, CAtom.atom_sym("2"), CAtom.atom_sym("3")])
@@ -1596,11 +1565,11 @@ def example_usage():
     interpreter = Interpreter(space, expr)
     while interpreter.has_next():
         interpreter.next()
-        logm(DEBUG,"Interpreter step result:", interpreter.get_step_result())
+        mlog2(DEBUG,"Interpreter step result:", interpreter.get_step_result())
 
     # Get the final result
     final_result = interpreter.get_result()
-    logm(DEBUG,"Final interpretation result:", final_result)
+    mlog2(DEBUG,"Final interpretation result:", final_result)
 
 # Uncomment to run the example
 # example_usage()
@@ -1634,18 +1603,25 @@ class Interpreter:
         else:
             warnings.warn("No more steps available in interpreter.")
 
+
     def evaluate_atom(self, atom: CAtom) -> List[CAtom]:
-        if atom.is_grounded():
-            # Execute grounded atom
-            args = [self.evaluate_atom(child)[0] for child in atom.get_children()]
-            return atom.execute(args)
-        elif atom.atom_type == AtomType.EXPRESSION:
-            # Evaluate expression
-            evaluated_children = [self.evaluate_atom(child)[0] for child in atom.children]
-            return [CAtom.atom_expr(evaluated_children)]
-        else:
-            # Return atom as is
-            return [atom]
+	    def safe_evaluate_atom(child):
+	        # Try to evaluate the child and return the first element if successful
+	        evaluated = self.evaluate_atom(child)
+	        # If the evaluation is a non-empty list, return its first element, otherwise fallback to child
+	        return evaluated[0] if isinstance(evaluated, list) and evaluated else child
+	
+	    if atom.is_grounded():
+	        # Execute grounded atom with safely evaluated arguments
+	        args = [safe_evaluate_atom(child) for child in atom.get_children()]
+	        return atom.execute(args)
+	    elif atom.atom_type == AtomType.EXPRESSION:
+	        # Evaluate expression with safely evaluated children
+	        evaluated_children = [safe_evaluate_atom(child) for child in atom.children]
+	        return [CAtom.atom_expr(evaluated_children)]
+	    else:
+	        # Return atom as is for other types (e.g., variables, symbols)
+	        return [atom]
 
     def get_result(self) -> List[CAtom]:
         if self.has_next():
@@ -1706,10 +1682,162 @@ def atom_match(a: CAtom, b: CAtom) -> CBindingsSet:
     return atom_match_atom(a, b)
 
 
-# ------------------ Main Function ------------------
+
+def demo1():
+    # Create a grounding space
+    space = CSpace()
+
+    # Create atoms
+    atom1 = CAtom.atom_sym("X")
+    atom2 = CAtom.atom_var("Y")
+    grounded_atom = CAtom.atom_gnd(42, CAtom.atom_sym("Int"))
+
+    # Add atoms to space
+    space.add(atom1)
+    space.add(atom2)
+    space.add(grounded_atom)
+
+    # Query space
+    result = space.query(atom1)
+    mlog2(DEBUG,"Query result:", result)
+
+    # Run interpreter on an expression
+    expr = CAtom.atom_expr([atom1, atom2])
+    interpreter = Interpreter(space, expr)
+    while interpreter.has_next():
+        interpreter.next()
+        mlog2(DEBUG,"Interpreter step result:", interpreter.get_step_result())
+
+    # Final result from interpreter
+    mlog2(DEBUG,"Final interpretation result:", interpreter.get_result())
+
+    # Test serialization
+    serializer = PythonToCSerializer()
+    grounded_atom.serialize(serializer)
+    mlog2(DEBUG,"Serialized grounded atom:", serializer.get_serialized_data())
+
+    # Testing environment builder
+    env_builder = EnvBuilder()
+    env_builder.set_working_dir("/path/to/dir")
+    env_builder.push_include_path("/path/to/include")
+    environment = env_builder.build()
+    mlog2(DEBUG,"Environment:", environment)
+
+
+
+
+# Note: Implement any other missing functions as required.
+
+# Testing and Examples
+def demo2():
+    # Create a space
+    space = CSpace()
+
+    # Create atoms
+    symbol_atom = CAtom.atom_sym("X")
+    variable_atom = CAtom.atom_var("Y")
+    grounded_type = CAtom.atom_sym("Int")
+    grounded_atom = CAtom.atom_gnd(42, grounded_type)
+
+    # Add atoms to the space
+    space.add(symbol_atom)
+    space.add(variable_atom)
+    space.add(grounded_atom)
+
+    # Query the space
+    query_atom = CAtom.atom_sym("X")
+    query_result = space.query(query_atom)
+    mlog2(DEBUG,"Query result:", [str(binding.bindings) for binding in query_result.list()])
+
+    # Replace an atom
+    new_atom = CAtom.atom_sym("Z")
+    space.replace(symbol_atom, new_atom)
+    mlog2(DEBUG,"Space after replacement:", space)
+
+    # Interpret an expression
+    expr_atom = CAtom.atom_expr([variable_atom, grounded_atom])
+    interpreter = Interpreter(space, expr_atom)
+
+    while interpreter.has_next():
+        interpreter.next()
+        mlog2(DEBUG,"Step result:", interpreter.get_step_result())
+
+    # Final result from interpreter
+    mlog2(DEBUG,"Final interpretation result:", interpreter.get_result())
+
+    # Example: Vector of Atoms
+    atom_vector = CVecAtom([])
+    atom_vector.push(CAtom.atom_sym("Hydrogen"))
+    atom_vector.push(CAtom.atom_sym("Oxygen"))
+
+    mlog(DEBUG,"Atoms in Vector:")
+    for atom in atom_vector:
+        print(atom)
+
+    # Example: Module Descriptor
+    mod_desc = CModuleDescriptor(name="Physics", description="Physics simulation module")
+    print(mod_desc)
+
+    # Example: Expression Parser
+    expr_parser = CSExprParser("(2 + (3 * 5))")
+    result = expr_parser.parse()
+    mlog2(DEBUG,"Parsed Expression Result:", result)
+
+    # Example: Space with Atoms
+    space2 = CSpace()
+    space2.add(CAtom.atom_sym("Proton"))
+    space2.add(CAtom.atom_sym("Neutron"))
+    mlog(DEBUG,"Items in Space2:")
+    for item in space2.atoms:
+        print(item)
+
+    # Example: Interpreter usage
+    interpreter2 = Interpreter(space2, CAtom.atom_sym("sample_expr"))
+    while interpreter2.has_next():
+        interpreter2.next()
+        mlog2(DEBUG,"Interpreter2 Step result:", interpreter2.get_step_result())
+
+    mlog2(DEBUG,"Final Interpretation Result:", interpreter2.get_result())
+
+    # Example: Logging
+    log_info("This is an informational message.")
+    log_warn("This is a warning message.")
+    log_error("This is an error message.")
+
+    # Example: Environment Builder
+    env_builder = EnvBuilder()
+    env_builder.set_working_dir("/path/to/working/dir")
+    env_builder.set_config_dir("/path/to/config/dir")
+    env_builder.push_include_path("/path/to/include")
+    env_builder.use_test_env()
+    environment = env_builder.build()
+    mlog2(DEBUG,"Environment:", environment)
+
+    # Example: Runner State
+    metta = CMetta(space)
+    runner_state = CRunnerState(metta, expr_parser)
+    while not runner_state.is_complete():
+        runner_state.step()
+        mlog2(DEBUG,"Runner State Current Results:", runner_state.current_results())
+
+    # Example: Atom Matching
+    pattern = CAtom.atom_expr([CAtom.atom_var("Var1"), CAtom.atom_sym("B")])
+    expression = CAtom.atom_expr([CAtom.atom_sym("A"), CAtom.atom_sym("B")])
+
+    bindings_set = atom_match_atom(expression, pattern)
+    if not bindings_set.is_empty():
+        for bindings in bindings_set.list():
+            mlog2(DEBUG,"Match found with bindings:", bindings.bindings)
+    else:
+        mlog(DEBUG,"No match found.")
+
+    # Example: Using atom_get_metatype
+    metatype = atom_get_metatype(symbol_atom)
+    mlog2(DEBUG,"Metatype of symbol_atom:", metatype)
+
+
+
 if __name__ == "__main__":
+   demo0()
    demo1()
    demo2()
-
-
-
