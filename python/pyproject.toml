@@ -42,7 +42,7 @@ package-dir = { "hyperon" = "hyperon", "mettalog" = "../src/mettalog", "mettalog
 py-modules = ["hyperonpy","mettalogpy"]
 
 [tool.cibuildwheel]
-before-all = "sh -c ./python/install-hyperonc.sh"
+#before-all = "sh -c ./python/install-hyperonc.sh"
 skip = "*musllinux*"
 test-requires = ["pytest==7.3.2"]
 test-command = "pytest {project}/python/tests"
