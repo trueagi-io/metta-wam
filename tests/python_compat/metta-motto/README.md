@@ -16,7 +16,8 @@ cd metta-motto
 
 Run the following command to install the project using pip:
 ```bash
-pip install metta-motto
+#pip install metta-motto
+pip install -e .
 ```
 
 ## Usage

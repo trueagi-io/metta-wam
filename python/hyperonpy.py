@@ -1,33 +1,18 @@
+
+# Add a bit more tracing/debugging in the code below 
+# Make sure you give me back the complete and workign versions of the entire content)  this is taking the place of a the old pybind11 C++ file so module level functions and class names and class function  cannot be renamed or ommited.  Continue  and dont worry about space limitations 
+
 """
 ===============================================================================
 Metta Script Runner and REPL Environment
 ===============================================================================
-This script provides a robust runner for Metta scripts, allowing users to execute
-Metta programs, configure verbosity levels for logging, and interactively 
-use the REPL (Read-Eval-Print Loop) interface.
-
-Features:
----------
-1. Adjustable verbosity levels (SILENT, USER, DEBUG, TRACE) for logging and debugging.
-2. The ability to process Metta script files with configurable paths, modules, 
-   and libraries.
-3. REPL mode for interactive execution of Metta code.
-4. Customizable with environment variables, such as 'METTALOG_VERBOSE' for setting
-   the verbosity level.
-
-Modules & Components:
-----------------------
-- os, sys: Standard libraries for operating system interaction and system functions.
-- hyperon: Provides Metta's core functionality for interpreting scripts.
-- readline, atexit: For managing REPL history and cleanup actions upon exit.
-- traceback: For error handling and printing detailed stack traces.
 
 Usage Example:
 --------------
 To run this script:
-    `python metta_script.py -v 2 -p /path/to/modules -m my_module script1.metta`
+    `python metta_script.py -v 2 -p /path/to/modules my_module script1.metta --repl`
     - This command sets verbosity to DEBUG, adds search paths and modules, and runs
-      the specified Metta script.
+      the specified Metta script then enters the --repl for further debugging.
 
 Logging Levels:
 ---------------
@@ -46,10 +31,20 @@ Environment Variables:
 
 import os
 import sys
-import hyperon
 import readline
 import atexit
 import traceback
+import re
+import warnings
+from enum import Enum
+from typing import Any, List, Optional, Dict, Callable, Union, Tuple
+from importlib import import_module
+import importlib.util
+import site
+#from hyperon.atoms import Atom, AtomKind, OperationAtom
+#from hyperon.base import GroundingSpaceRef, Tokenizer, SExprParser
+#from hyperon import *
+import hyperon
 
 # Module-level verbosity levels
 SILENT = 0  # No output
@@ -60,52 +55,67 @@ TRACE = 3   # Granular trace-level output
 # Default verbosity level
 METTALOG_VERBOSE = USER
 
-import os
-import re
-import warnings
-from enum import Enum
-from typing import Any, List, Optional, Dict, Callable, Union, Tuple
-
 # Log messages based on verbosity level
-def mlog(level, message, m2, m3):
+def mesg(level, message, m2=None, m3=None):
     if METTALOG_VERBOSE >= level:
-        print(message, m2, m3)
+        print(f"{message} {m2 or ''} {m3 or ''}")
 
-def mlog2(level, message, m2):
-    if METTALOG_VERBOSE >= level:
-        print(message, m2)
+def set_no_mock_objects_flag(flag: bool):
+    global mock_throw_error
+    mock_throw_error = flag
 
-def mlog(level, message, m2):
-    if METTALOG_VERBOSE >= level:
-        print(message, m2)
+def get_no_mock_objects_flag() -> bool:
+    return mock_throw_error
+# Testing and Examples
 
-def mlog(level, message):
-    if METTALOG_VERBOSE >= level:
-        print(message)
 
 # Set verbosity level
 def set_verbosity(level):
     global METTALOG_VERBOSE
+    level = int(level)
     if level in [SILENT, USER, DEBUG, TRACE]:
         METTALOG_VERBOSE = level
-        #mlog(DEBUG, f"Verbosity set to level {level}")
-    else:
+        mesg(DEBUG, f"Verbosity set to level {level}")
+    else:        
         print(f"Invalid verbosity level '{level}' provided. Defaulting to USER level.")
         METTALOG_VERBOSE = USER
 
+# Initialize verbosity from environment variable
 try:
-    verbosity_level = int(os.getenv("METTALOG_VERBOSE", USER))
-    set_verbosity(verbosity_level)
-except (ValueError, IndexError):
-    mlog(USER, "Invalid verbosity level. Defaulting to USER.")
-    set_verbosity(USER)
+    set_verbosity(os.getenv("METTALOG_VERBOSE", USER))
+except Exception as e:
+    mesg(USER, f"An error occurred: {e}")
+    if METTALOG_VERBOSE >= DEBUG:
+        traceback.print_exc()
+
+# Command-line verbosity handling
+try:
+    i = 0
+    while i < len(sys.argv):
+        arg = sys.argv[i]
+        i += 1
+
+        if arg in ("-v", "--verbosity"):
+            try:
+                set_verbosity(sys.argv[i])
+                break
+            except (ValueError, IndexError):
+                print("Invalid verbosity level. Defaulting to USER.")
+                set_verbosity(USER)
+
+    mesg(DEBUG, f"Argv={sys.argv}")
+
+except Exception as e:
+    mesg(USER, f"An error occurred: {e}")
+    if METTALOG_VERBOSE >= DEBUG:
+        traceback.print_exc()
 
 # Enums for AtomKind, SerialResult, SyntaxNodeType
 class AtomKind(Enum):
-    SYMBOL = "SYMBOL"
-    VARIABLE = "VARIABLE"
-    EXPR = "EXPR"
-    GROUNDED = "GROUNDED"
+    SYMBOL = 1 #"SYMBOL"
+    VARIABLE = 2 #"VARIABLE"
+    EXPR = 3 # "EXPR"
+    GROUNDED = 4 #"GROUNDED"
 
 class SerialResult(Enum):
     OK = 0
@@ -135,20 +145,21 @@ class CStruct:
         return self.obj
 
 
-# Placeholder for AtomType
-class AtomType:
-    SYMBOL = 'Symbol'
-    VARIABLE = 'Variable'
-    GROUNDED = 'Grounded'
-    EXPRESSION = 'Expression'
-    UNDEFINED = 'Undefined'
+# Placeholder for AtomKind
+#class AtomKind:
+#    SYMBOL = 'Symbol'
+#    VARIABLE = 'Variable'
+#    GROUNDED = 'Grounded'
+#    EXPRESSION = 'Expression'
+#    UNDEFINED = 'Undefined'
+
 
 # Global variable for tracing messages
 def trace_msg(msg: str):
-    mlog(DEBUG,f"TRACE: {msg}")
+    mesg(DEBUG,f"TRACE: {msg}")
 
 # Global variable to control whether to throw errors in mocks
-mock_throw_error = False
+mock_throw_error = True
 
 # ------------------ Atom Handling ------------------
 
@@ -156,17 +167,17 @@ class CAtom:
     def __init__(
         self,
         name: Optional[str] = None,
-        atom_type: Optional[str] = None,
+        atom_kind: Optional[int] = AtomKind.GROUNDED,
         grounded_object: Optional[Any] = None,
         children: Optional[List['CAtom']] = None
     ):
         self.name = name
-        self.atom_type = atom_type
+        self.atom_kind = atom_kind
         self.grounded_object = grounded_object
         self.children = children or []
 
     def is_grounded(self) -> bool:
-        return self.grounded_object is not None and self.atom_type == AtomType.GROUNDED
+        return self.grounded_object is not None and self.atom_kind == AtomKind.GROUNDED
 
     def execute(self, args: List['CAtom']) -> List['CAtom']:
         if self.is_grounded():
@@ -185,21 +196,21 @@ class CAtom:
             return self.grounded_object == other.grounded_object
         return (
             self.name == other.name and
-            self.atom_type == other.atom_type and
+            self.atom_kind == other.atom_kind and
             self.children == other.children
         )
 
     def __str__(self) -> str:
-        if self.is_grounded():
-            return self.grounded_object.serialize()
-        elif self.atom_type == AtomType.EXPRESSION:
+        if self.atom_kind == AtomKind.EXPR:
             return f"({' '.join(str(child) for child in self.children)})"
-        elif self.atom_type == AtomType.VARIABLE:
+        elif self.atom_kind == AtomKind.VARIABLE:
             return f"${self.name}"
-        elif self.atom_type == AtomType.SYMBOL:
+        elif self.atom_kind == AtomKind.SYMBOL:
             return f"{self.name}"
+        #elif self.is_grounded():
+        #    return self.grounded_object.serialize()
         else:
-            return f"Atom({self.name})"
+            return f"CAtom({self.name},{type(self.grounded_object)},{self.grounded_object})"
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -207,7 +218,7 @@ class CAtom:
     def clone(self) -> 'CAtom':
         return CAtom(
             name=self.name,
-            atom_type=self.atom_type,
+            atom_kind=self.atom_kind,
             grounded_object=self.grounded_object.clone() if self.is_grounded() else None,
             children=[child.clone() for child in self.children]
         )
@@ -216,21 +227,21 @@ class CAtom:
         return self.name is None and not self.children and not self.grounded_object
 
     def get_children(self) -> List['CAtom']:
-        if self.atom_type == AtomType.EXPRESSION:
+        if self.atom_kind == AtomKind.EXPR:
             return self.children
         else:
             warnings.warn("Attempted to get children of a non-expression atom.")
             return []
 
     def get_symbol(self) -> str:
-        if self.atom_type == AtomType.SYMBOL:
+        if self.atom_kind == AtomKind.SYMBOL:
             return self.name
         else:
             warnings.warn("Attempted to get symbol of a non-symbol atom.")
             return ""
 
     def get_name(self) -> str:
-        if self.atom_type == AtomType.VARIABLE:
+        if self.atom_kind == AtomKind.VARIABLE:
             return self.name
         else:
             warnings.warn("Attempted to get name of a non-variable atom.")
@@ -239,11 +250,11 @@ class CAtom:
     def to_pyobj(self) -> Any:
         if self.is_grounded():
             return self.grounded_object.pyobj
-        elif self.atom_type == AtomType.EXPRESSION:
+        elif self.atom_kind == AtomKind.EXPR:
             return [child.to_pyobj() for child in self.children]
-        elif self.atom_type == AtomType.SYMBOL:
+        elif self.atom_kind == AtomKind.SYMBOL:
             return self.name
-        elif self.atom_type == AtomType.VARIABLE:
+        elif self.atom_kind == AtomKind.VARIABLE:
             return f"${self.name}"
         else:
             warnings.warn("Attempted to convert an unknown atom type to Python object.")
@@ -252,23 +263,16 @@ class CAtom:
     def get_type(self) -> 'CAtom':
         if self.is_grounded():
             return self.grounded_object.typ
-        elif self.atom_type == AtomType.SYMBOL:
-            return CAtomType.SYMBOL
-        elif self.atom_type == AtomType.VARIABLE:
-            return CAtomType.VARIABLE
-        elif self.atom_type == AtomType.EXPRESSION:
-            return CAtomType.EXPRESSION
-        else:
-            return CAtomType.UNDEFINED
+        return self.atom_kind
 
     def serialize(self, serializer: 'Serializer') -> None:
         if self.is_grounded():
             self.grounded_object.serialize_with(serializer)
-        elif self.atom_type == AtomType.SYMBOL:
+        elif self.atom_kind == AtomKind.SYMBOL:
             serializer.serialize_str(self.name)
-        elif self.atom_type == AtomType.VARIABLE:
+        elif self.atom_kind == AtomKind.VARIABLE:
             serializer.serialize_str(f"${self.name}")
-        elif self.atom_type == AtomType.EXPRESSION:
+        elif self.atom_kind == AtomKind.EXPR:
             serializer.serialize_str("(")
             for child in self.children:
                 child.serialize(serializer)
@@ -289,24 +293,24 @@ class CAtom:
             else:
                 return CAtom.atom_sym(pyobj)
         else:
-            return CAtom.atom_gnd(pyobj, CAtom.atom_sym(AtomType.UNDEFINED))
+            return CAtom.atom_gnd(pyobj, CAtom.atom_sym(AtomKind.UNDEFINED))
 
     @staticmethod
     def atom_sym(name: str) -> 'CAtom':
-        return CAtom(name=name, atom_type=AtomType.SYMBOL)
+        return CAtom(name=name, atom_kind=AtomKind.SYMBOL)
 
     @staticmethod
     def atom_var(name: str) -> 'CAtom':
-        return CAtom(name=name, atom_type=AtomType.VARIABLE)
+        return CAtom(name=name, atom_kind=AtomKind.VARIABLE)
 
     @staticmethod
     def atom_gnd(pyobj: Any, typ: 'CAtom' = None) -> 'CAtom':
         if typ is None:
-            typ = CAtom.atom_sym(AtomType.UNDEFINED)
+            typ = CAtomType.UNDEFINED
         grounded_object = CGroundedObject(typ, pyobj)
         return CAtom(
             name=None,
-            atom_type=AtomType.GROUNDED,
+            atom_kind=AtomKind.GROUNDED,
             grounded_object=grounded_object
         )
 
@@ -314,25 +318,25 @@ class CAtom:
     def atom_expr(children: List['CAtom']) -> 'CAtom':
         return CAtom(
             name=None,
-            atom_type=AtomType.EXPRESSION,
+            atom_kind=AtomKind.EXPR,
             children=children
         )
 
     def __iter__(self):
-        if self.atom_type == AtomType.EXPRESSION:
+        if self.atom_kind == AtomKind.EXPR:
             return iter(self.children)
         else:
             return iter([])
 
 # Atom Types as Atoms
 class CAtomType:
-    UNDEFINED = CAtom.atom_sym(AtomType.UNDEFINED)
-    TYPE = CAtom.atom_sym("Type")
-    ATOM = CAtom.atom_sym("Generic")
     SYMBOL = CAtom.atom_sym("Symbol")
     VARIABLE = CAtom.atom_sym("Variable")
     EXPRESSION = CAtom.atom_sym("Expression")
     GROUNDED = CAtom.atom_sym("Grounded")
+    UNDEFINED = CAtom.atom_sym("%Undefined%")    
+    TYPE = CAtom.atom_sym("Type")
+    ATOM = CAtom.atom_sym("Atom")
     GROUNDED_SPACE = CAtom.atom_sym("Space")
     UNIT = CAtom.atom_sym("Unit")
 
@@ -389,10 +393,10 @@ def atom_eq(a: CAtom, b: CAtom) -> bool:
     return a == b
 
 def atom_is_error(atom: CAtom) -> bool:
-    if atom.atom_type == AtomType.EXPRESSION:
+    if atom.atom_kind == AtomKind.EXPR:
         if len(atom.children) >= 2:
             first_child = atom.children[0]
-            if first_child.atom_type == AtomType.SYMBOL and first_child.name == "Error":
+            if first_child.atom_kind == AtomKind.SYMBOL and first_child.name == "Error":
                 return True
     return False
 
@@ -408,11 +412,11 @@ def atom_free(atom: CAtom):
 def atom_get_metatype(atom: CAtom) -> AtomKind:
     if not isinstance(atom, CAtom):
         raise TypeError(f"Expected CAtom type but got {type(atom)}")
-    if atom.atom_type == AtomType.SYMBOL:
+    if atom.atom_kind == AtomKind.SYMBOL:
         return AtomKind.SYMBOL
-    elif atom.atom_type == AtomType.VARIABLE:
+    elif atom.atom_kind == AtomKind.VARIABLE:
         return AtomKind.VARIABLE
-    elif atom.atom_type == AtomType.EXPRESSION:
+    elif atom.atom_kind == AtomKind.EXPR:
         return AtomKind.EXPR
     elif atom.is_grounded():
         return AtomKind.GROUNDED
@@ -531,12 +535,52 @@ class CGroundedObject:
         if isinstance(other, CGroundedObject):
             return self.pyobj == other.pyobj
         return False
-
+    
     def __str__(self):
-        return f"GroundedObject({self.typ}, {self.pyobj})"
+        unwrapped_value = self.pyobj
+        unwrapped_value = unwrap_atom(unwrapped_value)
+        return f"CGroundedObject({self.typ}, {repr(unwrapped_value)}, {type(unwrapped_value)})"
+
 
     def clone(self) -> 'CGroundedObject':
         return CGroundedObject(self.typ, self.pyobj)
+
+
+def unwrap_atom(unwrapped_value):
+        # Try to call serialize() and ignore exceptions
+        try:
+            if hasattr(unwrapped_value, 'serialize') and callable(unwrapped_value.serialize):
+                unwrapped_value = unwrapped_value.serialize()
+        except Exception as e:
+            # Ignore exceptions during serialization
+            pass
+
+        # Check if the object has a get_object() method and call it if present
+        if hasattr(unwrapped_value, 'get_object') and callable(unwrapped_value.get_object):
+            unwrapped_value = unwrapped_value.get_object()
+
+        # Check if the object has a value() method and call it if present
+        if hasattr(unwrapped_value, 'value') and callable(unwrapped_value.value):
+            unwrapped_value = unwrapped_value.value()
+
+        # Check for a .content attribute
+        if hasattr(unwrapped_value, 'content'):
+            unwrapped_value = unwrapped_value.content
+        
+        # Check for a .value attribute (not method)
+        if hasattr(unwrapped_value, 'value'):
+            unwrapped_value = unwrapped_value.value                    
+
+
+        # Try to call serialize() and ignore exceptions
+        try:
+            if hasattr(unwrapped_value, 'serialize') and callable(unwrapped_value.serialize):
+                unwrapped_value = unwrapped_value.serialize()
+        except Exception as e:
+            # Ignore exceptions during serialization
+            pass
+
+        return unwrapped_value
 
 def gnd_obj_new(pyobj: Any, typ: CAtom) -> CGroundedObject:
     return CGroundedObject(typ, pyobj)
@@ -613,14 +657,22 @@ class CSpace:
         return False
 
     def __str__(self):
-        return f"CSpace({', '.join(str(atom) for atom in self.atoms)})"
+        return f"CSpace({id(self)},{', '.join(str(atom) for atom in self.atoms)})"
 
 def space_new_grounding() -> CSpace:
-    return CSpace()
+    apply_monkey_patches()
+    #if METTALOG_VERBOSE >= DEBUG: traceback.print_stack() 
+    space = CSpace()
+    trace_msg(f"space_new_grounding: {space}")
+    return space
 
 def space_new_custom(py_space_obj: Any) -> CSpace:
     # Placeholder for custom space; returns standard CSpace
-    return CSpace()
+    apply_monkey_patches()
+    #if METTALOG_VERBOSE >= DEBUG: traceback.print_stack() 
+    space = CSpace()
+    trace_msg(f"space_new_custom: {space}")
+    return space
 
 def space_free(space: CSpace):
     trace_msg(f"Freeing space: {space}")
@@ -713,7 +765,7 @@ def load_ascii(name: str, space: CSpace):
 
 # Continue with the rest of your module as before...
 
-# The rest of the module remains unchanged, including the definitions of classes like CTokenizer, CSExprParser, CBindings, CBindingsSet, Interpreter, CMetta, EnvBuilder, Serializer, etc.
+# The rest of the module remains unchanged, including the definitions of classes like CTokenizer, CSExprParser, CBindings, CBindingsSet, CInterpreter, CMetta, EnvBuilder, Serializer, etc.
 
 # Due to space limitations, please ensure that you include the rest of the classes and functions from your previous code into this module.
 
@@ -848,7 +900,7 @@ class CSExprParser:
         if self.cparser is not None and self.cparser is not self:
         	err_str = self.cparser.sexpr_parser_err_str()
         if err_str is None:
-            mlog(DEBUG,"No error in SExprParser")
+            mesg(DEBUG,"No error in SExprParser")
             return None
         else:
             print(f"SExprParser error: {err_str}")
@@ -868,7 +920,7 @@ def sexpr_parse_err_str(parser: CSExprParser) -> Optional[str]:
 def sexpr_parse_free(parser: CSExprParser):
     trace_msg(f"Freeing S-expression parser: {parser}")
 
-# ------------------ MeTTa Interpreter ------------------
+# ------------------ MeTTa CInterpreter ------------------
 
 class CMetta:
     def __init__(self, space: CSpace):
@@ -890,7 +942,7 @@ class CMetta:
         return results
 
     def evaluate_atom(self, atom: CAtom) -> List[CAtom]:
-        interpreter = Interpreter(self.space, atom)
+        interpreter = CInterpreter(self.space, atom)
         while interpreter.has_next():
             interpreter.next()
         return interpreter.get_result()
@@ -899,6 +951,7 @@ class CMetta:
         return self.error_message
 
 def metta_new(space: CSpace, env_builder: Any = None) -> CMetta:
+    trace_msg(f"metta_new: {space} {env_builder}")
     return CMetta(space)
 
 def metta_free(cmetta: CMetta):
@@ -935,10 +988,10 @@ def metta_evaluate_atom(cmetta: CMetta, catom: CAtom) -> List[CAtom]:
 
 
 # CRunContext Mock Class
-class CRunContext:
-    """Mock class for run context."""
-    def get_space(self):
-        return CSpace()
+#class CRunContext:
+#    """Mock class for run context."""
+#    def get_space(self):
+#        return CSpace()
 
 
 # CModuleDescriptor Mock
@@ -1096,20 +1149,8 @@ def env_builder_free(env_builder: EnvBuilder):
 
 # ------------------ Serializer Classes ------------------
 
-class Serializer:
-    def serialize_bool(self, value: bool) -> None:
-        raise NotImplementedError("serialize_bool must be implemented by subclasses.")
 
-    def serialize_int(self, value: int) -> None:
-        raise NotImplementedError("serialize_int must be implemented by subclasses.")
-
-    def serialize_float(self, value: float) -> None:
-        raise NotImplementedError("serialize_float must be implemented by subclasses.")
-
-    def serialize_str(self, value: str) -> None:
-        raise NotImplementedError("serialize_str must be implemented by subclasses.")
-
-class PythonToCSerializer(Serializer):
+class Serializer(CStruct):
     def __init__(self):
         self.serialized_data = ""
 
@@ -1128,6 +1169,57 @@ class PythonToCSerializer(Serializer):
     def get_serialized_data(self) -> str:
         return self.serialized_data
 
+
+class PySerializer(Serializer): pass
+
+# Serializer that bridges between Python and C, but in Python it's simplified
+class PythonToCSerializer(Serializer):
+     def __init__(self, api, context):
+         super().__init__()
+         self.api = api
+         self.context = context
+
+     def serialize_bool(self, value: bool):
+         return self.api.serialize_bool(self.context, value)
+
+     def serialize_int(self, value: int):
+         return self.api.serialize_longlong(self.context, value)
+
+     def serialize_float(self, value: float):
+         return self.api.serialize_double(self.context, value)
+
+ # C-to-Python serializer, using Python method references instead of pointers
+class CToPythonSerializer:
+     def __init__(self, serializer: Serializer):
+         self.serializer = serializer
+
+     @staticmethod
+     def serialize_bool(serializer, value: bool):
+         return serializer.serialize_bool(value)
+
+     @staticmethod
+     def serialize_longlong(serializer, value: int):
+         return serializer.serialize_int(value)
+
+     @staticmethod
+     def serialize_double(serializer, value: float):
+         return serializer.serialize_float(value)
+
+
+# Equivalent to the py_serialize function
+def py_serialize(gnd, api, context):
+    # This is just an example of how we would call Python logic in place of the original pybind11 import
+    hyperon = __import__('hyperon.atoms')  # In Python, we just import the required module
+    _priv_call_serialize_on_grounded_atom = getattr(hyperon, '_priv_call_serialize_on_grounded_atom')
+
+    # Assuming `gnd` is an instance of `GroundedObject`
+    pyobj = gnd.pyobj  # Direct attribute access for simplicity
+    py_serializer = PythonToCSerializer(api, context)
+    
+    result = _priv_call_serialize_on_grounded_atom(pyobj, py_serializer)
+    return result
+
+ 
 def serializer_new() -> Serializer:
     return PythonToCSerializer()
 
@@ -1199,7 +1291,7 @@ def atom_vec_push(atom_vec: CVecAtom, atom: CAtom):
 def atom_vec_pop(atom_vec: CVecAtom) -> CAtom:
     return atom_vec.pop()
 
-# ------------------ Interpreter Classes ------------------
+# ------------------ CInterpreter Classes ------------------
 
 class CStepResult:
     def __init__(self, result_atoms: List[CAtom], has_more_steps: bool = False):
@@ -1259,16 +1351,6 @@ def func_to_string_no_arg(func: Callable) -> str:
 
 def func_to_string(func: Callable, *args) -> str:
     return func(*args)
-
-def set_no_mock_objects_flag(flag: bool):
-    global mock_throw_error
-    mock_throw_error = flag
-
-def get_no_mock_objects_flag() -> bool:
-    return mock_throw_error
-# Testing and Examples
-
-
 
 
 # ------------------ Bindings and BindingsSet ------------------
@@ -1447,13 +1529,13 @@ def bindings_set_unpack(bindings_set: CBindingsSet) -> List[Dict[str, CAtom]]:
 # ------------------ Substitute Function ------------------
 
 def substitute(atom: CAtom, bindings: CBindings) -> CAtom:
-    if atom.atom_type == AtomType.VARIABLE:
+    if atom.atom_kind == AtomKind.VARIABLE:
         resolved_atom = bindings.resolve(atom)
         if resolved_atom:
             return resolved_atom
         else:
             return atom
-    elif atom.atom_type == AtomType.EXPRESSION:
+    elif atom.atom_kind == AtomKind.EXPR:
         substituted_children = [substitute(child, bindings) for child in atom.children]
         return CAtom.atom_expr(substituted_children)
     else:
@@ -1524,18 +1606,39 @@ def log_info(msg: str):
 
 class AddGroundedObject:
     def __init__(self):
-        self.typ = CAtom.atom_sym("Function")
+        self.typ = CAtom.atom_sym("Function+")
 
     def execute(self, *args):
+        print(f"args={args}")
+        trace_break()
         if len(args) != 2:
             raise ValueError("Add function requires exactly 2 arguments.")
-        return args[0] + args[1]
+        
+        return int(args[0]) + int(args[1])
 
     def serialize(self):
-        return "<AddFunction>"
+        return "<AddFunction+>"
 
     def clone(self):
         return AddGroundedObject()
+
+def trace_break():
+    print("TRACE: Press any key to continue...")
+    wait_for_key() #keyboard.read_event()  # This waits for a key event
+
+import sys
+import termios
+import tty
+
+def wait_for_key():    
+    fd = sys.stdin.fileno()
+    old_settings = termios.tcgetattr(fd)
+    try:
+        tty.setraw(fd)
+        sys.stdin.read(1)  # This waits for a single key press
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+    print("Key pressed!")
 
 # ------------------ Example Usage ------------------
 
@@ -1550,34 +1653,34 @@ def demo0():
 
     # Add atoms to the space
     space.add(atom1)
-    space.add(atom2)
+    #space.add(atom2)
     space.add(grounded_atom)
 
 
     # Query the space
     result = space.query(atom2)
-    mlog2(DEBUG,"Query result:", result)
+    mesg(DEBUG,"Query0 result:", result)
 
     # Create an expression
     expr = CAtom.atom_expr([grounded_atom, CAtom.atom_sym("2"), CAtom.atom_sym("3")])
 
     # Interpret the expression
-    interpreter = Interpreter(space, expr)
+    interpreter = CInterpreter(space, expr)
     while interpreter.has_next():
         interpreter.next()
-        mlog2(DEBUG,"Interpreter step result:", interpreter.get_step_result())
+        mesg(DEBUG,"CInterpreter step result:", interpreter.get_step_result())
 
     # Get the final result
     final_result = interpreter.get_result()
-    mlog2(DEBUG,"Final interpretation result:", final_result)
+    mesg(DEBUG,"Final interpretation result:", final_result)
 
 # Uncomment to run the example
 # example_usage()
 
-# ------------------ Interpreter Class ------------------
+# ------------------ CInterpreter Class ------------------
 
-class Interpreter:
-    """Interpreter for evaluating expressions within a grounding space."""
+class CInterpreter:
+    """CInterpreter for evaluating expressions within a grounding space."""
     def __init__(self, gnd_space: CSpace, expr: CAtom):
         self.gnd_space = gnd_space
         self.expr = expr
@@ -1611,11 +1714,14 @@ class Interpreter:
 	        # If the evaluation is a non-empty list, return its first element, otherwise fallback to child
 	        return evaluated[0] if isinstance(evaluated, list) and evaluated else child
 	
+	    print(f"evaluate_atom({atom})")
 	    if atom.is_grounded():
+	        print(f"evaluate_atom.is_grounded({atom})")
 	        # Execute grounded atom with safely evaluated arguments
 	        args = [safe_evaluate_atom(child) for child in atom.get_children()]
 	        return atom.execute(args)
-	    elif atom.atom_type == AtomType.EXPRESSION:
+	    elif atom.atom_kind == AtomKind.EXPR:
+	        print(f"evaluate_atom.expression({atom})")
 	        # Evaluate expression with safely evaluated children
 	        evaluated_children = [safe_evaluate_atom(child) for child in atom.children]
 	        return [CAtom.atom_expr(evaluated_children)]
@@ -1637,19 +1743,19 @@ class Interpreter:
 
 def atom_match_atom_single(atom1: CAtom, atom2: CAtom) -> Optional[CBindings]:
     bindings = CBindings()
-    if atom1.atom_type == AtomType.VARIABLE:
+    if atom1.atom_kind == AtomKind.VARIABLE:
         bindings.add_var_binding(atom1, atom2)
         return bindings
-    elif atom2.atom_type == AtomType.VARIABLE:
+    elif atom2.atom_kind == AtomKind.VARIABLE:
         bindings.add_var_binding(atom2, atom1)
         return bindings
-    elif atom1.atom_type == atom2.atom_type:
-        if atom1.atom_type == AtomType.SYMBOL:
+    elif atom1.atom_kind == atom2.atom_kind:
+        if atom1.atom_kind == AtomKind.SYMBOL:
             if atom1.name == atom2.name:
                 return bindings
             else:
                 return None
-        elif atom1.atom_type == AtomType.EXPRESSION:
+        elif atom1.atom_kind == AtomKind.EXPR:
             if len(atom1.children) != len(atom2.children):
                 return None
             for child1, child2 in zip(atom1.children, atom2.children):
@@ -1685,7 +1791,7 @@ def atom_match(a: CAtom, b: CAtom) -> CBindingsSet:
 
 def demo1():
     # Create a grounding space
-    space = CSpace()
+    space = space_new_grounding()
 
     # Create atoms
     atom1 = CAtom.atom_sym("X")
@@ -1699,29 +1805,29 @@ def demo1():
 
     # Query space
     result = space.query(atom1)
-    mlog2(DEBUG,"Query result:", result)
+    mesg(DEBUG,"Query result:", result)
 
     # Run interpreter on an expression
     expr = CAtom.atom_expr([atom1, atom2])
-    interpreter = Interpreter(space, expr)
+    interpreter = CInterpreter(space, expr)
     while interpreter.has_next():
         interpreter.next()
-        mlog2(DEBUG,"Interpreter step result:", interpreter.get_step_result())
+        mesg(DEBUG,"CInterpreter step result:", interpreter.get_step_result())
 
     # Final result from interpreter
-    mlog2(DEBUG,"Final interpretation result:", interpreter.get_result())
+    mesg(DEBUG,"Final interpretation result:", interpreter.get_result())
 
     # Test serialization
     serializer = PythonToCSerializer()
     grounded_atom.serialize(serializer)
-    mlog2(DEBUG,"Serialized grounded atom:", serializer.get_serialized_data())
+    mesg(DEBUG,"Serialized grounded atom:", serializer.get_serialized_data())
 
     # Testing environment builder
     env_builder = EnvBuilder()
     env_builder.set_working_dir("/path/to/dir")
     env_builder.push_include_path("/path/to/include")
     environment = env_builder.build()
-    mlog2(DEBUG,"Environment:", environment)
+    mesg(DEBUG,"Environment:", environment)
 
 
 
@@ -1731,7 +1837,7 @@ def demo1():
 # Testing and Examples
 def demo2():
     # Create a space
-    space = CSpace()
+    space = space_new_grounding()
 
     # Create atoms
     symbol_atom = CAtom.atom_sym("X")
@@ -1747,30 +1853,30 @@ def demo2():
     # Query the space
     query_atom = CAtom.atom_sym("X")
     query_result = space.query(query_atom)
-    mlog2(DEBUG,"Query result:", [str(binding.bindings) for binding in query_result.list()])
+    mesg(DEBUG,"Query result:", [str(binding.bindings) for binding in query_result.list()])
 
     # Replace an atom
     new_atom = CAtom.atom_sym("Z")
     space.replace(symbol_atom, new_atom)
-    mlog2(DEBUG,"Space after replacement:", space)
+    mesg(DEBUG,"Space after replacement:", space)
 
     # Interpret an expression
     expr_atom = CAtom.atom_expr([variable_atom, grounded_atom])
-    interpreter = Interpreter(space, expr_atom)
+    interpreter = CInterpreter(space, expr_atom)
 
     while interpreter.has_next():
         interpreter.next()
-        mlog2(DEBUG,"Step result:", interpreter.get_step_result())
+        mesg(DEBUG,"Step result:", interpreter.get_step_result())
 
     # Final result from interpreter
-    mlog2(DEBUG,"Final interpretation result:", interpreter.get_result())
+    mesg(DEBUG,"Final interpretation result:", interpreter.get_result())
 
     # Example: Vector of Atoms
     atom_vector = CVecAtom([])
     atom_vector.push(CAtom.atom_sym("Hydrogen"))
     atom_vector.push(CAtom.atom_sym("Oxygen"))
 
-    mlog(DEBUG,"Atoms in Vector:")
+    mesg(DEBUG,"Atoms in Vector:")
     for atom in atom_vector:
         print(atom)
 
@@ -1781,23 +1887,23 @@ def demo2():
     # Example: Expression Parser
     expr_parser = CSExprParser("(2 + (3 * 5))")
     result = expr_parser.parse()
-    mlog2(DEBUG,"Parsed Expression Result:", result)
+    mesg(DEBUG,"Parsed Expression Result:", result)
 
     # Example: Space with Atoms
-    space2 = CSpace()
+    space2 = space_new_grounding()
     space2.add(CAtom.atom_sym("Proton"))
     space2.add(CAtom.atom_sym("Neutron"))
-    mlog(DEBUG,"Items in Space2:")
+    mesg(DEBUG,"Items in Space2:")
     for item in space2.atoms:
         print(item)
 
-    # Example: Interpreter usage
-    interpreter2 = Interpreter(space2, CAtom.atom_sym("sample_expr"))
+    # Example: CInterpreter usage
+    interpreter2 = CInterpreter(space2, CAtom.atom_sym("sample_expr"))
     while interpreter2.has_next():
         interpreter2.next()
-        mlog2(DEBUG,"Interpreter2 Step result:", interpreter2.get_step_result())
+        mesg(DEBUG,"Interpreter2 Step result:", interpreter2.get_step_result())
 
-    mlog2(DEBUG,"Final Interpretation Result:", interpreter2.get_result())
+    mesg(DEBUG,"Final Interpretation Result:", interpreter2.get_result())
 
     # Example: Logging
     log_info("This is an informational message.")
@@ -1811,14 +1917,14 @@ def demo2():
     env_builder.push_include_path("/path/to/include")
     env_builder.use_test_env()
     environment = env_builder.build()
-    mlog2(DEBUG,"Environment:", environment)
+    mesg(DEBUG,"Environment:", environment)
 
     # Example: Runner State
-    metta = CMetta(space)
+    metta = metta_new(space)
     runner_state = CRunnerState(metta, expr_parser)
     while not runner_state.is_complete():
         runner_state.step()
-        mlog2(DEBUG,"Runner State Current Results:", runner_state.current_results())
+        mesg(DEBUG,"Runner State Current Results:", runner_state.current_results())
 
     # Example: Atom Matching
     pattern = CAtom.atom_expr([CAtom.atom_var("Var1"), CAtom.atom_sym("B")])
@@ -1827,17 +1933,280 @@ def demo2():
     bindings_set = atom_match_atom(expression, pattern)
     if not bindings_set.is_empty():
         for bindings in bindings_set.list():
-            mlog2(DEBUG,"Match found with bindings:", bindings.bindings)
+            mesg(DEBUG,"Match found with bindings:", bindings.bindings)
     else:
-        mlog(DEBUG,"No match found.")
+        mesg(DEBUG,"No match found.")
 
     # Example: Using atom_get_metatype
     metatype = atom_get_metatype(symbol_atom)
-    mlog2(DEBUG,"Metatype of symbol_atom:", metatype)
+    mesg(DEBUG,"Metatype of symbol_atom:", metatype)
 
+
+has_applied_monkey_patches = None
+
+def apply_monkey_patches():
+    global has_applied_monkey_patches
+    
+    # Check if monkey patches have already been applied
+    if has_applied_monkey_patches is not None and has_applied_monkey_patches is True:
+        return
+
+    mesg(DEBUG, f"hyperonpy::apply_monkey_patches")
+    # Set the flag to indicate that the patches are being applied
+    has_applied_monkey_patches = True
+
+    # Importing inside the function to avoid circular import issues
+    from hyperon.atoms import SymbolAtom, ExpressionAtom, GroundedAtom, VariableAtom, ValueAtom
+
+    def monkey_patch_class(cls):
+        # Save the original __init__ method
+        original_init = cls.__init__
+        
+        # Define the new __init__ method
+        def new_init(self, *args, **kwargs):
+            original_init(self, *args, **kwargs)
+            # Only add 'value' if it doesn't already exist
+            if not hasattr(self, 'value'):
+                self.value = self
+        
+        # Only patch __init__ to add 'value' if missing
+        cls.__init__ = new_init
+
+        # Only add get_object if it does not already exist
+        if not hasattr(cls, 'get_object'):
+            cls.get_object = lambda self: self
+
+        # Only add __iter__ if it does not already exist
+        if not hasattr(cls, '__iter__'):
+            cls.__iter__ = lambda self: iter([self])
+
+        # Check if the class already has a __getitem__ method
+        original_getitem = getattr(cls, '__getitem__', None)
+
+        # Define the new __getitem__ method
+        def new_getitem(self, index):
+            # If there was an original __getitem__, call it
+            if original_getitem:
+                try:
+                    return original_getitem(self, index)
+                except Exception as e:
+                    print(f"Original __getitem__ raised an exception: {e}")
+            # Otherwise, return the instance itself
+            return self
+
+        # Monkey patch the __getitem__ method
+        cls.__getitem__ = new_getitem
+
+    # Apply the monkey patch function to multiple classes
+    monkey_patch_class(SymbolAtom)
+    monkey_patch_class(ExpressionAtom)
+    monkey_patch_class(VariableAtom)
+    monkey_patch_class(GroundedAtom)
+    monkey_patch_class(ValueAtom)
+
+# History file for REPL
+def install_history():
+    histfile = os.path.join(os.path.expanduser("~"), ".metta_history")
+
+    try:
+        readline.set_history_length(10000)
+        readline.read_history_file(histfile)
+        h_len = readline.get_current_history_length()
+    except FileNotFoundError:
+        open(histfile, 'wb').close()
+        h_len = 0
+
+    def save_history(prev_h_len, histfile):
+        """Save command history to the history file."""
+        new_h_len = readline.get_current_history_length()
+        readline.set_history_length(10000)
+        readline.append_history_file(new_h_len - prev_h_len, histfile)
+
+    atexit.register(save_history, h_len, histfile)
+
+global runner
+runner = None
+global wont_need_repl
+wont_need_repl=True
+
+# Manual command-line argument processing in real-time
+def process_args():
+    wont_need_repl = False  # Keep track if we won't need to start the REPL
+    i = 1  # Skip the first argument (script name)
+
+    while i < len(sys.argv):
+        arg = sys.argv[i]
+
+        if arg in ("--demo"):
+            demo0()
+            demo1()
+            demo2()
+
+        if arg in ("-v", "--verbosity"):
+            try:
+                verbosity_level = int(sys.argv[i + 1])
+                set_verbosity(verbosity_level)
+                i += 1  # Skip next item
+            except (ValueError, IndexError):
+                print("Invalid verbosity level. Defaulting to USER.")
+                set_verbosity(USER)
+
+        elif arg in ("-p", "--path"):
+            if i + 1 < len(sys.argv):
+                path = sys.argv[i + 1]
+                mesg(DEBUG, f"Adding path: {path}")
+                push_include_path(path)
+                i += 1
+        elif arg == "--version":
+            mesg(USER, f"Hyperon version: {hyperon.__version__}")
+            sys.exit(0)  # Exit after showing version
+
+        elif arg in ("-h", "--help"):        
+            print_help()
+            sys.exit(0)  # Exit after showing help
+
+        elif arg in ("-f", "--file"):
+            if i + 1 < len(sys.argv):
+                file = sys.argv[i + 1]                
+                load_file(file)
+                wont_need_repl = True  # Mark that a file was loaded
+                i += 1
+
+        else:
+            # Assume this is a file to process
+            load_file(arg)
+            wont_need_repl = True  # Mark that a file was loaded
+
+        i += 1
+
+    return wont_need_repl
+
+# Print help information
+def print_help():
+    # Get the script name dynamically
+    script_name = os.path.basename(sys.argv[0])  # This will get the current script's name
+
+    help_text = f"""
+MeTTaLog Runner/REPL in Python
+
+Usage: {script_name} [options] [files]
+
+Options:
+  -v, --verbosity <level>   Set verbosity level: 0 (SILENT), 1 (USER), 2 (DEBUG), 3 (TRACE)
+  -p, --path <path>         Add search paths for modules
+  -f, --file <file>         MeTTa script files to execute
+  --repl                    Enter REPL
+  --version                 Print the version and exit
+  --help                    Display this help message
+    """
+    print(help_text)
+
+def make_runner():
+    global runner
+    if runner is not None:
+        return runner
+    mesg(DEBUG, f"hyperonpy::make_runner")
+    return hyperon.runner.MeTTa(env_builder=hyperon.Environment.custom_env(working_dir=os.path.dirname(".")))
+
+# Load and execute a file
+def load_file(file):    
+    global runner
+
+    wont_need_repl = True
+    if file == "--repl":
+        # Start REPL immediately and ignore further arguments
+        if runner is None: 
+            runner = make_runner()
+        REPL(runner).main_loop()
+        return
+
+    try:
+        mesg(DEBUG, f"Executing MeTTa script from: {file}")
+        with open(file) as f:
+            program = f.read()        
+            if runner is None: runner = make_runner()
+            for result in runner.run(program):
+                mesg(USER, f"Result: {result}")
+    except FileNotFoundError:
+        mesg(USER, f"Error: File '{file}' not found.")
+    except Exception as e:
+        mesg(USER, f"An error occurred: {e}")
+        if METTALOG_VERBOSE >= DEBUG:
+            traceback.print_exc()
+
+# REPL for interactive input with command history support
+class REPL:
+    def __init__(self, runner):
+        self.history = []  # Initialize command history
+        self.runner = runner
+
+    def main_loop(self):
+        install_history()
+        while True:
+            try:
+                line = input("metta> ")  # Use input function for user input
+
+                if line == '.history':
+                    for idx, item in enumerate(self.history):
+                        mesg(USER, f"{idx + 1}: {item}")
+                    continue
+
+                # If input is not empty, evaluate it
+                if line:
+                    self.history.append(line)
+                    if self.runner is None:
+                        global runner
+                        if runner is None: runner = make_runner()
+                        self.runner = runner
+                    result = self.runner.run(line)
+                    if result is not None:
+                        mesg(USER, result)
+
+            except (KeyboardInterrupt, EOFError):
+                # Exit REPL gracefully when Ctrl-D (EOF) is pressed
+                mesg(USER, "\nExiting REPL...")
+                return
+
+            except Exception as e:
+                mesg(USER, f"Error: {e}")
+                if METTALOG_VERBOSE >= DEBUG:
+                    traceback.print_exc()
+
+
+
+
+# Main function
+def main():
+    mesg(DEBUG,"hyperonpy::main")
+    apply_monkey_patches()
+    wont_need_repl = False
+    # Process command-line arguments and track if REPL or files were handled
+    wont_need_repl = process_args()
+
+    # If no files were loaded and --repl wasn't triggered, enter REPL
+    if not wont_need_repl:
+        load_file("--repl")
+
+def hyperonpy():
+    mesg(DEBUG,"hyperonpy::hyperonpy")
+    #from hyperon.runner import MeTTa
+    #runner = MeTTa(env_builder=hyperon.Environment.custom_env(working_dir=os.path.dirname(".")))
+    #apply_monkey_patches()
+    # Process command-line arguments and track if REPL or files were handled
+    wont_need_repl = process_args()
+
+    # If no files were loaded and --repl wasn't triggered, enter REPL
+    # if not wont_need_repl: REPL(runner).main_loop()
 
 
 if __name__ == "__main__":
-   demo0()
-   demo1()
-   demo2()
+    main()
+else:
+    mesg(DEBUG,f"__name__={__name__}")
+    hyperonpy()
+
+
+
+    
+#    Please continue where you left off /// Make sure you give me back the complete and workign versions of the entire content)  this is taking the place of a the old pybind11 C++ file so module level functions and class names and class function  cannot be renamed or ommited.  Continue  and dont worry about space limitations 
+
