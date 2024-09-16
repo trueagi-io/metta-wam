@@ -1027,6 +1027,7 @@ get_list_arity(_Args,-1).
    assertz(metta_python_proxy(String)),!.
 % Declare `did_load_metta_python_proxy/0` as volatile, meaning it will not be saved to a saved state.
 % This is useful when you don't want this predicate to persist across sessions or save states.
+:- dynamic(did_load_metta_python_proxy/0).
 :- volatile(did_load_metta_python_proxy/0).
 % If `did_load_metta_python_proxy/0` is not already asserted, it asserts the fact to indicate that the proxy has been loaded.
 % It retrieves the `metta_python_proxy/1` fact (which contains the content of the file).
