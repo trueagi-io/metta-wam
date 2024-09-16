@@ -16,7 +16,8 @@ cd metta-motto
 
 Run the following command to install the project using pip:
 ```bash
-pip install metta-motto
+#pip install metta-motto
+pip install -e .
 ```
 
 ## Usage
@@ -31,7 +32,7 @@ and MeTTa extention
 !(import! &self motto)
 ```
 
-Please, refer to the [tutorial](tutorial) and [examples](examples). [Tests](tests) can also be considered in addition.
+Please, refer to the [tutorial](./tutorial) and [examples](./examples). [Tests](./tests) can also be considered in addition.
 
 ## Tests
 

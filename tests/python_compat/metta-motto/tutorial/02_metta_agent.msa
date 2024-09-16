@@ -1,6 +1,6 @@
-; This is a nearly ordinary metta file, but it is supposed to be called via llm,
+; This is a nearly ordinary metta file, but it is supposed to be called via wrapper,
 ; which will automatically use motto extension and provide additional
-; functions like (messages), as well as take Response into account
+; functions like (messages), as well as call response function
 
 ; Note that in order to turn the argument of the function call
 ; from String to Expression, it should have Atom type in Doc.
@@ -13,10 +13,9 @@
 )
 (= (calc ($expr) $msgs) $expr)
 
-; Response is used to indicate that this is the output of the agent
-! (Response (llm (Agent (chat-gpt))
-    (Messages (system "Convert the user query to expression in Scheme/Lisp")
-              (messages))
-    (Functions calc))
-  )
-
+; `response` function is evaluated each time the agent is called
+(= (response) ((chat-gpt-agent)
+   (Messages (system "Convert the user query to expression in Scheme/Lisp")
+             (messages))
+   (Functions calc))
+)

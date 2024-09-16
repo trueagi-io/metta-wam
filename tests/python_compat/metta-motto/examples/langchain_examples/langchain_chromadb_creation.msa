@@ -1,0 +1,34 @@
+!(import! &self motto)
+!(let $folder (new-state (None))
+    (let () (add-atom &self (= (langchain-data-folder) $folder)) (empty))
+)
+
+(= (get-langchain-data-folder)
+   (get-state (langchain-data-folder))
+)
+
+(= (set-langchain-data-folder $folder)
+   (let () (change-state! (langchain-data-folder) $folder) (empty))
+)
+
+!(set-langchain-data-folder "./data/texts_for_retrieval")
+
+!(bind! &file_names ((py-atom os.listdir)  (get-langchain-data-folder)))
+!(bind! &files ((py-atom list) ((py-atom map) (py-atom (concat-str (concat-str "lambda x:'" (get-langchain-data-folder)) "/' + x")) &file_names)))
+!(bind! &loaders ((py-atom map) (py-atom langchain_community.document_loaders.TextLoader)   &files))
+!(bind! &loaded-files  ((py-atom list) ((py-atom map)  (py-atom langchain_community.document_loaders.TextLoader.load) &loaders)))
+!(bind! &text_splitter ((py-atom langchain_text_splitters.CharacterTextSplitter) (Kwargs (chunk_size 100) (chunk_overlap 0))))
+!(bind! &documents
+    ((py-atom list)
+        ((py-atom  functools.reduce) (py-atom "(lambda x, y: x+y)")
+            ((py-atom map) (py-dot &text_splitter split_documents) &loaded-files)
+        )
+    )
+)
+
+
+;save to db
+!((py-atom langchain_chroma.Chroma.from_documents)
+    (Kwargs (documents &documents ) (embedding ((py-atom langchain_openai.OpenAIEmbeddings))) (persist_directory "./data/chroma_db")))
+
+

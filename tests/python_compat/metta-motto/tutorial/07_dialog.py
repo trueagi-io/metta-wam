@@ -4,7 +4,7 @@ def reply_and_print(agent, msg):
     print("USER: ", msg)
     print("AI: ", agent(msg).content)
 
-# Currently, DialogAgent is inherited from MettaAgent class
+# Currently, DialogAgent is inherited from MettaScriptAgent class
 # (instead of, say, wrapping any other agent). Thus, we need to
 # call another agent (or implement Response somehow else) to
 # make it work. DialogAgent provides `history` function to get

@@ -32,7 +32,7 @@ Finally, to make our marketplace compliant with regulations without compromising
      super-resolution : The service takes a low-resolution image in binary format, uses it as input for a pre-trained model, and outputs the result as a higher-quality image.
    "))
 
-(= (function init)
+(= (Function init)
    set_subgoal)
 
 (= (doc set_subgoal)
@@ -48,8 +48,8 @@ Finally, to make our marketplace compliant with regulations without compromising
 (= (set_subgoal
      ("general question about platform")
      (Messages $history $prev-state-msg $user-msg))
-   (llm (compose-prompt platform-desc $history $user-msg))
-   ; (llm (append-expr $msgs (message platform-desc))
+   ((chat-gpt-agent) (compose-prompt platform-desc $history $user-msg))
+   ; ((chat-gpt-agent) (append-expr $msgs (message platform-desc))
 )
 
 ; Extracting components of input messages, ignoring $prev-state-msg and calling
@@ -85,7 +85,7 @@ Finally, to make our marketplace compliant with regulations without compromising
        $new-msg)))
 
 (= (compose-functions $state)
-   (let $fn-calls (collapse (function $state))
+   (let $fn-calls (collapse (Function $state))
      (cons-atom Functions $fn-calls)))
 
 ; TODO? Assuming that $user-msg is not wrapped into (user ...) is convenient

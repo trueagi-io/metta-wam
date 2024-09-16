@@ -1,11 +1,11 @@
 !(import! &self motto)
 
 ; In order to keep the dialog history, we need to use the same agent
-!(bind! &chat (Agent (metta-chat 07_dialog.msa)))
+!(bind! &chat (dialog-agent 07_dialog.msa))
 
 (= (print-respond $msg)
    (nop (println! $msg)
-        (println! (llm &chat $msg))
+        (println! (&chat $msg))
    )
 )
 

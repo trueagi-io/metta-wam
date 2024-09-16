@@ -38,6 +38,7 @@ if VSPACE_VERBOSE is not None:
     except ValueError: ""
 
 def print_exception_stack(e):
+    global verbose
     # become increasingly verbose!
     verbose += 1
     print_l_cmt(1, f"Exception occurred: {e}")
@@ -81,9 +82,11 @@ except ImportError as e:
 try: from hyperon.ext import register_atoms, register_tokens
 except ImportError as e:
     if verbose >= 0: print_exception_stack(e)
-try: from hyperon.runner import MeTTa
+try: 
+    from hyperon.runner import MeTTa
 except ImportError as e:
-    if verbose >= 0: print_exception_stack(e)
+    if verbose >= 0: 
+        print_exception_stack(e)
 
 
 

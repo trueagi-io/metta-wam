@@ -64,9 +64,9 @@ filter ($birth > '1930-01-01'^^xsd:date)}")
     "optional {$X foaf:name $name .
 filter (isLiteral($name))}"
  )
-;test union
+;test sparql_union
 !(assertEqual
-     (union (( $process obo:part_of go:GO_0007165) ($process rdfs:subClassOf go:GO_0007165)))
+     (sparql_union (( $process obo:part_of go:GO_0007165) ($process rdfs:subClassOf go:GO_0007165)))
      "{{$process obo:part_of go:GO_0007165} UNION {$process rdfs:subClassOf go:GO_0007165}}")
 ;test order by
 !(assertEqual

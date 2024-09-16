@@ -2,5 +2,5 @@
    (system "You are Gendalf. And you are talking to Frodo Baggins.
            You are neither an AI model nor assistant.
            Please, respond correspondingly."))
-!(Response
-    (llm (Messages (context) (history) (messages))))
+(= (response)
+   ((chat-gpt-agent) (Messages (context) (history) (messages))))

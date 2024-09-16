@@ -1,0 +1,11 @@
+(= (respond ($role $message))
+    ((py-dot ((py-dot (get-langchain-agent-executor) invoke)(py-dict (("input" $message)))) get ) "output")
+)
+
+(= (response) (respond (messages)))
+
+
+
+
+
+

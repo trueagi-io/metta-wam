@@ -1,0 +1,265 @@
+(= (response)
+   ((chat-gpt-agent  "gpt-3.5-turbo")
+       (system "Make sparql query to bdpedia and represent it  as expressions in Scheme.
+
+
+    There are some examples of queries converted to Scheme:
+    Find manufacturers who produce more than 10 different products and display the number of different products they produce:
+    (select
+    (
+        (fields ($manufacturer (as (count $product) $count)))
+        (where
+            (
+            ($product rdf:type <http://dbpedia.org/ontology/Device>)
+            ($product dbo:manufacturer $manufacturer)
+            )
+        )
+        (group_by $manufacturer)
+        (having (> (count $product) 10))
+    ))
+
+    Select Soccer players, who are born in a country with more than 10 million inhabitants,
+    who played as goalkeeper for a club that has a stadium with more than 30.000 seats and the club country is different from the birth country:
+
+    (select_distinct
+    (
+        (fields ($soccerplayer $countryOfBirth $team $countryOfTeam $stadiumcapacity ))
+        (where
+            (
+            ($soccerplayer a dbo:SoccerPlayer)
+            ($soccerplayer  dbo:position \"<http://dbpedia.org/resource/Goalkeeper_(association_football)>\")
+            ($soccerplayer  dbp:position \"<http://dbpedia.org/resource/Goalkeeper_(association_football)>\")
+            ($soccerplayer dbo:birthPlace/dbo:country* $countryOfBirth)
+            ($soccerplayer dbo:team $team)
+            ($team dbo:capacity $stadiumcapacity)
+            ($team dbo:ground $countryOfTeam)
+            ($countryOfBirth a dbo:Country)
+            ($countryOfBirth dbo:populationTotal $population)
+            ($countryOfTeam a dbo:Country)
+            (filter (!= $countryOfTeam  $countryOfBirth))
+            (filter (> $stadiumcapacity 30000)) (filter (> $population 10000000))
+            )
+        )
+        (order_by  $soccerplayer)
+    ))
+
+    Display names and dates of birth of all actors born in London after year 1930, who are still alive:
+    (select
+        (
+            (fields ($name $birth))
+            (where
+                (
+                ($person dbo:birthPlace \"<http://dbpedia.org/resource/London>\")
+                ($person dbo:occupation \"<http://dbpedia.org/resource/Actor>\")
+                ($person foaf:name $name)
+                ($person dbo:birthDate $birth)
+                (filter (> $birth  \"'1930-01-01'^^xsd:date\"))
+                (filter_not_exists ($person dbo:deathDate $death))
+                )
+            )
+        )
+    )
+
+
+    Select all writers born in Moscow in 19 century:
+    (select
+        (
+            (fields ($writer $writerLabel))
+            (where
+                (
+                ($writer a dbo:Writer)
+                ($writer dbo:birthPlace \"<http://dbpedia.org/resource/Moscow>\") ($writer dbo:birthDate $birthdate)
+                ($writer rdfs:label $writerLabel)
+                (filter (and (>  (year $birthdate) 1800)  (<=  (year $birthdate) 1899))) (filter (= (lang $writerLabel) 'en' ))
+                )
+            )
+            (order_by $writer)
+        )
+    )
+
+    Display names and dates of birth and death of all people born in New York between 1900-1950; sort the results based on the birth date
+    (select
+        (
+            (fields ($person $birth $death))
+            (where
+                (
+                ($person dbo:birthPlace \"<http://dbpedia.org/resource/New_York_City>\")
+                ($person dbo:birthDate $birth) ($person dbo:deathDate $death)
+                (filter (and (>= $birth \"'1900-01-01'^^xsd:date\") (<= $birth \"'1950-12-31'^^xsd:date\")))
+                )
+            )
+            (order_by $birth)
+        )
+    )
+
+
+    Find manufacturers who produce more than 10 different products and display the number of different products they produce
+    (select
+        (
+            (fields ($manufacturer (as (count $product) $count)))
+            (where
+                (
+                ($product rdf:type <http://dbpedia.org/ontology/Device>)
+                ($product dbo:manufacturer $manufacturer)
+                )
+            )
+            (group_by $manufacturer)
+            (having (> (count $product) 10))
+            (limit 3)
+        )
+    )
+
+    Count number of musicians with the first name Pharrell
+    (select
+        (
+            (fields ((count $musician)))
+            (where
+                (
+                ($musician rdf:type dbo:MusicalArtist)
+                ($musician foaf:name $name)
+                (filter (contains (str $name) \"'Pharrell'\" ))
+                )
+            )
+        )
+    )
+
+
+    Select US presidents and their wives:
+    (select
+    (
+        (fields ($president $presidentName $wife $wifeName))
+        (where
+            (
+            (dbr:President_of_the_United_States dbp:incumbent $president)
+            ($president dbo:spouse $wife)
+            ($president rdfs:label $presidentName)
+            ($wife rdfs:label $wifeName)
+            )
+        )
+    ))
+
+    Select number of musicians born in the US  after 1984 year and before 1988
+    (select
+        (
+            (fields ((as (count $person) $count)))
+            (where
+                (
+                ($person a dbo:MusicalArtist)
+                ($person dbo:birthPlace dbr:United_States)
+                ($person dbo:birthDate $birth)
+                (filter (and  (> (year $birth) 1984)(< (year $birth) 1988)))
+                )
+            )
+        )
+    )
+
+    Tell me Michael Jordan's draft year and the name of  draft team.
+    (select
+        (
+            (fields ($draftYear $draftTeam))
+            (where
+                (
+                ($person foaf:name \"'Michael Jordan'@en\")
+                ($person dbp:draftyear $draftYear)
+                ($person dbp:draftteam $draftTeam)
+                )
+            )
+        )
+    )
+
+    When did John Lennon die?
+    (select
+        (
+            (fields ($person $death))
+            (where
+                (
+                ($person foaf:name \"'John Lennon'@en\")
+                ($person dbo:deathDate $death)
+                )
+            )
+        )
+    )
+
+    Display names of actors born in Australia after 1990
+    (select
+        (
+            (fields ($name))
+            (where
+                (
+                ($actor dbo:birthPlace \"<http://dbpedia.org/resource/Australia>\")
+                ($actor dbo:birthDate $birth) ($actor dbo:occupation \"<http://dbpedia.org/resource/Actor>\") ($actor foaf:name $name)
+                (filter (>= $birth \"'1990-01-01'^^xsd:date\"))
+                )
+            )
+        )
+    )
+
+    Show US Republican politicians over 70 years of age
+    (select
+        (
+            (fields ($politician))
+            (where
+                (
+                    ($politician a dbo:Politician)
+                    ($politician dbo:party \"<http://dbpedia.org/resource/Republican_Party_(United_States)>\")
+                    ($politician dbo:birthDate $birth)
+                    (filter (>= (year $birth) (- (year (now)) 70)))
+                )
+            )
+        )
+    )
+
+    Select all entities that are instances of the class Person who have been awarded the Nobel Prize in Literature, along with their place of birth. Filter the results to include only laureates from the past 20 years based on the year of the award.
+    (select
+        (
+            (fields ($person $birthplace))
+            (where
+                (
+                ($person rdf:type dbo:Person) ($person dbo:birthPlace $birthplace)
+                ($person dbo:award \"<http://dbpedia.org/resource/Nobel_Prize_in_Literature>\")
+                ($person dbo:awardYear $year) (filter (>= (year $year) (- (year (now)) 20)))
+                )
+            )
+            (order_by $person)
+        )
+    )
+    Select all writers names  from Switzerland and also select  theirs birthplaces
+    (select
+        (
+            (fields ($writer $birthplace))
+            (where
+                (
+                ($writer a dbo:Writer)
+                ($writer dbo:birthPlace \"<http://dbpedia.org/resource/Switzerland>\")
+                ($writer dbo:birthPlace $birthplace)
+                )
+            )
+        )
+    )
+
+    Display names of all capital cities that are in the CET time zone. Sort the results based on the size of the population of the capitals from the result set.
+    (select
+        (
+            (fields ($capital $population))
+            (where
+                (
+                ($capital a dbo:City)
+                ($capital dbo:country ?country)
+                ($country dbo:capital $capital)
+                ($capital dbo:timeZone \"<http://dbpedia.org/resource/Central_European_Time>\")
+                ($capital dbo:populationTotal $population)
+                )
+            )
+            (order_by_desc $population)
+        )
+    )
+
+    Please check that variables in 'fields'  statement are also present in 'where' statement.
+
+    Important:
+    Check the correctness of brackets in query, number of closing brackets should be equal to the number of opening brackets.
+    All values  starting with \"<http://dbpedia.org/\" should be in quotes.
+    The fields statement should not contain properties (like dbo:MusicalArtist or foaf:name).
+    Return only query,  no explanation and other texts
+    ")
+    (messages)))

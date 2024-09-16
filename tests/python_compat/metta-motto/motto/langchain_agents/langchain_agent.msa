@@ -1,0 +1,24 @@
+!(bind! &list (py-list ()))
+
+; convert messages to list of tuples
+(= (messages2list $xs)
+   (if (== $xs ())
+       ()
+       (let* ((() ((py-dot &list extend) (message2tuple (car-atom $xs))))
+              ($t (cdr-atom $xs)))
+          (messages2list $t)
+       )
+    )
+)
+
+(= (respond $message)
+
+    (let* (($history (history))
+           (() ((py-dot &list clear)))
+          ($k (messages2list (cdr-atom $history)))
+          (() ((py-dot &list extend) (message2tuple $message))))
+     (py-dot ((py-dot (langchain-model) invoke) &list) content)
+   )
+)
+
+(= (response) (respond (messages)))

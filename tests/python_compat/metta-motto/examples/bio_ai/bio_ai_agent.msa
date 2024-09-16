@@ -19,9 +19,9 @@
     )
  )
 
-!(Response
+(= (response)
    (_eval
-   (llm (Agent (chat-gpt "gpt-3.5-turbo"))
+   ((chat-gpt-agent "gpt-3.5-turbo")
         (system "Generate queries in Scheme according to user question.
         There are some examples user's queries converted to Scheme:
 
