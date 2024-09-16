@@ -785,28 +785,16 @@ throw_stream_error(Stream, Reason) :-
     read_position(Stream, Line, Col, CharPos, _),
     throw(error(stream_error(Line:Col:CharPos, Reason))).
 
-%! read_comment(+Stream:stream) is det.
+%! read_single_line_comment(+Stream:stream) is det.
 %
 % Reads a single-line comment from the stream and asserts it with the position.
 % A comment starts with ';' and continues to the end of the line.
 % @arg Stream The input stream from which to read.
-read_comment(Stream) :-
-    % get_char(Stream, _),  % Skip the ';' character.
+read_single_line_comment(Stream) :-
+    % read_char(Stream, ';'),  % Skip the ';' character.
     read_position(Stream, Line, Col, CharPos, Pos),
-    read_until_eol(Stream, Comment),
-    assertz(metta_file_comment(Line, Col, CharPos, '$COMMENT'(Comment,Line, Col), Pos)).
-
-%! read_until_eol(+Stream:stream, -Comment:atom) is det.
-%
-% Reads characters from the stream until the end of the line (EOL) is encountered.
-% @arg Stream Stream from which to read.
-% @arg Comment The comment text read from the stream.
-read_until_eol(Stream, Comment) :-
-    get_char(Stream, Char),
-    (   char_type(Char,end_of_line) -> Comment = ""  % End of line reached, terminate the comment.
-    ;   Char = end_of_file -> Comment = ""  % End of file reached, terminate the comment.
-    ;   read_until_eol(Stream, RestComment), string_concat(Char, RestComment, Comment)  % Read more characters recursively.
-    ).
+    read_line_to_string(Stream, Comment),
+    assertz(metta_file_comment(Line, Col, CharPos, '$COMMENT'(Comment, Line, Col), Pos)).
 
 %! read_position(+Stream:stream, -Line:integer, -Col:integer, -CharPos:integer) is det.
 %
@@ -816,7 +804,7 @@ read_until_eol(Stream, Comment) :-
 % @arg Col The current column number.
 % @arg CharPos The current character position in the stream.
 % @arg Position The current $postion/3 Term of the stream.
-read_position(Stream, Line, Col, CharPos,Position) :-
+read_position(Stream, Line, Col, CharPos, Position) :-
     stream_property(Stream, position(Position)),  % Get the current position from the stream.
     stream_position_data(line_count, Position, Line),  % Extract the line number.
     stream_position_data(line_position, Position, Col),  % Extract the column number.
@@ -824,21 +812,91 @@ read_position(Stream, Line, Col, CharPos,Position) :-
 
 %! skip_spaces(+Stream:stream) is det.
 %
-% Skips whitespace characters in the input stream.
-% If a comment is encountered, reads the comment and asserts it.
-% @arg Stream Stream from which to skip spaces.
+% Skips spaces, single-line comments (starting with `;`), and block comments (between `/*` and `*/`),
+% including nested block comments. It continues to read until a non-space, non-comment character is encountered.
+%
+% @arg Stream The stream from which to read and skip spaces/comments.
 skip_spaces(Stream) :-
     peek_char(Stream, Char),
-    (   Char = ';' -> (read_comment(Stream), skip_spaces(Stream))  % If the character is ';', read a single-line comment.
-    ;   is_like_space(Char) -> (get_char(Stream, _), skip_spaces(Stream))  % Consume the space and continue.
-    ;   true  % Non-space character found; stop skipping.
+    (   Char = ';' ->
+        ( read_single_line_comment(Stream),  % If the character is ';', read a single-line comment.
+          skip_spaces(Stream))  % After reading the comment, continue skipping spaces.
+    ;   Char = '/' ->
+        skip_block_comment(Stream)  % Check if this is the start of a block comment.
+    ;   is_like_space(Char) ->
+        ( get_char(Stream, _),  % Consume the space character.
+          skip_spaces(Stream))  % Continue skipping spaces.
+    ;   true  % Non-space, non-comment character found; stop skipping.
     ), !.
 
-
+%! is_like_space(+Char:char) is semidet.
+%
+% Checks if a character is a space or similar (e.g., tabs, newlines).
+%
+% @arg Char The character to check.
 is_like_space(Char):- char_type(Char,white),!.
 is_like_space(Char):- char_type(Char,end_of_line),!.
 is_like_space(Char):- char_type(Char,space),!.
 is_like_space(Char):- char_type(Char,cntrl),!.
+
+%! skip_block_comment(+Stream:stream) is det.
+%
+% Skips over a block comment (starting with `/*` and ending with `*/`), supporting nested block comments.
+% The function captures the block comment along with its position and stores it in the database.
+%
+% @arg Stream The input stream from which to skip the block comment.
+skip_block_comment(Stream) :-
+    peek_string(Stream, 2, LookAhead),
+    (   LookAhead = "/*" ->
+        read_block_comment(Stream)  % If we see the block comment start, read and handle it.
+    ;   true  % Otherwise, no block comment, continue processing.
+    ).
+
+%! read_block_comment(+Stream:stream) is det.
+%
+% Reads a block comment (including nested block comments) from the stream
+% and asserts it with the starting position. A block comment starts with '/*' and
+% continues until the closing '*/'.
+%
+% @arg Stream The input stream from which to read the block comment.
+read_block_comment(Stream) :-
+    read_position(Stream, Line, Col, CharPos, Pos),  % Capture the start position.
+    get_string(Stream, 2, _),  % Skip the '/*' characters.
+    read_nested_block_comment(Stream, 1, Chars),  % Read the block comment, supporting nested ones.
+    string_chars(Comment, Chars),
+    assertz(metta_file_comment(Line, Col, CharPos, '$COMMENT'(Comment, Line, Col), Pos)).
+
+%! read_nested_block_comment(+Stream:stream, +Level:int, -Comment:list) is det.
+%
+% Reads a block comment (including nested block comments) and returns the comment as a list of characters.
+% The comment starts with '/*' and continues until the closing '*/', supporting nesting.
+%
+% @arg Stream The stream from which to read.
+% @arg Level  The current level of block comment nesting (initially 1 when called from `read_block_comment`).
+% @arg Comment The list of characters read within the block comment.
+read_nested_block_comment(Stream, Level, Comment) :-
+    read_nested_block_comment(Stream, Level, [], Comment).
+
+read_nested_block_comment(Stream, Level, Acc, Comment) :-
+    peek_string(Stream, 2, LookAhead),
+    (   LookAhead = "*/" ->
+        (   get_string(Stream, 2, _),  % Consume the '*/'.
+            NewLevel is Level - 1,  % Decrease the nesting level.
+            (   NewLevel = 0 ->
+                reverse(Acc, Comment)  % If outermost comment is closed, return the accumulated comment.
+            ;   read_nested_block_comment(Stream, NewLevel, ['*', '/' | Acc], Comment)  % Continue, append '*/'.
+            )
+        )
+    ;   LookAhead = "/*" ->
+        (   get_string(Stream, 2, _),  % Consume the '/*'.
+            NewLevel is Level + 1,  % Increase the nesting level.
+            read_nested_block_comment(Stream, NewLevel, ['/', '*' | Acc], Comment)  % Continue, append '/*'.
+        )
+    ;   (   get_char(Stream, Char),  % Read any other character.
+            read_nested_block_comment(Stream, Level, [Char | Acc], Comment)  % Accumulate the character and continue.
+        )
+    ).
+
 
 %! read_list(+EndChar:atom, +Stream:stream, -List:list) is det.
 %
@@ -856,9 +914,9 @@ read_list(EndChar, Stream, List) :-
         List = []
     ; Char = end_of_file ->  % Unexpected end of file inside the list.
         throw_stream_error(Stream, syntax_error(unexpected_end_of_file, "Unexpected end of file in list"))
-    ; cont_sexpr(EndChar, Stream, Element),  % Read the next S-expression.
+    ; ( cont_sexpr(EndChar, Stream, Element),  % Read the next S-expression.
         read_list(EndChar, Stream, Rest),  % Continue reading the rest of the list.
-        List = [Element | Rest]  % Add the element to the result list.
+        List = [Element | Rest])  % Add the element to the result list.
     ), !.
 
 %! read_quoted_string(+Stream:stream, +EndChar:atom, -String:atom) is det.
@@ -914,19 +972,49 @@ read_until_char(Stream, EndChar, Chars) :-
 % @arg Symbolic The complete symbolic expression read.
 read_symbolic(EndChar, Stream, FirstChar, Symbolic) :-
     read_symbolic_cont(EndChar, Stream, RestChars),
-    classify_and_convert_charseq(FirstChar, RestChars, Symbolic).
+    classify_and_convert_charseq([FirstChar| RestChars], Symbolic), !.
 
-%! classify_and_convert_charseq(+FirstChar:atom, +RestChars:list, -Symbolic:term) is det.
+%! classify_and_convert_charseq(+Chars:list, -Symbolic:term) is det.
 %
-% Classifies and converts a sequence of characters into a Prolog term, handling special cases like variables.
-% @arg FirstChar The first character of the sequence.
-% @arg RestChars The rest of the characters in the sequence.
-% @arg Symbolic The resultant Prolog term or symbol.
-classify_and_convert_charseq('$', RestChars, '$VAR'(Symbolic)) :- !, atom_chars(Symbolic, ['_'|RestChars]).
-classify_and_convert_charseq(FirstChar, RestChars, Symbolic) :-
-    % Attempt to interpret complex syntaxes such as hexadecimal numbers and date objects.
-    notrace(catch(read_from_chars([FirstChar | RestChars], Symbolic), _, fail)), atomic(Symbolic), !.
-classify_and_convert_charseq(FirstChar, RestChars, Symbolic) :- atom_chars(Symbolic, [FirstChar | RestChars]).
+% Classifies and converts a sequence of characters into a Prolog term,
+% handling special cases like variables, numbers, and symbolic terms.
+%
+% @param Chars    The input list of characters.
+% @param Symbolic The resultant Prolog term or symbol, which could be a variable,
+%                 number, or an atom.
+classify_and_convert_charseq(Chars, Symbolic) :-
+    % First, classify and convert the character sequence using the helper predicate.
+    classify_and_convert_charseq_(Chars, Symbol),
+
+    % If the classified symbol is an integer, and the original characters contain a '.',
+    % convert it to a floating point number.
+    ( ( integer(Symbol), memberchk('.', Chars))
+      -> Symbolic is Symbol * 1.0   % Convert to floating-point number.
+       ; Symbolic = Symbol).        % Otherwise, keep the symbol as is.
+
+
+%! classify_and_convert_charseq_(+Chars:list, -Symbolic:term) is det.
+%
+% Helper predicate that attempts to classify the character sequence.
+% Handles special cases such as Prolog variables and numbers.
+%
+% @param Chars    The input list of characters.
+% @param Symbolic The resultant Prolog term or symbol.
+
+% Case 1: If the character sequence starts with '$', treat it as a variable.
+classify_and_convert_charseq_(['$'| RestChars], '$VAR'(Symbolic)) :-
+    !,
+    atom_chars(Symbolic, ['_'|RestChars]).  % Convert the rest of the characters into a variable name.
+% Case 2: Attempt to interpret the characters as a Prolog term using `read_from_chars/2`.
+% This handles more complex syntaxes like numbers, dates, etc.
+classify_and_convert_charseq_(Chars, Symbolic) :-
+    notrace(catch(read_from_chars(Chars, Symbolic), _, fail)),  % Safely attempt to parse the characters.
+    atomic(Symbolic),  % Ensure the result is atomic.
+    !.
+% Case 3: If no other case applies, convert the characters directly into an atom.
+classify_and_convert_charseq_(Chars, Symbolic) :-
+    atom_chars(Symbolic, Chars).  % Convert the character sequence into an atom.
+
 
 %! read_symbolic_cont(+EndChar:atom, +Stream:stream, -Chars:list) is det.
 %
