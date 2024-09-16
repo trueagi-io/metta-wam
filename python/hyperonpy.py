@@ -2019,7 +2019,7 @@ def process_args():
             if i + 1 < len(sys.argv):
                 path = sys.argv[i + 1]
                 mesg(DEBUG, f"Adding path: {path}")
-                push_include_path(path)
+                env_builder_push_include_path(cb,path)
                 i += 1
         elif arg == "--version":
             mesg(USER, f"Hyperon version: {hyperon.__version__}")
