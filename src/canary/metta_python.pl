@@ -391,7 +391,7 @@ def rust_unwrap(obj):
         return obj.value()
     if isinstance(obj,GroundedAtom):
         if obj.get_object_type()==AtomType.UNDEFINED:
-        	return obj.get_object()
+            return obj.get_object()
     # if isinstance(obj,GroundedAtom): return obj.get_object()
     if isinstance(obj,GroundedObject):
         return obj.content
@@ -1018,6 +1018,29 @@ get_list_arity(_Args,-1).
 :- set_prolog_flag(py_argv , []).
 :- initialization(on_restore1,restore).
 :- initialization(on_restore2,restore).
+
+% Declare `metta_python_proxy/1` as dynamic so it can be modified at runtime.
+:- dynamic(metta_python_proxy/1).
+% Read the content of the file './metta_python_proxy.py' into the variable `String`.
+% Then, assert the content of the file as a fact `metta_python_proxy/1`.
+:- read_file_to_string('./metta_python_proxy.py', String, []),
+   assertz(metta_python_proxy(String)),!.
+% Declare `did_load_metta_python_proxy/0` as volatile, meaning it will not be saved to a saved state.
+% This is useful when you don't want this predicate to persist across sessions or save states.
+:- volatile(did_load_metta_python_proxy/0).
+% If `did_load_metta_python_proxy/0` is not already asserted, it asserts the fact to indicate that the proxy has been loaded.
+% It retrieves the `metta_python_proxy/1` fact (which contains the content of the file).
+% Then, it calls `py_module/2` with the module name and the Python code as arguments.
+% The cut (`!`) ensures no backtracking occurs once this is executed.
+load_metta_python_proxy :- did_load_metta_python_proxy.
+load_metta_python_proxy :-
+    assert(did_load_metta_python_proxy),
+    metta_python_proxy(String),
+    py_module(metta_python_proxy, String),!.
+% Ensure that `load_metta_python_proxy/0` is called when the program is initialized (on startup).
+% This will trigger the loading of the Python proxy module during initialization.
+:- initialization(load_metta_python_proxy).
+:- initialization(load_metta_python_proxy,restore).
 
 
 
