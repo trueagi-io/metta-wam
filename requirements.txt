@@ -1,34 +1,42 @@
-#notebook==6.4.12
-#jupyterlab==3.6.3
-jupyter_server>=1.6,<3
-traitlets >=4.2.1,<5.10.0a0
-coq-jupyter
-nbconvert==5.6.1
-#jupyterlab-lsp==4.0.0
-#jupyterlab==4.0.0
+##notebook==6.4.12
+##jupyterlab==3.6.3
+#jupyter_server>=1.6,<3
+#traitlets >=4.2.1,<5.10.0a0
+#coq-jupyter
+#nbconvert==5.6.1
+##jupyterlab-lsp==4.0.0
+##jupyterlab==4.0.0
 
-rise
-jupyter_nbextensions_configurator
-jupyter_contrib_nbextensions
+#rise
+#jupyter_nbextensions_configurator
+#jupyter_contrib_nbextensions
 
 
-sos
-sos-notebook
-sos-r
+#sos
+#sos-notebook
+#sos-r
+
+ansi2html
+junit2html
 
 openai
 numpy
 pandas
+torch
+torchvision
 #readline
 pyreadline3
-#pyswip @ git+https://github.com/logicmoo/pyswip
--e reqs/pyswip
--e reqs/hyperon-experimental/python[dev]
--e reqs/metta_kernel
--e .
-metakernel
+pyswip @ git+https://github.com/logicmoo/pyswip
+##-e reqs/pyswip
+#-e /opt/hyperon/hyperon-experimental/python[dev]
+hyperon
+##-e reqs/metta_kernel
+#-e ./python[dev] .
+#metakernel
 #calysto
 yasi
-hyperon-das==0.4.1
-hyperon-das-atomdb==0.3.2
+hyperon-das
+#==0.4.1
+hyperon-das-atomdb
+#==0.3.2
 

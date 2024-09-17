@@ -75,7 +75,7 @@ create_venv() {
         if [ -f "requirements.txt" ]; then
             : 
             #log 2 "Found local requirements.txt, installing packages..."
-            #pip install -r requirements.txt
+            pip install -r requirements.txt
         fi
     else
         log 2 "Virtual environment already exists: $VENV_DIR"
