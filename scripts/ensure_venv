@@ -90,6 +90,7 @@ if is_inside_venv; then
     else
         log 2 "Script is running inside the expected virtual environment: $VENV_DIR"
     fi
+    pip install -q -r "$PARENT_DIR/requirements.txt"
 else
     log 2 "Script is not running inside a virtual environment."
     create_venv

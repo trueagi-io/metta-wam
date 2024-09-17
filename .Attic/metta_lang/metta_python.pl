@@ -54,6 +54,7 @@
 :- encoding(iso_latin_1).
 :- flush_output.
 :- setenv('RUST_BACKTRACE',full).
+% Uncomment this when loading from non user context like for ecapsulation
 %:- '$set_source_module'('user').
 :- set_prolog_flag(py_backtrace_depth,10).
 :- set_prolog_flag(py_backtrace, true).
@@ -491,17 +492,20 @@ ensure_rust_metta:- ensure_rust_metta(_).
 
 :- dynamic(is_mettalog/1).
 :- volatile(is_mettalog/1).
-ensure_mettalog_py(MettaLearner):- is_mettalog(MettaLearner),!.
+
+ensure_mettalog_py(MettaLearner) :-
+    is_mettalog(MettaLearner), !.  % Check if MettaLearner is already known.
+
 ensure_mettalog_py(MettaLearner):-
-   with_safe_argv(
-   (want_py_lib_dir,
+   with_safe_argv( % Ensure safety for argument passing.
+   (want_py_lib_dir, % Ensure the Python library directory is available.
     %py_call('mettalog',MettaLearner),
     %py_call('motto',_),
     %py_call('motto.sparql_gate':'sql_space_atoms'(),Res1),pybug(Res1),
     %py_call('motto.llm_gate':'llmgate_atoms'(MeTTa),Res2),pybug(Res2),
-
-   pybug(is_mettalog(MettaLearner)),
-   asserta(is_mettalog(MettaLearner)))).
+        pybug(is_mettalog(MettaLearner)),  % Log any issues.
+        asserta(is_mettalog(MettaLearner))  % Store the MettaLearner instance.
+        )).
 
 ensure_mettalog_py:-
   %load_builtin_module,
@@ -571,6 +575,10 @@ atoms_iter_from_space(Space, Atoms) :-
     %py_call(GSpace:'atoms_iter'(), Atoms).
     true.
 :- endif.
+
+
+
+
 
 metta_py_pp(V):- py_is_enabled,once((py_is_object(V),py_to_pl(V,PL))),V\=@=PL,!,metta_py_pp(PL).
 metta_py_pp(V):- atomic(V),py_is_enabled,py_is_object(V),py_pp(V),!.
@@ -695,18 +703,35 @@ pyo_to_pl(VL,Par,Cir,CirO,Cl,O,E):- catch(py_obj_dir(O,L),_,fail),pybug(py_obj_d
 pyo_to_pl(_VL,_Par,Cir,Cir,_Cl,O,E):- O = E,!.
 
 pl_to_rust(Var,Py):- pl_to_rust(_VL,Var,Py).
+
+%!  pl_to_rust(+VL, +Var, -Py) is det.
+%
+%   Converts a Prolog term `Var` to its Rust/Hyperon representation, using a variable list `VL`
+%   for handling variable conversions. This handles lists, variables, atoms, and strings.
+%
+%   @arg VL The variable list for tracking variable-to-name mappings.
+%   @arg Var The Prolog term to be converted.
+%   @arg Py The resulting Rust/Hyperon representation.
+
 pl_to_rust(VL,Var,Py):- var(VL),!,ignore(VL=[vars]),pl_to_rust(VL,Var,Py).
 
 pl_to_rust(_VL,Sym,Py):- is_list(Sym),!, maplist(pl_to_rust,Sym,PyL), py_call(src:'mettalog':'MkExpr'(PyL),Py),!.
 pl_to_rust(VL,Var,Py):- var(Var), !, real_VL_var(Sym,VL,Var), py_call('hyperon.atoms':'V'(Sym),Py),!.
 pl_to_rust(VL,'$VAR'(Sym),Py):- !, real_VL_var(Sym,VL,_),py_call('hyperon.atoms':'V'(Sym),Py),!.
-pl_to_rust(VL,DSym,Py):- atom(DSym),atom_concat('$',VName,DSym), rinto_varname(VName,Sym),!, pl_to_rust(VL,'$VAR'(Sym),Py).
+pl_to_rust(VL,DSym,Py):- atom(DSym),
+ atom_concat('$',VName,DSym), rinto_varname(VName,Sym),!, pl_to_rust(VL,'$VAR'(Sym),Py).
 pl_to_rust(_VL,Sym,Py):- atom(Sym),!, py_call('hyperon.atoms':'S'(Sym),Py),!.
 %pl_to_rust(VL,Sym,Py):- is_list(Sym), maplist(pl_to_rust,Sym,PyL), py_call('hyperon.atoms':'E'(PyL),Py),!.
 pl_to_rust(_VL,Sym,Py):- string(Sym),!, py_call('hyperon.atoms':'ValueAtom'(Sym),Py),!.
 pl_to_rust(_VL,Sym,Py):- py_is_object(Sym),py_call('hyperon.atoms':'ValueAtom'(Sym),Py),!.
 pl_to_rust(_VL,Sym,Py):- py_call('hyperon.atoms':'ValueAtom'(Sym),Py),!.
 
+%!  py_list(+MeTTa, -PyList) is det.
+%
+%   Converts a Prolog term `MeTTa` into a Python list.
+%
+%   @arg MeTTa The Prolog term to be converted.
+%   @arg PyList The resulting Python list.
 py_list(MeTTa,PyList):- pl_to_py(MeTTa,PyList).
 
 py_tuple(O,Py):- py_ocall(tuple(O),Py),!.

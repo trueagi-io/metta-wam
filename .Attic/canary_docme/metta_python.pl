@@ -56,7 +56,8 @@
 
 % Set environment variable to capture full Rust backtrace in case of crashes.
 :- setenv('RUST_BACKTRACE', full).
-
+% Uncomment this when loading from non user context like for ecapsulation
+%:- '$set_source_module'('user').
 % Set the depth of Python backtrace to 10 for debugging Python errors in Prolog.
 :- set_prolog_flag(py_backtrace_depth, 10).
 
@@ -208,6 +209,8 @@ py_catch(Goal) :-
             Goal                        % Retry the goal with tracing enabled.
         )
     ).
+% uncomment this and comment the above     when you need to trace
+%py_catch(Goal):- trace,catch(Goal,E,(pybug(E),py_dump)),!.    
 
 %!  py_dump is det.
 %
@@ -1066,6 +1069,11 @@ py_is_function(O) :-
 
 py_is_function(O) :- 
     py_type(O, function), !.
+    
+% we might need to include methods soon    
+%py_is_function(O):- py_type(O, method),!.    
+    
+    
 
 %!  py_eval_from(+From, +I, -O) is det.
 %
@@ -1177,6 +1185,10 @@ ensure_mettalog_py(MettaLearner) :-
 ensure_mettalog_py(MettaLearner) :-
     with_safe_argv(  % Ensure safety for argument passing.
         (want_py_lib_dir,  % Ensure the Python library directory is available.
+            %py_call('mettalog',MettaLearner),
+            %py_call('motto',_),
+            %py_call('motto.sparql_gate':'sql_space_atoms'(),Res1),pybug(Res1),
+            %py_call('motto.llm_gate':'llmgate_atoms'(MeTTa),Res2),pybug(Res2),
         pybug(is_mettalog(MettaLearner)),  % Log any issues.
         asserta(is_mettalog(MettaLearner))  % Store the MettaLearner instance.
         )).
@@ -1186,6 +1198,9 @@ ensure_mettalog_py(MettaLearner) :-
 %   Initializes the MettaLearner instance by setting environment variables 
 %   and invoking the necessary Python modules.
 ensure_mettalog_py :-
+   % once finished we also are required to have these as well
+   %load_builtin_module,
+   %load_hyperon_module,
     setenv('VSPACE_VERBOSE', 0),  % Set the environment variable for verbosity.
     with_safe_argv(ensure_mettalog_py(_)), !.  % Safely initialize MettaLearner.
 
@@ -1244,7 +1259,7 @@ ensure_primary_metta_space :-
 %
 %   @arg GSpace The `GroundingSpace` instance that will be initialized.
 :- if(\+ current_predicate(new_rust_space/1)).
-
+% Initialize a new hyperon.base.GroundingSpace and get a reference
 new_rust_space(GSpace) :-
     with_safe_argv(py_call(hyperon:base:'GroundingSpace'(), GSpace)),  % Create a new GroundingSpace.
     asserta(is_python_space(GSpace)).  % Store the new space.
@@ -1320,6 +1335,8 @@ atom_from_space(Space, Sym) :-
 atoms_iter_from_space(Space, Atoms) :-
     ensure_space(Space, GSpace),  % Ensure the space is valid.
     with_safe_argv(py_call(src:'mettalog':get_atoms_iter_from_space(GSpace), Atoms)),  % Retrieve the iterator.
+    % for debugging print the atoms
+    %py_call(GSpace:'atoms_iter'(), Atoms).
     true.
 
 :- endif.
@@ -1400,6 +1417,9 @@ py_to_pl(VL, Par, Cir, CirO, O, E) :-
     py_is_object(O), py_class(O, Cl), !,
     pyo_to_pl(VL, Par, [O = E | Cir], CirO, Cl, O, E).
 
+% we might need to switch dicts to their prolog corispondence later
+%py_to_pl(_VL,_Par,Cir,Cir,L,E):- py_is_dict(L),!,py_mbi(identity(L),E).
+
 % If L is in the circular reference list, handle the circular reference.
 py_to_pl(_VL, _Par, Cir, Cir, L, E) :- 
     member(N-NE, Cir), N == L, !, (E = L ; NE = E), !.
@@ -1452,6 +1472,10 @@ py_to_pl(VL, Par, Cir, CirO, L, E) :- is_dict(L, F), !,
     dict_pairs(E, F, NVL).
 
 py_to_pl(_VL, _Par, Cir, Cir, L, E) :- \+ callable(L), !, E = L.
+
+%next phase code
+%py_to_pl(VL,Par,Cir,CirO,A:B:C,AB):-  py_is_object(A),callable(B),py_call(A:B,R),!, py_to_pl(VL,Par,[A:B-AB|Cir],CirO,R:C,AB).
+%py_to_pl(VL,Par,Cir,CirO,A:B,AB):-  py_is_object(A),callable(B),py_call(A:B,R),!, py_to_pl(VL,Par,[A:B-AB|Cir],CirO,R,AB).
 
 % Convert compound terms using `compound_name_arguments/3`.
 py_to_pl(VL, Par, Cir, CirO, A, AA) :- compound(A), !,
@@ -1602,6 +1626,9 @@ pyo_to_pl(VL, Par, Cir, CirO, Cl, O, E) :-
     py_member_values(O, M, R), 
     member(N-_, Cir), R \== N, !,  % Avoid circular references.
     py_to_pl(VL, [Cl | Par], Cir, CirO, R, E), !.
+
+%This is a more readable fallback we might switch to
+%pyo_to_pl(_VL,_Par,Cir,Cir,Cl,O,E):- get_str_rep(O,Str), E=..[Cl,Str].
 
 % Fallback case: If L is not callable, unify E with L.
 pyo_to_pl(_VL, _Par, Cir, Cir, _Cl, O, E) :- O = E, !.
@@ -2534,6 +2561,7 @@ load_functions_ext(Def) :-
 %
 example_usage :- 
     with_safe_argv(ensure_primary_metta_space(GSpace)),
+    %some_query(Query),
     Query = [],
     with_safe_argv(query_from_space(GSpace, Query, Result)),
     writeln(Result).
@@ -2722,7 +2750,7 @@ load_metta_python_proxy :-
     % Retrieve the Python proxy string.
     metta_python_proxy(String),
     % Initialize the Python module with the proxy string.
-    py_module(metta_python_proxy, String), 
+    ignore(notrace(with_safe_argv(catch(py_module(metta_python_proxy, String),_,true)))),!.
     !.
 
 % Ensure that `load_metta_python_proxy/0` is called when the program is initialized (on startup).
