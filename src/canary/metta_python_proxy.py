@@ -371,7 +371,7 @@ class Observer:
             if substring in args_list[1]: return
         if isinstance(args_list[0],(types.ModuleType)): 
             args_list[0]=None
-        arg = tuple(args)
+        arg = tuple(args_list)
 
 #        print()
         instance_key = f"instance_{event_type}"
