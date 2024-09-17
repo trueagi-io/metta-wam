@@ -1,8 +1,8 @@
 ;; Test Implication Direct Introduction DTL Rule
 
 ;; Import modules
-!(import! &self ImplicationDirectIntroductionDTL.metta)
-!(import! &self ../../synthesis/Synthesize.metta)
+!(import! &self metta:pln:dependent-types:ImplicationDirectIntroductionDTL)
+!(import! &self metta:synthesis:Synthesize)
 
 ;; Knowledge base
 (: kb (-> Atom))

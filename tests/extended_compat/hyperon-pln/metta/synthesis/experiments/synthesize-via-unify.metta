@@ -1,6 +1,6 @@
 ;; Import modules
-!(import! &self ../../common/Num.metta)
-!(import! &self ../Unify.metta)
+!(import! &self metta:common:Num)
+!(import! &self metta:synthesis:Unify)
 
 ;; Enumerate all programs up to a given depth that are consistent with
 ;; the query, using the given axioms and rules.

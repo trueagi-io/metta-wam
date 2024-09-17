@@ -28,8 +28,8 @@
 
 
 ;; Import modules
-!(import! &self ../../common/truthvalue/MeasEq.metta)
-!(import! &self ../../common/formula/ModusPonensFormula.metta)
+!(import! &self metta:common:truthvalue:MeasEq)
+!(import! &self metta:common:formula:ModusPonensFormula)
 
 ;; Define modus ponens rule
 (: modus-ponens-rule (-> Atom))

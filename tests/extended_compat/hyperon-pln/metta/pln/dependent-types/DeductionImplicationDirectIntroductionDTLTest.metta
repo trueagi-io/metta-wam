@@ -1,9 +1,9 @@
 ;; Test DeductionDTL and ImplicationDirectionIntroductionDTL rules
 
 ;; Import the rules
-!(import! &self ImplicationDirectIntroductionDTL.metta)
-!(import! &self DeductionDTL.metta)
-!(import! &self ../../synthesis/Synthesize.metta)
+!(import! &self metta:pln:dependent-types:ImplicationDirectIntroductionDTL)
+!(import! &self metta:pln:dependent-types:DeductionDTL)
+!(import! &self metta:synthesis:Synthesize)
 
 ;; Knowledge base
 (: kb (-> Atom))

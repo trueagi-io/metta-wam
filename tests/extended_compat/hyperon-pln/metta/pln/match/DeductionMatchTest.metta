@@ -1,5 +1,5 @@
 ;; Test Deduction match Rule
-!(import! &self DeductionMatch.metta)
+!(import! &self metta:pln:match:DeductionMatch)
 
 (≞ P (STV 1 0.1))
 (≞ Q (STV 1 0.1))

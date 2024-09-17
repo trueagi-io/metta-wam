@@ -1,5 +1,5 @@
 ;; Import modules
-!(import! &self ../../common/Num.metta)
+!(import! &self metta:common:Num)
 
 ;; ;; Type definitions checker
 ;; !(pragma! type-check auto)

@@ -1,6 +1,6 @@
 ;; Import modules
-!(import! &self synthesize-via-let.metta)
-!(import! &self ../../common/Record.metta)
+!(import! &self metta:synthesis:experiments:synthesize-via-let)
+!(import! &self metta:common:Record)
 
 ;; Test program synthesizer
 !(record syn ((: $term $type) Z))                  ; (: f (-> Number String)), (: g (-> String Bool)), (: h (-> Bool Number))

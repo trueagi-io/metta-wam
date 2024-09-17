@@ -1,6 +1,6 @@
 ;; Import modules
-!(import! &self synthesize-via-unify.metta)
-!(import! &self ../../common/Record.metta)
+!(import! &self metta:synthesis:experiments:synthesize-via-unify)
+!(import! &self metta:common:Record)
 
 ;; Knowledge base
 (: kb (-> Atom))

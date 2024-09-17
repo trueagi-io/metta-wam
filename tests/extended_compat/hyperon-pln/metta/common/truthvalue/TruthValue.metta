@@ -1,7 +1,7 @@
 ;; Truth value type definition
 
 ;; Import modules
-!(import! &self ../Num.metta)
+!(import! &self  metta:common:Num)
 
 ;;;;;;;;;;
 ;; Type ;;

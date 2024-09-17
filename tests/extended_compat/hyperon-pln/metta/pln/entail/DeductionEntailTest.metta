@@ -1,5 +1,5 @@
 ;; Test Deduction Entail Rule
-!(import! &self DeductionEntail.metta)
+!(import! &self metta:pln:entail:DeductionEntail)
 
 (= (P) (≞ P (STV 1 0.1)))
 (= (Q) (≞ Q (STV 1 0.1)))
