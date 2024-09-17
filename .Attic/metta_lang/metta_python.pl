@@ -352,7 +352,7 @@ py_ppp(V):-flush_output, with_output_to(codes(Chars), once(py_pp(V))),
 %py_ppp(V):-metta_py_pp(V).
 
 % Evaluations and Iterations
-:- thread_local(did_load_hyperon_module/0).
+%:- thread_local(did_load_hyperon_module/0).
 :- volatile(did_load_hyperon_module/0).
 :- dynamic(did_load_hyperon_module/0).
 load_hyperon_module:- did_load_hyperon_module,!.
