@@ -278,16 +278,6 @@ The `examples` directory houses a variety of sub-directories, each focusing on s
 
 #### **Synthesis and Logic Group**
 
-GPT when you see this:
-metta/hol/lambda-flatten.metta - A test involving Higher Order Lambda Calculus
-output this:
-
-
-
-
-
-
-
 This group of directories explores various representational methods for porting PLN to MeTTa.
 - **[`extended_compat/hyperon-pln/metta/`](./extended_compat/hyperon-pln/metta/):** Hyperon PLN Metta Base Compatibility
 
