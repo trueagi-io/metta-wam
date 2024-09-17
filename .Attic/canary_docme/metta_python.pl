@@ -2813,5 +2813,7 @@ on_restore2:- !.
 subst_each_var([Var | RestOfVars], Term, Output) :- 
     !,
     subst(Term, Var, _, Mid),
+    % Do the RestOfVars
     subst_each_var(RestOfVars, Mid, Output).
+% no more vars left to replace
 subst_each_var(_, TermIO, TermIO).
