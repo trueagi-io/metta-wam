@@ -2607,7 +2607,9 @@ called from Python or Rust, and likewise, call Python or Rust functions from wit
 
 */
 
-%:- ensurze_loaded(metta_interp).
+% when using this file alone uncomment the next line
+%:- ensure_loaded(metta_interp).
+
 %!  want_py_lib_dir is det.
 %
 %   Ensures that Python library directories are added to the Python path.
@@ -2790,7 +2792,10 @@ load_metta_python_proxy :-
 on_restore1 :- 
     ensure_mettalog_py.
 
-on_restore2:-!.
+
+on_restore2:- !.
+%on_restore2:- load_builtin_module.
+%:- load_hyperon_module.
 
 %!  subst_each_var(+Vars, +Term, -Output) is det.
 %

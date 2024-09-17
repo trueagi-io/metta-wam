@@ -1003,6 +1003,7 @@ To integrate VSpace with the existing Python and Rust components, similar interf
 
 */
 
+% when using this file alone uncomment the next line
 %:- ensure_loaded(metta_interp).
 
 :- dynamic(want_py_lib_dir/1).
