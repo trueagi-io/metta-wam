@@ -330,24 +330,25 @@ metta> !(remote-eval!  localhost (match &self $Code $Code))
 % Declare remote_code/4 as a dynamic predicate to allow runtime modification
 :- dynamic remote_code/4.  % Maps  MeTTa-Space and function to Service address
 
-% Get the current address of the service (Host:Port)
+
 %!  our_address(-HostPort) is det.
 %
 %   Retrieves the current Host and Port of this service instance.
 %
 %   @arg HostPort is the output in the form Host:Port.
+% Get the current address of the service (Host:Port)
 our_address(Host:Port):-
     % Get the hostname of the current machine
   gethostname(Host),
     % Retrieve the port number currently in use by this service
   vspace_port(Port).
 
-% Check if this service instance exists at a given address
 %!  we_exist(+Addr) is det.
 %
 %   Determines if the current service instance exists at the specified Addr.
 %
 %   @arg Addr is the address to check (Host:Port).
+% Check if this service instance exists at a given address
 we_exist(Addr):-
     % Get the current address and unify it with Addr
   our_address(Addr).
