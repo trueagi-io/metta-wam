@@ -32,7 +32,7 @@ and MeTTa extention
 !(import! &self motto)
 ```
 
-Please, refer to the [tutorial](./tutorial) and [examples](./examples). [Tests](./tests) can also be considered in addition.
+Please, refer to the [tutorial](tutorial) and [examples](examples). [Tests](tests) can also be considered in addition.
 
 ## Tests
 
