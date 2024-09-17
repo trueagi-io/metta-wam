@@ -2665,6 +2665,7 @@ get_list_arity(_Args, -1).
 :-initialization(on_restore1,restore).
 :-initialization(on_restore2,restore).
 
+% Declare `metta_python_proxy/1` as dynamic so it can be modified at runtime.
 %!  metta_python_proxy/1 is dynamic.
 %
 %   Declares `metta_python_proxy/1` as a dynamic predicate, allowing the content
@@ -2672,51 +2673,82 @@ get_list_arity(_Args, -1).
 %
 :- dynamic(metta_python_proxy/1).
 
-%!  load_metta_python_proxy/0 is det.
-%
-%   This predicate ensures that the Python proxy code from the file './metta_python_proxy.py'
-%   is loaded into the system at runtime. If the proxy has already been loaded, the predicate
-%   simply succeeds without reloading.
-%
-%   The content of the Python file is stored as a fact `metta_python_proxy/1` and used to
-%   initialize a Python module through the `py_module/2` predicate.
-%
-%   The predicate is dynamic and volatile, meaning it will not persist across saved states.
-%
-%   @example
-%     % On initialization, the proxy is loaded and the Python code is available.
-%     ?- load_metta_python_proxy.
-%     true.
-%
-load_metta_python_proxy :-
-    % Check if the proxy has already been loaded to prevent redundant loading.
-    did_load_metta_python_proxy, !.
-load_metta_python_proxy :-
-    % Assert that the proxy has been loaded to avoid future reloading.
-    assert(did_load_metta_python_proxy),
-    
-    % Retrieve the content of the file `metta_python_proxy.py` into `String`.
-    metta_python_proxy(String),
-    
-    % Load the Python module using the retrieved content.
-    py_module(metta_python_proxy, String), !.
 
-%!  did_load_metta_python_proxy/0 is volatile.
+% Read the content of the file './metta_python_proxy.py' into the variable `String`.
+% Then, assert the content of the file as a fact `metta_python_proxy/1`.
+%!  Read the content of './metta_python_proxy.py' into the `String` and assert it as a fact.
 %
-%   Declares `did_load_metta_python_proxy/0` as volatile, ensuring that it does not persist
-%   across saved states or sessions. This is useful for marking whether the Python proxy
-%   has been loaded without keeping the flag across multiple runs.
+%   This snippet reads the entire content of the file `metta_python_proxy.py` into
+%   the string `String`. Once read, the content is asserted as a fact `metta_python_proxy/1`.
+%   The cut (`!`) ensures that no backtracking occurs beyond this point.
+%
+:- read_file_to_string('./metta_python_proxy.py', String, []),
+   assertz(metta_python_proxy(String)), !.
+
+% Declare `did_load_metta_python_proxy/0` as volatile, meaning it will not be saved to a saved state.
+% This is useful when you don't want this predicate to persist across sessions or save states.
+%!  did_load_metta_python_proxy/0 is dynamic and volatile.
+%
+%   Declares `did_load_metta_python_proxy/0` as a dynamic and volatile predicate.
+%   The dynamic declaration allows this predicate to be asserted and retracted at runtime.
+%   The volatile declaration ensures that this predicate will not be saved across saved states
+%   (i.e., it will not persist across sessions).
 %
 :- dynamic(did_load_metta_python_proxy/0).
 :- volatile(did_load_metta_python_proxy/0).
 
-% Read the content of the file './metta_python_proxy.py' into `String` and assert it as a fact `metta_python_proxy/1`.
-% This allows the Python proxy code to be loaded dynamically during execution.
-:- read_file_to_string('./metta_python_proxy.py', String, []),
-   assertz(metta_python_proxy(String)), !.
+% If `did_load_metta_python_proxy/0` is not already asserted, it asserts the fact to indicate that the proxy has been loaded.
+% It retrieves the `metta_python_proxy/1` fact (which contains the content of the file).
+% Then, it calls `py_module/2` with the module name and the Python code as arguments.
+% The cut (`!`) ensures no backtracking occurs once this is executed.
 
-% Ensure that `load_metta_python_proxy/0` is called on initialization, both during startup and when restoring from a saved state.
+%!  load_metta_python_proxy is det.
+%
+%   Ensures that the Metta Python proxy is loaded. This predicate first checks if
+%   the proxy has already been loaded (by asserting the fact `did_load_metta_python_proxy`). 
+%   If it has not been loaded, the predicate asserts this fact, retrieves the Python 
+%   proxy as a string, and initializes the Python module using the proxy.
+%
+%   This predicate is deterministic and succeeds if the proxy is loaded or was already loaded.
+%
+%   @example
+%   ?- load_metta_python_proxy.
+%   % Ensures that the Metta Python proxy is loaded and available for use.
+%
+load_metta_python_proxy :- did_load_metta_python_proxy.  % Check if the proxy was already loaded.
+load_metta_python_proxy :-
+    % Assert that the proxy has now been loaded.
+    assert(did_load_metta_python_proxy),
+    % Retrieve the Python proxy string.
+    metta_python_proxy(String),
+    % Initialize the Python module with the proxy string.
+    py_module(metta_python_proxy, String), 
+    !.
+
+% Ensure that `load_metta_python_proxy/0` is called when the program is initialized (on startup).
+% This will trigger the loading of the Python proxy module during initialization.
+
+%!  initialization(load_metta_python_proxy) is det.
+%
+%   This directive ensures that the `load_metta_python_proxy/0` predicate is called
+%   when the program starts. It initializes the Metta Python proxy when the Prolog
+%   program is first loaded.
+%
+%   The directive guarantees that the proxy is set up and ready for use when the 
+%   program begins execution, making it available throughout the Prolog session.
+%
 :- initialization(load_metta_python_proxy).
+
+%!  initialization(load_metta_python_proxy, restore) is det.
+%
+%   This variant of the `initialization/2` directive ensures that the 
+%   `load_metta_python_proxy/0` predicate is also called during state restoration.
+%   When a saved state is restored, this directive ensures the Metta Python proxy 
+%   is re-initialized, maintaining consistency across state transitions.
+%
+%   The second argument, `restore`, indicates that the initialization should happen
+%   upon restoring a saved state, ensuring that the proxy is available after restoration.
+%
 :- initialization(load_metta_python_proxy, restore).
 
 %!  on_restore1 is det.
