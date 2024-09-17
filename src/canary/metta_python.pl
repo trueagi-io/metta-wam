@@ -1037,7 +1037,7 @@ load_metta_python_proxy :- did_load_metta_python_proxy.
 load_metta_python_proxy :-
     assert(did_load_metta_python_proxy),
     metta_python_proxy(String),
-    py_module(metta_python_proxy, String),!.
+    ignore(notrace(with_safe_argv(catch(py_module(metta_python_proxy, String),_,true)))),!.
 % Ensure that `load_metta_python_proxy/0` is called when the program is initialized (on startup).
 % This will trigger the loading of the Python proxy module during initialization.
 :- initialization(load_metta_python_proxy).
