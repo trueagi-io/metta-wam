@@ -7,13 +7,14 @@
 %                       seek_to_line/2,
 %                       linechar_offset/3,
 %                       clause_in_file_at_position/3,
-                        help_at_position/4
+                        help_at_position/4,
+                        split_text_single_lines/2
                         ]).
 :- use_module(library(debug), [debug/3]).
 :- use_module(lsp_metta_xref).
-:- use_module(lsp_metta_changes, [handle_doc_changes/2, doc_text/2]).
+:- use_module(lsp_metta_changes, [handle_doc_changes/2]).
 
-:- dynamic doc_text/2.
+:- dynamic lsp_metta_changes:doc_text/2.
 
 % /** <module> LSP Utils
 %
@@ -122,12 +123,16 @@ format_metta_Param(['@param',P],Pf) :- format(string(Pf),"Param: ~w",[P]).
 %     predicate_help(Path, Clause, S0),
 %     format_help(S0, S).
 
-annotated_read_sexpr_list(Stream,[]) :- at_end_of_stream(Stream).
-annotated_read_sexpr_list(Stream,[Item|L]) :-
-    annotated_read_sexpr(Stream,Item),
-    annotated_read_sexpr_list(Stream,L).
+% annotated_inc_row(p(L,C),p(L,C1),N) :- C1 is C+N.
 
-annotated_read_sexpr(I,O):- annotated_cont_sexpr(')', I,O).
+annotated_next_line(p(L,_),p(L1,0)) :- L1 is L+1.
+
+annotated_read_sexpr_list(LC0,LC0,Stream,[]) :- at_end_of_stream(Stream).
+annotated_read_sexpr_list(LC0,LC2,Stream,[Item|L]) :-
+    annotated_read_sexpr(LC0,LC1,Stream,Item),
+    annotated_read_sexpr_list(LC1,LC2,Stream,L).
+
+annotated_read_sexpr(LC0,LC1,I,O):- annotated_cont_sexpr(LC0,LC1,')',I,O).
 
 %! annotated_cont_sexpr(+EndChar:atom, +Stream:stream, -Item) is det.
 %
@@ -136,18 +141,25 @@ annotated_read_sexpr(I,O):- annotated_cont_sexpr(')', I,O).
 % @arg EndChar Character that denotes the end of a symbol.
 % @arg Stream Stream from which to read.
 % @arg Item The item read from the stream.
-annotated_cont_sexpr(EndChar, Stream, Item) :-
-    skip_spaces(Stream),  % Ignore whitespace before reading the expression.
+annotated_cont_sexpr(LC0,LC1,EndChar, Stream, Item) :-
+    annotated_skip_spaces(Stream),  % Ignore whitespace before reading the expression.
     get_char(Stream, Char),
-    (   Char = '(' -> annotated_read_list(')', Stream, Item)  % If '(', read an S-expression list.
-    ;   Char = '[' -> (annotated_read_list(']', Stream, It3m), Item = ['[...]',It3m])  % If '[', read an S-expression list.
-    ;   Char = '{' -> (annotated_read_list('}', Stream, It3m), Item = ['{...}',It3m])  % If '{', read an S-expression list.
-    ;   Char = '"' -> read_quoted_string(Stream, '"', Item)  % Read a quoted string.
-    ;   Char = '!' -> (annotated_read_sexpr(Stream, Subr), Item = exec(Subr))  % Read called directive
-    ;   Char = '\'' -> read_quoted_symbol(Stream, '\'', Item)  % Read a quoted symbol.
-    ;   Char = '`' -> read_quoted_symbol(Stream, '`', Item)  % Read a backquoted symbol.
-    ;   Char = end_of_file -> Item = end_of_file  % If EOF, set Item to 'end_of_file'.
-    ; read_symbolic(EndChar, Stream, Char, Item)            % Otherwise, read a symbolic expression.
+    (   Char = '(' -> (annotated_read_list(LC0,LC1,')', Stream, Item))  % If '(', read an S-expression list.
+    ;   Char = '[' -> (annotated_read_list(LC0,LC1,']', Stream, It3m), Item = ['[...]',It3m])  % If '[', read an S-expression list.
+    ;   Char = '{' -> (annotated_read_list(LC0,LC1,'}', Stream, It3m), Item = ['{...}',It3m])  % If '{', read an S-expression list.
+    ;   Char = '"' -> (LC1=LC0,read_quoted_string(Stream, '"', Item))  % Read a quoted string.
+    ;   Char = '!' -> (annotated_read_sexpr(LC0,LC1,Stream, Subr), Item = exec(Subr))  % Read called directive
+    ;   Char = '\'' -> (LC1=LC0,read_quoted_symbol(Stream, '\'', Item))  % Read a quoted symbol.
+    ;   Char = '`' -> (LC1=LC0,read_quoted_symbol(Stream, '`', Item))  % Read a backquoted symbol.
+    ;   Char = end_of_file -> (LC1=LC0,Item = end_of_file)  % If EOF, set Item to 'end_of_file'.
+    ;   seek(Stream,0,current,N0), % Otherwise, read a symbolic expression.
+        read_symbolic(EndChar, Stream, Char, Item0),
+        seek(Stream,0,current,N1),
+        LC1=LC0,
+        LC0=p(L,C),
+        Start is C+N0-1,
+        End is C+N1,
+        Item=annotated(L,Start,End,Item0)
     ), !.
 
 %! annotated_read_list(+EndChar:atom, +Stream:stream, -List:list) is det.
@@ -158,7 +170,7 @@ annotated_cont_sexpr(EndChar, Stream, Item) :-
 % @arg Stream Stream from which to read.
 % @arg List The list read from the stream.
 % @arg EndChar Character that denotes the end of the list.
-annotated_read_list(EndChar, Stream, List) :-
+annotated_read_list(LC0,LC2,EndChar, Stream, List) :-
     skip_spaces(Stream),  % Skip any leading spaces before reading.
     peek_char(Stream, Char), !,
     ( Char = EndChar ->  % Closing parenthesis signals the end of the list.
@@ -166,8 +178,8 @@ annotated_read_list(EndChar, Stream, List) :-
         List = []
     ; Char = end_of_file ->  % Unexpected end of file inside the list.
         List = [incomplete]
-    ; annotated_cont_sexpr(EndChar, Stream, Element),  % Read the next S-expression.
-        annotated_read_list(EndChar, Stream, Rest),  % Continue reading the rest of the list.
+    ; annotated_cont_sexpr(LC0, LC1, EndChar, Stream, Element),  % Read the next S-expression.
+        annotated_read_list(LC1, LC2, EndChar, Stream, Rest),  % Continue reading the rest of the list.
         List = [Element | Rest]  % Add the element to the result list.
     ), !.
 
@@ -190,8 +202,8 @@ annotated_skip_spaces(Stream) :-
 % @arg Stream The input stream from which to read.
 annotated_read_comment(Stream) :-
     % get_char(Stream, _),  % Skip the ';' character.
-    read_position(Stream, Line, Col, CharPos, Pos),
-    read_until_eol(Stream, Comment).
+    read_position(Stream, _Line, _Col, _CharPos, _Pos),
+    read_until_eol(Stream, _Comment).
 
 %!  clause_in_file_at_position(-Clause, +Path, +Position) is det.
 %
@@ -207,30 +219,55 @@ annotated_read_comment(Stream) :-
 %
 clause_in_file_at_position(Clause, Path, line_char(Line1, Char)) :-
     % Setup a stream to read the file and find the clause at the specified position.
-    doc_text(Path,SplitText),
+    lsp_metta_changes:doc_text(Path,SplitText),
     split_document_get_section_only(Line1,LinesLeft,SplitText,d(_,Text,_)),
     %debug(server,"~w",[d(_,Text,_)]),
-    open_string(Text,Stream),
-    annotated_read_sexpr_list(Stream,ItemList),
-    close(Stream),
-    debug(server,"~w",[ItemList]),
-    Clause="blah".
+    setup_call_cleanup(
+        open_string(Text,Stream),
+        annotated_read_sexpr_list(p(0,0),_,Stream,ItemList),
+        close(Stream)),
+    debug(server,"~w ~w ~w",[ItemList,0,Char]),
+    (find_term_in_annotated_stream(ItemList,0,Char,Clause) -> true ; Clause=''),
+    debug(server,"~w",[Clause]).
 
-%    %setup_call_cleanup(
-%        open_string(FullText, Stream),
-%        % Call clause_at_position to extract the clause at the given position.
-%        clause_at_position(Stream, Clause, Position),
-%        % Close the stream once the operation is done.
-%        close(Stream)
-%    %)
-%    .
+find_term_in_annotated_stream(annotated(Lpos,S,E,Term),Lpos,CPos,Term) :- CPos=<E,!,S=<CPos.
+find_term_in_annotated_stream(exec(L),Lpos,CPos,Term) :- find_term_in_annotated_stream(L,Lpos,CPos,Term).
+find_term_in_annotated_stream([H|T],Lpos,CPos,Term) :-
+    (find_term_in_annotated_stream(H,Lpos,CPos,Term) -> true ; find_term_in_annotated_stream(T,Lpos,CPos,Term)).
 
+%!  split_document_get_section(+N, -M, +SplitText, -Pre, -This, -Post) is det.
+%
+%   Splits a document into three parts based on a starting line number N.
+%
+%   This predicate takes a list of document sections, represented as terms `d(L, Body, Meta)`,
+%   where L is the number of lines, Body is the content, and Meta is additional metadata.
+%   The goal is to split the document into a prefix (Pre), the section containing the Nth line (This),
+%   and the remainder (Post).
+%
+%   @arg N        The line number at which to split the document.
+%   @arg M        Unifies with the offset from N at which the splitting occurs.
+%   @arg SplitText The input list of document sections to be split.
+%   @arg Pre      The prefix sections before the Nth line.
+%   @arg This     The section containing the Nth line.
+%   @arg Post     The remaining sections after the Nth line.
+%
 split_document_get_section(N,N,[],[],d(0,"",false),[]).
 split_document_get_section(N,M,[d(L,Body,Meta)|SplitText],[],d(L,Body,Meta),SplitText) :- L>=N,M is L-N,!.
 split_document_get_section(N,M,[d(L,Body,Meta)|SplitText],[d(L,Body,Meta)|Pre],This,Post) :- L<N,!,
     N1 is N-L,
     split_document_get_section(N1,M1,SplitText,Pre,This,Post),
     M is M1+L.
+
+split_document_get_multiple_sections(N1,_N2,N1,[], [],[],[]). % empty list
+split_document_get_multiple_sections(_N1,N2,0,SplitText, [],[],SplitText) :- 0>N2,!. % past the end
+split_document_get_multiple_sections(N1,N2,M,[d(L,Body,Meta)|SplitText],[d(L,Body,Meta)|Pre],This,Post) :- L=<N1,!, % in pre
+    N1n is N1-L,
+    N2n is N2-L,
+    split_document_get_multiple_sections(N1n,N2n,M,SplitText,Pre,This,Post).
+split_document_get_multiple_sections(N1,N2,N1,[d(L,Body,Meta)|SplitText],Pre,[d(L,Body,Meta)|This],Post) :- % in list
+    N1n is N1-L,
+    N2n is N2-L,
+    split_document_get_multiple_sections(N1n,N2n,_M1,SplitText,Pre,This,Post).
 
 split_document_get_section_only(N,N,[],d(0,"",false)).
 split_document_get_section_only(N,M,[d(L,Body,Meta)|_],d(L,Body,Meta)) :- L>=N,M is L-N,!.
@@ -281,3 +318,20 @@ clause_at_position(Stream, Clause, line_char(Line1, Char), Here) :-
 %    % Extract the clause at the specified position.
 %    extract_clause_at_position(Stream, Ops, Terms, line_char(Line1, Char), Here,
 %                               SubPos, Error, Clause).
+
+create_line_entry(N,S,d(N,S,false)).
+
+extract_line_entry(d(N,S,false),S).
+
+concat_strings([], "").
+concat_strings([H|T], Result) :-
+    concat_strings(T, TailResult),
+    string_concat(H, TailResult, Result).
+
+split_text_single_lines(FullText,SplitText) :-
+    split_string(FullText, "\n", "\r", SplitText0),
+    maplist(create_line_entry(1),SplitText0,SplitText).
+
+coalesce_text(SplitText,FullText) :-
+    maplist(extract_line_entry,SplitText,Strings),
+    concat_strings(Strings,FullText).
