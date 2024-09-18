@@ -1,5 +1,5 @@
 ;; Test Deduction equality Rule
-!(import! &self DeductionEqual.metta)
+!(import! &self  metta:pln:equal:DeductionEqual)
 
 ;; Test 1:
 !(, (≞ P (STV 1 0.1))

@@ -5,9 +5,9 @@
 ;; (: = (-> $t $t Type))
 
 ;; Import modules
-!(import! &self DeductionDTL.metta)
-!(import! &self ../../synthesis/Synthesize.metta)
-!(import! &self ../../common/Record.metta)
+!(import! &self metta:pln:dependent-types:DeductionDTL)
+!(import! &self metta:synthesis:Synthesize)
+!(import! &self metta:common:Record)
 
 ;; Knowledge base
 (: Predicate Type)

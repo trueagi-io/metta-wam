@@ -1,10 +1,10 @@
 ;; Test subtyping
 
 ;; Import synthesizer
-!(import! &self ../synthesis/Synthesize.metta)
+!(import! &self metta:synthesis:Synthesize)
 
 ;; Import rule base
-!(import! &rb rule-base.metta)
+!(import! &rb metta:subtyping:rule-base)
 
 ;; Define knowledge base for that test
 (: kb (-> Atom))

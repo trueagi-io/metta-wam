@@ -1,7 +1,7 @@
 
-! (Response
+(= (response)
    (_eval
-     (llm (Agent (chat-gpt))
+     ((chat-gpt-agent)
         (system "Represent natural language statements as expressions in Scheme.
 Distinguish questions and statements.
 Universal quantification should follow the pattern -

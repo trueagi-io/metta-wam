@@ -12,8 +12,7 @@
    "SUCCESS")
 
 !(assertEqual
-  (llm
-    (Agent EchoAgent)
-    (user "Please execute call-me with argument=A")
-    (function func_test))
+  ((echo-agent)
+   (user "Please execute call-me with argument=A")
+   (Function func_test))
   "SUCCESS")

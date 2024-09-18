@@ -1,5 +1,5 @@
 ;; Import TruthValue
-!(import! &self TruthValue.metta)
+!(import! &self metta:common:truthvalue:TruthValue)
 
 !(assertEqual (count->confidence 1) 0.5)
 !(assertEqual (count->confidence 10) 0.9090909090909091)

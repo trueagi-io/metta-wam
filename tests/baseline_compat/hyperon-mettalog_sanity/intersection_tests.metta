@@ -142,7 +142,7 @@ Test intersection with duplicates
 ;; This ensures that expressions like (+ 1 2) that unify with 3 are handled correctly.
 !(assertEqualToResult
   (pred-intersection unified (superpose (($x (+ 1 2)) (3 4))) (superpose ((3 $y) (4 (+ 1 2)))))
-  ((3 4) (4 3))
+  ((3 3) (3 4) (4 3))
 )
 
 ;; Test intersection with nested structures and expressions
@@ -215,10 +215,13 @@ Test intersection with duplicates
 )
 
 
-;(= (intersection-element $x $y)  (intersection (superpose $x) (superpose $y)))
-;!(assertEqual (intersection-element (1 2 3 foo bar) (2 foo)) (superpose (2 foo)))
+
 ;
-; (= (intersection $x $y) (superpose (intersection-element (collapse $x) (collapse $y))))
+; (= (intersection $x $y) (superpose (intersect-elements (collapse $x) (collapse $y))))
+
+; A Test to show we can define a function to be used like how normal people are imagining
+(= (intersect-elements $x $y) (collapse (intersection (superpose $x) (superpose $y))))
+!(assertEqual (intersect-elements (1 2 3 foo bar) (2 foo)) (2 foo))
 
 "
 

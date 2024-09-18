@@ -525,7 +525,7 @@ report_progress(FileName, InStream, TotalLines, StartTime) :-
     repeat,
     ( stop_reporting(FileName, InStream, TotalLines, StartTime)
       -> log_progress('~t - Stopping reporting on ~w progress.~n', [FileName])
-      ; (once(report_progress_so_far(FileName, InStream, TotalLines, StartTime, TimeLeft)),
+      ; (once(report_progress_so_far(FileName, get_percent_done(InStream, TotalLines), StartTime, TimeLeft)),
          ((number(TimeLeft), HalfTimeLeft is TimeLeft / 2, HalfTimeLeft < TimeBetweenReports, n_max(HalfTimeLeft,2,MinTime)) -> sleep(MinTime) ; sleep(TimeBetweenReports)),  % Sleep for HalfTime seconds between progress reports
          fail)).  % And Continue reporting
 
@@ -546,28 +546,64 @@ stop_reporting(FileName, InStream, _TotalLines, _StartTime):-
         log_error('Info: Stream closed.', [])
     ; fail ).  % Continue reporting if none of the above conditions are met
 
-%! report_progress_so_far(FileName, +InStream:stream, +TotalLines:int, +StartTime:float) is det.
+
+
+%! remaining_time(+PercentDone: float, +StartTime: float, -RemainingTime: integer) is det.
 %
-% Calculates and logs the progress and estimated time remaining.
-report_progress_so_far(FileName, InStream, TotalLines, StartTime, EstimatedTimeRemaining):-
+% Calculate the remaining time required to complete a task based on the percentage of the task already completed and the start time.
+% This predicate calculates the elapsed time from the start time to the current time, then uses this along with the task completion percentage to compute the remaining time.
+%
+% @param PercentDone The percentage of the task that has been completed, expressed as a float (e.g., 50.0 for 50%).
+% @param StartTime The start time of the task, expressed in epoch seconds.
+% @param RemainingTime The computed remaining time to complete the task, also in seconds.
+%
+% This predicate assumes that PercentDone is a positive value greater than zero. If it is zero or negative, a default remaining time of 60 seconds is returned to avoid division by zero or other meaningless calculations.
+%
+remaining_time(PercentDone, StartTime, RemainingTime) :-
+    PercentDone > 0,   % Ensure that PercentDone is greater than 0 to avoid division by zero
+    get_time(CurrentTime),
+    ElapsedTime is CurrentTime - StartTime,  % Calculate the time elapsed since the start
+    TotalTime is ElapsedTime / (PercentDone / 100),  % Estimate total time based on current progress
+    RemainingTime is TotalTime - ElapsedTime, !.  % Compute remaining time
+remaining_time(_, _, 60).  % Return a default remaining time if PercentDone is not greater than 0
+
+
+%! get_percent_done(+InStream: stream, +TotalLines: int, -Percent: float) is det.
+%
+% Calculates and logs the percentage of lines processed so far in a stream based on the total number of lines. This predicate not only calculates the percentage but also logs the progress directly.
+%
+% @param InStream The input stream from which lines are being read.
+% @param TotalLines The total number of lines in the stream.
+% @param Percent The percentage of lines processed thus far, calculated and used for logging.
+%
+get_percent_done(InStream, TotalLines, Percent):-
     stream_property(InStream, position(Position)),
     stream_position_data(line_count, Position, CurrentLine),  % Get the current line number being processed
-    PercentDone is (CurrentLine / TotalLines) * 100,  % Calculate the percentage completed
+    Percent is (CurrentLine / TotalLines) * 100,  % Calculate the percentage completed
+    log_progress('Info: Processing progress:\t ~2f% (Now ~d of ~d lines) ', [Percent, CurrentLine, TotalLines]).
 
-    % Calculate elapsed time and estimated remaining time
-    get_time(CurrentTime),
-    ElapsedTime is CurrentTime - StartTime,  % Time elapsed since the start
-    (   CurrentLine > 0 ->  % Avoid division by zero
-        ProcessingSpeed is CurrentLine / ElapsedTime,  % Lines processed per second
-        RemainingLines is TotalLines - CurrentLine,
-        EstimatedTimeRemaining is RemainingLines / ProcessingSpeed,  % Estimated time remaining in seconds
-        format_time_remaining(EstimatedTimeRemaining, TimeLeft)
-    ;   TimeLeft = 'N/A'  % If no lines have been processed, time left is unknown
+
+%! report_progress_so_far(+FileName: string, +CalcPercent: predicate, +StartTime: float, -RemainingTime: float) is det.
+%
+% Reports the progress and the estimated time remaining for processing a file, based on a percentage calculation predicate provided.
+%
+% @param FileName The name of the file being processed.
+% @param CalcPercent A lambda that when called, computes the percentage of the task completed. It should have a signature like `calc_percent_done(-Percent: float)`.
+% @param StartTime The start time of the file processing, typically captured using `get_time/1`.
+% @param RemainingTime The computed remaining time to complete the task, also in seconds.
+%
+% This predicate assumes the `CalcPercent` predicate handles all necessary file stream interactions to determine the progress.
+%
+report_progress_so_far(FileName, CalcPercent, StartTime, RemainingTime):-
+    call(CalcPercent, PercentDone),  % Call the provided predicate to calculate the percentage completed
+    remaining_time(PercentDone, StartTime, RemainingTime),
+    (   number(RemainingTime) ->
+        format_time_remaining(RemainingTime, TimeLeft)  % Convert estimated time into a human-readable format
+    ;   TimeLeft = 'N/A'  % If no lines have been processed, or an error occurred, time left is unknown
     ),
+    % Log the progress and estimated time remaining
+    log_progress('\tProcessing file ~w: ~2f% complete. \tEstimated time remaining: ~w', [FileName, PercentDone, TimeLeft]).
 
-    % Print the progress and estimated time remaining
-    log_progress('Info: Processing progress:\t ~2f% (Now ~@ of ~@ lines) ~w ', [PercentDone, scaled_units(CurrentLine), scaled_units(TotalLines), FileName]),
-    log_progress('\t - Estimated time remaining: ~w~n', [TimeLeft]).
 
 %! scaled_units(+Number:int) is det.
 %
@@ -717,8 +753,8 @@ write_readably(OutStream, Item) :-
 % Throws an error with stream position if the S-expression cannot be parsed.
 % @arg Stream Stream from which to read.
 % @arg Item The item read from the stream.
- (I,O):- string(I), open_string(I,S),!,read_sexpr(S,O).
-read_sexpr(I,O):- cont_sexpr(')', I,O).
+read_sexpr(I,O):- string(I), open_string(I,S),!,read_sexpr(S,O).
+read_sexpr(I,O):- cont_sexpr(')', I, O).
 %! cont_sexpr(+EndChar:atom, +Stream:stream, -Item) is det.
 %
 % Reads a single item (S-expression or comment) from the specified stream, handling different formats and encodings.
@@ -749,28 +785,16 @@ throw_stream_error(Stream, Reason) :-
     read_position(Stream, Line, Col, CharPos, _),
     throw(error(stream_error(Line:Col:CharPos, Reason))).
 
-%! read_comment(+Stream:stream) is det.
+%! read_single_line_comment(+Stream:stream) is det.
 %
 % Reads a single-line comment from the stream and asserts it with the position.
 % A comment starts with ';' and continues to the end of the line.
 % @arg Stream The input stream from which to read.
-read_comment(Stream) :-
-    % get_char(Stream, _),  % Skip the ';' character.
+read_single_line_comment(Stream) :-
+    % read_char(Stream, ';'),  % Skip the ';' character.
     read_position(Stream, Line, Col, CharPos, Pos),
-    read_until_eol(Stream, Comment),
-    assertz(metta_file_comment(Line, Col, CharPos, '$COMMENT'(Comment,Line, Col), Pos)).
-
-%! read_until_eol(+Stream:stream, -Comment:atom) is det.
-%
-% Reads characters from the stream until the end of the line (EOL) is encountered.
-% @arg Stream Stream from which to read.
-% @arg Comment The comment text read from the stream.
-read_until_eol(Stream, Comment) :-
-    get_char(Stream, Char),
-    (   char_type(Char,end_of_line) -> Comment = ""  % End of line reached, terminate the comment.
-    ;   Char = end_of_file -> Comment = ""  % End of file reached, terminate the comment.
-    ;   read_until_eol(Stream, RestComment), string_concat(Char, RestComment, Comment)  % Read more characters recursively.
-    ).
+    read_line_to_string(Stream, Comment),
+    assertz(metta_file_comment(Line, Col, CharPos, '$COMMENT'(Comment, Line, Col), Pos)).
 
 %! read_position(+Stream:stream, -Line:integer, -Col:integer, -CharPos:integer) is det.
 %
@@ -780,7 +804,7 @@ read_until_eol(Stream, Comment) :-
 % @arg Col The current column number.
 % @arg CharPos The current character position in the stream.
 % @arg Position The current $postion/3 Term of the stream.
-read_position(Stream, Line, Col, CharPos,Position) :-
+read_position(Stream, Line, Col, CharPos, Position) :-
     stream_property(Stream, position(Position)),  % Get the current position from the stream.
     stream_position_data(line_count, Position, Line),  % Extract the line number.
     stream_position_data(line_position, Position, Col),  % Extract the column number.
@@ -788,21 +812,91 @@ read_position(Stream, Line, Col, CharPos,Position) :-
 
 %! skip_spaces(+Stream:stream) is det.
 %
-% Skips whitespace characters in the input stream.
-% If a comment is encountered, reads the comment and asserts it.
-% @arg Stream Stream from which to skip spaces.
+% Skips spaces, single-line comments (starting with `;`), and block comments (between `/*` and `*/`),
+% including nested block comments. It continues to read until a non-space, non-comment character is encountered.
+%
+% @arg Stream The stream from which to read and skip spaces/comments.
 skip_spaces(Stream) :-
     peek_char(Stream, Char),
-    (   Char = ';' -> (read_comment(Stream), skip_spaces(Stream))  % If the character is ';', read a single-line comment.
-    ;   is_like_space(Char) -> (get_char(Stream, _), skip_spaces(Stream))  % Consume the space and continue.
-    ;   true  % Non-space character found; stop skipping.
+    (   Char = ';' ->
+        ( read_single_line_comment(Stream),  % If the character is ';', read a single-line comment.
+          skip_spaces(Stream))  % After reading the comment, continue skipping spaces.
+    ;   Char = '/' ->
+        skip_block_comment(Stream)  % Check if this is the start of a block comment.
+    ;   is_like_space(Char) ->
+        ( get_char(Stream, _),  % Consume the space character.
+          skip_spaces(Stream))  % Continue skipping spaces.
+    ;   true  % Non-space, non-comment character found; stop skipping.
     ), !.
 
-
+%! is_like_space(+Char:char) is semidet.
+%
+% Checks if a character is a space or similar (e.g., tabs, newlines).
+%
+% @arg Char The character to check.
 is_like_space(Char):- char_type(Char,white),!.
 is_like_space(Char):- char_type(Char,end_of_line),!.
 is_like_space(Char):- char_type(Char,space),!.
 is_like_space(Char):- char_type(Char,cntrl),!.
+
+%! skip_block_comment(+Stream:stream) is det.
+%
+% Skips over a block comment (starting with `/*` and ending with `*/`), supporting nested block comments.
+% The function captures the block comment along with its position and stores it in the database.
+%
+% @arg Stream The input stream from which to skip the block comment.
+skip_block_comment(Stream) :-
+    peek_string(Stream, 2, LookAhead),
+    (   LookAhead = "/*" ->
+        read_block_comment(Stream)  % If we see the block comment start, read and handle it.
+    ;   true  % Otherwise, no block comment, continue processing.
+    ).
+
+%! read_block_comment(+Stream:stream) is det.
+%
+% Reads a block comment (including nested block comments) from the stream
+% and asserts it with the starting position. A block comment starts with '/*' and
+% continues until the closing '*/'.
+%
+% @arg Stream The input stream from which to read the block comment.
+read_block_comment(Stream) :-
+    read_position(Stream, Line, Col, CharPos, Pos),  % Capture the start position.
+    get_string(Stream, 2, _),  % Skip the '/*' characters.
+    read_nested_block_comment(Stream, 1, Chars),  % Read the block comment, supporting nested ones.
+    string_chars(Comment, Chars),
+    assertz(metta_file_comment(Line, Col, CharPos, '$COMMENT'(Comment, Line, Col), Pos)).
+
+%! read_nested_block_comment(+Stream:stream, +Level:int, -Comment:list) is det.
+%
+% Reads a block comment (including nested block comments) and returns the comment as a list of characters.
+% The comment starts with '/*' and continues until the closing '*/', supporting nesting.
+%
+% @arg Stream The stream from which to read.
+% @arg Level  The current level of block comment nesting (initially 1 when called from `read_block_comment`).
+% @arg Comment The list of characters read within the block comment.
+read_nested_block_comment(Stream, Level, Comment) :-
+    read_nested_block_comment(Stream, Level, [], Comment).
+
+read_nested_block_comment(Stream, Level, Acc, Comment) :-
+    peek_string(Stream, 2, LookAhead),
+    (   LookAhead = "*/" ->
+        (   get_string(Stream, 2, _),  % Consume the '*/'.
+            NewLevel is Level - 1,  % Decrease the nesting level.
+            (   NewLevel = 0 ->
+                reverse(Acc, Comment)  % If outermost comment is closed, return the accumulated comment.
+            ;   read_nested_block_comment(Stream, NewLevel, ['*', '/' | Acc], Comment)  % Continue, append '*/'.
+            )
+        )
+    ;   LookAhead = "/*" ->
+        (   get_string(Stream, 2, _),  % Consume the '/*'.
+            NewLevel is Level + 1,  % Increase the nesting level.
+            read_nested_block_comment(Stream, NewLevel, ['/', '*' | Acc], Comment)  % Continue, append '/*'.
+        )
+    ;   (   get_char(Stream, Char),  % Read any other character.
+            read_nested_block_comment(Stream, Level, [Char | Acc], Comment)  % Accumulate the character and continue.
+        )
+    ).
+
 
 %! read_list(+EndChar:atom, +Stream:stream, -List:list) is det.
 %
@@ -820,9 +914,9 @@ read_list(EndChar, Stream, List) :-
         List = []
     ; Char = end_of_file ->  % Unexpected end of file inside the list.
         throw_stream_error(Stream, syntax_error(unexpected_end_of_file, "Unexpected end of file in list"))
-    ; cont_sexpr(EndChar, Stream, Element),  % Read the next S-expression.
+    ; ( cont_sexpr(EndChar, Stream, Element),  % Read the next S-expression.
         read_list(EndChar, Stream, Rest),  % Continue reading the rest of the list.
-        List = [Element | Rest]  % Add the element to the result list.
+        List = [Element | Rest])  % Add the element to the result list.
     ), !.
 
 %! read_quoted_string(+Stream:stream, +EndChar:atom, -String:atom) is det.
@@ -878,19 +972,49 @@ read_until_char(Stream, EndChar, Chars) :-
 % @arg Symbolic The complete symbolic expression read.
 read_symbolic(EndChar, Stream, FirstChar, Symbolic) :-
     read_symbolic_cont(EndChar, Stream, RestChars),
-    classify_and_convert_charseq(FirstChar, RestChars, Symbolic).
+    classify_and_convert_charseq([FirstChar| RestChars], Symbolic), !.
 
-%! classify_and_convert_charseq(+FirstChar:atom, +RestChars:list, -Symbolic:term) is det.
+%! classify_and_convert_charseq(+Chars:list, -Symbolic:term) is det.
 %
-% Classifies and converts a sequence of characters into a Prolog term, handling special cases like variables.
-% @arg FirstChar The first character of the sequence.
-% @arg RestChars The rest of the characters in the sequence.
-% @arg Symbolic The resultant Prolog term or symbol.
-classify_and_convert_charseq('$', RestChars, '$VAR'(Symbolic)) :- !, atom_chars(Symbolic, ['_'|RestChars]).
-classify_and_convert_charseq(FirstChar, RestChars, Symbolic) :-
-    % Attempt to interpret complex syntaxes such as hexadecimal numbers and date objects.
-    notrace(catch(read_from_chars([FirstChar | RestChars], Symbolic), _, fail)), atomic(Symbolic), !.
-classify_and_convert_charseq(FirstChar, RestChars, Symbolic) :- atom_chars(Symbolic, [FirstChar | RestChars]).
+% Classifies and converts a sequence of characters into a Prolog term,
+% handling special cases like variables, numbers, and symbolic terms.
+%
+% @param Chars    The input list of characters.
+% @param Symbolic The resultant Prolog term or symbol, which could be a variable,
+%                 number, or an atom.
+classify_and_convert_charseq(Chars, Symbolic) :-
+    % First, classify and convert the character sequence using the helper predicate.
+    classify_and_convert_charseq_(Chars, Symbol),
+
+    % If the classified symbol is an integer, and the original characters contain a '.',
+    % convert it to a floating point number.
+    ( ( integer(Symbol), memberchk('.', Chars))
+      -> Symbolic is Symbol * 1.0   % Convert to floating-point number.
+       ; Symbolic = Symbol).        % Otherwise, keep the symbol as is.
+
+
+%! classify_and_convert_charseq_(+Chars:list, -Symbolic:term) is det.
+%
+% Helper predicate that attempts to classify the character sequence.
+% Handles special cases such as Prolog variables and numbers.
+%
+% @param Chars    The input list of characters.
+% @param Symbolic The resultant Prolog term or symbol.
+
+% Case 1: If the character sequence starts with '$', treat it as a variable.
+classify_and_convert_charseq_(['$'| RestChars], '$VAR'(Symbolic)) :-
+    !,
+    atom_chars(Symbolic, ['_'|RestChars]).  % Convert the rest of the characters into a variable name.
+% Case 2: Attempt to interpret the characters as a Prolog term using `read_from_chars/2`.
+% This handles more complex syntaxes like numbers, dates, etc.
+classify_and_convert_charseq_(Chars, Symbolic) :-
+    notrace(catch(read_from_chars(Chars, Symbolic), _, fail)),  % Safely attempt to parse the characters.
+    atomic(Symbolic),  % Ensure the result is atomic.
+    !.
+% Case 3: If no other case applies, convert the characters directly into an atom.
+classify_and_convert_charseq_(Chars, Symbolic) :-
+    atom_chars(Symbolic, Chars).  % Convert the character sequence into an atom.
+
 
 %! read_symbolic_cont(+EndChar:atom, +Stream:stream, -Chars:list) is det.
 %

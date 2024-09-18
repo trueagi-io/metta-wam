@@ -110,11 +110,12 @@ def get_llm_args(metta: MeTTa, prompt_space: SpaceRef, *args):
     for atom in args:
         # We first interpret the atom argument in the context of the main metta space.
         # If the prompt template is in a separate file and contains some external
-        # symbols like (user-query) or (chat-gpt model), they will be resolved here.
+        # symbols like (user-query), they will be resolved here.
         # It is useful for messages, agents, as well as arbitrary code, which relies
         # on information from the agent.
         # TODO: we may want to do something special with equalities
-        arg = interpret(metta.space(), atom)
+        #arg = interpret(metta.space(), atom)
+        arg = metta.evaluate_atom(atom)
         # NOTE: doesn't work now since Error inside other expressions is not passed through them
         #       but it can be needed in the future
         #if isinstance(arg, ExpressionAtom) and repr(arg.get_children()[0]) == 'Error':
@@ -129,10 +130,10 @@ def get_llm_args(metta: MeTTa, prompt_space: SpaceRef, *args):
                 name = ch[0].get_name()
                 if name == 'Messages':
                     __msg_update(*get_llm_args(metta, prompt_space, *ch[1:]))
-                elif name in ['system', 'user', 'assistant']:
+                elif name in ['system', 'user', 'assistant', 'media']:
                     messages += [{'role': name, 'content': atom2msg(ch[1])}]
                     msg_atoms += [arg]
-                elif name in ['Functions', 'function']:
+                elif name in ['Functions', 'Function']:
                     functions += [get_func_def(fn, metta, prompt_space)
                                   for fn in ch[1:]]
                 elif name == 'Script':
@@ -140,7 +141,7 @@ def get_llm_args(metta: MeTTa, prompt_space: SpaceRef, *args):
                         # FIXME? This will overwrites the current prompt_space if it is set.
                         # It is convenient to have it here to successfully execute
                         # (llm &prompt (Functions fn)), when fn is defined in &prompt.
-                        # But (function fn) can also be put in &prompt directly.
+                        # But (Function fn) can also be put in &prompt directly.
                         # Depending on what is more convenient, this overriding can be changed.
                         prompt_space = ch[1].get_object()
                     else:
@@ -156,7 +157,7 @@ def get_llm_args(metta: MeTTa, prompt_space: SpaceRef, *args):
                     agent = ch[1]
                     # The agent can be a Python object or a string (filename)
                     if isinstance(agent, GroundedAtom):
-                        agent = agent.get_object().value
+                        agent = agent.get_object().content
                     elif isinstance(agent, SymbolAtom):
                         agent = agent.get_name()
                     else:
@@ -166,6 +167,15 @@ def get_llm_args(metta: MeTTa, prompt_space: SpaceRef, *args):
                         ps = param.get_children()
                         params[repr(ps[0])] = ps[1]
                     agent = (agent, params)
+                elif name == 'Kwargs':
+                    params = {}
+                    for param in ch[1:]:
+                        ps = param.get_children()
+                        params[repr(ps[0])] = ps[1]
+                    if not isinstance(agent, tuple):
+                        agent = (agent, params)
+                    else:
+                        agent[1].update(params)
                 elif name == '=':
                     # We ignore equalities here: if a space is used to store messages,
                     # it can contain equalities as well (another approach would be to
@@ -184,10 +194,36 @@ def get_llm_args(metta: MeTTa, prompt_space: SpaceRef, *args):
     return agent, messages, functions, \
         msg_atoms[0] if len(msg_atoms) == 1 else E(S('Messages'), *msg_atoms)
 
+def get_response(metta,agent,  response, functions, msgs_atom):
+    if not hasattr(response, "tool_calls"):
+        # if response is stream
+        return [ValueAtom(response)]
+    if response.tool_calls is not None:
+        result = []
+        for tool_call in response.tool_calls:
+            fname = tool_call.function.name
+            fs = S(fname)
+            args = tool_call.function.arguments if isinstance(tool_call.function.arguments, dict) else json.loads(
+                tool_call.function.arguments)
+            args = {} if args is None else \
+                json.loads(args) if isinstance(args, str) else args
+            # Here, we check if the arguments should be parsed to MeTTa
+            for func in functions:
+                if func["name"] != fname:
+                    continue
+                for k, v in args.items():
+                    if func["parameters"]["properties"][k]['metta-type'] == 'Atom':
+                        args[k] = metta.parse_single(v)
+            result.append(repr(E(fs, to_nested_expr(list(args.values())), msgs_atom)))
+        res = f"({' '.join(result)})" if len(result) > 1 else result[0]
+        val = metta.parse_single(res)
+        return [val]
+    return response.content if isinstance(agent, MettaAgent) else \
+        [ValueAtom(response.content)]
 
 def llm(metta: MeTTa, *args):
     try:
-        agent, messages, functions, msgs_atom = get_llm_args(metta, None, *args)
+        agent, messages, functions, msgs_atom= get_llm_args(metta, None, *args)
     except Exception as e:
         # NOTE: we put the error into the log since it can be ignored by the caller
         logger.error(e)
@@ -200,7 +236,7 @@ def llm(metta: MeTTa, *args):
         (agent, params) = agent
     if isinstance(agent, str):
         # NOTE: We could pass metta here, but it is of no use atm
-        agent = MettaAgent(agent)
+        agent = MettaScriptAgent(agent)
     if not isinstance(agent, Agent):
         raise TypeError(f"Agent {agent} should be of Agent type. Got {type(agent)}")
     if not isinstance(agent, MettaAgent):
@@ -214,22 +250,19 @@ def llm(metta: MeTTa, *args):
     except Exception as e:
         logger.error(e)
         raise e
-    if response.function_call is not None:
-        fname = response.function_call.name
-        fs = S(fname)
-        args = response.function_call.arguments
-        args = {} if args is None else \
-            json.loads(args) if isinstance(args, str) else args
-        # Here, we check if the arguments should be parsed to MeTTa
-        for func in functions:
-            if func["name"] != fname:
-                continue
-            for k, v in args.items():
-                if func["parameters"]["properties"][k]['metta-type'] == 'Atom':
-                    args[k] = metta.parse_single(v)
-        return [E(fs, to_nested_expr(list(args.values())), msgs_atom)]
-    return response.content if isinstance(agent, MettaAgent) else \
-           [ValueAtom(response.content)]
+    return get_response(metta, agent, response, functions, msgs_atom )
+
+class AgentCaller:
+
+    def __init__(self, metta, agent_class, *args, unwrap=True):
+        self.metta = metta
+        if unwrap:
+            self.agent_atom = OperationAtom("_", agent_class).get_object().execute(*args)[0]
+        else:
+            self.agent_atom = OperationAtom(str(agent_class), agent_class(*args))
+
+    def __call__(self, *args):
+        return llm(self.metta, E(S('Agent'), self.agent_atom), *args)
 
 
 @register_atoms(pass_metta=True)
@@ -241,20 +274,12 @@ def llmgate_atoms(metta):
     # the message converted from expression to text
     msgAtom = OperationAtom('atom2msg',
                     lambda atom: [ValueAtom(atom2msg(atom))], unwrap=False)
-    chatGPTAtom = OperationAtom('chat-gpt', ChatGPTAgent)
-    echoAgentAtom = ValueAtom(EchoAgent())
-    mettaChatAtom = OperationAtom('metta-chat',
-                    lambda x: [ValueAtom(DialogAgent(code=x) if isinstance(x, ExpressionAtom) else \
-                                         DialogAgent(path=x))], unwrap=False)
     containsStrAtom = OperationAtom('contains-str', lambda a, b: [ValueAtom(contains_str(a, b))], unwrap=False)
-
     concatStrAtom = OperationAtom('concat-str', lambda a, b: [ValueAtom(concat_str(a, b))], unwrap=False)
+    message2tupleAtom = OperationAtom('message2tuple', lambda a: [ValueAtom(message2tuple(a))], unwrap=False)
     result = {
         r"llm": llmAtom,
         r"atom2msg": msgAtom,
-        r"chat-gpt": chatGPTAtom,
-        r"EchoAgent": echoAgentAtom,
-        r"metta-chat": mettaChatAtom,
         # FIXME: We add this function here, so we can explicitly evaluate results of LLMs, but
         # we may either expect that this function appear in core MeTTa or need a special safe eval
         r"_eval": OperationAtom("_eval",
@@ -262,18 +287,44 @@ def llmgate_atoms(metta):
                                 unwrap=False),
         r"contains-str": containsStrAtom,
         r"concat-str": concatStrAtom,
+        r"message2tuple": message2tupleAtom
 
     }
     if importlib.util.find_spec('anthropic') is not None:
-        result[r"anthropic-agent"] = OperationAtom('anthropic-agent', AnthropicAgent)
-    if (importlib.util.find_spec('bs4') is not None) \
-            and (importlib.util.find_spec('tiktoken') is not None) \
-            and (importlib.util.find_spec('markdown') is not None):
-        result[r"retrieval-agent"]: OperationAtom('retrieval-agent', RetrievalAgent, unwrap=True)
+        result[r"anthropic-agent"] = OperationAtom('anthropic',
+        lambda *args: [OperationAtom('anthropic-agent', AgentCaller(metta, AnthropicAgent, *args), unwrap=False)],
+        unwrap=False)
+    if importlib.util.find_spec('tiktoken') is not None:
+        if (importlib.util.find_spec('bs4') is not None) \
+                and (importlib.util.find_spec('markdown') is not None):
+            result[r"retrieval-agent"] = OperationAtom('retrieval-agent',
+        lambda *args:  [OperationAtom('retrieval', AgentCaller(metta, RetrievalAgent,  unwrap=True,*args), unwrap=False)], unwrap=False)
+
+    chatGPTAgentAtom = OperationAtom('chat-gpt-agent',
+        lambda *args: [OperationAtom('chat-gpt', AgentCaller(metta, ChatGPTAgent, *args), unwrap=False)],
+        unwrap=False)
+    result[r"chat-gpt-agent"] = chatGPTAgentAtom
+    meTTaScriptAtom = OperationAtom('metta-script-agent',
+        lambda *args: [OperationAtom('msa', AgentCaller(metta, MettaScriptAgent, unwrap=False, *args), unwrap=False)],
+        unwrap=False)
+    result[r"metta-script-agent"] = meTTaScriptAtom
+    meTTaAgentAtom = OperationAtom('metta-agent',
+        lambda *args: [OperationAtom('ma', AgentCaller(metta, MettaAgent, unwrap=False, *args), unwrap=False)],
+        unwrap=False)
+    result[r"metta-agent"] = meTTaAgentAtom
+    dialogAgentAtom = OperationAtom('dialog-agent',
+        lambda *args: [OperationAtom('mda', AgentCaller(metta, DialogAgent, unwrap=False, *args), unwrap=False)],
+        unwrap=False)
+    result[r"dialog-agent"] = dialogAgentAtom
+    echoAgentAtom = OperationAtom('echo-agent',
+        lambda *args: [OperationAtom('EchoAgent', AgentCaller(metta, EchoAgent, *args), unwrap=False)],
+        unwrap=False)
+    result[r"echo-agent"] = echoAgentAtom
+    result[r"open-router-agent"] = OperationAtom('open-router-agent',
+                        lambda *args: [OperationAtom('ora', AgentCaller(metta, OpenRouterAgent, *args), unwrap=False)],
+                        unwrap=False)
 
     return result
-
-
 
 def str_find_all(str, values):
     return list(filter(lambda v: v in str, values))

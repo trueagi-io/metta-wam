@@ -42,8 +42,8 @@
 ;; function.
 
 ;; Import modules
-!(import! &self ../../common/truthvalue/EvidentialTruthValue.metta)
-!(import! &self ../../common/formula/ImplicationDirectIntroductionFormula.metta)
+!(import! &self metta:common:truthvalue:EvidentialTruthValue)
+!(import! &self metta:common:formula:ImplicationDirectIntroductionFormula)
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;; Rule Definition ;;

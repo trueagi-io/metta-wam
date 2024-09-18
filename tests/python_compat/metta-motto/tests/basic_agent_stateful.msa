@@ -1,0 +1,13 @@
+; verifying that the agent state is saved
+
+(= (greeted) False)
+
+(= (response)
+   (if (greeted)
+       "How can I assist you today?"
+       (let* (
+         (() (remove-atom &self (= (greeted) False)))
+         (() (add-atom &self (= (greeted) True))))
+         "Hello"
+       ))
+)

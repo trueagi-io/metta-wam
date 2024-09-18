@@ -1,7 +1,5 @@
-; Prompt templates are metta-files, which contain parameters to `llm`.
+; Prompt templates are metta-files, which contain parameters to `agents`.
 ; In contrast to agents, they don't return responses
-
-(Agent (chat-gpt))
 
 (system "
 You are the esteemed Dungeon Master of a grand and immersive Dungeons & Dragons campaign.

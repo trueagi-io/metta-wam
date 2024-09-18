@@ -22,7 +22,7 @@ r = agent([{'role': 'system', 'content': 'Always perform the function call'},
                       }
                   }}
               }]
-          ).function_call
+          ).tool_calls[0].function
 import json
 # The function call is just an object
 print(r.name, "(", json.loads(r.arguments), ")")

@@ -1,5 +1,5 @@
 ;; Import module
-!(import! &self Unify.metta)
+!(import! &self  metta:synthesis:Unify)
 
 ;; Test unify.
 ;; Should output (Link A B)

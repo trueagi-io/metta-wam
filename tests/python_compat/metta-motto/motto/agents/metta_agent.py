@@ -1,72 +1,108 @@
+import logging
+
 from .agent import Agent, Response
-from hyperon import MeTTa, Environment, ExpressionAtom, OperationAtom, E, S, interpret
+from hyperon import *
+from motto.utils import *
+
+assistant_role = 'assistant'
+
 
 class MettaAgent(Agent):
 
     def _try_unwrap(self, val):
         if val is None or isinstance(val, str):
             return val
+        if isinstance(val, GroundedAtom):
+            return str(val.get_object().content)
         return repr(val)
 
     def __init__(self, path=None, code=None, atoms={}, include_paths=None):
-        self._path = self._try_unwrap(path)
+        if isinstance(path, ExpressionAtom):  # A hack to pass code here from MeTTa
+            code = path
+            path = None
+        path = self._try_unwrap(path)
+        if path is not None:
+            with open(path, mode='r') as f:
+                code = f.read()
         self._code = code.get_children()[1] if isinstance(code, ExpressionAtom) else \
-                     self._try_unwrap(code)
-        if path is None and code is None:
+            self._try_unwrap(code)
+        if self._code is None:
             raise RuntimeError(f"{self.__class__.__name__} requires either path or code")
         self._atoms = atoms
-        self._includes = include_paths
+        self._include_paths = include_paths
+        self._create_metta()
+        self._context_space = None
 
-    def _prepare(self, metta, msgs_atom):
-        for k, v in self._atoms.items():
-            metta.register_atom(k, v)
-        metta.space().add_atom(E(S('='), E(S('messages')), msgs_atom))
-
-    def _postproc(self, response):
-        results = []
-        # Multiple responses are now returned as a list
-        for rs in response:
-            for r in rs:
-                if isinstance(r, ExpressionAtom):
-                    ch = r.get_children()
-                    if len(ch) == 0:
-                        continue
-                    # FIXME? we can simply ignore all non-Response results
-                    if len(ch) != 2 or repr(ch[0]) != 'Response':
-                        raise TypeError(f"Unexpected response format {ch}")
-                    results += [ch[1]]
-        return Response(results, None)
-
-    def __call__(self, msgs_atom, functions=[]):
-        # FIXME: we cannot use higher-level metta here (e.g. passed by llm func),
-        # from which an agent can be called, because its space will be polluted.
-        # Thus, we create new metta runner and import motto.
-        # We could avoid importing motto each time by reusing tokenizer or by
-        # swapping its space with a temporary space, but current API is not enough.
-        # It could also be possible to import! the agent script into a new space,
-        # but there is no function to do this without creating a new token
-        # (which might be useful). The latter solution will work differently.
-        if self._includes is not None:
-            env_builder = Environment.custom_env(include_paths=self._includes)
-            metta = MeTTaLog(env_builder=env_builder)
+    def _init_metta(self):
+        ### =========== Creating MeTTa runner ===========
+        # NOTE: each MeTTa agent uses its own space and runner,
+        # which are not inherited from the caller agent. Thus,
+        # the caller space is not directly accessible as a context.
+        if self._include_paths is not None:
+            env_builder = Environment.custom_env(include_paths=self._include_paths)
+            metta = MeTTa(env_builder=env_builder)
         else:
-            metta = MeTTaLog()
+            metta = MeTTa()
         # TODO: assert
         metta.run("!(import! &self motto)")
-        #metta.load_module_at_path("motto")
+        # Externally passed atoms for registrations
+        for k, v in self._atoms.items():
+            metta.register_atom(k, v)
+        self._metta = metta
+
+    def _load_code(self):
+        return self._metta.run(self._code) if isinstance(self._code, str) else \
+            self._metta.space().add_atom(self._code)
+
+    def _create_metta(self):
+        self._init_metta()
+        self._load_code()  # TODO: check that the result contains only units
+
+    def _prepare(self, msgs_atom, additional_info=None):
+        # The context space is recreated on each call
+        if self._context_space is not None:
+            self._metta.space().remove_atom(self._context_space)
+        self._context_space = G(GroundingSpaceRef())
+        self._metta.space().add_atom(self._context_space)
+        context_space = self._context_space.get_object()
+        context_space.add_atom(E(S('='), E(S('messages')), msgs_atom))
+        # what to do if need to set some variables from python?
+        if additional_info is not None:
+            for val in additional_info:
+                f, v, t = val
+                context_space.add_atom(
+                    E(S(':'), S(f), E(S('->'), S(t))))
+                context_space.add_atom(
+                    E(S('='), E(S(f)), ValueAtom(v)))
+
+    def _postproc(self, response):
+        # No postprocessing is needed here
+        return Response(response, None)
+
+    def __call__(self, msgs_atom, additional_info=None):
         # TODO: support {'role': , 'content': } dict input
         if isinstance(msgs_atom, str):
-            msgs_atom = metta.parse_single(msgs_atom)
-        self._prepare(metta, msgs_atom)
-        if self._path is not None:
-            #response = metta.load_module_at_path(self._path)
-            with open(self._path, mode='r') as f:
-                code = f.read()
-                response = metta.run(code)
-        if self._code is not None:
-            response = metta.run(self._code) if isinstance(self._code, str) else \
-                       [interpret(metta.space(), self._code)]
-        return self._postproc(response)
+            msgs_atom = self._metta.parse_single(msgs_atom)
+        self._prepare(msgs_atom, additional_info)
+        response = self._metta.run('!(response)')
+        return self._postproc(response[0])
+
+
+class MettaScriptAgent(MettaAgent):
+
+    def _create_metta(self):
+        # Skipping _create_metta in super.__init__
+        pass
+
+    def __call__(self, msgs_atom, additional_info=None):
+        self._init_metta()
+        if isinstance(msgs_atom, str):
+            msgs_atom = self._metta.parse_single(msgs_atom)
+        self._prepare(msgs_atom, additional_info)
+        # Loading the code after _prepare
+        super()._load_code()
+        response = self._metta.run('!(response)')
+        return self._postproc(response[0])
 
 
 class DialogAgent(MettaAgent):
@@ -74,11 +110,13 @@ class DialogAgent(MettaAgent):
     def __init__(self, path=None, code=None, atoms={}, include_paths=None):
         self.history = []
         super().__init__(path, code, atoms, include_paths)
+        self.log = logging.getLogger(__name__ + '.' + type(self).__name__)
+        self.perform_canceling = False
 
-    def _prepare(self, metta, msgs_atom):
-        super()._prepare(metta, msgs_atom)
-        metta.space().add_atom(E(S('='), E(S('history')),
-                                 E(S('Messages'), *self.history)))
+    def _prepare(self, msgs_atom, additional_info=None):
+        super()._prepare(msgs_atom, additional_info)
+        self._context_space.get_object().add_atom(
+            E(S('='), E(S('history')), E(S('Messages'), *self.history)))
         # atm, we put the input message into the history by default
         self.history += [msgs_atom]
 
@@ -91,5 +129,37 @@ class DialogAgent(MettaAgent):
         # the history as well as to do other stuff
         result = super()._postproc(response)
         # TODO: 0 or >1 results, to expression?
-        self.history += [E(S('assistant'), result.content[0])]
+        self.history += [E(S(assistant_role), result.content[0])]
         return result
+
+    def clear_history(self):
+        self.history = []
+
+    def get_response_by_index(self, index, role=assistant_role):
+        last_response = self.history[index]
+        if hasattr(last_response, "get_children"):
+            children = last_response.get_children()
+            if len(children) == 2 and (children[0].get_name() == role):
+                response = children[1].get_object().content
+                return response
+        return None
+
+    def process_last_stream_response(self):
+        response = self.get_response_by_index(-1)
+        if response is None:
+            return
+        if isinstance(response, str):
+            if not self.perform_canceling:
+                yield response
+        else:
+            stream = get_sentence_from_stream_response(response)
+            self.history.pop()
+            can_close = hasattr(response, "close")
+            for i, sentence in enumerate(stream):
+                if (i == 0) and self.perform_canceling:
+                    self.log.debug("Stream processing has been canceled")
+                    if can_close:
+                        response.close()
+                    break
+                self.history += [E(S(assistant_role), G(ValueObject(sentence)))]
+                yield sentence

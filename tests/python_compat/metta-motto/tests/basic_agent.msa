@@ -1,6 +1,6 @@
-; Agent scripts are also ordinary MeTTa files like prompt templates,
+; Agent scripts are ordinary MeTTa files like prompt templates,
 ; but they are supposed to be evaluated not in the context of a parent script,
-; so they put nothing into the parent script, but don't have access to its
+; so they put nothing into the parent script and don't have access to its
 ; definitions either. Only `messages` function is inserted to serve as an input.
 
 ; This expression should not be added to the main space
@@ -9,8 +9,7 @@
 (= (proc-messages (user "Ping")) (assistant "Pong"))
 (= (proc-messages (system "Ping")) (assistant "gniP"))
 
-; The caller expects `Response` expression as the output.
+; The caller expects `response` function to produce output.
 ; Let's check that internal functions can be called here.
-; Calling EchoAgent is excessive, but let's check that it will be called.
-
-!(Response (llm (Agent EchoAgent) (proc-messages (messages))))
+; Calling echo-agent is excessive, but let's check that it will be called.
+(= (response) ((echo-agent) (proc-messages (messages))))

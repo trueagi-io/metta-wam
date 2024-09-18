@@ -29,7 +29,7 @@
           "\\nUPDATED\\n"
           "Where there is no guidance" (get-state (rewrite))))
 
-! (nop (change-state! (rewrite) (llm (messages))))
+! (nop (change-state! (rewrite) ((chat-gpt-agent) (messages))))
 
 ! (atom2msg (get-atoms &messages))
 

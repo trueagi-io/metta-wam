@@ -41,9 +41,15 @@ agent_code = '''
 (= (human Socrates) True)
 (= (human Plato) True)
 (= (mortal $x) (human $x))
-! (Response (_eval (llm (Agent LogicAgent) (messages))))
+(= (response) (_eval (llm (Agent LogicAgent) (messages))))
 '''
+# When the agent doesn't change its space and needs the changes
+# to preserve between calls and doesn't execute commands at
+# load time, we can use any of MettaAgent and MettaScriptAgent
+# However, MettaAgent is more efficient, since its code will
+# be loaded only once
 agentM = MettaAgent(code=agent_code,
                     atoms={"LogicAgent": ValueAtom(agentL)})
 
 print(agentM('(user "Who is mortal?")').content)
+print(agentM('(user "Who is human?")').content)

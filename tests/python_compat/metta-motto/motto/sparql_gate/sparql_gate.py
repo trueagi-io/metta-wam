@@ -60,7 +60,7 @@ class ServiceFeatures:
 
 
 class RdfHelper:
-    complex_filters = ["filter_exists", "filter_not_exists", "union", "minus"]
+    complex_filters = ["filter_exists", "filter_not_exists", "sparql_union", "minus"]
     binary_operations_dict = {"+": "+", "-": "-", "*": "*", "/": "*", "=": "=", "!=": "!=", "<": "<", ">": ">",
                               "<=": "<=", ">=": ">=",
                               "or": "||", "and": "&&", "as": "as"}
@@ -200,7 +200,7 @@ class RdfHelper:
         function = function.lower()
         if hasattr(atom, 'get_children'):
             conditions, is_simple = self.__get_conditions_from_children(atom)
-            if function == "union":
+            if function == "sparql_union":
                 return [ValueAtom("{{" + "} UNION {".join(conditions) + "}}")]
             # if function is limit, order by, offset, ...
             elif function in RdfHelper.output_options_functions:
@@ -258,11 +258,9 @@ class RdfHelper:
         finally:
             return values
 
+
 @register_atoms
 def sql_space_atoms():
-    return sql_space_atoms_for_ra()
-
-def sql_space_atoms_for_ra():
     helper = RdfHelper()
 
     return {
@@ -270,8 +268,8 @@ def sql_space_atoms_for_ra():
             OperationObject('set-sparql-service-type', lambda a: helper.set_service_type(a), unwrap=False)),
         'filter':
             OperationAtom('filter', lambda a: helper.filter(a), type_names=['Atom', 'Atom'], unwrap=False),
-        'union':
-            G(OperationObject('union', lambda a: helper.collect_conditions(a, "union"), unwrap=False)),
+        'sparql_union':
+            G(OperationObject('sparql_union', lambda a: helper.collect_conditions(a, "sparql_union"), unwrap=False)),
         'filter_not_exists':
             G(OperationObject('filter_not_exists', lambda a: helper.collect_conditions(a, "filter not exists"),
                               unwrap=False)),
@@ -313,4 +311,3 @@ def sql_space_atoms_for_ra():
             G(OperationObject('where', lambda a: helper.service(a), unwrap=False)),
 
     }
-

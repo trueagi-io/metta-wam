@@ -163,18 +163,16 @@
 
 ;; Return True iff $x is a variable
 (: is-variable (-> Atom Bool))
-(= (is-variable $x)
-   (case (collapse (superpose (let $x 1 True)))
-     ((True True)
-      (%void% False))))
+(= (is-variable $x) (== (get-metatype $x) Variable))
 
 ;; Return True iff $x is closed
 (: is-closed (-> Atom Bool))
 (= (is-closed $x) (if (is-variable $x)
                       False
-                      (case $x
-                        ((($abs $arg) (and (is-closed $abs) (is-closed $arg)))
-                         ($x True)))))
+                      (if (is-expression $x)
+                          (or (let $head (car-atom $y) (is-closed $head))
+                              (let $tail (cdr-atom $y) (is-closed $tail)))
+                          True)))
 
 ;; Return the proof of a query iff it is closed.  Otherwise prune the branch.
 (: get-closed-proof (-> $a $a))
@@ -303,12 +301,21 @@
   (: ((Trans FM) ((Trans MA) AM)) (≼ Feb May)))
 
 ;; Prove that Feb precedes Jun
-;; !(assertEqualToResult
-  !(number-of (bc &kb
+
+!(assertEqual
+  !(bc &kb
       depth-updater depth-updater depth-terminator
       (fromNumber 5)
-      (: $prf (≼ Feb Jun))))
-;; (: ((Trans ((Trans FM) MA)) ((Trans AM) MJ)) (≼ Feb Jun)))
+      (: $prf (≼ Feb Jun)))
+ (: ((Trans ((Trans FM) MA)) ((Trans AM) MJ)) (≼ Feb Jun))
+
+!(assertEqual
+  (number-of (bc &kb
+      depth-updater depth-updater depth-terminator
+      (fromNumber 5)
+      (: $prf (≼ Feb Jun)))) 
+    1)
+    
 
 ;; Prove that Feb precedes Jul (to long to list)
 ;; !(assertEqual
@@ -318,6 +325,19 @@
       (fromNumber 6)
       (: $prf (≼ Feb Jul))))
   ;; (: ((Trans FM) ((Trans MA) ((Trans AM) ((Trans MJ) JJ)))) (≼ Feb Jul)))
+
+
+
+;; Disabled because it takes 3h.
+;;
+;; ;; Prove that Feb precedes Aug
+;; !(assertEqual
+  !(number-of
+     (bc &kb
+       depth-updater depth-updater depth-terminator
+       (fromNumber 7)
+       (: $prf (≼ Feb Aug))))
+;; (: ((Trans FM) ((Trans MA) ((Trans AM) ((Trans MJ) JJ)))) (≼ Feb Jul)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -496,17 +516,4 @@
           (: ((Trans FM) ((Trans ((Trans MA) AM)) ((Trans MJ) ((Trans JJ) JA)))) (≼ Feb Aug))
           (: ((Trans FM) ((Trans MA) ((Trans ((Trans AM) MJ)) ((Trans JJ) JA)))) (≼ Feb Aug))
           (: ((Trans FM) ((Trans MA) ((Trans AM) ((Trans MJ) ((Trans JJ) JA))))) (≼ Feb Aug))))
-
-
-
-;; Disabled because it takes 3h.
-;;
-;; ;; Prove that Feb precedes Aug
-;; !(assertEqual
-  !(number-of
-     (bc &kb
-       depth-updater depth-updater depth-terminator
-       (fromNumber 7)
-       (: $prf (≼ Feb Aug))))
-;; (: ((Trans FM) ((Trans MA) ((Trans AM) ((Trans MJ) JJ)))) (≼ Feb Jul)))
 

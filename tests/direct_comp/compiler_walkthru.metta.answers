@@ -1,0 +1,15 @@
+[(pfcWatch!)]
+[()]
+[()]
+[()]
+[()]
+[()]
+[(load-ontology!)]
+[(-> List)]
+[(function-arity prog-argv)]
+[(Error (assertEqual (function-arity prog-argv) 0) 
+Expected: [0]
+Got: [(function-arity prog-argv)]
+Missed result: 0)]
+0.00user 0.01system 0:00.05elapsed 45%CPU (0avgtext+0avgdata 24816maxresident)k
+24184inputs+0outputs (149major+2923minor)pagefaults 0swaps

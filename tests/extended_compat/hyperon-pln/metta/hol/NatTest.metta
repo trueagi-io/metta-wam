@@ -9,7 +9,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Import synthesizer (Nat is already defined in it)
-!(import! &self ../synthesis/Synthesize.metta)
+!(import! &self metta:synthesis:Synthesize)
 
 ;; Knowledge base
 (: kb (-> Atom))
@@ -54,9 +54,9 @@
 
           ;; Structural preservation of equality
           (: EqStruct1 (-> ;; Premise
-                               (=== $x $x')
-                               ;; Conclusion
-                               (=== ($op $x) ($op $x'))))
+                           (=== $x $x')
+                           ;; Conclusion
+                           (=== ($op $x) ($op $x'))))
           ;; (: EqStruct2 (-> ;; Premises
           ;;                  (=== $x $x')
           ;;                  (=== $y $y')
@@ -65,9 +65,9 @@
 
           ;; Rule of replacement
           (: Repl0 (-> ;; Premise
-                           (=== $x $x')
+                       (=== $x $x')
                        $x
-                           ;; Conclusion
+                       ;; Conclusion
                        $x'))
           ;; (: Repl1 (-> ;; Premises
           ;;              (=== $x $x')
@@ -94,10 +94,10 @@
           ;;               (-> (: $x' Nat) ($p $x')))))))
           ;; Structural induction on Nat
           (: IndNat (-> ;; Premises
-                                     ($p Z)               ; base case
+                        ($p Z)               ; base case
                         (-> ($p $x)
-                                         ($p (S $x)))     ; inductive step
-                                     ;; Conclusion
+                            ($p (S $x)))     ; inductive step
+                        ;; Conclusion
                         ($p $x'))))))
 
 ;; Prove that Z is left identity of plus

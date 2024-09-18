@@ -2,4 +2,4 @@
 
 (user (user-query))
 
-(function calc_math)
+(Function calc_math)

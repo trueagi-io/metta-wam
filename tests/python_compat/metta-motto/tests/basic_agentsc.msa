@@ -3,4 +3,4 @@
 ; Extract the user message (in a dumb way) for the basic_script
 (= (user-query) (let (user $x) (messages) $x))
 
-!(Response (llm (Script basic_script.mps)))
+(= (response) ((echo-agent) (Script basic_script.mps)))

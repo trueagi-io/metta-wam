@@ -54,6 +54,7 @@
 :- encoding(iso_latin_1).
 :- flush_output.
 :- setenv('RUST_BACKTRACE',full).
+% Uncomment this when loading from non user context like for ecapsulation
 %:- '$set_source_module'('user').
 :- set_prolog_flag(py_backtrace_depth,10).
 :- set_prolog_flag(py_backtrace, true).
@@ -352,7 +353,7 @@ py_ppp(V):-flush_output, with_output_to(codes(Chars), once(py_pp(V))),
 %py_ppp(V):-metta_py_pp(V).
 
 % Evaluations and Iterations
-:- thread_local(did_load_hyperon_module/0).
+%:- thread_local(did_load_hyperon_module/0).
 :- volatile(did_load_hyperon_module/0).
 :- dynamic(did_load_hyperon_module/0).
 load_hyperon_module:- did_load_hyperon_module,!.
@@ -391,7 +392,7 @@ def rust_unwrap(obj):
         return obj.value()
     if isinstance(obj,GroundedAtom):
         if obj.get_object_type()==AtomType.UNDEFINED:
-        	return obj.get_object()
+            return obj.get_object()
     # if isinstance(obj,GroundedAtom): return obj.get_object()
     if isinstance(obj,GroundedObject):
         return obj.content
@@ -491,17 +492,20 @@ ensure_rust_metta:- ensure_rust_metta(_).
 
 :- dynamic(is_mettalog/1).
 :- volatile(is_mettalog/1).
-ensure_mettalog_py(MettaLearner):- is_mettalog(MettaLearner),!.
+
+ensure_mettalog_py(MettaLearner) :-
+    is_mettalog(MettaLearner), !.  % Check if MettaLearner is already known.
+
 ensure_mettalog_py(MettaLearner):-
-   with_safe_argv(
-   (want_py_lib_dir,
+   with_safe_argv( % Ensure safety for argument passing.
+   (want_py_lib_dir, % Ensure the Python library directory is available.
     %py_call('mettalog',MettaLearner),
     %py_call('motto',_),
     %py_call('motto.sparql_gate':'sql_space_atoms'(),Res1),pybug(Res1),
     %py_call('motto.llm_gate':'llmgate_atoms'(MeTTa),Res2),pybug(Res2),
-
-   pybug(is_mettalog(MettaLearner)),
-   asserta(is_mettalog(MettaLearner)))).
+        pybug(is_mettalog(MettaLearner)),  % Log any issues.
+        asserta(is_mettalog(MettaLearner))  % Store the MettaLearner instance.
+        )).
 
 ensure_mettalog_py:-
   %load_builtin_module,
@@ -571,6 +575,10 @@ atoms_iter_from_space(Space, Atoms) :-
     %py_call(GSpace:'atoms_iter'(), Atoms).
     true.
 :- endif.
+
+
+
+
 
 metta_py_pp(V):- py_is_enabled,once((py_is_object(V),py_to_pl(V,PL))),V\=@=PL,!,metta_py_pp(PL).
 metta_py_pp(V):- atomic(V),py_is_enabled,py_is_object(V),py_pp(V),!.
@@ -695,18 +703,35 @@ pyo_to_pl(VL,Par,Cir,CirO,Cl,O,E):- catch(py_obj_dir(O,L),_,fail),pybug(py_obj_d
 pyo_to_pl(_VL,_Par,Cir,Cir,_Cl,O,E):- O = E,!.
 
 pl_to_rust(Var,Py):- pl_to_rust(_VL,Var,Py).
+
+%!  pl_to_rust(+VL, +Var, -Py) is det.
+%
+%   Converts a Prolog term `Var` to its Rust/Hyperon representation, using a variable list `VL`
+%   for handling variable conversions. This handles lists, variables, atoms, and strings.
+%
+%   @arg VL The variable list for tracking variable-to-name mappings.
+%   @arg Var The Prolog term to be converted.
+%   @arg Py The resulting Rust/Hyperon representation.
+
 pl_to_rust(VL,Var,Py):- var(VL),!,ignore(VL=[vars]),pl_to_rust(VL,Var,Py).
 
 pl_to_rust(_VL,Sym,Py):- is_list(Sym),!, maplist(pl_to_rust,Sym,PyL), py_call(src:'mettalog':'MkExpr'(PyL),Py),!.
 pl_to_rust(VL,Var,Py):- var(Var), !, real_VL_var(Sym,VL,Var), py_call('hyperon.atoms':'V'(Sym),Py),!.
 pl_to_rust(VL,'$VAR'(Sym),Py):- !, real_VL_var(Sym,VL,_),py_call('hyperon.atoms':'V'(Sym),Py),!.
-pl_to_rust(VL,DSym,Py):- atom(DSym),atom_concat('$',VName,DSym), rinto_varname(VName,Sym),!, pl_to_rust(VL,'$VAR'(Sym),Py).
+pl_to_rust(VL,DSym,Py):- atom(DSym),
+ atom_concat('$',VName,DSym), rinto_varname(VName,Sym),!, pl_to_rust(VL,'$VAR'(Sym),Py).
 pl_to_rust(_VL,Sym,Py):- atom(Sym),!, py_call('hyperon.atoms':'S'(Sym),Py),!.
 %pl_to_rust(VL,Sym,Py):- is_list(Sym), maplist(pl_to_rust,Sym,PyL), py_call('hyperon.atoms':'E'(PyL),Py),!.
 pl_to_rust(_VL,Sym,Py):- string(Sym),!, py_call('hyperon.atoms':'ValueAtom'(Sym),Py),!.
 pl_to_rust(_VL,Sym,Py):- py_is_object(Sym),py_call('hyperon.atoms':'ValueAtom'(Sym),Py),!.
 pl_to_rust(_VL,Sym,Py):- py_call('hyperon.atoms':'ValueAtom'(Sym),Py),!.
 
+%!  py_list(+MeTTa, -PyList) is det.
+%
+%   Converts a Prolog term `MeTTa` into a Python list.
+%
+%   @arg MeTTa The Prolog term to be converted.
+%   @arg PyList The resulting Python list.
 py_list(MeTTa,PyList):- pl_to_py(MeTTa,PyList).
 
 py_tuple(O,Py):- py_ocall(tuple(O),Py),!.
@@ -978,6 +1003,7 @@ To integrate VSpace with the existing Python and Rust components, similar interf
 
 */
 
+% when using this file alone uncomment the next line
 %:- ensure_loaded(metta_interp).
 
 :- dynamic(want_py_lib_dir/1).
@@ -1018,6 +1044,30 @@ get_list_arity(_Args,-1).
 :- set_prolog_flag(py_argv , []).
 :- initialization(on_restore1,restore).
 :- initialization(on_restore2,restore).
+
+% Declare `metta_python_proxy/1` as dynamic so it can be modified at runtime.
+:- dynamic(metta_python_proxy/1).
+% Read the content of the file './metta_python_proxy.py' into the variable `String`.
+% Then, assert the content of the file as a fact `metta_python_proxy/1`.
+:- read_file_to_string('./metta_python_proxy.py', String, []),
+   assertz(metta_python_proxy(String)),!.
+% Declare `did_load_metta_python_proxy/0` as volatile, meaning it will not be saved to a saved state.
+% This is useful when you don't want this predicate to persist across sessions or save states.
+:- dynamic(did_load_metta_python_proxy/0).
+:- volatile(did_load_metta_python_proxy/0).
+% If `did_load_metta_python_proxy/0` is not already asserted, it asserts the fact to indicate that the proxy has been loaded.
+% It retrieves the `metta_python_proxy/1` fact (which contains the content of the file).
+% Then, it calls `py_module/2` with the module name and the Python code as arguments.
+% The cut (`!`) ensures no backtracking occurs once this is executed.
+load_metta_python_proxy :- did_load_metta_python_proxy.
+load_metta_python_proxy :-
+    assert(did_load_metta_python_proxy),
+    metta_python_proxy(String),
+    ignore(notrace(with_safe_argv(catch(py_module(metta_python_proxy, String),_,true)))),!.
+% Ensure that `load_metta_python_proxy/0` is called when the program is initialized (on startup).
+% This will trigger the loading of the Python proxy module during initialization.
+:- initialization(load_metta_python_proxy).
+:- initialization(load_metta_python_proxy,restore).
 
 
 
