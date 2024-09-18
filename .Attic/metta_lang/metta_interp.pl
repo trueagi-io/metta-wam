@@ -723,9 +723,10 @@ cmdline_load_metta(Phase,Self,[M|Rest]):-
   format('~N'), fbug(unused_cmdline_option(Phase,M)), !,
   cmdline_load_metta(Phase,Self,Rest).
 
-install_ontology:- !.
-%load_ontology:- option_value(compile,false),!.
-load_ontology:- ensure_loaded(mettalog('metta_ontology.pfc.pl')).
+
+install_ontology:- ensure_corelib_types.
+load_ontology:- option_value(compile,false),!.
+load_ontology.
 
 %cmdline_load_file(Self,Filemask):- is_converting,!,
 
@@ -1031,7 +1032,7 @@ metta_atom(KB,Atom):- metta_atom_asserted( KB,Atom).
 
 %metta_atom(KB,Atom):- KB == '&corelib', !, metta_atom_asserted('&self',Atom).
 metta_atom(KB,Atom):- KB \== '&corelib', using_all_spaces,!, metta_atom('&corelib',Atom).
-metta_atom(KB,Atom):- KB \== '&corelib', !, 
+metta_atom(KB,Atom):- KB \== '&corelib', !,
    \+ \+ (metta_atom_asserted(KB,'&corelib'),
           should_inherit_from_corelib(Atom)), !,
    metta_atom('&corelib',Atom).
@@ -1849,6 +1850,8 @@ fix_message_hook:-
 %:- ensure_loaded('metta_ontology.pfc.pl').
 %:- initialization(loon_main, main).
 :- initialization(loon(main), main).
+
+%:- ensure_loaded(mettalog('metta_ontology.pfc.pl')).
 
 
 % Define a predicate to relate the likelihoods of three events

@@ -9,6 +9,37 @@ from pathlib import Path
 
 from hyperon import MeTTa
 
+
+# Step 1: Define the verbosity level (could be set from environment or manually)
+METTALOG_VERBOSE = int(os.getenv('METTALOG_VERBOSE', 0))  # Default to 0 if not set
+
+def log_message(message, level=1):
+    """
+    Logs a message based on the current verbosity level.
+
+    Args:
+        message (str): The message to log.
+        level (int): The verbosity level for this message.
+                     0 = silent, 1 = user, 2 = developer debug, 3 = tracing.
+    """
+    if METTALOG_VERBOSE >= level:
+        print(message)
+
+# Example usage
+
+def some_function():
+    log_message("This is a user-level message", 1)
+    log_message("This is a developer debug message", 2)
+    log_message("This is a tracing message", 3)
+
+# You can then change METTALOG_VERBOSE based on the context of the script
+# METTALOG_VERBOSE = 0  # Silent
+# METTALOG_VERBOSE = 1  # User messages
+# METTALOG_VERBOSE = 2  # Debug messages
+# METTALOG_VERBOSE = 3  # Trace-level messages
+
+
+
 def print_exception_stack(e):
     print(f"Exception occurred: {e}")
     traceback.print_exc()

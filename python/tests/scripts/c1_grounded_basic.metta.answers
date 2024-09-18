@@ -1,0 +1,6 @@
+thread 'main' panicked at repl/src/metta_shim.rs:156:20:
+called `Result::unwrap()` on an `Err` value: PyErr { type: <class 'AttributeError'>, value: AttributeError("module 'hyperonpy' has no attribute 'gnd_get_bool'"), traceback: Some(<traceback object at 0x7f5f305b0a40>) }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+Command exited with non-zero status 101
+0.13user 0.02system 0:00.15elapsed 99%CPU (0avgtext+0avgdata 36184maxresident)k
+0inputs+0outputs (0major+3964minor)pagefaults 0swaps

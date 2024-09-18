@@ -1,0 +1,67 @@
+thread 'main' panicked at src/metta_shim.rs:168:20:
+called `Result::unwrap()` on an `Err` value: PyErr { type: <class 'openai.error.AuthenticationError'>, value: AuthenticationError(message='Incorrect API key provided: freeve. You can find your API key at https://platform.openai.com/account/api-keys.', http_status=401, request_id=None), traceback: Some(<traceback object at 0x7f2c53265880>) }
+stack backtrace:
+   0:     0x55c52e94ed3c - std::backtrace_rs::backtrace::libunwind::trace::h67a838aed1f4d6ec
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/../../backtrace/src/backtrace/libunwind.rs:93:5
+   1:     0x55c52e94ed3c - std::backtrace_rs::backtrace::trace_unsynchronized::h1d1786bb1962baf8
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/../../backtrace/src/backtrace/mod.rs:66:5
+   2:     0x55c52e94ed3c - std::sys_common::backtrace::_print_fmt::h5a0b1f807a002d23
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/sys_common/backtrace.rs:67:5
+   3:     0x55c52e94ed3c - <std::sys_common::backtrace::_print::DisplayBacktrace as core::fmt::Display>::fmt::hf84ab6ad0b91784c
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/sys_common/backtrace.rs:44:22
+   4:     0x55c52e97185c - core::fmt::rt::Argument::fmt::h28f463bd1fdabed5
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/core/src/fmt/rt.rs:138:9
+   5:     0x55c52e97185c - core::fmt::write::ha37c23b175e921b3
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/core/src/fmt/mod.rs:1114:21
+   6:     0x55c52e94beee - std::io::Write::write_fmt::haa1b000741bcbbe1
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/io/mod.rs:1763:15
+   7:     0x55c52e94eb24 - std::sys_common::backtrace::_print::h1ff1030b04dfb157
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/sys_common/backtrace.rs:47:5
+   8:     0x55c52e94eb24 - std::sys_common::backtrace::print::hb982056c6f29541c
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/sys_common/backtrace.rs:34:9
+   9:     0x55c52e9500a3 - std::panicking::default_hook::{{closure}}::h11f92f82c62fbd68
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/panicking.rs:272:22
+  10:     0x55c52e94fdc4 - std::panicking::default_hook::hb8810fe276772c66
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/panicking.rs:292:9
+  11:     0x55c52e950625 - std::panicking::rust_panic_with_hook::hd2f0efd2fec86cb0
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/panicking.rs:731:13
+  12:     0x55c52e950521 - std::panicking::begin_panic_handler::{{closure}}::h3651b7fc4f61d784
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/panicking.rs:609:13
+  13:     0x55c52e94f266 - std::sys_common::backtrace::__rust_end_short_backtrace::hbc468e4b98c7ae04
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/sys_common/backtrace.rs:170:18
+  14:     0x55c52e950272 - rust_begin_unwind
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/panicking.rs:597:5
+  15:     0x55c52e7a7545 - core::panicking::panic_fmt::h979245e2fdb2fabd
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/core/src/panicking.rs:72:14
+  16:     0x55c52e7a79e3 - core::result::unwrap_failed::h8c4b86241881fbbb
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/core/src/result.rs:1652:5
+  17:     0x55c52e7b8318 - metta::metta_shim::metta_interface_mod::MettaShim::exec::he664f34e01237be7
+  18:     0x55c52e7bd52c - metta::main::h4061cff84c875f01
+  19:     0x55c52e7c4f93 - std::sys_common::backtrace::__rust_begin_short_backtrace::h9ba8fef5bf9c9a16
+  20:     0x55c52e7ca36d - std::rt::lang_start::{{closure}}::h44f0433eb5c0c983
+  21:     0x55c52e94665b - core::ops::function::impls::<impl core::ops::function::FnOnce<A> for &F>::call_once::hf9057cfaeeb252e2
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/core/src/ops/function.rs:284:13
+  22:     0x55c52e94665b - std::panicking::try::do_call::h629e203a624883e4
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/panicking.rs:504:40
+  23:     0x55c52e94665b - std::panicking::try::h7b61614724d6a4f1
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/panicking.rs:468:19
+  24:     0x55c52e94665b - std::panic::catch_unwind::h354ac1c0268491d8
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/panic.rs:142:14
+  25:     0x55c52e94665b - std::rt::lang_start_internal::{{closure}}::h919fee3c5ba8f617
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/rt.rs:148:48
+  26:     0x55c52e94665b - std::panicking::try::do_call::h54583f67455bff32
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/panicking.rs:504:40
+  27:     0x55c52e94665b - std::panicking::try::hb0e12c4e01d39dc2
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/panicking.rs:468:19
+  28:     0x55c52e94665b - std::panic::catch_unwind::h367b6339e3ca9a3b
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/panic.rs:142:14
+  29:     0x55c52e94665b - std::rt::lang_start_internal::ha5ce8533eaa0fda8
+                               at /rustc/79e9716c980570bfd1f666e3b16ac583f0168962/library/std/src/rt.rs:148:20
+  30:     0x55c52e7bf8d5 - main
+  31:     0x7f2c572f018a - <unknown>
+  32:     0x7f2c572f0245 - __libc_start_main
+  33:     0x55c52e7a7ca1 - _start
+  34:                0x0 - <unknown>
+Command exited with non-zero status 101
+0.43user 0.04system 0:00.71elapsed 67%CPU (0avgtext+0avgdata 77332maxresident)k
+16248inputs+0outputs (82major+11083minor)pagefaults 0swaps
