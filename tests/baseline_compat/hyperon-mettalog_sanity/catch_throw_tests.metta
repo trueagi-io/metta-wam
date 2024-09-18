@@ -39,3 +39,7 @@
 ;; exception (throw arg) is evaluated
 
 !(assertEqualToResult (catch (catch (throw (+ 1 2)) (+ 1 2) "Error level 2") 3 "Error level 1") ("Error level 1"))
+
+;; recover (catch arg3) is evaluated if exception is caught
+
+!(assertEqualToResult (catch (throw (Error 2)) (Error $x) (+ $x 1)) (3))
