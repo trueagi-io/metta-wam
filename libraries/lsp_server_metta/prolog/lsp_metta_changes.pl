@@ -9,14 +9,13 @@
 */
 
 :- use_module(library(readutil), [read_file_to_codes/3]).
+:- use_module(lsp_metta_utils).
 
 :- dynamic doc_text/2.
 
 %! handle_doc_changes(+File:atom, +Changes:list) is det.
 %
 %  Track =Changes= to the file =File=.
-
-handle_doc_changes(_,_).
 
 handle_doc_changes(_, []) :- !.
 handle_doc_changes(Path, [Change|Changes]) :-
@@ -25,15 +24,27 @@ handle_doc_changes(Path, [Change|Changes]) :-
 
 handle_doc_change(Path, Change) :-
     _{range: _{start: _{line: StartLine, character: StartChar},
-               end:   _{line: _EndLine0,   character: _EndChar}},
+               end:   _{line: EndLine,   character: _EndChar}},
       rangeLength: ReplaceLen, text: Text} :< Change,
     !,
     atom_codes(Text, ChangeCodes),
-    doc_text_fallback(Path, OrigCodes),
-    replace_codes(OrigCodes, StartLine, StartChar, ReplaceLen, ChangeCodes,
-                  NewText),
+    doc_text_fallback(Path, OrigDocument),
+    split_document_get_multiple_sections(StartLine,EndLine,NewStartLine,OrigDocument,Pre,This,Post),
+    %debug(server,"0:~w",[This]),
+    coalesce_text(This,TextBlock),
+    %debug(server,"1:~w",[TextBlock]),
+    string_codes(TextBlock,OrigCodes),
+    %debug(server,"2:~w",[OrigCodes]),
+    replace_codes(OrigCodes, NewStartLine, StartChar, ReplaceLen, ChangeCodes,
+                  NewCodes),
+    %debug(server,"3:~w",[NewCodes]),
+    string_codes(NewText,NewCodes),
+    %debug(server,"4:~w",[NewText]),
+    split_text_single_lines(NewText,NewSplitText),
+    %debug(server,"5:~w",[NewSplitText]),
+    append([Pre,NewSplitText,Post],NewDocument),
     retractall(doc_text(Path, _)),
-    assertz(doc_text(Path, NewText)).
+    assertz(doc_text(Path, NewDocument)).
 handle_doc_change(Path, Change) :-
     retractall(doc_text(Path, _)),
     atom_codes(Change.text, TextCodes),
@@ -47,8 +58,9 @@ handle_doc_change(Path, Change) :-
 doc_text_fallback(Path, Text) :-
     doc_text(Path, Text), !.
 doc_text_fallback(Path, Text) :-
-    read_file_to_codes(Path, Text, []),
-    assertz(doc_text(Path, Text)).
+    read_file_to_string(Path, Text, []),
+    split_text_single_lines(Text,SplitText),
+    assertz(doc_text(Path, SplitText)).
 
 %! replace_codes(Text, StartLine, StartChar, ReplaceLen, ReplaceText, -NewText) is det.
 replace_codes(Text, StartLine, StartChar, ReplaceLen, ReplaceText, NewText) :-

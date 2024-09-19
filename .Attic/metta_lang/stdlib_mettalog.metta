@@ -1592,3 +1592,21 @@
 (: concurrent-maplist! (-> Function Expression Expression))
 (: concurrent-maplist! (-> Function Expression Expression Expression))
 (: concurrent-maplist! (-> Function Expression Expression Expression Expression))
+
+;; Public MeTTa
+(@doc throw
+  (@desc "Raises an exception. See also `catch`; the system will look for the innermost catch such that Exception unifies with Catcher.")
+  (@params (
+    (@param "Exception")))
+  (@return "Does not return - raises an exception"))
+(: throw (-> Atom ErrorType))
+
+;; Public MeTTa
+(@doc catch
+  (@desc "Executes Form. If an exception is raised with `throw` during execution of Form while this is the innermost catch such that Catcher unifies with Exception, the exception is caught. Recover is then executed with bindings from Catcher.")
+  (@params (
+    (@param "Form")
+    (@param "Catcher")
+    (@param "Recover")))
+  (@return "Result of Form if no exception is raised. Result of Recover (with bindings from Catcher) if an exception is caught."))
+(: catch (-> Atom Atom Atom Atom))
