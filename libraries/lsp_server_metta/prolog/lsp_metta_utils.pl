@@ -96,11 +96,15 @@ help_at_position(Path, Line1, Char0, S) :-
     predicate_help(Path,Clause,S).
 
 predicate_help(_,'',"") :- !.
-predicate_help(_,['$'|T],S) :- !,string_chars(String,['$'|T]),format(string(S),"Variable: ~w",[String]).
-predicate_help(_,T,S) :- string_chars(String,T),atom_string(Term,String),metta_atom(_KB,['@doc',Term|Help]),!,
+predicate_help(_,var(Term),S) :- !,format(string(S),"Variable: ~w",[Term]).
+predicate_help(_,Term,"") :- number(Term),!.
+predicate_help(_,')',"") :- !.
+predicate_help(_,']',"") :- !.
+predicate_help(_,'}',"") :- !.
+predicate_help(_,Term,S) :- metta_atom(_KB,['@doc',Term|Help]),!,
     %debug(server,"clause1 ~w",[Help]),
     format_metta_doc(Term,Help,S).
-predicate_help(_,T,S) :- string_chars(String,T),format(string(S),"Unknown: ~w",[String]).
+predicate_help(_,Term,S) :- format(string(S),"Unknown: ~w",[Term]).
 
 format_metta_doc(Term,[['@desc',Description], ['@params', Params], ['@return', Return]],String) :-
     maplist(format_metta_Param,Params,Params_formatted),
@@ -194,8 +198,8 @@ annotated_read_list(LC0,LC2,EndChar, Stream, List) :-
 % @arg Stream Stream from which to skip spaces.
 annotated_skip_spaces(LC0,LC1,Stream) :-
     peek_char(Stream, Char),
-    (   Char = ';' -> (annotated_read_single_line_comment(Stream), LC1=LC0, annotated_skip_spaces(Stream))  % If the character is ';', read a single-line comment.
-    ;   char_type(Char,end_of_line) -> LC1=LC0, (get_char(Stream, _), annotated_skip_spaces(Stream))
+    (   Char = ';' -> (annotated_read_single_line_comment(Stream), annotated_skip_spaces(LC0,LC1,Stream))  % If the character is ';', read a single-line comment.
+    ;   char_type(Char,end_of_line) -> (get_char(Stream, _), annotated_skip_spaces(LC0,LC1,Stream))
     ;   (char_type(Char,white);char_type(Char,space);char_type(Char,cntrl)) -> (get_char(Stream, _), annotated_skip_spaces(LC0,LC1,Stream))  % Consume the space and continue.
     ;   LC1=LC0  % Non-space character found; stop skipping.
     ), !.
@@ -220,7 +224,33 @@ annotated_read_single_line_comment(Stream) :-
 % @arg Symbolic The complete symbolic expression read.
 annotated_read_symbolic(EndChar, Stream, FirstChar, Symbolic) :-
     annotated_read_symbolic_cont(EndChar, Stream, RestChars),
-    Symbolic=[FirstChar|RestChars].
+    annotated_classify_and_convert_charseq_([FirstChar| RestChars], Symbolic), !.
+
+
+%! annotated_classify_and_convert_charseq_(+Chars:list, -Symbolic:term) is det.
+%
+% Helper predicate that attempts to classify the character sequence.
+% Handles special cases such as Prolog variables and numbers.
+%
+% @param Chars    The input list of characters.
+% @param Symbolic The resultant Prolog term or symbol.
+
+% Case 1: If the character sequence starts with '$', treat it as a variable.
+annotated_classify_and_convert_charseq_(['$'| RestChars], var(Symbolic)) :-
+    !,atom_chars(Symbolic, RestChars).  % Convert the rest of the characters into a variable name.
+% % Case 2: Check to see of this is a number
+% annotated_classify_and_convert_charseq_(Chars,number(Value)) :-
+%     string_chars(S,Chars),
+%     number_string(V,S),
+% Case 3: Attempt to interpret the characters as a Prolog term using `read_from_chars/2`.
+% This handles more complex syntaxes like numbers, dates, etc.
+annotated_classify_and_convert_charseq_(Chars, Symbolic) :-
+    notrace(catch(read_from_chars(Chars, Symbolic), _, fail)),  % Safely attempt to parse the characters.
+    atomic(Symbolic),!.  % Ensure the result is atomic.
+% Case 4: If no other case applies, convert the characters directly into an atom.
+annotated_classify_and_convert_charseq_(Chars, Symbolic) :-
+    atom_chars(Symbolic, Chars).  % Convert the character sequence into an atom.
+
 
 %! annotated_read_symbolic_cont(+EndChar:atom, +Stream:stream, -Chars:list) is det.
 %
