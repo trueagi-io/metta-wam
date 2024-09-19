@@ -1,65 +1,128 @@
-
-disable_optimizer:- false.
+% Disables the optimizer. This predicate always fails, effectively serving as a no-op.
+% disable_optimizer :- false.
 disable_optimizer.
 
+% Operator definitions for pattern matching
+% Defines custom operator '=~' with precedence level 700.
 :- op(700,xfx,'=~').
+
+% Defines custom operator '=~' with precedence level 690.
 :- op(690,xfx, =~ ).
 
+%! assumed_true(+HB, +B2) is semidet.
+%
+%  Verifies that certain conditions hold true, taking into account dynamic disabling of the optimizer.
+%  If the optimizer is disabled, or if B2 does not meet specific criteria, the predicate fails.
+%  Otherwise, it verifies the condition based on the structure of B2.
+%  
+%  @param HB Context or helper structure used in the optimization process.
+%  @param B2 The condition to be verified.
+%
 
-% disables
 assumed_true(_,_):- disable_optimizer, !, fail.
+
+% Fails if the second argument is unbound.
 assumed_true(_ ,B2):- var(B2),!,fail.
+
+% Recursively checks truth of embedded evaluations.
 assumed_true(HB,eval_true(B2)):-!,assumed_true(HB,B2).
+
+% Checks if B2 is explicitly the term 'is_True('True')'.
 assumed_true(_ ,B2):- B2==is_True('True').
 %assumed_true(_ ,A=B):- A==B,!.
+% Checks if B2 is the string 'True'.
 assumed_true(_ ,B2):- B2=='True'.
+
+% Checks if B2 is the boolean true.
 assumed_true(_ ,B2):- B2== true,!.
+
+% Evaluates to true if both A and B are equal and Atom is 'Atom'.
 assumed_true(_ ,eval_for(b_5,Atom,A,B)):- 'Atom' == Atom, A=B.
+
+% Evaluates to true if both A and B are equal and Atom is 'Any'.
 assumed_true(_ ,eval_for(b_5,Atom,A,B)):- 'Any' == Atom, A=B.
 %assumed_true(_ ,eval_for(b_1,Atom,A,B)):- 'Atom' == Atom, A=B.
+
+% Fails if B2 is a user assignment with 'True'.
 assumed_true(_ ,B2):- B2==u_assign('True', '$VAR'('_')),!.
+
+% Recursively checks equality by evaluating X = Y.
 assumed_true(HB,X==Y):- !, assumed_true(HB,X=Y).
 %assumed_true( _,X=Y):- X==Y,!.
-assumed_true(HB,X=Y):- is_nsVar(X),is_nsVar(Y),
+% Evaluates equality between X and Y if both are namespace variables and counts are appropriate.
+assumed_true(HB, X = Y) :-
+ is_nsVar(X),is_nsVar(Y),
   ( \+ (X\=Y)),
   (count_var_gte(HB,Y,2);count_var_gte(HB,X,2)),
   X=Y,!.
 
-% disables
+% Optimizes variable assignment with respect to unary functions.
+%Failsimmediatelyifoptimizerisdisabled.
  optimize_u_assign_1(_,_):- disable_optimizer,!, fail.
+
+% Fails if Var is a namespace variable.
 optimize_u_assign_1(_,Var,_,_):- is_nsVar(Var),!,fail.
-optimize_u_assign_1(_HB,[H|T],R,Code):- symbol(H),length([H|T],Arity),
-   predicate_arity(F,A),Arity==A, \+ (predicate_arity(F,A2),A2\=A),
-    append([H|T],[R],ArgsR),Code=..ArgsR,!.
+
+% Checks symbol arity and generates code if matching.
+optimize_u_assign_1(_HB, [H|T], R, Code) :-
+    symbol(H),
+    length([H|T], Arity),
+    predicate_arity(F, A),
+    Arity == A,
+    \+ (predicate_arity(F, A2), A2 \= A),
+    append([H|T], [R], ArgsR),
+    Code =.. ArgsR, !.
+
+% Optimizes non-compound terms.
 optimize_u_assign_1(HB,Compound,R,Code):- \+ compound(Compound),!, optimize_u_assign(HB,Compound,R,Code).
+
+% Continues optimization for lists.
 optimize_u_assign_1(HB,[H|T],R,Code):- !, optimize_u_assign(HB,[H|T],R,Code).
+
+% Handles the case of unbound compound and list in R.
 optimize_u_assign_1(_ ,Compound,R,Code):-
    is_list(R),var(Compound),
    into_u_assign(R,Compound,Code),!.
 
 %optimize_u_assign_1(_,Compound,R,Code):- f2p(Compound,R,Code),!.
+
+% Additional pattern matching and handling for optimizations.
 optimize_u_assign_1(_,Compound,R,Code):-
   compound(Compound),
   as_functor_args(Compound,F,N0), N is N0 +1,
   (predicate_arity(F,N); functional_predicate_arg(F, N, N)),
    append_term_or_call(Compound,R,Code).
+
+% Optimizes match operations involving queries and templates.
 optimize_u_assign_1(HB,Compound,R,Code):- p2s(Compound,MeTTa),   optimize_u_assign(HB,MeTTa,R,Code).
+
+% Fallback for assigning a result using patterns.
 %optimize_u_assign_1(_,[Pred| ArgsL], R, u_assign([Pred| ArgsL],R)).
 
 
 
 % disables
 %append_term_or_call(F,R,call(F,R)):- disable_optimizer, !.
+
+% Handles symbols directly in conjunction with appending.
 append_term_or_call([F|Compound],R,Code):- symbol(F),
       is_list(Compound),append(Compound,[R],CodeL), Code=..[F|CodeL],!.
+% Handles symbols directly.
 append_term_or_call(F,R,Code):- symbol(F),!, Code=..[F,R].
+
+% General append for term and result.
 append_term_or_call(F,R,Code):- append_term(F,R,Code),!.
+
+% Default case calls function with R.
 append_term_or_call(F,R,call(F,R)).
 
 
 
-% disables
+
+% Disables optimization for the specified unit. Always fails the first clause.
 optimize_unit11(_,_):- !, fail.
+
+% Optimizes when the first argument is true.
 optimize_unit11(True,true):-True==true,!.
 /*
 optimize_unit11(B1,true):- B1 = eval_for(b_1,NonEval, A, B), A=B, is_non_eval_kind(NonEval),!.
@@ -162,39 +225,62 @@ optimize_u_assign((H:-_),[Pred| ArgsL], R, Code):- var(R), symbol(Pred), ok_to_a
   (H=..[Pred|_] -> nop(set_option_value('tabling',true)) ; current_predicate(_,Code)),!.
 
 
-% disables
+%!  optimize_conj(+Head, +Body1, +Body2, -Result) is det.
+%
+%   Attempts to optimize conjunctions in the given Prolog goal.
+%   The optimization tries to simplify the conjunction by matching patterns
+%   and making transformations if specific conditions are met.
+%
+%   @arg Head The head of the clause being optimized.
+%   @arg Body1 The first part of the body.
+%   @arg Body2 The second part of the body.
+%   @arg Result The optimized result of the conjunction.
+%
 optimize_conj(_, _, _, _):- disable_optimizer, !, fail.
 
 optimize_conj(_Head, B1,B2,eval_true(E)):-
+        % If B2 evaluates to is_True and B1 is an evaluation of the same value, simplify.
         B2 = is_True(True_Eval),
         B1 = eval(E,True_Eval1),
         True_Eval1 == True_Eval,!.
 
-optimize_conj(HB, RR, C=A, RR):- compound(RR),is_nsVar(C),is_nsVar(A),
+optimize_conj(HB, RR, C=A, RR):- 
+    % Optimization based on argument structures and variable occurrence counts.
+  compound(RR),is_nsVar(C),is_nsVar(A),
   as_functor_args(RR,_,_,Args),is_list(Args), member(CC,Args),var(CC), CC==C,
     count_var(HB,C,N),N=2,C=A,!.
 
 optimize_conj(_, u_assign(Term, C), u_assign(True,CC), eval_true(Term)):-
+    % Simplify when the assignment matches the expected true condition.
    'True'==True, CC==C.
 optimize_conj(_, u_assign(Term, C), is_True(CC), eval_true(Term)):- CC==C, !.
-optimize_conj(HB, u_assign(Term, C), C=A, u_assign(Term,A)):- is_ftVar(C),is_ftVar(A),count_var(HB,C,N),N=2,!.
+optimize_conj(HB, u_assign(Term, C), C=A, u_assign(Term,A)):- 
+%Simplify variable assignments.
+  is_ftVar(C),is_ftVar(A),count_var(HB,C,N),N=2,!.
 optimize_conj(_, u_assign(Term, C), is_True(CC), eval_true(Term)):- CC==C, !.
 optimize_conj(HB, B1,BT,B1):- assumed_true(HB,BT),!.
 optimize_conj(HB, BT,B1,B1):- assumed_true(HB,BT),!.
-%optimize_conj(Head, u_assign(Term, C), u_assign(True,CC), Term):- 'True'==True,
+
+% Commented-out optimization rules for potential future use.
+% optimize_conj(Head, u_assign(Term, C), u_assign(True, CC), Term):- 'True' == True.
 %     optimize_conj(Head, u_assign(Term, C), is_True(CC), CTerm).
 %optimize_conj(Head,B1,BT,BN1):- assumed_true(HB,BT),!, optimize_body(Head,B1,BN1).
 %optimize_conj(Head,BT,B1,BN1):- assumed_true(HB,BT),!, optimize_body(Head,B1,BN1).
 optimize_conj(Head,B1,B2,(BN1,BN2)):-
+    % Recursively optimize both parts of the body.
    optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2).
 
-
-
-
-
-
-
-
+%!  optimize_head_and_body(+Head, +Body, -HeadNewest, -BodyNewest) is det.
+%
+%   Optimizes both the head and body of a clause by first labeling singletons,
+%   then attempting optimizations on the head and body, and finally recursively
+%   optimizing until a fixed point is reached.
+%
+%   @arg Head The original head of the clause.
+%   @arg Body The original body of the clause.
+%   @arg HeadNewest The optimized head of the clause.
+%   @arg BodyNewest The optimized body of the clause.
+%
 optimize_head_and_body(Head,Body,HeadNewest,BodyNewest):-
    label_body_singles(Head,Body),
    (merge_and_optimize_head_and_body(Head,Body,HeadNew,BodyNew),
@@ -205,11 +291,24 @@ optimize_head_and_body(Head,Body,HeadNewest,BodyNewest):-
   (color_g_mesg('#404064',print_pl_source(( HeadNew :- BodyNew))),
     optimize_head_and_body(HeadNew,BodyNew,HeadNewest,BodyNewest)))),!.
 
-continue_opimize(HB,(H:-BB)):- expand_to_hb(HB,H,B), must_optimize_body(HB,B,BB),!.
-%continue_opimize(Converted,Converted).
+%!  continue_optimize(+HB, +Clause) is det.
+%
+%   Continues the optimization process for the given clause by expanding
+%   the head and body and performing body optimization.
+%
+%   @arg HB The head-body structure before optimization.
+%   @arg Clause The clause to be optimized.
+%
+continue_optimize(HB,(H:-BB)):- expand_to_hb(HB,H,B), must_optimize_body(HB,B,BB),!.
 
+% Uncommented version in case further work is needed.
+%continue_optimize(Converted,Converted).
 
-
+%!  merge_and_optimize_head_and_body(+Head, +Body, -HeadO, -BodyNew) is det.
+%
+%   Merges and optimizes the head and body of a clause. This process includes
+%   handling compound heads and recursively optimizing the body.
+%
 merge_and_optimize_head_and_body(Head,Converted,HeadO,Body):- nonvar(Head),
    Head = (PreHead,True),!,
    merge_and_optimize_head_and_body(PreHead,(True,Converted),HeadO,Body),!.
@@ -217,10 +316,19 @@ merge_and_optimize_head_and_body(AHead,Body,Head,BodyNew):-
     assertable_head(AHead,Head),
    must_optimize_body(Head,Body,BodyNew),!.
 
+%!  assertable_head(+PotentialHead, -Head) is det.
+%
+%   Ensures the provided head is assertable. This can involve restructuring
+%   arguments into a functor form when necessary.
+%
 assertable_head(u_assign(FList,R),Head):- FList =~ [F|List],
    append(List,[R],NewArgs), symbol(F), Head=..[F|NewArgs],!.
 assertable_head(Head,Head).
 
+%!  label_body_singles(+Head, +Body) is det.
+%
+%   Labels singleton variables in the body that are also present in the head.
+%
 label_body_singles(Head,Body):-
    term_singletons(Body+Head,BodyS),
    maplist(label_body_singles_2(Head),BodyS).
@@ -240,6 +348,11 @@ metta_predicate(match(space,matchable,template,eachvar)).
 must_optimize_body(A,B,CC):- once(optimize_body(A,B,C)), C \=@= B,!, must_optimize_body(A,C,CC).
 must_optimize_body(_,B,C):- B =C.
 
+%!  optimize_body(+Head, +Body, -OptimizedBody) is det.
+%
+%   Optimizes the body of a clause. This predicate handles various body constructs
+%   like conjunctions, disjunctions, and other structures that may benefit from optimization.
+%
 optimize_body(_HB,Body,BodyNew):- is_nsVar(Body),!,Body=BodyNew.
 %optimize_body( HB,u_assign(VT,R),u_assign(VT,R)):-!, must_optimize_body(HB,VT,VTT).
 optimize_body( HB,with_space(V,T),with_space(V,TT)):-!, must_optimize_body(HB,T,TT).
@@ -258,6 +371,7 @@ optimize_body( HB,loonit_assert_source_empty(V,X,Y,T,R3,R4),
   loonit_assert_source_empty(V,X,Y,TT,R3,R4)):-!,
   must_optimize_body(HB,T,TT).
 
+% Handles conjunction and conditional constructs.
 optimize_body( HB,(B1*->B2;B3),(BN1*->BN2;BN3)):-!, must_optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2), optimize_body(HB,B3,BN3).
 optimize_body( HB,(B1->B2;B3),(BN1->BN2;BN3)):-!, must_optimize_body(HB,B1,BN1), must_optimize_body(HB,B2,BN2), must_optimize_body(HB,B3,BN3).
 optimize_body( HB,(B1:-B2),(BN1:-BN2)):-!, optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2).
@@ -271,6 +385,10 @@ optimize_body( HB,eval(A,B),R):- optimize_u_assign_1(HB,A,B,R),!.
 %optimize_body(_HB,u_assign(A,B),u_assign(AA,B)):- p2s(A,AA),!.
 optimize_body(_HB,Body,BodyNew):- optimize_body_unit(Body,BodyNew).
 
+%!  optimize_body_unit(+Input, -Output) is det.
+%
+%   Performs basic unit-level optimizations for specific cases like 'true'.
+%
 optimize_body_unit(I,O):- I==true,!,I=O.
 optimize_body_unit(I,O):- I==('True'='True'),!,O=true.
 optimize_body_unit(I,O):- fail,
