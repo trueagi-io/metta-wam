@@ -304,7 +304,7 @@ function swipl_version () {
     if ! command -v swipl &> /dev/null; then
        echo "0.0"
     else
-       echo $(swipl --version | awk '{print $3}'
+       echo $(swipl --version | awk '{print $3}')
     fi
 }
 
