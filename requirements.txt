@@ -22,8 +22,8 @@ junit2html
 openai
 numpy
 pandas
-torch
-torchvision
+#torch
+#torchvision
 #readline
 pyreadline3
 pyswip @ git+https://github.com/logicmoo/pyswip
