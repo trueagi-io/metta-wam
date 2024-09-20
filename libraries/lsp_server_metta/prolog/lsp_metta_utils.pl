@@ -88,9 +88,9 @@ seek_to_line(_, _).
 %
 %  =Help= is the documentation for the term under the cursor at line
 %  =Line=, character =Char= in the file =Path=.
-help_at_position(Path, Line1, Char0, S) :-
+help_at_position(Path, Line, Char0, S) :-
     %debug(server,"help_at_position",[]),
-    clause_in_file_at_position(Clause, Path, line_char(Line1, Char0)),
+    clause_in_file_at_position(Clause, Path, line_char(Line, Char0)),
     % TODO - add this in when I can import eval_args
     %debug(server,"9 ~w",[Clause]),
     predicate_help(Path,Clause,S).
@@ -293,11 +293,11 @@ annotated_is_delimiter(Char) :-
 %       ?- clause_in_file_at_position(Clause, 'file.pl', line_char(5, 10)).
 %       Clause = (some_prolog_fact :- some_prolog_goal).
 %
-clause_in_file_at_position(Clause, Path, line_char(Line1, Char)) :-
+clause_in_file_at_position(Clause, Path, line_char(Line, Char)) :-
     % Setup a stream to read the file and find the clause at the specified position.
     lsp_metta_changes:doc_text(Path,SplitText),
-    split_document_get_section_only(Line1,LinesLeft,SplitText,d(_,Text,_)),
-    %debug(server,"0 ~w",[d(_,Text,_)]),
+    split_document_get_section_only(Line,LinesLeft,SplitText,d(_,Text,_)),
+    %debug(server,"0 ~w ~w",[Line,d(_,Text,_)]),
     setup_call_cleanup(
         open_string(Text,Stream),
         annotated_read_sexpr_list(p(0,0),_,Stream,ItemList),
@@ -327,72 +327,27 @@ find_term_in_annotated_stream([H|T],Lpos,CPos,Term) :-
 %   @arg Post     The remaining sections after the Nth line.
 %
 split_document_get_section(N,N,[],[],d(0,"",false),[]).
-split_document_get_section(N,M,[d(L,Body,Meta)|SplitText],[],d(L,Body,Meta),SplitText) :- L>=N,M is L-N,!.
-split_document_get_section(N,M,[d(L,Body,Meta)|SplitText],[d(L,Body,Meta)|Pre],This,Post) :- L<N,!,
+split_document_get_section(N,M,[d(L,Body,Meta)|SplitText],[],d(L,Body,Meta),SplitText) :- L>N,!.
+split_document_get_section(N,M,[d(L,Body,Meta)|SplitText],[d(L,Body,Meta)|Pre],This,Post) :-
     N1 is N-L,
-    split_document_get_section(N1,M1,SplitText,Pre,This,Post),
-    M is M1+L.
+    split_document_get_section(N1,M,SplitText,Pre,This,Post).
 
-split_document_get_multiple_sections(N1,_N2,N1,[], [],[],[]). % empty list
-split_document_get_multiple_sections(_N1,N2,0,SplitText, [],[],SplitText) :- 0>N2,!. % past the end
-split_document_get_multiple_sections(N1,N2,M,[d(L,Body,Meta)|SplitText],[d(L,Body,Meta)|Pre],This,Post) :- L=<N1,!, % in pre
+split_document_get_section_only(N,N,[],d(0,"",false)).
+split_document_get_section_only(N,N,[d(L,Body,Meta)|_],d(L,Body,Meta)) :- L>N,!.
+split_document_get_section_only(N,M,[d(L,_,_)|SplitText],This) :-
+    N1 is N-L,
+    split_document_get_section_only(N1,M,SplitText,This).
+
+split_document_get_multiple_sections(N1,_N2,N1,[],  [],[],[]). % empty list
+split_document_get_multiple_sections(_N1,N2,0,SplitText,  [],[],SplitText) :- 0>N2,!. % past the end
+split_document_get_multiple_sections(N1,N2,M,[d(L,Body,Meta)|SplitText],  [d(L,Body,Meta)|Pre],This,Post) :- L=<N1,!, % in pre
     N1n is N1-L,
     N2n is N2-L,
     split_document_get_multiple_sections(N1n,N2n,M,SplitText,Pre,This,Post).
-split_document_get_multiple_sections(N1,N2,N1,[d(L,Body,Meta)|SplitText],Pre,[d(L,Body,Meta)|This],Post) :- % in list
+split_document_get_multiple_sections(N1,N2,N1,[d(L,Body,Meta)|SplitText],  Pre,[d(L,Body,Meta)|This],Post) :- % in list
     N1n is N1-L,
     N2n is N2-L,
     split_document_get_multiple_sections(N1n,N2n,_M1,SplitText,Pre,This,Post).
-
-split_document_get_section_only(N,N,[],d(0,"",false)).
-split_document_get_section_only(N,M,[d(L,Body,Meta)|_],d(L,Body,Meta)) :- L>=N,M is L-N,!.
-split_document_get_section_only(N,M,[d(L,_,_)|SplitText],This) :- L<N,!,
-    N1 is N-L,
-    %debug(server,"split_document_get_section_only ~w ~w",[N1,SplitText]),
-    split_document_get_section_only(N1,M1,SplitText,This),
-    M is M1+L.
-
-%!  clause_at_position(+Stream, -Clause, +Start) is det.
-%
-%   Extracts a clause from the stream at the specified start position.
-%
-%   @arg Stream is the input stream of the source file.
-%   @arg Clause is the clause extracted from the stream.
-%   @arg Start is the starting position to search for the clause.
-%
-%   @example Example usage:
-%       ?- clause_at_position(Stream, Clause, line_char(5, 10)).
-%       Clause = (some_clause).
-%
-%clause_at_position(Stream, Clause, Start) :-
-%    debug(server,"clause_at_position1",[]),
-%    % Convert the line/character position into an offset within the stream.
-%    linechar_offset(Stream, Start, Offset, Prechars),!,
-%    accumulating_post_seek(Stream,Prechars,Chars),
-%    string_chars(Clause,Chars).
-%
-%!  clause_at_position(+Stream, -Clause, +Start, +Here) is det.
-%
-%   Retrieves a clause at the specified line and character position within the stream.
-%
-%   @arg Stream is the input stream of the source file.
-%   @arg Clause is the clause found at the given position.
-%   @arg Start represents the line and character position to start from.
-%   @arg Here is the offset position calculated earlier.
-%
-%   @see read_source_term_at_location/3 for term reading.
-%
-%clause_at_position(Stream, Clause, line_char(Line1, Char), Here) :-
-%    debug(server,"clause_at_position2 ~w",[Here]),
-%    peek_string(Stream,10,Clause).
-%    % Read terms from the source file at the given position.
-%    read_source_term_at_location(Stream, Terms, [line(Line1),
-%                                                 subterm_positions(SubPos),
-%                                                 operators(Ops),
-%                                                 error(Error)]),
-%    % Extract the clause at the specified position.
-%    extract_clause_at_position(Stream, Ops, Terms, line_char(Line1, Char), Here,
-%                               SubPos, Error, Clause).
 
 create_line_entry(N,S,d(N,S,false)).
 

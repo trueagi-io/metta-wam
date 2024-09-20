@@ -164,11 +164,10 @@ handle_msg("shutdown", Msg, _{id: Id, result: null}) :-
 % IN: params:{position:{character:11,line:56},textDocument:{uri:file://<FILEPATH>}}}
 % OUT: {id:21,result:{contents:{kind:plaintext,value:<ALL_THE_STUFF>}}}
 handle_msg("textDocument/hover", Msg, _{id: Id, result: Response}) :-
-    _{params: _{position: _{character: Char0, line: Line0},
+    _{params: _{position: _{character: Char0, line: Line},
                 textDocument: _{uri: Doc}}, id: Id} :< Msg,
     atom_concat('file://', Path, Doc),
-    Line1 is Line0 + 1,
-    (  help_at_position(Path, Line1, Char0, Help)
+    (  help_at_position(Path, Line, Char0, Help)
     -> Response = _{contents: _{kind: plaintext, value: Help}}
     ;  Response = null).
 
