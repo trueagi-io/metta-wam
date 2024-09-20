@@ -148,7 +148,7 @@ version_ge() {
 # List of required system dependencies for SWI-Prolog development, including various Java development tools and build systems
 SWI_DEV_DEPS="build-essential autoconf git cmake libpython3-dev libgmp-dev libssl-dev unixodbc-dev libffi-dev \
     libreadline-dev zlib1g-dev libarchive-dev libossp-uuid-dev libxext-dev libice-dev libjpeg-dev \
-    libxinerama-dev libxft-dev libxpm-dev libxt-dev pkg-config libdb-dev libpcre3 libpcre3-dev \
+    libxinerama-dev libxft-dev libxpm-dev libunwind-dev libxt-dev pkg-config libdb-dev libpcre3 libpcre3-dev \
     libpcre2-dev libpcrecpp0v5 libpcre16-3 libpcre32-3 libpcrecpp0v5 libqt5widgets5 qtbase5-dev \
     libgoogle-perftools-dev"
     
@@ -189,14 +189,14 @@ install_swi_devel_deps() {
             return 0
         } || {
             echo -e "${RED}Failed to install one or more dependencies.${NC}"
-            return 1
+            return 0
         }
     else
         echo -e "${RED}System modifications are not allowed. The following missing dependencies were found but cannot be installed:${NC}"
         for pkg in "${missing_packages[@]}"; do
             echo -e "${RED}$pkg${NC}"
         done
-        return 1
+        return 0
     fi
 }
 
@@ -304,7 +304,7 @@ function swipl_version () {
     if ! command -v swipl &> /dev/null; then
        echo "0.0"
     else
-       echo $(swipl --version | awk '{print $3}')
+       echo $(swipl --version | awk '{print $3}'
     fi
 }
 
