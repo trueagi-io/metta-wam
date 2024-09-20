@@ -395,8 +395,9 @@ compile_for_assert_eq(':-',HeadIn, BodyIn, Converted):-
     call(ensure_compiler_ready),
     Converted=(H:-B), s2p(HeadIn,H), s2p(BodyIn,B),!.
 
-ensure_compiler_ready:- ensure_loaded(mettalog('metta_ontology.pfc.pl')), ensure_corelib_types.
+%ensure_compiler_ready:- ensure_loaded(mettalog('metta_ontology.pfc.pl')), ensure_corelib_types.
 %ensure_compiler_ready:- eopfc.
+ensure_compiler_ready.
 /*
 compile_for_assert_01(HeadIs, AsBodyFn, Converted) :-
   ( AsBodyFn =@= HeadIs ; AsBodyFn == [] ), !,
@@ -485,7 +486,7 @@ compile_for_assert(HeadAsFunction0, AsBodyFn0, ConvertedO) :-
     optimize_head_and_body(HeadC,BodyC,HeadCC,BodyCC),
     Convert = (HeadCC :- BodyCC),
     fix_equals_in_head(Convert,Converted),!,
-    continue_opimize(Converted,ConvertedO))).
+    continue_optimize(Converted,ConvertedO))).
 
 
 compile_head_for_assert(Which,Head, NewHead, SupposedRT, Len, NarrowRetType,ResultToHead,ResultFromBody,PreBodyCode,ResultCode):-
