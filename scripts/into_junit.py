@@ -5,12 +5,23 @@ import re
 from collections import defaultdict
 import datetime
 
-def create_testcase_element(testclass, testname, stdout, identifier, got, expected, status, url, time):
+def testfile_name(url):
+    return url.split('#',1)[0].split('/')[-1]
+
+def create_testcase_element(testcase_info, failcounts_dict):
+    testpackage, testname, stdout, full_identifier, got, expected, status, url, time = testcase_info
+    return create_testcase_element_(testpackage, testname, stdout, full_identifier, got, expected, status, url, time, failcounts_dict)
+
+def create_testcase_element_(testclass, testname, stdout, identifier, got, expected, status, url, time, failcounts_dict):
     # Create the testcase XML element with the class and test name attributes
     testcase = ET.Element("testcase", classname=testclass, name=testname, time=time)
 
-    test_res = f"Assertion: {stdout}\nExpected: {expected}\nActual: {got}"    
-    url = url.replace("/./","/").replace("//","/").replace(":/","://")
+    test_res = f"Assertion: {stdout}\nExpected: {expected}\nActual: {got}"
+    url = url.replace("/./","/").replace("//","/").replace(":/","://")    
+    if testclass != 'WHOLE-TESTS':
+        testfile = testfile_name(url)
+        failcount = failcounts_dict[testfile]
+        url = url.replace('.metta.html', '.metta.' + str(failcount) + '_failed.html')    
     GITHUB_REPOSITORY_OWNER = os.getenv("GITHUB_REPOSITORY_OWNER", 'trueagi-io')
     if GITHUB_REPOSITORY_OWNER is not None:  # Correct checking against None
         url = url.replace('trueagi-io', GITHUB_REPOSITORY_OWNER.lower())  # Correct method to lower case
@@ -57,6 +68,7 @@ def parse_test_line(line):
 def generate_junit_xml(input_file, timestamp):
     dt = datetime.datetime.fromisoformat(timestamp)
     timestamps_dict = {}
+    failcounts_dict = defaultdict(int) # track number of failures per file
     packages_dict = defaultdict(list)  # Dictionary to group test cases by their testpackage
 
     with open(input_file, 'r') as file:
@@ -66,19 +78,24 @@ def generate_junit_xml(input_file, timestamp):
                 try:
                     parts = re.split(r'\s*\|\s*(?![^()]*\))', line.strip())
                     testpackage, testname, stdout, full_identifier, got, expected, status, url, time = parse_test_line(line)
-                    testcase = create_testcase_element(testpackage, testname, stdout, full_identifier, got, expected, status, url, time)
+                    if status == 'FAIL' and testpackage != 'WHOLE-TESTS':
+                        testfile = testfile_name(url)
+                        failcounts_dict[testfile] += 1
                     dt += datetime.timedelta(seconds=float(time))
                     if testpackage not in timestamps_dict:
                         timestamps_dict[testpackage] = dt
-                    packages_dict[testpackage].append(testcase)
-                    print(f"Processing {testpackage}.{testname}: {status}", file=sys.stderr)
+                    testcase_info = (testpackage, testname, stdout, full_identifier, got, expected, status, url, time)
+                    print(testcase_info)
+                    packages_dict[testpackage].append(testcase_info)
+                    print(f"Processed {testpackage}.{testname}: {status}", file=sys.stderr)
                 except ValueError as e:
                     print(f"Skipping line due to error: {e}\nLine: {line}\nParts: {parts}", file=sys.stderr)
 
     # Create a testsuite for each testpackage group
     testsuites = ET.Element("testsuites", timestamp=timestamp)
     testsuites_time = 0.0
-    for testpackage, testcases in packages_dict.items():
+    for testpackage, testcase_infos in packages_dict.items():
+        testcases = [create_testcase_element(testcase_info, failcounts_dict) for testcase_info in testcase_infos]
         testsuite_timestamp = timestamps_dict[testpackage].isoformat(timespec='seconds')
         testsuite = ET.Element("testsuite", name=testpackage, timestamp=testsuite_timestamp)
         testsuite_time = 0.0
