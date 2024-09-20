@@ -1610,3 +1610,12 @@
     (@param "Recover")))
   (@return "Result of Form if no exception is raised. Result of Recover (with bindings from Catcher) if an exception is caught."))
 (: catch (-> Atom Atom Atom Atom))
+
+;; Public MeTTa
+(@doc max-time!
+  (@desc "Executes Form. If execution takes longer than Time, will raise a time_limit_exceeded exception. See also `catch`.")
+  (@params (
+    (@param "Time (in seconds)")
+    (@param "Form")))
+  (@return "Result of Form if execution completes within Time. Raises an exception otherwise."))
+(: max-time! (-> Number Atom Atom))
