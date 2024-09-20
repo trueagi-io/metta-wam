@@ -1058,7 +1058,7 @@ metta_atom_asserted('&stdlib','&corelib').
 metta_atom_asserted('&flybase','&corelib').
 metta_atom_asserted('&catalog','&corelib').
 metta_atom_asserted('&catalog','&stdlib').
-:- ensure_loaded(metta_corelib).
+%:- ensure_loaded(metta_corelib).
 
 /*
 'mod-space'(top,'&self').
