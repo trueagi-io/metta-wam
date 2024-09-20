@@ -305,7 +305,7 @@ handle_msg("textDocument/didOpen", Msg, Resp) :-
     _{params: _{textDocument: TextDoc}} :< Msg,
     _{uri: FileUri} :< TextDoc,
     _{text: FullText} :< TextDoc,
-    split_text_single_lines(FullText,SplitText),
+    split_text_document(FullText,SplitText),
     %debug(server,SplitText,[]),
     atom_concat('file://', Path, FileUri),
     retractall(lsp_metta_changes:doc_text(Path, _)),
