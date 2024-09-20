@@ -291,13 +291,13 @@ clause_in_file_at_position(Clause, Path, line_char(Line, Char)) :-
     % Setup a stream to read the file and find the clause at the specified position.
     lsp_metta_changes:doc_text(Path,SplitText),
     split_document_get_section_only(Line,LinesLeft,SplitText,d(_,Text,_)),
-    %debug(server,"0 ~w ~w",[Line,d(_,Text,_)]),
+    %debug(server,"0 ~w ~w ~w",[Line,LinesLeft,d(_,Text,_)]),
     setup_call_cleanup(
         open_string(Text,Stream),
-        annotated_read_sexpr_list(p(LinesLeft,0),_,Stream,ItemList),
+        annotated_read_sexpr_list(p(0,0),_,Stream,ItemList),
         close(Stream)),
     %debug(server,"1 ~w ~w ~w",[ItemList,0,Char]),
-    (find_term_in_annotated_stream(ItemList,0,Char,Clause) -> true ; Clause='').
+    (find_term_in_annotated_stream(ItemList,LinesLeft,Char,Clause) -> true ; Clause='').
 
 find_term_in_annotated_stream(a(Lpos,S,E,Term),Lpos,CPos,Term) :- CPos=<E,!,S=<CPos.
 find_term_in_annotated_stream(exec(L),Lpos,CPos,Term) :- find_term_in_annotated_stream(L,Lpos,CPos,Term).
@@ -344,9 +344,10 @@ split_document_get_multiple_sections(N1,N2,N1,[d(L,Body,Meta)|SplitText],  Pre,[
     split_document_get_multiple_sections(N1n,N2n,_M1,SplitText,Pre,This,Post).
 
 % Choose the split strategy
+% Have only one of these commented out - any split strategy should work as long as lines are not broken up
 split_text_document(FullText,SplitText) :- split_text_single_lines(FullText,SplitText).
-%split_text_document(FullText,[d(100000000,FullText,false)]).
-
+% should use the number of lines in the file, but that would need to be calculated
+%split_text_document(FullText,[d(Big,FullText,false)]) :- current_prolog_flag(max_tagged_integer,Big).
 create_line_entry(N,S,d(N,S,false)).
 
 extract_line_entry(d(_,S,false),S).

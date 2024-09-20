@@ -39,6 +39,8 @@ u_assignI(B,C):-  u_assign(B,C).
 :- discontiguous f2q/6.
 
 
+% next three rules : default RetType to _ANY_, HeadIs to my_head, Depth to 40
+
 f2p(RetResult,Convert, Converted):-
   f2p(my_head,_ANY_,RetResult,Convert, Converted).
 
@@ -79,16 +81,17 @@ f2q(_Depth,_HeadIs, RetType,RetVar, Convert, true) :-
   is_ftVar(RetVar),is_ftVar(RetType),is_ftVar(Convert),
   RetVar=Convert,!. % Check if Convert is a variable
 
+% example: compile_for_assert([fp1,X],X,CC)
 f2q(_Depth,_HeadIs, RetType,RetVar, Convert, eval_for(b_C,RetType,Convert,RetVar)) :-
   is_ftVar(Convert),!.% Check if Convert is a variable
 
+% example: compile_for_assert([fp1,X],[X,X],CC)
 f2q(_Depth,_HeadIs,RetType,RetVar, [C|Convert], eval_for(b_B,RetType,[C|Convert],RetVar)) :-
    is_ftVar(C),!.% Check if Convert is a variable
 
+% example: compile_for_assert([fp1,X],eval(X),CC) (just strip the eval?)
 f2q(Depth,HeadIs,RetType,RetResult, eval(Convert), Code):-  !,
   DepthM1 is Depth-1, f2q(DepthM1,HeadIs,RetType,RetResult, Convert, Code).
-
-
 
 f2q(_Depth,_HeadIs,_RetType,_RetResult, u_assign(E,R),  UA):-  !,
     u_assign2(E,R)=UA.
