@@ -26,6 +26,8 @@ The main entry point for the Language Server implementation.
                             token_modifiers/1]).
 :- use_module(lsp_metta_xref).
 
+:- dynamic lsp_metta_changes:doc_text/2.
+
 main :-
     set_prolog_flag(debug_on_error, false),
     set_prolog_flag(report_error, true),
@@ -33,6 +35,7 @@ main :-
     current_prolog_flag(argv, Args),
     debug(server),
     debug(server(high)),
+    load_mettalog_xref,
     start(Args).
 
 start([stdio]) :- !,
@@ -302,7 +305,12 @@ handle_msg("textDocument/semanticTokens/range", Msg, _{id: Msg.id, result: []}) 
 handle_msg("textDocument/didOpen", Msg, Resp) :-
     _{params: _{textDocument: TextDoc}} :< Msg,
     _{uri: FileUri} :< TextDoc,
+    _{text: FullText} :< TextDoc,
+    split_text_single_lines(FullText,SplitText),
+    %debug(server,SplitText,[]),
     atom_concat('file://', Path, FileUri),
+    retractall(lsp_metta_changes:doc_text(Path, _)),
+    assertz(lsp_metta_changes:doc_text(Path, SplitText)),
     ( loaded_source(Path) ; assertz(loaded_source(Path)) ),
     check_errors_resp(FileUri, Resp).
 
@@ -348,3 +356,4 @@ check_errors_resp(FileUri, _{method: "textDocument/publishDiagnostics",
     check_errors(Path, Errors).
 check_errors_resp(_, false) :-
     debug(server, "Failed checking errors", []).
+
