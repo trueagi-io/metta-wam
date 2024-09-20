@@ -1381,9 +1381,10 @@ generate_interpreter_stubs:-
 
 :- dynamic(metta_atom_asserted_deduced/2).
 :- multifile(metta_atom_asserted_deduced/2).
-metta_atom_asserted_deduced('&corelib', Term):-
+metta_atom_asserted_deduced('&corelib', Term):- fail,
   %\+ did_generate_interpreter_stubs,
-   metta_atom_corelib_types(Term).
+   metta_atom_corelib_types(Term),
+   wdmsg(metta_atom_corelib_types(Term)).
 
 load_corelib_file:- really_using_corelib_file,!.
 load_corelib_file:- asserta(really_using_corelib_file), fail.
