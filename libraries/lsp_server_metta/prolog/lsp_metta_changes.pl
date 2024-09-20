@@ -40,7 +40,7 @@ handle_doc_change(Path, Change) :-
     %debug(server,"3:~w",[NewCodes]),
     string_codes(NewText,NewCodes),
     %debug(server,"4:~w",[NewText]),
-    split_text_single_lines(NewText,NewSplitText),
+    split_text_document(NewText,NewSplitText),
     %debug(server,"5:~w",[NewSplitText]),
     append([Pre,NewSplitText,Post],NewDocument),
     retractall(doc_text(Path, _)),
@@ -59,7 +59,7 @@ doc_text_fallback(Path, Text) :-
     doc_text(Path, Text), !.
 doc_text_fallback(Path, Text) :-
     read_file_to_string(Path, Text, []),
-    split_text_single_lines(Text,SplitText),
+    split_text_document(Text,SplitText),
     assertz(doc_text(Path, SplitText)).
 
 %! replace_codes(Text, StartLine, StartChar, ReplaceLen, ReplaceText, -NewText) is det.

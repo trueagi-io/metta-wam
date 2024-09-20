@@ -8,7 +8,7 @@
 %                       linechar_offset/3,
 %                       clause_in_file_at_position/3,
                         help_at_position/4,
-                        split_text_single_lines/2,
+                        split_text_document/2,
                         split_document_get_multiple_sections/7,
                         coalesce_text/2
                         ]).
@@ -26,63 +26,53 @@
 % @author James Cash
 % */
 
-%!  linechar_offset(+Stream:stream, +Position:line_char, -Offset:int) is det.
-%
-%   Converts a line and character position into a byte offset in the given stream.
-%   This predicate seeks to the specified line and character within the stream.
-%
-%   @arg Stream is the input stream being read.
-%   @arg Position is a term of the form line_char(Line, Char), representing the line and character to seek to.
-%   @arg Offset is the resulting byte offset corresponding to the position.
-%
-%   @example Convert line and character position to byte offset:
-%       ?- open('file.pl', read, Stream), linechar_offset(Stream, line_char(5, 10), Offset).
-%       Offset = 65.
-%
-linechar_offset(Stream, line_char(Line1, Char0), Offset, PreChars) :-
-    % Seek to the beginning of the stream (bof = beginning of file).
-    seek(Stream, 0, bof, _),
-    % Seek to the specified line number in the stream.
-    seek_to_line(Stream, Line1),
-    % Seek to the specified character position from the current line position.
-    accumulating_pre_seek(Stream, Char0, [], PreChars),
-    seek(Stream, 0, current, Offset).
+linechar_offset(_Stream, line_char(_Line1, _Char0), _Offset, _PreChars) :-
+    % needs to use the split-document model
+    debug(server,"~w",["lsp_metta_utils::linechar_offset not implemented yet"]).
 
-accumulating_pre_seek(_Stream, 0, CharList, CharList) :- !.
-accumulating_pre_seek(Stream, N, CharListIn, CharListOut) :- N>0,
-    get_char(Stream, Char),
-    ((\+ char_type(Char,white),Char\='(',Char\=')') -> append(CharListIn,[Char],Current) ; Current=[]),
-    Nnext is N-1,
-    accumulating_pre_seek(Stream, Nnext, Current, CharListOut).
-
-accumulating_post_seek(Stream, CharListIn, CharListOut) :-
-    get_char(Stream, Char),
-    ((\+ char_type(Char,white),Char\='(',Char\=')') ->
-        (append(CharListIn,[Char],Current),
-        accumulating_post_seek(Stream,Current,CharListOut))
-    ; CharListOut=CharListIn).
-
-%!  seek_to_line(+Stream:stream, +Line:int) is det.
+% %!  linechar_offset(+Stream:stream, +Position:line_char, -Offset:int) is det.
+% %
+% %   Converts a line and character position into a byte offset in the given stream.
+% %   This predicate seeks to the specified line and character within the stream.
+% %
+% %   @arg Stream is the input stream being read.
+% %   @arg Position is a term of the form line_char(Line, Char), representing the line and character to seek to.
+% %   @arg Offset is the resulting byte offset corresponding to the position.
+% %
+% %   @example Convert line and character position to byte offset:
+% %       ?- open('file.pl', read, Stream), linechar_offset(Stream, line_char(5, 10), Offset).
+% %       Offset = 65.
+% %
+% linechar_offset(Stream, line_char(Line1, Char0), Offset, PreChars) :-
+%     % Seek to the beginning of the stream (bof = beginning of file).
+%     seek(Stream, 0, bof, _),
+%     % Seek to the specified line number in the stream.
+%     seek_to_line(Stream, Line1),
+%     % Seek to the specified character position from the current line position.
+%     accumulating_pre_seek(Stream, Char0, [], PreChars),
+%     seek(Stream, 0, current, Offset).
 %
-%   Seeks to the specified line in the stream by skipping lines until the target line is reached.
-%
-%   @arg Stream is the input stream.
-%   @arg Line is the line number to seek to.
-%
-%   @example Seek to line 5 in a file:
-%       ?- open('file.pl', read, Stream), seek_to_line(Stream, 5).
-%
-seek_to_line(Stream, N) :-
-    % If N is greater than 1, we need to skip lines.
-    N > 1, !,
-    % Skip the current line by searching for a newline character.
-    skip(Stream, 0'\n),
-    % Decrement the line counter.
-    NN is N - 1,
-    % Recursively seek to the remaining lines.
-    seek_to_line(Stream, NN).
-% Base case: If N is 1, we have reached the desired line.
-seek_to_line(_, _).
+% %!  seek_to_line(+Stream:stream, +Line:int) is det.
+% %
+% %   Seeks to the specified line in the stream by skipping lines until the target line is reached.
+% %
+% %   @arg Stream is the input stream.
+% %   @arg Line is the line number to seek to.
+% %
+% %   @example Seek to line 5 in a file:
+% %       ?- open('file.pl', read, Stream), seek_to_line(Stream, 5).
+% %
+% seek_to_line(Stream, N) :-
+%     % If N is greater than 1, we need to skip lines.
+%     N > 1, !,
+%     % Skip the current line by searching for a newline character.
+%     skip(Stream, 0'\n),
+%     % Decrement the line counter.
+%     NN is N - 1,
+%     % Recursively seek to the remaining lines.
+%     seek_to_line(Stream, NN).
+% % Base case: If N is 1, we have reached the desired line.
+% seek_to_line(_, _).
 
 %! help_at_position(+Path:atom, +Line:integer, +Char:integer, -Help:string) is det.
 %
@@ -128,9 +118,9 @@ format_metta_Param(['@param',P],Pf) :- format(string(Pf),"Param: ~w",[P]).
 %     predicate_help(Path, Clause, S0),
 %     format_help(S0, S).
 
-% annotated_inc_row(p(L,C),p(L,C1),N) :- C1 is C+N.
-
-annotated_next_line(p(L,_),p(L1,0)) :- L1 is L+1.
+annotated_post_newline(Stream,p(L,_),p(L1,N0)) :-
+    L1 is L+1,
+    seek(Stream,0,current,N0).
 
 annotated_read_sexpr_list(LC0,LC0,Stream,[]) :- at_end_of_stream(Stream).
 annotated_read_sexpr_list(LC0,LC2,Stream,[Item|L]) :-
@@ -163,8 +153,8 @@ annotated_cont_sexpr(LCi,LC1,EndChar, Stream, Item) :-
         seek(Stream,0,current,N1),
         LC1=LC0,
         LC0=p(L,C),
-        Start is C+N0-1,
-        End is C+N1,
+        Start is N0-1-C,
+        End is N1-C,
         Item=a(L,Start,End,Item0)
     ), !.
 
@@ -198,9 +188,17 @@ annotated_read_list(LC0,LC2,EndChar, Stream, List) :-
 % @arg Stream Stream from which to skip spaces.
 annotated_skip_spaces(LC0,LC1,Stream) :-
     peek_char(Stream, Char),
-    (   Char = ';' -> (annotated_read_single_line_comment(Stream), annotated_skip_spaces(LC0,LC1,Stream))  % If the character is ';', read a single-line comment.
-    ;   char_type(Char,end_of_line) -> (get_char(Stream, _), annotated_skip_spaces(LC0,LC1,Stream))
-    ;   (char_type(Char,white);char_type(Char,space);char_type(Char,cntrl)) -> (get_char(Stream, _), annotated_skip_spaces(LC0,LC1,Stream))  % Consume the space and continue.
+    (   Char = ';' ->
+            (annotated_read_single_line_comment(Stream),
+            annotated_post_newline(Stream,LC0,LC0a),
+            annotated_skip_spaces(LC0a,LC1,Stream))  % If the character is ';', read a single-line comment.
+    ;   char_type(Char,end_of_line) ->
+            (get_char(Stream, _),
+            annotated_post_newline(Stream,LC0,LC0a),
+            annotated_skip_spaces(LC0a,LC1,Stream))
+    ;   (char_type(Char,white);char_type(Char,space);char_type(Char,cntrl)) ->
+            (get_char(Stream, _),
+            annotated_skip_spaces(LC0,LC1,Stream))  % Consume the space and continue.
     ;   LC1=LC0  % Non-space character found; stop skipping.
     ), !.
 
@@ -238,16 +236,12 @@ annotated_read_symbolic(EndChar, Stream, FirstChar, Symbolic) :-
 % Case 1: If the character sequence starts with '$', treat it as a variable.
 annotated_classify_and_convert_charseq_(['$'| RestChars], var(Symbolic)) :-
     !,atom_chars(Symbolic, RestChars).  % Convert the rest of the characters into a variable name.
-% % Case 2: Check to see of this is a number
-% annotated_classify_and_convert_charseq_(Chars,number(Value)) :-
-%     string_chars(S,Chars),
-%     number_string(V,S),
-% Case 3: Attempt to interpret the characters as a Prolog term using `read_from_chars/2`.
+% Case 2: Attempt to interpret the characters as a Prolog term using `read_from_chars/2`.
 % This handles more complex syntaxes like numbers, dates, etc.
 annotated_classify_and_convert_charseq_(Chars, Symbolic) :-
     notrace(catch(read_from_chars(Chars, Symbolic), _, fail)),  % Safely attempt to parse the characters.
     atomic(Symbolic),!.  % Ensure the result is atomic.
-% Case 4: If no other case applies, convert the characters directly into an atom.
+% Case 3: If no other case applies, convert the characters directly into an atom.
 annotated_classify_and_convert_charseq_(Chars, Symbolic) :-
     atom_chars(Symbolic, Chars).  % Convert the character sequence into an atom.
 
@@ -300,7 +294,7 @@ clause_in_file_at_position(Clause, Path, line_char(Line, Char)) :-
     %debug(server,"0 ~w ~w",[Line,d(_,Text,_)]),
     setup_call_cleanup(
         open_string(Text,Stream),
-        annotated_read_sexpr_list(p(0,0),_,Stream,ItemList),
+        annotated_read_sexpr_list(p(LinesLeft,0),_,Stream,ItemList),
         close(Stream)),
     %debug(server,"1 ~w ~w ~w",[ItemList,0,Char]),
     (find_term_in_annotated_stream(ItemList,0,Char,Clause) -> true ; Clause='').
@@ -327,7 +321,7 @@ find_term_in_annotated_stream([H|T],Lpos,CPos,Term) :-
 %   @arg Post     The remaining sections after the Nth line.
 %
 split_document_get_section(N,N,[],[],d(0,"",false),[]).
-split_document_get_section(N,M,[d(L,Body,Meta)|SplitText],[],d(L,Body,Meta),SplitText) :- L>N,!.
+split_document_get_section(N,N,[d(L,Body,Meta)|SplitText],[],d(L,Body,Meta),SplitText) :- L>N,!.
 split_document_get_section(N,M,[d(L,Body,Meta)|SplitText],[d(L,Body,Meta)|Pre],This,Post) :-
     N1 is N-L,
     split_document_get_section(N1,M,SplitText,Pre,This,Post).
@@ -348,6 +342,10 @@ split_document_get_multiple_sections(N1,N2,N1,[d(L,Body,Meta)|SplitText],  Pre,[
     N1n is N1-L,
     N2n is N2-L,
     split_document_get_multiple_sections(N1n,N2n,_M1,SplitText,Pre,This,Post).
+
+% Choose the split strategy
+split_text_document(FullText,SplitText) :- split_text_single_lines(FullText,SplitText).
+%split_text_document(FullText,[d(100000000,FullText,false)]).
 
 create_line_entry(N,S,d(N,S,false)).
 
