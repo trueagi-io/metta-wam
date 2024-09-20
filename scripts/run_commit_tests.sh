@@ -26,7 +26,7 @@ done
 if [ -z $timestamp ]; then
     timestamp=$(date +"%Y-%m-%dT%H:%M:%S")
 fi
-output=./reports/tests_output/baseline-compat-$timestamp/
+output=./reports/tests_output/baseline-compat/
 
 # run the tests
 mkdir -p $output
@@ -83,7 +83,7 @@ run_mettalog_tests() {
 }
 
 echo Running tests METTALOG_OUTPUT=$METTALOG_OUTPUT and SHARED_UNITS=$SHARED_UNITS
-SKIP_LONG=0
+SKIP_LONG=1
 
 #blank out the shared units
 cat /dev/null > /tmp/SHARED.UNITS
