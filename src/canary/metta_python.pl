@@ -51,6 +51,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+%********************************************************************************************* 
+% PROGRAM FUNCTION: integrates Prolog with Python and Rust environments to execute, manage, and 
+% query logical operations across different spaces, handling Python exceptions, module loading, 
+% and providing utilities for converting between Prolog terms and Python/Rust objects.
+%*********************************************************************************************
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % IMPORTANT:  DO NOT DELETE COMMENTED-OUT CODE AS IT MAY BE UN-COMMENTED AND USED
@@ -1049,17 +1054,30 @@ ensure_mettalog_py:-
     setenv('VSPACE_VERBOSE', 0),  % Set the environment variable for verbosity.
     with_safe_argv(ensure_mettalog_py(_)), !.  % Safely initialize MettaLearner.
 
-%!  space_type_method(+SpaceType, +MethodName, -Implementation) is multifile.
-%
-%   Defines method implementations for non-Prolog spaces, associating method names 
-%   with their corresponding implementations in the Rust space system.
-%
-%   @arg SpaceType The type of space, in this case, `is_not_prolog_space`.
-%   @arg MethodName The name of the method being mapped.
-%   @arg Implementation The corresponding implementation in the Rust space system.
 :- multifile(space_type_method/3).
 :- dynamic(space_type_method/3).
 
+%!  space_type_method(+SpaceType, +Method, +Implementation) is det.
+%
+%   Maps a method for a specific space type to its implementation.
+%
+%   This predicate associates a method name with the corresponding implementation
+%   for a given space type. It is used to define different actions (such as adding,
+%   removing, or querying atoms) for a specific type of space (e.g., a Prolog space or
+%   a Rust space).
+%
+%   @arg SpaceType       The type of the space (e.g., `is_not_prolog_space`).
+%   @arg Method          The name of the method to be mapped (e.g., `add_atom`).
+%   @arg Implementation  The actual implementation function or predicate that
+%                        performs the desired operation (e.g., `add_to_space`).
+%
+%   @examples
+%     % Example of mapping methods for a non-Prolog space:
+%     ?- space_type_method(is_not_prolog_space, new_space, new_rust_space).
+%
+%     % This maps the `new_space` method for `is_not_prolog_space` to the 
+%     % `new_rust_space` implementation.
+%
 space_type_method(is_not_prolog_space,new_space,new_rust_space).
 space_type_method(is_not_prolog_space,add_atom,add_to_space).
 space_type_method(is_not_prolog_space,remove_atom,remove_from_space).
@@ -1751,14 +1769,8 @@ must_det_llp((A,B)):- !,must_det_llp(A),must_det_llp(B).
 
 must_det_llp(B):- pybug(B),!,once(ignore(must_det_ll(B))).
 
-%!  is_pymod_in_space(+Module, +Space) is dynamic.
-%
-%   Declares a dynamic predicate that tracks whether a Python module is in a given space.
+% dynamic allows modifications at runtime.
 :- dynamic (is_pymod_in_space/2).
-
-%!  is_pymod_loaded(+Module, +Space) is dynamic.
-%
-%   Declares a dynamic predicate that tracks whether a Python module has been loaded.
 :- dynamic (is_pymod_loaded/2).
 
 %!  py_ready is semidet.
@@ -2403,30 +2415,8 @@ load_metta_python_proxy:-
     ignore(notrace(with_safe_argv(catch(py_module(metta_python_proxy,String),_,true)))),   
     !.
 
-% Ensure that `load_metta_python_proxy/0` is called when the program is initialized (on startup).
-% This will trigger the loading of the Python proxy module during initialization.
-
-%!  initialization(load_metta_python_proxy) is det.
-%
-%   This directive ensures that the `load_metta_python_proxy/0` predicate is called
-%   when the program starts. It initializes the Metta Python proxy when the Prolog
-%   program is first loaded.
-%
-%   The directive guarantees that the proxy is set up and ready for use when the 
-%   program begins execution, making it available throughout the Prolog session.
-%
 :- initialization(load_metta_python_proxy).
 
-%!  initialization(load_metta_python_proxy,restore) is det.
-%
-%   This variant of the `initialization/2` directive ensures that the 
-%   `load_metta_python_proxy/0` predicate is also called during state restoration.
-%   When a saved state is restored, this directive ensures the Metta Python proxy 
-%   is re-initialized, maintaining consistency across state transitions.
-%
-%   The second argument, `restore`, indicates that the initialization should happen
-%   upon restoring a saved state, ensuring that the proxy is available after restoration.
-%
 :- initialization(load_metta_python_proxy,restore).
 
 %!  on_restore1 is det.
