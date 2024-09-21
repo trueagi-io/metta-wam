@@ -748,7 +748,7 @@ class Inspector:
         if obj_name in self.printed_classes:
             return
 
-        mesg(f"\nInspecting {obj_name}:")
+        mesg(f"Inspecting {obj_name}:")
         self.get_members(obj, no_filter)
         self.printed_classes.add(obj_name)
         self.class_hierarchy[obj_name] = [base for base in obj.__bases__ if base is not object]
@@ -825,7 +825,7 @@ class Inspector:
             for base in bases:
                 base_name = base.__name__
                 if base_name not in self.printed_classes:
-                    mesg(f"\nInspecting base class {base_name}:")
+                    mesg(f"Inspecting base class {base_name}:")
                     self.mark_class(base, no_filter=no_filter)
 
     def monkey_patch_members(self):
