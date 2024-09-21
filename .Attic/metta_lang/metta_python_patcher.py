@@ -2,6 +2,7 @@ import inspect
 from enum import Enum
 import sys
 import types
+import traceback
 
 # Global variables
 suspend_trace = False
@@ -13,11 +14,41 @@ def name_dot(module, name):
         return name
     return f"{module.__name__}.{name}"
 
+import inspect
+
 def signature(obj):
-    try: 
+    try:
+        # First, try Python's inspect.signature for standard functions
         return inspect.signature(obj)
+    except (ValueError, TypeError) as e:
+        # Handle specific case where signature is not found for built-in methods
+        if is_pybind11_function(obj):
+            # Custom fallback for pybind11 methods, if known
+            return get_pybind11_signature(obj)
+        print(f"inspect.signature({obj}) caused error: {e}")
+        return "(builtin method)"
     except Exception as e:
-        return "..."
+        # Catch other errors
+        print(f"Error determining signature for {obj}: {e}")
+        return "(unknown)"
+
+def is_pybind11_function(obj):
+    """Detect if the object is a pybind11-wrapped function."""
+    return isinstance(obj, types.BuiltinFunctionType) and hasattr(obj, '__doc__')
+
+def get_pybind11_signature(obj):
+    """Retrieve or construct a pybind11 function's signature."""
+    # If the function has a docstring with signature info
+    doc = obj.__doc__
+    if doc:
+        # Try to extract the first line which often contains the signature
+        first_line = doc.splitlines()[0]
+        if '(' in first_line and ')' in first_line:
+            return first_line.strip()
+    
+    # Return fallback if no signature is found in docstring
+    return "(pybind11 function with unknown signature)"
+
 
 def ignore_exception(*args, **kwargs):
     pass
@@ -224,8 +255,9 @@ class MonkeyPatcher:
             )
             return modified_result if modified_result is not None else result
 
+        # Print the signature
+        #mesg(f"Patching instance method: {name_dot(target_class, method_name)} {signature(original_method)}")
         setattr(target_class, method_name, patched_method)
-        #mesg(f"Monkey-patched instance method {name_dot(target_class, method_name)}")
 
     def patch_class_method(self, target_class, method_name, method):
         """Patch a class method to allow observation of calls."""
@@ -313,22 +345,26 @@ class MonkeyPatcher:
             )
             return modified_result if modified_result is not None else result
 
+        # Print the signature
+        mesg(f"Patching module function: {name_dot(module, function_name)} {signature(original_function)}")
         setattr(module, function_name, patched_function)
-        #mesg(f"Monkey-patched function {name_dot(module, function_name)}")
 
     def patch_static_property(self, cls, property_name, value):
         """Patch class (static) properties to allow observation of gets and sets with exception handling."""
         private_name = f"_{property_name}"
         try:
+            # Store the original value in a private attribute
             setattr(cls, private_name, value)
             mesg(TRACE, f"[Trace] Patching static property: {name_dot(cls,property_name)}")
 
+            # Create getter
             def class_getter():
                 try:
-                    current_value = getattr(cls, private_name)
+                    current_value = getattr(cls, private_name)  # Retrieve the private value
+                    #mesg(TRACE, f"Getting static property '{property_name}' with value {current_value}")
                     if rust_mode:
                         return current_value
-                    result = self.observer.notify(value, 'get', cls, property_name, current_value, level="static")
+                    result = self.observer.notify(value, 'get', cls, property_name, current_value, level="class")
                     if isinstance(result, dict) and result.get('do_not_really_get', False):
                         return result.get('return_value')
                     return current_value
@@ -336,30 +372,39 @@ class MonkeyPatcher:
                     mesg(TRACE, f"Error getting static property '{name_dot(cls,property_name)}': {e}")
                     raise
 
+            # Create setter
             def class_setter(new_value):
                 try:
+                    #mesg(TRACE, f"Setting static property '{property_name}' to {new_value}")
                     if rust_mode:
                         return setattr(cls, private_name, new_value)
-                    result = self.observer.notify(value, 'set', cls, property_name, new_value, level="static")
-                    if isinstance(result, dict) and result.get('do_not_really_set', False):
-                        return
-                    if isinstance(result, dict) and result.get('really_set', False):
-                        new_value = result.get('new_value')
+                    result = self.observer.notify(value, 'set', cls, property_name, new_value, level="class")
+                    
+                    # Handle 'do_not_really_set' and 'really_set' options
+                    if isinstance(result, dict):
+                        if result.get('do_not_really_set', False):
+                            return  # Do not set the value if the callback dictates not to
+                        if result.get('really_set', False):
+                            new_value = result.get('new_value', new_value)  # Set to the new value if provided
+
                     setattr(cls, private_name, new_value)
                 except Exception as e:
                     mesg(TRACE, f"Error setting static property '{name_dot(cls,property_name)}': {e}")
                     raise
 
+            # Replace the class attribute with a property descriptor
             setattr(cls, property_name, property(fget=class_getter, fset=class_setter))
         except Exception as e:
             mesg(TRACE, f"Failed to patch static property '{name_dot(cls,property_name)}': {e}")
             raise
 
     def patch_module_variable(self, module, variable_name, value):
-        """Patch a variable to allow observation of gets and sets."""
-        descriptor = ClassVariableDescriptor(variable_name, value, self.observer)
-        setattr(module, variable_name, descriptor)
-        #mesg(f"Monkey-patched variable {name_dot(module)}{variable_name}")
+        """Patch a module-level variable to allow observation of gets and sets."""
+        try:
+            self.patch_static_class_property(module, variable_name, value)
+            mesg(f"Patching variable: {name_dot(module, variable_name)}")
+        except Exception as e:
+            mesg(f"Failed to patch module variable {variable_name} in {module.__name__}: {e}")
 
     def patch_static_class_property(self, cls, property_name, value):
         """Patch a static property to allow observation of gets and sets."""
@@ -479,10 +524,18 @@ class Inspector:
         )
 
         for member in sorted_members:
-            mesg(f"{member['class_name']}: "
-                 f"{{level: {member['level'].value}, "
-                 f"member-type: {member['member_type'].name}, "
-                 f"name: {member['name']}}}")
+            if callable(member['member']):
+                sig = signature(member['member'])
+                mesg(f"{member['class_name']}: "
+                     f"{{level: {member['level'].value}, "
+                     f"member-type: {member['member_type'].name}, "
+                     f"name: {member['name']}, "
+                     f"signature: {sig}}}")
+            else:
+                mesg(f"{member['class_name']}: "
+                     f"{{level: {member['level'].value}, "
+                     f"member-type: {member['member_type'].name}, "
+                     f"name: {member['name']}}}")
 
     def mark_base_classes(self, no_filter=False):
         for class_name in list(self.class_hierarchy.keys()):
@@ -499,14 +552,14 @@ class Inspector:
             cls = members[0]['class_object']  # All members belong to the same class
             for member_info in members:
 
-                
-
                 name = member_info['name']
                 member = member_info['member']
                 level = member_info['level']
                 member_type = member_info['member_type']
 
                 qualified_name = f"{name_dot(cls,name)}"
+                if callable(member):
+                    qualified_name = f"{qualified_name}{signature(member)}"
 
                 if not member in self.patched_members:
                     self.patched_members[member] = member_info
@@ -571,7 +624,7 @@ class Inspector:
 
             try:
                 if inspect.isfunction(obj) or inspect.isbuiltin(obj):
-                    mesg(f"Patching module function: {name_dot(module, name)}")
+                    #mesg(f"Patching module function: {name_dot(module, name)}")
                     self.monkey_patcher.patch_module_function(module, name, obj)
                 elif not callable(obj):
                     mesg(f"Borked Patching of module variable: {name_dot(module, name)}")
@@ -691,6 +744,9 @@ class BaseClass:
     def __str__(self):
         return "base_str"
 
+    def __repr__(self):
+        return "base_repr"
+
     @classmethod
     def base_class_method_without_self(cls):
         pass
@@ -707,7 +763,7 @@ class MyClass(BaseClass):
     class_var = 100  # Class-level attribute
 
     def __repr__(self):
-        return "base_str"
+        return "inst_repr"
 
     def __init__(self):
         super().__init__()  # Call base class __init__ to inherit base instance variables
@@ -776,7 +832,6 @@ if __name__ == "__main__":
     inspector.observer.subscribe('get', get_callback, level='module')
     inspector.observer.subscribe('set', set_callback, level='module')
 
-
     mesg("\nInspecting hyperon:")
     import hyperonpy
     from hyperon.atoms import *  # Import your classes
@@ -813,7 +868,9 @@ if __name__ == "__main__":
     obj.my_instance_property  # This should trigger the get_callback
     obj.my_instance_property = 200       # This will trigger the set_callback
     MyClass.class_var
-    #MyClass.class_var = 300
+    # Test the monkey-patched static properties and methods
+    mesg("\nTesting monkey-patched static class property:")
+    MyClass.class_var = 300  # This will trigger the set_callback for class_var
 
 
     input("\nPress Enter to inspect Atoms...")
@@ -851,5 +908,4 @@ if __name__ == "__main__":
     atom.value
     print(str(atom))
     print(repr(atom))
-
 
