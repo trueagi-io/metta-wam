@@ -8,11 +8,7 @@ import datetime
 def testfile_name(url):
     return url.split('#',1)[0].split('/')[-1]
 
-def create_testcase_element(testcase_info, failcounts_dict):
-    testpackage, testname, stdout, full_identifier, got, expected, status, url, time = testcase_info
-    return create_testcase_element_(testpackage, testname, stdout, full_identifier, got, expected, status, url, time, failcounts_dict)
-
-def create_testcase_element_(testclass, testname, stdout, identifier, got, expected, status, url, time, failcounts_dict):
+def create_testcase_element(testclass, testname, stdout, identifier, got, expected, status, url, time, failcounts_dict, move_filesP):
     # Create the testcase XML element with the class and test name attributes
     testcase = ET.Element("testcase", classname=testclass, name=testname, time=time)
 
@@ -65,7 +61,7 @@ def parse_test_line(line):
 
     return testpackage, testname, stdout, full_identifier, got, expected, status, url, time
 
-def generate_junit_xml(input_file, timestamp):
+def generate_junit_xml(input_file, timestamp, move_filesP):
     dt = datetime.datetime.fromisoformat(timestamp)
     timestamps_dict = {}
     failcounts_dict = defaultdict(int) # track number of failures per file
@@ -94,7 +90,7 @@ def generate_junit_xml(input_file, timestamp):
     testsuites = ET.Element("testsuites", timestamp=timestamp)
     testsuites_time = 0.0
     for testpackage, testcase_infos in packages_dict.items():
-        testcases = [create_testcase_element(testcase_info, failcounts_dict) for testcase_info in testcase_infos]
+        testcases = [create_testcase_element(*testcase_info, failcounts_dict, move_filesP) for testcase_info in testcase_infos]
         testsuite_timestamp = timestamps_dict[testpackage].isoformat(timespec='seconds')
         testsuite = ET.Element("testsuite", name=testpackage, timestamp=testsuite_timestamp)
         testsuite_time = 0.0
@@ -111,11 +107,12 @@ def generate_junit_xml(input_file, timestamp):
     return ET.tostring(testsuites, encoding="utf-8", xml_declaration=True).decode("utf-8")
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Usage: python scripts/into_junit.py <input_file> <timestamp>")
+    if len(sys.argv) != 4:
+        print("Usage: python scripts/into_junit.py <input_file> <timestamp> <move_filesP>")
         sys.exit(1)
 
     input_file = sys.argv[1]
     timestamp = sys.argv[2]
-    junit_xml = generate_junit_xml(input_file, timestamp)
+    move_filesP = sys.argv[3]
+    junit_xml = generate_junit_xml(input_file, timestamp, move_filesP)
     print(junit_xml)
