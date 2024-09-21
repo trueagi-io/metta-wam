@@ -1,10 +1,11 @@
+#!/usr/bin/env python3
+
 import inspect
 import sys
 import os
 import sys
 import types
 import hyperon
-import readline
 import atexit
 import traceback
 
@@ -16,6 +17,17 @@ TRACE = 3   # Granular trace-level output
 DEVEL = DEBUG
 # Default verbosity level
 METTALOG_VERBOSE = USER
+global runner
+runner = None
+global norepl_mode
+norepl_mode=True
+global rust_mode
+rust_mode=True
+global catom_mode
+catom_mode=False
+global cb
+cb = None
+
 
 # Log messages based on verbosity level
 def mesg(level, message='', m2=None, m3=None):
@@ -27,6 +39,8 @@ def mesg(level, message='', m2=None, m3=None):
     message = message.replace('lib/python3.11/site-packages/hyperonpy.cpython-311-x86_64-linux-gnu.so','..')
     message = message.replace("on <module 'hyperonpy' from '/home/deb12user/metta-wam/venv/..'>",'..')
 
+    print(message)
+    return
     if METTALOG_VERBOSE >= level:
         print(message)
 
@@ -47,7 +61,7 @@ def set_verbosity(level):
         METTALOG_VERBOSE = level
         mesg(DEBUG, f"Verbosity set to level {level}")
     else:        
-        print(f"Invalid verbosity level '{level}' provided. Defaulting to USER level.")
+        print(f"Invalid verbosity level '{level}' provided. Defaulting to level: {METTALOG_VERBOSE}.")
         METTALOG_VERBOSE = USER
 
 # Initialize verbosity from environment variable
@@ -83,7 +97,7 @@ except Exception as e:
 # History file for REPL
 def install_history():
     histfile = os.path.join(os.path.expanduser("~"), ".metta_history")
-
+    import readline
     try:
         readline.set_history_length(10000)
         readline.read_history_file(histfile)
@@ -100,63 +114,6 @@ def install_history():
 
     atexit.register(save_history, h_len, histfile)
 
-global runner
-runner = None
-global wont_need_repl
-wont_need_repl=True
-
-# Manual command-line argument processing in real-time
-def process_args():
-    global wont_need_repl
-    wont_need_repl = False  # Keep track if we won't need to start the REPL
-    i = 1  # Skip the first argument (script name)
-
-    while i < len(sys.argv):
-        arg = sys.argv[i]
-
-        if arg in ("--demo"):
-            # demo0()
-            demo1()
-            #demo2()
-
-        if arg in ("-v", "--verbosity"):
-            try:
-                verbosity_level = int(sys.argv[i + 1])
-                set_verbosity(verbosity_level)
-                i += 1  # Skip next item
-            except (ValueError, IndexError):
-                print("Invalid verbosity level. Defaulting to USER.")
-                set_verbosity(USER)
-
-        elif arg in ("-p", "--path"):
-            if i + 1 < len(sys.argv):
-                path = sys.argv[i + 1]
-                mesg(DEBUG, f"Adding path: {path}")
-                env_builder_push_include_path(cb,path)
-                i += 1
-        elif arg == "--version":
-            mesg(USER, f"Hyperon version: {hyperon.__version__}")
-            sys.exit(0)  # Exit after showing version
-
-        elif arg in ("-h", "--help"):        
-            print_help()
-            sys.exit(0)  # Exit after showing help
-
-        elif arg in ("-f", "--file"):
-            if i + 1 < len(sys.argv):
-                file = sys.argv[i + 1]                
-                load_file(file)
-                wont_need_repl = True  # Mark that a file was loaded
-                i += 1
-
-        else:
-            # Assume this is a file to process
-            load_file(arg)
-            wont_need_repl = True  # Mark that a file was loaded
-
-        i += 1
-
-    return wont_need_repl
 
 # Print help information
 def print_help():
@@ -184,19 +141,19 @@ def make_runner():
     global runner
     if runner is not None:
         return runner
-    mesg(DEBUG, f"hyperonpy::make_runner")
-    return hyperon.runner.MeTTa(env_builder=hyperon.Environment.custom_env(working_dir=os.path.dirname(".")))
+    #mesg(DEBUG, f"hyperonpy::make_runner")
+    global cb
+    if cb is None: cb = hyperon.Environment.custom_env(working_dir=os.path.dirname("."))
+    return hyperon.runner.MeTTa(env_builder=cb)
 
 # Load and execute a file
 def load_file(file):    
     global runner
 
-    wont_need_repl = True
+    norepl_mode = True
     if file == "--repl":
         # Start REPL immediately and ignore further arguments
-        if runner is None: 
-            runner = make_runner()
-        REPL(runner).main_loop()
+        REPL().main_loop()
         return
 
     try:
@@ -243,6 +200,8 @@ def into_repr(r):
     dicts, sets, and hp.CAtom (with trace suspension).
     """
 
+    if isinstance(r, (str, int, float, bool)): return r
+
     # Check if r is a property and avoid treating it as iterable
     if isinstance(r, property):
         try:
@@ -250,7 +209,6 @@ def into_repr(r):
             return str(r.fget()) if r.fget else '<unreadable property>'
         except Exception as e:
             return f'<unreadable property: {e}>'
-
 
     if isinstance(r, str):
         if r.startswith('"') and r.endswith('"'):
@@ -271,26 +229,153 @@ def into_repr(r):
     elif isinstance(r, tuple):
         return tuple(into_repr(i) for i in r)
     
-    elif isinstance(r, hp.CAtom):
-        
+    elif isinstance(r, hp.CAtom):        
         # Convert CAtom to string with trace suspension
-        #return with_suspend_trace(hp.atom_to_pyobj, r)
-        return atom_to_str(r)
+        return with_suspend_trace(hp.atom_to_str, r)
+        #return hp.atom_to_str(r)
     
     else:
         # For other types, return their string representation
         #return repr(r)
         return repr(r)
     return repr(r)
-
     
+def processed_directive(line):
+    """Process REPL directives by converting dot-prefixed commands to hyphenated arguments."""
+    
+    global norepl_mode, rust_mode, catom_mode
 
+    # Check if the line matches the pattern for setting a global variable
+    if '=' in line:
+        # Split the line into variable and value
+        var_name, value = line.split('=', 1)
+        var_name = var_name.strip()
+        value = value.strip()
+
+        # Map the string input to actual boolean or other values
+        if value.lower() in ('true', '1'):
+            value = True
+        elif value.lower() in ('false', '0'):
+            value = False
+        else:
+            try:
+                # Try to convert the value to an int or float if possible
+                value = eval(value)
+            except:
+                # Otherwise, leave it as a string
+                pass
+
+        # Handle setting global variables
+        if var_name == 'norepl_mode':
+            norepl_mode = value
+            mesg(USER, f"norepl_mode set to {norepl_mode}")
+        elif var_name == 'rust_mode':
+            rust_mode = value
+            mesg(USER, f"rust_mode set to {rust_mode}")
+        elif var_name == 'catom_mode':  # Updated from catom_mode to catom_mode
+            catom_mode = value
+            mesg(USER, f"catom_mode set to {catom_mode}")
+        else:
+            mesg(USER, f"Unknown setting: {var_name}")
+        return True
+
+    # Convert the first dot into '--' to standardize dot commands into hyphen commands
+    if line.startswith('.'):
+        if len(line) == 2:  # Shortcuts like .p should map to -p
+            line = '-' + line[1:]  # Convert `.p` to `-p`
+        else:
+            line = '--' + line[1:]  # Convert full commands like `.path` to `--path`
+
+    # Split the input line into arguments
+    args = line.split()
+
+    # Handle the commands (now in hyphenated format)
+    if args[0].startswith('-'):
+        arg = args[0]
+
+        if arg == '-history' or arg == '--history':
+            # Assuming `repl` is an instance of the REPL class or accessible here
+            for idx, item in enumerate(repl.history):
+                mesg(USER, f"{idx + 1}: {item}")
+            return True
+
+        elif arg == '--version':
+            mesg(USER, f"Hyperon version: {hyperon.__version__}")
+            return True
+
+        elif len(args) > 1 and arg in ("--file", '-f'):
+            filename = args[1]
+            load_file(filename)
+            mesg(USER, f"File {filename} loaded.")
+            return True
+
+        elif arg in ("--verbosity", '-v'):
+            if len(args) > 1:
+                try:
+                    verbosity_level = int(args[1])
+                    set_verbosity(verbosity_level)
+                except ValueError:
+                    print("Invalid verbosity level. Defaulting to USER.")
+                    set_verbosity(USER)
+            return True
+
+        # Handle the `--path` or `-p` directive with the provided path
+        elif arg in ("--path", '-p'):
+            if len(args) > 1:  # Ensure that the path is provided
+                path = args[1]
+                mesg(DEBUG, f"Adding path: {path}")
+                global cb
+                if cb is None: cb = hyperon.Environment.custom_env(working_dir=os.path.dirname("."))
+                hp.env_builder_push_include_path(cb, path)
+            else:
+                mesg(USER, "Error: No path provided for -p or --path")
+            return True
+
+        elif arg in ("--help", '-h'):
+            print_help()
+            return True
+
+    # If no known directive or argument is matched, return False
+    return False
+
+# Manual command-line argument processing in real-time
+def process_args():
+    global norepl_mode
+    norepl_mode = False  # Keep track if we won't need to start the REPL
+    i = 1  # Skip the first argument (script name)
+
+    while i < len(sys.argv):
+        arg = sys.argv[i]
+
+        # Combine the cases where the argument expects a following value (like a file or verbosity level)
+        if arg in ("--verbosity", "-v", "--file", "-f", "--path", "-p") and i + 1 < len(sys.argv):
+            directive = f"{arg} {sys.argv[i + 1]}"
+            i += 1  # Skip the next item (since it's part of the directive)
+        else:
+            directive = arg
+
+        # Call `processed_directive` with the combined directive
+        if processed_directive(directive):
+            # If processed_directive returns True, handle any flags that imply we won't need the REPL
+            if arg in ("--file", "-f"):
+                norepl_mode = True
+        else:
+            # If the argument is not handled by `processed_directive`, it's assumed to be a file
+            load_file(arg)
+            norepl_mode = True  # Mark that a file was loaded
+
+        i += 1
+
+    return norepl_mode
 
 # REPL for interactive input with command history support
 class REPL:
-    def __init__(self, runner):
+    def __init__(self, runner=None):
         self.history = []  # Initialize command history
         self.runner = runner
+
+    def main_loop2(self):
+        mettalog.repl(self.runner)
 
     def main_loop(self):
         install_history()
@@ -298,35 +383,37 @@ class REPL:
             try:
                 line = input("metta> ")  # Use input function for user input
 
-                if line == '.history':
-                    for idx, item in enumerate(self.history):
-                        mesg(USER, f"{idx + 1}: {item}")
-                    continue
-
                 # If input is not empty, evaluate it
                 if line:
                     self.history.append(line)
+                    if processed_directive(line): continue
+
                     if self.runner is None:
                         global runner
                         if runner is None: runner = make_runner()
                         self.runner = runner
-        #            result = self.runner.run(line)
-                    trunner = self.runner
-                    parser = SExprParser(line)
-                    results = hp.metta_run(trunner.cmetta, parser.cparser)
-                    err_str = hp.metta_err_str(trunner.cmetta)
-                    if (err_str is not None):
-                        print(f"RuntimeError({into_repr(err_str)})")
-                        continue
 
-                    tresults = into_repr(results)
-                    
-                    #if flat:
-                    #return [Atom._from_catom(catom) for result in results for catom in result]
-                    #else:
-                    #return [[Atom._from_catom(catom) for catom in result] for result in results]
+                    global catom_mode
+                    if not catom_mode:
+                        presult = self.runner.run(line)
+                        print("=>", presult)
+                    else:
+                        trunner = self.runner
+                        parser = SExprParser(line)
+                        results = hp.metta_run(trunner.cmetta, parser.cparser)
+                        err_str = hp.metta_err_str(trunner.cmetta)
+                        if (err_str is not None):
+                            print(f"RuntimeError({into_repr(err_str)})")
+                            continue
 
-                    print("->", tresults)
+                        tresults = into_repr(results)
+
+                        #if flat:
+                        #return [Atom._from_catom(catom) for result in results for catom in result]
+                        #else:
+                        #return [[Atom._from_catom(catom) for catom in result] for result in results]
+
+                        print("->", tresults)
                     #if result is not None:
                     #    mesg(USER, "{result}")
 
@@ -342,11 +429,25 @@ class REPL:
 
 
 
-synth_members = {'__class__', '__dict__', '__weakref__', '__getattribute__', '__setattr__', '__delattr__', '__new__'}
+import inspect
+import types
+
+# Global variables
+suspend_trace = False
+rust_mode = False  # Assuming this is defined elsewhere
+TRACE = True  # Assuming this is a logging level
+def mesg(*args, **kwargs):
+    """Simple message/logging function placeholder."""
+    print(*args, **kwargs)
+
+synth_members = {
+    '__module__', '__filename__', '__name__', 'pybind11_type',
+    '__class__', 'observer', '__dict__', '__weakref__',
+    '__getattribute__', '__setattr__', '__delattr__', '__new__'
+}
+
 # 1. Observer Class
 class Observer:
-    global suspend_trace
-
     def __init__(self):
         self.observers = {}
 
@@ -359,259 +460,375 @@ class Observer:
 
     def notify(self, func, event_type, *args, **kwargs):
         """Notify all subscribers for a specific event type."""
-
         global suspend_trace
-        if suspend_trace: return
+        if suspend_trace:
+            return
+
         level = kwargs.pop('level', 'instance')  # Remove 'level' from kwargs
-        #print(f"n={func} ",end="", flush=True)
-        #kwargs['original'] = func
-        #args = ((args,func), kwargs)
         args_list = list(args)
-        for substring in ["tokenizer", "metta_err_str", "_free"]:
-            if substring in args_list[1]: return
-        if isinstance(args_list[0],(types.ModuleType)): 
-            args_list[0]=None
-        arg = tuple(args_list)
 
-#        print()
-        instance_key = f"instance_{event_type}"
-        static_key = f"static_{event_type}"
+        # Skip certain substrings in the name (adjust or remove based on your needs)
+        if len(args_list) > 1:
+            for substring in ["tokenizer", "metta_err_str", "_free"]:
+                if substring in str(args_list[1]):
+                    return
 
-        # Handle instance-level events
-        if level == "instance" and instance_key in self.observers:
-            for callback in self.observers[instance_key]:
-                return callback(*args)
+        if isinstance(args_list[0], types.ModuleType):
+            args_list[0] = None
 
-        # Handle static-level events
-        if level == "static" and static_key in self.observers:
-            for callback in self.observers[static_key]:
+        args = tuple(args_list)
+
+        # Generate the event key based on the level and event type
+        event_key = f"{level}_{event_type}"
+
+        # Check if there are any observers subscribed to this event key
+        if event_key in self.observers:
+            for callback in self.observers[event_key]:
                 return callback(*args)
 
         # Default return if no observer modifies the value
         return kwargs.get('default_value')
 
-import inspect
-import sys
-
-# 2. Monkey Patching Class
-class MonkeyPatcher:
-    
-    def __init__(self, observer):
-        self.observer = observer
-        self.patched_classes = {"str": True}  # Dictionary to store patched classes
-
-    def patch(self, obj):
-        """Patch an object by getting its class and calling patch_class."""
-        cls = obj.__class__
-        self.patch_class(cls)
-        self._patch_instance(obj)
-
-    def patch_class(self, cls):
-        """Monkey-patch all methods and properties of a class (static level)."""
-        class_name = cls.__name__
-        
-        # Check if class has already been patched
-        if class_name in self.patched_classes:
-            mesg(f"Class {class_name} already patched.")
-            return
-
-        mesg(f"Patching class: {class_name}")
-        
-        for name, attribute in inspect.getmembers(cls):
-            if name in synth_members: continue
-            if name.startswith('__') and name.endswith('__'):
-                continue
-            try:
-                if inspect.isfunction(attribute) or inspect.ismethod(attribute):
-                    self._patch_method(cls, name, attribute, level="static")
-                else:
-                    # Handle static properties
-                    self._patch_class_property(cls, name, attribute)
-            except Exception as e:
-                mesg(f"Skipping patch_class {name}: {e}")
-
-        # Store the patched class in the dictionary
-        self.patched_classes[class_name] = cls
-
-
-    def patch_module(self, module):
-        """Patch all classes and functions in a given module (static level)."""
-        for name, obj in inspect.getmembers(module):
-            if inspect.isclass(obj):
-                # Skip built-in data types and already-patched classes
-                if obj.__name__ not in self.patched_classes and not self._is_builtin_type(obj):
-                    self.patch_class(obj)
-            elif inspect.isfunction(obj) or inspect.isbuiltin(obj) or callable(obj):
-                # Patch both Python and C-implemented functions
-                mesg(f"Patching function or callable: {name}")
-                self._patch_function(module, name, obj)
-
-
-    def patch_module2(self, module):
-        """Patch all classes and functions in a given module (static level)."""
-        for name, obj in inspect.getmembers(module):
-            if inspect.isclass(obj):
-                # Skip built-in data types and already-patched classes
-                if obj.__name__ not in self.patched_classes and not self._is_builtin_type(obj):
-                    self.patch_class(obj)
-            elif inspect.isfunction(obj):
-                # Optionally, patch module-level functions
-                self._patch_function(module, name, obj)
-
-
-    def _patch_function(self, module, func_name, func):
-        """Patch module-level functions or C-level callables."""
-        original_function = func
-
-        def patched_function(*args, **kwargs):
-            # Notify before the function call
-            result = self.observer.notify(original_function,'before_call', module, func_name, args, kwargs)
-            if isinstance(result, dict) and result.get('do_not_really_call', False):
-                return result.get('just_return')
-
-            # Call the original function (whether it's Python or C)
-            try:
-                result = original_function(*args, **kwargs)
-            except Exception as e:
-                mesg(f"E in func_name {func_name}: {e}")
-
-            # Notify after the function call
-            modified_result = self.observer.notify(func,'after_call', module, func_name, result)
-            return modified_result if modified_result is not None else result
-
-        # Replace the function in the module
-        setattr(module, func_name, patched_function)
-
-
-    def _is_builtin_type(self, cls):
-        """Check if the class is a built-in data type."""
-        return isinstance(cls, (str, int, float, bool, list, dict, set, tuple))
-
-    def _patch_function2(self, module, func_name, func):
-        """Patch module-level functions."""
-        original_function = func
-
-        def patched_function(*args, **kwargs):
-            # Notify before the function call
-            result = self.observer.notify(func,'before_call', module, func_name, args, kwargs)
-            if isinstance(result, dict) and result.get('do_not_really_call', False):
-                return result.get('just_return')
-
-            # Call the original function
-            result = original_function(*args, **kwargs)
-            
-            # Notify after the function call
-            modified_result = self.observer.notify(func,'after_call', module, func_name, result)
-            return modified_result if modified_result is not None else result
-
-        # Replace the function in the module
-        setattr(module, func_name, patched_function)
-
-    def _patch_class_property(self, cls, property_name, value):
-        """Patch class (static) properties to allow observation of gets and sets."""
-        private_name = f"_{property_name}"
-
-        # Make the property private by storing it in the class dictionary
-        setattr(cls, private_name, value)
-
-        # Define a custom getter for the class attribute
-        def class_getter(self):
+# 2. Helper Functions for Instance Getters/Setters
+def create_instance_getter(private_name, target, observer, level, value):
+    """A non-self function to handle the instance getter logic."""
+    def instance_getter(self):
+        try:
             current_value = getattr(self, private_name)
-            result = patcher.observer.notify(value,'get', cls, property_name, current_value, level="static")
+            if rust_mode:
+                return current_value
+
+            if 'observer' not in self.__dict__:
+                self.__dict__['observer'] = observer
+
+            result = observer.notify(value, 'get', target, private_name, current_value, level=level)
+
             if isinstance(result, dict) and result.get('just_return', False):
                 return result.get('just_return')
             return result if result is not None else current_value
+        except Exception as e:
+            mesg(TRACE, f"Error getting instance property '{private_name}' in {target.__name__}: {e}")
+            raise
+    return instance_getter
 
-        # Define a custom setter for the class attribute
-        def class_setter(self, new_value):
-            result = patcher.observer.notify(value,'set', cls, property_name, new_value, level="static")
-            if isinstance(result, dict) and result.get('do_not_really_set', False):
-                return
-            setattr(cls, private_name, result if result is not None else new_value)
+def create_instance_setter(private_name, target, observer, level, value):
+    """A non-self function to handle the instance setter logic."""
+    def instance_setter(self, new_value):
+        try:
+            if rust_mode:
+                return setattr(self, private_name, new_value)
 
-        # Create the property with the custom getter and setter
-        setattr(cls, property_name, property(fget=class_getter, fset=class_setter))
-
-    def _patch_instance(self, obj):
-        """Patch an individual instance (instance-level tracking)."""
-        # Don't patch objects that are built-in data types
-        if isinstance(obj, (str, float, list, tuple, dict, set, int, bool)):
-            mesg(f"Skipping patching built-in data type: {type(obj).__name__}")
-            return        
-
-        # Ensure the observer is set on the instance
-        if not hasattr(obj, 'observer'):
-            setattr(obj, 'observer', self.observer)
-
-        for name, attribute in inspect.getmembers(obj):
-            if name in synth_members: continue
-            if name.startswith('__') and name.endswith('__'):
-                continue
-            try:
-                if inspect.ismethod(attribute):
-                    self._patch_method(obj, name, attribute, level="instance")
-                else:
-                    self._patch_property(obj, name, attribute, level="instance", is_instance=True)
-            except Exception as e:
-                mesg(f"Skipping _patch_instance {name}: {e}")
-
-    def _patch_method(self, target, method_name, method, level):
-        """Patch a method to observe calls with before/after hooks and optionally override the return value."""
-        original_method = method
-
-        def patched_method(*args, **kwargs):
-            # Call before_call hook
-            result = self.observer.notify(method,'before_call', target, method_name, args, kwargs)
-            # If before_call returns a dict with do_not_really_call=True, use just_return
-            if isinstance(result, dict) and result.get('do_not_really_call', False):
-                return result.get('just_return')
-            else:
-                modified_args, modified_kwargs = result if isinstance(result, tuple) else (args, kwargs)
-            # Call the method and get the result
-            result = original_method(*modified_args, **modified_kwargs)
-            # Call after_call hook, allowing it to modify the result
-            modified_result = self.observer.notify(method,'after_call', target, method_name, result)
-            return modified_result if modified_result is not None else result
-
-        setattr(target, method_name, patched_method)
-
-    def _patch_property(self, target, property_name, value, level, is_instance=False):
-        """Patch a property to observe changes (on_set) and accesses (on_get), allowing modification."""
-        private_name = f"_{property_name}"
-
-        # Make the property private
-        setattr(target, private_name, value)
-
-        def getter(self):
-            current_value = getattr(self, private_name)
-
-            # Access __dict__ directly to avoid triggering the patched getter
             if 'observer' not in self.__dict__:
-                self.__dict__['observer'] = patcher.observer
+                self.__dict__['observer'] = observer
 
-            # Notify the observer, allowing it to modify or fake the value
-            result = self.observer.notify(value,'get', target, property_name, current_value, level=level)
+            result = observer.notify(value, 'set', target, private_name, new_value, level=level)
 
-            # Check if the observer wants to override the value
-            if isinstance(result, dict) and result.get('just_return', False):
-                return result.get('just_return')
-            return result if result is not None else current_value
-
-        def setter(self, new_value):
-            # Access __dict__ directly to avoid triggering the patched setter
-            if 'observer' not in self.__dict__:
-                self.__dict__['observer'] = patcher.observer
-
-            # Notify the observer, allowing it to modify the value being set or skip setting
-            result = self.observer.notify(value,'set', target, property_name, new_value, level=level)
-
-            # If do_not_really_set is True, skip the actual setting
             if isinstance(result, dict) and result.get('do_not_really_set', False):
                 return
             setattr(self, private_name, result if result is not None else new_value)
+        except Exception as e:
+            mesg(TRACE, f"Error setting instance property '{private_name}' in {target.__name__}: {e}")
+            raise
+    return instance_setter
 
+# 3. Monkey Patching Class
+class MonkeyPatcher:
+    def __init__(self, observer):
+        self.observer = observer
+        self.patched_objects = {}
+        self.patched_modules = {}
+        self.patched_instance_classes = {}
+        self.patched_static_classes = {"str": True}  # Dictionary to store patched classes
 
+    def patch_instance_property(self, target, property_name, value, level, is_instance=False):
+        """Patch instance-level properties to observe changes (on_set) and accesses (on_get)."""
+        private_name = f"_{property_name}"
+        try:
+            setattr(target, private_name, value)
+            mesg(TRACE, f"[Trace] Patching instance property: {property_name} in {target.__name__}")
 
+            instance_getter = create_instance_getter(private_name, target, self.observer, level, value)
+            instance_setter = create_instance_setter(private_name, target, self.observer, level, value)
+
+            setattr(target, property_name, property(fget=instance_getter, fset=instance_setter))
+        except Exception as e:
+            mesg(TRACE, f"Failed to patch instance property '{property_name}' in {target.__name__}: {e}")
+            raise
+
+    def patch_static_property(self, cls, property_name, value):
+        """Patch class (static) properties to allow observation of gets and sets with exception handling."""
+        private_name = f"_{property_name}"
+        try:
+            setattr(cls, private_name, value)
+            mesg(TRACE, f"[Trace] Patching static property: {property_name} in {cls.__name__}")
+
+            def class_getter():
+                try:
+                    current_value = getattr(cls, private_name)
+                    if rust_mode:
+                        return current_value
+                    result = self.observer.notify(value, 'get', cls, property_name, current_value, level="static")
+                    if isinstance(result, dict) and result.get('just_return', False):
+                        return result.get('just_return')
+                    return result if result is not None else current_value
+                except Exception as e:
+                    mesg(TRACE, f"Error getting static property '{property_name}' in {cls.__name__}: {e}")
+                    raise
+
+            def class_setter(new_value):
+                try:
+                    if rust_mode:
+                        return setattr(cls, private_name, new_value)
+                    result = self.observer.notify(value, 'set', cls, property_name, new_value, level="static")
+                    if isinstance(result, dict) and result.get('do_not_really_set', False):
+                        return
+                    setattr(cls, private_name, result if result is not None else new_value)
+                except Exception as e:
+                    mesg(TRACE, f"Error setting static property '{property_name}' in {cls.__name__}: {e}")
+                    raise
+
+            setattr(cls, property_name, property(fget=class_getter, fset=class_setter))
+        except Exception as e:
+            mesg(TRACE, f"Failed to patch static property '{property_name}' in {cls.__name__}: {e}")
+            raise
+
+    def patch_module_property(self, module, property_name, value):
+        """Patch module properties to allow observation of gets and sets with exception handling."""
+        private_name = f"_{property_name}"
+        try:
+            setattr(module, private_name, value)
+            mesg(TRACE, f"[Trace] Patching module property: {property_name} in {module.__name__}")
+
+            def module_getter():
+                try:
+                    current_value = getattr(module, private_name)
+                    if rust_mode:
+                        return current_value
+                    result = self.observer.notify(value, 'get', module, property_name, current_value, level='module')
+                    if isinstance(result, dict) and result.get('just_return', False):
+                        return result.get('just_return')
+                    return result if result is not None else current_value
+                except Exception as e:
+                    mesg(TRACE, f"Error getting module property '{property_name}' in {module.__name__}: {e}")
+                    raise
+
+            def module_setter(new_value):
+                try:
+                    if rust_mode:
+                        return setattr(module, private_name, new_value)
+                    result = self.observer.notify(value, 'set', module, property_name, new_value, level='module')
+                    if isinstance(result, dict) and result.get('do_not_really_set', False):
+                        return
+                    setattr(module, private_name, result if result is not None else new_value)
+                except Exception as e:
+                    mesg(TRACE, f"Error setting module property '{property_name}' in {module.__name__}: {e}")
+                    raise
+
+            setattr(module, property_name, property(fget=module_getter, fset=module_setter))
+        except Exception as e:
+            mesg(TRACE, f"Failed to patch module property '{property_name}' in {module.__name__}: {e}")
+            raise
+
+    def patch_static_method(self, target, method_name, method, level="static"):
+        """Patch a static method to observe calls with before/after hooks and error handling."""
+        original_method = method
+        mesg(TRACE, f"[Trace] Patching static method: {method_name} in {target.__name__}")
+
+        def patched_static_method(*args, **kwargs):
+            result = self.observer.notify(original_method, 'before_call', target, method_name, args, kwargs, level=level)
+            if isinstance(result, dict) and result.get('do_not_really_call', False):
+                return result.get('just_return')
+            modified_args, modified_kwargs = result if isinstance(result, tuple) else (args, kwargs)
+
+            try:
+                result = original_method(*modified_args, **modified_kwargs)
+            except Exception as e:
+                mesg(f"Error in static method {method_name}: {e}")
+                raise
+
+            modified_result = self.observer.notify(original_method, 'after_call', target, method_name, result, level=level)
+            return modified_result if modified_result is not None else result
+
+        setattr(target, method_name, patched_static_method)
+
+    def patch_instance_method(self, target, method_name, method, level):
+        """Patch an instance method to observe calls with before/after hooks and error handling."""
+        original_method = method
+        mesg(TRACE, f"[Trace] Patching instance method: {method_name} in {target.__name__}")
+
+        def patched_instance_method(instance_self, *args, **kwargs):
+            result = self.observer.notify(original_method, 'before_call', target, method_name, args, kwargs, level=level)
+            if isinstance(result, dict) and result.get('do_not_really_call', False):
+                return result.get('just_return')
+            modified_args, modified_kwargs = result if isinstance(result, tuple) else (args, kwargs)
+
+            try:
+                result = original_method(instance_self, *modified_args, **modified_kwargs)
+            except Exception as e:
+                mesg(f"Error in instance method {method_name}: {e}")
+                raise
+
+            modified_result = self.observer.notify(original_method, 'after_call', target, method_name, result, level=level)
+            return modified_result if modified_result is not None else result
+
+        setattr(target, method_name, patched_instance_method)
+
+    def patch_module_function(self, module, func_name, func):
+        """Patch a function or callable in the module with argument/result modifications and error handling."""
+        original_function = func
+        mesg(TRACE, f"[Trace] Patching module function: {func_name} in {module.__name__}")
+
+        def patched_function(*args, **kwargs):
+            result = self.observer.notify(original_function, 'before_call', module, func_name, args, kwargs, level='module')
+            if isinstance(result, dict) and result.get('do_not_really_call', False):
+                return result.get('just_return')
+            modified_args, modified_kwargs = result if isinstance(result, tuple) else (args, kwargs)
+
+            try:
+                result = original_function(*modified_args, **modified_kwargs)
+            except Exception as e:
+                mesg(f"Error in function {func_name}: {e}")
+                raise
+
+            modified_result = self.observer.notify(original_function, 'after_call', module, func_name, result, level='module')
+            return modified_result if modified_result is not None else result
+
+        setattr(module, func_name, patched_function)
+
+    def patch_module(self, module):
+        """Patch all classes, functions, and properties in a given module (module level)."""
+        name_key = module.__name__
+
+        if name_key in self.patched_modules:
+            mesg(TRACE, f"Module {name_key} already patched.")
+            return
+
+        self.patched_modules[name_key] = module
+        mesg(TRACE, f"Patching module: {name_key}")
+
+        for name, obj in inspect.getmembers(module):
+            if name in synth_members:
+                continue
+
+            try:
+                if inspect.isclass(obj):
+                    mesg(TRACE, f"Skipping class {name}")
+                    # Optionally, you can patch classes here
+                elif inspect.isfunction(obj) or inspect.isbuiltin(obj) or callable(obj):
+                    mesg(TRACE, f"Patching function or callable: {name}")
+                    self.patch_module_function(module, name, obj)
+                else:
+                    mesg(TRACE, f"Attempting to patch non-callable property: {name}")
+                    self.patch_module_property(module, name, obj)
+            except Exception as e:
+                mesg(TRACE, f"Skipping patch for {name} in module {module.__name__}: {e}")
+
+    def _is_patchable_type(self, obj):
+        """Check if the object's type is patchable."""
+        unpatchable_types = (str, float, list, tuple, dict, set, int, bool, Observer)
+        return not isinstance(obj, unpatchable_types)
+
+    def patch_class(self, cls, instance=None):
+        """Patch both static and instance members of a class."""
+        if not self._is_patchable_type(cls):
+            return
+
+        self.patch_static_class(cls)
+        self.patch_instance_class(cls, instance)
+
+    def patch_static_class(self, cls):
+        """Patch static methods and properties of a class."""
+        name_key = cls.__name__
+
+        if name_key in self.patched_static_classes:
+            mesg(TRACE, f"Static class {name_key} already patched.")
+            return
+
+        self.patched_static_classes[name_key] = cls
+        mesg(TRACE, f"Patching static class: {name_key}")
+
+        try:
+            instance = cls()
+        except Exception as e:
+            mesg(TRACE, f"Unable to create instance of {name_key}: {e}")
+            instance = None
+
+        for name, attribute in inspect.getmembers(cls):
+            if name in synth_members:
+                continue
+
+            try:
+                if callable(attribute):
+                    if inspect.isfunction(attribute) and not hasattr(attribute, '__self__'):
+                        mesg(TRACE, f"Patching static or class method: {name} in {cls.__name__}")
+                        self.patch_static_method(cls, name, attribute, level="static")
+                    else:
+                        mesg(TRACE, f"Skipping instance method: {name} in {cls.__name__}")
+                else:
+                    if hasattr(cls, name) and (instance is None or not hasattr(instance, name)):
+                        mesg(TRACE, f"Patching class-level or static property: {name} in {cls.__name__}")
+                        self.patch_static_property(cls, name, attribute)
+                    else:
+                        mesg(TRACE, f"Skipping instance property: {name} in {cls.__name__}")
+            except Exception as e:
+                mesg(TRACE, f"Skipping patch for {name} in {cls.__name__}: {e}")
+
+    def patch_instance_class(self, cls, instance=None):
+        """Patch instance methods and properties of a class."""
+        name_key = cls.__name__
+
+        if name_key in self.patched_instance_classes:
+            mesg(TRACE, f"Instance class {name_key} already patched.")
+            return
+
+        self.patched_instance_classes[name_key] = cls
+        mesg(TRACE, f"Patching instance class: {name_key}")
+
+        if instance is None:
+            try:
+                instance = cls()
+            except Exception as e:
+                mesg(TRACE, f"Unable to create instance of {name_key}: {e}")
+                instance = None
+
+        for name, attribute in inspect.getmembers(cls):
+            if name in synth_members:
+                continue
+
+            try:
+                if callable(attribute):
+                    if inspect.isfunction(attribute) and hasattr(attribute, '__code__') and 'self' in attribute.__code__.co_varnames:
+                        mesg(TRACE, f"Patching instance method: {name} in {cls.__name__}")
+                        self.patch_instance_method(cls, name, attribute, level="instance")
+                    else:
+                        mesg(TRACE, f"Skipping static method: {name} in {cls.__name__}")
+                else:
+                    if instance is not None and hasattr(instance, name):
+                        mesg(TRACE, f"Patching instance property: {name} in {cls.__name__}")
+                        self.patch_instance_property(cls, name, attribute, level="instance", is_instance=True)
+                    else:
+                        mesg(TRACE, f"Skipping static property: {name} in {cls.__name__}")
+            except Exception as e:
+                mesg(TRACE, f"Skipping patch for {name} in {cls.__name__}: {e}")
+
+    def patch_object(self, obj):
+        """Patch an individual instance (instance-level tracking)."""
+        if not self._is_patchable_type(obj):
+            return
+
+        name_key = id(obj)
+
+        if name_key in self.patched_objects:
+            return
+
+        self.patched_objects[name_key] = obj
+        mesg(TRACE, f"Patching object: {name_key}")
+
+        if not hasattr(obj, 'observer'):
+            setattr(obj, 'observer', self.observer)
+
+        cls = obj.__class__
+        self.patch_class(cls, obj)
 
 # 3. Example usage
 class MyClass:
@@ -620,6 +837,9 @@ class MyClass:
 
     def __init__(self, value):
         self.value = value
+
+    def __repr__(self):
+        return repr(value)
 
     def my_method(self, x):
         return x * 2
@@ -644,9 +864,24 @@ observer = Observer()
 patcher = MonkeyPatcher(observer)
 
 # Example usage for patching modules:
-import hyperonpy  # Assuming hyperonpy is an external module you want to patch
 # Patch the module
-patcher.patch_module(hyperonpy)
+
+# invoked with:   py_call(load_metta_python_proxy:patch_hyperonpy(),O)
+def patch_hyperonpy():    
+    from hyperon.atoms import SymbolAtom, ExpressionAtom, GroundedAtom, VariableAtom, ValueAtom
+    from hyperon.runner import MeTTa
+    import hyperonpy  # Assuming hyperonpy is an external module you want to patch
+    VA = ValueAtom("string")
+    patcher.patch_instance_class(ValueAtom,instance=VA)
+    patcher.patch_class(MyClass)
+    line = input("ValueAtom> ")
+    patcher.patch_module(hyperonpy)
+    line = input("hyperonpy> ")
+    metta = MeTTa()
+    patcher.patch_instance_class(MeTTa,instance=metta)
+    line = input("MeTTa> ")
+    
+    return {}
 
 has_applied_monkey_patches = None
 
@@ -664,7 +899,7 @@ def apply_monkey_patches():
     # Importing inside the function to avoid circular import issues
     from hyperon.atoms import SymbolAtom, ExpressionAtom, GroundedAtom, VariableAtom, ValueAtom
 
-    def monkey_patch_class(cls):
+    def monkey_patch_static_class(cls):
         # Save the original __init__ method
         original_init = cls.__init__
         
@@ -712,12 +947,12 @@ def apply_monkey_patches():
         cls.__getitem__ = new_getitem
 
     # Apply the monkey patch function to multiple classes
-    monkey_patch_class(SymbolAtom)
-    monkey_patch_class(ExpressionAtom)
-    monkey_patch_class(VariableAtom)
-    monkey_patch_class(GroundedAtom)
-    monkey_patch_class(ValueAtom)
-    monkey_patch_class(hyperonpy.CAtom)
+    monkey_patch_static_class(SymbolAtom)
+    monkey_patch_static_class(ExpressionAtom)
+    monkey_patch_static_class(VariableAtom)
+    monkey_patch_static_class(GroundedAtom)
+    monkey_patch_static_class(ValueAtom)
+    monkey_patch_static_class(hyperonpy.CAtom)
 
 def str_repr(obj):
    return "{type(obj)}@{id(obj)}" 
@@ -766,7 +1001,7 @@ def instance_on_get(obj, property_name, value):
     # Fake the value of the property
     if property_name == 'value':
         return {'just_return': 1000}
-    patcher.patch(value)
+    patcher.patch_object(value)
     return value
 
 def instance_on_set(obj, property_name, new_value):
@@ -805,20 +1040,20 @@ observer.subscribe('after_call', static_after_call, level="static")
 observer.subscribe('get', static_on_get, level="static")
 observer.subscribe('set', static_on_set, level="static")
 
-apply_monkey_patches()
+#apply_monkey_patches()
 
 # Main function
 def demo1():
-    global wont_need_repl
+    global norepl_mode
     global patcher
     global observer
     # Example: Patch a class and an instance
     my_obj = MyClass(10)
-    patcher.patch(my_obj)  # This will patch both the class (static) and the instance (instance-level)
+    patcher.patch_object(my_obj)  # This will patch both the class (static) and the instance (instance-level)
 
     # Example: Patch another class and an instance
     another_obj = AnotherClass("Alice")
-    patcher.patch(another_obj)
+    patcher.patch_object(another_obj)
 
     # Call methods and access properties (before/after call hooks, get/set hooks will be triggered)
     print(my_obj.my_method(5))  # Will trigger before/after call hooks
@@ -836,31 +1071,31 @@ def demo1():
     mesg(USER,another_obj.greet())  # Will trigger both instance and static 'call' event, return modified result
 
 def main():
-    global wont_need_repl
+    global norepl_mode
     global patcher
     global observer
 
-    cb = hyperon.Environment.custom_env(working_dir=os.path.dirname("."))
+    
+    # If no files were loaded and --repl wasn't triggered, enter REPL
+    norepl_mode = False
+    # Process command-line arguments and track if REPL or files were handled
+    norepl_mode = process_args()
+        
     #patcher.patch(cb)
-    runner = hyperon.MeTTa(env_builder=cb)
-    patcher.patch(runner)
+    #if cb is None cb = hyperon.Environment.custom_env(working_dir=os.path.dirname("."))
+    #runner = hyperon.MeTTa(env_builder=cb)
+    # patcher.patch(runner)
     # patcher.patch(hyperon)
     # Process command-line arguments and track if REPL or files were handled
 
-    # If no files were loaded and --repl wasn't triggered, enter REPL
-    if not wont_need_repl:
-        REPL(runner).main_loop()
 
-    mesg(DEBUG,"hyperonpy::main")
+    #mesg(DEBUG,"hyperonpy::main")
     #apply_monkey_patches()
     
-    wont_need_repl = False
-    # Process command-line arguments and track if REPL or files were handled
-    wont_need_repl = process_args()
-
     # If no files were loaded and --repl wasn't triggered, enter REPL
-    if not wont_need_repl:
+    if not norepl_mode:
         load_file("--repl")
+
 
 if __name__ == "__main__":
     main()
