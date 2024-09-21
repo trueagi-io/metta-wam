@@ -8,6 +8,10 @@ import datetime
 def testfile_name(url):
     return url.split('#',1)[0].split('/')[-1]
 
+def testfile_html_path_from_url(url):
+    path_index = url.index('/reports/')
+    return url[path_index+1:].split('#')[0]
+
 def create_testcase_element(testclass, testname, stdout, identifier, got, expected, status, url, time, failcounts_dict, move_filesP):
     # Create the testcase XML element with the class and test name attributes
     testcase = ET.Element("testcase", classname=testclass, name=testname, time=time)
@@ -17,7 +21,12 @@ def create_testcase_element(testclass, testname, stdout, identifier, got, expect
     if testclass != 'WHOLE-TESTS':
         testfile = testfile_name(url)
         failcount = failcounts_dict[testfile]
-        url = url.replace('.metta.html', '.metta.' + str(failcount) + '_failed.html')    
+        old_path = testfile_html_path_from_url(url)
+        url = url.replace('.metta.html', '.metta.' + str(failcount) + '_failed.html')
+        if move_filesP and os.path.isfile(old_path):
+            new_path = testfile_html_path_from_url(url)
+            os.rename(old_path, new_path)
+
     GITHUB_REPOSITORY_OWNER = os.getenv("GITHUB_REPOSITORY_OWNER", 'trueagi-io')
     if GITHUB_REPOSITORY_OWNER is not None:  # Correct checking against None
         url = url.replace('trueagi-io', GITHUB_REPOSITORY_OWNER.lower())  # Correct method to lower case

@@ -68,7 +68,6 @@ jobs:
       continue-on-error: true
       run: |
         python3 scripts/into_junit.py /tmp/SHARED.UNITS ${{ env.TIMESTAMP }} 1 > junit.xml
-        ls reports/tests_output/baseline-compat        
 
     - name: Convert JUnit XML to Standard HTML Report
       continue-on-error: true
