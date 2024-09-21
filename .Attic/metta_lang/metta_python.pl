@@ -370,7 +370,7 @@ load_builtin_module:-
     % Mark the module as loaded and proceed to load the Python module.
     assert(did_load_builtin_module),
     % Call py_module/2 to load the Python built-in module (complete the predicate as needed).
-    py_module(builtin_module,
+    with_safe_argv(py_module(builtin_module,
 '
 import sys
 #import numpy
@@ -567,7 +567,7 @@ def get_str_rep(func):
 
 the_modules_and_globals = merge_modules_and_globals()
 
-').
+')).
 
 %!  pych_chars(+Chars, -P) is det.
 %
@@ -668,7 +668,7 @@ load_hyperon_module:-
     % Mark the module as loaded.
     assert(did_load_hyperon_module),
     % Load the Python Hyperon module using py_module/2 (complete the call as necessary).
-    py_module(hyperon_module,
+    with_safe_argv(py_module(hyperon_module,
 '
 
 from hyperon.base import Atom
@@ -716,7 +716,7 @@ def rust_deref(obj):
     if undone is None: return obj
     obj = undone
 
-').
+')).
 
 
 %!  py_mcall(+I, -O) is semidet.
@@ -2405,19 +2405,19 @@ get_list_arity(_Args,-1).
 %   ?- load_metta_python_proxy.
 %   % Ensures that the Metta Python proxy is loaded and available for use.
 %
-load_metta_python_proxy:- did_load_metta_python_proxy.  % Check if the proxy was already loaded.
+load_metta_python_proxy:- did_load_metta_python_proxy, !.  % Check if the proxy was already loaded.
 load_metta_python_proxy:-
-    % Assert that the proxy has now been loaded.
-    assert(did_load_metta_python_proxy),
     % Retrieve the Python proxy string.
     metta_python_proxy(String),
     % Initialize the Python module with the proxy string.
-    ignore(notrace(with_safe_argv(catch(py_module(metta_python_proxy,String),_,true)))),   
+    ignore(notrace(with_safe_argv(py_module(metta_python_proxy,String)))),
+    % Assert that the proxy has now been loaded.
+    assert(did_load_metta_python_proxy),    
     !.
 
 :- initialization(load_metta_python_proxy).
 
-:- initialization(load_metta_python_proxy,restore).
+:- initialization(load_metta_python_proxy, restore).
 
 %!  on_restore1 is det.
 %
