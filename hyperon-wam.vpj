@@ -151,8 +151,6 @@
 					L="1"/>
 			</Folder>
 			<F N="reports/.gitignore"/>
-			<F N="reports/environment-2024-08-01-12-00-00.properties"/>
-			<F N="reports/junit-2024-08-01-12-00-00.xml"/>
 			<F N="reports/NewResults.md"/>
 			<F N="reports/PASS_FAIL.md"/>
 			<F N="reports/README.md"/>
@@ -169,7 +167,6 @@
 			<F N="scripts/7-FlybaseResults.metta"/>
 			<F N="scripts/8-FlybaseQuestions.metta"/>
 			<F N="scripts/add_lines.sh"/>
-			<F N="scripts/allure-rollup.sh"/>
 			<F N="scripts/chado_to_tsv.sh"/>
 			<F N="scripts/colorize_output.sh"/>
 			<F N="scripts/convert_to_metta.sh"/>
@@ -186,7 +183,6 @@
 			<F N="scripts/old_test_in_metta2.sh"/>
 			<F N="scripts/open-metta-file.reg"/>
 			<F N="scripts/pass_fail_totals.sh"/>
-			<F N="scripts/previous_reports.sh"/>
 			<F N="scripts/rebuild-fast.sh"/>
 			<F N="scripts/Rebuild-hyperon.cmd"/>
 			<F N="scripts/rebuild-hyperon.sh"/>
