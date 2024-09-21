@@ -1,13 +1,101 @@
+#!/usr/bin/env python3
+
 import inspect
+import os
 from enum import Enum
 import sys
 import types
+import hyperon
+import atexit
 import traceback
 
+# Module-level verbosity levels
+SILENT = 0  # No output
+USER = 1    # Basic output for users
+DEBUG = 2   # Detailed debug information
+TRACE = 3   # Granular trace-level output
+DEVEL = DEBUG
+# Default verbosity level
+METTALOG_VERBOSE = USER
+
+# Global variables
+global runner
+runner = None
+global norepl_mode
+norepl_mode=True
+global catom_mode
+catom_mode=False
+global cb
+cb = None
+global suspend_trace
 # Global variables
 suspend_trace = False
+global rust_mode
 rust_mode = False  # Set to False as default
-TRACE = True  # Assuming this is a logging level
+
+# Log messages based on verbosity level
+def mesg(level, message='', m2=None, m3=None):
+    if not isinstance(level, int):
+        message = f"{level} {message}"
+        level = TRACE
+
+    message = f"{message} {m2 or ''} {m3 or ''}"
+    message = message.replace('lib/python3.11/site-packages/hyperonpy.cpython-311-x86_64-linux-gnu.so','..')
+    message = message.replace("on <module 'hyperonpy' from '/home/deb12user/metta-wam/venv/..'>",'..')
+
+    print(message)
+    return
+    if METTALOG_VERBOSE >= level:
+        print(message)
+
+def set_no_mock_objects_flag(flag: bool):
+    global mock_throw_error
+    mock_throw_error = flag
+
+def get_no_mock_objects_flag() -> bool:
+    return mock_throw_error
+# Testing and Examples
+
+# Set verbosity level
+def set_verbosity(level):
+    global METTALOG_VERBOSE
+    level = int(level)
+    if level in [SILENT, USER, DEBUG, TRACE]:
+        METTALOG_VERBOSE = level
+        mesg(DEBUG, f"Verbosity set to level {level}")
+    else:
+        print(f"Invalid verbosity level '{level}' provided. Defaulting to level: {METTALOG_VERBOSE}.")
+        METTALOG_VERBOSE = USER
+
+# Initialize verbosity from environment variable
+try:
+    set_verbosity(os.getenv("METTALOG_VERBOSE", USER))
+except Exception as e:
+    mesg(USER, f"An error occurred: {e}")
+    if METTALOG_VERBOSE >= DEBUG:
+        traceback.print_exc()
+
+# Command-line verbosity handling
+try:
+    i = 0
+    while i < len(sys.argv):
+        arg = sys.argv[i]
+        i += 1
+
+        if arg in ("-v", "--verbosity"):
+            try:
+                set_verbosity(sys.argv[i])
+                break
+            except (ValueError, IndexError):
+                print("Invalid verbosity level. Defaulting to USER.")
+                set_verbosity(USER)
+
+    mesg(DEBUG, f"Argv={sys.argv}")
+except Exception as e:
+    mesg(USER, f"An error occurred: {e}")
+    if METTALOG_VERBOSE >= DEBUG:
+        traceback.print_exc()
+
 
 def name_dot(module, name):
     if module is None:
@@ -52,10 +140,6 @@ def get_pybind11_signature(obj):
 
 def ignore_exception(*args, **kwargs):
     pass
-
-def mesg(*args, **kwargs):
-    """Simple message/logging function placeholder."""
-    print(*args, **kwargs)
 
 # Define Enums for member types, levels, and implementation status
 class MemberType(Enum):
@@ -129,8 +213,27 @@ class Observer:
 def create_instance_getter(original_property, property_name, target, observer, level):
     """A function to handle the instance getter logic."""
     def instance_getter(self):
+        global suspend_trace
+
+        # If suspend_trace is active, bypass the monkey-patched getter
+        if suspend_trace:
+            return getattr(self, f"__original_{property_name}", None)
+
         try:
-            current_value = original_property.fget(self)
+            # Temporarily disable tracing to prevent recursion
+            suspend_trace = True
+
+            # If original_property is a property, use fget; otherwise, get the attribute directly
+            if isinstance(original_property, property):
+                current_value = original_property.fget(self)
+            else:
+                # Get the original value
+                current_value = getattr(self, f"__original_{property_name}", None)
+
+            # Re-enable tracing after access
+            suspend_trace = False
+
+            # Notify observers
             result = observer.notify(
                 original_property, 'get', target, property_name, current_value, level=level
             )
@@ -138,6 +241,7 @@ def create_instance_getter(original_property, property_name, target, observer, l
                 return result.get('return_value')
             return current_value
         except Exception as e:
+            suspend_trace = False  # Make sure to reset tracing even if an error occurs
             mesg(TRACE, f"Error getting instance property '{property_name}' in {target.__name__}: {e}")
             raise
     return instance_getter
@@ -145,27 +249,103 @@ def create_instance_getter(original_property, property_name, target, observer, l
 def create_instance_setter(original_property, property_name, target, observer, level):
     """A function to handle the instance setter logic."""
     def instance_setter(self, new_value):
+        global suspend_trace
+
+        if suspend_trace:
+            # Directly set the instance variable using __dict__ to avoid recursion issues
+            self.__dict__[property_name] = new_value
+            return
+
         try:
+            suspend_trace = True
+
+            # Notify observers
             result = observer.notify(
                 original_property, 'set', target, property_name, new_value, level=level
             )
             if isinstance(result, dict) and result.get('do_not_really_set', False):
+                suspend_trace = False
                 return
-            new_value = result if result is not None else new_value
-            original_property.fset(self, new_value)
+
+            # Check if the original property has a setter
+            if isinstance(original_property, property):            
+                print(f"Calling original setter for {property_name}. fset: {original_property.fset}")
+                if original_property.fset is not None:
+                    try:
+                        original_property.fset(self, new_value)
+                    except AttributeError as e:
+                        print(f"AttributeError in setter: {e}, using __dict__ as a fallback")
+                        self.__dict__['instance_var'] = new_value  # Ensure instance_var is updated
+                else:
+                    self.__dict__['instance_var'] = new_value  # Ensure instance_var is updated
+            else:
+                self.__dict__['instance_var'] = new_value  # Ensure instance_var is updated
+
+            suspend_trace = False
         except Exception as e:
+            suspend_trace = False
             mesg(TRACE, f"Error setting instance property '{property_name}' in {target.__name__}: {e}")
             raise
     return instance_setter
 
-# 3. MonkeyPatcher Class
+# 3. Monkey Patching Class
 class MonkeyPatcher:
     def __init__(self, observer):
         self.observer = observer
         self.patched_objects = {}
         self.patched_modules = {}
         self.patched_instance_classes = {}
-        self.patched_static_classes = {}
+        self.patched_static_classes = {"str": True}  # Dictionary to store patched classes
+        self.initialized_classes = set()  # Track classes that have been initialized
+
+    def patch_class_init(self, cls):
+        """Patch the class __init__ to handle instance variables."""
+        original_init = cls.__init__
+        patcher = self
+
+        def wrapped_init(instance, *args, **kwargs):
+            """Wrapper for the class __init__ that patches instance variables."""
+            # Call the original __init__ method first
+            result = original_init(instance, *args, **kwargs)
+
+            # Only patch instance variables after the class is initialized for the first time
+            if cls not in patcher.initialized_classes:
+                patcher.initialized_classes.add(cls)
+                # After __init__, inspect and patch instance variables
+                patcher.patch_instance_variables(instance)
+            
+            # Restore the original __init__ after patching
+            setattr(cls, '__init__', original_init)
+            return result
+
+        # Replace the original __init__ with the wrapped_init
+        if cls not in self.initialized_classes:
+            setattr(cls, '__init__', wrapped_init)
+    
+    def patch_instance_variables(self, instance):
+        """Patch instance variables by inspecting the instance's __dict__ after __init__ is called."""
+        
+        # Loop through all instance variables (in instance.__dict__)
+        for var_name, value in instance.__dict__.items():
+            # Use the patch_one_instance_variable to handle the patching logic
+            self.patch_one_instance_variable(instance.__class__, var_name, value)
+    
+    def patch_one_instance_variable(self, cls, var_name, value):
+        """Create the member_info dictionary and patch the instance variable."""
+        
+        # Assume all variables here are instance variables
+        member_info = {
+            'name': var_name,
+            'member': value,
+            'member_type': MemberType.VARIABLE,
+            'level': MemberLevel.INSTANCE,
+            'class_name': cls.__name__,
+            'class_object': cls
+        }
+    
+        # Call the patch function
+        global inspector
+        inspector.patch_member_info(cls, member_info)
 
     def patch_instance_property(self, target_class, property_name, original_property, level):
         """Patch an instance property to allow observation of gets and sets."""
@@ -185,7 +365,7 @@ class MonkeyPatcher:
             # Replace the property on the class
             setattr(target_class, property_name, new_property)
 
-            mesg(f"Patching instance property: {property_name} in {target_class.__name__}")
+            mesg(f"Patched instance property: {property_name} in {target_class.__name__}")
 
         except Exception as e:
             mesg(f"Failed to patch instance property '{property_name}' in {target_class.__name__}: {e}")
@@ -550,9 +730,38 @@ class Inspector:
         """Monkey-patch captured members using the MonkeyPatcher."""
         for class_name, members in self.captured_members.items():
             cls = members[0]['class_object']  # All members belong to the same class
+            patcher.patch_class_init(cls)
             for member_info in members:
+                self.patch_member_info(cls, member_info)
+    
+    def create_member_info_and_patch_member(self, cls, member_name, member):
+        """Create the member_info dictionary and patch the member."""
+        
+        # Determine if the member uses `self`, which can help identify its level
+        is_callable = callable(member)
+        uses_self_flag = uses_self(member) if is_callable else False
+        
+        # Determine the type and level of the member
+        member_type = classify_member_type(cls, member_name, member)
+        member_level = classify_member_level(cls, member_name, member, implemented_in(member_name, cls), uses_self_flag)
+        
+        # Create the member_info dictionary
+        member_info = {
+            'name': member_name,
+            'member': member,
+            'member_type': member_type,
+            'level': member_level,
+            'class_name': cls.__name__,
+            'class_object': cls
+        }
+    
+        # Call the patch function
+        self.patch_member_info(cls, member_info)
 
+    def patch_member_info(self, cls, member_info):
+                """Helper function to patch an individual member."""
                 name = member_info['name']
+                #if name == '__init__': return
                 member = member_info['member']
                 level = member_info['level']
                 member_type = member_info['member_type']
@@ -564,7 +773,7 @@ class Inspector:
                 if not member in self.patched_members:
                     self.patched_members[member] = member_info
                 else:
-                    continue
+                    return 
 
                 try:
                     if member_type == MemberType.METHOD:
@@ -747,6 +956,9 @@ class BaseClass:
     def __repr__(self):
         return "base_repr"
 
+    def base_method(self, value):
+        return value * 2
+
     @classmethod
     def base_class_method_without_self(cls):
         pass
@@ -761,17 +973,27 @@ class BaseClass:
 
 class MyClass(BaseClass):
     class_var = 100  # Class-level attribute
+    class_value = 100  # Static property
+    other_class_value = 666  # Another static property
 
-    def __repr__(self):
-        return "inst_repr"
-
-    def __init__(self):
+    def __init__(self, value="inst_value"):
         super().__init__()  # Call base class __init__ to inherit base instance variables
+        self.value = value
         self.instance_var = 10  # Instance-level attribute
 
+    def __repr__(self):
+        return repr(self.value)
+
+    def my_method(self, x):
+        return x * 2
+
     @staticmethod
-    def static_method():
-        pass
+    def static_method(y=1999):
+        return y + 100
+
+    @classmethod
+    def class_method(cls, z):
+        return z * 3
 
     @classmethod
     def class_method_without_self(cls):
