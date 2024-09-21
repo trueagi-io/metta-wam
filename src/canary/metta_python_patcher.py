@@ -730,7 +730,7 @@ class Inspector:
         """Monkey-patch captured members using the MonkeyPatcher."""
         for class_name, members in self.captured_members.items():
             cls = members[0]['class_object']  # All members belong to the same class
-            patcher.patch_class_init(cls)
+            self.monkey_patcher.patch_class_init(cls)
             for member_info in members:
                 self.patch_member_info(cls, member_info)
     
@@ -759,71 +759,71 @@ class Inspector:
         self.patch_member_info(cls, member_info)
 
     def patch_member_info(self, cls, member_info):
-                """Helper function to patch an individual member."""
-                name = member_info['name']
-                #if name == '__init__': return
-                member = member_info['member']
-                level = member_info['level']
-                member_type = member_info['member_type']
+        """Helper function to patch an individual member."""
+        name = member_info['name']
+        #if name == '__init__': return
+        member = member_info['member']
+        level = member_info['level']
+        member_type = member_info['member_type']
 
-                qualified_name = f"{name_dot(cls,name)}"
-                if callable(member):
-                    qualified_name = f"{qualified_name}{signature(member)}"
+        qualified_name = f"{name_dot(cls,name)}"
+        if callable(member):
+            qualified_name = f"{qualified_name}{signature(member)}"
 
-                if not member in self.patched_members:
-                    self.patched_members[member] = member_info
+        if not member in self.patched_members:
+            self.patched_members[member] = member_info
+        else:
+            return 
+
+        try:
+            if member_type == MemberType.METHOD:
+                if level == MemberLevel.INSTANCE:
+                    mesg(f"Patching instance method: {qualified_name}")
+                    self.monkey_patcher.patch_instance_method(cls, name, member)
+                elif level == MemberLevel.CLASS:
+                    mesg(f"Patching static class method: {qualified_name}")
+                    self.monkey_patcher.patch_class_method(cls, name, member)
                 else:
-                    return 
-
-                try:
-                    if member_type == MemberType.METHOD:
-                        if level == MemberLevel.INSTANCE:
-                            mesg(f"Patching instance method: {qualified_name}")
-                            self.monkey_patcher.patch_instance_method(cls, name, member)
-                        elif level == MemberLevel.CLASS:
-                            mesg(f"Patching static class method: {qualified_name}")
-                            self.monkey_patcher.patch_class_method(cls, name, member)
-                        else:
-                            mesg(f"Skipping method {qualified_name} with unknown level: {level}")
-                    elif member_type == MemberType.CLASS_METHOD:
-                        mesg(f"Patching (static) class method: {qualified_name}")
-                        self.monkey_patcher.patch_class_method(cls, name, member)
-                    elif member_type == MemberType.STATIC_METHOD:
-                        mesg(f"Patching static method: {qualified_name}")
-                        self.monkey_patcher.patch_static_method(cls, name, member)
-                    elif member_type == MemberType.PROPERTY:
-                        mesg(f"Patching property: {qualified_name}")
-                        # Retrieve the original property descriptor
-                        original_property = get_member_descriptor(cls, name)
-                        self.monkey_patcher.patch_instance_property(cls, name, original_property, level='instance')
-                    elif member_type == MemberType.VARIABLE:
-                        if level == MemberLevel.CLASS:
-                            mesg(f"Patching static class variable: {qualified_name}")
-                            self.monkey_patcher.patch_static_property(cls, name, member)
-                        elif level == MemberLevel.INSTANCE:
-                            mesg(f"Patching instance variable: {qualified_name}")
-                            self.monkey_patcher.patch_instance_property(cls, name, member, level='instance')
-                    elif member_type == MemberType.FUNCTION:
-                        # Functions inside classes are treated as methods
-                        if level == MemberLevel.INSTANCE:
-                            mesg(f"Patching instance function: {qualified_name}")
-                            self.monkey_patcher.patch_instance_method(cls, name, member)
-                        else:
-                            mesg(f"Patching static class function: {qualified_name}")
-                            self.monkey_patcher.patch_static_method(cls, name, member)
-                    elif member_type == MemberType.SPECIAL_METHOD:
-                        if level == MemberLevel.INSTANCE:
-                            mesg(f"Patching special instance method: {qualified_name}")
-                            self.monkey_patcher.patch_instance_method(cls, name, member)
-                        elif level == MemberLevel.CLASS:
-                            mesg(f"Patching special class method: {qualified_name}")
-                            self.monkey_patcher.patch_class_method(cls, name, member)
-                        else:
-                            mesg(f"Skipping special method {qualified_name} with unknown level: {level}")
-                    else:
-                        mesg(f"Skipping unsupported member type: {member_type} for {qualified_name}")
-                except Exception as e:
-                    mesg(f"Error patching {qualified_name}: {e}")
+                    mesg(f"Skipping method {qualified_name} with unknown level: {level}")
+            elif member_type == MemberType.CLASS_METHOD:
+                mesg(f"Patching (static) class method: {qualified_name}")
+                self.monkey_patcher.patch_class_method(cls, name, member)
+            elif member_type == MemberType.STATIC_METHOD:
+                mesg(f"Patching static method: {qualified_name}")
+                self.monkey_patcher.patch_static_method(cls, name, member)
+            elif member_type == MemberType.PROPERTY:
+                mesg(f"Patching property: {qualified_name}")
+                # Retrieve the original property descriptor
+                original_property = get_member_descriptor(cls, name)
+                self.monkey_patcher.patch_instance_property(cls, name, original_property, level='instance')
+            elif member_type == MemberType.VARIABLE:
+                if level == MemberLevel.CLASS:
+                    mesg(f"Patching static class variable: {qualified_name}")
+                    self.monkey_patcher.patch_static_property(cls, name, member)
+                elif level == MemberLevel.INSTANCE:
+                    mesg(f"Patching instance variable: {qualified_name}")
+                    self.monkey_patcher.patch_instance_property(cls, name, member, level='instance')
+            elif member_type == MemberType.FUNCTION:
+                # Functions inside classes are treated as methods
+                if level == MemberLevel.INSTANCE:
+                    mesg(f"Patching instance function: {qualified_name}")
+                    self.monkey_patcher.patch_instance_method(cls, name, member)
+                else:
+                    mesg(f"Patching static class function: {qualified_name}")
+                    self.monkey_patcher.patch_static_method(cls, name, member)
+            elif member_type == MemberType.SPECIAL_METHOD:
+                if level == MemberLevel.INSTANCE:
+                    mesg(f"Patching special instance method: {qualified_name}")
+                    self.monkey_patcher.patch_instance_method(cls, name, member)
+                elif level == MemberLevel.CLASS:
+                    mesg(f"Patching special class method: {qualified_name}")
+                    self.monkey_patcher.patch_class_method(cls, name, member)
+                else:
+                    mesg(f"Skipping special method {qualified_name} with unknown level: {level}")
+            else:
+                mesg(f"Skipping unsupported member type: {member_type} for {qualified_name}")
+        except Exception as e:
+            mesg(f"Error patching {qualified_name}: {e}")
 
     def monkey_patch_module(self, module):
         """Monkey-patch functions and variables in a module."""
@@ -1040,24 +1040,28 @@ if __name__ == "__main__":
         # Do not return anything unless modifying the value
 
     # Subscribe to observer events
-    inspector.observer.subscribe('before_call', before_call_callback, level='instance')
-    inspector.observer.subscribe('after_call', after_call_callback, level='instance')
-    inspector.observer.subscribe('before_call', before_call_callback, level='class')
-    inspector.observer.subscribe('after_call', after_call_callback, level='class')
-    inspector.observer.subscribe('before_call', before_call_callback, level='module')
-    inspector.observer.subscribe('after_call', after_call_callback, level='module')
+    observer = inspector.observer
+    
+    observer.subscribe('before_call', before_call_callback, level='instance')
+    observer.subscribe('after_call', after_call_callback, level='instance')
+    observer.subscribe('before_call', before_call_callback, level='class')
+    observer.subscribe('after_call', after_call_callback, level='class')
+    observer.subscribe('before_call', before_call_callback, level='module')
+    observer.subscribe('after_call', after_call_callback, level='module')
 
-    inspector.observer.subscribe('get', get_callback, level='instance')
-    inspector.observer.subscribe('set', set_callback, level='instance')
-    inspector.observer.subscribe('get', get_callback, level='class')
-    inspector.observer.subscribe('set', set_callback, level='class')
-    inspector.observer.subscribe('get', get_callback, level='module')
-    inspector.observer.subscribe('set', set_callback, level='module')
+    observer.subscribe('get', get_callback, level='instance')
+    observer.subscribe('set', set_callback, level='instance')
+    observer.subscribe('get', get_callback, level='class')
+    observer.subscribe('set', set_callback, level='class')
+    observer.subscribe('get', get_callback, level='module')
+    observer.subscribe('set', set_callback, level='module')
 
-    mesg("\nInspecting hyperon:")
+
     import hyperonpy
     from hyperon.atoms import *  # Import your classes
     from hyperon.runner import MeTTa  # Import your classes
+
+    mesg("\nInspecting hyperon:")
     inspector.monkey_patch_module(hyperonpy)
     inspector.monkey_patch_members()
 
@@ -1082,8 +1086,16 @@ if __name__ == "__main__":
     # Test the monkey-patched methods
     mesg("\nTesting monkey-patched methods:")
     obj = MyClass()
+    print(obj.my_instance_property)  # Should return 10
+    obj.my_instance_property = 200   # Should update instance_var to 200
+    print(obj.my_instance_property)  # Should now return 200
+
+ 
     obj.instance_method()
-    obj.__repr__()
+    v=obj.__repr__()
+    print(f"obj.__repr__={v}")
+    v=repr(obj)
+    print(f"repr(obj)={v}")
     MyClass.class_method_without_self()
     MyClass.class_method_with_self(obj)  # Provide 'self' as argument if required
     MyClass.static_method()
@@ -1131,3 +1143,211 @@ if __name__ == "__main__":
     print(str(atom))
     print(repr(atom))
 
+
+
+
+
+
+
+# Example classes for testing
+class BaseClassV2:
+    base_class_var = 41  # Class-level attribute
+
+    def __init__(self):
+        self.base_instance_var = 42  # Base class instance variable
+
+    def base_instance_method(self):
+        return self.base_instance_var
+
+    def __str__(self):
+        return "base_str"
+
+    def __repr__(self):
+        return "base_repr"
+
+    def base_method(self, value):
+        return value * 2
+
+    @classmethod
+    def base_class_method_without_self(cls):
+        pass
+
+    @classmethod
+    def base_class_method_with_self(cls, self):
+        pass
+
+    @property
+    def base_property(self):
+        return self.base_instance_var
+
+
+class MyClassV2(BaseClassV2):
+    class_var = 100  # Class-level attribute
+    class_value = 100  # Static property
+    other_class_value = 666  # Another static property
+
+    def __init__(self, value="inst_value"):
+        super().__init__()  # Call base class __init__ to inherit base instance variables
+        self.value = value
+        self.instance_var = 10  # Instance-level attribute
+
+    def __repr__(self):
+        return repr(self.value)
+
+    def my_method(self, x):
+        return x * 2
+
+    @staticmethod
+    def static_method(y=1999):
+        return y + 100
+
+    @classmethod
+    def class_method(cls, z):
+        return z * 3
+
+    @classmethod
+    def class_method_without_self(cls):
+        pass
+
+    @classmethod
+    def class_method_with_self(cls, self):
+        pass
+
+    def instance_method(self):
+        return self.instance_var
+
+    @property
+    def my_instance_property(self):
+        return self.instance_var
+
+    @my_instance_property.setter
+    def my_instance_property(self, value):
+        self.instance_var = value
+
+
+def inspect_and_patch_MyClassV2():
+    # Assuming `inspector` and `patcher` have already been initialized
+    mesg("Inspecting MyClassV2 with filters:")
+    
+    # Mark the class
+    inspector.mark_class(MyClassV2)
+    
+    # Mark the base classes
+    inspector.mark_base_classes()
+
+    # Monkey-patch captured members
+    inspector.monkey_patch_members()
+
+    # Test the monkey-patched methods
+    mesg("\nTesting monkey-patched methods:")
+    obj = MyClassV2()
+    
+    # Initial value should be 10
+    print(f"Initial value of my_instance_property: {obj.my_instance_property}")  # Should return 10
+    
+    # Set value to 200
+    obj.my_instance_property = 200   # Should update instance_var to 200
+    print(f"Updated value of my_instance_property: {obj.my_instance_property}")  # Should now return 200
+
+
+
+
+
+
+# 5. Tests and Main Execution
+def main():
+    demoInspector()
+    #test_TestClass()
+    #test_TestClassV2()
+    inspect_and_patch_MyClassV2()
+    #demoMyClass()
+    #demoHyperonPy()
+
+    
+class TestClassV2:
+    def __init__(self, value="inst_value"):
+        self.instance_var = 10  # Initialize instance_var
+
+    @property
+    def test_property(self):
+        # Getter should return instance_var
+        return self.instance_var
+
+    @test_property.setter
+    def test_property(self, value):
+        # Setter should update instance_var
+        print(f"Setting test_property: {value}")
+        self.instance_var = value
+        print(f"instance_var is now: {self.instance_var}")
+
+def test_TestClassV2():
+    print("\nTesting monkey-patched methods in TestClassV2:")
+    
+    obj = TestClassV2()
+    
+    # Initial value should be 10
+    print(f"Initial value of test_property: {obj.test_property}")  # Should return 10
+    
+    # Set value to 200
+    obj.test_property = 200   # Should update instance_var to 200
+    print(f"Updated value of test_property: {obj.test_property}")  # Should now return 200
+    
+    # Set value to 500
+    obj.test_property = 500   # Should update instance_var to 500
+    print(f"Updated value of test_property: {obj.test_property}")  # Should now return 500
+    
+
+def main2():
+    # Example callbacks that override returns and set different values
+    def before_call_override(*args):
+        target_class, method_name = args[0], args[1]
+        mesg(f"[Observer] Before calling {name_dot(target_class, method_name)}{args[2:]}")
+        if method_name == 'static_method':
+            return {'do_not_really_call': True, 'return_value': 777}  # Override static method return value
+        return args[2:]  # Pass through the original args/kwargs
+
+    def after_call_override(*args):
+        target_class, method_name, result = args[0], args[1], args[2]
+        mesg(f"[Observer] After calling {name_dot(target_class, method_name)} -> {result}")
+        if method_name == 'base_method':
+            return result * 10  # Modify return value of base_method
+
+    def get_override(*args):
+        target_class, property_name, current_value = args[0], args[1], args[2]
+        mesg(f"[Observer] Getting {name_dot(target_class, property_name)}, current value: {current_value}")
+        if property_name == 'my_instance_property':
+            return 999  # Override getter to always return 999 for my_instance_property
+
+    def set_override(*args):
+        target_class, property_name, new_value = args[0], args[1], args[2]
+        mesg(f"[Observer] Setting {name_dot(target_class, property_name)} to {new_value}")
+        if property_name == 'my_instance_property':
+            return {'do_not_really_set': True}  # Block setting my_instance_property
+
+    # Subscribe to observer events
+    inspector.subscribe('before_call', before_call_override, level='instance')
+    inspector.subscribe('after_call', after_call_override, level='instance')
+    inspector.subscribe('get', get_override, level='instance')
+    inspector.subscribe('set', set_override, level='instance')
+
+    # Patch methods and properties
+    patcher.patch_instance_method(MyClass, 'base_method', MyClass.base_method)
+    patcher.patch_static_method(MyClass, 'static_method', MyClass.static_method)
+
+    # Test: Override method calls and get/set behavior
+    obj = MyClass()
+
+    mesg("\nTesting instance method override:")
+    result = obj.base_method(5)  # This should be modified by the after_call_override
+    mesg(f"Result of base_method: {result}")  # Expecting 100 (5 * 2 * 10)
+
+    mesg("\nTesting static method override:")
+    result = MyClass.static_method()  # This should be overridden to return 777
+    mesg(f"Result of static_method: {result}")  # Expecting 777
+
+    mesg("\nTesting instance property get override:")
+    mesg(f"Value of my_instance_property: {obj.my_instance_property}")  # Expecting 999
+
+    mesg("\nTesting instance property set override:")
+    obj.my_instance_property = 300  # This should not actually change the value due to set_override
+    mesg(f"Value after trying to set my_instance_property: {obj.my_instance_property}")  # Still expecting 999
