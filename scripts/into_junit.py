@@ -85,7 +85,6 @@ def generate_junit_xml(input_file, timestamp):
                     if testpackage not in timestamps_dict:
                         timestamps_dict[testpackage] = dt
                     testcase_info = (testpackage, testname, stdout, full_identifier, got, expected, status, url, time)
-                    print(testcase_info)
                     packages_dict[testpackage].append(testcase_info)
                     print(f"Processed {testpackage}.{testname}: {status}", file=sys.stderr)
                 except ValueError as e:

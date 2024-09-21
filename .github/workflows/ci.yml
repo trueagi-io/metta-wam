@@ -168,7 +168,7 @@ jobs:
         sudo chmod 777 . -R
         ls -lA allure-history 
         mkdir -p allure-history/${{ env.BASELINE_COMPAT_PATH }}
-        cp -f ${{ env.BASELINE_COMPAT_PATH }}/* reports/tests_output/baseline-compat-${{ env.TIMESTAMP }}/
+        cp -f ${{ env.BASELINE_COMPAT_PATH }}/* reports/tests_output/baseline-compat/
         cp -rf reports/* allure-history/reports/        
         
 
