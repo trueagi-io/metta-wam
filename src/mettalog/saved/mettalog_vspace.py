@@ -4086,8 +4086,17 @@ def handle_arg(string, skip_filetypes=['.metta', '.md','.pl', '.png', '.jpg', '.
 swip = globals().get('swip') or PySwip()
 try:
     the_verspace = globals().get('the_verspace') or VSpace("&verspace")
+except Exception as e:
+if verbose>0: print(f"; Error: {e}")
+try:
     the_flybase = globals().get('the_flybase') or VSpace("&flybase")
+except Exception as e:
+if verbose>0: print(f"; Error: {e}")
+try:
     the_nb_space = globals().get('the_nb_space') or VSpace("&nb")
+except Exception as e:
+    if verbose>0: print(f"; Error: {e}")
+try:
     the_gptspace = globals().get('the_gptspace') or GptSpace()
 except Exception as e:
     if verbose>0: print(f"; Error: {e}")
