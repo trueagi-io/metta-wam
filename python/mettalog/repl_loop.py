@@ -202,15 +202,21 @@ atexit.register(save, h_len, histfile)
 
 argmode = "metta"
 
+def split_or_none(s, delimiter):
+    parts = s.split(delimiter, 1)  # split only at the first occurrence
+    return parts[0], (parts[1] if len(parts) > 1 else None)
 
-def repl_loop_impl(theMeTTa, get_sexpr_input=get_sexpr_input, print_cmt=print_cmt, mode="metta"):
+def repl_loop_impl(theMeTTa=None, get_sexpr_input=get_sexpr_input, print_cmt=print_cmt, mode="metta"):
 
         verbose = 2
+
+        if theMeTTa is None:
+            theMeTTa = get_metta()
 
         submode = "!"
         the_new_runner_space = theMeTTa.space()
 
-        def maybe_submode(self, line):
+        def maybe_submode(line):
             lastchar = line[-1]
             if "+-?!^".find(lastchar)>=0:
                 submode=lastchar
@@ -530,7 +536,7 @@ def repl_loop_impl(theMeTTa, get_sexpr_input=get_sexpr_input, print_cmt=print_cm
                     print_cmt(buf.getvalue().replace('rolog', 'ySwip'))
                 continue
 
-def repl(theMeTTa, get_sexpr_input=get_sexpr_input, print_cmt=print_cmt, mode="metta"):
+def repl(theMeTTa=None, get_sexpr_input=get_sexpr_input, print_cmt=print_cmt, mode="metta"):
     #load_vspace()
     argmode = mode
     if argmode is None:

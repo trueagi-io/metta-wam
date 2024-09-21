@@ -94,6 +94,7 @@ is_decl_mtype('Number').
 is_decl_mtype('Symbol').
 is_decl_mtype('Expression').
 is_decl_mtype('Grounded').
+is_decl_mtype('PyObject').
 
 %is_decl_type([ST|_]):- !, atom(ST),is_decl_type_l(ST).
 %is_decl_type(ST):- \+ atom(ST),!,fail.
@@ -164,9 +165,17 @@ is_dynaspace(S):- py_named_space(S).
 is_dynaspace(S):- typed_list(S,'hyperon::space::DynSpace',_).
 %  fake_notrace( is_space_type(Expr,_)),!.
 
+is_PyObject(S):- py_is_py(S).
+is_PyObject(S):- var(S),!,fail.
+is_PyObject('@'(S)):- !, nonvar(S), is_py_const(S).
+is_py_const('None').
+is_py_const('False').
+is_py_const('True').
+
 
 get_type_each(_, _, Nil, UD):- Nil==[],!,UD='%Undefined%'.
 get_type_each(Depth,Self,Val,Type):- \+ integer(Depth),!,get_type_each(10,Self,Val,Type).
+get_type_each(_Depth,_Slf,Val,PyObject):- is_PyObject(Val),!,'PyObject'=PyObject.
 get_type_each(Depth,_Slf,_Type,_):- Depth<1,!, fail.
 %get_type(Depth,Self,Val,Type):- is_debugging(eval),
 % ftrace(get_type_each(Depth,Self,Val,Type)),

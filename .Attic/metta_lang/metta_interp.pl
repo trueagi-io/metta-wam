@@ -1058,7 +1058,6 @@ metta_atom_asserted('&stdlib','&corelib').
 metta_atom_asserted('&flybase','&corelib').
 metta_atom_asserted('&catalog','&corelib').
 metta_atom_asserted('&catalog','&stdlib').
-%:- ensure_loaded(metta_corelib).
 
 /*
 'mod-space'(top,'&self').
@@ -1824,6 +1823,7 @@ fix_message_hook:-
 %:- ensure_loaded('../../library/genome/flybase_loader').
 
 :- ensure_loaded(metta_python).
+:- ensure_loaded(metta_corelib).
 :- initialization(use_corelib_file).
 
 :- ignore(((
