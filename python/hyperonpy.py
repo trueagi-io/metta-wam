@@ -31,7 +31,7 @@ Environment Variables:
 
 import os
 import sys
-import readline
+#import readline
 import atexit
 import traceback
 import re
@@ -1590,14 +1590,14 @@ def trace_break():
     print("TRACE: Press any key to continue...")
     wait_for_key() #keyboard.read_event()  # This waits for a key event
 
-import sys
-import termios
-import tty
 
 def wait_for_key():    
+    import sys  
     fd = sys.stdin.fileno()
+    import termios
     old_settings = termios.tcgetattr(fd)
     try:
+        import tty  
         tty.setraw(fd)
         sys.stdin.read(1)  # This waits for a single key press
     finally:

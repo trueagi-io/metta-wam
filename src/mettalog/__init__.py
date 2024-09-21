@@ -356,7 +356,7 @@ def   self_space():
 
 space_refs = {
     #'&vspace': lambda: the_verspace,
-    '&gptspace': lambda: the_gptspace,
+    #'&gptspace': lambda: the_gptspace,
     #'&flybase': lambda: the_flybase,
     '&parent': lambda: parent_space(),
     '&child': lambda: child_space(),
@@ -682,7 +682,7 @@ def register_vspace_atoms_for_ra(mettaIn):
         'vspace-main': OperationAtom('vspace-main', vspace_main),
         'mettalog::vspace-main': OperationAtom('vspace-main', lambda *args: [vspace_main(*args)]),
         'swip-exec': OperationAtom('swip-exec', lambda s: [swip_exec(s)]),
-        'py-eval': OperationAtom('py-eval', lambda s: [eval(s)]) })
+        'py-eval-int': OperationAtom('py-eval-int', lambda s: [eval(s)]) })
 
     #add_python_module(sys.modules[__name__], dict = oper_dict)
     #print("oper_dict", oper_dict)
@@ -1089,7 +1089,7 @@ NeedNameSpaceInSWIP = True
 def load_vspace():
     global NeedNameSpaceInSWIP
     #os.path.dirname(__file__)}/canary/metta_interp
-    metta_interp_file = "/opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/metta-wam/src/canary/metta_interp"
+    metta_interp_file = "/opt/hyperon/metta-wam/src/canary/metta_interp"
     load_metta_interp = f"user:ensure_loaded('{metta_interp_file}')"
     swip_exec(load_metta_interp)
     if NeedNameSpaceInSWIP:
@@ -2093,12 +2093,22 @@ selected_space_name = globals().get('selected_space_name') or "&self"
 from mettalog.vspace import *
 from mettalog.repl_loop import *
 
+
+
 try:
     the_verspace = globals().get('the_verspace') or VSpace("&verspace")
+except Exception as e: 
+    if verbose>0: print(f"; Error: {e}")
+try:
     the_flybase = globals().get('the_flybase') or VSpace("&flybase")
+except Exception as e: 
+    if verbose>0: print(f"; Error: {e}")
+try:
     the_nb_space = globals().get('the_nb_space') or VSpace("&nb")
-except Exception as e:
-    if verbose >= 0: print_exception_stack(e)
+except Exception as e: 
+    if verbose>0: print(f"; Error: {e}")
+#try: the_gptspace = globals().get('the_gptspace') or GptSpace()
+#except Exception as e: if verbose>0: print(f"; Error: {e}")
 
 argmode = None
 sys_argv_length = len(sys.argv)

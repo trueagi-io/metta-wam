@@ -72,6 +72,8 @@
 			Filters=""
 			GUID="{5BB17C1C-B7AC-4E20-A88A-FB0E514087FF}"></Folder>
 	</CustomFolders>
+	<List Name="RTE">
+	</List>
 	<Files AutoFolders="DirectoryView">
 		<Folder Name="../.local">
 			<Folder Name="share">
@@ -917,6 +919,4 @@
 			</Folder>
 		</Folder>
 	</Files>
-	<List Name="RTE">
-	</List>
 </Project>
