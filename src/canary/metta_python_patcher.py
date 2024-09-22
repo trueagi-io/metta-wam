@@ -32,6 +32,14 @@ suspend_trace = False
 global rust_mode
 rust_mode = False  # Set to False as default
 
+# ANSI color code for cyan
+CYAN = "\033[96m"
+RESET = "\033[0m"
+
+def commentary(message):
+    """Function to print a message in cyan for debug commentary."""
+    print(f"{CYAN}{message}{RESET}")
+
 # Log messages based on verbosity level
 def mesg(level, message='', m2=None, m3=None):
     if not isinstance(level, int):
@@ -55,42 +63,40 @@ def get_no_mock_objects_flag() -> bool:
 # Set verbosity level
 def set_verbosity(level):
     global METTALOG_VERBOSE
-    level = int(level)
-    if level in [SILENT, USER, DEBUG, TRACE]:
-        METTALOG_VERBOSE = level
-        mesg(DEBUG, f"Verbosity set to level {level}")
+    newlevel = int(level)
+    if isinstance(newlevel, int):
+        METTALOG_VERBOSE = newlevel
+        mesg(DEBUG, f"Verbosity set to level {newlevel}")
     else:
-        print(f"Invalid verbosity level '{level}' provided. Defaulting to level: {METTALOG_VERBOSE}.")
-        METTALOG_VERBOSE = USER
+        print(f"Invalid verbosity level '{level}' provided. Keeping level: {METTALOG_VERBOSE}.")
 
-# Initialize verbosity from environment variable
-try:
-    set_verbosity(os.getenv("METTALOG_VERBOSE", USER))
-except Exception as e:
-    mesg(USER, f"An error occurred: {e}")
-    if METTALOG_VERBOSE >= DEBUG:
-        traceback.print_exc()
+if True:
+    # Initialize verbosity from environment variable
+    try:
+        set_verbosity(os.getenv("METTALOG_VERBOSE", USER))
+    except Exception as e:
+        mesg(USER, f"An error occurred: {e}")
+        if METTALOG_VERBOSE >= DEBUG:
+            traceback.print_exc()
+    # Command-line verbosity handling
+    try:
+        i = 0
+        while i < len(sys.argv):
+            arg = sys.argv[i]
+            i += 1
 
-# Command-line verbosity handling
-try:
-    i = 0
-    while i < len(sys.argv):
-        arg = sys.argv[i]
-        i += 1
+            if arg in ("-v", "--verbosity"):
+                try:
+                    set_verbosity(sys.argv[i])
+                    break
+                except (ValueError, IndexError):
+                    print(f"Verbosity level defaulting to {METTALOG_VERBOSE}.")
 
-        if arg in ("-v", "--verbosity"):
-            try:
-                set_verbosity(sys.argv[i])
-                break
-            except (ValueError, IndexError):
-                print("Invalid verbosity level. Defaulting to USER.")
-                set_verbosity(USER)
-
-    mesg(DEBUG, f"Argv={sys.argv}")
-except Exception as e:
-    mesg(USER, f"An error occurred: {e}")
-    if METTALOG_VERBOSE >= DEBUG:
-        traceback.print_exc()
+        mesg(DEBUG, f"Argv={sys.argv}")
+    except Exception as e:
+        mesg(USER, f"An error occurred: {e}")
+        if METTALOG_VERBOSE >= DEBUG:
+            traceback.print_exc()
 
 
 def name_dot(module, name):
@@ -99,6 +105,22 @@ def name_dot(module, name):
     return f"{module.__name__}.{name}"
 
 def signature(obj):
+    def is_pybind11_function(obj):
+        """Detect if the object is a pybind11-wrapped function."""
+        return isinstance(obj, types.BuiltinFunctionType) and hasattr(obj, '__doc__')
+
+    def get_pybind11_signature(obj):
+        """Retrieve or construct a pybind11 function's signature."""
+        # If the function has a docstring with signature info
+        doc = obj.__doc__
+        if doc:
+            # Try to extract the first line which often contains the signature
+            first_line = doc.splitlines()[0]
+            if '(' in first_line and ')' in first_line:
+                return first_line.strip()
+
+        # Return fallback if no signature is found in docstring
+        return "(pybind11 function with unknown signature)"
     try:
         # First, try Python's inspect.signature for standard functions
         return inspect.signature(obj)
@@ -113,23 +135,6 @@ def signature(obj):
         # Catch other errors
         print(f"Error determining signature for {obj}: {e}")
         return "(unknown)"
-
-def is_pybind11_function(obj):
-    """Detect if the object is a pybind11-wrapped function."""
-    return isinstance(obj, types.BuiltinFunctionType) and hasattr(obj, '__doc__')
-
-def get_pybind11_signature(obj):
-    """Retrieve or construct a pybind11 function's signature."""
-    # If the function has a docstring with signature info
-    doc = obj.__doc__
-    if doc:
-        # Try to extract the first line which often contains the signature
-        first_line = doc.splitlines()[0]
-        if '(' in first_line and ')' in first_line:
-            return first_line.strip()
-    
-    # Return fallback if no signature is found in docstring
-    return "(pybind11 function with unknown signature)"
 
 
 def ignore_exception(*args, **kwargs):
@@ -158,20 +163,20 @@ class Implemented(Enum):
     INHERITED = "Inherited"  # Inherited from a base class
     DEFAULT = "Default"      # Inherited from 'object'
 
-# Overrider Class
-class Overrider:
+# Observer Class
+class Observer:
     def __init__(self):
-        self.overriders = {}
+        self.subscribers = {}
 
     def subscribe(self, event_type, callback, level="instance"):
-        """Subscribe to an event type ('before_call', 'after_call', 'set', 'get') with a callback."""
+        """Override to an event type ('before_call', 'after_call', 'set', 'get') with a callback."""
         key = f"{level}_{event_type}"
-        if key not in self.overriders:
-            self.overriders[key] = []
-        self.overriders[key].append(callback)
+        if key not in self.subscribers:
+            self.subscribers[key] = []
+        self.subscribers[key].append(callback)
 
     def notify(self, func, event_type, *args, **kwargs):
-        """Notify all subscribers for a specific event type."""
+        """Notify all overriders for a specific event type."""
         global suspend_trace
         #if suspend_trace:
         #   return
@@ -194,9 +199,9 @@ class Overrider:
         event_key = f"{level}_{event_type}"
         final_result = None  # Store the first valid result here
 
-        # Check if there are any overriders subscribed to this event key
-        if event_key in self.overriders:
-            for callback in self.overriders[event_key]:
+        # Check if there are any subscribers overrided to this event key
+        if event_key in self.subscribers:
+            for callback in self.subscribers[event_key]:
                 result = callback(*args)
                 # Apply the first valid override (with 'overriden_value' or 'do_not_really_*')
                 if result and ('return_value' in result or 'do_not_really_set' in result):
@@ -209,529 +214,134 @@ class Overrider:
         return final_result or kwargs.get('default_value')
 
 # 3. Monkey Patching Class
-class MonkeyPatcher:
-    def __init__(self, overrider_in, inspector_in):
-        self.overrider = overrider_in
-        self.inspector = inspector_in
-        self.patched_objects = {}
-        self.patched_modules = {}
-        self.patched_instance_classes = {}
-        self.patched_static_classes = {"str": True}  # Dictionary to store patched classes
-        self.initialized_classes = set()  # Track classes that have been initialized
+class Overrider:
 
 
-    def patch_class_init(self, cls):
-        """Patch the class __init__ to handle instance variables."""
-        original_init = cls.__init__
-        patcher = self
-    
-        def wrapped_init(instance, *args, **kwargs):
-            """Wrapper for the class __init__ that patches instance variables."""
-            commentary(f"Initializing {cls.__name__} with args {args} and kwargs {kwargs}")
-            
-            # Call the original __init__ method
-            result = original_init(instance, *args, **kwargs)
-            setattr(cls, '__init__', original_init)            
-            # Patch instance variables after __init__ completes
-            patcher.patch_instance_variables(instance)
-            return result
-    
-        # Ensure the method is callable and handle function vs bound method
-        if cls not in self.initialized_classes:
-            self.initialized_classes.add(cls)
-            # Replace the original __init__ with wrapped_init
-            setattr(cls, '__init__', wrapped_init)
-
-    
-    def patch_instance_variables(self, instance):
-        """Patch instance variables by inspecting the instance's __dict__ after __init__ is called."""
-        
-        # Loop through all instance variables (in instance.__dict__)
-        for var_name, value in instance.__dict__.items():
-            # Use the patch_one_instance_variable to handle the patching logic
-            self.patch_one_instance_variable(instance.__class__, var_name, value)
-    
-    def patch_one_instance_variable(self, cls, var_name, value):
-        """Create the member_info dictionary and patch the instance variable."""
-        
-        # Assume all variables here are instance variables
-        member_info = {
-            'name': var_name,
-            'member': value,
-            'member_type': MemberType.VARIABLE,
-            'level': MemberLevel.INSTANCE,
-            'class_name': cls.__name__,
-            'class_object': cls
-        }
-    
-        # Call the patch function
-        # global inspector
-        self.inspector.patch_member_info(cls, member_info)
-
-    def patch_instance_property(self, target_class, property_name, original_property, level):
-        """Patch an instance property to allow observation of gets and sets."""
-        try:
-            commentary(f"Patching instance property: {property_name} in {target_class.__name__}")
-
-            # Capture the overrider from the current MonkeyPatcher instance
-            overrider = self.overrider
-    
-            # Create getter and setter functions using the captured overrider
-            def patched_getter(instance):
-                global suspend_trace
-    
-                mesg(f"Calling patched_getter for '{property_name}' in {target_class.__name__}")
-            
-                #if suspend_trace and False:
-                #    # If tracing is suspended, directly return the original value
-                #    return getattr(instance, '__dict__', {}).get(property_name, None)
-    
-                try:
-                    if not suspend_trace:
-                        # Notify the overrider and ensure a safe default dictionary is returned
-                        suspend_trace = True
-                        result = overrider.notify(instance, 'get', target_class, property_name, original_property, level=level)
-                        suspend_trace = False
-                        if isinstance(result, dict) and result.get('do_not_really_get', False):
-                            return result.get('return_value')
-
-
-
-                    mesg(f"Accessing property '{property_name}' in {target_class.__name__} through patched_getter")
-            
-                    # Access the current value, handling __dict__ and original getter cases
-                    if property_name in instance.__dict__:
-                        current_value = instance.__dict__[property_name]
-                    elif isinstance(original_property, property) and original_property.fget:
-                        current_value = original_property.fget(instance)
-                    else:
-                        current_value = getattr(instance, property_name, None)
-    
-                    # Debug: Output the current value before notifying
-                    mesg(f"[Debug] Current value of {property_name}: {current_value}")
-            
-    
-                    #suspend_trace = False
-            
-                    # Return the original or modified value based on overrider, falling back to current_value
-                    return current_value
-    
-                except Exception as e:
-                    suspend_trace = False  # Ensure tracing is resumed if an error occurs
-                    mesg(f"Error getting property '{property_name}' in {target_class.__name__}: {e}")
-                    raise
-    
-            def patched_setter(instance, new_value):
-                global suspend_trace
-    
-                mesg(f"Calling patched_setter for '{property_name}' in {target_class.__name__} with value {new_value}")
-    
-                if suspend_trace:
-                    instance.__dict__[property_name] = new_value
-                    return
-
-                try:
-                    suspend_trace = True
-                    # Notify the overrider before setting the new value
-                    result = overrider.notify(instance, 'set', target_class, property_name, new_value, level=level)
-                    if isinstance(result, dict):
-                        if result.get('do_not_really_set', False): return
-                        if 'return_value' in dict:
-                            new_value = result.get('return_value')
-
-                    # Set the value using the original setter if it exists, or directly update __dict__
-                    if isinstance(original_property, property) and original_property.fset:
-                        original_property.fset(instance, new_value)
-                    else:
-                        instance.__dict__[property_name] = new_value  # Directly set in __dict__
-    
-                    suspend_trace = False
-    
-                except Exception as e:
-                    suspend_trace = False
-                    mesg(f"Error setting property '{property_name}' in {target_class.__name__}: {e}")
-                    raise
-    
-            # Apply the new property
-            new_property = property(fget=patched_getter, fset=patched_setter)
-            setattr(target_class, property_name, new_property)
-
-            commentary(f"Successfully patched instance property: {property_name} in {target_class.__name__}")
-
-        except Exception as e:
-            mesg(f"Failed to patch instance property '{property_name}' in {target_class.__name__}: {e}")
-            raise
-
-    def patch_module_property(self, module, property_name, value):
-        """Patch module properties to allow observation of gets and sets with exception handling."""
-        private_name = f"_{property_name}"
-        try:
-            setattr(module, private_name, value)
-            mesg(TRACE, f"[Trace] Patching module property: {property_name} in {module.__name__}")
-
-            def module_getter(instance=None):
-                """Modified to accept an optional 'instance' argument for property access."""
-                try:
-                    current_value = getattr(module, private_name)
-                    if rust_mode:
-                        return current_value
-                    result = self.overrider.notify(value, 'get', module, property_name, current_value, level='module')
-                    if isinstance(result, dict) and result.get('do_not_really_get', False):
-                        return result.get('return_value')
-                    return current_value
-                except Exception as e:
-                    mesg(TRACE, f"Error getting module property '{name_dot(module, property_name)}': {e}")
-                    raise
-    
-            def module_setter(new_value):
-                try:
-                    if rust_mode:
-                        return setattr(module, private_name, new_value)
-                    result = self.overrider.notify(value, 'set', module, property_name, new_value, level='module')
-                    if isinstance(result, dict):
-                        if result.get('do_not_really_set', False): return
-                        if 'return_value' in dict:
-                            new_value = result.get('return_value')
-                    setattr(module, private_name, new_value)
-                except Exception as e:
-                    mesg(TRACE, f"Error setting module property '{name_dot(module, property_name)}': {e}")
-                    raise
-    
-            setattr(module, property_name, property(fget=module_getter, fset=module_setter))
-        except Exception as e:
-            mesg(TRACE, f"Failed to patch module property '{name_dot(module, property_name)}': {e}")
-            raise
-
-    def patch_module_propertyOLD(self, module, property_name, value):
-        """Patch module properties to allow observation of gets and sets with exception handling."""
-        private_name = f"_{property_name}"
-        try:
-            setattr(module, private_name, value)
-            mesg(TRACE, f"[Trace] Patching module property: {property_name} in {module.__name__}")
-
-            def module_getter():
-                try:
-                    current_value = getattr(module, private_name)
-                    if rust_mode:
-                        return current_value
-                    result = self.overrider.notify(value, 'get', module, property_name, current_value, level='module')
-                    if isinstance(result, dict) and result.get('do_not_really_get', False):
-                        return result.get('return_value')
-                    return current_value
-                except Exception as e:
-                    mesg(TRACE, f"Error getting module property '{name_dot(module, property_name)}': {e}")
-                    raise
-
-            def module_setter(new_value):
-                try:
-                    if rust_mode:
-                        return setattr(module, private_name, new_value)
-                    result = self.overrider.notify(value, 'set', module, property_name, new_value, level='module')
-                    if isinstance(result, dict):
-                        if result.get('do_not_really_set', False): return
-                        if 'return_value' in dict:
-                            new_value = result.get('return_value')
-                    setattr(module, private_name, new_value)
-                except Exception as e:
-                    mesg(TRACE, f"Error setting module property '{name_dot(module, property_name)}': {e}")
-                    raise
-
-            setattr(module, property_name, property(fget=module_getter, fset=module_setter))
-        except Exception as e:
-            mesg(TRACE, f"Failed to patch module property '{name_dot(module, property_name)}': {e}")
-            raise
-
-
-    def patch_instance_method(self, target_class, method_name, method):
-        """Patch an instance method to allow observation of calls."""
-        original_method = method
-
-        def patched_method(instance_self, *args, **kwargs):
-            result = self.overrider.notify(
-                original_method, 'before_call', target_class, method_name, args, kwargs, level='instance'
-            )
-            if isinstance(result, dict) and result.get('do_not_really_call', False):
-                return result.get('return_value')
-            elif isinstance(result, tuple):
-                modified_args, modified_kwargs = result
-            else:
-                modified_args, modified_kwargs = args, kwargs
-
-            try:
-                # Preserve original logic for special methods like __repr__.
-                result = original_method(instance_self, *modified_args, **modified_kwargs)
-            except Exception as e:
-                mesg(f"Error in instance method {method_name}: {e}")
-                raise
-
-            modified_result = self.overrider.notify(
-                original_method, 'after_call', target_class, method_name, result, level='instance'
-            )
-            return modified_result if modified_result is not None else result
-
-        # Handle special methods like __repr__ or __str__.
-        if method_name.startswith("__") and method_name.endswith("__"):
-            mesg(f"Patching special instance method: {name_dot(target_class, method_name)}")
-        else:
-            mesg(f"Patching instance method: {name_dot(target_class, method_name)}")
-    
-        setattr(target_class, method_name, patched_method)
-
-    def patch_class_method(self, target_class, method_name, method):
-        """Patch a class method to allow observation of calls."""
-        # Extract the unbound function from the classmethod object
-        original_method = method.__func__
-
-        def patched_class_method(cls, *args, **kwargs):
-            result = self.overrider.notify(
-                original_method, 'before_call', target_class, method_name, args, kwargs, level='class'
-            )
-            if isinstance(result, dict) and result.get('do_not_really_call', False):
-                return result.get('return_value')
-            elif isinstance(result, tuple):
-                modified_args, modified_kwargs = result
-            else:
-                modified_args, modified_kwargs = args, kwargs
-
-            try:
-                # Call the unbound original method with 'cls' explicitly
-                result = original_method(cls, *modified_args, **modified_kwargs)
-            except Exception as e:
-                mesg(f"Error in class method {method_name}: {e}")
-                raise
-
-            modified_result = self.overrider.notify(
-                original_method, 'after_call', target_class, method_name, result, level='class'
-            )
-            return modified_result if modified_result is not None else result
-
-        setattr(target_class, method_name, classmethod(patched_class_method))
-        #mesg(f"Monkey-patched class method {name_dot(target_class, method_name)}")
-
-    def patch_static_method(self, target_class, method_name, method):
-        """Patch a static method to allow observation of calls."""
-        original_method = method
-
-        def patched_static_method(*args, **kwargs):
-            result = self.overrider.notify(
-                original_method, 'before_call', target_class, method_name, args, kwargs, level='class'
-            )
-            if isinstance(result, dict) and result.get('do_not_really_call', False):
-                return result.get('return_value')
-            elif isinstance(result, tuple):
-                modified_args, modified_kwargs = result
-            else:
-                modified_args, modified_kwargs = args, kwargs
-
-            try:
-                result = original_method(*modified_args, **modified_kwargs)
-            except Exception as e:
-                mesg(f"Error in static method {name_dot(target_class, method_name)}: {e}")
-                raise
-
-            modified_result = self.overrider.notify(
-                original_method, 'after_call', target_class, method_name, result, level='class'
-            )
-            return modified_result if modified_result is not None else result
-
-        setattr(target_class, method_name, staticmethod(patched_static_method))
-        #mesg(f"Monkey-patched static method {name_dot(target_class, method_name)}")
-
-    def patch_module_function(self, module, function_name, function):
-        """Patch a function to allow observation of calls."""
-        original_function = function
-
-        def patched_function(*args, **kwargs):
-            result = self.overrider.notify(
-                original_function, 'before_call', module, function_name, args, kwargs, level='module'
-            )
-            if isinstance(result, dict) and result.get('do_not_really_call', False):
-                return result.get('return_value')
-            elif isinstance(result, tuple):
-                modified_args, modified_kwargs = result
-            else:
-                modified_args, modified_kwargs = args, kwargs
-
-            try:
-                result = original_function(*modified_args, **modified_kwargs)
-            except Exception as e:
-                mesg(f"Error in function {name_dot(module, function_name)}: {e}")
-                raise
-
-            modified_result = self.overrider.notify(
-                original_function, 'after_call', module, function_name, result, level='module'
-            )
-            return modified_result if modified_result is not None else result
-
-        # Print the signature
-        mesg(f"Patching module function: {name_dot(module, function_name)} {signature(original_function)}")
-        setattr(module, function_name, patched_function)
-
-    def patch_static_property(self, cls, property_name, value):
-        """Patch class (static) properties to allow observation of gets and sets with exception handling."""
-        private_name = f"_{property_name}"
-        try:
-            # Store the original value in a private attribute
-            setattr(cls, private_name, value)
-            mesg(TRACE, f"[Trace] Patching static property: {name_dot(cls,property_name)}")
-
-            # Create getter
-            def class_getter():
-                try:
-                    current_value = getattr(cls, private_name)  # Retrieve the private value
-                    #mesg(TRACE, f"Getting static property '{property_name}' with value {current_value}")
-                    if rust_mode:
-                        return current_value
-                    result = self.overrider.notify(value, 'get', cls, property_name, current_value, level="class")
-                    if isinstance(result, dict) and result.get('do_not_really_get', False):
-                        return result.get('return_value')
-                    return current_value
-                except Exception as e:
-                    mesg(TRACE, f"Error getting static property '{name_dot(cls,property_name)}': {e}")
-                    raise
-
-            # Create setter
-            def class_setter(new_value):
-                try:
-                    #mesg(TRACE, f"Setting static property '{property_name}' to {new_value}")
-                    if rust_mode:
-                        return setattr(cls, private_name, new_value)
-                    result = self.overrider.notify(value, 'set', cls, property_name, new_value, level="class")
-                    
-                    # Handle 'do_not_really_set' and 'really_set' options
-                    if isinstance(result, dict):
-                        if result.get('do_not_really_set', False): return
-                        if 'return_value' in dict:
-                            new_value = result.get('return_value')
-                        if result.get('really_set', False):
-                            new_value = result.get('new_value', new_value)  # Set to the new value if provided
-
-                    setattr(cls, private_name, new_value)
-                except Exception as e:
-                    mesg(TRACE, f"Error setting static property '{name_dot(cls,property_name)}': {e}")
-                    raise
-
-            # Replace the class attribute with a property descriptor
-            setattr(cls, property_name, property(fget=class_getter, fset=class_setter))
-        except Exception as e:
-            mesg(TRACE, f"Failed to patch static property '{name_dot(cls,property_name)}': {e}")
-            raise
-
-    def patch_module_variable(self, module, variable_name, value):
-        """Patch a module-level variable to allow observation of gets and sets."""
-        try:
-            self.patch_static_class_property(module, variable_name, value)
-            mesg(f"Patching variable: {name_dot(module, variable_name)}")
-        except Exception as e:
-            mesg(f"Failed to patch module variable {variable_name} in {module.__name__}: {e}")
-
-    def patch_static_class_property(self, cls, property_name, value):
-        """Patch a static property to allow observation of gets and sets."""
-        try:
-            #mesg(TRACE, f"[Trace] Patching static property: {name_dot(cls,property_name)}")
-            descriptor = ClassVariableDescriptor(property_name, value, self.overrider)
-            setattr(cls, property_name, descriptor)
-            mesg(f"Patching static property: {name_dot(cls,property_name)}")
-        except Exception as e:
-            mesg(f"Failed to patch static property '{name_dot(cls,property_name)}'  : {e}")
-            raise
-
-
-# Define the ClassVariableDescriptor
-class ClassVariableDescriptor:
-    def __init__(self, name, initial_value, overrider):
-        self.name = name
-        self.value = initial_value
-        self.overrider = overrider
-
-    def __get__(self, instance, owner):
-        current_value = self.value
-        result = self.overrider.notify(
-            None, 'get', owner, self.name, current_value, level='class'
-        )
-        if isinstance(result, dict) and result.get('do_not_really_get', False):
-            return result.get('return_value')
-        return current_value
-
-    def __set__(self, instance, new_value):
-        result = self.overrider.notify(
-            None, 'set', instance, self.name, new_value, level='class'
-        )
-        if isinstance(result, dict) and result.get('do_not_really_set', False):
-            return
-        if isinstance(result, dict) and result.get('really_set', False):
-            self.value = result.get('new_value')
-            return
-        self.value = new_value
-
-# 4. Inspector Class
-class Inspector:
-    def __init__(self):
-        self.printed_classes = set()
-        self.printed_members = set()
+    def __init__(self, all=True):
+        self.observer = Observer()
+        self.attempted_to_capture_init_variables_on_classes = set()
+        self.marked_classes = set()
+        self.marked_members = set()
         self.class_hierarchy = {}
-        self.captured_members = {}
+        self.marked_member_info_by_classname = {}
         self.patched_members = {}
+        self.set_default_observers(all, all)
 
-        self.overrider = Overrider()
-        self.monkey_patcher = MonkeyPatcher(self.overrider, self)
+    # Setup observer and monkey-patcher system
+    def set_default_observers(self, allDefaults, also_static):   
+        """Override events for method calls, property access, etc."""
 
-    def mark_class(self, obj, no_filter=False):
-        if not inspect.isclass(obj):
-            mesg(f"Warning: {obj} is not a class. Skipping.")
+        # Override to events
+        def before_call_callback(*args):
+            target_class, method_name = args[0], args[1]
+            mesg(f"[Overrider] Before calling {name_dot(target_class, method_name)}{args[2:]}")
+
+        def after_call_callback(*args):
+            target_class, method_name, result = args[0], args[1], args[2]
+            mesg(f"[Overrider] After calling {name_dot(target_class, method_name)} -> {result}")
+
+        def get_callback(*args):
+            target_class, property_name, current_value = args[0], args[1], args[2]
+            mesg(f"[Overrider] Getting {name_dot(target_class, property_name)}, current value: {current_value}")
+
+        def set_callback(*args):
+            target_class, property_name, new_value = args[0], args[1], args[2]
+            mesg(f"[Overrider] Setting {name_dot(target_class, property_name)} to {new_value}")
+
+        if allDefaults:
+            
+            self.add_override('before_call', before_call_callback, level='instance')
+            self.add_override('after_call', after_call_callback, level='instance')
+            self.add_override('get', get_callback, level='instance')
+            self.add_override('set', set_callback, level='instance')
+
+            if also_static:
+                self.add_override('before_call', before_call_callback, level='class')
+                self.add_override('after_call', after_call_callback, level='class')
+                self.add_override('get', get_callback, level='class')
+                self.add_override('set', set_callback, level='class')
+
+            self.add_override('before_call', before_call_callback, level='module')
+            self.add_override('after_call', after_call_callback, level='module')
+            self.add_override('get', get_callback, level='module')
+            self.add_override('set', set_callback, level='module')
+
+    def check_override(self, func, event_type, *args, **kwargs):
+        return self.observer.notify(func, event_type, *args, **kwargs)
+
+    def add_override(self, event_type, callback, level="instance"):
+        return self.observer.subscribe(event_type, callback, level)
+
+    def mark_members(self, obj, also_static=False):
+        if obj is not None:
+            if inspect.isclass(obj): 
+                mark_class(self, obj, also_static)
+            elif inspect.ismodule(obj): 
+                monkey_patch_module(self, obj)
+            else:
+                mark_class(self, type(obj))
+                
+
+    def mark_class(self, cls, also_static=False, also_inherited=False):
+        if not inspect.isclass(cls):
+            mesg(f"Warning: {cls} is not a class. Skipping.")
             return
-
-        obj_name = obj.__name__
-        if obj_name in self.printed_classes:
+        cls_name = cls.__name__
+        if cls_name in self.marked_classes:
             return
+        mesg(f"Inspecting {cls_name}:")
+        self.class_hierarchy[cls_name] = [base for base in cls.__bases__ if base is not object]
+        self.marked_classes.add(cls_name)
 
-        mesg(f"Inspecting {obj_name}:")
-        self.get_members(obj, no_filter)
-        self.printed_classes.add(obj_name)
-        self.class_hierarchy[obj_name] = [base for base in obj.__bases__ if base is not object]
-
-    def get_members(self, obj, no_filter=False):
-        obj_name = obj.__name__
-        members = inspect.getmembers(obj)
+        members = inspect.getmembers(cls)
         member_list = []
 
         for name, member in members:
             if name.startswith('_') and not (name.startswith('__') and name.endswith('__')):
                 continue
 
-            implemented_from = implemented_in(name, obj)
+            implemented_from = implemented_in(name, cls)
             is_callable = callable(member)
             self_usage = uses_self(member) if is_callable else False
 
-            member_type = classify_member_type(obj, name, member)
-            member_level = classify_member_level(obj, name, member, implemented_from, self_usage)
-            implementation = classify_implementation(obj, implemented_from)
+            member_type = classify_member_type(cls, name, member)
+            member_level = classify_member_level(cls, name, member, implemented_from, self_usage)
+            implementation = classify_implementation(cls, implemented_from)
 
-            if not no_filter:
-                if implementation != Implemented.LOCAL.value:
-                    continue
-                if member_level == MemberLevel.CLASS and member_type == MemberType.SPECIAL_VARIABLE:
-                    continue
-
-            if (obj_name, name) in self.printed_members:
+            # we skip these implicitly
+            if member_level == MemberLevel.CLASS and member_type == MemberType.SPECIAL_VARIABLE:
                 continue
-            self.printed_members.add((obj_name, name))
+
+            # skip static ?
+            if member_level == MemberLevel.CLASS and not also_static:
+                continue
+
+            # skip inherited ?
+            if implementation != Implemented.LOCAL.value and not also_inherited:
+                continue
+
+            if (cls_name, name) in self.marked_members:
+                continue
+            self.marked_members.add((cls_name, name))
 
             member_info = {
-                'name': name,
-                'member': member,
-                'member_type': member_type,
                 'level': member_level,
                 'implemented': implementation,
+                'member_type': member_type,
+                'name': name,
+                'class_name': cls_name,
+                'class_object': cls,
+                'member': member,                
                 'implemented_from': implemented_from,
-                'class_name': obj_name,
-                'class_object': obj
             }
             member_list.append(member_info)
 
-        if obj_name not in self.captured_members:
-            self.captured_members[obj_name] = []
-        self.captured_members[obj_name].extend(member_list)
+        if cls_name not in self.marked_member_info_by_classname:
+            self.marked_member_info_by_classname[cls_name] = []
+        self.marked_member_info_by_classname[cls_name].extend(member_list)
+        self.print_marked(member_list)
+
+    def print_marked(self, member_list):
 
         sorted_members = sorted(
             member_list,
@@ -741,7 +351,6 @@ class Inspector:
                 x['name']
             )
         )
-
         for member in sorted_members:
             if callable(member['member']):
                 sig = signature(member['member'])
@@ -756,35 +365,35 @@ class Inspector:
                      f"member-type: {member['member_type'].name}, "
                      f"name: {member['name']}}}")
 
-    def mark_base_classes(self, no_filter=False):
+    def mark_base_classes(self, also_static=False, also_inherited=False):
         for class_name in list(self.class_hierarchy.keys()):
             bases = self.class_hierarchy[class_name]
             for base in bases:
                 base_name = base.__name__
-                if base_name not in self.printed_classes:
+                if base_name not in self.marked_classes:
                     mesg(f"Inspecting base class {base_name}:")
-                    self.mark_class(base, no_filter=no_filter)
+                    self.mark_class(base, also_static=also_static, also_inherited=also_inherited)
 
     def monkey_patch_members(self):
-        """Monkey-patch captured members using the MonkeyPatcher."""
-        patcher = self.monkey_patcher
-        for class_name, members in self.captured_members.items():
-            cls = members[0]['class_object']  # All members belong to the same class
-            patcher.patch_class_init(cls)
-            for member_info in members:
+        """Monkey-patch captured members using the Overrider."""
+        for class_name, member_infos in self.marked_member_info_by_classname.items():
+            #print(f"member_infos={member_infos}")
+            cls = member_infos[0]['class_object']  # All members belong to the same class
+            self.patch_class_init(cls)
+            for member_info in member_infos:
                 self.patch_member_info(cls, member_info)
-    
+
     def create_member_info_and_patch_member(self, cls, member_name, member):
         """Create the member_info dictionary and patch the member."""
-        
+
         # Determine if the member uses `self`, which can help identify its level
         is_callable = callable(member)
         uses_self_flag = uses_self(member) if is_callable else False
-        
+
         # Determine the type and level of the member
         member_type = classify_member_type(cls, member_name, member)
         member_level = classify_member_level(cls, member_name, member, implemented_in(member_name, cls), uses_self_flag)
-        
+
         # Create the member_info dictionary
         member_info = {
             'name': member_name,
@@ -794,7 +403,7 @@ class Inspector:
             'class_name': cls.__name__,
             'class_object': cls
         }
-    
+
         # Call the patch function
         self.patch_member_info(cls, member_info)
 
@@ -812,9 +421,9 @@ class Inspector:
 
         if member in self.patched_members:
             return  # Skip if already patched
-    
+
         self.patched_members[member] = member_info
-        patcher = self.monkey_patcher
+        patcher = self
 
         try:
             if member_type == MemberType.METHOD:
@@ -868,7 +477,7 @@ class Inspector:
 
     def monkey_patch_module(self, module):
         """Monkey-patch functions and variables in a module."""
-        patcher = self.monkey_patcher
+        patcher = self
         for name, obj in inspect.getmembers(module):
             if name.startswith('_'):
                 continue
@@ -884,8 +493,455 @@ class Inspector:
                 mesg(f"Error patching {name_dot(module, name)}: {e}")
 
 
+    def patch_class_init(self, cls):
+        """Patch the class __init__ to handle instance variables."""
+        original_init = cls.__init__
+        patcher = self
+    
+        def capture_init_variables_once(instance, *args, **kwargs):
+            """Wrapper for the class __init__ that patches instance variables."""
+            mesg(f"Initializing {cls.__name__} with args {args} and kwargs {kwargs}")
+            
+            # Call the original __init__ method
+            result = original_init(instance, *args, **kwargs)
+            # undo this isntance variable system 
+            setattr(cls, '__init__', original_init)            
+            # Patch instance variables after __init__ completes
+            patcher.patch_instance_variables(instance)
+            return result
+    
+        # Ensure the method is callable and handle function vs bound method
+        if cls not in self.attempted_to_capture_init_variables_on_classes:
+            self.attempted_to_capture_init_variables_on_classes.add(cls)
+            # Replace the original __init__ with capture_init_variables_once
+            setattr(cls, '__init__', capture_init_variables_once)
 
-# Helper functions used by the Inspector
+    
+    def patch_instance_variables(self, instance):
+        """Patch instance variables by inspecting the instance's __dict__ after __init__ is called."""
+        
+        # Loop through all instance variables (in instance.__dict__)
+        for var_name, value in instance.__dict__.items():
+            # Use the patch_one_instance_variable to handle the patching logic
+            self.patch_one_instance_variable(instance.__class__, var_name, value)
+    
+    def patch_one_instance_variable(self, cls, var_name, value):
+        """Create the member_info dictionary and patch the instance variable."""
+        
+        # Assume all variables here are instance variables
+        member_info = {
+            'name': var_name,
+            'member': value,
+            'member_type': MemberType.VARIABLE,
+            'level': MemberLevel.INSTANCE,
+            'class_name': cls.__name__,
+            'class_object': cls
+        }
+    
+        # Call the patch function
+        # global overrider
+        self.patch_member_info(cls, member_info)
+
+    def patch_instance_property(self, target_class, property_name, original_property, level):
+        """Patch an instance property to allow observation of gets and sets."""
+        try:
+            mesg(f"Patching instance property: {property_name} in {target_class.__name__}")
+
+            # Capture the observer from the current Overrider instance
+            observer = self.observer
+    
+            # Create getter and setter functions using the captured observer
+            def patched_getter(instance):
+                global suspend_trace
+    
+                mesg(f"Calling patched_getter for '{property_name}' in {target_class.__name__}")
+            
+                #if suspend_trace and False:
+                #    # If tracing is suspended, directly return the original value
+                #    return getattr(instance, '__dict__', {}).get(property_name, None)
+    
+                try:
+                    if not suspend_trace:
+                        # Notify the observer and ensure a safe default dictionary is returned
+                        suspend_trace = True
+                        result = observer.notify(instance, 'get', target_class, property_name, original_property, level=level)
+                        suspend_trace = False
+                        if isinstance(result, dict) and result.get('do_not_really_get', False):
+                            return result.get('return_value')
+
+
+
+                    mesg(f"Accessing property '{property_name}' in {target_class.__name__} through patched_getter")
+            
+                    # Access the current value, handling __dict__ and original getter cases
+                    if property_name in instance.__dict__:
+                        current_value = instance.__dict__[property_name]
+                    elif isinstance(original_property, property) and original_property.fget:
+                        current_value = original_property.fget(instance)
+                    else:
+                        current_value = getattr(instance, property_name, None)
+    
+                    # Debug: Output the current value before notifying
+                    mesg(f"[Debug] Current value of {property_name}: {current_value}")
+            
+    
+                    #suspend_trace = False
+            
+                    # Return the original or modified value based on observer, falling back to current_value
+                    return current_value
+    
+                except Exception as e:
+                    suspend_trace = False  # Ensure tracing is resumed if an error occurs
+                    mesg(f"Error getting property '{property_name}' in {target_class.__name__}: {e}")
+                    raise
+    
+            def patched_setter(instance, new_value):
+                global suspend_trace
+    
+                mesg(f"Calling patched_setter for '{property_name}' in {target_class.__name__} with value {new_value}")
+    
+                if suspend_trace:
+                    instance.__dict__[property_name] = new_value
+                    return
+
+                try:
+                    suspend_trace = True
+                    # Notify the observer before setting the new value
+                    result = observer.notify(instance, 'set', target_class, property_name, new_value, level=level)
+                    if isinstance(result, dict):
+                        if result.get('do_not_really_set', False): return
+                        if 'return_value' in dict:
+                            new_value = result.get('return_value')
+
+                    # Set the value using the original setter if it exists, or directly update __dict__
+                    if isinstance(original_property, property) and original_property.fset:
+                        original_property.fset(instance, new_value)
+                    else:
+                        instance.__dict__[property_name] = new_value  # Directly set in __dict__
+    
+                    suspend_trace = False
+    
+                except Exception as e:
+                    suspend_trace = False
+                    mesg(f"Error setting property '{property_name}' in {target_class.__name__}: {e}")
+                    raise
+    
+            # Apply the new property
+            new_property = property(fget=patched_getter, fset=patched_setter)
+            setattr(target_class, property_name, new_property)
+
+            mesg(f"Successfully patched instance property: {property_name} in {target_class.__name__}")
+
+        except Exception as e:
+            mesg(f"Failed to patch instance property '{property_name}' in {target_class.__name__}: {e}")
+            raise
+
+    def patch_module_property(self, module, property_name, value):
+        """Patch module properties to allow observation of gets and sets with exception handling."""
+        private_name = f"_{property_name}"
+        try:
+            setattr(module, private_name, value)
+            mesg(f"Patching module property: {property_name} in {module.__name__}")
+
+            def module_getter(instance=None):
+                """Modified to accept an optional 'instance' argument for property access."""
+                try:
+                    current_value = getattr(module, private_name)
+                    if rust_mode:
+                        return current_value
+                    result = self.check_override(value, 'get', module, property_name, current_value, level='module')
+                    if isinstance(result, dict) and result.get('do_not_really_get', False):
+                        return result.get('return_value')
+                    return current_value
+                except Exception as e:
+                    mesg(TRACE, f"Error getting module property '{name_dot(module, property_name)}': {e}")
+                    raise
+    
+            def module_setter(new_value):
+                try:
+                    if rust_mode:
+                        return setattr(module, private_name, new_value)
+                    result = self.check_override(value, 'set', module, property_name, new_value, level='module')
+                    if isinstance(result, dict):
+                        if result.get('do_not_really_set', False): return
+                        if 'return_value' in dict:
+                            new_value = result.get('return_value')
+                    setattr(module, private_name, new_value)
+                except Exception as e:
+                    mesg(TRACE, f"Error setting module property '{name_dot(module, property_name)}': {e}")
+                    raise
+    
+            setattr(module, property_name, property(fget=module_getter, fset=module_setter))
+        except Exception as e:
+            mesg(TRACE, f"Failed to patch module property '{name_dot(module, property_name)}': {e}")
+            raise
+
+    def patch_module_propertyOLD(self, module, property_name, value):
+        """Patch module properties to allow observation of gets and sets with exception handling."""
+        private_name = f"_{property_name}"
+        try:
+            setattr(module, private_name, value)
+            mesg(f"Patching module property: {property_name} in {module.__name__}")
+
+            def module_getter():
+                try:
+                    current_value = getattr(module, private_name)
+                    if rust_mode:
+                        return current_value
+                    result = self.check_override(value, 'get', module, property_name, current_value, level='module')
+                    if isinstance(result, dict) and result.get('do_not_really_get', False):
+                        return result.get('return_value')
+                    return current_value
+                except Exception as e:
+                    mesg(TRACE, f"Error getting module property '{name_dot(module, property_name)}': {e}")
+                    raise
+
+            def module_setter(new_value):
+                try:
+                    if rust_mode:
+                        return setattr(module, private_name, new_value)
+                    result = self.check_override(value, 'set', module, property_name, new_value, level='module')
+                    if isinstance(result, dict):
+                        if result.get('do_not_really_set', False): return
+                        if 'return_value' in dict:
+                            new_value = result.get('return_value')
+                    setattr(module, private_name, new_value)
+                except Exception as e:
+                    mesg(TRACE, f"Error setting module property '{name_dot(module, property_name)}': {e}")
+                    raise
+
+            setattr(module, property_name, property(fget=module_getter, fset=module_setter))
+        except Exception as e:
+            mesg(TRACE, f"Failed to patch module property '{name_dot(module, property_name)}': {e}")
+            raise
+
+
+    def patch_instance_method(self, target_class, method_name, method):
+        """Patch an instance method to allow observation of calls."""
+        original_method = method
+
+        def patched_method(instance_self, *args, **kwargs):
+            result = self.check_override(
+                original_method, 'before_call', target_class, method_name, args, kwargs, level='instance'
+            )
+            if isinstance(result, dict) and result.get('do_not_really_call', False):
+                return result.get('return_value')
+            elif isinstance(result, tuple):
+                modified_args, modified_kwargs = result
+            else:
+                modified_args, modified_kwargs = args, kwargs
+
+            try:
+                # Preserve original logic for special methods like __repr__.
+                result = original_method(instance_self, *modified_args, **modified_kwargs)
+            except Exception as e:
+                mesg(f"Error in instance method {method_name}: {e}")
+                raise
+
+            modified_result = self.check_override(
+                original_method, 'after_call', target_class, method_name, result, level='instance'
+            )
+            return modified_result if modified_result is not None else result
+
+        # Handle special methods like __repr__ or __str__.
+        if method_name.startswith("__") and method_name.endswith("__"):
+            mesg(f"Patching special instance method: {name_dot(target_class, method_name)}")
+        else:
+            mesg(f"Patching instance method: {name_dot(target_class, method_name)}")
+    
+        setattr(target_class, method_name, patched_method)
+
+    def patch_class_method(self, target_class, method_name, method):
+        """Patch a class method to allow observation of calls."""
+        # Extract the unbound function from the classmethod object
+        original_method = method.__func__
+
+        def patched_class_method(cls, *args, **kwargs):
+            result = self.check_override(
+                original_method, 'before_call', target_class, method_name, args, kwargs, level='class'
+            )
+            if isinstance(result, dict) and result.get('do_not_really_call', False):
+                return result.get('return_value')
+            elif isinstance(result, tuple):
+                modified_args, modified_kwargs = result
+            else:
+                modified_args, modified_kwargs = args, kwargs
+
+            try:
+                # Call the unbound original method with 'cls' explicitly
+                result = original_method(cls, *modified_args, **modified_kwargs)
+            except Exception as e:
+                mesg(f"Error in class method {method_name}: {e}")
+                raise
+
+            modified_result = self.check_override(
+                original_method, 'after_call', target_class, method_name, result, level='class'
+            )
+            return modified_result if modified_result is not None else result
+
+        setattr(target_class, method_name, classmethod(patched_class_method))
+        #mesg(f"Monkey-patched class method {name_dot(target_class, method_name)}")
+
+    def patch_static_method(self, target_class, method_name, method):
+        """Patch a static method to allow observation of calls."""
+        original_method = method
+
+        def patched_static_method(*args, **kwargs):
+            result = self.check_override(
+                original_method, 'before_call', target_class, method_name, args, kwargs, level='class'
+            )
+            if isinstance(result, dict) and result.get('do_not_really_call', False):
+                return result.get('return_value')
+            elif isinstance(result, tuple):
+                modified_args, modified_kwargs = result
+            else:
+                modified_args, modified_kwargs = args, kwargs
+
+            try:
+                result = original_method(*modified_args, **modified_kwargs)
+            except Exception as e:
+                mesg(f"Error in static method {name_dot(target_class, method_name)}: {e}")
+                raise
+
+            modified_result = self.check_override(
+                original_method, 'after_call', target_class, method_name, result, level='class'
+            )
+            return modified_result if modified_result is not None else result
+
+        setattr(target_class, method_name, staticmethod(patched_static_method))
+        #mesg(f"Monkey-patched static method {name_dot(target_class, method_name)}")
+
+    def patch_module_function(self, module, function_name, function):
+        """Patch a function to allow observation of calls."""
+        original_function = function
+
+        def patched_function(*args, **kwargs):
+            result = self.check_override(
+                original_function, 'before_call', module, function_name, args, kwargs, level='module'
+            )
+            if isinstance(result, dict) and result.get('do_not_really_call', False):
+                return result.get('return_value')
+            elif isinstance(result, tuple):
+                modified_args, modified_kwargs = result
+            else:
+                modified_args, modified_kwargs = args, kwargs
+
+            try:
+                result = original_function(*modified_args, **modified_kwargs)
+            except Exception as e:
+                mesg(f"Error in function {name_dot(module, function_name)}: {e}")
+                raise
+
+            modified_result = self.check_override(
+                original_function, 'after_call', module, function_name, result, level='module'
+            )
+            return modified_result if modified_result is not None else result
+
+        # Print the signature
+        mesg(f"Patching module function: {name_dot(module, function_name)} {signature(original_function)}")
+        setattr(module, function_name, patched_function)
+
+    def patch_static_property(self, cls, property_name, value):
+        """Patch class (static) properties to allow observation of gets and sets with exception handling."""
+        private_name = f"_{property_name}"
+        try:
+            # Store the original value in a private attribute
+            setattr(cls, private_name, value)
+            mesg(f"Patching static property: {name_dot(cls,property_name)}")
+
+            # Create getter
+            def class_getter():
+                try:
+                    current_value = getattr(cls, private_name)  # Retrieve the private value
+                    #mesg(TRACE, f"Getting static property '{property_name}' with value {current_value}")
+                    if rust_mode:
+                        return current_value
+                    result = self.check_override(value, 'get', cls, property_name, current_value, level="class")
+                    if isinstance(result, dict) and result.get('do_not_really_get', False):
+                        return result.get('return_value')
+                    return current_value
+                except Exception as e:
+                    mesg(TRACE, f"Error getting static property '{name_dot(cls,property_name)}': {e}")
+                    raise
+
+            # Create setter
+            def class_setter(new_value):
+                try:
+                    #mesg(TRACE, f"Setting static property '{property_name}' to {new_value}")
+                    if rust_mode:
+                        return setattr(cls, private_name, new_value)
+                    result = self.check_override(value, 'set', cls, property_name, new_value, level="class")
+                    
+                    # Handle 'do_not_really_set' and 'really_set' options
+                    if isinstance(result, dict):
+                        if result.get('do_not_really_set', False): return
+                        if 'return_value' in dict:
+                            new_value = result.get('return_value')
+                        if result.get('really_set', False):
+                            new_value = result.get('new_value', new_value)  # Set to the new value if provided
+
+                    setattr(cls, private_name, new_value)
+                except Exception as e:
+                    mesg(TRACE, f"Error setting static property '{name_dot(cls,property_name)}': {e}")
+                    raise
+
+            # Replace the class attribute with a property descriptor
+            setattr(cls, property_name, property(fget=class_getter, fset=class_setter))
+        except Exception as e:
+            mesg(TRACE, f"Failed to patch static property '{name_dot(cls,property_name)}': {e}")
+            raise
+
+    def patch_module_variable(self, module, variable_name, value):
+        """Patch a module-level variable to allow observation of gets and sets."""
+        try:
+            self.patch_static_class_property(module, variable_name, value)
+            mesg(f"Patching variable: {name_dot(module, variable_name)}")
+        except Exception as e:
+            mesg(f"Failed to patch module variable {variable_name} in {module.__name__}: {e}")
+
+    def patch_static_class_property(self, cls, property_name, value):
+        """Patch a static property to allow observation of gets and sets."""
+        try:
+            #mesg(f"Patching static property: {name_dot(cls,property_name)}")
+            descriptor = ClassVariableDescriptor(property_name, value, self.observer)
+            setattr(cls, property_name, descriptor)
+            mesg(f"Patching static property: {name_dot(cls,property_name)}")
+        except Exception as e:
+            mesg(f"Failed to patch static property '{name_dot(cls,property_name)}'  : {e}")
+            raise
+
+
+# Define the ClassVariableDescriptor
+class ClassVariableDescriptor:
+    def __init__(self, name, initial_value, observer):
+        self.name = name
+        self.value = initial_value
+        self.observer = observer
+
+    def __get__(self, instance, owner):
+        current_value = self.value
+        result = self.check_override(
+            None, 'get', owner, self.name, current_value, level='class'
+        )
+        if isinstance(result, dict) and result.get('do_not_really_get', False):
+            return result.get('return_value')
+        return current_value
+
+    def __set__(self, instance, new_value):
+        result = self.check_override(
+            None, 'set', instance, self.name, new_value, level='class'
+        )
+        if isinstance(result, dict) and result.get('do_not_really_set', False):
+            return
+        if isinstance(result, dict) and result.get('really_set', False):
+            self.value = result.get('new_value')
+            return
+        self.value = new_value
+
+
+
+
+# Helper functions used by the Overrider
 def uses_self(member):
     if not callable(member):
         return False
@@ -987,7 +1043,7 @@ def classify_implementation(obj, implemented_from):
 #!/usr/bin/env python3
 # Filename: test_metta_python_patcher.py
 # Ensure this part is consistent (we keep the contents below maintained and ready to be put into our own file)
-from metta_python_patcher import Overrider, MonkeyPatcher, Inspector, mesg, name_dot
+from metta_python_patcher import Observer, mesg, name_dot
 import hyperonpy
 from hyperon.runner import MeTTa
 from hyperon.atoms import GroundedAtom, VariableAtom, SymbolAtom, ExpressionAtom, ValueObject, OperationObject, MatchableObject
@@ -1112,48 +1168,7 @@ class TestClassV2:
         print(f"instance_var is now: {self.instance_var}")
 
 
-# Setup overrider and monkey-patcher system
-def setup_overrider_and_patcher(registerAll=True):
-    commentary("Setting up the overrider and patcher system")
-    inspector = Inspector()
-    patcher = inspector.monkey_patcher
-    overrider = patcher.overrider
 
-    # Subscribe to events
-    def before_call_callback(*args):
-        target_class, method_name = args[0], args[1]
-        mesg(f"[Overrider] Before calling {name_dot(target_class, method_name)}{args[2:]}")
-
-    def after_call_callback(*args):
-        target_class, method_name, result = args[0], args[1], args[2]
-        mesg(f"[Overrider] After calling {name_dot(target_class, method_name)} -> {result}")
-
-    def get_callback(*args):
-        target_class, property_name, current_value = args[0], args[1], args[2]
-        mesg(f"[Overrider] Getting {name_dot(target_class, property_name)}, current value: {current_value}")
-
-    def set_callback(*args):
-        target_class, property_name, new_value = args[0], args[1], args[2]
-        mesg(f"[Overrider] Setting {name_dot(target_class, property_name)} to {new_value}")
-
-    if registerAll:
-    # Subscribe to overrider events for method calls, property access, etc.
-        overrider.subscribe('before_call', before_call_callback, level='instance')
-        overrider.subscribe('after_call', after_call_callback, level='instance')
-        overrider.subscribe('get', get_callback, level='instance')
-        overrider.subscribe('set', set_callback, level='instance')
-    
-        overrider.subscribe('before_call', before_call_callback, level='class')
-        overrider.subscribe('after_call', after_call_callback, level='class')
-        overrider.subscribe('get', get_callback, level='class')
-        overrider.subscribe('set', set_callback, level='class')
-    
-        overrider.subscribe('before_call', before_call_callback, level='module')
-        overrider.subscribe('after_call', after_call_callback, level='module')
-        overrider.subscribe('get', get_callback, level='module')
-        overrider.subscribe('set', set_callback, level='module')
-        
-    return inspector, patcher, overrider
 
 
 # Test case for demoHyperonPy
@@ -1168,13 +1183,13 @@ def test_demoHyperonPy():
         const = const.fget(hyperonpy)  # Access the property value if it's a property
     
     commentary("Creating a fresh overrider system for HyperonPy")
-    inspector, patcher, overrider = setup_overrider_and_patcher()  # Ensure everything is set up
+    overrider = Overrider()  # Ensure everything is set up
 
     commentary("Inspecting the hyperonpy module")
-    inspector.monkey_patch_module(hyperonpy)
+    overrider.monkey_patch_module(hyperonpy)
 
     commentary("Patching all members of hyperonpy module")
-    inspector.monkey_patch_members()
+    overrider.monkey_patch_members()
 
     commentary("Creating a MeTTa instance for further testing")
     metta = MeTTa()
@@ -1198,7 +1213,7 @@ def test_demoHyperonPy():
 
 def demoAtoms():
     commentary("Starting demoAtoms() by setting up the overrider system")
-    inspector, patcher, overrider = setup_overrider_and_patcher()  # Ensure everything is set up
+    overrider = Overrider()  # Ensure everything is set up
 
     # First, run the tests without monkey-patching
     commentary("Running the tests without any monkey-patching to check base behavior")
@@ -1217,19 +1232,19 @@ def demoAtoms():
 
     # Now, proceed with monkey-patching and repeat the test
     commentary("Marking and inspecting ValueObject and other atom-related classes for monkey-patching")
-    inspector.mark_class(GroundedAtom)
-    inspector.mark_class(VariableAtom)
-    inspector.mark_class(SymbolAtom)
-    inspector.mark_class(ExpressionAtom)
-    inspector.mark_class(ValueObject)
-    inspector.mark_class(OperationObject)
-    inspector.mark_class(MatchableObject)
+    overrider.mark_class(GroundedAtom)
+    overrider.mark_class(VariableAtom)
+    overrider.mark_class(SymbolAtom)
+    overrider.mark_class(ExpressionAtom)
+    overrider.mark_class(ValueObject)
+    overrider.mark_class(OperationObject)
+    overrider.mark_class(MatchableObject)
 
     commentary("Marking base classes")
-    inspector.mark_base_classes(no_filter=False)
+    overrider.mark_base_classes(also_static=False)
 
     commentary("Monkey-patching captured members")
-    inspector.monkey_patch_members()
+    overrider.monkey_patch_members()
 
     commentary("Creating a ValueObject instance (with monkey-patching) with the value 'I am a String'")
     atom = ValueObject("I am a String")
@@ -1249,14 +1264,14 @@ def demoAtoms():
 # Test case for MyClass
 def demoMyClass():
     commentary("Creating a fresh overrider system for demoMyClass()")
-    inspector, patcher, overrider = setup_overrider_and_patcher()  # Ensure everything is set up
+    overrider = Overrider()  # Ensure everything is set up
 
     commentary("Marking MyClass for inspection and filtering out any irrelevant base classes")
-    inspector.mark_class(MyClass)
-    inspector.mark_base_classes()
+    overrider.mark_class(MyClass)
+    overrider.mark_base_classes()
 
     commentary("Attempting to patch all members of MyClass for observation and overrides")
-    inspector.monkey_patch_members()
+    overrider.monkey_patch_members()
 
     # Test the monkey-patched methods
     commentary("Creating an instance of MyClass. Expecting instance_var to be initialized to 10 and value to 'inst_value'")
@@ -1297,13 +1312,13 @@ def demoMyClass():
 # Test case for TestClassV2
 def test_TestClassV2():
     commentary("Setting up a fresh overrider system for TestClassV2")
-    inspector, patcher, overrider = setup_overrider_and_patcher()
+    overrider = Overrider()
 
     commentary("Marking TestClassV2 for inspection")
-    inspector.mark_class(TestClassV2)
+    overrider.mark_class(TestClassV2)
 
     commentary("Attempting to patch all members of TestClassV2")
-    inspector.monkey_patch_members()
+    overrider.monkey_patch_members()
 
     commentary("Creating an instance of TestClassV2. The constructor should initialize 'instance_var' to 10")
     obj = TestClassV2()
@@ -1350,7 +1365,7 @@ class OverrideClass:
 # Test case for testing method override in OverrideClass
 def test_method_override():
     commentary("Setting up a fresh overrider system for method override testing in OverrideClass")
-    inspector, patcher, overrider = setup_overrider_and_patcher(False)  # Ensure everything is set up
+    overrider = Overrider(False)  # Ensure everything is set up
 
     commentary("Subscribing to 'before_call' to override 'multiply' method when called with argument 5")
     def before_multiply_override(*args):
@@ -1363,13 +1378,13 @@ def test_method_override():
             commentary(f"Overriding {name_dot(target_class, method_name)} to return 100 when input is 5")
             return {'do_not_really_call': True, 'return_value': 100}  # Override return value if argument is 5
 
-    overrider.subscribe('before_call', before_multiply_override, level='instance')
+    overrider.add_override('before_call', before_multiply_override, level='instance')
 
     commentary("Marking OverrideClass for inspection")
-    inspector.mark_class(OverrideClass)
+    overrider.mark_class(OverrideClass)
 
     commentary("Attempting to patch all members of OverrideClass")
-    inspector.monkey_patch_members()
+    overrider.monkey_patch_members()
 
     commentary("Creating an instance of OverrideClass, which initializes 'instance_var' to 10")
     obj = OverrideClass()
@@ -1386,7 +1401,7 @@ def test_method_override():
 # Test case for testing property getter override in OverrideClass
 def test_property_get_override():
     commentary("Setting up a fresh overrider system for property getter override in OverrideClass")
-    inspector, patcher, overrider = setup_overrider_and_patcher(False)  # Set up the overrider and patcher
+    overrider = Overrider(False)  # Set up the overrider and patcher
 
     commentary("Subscribing to 'get' to override 'dynamic_property' to always return 999")
 
@@ -1405,13 +1420,13 @@ def test_property_get_override():
         return {}
 
 
-    overrider.subscribe('get', override_dynamic_property_get, level='instance')
+    overrider.add_override('get', override_dynamic_property_get, level='instance')
 
     commentary("Marking OverrideClass for inspection")
-    inspector.mark_class(OverrideClass)
+    overrider.mark_class(OverrideClass)
 
     commentary("Attempting to patch all members of OverrideClass")
-    inspector.monkey_patch_members()
+    overrider.monkey_patch_members()
 
     commentary("Creating an instance of OverrideClass, which initializes 'instance_var' to 10")
     obj = OverrideClass()
@@ -1432,7 +1447,7 @@ def test_property_get_override():
 # Test case for testing property setter override in OverrideClass
 def test_property_set_override():
     commentary("Setting up a fresh overrider system for property setter override in OverrideClass")
-    inspector, patcher, overrider = setup_overrider_and_patcher(False)  # Ensure everything is set up
+    overrider = Overrider(False)  # Ensure everything is set up
 
     commentary("Subscribing to 'set' to block setting 'dynamic_property' to 300")
     def set_property_override(*args):
@@ -1442,13 +1457,13 @@ def test_property_set_override():
             commentary(f"Blocking {name_dot(target_class, property_name)} from being set to 300")
             return {'do_not_really_set': True}  # Block setting if the new value is 300
 
-    overrider.subscribe('set', set_property_override, level='instance')
+    overrider.add_override('set', set_property_override, level='instance')
 
     commentary("Marking OverrideClass for inspection")
-    inspector.mark_class(OverrideClass)
+    overrider.mark_class(OverrideClass)
 
     commentary("Attempting to patch all members of OverrideClass")
-    inspector.monkey_patch_members()
+    overrider.monkey_patch_members()
 
     commentary("Creating an instance of OverrideClass, which initializes 'instance_var' to 10")
     obj = OverrideClass()
@@ -1467,7 +1482,7 @@ def test_property_set_override():
 # Test case for testing static method override in OverrideClass
 def test_static_method_override():
     commentary("Setting up a fresh overrider system for static method override in OverrideClass")
-    inspector, patcher, overrider = setup_overrider_and_patcher(False)  # Ensure everything is set up
+    overrider = Overrider()  # Ensure everything is set up
 
     commentary("Subscribing to 'before_call' to override 'static_method' to return 777")
     def before_static_method_override(*args):
@@ -1477,13 +1492,13 @@ def test_static_method_override():
             commentary(f"Overriding {name_dot(target_class, method_name)} to return 777")
             return {'do_not_really_call': True, 'return_value': 777}  # Override static method return value
 
-    overrider.subscribe('before_call', before_static_method_override, level='class')
+    overrider.add_override('before_call', before_static_method_override, level='class')
 
     commentary("Marking OverrideClass for inspection")
-    inspector.mark_class(OverrideClass)
+    overrider.mark_class(OverrideClass, also_static=True)
 
     commentary("Attempting to patch all members of OverrideClass")
-    inspector.monkey_patch_members()
+    overrider.monkey_patch_members()
 
     commentary("Calling 'static_method', expecting the overridden return value of 777")
     check_equal(777, OverrideClass.static_method(), "OverrideClass static_method override")
@@ -1498,32 +1513,44 @@ class BaseClassForOverride:
     def base_method(self, value):
         return value * 2
 
+    def pass_method(self, value):
+        return value * 2
+
+    def override_base_method(self, value):
+        return value * 2
+
 
 class DerivedClassForOverride(BaseClassForOverride):
     def derived_method(self, value):
         return self.base_method(value) + 1  # Calls the base method and adds 1
 
+    def pass_method(self, value):
+        pass
+
+    def override_base_method(self, value):
+        return value * 3
+
 # Test case for testing base method override in derived class
 def test_base_method_override():
     commentary("Setting up a fresh overrider system for base method override in DerivedClassForOverride")
-    inspector, patcher, overrider = setup_overrider_and_patcher()
+    overrider = Overrider()
 
     commentary("Subscribing to 'before_call' to override 'base_method' to return 100 if called with 5")
     def before_base_method_override(*args):
         target_class, method_name = args[0], args[1]
         mesg(f"[Override] Before calling {name_dot(target_class, method_name)}")
-        if method_name == "base_method" and args[2] == 5:
+        if method_name == "base_method" and args[2] == (5, ):
             commentary(f"Overriding {name_dot(target_class, method_name)} to return 100 when input is 5")
             return {'do_not_really_call': True, 'return_value': 100}  # Override return value if argument is 5
 
-    overrider.subscribe('before_call', before_base_method_override, level='instance')
+    overrider.add_override('before_call', before_base_method_override, level='instance')
 
     commentary("Marking BaseClassForOverride and DerivedClassForOverride for inspection")
-    inspector.mark_class(BaseClassForOverride)
-    inspector.mark_class(DerivedClassForOverride)
+    overrider.mark_class(BaseClassForOverride)
+    overrider.mark_class(DerivedClassForOverride)
 
     commentary("Attempting to patch all members of both classes")
-    inspector.monkey_patch_members()
+    overrider.monkey_patch_members()
 
     commentary("Creating an instance of DerivedClassForOverride (inheriting from BaseClassForOverride)")
     obj = DerivedClassForOverride()
@@ -1537,54 +1564,18 @@ def test_base_method_override():
     commentary("Finished with test_base_method_override\n\n")
 
 
-# Test case for testing constructor (__init__) override in BaseClassForOverride
-def test_constructor_override():
-    commentary("Setting up a fresh overrider system for constructor override in BaseClassForOverride")
-    inspector, patcher, overrider = setup_overrider_and_patcher()
-
-    commentary("Subscribing to 'before_call' and 'after_call' to override constructor behavior")
-    def before_init_override(*args):
-        target_class, method_name = args[0], args[1]
-        mesg(f"[Override] Before calling {name_dot(target_class, method_name)}")
-        if method_name == "__init__":
-            commentary(f"Allowing {name_dot(target_class, method_name)} to run but will modify after")
-
-    def after_init_override(*args):
-        target_class, method_name, result = args[0], args[1], args[2]
-        mesg(f"[Override] After calling {name_dot(target_class, method_name)}")
-        if method_name == "__init__":
-            commentary(f"Overriding 'instance_var' to 999 after constructor (__init__) call")
-            args[0].instance_var = 999  # Force instance_var to 999 after __init__
-
-    overrider.subscribe('before_call', before_init_override, level='instance')
-    overrider.subscribe('after_call', after_init_override, level='instance')
-
-    commentary("Marking BaseClassForOverride for inspection")
-    inspector.mark_class(BaseClassForOverride)
-
-    commentary("Attempting to patch all members of BaseClassForOverride")
-    inspector.monkey_patch_members()
-
-    commentary("Creating an instance of BaseClassForOverride, expecting 'instance_var' to be forced to 999 after __init__")
-    obj = BaseClassForOverride()
-    check_equal(999, obj.instance_var, "BaseClassForOverride instance_var after init override")
-
-    commentary("Finished with test_constructor_override\n\n")
-
-
 # Main function to execute all tests
 def main():
     commentary("Starting the main test suite")
     #test_demoHyperonPy()  # Test the HyperonPy and MeTTa patching
     #demoAtoms()  # Inspect and patch Atom classes
-    #demoMyClass()  # Inspect and patch MyClass
-    #test_TestClassV2()  # Test property access and modification for TestClassV2
+    demoMyClass()  # Inspect and patch MyClass
+    test_TestClassV2()  # Test property access and modification for TestClassV2
     test_method_override()  # Test method overriding
     test_property_get_override()  # Test property getter override
     test_property_set_override()  # Test property setter override
     test_static_method_override()  # Test static method override
     test_base_method_override()  # Test base method overriding
-    test_constructor_override()  # Test constructor (__init__) overriding
     commentary("Finished executing the main test suite")
 
 
