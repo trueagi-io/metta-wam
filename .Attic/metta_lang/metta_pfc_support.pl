@@ -141,23 +141,22 @@ pfc_spft(P, F, T) :-
 % There are three of these to try to efficiently handle the cases
 % where some of the arguments are not bound but at least one is.
 
-%!  pfcRemOneSupport(+P, (+Fact, +Trigger)) is det.
+%!  pfcRemOneSupport(+P, +FactTriggerPair) is semidet.
 %
-%   Removes a specific support for the fact 'P' by retracting the '$spft$' assertion
-%   if it exists. This is used to efficiently handle cases where some of the arguments
-%   ('P', 'Fact', or 'Trigger') may not be bound, but at least one must be callable.
+%   Removes one support relationship between a fact and a trigger.
+%   This predicate ensures that at least one of P, Fact, or Trigger is callable,
+%   and then attempts to retract the support fact associated with them.
 %
-%   This predicate checks if at least one of 'P', 'Fact', or 'Trigger' is callable 
-%   and then retracts the support fact represented by '$spft$(P, Fact, Trigger)' 
-%   from the database. If none of them are callable, it will throw a warning or error.
+%   The support fact being retracted is represented as '$spft$'(P, Fact, Trigger).
 %
-%   @arg P       The primary fact or goal.
-%   @arg Fact    A fact that is supported by 'P'.
-%   @arg Trigger The condition or trigger that justifies the support of 'Fact'.
+%   @arg P The primary predicate or fact that is being checked for support.
+%   @arg FactTriggerPair A tuple (Fact, Trigger) representing the fact and the trigger
+%                        that together form the support relationship for P.
 %
 %   @example
-%     % Remove support for a fact with a given trigger.
-%     ?- pfcRemOneSupport(p(my_fact), (fact_details, trigger_details)).
+%     % Suppose P is some predicate, Fact is a fact, and Trigger is a condition
+%     % that supports the fact P. The following retracts this support relationship:
+%     ?- pfcRemOneSupport(P, (Fact, Trigger)).
 %
 pfcRemOneSupport(P, (Fact, Trigger)) :-
     % Ensure that at least one of P, Fact, or Trigger is callable.
@@ -985,7 +984,7 @@ if_missing_mask(Q,N,R,dif:dif(Was,NEW)):-
         (N=A,get_assertion_head_arg(N,Q,Was),replace_arg(Q,N,NEW,R)))).
 */
 
-%% which_missing_argnum(+Q, ?N) is semidet.
+%! which_missing_argnum(+Q, ?N) is semidet.
 %
 %   Determines which argument of the compound term 'Q' is considered "missing."
 %   The argument number is returned in 'N'. A "missing" argument is identified based on
@@ -1003,13 +1002,7 @@ which_missing_argnum(Q, N) :-
     % Check if the argument is single-valued using 'singleValuedInArg/2'.
     (call_u(singleValuedInArg(F, N)) -> true ; which_missing_argnum(Q, F, A, N)).
 
-%% which_missing_argnum(+_F, +_A, +1, -_) is failure.
-%
-%   Base case to fail when no missing argument is found.
-%
-which_missing_argnum(_, _, 1, _) :- !, fail.
-
-%% which_missing_argnum(+Q, +_F, +A, ?N) is semidet.
+%! which_missing_argnum(+Q, +_F, +A, ?N) is semidet.
 %
 %   Iterates through the arguments of 'Q' and checks if any of them are "missing."
 %   A missing argument is identified as a non-variable term.
@@ -1019,6 +1012,7 @@ which_missing_argnum(_, _, 1, _) :- !, fail.
 %   @arg A The arity of the term 'Q'.
 %   @arg N The argument number of the missing argument.
 %
+which_missing_argnum(_, _, 1, _) :- !, fail.
 which_missing_argnum(Q, _F, A, N) :-
     % Iterate over the arguments from 1 to 'A'.
     between(A, 1, N),
