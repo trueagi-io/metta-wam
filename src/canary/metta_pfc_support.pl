@@ -1050,7 +1050,7 @@ justifications(F, Js) :-
 % %  together, allows us to deduce P.  A base fact is an axiom (a fact
 % %  added by the user or a raw Prolog fact (i.e. one w/o any support))
 % %  or an assumption.
-% %  base(+P, -L) is semidet.
+%!  base(+P, -L) is semidet.
 %
 %   True if 'L' is a list of "base" facts which, when combined, allow
 %   us to deduce 'P'. A "base" fact is either an axiom (a fact added by the user or a
@@ -1068,9 +1068,7 @@ base(F, L) :-
     % Recursively find the base facts for each justification.
     bases(Js, L).
 
-% %  bases(L1,L2) is true if list L2 represents the union of all of the
-% %  facts on which some conclusion in list L1 is based.
-% %  bases(+L1, -L2) is det.
+%!  bases(+L1, -L2) is det.
 %
 %   True if 'L2' is the union of all the base facts on which the conclusions
 %   in the list 'L1' are based. This recursively breaks down the justifications
@@ -1079,6 +1077,9 @@ base(F, L) :-
 %   @arg L1 The list of conclusions (facts) whose base facts are being sought.
 %   @arg L2 The resulting list of base facts.
 %
+% %  bases(L1,L2) is true if list L2 represents the union of all of the
+% %  facts on which some conclusion in list L1 is based.
+
 bases([], []).
 bases([X | Rest], L) :-
     % Recursively find the base facts for 'X'.
@@ -1088,7 +1089,7 @@ bases([X | Rest], L) :-
     % Combine the base facts using 'pfcUnion/3' to avoid duplicates.
     pfcUnion(Bx, Br, L).
 
-% %  axiom(+F) is semidet.
+%!  axiom(+F) is semidet.
 %
 %   True if 'F' is an axiom. An axiom is either a fact supported by the special
 %   support '(god,god)' or matched by 'matches_why_UU(UU)'. An axiom is a fact that
@@ -1102,7 +1103,7 @@ axiom(F) :-
     % Verify that the support for 'F' is either 'UU' or '(god,god)'.
     pfcGetSupport(F, UU) ; pfcGetSupport(F, (god, god)).
 
-% %  assumption(+F) is semidet.
+%!  assumption(+F) is semidet.
 %
 %   True if 'F' is an assumption. An assumption is a failed goal, meaning that
 %   our inability to prove 'P' is taken as a proof of 'not(P)'.
@@ -1161,7 +1162,7 @@ assumptions1([X | Rest], L) :-
     % Union the assumptions from 'X' and the rest into 'L'.
     pfcUnion(Bx, Br, L).
 
-% %  pfcProofTree(+P, -T) is det.
+%!  pfcProofTree(+P, -T) is det.
 %
 %   Constructs the proof tree 'T' for the fact 'P'. A proof tree is a nested list
 %   where the root is 'P', and each child represents a justification for 'P'.
@@ -1173,7 +1174,7 @@ assumptions1([X | Rest], L) :-
 %   @arg T The resulting proof tree structure.
 %
 
-% pfcChild(+P, ?Q) is semidet.
+%! pfcChild(+P, ?Q) is semidet.
 %
 %   True if 'P' is an immediate justifier for 'Q'. This predicate looks up
 %   whether 'P' directly supports 'Q' by checking the support data.
@@ -1190,7 +1191,7 @@ pfcChild(P, Q) :-
     pfcType(Trig, trigger(_Pos)),
     pfcChild(P, Trig).
 
-% pfcChildren(+P, -L) is det.
+%! pfcChildren(+P, -L) is det.
 %
 %   Collects the immediate children of 'P' into a list 'L'. These are all the
 %   facts that are directly supported by 'P'.
@@ -1202,7 +1203,7 @@ pfcChildren(P, L) :-
     % Collect all immediate justifiers (children) of 'P' using 'bagof_or_nil/3'.
     bagof_or_nil(C, pfcChild(P, C), L).
 
-% pfcDescendant(+P, ?Q) is semidet.
+%! pfcDescendant(+P, ?Q) is semidet.
 %
 %   True if 'P' is an ancestor (justifier) for 'Q'. This predicate recursively
 %   checks whether 'P' supports 'Q', either directly or indirectly.
@@ -1214,7 +1215,7 @@ pfcDescendant(P, Q) :-
     % Recursively find if 'P' is an ancestor of 'Q'.
     pfcDescendant1(P, Q, []).
 
-% pfcDescendant1(+P, +Q, +Seen) is semidet.
+%! pfcDescendant1(+P, +Q, +Seen) is semidet.
 %
 %   Helper predicate that tracks the 'Seen' list to avoid cycles when recursively
 %   checking for descendants.
@@ -1231,7 +1232,7 @@ pfcDescendant1(P, Q, Seen) :-
     % Either 'P' is 'X' or continue recursively checking ancestors.
     (P = X ; pfcDescendant1(P, X, [X | Seen])).
 
-% pfcDescendants(+P, -L) is det.
+%! pfcDescendants(+P, -L) is det.
 %
 %   Collects all descendants of 'P' (facts that are directly or indirectly
 %   justified by 'P') into a list 'L'.
@@ -1250,7 +1251,7 @@ matches_why_U(U):-  freeze(U,U=user(_)).
 matches_why_UU(UU):- matches_why_U(U1),matches_why_U(U2), freeze(UU,UU=(U1,U2)).
 */
 
-% %  current_why_U(-U) is det.
+%!   current_why_U(-U) is det.
 %
 %   Retrieves the current user reason 'U' using 'get_why_uu/1'. This represents
 %   a reason why a fact is true, expressed as a user context. 
@@ -1262,7 +1263,7 @@ current_why_U(U) :-
     % Retrieve the first element of the tuple (U, _) from 'get_why_uu/1'.
     get_why_uu((U, _)).
 
-% %  current_why_UU(-UU) is det.
+%!  current_why_UU(-UU) is det.
 %
 %   Retrieves the current pair of user reasons 'UU', where both components
 %   of the tuple represent user reasons for a fact. This uses 'get_why_uu/1'
@@ -1274,7 +1275,7 @@ current_why_UU(UU) :-
     % Retrieve the pair of user reasons using 'get_why_uu/1'.
     get_why_uu(UU).
 
-% %  matches_why_U(+U) is semidet.
+%!  matches_why_U(+U) is semidet.
 %
 %   Matches the current user reason with 'U'. This predicate uses 'freeze/2'
 %   to ensure that 'U' can be matched lazily, ensuring it does not fail prematurely.
@@ -1285,7 +1286,7 @@ matches_why_U(U) :-
     % Attempt to match 'U' with the current user reason using 'freeze/2'.
     nop((current_why_U(Y), freeze(U, \+ \+ (U = Y; true)))).
 
-% %  matches_why_UU(+UU) is semidet.
+%!  matches_why_UU(+UU) is semidet.
 %
 %   Matches 'UU' to the current pair of user reasons. This predicate ensures
 %   that 'UU' is a valid pair of user reasons, delegating to 'only_is_user_reason/1'.
@@ -1296,7 +1297,7 @@ matches_why_UU(UU) :-
     % Ensure 'UU' is a valid pair of user reasons.
     nop(only_is_user_reason(UU)).
 
-% %  matterialize_support_term(+S, -Sup) is det.
+%!  matterialize_support_term(+S, -Sup) is det.
 %
 %   Converts a supported term 'S' into a materialized support term 'Sup'. If 'S' has
 %   attached variables (e.g., constraints), those goals are added to the support term.
@@ -1309,14 +1310,13 @@ matterialize_support_term(S, Sup) :-
     % Check if the term 'S' has any attached variables (constraints).
     term_attvars(S, Atts),Atts \== [] -> 
     % If attached variables exist, copy 'S' and gather the associated goals.
-    copy_term(S, _, Goals), Sup = S + Goals, !.
-    
-% %  matterialize_support_term(+SS, -SS) is det.
+    copy_term(S, _, Goals), Sup = S + Goals, !.    
 %
-%   This predicate is a fallback when the term 'SS' has no attached variables, ensuring
-%   that the original term is returned without modification.
+%   The following predicate is a fallback when the term 'SS' has no attached variables, ensuring
+%   that the original term is returned without modification. Note: variation of above predicate.
 %
 matterialize_support_term(SS, SS).
+
 :- set_prolog_flag(pfc_term_expansion, false).
 
 %!  pfc_system_term_expansion(+I, +S0, -O, -S1) is semidet.
@@ -1378,7 +1378,7 @@ end_of_file.
 
 
 
-%% is_fc_body( +P) is semidet.
+%! is_fc_body( +P) is semidet.
 %
 %   Determines if the given predicate P is a forward chaining body.
 %
@@ -1389,7 +1389,7 @@ end_of_file.
 %
 is_fc_body(P):- has_body_atom(fwc,P).
 
-%% is_bc_body( +P) is semidet.
+%! is_bc_body( +P) is semidet.
 %
 %   Determines if the given predicate P is a backchaining body.
 %
@@ -1400,7 +1400,7 @@ is_fc_body(P):- has_body_atom(fwc,P).
 %
 is_bc_body(P):- has_body_atom(bwc,P).
 
-%% is_action_body( +P) is semidet.
+%! is_action_body( +P) is semidet.
 %
 %   Determines if the given predicate P is an action body.
 %
@@ -1411,7 +1411,7 @@ is_bc_body(P):- has_body_atom(bwc,P).
 %
 is_action_body(P):- has_body_atom(wac,P).
 
-%% has_body_atom( +WAC, ?P) is semidet.
+%! has_body_atom( +WAC, ?P) is semidet.
 %
 %   Checks if the predicate P has WAC as an atom in its body.
 %
@@ -1434,7 +1434,7 @@ has_body_atom(WAC,P):- call(
 % is_atom_body_pfa(WAC,P,F,2,Rest):- get_assertion_head_arg(2,P,E), E==WAC, get_assertion_head_arg(1,P,Rest), !.
 */
 
-%% same_functors( +Head1, +Head2) is det.
+%! same_functors( +Head1, +Head2) is det.
 %
 %   Checks if two predicate heads have the same functor and arity.
 %
@@ -1446,7 +1446,7 @@ same_functors(Head1, Head2):-
     must_det(get_unnegated_functor(Head2, F2, A2)),
     !, F1 = F2, A1 = A2.
 
-%% mpred_update_literal( +P, ?N, ?Q, ?R) is semidet.
+%! mpred_update_literal( +P, ?N, ?Q, ?R) is semidet.
 %
 %   Updates the N-th argument of the predicate P with Q and returns the updated result in R.
 %
@@ -1464,7 +1464,7 @@ mpred_update_literal(P, N, Q, R):- get_assertion_head_arg(N, P, UPDATE),
 
 % '$spft'(MZ,5,5,5).
 
-%% update_single_valued_arg(+Module, +P, ?N) is semidet.
+%! update_single_valued_arg(+Module, +P, ?N) is semidet.
 %
 %   Updates the N-th argument of predicate P in the specified module.
 %
@@ -1510,7 +1510,7 @@ update_single_valued_arg(M, P, N):-
 % utils
 % =======================
 
-%% map_literals( +P, ?G) is semidet.
+%! map_literals( +P, ?G) is semidet.
 %
 %   Applies the predicate P to every literal in G.
 %
@@ -1522,7 +1522,7 @@ update_single_valued_arg(M, P, N):-
 %
 map_literals(P,G):- map_literals(P,G,[]).
 
-%% map_literals( +VALUE1, :TermH, ?VALUE3) is semidet.
+%! map_literals( +VALUE1, :TermH, ?VALUE3) is semidet.
 %
 %   A helper predicate for map_literals/2.
 %
@@ -1541,7 +1541,7 @@ map_literals(Pred,H,S):- mpred_literal(H), must_ex(apply(Pred,[H|S])), !.
 map_literals(_Pred,H,_S):- \+ is_ftCompound(H), !.  % Skip non-compound terms
 map_literals(Pred,H,S):- H=..List, !, map_literals(Pred,List,S), !.
 
-%% map_unless( :PRED1Test, ?Pred, ?H, ?S) is semidet.
+%! map_unless( :PRED1Test, ?Pred, ?H, ?S) is semidet.
 %
 %   Applies a predicate to a term unless a test condition is met.
 %
@@ -1560,7 +1560,7 @@ map_unless(Test,Pred,(H,T),S):- !, apply(Pred,[H|S]), map_unless(Test,Pred,T,S).
 map_unless(Test,Pred,[H|T],S):- !, apply(Pred,[H|S]), map_unless(Test,Pred,T,S).
 map_unless(Test,Pred,H,S):- H=..List, !, map_unless(Test,Pred,List,S), !.
 
-%% map_first_arg( +Pred, ?List) is semidet.
+%! map_first_arg( +Pred, ?List) is semidet.
 %
 %   Applies the given predicate to the first argument of each element in List.
 %
@@ -1573,7 +1573,7 @@ map_unless(Test,Pred,H,S):- H=..List, !, map_unless(Test,Pred,List,S), !.
 :- meta_predicate(map_first_arg(*,+)).
 map_first_arg(CMPred,List):- strip_module(CMPred,CM,Pred), map_first_arg(CM,Pred,List,[]).
 
-%% map_first_arg( +Pred, :TermH, ?S) is semidet.
+%! map_first_arg( +Pred, :TermH, ?S) is semidet.
 %
 %   A variant of map_first_arg/2 that processes terms with additional arguments.
 %
@@ -1599,7 +1599,7 @@ map_first_arg(CM,Pred,H,S):- CM:apply(Pred,[H|S]).
 %example pfcVerifyMissing(mpred_isa(I,D), mpred_isa(I,C), ((mpred_isa(I,C), {D==C});-mpred_isa(I,C))).
 %example pfcVerifyMissing(mudColor(I,D), mudColor(I,C), ((mudColor(I,C), {D==C});-mudColor(I,C))).
 
-%% pfcVerifyMissing( +GC, ?GO, ?GO) is semidet.
+%! pfcVerifyMissing( +GC, ?GO, ?GO) is semidet.
 %
 %   Verifies the missing rule in forward chaining for predicate GO.
 %
@@ -1616,7 +1616,7 @@ pfcVerifyMissing(GC, GO, ((GO, {D==C});\+ GO) ):-
 %example mpred_freeLastArg(mpred_isa(I,C),~(mpred_isa(I,C))):-is_ftNonvar(C),!.
 %example mpred_freeLastArg(mpred_isa(I,C),(mpred_isa(I,F),C\=F)):-!.
 
-%% mpred_freeLastArg( +G, ?GG) is semidet.
+%! mpred_freeLastArg( +G, ?GG) is semidet.
 %
 %   Frees the last argument of a predicate.
 %
@@ -1630,7 +1630,7 @@ mpred_freeLastArg(G,GG):-
     G=..[F,A|Args], append(Left,[_],Args), append(Left,[_],NewArgs), GG=..[F,A|NewArgs], !.
 mpred_freeLastArg(_G, false).
 
-%% mpred_current_op_support( +VALUE1) is semidet.
+%! mpred_current_op_support( +VALUE1) is semidet.
 %
 %   Retrieves the current operator support in PFC.
 %
@@ -1640,7 +1640,7 @@ mpred_freeLastArg(_G, false).
 %
 mpred_current_op_support((p,p)):- !.
 
-%% pfcVersion( +VALUE1) is semidet.
+%%! pfcVersion( +VALUE1) is semidet.
 %
 % Prolog Forward Chaining Version.
 %
@@ -1648,7 +1648,7 @@ mpred_current_op_support((p,p)):- !.
 
 % % :- '$set_source_module'(mpred_kb_ops).
 
-%% correctify_support( +S, ?S) is semidet.
+%! correctify_support( +S, ?S) is semidet.
 %
 %   Corrects or normalizes support for a predicate.
 %
@@ -1664,7 +1664,7 @@ correctify_support((U,_UU),(U,ax)):- !.
 correctify_support([U],S):- correctify_support(U,S).
 correctify_support(U,(U,ax)).
 
-%% clause_asserted_local( :TermABOX) is semidet.
+%! clause_asserted_local( :TermABOX) is semidet.
 %
 %   Checks if a clause is locally asserted in the knowledge base.
 %
@@ -1680,7 +1680,7 @@ clause_asserted_local(MCL):-
     clause_u('$spft'(MZ,UP,UFact,UTrigger),true,Ref),
     (((UP=@=P,UFact=@=Fact,UTrigger=@=Trigger))).
 
-%% is_already_supported( +P, ?S, ?UU) is semidet.
+%! is_already_supported( +P, ?S, ?UU) is semidet.
 %
 %   Checks if a predicate P is already supported.
 %
@@ -1695,7 +1695,7 @@ is_already_supported(P,(S,T),(S,T)):- clause_asserted_local('$spft'(_MZ,P,S,T)),
 is_already_supported(P,_S,UU):- clause_asserted_local('$spft'(_MZ,P,US,UT)),must_ex(get_source_uu(UU)),
     UU=(US,UT).
 
-%% if_missing1( +Q) is semidet.
+%! if_missing1( +Q) is semidet.
 %
 %   Triggers an action if a certain predicate Q is missing.
 %
@@ -1705,7 +1705,7 @@ is_already_supported(P,_S,UU):- clause_asserted_local('$spft'(_MZ,P,US,UT)),must
 %
 if_missing1(Q):- mpred_literal_nv(Q),call_u(\+ ~Q),if_missing_mask(Q,R,Test),!,lookup_u(R),Test.
 
-%% mpred_run_pause is det.
+%! mpred_run_pause is det.
 %
 %   Pauses the forward-chaining engine.
 %
@@ -1714,7 +1714,7 @@ if_missing1(Q):- mpred_literal_nv(Q),call_u(\+ ~Q),if_missing_mask(Q,R,Test),!,l
 %
 mpred_run_pause:- asserta(t_l:mpred_run_paused).
 
-%% mpred_run_resume is det.
+%! mpred_run_resume is det.
 %
 %   Resumes the forward-chaining engine.
 %
@@ -1723,7 +1723,7 @@ mpred_run_pause:- asserta(t_l:mpred_run_paused).
 %
 mpred_run_resume:- retractall(t_l:mpred_run_paused).
 
-%% fwithout_running( +G) is det.
+%! fwithout_running( +G) is det.
 %
 %   Runs a goal G without allowing forward chaining to execute.
 %
