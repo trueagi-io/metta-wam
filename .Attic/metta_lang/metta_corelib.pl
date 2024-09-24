@@ -43,6 +43,7 @@
 %   ?- load_metta_python_patcher.
 %   true.
 %
+load_metta_python_patcher :- ! % disable the patcher 
 load_metta_python_patcher :-
     did_load_metta_python_patcher, !.  % If already loaded, do nothing.
 
