@@ -248,9 +248,7 @@ pfc_make_supports((P,S1,S2)) :-
   % Cut to prevent backtracking after adding support and classification.
   !.
 
-% %  Get a key from the trigger that will be used as the first argument of
-% %  the trigger base clause that stores the trigger.
-% %
+
 %!  pfcTriggerKey(+Trigger, -Key) is det.
 %
 %   Extracts the best indexing key from a given Trigger.
@@ -1046,13 +1044,9 @@ justifications(F, Js) :-
     % Collect all justifications for fact 'F' into list 'Js'.
     bagof(J, justification(F, J), Js).
 
-% %  base(P,L) - is true iff L is a list of "base" facts which, taken
-% %  together, allows us to deduce P.  A base fact is an axiom (a fact
-% %  added by the user or a raw Prolog fact (i.e. one w/o any support))
-% %  or an assumption.
 %!  base(+P, -L) is semidet.
 %
-%   True if 'L' is a list of "base" facts which, when combined, allow
+%   True iff 'L' is a list of "base" facts which, when combined, allow
 %   us to deduce 'P'. A "base" fact is either an axiom (a fact added by the user or a
 %   raw Prolog fact with no support) or an assumption (a failed goal that we assume to be true).
 %
@@ -1068,7 +1062,7 @@ base(F, L) :-
     % Recursively find the base facts for each justification.
     bases(Js, L).
 
-%!  bases(+L1, -L2) is det.
+%!  bases(+L1, -L2) is semidet.
 %
 %   True if 'L2' is the union of all the base facts on which the conclusions
 %   in the list 'L1' are based. This recursively breaks down the justifications
@@ -1103,28 +1097,21 @@ axiom(F) :-
     % Verify that the support for 'F' is either 'UU' or '(god,god)'.
     pfcGetSupport(F, UU) ; pfcGetSupport(F, (god, god)).
 
-%!  assumption(+F) is semidet.
-%
-%   True if 'F' is an assumption. An assumption is a failed goal, meaning that
-%   our inability to prove 'P' is taken as a proof of 'not(P)'.
-%
-%   @arg F The fact to check for being an assumption.
-%
-%   Assumptions typically arise from failure to prove a goal, which is
-%   treated as an implicit assumption of its negation.
 
 %!  assumption(+P) is semidet.
 %
+%   Assumptions typically arise from failure to prove a goal, which is
+%   treated as an implicit assumption of its negation.
+%
+%   An assumption is a failed goal, meaning that our inability to prove 'P' is taken as a proof of 'not(P)'.
+%
 %   True if 'P' is an assumption. An assumption is defined as any goal 'P' that,
 %   when unnegated using 'pfc_unnegate/2', does not have a proof, and thus its negation is assumed.
-%
-%   @arg P The fact to check for being an assumption.
 %
 assumption(P) :-
     % Unnegate 'P' to check if it represents an assumption.
     pfc_unnegate(P, _).
 
-% %  assumptions(X,As) if As is a set of assumptions which underly X.
 %!  assumptions(+X, -As) is det.
 %
 %   True if 'As' is the set of assumptions that underlie the fact 'X'. 
