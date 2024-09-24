@@ -197,9 +197,9 @@ pfcRemOneSupportOrQuietlyFail(P, (Fact, Trigger)) :-
 %     ?- pfc_collect_supports(Triples).
 %     Triples = [triple1, triple2, triple3].
 %
-pfc_collect_supports(Tripples) :-
+pfc_collect_supports(Triples) :-
   % Use bagof/3 to collect all triples that satisfy pfc_support_relation/1.
-  bagof(Tripple, pfc_support_relation(Tripple), Tripples),!.  % Cut to ensure deterministic behavior
+  bagof(Triple, pfc_support_relation(Triple), Triples),!.  % Cut to ensure deterministic behavior
 % If bagof/3 fails (i.e., no triples are found), return an empty list.
 pfc_collect_supports([]).
 
