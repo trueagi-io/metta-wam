@@ -302,6 +302,7 @@ ok_varname_or_int(Name) :-
 %
 %   @arg Name The name to validate.
 %
+quietly_sreader(G):- notrace(G).
 ok_var_name(Name):-
     % Ensure the name follows valid Prolog variable naming rules.
  notrace((
