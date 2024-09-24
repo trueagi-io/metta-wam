@@ -822,6 +822,39 @@ ml_goal_6(Goal, E1, E2, E3, E4, E5, E6, call(Goal, E1, E2, E3, E4, E5, E6)).
 once_in_module_6(M, Goal, E1, E2, E3, E4, E5, E6) :- call(M:Goal, E1, E2, E3, E4, E5, E6), !.
 
 
+/*
+:- meta_predicate maplist(5, ?, ?, ?, ?, ?).
+
+maplist(Goal, List1, List2, List3, List4, List5) :-
+    maplist_(List1, List2, List3, List4, List5, Goal).
+
+maplist_([], [], [], [], [], _).
+maplist_([X1|Xs1], [X2|Xs2], [X3|Xs3], [X4|Xs4], [X5|Xs5], Goal) :-
+    call(Goal, X1, X2, X3, X4, X5),
+    maplist_(Xs1, Xs2, Xs3, Xs4, Xs5, Goal).
+
+:- meta_predicate maplist(6, ?, ?, ?, ?, ?, ?).
+
+maplist(Goal, List1, List2, List3, List4, List5, List6) :-
+    maplist_(List1, List2, List3, List4, List5, List6, Goal).
+
+maplist_([], [], [], [], [], [], _).
+maplist_([X1|Xs1], [X2|Xs2], [X3|Xs3], [X4|Xs4], [X5|Xs5], [X6|Xs6], Goal) :-
+    call(Goal, X1, X2, X3, X4, X5, X6),
+    maplist_(Xs1, Xs2, Xs3, Xs4, Xs5, Xs6, Goal).
+
+:- meta_predicate maplist(7, ?, ?, ?, ?, ?, ?, ?).
+
+maplist(Goal, List1, List2, List3, List4, List5, List6, List7) :-
+    maplist_(List1, List2, List3, List4, List5, List6, List7, Goal).
+
+maplist_([], [], [], [], [], [], [], _).
+maplist_([X1|Xs1], [X2|Xs2], [X3|Xs3], [X4|Xs4], [X5|Xs5], [X6|Xs6], [X7|Xs7], Goal) :-
+    call(Goal, X1, X2, X3, X4, X5, X6, X7),
+    maplist_(Xs1, Xs2, Xs3, Xs4, Xs5, Xs6, Xs7, Goal).
+*/
+
+
 %!  metta_hyperpose(:Eq, :RetType, +Depth, +MSpace, +InList, -Res) is det.
 %
 %   Concurrently applies a function, leveraging threading to optimize processing,
@@ -875,6 +908,9 @@ concurrent_assert_result(P2, InList, Tag) :-
                        % Assert the result after computation.
                        assert_result_after_computation(P2, Tag, Index, InputVar),
                        [threads(Procs)]).
+
+
+:- dynamic(result/4).
 
 % Asserts the output of applying P2 to Input.
 assert_result_after_computation(P2, Tag, Index, Input) :-
