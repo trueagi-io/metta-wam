@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 import inspect
-import sys
 import os
+from enum import Enum
 import sys
 import types
 import hyperon
@@ -175,7 +175,9 @@ from hyperon.atoms import Atom, AtomType, OperationAtom
 from hyperon.base import GroundingSpaceRef, Tokenizer, SExprParser
 from hyperonpy import EnvBuilder, ModuleId
 
+# Global variables
 suspend_trace = False
+rust_mode = False  # Set to False as default
 
 def with_suspend_trace(action, *args, **kwargs):
     """
@@ -429,6 +431,82 @@ class REPL:
 
 
 
+
+
+
+
+def name_dot(module, name):
+    if module is None:
+        return name
+    return f"{module.__name__}.{name}"
+
+import inspect
+
+def signature(obj):
+    try:
+        # First, try Python's inspect.signature for standard functions
+        return inspect.signature(obj)
+    except (ValueError, TypeError) as e:
+        # Handle specific case where signature is not found for built-in methods
+        if is_pybind11_function(obj):
+            # Custom fallback for pybind11 methods, if known
+            return get_pybind11_signature(obj)
+        print(f"inspect.signature({obj}) caused error: {e}")
+        return "(builtin method)"
+    except Exception as e:
+        # Catch other errors
+        print(f"Error determining signature for {obj}: {e}")
+        return "(unknown)"
+
+def is_pybind11_function(obj):
+    """Detect if the object is a pybind11-wrapped function."""
+    return isinstance(obj, types.BuiltinFunctionType) and hasattr(obj, '__doc__')
+
+def get_pybind11_signature(obj):
+    """Retrieve or construct a pybind11 function's signature."""
+    # If the function has a docstring with signature info
+    doc = obj.__doc__
+    if doc:
+        # Try to extract the first line which often contains the signature
+        first_line = doc.splitlines()[0]
+        if '(' in first_line and ')' in first_line:
+            return first_line.strip()
+
+    # Return fallback if no signature is found in docstring
+    return "(pybind11 function with unknown signature)"
+
+
+def ignore_exception(*args, **kwargs):
+    pass
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import inspect
 import types
 
@@ -436,9 +514,6 @@ import types
 suspend_trace = False
 rust_mode = False  # Assuming this is defined elsewhere
 TRACE = True  # Assuming this is a logging level
-def mesg(*args, **kwargs):
-    """Simple message/logging function placeholder."""
-    print(*args, **kwargs)
 
 synth_members = {
     '__module__', '__filename__', '__name__', 'pybind11_type',
@@ -484,7 +559,9 @@ class Observer:
         # Check if there are any observers subscribed to this event key
         if event_key in self.observers:
             for callback in self.observers[event_key]:
-                return callback(*args)
+                result = callback(*args)
+                if result is not None:
+                    return result
 
         # Default return if no observer modifies the value
         return kwargs.get('default_value')
@@ -605,11 +682,11 @@ class MonkeyPatcher:
                     if rust_mode:
                         return current_value
                     result = self.observer.notify(value, 'get', module, property_name, current_value, level='module')
-                    if isinstance(result, dict) and result.get('just_return', False):
-                        return result.get('just_return')
-                    return result if result is not None else current_value
+                    if isinstance(result, dict) and result.get('do_not_really_get', False):
+                        return result.get('return_value')
+                    return current_value
                 except Exception as e:
-                    mesg(TRACE, f"Error getting module property '{property_name}' in {module.__name__}: {e}")
+                    mesg(TRACE, f"Error getting module property '{name_dot(module, property_name)}': {e}")
                     raise
 
             def module_setter(new_value):
@@ -871,10 +948,10 @@ def patch_hyperonpy():
     from hyperon.atoms import SymbolAtom, ExpressionAtom, GroundedAtom, VariableAtom, ValueAtom
     from hyperon.runner import MeTTa
     import hyperonpy  # Assuming hyperonpy is an external module you want to patch
-    VA = ValueAtom("string")
-    patcher.patch_instance_class(ValueAtom,instance=VA)
+    VA = ValueObject("string")
+    patcher.patch_instance_class(ValueObject,instance=VA)
     patcher.patch_class(MyClass)
-    line = input("ValueAtom> ")
+    line = input("ValueObject> ")
     patcher.patch_module(hyperonpy)
     line = input("hyperonpy> ")
     metta = MeTTa()
