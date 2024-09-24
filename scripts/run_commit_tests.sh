@@ -26,7 +26,7 @@ done
 if [ -z $timestamp ]; then
     timestamp=$(date +"%Y-%m-%dT%H:%M:%S")
 fi
-output=./reports/tests_output/baseline-compat-$timestamp/
+output=./reports/tests_output/baseline-compat/
 
 # run the tests
 mkdir -p $output
