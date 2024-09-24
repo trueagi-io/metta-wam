@@ -1,4 +1,4 @@
-%!  metta_python_patcher(-Content) is dynamic.
+%!  metta_python_patcher(-Content) is det.
 %
 %   A dynamic predicate that stores the content of the Python file 'metta_python_patcher.py'.
 %   The content is read into a string and asserted as a fact for later use.
@@ -18,7 +18,7 @@
 :- read_file_to_string('./metta_python_patcher.py', String, []),
    assertz(metta_python_patcher(String)), !.
 
-%!  did_load_metta_python_patcher is volatile.
+%!  did_load_metta_python_patcher is det.
 %
 %   A volatile predicate used as a flag to track whether the Python patcher has been loaded.
 %   This predicate will not be saved across sessions and exists only for the current runtime.
