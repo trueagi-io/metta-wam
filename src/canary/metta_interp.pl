@@ -63,6 +63,7 @@
 :- set_prolog_flag(debug_on_interrupt,true).
 :- set_prolog_flag(debug_on_error,true).
 :- ensure_loaded(swi_support).
+:- ensure_loaded(library(pldoc)).
 %:- set_prolog_flag(compile_meta_arguments,control).
 :- (prolog_load_context(directory, Value);Value='.'), absolute_file_name('../packs/',Dir,[relative_to(Value)]),
     atom_concat(Dir,'predicate_streams',PS),
