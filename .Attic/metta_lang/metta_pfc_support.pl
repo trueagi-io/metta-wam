@@ -423,7 +423,7 @@ clear_proofs :-
     % Optionally log or provide visual feedback by calling 'color_line/2'.
     nop(color_line(cyan, 1)).
 
-%!  lookup_spft_match(+A, +B, -C) is semidet.
+%!  lookup_spft_match(+A, +B, -C) is nondet.
 %
 %   Matches a specific pattern by ensuring that 'A' is unchanged after a lookup operation.
 %
@@ -449,7 +449,7 @@ lookup_spft_match(A, B, C) :-
     % Ensure that 'A' is still structurally identical to 'AA'.
     A =@= AA.
 
-%!  lookup_spft_match_deeper(+H, +Fact, -Trigger) is semidet.
+%!  lookup_spft_match_deeper(+H, +Fact, -Trigger) is nondet.
 %
 %   Performs a deeper lookup operation by ensuring the head term 'H' is unchanged after the lookup.
 %
@@ -1627,7 +1627,7 @@ mpred_freeLastArg(_G, false).
 %
 mpred_current_op_support((p,p)):- !.
 
-%%! pfcVersion( +VALUE1) is semidet.
+%! pfcVersion( +VALUE1) is semidet.
 %
 % Prolog Forward Chaining Version.
 %
