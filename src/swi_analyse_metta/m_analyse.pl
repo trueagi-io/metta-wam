@@ -2079,7 +2079,7 @@ is_flag_to_metta_files( 'yes' ):-!.
 change_output_for_creating_files( Fn , Count ):- is_flag_to_metta_files( 'yes' ), 
   atom_number( Ato, Count ),
   file_base_name( Fn, Base ),  file_name_extension( Base2, _Ext, Base ), !,
-  atomic_list_concat( [ 'metta_generated/', Base2, Ato, '_py.metta' ], Rs ),
+  atomic_list_concat( [ '../../tests/from_python_generated/', Base2, Ato, '_py.metta' ], Rs ),
   told(),
   tell( Rs ).
 change_output_for_creating_files( _Fn , _ ):- !.
@@ -2090,11 +2090,21 @@ write_belongs_to( belongs_to_previous_line , Lx, _Linum, _Fn, Linum_last, Tag1, 
   number_string( Linum_last, Sx2 ), write( "\n; <br> lastline " ), write( Sx2 ), write( " <br> \n" ),
   write( " \n" ),   write( Tag1 ) ,   write( Lx ),   write( Tag2 ) .
 
+
+% today_key( Dk ), 
+% incr2( N2 ), number_string( N2, N2_s ),
+% concat_slist( [ "; ", N2_s, ". ", Dk, " R.v.Vessum converted python source to metta \n!(assertEqualToResult
+ 
+ 
 write_belongs_to( _ , Lx, Linum, Fn, Linum_last , Tag1, Tag2 ):- !,	
+  today_key( Dk ), 
   number_string( Linum_last, Sx2 ), write( "\n; <br>  lastline " ), write( Sx2 ), write( " <br> \n" ),
   incr( Count ), number_string( Count, Sx ),
   change_output_for_creating_files( Fn , Count ),
-  write( "; FILE: " ), write( Sx ),  write( Fn ), write( " :" ), write( Linum ), 
+  write( "\n; " ), write( Dk ),  write( " R.v.Vessum converted python source to metta " ), 
+  write( "\n; FILE: " ), write( Sx ),  write( Fn ), write( " :" ), write( Linum ), 
+  
+  % ves
   write( Tag1 ), write( Lx ) ,   write( Tag2 ), write("  !(assertEqualToResult ( )  (  )  )").
 
 %  write( "\n<br> ends at : "), write( Linum_last ), write( "<br>" ), 
