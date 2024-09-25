@@ -2415,9 +2415,39 @@ load_metta_python_proxy:-
     assert(did_load_metta_python_proxy),    
     !.
 
-:- initialization(load_metta_python_proxy).
+%!  lazy_load_python is det.
+%
+%   This predicate represents a placeholder or a stub for lazily loading the Python
+%   integration. Currently, it does not contain any implementation logic.
+%   Presumably, it would attempt to load Python-related resources or interfaces
+%   when needed, avoiding unnecessary overhead if Python is not required.
+%
+%   The implementation should be added to perform the actual lazy loading of
+%   the Python environment or integration.
+%
+lazy_load_python.
 
-:- initialization(load_metta_python_proxy, restore).
+%!  maybe_load_metta_python_proxy is det.
+%
+%   This predicate ensures that the Python integration for Metta is loaded.
+%   It tries to load the Python interface lazily by calling `lazy_load_python/0`.
+%   If the lazy loading succeeds (determined by the cut `!`), it does nothing more.
+%   If lazy loading fails, it proceeds to load the Metta Python proxy using 
+%   `load_metta_python_proxy/0`.
+%
+maybe_load_metta_python_proxy :- 
+    % Attempt lazy loading of the Python interface.
+    lazy_load_python, !.
+maybe_load_metta_python_proxy :- 
+    % If lazy loading fails, load the Metta Python proxy manually.
+    load_metta_python_proxy.
+
+% The following directives ensure that `maybe_load_metta_python_proxy/0` is called 
+% during system initialization. The first initialization runs when the program 
+% starts, and the second runs when the system is restored from a saved state.
+:- initialization(maybe_load_metta_python_proxy).
+:- initialization(maybe_load_metta_python_proxy, restore).
+
 
 %!  on_restore1 is det.
 %
