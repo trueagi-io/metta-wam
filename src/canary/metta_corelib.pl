@@ -43,7 +43,7 @@
 %   ?- load_metta_python_patcher.
 %   true.
 %
-load_metta_python_patcher :- ! % disable the patcher 
+load_metta_python_patcher :- !. % disable the patcher 
 load_metta_python_patcher :-
     did_load_metta_python_patcher, !.  % If already loaded, do nothing.
 
@@ -113,6 +113,32 @@ load_mettalogpy :-
 %   ?- mettalogpy_repl.
 %   true.
 %
-mettalogpy_repl :-
+mettalogpy_repl :- 
+    load_metta_python_proxy,
+    load_metta_python_patcher,
+    load_mettalogpy,
     py_call(mettalog:repl()).
+
+
+%!  maybe_load_metta_python_patcher is det.
+%
+%   This predicate ensures that the Python integration for Metta is loaded.
+%   It tries to load the Python interface lazily by calling `lazy_load_python/0`.
+%   If the lazy loading succeeds (determined by the cut `!`), it does nothing more.
+%   If lazy loading fails, it proceeds to load the Metta Python patcher using 
+%   `load_metta_python_patcher/0`.
+%
+maybe_load_metta_python_patcher :- 
+    % Attempt lazy loading of the Python interface.
+    lazy_load_python, !.
+maybe_load_metta_python_patcher :- 
+    % If lazy loading fails, load the Metta Python patcher manually.
+    load_metta_python_patcher.
+
+% The following directives ensure that `maybe_load_metta_python_patcher/0` is called 
+% during system initialization. The first initialization runs when the program 
+% starts, and the second runs when the system is restored from a saved state.
+:- initialization(maybe_load_metta_python_patcher).
+
+:- initialization(maybe_load_metta_python_patcher, restore).
 
