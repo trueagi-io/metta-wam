@@ -1623,7 +1623,7 @@ non_simple_arg(E):-
     % Succeeds if E is a compound and not a free-term variable.
     compound(E), !, \+ is_ftVar(E).
 
-%!  f2q(+Depth, +HeadIs, +RetType, +RetResult, +Converting, -(PreArgs, Converted)) is nondet.
+%%%!  f2q(+Depth, +HeadIs, +RetType, +RetResult, +Converting, -(PreArgs, Converted)) is nondet.
 %
 %   This predicate attempts to convert a functor into another representation while 
 %   maintaining its arguments and structure, and verifying type compatibility. 
@@ -1844,7 +1844,7 @@ metta_atom_iter(Space, Match) :- metta_atom_iter('=', 10, Space, Space, Match).
 make_with_space(Space, MatchCode, MatchCode) :- Space == '&self', !.
 make_with_space(Space, MatchCode, with_space(Space, MatchCode)) :- Space \== '&self'.
 
-%!  f2q(+Depth, +HeadIs, +RetType, +RetResult, +(A =~ B), -(A =~ B)) is det.
+%%%!  f2q(+Depth, +HeadIs, +RetType, +RetResult, +(A =~ B), -(A =~ B)) is det.
 %
 %   If `Convert` is a simple `=~` comparison, this is treated as a direct match
 %   and no further conversion or processing is necessary.
@@ -1921,7 +1921,7 @@ f2q(_Depth, HeadIs, _RetType, RetResult, Convert, Converted) :-
         compound_name_list(Converted, FP, [RetResult])
     )).
 
-%!  f2q(+Depth, +HeadIs, +RetType, +RetResult, +(is(Convert)), -(Converted, is(RetResult, Result))) is nondet.
+%%%!  f2q(+Depth, +HeadIs, +RetType, +RetResult, +(is(Convert)), -(Converted, is(RetResult, Result))) is nondet.
 %
 %   Converts `is` expressions into the equivalent `is` predicate in Prolog.
 %
@@ -1985,7 +1985,7 @@ f2q(Depth, HeadIs, RetType, RetResultL, ConvertL, Converted) :-
     into_equals(RetResultL, [RetResult], Equals),             % Create an equals statement for the result.
     combine_code(Code, Equals, Converted).
 
-%!  f2q(+Depth, +HeadIs, +RetType, +ResultVar, +'cdr-atom'(Atom), +'cdr-atom'(Atom, ResultVar)) is det.
+%%%!  f2q(+Depth, +HeadIs, +RetType, +ResultVar, +'cdr-atom'(Atom), +'cdr-atom'(Atom, ResultVar)) is det.
 %
 %   Handles `cdr-atom` conversion, generating the appropriate Prolog structure with `cdr-atom` functor.
 %
@@ -1996,7 +1996,7 @@ f2q(Depth, HeadIs, RetType, RetResultL, ConvertL, Converted) :-
 %   @arg Atom         The atom whose `cdr` is being accessed.
 f2q(_Depth, _HeadIs, _RetType, ResultVar, 'cdr-atom'(Atom), 'cdr-atom'(Atom, ResultVar)) :- !.
 
-%!  f2q(+Depth, +HeadIs, +RetType, +ResultVar, +'car-atom'(Atom), +'car-atom'(Atom, ResultVar)) is det.
+%%%!  f2q(+Depth, +HeadIs, +RetType, +ResultVar, +'car-atom'(Atom), +'car-atom'(Atom, ResultVar)) is det.
 %
 %   Handles `car-atom` conversion, generating the appropriate Prolog structure with `car-atom` functor.
 %
@@ -2123,7 +2123,7 @@ f2q(Depth, _HeadIs, RetType, RetVar, Data, CodeOut) :-
     % Combine the parameter code with the final eval_for call.
     combine_code(ParamCode, eval_for(b_6, NarrowType, Call, RetVar), CodeOut).
 
-%!  f2q(+Depth, +HeadIs, +RetType, +RetVar, +Data, -eval_for(b_8, RetType, Data, RetVar)) is det.
+%%%!  f2q(+Depth, +HeadIs, +RetType, +RetVar, +Data, -eval_for(b_8, RetType, Data, RetVar)) is det.
 %
 %   Converts `Data` directly into an `eval_for(b_8)` structure.
 %
