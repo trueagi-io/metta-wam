@@ -28,7 +28,7 @@ from_python(ModuleFunctionName, _TupleArgs, LArgs, KwArgs, Result) :-
     Predicate =.. [ModuleFunctionName | FullArgs], % Create the goal dynamically with all arguments
     registered_function(ModuleFunctionName,_,_,_,ReturnType),
     format('Calling existing Prolog predicate: ~q -> ~q ', [Predicate,ReturnType]),!,
-    must_det_ll((call_ret_type(Predicate,ReturnType,Return,Result), writeln(Return->Result), nonvar(Result))).
+    ((call_ret_type(Predicate,ReturnType,Return,Result), writeln(Return->Result), nonvar(Result))).
 % If the Prolog predicate does not exist, call the original Python function
 from_python(ModuleFunctionName, TupleArgs, LArgs, KwArgs, Return) :- fail,
     format('No Prolog predicate found for: ~w. Calling original Python function.~n', [ModuleFunctionName]),
