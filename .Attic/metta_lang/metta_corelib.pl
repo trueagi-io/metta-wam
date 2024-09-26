@@ -28,14 +28,14 @@ from_python(ModuleFunctionName, _TupleArgs, LArgs, KwArgs, Result) :-
     Predicate =.. [ModuleFunctionName | FullArgs], % Create the goal dynamically with all arguments
     registered_function(ModuleFunctionName,_,_,_,ReturnType),
     format('Calling existing Prolog predicate: ~q -> ~q ', [Predicate,ReturnType]),!,
-    call_ret_type(Predicate,ReturnType,Return,Result), writeln(Return->Result).
+    must_det_ll((call_ret_type(Predicate,ReturnType,Return,Result), writeln(Return->Result), nonvar(Result))).
 % If the Prolog predicate does not exist, call the original Python function
 from_python(ModuleFunctionName, TupleArgs, LArgs, KwArgs, Return) :- fail,
-    maybe_info('No Prolog predicate found for: ~w. Calling original Python function.~n', [ModuleFunctionName]),
+    format('No Prolog predicate found for: ~w. Calling original Python function.~n', [ModuleFunctionName]),
     call_python_original(ModuleFunctionName, TupleArgs, LArgs, KwArgs, Return).
 
-call_ret_type(Predicate,bool,_Return,Result):-!, (call(Predicate) -> ignore(Result='@'('True')) ; ignore(Result='@'('False'))).
-call_ret_type(Predicate,'None',_Return,Result):-!, ignore(call(Predicate)) -> ignore(Result=('None')).
+call_ret_type(Predicate,bool,_Return,Result):-!, (call(Predicate) -> ignore(Result='@'('true')) ; ignore(Result='@'('false'))).
+call_ret_type(Predicate,'None',_Return,Result):-!, ignore(call(Predicate)) -> ignore(Result='@'('none')).
 call_ret_type(Predicate,_RetType,Return,Result):-!, call(Predicate),ret_res(Return,Result).
 
 ret_res(o3(_,ID,_),ID):- nonvar(ID), !.
@@ -290,11 +290,16 @@ load_mettalogpy :-
 %   ?- mettalogpy_repl.
 %   true.
 %
-mettalogpy_repl :- 
-    load_metta_python_proxy,
+mettalogpy_repl:-
+   catch_log(override_hyperonpy),
+   catch_log(hyperonpy_repl),!.
+
+hyperonpy_repl:- 
+  maplist(catch_log,
+   [load_metta_python_proxy,
     load_metta_python_patcher,
     load_mettalogpy,
-    py_call(mettalog:repl()).
+    py_call(mettalog:repl())]).
 
 
 %!  maybe_load_metta_python_patcher is det.
@@ -322,7 +327,7 @@ maybe_load_metta_python_patcher :-
 
 
 % Call the original Python function if there's no Prolog predicate
-call_python_original(ModuleFunctionName, TupleArgs, LArgs, KwArgs, Return) :-
+call_python_original(ModuleFunctionName, TupleArgs, LArgs, KwArgs, Return) :- fail,
     py_call(override:call_python_original(ModuleFunctionName, TupleArgs, LArgs, KwArgs), Return).
 
 my_module_add(A,B,_,R):- R is A + B.
@@ -338,7 +343,6 @@ my_module_factorial(N, F) :-
     N1 is N - 1,
     my_module_factorial(N1, F1),
     F is N * F1.
-
 
 
 % The `oo_*` library simulates object-oriented behavior in Prolog. It allows for creating, manipulating, and interacting with objects using dynamic predicates and helper functions.
@@ -513,6 +517,8 @@ oo_equal(ObjectOrID1, ObjectOrID2, AreEqual) :-
 into_object(I,O):- into_object1(I,O),!.
 into_object(ID, _) :- \+ o3(_, ID, _), throw(error(existence_error(object, ID), into_object/2)).
 
+into_object1(Var,o3(Type, ID, Attributes)):- attvar(Var),get_attr(Var,type,Type),get_attr(Var,id,ID),get_attr(Var,fields,Attributes),!.
+into_object1(Var,VarO):- var(Var),!,VarO=Var.
 into_object1(o3(Type, ID, Attributes), o3(Type, ID, Attributes)) :- !.
 % Fail if object not found
 into_object1(ID, o3(Type, ID, Attributes)) :- o3(Type, ID, Attributes), !.
@@ -1448,7 +1454,7 @@ hyperonpy_metta_eq(Metta1, Metta2, AreEqual) :-
 %   @arg ErrorStr The error string associated with the Metta instance.
 hyperonpy_metta_err_str(Metta, ErrorStr) :-
    nop(oo_invoke(metta, Metta, err_str(), ErrorStr)),
-   ignore(ErrorStr = "").
+   ignore(ErrorStr = '@'('none')).
 
 %!  hyperonpy_metta_evaluate_atom(+Metta, +Atom, -ResultList) is det.
 %
@@ -1521,7 +1527,7 @@ hyperonpy_metta_new(Space, EnvBuilder, Metta) :-
 %   @arg ResultList The list of results from running the parser.
 hyperonpy_metta_run(Metta, SExprParser, ResultList) :-
    nop(oo_invoke(metta, Metta, run(SExprParser), ResultList)),
-   ignore(ResultList = 'None'). % [2].
+   ignore(ResultList = '@'('none')). % [2].
 
 %!  hyperonpy_metta_space(+Metta, -Space) is det.
 %

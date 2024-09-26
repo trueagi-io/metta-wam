@@ -127,10 +127,12 @@ def override_module_calls_with_janus(module):
                     result_list = list(result_iter)
                     if len(result_list) == 1:
                         result = result_list[0]
+                    if str(result) == "None":
+                        return None
                     if result is not None:
                         return result
 
-                    return None
+                    #return None
                     return original_function(*args, **kwargs)
 
                 except Exception as e:
