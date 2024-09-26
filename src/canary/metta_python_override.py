@@ -123,14 +123,15 @@ def override_module_calls_with_janus(module):
             def overridden_function(*args, **kwargs):
                 pargs = list(args)
                 try:
-                    result_iter = janus.apply_once('user', 'from_python', full_function_name, args, pargs, kwargs)
+                    result_iter = janus.apply('user', 'from_python', full_function_name, args, pargs, kwargs)
                     result_list = list(result_iter)
                     if len(result_list) == 1:
                         result = result_list[0]
                         # if str(result) == "None": return None
-                        if result is not None:
-                            return result
-                        return None
+                        if str(result) == 'call_original_function':
+                            return original_function(*args, **kwargs)
+                        return result
+
                     return original_function(*args, **kwargs)
 
                 except Exception as e:

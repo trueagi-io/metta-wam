@@ -5,6 +5,10 @@
 % :- module(python_interface, [from_python/5, register_function/5, registered_function/5]).
 :- use_module(library(janus)).
 
+% Uncomment the next line for quiter runs
+% if_bugger(_):- !.
+if_bugger(G):- call(G).
+
 % Dynamic predicate to store registered functions
 :- dynamic registered_function/5.
 
@@ -27,10 +31,13 @@ from_python(ModuleFunctionName, _TupleArgs, LArgs, KwArgs, Result) :-
     (current_predicate(ModuleFunctionName/Arity) -> append(LArgs, [], FullArgs)))),
     Predicate =.. [ModuleFunctionName | FullArgs], % Create the goal dynamically with all arguments
     registered_function(ModuleFunctionName,_,_,_,ReturnType),
-    format('Calling existing Prolog predicate: ~q -> ~q ', [Predicate,ReturnType]),!,
-    ((call_ret_type(Predicate,ReturnType,Return,Result), writeln(Return->Result), nonvar(Result))).
+    if_bugger(format('Calling existing Prolog predicate: ~q -> ~q ', [Predicate,ReturnType])),!,
+    ((call_ret_type(Predicate,ReturnType,Return,Result), if_bugger(writeln(Return->Result)), nonvar(Result))).
+
+from_python(_ModuleFunctionName, _TupleArgs, _LArgs, _KwArgs, 'call_original_function'):-!.
+
 % If the Prolog predicate does not exist, call the original Python function
-from_python(ModuleFunctionName, TupleArgs, LArgs, KwArgs, Return) :- fail,
+from_python(ModuleFunctionName, TupleArgs, LArgs, KwArgs, Return) :-  
     format('No Prolog predicate found for: ~w. Calling original Python function.~n', [ModuleFunctionName]),
     call_python_original(ModuleFunctionName, TupleArgs, LArgs, KwArgs, Return).
 
