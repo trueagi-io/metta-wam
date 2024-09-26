@@ -194,7 +194,7 @@ class Observer:
         if isinstance(args_list[0], types.ModuleType):
             args_list[0] = None
 
-        args = tuple(args_list)
+        args = tuple(args_list) 
 
         # Generate the event key based on the level and event type
         event_key = f"{level}_{event_type}"

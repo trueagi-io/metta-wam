@@ -213,13 +213,15 @@ def repl_loop_impl(theMeTTa=None, get_sexpr_input=get_sexpr_input, print_cmt=pri
         if theMeTTa is None:
             theMeTTa = get_metta()
 
-        submode = "!"
+        submode = "+"  # default `submode` is to add information
         the_new_runner_space = theMeTTa.space()
 
         def maybe_submode(line):
+            nonlocal submode
             lastchar = line[-1]
             if "+-?!^".find(lastchar)>=0:
                 submode=lastchar
+
         def parse_single(s):
             return theMeTTa.parse_single(s)
 
@@ -345,7 +347,7 @@ def repl_loop_impl(theMeTTa=None, get_sexpr_input=get_sexpr_input, print_cmt=pri
 
                 elif sline.startswith("@v"):
                     verbose = int(sline.split()[1])
-                    os.environ["VSPACE_VERBOSE"] = str(verbose)
+                    os.environ["METTALOG_VERBOSE"] = str(verbose)
                     print_cmt(f"Verbosity level set to {verbose}")
                     continue
 
@@ -386,7 +388,7 @@ def repl_loop_impl(theMeTTa=None, get_sexpr_input=get_sexpr_input, print_cmt=pri
                     print_cmt(".q     - Quit the session")
                     print_cmt(".h     - Display command history")
                     print_cmt("\nFrom your shell you can use..")
-                    print_cmt("\texport VSPACE_VERBOSE=2")
+                    print_cmt("\texport METTALOG_VERBOSE=2")
                     flush_console()
                     continue
 
