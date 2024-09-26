@@ -78,6 +78,19 @@ is_win64_ui:- is_win64,current_prolog_flag(hwnd,_).
 
 dont_change_streams:- true.
 
+%!  lazy_load_python is det.
+%
+%   This predicate represents a placeholder or a stub for lazily loading the Python
+%   integration. Currently, it does not contain any implementation logic.
+%   Presumably, it would attempt to load Python-related resources or interfaces
+%   when needed, avoiding unnecessary overhead if Python is not required.
+%
+%   The implementation should be added to perform the actual lazy loading of
+%   the Python environment or integration.
+%
+:- dynamic(lazy_load_python/0).
+lazy_load_python.
+
 :- dynamic(user:is_metta_src_dir/1).
 :- prolog_load_context(directory,Dir),
   retractall(user:is_metta_src_dir(_)),

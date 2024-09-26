@@ -2415,18 +2415,6 @@ load_metta_python_proxy:-
     assert(did_load_metta_python_proxy),    
     !.
 
-%!  lazy_load_python is det.
-%
-%   This predicate represents a placeholder or a stub for lazily loading the Python
-%   integration. Currently, it does not contain any implementation logic.
-%   Presumably, it would attempt to load Python-related resources or interfaces
-%   when needed, avoiding unnecessary overhead if Python is not required.
-%
-%   The implementation should be added to perform the actual lazy loading of
-%   the Python environment or integration.
-%
-lazy_load_python.
-
 %!  maybe_load_metta_python_proxy is det.
 %
 %   This predicate ensures that the Python integration for Metta is loaded.
