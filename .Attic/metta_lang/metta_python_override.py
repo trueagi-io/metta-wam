@@ -127,12 +127,10 @@ def override_module_calls_with_janus(module):
                     result_list = list(result_iter)
                     if len(result_list) == 1:
                         result = result_list[0]
-                    if str(result) == "None":
+                        # if str(result) == "None": return None
+                        if result is not None:
+                            return result
                         return None
-                    if result is not None:
-                        return result
-
-                    #return None
                     return original_function(*args, **kwargs)
 
                 except Exception as e:
@@ -145,8 +143,37 @@ def override_module_calls_with_janus(module):
         setattr(module, name, overridden_func)
 
 def test_my_module():
-    import my_module
+    import types
+
+    # Create an actual module object
+    my_module = types.ModuleType("my_module")
+
+    # Define functions in this module
+    def add(a, b):
+        return 666  # Intentionally incorrect
+    
+    def multiply(a, b):
+        return a * b
+    
+    def greet(name):
+        return f"Hello, {name}!"
+    
+    def factorial(n):
+        """Calculates the factorial of n recursively."""
+        if n == 0:
+            return 1
+        else:
+            return -n  # Intentionally incorrect
+    
+    # Assign these functions to the module
+    my_module.add = add
+    my_module.multiply = multiply
+    my_module.greet = greet
+    my_module.factorial = factorial
+
+    # override the module calls with prolog
     override_module_calls_with_janus(my_module)
+
     # Test calls
     print("Testing overridden functions:")
     print(f"add(2, 3): {my_module.add(2, 3)}")
