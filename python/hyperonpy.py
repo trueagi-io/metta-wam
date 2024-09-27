@@ -31,7 +31,7 @@ Environment Variables:
 
 import os
 import sys
-import readline
+#import readline
 import atexit
 import traceback
 import re
@@ -138,7 +138,7 @@ class SyntaxNodeType(Enum):
 class CStruct:
     def __init__(self, obj=None):
         self.obj = obj
-    def __init__(self, l2, **kwargs):
+    def __init__(self, l2=None, **kwargs):
         self.__dict__.update(kwargs)
 
     def ptr(self):
@@ -1590,14 +1590,14 @@ def trace_break():
     print("TRACE: Press any key to continue...")
     wait_for_key() #keyboard.read_event()  # This waits for a key event
 
-import sys
-import termios
-import tty
 
 def wait_for_key():    
+    import sys  
     fd = sys.stdin.fileno()
+    import termios
     old_settings = termios.tcgetattr(fd)
     try:
+        import tty  
         tty.setraw(fd)
         sys.stdin.read(1)  # This waits for a single key press
     finally:
@@ -2105,7 +2105,7 @@ class REPL:
         self.runner = runner
 
     def main_loop(self):
-        install_history()
+        #install_history()
         while True:
             try:
                 line = input("metta> ")  # Use input function for user input
@@ -2169,8 +2169,5 @@ else:
     mesg(DEBUG,f"__name__={__name__}")
     hyperonpy()
 
-
-
-    
 #    Please continue where you left off /// Make sure you give me back the complete and workign versions of the entire content)  this is taking the place of a the old pybind11 C++ file so module level functions and class names and class function  cannot be renamed or ommited.  Continue  and dont worry about space limitations 
 
