@@ -40,13 +40,18 @@ tar -zcvf lsp_server_metta-0.0.3.tgz --exclude=vscode lsp_server_metta
 
 VSCode require a `.vsix` file. There are two ways to get that:
 
-UNFINISHED
+### From the marketplace
 
-* VSCode
+![screenshot](images/VSCode_lsp_install.png)
 
-  - download the latest ~.vsix~ file from the [[https://github.com/jamesnvc/lsp_server/releases][releases page]]
-  - clone this repo and copy/symlink the ~vscode/~ directory to ~~/.vscode/extensions/~
-  - clone and build the ~.vsix~ file yourself by the follwing steps:
-    1. install ~vsce~ (~npm install -g vsce~)
-    2. run ~vsce publish~ from the ~vscode/~ directory
-    3. add the resulting ~.vsix~ to VSCode.
+From VSCode, go to the extensions button on the left (four squares with one of them offset, circled in red), at the top of the EXTENSIONS pane, go to the place where it says `Search Extensions in Marketplace`, and type `metta`. Several extensions will appear, you want the `metta-lsp` server written by Roy Ward (the one with a green oval around it). Click the `Install` button and you are done.
+
+### Build the `.vsix` file yourself
+
+* install `vsce` (`npm install -g vsce`, although the `-g` didn't work for me)
+
+* `cd vscode`
+
+* `vsce package` (the might be some Javascript dependencies required to be installed before this works). If you are using the instructions from metta-lsp-0.0.2.vsix, DO NOT `vsce publish` as is suggested there unless you want to fork this and add your own version to the marketplace.
+
+* Take the resulting `.vsix` file (called `metta-lsp-0.0.2.vsix` or something similar), and install into VSCode (find the `...` at the top right of the EXTENSIONS panel, click on it and select `Install from VSIX...`.
