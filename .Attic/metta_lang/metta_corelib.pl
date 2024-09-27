@@ -1,416 +1,191 @@
 :- multifile(lazy_load_python/0).
 :- dynamic(lazy_load_python/0).
-
-% Import the Janus library, which is used for interfacing with Python.
-:- use_module(library(janus)).
-
-% Uncomment the next line for quieter runs, meaning any debugging or tracing calls will be suppressed.
-% if_bugger(_):- !.
-if_bugger(G):- call(G).
-
-% Define a no-op predicate if `nop/1` is not already defined.
-:- if(\+ current_predicate(nop/1)).
-nop(_).
-:- endif.
-
-% Define a tracing predicate to handle failure cases during execution.
-% If `trace_failures/1` is not already defined, define it here.
-:- if(\+ current_predicate(trace_failures/1)).
-trace_failures((A,B)):- !,  
-  (A *-> trace_failures(B)  ; 
-     (B *-> trace_failures(A)  ;  wfailed(((A,B))))).
-trace_failures(A):- (A *-> true ; wfailed(A)).
-
-% Predicate to print failed goals for debugging purposes.
-wfailed(G):- writeln(wfailed(G)), fail.
-:- endif.
-
-% Dynamic predicate to store registered Python functions with details about their parameters and return type.
-:- dynamic registered_function/5.
-
-%!  register_function(+ModuleFunctionName, +ParamNames, +ParamTypes, +ParamDefaults, +ReturnType) is det.
-%
-%   Registers a Python function in Prolog with its associated parameters and return type.
-%   If a function with the same name is already registered, it will be retracted and replaced
-%   with the new details.
-%
-%   @arg ModuleFunctionName The name of the function being registered (concatenation of module and function name).
-%   @arg ParamNames List of parameter names.
-%   @arg ParamTypes List of parameter types.
-%   @arg ParamDefaults List of default values for the parameters.
-%   @arg ReturnType The return type of the function.
-%
-%   @example
-%   % Registering a Python function named 'math_add':
-%   ?- register_function('math_add', ['x', 'y'], ['int', 'int'], [0, 0], 'int').
-%   Registered function: 'math_add' with parameters: ['x', 'y'], defaults: [0, 0], types: ['int', 'int'] -> 'int'.
-%
-register_function(ModuleFunctionName, ParamNames, ParamTypes, ParamDefaults, ReturnType) :-
-    % Remove any previous registration of the function.
-    retractall(registered_function(ModuleFunctionName, _, _, _, _)),
-    % Register the function with its new details.
-    assertz(registered_function(ModuleFunctionName, ParamNames, ParamTypes, ParamDefaults, ReturnType)),
-    format('Registered function: ~q with parameters: ~q, defaults: ~q, types: ~q -> ~q~n', 
-           [ModuleFunctionName, ParamNames, ParamDefaults, ParamTypes, ReturnType]).
-
-%!  from_python(+ModuleFunctionName, +TupleArgs, +LArgs, +KwArgs, -Return) is det.
-%
-%   Handles calling a registered Prolog predicate or, if not found, the original Python function.
-%   It first checks if the Prolog predicate exists, and if so, dynamically constructs the goal and calls it.
-%   If no Prolog predicate is found, it calls the original Python function.
-%
-%   @arg ModuleFunctionName The name of the function being called.
-%   @arg TupleArgs A tuple of arguments (not currently used but passed for compatibility).
-%   @arg LArgs A list of positional arguments.
-%   @arg KwArgs A list of keyword arguments.
-%   @arg Return The result of the function call.
-%
-%   @example
-%   % Calling a registered Prolog function:
-%   ?- from_python('math_add', _, [1, 2], [], Result).
-%   Result = 3.
-%
-from_python(ModuleFunctionName, _TupleArgs, LArgs, KwArgs, Result) :-
-    % Determine the arity of the function based on the number of positional arguments.
-    length(LArgs, Arity), 
-    NewArity1 is Arity + 1,  % Adjust arity to account for one additional argument (Return).
-    NewArity2 is Arity + 2,  % Adjust arity to account for two additional arguments (KwArgs and Return).
-
-    % Check if a Prolog predicate with the corresponding arity exists.
-    (current_predicate(ModuleFunctionName/NewArity2) -> append(LArgs, [KwArgs, Return], FullArgs);
-    (current_predicate(ModuleFunctionName/NewArity1) -> append(LArgs, [Return], FullArgs);
-    (current_predicate(ModuleFunctionName/Arity) -> append(LArgs, [], FullArgs)))),
-
-    % Construct the predicate dynamically with all arguments.
-    Predicate =.. [ModuleFunctionName | FullArgs],
-    registered_function(ModuleFunctionName, _, _, _, ReturnType),
-
-    % Call the Prolog predicate and handle its return type.
-    if_bugger(format('Calling existing Prolog predicate: ~q -> ~q ', [Predicate, ReturnType])),!,
-    trace_failures((call_ret_type(Predicate, ReturnType, Return, Result), 
-                    if_bugger(writeln(Return -> Result)), nonvar(Result))).
-
-% Fallback clause if no corresponding Prolog predicate is found, calls the original Python function.
-from_python(_ModuleFunctionName, _TupleArgs, _LArgs, _KwArgs, 'call_original_function'):- !.
-
-%!  from_python(+ModuleFunctionName, +TupleArgs, +LArgs, +KwArgs, -Return) is det.
-%
-%   Fallback implementation for handling cases where no Prolog predicate exists for a Python function.
-%   In such cases, it invokes the original Python function.
-%
-%   @arg ModuleFunctionName The name of the Python function to call.
-%   @arg TupleArgs A tuple of arguments.
-%   @arg LArgs A list of positional arguments.
-%   @arg KwArgs A list of keyword arguments.
-%   @arg Return The result of the function call.
-%
-from_python(ModuleFunctionName, TupleArgs, LArgs, KwArgs, Return) :-  
-    format('No Prolog predicate found for: ~w. Calling original Python function.~n', [ModuleFunctionName]),
-    call_python_original(ModuleFunctionName, TupleArgs, LArgs, KwArgs, Return).
-
-% Predicate to handle calling a predicate with a boolean return type.
-call_ret_type(Predicate, bool, _Return, Result) :- !, 
-    (call(Predicate) -> ignore(Result = '@'('true')) ; ignore(Result = '@'('false'))).
-
-% Predicate to handle calling a predicate with a 'None' return type.
-call_ret_type(Predicate, 'None', _Return, Result) :- !, 
-    ignore(call(Predicate)) -> ignore(Result = '@'('none')).
-
-% Generic handler for other return types.
-call_ret_type(Predicate, _RetType, Return, Result) :- !, 
-    call(Predicate), ret_res(Return, Result).
-
-% Helper to process the return value.
-ret_res(o3(_, ID, _), ID) :- nonvar(ID), !.
-ret_res(ID, ID).
-
-
-%!  override_hyperonpy is det.
-%
-%   Loads the Python overrider (if not already loaded) and calls the Python function `override_hyperonpy/0`
-%   from the `metta_python_overrider` module. The result is expected to be an empty Python dictionary (`py{}`).
-%
-%   @example
-%   % Applying the override to Hyperon:
-%   ?- override_hyperonpy.
-%   true.
-%
-override_hyperonpy :-
-    load_metta_python_overrider,  % Ensure the overrider is loaded.
-    py_call(metta_python_override:load_hyperon_overrides(), _), !.
-
-%!  test_override_hyperonpy is det.
-%
-%   Loads the Hyperon Python module by first applying the necessary overridees using `override_hyperonpy/0`.
-%
-%   @example
-%   % Load the Hyperon module:
-%   ?- test_override_hyperonpy.
-%   true.
-%
-test_override_hyperonpy :-
-    load_metta_python_overrider,  % Ensure the overrider is loaded.
-    py_call(metta_python_override:test_hyperon_overrides(), _), !.
-
-
-
-%!  metta_python_overrider(-Content) is det.
-%
-%   Reads and asserts the content of the Python file 'metta_python_override.py' as a dynamic fact.
-%   This allows the Python code to be accessed and used at runtime within Prolog.
-%
-%   @arg Content A string representing the contents of the 'metta_python_override.py' file.
-%
-%   @example
-%   % Retrieve the content of the Python overrider:
-%   ?- metta_python_overrider(Content).
-%   Content = "... Python code ...".
-%
-:- dynamic(metta_python_overrider/1).
-
-% Read the content of the Python override file and assert it as a fact.
-:- read_file_to_string('./metta_python_override.py', String, []),
-   assertz(metta_python_overrider(String)), !.
-
-%!  did_load_metta_python_overrider is det.
-%
-%   A volatile predicate that acts as a flag indicating whether the Python overrider has been loaded.
-%   This flag is not saved between sessions and only exists during the current runtime.
-%
-%   @example
-%   % After loading the overrider, this will succeed:
-%   ?- did_load_metta_python_overrider.
-%
-:- dynamic(did_load_metta_python_overrider/0).
-:- volatile(did_load_metta_python_overrider/0).
-
-%!  load_metta_python_overrider is det.
-%
-%   Loads the Python overrider if it hasn't been loaded yet. The overrider content is retrieved
-%   from `metta_python_overrider/1`, and the Python module is loaded via `py_module/2`. Once
-%   loaded, `did_load_metta_python_overrider/0` is asserted to prevent reloading.
-%
-%   @example
-%   % Load the Python overrider:
-%   ?- load_metta_python_overrider.
-%   true.
-%
-load_metta_python_overrider :- 
-    did_load_metta_python_overrider, !.  % If already loaded, do nothing.
-
-load_metta_python_overrider :- 
-    % Retrieve the Python overrider content.
-    metta_python_overrider(String),
-    % Load the Python module via py_module/2.
-    py_module(metta_python_overrider, String),
-    % Assert that the overrider has now been loaded.
-    assert(did_load_metta_python_overrider), !,
-    % Try to load the module again, ignoring any errors.
-    ignore(notrace(with_safe_argv(catch(py_module(metta_python_overrider, String), _, true)))), !.
-
-
-%!  maybe_load_metta_python_overrider is det.
-%
-%   This predicate ensures that the Python integration for Metta is loaded.
-%   It tries to load the Python interface lazily by calling `lazy_load_python/0`.
-%   If the lazy loading succeeds (determined by the cut `!`), it does nothing more.
-%   If lazy loading fails, it proceeds to load the Metta Python overrider using 
-%   `load_metta_python_overrider/0`.
-%
-maybe_load_metta_python_overrider :- 
-    % Attempt lazy loading of the Python interface.
-    lazy_load_python, !.
-maybe_load_metta_python_overrider :- 
-    % If lazy loading fails, load the Metta Python overrider manually.
-    load_metta_python_overrider.
-
-% The following directives ensure that `maybe_load_metta_python_overrider/0` is called 
-% during system initialization. The first initialization runs when the program 
-% starts, and the second runs when the system is restored from a saved state.
-:- initialization(maybe_load_metta_python_overrider).
-:- initialization(maybe_load_metta_python_overrider, restore).
-
-
-
-
-
-
-
-
-%!  metta_python_patcher(-Content) is det.
-%
-%   Reads and asserts the content of the Python file 'metta_python_patcher.py' as a dynamic fact.
-%   This allows the Python code to be accessed and used at runtime within Prolog.
-%
-%   @arg Content A string representing the contents of the 'metta_python_patcher.py' file.
-%
-%   @example
-%   % Retrieve the content of the Python patcher:
-%   ?- metta_python_patcher(Content).
-%   Content = "... Python code ...".
-%
-:- dynamic(metta_python_patcher/1).
-
-:-  % Get the directory of the current Prolog file being loaded.
-    prolog_load_context(directory, Dir),
-    % Construct the full path to the Python patcher file.
-    atomic_list_concat([Dir, '/', 'metta_python_patcher.py'], FilePath),
-    % Read the content of the Python patcher file and assert it.
-    read_file_to_string(FilePath, String, []),
-    asserta(metta_python_patcher(String)), !.
-
-
-%!  did_load_metta_python_patcher is det.
-%
-%   A volatile predicate that acts as a flag indicating whether the Python patcher has been loaded.
-%   This flag is not saved between sessions and only exists during the current runtime.
-%
-%   @example
-%   % After loading the patcher, this will succeed:
-%   ?- did_load_metta_python_patcher.
-%
-:- dynamic(did_load_metta_python_patcher/0).
-:- volatile(did_load_metta_python_patcher/0).
-
-%!  load_metta_python_patcher is det.
-%
-%   Loads the Python patcher if it hasn't been loaded yet. The patcher content is retrieved
-%   from `metta_python_patcher/1`, and the Python module is loaded via `py_module/2`. Once
-%   loaded, `did_load_metta_python_patcher/0` is asserted to prevent reloading.
-%
-%   @example
-%   % Load the Python patcher:
-%   ?- load_metta_python_patcher.
-%   true.
-%
-load_metta_python_patcher :- 
-    did_load_metta_python_patcher, !.  % If already loaded, do nothing.
-
-load_metta_python_patcher :- 
-    % Retrieve the Python patcher content.
-    metta_python_patcher(String),
-    % Load the Python module via py_module/2.
-    py_module(metta_python_patcher, String),
-    % Assert that the patcher has now been loaded.
-    assert(did_load_metta_python_patcher), !,
-    % Try to load the module again, ignoring any errors.
-    ignore(notrace(with_safe_argv(catch(py_module(metta_python_patcher, String), _, true)))), !.
-
-
-%!  maybe_load_metta_python_patcher is det.
-%
-%   This predicate ensures that the Python integration for Metta is loaded.
-%   It tries to load the Python interface lazily by calling `lazy_load_python/0`.
-%   If the lazy loading succeeds (determined by the cut `!`), it does nothing more.
-%   If lazy loading fails, it proceeds to load the Metta Python patcher using 
-%   `load_metta_python_patcher/0`.
-%
-maybe_load_metta_python_patcher :- 
-    % Attempt lazy loading of the Python interface.
-    lazy_load_python, !.
-maybe_load_metta_python_patcher :- 
-    % If lazy loading fails, load the Metta Python patcher manually.
-    load_metta_python_patcher.
-
-% The following directives ensure that `maybe_load_metta_python_patcher/0` is called 
-% during system initialization. The first initialization runs when the program 
-% starts, and the second runs when the system is restored from a saved state.
-:- initialization(maybe_load_metta_python_patcher).
-:- initialization(maybe_load_metta_python_patcher, restore).
-
-
-
-
-
-
-
-%!  patch_hyperonpy is det.
-%
-%   Loads the Python patcher (if not already loaded) and calls the Python function `patch_hyperonpy/0`
-%   from the `metta_python_patcher` module. The result is expected to be an empty Python dictionary (`py{}`).
-%
-%   @example
-%   % Applying the patch to Hyperon:
-%   ?- patch_hyperonpy.
-%   true.
-%
-patch_hyperonpy :-
-    load_metta_python_patcher,  % Ensure the patcher is loaded.
-    py_call(metta_python_patcher:patch_hyperonpy(), O), !,
-    O = py{}.
-
-%!  load_hyperonpy is det.
-%
-%   Loads the Hyperon Python module by first applying the necessary patches using `patch_hyperonpy/0`.
-%
-%   @example
-%   % Load the Hyperon module:
-%   ?- load_hyperonpy.
-%   true.
-%
-load_hyperonpy :-
-    patch_hyperonpy.
-
-%!  load_mettalogpy is det.
-%
-%   Loads the `mettalog` Python module and optionally attempts to load the `hyperon` module.
-%   The `nop/1` around the second `py_exec/1` ensures that loading `hyperon` does not raise an error.
-%
-%   @example
-%   % Load mettalog and hyperon (if available):
-%   ?- load_mettalogpy.
-%   true.
-%
-load_mettalogpy :-
-    py_exec("import mettalog"),
-    nop(py_exec("import hyperon")).
-
-%!  mettalogpy_repl is det.
-%
-%   Starts the REPL (Read-Eval-Print Loop) for the `mettalog` Python module by invoking the `repl/0` function.
-%
-%   @example
-%   % Start the mettalog REPL:
-%   ?- mettalogpy_repl.
-%   true.
-%
-mettalogpy_repl:-
-   catch_log(override_hyperonpy),
-   catch_log(hyperonpy_repl),!.
-
-hyperonpy_repl:- 
-  maplist(catch_log,
-   [load_metta_python_proxy,
-    load_metta_python_patcher,
-    load_mettalogpy,
-    py_call(mettalog:repl())]).
-
-
-
-% Call the original Python function if there's no Prolog predicate
-call_python_original(ModuleFunctionName, TupleArgs, LArgs, KwArgs, Return) :- fail,
-    py_call(override:call_python_original(ModuleFunctionName, TupleArgs, LArgs, KwArgs), Return).
-
-my_module_add(A,B,_,R):- R is A + B.
-
-maybe_info(_Fmt,_Args):-!.
-maybe_info(Fmt,Args):- format(Fmt,Args).
-
-
-% Define factorial in Prolog
-my_module_factorial(0, 1).
-my_module_factorial(N, F) :-
-    N > 0,
-    N1 is N - 1,
-    my_module_factorial(N1, F1),
-    F is N * F1.
-
-
-% The `oo_*` library simulates object-oriented behavior in Prolog. It allows for creating, manipulating, and interacting with objects using dynamic predicates and helper functions.
+% ==================================================
+
+:- module(hyperonpy_prolog_translation, [
+    % Object-oriented helper predicates
+    oo_new/3,          % 1
+    oo_free/1,         % 2
+    oo_invoke/4,       % 3
+    oo_clone/2,        % 4
+    oo_get/4,          % 5
+    oo_set/3,          % 6
+    oo_equal/3,        % 7
+
+    % hyperonpy_* functions
+    % 1. Atom Functions
+    hyperonpy_atom_sym/2,            % 8
+    hyperonpy_atom_var/2,            % 9
+    hyperonpy_atom_expr/2,           % 10
+    hyperonpy_atom_gnd/3,            % 11
+    hyperonpy_atom_free/1,           % 12
+    hyperonpy_atom_to_str/2,         % 13
+    hyperonpy_atom_eq/3,             % 14
+    hyperonpy_atom_get_name/2,       % 15
+    hyperonpy_atom_get_children/2,   % 16
+    hyperonpy_atom_get_grounded_type/2, % 17
+    hyperonpy_atom_get_object/2,     % 18
+    hyperonpy_atom_is_cgrounded/2,   % 19
+    hyperonpy_atom_is_error/2,       % 20
+    hyperonpy_atom_error_message/2,  % 21
+    hyperonpy_atom_var_parse_name/2, % 22
+    hyperonpy_atom_get_metatype/2,   % 23
+    hyperonpy_atom_get_space/2,      % 24
+    hyperonpy_atom_iterate/2,        % 25
+    hyperonpy_atom_match_atom/3,     % 26
+    hyperonpy_atom_gnd_serialize/3,  % 27
+    hyperonpy_atom_clone/2,          % 28
+
+    % 2. Atom Vector Functions
+    hyperonpy_atom_vec_new/1,        % 29
+    hyperonpy_atom_vec_from_list/2,  % 30
+    hyperonpy_atom_vec_len/2,        % 31
+    hyperonpy_atom_vec_push/2,       % 32
+    hyperonpy_atom_vec_pop/2,        % 33
+    hyperonpy_atom_vec_free/1,       % 34
+
+    % 3. Bindings Functions
+    hyperonpy_bindings_new/1,        % 35
+    hyperonpy_bindings_free/1,       % 36
+    hyperonpy_bindings_add_var_binding/4, % 37
+    hyperonpy_bindings_resolve/3,    % 38
+    hyperonpy_bindings_is_empty/2,   % 39
+    hyperonpy_bindings_list/2,       % 40
+    hyperonpy_bindings_merge/3,      % 41
+    hyperonpy_bindings_eq/3,         % 42
+    hyperonpy_bindings_clone/2,      % 43
+    hyperonpy_bindings_to_str/2,     % 44
+    hyperonpy_bindings_narrow_vars/2, % 45
+
+    % 4. Bindings Set Functions
+    hyperonpy_bindings_set_empty/1,  % 46
+    hyperonpy_bindings_set_free/1,   % 47
+    hyperonpy_bindings_set_add_var_binding/3, % 48
+    hyperonpy_bindings_set_is_empty/2, % 49
+    hyperonpy_bindings_set_list/2,   % 50
+    hyperonpy_bindings_set_merge_into/2, % 51
+    hyperonpy_bindings_set_eq/3,     % 52
+    hyperonpy_bindings_set_clone/2,  % 53
+    hyperonpy_bindings_set_from_bindings/2, % 54
+    hyperonpy_bindings_set_unpack/2, % 55
+    hyperonpy_bindings_set_is_single/2, % 56
+    hyperonpy_bindings_set_push/2,   % 57
+    hyperonpy_bindings_set_single/1, % 58
+    hyperonpy_bindings_set_add_var_equality/3, % 59
+    hyperonpy_bindings_set_to_str/2, % 60
+
+    % 5. Validation Functions
+    hyperonpy_validate_atom/3,       % 61
+    hyperonpy_check_type/4,          % 62
+    hyperonpy_get_atom_types/3,      % 63
+
+    % 6. Metta Functions
+    hyperonpy_metta_new/3,           % 64
+    hyperonpy_metta_free/1,          % 65
+    hyperonpy_metta_space/2,         % 66
+    hyperonpy_metta_tokenizer/2,     % 67
+    hyperonpy_metta_run/3,           % 68
+    hyperonpy_metta_err_str/2,       % 69
+    hyperonpy_metta_evaluate_atom/3, % 70
+    hyperonpy_metta_load_module_at_path/4, % 71
+    hyperonpy_metta_load_module_direct/4, % 72
+    hyperonpy_metta_working_dir/2,   % 73
+    hyperonpy_metta_eq/3,            % 74
+
+    % 7. Environment Builder Functions
+    hyperonpy_environment_config_dir/2, % 75
+    hyperonpy_env_builder_start/1,   % 76
+    hyperonpy_env_builder_use_default/1, % 77
+    hyperonpy_env_builder_use_test_env/1, % 78
+    hyperonpy_env_builder_set_working_dir/2, % 79
+    hyperonpy_env_builder_set_config_dir/2, % 80
+    hyperonpy_env_builder_create_config_dir/3, % 81
+    hyperonpy_env_builder_disable_config_dir/1, % 82
+    hyperonpy_env_builder_set_is_test/2, % 83
+    hyperonpy_env_builder_push_include_path/2, % 84
+    hyperonpy_env_builder_push_fs_module_format/3, % 85
+    hyperonpy_env_builder_init_common_env/2, % 86
+
+    % 8. Space Functions
+    hyperonpy_space_new_grounding/1, % 87
+    hyperonpy_space_free/1,          % 88
+    hyperonpy_space_add/2,           % 89
+    hyperonpy_space_remove/3,        % 90
+    hyperonpy_space_replace/4,       % 91
+    hyperonpy_space_subst/4,         % 92
+    hyperonpy_space_eq/3,            % 93
+    hyperonpy_space_list/2,          % 94
+    hyperonpy_space_atom_count/2,    % 95
+    hyperonpy_space_get_payload/2,   % 96
+    hyperonpy_space_new_custom/2,    % 97
+    hyperonpy_space_query/3,         % 98
+
+    % 9. Interpretation Functions
+    hyperonpy_interpret_init/3,      % 99
+    hyperonpy_interpret_step/2,      % 100
+    hyperonpy_step_get_result/2,     % 101
+    hyperonpy_step_has_next/2,       % 102
+
+    % 10. Tokenizer Functions
+    hyperonpy_tokenizer_new/1,       % 103
+    hyperonpy_tokenizer_free/1,      % 104
+    hyperonpy_tokenizer_register_token/3, % 105
+    hyperonpy_tokenizer_clone/2,     % 106
+
+    % 11. Runner State Functions
+    hyperonpy_runner_state_new_with_atoms/3, % 107
+    hyperonpy_runner_state_new_with_parser/3, % 108
+    hyperonpy_runner_state_step/1,   % 109
+    hyperonpy_runner_state_current_results/2, % 110
+    hyperonpy_runner_state_is_complete/2, % 111
+    hyperonpy_runner_state_free/1,   % 112
+    hyperonpy_runner_state_err_str/2, % 113
+
+    % 12. Syntax Node Functions
+    hyperonpy_syntax_node_clone/2,   % 114
+    hyperonpy_syntax_node_free/1,    % 115
+    hyperonpy_syntax_node_is_null/2, % 116
+    hyperonpy_syntax_node_type/2,    % 117
+    hyperonpy_syntax_node_is_leaf/2, % 118
+    hyperonpy_syntax_node_unroll/2,  % 119
+    hyperonpy_syntax_node_src_range/2, % 120
+
+    % 13. Run Context Functions
+    hyperonpy_run_context_get_metta/2, % 121
+    hyperonpy_run_context_get_space/2, % 122
+    hyperonpy_run_context_get_tokenizer/2, % 123
+    hyperonpy_run_context_import_dependency/2, % 124
+    hyperonpy_run_context_init_self_module/3, % 125
+    hyperonpy_run_context_load_module/3, % 126
+
+    % 14. Logging Functions
+    hyperonpy_log_error/1,           % 127
+    hyperonpy_log_info/1,            % 128
+    hyperonpy_log_warn/1,            % 129
+
+    % 15. Load Function
+    hyperonpy_load_ascii/3           % 130
+]).
+
+% The `oo_*` library simulates object-oriented behavior in Prolog.
+% It allows for creating, manipulating, and interacting with objects using dynamic predicates and helper functions.
 :- dynamic o3/3.
 
-o3(atom,int2,[metatype,'Grounded',value:2]).
+o3(atom,int1,[metatype,'Grounded',grounded_type:'Number',object:1]).
+o3(atom,int2,[metatype,'Grounded',grounded_type:'Number',object:2]).
+o3(atom,int3,[metatype,'Grounded',grounded_type:'Number',object:3]).
+o3(atom,int4,[metatype,'Grounded',grounded_type:'Number',object:4]).
 
+
+% Unique object ID generator
+generate_object_id(Type, ObjectID) :-
+    retract(object_counter(N)),
+    N1 is N + 1,
+    assert(object_counter(N1)),
+    atom_concat(Type, '_', TempID),
+    gensym(TempID, ObjectID).
+
+% Define oo_new/3 to create a new object with attributes stored as o_f_v(Object, FieldName, Value)
 %!  oo_new(+Type, +Attributes, -Object) is det.
 %
 %   Creates a new object with a unique ID based on its type.
@@ -427,8 +202,10 @@ o3(atom,int2,[metatype,'Grounded',value:2]).
 %   ?- oo_new(atom_vec, [value:[a,b,c]], Obj).
 %   Obj = o3(atom_vec, atom_vec1, [value:[a, b, c]]).
 %
-oo_new(Type, Attributes, o3(Type, ID, Attributes)) :-
-    gensym(Type, ID),                % Generate a unique ID with the Type as a prefix
+oo_new(Type, Attributes, Object) :-
+        Object= o3(Type, ID, Attributes),
+
+    generate_object_id(Type, Object),  % Generate a unique ID with the Type as a prefix                % Generate a unique ID with the Type as a prefix
     assert(o3(Type, ID, Attributes)).
 
 %!  oo_free(+ObjectOrID) is det.
@@ -493,14 +270,30 @@ oo_invoke(Type, ObjectOrID, MethodCall, Result) :-
 %   @arg ClonedObject The newly created object (clone).
 %
 %   @example
-%   ?- oo_clone(atom_vec1, Clone).
-%   Clone = o3(atom_vec, atom_vec2, [value:[a, b, c]]).
+%     ?- oo_clone(atom_vec_1, Clone).
+%     Clone = o3(atom_vec, atom_vec2, [value:[a, b, c]]).
 %
 oo_clone(ObjectOrID, ClonedObject) :-
     into_object(ObjectOrID, o3(Type, _, Attributes)),
     oo_new(Type, Attributes, ClonedObject).
 
-%!  oo_field(+Type, +ObjectOrID, +FieldName, -Value) is det.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+%!  oo_get(+Type, +ObjectOrID, +FieldName, -Value) is det.
 %
 %   Retrieves the value of a specific field from an object's attributes.
 %
@@ -514,16 +307,18 @@ oo_clone(ObjectOrID, ClonedObject) :-
 %   @arg Value The value associated with the field.
 %
 %   @example
-%   ?- oo_field(atom_vec, atom_vec1, value, List).
+%   ?- oo_get(atom_vec, atom_vec1, value, List).
 %   List = [a, b, c].
 %
-oo_field(Type, ObjectOrID, FieldName, Value) :-
+oo_get(ObjectOrID, FieldName, Value):-
+  oo_get(_, ObjectOrID, FieldName, Value).
+oo_get(Type, ObjectOrID, FieldName, Value) :-
     % Convert ObjectOrID into o3 structure using into_object/2
     into_object(ObjectOrID, o3(DeclType, _, Attributes)),
     % Check for the FieldName in Attributes or use a fallback
      member_chk(FieldName:Value, Attributes),
     % Check if the declared type matches the expected type
-    warn_if_not_true(DeclType = Type, oo_field(Type, ObjectOrID, FieldName, Value)),    
+    warn_if_not_true(DeclType = Type, oo_get(Type, ObjectOrID, FieldName, Value)),    
     !.
 
 member_chk(FieldName:Value, Attributes):-
@@ -551,7 +346,7 @@ member_chk(FieldName:Value, Attributes):-
 %
 %   @example
 %   ?- oo_equal(atom_vec1, atom_vec2, AreEqual).
-%   AreEqual = false.
+%   AreEqual = @(false).
 %
 oo_equal(ObjectOrID1, ObjectOrID2, AreEqual) :-
     % Resolve both objects to the object/3 form
@@ -560,7 +355,7 @@ oo_equal(ObjectOrID1, ObjectOrID2, AreEqual) :-
 
     % Check if IDs are the same; if so, they are equal
     (ID1 == ID2 ->
-        AreEqual = true
+        AreEqual = @(true)
     ;
     % Otherwise, if types are the same, compare attributes
     (Type1 == Type2 ->
@@ -573,10 +368,10 @@ oo_equal(ObjectOrID1, ObjectOrID2, AreEqual) :-
         subtract(Attributes2, Attributes1, [])),
 
         % If all conditions are satisfied, set AreEqual to true
-        AreEqual = true
+        AreEqual = @(true)
     ;
     % If neither condition is met, they are not equal
-    AreEqual = false)).
+    AreEqual = @(false))).
 
 %!  into_object(+Input, -Object) is det.
 %
@@ -604,209 +399,6 @@ into_object1(ID, o3(Type, ID, Attributes)) :- o3(Type, ID, Attributes), !.
 into_object_no_throw(I,O):- into_object1(I,O),!.
 into_object_no_throw(I,I).
 
-%!  handle_method_call(+Type, +ID, +Attributes, +MethodCall, -Result) is det.
-%
-%   Handles method calls on objects by matching on the object's type and method.
-%
-%   This predicate defines various method handlers that can be invoked on objects,
-%   depending on the object's type and the method called. Each method handler
-%   modifies or queries the object's state based on the method call.
-%
-%   @arg Type The type of the object.
-%   @arg ID The ID of the object.
-%   @arg Attributes The attributes associated with the object.
-%   @arg MethodCall The method being invoked on the object.
-%   @arg Result The result of the method call (if applicable).
-%
-%   @example
-%   ?- oo_invoke(atom_vec, atom_vec1, length(), Len).
-%   Len = 3.
-%
-
-% ------------------ Handle Method Calls Implementation ------------------
-
-% Handling length() for other o3 types that have a list attribute
-handle_method_call(_, _, Attributes, length(), Length) :-
-    freeze(List,is_list(List)),member_chk(value:List, Attributes),
-    length(List, Length).
-
-
-% Push method
-handle_method_call(atom_vec, ID, Attributes, push(Element), true) :-
-    member_chk(value:List, Attributes),
-    append(List, [Element], NewList),
-    retract(o3(atom_vec, ID, Attributes)),
-    assert(o3(atom_vec, ID, [type:atom_vec, value:NewList])).
-
-% Pop method
-handle_method_call(atom_vec, ID, Attributes, pop(), PoppedElement) :-
-    member_chk(value:List, Attributes),
-    append(PoppedList, [PoppedElement], List),
-    retract(o3(atom_vec, ID, Attributes)),
-    assert(o3(atom_vec, ID, [type:atom_vec, value:PoppedList])).
-
-% Handle method for other types as per your list
-handle_method_call(atom, ID, Attributes, to_str(), Str) :-
-    member_chk(value:Value, Attributes),
-    format(atom(Str), '~w', [Value]).
-
-% Handle get_* methods
-handle_method_call(Type, ID, Attributes, Method, Value) :-
-    compound_name_arity(Method, Get_Something, 0),
-    % Ensures that Method is a compound term like get_name, get_type, etc., with arity 0
-    compound_name_arity(Method, Get_Something, 0),
-    % Ensure that the functor begins with 'get_' followed by the field name
-    atom_concat('get_', FieldName, Get_Something),
-    % Look up the attribute by the extracted field name
-    member_chk(FieldName:Value, Attributes),!.
-
-% in case get_method and not get_method()
-handle_method_call(Type, ID, Attributes, AMethod, Value) :-
-    atom(AMethod),compound_name_arity(Method, Method, 0),!,
-    handle_method_call(Type, ID, Attributes, Method, Value).
-
-% atom_eq
-handle_method_call(atom, ID1, Attributes1, eq(ID2), AreEqual) :-
-    member_chk(value:Atom1, Attributes1),
-    o3(atom, ID2, [value:Atom2]),
-    AreEqual = (Atom1 == Atom2).
-
-% atom_error_message
-handle_method_call(atom, ID, Attributes, error_message(), ErrorMessage) :-
-    member_chk(value:Atom, Attributes),
-    atom_is_error(ID, true),
-    atom_get_children(ID, [_, ErrorMessage]).
-
-% atom_expr
-handle_method_call(atom, _Static, _, expr(ExpressionList), NewID) :-
-    oo_new(atom, [metatype:'Expression', value:ExpressionList], NewID).
-
-% atom_free
-handle_method_call(Atom, ID, _, free(), _) :-
-    retractall(o3(Atom, ID, _)).
-
-% atom_get_children
-handle_method_call(atom, ID, Attributes, get_children(), Children) :-
-    member_chk(metatype:'Expression', Attributes),
-    member_chk(value:Children, Attributes).
-
-% atom_gnd
-handle_method_call(atom, NewID, _, gnd(Object, GroundedType), _) :-
-    oo_new(atom, [type:grounded, object:Object, grounded_type:GroundedType], NewID).
-
-% atom_sym
-handle_method_call(atom, NewID, _, sym(Symbol), _) :-
-    oo_new(atom, [type:symbol, name:Symbol], NewID).
-
-% atom_var
-handle_method_call(atom, NewID, _, var(VarName), _) :-
-    oo_new(atom, [type:variable, name:VarName], NewID).
-
-% atom_to_str
-handle_method_call(atom, ID, Attributes, to_str(), Str) :-
-    member_chk(value:Atom, Attributes),
-    format(atom(Str), '~w', [Atom]).
-
-% atom_vec_new
-handle_method_call(atom_vec, NewID, _, new(), _) :-
-    oo_new(atom_vec, [type:atom_vec, value:[]], NewID).
-
-% atom_vec_from_list
-handle_method_call(atom_vec, NewID, _, from_list(List), _) :-
-    oo_new(atom_vec, [type:atom_vec, value:List], NewID).
-
-% bindings_add_var_binding
-handle_method_call(bindings, ID, Attributes, add_var_binding(VarAtom, BoundAtom), Success) :-
-    member_chk(value:Bindings, Attributes),
-    (   memberchk(VarAtom-BoundAtom, Bindings)
-    ->  Success = @(true)
-    ;   Success = @(false)).
-
-% bindings_clone
-handle_method_call(bindings, NewID, Attributes, clone(), _) :-
-    member_chk(value:Bindings, Attributes),
-    oo_new(bindings, [type:bindings, value:Bindings], NewID).
-
-% bindings_is_empty
-handle_method_call(bindings, ID, Attributes, is_empty(), IsEmpty) :-
-    member_chk(value:Bindings, Attributes),
-    (Bindings == [] -> IsEmpty = true; IsEmpty = false).
-
-% bindings_list
-handle_method_call(bindings, ID, Attributes, list(), List) :-
-    member_chk(value:Bindings, Attributes),
-    findall(Var-Atom, member(Var-Atom, Bindings), List).
-
-% bindings_merge
-handle_method_call(bindings, NewID, Attributes1, merge(ID2), _) :-
-    member_chk(value:Bindings1, Attributes1),
-    o3(bindings, ID2, [value:Bindings2]),
-    append(Bindings1, Bindings2, ResultBindings),
-    oo_new(bindings, [type:bindings, value:ResultBindings], NewID).
-
-% bindings_new
-handle_method_call(bindings, NewID, _, new(), _) :-
-    oo_new(bindings, [type:bindings, value:[]], NewID).
-
-% bindings_resolve
-handle_method_call(bindings, ID, Attributes, resolve(VarAtom), ResolvedAtom) :-
-    member_chk(value:Bindings, Attributes),
-    member(VarAtom-ResolvedAtom, Bindings).
-
-% bindings_set_add_var_binding
-handle_method_call(bindings_set, ID, Attributes, add_var_binding(VarAtom, BoundAtom), _) :-
-    member_chk(value:BindingsSet, Attributes),
-    append(BindingsSet, [[VarAtom-BoundAtom]], NewSet),
-    retractall(o3(bindings_set, ID, _)),
-    assert(o3(bindings_set, ID, [type:bindings_set, value:NewSet])).
-
-% bindings_set_is_empty
-handle_method_call(bindings_set, ID, Attributes, is_empty(), IsEmpty) :-
-    member_chk(value:BindingsSet, Attributes),
-    (BindingsSet == [] -> IsEmpty = true; IsEmpty = false).
-
-% bindings_set_list
-handle_method_call(bindings_set, ID, Attributes, list(), List) :-
-    member_chk(value:BindingsSet, Attributes),
-    List = BindingsSet.
-
-% bindings_set_merge_into
-handle_method_call(bindings_set, ID1, Attributes1, merge_into(ID2), _) :-
-    member_chk(value:BindingsSet1, Attributes1),
-    o3(bindings_set, ID2, [value:BindingsSet2]),
-    append(BindingsSet1, BindingsSet2, MergedSet),
-    retractall(o3(bindings_set, ID1, _)),
-    assert(o3(bindings_set, ID1, [type:bindings_set, value:MergedSet])).
-
-% tokenizer_new
-handle_method_call(tokenizer, NewID, _, new(), _) :-
-    oo_new(tokenizer, [type:tokenizer, value:[]], NewID).
-
-% tokenizer_register_token
-handle_method_call(tokenizer, ID, Attributes, register_token(Token, Callback), _) :-
-    member_chk(value:TokenList, Attributes),
-    append(TokenList, [(Token, Callback)], NewTokenList),
-    retractall(o3(tokenizer, ID, _)),
-    assert(o3(tokenizer, ID, [type:tokenizer, value:NewTokenList])).
-
-% tokenizer_clone
-handle_method_call(tokenizer, NewID, Attributes, clone(), _) :-
-    member_chk(value:TokenList, Attributes),
-    oo_new(tokenizer, [type:tokenizer, value:TokenList], NewID).
-
-% syntax_node_free
-handle_method_call(syntax_node, ID, _, free(), _) :-
-    retractall(o3(syntax_node, ID, _)).
-
-% syntax_node_is_null
-handle_method_call(syntax_node, ID, Attributes, is_null(), IsNull) :-
-    \+ member_chk(value:_, Attributes),
-    IsNull = true.
-
-% syntax_node_clone
-handle_method_call(syntax_node, NewID, Attributes, clone(), _) :-
-    member_chk(value:NodeValue, Attributes),
-    oo_new(syntax_node, [type:syntax_node, value:NodeValue], NewID).
 
 
 %!  find_list_attribute(+Attributes, -List) is det.
@@ -887,7 +479,7 @@ hyperonpy_atom_free(Atom) :-
 %   @arg Atom The atom (`hyperonpy.CAtom`).
 %   @arg Children The list of child atoms.
 hyperonpy_atom_get_children(Atom, Children) :-
-    oo_field(atom, Atom, children, Children).
+    oo_get(atom, Atom, children, Children).
 
 %!  hyperonpy_atom_get_grounded_type(+Atom, -GroundedType) is det.
 %
@@ -898,7 +490,7 @@ hyperonpy_atom_get_children(Atom, Children) :-
 %   @arg Atom The atom (`hyperonpy.CAtom`).
 %   @arg GroundedType The grounded type of the atom.
 hyperonpy_atom_get_grounded_type(Atom, GroundedType) :-
-    oo_field(atom, Atom, grounded_type, GroundedType).
+    oo_get(atom, Atom, grounded_type, GroundedType).
 
 %!  hyperonpy_atom_get_metatype(+Atom, -MetaType) is det.
 %
@@ -909,8 +501,7 @@ hyperonpy_atom_get_grounded_type(Atom, GroundedType) :-
 %   @arg Atom The atom (`hyperonpy.CAtom`).
 %   @arg MetaType The metatype of the atom.
 hyperonpy_atom_get_metatype(Atom, MetaType) :-
-    
-    oo_field(atom, Atom, metatype, MetaType).
+    oo_get(atom, Atom, metatype, MetaType).
 
 %!  hyperonpy_atom_get_name(+Atom, -Name) is det.
 %
@@ -921,7 +512,7 @@ hyperonpy_atom_get_metatype(Atom, MetaType) :-
 %   @arg Atom The atom (`hyperonpy.CAtom`).
 %   @arg Name The name of the atom (string).
 hyperonpy_atom_get_name(Atom, Name) :-
-    oo_field(atom, Atom, name, Name).
+    oo_get(atom, Atom, name, Name).
 
 %!  hyperonpy_atom_get_object(+Atom, -Object) is det.
 %
@@ -932,7 +523,7 @@ hyperonpy_atom_get_name(Atom, Name) :-
 %   @arg Atom The atom (`hyperonpy.CAtom`).
 %   @arg Object The object associated with the atom.
 hyperonpy_atom_get_object(Atom, Object) :-
-    oo_field(atom, Atom, object, Object).
+    oo_get(atom, Atom, object, Object).
 
 %!  hyperonpy_atom_get_space(+Atom, -Space) is det.
 %
@@ -943,7 +534,7 @@ hyperonpy_atom_get_object(Atom, Object) :-
 %   @arg Atom The atom (`hyperonpy.CAtom`).
 %   @arg Space The space associated with the atom (`CStruct<space_t>`).
 hyperonpy_atom_get_space(Atom, Space) :-
-    oo_field(atom, Atom, space, Space).
+    oo_get(atom, Atom, space, Space).
 
 %!  hyperonpy_atom_gnd(+Object, +GroundedType, -Atom) is det.
 %
@@ -971,14 +562,14 @@ hyperonpy_atom_gnd_serialize(Atom, Serializer, SerializedResult) :-
 
 %!  hyperonpy_atom_is_cgrounded(+Atom, -IsCgrounded) is det.
 %
-%   Checks if an atom is C-grounded.
+%   Checks if an atom is grounded.
 %
-%   This function checks whether the given `hyperonpy.CAtom` is C-grounded.
+%   This function checks whether the given `hyperonpy.CAtom` is grounded.
 %
 %   @arg Atom The atom (`hyperonpy.CAtom`).
-%   @arg IsCgrounded Boolean result indicating if the atom is C-grounded.
+%   @arg IsCgrounded Boolean result indicating if the atom is grounded.
 hyperonpy_atom_is_cgrounded(Atom, IsCgrounded) :-
-    oo_invoke(atom, Atom, is_cgrounded(), IsCgrounded).
+    py_is_tf(oo_get(atom, Atom, metatype, 'Grounded'),IsCgrounded).
 
 %!  hyperonpy_atom_is_error(+Atom, -IsError) is det.
 %
@@ -1448,6 +1039,29 @@ hyperonpy_check_type(Space, Atom1, Atom2, IsValid) :-
 % **2.7. Environment Builder Functions**
 % =============================
 
+
+% environment_config_dir/1
+% Retrieves the current configuration directory for the environment
+hyperonpy_environment_config_dir(ConfigDir) :-
+    oo_get(env_builder_instance, config_dir, ConfigDir).
+
+
+% env_builder_init_common_env/2
+% Finalizes the initialization of the common environment using the provided EnvBuilder
+hyperonpy_env_builder_init_common_env(EnvBuilder, Result) :-
+    oo_invoke(env_builder, EnvBuilder, init_common_env(), Result).
+
+% env_builder_set_working_dir/2
+% Sets the working directory for the given EnvBuilder
+hyperonpy_env_builder_set_working_dir(EnvBuilder, WorkingDir) :-
+    oo_set(EnvBuilder, working_dir, WorkingDir).
+
+% env_builder_set_config_dir/2
+% Sets the configuration directory for the given EnvBuilder
+hyperonpy_env_builder_set_config_dir(EnvBuilder, ConfigDir) :-
+    oo_set(EnvBuilder, config_dir, ConfigDir).
+
+
 %!  hyperonpy_env_builder_create_config_dir(+EnvBuilder, +UseDefault, -Result) is det.
 %
 %   Creates a configuration directory using the environment builder.
@@ -1457,85 +1071,33 @@ hyperonpy_check_type(Space, Atom1, Atom2, IsValid) :-
 %   @arg EnvBuilder The environment builder (`hyperonpy.EnvBuilder`).
 %   @arg UseDefault Boolean indicating whether to use the default configuration directory.
 %   @arg Result The result of the operation.
-hyperonpy_env_builder_create_config_dir(EnvBuilder, UseDefault, Result) :-
-    oo_invoke(env_builder, EnvBuilder, create_config_dir(UseDefault), Result).
+hyperonpy_env_builder_create_config_dir(EnvBuilder, ShouldCreate, Result) :-
+    oo_invoke(env_builder, EnvBuilder, create_config_dir(ShouldCreate), Result).
 
-%!  hyperonpy_env_builder_disable_config_dir(+EnvBuilder) is det.
-%
-%   Disables the configuration directory for the environment builder.
-%
-%   This function disables the configuration directory in the `hyperonpy.EnvBuilder`.
-%
-%   @arg EnvBuilder The environment builder (`hyperonpy.EnvBuilder`).
+% env_builder_disable_config_dir/1
+% Disables the configuration directory for the environment builder
 hyperonpy_env_builder_disable_config_dir(EnvBuilder) :-
-    oo_invoke(env_builder, EnvBuilder, disable_config_dir(), _).
+    oo_set(EnvBuilder, config_dir, @(none)).
 
-%!  hyperonpy_env_builder_init_common_env(+EnvBuilder, -Result) is det.
-%
-%   Initializes the common environment using the environment builder.
-%
-%   This function initializes the common environment in the `hyperonpy.EnvBuilder`.
-%
-%   @arg EnvBuilder The environment builder (`hyperonpy.EnvBuilder`).
-%   @arg Result Boolean result indicating success or failure of initialization.
-hyperonpy_env_builder_init_common_env(EnvBuilder, Result) :-
-    oo_invoke(env_builder, EnvBuilder, init_common_env(), Result).
-
-%!  hyperonpy_env_builder_push_fs_module_format(+EnvBuilder, +FormatObject, +FormatIndex) is det.
-%
-%   Pushes a file system module format to the environment builder.
-%
-%   This function pushes a file system module format into the `hyperonpy.EnvBuilder`.
-%
-%   @arg EnvBuilder The environment builder (`hyperonpy.EnvBuilder`).
-%   @arg FormatObject The format object.
-%   @arg FormatIndex The index at which to push the format.
-hyperonpy_env_builder_push_fs_module_format(EnvBuilder, FormatObject, FormatIndex) :-
-    oo_invoke(env_builder, EnvBuilder, push_fs_module_format(FormatObject, FormatIndex), _).
-
-%!  hyperonpy_env_builder_push_include_path(+EnvBuilder, +IncludePath) is det.
-%
-%   Pushes an include path to the environment builder.
-%
-%   This function pushes an include path into the `hyperonpy.EnvBuilder`.
-%
-%   @arg EnvBuilder The environment builder (`hyperonpy.EnvBuilder`).
-%   @arg IncludePath The include path to push.
-hyperonpy_env_builder_push_include_path(EnvBuilder, IncludePath) :-
-    oo_invoke(env_builder, EnvBuilder, push_include_path(IncludePath), _).
-
-%!  hyperonpy_env_builder_set_config_dir(+EnvBuilder, +ConfigDir) is det.
-%
-%   Sets the configuration directory for the environment builder.
-%
-%   This function sets the configuration directory in the `hyperonpy.EnvBuilder`.
-%
-%   @arg EnvBuilder The environment builder (`hyperonpy.EnvBuilder`).
-%   @arg ConfigDir The configuration directory path.
-hyperonpy_env_builder_set_config_dir(EnvBuilder, ConfigDir) :-
-    oo_invoke(env_builder, EnvBuilder, set_config_dir(ConfigDir), _).
-
-%!  hyperonpy_env_builder_set_is_test(+EnvBuilder, +IsTest) is det.
-%
-%   Marks the environment builder as a test environment.
-%
-%   This function sets whether the `hyperonpy.EnvBuilder` is operating in a test environment.
-%
-%   @arg EnvBuilder The environment builder (`hyperonpy.EnvBuilder`).
-%   @arg IsTest Boolean indicating if the environment is for testing.
+% env_builder_set_is_test/2
+% Sets whether the environment is for testing or not
 hyperonpy_env_builder_set_is_test(EnvBuilder, IsTest) :-
-    oo_invoke(env_builder, EnvBuilder, set_is_test(IsTest), _).
+    oo_set(EnvBuilder, is_test, IsTest).
 
-%!  hyperonpy_env_builder_set_working_dir(+EnvBuilder, +WorkingDir) is det.
-%
-%   Sets the working directory for the environment builder.
-%
-%   This function sets the working directory in the `hyperonpy.EnvBuilder`.
-%
-%   @arg EnvBuilder The environment builder (`hyperonpy.EnvBuilder`).
-%   @arg WorkingDir The working directory path.
-hyperonpy_env_builder_set_working_dir(EnvBuilder, WorkingDir) :-
-    oo_invoke(env_builder, EnvBuilder, set_working_dir(WorkingDir), _).
+% env_builder_push_include_path/2
+% Adds an include path to the environment for the EnvBuilder
+hyperonpy_env_builder_push_include_path(EnvBuilder, IncludePath) :-
+    oo_get(EnvBuilder, include_paths, Paths),
+    append(Paths, [IncludePath], NewPaths),
+    oo_set(EnvBuilder, include_paths, NewPaths).
+
+% env_builder_push_fs_module_format/3
+% Adds a new module format to the environment using an interface and format ID
+hyperonpy_env_builder_push_fs_module_format(EnvBuilder, Interface, FormatID) :-
+    oo_get(EnvBuilder, module_formats, Formats),
+    append(Formats, [(Interface, FormatID)], NewFormats),
+    oo_set(EnvBuilder, module_formats, NewFormats).
+
 
 %!  hyperonpy_env_builder_start(-EnvBuilder) is det.
 %
@@ -1554,8 +1116,10 @@ hyperonpy_env_builder_start(EnvBuilder) :-
 %   This function initializes the `hyperonpy.EnvBuilder` using default settings.
 %
 %   @arg EnvBuilder The resulting environment builder (`hyperonpy.EnvBuilder`).
+%
+%   Uses the default common environment for the EnvBuilder
 hyperonpy_env_builder_use_default(EnvBuilder) :-
-    nop(oo_new(env_builder, [type:default], EnvBuilder)).
+    oo_new(env_builder, [type:default], EnvBuilder).
 
 %!  hyperonpy_env_builder_use_test_env(-EnvBuilder) is det.
 %
@@ -1565,7 +1129,7 @@ hyperonpy_env_builder_use_default(EnvBuilder) :-
 %
 %   @arg EnvBuilder The resulting environment builder (`hyperonpy.EnvBuilder`).
 hyperonpy_env_builder_use_test_env(EnvBuilder) :-
-    oo_new(env_builder, [type:test], EnvBuilder).
+    oo_new(env_builder, [test_env:@(true)], EnvBuilder).
 
 % ==============================
 % **2.8. Environment Configuration Function**
@@ -1578,8 +1142,8 @@ hyperonpy_env_builder_use_test_env(EnvBuilder) :-
 %   This function returns the path to the configuration directory in the environment.
 %
 %   @arg ConfigDir The path to the configuration directory.
-hyperonpy_environment_config_dir(ConfigDir) :-
-    oo_invoke(env_builder, environment, config_dir(), ConfigDir).
+hyperonpy_environment_config_dir(EnvBuilder, ConfigDir) :-
+    oo_get(env_builder, EnvBuilder, config_dir, ConfigDir).
 
 
 % ==============================
@@ -1774,7 +1338,7 @@ hyperonpy_metta_new(Space, EnvBuilder, Metta) :-
 %   @arg ResultList The list of results from running the parser.
 hyperonpy_metta_run(Metta, SExprParser, ResultList) :-
    nop(oo_invoke(metta, Metta, run(SExprParser), ResultList)),
-   ignore(ResultList = [[int2]]). % [2].
+   ignore(ResultList = [[int4]]). % [2].
 
 %!  hyperonpy_metta_space(+Metta, -Space) is det.
 %
@@ -1785,7 +1349,7 @@ hyperonpy_metta_run(Metta, SExprParser, ResultList) :-
 %   @arg Metta The `hyperonpy.CMetta` instance.
 %   @arg Space The space (`hyperonpy.CSpace`).
 hyperonpy_metta_space(Metta, Space) :-
-    oo_field(metta, Metta, space, Space).
+    oo_get(metta, Metta, space, Space).
 
 %!  hyperonpy_metta_tokenizer(+Metta, -Tokenizer) is det.
 %
@@ -1796,7 +1360,7 @@ hyperonpy_metta_space(Metta, Space) :-
 %   @arg Metta The `hyperonpy.CMetta` instance.
 %   @arg Tokenizer The tokenizer (`hyperonpy.CTokenizer`).
 hyperonpy_metta_tokenizer(Metta, Tokenizer) :-
-    oo_field(metta, Metta, tokenizer, Tokenizer).
+    oo_get(metta, Metta, tokenizer, Tokenizer).
 
 %!  hyperonpy_metta_working_dir(+Metta, -WorkingDir) is det.
 %
@@ -1807,7 +1371,7 @@ hyperonpy_metta_tokenizer(Metta, Tokenizer) :-
 %   @arg Metta The `hyperonpy.CMetta` instance.
 %   @arg WorkingDir The working directory (string).
 hyperonpy_metta_working_dir(Metta, WorkingDir) :-
-    oo_field(metta, Metta, working_dir, WorkingDir).
+    oo_get(metta, Metta, working_dir, WorkingDir).
 
 % ==============================
 % **2.14. Run Context Functions**
@@ -1822,7 +1386,7 @@ hyperonpy_metta_working_dir(Metta, WorkingDir) :-
 %   @arg RunContext The run context (`hyperonpy.CRunContext`).
 %   @arg Metta The Metta instance (`hyperonpy.CMetta`).
 hyperonpy_run_context_get_metta(RunContext, Metta) :-
-    oo_field(run_context, RunContext, metta, Metta).
+    oo_get(run_context, RunContext, metta, Metta).
 
 %!  hyperonpy_run_context_get_space(+RunContext, -Space) is det.
 %
@@ -1833,7 +1397,7 @@ hyperonpy_run_context_get_metta(RunContext, Metta) :-
 %   @arg RunContext The run context (`hyperonpy.CRunContext`).
 %   @arg Space The space (`hyperonpy.CSpace`).
 hyperonpy_run_context_get_space(RunContext, Space) :-
-    oo_field(run_context, RunContext, space, Space).
+    oo_get(run_context, RunContext, space, Space).
 
 %!  hyperonpy_run_context_get_tokenizer(+RunContext, -Tokenizer) is det.
 %
@@ -1844,7 +1408,7 @@ hyperonpy_run_context_get_space(RunContext, Space) :-
 %   @arg RunContext The run context (`hyperonpy.CRunContext`).
 %   @arg Tokenizer The tokenizer (`hyperonpy.CTokenizer`).
 hyperonpy_run_context_get_tokenizer(RunContext, Tokenizer) :-
-    oo_field(run_context, RunContext, tokenizer, Tokenizer).
+    oo_get(run_context, RunContext, tokenizer, Tokenizer).
 
 %!  hyperonpy_run_context_import_dependency(+RunContext, +ModuleID) is det.
 %
@@ -2026,7 +1590,7 @@ hyperonpy_space_free(Space) :-
 %   @arg Space The space (`hyperonpy.CSpace`).
 %   @arg Payload The payload object.
 hyperonpy_space_get_payload(Space, Payload) :-
-    oo_field(space, Space, payload, Payload).
+    oo_get(space, Space, payload, Payload).
 
 %!  hyperonpy_space_list(+Space, -AtomListOpt) is det.
 %
@@ -2192,7 +1756,7 @@ hyperonpy_syntax_node_is_null(SyntaxNode, IsNull) :-
 %   @arg SyntaxNode The syntax node (`hyperonpy.CSyntaxNode`).
 %   @arg SrcRange The source range object.
 hyperonpy_syntax_node_src_range(SyntaxNode, SrcRange) :-
-    oo_field(syntax_node, SyntaxNode, src_range, SrcRange).
+    oo_get(syntax_node, SyntaxNode, src_range, SrcRange).
 
 %!  hyperonpy_syntax_node_type(+SyntaxNode, -NodeType) is det.
 %
@@ -2203,7 +1767,7 @@ hyperonpy_syntax_node_src_range(SyntaxNode, SrcRange) :-
 %   @arg SyntaxNode The syntax node (`hyperonpy.CSyntaxNode`).
 %   @arg NodeType The node type (`hyperonpy.SyntaxNodeType`).
 hyperonpy_syntax_node_type(SyntaxNode, NodeType) :-
-    oo_field(syntax_node, SyntaxNode, type, NodeType).
+    oo_get(syntax_node, SyntaxNode, type, NodeType).
 
 %!  hyperonpy_syntax_node_unroll(+SyntaxNode, -UnrolledList) is det.
 %
@@ -2284,6 +1848,217 @@ hyperonpy_validate_atom(Space, Atom, IsValid) :-
 % End of the hyperonpy_* function definitions.
 % ==============================
 
+%!  handle_method_call(+Type, +ID, +Attributes, +MethodCall, -Result) is det.
+%
+%   Handles method calls on objects by matching on the object's type and method.
+%
+%   This predicate defines various method handlers that can be invoked on objects,
+%   depending on the object's type and the method called. Each method handler
+%   modifies or queries the object's state based on the method call.
+%
+%   @arg Type The type of the object.
+%   @arg ID The ID of the object.
+%   @arg Attributes The attributes associated with the object.
+%   @arg MethodCall The method being invoked on the object.
+%   @arg Result The result of the method call (if applicable).
+%
+%   @example
+%   ?- oo_invoke(atom_vec, atom_vec1, length(), Len).
+%   Len = 3.
+%
+
+% ------------------ Handle Method Calls Implementation ------------------
+
+% Handle missing attributes
+handle_method_call(Type, ID, Attributes, Method, Result):-
+   var(Attributes), nonvar(ID),
+   into_object(ID, o3(Type, _, Attributes2)), Attributes\=@=Attributes2,!,
+   handle_method_call(Type, ID, Attributes2, Method, Result).
+
+% Handling length() for other o3 types that have a list attribute
+handle_method_call(_, _, Attributes, length(), Length) :-
+    freeze(List,is_list(List)),member_chk(value:List, Attributes),
+    length(List, Length).
+
+
+% Push method
+handle_method_call(atom_vec, ID, Attributes, push(Element), true) :-
+    member_chk(value:List, Attributes),
+    append(List, [Element], NewList),
+    retract(o3(atom_vec, ID, Attributes)),
+    assert(o3(atom_vec, ID, [type:atom_vec, value:NewList])).
+
+% Pop method
+handle_method_call(atom_vec, ID, Attributes, pop(), PoppedElement) :-
+    member_chk(value:List, Attributes),
+    append(PoppedList, [PoppedElement], List),
+    retract(o3(atom_vec, ID, Attributes)),
+    assert(o3(atom_vec, ID, [type:atom_vec, value:PoppedList])).
+
+% Handle method for other types as per your list
+handle_method_call(atom, _ID, Attributes, to_str(), Str) :-
+    member_chk(value:Value, Attributes),
+    format(atom(Str), '~w', [Value]).
+
+% Handle get_* methods
+handle_method_call(_Type, _ID, Attributes, Method, Value) :-
+    compound_name_arity(Method, Get_Something, 0),
+    % Ensures that Method is a compound term like get_name, get_type, etc., with arity 0
+    compound_name_arity(Method, Get_Something, 0),
+    % Ensure that the functor begins with 'get_' followed by the field name
+    atom_concat('get_', FieldName, Get_Something),
+    % Look up the attribute by the extracted field name
+    member_chk(FieldName:Value, Attributes),!.
+
+% in case get_method and not get_method()
+handle_method_call(Type, ID, Attributes, AMethod, Value) :-
+    atom(AMethod),compound_name_arity(Method, Method, 0),!,
+    handle_method_call(Type, ID, Attributes, Method, Value).
+
+% atom_eq
+handle_method_call(atom, _ID1, Attributes1, eq(ID2), AreEqual) :-
+    member_chk(value:Atom1, Attributes1),
+    o3(atom, ID2, [value:Atom2]),
+    AreEqual = (Atom1 == Atom2).
+
+% atom_error_message
+handle_method_call(atom, _ID, Attributes, error_message(), ErrorMessage) :-
+    member_chk(value:_Atom, Attributes),
+    atom_is_error(ID, true),
+    atom_get_children(ID, [_, ErrorMessage]).
+
+% atom_expr
+handle_method_call(atom, _Static, _, expr(ExpressionList), NewID) :-
+    oo_new(atom, [metatype:'Expression', value:ExpressionList], NewID).
+
+% atom_free
+handle_method_call(Atom, ID, _, free(), _) :-
+    retractall(o3(Atom, ID, _)).
+
+% atom_get_children
+handle_method_call(atom, _ID, Attributes, get_children(), Children) :-
+    member_chk(metatype:'Expression', Attributes),
+    member_chk(value:Children, Attributes).
+
+% atom_gnd
+handle_method_call(atom, _Static, _, gnd(Object, GroundedType), NewID) :-
+    oo_new(atom, [metatype:'Grounded', object:Object, grounded_type:GroundedType], NewID).
+
+% atom_sym
+handle_method_call(atom, _Static, _, atom_sym(Symbol), Atom) :-
+    hyperon_atom_var(Symbol, Atom).
+
+% atom_var
+handle_method_call(atom, _Static, _, atom_var(VarName), Atom) :-
+    hyperon_atom_var(VarName, Atom).
+
+
+% atom_to_str
+handle_method_call(atom, _ID, Attributes, to_str(), Str) :-
+    member_chk(value:Atom, Attributes),
+    format(atom(Str), '~w', [Atom]).
+
+% atom_vec_new
+handle_method_call(atom_vec, _Static, _, new(), NewID) :-
+    oo_new(atom_vec, [type:atom_vec, value:[]], NewID).
+
+% atom_vec_from_list
+handle_method_call(atom_vec, _Static, _, from_list(List), NewID) :-
+    oo_new(atom_vec, [type:atom_vec, value:List], NewID).
+
+% bindings_add_var_binding
+handle_method_call(bindings, _ID, Attributes, add_var_binding(VarAtom, BoundAtom), Success) :-
+    member_chk(value:Bindings, Attributes),
+    (   memberchk(VarAtom-BoundAtom, Bindings)
+    ->  Success = @(true)
+    ;   Success = @(false)).
+
+% bindings_clone
+handle_method_call(bindings, _ID, Attributes, clone(), NewID) :-
+    member_chk(value:Bindings, Attributes),
+    oo_new(bindings, [type:bindings, value:Bindings], NewID).
+
+% bindings_is_empty
+handle_method_call(bindings, _ID, Attributes, is_empty(), IsEmpty) :-
+    member_chk(value:Bindings, Attributes),
+    py_is_tf(Bindings == [], IsEmpty).
+
+% bindings_list
+handle_method_call(bindings, _ID, Attributes, list(), List) :-
+    member_chk(value:Bindings, Attributes),
+    findall(Var-Atom, member(Var-Atom, Bindings), List).
+
+% bindings_merge
+handle_method_call(bindings, _ID1, Attributes1, merge(ID2), NewID) :-
+    member_chk(value:Bindings1, Attributes1),
+    o3(bindings, ID2, [value:Bindings2]),
+    append(Bindings1, Bindings2, ResultBindings),
+    oo_new(bindings, [type:bindings, value:ResultBindings], NewID).
+
+% bindings_new
+handle_method_call(bindings, _Static, _, new(), NewID) :-
+    oo_new(bindings, [type:bindings, value:[]], NewID).
+
+% bindings_resolve
+handle_method_call(bindings, _ID, Attributes, resolve(VarAtom), ResolvedAtom) :-
+    member_chk(value:Bindings, Attributes),
+    member(VarAtom-ResolvedAtom, Bindings).
+
+% bindings_set_add_var_binding
+handle_method_call(bindings_set, ID, Attributes, add_var_binding(VarAtom, BoundAtom), _) :-
+    member_chk(value:BindingsSet, Attributes),
+    append(BindingsSet, [[VarAtom-BoundAtom]], NewSet),
+    retractall(o3(bindings_set, ID, _)),
+    assert(o3(bindings_set, ID, [type:bindings_set, value:NewSet])).
+
+% bindings_set_is_empty
+handle_method_call(bindings_set, _ID, Attributes, is_empty(), IsEmpty) :-
+    member_chk(value:BindingsSet, Attributes),
+    (BindingsSet == [] -> IsEmpty = @(true); IsEmpty = @(false)).
+
+% bindings_set_list
+handle_method_call(bindings_set, _ID, Attributes, list(), List) :-
+    member_chk(value:BindingsSet, Attributes),
+    List = BindingsSet.
+
+% bindings_set_merge_into
+handle_method_call(bindings_set, ID1, Attributes1, merge_into(ID2), _) :-
+    member_chk(value:BindingsSet1, Attributes1),
+    o3(bindings_set, ID2, [value:BindingsSet2]),
+    append(BindingsSet1, BindingsSet2, MergedSet),
+    retractall(o3(bindings_set, ID1, _)),
+    assert(o3(bindings_set, ID1, [type:bindings_set, value:MergedSet])).
+
+% tokenizer_new
+handle_method_call(tokenizer, NewID, _, new(), _) :-
+    oo_new(tokenizer, [type:tokenizer, value:[]], NewID).
+
+% tokenizer_register_token
+handle_method_call(tokenizer, ID, Attributes, register_token(Token, Callback), _) :-
+    member_chk(value:TokenList, Attributes),
+    append(TokenList, [(Token, Callback)], NewTokenList),
+    retractall(o3(tokenizer, ID, _)),
+    assert(o3(tokenizer, ID, [type:tokenizer, value:NewTokenList])).
+
+% tokenizer_clone
+handle_method_call(tokenizer, NewID, Attributes, clone(), _) :-
+    member_chk(value:TokenList, Attributes),
+    oo_new(tokenizer, [type:tokenizer, value:TokenList], NewID).
+
+% syntax_node_free
+handle_method_call(syntax_node, ID, _, free(), _) :-
+    retractall(o3(syntax_node, ID, _)).
+
+% syntax_node_is_null
+handle_method_call(syntax_node, _ID, Attributes, is_null(), IsNull) :-
+    py_is_tf( ( \+ member_chk(value:_, Attributes)), IsNull).
+    
+
+% syntax_node_clone
+handle_method_call(syntax_node, NewID, Attributes, clone(), _) :-
+    member_chk(value:NodeValue, Attributes),
+    oo_new(syntax_node, [type:syntax_node, value:NodeValue], NewID).
+
 
 end_of_file.
 
@@ -2305,7 +2080,7 @@ end_of_file.
 
 % Check equality
 ?- hyperonpy_atom_eq(Atom, ClonedAtom, AreEqual).
-% AreEqual = false.
+% AreEqual = @(false).
 
 % Free the cloned atom
 ?- hyperonpy_atom_free(ClonedAtom).
@@ -2347,7 +2122,7 @@ true.
 
 % Add a variable binding
 ?- hyperonpy_bindings_add_var_binding(Bindings, VarAtom, BoundAtom, Success).
-% Success = true.
+% Success = @(true).
 
 % Clone bindings
 ?- hyperonpy_bindings_clone(Bindings, NewBindings).
@@ -2355,7 +2130,7 @@ true.
 
 % Check if bindings are equal
 ?- hyperonpy_bindings_eq(Bindings, NewBindings, AreEqual).
-% AreEqual = false.
+% AreEqual = @(false).
 
 % Free bindings
 ?- hyperonpy_bindings_free(NewBindings).
