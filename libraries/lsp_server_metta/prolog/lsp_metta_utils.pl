@@ -26,9 +26,9 @@
 % @author James Cash
 % */
 
-linechar_offset(_Stream, line_char(_Line1, _Char0), _Offset, _PreChars) :-
-    % needs to use the split-document model
-    debug(server,"~w",["lsp_metta_utils::linechar_offset not implemented yet"]).
+%linechar_offset(_Stream, line_char(_Line1, _Char0), _Offset, _PreChars) :-
+%    % needs to use the split-document model
+%    debug(server,"~w",["lsp_metta_utils::linechar_offset not implemented yet"]).
 
 % %!  linechar_offset(+Stream:stream, +Position:line_char, -Offset:int) is det.
 % %
@@ -82,7 +82,7 @@ help_at_position(Path, Line, Char0, S) :-
     %debug(server,"help_at_position",[]),
     clause_with_arity_in_file_at_position(Clause, Arity, Path, line_char(Line, Char0)),
     % TODO - add this in when I can import eval_args
-    debug(server,"Clause=~w",[Clause]),
+    %debug(server,"Clause=~w",[Clause]),
     predicate_help(Path,Clause,Arity,S).
 
 predicate_help(_,'',_,"") :- !.
