@@ -1629,3 +1629,12 @@
     (@param "Form")))
   (@return "Result of Form if execution completes within Time. Raises an exception otherwise."))
 (: max-time! (-> Number Atom Atom))
+
+;; Public MeTTa
+(@doc limit!
+  (@desc "Executes Form generating at most Limit results. Results are returned as soon as they become available.")
+  (@params (
+    (@param "Limit")
+    (@param "Form")))
+  (@return "First Limit results of Form."))
+(: limit! (-> Number Atom Atom))
