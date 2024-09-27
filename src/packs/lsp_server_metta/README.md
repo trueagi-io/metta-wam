@@ -1,108 +1,46 @@
-* MeTTaLog Language server
+# MeTTaLog Language server
 
- **Currently a fork of prolog Language server. Will update this README later.**
+NOTE: very much a work in progress.
 
-Still a work-in-progress -- please open an issue if you have any issues or feature requests!.
+An LSP server for the programming language MeTTa. The server itself is written in Prolog, and requires MeTTaLog (found at https://github.com/trueagi-io/metta-wam) for some of the tools it has there. It will soon be packaged as part of the MeTTaLog project.
 
-Currently supports showing documentation on hover, go to definition, go to callers, listing defined symbols in the file, and showing a limited number of diagnostics.
+It is based off the `lsp_server` for SWI-Prolog (found at https://github.com/jamesnvc/lsp_server). The README there may still be useful is it describes how to connect to an LSP server from different editors - we hav currently only tested VSCode.
 
-Only tested with SWI-Prolog, as it heavily uses its introspection facilities to do its stuff.
-It should work with any relatively-recent version of SWI-Prolog, but for best results (for "find references" in particular), use a version with ~xref_called/5~ (8.1.5 or newer; past commit [[https://github.com/SWI-Prolog/swipl-devel/commit/303f6430de5c9d7e225d8eb6fb8bb8b59e7c5f8f][303f6430de5c]]).
+Still a work-in-progress - we currently supports showing documentation on hover. We are spending time getting a well designed core, which will make the other functionality easy to implement.
 
-Installable as a pack like ~?- pack_install(lsp_server).~
+Only tested with SWI-Prolog and version requirements are whatever is required for the MeTTalog project (9.3.9 or higher). SWI-Prolog as installed as part of MeTTalog installation.
 
-* Emacs
+There are two components that need to be installed: the prolog package needs to be installed in SWI-Prolog, and there are specific installation requirements for each editor. Instructions for VSCode are given below.
 
-**  [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]]:
+## Installing the SWI-Prolog package
 
-#+begin_src emacs-lisp
-(lsp-register-client
-  (make-lsp-client
-   :new-connection
-   (lsp-stdio-connection (list "swipl"
-                               "-g" "use_module(library(lsp_server))."
-                               "-g" "lsp_server:main"
-                               "-t" "halt"
-                               "--" "stdio"))
-   :major-modes '(prolog-mode)
-   :priority 1
-   :multi-root t
-   :server-id 'prolog-ls))
-#+end_src
+NOTE: this will at some point be added to the MeTTalog installation and become unncessary.
 
-* Vim/Neovim
+This is a slightly modified version of the directions to be found at https://www.swi-prolog.org/howto/Pack.html
 
-**  [[https://github.com/autozimu/LanguageClient-neovim][LanguageClient]]:
+* Make sure that you are in the `metta-wam/src/packs` directory. From the `metta-wam` directory,
 
-#+begin_src viml
-let g:LanguageClient_serverCommands = {
-\ 'prolog': ['swipl',
-\            '-g', 'use_module(library(lsp_server)).',
-\            '-g', 'lsp_server:main',
-\            '-t', 'halt',
-\            '--', 'stdio']
-\ }
-#+end_src
+```
+cd src/packs
+```
 
-* Neovim
+* Create a `.tgz` (tarred and gzipped) file. Note that the suffix should be `.tgz`, not the more usual `.tar.gz`.
 
-** [[https://github.com/neoclide/coc.nvim][CoC]]
+```
+tar -zcvf lsp_server_metta-0.0.3.tgz --exclude=vscode lsp_server_metta
+```
 
-Put the following in ~coc-settings.json~ (which you can access by using the command ~:CocConfig~).
+* From SWI-Prolog, install file directly as a package:
 
-#+begin_src json
-{"languageserver": {
-  "prolog-lsp": {
-    "command": "swipl",
-    "args": ["-g", "use_module(library(lsp_server)).",
-             "-g", "lsp_server:main",
-             "-t", "halt",
-             "--", "stdio"
-            ],
-    "filetypes": ["prolog"]
-  }}
-}
-#+end_src
+```
+?- pack_install('lsp_server_metta-0.0.3.tgz').
+```
 
-** Native LSP (for Neovim >= 0.5)
+## Installing for VSCode
 
-Install the [[https://github.com/neovim/nvim-lspconfig][neovim/nvim-lspconfig]] package
+VSCode require a `.vsix` file. There are two ways to get that:
 
-Put the following in ~$XDG_CONFIG_DIR/nvim/lua/lspconfig/prolog_lsp.lua~:
-
-#+begin_src lua
-local configs = require 'lspconfig/configs'
-local util = require 'lspconfig/util'
-
-configs.prolog_lsp = {
-  default_config = {
-    cmd = {"swipl",
-           "-g", "use_module(library(lsp_server)).",
-           "-g", "lsp_server:main",
-           "-t", "halt",
-           "--", "stdio"};
-    filetypes = {"prolog"};
-    root_dir = util.root_pattern("pack.pl");
-  };
-  docs = {
-     description = [[
-  https://github.com/jamesnvc/prolog_lsp
-
-  Prolog Language Server
-  ]];
-  }
-}
--- vim:et ts=2 sw=2
-#+end_src
-
-Then add the following to ~init.vim~:
-
-#+begin_src viml
-lua << EOF
-require('lspconfig/prolog_lsp')
-require('lspconfig').prolog_lsp.setup{}
-EOF
-#+end_src
+UNFINISHED
 
 * VSCode
 
