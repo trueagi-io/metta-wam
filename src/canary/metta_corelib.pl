@@ -384,7 +384,7 @@ my_module_factorial(N, F) :-
 % **Prolog Translation of the Given File with Numbered Functions**
 % ==================================================
 
-:- module(hyperonpy_prolog_translation, [
+no_module:- module(hyperonpy_prolog_translation, [
     % Object-oriented helper predicates
     oo_new/3,          % 1
     oo_free/1,         % 2
