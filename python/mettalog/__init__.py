@@ -28,13 +28,13 @@ from mettalog import *
 
 # Global Variables
 deref_op = False
-VSPACE_VERBOSE = os.environ.get("VSPACE_VERBOSE")
+METTALOG_VERBOSE = os.environ.get("METTALOG_VERBOSE")
 # 0 = for scripts/demos
 # 1 = developer
 # 2 = debugger
 verbose = 1
-if VSPACE_VERBOSE is not None:
-    try: verbose = int(VSPACE_VERBOSE) # Convert it to an integer
+if METTALOG_VERBOSE is not None:
+    try: verbose = int(METTALOG_VERBOSE) # Convert it to an integer
     except ValueError: ""
 
 def print_exception_stack(e):
@@ -260,8 +260,14 @@ class MeTTaLog(MeTTa):
         parser = SExprParser(program)
         results = hp.metta_run(self.cmetta, parser.cparser)
         err_str = hp.metta_err_str(self.cmetta)
-        if (err_str is not None):
-            raise RuntimeError(err_str)
+        if err_str is not None:
+            err_str = str(err_str)
+            if err_str != '':
+                print('RuntimeError: "', err_str, "")
+                raise RuntimeError(err_str)
+
+        if results is None:
+            return results
         if flat:
             return [Atom._from_catom(catom) for result in results for catom in result]
         else:
@@ -1895,7 +1901,7 @@ def load_module_to_rust(module):
     with temporary_change_dir(module_dir):
         # Place your Rust integration code here. The working directory is temporarily the module's directory.
         # This mock function represents calling Rust's functionality - replace with actual call
-        get_metta().run_hyperon(f"(import! &self {short_name})")
+        get_metta().run_hyperon(f"!(import! &self {short_name})")
         # After the block, the working directory will revert to what it was.
 
 
