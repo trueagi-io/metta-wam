@@ -650,18 +650,14 @@ handle_method_call(atom, ID, Attributes, to_str(), Str) :-
     member_chk(value:Value, Attributes),
     format(atom(Str), '~w', [Value]).
 
-
-handle_method_call(atom, ID, Attributes, get_children(), Children) :-
-    member_chk(value:Children, Attributes).
-
-handle_method_call(atom, ID, Attributes, get_name(), Name) :-
-    member_chk(name:Name, Attributes).
-
-handle_method_call(atom, ID, Attributes, get_grounded_type(), GroundedType) :-
-    member_chk(grounded_type:GroundedType, Attributes).
-
-handle_method_call(atom, ID, Attributes, get_type(), Type) :-
-    member_chk(type:Type, Attributes).
+% Handle get_* methods
+handle_method_call(_Type, ID, Attributes, Method, Value) :-
+    % Ensures that Method is a compound term like get_name, get_type, etc., with arity 0
+    compound_name_arity(Method, Get_Something, 0),
+    % Ensure that the functor begins with 'get_' followed by the field name
+    atom_concat('get_', FieldName, Get_Something),
+    % Look up the attribute by the extracted field name
+    member_chk(FieldName:Value, Attributes),!.
 
 % atom_eq
 handle_method_call(atom, ID1, Attributes1, eq(ID2), AreEqual) :-
