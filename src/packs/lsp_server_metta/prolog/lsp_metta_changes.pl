@@ -85,7 +85,7 @@ replace(Lines1, Chars, Skip, NewText), Line -->
 skip(0) --> !.
 skip(N) --> [C], { C#<128, succ(N0, N) }, skip(N0).
 skip(N) --> [C,_], { C#>=128,C#<224, succ(N0, N) }, skip(N0).
-skip(N) --> [C,_,_], { C#>=224,C<#240, succ(N0, N) }, skip(N0).
+skip(N) --> [C,_,_], { C#>=224,C#<240, succ(N0, N) }, skip(N0).
 skip(N) --> [C,_,_,_], { C#>=240, plus(N0, 2, N) }, skip(N0).
 
 line([0'\n]) --> [0'\n], !.
