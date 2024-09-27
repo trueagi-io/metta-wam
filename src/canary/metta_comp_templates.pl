@@ -180,8 +180,8 @@ sum_acc([H|T], Acc, S) :-
     NewAcc is Acc + H,
     sum_acc(T, NewAcc, S).
 
-% # 3. Factorial
-% %  Normal Recursive
+%   3. Factorial
+%   Normal Recursive
 %!  factorial(+N, -F) is det.
 %
 %   Computes the factorial of a given non-negative integer N.
@@ -208,7 +208,7 @@ factorial(N, F) :-
     % Multiply N by the result of the previous factorial.
     F is N * Y.
 
-% %  With Accumulator
+%   With Accumulator
 %!  factorial_acc(+N, -F) is det.
 %
 %   Computes the factorial of a given non-negative integer N using an accumulator.
@@ -413,7 +413,7 @@ element_in_list(X, [_|T]) :-
     % Recursively check if the element is in the tail of the list.
     element_in_list(X, T).
 
-% # With Accumulator
+%   With Accumulator
 %!  element_in_list_acc(+Element, +List) is nondet.
 %
 %   Checks whether a given element exists in a list using an accumulator.
@@ -446,7 +446,7 @@ element_in_list_acc(X, L) :-
 %   @arg List    The list in which to search for the element.
 %   @arg Acc     The accumulator, which is initially false and becomes true if the element is found.
 %
-element_in_list_acc(X, [], Acc) :- 
+element_in_list_acc(_, [], Acc) :- 
     % Base case: the list is empty. Return the accumulator value.
     Acc.
 element_in_list_acc(X, [X|_], _) :- 
@@ -934,10 +934,10 @@ merge_sorted_acc([], L, Acc, L) :-
 merge_sorted_acc(L, [], Acc, L) :- 
     % If the second list is empty, reverse the accumulator and append List1.
     reverse(Acc, L), !.
-merge_sorted_acc([H1|T1], [H2|T2], Acc, [H|M]) :-
+merge_sorted_acc([H1|T1], [H2|T2], Acc, [_|M]) :-
     % If H1 is less than or equal to H2, add H1 to the accumulator and continue.
     H1 =< H2,merge_sorted_acc(T1, [H2|T2], [H1|Acc], M).
-merge_sorted_acc([H1|T1], [H2|T2], Acc, [H|M]) :-
+merge_sorted_acc([H1|T1], [H2|T2], Acc, [_|M]) :-
     % If H1 is greater than H2, add H2 to the accumulator and continue.
     H1 > H2,merge_sorted_acc([H1|T1], T2, [H2|Acc], M).
 
@@ -1246,8 +1246,8 @@ height_acc(tree(L, _, R), Acc, H) :-
     % The final height is the maximum height of the two subtrees.
     H is max(Hl, Hr).
 
-%  18. Search for an Element in a Binary Search Tree
-% # Normal Recursive
+%   18. Search for an Element in a Binary Search Tree
+%   Normal Recursive
 %!  search_bst(+Tree, +Value) is nondet.
 %
 %   Searches for a given value in a binary search tree (BST).
@@ -1483,8 +1483,7 @@ dfs(Vertex, Graph, Visited, FinalVisited) :-
     % Recursively visit the neighbor.
     dfs(Neighbor, Graph, [Neighbor|Visited], FinalVisited).
 
-% # With Accumulator
-% prolog
+% With Accumulator
 % Due to the way depth-first search works, a typical accumulator would not be very effective.
 % The visited list already acts like an accumulator.
 is_cyclic_acc(Graph) :- is_cyclic(Graph).
@@ -1770,10 +1769,9 @@ shortest_path(Start, End, Graph, Path) :-
 %   @arg Visited The list of vertices that have been visited so far.
 %   @arg Path The shortest path from the start to the end vertex.
 %
-shortest_path(_, End, _, Visited, ReversePath) :-
+shortest_path(_, End, _, _, ReversePath) :-
     % Stop the search when the target vertex End is found in the visited list.
     reverse(ReversePath, [End|_]), !.
-
 shortest_path(Vertices, End, Graph, Visited, Path) :-
     % Find all adjacent unvisited vertices from the current vertices.
     adjacent_unvisited(Vertices, Graph, Visited, Adjacent),
