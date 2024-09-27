@@ -1,8 +1,12 @@
 
 # metta_python_override.py
+import janus_swi
 import janus_swi as janus
 import inspect
 import types
+janus_module = types.ModuleType("janus")
+janus_module.import_module_from_string = janus_swi.import_module_from_string
+
 import traceback
 from functools import wraps  # Import wraps here
 
@@ -166,7 +170,7 @@ def override_module_calls_with_janus(module):
         full_function_name = f"{module_name}_{name}"
 
         try:
-            janus.cmd('user', 'register_function', full_function_name, param_names, param_types, param_defaults, str(return_type))
+            janus_swi.cmd('user', 'register_function', full_function_name, param_names, param_types, param_defaults, str(return_type))
         except Exception as e:
             print(f"Error registering function {name} with Prolog: {e}")
 
@@ -175,8 +179,8 @@ def override_module_calls_with_janus(module):
             def overridden_function(*args, **kwargs):
                 pargs = list(args)
 
-                def try_one(full_function_name, args, pargs, kwargs):
-                    result_iter = janus.apply('user', 'from_python', full_function_name, args, pargs, kwargs)
+                def try_one_off(full_function_name, args, pargs, kwargs):
+                    result_iter = janus_swi.apply('user', 'from_python', full_function_name, args, pargs, kwargs)
                     result_list = list(result_iter)
                     if len(result_list) == 1:
                         result = result_list[0]
@@ -186,6 +190,12 @@ def override_module_calls_with_janus(module):
                         return result, True
                     print("odd return",result_list)
                     return result_list[0], False
+
+                def try_one(full_function_name, args, pargs, kwargs):
+                    result = janus_swi.apply_once('user', 'from_python', full_function_name, args, pargs, kwargs)
+                    if str(result) == 'call_original_function':
+                        return original_function(*args, **kwargs), True
+                    return result, True
 
 
                 try:
@@ -210,7 +220,7 @@ def override_module_calls_with_janus(module):
 def my_break():
     ""
 
-def test_test_my_module():
+def test_my_module():
     setup_janus()
     import types
 
@@ -251,7 +261,7 @@ def test_test_my_module():
     print(f"factorial(5): {my_module.factorial(5)}")
 
 
-hyperon_overrides_ready=False
+hyperon_overrides_ready = False
 def load_hyperon_overrides():
     global hyperon_overrides_ready
     if hyperon_overrides_ready: return True
@@ -260,20 +270,20 @@ def load_hyperon_overrides():
     import hyperonpy
     override_module_calls_with_janus(hyperonpy)
 
-def load_hyperon_overrides():
+def test_hyperon_overrides():
     import hyperon
     load_hyperon_overrides()
     metta = hyperon.runner.MeTTa()
     print(metta.run("!(+ 1 1)"))
 
 
-janus_ready=False
+janus_ready = False
 def setup_janus():
     global janus_ready
 
     if janus_ready:
         return True
-    janus_ready=True
+    janus_ready = True
     import sys
     import os
 
@@ -282,7 +292,7 @@ def setup_janus():
     # Initialize Janus
     prolog_module_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'metta_corelib.pl')
     consult_command = f"consult('{prolog_module_path}')"
-    janus.query_once(consult_command)
+    janus_swi.query_once(consult_command)
 
 
 
