@@ -30,16 +30,16 @@ handle_doc_change(Path, Change) :-
     atom_codes(Text, ChangeCodes),
     doc_text_fallback(Path, OrigDocument),
     split_document_get_multiple_sections(StartLine,EndLine,NewStartLine,OrigDocument,Pre,This,Post),
-    %debug(server,"0:~w",[This]),
+    debug(server,"0:~w ~w ~w ~w ~w",[NewStartLine,EndLine,StartChar,ReplaceLen,This]),
     coalesce_text(This,TextBlock),
-    %debug(server,"1:~w",[TextBlock]),
+    debug(server,"1:~w",[TextBlock]),
     string_codes(TextBlock,OrigCodes),
-    %debug(server,"2:~w",[OrigCodes]),
+    debug(server,"2:~w",[OrigCodes]),
     replace_codes(OrigCodes, NewStartLine, StartChar, ReplaceLen, ChangeCodes,
                   NewCodes),
-    %debug(server,"3:~w",[NewCodes]),
+    debug(server,"3:~w",[NewCodes]),
     string_codes(NewText,NewCodes),
-    %debug(server,"4:~w",[NewText]),
+    debug(server,"4:~w",[NewText]),
     split_text_document(NewText,NewSplitText),
     %debug(server,"5:~w",[NewSplitText]),
     append([Pre,NewSplitText,Post],NewDocument),
@@ -64,6 +64,7 @@ doc_text_fallback(Path, Text) :-
 
 %! replace_codes(Text, StartLine, StartChar, ReplaceLen, ReplaceText, -NewText) is det.
 replace_codes(Text, StartLine, StartChar, ReplaceLen, ReplaceText, NewText) :-
+    debug(server,"~w ~w ~w ~w ~w ~w", [Text, StartLine, StartChar, ReplaceLen, ReplaceText, NewText]),
     phrase(replace(StartLine, StartChar, ReplaceLen, ReplaceText),
            Text,
            NewText).
@@ -72,17 +73,20 @@ replace(0, 0, 0, NewText), NewText --> !, [].
 replace(0, 0, Skip, NewText) -->
     !, skip(Skip),
     replace(0, 0, 0, NewText).
-replace(0, Chars, Skip, NewText), Take -->
-    { length(Take, Chars) },
-    Take, !,
-    replace(0, 0, Skip, NewText).
+replace(0, Chars, Skip, NewText), [C] --> {C#<128, succ(Chars0,Chars)}, [C], !, replace(0, Chars0, Skip, NewText).
+replace(0, Chars, Skip, NewText), [C,B0] --> {C#>=128, C#<224, succ(Chars0,Chars)}, [C,B0], !, replace(0, Chars0, Skip, NewText).
+replace(0, Chars, Skip, NewText), [C,B0,B1] --> {C#>=224, C#<240, succ(Chars0,Chars)}, [C,B0,B1], !, replace(0, Chars0, Skip, NewText).
+replace(0, Chars, Skip, NewText), [C,B0,B1,B2] --> {C#>=240, plus(Chars0,2,Chars)}, [C,B0,B1,B2], !, replace(0, Chars0, Skip, NewText).
 replace(Lines1, Chars, Skip, NewText), Line -->
     line(Line), !,
     { succ(Lines0, Lines1) },
     replace(Lines0, Chars, Skip, NewText).
 
-skip(0) --> !, [].
-skip(N) --> [_], { succ(N0, N) }, skip(N0).
+skip(0) --> !.
+skip(N) --> [C], { C#<128, succ(N0, N) }, skip(N0).
+skip(N) --> [C,_], { C#>=128,C#<224, succ(N0, N) }, skip(N0).
+skip(N) --> [C,_,_], { C#>=224,C<#240, succ(N0, N) }, skip(N0).
+skip(N) --> [C,_,_,_], { C#>=240, plus(N0, 2, N) }, skip(N0).
 
 line([0'\n]) --> [0'\n], !.
 line([C|Cs]) --> [C], line(Cs).
