@@ -651,13 +651,19 @@ handle_method_call(atom, ID, Attributes, to_str(), Str) :-
     format(atom(Str), '~w', [Value]).
 
 % Handle get_* methods
-handle_method_call(_Type, ID, Attributes, Method, Value) :-
+handle_method_call(Type, ID, Attributes, Method, Value) :-
+    compound_name_arity(Method, Get_Something, 0),
     % Ensures that Method is a compound term like get_name, get_type, etc., with arity 0
     compound_name_arity(Method, Get_Something, 0),
     % Ensure that the functor begins with 'get_' followed by the field name
     atom_concat('get_', FieldName, Get_Something),
     % Look up the attribute by the extracted field name
     member_chk(FieldName:Value, Attributes),!.
+
+% in case get_method and not get_method()
+handle_method_call(Type, ID, Attributes, AMethod, Value) :-
+    atom(AMethod),compound_name_arity(Method, Method, 0),!,
+    handle_method_call(Type, ID, Attributes, Method, Value).
 
 % atom_eq
 handle_method_call(atom, ID1, Attributes1, eq(ID2), AreEqual) :-
@@ -671,8 +677,8 @@ handle_method_call(atom, ID, Attributes, error_message(), ErrorMessage) :-
     atom_is_error(ID, true),
     atom_get_children(ID, [_, ErrorMessage]).
 
-    % atom_expr
-handle_method_call(atom, NewID, _, expr(ExpressionList), _) :-
+% atom_expr
+handle_method_call(atom, _Static, _, expr(ExpressionList), NewID) :-
     oo_new(atom, [metatype:'Expression', value:ExpressionList], NewID).
 
 % atom_free
