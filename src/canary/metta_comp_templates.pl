@@ -60,8 +60,8 @@
 % IMPORTANT:  DO NOT DELETE COMMENTED-OUT CODE AS IT MAY BE UN-COMMENTED AND USED
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% # 1. Length of a List
-% %  Normal Recursive
+%   1. Length of a List
+%   Normal Recursive
 %!  len(+List, -Length) is det.
 %
 %   Computes the length of a given list.
@@ -83,7 +83,7 @@ len([_|T], N) :-
     len(T, X),
     N is X + 1.  % The length is one more than the length of the tail.
 
-% %  With Accumulator
+%   With Accumulator
 %!  len_acc(+List, -Length) is det.
 %
 %   Computes the length of a list using an accumulator.
@@ -118,8 +118,8 @@ len_acc([_|T], Acc, N) :-
     NewAcc is Acc + 1,
     len_acc(T, NewAcc, N).
 
-% # 2. Sum of a List
-% %  Normal Recursive
+%   2. Sum of a List
+%   Normal Recursive
 %!  sum(+List, -Sum) is det.
 %
 %   Computes the sum of all elements in a given list.
@@ -249,8 +249,8 @@ factorial_acc(N, Acc, F) :-
     % Recursively calculate the factorial with the updated accumulator.
     factorial_acc(NewN, NewAcc, F).
 
-% # 4. Reverse List
-% %  Normal Recursive
+%   4. Reverse List
+%   Normal Recursive
 %!  reverse_list(+List, -Reversed) is det.
 %
 %   Reverses the elements of a given list.
@@ -309,8 +309,8 @@ reverse_list_acc([H|T], Acc, R) :-
     % Prepend the head of the list to the accumulator and recurse on the tail.
     reverse_list_acc(T, [H|Acc], R).
 
-% # 5. Fibonacci
-% %  Normal Recursive
+%   5. Fibonacci
+%   Normal Recursive
 %!  fibonacci(+N, -F) is det.
 %
 %   Computes the N-th Fibonacci number.
@@ -344,7 +344,7 @@ fibonacci(N, F) :-
     % The Fibonacci number is the sum of the two preceding numbers.
     F is F1 + F2.
 
-% %  With Accumulator
+%   With Accumulator
 %!  fibonacci_acc(+N, -F) is det.
 %
 %   Computes the N-th Fibonacci number using an accumulator-based approach.
@@ -388,8 +388,8 @@ fibonacci_acc(N, A, B, F) :-
     % Recursively compute the Fibonacci number with updated accumulators.
     fibonacci_acc(NewN, B, NewB, F).
 
-% # 6. Find an Element in a List
-% # Normal Recursive
+%   6. Find an Element in a List
+%   Normal Recursive
 %!  element_in_list(+Element, +List) is nondet.
 %
 %   Checks whether a given element exists in a list.
@@ -456,8 +456,8 @@ element_in_list_acc(X, [_|T], Acc) :-
     % Recursively search the tail of the list with the current accumulator value.
     element_in_list_acc(X, T, Acc).
 
-%  7. Check if a List is a Palindrome
-% # Normal Recursive
+%   7. Check if a List is a Palindrome
+%   Normal Recursive
 %!  is_palindrome(+List) is nondet.
 %
 %   Checks whether a given list is a palindrome.
@@ -479,7 +479,7 @@ is_palindrome(L) :-
     % Reverse the list and check if it is equal to the original list.
     reverse(L, L).
 
-% # With Accumulator
+%   With Accumulator
 %!  is_palindrome_acc(+List) is nondet.
 %
 %   Checks whether a given list is a palindrome using an accumulator.
@@ -516,8 +516,8 @@ reverse_acc([H|T], Acc, R) :-
     % Recursively reverse the tail, prepending the head to the accumulator.
     reverse_acc(T, [H|Acc], R).
 
-%  8. Calculate the Product of All Elements in a List
-% # Normal Recursive
+%   8. Calculate the Product of All Elements in a List
+%   Normal Recursive
 %!  product_list(+List, -Product) is det.
 %
 %   Computes the product of all elements in a given list.
@@ -577,8 +577,8 @@ product_list_acc([H|T], Acc, P) :-
     % Recursively compute the product of the tail.
     product_list_acc(T, NewAcc, P).
 
-%  9. Find the Nth Element of a List
-% Normal recursive
+%   9. Find the Nth Element of a List
+%   Normal recursive
 %!  nth_element(+N, +List, -Element) is nondet.
 %
 %   Finds the N-th element of a list using recursion.
@@ -640,8 +640,8 @@ nth_element_acc(N, [_|T], Acc, X) :-
     NewAcc is Acc + 1,
     nth_element_acc(N, T, NewAcc, X).
 
-%  10. Count the Occurrences of an Element in a List
-% # Normal Recursive
+%   10. Count the Occurrences of an Element in a List
+%   Normal Recursive
 %!  count_occurrences(+Element, +List, -Count) is det.
 %
 %   Counts the occurrences of a given element in a list.
@@ -708,8 +708,8 @@ count_occurrences_acc(X, [Y|T], Acc, N) :-
     X \= Y,
     count_occurrences_acc(X, T, Acc, N).
 
-%  11. Calculate the Greatest Common Divisor of Two Numbers
-% # Normal Recursive
+%   11. Calculate the Greatest Common Divisor of Two Numbers
+%   Normal Recursive
 %!  gcd(+A, +B, -GCD) is det.
 %
 %   Computes the greatest common divisor (GCD) of two numbers using recursion.
@@ -737,8 +737,8 @@ gcd(A, B, GCD) :-
     % Recursively call gcd/3 with B and the remainder.
     gcd(B, R, GCD).
 
-% # With Accumulator
-%!  gcd_acc(+A, +B, -GCD) is det.
+%   With Accumulator
+%   gcd_acc(+A, +B, -GCD) is det.
 %
 %   Computes the greatest common divisor (GCD) of two numbers using an accumulator.
 %   The accumulator is not needed for GCD itself but can be used to track steps or iterations.
@@ -770,8 +770,8 @@ gcd_acc(A, B, Acc, GCD) :-
    gcd_acc(B, R, NewAcc, GCD).
 %
 
-%  12. Check if a Number is Prime
-% # Normal Recursive
+%   12. Check if a Number is Prime
+%   Normal Recursive
 %!  is_prime(+N) is nondet.
 %
 %   Succeeds if N is a prime number.
@@ -805,7 +805,7 @@ is_prime(N) :-
     % meaning N is not divisible by any number in this range.
     \+ (between(2, sqrt(N), X), N mod X =:= 0).
 
-% # With Accumulator
+%   With Accumulator
 %!  is_prime_acc(+N) is nondet.
 %
 %   Succeeds if N is a prime number using an accumulator-based approach.
@@ -893,7 +893,7 @@ merge_sorted([H1|T1], [H2|T2], [H2|M]) :-
     % If H1 is greater than H2, place H2 in the result and continue.
     H1 > H2,merge_sorted([H1|T1], T2, M).
 
-% # With Accumulator
+%   With Accumulator
 %!  merge_sorted_acc(+List1, +List2, -Merged) is det.
 %
 %   Merges two sorted lists into one sorted list using an accumulator for efficiency.
@@ -941,8 +941,8 @@ merge_sorted_acc([H1|T1], [H2|T2], Acc, [H|M]) :-
     % If H1 is greater than H2, add H2 to the accumulator and continue.
     H1 > H2,merge_sorted_acc([H1|T1], T2, [H2|Acc], M).
 
-%  14. Find the Last Element of a List
-% # Normal Recursive
+%   14. Find the Last Element of a List
+%   Normal Recursive
 %!  last_element(+List, -Element) is det.
 %
 %   Retrieves the last element of a list.
@@ -968,7 +968,7 @@ last_element([_|T], X) :-
     % Recursively process the tail of the list until the last element is found.
     last_element(T, X).
 
-% # With Accumulator
+%   With Accumulator
 %!  last_element_acc(+List, -Element) is det.
 %
 %   Retrieves the last element of a list using an accumulator for efficiency.
@@ -1009,8 +1009,8 @@ last_element_acc([H|T], _, X) :-
     % Update the accumulator with the new head and process the rest of the list.
     last_element_acc(T, H, X).
 
-%  15. Remove Duplicate Elements from a List
-% # Normal Recursive
+%   15. Remove Duplicate Elements from a List
+%   Normal Recursive
 %!  remove_duplicates(+List, -UniqueList) is det.
 %
 %   Removes duplicate elements from a list while preserving the order of the first occurrence.
@@ -1039,7 +1039,7 @@ remove_duplicates([_|T], T1) :-
     % If H is a duplicate, skip it and continue processing the tail.
     remove_duplicates(T, T1).
 
-% # With Accumulator
+%   With Accumulator
 %!  remove_duplicates_acc(+List, -UniqueList) is det.
 %
 %   Removes duplicate elements from a list using an accumulator for efficiency.
@@ -1082,8 +1082,8 @@ remove_duplicates_acc([H|T], Acc, R) :-
         % Otherwise, add H to the accumulator and continue processing the tail.
         remove_duplicates_acc(T, [H|Acc], R)).
 
-%  16. Check if a Binary Tree is Balanced
-% # Normal Recursive
+%   16. Check if a Binary Tree is Balanced
+%   Normal Recursive
 %!  is_balanced(+Tree) is nondet.
 %
 %   Succeeds if the binary tree `Tree` is height-balanced.
@@ -1118,7 +1118,7 @@ is_balanced(tree(L, _, R)) :-
     % Recursively check if the right subtree is balanced.
     is_balanced(R).
 
-% # With Accumulator
+%   With Accumulator
 %!  is_balanced_acc(+Tree) is nondet.
 %
 %   Succeeds if the binary tree `Tree` is height-balanced, using an accumulator for height calculation.
@@ -1167,7 +1167,7 @@ is_balanced_acc(tree(L, _, R), H) :-
     H is max(Hl, Hr) + 1.
 
 %  17. Calculate the Height of a Binary Tree
-% # Normal Recursive
+%  Normal Recursive
 %!  height(+Tree, -Height) is det.
 %
 %   Calculates the height of the binary tree `Tree`.
@@ -1197,7 +1197,7 @@ height(tree(L, _, R), H) :-
     % The height of the current tree is 1 plus the maximum height of the two subtrees.
     H is max(Hl, Hr) + 1.
 
-% # With Accumulator
+%   With Accumulator
 %!  height_acc(+Tree, -Height) is det.
 %
 %   Calculates the height of a binary tree using an accumulator for efficiency.
@@ -1277,13 +1277,13 @@ search_bst(tree(_, Y, R), X) :-
     % If X is greater than Y, search in the right subtree.
     X > Y,search_bst(R, X).
 
-% # With Accumulator
+% With Accumulator
 % The accumulator is not very useful here, as the search path is already determined by the BST property.
 search_bst_acc(Tree, X) :- search_bst(Tree, X).
 %
 
-%  19. Insert an Element into a Binary Search Tree
-% # Normal Recursive
+%   19. Insert an Element into a Binary Search Tree
+%   Normal Recursive
 %!  insert_bst(+Tree, +Value, -NewTree) is det.
 %
 %   Inserts a value into a binary search tree (BST), producing a new tree.
@@ -1313,13 +1313,13 @@ insert_bst(tree(L, Y, R), X, tree(L, Y, R1)) :-
     % If X is greater than Y, insert X into the right subtree.
     X > Y,insert_bst(R, X, R1).
 
-% # With Accumulator
+% With Accumulator
 % The accumulator is not very useful here, as the insertion path is already determined by the BST property.
 insert_bst_acc(Tree, X, NewTree) :- insert_bst(Tree, X, NewTree).
 %
 
-%  20. Delete an Element from a Binary Search Tree
-% # Normal Recursive
+%   20. Delete an Element from a Binary Search Tree
+%   Normal Recursive
 %!  delete_bst(+Tree, +Value, -NewTree) is det.
 %
 %   Deletes a value from a binary search tree (BST), producing a new tree.
@@ -1381,13 +1381,13 @@ merge_trees(tree(L1, X, R1), tree(L2, Y, R2), tree(Merged, Y, R2)) :-
     % Recursively merge the right subtree of Tree1 with the left subtree of Tree2.
     merge_trees(tree(L1, X, R1), L2, Merged).
 
-% # With Accumulator
+% With Accumulator
 % The accumulator is not very useful here, as the deletion path is already determined by the BST property.
 delete_bst_acc(Tree, X, NewTree) :- delete_bst(Tree, X, NewTree).
 %
 
-%  21. Find the Lowest Common Ancestor in a Binary Search Tree
-% # Normal Recursive
+%   21. Find the Lowest Common Ancestor in a Binary Search Tree
+%   Normal Recursive
 %!  lowest_common_ancestor(+Tree, +X, +Z, -LCA) is nondet.
 %
 %   Finds the lowest common ancestor (LCA) of two values, `X` and `Z`, in a binary search tree (BST).
@@ -1417,16 +1417,16 @@ lowest_common_ancestor(tree(_, Y, R), X, Z, LCA) :-
     % If both X and Z are greater than Y, the LCA is in the right subtree.
     X > Y, Z > Y,lowest_common_ancestor(R, X, Z, LCA).
 
-% # With Accumulator
+% With Accumulator
 % prolog
 % The accumulator is not very useful here, as the search path is already determined by the BST property.
 lowest_common_ancestor_acc(Tree, X, Z, LCA) :- lowest_common_ancestor(Tree, X, Z, LCA).
 %
 
 %  22. Check if a Graph is Cyclic
-% For graphs, it is better to represent them in a Prolog-friendly format, such as adjacency lists. 
-% I will use a representation where each node has a list of its neighbors.
-% # Normal Recursive
+%  For graphs, it is better to represent them in a Prolog-friendly format, such as adjacency lists. 
+%  I will use a representation where each node has a list of its neighbors.
+%  Normal Recursive
 %!  is_cyclic(+Graph) is nondet.
 %
 %   Checks whether the given graph contains a cycle.
@@ -1490,8 +1490,8 @@ dfs(Vertex, Graph, Visited, FinalVisited) :-
 is_cyclic_acc(Graph) :- is_cyclic(Graph).
 %
 
-%  23. Perform a Depth-First Search on a Graph
-% # Normal Recursive
+%   23. Perform a Depth-First Search on a Graph
+%   Normal Recursive
 %!  dfs_graph(+Vertex, +Graph) is det.
 %
 %   Performs a depth-first search (DFS) traversal starting from the given `Vertex` in the `Graph`.
@@ -1556,8 +1556,8 @@ dfs_neighbors([Neighbor|Neighbors], Graph, Visited) :-
     % Continue with the remaining neighbors.
     dfs_neighbors(Neighbors, Graph, Visited).
 
-% # With Accumulator
-% The visited list acts as an accumulator.
+%   With Accumulator
+%   The visited list acts as an accumulator.
 %!  dfs_graph_acc(+Vertex, +Graph) is det.
 %
 %   Performs a depth-first search (DFS) traversal starting from the given `Vertex` in the `Graph`.
@@ -1579,8 +1579,8 @@ dfs_graph_acc(Vertex, Graph) :-
     % Calls the original dfs_graph/2 predicate to perform the DFS traversal.
     dfs_graph(Vertex, Graph).
 
-%  24. Perform a Breadth-First Search on a Graph
-% # Normal Recursive
+%   24. Perform a Breadth-First Search on a Graph
+%   Normal Recursive
 %!  bfs_graph(+Vertex, +Graph) is det.
 %
 %   Performs a breadth-first search (BFS) traversal starting from the given `Vertex` in the `Graph`.
@@ -1653,8 +1653,8 @@ filter_unvisited([Neighbor|Neighbors], Visited, NewNeighbors, NewVisited) :-
         filter_unvisited(Neighbors, [Neighbor|Visited], NewNeighbors, [Neighbor|NewVisited])
     ).
 
-% # With Accumulator
-% The visited list acts as an accumulator.
+%   With Accumulator
+%   The visited list acts as an accumulator.
 %!  bfs_graph_acc(+Vertex, +Graph) is det.
 %
 %   Performs a breadth-first search (BFS) traversal starting from the given `Vertex` in the `Graph`.
@@ -1678,8 +1678,8 @@ bfs_graph_acc(Vertex, Graph) :-
     % Calls the original bfs_graph/2 predicate to perform the BFS traversal.
     bfs_graph(Vertex, Graph).
 
-%  25. Check if a Graph is Connected
-% # Normal Recursive
+%   25. Check if a Graph is Connected
+%   Normal Recursive
 %!  is_connected(+Graph) is nondet.
 %
 %   Checks whether the given graph is connected.
@@ -1707,8 +1707,8 @@ is_connected(Graph) :-
     % Check that all other vertices have been visited.
     \+ (member(OtherVertex-_, Graph), \+ member(OtherVertex, Visited)), !.
 
-% # With Accumulator
-% The visited list acts as an accumulator.
+%   With Accumulator
+%   The visited list acts as an accumulator.
 %!  is_connected_acc(+Graph) is nondet.
 %
 %   Checks whether the given graph is connected, using an accumulator approach (placeholder).
@@ -1732,8 +1732,8 @@ is_connected_acc(Graph) :-
     % Reuses the is_connected/1 predicate for the actual connectivity check.
     is_connected(Graph).
 
-%  26. Find the Shortest Path between Two Nodes in a Graph
-% # Normal Recursive
+%   26. Find the Shortest Path between Two Nodes in a Graph
+%   Normal Recursive
 %!  shortest_path(+Start, +End, +Graph, -Path) is nondet.
 %
 %   Finds the shortest path between two vertices in a graph using a breadth-first search (BFS) approach.
@@ -1784,8 +1784,8 @@ shortest_path(Vertices, End, Graph, Visited, Path) :-
     % Recursively continue the search with updated lists.
     shortest_path(NewVertices, End, Graph, NewVisited, Path).
 
-% # With Accumulator
-% The visited list and the list of vertices to explore act as accumulators.
+%   With Accumulator
+%   The visited list and the list of vertices to explore act as accumulators.
 %!  shortest_path_acc(+Start, +End, +Graph, -Path) is det.
 %
 %   Finds the shortest path between two vertices in a graph using a breadth-first search (BFS) approach.
@@ -1807,8 +1807,8 @@ shortest_path_acc(Start, End, Graph, Path) :-
     % Reuses the original shortest_path/4 predicate to find the shortest path.
     shortest_path(Start, End, Graph, Path).
 
-%  27. Check if a String is a Palindrome
-% # Normal Recursive
+%   27. Check if a String is a Palindrome
+%   Normal Recursive
 %!  is_string_palindrome(+Str) is nondet.
 %
 %   Checks whether the given string `Str` is a palindrome.
@@ -1833,13 +1833,13 @@ is_string_palindrome(Str) :-
     % Check if the character list is a palindrome.
     is_palindrome(Chars).
 
-% # With Accumulator
+% With Accumulator
 % prolog
 is_string_palindrome_acc(Str) :- string_chars(Str, Chars), is_palindrome_acc(Chars, []).
 %
 
-%  28. Compute the Edit Distance between Two Strings
-% # Normal Recursive
+%   28. Compute the Edit Distance between Two Strings
+%   Normal Recursive
 %!  edit_distance(+List1, +List2, -Distance) is det.
 %
 %   Computes the edit distance (Levenshtein distance) between two lists `List1` and `List2`.
@@ -1874,7 +1874,7 @@ edit_distance([H1|T1], [H2|T2], D) :-
     % If the heads of the two lists are different, increment the distance.
     D is D1 + (H1 \= H2).
 
-% # With Accumulator
+%   With Accumulator
 %!  edit_distance_acc(+List1, +List2, -Distance) is det.
 %
 %   Computes the edit distance (Levenshtein distance) between two lists `List1` and `List2` using an accumulator.
@@ -1925,8 +1925,8 @@ edit_distance_acc([H1|T1], [H2|T2], Acc, D) :-
     % Recursively process the tails of both lists.
     edit_distance_acc(T1, T2, NewAcc, D).
 
-%  29. Find the Longest Common Subsequence of Two Strings
-% # Normal Recursive
+%   29. Find the Longest Common Subsequence of Two Strings
+%   Normal Recursive
 %!  lcs(+List1, +List2, -LCS) is det.
 %
 %   Finds the longest common subsequence (LCS) between two lists.
@@ -1956,7 +1956,7 @@ lcs([_|T1], S2, Lcs) :-
     % If the heads do not match, try the tail of the first list.
     lcs(T1, S2, Lcs).
 
-% # With Accumulator
+%   With Accumulator
 %!  lcs_acc(+List1, +List2, -LCS) is det.
 %
 %   Finds the longest common subsequence (LCS) between two lists using an accumulator.
@@ -2080,7 +2080,7 @@ longest_string([H|T], Acc, Longest) :-
         longest_string(T, Acc, Longest)  % Keep the current longest.
     ).
 
-% # With Accumulator
+%   With Accumulator
 %!  longest_common_substring_acc(+String1, +String2, -LCS) is det.
 %
 %   Finds the longest common substring between two strings using an accumulator.
