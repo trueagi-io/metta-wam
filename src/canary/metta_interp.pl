@@ -63,6 +63,7 @@
 :- set_prolog_flag(debug_on_interrupt,true).
 :- set_prolog_flag(debug_on_error,true).
 :- ensure_loaded(swi_support).
+:- ensure_loaded(library(pldoc)).
 %:- set_prolog_flag(compile_meta_arguments,control).
 :- (prolog_load_context(directory, Value);Value='.'), absolute_file_name('../packs/',Dir,[relative_to(Value)]),
     atom_concat(Dir,'predicate_streams',PS),
@@ -76,6 +77,19 @@ is_win64:- current_prolog_flag(windows,_).
 is_win64_ui:- is_win64,current_prolog_flag(hwnd,_).
 
 dont_change_streams:- true.
+
+%!  lazy_load_python is det.
+%
+%   This predicate represents a placeholder or a stub for lazily loading the Python
+%   integration. Currently, it does not contain any implementation logic.
+%   Presumably, it would attempt to load Python-related resources or interfaces
+%   when needed, avoiding unnecessary overhead if Python is not required.
+%
+%   The implementation should be added to perform the actual lazy loading of
+%   the Python environment or integration.
+%
+:- dynamic(lazy_load_python/0).
+lazy_load_python.
 
 :- dynamic(user:is_metta_src_dir/1).
 :- prolog_load_context(directory,Dir),
@@ -1058,7 +1072,6 @@ metta_atom_asserted('&stdlib','&corelib').
 metta_atom_asserted('&flybase','&corelib').
 metta_atom_asserted('&catalog','&corelib').
 metta_atom_asserted('&catalog','&stdlib').
-%:- ensure_loaded(metta_corelib).
 
 /*
 'mod-space'(top,'&self').
@@ -1824,6 +1837,7 @@ fix_message_hook:-
 %:- ensure_loaded('../../library/genome/flybase_loader').
 
 :- ensure_loaded(metta_python).
+:- ensure_loaded(metta_corelib).
 :- initialization(use_corelib_file).
 
 :- ignore(((

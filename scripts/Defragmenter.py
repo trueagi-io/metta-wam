@@ -9,8 +9,18 @@ import sys
 import os
 
 def process_prolog_code(prolog_code):
+    # Regular expression pattern to match filenames ending with a quote, strip periods
+    pattern = r'([a-zA-Z0-9]+(?:\.[a-zA-Z0-9]+)+)\''
+
+	# Function to replace matched filenames
+    def replace_filename(match):
+        return re.sub(r'\.', '', match.group(1)) + "'"
+
+    # Use re.sub to find and replace all matching filenames
+    converted_filenames = re.sub(pattern, replace_filename, prolog_code)
+    
     # Remove single-line comments
-    code_without_single_line = re.sub(r'%.*$', '', prolog_code, flags=re.MULTILINE)
+    code_without_single_line = re.sub(r'%.*$', '', converted_filenames, flags=re.MULTILINE)
     
     # Remove multi-line comments
     code_without_comments = re.sub(r'/\*[\s\S]*?\*/', '', code_without_single_line)

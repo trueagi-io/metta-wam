@@ -19,6 +19,13 @@
  * Contribution: Contributions are welcome! For contributing guidelines, please check the CONTRIBUTING.md
  *               file in the repository.
  */
+% ==============================
+% MeTTa to Prolog transpilation (which uses the Host SWI-Prolog compiler)
+% Aimed at compiling/optimizing and transforming
+% Prolog predicates to functional equivalents and vice versa, with special attention
+% to handling different logical constructs and performing conversions between
+% functions and predicates.
+% ==============================
 
 % Setting the file encoding to ISO-Latin-1
 :- encoding(iso_latin_1).
@@ -150,6 +157,7 @@ decl_functional_predicate_arg('==', 2, 2).
 decl_functional_predicate_arg('=', 2, 2).
 decl_functional_predicate_arg('is-same', 2, 2).
 decl_functional_predicate_arg(assertEqual, 2, 2).
+decl_functional_predicate_arg(assertTrue, 2, 2).
 decl_functional_predicate_arg(case, 3, 3).
 decl_functional_predicate_arg(collapse, 2, 2).
 decl_functional_predicate_arg('PredArity', 2, 2).

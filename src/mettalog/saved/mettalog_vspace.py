@@ -13,13 +13,13 @@ from glob import glob
 from time import monotonic_ns, time
 
 # Global Variables
-VSPACE_VERBOSE = os.environ.get("VSPACE_VERBOSE")
+METTALOG_VERBOSE = os.environ.get("METTALOG_VERBOSE")
 # 0 = for scripts/demos
 # 1 = developer
 # 2 = debugger
 verbose = 1
-if VSPACE_VERBOSE is not None:
- try: verbose = int(VSPACE_VERBOSE) # Convert it to an integer
+if METTALOG_VERBOSE is not None:
+ try: verbose = int(METTALOG_VERBOSE) # Convert it to an integer
  except ValueError: ""
 
 print(";; ...doing...",__name__)
@@ -3445,7 +3445,7 @@ try:
 	
 	                elif sline.startswith("@v"):
 	                    verbose = int(sline.split()[1])
-	                    os.environ["VSPACE_VERBOSE"] = str(verbose)
+	                    os.environ["METTALOG_VERBOSE"] = str(verbose)
 	                    print_cmt(f"Verbosity level set to {verbose}")
 	                    continue
 	
@@ -3486,7 +3486,7 @@ try:
 	                    print_cmt(".q       - Quit the session")
 	                    print_cmt(".h       - Display command history")
 	                    print_cmt("\nFrom your shell you can use..")
-	                    print_cmt("\texport VSPACE_VERBOSE=2")
+	                    print_cmt("\texport METTALOG_VERBOSE=2")
 	                    flush_console()
 	                    continue
 	
@@ -4086,8 +4086,17 @@ def handle_arg(string, skip_filetypes=['.metta', '.md','.pl', '.png', '.jpg', '.
 swip = globals().get('swip') or PySwip()
 try:
     the_verspace = globals().get('the_verspace') or VSpace("&verspace")
+except Exception as e:
+if verbose>0: print(f"; Error: {e}")
+try:
     the_flybase = globals().get('the_flybase') or VSpace("&flybase")
+except Exception as e:
+if verbose>0: print(f"; Error: {e}")
+try:
     the_nb_space = globals().get('the_nb_space') or VSpace("&nb")
+except Exception as e:
+    if verbose>0: print(f"; Error: {e}")
+try:
     the_gptspace = globals().get('the_gptspace') or GptSpace()
 except Exception as e:
     if verbose>0: print(f"; Error: {e}")

@@ -1373,24 +1373,34 @@
 (@doc py-list
   (@desc "Converts a MeTTa Expression into a Python list and returns it as a PyObject.")
   (@params (
-    (@param (@type Expression) (@desc "A MeTTa List that will be converted into a Python list"))
+    (@param (@desc "A MeTTa List that will be converted into a Python list"))
   ))
-  (@return (@type PyObject) (@desc "A Python list object that represents the given MeTTa Expression as a PyObject"))
+  (@return (@desc "A Python list object that represents the given MeTTa Expression as a PyObject"))
 )
 (: py-list (-> Expression PyObject))
 ;; Implemented from Interpreters
 
-;; Public MeTTa
+;; Public MeTTaLog
 (@doc py-eval
   (@desc "Evaluates a Python expression from a string and returns the result as a PyObject.")
   (@params (
-    (@param (@type String) (@desc "A string representing a Python expression that will be evaluated"))
+    (@param (@desc "A string representing a Python expression that will be evaluated"))
   ))
-  (@return (@type PyObject) (@desc "The result of evaluating the Python expression as a PyObject"))
+  (@return (@desc "The result of evaluating the Python expression as a PyObject"))
 )
 (: py-eval (-> String PyObject))
 ;; Implemented from Interpreters
 
+;; Public MeTTaLog
+(@doc py-exec!
+  (@desc "Executes some Python sourcecode from a string !(py-exec! \"import torch\") -> True.  !(py-exec! \"import torche\") -> False. ")
+  (@params (
+    (@param (@type String) (@desc "A string representing a Python sourcecode that will be executed"))
+  ))
+  (@return (@desc "The True|False results of executing the Python expression"))
+)
+(: py-exec! (-> String Bool))
+;; Implemented from Interpreters
 
 ; TODO: Segmentation fault (core dumped) when calling !(help &self)
 ; TODO: help! not working for &self (segmentation fault)
