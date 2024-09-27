@@ -31,7 +31,7 @@ cleanup_debug:-
 :- export(plain_var/1).
 plain_var(V):- notrace((var(V), \+ attvar(V), \+ get_attr(V,ci,_))).
 catch_nolog(G):- ignore(catch(notrace(G),E,once(true;nop(u_dmsg(E=G))))).
-catch_log(G):- ignore(catch((G),E,((u_dmsg(E=G),ugtrace(G))))).
+catch_log(G):- ignore(catch((G),E,((u_dmsg(E=G),ugtrace(E,G))))).
 % catch_log(G):- ignore(catch(notrace(G),E,((writeln(E=G),catch_nolog(ds))))).
 
 get_user_error(UE):- stream_property(UE,file_no(2)),!.
@@ -376,7 +376,7 @@ stack_dump:-  ignore(catch(bt,_,true)). %,ignore(catch(dumpST,_,true)),ignore(ca
 ugtrace(error(Why),G):- !, notrace,write_src_uo(Why),stack_dump,write_src_uo(Why),rtrace(G).
 ugtrace(Why,G):-  tracing,!,notrace,write_src(Why),rtrace(G).
 ugtrace(Why,_):-  is_testing, !, ignore(give_up(Why,5)),throw('$aborted').
-ugtrace(_Why,G):-  ggtrace(G),throw('$aborted').
+ugtrace(Why,G):-  wdmsg(Why),ggtrace(G),throw('$aborted').
 %ugtrace(Why,G):- ggtrace(G).
 
 give_up(Why,_):- is_testing,!,write_src_uo(Why),!, throw(give_up(Why)).
