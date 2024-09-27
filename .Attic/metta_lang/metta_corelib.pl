@@ -1,5 +1,387 @@
 :- multifile(lazy_load_python/0).
 :- dynamic(lazy_load_python/0).
+
+% Import the Janus library, which is used for interfacing with Python.
+:- use_module(library(janus)).
+
+% Uncomment the next line for quieter runs, meaning any debugging or tracing calls will be suppressed.
+% if_bugger(_):- !.
+if_bugger(G) :- call(G).
+
+% Define a no-op predicate if `nop/1` is not already defined.
+:- if(\+ current_predicate(nop/1)).
+nop(_).
+:- endif.
+
+% Define a tracing predicate to handle failure cases during execution.
+% If `trace_failures/1` is not already defined, define it here.
+
+:- if(\+ current_predicate(trace_failures/1)).
+trace_failures((A, B)) :- !,
+    (A *-> trace_failures(B);
+    (B *-> trace_failures(A); wfailed(((A, B))))).
+trace_failures(A) :- (A *-> true; wfailed(A)).
+
+% Predicate to print failed goals for debugging purposes.
+wfailed(G) :- writeln(wfailed(G)), fail.
+:- endif.
+
+py_is_tf(Goal,TF):- once(Goal)->TF='@'(true);TF='@'(false).
+
+% Dynamic predicate to store registered Python functions with details about their parameters and return type.
+:- dynamic registered_function/5.
+
+%!  register_function(+ModuleFunctionName, +ParamNames, +ParamTypes, +ParamDefaults, +ReturnType) is det.
+%
+%   Registers a Python function in Prolog with its associated parameters and return type.
+%   If a function with the same name is already registered, it will be retracted and replaced
+%   with the new details.
+%
+%   @arg ModuleFunctionName The name of the function being registered (concatenation of module and function name).
+%   @arg ParamNames List of parameter names.
+%   @arg ParamTypes List of parameter types.
+%   @arg ParamDefaults List of default values for the parameters.
+%   @arg ReturnType The return type of the function.
+%
+%   @example
+%     % Registering a Python function named 'math_add':
+%     ?- register_function('math_add', ['x', 'y'], ['int', 'int'], [0, 0], 'int').
+%   Registered function: 'math_add' with parameters: ['x', 'y'], defaults: [0, 0], types: ['int', 'int'] -> 'int'.
+%
+register_function(ModuleFunctionName, ParamNames, ParamTypes, ParamDefaults, ReturnType) :-
+    % Remove any previous registration of the function.
+    retractall(registered_function(ModuleFunctionName, _, _, _, _)),
+    % Register the function with its new details.
+    assertz(registered_function(ModuleFunctionName, ParamNames, ParamTypes, ParamDefaults, ReturnType)),
+    format('Registered function: ~q with parameters: ~q, defaults: ~q, types: ~q -> ~q~n',
+           [ModuleFunctionName, ParamNames, ParamDefaults, ParamTypes, ReturnType]).
+
+%!  from_python(+ModuleFunctionName, +TupleArgs, +LArgs, +KwArgs, -Return) is det.
+%
+%   Handles calling a registered Prolog predicate or, if not found, the original Python function.
+%   It first checks if the Prolog predicate exists, and if so, dynamically constructs the goal and calls it.
+%   If no Prolog predicate is found, it calls the original Python function.
+%
+%   @arg ModuleFunctionName The name of the function being called.
+%   @arg TupleArgs A tuple of arguments (not currently used but passed for compatibility).
+%   @arg LArgs A list of positional arguments.
+%   @arg KwArgs A list of keyword arguments.
+%   @arg Return The result of the function call.
+%
+%   @example
+%     % Calling a registered Prolog function:
+%     ?- from_python('math_add', _, [1, 2], [], Result).
+%   Result = 3.
+%
+from_python(ModuleFunctionName, _TupleArgs, LArgs, KwArgs, Result) :-
+    % Determine the arity of the function based on the number of positional arguments.
+    length(LArgs, Arity),
+    NewArity1 is Arity + 1,  % Adjust arity to account for one additional argument (Return).
+    NewArity2 is Arity + 2,  % Adjust arity to account for two additional arguments (KwArgs and Return).
+
+    % Check if a Prolog predicate with the corresponding arity exists.
+    (current_predicate(ModuleFunctionName/NewArity2) -> append(LArgs, [KwArgs, Return], FullArgs);
+    (current_predicate(ModuleFunctionName/NewArity1) -> append(LArgs, [Return], FullArgs);
+    (current_predicate(ModuleFunctionName/Arity) -> append(LArgs, [], FullArgs)))),
+    % Construct the predicate dynamically with all arguments.
+    Predicate =.. [ModuleFunctionName | FullArgs],
+    registered_function(ModuleFunctionName, _, _, _, ReturnType),
+
+    % Call the Prolog predicate and handle its return type.
+    if_bugger(format('Calling existing Prolog predicate: ~q -> ~q ', [Predicate, ReturnType])), !,
+    trace_failures((call_ret_type(Predicate, ReturnType, Return, Result),
+                    if_bugger(writeln(Return -> Result)), nonvar(Result))).
+
+% Fallback clause if no corresponding Prolog predicate is found, calls the original Python function.
+from_python(_ModuleFunctionName, _TupleArgs, _LArgs, _KwArgs, 'call_original_function') :- !.
+
+from_python(ModuleFunctionName, TupleArgs, LArgs, KwArgs, Return) :-
+    format('No Prolog predicate found for: ~w. Calling original Python function.~n', [ModuleFunctionName]),
+    call_python_original(ModuleFunctionName, TupleArgs, LArgs, KwArgs, Return).
+
+% Predicate to handle calling a predicate with a boolean return type.
+call_ret_type(Predicate, bool, _Return, Result) :- !,
+    (call(Predicate) -> ignore(Result = '@'('true')); ignore(Result = '@'('false'))).
+
+% Predicate to handle calling a predicate with a 'None' return type.
+call_ret_type(Predicate, 'None', _Return, Result) :- !,
+    ignore(call(Predicate)) -> ignore(Result = '@'('none')).
+
+% Generic handler for other return types.
+call_ret_type(Predicate, _RetType, Return, Result) :- !,
+    call(Predicate), ret_res(Return, Result).
+
+% Helper to process the return value.
+ret_res(o3(_, ID, _), ID) :- nonvar(ID), !.
+ret_res(ID, ID).
+
+%!  override_hyperonpy is det.
+%
+%   Loads the Python overrider (if not already loaded) and calls the Python function `override_hyperonpy/0`
+%   from the `metta_python_overrider` module. The result is expected to be an empty Python dictionary (`py{}`).
+%
+%   @example
+%     % Applying the override to Hyperon:
+%     ?- override_hyperonpy.
+%   true.
+%
+override_hyperonpy :-
+    load_metta_python_overrider,  % Ensure the overrider is loaded.
+    py_call(metta_python_override:load_hyperon_overrides(), _), !.
+
+%!  test_override_hyperonpy is det.
+%
+%   Loads the Hyperon Python module by first applying the necessary overridees using `override_hyperonpy/0`.
+%
+%   @example
+%     % Load the Hyperon module:
+%     ?- test_override_hyperonpy.
+%   true.
+%
+test_override_hyperonpy :-
+    load_metta_python_overrider,  % Ensure the overrider is loaded.
+    py_call(metta_python_override:test_hyperon_overrides(), _), !.
+
+%!  metta_python_overrider(-Content) is det.
+%
+%   Reads and asserts the content of the Python file 'metta_python_override.py' as a dynamic fact.
+%   This allows the Python code to be accessed and used at runtime within Prolog.
+%
+%   @arg Content A string representing the contents of the 'metta_python_override.py' file.
+%
+%   @example
+%     % Retrieve the content of the Python overrider:
+%     ?- metta_python_overrider(Content).
+%   Content = "... Python code ...".
+%
+:- dynamic(metta_python_overrider/1).
+
+% Read the content of the Python override file and assert it as a fact.
+:- read_file_to_string('./metta_python_override.py', String, []),
+   assertz(metta_python_overrider(String)), !.
+
+%!  did_load_metta_python_overrider is det.
+%
+%   A volatile predicate that acts as a flag indicating whether the Python overrider has been loaded.
+%   This flag is not saved between sessions and only exists during the current runtime.
+%
+%   @example
+%     % After loading the overrider, this will succeed:
+%     ?- did_load_metta_python_overrider.
+%
+:- dynamic(did_load_metta_python_overrider/0).
+:- volatile(did_load_metta_python_overrider/0).
+
+%!  load_metta_python_overrider is det.
+%
+%   Loads the Python overrider if it hasn't been loaded yet. The overrider content is retrieved
+%   from `metta_python_overrider/1`, and the Python module is loaded via `py_module/2`. Once
+%   loaded, `did_load_metta_python_overrider/0` is asserted to prevent reloading.
+%
+%   @example
+%     % Load the Python overrider:
+%     ?- load_metta_python_overrider.
+%   true.
+%
+load_metta_python_overrider :-
+    did_load_metta_python_overrider, !.  % If already loaded, do nothing.
+
+load_metta_python_overrider :-
+    % Retrieve the Python overrider content.
+    metta_python_overrider(String),
+    % Load the Python module via py_module/2.
+    py_module(metta_python_overrider, String),
+    % Assert that the overrider has now been loaded.
+    assert(did_load_metta_python_overrider), !.
+    % Try to load the module again, ignoring any errors.
+    % ignore(notrace(with_safe_argv(catch(py_module(metta_python_overrider, String), _, true)))), !.
+
+
+%!  maybe_load_metta_python_overrider is det.
+%
+%   This predicate ensures that the Python integration for Metta is loaded.
+%   It tries to load the Python interface lazily by calling `lazy_load_python/0`.
+%   If the lazy loading succeeds (determined by the cut `!`), it does nothing more.
+%   If lazy loading fails, it proceeds to load the Metta Python overrider using
+%   `load_metta_python_overrider/0`.
+%
+maybe_load_metta_python_overrider :-
+    % Attempt lazy loading of the Python interface.
+    lazy_load_python, !.
+maybe_load_metta_python_overrider :-
+    % If lazy loading fails, load the Metta Python overrider manually.
+    load_metta_python_overrider.
+
+% The following directives ensure that `maybe_load_metta_python_overrider/0` is called 
+% during system initialization. The first initialization runs when the program 
+% starts, and the second runs when the system is restored from a saved state.
+%:- initialization(maybe_load_metta_python_overrider).
+%:- initialization(maybe_load_metta_python_overrider, restore).
+
+
+%!  metta_python_patcher(-Content) is det.
+%
+%   Reads and asserts the content of the Python file 'metta_python_patcher.py' as a dynamic fact.
+%   This allows the Python code to be accessed and used at runtime within Prolog.
+%
+%   @arg Content A string representing the contents of the 'metta_python_patcher.py' file.
+%
+%   @example
+%     % Retrieve the content of the Python patcher:
+%     ?- metta_python_patcher(Content).
+%   Content = "... Python code ...".
+%
+:- dynamic(metta_python_patcher/1).
+
+:-  % Get the directory of the current Prolog file being loaded.
+    prolog_load_context(directory, Dir),
+    % Construct the full path to the Python patcher file.
+    atomic_list_concat([Dir, '/', 'metta_python_patcher.py'], FilePath),
+    % Read the content of the Python patcher file and assert it.
+    read_file_to_string(FilePath, String, []),
+    asserta(metta_python_patcher(String)), !.
+
+%!  did_load_metta_python_patcher is det.
+%
+%   A volatile predicate that acts as a flag indicating whether the Python patcher has been loaded.
+%   This flag is not saved between sessions and only exists during the current runtime.
+%
+%   @example
+%     % After loading the patcher, this will succeed:
+%     ?- did_load_metta_python_patcher.
+%
+:- dynamic(did_load_metta_python_patcher/0).
+:- volatile(did_load_metta_python_patcher/0).
+
+%!  load_metta_python_patcher is det.
+%
+%   Loads the Python patcher if it hasn't been loaded yet. The patcher content is retrieved
+%   from `metta_python_patcher/1`, and the Python module is loaded via `py_module/2`. Once
+%   loaded, `did_load_metta_python_patcher/0` is asserted to prevent reloading.
+%
+%   @example
+%     % Load the Python patcher:
+%     ?- load_metta_python_patcher.
+%   true.
+%
+load_metta_python_patcher :-
+    did_load_metta_python_patcher, !.  % If already loaded, do nothing.
+
+load_metta_python_patcher :-
+    % Retrieve the Python patcher content.
+    metta_python_patcher(String),
+    % Load the Python module via py_module/2.
+    py_module(metta_python_patcher, String),
+    % Assert that the patcher has now been loaded.
+    assert(did_load_metta_python_patcher), !,
+    % Try to load the module again, ignoring any errors.
+    %ignore(notrace(with_safe_argv(catch(py_module(metta_python_patcher, String), _, true)))), 
+    !.
+
+%!  maybe_load_metta_python_patcher is det.
+%
+%   This predicate ensures that the Python integration for Metta is loaded.
+%   It tries to load the Python interface lazily by calling `lazy_load_python/0`.
+%   If the lazy loading succeeds (determined by the cut `!`), it does nothing more.
+%   If lazy loading fails, it proceeds to load the Metta Python patcher using
+%   `load_metta_python_patcher/0`.
+%
+maybe_load_metta_python_patcher :-
+    % Attempt lazy loading of the Python interface.
+    lazy_load_python, !.
+maybe_load_metta_python_patcher :-
+    % If lazy loading fails, load the Metta Python patcher manually.
+    load_metta_python_patcher.
+
+% The following directives ensure that `maybe_load_metta_python_patcher/0` is called 
+% during system initialization. The first initialization runs when the program 
+% starts, and the second runs when the system is restored from a saved state.
+%:- initialization(maybe_load_metta_python_patcher).
+%:- initialization(maybe_load_metta_python_patcher, restore).
+
+%!  patch_hyperonpy is det.
+%
+%   Loads the Python patcher (if not already loaded) and calls the Python function `patch_hyperonpy/0`
+%   from the `metta_python_patcher` module. The result is expected to be an empty Python dictionary (`py{}`).
+%
+%   @example
+%     % Applying the patch to Hyperon:
+%     ?- patch_hyperonpy.
+%   true.
+%
+patch_hyperonpy :-
+    load_metta_python_patcher,  % Ensure the patcher is loaded.
+    py_call(metta_python_patcher:patch_hyperonpy(), O), !,
+    O = py{}.
+
+%!  load_hyperonpy is det.
+%
+%   Loads the Hyperon Python module by first applying the necessary patches using `patch_hyperonpy/0`.
+%
+%   @example
+%     % Load the Hyperon module:
+%     ?- load_hyperonpy.
+%   true.
+%
+load_hyperonpy :-
+    patch_hyperonpy.
+
+%!  load_mettalogpy is det.
+%
+%   Loads the `mettalog` Python module and optionally attempts to load the `hyperon` module.
+%   The `nop/1` around the second `py_exec/1` ensures that loading `hyperon` does not raise an error.
+%
+%   @example
+%     % Load mettalog and hyperon (if available):
+%     ?- load_mettalogpy.
+%   true.
+%
+load_mettalogpy :-
+    py_exec("import mettalog"),
+    nop(py_exec("import hyperon")).
+
+%!  mettalogpy_repl is det.
+%
+%   Starts the REPL (Read-Eval-Print Loop) for the `mettalog` Python module by invoking the `repl/0` function.
+%
+%   @example
+%     % Start the mettalog REPL:
+%     ?- mettalogpy_repl.
+%   true.
+%
+mettalogpy_repl :-
+    catch_log(override_hyperonpy),
+    catch_log(hyperonpy_repl), !.
+
+hyperonpy_repl :-
+    maplist(catch_log,
+            [load_metta_python_proxy,
+             load_metta_python_patcher,
+             load_mettalogpy,
+             py_call(mettalog:repl())]).
+
+% Call the original Python function if there's no Prolog predicate
+call_python_original(ModuleFunctionName, TupleArgs, LArgs, KwArgs, Return) :- fail,
+    py_call(metta_python_override:call_python_original(ModuleFunctionName, TupleArgs, LArgs, KwArgs), Return).
+
+% Sample Prolog function for demonstration
+my_module_add(A, B, _, R) :- R is A + B.
+
+maybe_info(_Fmt, _Args) :- !.
+maybe_info(Fmt, Args) :- format(Fmt, Args).
+
+% Define factorial in Prolog
+my_module_factorial(0, 1).
+my_module_factorial(N, F) :-
+    N > 0,
+    N1 is N - 1,
+    my_module_factorial(N1, F1),
+    F is N * F1.
+
+
+
+% ==================================================
+% **Prolog Translation of the Given File with Numbered Functions**
 % ==================================================
 
 :- module(hyperonpy_prolog_translation, [
@@ -1129,7 +1511,7 @@ hyperonpy_env_builder_use_default(EnvBuilder) :-
 %
 %   @arg EnvBuilder The resulting environment builder (`hyperonpy.EnvBuilder`).
 hyperonpy_env_builder_use_test_env(EnvBuilder) :-
-    oo_new(env_builder, [test_env:@(true)], EnvBuilder).
+    oo_new(env_builder, [test_env: ( '@'(true))], EnvBuilder).
 
 % ==============================
 % **2.8. Environment Configuration Function**
