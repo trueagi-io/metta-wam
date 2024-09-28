@@ -116,7 +116,7 @@ server_capabilities(
                           },
       hoverProvider: true,
       completionProvider: _{},
-      definitionProvider: true,
+      definitionProvider: false,
       declarationProvider: true,
       implementationProvider: true,
       referencesProvider: true,
@@ -164,11 +164,10 @@ handle_msg("shutdown", Msg, _{id: Id, result: null}) :-
 % IN: params:{position:{character:11,line:56},textDocument:{uri:file://<FILEPATH>}}}
 % OUT: {id:21,result:{contents:{kind:plaintext,value:<ALL_THE_STUFF>}}}
 handle_msg("textDocument/hover", Msg, _{id: Id, result: Response}) :-
-    _{params: _{position: _{character: Char0, line: Line0},
+    _{params: _{position: _{character: Char0, line: Line},
                 textDocument: _{uri: Doc}}, id: Id} :< Msg,
     atom_concat('file://', Path, Doc),
-    Line1 is Line0 + 1,
-    (  help_at_position(Path, Line1, Char0, Help)
+    (  help_at_position(Path, Line, Char0, Help)
     -> Response = _{contents: _{kind: plaintext, value: Help}}
     ;  Response = null).
 
@@ -306,8 +305,9 @@ handle_msg("textDocument/didOpen", Msg, Resp) :-
     _{params: _{textDocument: TextDoc}} :< Msg,
     _{uri: FileUri} :< TextDoc,
     _{text: FullText} :< TextDoc,
-    split_text_single_lines(FullText,SplitText),
-    %debug(server,SplitText,[]),
+    %debug(server,"~w",[FullText]),
+    split_text_document(FullText,SplitText),
+    %debug(server,"~w",[SplitText]),
     atom_concat('file://', Path, FileUri),
     retractall(lsp_metta_changes:doc_text(Path, _)),
     assertz(lsp_metta_changes:doc_text(Path, SplitText)),
