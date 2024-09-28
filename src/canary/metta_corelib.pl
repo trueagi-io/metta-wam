@@ -582,12 +582,23 @@ no_module:- module(hyperonpy_prolog_translation, [
 % Creates a new object with a unique ID based on its type.
 % Stores the object's state in o_f_v(ID, FieldName, Value).
 %
+oo_new(Type, Attributes, ObjectID) :-
+    % Check if 'value' field is present in Attributes
+    memberchk(value:Value, Attributes),
+    % Check if an existing object with the same Type and Value exists
+    o_f_v(ExistingID, type, Type),
+    o_f_v(ExistingID, value, Value),
+    % Optionally, ensure other fields match as needed
+    % For simplicity, we only check Type and Value
+    !,  % Cut to prevent backtracking
+    ObjectID = ExistingID.
 
 oo_new(Type, Attributes, ObjectID) :-
+    % If no existing object is found, create a new one
     generate_object_id(Type, ObjectID),
     assertz(o_f_v(ObjectID, type, Type)),
-    forall(member(FieldName:Value, Attributes),
-           assertz(o_f_v(ObjectID, FieldName, Value))).
+    forall(member(FieldName:FieldValue, Attributes),
+           assertz(o_f_v(ObjectID, FieldName, FieldValue))).
 
 
 % 2. oo_free/1
