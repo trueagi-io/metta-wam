@@ -204,6 +204,7 @@ def override_module_calls_with_janus(module):
                         return result
 
                     my_break()
+                    result, tf = try_one(full_function_name, args, pargs, kwargs)
                     return result
 
                     return original_function(*args, **kwargs)
@@ -266,11 +267,11 @@ def load_hyperon_overrides():
     global hyperon_overrides_ready
     if hyperon_overrides_ready: return True
     hyperon_overrides_ready = True
-    setup_janus()
     import hyperonpy
     override_module_calls_with_janus(hyperonpy)
 
 def test_hyperon_overrides():
+    setup_janus()
     import hyperon
     load_hyperon_overrides()
     metta = hyperon.runner.MeTTa()
@@ -298,6 +299,5 @@ def setup_janus():
 
 if __name__ == "__main__":
     setup_janus()
-
     test_my_module()
     test_hyperon_overrides()
