@@ -570,10 +570,89 @@ no_module:- module(hyperonpy_prolog_translation, [
 
 % Declare dynamic predicates
 :- dynamic metta_atom/2.
-
+:- dynamic(o_f_v/3).
+:- dynamic(t_f_v/3).
 % ==================================================
 % **1. Object-Oriented Simulation in Prolog**
 % ==================================================
+% Predicate to handle objects directly if they are strings, numbers, symbols, or variables.
+from_obj(Value, Obj) :- var(Value),!, Obj = Value.
+from_obj(Value, Obj) :-
+    direct_atom(Value), !,  % Only handle strings, numbers, symbols, and variables.
+    Obj = Value.
+from_obj(Obj, Obj).  % If not a direct atom, return the object directly.
+
+% Predicate to identify direct atoms (strings, numbers, symbols, variables).
+direct_atom(Value) :-
+    (symbol_not_ref(Value); string(Value); number(Value); bvar(Value)), !.
+
+% Main predicate to manage object fields based on their type.
+o_f_v(Object, FieldName, Value) :-
+    determine_object_type(Object, Type), !,  % Identify the object type.
+    object_field_value(Type, Object, FieldName, Value).
+
+% Mapping between predicates and their corresponding type names.
+p1_typename(string, 'String').
+p1_typename(number, 'Number').
+p1_typename(is_list, 'Expression').
+p1_typename(symbol_not_ref, 'Symbol').
+p1_typename(bvar, 'Variable').
+
+% Predicate to identify symbols that are not references (i.e., not declared o_f_v/3).
+symbol_not_ref(Atom) :-
+    atom(Atom),
+    \+ clause(o_f_v(Atom, type, _), true).
+
+% Predicate to identify variables using the custom bvar/1 predicate.
+bvar(Var) :- var(Var),!.
+bvar(Var) :- compound(Var),!,Var='$VAR'(_).
+bvar(Var, Symbol) :- compound(Var),!,Var='$VAR'(Symbol).
+
+
+% Predicate to determine the object type using p1_typename/2 mappings.
+determine_object_type(Object, TypeName) :-
+    p1_typename(PredicateName, TypeName),
+    call(PredicateName, Object), !.
+
+% Helper predicates for different object types.
+
+% Handle objects of type 'String' with 'grounded_type'.
+object_field_value('String', Object, FieldName, Value) :- !,
+    object_field_value_base(Object, FieldName, Value, 'String').
+
+% Handle objects of type 'Number' with 'grounded_type'.
+object_field_value('Number', Object, FieldName, Value) :- !,
+    object_field_value_base(Object, FieldName, Value, 'Number').
+
+% Handle symbols with metatype 'Symbol' and no grounded_type.
+object_field_value('Symbol', Object, FieldName, Value) :- !,
+   ((FieldName = type, Value = atom);
+    (FieldName = metatype, Value = 'Symbol');
+    (FieldName = value, Value = Object)).
+
+% Handle lists with metatype 'Expression' and no grounded_type.
+object_field_value('Expression', Object, FieldName, Value) :- !,
+   ((FieldName = type, Value = atom);
+    (FieldName = metatype, Value = 'Expression');
+    (FieldName = value, Value = Object)).
+
+% Handle variables with metatype 'Variable' and no grounded_type.
+object_field_value('Variable', Object, FieldName, Value) :- !,
+   ((FieldName = type, Value = atom);
+    (FieldName = metatype, Value = 'Variable');
+    (FieldName = value, Value = Object)).
+
+% Generic handler for atoms that are not specifically typed as 'String', 'Number', 'Symbol', 'Expression', or 'Variable'.
+object_field_value(atom, _Object, FieldName, Value) :-
+    (FieldName = type, Value = atom).
+
+% Base handler for returning the field values for grounded object types ('String', 'Number').
+object_field_value_base(Object, FieldName, Value, GroundedType) :-
+    (FieldName = type, Value = atom);
+    (FieldName = value, Value = Object);
+    (FieldName = grounded_type, Value = GroundedType);
+    (FieldName = metatype, Value = 'Grounded').
+
 
 % 1. oo_new/3
 
@@ -582,26 +661,55 @@ no_module:- module(hyperonpy_prolog_translation, [
 % Creates a new object with a unique ID based on its type.
 % Stores the object's state in o_f_v(ID, FieldName, Value).
 %
-oo_new(Type, Attributes, ObjectID) :-
-    % Check if 'value' field is present in Attributes and separate it
-    select(value:Value, Attributes, RestOf),
-    % Check if an existing object with the same Type and Value exists
+% Adjusted oo_new/3 for handling numbers and strings as ObjectID.
+oo_new(Type, Attributes, ObjectID) :- fail,  
+    % Separate the 'value' field from the rest of the attributes.
+    select(value:ValueIn, Attributes, RestOf),
+    % General case for other types of values.
     o_f_v(ExistingID, value, Value),
+    (var(Value) -> Value==ValueIn ; ValueIn =@= Value),
     o_f_v(ExistingID, type, Type),
-    % Ensure other fields match between the existing object and the provided attributes
     forall(
         member(FieldName:FieldValue, RestOf),
         o_f_v(ExistingID, FieldName, FieldValue)
     ),
-    !,  % Cut to prevent backtracking once a match is found
+    !,  % Cut to prevent backtracking once a match is found.
     ObjectID = ExistingID.
+   
 
+% Fallback clause: If no existing object is found, create a new one.
 oo_new(Type, Attributes, ObjectID) :-
-    % If no existing object is found, create a new one
+    % Generate a unique ID for the new object.
     generate_object_id(Type, ObjectID),
+    % Assert the type and all provided attributes for the new object.
     assertz(o_f_v(ObjectID, type, Type)),
-    forall(member(FieldName:FieldValue, Attributes),
-           assertz(o_f_v(ObjectID, FieldName, FieldValue))).
+    forall(
+        member(FieldName:FieldValue, Attributes),
+        assertz(o_f_v(ObjectID, FieldName, FieldValue))
+    ).
+
+% Helper predicate to set up default fields from t_f_v/3 if not explicitly provided.
+setup_default_fields(Type, ObjectID, ProvidedFields) :-
+    % Get all default fields for the given type.
+    findall(FieldName:DefaultValue, t_f_v(Type, FieldName, DefaultValue), Defaults),
+    % Merge provided fields with defaults, giving priority to provided fields.
+    merge_fields(Defaults, ProvidedFields, FinalFields),
+    % Assert each field into o_f_v/3.
+    forall(
+        member(FieldName:FieldValue, FinalFields),
+        assertz(o_f_v(ObjectID, FieldName, FieldValue))
+    ).
+
+% Merge provided fields with defaults, giving priority to provided fields.
+merge_fields([], ProvidedFields, ProvidedFields).
+merge_fields([FieldName:DefaultValue | RestDefaults], ProvidedFields, [FieldName:Value | Merged]) :-
+    (select(FieldName:Value, ProvidedFields, Remaining) -> true ; Value = DefaultValue, Remaining = ProvidedFields),
+    merge_fields(RestDefaults, Remaining, Merged).
+
+% Generate a unique ID for each object based on its type.
+generate_object_id(Type, ID) :-
+    atom_concat(Type, '_', TempID),
+    gensym(TempID, ID).
 
 
 % 2. oo_free/1
@@ -667,10 +775,6 @@ oo_equal(ObjectID1, ObjectID2, AreEqual) :-
         (State1 == State2 -> AreEqual = '@'(true); AreEqual = '@'(false))
     ).
 
-% Generate a unique ID for each object based on its type.
-generate_object_id(Type, ID) :-
-    atom_concat(Type, '_', TempID),
-    gensym(TempID, ID).
 
 % collect_object_state(+ObjectID, -State) is det.
 %
@@ -698,8 +802,13 @@ collect_object_state(ObjectID, State) :-
 %
 %   Creates a symbolic atom from a symbol.
 %
-hyperonpy_atom_sym(Symbol, Atom) :-
-    oo_new(atom, [metatype:'Symbol', value:Symbol], Atom).
+hyperonpy_atom_sym(String, Atom) :-
+    (symbol(String)->Symbol=String;name(Symbol, String)),
+    hyperonpy_sym_sym(Symbol, Atom).
+    
+hyperonpy_sym_sym(Symbol, Atom):- symbol_not_ref(Symbol),!, Atom=Symbol.
+hyperonpy_sym_sym(Symbol, Atom):-    
+    oo_new(atom, [metatype:'Symbol', value:Symbol], Atom),!.
 
 % 9. hyperonpy_atom_var/2
 
@@ -708,7 +817,8 @@ hyperonpy_atom_sym(Symbol, Atom) :-
 %   Creates a variable atom from a variable name.
 %
 hyperonpy_atom_var(VarName, Atom) :-
-    oo_new(atom, [metatype:'Variable', value:VarName], Atom).
+    (bvar(VarName,Symbol)-> true ; name(Symbol, VarName)),
+    oo_new(atom, [metatype:'Variable', value:Symbol], Atom).
 
 % 10. hyperonpy_atom_expr/2
 
