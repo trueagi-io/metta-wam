@@ -583,14 +583,17 @@ no_module:- module(hyperonpy_prolog_translation, [
 % Stores the object's state in o_f_v(ID, FieldName, Value).
 %
 oo_new(Type, Attributes, ObjectID) :-
-    % Check if 'value' field is present in Attributes
-    memberchk(value:Value, Attributes),
+    % Check if 'value' field is present in Attributes and separate it
+    select(value:Value, Attributes, RestOf),
     % Check if an existing object with the same Type and Value exists
-    o_f_v(ExistingID, type, Type),
     o_f_v(ExistingID, value, Value),
-    % Optionally, ensure other fields match as needed
-    % For simplicity, we only check Type and Value
-    !,  % Cut to prevent backtracking
+    o_f_v(ExistingID, type, Type),
+    % Ensure other fields match between the existing object and the provided attributes
+    forall(
+        member(FieldName:FieldValue, RestOf),
+        o_f_v(ExistingID, FieldName, FieldValue)
+    ),
+    !,  % Cut to prevent backtracking once a match is found
     ObjectID = ExistingID.
 
 oo_new(Type, Attributes, ObjectID) :-
