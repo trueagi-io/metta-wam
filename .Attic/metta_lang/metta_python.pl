@@ -2405,6 +2405,7 @@ get_list_arity(_Args,-1).
 %   ?- load_metta_python_proxy.
 %   % Ensures that the Metta Python proxy is loaded and available for use.
 %
+load_metta_python_proxy:- !.
 load_metta_python_proxy:- did_load_metta_python_proxy, !.  % Check if the proxy was already loaded.
 load_metta_python_proxy:-
     % Retrieve the Python proxy string.
