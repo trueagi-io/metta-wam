@@ -3,6 +3,7 @@ import inspect
 import janus_swi
 import traceback
 import types
+from enum import Enum
 from platform import python_branch
 from functools import wraps  # Import wraps here
 from typing import Any, Dict, List, Tuple, Union
@@ -22,6 +23,50 @@ def name_dot(cls, name):
         return name
     return f"{cls.__name__}.{name}"
     
+# Helper functions used by the Overrider
+def uses_self(member):
+    if not callable(member):
+        return False
+    try:
+        sig = inspect.signature(member)
+        return 'self' in sig.parameters
+    except (ValueError, TypeError):
+        return False
+
+def implemented_in(member_name, obj):
+    if inspect.isclass(obj):
+        if member_name in obj.__dict__:
+            return obj.__name__
+        for base in inspect.getmro(obj)[1:]:
+            if member_name in base.__dict__:
+                return base.__name__
+    elif inspect.ismodule(obj):
+        if member_name in obj.__dict__:
+            return obj.__name__
+        else:
+            return 'imported'
+    return None
+
+class MemberLevel(Enum):
+    INSTANCE = "instance"  # For instance methods and properties
+    CLASS = "class"        # For class methods, static methods, and class variables
+    MODULE = "module"      # For module-level members
+
+class Implemented(Enum):
+    LOCAL = "Local"          # Implemented in the current class/module
+    INHERITED = "Inherited"  # Inherited from a base class
+    DEFAULT = "Default"      # Inherited from 'object'
+
+def classify_implementation(obj, implemented_from):
+    if implemented_from == obj.__name__:
+        return Implemented.LOCAL.value
+    elif implemented_from == 'object':
+        return Implemented.DEFAULT.value
+    elif implemented_from is not None:
+        return Implemented.INHERITED.value
+    else:
+        return Implemented.LOCAL.value
+
 # Create a module type for Janus and register necessary functions
 janus_module = types.ModuleType("janus")
 janus_module.import_module_from_string = janus_swi.import_module_from_string
@@ -149,17 +194,9 @@ def override_function(module, name, func, original_functions, prefix):
         return
     original_functions[full_function_name] = func
     if not predicate_exists_in_prolog(full_function_name):
-        print(f"{YELLOW}Not overriding function {name_dot(module, name)} {WHITE} {full_function_name}.{RESET}")
+        print(f"{WHITE} {full_function_name} {YELLOW} % Not overriding function {name_dot(module, name)} {RESET}")
         return
-    print(f"{GREEN}Overriding function {name_dot(module, name)} {WHITE} {full_function_name}.{RESET}")
-    param_details, return_type = signature(func)
-    param_names = [param['name'] for param in param_details]
-    param_types = [str(param['type']) for param in param_details]
-    param_defaults = [param['default'] for param in param_details]
-    try:
-        janus_swi.cmd('user', 'register_function', full_function_name, param_names, param_types, param_defaults, str(return_type))
-    except Exception as e:
-        print(f"{RED}Error registering function {name_dot(module, name)} with Prolog: {e}{RESET}")
+    register_method(full_function_name, func, module, name)
 
     def make_overridden_function(original_function, full_function_name):
         @wraps(original_function)
@@ -171,6 +208,7 @@ def override_function(module, name, func, original_functions, prefix):
                 if tf:
                     return result
             except Exception as e:
+                traceback.print_exc()
                 print(f"{RED}First attempt failed for {full_function_name}, retrying... Exception: {e}{RESET}")
                 try:
                     py_break()
@@ -187,7 +225,21 @@ def override_function(module, name, func, original_functions, prefix):
     overridden_func = make_overridden_function(func, full_function_name)
     setattr(module, name, overridden_func)
 
-def override_static_calls_with_janus(cls, prefix):
+
+def register_method(full_function_name, func, module, name):
+    print(f"{GREEN}Overriding {name_dot(module, name)} {WHITE} {full_function_name}.{RESET}")
+    param_details, return_type = signature(func)
+    param_names = [param['name'] for param in param_details]
+    param_types = [str(param['type']) for param in param_details]
+    param_defaults = [param['default'] for param in param_details]
+    try:
+        janus_swi.cmd('user', 'register_function', full_function_name, param_names, param_types, param_defaults,
+                      str(return_type))
+    except Exception as e:
+        print(f"{RED}Error registering function {name_dot(module, name)} with Prolog: {e}{RESET}")
+
+
+def override_static_calls_with_janus(cls, prefix=None):
     if not hasattr(cls, '_original_methods'):
         cls._original_methods = {}
     original_methods = cls._original_methods
@@ -195,11 +247,13 @@ def override_static_calls_with_janus(cls, prefix):
     if prefix is None:
         prefix = class_name
     for method_name, method in inspect.getmembers(cls, predicate=inspect.isfunction):
+        implemented_from = implemented_in(method_name, cls)
+        if uses_self(method): continue
         full_function_name = f"static_{prefix}_{method_name}"
         if full_function_name in original_methods:
             continue
         if not predicate_exists_in_prolog(full_function_name):
-            print(f"{YELLOW}Not overriding static method {name_dot(cls, method_name)} {WHITE} {full_function_name}.{RESET}")
+            print(f"{WHITE} {full_function_name} {YELLOW} % Not overriding function {name_dot(cls, method_name)} {RESET}")
             continue
         print(f"{GREEN}Overriding static method {name_dot(cls, method_name)} {WHITE} {full_function_name}.{RESET}")
         original_methods[full_function_name] = method
@@ -236,7 +290,8 @@ def override_static_fields_with_janus(cls, prefix=None):
     if prefix is None:
         prefix = class_name
     for field_name, value in cls.__dict__.items():
-        if not field_name.startswith('__') and not callable(value):
+        if not field_name.startswith('_') and not callable(value):
+            if uses_self(value): continue
             full_field_name = f"static_{prefix}_{field_name}"
             if predicate_exists_in_prolog(full_field_name):
                 print(f"{GREEN}Overriding static field {name_dot(cls, field_name)} {WHITE} {full_field_name}.{RESET}")
@@ -256,7 +311,8 @@ def override_static_fields_with_janus(cls, prefix=None):
                 mpp = make_prolog_property(full_field_name)
                 setattr(cls, field_name, mpp)
             else:
-                print(f"{YELLOW}Not overriding static field {name_dot(cls, field_name)} {WHITE} {full_field_name}.{RESET}")
+                print(f"{WHITE} {full_field_name}(Class,RetVal):-  % {YELLOW}Not overriding static field {name_dot(cls, field_name)}{RESET}")
+
 def override_instance_fields_with_janus(cls, prefix=None):
     """
     Overrides instance fields of a class with Prolog-backed attributes, passing self to Prolog.
@@ -309,7 +365,7 @@ def override_instance_fields_with_janus(cls, prefix=None):
                     return property(getter, setter)
                 setattr(cls, field_name, make_prolog_property())
             else:
-                print(f"{YELLOW}Not overriding instance field {name_dot(cls, field_name)} {WHITE} {full_field_name}.{RESET}")
+                print(f"{WHITE} {full_field_name}(Inst,RetVal):-  % {YELLOW}Not overriding instance field {name_dot(cls, field_name)}{RESET}")
     cls.__init__ = new_init
 
 def override_instance_calls_with_janus(cls, prefix=None):
@@ -323,20 +379,23 @@ def override_instance_calls_with_janus(cls, prefix=None):
     if prefix is None:
         prefix = class_name
     for method_name, method in inspect.getmembers(cls, predicate=inspect.isfunction):
+        implemented_from = implemented_in(method_name, cls)
+        if not uses_self(method): continue
         full_function_name = f"instance_{prefix}_{method_name}"
         if full_function_name in original_methods:
             continue
         if not predicate_exists_in_prolog(full_function_name):
-            print(f"{YELLOW}Not overriding instance method {name_dot(cls, method_name)} {WHITE} {full_function_name}.{RESET}")
+            print(
+                f"{WHITE} {full_function_name}(Inst,Value,RetVal):- format('{full_function_name}(~q,~q,~q)',[Inst,Value,RetVal]). {YELLOW} % Not overriding function {name_dot(cls, method_name)} {RESET}")
             continue
-        print(f"{GREEN}Overriding instance method {name_dot(cls, method_name)} {WHITE} {full_function_name}.{RESET}")
+        register_method(full_function_name, method, cls, method_name)
         original_methods[full_function_name] = method
 
         def make_overridden_instance_method(original_method, full_function_name):
             @wraps(original_method)
             def overridden_instance_method(self, *args, **kwargs):
                 try:
-                    result, tf = try_one(full_function_name, [self] + list(args), [self] + list(args), kwargs, original_function=original_method)
+                    result, tf = try_one(full_function_name, (self,) + args, [self] + list(args), kwargs, original_function=original_method)
                     if tf:
                         return result
                 except Exception as e:
@@ -354,10 +413,19 @@ def override_instance_calls_with_janus(cls, prefix=None):
         overridden_instance_method = make_overridden_instance_method(method, full_function_name)
         setattr(cls, method_name, overridden_instance_method)
 
+rust_mode=False
 def try_one(full_function_name, args, pargs, kwargs, original_function):
+    global rust_mode
+    if rust_mode:
+            return original_function(*args, **kwargs), True
     result = janus_swi.apply_once('user', 'from_python', full_function_name, args, pargs, kwargs)
     if str(result) == 'call_original_function':
-        return original_function(*args, **kwargs), True
+        try:
+            rust_mode = True
+            return original_function(*args, **kwargs), True
+        finally:
+            rust_mode = False
+
     return result, True
 
 def py_break():
@@ -468,27 +536,38 @@ def setup_janus():
     consult_command = f"consult('{prolog_module_path}')"
     janus_swi.query_once(consult_command)
 
+
+OverrideHyperonPy=False
 hyperon_overrides_ready = False
 def load_hyperon_overrides():
     global hyperon_overrides_ready
     if hyperon_overrides_ready:
         return True
     hyperon_overrides_ready = True
-    import hyperonpy
-    override_module_calls_with_janus(hyperonpy)
     import hyperon
     override_static_calls_with_janus(hyperon.atoms.Atom, "hyperon_atom")
     override_static_fields_with_janus(hyperon.atoms.Atom, "hyperon_atom")
     #override_instance_fields_with_janus(hyperon.atoms.Atom, "hyperon_atom")
     #override_instance_calls_with_janus(hyperon.atoms.Atom, "hyperon_atom")
+    if OverrideHyperonPy:
+        override_hyperon_py()
+
+def override_hyperon_py():
+    import hyperonpy
+    override_module_calls_with_janus(hyperonpy)
     # Include the missing line as per your request
     override_static_fields_with_janus(hyperonpy.CAtomType, "catom_type_")
+
+def override_metta_py():
+    import hyperon
+    override_instance_calls_with_janus(hyperon.runner.MeTTa)
+    override_static_calls_with_janus(hyperon.runner.MeTTa)
 
 def test_hyperon_overrides():
     setup_janus()
     load_hyperon_overrides()
+    override_metta_py()
     import hyperon
-    override_instance_calls_with_janus(hyperon.runner.MeTTa)
     metta = hyperon.runner.MeTTa()
     result = metta.run("!(+ 1 1)")
     print(result)

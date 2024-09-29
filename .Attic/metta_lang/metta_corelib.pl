@@ -1538,8 +1538,19 @@ hyperonpy_metta_run(Metta, SExprParser, ResultList) :-
     ResultList = [[2]].
 
 instance_MeTTa_run(Metta, SExpr, ResultList):-
-    eval(SExpr,Result),
-    ResultList=[[Result]].
+    %eval(SExpr,Result),
+    format('~N~q~n',[instance_MeTTa_run(Metta, SExpr, ResultList)]),
+    ResultList=[[SExpr]].
+
+instance_MeTTa_evaluate_atom(Inst,Value,RetVal):- format('instance_MeTTa_evaluate_atom(~q,~q,~q)',[Inst,Value,RetVal]).
+instance_MeTTa_load_module_at_path(Inst,Value,RetVal):- format('instance_MeTTa_load_module_at_path(~q,~q,~q)',[Inst,Value,RetVal]).
+instance_MeTTa_load_module_direct_from_func(Inst,Value,RetVal):- format('instance_MeTTa_load_module_direct_from_func(~q,~q,~q)',[Inst,Value,RetVal]).
+instance_MeTTa_load_module_direct_from_pymod(Inst,Value,RetVal):- format('instance_MeTTa_load_module_direct_from_pymod(~q,~q,~q)',[Inst,Value,RetVal]).
+instance_MeTTa_parse_all(Inst,Value,RetVal):- format('instance_MeTTa_parse_all(~q,~q,~q)',[Inst,Value,RetVal]).
+instance_MeTTa_parse_single(Inst,Value,RetVal):- format('instance_MeTTa_parse_single(~q,~q,~q)',[Inst,Value,RetVal]).
+instance_MeTTa_register_atom(Inst,Value,RetVal):- format('instance_MeTTa_register_atom(~q,~q,~q)',[Inst,Value,RetVal]).
+instance_MeTTa_register_token(Inst,Value,RetVal):- format('instance_MeTTa_register_token(~q,~q,~q)',[Inst,Value,RetVal]).
+
 
 
 instance_MyClass_slot_field(Inst,Out):- sformat(Out,'was_instance_MyClass_slot_field(~q)',[Inst]).
