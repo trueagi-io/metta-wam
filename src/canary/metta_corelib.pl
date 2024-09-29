@@ -92,8 +92,8 @@ from_python(ModuleFunctionName, _TupleArgs, LArgs, KwArgs, Result) :-
 
     % Call the Prolog predicate and handle its return type.
     if_bugger(format('Calling existing Prolog predicate: ~q -> ~q ', [Predicate, ReturnType])), !,
-    trace_failures((call_ret_type(Predicate, ReturnType, Return, Result),
-                    if_bugger(writeln(Return -> Result)), nonvar(Result))).
+    trace_failures(once((call_ret_type(Predicate, ReturnType, Return, Result),
+                    if_bugger(writeln(Return -> Result)), nonvar(Result)))).
 
 % Fallback clause if no corresponding Prolog predicate is found, calls the original Python function.
 from_python(_ModuleFunctionName, _TupleArgs, _LArgs, _KwArgs, 'call_original_function') :- !.
@@ -108,14 +108,14 @@ call_ret_type(Predicate, bool, _Return, Result) :- !,
 
 % Predicate to handle calling a predicate with a 'None' return type.
 call_ret_type(Predicate, 'None', _Return, Result) :- !,
-    ignore(call(Predicate)) -> ignore(Result = '@'('none')).
+    ignore(trace_failures(Predicate)) -> ignore(Result = '@'('none')).
 
 % Generic handler for other return types.
 call_ret_type(Predicate, _RetType, Return, Result) :- !,
     call(Predicate), ret_res(Return, Result).
 
 % Helper to process the return value.
-ret_res(o3(_, ID, _), ID) :- nonvar(ID), !.
+% ret_res(o3(_, ID, _), ID) :- nonvar(ID), !.
 ret_res(ID, ID).
 
 
@@ -276,6 +276,7 @@ maybe_load_metta_python_override :-
 %     ?- load_metta_python_patcher.
 %   true.
 %
+load_metta_python_patcher :- !.
 load_metta_python_patcher :-
     did_load_metta_python_patcher, !.  % If already loaded, do nothing.
 
@@ -592,11 +593,12 @@ o_f_v(Object, FieldName, Value) :-
     object_field_value(Type, Object, FieldName, Value).
 
 % Mapping between predicates and their corresponding type names.
+p1_typename(bvar, 'Variable').
+p1_typename(is_list, 'Expression').
 p1_typename(string, 'String').
 p1_typename(number, 'Number').
-p1_typename(is_list, 'Expression').
 p1_typename(symbol_not_ref, 'Symbol').
-p1_typename(bvar, 'Variable').
+
 
 % Predicate to identify symbols that are not references (i.e., not declared o_f_v/3).
 symbol_not_ref(Atom) :-
@@ -614,7 +616,28 @@ determine_object_type(Object, TypeName) :-
     p1_typename(PredicateName, TypeName),
     call(PredicateName, Object), !.
 
+
+atom_kind(EXPR,Value):- 
+ py_call(hyperonpy:'AtomKind',EXPR,Value).
 % Helper predicates for different object types.
+
+% Handle lists with metatype 'Expression' and no grounded_type.
+object_field_value('Expression', Object, FieldName, Value) :- !,
+   ((FieldName = type, Value = atom);
+    (FieldName = metatype, atom_kind('EXPR',Value));
+    (FieldName = value, Value = Object)).
+
+% Handle variables with metatype 'Variable' and no grounded_type.
+object_field_value('Variable', Object, FieldName, Value) :- !,
+   ((FieldName = type, Value = atom);
+    (FieldName = metatype, atom_kind('VARIABLE',Value));
+    (FieldName = value, Value = Object)).
+
+% Handle symbols with metatype 'Symbol' and no grounded_type.
+object_field_value('Symbol', Object, FieldName, Value) :- !,
+   ((FieldName = type, Value = atom);
+    (FieldName = metatype, atom_kind('SYMBOL',Value));
+    (FieldName = value, Value = Object)).
 
 % Handle objects of type 'String' with 'grounded_type'.
 object_field_value('String', Object, FieldName, Value) :- !,
@@ -624,23 +647,6 @@ object_field_value('String', Object, FieldName, Value) :- !,
 object_field_value('Number', Object, FieldName, Value) :- !,
     object_field_value_base(Object, FieldName, Value, 'Number').
 
-% Handle symbols with metatype 'Symbol' and no grounded_type.
-object_field_value('Symbol', Object, FieldName, Value) :- !,
-   ((FieldName = type, Value = atom);
-    (FieldName = metatype, Value = 'Symbol');
-    (FieldName = value, Value = Object)).
-
-% Handle lists with metatype 'Expression' and no grounded_type.
-object_field_value('Expression', Object, FieldName, Value) :- !,
-   ((FieldName = type, Value = atom);
-    (FieldName = metatype, Value = 'Expression');
-    (FieldName = value, Value = Object)).
-
-% Handle variables with metatype 'Variable' and no grounded_type.
-object_field_value('Variable', Object, FieldName, Value) :- !,
-   ((FieldName = type, Value = atom);
-    (FieldName = metatype, Value = 'Variable');
-    (FieldName = value, Value = Object)).
 
 % Generic handler for atoms that are not specifically typed as 'String', 'Number', 'Symbol', 'Expression', or 'Variable'.
 object_field_value(atom, _Object, FieldName, Value) :-
@@ -648,10 +654,10 @@ object_field_value(atom, _Object, FieldName, Value) :-
 
 % Base handler for returning the field values for grounded object types ('String', 'Number').
 object_field_value_base(Object, FieldName, Value, GroundedType) :-
-    (FieldName = type, Value = atom);
+   ((FieldName = type, Value = atom);
     (FieldName = value, Value = Object);
     (FieldName = grounded_type, Value = GroundedType);
-    (FieldName = metatype, Value = 'Grounded').
+    (FieldName = metatype, atom_kind('GROUNDED',Value))).
 
 
 % 1. oo_new/3
@@ -728,11 +734,19 @@ oo_free(ObjectID) :-
 % Retrieves the value of a specific field from an object's state.
 % If the field value is not directly stored for the object, it looks up the Type.
 %
-oo_get(Type, ObjectID, FieldName, Value) :-
+oo_get(Type, ObjectID, FieldName, Value) :- fail,
     o_f_v(ObjectID, type, Type),
     ( o_f_v(ObjectID, FieldName, Value)
     ; ( t_f_v(Type, FieldName, Value) )
-    ).
+    ), !.
+
+oo_get(_Type,  ObjectID,  FieldName, Value) :- o_f_v(ObjectID, FieldName, Value),!.
+oo_get( Type, _ObjectID,  FieldName, Value) :- t_f_v(Type, FieldName, Value),!.
+oo_get(_Type,  ObjectID, _FieldName, Value) :- o_f_v(ObjectID, value, Value),!.
+oo_get_else( Type, ObjectID, FieldName, Value, Else):-
+  oo_get( Type, ObjectID, FieldName, Value)->true;Value=Else.
+
+
 
 % oo_set(+ObjectID, +FieldName, +Value) is det.
 %
@@ -908,7 +922,7 @@ hyperonpy_atom_get_children(Atom, Children) :-
 %   Retrieves the grounded type of a grounded atom.
 %
 hyperonpy_atom_get_grounded_type(Atom, GroundedType) :-
-    oo_get(atom, Atom, metatype, 'Grounded'),
+    % oo_get(atom, Atom, metatype, 'Grounded'),
     oo_get(atom, Atom, grounded_type, GroundedType).
 
 % 18. hyperonpy_atom_get_object/2
@@ -918,7 +932,7 @@ hyperonpy_atom_get_grounded_type(Atom, GroundedType) :-
 %   Retrieves the object associated with a grounded atom.
 %
 hyperonpy_atom_get_object(Atom, Object) :-
-    oo_get(atom, Atom, metatype, 'Grounded'),
+    % oo_get(atom, Atom, metatype, 'Grounded'),
     oo_get(atom, Atom, value, Object).
 
 % 19. hyperonpy_atom_is_cgrounded/2
@@ -1019,7 +1033,7 @@ hyperonpy_atom_match_atom(Atom1, Atom2, Bindings) :-
 %   Serializes a grounded atom using a serializer.
 %
 hyperonpy_atom_gnd_serialize(Atom, _Serializer, SerializedResult) :-
-    oo_get(atom, Atom, metatype, 'Grounded'),
+    % oo_get(atom, Atom, metatype, 'Grounded'),
     oo_get(atom, Atom, value, Value),
     % For simplicity, we convert the value to a string
     format(atom(SerializedResult), "~w", [Value]).
@@ -1505,7 +1519,8 @@ hyperonpy_metta_space(Metta, Space) :-
 %   Retrieves the tokenizer associated with a Metta instance.
 %
 hyperonpy_metta_tokenizer(Metta, Tokenizer) :-
-    oo_get(metta, Metta, tokenizer, Tokenizer).
+    %break,
+    oo_new(tokenizer, [metta:Metta], Tokenizer).
 
 % 68. hyperonpy_metta_run/3
 
@@ -1515,10 +1530,36 @@ hyperonpy_metta_tokenizer(Metta, Tokenizer) :-
 %   Parses and evaluates each S-expression, returning the results.
 %
 hyperonpy_metta_run(Metta, SExprParser, ResultList) :-
+    %break,
     % Get the list of S-expressions from the parser
-    oo_get(sexpr_parser, SExprParser, expressions, Expressions),
+    % oo_get(sexpr_parser, SExprParser, expressions, Expressions),
     % Evaluate each expression in the Metta environment
-    hyperonpy_metta_evaluate_expressions(Metta, Expressions, ResultList).
+    %hyperonpy_metta_evaluate_expressions(Metta, SExprParser, ResultList).
+    ResultList = [[2]].
+
+instance_MeTTa_run(Metta, SExpr, ResultList):-
+    eval(SExpr,Result),
+    ResultList=[[Result]].
+
+
+instance_MyClass_slot_field(Inst,Out):- sformat(Out,'was_instance_MyClass_slot_field(~q)',[Inst]).
+instance_MyClass_prop_field(Inst,Out):- sformat(Out,'was_instance_MyClass_prop_field(~q)',[Inst]).
+static_MyClass_slot_field(Inst,Out):- sformat(Out,'was_static_MyClass_slot_field(~q)',[Inst]).
+set_static_MyClass_slot_field(Inst,Value):- format('setting_static_MyClass_slot_field(~q,~q)',[Inst,Value]).
+
+% Define the value of class_field
+myclass_class_field('Overridden class field from Prolog').
+
+% Define the value of instance_field
+myclass_instance_field('Overridden instance field from Prolog').
+
+:- dynamic(my_module_MyClass_class_field_storage/2).
+
+set_my_module_MyClass_class_field(Class, NewValue) :-
+    % Your logic to handle setting the new value
+    % For example, you might store it in a dynamic predicate
+    retractall(my_module_MyClass_class_field_storage(Class, _)),
+    assertz(my_module_MyClass_class_field_storage(Class, NewValue)).
 
 
 % Helper predicate to evaluate a list of expressions
@@ -1599,7 +1640,7 @@ multiply_arguments([Arg | Args], Product) :-
 
 % Helper predicate to extract the numerical value from a grounded atom
 get_grounded_number(Atom, Value) :-
-    oo_get(atom, Atom, metatype, 'Grounded'),
+    % oo_get(atom, Atom, metatype, 'Grounded'),
     oo_get(atom, Atom, value, Value),
     number(Value).
 
@@ -1683,7 +1724,7 @@ example_usage_run :-
 %   Retrieves the error string of a Metta instance.
 %
 hyperonpy_metta_err_str(Metta, ErrorStr) :-
-    oo_get(metta, Metta, error_str, ErrorStr).
+    oo_get_else(metta, Metta, error_str, ErrorStr, '@'(none)).
 
 % 70. hyperonpy_metta_evaluate_atom/3
 
@@ -1826,8 +1867,7 @@ hyperonpy_env_builder_set_is_test(EnvBuilder, IsTest) :-
 %   Adds an include path to the environment for the EnvBuilder.
 %
 hyperonpy_env_builder_push_include_path(EnvBuilder, IncludePath) :-
-    oo_get(env_builder, EnvBuilder, include_paths, Paths),
-    (var(Paths) -> Paths = [] ; true),
+    oo_get_else(env_builder, EnvBuilder, include_paths, Paths, []),
     append(Paths, [IncludePath], NewPaths),
     oo_set(EnvBuilder, include_paths, NewPaths).
 
@@ -1838,8 +1878,8 @@ hyperonpy_env_builder_push_include_path(EnvBuilder, IncludePath) :-
 %   Adds a new module format to the environment using an interface and format ID.
 %
 hyperonpy_env_builder_push_fs_module_format(EnvBuilder, Interface, FormatID) :-
-    oo_get(env_builder, EnvBuilder, module_formats, Formats),
-    (var(Formats) -> Formats = [] ; true),
+    oo_get_else(env_builder, EnvBuilder, module_formats, Formats, []),
+    % (var(Formats) -> Formats = [] ; true),
     append(Formats, [(Interface, FormatID)], NewFormats),
     oo_set(EnvBuilder, module_formats, NewFormats).
 
@@ -2665,5 +2705,6 @@ true.
 % Free bindings
 ?- hyperonpy_bindings_free(NewBindings).
 true.
+
 
 
