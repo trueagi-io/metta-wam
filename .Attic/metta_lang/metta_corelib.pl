@@ -1,3 +1,5 @@
+:- ensure_loaded(metta_interp).
+:- style_check(-singleton).
 
 :- multifile(lazy_load_python/0).
 :- dynamic(lazy_load_python/0).
@@ -1538,9 +1540,14 @@ hyperonpy_metta_run(Metta, SExprParser, ResultList) :-
     ResultList = [[2]].
 
 instance_MeTTa_run(Metta, SExpr, ResultList):-
-    %eval(SExpr,Result),
-    format('~N~q~n',[instance_MeTTa_run(Metta, SExpr, ResultList)]),
-    ResultList=[[SExpr]].
+    %open_string(SExpr, Stream), parse_sexpr(Stream, Term),!,  eval(Term,Result),
+    run_metta(SExpr,Result),
+    %format('~N~q~n',[instance_MeTTa_run(Metta, SExpr, ResultList)]),
+    ResultList=[[Result]],!.
+
+run_metta(SExpr,Result):- 
+  text_to_string(SExpr,String),do_metta(stdio,+,'&self',String,Result).
+
 
 instance_MeTTa_evaluate_atom(Inst,Value,RetVal):- format('instance_MeTTa_evaluate_atom(~q,~q,~q)',[Inst,Value,RetVal]).
 instance_MeTTa_load_module_at_path(Inst,Value,RetVal):- format('instance_MeTTa_load_module_at_path(~q,~q,~q)',[Inst,Value,RetVal]).
