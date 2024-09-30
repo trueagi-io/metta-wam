@@ -1,6 +1,12 @@
 :- module(lsp_metta_changes, [handle_doc_changes/2,
                       doc_text_fallback/2,
                        doc_text/2]).
+:- use_module(lsp_metta_split, [
+    split_text_document/2,
+    split_document_get_multiple_sections/7,
+    coalesce_text/2
+]).
+
 /** <module> LSP changes
  Module for tracking edits to the source, in order to be able to act on
  the code as it is in the editor buffer, before saving.
