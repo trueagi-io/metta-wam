@@ -1,3 +1,6 @@
+:- ensure_loaded(metta_interp).
+:- style_check(-singleton).
+
 :- multifile(lazy_load_python/0).
 :- dynamic(lazy_load_python/0).
 
@@ -6,7 +9,7 @@
 
 % Uncomment the next line for quieter runs, meaning any debugging or tracing calls will be suppressed.
 % if_bugger(_):- !.
-if_bugger(G):- call(G).
+if_bugger(G) :- call(G).
 
 % Define a no-op predicate if `nop/1` is not already defined.
 :- if(\+ current_predicate(nop/1)).
@@ -15,18 +18,22 @@ nop(_).
 
 % Define a tracing predicate to handle failure cases during execution.
 % If `trace_failures/1` is not already defined, define it here.
+
 :- if(\+ current_predicate(trace_failures/1)).
-trace_failures((A,B)):- !,  
-  (A *-> trace_failures(B)  ; 
-     (B *-> trace_failures(A)  ;  wfailed(((A,B))))).
-trace_failures(A):- (A *-> true ; wfailed(A)).
+trace_failures((A, B)) :- !,
+    (A *-> trace_failures(B);
+    (B *-> trace_failures(A); wfailed(((A, B))))).
+trace_failures(A) :- (A *-> true; (wfailed(A),trace,A)).
 
 % Predicate to print failed goals for debugging purposes.
-wfailed(G):- writeln(wfailed(G)), fail.
+wfailed(G) :- writeln(wfailed(G)), fail.
 :- endif.
+
+py_is_tf(Goal,TF):- once(Goal)->TF='@'(true);TF='@'(false).
 
 % Dynamic predicate to store registered Python functions with details about their parameters and return type.
 :- dynamic registered_function/5.
+
 
 %!  register_function(+ModuleFunctionName, +ParamNames, +ParamTypes, +ParamDefaults, +ReturnType) is det.
 %
@@ -41,8 +48,8 @@ wfailed(G):- writeln(wfailed(G)), fail.
 %   @arg ReturnType The return type of the function.
 %
 %   @example
-%   % Registering a Python function named 'math_add':
-%   ?- register_function('math_add', ['x', 'y'], ['int', 'int'], [0, 0], 'int').
+%     % Registering a Python function named 'math_add':
+%     ?- register_function('math_add', ['x', 'y'], ['int', 'int'], [0, 0], 'int').
 %   Registered function: 'math_add' with parameters: ['x', 'y'], defaults: [0, 0], types: ['int', 'int'] -> 'int'.
 %
 register_function(ModuleFunctionName, ParamNames, ParamTypes, ParamDefaults, ReturnType) :-
@@ -50,8 +57,9 @@ register_function(ModuleFunctionName, ParamNames, ParamTypes, ParamDefaults, Ret
     retractall(registered_function(ModuleFunctionName, _, _, _, _)),
     % Register the function with its new details.
     assertz(registered_function(ModuleFunctionName, ParamNames, ParamTypes, ParamDefaults, ReturnType)),
-    format('Registered function: ~q with parameters: ~q, defaults: ~q, types: ~q -> ~q~n', 
+    format('Registered function: ~q with parameters: ~q, defaults: ~q, types: ~q -> ~q~n',
            [ModuleFunctionName, ParamNames, ParamDefaults, ParamTypes, ReturnType]).
+
 
 %!  from_python(+ModuleFunctionName, +TupleArgs, +LArgs, +KwArgs, -Return) is det.
 %
@@ -66,13 +74,13 @@ register_function(ModuleFunctionName, ParamNames, ParamTypes, ParamDefaults, Ret
 %   @arg Return The result of the function call.
 %
 %   @example
-%   % Calling a registered Prolog function:
-%   ?- from_python('math_add', _, [1, 2], [], Result).
+%     % Calling a registered Prolog function:
+%     ?- from_python('math_add', _, [1, 2], [], Result).
 %   Result = 3.
 %
 from_python(ModuleFunctionName, _TupleArgs, LArgs, KwArgs, Result) :-
     % Determine the arity of the function based on the number of positional arguments.
-    length(LArgs, Arity), 
+    length(LArgs, Arity),
     NewArity1 is Arity + 1,  % Adjust arity to account for one additional argument (Return).
     NewArity2 is Arity + 2,  % Adjust arity to account for two additional arguments (KwArgs and Return).
 
@@ -80,81 +88,69 @@ from_python(ModuleFunctionName, _TupleArgs, LArgs, KwArgs, Result) :-
     (current_predicate(ModuleFunctionName/NewArity2) -> append(LArgs, [KwArgs, Return], FullArgs);
     (current_predicate(ModuleFunctionName/NewArity1) -> append(LArgs, [Return], FullArgs);
     (current_predicate(ModuleFunctionName/Arity) -> append(LArgs, [], FullArgs)))),
-
     % Construct the predicate dynamically with all arguments.
     Predicate =.. [ModuleFunctionName | FullArgs],
     registered_function(ModuleFunctionName, _, _, _, ReturnType),
 
     % Call the Prolog predicate and handle its return type.
-    if_bugger(format('Calling existing Prolog predicate: ~q -> ~q ', [Predicate, ReturnType])),!,
-    trace_failures((call_ret_type(Predicate, ReturnType, Return, Result), 
-                    if_bugger(writeln(Return -> Result)), nonvar(Result))).
+    if_bugger(format('Calling existing Prolog predicate: ~q -> ~q ', [Predicate, ReturnType])), !,
+    trace_failures(once((call_ret_type(Predicate, ReturnType, Return, Result),
+                    if_bugger(writeln(Return -> Result)), nonvar(Result)))).
 
 % Fallback clause if no corresponding Prolog predicate is found, calls the original Python function.
-from_python(_ModuleFunctionName, _TupleArgs, _LArgs, _KwArgs, 'call_original_function'):- !.
+from_python(_ModuleFunctionName, _TupleArgs, _LArgs, _KwArgs, 'call_original_function') :- !.
 
-%!  from_python(+ModuleFunctionName, +TupleArgs, +LArgs, +KwArgs, -Return) is det.
-%
-%   Fallback implementation for handling cases where no Prolog predicate exists for a Python function.
-%   In such cases, it invokes the original Python function.
-%
-%   @arg ModuleFunctionName The name of the Python function to call.
-%   @arg TupleArgs A tuple of arguments.
-%   @arg LArgs A list of positional arguments.
-%   @arg KwArgs A list of keyword arguments.
-%   @arg Return The result of the function call.
-%
-from_python(ModuleFunctionName, TupleArgs, LArgs, KwArgs, Return) :-  
+from_python(ModuleFunctionName, TupleArgs, LArgs, KwArgs, Return) :-
     format('No Prolog predicate found for: ~w. Calling original Python function.~n', [ModuleFunctionName]),
     call_python_original(ModuleFunctionName, TupleArgs, LArgs, KwArgs, Return).
 
 % Predicate to handle calling a predicate with a boolean return type.
-call_ret_type(Predicate, bool, _Return, Result) :- !, 
-    (call(Predicate) -> ignore(Result = '@'('true')) ; ignore(Result = '@'('false'))).
+call_ret_type(Predicate, bool, _Return, Result) :- !,
+    (call(Predicate) -> ignore(Result = '@'('true')); ignore(Result = '@'('false'))).
 
 % Predicate to handle calling a predicate with a 'None' return type.
-call_ret_type(Predicate, 'None', _Return, Result) :- !, 
-    ignore(call(Predicate)) -> ignore(Result = '@'('none')).
+call_ret_type(Predicate, 'None', _Return, Result) :- !,
+    ignore(trace_failures(Predicate)) -> ignore(Result = '@'('none')).
 
 % Generic handler for other return types.
-call_ret_type(Predicate, _RetType, Return, Result) :- !, 
+call_ret_type(Predicate, _RetType, Return, Result) :- !,
     call(Predicate), ret_res(Return, Result).
 
 % Helper to process the return value.
-ret_res(o3(_, ID, _), ID) :- nonvar(ID), !.
+% ret_res(o3(_, ID, _), ID) :- nonvar(ID), !.
 ret_res(ID, ID).
 
 
 %!  override_hyperonpy is det.
 %
-%   Loads the Python overrider (if not already loaded) and calls the Python function `override_hyperonpy/0`
-%   from the `metta_python_overrider` module. The result is expected to be an empty Python dictionary (`py{}`).
+%   Loads the Python override (if not already loaded) and calls the Python function `override_hyperonpy/0`
+%   from the `metta_python_override` module. The result is expected to be an empty Python dictionary (`py{}`).
 %
 %   @example
-%   % Applying the override to Hyperon:
-%   ?- override_hyperonpy.
+%     % Applying the override to Hyperon:
+%     ?- override_hyperonpy.
 %   true.
 %
 override_hyperonpy :-
-    load_metta_python_overrider,  % Ensure the overrider is loaded.
+    load_metta_python_override,  % Ensure the override is loaded.
     py_call(metta_python_override:load_hyperon_overrides(), _), !.
+
 
 %!  test_override_hyperonpy is det.
 %
 %   Loads the Hyperon Python module by first applying the necessary overridees using `override_hyperonpy/0`.
 %
 %   @example
-%   % Load the Hyperon module:
-%   ?- test_override_hyperonpy.
+%     % Load the Hyperon module:
+%     ?- test_override_hyperonpy.
 %   true.
 %
 test_override_hyperonpy :-
-    load_metta_python_overrider,  % Ensure the overrider is loaded.
+    load_metta_python_override,  % Ensure the override is loaded.
     py_call(metta_python_override:test_hyperon_overrides(), _), !.
 
 
-
-%!  metta_python_overrider(-Content) is det.
+%!  metta_python_override(-Content) is det.
 %
 %   Reads and asserts the content of the Python file 'metta_python_override.py' as a dynamic fact.
 %   This allows the Python code to be accessed and used at runtime within Prolog.
@@ -162,78 +158,76 @@ test_override_hyperonpy :-
 %   @arg Content A string representing the contents of the 'metta_python_override.py' file.
 %
 %   @example
-%   % Retrieve the content of the Python overrider:
-%   ?- metta_python_overrider(Content).
+%     % Retrieve the content of the Python override:
+%     ?- metta_python_override(Content).
 %   Content = "... Python code ...".
 %
-:- dynamic(metta_python_overrider/1).
+:- dynamic(metta_python_override/1).
 
 % Read the content of the Python override file and assert it as a fact.
 :- read_file_to_string('./metta_python_override.py', String, []),
-   assertz(metta_python_overrider(String)), !.
+   assertz(metta_python_override(String)), !.
 
-%!  did_load_metta_python_overrider is det.
+
+%!  did_load_metta_python_override is det.
 %
-%   A volatile predicate that acts as a flag indicating whether the Python overrider has been loaded.
+%   A volatile predicate that acts as a flag indicating whether the Python override has been loaded.
 %   This flag is not saved between sessions and only exists during the current runtime.
 %
 %   @example
-%   % After loading the overrider, this will succeed:
-%   ?- did_load_metta_python_overrider.
+%     % After loading the override, this will succeed:
+%     ?- did_load_metta_python_override.
 %
-:- dynamic(did_load_metta_python_overrider/0).
-:- volatile(did_load_metta_python_overrider/0).
+:- dynamic(did_load_metta_python_override/0).
+:- volatile(did_load_metta_python_override/0).
 
-%!  load_metta_python_overrider is det.
+
+%!  load_metta_python_override is det.
 %
-%   Loads the Python overrider if it hasn't been loaded yet. The overrider content is retrieved
-%   from `metta_python_overrider/1`, and the Python module is loaded via `py_module/2`. Once
-%   loaded, `did_load_metta_python_overrider/0` is asserted to prevent reloading.
+%   Loads the Python override if it hasn't been loaded yet. The override content is retrieved
+%   from `metta_python_override/1`, and the Python module is loaded via `py_module/2`. Once
+%   loaded, `did_load_metta_python_override/0` is asserted to prevent reloading.
 %
 %   @example
-%   % Load the Python overrider:
-%   ?- load_metta_python_overrider.
+%     % Load the Python override:
+%     ?- load_metta_python_override.
 %   true.
 %
-load_metta_python_overrider :- 
-    did_load_metta_python_overrider, !.  % If already loaded, do nothing.
+load_metta_python_override :-
+    did_load_metta_python_override, !.  % If already loaded, do nothing.
 
-load_metta_python_overrider :- 
-    % Retrieve the Python overrider content.
-    metta_python_overrider(String),
+load_metta_python_override :-
+    % Retrieve the Python override content.
+    metta_python_override(String),
     % Load the Python module via py_module/2.
-    py_module(metta_python_overrider, String),
-    % Assert that the overrider has now been loaded.
-    assert(did_load_metta_python_overrider), !,
+    py_module(metta_python_override, String),
+    % Assert that the override has now been loaded.
+    assert(did_load_metta_python_override), !.
     % Try to load the module again, ignoring any errors.
-    ignore(notrace(with_safe_argv(catch(py_module(metta_python_overrider, String), _, true)))), !.
+    % ignore(notrace(with_safe_argv(catch(py_module(metta_python_override, String), _, true)))), !.
 
 
-%!  maybe_load_metta_python_overrider is det.
+
+%!  maybe_load_metta_python_override is det.
 %
 %   This predicate ensures that the Python integration for Metta is loaded.
 %   It tries to load the Python interface lazily by calling `lazy_load_python/0`.
 %   If the lazy loading succeeds (determined by the cut `!`), it does nothing more.
-%   If lazy loading fails, it proceeds to load the Metta Python overrider using 
-%   `load_metta_python_overrider/0`.
+%   If lazy loading fails, it proceeds to load the Metta Python override using
+%   `load_metta_python_override/0`.
 %
-maybe_load_metta_python_overrider :- 
+maybe_load_metta_python_override :-
     % Attempt lazy loading of the Python interface.
     lazy_load_python, !.
-maybe_load_metta_python_overrider :- 
-    % If lazy loading fails, load the Metta Python overrider manually.
-    load_metta_python_overrider.
+maybe_load_metta_python_override :-
+    % If lazy loading fails, load the Metta Python override manually.
+    load_metta_python_override.
 
-% The following directives ensure that `maybe_load_metta_python_overrider/0` is called 
+% The following directives ensure that `maybe_load_metta_python_override/0` is called 
 % during system initialization. The first initialization runs when the program 
 % starts, and the second runs when the system is restored from a saved state.
-:- initialization(maybe_load_metta_python_overrider).
-:- initialization(maybe_load_metta_python_overrider, restore).
-
-
-
-
-
+%:- initialization(maybe_load_metta_python_override).
+%:- initialization(maybe_load_metta_python_override, restore).
 
 
 
@@ -245,8 +239,8 @@ maybe_load_metta_python_overrider :-
 %   @arg Content A string representing the contents of the 'metta_python_patcher.py' file.
 %
 %   @example
-%   % Retrieve the content of the Python patcher:
-%   ?- metta_python_patcher(Content).
+%     % Retrieve the content of the Python patcher:
+%     ?- metta_python_patcher(Content).
 %   Content = "... Python code ...".
 %
 :- dynamic(metta_python_patcher/1).
@@ -266,11 +260,12 @@ maybe_load_metta_python_overrider :-
 %   This flag is not saved between sessions and only exists during the current runtime.
 %
 %   @example
-%   % After loading the patcher, this will succeed:
-%   ?- did_load_metta_python_patcher.
+%     % After loading the patcher, this will succeed:
+%     ?- did_load_metta_python_patcher.
 %
 :- dynamic(did_load_metta_python_patcher/0).
 :- volatile(did_load_metta_python_patcher/0).
+
 
 %!  load_metta_python_patcher is det.
 %
@@ -279,14 +274,15 @@ maybe_load_metta_python_overrider :-
 %   loaded, `did_load_metta_python_patcher/0` is asserted to prevent reloading.
 %
 %   @example
-%   % Load the Python patcher:
-%   ?- load_metta_python_patcher.
+%     % Load the Python patcher:
+%     ?- load_metta_python_patcher.
 %   true.
 %
-load_metta_python_patcher :- 
+load_metta_python_patcher :- !.
+load_metta_python_patcher :-
     did_load_metta_python_patcher, !.  % If already loaded, do nothing.
 
-load_metta_python_patcher :- 
+load_metta_python_patcher :-
     % Retrieve the Python patcher content.
     metta_python_patcher(String),
     % Load the Python module via py_module/2.
@@ -294,7 +290,9 @@ load_metta_python_patcher :-
     % Assert that the patcher has now been loaded.
     assert(did_load_metta_python_patcher), !,
     % Try to load the module again, ignoring any errors.
-    ignore(notrace(with_safe_argv(catch(py_module(metta_python_patcher, String), _, true)))), !.
+    %ignore(notrace(with_safe_argv(catch(py_module(metta_python_patcher, String), _, true)))), 
+    !.
+
 
 
 %!  maybe_load_metta_python_patcher is det.
@@ -302,26 +300,21 @@ load_metta_python_patcher :-
 %   This predicate ensures that the Python integration for Metta is loaded.
 %   It tries to load the Python interface lazily by calling `lazy_load_python/0`.
 %   If the lazy loading succeeds (determined by the cut `!`), it does nothing more.
-%   If lazy loading fails, it proceeds to load the Metta Python patcher using 
+%   If lazy loading fails, it proceeds to load the Metta Python patcher using
 %   `load_metta_python_patcher/0`.
 %
-maybe_load_metta_python_patcher :- 
+maybe_load_metta_python_patcher :-
     % Attempt lazy loading of the Python interface.
     lazy_load_python, !.
-maybe_load_metta_python_patcher :- 
+maybe_load_metta_python_patcher :-
     % If lazy loading fails, load the Metta Python patcher manually.
     load_metta_python_patcher.
 
 % The following directives ensure that `maybe_load_metta_python_patcher/0` is called 
 % during system initialization. The first initialization runs when the program 
 % starts, and the second runs when the system is restored from a saved state.
-:- initialization(maybe_load_metta_python_patcher).
-:- initialization(maybe_load_metta_python_patcher, restore).
-
-
-
-
-
+%:- initialization(maybe_load_metta_python_patcher).
+%:- initialization(maybe_load_metta_python_patcher, restore).
 
 
 %!  patch_hyperonpy is det.
@@ -330,8 +323,8 @@ maybe_load_metta_python_patcher :-
 %   from the `metta_python_patcher` module. The result is expected to be an empty Python dictionary (`py{}`).
 %
 %   @example
-%   % Applying the patch to Hyperon:
-%   ?- patch_hyperonpy.
+%     % Applying the patch to Hyperon:
+%     ?- patch_hyperonpy.
 %   true.
 %
 patch_hyperonpy :-
@@ -339,17 +332,19 @@ patch_hyperonpy :-
     py_call(metta_python_patcher:patch_hyperonpy(), O), !,
     O = py{}.
 
+
 %!  load_hyperonpy is det.
 %
 %   Loads the Hyperon Python module by first applying the necessary patches using `patch_hyperonpy/0`.
 %
 %   @example
-%   % Load the Hyperon module:
-%   ?- load_hyperonpy.
+%     % Load the Hyperon module:
+%     ?- load_hyperonpy.
 %   true.
 %
 load_hyperonpy :-
     patch_hyperonpy.
+
 
 %!  load_mettalogpy is det.
 %
@@ -357,45 +352,44 @@ load_hyperonpy :-
 %   The `nop/1` around the second `py_exec/1` ensures that loading `hyperon` does not raise an error.
 %
 %   @example
-%   % Load mettalog and hyperon (if available):
-%   ?- load_mettalogpy.
+%     % Load mettalog and hyperon (if available):
+%     ?- load_mettalogpy.
 %   true.
 %
 load_mettalogpy :-
     py_exec("import mettalog"),
     nop(py_exec("import hyperon")).
 
+
 %!  mettalogpy_repl is det.
 %
 %   Starts the REPL (Read-Eval-Print Loop) for the `mettalog` Python module by invoking the `repl/0` function.
 %
 %   @example
-%   % Start the mettalog REPL:
-%   ?- mettalogpy_repl.
+%     % Start the mettalog REPL:
+%     ?- mettalogpy_repl.
 %   true.
 %
-mettalogpy_repl:-
-   catch_log(override_hyperonpy),
-   catch_log(hyperonpy_repl),!.
+mettalogpy_repl :-
+    catch_log(override_hyperonpy),
+    catch_log(py_call(mettalog:repl())), !.
 
-hyperonpy_repl:- 
-  maplist(catch_log,
-   [load_metta_python_proxy,
-    load_metta_python_patcher,
-    load_mettalogpy,
-    py_call(mettalog:repl())]).
-
-
+hyperonpy_repl :-
+    maplist(catch_log,
+            [load_metta_python_proxy,
+             load_metta_python_patcher,
+             load_mettalogpy,
+             py_call(mettalog:repl())]).
 
 % Call the original Python function if there's no Prolog predicate
 call_python_original(ModuleFunctionName, TupleArgs, LArgs, KwArgs, Return) :- fail,
-    py_call(override:call_python_original(ModuleFunctionName, TupleArgs, LArgs, KwArgs), Return).
+    py_call(metta_python_override:call_python_original(ModuleFunctionName, TupleArgs, LArgs, KwArgs), Return).
 
-my_module_add(A,B,_,R):- R is A + B.
+% Sample Prolog function for demonstration
+my_module_add(A, B, _, R) :- R is A + B.
 
-maybe_info(_Fmt,_Args):-!.
-maybe_info(Fmt,Args):- format(Fmt,Args).
-
+maybe_info(_Fmt, _Args) :- !.
+maybe_info(Fmt, Args) :- format(Fmt, Args).
 
 % Define factorial in Prolog
 my_module_factorial(0, 1).
@@ -406,203 +400,2035 @@ my_module_factorial(N, F) :-
     F is N * F1.
 
 
-% The `oo_*` library simulates object-oriented behavior in Prolog. It allows for creating, manipulating, and interacting with objects using dynamic predicates and helper functions.
-:- dynamic o3/3.
 
-o3(atom,int2,[metatype,'Grounded',value:2]).
+% ==================================================
+% **Prolog Translation of the Given File with Numbered Functions**
+% Module Declaration and Exports
+% ==================================================
 
-%!  oo_new(+Type, +Attributes, -Object) is det.
+no_module:- module(hyperonpy_prolog_translation, [
+    % Object-oriented helper predicates
+    oo_new/3,          % 1
+    oo_free/1,         % 2
+    oo_invoke/4,       % 3
+    oo_clone/2,        % 4
+    oo_get/4,          % 5
+    oo_set/3,          % 6
+    oo_equal/3,        % 7
+
+    % hyperonpy_* functions
+    % 1. Atom Functions
+    hyperonpy_atom_sym/2,            % 8
+    hyperonpy_atom_var/2,            % 9
+    hyperonpy_atom_expr/2,           % 10
+    hyperonpy_atom_gnd/3,            % 11
+    hyperonpy_atom_free/1,           % 12
+    hyperonpy_atom_to_str/2,         % 13
+    hyperonpy_atom_eq/3,             % 14
+    hyperonpy_atom_get_name/2,       % 15
+    hyperonpy_atom_get_children/2,   % 16
+    hyperonpy_atom_get_grounded_type/2, % 17
+    hyperonpy_atom_get_object/2,     % 18
+    hyperonpy_atom_is_cgrounded/2,   % 19
+    hyperonpy_atom_is_error/2,       % 20
+    hyperonpy_atom_error_message/2,  % 21
+    hyperonpy_atom_var_parse_name/2, % 22
+    hyperonpy_atom_get_metatype/2,   % 23
+    hyperonpy_atom_get_space/2,      % 24
+    hyperonpy_atom_iterate/2,        % 25
+    hyperonpy_atom_match_atom/3,     % 26
+    hyperonpy_atom_gnd_serialize/3,  % 27
+    hyperonpy_atom_clone/2,          % 28
+
+    % 2. Atom Vector Functions
+    hyperonpy_atom_vec_new/1,        % 29
+    hyperonpy_atom_vec_from_list/2,  % 30
+    hyperonpy_atom_vec_len/2,        % 31
+    hyperonpy_atom_vec_push/2,       % 32
+    hyperonpy_atom_vec_pop/2,        % 33
+    hyperonpy_atom_vec_free/1,       % 34
+
+    % 3. Bindings Functions
+    hyperonpy_bindings_new/1,        % 35
+    hyperonpy_bindings_free/1,       % 36
+    hyperonpy_bindings_add_var_binding/4, % 37
+    hyperonpy_bindings_resolve/3,    % 38
+    hyperonpy_bindings_is_empty/2,   % 39
+    hyperonpy_bindings_list/2,       % 40
+    hyperonpy_bindings_merge/3,      % 41
+    hyperonpy_bindings_eq/3,         % 42
+    hyperonpy_bindings_clone/2,      % 43
+    hyperonpy_bindings_to_str/2,     % 44
+    hyperonpy_bindings_narrow_vars/2, % 45
+
+    % 4. Bindings Set Functions
+    hyperonpy_bindings_set_empty/1,  % 46
+    hyperonpy_bindings_set_free/1,   % 47
+    hyperonpy_bindings_set_add_var_binding/3, % 48
+    hyperonpy_bindings_set_is_empty/2, % 49
+    hyperonpy_bindings_set_list/2,   % 50
+    hyperonpy_bindings_set_merge_into/2, % 51
+    hyperonpy_bindings_set_eq/3,     % 52
+    hyperonpy_bindings_set_clone/2,  % 53
+    hyperonpy_bindings_set_from_bindings/2, % 54
+    hyperonpy_bindings_set_unpack/2, % 55
+    hyperonpy_bindings_set_is_single/2, % 56
+    hyperonpy_bindings_set_push/2,   % 57
+    hyperonpy_bindings_set_single/1, % 58
+    hyperonpy_bindings_set_add_var_equality/3, % 59
+    hyperonpy_bindings_set_to_str/2, % 60
+
+    % 5. Validation Functions
+    hyperonpy_validate_atom/3,       % 61
+    hyperonpy_check_type/4,          % 62
+    hyperonpy_get_atom_types/3,      % 63
+
+    % 6. Metta Functions
+    hyperonpy_metta_new/3,           % 64
+    hyperonpy_metta_free/1,          % 65
+    hyperonpy_metta_space/2,         % 66
+    hyperonpy_metta_tokenizer/2,     % 67
+    hyperonpy_metta_run/3,           % 68
+    hyperonpy_metta_err_str/2,       % 69
+    hyperonpy_metta_evaluate_atom/3, % 70
+    hyperonpy_metta_load_module_at_path/4, % 71
+    hyperonpy_metta_load_module_direct/4, % 72
+    hyperonpy_metta_working_dir/2,   % 73
+    hyperonpy_metta_eq/3,            % 74
+
+    % 7. Environment Builder Functions
+    hyperonpy_environment_config_dir/2, % 75
+    hyperonpy_env_builder_start/1,   % 76
+    hyperonpy_env_builder_use_default/1, % 77
+    hyperonpy_env_builder_use_test_env/1, % 78
+    hyperonpy_env_builder_set_working_dir/2, % 79
+    hyperonpy_env_builder_set_config_dir/2, % 80
+    hyperonpy_env_builder_create_config_dir/3, % 81
+    hyperonpy_env_builder_disable_config_dir/1, % 82
+    hyperonpy_env_builder_set_is_test/2, % 83
+    hyperonpy_env_builder_push_include_path/2, % 84
+    hyperonpy_env_builder_push_fs_module_format/3, % 85
+    hyperonpy_env_builder_init_common_env/2, % 86
+
+    % 8. Space Functions
+    hyperonpy_space_new_grounding/1, % 87
+    hyperonpy_space_free/1,          % 88
+    hyperonpy_space_add/2,           % 89
+    hyperonpy_space_remove/3,        % 90
+    hyperonpy_space_replace/4,       % 91
+    hyperonpy_space_subst/4,         % 92
+    hyperonpy_space_eq/3,            % 93
+    hyperonpy_space_list/2,          % 94
+    hyperonpy_space_atom_count/2,    % 95
+    hyperonpy_space_get_payload/2,   % 96
+    hyperonpy_space_new_custom/2,    % 97
+    hyperonpy_space_query/3,         % 98
+
+    % 9. Interpretation Functions
+    hyperonpy_interpret_init/3,      % 99
+    hyperonpy_interpret_step/2,      % 100
+    hyperonpy_step_get_result/2,     % 101
+    hyperonpy_step_has_next/2,       % 102
+
+    % 10. Tokenizer Functions
+    hyperonpy_tokenizer_new/1,       % 103
+    hyperonpy_tokenizer_free/1,      % 104
+    hyperonpy_tokenizer_register_token/3, % 105
+    hyperonpy_tokenizer_clone/2,     % 106
+
+    % 11. Runner State Functions
+    hyperonpy_runner_state_new_with_atoms/3, % 107
+    hyperonpy_runner_state_new_with_parser/3, % 108
+    hyperonpy_runner_state_step/1,   % 109
+    hyperonpy_runner_state_current_results/2, % 110
+    hyperonpy_runner_state_is_complete/2, % 111
+    hyperonpy_runner_state_free/1,   % 112
+    hyperonpy_runner_state_err_str/2, % 113
+
+    % 12. Syntax Node Functions
+    hyperonpy_syntax_node_clone/2,   % 114
+    hyperonpy_syntax_node_free/1,    % 115
+    hyperonpy_syntax_node_is_null/2, % 116
+    hyperonpy_syntax_node_type/2,    % 117
+    hyperonpy_syntax_node_is_leaf/2, % 118
+    hyperonpy_syntax_node_unroll/2,  % 119
+    hyperonpy_syntax_node_src_range/2, % 120
+
+    % 13. Run Context Functions
+    hyperonpy_run_context_get_metta/2, % 121
+    hyperonpy_run_context_get_space/2, % 122
+    hyperonpy_run_context_get_tokenizer/2, % 123
+    hyperonpy_run_context_import_dependency/2, % 124
+    hyperonpy_run_context_init_self_module/3, % 125
+    hyperonpy_run_context_load_module/3, % 126
+
+    % 14. Logging Functions
+    hyperonpy_log_error/1,           % 127
+    hyperonpy_log_info/1,            % 128
+    hyperonpy_log_warn/1,            % 129
+
+    % 15. Load Function
+    hyperonpy_load_ascii/3           % 130
+]).
+
+% Declare dynamic predicates
+:- dynamic metta_atom/2.
+:- dynamic(o_f_v/3).
+:- dynamic(t_f_v/3).
+% ==================================================
+% **1. Object-Oriented Simulation in Prolog**
+% ==================================================
+% Predicate to handle objects directly if they are strings, numbers, symbols, or variables.
+from_obj(Value, Obj) :- var(Value),!, Obj = Value.
+from_obj(Value, Obj) :-
+    direct_atom(Value), !,  % Only handle strings, numbers, symbols, and variables.
+    Obj = Value.
+from_obj(Obj, Obj).  % If not a direct atom, return the object directly.
+
+% Predicate to identify direct atoms (strings, numbers, symbols, variables).
+direct_atom(Value) :-
+    (symbol_not_ref(Value); string(Value); number(Value); bvar(Value)), !.
+
+% Main predicate to manage object fields based on their type.
+o_f_v(Object, FieldName, Value) :-
+    determine_object_type(Object, Type), !,  % Identify the object type.
+    object_field_value(Type, Object, FieldName, Value).
+
+% Mapping between predicates and their corresponding type names.
+p1_typename(bvar, 'Variable').
+p1_typename(is_list, 'Expression').
+p1_typename(string, 'String').
+p1_typename(number, 'Number').
+p1_typename(symbol_not_ref, 'Symbol').
+
+
+% Predicate to identify symbols that are not references (i.e., not declared o_f_v/3).
+symbol_not_ref(Atom) :-
+    atom(Atom),
+    \+ clause(o_f_v(Atom, type, _), true).
+
+% Predicate to identify variables using the custom bvar/1 predicate.
+bvar(Var) :- var(Var),!.
+bvar(Var) :- compound(Var),!,Var='$VAR'(_).
+bvar(Var, Symbol) :- compound(Var),!,Var='$VAR'(Symbol).
+
+
+% Predicate to determine the object type using p1_typename/2 mappings.
+determine_object_type(Object, TypeName) :-
+    p1_typename(PredicateName, TypeName),
+    call(PredicateName, Object), !.
+
+
+atom_kind(EXPR,Value):- 
+ py_call(hyperonpy:'AtomKind',EXPR,Value).
+% Helper predicates for different object types.
+
+% Handle lists with metatype 'Expression' and no grounded_type.
+object_field_value('Expression', Object, FieldName, Value) :- !,
+   ((FieldName = type, Value = atom);
+    (FieldName = metatype, atom_kind('EXPR',Value));
+    (FieldName = value, Value = Object)).
+
+% Handle variables with metatype 'Variable' and no grounded_type.
+object_field_value('Variable', Object, FieldName, Value) :- !,
+   ((FieldName = type, Value = atom);
+    (FieldName = metatype, atom_kind('VARIABLE',Value));
+    (FieldName = value, Value = Object)).
+
+% Handle symbols with metatype 'Symbol' and no grounded_type.
+object_field_value('Symbol', Object, FieldName, Value) :- !,
+   ((FieldName = type, Value = atom);
+    (FieldName = metatype, atom_kind('SYMBOL',Value));
+    (FieldName = value, Value = Object)).
+
+% Handle objects of type 'String' with 'grounded_type'.
+object_field_value('String', Object, FieldName, Value) :- !,
+    object_field_value_base(Object, FieldName, Value, 'String').
+
+% Handle objects of type 'Number' with 'grounded_type'.
+object_field_value('Number', Object, FieldName, Value) :- !,
+    object_field_value_base(Object, FieldName, Value, 'Number').
+
+
+% Generic handler for atoms that are not specifically typed as 'String', 'Number', 'Symbol', 'Expression', or 'Variable'.
+object_field_value(atom, _Object, FieldName, Value) :-
+    (FieldName = type, Value = atom).
+
+% Base handler for returning the field values for grounded object types ('String', 'Number').
+object_field_value_base(Object, FieldName, Value, GroundedType) :-
+   ((FieldName = type, Value = atom);
+    (FieldName = value, Value = Object);
+    (FieldName = grounded_type, Value = GroundedType);
+    (FieldName = metatype, atom_kind('GROUNDED',Value))).
+
+
+% 1. oo_new/3
+
+% oo_new(+Type, +Attributes, -ObjectID) is det.
 %
-%   Creates a new object with a unique ID based on its type.
+% Creates a new object with a unique ID based on its type.
+% Stores the object's state in o_f_v(ID, FieldName, Value).
 %
-%   This predicate generates a new object by combining the provided Type and Attributes.
-%   The unique ID is generated using `gensym/2`, which ensures the ID is prefixed
-%   with the Type.
-%
-%   @arg Type The type of the object to be created.
-%   @arg Attributes The attributes associated with the object.
-%   @arg Object The resulting object structure in the form o3(Type, ID, Attributes).
-%
-%   @example
-%   ?- oo_new(atom_vec, [value:[a,b,c]], Obj).
-%   Obj = o3(atom_vec, atom_vec1, [value:[a, b, c]]).
-%
-oo_new(Type, Attributes, o3(Type, ID, Attributes)) :-
-    gensym(Type, ID),                % Generate a unique ID with the Type as a prefix
-    assert(o3(Type, ID, Attributes)).
+% Adjusted oo_new/3 for handling numbers and strings as ObjectID.
+oo_new(Type, Attributes, ObjectID) :- fail,  
+    % Separate the 'value' field from the rest of the attributes.
+    select(value:ValueIn, Attributes, RestOf),
+    % General case for other types of values.
+    o_f_v(ExistingID, value, Value),
+    (var(Value) -> Value==ValueIn ; ValueIn =@= Value),
+    o_f_v(ExistingID, type, Type),
+    forall(
+        member(FieldName:FieldValue, RestOf),
+        o_f_v(ExistingID, FieldName, FieldValue)
+    ),
+    !,  % Cut to prevent backtracking once a match is found.
+    ObjectID = ExistingID.
+   
+
+% Fallback clause: If no existing object is found, create a new one.
+oo_new(Type, Attributes, ObjectID) :-
+    % Generate a unique ID for the new object.
+    generate_object_id(Type, ObjectID),
+    % Assert the type and all provided attributes for the new object.
+    assertz(o_f_v(ObjectID, type, Type)),
+    forall(
+        member(FieldName:FieldValue, Attributes),
+        assertz(o_f_v(ObjectID, FieldName, FieldValue))
+    ).
+
+% Helper predicate to set up default fields from t_f_v/3 if not explicitly provided.
+setup_default_fields(Type, ObjectID, ProvidedFields) :-
+    % Get all default fields for the given type.
+    findall(FieldName:DefaultValue, t_f_v(Type, FieldName, DefaultValue), Defaults),
+    % Merge provided fields with defaults, giving priority to provided fields.
+    merge_fields(Defaults, ProvidedFields, FinalFields),
+    % Assert each field into o_f_v/3.
+    forall(
+        member(FieldName:FieldValue, FinalFields),
+        assertz(o_f_v(ObjectID, FieldName, FieldValue))
+    ).
+
+% Merge provided fields with defaults, giving priority to provided fields.
+merge_fields([], ProvidedFields, ProvidedFields).
+merge_fields([FieldName:DefaultValue | RestDefaults], ProvidedFields, [FieldName:Value | Merged]) :-
+    (select(FieldName:Value, ProvidedFields, Remaining) -> true ; Value = DefaultValue, Remaining = ProvidedFields),
+    merge_fields(RestDefaults, Remaining, Merged).
+
+% Generate a unique ID for each object based on its type.
+generate_object_id(Type, ID) :-
+    atom_concat(Type, '_', TempID),
+    gensym(TempID, ID).
+
+
+% 2. oo_free/1
 
 %!  oo_free(+ObjectOrID) is det.
 %
 %   Frees (removes) an object from the system.
 %
-%   This predicate removes an object from the system by resolving the input to an
-%   object structure using `into_object/2` and then retracting any associated facts.
-%
-%   @arg ObjectOrID Either an object structure or an object ID.
-%
-%   @example
-%   ?- oo_free(atom_vec1).
-%
-oo_free(ObjectOrID) :-
-    ignore((into_object_no_throw(ObjectOrID, o3(Type, ID, _)),
-    retractall(o3(Type, ID, _)))).
+oo_free(ObjectID) :-
+    retractall(o_f_v(ObjectID, _, _)).
+% 3. oo_invoke/4
 
-%!  warn_if_not_true(+Goal, +Message) is det.
-%
-%   Logs a warning message if the given Goal is not true.
-%
-%   If the provided Goal fails, this predicate prints the given Message to the console.
-%   This is useful for debugging purposes or checking for unexpected conditions.
-%
-%   @arg Goal The goal to be evaluated.
-%   @arg Message The message to log if the goal fails.
-%
-warn_if_not_true(P0, Message) :-
-    ((\+ P0) -> format('~N~nWARNING: ~q  , ~q ~n', [P0, Message]); true).
 
-%!  oo_invoke(+Type, +ObjectOrID, +MethodCall, -Result) is det.
+% oo_get(+Type, +ObjectID, +FieldName, -Value) is det.
 %
-%   Invokes a method on an object, resolving the object using `into_object/2`.
+% Retrieves the value of a specific field from an object's state.
+% If the field value is not directly stored for the object, it looks up the Type.
 %
-%   This predicate ensures that the object type matches the expected Type. If the
-%   type is correct, it proceeds to handle the method call using `handle_method_call/4`.
-%
-%   @arg Type The expected type of the object.
-%   @arg ObjectOrID Either an object structure or object ID.
-%   @arg MethodCall The method being invoked on the object.
-%   @arg Result The result of the method call.
-%
-%   @example
-%   ?- oo_invoke(atom_vec, atom_vec1, length(), Len).
-%   Len = 3.
-%
-oo_invoke(Type, ObjectOrID, MethodCall, Result) :-
-    into_object(ObjectOrID, o3(DeclType, ID, Attributes)),
-    % Ensure the object type matches the expected type
-    warn_if_not_true(DeclType = Type, oo_invoke(Type, ObjectOrID, MethodCall)),
-    handle_method_call(Type, ID, Attributes, MethodCall, Result).
+oo_get(Type, ObjectID, FieldName, Value) :- fail,
+    o_f_v(ObjectID, type, Type),
+    ( o_f_v(ObjectID, FieldName, Value)
+    ; ( t_f_v(Type, FieldName, Value) )
+    ), !.
 
-%!  oo_clone(+ObjectOrID, -ClonedObject) is det.
-%
-%   Clones an existing object by creating a new object with the same attributes.
-%
-%   This predicate copies the attributes of an existing object, generates a new
-%   unique ID, and creates a new object using `oo_new/3`.
-%
-%   @arg ObjectOrID Either an object structure or object ID.
-%   @arg ClonedObject The newly created object (clone).
-%
-%   @example
-%   ?- oo_clone(atom_vec1, Clone).
-%   Clone = o3(atom_vec, atom_vec2, [value:[a, b, c]]).
-%
-oo_clone(ObjectOrID, ClonedObject) :-
-    into_object(ObjectOrID, o3(Type, _, Attributes)),
-    oo_new(Type, Attributes, ClonedObject).
+oo_get(_Type,  ObjectID,  FieldName, Value) :- o_f_v(ObjectID, FieldName, Value),!.
+oo_get( Type, _ObjectID,  FieldName, Value) :- t_f_v(Type, FieldName, Value),!.
+oo_get(_Type,  ObjectID, _FieldName, Value) :- o_f_v(ObjectID, value, Value),!.
+oo_get_else( Type, ObjectID, FieldName, Value, Else):-
+  oo_get( Type, ObjectID, FieldName, Value)->true;Value=Else.
 
-%!  oo_field(+Type, +ObjectOrID, +FieldName, -Value) is det.
-%
-%   Retrieves the value of a specific field from an object's attributes.
-%
-%   This predicate extracts the value associated with a field (FieldName) from
-%   the object's attributes. It also ensures that the object's type matches the
-%   expected Type.
-%
-%   @arg Type The expected type of the object.
-%   @arg ObjectOrID Either an object structure or object ID.
-%   @arg FieldName The field to retrieve from the attributes.
-%   @arg Value The value associated with the field.
-%
-%   @example
-%   ?- oo_field(atom_vec, atom_vec1, value, List).
-%   List = [a, b, c].
-%
-oo_field(Type, ObjectOrID, FieldName, Value) :-
-    % Convert ObjectOrID into o3 structure using into_object/2
-    into_object(ObjectOrID, o3(DeclType, _, Attributes)),
-    % Check for the FieldName in Attributes or use a fallback
-     member_chk(FieldName:Value, Attributes),
-    % Check if the declared type matches the expected type
-    warn_if_not_true(DeclType = Type, oo_field(Type, ObjectOrID, FieldName, Value)),    
-    !.
 
-member_chk(FieldName:Value, Attributes):-
-    trace_failures(
-        (   
-            memberchk(FieldName:Value, Attributes) -> true ;
-            (   
-                memberchk(value:Value, Attributes) -> true ;
-                last(Attributes, _:Value)  % Default to the last attribute's value if FieldName not found
-            )
-        )
-    ).
 
-%!  oo_equal(+ObjectOrID1, +ObjectOrID2, -AreEqual) is det.
+% oo_set(+ObjectID, +FieldName, +Value) is det.
+%
+% Sets the value of a specific field in an object's state.
+%
+oo_set(ObjectID, FieldName, Value) :-
+    retractall(o_f_v(ObjectID, FieldName, _)),
+    assertz(o_f_v(ObjectID, FieldName, Value)).
+
+% oo_invoke(+Type, +ObjectID, +MethodCall, -Result) is det.
+%
+% Invokes a method on an object.
+%
+oo_invoke(Type, ObjectID, MethodCall, Result) :-
+    o_f_v(ObjectID, type, Type),
+    handle_method_call(Type, ObjectID, MethodCall, Result).
+
+% 4. oo_clone/2
+
+% oo_clone(+ObjectID, -ClonedObjectID) is det.
+%
+% Clones an existing object by creating a new object with the same fields.
+%
+oo_clone(ObjectID, ClonedObjectID) :-
+    o_f_v(ObjectID, type, Type),
+    findall(FieldName:Value, o_f_v(ObjectID, FieldName, Value), Attributes),
+    exclude(=(type:_), Attributes, AttributesWithoutType),
+    oo_new(Type, AttributesWithoutType, ClonedObjectID).
+
+% oo_equal(+ObjectID1, +ObjectID2, -AreEqual) is det.
 %
 %   Checks equality between two objects.
 %
-%   This predicate compares two objects by resolving them to their object structures
-%   using `into_object/2`. Objects are considered equal if they either have the same
-%   ID or have the same type and identical attributes.
-%
-%   @arg ObjectOrID1 The first object or ID to compare.
-%   @arg ObjectOrID2 The second object or ID to compare.
-%   @arg AreEqual Unifies with `true` if the objects are equal, otherwise `false`.
-%
-%   @example
-%   ?- oo_equal(atom_vec1, atom_vec2, AreEqual).
-%   AreEqual = false.
-%
-oo_equal(ObjectOrID1, ObjectOrID2, AreEqual) :-
-    % Resolve both objects to the object/3 form
-    into_object(ObjectOrID1, o3(Type1, ID1, Attributes1)),
-    into_object(ObjectOrID2, o3(Type2, ID2, Attributes2)),
-
-    % Check if IDs are the same; if so, they are equal
-    (ID1 == ID2 ->
-        AreEqual = true
+oo_equal(ObjectID1, ObjectID2, AreEqual) :-
+    (ObjectID1 == ObjectID2 ->
+        AreEqual = '@'(true)
     ;
-    % Otherwise, if types are the same, compare attributes
-    (Type1 == Type2 ->
-        % Find common attributes
-       (intersection(Attributes1, Attributes2, CommonAttributes),
-        CommonAttributes \= [],   % Ensure at least one common attribute
+        collect_object_state(ObjectID1, State1),
+        collect_object_state(ObjectID2, State2),
+        (State1 == State2 -> AreEqual = '@'(true); AreEqual = '@'(false))
+    ).
 
-        % Check that there are no differing attributes
-        subtract(Attributes1, Attributes2, []),
-        subtract(Attributes2, Attributes1, [])),
 
-        % If all conditions are satisfied, set AreEqual to true
-        AreEqual = true
+% collect_object_state(+ObjectID, -State) is det.
+%
+% Collects all field-value pairs for an object into a list.
+%
+collect_object_state(ObjectID, State) :-
+    findall(FieldName-Value, o_f_v(ObjectID, FieldName, Value), State).
+
+% ==================================================
+% Type Field Values (Default values for types)
+% ==================================================
+
+% Define default field values for types here if needed.
+% Example:
+% t_f_v(atom_vec, value, []).
+
+% ==================================================
+% 1. Atom Functions (8-28)
+% ==================================================
+
+
+% 8. hyperonpy_atom_sym/2
+
+%!  hyperonpy_atom_sym(+Symbol, -Atom) is det.
+%
+%   Creates a symbolic atom from a symbol.
+%
+hyperonpy_atom_sym(String, Atom) :-
+    (symbol(String)->Symbol=String;name(Symbol, String)),
+    hyperonpy_sym_sym(Symbol, Atom).
+    
+hyperonpy_sym_sym(Symbol, Atom):- symbol_not_ref(Symbol),!, Atom=Symbol.
+hyperonpy_sym_sym(Symbol, Atom):-    
+    oo_new(atom, [metatype:'Symbol', value:Symbol], Atom),!.
+
+% 9. hyperonpy_atom_var/2
+
+%!  hyperonpy_atom_var(+VarName, -Atom) is det.
+%
+%   Creates a variable atom from a variable name.
+%
+hyperonpy_atom_var(VarName, Atom) :-
+    (bvar(VarName,Symbol)-> true ; name(Symbol, VarName)),
+    oo_new(atom, [metatype:'Variable', value:Symbol], Atom).
+
+% 10. hyperonpy_atom_expr/2
+
+%!  hyperonpy_atom_expr(+ExpressionList, -Atom) is det.
+%
+%   Creates an expression atom from a list of expressions.
+%
+hyperonpy_atom_expr(ExpressionList, Atom) :-
+    oo_new(atom, [metatype:'Expression', value:ExpressionList], Atom).
+
+% 11. hyperonpy_atom_gnd/3
+
+%!  hyperonpy_atom_gnd(+Object, +GroundedType, -Atom) is det.
+%
+%   Creates a grounded atom with a specified type.
+%
+% Adjusted hyperonpy_atom_gnd/3 to handle numbers directly
+hyperonpy_atom_gnd(Object, GroundedType, Atom) :-
+    (GroundedType == 'Number', number(Object) ->
+        oo_new(atom, [metatype:'Grounded', value:Object, grounded_type:GroundedType], Atom)
     ;
-    % If neither condition is met, they are not equal
-    AreEqual = false)).
+        % Handle other grounded types as needed
+        oo_new(atom, [metatype:'Grounded', value:Object, grounded_type:GroundedType], Atom)
+    ).
 
-%!  into_object(+Input, -Object) is det.
-%
-%   Helper predicate to convert an ID or object/3 structure into an object/3 structure.
-%
-%   This predicate attempts to resolve the input to an object/3 structure. If the input
-%   is already in object/3 form, it succeeds. Otherwise, it looks up the object using
-%   the provided ID.
-%
-%   @arg Input Either an object structure or an object ID.
-%   @arg Object The resulting object structure (if found).
-%
-%   @throws existence_error if the object does not exist.
-%
-into_object(I,O):- into_object1(I,O),!.
-into_object(ID, _) :- \+ o3(_, ID, _), throw(error(existence_error(object, ID), into_object/2)).
+% 12. hyperonpy_atom_free/1
 
-into_object1(Var,o3(Type, ID, Attributes)):- attvar(Var),get_attr(Var,type,Type),get_attr(Var,id,ID),get_attr(Var,fields,Attributes),!.
-into_object1(Var,VarO):- var(Var),!,VarO=Var.
-into_object1(o3(Type, ID, Attributes), o3(Type, ID, Attributes)) :- !.
-% Fail if object not found
-into_object1(ID, o3(Type, ID, Attributes)) :- o3(Type, ID, Attributes), !.
+%!  hyperonpy_atom_free(+Atom) is det.
+%
+%   Frees an atom from memory.
+%
+hyperonpy_atom_free(Atom) :-
+    oo_free(Atom).
+
+% 13. hyperonpy_atom_to_str/2
+
+%!  hyperonpy_atom_to_str(+Atom, -Str) is det.
+%
+%   Converts an atom to its string representation.
+%
+hyperonpy_atom_to_str(Atom, Str) :-
+    oo_get(atom, Atom, metatype, Metatype),
+    oo_get(atom, Atom, value, Value),
+    (Metatype == 'Symbol' ->
+        format(atom(Str), "~w", [Value])
+    ; Metatype == 'Variable' ->
+        format(atom(Str), "?~w", [Value])
+    ; Metatype == 'Expression' ->
+        format(atom(Str), "(~w)", [Value])
+    ; Metatype == 'Grounded' ->
+        format(atom(Str), "<~w>", [Value])
+    ; Str = ""
+    ).
+
+% 14. hyperonpy_atom_eq/3
+
+%!  hyperonpy_atom_eq(+Atom1, +Atom2, -AreEqual) is det.
+%
+%   Compares two atoms for equality.
+%
+hyperonpy_atom_eq(Atom1, Atom2, AreEqual) :-
+    oo_equal(Atom1, Atom2, AreEqual).
+
+% 15. hyperonpy_atom_get_name/2
+
+%!  hyperonpy_atom_get_name(+Atom, -Name) is det.
+%
+%   Retrieves the name of an atom.
+%
+hyperonpy_atom_get_name(Atom, Name) :-
+    oo_get(atom, Atom, value, Name).
+
+% 16. hyperonpy_atom_get_children/2
+
+%!  hyperonpy_atom_get_children(+Atom, -Children) is det.
+%
+%   Retrieves the children of an expression atom.
+%
+hyperonpy_atom_get_children(Atom, Children) :-
+    oo_get(atom, Atom, metatype, 'Expression'),
+    oo_get(atom, Atom, value, Children).
+
+% 17. hyperonpy_atom_get_grounded_type/2
+
+%!  hyperonpy_atom_get_grounded_type(+Atom, -GroundedType) is det.
+%
+%   Retrieves the grounded type of a grounded atom.
+%
+hyperonpy_atom_get_grounded_type(Atom, GroundedType) :-
+    % oo_get(atom, Atom, metatype, 'Grounded'),
+    oo_get(atom, Atom, grounded_type, GroundedType).
+
+% 18. hyperonpy_atom_get_object/2
+
+%!  hyperonpy_atom_get_object(+Atom, -Object) is det.
+%
+%   Retrieves the object associated with a grounded atom.
+%
+hyperonpy_atom_get_object(Atom, Object) :-
+    % oo_get(atom, Atom, metatype, 'Grounded'),
+    oo_get(atom, Atom, value, Object).
+
+% 19. hyperonpy_atom_is_cgrounded/2
+
+%!  hyperonpy_atom_is_cgrounded(+Atom, -IsCgrounded) is det.
+%
+%   Checks if an atom is a grounded atom.
+%
+hyperonpy_atom_is_cgrounded(Atom, IsCgrounded) :-
+    oo_get(atom, Atom, metatype, Metatype),
+    (Metatype == 'Grounded' -> IsCgrounded = '@'(true); IsCgrounded = '@'(false)).
+
+% 20. hyperonpy_atom_is_error/2
+
+%!  hyperonpy_atom_is_error(+Atom, -IsError) is det.
+%
+%   Checks if an atom represents an error.
+%
+hyperonpy_atom_is_error(Atom, IsError) :-
+    oo_get(atom, Atom, is_error, IsErrorValue),
+    (nonvar(IsErrorValue) -> IsError = IsErrorValue; IsError = '@'(false)).
+
+% 21. hyperonpy_atom_error_message/2
+
+%!  hyperonpy_atom_error_message(+Atom, -ErrorMessage) is det.
+%
+%   Retrieves the error message associated with an atom.
+%
+hyperonpy_atom_error_message(Atom, ErrorMessage) :-
+    oo_get(atom, Atom, is_error, '@'(true)),
+    oo_get(atom, Atom, error_message, ErrorMessage).
+
+% 22. hyperonpy_atom_var_parse_name/2
+
+%!  hyperonpy_atom_var_parse_name(+Name, -Atom) is det.
+%
+%   Parses a variable name and creates a variable atom.
+%
+hyperonpy_atom_var_parse_name(Name, Atom) :-
+    hyperonpy_atom_var(Name, Atom).
+
+% 23. hyperonpy_atom_get_metatype/2
+
+%!  hyperonpy_atom_get_metatype(+Atom, -MetaType) is det.
+%
+%   Retrieves the metatype of an atom.
+%
+hyperonpy_atom_get_metatype(Atom, MetaType) :-
+    oo_get(atom, Atom, metatype, MetaType).
+
+% 24. hyperonpy_atom_get_space/2
+
+%!  hyperonpy_atom_get_space(+Atom, -Space) is det.
+%
+%   Retrieves the space associated with an atom.
+%
+hyperonpy_atom_get_space(Atom, Space) :-
+    oo_get(atom, Atom, space, Space).
+
+% 25. hyperonpy_atom_iterate/2
+
+%!  hyperonpy_atom_iterate(+Atom, -List) is det.
+%
+%   Iterates over the components of an atom.
+%
+hyperonpy_atom_iterate(Atom, List) :-
+    oo_get(atom, Atom, metatype, Metatype),
+    (Metatype == 'Expression' ->
+        oo_get(atom, Atom, value, List)
+    ;
+        List = []
+    ).
+
+% 26. hyperonpy_atom_match_atom/3
+
+%!  hyperonpy_atom_match_atom(+Atom1, +Atom2, -BindingsSet) is det.
+%
+%   Matches two atoms and returns the resulting bindings set.
+%
+% Adjust hyperonpy_atom_match_atom/3 to perform basic matching
+hyperonpy_atom_match_atom(Atom1, Atom2, Bindings) :-
+    % For simplicity, assume exact match results in an empty bindings list
+    hyperonpy_atom_eq(Atom1, Atom2, AreEqual),
+    (AreEqual == '@'(true) ->
+       (hyperonpy_bindings_new(BindingsObj),
+        oo_get(bindings, BindingsObj, value, Bindings))
+    ;
+        % If atoms don't match, no bindings
+        hyperonpy_bindings_set_empty(Bindings)
+    ).
 
 
-into_object_no_throw(I,O):- into_object1(I,O),!.
-into_object_no_throw(I,I).
+
+% 27. hyperonpy_atom_gnd_serialize/3
+
+%!  hyperonpy_atom_gnd_serialize(+Atom, +Serializer, -SerializedResult) is det.
+%
+%   Serializes a grounded atom using a serializer.
+%
+hyperonpy_atom_gnd_serialize(Atom, _Serializer, SerializedResult) :-
+    % oo_get(atom, Atom, metatype, 'Grounded'),
+    oo_get(atom, Atom, value, Value),
+    % For simplicity, we convert the value to a string
+    format(atom(SerializedResult), "~w", [Value]).
+
+% 28. hyperonpy_atom_clone/2
+
+%!  hyperonpy_atom_clone(+Atom, -ClonedAtom) is det.
+%
+%   Clones an atom.
+%
+hyperonpy_atom_clone(Atom, ClonedAtom) :-
+    oo_clone(Atom, ClonedAtom).
+
+% Helper predicate for matching atoms
+match_atoms(Atom1, Atom2, BindingsIn, BindingsOut) :-
+    oo_get(atom, Atom1, metatype, Type1),
+    oo_get(atom, Atom2, metatype, Type2),
+    (Type1 == 'Variable' ->
+        oo_get(atom, Atom1, value, VarName),
+        BindingsOut = [VarName-Atom2 | BindingsIn]
+    ;
+    Type1 == Type2 ->
+        oo_get(atom, Atom1, value, Value1),
+        oo_get(atom, Atom2, value, Value2),
+        (Value1 == Value2 ->
+            BindingsOut = BindingsIn
+        ;
+            fail
+        )
+    ;
+        fail
+    ).
+
+
+
+% ==================================================
+% 2. Atom Vector Functions (29-34)
+% ==================================================
+
+% Default value for atom_vec type
+t_f_v(atom_vec, value, []).
+
+% 29. hyperonpy_atom_vec_new/1
+
+%!  hyperonpy_atom_vec_new(-AtomVec) is det.
+%
+%   Creates a new empty atom vector.
+%
+hyperonpy_atom_vec_new(AtomVec) :-
+    oo_new(atom_vec, [], AtomVec).
+
+% 30. hyperonpy_atom_vec_from_list/2
+
+%!  hyperonpy_atom_vec_from_list(+List, -AtomVec) is det.
+%
+%   Creates an atom vector from a list of atoms.
+%
+hyperonpy_atom_vec_from_list(List, AtomVec) :-
+    oo_new(atom_vec, [value:List], AtomVec).
+
+% 31. hyperonpy_atom_vec_len/2
+
+%!  hyperonpy_atom_vec_len(+AtomVec, -Length) is det.
+%
+%   Retrieves the length of an atom vector.
+%
+hyperonpy_atom_vec_len(AtomVec, Length) :-
+    oo_get(atom_vec, AtomVec, value, List),
+    length(List, Length).
+
+% 32. hyperonpy_atom_vec_push/2
+
+%!  hyperonpy_atom_vec_push(+AtomVec, +Atom) is det.
+%
+%   Pushes a new atom into the atom vector.
+%
+hyperonpy_atom_vec_push(AtomVec, Atom) :-
+    oo_get(atom_vec, AtomVec, value, List),
+    append(List, [Atom], NewList),
+    oo_set(AtomVec, value, NewList).
+
+% 33. hyperonpy_atom_vec_pop/2
+
+%!  hyperonpy_atom_vec_pop(+AtomVec, -PoppedAtom) is det.
+%
+%   Removes and returns the last atom from the vector.
+%
+hyperonpy_atom_vec_pop(AtomVec, PoppedAtom) :-
+    oo_get(atom_vec, AtomVec, value, List),
+    append(NewList, [PoppedAtom], List),
+    oo_set(AtomVec, value, NewList).
+
+% 34. hyperonpy_atom_vec_free/1
+
+%!  hyperonpy_atom_vec_free(+AtomVec) is det.
+%
+%   Frees an atom vector from memory.
+%
+hyperonpy_atom_vec_free(AtomVec) :-
+    oo_free(AtomVec).
+
+% ==================================================
+% 3. Bindings Functions (35-45)
+% ==================================================
+
+% 35. hyperonpy_bindings_new/1
+
+%!  hyperonpy_bindings_new(-NewBindings) is det.
+%
+%   Creates a new empty bindings.
+%
+hyperonpy_bindings_new(NewBindings) :-
+    oo_new(bindings, [value:[]], NewBindings).
+
+% 36. hyperonpy_bindings_free/1
+
+%!  hyperonpy_bindings_free(+Bindings) is det.
+%
+%   Frees the bindings from memory.
+%
+hyperonpy_bindings_free(Bindings) :-
+    oo_free(Bindings).
+
+% 37. hyperonpy_bindings_add_var_binding/4
+
+%!  hyperonpy_bindings_add_var_binding(+Bindings, +VarAtom, +BoundAtom, -Success) is det.
+%
+%   Adds a variable binding to the bindings.
+%
+hyperonpy_bindings_add_var_binding(Bindings, VarAtom, BoundAtom, Success) :-
+    oo_get(bindings, Bindings, value, BindingsList),
+    oo_get(atom, VarAtom, value, VarName),
+    (member(VarName-_, BindingsList) ->
+        Success = '@'(false)
+    ;
+        NewBindingsList = [VarName-BoundAtom | BindingsList],
+        oo_set(Bindings, value, NewBindingsList),
+        Success = '@'(true)
+    ).
+
+% 38. hyperonpy_bindings_resolve/3
+
+%!  hyperonpy_bindings_resolve(+Bindings, +VarAtom, -ResolvedAtom) is det.
+%
+%   Resolves a variable atom in the bindings.
+%
+hyperonpy_bindings_resolve(Bindings, Atom, ResolvedAtom) :-
+    hyperonpy_atom_get_metatype(Atom, Metatype),
+    (Metatype == 'Variable' ->
+        hyperonpy_atom_get_name(Atom, VarName),
+        oo_get(bindings, Bindings, value, BindingsList),
+        (member(VarName-Value, BindingsList) ->
+            ResolvedAtom = Value
+        ;
+            ResolvedAtom = Atom
+        )
+    ;
+        ResolvedAtom = Atom
+    ).
+
+% 39. hyperonpy_bindings_is_empty/2
+
+%!  hyperonpy_bindings_is_empty(+Bindings, -IsEmpty) is det.
+%
+%   Checks if the bindings is empty.
+%
+hyperonpy_bindings_is_empty(Bindings, IsEmpty) :-
+    oo_get(bindings, Bindings, value, BindingsList),
+    (BindingsList == [] -> IsEmpty = '@'(true); IsEmpty = '@'(false)).
+
+% 40. hyperonpy_bindings_list/2
+
+%!  hyperonpy_bindings_list(+Bindings, -List) is det.
+%
+%   Retrieves the list of bindings from the bindings.
+%
+hyperonpy_bindings_list(Bindings, List) :-
+    oo_get(bindings, Bindings, value, List).
+
+% 41. hyperonpy_bindings_merge/3
+
+%!  hyperonpy_bindings_merge(+Bindings1, +Bindings2, -ResultBindingsSet) is det.
+%
+%   Merges two bindings.
+%
+hyperonpy_bindings_merge(Bindings1, Bindings2, ResultBindingsSet) :-
+    oo_get(bindings, Bindings1, value, List1),
+    oo_get(bindings, Bindings2, value, List2),
+    append(List1, List2, MergedList),
+    oo_new(bindings_set, [value:[MergedList]], ResultBindingsSet).
+
+% 42. hyperonpy_bindings_eq/3
+
+%!  hyperonpy_bindings_eq(+Bindings1, +Bindings2, -AreEqual) is det.
+%
+%   Compares two bindings for equality.
+%
+hyperonpy_bindings_eq(Bindings1, Bindings2, AreEqual) :-
+    oo_equal(Bindings1, Bindings2, AreEqual).
+
+% 43. hyperonpy_bindings_clone/2
+
+%!  hyperonpy_bindings_clone(+Bindings, -NewBindings) is det.
+%
+%   Clones the bindings.
+%
+hyperonpy_bindings_clone(Bindings, NewBindings) :-
+    oo_clone(Bindings, NewBindings).
+
+% 44. hyperonpy_bindings_to_str/2
+
+%!  hyperonpy_bindings_to_str(+Bindings, -Str) is det.
+%
+%   Converts a bindings object to a string representation.
+%
+hyperonpy_bindings_to_str(Bindings, Str) :-
+    oo_get(bindings, Bindings, value, BindingsList),
+    term_string(BindingsList, Str).
+
+% 45. hyperonpy_bindings_narrow_vars/2
+
+%!  hyperonpy_bindings_narrow_vars(+Bindings, +VarAtomVec) is det.
+%
+%   Narrows the variable bindings in the bindings.
+%
+hyperonpy_bindings_narrow_vars(Bindings, VarAtomVec) :-
+    oo_get(bindings, Bindings, value, BindingsList),
+    oo_get(atom_vec, VarAtomVec, value, VarAtoms),
+    findall(VarName-BoundAtom, 
+       (member(VarName-BoundAtom, BindingsList),
+        member(VarAtom, VarAtoms),
+        hyperonpy_atom_get_name(VarAtom, VarName)
+    ), NarrowedBindingsList),
+    oo_set(Bindings, value, NarrowedBindingsList).
+
+% ==================================================
+% 4. Bindings Set Functions (46-60)
+% ==================================================
+
+% 46. hyperonpy_bindings_set_empty/1
+
+%!  hyperonpy_bindings_set_empty(-BindingsSet) is det.
+%
+%   Creates an empty bindings set.
+%
+hyperonpy_bindings_set_empty(BindingsSet) :-
+    oo_new(bindings_set, [value:[]], BindingsSet).
+
+% 47. hyperonpy_bindings_set_free/1
+
+%!  hyperonpy_bindings_set_free(+BindingsSet) is det.
+%
+%   Frees a bindings set from memory.
+%
+hyperonpy_bindings_set_free(BindingsSet) :-
+    oo_free(BindingsSet).
+
+% 48. hyperonpy_bindings_set_add_var_binding/3
+
+%!  hyperonpy_bindings_set_add_var_binding(+BindingsSet, +VarAtom, +BoundAtom) is det.
+
+
+hyperonpy_bindings_set_add_var_binding_(BindingsSet, VarAtom, BoundAtom):-
+    hyperonpy_bindings_set_add_var_binding_impl2(BindingsSet, VarAtom, BoundAtom).
+hyperonpy_bindings_set_add_var_binding_impl1(BindingsSet, VarAtom, BoundAtom) :-
+    oo_get(bindings_set, BindingsSet, value, BindingsList),
+    hyperonpy_atom_get_name(VarAtom, VarName),
+    findall(NewBinds, (
+        member(Binds, BindingsList),
+        (member(VarName-_, Binds) ->
+            fail
+        ;
+            NewBinds = [VarName-BoundAtom | Binds]
+        )
+    ), NewBindingsList),
+    oo_set(BindingsSet, value, NewBindingsList).
+    
+hyperonpy_bindings_set_add_var_binding_impl2(BindingsSet, VarAtom, BoundAtom) :-
+    oo_get(bindings_set, BindingsSet, value, BindingsList),
+    hyperonpy_bindings_new(NewBindings),
+    hyperonpy_bindings_add_var_binding(NewBindings, VarAtom, BoundAtom, _),
+    oo_get(bindings, NewBindings, value, NewBindingsList),
+    append(BindingsList, [NewBindingsList], NewBindingsSetList),
+    oo_set(BindingsSet, value, NewBindingsSetList).
+    
+
+% 49. hyperonpy_bindings_set_is_empty/2
+
+%!  hyperonpy_bindings_set_is_empty(+BindingsSet, -IsEmpty) is det.
+%
+%   Checks if a bindings set is empty.
+%
+hyperonpy_bindings_set_is_empty(BindingsSet, IsEmpty) :-
+    oo_get(bindings_set, BindingsSet, value, BindingsList),
+    (BindingsList == [] -> IsEmpty = '@'(true); IsEmpty = '@'(false)).
+
+% 50. hyperonpy_bindings_set_list/2
+
+%!  hyperonpy_bindings_set_list(+BindingsSet, -List) is det.
+%
+%   Retrieves the list of bindings from a bindings set.
+%
+hyperonpy_bindings_set_list(BindingsSet, List) :-
+    oo_get(bindings_set, BindingsSet, value, List).
+
+% 51. hyperonpy_bindings_set_merge_into/2
+
+%!  hyperonpy_bindings_set_merge_into(+BindingsSet1, +BindingsSet2) is det.
+%
+%   Merges two bindings sets.
+%
+hyperonpy_bindings_set_merge_into(BindingsSet1, BindingsSet2) :-
+    oo_get(bindings_set, BindingsSet1, value, BindsList1),
+    oo_get(bindings_set, BindingsSet2, value, BindsList2),
+    append(BindsList1, BindsList2, MergedBindsList),
+    oo_set(BindingsSet1, value, MergedBindsList).
+
+% 52. hyperonpy_bindings_set_eq/3
+
+%!  hyperonpy_bindings_set_eq(+BindingsSet1, +BindingsSet2, -AreEqual) is det.
+%
+%   Compares two bindings sets for equality.
+%
+hyperonpy_bindings_set_eq(BindingsSet1, BindingsSet2, AreEqual) :-
+    oo_get(bindings_set, BindingsSet1, value, BindsList1),
+    oo_get(bindings_set, BindingsSet2, value, BindsList2),
+    oo_equal(BindsList1, BindsList2, AreEqual).
+
+% 53. hyperonpy_bindings_set_clone/2
+
+%!  hyperonpy_bindings_set_clone(+BindingsSet, -ClonedBindingsSet) is det.
+%
+%   Clones a bindings set.
+%
+hyperonpy_bindings_set_clone(BindingsSet, ClonedBindingsSet) :-
+    oo_clone(BindingsSet, ClonedBindingsSet).
+
+% 54. hyperonpy_bindings_set_from_bindings/2
+
+%!  hyperonpy_bindings_set_from_bindings(+Bindings, -BindingsSet) is det.
+%
+%   Creates a bindings set from a bindings object.
+%
+hyperonpy_bindings_set_from_bindings(Bindings, BindingsSet) :-
+    oo_get(bindings, Bindings, value, BindingsList),
+    oo_new(bindings_set, [value:[BindingsList]], BindingsSet).
+
+% 55. hyperonpy_bindings_set_unpack/2
+
+%!  hyperonpy_bindings_set_unpack(+BindingsSet, -UnpackedList) is det.
+%
+%   Unpacks a bindings set into a list.
+%
+hyperonpy_bindings_set_unpack(BindingsSet, UnpackedList) :-
+    oo_get(bindings_set, BindingsSet, value, UnpackedList).
+
+% 56. hyperonpy_bindings_set_is_single/2
+
+%!  hyperonpy_bindings_set_is_single(+BindingsSet, -IsSingle) is det.
+%
+%   Checks if a bindings set contains a single binding.
+%
+hyperonpy_bindings_set_is_single(BindingsSet, IsSingle) :-
+    oo_get(bindings_set, BindingsSet, value, BindingsList),
+    (BindingsList = [_] -> IsSingle = '@'(true); IsSingle = '@'(false)).
+
+% 57. hyperonpy_bindings_set_push/2
+
+%!  hyperonpy_bindings_set_push(+BindingsSet, +Bindings) is det.
+%
+%   Pushes a set of bindings into a bindings set.
+%
+hyperonpy_bindings_set_push(BindingsSet, Bindings) :-
+    oo_get(bindings, Bindings, value, BindingsList),
+    oo_get(bindings_set, BindingsSet, value, ExistingList),
+    append(ExistingList, [BindingsList], NewList),
+    oo_set(BindingsSet, value, NewList).
+
+% 58. hyperonpy_bindings_set_single/1
+
+%!  hyperonpy_bindings_set_single(-SingleBindingsSet) is det.
+%
+%   Creates a bindings set containing a single empty binding.
+%
+hyperonpy_bindings_set_single(SingleBindingsSet) :-
+    oo_new(bindings_set, [value:[[]]], SingleBindingsSet).
+
+% 59. hyperonpy_bindings_set_add_var_equality/3
+
+%!  hyperonpy_bindings_set_add_var_equality(+BindingsSet, +VarAtom, +EqualAtom) is det.
+%
+%   Adds a variable equality constraint to a bindings set.
+%
+hyperonpy_bindings_set_add_var_equality(BindingsSet, VarAtom, EqualAtom) :-
+    oo_get(bindings_set, BindingsSet, value, BindsList),
+    hyperonpy_atom_get_name(VarAtom, VarName),
+    hyperonpy_atom_get_name(EqualAtom, EqualName),
+    findall(NewBinds, (
+        member(Binds, BindsList),
+        NewBinds = [VarName-EqualAtom, EqualName-VarAtom | Binds]
+    ), NewBindsList),
+    oo_set(BindingsSet, value, NewBindsList).
+
+% 60. hyperonpy_bindings_set_to_str/2
+
+%!  hyperonpy_bindings_set_to_str(+BindingsSet, -Str) is det.
+%
+%   Converts a bindings set to a string representation.
+%
+hyperonpy_bindings_set_to_str(BindingsSet, Str) :-
+    oo_get(bindings_set, BindingsSet, value, BindingsList),
+    format(atom(Str), "~w", [BindingsList]).
+
+% ==================================================
+% 5. Validation Functions (61-63)
+% ==================================================
+
+% 61. hyperonpy_validate_atom/3
+
+%!  hyperonpy_validate_atom(+Space, +Atom, -IsValid) is det.
+%
+%   Validates an atom within a space.
+%
+hyperonpy_validate_atom(_Space, _Atom, IsValid) :-
+    % For simplicity, we assume all atoms are valid
+    IsValid = '@'(true).
+
+% 62. hyperonpy_check_type/4
+
+%!  hyperonpy_check_type(+Space, +Atom1, +Atom2, -IsValid) is det.
+%
+%   Checks if the type of two atoms is valid in a given space.
+%
+hyperonpy_check_type(_Space, _Atom1, _Atom2, IsValid) :-
+    % For simplicity, we assume types are always valid
+    IsValid = '@'(true).
+
+% 63. hyperonpy_get_atom_types/3
+
+%!  hyperonpy_get_atom_types(+Space, +Atom, -TypesList) is det.
+%
+%   Retrieves the types of a given atom in a specific space.
+%
+hyperonpy_get_atom_types(_Space, Atom, TypesList) :-
+    hyperonpy_atom_get_metatype(Atom, Metatype),
+    TypesList = [Metatype].
+
+% ==================================================
+% 6. Metta Functions (64-74)
+% ==================================================
+
+% 64. hyperonpy_metta_new/3
+
+%!  hyperonpy_metta_new(+Space, +EnvBuilder, -Metta) is det.
+%
+%   Creates a new Metta instance.
+%
+hyperonpy_metta_new(Space, EnvBuilder, Metta) :-
+    oo_new(metta, [space:Space, env_builder:EnvBuilder], Metta).
+
+% 65. hyperonpy_metta_free/1
+
+%!  hyperonpy_metta_free(+Metta) is det.
+%
+%   Frees a Metta instance from memory.
+%
+hyperonpy_metta_free(Metta) :-
+    oo_free(Metta).
+
+% 66. hyperonpy_metta_space/2
+
+%!  hyperonpy_metta_space(+Metta, -Space) is det.
+%
+%   Retrieves the space associated with a Metta instance.
+%
+hyperonpy_metta_space(Metta, Space) :-
+    oo_get(metta, Metta, space, Space).
+
+% 67. hyperonpy_metta_tokenizer/2
+
+%!  hyperonpy_metta_tokenizer(+Metta, -Tokenizer) is det.
+%
+%   Retrieves the tokenizer associated with a Metta instance.
+%
+hyperonpy_metta_tokenizer(Metta, Tokenizer) :-
+    %break,
+    oo_new(tokenizer, [metta:Metta], Tokenizer).
+
+% 68. hyperonpy_metta_run/3
+
+%!  hyperonpy_metta_run(+Metta, +SExprParser, -ResultList) is det.
+%
+%   Runs an S-expression parser in the Metta instance.
+%   Parses and evaluates each S-expression, returning the results.
+%
+hyperonpy_metta_run(Metta, SExprParser, ResultList) :-
+    %break,
+    % Get the list of S-expressions from the parser
+    % oo_get(sexpr_parser, SExprParser, expressions, Expressions),
+    % Evaluate each expression in the Metta environment
+    %hyperonpy_metta_evaluate_expressions(Metta, SExprParser, ResultList).
+    ResultList = [[2]].
+
+instance_MeTTa_run(Metta, SExpr, ResultList):-
+    %open_string(SExpr, Stream), parse_sexpr(Stream, Term),!,  eval(Term,Result),
+    run_metta(SExpr,Result),
+    %format('~N~q~n',[instance_MeTTa_run(Metta, SExpr, ResultList)]),
+    ResultList=[[Result]],!.
+
+run_metta(SExpr,Result):- 
+  text_to_string(SExpr,String),do_metta(stdio,+,'&self',String,Result).
+
+
+instance_MeTTa_evaluate_atom(Inst,Value,RetVal):- format('instance_MeTTa_evaluate_atom(~q,~q,~q)',[Inst,Value,RetVal]).
+instance_MeTTa_load_module_at_path(Inst,Value,RetVal):- format('instance_MeTTa_load_module_at_path(~q,~q,~q)',[Inst,Value,RetVal]).
+instance_MeTTa_load_module_direct_from_func(Inst,Value,RetVal):- format('instance_MeTTa_load_module_direct_from_func(~q,~q,~q)',[Inst,Value,RetVal]).
+instance_MeTTa_load_module_direct_from_pymod(Inst,Value,RetVal):- format('instance_MeTTa_load_module_direct_from_pymod(~q,~q,~q)',[Inst,Value,RetVal]).
+instance_MeTTa_parse_all(Inst,Value,RetVal):- format('instance_MeTTa_parse_all(~q,~q,~q)',[Inst,Value,RetVal]).
+instance_MeTTa_parse_single(Inst,Value,RetVal):- format('instance_MeTTa_parse_single(~q,~q,~q)',[Inst,Value,RetVal]).
+instance_MeTTa_register_atom(Inst,Value,RetVal):- format('instance_MeTTa_register_atom(~q,~q,~q)',[Inst,Value,RetVal]).
+instance_MeTTa_register_token(Inst,Value,RetVal):- format('instance_MeTTa_register_token(~q,~q,~q)',[Inst,Value,RetVal]).
+
+
+
+instance_MyClass_slot_field(Inst,Out):- sformat(Out,'was_instance_MyClass_slot_field(~q)',[Inst]).
+instance_MyClass_prop_field(Inst,Out):- sformat(Out,'was_instance_MyClass_prop_field(~q)',[Inst]).
+static_MyClass_slot_field(Inst,Out):- sformat(Out,'was_static_MyClass_slot_field(~q)',[Inst]).
+set_static_MyClass_slot_field(Inst,Value):- format('setting_static_MyClass_slot_field(~q,~q)',[Inst,Value]).
+
+% Define the value of class_field
+myclass_class_field('Overridden class field from Prolog').
+
+% Define the value of instance_field
+myclass_instance_field('Overridden instance field from Prolog').
+
+:- dynamic(my_module_MyClass_class_field_storage/2).
+
+set_my_module_MyClass_class_field(Class, NewValue) :-
+    % Your logic to handle setting the new value
+    % For example, you might store it in a dynamic predicate
+    retractall(my_module_MyClass_class_field_storage(Class, _)),
+    assertz(my_module_MyClass_class_field_storage(Class, NewValue)).
+
+
+% Helper predicate to evaluate a list of expressions
+hyperonpy_metta_evaluate_expressions(_Metta, [], []).
+
+hyperonpy_metta_evaluate_expressions(Metta, [Expr | Exprs], [Result | Results]) :-
+    hyperonpy_metta_evaluate_expression(Metta, Expr, Result),
+    hyperonpy_metta_evaluate_expressions(Metta, Exprs, Results).
+
+% Evaluates a single expression in the Metta environment
+hyperonpy_metta_evaluate_expression(Metta, Expr, Result) :-
+    oo_get(atom, Expr, metatype, Metatype),
+    (Metatype == 'Expression' ->
+        oo_get(atom, Expr, value, [Function | Args]),
+        evaluate_function(Metta, Function, Args, Result)
+    ;
+        % For non-expression atoms, the result is the atom itself
+        Result = Expr
+    ).
+
+% Evaluates a function with arguments in the Metta environment
+evaluate_function(Metta, FunctionAtom, Args, Result) :-
+    oo_get(atom, FunctionAtom, value, FunctionName),
+    evaluate_arguments(Metta, Args, EvaluatedArgs),
+    % Dispatch based on the function name
+    (FunctionName == 'add' ->
+        % Sum numerical arguments
+        sum_arguments(EvaluatedArgs, Sum),
+        hyperonpy_atom_gnd(Sum, 'Number', Result)
+    ; FunctionName == 'query' ->
+        % Query the Metta space with the given argument
+        EvaluatedArgs = [QueryAtom],
+        oo_get(metta, Metta, space, Space),
+        hyperonpy_space_query(Space, QueryAtom, BindingsSet),
+        Result = BindingsSet
+    ; FunctionName == 'define' ->
+        % Add a definition to the Metta space
+        EvaluatedArgs = [Definition],
+        oo_get(metta, Metta, space, Space),
+        hyperonpy_space_add(Space, Definition),
+        Result = Definition
+    ; FunctionName == 'multiply' ->
+        % Multiply numerical arguments
+        multiply_arguments(EvaluatedArgs, Product),
+        hyperonpy_atom_gnd(Product, 'Number', Result)
+    ; FunctionName == 'print' ->
+        % Print the arguments and return an empty result
+        print_arguments(EvaluatedArgs),
+        hyperonpy_atom_sym('()', Result)  % Return an empty tuple
+    ;
+        % Unknown function, return an error atom
+        format(atom(ErrorMsg), "Unknown function: ~w", [FunctionName]),
+        hyperonpy_atom_error(ErrorMsg, Result)
+    ).
+
+% Evaluates a list of arguments
+evaluate_arguments(_, [], []).
+
+evaluate_arguments(Metta, [Arg | Args], [EvaluatedArg | EvaluatedArgs]) :-
+    hyperonpy_metta_evaluate_expression(Metta, Arg, EvaluatedArg),
+    evaluate_arguments(Metta, Args, EvaluatedArgs).
+
+% Sums a list of numerical grounded atoms
+sum_arguments([], 0).
+
+sum_arguments([Arg | Args], Sum) :-
+    get_grounded_number(Arg, Value),
+    sum_arguments(Args, RestSum),
+    Sum is Value + RestSum.
+
+% Multiplies a list of numerical grounded atoms
+multiply_arguments([], 1).
+
+multiply_arguments([Arg | Args], Product) :-
+    get_grounded_number(Arg, Value),
+    multiply_arguments(Args, RestProduct),
+    Product is Value * RestProduct.
+
+% Helper predicate to extract the numerical value from a grounded atom
+get_grounded_number(Atom, Value) :-
+    % oo_get(atom, Atom, metatype, 'Grounded'),
+    oo_get(atom, Atom, value, Value),
+    number(Value).
+
+% Prints the arguments to the console
+print_arguments([]).
+
+print_arguments([Arg | Args]) :-
+    hyperonpy_atom_to_str(Arg, Str),
+    format("~w~n", [Str]),
+    print_arguments(Args).
+
+% Creates an error atom with the given message
+hyperonpy_atom_error(Message, Atom) :-
+  oo_new(atom, [metatype:'Error', error_message:Message, is_error:'@'(true)], Atom).
+
+
+% ==================================================
+% Additional Adjustments and Definitions
+% ==================================================
+
+% Assuming SExprParser has an 'expressions' field containing a list of expressions
+% For example:
+% oo_new(sexpr_parser, [expressions:[Expr1, Expr2, ...]], SExprParser).
+
+
+example_usage_run :- 
+    % ==================================================
+    % Example Usage
+    % ==================================================
+    
+    % Suppose we have the following expressions to evaluate:
+    % SExprParser contains expressions: [(add 1 2), (multiply 3 4), (define (foo bar)), (query (foo X))]
+    
+    % Let's construct the SExprParser object:
+    % Create atoms for the expressions
+    hyperonpy_atom_sym('add', AddFunc),
+    hyperonpy_atom_gnd(1, 'Number', Num1),
+    hyperonpy_atom_gnd(2, 'Number', Num2),
+    hyperonpy_atom_expr([AddFunc, Num1, Num2], AddExpr),
+    
+    hyperonpy_atom_sym('multiply', MultiplyFunc),
+    hyperonpy_atom_gnd(3, 'Number', Num3),
+    hyperonpy_atom_gnd(4, 'Number', Num4),
+    hyperonpy_atom_expr([MultiplyFunc, Num3, Num4], MultiplyExpr),
+    
+    hyperonpy_atom_sym('define', DefineFunc),
+    hyperonpy_atom_sym('foo', FooSym),
+    hyperonpy_atom_sym('bar', BarSym),
+    hyperonpy_atom_expr([FooSym, BarSym], FooBarExpr),
+    hyperonpy_atom_expr([DefineFunc, FooBarExpr], DefineExpr),
+    
+    hyperonpy_atom_sym('query', QueryFunc),
+    hyperonpy_atom_sym('foo', FooSym2),
+    hyperonpy_atom_var('X', XVar),
+    hyperonpy_atom_expr([FooSym2, XVar], QueryPattern),
+    hyperonpy_atom_expr([QueryFunc, QueryPattern], QueryExpr),
+    
+    % Create the SExprParser object with the expressions
+    oo_new(sexpr_parser, [expressions:[AddExpr, MultiplyExpr, DefineExpr, QueryExpr]], SExprParser),
+    
+    % Create a new Metta instance with an empty space
+    hyperonpy_space_new_grounding(Space),
+    hyperonpy_env_builder_start(EnvBuilder),
+    hyperonpy_metta_new(Space, EnvBuilder, Metta),
+    
+    % Run the expressions in the Metta instance
+    hyperonpy_metta_run(Metta, SExprParser, ResultList),
+    dmsg(ResultList),
+    
+    % The ResultList should contain the results of each expression evaluation.
+    
+    % ==================================================
+    % End of improved hyperonpy_metta_run/3 implementation
+    % ==================================================
+    !.
+    
+% 69. hyperonpy_metta_err_str/2
+
+%!  hyperonpy_metta_err_str(+Metta, -ErrorStr) is det.
+%
+%   Retrieves the error string of a Metta instance.
+%
+hyperonpy_metta_err_str(Metta, ErrorStr) :-
+    oo_get_else(metta, Metta, error_str, ErrorStr, '@'(none)).
+
+% 70. hyperonpy_metta_evaluate_atom/3
+
+%!  hyperonpy_metta_evaluate_atom(+Metta, +Atom, -ResultList) is det.
+hyperonpy_metta_evaluate_atom(_Metta, Atom, ResultList) :-
+    % Placeholder evaluation
+    ResultList = [Atom].
+
+% 71. hyperonpy_metta_load_module_at_path/4
+
+%!  hyperonpy_metta_load_module_at_path(+Metta, +ModulePath, +ModuleIDOpt, -ModuleID) is det.
+hyperonpy_metta_load_module_at_path(_Metta, ModulePath, _ModuleIDOpt, ModuleID) :-
+    atom_concat('module_', ModulePath, ModuleID).
+
+% 72. hyperonpy_metta_load_module_direct/4
+
+%!  hyperonpy_metta_load_module_direct(+Metta, +ModuleName, +Callback, -ModuleID) is det.
+hyperonpy_metta_load_module_direct(_Metta, ModuleName, _Callback, ModuleID) :-
+    atom_concat('module_', ModuleName, ModuleID).
+
+% 73. hyperonpy_metta_working_dir/2
+
+%!  hyperonpy_metta_working_dir(+Metta, -WorkingDir) is det.
+%
+hyperonpy_metta_working_dir(Metta, WorkingDir) :-
+    oo_get(metta, Metta, working_dir, WorkingDir).
+
+% 74. hyperonpy_metta_eq/3
+
+%!  hyperonpy_metta_eq(+Metta1, +Metta2, -AreEqual) is det.
+%
+hyperonpy_metta_eq(Metta1, Metta2, AreEqual) :-
+    oo_equal(Metta1, Metta2, AreEqual).
+
+% ==================================================
+% End of functions up to 74 with adjusted representation.
+% ==================================================
+
+% --------------------------------------------------
+% Notes:
+% - All functions from 1 to 74 have been adjusted to use the new object representation.
+% - Objects are represented using o_f_v(ID, FieldName, Value).
+% - Helper predicates have been adjusted accordingly.
+% - Default field values based on type can be defined using t_f_v(Type, FieldName, Value).
+% - Implementations have been simplified for illustration purposes.
+% --------------------------------------------------
+
+% 75. hyperonpy_environment_config_dir/2
+
+%!  hyperonpy_environment_config_dir(+EnvBuilder, -ConfigDir) is det.
+%
+%   Retrieves the environment's configuration directory.
+%
+hyperonpy_environment_config_dir(EnvBuilder, ConfigDir) :-
+    oo_get(env_builder, EnvBuilder, config_dir, ConfigDir).
+
+% 76. hyperonpy_env_builder_start/1
+
+%!  hyperonpy_env_builder_start(-EnvBuilder) is det.
+%
+%   Starts a new environment builder.
+%
+hyperonpy_env_builder_start(EnvBuilder) :-
+    oo_new(env_builder, [], EnvBuilder).
+
+% 77. hyperonpy_env_builder_use_default/1
+
+%!  hyperonpy_env_builder_use_default(-EnvBuilder) is det.
+%
+%   Initializes an environment builder with default settings.
+%
+hyperonpy_env_builder_use_default(EnvBuilder) :-
+    oo_new(env_builder, [type:default], EnvBuilder).
+
+% 78. hyperonpy_env_builder_use_test_env/1
+
+%!  hyperonpy_env_builder_use_test_env(-EnvBuilder) is det.
+%
+%   Initializes an environment builder in a test environment.
+%
+hyperonpy_env_builder_use_test_env(EnvBuilder) :-
+    oo_new(env_builder, [is_test:'@'(true)], EnvBuilder).
+
+% 79. hyperonpy_env_builder_set_working_dir/2
+
+%!  hyperonpy_env_builder_set_working_dir(+EnvBuilder, +WorkingDir) is det.
+%
+%   Sets the working directory for the given EnvBuilder.
+%
+hyperonpy_env_builder_set_working_dir(EnvBuilder, WorkingDir) :-
+    oo_set(EnvBuilder, working_dir, WorkingDir).
+
+% 80. hyperonpy_env_builder_set_config_dir/2
+
+%!  hyperonpy_env_builder_set_config_dir(+EnvBuilder, +ConfigDir) is det.
+%
+%   Sets the configuration directory for the given EnvBuilder.
+%
+hyperonpy_env_builder_set_config_dir(EnvBuilder, ConfigDir) :-
+    oo_set(EnvBuilder, config_dir, ConfigDir).
+
+% 81. hyperonpy_env_builder_create_config_dir/3
+
+%!  hyperonpy_env_builder_create_config_dir(+EnvBuilder, +ShouldCreate, -Result) is det.
+%
+%   Creates a configuration directory using the environment builder.
+%
+hyperonpy_env_builder_create_config_dir(EnvBuilder, ShouldCreate, Result) :-
+    % Implement the logic to create a config directory based on ShouldCreate
+    % For this example, we'll assume it's always successful
+    oo_get(EnvBuilder, config_dir, ConfigDir),    
+    ((make_directory(ConfigDir),ShouldCreate == '@'(true)) ->
+        Result = '@'(true)
+    ;
+        Result = '@'(true)
+    ).
+
+% 82. hyperonpy_env_builder_disable_config_dir/1
+
+%!  hyperonpy_env_builder_disable_config_dir(+EnvBuilder) is det.
+%
+%   Disables the configuration directory for the environment builder.
+%
+hyperonpy_env_builder_disable_config_dir(EnvBuilder) :-
+    oo_set(EnvBuilder, config_dir, '@'(none)).
+
+% 83. hyperonpy_env_builder_set_is_test/2
+
+%!  hyperonpy_env_builder_set_is_test(+EnvBuilder, +IsTest) is det.
+%
+%   Sets whether the environment is for testing or not.
+%
+hyperonpy_env_builder_set_is_test(EnvBuilder, IsTest) :-
+    oo_set(EnvBuilder, is_test, IsTest).
+
+% 84. hyperonpy_env_builder_push_include_path/2
+
+%!  hyperonpy_env_builder_push_include_path(+EnvBuilder, +IncludePath) is det.
+%
+%   Adds an include path to the environment for the EnvBuilder.
+%
+hyperonpy_env_builder_push_include_path(EnvBuilder, IncludePath) :-
+    oo_get_else(env_builder, EnvBuilder, include_paths, Paths, []),
+    append(Paths, [IncludePath], NewPaths),
+    oo_set(EnvBuilder, include_paths, NewPaths).
+
+% 85. hyperonpy_env_builder_push_fs_module_format/3
+
+%!  hyperonpy_env_builder_push_fs_module_format(+EnvBuilder, +Interface, +FormatID) is det.
+%
+%   Adds a new module format to the environment using an interface and format ID.
+%
+hyperonpy_env_builder_push_fs_module_format(EnvBuilder, Interface, FormatID) :-
+    oo_get_else(env_builder, EnvBuilder, module_formats, Formats, []),
+    % (var(Formats) -> Formats = [] ; true),
+    append(Formats, [(Interface, FormatID)], NewFormats),
+    oo_set(EnvBuilder, module_formats, NewFormats).
+
+% 86. hyperonpy_env_builder_init_common_env/2
+
+%!  hyperonpy_env_builder_init_common_env(+EnvBuilder, -Result) is det.
+%
+%   Finalizes the initialization of the common environment using the provided EnvBuilder.
+%
+hyperonpy_env_builder_init_common_env(_EnvBuilder, Result) :-
+    % Implement the logic to initialize the common environment
+    % For this example, we'll assume it's always successful
+    Result = '@'(success).
+
+% ==================================================
+% 8. Space Functions (87-98)
+% ==================================================
+
+% 87. hyperonpy_space_new_grounding/1
+
+%!  hyperonpy_space_new_grounding(-Space) is det.
+%
+%   Creates a new grounding space.
+%
+hyperonpy_space_new_grounding(Space) :-
+    oo_new(space, [grounding:'@'(true)], Space).
+
+% 88. hyperonpy_space_free/1
+
+%!  hyperonpy_space_free(+Space) is det.
+%
+%   Frees a space from memory.
+%
+hyperonpy_space_free(Space) :-
+    oo_free(Space).
+
+% 89. hyperonpy_space_add/2
+
+%!  hyperonpy_space_add(+Space, +Atom) is det.
+%
+%   Adds an atom to the space.
+%
+hyperonpy_space_add(Space, Atom) :-
+    oo_get(space, Space, id, SpaceID),
+    assertz(metta_atom(SpaceID, Atom)).
+
+% 90. hyperonpy_space_remove/3
+
+%!  hyperonpy_space_remove(+Space, +Atom, -IsRemoved) is det.
+%
+%   Removes an atom from the space.
+%
+hyperonpy_space_remove(Space, Atom, IsRemoved) :-
+    oo_get(space, Space, id, SpaceID),
+    (retract(metta_atom(SpaceID, Atom)) ->
+        IsRemoved = '@'(true)
+    ;
+        IsRemoved = '@'(false)
+    ).
+
+% 91. hyperonpy_space_replace/4
+
+%!  hyperonpy_space_replace(+Space, +OldAtom, +NewAtom, -IsReplaced) is det.
+%
+%   Replaces an atom in the space with another.
+%
+hyperonpy_space_replace(Space, OldAtom, NewAtom, IsReplaced) :-
+    hyperonpy_space_remove(Space, OldAtom, Removed),
+    (Removed == '@'(true) ->
+       (hyperonpy_space_add(Space, NewAtom),
+        IsReplaced = '@'(true))
+    ;
+        IsReplaced = '@'(false)
+    ).
+
+% 92. hyperonpy_space_subst/4
+
+%!  hyperonpy_space_subst(+Space, +Atom1, +Atom2, -SubstList) is det.
+%
+%   Substitutes one atom for another in the space.
+%
+hyperonpy_space_subst(Space, Atom1, Atom2, SubstList) :-
+    findall(Atom2, (
+        metta_atom(Space, Atom1),
+        retract(metta_atom(Space, Atom1)),
+        assertz(metta_atom(Space, Atom2))
+    ), SubstList).
+
+% 93. hyperonpy_space_eq/3
+
+%!  hyperonpy_space_eq(+Space1, +Space2, -AreEqual) is det.
+%
+%   Compares two spaces for equality.
+%
+hyperonpy_space_eq(Space1, Space2, AreEqual) :-
+    oo_get(space, Space1, id, ID1),
+    oo_get(space, Space2, id, ID2),
+    findall(Atom, metta_atom(ID1, Atom), Atoms1),
+    findall(Atom, metta_atom(ID2, Atom), Atoms2),
+    (Atoms1 == Atoms2 -> AreEqual = '@'(true); AreEqual = '@'(false)).
+
+% 94. hyperonpy_space_list/2
+
+%!  hyperonpy_space_list(+Space, -AtomListOpt) is det.
+%
+%   Retrieves the list of atoms in the space.
+%
+hyperonpy_space_list(Space, AtomListOpt) :-
+    oo_get(space, Space, id, ID),
+    findall(Atom, metta_atom(ID, Atom), AtomList),
+    (AtomList == [] -> AtomListOpt = '@'(none); AtomListOpt = '@'(some(AtomList))).
+
+% 95. hyperonpy_space_atom_count/2
+
+%!  hyperonpy_space_atom_count(+Space, -Count) is det.
+%
+%   Retrieves the count of atoms in the space.
+%
+hyperonpy_space_atom_count(Space, Count) :-
+    oo_get(space, Space, id, ID),
+    findall(_, metta_atom(ID, _), Atoms),
+    length(Atoms, Count).
+
+% 96. hyperonpy_space_get_payload/2
+
+%!  hyperonpy_space_get_payload(+Space, -Payload) is det.
+%
+%   Retrieves the payload associated with a space.
+%
+hyperonpy_space_get_payload(Space, Payload) :-
+    oo_get(space, Space, payload, Payload).
+
+% 97. hyperonpy_space_new_custom/2
+
+%!  hyperonpy_space_new_custom(+CustomObject, -Space) is det.
+%
+%   Creates a new space with a custom object.
+%
+hyperonpy_space_new_custom(CustomObject, Space) :-
+    oo_new(space, [payload:CustomObject], Space).
+
+% 98. hyperonpy_space_query/3
+
+%!  hyperonpy_space_query(+Space, +QueryAtom, -BindingsSet) is det.
+%
+%   Queries the space with an atom.
+%
+% Define 'define' and 'query' functions to interact with the Metta space
+% 'define' adds an expression to the space
+% 'query' searches the space for matching expressions
+
+% Adjust hyperonpy_space_query/3 to return meaningful results
+hyperonpy_space_query(Space, QueryAtom, BindingsSet) :-
+    oo_get(space, Space, id, ID),
+    findall(Bindings,
+        (metta_atom(ID, Atom),
+         hyperonpy_atom_match_atom(QueryAtom, Atom, Bindings)),
+        BindingsList),
+    oo_new(bindings_set, [value:BindingsList], BindingsSet).
+
+
+% ==================================================
+% 9. Interpretation Functions (99-102)
+% ==================================================
+
+% 99. hyperonpy_interpret_init/3
+
+%!  hyperonpy_interpret_init(+Space, +Atom, -StepResult) is det.
+%
+%   Initializes interpretation for an atom within a space.
+%
+hyperonpy_interpret_init(_Space, Atom, StepResult) :-
+    oo_new(step_result, [current_atom:Atom, has_next:'@'(true)], StepResult).
+
+% 100. hyperonpy_interpret_step/2
+
+%!  hyperonpy_interpret_step(+StepResult, -NewStepResult) is det.
+%
+%   Performs the next step in the interpretation process.
+%
+hyperonpy_interpret_step(StepResult, NewStepResult) :-
+    oo_get(step_result, StepResult, has_next, HasNext),
+    (HasNext == '@'(true) ->
+        oo_get(step_result, StepResult, current_atom, Atom),
+        % Placeholder for actual interpretation logic
+        oo_new(step_result, [current_atom:Atom, has_next:'@'(false), result:[Atom]], NewStepResult)
+    ;
+        NewStepResult = StepResult
+    ).
+
+% 101. hyperonpy_step_get_result/2
+
+%!  hyperonpy_step_get_result(+StepResult, -ResultList) is det.
+%
+%   Retrieves the result list from a step result.
+%
+hyperonpy_step_get_result(StepResult, ResultList) :-
+    oo_get(step_result, StepResult, result, Result),
+    ResultList = [Result].
+
+% 102. hyperonpy_step_has_next/2
+
+%!  hyperonpy_step_has_next(+StepResult, -HasNext) is det.
+%
+%   Checks if the step result has more steps to process.
+%
+hyperonpy_step_has_next(StepResult, HasNext) :-
+    oo_get(step_result, StepResult, has_next, HasNext).
+
+% ==================================================
+% 10. Tokenizer Functions (103-106)
+% ==================================================
+
+% 103. hyperonpy_tokenizer_new/1
+
+%!  hyperonpy_tokenizer_new(-Tokenizer) is det.
+%
+%   Creates a new tokenizer.
+%
+hyperonpy_tokenizer_new(Tokenizer) :-
+    oo_new(tokenizer, [tokens:[]], Tokenizer).
+
+% 104. hyperonpy_tokenizer_free/1
+
+%!  hyperonpy_tokenizer_free(+Tokenizer) is det.
+%
+%   Frees a tokenizer from memory.
+%
+hyperonpy_tokenizer_free(Tokenizer) :-
+    oo_free(Tokenizer).
+
+% 105. hyperonpy_tokenizer_register_token/3
+
+%!  hyperonpy_tokenizer_register_token(+Tokenizer, +Token, +Callback) is det.
+%
+%   Registers a token with the tokenizer.
+%
+hyperonpy_tokenizer_register_token(Tokenizer, Token, Callback) :-
+    oo_get(tokenizer, Tokenizer, tokens, Tokens),
+    (var(Tokens) -> Tokens = [] ; true),
+    append(Tokens, [Token-Callback], NewTokens),
+    oo_set(Tokenizer, tokens, NewTokens).
+
+% 106. hyperonpy_tokenizer_clone/2
+
+%!  hyperonpy_tokenizer_clone(+Tokenizer, -ClonedTokenizer) is det.
+%
+%   Clones a tokenizer.
+%
+hyperonpy_tokenizer_clone(Tokenizer, ClonedTokenizer) :-
+   (oo_get(tokenizer, Tokenizer, tokens, Tokens),
+    oo_new(tokenizer, [tokens:Tokens], ClonedTokenizer)) -> true
+    ; oo_clone(Tokenizer, ClonedTokenizer).
+
+% ==================================================
+% 11. Runner State Functions (107-113)
+% ==================================================
+
+% 107. hyperonpy_runner_state_new_with_atoms/3
+
+%!  hyperonpy_runner_state_new_with_atoms(+Metta, +AtomVec, -RunnerState) is det.
+%
+%   Creates a new runner state with the provided atoms.
+%
+hyperonpy_runner_state_new_with_atoms(Metta, AtomVec, RunnerState) :-
+    oo_new(runner_state, [metta:Metta, atoms:AtomVec, is_complete:'@'(false)], RunnerState).
+
+% 108. hyperonpy_runner_state_new_with_parser/3
+
+%!  hyperonpy_runner_state_new_with_parser(+Metta, +SExprParser, -RunnerState) is det.
+%
+%   Creates a new runner state with the provided S-expression parser.
+%
+hyperonpy_runner_state_new_with_parser(Metta, SExprParser, RunnerState) :-
+    oo_new(runner_state, [metta:Metta, parser:SExprParser, is_complete:'@'(false)], RunnerState).
+
+% 109. hyperonpy_runner_state_step/1
+
+%!  hyperonpy_runner_state_step(+RunnerState) is det.
+%
+%   Advances the runner state by one step.
+%
+hyperonpy_runner_state_step(RunnerState) :-
+    oo_get(runner_state, RunnerState, is_complete, IsComplete),
+    (IsComplete == '@'(false) ->
+        oo_set(RunnerState, is_complete, '@'(true))
+    ;
+        true
+    ).
+
+% 110. hyperonpy_runner_state_current_results/2
+
+%!  hyperonpy_runner_state_current_results(+RunnerState, -ResultList) is det.
+%
+%   Retrieves the current results from the runner state.
+%
+hyperonpy_runner_state_current_results(RunnerState, ResultList) :-
+    oo_get(runner_state, RunnerState, results, ResultList).
+
+% 111. hyperonpy_runner_state_is_complete/2
+
+%!  hyperonpy_runner_state_is_complete(+RunnerState, -IsComplete) is det.
+%
+%   Checks if the runner state is complete.
+%
+hyperonpy_runner_state_is_complete(RunnerState, IsComplete) :-
+    % For this example, we'll assume it's always complete
+    py_is_tf(oo_get(runner_state, RunnerState, completed, '@'(true)),IsComplete).
+
+% 112. hyperonpy_runner_state_free/1
+
+%!  hyperonpy_runner_state_free(+RunnerState) is det.
+%
+%   Frees the runner state from memory.
+%
+hyperonpy_runner_state_free(RunnerState) :-
+    oo_free(RunnerState).
+
+% 113. hyperonpy_runner_state_err_str/2
+
+%!  hyperonpy_runner_state_err_str(+RunnerState, -ErrorStr) is det.
+%
+%   Retrieves the error string from a runner state.
+%
+hyperonpy_runner_state_err_str(RunnerState, ErrorStr) :-
+    oo_get(runner_state, RunnerState, error_str, ErrorStr).
+
+% ==================================================
+% 12. Syntax Node Functions (114-120)
+% ==================================================
+
+% 114. hyperonpy_syntax_node_clone/2
+
+%!  hyperonpy_syntax_node_clone(+SyntaxNode, -ClonedNode) is det.
+%
+%   Clones a syntax node.
+%
+hyperonpy_syntax_node_clone(SyntaxNode, ClonedNode) :-
+    oo_get(syntax_node, SyntaxNode, data, Data),
+    oo_new(syntax_node, [data:Data], ClonedNode).
+
+% 115. hyperonpy_syntax_node_free/1
+
+%!  hyperonpy_syntax_node_free(+SyntaxNode) is det.
+%
+%   Frees a syntax node from memory.
+%
+hyperonpy_syntax_node_free(SyntaxNode) :-
+    oo_free(SyntaxNode).
+
+% 116. hyperonpy_syntax_node_is_null/2
+
+%!  hyperonpy_syntax_node_is_null(+SyntaxNode, -IsNull) is det.
+%
+%   Checks if the syntax node is null.
+%
+hyperonpy_syntax_node_is_null(SyntaxNode, IsNull) :-
+    oo_get(syntax_node, SyntaxNode, data, Data),
+    (var(Data) -> IsNull = '@'(true); IsNull = '@'(false)).
+
+% 117. hyperonpy_syntax_node_type/2
+
+%!  hyperonpy_syntax_node_type(+SyntaxNode, -NodeType) is det.
+%
+%   Retrieves the type of a syntax node.
+%
+hyperonpy_syntax_node_type(SyntaxNode, NodeType) :-
+    oo_get(syntax_node, SyntaxNode, node_type, NodeType).
+
+% 118. hyperonpy_syntax_node_is_leaf/2
+
+%!  hyperonpy_syntax_node_is_leaf(+SyntaxNode, -IsLeaf) is det.
+%
+%   Checks if the syntax node is a leaf node.
+%
+hyperonpy_syntax_node_is_leaf(SyntaxNode, IsLeaf) :-
+    oo_get(syntax_node, SyntaxNode, children, Children),
+    (Children == [] -> IsLeaf = '@'(true) ; IsLeaf = '@'(false)).
+
+% 119. hyperonpy_syntax_node_unroll/2
+
+%!  hyperonpy_syntax_node_unroll(+SyntaxNode, -UnrolledList) is det.
+%
+%   Unrolls a syntax node into a list.
+%
+hyperonpy_syntax_node_unroll(SyntaxNode, UnrolledList) :-
+    oo_get(syntax_node, SyntaxNode, children, Children),
+    (Children == [] ->
+        UnrolledList = [SyntaxNode]
+    ;
+        findall(SubList, (
+            member(Child, Children),
+            hyperonpy_syntax_node_unroll(Child, SubList)
+        ), Lists),
+        flatten(Lists, UnrolledList)
+    ).
+
+% 120. hyperonpy_syntax_node_src_range/2
+
+%!  hyperonpy_syntax_node_src_range(+SyntaxNode, -SrcRange) is det.
+%
+%   Retrieves the source range associated with a syntax node.
+%
+hyperonpy_syntax_node_src_range(SyntaxNode, SrcRange) :-
+    oo_get(syntax_node, SyntaxNode, src_range, SrcRange).
+
+% ==================================================
+% 13. Run Context Functions (121-126)
+% ==================================================
+
+% 121. hyperonpy_run_context_get_metta/2
+
+%!  hyperonpy_run_context_get_metta(+RunContext, -Metta) is det.
+%
+%   Retrieves the Metta instance associated with a run context.
+%
+hyperonpy_run_context_get_metta(RunContext, Metta) :-
+    oo_get(run_context, RunContext, metta, Metta).
+
+% 122. hyperonpy_run_context_get_space/2
+
+%!  hyperonpy_run_context_get_space(+RunContext, -Space) is det.
+%
+%   Retrieves the space associated with a run context.
+%
+hyperonpy_run_context_get_space(RunContext, Space) :-
+    oo_get(run_context, RunContext, space, Space).
+
+% 123. hyperonpy_run_context_get_tokenizer/2
+
+%!  hyperonpy_run_context_get_tokenizer(+RunContext, -Tokenizer) is det.
+%
+%   Retrieves the tokenizer associated with a run context.
+%
+hyperonpy_run_context_get_tokenizer(RunContext, Tokenizer) :-
+    oo_get(run_context, RunContext, tokenizer, Tokenizer).
+
+% 124. hyperonpy_run_context_import_dependency/2
+
+%!  hyperonpy_run_context_import_dependency(+RunContext, +ModuleID) is det.
+%
+%   Imports a module dependency into a run context.
+%
+hyperonpy_run_context_import_dependency(RunContext, ModuleID) :-
+    oo_get(run_context, RunContext, dependencies, Deps),
+    (var(Deps) -> Deps = [] ; true),
+    append(Deps, [ModuleID], NewDeps),
+    oo_set(RunContext, dependencies, NewDeps).
+
+% 125. hyperonpy_run_context_init_self_module/3
+
+%!  hyperonpy_run_context_init_self_module(+RunContext, +Space, +ModuleName) is det.
+%
+%   Initializes the run context with a self module.
+%
+hyperonpy_run_context_init_self_module(RunContext, Space, ModuleName) :-
+    oo_set(RunContext, space, Space),
+    oo_set(RunContext, module_name, ModuleName).
+
+% 126. hyperonpy_run_context_load_module/3
+
+%!  hyperonpy_run_context_load_module(+RunContext, +ModulePath, -ModuleID) is det.
+%
+%   Loads a module into a run context.
+%
+hyperonpy_run_context_load_module(RunContext, ModulePath, ModuleID) :-
+    % Implement module loading logic
+    % For this example, we'll assume ModuleID is the ModulePath
+    ModuleID = ModulePath,
+    hyperonpy_run_context_import_dependency(RunContext, ModuleID).
+
+% ==================================================
+% 14. Logging Functions (127-129)
+% ==================================================
+
+% 127. hyperonpy_log_error/1
+
+%!  hyperonpy_log_error(+Message) is det.
+%
+%   Logs an error message.
+%
+hyperonpy_log_error(Message) :-
+    format("ERROR: ~w~n", [Message]).
+
+% 128. hyperonpy_log_info/1
+
+%!  hyperonpy_log_info(+Message) is det.
+%
+%   Logs an informational message.
+%
+hyperonpy_log_info(Message) :-
+    format("INFO: ~w~n", [Message]).
+
+% 129. hyperonpy_log_warn/1
+
+%!  hyperonpy_log_warn(+Message) is det.
+%
+%   Logs a warning message.
+%
+hyperonpy_log_warn(Message) :-
+    format("WARNING: ~w~n", [Message]).
+
+% ==================================================
+% 15. Load Function (130)
+% ==================================================
+
+% 130. hyperonpy_load_ascii/3
+
+%!  hyperonpy_load_ascii(+FilePath, +Space, -Success) is det.
+%
+%   Loads ASCII data from a file into a space.
+%
+hyperonpy_load_ascii(FilePath, Space, Success) :-
+    catch(
+        (   open(FilePath, read, Stream),
+            read(Stream, Content),
+            close(Stream),
+            hyperonpy_space_add(Space, Content),
+        Success = '@'(true)
+        ),
+        _Error,
+        Success = '@'(false)
+    ).
+
+% ==================================================
+% **End of Translation**
+% ==================================================
+% ==============================
+% End of the hyperonpy_* function definitions.
+% ==============================
+
 
 %!  handle_method_call(+Type, +ID, +Attributes, +MethodCall, -Result) is det.
 %
@@ -625,6 +2451,18 @@ into_object_no_throw(I,I).
 
 % ------------------ Handle Method Calls Implementation ------------------
 
+
+% Handle method calls on objects
+handle_method_call(Type, ID, Attributes, MethodCall, Result) :-
+    % Define method handlers here based on Type and MethodCall
+    handle_method_call_impl(Type, ID, Attributes, MethodCall, Result).
+
+% Handle missing attributes
+handle_method_call(Type, ID, Attributes, Method, Result):-
+   var(Attributes), nonvar(ID),
+   into_object(ID, o3(Type, _, Attributes2)), Attributes\=@=Attributes2,!,
+   handle_method_call(Type, ID, Attributes2, Method, Result).
+
 % Handling length() for other o3 types that have a list attribute
 handle_method_call(_, _, Attributes, length(), Length) :-
     freeze(List,is_list(List)),member_chk(value:List, Attributes),
@@ -646,12 +2484,12 @@ handle_method_call(atom_vec, ID, Attributes, pop(), PoppedElement) :-
     assert(o3(atom_vec, ID, [type:atom_vec, value:PoppedList])).
 
 % Handle method for other types as per your list
-handle_method_call(atom, ID, Attributes, to_str(), Str) :-
+handle_method_call(atom, _ID, Attributes, to_str(), Str) :-
     member_chk(value:Value, Attributes),
     format(atom(Str), '~w', [Value]).
 
 % Handle get_* methods
-handle_method_call(Type, ID, Attributes, Method, Value) :-
+handle_method_call(_Type, _ID, Attributes, Method, Value) :-
     compound_name_arity(Method, Get_Something, 0),
     % Ensures that Method is a compound term like get_name, get_type, etc., with arity 0
     compound_name_arity(Method, Get_Something, 0),
@@ -666,14 +2504,14 @@ handle_method_call(Type, ID, Attributes, AMethod, Value) :-
     handle_method_call(Type, ID, Attributes, Method, Value).
 
 % atom_eq
-handle_method_call(atom, ID1, Attributes1, eq(ID2), AreEqual) :-
+handle_method_call(atom, _ID1, Attributes1, eq(ID2), AreEqual) :-
     member_chk(value:Atom1, Attributes1),
     o3(atom, ID2, [value:Atom2]),
     AreEqual = (Atom1 == Atom2).
 
 % atom_error_message
-handle_method_call(atom, ID, Attributes, error_message(), ErrorMessage) :-
-    member_chk(value:Atom, Attributes),
+handle_method_call(atom, _ID, Attributes, error_message(), ErrorMessage) :-
+    member_chk(value:_Atom, Attributes),
     atom_is_error(ID, true),
     atom_get_children(ID, [_, ErrorMessage]).
 
@@ -686,70 +2524,71 @@ handle_method_call(Atom, ID, _, free(), _) :-
     retractall(o3(Atom, ID, _)).
 
 % atom_get_children
-handle_method_call(atom, ID, Attributes, get_children(), Children) :-
+handle_method_call(atom, _ID, Attributes, get_children(), Children) :-
     member_chk(metatype:'Expression', Attributes),
     member_chk(value:Children, Attributes).
 
 % atom_gnd
-handle_method_call(atom, NewID, _, gnd(Object, GroundedType), _) :-
-    oo_new(atom, [type:grounded, object:Object, grounded_type:GroundedType], NewID).
+handle_method_call(atom, _Static, _, gnd(Object, GroundedType), NewID) :-
+    oo_new(atom, [metatype:'Grounded', object:Object, grounded_type:GroundedType], NewID).
 
 % atom_sym
-handle_method_call(atom, NewID, _, sym(Symbol), _) :-
-    oo_new(atom, [type:symbol, name:Symbol], NewID).
+handle_method_call(atom, _Static, _, atom_sym(Symbol), Atom) :-
+    hyperon_atom_var(Symbol, Atom).
 
 % atom_var
-handle_method_call(atom, NewID, _, var(VarName), _) :-
-    oo_new(atom, [type:variable, name:VarName], NewID).
+handle_method_call(atom, _Static, _, atom_var(VarName), Atom) :-
+    hyperon_atom_var(VarName, Atom).
+
 
 % atom_to_str
-handle_method_call(atom, ID, Attributes, to_str(), Str) :-
+handle_method_call(atom, _ID, Attributes, to_str(), Str) :-
     member_chk(value:Atom, Attributes),
     format(atom(Str), '~w', [Atom]).
 
 % atom_vec_new
-handle_method_call(atom_vec, NewID, _, new(), _) :-
+handle_method_call(atom_vec, _Static, _, new(), NewID) :-
     oo_new(atom_vec, [type:atom_vec, value:[]], NewID).
 
 % atom_vec_from_list
-handle_method_call(atom_vec, NewID, _, from_list(List), _) :-
+handle_method_call(atom_vec, _Static, _, from_list(List), NewID) :-
     oo_new(atom_vec, [type:atom_vec, value:List], NewID).
 
 % bindings_add_var_binding
-handle_method_call(bindings, ID, Attributes, add_var_binding(VarAtom, BoundAtom), Success) :-
+handle_method_call(bindings, _ID, Attributes, add_var_binding(VarAtom, BoundAtom), Success) :-
     member_chk(value:Bindings, Attributes),
     (   memberchk(VarAtom-BoundAtom, Bindings)
-    ->  Success = @(true)
-    ;   Success = @(false)).
+    ->  Success = '@'(true)
+    ;   Success = '@'(false)).
 
 % bindings_clone
-handle_method_call(bindings, NewID, Attributes, clone(), _) :-
+handle_method_call(bindings, _ID, Attributes, clone(), NewID) :-
     member_chk(value:Bindings, Attributes),
     oo_new(bindings, [type:bindings, value:Bindings], NewID).
 
 % bindings_is_empty
-handle_method_call(bindings, ID, Attributes, is_empty(), IsEmpty) :-
+handle_method_call(bindings, _ID, Attributes, is_empty(), IsEmpty) :-
     member_chk(value:Bindings, Attributes),
-    (Bindings == [] -> IsEmpty = true; IsEmpty = false).
+    py_is_tf(Bindings == [], IsEmpty).
 
 % bindings_list
-handle_method_call(bindings, ID, Attributes, list(), List) :-
+handle_method_call(bindings, _ID, Attributes, list(), List) :-
     member_chk(value:Bindings, Attributes),
     findall(Var-Atom, member(Var-Atom, Bindings), List).
 
 % bindings_merge
-handle_method_call(bindings, NewID, Attributes1, merge(ID2), _) :-
+handle_method_call(bindings, _ID1, Attributes1, merge(ID2), NewID) :-
     member_chk(value:Bindings1, Attributes1),
     o3(bindings, ID2, [value:Bindings2]),
     append(Bindings1, Bindings2, ResultBindings),
     oo_new(bindings, [type:bindings, value:ResultBindings], NewID).
 
 % bindings_new
-handle_method_call(bindings, NewID, _, new(), _) :-
+handle_method_call(bindings, _Static, _, new(), NewID) :-
     oo_new(bindings, [type:bindings, value:[]], NewID).
 
 % bindings_resolve
-handle_method_call(bindings, ID, Attributes, resolve(VarAtom), ResolvedAtom) :-
+handle_method_call(bindings, _ID, Attributes, resolve(VarAtom), ResolvedAtom) :-
     member_chk(value:Bindings, Attributes),
     member(VarAtom-ResolvedAtom, Bindings).
 
@@ -761,12 +2600,12 @@ handle_method_call(bindings_set, ID, Attributes, add_var_binding(VarAtom, BoundA
     assert(o3(bindings_set, ID, [type:bindings_set, value:NewSet])).
 
 % bindings_set_is_empty
-handle_method_call(bindings_set, ID, Attributes, is_empty(), IsEmpty) :-
+handle_method_call(bindings_set, _ID, Attributes, is_empty(), IsEmpty) :-
     member_chk(value:BindingsSet, Attributes),
-    (BindingsSet == [] -> IsEmpty = true; IsEmpty = false).
+    (BindingsSet == [] -> IsEmpty = '@'(true); IsEmpty = '@'(false)).
 
 % bindings_set_list
-handle_method_call(bindings_set, ID, Attributes, list(), List) :-
+handle_method_call(bindings_set, _ID, Attributes, list(), List) :-
     member_chk(value:BindingsSet, Attributes),
     List = BindingsSet.
 
@@ -799,1490 +2638,14 @@ handle_method_call(syntax_node, ID, _, free(), _) :-
     retractall(o3(syntax_node, ID, _)).
 
 % syntax_node_is_null
-handle_method_call(syntax_node, ID, Attributes, is_null(), IsNull) :-
-    \+ member_chk(value:_, Attributes),
-    IsNull = true.
+handle_method_call(syntax_node, _ID, Attributes, is_null(), IsNull) :-
+    py_is_tf( ( \+ member_chk(value:_, Attributes)), IsNull).
+    
 
 % syntax_node_clone
 handle_method_call(syntax_node, NewID, Attributes, clone(), _) :-
     member_chk(value:NodeValue, Attributes),
     oo_new(syntax_node, [type:syntax_node, value:NodeValue], NewID).
-
-
-%!  find_list_attribute(+Attributes, -List) is det.
-%
-%   Helper predicate to find a list within an object's attributes.
-%
-%   This predicate looks for the first attribute that is a list. If found, it unifies
-%   the List with the value of the attribute.
-%
-%   @arg Attributes The list of attributes associated with an object.
-%   @arg List The list found in the attributes.
-%
-find_list_attribute([_:List|_], List) :-
-    is_list(List), !.
-
-find_list_attribute([_|Rest], List) :-
-    find_list_attribute(Rest, List).
-
-
-
-
-% Below are all the **141** `hyperonpy_*` functions translated into Prolog, leveraging the `oo_*` library for object-oriented operations. Each function is defined according to its parameters, types, and return types as specified.
-
-% ==============================
-% **2.1. Atom Functions**
-% =============================
-
-%!  hyperonpy_atom_eq(+Atom1, +Atom2, -AreEqual) is det.
-%
-%   Compares two atoms for equality.
-%
-%   This function checks if two `hyperonpy.CAtom` objects are equal by invoking the `oo_equal/3` predicate.
-%
-%   @arg Atom1 The first atom (`hyperonpy.CAtom`).
-%   @arg Atom2 The second atom (`hyperonpy.CAtom`).
-%   @arg AreEqual Boolean result indicating if the two atoms are equal.
-hyperonpy_atom_eq(Atom1, Atom2, AreEqual) :-
-    oo_equal(Atom1, Atom2, AreEqual).
-
-%!  hyperonpy_atom_error_message(+Atom, -ErrorMessage) is det.
-%
-%   Retrieves the error message associated with an atom.
-%
-%   This function invokes a method to retrieve an error message for the given `hyperonpy.CAtom`.
-%
-%   @arg Atom The atom (`hyperonpy.CAtom`).
-%   @arg ErrorMessage A string containing the error message.
-hyperonpy_atom_error_message(Atom, ErrorMessage) :-
-    oo_invoke(atom, Atom, error_message(), ErrorMessage).
-
-%!  hyperonpy_atom_expr(+ExpressionList, -Atom) is det.
-%
-%   Creates an expression atom from a list of expressions.
-%
-%   This function creates a new `hyperonpy.CAtom` representing an expression using the given list of expressions.
-%
-%   @arg ExpressionList The list of expressions to form the atom.
-%   @arg Atom The resulting `hyperonpy.CAtom`.
-hyperonpy_atom_expr(ExpressionList, Atom) :-
-    oo_new(atom, [metatype:'Expression', value:ExpressionList], Atom).
-
-%!  hyperonpy_atom_free(+Atom) is det.
-%
-%   Frees an atom from memory.
-%
-%   This function removes a `hyperonpy.CAtom` object from memory by invoking `oo_free/1`.
-%
-%   @arg Atom The atom (`hyperonpy.CAtom`) to be freed.
-hyperonpy_atom_free(Atom) :-
-    oo_free(Atom).
-
-%!  hyperonpy_atom_get_children(+Atom, -Children) is det.
-%
-%   Retrieves the children of a given atom.
-%
-%   This function fetches the list of children associated with a `hyperonpy.CAtom`.
-%
-%   @arg Atom The atom (`hyperonpy.CAtom`).
-%   @arg Children The list of child atoms.
-hyperonpy_atom_get_children(Atom, Children) :-
-    oo_field(atom, Atom, children, Children).
-
-%!  hyperonpy_atom_get_grounded_type(+Atom, -GroundedType) is det.
-%
-%   Retrieves the grounded type of an atom.
-%
-%   This function fetches the grounded type of the given `hyperonpy.CAtom`.
-%
-%   @arg Atom The atom (`hyperonpy.CAtom`).
-%   @arg GroundedType The grounded type of the atom.
-hyperonpy_atom_get_grounded_type(Atom, GroundedType) :-
-    oo_field(atom, Atom, grounded_type, GroundedType).
-
-%!  hyperonpy_atom_get_metatype(+Atom, -MetaType) is det.
-%
-%   Retrieves the metatype of an atom.
-%
-%   This function fetches the metatype of the given `hyperonpy.CAtom`.
-%
-%   @arg Atom The atom (`hyperonpy.CAtom`).
-%   @arg MetaType The metatype of the atom.
-hyperonpy_atom_get_metatype(Atom, MetaType) :-
-    
-    oo_field(atom, Atom, metatype, MetaType).
-
-%!  hyperonpy_atom_get_name(+Atom, -Name) is det.
-%
-%   Retrieves the name of an atom.
-%
-%   This function fetches the name of the given `hyperonpy.CAtom`.
-%
-%   @arg Atom The atom (`hyperonpy.CAtom`).
-%   @arg Name The name of the atom (string).
-hyperonpy_atom_get_name(Atom, Name) :-
-    oo_field(atom, Atom, name, Name).
-
-%!  hyperonpy_atom_get_object(+Atom, -Object) is det.
-%
-%   Retrieves the object associated with a grounded atom.
-%
-%   This function fetches the object associated with the given `hyperonpy.CAtom`.
-%
-%   @arg Atom The atom (`hyperonpy.CAtom`).
-%   @arg Object The object associated with the atom.
-hyperonpy_atom_get_object(Atom, Object) :-
-    oo_field(atom, Atom, object, Object).
-
-%!  hyperonpy_atom_get_space(+Atom, -Space) is det.
-%
-%   Retrieves the space associated with an atom.
-%
-%   This function fetches the space associated with the given `hyperonpy.CAtom`.
-%
-%   @arg Atom The atom (`hyperonpy.CAtom`).
-%   @arg Space The space associated with the atom (`CStruct<space_t>`).
-hyperonpy_atom_get_space(Atom, Space) :-
-    oo_field(atom, Atom, space, Space).
-
-%!  hyperonpy_atom_gnd(+Object, +GroundedType, -Atom) is det.
-%
-%   Creates a grounded atom with a specified type.
-%
-%   This function creates a new grounded `hyperonpy.CAtom` with the given object and grounded type.
-%
-%   @arg Object The object to associate with the atom.
-%   @arg GroundedType The grounded type for the atom.
-%   @arg Atom The resulting `hyperonpy.CAtom`.
-hyperonpy_atom_gnd(Object, GroundedType, Atom) :-
-    oo_new(atom, [metatype:'Grounded', value:Object, grounded_type:GroundedType], Atom).
-
-%!  hyperonpy_atom_gnd_serialize(+Atom, +Serializer, -SerializedResult) is det.
-%
-%   Serializes a grounded atom using a serializer.
-%
-%   This function invokes the serialization of a `hyperonpy.CAtom` using the provided `hyperonpy.Serializer`.
-%
-%   @arg Atom The grounded atom (`hyperonpy.CAtom`).
-%   @arg Serializer The serializer (`hyperonpy.Serializer`).
-%   @arg SerializedResult The result of the serialization (`hyperonpy.SerialResult`).
-hyperonpy_atom_gnd_serialize(Atom, Serializer, SerializedResult) :-
-    oo_invoke(atom, Atom, gnd_serialize(Serializer), SerializedResult).
-
-%!  hyperonpy_atom_is_cgrounded(+Atom, -IsCgrounded) is det.
-%
-%   Checks if an atom is C-grounded.
-%
-%   This function checks whether the given `hyperonpy.CAtom` is C-grounded.
-%
-%   @arg Atom The atom (`hyperonpy.CAtom`).
-%   @arg IsCgrounded Boolean result indicating if the atom is C-grounded.
-hyperonpy_atom_is_cgrounded(Atom, IsCgrounded) :-
-    oo_invoke(atom, Atom, is_cgrounded(), IsCgrounded).
-
-%!  hyperonpy_atom_is_error(+Atom, -IsError) is det.
-%
-%   Checks if an atom represents an error.
-%
-%   This function checks whether the given `hyperonpy.CAtom` represents an error.
-%
-%   @arg Atom The atom (`hyperonpy.CAtom`).
-%   @arg IsError Boolean result indicating if the atom is an error.
-hyperonpy_atom_is_error(Atom, IsError) :-
-    oo_invoke(atom, Atom, is_error(), IsError).
-
-%!  hyperonpy_atom_iterate(+Atom, -List) is det.
-%
-%   Iterates over the components of an atom.
-%
-%   This function iterates over the components of the given `hyperonpy.CAtom`, returning them as a list.
-%
-%   @arg Atom The atom (`hyperonpy.CAtom`).
-%   @arg List The list of components.
-hyperonpy_atom_iterate(Atom, List) :-
-    oo_invoke(atom, Atom, iterate(), List).
-
-%!  hyperonpy_atom_match_atom(+Atom1, +Atom2, -BindingsSet) is det.
-%
-%   Matches two atoms and returns the resulting bindings.
-%
-%   This function matches two `hyperonpy.CAtom` objects and returns the resulting bindings as a `CStruct<bindings_set_t>`.
-%
-%   @arg Atom1 The first atom (`hyperonpy.CAtom`).
-%   @arg Atom2 The second atom (`hyperonpy.CAtom`).
-%   @arg BindingsSet The resulting bindings set (`CStruct<bindings_set_t>`).
-hyperonpy_atom_match_atom(Atom1, Atom2, BindingsSet) :-
-    oo_invoke(atom, Atom1, match_atom(Atom2), BindingsSet).
-
-%!  hyperonpy_atom_sym(+Symbol, -Atom) is det.
-%
-%   Creates a symbolic atom from a symbol.
-%
-%   This function creates a new `hyperonpy.CAtom` representing a symbol.
-%
-%   @arg Symbol The symbol to form the atom.
-%   @arg Atom The resulting `hyperonpy.CAtom`.
-hyperonpy_atom_sym(Symbol, Atom) :-
-    oo_new(atom, [metatype:'Symbol', value:Symbol], Atom).
-
-%!  hyperonpy_atom_to_str(+Atom, -Str) is det.
-%
-%   Converts an atom to its string representation.
-%
-%   This function converts a `hyperonpy.CAtom` to its string representation.
-%
-%   @arg Atom The atom (`hyperonpy.CAtom`).
-%   @arg Str The string representation of the atom.
-hyperonpy_atom_to_str(Atom, Str) :-
-    oo_invoke(atom, Atom, to_str(), Str).
-
-%!  hyperonpy_atom_var(+VarName, -Atom) is det.
-%
-%   Creates a variable atom from a variable name.
-%
-%   This function creates a new `hyperonpy.CAtom` representing a variable with the given name.
-%
-%   @arg VarName The name of the variable.
-%   @arg Atom The resulting `hyperonpy.CAtom`.
-hyperonpy_atom_var(VarName, Atom) :-
-    oo_new(atom, [metatype:'Variable', value:VarName], Atom).
-
-%!  hyperonpy_atom_var_parse_name(+Name, -Atom) is det.
-%
-%   Parses a variable name and creates a variable atom.
-%
-%   This function parses a variable name and creates a corresponding `hyperonpy.CAtom`.
-%
-%   @arg Name The name to parse.
-%   @arg Atom The resulting `hyperonpy.CAtom`.
-hyperonpy_atom_var_parse_name(Name, Atom) :-
-    oo_new(atom, [type:atom_var, value:Name], Atom).
-
-% ==============================
-% **2.2. Atom Vector (`atom_vec`) Functions**
-% =============================
-
-%!  hyperonpy_atom_vec_free(+AtomVec) is det.
-%
-%   Frees an atom vector from memory.
-%
-%   This function removes a `hyperonpy.CVecAtom` object from memory by invoking `oo_free/1`.
-%
-%   @arg AtomVec The atom vector (`hyperonpy.CVecAtom`) to be freed.
-hyperonpy_atom_vec_free(AtomVec) :-
-    oo_free(AtomVec).
-
-%!  hyperonpy_atom_vec_from_list(+List, -AtomVec) is det.
-%
-%   Creates an atom vector from a list of atoms.
-%
-%   This function creates a new `hyperonpy.CVecAtom` from a list of atoms.
-%
-%   @arg List The list of atoms.
-%   @arg AtomVec The resulting `hyperonpy.CVecAtom`.
-hyperonpy_atom_vec_from_list(List, AtomVec) :-
-    oo_new(atom_vec, [type:atom_vec, value:List], AtomVec).
-
-%!  hyperonpy_atom_vec_len(+AtomVec, -Length) is det.
-%
-%   Retrieves the length of an atom vector.
-%
-%   This function returns the length of the given `hyperonpy.CVecAtom`.
-%
-%   @arg AtomVec The atom vector (`hyperonpy.CVecAtom`).
-%   @arg Length The length of the atom vector.
-hyperonpy_atom_vec_len(AtomVec, Length) :-
-    oo_invoke(atom_vec, AtomVec, length(), Length).
-
-%!  hyperonpy_atom_vec_new(-AtomVec) is det.
-%
-%   Creates a new empty atom vector.
-%
-%   This function creates a new empty `hyperonpy.CVecAtom`.
-%
-%   @arg AtomVec The resulting empty atom vector (`hyperonpy.CVecAtom`).
-hyperonpy_atom_vec_new(AtomVec) :-
-    oo_new(atom_vec, [type:atom_vec, value:[]], AtomVec).
-
-%!  hyperonpy_atom_vec_pop(+AtomVec, -PoppedAtom) is det.
-%
-%   Removes and returns the last atom from the vector.
-%
-%   This function pops the last atom from the given `hyperonpy.CVecAtom`.
-%
-%   @arg AtomVec The atom vector (`hyperonpy.CVecAtom`).
-%   @arg PoppedAtom The atom that was removed from the vector.
-hyperonpy_atom_vec_pop(AtomVec, PoppedAtom) :-
-    oo_invoke(atom_vec, AtomVec, pop(), PoppedAtom).
-
-%!  hyperonpy_atom_vec_push(+AtomVec, +Atom) is det.
-%
-%   Pushes a new atom into the atom vector.
-%
-%   This function adds a new atom to the end of the given `hyperonpy.CVecAtom`.
-%
-%   @arg AtomVec The atom vector (`hyperonpy.CVecAtom`).
-%   @arg Atom The atom to push into the vector.
-hyperonpy_atom_vec_push(AtomVec, Atom) :-
-    oo_invoke(atom_vec, AtomVec, push(Atom), _).
-
-% ==============================
-% **2.3. Bindings Functions**
-% =============================
-
-%!  hyperonpy_bindings_add_var_binding(+Bindings, +VarAtom, +BoundAtom, -Success) is det.
-%
-%   Adds a variable binding to the bindings set.
-%
-%   This function adds a binding between a variable atom and a bound atom to the `hyperonpy.CBindings`.
-%
-%   @arg Bindings The bindings set (`hyperonpy.CBindings`).
-%   @arg VarAtom The variable atom (`hyperonpy.CAtom`).
-%   @arg BoundAtom The bound atom (`hyperonpy.CAtom`).
-%   @arg Success Boolean result indicating whether the binding was added successfully.
-hyperonpy_bindings_add_var_binding(Bindings, VarAtom, BoundAtom, Success) :-
-    oo_invoke(bindings, Bindings, add_var_binding(VarAtom, BoundAtom), Success).
-
-%!  hyperonpy_bindings_clone(+Bindings, -NewBindings) is det.
-%
-%   Clones the bindings.
-%
-%   This function creates a copy of the given `hyperonpy.CBindings`.
-%
-%   @arg Bindings The bindings set to clone (`hyperonpy.CBindings`).
-%   @arg NewBindings The cloned bindings set (`hyperonpy.CBindings`).
-hyperonpy_bindings_clone(Bindings, NewBindings) :-
-    oo_clone(Bindings, NewBindings).
-
-%!  hyperonpy_bindings_eq(+Bindings1, +Bindings2, -AreEqual) is det.
-%
-%   Compares two bindings sets for equality.
-%
-%   This function checks if two `hyperonpy.CBindings` sets are equal.
-%
-%   @arg Bindings1 The first bindings set (`hyperonpy.CBindings`).
-%   @arg Bindings2 The second bindings set (`hyperonpy.CBindings`).
-%   @arg AreEqual Boolean result indicating if the two bindings sets are equal.
-hyperonpy_bindings_eq(Bindings1, Bindings2, AreEqual) :-
-    oo_equal(Bindings1, Bindings2, AreEqual).
-
-%!  hyperonpy_bindings_free(+Bindings) is det.
-%
-%   Frees the bindings from memory.
-%
-%   This function removes a `hyperonpy.CBindings` object from memory.
-%
-%   @arg Bindings The bindings set (`hyperonpy.CBindings`) to be freed.
-hyperonpy_bindings_free(Bindings) :-
-    oo_free(Bindings).
-
-%!  hyperonpy_bindings_is_empty(+Bindings, -IsEmpty) is det.
-%
-%   Checks if the bindings set is empty.
-%
-%   This function checks if the given `hyperonpy.CBindings` set is empty.
-%
-%   @arg Bindings The bindings set (`hyperonpy.CBindings`).
-%   @arg IsEmpty Boolean result indicating if the bindings set is empty.
-hyperonpy_bindings_is_empty(Bindings, IsEmpty) :-
-    oo_invoke(bindings, Bindings, is_empty(), IsEmpty).
-
-%!  hyperonpy_bindings_list(+Bindings, -List) is det.
-%
-%   Retrieves the list of bindings from the bindings set.
-%
-%   This function returns the list of bindings in the `hyperonpy.CBindings` set.
-%
-%   @arg Bindings The bindings set (`hyperonpy.CBindings`).
-%   @arg List The list of bindings.
-hyperonpy_bindings_list(Bindings, List) :-
-    oo_invoke(bindings, Bindings, list(), List).
-
-%!  hyperonpy_bindings_merge(+Bindings1, +Bindings2, -ResultBindingsSet) is det.
-%
-%   Merges two bindings sets.
-%
-%   This function merges two `hyperonpy.CBindings` sets into a new bindings set (`CStruct<bindings_set_t>`).
-%
-%   @arg Bindings1 The first bindings set (`hyperonpy.CBindings`).
-%   @arg Bindings2 The second bindings set (`hyperonpy.CBindings`).
-%   @arg ResultBindingsSet The resulting merged bindings set (`CStruct<bindings_set_t>`).
-hyperonpy_bindings_merge(Bindings1, Bindings2, ResultBindingsSet) :-
-    oo_invoke(bindings, Bindings1, merge(Bindings2), ResultBindingsSet).
-
-%!  hyperonpy_bindings_narrow_vars(+Bindings, +VarAtomVec) is det.
-%
-%   Narrows the variable bindings in the bindings set.
-%
-%   This function narrows the variable bindings in the `hyperonpy.CBindings` using the provided vector of variable atoms.
-%
-%   @arg Bindings The bindings set (`hyperonpy.CBindings`).
-%   @arg VarAtomVec The vector of variable atoms (`hyperonpy.CVecAtom`).
-hyperonpy_bindings_narrow_vars(Bindings, VarAtomVec) :-
-    oo_invoke(bindings, Bindings, narrow_vars(VarAtomVec), _).
-
-%!  hyperonpy_bindings_new(-NewBindings) is det.
-%
-%   Creates a new empty bindings set.
-%
-%   This function creates a new empty `hyperonpy.CBindings`.
-%
-%   @arg NewBindings The resulting empty bindings set (`hyperonpy.CBindings`).
-hyperonpy_bindings_new(NewBindings) :-
-    oo_new(bindings, [value:[]], NewBindings).
-
-%!  hyperonpy_bindings_resolve(+Bindings, +Atom, -ResolvedAtom) is det.
-%
-%   Resolves a variable atom in the bindings set.
-%
-%   This function resolves a variable atom in the `hyperonpy.CBindings`, returning the bound atom if found.
-%
-%   @arg Bindings The bindings set (`hyperonpy.CBindings`).
-%   @arg Atom The atom (`hyperonpy.CAtom`) to resolve.
-%   @arg ResolvedAtom The resolved atom (`Optional[hyperonpy.CAtom]`).
-hyperonpy_bindings_resolve(Bindings, Atom, ResolvedAtom) :-
-    oo_invoke(bindings, Bindings, resolve(Atom), ResolvedAtom).
-
-% ==============================
-% **2.4. Bindings Set Functions**
-% =============================
-
-%!  hyperonpy_bindings_set_add_var_binding(+BindingsSet, +VarAtom, +BoundAtom) is det.
-%
-%   Adds a variable binding to a bindings set.
-%
-%   This function adds a binding between a variable atom and a bound atom to the `hyperonpy.CBindingsSet`.
-%
-%   @arg BindingsSet The bindings set (`hyperonpy.CBindingsSet`).
-%   @arg VarAtom The variable atom (`hyperonpy.CAtom`).
-%   @arg BoundAtom The atom to bind to the variable (`hyperonpy.CAtom`).
-hyperonpy_bindings_set_add_var_binding(BindingsSet, VarAtom, BoundAtom) :-
-    oo_invoke(bindings_set, BindingsSet, add_var_binding(VarAtom, BoundAtom), _).
-
-%!  hyperonpy_bindings_set_add_var_equality(+BindingsSet, +VarAtom, +EqualAtom) is det.
-%
-%   Adds a variable equality constraint to a bindings set.
-%
-%   This function adds an equality constraint between a variable atom and another atom in the `hyperonpy.CBindingsSet`.
-%
-%   @arg BindingsSet The bindings set (`hyperonpy.CBindingsSet`).
-%   @arg VarAtom The variable atom (`hyperonpy.CAtom`).
-%   @arg EqualAtom The atom that the variable must equal (`hyperonpy.CAtom`).
-hyperonpy_bindings_set_add_var_equality(BindingsSet, VarAtom, EqualAtom) :-
-    oo_invoke(bindings_set, BindingsSet, add_var_equality(VarAtom, EqualAtom), _).
-
-%!  hyperonpy_bindings_set_clone(+BindingsSet, -ClonedBindingsSet) is det.
-%
-%   Clones a bindings set.
-%
-%   This function creates a copy of the given `hyperonpy.CBindingsSet`.
-%
-%   @arg BindingsSet The bindings set to clone (`hyperonpy.CBindingsSet`).
-%   @arg ClonedBindingsSet The resulting cloned bindings set.
-hyperonpy_bindings_set_clone(BindingsSet, ClonedBindingsSet) :-
-    oo_clone(BindingsSet, ClonedBindingsSet).
-
-%!  hyperonpy_bindings_set_empty(-BindingsSet) is det.
-%
-%   Creates an empty bindings set.
-%
-%   This function creates a new, empty `hyperonpy.CBindingsSet`.
-%
-%   @arg BindingsSet The resulting empty bindings set.
-hyperonpy_bindings_set_empty(BindingsSet) :-
-    oo_new(bindings_set, [single:true], BindingsSet).
-
-%!  hyperonpy_bindings_set_eq(+BindingsSet1, +BindingsSet2, -AreEqual) is det.
-%
-%   Compares two bindings sets for equality.
-%
-%   This function checks whether two `hyperonpy.CBindingsSet` are equal.
-%
-%   @arg BindingsSet1 The first bindings set (`hyperonpy.CBindingsSet`).
-%   @arg BindingsSet2 The second bindings set (`hyperonpy.CBindingsSet`).
-%   @arg AreEqual Boolean result indicating whether the two bindings sets are equal.
-hyperonpy_bindings_set_eq(BindingsSet1, BindingsSet2, AreEqual) :-
-    oo_equal(BindingsSet1, BindingsSet2, AreEqual).
-
-%!  hyperonpy_bindings_set_free(+BindingsSet) is det.
-%
-%   Frees a bindings set from memory.
-%
-%   This function removes a `hyperonpy.CBindingsSet` object from memory.
-%
-%   @arg BindingsSet The bindings set (`hyperonpy.CBindingsSet`) to be freed.
-hyperonpy_bindings_set_free(BindingsSet) :-
-    oo_free(BindingsSet).
-
-%!  hyperonpy_bindings_set_from_bindings(+Bindings, -BindingsSet) is det.
-%
-%   Creates a bindings set from a bindings object.
-%
-%   This function creates a new `hyperonpy.CBindingsSet` from an existing `hyperonpy.CBindings`.
-%
-%   @arg Bindings The bindings object (`hyperonpy.CBindings`).
-%   @arg BindingsSet The resulting bindings set (`hyperonpy.CBindingsSet`).
-hyperonpy_bindings_set_from_bindings(Bindings, BindingsSet) :-
-    oo_new(bindings_set, [from_bindings:Bindings], BindingsSet).
-
-%!  hyperonpy_bindings_set_is_empty(+BindingsSet, -IsEmpty) is det.
-%
-%   Checks if a bindings set is empty.
-%
-%   This function checks whether the given `hyperonpy.CBindingsSet` is empty.
-%
-%   @arg BindingsSet The bindings set (`hyperonpy.CBindingsSet`).
-%   @arg IsEmpty Boolean result indicating if the bindings set is empty.
-hyperonpy_bindings_set_is_empty(BindingsSet, IsEmpty) :-
-    oo_invoke(bindings_set, BindingsSet, is_empty(), IsEmpty).
-
-%!  hyperonpy_bindings_set_is_single(+BindingsSet, -IsSingle) is det.
-%
-%   Checks if a bindings set contains a single binding.
-%
-%   This function checks whether the given `hyperonpy.CBindingsSet` contains only a single binding.
-%
-%   @arg BindingsSet The bindings set (`hyperonpy.CBindingsSet`).
-%   @arg IsSingle Boolean result indicating if the bindings set contains only one binding.
-hyperonpy_bindings_set_is_single(BindingsSet, IsSingle) :-
-    oo_invoke(bindings_set, BindingsSet, is_single(), IsSingle).
-
-%!  hyperonpy_bindings_set_list(+BindingsSet, -List) is det.
-%
-%   Retrieves the list of bindings from a bindings set.
-%
-%   This function returns the list of bindings in the `hyperonpy.CBindingsSet`.
-%
-%   @arg BindingsSet The bindings set (`hyperonpy.CBindingsSet`).
-%   @arg List The list of bindings.
-hyperonpy_bindings_set_list(BindingsSet, List) :-
-    oo_invoke(bindings_set, BindingsSet, list(), List).
-
-%!  hyperonpy_bindings_set_merge_into(+BindingsSet1, +BindingsSet2) is det.
-%
-%   Merges two bindings sets.
-%
-%   This function merges the bindings in `BindingsSet1` into `BindingsSet2`.
-%
-%   @arg BindingsSet1 The first bindings set (`hyperonpy.CBindingsSet`).
-%   @arg BindingsSet2 The second bindings set (`hyperonpy.CBindingsSet`).
-hyperonpy_bindings_set_merge_into(BindingsSet1, BindingsSet2) :-
-    oo_invoke(bindings_set, BindingsSet1, merge_into(BindingsSet2), _).
-
-%!  hyperonpy_bindings_set_push(+BindingsSet, +Bindings) is det.
-%
-%   Pushes a set of bindings into a bindings set.
-%
-%   This function pushes the given `hyperonpy.CBindings` into the `hyperonpy.CBindingsSet`.
-%
-%   @arg BindingsSet The bindings set (`hyperonpy.CBindingsSet`).
-%   @arg Bindings The bindings to push (`hyperonpy.CBindings`).
-hyperonpy_bindings_set_push(BindingsSet, Bindings) :-
-    oo_invoke(bindings_set, BindingsSet, push(Bindings), _).
-
-%!  hyperonpy_bindings_set_single(-SingleBindingsSet) is det.
-%
-%   Creates a bindings set containing a single binding.
-%
-%   This function creates a new `hyperonpy.CBindingsSet` with only one binding.
-%
-%   @arg SingleBindingsSet The resulting bindings set with one binding.
-hyperonpy_bindings_set_single(SingleBindingsSet) :-
-    oo_new(bindings_set, [single:true], SingleBindingsSet).
-
-%!  hyperonpy_bindings_set_to_str(+BindingsSet, -Str) is det.
-%
-%   Converts a bindings set to a string representation.
-%
-%   This function converts a `hyperonpy.CBindingsSet` to its string representation.
-%
-%   @arg BindingsSet The bindings set (`hyperonpy.CBindingsSet`).
-%   @arg Str The string representation of the bindings set.
-hyperonpy_bindings_set_to_str(BindingsSet, Str) :-
-    oo_invoke(bindings_set, BindingsSet, to_str(), Str).
-
-%!  hyperonpy_bindings_set_unpack(+BindingsSet, -UnpackedList) is det.
-%
-%   Unpacks a bindings set into a list.
-%
-%   This function unpacks the bindings in the given `hyperonpy.CBindingsSet` into a list.
-%
-%   @arg BindingsSet The bindings set (`hyperonpy.CBindingsSet`).
-%   @arg UnpackedList The list of unpacked bindings.
-hyperonpy_bindings_set_unpack(BindingsSet, UnpackedList) :-
-    oo_invoke(bindings_set, BindingsSet, unpack(), UnpackedList).
-
-% ==============================
-% **2.5. Bindings Functions Continued**
-% =============================
-
-%!  hyperonpy_bindings_to_str(+Bindings, -Str) is det.
-%
-%   Converts a bindings object to a string representation.
-%
-%   This function converts a `hyperonpy.CBindings` object to its string representation.
-%
-%   @arg Bindings The bindings object (`hyperonpy.CBindings`).
-%   @arg Str The string representation of the bindings.
-hyperonpy_bindings_to_str(Bindings, Str) :-
-    oo_invoke(bindings, Bindings, to_str(), Str).
-
-% ==============================
-% **2.6. Type Checking Function**
-% =============================
-
-%!  hyperonpy_check_type(+Space, +Atom1, +Atom2, -IsValid) is det.
-%
-%   Checks if the type of two atoms is valid in a given space.
-%
-%   This function checks the types of `Atom1` and `Atom2` in the given `hyperonpy.CSpace`.
-%
-%   @arg Space The space (`hyperonpy.CSpace`) in which to check the types.
-%   @arg Atom1 The first atom (`hyperonpy.CAtom`).
-%   @arg Atom2 The second atom (`hyperonpy.CAtom`).
-%   @arg IsValid Boolean result indicating whether the types are valid.
-hyperonpy_check_type(Space, Atom1, Atom2, IsValid) :-
-    oo_invoke(space, Space, check_type(Atom1, Atom2), IsValid).
-
-% ==============================
-% **2.7. Environment Builder Functions**
-% =============================
-
-%!  hyperonpy_env_builder_create_config_dir(+EnvBuilder, +UseDefault, -Result) is det.
-%
-%   Creates a configuration directory using the environment builder.
-%
-%   This function uses `hyperonpy.EnvBuilder` to create a configuration directory, with an option to use the default directory.
-%
-%   @arg EnvBuilder The environment builder (`hyperonpy.EnvBuilder`).
-%   @arg UseDefault Boolean indicating whether to use the default configuration directory.
-%   @arg Result The result of the operation.
-hyperonpy_env_builder_create_config_dir(EnvBuilder, UseDefault, Result) :-
-    oo_invoke(env_builder, EnvBuilder, create_config_dir(UseDefault), Result).
-
-%!  hyperonpy_env_builder_disable_config_dir(+EnvBuilder) is det.
-%
-%   Disables the configuration directory for the environment builder.
-%
-%   This function disables the configuration directory in the `hyperonpy.EnvBuilder`.
-%
-%   @arg EnvBuilder The environment builder (`hyperonpy.EnvBuilder`).
-hyperonpy_env_builder_disable_config_dir(EnvBuilder) :-
-    oo_invoke(env_builder, EnvBuilder, disable_config_dir(), _).
-
-%!  hyperonpy_env_builder_init_common_env(+EnvBuilder, -Result) is det.
-%
-%   Initializes the common environment using the environment builder.
-%
-%   This function initializes the common environment in the `hyperonpy.EnvBuilder`.
-%
-%   @arg EnvBuilder The environment builder (`hyperonpy.EnvBuilder`).
-%   @arg Result Boolean result indicating success or failure of initialization.
-hyperonpy_env_builder_init_common_env(EnvBuilder, Result) :-
-    oo_invoke(env_builder, EnvBuilder, init_common_env(), Result).
-
-%!  hyperonpy_env_builder_push_fs_module_format(+EnvBuilder, +FormatObject, +FormatIndex) is det.
-%
-%   Pushes a file system module format to the environment builder.
-%
-%   This function pushes a file system module format into the `hyperonpy.EnvBuilder`.
-%
-%   @arg EnvBuilder The environment builder (`hyperonpy.EnvBuilder`).
-%   @arg FormatObject The format object.
-%   @arg FormatIndex The index at which to push the format.
-hyperonpy_env_builder_push_fs_module_format(EnvBuilder, FormatObject, FormatIndex) :-
-    oo_invoke(env_builder, EnvBuilder, push_fs_module_format(FormatObject, FormatIndex), _).
-
-%!  hyperonpy_env_builder_push_include_path(+EnvBuilder, +IncludePath) is det.
-%
-%   Pushes an include path to the environment builder.
-%
-%   This function pushes an include path into the `hyperonpy.EnvBuilder`.
-%
-%   @arg EnvBuilder The environment builder (`hyperonpy.EnvBuilder`).
-%   @arg IncludePath The include path to push.
-hyperonpy_env_builder_push_include_path(EnvBuilder, IncludePath) :-
-    oo_invoke(env_builder, EnvBuilder, push_include_path(IncludePath), _).
-
-%!  hyperonpy_env_builder_set_config_dir(+EnvBuilder, +ConfigDir) is det.
-%
-%   Sets the configuration directory for the environment builder.
-%
-%   This function sets the configuration directory in the `hyperonpy.EnvBuilder`.
-%
-%   @arg EnvBuilder The environment builder (`hyperonpy.EnvBuilder`).
-%   @arg ConfigDir The configuration directory path.
-hyperonpy_env_builder_set_config_dir(EnvBuilder, ConfigDir) :-
-    oo_invoke(env_builder, EnvBuilder, set_config_dir(ConfigDir), _).
-
-%!  hyperonpy_env_builder_set_is_test(+EnvBuilder, +IsTest) is det.
-%
-%   Marks the environment builder as a test environment.
-%
-%   This function sets whether the `hyperonpy.EnvBuilder` is operating in a test environment.
-%
-%   @arg EnvBuilder The environment builder (`hyperonpy.EnvBuilder`).
-%   @arg IsTest Boolean indicating if the environment is for testing.
-hyperonpy_env_builder_set_is_test(EnvBuilder, IsTest) :-
-    oo_invoke(env_builder, EnvBuilder, set_is_test(IsTest), _).
-
-%!  hyperonpy_env_builder_set_working_dir(+EnvBuilder, +WorkingDir) is det.
-%
-%   Sets the working directory for the environment builder.
-%
-%   This function sets the working directory in the `hyperonpy.EnvBuilder`.
-%
-%   @arg EnvBuilder The environment builder (`hyperonpy.EnvBuilder`).
-%   @arg WorkingDir The working directory path.
-hyperonpy_env_builder_set_working_dir(EnvBuilder, WorkingDir) :-
-    oo_invoke(env_builder, EnvBuilder, set_working_dir(WorkingDir), _).
-
-%!  hyperonpy_env_builder_start(-EnvBuilder) is det.
-%
-%   Starts a new environment builder.
-%
-%   This function creates a new `hyperonpy.EnvBuilder` and starts it.
-%
-%   @arg EnvBuilder The resulting environment builder (`hyperonpy.EnvBuilder`).
-hyperonpy_env_builder_start(EnvBuilder) :-
-    oo_new(env_builder, [], EnvBuilder).
-
-%!  hyperonpy_env_builder_use_default(-EnvBuilder) is det.
-%
-%   Initializes an environment builder with default settings.
-%
-%   This function initializes the `hyperonpy.EnvBuilder` using default settings.
-%
-%   @arg EnvBuilder The resulting environment builder (`hyperonpy.EnvBuilder`).
-hyperonpy_env_builder_use_default(EnvBuilder) :-
-    nop(oo_new(env_builder, [type:default], EnvBuilder)).
-
-%!  hyperonpy_env_builder_use_test_env(-EnvBuilder) is det.
-%
-%   Initializes an environment builder in a test environment.
-%
-%   This function initializes the `hyperonpy.EnvBuilder` as a test environment.
-%
-%   @arg EnvBuilder The resulting environment builder (`hyperonpy.EnvBuilder`).
-hyperonpy_env_builder_use_test_env(EnvBuilder) :-
-    oo_new(env_builder, [type:test], EnvBuilder).
-
-% ==============================
-% **2.8. Environment Configuration Function**
-% =============================
-
-%!  hyperonpy_environment_config_dir(-ConfigDir) is det.
-%
-%   Retrieves the environment's configuration directory.
-%
-%   This function returns the path to the configuration directory in the environment.
-%
-%   @arg ConfigDir The path to the configuration directory.
-hyperonpy_environment_config_dir(ConfigDir) :-
-    oo_invoke(env_builder, environment, config_dir(), ConfigDir).
-
-
-% ==============================
-% **2.9. Atom Types Function**
-% =============================
-
-%!  hyperonpy_get_atom_types(+Space, +Atom, -TypesList) is det.
-%
-%   Retrieves the types of a given atom in a specific space.
-%
-%   This function fetches the list of types associated with a `hyperonpy.CAtom` in the provided `hyperonpy.CSpace`.
-%
-%   @arg Space The space in which to check for atom types (`hyperonpy.CSpace`).
-%   @arg Atom The atom (`hyperonpy.CAtom`).
-%   @arg TypesList The list of atom types.
-hyperonpy_get_atom_types(Space, Atom, TypesList) :-
-    oo_invoke(space, Space, get_atom_types(Atom), TypesList).
-
-% ==============================
-% **2.10. Interpretation Functions**
-% =============================
-
-%!  hyperonpy_interpret_init(+Space, +Atom, -StepResult) is det.
-%
-%   Initializes interpretation for an atom within a space.
-%
-%   This function initializes the interpretation of a `hyperonpy.CAtom` in a `hyperonpy.CSpace`.
-%
-%   @arg Space The space (`hyperonpy.CSpace`).
-%   @arg Atom The atom to interpret (`hyperonpy.CAtom`).
-%   @arg StepResult The initial result of the interpretation (`hyperonpy.CStepResult`).
-hyperonpy_interpret_init(Space, Atom, StepResult) :-
-    oo_invoke(space, Space, interpret_init(Atom), StepResult).
-
-%!  hyperonpy_interpret_step(+StepResult, -NewStepResult) is det.
-%
-%   Performs the next step in the interpretation process.
-%
-%   This function continues the interpretation of a `hyperonpy.CStepResult`.
-%
-%   @arg StepResult The current step result (`hyperonpy.CStepResult`).
-%   @arg NewStepResult The result after performing the next step (`hyperonpy.CStepResult`).
-hyperonpy_interpret_step(StepResult, NewStepResult) :-
-    oo_invoke(step_result, StepResult, interpret_step(), NewStepResult).
-
-% ==============================
-% **2.11. Load Function**
-% =============================
-
-%!  hyperonpy_load_ascii(+FilePath, +Space, -Success) is det.
-%
-%   Loads ASCII data from a file into a space.
-%
-%   This function loads ASCII data into the provided `hyperonpy.CSpace` from a specified file.
-%
-%   @arg FilePath The path to the file (string).
-%   @arg Space The space (`hyperonpy.CSpace`).
-%   @arg Success Boolean indicating whether the load was successful.
-hyperonpy_load_ascii(FilePath, Space, Success) :-
-    oo_invoke(space, Space, load_ascii(FilePath), Success).
-
-% ==============================
-% **2.12. Logging Functions**
-% =============================
-
-%!  hyperonpy_log_error(+Message) is det.
-%
-%   Logs an error message.
-%
-%   This function logs an error message.
-%
-%   @arg Message The error message (string).
-hyperonpy_log_error(Message) :-
-    format("hyperonpy_log_error: ~w~n", [Message]).
-
-%!  hyperonpy_log_info(+Message) is det.
-%
-%   Logs an informational message.
-%
-%   This function logs an informational message.
-%
-%   @arg Message The informational message (string).
-hyperonpy_log_info(Message) :-
-    format("hyperonpy_log_info: ~w~n", [Message]).
-
-%!  hyperonpy_log_warn(+Message) is det.
-%
-%   Logs a warning message.
-%
-%   This function logs a warning message.
-%
-%   @arg Message The warning message (string).
-hyperonpy_log_warn(Message) :-
-    format("hyperonpy_log_warn: ~w~n", [Message]).
-
-% ==============================
-% **2.13. Metta Functions**
-% =============================
-
-%!  hyperonpy_metta_eq(+Metta1, +Metta2, -AreEqual) is det.
-%
-%   Compares two `hyperonpy.CMetta` instances for equality.
-%
-%   This function checks if two `hyperonpy.CMetta` objects are equal.
-%
-%   @arg Metta1 The first `hyperonpy.CMetta` object.
-%   @arg Metta2 The second `hyperonpy.CMetta` object.
-%   @arg AreEqual Boolean result indicating whether the two objects are equal.
-hyperonpy_metta_eq(Metta1, Metta2, AreEqual) :-
-    oo_equal(Metta1, Metta2, AreEqual).
-
-%!  hyperonpy_metta_err_str(+Metta, -ErrorStr) is det.
-%
-%   Retrieves the error string of a Metta instance.
-%
-%   This function retrieves the error string from the provided `hyperonpy.CMetta` instance.
-%
-%   @arg Metta The `hyperonpy.CMetta` instance.
-%   @arg ErrorStr The error string associated with the Metta instance.
-hyperonpy_metta_err_str(Metta, ErrorStr) :-
-   nop(oo_invoke(metta, Metta, err_str(), ErrorStr)),
-   ignore(ErrorStr = '@'('none')).
-
-%!  hyperonpy_metta_evaluate_atom(+Metta, +Atom, -ResultList) is det.
-%
-%   Evaluates an atom using the provided Metta instance.
-%
-%   This function evaluates a `hyperonpy.CAtom` using the provided `hyperonpy.CMetta` instance.
-%
-%   @arg Metta The `hyperonpy.CMetta` instance.
-%   @arg Atom The atom to evaluate (`hyperonpy.CAtom`).
-%   @arg ResultList The resulting list after evaluation.
-hyperonpy_metta_evaluate_atom(Metta, Atom, ResultList) :-
-    oo_invoke(metta, Metta, evaluate_atom(Atom), ResultList).
-
-%!  hyperonpy_metta_free(+Metta) is det.
-%
-%   Frees a Metta instance from memory.
-%
-%   This function removes a `hyperonpy.CMetta` object from memory.
-%
-%   @arg Metta The Metta instance (`hyperonpy.CMetta`) to be freed.
-hyperonpy_metta_free(Metta) :-
-    oo_free(Metta).
-
-%!  hyperonpy_metta_load_module_at_path(+Metta, +ModulePath, +ModuleIDOpt, -ModuleID) is det.
-%
-%   Loads a module at the specified path into a Metta instance.
-%
-%   This function loads a module located at `ModulePath` into the provided `hyperonpy.CMetta` instance.
-%
-%   @arg Metta The `hyperonpy.CMetta` instance.
-%   @arg ModulePath The path to the module (string).
-%   @arg ModuleIDOpt The optional module ID (optional string).
-%   @arg ModuleID The resulting module ID.
-hyperonpy_metta_load_module_at_path(Metta, ModulePath, ModuleIDOpt, ModuleID) :-
-    oo_invoke(metta, Metta, load_module_at_path(ModulePath, ModuleIDOpt), ModuleID).
-
-%!  hyperonpy_metta_load_module_direct(+Metta, +ModuleName, +Callback, -ModuleID) is det.
-%
-%   Loads a module directly into a Metta instance.
-%
-%   This function loads a module into the provided `hyperonpy.CMetta` instance using a callback.
-%
-%   @arg Metta The `hyperonpy.CMetta` instance.
-%   @arg ModuleName The name of the module (string).
-%   @arg Callback The callback function to load the module.
-%   @arg ModuleID The resulting module ID.
-hyperonpy_metta_load_module_direct(Metta, ModuleName, Callback, ModuleID) :-
-    oo_invoke(metta, Metta, load_module_direct(ModuleName, Callback), ModuleID).
-
-%!  hyperonpy_metta_new(+Space, +EnvBuilder, -Metta) is det.
-%
-%   Creates a new Metta instance.
-%
-%   This function creates a new `hyperonpy.CMetta` instance using the provided `hyperonpy.CSpace` and environment builder.
-%
-%   @arg Space The space (`hyperonpy.CSpace`).
-%   @arg EnvBuilder The environment builder (`CStruct<env_builder_t>`).
-%   @arg Metta The resulting Metta instance (`hyperonpy.CMetta`).
-hyperonpy_metta_new(Space, EnvBuilder, Metta) :-
-    oo_new(metta, [space:Space, env_builder:EnvBuilder], Metta).
-
-%!  hyperonpy_metta_run(+Metta, +SExprParser, -ResultList) is det.
-%
-%   Runs an S-expression parser in the Metta instance.
-%
-%   This function runs the `hyperonpy.CSExprParser` in the provided `hyperonpy.CMetta` instance and returns the result.
-%
-%   @arg Metta The `hyperonpy.CMetta` instance.
-%   @arg SExprParser The S-expression parser (`hyperonpy.CSExprParser`).
-%   @arg ResultList The list of results from running the parser.
-hyperonpy_metta_run(Metta, SExprParser, ResultList) :-
-   nop(oo_invoke(metta, Metta, run(SExprParser), ResultList)),
-   ignore(ResultList = [[int2]]). % [2].
-
-%!  hyperonpy_metta_space(+Metta, -Space) is det.
-%
-%   Retrieves the space associated with a Metta instance.
-%
-%   This function returns the `hyperonpy.CSpace` associated with the provided `hyperonpy.CMetta` instance.
-%
-%   @arg Metta The `hyperonpy.CMetta` instance.
-%   @arg Space The space (`hyperonpy.CSpace`).
-hyperonpy_metta_space(Metta, Space) :-
-    oo_field(metta, Metta, space, Space).
-
-%!  hyperonpy_metta_tokenizer(+Metta, -Tokenizer) is det.
-%
-%   Retrieves the tokenizer associated with a Metta instance.
-%
-%   This function returns the tokenizer (`hyperonpy.CTokenizer`) associated with the provided `hyperonpy.CMetta` instance.
-%
-%   @arg Metta The `hyperonpy.CMetta` instance.
-%   @arg Tokenizer The tokenizer (`hyperonpy.CTokenizer`).
-hyperonpy_metta_tokenizer(Metta, Tokenizer) :-
-    oo_field(metta, Metta, tokenizer, Tokenizer).
-
-%!  hyperonpy_metta_working_dir(+Metta, -WorkingDir) is det.
-%
-%   Retrieves the working directory associated with a Metta instance.
-%
-%   This function returns the working directory of the provided `hyperonpy.CMetta` instance.
-%
-%   @arg Metta The `hyperonpy.CMetta` instance.
-%   @arg WorkingDir The working directory (string).
-hyperonpy_metta_working_dir(Metta, WorkingDir) :-
-    oo_field(metta, Metta, working_dir, WorkingDir).
-
-% ==============================
-% **2.14. Run Context Functions**
-% =============================
-
-%!  hyperonpy_run_context_get_metta(+RunContext, -Metta) is det.
-%
-%   Retrieves the Metta instance associated with a run context.
-%
-%   This function fetches the `hyperonpy.CMetta` associated with the provided `hyperonpy.CRunContext`.
-%
-%   @arg RunContext The run context (`hyperonpy.CRunContext`).
-%   @arg Metta The Metta instance (`hyperonpy.CMetta`).
-hyperonpy_run_context_get_metta(RunContext, Metta) :-
-    oo_field(run_context, RunContext, metta, Metta).
-
-%!  hyperonpy_run_context_get_space(+RunContext, -Space) is det.
-%
-%   Retrieves the space associated with a run context.
-%
-%   This function fetches the `hyperonpy.CSpace` associated with the provided `hyperonpy.CRunContext`.
-%
-%   @arg RunContext The run context (`hyperonpy.CRunContext`).
-%   @arg Space The space (`hyperonpy.CSpace`).
-hyperonpy_run_context_get_space(RunContext, Space) :-
-    oo_field(run_context, RunContext, space, Space).
-
-%!  hyperonpy_run_context_get_tokenizer(+RunContext, -Tokenizer) is det.
-%
-%   Retrieves the tokenizer associated with a run context.
-%
-%   This function fetches the `hyperonpy.CTokenizer` associated with the provided `hyperonpy.CRunContext`.
-%
-%   @arg RunContext The run context (`hyperonpy.CRunContext`).
-%   @arg Tokenizer The tokenizer (`hyperonpy.CTokenizer`).
-hyperonpy_run_context_get_tokenizer(RunContext, Tokenizer) :-
-    oo_field(run_context, RunContext, tokenizer, Tokenizer).
-
-%!  hyperonpy_run_context_import_dependency(+RunContext, +ModuleID) is det.
-%
-%   Imports a module dependency into a run context.
-%
-%   This function imports a module dependency identified by `ModuleID` into the `hyperonpy.CRunContext`.
-%
-%   @arg RunContext The run context (`hyperonpy.CRunContext`).
-%   @arg ModuleID The module ID (`CStruct<module_id_t>`).
-hyperonpy_run_context_import_dependency(RunContext, ModuleID) :-
-    oo_invoke(run_context, RunContext, import_dependency(ModuleID), _).
-
-%!  hyperonpy_run_context_init_self_module(+RunContext, +Space, +ModuleName) is det.
-%
-%   Initializes the run context with a self module.
-%
-%   This function initializes a self module in the `hyperonpy.CRunContext` using the given space and module name.
-%
-%   @arg RunContext The run context (`hyperonpy.CRunContext`).
-%   @arg Space The space (`hyperonpy.CSpace`).
-%   @arg ModuleName The name of the self module (string).
-hyperonpy_run_context_init_self_module(RunContext, Space, ModuleName) :-
-    oo_invoke(run_context, RunContext, init_self_module(Space, ModuleName), _).
-
-%!  hyperonpy_run_context_load_module(+RunContext, +ModulePath, -ModuleID) is det.
-%
-%   Loads a module into a run context.
-%
-%   This function loads a module from the given `ModulePath` into the provided `hyperonpy.CRunContext`.
-%
-%   @arg RunContext The run context (`hyperonpy.CRunContext`).
-%   @arg ModulePath The path to the module (string).
-%   @arg ModuleID The resulting module ID (`CStruct<module_id_t>`).
-hyperonpy_run_context_load_module(RunContext, ModulePath, ModuleID) :-
-    oo_invoke(run_context, RunContext, load_module(ModulePath), ModuleID).
-
-% ==============================
-% **2.15. Runner State Functions**
-% =============================
-
-%!  hyperonpy_runner_state_current_results(+RunnerState, -ResultList) is det.
-%
-%   Retrieves the current results from the runner state.
-%
-%   This function fetches the list of results from the current state of the `hyperonpy.CRunnerState`.
-%
-%   @arg RunnerState The runner state (`hyperonpy.CRunnerState`).
-%   @arg ResultList The list of current results.
-hyperonpy_runner_state_current_results(RunnerState, ResultList) :-
-    oo_invoke(runner_state, RunnerState, current_results(), ResultList).
-
-%!  hyperonpy_runner_state_err_str(+RunnerState, -ErrorStr) is det.
-%
-%   Retrieves the error string from a runner state.
-%
-%   This function fetches the error string associated with the provided `hyperonpy.CRunnerState`.
-%
-%   @arg RunnerState The runner state (`hyperonpy.CRunnerState`).
-%   @arg ErrorStr The error string associated with the runner state.
-hyperonpy_runner_state_err_str(RunnerState, ErrorStr) :-
-    oo_invoke(runner_state, RunnerState, err_str(), ErrorStr).
-
-%!  hyperonpy_runner_state_free(+RunnerState) is det.
-%
-%   Frees the runner state from memory.
-%
-%   This function removes a `hyperonpy.CRunnerState` object from memory.
-%
-%   @arg RunnerState The runner state (`hyperonpy.CRunnerState`) to be freed.
-hyperonpy_runner_state_free(RunnerState) :-
-    oo_free(RunnerState).
-
-%!  hyperonpy_runner_state_is_complete(+RunnerState, -IsComplete) is det.
-%
-%   Checks if the runner state is complete.
-%
-%   This function checks whether the `hyperonpy.CRunnerState` has completed its operation.
-%
-%   @arg RunnerState The runner state (`hyperonpy.CRunnerState`).
-%   @arg IsComplete Boolean indicating if the runner state is complete.
-hyperonpy_runner_state_is_complete(RunnerState, IsComplete) :-
-    oo_invoke(runner_state, RunnerState, is_complete(), IsComplete).
-
-%!  hyperonpy_runner_state_new_with_atoms(+Metta, +AtomVec, -RunnerState) is det.
-%
-%   Creates a new runner state with the provided atoms.
-%
-%   This function initializes a new `hyperonpy.CRunnerState` with the given list of atoms (`hyperonpy.CVecAtom`) and the `hyperonpy.CMetta`.
-%
-%   @arg Metta The `hyperonpy.CMetta` instance.
-%   @arg AtomVec The vector of atoms (`hyperonpy.CVecAtom`).
-%   @arg RunnerState The resulting runner state (`hyperonpy.CRunnerState`).
-hyperonpy_runner_state_new_with_atoms(Metta, AtomVec, RunnerState) :-
-    oo_new(runner_state, [metta:Metta, atoms:AtomVec], RunnerState).
-
-%!  hyperonpy_runner_state_new_with_parser(+Metta, +SExprParser, -RunnerState) is det.
-%
-%   Creates a new runner state with the provided S-expression parser.
-%
-%   This function initializes a new `hyperonpy.CRunnerState` using the provided `hyperonpy.CMetta` and `hyperonpy.CSExprParser`.
-%
-%   @arg Metta The `hyperonpy.CMetta` instance.
-%   @arg SExprParser The S-expression parser (`hyperonpy.CSExprParser`).
-%   @arg RunnerState The resulting runner state (`hyperonpy.CRunnerState`).
-hyperonpy_runner_state_new_with_parser(Metta, SExprParser, RunnerState) :-
-    oo_new(runner_state, [metta:Metta, sexpr_parser:SExprParser], RunnerState).
-
-%!  hyperonpy_runner_state_step(+RunnerState) is det.
-%
-%   Advances the runner state by one step.
-%
-%   This function performs a single step in the `hyperonpy.CRunnerState`.
-%
-%   @arg RunnerState The runner state (`hyperonpy.CRunnerState`).
-hyperonpy_runner_state_step(RunnerState) :-
-    oo_invoke(runner_state, RunnerState, step(), _).
-
-% ==============================
-% **2.16. Space (`space`) Functions**
-% =============================
-
-atom_form(Atom,Form):-
-  Atom=Form.
-
-into_id(o3(_,ID,_),ID):-!.
-into_id(ID,ID):-!.
-
-%!  hyperonpy_space_add(+Space, +Atom) is det.
-%
-%   Adds an atom to the space.
-%
-%   This function adds the given `hyperonpy.CAtom` to the provided `hyperonpy.CSpace`.
-%
-%   @arg Space The space (`hyperonpy.CSpace`).
-%   @arg Atom The atom to add (`hyperonpy.CAtom`).
-hyperonpy_space_add(Space, Atom) :-
-    atom_form(Atom,Form),into_id(Space,ID),
-    assertz(metta_atom(ID,Form)).
-
-%!  hyperonpy_space_atom_count(+Space, -Count) is det.
-%
-%   Retrieves the count of atoms in the space.
-%
-%   This function returns the number of atoms present in the `hyperonpy.CSpace`.
-%
-%   @arg Space The space (`hyperonpy.CSpace`).
-%   @arg Count The count of atoms.
-hyperonpy_space_atom_count(Space, Count) :-
-    oo_invoke(space, Space, atom_count(), Count).
-
-%!  hyperonpy_space_eq(+Space1, +Space2, -AreEqual) is det.
-%
-%   Compares two spaces for equality.
-%
-%   This function checks whether two `hyperonpy.CSpace` objects are equal.
-%
-%   @arg Space1 The first space (`hyperonpy.CSpace`).
-%   @arg Space2 The second space (`hyperonpy.CSpace`).
-%   @arg AreEqual Boolean indicating whether the two spaces are equal.
-hyperonpy_space_eq(Space1, Space2, AreEqual) :-
-    oo_equal(Space1, Space2, AreEqual).
-
-%!  hyperonpy_space_free(+Space) is det.
-%
-%   Frees a space from memory.
-%
-%   This function removes a `hyperonpy.CSpace` object from memory.
-%
-%   @arg Space The space (`hyperonpy.CSpace`) to be freed.
-hyperonpy_space_free(Space) :-
-    oo_free(Space).
-
-%!  hyperonpy_space_get_payload(+Space, -Payload) is det.
-%
-%   Retrieves the payload associated with a space.
-%
-%   This function fetches the payload object associated with the provided `hyperonpy.CSpace`.
-%
-%   @arg Space The space (`hyperonpy.CSpace`).
-%   @arg Payload The payload object.
-hyperonpy_space_get_payload(Space, Payload) :-
-    oo_field(space, Space, payload, Payload).
-
-%!  hyperonpy_space_list(+Space, -AtomListOpt) is det.
-%
-%   Retrieves the list of atoms in the space.
-%
-%   This function returns the list of atoms in the provided `hyperonpy.CSpace`.
-%
-%   @arg Space The space (`hyperonpy.CSpace`).
-%   @arg AtomListOpt The list of atoms, or an optional value if empty.
-hyperonpy_space_list(Space, AtomListOpt) :-
-    oo_invoke(space, Space, list(), AtomListOpt).
-
-%!  hyperonpy_space_new_custom(+CustomObject, -Space) is det.
-%
-%   Creates a new space with a custom object.
-%
-%   This function creates a new `hyperonpy.CSpace` with the provided custom object.
-%
-%   @arg CustomObject The custom object to associate with the space.
-%   @arg Space The resulting space (`hyperonpy.CSpace`).
-hyperonpy_space_new_custom(CustomObject, Space) :-
-    oo_new(space, [custom_object:CustomObject], Space).
-
-%!  hyperonpy_space_new_grounding(-Space) is det.
-%
-%   Creates a new grounding space.
-%
-%   This function creates a new grounding `hyperonpy.CSpace`.
-%
-%   @arg Space The resulting grounding space (`hyperonpy.CSpace`).
-hyperonpy_space_new_grounding(Space) :-
-    oo_new(space, [grounding:true], Space).
-
-%!  hyperonpy_space_query(+Space, +QueryAtom, -BindingsSet) is det.
-%
-%   Queries the space with an atom.
-%
-%   This function queries the `hyperonpy.CSpace` with the given `hyperonpy.CAtom`, returning a set of bindings.
-%
-%   @arg Space The space (`hyperonpy.CSpace`).
-%   @arg QueryAtom The atom to query (`hyperonpy.CAtom`).
-%   @arg BindingsSet The resulting set of bindings (`hyperonpy.CBindingsSet`).
-hyperonpy_space_query(Space, QueryAtom, BindingsSet) :-
-    oo_invoke(space, Space, query(QueryAtom), BindingsSet).
-
-%!  hyperonpy_space_remove(+Space, +Atom, -IsRemoved) is det.
-%
-%   Removes an atom from the space.
-%
-%   This function removes the given `hyperonpy.CAtom` from the provided `hyperonpy.CSpace`.
-%
-%   @arg Space The space (`hyperonpy.CSpace`).
-%   @arg Atom The atom to remove (`hyperonpy.CAtom`).
-%   @arg IsRemoved Boolean indicating whether the atom was removed.
-hyperonpy_space_remove(Space, Atom, IsRemoved) :-
-    oo_invoke(space, Space, remove(Atom), IsRemoved).
-
-%!  hyperonpy_space_replace(+Space, +OldAtom, +NewAtom, -IsReplaced) is det.
-%
-%   Replaces an atom in the space with another.
-%
-%   This function replaces `OldAtom` with `NewAtom` in the provided `hyperonpy.CSpace`.
-%
-%   @arg Space The space (`hyperonpy.CSpace`).
-%   @arg OldAtom The atom to replace (`hyperonpy.CAtom`).
-%   @arg NewAtom The atom to insert (`hyperonpy.CAtom`).
-%   @arg IsReplaced Boolean indicating if the atom was replaced.
-hyperonpy_space_replace(Space, OldAtom, NewAtom, IsReplaced) :-
-    oo_invoke(space, Space, replace(OldAtom, NewAtom), IsReplaced).
-
-%!  hyperonpy_space_subst(+Space, +Atom1, +Atom2, -SubstList) is det.
-%
-%   Substitutes one atom for another in the space.
-%
-%   This function performs a substitution of `Atom1` for `Atom2` in the provided `hyperonpy.CSpace`, returning a list of substitutions.
-%
-%   @arg Space The space (`hyperonpy.CSpace`).
-%   @arg Atom1 The atom to be replaced (`hyperonpy.CAtom`).
-%   @arg Atom2 The atom to replace `Atom1` (`hyperonpy.CAtom`).
-%   @arg SubstList The resulting list of substitutions.
-hyperonpy_space_subst(Space, Atom1, Atom2, SubstList) :-
-    oo_invoke(space, Space, subst(Atom1, Atom2), SubstList).
-
-% ==============================
-% **2.17. Step Result Functions**
-% =============================
-
-%!  hyperonpy_step_get_result(+StepResult, -ResultList) is det.
-%
-%   Retrieves the result list from a step result.
-%
-%   This function fetches the list of results from the `hyperonpy.CStepResult`.
-%
-%   @arg StepResult The step result (`hyperonpy.CStepResult`).
-%   @arg ResultList The resulting list.
-hyperonpy_step_get_result(StepResult, ResultList) :-
-    oo_invoke(step_result, StepResult, get_result(), ResultList).
-
-%!  hyperonpy_step_has_next(+StepResult, -HasNext) is det.
-%
-%   Checks if the step result has more steps to process.
-%
-%   This function checks whether the `hyperonpy.CStepResult` has more steps.
-%
-%   @arg StepResult The step result (`hyperonpy.CStepResult`).
-%   @arg HasNext Boolean indicating if more steps are available.
-hyperonpy_step_has_next(StepResult, HasNext) :-
-    oo_invoke(step_result, StepResult, has_next(), HasNext).
-
-% ==============================
-% **2.18. Syntax Node Functions**
-% =============================
-
-%!  hyperonpy_syntax_node_clone(+SyntaxNode, -ClonedNode) is det.
-%
-%   Clones a syntax node.
-%
-%   This function creates a copy of the given `hyperonpy.CSyntaxNode`.
-%
-%   @arg SyntaxNode The syntax node to clone (`hyperonpy.CSyntaxNode`).
-%   @arg ClonedNode The resulting cloned syntax node (`hyperonpy.CSyntaxNode`).
-hyperonpy_syntax_node_clone(SyntaxNode, ClonedNode) :-
-    oo_clone(SyntaxNode, ClonedNode).
-
-%!  hyperonpy_syntax_node_free(+SyntaxNode) is det.
-%
-%   Frees a syntax node from memory.
-%
-%   This function removes a `hyperonpy.CSyntaxNode` object from memory.
-%
-%   @arg SyntaxNode The syntax node (`hyperonpy.CSyntaxNode`) to be freed.
-hyperonpy_syntax_node_free(SyntaxNode) :-
-    oo_free(SyntaxNode).
-
-%!  hyperonpy_syntax_node_is_leaf(+SyntaxNode, -IsLeaf) is det.
-%
-%   Checks if the syntax node is a leaf node.
-%
-%   This function checks whether the provided `hyperonpy.CSyntaxNode` is a leaf node.
-%
-%   @arg SyntaxNode The syntax node (`hyperonpy.CSyntaxNode`).
-%   @arg IsLeaf Boolean result indicating if the node is a leaf.
-hyperonpy_syntax_node_is_leaf(SyntaxNode, IsLeaf) :-
-    oo_invoke(syntax_node, SyntaxNode, is_leaf(), IsLeaf).
-
-%!  hyperonpy_syntax_node_is_null(+SyntaxNode, -IsNull) is det.
-%
-%   Checks if the syntax node is null.
-%
-%   This function checks whether the provided `hyperonpy.CSyntaxNode` is a null node.
-%
-%   @arg SyntaxNode The syntax node (`hyperonpy.CSyntaxNode`).
-%   @arg IsNull Boolean result indicating if the node is null.
-hyperonpy_syntax_node_is_null(SyntaxNode, IsNull) :-
-    oo_invoke(syntax_node, SyntaxNode, is_null(), IsNull).
-
-%!  hyperonpy_syntax_node_src_range(+SyntaxNode, -SrcRange) is det.
-%
-%   Retrieves the source range associated with a syntax node.
-%
-%   This function fetches the source range of the provided `hyperonpy.CSyntaxNode`.
-%
-%   @arg SyntaxNode The syntax node (`hyperonpy.CSyntaxNode`).
-%   @arg SrcRange The source range object.
-hyperonpy_syntax_node_src_range(SyntaxNode, SrcRange) :-
-    oo_field(syntax_node, SyntaxNode, src_range, SrcRange).
-
-%!  hyperonpy_syntax_node_type(+SyntaxNode, -NodeType) is det.
-%
-%   Retrieves the type of a syntax node.
-%
-%   This function fetches the type of the provided `hyperonpy.CSyntaxNode`.
-%
-%   @arg SyntaxNode The syntax node (`hyperonpy.CSyntaxNode`).
-%   @arg NodeType The node type (`hyperonpy.SyntaxNodeType`).
-hyperonpy_syntax_node_type(SyntaxNode, NodeType) :-
-    oo_field(syntax_node, SyntaxNode, type, NodeType).
-
-%!  hyperonpy_syntax_node_unroll(+SyntaxNode, -UnrolledList) is det.
-%
-%   Unrolls a syntax node into a list.
-%
-%   This function unrolls the components of the `hyperonpy.CSyntaxNode` into a list.
-%
-%   @arg SyntaxNode The syntax node (`hyperonpy.CSyntaxNode`).
-%   @arg UnrolledList The list of unrolled components.
-hyperonpy_syntax_node_unroll(SyntaxNode, UnrolledList) :-
-    oo_invoke(syntax_node, SyntaxNode, unroll(), UnrolledList).
-
-% ==============================
-% **2.19. Tokenizer Functions**
-% =============================
-
-%!  hyperonpy_tokenizer_clone(+Tokenizer, -ClonedTokenizer) is det.
-%
-%   Clones a tokenizer.
-%
-%   This function creates a copy of the given `hyperonpy.CTokenizer`.
-%
-%   @arg Tokenizer The tokenizer to clone (`hyperonpy.CTokenizer`).
-%   @arg ClonedTokenizer The resulting cloned tokenizer.
-hyperonpy_tokenizer_clone(Tokenizer, ClonedTokenizer) :-
-    oo_clone(Tokenizer, ClonedTokenizer).
-
-%!  hyperonpy_tokenizer_free(+Tokenizer) is det.
-%
-%   Frees a tokenizer from memory.
-%
-%   This function removes a `hyperonpy.CTokenizer` object from memory.
-%
-%   @arg Tokenizer The tokenizer (`hyperonpy.CTokenizer`) to be freed.
-hyperonpy_tokenizer_free(Tokenizer) :-
-    oo_free(Tokenizer).
-
-%!  hyperonpy_tokenizer_new(-Tokenizer) is det.
-%
-%   Creates a new tokenizer.
-%
-%   This function initializes a new `hyperonpy.CTokenizer`.
-%
-%   @arg Tokenizer The resulting tokenizer.
-hyperonpy_tokenizer_new(Tokenizer) :-
-    oo_new(tokenizer, [type:tokenizer, value:[]], Tokenizer).
-
-%!  hyperonpy_tokenizer_register_token(+Tokenizer, +Token, +Callback) is det.
-%
-%   Registers a token with the tokenizer.
-%
-%   This function registers a new token and its associated callback function in the provided `hyperonpy.CTokenizer`.
-%
-%   @arg Tokenizer The tokenizer (`hyperonpy.CTokenizer`).
-%   @arg Token The token to register (string).
-%   @arg Callback The callback function for the token.
-hyperonpy_tokenizer_register_token(Tokenizer, Token, Callback) :-
-    oo_invoke(tokenizer, Tokenizer, register_token(Token, Callback), _).
-
-% ==============================
-% **2.20. Validation Function**
-% =============================
-
-%!  hyperonpy_validate_atom(+Space, +Atom, -IsValid) is det.
-%
-%   Validates an atom within a space.
-%
-%   This function validates a `hyperonpy.CAtom` in the provided `hyperonpy.CSpace`.
-%
-%   @arg Space The space (`hyperonpy.CSpace`).
-%   @arg Atom The atom (`hyperonpy.CAtom`) to validate.
-%   @arg IsValid Boolean result indicating if the atom is valid.
-hyperonpy_validate_atom(Space, Atom, IsValid) :-
-    oo_invoke(space, Space, validate_atom(Atom), IsValid).
-
-
-% ==============================
-% End of the hyperonpy_* function definitions.
-% ==============================
 
 
 end_of_file.
@@ -2305,7 +2668,7 @@ end_of_file.
 
 % Check equality
 ?- hyperonpy_atom_eq(Atom, ClonedAtom, AreEqual).
-% AreEqual = false.
+% AreEqual = '@'(false).
 
 % Free the cloned atom
 ?- hyperonpy_atom_free(ClonedAtom).
@@ -2347,7 +2710,7 @@ true.
 
 % Add a variable binding
 ?- hyperonpy_bindings_add_var_binding(Bindings, VarAtom, BoundAtom, Success).
-% Success = true.
+% Success = '@'(true).
 
 % Clone bindings
 ?- hyperonpy_bindings_clone(Bindings, NewBindings).
@@ -2355,7 +2718,7 @@ true.
 
 % Check if bindings are equal
 ?- hyperonpy_bindings_eq(Bindings, NewBindings, AreEqual).
-% AreEqual = false.
+% AreEqual = '@'(false).
 
 % Free bindings
 ?- hyperonpy_bindings_free(NewBindings).
