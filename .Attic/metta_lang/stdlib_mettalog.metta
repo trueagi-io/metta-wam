@@ -1629,3 +1629,28 @@
     (@param "Form")))
   (@return "Result of Form if execution completes within Time. Raises an exception otherwise."))
 (: max-time! (-> Number Atom Atom))
+
+;; Public MeTTa
+(@doc limit!
+  (@desc "Executes Form generating at most Limit results. Results are returned as soon as they become available.")
+  (@params (
+    (@param "Limit")
+    (@param "Form")))
+  (@return "First Limit results of Form."))
+(: limit! (-> Number Atom Atom))
+
+;; Public MeTTa
+(@doc call!
+  (@desc "Trampolines to Prolog's call. Only works when the predicate and each arg are provided separately. e.g. !(call! ls /) will print the root directory but !(call! ls(/)) will fail.")
+  (@params (
+    (@param "Form")))
+  (@return "True if the call succeeds, False otherwise."))
+(: call! (-> Atom Atom))
+
+;; Public MeTTa
+(@doc call-string!
+  (@desc "Executes String as Prolog code. For example, (call-string! \"member(1,[1,2,3])\") returns [()] while (call-string! \"member(4,[1,2,3])\") returns []. (call-string! \"member(X,[1,2,3])\") returns [(1), (2), (3)].")
+  (@params (
+    (@param "String")))
+  (@return "A list of the binding values. If there are no bindings but the Prolog query is True, returns the empty list."))
+(: call-string! (-> String Atom))

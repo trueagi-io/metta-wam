@@ -60,10 +60,10 @@
 :- set_prolog_flag(backtrace_goal_dept,100).
 :- set_prolog_flag(backtrace_show_lines,true).
 :- set_prolog_flag(write_attributes,portray).
-:- set_prolog_flag(debug_on_interrupt,true).
 :- set_prolog_flag(debug_on_error,true).
 :- ensure_loaded(swi_support).
 :- ensure_loaded(library(pldoc)).
+%:- set_prolog_flag(debug_on_interrupt,true).
 %:- set_prolog_flag(compile_meta_arguments,control).
 :- (prolog_load_context(directory, Value);Value='.'), absolute_file_name('../packs/',Dir,[relative_to(Value)]),
     atom_concat(Dir,'predicate_streams',PS),
@@ -993,7 +993,8 @@ load_hook0(Load,Assertion):- fail,
        assertion_hb(Assertion,Self,H,B),
        functs_to_preds([=,H,B],Preds),
        assert_preds(Self,Load,Preds).
-load_hook0(Load,Assertion):- fail,
+% old compiler hook       
+load_hook0(Load,Assertion):-
      assertion_hb(Assertion,Self, Eq, H,B),
      rtrace_on_error(compile_for_assert_eq(Eq, H, B, Preds)),!,
      rtrace_on_error(assert_preds(Self,Load,Preds)).
@@ -1428,7 +1429,8 @@ call_for_term_variables(TermV,catch_red(show_failure(Term)),NamedVarsList,X):-
   call_for_term_variables5(TermV, DCAllVars, Singletons, NonSingletons, Term,NamedVarsList,X),!,
   must_be(callable,Term).
 
-into_metta_callable(_Self,TermV,Term,X,NamedVarsList,Was):- \+ never_compile(TermV),
+into_metta_callable(_Self,TermV,Term,X,NamedVarsList,Was):- 
+ \+ never_compile(TermV),
  is_transpiling, !,
  must_det_ll((((
 
@@ -1438,7 +1440,7 @@ into_metta_callable(_Self,TermV,Term,X,NamedVarsList,Was):- \+ never_compile(Ter
   subst_vars(Res+ExecGoal,Res+Term,NamedVarsList),
   copy_term_g(NamedVarsList,Was),
   term_variables(Term,Vars),
-  %notrace((color_g_mesg('#114411',print_pl_source(answer(Res):-ExecGoal)))),
+  notrace((color_g_mesg('#114411',print_pl_source(answer(Res):-ExecGoal)))),
   %nl,writeq(Term),nl,
   ((\+ \+
   ((numbervars(v(TermV,Term,NamedVarsList,Vars),999,_,[attvar(bind)]),
