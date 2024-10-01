@@ -26,11 +26,30 @@
  * Acknowledgments: Special thanks to all contributors and the open source community for their support and contributions.
  */
 
+%********************************************************************************************* 
+% PROGRAM FUNCTION: Translate Prolog code to MeTTa code
+%*********************************************************************************************
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% IMPORTANT:  DO NOT DELETE COMMENTED-OUT CODE AS IT MAY BE UN-COMMENTED AND USED
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% The encoding is set to iso_latin_1 to ensure proper handling of characters in that encoding.
 :- encoding(iso_latin_1).
+
+% The flush_output/0 predicate is called to forcefully flush all pending output buffers.
 :- flush_output.
+
+% This sets an environment variable 'RUST_BACKTRACE' to 'full', likely to enable detailed error backtraces
+% when using a Rust-based library or component within the system.
 :- setenv('RUST_BACKTRACE',full).
+
+% Defines a custom operator =~ with precedence 700 and xfx type, meaning it is a non-associative infix operator.
+% This operator could be used for a specialized equality or pattern-matching operation in the program.
 :- op(700,xfx,'=~').
+
+% Ensures that the file 'metta_interp' is loaded, which likely contains the main interpretation or processing logic 
+% for the system.
 :- ensure_loaded(metta_interp).
 
 % ===============================
@@ -41,32 +60,126 @@
 % The 'forall' loop will write and call all goals of the 'fb0' clauses.
 
 
-fb:- make,
-   writeln(';; ==========================================='),
-   forall((clause(fb0,Goal),write(';; '),writeq(?- Goal),nl,call(Goal)),
-   writeln(';; ===========================================')).
+% ===============================
+%    TESTING
+% ===============================
 
-% The 'fb0' rule showing mettalog sources with specific definitions.
-fb0:- show_mettalog_src((two_pi(R):-(pi(A), +(A, A, B), R is B))).
-fb0:- show_mettalog_src(factorial_tail_basic).
-fb0:- show_mettalog_src(funct).
+%!  fb is det.
+%
+%   This predicate is used for testing purposes. It first compiles the program by calling 'make'.
+%   After that, it writes information for each clause of 'fb0', a test case rule, and executes the goals.
+%   
+%   The 'make' predicate is commonly used in Prolog for recompiling any modified predicates.
+%   The 'forall' loop iterates over all clauses of 'fb0', writing and calling the goals in the clauses.
+%
+%   @example
+%   ?- fb.
+%   ;; ===========================================
+%   ;; ?- (two_pi(R) :- (pi(A), +(A, A, B), R is B)).
+%   ;; ?- factorial_tail_basic.
+%   ;; ?- funct.
+%   ;; ===========================================
+fb :- 
+    make,  % Recompiles the program.
+    writeln(';; ==========================================='),
+    forall(
+        % Retrieve and execute each clause of 'fb0'.
+        (clause(fb0, Goal), write(';; '), writeq(?- Goal), nl, call(Goal)),
+        % After processing each clause, print a separator.
+        writeln(';; ===========================================')
+    ).
 
-print_metta_src :-  show_mettalog_src.
-% 'show_mettalog_src' rule compiles the program and shows mettalog sources for each source file containing 'metta'.
-show_mettalog_src:- make,
-  forall((source_file(AsPred,File),
-          symbol_contains(File,metta)),
-         show_mettalog_src(AsPred)).
+%!  fb0 is det.
+%
+%   This rule provides test cases by showing mettalog sources. Each clause of 'fb0' uses 'show_mettalog_src'
+%   to display specific mettalog definitions. These are examples of how Prolog can show the structure of logical
+%   rules or concepts using 'show_mettalog_src/1'.
+%
+%   @example
+%   ?- fb0.
+%   This will show the mettalog source for two_pi/1, factorial_tail_basic/0, and funct/0.
+fb0 :- show_mettalog_src((two_pi(R) :- (pi(A), +(A, A, B), R is B))).
+fb0 :- show_mettalog_src(factorial_tail_basic).
+fb0 :- show_mettalog_src(funct).
 
+%!  print_metta_src is det.
+%   Displays mettalog sources for files or predicates that contain 'metta'.
+%   This predicate calls 'show_mettalog_src/0' to display all mettalog sources in the program.
+%   The 'show_mettalog_src' rule compiles the program and shows the mettalog sources for each 
+%   source file that contains 'metta' in its name or content.
+%
+%   This is useful for listing all relevant mettalog definitions after ensuring that the program is up-to-date.
+%
+%   @example
+%   ?- print_metta_src.
+print_metta_src :- show_mettalog_src.
 
-% Handling different cases for 'show_mettalog_src' with different input parameters.
-% These rules use nonvar, current_predicate, and other built-ins to perform various checks and actions
-% based on the type and value of the input to 'show_mettalog_src'.
-show_mettalog_src(F/A):- nonvar(F),!, forall(current_predicate(F/A), show_mettalog_src(F,A)).
-show_mettalog_src(AsPred):- functor(AsPred,F,A), \+ \+ current_predicate(F/A), !, forall(current_predicate(F/A), show_mettalog_src(F,A)).
-show_mettalog_src(F):-  atom(F), \+ \+ current_predicate(F/_),!, forall(current_predicate(F/A), show_mettalog_src(F,A)).
-show_mettalog_src(C):-  atom(C), \+ \+ (current_predicate(F/_),once(atom_contains(F,C))),!, forall((current_predicate(F/A),once(atom_contains(F,C))), show_mettalog_src(F,A)).
-show_mettalog_src(C):- show_cvts(C),!.
+%!  show_mettalog_src is det.
+%
+%   Compiles the Prolog program and displays the mettalog sources for each source file 
+%   containing 'metta' in its file name.
+%
+%   This predicate uses `make/0` to recompile the program, then iterates through all 
+%   the source files, checking if the file name contains 'metta'. If so, it calls 
+%   `show_mettalog_src/1` with the corresponding predicate.
+%
+%   @example Compile and show mettalog sources:
+%     ?- show_mettalog_src.
+%     % This will compile the current Prolog program and print mettalog source details.
+%
+show_mettalog_src:- 
+    % Recompile the program with make/0 to ensure all source changes are applied.
+    make,
+    % For all source files whose file names contain 'metta', display the mettalog source.
+    forall(
+        (
+            % Retrieve the predicate and its corresponding source file.
+            source_file(AsPred, File),
+            % Check if the file name contains 'metta'.
+            symbol_contains(File, metta)
+        ),
+        % Show the mettalog source for the retrieved predicate.
+        show_mettalog_src(AsPred)
+    ).
+
+%!  show_mettalog_src(+Spec) is det.
+%
+%   Displays the mettalog source for predicates that match the specification `Spec`.
+%   This predicate handles various types of input to identify the predicates whose 
+%   source should be displayed:
+%
+%   - If `Spec` is in the form `F/A` (functor and arity), it directly shows the mettalog 
+%     source for all predicates with functor `F` and arity `A`.
+%   - If `Spec` is a predicate term, it extracts the functor and arity and shows 
+%     the source for predicates matching the functor and arity of the term.
+%   - If `Spec` is just the functor `F`, it shows the source for all predicates with 
+%     that functor, regardless of arity.
+%   - If `Spec` is an atom `C` and matches part of a predicate functor, it shows the 
+%     source for all predicates whose functor contains the atom `C`.
+%   - If none of the above match, it uses `show_cvts/1` as a fallback to display 
+%     the mettalog source.
+%
+%   @arg Spec The specification of the predicate(s) whose mettalog source is to be shown.
+%        This can be of the form `F/A` (functor and arity), a predicate term, or an atom.
+%
+%   @example Show the mettalog source for a specific functor and arity:
+%     ?- show_mettalog_src(member/2).
+%
+%   @example Show the mettalog source for all predicates with a specific functor:
+%     ?- show_mettalog_src(member).
+%
+%   @example Show the mettalog source for all predicates whose functor contains 'metta':
+%     ?- show_mettalog_src('metta').
+%
+show_mettalog_src(F/A):- nonvar(F), !,
+    forall(current_predicate(F/A), show_mettalog_src(F,A)).
+show_mettalog_src(AsPred):- functor(AsPred, F, A),\+ \+ current_predicate(F/A),!,forall(current_predicate(F/A), 
+    show_mettalog_src(F,A)).
+show_mettalog_src(F):- atom(F),\+ \+ current_predicate(F/_),!,forall(current_predicate(F/A), show_mettalog_src(F,A)).
+show_mettalog_src(C):- atom(C),\+ \+ (current_predicate(F/_), once(atom_contains(F,C))),!,
+    forall((current_predicate(F/A), once(atom_contains(F,C))), show_mettalog_src(F,A)).
+show_mettalog_src(C):- show_cvts(C), !.
+
 
 % The 'show_space_src' rules compile the program and show space sources for each space predicate.
 show_space_src:- make,
