@@ -1,0 +1,185 @@
+
+<html> <head> 
+
+<script> 
+function open_div(xid){ document.getElementById(xid).style.display = 'block'; }
+function close_div(xid){ document.getElementById(xid).style.display = 'none'; }
+
+</script> 
+
+</head> 
+
+<body style="font-family: arial; font-size: 12pt; background-color: #E5E5E5"> 
+ <H2> 
+not_include_metta_files </H2> 
+ <H2> 
+display_per_file </H2> 
+ <H2> 
+python_leading </H2> 
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> test_examples.py</i></b> <b> &nbsp &nbsp &nbsp tests</b> &nbsp &nbsp &nbsp python
+../../../hyperon-experimental/python/tests
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/tests/test_examples.py');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('pythonteststest_examples.py')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('pythonteststest_examples.py')" style="cursor:pointer">  Close </a>
+
+<div id="pythonteststest_examples.py" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #A7E3A7">         self.assertEqualMettaRunnerResults(metta.run('!(<b>get-type</b> "A")'), [[S('String')]]) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #A7E3A7">         self.assertEqual(repr(metta.run('!(<b>"A")')),</b> '[[("A")]]') "A")')),   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #A7E3A7">         self.assertEqualMettaRunnerResults(metta.run('!(<b>achieve</b> (visit Kim))'), achieve   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #A7E3A7">         metta.run('!(<b>(py-dot</b> (Setter pglob 5) act))') (py-dot   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #A7E3A7">         self.assertEqualMettaRunnerResults(metta.run('!(<b>get-st</b> (name id-001))'), get-st   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #A7E3A7">         metta.run('!(<b>change-st</b> (name id-001) Fritz)') change-st   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> test_stdlib.py</i></b> <b> &nbsp &nbsp &nbsp tests</b> &nbsp &nbsp &nbsp python
+../../../hyperon-experimental/python/tests
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/tests/test_stdlib.py');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('pythonteststest_stdlib.py')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('pythonteststest_stdlib.py')" style="cursor:pointer">  Close </a>
+
+<div id="pythonteststest_stdlib.py" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #A7E3A7">         self.assertEqual(metta.run('!(<b>py-chain</b> (1 2 3 4))'), [[ValueAtom( 7 )]]) py-chain   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #A7E3A7">         self.assertEqual(metta.run('!(<b>py-dict</b> ())'), [[ValueAtom( {} )]]) py-dict   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #A7E3A7">         self.assertEqual(metta.run('!(<b>py-tuple</b> ())'), [[ValueAtom( () )]]) py-tuple   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #A7E3A7">         self.assertEqual(metta.run('!(<b>py-list</b> ())'), [[ValueAtom( [] )]]) py-list   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #A7E3A7">         self.assertEqual(metta.run('!(<b>intent</b> "hello")', True), [E(S("Intent"), S("Hello"))]) intent   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #A7E3A7">         self.assertEqualMettaRunnerResults(metta.run('!(<b>stringToChars</b> "ABC")'), stringToChars   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #A7E3A7">         #self.assertEqualMettaRunnerResults(metta.run('!(<b>parse</b> "$X")'), parse   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> metta_eval.pl</i></b> <b> &nbsp &nbsp &nbsp canary</b> &nbsp &nbsp &nbsp ..
+../canary
+<a onclick="prompt('copy path','../canary/metta_eval.pl');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('..canarymetta_eval.pl')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('..canarymetta_eval.pl')" style="cursor:pointer">  Close </a>
+
+<div id="..canarymetta_eval.pl" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>get-type</b>',Val,Self],Type):- current_self(Self), !, get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>get-type</b>',Val,Other],Type):- !, get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(_Eq,_RetType,Depth,Self,['<b>get-type</b>',Val],Type):- is_list(Val), !, get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>get-type</b>',Val],TypeO):- !, get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>stringToChars</b>',String],Chars):- !, eval_args(Eq,RetType,Depth,Self,String,SS), string_chars(SS,Chars0), maplist(as_metta_char,Chars0,Chars). stringToChars   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,_Dpth,_Slf,['<b>py-list</b>',Atom_list],CDR_Y):-  py-list   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20( Eq, RetType, Depth, Self, [ '<b>parse</b>' , L ] , Exp ):-  parse   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> metta_interp.pl</i></b> <b> &nbsp &nbsp &nbsp canary</b> &nbsp &nbsp &nbsp ..
+../canary
+<a onclick="prompt('copy path','../canary/metta_interp.pl');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('..canarymetta_interp.pl')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('..canarymetta_interp.pl')" style="cursor:pointer">  Close </a>
+
+<div id="..canarymetta_interp.pl" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D3D4FF"> '<b>parse</b>'( Strx, Atom_metta ):- eval_H( [ parse, Strx ], Atom_metta ). parse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> '<b>get-type</b>'(Value, Type):- eval_H(['get-type', Value], Type). get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> '<b>stringToChars</b>'(String, Chars) :- eval_H(['stringToChars', String], Chars). stringToChars   <br> 
+ <br> &nbsp <br>
+ </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> metta_ontology.pfc.pl</i></b> <b> &nbsp &nbsp &nbsp canary</b> &nbsp &nbsp &nbsp ..
+../canary
+<a onclick="prompt('copy path','../canary/metta_ontology.pfc.pl');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('..canarymetta_ontology.pfc.pl')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('..canarymetta_ontology.pfc.pl')" style="cursor:pointer">  Close </a>
+
+<div id="..canarymetta_ontology.pfc.pl" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D3D4FF"> properties('&corelib','<b>parse</b>', [data_structures, qhelp("Parse a string to an expression."), parse ]). parse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>stringToChars</b>', [string_operations, qhelp("Convert a string to a list of chars."), string_to_chars]). stringToChars   <br> 
+ <br> &nbsp <br>
+ </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> stdlib.rs</i></b> <b> &nbsp &nbsp &nbsp runner</b> &nbsp &nbsp &nbsp metta
+../../../hyperon-experimental/lib/src/metta/runner
+<a onclick="prompt('copy path','../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('mettarunnerstdlib.rs')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('mettarunnerstdlib.rs')" style="cursor:pointer">  Close </a>
+
+<div id="mettarunnerstdlib.rs" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">         tref.register_token(regex(r"<b>get-type</b>"), move |_| { get_type_op.clone() }); get-type   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> stdlib_minimal.rs</i></b> <b> &nbsp &nbsp &nbsp runner</b> &nbsp &nbsp &nbsp metta
+../../../hyperon-experimental/lib/src/metta/runner
+<a onclick="prompt('copy path','../../../hyperon-experimental/lib/src/metta/runner/stdlib_minimal.rs');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('mettarunnerstdlib_minimal.rs')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('mettarunnerstdlib_minimal.rs')" style="cursor:pointer">  Close </a>
+
+<div id="mettarunnerstdlib_minimal.rs" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">     tref.register_token(regex(r"<b>get-type</b>"), move |_| { get_type_op.clone() }); get-type   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+ Tags not found - uncovered <br>
+<b>  intent</b> <br> 
+<b>  py-tuple</b> <br> 
+<b>  py-dict</b> <br> 
+<b>  py-chain</b> <br> 
+<b>  change-st</b> <br> 
+<b>  get-st</b> <br> 
+<b>  (py-dot</b> <br> 
+<b>  achieve</b> <br> 
+<b>  "A")')),</b> <br> 

@@ -1,0 +1,76 @@
+print_sso(A):- must_det_ll(( nl_if_needed, into_ss_string(A,SS),!,
+  SS = ss(L,Lst),
+  writeln(print_sso(l(L))),
+  forall(member(S,Lst),writeln(S)),nl_if_needed)),!.
+
+var_or_number(V):- var(V),!.
+var_or_number(V):- integer(V),!.
+
+
+find_longest_len(SL,L):- find_longest_len(SL,10,L),!.
+find_longest_len([],L,L).
+find_longest_len([S|SS],N,L):- print_length(S,N2),max_min(N,N2,NM,_),
+  find_longest_len(SS,NM,L).
+
+:- meta_predicate( print_with_pad(0)).
+:- export( print_with_pad/1).
+/*print_with_pad(Goal):-
+
+  (line_position(current_output,O);O=0),!,
+  O1 is O+1,
+  call_w_pad(O1,Goal).
+*/
+print_with_pad(Goal):-(line_position(current_output,O);O=0),!,  O1 is O+1,wots(S,Goal),print_w_pad(O1,S).
+
+
+into_s(Text,S):- notrace(catch(text_to_string(Text,S),_,fail)),!.
+into_s(Obj,S):- wots_hs(S,pp(Obj)),!.
+
+print_w_pad(Pad,Text):- into_s(Text,S), atomics_to_string(L,'\n',S)-> my_maplist(print_w_pad0(Pad),L).
+print_w_pad0(Pad,S):- nl_if_needed,dash_chars(Pad,' '), write(S).
+
+
+:- meta_predicate(call_w_pad_prev(+,0)).
+call_w_pad_prev(Pad,Goal):- wots_hs(S,Goal), print_w_pad(Pad,S).
+
+%call_w_pad(N,Goal):- wants_html,!,format('<span style="margin-left:~w0%;">',[N]),call_cleanup(call(Goal),write('</span>')).
+:- meta_predicate(call_w_pad(+,0)).
+call_w_pad(_N,Goal):- wants_html,!,format('<span style="margin-left:10px;">',[]),call_cleanup(call(Goal),write('</span>')).
+call_w_pad(N,Goal):- nl_if_needed,wots_hs(S,dash_chars(N,' ')),!,pre_pend_each_line(S,Goal).
+maybe_print_pre_pended(Out,Pre,S):- atomics_to_string(L,'\n',S), maybe_print_pre_pended_L(Out,Pre,L).
+maybe_print_pre_pended_L(Out,_,[L]):- write(Out,L),!,flush_output(Out).
+maybe_print_pre_pended_L(Out,Pre,[H|L]):- write(Out,H),nl(Out),!,write(Out,Pre),maybe_print_pre_pended_L(Out,Pre,L).
+
+%pre_pend_each_line(_,Goal):- !,ignore(Goal).
+:- meta_predicate(pre_pend_each_line(+,0)).
+pre_pend_each_line(Pre,Goal):- write(Pre),pre_pend_each_line0(Pre,Goal).
+pre_pend_each_line0(Pre,Goal):-
+  current_output(Out),
+  current_predicate(predicate_streams:new_predicate_output_stream/2),!,
+  call(call,predicate_streams:new_predicate_output_stream([Data]>>maybe_print_pre_pended(Out,Pre,Data),Stream)),
+  arc_set_stream(Stream,tty(true)),
+  %arc_set_stream(Stream,buffer(false)),
+  %undo(ignore(catch(close(Stream),_,true))),!,
+  setup_call_cleanup(true,
+   (with_output_to_each(Stream,once(Goal)),flush_output(Stream)),
+    ignore(catch(close(Stream),_,true))),!.
+pre_pend_each_line0(Pre,Goal):-
+  with_output_to_each(string(Str),Goal)*->once((maybe_print_pre_pended(current_output,Pre,Str),nl_if_needed)).
+
+
+
+end_of_file.
+
+
+
+run_source_code(ShareVars, SourceCode, Vs, QQ):-
+  QQ = source_buffer(SourceCode,Vs),!,
+  %print(term=Sourcecode -> vs=Vs),
+  maplist(share_vars(Vs),ShareVars),
+  (\+ is_list(SourceCode)
+    -> mort(SourceCode)
+    ; maplist(mort,SourceCode)).
+
+run_source_code(ShareVars, Vs, QQ):-
+  QQ = source_buffer(SourceCode,Vs),!,
+  %print(term=Sourcecode -> vs=Vs),

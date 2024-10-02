@@ -1,0 +1,111 @@
+    \+ fcSupported(P),
+    fcUndo(P),!.
+pfcRetractAll(P,_S0) :-
+  removeIfUnsupported(P),
+  fail.
+pfcRetractAll(_,_).
+
+
+pfcSupportedBy(P,S,How):-
+   pfcGetSupport(P,(F,T)),
+   (pfcSupportedBy(F,S,_)->How=F;
+   pfcSupportedBy(T,S,How)).
+
+pfcSupportedBy(P,S,How):-P=S,How=S.
+
+pfcRetractAll_v2(P,S0) :-
+  \+ \+ pfcWithdraw(P,S0),
+  pfcGetSupport(P,(S,RemoveIfTrigger)),
+  % pfcDebug(pfcPrintf("removing support ~p from ~p",[S,P])),
+  matterialize_support_term((S,RemoveIfTrigger),Sup),
+  pfcTraceMsg('    Removing support: ~p   \n   From: ~p~n',[Sup,P]),
+  (pfcRemOneSupportOrQuietlyFail(P,(S,RemoveIfTrigger))
+     -> pfcTraceMsg('    Success removing support: ~p   \n   From: ~p~n',[Sup,P])
+     ; (pfcWarn("pfcRemOneSupport/2 Could not find support ~p thus\n    Did not yet pfcRetractAll_v2: ~p",
+                [Sup,P]))),
+  pfcRetractAll_v2(S, S0),
+  fail.
+
+pfcRetractAll_v2(P,_):- removeIfUnsupported(P).
+
+% pfcRemove/1 is the user''s interface - it withdraws user support for P.
+%
+% pfcRemove is like pfcRetractAll, but if P is still in the DB after removing the
+% user's support, it is retracted by more forceful means (e.g. pfcBlast).
+%
+pfcRemove(Fact) :- control_arg_types(Fact,Fixed),!,pfcRemove(Fixed).
+pfcRemove(P) :-
+  pfcRetractAll(P),
+  pfc_call(P)
+     -> pfcBlast(P)
+      ; true.
+
+
+% %  pfcBlast(+F) is det
+%
+% retracts fact F from the DB and removes any dependent facts
+%
+
+pfcBlast(F) :-
+  pfcRemoveSupports(F),
+  fcUndo(F).
+
+
+% removes any remaining supports for fact F, complaining as it goes.
+
+pfcRemoveSupports(F) :-
+  pfcRemOneSupport(F,S),
+  pfcWarn("~p was still supported by ~p (but no longer)",[F,S]),
+  fail.
+pfcRemoveSupports(_).
+
+pfcRemoveSupportsQuietly(F) :-
+  pfcRemOneSupport(F,_),
+  fail.
+pfcRemoveSupportsQuietly(_).
+
+% fcUndo(X) undoes X.
+
+
+fcUndo(pfcAction(A)) :-
+  % undo an action by finding a method and successfully executing it.
+  !,
+  pfcRemActionTrace(pfcAction(A)).
+
+fcUndo('$pt$'(/*Key,*/Head,Body)) :-
+  % undo a positive trigger(+).
+  %
+  !,
+  (retract('$pt$'(/*Key,*/Head,Body))
+    -> unFc('$pt$'(Head,Body))
+     ; pfcWarn("Trigger not found to retract: ~p",['$pt$'(Head,Body)])).
+
+fcUndo('$nt$'(Head,Condition,Body)) :-
+  % undo a negative trigger(-).
+  !,
+  (retract('$nt$'(Head,Condition,Body))
+    -> unFc('$nt$'(Head,Condition,Body))
+     ; pfcWarn("Trigger not found to retract: ~p",['$nt$'(Head,Condition,Body)])).
+
+fcUndo(Fact) :-
+  % undo a random fact, printing out the trace, if relevant.
+  retract(Fact),
+  pfcTraceRem(Fact),
+  unFc(Fact).
+
+
+% %  unFc(P) is det.
+%
+% unFc(P) "un-forward-chains" from fact f.  That is, fact F has just
+% been removed from the database, so remove all dependant relations it
+% participates in and check the things that they support to see if they
+% should stayu in the database or should also be removed.
+
+
+unFc(F) :-
+  pfcRetractDependantRelations(F),
+  unFc1(F).
+
+unFc1(F) :-
+  pfcUnFcCheckTriggers(F),
+  % is this really the right place for pfcRun<?

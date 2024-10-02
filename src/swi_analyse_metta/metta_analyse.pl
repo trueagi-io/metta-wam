@@ -745,7 +745,10 @@ search_o_y_and_assert( 1, Sea, Linum, Lx, _Zk, F, Level, Linum , metta_else_wher
   parenthesis_count( Lx, Count_is_open ), extra_lines_for_open_parenthesis( Count_is_open, Lines_read_extra ),
   read_extra_lines( 'metta' , Lines_read_extra, Sea , Xtra_lines ), string_concat( Lx, Xtra_lines , Lx2 ),
   assert_eval_tag_mult( 'metta_tag_extra', Linum, Tag_s , F, Lx2 ),
+<<<<<<< HEAD
   % metta_example
+=======
+>>>>>>> d3628bb (Update analyse to a Table and after CSV)
   assert( found_search_result( 'metta_example', Tag_s, Level, Linum, F, Lx2  ) ).
 
 
@@ -797,6 +800,7 @@ search_o_y_and_assert( 1, Sea, Linum, Lx, _Zk, F, Level, Linum , is_not_leading,
 %  string_concat( Lx, " ** <b>" , Cx ), string_concat( Cx, C1, Cp ), string_concat( Cp, " </b> " , C2 ),   !,
 %  assert( found_search_result( Level, Linum, F, C2  ) ).
 
+<<<<<<< HEAD
 
 search_o_y_and_assert( 1, _Sea, Linum, Lx, _Zk, F, Level, Linum , Is_leading , 0):-
   ( Is_leading == 'is_not_leading' ;  Is_leading == 'is_leading' ),
@@ -827,6 +831,25 @@ search_o_y_and_assert( 1, _Sea, Linum, Lx, _Zk, F, Level, Linum , Is_leading , 0
   rust_detect_tag( Tag_from, Tag_til , _, _),
   string_concat( Tag_from, Tag_s, C1 ), string_concat( C1, Tag_til, C4 ), 
   search_o_y( Lx, C4 ), !,
+=======
+search_o_y_and_assert( 1, Sea, Linum, Lx, _Zk, F, Level, Linum , Is_leading, Lines_read_extra ):-
+  ( Is_leading == 'is_not_leading' ;  Is_leading == 'is_leading' ),
+  file_name_extension( _, Ext, F ), Ext == 'rs',
+  eval_tag_secondary( Tag_org, Tag_s ),  
+  search_o_y( Lx, Tag_s ), !,
+  assert_eval_tag_found( 'rust', Tag_org , "", "", "" ),  Lines_read_extra =  4,
+  read_extra_lines( 'rust' , Lines_read_extra, Sea , Xtra_lines ), string_concat( Lx, Xtra_lines , Lx2 ),
+  assert( found_search_result( 'rust', Tag_org , Level, Linum, F, Lx2  ) ).
+
+
+search_o_y_and_assert( 1, _Sea, Linum, Lx, _Zk, F, Level, Linum , Is_leading , 0):-
+  ( Is_leading == 'is_not_leading' ;  Is_leading == 'is_leading' ),
+  file_name_extension( _, Ext, F ), Ext == 'rs',
+  eval_tag( _, _, Tag_s, _ ,_,_),  
+  rust_detect_tag( Tag_from, Tag_til , _, _),
+  string_concat( Tag_from, Tag_s, C1 ), string_concat( C1, Tag_til, C4 ), 
+  search_o_y( Lx, C4 ), !,
+>>>>>>> d3628bb (Update analyse to a Table and after CSV)
   assert_eval_tag_found( 'rust', Tag_s , "", "", "" ),
   assert( found_search_result( 'rust', Tag_s , Level, Linum, F, Lx  ) ).
 
@@ -1105,6 +1128,7 @@ try_find_types( _Tag , "" , "" , "" ):- !.
 
 eval_tag_or_similar_category( Ontol_1, Linum, Tag, Fn, Lx , From_similar , is_self ):-
     eval_tag( 'metta_tag_std_lib' , Linum, Tag, Fn, Lx, _ ) ,  From_similar = Ontol_1.
+<<<<<<< HEAD
   
 eval_tag_or_similar_category( Ontol_1, Linum, Tag, Fn, Lx , From_similar , is_self ):-
     eval_tag( 'metta_tag_extra' , Linum, Tag, Fn, Lx, _ ) ,  From_similar = Ontol_1.
@@ -1113,6 +1137,12 @@ eval_tag_or_similar_category( Ontol_1, Linum, Tag, Fn, Lx , From_similar , is_se
   % assert_eval_tag_mult( 'metta_example', Linum, Tag_s , F, Lx2 ),
   % metta_example
 
+=======
+
+eval_tag_or_similar_category( Ontol_1, Linum, Tag, Fn, Lx , From_similar , is_self ):-
+    eval_tag( 'metta_tag_extra' , Linum, Tag, Fn, Lx, _ ) ,  From_similar = Ontol_1.
+
+>>>>>>> d3628bb (Update analyse to a Table and after CSV)
 eval_tag_or_similar_category( Ontol_1, Linum, Tag, Fn, Lx , Tag_other , similar_to ):-
     eval_tag_found( 'metta_ontol_pl' , Tag , Ontol_1, _, _ ,_),
 	eval_tag_found( 'metta_ontol_pl' , Tag_other , Ontol_1, _, _ ,_),
@@ -1477,6 +1507,8 @@ write_codes_metta_clause_htm( [] , _Parenthesis_level ):- !.
 write_codes_metta_clause_htm( [ 45, 62 | Codes ] , Parenthesis_level ):-    !,  
   write( "<div class=\"tag_arrow"),  write( "\">" ) ,   write( "->" ),  write( "</div>" ) ,  
   write_codes_metta_clause_htm( Codes  , Parenthesis_level ).
+<<<<<<< HEAD
+=======
 
 %write_codes_metta_clause_htm( [ 61 | Codes ] , Parenthesis_level ):-    !,  
 %  write( "<div class=\"tag_equal\">"),    write( "=" ),  write( "</div>" ) ,  
@@ -1511,7 +1543,87 @@ write_codes_metta_clause_htm( [ Co | Codes ] , Parenthesis_level ):-   Co == 10,
   write( "<br>"),   write_codes_metta_clause_htm( Codes  , Parenthesis_level ).
 
 write_codes_metta_clause_htm( [ H | Codes ], Plevel ):-  !,  string_codes( Zx,  [ H ] ), write( Zx ),  write_codes_metta_clause_htm( Codes , Plevel ).
+>>>>>>> d3628bb (Update analyse to a Table and after CSV)
 
+%write_codes_metta_clause_htm( [ 61 | Codes ] , Parenthesis_level ):-    !,  
+%  write( "<div class=\"tag_equal\">"),    write( "=" ),  write( "</div>" ) ,  
+%  write_codes_metta_clause_htm( Codes  , Parenthesis_level ).
+
+<<<<<<< HEAD
+%write_codes_metta_clause_htm( [ 58 | Codes ] , Parenthesis_level ):-    !,  
+%  write( "<div class=\"tag_assignment\">"),   write( ":" ),  write( "</div>" ) ,  
+%  write_codes_metta_clause_htm( Codes  , Parenthesis_level ).
+=======
+%----
+write_codes_with_tag_colors( _Ext, [] ):-!.
+write_codes_with_tag_colors( Ext, [ H | Codes ] ):-  H == 40, !,  string_codes( Zx,  [ H ] ), 
+  write( "<div class=\"tag_"), write( Ext ), write(" leftpar_"), write( Ext ), write( "\">" ) , write( Zx ),
+  write( "</div>" ) ,   write_codes_with_tag_colors( Ext,  Codes  ).
+
+write_codes_with_tag_colors( Ext, [ H | Codes ] ):-  H == 41, !,  string_codes( Zx,  [ H ] ), 
+  write( "<div class=\"tag_"), write( Ext ), write(" rightpar_"), write( Ext ), write( "\">" ) , write( Zx ),
+  write( "</div>" ) ,   write_codes_with_tag_colors( Ext,  Codes  ).
+
+write_codes_with_tag_colors( Ext, [ H | Codes ] ):-  !,  string_codes( Zx,  [ H ] ), write( Zx ),
+  write_codes_with_tag_colors( Ext,  Codes  ).
+>>>>>>> d3628bb (Update analyse to a Table and after CSV)
+
+write_codes_metta_clause_htm( [ Co , Co2 | Codes ] , Parenthesis_level ):-   Co == 40, Parenthesis_level == 0 , 
+  ( Co2 == 61; Co2 == 58 ),  !,  
+  write( "<div class=\"tag_parenthesis0\">" ) ,    write( "(" ),
+  write( "</div>" ) ,  
+  string_codes( Zx,  [ Co2 ] ), 
+  write( "<div class=\"tag_operator\">" ) ,    write( Zx ),
+  write( "</div>" ) ,  
+  
+  Parenthesis_level2 is Parenthesis_level + 1,
+  write_codes_metta_clause_htm( Codes  , Parenthesis_level2 ).
+  
+  
+write_codes_metta_clause_htm( [ Co | Codes ] , Parenthesis_level ):-   Co == 40, !,  
+  write( "<div class=\"tag_parenthesis"), write( Parenthesis_level ), write( "\">" ) , numspace( Parenthesis_level ),   write( "(" ),
+  write( "</div>" ) ,  Parenthesis_level2 is Parenthesis_level + 1,
+  write_codes_metta_clause_htm( Codes  , Parenthesis_level2 ).
+  
+write_codes_metta_clause_htm( [ Co | Codes ] , Parenthesis_level ):-   Co == 41, !, 
+  Parenthesis_level2 is Parenthesis_level - 1,
+  write( "<div class=\"tag_parenthesis"), write( Parenthesis_level2 ), write( "\">" ) , write( ") &nbsp " ),  write( "</div>" ) ,
+  write_codes_metta_clause_htm( Codes  , Parenthesis_level2 ).
+write_codes_metta_clause_htm( [ Co | Codes ] , Parenthesis_level ):-   Co == 10, !,  
+  write( "<br>"),   write_codes_metta_clause_htm( Codes  , Parenthesis_level ).
+
+write_codes_metta_clause_htm( [ H | Codes ], Plevel ):-  !,  string_codes( Zx,  [ H ] ), write( Zx ),  write_codes_metta_clause_htm( Codes , Plevel ).
+
+%  sub_string( Txt, Pos, Len, Aft, "(" ) , 
+%  sub_string( Txt, 0, Pos, _, Begin ), Y is Pos + Len,  
+%  sub_string( Txt, Y, Aft, 0, Rest_string ),  !,
+%  write( Begin ) , 
+  % write( "<div style=\"color:black; display: inline-block\">" ) ,  write( "(" ),  write( "</div>" ) , 
+  % write( "<div style=\"color:black; display: inline-block\">" ) ,  write( "(" ),  write( "</div>" ) , 
+%  write_line_with_tag_colors( Ext, Rest_string ).
+
+make_used_tag_bold( TxLine1, Zk , Cat2 ):-
+  string_lower( TxLine1, Txlow ) ,   string_lower( Zk, Zk_low ) , 
+  sub_string( Txlow , Sta, Le, Aft , Zk_low ),
+  concat( Zk, "", Zk2 ), concat( "<div class=\"tag_searched\">" , Zk2, C1 ), concat( C1, "</div>" , C2 ),
+  sub_string( TxLine1 , 0, Sta, _ , Begin ),
+  Y is Sta + Le,
+  sub_string( TxLine1 , Y, Aft, _ , Rest ),
+  string_concat( Begin, C2, Cat1 ),
+  string_concat( Cat1, Rest, Cat2 ), !.
+  
+  % str_replace_tag( TxLine1 , Zk, C2, Txtline2 ), !.
+
+make_used_tag_bold( Tx, _Zk , Tx ):-  !.
+
+  % write_line_with_tag_colors( '', " ajjahsgdfgfgf ffhhfh fhfhfhh ffhhf", "ffhh" ).
+  % % string_length( Zk, Lx ), Lx > 0,
+  % write( "<div style=\"color:black; display: inline-block\">" ) ,  
+write_line_with_tag_colors( Ext, Txt ):-  !,
+  string_codes( Txt, Codes ),
+  write_codes_with_tag_colors( Ext, Codes ).
+
+% write_line_with_tag_colors( _Ext, Txt ):- write( Txt ). 
 
 %----
 write_codes_with_tag_colors( _Ext, [] ):-!.
@@ -1579,7 +1691,11 @@ search_prolog_files( Tp, _Dk, Zk, MdfKeyaft, Is_mk_update, Xfi , Isleading ):-
   write( "Consulted\n" ), write( Xfi ), nl,  write( "\n<br> &nbsp <br> \n" ),
   read_all_singularity_files( is_octet, Tp, Zk, only_copy_files, Is_mk_update, 'dummy_001', 0 , Isleading ),
   read_all_singularity_files( is_octet, Tp, Zk, only_copy_files, Is_mk_update, 'dummy_001', 1, Isleading ).
+<<<<<<< HEAD
 search_prolog_files( _Tp, _Dk, _Zk, _MdfKeyaft, _Is_mk_update, _Xfi , _Isleading ):- !.
+=======
+
+>>>>>>> d3628bb (Update analyse to a Table and after CSV)
 %--
        % assert( singularity_src_dir_perform( '../../tests/baseline_compat/' ) ),
         %  assert( singularity_src_dir_perform( '../../tests/' ) ),
@@ -1589,7 +1705,13 @@ search_metta_files( Tp, _Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, Isleading ):-
   retractall( chercher_a( _ ) ), assert( chercher_a( "assertEqual" ) ),
   retractall( current_file_extension( _ ) ), assert( current_file_extension( '.metta' ) ),
   retractall( singularity_src_dir_perform( _ ) ),  
+<<<<<<< HEAD
        assert( singularity_src_dir_perform( Sdir ) ),
+=======
+  
+%    assert( singularity_src_dir_perform( '../../tests/baseline_compat/hyperon-mettalog_sanity/' ) ),
+      assert( singularity_src_dir_perform( '../../tests/baseline_compat/' ) ),
+>>>>>>> d3628bb (Update analyse to a Table and after CSV)
   singularity_src_dir_perform( Dirx_zz_2 ),  get_all_singularity_files( Tp, MdfKeyaft, Dirx_zz_2 ),   sleep(2),
   write(" start read files \n"),  write("\n<br> &nbsp <br> \n"),
   retractall( dir_level( _, _, _, _, _, _, _, _, _, _) ),   retractall( file_level(_, _, _, _, _, _, _, _, _, _, _) ),
@@ -1597,6 +1719,7 @@ search_metta_files( Tp, _Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, Isleading ):-
   write( "Consulted\n" ), write( Xfi ), nl,  write( "\n<br> &nbsp <br> \n" ),
   read_all_singularity_files( is_octet, Tp, Zk, only_copy_files, Is_mk_update, Dirx_zz_2, 0 , Isleading),
   read_all_singularity_files( is_octet, Tp, Zk, only_copy_files, Is_mk_update, Dirx_zz_2, 1 , Isleading).
+<<<<<<< HEAD
 search_metta_files( _Tp, _Dk, _Zk, _MdfKeyaft, _Is_mk_update, _Xfi, _Isleading ):- !.
 
 search_metta_files_else_where( Tp, _Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, _Isleading ):-
@@ -1618,14 +1741,22 @@ search_metta_files_else_where( _Tp, _Dk, _Zk, _MdfKeyaft, _Is_mk_update, _Xfi, _
 
 search_metta_files_std_lib( Tp, _Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, _Isleading ):-
   read_files_dir( 'metta_std_lib_dir',  Sdir ),  !,
+=======
+
+search_metta_files_std_lib( Tp, _Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, _Isleading ):-
+>>>>>>> d3628bb (Update analyse to a Table and after CSV)
   retractall( chercher_a( _ ) ), assert( chercher_a( "assertEqual" ) ),
   retractall( current_file_extension( _ ) ), assert( current_file_extension( '.metta' ) ),
   retractall( singularity_src_dir_perform( _ ) ),  
   % canary
 %  assert( singularity_src_dir_perform( '../../tests/extended_compat/metta-examples/' ) ),
+<<<<<<< HEAD
   
   % assert( singularity_src_dir_perform( '../canary/' ) ),
   assert( singularity_src_dir_perform( Sdir ) ),
+=======
+  assert( singularity_src_dir_perform( '../canary/' ) ),
+>>>>>>> d3628bb (Update analyse to a Table and after CSV)
   singularity_src_dir_perform( Dirx_zz_2 ),  get_all_singularity_files( Tp, MdfKeyaft, Dirx_zz_2 ),   sleep(2),
   write(" start read files search_metta_files_std_lib \n"),  write("\n<br> &nbsp <br> \n"),
   retractall( dir_level( _, _, _, _, _, _, _, _, _, _) ),   retractall( file_level(_, _, _, _, _, _, _, _, _, _, _) ),
@@ -1633,7 +1764,27 @@ search_metta_files_std_lib( Tp, _Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, _Isleadin
   write( "Consulted\n" ), write( Xfi ), nl,  write( "\n<br> &nbsp <br> \n" ),
   read_all_singularity_files( is_octet, Tp, Zk, only_copy_files, Is_mk_update, Dirx_zz_2, 0 , metta_std_lib ),
   read_all_singularity_files( is_octet, Tp, Zk, only_copy_files, Is_mk_update, Dirx_zz_2, 1 , metta_std_lib ).
+<<<<<<< HEAD
 search_metta_files_std_lib( _Tp, _Dk, _Zk, _MdfKeyaft, _Is_mk_update, _Xfi, _Isleading ):- !.
+=======
+
+
+
+
+search_metta_files_else_where( Tp, _Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, _Isleading ):-
+  retractall( chercher_a( _ ) ), assert( chercher_a( "assertEqual" ) ),
+  retractall( current_file_extension( _ ) ), assert( current_file_extension( '.metta' ) ),
+  retractall( singularity_src_dir_perform( _ ) ),  
+  assert( singularity_src_dir_perform( '../../tests/extended_compat/metta-examples/' ) ),
+  singularity_src_dir_perform( Dirx_zz_2 ),  get_all_singularity_files( Tp, MdfKeyaft, Dirx_zz_2 ),   sleep(2),
+  write(" start read files \n"),  write("\n<br> &nbsp <br> \n"),
+  retractall( dir_level( _, _, _, _, _, _, _, _, _, _) ),   retractall( file_level(_, _, _, _, _, _, _, _, _, _, _) ),
+  consult( Xfi ), 
+  write( "Consulted\n" ), write( Xfi ), nl,  write( "\n<br> &nbsp <br> \n" ),
+  read_all_singularity_files( is_octet, Tp, Zk, only_copy_files, Is_mk_update, Dirx_zz_2, 0 , metta_else_where ),
+  read_all_singularity_files( is_octet, Tp, Zk, only_copy_files, Is_mk_update, Dirx_zz_2, 1 , metta_else_where ).
+
+>>>>>>> d3628bb (Update analyse to a Table and after CSV)
 
 
 
@@ -1646,6 +1797,7 @@ search_metta_files_std_lib( _Tp, _Dk, _Zk, _MdfKeyaft, _Is_mk_update, _Xfi, _Isl
 
 
 search_metta_files2( Tp, _Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, Isleading ):-
+<<<<<<< HEAD
   read_files_dir( 'examples_source_dir',  Sdir ),  !,
   retractall( chercher_a( _ ) ), assert( chercher_a( "assertEqual" ) ),
   retractall( current_file_extension( _ ) ), assert( current_file_extension( '.metta' ) ),
@@ -1653,6 +1805,12 @@ search_metta_files2( Tp, _Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, Isleading ):-
   
   % assert( singularity_src_dir_perform( '../../../metta-examples-main/' ) ),
   assert( singularity_src_dir_perform( Sdir ) ),
+=======
+  retractall( chercher_a( _ ) ), assert( chercher_a( "assertEqual" ) ),
+  retractall( current_file_extension( _ ) ), assert( current_file_extension( '.metta' ) ),
+  retractall( singularity_src_dir_perform( _ ) ),  
+  assert( singularity_src_dir_perform( '../../../metta-examples-main/' ) ),
+>>>>>>> d3628bb (Update analyse to a Table and after CSV)
   singularity_src_dir_perform( Dirx_zz_2 ),  get_all_singularity_files( Tp, MdfKeyaft, Dirx_zz_2 ),   sleep(2),
   write(" start read files \n"),  write("\n<br> &nbsp <br> \n"),
   retractall( dir_level( _, _, _, _, _, _, _, _, _, _) ),   retractall( file_level(_, _, _, _, _, _, _, _, _, _, _) ),
@@ -1660,7 +1818,11 @@ search_metta_files2( Tp, _Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, Isleading ):-
   write( "Consulted\n" ), write( Xfi ), nl,  write( "\n<br> &nbsp <br> \n" ),
   read_all_singularity_files( is_octet, Tp, Zk, only_copy_files, Is_mk_update, Dirx_zz_2, 0 , Isleading),
   read_all_singularity_files( is_octet, Tp, Zk, only_copy_files, Is_mk_update, Dirx_zz_2, 1 , Isleading).
+<<<<<<< HEAD
 search_metta_files2( _Tp, _Dk, _Zk, _MdfKeyaft, _Is_mk_update, _Xfi, _Isleading ):- !.
+=======
+
+>>>>>>> d3628bb (Update analyse to a Table and after CSV)
 
  
 
@@ -1680,7 +1842,10 @@ search_metta_files_hyperon( Tp, _Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, Isleading
   write( "Consulted\n" ), write( Xfi ), nl,  write( "\n<br> &nbsp <br> \n" ),
   read_all_singularity_files( is_octet, Tp, Zk, only_copy_files, Is_mk_update, Dirx_zz_3, 0 , Isleading),
   read_all_singularity_files( is_octet, Tp, Zk, only_copy_files, Is_mk_update, Dirx_zz_3, 1 , Isleading).
+<<<<<<< HEAD
 search_metta_files_hyperon( _Tp, _Dk, _Zk, _MdfKeyaft, _Is_mk_update, _Xfi, _Isleading ):- !.
+=======
+>>>>>>> d3628bb (Update analyse to a Table and after CSV)
 
 
 search_python_files_hyperon( Tp, _Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, Isleading ):-
@@ -1704,9 +1869,13 @@ search_rust_files_hyperon( Tp, _Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, Isleading 
   read_files_dir( 'hyperon_source_dir',  Sdir ),  !,
   retractall( chercher_a( _ ) ), assert( chercher_a( "assertEqual" ) ),
   retractall( current_file_extension( _ ) ), assert( current_file_extension( '.rs' ) ),
+<<<<<<< HEAD
   retractall( singularity_src_dir_perform( _ ) ),  
 	 % assert( singularity_src_dir_perform( '../../../hyperon-experimental/lib/src/' ) ),
 	 assert( singularity_src_dir_perform( Sdir ) ),
+=======
+  retractall( singularity_src_dir_perform( _ ) ),  assert( singularity_src_dir_perform( '../../../hyperon-experimental/lib/src/' ) ),
+>>>>>>> d3628bb (Update analyse to a Table and after CSV)
   singularity_src_dir_perform( Dirx_zz_5 ),  get_all_singularity_files( Tp, MdfKeyaft, Dirx_zz_5 ),   sleep(2),
   write(" start read files \n"),  write("\n<br> &nbsp <br> \n"),
   retractall( dir_level( _, _, _, _, _, _, _, _, _, _) ),   retractall( file_level(_, _, _, _, _, _, _, _, _, _, _) ),
@@ -1714,6 +1883,10 @@ search_rust_files_hyperon( Tp, _Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, Isleading 
   write( "Consulted\n" ), write( Xfi ), nl,  write( "\n<br> &nbsp <br> \n" ),
 %  read_all_singularity_files( is_octet, Tp, Zk, only_copy_files, Is_mk_update, Dirx_zz_5, 0 , Isleading),
 %  read_all_singularity_files( is_octet, Tp, Zk, only_copy_files, Is_mk_update, Dirx_zz_5, 1 , Isleading).
+<<<<<<< HEAD
+=======
+
+>>>>>>> d3628bb (Update analyse to a Table and after CSV)
   read_all_singularity_files( is_utf8, Tp, Zk, only_copy_files, Is_mk_update, Dirx_zz_5, 0 , Isleading),
   read_all_singularity_files( is_utf8, Tp, Zk, only_copy_files, Is_mk_update, Dirx_zz_5, 1 , Isleading).
 search_rust_files_hyperon( _Tp, _Dk, _Zk, _MdfKeyaft, _Is_mk_update, _Xfi, _Isleading ):- !.
@@ -1745,6 +1918,7 @@ short_code_metta( _Inc_Metta, 'notinc' ):-!.
 %---
 
 also_search_metta_files( include_metta_files , Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi ):- !,
+<<<<<<< HEAD
   
   % TEMP
   write( "Phase- metta STDLIB files" ), nl, 
@@ -1758,6 +1932,17 @@ also_search_metta_files( include_metta_files , Tp, Dk, Zk, MdfKeyaft, Is_mk_upda
   search_metta_files2( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, is_not_leading ),  
   
   
+=======
+  search_metta_files( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, is_not_leading ),
+  % TEMP
+  write( "Phase- metta STDLIB files" ), nl, 
+  search_metta_files_std_lib( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, is_not_leading ), 
+  
+  % TEMP
+  search_metta_files2( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, is_not_leading ),  
+  search_metta_files_else_where( Tp, Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, is_not_leading ), 
+    
+>>>>>>> d3628bb (Update analyse to a Table and after CSV)
   !.
 %  search_metta_files_else_where( Tp, _Dk, Zk, MdfKeyaft, Is_mk_update, Xfi, _Isleading ),
   
@@ -1819,7 +2004,11 @@ search_all_files_with_leading( 'rust_leading' , Tp, Dk, Zk, MdfKeyaft, Is_mk_upd
 
 reset_htm( _Display_per_file_or_per_tag, _LeadingTag, _Inc_Metta, Htmfile ):-
   tell( Htmfile ),
+<<<<<<< HEAD
   get_time( TimeStamp ),
+=======
+  get_time(TimeStamp),
+>>>>>>> d3628bb (Update analyse to a Table and after CSV)
   write("\n<html> <head> \n"),
   write("\n<script> \n"),
   write("function open_div(xid){ document.getElementById(xid).style.display = 'block'; }\n"),
@@ -1932,8 +2121,11 @@ get_tag_properties( _El, "", "" ):-!.
 
 write_cell( Tag ):-    write( "<td>" ),      write( Tag ),     write( "</td>" ), !.
 
+<<<<<<< HEAD
 write_cell_pre( Tag ):-    write( "<td> <pre>" ),      write( Tag ),     write( "</pre> </td>" ), !.
 
+=======
+>>>>>>> d3628bb (Update analyse to a Table and after CSV)
 write_head( Tag ):-    write( "<th style=\"text-align:left\">" ),      write( Tag ),     write( "</th>" ), !.
 
 
@@ -1967,6 +2159,7 @@ set_tags_for_table():- !.
 
 
 find_has_metta_doc( El_tag , "has @doc" ):- eval_tag( metta_tag_std_lib, _, El_tag , _F, _Str, _ ),!.
+<<<<<<< HEAD
 find_has_metta_doc( _El_tag , "<b> NO </b> @doc" ):- !.
 
 find_has_metta_type_doc( El_tag , "has type @doc" , Str ):- eval_tag( metta_tag_std_lib, _, El_tag , _F, Str, _ ), 
@@ -1975,10 +2168,15 @@ find_has_metta_type_doc( El_tag , "has type @doc" , Str ):- eval_tag( metta_tag_
 find_has_metta_type_doc( _El_tag , "<b> No type</b> @doc" , "<b> No type</b> @doc" ):- !.
 
 %  metta_function_declaration
+=======
+find_has_metta_doc( _El_tag , "<b> no </b> @doc" ):- !.
+
+>>>>>>> d3628bb (Update analyse to a Table and after CSV)
 
 % is_metta
 %---
 % 'rust'
+<<<<<<< HEAD
 show_read_files_dir():-
  read_files_dir( Tp, Dir ), write( Tp ), write(" <b>"), write( Dir ), write(" </b> <br>"), nl, fail, !.
 show_read_files_dir():-  write("<br> &nbsp; <br> "), !.
@@ -2044,6 +2242,40 @@ make_rust_prolog_csv():-
 make_rust_prolog_csv():- write( "" ), !.
 
 
+=======
+make_rust_prolog_table():-  write( "<table border=1 style=\"border: 1px solid black; min-width:600px; max-width:900px; margin: auto\">" ),
+  
+    retractall( tel(_)) , assert( tel( 0 ) ),
+  % eval_tag( 'rust', Linum, Taglow, F , Sline , Ari)
+  % eval_tag( 'rust', Linum, Taglow, F , Sline , Ari)
+    write( "<tr>" ), 
+    write_head( " " ), write_head( "function" ), write_head( "Rust" ), write_head( "Prolog" ),  
+	write_head( "Occurs in metta-files" ),	write_head( "Has metta-files" ),
+	write_head( "Has @doc" ),
+	write_head( "Num of metta-test" ),	write_head( "Has metta-testf" ),
+    write( "</tr>" ),
+    tag_for_table( El_tag ),
+    is_metta_function( El_tag ),
+    incr( Count ), number_string( Count, Sx ),
+    get_tag_properties( El_tag, Hasrust, Hasprolog ),
+	get_tag_occurences( El_tag , _Num_oc, Occurences_string , Files_list_s ),
+    %only_small_number_of_occurences_display( Num_oc, Files_list_s0, Files_list_s ),
+
+	get_tag_occurences_test( El_tag , _Num_oc2, Occurences_string2 , Files_list_s2 ),
+    %only_small_number_of_occurences_display( Num_oc2, Files_list_s02, Files_list_s2 ),
+    find_has_metta_doc( El_tag , Has_doc_s ),
+%   find_metta_test_occurences( El_tag, Numberof_s, _Files_list ),
+    write( "<tr>" ), write_cell( Sx ),
+    write_cell( El_tag ), write_cell( Hasrust ), write_cell( Hasprolog ),  
+	write_cell( Occurences_string ),  write_cell( Files_list_s ),
+	write_cell( Has_doc_s ),
+	write_cell( Occurences_string2 ),  write_cell( Files_list_s2 ),
+    write( "</tr>" ), fail, !.
+
+make_rust_prolog_table():- write( "</table>" ), !.
+
+
+>>>>>>> d3628bb (Update analyse to a Table and after CSV)
 
 memory_data_to_file( Fn ):-  tell( Fn ),
  eval_tag( A , B , C , D , E, F ), write_term( eval_tag( A , B , C , D , E, F ), [quoted(true)] ), nl, fail.
@@ -2115,9 +2347,13 @@ count_tags_files_occurences_test():- !.
 % eval_tag(metta_tag_std_lib,1348,"format-args",'../canary/stdlib_me
 % eval_tag(metta_example,58,"let*",'../../tests/baseline_compat/hyp
 
+<<<<<<< HEAD
 % create_view_table().
 create_view_table():- !,
  start_analyse( 'display_per_tag', 'rust_leading', 0, '', is_dummy_tag, include_metta_files ).
+=======
+
+>>>>>>> d3628bb (Update analyse to a Table and after CSV)
 
 
 %---
@@ -2159,6 +2395,11 @@ start_analyse_metta( Display_per_file_or_per_tag, LeadingTag, Tp, MdfKeyaft, Is_
  % show_identified_eval_secondary_tags(), 
  % display_tags_not_found(),
   make_rust_prolog_table(),
+<<<<<<< HEAD
+=======
+
+  retractall( eval_tag_found( _ , _ , _, _, _ ,_) ),
+>>>>>>> d3628bb (Update analyse to a Table and after CSV)
   told(),
 
   tell( 'result/prolog_rust.csv' ),  make_rust_prolog_csv(),  told(),
@@ -2294,6 +2535,7 @@ is_metta_function( Tag ):-  string_length( Tag, Lex ), Lex > 3,  Tag \= "eval", 
 
 % % { assert_equal_to_result_op.clone() });
 rust_detect_tag( "regex(r\"", "\"" , "{", ".clone(" ):- !.
+<<<<<<< HEAD
  
 rust_metta_tag( "assert_eq!(", "" ):- !.
 
@@ -2307,15 +2549,27 @@ metta_file_tag_find( "(", " " ):- !.
 metta_file_tag( "(", "" ):- !.
 metta_file_tag_til_space( "(", " " ):- !.
 
+=======
+python_detect_tag( "metta.run('!(", " " ):- !.
+metta_interp_tag( "'", "'" ):- !.
+metta_ontology_tag( "'", "'" ):- !.
+metta_file_tag_find( "(", " " ):- !.
+metta_file_tag( "(", "" ):- !.
+metta_file_tag_til_space( "(", " " ):- !.
+
+>>>>>>> d3628bb (Update analyse to a Table and after CSV)
 metta_function_declaration( "(: ", " " ):- !.
 
 metta_docfile_tag( "(@doc ", "" ):- !.
 
 
+<<<<<<< HEAD
  
 
 
 
+=======
+>>>>>>> d3628bb (Update analyse to a Table and after CSV)
 % README HERE:  USAGE: 
 % first consult the prolog file with this :
 %  [metta_analyse].

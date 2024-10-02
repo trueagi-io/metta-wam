@@ -1,0 +1,59 @@
+%  EVAL LAZY
+% =================================================================
+% =================================================================
+% =================================================================
+
+
+is_progn(C):- var(C),!,fail.
+is_progn('chain-body').
+is_progn('progn').
+
+eval_20(Eq,RetType,Depth,Self,[Comma,X  ],Res):- is_progn(Comma),!, eval_args(Eq,RetType,Depth,Self,X,Res).
+%eval_20(Eq,RetType,Depth,Self,[Comma,X,Y],Res):- is_progn(Comma),!, eval_args(Eq,_,Depth,Self,X,_),
+%  eval_args(Eq,RetType,Depth,Self,Y,Res).
+eval_20(Eq,RetType,Depth,Self,[Comma,X|Y],Res):- is_progn(Comma),!, eval_args(Eq,_,Depth,Self,X,_),
+  eval_args(Eq,RetType,Depth,Self,[Comma|Y],Res).
+
+eval_20(Eq,RetType,Depth,Self,['chain',Atom,Var|Y],Res):-  !,  eval_args(Eq,_RetType,Depth,Self,Atom,R),
+  Var = R, eval_args(Eq,RetType,Depth,Self,['chain-body'|Y],Res).
+
+%eval_20(Eq,RetType,Depth,Self,['chain-body',X],Res):- !,eval_args(Eq,RetType,Depth,Self,X,Res).
+%eval_20(Eq,RetType,Depth,Self,['chain-body',X|Y],Res):-  !, eval_args(Eq,RetType,Depth,Self,X,_), eval_args(Eq,RetType,Depth,Self,['chain-body'|Y],Res).
+
+eval_20(Eq,RetType,Depth,Self,['eval',X],Res):- !,
+   eval_args(Eq,RetType,Depth,Self,X, Res).
+
+
+eval_20(Eq,RetType,Depth,Self,['eval-for',Type,X],Res):- !,
+    ignore(Type=RetType),
+    eval_args(Eq,Type,Depth,Self,X, Res).
+
+eval_20(Eq,RetType,Depth,Self,['eval-for',_Why,Type,X],Res):- !,
+    ignore(Type=RetType),
+    eval_args(Eq,Type,Depth,Self,X, Res).
+
+
+
+/* Function takes list of atoms (first argument), variable (second argument) and filter predicate (third argument) and returns list with items which passed filter.
+     E.g. (filter-atom (1 2 3 4) $v (eval (> $v 2))) will give (3 4)") */
+
+eval_20(Eq,RetType,Depth,Self,['filter-atom',List,Var,Pred],Res):- !,
+   call_filter_atom(Eq,RetType,Depth,Self,List,Var,Pred,Res).
+
+call_filter_atom(_Eq,_RetType,_Depth,_Self,[],_Var,_Pred1,[]):-!.
+call_filter_atom(Eq,RetType,Depth,Self,[E|List],Var,Pred,Out):-
+    (( \+ \+ (E = Var, eval_args_true(Eq,RetType,Depth,Self,Pred))) -> Out = [E|Res] ; Out = Res),
+    call_filter_atom(Eq,RetType,Depth,Self,List,Var,Pred,Res).
+
+% "Function takes list of atoms (first argument), variable to be used inside (second variable) and an expression which will be evaluated for each atom in list (third argument). Expression should contain variable. So e.g. (map-atom (1 2 3 4) $v (eval (+ $v 1))) will give (2 3 4 5)"
+eval_20(Eq,RetType,Depth,Self,['map-atom',List,V,Eval],Res):- !,
+   call_map_atom(Eq,RetType,Depth,Self,List,V,Eval,Res).
+
+call_map_atom(Eq,RetType,Depth,Self,[E|List],V,Eval,[CR|Res]):- !, faster_replace(V,E,Eval,CEval),
+    eval_args(Eq,RetType,Depth,Self,CEval,CR),
+    call_map_atom(Eq,RetType,Depth,Self,List,V,Eval,Res).
+call_map_atom(_Eq,_RetType,_Depth,_Self,[],_V,_Pred,[]):-!.
+
+% which is faster?
+%faster_replace(B,E,Eval,CEval):- subst0011a(B,E,Eva2,CEval).
+faster_replace(B,E,Eval,CEval):-  copy_term(B+Eval,CB+CEval), E = CB.

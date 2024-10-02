@@ -1,0 +1,79 @@
+:- multifile(color_g_mesg/2).
+
+self_eval0(X):- \+ callable(X),!.
+self_eval0(X):- py_is_py(X),!.
+%self_eval0(X):- py_type(X,List), List\==list,!.
+self_eval0(X):- is_valid_nb_state(X),!.
+%self_eval0(X):- string(X),!.
+%self_eval0(X):- number(X),!.
+%self_eval0([]).
+self_eval0(X):- is_metta_declaration(X),!.
+self_eval0([_,Ar,_]):- (Ar=='-->';Ar=='<->';Ar=='<--'),!.
+self_eval0([F|X]):- !, is_list(X),length(X,Len),!,nonvar(F), is_self_eval_l_fa(F,Len),!.
+self_eval0(X):- typed_list(X,_,_),!.
+%self_eval0(X):- compound(X),!.
+%self_eval0(X):- is_ref(X),!,fail.
+self_eval0('True'). self_eval0('False'). % self_eval0('F').
+self_eval0('Empty').
+self_eval0([]).
+self_eval0('%Undefined%').
+self_eval0(X):- atom(X),!, \+ nb_bound(X,_),!.
+
+nb_bound(Name,X):- atom(Name), atom_concat('&', _, Name),
+  nb_current(Name, X).
+
+
+coerce(Type,Value,Result):- nonvar(Value),Value=[Echo|EValue], Echo == echo, EValue = [RValue],!,coerce(Type,RValue,Result).
+coerce(Type,Value,Result):- var(Type), !, Value=Result, freeze(Type,coerce(Type,Value,Result)).
+coerce('Atom',Value,Result):- !, Value=Result.
+coerce('Bool',Value,Result):- var(Value), !, Value=Result, freeze(Value,coerce('Bool',Value,Result)).
+coerce('Bool',Value,Result):- is_list(Value),!,as_tf(call_true(Value),Result),
+set_list_value(Value,Result).
+
+set_list_value(Value,Result):- nb_setarg(1,Value,echo),nb_setarg(1,Value,[Result]).
+
+%is_self_eval_l_fa('S',1). % cheat to comment
+
+% these should get uncomented with a flag
+%is_self_eval_l_fa(':',2).
+% is_self_eval_l_fa('=',2).
+% eval_20(Eq,RetType,Depth,Self,['quote',Eval],RetVal):- !, Eval = RetVal, check_returnval(Eq,RetType,RetVal).
+is_self_eval_l_fa('quote',_).
+is_self_eval_l_fa('Error',_).
+is_self_eval_l_fa('{...}',_).
+is_self_eval_l_fa('[...]',_).
+
+self_eval(X):- notrace(self_eval0(X)).
+
+:-  set_prolog_flag(access_level,system).
+hyde(F/A):- functor(P,F,A), redefine_system_predicate(P),'$hide'(F/A), '$iso'(F/A).
+:- 'hyde'(option_else/2).
+:- 'hyde'(atom/1).
+:- 'hyde'(quietly/1).
+%:- 'hyde'(fake_notrace/1).
+:- 'hyde'(var/1).
+:- 'hyde'(is_list/1).
+:- 'hyde'(copy_term/2).
+:- 'hyde'(nonvar/1).
+:- 'hyde'(quietly/1).
+%:- 'hyde'(option_value/2).
+
+
+is_metta_declaration([F|_]):- F == '->',!.
+is_metta_declaration([F,H,_|T]):- T ==[], is_metta_declaration_f(F,H).
+
+is_metta_declaration_f(F,H):- F == ':<', !, nonvar(H).
+is_metta_declaration_f(F,H):- F == ':>', !, nonvar(H).
+is_metta_declaration_f(F,H):- F == '=', !, is_list(H),  \+ (current_self(Space), is_user_defined_head_f(Space,F)).
+
+% is_metta_declaration([F|T]):- is_list(T), is_user_defined_head([F]),!.
+
+% Sets the current self space to '&self'. This is likely used to track the current context or scope during the evaluation of Metta code.
+:- nb_setval(self_space, '&self').
+
+%! eval_to(+X,+Y) is semidet.
+% checks if X evals to Y
+evals_to(XX,Y):- Y=@=XX,!.
+evals_to(XX,Y):- Y=='True',!, is_True(XX),!.
+
+%current_self(Space):- nb_current(self_space,Space).

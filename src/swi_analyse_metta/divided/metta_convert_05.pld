@@ -1,0 +1,80 @@
+sexpr_s2p_pre_list(Fn,Nth,[S0|STERM0],[S|STERM]):-
+ (is_list(S0)->sexpr_s2p(Fn,Nth,S0,S);sexpr_s2p_pre_list(Fn,Nth,S0,S)),
+ sexpr_s2p_pre_list(Fn,Nth,STERM0,STERM),!.
+sexpr_s2p_pre_list(_Fn,_,STERM,STERM).
+
+
+
+
+% p2m/2 is a translation utility to convert Prolog constructs to MeTTa constructs.
+% It handles a variety of cases, including different types of compound terms,
+% control structures, and predicate definitions.
+% The first argument is the input in Prolog syntax,
+% and the second argument is the output converted to MeTTa syntax.
+
+p2m(I):-forall(
+  no_repeats(current_predicate(I/A)),
+   (functor(P,I,A),
+   forall(clause(P,Body),
+     (numbervars(P+Body,0,_,[]),
+     write_src(=(P,'call!'(Body))))))).
+
+
+
+p2m(I,O):- p2m([progn],I,O).
+
+p2m(_OC,NC, NC) :- var(NC), !.  % If NC is a variable, do not translate.
+p2m(_OC,NC, NC) :- is_ftVar(NC), !.  % If NC is a free term variable, do not translate.
+
+p2m(OC,[H|T],'::'(L)):- is_list([H|T]),maplist(p2m(OC),[H|T],L).
+p2m(OC,[H|T], 'Cons'(OH,OT)):- p2m(OC,H, OH), p2m(OC,T, OT).
+
+
+% Conversion for any atomic term
+p2m(_OC,A, A):- string(A),!.
+p2m(_OC,[], 'Nil'). % empty list
+p2m(_OC,[], 'Nil'). % empty list
+p2m(_OC,'[|]','Cons').
+p2m(_OC,!, ['set-det']).  % Translate the cut operation directly.
+p2m(_OC,!, '!').  % Translate the cut operation directly.
+p2m(_OC,false, 'False').
+p2m(_OC,true, 'True').  % Translate Prolog?s true to MeTTa?s True.
+p2m([progn|_],Atom,[O]):- atom(Atom),!,p2m([arg],Atom,O),!.
+p2m(_OC,( ';' ),'xor').
+p2m(_OC,( ',' ),'and2').
+%p2m(_OC,( ',' ),and).
+%p2m(_OC,( '\\+' ),unless).
+%p2m(_OC,( ':-' ),entailed_by).
+p2m(_OC,'=..','atom_2_list').
+p2m([progn|_], (fail), [empty]).  % Translate Prolog?s fail to MeTTa?s False.
+p2m(_OC,'atom','is-symbol').
+p2m(_OC,'atomic','symbolic').
+p2m(OC,ASymbolProc,O):- atom(ASymbolProc),
+    symbolic_list_concat(LS,'$',ASymbolProc),LS\==[],LS\=[_],!,
+    symbolic_list_concat(LS,'%',SymbolProc),into_hyphens(SymbolProc,O).
+p2m(OC,ASymbolProc,O):- atom(ASymbolProc),into_hyphens(ASymbolProc,O).
+p2m(_,A, H):- atom(A),into_hyphens(A,H),!.
+p2m(_OC,A, A):- atomic(A).
+p2m(_OC,NC,NC):- \+ compound(NC),!.
+
+
+p2m(_OC,NC,[F]):- compound_name_arity(NC,F,0),!.
+p2m(OC,M:I, O):- M==user,!, p2m(OC,I,O),!.
+p2m(OC,M:I, O):- M==user,!, p2m(OC,I,O),!.
+p2m(_OC,M:I, 'scoped'(N,O)):-  p2m(OC,M,N),p2m(I,O).
+% Conversion for lists
+p2m(OC,NC, OO) :-
+    % If NC is a list, map each element of the list from Prolog to MeTTa
+    is_list(NC),!,
+    maplist(p2m(OC), NC, OO).
+    p2m([progn|_], (!,fail), [empty]).  % Translate Prolog?s fail to MeTTa?s False.
+% p2m(_OC,fail, 'False').  % Translate Prolog?s fail to MeTTa?s False.
+% p2m(_OC,prolog, meTTa).  % Translate the atom prolog to meTTa.
+
+
+p2m([progn|_],A, [H]):- atom(A),into_hyphens(A,H),!.
+
+% Conversion for the negation as failure
+p2m(_OC,(\+ A), O):- !, p2m(_OC,naf(A), O).
+
+p2m(OC,(G,E),O):-  conjuncts_to_list((G,E),List),!,into_sequential(OC,List,O),!.

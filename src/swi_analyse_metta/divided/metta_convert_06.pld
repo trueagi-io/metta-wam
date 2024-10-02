@@ -1,0 +1,63 @@
+
+% Conversion for arithmetic evaluation
+%p2m(_OC,is(A, B), O):- !, p2m(_OC,eval(B, A), O).
+%p2m(_OC,is(V,Expr),let(V,Expr,'True')).
+p2m(_OC,(Head:-Body),O):- Body == true,!, O = (=(Head,'True')).
+p2m(_OC,(Head:-Body),O):- Body == fail,!, O = (=(Head,[empty])).
+p2m(OC,(Head:-Body),O):-
+   p2m(Head,H),conjuncts_to_list(Body,List),maplist(p2m([progn|OC]),List,SP),!,
+   O =  ['=',H|SP].
+
+p2m(OC,(:-Body),O):- !,
+   conjuncts_to_list(Body,List),into_sequential([progn|OC],List,SP),!, O= exec(SP).
+p2m(OC,( ?- Body),O):- !,
+   conjuncts_to_list(Body,List),into_sequential([progn|OC],List,SP),!, O= exec('?-'(SP)).
+
+%p2m(_OC,(Head:-Body),O):- conjuncts_to_list(Body,List),into_sequential(OC,List,SP),!,O=(=(Head,SP)).
+
+% Conversion for if-then-else constructs
+p2m(OC,(A->B;C),O):- !, p2m(OC,det_if_then_else(A,B,C),O).
+p2m(OC,(A;B),O):- !, p2m(OC,or(A,B),O).
+p2m(OC,(A*->B;C),O):- !, p2m(OC,if(A,B,C),O).
+p2m(OC,(A->B),O):- !, p2m(OC,det_if_then(A,B),O).
+p2m(OC,(A*->B),O):- !, p2m(OC,if(A,B),O).
+p2m(_OC,metta_defn(Eq,Self,H,B),'add-atom'(Self,[Eq,H,B])).
+p2m(_OC,metta_type,'get-type').
+p2m(_OC,metta_atom,'get-atoms').
+%p2m(_OC,get_metta_atom,'get-atoms').
+p2m(_OC,clause(H,B), ==([=,H,B],'get-atoms'('&self'))).
+p2m(_OC,assert(X),'add-atom'('&self',X)).
+p2m(_OC,assertz(X),'add-atom'('&self',X)).
+p2m(_OC,asserta(X),'add-atom'('&self',X)).
+p2m(_OC,retract(X),'remove-atom'('&self',X)).
+p2m(_OC,retractall(X),'remove-all-atoms'('&self',X)).
+% The catch-all case for the other compound terms.
+%p2m(_OC,I,O):- I=..[F|II],maplist(p2m,[F|II],OO),O=..OO.
+
+% It will break down compound terms into their functor and arguments and apply p2m recursively
+p2m(OC,I, O):-
+    compound(I),
+    I =.. [F|II], % univ operator to convert between a term and a list consisting of functor name and arguments
+    maplist(p2m([F|OC]), II, OO), % applying p2m recursively on each argument of the compound term
+    into_hyphens(F,FF),
+    O = [FF|OO]. % constructing the output term with the converted arguments
+
+
+% In the context of this conversion predicate, each branch of the p2m predicate
+% is handling a different type or structure of term, translating it into its
+% equivalent representation in another logic programming language named MeTTa.
+% The actual transformations are dependent on the correspondence between Prolog
+% constructs and MeTTa constructs, as defined by the specific implementations
+% of Prolog and MeTTa being used.
+prolog_to_metta(V, D) :-
+    % Perform the translation from Prolog to MeTTa
+    p2m([progn], V, D),!.
+
+
+% Define predicates to support the transformation from Prolog to MeTTa syntax
+% (Continuing the translation from Prolog to MeTTa syntax as per the given code)
+% Handle the case where the body is a conjunction of terms
+into_sequential(OC,Body, SP) :-
+    % Check if Body is not a list and convert conjunctions in Body to a list of conjuncts.
+    \+ is_list(Body),
+    conjuncts_to_list(Body, List),

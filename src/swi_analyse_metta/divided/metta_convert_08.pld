@@ -1,0 +1,66 @@
+      with_file_lists(Rel,P1, Dir).
+with_file_lists(Rel,P1, File) :-
+      symbol_contains(File, '*'),
+      expand_file_name(File, List),List\==[],  !,
+      maplist(with_wild_path(Fnicate), List).
+with_file_lists(Rel,P1, File) :-
+      exists_directory(File),
+      directory_file_path(File, '*.*sv', Wildcard),
+      expand_file_name(Wildcard, List), !,
+      maplist(Fnicate, List).
+*/
+
+
+
+with_file_lists(Rel,P1,Wildcard):-  atom(Wildcard),
+      \+ exists_file(Wildcard),
+    once(atom_contains(Wildcard,'*');atom_contains(Wildcard,'?');atom_contains(Wildcard,'|')),
+      expand_file_name(Wildcard, Files), Files\==[], !,
+      ignore(maplist(with_file_lists(Rel,P1),Files)).
+
+with_file_lists(Rel,P1,Wildcard):-  atom(Wildcard),
+    once(atom_contains(Wildcard,'*');atom_contains(Wildcard,'?');atom_contains(Wildcard,'|')),
+      \+ exists_file(Wildcard),
+      absolute_file_name(Wildcard,AbsWildcard,[relative_to(Rel)]),
+      \+ exists_file(AbsWildcard),
+      expand_file_name(AbsWildcard, Files), Files\==[], !,
+      ignore(maplist(with_file_lists(Rel,P1),Files)).
+
+/*
+with_file_lists(Rel,P1,Local):- (Local=='.';Local=='';Local=='*.pl'),Directory = Rel,
+    absolute_file_name(Directory,AbsDirectory,[relative_to(Rel),file_type(directory)]),
+    exists_directory(AbsDirectory),
+    findall(File,directory_source_files(AbsDirectory, File, [recursive(false),if(true)]),Files),
+    ignore(maplist(with_file_lists(Rel,P1),Files)),!.
+*/
+with_file_lists(Rel,P1,Local):- (Local=='**';Local=='**.pl'),
+    must_det_ll((absolute_file_name(Directory,AbsDirectory,[file_type(directory)]),
+    exists_directory(AbsDirectory))),
+    findall(File,directory_source_files(AbsDirectory, File, [recursive(true),if(true)]),Files),!,
+    ignore(maplist(with_file_lists(Rel,P1),Files)).
+
+
+with_file_lists(Rel,P1,Filename):-
+    symbolic_list_concat(['**',S|More],'/',Filename),
+    symbolic_list_concat([S|More],'/',Rest),
+    list_all_subdirectories(Rel, AllSubdirectories),!,
+    forall(member(SubDir,AllSubdirectories),with_file_lists(SubDir,P1,Rest)).
+
+with_file_lists(Rel,P1,Filename):-
+    symbolic_list_concat([WildDir,S|More],'/',Filename),
+    symbolic_list_concat([Rel,WildDir,''],'/',WildMaskDir),
+    expand_file_name(WildMaskDir, AllSubdirectories),
+    symbolic_list_concat([S|More],'/',Rest),!,
+    forall(member(SubDir,AllSubdirectories),with_file_lists(SubDir,P1,Rest)).
+
+
+
+with_file_lists(Rel,P1,FileSpec):- atomic(FileSpec),
+  absolute_file_name(FileSpec,AbsFile,[relative_to(Rel),access(read), file_errors(fail)]),
+  exists_file(AbsFile), !, ignore(call(P1,AbsFile)).
+
+with_file_lists(Rel,P1,Directory):- atomic(Directory),
+    absolute_file_name(Directory,AbsDirectory,[relative_to(Rel),access(read), file_errors(fail), file_type(directory)]),
+    exists_directory(AbsDirectory), !,
+  findall(File,directory_source_files(AbsDirectory, File, [recursive(true),if(true)]),Files),!,
+  ignore(maplist(with_file_lists(Rel,P1),Files)).

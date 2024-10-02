@@ -1,0 +1,65 @@
+   (is_True(TF) -> eval_args(Eq,RetType,Depth,Self,Then,Res) ;
+      (!, fail,Res = [],!)).
+
+eval_20(Eq,RetType,Depth,Self,['if',Cond,Then],Res):- !,
+   eval_args(Eq,'Bool',Depth,Self,Cond,TF),
+   (is_True(TF) -> eval_args(Eq,RetType,Depth,Self,Then,Res) ;
+      (!, fail,Res = [],!)).
+
+
+eval_20(Eq,RetType,_Dpth,_Slf,[_,Nothing],NothingO):-
+   'Nothing'==Nothing,!,do_expander(Eq,RetType,Nothing,NothingO).
+
+
+% =================================================================
+% =================================================================
+% =================================================================
+%  CONS/CAR/CDR
+% =================================================================
+% =================================================================
+% =================================================================
+
+
+
+into_pl_list(Var,Var):- var(Var),!.
+into_pl_list(Nil,[]):- Nil == 'Nil',!.
+into_pl_list([Cons,H,T],[HH|TT]):- Cons == 'Cons', !, into_pl_list(H,HH),into_pl_list(T,TT),!.
+into_pl_list(X,X).
+
+into_metta_cons(Var,Var):- var(Var),!.
+into_metta_cons([],'Nil'):-!.
+into_metta_cons([Cons, A, B ],['Cons', AA, BB]):- 'Cons'==Cons, no_cons_reduce, !,
+  into_metta_cons(A,AA), into_metta_cons(B,BB).
+into_metta_cons([H|T],['Cons',HH,TT]):- into_metta_cons(H,HH),into_metta_cons(T,TT),!.
+into_metta_cons(X,X).
+
+into_listoid(AtomC,Atom):- AtomC = [Cons,H,T],Cons=='Cons',!, Atom=[H,[T]].
+into_listoid(AtomC,Atom):- is_list(AtomC),!,Atom=AtomC.
+into_listoid(AtomC,Atom):- typed_list(AtomC,_,Atom),!.
+
+:- if( \+  current_predicate( typed_list / 3 )).
+typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_arguments(Cmpd,Type,[List|_]),is_list(List).
+:- endif.
+
+%eval_20(Eq,RetType,Depth,Self,['colapse'|List], Flat):- !, maplist(eval_args(Eq,RetType,Depth,Self),List,Res),flatten(Res,Flat).
+
+%eval_20(Eq,RetType,Depth,Self,['flatten'|List], Flat):- !, maplist(eval_args(Eq,RetType,Depth,Self),List,Res),flatten(Res,Flat).
+
+
+eval_20(Eq,RetType,_Dpth,_Slf,['car-atom',Atom],CAR_Y):- !, Atom=[CAR|_],!,do_expander(Eq,RetType,CAR,CAR_Y).
+eval_20(Eq,RetType,_Dpth,_Slf,['cdr-atom',Atom],CDR_Y):- !, Atom=[_|CDR],!,do_expander(Eq,RetType,CDR,CDR_Y).
+
+eval_20(Eq,RetType,Depth,Self,['Cons', A, B ],['Cons', AA, BB]):- no_cons_reduce, !,
+  eval_args(Eq,RetType,Depth,Self,A,AA), eval_args(Eq,RetType,Depth,Self,B,BB).
+
+%eval_20(_Eq,_RetType,Depth,Self,['::'|PL],Prolog):-  maplist(as_prolog(Depth,Self),PL,Prolog),!.
+%eval_20(_Eq,_RetType,Depth,Self,['@'|PL],Prolog):- as_prolog(Depth,Self,['@'|PL],Prolog),!.
+
+eval_20(Eq,RetType,Depth,Self,['Cons', A, B ],[AA|BB]):- \+ no_cons_reduce, !,
+   eval_args(Eq,RetType,Depth,Self,A,AA), eval_args(Eq,RetType,Depth,Self,B,BB).
+
+
+
+% =================================================================
+% =================================================================
+% =================================================================

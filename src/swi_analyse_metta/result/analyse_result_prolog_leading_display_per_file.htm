@@ -1,0 +1,1945 @@
+
+<html> <head> 
+
+<script> 
+function open_div(xid){ document.getElementById(xid).style.display = 'block'; }
+function close_div(xid){ document.getElementById(xid).style.display = 'none'; }
+
+</script> 
+
+</head> 
+
+<body style="font-family: arial; font-size: 12pt; background-color: #E5E5E5"> 
+ <H2> 
+include_metta_files </H2> 
+ <H2> 
+display_per_file </H2> 
+ <H2> 
+prolog_leading </H2> 
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> metta_eval.pl</i></b> <b> &nbsp &nbsp &nbsp canary</b> &nbsp &nbsp &nbsp ..
+../canary
+<a onclick="prompt('copy path','../canary/metta_eval.pl');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('..canarymetta_eval.pl')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('..canarymetta_eval.pl')" style="cursor:pointer">  Close </a>
+
+<div id="..canarymetta_eval.pl" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D3D4FF"> eval_20(_Eq,_RetType,_Depth,_Self,['<b>call-string!</b>',Str],NoResult):- !,'call-string!'(Str,NoResult). call-string!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,_Dpth,_Slf,['<b>make_list</b>',List],MettaList):- !, into_metta_cons(List,MettaList),check_returnval(Eq,RetType,MettaList). make_list   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20( Eq, RetType, Depth, Self, [ '<b>parse</b>' , L ] , Exp ):-  parse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20( Eq, RetType, Depth, Self, [ '<b>repr</b>' , L ] , Sxx ):-  repr   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>union</b>',Eval1,Eval2],RetVal):- !, union   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>intersection</b>',Eval1,Eval2],RetVal):- !, intersection   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,_Dpth,_Slf,['<b>py-list</b>',Atom_list],CDR_Y):-  py-list   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>subtraction</b>',Eval1,Eval2],RetVal):- !, subtraction   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>unique</b>',Eval],RetVal):- !, unique   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,OuterRetType,Depth,Self,['<b>range</b>',A,B],OO):- fail, (is_list(A);is_list(B)), range   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,_ListOfRetType,Depth,Self,['<b>TupleConcat</b>',A,B],OO):- fail, !, TupleConcat   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(_Eq,_RetType,_Depth,_Self,['<b>compile!</b>',Space],Res):- !, compile!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(_Eq,_RetType,_Depth,_Self,['<b>compile-space!</b>',Space],Res):- !, compile-space!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> eval_20(_Eq,_RetType,_Dpth,_Slf,['<b>function-arity</b>',F],A):- !, function-arity   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> eval_20(_Eq,_RetType,_Dpth,_Slf,['<b>predicate-arity</b>',F],A):- !, predicate-arity   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>hyperpose</b>',ArgL],Res):- !, metta_hyperpose(Eq,RetType,Depth,Self,ArgL,Res). hyperpose   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>concurrent-forall!</b>',Gen,Test|Options],NoResult):- !, concurrent-forall!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>concurrent-maplist!</b>',Pred,ArgL1],ResL):- !, concurrent-maplist!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>maplist!</b>',Pred,ArgL1],ResL):- !, maplist!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>with-output-to!</b>',S,NE],R):-  !, with-output-to!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>setup-call-cleanup!</b>',S,NE,E],R):-  !, setup-call-cleanup!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>call-cleanup!</b>',NE,E],R):-  !, call-cleanup!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>max-time</b>',NE,E],R):-  !, max-time   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>max-time!</b>',N,E],R):- !, eval_20(Eq,RetType,Depth,Self,['max-time',N,E],R). max-time!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>offset</b>',NE,E],R):-  !, offset   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>offset!</b>',N,E],R):- !, eval_20(Eq,RetType,Depth,Self,['offset',N,E],R). offset!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>limit</b>',NE,E],R):-  !, limit   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>limit!</b>',N,E],R):- !, eval_20(Eq,RetType,Depth,Self,['limit',N,E],R). limit!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>findall!</b>',Template,X],ResL):- !, findall!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>number-of</b>',X],N):- !, number-of   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,_TRetType,Depth,Self,['<b>throw</b>',X],_):- !, throw   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>catch</b>',X,EX,Handler],Res):- !, catch   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>return</b>',X],_):- !, return   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>function</b>',X],Res):- !, gensym(return_,RetF), function   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>save-space!</b>',Other,File],RetVal):- !, save-space!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,_Dpth,Self,['<b>transfer!</b>',File],RetVal):- !, must_det_ll((include_metta(Self,File), transfer!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>pragma!</b>',Other,Expr],RetVal):- !, pragma!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,_Depth,_Slf,['<b>bind!</b>',Other,['new-space']],RetVal):- atom(Other),!, bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>load-file!</b>',Other,File],RetVal):- !, load-file!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>import!</b>',Other,File],RetVal):- !, import!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>load-ascii</b>',Other,File],RetVal):- !, load-ascii   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,_Depth,Self,['<b>include</b>',File],RetVal):- !, include   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>include!</b>',Other,File],RetVal):- !, include!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>register-module!</b>',Dir],RetVal):- !, register-module!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> eval_20(_Eq,_RetType,_Dpth,_Slf,['<b>extend-py!</b>',Module],Res):-  !, 'extend-py!'(Module,Res). extend-py!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>format-args</b>',Format,Args],Result):- format-args   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>charsToString</b>',Chars],String):- !, eval_args(Eq,RetType,Depth,Self,Chars,CC), maplist(as_metta_char,CC0,CC), string_chars(String,CC0). charsToString   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>stringToChars</b>',String],Chars):- !, eval_args(Eq,RetType,Depth,Self,String,SS), string_chars(SS,Chars0), maplist(as_metta_char,Chars0,Chars). stringToChars   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> eval_20(_Eq,_RetType,_Depth,_Self,['<b>get-metatype</b>',Val],TypeO):- !, get-metatype   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>CountElement</b>',L],Res):- !, eval_args(Eq,RetType,Depth,Self,L,LL), !, (is_list(LL)->length(LL,Res);Res=1). CountElement   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>length</b>',L],Res):- !, eval_args(Eq,RetType,Depth,Self,L,LL), !, (is_list(LL)->length(LL,Res);Res=1). length   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>get-type</b>',Val,Self],Type):- current_self(Self), !, get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(_Eq,_RetType,Depth,Self,['<b>get-types</b>',Val],TypeO):- !, get-types   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>get-state</b>',StateExpr],Value):- !, get-state   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>new-state</b>',UpdatedValue],StateMonad):- !, new-state   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>change-state!</b>',StateExpr, UpdatedValue], Ret):- !, change-state!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>Cons</b>', A, B ],['Cons', AA, BB]):- no_cons_reduce, !, Cons   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,_Dpth,_Slf,['<b>cdr-atom</b>',Atom],CDR_Y):- !, Atom=[_|CDR],!,do_expander(Eq,RetType,CDR,CDR_Y). cdr-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,_Dpth,_Slf,['<b>car-atom</b>',Atom],CAR_Y):- !, Atom=[CAR|_],!,do_expander(Eq,RetType,CAR,CAR_Y). car-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>if-equal</b>',X,Y,Then,Else],Res):- !, if-equal   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(_Eq,_RetType,_Depth,_Self,['<b>decons</b>',OneArg],[H,T]):- !, must_unify(OneArg,[H|T]). decons   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(_Eq,_RetType,_Depth,_Self,['<b>decons-atom</b>',OneArg],[H,T]):- OneArg==[], !, fail. %H=[],T=[],!. decons-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(_Eq,_RetType1,_Depth,_Self,['<b>call-fn-nth!</b>',Nth,S], R):- call-fn-nth!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> eval_20(_Eq,_RetType1,_Depth,_Self,['<b>call-fn!</b>',S], R):- !, eval_call_fn(S,R). call-fn!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(_Eq,_RetType1,_Depth,_Self,['<b>call!</b>',S], TF):- !, eval_call(S,TF). call!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>sequential</b>',List],Res):- !, sequential   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>collapse</b>',List],Res):-!, collapse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>superpose-bind</b>',List],Res):- !, superpose-bind   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>collapse-bind</b>',List],Res):-!, collapse-bind   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> eval_20(Eq,_RetType,Depth,Self,['<b>case</b>',A,[[Void,_]]],Res):- case   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>switch</b>',A,CL|T],Res):- !, switch   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>unify</b>',Space|Args],Res):- !, unify   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>print</b>',Cond],Res):- !, eval_args(Eq,RetType,Depth,Self,Cond,Res),format('~N'),print(Res),format('~N'). print   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>time!</b>',Cond],Res):- !, time_eval(eval_args(Cond),eval_args(Eq,RetType,Depth,Self,Cond,Res)). time!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>profile!</b>',Cond],Res):- !, time_eval(profile(Cond),profile(eval_args(Eq,RetType,Depth,Self,Cond,Res))). profile!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>trace</b>',Cond],Res):- !, with_debug(eval_args,eval_args(Eq,RetType,Depth,Self,Cond,Res)). trace   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>trace!</b>',A,B],C):- !, % writeln(trace(A)), trace!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>no-rtrace!</b>',Cond],Res):- !, quietly(eval_args(Eq,RetType,Depth,Self,Cond,Res)). no-rtrace!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>rtrace!</b>',Cond],Res):- !, rtrace(eval_args(Eq,RetType,Depth,Self,Cond,Res)). rtrace!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>eval-for</b>',Type,X],Res):- !, eval-for   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>chain</b>',Atom,Var|Y],Res):-  !,  eval_args(Eq,_RetType,Depth,Self,Atom,R), chain   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(=,Type,_,_,['<b>coerce</b>',Type,Value],Result):- !, coerce(Type,Value,Result). coerce   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(_,_,_,_,['<b>echo</b>',Value],Value):- !. echo   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> metta_interp.pl</i></b> <b> &nbsp &nbsp &nbsp canary</b> &nbsp &nbsp &nbsp ..
+../canary
+<a onclick="prompt('copy path','../canary/metta_interp.pl');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('..canarymetta_interp.pl')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('..canarymetta_interp.pl')" style="cursor:pointer">  Close </a>
+
+<div id="..canarymetta_interp.pl" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D3D4FF"> '<b>repr</b>'( Atomx, String_metta ):- eval_H( [ repr, Atomx ], String_metta ). repr   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> '<b>parse</b>'( Strx, Atom_metta ):- eval_H( [ parse, Strx ], Atom_metta ). parse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> '<b>car-atom</b>'(List, Head):- eval_H(['car-atom', List], Head). car-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> '<b>cdr-atom</b>'(List, Tail):- eval_H(['cdr-atom', List], Tail). cdr-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> '<b>collapse</b>'(List, CollapsedList):- eval_H(['collapse', List], CollapsedList). collapse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> '<b>rtrace!</b>'(Condition, EvalResult):- eval_H(['rtrace', Condition], EvalResult). rtrace!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> '<b>time!</b>'(EvalThis, EvalResult):- eval_H(['time', EvalThis], EvalResult). time!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> '<b>import!</b>'(Environment, Filename, Namespace):- eval_H(['import!', Environment, Filename], Namespace). import!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> '<b>pragma!</b>'(Environment, Expression, EvalValue):- eval_H(['pragma!', Environment, Expression], EvalValue). pragma!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> '<b>print</b>'(Message, EvalResult):- eval_H(['print', Message], EvalResult). print   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> '<b>bind!</b>'(Environment, Variable, Value):- eval_H(['bind!', Environment, Variable], Value). bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> '<b>get-type</b>'(Value, Type):- eval_H(['get-type', Value], Type). get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> '<b>stringToChars</b>'(String, Chars) :- eval_H(['stringToChars', String], Chars). stringToChars   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> '<b>charsToString</b>'(Chars, String) :- eval_H(['charsToString', Chars], String). charsToString   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> '<b>format-args</b>'(Format, Args, Result) :- eval_H(['format-args', Format, Args], Result). format-args   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> metta_ontology.pfc.pl</i></b> <b> &nbsp &nbsp &nbsp canary</b> &nbsp &nbsp &nbsp ..
+../canary
+<a onclick="prompt('copy path','../canary/metta_ontology.pfc.pl');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('..canarymetta_ontology.pfc.pl')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('..canarymetta_ontology.pfc.pl')" style="cursor:pointer">  Close </a>
+
+<div id="..canarymetta_ontology.pfc.pl" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D3D4FF"> properties('&corelib','<b>case</b>', [flow_control, qhelp("Case selection."), conditional_execution]). case   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>function</b>', [function_definition, qhelp("Function block.")]). function   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>return</b>', [function_definition, qhelp("Return value of a function block."), return_value]). return   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>catch</b>', [error_handling, qhelp("Catches exceptions."), exception_handling]). catch   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>throw</b>', [error_handling, qhelp("Throws exceptions."), exception_handling]). throw   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>collapse</b>', [data_structures, qhelp("Collapses a structure."), manipulation]). collapse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>sequential</b>', [data_structures, qhelp("Sequentially applies operations."), sequential_operations]). sequential   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>repr</b>', [data_structures, qhelp("Represent an expression as string."), repr ]). repr   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>parse</b>', [data_structures, qhelp("Parse a string to an expression."), parse ]). parse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>limit!</b>', [iteration_control, qhelp("Limits the number of iterations.")]). limit!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>offset!</b>', [iteration_control, qhelp("Adjusts the starting point of iteration.")]). offset!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>number-of</b>', [iteration_control, qhelp("Returns iteration count.")]). number-of   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>pragma!</b>', [compiler_directive, qhelp("Compiler directive for optimizations/settings."), optimization]). pragma!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>include!</b>', [code_inclusion, qhelp("Includes code from another file or context.")]). include!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>load-ascii</b>', [file_handling, qhelp("Loads ASCII file content.")]). load-ascii   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>extend-py!</b>', [integration, qhelp("Extends integration with Python."), python]). extend-py!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>import!</b>', [module_import, qhelp("Imports an external module or file.")]). import!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>eval-for</b>', [evaluation, qhelp("Evaluates assuming a return type."), type_assumption]). eval-for   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>call!</b>', [dynamic_call, qhelp("Tries to dynamically guess if predicate or function.")]). call!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>predicate-arity</b>', [function_definition, qhelp("Defines the arity of predicates/functions."), arity]). predicate-arity   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> properties('&corelib','<b>call-fn!</b>', [dynamic_call, qhelp("Calls a function dynamically."), function]). call-fn!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>call-string!</b>', [evaluation, qhelp("Evaluates a string of Prolog code."), prolog_code]). call-string!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> properties('&corelib','<b>transfer!</b>', [memory_management, qhelp("Transfers space content to another space.")]). transfer!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>coerce</b>', [type_conversion, qhelp("Forces argument types for compatibility."), compatibility]). coerce   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>time!</b>', [execution_timing, qhelp("Execution timing.")]). time!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>trace!</b>', [debugging, qhelp("Prints some debug information."), information_printing]). trace!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>no-rtrace!</b>', [debugging, qhelp("Disables tracing for debugging."), trace_control]). no-rtrace!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>rtrace!</b>', [debugging, qhelp("Enables tracing for debugging."), trace_control]). rtrace!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>with-output-to!</b>', [output, qhelp("Redirects output to a specified target."), redirection]). with-output-to!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> properties('&corelib','<b>print</b>', [output, qhelp("Prints text to output."), text_printing]). print   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>change-state!</b>', [state_management, qhelp("Changes the state of a system component."), system_integration]). change-state!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> properties('&corelib','<b>get-state</b>', [state_management, qhelp("Gets the state of a component or system."), data_retrieval]). get-state   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>car-atom</b>', [list_operations, qhelp("Retrieves the head of a list."), head_retrieval]). car-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>cdr-atom</b>', [list_operations, qhelp("Retrieves the tail of a list."), tail_retrieval]). cdr-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>range</b>', [list_operations, qhelp("Generates a range of numbers."), range_generation]). range   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>make_list</b>', [list_operations, qhelp("Creates a list with specified elements."), creation]). make_list   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>Cons</b>', [list_operations, qhelp("Constructs a list."), construction]). Cons   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>length</b>', [list_operations, qhelp("Determines the length of a list."), length_determination]). length   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>unique</b>', [nondet_sets, qhelp("Makes nondet results unique."), no_repeats_var]). unique   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>subtraction</b>', [nondet_sets, qhelp("It subtracts elements generated by Call2 from those generated by Call1."), lazy_subtraction]). subtraction   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>intersection</b>', [nondet_sets, qhelp("It gives the intersection duplicates are not removed ."), lazy_intersection]). intersection   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> properties('&corelib','<b>union</b>', [nondet_sets, qhelp("It gives the union of 2 list ."), lazy_union ]). union   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>stringToChars</b>', [string_operations, qhelp("Convert a string to a list of chars."), string_to_chars]). stringToChars   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> properties('&corelib','<b>charsToString</b>', [string_operations, qhelp("Convert a list of chars to a string."), chars_to_string]). charsToString   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> properties('&corelib','<b>format-args</b>', [string_operations, qhelp("Generate a formatted string using a format specifier."), format_args]). format-args   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> test_stdlib.py</i></b> <b> &nbsp &nbsp &nbsp tests</b> &nbsp &nbsp &nbsp python
+../../../hyperon-experimental/python/tests
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/tests/test_stdlib.py');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('pythonteststest_stdlib.py')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('pythonteststest_stdlib.py')" style="cursor:pointer">  Close </a>
+
+<div id="pythonteststest_stdlib.py" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #A7E3A7">         #self.assertEqualMettaRunnerResults(metta.run('!(<b>parse</b> "$X")'), parse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #A7E3A7">         self.assertEqualMettaRunnerResults(metta.run('!(<b>parse</b> "\\"A\\"")'), parse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #A7E3A7">         #self.assertEqualMettaRunnerResults(metta.run('!(<b>parse</b> "(func (Cons $x (Cons $xs $xss))) ")'), parse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #A7E3A7">         self.assertEqualMettaRunnerResults(metta.run('!(<b>parse</b> "(A 2 \'S\')")'), parse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #A7E3A7">         self.assertEqualMettaRunnerResults(metta.run('!(<b>stringToChars</b> "ABC")'), stringToChars   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #A7E3A7">         self.assertEqual(metta.run('!(<b>py-list</b> ())'), [[ValueAtom( [] )]]) py-list   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #A7E3A7">         self.assertEqual(metta.run('!(<b>py-list</b> (1 2 (4.5 3)))'), [[ValueAtom( [1,2,[4.5,3]] )]]) py-list   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #A7E3A7">         self.assertEqual(metta.run('!(<b>py-list</b> (1 2 (py-tuple (3 4))))'), [[ValueAtom( [1,2, (3,4)] )]]) py-list   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #A7E3A7">         self.assertEqual(str(metta.run('!(<b>py-list</b> (a b c))')[0][0].get_object().content[2]), "c") py-list   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #A7E3A7">         self.assertRaises(Exception, metta.run('!(<b>py-list</b> 1 2)')) py-list   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #A7E3A7">         self.assertRaises(Exception, metta.run('!(<b>py-list</b> 1)')) py-list   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> test_examples.py</i></b> <b> &nbsp &nbsp &nbsp tests</b> &nbsp &nbsp &nbsp python
+../../../hyperon-experimental/python/tests
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/tests/test_examples.py');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('pythonteststest_examples.py')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('pythonteststest_examples.py')" style="cursor:pointer">  Close </a>
+
+<div id="pythonteststest_examples.py" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #A7E3A7">         self.assertEqualMettaRunnerResults(metta.run('!(<b>get-type</b> "A")'), [[S('String')]]) get-type   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> stdlib.rs</i></b> <b> &nbsp &nbsp &nbsp runner</b> &nbsp &nbsp &nbsp metta
+../../../hyperon-experimental/lib/src/metta/runner
+<a onclick="prompt('copy path','../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('mettarunnerstdlib.rs')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('mettarunnerstdlib.rs')" style="cursor:pointer">  Close </a>
+
+<div id="mettarunnerstdlib.rs" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">         tref.register_token(regex(r"<b>register-module!</b>"), move |_| { register_module_op.clone() }); register-module!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>bind!</b>"), move |_| { bind_op.clone() }); bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>car-atom</b>"), move |_| { car_atom_op.clone() }); car-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>cdr-atom</b>"), move |_| { cdr_atom_op.clone() }); cdr-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>format-args</b>"), move |_| { format_args_op.clone() }); format-args   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>trace!</b>"), move |_| { trace_op.clone() }); trace!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>new-state</b>"), move |_| { new_state_op.clone() }); new-state   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>change-state!</b>"), move |_| { change_state_op.clone() }); change-state!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>get-state</b>"), move |_| { get_state_op.clone() }); get-state   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>get-metatype</b>"), move |_| { get_meta_type_op.clone() }); get-metatype   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>case</b>"), move |_| { case_op.clone() }); case   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>collapse</b>"), move |_| { collapse_op.clone() }); collapse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>unique</b>"), move |_| { unique_op.clone() }); unique   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>union</b>"), move |_| { union_op.clone() }); union   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>intersection</b>"), move |_| { intersection_op.clone() }); intersection   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>subtraction</b>"), move |_| { subtraction_op.clone() }); subtraction   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>get-type</b>"), move |_| { get_type_op.clone() }); get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>import!</b>"), move |_| { import_op.clone() }); import!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>include</b>"), move |_| { include_op.clone() }); include   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>pragma!</b>"), move |_| { pragma_op.clone() }); pragma!   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> stdlib_minimal.rs</i></b> <b> &nbsp &nbsp &nbsp runner</b> &nbsp &nbsp &nbsp metta
+../../../hyperon-experimental/lib/src/metta/runner
+<a onclick="prompt('copy path','../../../hyperon-experimental/lib/src/metta/runner/stdlib_minimal.rs');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('mettarunnerstdlib_minimal.rs')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('mettarunnerstdlib_minimal.rs')" style="cursor:pointer">  Close </a>
+
+<div id="mettarunnerstdlib_minimal.rs" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">     tref.register_token(regex(r"<b>get-type</b>"), move |_| { get_type_op.clone() }); get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">     tref.register_token(regex(r"<b>get-metatype</b>"), move |_| { get_meta_type_op.clone() }); get-metatype   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D89800">     tref.register_token(regex(r"<b>if-equal</b>"), move |_| { is_equivalent.clone() }); if-equal   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">     tref.register_token(regex(r"<b>new-state</b>"), move |_| { new_state_op.clone() }); new-state   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">     tref.register_token(regex(r"<b>change-state!</b>"), move |_| { change_state_op.clone() }); change-state!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D89800">     tref.register_token(regex(r"<b>get-state</b>"), move |_| { get_state_op.clone() }); get-state   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">     tref.register_token(regex(r"<b>collapse</b>"), move |_| { collapse_op.clone() }); collapse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">     tref.register_token(regex(r"<b>unique</b>"), move |_| { unique_op.clone() }); unique   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">     tref.register_token(regex(r"<b>union</b>"), move |_| { union_op.clone() }); union   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">     tref.register_token(regex(r"<b>intersection</b>"), move |_| { intersection_op.clone() }); intersection   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D89800">     tref.register_token(regex(r"<b>subtraction</b>"), move |_| { subtraction_op.clone() }); subtraction   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">     tref.register_token(regex(r"<b>case</b>"), move |_| { case_op.clone() }); case   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">     tref.register_token(regex(r"<b>pragma!</b>"), move |_| { pragma_op.clone() }); pragma!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">     tref.register_token(regex(r"<b>import!</b>"), move |_| { import_op.clone() }); import!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">     tref.register_token(regex(r"<b>include</b>"), move |_| { include_op.clone() }); include   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">     tref.register_token(regex(r"<b>bind!</b>"), move |_| { bind_op.clone() }); bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">     tref.register_token(regex(r"<b>trace!</b>"), move |_| { trace_op.clone() }); trace!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">     tref.register_token(regex(r"<b>format-args</b>"), move |_| { format_args_op.clone() }); format-args   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> parse_test.metta</i></b> <b> &nbsp &nbsp &nbsp hyperon-mettalog_sanity</b> &nbsp &nbsp &nbsp baseline_compat
+../../tests/baseline_compat/hyperon-mettalog_sanity
+<a onclick="prompt('copy path','../../tests/baseline_compat/hyperon-mettalog_sanity/parse_test.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('baseline_compathyperon-mettalog_sanityparse_test.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('baseline_compathyperon-mettalog_sanityparse_test.metta')" style="cursor:pointer">  Close </a>
+
+<div id="baseline_compathyperon-mettalog_sanityparse_test.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> 
+
+; <b>parse</b>
+!(assertEqualToResult (parse "(foo 1 2 3)" )  ((foo 1 2 3)) )
+
+
+ parse   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> 01_lang_inc.metta</i></b> <b> &nbsp &nbsp &nbsp hyperon-mettalog_sanity</b> &nbsp &nbsp &nbsp baseline_compat
+../../tests/baseline_compat/hyperon-mettalog_sanity
+<a onclick="prompt('copy path','../../tests/baseline_compat/hyperon-mettalog_sanity/01_lang_inc.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('baseline_compathyperon-mettalog_sanity01_lang_inc.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('baseline_compathyperon-mettalog_sanity01_lang_inc.metta')" style="cursor:pointer">  Close </a>
+
+<div id="baseline_compathyperon-mettalog_sanity01_lang_inc.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> 
+; a functional example
+(= (maybe-inc $x)
+    (<b>case</b> $x
+     (((Just $v) (Just (+ 1 $v)))
+	(Nothing Nothing))))
+
+!(assertEqual (maybe-inc Nothing) Nothing)
+!(assertEqual (maybe-inc (Just 2)) (Just 3))
+
+
+
+ case   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> fibo_hang.metta</i></b> <b> &nbsp &nbsp &nbsp hyperon-mettalog_sanity</b> &nbsp &nbsp &nbsp baseline_compat
+../../tests/baseline_compat/hyperon-mettalog_sanity
+<a onclick="prompt('copy path','../../tests/baseline_compat/hyperon-mettalog_sanity/fibo_hang.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('baseline_compathyperon-mettalog_sanityfibo_hang.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('baseline_compathyperon-mettalog_sanityfibo_hang.metta')" style="cursor:pointer">  Close </a>
+
+<div id="baseline_compathyperon-mettalog_sanityfibo_hang.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> 
+;; makes this file be treated as if the command line --compile=full  was supplied
+!(pragma! compile full)
+
+(= (fib $n)
+    (if (== $n 0)
+        0
+        (if (== $n 1)
+            1
+            (+ (fib (- $n 1)) (fib (- $n 2))))))
+
+(= (fib1 $a $b $n $i)
+   (if (< $n 3)
+        (fib $n)
+        (if (== $i (- $n 2))
+             (+ $a $b)
+            (fib1 $b (+ $a $b) $n (+ $i 1)))))
+
+
+!(<b>print</b>ln! (fib 12))
+
+!(println! (fib1 0 1 100 0))
+
+!(println! (fib1 0 1 80 0))
+
+!(println! (fib 80))
+
+
+
+ print   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> subtraction_test2.metta</i></b> <b> &nbsp &nbsp &nbsp hyperon-mettalog_sanity</b> &nbsp &nbsp &nbsp baseline_compat
+../../tests/baseline_compat/hyperon-mettalog_sanity
+<a onclick="prompt('copy path','../../tests/baseline_compat/hyperon-mettalog_sanity/subtraction_test2.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('baseline_compathyperon-mettalog_sanitysubtraction_test2.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('baseline_compathyperon-mettalog_sanitysubtraction_test2.metta')" style="cursor:pointer">  Close </a>
+
+<div id="baseline_compathyperon-mettalog_sanitysubtraction_test2.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> 
+
+; <b>subtraction</b>
+; !(subtraction (superpose (a b c)) (superpose (b c d)))
+!(assertEqualToResult (subtraction (superpose (a b c)) (superpose (b c d))) ( a ))
+
+
+
+ subtraction   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> repr_test.metta</i></b> <b> &nbsp &nbsp &nbsp hyperon-mettalog_sanity</b> &nbsp &nbsp &nbsp baseline_compat
+../../tests/baseline_compat/hyperon-mettalog_sanity
+<a onclick="prompt('copy path','../../tests/baseline_compat/hyperon-mettalog_sanity/repr_test.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('baseline_compathyperon-mettalog_sanityrepr_test.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('baseline_compathyperon-mettalog_sanityrepr_test.metta')" style="cursor:pointer">  Close </a>
+
+<div id="baseline_compathyperon-mettalog_sanityrepr_test.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> 
+
+
+; <b>repr</b>
+!(assertEqualToResult (repr (foo 1 2 3))  "(foo 1 2 3)" )
+
+
+ repr   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> 03-soring-via-insert.metta</i></b> <b> &nbsp &nbsp &nbsp hyperon-mettalog_sanity</b> &nbsp &nbsp &nbsp baseline_compat
+../../tests/baseline_compat/hyperon-mettalog_sanity
+<a onclick="prompt('copy path','../../tests/baseline_compat/hyperon-mettalog_sanity/03-soring-via-insert.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('baseline_compathyperon-mettalog_sanity03-soring-via-insert.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('baseline_compathyperon-mettalog_sanity03-soring-via-insert.metta')" style="cursor:pointer">  Close </a>
+
+<div id="baseline_compathyperon-mettalog_sanity03-soring-via-insert.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> !(<b>get-type</b> insert) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> (= (insert $x Nil) (<b>Cons</b> $x Nil)) Cons   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> (= (insert $x (<b>Cons</b> $head $tail)) Cons   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> 	      (<b>Cons</b> $x (Cons $head $tail)) Cons   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> 	      (<b>Cons</b> $head (insert $x $tail)))) Cons   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(assertEqual (insert 2 (insert 1 Nil)) (<b>Cons</b> 1 (Cons 2 Nil))) Cons   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(assertEqual  (<b>Cons</b> 1 Nil)  (Cons 1 Nil)) Cons   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(assertEqual  (insert 1 Nil)  (<b>Cons</b> 1 Nil)) Cons   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(assertEqual (insert 1 (insert 2 Nil)) (<b>Cons</b> 1 (Cons 2 Nil))) Cons   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(assertEqual (insert 3 (insert 2 (insert 1 Nil))) (<b>Cons</b> 1 (Cons 2 (Cons 3 Nil)))) Cons   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> intersection_test.metta</i></b> <b> &nbsp &nbsp &nbsp hyperon-mettalog_sanity</b> &nbsp &nbsp &nbsp baseline_compat
+../../tests/baseline_compat/hyperon-mettalog_sanity
+<a onclick="prompt('copy path','../../tests/baseline_compat/hyperon-mettalog_sanity/intersection_test.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('baseline_compathyperon-mettalog_sanityintersection_test.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('baseline_compathyperon-mettalog_sanityintersection_test.metta')" style="cursor:pointer">  Close </a>
+
+<div id="baseline_compathyperon-mettalog_sanityintersection_test.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> 
+; <b>intersection</b>
+!(assertEqualToResult (intersection (superpose (a b c)) (superpose (b c d))) (b c ))
+
+ intersection   <br> 
+ <br> &nbsp <br>
+ </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> string-tests.metta</i></b> <b> &nbsp &nbsp &nbsp hyperon-mettalog_sanity</b> &nbsp &nbsp &nbsp baseline_compat
+../../tests/baseline_compat/hyperon-mettalog_sanity
+<a onclick="prompt('copy path','../../tests/baseline_compat/hyperon-mettalog_sanity/string-tests.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('baseline_compathyperon-mettalog_sanitystring-tests.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('baseline_compathyperon-mettalog_sanitystring-tests.metta')" style="cursor:pointer">  Close </a>
+
+<div id="baseline_compathyperon-mettalog_sanitystring-tests.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> !(assertEqual (<b>stringToChars</b> "xyzzy") ('x' 'y' 'z' 'z' 'y')) stringToChars   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #ECED99"> !(assertEqual (<b>charsToString</b> ('x' 'y' 'z' 'z' 'y')) "xyzzy") charsToString   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #ECED99"> !(assertEqual (<b>stringToChars</b> "") ()) stringToChars   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #ECED99"> !(assertEqual (<b>charsToString</b> ()) "") charsToString   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #ECED99"> !(assertEqual (charsToString (<b>stringToChars</b> "xyzzy")) "xyzzy") stringToChars   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #ECED99"> !(assertEqual (<b>stringToChars</b> (charsToString ('x' 'y' 'z' 'z' 'y'))) ('x' 'y' 'z' 'z' 'y')) stringToChars   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #ECED99"> !(assertEqual (<b>charsToString</b> ('x' 'y' ' ' 'z' 'y')) "xy zy") charsToString   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #ECED99"> !(assertEqual (<b>stringToChars</b> "xy zy") ('x' 'y' ' ' 'z' 'y')) stringToChars   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #ECED99"> !(assertEqual (<b>charsToString</b> (' ')) " ") charsToString   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #ECED99"> !(assertEqual (<b>stringToChars</b> " ") (' ')) stringToChars   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #ECED99"> !(assertEqual (<b>stringToChars</b> (superpose ("ab" "cd" "ef"))) (superpose (('a' 'b') ('c' 'd') ('e' 'f')))) stringToChars   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #ECED99"> !(assertEqual (<b>format-args</b> "" (1 2 3)) "") format-args   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(assertEqual (<b>format-args</b> " " (1 2 3)) " ") format-args   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(assertEqual (<b>format-args</b> "{}" (1 2 3)) "1") format-args   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(assertEqual (<b>format-args</b> "{}}" (1 2 3)) "{}") format-args   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(assertEqual (<b>format-args</b> "xyz zy" (1 2 3)) "xyz zy") format-args   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(assertEqual (<b>format-args</b> "Indexed {1} {} {0} {}" (1 2 3)) "Indexed 2 1 1 2") format-args   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(assertEqual (<b>format-args</b> "Different types {} {} {} {} {} {}" (1 "2" 'c' -0.5 atom (1 2 c -0.5 atom))) "Different types 1 2 c -0.5 atom (1 2 c -0.5 atom)") format-args   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(assertEqual (<b>format-args</b> "Two digit index={11}" (0 1 2 3 4 5 6 7 8 9 10 "eleven")) "Two digit index=eleven") format-args   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(assertEqual (<b>format-args</b> "Bad args list {1} {} {0} {}" x) (format-args "Bad args list {1} {} {0} {}" x)) format-args   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(assertEqual (<b>format-args</b> "Malformed format}{{}{{{}{} {4} { } {-1} {x} {{{{{{}}}}}}{{{{{}}}}}" ("success1" "success2")) "Malformed format}{}{success1success2 {4} { } {-1} {x} {{{}}}{{{}}}") format-args   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> structure-tests.metta</i></b> <b> &nbsp &nbsp &nbsp hyperon-mettalog_sanity</b> &nbsp &nbsp &nbsp baseline_compat
+../../tests/baseline_compat/hyperon-mettalog_sanity
+<a onclick="prompt('copy path','../../tests/baseline_compat/hyperon-mettalog_sanity/structure-tests.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('baseline_compathyperon-mettalog_sanitystructure-tests.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('baseline_compathyperon-mettalog_sanitystructure-tests.metta')" style="cursor:pointer">  Close </a>
+
+<div id="baseline_compathyperon-mettalog_sanitystructure-tests.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> !(<b>collapse</b> (superpose ((superpose (1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3)) collapse   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> 00_lang_ok_to_redefine.metta</i></b> <b> &nbsp &nbsp &nbsp hyperon-mettalog_sanity</b> &nbsp &nbsp &nbsp baseline_compat
+../../tests/baseline_compat/hyperon-mettalog_sanity
+<a onclick="prompt('copy path','../../tests/baseline_compat/hyperon-mettalog_sanity/00_lang_ok_to_redefine.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('baseline_compathyperon-mettalog_sanity00_lang_ok_to_redefine.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('baseline_compathyperon-mettalog_sanity00_lang_ok_to_redefine.metta')" style="cursor:pointer">  Close </a>
+
+<div id="baseline_compathyperon-mettalog_sanity00_lang_ok_to_redefine.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99">   (<b>chain</b> (eval (get-metatype $atom)) $type chain   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">     (eval (<b>if-equal</b> $type Expression if-equal   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">       (eval (<b>if-equal</b> $atom () $else $then)) if-equal   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">     (<b>chain</b> (decons $atom) $list chain   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (eval (<b>if-equal</b> $atom Empty $then $else))) if-equal   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">     (eval (<b>if-equal</b> $head Error $then $else)) if-equal   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> (= (<b>return</b>-on-error $atom $then) return   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> (= (<b>switch</b> $atom $cases) switch   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>chain</b> (decons $cases) $list (eval (switch-internal $atom $list)))) chain   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> (= (<b>switch</b>-internal $atom (($pattern $template) $tail)) switch   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (match $atom $pattern $template (eval (<b>switch</b> $atom $tail)))) switch   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>chain</b> (eval $atom) $res chain   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>chain</b> (eval (get-type $atom $space)) $actual-type chain   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">     (eval (<b>switch</b> ($actual-type $type) switch   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>chain</b> (eval (get-metatype $type)) $meta chain   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">     (eval (<b>switch</b> ($type $meta) switch   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">           (<b>chain</b> (eval (car $type)) $head chain   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>chain</b> (eval (get-metatype $atom)) $meta chain   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">     (eval (<b>switch</b> ($type $meta) switch   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">     (<b>chain</b> (eval (get-type $op $space)) $op-type chain   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">       (<b>chain</b> (eval (is-function $op-type)) $is-func chain   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">           (<b>chain</b> (eval (interpret-func $atom $op-type $space)) $reduced-atom chain   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">           (<b>chain</b> (eval (interpret-tuple $atom $space)) $reduced-atom chain   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">     (<b>chain</b> (eval (interpret $op $type $space)) $reduced-op chain   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">       (eval (<b>return</b>-on-error $reduced-op return   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">           (<b>chain</b> (eval (interpret-args $expr $args $arg-types $space)) $reduced-args chain   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">             (eval (<b>return</b>-on-error $reduced-args return   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">         (<b>chain</b> (eval (interpret $head $head-type $space)) $reduced-head chain   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">           (eval (<b>if-equal</b> $reduced-head $head if-equal   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">             (eval (<b>return</b>-on-error $reduced-head return   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>chain</b> (eval (interpret-args $atom $args-tail $args-tail-types $space)) $reduced-tail chain   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">     (eval (<b>return</b>-on-error $reduced-tail return   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">       (<b>chain</b> (eval (interpret $head %Undefined% $space)) $rhead chain   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">         (<b>chain</b> (eval (interpret-tuple $tail $space)) $rtail chain   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>chain</b> (eval $atom) $result chain   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> 00_lang_case.metta</i></b> <b> &nbsp &nbsp &nbsp hyperon-mettalog_sanity</b> &nbsp &nbsp &nbsp baseline_compat
+../../tests/baseline_compat/hyperon-mettalog_sanity
+<a onclick="prompt('copy path','../../tests/baseline_compat/hyperon-mettalog_sanity/00_lang_case.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('baseline_compathyperon-mettalog_sanity00_lang_case.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('baseline_compathyperon-mettalog_sanity00_lang_case.metta')" style="cursor:pointer">  Close </a>
+
+<div id="baseline_compathyperon-mettalog_sanity00_lang_case.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> (<b>case</b> (+ 1 5) case   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  (<b>case</b> (+ 1 5) case   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">     (<b>case</b> 5 case   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  (<b>case</b> (+ 1 (superpose (1 2 3))) case   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>case</b> (+ 1 (superpose (1 2 3))) case   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(assertEqualToResult (<b>collapse</b> (superpose ())) (())) collapse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(assertEqualToResult (<b>collapse</b> (superpose ((nop 1)))) (())) collapse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>case</b> case   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>case</b> case   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> unique_test.metta</i></b> <b> &nbsp &nbsp &nbsp hyperon-mettalog_sanity</b> &nbsp &nbsp &nbsp baseline_compat
+../../tests/baseline_compat/hyperon-mettalog_sanity
+<a onclick="prompt('copy path','../../tests/baseline_compat/hyperon-mettalog_sanity/unique_test.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('baseline_compathyperon-mettalog_sanityunique_test.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('baseline_compathyperon-mettalog_sanityunique_test.metta')" style="cursor:pointer">  Close </a>
+
+<div id="baseline_compathyperon-mettalog_sanityunique_test.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99">     (<b>collapse</b> (unique (superpose $list)))) collapse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>unique</b> (superpose (a b b c c c d))) unique   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>unique</b> (superpose (a b c d))) unique   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>unique</b> (superpose (a))) unique   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>unique</b> (superpose ())) unique   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>unique</b> (superpose (a a a a))) unique   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>unique</b> (superpose ((1 2) (1 2) (3 4)))) unique   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>unique</b> (superpose (1 "hello" 1 "world" "hello" 3.14 3.14))) unique   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>unique</b> (superpose ($x $y $x $z))) unique   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>unique</b> (superpose ((:: $x $y) (:: $x $z) (:: $x $y) (:: $a $b)))) unique   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>unique</b> (superpose ((:: $x $y) (:: $x $y) (:: $x $z) (:: $x $y)))) unique   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>unique</b> (superpose ((:: 1 $x) (:: $x "hello") (:: 1 $x) (:: $y $z) (:: $x "hello")))) unique   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>unique</b> (superpose ((:: $x (:: a b)) (:: $x (:: a b)) (:: (:: 1 $x) (:: 2 $y)) (:: (:: 1 $x) (:: 2 $y))))) unique   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> union_test.metta</i></b> <b> &nbsp &nbsp &nbsp hyperon-mettalog_sanity</b> &nbsp &nbsp &nbsp baseline_compat
+../../tests/baseline_compat/hyperon-mettalog_sanity
+<a onclick="prompt('copy path','../../tests/baseline_compat/hyperon-mettalog_sanity/union_test.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('baseline_compathyperon-mettalog_sanityunion_test.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('baseline_compathyperon-mettalog_sanityunion_test.metta')" style="cursor:pointer">  Close </a>
+
+<div id="baseline_compathyperon-mettalog_sanityunion_test.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> 
+
+; <b>union</b>
+; !(union (superpose (a b c)) (superpose (b c d)))
+!(assertEqualToResult (union (superpose (a b c)) (superpose (b c d))) ( a b c d ))
+
+
+ union   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> xor_test.metta</i></b> <b> &nbsp &nbsp &nbsp hyperon-mettalog_sanity</b> &nbsp &nbsp &nbsp baseline_compat
+../../tests/baseline_compat/hyperon-mettalog_sanity
+<a onclick="prompt('copy path','../../tests/baseline_compat/hyperon-mettalog_sanity/xor_test.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('baseline_compathyperon-mettalog_sanityxor_test.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('baseline_compathyperon-mettalog_sanityxor_test.metta')" style="cursor:pointer">  Close </a>
+
+<div id="baseline_compathyperon-mettalog_sanityxor_test.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> !(assertEqual (xor (mprogn (<b>print</b>ln! "First") True) (mprogn (println! "Second") False)) True) print   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(assertEqual (xor (mprogn (<b>print</b>ln! "First") True) (mprogn (println! "Second") True)) False) print   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(assertEqual (xor (mprogn (<b>print</b>ln! "First") False) (mprogn (println! "Second") True)) True) print   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(assertEqual (xor (mprogn (<b>print</b>ln! "First") False) (mprogn (println! "Second") False)) False) print   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> 06_match_in_space.metta</i></b> <b> &nbsp &nbsp &nbsp hyperon-mettalog_sanity</b> &nbsp &nbsp &nbsp baseline_compat
+../../tests/baseline_compat/hyperon-mettalog_sanity
+<a onclick="prompt('copy path','../../tests/baseline_compat/hyperon-mettalog_sanity/06_match_in_space.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('baseline_compathyperon-mettalog_sanity06_match_in_space.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('baseline_compathyperon-mettalog_sanity06_match_in_space.metta')" style="cursor:pointer">  Close </a>
+
+<div id="baseline_compathyperon-mettalog_sanity06_match_in_space.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> !(<b>bind!</b> &kb (new-space)) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>case</b> case   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(assertEqual (<b>case</b> (match  &kb  ($rel B_AS $x) ($rel $x)) case   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> subtraction_test.metta</i></b> <b> &nbsp &nbsp &nbsp hyperon-mettalog_sanity</b> &nbsp &nbsp &nbsp baseline_compat
+../../tests/baseline_compat/hyperon-mettalog_sanity
+<a onclick="prompt('copy path','../../tests/baseline_compat/hyperon-mettalog_sanity/subtraction_test.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('baseline_compathyperon-mettalog_sanitysubtraction_test.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('baseline_compathyperon-mettalog_sanitysubtraction_test.metta')" style="cursor:pointer">  Close </a>
+
+<div id="baseline_compathyperon-mettalog_sanitysubtraction_test.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99">   (<b>subtraction</b> (superpose (a b c d)) (superpose (b c))) subtraction   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>subtraction</b> (subtraction (superpose (a b c d)) (superpose (b c))) (superpose (d))) subtraction   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>subtraction</b> (superpose ((foo bar) (bar baz) qux)) (superpose ((bar baz) qux))) subtraction   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>subtraction</b> (superpose (1 2 3 foo bar)) (superpose (2 foo))) subtraction   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>subtraction</b> (superpose (a b b c d)) (superpose (b c))) subtraction   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>unique</b> (subtraction (superpose (a b b c)) (superpose (b c c d)))) unique   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (subtraction (<b>unique</b> (superpose (a b b c))) (unique (superpose (b c c d)))) unique   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>subtraction</b> (superpose ($x $y)) (superpose (b))) subtraction   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>subtraction</b> (superpose (a b c)) (superpose ())) subtraction   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>subtraction</b> (superpose ((foo $x) (bar $y))) (superpose ((bar $y) (foo qux)))) subtraction   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> test_das.metta</i></b> <b> &nbsp &nbsp &nbsp integration</b> &nbsp &nbsp &nbsp python
+../../../hyperon-experimental/python/integration
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/integration/test_das.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('pythonintegrationtest_das.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('pythonintegrationtest_das.metta')" style="cursor:pointer">  Close </a>
+
+<div id="pythonintegrationtest_das.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> !(<b>import!</b> &self das_gate) import!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &das (new-das)) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> ;!(<b>bind!</b> &das (new-remote-das (Error "Put your IP here" ()) 8081)) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">     (<b>cdr-atom</b> $x)) cdr-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> ;!(match_res_len(<b>collapse</b> (match &space (Test $x) (This $x works)))) collapse   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> test_bio_das.metta</i></b> <b> &nbsp &nbsp &nbsp integration</b> &nbsp &nbsp &nbsp python
+../../../hyperon-experimental/python/integration
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/integration/test_bio_das.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('pythonintegrationtest_bio_das.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('pythonintegrationtest_bio_das.metta')" style="cursor:pointer">  Close </a>
+
+<div id="pythonintegrationtest_bio_das.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> !(<b>import!</b> &self das_gate) import!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> ;!(<b>bind!</b> &das (new-das)) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &das (new-remote-das (Error "Put your IP here" ()) (Error "Put port number here" ()))) bind!   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> r.metta</i></b> <b> &nbsp &nbsp &nbsp resolve</b> &nbsp &nbsp &nbsp sandbox
+../../../hyperon-experimental/python/sandbox/resolve
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/sandbox/resolve/r.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('sandboxresolver.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('sandboxresolver.metta')" style="cursor:pointer">  Close </a>
+
+<div id="sandboxresolver.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> !(<b>import!</b> &self resolve) import!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>import!</b> &self r) import!   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> nm_test.metta</i></b> <b> &nbsp &nbsp &nbsp numpy</b> &nbsp &nbsp &nbsp sandbox
+../../../hyperon-experimental/python/sandbox/numpy
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/sandbox/numpy/nm_test.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('sandboxnumpynm_test.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('sandboxnumpynm_test.metta')" style="cursor:pointer">  Close </a>
+
+<div id="sandboxnumpynm_test.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> !(<b>import!</b> &self numme) import!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &x (np.vector 1 2 3)) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &y (np.array (3 2 3))) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &m (np.array ((6 1) (7 2) (8 3)))) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &mt (np.array ((1 0 0) (0 1 0)))) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> ! (<b>case</b> (np.array (((1 1) (2 2) (3 3)) ((2 3) (3 4) (4 5)))) case   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> ! (<b>case</b> (np.vector 1 2 3) case   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> test_nspace.metta</i></b> <b> &nbsp &nbsp &nbsp neurospace</b> &nbsp &nbsp &nbsp sandbox
+../../../hyperon-experimental/python/sandbox/neurospace
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/sandbox/neurospace/test_nspace.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('sandboxneurospacetest_nspace.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('sandboxneurospacetest_nspace.metta')" style="cursor:pointer">  Close </a>
+
+<div id="sandboxneurospacetest_nspace.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> !(<b>import!</b> &self neurospace) import!   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> example_03_langchain.metta</i></b> <b> &nbsp &nbsp &nbsp simple_import</b> &nbsp &nbsp &nbsp sandbox
+../../../hyperon-experimental/python/sandbox/simple_import
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/sandbox/simple_import/example_03_langchain.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('sandboxsimple_importexample_03_langchain.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('sandboxsimple_importexample_03_langchain.metta')" style="cursor:pointer">  Close </a>
+
+<div id="sandboxsimple_importexample_03_langchain.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> !(<b>bind!</b> ChatOpenAI (py-atom langchain_openai.ChatOpenAI)) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> ChatPromptTemplate (py-atom langchain_core.prompts.ChatPromptTemplate)) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> StrOutputParser (py-atom langchain_core.output_parsers.StrOutputParser)) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> model (ChatOpenAI (Kwargs (temperature 0) (model "gpt-3.5-turbo")))) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> prompt ( (py-dot ChatPromptTemplate from_template) "tell me a joke about cat")) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> chain1 (py-chain  (prompt model (StrOutputParser)) )) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> prompt2 ( (py-dot ChatPromptTemplate from_messages ) (py-tuple (("system" "You are very funny") ("user" "tell me joke about {foo}"))))) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> chain2 (py-chain (prompt2 model (StrOutputParser)) )) bind!   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> example_04_numpy_simple_import.metta</i></b> <b> &nbsp &nbsp &nbsp simple_import</b> &nbsp &nbsp &nbsp sandbox
+../../../hyperon-experimental/python/sandbox/simple_import
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/sandbox/simple_import/example_04_numpy_simple_import.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('sandboxsimple_importexample_04_numpy_simple_import.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('sandboxsimple_importexample_04_numpy_simple_import.metta')" style="cursor:pointer">  Close </a>
+
+<div id="sandboxsimple_importexample_04_numpy_simple_import.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> !(<b>bind!</b> linalg (py-atom numpy.linalg))
+!(bind! numpy (py-atom numpy))
+
+!(bind! m1 ((py-dot numpy random.rand) 3 3 ))
+!(bind! m1_inv ( (py-dot linalg inv) m1))
+!( (py-dot numpy matmul) m1 m1_inv)
+ bind!   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> example_01.metta</i></b> <b> &nbsp &nbsp &nbsp simple_import</b> &nbsp &nbsp &nbsp sandbox
+../../../hyperon-experimental/python/sandbox/simple_import
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/sandbox/simple_import/example_01.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('sandboxsimple_importexample_01.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('sandboxsimple_importexample_01.metta')" style="cursor:pointer">  Close </a>
+
+<div id="sandboxsimple_importexample_01.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> !(<b>bind!</b> simple_fun (py-atom example_01.simple_fun))
+!(bind! SimpleObject (py-atom example_01.SimpleObject))
+
+!(bind! so (SimpleObject))
+
+
+; it is important that obj will have type SimpleObject when passed to simple_fun!
+!(simple_fun 1 2 "3" (Kwargs (kwarg1 2) (obj so)) )
+
+!( (py-dot so method) "arg1" "arg2" (Kwargs (arg3 3)) )
+ bind!   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> example_02_numpy.metta</i></b> <b> &nbsp &nbsp &nbsp simple_import</b> &nbsp &nbsp &nbsp sandbox
+../../../hyperon-experimental/python/sandbox/simple_import
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/sandbox/simple_import/example_02_numpy.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('sandboxsimple_importexample_02_numpy.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('sandboxsimple_importexample_02_numpy.metta')" style="cursor:pointer">  Close </a>
+
+<div id="sandboxsimple_importexample_02_numpy.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> !(<b>bind!</b> np (py-atom numpy))
+
+!(bind! a1 ( (py-dot np array) (py-atom (py-tuple (1 2 3)) )))
+!(bind! a2 ( (py-dot a1 __mul__) 3))
+!(bind! a3 ( (py-dot a1 __add__) a2))
+
+
+!(a1)
+!(a2)
+!(a3)
+
+!(bind! m1 ((py-dot np array) (py-atom (py-list ((1 2 3) (py-list (4 4 5)) (py-tuple (6 7 8))) ))))
+!(bind! linalg (py-atom numpy.linalg))
+!(bind! m1_inv ( (py-dot linalg inv) m1))
+
+!( (py-dot np matmul) m1 m1_inv)
+ bind!   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> test_snet.metta</i></b> <b> &nbsp &nbsp &nbsp snet</b> &nbsp &nbsp &nbsp sandbox
+../../../hyperon-experimental/python/sandbox/snet
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/sandbox/snet/test_snet.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('sandboxsnettest_snet.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('sandboxsnettest_snet.metta')" style="cursor:pointer">  Close </a>
+
+<div id="sandboxsnettest_snet.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> ; !(<b>import!</b> &self snet_io) import!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> ;!(<b>import!</b> &self snet:naint:image-generation) import!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>import!</b> &self snet:naint:code-generation) import!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> ;!(<b>import!</b> &self snet:naint:generative-lms) import!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> ;!(<b>import!</b> &self snet:naint:abstractive-summarisation) import!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> (<b>import!</b> &self snet:naint:text-generation) import!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">              (<b>length</b> 100))) length   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> 03_example_dict.metta</i></b> <b> &nbsp &nbsp &nbsp bhv_binding</b> &nbsp &nbsp &nbsp sandbox
+../../../hyperon-experimental/python/sandbox/bhv_binding
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/sandbox/bhv_binding/03_example_dict.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('sandboxbhv_binding03_example_dict.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('sandboxbhv_binding03_example_dict.metta')" style="cursor:pointer">  Close </a>
+
+<div id="sandboxbhv_binding03_example_dict.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> !(<b>import!</b> &self bhv_binding)
+
+!(bind! &v1 (bhv-new))
+!(bind! &v2 (bhv-new))
+!(bind! &v3 (bhv-new))
+!(bind! &k1 (bhv-new))
+!(bind! &k2 (bhv-new))
+!(bind! &k3 (bhv-new))
+
+
+!(bind! dict (bhv-majority (bhv-bind &v1 &k1) (bhv-bind &v2 &k2) (bhv-bind &v3 &k3) ))
+!(bind! v1_retrived (bhv-bind &k1 dict))
+
+!(bhv-std-apart-relative v1_retrived &v1)
+!(bhv-is-related v1_retrived &v1)
+
+
+ import!   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> 01_example_majority.metta</i></b> <b> &nbsp &nbsp &nbsp bhv_binding</b> &nbsp &nbsp &nbsp sandbox
+../../../hyperon-experimental/python/sandbox/bhv_binding
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/sandbox/bhv_binding/01_example_majority.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('sandboxbhv_binding01_example_majority.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('sandboxbhv_binding01_example_majority.metta')" style="cursor:pointer">  Close </a>
+
+<div id="sandboxbhv_binding01_example_majority.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> !(<b>import!</b> &self bhv_binding)
+
+!(bind! &a (bhv-new))
+!(bind! &b (bhv-new))
+!(bind! &c (bhv-new))
+
+!(bind! &abc (bhv-majority &a &b &c ))
+
+!(bhv-std-apart-relative &a &abc)
+!(bhv-is-related &a &abc)
+
+
+ import!   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> 02_example_perm.metta</i></b> <b> &nbsp &nbsp &nbsp bhv_binding</b> &nbsp &nbsp &nbsp sandbox
+../../../hyperon-experimental/python/sandbox/bhv_binding
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/sandbox/bhv_binding/02_example_perm.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('sandboxbhv_binding02_example_perm.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('sandboxbhv_binding02_example_perm.metta')" style="cursor:pointer">  Close </a>
+
+<div id="sandboxbhv_binding02_example_perm.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> !(<b>import!</b> &self bhv_binding)
+
+!(bind! &a (bhv-new))
+!(bind! &b (bhv-new))
+
+!(bind! &perm1 (bhv-new-perm))
+(= (perm1 $x) (bhv-apply-perm &perm1 $x))
+
+!(bind! ab (bhv-majority &a &b ))
+
+; Should return False since a is permuted but ab is not permuted
+!(bhv-is-related (perm1 &a) ab)
+
+;Should return True
+!(bhv-is-related (perm1 &a) (perm1 ab))
+
+
+
+
+
+
+ import!   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> 04_example_dollar_of_mexico.metta</i></b> <b> &nbsp &nbsp &nbsp bhv_binding</b> &nbsp &nbsp &nbsp sandbox
+../../../hyperon-experimental/python/sandbox/bhv_binding
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/sandbox/bhv_binding/04_example_dollar_of_mexico.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('sandboxbhv_binding04_example_dollar_of_mexico.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('sandboxbhv_binding04_example_dollar_of_mexico.metta')" style="cursor:pointer">  Close </a>
+
+<div id="sandboxbhv_binding04_example_dollar_of_mexico.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> !(<b>import!</b> &self bhv_binding) import!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &name (bhv-new)) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &capital_city (bhv-new)) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &money (bhv-new)) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &united_states (bhv-new)) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &washington_dc (bhv-new)) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &dollar (bhv-new)) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &mexico (bhv-new)) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &mexico_city (bhv-new)) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &peso (bhv-new)) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> USA (bhv-majority (bhv-bind &name &united_states) (bhv-bind &capital_city &washington_dc) (bhv-bind &money &dollar) )) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> MEX (bhv-majority (bhv-bind &name &mexico) (bhv-bind &capital_city &mexico_city) (bhv-bind &money &peso) )) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> Pair (bhv-bind USA MEX)) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> dollar_of_mexico (bhv-bind &dollar Pair)) bind!   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> test_lambda.metta</i></b> <b> &nbsp &nbsp &nbsp jetta</b> &nbsp &nbsp &nbsp sandbox
+../../../hyperon-experimental/python/sandbox/jetta
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/sandbox/jetta/test_lambda.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('sandboxjettatest_lambda.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('sandboxjettatest_lambda.metta')" style="cursor:pointer">  Close </a>
+
+<div id="sandboxjettatest_lambda.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> !(<b>import!</b> &self compile) import!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &jspace (new-jetta-space)) bind!   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> test_basic_jetta.metta</i></b> <b> &nbsp &nbsp &nbsp jetta</b> &nbsp &nbsp &nbsp sandbox
+../../../hyperon-experimental/python/sandbox/jetta
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/sandbox/jetta/test_basic_jetta.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('sandboxjettatest_basic_jetta.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('sandboxjettatest_basic_jetta.metta')" style="cursor:pointer">  Close </a>
+
+<div id="sandboxjettatest_basic_jetta.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> !(<b>import!</b> &self compile) import!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &jspace (new-jetta-space)) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>case</b> (jetta "WRON SPACE" "(foo 11 4)") case   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">        (<b>case</b> (jetta &jspace "(foof 11 4)") case   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> test_expr_compile.metta</i></b> <b> &nbsp &nbsp &nbsp jetta</b> &nbsp &nbsp &nbsp sandbox
+../../../hyperon-experimental/python/sandbox/jetta
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/sandbox/jetta/test_expr_compile.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('sandboxjettatest_expr_compile.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('sandboxjettatest_expr_compile.metta')" style="cursor:pointer">  Close </a>
+
+<div id="sandboxjettatest_expr_compile.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> !(<b>import!</b> &self compile) import!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &jspace (new-jetta-space)) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">        (<b>case</b> (compile &jspace (ffff a b)) case   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> sql_space_test.metta</i></b> <b> &nbsp &nbsp &nbsp sql_space</b> &nbsp &nbsp &nbsp sandbox
+../../../hyperon-experimental/python/sandbox/sql_space
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/sandbox/sql_space/sql_space_test.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('sandboxsql_spacesql_space_test.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('sandboxsql_spacesql_space_test.metta')" style="cursor:pointer">  Close </a>
+
+<div id="sandboxsql_spacesql_space_test.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> !(<b>import!</b> &self sql_space) import!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &sql_space (new-sql-space musicbrainz_db localhost musicbrainz musicbrainz 5432)) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(sql.save-query-result &sql_space &self (, (musicbrainz.artist (id $id) (name $name)) (musicbrainz.artist (id $id) (begin_date_year 1977)) (<b>limit</b> 3))) limit   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(match &sql_space (, (musicbrainz.artist (id $id) (name $name)) (musicbrainz.artist (id $id) (begin_date_year 1983)) (<b>limit</b> 3)) $name) limit   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> tm_test.metta</i></b> <b> &nbsp &nbsp &nbsp pytorch</b> &nbsp &nbsp &nbsp sandbox
+../../../hyperon-experimental/python/sandbox/pytorch
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/sandbox/pytorch/tm_test.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('sandboxpytorchtm_test.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('sandboxpytorchtm_test.metta')" style="cursor:pointer">  Close </a>
+
+<div id="sandboxpytorchtm_test.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> !(<b>import!</b> &self torchme) import!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &th (torch:tensor (3. 2. 3.))) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &x (torch:tensor (3 2 3))) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &m (torch:tensor ((6 1) (7 2) (8 3)))) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &a (torch:tensor ((1 1 1) (0 0 0)))) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &b (torch:tensor ((-1 -1 -1) (1 1 1)))) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &q (torch:rand (3 4))) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &w (torch:rand (4 5))) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &p (torch:rand (4 4))) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &k (torch:tensor ((0. 1.) (1. 0.) (2. 0.) (2. 2.)))) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &c (torch:tensor (1 2 3))) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &tm (torch:matmul (&q &w))) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &mtm (torch:mean (&tm))) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &foo_model (torch:instantiate_module FooModel tm_test)) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &kwargs_arange (kwargs ((start 0) (end 100) (dtype torch.float) (requires_grad True))) ) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &kwargs_foo (kwargs ((param1 1) (param2 None) (param3 foo))) ) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &to_tensor_transform (torch:instantiate_module ToTensor torchvision.transforms)) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &train_data (torch:instantiate_module FashionMNIST torchvision.datasets data True &to_tensor_transform None True)) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &test_data (torch:instantiate_module FashionMNIST torchvision.datasets data False &to_tensor_transform None True)) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &train_dataloader (torch:instantiate_module DataLoader torch.utils.data &train_data 64)) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &test_dataloader (torch:instantiate_module DataLoader torch.utils.data &test_data 64)) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &model (torch:instantiate_module NeuralNetwork tm_test)) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &model_params (torch:get_model_params &model)) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &optimizer (torch:instantiate_module SGD torch.optim &model_params 0.001)) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &loss_fn (torch:instantiate_module CrossEntropyLoss torch.nn)) bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>bind!</b> &trainer (torch:instantiate_module Trainer tm_test &train_dataloader &model &loss_fn &optimizer)) bind!   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> module.metta</i></b> <b> &nbsp &nbsp &nbsp ext_sub</b> &nbsp &nbsp &nbsp tests
+../../../hyperon-experimental/python/tests/ext_sub
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/tests/ext_sub/module.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('testsext_submodule.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('testsext_submodule.metta')" style="cursor:pointer">  Close </a>
+
+<div id="testsext_submodule.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> !(<b>import!</b> &self self:ext_nested)
+ import!   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> d4_type_prop.metta</i></b> <b> &nbsp &nbsp &nbsp scripts</b> &nbsp &nbsp &nbsp tests
+../../../hyperon-experimental/python/tests/scripts
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/tests/scripts/d4_type_prop.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('testsscriptsd4_type_prop.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('testsscriptsd4_type_prop.metta')" style="cursor:pointer">  Close </a>
+
+<div id="testsscriptsd4_type_prop.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> ; Predicates (<b>function</b>s) from `Entity` to `Type` function   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>get-type</b> (Mortal Plato)) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>get-type</b> (HumansAreMortal SocratesIsHuman)) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>get-type</b> (HumansAreMortal (Human Socrates))) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>get-type</b> (= SocratesIsMortal (HumansAreMortal SocratesIsHuman))) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>get-type</b> (= (Mortal Socrates) (Mortal Plato))) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>get-type</b> (= SocratesIsMortal (HumansAreMortal PlatoIsHuman))) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>get-type</b> (= SocratesIsHuman PlatoIsHuman)) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>get-type</b> (= SocratesIsHuman SocratesIsMortal)) get-type   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> f1_moduleA.metta</i></b> <b> &nbsp &nbsp &nbsp scripts</b> &nbsp &nbsp &nbsp tests
+../../../hyperon-experimental/python/tests/scripts
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/tests/scripts/f1_moduleA.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('testsscriptsf1_moduleA.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('testsscriptsf1_moduleA.metta')" style="cursor:pointer">  Close </a>
+
+<div id="testsscriptsf1_moduleA.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Example file used by f1_imports.metta
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+!(<b>import!</b> &self f1_moduleC)
+
+; FIXME? stdlib space is not available at importing time -
+; only tokens / grounded operations work, while symbolic functions
+; (like `if`) don't work.
+; FIXME? Exceptions are not caught by `importOp`
+!(assertEqual (+ 1 2) 3)
+; !(assertEqual (if True "S" "F") "S")
+
+(= (dup $x) (if (== $x 0) (+ $x 10) (g $x)))
+
+(: f (-> Number Number))
+(= (f $x) (if (< $x 0) (- 0 $x) (g (+ 1 $x))))
+ import!   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> c2_spaces.metta</i></b> <b> &nbsp &nbsp &nbsp scripts</b> &nbsp &nbsp &nbsp tests
+../../../hyperon-experimental/python/tests/scripts
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/tests/scripts/c2_spaces.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('testsscriptsc2_spaces.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('testsscriptsc2_spaces.metta')" style="cursor:pointer">  Close </a>
+
+<div id="testsscriptsc2_spaces.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> !(<b>import!</b> &kb c2_spaces_kb) import!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>import!</b> &self c2_spaces_kb) import!   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> d5_auto_types.metta</i></b> <b> &nbsp &nbsp &nbsp scripts</b> &nbsp &nbsp &nbsp tests
+../../../hyperon-experimental/python/tests/scripts
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/tests/scripts/d5_auto_types.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('testsscriptsd5_auto_types.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('testsscriptsd5_auto_types.metta')" style="cursor:pointer">  Close </a>
+
+<div id="testsscriptsd5_auto_types.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> !(<b>pragma!</b> type-check auto) pragma!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">    (<b>collapse</b> (+ 5 "S")) collapse   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> e3_match_states.metta</i></b> <b> &nbsp &nbsp &nbsp scripts</b> &nbsp &nbsp &nbsp tests
+../../../hyperon-experimental/python/tests/scripts
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/tests/scripts/e3_match_states.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('testsscriptse3_match_states.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('testsscriptse3_match_states.metta')" style="cursor:pointer">  Close </a>
+
+<div id="testsscriptse3_match_states.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99">     (let $<b>new-state</b> (new-state $status) new-state   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>get-state</b> (status (Goal lunch-order))) get-state   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(nop (<b>change-state!</b> (status (Goal lunch-order)) active)) change-state!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #ECED99">   (<b>get-state</b> (status (Goal lunch-order))) get-state   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(bind! &state-active (<b>new-state</b> active)) new-state   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(nop (<b>change-state!</b> &state-active inactive)) change-state!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #ECED99"> ; We cannot put `(<b>new-state</b> active)` inside `match`, because it doesn't new-state   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> ; `(let $state-active (<b>new-state</b> active)) ...) here. new-state   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (if (== (<b>get-state</b> (status (Goal $goal))) get-state   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> f1_moduleB.metta</i></b> <b> &nbsp &nbsp &nbsp scripts</b> &nbsp &nbsp &nbsp tests
+../../../hyperon-experimental/python/tests/scripts
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/tests/scripts/f1_moduleB.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('testsscriptsf1_moduleB.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('testsscriptsf1_moduleB.metta')" style="cursor:pointer">  Close </a>
+
+<div id="testsscriptsf1_moduleB.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Example file used by f1_imports.metta
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+!(<b>import!</b> &self f1_moduleC)
+
+(= (dup $x) (if (== $x 0) (g $x) (+ $x 10)))
+ import!   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> f1_imports.metta</i></b> <b> &nbsp &nbsp &nbsp scripts</b> &nbsp &nbsp &nbsp tests
+../../../hyperon-experimental/python/tests/scripts
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/tests/scripts/f1_imports.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('testsscriptsf1_imports.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('testsscriptsf1_imports.metta')" style="cursor:pointer">  Close </a>
+
+<div id="testsscriptsf1_imports.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99">   ((let $x (get-atoms &self) (<b>get-type</b> $x))) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (superpose (((<b>get-type</b> &self)) ((get-type &self))))) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>import!</b> &m f1_moduleA) import!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">     (let $head (<b>car-atom</b> $list) car-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">         (let $tail (<b>cdr-atom</b> $list) (contains $tail $condition)) )))) cdr-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">    (let* (($type (<b>get-type</b> $atom)) ($space (get-type &self))) (== $type $space))) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (let $x (<b>collapse</b> (get-atoms &m)) (contains $x is-space)) collapse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> ; !(let $x (<b>collapse</b> (get-atoms &m)) (car-atom $x)) collapse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>import!</b> &self f1_moduleA) import!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> ;  (let $a (<b>collapse</b> (get-atoms &self)) (contains $a is-m)) collapse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>import!</b> &corelib top:corelib) import!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (let $a (<b>collapse</b> (get-atoms &self)) (contains $a is-corelib)) collapse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>import!</b> &self f1_moduleB) import!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> !(<b>import!</b> &self f1_moduleB) import!   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> d3_deptypes.metta</i></b> <b> &nbsp &nbsp &nbsp scripts</b> &nbsp &nbsp &nbsp tests
+../../../hyperon-experimental/python/tests/scripts
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/tests/scripts/d3_deptypes.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('testsscriptsd3_deptypes.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('testsscriptsd3_deptypes.metta')" style="cursor:pointer">  Close </a>
+
+<div id="testsscriptsd3_deptypes.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99">   (get-type (<b>Cons</b> 0 (Cons 1 Nil))) Cons   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> (= (drop (<b>Cons</b> $x $xs)) $xs) Cons   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (get-type (drop (<b>Cons</b> 1 Nil))) Cons   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (drop (<b>Cons</b> 2 (Cons 1 Nil))) Cons   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>Cons</b> 1 Nil)) Cons   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>get-type</b> (drop Nil)) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (get-type (<b>Cons</b>N "1" (ConsN "2" NilN))) Cons   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> (= (dropN (<b>Cons</b>N $x $xs)) $xs) Cons   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (get-type (dropN (<b>Cons</b>N "1" NilN))) Cons   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   ((get-type (dropN (dropN (<b>Cons</b>N "1" NilN))))) Cons   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> b4_nondeterm.metta</i></b> <b> &nbsp &nbsp &nbsp scripts</b> &nbsp &nbsp &nbsp tests
+../../../hyperon-experimental/python/tests/scripts
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/tests/scripts/b4_nondeterm.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('testsscriptsb4_nondeterm.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('testsscriptsb4_nondeterm.metta')" style="cursor:pointer">  Close </a>
+
+<div id="testsscriptsb4_nondeterm.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99">   (<b>collapse</b> collapse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (let $x (<b>collapse</b> (color)) (superpose $x))) collapse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>collapse</b> (shape)) collapse   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> b5_types_prelim.metta</i></b> <b> &nbsp &nbsp &nbsp scripts</b> &nbsp &nbsp &nbsp tests
+../../../hyperon-experimental/python/tests/scripts
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/tests/scripts/b5_types_prelim.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('testsscriptsb5_types_prelim.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('testsscriptsb5_types_prelim.metta')" style="cursor:pointer">  Close </a>
+
+<div id="testsscriptsb5_types_prelim.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99">    (<b>Cons</b> (S Z) (Cons Z Nil)) Cons   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   ((<b>Cons</b> (S Z) (Cons Z Nil)))) Cons   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> ;  (<b>Cons</b> S (Cons Z Nil)) Cons   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> ;  ((Error (<b>Cons</b> Z Nil) BadType))) Cons   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> e1_kb_write.metta</i></b> <b> &nbsp &nbsp &nbsp scripts</b> &nbsp &nbsp &nbsp tests
+../../../hyperon-experimental/python/tests/scripts
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/tests/scripts/e1_kb_write.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('testsscriptse1_kb_write.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('testsscriptse1_kb_write.metta')" style="cursor:pointer">  Close </a>
+
+<div id="testsscriptse1_kb_write.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> !(<b>bind!</b> &kb (new-space)) bind!   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> e2_states.metta</i></b> <b> &nbsp &nbsp &nbsp scripts</b> &nbsp &nbsp &nbsp tests
+../../../hyperon-experimental/python/tests/scripts
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/tests/scripts/e2_states.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('testsscriptse2_states.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('testsscriptse2_states.metta')" style="cursor:pointer">  Close </a>
+
+<div id="testsscriptse2_states.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> !(bind! &state-token (<b>new-state</b> (A B))) new-state   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">    (<b>get-state</b> (get-token)) get-state   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">    (<b>new-state</b> (A B))) new-state   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (get-type (<b>new-state</b> 2)) new-state   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (get-type (<b>change-state!</b> (new-state "S") "V")) change-state!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #ECED99">   (let $v (<b>new-state</b> 1) (get-type $v)) new-state   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>get-type</b> &state-token) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>change-state!</b> &state-token 1) change-state!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #ECED99">   (<b>change-state!</b> (new-state 1) "S") change-state!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #ECED99"> !(nop (<b>change-state!</b> &state-token (C D))) change-state!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #ECED99">    (<b>get-state</b> (get-token)) get-state   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (let $x (<b>new-state</b> 1) new-state   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">      (<b>change-state!</b> $x (+ (get-state $x) 1))) change-state!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #ECED99">   (<b>new-state</b> 2)) new-state   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">    (let $tnso (<b>new-state</b> 1) $tnso) new-state   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">    (<b>new-state</b> 1)) new-state   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> ; !(get-state (let $x (<b>new-state</b> 1) $x)) new-state   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> d2_higherfunc.metta</i></b> <b> &nbsp &nbsp &nbsp scripts</b> &nbsp &nbsp &nbsp tests
+../../../hyperon-experimental/python/tests/scripts
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/tests/scripts/d2_higherfunc.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('testsscriptsd2_higherfunc.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('testsscriptsd2_higherfunc.metta')" style="cursor:pointer">  Close </a>
+
+<div id="testsscriptsd2_higherfunc.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99">   (<b>get-type</b> (curry +)) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>get-type</b> ((curry +) 2)) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>get-type</b> (curry-a + 2)) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>get-type</b> ((curry-a + 2) 3)) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>get-type</b> ((curry-a + 2) "S")) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> ;   (<b>get-type</b> (lambda ($x $y) (+ $x $y))) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>get-type</b> (fmap (curry-a + 1) (Left 5))) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>get-type</b> (fmap (curry-a + 2) (Left "5"))) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> ;  (<b>get-type</b> (fmap (curry-a + 2) (UntypedC "5"))) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> ;  (<b>get-type</b> (fmap (curry-a + 2) (UntypedC (Null) 5))) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> (= (fmap-i $f (<b>Cons</b> $x $xs)) Cons   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">    (<b>Cons</b> ($f $x) (fmap-i $f $xs))) Cons   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (fmap-i (curry-a * 2) (<b>Cons</b> 3 (Cons 4 Nil))) Cons   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>Cons</b> 6 (Cons 8 Nil))) Cons   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> (= (insert $x Nil) (<b>Cons</b> $x Nil)) Cons   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> (= (insert $x (<b>Cons</b> $head $tail)) Cons   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>case</b> (< $x $head) case   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">       ((True  (<b>Cons</b> $x (Cons $head $tail))) Cons   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">        (False (<b>Cons</b> $head (insert $x $tail)))))) Cons   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99"> (= (sort (<b>Cons</b> $head $tail)) (insert $head (sort $tail))) Cons   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>Cons</b> 1 (Cons 2 (Cons 3 Nil)))) Cons   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (sort (<b>Cons</b> 3 (Cons 1 (Cons 2 Nil)))) Cons   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>Cons</b> 1 (Cons 2 (Cons 3 Nil)))) Cons   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> d1_gadt.metta</i></b> <b> &nbsp &nbsp &nbsp scripts</b> &nbsp &nbsp &nbsp tests
+../../../hyperon-experimental/python/tests/scripts
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/tests/scripts/d1_gadt.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('testsscriptsd1_gadt.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('testsscriptsd1_gadt.metta')" style="cursor:pointer">  Close </a>
+
+<div id="testsscriptsd1_gadt.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99">   (<b>get-type</b> 5) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>get-type</b> (+ 5 7)) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>get-type</b> +) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>get-type</b> (+ 5 "4")) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>get-type</b> (+ -)) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>get-type</b> Either) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>get-type</b> (Left 5)) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>get-type</b> (isLeft (Right 5))) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>get-type</b> (isLeft 5)) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>get-type</b> (LeftP 5)) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (<b>get-type</b> (pair (LeftP 5) "String")) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (get-type (<b>Cons</b> 5 (Cons 6 Nil))) Cons   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (get-type (<b>Cons</b> 5 (Cons "6" Nil))) Cons   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">   (let (List $t) (get-type (<b>Cons</b> 5 (Cons 6 Nil))) Cons   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> image-generation.metta</i></b> <b> &nbsp &nbsp &nbsp naint</b> &nbsp &nbsp &nbsp snet
+../../../hyperon-experimental/python/sandbox/snet/snet/naint
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/sandbox/snet/snet/naint/image-generation.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('snetnaintimage-generation.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('snetnaintimage-generation.metta')" style="cursor:pointer">  Close </a>
+
+<div id="snetnaintimage-generation.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> !(<b>import!</b> &self snet_io)
+
+!(add-reduct &self
+  (= (image-generation)
+     (snet-service "naint" "image-generation"
+       ; Put your data here or use environment variables
+       ;(Kwargs
+       ;  (private_key SNET_PRIVATE_KEY)
+       ;  (eth_rpc_endpoint ETH_RPC_ENDPOINT)
+       ;  (email SNET_EMAIL)
+       ;  (free_call_auth_token_bin FREE_CALL_AUTH_TOKEN_BIN)
+       ;)
+     )))
+ import!   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> generative-lms.metta</i></b> <b> &nbsp &nbsp &nbsp naint</b> &nbsp &nbsp &nbsp snet
+../../../hyperon-experimental/python/sandbox/snet/snet/naint
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/sandbox/snet/snet/naint/generative-lms.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('snetnaintgenerative-lms.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('snetnaintgenerative-lms.metta')" style="cursor:pointer">  Close </a>
+
+<div id="snetnaintgenerative-lms.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> !(<b>import!</b> &self snet_io)
+
+!(add-reduct &self
+  (= (generative-lms)
+     (snet-service "naint" "generative-lms"
+       ; Put your data here or use environment variables
+       ;(Kwargs
+       ;  (private_key SNET_PRIVATE_KEY)
+       ;  (eth_rpc_endpoint ETH_RPC_ENDPOINT)
+       ;  (email SNET_EMAIL)
+       ;  (free_call_auth_token_bin FREE_CALL_AUTH_TOKEN_BIN)
+       ;)
+     )))
+ import!   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> text-generation.metta</i></b> <b> &nbsp &nbsp &nbsp naint</b> &nbsp &nbsp &nbsp snet
+../../../hyperon-experimental/python/sandbox/snet/snet/naint
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/sandbox/snet/snet/naint/text-generation.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('snetnainttext-generation.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('snetnainttext-generation.metta')" style="cursor:pointer">  Close </a>
+
+<div id="snetnainttext-generation.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> !(<b>import!</b> &self snet_io) import!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">             (<b>length</b> $length)) length   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> code-generation.metta</i></b> <b> &nbsp &nbsp &nbsp naint</b> &nbsp &nbsp &nbsp snet
+../../../hyperon-experimental/python/sandbox/snet/snet/naint
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/sandbox/snet/snet/naint/code-generation.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('snetnaintcode-generation.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('snetnaintcode-generation.metta')" style="cursor:pointer">  Close </a>
+
+<div id="snetnaintcode-generation.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> !(<b>import!</b> &self snet_io)
+
+!(add-reduct &self
+  (= (code-generation)
+     (snet-service "naint" "code-generation"
+       ; Put your data here or use environment variables
+       ;(Kwargs
+       ;  (private_key SNET_PRIVATE_KEY)
+       ;  (eth_rpc_endpoint ETH_RPC_ENDPOINT)
+       ;  (email SNET_EMAIL)
+       ;  (free_call_auth_token_bin FREE_CALL_AUTH_TOKEN_BIN)
+       ;)
+     )))
+
+(: generate (-> String String))
+(= (generate $request)
+   ((code-generation) "generate" "Query"
+    (Kwargs (request $request))
+   )
+)
+ import!   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> abstractive-summarisation.metta</i></b> <b> &nbsp &nbsp &nbsp naint</b> &nbsp &nbsp &nbsp snet
+../../../hyperon-experimental/python/sandbox/snet/snet/naint
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/sandbox/snet/snet/naint/abstractive-summarisation.metta');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('snetnaintabstractive-summarisation.metta')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('snetnaintabstractive-summarisation.metta')" style="cursor:pointer">  Close </a>
+
+<div id="snetnaintabstractive-summarisation.metta" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #ECED99"> !(<b>import!</b> &self snet_io)
+
+!(add-reduct &self
+  (= (abstractive-summarisation)
+     (snet-service "naint" "abstractive-summarisation"
+       ; Put your data here or use environment variables
+       ;(Kwargs
+       ;  (private_key SNET_PRIVATE_KEY)
+       ;  (eth_rpc_endpoint ETH_RPC_ENDPOINT)
+       ;  (email SNET_EMAIL)
+       ;  (free_call_auth_token_bin FREE_CALL_AUTH_TOKEN_BIN)
+       ;)
+     )))
+ import!   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+ Tags not found - uncovered <br>
+<b>  echo</b> <br> 

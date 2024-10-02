@@ -1,0 +1,63 @@
+
+is_setter_syntax(I,_Obj,_Member,_Var,_):- \+ compound(I),!,fail.
+is_setter_syntax(set(Obj,Member),Obj,Member,_Var,b).
+is_setter_syntax(gset(Obj,Member),Obj,Member,_Var,nb).
+is_setter_syntax(hset(How,Obj,Member),Obj,Member,_Var,How).
+is_setter_syntax(set(ObjMember),Obj,Member,_Var,b):- obj_member_syntax(ObjMember,Obj,Member).
+is_setter_syntax(gset(ObjMember),Obj,Member,_Var,nb):- obj_member_syntax(ObjMember,Obj,Member).
+is_setter_syntax(hset(How,ObjMember),Obj,Member,_Var,How):- obj_member_syntax(ObjMember,Obj,Member).
+
+obj_member_syntax(ObjMember,Obj,Member):-compound(ObjMember), compound_name_arguments(ObjMember,'.',[Obj,Member]),!.
+
+maybe_expand_md(_MD,I,_):- \+ compound(I),!,fail.
+%maybe_expand_md(MD,I,_):- compound(I),!,fail. % THIS DISABLES
+% THIS DISABLES
+%maybe_expand_md(MD,must_det_ll(GoalL),GoalL):-!.
+maybe_expand_md(MD,MDGoal,GoalLO):- compound_name_arg(MDGoal,MD,Goal),!, expand_md(MD,Goal,GoalLO).
+maybe_expand_md(MD,maplist(P1,GoalL),GoalLO):- P1 ==MD,!,
+  expand_md(MD,GoalL,GoalLO).
+maybe_expand_md(MD,maplist(P1,GoalL),GoalLO):- P1 ==MD,!,
+  expand_md(MD,GoalL,GoalLO).
+maybe_expand_md(MD,I,O):- sub_term(C,I),compound(C), compound_name_arg(C,MD,Goal),
+   compound(Goal),Goal=(_,_),
+   once((expand_md(MD,Goal,GoalO),substM(I,C,GoalO,O))),I\=@=O.
+
+
+%maybe_expand_md(MD,I,O):- sub_term(S,I),compound(S),S=must_det_ll(G),
+%  once(expand_md(MD,S,M)),M\=S,
+
+
+
+expand_md(_MD,Nil,true):- Nil==[],!.
+expand_md(_MD,Var,Var):- \+ callable(Var),!.
+expand_md(MD,[A|B],(AA,BB)):- assertion(callable(A)), assertion(is_list(B)), !,
+  expand_md1(MD,A,AA), expand_md(MD,B,BB).
+expand_md(MD,A,AA):- !, expand_md1(MD,A,AA).
+
+prevents_expansion(A):- is_trace_call(A).
+is_trace_call(A):- A == trace.
+is_trace_call(A):- A == itrace.
+
+skip_expansion(A):- var(A),!,fail.
+skip_expansion(!).
+skip_expansion(false).
+skip_expansion(true).
+skip_expansion(C):- compound(C),functor(C,F,A),skip_fa_expansion(F,A).
+skip_fa_expansion(once,1).
+skip_fa_expansion(call,_).
+skip_fa_expansion(if_t,2).
+
+expand_md1(_MD,Var,Var):- \+ callable(Var),!.
+expand_md1(_MD,Cut,Cut):-  skip_expansion(Cut),!.
+expand_md1(MD,MDAB, AABB):- compound(MDAB), compound_name_arg(MDAB,MD,AB),!, expand_md(MD,AB,AABB).
+expand_md1(MD,maplist(P1,A),md_maplist(MD,P1,A)):-!.
+expand_md1(MD,maplist(P2,A,B),md_maplist(MD,P2,A,B)):-!.
+expand_md1(MD,maplist(P3,A,B,C),md_maplist(MD,P3,A,B,C)):-!.
+expand_md1(MD,my_maplist(P1,A),md_maplist(MD,P1,A)):-!.
+expand_md1(MD,my_maplist(P2,A,B),md_maplist(MD,P2,A,B)):-!.
+expand_md1(MD,my_maplist(P3,A,B,C),md_maplist(MD,P3,A,B,C)):-!.
+%expand_md1(MD,Goal,O):- \+ compound(Goal), !,O = must_det_ll(Goal).
+%expand_md1(MD,(A,B),((A,B))):- remove_must_det(MD), prevents_expansion(A),!.
+%expand_md1(MD,(A,B),must_det_ll((A,B))):- prevents_expansion(A),!.
+expand_md1(MD,(A,B),(AA,BB)):- !, expand_md(MD,A,AA), expand_md(MD,B,BB).
+expand_md1(MD,(C*->A;B),(CC*->AA;BB)):- !, expand_md(MD,A,AA), expand_md(MD,B,BB), expand_must_not_error(C,CC).

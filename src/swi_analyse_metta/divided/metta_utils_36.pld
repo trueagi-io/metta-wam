@@ -1,0 +1,55 @@
+dash_chars(H,_):- H < 1,!.
+dash_chars(H,C):- forall(between(0,H,_),bformatc1(C)).
+
+%section_break:- wants_html,!,write('<p><hr></p>').
+section_break.
+%dash_uborder_no_nl_1:-  line_position(current_output,0),!, bformatc1('\u00AF\u00AF\u00AF ').
+%dash_uborder_no_nl_1:-  line_position(current_output,W),W==1,!, bformatc1('\u00AF\u00AF\u00AF ').
+dash_uborder_no_nl_1:- bformatc1('\u00AF\u00AF\u00AF ').
+dash_uborder_no_nl_1:- uborder(Short,Long),!, bformatc1(Short),bformatc1(Long),write_nbsp.
+dash_uborder_no_nl(1):- !, dash_uborder_no_nl_1.
+dash_uborder_no_nl(Width):- WidthM1 is Width-1, uborder(Short,Long),write_nbsp, write(Short),dash_chars(WidthM1,Long),!.
+dash_uborder_no_nl(Width):- WidthM1 is Width-1, write_nbsp, bformat('\u00AF'),dash_chars(WidthM1,'\u00AF\u00AF'),!.
+dash_uborder_no_nl(Width):- nl_if_needed, WidthM1 is Width-1, bformatc1(' \u00AF'),dash_chars(WidthM1,'\u00AF\u00AF').
+
+dash_uborder(Width):- nl_if_needed,dash_uborder_no_nl(Width),nl_now.
+
+uborder('-','--'):- stream_property(current_output,encoding(utf8)),!.
+uborder('\u00AF','\u00AF\u00AF'):- !. %stream_property(current_output,encoding(text)).
+%uborder('-','--').
+
+dash_border_no_nl_1:-  line_position(current_output,0),!, bformatc1(' ___ ').
+dash_border_no_nl_1:-  line_position(current_output,W),W==1,!, bformatc1('___ ').
+dash_border_no_nl_1:- bformatc1(' ___ ').
+
+%dash_border_no_nl(Width):- write(''),dash_chars(Width,'_'),write_nbsp,!.
+
+dash_border_no_nl(Width):- nl_if_needed, WidthM1 is Width-1, bformatc1(' _'),dash_chars(WidthM1,'__').
+
+dash_border(Width):- !, dash_border_no_nl(Width),nl_now,!.
+
+functor_test_color(pass,green).
+functor_test_color(fail,red).
+functor_test_color(warn,yellow).
+
+arcdbg(G):- is_vm_map(G), !, write_map(G,'arcdbg').
+arcdbg(G):- compound(G), compound_name_arity(G,F,_),functor_test_color(F,C),
+  wots_hs(S,print(G)),color_print(C,S),!,nl_if_needed_ansi.
+arcdbg(G):- u_dmsg(G).
+
+
+%user:portray(Grid):- ((\+ tracing, is_group(Grid),print_grid(Grid))).
+%user:portray(Grid):- quietlyd((is_object(Grid),print_grid(Grid))).
+n_times(N,Goal):- forall(between(1,N,_),ignore(Goal)).
+banner_lines(Color):- banner_lines(Color,1).
+banner_lines(Color,N):- wants_html,!,format('\n<hr style="border: ~wpx solid ~w">\n',[N,Color]),!.
+banner_lines(Color,N):-
+ must_det_ll((nl_if_needed,
+  n_times(N,color_print(Color,'-------------------------------------------------')),nl_now,
+  n_times(N,color_print(Color,'=================================================')),nl_now,
+  n_times(N,color_print(Color,'-------------------------------------------------')),nl_now,
+  n_times(N,color_print(Color,'=================================================')),nl_now,
+  n_times(N,color_print(Color,'-------------------------------------------------')),nl_now)),!.
+
+print_sso(A):- ( \+ compound(A) ; \+ (sub_term(E,A), is_gridoid(E))),!, u_dmsg(print_sso(A)),!.
+print_sso(A):- grid_footer(A,G,W),writeln(print_sso(W)), print_grid(W,G),!.

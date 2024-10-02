@@ -1,0 +1,78 @@
+
+:- set_prolog_flag(verbose_autoload, false).
+:- set_prolog_flag(verbose, silent).
+:- set_prolog_flag(verbose_load, silent).
+:- ensure_loaded(library(logicmoo_utils)).
+:- assert((user:'$exported_op'(_,_,_):- fail)).
+:- abolish((system:'$exported_op'/3)).
+:- assert((system:'$exported_op'(_,_,_):- fail)).
+
+:- if(exists_source(library(logicmoo_utils))).
+:- ensure_loaded(library(logicmoo_utils)).
+:- endif.
+:- if(exists_source(library(dictoo))).
+%:- ensure_loaded(library(dictoo)).
+:- endif.
+
+
+
+:- dynamic(done_once/1).
+do_once(G):-
+  ((done_once(GG),GG=@=G) -> true
+  ;(assert(done_once(G)),(once(@(G,user))->true;retract(done_once(G))))).
+
+cleanup_debug:-
+  forall(
+    (clause(prolog_debug:debugging(A1,B,C),Body,Cl1),
+     clause(prolog_debug:debugging(A2,B,C),Body,Cl2),
+     A1=@=A2,Cl1\==Cl2),
+     erase(Cl2)).
+
+:- export(plain_var/1).
+plain_var(V):- notrace((var(V), \+ attvar(V), \+ get_attr(V,ci,_))).
+catch_nolog(G):- ignore(catch(notrace(G),E,once(true;nop(u_dmsg(E=G))))).
+catch_log(G):- ignore(catch((G),E,((u_dmsg(E=G),ugtrace(G))))).
+% catch_log(G):- ignore(catch(notrace(G),E,((writeln(E=G),catch_nolog(ds))))).
+
+get_user_error(UE):- stream_property(UE,file_no(2)),!.
+get_user_error(UE):- stream_property(UE,alias(user_error)),!.
+
+ufmt(G):- notrace((fbug(G)->true;ufmt0(G))).
+ufmt0(G):- fmt(G)->true;writeln(G).
+u_dmsg(G):- is_list(G),!,my_maplist(u_dmsg,G).
+u_dmsg(M):- get_user_error(UE), \+ current_predicate(with_toplevel_pp/2),!, with_output_to(UE,ufmt(M)).
+u_dmsg(M):- get_user_error(UE),!, with_toplevel_pp(ansi, with_output_to(UE,ufmt(M))).
+u_dmsg(M):- get_user_error(UE),  stream_property(UO,file_no(1)), current_output(CO),!,
+  (UO==CO ->  fbug(M) ;
+   (with_toplevel_pp(ansi, with_output_to(UE,ufmt(M))), with_output_to(CO,pp(M)))).
+u_dmsg(G):-ufmt(G),!.
+
+
+:- multifile(is_cgi/0).
+:- dynamic(is_cgi/0).
+:- multifile(arc_html/0).
+:- dynamic(arc_html/0).
+
+
+logicmoo_use_swish:-
+  set_prolog_flag(use_arc_swish,true),
+  ld_logicmoo_webui,call(call,webui_start_swish_and_clio),
+  http_handler('/swish', http_redirect(moved, '/swish/'), []).
+
+arc_user(Nonvar):- nonvar(Nonvar),!,arc_user(Var),!,Nonvar=Var.
+arc_user(main):- main_thread, !. %\+ if_thread_main(fail),!.
+arc_user(ID):- catch((pengine:pengine_user(ID)),_,fail),!.
+arc_user(ID):- catch((xlisting_web:is_cgi_stream,xlisting_web:find_http_session(User),http_session:session_data(User,username(ID))),_,fail),!.
+arc_user(ID):- catch((is_cgi, (xlisting_web:find_http_session(ID))),_,fail),!.
+arc_user(ID):- is_cgi,!,ID=web_user.
+arc_user(ID):- thread_self(ID).
+
+:- dynamic(arc_user_prop/3).
+
+%luser_setval(N,V):- nb_setval(N,V),!.
+luser_setval(N,V):- arc_user(ID),luser_setval(ID,N,V),!.
+luser_setval(ID,N,V):- \+ (arc_sensical_term(N),arc_sensical_term(V)),
+  warn_skip(not_arc_sensical_term(luser_setval(ID,N,V))).
+luser_setval(ID,N,V):-
+  (atom(N)->nb_setval(N,V);true),
+  retractall(arc_user_prop(ID,N,_)),asserta(arc_user_prop(ID,N,V)).

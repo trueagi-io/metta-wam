@@ -1,0 +1,88 @@
+my_include(_,_,[]).
+
+%my_exclude(P1,I,O):- my_include(not(P1),I,O).
+my_exclude(P1,I,O):- my_partition(P1,I,_,O).
+
+
+subst_1L([],Term,Term):-!.
+subst_1L([X-Y|List], Term, NewTerm ) :-
+  subst0011(X, Y, Term, MTerm ),
+  subst_1L(List, MTerm, NewTerm ).
+
+subst_2L([],_,I,I).
+subst_2L([F|FF],[R|RR],I,O):- subst0011(F,R,I,M),subst_2L(FF,RR,M,O).
+
+
+subst001(I,F,R,O):- subst0011(F,R,I,O),!.
+
+
+subst0011(X, Y, Term, NewTerm ) :-
+  copy_term((X,Y,Term),(CX,CY,Copy),Goals),
+  (Goals==[]
+   ->subst0011a( X, Y, Term, NewTerm )
+   ;(subst0011a(CX, CY, Goals, NewGoals),
+     (NewGoals==Goals ->
+       subst0011a( X, Y, Term, NewTerm )
+       ; (subst0011a(CX, CY, Copy, NewCopy),
+          NewTerm = NewCopy, maplist(call,NewGoals))))).
+
+
+
+subst0011a(X, Y, Term, NewTerm ) :-
+ ((X==Term)-> Y=NewTerm ;
+  (is_list(Term)-> maplist(subst0011a(X, Y), Term, NewTerm );
+   (( \+ compound(Term); Term='$VAR'(_))->Term=NewTerm;
+     ((compound_name_arguments(Term, F, Args),
+       maplist(subst0011a(X, Y), Args, ArgsNew),
+        compound_name_arguments( NewTerm, F, ArgsNew )))))),!.
+
+subst001C(I,F,R,O):- subst001_p2(same_term,I,F,R,O),!.
+subst0011C(F,R,I,O):- subst0011_p2(same_term,F,R,I,O),!.
+subst_2LC(F,R,I,O):- subst_2L_p2(same_term,F,R,I,O).
+
+subst_2L_p2(_P2, [],_,I,I):-!.
+subst_2L_p2(_P2, _,[],I,I):-!.
+subst_2L_p2(P2, [F|FF],[R|RR],I,O):- subst0011_p2(P2, F,R,I,M),subst_2L_p2(P2, FF,RR,M,O).
+
+subst001_p2(P2, I,F,R,O):- subst0011_p2(P2, F,R,I,O),!.
+
+subst_1L_p2(_,  [],Term,Term):-!.
+subst_1L_p2(P2, [X-Y|List], Term, NewTerm ) :-
+  subst0011_p2(P2, X, Y, Term, MTerm ),
+  subst_1L_p2(P2, List, MTerm, NewTerm ).
+
+subst0011_p2(P2, X, Y, Term, NewTerm ) :-
+  copy_term((X,Y,Term),(CX,CY,Copy),Goals),
+  (Goals==[]
+  ->subst0011a_p2(P2, X, Y, Term, NewTerm )
+  ;(subst0011a_p2(P2, CX, CY, Goals, NewGoals),
+     (NewGoals==Goals ->
+       subst0011a_p2(P2, X, Y, Term, NewTerm )
+       ; (subst0011a_p2(P2, CX, CY, Copy, NewCopy),
+          NewTerm = NewCopy, maplist(call,NewGoals))))).
+
+subst0011a_p2(P2, X, Y, Term, NewTerm ) :-
+ (p2_call(P2,X,Term)-> Y=NewTerm ;
+  (is_list(Term)-> maplist(subst0011a_p2(P2, X, Y), Term, NewTerm );
+   (( \+ compound(Term); Term='$VAR'(_))->Term=NewTerm;
+     ((compound_name_arguments(Term, F, Args),
+       maplist(subst0011a_p2(P2, X, Y), Args, ArgsNew),
+        compound_name_arguments( NewTerm, F, ArgsNew )))))),!.
+
+
+
+ppa(FF):-
+  copy_term(FF,FA,GF),
+  numbervars(FA+GF,0,_,[attvar(bind),singletons(true)]),
+  sort_safe(GF,GS),write(' '),
+  locally(b_setval(arc_can_portray,nil),
+      ppawt(FA)),format('~N'),
+  ignore((GS\==[], format('\t'),ppawt(attvars=GS),nl)),nl,!.
+
+ppawt(FA):-
+  write_term(FA,[numbervars(false), quoted(true),
+   character_escapes(true),cycles(true),dotlists(false),no_lists(false),
+    blobs(portray),attributes(dots),
+    portray(true), partial(false), fullstop(true),
+    %portray(false), partial(true), fullstop(true),
+   ignore_ops(false), quoted(true), quote_non_ascii(true), brace_terms(false)]).

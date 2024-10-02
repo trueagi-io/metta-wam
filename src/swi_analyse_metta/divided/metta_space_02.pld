@@ -1,0 +1,84 @@
+% TODO move non flybase specific code between here and the compiler
+%:- ensure_loaded(flybase_main).
+
+:- multifile(is_pre_statistic/2).
+:- dynamic(is_pre_statistic/2).
+save_pre_statistic(Name):- is_pre_statistic(Name,_)-> true; (statistics(Name,AS),term_number(AS,FN),
+              pfcAdd_Now(is_pre_statistic(Name,FN))).
+pre_statistic(N,V):- is_pre_statistic(N,V)-> true ; V = 0.
+post_statistic(N,V):- statistics(N,VV),term_number(VV,FV),pre_statistic(N,WV), V0 is FV-WV, (V0<0 -> V = 0 ; V0=V).
+term_number(T,N):- sub_term(N,T),number(N).
+
+
+call_match([G]):-!, call(G).
+call_match([G|GG]):- !, call(G), call_match(GG).
+call_match(G):- call(G).
+
+'save-space!'(Space,File):-
+ setup_call_cleanup(
+  open(File,write,Out,[]),
+  with_output_to(Out,
+   forall(get_atoms(Space,Atom),
+      write_src(Atom))),
+  close(Out)).
+
+
+:- dynamic(repeats/1).
+:- dynamic(not_repeats/1).
+assert_new(P):- notrace(catch(call(P),_,fail)),!,
+  assert_new1(repeats(P)).
+assert_new(P):- pfcAdd_Now(P), flag(assert_new,TA,TA+1),assert_new1(not_repeats(P)),!.
+
+retract1(P):- \+ call(P),!.
+retract1(P):- ignore(\+ retract(P)).
+
+assert_new1(P):- \+ \+ call(P),!.
+assert_new1(P):- pfcAdd_Now(P).
+
+
+:- dynamic(fb_pred/3).
+:- dynamic(mod_f_a/3).
+decl_m_fb_pred(Mod,Fn,A):- var(Mod),!,mod_f_a(Mod,Fn,A).
+decl_m_fb_pred(Mod,Fn,A):- mod_f_a(Mod,Fn,A)->true;
+   (dynamic(Mod:Fn/A),
+  pfcAdd_Now(mod_f_a(Mod,Fn,A))).
+:- dynamic(fb_pred_file/3).
+decl_fb_pred(Fn,A):-
+   (fb_pred(Fn,A)-> true; (dynamic(Fn/A),pfcAdd_Now(fb_pred(Fn,A)))),
+   ignore((nb_current(loading_file,File),
+    (fb_pred_file(Fn,A,File)-> true; pfcAdd_Now(fb_pred_file(Fn,A,File))))).
+% Import necessary libraries
+:- use_module(library(readutil)).
+
+
+skip(_).
+
+% ===============================
+% MeTTa Python incoming interface
+% ===============================
+
+% ============================
+% %%%% Atom Manipulations
+% ============================
+
+% Clear all atoms from a space
+'clear-atoms'(SpaceNameOrInstance) :-
+  dout(space,['clear-atoms',SpaceNameOrInstance]),
+  space_type_method(Type,clear_space,Method), call(Type,SpaceNameOrInstance),!,
+  dout(space,['type-method',Type,Method]),
+  call(Method,SpaceNameOrInstance).
+
+% Add an atom to the space
+'add-atom'(SpaceNameOrInstance, Atom) :-      % dout(space,['add-atom',SpaceNameOrInstance, Atom]),
+ ((   space_type_method(Type,add_atom,Method), call(Type,SpaceNameOrInstance),!,
+    if_t((SpaceNameOrInstance\=='&self' ; Type\=='is_asserted_space'),
+       dout(space,['type-method',Type,Method,SpaceNameOrInstance,Atom])),
+    call(Method,SpaceNameOrInstance,Atom))).
+% Add Atom
+'add-atom'(Environment, AtomDeclaration, Result):-
+      eval_args(['add-atom', Environment, AtomDeclaration], Result).
+
+% remove an atom from the space
+'remove-atom'(SpaceNameOrInstance, Atom) :-
+    dout(space,['remove-atom',SpaceNameOrInstance, Atom]),
+    space_type_method(Type,remove_atom,Method), call(Type,SpaceNameOrInstance),!,

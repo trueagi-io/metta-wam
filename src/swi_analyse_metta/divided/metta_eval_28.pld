@@ -1,0 +1,72 @@
+
+
+
+% =================================================================
+% =================================================================
+% =================================================================
+%  METTLOG EXTRA PREDEFS
+% =================================================================
+% =================================================================
+% =================================================================
+
+%eval_20(Eq,RetType,_Dpth,_Slf,['trace!',A],A):- !, format('~N'),fbug(A),format('~N').
+
+eval_20(Eq,RetType,_Dpth,_Slf,List,YY):- is_list(List),maplist(self_eval,List),List=[H|_], \+ atom(H), !,Y=List,do_expander(Eq,RetType,Y,YY).
+
+% Temporarily in this file
+eval_20(Eq,_ListOfRetType,Depth,Self,['TupleConcat',A,B],OO):- fail, !,
+    eval_args(Eq,RetType,Depth,Self,A,AA),
+    eval_args(Eq,RetType,Depth,Self,B,BB),
+    append(AA,BB,OO).
+
+% Temporarily in this file
+eval_20(Eq,OuterRetType,Depth,Self,['range',A,B],OO):- fail, (is_list(A);is_list(B)),
+  ((eval_args(Eq,RetType,Depth,Self,A,AA),
+    eval_args(Eq,RetType,Depth,Self,B,BB))),
+    ((AA+BB)\=@=(A+B)),
+    eval_20(Eq,OuterRetType,Depth,Self,['range',AA,BB],OO),!.
+
+
+/*
+  fromNumber(Var1,Var2):- var(Var1),var(Var2),!,
+   freeze(Var1,fromNumber(Var1,Var2)),
+   freeze(Var2,fromNumber(Var1,Var2)).
+fromNumber(0,'Z'):-!.
+fromNumber(N,['S',Nat]):- integer(N), M is N -1,!,fromNumber(M,Nat).
+
+eval_20(Eq,RetType,Depth,Self,['fromNumber',NE],RetVal):- !,
+   eval_args('=','Number',Depth,Self,NE,N),
+    fromNumber(N,RetVal), check_returnval(Eq,RetType,RetVal).
+*/
+
+%% lazy_union(:P2, +E1_Call1, +E2_Call2, -E) is nondet.
+%  - Performs a union operation using lazy evaluation
+% Arguments:
+%  - P2: Any arity 2 predicate
+%  - E1^Call1: The first goal (Call1) generating elements (E1)
+%  - E2^Call2: The second goal (Call2) generating elements (E2)
+%  - E: The resulting element that is part of the union of the two sets
+lazy_union(P2, E1^Call1, E2^Call2, E) :-
+    % Step 1: Use lazy_findall/3 to declare that all elements satisfying Call1 are supposedly in List1
+    lazy_findall(E1, Call1, List1),
+    % Step 2: Use lazy_findall/3 to declare that all elements satisfying Call2 are supposedly in List2
+    lazy_findall(E2, Call2, List2),
+    % Step 3: Perform the union logic
+    (   % Case 1: If E is a member of List1, include it in the result
+        member(E, List1)
+        % Case 2: Otherwise, check if E is a member of List2
+        % Additionally, ensure that E does not already exist in List1
+        ; (member(E, List2), \+ (member(E1, List1), call(P2, E1, E)))
+    ).
+
+
+variant_by_type(X,Y):- var(X),!,X==Y.
+variant_by_type(X,Y):- X=@=Y.
+
+eval_20(Eq,RetType,Depth,Self,['unique',Eval],RetVal):- !,
+   term_variables(Eval+RetVal,Vars),
+   no_repeats_var(YY),
+   eval_20(Eq,RetType,Depth,Self,Eval,RetVal),YY=Vars.
+
+eval_20(Eq,RetType,Depth,Self,['pred-unique',P2,Eval],RetVal):- !,
+   no_repeats_var(P2,YY),

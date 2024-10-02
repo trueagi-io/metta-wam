@@ -1,0 +1,19 @@
+    '                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        '='    ',
+    '                                                                          '='     ',
+    '\t'='  ',
+    '                         '='     '],S0,SS),p_to_br(SS,O).
+*/
+
+
+wqs_l(H):- \+ is_list(H),!, wqs(H).
+wqs_l(H):- wqs(H).
+
+wqs(P):- wots_hs(SS,wqs0(P)), maybe_color(SS,P).
+wqs(C,P):- ansicall(C,wqs0(P)),!.
+
+wqs0(X):- plain_var(X), wqs(plain_var(X)),!.
+wqs0(X):- plain_var(X), !, wqs(plain_var(X)), ibreak.
+wqs0(S):- term_is_ansi(S), !, write_keeping_ansi_mb(S).
+wqs0(C):- is_colorish(C),color_print(C,C),!.
+wqs0(G):- is_vm_map(G), !, write_map(G,'wqs').
+wqs0(X):- var(X), !, get_attrs(X,AVs),!,writeq(X),write('/*{'),print(AVs),write('}*/').

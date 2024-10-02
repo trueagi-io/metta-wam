@@ -1,0 +1,105 @@
+  pfcRun.
+
+
+pfcUnFcCheckTriggers(F) :-
+  pfcType(F,fact(_)),
+  copy_term(F,Fcopy),
+  pfcCallSystem('$nt$'(Fcopy,Condition,Action)),
+  (\+ pfcCallSystem(Condition)),
+  fcEvalLHS(Action,((\+F),'$nt$'(F,Condition,Action))),
+  fail.
+pfcUnFcCheckTriggers(_).
+
+pfcRetractDependantRelations(Fact) :-
+  pfcType(Fact,Type),
+  (Type=trigger(_Pos) -> pfcRemOneSupport(P,(_,Fact))
+                ; pfcRemOneSupportOrQuietlyFail(P,(Fact,_))),
+  removeIfUnsupported(P),
+  fail.
+pfcRetractDependantRelations(_).
+
+
+
+% %  removeIfUnsupported(+P) checks to see if P is supported and removes
+% %  it from the DB if it is not.
+
+removeIfUnsupported(P) :-
+   fcSupported(P) -> pfcTraceMsg(fcSupported(P)) ;  fcUndo(P).
+
+
+% %  fcSupported(+P) succeeds if P is "supported". What this means
+% %  depends on the TMS mode selected.
+
+fcSupported(P) :-
+  must_ex(fcTmsMode(Mode)),
+  supported(Mode,P).
+
+supported(local,P) :- !, pfcGetSupport(P,_).
+supported(cycles,P) :-  !, wellFounded(P).
+supported(_,_P) :- true.
+
+
+% % 
+% %  a fact is well founded if it is supported by the user
+% %  or by a set of facts and a rules, all of which are well founded.
+% %
+
+wellFounded(Fact) :- wf(Fact,[]).
+
+wf(F,_) :-
+  % supported by user (axiom) or an "absent" fact (assumption).
+  (axiom(F) ; assumption(F)),
+  !.
+
+wf(F,Descendants) :-
+  % first make sure we aren't in a loop.
+  (\+ memberchk(F,Descendants)),
+  % find a justification.
+  supports(F,Supporters),
+  % all of whose members are well founded.
+  wflist(Supporters,[F|Descendants]),
+  !.
+
+% %  wflist(L) simply maps wf over the list.
+
+wflist([],_).
+wflist([X|Rest],L) :-
+  wf(X,L),
+  wflist(Rest,L).
+
+
+
+% supports(+F,-ListofSupporters) where ListOfSupports is a list of the
+% supports for one justification for fact F -- i.e. a list of facts which,
+% together allow one to deduce F.  One of the facts will typically be a rule.
+% The supports for a user-defined fact are: [user].
+
+supports(F,[Fact|MoreFacts]) :-
+  pfcGetSupport(F,(Fact,Trigger)),
+  triggerSupports(Trigger,MoreFacts).
+
+triggerSupports(U,[]) :- axiomatic_supporter(U),!.
+
+triggerSupports(Trigger,AllSupport):-
+  triggerSupports1(Trigger,AllSupport)*->true;triggerSupports2(Trigger,AllSupport).
+
+triggerSupports1(Trigger,AllSupport) :-
+  pfcGetSupport(Trigger,(Fact,AnotherTrigger)),
+  (triggerSupports(AnotherTrigger,MoreFacts)*->true;MoreFacts=[AnotherTrigger]),
+  [Fact|MoreFacts] = AllSupport.
+
+triggerSupports2(Trigger,AllSupport) :- fail,
+  pfcGetSupport(Trigger,(Fact,AnotherTrigger)),
+  (triggerSupports(AnotherTrigger,MoreFacts)*->true;MoreFacts=[AnotherTrigger]),
+  [Fact|MoreFacts] = AllSupport.
+
+axiomatic_supporter(Var):-is_ftVar(Var),!,fail.
+axiomatic_supporter(is_ftVar(_)).
+axiomatic_supporter(clause_u(_)).
+axiomatic_supporter(user(_)).
+axiomatic_supporter(U):- is_file_ref(U),!.
+axiomatic_supporter(ax):-!.
+
+is_file_ref(A):-compound(A),A=mfl4(_VarNameZ,_,_,_).
+
+triggerSupports(_,Var,[is_ftVar(Var)]):-is_ftVar(Var),!.

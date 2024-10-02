@@ -1,0 +1,78 @@
+metta_assertdb_iter_bind(KB,Query,Vars):-
+  ignore(term_variables(Query,Vars)),
+  print(metta_assertdb(['match',KB,Query,Vars])),nl,
+     AMA = metta_atom_asserted,
+     decl_m_fb_pred(user,AMA,2),
+     MP =.. [AMA,KB,Query],
+
+  (MP*->true;call_metta_assertdb(KB,Query,Vars)),
+  metta_assertdb('RES',metta_assertdb_iter_bind(KB,Query,Vars)).
+%metta_assertdb_iter_bind(KB,Atom,Template):- metta_assertdb_stats, findall(Template,metta_assertdb_iter(KB,Atom),VarList).
+
+metta_assertdb_iter_bind(KB,Atoms,Vars):-
+  metta_assertdb_stats,
+  term_variables(Atoms,AVars),
+  metta_assertdb_iter(KB,Atoms), ignore(AVars = Vars).
+*/
+
+
+align_varnames(VarNames,Vars):-
+  list_to_set(VarNames,NameSet),
+  merge_named_vars(NameSet,VarNames,Vars).
+
+merge_named_vars([],_VarNames,_Vars):-!.
+merge_named_vars([N|NameSet],VarNames,Vars):-
+  merge_named(N,_V,VarNames,Vars),
+  merge_named_vars(NameSet,VarNames,Vars).
+%merge_named_vars(_,_,_).
+
+merge_named(_,_,[],[]):-!.
+merge_named(N,V,[N|VarNames],[V|Vars]):-
+  merge_named(N,V,VarNames,Vars).
+
+
+call_metta( KB,Query,_Vars):- metta_atom(KB,Query).
+call_metta(_KB,Query,_Vars):- metta_to_pyswip([],Query,Call),!,
+  %print(user:Call),nl,
+    user:call(Call).
+
+metta_to_pyswip(_PS,Query,Call):- var(Query),!,Call=Query.
+metta_to_pyswip(_PS,Query,Call):- \+ compound(Query),!,Call=Query,!.
+metta_to_pyswip(PS,Query,Call):- is_list(Query),Query=[Q|Uery],!,cmpd_to_pyswip(PS,Q,Uery,Call).
+metta_to_pyswip(PS,Query,Call):- Query=..[Q|Uery], cmpd_to_pyswip(PS,Q,Uery,Call).
+
+cmpd_to_pyswip(PS,Q,Uery,Call):- atom(Q),maplist(metta_to_pyswip([Q|PS]),Uery,Cery),Call=..[Q|Cery].
+cmpd_to_pyswip(PS,"and",Uery,Call):- maplist(metta_to_pyswip(PS),Uery,Args),list_to_conjuncts(Args,Call).
+
+
+'show-metta-def'(Pred, []):-
+  'get-metta-src'(Pred,[_|SrcL]),
+  maplist(write_src_nl,SrcL).
+
+write_src_nl(Src):- format('~N'),write_src(Src),format('~N').
+
+%'get-metta-src'(Pred,[Len|SrcL]):- findall(['AtomDef',Src],'get-metta-src1'(Pred,Src),SrcL), length(SrcL,Len).
+'get-metta-src'(Pred,[Len|SrcL]):- findall(Src,'get-metta-src1'(Pred,Src),SrcL), length(SrcL,Len).
+'get-metta-src1'(Pred,Src):-
+  current_self(Space),
+  metta_atom(Space,F,A,List),
+  once((sub_var(Pred,A)->Src = [F,A,List];sub_var(Pred,F)->Src = [F,A|List])).
+
+% is a quine
+'AtomDef'(X,['AtomDef',X]).
+
+
+sort_on(C,R,A,B):- (A==B-> R= (=) ; must_det_ll((call(C,A,AA),call(C,B,BB),!,compare(R,AA+A,BB+B)))),!.
+tokens(X,VL):- unaccent_atom(X,A),!, findall(E,(is_tokenizer(T),call(T,A,E)),L),predsort(sort_on(length_fw_len),L,S),last(S,VL).
+
+length_fw_len([W|List],L+WL):- length(List,L),atom_length(W,WL).
+
+print_token_args:- make,
+   fb_arg(X),tokens(X,A0),
+   exclude(is_dash,A0,A),tterm(A,AT),writeq(X),write('    '),writeq(AT),write('  '),write_src(A),nl,fail.
+is_dash('_').
+is_dash('-').
+tterm([A],A):-!.
+tterm([A,':',B|M],BA):- atom(A),!,BA=..[A,B|M].
+tterm([A,B|M],BA):- atom(B),!,BA=..[B,A|M].
+tterm([A|B],BA):- atom(A),!,BA=..[B|A].

@@ -1,0 +1,72 @@
+    if_debugging(println_impl(['bc-rec', [:, [_prfabs, _prfarg], _ccln], ['S', _k]])),
+    bc_impl([:, _prfabs, ['->', _prms, _ccln]], _k, [:, _prfabs, [->, _prms, _ccln]]),
+    bc_impl([:, _prfarg, _prms], _k, [:, _prfarg, _prms]).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+end_of_file.
+
+
+
+        eval_20(Eq,RetType,Depth,Self,X,Y):- fail,
+          once(type_fit_childs(Eq,Depth,Self,RetType,X,XX)),
+            X\=@=XX, fbug(type_fit_childs(X,XX)),fail,
+          eval_evals(Eq,RetType,Depth,Self,XX,Y).
+
+
+        into_arg_code([],true):-!.
+        into_arg_code(H,TT):- \+ iz_conz(H), TT = H.
+        into_arg_code([H,T],TT):- H==true,!,into_arg_code(T,TT).
+        into_arg_code([T,H],TT):- H==true,!,into_arg_code(T,TT).
+        into_arg_code([H,T],','(HH,TT)):- !, into_arg_code(H,HH),into_arg_code(T,TT).
+        into_arg_code([H|T],TT):- H==true,!,into_arg_code(T,TT).
+        into_arg_code([H|T],','(HH,TT)):- !, into_arg_code(H,HH),into_arg_code(T,TT).
+        into_arg_code(TT,TT).
+        into_arg_code([H|T],next(H,TT)):- into_arg_code(T,TT).
+
+
+        % reduce args to match types even inside atoms
+        type_fit_childs(_Eq,_Depth,_Self,_RetType,true,X,Y):- is_ftVar(X),!,Y=X.
+        type_fit_childs(_Eq,_Depth,_Self,_RetType,true,X,Y):- symbolic(X),!,Y=X.
+        type_fit_childs(Eq,Depth,Self,RetType,CodeForArg,X,Y):- compound_non_cons(X),!,
+           into_list_args(X,XX),!,type_fit_childs(Eq,Depth,Self,RetType,CodeForArg,XX,Y).
+        type_fit_childs(_Eq,_Depth,_Self,_RetType,true,X,Y):- \+ is_list(X),iz_conz(X), trace, !,Y=X.
+        type_fit_childs(_Eq,_Depth,_Self,_RetType,true,X,Y):- self_eval(X),!,Y=X.
+
+        type_fit_childs(_Eq,_Depth,_Self,_RetType,true,[H|Args],[H|Args]):- (H=='eval_args';H=='eval_args-for'),!.
+
+        type_fit_childs(Eq,Depth,Self,RetType,CodeForArg,['let*',Lets,Body],RetVal):- !,
+            expand_let_star(Lets,Body,NewLet),!,
+                type_fit_childs(Eq,Depth,Self,RetType,CodeForArg,NewLet,RetVal).
+
+        /*                                e,CodeForCond,['If',Cond,Then,Else],
+            pe_fit_childs(Eq,Depth,Self,RetType,CodeForCond,['If',Cond,Then,Else],
+                    ['If',ConVal,(CodeForThen),CodeForElse]):-
+            type_fit_childs(Eq,Depth,Self,'Bool',CodeForCond,Cond,ConVal).
+            type_fit_childs(Eq,Depth,Self,RetType,CodeForThen,Then,ThenVal).
+            type_fit_childs(Eq,Depth,Self,RetType,CodeForElse,Else,ElseVal).
+        */
+
+        type_fit_childs(Eq,Depth,Self,RetType,FullCodeForArgs,[H|Args],Y):- H\==':',
+           ignore(get_operator_typedef1(Self,H,ParamTypes,RType)),
+           ignore(eager_for_type(RType,RetType)),!,
+           must_det_ll((maplist(type_fit_childs(Eq,Depth,Self),ParamTypes,CodeForArgs,Args,NewArgs),
+           into_arg_code(CodeForArgs,MCodeForArgs),
+           into_arg_code([MCodeForArgs,'eval_args'(XX,Y)],FullCodeForArgs),
+
+           XX = [H|NewArgs],
+           Y = _)).
+           %eval_args(Eq,RetType,CodeForArg,Depth,Self,XX,Y).

@@ -1,0 +1,68 @@
+
+with_file_lists(Rel,P1,Wildcard):- atom(Wildcard),
+  absolute_file_name(Wildcard,AbsWildcard,[relative_to(Rel)]),
+  \+ exists_file(AbsWildcard),
+  expand_file_name(AbsWildcard, Files), Files\==[], !,
+  ignore(maplist(with_file_lists(Rel,P1),Files)).
+
+%with_file_lists(Rel,P1,Filename):- must_det_ll(call(P1,Filename)).
+with_file_lists(Rel,P1,Filename):- write_src(with_file_lists(Rel,P1,Filename)),nl.
+
+
+
+
+    % Entry point for printing to Metta format. It clears the screen, sets the working directory,
+    % expands the filenames with a specific extension, and processes each file.
+     % cls, % Clears the screen (assumes a custom or system-specific implementation).
+     % with_pwd(
+      %   '/opt/logicmoo_opencog/hyperon-wam/tests/gpt2-like/language_models/',
+     %Filt = 'tests/gpt2-like/language_models/*.pl',
+    % Filt = '/opt/logicmoo_opencog/hyperon-wam/tests/performance/nondet_unify/*.pl',
+       % Finds all Prolog files in the specified directory.
+     %  convert_to_metta(Filt),  % Processes each found file.
+      % MC = '/opt/logicmoo_opencog/hyperon-wam/src/main/metta_convert.pl',
+      % convert_to_metta(MC), % Processes each found file.
+    % Example of a no-operation (nop) call for a specific file path, indicating a placeholder or unused example.
+    %$nop(convert_to_metta('/opt/logicmoo_opencog/hyperon-wam/src/main/metta_convert.pl')).
+
+default_pl_mask(Mask):- Mask = [
+   %'src/main/metta_*.pl',
+   %'src/main/flybase_*.pl',
+   '*/*.pl',
+   '*/*/*.pl',
+   '*/*/*/.pl',
+   '*/*/*/*/.pl',
+   '*/*/*/*/*/.pl',
+   '*/*/*/*/*/*.pl',
+   '*.pl'
+  ],!.
+default_pl_mask(Mask):- Mask = ['**/*.pl'].
+
+convert_to_metta_console :- default_pl_mask(Mask),
+      ignore(convert_to_metta_console(Mask)),!, writeln(';; convert_to_metta_console. ').
+
+convert_to_metta_file :- default_pl_mask(Mask),
+       ignore(convert_to_metta_file(Mask)),!, writeln(';; convert_to_metta_file. ').
+
+
+convert_to_metta :- default_pl_mask(Mask),
+     %locally(set_prolog_flag(gc,true),
+
+      call(
+            ignore(convert_to_metta(Mask))),!, writeln(';; convert_to_metta. ').
+
+ctm:- convert_to_metta.
+% Processes a list of filenames, applying 'convert_to_metta' to each.
+convert_to_metta_console(FileSpec):-  with_file_lists('.',convert_to_metta_now(user_output),FileSpec).
+convert_to_metta_file(FileSpec):-  with_file_lists('.',convert_to_metta_now(_Create),FileSpec).
+convert_to_metta(Filename):- atomic(Filename), exists_file(Filename),!,
+      ignore(convert_to_metta_file(Filename)),
+      ignore(convert_to_metta_console(Filename)),!.
+convert_to_metta(FileSpec):- with_file_lists('.',convert_to_metta,FileSpec).
+
+convert_to_metta_now(OutputIn,Filename):-
+      user_io(convert_to_metta_now_out(OutputIn,Filename)).
+
+% Processes a single filename by opening the file, translating its content, and then closing the file.
+convert_to_metta_now_out(OutputIn,Filename):-
+    atom(Filename),  % Verifies that the filename is an atom.

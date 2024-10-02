@@ -1,0 +1,72 @@
+   if_trace((case),(writeqln('case'=A))),
+   ((eval_args(Eq,_UnkRetType,Depth,Self,A,AA),
+         if_trace((case),writeqln('switch'=AA)),
+    (select_case(Depth,Self,AA,KVs,Value)->true;(member(Void -Value,KVs),Void=='%void%')))
+     *->true;(member(Void -Value,KVs),Void=='%void%')),
+    eval_args(Eq,CaseRetType,Depth,Self,Value,Res).
+
+  select_case(Depth,Self,AA,Cases,Value):-
+     (best_key(AA,Cases,Value) -> true ;
+      (maybe_special_keys(Depth,Self,Cases,CasES),
+       (best_key(AA,CasES,Value) -> true ;
+        (member(Void -Value,CasES),Void=='%void%')))).
+
+  best_key(AA,Cases,Value):- member(Match-Value,Cases),AA = Match,!.
+  best_key(AA,Cases,Value):-
+     ((member(Match-Value,Cases),AA ==Match)->true;
+      ((member(Match-Value,Cases),AA=@=Match)->true;
+        (member(Match-Value,Cases),AA = Match))).
+
+    into_case_list(CASES,CASES):- is_list(CASES),!.
+        is_case(AA,[AA,Value],Value):-!.
+        is_case(AA,[AA|Value],Value).
+
+   maybe_special_keys(Depth,Self,[K-V|KVI],[AK-V|KVO]):-
+     eval_args(Depth,Self,K,AK), K\=@=AK,!,
+     maybe_special_keys(Depth,Self,KVI,KVO).
+   maybe_special_keys(Depth,Self,[_|KVI],KVO):-
+     maybe_special_keys(Depth,Self,KVI,KVO).
+   maybe_special_keys(_Depth,_Self,[],[]).
+
+
+% =================================================================
+% =================================================================
+% =================================================================
+%  COLLAPSE/SUPERPOSE
+% =================================================================
+% =================================================================
+% =================================================================
+
+%;; collapse-bind because `collapse` doesnt guarentee shared bindings
+eval_20(Eq,RetType,Depth,Self,['collapse-bind',List],Res):-!,
+ maplist_ok_fails(eval_ne(Eq,RetType,Depth,Self),List,Res).
+
+maplist_ok_fails(Pred2,[A|AA],BBB):- !,
+ (call(Pred2,A,B) -> (BBB=[B|BB], maplist_ok_fails(Pred2,AA,BB))
+   ; maplist_ok_fails(Pred2,AA,BBB)).
+maplist_ok_fails(_Pred2,[],[]).
+
+%;; superpose-bind because `superpose` doesnt guarentee shared bindings
+% @TODO  need to keep bindings
+eval_20(Eq,RetType,Depth,Self,['superpose-bind',List],Res):- !,
+       re_member(Res,E,List),
+       eval_ret(Eq,RetType,Depth,Self,E,Res).
+
+re_member(Res,E,List):- term_variables(Res+E+List,TV),copy_term(TV,Copy),
+    member(E,List),TV=Copy.
+
+%[collapse,[1,2,3]]
+eval_20(Eq,RetType,Depth,Self,['collapse',List],Res):-!,
+ findall_eval(Eq,RetType,Depth,Self,List,Res).
+
+
+eval_20(Eq,RetType,Depth,Self,['superpose',List],Res):- !,
+       member(E,List),
+       eval_ret(Eq,RetType,Depth,Self,E,Res).
+
+%[superpose,[1,2,3]]
+old_eval_20(_Eq,RetType,_Depth,_Self,['superpose',List],Res):- List==[], !,
+  make_empty(RetType,[],Res).
+old_eval_20(Eq,RetType,Depth,Self,['superpose',List],Res):- !,
+  (((
+   is_user_defined_head(Eq,Self,List) ,eval_args(Eq,RetType,Depth,Self,List,UList),

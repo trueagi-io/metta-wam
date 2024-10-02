@@ -1,0 +1,50 @@
+map_pred1(NoCycles,Pred, IO, OO) :- is_list(IO),!, maplist(map_pred(NoCycles,Pred), IO, OO).
+map_pred1(NoCycles,Pred, IO, [O|ArgS]) :-  IO= [I|Args], !,
+  map_pred([IO,ArgS|NoCycles],Pred, I, O), map_pred0([IO,I|NoCycles],Pred, Args, ArgS).
+map_pred1(NoCycles,Pred, P, P1) :-
+  compound_name_arguments(P, F, Args), maplist(map_pred([P|NoCycles],Pred),Args,ArgS), compound_name_arguments(P1, F, ArgS).
+%map_pred(_Pred, P, P).
+/*
+:- meta_predicate map_pred(2, ?, ?, ?, ?).
+map_pred(Pred, P, X, Sk, P1) :- must_be_free(X), p2_call(Pred, P, X), !, must(Sk=P1), !.
+map_pred(_Pred, P, _, _, P1) :- is_ftVar(P), !, must(P1=P), !.
+map_pred(Pred, [P|Args], X, Sk, [P1|ArgS]) :- !, map_pred(Pred, P, X, Sk, P1), !, must(map_pred(Pred, Args, X, Sk, ArgS)), !.
+map_pred(Pred, P, X, Sk, P1) :- compound(P), !, compound_name_arguments(P, F, Args), map_pred(Pred, [F|Args], X, Sk, [Fs|ArgS]), !, compound_name_arguments(P1, Fs, ArgS), !.
+map_pred(_Pred, P, _, _, P).
+*/
+is_cons(A):- compound(A),A=[_|_].
+
+into_grid_or_var(G,G):- is_cons(G),!.
+into_grid_or_var(G,G):- var(G),!.
+into_grid_or_var(O,G):- cast_to_grid(O,G,_Uncast),!.
+
+maybe_mapgrid(P2,I,O):- is_grid(I),!,mapgrid(P2,I,O).
+maybe_mapgrid(P3,I,O,M):- is_grid(I),!,mapgrid(P3,I,O,M).
+maybe_mapgrid(P4,I,O,M,N):- is_grid(I),!,mapgrid(P4,I,O,M,N).
+
+mapgrid(P4,Grid,GridM,GridN,GridO):- into_grid_or_var(Grid,G1),into_grid_or_var(GridM,G2),into_grid_or_var(GridN,G3),into_grid_or_var(GridO,G4),mapg_list(P4,G1,G2,G3,G4).
+mapg_list(P4,Grid,GridM,GridN,GridO):- is_list(Grid),!,maplist(mapg_list(P4),Grid,GridM,GridN,GridO).
+mapg_list(P4,Grid,GridM,GridN,GridO):- call(P4,Grid,GridM,GridN,GridO),!.
+
+mapgrid(P3,Grid,GridN,GridO):- into_grid_or_var(Grid,G1),into_grid_or_var(GridN,G2),into_grid_or_var(GridO,G3),mapg_list(P3,G1,G2,G3).
+mapg_list(P3,Grid,GridN,GridO):- is_list(Grid),!,maplist(mapg_list(P3),Grid,GridN,GridO).
+mapg_list(P3,Grid,GridN,GridO):- call(P3,Grid,GridN,GridO),!.
+
+mapgrid(P2, Grid,GridN):- into_grid_or_var(Grid,G1),into_grid_or_var(GridN,G2),!,mapg_list(P2, G1,G2).
+mapg_list(P2, Grid,GridN):- is_list(Grid),!,maplist(mapg_list(P2),Grid,GridN).
+mapg_list(P2, Grid,GridN):- p2_call(P2, Grid,GridN),!.
+
+mapgrid(P1,Grid):- into_grid_or_var(Grid,G1),mapg_list(P1,G1).
+mapg_list(P1,Grid):- is_list(Grid),!,maplist(mapg_list(P1),Grid).
+mapg_list(P1,Grid):- p1_call(P1,Grid),!.
+
+
+maplist_ignore(_3,H,I,J):- (H==[];I==[],J==[]),!,(ignore(H=[]),ignore(I=[]),ignore(J=[])).
+maplist_ignore(P3,H,I,J):- \+ is_list(H),!, ignore(p2_call(call(P3,H),I,J)).
+maplist_ignore(P3,[H|Grid],[I|GridN],[J|GridO]):- maplist_ignore(P3,H,I,J), !,maplist_ignore(P3,Grid,GridN,GridO).
+
+maplist_ignore(_2,H,I):- (H==[];I==[]),!,(ignore(H=[]),ignore(I=[])).
+maplist_ignore(P2, H,I):- \+ is_list(H),!, ignore(p2_call(P2, H,I)).
+maplist_ignore(P2, [H|Grid],[I|GridN]):- maplist_ignore(P2, H,I), !,maplist_ignore(P2, Grid,GridN).
+
+%p1_or(P1,Q1,E):- must_be(callable,P1),!, (p1_call(P1,E);p1_call(Q1,E)).

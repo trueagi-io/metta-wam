@@ -1,0 +1,124 @@
+% away eventually when the P/Condition form is no longer used anywhere.
+
+pfc_nf1(P/Cond,[( \+P )/Cond]) :- pfcNegatedLiteral(P), !.
+
+pfc_nf1(P/Cond,[P/Cond]) :-  pfcLiteral(P), !.
+
+% %  handle a negated form
+
+pfc_nf1(NegTerm,NF) :-
+  pfc_unnegate(NegTerm,Term),
+  !,
+  pfc_nf1_negation(Term,NF).
+
+% %  disjunction.
+
+pfc_nf1((P;Q),NF) :-
+  !,
+  (pfc_nf1(P,NF) ;   pfc_nf1(Q,NF)).
+
+
+% %  conjunction.
+
+pfc_nf1((P,Q),NF) :-
+  !,
+  pfc_nf1(P,NF1),
+  pfc_nf1(Q,NF2),
+  append(NF1,NF2,NF).
+
+% %  handle a random atom.
+
+pfc_nf1(P,[P]) :-
+  pfcLiteral(P),
+  !.
+
+/*% % % shouln't we have something to catch the rest as errors?*/
+pfc_nf1(Term,[Term]) :-
+  pfcWarn("pfc_nf doesn''t know how to normalize ~p (accepting though)",[Term]).
+
+
+% %  pfc_nf1_negation(P,NF) is true if NF is the normal form of \+P.
+pfc_nf1_negation((P/Cond),[(\+(P))/Cond]) :- !.
+
+pfc_nf1_negation((P;Q),NF) :-
+  !,
+  pfc_nf1_negation(P,NFp),
+  pfc_nf1_negation(Q,NFq),
+  append(NFp,NFq,NF).
+
+pfc_nf1_negation((P,Q),NF) :-
+  % this code is not correct! twf.
+  !,
+  pfc_nf1_negation(P,NF)
+  ;
+  (pfc_nf1(P,Pnf),
+   pfc_nf1_negation(Q,Qnf),
+   append(Pnf,Qnf,NF)).
+
+pfc_nf1_negation(P,[\+P]).
+
+
+% %  pfc_nf_negations(List2,List) sweeps through List2 to produce List,
+% %  changing ~{...} to {\+...}
+% % % ? is this still needed? twf 3/16/90
+
+pfc_nf_negations(X,X) :- !.  % I think not! twf 3/27/90
+
+pfc_nf_negations([],[]).
+
+pfc_nf_negations([H1|T1],[H2|T2]) :-
+  pfc_nf_negation(H1,H2),
+  pfc_nf_negations(T1,T2).
+
+% Maybe \+ tilded_negation ?
+
+pfc_nf_negation(Form,{\+ X}) :-
+  nonvar(Form),
+  Form=(~({X})),
+  !.
+pfc_nf_negation(Form,{\+ X}) :- tilded_negation,
+  nonvar(Form),
+  Form=(-({X})),
+  !.
+pfc_nf_negation(Form,{\+ X}) :- tilded_negation,
+  nonvar(Form),
+  Form=( \+ ({X})),
+  !.
+pfc_nf_negation(X,X).
+
+
+
+     % %  constrain_meta(+Lhs, ?Guard) is semidet.
+     %
+     % Creates a somewhat sane Guard.
+     %
+     % To turn this feature off...
+     % ?- set_prolog_flag(constrain_meta,false).
+     %
+     %
+     constrain_meta(_,_):- current_prolog_flag(constrain_meta,false),!,fail.
+     % FACT
+     constrain_meta(P,mpred_positive_fact(P)):- is_ftVar(P),!.
+     % NEG chaining
+     constrain_meta(~ P, CP):- !,  constrain_meta(P,CP).
+     constrain_meta(\+ P, CP):- !,  constrain_meta(P,CP).
+     % FWD chaining
+     constrain_meta((_==>Q),nonvar(Q)):- !, is_ftVar(Q).
+     % EQV chaining
+     constrain_meta((P<==>Q),(nonvar(Q);nonvar(P))):- (is_ftVar(Q);is_ftVar(P)),!.
+     % BWD chaining
+     constrain_meta((Q <- _),mpred_literal(Q)):- is_ftVar(Q),!.
+     constrain_meta((Q <- _),CQ):- !, constrain_meta(Q,CQ).
+     % CWC chaining
+     constrain_meta((Q :- _),mpred_literal(Q)):- is_ftVar(Q),!.
+     constrain_meta((Q :- _),CQ):- !, constrain_meta(Q,CQ).
+
+
+
+
+
+     is_simple_lhs(ActN):- is_ftVar(ActN),!,fail.
+     is_simple_lhs( \+ _ ):-!,fail.
+     is_simple_lhs( ~ _ ):-!,fail.
+     is_simple_lhs( _  / _ ):-!,fail.
+     is_simple_lhs((Lhs1,Lhs2)):- !,is_simple_lhs(Lhs1),is_simple_lhs(Lhs2).

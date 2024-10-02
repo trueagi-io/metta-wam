@@ -1,0 +1,85 @@
+%fbug(P):- format(user_error,'~N~p~n',[P]).
+:- endif.
+
+
+
+substM(T, F, R, R):- T==F,!.
+substM(T, _, _, R):- \+ compound(T),!,R=T.
+substM([H1|T1], F, R, [H2|T2]) :- !, substM(H1, F, R, H2), substM(T1, F, R, T2).
+substM(C1, F, R, C2) :- C1 =.. [Fn|A1], substM_l(A1,F,R,A2),!, C2 =.. [Fn|A2].
+substM_l([], _, _, []).  substM_l([H1|T1], F, R, [H2|T2]) :- substM(H1, F, R, H2), substM_l(T1, F, R, T2).
+
+
+pp_m(Cl):- write_src(Cl),!.
+pp_m(C,Cl):- color_g_mesg(C,write_src(Cl)),!.
+%  notrace((format('~N'), ignore(( \+ ((numbervars(Cl,0,_,[singletons(true)]), print_tree_with_final(Cl,"."))))))).
+pp_q(Cl):-
+  notrace((format('~N'), ignore(( \+ ((numbervars(Cl,0,_,[singletons(true)]), print_tree_with_final(Cl,"."))))))).
+
+
+ncatch(G,E,F):- catch(G,E,F).
+mcatch(G,E,F):- catch(G,E,F).
+%mcatch(G,E,F):- catch(G,E,(fbug(G=E),catch(bt,_,fail),fbug(G=E),ignore(call(F)),throw(E))).
+%ncatch(G,E,F):- catch(G,E,(fbug(G=E),catch(bt,_,fail),fbug(G=E),call(G))).
+%ncatch(G,E,(F)).
+
+
+:- if( \+ current_predicate(if_t/2)).
+:- meta_predicate(if_t(0,0)).
+if_t(IF, THEN) :- call(call,ignore((((IF,THEN))))).
+:- endif.
+
+:- if( \+ current_predicate(must_ll/1)).
+:- meta_predicate(must_ll(0)).
+must_ll(G):- md(call,G)*->true;throw(not_at_least_once(G)).
+:- endif.
+
+:- if( \+ current_predicate(at_least_once/1)).
+:- meta_predicate(at_least_once(0)).
+at_least_once(G):- call(G)*->true;throw(not_at_least_once(G)).
+:- endif.
+
+%wraps_each(must_ll,call).
+wraps_each(must_det_ll,once).
+md_like(MD):- wraps_each(MD,_).
+
+remove_must_det(_):- !,fail.
+%remove_must_det(MD):- !.
+%remove_must_det(MD):- nb_current(remove_must_det(MD),TF),!,TF==true.
+%remove_must_det(MD):- \+ false.
+
+%remove_mds(MD,G,GGG):- compound(G), G = must_det_ll(GG),!,expand_goal(GG,GGG),!.
+%remove_mds(MD,G,GGG):- compound(G), G = must_det_l(GG),!,expand_goal(GG,GGG),!.
+remove_mds(MD,GG,GO):- sub_term(G,GG),compound(G),compound_name_arg(G,MD,GGGG),subst001(GG,G,GGGG,GGG),remove_mds(MD,GGG,GO).
+remove_mds(_,GG,GG).
+%remove_mds(MD,G,GG):- compound(G), G = ..[MD,AA], compound(G),removed_term(G,GO),expand_goal(GO,GG).
+
+%never_rrtrace:-!.
+never_rrtrace:- nb_current(cant_rrtrace,t),!,notrace.
+never_rrtrace:- is_cgi,notrace.
+
+
+%itrace:- !.
+%itrace:- \+ current_prolog_flag(debug,true),!.
+itrace:- if_thread_main(trace),!.
+ibreak:- if_thread_main(((trace,break))).
+%recolor(_,_):- ibreak.
+
+%tc_arg(N,C,E):- compound(C),!,arg(N,C,E).
+tc_arg(N,C,E):- catch(arg(N,C,E),Err,
+  /*unrepress_output*/((bt,fbug(tc_arg(N,C,E)=Err),((tracing->true;trace),break,arg(N,C,E))))).
+
+
+
+
+
+
+compound_name_arg(G,MD,Goal):- var(G),!,atom(MD),G=..[MD,Goal].
+compound_name_arg(G,MD,Goal):- compound(G),!, compound_name_arguments(G,MD,[Goal]).
+
+
+:- multifile(user:message_hook/3).
+:- dynamic(user:message_hook/3).
+%user:message_hook(Term, Kind, Lines):- error==Kind, itrace,fbug(user:message_hook(Term, Kind, Lines)),trace,fail.
+user:message_hook(Term, Kind, Lines):-
+   fail, error==Kind,

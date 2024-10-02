@@ -1,0 +1,48 @@
+%faster_replace(A,Init,B,E,Eval,CEval):- copy_term(A+B+Eval,CA+CB+CEval), CA = Init, CB = E.
+
+
+% Function takes list of values (first argument), initial value (second argument) and operation (fifth argument) and applies it consequently to the list of values, using init value as a start. It also takes two variables (third and fourth argument) to use them inside
+eval_20(Eq,RetType,Depth,Self,['foldl-atom',List,Init,A,B,Eval],Res):- !,
+   call_foldl_atom(Eq,RetType,Depth,Self,List,Init,A,B,Eval,Res).
+
+% Last Cail
+call_foldl_atom(Eq,RetType,Depth,Self,[E],Init,A,B,Eval,Res):- !, A = Init, B = E,
+  eval_args(Eq,RetType,Depth,Self,Eval,Res).
+% Recursive Cail
+call_foldl_atom(Eq,RetType,Depth,Self,[E|List],Init,A,B,Eval,Res):- !, faster_replace(A,Init,B,E,Eval,CEval),
+     eval_args(Eq,RetType,Depth,Self,CEval,CR),
+     call_foldl_atom(Eq,RetType,Depth,Self,List,CR,A,B,Eval,Res).
+% Empty List
+call_foldl_atom(_Eq,_RetType,_Depth,_Self,[],Init,_A,_B,_Eval,Init):-!.
+
+% which is faster?
+faster_replace(A,Init,B,E,Eval,CEval):- subst0011a(A,Init,Eval,Eva2), subst0011a(B,E,Eva2,CEval).
+%faster_replace(A,Init,B,E,Eval,CEval):- copy_term(A+B+Eval,CA+CB+CEval), CA = Init, CB = E.
+
+% =================================================================
+% =================================================================
+% =================================================================
+%  LET
+% =================================================================
+% =================================================================
+% =================================================================
+
+unified(X,Y):- X=@=Y,X=Y,!.
+unified(X,Y):- X=Y,!.
+unified(X,Y):- eval(X,XX),X\=@=XX,unified(Y,XX).
+unified(X,Y):- eval(Y,YY),Y\=@=YY,unified(YY,X).
+
+eval_until_unify(_Eq,_RetType,_Dpth,_Slf,X,X):- !.
+eval_until_unify(Eq,RetType,Depth,Self,X,Y):- eval_until_eq(Eq,RetType,Depth,Self,X,Y),!.
+
+eval_until_eq(_Eq,_RetType,_Dpth,_Slf,X,Y):- catch_nowarn(X=:=Y),!.
+eval_until_eq(_Eq,_RetType,_Dpth,_Slf,X,Y):- catch_nowarn('#='(X,Y)),!.
+eval_until_eq(Eq,RetType,_Dpth,_Slf,X,Y):-  X=Y,check_returnval(Eq,RetType,Y).
+%eval_until_eq(Eq,RetType,Depth,Self,X,Y):- var(Y),!,eval_in_steps_or_same(Eq,RetType,Depth,Self,X,XX),Y=XX.
+%eval_until_eq(Eq,RetType,Depth,Self,Y,X):- var(Y),!,eval_in_steps_or_same(Eq,RetType,Depth,Self,X,XX),Y=XX.
+eval_until_eq(Eq,RetType,Depth,Self,X,Y):- \+is_list(Y),!,eval_in_steps_some_change(Eq,RetType,Depth,Self,X,XX),Y=XX.
+eval_until_eq(Eq,RetType,Depth,Self,Y,X):- \+is_list(Y),!,eval_in_steps_some_change(Eq,RetType,Depth,Self,X,XX),Y=XX.
+eval_until_eq(Eq,RetType,Depth,Self,X,Y):- eval_in_steps_some_change(Eq,RetType,Depth,Self,X,XX),eval_until_eq(Eq,RetType,Depth,Self,Y,XX).
+eval_until_eq(_Eq,_RetType,_Dpth,_Slf,X,Y):- length(X,Len), \+ length(Y,Len),!,fail.
+eval_until_eq(Eq,RetType,Depth,Self,X,Y):-  nth1(N,X,EX,RX), nth1(N,Y,EY,RY),
+  EX=EY,!, maplist(eval_until_eq(Eq,RetType,Depth,Self),RX,RY).

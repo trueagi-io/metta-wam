@@ -1,0 +1,52 @@
+%   eval_20(Eq,RetType,Depth,Self,['let*',LetRest,Body],RetVal).
+eval_20(Eq,RetType,Depth,Self,['let*',[[Var,Val]|LetRest],Body],RetVal):- !,
+    eval_20(Eq,RetType,Depth,Self,['let',Var,Val,['let*',LetRest,Body]],RetVal).
+*/
+% =================================================================
+% =================================================================
+% =================================================================
+%  TRACE/PRINT
+% =================================================================
+% =================================================================
+% =================================================================
+
+eval_20(Eq,RetType,_Dpth,_Slf,['repl!'],Y):- !,  repl,check_returnval(Eq,RetType,Y).
+%eval_20(Eq,RetType,Depth,Self,['enforce',Cond],Res):- !, enforce_true(Eq,RetType,Depth,Self,Cond,Res).
+eval_20(Eq,RetType,Depth,Self,['!',Cond],Res):- !, call(eval_args(Eq,RetType,Depth,Self,Cond,Res)).
+eval_20(Eq,RetType,Depth,Self,['rtrace!',Cond],Res):- !, rtrace(eval_args(Eq,RetType,Depth,Self,Cond,Res)).
+eval_20(Eq,RetType,Depth,Self,['no-rtrace!',Cond],Res):- !, quietly(eval_args(Eq,RetType,Depth,Self,Cond,Res)).
+eval_20(Eq,RetType,Depth,Self,['trace!',A,B],C):- !, % writeln(trace(A)),
+     stream_property(S,file_no(2)),!,
+     eval_args(Eq,RetType,Depth,Self,B,C),
+     ignore((eval_args(Eq,_RetType,Depth,Self,A,AA),
+     with_output_to(S,(format('~N'), write_src(AA),format('~N'))))).
+eval_20(Eq,RetType,Depth,Self,['trace',Cond],Res):- !, with_debug(eval_args,eval_args(Eq,RetType,Depth,Self,Cond,Res)).
+eval_20(Eq,RetType,Depth,Self,['profile!',Cond],Res):- !, time_eval(profile(Cond),profile(eval_args(Eq,RetType,Depth,Self,Cond,Res))).
+eval_20(Eq,RetType,Depth,Self,['time!',Cond],Res):- !, time_eval(eval_args(Cond),eval_args(Eq,RetType,Depth,Self,Cond,Res)).
+eval_20(Eq,RetType,Depth,Self,['print',Cond],Res):- !, eval_args(Eq,RetType,Depth,Self,Cond,Res),format('~N'),print(Res),format('~N').
+% !(print! $1)
+eval_20(Eq,RetType,Depth,Self,['princ!'|Cond],Res):- !,
+  maplist(eval_args(Eq,RetType,Depth,Self),Cond,Out),
+  maplist(princ_impl,Out),
+  make_nop(RetType,[],Res),check_returnval(Eq,RetType,Res).
+% !(println! $1)
+eval_20(Eq,RetType,Depth,Self,['println!'|Cond],Res):- !,
+  maplist(eval_args(Eq,RetType,Depth,Self),Cond,Out),
+  maplist(println_impl,Out),
+  make_nop(RetType,[],Res),check_returnval(Eq,RetType,Res).
+
+println_impl(X):- format("~N~@~N",[write_sln(X)]),!.
+println_impl(X):- user_io((ansi_format(fg('#c7ea46'),"~N~@~N",[write_sln(X)]))).
+
+princ_impl(X):- format("~@",[write_sln(X)]),!.
+
+write_sln(X):- string(X), !, write(X).
+write_sln(X):- write_src_woi(X).
+
+with_output_to_str( Sxx , Goal ):-
+  wots( Sxx , Goal ).
+
+% =================================================================
+% =================================================================
+% =================================================================
+%  UNIT TESTING/assert<STAR>

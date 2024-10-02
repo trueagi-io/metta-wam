@@ -1,0 +1,80 @@
+    ; ((call(G),copy_term(G,CG,GG)) *->asserta(in_memo_cached(Key,C,GT,CG,GG))
+                  ;asserta(in_memo_cached(Key,C,GT,failed,_)))),
+  E, (retractall(in_memo_cached(Key,C,GT,_,_)),throw(E))),erase(Started)).
+
+set_nth1(1,[_|Row],E,[E|Row]):-!.
+set_nth1(N,[W|Row],E,[W|RowMod]):- Nm1 is N-1, set_nth1(Nm1,Row,E,RowMod).
+
+findall_count(T,G,N):- findall_set(T,G,S),length(S,N).
+
+findall_set(T,G,S):- findall(T,G,L),list_to_set(L,S).
+
+make_list_inited(0,_,[]):-!.
+make_list_inited(1,E,[E]):-!.
+make_list_inited(N,E,[E|List]):- Nm1 is N -1,make_list_inited(Nm1,E,List).
+
+nth_fact(P,I):- clause(P,true,Ref),nth_clause(P,I,Ref).
+
+nonvar_or_ci(C):- (nonvar(C);attvar(C)),!.
+
+add_i(Info):-
+ quietly((tersify(Info,InfoT),
+ luser_getval(test_rules,TRules),
+ luser_getval(pair_rules,PRules),
+  nb_set_add(TRules,InfoT),
+  nb_set_add(PRules,InfoT),
+ nop(pp(cyan,+InfoT)))).
+
+add_i(F,Info):-
+ append_term(i(F),Info,FInfo),
+ add_i(FInfo).
+
+add_rule(Info):- add_i(rule,Info).
+add_cond(Info):- add_i(cond,Info).
+%do_action(Info):- guess_pretty(Info),add_i(action,Info),call(Info).
+do_action(Call):- !, copy_term(Call,Info),call(Call),add_i(action,Info).
+add_action(Info):- add_i(action,Info).
+add_note(Info):- add_i(note,Info).
+add_indiv(W,Info):- add_i(indiv(W),Info).
+add_comparitor(Info):- add_i(comparitor,Info).
+show_rules:-
+ luser_getval(pair_rules,PRules), maplist(pp(cyan),PRules),
+ luser_getval(test_rules,TRules), maplist(pp(blue),TRules),
+ !.
+
+
+sub_atom_value(TestID,A):- sub_term(A,TestID),(atom(A);string(A)).
+
+my_list_to_set(List, Set):- my_list_to_set(List, (=) ,Set).
+my_list_to_set_variant(List, Set):- my_list_to_set(List, (=@=) ,Set).
+my_list_to_set_cmp(List, Set):- my_list_to_set(List, (=@=) ,Set).
+
+my_list_to_set([E|List],P2, Set):- select(C,List,Rest), p2_call(P2, E,C), !, my_list_to_set([E|Rest],P2, Set).
+my_list_to_set([E|List],P2, [E|Set]):-!, my_list_to_set(List,P2, Set).
+my_list_to_set([],_,[]).
+
+my_list_to_set_cmp([E|List],C3, Set):- select(C,List,Rest), call(C3,R,E,C),
+   R== (=), my_list_to_set_cmp([C|Rest],C3, Set),!.
+  my_list_to_set_cmp([E|List],C3, [E|Set]):-!, my_list_to_set_cmp(List,C3, Set).
+my_list_to_set_cmp([],_,[]).
+
+
+contains_nonvar(N,Info):- sub_term(E,Info),nonvar_or_ci(E),E=N,!.
+
+max_min(A,B,C,D):- must_be_free(C),must_be_free(D),max_min0(A,B,C,D).
+max_min0(A,B,B,B):- plain_var(A).
+max_min0(A,B,A,A):- plain_var(B),!.
+max_min0(A,B,C,D):- number(A),number(B), !, ((A > B) -> (C=A, D=B) ; (C=B, D=A)).
+max_min0(_,A,A,A):- number(A),!.
+max_min0(A,_,A,A):- number(A),!.
+max_min0(_,_,_,_).
+
+as_debug(L,G):- as_debug(L,true,G).
+as_debug(9,_,_):- !.
+as_debug(_,C,G):- ignore(catch((call(C)->wots(S,G),format('~NDEBUG: ~w~N',[S]);true),_,true)).
+
+shall_count_as_same(A,B):- same_term(A,B),!. % unify ok_ok cmatch
+shall_count_as_same(A,B):- plain_var(A),!,A==B.
+shall_count_as_same(A,B):- atomic(A),!, A=@=B.
+shall_count_as_same(A,B):- var(B),!,A=@=B.
+shall_count_as_same(A,B):- A=@=B,!.

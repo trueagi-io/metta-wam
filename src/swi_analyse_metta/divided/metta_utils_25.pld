@@ -1,0 +1,73 @@
+into_title_str(Term,Str):- compound(Term), compound_name_arguments(Term,Name,Args),
+   %include(not_p1(plain_var),Args,Nonvars),
+   Args=Nonvars,
+   my_maplist(tersify,Nonvars,ArgsT), into_title_str([Name,"(",ArgsT,")"],Str),!.
+into_title_str(Term,Str):- catch(sformat(Str,'~p',[Term]),_,term_string(Term,Str)).
+
+has_short_id(TestID,testid,UUID):- is_valid_testname(TestID),test_id_atom(TestID,UUID).
+has_short_id(Obj,object,OID):- is_object(Obj),obj_to_oid(Obj,OID).
+has_short_id(Grid,grid,GID):- is_grid(Grid),grid_to_gid(Grid,GID).
+
+
+is_valid_linkid(ID,testid,TestID):- atom_id(ID,TestID),is_valid_testname(TestID),!.
+is_valid_linkid(ID,object,Obj):- known_object(ID,Obj),!.
+is_valid_linkid(ID,grid,Grid):- known_grid(ID,Grid),!.
+% individuate_3(complete, two(v_1d398264_trn_0_in, v_1d398264_trn_0_out))
+is_valid_linkid(ID,group,Grp):- get_current_test(TestID),is_why_grouped_g(TestID,_Count,ID,Grp).
+
+
+wqs_c(S):- term_is_ansi(S), !, write_keeping_ansi_mb(S).
+wqs_c(S):- (string(S);is_codelist(S);is_charlist(S)),catch(format('~s',[S]),_,writeq(S)).
+wqs_c(S):- empty_wqs_c(S),!.
+wqs_c(S):- var(S),!,write(var(S)).
+wqs_c(S):- atom(S),into_title_str(S,TS),write(TS),!.
+wqs_c(S):- atom(S),write_atom(S),!.
+%wqs_c(S):- atom(S),write(S),!.
+wqs_c(S):- \+compound(S),!,notrace(catch(format('~p',[S]),_,write(S))).
+wqs_c(title(S)):- !, wqs_c(S).
+wqs_c(H+T):- !, wqs_c(H),write_nbsp,wqs_c(T).
+wqs_c(S):- is_grid(S), print_grid(S),!.
+wqs_c(S):- is_vm(S), pp(S) ,!.
+wqs_c(L):- is_list(L), include(non_empty_wqs_c,L,LL),!,wqs_c_l(LL).
+wqs_c([H|T]):- pp([H|T]),!.
+wqs_c(H):- callable_arity(H,0),is_writer_goal(H),catch(call_e_dmsg(H),_,fail),!.
+%wqs_c(H):- callable_arity(H,0),call(H),!.
+wqs_c(H):- locally(t_l:wqs_fb(pp_no_nl),wqs(H)),!.
+
+wqs_c_l([]):-!.
+wqs_c_l([H]):- wqs_c(H),!.
+wqs_c_l([H|T]):- wqs_c(H),write_nbsp,wqs_c_l(T),!.
+
+
+
+
+
+ppt(_):- is_print_collapsed,!.
+ppt(G):- stack_check_or_call(4000,writeq(G)),!.
+ppt(G):- is_vm_map(G), !, write_map(G,'ppt').
+ppt(S):- term_is_ansi(S), !, write_keeping_ansi_mb(S).
+%ppt(P):- compound(P),wqs1(P),!.
+
+ppt(P):- \+ ansi_main, wants_html,!,ptcol_html(P),write_br.
+ppt(P):- \+ \+ ((tersify(P,Q),!,pp(Q))),!.
+ppt(Color,P):- \+ ansi_main, wants_html,!,with_color_span(Color,ptcol_html(P)),write_br.
+ppt(Color,P):- \+ \+ ((tersify(P,Q),!,pp(Color,Q))),!.
+
+
+write_br:- ansi_main,!,nl.
+write_br:- write('<br>').
+
+ptc(Color,Call):- pp(Color,call(Call)).
+
+:- meta_predicate(ppnl(+)).
+ppnl(Term):- is_list(Term),!,g_out(wqs(Term)).
+ppnl(Term):- nl_if_needed,format('~q',[Term]),nl_if_needed_ansi.
+
+:- meta_predicate(pp(+)).
+pp(Color,P):- \+ ansi_main, wants_html,!,with_color_span(Color,pp(P)),write_br.
+pp(Color,P):- ignore((quietlyd((wots_hs(S,pp(P)),!,color_print(Color,S))))).
+
+pp(_):- is_print_collapsed,!.
+%pp(Term):- is_toplevel_printing(Term), !, nl_if_needed, pp_no_nl(Term),!,nl_if_needed_ansi.
+pp(_Term):- nl_if_needed, fail.
+pp(Term):- \+ ansi_main, wants_html,!, wots_vs(SS,ptcol_html_scrollable(Term)),write(SS),write_br.

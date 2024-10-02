@@ -1,0 +1,71 @@
+*/
+%eval_40(Eq,RetType,_Dpth,_Slf,['==',X,Y],Res):-  !, subst_args(Eq,RetType,_Dpth,_Slf,['==',X,Y],Res).
+
+eval_40(Eq,RetType,Depth,Self,[EQ, X,Y],Res):- EQ=='==', using_all_spaces, !,
+    suggest_type(RetType,'Bool'),
+    as_tf(eval_until_unify(Eq,_SharedType,Depth,Self,X,Y),Res).
+
+eval_40(Eq,RetType,_Dpth,_Slf,[EQ,X,Y],Res):- EQ=='==', !,
+    suggest_type(RetType,'Bool'),
+    eq_unify(Eq,_SharedType, X, Y, Res).
+
+eq_unify(_Eq,_SharedType, X, Y, TF):- as_tf(X=:=Y,TF),!.
+eq_unify(_Eq,_SharedType, X, Y, TF):- as_tf( '#='(X,Y),TF),!.
+eq_unify( Eq,  SharedType, X, Y, TF):- as_tf(eval_until_unify(Eq,SharedType, X, Y), TF).
+
+
+eval_20(_Eq,RetType,_Dpth,_Slf,[EQ,X,Y],TF):- EQ=='===', !,
+    suggest_type(RetType,'Bool'),
+    as_tf(X==Y,TF).
+
+eval_20(_Eq,RetType,_Dpth,_Slf,[EQ,X,Y],TF):- EQ=='====', !,
+    suggest_type(RetType,'Bool'),
+    as_tf(same_terms(X,Y),TF).
+
+
+suggest_type(_RetType,_Bool).
+
+naive_eval_args:-
+    false.
+
+eval_41(Eq,RetType,Depth,Self,[AE|More],Res):- naive_eval_args,!,
+  maplist(must_eval_args(Eq,_,Depth,Self),More,Adjusted),
+  eval_70(Eq,RetType,Depth,Self,[AE|Adjusted],Res),
+  check_returnval(Eq,RetType,Res).
+
+eval_41(Eq,RetType,Depth,Self,AEMore,ResOut):- \+ naive_eval_args,!,
+  eval_adjust_args(Eq,RetType,ResIn,ResOut,Depth,Self,AEMore,AEAdjusted),
+  if_trace((e;args),
+     (AEMore\==AEAdjusted -> color_g_mesg('#773733',indentq2(Depth,AEMore -> AEAdjusted))
+       ; nop(indentq2(Depth,same(AEMore))))),
+  eval_70(Eq,RetType,Depth,Self,AEAdjusted,ResIn),
+  check_returnval(Eq,RetType,ResOut).
+
+
+eval_20(Eq,RetType,Depth,Self,X,Y):-
+  (eval_40(Eq,RetType,Depth,Self,X,M)*-> M=Y ;
+     % finish_eval(Depth,Self,M,Y);
+    (eval_failed(Depth,Self,X,Y)*->true;X=Y)).
+eval_40(Eq,RetType,Depth,Self,AEMore,ResOut):- eval_41(Eq,RetType,Depth,Self,AEMore,ResOut).
+eval_70(Eq,RetType,Depth,Self,PredDecl,Res):-
+    if_or_else(eval_maybe_python(Eq,RetType,Depth,Self,PredDecl,Res),
+    if_or_else(eval_maybe_host_predicate(Eq,RetType,Depth,Self,PredDecl,Res),
+    if_or_else(eval_maybe_host_function(Eq,RetType,Depth,Self,PredDecl,Res),
+    if_or_else(eval_maybe_defn(Eq,RetType,Depth,Self,PredDecl,Res),
+               eval_maybe_subst(Eq,RetType,Depth,Self,PredDecl,Res))))).
+
+
+eval_all_args:- true_flag.
+fail_missed_defn:- true_flag.
+fail_on_constructor:- true_flag.
+
+
+eval_adjust_args(Eq,RetType,ResIn,ResOut,Depth,Self,X,Y):-
+  if_or_else((eval_all_args,eval_adjust_args2(Eq,RetType,ResIn,ResOut,Depth,Self,X,Y)),
+             eval_adjust_args1(Eq,RetType,ResIn,ResOut,Depth,Self,X,Y)).
+
+eval_adjust_args1(Eq,RetType,ResIn,ResOut,Depth,Self,[AE|More],[AE|Adjusted]):-
+ adjust_args_90(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted).
+adjust_args_90(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted):- \+ is_debugging(eval_args),!,
+    adjust_args_9(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted).
+adjust_args_90(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted):-

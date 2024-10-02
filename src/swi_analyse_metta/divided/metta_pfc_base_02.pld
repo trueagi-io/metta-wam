@@ -1,0 +1,86 @@
+%:- set_prolog_flag(pfc_shared_module,baseKB).
+
+must_ex(X):- catch(X,E,rtrace(E))*->true;(dmsg(failed(must_ex(X))),rtrace(X)).
+quietly_ex(X):-call(X).
+
+% @TODO undisable when we have defined into_type/3 to not fail
+control_arg_types(A,B):- fail, once(control_arg_types1(20,[],A,B)),A\==B,!.
+
+%:- listing(control_arg_types/3).
+
+control_arg_types1( Max,_,A,B):- Max<1,!,A=B.
+control_arg_types1(_Max,_,A,B):- \+ compound(A),!,A=B.
+control_arg_types1(_Max,_,A,B):- iz_conz(A), \+ is_list(A),!, A = B.
+control_arg_types1(_Max,_,A,B):- (current_predicate(check_args/2)->check_args(A,B)->A\=@=B),!.
+%control_arg_types1(Max,Pre,A,B):- is_list(A), !, maplist(control_arg_types1(Max,Pre),A,B).
+control_arg_types1( Max,Pre,A,B):- Max0 is Max-1,
+ compound_name_arguments(A,F,AA),
+ length(AA,N),
+ do_control_arg_types1(Max0,F/N,1,Pre,AA,BB),
+ compound_name_arguments(B,F,BB).
+
+do_control_arg_types1(_Max,_FofN,_ArgNp1,_Pre,[],[]):-!.
+do_control_arg_types1( Max,FofN,ArgN,Pre,[A|AA],[B|BB]):-
+  do_control_1arg_type(Max,FofN,ArgN,Pre,A,B),
+  ArgNp1 is ArgN+1,
+  do_control_arg_types1(Max,FofN,ArgNp1,Pre,AA,BB).
+
+do_control_1arg_type(_Max,_FN,_N,_Pre,A,B):- var(A),!,B=A.
+do_control_1arg_type(_Max,F/_, N,_Pre,A,B):- arg_n_isa(F,N,ISA),into_type(ISA,A,B),!.
+do_control_1arg_type(Max,FofN,_,Pre,A,B):-
+   Max0 is Max-1, control_arg_types1(Max0,[FofN|Pre],A,B).
+
+
+%arg_n_isa(_F,_N,_ISA):- fail.
+arg_n_isa(F,N,ISA):- clause_b(argIsa(F,N,ISA)).
+
+save_pfc_state:-
+  %tell(pfcState),
+  forall((pfcStateTerm(F/A),current_predicate(F/A)),listing(F/A)),
+  %told.
+  !.
+
+pfcDoAll(Goal):- forall(call(Goal),true).
+
+pfcStateTerm(F/A):- pfcDatabaseTerm(F/A).
+pfcStateTerm(F/A):-
+ member((F/A),[
+     fcUndoMethod/2,
+     fcAction/2,
+     fcTmsMode/1,
+     pfcQueue/1,
+     pfcCurrentDb/1,
+     pfcHaltSignal/1,
+     pfcDebugging/0,
+     pfcSelect/1,
+     pfcSearch/1]).
+
+
+
+:- if(( current_prolog_flag(xref,true) ;
+   ('$current_source_module'(SM),'context_module'(M),'$current_typein_module'(CM),
+     current_prolog_flag(pfc_shared_module,BaseKB),asserta(BaseKB:'wusing_pfc'(M,CM,SM,pfc_rt))))).
+:- endif.
+:- if(current_prolog_flag(xref,true)).
+%:- module(pfc_rt,[]).
+:- endif.
+:- if((prolog_load_context(source,File),prolog_load_context(file,File))).
+%:- prolog_load_context(file,File),unload_file(File).
+:- use_module(library(logicmoo_utils)).
+:- endif.
+%:- pfc_lib:use_module(pfc_lib).
+:- if( \+  current_prolog_flag(xref,true)).
+:- current_prolog_flag(pfc_shared_module,BaseKB),
+   must_ex(retract(BaseKB:'wusing_pfc'(M,CM,SM,pfc_rt))),
+   nop(fbugio(BaseKB:'chusing_pfc'(M,CM,SM,pfc_rt))),
+   (M==SM ->
+     (nop(maybe_ensure_abox(SM)),nop((M:ain(genlMt(SM,BaseKB)))));
+     nop(fbugio(BaseKB:'lusing_pfc'(M,CM,SM,pfc_rt)))),
+   assert(BaseKB:'$using_pfc'(M,CM,SM,pfc_rt)),
+   asserta(SM:'$does_use_pfc_mod'(M,CM,SM,pfc_rt)).
+   %backtrace(200).
+
+/*
+:- multifile '$exported_op'/3.
+:- dynamic '$exported_op'/3.
+:- discontiguous '$exported_op'/3.

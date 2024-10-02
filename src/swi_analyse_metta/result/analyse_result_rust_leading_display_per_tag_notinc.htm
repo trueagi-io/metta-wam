@@ -1,0 +1,1543 @@
+
+<html> <head> 
+
+<script> 
+function open_div(xid){ document.getElementById(xid).style.display = 'block'; }
+function close_div(xid){ document.getElementById(xid).style.display = 'none'; }
+
+</script> 
+
+</head> 
+
+<body style="font-family: arial; font-size: 12pt; background-color: #E5E5E5"> 
+ <H2> 
+not_include_metta_files </H2> 
+ <H2> 
+display_per_tag </H2> 
+ <H2> 
+rust_leading </H2> 
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> %</i></b>  <a onclick="prompt('copy path','%');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>%</b>"), move |_| { mod_op.clone() }); %   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_interp.pl  <br> 
+'<b>%</b>'(Dividend, Divisor, Remainder):- eval_H(['mod',Dividend, Divisor], Remainder). %   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> &self</i></b>  <a onclick="prompt('copy path','&self');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>&self</b>"), move |_| { self_atom.clone() }); &self   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib_minimal.rs  <br> 
+    let self_atom = Atom::gnd(space.clone());     tref.register_token(regex(r"<b>&self</b>"), move |_| { self_atom.clone() }); }  pub fn register_rust_stdlib_tokens(target: &mut Tokenizer) { &self   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        let self_atom = Atom::gnd(space.clone());         tref.register_token(regex(r"<b>&self</b>"), move |_| { self_atom.clone() });     }      #[cfg(feature = "old_interpreter")] &self   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> *</i></b>  <a onclick="prompt('copy path','*');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"\<b>*</b>"), move |_| { mul_op.clone() }); *   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib_minimal.rs  <br> 
+    tref.register_token(regex(r"\<b>*</b>"), move |_| { mul_op.clone() });     let div_op = Atom::gnd(DivOp{});     tref.register_token(regex(r"/"), move |_| { div_op.clone() });     let mod_op = Atom::gnd(ModOp{});     tref.register_token(regex(r"%"), move |_| { mod_op.clone() }); *   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"\<b>*</b>"), move |_| { mul_op.clone() });         let div_op = Atom::gnd(DivOp{});         tref.register_token(regex(r"/"), move |_| { div_op.clone() });         let mod_op = Atom::gnd(ModOp{});         tref.register_token(regex(r"%"), move |_| { mod_op.clone() }); *   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_interp.pl  <br> 
+'<b>*</b>'(A, B, Product):- eval_H([*,A,B],Product). *   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>*</b>', [arithmetic, qhelp("Multiplication."), multiplication]). *   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> +</i></b>  <a onclick="prompt('copy path','+');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"\<b>+</b>"), move |_| { sum_op.clone() }); +   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib_minimal.rs  <br> 
+    let sum_op = Atom::gnd(SumOp{});     tref.register_token(regex(r"\<b>+</b>"), move |_| { sum_op.clone() });     let sub_op = Atom::gnd(SubOp{});     tref.register_token(regex(r"\-"), move |_| { sub_op.clone() });     let mul_op = Atom::gnd(MulOp{}); +   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        let sum_op = Atom::gnd(SumOp{});         tref.register_token(regex(r"\<b>+</b>"), move |_| { sum_op.clone() });         let sub_op = Atom::gnd(SubOp{});         tref.register_token(regex(r"\-"), move |_| { sub_op.clone() });         let mul_op = Atom::gnd(MulOp{}); +   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_interp.pl  <br> 
+'<b>+</b>'(A, B, Sum):- eval_H([+,A,B],Sum). +   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>+</b>', [arithmetic, qhelp("Addition."), addition]). +   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> -</i></b>  <a onclick="prompt('copy path','-');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"\<b>-</b>"), move |_| { sub_op.clone() }); -   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_interp.pl  <br> 
+'<b>-</b>'( A, B, Sum):- eval_H([-,A,B],Sum). -   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>-</b>', [arithmetic, qhelp("Subtraction."), subtraction]). -   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> /</i></b>  <a onclick="prompt('copy path','/');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>/</b>"), move |_| { div_op.clone() }); /   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_interp.pl  <br> 
+'<b>/</b>'(Dividend, Divisor, Quotient):- eval_H(['/',Dividend, Divisor], Quotient).   %{Dividend = Quotient * Divisor}. /   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> <</i></b>  <a onclick="prompt('copy path','<');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b><</b>"), move |_| { lt_op.clone() }); <   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib_minimal.rs  <br> 
+    let lt_op = Atom::gnd(LessOp{});     tref.register_token(regex(r"<b><</b>"), move |_| { lt_op.clone() });     let gt_op = Atom::gnd(GreaterOp{});     tref.register_token(regex(r">"), move |_| { gt_op.clone() });     let le_op = Atom::gnd(LessEqOp{}); <   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        let lt_op = Atom::gnd(LessOp{});         tref.register_token(regex(r"<b><</b>"), move |_| { lt_op.clone() });         let gt_op = Atom::gnd(GreaterOp{});         tref.register_token(regex(r">"), move |_| { gt_op.clone() });         let le_op = Atom::gnd(LessEqOp{}); <   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b><</b>', [comparison, qhelp("Less than."), less_than]). <   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> <=</i></b>  <a onclick="prompt('copy path','<=');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b><=</b>"), move |_| { le_op.clone() }); <=   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib_minimal.rs  <br> 
+    tref.register_token(regex(r"<b><=</b>"), move |_| { le_op.clone() });     let ge_op = Atom::gnd(GreaterEqOp{});     tref.register_token(regex(r">="), move |_| { ge_op.clone() });     let eq_op = Atom::gnd(stdlib::EqualOp{});     tref.register_token(regex(r"=="), move |_| { eq_op.clone() }); <=   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b><=</b>"), move |_| { le_op.clone() });         let ge_op = Atom::gnd(GreaterEqOp{});         tref.register_token(regex(r">="), move |_| { ge_op.clone() });         let eq_op = Atom::gnd(EqualOp{});         tref.register_token(regex(r"=="), move |_| { eq_op.clone() }); <=   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b><=</b>', [comparison, qhelp("Less than or equal to."), less_than_or_equal]). <=   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> ==</i></b>  <a onclick="prompt('copy path','==');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>==</b>"), move |_| { eq_op.clone() }); ==   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>==</b>', [logic, qhelp("Equality test."), equality_test]). ==   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> ></i></b>  <a onclick="prompt('copy path','>');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>></b>"), move |_| { gt_op.clone() }); >   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>></b>', [comparison, qhelp("Greater than."), greater_than]). >   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> >=</i></b>  <a onclick="prompt('copy path','>=');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>>=</b>"), move |_| { ge_op.clone() }); >=   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>>=</b>', [comparison, qhelp("Greater than or equal to."), greater_than_or_equal]). >=   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> add-atom</i></b>  <a onclick="prompt('copy path','add-atom');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>add-atom</b>"), move |_| { add_atom_op.clone() }); add-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib_minimal.rs  <br> 
+    let add_atom_op = Atom::gnd(stdlib::AddAtomOp{});     tref.register_token(regex(r"<b>add-atom</b>"), move |_| { add_atom_op.clone() });     let remove_atom_op = Atom::gnd(stdlib::RemoveAtomOp{});     tref.register_token(regex(r"remove-atom"), move |_| { remove_atom_op.clone() });     let get_atoms_op = Atom::gnd(stdlib::GetAtomsOp{}); add-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn add_atom_op() {         let space = DynSpace::new(GroundingSpace::new());         let satom = Atom::gnd(space.clone());         let res = AddAtomOp{}.execute(&mut vec![satom, expr!(("foo" "bar"))]).expect("No result returned");         assert_eq!(res, vec![UNIT_ATOM()]); add-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>add-atom</b>', [manipulation, qhelp("Replaces an atom within a structure.")]). add-atom   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> and</i></b>  <a onclick="prompt('copy path','and');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>and</b>"), move |_| { and_op.clone() }); and   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        let <b>and</b>_op = Atom::gnd(AndOp{});         tref.register_token(regex(r"and"), move |_| { and_op.clone() });         let or_op = Atom::gnd(OrOp{});         tref.register_token(regex(r"or"), move |_| { or_op.clone() });         let not_op = Atom::gnd(NotOp{}); and   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>and</b>',X,Y],TF):- !, and   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>and</b>', [logic, qhelp("Logical AND."), logical_and]). and   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> assertEqual</i></b>  <a onclick="prompt('copy path','assertEqual');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>assertEqual</b>"), move |_| { assert_equal_op.clone() }); assertEqual   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib_minimal.rs  <br> 
+    let assert_equal_op = Atom::gnd(AssertEqualOp::new(space.clone()));     tref.register_token(regex(r"<b>assertEqual</b>"), move |_| { assert_equal_op.clone() });     let assert_equal_to_result_op = Atom::gnd(AssertEqualToResultOp::new(space.clone()));     tref.register_token(regex(r"assertEqualToResult"), move |_| { assert_equal_to_result_op.clone() });     let superpose_op = Atom::gnd(SuperposeOp::new(space.clone())); assertEqual   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>assertEqual</b>"), move |_| { assert_equal_op.clone() });         let assert_equal_to_result_op = Atom::gnd(AssertEqualToResultOp::new(space.clone()));         tref.register_token(regex(r"assertEqualToResult"), move |_| { assert_equal_to_result_op.clone() });         let collapse_op = Atom::gnd(CollapseOp::new(space.clone()));         tref.register_token(regex(r"collapse"), move |_| { collapse_op.clone() }); assertEqual   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn assert_equal_op() {         let space = DynSpace::new(metta_space("             (= (foo) (A B))             (= (foo) (B C))             (= (bar) (B C)) assertEqual   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        let assert_equal_op = AssertEqualOp::new(space);          assert_eq!(assert_equal_op.execute(&mut vec![expr!(("foo")), expr!(("bar"))]), unit_result());          let actual = assert_equal_op.execute(&mut vec![expr!(("foo")), expr!(("err"))]); assertEqual   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        let actual = assert_equal_op.execute(&mut vec![expr!(("err")), expr!(("foo"))]);         let expected = Regex::new("\nExpected: \\[\\((B C)|, |(A B)\\){3}\\]\nGot: \\[(A B)\\]\nMissed result: (B C)").unwrap();         assert_runtime_error(actual, expected);     }  assertEqual   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,_RetType,Depth,Self,['<b>assertEqual</b>',X,Y],RetVal):- !, assertEqual   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> assertEqualToResult</i></b>  <a onclick="prompt('copy path','assertEqualToResult');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>assertEqualToResult</b>"), move |_| { assert_equal_to_result_op.clone() }); assertEqualToResult   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn assert_equal_to_result_op() {         let space = DynSpace::new(metta_space("             (= (foo) (A B))             (= (foo) (B C))         ")); assertEqualToResult   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        let assert_equal_to_result_op = AssertEqualToResultOp::new(space);          assert_eq!(assert_equal_to_result_op.execute(&mut vec![                 expr!(("foo")), expr!(("B" "C") ("A" "B"))]),                 unit_result()); assertEqualToResult   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,_RetType,Depth,Self,['<b>assertEqualToResult</b>',X,Y],RetVal):- !, assertEqualToResult   <br> 
+ <br> &nbsp <br>
+ </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> bind!</i></b>  <a onclick="prompt('copy path','bind!');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>bind!</b>"), move |_| { bind_op.clone() }); bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        let bind_op = BindOp::new(tokenizer.clone());          assert_eq!(bind_op.execute(&mut vec![sym!("&my"), sym!("definition")]), unit_result());         let borrowed = tokenizer.borrow();         let constr = borrowed.find_token("&my"); bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,_Depth,_Slf,['<b>bind!</b>',Other,['new-space']],RetVal):- atom(Other),!, bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>bind!</b>',Other,Expr],RetVal):- !, bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_interp.pl  <br> 
+'<b>bind!</b>'(Environment, Variable, Value):- eval_H(['bind!', Environment, Variable], Value). bind!   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> capture</i></b>  <a onclick="prompt('copy path','capture');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>capture</b>"), move |_| { capture_op.clone() }); capture   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        let <b>capture</b>_op = Atom::gnd(CaptureOp::new(space.clone()));         tref.register_token(regex(r"capture"), move |_| { capture_op.clone() });         let case_op = Atom::gnd(CaseOp::new(space.clone()));         tref.register_token(regex(r"case"), move |_| { case_op.clone() });         let assert_equal_op = Atom::gnd(AssertEqualOp::new(space.clone())); capture   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> car-atom</i></b>  <a onclick="prompt('copy path','car-atom');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>car-atom</b>"), move |_| { car_atom_op.clone() }); car-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn car_atom_op() {         let res = CarAtomOp{}.execute(&mut vec![expr!(("A" "C") "B")]).expect("No result returned");         assert_eq!(res, vec![expr!("A" "C")]);     }  car-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,_Dpth,_Slf,['<b>car-atom</b>',Atom],CAR_Y):- !, Atom=[CAR|_],!,do_expander(Eq,RetType,CAR,CAR_Y). car-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_interp.pl  <br> 
+'<b>car-atom</b>'(List, Head):- eval_H(['car-atom', List], Head). car-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>car-atom</b>', [list_operations, qhelp("Retrieves the head of a list."), head_retrieval]). car-atom   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> case</i></b>  <a onclick="prompt('copy path','case');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>case</b>"), move |_| { case_op.clone() }); case   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn <b>case</b>_op() {         let space = DynSpace::new(metta_space("             (= (foo) (A B))         "));  case   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        let <b>case</b>_op = CaseOp::new(space.clone());          assert_eq!(case_op.execute(&mut vec![expr!(("foo")),                 expr!(((n "B") n) ("Empty" "D"))]),             Ok(vec![Atom::sym("A")])); case   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn <b>case</b>_op_external_vars_at_right_are_kept_untouched() {         let space = DynSpace::new(GroundingSpace::new());         let case_op = CaseOp::new(space.clone());          assert_eq!(case_op.execute(&mut vec![expr!(ext), expr!(((t t)))]), case   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn <b>case</b>_op_internal_variables_has_priority_in_template() {         let space = DynSpace::new(GroundingSpace::new());         let case_op = CaseOp::new(space.clone());          assert_eq!(case_op.execute(&mut vec![expr!(x "A"), expr!(((x x)))]), case   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,_RetType,Depth,Self,['<b>case</b>',A,[[Void,_]]],Res):- case   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>case</b>',A,[]],NoResult):- !, case   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>case</b>',A,CL|T],Res):- !, case   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>case</b>', [flow_control, qhelp("Case selection."), conditional_execution]). case   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> cdr-atom</i></b>  <a onclick="prompt('copy path','cdr-atom');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>cdr-atom</b>"), move |_| { cdr_atom_op.clone() }); cdr-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>cdr-atom</b>"), move |_| { cdr_atom_op.clone() });         let cons_atom_op = Atom::gnd(ConsAtomOp{});         tref.register_token(regex(r"cons-atom"), move |_| { cons_atom_op.clone() });         let println_op = Atom::gnd(PrintlnOp{});         tref.register_token(regex(r"println!"), move |_| { println_op.clone() }); cdr-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn cdr_atom_op() {         let res = CdrAtomOp{}.execute(&mut vec![expr!(("A"))]).expect("No result returned");         assert_eq!(res, vec![expr!()]);         let res = CdrAtomOp{}.execute(&mut vec![expr!(("A" "C") ("D" "E") "B")]).expect("No result returned");         assert_eq!(res, vec![expr!(("D" "E") "B")]); cdr-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,_Dpth,_Slf,['<b>cdr-atom</b>',Atom],CDR_Y):- !, Atom=[_|CDR],!,do_expander(Eq,RetType,CDR,CDR_Y). cdr-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_interp.pl  <br> 
+'<b>cdr-atom</b>'(List, Tail):- eval_H(['cdr-atom', List], Tail). cdr-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>cdr-atom</b>', [list_operations, qhelp("Retrieves the tail of a list."), tail_retrieval]). cdr-atom   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> change-state!</i></b>  <a onclick="prompt('copy path','change-state!');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>change-state!</b>"), move |_| { change_state_op.clone() }); change-state!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>change-state!</b>',StateExpr, UpdatedValue], Ret):- !, change-state!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>change-state!</b>', [state_management, qhelp("Changes the state of a system component."), system_integration]). change-state!   <br> 
+ <br> &nbsp <br>
+ </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> collapse</i></b>  <a onclick="prompt('copy path','collapse');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>collapse</b>"), move |_| { collapse_op.clone() }); collapse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn <b>collapse</b>_op() {         let space = DynSpace::new(metta_space("             (= (foo) (A B))             (= (foo) (B C))         ")); collapse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        let <b>collapse</b>_op = CollapseOp::new(space);          let actual = collapse_op.execute(&mut vec![expr!(("foo"))]).unwrap();         assert_eq!(actual.len(), 1);         assert_eq_no_order!( collapse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>collapse</b>',List],Res):-!, collapse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_interp.pl  <br> 
+'<b>collapse</b>'(List, CollapsedList):- eval_H(['collapse', List], CollapsedList). collapse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>collapse</b>', [data_structures, qhelp("Collapses a structure."), manipulation]). collapse   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> cons-atom</i></b>  <a onclick="prompt('copy path','cons-atom');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>cons-atom</b>"), move |_| { cons_atom_op.clone() }); cons-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn cons_atom_op() {         let res = ConsAtomOp{}.execute(&mut vec![expr!("A"), expr!()]).expect("No result returned");         assert_eq!(res, vec![expr!(("A"))]);         let res = ConsAtomOp{}.execute(&mut vec![expr!("A" "F"), expr!(("B" "C") "D")]).expect("No result returned");         assert_eq!(res, vec![expr!(("A" "F") ("B" "C") "D")]); cons-atom   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> flip</i></b>  <a onclick="prompt('copy path','flip');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>flip</b>"), move |_| { flip_op.clone() }); flip   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>flip</b>"), move |_| { flip_op.clone() });          target.move_front(&mut rust_tokens);     }  flip   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_interp.pl  <br> 
+'<b>flip</b>'(Bool) :- eval_H(['flip'], Bool). % see `flip` in metta_eval.pl as `eval_20/6` flip   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>flip</b>', [random, qhelp("Return a random boolean."), random_boolean]). flip   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> format-args</i></b>  <a onclick="prompt('copy path','format-args');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>format-args</b>"), move |_| { format_args_op.clone() }); format-args   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        let format_args_op = Atom::gnd(FormatArgsOp{});         tref.register_token(regex(r"<b>format-args</b>"), move |_| { format_args_op.clone() });         let trace_op = Atom::gnd(TraceOp{});         tref.register_token(regex(r"trace!"), move |_| { trace_op.clone() });         let nop_op = Atom::gnd(NopOp{}); format-args   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>format-args</b>',Format,Args],Result):- format-args   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>format-args</b>',_Fmt,Args],_Result) :- format-args   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_interp.pl  <br> 
+'<b>format-args</b>'(Format, Args, Result) :- eval_H(['format-args', Format, Args], Result). format-args   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>format-args</b>', [string_operations, qhelp("Generate a formatted string using a format specifier."), format_args]). format-args   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> get-atoms</i></b>  <a onclick="prompt('copy path','get-atoms');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>get-atoms</b>"), move |_| { get_atoms_op.clone() }); get-atoms   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib_minimal.rs  <br> 
+    tref.register_token(regex(r"<b>get-atoms</b>"), move |_| { get_atoms_op.clone() });     let new_state_op = Atom::gnd(stdlib::NewStateOp{});     tref.register_token(regex(r"new-state"), move |_| { new_state_op.clone() });     let change_state_op = Atom::gnd(stdlib::ChangeStateOp{});     tref.register_token(regex(r"change-state!"), move |_| { change_state_op.clone() }); get-atoms   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        let get_atoms_op = Atom::gnd(GetAtomsOp{});         tref.register_token(regex(r"<b>get-atoms</b>"), move |_| { get_atoms_op.clone() });         let car_atom_op = Atom::gnd(CarAtomOp{});         tref.register_token(regex(r"car-atom"), move |_| { car_atom_op.clone() });         let cdr_atom_op = Atom::gnd(CdrAtomOp{}); get-atoms   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn get_atoms_op() {         let space = DynSpace::new(metta_space("             (foo bar)             (bar foo)         ")); get-atoms   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>get-atoms</b>', [data_retrieval, qhelp("Retrieves atoms from a structure.")]). get-atoms   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> get-metatype</i></b>  <a onclick="prompt('copy path','get-metatype');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>get-metatype</b>"), move |_| { get_meta_type_op.clone() }); get-metatype   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib_minimal.rs  <br> 
+    tref.register_token(regex(r"<b>get-metatype</b>"), move |_| { get_meta_type_op.clone() });     let is_equivalent = Atom::gnd(IfEqualOp{});     tref.register_token(regex(r"if-equal"), move |_| { is_equivalent.clone() });     let new_space_op = Atom::gnd(stdlib::NewSpaceOp{});     tref.register_token(regex(r"new-space"), move |_| { new_space_op.clone() }); get-metatype   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(_Eq,_RetType,_Depth,_Self,['<b>get-metatype</b>',Val],TypeO):- !, get-metatype   <br> 
+ <br> &nbsp <br>
+ </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> get-state</i></b>  <a onclick="prompt('copy path','get-state');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>get-state</b>"), move |_| { get_state_op.clone() }); get-state   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib_minimal.rs  <br> 
+    let get_state_op = Atom::gnd(stdlib::GetStateOp{});     tref.register_token(regex(r"<b>get-state</b>"), move |_| { get_state_op.clone() });     let nop_op = Atom::gnd(stdlib::NopOp{});     tref.register_token(regex(r"nop"), move |_| { nop_op.clone() });     let match_op = Atom::gnd(stdlib::MatchOp{}); get-state   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>get-state</b>"), move |_| { get_state_op.clone() });         let get_meta_type_op = Atom::gnd(GetMetaTypeOp{});         tref.register_token(regex(r"get-metatype"), move |_| { get_meta_type_op.clone() });         let mod_space_op = Atom::gnd(ModSpaceOp::new(metta.clone()));         tref.register_token(regex(r"mod-space!"), move |_| { mod_space_op.clone() }); get-state   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>get-state</b>',StateExpr],Value):- !, get-state   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>get-state</b>', [state_management, qhelp("Gets the state of a component or system."), data_retrieval]). get-state   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> get-type</i></b>  <a onclick="prompt('copy path','get-type');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>get-type</b>"), move |_| { get_type_op.clone() }); get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib_minimal.rs  <br> 
+    let get_type_op = Atom::gnd(GetTypeOp::new(space.clone()));     tref.register_token(regex(r"<b>get-type</b>"), move |_| { get_type_op.clone() });     let get_type_space_op = Atom::gnd(stdlib::GetTypeSpaceOp{});     tref.register_token(regex(r"get-type-space"), move |_| { get_type_space_op.clone() });     let get_meta_type_op = Atom::gnd(stdlib::GetMetaTypeOp{}); get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib_minimal.rs  <br> 
+    fn get_type_op() {         let space = DynSpace::new(metta_space("             (: B Type)             (: C Type)             (: A B) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib_minimal.rs  <br> 
+        let get_type_op = GetTypeOp::new(space.clone());         assert_eq_no_order!(get_type_op.execute(&mut vec![sym!("A"), expr!({space.clone()})]).unwrap(),             vec![sym!("B"), sym!("C")]);     }  get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib_minimal.rs  <br> 
+    fn get_type_op_non_valid_atom() {         let space = DynSpace::new(metta_space("             (: f (-> Number String))             (: 42 Number)             (: \"test\" String) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib_minimal.rs  <br> 
+        let get_type_op = GetTypeOp::new(space.clone());         assert_eq_no_order!(get_type_op.execute(&mut vec![expr!("f" "42"), expr!({space.clone()})]).unwrap(),             vec![sym!("String")]);         assert_eq_no_order!(get_type_op.execute(&mut vec![expr!("f" "\"test\""), expr!({space.clone()})]).unwrap(),             vec![EMPTY_SYMBOL]); get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        let get_type_op = Atom::gnd(GetTypeOp::new(space.clone()));         tref.register_token(regex(r"<b>get-type</b>"), move |_| { get_type_op.clone() });         let get_type_space_op = Atom::gnd(GetTypeSpaceOp{});         tref.register_token(regex(r"get-type-space"), move |_| { get_type_space_op.clone() });         let import_op = Atom::gnd(ImportOp::new(metta.clone())); get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn get_type_op() {         let space = DynSpace::new(metta_space("             (: B Type)             (: C Type)             (: A B) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        let get_type_op = GetTypeOp::new(space);         assert_eq_no_order!(get_type_op.execute(&mut vec![sym!("A")]).unwrap(),             vec![sym!("B"), sym!("C")]);     }  get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn get_type_op_non_valid_atom() {         let space = DynSpace::new(metta_space("             (: f (-> Number String))             (: 42 Number)             (: \"test\" String) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        let get_type_op = GetTypeOp::new(space);         assert_eq_no_order!(get_type_op.execute(&mut vec![expr!("f" "42")]).unwrap(),             vec![sym!("String")]);         assert_eq_no_order!(get_type_op.execute(&mut vec![expr!("f" "\"test\"")]).unwrap(),             Vec::<Atom>::new()); get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>get-type</b>',Val,Self],Type):- current_self(Self), !, get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>get-type</b>',Val,Other],Type):- !, get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(_Eq,_RetType,Depth,Self,['<b>get-type</b>',Val],Type):- is_list(Val), !, get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>get-type</b>',Val],TypeO):- !, get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_interp.pl  <br> 
+'<b>get-type</b>'(Value, Type):- eval_H(['get-type', Value], Type). get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #A7E3A7">  ../../../hyperon-experimental/python/tests/test_examples.py  <br> 
+        self.assertEqualMettaRunnerResults(metta.run('!(<b>get-type</b> "A")'), [[S('String')]]) get-type   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> get-type-space</i></b>  <a onclick="prompt('copy path','get-type-space');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>get-type-space</b>"), move |_| { get_type_space_op.clone() }); get-type-space   <br> 
+ <br> &nbsp <br>
+ </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> git-module!</i></b>  <a onclick="prompt('copy path','git-module!');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>git-module!</b>"), move |_| { git_module_op.clone() }); git-module!   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> import!</i></b>  <a onclick="prompt('copy path','import!');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>import!</b>"), move |_| { import_op.clone() }); import!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>import!</b>"), move |_| { import_op.clone() });         let include_op = Atom::gnd(IncludeOp::new(metta.clone()));         tref.register_token(regex(r"include"), move |_| { include_op.clone() });         let pragma_op = Atom::gnd(PragmaOp::new(metta.settings().clone()));         tref.register_token(regex(r"pragma!"), move |_| { pragma_op.clone() }); import!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>import!</b>',Other,File],RetVal):- !, import!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_interp.pl  <br> 
+'<b>import!</b>'(Environment, Filename, Namespace):- eval_H(['import!', Environment, Filename], Namespace). import!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>import!</b>', [module_import, qhelp("Imports an external module or file.")]). import!   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> include</i></b>  <a onclick="prompt('copy path','include');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>include</b>"), move |_| { include_op.clone() }); include   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib_minimal.rs  <br> 
+    tref.register_token(regex(r"<b>include</b>"), move |_| { include_op.clone() });     let bind_op = Atom::gnd(stdlib::BindOp::new(tokenizer.clone()));     tref.register_token(regex(r"bind!"), move |_| { bind_op.clone() });     let trace_op = Atom::gnd(stdlib::TraceOp{});     tref.register_token(regex(r"trace!"), move |_| { trace_op.clone() }); include   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,_Depth,Self,['<b>include</b>',File],RetVal):- !, include   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> intersection</i></b>  <a onclick="prompt('copy path','intersection');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>intersection</b>"), move |_| { intersection_op.clone() }); intersection   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn <b>intersection</b>_op() {         let space = DynSpace::new(metta_space("             (= (foo) Z)             (= (foo) (A (B C)))             (= (foo) (A (B C))) intersection   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        let <b>intersection</b>_op = IntersectionOp::new(space);         let actual = intersection_op.execute(&mut vec![expr!(("foo")), expr!(("bar"))]).unwrap();         assert_eq_no_order!(actual,                    vec![expr!("A" ("B" "C")), expr!("f" "g"), expr!("f" "g"), expr!("Z")]);  intersection   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>intersection</b>',Eval1,Eval2],RetVal):- !, intersection   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>intersection</b>', [nondet_sets, qhelp("It gives the intersection duplicates are not removed ."), lazy_intersection]). intersection   <br> 
+ <br> &nbsp <br>
+ </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> let</i></b>  <a onclick="prompt('copy path','let');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>let</b>"), move |_| { let_op.clone() }); let   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn <b>let</b>_op() {         assert_eq!(LetOp{}.execute(&mut vec![expr!(a b), expr!("A" "B"), expr!(b a)]),             Ok(vec![expr!("B" "A")]));     }  let   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn <b>let</b>_op_external_vars_at_right_are_kept_untouched() {         assert_eq!(LetOp{}.execute(&mut vec![expr!(t), expr!(ext), expr!(t)]),             Ok(vec![expr!(ext)]));         assert_eq!(LetOp{}.execute(&mut vec![expr!(t), expr!(ext "A"), expr!(t)]),             Ok(vec![expr!(ext "A")])); let   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn <b>let</b>_op_internal_variables_has_priority_in_template() {         assert_eq!(LetOp{}.execute(&mut vec![expr!(x), expr!(x "A"), expr!(x)]),             Ok(vec![expr!(x "A")]));     }  let   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn <b>let</b>_op_keep_variables_equalities_issue290() {         assert_eq_metta_results!(run_program("!(let* (($f f) ($f $x)) $x)"), Ok(vec![vec![expr!("f")]]));         assert_eq_metta_results!(run_program("!(let* (($f $x) ($f f)) $x)"), Ok(vec![vec![expr!("f")]]));         assert_eq_metta_results!(run_program("!(let (quote ($x $x)) (quote ($z $y)) (let $y A ($z $y)))"), Ok(vec![vec![expr!("A" "A")]]));         assert_eq_metta_results!(run_program("!(let (quote ($x $x)) (quote ($z $y)) (let $z A ($z $y)))"), Ok(vec![vec![expr!("A" "A")]])); let   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn <b>let</b>_op_variables_visibility_pr262() {         let program = "             ;; Knowledge             (â P Q)             (â Q R) let   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>let</b>',E,V,Body],OO):- var(V), nonvar(E), !, let   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>let</b>',V,E,Body],OO):- !, % var(V), nonvar(E), !, let   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>let</b>',V,E,Body],OO):- nonvar(V),nonvar(E),!, let   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>let</b>',V,E,Body],OO):- var(V), nonvar(E), !, let   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>let</b>',V,E,Body],OO):- var(V), var(E), !, let   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_interp.pl  <br> 
+'<b>let</b>'(Variable, Expression, Body, Result):- eval_H(['let', Variable, Expression, Body], Result). let   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>let</b>', [variable_assignment, qhelp("Variable assignment.")]). let   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> let*</i></b>  <a onclick="prompt('copy path','let*');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"let\*"), move |_| { let_var_op.clone() }); let*   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn let_var_op() {         assert_eq!(LetVarOp{}.execute(&mut vec![expr!(), sym!("B")]),             Ok(vec![sym!("B")]));         assert_eq!(LetVarOp{}.execute(&mut vec![expr!(((a "A"))), expr!(a)]),             Ok(vec![expr!({LetOp{}} a "A" a)])); let*   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>let*</b>',[],Body],RetVal):- !, eval_args(Eq,RetType,Depth,Self,Body,RetVal). let*   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>let*</b>',[[Var,Val]|LetRest],Body],RetVal):- !, let*   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_interp.pl  <br> 
+'<b>let*</b>'(Bindings, Body, Result):- eval_H(['let*', Bindings, Body], Result). let*   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>let*</b>', [variable_assignment, qhelp("Sequential variable assignment."), sequential]). let*   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> match</i></b>  <a onclick="prompt('copy path','match');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>match</b>"), move |_| { match_op.clone() }); match   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/old_interpreter.rs  <br> 
+    OperatorPlan::new(|_| <b>match</b>_op(context, input), descr) }  fn match_op<'a, T: SpaceRef<'a>>(context: InterpreterContextRef<'a, T>, input: InterpretedAtom) -> StepResult<'a, Results, InterpreterError> {     log::debug!("match_op: {}", input); match   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib_minimal.rs  <br> 
+    tref.register_token(regex(r"<b>match</b>"), move |_| { match_op.clone() });     let mod_space_op = Atom::gnd(stdlib::ModSpaceOp::new(metta.clone()));     tref.register_token(regex(r"mod-space!"), move |_| { mod_space_op.clone() });     let print_mods_op = Atom::gnd(stdlib::PrintModsOp::new(metta.clone()));     tref.register_token(regex(r"print-mods!"), move |_| { print_mods_op.clone() }); match   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        let <b>match</b>_op = Atom::gnd(MatchOp{});         tref.register_token(regex(r"match"), move |_| { match_op.clone() });         let bind_op = Atom::gnd(BindOp::new(tokenizer));         tref.register_token(regex(r"bind!"), move |_| { bind_op.clone() });         let new_space_op = Atom::gnd(NewSpaceOp{}); match   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn <b>match</b>_op() {         let space = DynSpace::new(metta_space("(A B)"));         let match_op = MatchOp{};         assert_eq!(match_op.execute(&mut vec![expr!({space}), expr!("A" "B"), expr!("B" "A")]),             Ok(vec![expr!("B" "A")])); match   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn <b>match</b>_op_issue_530() {         let space = DynSpace::new(metta_space("(A $a $a)"));         let match_op = MatchOp{};         let result = match_op.execute(&mut vec![expr!({space}), expr!("A" x y), expr!("A" x y)]).unwrap();         assert_eq!(result.len(), 1); match   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>match</b>', [pattern_matching, qhelp("Matches patterns within structures or data.")]). match   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> mod-space!</i></b>  <a onclick="prompt('copy path','mod-space!');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>mod-space!</b>"), move |_| { mod_space_op.clone() }); mod-space!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+fn mod_space_op() {     let program = r#"         !(bind! &new_space (new-space))         !(add-atom &new_space (<b>mod-space!</b> stdlib))         !(get-atoms &new_space) mod-space!   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> new-space</i></b>  <a onclick="prompt('copy path','new-space');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>new-space</b>"), move |_| { new_space_op.clone() }); new-space   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>new-space</b>"), move |_| { new_space_op.clone() });         let add_atom_op = Atom::gnd(AddAtomOp{});         tref.register_token(regex(r"add-atom"), move |_| { add_atom_op.clone() });         let remove_atom_op = Atom::gnd(RemoveAtomOp{});         tref.register_token(regex(r"remove-atom"), move |_| { remove_atom_op.clone() }); new-space   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn new_space_op() {         let res = NewSpaceOp{}.execute(&mut vec![]).expect("No result returned");         let space = res.get(0).expect("Result is empty");         let space = space.as_gnd::<DynSpace>().expect("Result is not space");         let space_atoms: Vec<Atom> = space.borrow().as_space().atom_iter().unwrap().cloned().collect(); new-space   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>new-space</b>', [memory_allocation, qhelp("Allocates new space or memory region.")]). new-space   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> new-state</i></b>  <a onclick="prompt('copy path','new-state');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>new-state</b>"), move |_| { new_state_op.clone() }); new-state   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        let new_state_op = Atom::gnd(NewStateOp{});         tref.register_token(regex(r"<b>new-state</b>"), move |_| { new_state_op.clone() });         let change_state_op = Atom::gnd(ChangeStateOp{});         tref.register_token(regex(r"change-state!"), move |_| { change_state_op.clone() });         let get_state_op = Atom::gnd(GetStateOp{}); new-state   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>new-state</b>',UpdatedValue],StateMonad):- !, new-state   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> nop</i></b>  <a onclick="prompt('copy path','nop');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>nop</b>"), move |_| { nop_op.clone() }); nop   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>nop</b>"), move |_| { nop_op.clone() });         let let_op = Atom::gnd(LetOp{});         tref.register_token(regex(r"let"), move |_| { let_op.clone() });         let let_var_op = Atom::gnd(LetVarOp{});         tref.register_token(regex(r"let\*"), move |_| { let_var_op.clone() }); nop   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn <b>nop</b>_op() {         assert_eq!(NopOp{}.execute(&mut vec![]), unit_result());     }      #[test] nop   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(_Eq,RetType,Depth,Self,['<b>nop</b>',Expr], NoResult ):- !, nop   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_interp.pl  <br> 
+'<b>nop</b>'(Expression, EvalResult):- eval_H(['nop', Expression], EvalResult). nop   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>nop</b>', [iteration_control, qhelp("Suppresses iteration result."), suppression]). nop   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> not</i></b>  <a onclick="prompt('copy path','not');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>not</b>"), move |_| { not_op.clone() }); not   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>not</b>"), move |_| { not_op.clone() });         // NOTE: xor and flip are absent in Python intentionally for conversion testing         let xor_op = Atom::gnd(XorOp{});         tref.register_token(regex(r"xor"), move |_| { xor_op.clone() });         let flip_op = Atom::gnd(FlipOp{}); not   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>not</b>',X],TF):- !, not   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>not</b>', [logic, qhelp("Logical NOT."), logical_not]). not   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> or</i></b>  <a onclick="prompt('copy path','or');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>or</b>"), move |_| { or_op.clone() }); or   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>or</b>',X,Y],TF):- !, or   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&c<b>or</b>elib','or', [logic, qhelp("Logical OR."), logical_or]). or   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> pragma!</i></b>  <a onclick="prompt('copy path','pragma!');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>pragma!</b>"), move |_| { pragma_op.clone() }); pragma!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib_minimal.rs  <br> 
+    let pragma_op = Atom::gnd(stdlib::PragmaOp::new(metta.settings().clone()));     tref.register_token(regex(r"<b>pragma!</b>"), move |_| { pragma_op.clone() });     let import_op = Atom::gnd(stdlib::ImportOp::new(metta.clone()));     tref.register_token(regex(r"import!"), move |_| { import_op.clone() });     let include_op = Atom::gnd(stdlib::IncludeOp::new(metta.clone())); pragma!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>pragma!</b>',Other,Expr],RetVal):- !, pragma!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_interp.pl  <br> 
+'<b>pragma!</b>'(Environment, Expression, EvalValue):- eval_H(['pragma!', Environment, Expression], EvalValue). pragma!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>pragma!</b>', [compiler_directive, qhelp("Compiler directive for optimizations/settings."), optimization]). pragma!   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> print-mods!</i></b>  <a onclick="prompt('copy path','print-mods!');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>print-mods!</b>"), move |_| { print_mods_op.clone() }); print-mods!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        let print_mods_op = Atom::gnd(PrintModsOp::new(metta.clone()));         tref.register_token(regex(r"<b>print-mods!</b>"), move |_| { print_mods_op.clone() });         let sealed_op = Atom::gnd(SealedOp{});         tref.register_token(regex(r"sealed"), move |_| { sealed_op.clone() });  print-mods!   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> println!</i></b>  <a onclick="prompt('copy path','println!');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>println!</b>"), move |_| { println_op.clone() }); println!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib_minimal.rs  <br> 
+    let println_op = Atom::gnd(stdlib::PrintlnOp{});     tref.register_token(regex(r"<b>println!</b>"), move |_| { println_op.clone() });     let format_args_op = Atom::gnd(stdlib::FormatArgsOp{});     tref.register_token(regex(r"format-args"), move |_| { format_args_op.clone() });     let print_alternatives_op = Atom::gnd(PrintAlternativesOp{}); println!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn println_op() {         assert_eq!(PrintlnOp{}.execute(&mut vec![sym!("A")]), unit_result());     }      #[test] println!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>println!</b>', [output, qhelp("Prints text with newline to output."), text_printing]). println!   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> register-module!</i></b>  <a onclick="prompt('copy path','register-module!');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>register-module!</b>"), move |_| { register_module_op.clone() }); register-module!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        let register_module_op = Atom::gnd(RegisterModuleOp::new(metta.clone()));         tref.register_token(regex(r"<b>register-module!</b>"), move |_| { register_module_op.clone() });         let git_module_op = Atom::gnd(GitModuleOp::new(metta.clone()));         tref.register_token(regex(r"git-module!"), move |_| { git_module_op.clone() });     } register-module!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>register-module!</b>',Dir],RetVal):- !, register-module!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>register-module!</b>',Name,Dir],RetVal):- !, register-module!   <br> 
+ <br> &nbsp <br>
+ </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> remove-atom</i></b>  <a onclick="prompt('copy path','remove-atom');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>remove-atom</b>"), move |_| { remove_atom_op.clone() }); remove-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn remove_atom_op() {         let space = DynSpace::new(metta_space("             (foo bar)             (bar foo)         ")); remove-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>remove-atom</b>', [manipulation, qhelp("Removes an atom from a structure.")]). remove-atom   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> sealed</i></b>  <a onclick="prompt('copy path','sealed');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>sealed</b>"), move |_| { sealed_op.clone() }); sealed   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib_minimal.rs  <br> 
+    let <b>sealed</b>_op = Atom::gnd(stdlib::SealedOp{});     tref.register_token(regex(r"sealed"), move |_| { sealed_op.clone() });     // &self should be updated     // TODO: adding &self might be done not by stdlib, but by MeTTa itself.     // TODO: adding &self introduces self referencing and thus prevents space sealed   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn <b>sealed</b>_op_runner() {         let nested = run_program("!(sealed ($x) (sealed ($a $b) (quote (= ($a $x $c) ($b)))))");         let simple_replace = run_program("!(sealed ($x $y) (quote (= ($y $z))))");          assert!(crate::atom::matcher::atoms_are_equivalent(&nested.unwrap()[0][0], &expr!("quote" ("=" (a b c) (z))))); sealed   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn <b>sealed</b>_op_execute() {         let val = SealedOp{}.execute(&mut vec![expr!(x y), expr!("="(y z))]);         assert!(crate::atom::matcher::atoms_are_equivalent(&val.unwrap()[0], &expr!("="(y z))));     }  sealed   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> subtraction</i></b>  <a onclick="prompt('copy path','subtraction');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>subtraction</b>"), move |_| { subtraction_op.clone() }); subtraction   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib_minimal.rs  <br> 
+    tref.register_token(regex(r"<b>subtraction</b>"), move |_| { subtraction_op.clone() });     let case_op = Atom::gnd(CaseOp::new(space.clone()));     tref.register_token(regex(r"case"), move |_| { case_op.clone() });     let capture_op = Atom::gnd(CaptureOp::new(space.clone()));     tref.register_token(regex(r"capture"), move |_| { capture_op.clone() }); subtraction   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn <b>subtraction</b>_op() {         let space = DynSpace::new(metta_space("             (= (foo) Z)             (= (foo) S)             (= (foo) S) subtraction   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        let <b>subtraction</b>_op = SubtractionOp::new(space);         let actual = subtraction_op.execute(&mut vec![expr!(("foo")), expr!(("bar"))]).unwrap();         assert_eq_no_order!(actual,                    vec![expr!("A" ("B" "C")), expr!("f" "g"), expr!("f" "g"), expr!("P" "b")]);     } subtraction   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>subtraction</b>',Eval1,Eval2],RetVal):- !, subtraction   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>subtraction</b>', [nondet_sets, qhelp("It subtracts elements generated by Call2 from those generated by Call1."), lazy_subtraction]). subtraction   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> superpose</i></b>  <a onclick="prompt('copy path','superpose');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>superpose</b>"), move |_| { superpose_op.clone() }); superpose   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib_minimal.rs  <br> 
+    tref.register_token(regex(r"<b>superpose</b>"), move |_| { superpose_op.clone() });     let collapse_op = Atom::gnd(CollapseOp::new(space.clone()));     tref.register_token(regex(r"collapse"), move |_| { collapse_op.clone() });     let unique_op = Atom::gnd(stdlib::UniqueOp::new(space.clone()));     tref.register_token(regex(r"unique"), move |_| { unique_op.clone() }); superpose   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        let <b>superpose</b>_op = Atom::gnd(SuperposeOp::new(space.clone()));         tref.register_token(regex(r"superpose"), move |_| { superpose_op.clone() });         let unique_op = Atom::gnd(UniqueOp::new(space.clone()));         tref.register_token(regex(r"unique"), move |_| { unique_op.clone() });         let union_op = Atom::gnd(UnionOp::new(space.clone())); superpose   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn <b>superpose</b>_op() {         let space = DynSpace::new(GroundingSpace::new());         let superpose_op = SuperposeOp::new(space);         assert_eq!(superpose_op.execute(&mut vec![expr!("A" ("B" "C"))]),             Ok(vec![sym!("A"), expr!("B" "C")])); superpose   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn <b>superpose</b>_op_type() {         let space = DynSpace::new(GroundingSpace::new());         assert!(validate_atom(space.borrow().as_space(), &expr!({SumOp{}}             ({SuperposeOp::new(space.clone())} ({Number::Integer(1)} {Number::Integer(2)} {Number::Integer(3)}))             {Number::Integer(1)}))); superpose   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn <b>superpose</b>_op_multiple_interpretations() {         let metta = Metta::new(Some(EnvBuilder::test_env()));         let parser = SExprParser::new("             (= (f) A)             (= (f) B) superpose   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn <b>superpose</b>_op_superposed_with_collapse() {         let metta = Metta::new(Some(EnvBuilder::test_env()));         let parser = SExprParser::new("             (= (f) A)             (= (f) B) superpose   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn <b>superpose</b>_op_consumes_interpreter_errors() {         let metta = Metta::new(Some(EnvBuilder::test_env()));         let parser = SExprParser::new("             (: f (-> A B))             (= (f $x) $x) superpose   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>superpose</b>',List],Res):- !, superpose   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_interp.pl  <br> 
+'<b>superpose</b>'(List, SuperposedList):- eval_H(['superpose', List], SuperposedList). superpose   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>superpose</b>', [data_structures, qhelp("Superposes data structures."), manipulation]). superpose   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> trace!</i></b>  <a onclick="prompt('copy path','trace!');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>trace!</b>"), move |_| { trace_op.clone() }); trace!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn trace_op() {         assert_eq!(TraceOp{}.execute(&mut vec![sym!("\"Here?\""), sym!("42")]),                    Ok(vec![sym!("42")]));     }  trace!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>trace!</b>',A,B],C):- !, % writeln(trace(A)), trace!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>trace!</b>', [debugging, qhelp("Prints some debug information."), information_printing]). trace!   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> union</i></b>  <a onclick="prompt('copy path','union');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>union</b>"), move |_| { union_op.clone() }); union   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib_minimal.rs  <br> 
+    let <b>union</b>_op = Atom::gnd(stdlib::UnionOp::new(space.clone()));     tref.register_token(regex(r"union"), move |_| { union_op.clone() });     let intersection_op = Atom::gnd(stdlib::IntersectionOp::new(space.clone()));     tref.register_token(regex(r"intersection"), move |_| { intersection_op.clone() });     let subtraction_op = Atom::gnd(stdlib::SubtractionOp::new(space.clone())); union   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>union</b>"), move |_| { union_op.clone() });         let intersection_op = Atom::gnd(IntersectionOp::new(space.clone()));         tref.register_token(regex(r"intersection"), move |_| { intersection_op.clone() });         let subtraction_op = Atom::gnd(SubtractionOp::new(space.clone()));         tref.register_token(regex(r"subtraction"), move |_| { subtraction_op.clone() }); union   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn <b>union</b>_op() {         let space = DynSpace::new(metta_space("             (= (foo) (A (B C)))             (= (foo) (A (B C)))             (= (foo) (f g)) union   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        let <b>union</b>_op = UnionOp::new(space);         let actual = union_op.execute(&mut vec![expr!(("foo")), expr!(("bar"))]).unwrap();         assert_eq_no_order!(actual,                    vec![expr!("A" ("B" "C")), expr!("A" ("B" "C")), expr!("f" "g"), expr!("f" "g"), expr!("f" "g"), expr!("Z"),                         expr!("A" ("B" "C")), expr!("p"), expr!("p"), expr!("Q" "a")]); union   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>union</b>',Eval1,Eval2],RetVal):- !, union   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>union</b>', [nondet_sets, qhelp("It gives the union of 2 list ."), lazy_union ]). union   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> unique</i></b>  <a onclick="prompt('copy path','unique');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>unique</b>"), move |_| { unique_op.clone() }); unique   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+    fn <b>unique</b>_op() {         let space = DynSpace::new(metta_space("             (= (foo) (A (B C)))             (= (foo) (A (B C)))             (= (foo) (f g)) unique   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        let <b>unique</b>_op = UniqueOp::new(space);         let actual = unique_op.execute(&mut vec![expr!(("foo"))]).unwrap();         assert_eq_no_order!(actual,                    vec![expr!("A" ("B" "C")), expr!("f" "g"), expr!("Z")]);     } unique   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>unique</b>',Eval],RetVal):- !, unique   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>unique</b>', [nondet_sets, qhelp("Makes nondet results unique."), no_repeats_var]). unique   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> xor</i></b>  <a onclick="prompt('copy path','xor');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>xor</b>"), move |_| { xor_op.clone() }); xor   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>xor</b>',X,Y],TF):- !, xor   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>xor</b>', [logic, qhelp("Logical XOR."), logical_xor]) xor   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+ <h2> Tags identified </h2> <br>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >   register-module!  1031 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ git-module!  1033 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ match  1767 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ bind!  1769 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ new-space  1771 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ add-atom  1773 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ remove-atom  1775 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ get-atoms  1777 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ car-atom  1779 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ cdr-atom  1781 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ cons-atom  1783 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ println!  1785 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ format-args  1787 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ trace!  1789 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ nop  1791 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ let  1793 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ let*  1795 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ new-state  1797 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ change-state!  1799 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ get-state  1801 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ get-metatype  1803 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ mod-space!  1805 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ print-mods!  1807 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ sealed  1809 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ capture  1821 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ case  1823 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ assertEqual  1825 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ assertEqualToResult  1827 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ collapse  1829 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ superpose  1831 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ unique  1833 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ union  1835 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ intersection  1837 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ subtraction  1839 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ get-type  1841 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ get-type-space  1843 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ import!  1845 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ include  1847 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ pragma!  1849 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ &self  1859 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ +  1878 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ -  1880 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ *  1882 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ /  1884 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ %  1886 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ <  1888 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ >  1890 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ <=  1892 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ >=  1894 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ ==  1896 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ and  1898 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ or  1900 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ not  1902 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ xor  1905 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+ flip  1907 ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs <br> 
+
+  </div>
+<h2> Secondary Tags identified </h2> <br>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >   - register_module_op-   <br> 
+ - git_module_op-   <br> 
+ - match_op-   <br> 
+ - bind_op-   <br> 
+ - new_space_op-   <br> 
+ - add_atom_op-   <br> 
+ - remove_atom_op-   <br> 
+ - get_atoms_op-   <br> 
+ - car_atom_op-   <br> 
+ - cdr_atom_op-   <br> 
+ - cons_atom_op-   <br> 
+ - println_op-   <br> 
+ - format_args_op-   <br> 
+ - trace_op-   <br> 
+ - nop_op-   <br> 
+ - let_op-   <br> 
+ - let_var_op-   <br> 
+ - new_state_op-   <br> 
+ - change_state_op-   <br> 
+ - get_state_op-   <br> 
+ - get_meta_type_op-   <br> 
+ - mod_space_op-   <br> 
+ - print_mods_op-   <br> 
+ - sealed_op-   <br> 
+ - capture_op-   <br> 
+ - case_op-   <br> 
+ - assert_equal_op-   <br> 
+ - assert_equal_to_result_op-   <br> 
+ - collapse_op-   <br> 
+ - superpose_op-   <br> 
+ - unique_op-   <br> 
+ - union_op-   <br> 
+ - intersection_op-   <br> 
+ - subtraction_op-   <br> 
+ - get_type_op-   <br> 
+ - get_type_space_op-   <br> 
+ - import_op-   <br> 
+ - include_op-   <br> 
+ - pragma_op-   <br> 
+ - self_atom-   <br> 
+ - sum_op-   <br> 
+ - sub_op-   <br> 
+ - mul_op-   <br> 
+ - div_op-   <br> 
+ - mod_op-   <br> 
+ - lt_op-   <br> 
+ - gt_op-   <br> 
+ - le_op-   <br> 
+ - ge_op-   <br> 
+ - eq_op-   <br> 
+ - and_op-   <br> 
+ - or_op-   <br> 
+ - not_op-   <br> 
+ - xor_op-   <br> 
+ - flip_op-   <br> 
+
+  </div>
+Tags not found - uncovered <br>
+<b>  git-module!</b> <br> 
+<b>  get-type-space</b> <br> 

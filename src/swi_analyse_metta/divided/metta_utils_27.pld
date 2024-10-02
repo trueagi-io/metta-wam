@@ -1,0 +1,67 @@
+  ignore(pretty1(O)),ignore(pretty_two(O)),ignore(pretty_three(O)),ignore(pretty_final(O)),!,
+  ((term_singletons(O,SS),numbervars(SS,999999999999,_,[attvar(skip),singletons(true)]))).
+
+:- dynamic(pretty_clauses:pp_hook/3).
+:- multifile(pretty_clauses:pp_hook/3).
+:- module_transparent(pretty_clauses:pp_hook/3).
+pretty_clauses:pp_hook(FS,Tab,S):- \+ current_prolog_flag(never_pp_hook, true), nb_current(arc_can_portray,t),  notrace(catch(arc_pp_hook(FS,Tab,S),_,fail)).
+
+arc_pp_hook(_,Tab,S):- term_is_ansi(S), !,prefix_spaces(Tab), write_keeping_ansi_mb(S).
+%arc_pp_hook(_,Tab,S):- is_vm(S),!,prefix_spaces(Tab),!,write('..VM..').
+%arc_pp_hook(_,  _,_):- \+ \+ current_prolog_flag(never_pp_hook, true), nb_current(arc_can_portray,t),!,fail.
+arc_pp_hook(FS,_  ,G):- \+ current_prolog_flag(never_pp_hook, true), nb_current(arc_can_portray,t),
+  current_predicate(is_group/1),
+   locally(b_setval(pp_parent,FS),
+     print_with_pad(pp_hook_g(G))),!.
+
+pp_parent(PP):- nb_current(pp_parent,PP),!.
+pp_parent([]):-!.
+
+%:- meta_predicate(lock_doing(+,+,0)).
+:- meta_predicate(lock_doing(+,+,:)).
+lock_doing(Lock,G,Goal):-
+ (nb_current(Lock,Was);Was=[]), !,
+  \+ ((member(E,Was),E==G)),
+  locally(nb_setval(Lock,[G|Was]),Goal).
+
+never_let_arc_portray_again:- set_prolog_flag(never_pp_hook, true),!.
+arc_can_portray:- \+ current_prolog_flag(never_pp_hook, true), nb_current(arc_can_portray,t).
+
+arcp:will_arc_portray:-
+   \+ current_prolog_flag(never_pp_hook, true),
+   \+ nb_current(arc_can_portray,f),
+   %nb_current(arc_can_portray,t),
+   current_prolog_flag(debug,false),
+   \+ tracing,
+   flag(arc_portray_current_depth,X,X),X<3,
+   current_predicate(bfly_startup/0).
+
+user:portray(Grid):-
+  arcp:will_arc_portray, \+ \+ catch(quietly(arc_portray(Grid)),_,fail),!, flush_output.
+
+
+pp_hook_g(S):- term_is_ansi(S), !, write_keeping_ansi_mb(S).
+pp_hook_g(_):- \+ \+ current_prolog_flag(never_pp_hook, true), nb_current(arc_can_portray,t),!,fail.
+pp_hook_g(S):- term_contains_ansi(S), !, write_nbsp, pp_hook_g0(S).
+pp_hook_g(G):- \+ plain_var(G), lock_doing(in_pp_hook_g,G,pp_hook_g0(G)).
+
+pp_hook_g0(S):- term_is_ansi(S), !, write_nbsp, write_keeping_ansi_mb(S).
+pp_hook_g0(_):- \+ \+ current_prolog_flag(never_pp_hook, true), nb_current(arc_can_portray,t),!,fail.
+pp_hook_g0(_):- in_pp(bfly),!,fail.
+pp_hook_g0(G):- wots_hs(S,in_bfly(f,pp_hook_g10(G))),write(S).
+
+mass_gt1(O1):- into_obj(O1,O2),mass(O2,M),!,M>1.
+
+% Pretty printing
+pp_hook_g10(G):- \+ plain_var(G), current_predicate(pp_hook_g1/1), lock_doing(in_pp_hook_g10,G,pp_hook_g1(G)).
+
+%as_grid_string(O,SSS):- is_grid(O),wots_vs(S,print_grid(O)), sformat(SSS,'{  ~w}',[S]).
+as_grid_string(O,SSS):- wots_vs(S,show_indiv(O)), sformat(SSS,'{  ~w}',[S]).
+as_pre_string(O,SS):- wots_hs(S,show_indiv(O)), strip_vspace(S,SS).
+
+
+pretty_grid(O):-
+  catch(
+  (wots_hs(S,print_grid(O)),strip_vspace(S,SS),
+   ptc(orange,(format('"  ~w  "',[SS])))),
+  _,fail),!.

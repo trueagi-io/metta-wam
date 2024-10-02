@@ -1,0 +1,67 @@
+% =================================================================
+% =================================================================
+
+eval_20(Eq,RetType,_Dpth,_Slf,['new-space'],Space):- !, 'new-space'(Space),check_returnval(Eq,RetType,Space).
+
+eval_20(Eq,RetType,Depth,Self,[Op,Space|Args],Res):- is_space_op(Op),!,
+  eval_space_start(Eq,RetType,Depth,Self,[Op,Space|Args],Res).
+eval_20(Eq,RetType,Depth,Self,['unify',Space|Args],Res):- !,
+  eval_space_start(Eq,RetType,Depth,Self,['match',Space|Args],Res).
+
+eval_space_start(Eq,RetType,_Depth,_Self,[_Op,_Other,Atom],Res):-
+  (Atom == [] ;  Atom =='Empty';  Atom =='Nil'),!,make_nop(RetType,'False',Res),check_returnval(Eq,RetType,Res).
+
+eval_space_start(Eq,RetType,Depth,Self,[Op,Other|Args],Res):-
+  into_space(Depth,Self,Other,Space),
+  eval_space(Eq,RetType,Depth,Self,[Op,Space|Args],Res).
+
+
+eval_space(Eq,RetType,_Dpth,_Slf,['add-atom',Space,PredDecl],Res):- !,
+   do_metta(python,load,Space,PredDecl,TF),make_nop(RetType,TF,Res),check_returnval(Eq,RetType,Res).
+
+eval_space(Eq,RetType,_Dpth,_Slf,['remove-atom',Space,PredDecl],Res):- !,
+   do_metta(python,unload_all,Space,PredDecl,TF),
+   make_nop(RetType,TF,Res),check_returnval(Eq,RetType,Res).
+
+eval_space(Eq,RetType,_Dpth,_Slf,['atom-count',Space],Count):- !,
+    ignore(RetType='Number'),ignore(Eq='='),
+    'atom-count'(Space, Count).
+    %findall(Atom, metta_atom(Space, Atom),Atoms),
+    %length(Atoms,Count).
+
+eval_space(Eq,RetType,_Dpth,_Slf,['atom-replace',Space,Rem,Add],TF):- !,
+   copy_term(Rem,RCopy), as_tf((metta_atom_iter_ref(Space,RCopy,Ref), RCopy=@=Rem,erase(Ref), do_metta(Space,load,Add)),TF),
+ check_returnval(Eq,RetType,TF).
+
+eval_space(Eq,RetType,_Dpth,_Slf,['get-atoms',Space],Atom):- !,
+  ignore(RetType='Atom'),
+  get_metta_atom_from(Space, Atom),
+  check_returnval(Eq,RetType,Atom).
+
+% Match-ELSE
+eval_space(Eq,RetType,Depth,Self,['match',Other,Goal,Template,Else],Template):- !,
+  ((eval_space(Eq,RetType,Depth,Self,['match',Other,Goal,Template],Template),
+       \+ make_nop(RetType,[],Template))*->true;Template=Else).
+% Match-TEMPLATE
+eval_space(Eq,_RetType,Depth,Self,['match',Other,Goal,Template],Template):-!,
+  metta_atom_iter(Eq,Depth,Self,Other,Goal).
+/*
+eval_space(Eq,RetType,Depth,Self,['match',Other,Goal,Template],Res):- !,
+   metta_atom_iter(Eq,Depth,Self,Other,Goal),
+   eval_args(Eq,RetType,Depth,Self,Template,Res).
+*/
+
+%metta_atom_iter(Eq,_Depth,_Slf,Other,[Equal,[F|H],B]):- Eq == Equal,!,  % trace,
+%   metta_eq_def(Eq,Other,[F|H],B).
+
+/*
+metta_atom_iter(Eq,Depth,Self,Other,[Equal,[F|H],B]):- Eq == Equal,!,  % trace,
+   metta_eq_def(Eq,Other,[F|H],BB),
+   eval_sometimes(Eq,_RetType,Depth,Self,B,BB).
+*/
+
+metta_atom_iter(_Eq,Depth,_,_,_):- Depth<3,!,fail.
+metta_atom_iter(Eq,Depth,Self,Other,[And|Y]):- atom(And), is_comma(And),!,
+  (Y==[] -> true ;
+    ( D2 is Depth -1, Y = [H|T],
+       metta_atom_iter(Eq,D2,Self,Other,H),metta_atom_iter(Eq,D2,Self,Other,[And|T]))).

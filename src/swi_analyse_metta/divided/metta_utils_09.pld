@@ -1,0 +1,66 @@
+expand_md1(MD,(C->A;B),(CC->AA;BB)):- !, expand_md(MD,A,AA), expand_md(MD,B,BB), expand_must_not_error(C,CC).
+expand_md1(MD,(C;B),(CC;BB)):- !, expand_md(MD,B,BB), expand_must_not_error(C,CC).
+
+expand_md1(MD,locally(C,A),locally(C,AA)):- !, expand_md(MD,A,AA).
+
+expand_md1(MD,call_cleanup(A,B),call_cleanup(AA,BB)):- !, expand_md(MD,A,AA), expand_md(MD,B,BB).
+expand_md1(MD,setup_call_cleanup(C,A,B),setup_call_cleanup(CC,AA,BB)):- !,
+  expand_md(MD,C,CC),expand_md(MD,A,AA), expand_md(MD,B,BB).
+
+expand_md1(MD,M:P, M:AABB):-!,expand_md(MD,P, AABB).
+
+expand_md1(MD,P, AABB) :- predicate_property(P,(meta_predicate( MP ))),
+   strip_module(P,_,SP),strip_module(MP,_,SMP), kaggle_arc_1_pred(_,SP),
+   \+ skippable_built_in(P),
+   SP=..[F|Args],SMP=..[F|Margs],!,
+   maplist(expand_meta_predicate_arg(MD),Margs,Args,EArgs),
+   AABB=..[F|EArgs].
+
+expand_md1(MD, A, MDAA):- \+ remove_must_det(MD), !, expand_goal(A,AA),!,compound_name_arg(MDAA,MD,AA).
+expand_md1(_MD, A, AA):- expand_goal(A,AA),!.
+
+expand_must_not_error(C,C):- remove_must_det(must_not_error),!.
+expand_must_not_error(C,CC):- \+ predicate_property(C,meta_predicate(_)),!, CC = must_not_error(C),!.
+expand_must_not_error(C,CC):- expand_md(must_not_error, C, CC).
+
+kaggle_arc_1_pred(M,P):-
+  predicate_property(M:P,file(F)),
+  \+ predicate_property(M:P,imported_from(_)),
+  \+ \+ atom_contains(F,'arc_'),
+  \+ atom_contains(F,'_pfc'),
+  \+ atom_contains(F,'_afc'),
+  % \+ atom_contains(F,'_ui_'),
+  true.
+
+%meta_builtin(P):- var(P),meta_builtin(P).
+%meta_builtin(P):- predicate_property(P,interpreted),predicate_property(P,static).
+skippable_built_in(MP):- strip_module(MP,_,P), predicate_property(system:P,built_in),
+  once(predicate_property(system:P,iso);predicate_property(system:P,notrace)).
+%meta_builtin(P):- predicate_property(P,/*notrace*/), \+ predicate_property(P,nodebug).
+
+expand_meta_predicate_arg(_MD,'?',A,A):-!.
+expand_meta_predicate_arg(_MD,'+',A,A):-!.
+expand_meta_predicate_arg(_MD,'-',A,A):-!.
+expand_meta_predicate_arg(MD, ':',A,AA):- !,expand_md1(MD,A,AA).
+expand_meta_predicate_arg(MD,  0,A,AA):- !,expand_md1(MD,A,AA).
+%expand_meta_predicate_arg(MD,*,A,AA):- !,expand_md1(MD,A,AA).
+expand_meta_predicate_arg(_MD,_,A,A).
+
+goal_expansion_getter(Goal,O):- \+ compound(Goal), !,O = Goal.
+goal_expansion_getter(I,O):- md_like(MD),maybe_expand_md(MD,I,O),I\=@=O,!.
+goal_expansion_getter(I,O):- md_like(MD),maybe_expand_md(MD,I,M),I\=@=M,!,goal_expansion_getter(M,O).
+goal_expansion_getter(Goal,get_kov(Func,Self,Value)):- compound(Goal),
+  compound_name_arguments(Goal,'.',[ Self, Func, Value]),var(Value).
+goal_expansion_getter(Goal,Out):-
+ compound_name_arguments(Goal,F,Args),
+ maplist(goal_expansion_getter,Args,ArgsOut),
+ compound_name_arguments(Out,F,ArgsOut).
+
+:- export(goal_expansion_getter/2).
+:- system:import(goal_expansion_getter/2).
+
+
+goal_expansion_setter(Goal,_):- \+ compound(Goal), !, fail.
+
+
+goal_expansion_setter(I,O):- md_like(MD),maybe_expand_md(MD,I,O),I\=@=O,!.
