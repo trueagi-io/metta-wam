@@ -55,14 +55,6 @@
 % ===============================
 %    TESTING
 % ===============================
-% Define 'fb', a rule that calls 'make' and writes information for each clause of 'fb0'.
-% 'make' compiles the program.
-% The 'forall' loop will write and call all goals of the 'fb0' clauses.
-
-
-% ===============================
-%    TESTING
-% ===============================
 
 %!  fb is det.
 %
