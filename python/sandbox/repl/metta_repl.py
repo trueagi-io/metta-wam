@@ -1,7 +1,15 @@
-import os
+from hyperon.base import Atom
+from hyperon.atoms import OperationAtom, E
+from hyperon.ext import register_tokens
+from hyperon.ext import register_atoms
+from hyperon.atoms import G, AtomType
+from hyperon.runner import MeTTa
+
+import hyperonpy as hp
+
 import sys
-import hyperon
 import readline
+import os
 import atexit
 import traceback
 
@@ -151,7 +159,74 @@ def load_file(runner, file):
         if METTALOG_VERBOSE >= DEBUG:
             traceback.print_exc()
 
-# REPL for interactive input with command history support
+class MeTTaVS(MeTTa):
+    def copy(self):
+        return self
+
+@register_atoms
+def my_imported_runner_atom():
+    # We don't use metta here, but we could...
+    content = '''
+        (: fact (-> Number Number))
+        (= (fact $x)
+           (case $x
+            ((0 1)
+             ($_ (* $x (fact (- $x 1)))))
+           )
+        )
+
+        (some content)
+        (= (self-from-self)
+           (match &self (some $x) $x))
+
+        something
+
+        (= (call_func $f $arg) ($f $arg))
+    '''    
+    runner.run(content)
+    
+    return {
+        'r': runnerAtom
+    }
+
+@register_tokens(pass_metta=True)
+def my_resolver_atoms(metta):
+
+    def run_resolved_symbol_op(runner, atom, *args):
+        expr = E(atom, *args)
+        result = hp.metta_evaluate_atom(runner.cmetta, expr.catom)
+        result = [Atom._from_catom(catom) for catom in result]
+        return result
+
+    def resolve_atom(metta, token):
+        # TODO: nested modules...
+        runner_name, atom_name = token.split('::')
+        # FIXME: using `run` for this is an overkill,
+        #        but there is no good Python API for this;
+        #        we may have an interface function for
+        #        `tokenizer` to resolve individual symbols -
+        #        metta.tokenizer().find_token ...
+        #        or something else...
+        # TODO: assert
+        runner = metta.run('! ' + runner_name)[0][0].get_object()
+        atom = runner.run('! ' + atom_name)[0][0]
+        # A hack to make runner::&self work
+        # TODO? the problem is that we need to return an operation to make this
+        # work in parent expressions, thus, it is unclear how to return pure
+        # symbols
+        if atom.get_metatype() == hp.AtomKind.GROUNDED:
+            return atom
+        # TODO: borrow atom type to op
+        return OperationAtom(
+            token,
+            lambda *args: run_resolved_symbol_op(runner, atom, *args),
+            unwrap=False)
+
+    return {
+        r"[^\s]+::[^\s]+": lambda token: resolve_atom(metta, token)
+    }
+
+
 class REPL:
     def __init__(self, runner):
         self.history = []  # Initialize command history
@@ -184,10 +259,13 @@ class REPL:
                 if METTALOG_VERBOSE >= DEBUG:
                     traceback.print_exc()
 
+runnerAtom = None
 # Main function
 def main():
+    global runnerAtom
     cb = hyperon.Environment.custom_env(working_dir=os.path.dirname("."))
     runner = hyperon.MeTTa(env_builder=cb)
+    runnerAtom = G(runner, AtomType.ATOM)
 
     # Process command-line arguments and track if REPL or files were handled
     wont_need_repl = process_args(runner)
