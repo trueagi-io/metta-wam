@@ -26,7 +26,7 @@ setup(
        install_requires=[
         # List your project's dependencies here.
         'hyperon',
-        'mettalog',
+        #'mettalog',
         'openai'
         ]
    )

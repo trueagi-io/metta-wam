@@ -107,12 +107,16 @@ $ev bio:date $birthdate}")
 $ev rdf:type bio:Birth .
 $ev bio:date $birthdate}")
 
+
+(ask ((conditions ((<http://dbpedia.org/resource/Amazon_River> dbp:length $amazon) (<http://dbpedia.org/resource/Nile> dbp:length $nile )
+    (filter (> $amazon $nile))))))
+
 ;test ASK
 ; Is the Amazon river longer than the Nile River?
-!(assertEqual
+!(assertEqualToResult
     (ask ((conditions ((<http://dbpedia.org/resource/Amazon_River> dbp:length $amazon) (<http://dbpedia.org/resource/Nile> dbp:length $nile )
     (filter (> $amazon $nile))))))
-    False)
+    ())
 
 
 

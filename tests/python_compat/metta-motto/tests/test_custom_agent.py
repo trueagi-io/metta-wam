@@ -23,3 +23,7 @@ def test_custom_agent():
         [ValueAtom("I need a word to search")],
         [ValueAtom("Name")],
         [ValueAtom("Fail")]]
+
+if __name__ == '__main__':
+    test_custom_agent()
+

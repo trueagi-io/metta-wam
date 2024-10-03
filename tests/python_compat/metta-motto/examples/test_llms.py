@@ -4,7 +4,7 @@ import time
 
 from hyperon import MeTTa
 from motto.agents import MettaScriptAgent, DialogAgent
-
+from motto import get_sentence_from_stream_response
 
 def test_stream_response():
     m = MeTTa()
@@ -104,3 +104,31 @@ def test_canceling():
     for v in agent.process_last_stream_response():
         res.append(v)
     assert len(res) == 0
+
+def test_open_router_stream_sentence():
+    code = '''
+        (= (respond)
+            ((open-router-agent "openai/gpt-3.5-turbo" True) (messages))
+        )
+        (= (response) (respond))
+    '''
+    agent = MettaScriptAgent(code=code)
+    v = agent('(Messages (system  "You are Grace, you are in London")(user "Who was the 22nd President of France?"))')
+    stream = get_sentence_from_stream_response(v.content)
+    for chunk in stream:
+        print(chunk)
+        assert "president" in chunk.lower()
+
+def test_chat_gpt_stream_sentence():
+    code = '''
+        (= (respond)
+            ((chat-gpt-agent "gpt-3.5-turbo" True) (messages))
+        )
+          (= (response) (respond))
+    '''
+    agent = MettaScriptAgent(code=code)
+    v = agent('(Messages (system  "You are Grace, you are in London")(user "Who was the 22nd President of France?"))')
+    stream = get_sentence_from_stream_response(v.content)
+    for chunk in stream:
+        print(chunk)
+        assert "president" in chunk.lower()

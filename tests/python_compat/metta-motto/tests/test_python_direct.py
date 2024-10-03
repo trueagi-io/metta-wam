@@ -50,3 +50,9 @@ def test_python_metta_dialog_clear_histoy():
     a.clear_history()
     assert a('(user "Recall")').content == [ValueAtom('')]
 
+if __name__ == '__main__':
+    test_python_metta_direct()
+    test_python_metta_agent()
+    test_python_metta_dialog()
+    test_python_metta_dialog_clear_histoy()
+

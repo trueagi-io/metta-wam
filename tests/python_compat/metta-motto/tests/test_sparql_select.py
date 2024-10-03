@@ -25,3 +25,4 @@ def test_select():
         for item in result[i].get_object().value:
             assert item.get_object().value in correct[i % len(correct)]
 
+if __name__ == '__main__': test_select()
