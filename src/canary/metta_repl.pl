@@ -1,7 +1,6 @@
 % Directive to save history when the program halts.
 :- at_halt(save_history).
 
-notrace(G):- once(G).
 
 %! history_file_location(-Filename) is det.
 %   Determines the location of the REPL history file.
