@@ -1648,6 +1648,23 @@
 (: limit! (-> Number Atom Atom))
 
 ;; Public MeTTa
+(@doc number-of
+  (@desc "Returns the number of results Form generates")
+  (@params (
+    (@param "Form")))
+  (@return "Number of results of Form."))
+(: number-of (-> Atom Number))
+
+;; Public MeTTa
+(@doc offset!
+  (@desc "Executes Form ignoring the first Count results. Results are returned as soon as they become available.")
+  (@params (
+    (@param "Count")
+    (@param "Form")))
+  (@return "Results of Form after ignoring the first Count results that are generated."))
+(: offset! (-> Number Atom Atom))
+
+;; Public MeTTa
 (@doc call!
   (@desc "Trampolines to Prolog's call. Only works when the predicate and each arg are provided separately. e.g. !(call! ls /) will print the root directory but !(call! ls(/)) will fail.")
   (@params (
@@ -1681,11 +1698,3 @@
     (@param "Cleanup")))
   (@return "Result of Form."))
 (: setup-call-cleanup! (-> Atom Atom Atom Atom))
-
-;; Public MeTTa
-(@doc number-of
-  (@desc "Returns the number of results Form generates")
-  (@params (
-    (@param "Form")))
-  (@return "Number of results of Form."))
-(: number-of (-> Atom Number))
