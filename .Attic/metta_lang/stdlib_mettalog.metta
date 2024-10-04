@@ -1631,6 +1631,14 @@
 (: max-time! (-> Number Atom Atom))
 
 ;; Public MeTTa
+(@doc sleep!
+  (@desc "Sleeps for N seconds.")
+  (@params (
+    (@param "N")))
+  (@return "Returns True after sleeping completes."))
+(: sleep! (-> Number Bool))
+
+;; Public MeTTa
 (@doc limit!
   (@desc "Executes Form generating at most Limit results. Results are returned as soon as they become available.")
   (@params (
@@ -1638,6 +1646,23 @@
     (@param "Form")))
   (@return "First Limit results of Form."))
 (: limit! (-> Number Atom Atom))
+
+;; Public MeTTa
+(@doc number-of
+  (@desc "Returns the number of results Form generates")
+  (@params (
+    (@param "Form")))
+  (@return "Number of results of Form."))
+(: number-of (-> Atom Number))
+
+;; Public MeTTa
+(@doc offset!
+  (@desc "Executes Form ignoring the first Count results. Results are returned as soon as they become available.")
+  (@params (
+    (@param "Count")
+    (@param "Form")))
+  (@return "Results of Form after ignoring the first Count results that are generated."))
+(: offset! (-> Number Atom Atom))
 
 ;; Public MeTTa
 (@doc call!
@@ -1654,3 +1679,22 @@
     (@param "String")))
   (@return "A list of the binding values. If there are no bindings but the Prolog query is True, returns the empty list."))
 (: call-string! (-> String Atom))
+
+;; Public MeTTa
+(@doc call-cleanup!
+  (@desc "Same as (setup-call-cleanup! true Form Cleanup). setup-call-cleanup! is recommended instead if Cleanup is intended to undo prior side-effects - place those side-effects in Setup.")
+  (@params (
+    (@param "Form")
+    (@param "Cleanup")))
+  (@return "Result of Form."))
+(: call-cleanup! (-> Atom Atom Atom))
+
+;; Public MeTTa
+(@doc setup-call-cleanup!
+  (@desc "Executes Setup, then Form, then finally Cleanup. Setup is protected from interrupts (e.g. max-time!). In most uses, Setup will perform temporary side-effects required by Form that are finally undone by Cleanup. Cleanup is run even if Form raises an exception.")
+  (@params (
+    (@param "Setup")
+    (@param "Form")
+    (@param "Cleanup")))
+  (@return "Result of Form."))
+(: setup-call-cleanup! (-> Atom Atom Atom Atom))
