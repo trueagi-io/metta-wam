@@ -1681,3 +1681,11 @@
     (@param "Cleanup")))
   (@return "Result of Form."))
 (: setup-call-cleanup! (-> Atom Atom Atom Atom))
+
+;; Public MeTTa
+(@doc number-of
+  (@desc "Returns the number of results Form generates")
+  (@params (
+    (@param "Form")))
+  (@return "Number of results of Form."))
+(: number-of (-> Atom Number))
