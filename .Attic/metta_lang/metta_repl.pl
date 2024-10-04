@@ -1,6 +1,7 @@
 % Directive to save history when the program halts.
 :- at_halt(save_history).
 
+
 %! history_file_location(-Filename) is det.
 %   Determines the location of the REPL history file.
 %   On Linux, the history is stored in ~/.config/metta/repl_history.txt.
@@ -152,9 +153,10 @@ repl3 :-
     % Create the prompt by writing it to an atom `P`.
     with_output_to(atom(P), write_metta_prompt),
     % Set up cleanup for the terminal prompt and execute repl4.
+    notrace(prompt(Was, P)),
     setup_call_cleanup(
         % Set the terminal prompt without tracing.
-        notrace(prompt(Was, P)),
+        true,
         % Flush the terminal and call repl4 to handle input.
         ((ttyflush, repl4, ttyflush)),
         % After execution, restore the previous terminal prompt.
@@ -173,11 +175,11 @@ repl4 :-
     % Read the next expression from the REPL input.
     repl_read(Expr),
     % Check if the input is either `end_of_file` or empty on Windows; if so, throw `end_of_input`.
-    notrace(if_t((Expr == end_of_file; (is_win64, Expr == '')), throw(end_of_input))),
+    (if_t((Expr == end_of_file; (is_win64, Expr == '')), notrace(throw(end_of_input)))),
     % Flush the terminal input/output to make sure the REPL is responsive.
     ttyflush,
     % Check for any directives embedded in the expression and process them.
-    notrace(ignore(check_has_directive(Expr))),
+    (ignore(check_has_directive(Expr))),
     % Get the current self reference and reading mode for the REPL.
     current_self(Self), current_read_mode(repl, Mode),
     % Output the read expression for debugging purposes, if applicable.
@@ -187,7 +189,7 @@ repl4 :-
     % Optionally write the result of the evaluation to the source.
     nop((write_src(O), nl)),
     % Throw `restart_reading` to restart the REPL input process after execution.
-    notrace(throw(restart_reading)))).
+    nop(notrace(throw(restart_reading))))),!.
 
 %! check_has_directive(+V) is semidet.
 %   Checks if the expression `V` contains a directive and processes it.
@@ -273,6 +275,15 @@ balanced_parentheses([')'|T], N) :- N > 0, N1 is N - 1, !, balanced_parentheses(
 % Skip any characters that are not parentheses.
 balanced_parentheses([H|T], N) :- H \= '(', H \= ')', !, balanced_parentheses(T, N).
 
+next_expr(ExprI,Expr):- ExprI==end_of_file,!, (comment_buffer(Expr);(ExprI=Expr)).
+next_expr(ExprI,Expr):- ExprI=Expr.
+repl_read(In,Expr):- repl_read_next(In,ExprI),next_expr(ExprI,Expr).
+repl_read(Expr):- repl_read_next(ExprI),next_expr(ExprI,Expr).
+
+% maybe Write any stored comments to the output?
+comment_buffer(Comment):- retract(metta_file_comment(_Line, _Col, _CharPos, Comment, _Pos)).
+           
+
 %!  repl_read(+NewAccumulated, -Expr) is det.
 %   Reads and accumulates input until it forms a valid expression or detects an error.
 %
@@ -281,38 +292,39 @@ balanced_parentheses([H|T], N) :- H \= '(', H \= ')', !, balanced_parentheses(T,
 %   @example
 %       ?- repl_read("foo.", Expr).
 %       Expr = call(foo).
-repl_read(NewAccumulated, Expr) :-
+repl_read_next(NewAccumulated, Expr) :-
     % Concatenate the input with '.' and try to interpret it as an atom.
     symbol_concat(Atom,'.',NewAccumulated),
     % Attempt to read the term from the atom, handle errors and retry if necessary.
     catch_err((read_term_from_atom(Atom, Term, []), Expr = call(Term)), E,
-       (write('Syntax error: '), writeq(E), nl, repl_read(Expr))), !.
+       (((fail, write('Syntax error: '), writeq(E), nl, repl_read_next(Expr))))), !.
 
-% Previously commented: repl_read(Str, Expr):- ((clause(t_l:s_reader_info(Expr),_,Ref),erase(Ref))).
+
+% Previously commented: repl_read_next(Str, Expr):- ((clause(t_l:s_reader_info(Expr),_,Ref),erase(Ref))).
 
 % Handle special case for '!' symbol.
-repl_read("!", '!') :- !.
+repl_read_next("!", '!') :- !.
 % Handle special case for '+' symbol.
-repl_read("+", '+') :- !.
+repl_read_next("+", '+') :- !.
 % Convert a string to an atom and check for a valid interpreter mode.
-repl_read(Str, Atom) :- atom_string(Atom, Str), metta_interp_mode(Atom, _), !.
+repl_read_next(Str, Atom) :- atom_string(Atom, Str), metta_interp_mode(Atom, _), !.
 
 % Handle input starting with '@'.
-repl_read(Str, Expr) :- symbol_concat('@', _, Str), !, atom_string(Expr, Str).
+repl_read_next(Str, Expr) :- symbol_concat('@', _, Str), !, atom_string(Expr, Str).
 % Handle incorrect input with unbalanced parentheses.
-repl_read(Str, _Expr) :- symbol_concat(')', _, Str), !, fbug(repl_read_syntax(Str)), throw(restart_reading).
+repl_read_next(Str, _Expr) :- symbol_concat(')', _, Str), !, fbug(repl_read_syntax(Str)), throw(restart_reading).
 
 % Normalize spaces in the accumulated input and re-read if the normalized result is different.
-repl_read(NewAccumulated, Expr) :-
+repl_read_next(NewAccumulated, Expr) :-
     normalize_space(string(Renew), NewAccumulated),
     Renew \== NewAccumulated, !,
-    repl_read(Renew, Expr).
+    repl_read_next(Renew, Expr).
 
-% Previously commented: repl_read(Str, 'add-atom'('&self',Expr)):- symbol_concat('+',W,Str),!,repl_read(W,Expr).
-% Previously commented: repl_read(NewAccumulated, exec(Expr)):- string_concat("!", Renew, NewAccumulated), !, repl_read(Renew, Expr).
+% Previously commented: repl_read_next(Str, 'add-atom'('&self',Expr)):- symbol_concat('+',W,Str),!,repl_read_next(W,Expr).
+% Previously commented: repl_read_next(NewAccumulated, exec(Expr)):- string_concat("!", Renew, NewAccumulated), !, repl_read_next(Renew, Expr).
 
 % Read and process the input if parentheses are balanced, then add it to the history.
-repl_read(NewAccumulated, Expr) :-
+repl_read_next(NewAccumulated, Expr) :-
     % Convert the accumulated string to a list of characters.
     string_chars(NewAccumulated, Chars),
     % Check if the parentheses are balanced.
@@ -326,39 +338,39 @@ repl_read(NewAccumulated, Expr) :-
     add_history_string(Renew).
 
 % Read the next line of input, accumulate it, and continue processing.
-repl_read(Accumulated, Expr) :-
+repl_read_next(Accumulated, Expr) :-
     % Read a line from the current input stream.
     read_line_to_string(current_input, Line),
-    % Call repl_read with the new line concatenated to the accumulated input.
-    repl_read(Accumulated, Line, Expr).
+    % Call repl_read_next with the new line concatenated to the accumulated input.
+    repl_read_next(Accumulated, Line, Expr).
 
 % Handle end-of-file input gracefully.
-repl_read(_, end_of_file, end_of_file) :- writeln(""), throw(end_of_input).
+repl_read_next(_, end_of_file, end_of_file) :- nop(writeln("")), notrace(throw(end_of_input)).
 
 % Continue reading if no input has been accumulated yet.
-repl_read(Accumulated, "", Expr) :- !, repl_read(Accumulated, Expr).
+% repl_read_next(Accumulated, "", Expr) :- !, repl_read_next(Accumulated, Expr).
 % Handle end-of-file as a valid input.
-repl_read(_Accumulated, Line, Expr) :- Line == end_of_file, !, Expr = Line.
+repl_read_next(_Accumulated, Line, Expr) :- Line == end_of_file, !, Expr = Line.
 
 % Concatenate accumulated input with the new line and continue reading.
-repl_read(Accumulated, Line, Expr) :-
+repl_read_next(Accumulated, Line, Expr) :-
     % Concatenate the accumulated input with the new line using a space between them.
-    symbolics_to_string([Accumulated, " ", Line], NewAccumulated), !,
+    symbolics_to_string([Accumulated, "\n", Line], NewAccumulated), !,
     % Continue reading and processing the new accumulated input.
-    repl_read(NewAccumulated, Expr).
+    repl_read_next(NewAccumulated, Expr).
 
 % Retrieve stored reader info and erase it.
-repl_read(O2) :- clause(t_l:s_reader_info(O2), _, Ref), erase(Ref).
+repl_read_next(O2) :- clause(t_l:s_reader_info(O2), _, Ref), erase(Ref).
 
 % Repeat the REPL reading process until input is fully processed.
-repl_read(Expr) :-
+repl_read_next(Expr) :-
     repeat,
     % Remove any pending buffer codes.
     remove_pending_buffer_codes(_, Was),
     % Convert buffer contents to a string.
     text_to_string(Was, Str),
     % Read the expression from the input.
-    repl_read(Str, Expr),
+    repl_read_next(Str, Expr),
     % Stop the repeat loop if there are no more pending codes.
     ((peek_pending_codes(_, Peek), Peek == []) -> ! ; true).
 

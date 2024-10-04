@@ -560,7 +560,9 @@ eval_20(Eq,RetType,Depth,Self,['trace!',A,B],C):- !, % writeln(trace(A)),
      with_output_to(S,(format('~N'), write_src(AA),format('~N'))))).
 eval_20(Eq,RetType,Depth,Self,['trace',Cond],Res):- !, with_debug(eval_args,eval_args(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(Eq,RetType,Depth,Self,['profile!',Cond],Res):- !, time_eval(profile(Cond),profile(eval_args(Eq,RetType,Depth,Self,Cond,Res))).
-eval_20(Eq,RetType,Depth,Self,['time!',Cond],Res):- !, time_eval(eval_args(Cond),eval_args(Eq,RetType,Depth,Self,Cond,Res)).
+eval_20(Eq,RetType,Depth,Self,['cpu-time',Cond],Res):- !, ctime_eval(eval_args(Cond),eval_args(Eq,RetType,Depth,Self,Cond,Res)).
+eval_20(Eq,RetType,Depth,Self,['wall-time',Cond],Res):- !, wtime_eval(eval_args(Cond),eval_args(Eq,RetType,Depth,Self,Cond,Res)).
+eval_20(Eq,RetType,Depth,Self,['time',Cond],Res):- !, wtime_eval(eval_args(Cond),eval_args(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(Eq,RetType,Depth,Self,['print',Cond],Res):- !, eval_args(Eq,RetType,Depth,Self,Cond,Res),format('~N'),print(Res),format('~N').
 % !(print! $1)
 eval_20(Eq,RetType,Depth,Self,['princ!'|Cond],Res):- !,
@@ -573,13 +575,14 @@ eval_20(Eq,RetType,Depth,Self,['println!'|Cond],Res):- !,
   maplist(println_impl,Out),
   make_nop(RetType,[],Res),check_returnval(Eq,RetType,Res).
 
-println_impl(X):- format("~N~@~N",[write_sln(X)]),!.
-println_impl(X):- user_io((ansi_format(fg('#c7ea46'),"~N~@~N",[write_sln(X)]))).
+println_impl(X):- format("~N~@~N",[write_sln(X)]),!,flush_output.
+%println_impl(X):- user_io((ansi_format(fg('#c7ea46'),"~N~@~N",[write_sln(X)]))),flush_output.
+%println_impl(X):- ((ansi_format(fg('#c7ea46'),"~N~@~N",[write_sln(X)]))),flush_output.
 
-princ_impl(X):- format("~@",[write_sln(X)]),!.
+princ_impl(X):- format("~@",[write_sln(X)]),!,flush_output.
 
-write_sln(X):- string(X), !, write(X).
-write_sln(X):- write_src_woi(X).
+write_sln(X):- string(X), !, write(X),flush_output.
+write_sln(X):- write_src_woi(X),flush_output.
 
 with_output_to_str( Sxx , Goal ):-
   wots( Sxx , Goal ).
@@ -1600,43 +1603,43 @@ eval_20(Eq,RetType,Depth,Self,['number-of',X,N],TF):- !,
    findall_eval(Eq,RetType,Depth,Self,X,ResL),
    length(ResL,N), true_type(Eq,RetType,TF).
 
-eval_20(Eq,RetType,Depth,Self,['findall!',Template,X],ResL):- !,
+eval_20(Eq,RetType,Depth,Self,['findall',Template,X],ResL):- !,
    findall(Template,eval_args(Eq,RetType,Depth,Self,X,_),ResL).
 
 
-
-eval_20(Eq,RetType,Depth,Self,['limit!',N,E],R):- !, eval_20(Eq,RetType,Depth,Self,['limit',N,E],R).
 eval_20(Eq,RetType,Depth,Self,['limit',NE,E],R):-  !,
    eval_args('=','Number',Depth,Self,NE,N),
    limit(N,eval_ne(Eq,RetType,Depth,Self,E,R)).
 
-eval_20(Eq,RetType,Depth,Self,['offset!',N,E],R):- !, eval_20(Eq,RetType,Depth,Self,['offset',N,E],R).
 eval_20(Eq,RetType,Depth,Self,['offset',NE,E],R):-  !,
    eval_args('=','Number',Depth,Self,NE,N),
    offset(N,eval_ne(Eq,RetType,Depth,Self,E,R)).
 
-eval_20(Eq,RetType,Depth,Self,['max-time!',N,E],R):- !, eval_20(Eq,RetType,Depth,Self,['max-time',N,E],R).
 eval_20(Eq,RetType,Depth,Self,['max-time',NE,E],R):-  !,
    eval_args('=','Number',Depth,Self,NE,N),
    cwtl(N,eval_ne(Eq,RetType,Depth,Self,E,R)).
 
 
-eval_20(Eq,RetType,Depth,Self,['call-cleanup!',NE,E],R):-  !,
+eval_20(Eq,RetType,Depth,Self,['call-cleanup',NE,E],R):-  !,
    call_cleanup(eval_args(Eq,RetType,Depth,Self,NE,R),
                 eval_args(Eq,_U_,Depth,Self,E,_)).
 
-eval_20(Eq,RetType,Depth,Self,['setup-call-cleanup!',S,NE,E],R):-  !,
+eval_20(Eq,RetType,Depth,Self,['setup-call-cleanup',S,NE,E],R):-  !,
    setup_call_cleanup(
          eval_args(Eq,_,Depth,Self,S,_),
          eval_args(Eq,RetType,Depth,Self,NE,R),
          eval_args(Eq,_,Depth,Self,E,_)).
 
-eval_20(Eq,RetType,Depth,Self,['with-output-to!',S,NE],R):-  !,
+eval_20(Eq,RetType,Depth,Self,['with-output-to',S,NE],R):-  !,
    eval_args(Eq,'Sink',Depth,Self,S,OUT),
    with_output_to_stream(OUT,
       eval_args(Eq,RetType,Depth,Self,NE,R)).
 
-
+eval_20(Eq,RetType,Depth,Self,[Excl|Rest],Res):- 
+ arg(_, v('catch!','throw!','number-of!','limit!','offset!','max-time!','findall!','setup-call-cleanup!','call-cleanup!','call-cleanup!','with-output-to!'), Excl), 
+ sub_atom(Excl,_,_,1,NoExcl),!,
+ eval_20(Eq,RetType,Depth,Self,[NoExcl|Rest],Res).
+ 
 
 % =================================================================
 % =================================================================
@@ -2596,8 +2599,22 @@ not_template_arg(TArg):- atomic(TArg),!.
 
 cwdl(DL,Goal):- call_with_depth_limit(Goal,DL,R), (R==depth_limit_exceeded->(!,fail);true).
 
-cwtl(DL,Goal):- catch(call_with_time_limit(DL,Goal),time_limit_exceeded(_),fail).
+%cwtl(DL,Goal):- catch(call_with_time_limit(DL,Goal),time_limit_exceeded,fail).
 
+cwtl(Time, Goal) :-
+    Time>0,
+    !,
+    setup_call_cleanup(alarm(Time,
+                             throw(time_limit_exceeded),
+                             Id,
+                             [install(false)]),
+                       cwtl_goal(Id, Goal),
+                       time:remove_alarm_notrace(Id)).
+
+cwtl_goal(AlarmID, Goal) :-
+    install_alarm(AlarmID),
+    call(Goal).
+    
 
 %findall_eval(Eq,RetType,Depth,Self,X,L):- findall_eval(Eq,RetType,_RT,Depth,Self,X,L).
 %findall_eval(Eq,RetType,Depth,Self,X,S):- findall(E,eval_ne(Eq,RetType,Depth,Self,X,E),S)*->true;S=[].
