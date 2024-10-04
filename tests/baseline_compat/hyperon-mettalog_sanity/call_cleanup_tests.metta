@@ -53,3 +53,19 @@
                              time_limit_exceeded
                              (time_limit_exceeded (get-state! &var)))
                       ((time_limit_exceeded 1)))
+
+;; setup-call-cleanup! returns Form for each result of Setup
+
+!(change-state! &var 0)
+!(assertEqualToResult (setup-call-cleanup! (superpose (1 2 3 4))
+                                           (increment)
+                                           ignore)
+                      (1 2 3 4))
+
+;; setup-call-cleanup! returns Form then calls Cleanup for each result of Setup
+
+!(change-state! &var 0)
+!(assertEqualToResult (setup-call-cleanup! (superpose (1 2 3 4))
+                                           (increment)
+                                           (increment))
+                      (1 3 5 7))
