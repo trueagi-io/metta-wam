@@ -1,0 +1,15 @@
+(= (respond)
+     (let (user $msg) (messages)
+        (case (match &self ($msg $ans) $ans)
+          (
+           (Empty (let*
+             (($response ((chat-gpt-agent) (messages)))
+              (() (add-atom &self ($msg $response))))
+             $response)
+           )
+           ($ans (CACHED $ans))
+          )
+        )
+      )
+)
+(= (response) (respond))

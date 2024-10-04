@@ -458,7 +458,7 @@ write_answer_output.
 
 
 null_io(G):- null_user_output(Out), !, with_output_to(Out,G).
-user_io(G):- original_user_output(Out), !, with_output_to(Out,G).
+user_io(G):- original_user_output(Out), ttyflush, !, with_output_to(Out,G), flush_output(Out), ttyflush.
 user_err(G):- original_user_error(Out), !, with_output_to(Out,G).
 with_output_to_s(Out,G):- current_output(COut),
   redo_call_cleanup(set_prolog_IO(user_input, Out,user_error), G,
@@ -1415,9 +1415,9 @@ do_metta_exec(From,Self,TermV,FOut):-
    give_up(Why),pp_m(red,gave_up(Why)))),!.
 
 
-o_s(['assertEqual'|O],S):- o_s(O,S).
-o_s(['assertEqualToResult'|O],S):- o_s(O,S).
-o_s([O|_],S):- !, o_s(O,S).
+o_s(['assertEqual'|O],S):- nonvar(O), o_s(O,S).
+o_s(['assertEqualToResult'|O],S):- nonvar(O), o_s(O,S).
+o_s([O|_],S):- nonvar(O), !, o_s(O,S).
 o_s(S,S).
 into_simple_op(Load,[Op|O],op(Load,Op,S)):- o_s(O,S),!.
 
@@ -1552,10 +1552,19 @@ not_in_eq(List, Element) :-
 %   ; Evaluation took 123.45 ms.
 %   ; Evaluation took 0.012 ms. (12.33 microseconds)
 %
-time_eval(Goal):-
-  time_eval('Evaluation',Goal).
+time_eval(Goal):- time_eval('Evaluation',Goal).
 time_eval(What,Goal) :-
     timed_call(Goal,Seconds),
+    give_time(What,Seconds).
+
+ctime_eval(Goal):- ctime_eval('Evaluation',Goal).
+ctime_eval(What,Goal) :-
+    ctimed_call(Goal,Seconds),
+    give_time(What,Seconds).
+
+wtime_eval(Goal):- wtime_eval('Evaluation',Goal).
+wtime_eval(What,Goal) :-
+    wtimed_call(Goal,Seconds),
     give_time(What,Seconds).
 
 %give_time(_What,_Seconds):- is_compatio,!.
@@ -1568,11 +1577,20 @@ give_time(What,Seconds):-
             ;( Micro is Milliseconds * 1_000,
               format('~N; ~w took ~6f secs. (~2f microseconds) ~n~n', [What, Seconds, Micro])))).
 
-timed_call(Goal,Seconds):-
+timed_call(Goal,Seconds):- ctimed_call(Goal,Seconds).
+
+ctimed_call(Goal,Seconds):-
     statistics(cputime, Start),
     ( \+ rtrace_this(Goal)->rtrace_on_error(Goal);rtrace(Goal)),
     statistics(cputime, End),
     Seconds is End - Start.
+
+wtimed_call(Goal,Seconds):-
+    statistics(walltime, [Start,_]),
+    ( \+ rtrace_this(Goal)->rtrace_on_error(Goal);rtrace(Goal)),
+    statistics(walltime, [End,_]),
+    Seconds is (End - Start)/1000.
+
 
 rtrace_this(eval_H(_, _, P , _)):- compound(P), !, rtrace_this(P).
 rtrace_this([P|_]):- P == 'pragma!',!,fail.

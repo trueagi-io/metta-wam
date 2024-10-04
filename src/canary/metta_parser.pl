@@ -957,11 +957,18 @@ read_until_char(Stream, EndChar, Chars) :-
     (   Char = end_of_file -> throw_stream_error(Stream, unexpected_end_of_file(read_until_char(EndChar)))
     ;   Char = EndChar -> Chars = []
     ;   Char = '\\' -> get_char(Stream, NextChar),
+                       maybe_escape(Char, NextChar, CharRead),
                        read_until_char(Stream, EndChar, RestChars),
-                       Chars = [NextChar | RestChars]
+                       Chars = [CharRead | RestChars]
     ;   read_until_char(Stream, EndChar, RestChars),
         Chars = [Char | RestChars]
     ).
+
+maybe_escape('\\', 'n', '\n').
+maybe_escape('\\', 't', '\t').
+maybe_escape('\\', 'r', '\r').
+maybe_escape(_Char, NextChar, NextChar).
+
 
 %! read_symbolic(+EndChar:atom, +Stream:stream, +FirstChar:atom, -Symbolic:atom) is det.
 %

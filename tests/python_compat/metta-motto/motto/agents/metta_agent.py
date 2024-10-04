@@ -79,7 +79,7 @@ class MettaAgent(Agent):
         # No postprocessing is needed here
         return Response(response, None)
 
-    def __call__(self, msgs_atom, additional_info=None):
+    def __call__(self, msgs_atom, functions=[], additional_info=None):
         # TODO: support {'role': , 'content': } dict input
         if isinstance(msgs_atom, str):
             msgs_atom = self._metta.parse_single(msgs_atom)
@@ -94,7 +94,7 @@ class MettaScriptAgent(MettaAgent):
         # Skipping _create_metta in super.__init__
         pass
 
-    def __call__(self, msgs_atom, additional_info=None):
+    def __call__(self, msgs_atom, functions=[], additional_info=None):
         self._init_metta()
         if isinstance(msgs_atom, str):
             msgs_atom = self._metta.parse_single(msgs_atom)

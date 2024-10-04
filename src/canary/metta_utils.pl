@@ -323,6 +323,7 @@ always_rethrow(return(_)).
 always_rethrow(metta_return(_)).
 always_rethrow(give_up(_)).
 always_rethrow(time_limit_exceeded(_)).
+always_rethrow(time_limit_exceeded).
 always_rethrow(depth_limit_exceeded).
 always_rethrow(restart_reading).
 always_rethrow(E):- never_rrtrace,!,throw(E).
