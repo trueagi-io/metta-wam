@@ -10,9 +10,9 @@ Still a work-in-progress - we currently supports showing documentation on hover.
 
 Only tested with SWI-Prolog and version requirements are whatever is required for the MeTTalog project (9.3.9 or higher). SWI-Prolog as installed as part of MeTTalog installation.
 
-There are two components that need to be installed: the prolog package needs to be installed in SWI-Prolog, and there are specific installation requirements for each editor. Instructions for VSCode are given below.
+There are two components that need to be installed: the prolog package needs to be installed in SWI-Prolog (and `logicmoo_utils` if you don't have that already, and there are specific installation requirements for each editor. Instructions for VSCode are given below.
 
-## Installing the SWI-Prolog package
+## Installing the SWI-Prolog package(s)
 
 NOTE: this will at some point be added to the MeTTalog installation and become unncessary.
 
@@ -34,6 +34,12 @@ tar -zcvf lsp_server_metta-0.0.3.tgz --exclude=vscode lsp_server_metta
 
 ```
 ?- pack_install('lsp_server_metta-0.0.3.tgz').
+```
+
+* You may need to install the `logicmoo_utils` package. If you already have this (you can check with `pack_list('logicmoo_utils').`, `i` as the first character of the return line means installed, `p` means not installed) it won't hurt to install it again:
+
+```
+pack_install('logicmoo_utils').
 ```
 
 ## Installing for VSCode
