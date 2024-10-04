@@ -52,3 +52,20 @@
 (= (test B) (input B))
 
 !(assertEqualToResult (number-of (test $x)) (2))
+
+;; offset! ignores first N results
+
+!(assertEqualToResult (offset! 2 (sequential (1 2 3 4))) (3 4))
+
+;; offset! first N results are still generated, just discarded
+
+!(change-state! &var 0)
+!(assertEqualToResult (offset! 2 (sequential ((increment) (increment) (increment) (increment)))) (3 4))
+
+;; offset! and limit!
+
+!(assertEqualToResult (offset! 2 (limit! 4 (infinite))) (3 4))
+
+;; limit! and offset!
+
+!(assertEqualToResult (limit! 4 (offset! 2 (infinite))) (3 4 5 6))
