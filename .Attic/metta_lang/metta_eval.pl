@@ -1603,43 +1603,43 @@ eval_20(Eq,RetType,Depth,Self,['number-of',X,N],TF):- !,
    findall_eval(Eq,RetType,Depth,Self,X,ResL),
    length(ResL,N), true_type(Eq,RetType,TF).
 
-eval_20(Eq,RetType,Depth,Self,['findall!',Template,X],ResL):- !,
+eval_20(Eq,RetType,Depth,Self,['findall',Template,X],ResL):- !,
    findall(Template,eval_args(Eq,RetType,Depth,Self,X,_),ResL).
 
 
-
-eval_20(Eq,RetType,Depth,Self,['limit!',N,E],R):- !, eval_20(Eq,RetType,Depth,Self,['limit',N,E],R).
 eval_20(Eq,RetType,Depth,Self,['limit',NE,E],R):-  !,
    eval_args('=','Number',Depth,Self,NE,N),
    limit(N,eval_ne(Eq,RetType,Depth,Self,E,R)).
 
-eval_20(Eq,RetType,Depth,Self,['offset!',N,E],R):- !, eval_20(Eq,RetType,Depth,Self,['offset',N,E],R).
 eval_20(Eq,RetType,Depth,Self,['offset',NE,E],R):-  !,
    eval_args('=','Number',Depth,Self,NE,N),
    offset(N,eval_ne(Eq,RetType,Depth,Self,E,R)).
 
-eval_20(Eq,RetType,Depth,Self,['max-time!',N,E],R):- !, eval_20(Eq,RetType,Depth,Self,['max-time',N,E],R).
 eval_20(Eq,RetType,Depth,Self,['max-time',NE,E],R):-  !,
    eval_args('=','Number',Depth,Self,NE,N),
    cwtl(N,eval_ne(Eq,RetType,Depth,Self,E,R)).
 
 
-eval_20(Eq,RetType,Depth,Self,['call-cleanup!',NE,E],R):-  !,
+eval_20(Eq,RetType,Depth,Self,['call-cleanup',NE,E],R):-  !,
    call_cleanup(eval_args(Eq,RetType,Depth,Self,NE,R),
                 eval_args(Eq,_U_,Depth,Self,E,_)).
 
-eval_20(Eq,RetType,Depth,Self,['setup-call-cleanup!',S,NE,E],R):-  !,
+eval_20(Eq,RetType,Depth,Self,['setup-call-cleanup',S,NE,E],R):-  !,
    setup_call_cleanup(
          eval_args(Eq,_,Depth,Self,S,_),
          eval_args(Eq,RetType,Depth,Self,NE,R),
          eval_args(Eq,_,Depth,Self,E,_)).
 
-eval_20(Eq,RetType,Depth,Self,['with-output-to!',S,NE],R):-  !,
+eval_20(Eq,RetType,Depth,Self,['with-output-to',S,NE],R):-  !,
    eval_args(Eq,'Sink',Depth,Self,S,OUT),
    with_output_to_stream(OUT,
       eval_args(Eq,RetType,Depth,Self,NE,R)).
 
-
+eval_20(Eq,RetType,Depth,Self,[Excl|Rest],Res):- 
+ arg(_, v('catch!','throw!','number-of!','limit!','offset!','max-time!','findall!','setup-call-cleanup!','call-cleanup!','call-cleanup!','with-output-to!'), Excl), 
+ sub_atom(Excl,_,_,1,NoExcl),!,
+ eval_20(Eq,RetType,Depth,Self,[NoExcl|Rest],Res).
+ 
 
 % =================================================================
 % =================================================================
