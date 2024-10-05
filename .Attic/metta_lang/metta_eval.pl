@@ -1625,9 +1625,8 @@ eval_20(Eq,RetType,Depth,Self,['call-cleanup',NE,E],R):-  !,
                 eval_args(Eq,_U_,Depth,Self,E,_)).
 
 eval_20(Eq,RetType,Depth,Self,['setup-call-cleanup',S,NE,E],R):-  !,
-   setup_call_cleanup(
-         eval_args(Eq,_,Depth,Self,S,_),
-         eval_args(Eq,RetType,Depth,Self,NE,R),
+         sig_atomic_no_cut(eval_args(Eq,_,Depth,Self,S,_)),
+         call_cleanup(eval_args(Eq,RetType,Depth,Self,NE,R),
          eval_args(Eq,_,Depth,Self,E,_)).
 
 eval_20(Eq,RetType,Depth,Self,['with-output-to',S,NE],R):-  !,
@@ -1640,6 +1639,9 @@ eval_20(Eq,RetType,Depth,Self,[Excl|Rest],Res):-
  sub_atom(Excl,_,_,1,NoExcl),!,
  eval_20(Eq,RetType,Depth,Self,[NoExcl|Rest],Res).
  
+
+%sig_atomic_no_cut(Goal):- sig_atomic(Goal). 
+sig_atomic_no_cut(Goal):- call(Goal).
 
 % =================================================================
 % =================================================================
