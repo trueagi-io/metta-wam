@@ -295,16 +295,49 @@ py_resolve(V, Py):- var(V),!,get_attr(V, pyobj, Py),!.
 py_resolve(V, Py):- \+ compound(V),!,py_is_object(V),Py = V.
 py_resolve(V, Py):- is_list(V),!,fail, maplist(py_resolve,V,Py).
 py_resolve(V, Py):- V=Py.
-
 %!  py_is_tuple(+X) is semidet.
 %
-%   Checks if the given term `X` is a Python tuple. This is determined by resolving 
-%   the term `X` and verifying its type is `tuple`. Additionally, it ensures the object 
-%   is not a string.
+%   Checks if the given term `X` is a Python tuple. The function resolves 
+%   the term `X` (typically some reference to a Python object) and checks 
+%   whether it is a tuple, but not a string (as strings can sometimes 
+%   behave like sequences in Python).
+%
+%   The predicate `py_is_tuple/1` is semi-deterministic, meaning it 
+%   succeeds if `X` can be determined to be a tuple and fails otherwise.
+%   It is not fully deterministic because the input could resolve to 
+%   something other than a tuple.
 %
 %   @arg X The term to check if it is a Python tuple.
 %
-py_is_tuple(X):-py_resolve(X,V),py_tuple(V,T),py_tuple(T,TT),T==TT, \+ py_type(V, str).
+py_is_tuple(X):- 
+    % Resolve the Prolog term `X` to a Python object `V`.
+    py_resolve(X, V),    
+    % Check if the resolved Python object `V` is a tuple.
+    py_is_tuple_res(V).
+
+% Helper predicate to check if the resolved object `V` is a tuple.
+py_is_tuple_res(V):-
+    % If `V` is a compound term, attempt to match it as a tuple-like structure.
+    compound(V), !,
+    % Check if `V` is a compound with the name `'-'`, which represents a tuple in some Prolog-Python integration.
+    % This checks if `V` has a compound structure representing a tuple-like form.
+    compound_name_arity(V, '-', _).
+
+% Continue checking if the term is atomic and an object but not a string.
+py_is_tuple_res(V):- 
+    % If `V` is atomic (i.e., a basic Prolog term, not a compound term).
+    atomic(V),    
+    % Check if `V` is a Python object.
+    py_is_object(V), !,  % Cut to prevent backtracking once object check succeeds.    
+    % Ensure the type of `V` is not `str` (strings should not be considered tuples).
+    \+ py_type(V, str),    
+    % Finally, check if `V` is of type `tuple`.
+    py_type(V, tuple).
+
+% The commented out code below seems to have been an alternative tuple-checking strategy.
+% It uses `py_tuple/2` to extract or transform a tuple, ensuring that the tuple is identical 
+% to itself and that it is not a string.
+% py_is_tuple_res(V):- py_tuple(V,T), py_tuple(T,TT), T==TT, \+ py_type(V, str).
 
 %!  py_is_py_dict(+X) is semidet.
 %
@@ -334,7 +367,6 @@ py_is_list(X):- py_resolve(X,V),py_type(V,list).
 % Declare the predicate `did_load_builtin_module/0` as thread-local to ensure that 
 % its state is specific to each thread. It is also marked as volatile so that it is 
 % not saved across restarts, and dynamic to allow modifications during runtime.
-:- thread_local(did_load_builtin_module/0).
 :- volatile(did_load_builtin_module/0).
 :- dynamic(did_load_builtin_module/0).
 
@@ -355,7 +387,6 @@ load_builtin_module:-
     did_load_builtin_module, !.
 load_builtin_module:- 
     % Mark the module as loaded and proceed to load the Python module.
-    assert(did_load_builtin_module),
     % Call py_module/2 to load the Python built-in module (complete the predicate as needed).
     with_safe_argv(py_module(builtin_module,
 '
@@ -554,7 +585,8 @@ def get_str_rep(func):
 
 the_modules_and_globals = merge_modules_and_globals()
 
-')).
+')),
+    assert(did_load_builtin_module).
 
 %!  pych_chars(+Chars, -P) is det.
 %
@@ -1471,8 +1503,9 @@ py_list(MeTTa,PyList):- pl_to_py(MeTTa,PyList).
 %
 %   @arg O The input list to be converted.
 %   @arg Py The resulting Python tuple.
-py_tuple(O,Py):- py_ocall(tuple(O),Py),!.  % Call Python tuple function.
+
 py_tuple(O,Py):- py_obi(py_tuple(O),Py),!. % Alternative method to create a Python tuple.
+% py_tuple(O,Py):- py_ocall(tuple(O),Py),!.  % Call Python tuple function.
 
 %!  py_dict(+O, -Py) is det.
 %
