@@ -659,6 +659,7 @@ from hyperon.ext import register_atoms
 from hyperon.atoms import G, AtomType
 from hyperon.runner import MeTTa
 from hyperon.atoms import *
+from hyperon.stdlib import *
 import hyperonpy as hp
 
 import sys
@@ -672,10 +673,33 @@ class MeTTaVS(MeTTa):
 
 runner = MeTTaVS()
 
+def get_children(metta_iterable):
+    try:
+        return iter(metta_iterable)
+    except TypeError:
+        try:
+            return iter([metta_iterable])  # Encapsulate in a list and then iterate
+        except TypeError:
+            raise ValueError("Provided object cannot be iterated or converted to an iterable.")
+
+# chain python objects with |  (syntactic sugar for langchain)
+def py_chain(metta_tuple):
+    unwrap1 = rust_deref(metta_tuple)
+    objects = [rust_deref(a) for a in get_children(unwrap1)]
+    result = objects[0]
+    for obj in objects[1:]:
+        result = result | obj
+    return result
+
 def rust_metta_run(obj):
     return runner.run(obj)
 
+def always_unwrap_python_object(rust):
+  return hyperon.stdlib.try_unwrap_python_object(rust)
+
 def rust_unwrap(obj):
+    if isinstance(obj, janus.Term):
+        return obj
     if isinstance(obj,SymbolAtom):
         return obj.get_name()
     if isinstance(obj,ExpressionAtom):
@@ -688,7 +712,11 @@ def rust_unwrap(obj):
     # if isinstance(obj,GroundedAtom): return obj.get_object()
     if isinstance(obj,GroundedObject):
         return obj.content
-    return obj
+    # Check if obj is a list or a tuple, but not a string
+    if isinstance(obj, (list, tuple)) and not isinstance(obj, str):
+        return type(obj)(rust_deref(element) for element in obj)
+
+    return always_unwrap_python_object(obj)
 
 def rust_deref(obj):
   while True:
@@ -1468,6 +1496,27 @@ py_list(MeTTa,PyList):- pl_to_py(MeTTa,PyList).
 
 py_tuple(O,Py):- py_obi(py_tuple(O),Py),!. % Alternative method to create a Python tuple.
 % py_tuple(O,Py):- py_ocall(tuple(O),Py),!.  % Call Python tuple function.
+
+
+%!  py_chain(+O, -Py) is det.
+%
+%   This converts metta Expression into a list of Python objects , Then OR's them via __or__/__nor__ operator
+%   The Python result is returned as `Py` after some processing.
+%
+%   @arg O The input to the chain (likely some input object).
+%   @arg Py The final output resulting from the `py_chain` call.
+%
+py_chain(O, Py):-
+    % First, load the `hyperon_module` to ensure it is available for calling.
+    load_hyperon_module,
+    % The actual call to the `hyperon_module:py_chain/2` function in Python. This likely passes
+    % the argument `I` and returns a result `M`. The `py_ocall/2` mechanism calls the Python method.
+    py_ocall(hyperon_module:py_chain(I), M),
+    % Finally, the result from the Python call, `M`, is returned via `rust_return/2` to `O`.
+    % The `rust_return/2` might be a utility for handling MeTTaLog-Python interop and ensures
+    % that `O` receives the final processed result from the chain.
+    rust_return(M, O).
+
 
 %!  py_dict(+O, -Py) is det.
 %
