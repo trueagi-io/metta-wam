@@ -61,19 +61,6 @@
 % IMPORTANT:  DO NOT DELETE COMMENTED-OUT CODE AS IT MAY BE UN-COMMENTED AND USED
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Set the character encoding for the Prolog source file to ISO Latin-1.
-% This directive ensures that all characters in this file are interpreted as ISO Latin-1
-% (Western European encoding). This encoding is typically used for legacy text files.
-:- encoding(iso_latin_1).
-
-% Flush any pending output in the current output stream.
-% This ensures that all buffered output is written immediately. It can be useful
-% when ensuring that output is fully sent before proceeding with the next operations.
-:- flush_output.
-
-% Set environment variable to capture full Rust backtrace in case of crashes.
-:- setenv('RUST_BACKTRACE',full).
-
 % Uncomment this when loading from non user context like for ecapsulation
 %:- '$set_source_module'('user').
 

@@ -34,15 +34,6 @@
 % IMPORTANT:  DO NOT DELETE COMMENTED-OUT CODE AS IT MAY BE UN-COMMENTED AND USED
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% The encoding is set to iso_latin_1 to ensure proper handling of characters in that encoding.
-:- encoding(iso_latin_1).
-
-% The flush_output/0 predicate is called to forcefully flush all pending output buffers.
-:- flush_output.
-
-% This sets an environment variable 'RUST_BACKTRACE' to 'full', likely to enable detailed error backtraces
-% when using a Rust-based library or component within the system.
-:- setenv('RUST_BACKTRACE',full).
 
 % Defines a custom operator =~ with precedence 700 and xfx type, meaning it is a non-associative infix operator.
 % This operator could be used for a specialized equality or pattern-matching operation in the program.
