@@ -1,7 +1,3 @@
-:- encoding(iso_latin_1).
-:- flush_output.
-:- setenv('RUST_BACKTRACE',full).
-
 % ===============================
 %       PRINTERS
 % ===============================
@@ -177,7 +173,7 @@ pp_sexi(V) :- (number(V) ; is_dict(V)), !, print_concept('ValueAtom',V).
 %pp_sex(''):- !, write('()').
 
 % Continuing with 'pp_sex', 'write_mobj', and related rules,
-% handling different cases based on the value�s type and structure, and performing the appropriate writing action.
+% handling different cases based on the value type and structure, and performing the appropriate writing action.
 % Lists are printed with parentheses.
 pp_sexi(V) :- \+ compound(V), !, format('~p',[V]).
 

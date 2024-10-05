@@ -50,19 +50,93 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
+% Set the encoding for the Prolog system to UTF-8 to ensure proper handling of characters.
+% The previously commented out line was for iso_latin_1 encoding.
+% UTF-8 is more universal and can handle a wider range of characters.
 :- encoding(utf8).
+
+% Set the 'RUST_BACKTRACE' environment variable to 'full'.
+% This likely enables detailed error backtraces when using Rust-based components.
+% Rust will now output full stack traces when errors occur, which aids in debugging.
+:- setenv('RUST_BACKTRACE', full).
+
+% Set the Prolog flag for encoding to UTF-8 (overrides other default encodings).
+% This ensures that the Prolog interpreter treats all input/output as UTF-8 encoded.
 :- set_prolog_flag(encoding, utf8).
-:- nb_setval(cmt_override,lse('; ',' !(" ',' ") ')).
-:- set_prolog_flag(source_search_working_directory,true).
-:- set_prolog_flag(backtrace,true).
-:- set_prolog_flag(backtrace_depth,100).
-:- set_prolog_flag(backtrace_goal_dept,100).
-:- set_prolog_flag(backtrace_show_lines,true).
-:- set_prolog_flag(write_attributes,portray).
-:- set_prolog_flag(debug_on_error,true).
+
+% Set a global non-backtrackable variable 'cmt_override' with a specific string pattern.
+% This could be used for customizing the way comments or other formatting behaviors are handled.
+:- nb_setval(cmt_override, lse('; ', ' !(" ', ' ") ')).
+
+% Set the flag to make the source search relative to the working directory.
+% This helps locate Prolog files from the current working directory.
+:- set_prolog_flag(source_search_working_directory, true).
+
+% Enable backtracing, which allows tracking the sequence of goals that led to an error.
+% This is useful for debugging as it shows the call stack at the time of an error.
+:- set_prolog_flag(backtrace, true).
+
+% Set the maximum depth for the backtrace to 100, meaning up to 100 frames of the call stack will be shown.
+:- set_prolog_flag(backtrace_depth, 100).
+
+% Set the maximum goal depth for backtraces, limiting the display of deeply nested goal calls.
+:- set_prolog_flag(backtrace_goal_dept, 100).
+
+% Enable showing line numbers in the backtrace, which can help pinpoint where in the source code an error occurred.
+:- set_prolog_flag(backtrace_show_lines, true).
+
+% Configure the flag to customize how Prolog writes out attributes (such as variables and terms).
+% Using 'portray' ensures that the output is human-readable and properly formatted.
+:- set_prolog_flag(write_attributes, portray).
+
+% Enable debugging on errors.
+% When an error occurs, this setting will automatically start the Prolog debugger, providing detailed information about the error.
+:- set_prolog_flag(debug_on_error, true).
+
+% Load additional Prolog support functions from the 'swi_support' file.
+% This could include helper predicates or extensions for SWI-Prolog.
 :- ensure_loaded(swi_support).
+
+% Load the Prolog documentation library (pldoc).
+% This library provides tools for generating and interacting with Prolog documentation.
 :- ensure_loaded(library(pldoc)).
+
+% Ensure that the `user_input` stream is treated as a terminal (TTY).
+% This is useful for interactive input, ensuring the system knows it's receiving input from a terminal.
+:- set_stream(user_input, tty(true)).
+
+% Set the encoding of the `current_input` stream to UTF-8.
+% This ensures that any input read from `current_input` (which is typically `user_input`) is interpreted as UTF-8.
+:- set_stream(current_input, encoding(utf8)).
+
+% Treat `current_input` as a terminal (TTY).
+% Even though `current_input` is usually linked to `user_input`, this ensures that it's explicitly treated as terminal input.
+:- set_stream(current_input, tty(true)).
+
+% Set the encoding for the `user_input` stream to UTF-8.
+% This makes sure that all input read from `user_input` is correctly handled as UTF-8 encoded text.
+:- set_stream(user_input, encoding(utf8)).
+
+% Treat `user_output` as a terminal (TTY).
+% This ensures that output to the terminal behaves properly, recognizing that it's interacting with a terminal (e.g., for handling special characters).
+:- set_stream(user_output, tty(true)).
+
+% Set the encoding for the `user_output` stream to UTF-8.
+% This ensures that all output sent to `user_output` is encoded in UTF-8, allowing the display of Unicode characters.
+:- set_stream(user_output, encoding(utf8)).
+
+% Treat `user_error` as a terminal (TTY).
+% This ensures that error messages are handled as terminal output, allowing for proper interaction when the user sees error messages.
+:- set_stream(user_error, tty(true)).
+
+% Set the encoding for the `user_error` stream to UTF-8.
+% This ensures that error messages and other output sent to `user_error` are encoded in UTF-8, preventing issues with special characters in error messages.
+:- set_stream(user_error, encoding(utf8)).
+
+% Flush any pending output to ensure that anything waiting to be written to output is immediately written.
+% Useful to make sure output is synchronized and nothing is left in the buffer.
+:- flush_output.
+
 %:- set_prolog_flag(debug_on_interrupt,true).
 %:- set_prolog_flag(compile_meta_arguments,control).
 :- (prolog_load_context(directory, Value);Value='.'), absolute_file_name('../packs/',Dir,[relative_to(Value)]),
@@ -297,8 +371,6 @@ current_self(Self):- ((nb_current(self_space,Self),Self\==[])->true;Self='&self'
 
 %:- set_stream(user_input,tty(true)).
 %:- use_module(library(editline)).
-:- set_prolog_flag(encoding,iso_latin_1).
-:- set_prolog_flag(encoding,utf8).
 %:- set_output(user_error).
 %:- set_prolog_flag(encoding,octet).
 
@@ -755,7 +827,9 @@ if_phase(Current,Phase,Goal):- ignore((sub_var(Current,Phase),!, Goal)).
 
 set_tty_color_term(TF):-
   current_output(X),set_stream(X,tty(TF)),
+                    set_stream(X, encoding(utf8)),
   set_stream(current_output,tty(TF)),
+  set_stream(current_output, encoding(utf8)),
   set_prolog_flag(color_term ,TF).
 
 m_opt(M,Opt):-

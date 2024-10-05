@@ -320,6 +320,7 @@ must_not_error(X):- ncatch(X,E,(rethrow_abort(E);(/*arcST,*/writeq(E=X),pp(etrac
 always_rethrow('$aborted').
 always_rethrow(md_failed(_,_,_)).
 always_rethrow(return(_)).
+always_rethrow(metta_throw(_)).
 always_rethrow(metta_return(_)).
 always_rethrow(give_up(_)).
 always_rethrow(time_limit_exceeded(_)).
@@ -1296,7 +1297,6 @@ end_of_file.
 
 
 
-:- encoding(iso_latin_1).
 /*
   this is part of (H)MUARC  https://logicmoo.org/xwiki/bin/view/Main/ARC/
 
