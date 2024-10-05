@@ -588,40 +588,6 @@ the_modules_and_globals = merge_modules_and_globals()
 ')),
     assert(did_load_builtin_module).
 
-%!  pych_chars(+Chars, -P) is det.
-%
-%   Processes a list of characters (Chars) to clean up and remove specific patterns 
-%   such as carriage return (`\r@(none)`), newline (`\n@(none)`), and isolated newline 
-%   or end-of-line characters. The resulting cleaned characters are unified with `P`.
-%
-%   @arg Chars The input list of characters to be processed. If `Chars` is not a list, 
-%              the predicate unifies `P` directly with `Chars`.
-%   @arg P     The processed list of characters after removing specific patterns.
-%
-%   @example
-%     % Clean up a list of characters with various newline and none markers:
-%     ?- pych_chars(`Hello@\n@(none)World`, P).
-%     P = "HelloWorld".
-%
-pych_chars(Chars, P):- 
-    % If Chars is not a list, return it as is.
-    \+ is_list(Chars),!,P=Chars.
-pych_chars(Chars, P):-
-    % Remove the pattern `\r@(none)` from Chars.
-    append(O,`\r@(none)`,Chars),!,pych_chars(O,P).
-pych_chars(Chars, P):-
-    % Remove the pattern `\n@(none)` from Chars.
-    append(O,`\n@(none)`,Chars),!,pych_chars(O,P).
-pych_chars(Chars, P):-
-    % Remove the pattern `@(none)` from Chars.
-    append(O,`@(none)`,Chars),!,pych_chars(O,P).
-pych_chars(Chars, P):-
-    % Remove single newline character.
-    append(O,[WS],Chars),code_type(WS,new_line),!,pych_chars(O,P).
-pych_chars(Chars, P):-
-    % Remove single end-of-line character.
-    append(O,[WS],Chars),code_type(WS,end_of_line),!,pych_chars(O,P).
-pych_chars(P,P).
 
 %!  py_ppp(+V) is det.
 %
@@ -639,13 +605,9 @@ pych_chars(P,P).
 %
 py_ppp(V):-
     % Ensure all buffered output is flushed before printing.
-    flush_output,
-    % Redirect the output of py_pp/1 to a list of codes (Chars).
-    with_output_to(codes(Chars), once(py_pp(V))),
-    % Clean the output using pych_chars/2 to remove unwanted characters.
-    pych_chars(Chars, P),
-    % Format and print the cleaned output.
-    !, format('~s', [P]),
+    flush_output, janus:opts_kws([], Kws),
+    PFormat=..[pformat, V|Kws],    % Format and print the cleaned output.
+    py_call(pprint:PFormat, String),!,write(String).
     % Ensure the output is fully flushed after printing.
     !, flush_output.
     
@@ -662,7 +624,7 @@ py_ppp(V):-
 % predicates to manage the state of the module loading.
 
 % Declare the predicate `did_load_hyperon_module/0` as thread-local to ensure that 
-% its state is specific to each thread. It is also marked as volatile so that it is 
+% its state might later be required in each separate thread. It is also marked as volatile so that it is 
 % not saved across restarts, and dynamic to allow modifications during runtime.
 %:- thread_local(did_load_hyperon_module/0).
 :- volatile(did_load_hyperon_module/0).
