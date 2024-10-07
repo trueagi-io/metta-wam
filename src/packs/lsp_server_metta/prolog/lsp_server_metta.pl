@@ -16,7 +16,7 @@ The main entry point for the Language Server implementation.
 
 :- use_module(lsp_metta_utils).
 :- use_module(lsp_metta_checking, [check_errors/2]).
-:- use_module(lsp_metta_parser, [lsp_metta_request//1]).
+:- use_module(lsp_json_parser, [lsp_metta_request//1]).
 :- use_module(lsp_metta_changes, [handle_doc_changes/2]).
 :- use_module(lsp_metta_completion, [completions_at/3]).
 :- use_module(lsp_metta_colours, [
@@ -25,6 +25,10 @@ The main entry point for the Language Server implementation.
                             token_types/1,
                             token_modifiers/1]).
 :- use_module(lsp_metta_xref).
+:- use_module(lsp_metta_split, [
+        split_text_document/2,
+        coalesce_text/2
+]).
 
 :- dynamic lsp_metta_changes:doc_text/2.
 
