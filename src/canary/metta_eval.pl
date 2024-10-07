@@ -1624,11 +1624,12 @@ eval_20(Eq,RetType,Depth,Self,['call-cleanup',NE,E],R):-  !,
    call_cleanup(eval_args(Eq,RetType,Depth,Self,NE,R),
                 eval_args(Eq,_U_,Depth,Self,E,_)).
 
+% like call-cleanup but we might might avoid certain interupts durring setup
 eval_20(Eq,RetType,Depth,Self,['setup-call-cleanup',S,NE,E],R):-  !,
-   setup_call_cleanup(
-         eval_args(Eq,_,Depth,Self,S,_),
-         eval_args(Eq,RetType,Depth,Self,NE,R),
-         eval_args(Eq,_,Depth,Self,E,_)).
+   sig_atomic_no_cut(eval_args(Eq,_,Depth,Self,S,_)),
+   call_cleanup(eval_args(Eq,RetType,Depth,Self,NE,R),
+                eval_args(Eq,_U_,Depth,Self,E,_)).
+
 
 eval_20(Eq,RetType,Depth,Self,['with-output-to',S,NE],R):-  !,
    eval_args(Eq,'Sink',Depth,Self,S,OUT),
@@ -1639,7 +1640,10 @@ eval_20(Eq,RetType,Depth,Self,[Excl|Rest],Res):-
  arg(_, v('catch!','throw!','number-of!','limit!','offset!','max-time!','findall!','setup-call-cleanup!','call-cleanup!','call-cleanup!','with-output-to!'), Excl), 
  sub_atom(Excl,_,_,1,NoExcl),!,
  eval_20(Eq,RetType,Depth,Self,[NoExcl|Rest],Res).
- 
+
+
+%sig_atomic_no_cut(Goal):- sig_atomic(Goal). 
+sig_atomic_no_cut(Goal):- call(Goal).
 
 % =================================================================
 % =================================================================
@@ -2083,6 +2087,8 @@ eval_20(_Eq,_RetType,_Depth,_Self,['py-dict',Arg],Res):- !,
   must_det_ll((py_dict(Arg,Res))).
 eval_20(_Eq,_RetType,_Depth,_Self,['py-tuple',Arg],Res):- !,
   must_det_ll((py_tuple(Arg,Res))).
+eval_20(_Eq,_RetType,_Depth,_Self,['py-chain',Arg],Res):- !,
+  must_det_ll((py_chain(Arg,Res))).
 eval_40(_Eq,_RetType,_D7epth,_Self,['py-atom',Arg],Res):- !,
   must_det_ll((py_atom(Arg,Res))).
 eval_40(_Eq,_RetType,_Depth,_Self,['py-atom',Arg,Type],Res):- !,

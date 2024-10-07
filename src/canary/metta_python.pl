@@ -61,19 +61,6 @@
 % IMPORTANT:  DO NOT DELETE COMMENTED-OUT CODE AS IT MAY BE UN-COMMENTED AND USED
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Set the character encoding for the Prolog source file to ISO Latin-1.
-% This directive ensures that all characters in this file are interpreted as ISO Latin-1
-% (Western European encoding). This encoding is typically used for legacy text files.
-:- encoding(iso_latin_1).
-
-% Flush any pending output in the current output stream.
-% This ensures that all buffered output is written immediately. It can be useful
-% when ensuring that output is fully sent before proceeding with the next operations.
-:- flush_output.
-
-% Set environment variable to capture full Rust backtrace in case of crashes.
-:- setenv('RUST_BACKTRACE',full).
-
 % Uncomment this when loading from non user context like for ecapsulation
 %:- '$set_source_module'('user').
 
@@ -308,16 +295,49 @@ py_resolve(V, Py):- var(V),!,get_attr(V, pyobj, Py),!.
 py_resolve(V, Py):- \+ compound(V),!,py_is_object(V),Py = V.
 py_resolve(V, Py):- is_list(V),!,fail, maplist(py_resolve,V,Py).
 py_resolve(V, Py):- V=Py.
-
 %!  py_is_tuple(+X) is semidet.
 %
-%   Checks if the given term `X` is a Python tuple. This is determined by resolving 
-%   the term `X` and verifying its type is `tuple`. Additionally, it ensures the object 
-%   is not a string.
+%   Checks if the given term `X` is a Python tuple. The function resolves 
+%   the term `X` (typically some reference to a Python object) and checks 
+%   whether it is a tuple, but not a string (as strings can sometimes 
+%   behave like sequences in Python).
+%
+%   The predicate `py_is_tuple/1` is semi-deterministic, meaning it 
+%   succeeds if `X` can be determined to be a tuple and fails otherwise.
+%   It is not fully deterministic because the input could resolve to 
+%   something other than a tuple.
 %
 %   @arg X The term to check if it is a Python tuple.
 %
-py_is_tuple(X):-py_resolve(X,V),py_tuple(V,T),py_tuple(T,TT),T==TT, \+ py_type(V, str).
+py_is_tuple(X):- 
+    % Resolve the Prolog term `X` to a Python object `V`.
+    py_resolve(X, V),    
+    % Check if the resolved Python object `V` is a tuple.
+    py_is_tuple_res(V).
+
+% Helper predicate to check if the resolved object `V` is a tuple.
+py_is_tuple_res(V):-
+    % If `V` is a compound term, attempt to match it as a tuple-like structure.
+    compound(V), !,
+    % Check if `V` is a compound with the name `'-'`, which represents a tuple in some Prolog-Python integration.
+    % This checks if `V` has a compound structure representing a tuple-like form.
+    compound_name_arity(V, '-', _).
+
+% Continue checking if the term is atomic and an object but not a string.
+py_is_tuple_res(V):- 
+    % If `V` is atomic (i.e., a basic Prolog term, not a compound term).
+    atomic(V),    
+    % Check if `V` is a Python object.
+    py_is_object(V), !,  % Cut to prevent backtracking once object check succeeds.    
+    % Ensure the type of `V` is not `str` (strings should not be considered tuples).
+    \+ py_type(V, str),    
+    % Finally, check if `V` is of type `tuple`.
+    py_type(V, tuple).
+
+% The commented out code below seems to have been an alternative tuple-checking strategy.
+% It uses `py_tuple/2` to extract or transform a tuple, ensuring that the tuple is identical 
+% to itself and that it is not a string.
+% py_is_tuple_res(V):- py_tuple(V,T), py_tuple(T,TT), T==TT, \+ py_type(V, str).
 
 %!  py_is_py_dict(+X) is semidet.
 %
@@ -347,7 +367,6 @@ py_is_list(X):- py_resolve(X,V),py_type(V,list).
 % Declare the predicate `did_load_builtin_module/0` as thread-local to ensure that 
 % its state is specific to each thread. It is also marked as volatile so that it is 
 % not saved across restarts, and dynamic to allow modifications during runtime.
-:- thread_local(did_load_builtin_module/0).
 :- volatile(did_load_builtin_module/0).
 :- dynamic(did_load_builtin_module/0).
 
@@ -368,7 +387,6 @@ load_builtin_module:-
     did_load_builtin_module, !.
 load_builtin_module:- 
     % Mark the module as loaded and proceed to load the Python module.
-    assert(did_load_builtin_module),
     % Call py_module/2 to load the Python built-in module (complete the predicate as needed).
     with_safe_argv(py_module(builtin_module,
 '
@@ -567,42 +585,9 @@ def get_str_rep(func):
 
 the_modules_and_globals = merge_modules_and_globals()
 
-')).
+')),
+    assert(did_load_builtin_module).
 
-%!  pych_chars(+Chars, -P) is det.
-%
-%   Processes a list of characters (Chars) to clean up and remove specific patterns 
-%   such as carriage return (`\r@(none)`), newline (`\n@(none)`), and isolated newline 
-%   or end-of-line characters. The resulting cleaned characters are unified with `P`.
-%
-%   @arg Chars The input list of characters to be processed. If `Chars` is not a list, 
-%              the predicate unifies `P` directly with `Chars`.
-%   @arg P     The processed list of characters after removing specific patterns.
-%
-%   @example
-%     % Clean up a list of characters with various newline and none markers:
-%     ?- pych_chars(`Hello@\n@(none)World`, P).
-%     P = "HelloWorld".
-%
-pych_chars(Chars, P):- 
-    % If Chars is not a list, return it as is.
-    \+ is_list(Chars),!,P=Chars.
-pych_chars(Chars, P):-
-    % Remove the pattern `\r@(none)` from Chars.
-    append(O,`\r@(none)`,Chars),!,pych_chars(O,P).
-pych_chars(Chars, P):-
-    % Remove the pattern `\n@(none)` from Chars.
-    append(O,`\n@(none)`,Chars),!,pych_chars(O,P).
-pych_chars(Chars, P):-
-    % Remove the pattern `@(none)` from Chars.
-    append(O,`@(none)`,Chars),!,pych_chars(O,P).
-pych_chars(Chars, P):-
-    % Remove single newline character.
-    append(O,[WS],Chars),code_type(WS,new_line),!,pych_chars(O,P).
-pych_chars(Chars, P):-
-    % Remove single end-of-line character.
-    append(O,[WS],Chars),code_type(WS,end_of_line),!,pych_chars(O,P).
-pych_chars(P,P).
 
 %!  py_ppp(+V) is det.
 %
@@ -620,13 +605,9 @@ pych_chars(P,P).
 %
 py_ppp(V):-
     % Ensure all buffered output is flushed before printing.
-    flush_output,
-    % Redirect the output of py_pp/1 to a list of codes (Chars).
-    with_output_to(codes(Chars), once(py_pp(V))),
-    % Clean the output using pych_chars/2 to remove unwanted characters.
-    pych_chars(Chars, P),
-    % Format and print the cleaned output.
-    !, format('~s', [P]),
+    flush_output, janus:opts_kws([], Kws),
+    PFormat=..[pformat, V|Kws],    % Format and print the cleaned output.
+    py_call(pprint:PFormat, String),!,write(String),
     % Ensure the output is fully flushed after printing.
     !, flush_output.
     
@@ -643,7 +624,7 @@ py_ppp(V):-
 % predicates to manage the state of the module loading.
 
 % Declare the predicate `did_load_hyperon_module/0` as thread-local to ensure that 
-% its state is specific to each thread. It is also marked as volatile so that it is 
+% its state might later be required in each separate thread. It is also marked as volatile so that it is 
 % not saved across restarts, and dynamic to allow modifications during runtime.
 %:- thread_local(did_load_hyperon_module/0).
 :- volatile(did_load_hyperon_module/0).
@@ -678,6 +659,7 @@ from hyperon.ext import register_atoms
 from hyperon.atoms import G, AtomType
 from hyperon.runner import MeTTa
 from hyperon.atoms import *
+from hyperon.stdlib import *
 import hyperonpy as hp
 
 import sys
@@ -691,10 +673,35 @@ class MeTTaVS(MeTTa):
 
 runner = MeTTaVS()
 
+def get_children(metta_iterable):
+    try:
+        return iter(metta_iterable)
+    except TypeError:
+        try:
+            return iter([metta_iterable])  # Encapsulate in a list and then iterate
+        except TypeError:
+            raise ValueError("Provided object cannot be iterated or converted to an iterable.")
+
+# chain python objects with |  (syntactic sugar for langchain)
+def py_chain(metta_tuple):
+    unwrap1 = rust_deref(metta_tuple)
+    objects = [rust_deref(a) for a in get_children(unwrap1)]
+    result = objects[0]
+    for obj in objects[1:]:
+        result = result | obj
+    return result
+
 def rust_metta_run(obj):
     return runner.run(obj)
 
+def always_unwrap_python_object(rust):
+  return hyperon.stdlib.try_unwrap_python_object(rust)
+
 def rust_unwrap(obj):
+    if obj is None:
+        return obj
+    if isinstance(obj, janus.Term):
+        return obj
     if isinstance(obj,SymbolAtom):
         return obj.get_name()
     if isinstance(obj,ExpressionAtom):
@@ -707,7 +714,11 @@ def rust_unwrap(obj):
     # if isinstance(obj,GroundedAtom): return obj.get_object()
     if isinstance(obj,GroundedObject):
         return obj.content
-    return obj
+    # Check if obj is a list or a tuple, but not a string
+    if isinstance(obj, (list, tuple)) and not isinstance(obj, str):
+        return type(obj)(rust_deref(element) for element in obj)
+
+    return always_unwrap_python_object(obj)
 
 def rust_deref(obj):
   while True:
@@ -1484,8 +1495,30 @@ py_list(MeTTa,PyList):- pl_to_py(MeTTa,PyList).
 %
 %   @arg O The input list to be converted.
 %   @arg Py The resulting Python tuple.
-py_tuple(O,Py):- py_ocall(tuple(O),Py),!.  % Call Python tuple function.
+
 py_tuple(O,Py):- py_obi(py_tuple(O),Py),!. % Alternative method to create a Python tuple.
+% py_tuple(O,Py):- py_ocall(tuple(O),Py),!.  % Call Python tuple function.
+
+
+%!  py_chain(+O, -Py) is det.
+%
+%   This converts metta Expression into a list of Python objects , Then OR's them via __or__/__nor__ operator
+%   The Python result is returned as `Py` after some processing.
+%
+%   @arg O The input to the chain (likely some input object).
+%   @arg Py The final output resulting from the `py_chain` call.
+%
+py_chain(I, Py):-
+    % First, load the `hyperon_module` to ensure it is available for calling.
+    load_hyperon_module,
+    % The actual call to the `hyperon_module:py_chain/2` function in Python. This likely passes
+    % the argument `I` and returns a result `M`. The `py_ocall/2` mechanism calls the Python method.
+    py_ocall(hyperon_module:py_chain(I), M),
+    % Finally, the result from the Python call, `M`, is returned via `rust_return/2` to `O`.
+    % The `rust_return/2` might be a utility for handling MeTTaLog-Python interop and ensures
+    % that `O` receives the final processed result from the chain.
+    rust_return(M, Py).
+
 
 %!  py_dict(+O, -Py) is det.
 %
@@ -1983,6 +2016,7 @@ rust_metta_run1(R,Run):-
 %   @example Convert the result of a Rust metta run:
 %       ?- rust_return(M,O).
 %
+
 rust_return(M,O):- 
     (py_iter(M,R,[py_object(true)]),py_iter(R,R1,[py_object(true)]))*->rust_to_pl(R1,O);
     (fail,rust_to_pl(M,O)).

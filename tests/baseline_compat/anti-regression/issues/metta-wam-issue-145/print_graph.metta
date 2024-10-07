@@ -1,3 +1,5 @@
+
+
 !(bind! &ex1 (new-space))
 !(add-atom &ex1 (y y (ɑ 0)))
 !(add-atom &ex1 (x z (ɑ 0)))
@@ -16,5 +18,4 @@
   (println! (graphviz-triple (get-atoms $space)))
 )
 !(graphviz &ex1)
-
 

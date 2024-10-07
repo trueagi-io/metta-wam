@@ -275,7 +275,7 @@ balanced_parentheses([')'|T], N) :- N > 0, N1 is N - 1, !, balanced_parentheses(
 % Skip any characters that are not parentheses.
 balanced_parentheses([H|T], N) :- H \= '(', H \= ')', !, balanced_parentheses(T, N).
 
-next_expr(ExprI,Expr):- ExprI==end_of_file,!, (comment_buffer(Expr);(ExprI=Expr)).
+next_expr(ExprI,Expr):- ExprI==end_of_file,!, (comment_buffer(Expr);(Expr="")).
 next_expr(ExprI,Expr):- ExprI=Expr.
 repl_read(In,Expr):- repl_read_next(In,ExprI),next_expr(ExprI,Expr).
 repl_read(Expr):- repl_read_next(ExprI),next_expr(ExprI,Expr).
@@ -315,7 +315,7 @@ repl_read_next(Str, Expr) :- symbol_concat('@', _, Str), !, atom_string(Expr, St
 repl_read_next(Str, _Expr) :- symbol_concat(')', _, Str), !, fbug(repl_read_syntax(Str)), throw(restart_reading).
 
 % Normalize spaces in the accumulated input and re-read if the normalized result is different.
-repl_read_next(NewAccumulated, Expr) :-
+repl_read_next(NewAccumulated, Expr) :- fail,
     normalize_space(string(Renew), NewAccumulated),
     Renew \== NewAccumulated, !,
     repl_read_next(Renew, Expr).
@@ -325,16 +325,16 @@ repl_read_next(NewAccumulated, Expr) :-
 
 % Read and process the input if parentheses are balanced, then add it to the history.
 repl_read_next(NewAccumulated, Expr) :-
+    % Normalize the string
+    normalize_space(string(Renew), NewAccumulated),
     % Convert the accumulated string to a list of characters.
-    string_chars(NewAccumulated, Chars),
+    string_chars(Renew, Chars),
     % Check if the parentheses are balanced.
     balanced_parentheses(Chars),
     % Ensure there is some content in the input.
     length(Chars, Len), Len > 0,
     % Parse the metta expression from the accumulated input.
-    read_metta(NewAccumulated, Expr),
-    % Normalize the string and add it to the history.
-    normalize_space(string(Renew), NewAccumulated),
+    read_metta(Renew, Expr),!,
     add_history_string(Renew).
 
 % Read the next line of input, accumulate it, and continue processing.
