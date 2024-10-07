@@ -56,6 +56,7 @@ stdio_server :-
     % causes Content-Length to be incorrect
     set_stream(In, encoding(octet)),
     current_output(Out),
+    throw(i_loaded_this),
     set_stream(Out, encoding(utf8)),
     stdio_handler(A-A, In).
 

@@ -607,7 +607,7 @@ py_ppp(V):-
     % Ensure all buffered output is flushed before printing.
     flush_output, janus:opts_kws([], Kws),
     PFormat=..[pformat, V|Kws],    % Format and print the cleaned output.
-    py_call(pprint:PFormat, String),!,write(String).
+    py_call(pprint:PFormat, String),!,write(String),
     % Ensure the output is fully flushed after printing.
     !, flush_output.
     
@@ -698,6 +698,8 @@ def always_unwrap_python_object(rust):
   return hyperon.stdlib.try_unwrap_python_object(rust)
 
 def rust_unwrap(obj):
+    if obj is None:
+        return obj
     if isinstance(obj, janus.Term):
         return obj
     if isinstance(obj,SymbolAtom):
@@ -1506,7 +1508,7 @@ py_tuple(O,Py):- py_obi(py_tuple(O),Py),!. % Alternative method to create a Pyth
 %   @arg O The input to the chain (likely some input object).
 %   @arg Py The final output resulting from the `py_chain` call.
 %
-py_chain(O, Py):-
+py_chain(I, Py):-
     % First, load the `hyperon_module` to ensure it is available for calling.
     load_hyperon_module,
     % The actual call to the `hyperon_module:py_chain/2` function in Python. This likely passes
@@ -1515,7 +1517,7 @@ py_chain(O, Py):-
     % Finally, the result from the Python call, `M`, is returned via `rust_return/2` to `O`.
     % The `rust_return/2` might be a utility for handling MeTTaLog-Python interop and ensures
     % that `O` receives the final processed result from the chain.
-    rust_return(M, O).
+    rust_return(M, Py).
 
 
 %!  py_dict(+O, -Py) is det.
@@ -2014,6 +2016,7 @@ rust_metta_run1(R,Run):-
 %   @example Convert the result of a Rust metta run:
 %       ?- rust_return(M,O).
 %
+
 rust_return(M,O):- 
     (py_iter(M,R,[py_object(true)]),py_iter(R,R1,[py_object(true)]))*->rust_to_pl(R1,O);
     (fail,rust_to_pl(M,O)).
