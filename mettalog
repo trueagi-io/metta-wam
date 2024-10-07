@@ -31,6 +31,58 @@ debug_this_script=false
 contains_halt=false
 dry_run=0
 
+#!/bin/bash
+
+# Store the current values of LANG and LC_ALL, and track if they were originally unset
+if [ -z "${LANG+x}" ]; then
+    LANG_UNSET=true
+else
+    ORIGINAL_LANG="$LANG"
+fi
+
+if [ -z "${LC_ALL+x}" ]; then
+    LC_ALL_UNSET=true
+else
+    ORIGINAL_LC_ALL="$LC_ALL"
+fi
+
+# Function to restore original values on exit
+restore_original_values() {
+    # Restore LANG
+    if [ "${LANG_UNSET}" = true ]; then
+        unset LANG
+    else
+        export LANG="$ORIGINAL_LANG"
+    fi
+
+    # Restore LC_ALL
+    if [ "${LC_ALL_UNSET}" = true ]; then
+        unset LC_ALL
+    else
+        export LC_ALL="$ORIGINAL_LC_ALL"
+    fi
+}
+
+# Trap to ensure the original values are restored when the script exits
+trap restore_original_values EXIT
+
+# Check and set LANG to en_US.UTF-8 if unset or empty
+if [ -z "$LANG" ]; then
+    #echo "LANG is unset or empty. Setting LANG to en_US.UTF-8."
+    export LANG="en_US.UTF-8"
+else
+    : #echo "LANG is set to: $LANG"
+fi
+
+# Check and set LC_ALL to en_US.UTF-8 if unset or empty
+if [ -z "$LC_ALL" ]; then
+    #echo "LC_ALL is unset or empty. Setting LC_ALL to en_US.UTF-8."
+    export LC_ALL="en_US.UTF-8"
+else
+    : #echo "LC_ALL is set to: $LC_ALL"
+fi
+
+
 # Function to add a flag to a list
 add_to_list() {
     local flag=$1
@@ -46,42 +98,72 @@ set_io_flags() {
 
     # Handle stdin flags
     if [ -p /dev/stdin ]; then
-        add_to_list "--stdin=pipe" STDIO_OPTIONS
+	add_to_list "--stdin=pipe" STDIO_OPTIONS
+	# Convert the pipe to the /proc/self/fd format
+	local fd_number
+	fd_number=$(readlink /proc/self/fd/0)
+	# Extract the process ID and file descriptor
+	if [[ $fd_number =~ pipe:\[(.*)\] ]]; then
+	    pid=$$
+	    fd=0  # stdin is typically file descriptor 0
+	    # Construct the /proc/[pid]/fd/[fd] path
+	    proc_fd_path="/proc/${pid}/fd/${fd}"
+	    add_to_list "--input-filename=${proc_fd_path}" STDIO_OPTIONS
+	fi
     elif [ -f /dev/stdin ]; then
-        local input_filename
-        input_filename=$(readlink /proc/self/fd/0)
-        add_to_list "--stdin=file" STDIO_OPTIONS
-        add_to_list "--input-filename=${input_filename}" STDIO_OPTIONS
+	local input_filename
+	input_filename=$(readlink /proc/self/fd/0)
+	add_to_list "--stdin=file" STDIO_OPTIONS
+	add_to_list "--input-filename=${input_filename}" STDIO_OPTIONS
     else
 	add_to_list "--stdin=tty" STDIO_OPTIONS
     fi
-
+    
     # Handle stdout flags
     if [ ! -t 1 ]; then
-        if [ -p /dev/stdout ]; then
-            add_to_list "--stdout=pipe" STDIO_OPTIONS
-        elif [ -f /dev/stdout ]; then
-            local output_filename
-            output_filename=$(readlink /proc/self/fd/1)
-            add_to_list "--stdout=file" STDIO_OPTIONS
-            add_to_list "--output-filename=${output_filename}" STDIO_OPTIONS
-        fi
+	if [ -p /dev/stdout ]; then
+	    add_to_list "--stdout=pipe" STDIO_OPTIONS
+	    # Convert the pipe to the /proc/self/fd format
+	    local fd_number
+	    fd_number=$(readlink /proc/self/fd/1)
+	    if [[ $fd_number =~ pipe:\[(.*)\] ]]; then
+		pid=$$
+		fd=1  # stdout is typically file descriptor 1
+		proc_fd_path="/proc/${pid}/fd/${fd}"
+		add_to_list "--output-filename=${proc_fd_path}" STDIO_OPTIONS
+	    fi
+	elif [ -f /dev/stdout ]; then
+	    local output_filename
+	    output_filename=$(readlink /proc/self/fd/1)
+	    add_to_list "--stdout=file" STDIO_OPTIONS
+	    add_to_list "--output-filename=${output_filename}" STDIO_OPTIONS
+	fi
     else
-        add_to_list "--stdout=tty" STDIO_OPTIONS
+	add_to_list "--stdout=tty" STDIO_OPTIONS
     fi
-
+    
     # Handle stderr flags
     if [ ! -t 2 ]; then
-        if [ -p /dev/stderr ]; then
-            add_to_list "--stderr=pipe" STDIO_OPTIONS
-        elif [ -f /dev/stderr ]; then
-            local error_filename
-            error_filename=$(readlink /proc/self/fd/2)
-            add_to_list "--stderr=file" STDIO_OPTIONS
-            add_to_list "--error-filename=${error_filename}" STDIO_OPTIONS
-        fi
+	if [ -p /dev/stderr ]; then
+	    add_to_list "--stderr=pipe" STDIO_OPTIONS
+	    # Convert the pipe to the /proc/self/fd format
+	    local fd_number
+	    fd_number=$(readlink /proc/self/fd/2)
+	    # Extract the process ID and file descriptor
+	    if [[ $fd_number =~ pipe:\[(.*)\] ]]; then
+		pid=$$
+		fd=2  # stderr is typically file descriptor 2
+		proc_fd_path="/proc/${pid}/fd/${fd}"
+		add_to_list "--error-filename=${proc_fd_path}" STDIO_OPTIONS
+	    fi
+	elif [ -f /dev/stderr ]; then
+	    local error_filename
+	    error_filename=$(readlink /proc/self/fd/2)
+	    add_to_list "--stderr=file" STDIO_OPTIONS
+	    add_to_list "--error-filename=${error_filename}" STDIO_OPTIONS
+	fi
     else
-        add_to_list "--stderr=tty" STDIO_OPTIONS
+	add_to_list "--stderr=tty" STDIO_OPTIONS
     fi
 }
 
