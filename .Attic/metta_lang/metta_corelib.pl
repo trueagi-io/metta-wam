@@ -1,6 +1,72 @@
+/*
+ * Project: MeTTaLog - A MeTTa to Prolog Transpiler/Interpreter
+ * Description: This file is part of the source code for a transpiler designed to convert
+ *              MeTTa language programs into Prolog, utilizing the SWI-Prolog compiler for
+ *              optimizing and transforming function/logic programs. It handles different
+ *              logical constructs and performs conversions between functions and predicates.
+ *
+ * Author: Douglas R. Miles
+ * Contact: logicmoo@gmail.com / dmiles@logicmoo.org
+ * License: LGPL
+ * Repository: https://github.com/trueagi-io/metta-wam
+ *             https://github.com/logicmoo/hyperon-wam
+ * Created Date: 8/23/2023
+ * Last Modified: $LastChangedDate$  # You will replace this with Git automation
+ *
+ * Usage: This file is a part of the transpiler that transforms MeTTa programs into Prolog. For details
+ *        on how to contribute or use this project, please refer to the repository README or the project documentation.
+ *
+ * Contribution: Contributions are welcome! For contributing guidelines, please check the CONTRIBUTING.md
+ *               file in the repository.
+ *
+ * Notes:
+ * - Ensure you have SWI-Prolog installed and properly configured to use this transpiler.
+ * - This project is under active development, and we welcome feedback and contributions.
+ *
+ * Acknowledgments: Special thanks to all contributors and the open source community for their support and contributions.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+%*********************************************************************************************% 
+% PROGRAM FUNCTION: provides means to create and manipulate atoms, atom vectors, 
+% bindings, spaces, and other components necessary for executing Metta code.
+%*********************************************************************************************%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% IMPORTANT:  DO NOT DELETE COMMENTED-OUT CODE AS IT MAY BE UN-COMMENTED AND USED
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Load Metta interpreter module.
 :- ensure_loaded(metta_interp).
+
+% Disable singleton variable warnings.
 :- style_check(-singleton).
 
+% Allow multifile and dynamic definitions of lazy_load_python/0.
 :- multifile(lazy_load_python/0).
 :- dynamic(lazy_load_python/0).
 
@@ -18,22 +84,60 @@ nop(_).
 
 % Define a tracing predicate to handle failure cases during execution.
 % If `trace_failures/1` is not already defined, define it here.
-
 :- if(\+ current_predicate(trace_failures/1)).
+
+%!  trace_failures(+Goal) is det.
+%
+%   A utility predicate for tracing and debugging failures in compound goals.
+%   This predicate attempts to execute a goal and, if it fails, it logs the failure and optionally traces the goal.
+%
+%   @arg Goal The goal to be executed. If the goal consists of two subgoals (A, B), both will be traced separately if necessary.
+%   
+%   @example
+%     % Trace a compound goal and handle failure:
+%     ?- trace_failures((member(X, [1,2,3]), member(Y, [a,b,c]))).
+%
 trace_failures((A, B)) :- !,
+    % If A succeeds deterministically (*->), attempt B. If B fails, trace A and B.
     (A *-> trace_failures(B);
+    % If A fails or B fails, log the failure and trace the goal (A, B).
     (B *-> trace_failures(A); wfailed(((A, B))))).
-trace_failures(A) :- (A *-> true; (wfailed(A),trace,A)).
 
-% Predicate to print failed goals for debugging purposes.
-wfailed(G) :- writeln(wfailed(G)), fail.
-:- endif.
+% Handle simple goals (non-compound).
+trace_failures(A) :- 
+    % If A succeeds deterministically (*->), nothing is traced. If it fails, log and trace.
+    (A *-> true; (wfailed(A), trace, A)).
 
-py_is_tf(Goal,TF):- once(Goal)->TF='@'(true);TF='@'(false).
+%!  wfailed(+Goal) is det.
+%
+%   A helper predicate that prints a failure message for a goal that has failed.
+%
+%   @arg Goal The goal that has failed.
+%
+%   @example
+%     % Log a failed goal:
+%     ?- wfailed(member(X, [1,2,3])).
+%
+wfailed(G) :- 
+    % Write a failure message to the console.
+    writeln(wfailed(G)), 
+    % Fail to indicate that the goal has failed.
+    fail.
+
+:- endif.  % trace_failures 
+
+%!  py_is_tf(+Goal, -TF) is det.
+%
+%   Evaluates the given Goal and unifies TF with '@'(true) if the goal succeeds, 
+%   or '@'(false) if it fails.
+%
+%   @arg Goal The Prolog goal to evaluate.
+%   @arg TF   The result, '@'(true)' or '@'(false)', depending on the success of the Goal.
+%
+py_is_tf(Goal, TF) :- once(Goal) -> TF = '@'(true) ; TF = '@'(false).
 
 % Dynamic predicate to store registered Python functions with details about their parameters and return type.
 :- dynamic registered_function/5.
-
 
 %!  register_function(+ModuleFunctionName, +ParamNames, +ParamTypes, +ParamDefaults, +ReturnType) is det.
 %
@@ -60,7 +164,6 @@ register_function(ModuleFunctionName, ParamNames, ParamTypes, ParamDefaults, Ret
     format('Registered function: ~q with parameters: ~q, defaults: ~q, types: ~q -> ~q~n',
            [ModuleFunctionName, ParamNames, ParamDefaults, ParamTypes, ReturnType]).
 
-
 %!  from_python(+ModuleFunctionName, +TupleArgs, +LArgs, +KwArgs, -Return) is det.
 %
 %   Handles calling a registered Prolog predicate or, if not found, the original Python function.
@@ -83,7 +186,6 @@ from_python(ModuleFunctionName, _TupleArgs, LArgs, KwArgs, Result) :-
     length(LArgs, Arity),
     NewArity1 is Arity + 1,  % Adjust arity to account for one additional argument (Return).
     NewArity2 is Arity + 2,  % Adjust arity to account for two additional arguments (KwArgs and Return).
-
     % Check if a Prolog predicate with the corresponding arity exists.
     (current_predicate(ModuleFunctionName/NewArity2) -> append(LArgs, [KwArgs, Return], FullArgs);
     (current_predicate(ModuleFunctionName/NewArity1) -> append(LArgs, [Return], FullArgs);
@@ -91,35 +193,68 @@ from_python(ModuleFunctionName, _TupleArgs, LArgs, KwArgs, Result) :-
     % Construct the predicate dynamically with all arguments.
     Predicate =.. [ModuleFunctionName | FullArgs],
     registered_function(ModuleFunctionName, _, _, _, ReturnType),
-
     % Call the Prolog predicate and handle its return type.
     if_bugger(format('Calling existing Prolog predicate: ~q -> ~q ', [Predicate, ReturnType])), !,
     trace_failures(once((call_ret_type(Predicate, ReturnType, Return, Result),
                     if_bugger(writeln(Return -> Result)), nonvar(Result)))).
-
-% Fallback clause if no corresponding Prolog predicate is found, calls the original Python function.
-from_python(_ModuleFunctionName, _TupleArgs, _LArgs, _KwArgs, 'call_original_function') :- !.
-
+from_python(_ModuleFunctionName, _TupleArgs, _LArgs, _KwArgs, 'call_original_function') :- 
+    % Fallback clause if no corresponding Prolog predicate is found, calls the original Python function. 
+    !.
 from_python(ModuleFunctionName, TupleArgs, LArgs, KwArgs, Return) :-
     format('No Prolog predicate found for: ~w. Calling original Python function.~n', [ModuleFunctionName]),
     call_python_original(ModuleFunctionName, TupleArgs, LArgs, KwArgs, Return).
 
-% Predicate to handle calling a predicate with a boolean return type.
+%!  call_ret_type(+Predicate, +ReturnType, +Return, -Result) is det.
+%
+%   Calls the provided Predicate and handles different return types.
+%   The Result is unified with the appropriate representation based on the ReturnType.
+%
+%   @arg Predicate The Prolog predicate to be called.
+%   @arg ReturnType The type of the return value ('bool', 'None', or other types).
+%   @arg Return The actual return value of the predicate (if applicable).
+%   @arg Result The processed result, which will be unified based on the ReturnType.
+%
+%   @example
+%     % Example for a boolean return type:
+%     ?- call_ret_type(member(1, [1, 2, 3]), bool, _, Result).
+%     Result = '@'(true).
+%
+%     % Example for a None return type:
+%     ?- call_ret_type(writeln('Hello!'), 'None', _, Result).
+%     Hello!
+%     Result = '@'(none).
+%
+%     % Example for a generic return type:
+%     ?- call_ret_type(is_list([1, 2]), _, [1, 2], Result).
+%     Result = [1, 2].
+%
 call_ret_type(Predicate, bool, _Return, Result) :- !,
+    % Predicate to handle calling a predicate with a boolean return type.
     (call(Predicate) -> ignore(Result = '@'('true')); ignore(Result = '@'('false'))).
-
-% Predicate to handle calling a predicate with a 'None' return type.
 call_ret_type(Predicate, 'None', _Return, Result) :- !,
+    % Predicate to handle calling a predicate with a 'None' return type.
     ignore(trace_failures(Predicate)) -> ignore(Result = '@'('none')).
-
-% Generic handler for other return types.
 call_ret_type(Predicate, _RetType, Return, Result) :- !,
+    % Generic handler for other return types.
     call(Predicate), ret_res(Return, Result).
 
-% Helper to process the return value.
-% ret_res(o3(_, ID, _), ID) :- nonvar(ID), !.
+%!  ret_res(+Return, -Result) is det.
+%
+%   A helper predicate that unifies the return value with the result. 
+%   This is typically used in scenarios where you want to pass the return 
+%   value through unchanged or extract a value from more complex structures.
+%
+%   @arg Return The value to unify.
+%   @arg Result The unified result.
+%
+%   @example
+%     ?- ret_res(5, Result).
+%     Result = 5.
+%
+%     % Example with a complex structure (e.g., extracting ID from an object):
+%     % ret_res(o3(_, ID, _), ID).
+%
 ret_res(ID, ID).
-
 
 %!  override_hyperonpy is det.
 %
@@ -135,10 +270,9 @@ override_hyperonpy :-
     load_metta_python_override,  % Ensure the override is loaded.
     py_call(metta_python_override:load_hyperon_overrides(), _), !.
 
-
 %!  test_override_hyperonpy is det.
 %
-%   Loads the Hyperon Python module by first applying the necessary overridees using `override_hyperonpy/0`.
+%   Loads the Hyperon Python module by first applying the necessary overrides using `override_hyperonpy/0`.
 %
 %   @example
 %     % Load the Hyperon module:
@@ -148,7 +282,6 @@ override_hyperonpy :-
 test_override_hyperonpy :-
     load_metta_python_override,  % Ensure the override is loaded.
     py_call(metta_python_override:test_hyperon_overrides(), _), !.
-
 
 %!  metta_python_override(-Content) is det.
 %
@@ -168,7 +301,6 @@ test_override_hyperonpy :-
 :- read_file_to_string('./metta_python_override.py', String, []),
    assertz(metta_python_override(String)), !.
 
-
 %!  did_load_metta_python_override is det.
 %
 %   A volatile predicate that acts as a flag indicating whether the Python override has been loaded.
@@ -181,10 +313,9 @@ test_override_hyperonpy :-
 :- dynamic(did_load_metta_python_override/0).
 :- volatile(did_load_metta_python_override/0).
 
-
 %!  load_metta_python_override is det.
 %
-%   Loads the Python override if it hasn't been loaded yet. The override content is retrieved
+%   Loads the Python override if it has not been loaded yet. The override content is retrieved
 %   from `metta_python_override/1`, and the Python module is loaded via `py_module/2`. Once
 %   loaded, `did_load_metta_python_override/0` is asserted to prevent reloading.
 %
@@ -194,8 +325,8 @@ test_override_hyperonpy :-
 %   true.
 %
 load_metta_python_override :-
-    did_load_metta_python_override, !.  % If already loaded, do nothing.
-
+    % If already loaded, do nothing.
+    did_load_metta_python_override, !.  
 load_metta_python_override :-
     % Retrieve the Python override content.
     metta_python_override(String),
@@ -205,8 +336,6 @@ load_metta_python_override :-
     assert(did_load_metta_python_override), !.
     % Try to load the module again, ignoring any errors.
     % ignore(notrace(with_safe_argv(catch(py_module(metta_python_override, String), _, true)))), !.
-
-
 
 %!  maybe_load_metta_python_override is det.
 %
@@ -228,8 +357,6 @@ maybe_load_metta_python_override :-
 % starts, and the second runs when the system is restored from a saved state.
 %:- initialization(maybe_load_metta_python_override).
 %:- initialization(maybe_load_metta_python_override, restore).
-
-
 
 %!  metta_python_patcher(-Content) is det.
 %
@@ -253,7 +380,6 @@ maybe_load_metta_python_override :-
     read_file_to_string(FilePath, String, []),
     asserta(metta_python_patcher(String)), !.
 
-
 %!  did_load_metta_python_patcher is det.
 %
 %   A volatile predicate that acts as a flag indicating whether the Python patcher has been loaded.
@@ -266,10 +392,9 @@ maybe_load_metta_python_override :-
 :- dynamic(did_load_metta_python_patcher/0).
 :- volatile(did_load_metta_python_patcher/0).
 
-
 %!  load_metta_python_patcher is det.
 %
-%   Loads the Python patcher if it hasn't been loaded yet. The patcher content is retrieved
+%   Loads the Python patcher if it has not been loaded yet. The patcher content is retrieved
 %   from `metta_python_patcher/1`, and the Python module is loaded via `py_module/2`. Once
 %   loaded, `did_load_metta_python_patcher/0` is asserted to prevent reloading.
 %
@@ -292,8 +417,6 @@ load_metta_python_patcher :-
     % Try to load the module again, ignoring any errors.
     %ignore(notrace(with_safe_argv(catch(py_module(metta_python_patcher, String), _, true)))), 
     !.
-
-
 
 %!  maybe_load_metta_python_patcher is det.
 %
@@ -332,7 +455,6 @@ patch_hyperonpy :-
     py_call(metta_python_patcher:patch_hyperonpy(), O), !,
     O = py{}.
 
-
 %!  load_hyperonpy is det.
 %
 %   Loads the Hyperon Python module by first applying the necessary patches using `patch_hyperonpy/0`.
@@ -344,7 +466,6 @@ patch_hyperonpy :-
 %
 load_hyperonpy :-
     patch_hyperonpy.
-
 
 %!  load_mettalogpy is det.
 %
@@ -360,7 +481,6 @@ load_mettalogpy :-
     py_exec("import mettalog"),
     nop(py_exec("import hyperon")).
 
-
 %!  mettalogpy_repl is det.
 %
 %   Starts the REPL (Read-Eval-Print Loop) for the `mettalog` Python module by invoking the `repl/0` function.
@@ -373,7 +493,6 @@ load_mettalogpy :-
 mettalogpy_repl :-
     catch_log(override_hyperonpy),
     catch_log(py_call(mettalog:repl())), !.
-
 hyperonpy_repl :-
     maplist(catch_log,
             [load_metta_python_proxy,
@@ -381,31 +500,80 @@ hyperonpy_repl :-
              load_mettalogpy,
              py_call(mettalog:repl())]).
 
-% Call the original Python function if there's no Prolog predicate
-call_python_original(ModuleFunctionName, TupleArgs, LArgs, KwArgs, Return) :- fail,
+%!  call_python_original(+ModuleFunctionName, +TupleArgs, +LArgs, +KwArgs, -Return) is det.
+%
+%   Calls the original Python function if no corresponding Prolog predicate exists.
+%
+%   @arg ModuleFunctionName The Python function (with module) to call.
+%   @arg TupleArgs Positional arguments tuple.
+%   @arg LArgs Additional positional arguments.
+%   @arg KwArgs Keyword arguments.
+%   @arg Return Result of the Python function call.
+%
+call_python_original(ModuleFunctionName, TupleArgs, LArgs, KwArgs, Return) :- 
+    fail,
     py_call(metta_python_override:call_python_original(ModuleFunctionName, TupleArgs, LArgs, KwArgs), Return).
 
-% Sample Prolog function for demonstration
+%!  my_module_add(+A, +B, +Unused, -R) is det.
+%
+%   A simple demonstration function that adds two numbers A and B, ignoring the third argument.
+%
+%   @arg A The first number to add.
+%   @arg B The second number to add.
+%   @arg Unused An unused argument (typically ignored in this function).
+%   @arg R The result of adding A and B.
+%
+%   @example
+%     ?- my_module_add(2, 3, _, R).
+%     R = 5.
+%
 my_module_add(A, B, _, R) :- R is A + B.
 
+%!  maybe_info(+Fmt, +Args) is det.
+%
+%   Conditionally logs information based on the provided format and arguments. 
+%   If no logging is needed, the first clause suppresses the output using a cut.
+%   Otherwise, the second clause formats and outputs the message.
+%
+%   @arg Fmt The format string used to structure the output.
+%   @arg Args The arguments to fill in the format string.
+%
+%   @example
+%     ?- maybe_info("Processing value: ~w", [Value]).
+%     Processing value: some_value
+%
 maybe_info(_Fmt, _Args) :- !.
 maybe_info(Fmt, Args) :- format(Fmt, Args).
 
-% Define factorial in Prolog
+%!  my_module_factorial(+N, -F) is det.
+%
+%   Computes the factorial of a non-negative integer N.
+%   The base case for 0 is defined as 1, and for positive integers,
+%   the factorial is computed recursively.
+%
+%   @arg N The non-negative integer for which the factorial is to be computed.
+%   @arg F The result of the factorial computation, where F is N!.
+%
+%   @example
+%     ?- my_module_factorial(5, F).
+%     F = 120.
+%
 my_module_factorial(0, 1).
-my_module_factorial(N, F) :-
-    N > 0,
-    N1 is N - 1,
-    my_module_factorial(N1, F1),
-    F is N * F1.
-
-
+my_module_factorial(N, F) :- N > 0,N1 is N - 1,my_module_factorial(N1, F1),F is N * F1.
 
 % ==================================================
 % **Prolog Translation of the Given File with Numbered Functions**
 % Module Declaration and Exports
 % ==================================================
 
+%!  no_module is det.
+%
+%   This enables Prolog to invoke multiple Python functions in Hyperon.
+%
+%   This predicate declares a module named `hyperonpy_prolog_translation`. It exports a large number of predicates 
+%   used for interacting with the Python `hyperonpy` library, including for managing atoms, bindings, spaces, 
+%   interpretation, and other related operations.
+%
 no_module:- module(hyperonpy_prolog_translation, [
     % Object-oriented helper predicates
     oo_new/3,          % 1
@@ -571,10 +739,15 @@ no_module:- module(hyperonpy_prolog_translation, [
     hyperonpy_load_ascii/3           % 130
 ]).
 
-% Declare dynamic predicates
+% Declares a dynamic predicate `metta_atom/2` 
 :- dynamic metta_atom/2.
-:- dynamic(o_f_v/3).
-:- dynamic(t_f_v/3).
+
+% Declares a dynamic predicate `o_f_v/3` 
+:- dynamic o_f_v/3.
+
+% Declares a dynamic predicate `t_f_v/3` 
+:- dynamic t_f_v/3.
+
 % ==================================================
 % **1. Object-Oriented Simulation in Prolog**
 % ==================================================
@@ -667,7 +840,7 @@ object_field_value_base(Object, FieldName, Value, GroundedType) :-
 % oo_new(+Type, +Attributes, -ObjectID) is det.
 %
 % Creates a new object with a unique ID based on its type.
-% Stores the object's state in o_f_v(ID, FieldName, Value).
+% Stores the object state in o_f_v(ID, FieldName, Value).
 %
 % Adjusted oo_new/3 for handling numbers and strings as ObjectID.
 oo_new(Type, Attributes, ObjectID) :- fail,  
@@ -733,7 +906,7 @@ oo_free(ObjectID) :-
 
 % oo_get(+Type, +ObjectID, +FieldName, -Value) is det.
 %
-% Retrieves the value of a specific field from an object's state.
+% Retrieves the value of a specific field from an object state.
 % If the field value is not directly stored for the object, it looks up the Type.
 %
 oo_get(Type, ObjectID, FieldName, Value) :- fail,
@@ -752,7 +925,7 @@ oo_get_else( Type, ObjectID, FieldName, Value, Else):-
 
 % oo_set(+ObjectID, +FieldName, +Value) is det.
 %
-% Sets the value of a specific field in an object's state.
+% Sets the value of a specific field in an object state.
 %
 oo_set(ObjectID, FieldName, Value) :-
     retractall(o_f_v(ObjectID, FieldName, _)),
@@ -1022,7 +1195,7 @@ hyperonpy_atom_match_atom(Atom1, Atom2, Bindings) :-
        (hyperonpy_bindings_new(BindingsObj),
         oo_get(bindings, BindingsObj, value, Bindings))
     ;
-        % If atoms don't match, no bindings
+        % If atoms do not match, no bindings
         hyperonpy_bindings_set_empty(Bindings)
     ).
 
@@ -1692,7 +1865,7 @@ example_usage_run :-
     % Suppose we have the following expressions to evaluate:
     % SExprParser contains expressions: [(add 1 2), (multiply 3 4), (define (foo bar)), (query (foo X))]
     
-    % Let's construct the SExprParser object:
+    % Construct the SExprParser object:
     % Create atoms for the expressions
     hyperonpy_atom_sym('add', AddFunc),
     hyperonpy_atom_gnd(1, 'Number', Num1),
@@ -1794,7 +1967,7 @@ hyperonpy_metta_eq(Metta1, Metta2, AreEqual) :-
 
 %!  hyperonpy_environment_config_dir(+EnvBuilder, -ConfigDir) is det.
 %
-%   Retrieves the environment's configuration directory.
+%   Retrieves the environment configuration directory.
 %
 hyperonpy_environment_config_dir(EnvBuilder, ConfigDir) :-
     oo_get(env_builder, EnvBuilder, config_dir, ConfigDir).
@@ -2365,7 +2538,7 @@ hyperonpy_run_context_init_self_module(RunContext, Space, ModuleName) :-
 %
 hyperonpy_run_context_load_module(RunContext, ModulePath, ModuleID) :-
     % Implement module loading logic
-    % For this example, we'll assume ModuleID is the ModulePath
+    % For this example, we will assume ModuleID is the ModulePath
     ModuleID = ModulePath,
     hyperonpy_run_context_import_dependency(RunContext, ModuleID).
 
@@ -2432,7 +2605,7 @@ hyperonpy_load_ascii(FilePath, Space, Success) :-
 
 %!  handle_method_call(+Type, +ID, +Attributes, +MethodCall, -Result) is det.
 %
-%   Handles method calls on objects by matching on the object's type and method.
+%   Handles method calls on objects by matching on the object type and method.
 %
 %   This predicate defines various method handlers that can be invoked on objects,
 %   depending on the object's type and the method called. Each method handler
