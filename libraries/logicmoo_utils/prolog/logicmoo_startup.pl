@@ -644,7 +644,7 @@ setup_hist0:-  '$toplevel':setup_history.
 :- system:use_module(library(unix)).
 :- system:use_module(library(uri)).
 :- system:use_module(library(url)).
-:- system:use_module(library(utf8)).
+%:- system:use_module(library(utf8)).
 :- system:use_module(library(uuid)).
 %w:- system:use_module(library(varnumbers)).
 :- system:use_module(library(vm)).
