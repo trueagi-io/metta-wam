@@ -10,7 +10,7 @@ Still a work-in-progress - we currently supports showing documentation on hover.
 
 Only tested with SWI-Prolog and version requirements are whatever is required for the MeTTalog project (9.3.9 or higher). SWI-Prolog as installed as part of MeTTalog installation.
 
-There are two components that need to be installed: the prolog package needs to be installed in SWI-Prolog (and `logicmoo_utils` if you don't have that already, and there are specific installation requirements for each editor. Instructions for VSCode are given below.
+There are two components that need to be installed: the prolog package needs to be installed in SWI-Prolog (and `logicmoo_utils` if you don't have that already), and there are specific installation requirements for each editor. Instructions for VSCode are given below.
 
 ## Installing the SWI-Prolog package(s)
 
