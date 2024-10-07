@@ -249,6 +249,7 @@ set_html_stream_encoding:- set_stream_encoding(utf8).
 
 as_html_encoded(Goal):- with_enc(utf8,Goal).
 
+with_enc(_Enc,Goal):-!, call(Goal). %dont
 with_enc(Enc,Goal):-
  stream_property(current_output,encoding(Was)),
  sccs(current_prolog_flag(encoding,EncWas),
@@ -262,6 +263,7 @@ with_enc(Enc,Goal):-
        set_prolog_flag(encoding,EncWas)).
 
 
+set_stream_encoding(_Text):-! %dont
 set_stream_encoding(Text):-
  %set_prolog_flag(encoding,Text),
  notrace((
