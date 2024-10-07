@@ -743,10 +743,10 @@ no_module:- module(hyperonpy_prolog_translation, [
 :- dynamic metta_atom/2.
 
 % Declares a dynamic predicate `o_f_v/3` 
-:- dynamic o_f_v/3.
+:- dynamic(o_f_v/3).
 
 % Declares a dynamic predicate `t_f_v/3` 
-:- dynamic t_f_v/3.
+:- dynamic(t_f_v/3).
 
 % ==================================================
 % **1. Object-Oriented Simulation in Prolog**
