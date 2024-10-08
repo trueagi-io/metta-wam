@@ -160,11 +160,48 @@ def load_file(runner, file):
             traceback.print_exc()
 
 class MeTTaVS(MeTTa):
+
+    def __init__(self, cmetta = None, space = None, env_builder = None):
+        super().__init__(cmetta=cmetta, space=space,env_builder=env_builder)
     def copy(self):
         return self
+    def run(self, program, flat=False):
+        """Runs the MeTTa code from the program string containing S-Expression MeTTa syntax"""
+        import hyperon
+        startWithBang = False
+        if str(program).startswith('!'):
+            program = program[1:]
+            startWithBang = True
+
+        from hyperon.atoms import Atom
+        parser = hyperon.base.SExprParser(program)
+        if startWithBang:
+            atom = parser.parse(self.tokenizer())
+            result = hp.metta_evaluate_atom(self.cmetta, atom.catom)
+            return [Atom._from_catom(catom) for catom in result]
+        else:
+            results = hp.metta_run(self.cmetta, parser.cparser)
+            self._run_check_for_error()
+            if flat:
+                return [Atom._from_catom(catom) for result in results for catom in result]
+            else:
+                return [[Atom._from_catom(catom) for catom in result] for result in results]
+    def evaluate_atom(self, atom):
+        import hyperon
+
+        from hyperon.atoms import Atom
+        result = hp.metta_evaluate_atom(self.cmetta, atom.catom)
+        self._run_check_for_error()
+        return [Atom._from_catom(catom) for catom in result]
+
+
+global runner, runnerAtom
+runnerAtom = None
+runner = None
 
 @register_atoms
 def my_imported_runner_atom():
+    global runner, runnerAtom
     # We don't use metta here, but we could...
     content = '''
         (: fact (-> Number Number))
@@ -259,13 +296,16 @@ class REPL:
                 if METTALOG_VERBOSE >= DEBUG:
                     traceback.print_exc()
 
-runnerAtom = None
 # Main function
 def main():
-    global runnerAtom
+    global runner, runnerAtom
+    import hyperon
+    if runner is None:
     cb = hyperon.Environment.custom_env(working_dir=os.path.dirname("."))
-    runner = hyperon.MeTTa(env_builder=cb)
-    runnerAtom = G(runner, AtomType.ATOM)
+        runner = MeTTaVS(env_builder=cb)
+    if runnerAtom is None:
+        atom = hyperon.atoms.AtomType.ATOM
+        runnerAtom = G(runner, atom)
 
     # Process command-line arguments and track if REPL or files were handled
     wont_need_repl = process_args(runner)
