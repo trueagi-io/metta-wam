@@ -1,5 +1,6 @@
 :- module(lsp_metta_parser, [
-    annotated_read_sexpr_list/4
+    annotated_read_sexpr_list/4,
+    annotated_get_blank_lines/3
 ]).
 
 annotated_position_inc(p(L,C0),p(L,C1),N) :- C1 is C0+N.
@@ -46,10 +47,9 @@ annotated_cont_sexpr(LCi,LC1,EndChar, Stream, Item) :-
 % @arg EndChar Character that denotes the end of the quoted string.
 % @arg String The string read from the stream.
 annotated_read_quoted_string(LC0, LC1, Stream, EndChar, String) :-
-    annotated_read_until_char(Stream, EndChar, Chars),  % Read characters until the ending quote.
-    uft8_count_to_utf16_count(Chars,Total,1),
+    annotated_read_until_char(LC0, LCa, Stream, EndChar, Chars),  % Read characters until the ending quote.
     string_chars(String,Chars),
-    annotated_position_inc(LC0,LC1,Total).
+    annotated_position_inc(LCa,LC1,1).
 
 %! annotated_read_quoted_symbol(+Stream:stream, +EndChar:atom, -Symbol:atom) is det.
 %
@@ -59,11 +59,10 @@ annotated_read_quoted_string(LC0, LC1, Stream, EndChar, String) :-
 % @arg EndChar Character that closes the quoted symbol.
 % @arg Symbol The symbol read from the stream.
 annotated_read_quoted_symbol(LC0, LC1, Stream, EndChar, Symbol) :-
-    annotated_read_until_char(Stream, EndChar, Chars),
+    annotated_read_until_char(LC0, LCa, Stream, EndChar, Chars),
     ((EndChar == '\'', Chars = [Char])
              -> Symbol='#\\'(Char); atom_chars(Symbol, Chars)),
-    uft8_count_to_utf16_count(Chars,Total,1),
-   annotated_position_inc(LC0,LC1,Total).
+    annotated_position_inc(LCa,LC1,1).
 
 %! annotated_read_until_char(+Stream:stream, +EndChar:atom, -Chars:list) is det.
 %
@@ -73,14 +72,28 @@ annotated_read_quoted_symbol(LC0, LC1, Stream, EndChar, Symbol) :-
 % @arg Stream Stream from which to read.
 % @arg EndChar Character that indicates the end of the reading.
 % @arg Chars List of characters read until the end character.
-annotated_read_until_char(Stream, EndChar, Chars) :-
+annotated_read_until_char(LC0, LC1, Stream, EndChar, Chars) :-
     get_char(Stream, Char),
     (   Char = end_of_file -> throw_stream_error(Stream, unexpected_end_of_file(annotated_read_until_char(EndChar)))
-    ;   Char = EndChar -> Chars = []
+    ;   Char = EndChar -> Chars = [],
+                        annotated_position_inc(LC0,LC1,1)
+    ;   char_type(Char,end_of_line) ->
+                        annotated_read_until_char(LC0,LCa,Stream,EndChar,RestChars),
+                        Chars = [Char | RestChars],
+                        annotated_post_newline(LCa,LC1)
     ;   Char = '\\' -> get_char(Stream, NextChar),
-                       annotated_read_until_char(Stream, EndChar, RestChars),
-                       Chars = [NextChar | RestChars]
-    ;   annotated_read_until_char(Stream, EndChar, RestChars),
+                        % need to advance for end of line even if it is escaped
+                        (char_type(NextChar,end_of_line) ->
+                            annotated_post_newline(LC0,LC1)
+                        ;
+                            uft8_count_to_utf16_count_single(NextChar,NextSize),
+                            Total is NextSize+1,
+                            annotated_position_inc(LC0,LC1,Total)),
+                        annotated_read_until_char(Stream, EndChar, RestChars),
+                        Chars = [NextChar | RestChars]
+    ;   annotated_read_until_char(LC0,LCa,Stream, EndChar, RestChars),
+        uft8_count_to_utf16_count_single(Char,Size),
+        annotated_position_inc(LCa,LC1,Size),
         Chars = [Char | RestChars]
     ).
 
@@ -148,16 +161,17 @@ annotated_skip_spaces_until_eol(LC0,LC1,Stream,EolFound) :-
     ;   (char_type(Char,white);char_type(Char,space);char_type(Char,cntrl)) ->
             (get_char(Stream, _),
             annotated_skip_spaces_until_eol(LC0,LC1,Stream,EolFound))  % Consume the space and continue.
-    ;   Char=end_of_file -> LC1=LC0,EolFound=true
+    ;   Char=end_of_file -> LC1=LC0,EolFound=false
     ;   (LC1=LC0,EolFound=false)  % Non-space character found; stop skipping.
     ), !.
 
-annotated_get_blank_lines(LC0,LCblank,LCLeftover,StartOfIncompleteLinePos,Stream) :-
-    seek(Stream,0,current,CurrentPos),
+annotated_get_blank_lines(LC0,LCStartOfBlank,Stream) :-
+    seek(Stream,0,current,StartOfLinePos),
     annotated_skip_spaces_until_eol(LC0,LC1,Stream,EolFound),
     (EolFound
-        -> (annotated_get_blank_lines(LC1,LCblank,LCLeftover,StartOfIncompleteLinePos,Stream))
-        ; (LCblank=LC0,LCLeftover=LC1,StartOfIncompleteLinePos=CurrentPos)).
+    -> (annotated_get_blank_lines(LC1,LCStartOfBlank,Stream))
+    ; (LCStartOfBlank=LC0,
+        seek(Stream,0,StartOfLinePos,_))). % found something, so go back to the start of the line
 
 %! annotated_read_single_line_comment(+Stream:stream) is det.
 %
@@ -171,6 +185,13 @@ uft8_count_to_utf16_count(Chars,Size,Additional) :-
     maplist(char_code,Chars,Codes),
     uft8_count_to_utf16_count_aux(Codes,Sum),
     Size is Sum+Additional.
+
+uft8_count_to_utf16_count_single(Char,Count) :-
+    char_code(Char,C),
+    (C<128 -> Count=1; % normal ASCII characters
+    C<192 -> Count=0; % x80-xBF do not count towards the total
+    C<240 -> Count=1; % xC0-xDF,xE0-xEF are the 2-3 byte UTF-8 characters, which only count as 2 UTF-16
+    Count=2). % xF0-xF7 are 4 byte UTF-8 which count as 2 UTF-16
 
 uft8_count_to_utf16_count_aux([],0).
 uft8_count_to_utf16_count_aux([C|T],Sum) :- C<128,!,uft8_count_to_utf16_count_aux(T,Sum0),Sum is Sum0+1.

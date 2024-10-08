@@ -132,19 +132,81 @@ iz_conz(B):- compound(B), B=[_|_].
 % non-singleton Variable
 is_nsVar(NS):- is_ftVar(NS), NS\=@= '$VAR'('_').
 
-into_list_args(A,AA):- into_list_args0(A,AAA),!,AAA=AA.
-into_list_args0(A,A):- is_ftVar(A).
-into_list_args0(A,A):- is_nsVar(A).
-into_list_args0([],[]):-!.
-into_list_args0(C,[C]):- \+ compound(C),!.
-into_list_args0([H|T],[H|T]):- \+ is_list(T),!.
-into_list_args0([H,List,A],HT):- H == u_assign,!,append(List,[A],HT),!.
-into_list_args0([H|T],[H|T]):-!.
-into_list_args0(u_assign(List, A),[H|T]):- append(List,[A],[H|T]),!.
-into_list_args0(holds(A),AA):- !, into_list_args(A,AA),!.
-into_list_args0(C,[F|Args]):- compound_name_arguments(C,F,Args),!.
+%!  into_list_args(+A, -AA) is det.
+%
+%   Converts a term A into a list AA according to specific rules based on the structure of A.
+%   The primary predicate, `into_list_args/2`, calls an auxiliary predicate `into_list_args0/2`
+%   to handle the actual conversion logic.
+%
+%   @arg A   The input term to be converted. This can be any term, including variables, lists,
+%            and compound terms.
+%   @arg AA  The output list form of the term A, constructed according to the rules in
+%            `into_list_args0/2`.
+%
+%   @example
+%     % Converting a simple variable.
+%     ?- into_list_args(X, AA).
+%
+%     % Converting a list.
+%     ?- into_list_args([1, 2, 3], AA).
+%
+%     % Converting a compound term.
+%     ?- into_list_args(foo(bar, baz), AA).
+%
+into_list_args(A, AA) :-
+    % Call the auxiliary predicate to convert A into an intermediate form AAA.
+    into_list_args0(A, AAA),
+    % Use the cut operator to commit to the first solution.
+    !,
+    % Unify the final result with AA.
+    AAA = AA.
 
+%!  into_list_args0(+A, -AA) is det.
+%
+%   Auxiliary predicate that performs the actual conversion of a term A into a list form AA.
+%   Handles various cases including variables, lists, and compound terms.
+%
+%   @arg A   The input term to be converted. This can be a free variable, a list, or a compound term.
+%   @arg AA  The output list representation of A, following specific transformation rules.
+%
+into_list_args0(A, A) :-
+    % If A is a free variable (per custom check is_ftVar/1), unify AA with A itself.
+    is_ftVar(A).
 
+into_list_args0(A, A) :-
+    % If A is a namespaced variable (per custom check is_nsVar/1), unify AA with A itself.
+    is_nsVar(A).
+
+into_list_args0([], []) :- !.
+    % An empty list remains an empty list.
+
+into_list_args0(C, [C]) :-
+    % If C is not a compound term (atom or atomic), convert it to a single-element list.
+    \+ compound(C), !.
+
+into_list_args0([H|T], [H|T]) :-
+    % If the tail T is not a list, treat the term as a single-level list.
+    \+ is_list(T), !.
+
+into_list_args0([H, List, A], HT) :-
+    % If the head is 'u_assign', append A to List to form HT.
+    H == u_assign, !,
+    append(List, [A], HT), !.
+
+into_list_args0([H|T], [H|T]) :- !.
+    % If none of the specific cases match, return the term as is.
+
+into_list_args0(u_assign(List, A), [H|T]) :-
+    % Handle the special compound term 'u_assign(List, A)' by converting it to a list.
+    append(List, [A], [H|T]), !.
+
+into_list_args0(holds(A), AA) :- !,
+    % For 'holds(A)' term, recursively call into_list_args/2 to convert A into list form AA.
+    into_list_args(A, AA), !.
+
+into_list_args0(C, [F|Args]) :-
+    % If C is a general compound term, split it into functor and arguments list.
+    compound_name_arguments(C, F, Args), !.
 
 compound_name_list(AsPred,FP,PredArgs):- var(AsPred),!,AsPred=[FP|PredArgs].
 compound_name_list(AsPred,FP,PredArgs):- iz_conz(AsPred),!,AsPred=[FP|PredArgs].
@@ -350,6 +412,7 @@ functs_to_preds(I,OO):-
    notrace(is_html->true; non_compat_io(color_g_mesg('yellow', (write_src(I),nl)))),
    must_det_ll(functs_to_preds0(I,OO)),!.
 
+% Atoms do not get modified
 functs_to_preds0(I,OO):- \+ compound(I),!,OO=I.
 %functs_to_preds0(I,OO):- data_term(I),!,OO=I.
 functs_to_preds0(I,OO):- \+ is_conz(I), once(into_list_args(I,II)), I\=@=II, functs_to_preds(II,OO),!.
@@ -999,15 +1062,44 @@ not_a_function_in_arg(Arg):- \+ is_list(Arg),!.
 
 
 
-f2p(HeadIs,RetResult,Convert, Converted):-
-  f2p(40,HeadIs,_ANY_,RetResult,Convert, Converted),!.
+%!  f2p(+HeadIs, -RetResult, +Convert, -Converted) is det.
+%
+%   Wrapper predicate for `f2p/6`, setting the initial Depth to 40.
+%   This predicate initiates the conversion process with a predefined depth limit.
+%
+%   @arg HeadIs    Input term representing the head of the operation or query.
+%   @arg RetResult The result to be returned after processing.
+%   @arg Convert   The conversion goal to be applied.
+%   @arg Converted The final converted result.
+%
+f2p(HeadIs, RetResult, Convert, Converted) :-
+    % Call `f2p/6` with Depth initialized to 40 and use a wildcard for `_ANY_`.
+    f2p(40, HeadIs, _ANY_, RetResult, Convert, Converted),!.
 
+%!  f2p(+Depth, +HeadIs, +RetType, -RetResult, +Convert, -Converted) is det.
+%
+%   Main predicate to perform a conversion operation with depth control.
+%   This predicate performs the conversion by first delegating to `f2q/6` for intermediate
+%   processing, then calling `convert_fromi/3` for the final conversion step.
+%
+%   @arg Depth     The current recursion depth. Controls how many recursive steps can be taken.
+%   @arg HeadIs    The head term indicating what is to be processed.
+%   @arg RetType   Specifies the type of return expected, though it's not used directly in this implementation.
+%   @arg RetResult The result generated from `f2q/6`.
+%   @arg Convert   The conversion goal or data to be applied to `HeadIs`.
+%   @arg Converted The final converted output after `convert_fromi/3`.
+%
+f2p(Depth, HeadIs, RetType, RetResult, Convert, Converted) :-
+    % Calculate the next depth level by decrementing the current depth.
+    Depth2 is Depth - 1,
+    % Call `f2q/6` to perform intermediate processing with the decremented depth.
+    f2q(Depth2, HeadIs, RetType, RetResult, Convert, Converting),
+    % Use `convert_fromi/3` to finalize the conversion with the result from `f2q/6`.
+    convert_fromi(Depth2, Converting, Converted),!.
 
-f2p(Depth,HeadIs,RetType,RetResult,Convert, Converted):-
-   Depth2 is Depth-1,
-  f2q(Depth2,HeadIs,RetType,RetResult,Convert, Converting),
-  convert_fromi(Depth2,Converting, Converted),!.
-f2p(_Depth,_HeadIs,_RetType,RetResult,Convert, eval(Convert,RetResult)).
+f2p(_Depth, _HeadIs, _RetType, RetResult, Convert, eval(Convert, RetResult)).
+    % If depth-controlled processing fails, fall back to returning an evaluation term.
+    % This represents a default behavior or a terminal case where evaluation directly uses `Convert`.
 
 
 convert_fromi(_Depth,Converted, Converted):- is_ftVar(Converted),!.
