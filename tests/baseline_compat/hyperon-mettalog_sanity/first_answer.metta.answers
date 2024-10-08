@@ -1,4 +1,1 @@
-[(: cde (Implication (OrLink C D) E))]
-[(: cde (Implication (OrLink C D) E)), (: a A), (: (DisjunctionIntroduction cde cde) (OrLink (Implication (OrLink C D) E) (Implication (OrLink C D) E))), (: (DisjunctionIntroduction cde a) (OrLink (Implication (OrLink C D) E) B)), (: abc (Implication (AndLink A B) C)), (: a B)]
-5.22user 0.01system 0:05.28elapsed 99%CPU (0avgtext+0avgdata 48272maxresident)k
-36168inputs+0outputs (251major+6895minor)pagefaults 0swaps
+timeout: failed to run command ‘time’: No such file or directory
