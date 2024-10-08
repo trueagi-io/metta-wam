@@ -73,8 +73,8 @@ create_venv() {
             rm /tmp/requirements.txt
         fi
         if [ -f "requirements.txt" ]; then
-            : 
-            #log 2 "Found local requirements.txt, installing packages..."
+            log 2 "Found local requirements.txt, installing packages..."
+            activate_venv
             pip install -r requirements.txt
         fi
     else
@@ -90,7 +90,10 @@ if is_inside_venv; then
     else
         log 2 "Script is running inside the expected virtual environment: $VENV_DIR"
     fi
-    pip install -q -r "$PARENT_DIR/requirements.txt"
+    if [ -f "$PARENT_DIR/requirements.txt" ]; then
+        log 3 "quietly checking if requirements are still met"
+        pip install -q -r "$PARENT_DIR/requirements.txt"
+    fi
 else
     log 2 "Script is not running inside a virtual environment."
     create_venv
