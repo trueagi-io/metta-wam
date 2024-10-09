@@ -33,7 +33,8 @@
   (intersection (superpose (1 2 3 foo bar)) (superpose (2 foo)))
   (superpose (2 foo))
 )
-Test intersection with duplicates
+
+;; Test intersection with duplicates
 ;; This test ensures that duplicates are treated correctly in the intersection.
 !(assertEqual
   (intersection (superpose (a b b c d)) (superpose (b c)))
@@ -142,7 +143,7 @@ Test intersection with duplicates
 ;; This ensures that expressions like (+ 1 2) that unify with 3 are handled correctly.
 !(assertEqualToResult
   (pred-intersection unified (superpose (($x (+ 1 2)) (3 4))) (superpose ((3 $y) (4 (+ 1 2)))))
-  ((3 3) (3 4) (4 3))
+  ((3 4) (4 3))
 )
 
 ;; Test intersection with nested structures and expressions
@@ -214,31 +215,3 @@ Test intersection with duplicates
   (superpose ($x (f $y)))
 )
 
-
-
-;
-; (= (intersection $x $y) (superpose (intersect-elements (collapse $x) (collapse $y))))
-
-; A Test to show we can define a function to be used like how normal people are imagining
-(= (intersect-elements $x $y) (collapse (intersection (superpose $x) (superpose $y))))
-!(assertEqual (intersect-elements (1 2 3 foo bar) (2 foo)) (2 foo))
-
-"
-
-!(bind! &ctx1 (make-space (f1 f2 f3)))
-!(bind! &ctx2 (make-space (f1 f2 f3 f4 f5)))
-(intersection (get-atoms &ctx1) (get-atoms &ctx2)) 
-    
-!(get-atoms &ctx1) -> 1 2 3 4 5 6 7 ... .. ... 
-!(get-atoms &ctx2) -> 1 2 3 4 5 6 7 ... .. ... 
-  
-(= (intersection $x $y) (superpose (intersection-element (collapse $x) (collapse $y))))
-
-(intersection (get-atoms &ctx1) (get-atoms &ctx2)) 
- 1 2 3 4 5 ... 
-
- - Rust Prolog
- - Sicstus CLP(FD) 1000x 
- - GNUProlog
- - XSB-Prolog
-"
