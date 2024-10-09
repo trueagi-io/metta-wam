@@ -1122,6 +1122,12 @@ eval_20(Eq,RetType,Depth,Self,['if-unify',X,Y,Then,Else],Res):- !,
      ;  eval_args(Eq,RetType,Depth,Self,Else,Res)).
 
 
+eval_20(Eq,RetType,Depth,Self,['if-decons-expr',HT,H,T,Then,Else],Res):- !,
+   (HT = [H|T],
+     -> eval_args(Eq,RetType,Depth,Self,Then,Res)
+     ;  eval_args(Eq,RetType,Depth,Self,Else,Res)).
+
+
 eval_20(Eq,RetType,Depth,Self,['if-equal',X,Y,Then,Else],Res):- !,
 
    ( \+ \+ (eval_args(Eq,'Bool',Depth,Self,['==',X,Y],TF),is_True(TF))

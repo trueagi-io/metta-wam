@@ -10,7 +10,7 @@
 (: Type Type)
 (: %Undefined% Type)
 (: Variable Type)
-(: if-decons (-> Atom Variable Variable Atom Atom Atom))
+; (: if-decons (-> Atom Variable Variable Atom Atom Atom))
 (: if-empty (-> Atom Atom Atom Atom))
 (: if-non-empty-expression (-> Atom Atom Atom Atom))
 (: if-not-reducible (-> Atom Atom Atom Atom))
