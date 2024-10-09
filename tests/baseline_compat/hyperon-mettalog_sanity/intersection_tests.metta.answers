@@ -1,1 +1,6 @@
-timeout: failed to run command ‘time’: No such file or directory
+[(Error (assertEqual (intersection (superpose (a b c d)) (superpose (c d e f))) (superpose (c d))) 
+Expected: [c, d]
+Got: []
+Missed result: c)]
+0.02user 0.00system 0:00.05elapsed 49%CPU (0avgtext+0avgdata 24552maxresident)k
+24280inputs+0outputs (145major+2901minor)pagefaults 0swaps
