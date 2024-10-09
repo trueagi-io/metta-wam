@@ -77,13 +77,13 @@ annotated_read_until_char(LC0, LC1, Stream, EndChar, Chars) :-
     (   Char = end_of_file -> throw_stream_error(Stream, unexpected_end_of_file(annotated_read_until_char(EndChar)))
     ;   Char = EndChar -> Chars = [],
                         annotated_position_inc(LC0,LC1,1)
-    ;   char_type(Char,end_of_line) ->
+    ;   Char = '\n' ->
                         annotated_read_until_char(LC0,LCa,Stream,EndChar,RestChars),
                         Chars = [Char | RestChars],
                         annotated_post_newline(LCa,LC1)
     ;   Char = '\\' -> get_char(Stream, NextChar),
                         % need to advance for end of line even if it is escaped
-                        (char_type(NextChar,end_of_line) ->
+                        (NextChar = '\n' ->
                             annotated_post_newline(LC0,LC1)
                         ;
                             uft8_count_to_utf16_count_single(NextChar,NextSize),
@@ -131,7 +131,7 @@ annotated_skip_spaces(LC0,LC1,Stream) :-
             (annotated_read_single_line_comment(Stream),
             annotated_post_newline(LC0,LC0a),
             annotated_skip_spaces(LC0a,LC1,Stream))  % If the character is ';', read a single-line comment.
-    ;   char_type(Char,end_of_line) ->
+    ;   Char = '\n' ->
             (get_char(Stream, _),
             annotated_post_newline(LC0,LC0a),
             annotated_skip_spaces(LC0a,LC1,Stream))
@@ -154,7 +154,7 @@ annotated_skip_spaces_until_eol(LC0,LC1,Stream,EolFound) :-
             (annotated_read_single_line_comment(LC0,LC0a,Stream),
             annotated_post_newline(LC0a,LC1),
             EolFound=true)
-    ;   char_type(Char,end_of_line) ->
+    ;   Char = '\n' ->
             (get_char(Stream, _),
             annotated_post_newline(LC0,LC1),
             EolFound=true)
