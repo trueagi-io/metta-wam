@@ -29,7 +29,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-09 17:24:03+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-09 22:15:50+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  prolog false)
 
@@ -95,9 +95,9 @@ Script started on 2024-10-09 17:24:03+00:00 [TERM="xterm-256color" TTY="/dev/pts
 P;HTML|
 ;                                           (= 2  "Missed result: ())]")
 P;HTML|
-;                                           (= 2  "0.03user 0.00system 0:00.04elapsed 100%CPU (0avgtext+0avgdata 24848maxresident)k")
+;                                           (= 2  "0.04user 0.00system 0:00.04elapsed 100%CPU (0avgtext+0avgdata 24908maxresident)k")
 P;HTML|
-;                                           (= 2  "0inputs+0outputs (0major+2840minor)pagefaults 0swaps")
+;                                           (= 2  "0inputs+0outputs (0major+2835minor)pagefaults 0swaps")
 P;HTML|
 ;                                          (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/call_tests.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/call_tests.metta)
 
@@ -113,7 +113,7 @@ Script started on 2024-10-09 17:24:03+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-METTALOG-SANITY.CALL-TESTS.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000182 secs. (182.00 microseconds) 
+; took 0.000209 secs. (208.97 microseconds) 
 
   !(assertEqualToResult 
     (call-string! "member(1,[1,2,3])") 
@@ -137,7 +137,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.CALL-TESTS.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000159 secs. (159.14 microseconds) 
+; took 0.000174 secs. (173.75 microseconds) 
 
   !(assertEqualToResult 
     (call-string! "member(1,[1,2,3])") ())
@@ -162,7 +162,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.CALL-TESTS.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000363 secs. (363.18 microseconds) 
+; took 0.000364 secs. (364.13 microseconds) 
 
   !(assertEqualToResult 
     (call-string! "member(X,[1,2,3])") 
@@ -193,7 +193,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.CALL-TESTS.04</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.38 milliseconds) 
+; took 0.001 secs. (1.34 milliseconds) 
 
   !(assertEqualToResult 
     (call-string! "member(X,[[1,2],[3,4]])") 
@@ -218,7 +218,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.CALL-TESTS.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000441 secs. (440.68 microseconds) 
+; took 0.000436 secs. (435.60 microseconds) 
 
   !(assertEqualToResult 
     (call-string! "member([X,Y],[[1,2],[3,4]])") 
@@ -248,7 +248,7 @@ Deterministic: ()
 
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.12 milliseconds) 
+; took 0.001 secs. (1.16 milliseconds) 
 
   !(assertEqualToResult 
     (call! parse_time "2006-12-08T15:29:44Z" iso_8601 1165591784.0) 
@@ -277,7 +277,7 @@ Deterministic: ()
 
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.71 milliseconds) 
+; took 0.002 secs. (1.75 milliseconds) 
 
   !(assertEqualToResult 
     (call! parse_time "2006-12-08T15:29:44Z" iso_8601 $x) 
@@ -307,7 +307,7 @@ Deterministic: ()
 
 ; 
 ; EVAL TEST
-; took 0.000986 secs. (985.81 microseconds) 
+; took 0.001 secs. (1.08 milliseconds) 
 
   !(assertEqualToResult 
     (call! parse_time "2006-12-08T15:29:44Z" iso_8601 X) 
@@ -352,7 +352,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 268,872 inferences, 0.047 CPU in 0.047 seconds (100% CPU, 5674118 Lips)
+>% 268,870 inferences, 0.048 CPU in 0.048 seconds (100% CPU, 5609245 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/call_tests.metta  0)
 <span class="ansi1"
@@ -387,7 +387,7 @@ Deterministic: ()
 P;HTML|
 ;           (set_option_value  compatio true)
 
-Script done on 2024-10-09 17:24:08+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-09 22:15:56+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

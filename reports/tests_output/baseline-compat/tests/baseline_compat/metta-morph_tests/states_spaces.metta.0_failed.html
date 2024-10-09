@@ -42,7 +42,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-09 17:30:37+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-09 22:22:37+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  prolog false)
 
@@ -164,7 +164,7 @@ Deterministic: (State  45 $_59730)
 >;; METTA-MORPH-TESTS.STATES-SPACES.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000207 secs. (206.77 microseconds) 
+; took 0.000208 secs. (208.03 microseconds) 
 
   !(assertEqualToResult 
     (get-state &FIFO) 
@@ -196,7 +196,7 @@ Deterministic: ()
 > a
 </span>; 
 ; EVAL TEST
-; took 0.001 secs. (1.08 milliseconds) 
+; took 0.001 secs. (1.30 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &WU a) 
@@ -226,7 +226,7 @@ Deterministic: ()
 >;; METTA-MORPH-TESTS.STATES-SPACES.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000200 secs. (199.93 microseconds) 
+; took 0.000205 secs. (204.83 microseconds) 
 
   !(assertEqualToResult 
     (match &WU $1 $1) 
@@ -290,7 +290,7 @@ Deterministic: ()
 > a
 </span>; 
 ; EVAL TEST
-; took 0.000647 secs. (647.44 microseconds) 
+; took 0.000633 secs. (633.41 microseconds) 
 
   !(assertEqualToResult 
     (remove-atom &WU a) 
@@ -315,7 +315,7 @@ Deterministic: ()
 >;; METTA-MORPH-TESTS.STATES-SPACES.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000320 secs. (320.10 microseconds) 
+; took 0.000350 secs. (349.83 microseconds) 
 
   !(assertEqual 
     (match &WU $1 $1) 
@@ -330,7 +330,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 240,237 inferences, 0.052 CPU in 0.052 seconds (100% CPU, 4651332 Lips)
+>% 240,237 inferences, 0.052 CPU in 0.053 seconds (99% CPU, 4589679 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/states_spaces.metta  0)
 <span class="ansi1"
@@ -365,7 +365,7 @@ Deterministic: ()
 P;HTML|
 ;           (set_option_value  compatio true)
 
-Script done on 2024-10-09 17:30:43+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-09 22:22:42+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
