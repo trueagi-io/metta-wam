@@ -93,13 +93,20 @@ predicate_help(_,Term,_,"") :- number(Term),!.
 predicate_help(_,')',_,"") :- !.
 predicate_help(_,']',_,"") :- !.
 predicate_help(_,'}',_,"") :- !.
+
+predicate_help(Path,Clause,Arity,S) :-  
+  user:(
+     current_predicate(predicate_help_hook/5),
+     predicate_help_hook(first,Path,Clause,Arity,S)),!.
+
 predicate_help(_,Term,Arity,S) :- metta_atom(_KB,['@doc',Term|Help]),
     %debug(server,"clause1 ~w",[Help]),
     format_metta_doc(Term,Arity,Help,S),!.
 predicate_help(Path,Clause,Arity,S) :-  
   user:(
-     current_predicate(predicate_help_fallback_hook/4),
-     predicate_help_fallback_hook(Path,Clause,Arity,S)),!.
+     current_predicate(predicate_help_hook/5),
+     predicate_help_hook(last,Path,Clause,Arity,S)),!.
+
 predicate_help(_,Term,_,S) :- format(string(S),"Unknown: ~w",[Term]).
 
 format_metta_doc(Term,Arity,[['@desc',Description], ['@params', Params], ['@return', Return]],String) :-
