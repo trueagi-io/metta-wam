@@ -273,12 +273,12 @@ py_is_module_unsafe(M):- catch((py_call(M, X),py_type(X, module)), _, fail).
 
 %py_is_py(_):- \+ py_is_enabled,!,fail.
 py_is_py(V):- var(V),!,get_attr(V, pyobj, _),!.
-py_is_py(V):- compound(V),!,fail.
-py_is_py(V):- is_list(V),!,fail.
-py_is_py(V):- atomic(V),!,\+ atom(V),py_is_object(V),!.
-py_is_py(V):- \+ callable(V),!,fail.
 py_is_py(V):- py_is_tuple(V),!.
 py_is_py(V):- py_is_py_dict(V),!.
+py_is_py(V):- atomic(V),!,\+ atom(V),py_is_object(V),!.
+py_is_py(V):- \+ callable(V),!,fail.
+py_is_py(V):- compound(V),!,fail.
+py_is_py(V):- is_list(V),!,fail.
 py_is_py(V):- py_is_list(V),!.
 
 %!  py_resolve(+V, -Py) is det.
@@ -1540,7 +1540,8 @@ py_dict(O,Py):- py_ocall(dict(O),Py),!.  % Otherwise, convert `O` to a Python di
 %   @arg L The Python list.
 %   @arg Nth The index of the element to retrieve.
 %   @arg E The resulting element at the specified index.
-py_nth(L,Nth,E):- py_obi(py_nth(L,Nth),E).
+py_nth(L,Nth,E):- py_mbi(py_nth(L,Nth),E).
+% py_nth(L,Nth,E):- py_obi(py_nth(L,Nth),E).
 
 %!  py_len(+L, -E) is det.
 %
