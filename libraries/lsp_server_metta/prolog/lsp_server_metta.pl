@@ -150,6 +150,12 @@ server_capabilities(
 
 :- dynamic loaded_source/1.
 
+% is not already an object?
+into_result_object(Help,Response):- \+ is_dict(Help),
+   Response = _{contents: _{kind: plaintext, value: Help}}.
+into_result_object(Help,Response):-  Help=Response,!.
+
+
 % messages (with a response)
 handle_msg("initialize", Msg,
            _{id: Id, result: _{capabilities: ServerCapabilities} }) :-
@@ -172,7 +178,7 @@ handle_msg("textDocument/hover", Msg, _{id: Id, result: Response}) :-
                 textDocument: _{uri: Doc}}, id: Id} :< Msg,
     atom_concat('file://', Path, Doc),
     (  help_at_position(Path, Line, Char0, Help)
-    -> Response = _{contents: _{kind: plaintext, value: Help}}
+    -> into_result_object(Help, Response)
     ;  Response = null).
 
 % CALL: textDocument/documentSymbol
