@@ -101,17 +101,9 @@
 % This library provides tools for generating and interacting with Prolog documentation.
 :- ensure_loaded(library(pldoc)).
 
-% Ensure that the `user_input` stream is treated as a terminal (TTY).
-% This is useful for interactive input, ensuring the system knows it's receiving input from a terminal.
-:- set_stream(user_input, tty(true)).
-
 % Set the encoding of the `current_input` stream to UTF-8.
 % This ensures that any input read from `current_input` (which is typically `user_input`) is interpreted as UTF-8.
 :- set_stream(current_input, encoding(utf8)).
-
-% Treat `current_input` as a terminal (TTY).
-% Even though `current_input` is usually linked to `user_input`, this ensures that it's explicitly treated as terminal input.
-:- set_stream(current_input, tty(true)).
 
 % Set the encoding for the `user_input` stream to UTF-8.
 % This makes sure that all input read from `user_input` is correctly handled as UTF-8 encoded text.
@@ -1932,6 +1924,7 @@ fix_message_hook:-
 
 :- ensure_loaded(metta_python).
 :- ensure_loaded(metta_corelib).
+:- ensure_loaded(metta_help).
 :- initialization(use_corelib_file).
 
 :- ignore(((
