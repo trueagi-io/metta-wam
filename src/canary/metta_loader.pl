@@ -608,7 +608,8 @@ translate_metta_file_to_datalog_io(Filename,Input,Output):- may_use_datalog,
     (Term==end_of_file->!;
     (once(((
       % if_t((0 is (Lineno mod 10000)),writeln(Term:Lineno)),
-      /*non_compat_io*/(
+      /*non_compat_io*/
+      (
           if_t((
              get_time(NTime),arg(1,LastTime,Last),
                 Elapsed is (NTime-Last), Elapsed > 4),
@@ -1180,8 +1181,8 @@ dvar_name(N,O):- integer(N),symbol_concat('_',N,O).
 dvar_name(N,O):- atom(N),atom_number(N,Num),dvar_name(Num,O),!.
 dvar_name(N,O):- \+ symbol(N),!,format(atom(A),'~w',[N]),dvar_name(A,O).
 dvar_name(N,O):- !, format(atom(A),'_~w',[N]),dvar_name(A,O).
-%dvar_name(  '',''):-!. % "$"
-%dvar_name('_','__'):-!. % "$_"
+%dvar_name(  '',''):-!. % $
+%dvar_name('_','__'):-!. % $_
 dvar_name(N,O):- symbol_concat('_',_,N),!,symbol_concat('_',N,O).
 dvar_name(N,O):- svar_fixvarname_dont_capitalize(N,O),!.
 dvar_name(N,O):- must_det_ll((atom_chars(N,Lst),maplist(c2vn,Lst,NList),symbolic_list_concat(NList,S),svar_fixvarname_dont_capitalize(S,O))),!.
@@ -1378,7 +1379,7 @@ generate_interpreter_stubs:-
    asserta(did_generate_interpreter_stubs),
    forall(metta_type('&corelib',Symb,Def),
         gen_interp_stubs('&corelib',Symb,Def)).
-
+        
 :- dynamic(metta_atom_asserted_deduced/2).
 :- multifile(metta_atom_asserted_deduced/2).
 metta_atom_asserted_deduced('&corelib', Term):- fail,
@@ -1395,6 +1396,5 @@ really_use_corelib_file(Dir,File):- absolute_file_name(File,Filename,[relative_t
  locally(nb_setval(may_use_fast_buffer,t),
    locally(nb_setval(suspend_answers,true),
      with_output_to(string(_),include_metta_directory_file('&corelib',Dir,Filename)))).
-
 
 
