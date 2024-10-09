@@ -1924,6 +1924,7 @@ fix_message_hook:-
 
 :- ensure_loaded(metta_python).
 :- ensure_loaded(metta_corelib).
+:- ensure_loaded(metta_help).
 :- initialization(use_corelib_file).
 
 :- ignore(((
