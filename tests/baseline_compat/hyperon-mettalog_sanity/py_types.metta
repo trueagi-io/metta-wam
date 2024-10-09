@@ -11,8 +11,10 @@
 !(assertNotEqual (py-list (a "b" c)) (py-list (a b c)))
 
 
-; We need py-chain for langchain, but we test with bitwise operation | (1 | 2 | 3 | 4 = 7)
+; We need py-chain for langchain, but we test with bitwise operation | (1 | 2 | 3 | 4 = 7) and logical OR
 !(assertEqual (py-chain (1 2 3 4)) (py-eval "7"))
+!(assertEqualToResult (py-chain (True False)) (True))
+!(assertEqualToResult (py-chain (False False)) (False))
 
 !(bind! &pow (py-atom math.pow (-> Number Number Number)))
 !(bind! &math (py-atom math))
