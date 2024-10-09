@@ -218,6 +218,9 @@
 			<F N="scripts/total_loonits.sh"/>
 		</Folder>
 		<Folder Name="src">
+			<Folder Name="canary">
+				<F N="src/canary/metta_help.pl"/>
+			</Folder>
 			<F
 				N="src/*.*"
 				Recurse="1"
