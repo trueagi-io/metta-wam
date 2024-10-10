@@ -334,7 +334,7 @@ repl_read_next(NewAccumulated, Expr) :-
     % Ensure there is some content in the input.
     length(Chars, Len), Len > 0,
     % Parse the metta expression from the accumulated input.
-    read_metta(Renew, Expr),!,
+    catch(read_metta(Renew, Expr),error(stream_error(_,_)),fail),!,
     add_history_string(Renew).
 
 % Read the next line of input, accumulate it, and continue processing.
