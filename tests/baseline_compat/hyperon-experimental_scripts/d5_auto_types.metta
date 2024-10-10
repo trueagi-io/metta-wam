@@ -50,7 +50,7 @@
 ; allows us to write code that analyzes badly typed expressions
 ; within MeTTa (e.g. for self-reflective genetic programming).
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(match &self (== SocratesIsHuman SamIsMortal) Really?)
+!(match &self (== SocratesIsHuman SamIsMortal) Really?)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -58,7 +58,7 @@
 ; by a function with type parameter:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; let binds without type checking, but errors when used
-(let $x (+ 5 "S") $x)
+!(let $x (+ 5 "S") $x)
 (: f (-> $t Number))
 !(assertEqualToResult
    (f (+ 5 "S"))
