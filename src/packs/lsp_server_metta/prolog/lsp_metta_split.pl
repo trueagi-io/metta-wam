@@ -4,6 +4,9 @@
     split_document_get_section_only/4,
     coalesce_text/2
 ]).
+:- use_module(lsp_metta_parser, [
+        annotated_get_blank_lines/3
+]).
 
 %!  split_document_get_section(+N, -M, +SplitText, -Pre, -This, -Post) is det.
 %
@@ -63,7 +66,7 @@ split_text_document_by_clause_aux(Stream,[]) :- at_end_of_stream(Stream),!.
 split_text_document_by_clause_get_empty_plus_clause(Stream,[]) :- at_end_of_stream(Stream),!.
 split_text_document_by_clause_get_empty_plus_clause(Stream,[]) :-
     seek(Stream,0,current,CurrentPos),
-    annotated_get_blank_lines(p(0,0),LCblank,LCLeftover,StartOfIncompleteLinePos,Stream).
+    annotated_get_blank_lines(p(0,0),LCblank,Stream).
     annotated_skip_spaces_until_eol(p(0,0),Pout,Stream,EolFound). %% TODO FIXME
 
 %annotated_read_sexpr_list(LC0,LC0,Stream,[]) :- at_end_of_stream(Stream),!.
