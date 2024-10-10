@@ -1193,7 +1193,7 @@
     (@param "A grounded atom referencing a Space")
     (@param "Pattern atom to be matched")
     (@param "Output pattern typically containing variables from the input pattern")))
-  (@return "If match was successfull it outputs pattern (third argument) with filled variables (if any were present in pattern) using matched pattern (second argument). Nothing - otherwise"))
+  (@return "If match was successful it outputs pattern (third argument) with filled variables (if any were present in pattern) using matched pattern (second argument). Nothing - otherwise"))
 (: match (-> Atom Atom Atom %Undefined%))
 ;; Implemented from Interpreters
 ;(ALT= (match $space $pattern $template)
@@ -1380,6 +1380,17 @@
   (@return (@desc "A Python list object that represents the given MeTTa Expression as a PyObject"))
 )
 (: py-list (-> Expression PyObject))
+;; Implemented from Interpreters
+
+;; Public MeTTa
+(@doc py-chain
+  (@desc "Chains together a list of Python objects contained in a MeTTa Expression, applying the Python vertical bar | OR operation jointly to all elements.")
+  (@params (
+    (@param (@desc "A MeTTa list of atoms, each embedding a Python object.")) 
+  ))
+  (@return (@desc "A MeTTa atom which embeds the result of applying the Python OR | operator to all elements of the list."))
+)
+(: py-chain (-> Expression PyObject))
 ;; Implemented from Interpreters
 
 ;; Public MeTTaLog
