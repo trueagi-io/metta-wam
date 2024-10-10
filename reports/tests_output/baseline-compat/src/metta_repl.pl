@@ -173,7 +173,7 @@ repl4 :-
     % The following command to reset terminal settings is commented out for now.
     % ignore(shell('stty sane ; stty echo')),
     % Read the next expression from the REPL input.
-    repl_read(Expr),
+    catch(repl_read(Expr),error(stream_error(_,E)),(writeln(E),throw(restart_reading))),
     % Check if the input is either `end_of_file` or empty on Windows; if so, throw `end_of_input`.
     (if_t((Expr == end_of_file; (is_win64, Expr == '')), notrace(throw(end_of_input)))),
     % Flush the terminal input/output to make sure the REPL is responsive.
