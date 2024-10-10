@@ -6,11 +6,10 @@
 
 is_documented(Symbol):- metta_atom(_KB,['@doc',Symbol|_]).
 
-:- dynamic loaded_file_time/2.
 symbol_resolve(Term,Resolved):- symbol(Term),symbol_concat(Resolved,'!',Term),!.
 symbol_resolve(Term,Resolved):- symbol(Term),symbol_concat(Term,'!',Resolved).
-%symbol_resolve(Term,Resolved):- symbol(Term),symbol_concat('metta-',Term,Resolved).
 
+:- dynamic loaded_file_time/2.
 
 predicate_help_hook(_,_Path,Term,_Arity,_S) :- \+ symbol(Term),!,fail.   
 predicate_help_hook(last,Path,Term,Arity,S) :- Path\=recurse(_), \+ is_documented(Term),
@@ -32,7 +31,7 @@ predicate_help_hook(last,Path, Term, _Arity, _S) :- atomic(Path),
         (format(user_error, 'File "~w" was already loaded at time ~w, skipping reload.~n', [Path, Time]),fail)
     ;   % Otherwise, try to load the file and remember the modification time
     (   asserta(loaded_file_time(Path, Time)),  % Remember that we loaded this file at Time
-        try_load_metta_file('&self', Path),
+        xref_metta_file('&self', Path),
         format(user_error,'File "~w" loaded successfully at time ~w.~n', [Path, Time]),!,
         fail
         %lsp_metta_utils:predicate_help(recurse(Path),Term,Arity,S)
@@ -51,12 +50,43 @@ predicate_help_hook(last,_Path,Term,Arity,S) :-
       kind: 'markdown',
       value: Str
       }
-  }.
+  },!.
+  %listing(lsp_metta_changes:doc_text/2).
 
 
 symbol_arity_help(Term,_Arity):- eval(['help!',Term],_).
 
 
-try_load_metta_file(Self, Path):-
+xref_metta_file(Self, Path):-
   with_option(exec, 'skip', 
-     load_metta(Self, Path)).
+    with_option(suspend_answers, true, 
+       xref_load_metta(Self, Path))).
+
+% xref_buffer_metta(Self, Path):-  load_metta(Self, Path), !.
+
+xref_buffer_metta(Self, Path):-
+     must_det_ll((
+     symbol(Path),
+     exists_file(Path),
+     % Convert the relative filename to an absolute path.
+     absolute_file_name(Path, Filename),
+     % Extract the directory path from the filename.
+     directory_file_path(Directory, _, Filename),
+     % Register the file in the Prolog knowledge base as being part of the Metta context.
+     pfcAdd_Now(metta_file(Self, Filename, Directory)),
+     % Suspend Prolog answers during the inclusion of the Metta file.
+     with_option(suspend_answers, true,
+     % Include the file and load its content into the directory.
+     with_cwd(Directory,must_det_ll(setup_call_cleanup(open(Path,read,In, [encoding(utf8)]),
+       must_det_ll( make_metta_file_buffer(false,Path,In)),
+       close(In))))))).
+
+xref_buffer_metta(_Self, Path):- doc_text_fallback(Path,Text),
+    to_text_string(Text,String),
+    open_string(String,In),
+    make_metta_file_buffer(false,Path,In).
+
+to_text_string(Text,String):-
+   findall(Str,sub_term(d(_,Str, _,_),Text),List),atomics_to_string(List,String),!.
+
+
