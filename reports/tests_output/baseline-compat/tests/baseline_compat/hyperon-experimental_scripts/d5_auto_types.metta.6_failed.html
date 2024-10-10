@@ -15,6 +15,7 @@
 .ansi1 { font-weight: bold; }
 .ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
+.ansi36 { color: #00aaaa; }
 .ansi38-013099040 { color: #0D6328; }
 .ansi38-013099040 { color: #0D6328; }
 .ansi38-013099040 { color: #0D6328; }
@@ -30,8 +31,10 @@
 .ansi38-013099040 { color: #0D6328; }
 .ansi38-013099040 { color: #0D6328; }
 .ansi38-013099040 { color: #0D6328; }
-.ansi38-255165000 { color: #FFA500; }
-.ansi38-255165000 { color: #FFA500; }
+.ansi38-255165009 { color: #FFA509; }
+.ansi38-255238088 { color: #FFEE58; }
+.ansi38-013099040 { color: #0D6328; }
+.ansi38-013099040 { color: #0D6328; }
 .ansi38-255165000 { color: #FFA500; }
 .ansi38-013099040 { color: #0D6328; }
 </style>
@@ -39,7 +42,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-10 23:12:39+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-10 23:40:23+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -387,7 +390,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D5-AUTO-TYPES.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000187 secs. (186.54 microseconds) 
+; took 0.000181 secs. (181.29 microseconds) 
 
   !(assertEqualToResult 
     (+ 5 "S") 
@@ -412,7 +415,7 @@ Deterministic: ((Error  (got  (88)) (expected  ((Error "S" BadType)))))
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D5-AUTO-TYPES.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000189 secs. (189.40 microseconds) 
+; took 0.000181 secs. (181.49 microseconds) 
 
   !(assertEqualToResult 
     (== 5 "S") 
@@ -465,7 +468,7 @@ Deterministic: ((Error  (got  (False)) (expected  ((Error "S" BadType)))))
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D5-AUTO-TYPES.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000571 secs. (570.55 microseconds) 
+; took 0.000665 secs. (665.17 microseconds) 
 
   !(assertEqualToResult 
     (== SocratesIsHuman SamIsMortal) 
@@ -491,7 +494,7 @@ Deterministic: ((Error  (got  (False)) (expected  ((Error SamIsMortal BadType)))
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D5-AUTO-TYPES.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000408 secs. (407.98 microseconds) 
+; took 0.000530 secs. (530.29 microseconds) 
 
   !(assertEqualToResult 
     (HumansAreMortal (Human Socrates)) 
@@ -522,7 +525,7 @@ Deterministic: ((Error  (got  ((HumansAreMortal (Human Socrates)))) (expected  (
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D5-AUTO-TYPES.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000294 secs. (294.18 microseconds) 
+; took 0.000354 secs. (353.77 microseconds) 
 
   !(assertEqualToResult 
     (collapse (+ 5 "S")) 
@@ -545,19 +548,54 @@ Deterministic: ((Error  (got  ((88))) (expected  (((Error "S" BadType))))))
 ;;; allows us to write code that analyzes badly typed expressions
 ;;; within MeTTa (e.g. for self-reflective genetic programming).
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-<span class="ansi38-255165000"
->  (match &self 
+<span class="ansi38-255165009"
+>;; In file as:  
+</span><span class="ansi1 ansi38-255238088"
+>  !(match &self 
     (== SocratesIsHuman SamIsMortal) Really?)
-</span>;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+</span>;; To unit test case:
+<span class="ansi38-013099040"
+>  !(assertEqualToResult 
+    (match &self 
+      (== SocratesIsHuman SamIsMortal) Really?) 
+    (()))
+
+</span>[
+
+;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D5-AUTO-TYPES.06"
+>;; HYPERON-EXPERIMENTAL-SCRIPTS.D5-AUTO-TYPES.06</h3>
+; 
+; EVAL TEST
+; took 0.000131 secs. (131.43 microseconds) 
+
+  !(assertEqualToResult 
+    (match &self 
+      (== SocratesIsHuman SamIsMortal) Really?) 
+    (()))
+
+<span class="ansi36"
+>  (loonit_success  
+    (equal_enough_for_test  () 
+      (())))
+</span>
+Deterministic: ()
+()]
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; internal call doesn't pass type check even if wrapped
 ;;; by a function with type parameter:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; let binds without type checking, but errors when used
-<span class="ansi38-255165000"
->  (let $x 
+<span class="ansi38-013099040"
+>  !(let $x 
     (+ 5 "S") $x)
-</span><span class="ansi38-255165000"
+
+</span>[
+
+Deterministic: 88
+$x = 88
+88]
+<span class="ansi38-255165000"
 >  (: f 
     (-> $t Number))
 </span><span class="ansi38-013099040"
@@ -567,11 +605,11 @@ Deterministic: ((Error  (got  ((88))) (expected  (((Error "S" BadType))))))
 
 </span>[
 
-;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D5-AUTO-TYPES.06"
->;; HYPERON-EXPERIMENTAL-SCRIPTS.D5-AUTO-TYPES.06</h3>
+;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D5-AUTO-TYPES.07"
+>;; HYPERON-EXPERIMENTAL-SCRIPTS.D5-AUTO-TYPES.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000765 secs. (765.07 microseconds) 
+; took 0.000872 secs. (871.55 microseconds) 
 
   !(assertEqualToResult 
     (f (+ 5 "S")) 
@@ -586,14 +624,14 @@ Deterministic: ((Error  (got  ((88))) (expected  (((Error "S" BadType))))))
 Deterministic: ((Error  (got  ((f 88))) (expected  ((Error "S" BadType)))))
 ((Error  (got  ((f 88))) (expected  ((Error "S" BadType)))))]
 <span class="ansi32"
->% 306,473 inferences, 0.070 CPU in 0.070 seconds (100% CPU, 4393123 Lips)
+>% 331,204 inferences, 0.073 CPU in 0.073 seconds (100% CPU, 4547784 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/d5_auto_types.metta  0)
 <span class="ansi1"
 >LoonIt Report
 </span>------------
 <span class="ansi32"
->Successes: 0
+>Successes: 1
 </span><span class="ansi31"
 >Failures: 6
 </span><br/> <a href="#" onclick="window.history.back(); return false;"
@@ -721,7 +759,7 @@ Deterministic: ((Error  (got  ((f 88))) (expected  ((Error "S" BadType)))))
 P;HTML|
 ;           (maybe_halt  7)
 
-Script done on 2024-10-10 23:12:44+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-10 23:40:29+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

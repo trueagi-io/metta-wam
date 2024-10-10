@@ -172,23 +172,40 @@ grovel_some_help(Term, _) :-
 about_term([Op, Atom | _], Term):- fail, Op==':', is_documented(Term), !, Atom\==Term, % Dont reshow types
     sub_var(Term, Atom),  !. % Check if the term is a subterm of the atom.
 about_term([_,[Atom|_]|_],Term):- sub_var(Term,Atom),!.
-about_term([Atom|_],Term):- sub_var(Term,Atom),!.
+about_term([Atom|_],Term):- \+ promiscuous_symbol(Term), sub_var(Term,Atom),!.
+%promiscuous_symbol(+Term) is semidet.
+promiscuous_symbol(Term):- var(Term),!,fail.
+promiscuous_symbol('=').
+promiscuous_symbol(':').
 
 %!  write_src_xref(+Src) is det.
 %
 %   Outputs source code or its reference based on the nesting of the source.
 %
 %   @arg Src The source code or reference to output.
-write_src_xref(Src):- % fail, 
+write_src_xref(Src):-
+  write_src_xref1(Src),
+  maybe_link_xref(Src).
+write_src_xref1(Src):- % fail, 
     very_nested_src(Src), !,  % Check if the source is complex.
     wots(S, pp_sexi_l(Src)), write(S).  % Write the full source content if it's complex.
-write_src_xref(Src):- 
+write_src_xref1(Src):- 
     write_src_woi(Src).  % Otherwise, write the source content without additional information.
 % Check for deeply nested lists
 very_nested_src([_, _ | Src]):- is_list(Src), 
     member(M, Src), is_list(M), 
     member(E, M), is_list(E), 
     member(I, E), is_list(I), !.  
+maybe_link_xref(What):- 
+  ignore(once((metta_file_buffer(_,What0,_,File,Loc),
+     alpha_unify(What,What0),
+     write_file_link(File,Loc)))).
+
+write_file_link(File,Position):- 
+  stream_position_data(line_count, Position, Line),  % Extract the line number.
+  %stream_position_data(line_position, Position, Col),  % Extract the column number.
+  %stream_position_data(char_count, Position, CharPos),  % Extract the character position.
+  format('~n```~n[~w:~w](file://~w#L~w)~n```lisp~n',[File,Line,File,Line]).
 
 %!  skip_xref_atom(+Atom) is semidet.
 %

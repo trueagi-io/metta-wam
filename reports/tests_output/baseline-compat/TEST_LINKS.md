@@ -9,11 +9,11 @@
 |  54|1   2|  56|   94% | tests output -compat I  anti-regression | tests_output/baseline-compat/tests/baseline_compat/anti-regression |
 |  90|    0|  90|  100% | tests output -compat I  metta-morph tests | tests_output/baseline-compat/tests/baseline_compat/metta-morph_tests |
 | 102|    4| 106|   96% | tests output -compat I  quick  | tests_output/baseline-compat/tests/baseline_compat/quick |
-| 198|   24| 222|   89% | tests output -compat I  hyperon-experimental  | tests_output/baseline-compat/tests/baseline_compat/hyperon-experimental_scripts |
+| 199|   24| 223|   89% | tests output -compat I  hyperon-experimental  | tests_output/baseline-compat/tests/baseline_compat/hyperon-experimental_scripts |
 | 247|5  17| 264|   91% | tests output -compat I  hyperon-mettalog sanity | tests_output/baseline-compat/tests/baseline_compat/hyperon-mettalog_sanity |
-| 713|6  48| 761|   92% | tests output -compat I         | tests_output/baseline-compat/tests/baseline_compat |
-| 713|6  48| 761|   92% | tests output -compat           | tests_output/baseline-compat/ |
-| 713|6  48| 761|   92% | tests output -compat tests     | tests_output/baseline-compat/tests |
+| 714|6  48| 762|   92% | tests output -compat I         | tests_output/baseline-compat/tests/baseline_compat |
+| 714|6  48| 762|   92% | tests output -compat           | tests_output/baseline-compat/ |
+| 714|6  48| 762|   92% | tests output -compat tests     | tests_output/baseline-compat/tests |
 
 
 
@@ -50,7 +50,7 @@
 |    11 |     0 |    100%  | [b4_nondeterm.metta](https://logicmoo.org/public/metta/reports/tests_output/baseline-compat/tests/baseline_compat/hyperon-experimental_scripts/b4_nondeterm.metta.html) |
 |     2 |     3 |     40%  | [g1_docs.metta](https://logicmoo.org/public/metta/reports/tests_output/baseline-compat/tests/baseline_compat/hyperon-experimental_scripts/g1_docs.metta.html) |
 |    21 |     2 |     91%  | [c1_grounded_basic.metta](https://logicmoo.org/public/metta/reports/tests_output/baseline-compat/tests/baseline_compat/hyperon-experimental_scripts/c1_grounded_basic.metta.html) |
-|     0 |     6 |      0%  | [d5_auto_types.metta](https://logicmoo.org/public/metta/reports/tests_output/baseline-compat/tests/baseline_compat/hyperon-experimental_scripts/d5_auto_types.metta.html) |
+|     1 |     6 |     14%  | [d5_auto_types.metta](https://logicmoo.org/public/metta/reports/tests_output/baseline-compat/tests/baseline_compat/hyperon-experimental_scripts/d5_auto_types.metta.html) |
 |    20 |     1 |     95%  | [f1_imports.metta](https://logicmoo.org/public/metta/reports/tests_output/baseline-compat/tests/baseline_compat/hyperon-experimental_scripts/f1_imports.metta.html) |
 |     7 |     0 |    100%  | [a1_symbols.metta](https://logicmoo.org/public/metta/reports/tests_output/baseline-compat/tests/baseline_compat/hyperon-experimental_scripts/a1_symbols.metta.html) |
 |    19 |     0 |    100%  | [d4_type_prop.metta](https://logicmoo.org/public/metta/reports/tests_output/baseline-compat/tests/baseline_compat/hyperon-experimental_scripts/d4_type_prop.metta.html) |
@@ -71,7 +71,7 @@
 |    10 |     2 |     83%  | [e2_states.metta](https://logicmoo.org/public/metta/reports/tests_output/baseline-compat/tests/baseline_compat/hyperon-experimental_scripts/e2_states.metta.html) |
 |    26 |     1 |     96%  | [d2_higherfunc.metta](https://logicmoo.org/public/metta/reports/tests_output/baseline-compat/tests/baseline_compat/hyperon-experimental_scripts/d2_higherfunc.metta.html) |
 |       |       |          |                                                                                |
-|   198 |    24 |     89%  | Total                                                                          |
+|   199 |    24 |     89%  | Total                                                                          |
 |       |       |          |                                                                                |
 
 
@@ -236,11 +236,11 @@
 |  54|1   2|  56|   94% | tests output -compat I  anti-regression | tests_output/baseline-compat/tests/baseline_compat/anti-regression |
 |  90|    0|  90|  100% | tests output -compat I  metta-morph tests | tests_output/baseline-compat/tests/baseline_compat/metta-morph_tests |
 | 102|    4| 106|   96% | tests output -compat I  quick  | tests_output/baseline-compat/tests/baseline_compat/quick |
-| 198|   24| 222|   89% | tests output -compat I  hyperon-experimental  | tests_output/baseline-compat/tests/baseline_compat/hyperon-experimental_scripts |
+| 199|   24| 223|   89% | tests output -compat I  hyperon-experimental  | tests_output/baseline-compat/tests/baseline_compat/hyperon-experimental_scripts |
 | 247|5  17| 264|   91% | tests output -compat I  hyperon-mettalog sanity | tests_output/baseline-compat/tests/baseline_compat/hyperon-mettalog_sanity |
-| 713|6  48| 761|   92% | tests output -compat I         | tests_output/baseline-compat/tests/baseline_compat |
-| 713|6  48| 761|   92% | tests output -compat           | tests_output/baseline-compat/ |
-| 713|6  48| 761|   92% | tests output -compat tests     | tests_output/baseline-compat/tests |
+| 714|6  48| 762|   92% | tests output -compat I         | tests_output/baseline-compat/tests/baseline_compat |
+| 714|6  48| 762|   92% | tests output -compat           | tests_output/baseline-compat/ |
+| 714|6  48| 762|   92% | tests output -compat tests     | tests_output/baseline-compat/tests |
 
 
 |Pass|EFail|Totl|Percent| Module | Directory |
@@ -250,12 +250,12 @@
 |  90|    0|  90|  100% | tests output -compat I  metta-morph tests | tests_output/baseline-compat/tests/baseline_compat/metta-morph_tests |
 |   4|2   0|   4|   66% | tests output -compat I  hyperon-mettalog sanity synth buffer | tests_output/baseline-compat/tests/baseline_compat/hyperon-mettalog_sanity/synth_buffer |
 | 247|5  17| 264|   91% | tests output -compat I  hyperon-mettalog sanity | tests_output/baseline-compat/tests/baseline_compat/hyperon-mettalog_sanity |
-| 198|   24| 222|   89% | tests output -compat I  hyperon-experimental  | tests_output/baseline-compat/tests/baseline_compat/hyperon-experimental_scripts |
+| 199|   24| 223|   89% | tests output -compat I  hyperon-experimental  | tests_output/baseline-compat/tests/baseline_compat/hyperon-experimental_scripts |
 |   4|    0|   4|  100% | tests output -compat I  anti-regression issues metta-wam-issue-145 | tests_output/baseline-compat/tests/baseline_compat/anti-regression/issues/metta-wam-issue-145 |
 |   4|    0|   4|  100% | tests output -compat I  anti-regression issues metta-wam-issue-116 | tests_output/baseline-compat/tests/baseline_compat/anti-regression/issues/metta-wam-issue-116 |
 |   8|    0|   8|  100% | tests output -compat I  anti-regression issues | tests_output/baseline-compat/tests/baseline_compat/anti-regression/issues |
 |  54|1   2|  56|   94% | tests output -compat I  anti-regression | tests_output/baseline-compat/tests/baseline_compat/anti-regression |
-| 713|6  48| 761|   92% | tests output -compat I         | tests_output/baseline-compat/tests/baseline_compat |
-| 713|6  48| 761|   92% | tests output -compat tests     | tests_output/baseline-compat/tests |
-| 713|6  48| 761|   92% | tests output -compat           | tests_output/baseline-compat/ |
+| 714|6  48| 762|   92% | tests output -compat I         | tests_output/baseline-compat/tests/baseline_compat |
+| 714|6  48| 762|   92% | tests output -compat tests     | tests_output/baseline-compat/tests |
+| 714|6  48| 762|   92% | tests output -compat           | tests_output/baseline-compat/ |
 [?7h
