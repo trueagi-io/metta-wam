@@ -627,6 +627,7 @@ not_compat_io(G):- not_compatio(G).
 non_compat_io(G):- not_compatio(G).
 
 
+trace_on_pass:- false.
 trace_on_fail:-     option_value('trace-on-fail',true).
 trace_on_overflow:- option_value('trace-on-overflow',true).
 doing_repl:-     option_value('doing_repl',true).
