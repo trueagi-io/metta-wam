@@ -332,6 +332,7 @@ switch_to_mettalog:-
   set_option_value('load',verbose),
   set_option_value('log',true),
   %set_option_value('test',true),
+  forall(mettalog_option_value_def(Name, DefaultValue),set_option_value(Name, DefaultValue)),
   set_output_stream.
 
 switch_to_mettarust:-
@@ -340,6 +341,7 @@ switch_to_mettarust:-
   set_option_value('compat',true),
   set_option_value('log',false),
   set_option_value('test',false),
+  forall(rust_option_value_def(Name, DefaultValue),set_option_value(Name, DefaultValue)),
   set_output_stream.
 
 
@@ -364,19 +366,34 @@ current_self(Self):- ((nb_current(self_space,Self),Self\==[])->true;Self='&self'
 
 % Define the option and call help documentation
 option_value_def(Name, DefaultValue) :-
-    option_value_name_default_type_help(Name, DefaultValue, _, _, _).
+    all_option_value_name_default_type_help(Name, DefaultValue, _, _, _).
+
+rust_option_value_def(Name, DefaultValue) :-
+    all_option_value_name_default_type_help(Name, MettaLogDV,[DefaultValue|_], _Cmt,_Topic),
+    MettaLogDV \= DefaultValue.
+
+mettalog_option_value_def(Name, MettaLogDV) :-
+    all_option_value_name_default_type_help(Name, MettaLogDV,[DefaultValue|_], _Cmt,_Topic),
+    MettaLogDV \= DefaultValue.
+
+
+:- discontiguous(option_value_name_default_type_help/5).
+:- discontiguous(all_option_value_name_default_type_help/5).
+
+all_option_value_name_default_type_help(Name, DefaultValue, Type, Cmt, Topic):-
+ option_value_name_default_type_help(Name, DefaultValue, Type, Cmt, Topic).
 
 % Compatibility and Modes
 option_value_name_default_type_help('compat', false, [true, false], "Enable all compatibility with MeTTa-Rust", 'Compatibility and Modes').
 option_value_name_default_type_help('compatio', false, [true, false], "Enable IO compatibility with MeTTa-Rust", 'Compatibility and Modes').
-%option_value_name_default_type_help('repl', auto, [false, true, auto], "Enter REPL mode (auto means true unless a file argument was supplied)", 'Execution and Control').
-%option_value_name_default_type_help('prolog', false, [false, true], "Enable or disable Prolog REPL mode", 'Compatibility and Modes').
+all_option_value_name_default_type_help('repl', auto, [false, true, auto], "Enter REPL mode (auto means true unless a file argument was supplied)", 'Execution and Control').
+all_option_value_name_default_type_help('prolog', false, [false, true], "Enable or disable Prolog REPL mode", 'Compatibility and Modes').
 option_value_name_default_type_help('devel', false, [false, true], "Developer mode", 'Compatibility and Modes').
-%option_value_name_default_type_help('skip-exec', noskip, [noskip, skip], "Controls execution during script loading: noskip or skip (don't-skip-include/binds) vs skip-all", 'Execution and Control').
+all_option_value_name_default_type_help('exec', noskip, [noskip, skip], "Controls execution during script loading: noskip or skip (don't-skip-include/binds) vs skip-all", 'Execution and Control').
 
 % Resource Limits
 option_value_name_default_type_help('stack-max', 500, [inf,1000,10_000], "Maximum stack depth allowed during execution", 'Resource Limits').
-%option_value_name_default_type_help('maximum-result-count', inf, [inf,1,2,3,10], "Set the maximum number of results, infinite by default", 'Miscellaneous').
+all_option_value_name_default_type_help('maximum-result-count', inf, [inf,1,2,3,10], "Set the maximum number of results, infinite by default", 'Miscellaneous').
 option_value_name_default_type_help('limit', inf, [inf,1,2,3,10], "Set the maximum number of results, infinite by default", 'Miscellaneous').
 option_value_name_default_type_help('initial-result-count', 10, [inf,10], "For MeTTaLog log mode: print the first 10 answers without waiting for user", 'Miscellaneous').
 
@@ -396,8 +413,8 @@ option_value_name_default_type_help('tabling', auto, [auto, true, false], "When 
 
 % Output and Logging
 option_value_name_default_type_help('log', false, [false, true], "Enable or disable logging", 'Output and Logging').
-%option_value_name_default_type_help('html', false, [false, true], "Generate HTML output", 'Output and Logging').
-%option_value_name_default_type_help('python', true, [true, false], "Enable Python functions", 'Output and Logging').
+all_option_value_name_default_type_help('html', false, [false, true], "Generate HTML output", 'Output and Logging').
+all_option_value_name_default_type_help('python', true, [true, false], "Enable Python functions", 'Output and Logging').
 option_value_name_default_type_help('output', './', ['./'], "Set the output directory", 'Output and Logging').
 option_value_name_default_type_help('exeout', './Sav.gitlab.MeTTaLog', [_], "Output executable location", 'Miscellaneous').
 option_value_name_default_type_help('halt', false, [false, true], "Halts execution after the current operation", 'Miscellaneous').
