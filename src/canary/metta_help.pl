@@ -12,7 +12,7 @@
 metta_atom_xref(Atom):- 
     metta_file_buffer(+, Atom, NamedVarsList, _Filename, _LineCount),  % Retrieve the atom from a Metta file buffer.
     \+ clause(metta_atom_asserted(_, Atom), true),  % Ensure the atom has not been asserted already.
-    maybe_set_var_names(NamedVarsList).  % Set variable names based on the named variables list.
+    nop(maybe_set_var_names(NamedVarsList)).  % Set variable names based on the named variables list.
 metta_atom_xref(Atom):- 
     clause(metta_atom_asserted(_, Atom), true).  % Check if the atom has been asserted in the knowledge base.
 
@@ -54,24 +54,22 @@ predicate_help_hook(first, Path, _Term, _Arity, _S):-
     fail.
 
 predicate_help_hook(first, _, Term, Arity, S):-     
-    term_arity_def_string(Term, Arity, Str),  % Generate a term definition string based on its arity.
+    all_info_string(Term, Arity, Str),  % Generate a term definition string based on its arity.
     Str \= "",  % Ensure the definition string is not empty.
     atom_length(Str, Len), 
-    Len > 10,  % Ensure the definition string has a minimum length.
+    Len > 10,  % Ensure the definition string has a minimum length.    
     maybe_markdown(Str, S).
 
 predicate_help_hook(last, _, Term, Arity, S):- 
    (get_type(Term, Type) -> true; Type = unknownType),  % Get the type of the term or default to 'unknownType'.
-    term_arity_def_string(Term, Arity, DS),  % Generate a term definition string.
-    format(string(Str), "*Type ~w*: ~w (~w)
-```
-~w", [Type, Term, Arity, DS]),  % Format the output as a help string.
+    all_info_string(Term, Arity, DS),  % Generate a term definition string.
+    format(string(Str), "*Type ~w*: ~w (~w)~n~w", [Type, Term, Arity, DS]),  % Format the output as a help string.
     maybe_markdown(Str, S),!.
 
 
 maybe_markdown(Str, S):- 
     S = _{ contents: _{
-            kind: 'plaintext',  % Define the help content format as markdown text.
+            kind: 'markdown',  % Define the help content format as markdown text.
             value: Str  % Store the formatted help string.
         } }, !.
 
@@ -122,19 +120,20 @@ symbol_resolve(Term, Resolved):-
     symbol(Term),  % Ensure the term is a valid symbol.
     symbol_concat(Term, '!', Resolved).  % Try to resolve the symbol by adding a '!' if missing.
 
-%!  term_arity_def_string(+Term, +Arity, -S) is det.
+%!  all_info_string(+Term, +Arity, -S) is det.
 %
 %   Generates a formatted string describing the term and its arity.
 %
 %   @arg Term  The term (predicate) for which the description is generated.
 %   @arg Arity The arity of the predicate.
 %   @arg S     The resulting string description.
-term_arity_def_string(Term, Arity, S):- 
+all_info_string(Term, Arity, Str):- 
     with_output_to(string(S), grovel_all_info(Term, Arity)),  % Generate a string output for the term's arity help.
     string(S),  % Ensure that the output is a valid string.
     S \= "",  % Ensure that the string is not empty.
     atom_length(S, Len), 
-    Len > 1.  % Ensure the string has a minimum length.
+    Len > 1, % Ensure the string has a minimum length.
+    format(string(Str), "```lisp~n~w~n```", [S]). 
 
 %!  grovel_all_info(+Term, +Arity) is det.
 %
@@ -153,7 +152,7 @@ grovel_all_info(Term, Arity):-
 %   @arg Arity The arity to check for.
 grovel_some_help(Term, _) :- 
     eval(['help!', Term], _).  % Evaluate the help command for the term.
-grovel_some_help(Term, Arity):- 
+grovel_some_help(Term, Arity):- number(Arity), Arity > 1,
     findall(A, is_documented_arity(Term, A), ArityDoc),  % Retrieve documented arities for the term.
     ArityDoc \== [],  % Ensure the documentation is not empty.
     \+ memberchk(Arity, ArityDoc),  % Verify if the term's arity DOES NOT matches the documented arity.
@@ -162,7 +161,7 @@ grovel_some_help(Term, _) :-
     metta_atom_xref(Atom),  % Cross-reference the term with known atoms.
     about_term(Atom, Term),  % Determine if the atom is related to the term.
     \+ skip_xref_atom(Atom),  % Skip atoms that are not relevant for cross-referencing.
-    format('~n~@~n', [write_src_xref(Atom)]).  % Write the source cross-reference for the atom.
+    format('~@~n', [write_src_xref(Atom)]).  % Write the source cross-reference for the atom.
 
 %!  about_term(+Atom, +Term) is semidet.
 %
@@ -180,9 +179,9 @@ about_term([Atom|_],Term):- sub_var(Term,Atom),!.
 %   Outputs source code or its reference based on the nesting of the source.
 %
 %   @arg Src The source code or reference to output.
-write_src_xref(Src):- 
+write_src_xref(Src):- % fail, 
     very_nested_src(Src), !,  % Check if the source is complex.
-    write_src(Src).  % Write the full source content if it's complex.
+    wots(S, pp_sexi_l(Src)), write(S).  % Write the full source content if it's complex.
 write_src_xref(Src):- 
     write_src_woi(Src).  % Otherwise, write the source content without additional information.
 % Check for deeply nested lists
