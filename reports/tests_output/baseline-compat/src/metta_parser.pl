@@ -784,7 +784,7 @@ cont_sexpr(EndChar, Stream, Item) :-
 % @arg Reason The reason for the error.
 throw_stream_error(Stream, Reason) :-
     read_position(Stream, Line, Col, CharPos, _),
-    throw(error(stream_error(Line:Col:CharPos, Reason))).
+    throw(stream_error(Line:Col:CharPos, Reason)).
 
 %! read_single_line_comment(+Stream:stream) is det.
 %
