@@ -53,7 +53,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-10 17:31:40+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-10 22:32:57+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -416,7 +416,7 @@ Script started on 2024-10-10 17:31:40+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000361 secs. (360.75 microseconds) 
+; took 0.000315 secs. (314.72 microseconds) 
 
   !(assertEqual 
     (match &self 
@@ -450,7 +450,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000242 secs. (241.83 microseconds) 
+; took 0.000237 secs. (236.60 microseconds) 
 
   !(assertEqual 
     (collapse (match &self (= (shape) $x) $x)) ())
@@ -479,7 +479,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000483 secs. (483.20 microseconds) 
+; took 0.000403 secs. (403.23 microseconds) 
 
   !(assertEqual 
     (color) 
@@ -511,7 +511,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000957 secs. (956.93 microseconds) 
+; took 0.000860 secs. (860.03 microseconds) 
 
   !(assertEqual 
     (color) 
@@ -543,7 +543,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.05</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.38 milliseconds) 
+; took 0.001 secs. (1.31 milliseconds) 
 
   !(assertEqual 
     (collapse (shape)) 
@@ -568,7 +568,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000222 secs. (222.15 microseconds) 
+; took 0.000196 secs. (195.63 microseconds) 
 
   !(assertEqualToResult 
     (shape) 
@@ -613,7 +613,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.07</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.53 milliseconds) 
+; took 0.001 secs. (1.47 milliseconds) 
 
   !(assertEqualToResult 
     (pair 
@@ -674,7 +674,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.08</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.72 milliseconds) 
+; took 0.002 secs. (1.77 milliseconds) 
 
   !(assertEqual 
     (find-equal 
@@ -712,7 +712,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.09</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.05 milliseconds) 
+; took 0.001 secs. (1.04 milliseconds) 
 
   !(assertEqualToResult 
     (rev A 
@@ -803,7 +803,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.10</h3>
 ; 
 ; EVAL TEST
-; took 0.004 secs. (3.94 milliseconds) 
+; took 0.004 secs. (3.70 milliseconds) 
 
   !(assertEqual 
     (is (air dry)) 
@@ -832,7 +832,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.11</h3>
 ; 
 ; EVAL TEST
-; took 0.004 secs. (3.76 milliseconds) 
+; took 0.004 secs. (3.63 milliseconds) 
 
   !(assertEqual 
     (is (air wet)) 
@@ -851,7 +851,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 566,820 inferences, 0.121 CPU in 0.121 seconds (100% CPU, 4674337 Lips)
+>% 566,820 inferences, 0.119 CPU in 0.119 seconds (100% CPU, 4746004 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/b4_nondeterm.metta  0)
 <span class="ansi1"
@@ -986,7 +986,7 @@ Deterministic: ()
 P;HTML|
 ;           (maybe_halt  7)
 
-Script done on 2024-10-10 17:31:45+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-10 22:33:02+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
