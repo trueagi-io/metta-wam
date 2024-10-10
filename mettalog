@@ -543,6 +543,8 @@ Note: A bare filename is equivalent to using the -s option for MeTTa scripts.
      --fresh                  Clean up by deleting any .answers files under directory
      --clean                  Clean up by deleting all .html files under directory
 
+ $( mettalog -g show_help_options )
+
    Debugging:
      --exec=skip              Skip over !exec dirrectives
      --e=debug                Recursively trace Evaluation
@@ -554,6 +556,7 @@ Note: A bare filename is equivalent to using the -s option for MeTTa scripts.
      --prolog                 Drop to the host system debugger
      --on-error=style         One of print, halt or status
      --on-warning=style       One of print, halt or status
+  
 
   Boolean options may be written as --name=bool, --name, --no-name or --noname.
   Both '-' or '_' are accepted as word-separator for long options.
