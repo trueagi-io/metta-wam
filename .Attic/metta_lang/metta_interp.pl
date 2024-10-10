@@ -332,6 +332,7 @@ switch_to_mettalog:-
   set_option_value('load',verbose),
   set_option_value('log',true),
   %set_option_value('test',true),
+  forall(mettalog_option_value_def(Name, DefaultValue),set_option_value(Name, DefaultValue)),
   set_output_stream.
 
 switch_to_mettarust:-
@@ -340,6 +341,7 @@ switch_to_mettarust:-
   set_option_value('compat',true),
   set_option_value('log',false),
   set_option_value('test',false),
+  forall(rust_option_value_def(Name, DefaultValue),set_option_value(Name, DefaultValue)),
   set_output_stream.
 
 
@@ -361,86 +363,172 @@ is_pyswip:- current_prolog_flag(os_argv,ArgV),member( './',ArgV).
 current_self(Self):- ((nb_current(self_space,Self),Self\==[])->true;Self='&self').
 :- nb_setval(repl_mode, '+').
 
-%:- set_stream(user_input,tty(true)).
-%:- use_module(library(editline)).
-%:- set_output(user_error).
-%:- set_prolog_flag(encoding,octet).
+
+% Define the option and call help documentation
+option_value_def(Name, DefaultValue) :-
+    all_option_value_name_default_type_help(Name, DefaultValue, _, _, _).
+
+rust_option_value_def(Name, DefaultValue) :-
+    all_option_value_name_default_type_help(Name, MettaLogDV,[DefaultValue|_], _Cmt,_Topic),
+    MettaLogDV \= DefaultValue.
+
+mettalog_option_value_def(Name, MettaLogDV) :-
+    all_option_value_name_default_type_help(Name, MettaLogDV,[DefaultValue|_], _Cmt,_Topic),
+    MettaLogDV \= DefaultValue.
+
+
+:- discontiguous(option_value_name_default_type_help/5).
+:- discontiguous(all_option_value_name_default_type_help/5).
+
+all_option_value_name_default_type_help(Name, DefaultValue, Type, Cmt, Topic):-
+ option_value_name_default_type_help(Name, DefaultValue, Type, Cmt, Topic).
+
+% Compatibility and Modes
+option_value_name_default_type_help('compat', false, [true, false], "Enable all compatibility with MeTTa-Rust", 'Compatibility and Modes').
+option_value_name_default_type_help('compatio', false, [true, false], "Enable IO compatibility with MeTTa-Rust", 'Compatibility and Modes').
+all_option_value_name_default_type_help('repl', auto, [false, true, auto], "Enter REPL mode (auto means true unless a file argument was supplied)", 'Execution and Control').
+all_option_value_name_default_type_help('prolog', false, [false, true], "Enable or disable Prolog REPL mode", 'Compatibility and Modes').
+option_value_name_default_type_help('devel', false, [false, true], "Developer mode", 'Compatibility and Modes').
+all_option_value_name_default_type_help('exec', noskip, [noskip, skip], "Controls execution during script loading: noskip or skip (don't-skip-include/binds) vs skip-all", 'Execution and Control').
+
+% Resource Limits
+option_value_name_default_type_help('stack-max', 500, [inf,1000,10_000], "Maximum stack depth allowed during execution", 'Resource Limits').
+all_option_value_name_default_type_help('maximum-result-count', inf, [inf,1,2,3,10], "Set the maximum number of results, infinite by default", 'Miscellaneous').
+option_value_name_default_type_help('limit', inf, [inf,1,2,3,10], "Set the maximum number of results, infinite by default", 'Miscellaneous').
+option_value_name_default_type_help('initial-result-count', 10, [inf,10], "For MeTTaLog log mode: print the first 10 answers without waiting for user", 'Miscellaneous').
+
+% Miscellaneous
+option_value_name_default_type_help('answer-format', 'show', ['rust', 'silent', 'detailed'], "Control how results are displayed", 'Output and Logging').
+option_value_name_default_type_help('repeats', true, [true, false], "false to avoid repeated results", 'Miscellaneous').
+option_value_name_default_type_help('time', true, [false, true], "Enable or disable timing for operations (in Rust compatibility mode, this is false)", 'Miscellaneous').
+
+% Testing and Validation
+option_value_name_default_type_help('synth-unit-tests', false, [false, true], "Synthesize unit tests", 'Testing and Validation').
+
+% Optimization and Compilation
+option_value_name_default_type_help('optimize', true, [true, false], "Enable or disable optimization", 'Optimization and Compilation').
+option_value_name_default_type_help('transpiler', 'silent', ['silent', 'verbose'], "Sets the expected level of output from the transpiler", 'Output and Logging').
+option_value_name_default_type_help('compile', 'false', ['false', 'true', 'full'], "Compilation option: 'true' is safe vs 'full' means to include unsafe as well", 'Optimization and Compilation').
+option_value_name_default_type_help('tabling', auto, [auto, true, false], "When to use predicate tabling (memoization)", 'Optimization and Compilation').
+
+% Output and Logging
+option_value_name_default_type_help('log', false, [false, true], "Enable or disable logging", 'Output and Logging').
+all_option_value_name_default_type_help('html', false, [false, true], "Generate HTML output", 'Output and Logging').
+all_option_value_name_default_type_help('python', true, [true, false], "Enable Python functions", 'Output and Logging').
+option_value_name_default_type_help('output', './', ['./'], "Set the output directory", 'Output and Logging').
+option_value_name_default_type_help('exeout', './Sav.gitlab.MeTTaLog', [_], "Output executable location", 'Miscellaneous').
+option_value_name_default_type_help('halt', false, [false, true], "Halts execution after the current operation", 'Miscellaneous').
+
+% Debugging and Tracing
+option_value_name_default_type_help('trace-length', 500, [inf], "Length of the trace buffer for debugging", 'Debugging and Tracing').
+option_value_name_default_type_help('trace-on-overtime', 4.0, [inf], "Trace if execution time exceeds limit", 'Debugging and Tracing').
+option_value_name_default_type_help('trace-on-overflow', 1000, [inf], "Trace on stack overflow", 'Debugging and Tracing').
+option_value_name_default_type_help('trace-on-eval', false, [false, true], "Trace during normal evaluation", 'Debugging and Tracing').
+option_value_name_default_type_help('trace-on-load', silent, [silent, verbose], "Verbosity on file loading", 'Debugging and Tracing').
+option_value_name_default_type_help('trace-on-exec', false, [silent, verbose], "Trace on execution during loading", 'Debugging and Tracing').
+option_value_name_default_type_help('trace-on-error', 'non-type', [false, 'non-type', true], "Trace on all or none or non-type errors", 'Debugging and Tracing').
+option_value_name_default_type_help('trace-on-fail', false, [false, true], "Trace on failure", 'Debugging and Tracing').
+option_value_name_default_type_help('trace-on-test', true, [silent, false, verbose], "Trace on success as well", 'Debugging and Tracing').
+option_value_name_default_type_help('repl-on-error', true, [false, true], "Drop to REPL on error", 'Debugging and Tracing').
+option_value_name_default_type_help('repl-on-fail',  false, [false, true], "Start REPL on failed unit test", 'Debugging and Tracing').
+option_value_name_default_type_help('exit-on-fail',  false, [true, false], "Rust exits on first Assertion Error", 'Debugging and Tracing').
+
+% Define the possible values for various types
+
+% Verbosity values
+type_value(verbosity_mode, 'silent').  % No output or only critical errors
+type_value(verbosity_mode, 'error').   % Only errors are shown
+type_value(verbosity_mode, 'warn').    % Errors and warnings are shown
+type_value(verbosity_mode, 'info').    % General information (default level)
+type_value(verbosity_mode, 'debug').   % Detailed debug output
+type_value(verbosity_mode, 'trace').   % Extremely detailed output, execution trace
 
 
 
-/*
-Now PASSING NARS.TEC:\opt\logicmoo_workspace\packs_sys\logicmoo_opencog\MeTTa\hyperon-wam\src\pyswip\metta_interp.pl
-C:\opt\logicmoo_workspace\packs_sys\logicmoo_opencog\MeTTa\hyperon-wam\src\pyswip1\metta_interp.pl
-STS1.01)
-Now PASSING TEST-SCRIPTS.B5-TYPES-PRELIM.08)
-Now PASSING TEST-SCRIPTS.B5-TYPES-PRELIM.14)
-Now PASSING TEST-SCRIPTS.B5-TYPES-PRELIM.15)
-Now PASSING TEST-SCRIPTS.C1-GROUNDED-BASIC.15)
-Now PASSING TEST-SCRIPTS.E2-STATES.08)
-PASSING TEST-SCRIPTS.B5-TYPES-PRELIM.02)
-PASSING TEST-SCRIPTS.B5-TYPES-PRELIM.07)
-PASSING TEST-SCRIPTS.B5-TYPES-PRELIM.09)
-PASSING TEST-SCRIPTS.B5-TYPES-PRELIM.11)
-PASSING TEST-SCRIPTS.C1-GROUNDED-BASIC.14)
-PASSING TEST-SCRIPTS.E2-STATES.07)
------------------------------------------
-FAILING TEST-SCRIPTS.D5-AUTO-TYPES.01)
-Now FAILING TEST-SCRIPTS.00-LANG-CASE.03)
-Now FAILING TEST-SCRIPTS.B5-TYPES-PRELIM.19)
-Now FAILING TEST-SCRIPTS.C1-GROUNDED-BASIC.20)
+% Compile modes
+type_value(compile_mode, 'false').  % Compilation is disabled
+type_value(compile_mode, 'true').   % Basic compilation is enabled
+type_value(compile_mode, 'auto').   % Automatically decide based on context
+type_value(compile_mode, 'full').   % Full compilation is enabled
 
-*/
+% Execution modes
+type_value(exec_mode, 'noskip').   % Execution proceeds normally
+type_value(exec_mode, 'skip').   % Execution is skipped
 
+% Fail modes
+type_value(fail_mode, 'repl').   % On failure, drop into REPL
+type_value(fail_mode, 'exit').   % On failure, exit execution
 
-%option_value_def('repl',auto).
-option_value_def('prolog',false).
-option_value_def('compat',auto).
-option_value_def('compatio',true).
-%option_value_def('compatio',false).
-option_value_def('compile',false).
-%option_value_def('compile',true).
-%option_value_def('compile',full).
-option_value_def('tabling',true).
-option_value_def('optimize',true).
-option_value_def(no_repeats,false).
-%option_value_def('time',false).
-option_value_def('test',false).
-option_value_def('html',false).
-option_value_def('python',true).
-%option_value_def('halt',false).
-option_value_def('doing_repl',false).
-option_value_def('test-retval',false).
-option_value_def('exeout','./Sav.gitlab.MeTTaLog').
+% Error handling modes
+type_value(error_mode, 'default').  % Default error handling mode
+type_value(warning_mode, 'default'). % Default warning handling mode
 
-option_value_def('synth_unit_tests',false).
+% Dynamically show all available options with descriptions in the required format, grouped and halt
+show_help_options :-
+    findall([Name, DefaultValue, Type, Help, Group],
+            option_value_name_default_type_help(Name, DefaultValue, Type, Help, Group),
+            Options),
+    max_name_length(Options, MaxLen),
+    format("  First value is the default; if a brown value is listed, it is the Rust compatibility default:\n\n"),
+    group_options(Options, MaxLen),
+    halt.
 
-option_value_def('trace-length',500).
-option_value_def('stack-max',500).
-option_value_def('trace-on-overtime',4.0).
-option_value_def('trace-on-overflow',false).
-option_value_def('trace-on-error',true).
-option_value_def('trace-on-exec',false).
-option_value_def('trace-on-fail',false).
-option_value_def('trace-on-pass',false).
+% Calculate the maximum length of option names
+max_name_length(Options, MaxLen) :-
+    findall(Length, (member([Name, _, _, _, _], Options), atom_length(Name, Length)), Lengths),
+    max_list(Lengths, MaxLen).
+
+% Group the options by category and print them
+group_options(Options, MaxLen) :-
+    findall(Group, member([_, _, _, _, Group], Options), Groups),
+    list_to_set(Groups, SortedGroups),
+    print_groups(SortedGroups, Options, MaxLen).
 
 
-option_value_def('exec',true). % vs skip
+% Print options by group with clarification for defaults and Rust compatibility
+print_groups([], _, _).
+print_groups([Group | RestGroups], Options, MaxLen) :-
+    format("   ~w:\n", [Group]),
+    print_group_options(Group, Options, MaxLen),
+    format("\n"),
+    print_groups(RestGroups, Options, MaxLen).
 
-option_value_def('trace-on-load',false).
-option_value_def('load','silent').
+% Print options in each group, aligned to the longest option name, mentioning Rust changes explicitly
+print_group_options(_, [], _).
+print_group_options(Group, [[Name, DefaultValue, Type, Help, Group] | Rest], MaxLen) :-
+    % Remove duplicates from the list of values
+    list_to_set(Type, UniqueValues),
+    list_to_set([DefaultValue|Type], [_,_|UniqueValues2]),
+    % Define the column where the comment should start
+    CommentColumn is 60, % Adjust this number to set the comment column position
+    ( (UniqueValues = [DefaultValue | RestOfValues])
+    ->  % Print default first, then other values, omit empty lists
+        (format_value_list(RestOfValues, CleanRest),
+         ( (CleanRest \= '')
+         ->  format("     --~w~*t=<\033[1;37m~w\033[0m|~w> \033[~dG ~w\n", [Name, MaxLen, DefaultValue, CleanRest, CommentColumn, Help])
+         ;   format("     --~w~*t=<\033[1;37m~w\033[0m> \033[~dG ~w\n", [Name, MaxLen, DefaultValue, CommentColumn, Help])
+         ))
+    ;   % Case 2: If the default value is not first, list default first and mark the first value as Rust-specific
+        (UniqueValues = [RustSpecificValue | _RestOfValues],
+         DefaultValue \= RustSpecificValue)
+    ->  % Print default first, mark the Rust value in brown, then other values, omit empty lists
+        (format_value_list(UniqueValues2, CleanRest),
+         ( (CleanRest \= '')
+         ->  format("     --~w~*t=<\033[1;37m~w\033[0m|\033[38;5;94m~w\033[0m|~w> \033[~dG ~w\n", [Name, MaxLen, DefaultValue, RustSpecificValue, CleanRest, CommentColumn, Help])
+         ;   format("     --~w~*t=<\033[1;37m~w\033[0m|\033[38;5;94m~w\033[0m> \033[~dG ~w\n", [Name, MaxLen, DefaultValue, RustSpecificValue, CommentColumn, Help])
+         ))
+    ),
+    print_group_options(Group, Rest, MaxLen).
 
-option_value_def('trace-on-eval',false).
-option_value_def('eval',silent).
+print_group_options(Group, [_ | Rest], MaxLen) :-
+    print_group_options(Group, Rest, MaxLen).
 
-option_value_def('transpiler',silent).
-option_value_def('result',show).
-
-option_value_def('maximum-result-count',inf). % infinate answers
-
-% MeTTaLog --log mode only
-% if print the first 10 answers without stopping
-option_value_def('initial-result-count',10).
-
+% Helper to print the list of values without square brackets
+format_value_list([], '').
+format_value_list([H], H) :- !.
+format_value_list([H|T], Formatted) :-
+    format_value_list(T, Rest),
+    format(atom(Formatted), "~w|~w", [H, Rest]).
 
 
 
@@ -468,19 +556,20 @@ on_set_value(_Note,compatio,true):- switch_to_mettarust.
 on_set_value(Note,N,V):- symbol(N), symbol_concat('trace-on-',F,N),fbugio(Note,set_debug(F,V)),set_debug(F,V).
 on_set_value(Note,N,V):- symbol(N), is_debug_like(V,TF),fbugio(Note,set_debug(N,TF)),set_debug(N,TF).
 
+
+%is_debug_like(false, false).
 is_debug_like(trace, true).
 is_debug_like(notrace, false).
 is_debug_like(debug, true).
 is_debug_like(nodebug, false).
 is_debug_like(silent, false).
-%is_debug_like(false, false).
 
 'is-symbol'(X):- symbol(X).
 %:- (is_mettalog->switch_to_mettalog;switch_to_mettarust).
 
 set_is_unit_test(TF):-
   forall(option_value_def(A,B),set_option_value_interp(A,B)),
-  set_option_value_interp('trace-on-pass',false),
+  set_option_value_interp('trace-on-test',false),
   set_option_value_interp('trace-on-fail',false),
   set_option_value_interp('load',show),
   set_option_value_interp('test',TF),
@@ -538,9 +627,9 @@ not_compat_io(G):- not_compatio(G).
 non_compat_io(G):- not_compatio(G).
 
 
+trace_on_pass:- false.
 trace_on_fail:-     option_value('trace-on-fail',true).
 trace_on_overflow:- option_value('trace-on-overflow',true).
-trace_on_pass:-     option_value('trace-on-pass',true).
 doing_repl:-     option_value('doing_repl',true).
 if_repl(Goal):- doing_repl->call(Goal);true.
 
