@@ -79,7 +79,7 @@ split_text_document_by_clause_aux(Stream,Entries) :-
         BlankSize is BlankEndPos-StartPos-1, % -1 to drop the newline from the end
         read_string(Stream,BlankSize,BlankContent),
         read_string(Stream,1,_),
-        create_line_entry(Lblank,BlankContent,BlankEntry),
+        create_line_entry(Lblank,BlankContent,[],BlankEntry),
         PostEmptyStartPos=BlankEndPos,
         PostEmptyLCblank=p(0,0),
         MaybeBlankEntry=[BlankEntry]
@@ -87,29 +87,36 @@ split_text_document_by_clause_aux(Stream,Entries) :-
     (at_end_of_stream(Stream) ->
         Entries=MaybeBlankEntry
     ;
-        split_text_document_by_clauses_whole_lines(PostEmptyLCblank,p(EL,_),Stream,_Items),
+        split_text_document_by_clauses_whole_lines(PostEmptyLCblank,p(EL,_),Stream,Metadata),
         seek(Stream,0,current,EndPos),
         seek(Stream,PostEmptyStartPos,bof,_),
         Size is EndPos-PostEmptyStartPos-1, % -1 to drop the newline from the end
         read_string(Stream,Size,Content),
         read_string(Stream,1,_),
-        create_line_entry(EL,Content,Entry),
+        create_line_entry(EL,Content,Metadata,Entry),
         split_text_document_by_clause_aux(Stream,Entries0),
         append(MaybeBlankEntry,[Entry|Entries0],Entries)
     ).
 
+convert_item_to_metadata(Item,Md) :-
+    (Item=[a(_,_,_,'='),[a(_,_,_,Name)|_]|_] -> Md=[impl(Name)]
+    ; Item=[a(_,_,_,':'),a(_,_,_,Name)|_] -> Md=[def(Name)]
+    ; Item=[a(_,_,_,'@doc'),a(_,_,_,Name)|_] -> Md=[doc(Name)]
+    ; Md=[]).
+
 % read clauses until get one that does not result in a line split
-split_text_document_by_clauses_whole_lines(LC0,LC1,Stream,Items) :-
+split_text_document_by_clauses_whole_lines(LC0,LC1,Stream,Metadata) :-
     annotated_read_sexpr(LC0,LCa,Stream,Item),
+    convert_item_to_metadata(Item,Md1),
     annotated_skip_spaces_until_eol(LCa,LCb,Stream,EolFound),
     (EolFound ->
         LC1=LCb,
-        Items=[Item]
+        Metadata=Md1
     ;
-        split_text_document_by_clauses_whole_lines(LCb,LC1,Stream,Items0),
-        Items=[Item|Items0]).
+        split_text_document_by_clauses_whole_lines(LCb,LC1,Stream,Metadata0),
+        append(Md1,Metadata0,Metadata)).
 
-create_line_entry(N,S,d(N,S,Size,[])) :- string_length(S,Size).
+create_line_entry(N,S,Md,d(N,S,Size,Md)) :- string_length(S,Size).
 
 extract_line_entry(d(_,S,_,_),S).
 
@@ -122,7 +129,7 @@ concat_strings([H|T], Result) :-
 
 split_text_single_lines(FullText,SplitText) :-
     split_string(FullText, "\n", "", SplitText0),
-    maplist(create_line_entry(1),SplitText0,SplitText).
+    maplist(create_line_entry(1),SplitText0,[],SplitText).
 
 coalesce_text(SplitText,FullText) :-
     maplist(extract_line_entry,SplitText,Strings),

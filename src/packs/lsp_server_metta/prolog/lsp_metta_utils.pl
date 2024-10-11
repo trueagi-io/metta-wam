@@ -27,54 +27,6 @@
 % @author James Cash
 % */
 
-%linechar_offset(_Stream, line_char(_Line1, _Char0), _Offset, _PreChars) :-
-%    % needs to use the split-document model
-%    debug(server,"~w",["lsp_metta_utils::linechar_offset not implemented yet"]).
-
-% %!  linechar_offset(+Stream:stream, +Position:line_char, -Offset:int) is det.
-% %
-% %   Converts a line and character position into a byte offset in the given stream.
-% %   This predicate seeks to the specified line and character within the stream.
-% %
-% %   @arg Stream is the input stream being read.
-% %   @arg Position is a term of the form line_char(Line, Char), representing the line and character to seek to.
-% %   @arg Offset is the resulting byte offset corresponding to the position.
-% %
-% %   @example Convert line and character position to byte offset:
-% %       ?- open('file.pl', read, Stream), linechar_offset(Stream, line_char(5, 10), Offset).
-% %       Offset = 65.
-% %
-% linechar_offset(Stream, line_char(Line1, Char0), Offset, PreChars) :-
-%     % Seek to the beginning of the stream (bof = beginning of file).
-%     seek(Stream, 0, bof, _),
-%     % Seek to the specified line number in the stream.
-%     seek_to_line(Stream, Line1),
-%     % Seek to the specified character position from the current line position.
-%     accumulating_pre_seek(Stream, Char0, [], PreChars),
-%     seek(Stream, 0, current, Offset).
-%
-% %!  seek_to_line(+Stream:stream, +Line:int) is det.
-% %
-% %   Seeks to the specified line in the stream by skipping lines until the target line is reached.
-% %
-% %   @arg Stream is the input stream.
-% %   @arg Line is the line number to seek to.
-% %
-% %   @example Seek to line 5 in a file:
-% %       ?- open('file.pl', read, Stream), seek_to_line(Stream, 5).
-% %
-% seek_to_line(Stream, N) :-
-%     % If N is greater than 1, we need to skip lines.
-%     N > 1, !,
-%     % Skip the current line by searching for a newline character.
-%     skip(Stream, 0'\n),
-%     % Decrement the line counter.
-%     NN is N - 1,
-%     % Recursively seek to the remaining lines.
-%     seek_to_line(Stream, NN).
-% % Base case: If N is 1, we have reached the desired line.
-% seek_to_line(_, _).
-
 %! help_at_position(+Path:atom, +Line:integer, +Char:integer, -Help:string) is det.
 %
 %  =Help= is the documentation for the term under the cursor at line
@@ -86,27 +38,24 @@ help_at_position(Path, Line, Char0, S) :-
     %debug(server,"Clause=~w",[Clause]),
     predicate_help(Path,Clause,Arity,S).
 
-predicate_help(_,Var,_,S) :- var(Var),!,format(string(S),"Variable: ~w",[Var]).
+predicate_help(_,Var,_,S) :- var(Var),!,format(string(S),"Var: ~w",[Var]).
 predicate_help(_,'',_,"") :- !.
 predicate_help(_,var(Term),_,S) :- !,format(string(S),"Variable: ~w",[Term]).
 predicate_help(_,Term,_,"") :- number(Term),!.
 predicate_help(_,')',_,"") :- !.
 predicate_help(_,']',_,"") :- !.
 predicate_help(_,'}',_,"") :- !.
-
-predicate_help(Path,Clause,Arity,S) :-  
+predicate_help(_,Term,Arity,S) :- find_at_doc(Term,S), !.
+predicate_help(Path,Clause,Arity,S) :-
   user:(
      current_predicate(predicate_help_hook/5),
      predicate_help_hook(first,Path,Clause,Arity,S)),!.
-
 predicate_help(_,Term,Arity,S) :- metta_atom(_KB,['@doc',Term|Help]),
-    %debug(server,"clause1 ~w",[Help]),
     format_metta_doc(Term,Arity,Help,S),!.
 predicate_help(Path,Clause,Arity,S) :-  
   user:(
      current_predicate(predicate_help_hook/5),
      predicate_help_hook(last,Path,Clause,Arity,S)),!.
-
 predicate_help(_,Term,_,S) :- format(string(S),"Unknown: ~w",[Term]).
 
 format_metta_doc(Term,Arity,[['@desc',Description], ['@params', Params], ['@return', Return]],String) :-
@@ -118,20 +67,19 @@ format_metta_doc(Term,Arity,[['@desc',Description], ['@params', Params], ['@retu
 
 format_metta_Param(['@param',P],Pf) :- format(string(Pf),"Param: ~w",[P]).
 
-%format_help(HelpFull, Help) :-
-%    split_string(HelpFull, "\n", " ", Lines0),
-%    exclude([Line]>>string_concat("Availability: ", _, Line),
-%            Lines0, Lines1),
-%    exclude([""]>>true, Lines1, Lines2),
-%    Lines2 = [HelpShort|_],
-%    split_string(HelpFull, "\n", "", HelpLines),
-%    selectchk(HelpShort, HelpLines, "", HelpLines0),
-%    append([HelpShort], HelpLines0, HelpLines1),
-%    atomic_list_concat(HelpLines1, "\n", Help).
+find_at_doc(Term,S) :-
+    lsp_metta_changes:doc_text(Path,SplitFile),
+    find_at_doc_aux(Path,Term,SplitFile,S).
 
-%    S=Clause.
-%     predicate_help(Path, Clause, S0),
-%     format_help(S0, S).
+find_at_doc_aux(_Path,Term,[d(_,Doc,_,Metadata)|_],S) :-
+    find_at_doc_aux2(Term,Metadata),!,
+    format(string(S),"@doc found: ~w",[Doc]).
+find_at_doc_aux(Path,Term,[_|T],S) :-
+    find_at_doc_aux(Path,Term,T,S).
+
+find_at_doc_aux2(Term,[doc(Term)|_]) :- !.
+find_at_doc_aux2(Term,[H|T]) :-
+    find_at_doc_aux2(Term,T).
 
 %!  clause_with_arity_in_file_at_position(-Clause, -Arity, +Path, +Position) is det.
 %
