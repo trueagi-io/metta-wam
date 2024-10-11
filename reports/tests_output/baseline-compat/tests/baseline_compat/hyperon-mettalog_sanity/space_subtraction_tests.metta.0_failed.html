@@ -13,7 +13,6 @@
 .inv_foreground { color: #000000; }
 .inv_background { background-color: #AAAAAA; }
 .ansi1 { font-weight: bold; }
-.ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
 .ansi38-013099040 { color: #0D6328; }
@@ -45,10 +44,8 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-11 00:36:36+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
-<span class="ansi1 ansi31"
->ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_debug.pl:369:65: Syntax error: Illegal start of term
-</span>P;HTML|
+Script started on 2024-10-11 02:00:29+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+P;HTML|
 ;           (set_option_value  compat false)
 
 P;HTML|
@@ -432,7 +429,7 @@ Deterministic: ()
 >  (superpose ((foo $_112330 $_112352) (foo 1 2) (foo 3 4) (foo $_112330 10) (foo $_112330 $_112330)))
 </span>; 
 ; EVAL TEST
-; took 0.006 secs. (6.30 milliseconds) 
+; took 0.006 secs. (6.35 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &space31 
@@ -535,7 +532,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SPACE-SUBTRACTION-TESTS.04</h3>
 ; 
 ; EVAL TEST
-; took 0.061 secs. (60.70 milliseconds) 
+; took 0.066 secs. (65.66 milliseconds) 
 
   !(assertEqual 
     (subtraction 
@@ -570,7 +567,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SPACE-SUBTRACTION-TESTS.05</h3>
 ; 
 ; EVAL TEST
-; took 0.015 secs. (14.63 milliseconds) 
+; took 0.015 secs. (14.61 milliseconds) 
 
   !(assertEqual 
     (subtraction 
@@ -607,7 +604,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SPACE-SUBTRACTION-TESTS.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000380 secs. (380.03 microseconds) 
+; took 0.000314 secs. (314.44 microseconds) 
 
   !(assertEqual 
     (subtraction 
@@ -637,7 +634,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SPACE-SUBTRACTION-TESTS.07</h3>
 ; 
 ; EVAL TEST
-; took 0.010 secs. (10.49 milliseconds) 
+; took 0.010 secs. (10.45 milliseconds) 
 
   !(assertEqual 
     (union 
@@ -678,7 +675,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SPACE-SUBTRACTION-TESTS.08</h3>
 ; 
 ; EVAL TEST
-; took 0.009 secs. (8.75 milliseconds) 
+; took 0.009 secs. (8.77 milliseconds) 
 
   !(assertEqual 
     (union 
@@ -715,7 +712,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SPACE-SUBTRACTION-TESTS.09</h3>
 ; 
 ; EVAL TEST
-; took 0.010 secs. (10.13 milliseconds) 
+; took 0.010 secs. (10.06 milliseconds) 
 
   !(assertEqual 
     (union 
@@ -756,7 +753,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SPACE-SUBTRACTION-TESTS.10</h3>
 ; 
 ; EVAL TEST
-; took 0.009 secs. (8.97 milliseconds) 
+; took 0.009 secs. (8.98 milliseconds) 
 
   !(assertEqual 
     (union 
@@ -797,7 +794,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SPACE-SUBTRACTION-TESTS.11</h3>
 ; 
 ; EVAL TEST
-; took 0.007 secs. (6.93 milliseconds) 
+; took 0.007 secs. (7.00 milliseconds) 
 
   !(assertEqual 
     (union 
@@ -822,7 +819,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 1,256,356 inferences, 0.287 CPU in 0.287 seconds (100% CPU, 4376735 Lips)
+>% 1,256,359 inferences, 0.293 CPU in 0.293 seconds (100% CPU, 4283995 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/space_subtraction_tests.metta  0)
 <span class="ansi1"
@@ -957,7 +954,7 @@ Deterministic: ()
 P;HTML|
 ;           (maybe_halt  7)
 
-Script done on 2024-10-11 00:36:41+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-11 02:00:35+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

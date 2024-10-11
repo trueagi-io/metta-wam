@@ -13,7 +13,6 @@
 .inv_foreground { color: #000000; }
 .inv_background { background-color: #AAAAAA; }
 .ansi1 { font-weight: bold; }
-.ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
 .ansi38-255165000 { color: #FFA500; }
@@ -41,10 +40,8 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-11 00:31:02+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
-<span class="ansi1 ansi31"
->ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_debug.pl:369:65: Syntax error: Illegal start of term
-</span>P;HTML|
+Script started on 2024-10-11 01:54:56+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+P;HTML|
 ;           (set_option_value  compat false)
 
 P;HTML|
@@ -387,7 +384,7 @@ Script started on 2024-10-11 00:31:02+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B2-BACKCHAIN.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000337 secs. (337.26 microseconds) 
+; took 0.000393 secs. (392.91 microseconds) 
 
   !(assertEqualToResult 
     (Frog Sam) 
@@ -412,7 +409,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B2-BACKCHAIN.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000402 secs. (402.13 microseconds) 
+; took 0.000512 secs. (511.84 microseconds) 
 
   !(assertEqual 
     (frog Sam) T)
@@ -435,7 +432,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B2-BACKCHAIN.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000334 secs. (333.71 microseconds) 
+; took 0.000462 secs. (462.47 microseconds) 
 
   !(assertEqualToResult 
     (frog Fritz) ())
@@ -509,7 +506,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B2-BACKCHAIN.04</h3>
 ; 
 ; EVAL TEST
-; took 0.004 secs. (3.72 milliseconds) 
+; took 0.004 secs. (3.78 milliseconds) 
 
   !(assertEqual 
     (deduce (Evaluation (mortal Plato))) T)
@@ -574,7 +571,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B2-BACKCHAIN.05</h3>
 ; 
 ; EVAL TEST
-; took 0.016 secs. (16.13 milliseconds) 
+; took 0.016 secs. (16.30 milliseconds) 
 
   !(assertEqual 
     (explain (Evaluation (mortal Plato))) 
@@ -601,7 +598,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 415,021 inferences, 0.082 CPU in 0.082 seconds (100% CPU, 5080786 Lips)
+>% 415,024 inferences, 0.085 CPU in 0.085 seconds (100% CPU, 4871590 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/b2_backchain.metta  0)
 <span class="ansi1"
@@ -736,7 +733,7 @@ Deterministic: ()
 P;HTML|
 ;           (maybe_halt  7)
 
-Script done on 2024-10-11 00:31:08+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-11 01:55:01+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

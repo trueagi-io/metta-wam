@@ -37,10 +37,8 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-11 00:32:34+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
-<span class="ansi1 ansi31"
->ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_debug.pl:369:65: Syntax error: Illegal start of term
-</span>P;HTML|
+Script started on 2024-10-11 01:56:28+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+P;HTML|
 ;           (set_option_value  compat false)
 
 P;HTML|
@@ -408,7 +406,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000708 secs. (708.11 microseconds) 
+; took 0.000664 secs. (663.83 microseconds) 
 
   !(assertEqual 
     (get-state (get-token)) 
@@ -437,7 +435,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000530 secs. (530.24 microseconds) 
+; took 0.000553 secs. (552.83 microseconds) 
 
   !(assertEqual 
     (get-token) 
@@ -469,7 +467,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000599 secs. (598.86 microseconds) 
+; took 0.000621 secs. (621.46 microseconds) 
 
   !(assertEqual 
     (get-type (new-state 2)) 
@@ -494,7 +492,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000695 secs. (694.95 microseconds) 
+; took 0.000707 secs. (707.05 microseconds) 
 
   !(assertEqual 
     (get-type (change-state! (new-state "S") "V")) 
@@ -522,7 +520,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000700 secs. (699.52 microseconds) 
+; took 0.000690 secs. (689.76 microseconds) 
 
   !(assertEqual 
     (let $v 
@@ -550,7 +548,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000608 secs. (608.30 microseconds) 
+; took 0.000575 secs. (575.37 microseconds) 
 
   !(assertEqual 
     (get-type &state-token) 
@@ -582,7 +580,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000269 secs. (268.69 microseconds) 
+; took 0.000243 secs. (243.02 microseconds) 
 
   !(assertEqual 
     (change-state! &state-token 1) 
@@ -615,7 +613,7 @@ Deterministic: ((Error  (got  ((State  1 $_248156))) (expected  ((Error 1 BadTyp
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.08</h3>
 ; 
 ; EVAL TEST
-; took 0.000264 secs. (263.74 microseconds) 
+; took 0.000238 secs. (238.27 microseconds) 
 
   !(assertEqual 
     (change-state! 
@@ -657,7 +655,7 @@ Deterministic: ((Error  (got  ((State  "S" $_277742))) (expected  ((Error "S" Ba
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.09</h3>
 ; 
 ; EVAL TEST
-; took 0.000607 secs. (607.36 microseconds) 
+; took 0.000495 secs. (495.21 microseconds) 
 
   !(assertEqualToResult 
     (nop (change-state! &state-token (C D))) 
@@ -683,7 +681,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.10</h3>
 ; 
 ; EVAL TEST
-; took 0.000664 secs. (664.37 microseconds) 
+; took 0.000681 secs. (681.39 microseconds) 
 
   !(assertEqual 
     (get-state (get-token)) 
@@ -717,7 +715,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.11</h3>
 ; 
 ; EVAL TEST
-; took 0.000822 secs. (822.47 microseconds) 
+; took 0.000777 secs. (777.43 microseconds) 
 
   !(assertEqual 
     (let $x 
@@ -749,7 +747,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.12</h3>
 ; 
 ; EVAL TEST
-; took 0.000357 secs. (357.29 microseconds) 
+; took 0.000310 secs. (310.26 microseconds) 
 
   !(assertEqual 
     (let $tnso 
@@ -766,7 +764,7 @@ Deterministic: ()
 ()]
 ;;; FIXME: doesn't work as for 25 May 2023
 <span class="ansi32"
->% 520,096 inferences, 0.097 CPU in 0.097 seconds (100% CPU, 5353829 Lips)
+>% 520,099 inferences, 0.099 CPU in 0.099 seconds (100% CPU, 5242071 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/e2_states.metta  0)
 <span class="ansi1"
@@ -901,7 +899,7 @@ Deterministic: ()
 P;HTML|
 ;           (maybe_halt  7)
 
-Script done on 2024-10-11 00:32:40+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-11 01:56:33+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

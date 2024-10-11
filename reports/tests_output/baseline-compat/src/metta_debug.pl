@@ -357,7 +357,7 @@ is_nodebug :-
 %     X = 2 ;
 %     X = 3.
 %
-with_no_debug(Goal) :- is_nodebug, !, % If 'nodebug' is true, call the goal without any further option adjustments.    
+with_no_debug(Goal) :-  is_nodebug, !, % If 'nodebug' is true, call the goal without any further option adjustments.    
     call(Goal).
 with_no_debug(Goal) :-
     % Otherwise, call the goal while modifying several debugging and execution options.
@@ -366,7 +366,7 @@ with_no_debug(Goal) :-
             with_option(debug, silent,
                 with_option(e, silent,
                     with_option(eval, true,
-                        with_option(exec, noskip, call(Goal)))))))).
+                        with_option(exec, noskip, call(Goal))))))).
 
 
 

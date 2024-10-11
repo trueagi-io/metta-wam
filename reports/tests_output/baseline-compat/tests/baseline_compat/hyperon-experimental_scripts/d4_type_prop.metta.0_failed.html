@@ -13,7 +13,6 @@
 .inv_foreground { color: #000000; }
 .inv_background { background-color: #AAAAAA; }
 .ansi1 { font-weight: bold; }
-.ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
 .ansi38-255165000 { color: #FFA500; }
@@ -69,10 +68,8 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-11 00:32:13+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
-<span class="ansi1 ansi31"
->ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_debug.pl:369:65: Syntax error: Illegal start of term
-</span>P;HTML|
+Script started on 2024-10-11 01:56:07+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+P;HTML|
 ;           (set_option_value  compat false)
 
 P;HTML|
@@ -427,7 +424,7 @@ Script started on 2024-10-11 00:32:13+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000266 secs. (266.34 microseconds) 
+; took 0.000291 secs. (291.18 microseconds) 
 
   !(assertEqual 
     (get-type (Mortal Plato)) Type)
@@ -475,7 +472,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.02</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.11 milliseconds) 
+; took 0.001 secs. (1.21 milliseconds) 
 
   !(assertEqual 
     (get-type (HumansAreMortal SocratesIsHuman)) 
@@ -500,7 +497,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000319 secs. (319.49 microseconds) 
+; took 0.000285 secs. (284.59 microseconds) 
 
   !(assertEqualToResult 
     (get-type (HumansAreMortal (Human Socrates))) ())
@@ -554,7 +551,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.04</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.47 milliseconds) 
+; took 0.003 secs. (2.61 milliseconds) 
 
   !(assertEqualToResult 
     ("sameTypes" 
@@ -586,7 +583,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000357 secs. (356.60 microseconds) 
+; took 0.000398 secs. (398.01 microseconds) 
 
   !(assertEqual 
     (get-type (= SocratesIsMortal (HumansAreMortal SocratesIsHuman))) Type)
@@ -621,7 +618,7 @@ Deterministic: ("sameTypes" Type Type)
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000362 secs. (361.73 microseconds) 
+; took 0.000476 secs. (475.75 microseconds) 
 
   !(assertEqual 
     (get-type (= (Mortal Socrates) (Mortal Plato))) Type)
@@ -657,7 +654,7 @@ Deterministic: ("!sameTypes" (Mortal Socrates) (Mortal Plato))
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000324 secs. (323.72 microseconds) 
+; took 0.000318 secs. (317.78 microseconds) 
 
   !(assertEqualToResult 
     (get-type (= SocratesIsMortal (HumansAreMortal PlatoIsHuman))) ())
@@ -691,7 +688,7 @@ Deterministic: ("!sameTypes" (Human Socrates) (Human Plato))
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.08</h3>
 ; 
 ; EVAL TEST
-; took 0.000244 secs. (243.77 microseconds) 
+; took 0.000248 secs. (248.33 microseconds) 
 
   !(assertEqualToResult 
     (get-type (= SocratesIsHuman PlatoIsHuman)) ())
@@ -724,7 +721,7 @@ Deterministic: ("!sameTypes" (Human Socrates) (Mortal Socrates))
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.09</h3>
 ; 
 ; EVAL TEST
-; took 0.000253 secs. (253.14 microseconds) 
+; took 0.000263 secs. (262.79 microseconds) 
 
   !(assertEqualToResult 
     (get-type (= SocratesIsHuman SocratesIsMortal)) ())
@@ -767,7 +764,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.10</h3>
 ; 
 ; EVAL TEST
-; took 0.000491 secs. (490.87 microseconds) 
+; took 0.000492 secs. (492.11 microseconds) 
 
   !(assertEqual 
     (= SocratesIsMortal 
@@ -793,7 +790,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.11</h3>
 ; 
 ; EVAL TEST
-; took 0.000437 secs. (436.92 microseconds) 
+; took 0.000430 secs. (429.71 microseconds) 
 
   !(assertEqual 
     (= 
@@ -825,7 +822,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.12</h3>
 ; 
 ; EVAL TEST
-; took 0.000779 secs. (778.65 microseconds) 
+; took 0.000764 secs. (763.97 microseconds) 
 
   !(assertEqual 
     (= 
@@ -851,7 +848,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.13</h3>
 ; 
 ; EVAL TEST
-; took 0.000863 secs. (863.47 microseconds) 
+; took 0.000720 secs. (720.22 microseconds) 
 
   !(assertEqualToResult 
     (= 
@@ -882,7 +879,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.14</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.29 milliseconds) 
+; took 0.001 secs. (1.31 milliseconds) 
 
   !(assertEqual 
     (= 
@@ -909,7 +906,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.15</h3>
 ; 
 ; EVAL TEST
-; took 0.000615 secs. (614.75 microseconds) 
+; took 0.000642 secs. (641.56 microseconds) 
 
   !(assertEqualToResult 
     (= 
@@ -936,7 +933,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.16</h3>
 ; 
 ; EVAL TEST
-; took 0.000420 secs. (419.75 microseconds) 
+; took 0.000462 secs. (462.00 microseconds) 
 
   !(assertEqualToResult 
     (Mortal Plato) 
@@ -962,7 +959,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.17</h3>
 ; 
 ; EVAL TEST
-; took 0.000846 secs. (846.04 microseconds) 
+; took 0.000874 secs. (874.39 microseconds) 
 
   !(assertEqual 
     (= 
@@ -999,7 +996,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.18</h3>
 ; 
 ; EVAL TEST
-; took 0.000392 secs. (391.84 microseconds) 
+; took 0.000512 secs. (512.37 microseconds) 
 
   !(assertEqual 
     (Mortal Plato) T)
@@ -1031,7 +1028,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.19</h3>
 ; 
 ; EVAL TEST
-; took 0.000708 secs. (708.20 microseconds) 
+; took 0.000741 secs. (740.66 microseconds) 
 
   !(assertEqualToResult 
     (ift 
@@ -1047,7 +1044,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 778,866 inferences, 0.151 CPU in 0.151 seconds (100% CPU, 5144123 Lips)
+>% 778,869 inferences, 0.153 CPU in 0.153 seconds (100% CPU, 5103161 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/d4_type_prop.metta  0)
 <span class="ansi1"
@@ -1182,7 +1179,7 @@ Deterministic: ()
 P;HTML|
 ;           (maybe_halt  7)
 
-Script done on 2024-10-11 00:32:19+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-11 01:56:12+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

@@ -13,7 +13,6 @@
 .inv_foreground { color: #000000; }
 .inv_background { background-color: #AAAAAA; }
 .ansi1 { font-weight: bold; }
-.ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
 .ansi38-013099040 { color: #0D6328; }
@@ -41,10 +40,8 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-11 00:41:39+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
-<span class="ansi1 ansi31"
->ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_debug.pl:369:65: Syntax error: Illegal start of term
-</span>P;HTML|
+Script started on 2024-10-11 02:05:31+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+P;HTML|
 ;           (set_option_value  compat false)
 
 P;HTML|
@@ -474,7 +471,7 @@ Last Result(2): ()
 >;; METTA-MORPH-TESTS.TESTS0.01</h3>
 ; 
 ; EVAL TEST
-; took 0.008 secs. (7.62 milliseconds) 
+; took 0.008 secs. (7.86 milliseconds) 
 
   !(assertEqualToResult 
     (|- 
@@ -504,7 +501,7 @@ Deterministic: ()
 >;; METTA-MORPH-TESTS.TESTS0.02</h3>
 ; 
 ; EVAL TEST
-; took 0.005 secs. (4.91 milliseconds) 
+; took 0.005 secs. (5.24 milliseconds) 
 
   !(assertEqualToResult 
     (|- 
@@ -532,7 +529,7 @@ Deterministic: ()
 >;; METTA-MORPH-TESTS.TESTS0.03</h3>
 ; 
 ; EVAL TEST
-; took 0.008 secs. (8.32 milliseconds) 
+; took 0.008 secs. (8.38 milliseconds) 
 
   !(assertEqualToResult 
     (|- ((({(a b) }) --> mwawa) (1.0 0.9))) 
@@ -558,7 +555,7 @@ Deterministic: ()
 >;; METTA-MORPH-TESTS.TESTS0.04</h3>
 ; 
 ; EVAL TEST
-; took 0.007 secs. (7.40 milliseconds) 
+; took 0.007 secs. (7.37 milliseconds) 
 
   !(assertEqualToResult 
     (|- (((a * b) --> R) (1.0 0.9))) 
@@ -586,7 +583,7 @@ Deterministic: ()
 >;; METTA-MORPH-TESTS.TESTS0.05</h3>
 ; 
 ; EVAL TEST
-; took 0.008 secs. (7.53 milliseconds) 
+; took 0.008 secs. (7.54 milliseconds) 
 
   !(assertEqualToResult 
     (|- ((R --> (a * b)) (1.0 0.9))) 
@@ -617,7 +614,7 @@ Deterministic: ()
 >;; METTA-MORPH-TESTS.TESTS0.06</h3>
 ; 
 ; EVAL TEST
-; took 0.017 secs. (17.45 milliseconds) 
+; took 0.018 secs. (17.65 milliseconds) 
 
   !(assertEqualToResult 
     (|- 
@@ -669,7 +666,7 @@ Deterministic: ()
 >;; METTA-MORPH-TESTS.TESTS0.07</h3>
 ; 
 ; EVAL TEST
-; took 0.031 secs. (31.35 milliseconds) 
+; took 0.032 secs. (32.17 milliseconds) 
 
   !(assertEqualToResult 
     (|- 
@@ -715,7 +712,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 1,956,563 inferences, 0.568 CPU in 0.568 seconds (100% CPU, 3446598 Lips)
+>% 1,956,566 inferences, 0.568 CPU in 0.568 seconds (100% CPU, 3445504 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/tests0.metta  0)
 <span class="ansi1"
@@ -850,7 +847,7 @@ Deterministic: ()
 P;HTML|
 ;           (maybe_halt  7)
 
-Script done on 2024-10-11 00:41:45+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-11 02:05:37+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

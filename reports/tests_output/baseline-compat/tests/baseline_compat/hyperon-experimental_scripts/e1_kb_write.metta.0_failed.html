@@ -13,7 +13,6 @@
 .inv_foreground { color: #000000; }
 .inv_background { background-color: #AAAAAA; }
 .ansi1 { font-weight: bold; }
-.ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
 .ansi38-013099040 { color: #0D6328; }
@@ -34,10 +33,8 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-11 00:32:27+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
-<span class="ansi1 ansi31"
->ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_debug.pl:369:65: Syntax error: Illegal start of term
-</span>P;HTML|
+Script started on 2024-10-11 01:56:21+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+P;HTML|
 ;           (set_option_value  compat false)
 
 P;HTML|
@@ -415,7 +412,7 @@ Deterministic: ()
 >  (Green Sam)
 </span>; 
 ; EVAL TEST
-; took 0.005 secs. (4.69 milliseconds) 
+; took 0.005 secs. (4.82 milliseconds) 
 
   !(assertEqualToResult 
     (ift 
@@ -445,7 +442,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E1-KB-WRITE.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000198 secs. (198.09 microseconds) 
+; took 0.000220 secs. (219.65 microseconds) 
 
   !(assertEqualToResult 
     (match &kb 
@@ -461,7 +458,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 155,002 inferences, 0.038 CPU in 0.038 seconds (100% CPU, 4083719 Lips)
+>% 155,005 inferences, 0.039 CPU in 0.039 seconds (100% CPU, 4023847 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/e1_kb_write.metta  0)
 <span class="ansi1"
@@ -596,7 +593,7 @@ Deterministic: ()
 P;HTML|
 ;           (maybe_halt  7)
 
-Script done on 2024-10-11 00:32:33+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-11 01:56:26+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

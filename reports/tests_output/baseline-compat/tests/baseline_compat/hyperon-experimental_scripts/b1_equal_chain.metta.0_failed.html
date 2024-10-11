@@ -13,7 +13,6 @@
 .inv_foreground { color: #000000; }
 .inv_background { background-color: #AAAAAA; }
 .ansi1 { font-weight: bold; }
-.ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
 .ansi38-255165000 { color: #FFA500; }
@@ -34,10 +33,8 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-11 00:30:55+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
-<span class="ansi1 ansi31"
->ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_debug.pl:369:65: Syntax error: Illegal start of term
-</span>P;HTML|
+Script started on 2024-10-11 01:54:49+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+P;HTML|
 ;           (set_option_value  compat false)
 
 P;HTML|
@@ -398,7 +395,7 @@ Script started on 2024-10-11 00:30:55+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B1-EQUAL-CHAIN.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000744 secs. (744.27 microseconds) 
+; took 0.001 secs. (1.06 milliseconds) 
 
   !(assertEqual 
     (S K K x) x)
@@ -427,7 +424,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B1-EQUAL-CHAIN.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000284 secs. (284.01 microseconds) 
+; took 0.000308 secs. (307.53 microseconds) 
 
   !(assertEqualToResult 
     (expression without known equalities) 
@@ -467,7 +464,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B1-EQUAL-CHAIN.03</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.50 milliseconds) 
+; took 0.001 secs. (1.48 milliseconds) 
 
   !(assertEqual 
     (Add 
@@ -499,7 +496,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B1-EQUAL-CHAIN.04</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.07 milliseconds) 
+; took 0.002 secs. (2.08 milliseconds) 
 
   !(assertEqual 
     (Something? (Add (S Z) (S Z))) 
@@ -533,7 +530,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B1-EQUAL-CHAIN.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000817 secs. (817.19 microseconds) 
+; took 0.000913 secs. (912.76 microseconds) 
 
   !(assertEqual 
     (eq 
@@ -558,7 +555,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B1-EQUAL-CHAIN.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000305 secs. (304.60 microseconds) 
+; took 0.000298 secs. (298.02 microseconds) 
 
   !(assertEqualToResult 
     (eq Green Blue) 
@@ -573,7 +570,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 277,797 inferences, 0.057 CPU in 0.057 seconds (100% CPU, 4874465 Lips)
+>% 277,798 inferences, 0.059 CPU in 0.059 seconds (100% CPU, 4737649 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/b1_equal_chain.metta  0)
 <span class="ansi1"
@@ -708,7 +705,7 @@ Deterministic: ()
 P;HTML|
 ;           (maybe_halt  7)
 
-Script done on 2024-10-11 00:31:00+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-11 01:54:54+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
