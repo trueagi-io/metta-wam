@@ -59,12 +59,6 @@
 % functions and predicates.
 % ==============================
 
-% Setting the file encoding to ISO-Latin-1
-:- encoding(iso_latin_1).
-% Flushing the current output
-:- flush_output.
-% Setting the Rust backtrace to Full
-:- setenv('RUST_BACKTRACE',full).
 % Loading various library files
 :- ensure_loaded(swi_support).
 :- ensure_loaded(metta_testing).
@@ -76,7 +70,6 @@
 % TODO move non flybase specific code between here and the compiler
 %:- ensure_loaded(flybase_main).
 % =======================================
-%:- set_option_value(encoding,utf8).
 
 eopfc:- ensure_loaded(mettalog('metta_ontology.pfc.pl')).
 

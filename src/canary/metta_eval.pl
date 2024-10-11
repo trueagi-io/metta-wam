@@ -1069,8 +1069,8 @@ eval_20(Eq,RetType,Depth,Self,['do',Expr], NoResult):- !,
   %eval_ne(Eq,_RetType2,Depth,Self,Expr,_),!,
   make_empty(RetType,[],NoResult).
 
-eval_20(_Eq,_RetType1,_Depth,_Self,['call!',S], TF):- !, eval_call(S,TF).
-eval_20(_Eq,_RetType1,_Depth,_Self,['call-fn!',S], R):- !, eval_call_fn(S,R).
+eval_20(_Eq,_RetType1,_Depth,_Self,['call!'|S], TF):- !, eval_call(S,TF).
+eval_20(_Eq,_RetType1,_Depth,_Self,['call-fn!'|S], R):- !, eval_call_fn(S,R).
 eval_20(_Eq,_RetType1,_Depth,_Self,['call-fn-nth!',Nth,S], R):-
     length(Left,Nth),
     append(Left,Right,S),
@@ -1118,6 +1118,12 @@ using_all_spaces:- nb_current(with_all_spaces,t).
 eval_20(Eq,RetType,Depth,Self,['if-unify',X,Y,Then,Else],Res):- !,
    eval_args(Eq,'Bool',Depth,Self,['==',X,Y],TF),
    (is_True(TF)
+     -> eval_args(Eq,RetType,Depth,Self,Then,Res)
+     ;  eval_args(Eq,RetType,Depth,Self,Else,Res)).
+
+
+eval_20(Eq,RetType,Depth,Self,['if-decons-expr',HT,H,T,Then,Else],Res):- !,
+   (HT = [H|T]
      -> eval_args(Eq,RetType,Depth,Self,Then,Res)
      ;  eval_args(Eq,RetType,Depth,Self,Else,Res)).
 
@@ -1624,11 +1630,12 @@ eval_20(Eq,RetType,Depth,Self,['call-cleanup',NE,E],R):-  !,
    call_cleanup(eval_args(Eq,RetType,Depth,Self,NE,R),
                 eval_args(Eq,_U_,Depth,Self,E,_)).
 
+% like call-cleanup but we might might avoid certain interupts durring setup
 eval_20(Eq,RetType,Depth,Self,['setup-call-cleanup',S,NE,E],R):-  !,
-   setup_call_cleanup(
-         eval_args(Eq,_,Depth,Self,S,_),
-         eval_args(Eq,RetType,Depth,Self,NE,R),
-         eval_args(Eq,_,Depth,Self,E,_)).
+   sig_atomic_no_cut(eval_args(Eq,_,Depth,Self,S,_)),
+   call_cleanup(eval_args(Eq,RetType,Depth,Self,NE,R),
+                eval_args(Eq,_U_,Depth,Self,E,_)).
+
 
 eval_20(Eq,RetType,Depth,Self,['with-output-to',S,NE],R):-  !,
    eval_args(Eq,'Sink',Depth,Self,S,OUT),
@@ -1639,7 +1646,10 @@ eval_20(Eq,RetType,Depth,Self,[Excl|Rest],Res):-
  arg(_, v('catch!','throw!','number-of!','limit!','offset!','max-time!','findall!','setup-call-cleanup!','call-cleanup!','call-cleanup!','with-output-to!'), Excl), 
  sub_atom(Excl,_,_,1,NoExcl),!,
  eval_20(Eq,RetType,Depth,Self,[NoExcl|Rest],Res).
- 
+
+
+%sig_atomic_no_cut(Goal):- sig_atomic(Goal). 
+sig_atomic_no_cut(Goal):- call(Goal).
 
 % =================================================================
 % =================================================================
@@ -2083,6 +2093,8 @@ eval_20(_Eq,_RetType,_Depth,_Self,['py-dict',Arg],Res):- !,
   must_det_ll((py_dict(Arg,Res))).
 eval_20(_Eq,_RetType,_Depth,_Self,['py-tuple',Arg],Res):- !,
   must_det_ll((py_tuple(Arg,Res))).
+eval_20(_Eq,_RetType,_Depth,_Self,['py-chain',Arg],Res):- !,
+  must_det_ll((py_chain(Arg,Res))).
 eval_40(_Eq,_RetType,_D7epth,_Self,['py-atom',Arg],Res):- !,
   must_det_ll((py_atom(Arg,Res))).
 eval_40(_Eq,_RetType,_Depth,_Self,['py-atom',Arg,Type],Res):- !,
@@ -2313,6 +2325,7 @@ allow_host_functions.
 s2ps(S,P):- S=='Nil',!,P=[].
 s2ps(S,P):- \+ is_list(S),!,P=S.
 s2ps([F|S],P):- atom(F),maplist(s2ps,S,SS),join_s2ps(F,SS,P),!.
+s2ps([F|S],P):- is_list(F),maplist(s2ps,[F|S],SS),join_s2ps(call,SS,P),!.
 s2ps(S,S):-!.
 join_s2ps('Cons',[H,T],[H|T]):-!.
 join_s2ps(F,Args,P):-atom(F),P=..[F|Args].

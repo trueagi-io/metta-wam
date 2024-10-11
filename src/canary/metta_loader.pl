@@ -355,8 +355,6 @@ import_metta1(Self, RelFilename):-
     exists_file(RelFilename),
     % Convert the relative filename to an absolute path.
     absolute_file_name(RelFilename, Filename),
-    % Generate a temporary file based on the absolute filename.
-    gen_tmp_file(fail, Filename),
     % Extract the directory path from the filename.
     directory_file_path(Directory, _, Filename),
     % Register the file in the Prolog knowledge base as being part of the Metta context.
@@ -608,7 +606,8 @@ translate_metta_file_to_datalog_io(Filename,Input,Output):- may_use_datalog,
     (Term==end_of_file->!;
     (once(((
       % if_t((0 is (Lineno mod 10000)),writeln(Term:Lineno)),
-      /*non_compat_io*/(
+      /*non_compat_io*/
+      (
           if_t((
              get_time(NTime),arg(1,LastTime,Last),
                 Elapsed is (NTime-Last), Elapsed > 4),
@@ -771,10 +770,16 @@ load_metta_file_stream_fast(_Size, _P2, Filename, Self, _In) :-
     ;   (fbugio(deleting(BufferFile)),delete_file(BufferFile), fail)
     ).
 
-load_metta_file_stream_fast(_Size,P2,Filename,Self,In):-
+load_metta_file_stream_fast(_Size,_P2,Filename,Self,In):-
+  make_metta_file_buffer(use_fast_buffer,Filename,In),
+  load_metta_buffer(Self,Filename).
+
+
+
+make_metta_file_buffer(TFMakeFile,Filename,In):-
   % maybe time this
   ((
-      if_t(use_fast_buffer,
+      if_t(TFMakeFile,
          ((symbol_concat(Filename, '.buffer~', BufferFile),
           fbugio(creating(BufferFile)),
           write_bf(BufferFile, ( :- dynamic(metta_file_buffer/5))),
@@ -782,16 +787,18 @@ load_metta_file_stream_fast(_Size,P2,Filename,Self,In):-
       repeat,
             my_line_count(In, LineCount),
             current_read_mode(file,Mode),
-            must_det_ll(call(P2, In,Expr)), %write_src(read_metta=Expr),nl,
+            must_det_ll(call(read_metta2, In,Expr)), %write_src(read_metta=Expr),nl,
             subst_vars(Expr, Term, [], NamedVarsList),
             BufferTerm = metta_file_buffer(Mode,Term,NamedVarsList,Filename,LineCount),
             assertz(BufferTerm),
-            if_t(use_fast_buffer,write_bf(BufferFile,BufferTerm)),
+            if_t(TFMakeFile,write_bf(BufferFile,BufferTerm)),
 
       flush_output,
-      at_end_of_stream(In),!)),!,
+      at_end_of_stream(In),!)),!.
       %listing(metta_file_buffer/5),
-      load_metta_buffer(Self,Filename).
+      
+
+
 
 always_rebuild_temp:- true.
 
@@ -1180,8 +1187,8 @@ dvar_name(N,O):- integer(N),symbol_concat('_',N,O).
 dvar_name(N,O):- atom(N),atom_number(N,Num),dvar_name(Num,O),!.
 dvar_name(N,O):- \+ symbol(N),!,format(atom(A),'~w',[N]),dvar_name(A,O).
 dvar_name(N,O):- !, format(atom(A),'_~w',[N]),dvar_name(A,O).
-%dvar_name(  '',''):-!. % "$"
-%dvar_name('_','__'):-!. % "$_"
+%dvar_name(  '',''):-!. % $
+%dvar_name('_','__'):-!. % $_
 dvar_name(N,O):- symbol_concat('_',_,N),!,symbol_concat('_',N,O).
 dvar_name(N,O):- svar_fixvarname_dont_capitalize(N,O),!.
 dvar_name(N,O):- must_det_ll((atom_chars(N,Lst),maplist(c2vn,Lst,NList),symbolic_list_concat(NList,S),svar_fixvarname_dont_capitalize(S,O))),!.
@@ -1378,7 +1385,7 @@ generate_interpreter_stubs:-
    asserta(did_generate_interpreter_stubs),
    forall(metta_type('&corelib',Symb,Def),
         gen_interp_stubs('&corelib',Symb,Def)).
-
+        
 :- dynamic(metta_atom_asserted_deduced/2).
 :- multifile(metta_atom_asserted_deduced/2).
 metta_atom_asserted_deduced('&corelib', Term):- fail,
@@ -1395,6 +1402,5 @@ really_use_corelib_file(Dir,File):- absolute_file_name(File,Filename,[relative_t
  locally(nb_setval(may_use_fast_buffer,t),
    locally(nb_setval(suspend_answers,true),
      with_output_to(string(_),include_metta_directory_file('&corelib',Dir,Filename)))).
-
 
 

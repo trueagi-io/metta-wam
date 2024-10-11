@@ -53,9 +53,6 @@
 
 
 
-:- encoding(iso_latin_1).
-:- flush_output.
-:- setenv('RUST_BACKTRACE',full).
 :- ensure_loaded(metta_compiler).
 %:- ensure_loaded(metta_compiler).
 % TODO move non flybase specific code between here and the compiler

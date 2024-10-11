@@ -318,6 +318,58 @@ with_debug(Flag, Goal) :-
     reset_only_eval_num,
     setup_call_cleanup(set_debug(Flag, true), call(Goal), set_debug(Flag, false)).
 
+
+%!  is_nodebug is semidet.
+%
+%   Checks if the 'nodebug' option is set to true.
+%   This predicate succeeds if the option `nodebug` is set to true, 
+%   otherwise it fails.
+%
+%   @example
+%     ?- is_nodebug.
+%     true.
+%
+is_nodebug :- 
+    % Check if the option 'nodebug' is set to true.
+    option_value(nodebug, true).
+
+%!  with_no_debug(+Goal) is det.
+%
+%   Executes the given Goal with debug-related options set appropriately.
+%   This predicate runs Goal under different debugging settings depending
+%   on whether the 'nodebug' option is active.
+%
+%   @arg Goal The goal to execute. It can be any Prolog predicate.
+%
+%   If 'nodebug' is set to true, it immediately calls the goal without any 
+%   additional changes to options. Otherwise, it wraps the Goal execution 
+%   inside several `with_option/3` predicates that modify various debugging 
+%   and evaluation options.
+%
+%   @examples
+%     % Call a goal with no debugging if 'nodebug' is set.
+%     ?- with_no_debug(true).
+%     true.
+%
+%     % Example where debug options are set and the goal is executed.
+%     ?- with_no_debug(member(X, [1, 2, 3])).
+%     X = 1 ;
+%     X = 2 ;
+%     X = 3.
+%
+with_no_debug(Goal) :-  is_nodebug, !, % If 'nodebug' is true, call the goal without any further option adjustments.    
+    call(Goal).
+with_no_debug(Goal) :-
+    % Otherwise, call the goal while modifying several debugging and execution options.
+    with_option(nodebug, true,
+        with_option(time, false,
+            with_option(debug, silent,
+                with_option(e, silent,
+                    with_option(eval, true,
+                        with_option(exec, noskip, call(Goal))))))).
+
+
+
 %% flag_to_var(+Flag, -Var) is det.
 % Convert a debugging flag to a variable name.
 % Flag - The debugging flag.
@@ -351,6 +403,7 @@ if_trace(Flag, Goal) :-
 %% is_showing(+Flag) is semidet.
 % Check if showing is enabled for a flag.
 % Flag - The flag to check.
+is_showing(_) :- is_nodebug, !, fail.
 is_showing(Flag) :- fast_option_value(Flag, 'silent'), !, fail.
 is_showing(Flag) :- is_verbose(Flag), !.
 is_showing(Flag) :- fast_option_value(Flag, 'show'), !.
@@ -373,6 +426,7 @@ fast_option_value(N, V) :- atom(N), current_prolog_flag(N, V).
 %% is_verbose(+Flag) is semidet.
 % Check if verbose mode is enabled for a flag.
 % Flag - The flag to check.
+is_verbose(_) :- is_nodebug, !, fail.
 is_verbose(Flag) :- fast_option_value(Flag, 'silent'), !, fail.
 is_verbose(Flag) :- fast_option_value(Flag, 'verbose'), !.
 is_verbose(Flag) :- is_debugging(Flag), !.
@@ -403,6 +457,7 @@ efbug(_, G) :- call(G).
 
 %% is_debugging_always(+_Flag) is semidet.
 % Always return true for debugging, used as a placeholder.
+is_debugging_always(_) :- is_nodebug, !, fail.
 is_debugging_always(_Flag) :- !.
 
 %% is_debugging(+Flag) is semidet.
@@ -411,6 +466,8 @@ is_debugging_always(_Flag) :- !.
 
 %is_debugging(Flag):- !, fail.
 is_debugging(Flag) :- var(Flag), !, fail.
+is_debugging(_) :- is_nodebug, !, fail.
+
 is_debugging((A; B)) :- !, (is_debugging(A); is_debugging(B)).
 is_debugging((A, B)) :- !, (is_debugging(A), is_debugging(B)).
 is_debugging(not(Flag)) :- !, \+ is_debugging(Flag).
