@@ -151,7 +151,7 @@ grovel_all_info(Term, Arity):-
 %   @arg Term  The term (predicate) for which help is displayed.
 %   @arg Arity The arity to check for.
 grovel_some_help(Term, _) :- 
-    with_no_debug(eval(['help!', Term], _)).  % Evaluate the help command for the term.
+    xref_call(eval(['help!', Term], _)).  % Evaluate the help command for the term.
 grovel_some_help(Term, Arity):- number(Arity), Arity > 1,
     findall(A, is_documented_arity(Term, A), ArityDoc),  % Retrieve documented arities for the term.
     ArityDoc \== [],  % Ensure the documentation is not empty.
@@ -163,6 +163,11 @@ grovel_some_help(Term, _) :-
     \+ skip_xref_atom(Atom),  % Skip atoms that are not relevant for cross-referencing.
     format('~@~n', [write_src_xref(Atom)]).  % Write the source cross-reference for the atom.
 
+
+%xref_call(G):- catch(G,E,debug(server(high), "xref_call ~w", [G])).
+%xref_call(G):- catch(with_no_debug(G),E,debug(server(high), "xref_call ~w", [G->E])).
+xref_call(G):- with_no_debug(G).
+%xref_call(G):- call(G). 
 
 %!  about_term(+Atom, +Term) is semidet.
 %
@@ -179,6 +184,14 @@ about_term([Atom|_],Term):- \+ promiscuous_symbol(Term), sub_var(Term,Atom),!.
 promiscuous_symbol(Term):- var(Term),!,fail.
 promiscuous_symbol('=').
 promiscuous_symbol(':').
+
+:- multifile(user:handle_msg_hook/3).
+:- dynamic(user:handle_msg_hook/3).
+% Save the last Msg.body Object for each method
+user:handle_msg_hook(MethodStr, MsgBody, _) :- fail,
+   atom_string(Method,MethodStr),
+   nb_setval(Method, MsgBody),
+   fail.
 
 %!  write_src_xref(+Src) is det.
 %
@@ -200,7 +213,8 @@ very_nested_src([_, _ | Src]):- is_list(Src),
     member(I, E), is_list(I), !.  
 maybe_link_xref(What):- 
   ignore(once((
-     clause(metta_file_buffer(_,What0,_,_,_),true,Ref),
+     clause(metta_file_buffer(_,What0,_,File,_),true,Ref),
+     symbolic(File), \+ symbol_contains(File,'stdlib_mettalog'),
      alpha_unify(What,What0),
      next_clause(Ref, metta_file_buffer(_,_,_,File,Loc)),     
      write_file_link(File,Loc)))).
@@ -214,7 +228,7 @@ next_clause(Ref, NextClause) :-
      nth_clause(Pred, NextIndex, NextRef),!,
      clause(NextClause, _, NextRef).  % Get the clause at this reference
 
-write_file_link(File,Position):- 
+write_file_link(File,Position):-   
   stream_position_data(line_count, Position, Line),  % Extract the line number.
   %stream_position_data(line_position, Position, Col),  % Extract the column number.
   %stream_position_data(char_count, Position, CharPos),  % Extract the character position.
