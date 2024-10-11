@@ -197,9 +197,20 @@ very_nested_src([_, _ | Src]):- is_list(Src),
     member(E, M), is_list(E), 
     member(I, E), is_list(I), !.  
 maybe_link_xref(What):- 
-  ignore(once((metta_file_buffer(_,What0,_,File,Loc),
+  ignore(once((
+     clause(metta_file_buffer(_,What0,_,_,_),true,Ref),
      alpha_unify(What,What0),
+     next_clause(Ref, metta_file_buffer(_,_,_,File,Loc)),     
      write_file_link(File,Loc)))).
+
+% next_clause(Ref, NextClause)
+%   - Ref is the reference of the current clause
+%   - NextClause is the next clause's reference, if it exists
+next_clause(Ref, NextClause) :-
+     nth_clause(Pred, Nth, Ref),
+     NextIndex is Nth + 1,
+     nth_clause(Pred, NextIndex, NextRef),!,
+     clause(NextClause, _, NextRef).  % Get the clause at this reference
 
 write_file_link(File,Position):- 
   stream_position_data(line_count, Position, Line),  % Extract the line number.
