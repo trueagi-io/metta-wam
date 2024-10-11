@@ -151,7 +151,7 @@ grovel_all_info(Term, Arity):-
 %   @arg Term  The term (predicate) for which help is displayed.
 %   @arg Arity The arity to check for.
 grovel_some_help(Term, _) :- 
-    eval(['help!', Term], _).  % Evaluate the help command for the term.
+    with_no_debug(eval(['help!', Term], _)).  % Evaluate the help command for the term.
 grovel_some_help(Term, Arity):- number(Arity), Arity > 1,
     findall(A, is_documented_arity(Term, A), ArityDoc),  % Retrieve documented arities for the term.
     ArityDoc \== [],  % Ensure the documentation is not empty.
@@ -163,6 +163,7 @@ grovel_some_help(Term, _) :-
     \+ skip_xref_atom(Atom),  % Skip atoms that are not relevant for cross-referencing.
     format('~@~n', [write_src_xref(Atom)]).  % Write the source cross-reference for the atom.
 
+
 %!  about_term(+Atom, +Term) is semidet.
 %
 %   Determines if the Atom is about the given Term.
@@ -172,6 +173,7 @@ grovel_some_help(Term, _) :-
 about_term([Op, Atom | _], Term):- fail, Op==':', is_documented(Term), !, Atom\==Term, % Dont reshow types
     sub_var(Term, Atom),  !. % Check if the term is a subterm of the atom.
 about_term([_,[Atom|_]|_],Term):- sub_var(Term,Atom),!.
+about_term([_,Atom|_],Term):- ==(Term,Atom),!.
 about_term([Atom|_],Term):- \+ promiscuous_symbol(Term), sub_var(Term,Atom),!.
 %promiscuous_symbol(+Term) is semidet.
 promiscuous_symbol(Term):- var(Term),!,fail.
