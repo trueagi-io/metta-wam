@@ -13,6 +13,7 @@
 .inv_foreground { color: #000000; }
 .inv_background { background-color: #AAAAAA; }
 .ansi1 { font-weight: bold; }
+.ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
 .ansi38-013099040 { color: #0D6328; }
@@ -47,8 +48,10 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-11 00:16:47+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
-P;HTML|
+Script started on 2024-10-11 00:40:26+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+<span class="ansi1 ansi31"
+>ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_debug.pl:369:65: Syntax error: Illegal start of term
+</span>P;HTML|
 ;           (set_option_value  compat false)
 
 P;HTML|
@@ -413,7 +416,7 @@ Deterministic: ()
 >;; METTA-MORPH-TESTS.MATCH-VOID.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000159 secs. (159.10 microseconds) 
+; took 0.000158 secs. (157.87 microseconds) 
 
   !(assertEqualToResult 
     (match &belief_events $1 $1) ())
@@ -442,7 +445,7 @@ Deterministic: ()
 > belief1
 </span>; 
 ; EVAL TEST
-; took 0.001 secs. (1.06 milliseconds) 
+; took 0.001 secs. (1.15 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &belief_events belief1) 
@@ -472,7 +475,7 @@ Deterministic: ()
 >;; METTA-MORPH-TESTS.MATCH-VOID.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000162 secs. (161.65 microseconds) 
+; took 0.000193 secs. (193.10 microseconds) 
 
   !(assertEqualToResult 
     (match &belief_events $1 $1) 
@@ -503,7 +506,7 @@ Deterministic: ()
 >;; METTA-MORPH-TESTS.MATCH-VOID.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000123 secs. (123.26 microseconds) 
+; took 0.000142 secs. (142.22 microseconds) 
 
   !(assertEqualToResult 
     (case belief1 
@@ -535,7 +538,7 @@ Deterministic: ()
 >;; METTA-MORPH-TESTS.MATCH-VOID.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000224 secs. (223.60 microseconds) 
+; took 0.000262 secs. (262.06 microseconds) 
 
   !(assertEqualToResult 
     (case 
@@ -562,7 +565,7 @@ Deterministic: ()
 >;; METTA-MORPH-TESTS.MATCH-VOID.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000253 secs. (252.94 microseconds) 
+; took 0.000325 secs. (325.37 microseconds) 
 
   !(assertEqualToResult 
     (case 
@@ -591,7 +594,7 @@ Deterministic: ()
 >;; METTA-MORPH-TESTS.MATCH-VOID.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000322 secs. (322.49 microseconds) 
+; took 0.000365 secs. (364.51 microseconds) 
 
   !(assertEqualToResult 
     (case 
@@ -620,7 +623,7 @@ Deterministic: ()
 >;; METTA-MORPH-TESTS.MATCH-VOID.08</h3>
 ; 
 ; EVAL TEST
-; took 0.000234 secs. (233.69 microseconds) 
+; took 0.000293 secs. (293.20 microseconds) 
 
   !(assertEqualToResult 
     (case 
@@ -654,7 +657,7 @@ Deterministic: ()
 > goal1
 </span>; 
 ; EVAL TEST
-; took 0.001 secs. (1.09 milliseconds) 
+; took 0.001 secs. (1.14 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &goal_events goal1) 
@@ -681,7 +684,7 @@ Deterministic: ()
 >;; METTA-MORPH-TESTS.MATCH-VOID.10</h3>
 ; 
 ; EVAL TEST
-; took 0.000299 secs. (298.65 microseconds) 
+; took 0.000313 secs. (312.88 microseconds) 
 
   !(assertEqualToResult 
     (case 
@@ -709,7 +712,7 @@ Deterministic: ()
 >;; METTA-MORPH-TESTS.MATCH-VOID.11</h3>
 ; 
 ; EVAL TEST
-; took 0.000242 secs. (241.87 microseconds) 
+; took 0.000261 secs. (260.68 microseconds) 
 
   !(assertEqualToResult 
     (case 
@@ -724,7 +727,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 360,531 inferences, 0.072 CPU in 0.072 seconds (100% CPU, 5038461 Lips)
+>% 365,226 inferences, 0.074 CPU in 0.074 seconds (100% CPU, 4932441 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/match_void.metta  0)
 <span class="ansi1"
@@ -859,7 +862,7 @@ Deterministic: ()
 P;HTML|
 ;           (maybe_halt  7)
 
-Script done on 2024-10-11 00:16:53+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-11 00:40:31+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

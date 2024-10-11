@@ -13,6 +13,7 @@
 .inv_foreground { color: #000000; }
 .inv_background { background-color: #AAAAAA; }
 .ansi1 { font-weight: bold; }
+.ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
 .ansi38-255165000 { color: #FFA500; }
@@ -41,8 +42,10 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-11 00:07:53+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
-P;HTML|
+Script started on 2024-10-11 00:32:06+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+<span class="ansi1 ansi31"
+>ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_debug.pl:369:65: Syntax error: Illegal start of term
+</span>P;HTML|
 ;           (set_option_value  compat false)
 
 P;HTML|
@@ -404,7 +407,7 @@ Script started on 2024-10-11 00:07:53+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D3-DEPTYPES.01</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.30 milliseconds) 
+; took 0.001 secs. (1.40 milliseconds) 
 
   !(assertEqual 
     (get-type (Cons 0 (Cons 1 Nil))) 
@@ -443,7 +446,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D3-DEPTYPES.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000678 secs. (677.61 microseconds) 
+; took 0.000696 secs. (696.20 microseconds) 
 
   !(assertEqual 
     (get-type (drop (Cons 1 Nil))) 
@@ -469,7 +472,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D3-DEPTYPES.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000935 secs. (934.80 microseconds) 
+; took 0.000971 secs. (970.53 microseconds) 
 
   !(assertEqual 
     (drop (Cons 2 (Cons 1 Nil))) 
@@ -494,7 +497,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D3-DEPTYPES.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000460 secs. (460.34 microseconds) 
+; took 0.000242 secs. (242.12 microseconds) 
 
   !(assertEqualToResult 
     (get-type (drop Nil)) ())
@@ -537,7 +540,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D3-DEPTYPES.05</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.19 milliseconds) 
+; took 0.001 secs. (1.12 milliseconds) 
 
   !(assertEqual 
     (get-type (ConsN "1" (ConsN "2" NilN))) 
@@ -572,7 +575,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D3-DEPTYPES.06</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.07 milliseconds) 
+; took 0.001 secs. (1.02 milliseconds) 
 
   !(assertEqual 
     (get-type (dropN (ConsN "1" NilN))) 
@@ -605,7 +608,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D3-DEPTYPES.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000452 secs. (451.82 microseconds) 
+; took 0.000292 secs. (292.48 microseconds) 
 
   !(assertEqualToResult 
     (dropN NilN) 
@@ -620,7 +623,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 324,107 inferences, 0.082 CPU in 0.082 seconds (100% CPU, 3955736 Lips)
+>% 332,762 inferences, 0.073 CPU in 0.073 seconds (100% CPU, 4566333 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/d3_deptypes.metta  0)
 <span class="ansi1"
@@ -755,7 +758,7 @@ Deterministic: ()
 P;HTML|
 ;           (maybe_halt  7)
 
-Script done on 2024-10-11 00:07:59+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-11 00:32:12+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

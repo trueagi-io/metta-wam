@@ -13,6 +13,7 @@
 .inv_foreground { color: #000000; }
 .inv_background { background-color: #AAAAAA; }
 .ansi1 { font-weight: bold; }
+.ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
 .ansi38-255165000 { color: #FFA500; }
@@ -69,8 +70,10 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-11 00:06:50+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
-P;HTML|
+Script started on 2024-10-11 00:31:09+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+<span class="ansi1 ansi31"
+>ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_debug.pl:369:65: Syntax error: Illegal start of term
+</span>P;HTML|
 ;           (set_option_value  compat false)
 
 P;HTML|
@@ -423,7 +426,7 @@ Script started on 2024-10-11 00:06:50+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B3-DIRECT.01</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.07 milliseconds) 
+; took 0.001 secs. (1.18 milliseconds) 
 
   !(assertEqual 
     (green Fritz) T)
@@ -541,7 +544,7 @@ true]
 >          |     <--Fritz </span>
 ; 
 ; EVAL TEST
-; took 0.024 secs. (24.13 milliseconds) 
+; took 0.022 secs. (22.49 milliseconds) 
 
   !(assertEqual 
     (ift 
@@ -582,7 +585,7 @@ Deterministic: ()
 >    1:1   |   |-<--eat_flies </span>
 ; 
 ; EVAL TEST
-; took 0.003 secs. (2.54 milliseconds) 
+; took 0.002 secs. (2.26 milliseconds) 
 
   !(assertEqualToResult 
     (match &self 
@@ -601,7 +604,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 338,251 inferences, 0.072 CPU in 0.072 seconds (100% CPU, 4717879 Lips)
+>% 343,270 inferences, 0.067 CPU in 0.067 seconds (100% CPU, 5119644 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/b3_direct.metta  0)
 <span class="ansi1"
@@ -736,7 +739,7 @@ Deterministic: ()
 P;HTML|
 ;           (maybe_halt  7)
 
-Script done on 2024-10-11 00:06:56+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-11 00:31:15+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

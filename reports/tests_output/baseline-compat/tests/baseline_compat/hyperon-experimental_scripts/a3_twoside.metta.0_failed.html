@@ -13,6 +13,7 @@
 .inv_foreground { color: #000000; }
 .inv_background { background-color: #AAAAAA; }
 .ansi1 { font-weight: bold; }
+.ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
 .ansi38-255165000 { color: #FFA500; }
@@ -28,8 +29,10 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-11 00:06:20+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
-P;HTML|
+Script started on 2024-10-11 00:30:41+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+<span class="ansi1 ansi31"
+>ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_debug.pl:369:65: Syntax error: Illegal start of term
+</span>P;HTML|
 ;           (set_option_value  compat false)
 
 P;HTML|
@@ -374,7 +377,7 @@ Script started on 2024-10-11 00:06:20+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A3-TWOSIDE.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000544 secs. (544.07 microseconds) 
+; took 0.000607 secs. (606.75 microseconds) 
 
   !(assertEqualToResult 
     (match &self 
@@ -405,7 +408,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A3-TWOSIDE.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000345 secs. (345.27 microseconds) 
+; took 0.000400 secs. (399.63 microseconds) 
 
   !(assertEqualToResult 
     (match &self 
@@ -449,7 +452,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A3-TWOSIDE.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000393 secs. (393.26 microseconds) 
+; took 0.000544 secs. (544.46 microseconds) 
 
   !(assertEqualToResult 
     (match &self 
@@ -490,7 +493,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A3-TWOSIDE.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000374 secs. (373.53 microseconds) 
+; took 0.000486 secs. (485.52 microseconds) 
 
   !(assertEqualToResult 
     (match &self 
@@ -513,7 +516,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 187,214 inferences, 0.037 CPU in 0.037 seconds (100% CPU, 5007393 Lips)
+>% 190,469 inferences, 0.038 CPU in 0.038 seconds (100% CPU, 5039322 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/a3_twoside.metta  0)
 <span class="ansi1"
@@ -648,7 +651,7 @@ Deterministic: ()
 P;HTML|
 ;           (maybe_halt  7)
 
-Script done on 2024-10-11 00:06:25+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-11 00:30:46+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

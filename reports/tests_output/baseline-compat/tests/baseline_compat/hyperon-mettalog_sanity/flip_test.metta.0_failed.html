@@ -13,6 +13,7 @@
 .inv_foreground { color: #000000; }
 .inv_background { background-color: #AAAAAA; }
 .ansi1 { font-weight: bold; }
+.ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
 .ansi38-255165000 { color: #FFA500; }
@@ -26,8 +27,10 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-11 00:10:37+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
-P;HTML|
+Script started on 2024-10-11 00:34:36+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+<span class="ansi1 ansi31"
+>ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_debug.pl:369:65: Syntax error: Illegal start of term
+</span>P;HTML|
 ;           (set_option_value  compat false)
 
 P;HTML|
@@ -373,7 +376,7 @@ Script started on 2024-10-11 00:10:37+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-METTALOG-SANITY.FLIP-TEST.01</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.08 milliseconds) 
+; took 0.001 secs. (1.16 milliseconds) 
 
   !(assertEqualToResult 
     (recur-until-flip-true 1) 
@@ -398,7 +401,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.FLIP-TEST.02</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.05 milliseconds) 
+; took 0.002 secs. (1.99 milliseconds) 
 
   !(assertEqualToResult 
     (recur-until-flip-false 1) 
@@ -413,7 +416,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 109,653 inferences, 0.026 CPU in 0.026 seconds (100% CPU, 4227359 Lips)
+>% 119,606 inferences, 0.027 CPU in 0.027 seconds (100% CPU, 4401570 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/flip_test.metta  0)
 <span class="ansi1"
@@ -548,7 +551,7 @@ Deterministic: ()
 P;HTML|
 ;           (maybe_halt  7)
 
-Script done on 2024-10-11 00:10:43+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-11 00:34:42+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

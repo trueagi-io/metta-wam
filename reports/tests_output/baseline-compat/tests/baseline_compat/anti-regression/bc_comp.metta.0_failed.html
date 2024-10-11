@@ -675,8 +675,10 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-11 00:02:28+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
-^@P;HTML|
+Script started on 2024-10-11 00:26:57+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+^@<span class="ansi1 ansi31"
+>ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_debug.pl:369:65: Syntax error: Illegal start of term
+</span>P;HTML|
 ;           (set_option_value  compat false)
 
 P;HTML|
@@ -1263,7 +1265,7 @@ Deterministic: ()
       (rule1output $_4566 $_4584)))
 </span>; 
 ; EVAL TEST
-; took 0.005 secs. (5.10 milliseconds) 
+; took 0.005 secs. (5.15 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &kb 
@@ -1364,7 +1366,7 @@ Deterministic: ()
         (less $_4734 $_4752))))
 </span>; 
 ; EVAL TEST
-; took 0.007 secs. (7.05 milliseconds) 
+; took 0.007 secs. (7.01 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &kb 
@@ -1798,7 +1800,7 @@ Deterministic: ()
 >   96:0   |-<--(if (and (and (is-closed 2) (is-closed 3)) (< 2 3)) (: CPU (⍃ 2 3)) (empty)) </span>
 ; 
 ; EVAL TEST
-; took 0.141 secs. (140.62 milliseconds) 
+; took 0.141 secs. (141.30 milliseconds) 
 
   !(assertEqualToResult 
     (bc 
@@ -2057,7 +2059,7 @@ Deterministic: ()
 >   84:0   |-<--(if (and (and (is-closed 4) (is-closed 3)) (< 4 3)) (: CPU (⍃ 4 3)) (empty)) </span>
 ; 
 ; EVAL TEST
-; took 0.137 secs. (136.75 milliseconds) 
+; took 0.137 secs. (137.04 milliseconds) 
 
   !(assertEqualToResult 
     (bc 
@@ -2997,7 +2999,7 @@ Deterministic: ()
 >  308:1   |   |-<--(: ((rule (rule1 axiom)) CPU) (less 2 3)) </span>
 ; 
 ; EVAL TEST
-; took 1.073 secs. (1072.84 milliseconds) 
+; took 1.073 secs. (1072.71 milliseconds) 
 
   !(assertEqualToResult 
     (bc 
@@ -3021,7 +3023,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 10,315,843 inferences, 1.667 CPU in 1.667 seconds (100% CPU, 6187242 Lips)
+>% 10,361,303 inferences, 1.665 CPU in 1.665 seconds (100% CPU, 6224597 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/bc_comp.metta  0)
 <span class="ansi1"
@@ -3156,7 +3158,7 @@ Deterministic: ()
 P;HTML|
 ;           (maybe_halt  7)
 
-Script done on 2024-10-11 00:02:35+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-11 00:27:04+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

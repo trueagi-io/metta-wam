@@ -13,6 +13,7 @@
 .inv_foreground { color: #000000; }
 .inv_background { background-color: #AAAAAA; }
 .ansi1 { font-weight: bold; }
+.ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
 .ansi38-255165000 { color: #FFA500; }
@@ -24,8 +25,10 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-11 00:17:20+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
-P;HTML|
+Script started on 2024-10-11 00:40:57+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+<span class="ansi1 ansi31"
+>ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_debug.pl:369:65: Syntax error: Illegal start of term
+</span>P;HTML|
 ;           (set_option_value  compat false)
 
 P;HTML|
@@ -360,7 +363,7 @@ Script started on 2024-10-11 00:17:20+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; METTA-MORPH-TESTS.NESTED-PARAMETERS.01</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.16 milliseconds) 
+; took 0.001 secs. (1.33 milliseconds) 
 
   !(assertEqualToResult 
     (Truth_Deduction 
@@ -377,7 +380,7 @@ Script started on 2024-10-11 00:17:20+00:00 [TERM="xterm-256color" TTY="/dev/pts
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 68,634 inferences, 0.015 CPU in 0.015 seconds (100% CPU, 4444234 Lips)
+>% 70,917 inferences, 0.015 CPU in 0.015 seconds (100% CPU, 4620579 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/nested_parameters.metta  0)
 <span class="ansi1"
@@ -512,7 +515,7 @@ Deterministic: ()
 P;HTML|
 ;           (maybe_halt  7)
 
-Script done on 2024-10-11 00:17:26+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-11 00:41:03+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

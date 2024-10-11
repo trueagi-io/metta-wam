@@ -13,6 +13,7 @@
 .inv_foreground { color: #000000; }
 .inv_background { background-color: #AAAAAA; }
 .ansi1 { font-weight: bold; }
+.ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
 .ansi38-013099040 { color: #0D6328; }
@@ -42,8 +43,10 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-11 00:17:44+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
-P;HTML|
+Script started on 2024-10-11 00:41:18+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+<span class="ansi1 ansi31"
+>ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_debug.pl:369:65: Syntax error: Illegal start of term
+</span>P;HTML|
 ;           (set_option_value  compat false)
 
 P;HTML|
@@ -409,7 +412,7 @@ Deterministic: (State  45 $_59730)
 >;; METTA-MORPH-TESTS.STATES-SPACES.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000183 secs. (183.17 microseconds) 
+; took 0.000230 secs. (230.14 microseconds) 
 
   !(assertEqualToResult 
     (get-state &FIFO) 
@@ -441,7 +444,7 @@ Deterministic: ()
 > a
 </span>; 
 ; EVAL TEST
-; took 0.001 secs. (1.18 milliseconds) 
+; took 0.001 secs. (1.13 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &WU a) 
@@ -471,7 +474,7 @@ Deterministic: ()
 >;; METTA-MORPH-TESTS.STATES-SPACES.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000181 secs. (181.47 microseconds) 
+; took 0.000199 secs. (198.75 microseconds) 
 
   !(assertEqualToResult 
     (match &WU $1 $1) 
@@ -503,7 +506,7 @@ Deterministic: ()
 > b
 </span>; 
 ; EVAL TEST
-; took 0.001 secs. (1.15 milliseconds) 
+; took 0.001 secs. (1.17 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &WU b) 
@@ -535,7 +538,7 @@ Deterministic: ()
 > a
 </span>; 
 ; EVAL TEST
-; took 0.000503 secs. (503.29 microseconds) 
+; took 0.000620 secs. (619.52 microseconds) 
 
   !(assertEqualToResult 
     (remove-atom &WU a) 
@@ -560,7 +563,7 @@ Deterministic: ()
 >;; METTA-MORPH-TESTS.STATES-SPACES.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000258 secs. (257.82 microseconds) 
+; took 0.000339 secs. (339.46 microseconds) 
 
   !(assertEqual 
     (match &WU $1 $1) 
@@ -575,7 +578,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 240,730 inferences, 0.052 CPU in 0.052 seconds (100% CPU, 4585676 Lips)
+>% 243,679 inferences, 0.052 CPU in 0.052 seconds (100% CPU, 4669177 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/states_spaces.metta  0)
 <span class="ansi1"
@@ -710,7 +713,7 @@ Deterministic: ()
 P;HTML|
 ;           (maybe_halt  7)
 
-Script done on 2024-10-11 00:17:49+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-11 00:41:24+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

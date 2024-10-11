@@ -13,6 +13,7 @@
 .inv_foreground { color: #000000; }
 .inv_background { background-color: #AAAAAA; }
 .ansi1 { font-weight: bold; }
+.ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
 .ansi38-013099040 { color: #0D6328; }
@@ -122,8 +123,10 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-11 00:03:40+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
-P;HTML|
+Script started on 2024-10-11 00:28:07+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+<span class="ansi1 ansi31"
+>ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_debug.pl:369:65: Syntax error: Illegal start of term
+</span>P;HTML|
 ;           (set_option_value  compat false)
 
 P;HTML|
@@ -656,7 +659,7 @@ Deterministic: ()
 >;; METTA-WAM-ISSUE-116.TEST-SPO-100.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000523 secs. (523.08 microseconds) 
+; took 0.000586 secs. (586.14 microseconds) 
 
   !(assertEqualToResult 
     (match &hald100 
@@ -673,7 +676,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 534,341 inferences, 0.188 CPU in 0.188 seconds (100% CPU, 2843887 Lips)
+>% 544,148 inferences, 0.184 CPU in 0.184 seconds (100% CPU, 2962096 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/issues/metta-wam-issue-116/test_spo_100.metta  0)
 <span class="ansi1"
@@ -808,7 +811,7 @@ Deterministic: ()
 P;HTML|
 ;           (maybe_halt  7)
 
-Script done on 2024-10-11 00:03:45+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-11 00:28:12+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

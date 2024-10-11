@@ -13,6 +13,7 @@
 .inv_foreground { color: #000000; }
 .inv_background { background-color: #AAAAAA; }
 .ansi1 { font-weight: bold; }
+.ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
 .ansi38-013099040 { color: #0D6328; }
@@ -71,8 +72,10 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-11 00:18:45+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
-P;HTML|
+Script started on 2024-10-11 00:42:15+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+<span class="ansi1 ansi31"
+>ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_debug.pl:369:65: Syntax error: Illegal start of term
+</span>P;HTML|
 ;           (set_option_value  compat false)
 
 P;HTML|
@@ -455,7 +458,7 @@ Deterministic: ()
 >;; MODULE-SYSTEM.C2-SPACES.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000510 secs. (510.00 microseconds) 
+; took 0.000583 secs. (583.18 microseconds) 
 
   !(assertEqualToResult 
     (match &kb 
@@ -486,7 +489,7 @@ Deterministic: ()
 >;; MODULE-SYSTEM.C2-SPACES.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000142 secs. (141.89 microseconds) 
+; took 0.000155 secs. (154.60 microseconds) 
 
   !(assertEqualToResult 
     (match &self 
@@ -516,7 +519,7 @@ Deterministic: ()
 >;; MODULE-SYSTEM.C2-SPACES.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000300 secs. (299.97 microseconds) 
+; took 0.000338 secs. (337.77 microseconds) 
 
   !(assertEqual 
     (match &kb 
@@ -555,7 +558,7 @@ Deterministic: ()
 >;; MODULE-SYSTEM.C2-SPACES.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000559 secs. (559.39 microseconds) 
+; took 0.000625 secs. (625.26 microseconds) 
 
   !(assertEqualToResult 
     (match &kb 
@@ -659,7 +662,7 @@ Deterministic: ()
 >;; MODULE-SYSTEM.C2-SPACES.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000409 secs. (408.57 microseconds) 
+; took 0.000552 secs. (551.67 microseconds) 
 
   !(assertEqualToResult 
     (match &self 
@@ -679,7 +682,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 420,800 inferences, 0.101 CPU in 0.101 seconds (100% CPU, 4173888 Lips)
+>% 427,961 inferences, 0.104 CPU in 0.104 seconds (100% CPU, 4120018 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/module-system/c2_spaces.metta  0)
 <span class="ansi1"
@@ -814,7 +817,7 @@ Deterministic: ()
 P;HTML|
 ;           (maybe_halt  7)
 
-Script done on 2024-10-11 00:18:51+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-11 00:42:20+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

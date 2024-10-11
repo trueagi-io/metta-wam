@@ -13,6 +13,7 @@
 .inv_foreground { color: #000000; }
 .inv_background { background-color: #AAAAAA; }
 .ansi1 { font-weight: bold; }
+.ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
 .ansi38-255165000 { color: #FFA500; }
@@ -75,8 +76,10 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-11 00:04:22+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
-P;HTML|
+Script started on 2024-10-11 00:28:47+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+<span class="ansi1 ansi31"
+>ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_debug.pl:369:65: Syntax error: Illegal start of term
+</span>P;HTML|
 ;           (set_option_value  compat false)
 
 P;HTML|
@@ -540,7 +543,7 @@ Deterministic: ()
         (VarIdx (S Z)))))
 </span>; 
 ; EVAL TEST
-; took 0.003 secs. (3.39 milliseconds) 
+; took 0.004 secs. (3.61 milliseconds) 
 
   !(assertEqualToResult 
     (let $sptrn 
@@ -601,7 +604,7 @@ Deterministic: ()
           (countNat $_229034)))))
 </span>; 
 ; EVAL TEST
-; took 0.007 secs. (6.53 milliseconds) 
+; took 0.007 secs. (6.71 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &kb 
@@ -652,7 +655,7 @@ Deterministic: ()
 >  (Inheritance B A)
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.77 milliseconds) 
+; took 0.002 secs. (1.90 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &db 
@@ -687,7 +690,7 @@ Deterministic: ()
 >  (Inheritance C A)
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.87 milliseconds) 
+; took 0.002 secs. (1.89 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &db 
@@ -722,7 +725,7 @@ Deterministic: ()
 >  (Inheritance D E)
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.86 milliseconds) 
+; took 0.002 secs. (1.89 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &db 
@@ -757,7 +760,7 @@ Deterministic: ()
 >  (Inheritance C E)
 </span>; 
 ; EVAL TEST
-; took 0.001 secs. (1.28 milliseconds) 
+; took 0.001 secs. (1.39 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &db 
@@ -887,7 +890,7 @@ Deterministic: ()
 >;; ANTI-REGRESSION.METTALOGTESTCURRIED2.07</h3>
 ; 
 ; EVAL TEST
-; took 0.036 secs. (36.03 milliseconds) 
+; took 0.041 secs. (41.42 milliseconds) 
 
   !(assertEqualToResult 
     (let 
@@ -951,7 +954,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 832,062 inferences, 0.170 CPU in 0.170 seconds (100% CPU, 4900741 Lips)
+>% 904,023 inferences, 0.176 CPU in 0.176 seconds (100% CPU, 5125036 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/mettalogTestCurried2.metta  0)
 <span class="ansi1"
@@ -1086,7 +1089,7 @@ Deterministic: ()
 P;HTML|
 ;           (maybe_halt  7)
 
-Script done on 2024-10-11 00:04:28+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-11 00:28:53+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

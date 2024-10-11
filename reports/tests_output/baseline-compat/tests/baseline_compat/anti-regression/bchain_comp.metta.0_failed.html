@@ -13,6 +13,7 @@
 .inv_foreground { color: #000000; }
 .inv_background { background-color: #AAAAAA; }
 .ansi1 { font-weight: bold; }
+.ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
 .ansi38-013099040 { color: #0D6328; }
@@ -69,8 +70,10 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-11 00:02:38+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
-P;HTML|
+Script started on 2024-10-11 00:27:06+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+<span class="ansi1 ansi31"
+>ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_debug.pl:369:65: Syntax error: Illegal start of term
+</span>P;HTML|
 ;           (set_option_value  compat false)
 
 P;HTML|
@@ -569,7 +572,7 @@ Deterministic: ()
     (nums 2 3))
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.94 milliseconds) 
+; took 0.002 secs. (1.83 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &kb 
@@ -653,7 +656,7 @@ Deterministic: ()
       (rule1output $_4566 $_4584)))
 </span>; 
 ; EVAL TEST
-; took 0.005 secs. (5.19 milliseconds) 
+; took 0.005 secs. (5.15 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &kb 
@@ -754,7 +757,7 @@ Deterministic: ()
         (less $_4734 $_4752))))
 </span>; 
 ; EVAL TEST
-; took 0.007 secs. (6.99 milliseconds) 
+; took 0.007 secs. (6.98 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &kb 
@@ -907,7 +910,7 @@ Deterministic: ()
 >;; ANTI-REGRESSION.BCHAIN-COMP.04</h3>
 ; 
 ; EVAL TEST
-; took 0.006 secs. (5.82 milliseconds) 
+; took 0.006 secs. (6.44 milliseconds) 
 
   !(assertEqualToResult 
     (bc 
@@ -960,7 +963,7 @@ Deterministic: ()
 >;; ANTI-REGRESSION.BCHAIN-COMP.05</h3>
 ; 
 ; EVAL TEST
-; took 0.005 secs. (4.81 milliseconds) 
+; took 0.006 secs. (5.86 milliseconds) 
 
   !(assertEqualToResult 
     (bc 
@@ -1036,7 +1039,7 @@ Deterministic: ()
 >;; ANTI-REGRESSION.BCHAIN-COMP.06</h3>
 ; 
 ; EVAL TEST
-; took 0.017 secs. (17.46 milliseconds) 
+; took 0.020 secs. (19.75 milliseconds) 
 
   !(assertEqualToResult 
     (bc 
@@ -1060,7 +1063,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 3,233,201 inferences, 0.332 CPU in 0.332 seconds (100% CPU, 9735028 Lips)
+>% 3,279,872 inferences, 0.333 CPU in 0.333 seconds (100% CPU, 9846360 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/bchain_comp.metta  0)
 <span class="ansi1"
@@ -1195,7 +1198,7 @@ Deterministic: ()
 P;HTML|
 ;           (maybe_halt  7)
 
-Script done on 2024-10-11 00:02:43+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-11 00:27:11+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

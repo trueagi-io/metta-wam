@@ -13,6 +13,7 @@
 .inv_foreground { color: #000000; }
 .inv_background { background-color: #AAAAAA; }
 .ansi1 { font-weight: bold; }
+.ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
 .ansi38-255165000 { color: #FFA500; }
@@ -62,8 +63,10 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-11 00:05:41+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
-P;HTML|
+Script started on 2024-10-11 00:30:06+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+<span class="ansi1 ansi31"
+>ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_debug.pl:369:65: Syntax error: Illegal start of term
+</span>P;HTML|
 ;           (set_option_value  compat false)
 
 P;HTML|
@@ -453,7 +456,7 @@ Script started on 2024-10-11 00:05:41+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; ANTI-REGRESSION.TEST-IF-CLOSED.01</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.20 milliseconds) 
+; took 0.001 secs. (1.24 milliseconds) 
 
   !(assertEqualToResult 
     (is-variable $x) 
@@ -484,7 +487,7 @@ Deterministic: ()
 >;; ANTI-REGRESSION.TEST-IF-CLOSED.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000862 secs. (861.53 microseconds) 
+; took 0.000924 secs. (923.64 microseconds) 
 
   !(assertEqualToResult 
     (is-variable 1) 
@@ -515,7 +518,7 @@ Deterministic: ()
 >;; ANTI-REGRESSION.TEST-IF-CLOSED.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000876 secs. (876.06 microseconds) 
+; took 0.000915 secs. (914.77 microseconds) 
 
   !(assertEqualToResult 
     (is-expression $x) 
@@ -546,7 +549,7 @@ Deterministic: ()
 >;; ANTI-REGRESSION.TEST-IF-CLOSED.04</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.24 milliseconds) 
+; took 0.001 secs. (1.41 milliseconds) 
 
   !(assertEqualToResult 
     (is-expression (⍃ 4 3)) 
@@ -577,7 +580,7 @@ Deterministic: ()
 >;; ANTI-REGRESSION.TEST-IF-CLOSED.05</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.13 milliseconds) 
+; took 0.001 secs. (1.29 milliseconds) 
 
   !(assertEqualToResult 
     (is-expression (⍃ 4 $x)) 
@@ -608,7 +611,7 @@ Deterministic: ()
 >;; ANTI-REGRESSION.TEST-IF-CLOSED.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000867 secs. (866.54 microseconds) 
+; took 0.000957 secs. (956.90 microseconds) 
 
   !(assertEqualToResult 
     (is-expression 4) 
@@ -639,7 +642,7 @@ Deterministic: ()
 >;; ANTI-REGRESSION.TEST-IF-CLOSED.07</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.07 milliseconds) 
+; took 0.001 secs. (1.18 milliseconds) 
 
   !(assertEqualToResult 
     (is-closed $x) 
@@ -670,7 +673,7 @@ Deterministic: ()
 >;; ANTI-REGRESSION.TEST-IF-CLOSED.08</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.01 milliseconds) 
+; took 0.002 secs. (2.15 milliseconds) 
 
   !(assertEqualToResult 
     (is-closed 4) 
@@ -701,7 +704,7 @@ Deterministic: ()
 >;; ANTI-REGRESSION.TEST-IF-CLOSED.09</h3>
 ; 
 ; EVAL TEST
-; took 0.008 secs. (8.25 milliseconds) 
+; took 0.009 secs. (9.17 milliseconds) 
 
   !(assertEqualToResult 
     (is-closed (⍃ $y 3)) 
@@ -732,7 +735,7 @@ Deterministic: ()
 >;; ANTI-REGRESSION.TEST-IF-CLOSED.10</h3>
 ; 
 ; EVAL TEST
-; took 0.013 secs. (13.12 milliseconds) 
+; took 0.015 secs. (14.64 milliseconds) 
 
   !(assertEqualToResult 
     (is-closed (⍃ 4 $x)) 
@@ -763,7 +766,7 @@ Deterministic: ()
 >;; ANTI-REGRESSION.TEST-IF-CLOSED.11</h3>
 ; 
 ; EVAL TEST
-; took 0.015 secs. (14.91 milliseconds) 
+; took 0.017 secs. (16.85 milliseconds) 
 
   !(assertEqualToResult 
     (is-closed (⍃ 4 3)) 
@@ -779,7 +782,7 @@ Deterministic: ()
 ()]
 ;;; rust gets stuck / mettalog true
 <span class="ansi32"
->% 628,278 inferences, 0.127 CPU in 0.127 seconds (100% CPU, 4960148 Lips)
+>% 692,841 inferences, 0.131 CPU in 0.131 seconds (100% CPU, 5273988 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/test_if_closed.metta  0)
 <span class="ansi1"
@@ -914,7 +917,7 @@ Deterministic: ()
 P;HTML|
 ;           (maybe_halt  7)
 
-Script done on 2024-10-11 00:05:46+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-11 00:30:11+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
