@@ -10,7 +10,7 @@
 (: Type Type)
 (: %Undefined% Type)
 (: Variable Type)
-(: if-decons (-> Atom Variable Variable Atom Atom Atom))
+; (: if-decons (-> Atom Variable Variable Atom Atom Atom))  was a misnamed if-decons-expr 
 (: if-empty (-> Atom Atom Atom Atom))
 (: if-non-empty-expression (-> Atom Atom Atom Atom))
 (: if-not-reducible (-> Atom Atom Atom Atom))
@@ -220,7 +220,7 @@
   (@return "Either template with head and tail replaced by values or default value"))
 (: if-decons-expr (-> Expression Variable Variable Atom Atom Atom))
 ;; Maybe Implement from Interpreter? But our transpiler should brilliantt enbought to make this awesome prolog code instead
-(= (if-decons-expr $atom $head $tail $then $else)
+(ALT= (if-decons-expr $atom $head $tail $then $else)
   (function (eval (if-equal $atom ()
     (return $else)
     (chain (decons-atom $atom) $list
@@ -916,11 +916,12 @@
 ;; Is Data Functor
 
 ;; Public MeTTa
-(@doc metta-get-doc
+(@doc get-doc
   (@desc "Returns documentation for the given Atom/Function")
   (@params (
     (@param "Atom/Function name for which documentation is needed")))
   (@return "Documentation for the given atom/function"))
+(: get-doc (-> Atom Atom))
 (: metta-get-doc (-> Atom Atom))
 (= (metta-get-doc $atom)
   (let $meta-type (get-metatype $atom)
@@ -1009,11 +1010,12 @@
         (@doc-formal (@item $atom) (@kind atom) (@type $type) (@desc "No documentation")) )))))
 
 ;; Public MeTTa
-(@doc metta-help!
+(@doc help!
   (@desc "Function prints documentation for the input atom.")
   (@params (
     (@param "Input to get documentation for")))
   (@return "Unit atom"))
+(: help! (-> Atom (->)))
 (: metta-help! (-> Atom (->)))
 (= (metta-help! $atom)
   (case (get-doc $atom) (
@@ -1191,7 +1193,7 @@
     (@param "A grounded atom referencing a Space")
     (@param "Pattern atom to be matched")
     (@param "Output pattern typically containing variables from the input pattern")))
-  (@return "If match was successfull it outputs pattern (third argument) with filled variables (if any were present in pattern) using matched pattern (second argument). Nothing - otherwise"))
+  (@return "If match was successful it outputs pattern (third argument) with filled variables (if any were present in pattern) using matched pattern (second argument). Nothing - otherwise"))
 (: match (-> Atom Atom Atom %Undefined%))
 ;; Implemented from Interpreters
 ;(ALT= (match $space $pattern $template)
@@ -1378,6 +1380,17 @@
   (@return (@desc "A Python list object that represents the given MeTTa Expression as a PyObject"))
 )
 (: py-list (-> Expression PyObject))
+;; Implemented from Interpreters
+
+;; Public MeTTa
+(@doc py-chain
+  (@desc "Chains together a list of Python objects contained in a MeTTa Expression, applying the Python vertical bar | OR operation jointly to all elements.")
+  (@params (
+    (@param (@desc "A MeTTa list of atoms, each embedding a Python object.")) 
+  ))
+  (@return (@desc "A MeTTa atom which embeds the result of applying the Python OR | operator to all elements of the list."))
+)
+(: py-chain (-> Expression PyObject))
 ;; Implemented from Interpreters
 
 ;; Public MeTTaLog

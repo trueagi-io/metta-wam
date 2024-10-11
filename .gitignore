@@ -68,4 +68,16 @@ src/canary/metta_compiler.pl.new2
 src/canary/metta_compiler.pl.newest
 src/canary/metta_compiler.pl.old
 tests_output/
-
+*.swp
+target/
+Cargo.lock
+.DS_Store
+__pycache__
+CMakeUserPresets.json
+/build
+/python/hyperon.egg-info
+/python/dist
+/python/build
+/python/*.so
+/python/*.dylib
+/python/wheelhouse

@@ -16,7 +16,7 @@ The main entry point for the Language Server implementation.
 
 :- use_module(lsp_metta_utils).
 :- use_module(lsp_metta_checking, [check_errors/2]).
-:- use_module(lsp_metta_parser, [lsp_metta_request//1]).
+:- use_module(lsp_json_parser, [lsp_metta_request//1]).
 :- use_module(lsp_metta_changes, [handle_doc_changes/2]).
 :- use_module(lsp_metta_completion, [completions_at/3]).
 :- use_module(lsp_metta_colours, [
@@ -25,6 +25,10 @@ The main entry point for the Language Server implementation.
                             token_types/1,
                             token_modifiers/1]).
 :- use_module(lsp_metta_xref).
+:- use_module(lsp_metta_split, [
+        split_text_document/2,
+        coalesce_text/2
+]).
 
 :- dynamic lsp_metta_changes:doc_text/2.
 
@@ -146,6 +150,12 @@ server_capabilities(
 
 :- dynamic loaded_source/1.
 
+% is not already an object?
+into_result_object(Help,Response):- \+ is_dict(Help),
+   Response = _{contents: _{kind: plaintext, value: Help}}.
+into_result_object(Help,Response):-  Help=Response,!.
+
+
 % messages (with a response)
 handle_msg("initialize", Msg,
            _{id: Id, result: _{capabilities: ServerCapabilities} }) :-
@@ -168,7 +178,7 @@ handle_msg("textDocument/hover", Msg, _{id: Id, result: Response}) :-
                 textDocument: _{uri: Doc}}, id: Id} :< Msg,
     atom_concat('file://', Path, Doc),
     (  help_at_position(Path, Line, Char0, Help)
-    -> Response = _{contents: _{kind: plaintext, value: Help}}
+    -> into_result_object(Help, Response)
     ;  Response = null).
 
 % CALL: textDocument/documentSymbol
