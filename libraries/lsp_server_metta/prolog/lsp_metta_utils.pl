@@ -86,7 +86,7 @@ help_at_position(Path, Line, Char0, S) :-
     %debug(server,"Clause=~w",[Clause]),
     predicate_help(Path,Clause,Arity,S).
 
-predicate_help(_,Var,_,S) :- var(Var),!,format(string(S),"Variable: ~w",[Term]).
+predicate_help(_,Var,_,S) :- var(Var),!,format(string(S),"Variable: ~w",[Var]).
 predicate_help(_,'',_,"") :- !.
 predicate_help(_,var(Term),_,S) :- !,format(string(S),"Variable: ~w",[Term]).
 predicate_help(_,Term,_,"") :- number(Term),!.
