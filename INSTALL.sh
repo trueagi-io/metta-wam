@@ -17,7 +17,7 @@ IS_SOURCED=$( [[ "${BASH_SOURCE[0]}" != "${0}" ]] && echo 1 || echo 0)
 
 # If the script is executed (not sourced), display an error and exit.
 if [ "$IS_SOURCED" -eq "0" ]; then
-    echo -e "${RED}This script must be sourced, not executed. Use 'source $0'${NC}."
+    echo -e "${RED}This script must be sourced, not executed. Use 'source $0 $@'${NC}."
     exit 1  # Exit is appropriate here since it's not sourced.
 fi
 
@@ -169,6 +169,13 @@ SWI_DEV_DEPS+=" junit junit4 libhamcrest-java default-jdk default-jdk-headless"
 
 # Required for VENV    
 SWI_DEV_DEPS+=" python3-venv"
+
+# Required for EDITLINE    
+SWI_DEV_DEPS+=" libedit-dev"
+
+# Required to Fix "Could NOT find LibYAML (missing: LIBYAML_INCLUDE_DIR YAML_LIBRARY)"    
+SWI_DEV_DEPS+=" libyaml-dev"
+
 
 # Function to check if a package is installed
 is_package_installed() {
