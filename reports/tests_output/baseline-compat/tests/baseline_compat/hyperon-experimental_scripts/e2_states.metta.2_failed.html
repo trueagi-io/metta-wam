@@ -37,7 +37,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-12 06:53:48+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-12 07:10:44+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -406,7 +406,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000659 secs. (659.20 microseconds) 
+; took 0.000654 secs. (653.86 microseconds) 
 
   !(assertEqual 
     (get-state (get-token)) 
@@ -435,7 +435,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000540 secs. (540.28 microseconds) 
+; took 0.000516 secs. (516.44 microseconds) 
 
   !(assertEqual 
     (get-token) 
@@ -467,7 +467,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000607 secs. (606.51 microseconds) 
+; took 0.000597 secs. (597.46 microseconds) 
 
   !(assertEqual 
     (get-type (new-state 2)) 
@@ -492,7 +492,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000752 secs. (752.24 microseconds) 
+; took 0.000692 secs. (692.46 microseconds) 
 
   !(assertEqual 
     (get-type (change-state! (new-state "S") "V")) 
@@ -520,7 +520,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000742 secs. (741.69 microseconds) 
+; took 0.000676 secs. (675.92 microseconds) 
 
   !(assertEqual 
     (let $v 
@@ -548,7 +548,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000647 secs. (646.55 microseconds) 
+; took 0.000571 secs. (570.61 microseconds) 
 
   !(assertEqual 
     (get-type &state-token) 
@@ -580,7 +580,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000249 secs. (249.30 microseconds) 
+; took 0.000227 secs. (226.72 microseconds) 
 
   !(assertEqual 
     (change-state! &state-token 1) 
@@ -613,7 +613,7 @@ Deterministic: ((Error  (got  ((State  1 $_248156))) (expected  ((Error 1 BadTyp
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.08</h3>
 ; 
 ; EVAL TEST
-; took 0.000253 secs. (252.66 microseconds) 
+; took 0.000249 secs. (248.51 microseconds) 
 
   !(assertEqual 
     (change-state! 
@@ -655,7 +655,7 @@ Deterministic: ((Error  (got  ((State  "S" $_277742))) (expected  ((Error "S" Ba
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.09</h3>
 ; 
 ; EVAL TEST
-; took 0.000448 secs. (447.99 microseconds) 
+; took 0.000494 secs. (493.66 microseconds) 
 
   !(assertEqualToResult 
     (nop (change-state! &state-token (C D))) 
@@ -681,7 +681,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.10</h3>
 ; 
 ; EVAL TEST
-; took 0.000721 secs. (721.02 microseconds) 
+; took 0.000659 secs. (658.78 microseconds) 
 
   !(assertEqual 
     (get-state (get-token)) 
@@ -715,7 +715,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.11</h3>
 ; 
 ; EVAL TEST
-; took 0.000776 secs. (775.78 microseconds) 
+; took 0.000698 secs. (697.71 microseconds) 
 
   !(assertEqual 
     (let $x 
@@ -747,7 +747,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.12</h3>
 ; 
 ; EVAL TEST
-; took 0.000353 secs. (353.00 microseconds) 
+; took 0.000319 secs. (318.84 microseconds) 
 
   !(assertEqual 
     (let $tnso 
@@ -764,7 +764,7 @@ Deterministic: ()
 ()]
 ;;; FIXME: doesn't work as for 25 May 2023
 <span class="ansi32"
->% 520,099 inferences, 0.097 CPU in 0.097 seconds (100% CPU, 5376350 Lips)
+>% 520,099 inferences, 0.096 CPU in 0.096 seconds (100% CPU, 5440630 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/e2_states.metta  0)
 <span class="ansi1"
@@ -899,7 +899,7 @@ Deterministic: ()
 P;HTML|
 ;           (maybe_halt  7)
 
-Script done on 2024-10-12 06:53:53+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-12 07:10:50+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
