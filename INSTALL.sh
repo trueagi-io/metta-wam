@@ -229,7 +229,7 @@ install_swi_devel_deps() {
 # This section will trigger SWI-Prolog installation based on the chosen method (source, PPA, or skip).
 install_swi() {
   if [ "$SWI_INSTALL" = "src" ]; then
-    install_swi_from_src
+    ( install_swi_from_src )
   elif [ "$SWI_INSTALL" = "ppa" ]; then
     install_swi_from_ppa
   elif [ "$SWI_INSTALL" = "upgrade" ]; then
