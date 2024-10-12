@@ -317,7 +317,7 @@ handle_msg("textDocument/didOpen", Msg, Resp) :-
     _{text: FullText} :< TextDoc,
     %debug(server,"~w",[FullText]),
     split_text_document(FullText,SplitText),
-    %debug(server,"~w",[SplitText]),
+    debug(server,"~w",[SplitText]),
     atom_concat('file://', Path, FileUri),
     retractall(lsp_metta_changes:doc_text(Path, _)),
     assertz(lsp_metta_changes:doc_text(Path, SplitText)),
