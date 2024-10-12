@@ -1,7 +1,9 @@
-#!/bin/bash -x -e -v
-# ```
+#!/bin/bash -vex
 # Run this file with source ./INSTALL.md
-# ANSI escape codes for colors
+# ```
+#
+# ## ANSI escape codes for colors
+# These codes are used to colorize output in the terminal for better readability.
 YELLOW='\033[1;33m'
 BLUE='\033[1;36m' # Lighter shade of blue
 RED='\033[0;31m'
@@ -9,14 +11,18 @@ GREEN='\033[1;32m' # Lighter shade of green
 BOLD='\033[1m'
 NC='\033[0m' # No Color
 
-# Ensure the script is being sourced, not executed
+# ## Ensure the script is being sourced, not executed
+# The script must be sourced so that it can set environment variables and return properly.
 IS_SOURCED=$( [[ "${BASH_SOURCE[0]}" != "${0}" ]] && echo 1 || echo 0)
+
+# If the script is executed (not sourced), display an error and exit.
 if [ "$IS_SOURCED" -eq "0" ]; then
     echo -e "${RED}This script must be sourced, not executed. Use 'source $0'${NC}."
-    return 1
+    exit 1  # Exit is appropriate here since it's not sourced.
 fi
 
-# Check if "--help" is in the arguments and display help if it is
+# ## Display help if "--help" is in the arguments
+# If "--help" is passed as an argument, display usage information and exit.
 if [[ "$@" =~ "--help" ]]; then
     echo -e "${BOLD}Usage:${NC} source $0 [OPTIONS]"
     echo ""
@@ -32,28 +38,32 @@ if [[ "$@" =~ "--help" ]]; then
     echo -e "  ${YELLOW}--steps${NC}                         Enable step-by-step installation."
     echo -e "  ${YELLOW}--allow-system-modifications${NC}    Allow modifying system files and settings."
     echo -e "  ${YELLOW}--break-system-packages${NC}         Use PIP (Python) Flag: --break-system-packages"
-    return 0
+    return 0  # Return instead of exit since the script is sourced.
 fi
 
-# Export environment variables
-export RPWD=$PWD
-export MeTTa=$(realpath "${BASH_SOURCE[0]}")
-export METTALOG_DIR=$(dirname "$MeTTa")
+# ## Export environment variables
+# Set necessary environment variables for the rest of the script to use.
+export RPWD=$PWD  # Save the original working directory.
+export MeTTa=$(realpath "${BASH_SOURCE[0]}")  # Get the real path of the current script.
+export METTALOG_DIR=$(dirname "$MeTTa")  # Get the directory where the script is located.
 
-cd "$METTALOG_DIR" || { echo "Failed to navigate to $METTALOG_DIR"; [[ "$IS_SOURCED" == "1" ]] && return 1 || exit 1; }
+# Change to the script's directory, or return an error if the directory change fails.
+cd "$METTALOG_DIR" || { echo "Failed to navigate to $METTALOG_DIR"; return 1; }
 
-
+# Optionally ignore changes to `.bash_history`.
 if [ -f .bash_history ]; then 
     (cd $METTALOG_DIR ; git update-index --assume-unchanged .bash_history) || true
 fi
 
-# Default values for variables
+# ## Default values for variables
+# These default values are set unless the user overrides them through command-line arguments.
 FORCE_REINSTALL_SWI=0
 SWI_INSTALL="src"
 EASY_INSTALL="?"
 INSTALL_TYPE="non_docker"
 
-# Detect environment unless user has already specified
+# ## Detect environment (GitHub Actions, Jenkins, Docker, etc.)
+# Automatically detect if the script is being run in a specific environment (GitHub Actions, Jenkins, Docker).
 if [ -n "$GITHUB_ACTIONS" ]; then
     echo -e "${BLUE}GitHub Actions environment detected${NC}."
     INSTALL_TYPE="github_vm"
@@ -82,7 +92,8 @@ else
     EASY_INSTALL="Y"
 fi
 
-# Parse command-line arguments and allow user overrides
+# ## Parse command-line arguments
+# Parse and process any command-line arguments passed to the script.
 for arg in "$@"; do
   case $arg in
     --swi=*) SWI_INSTALL="${arg#*=}" ;;
@@ -97,6 +108,7 @@ for arg in "$@"; do
     ;;
     --allow-system-modifications)
       export ALLOW_MODIFY_SYSTEM=1
+      UPDATE_SYSTEM=1
       echo -e "${GREEN}System modifications allowed${NC}"
     ;;
     --break-system-packages)
@@ -107,6 +119,7 @@ for arg in "$@"; do
   esac
 done
 
+# ## Prompt functions
 # Function to prompt for user confirmation with 'N' as the default
 confirm_with_default() {
     echo -e -n "$2"
@@ -135,8 +148,7 @@ prompt_for_input() {
     echo -e "${value:-$2}"
 }
 
-
-
+# ## Version comparison
 # Function to compare versions
 version_ge() {
     # Compare $1 with $2; if $1 >= $2, return 0 (true), else return 1 (false)
@@ -144,8 +156,8 @@ version_ge() {
     return $?
 }
 
-
-# List of required system dependencies for SWI-Prolog development, including various Java development tools and build systems
+# ## SWI-Prolog dependencies
+# List of required system dependencies for SWI-Prolog development, including various Java development tools and build systems.
 SWI_DEV_DEPS="build-essential autoconf git cmake libpython3-dev libgmp-dev libssl-dev unixodbc-dev libffi-dev \
     libreadline-dev zlib1g-dev libarchive-dev libossp-uuid-dev libxext-dev libice-dev libjpeg-dev \
     libxinerama-dev libxft-dev libxpm-dev libunwind-dev libxt-dev pkg-config libdb-dev libpcre3 libpcre3-dev \
@@ -155,12 +167,16 @@ SWI_DEV_DEPS="build-essential autoconf git cmake libpython3-dev libgmp-dev libss
 # Required for JPL    
 SWI_DEV_DEPS+=" junit junit4 libhamcrest-java default-jdk default-jdk-headless"
 
+# Required for VENV    
+SWI_DEV_DEPS+=" python3-venv"
+
 # Function to check if a package is installed
 is_package_installed() {
     dpkg-query -W -f='${Status}' "$1" 2>/dev/null | grep -q "install ok installed"
 }
 
-# Only install system dependencies if needed
+# ## Install SWI-Prolog dependencies
+# Function to ensure required system dependencies are installed.
 install_swi_devel_deps() {
     local missing_packages=()
 
@@ -189,20 +205,21 @@ install_swi_devel_deps() {
             return 0
         } || {
             echo -e "${RED}Failed to install one or more dependencies.${NC}"
-            return 0
+            return 1  # Fail and return on error.
         }
     else
         echo -e "${RED}System modifications are not allowed. The following missing dependencies were found but cannot be installed:${NC}"
         for pkg in "${missing_packages[@]}"; do
             echo -e "${RED}$pkg${NC}"
         done
-        return 0
+        return 1  # Fail and return because system updates aren't allowed.
     fi
 }
 
 
 
-# Function to install SWI-Prolog based on the value of SWI_INSTALL
+# ## Install SWI-Prolog based on user's choice
+# This section will trigger SWI-Prolog installation based on the chosen method (source, PPA, or skip).
 install_swi() {
   if [ "$SWI_INSTALL" = "src" ]; then
     install_swi_from_src
@@ -246,8 +263,8 @@ install_swi_from_src() {
         rm -rf swipl-devel
     fi
     
+    install_swi_devel_deps || return 1
 
-    install_swi_devel_deps
 
     # Check if the SWI-Prolog source code directory exists
     if [ -d "swipl-devel" ]; then
@@ -269,7 +286,7 @@ install_swi_from_src() {
         echo -e "${BLUE}Special submodule update for ${SWI_INSTALL_VERSION} version of SWI-Prolog..${NC}."
         git -C . submodule update --init packages/ltx2htm packages/pldoc packages/nlp packages/archive packages/clib packages/http packages/sgml packages/ssl packages/zlib
     fi
-
+   
     cd swipl-devel && git submodule update --init  && {
         echo -e "${GREEN}Submodules updated successfully${NC}."
     } || {
@@ -317,17 +334,18 @@ install_or_update_swipl() {
 
     if [ "$FORCE_REINSTALL_SWI" -eq 1 ]; then
         echo -e "${YELLOW}Forcing rebuild of SWI-Prolog as --force was passed.${NC}"
-        install_swi
+        install_swi || return 1
     elif version_ge "$swi_prolog_version" "$required_version"; then
         echo -e "${GREEN}SWI-Prolog version $swi_prolog_version is installed and meets the required version $required_version or higher${NC}."
     else
         echo -e "${YELLOW}Attempting to update SWI-Prolog..${NC}"
-        install_swi
+        install_swi || return 1
         swi_prolog_version=$(swipl_version)
         if version_ge "$swi_prolog_version" "$required_version"; then
             echo -e "${GREEN}SWI-Prolog upgraded to $swi_prolog_version, which meets the required version $required_version or higher${NC}."
         else
-            echo -e "${YELLOW}Failed to upgrade SWI-Prolog to version $required_version or higher. Janus may not work without this version.${NC}"
+            echo -e "${RED}Failed to upgrade SWI-Prolog to version $required_version or higher.${NC}"
+            return 1
         fi
     fi
 }
@@ -337,9 +355,9 @@ install_or_update_swipl() {
 if [ "$EASY_INSTALL" == "?" ]; then
     if confirm_with_default "Y" "Would you like to use easy installation mode?"; then
         EASY_INSTALL="Y"
-else
+    else
         EASY_INSTALL="N"
-fi
+    fi
 fi
 
 
@@ -373,42 +391,19 @@ done
 
 echo -e "${BLUE}Starting the installation process.${NC}."
 
-upgrade_pip() {
-    if [ "$UPDATE_SYSTEM" -eq 1 ]; then
-        if [ "${EASY_INSTALL}" == "N" ] && confirm_with_default "N" "Upgrade pip to the latest version?"; then
-
-            # Upgrade pip to the latest version
-            echo -e "${BLUE}Upgrading pip to the latest version..${NC}."
-
-            # If PIP_BREAK_SYSTEM_PACKAGES is set to 1, allow pip to break system packages
-            if [ -n "$PIP_BREAK_SYSTEM_PACKAGES" ] && [ "$PIP_BREAK_SYSTEM_PACKAGES" -eq 1 ]; then
-                PIP_CMD="pip install --upgrade pip --break-system-packages"
-            else
-                PIP_CMD="pip install --upgrade pip"
-            fi
-
-            $PIP_CMD
-            if [ $? -ne 0 ]; then
-                echo -e "${RED}Failed to upgrade pip. Exiting${NC}."
-                return 1
-            else
-                echo -e "${GREEN}pip upgraded successfully${NC}."
-            fi
-        fi
-    fi
-}
-
+# ## Ensure pip and python3-venv are installed and upgraded
+# This function ensures that python3-venv and pip are installed and ready for use.
 ensure_venv_and_pip() {
     # Check if Python is installed
     if ! command -v python3 &> /dev/null; then
         echo -e "${RED}Python3 is not installed. Please install Python3 to continue${NC}."
-        return 1
+        return 1  # Return because Python3 is required.
     fi
 
-    # Check if venv is installed
-    if ! python3 -m venv --help &> /dev/null; then
-        echo -e "${YELLOW}Python venv module is not installed. Installing venv..${NC}."
-        
+    # Check if python3-venv package is installed using dpkg
+    if ! dpkg-query -W -f='${Status}' python3-venv 2>/dev/null | grep -q "install ok installed"; then
+        echo -e "${YELLOW}Python venv package is not installed. Installing python3-venv...${NC}"
+
         # Only allow system modifications if UPDATE_SYSTEM is set to 1
         if [ "$UPDATE_SYSTEM" -eq 1 ]; then
             sudo apt-get update
@@ -420,16 +415,16 @@ ensure_venv_and_pip() {
                 echo -e "${GREEN}Python venv module installed successfully${NC}."
             fi
         else
-            echo -e "${RED}System modifications are not allowed. Cannot install Python venv. Exiting${NC}."
+            echo -e "${RED}System modifications are not allowed. Cannot install python3-venv. Exiting${NC}."
             return 1
         fi
     else
-        echo -e "${GREEN}Python venv module is already installed${NC}."
-fi
+        echo -e "${GREEN}python3-venv package is already installed${NC}."
+    fi
 
     # Check if pip is installed
     if ! command -v pip3 &> /dev/null; then
-        echo -e "${YELLOW}pip is not installed. Installing pip..${NC}."
+        echo -e "${YELLOW}pip is not installed. Installing pip...${NC}"
 
         # Only allow system modifications if UPDATE_SYSTEM is set to 1
         if [ "$UPDATE_SYSTEM" -eq 1 ]; then
@@ -438,9 +433,7 @@ fi
             if [ $? -ne 0 ]; then
                 echo -e "${RED}Failed to install pip. Exiting${NC}."
                 return 1
-    else
-                echo -e "${GREEN}pip installed successfully${NC}."
-    fi
+            fi
         else
             echo -e "${RED}System modifications are not allowed. Cannot install pip. Exiting${NC}."
             return 1
@@ -449,18 +442,16 @@ fi
         echo -e "${GREEN}pip is already installed${NC}."
     fi
 
-    source ./scripts/ensure_venv
+    return 0
 }
 
-ensure_venv_and_pip
-
-# Ensure SWI-Prolog is installed with Janus support
+# ## Ensure SWI-Prolog is installed and meets the required version
 if ! command -v swipl &> /dev/null || ! swipl -g "use_module(library(janus)), halt(0)." -t "halt(1)" 2>/dev/null; then
     if confirm_with_default "Y" "SWI-Prolog is not installed with Janus support. Would you like to install it?"; then
-        install_or_update_swipl
+        install_swi || return 1
     else
         echo -e "${RED}SWI-Prolog installation aborted. Exiting script${NC}."
-        return 1
+        return 1  # Return because the script is sourced.
     fi
 else
     swi_prolog_version=$(swipl_version)
@@ -469,7 +460,7 @@ else
         echo -e "${GREEN}SWI-Prolog version $swi_prolog_version is installed and meets the required version $required_version or higher${NC}."
         if [ "$FORCE_REINSTALL_SWI" -eq 1 ]; then
             echo -e "${YELLOW}Forcing update SWI-Prolog..${NC}."
-            install_or_update_swipl
+            install_or_update_swipl || return 1
             swi_prolog_version=$(swipl_version)
             if version_ge $swi_prolog_version $required_version; then
                 echo -e "${GREEN}SWI-Prolog upgraded to $swi_prolog_version, which meets the required version $required_version or higher${NC}."
@@ -480,7 +471,7 @@ else
     else
         if confirm_with_default "Y" "SWI-Prolog is not version $required_version or higher. Would you like to update it?"; then
             echo -e "${YELLOW}Attempting to update SWI-Prolog..${NC}."
-            install_or_update_swipl
+            install_or_update_swipl || return 1
             swi_prolog_version=$(swipl_version)
             if version_ge $swi_prolog_version $required_version; then
                 echo -e "${GREEN}SWI-Prolog upgraded to $swi_prolog_version, which meets the required version $required_version or higher${NC}."
@@ -491,17 +482,18 @@ else
     fi
 fi
 
-# Assuming SWI-Prolog 9.3.9 is installed successfully
+# Assuming SWI-Prolog X.X.X is installed successfully
 # Install Janus Python support for SWI-Prolog
-echo -e "${BLUE}Checking if Janus Python support is already installed..${NC}."
+echo -e "${BLUE}Checking if Janus Python support is installed now..${NC}."
 if ! swipl -g "use_module(library(janus)), halt(0)." -t "halt(1)" 2>/dev/null; then
-    # janus not installed, prompt the user
+    # Janus not installed, prompt the user
     if [ "${EASY_INSTALL}" == "Y" ] || confirm_with_default "Y" "Would you like to install Python (Janus) support?"; then
         echo -e "${BLUE}Installing Janus for SWI-Prolog..${NC}."
+       ensure_venv_and_pip || return 1
 	    pip install git+https://github.com/SWI-Prolog/packages-swipy.git	    
 	    if [ $? -ne 0 ]; then
-		echo -e "${RED}Failed to install Janus. Exiting script${NC}."
-		return 1
+	       	echo -e "${RED}Failed to install Janus. Exiting script${NC}."
+		    return 1
 	    else
             echo -e "${GREEN}Janus installed successfully${NC}."
 	    fi
@@ -512,13 +504,24 @@ else
     echo -e "${GREEN}Janus Python support is already installed${NC}."
 fi
 
+# Ensure venv and pip are installed, and exit if this fails
+ensure_venv_and_pip || return 1
+
+# Remove faulty virtual environment if it exists
+if [ -d "$METTALOG_DIR/venv" ] && [ ! -f "$METTALOG_DIR/venv/bin/activate" ]; then
+    echo -e "${YELLOW}Detected a faulty virtual environment without an activate script, removing it...${NC}"
+    rm -rf "$METTALOG_DIR/venv"
+fi
+
+source ./scripts/ensure_venv
+
 # Install PySWIP for Python-SWI-Prolog interface
 echo -e "${BLUE}Checking if PySWIP is already installed..${NC}."
-if ! python3 -c "import pyswip" &> /dev/null; then
+if false && ! python3 -c "import pyswip" &> /dev/null; then
     if [ "${EASY_INSTALL}" == "Y" ] || confirm_with_default "Y" "Would you like to install PySWIP?"; then
         echo -e "${BLUE}Installing PySWIP..${NC}."
-        ensure_venv_and_pip
-        pip install git+https://github.com/logicmoo/pyswip.git
+        ensure_venv_and_pip || return 1
+        pip install git+https://github.com/logicmoo/pyswip.git || return 1
         echo -e "${GREEN}PySWIP installation complete${NC}."
     else
         echo -e "${YELLOW}Skipping PySWIP installation${NC}."
@@ -602,9 +605,10 @@ if false && confirm_with_default "N" "Show README.md"; then
     echo -en "${NC}"
 fi
 
-
-cd $RPWD
-
+# ## Final output and clean-up
+# After the installation, return to the original working directory and print a success message.
+echo -e "${GREEN}Installation and setup complete!${NC}"
+cd "$RPWD"  # Return to the original directory.
 # End of the script
 
 # ```
