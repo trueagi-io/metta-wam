@@ -42,7 +42,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-12 00:49:22+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-12 03:09:32+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -390,7 +390,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D5-AUTO-TYPES.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000206 secs. (206.30 microseconds) 
+; took 0.000231 secs. (230.86 microseconds) 
 
   !(assertEqualToResult 
     (+ 5 "S") 
@@ -415,7 +415,7 @@ Deterministic: ((Error  (got  (88)) (expected  ((Error "S" BadType)))))
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D5-AUTO-TYPES.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000173 secs. (173.46 microseconds) 
+; took 0.000178 secs. (178.31 microseconds) 
 
   !(assertEqualToResult 
     (== 5 "S") 
@@ -468,7 +468,7 @@ Deterministic: ((Error  (got  (False)) (expected  ((Error "S" BadType)))))
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D5-AUTO-TYPES.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000727 secs. (727.43 microseconds) 
+; took 0.000690 secs. (690.09 microseconds) 
 
   !(assertEqualToResult 
     (== SocratesIsHuman SamIsMortal) 
@@ -494,7 +494,7 @@ Deterministic: ((Error  (got  (False)) (expected  ((Error SamIsMortal BadType)))
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D5-AUTO-TYPES.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000560 secs. (560.44 microseconds) 
+; took 0.000504 secs. (503.86 microseconds) 
 
   !(assertEqualToResult 
     (HumansAreMortal (Human Socrates)) 
@@ -525,7 +525,7 @@ Deterministic: ((Error  (got  ((HumansAreMortal (Human Socrates)))) (expected  (
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D5-AUTO-TYPES.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000313 secs. (313.24 microseconds) 
+; took 0.000351 secs. (350.66 microseconds) 
 
   !(assertEqualToResult 
     (collapse (+ 5 "S")) 
@@ -566,7 +566,7 @@ Deterministic: ((Error  (got  ((88))) (expected  (((Error "S" BadType))))))
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D5-AUTO-TYPES.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000151 secs. (151.20 microseconds) 
+; took 0.000166 secs. (166.37 microseconds) 
 
   !(assertEqualToResult 
     (match &self 
@@ -609,7 +609,7 @@ $x = 88
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D5-AUTO-TYPES.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000967 secs. (966.81 microseconds) 
+; took 0.000907 secs. (907.24 microseconds) 
 
   !(assertEqualToResult 
     (f (+ 5 "S")) 
@@ -624,7 +624,7 @@ $x = 88
 Deterministic: ((Error  (got  ((f 88))) (expected  ((Error "S" BadType)))))
 ((Error  (got  ((f 88))) (expected  ((Error "S" BadType)))))]
 <span class="ansi32"
->% 340,114 inferences, 0.074 CPU in 0.074 seconds (100% CPU, 4584752 Lips)
+>% 340,114 inferences, 0.076 CPU in 0.076 seconds (100% CPU, 4450199 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/d5_auto_types.metta  0)
 <span class="ansi1"
@@ -759,7 +759,7 @@ Deterministic: ((Error  (got  ((f 88))) (expected  ((Error "S" BadType)))))
 P;HTML|
 ;           (maybe_halt  7)
 
-Script done on 2024-10-12 00:49:28+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-12 03:09:38+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

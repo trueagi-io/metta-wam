@@ -42,7 +42,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-12 00:58:51+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-12 03:18:40+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -409,7 +409,7 @@ Deterministic: (State  45 $_59730)
 >;; METTA-MORPH-TESTS.STATES-SPACES.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000218 secs. (217.70 microseconds) 
+; took 0.000201 secs. (200.66 microseconds) 
 
   !(assertEqualToResult 
     (get-state &FIFO) 
@@ -441,7 +441,7 @@ Deterministic: ()
 > a
 </span>; 
 ; EVAL TEST
-; took 0.001 secs. (1.10 milliseconds) 
+; took 0.001 secs. (1.18 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &WU a) 
@@ -471,7 +471,7 @@ Deterministic: ()
 >;; METTA-MORPH-TESTS.STATES-SPACES.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000187 secs. (187.07 microseconds) 
+; took 0.000201 secs. (201.22 microseconds) 
 
   !(assertEqualToResult 
     (match &WU $1 $1) 
@@ -503,7 +503,7 @@ Deterministic: ()
 > b
 </span>; 
 ; EVAL TEST
-; took 0.001 secs. (1.13 milliseconds) 
+; took 0.001 secs. (1.17 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &WU b) 
@@ -535,7 +535,7 @@ Deterministic: ()
 > a
 </span>; 
 ; EVAL TEST
-; took 0.000518 secs. (517.69 microseconds) 
+; took 0.000576 secs. (575.93 microseconds) 
 
   !(assertEqualToResult 
     (remove-atom &WU a) 
@@ -560,7 +560,7 @@ Deterministic: ()
 >;; METTA-MORPH-TESTS.STATES-SPACES.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000275 secs. (275.29 microseconds) 
+; took 0.000286 secs. (285.71 microseconds) 
 
   !(assertEqual 
     (match &WU $1 $1) 
@@ -575,7 +575,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 243,682 inferences, 0.051 CPU in 0.051 seconds (100% CPU, 4764997 Lips)
+>% 243,682 inferences, 0.053 CPU in 0.053 seconds (99% CPU, 4637549 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/states_spaces.metta  0)
 <span class="ansi1"
@@ -710,7 +710,7 @@ Deterministic: ()
 P;HTML|
 ;           (maybe_halt  7)
 
-Script done on 2024-10-12 00:58:57+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-12 03:18:46+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
