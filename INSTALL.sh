@@ -614,7 +614,6 @@ fi
 
 # ## Final output and clean-up
 # After the installation, return to the original working directory and print a success message.
-echo -e "${GREEN}Installation and setup complete!${NC}"
 cd "$RPWD"  # Return to the original directory.
 # End of the script
 
