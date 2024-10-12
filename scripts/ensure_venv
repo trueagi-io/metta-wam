@@ -42,6 +42,11 @@ log() {
     fi
 }
 
+if [ -d "$PARENT_DIR/$VENV_DIR" ] && [ ! -f "$PARENT_DIR/$VENV_DIR/bin/activate" ]; then
+    log 1 "Detected a faulty virtual environment without an activate script, removing it..."
+    rm -rf "$PARENT_DIR/$VENV_DIR"
+fi
+
 # Function to activate the virtual environment
 activate_venv() {
     log 2 "Activating the virtual environment: $(realpath $VENV_DIR)"
@@ -59,6 +64,11 @@ is_inside_venv() {
 
 # Function to create a virtual environment
 create_venv() {
+    if [ -d "$VENV_DIR" ] && [ ! -f "$VENV_DIR/bin/activate" ]; then
+        log 1 "Detected a faulty virtual environment without an activate script, removing it..."
+        rm -rf "$VENV_DIR"
+    fi
+
     if [ ! -d "$VENV_DIR" ]; then
         log 1 "Creating a virtual environment: $VENV_DIR"
         python3 -m venv "$VENV_DIR"
@@ -106,4 +116,5 @@ fi
 
 # Place your script's main execution logic here
 #log 2 "Executing the main script logic..."
+
 
