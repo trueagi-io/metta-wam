@@ -784,15 +784,25 @@ make_metta_file_buffer(TFMakeFile,Filename,In):-
           fbugio(creating(BufferFile)),
           write_bf(BufferFile, ( :- dynamic(metta_file_buffer/5))),
           write_bf(BufferFile, ( :- multifile(metta_file_buffer/5)))))),
-      repeat,
-            my_line_count(In, LineCount),
-            current_read_mode(file,Mode),
-            must_det_ll(call(read_metta2, In,Expr)), %write_src(read_metta=Expr),nl,
-            subst_vars(Expr, Term, [], NamedVarsList),
-            BufferTerm = metta_file_buffer(Mode,Term,NamedVarsList,Filename,LineCount),
-            assertz(BufferTerm),
-            if_t(TFMakeFile,write_bf(BufferFile,BufferTerm)),
-
+    repeat,    
+    % Count the current line in the input stream
+        
+    %debug(server(xref), "Pos ~w", [Pos]),  % Log the current line number.
+    % Get the current mode for reading the file
+       current_read_mode(file, Mode),
+       % Read and parse the content of the Metta file
+       skip_spaces(In),
+       forall(retract(metta_file_comment(_Line, _Col, _CharPos, '$COMMENT'(Comment, CLine, CCol), CPos)),
+             assertz(metta_file_buffer(+, '$COMMENT'(Comment, CLine, CCol), [], Filename, CPos))),
+       stream_property(In,position(Pos)),
+       read_sexpr(In, Expr),
+       subst_vars(Expr, Term, [], NamedVarsList),
+       % Assert the parsed content into the Metta buffer
+       BufferTerm = metta_file_buffer(Mode, Term, NamedVarsList, Filename, Pos),
+       assertz(BufferTerm),
+       % debug(server(xref), "BufferTerm ~w", [BufferTerm]),  % Log the parsed buffer term.
+       % Optionally write the buffer content to the buffer file
+       if_t(TFMakeFile, write_bf(BufferFile, BufferTerm)),
       flush_output,
       at_end_of_stream(In),!)),!.
       %listing(metta_file_buffer/5),
