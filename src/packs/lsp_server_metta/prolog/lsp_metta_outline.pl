@@ -1,3 +1,7 @@
+%:- module(lsp_metta_outline, [
+%                        xref_document_symbols/2,
+%                        xref_source/1]).
+
 %!  metta_atom_xref(+Atom) is semidet.
 %
 %   Attempts to cross-reference a given atom from a Metta buffer or already
@@ -50,7 +54,7 @@ predicate_help_hook(last, Path, Term, Arity, S):-
 predicate_help_hook(first, Path, _Term, _Arity, _S):- 
     atomic(Path),  % Ensure the path is an atomic value (not a variable or complex term).
     make,  % Trigger the make command to compile the knowledge base. (For real-time editing)
-    xref_file_maybe(Path),  % Possibly cross-reference the file.
+    xref_source(Path),  % Possibly cross-reference the file.
     fail.
 
 predicate_help_hook(first, _, Term, Arity, S):-     
@@ -180,6 +184,7 @@ about_term([Op, Atom | _], Term):- fail, Op==':', is_documented(Term), !, Atom\=
 about_term([_,[Atom|_]|_],Term):- sub_var(Term,Atom),!.
 about_term([_,Atom|_],Term):- ==(Term,Atom),!.
 about_term([Atom|_],Term):- \+ promiscuous_symbol(Term), sub_var(Term,Atom),!.
+about_term(exec(Atom),Term):-!, sub_var(Term, Atom).
 %promiscuous_symbol(+Term) is semidet.
 promiscuous_symbol(Term):- var(Term),!,fail.
 promiscuous_symbol('=').
@@ -213,11 +218,11 @@ very_nested_src([_, _ | Src]):- is_list(Src),
     member(I, E), is_list(I), !.  
 maybe_link_xref(What):- 
   ignore(once((
-     clause(metta_file_buffer(_,What0,_,File,_),true,Ref),
-     symbolic(File), \+ symbol_contains(File,'stdlib_mettalog'),
-     alpha_unify(What,What0),
-     next_clause(Ref, metta_file_buffer(_,_,_,File,Loc)),     
-     write_file_link(File,Loc)))).
+     clause(metta_file_buffer(_,Atom,_,Path,Pos),true,Ref),
+     %symbolic(Path), \+ symbol_contains(Path,'stdlib_mettalog'),
+     alpha_unify(What,Atom),
+     %next_clause(Ref, metta_file_buffer(_,_,_,Path,Pos)),     
+     write_file_link(Path,Pos)))).
 
 % next_clause(Ref, NextClause)
 %   - Ref is the reference of the current clause
@@ -228,47 +233,49 @@ next_clause(Ref, NextClause) :-
      nth_clause(Pred, NextIndex, NextRef),!,
      clause(NextClause, _, NextRef).  % Get the clause at this reference
 
-write_file_link(File,Position):-   
+write_file_link(Path,Position):-   
   stream_position_data(line_count, Position, Line),  % Extract the line number.
   %stream_position_data(line_position, Position, Col),  % Extract the column number.
   %stream_position_data(char_count, Position, CharPos),  % Extract the character position.
-  format('~n```~n[~w:~w](file://~w#L~w)~n```lisp~n',[File,Line,File,Line]).
+  format('~n```~n[~w:~w](file://~w#L~w)~n```lisp~n',[Path,Line,Path,Line]).
 
 %!  skip_xref_atom(+Atom) is semidet.
 %
 %   Checks whether the given Atom should be skipped during cross-referencing.
 %
 %   @arg Atom The atom to check.
-skip_xref_atom(Atom):- sub_var('@doc', Atom), !. % Skip documentation (already shown)
-skip_xref_atom(exec(_)).  % Skip execution commands.
+
+%skip_xref_atom(Atom):- sub_var('@doc', Atom), !. % Skip documentation (already shown)
+%skip_xref_atom(exec(_)).  % Skip execution commands.
 skip_xref_atom([Pred | _]):- 
     symbol(Pred),  % Check if the predicate is a symbol.
     symbol_concat('assert', _, Pred).  % Skip 'assert*' predicates.
 
-%!  xref_file_maybe(+Path) is semidet.
+%!  xref_source(+Path) is semidet.
 %
 %   Checks if a Metta file needs to be reprocessed by comparing its current content 
 %   with the last recorded content, ensuring that at least 20 seconds have passed since 
 %   the last check.
 %
 %   @arg Path The file path of the Metta file.
-xref_file_maybe(Path) :-
-    file_name_extension(_, metta, Path),  % Ensure the file has a .metta extension.
-    (   check_time_elapsed(Path)  % Check if enough time has passed since the last check.
-    ->  (   get_current_text(Path, NewText),  % Get the current content of the file.
+xref_source(Path) :-
+   ignore(xref_source_path(Path)).
+
+xref_source_path(Doc) :- var(Doc),!.
+xref_source_path(Doc) :- atom_concat('file://', Path, Doc), !, xref_source_path(Path).
+xref_source_path(Path):- \+ check_time_elapsed(Path), !, debug(server(xref), 'Skipping check for "~w" as 20 seconds have not passed.~n', [Path]), !.
+xref_source_path(Path):- \+ file_name_extension(_, metta, Path),!.  % Ensure the file has a .metta extension.
+xref_source_path(Path):- get_current_text(Path, NewText),  % Get the current content of the file.
             compare_and_update_string(Path, NewText),  % Compare with the last stored content.
-            nop(debug_buffer_info)  % Save the current state.
-        )
-    ;   debug(server(xref), 'Skipping check for "~w" as 20 seconds have not passed.~n', [Path]), 
-        fail
-    ).
+      call(debug_buffer_info).  % Save the current state.
+
 
 %!  debug_buffer_info is det.
 %
 %   Saves the current state of the Metta file buffer to 'last_file.txt'.
 debug_buffer_info:- 
-    tell('last_file.txt'),  % Open the file for writing.
-    listing(metta_file_buffer),  % Write all asserted facts about the Metta file buffer.
+    tell('last_file.txft'),  % Open the file for writing.
+    listing(metta_file_buffer),!,  % Write all asserted facts about the Metta file buffer.
     told.  % Close the file.
 
 %!  check_time_elapsed(+Path) is semidet.
@@ -298,7 +305,7 @@ check_time_elapsed(Path) :-
 %   @arg NewText The text content of the file.
 get_current_text(Path, NewText) :-
     (   source_file_text(Path, NewText)  % Attempt to get the file's content as text.
-    ->  true
+    *->  true
     ;   NewText = ""  % Default to an empty string if the file cannot be read.
     ).
 
@@ -316,9 +323,9 @@ compare_and_update_string(Path, NewText) :-
     ->  debug(server(xref), 'Text for "~w" has changed, reprocessing buffer.~n', [Path]),  % Log the change.
         retractall(last_retrieved_string(Path, _)),  % Remove the old content entry.
         asserta(last_retrieved_string(Path, NewText)),  % Update with the new content.
-        xref_metta_file_text('&self', Path, NewText)  % Reprocess the file with the new content.
+        xref_metta_file_text('&xref', Path, NewText)  % Reprocess the file with the new content.
     ;   (debug(server(xref), 'Text for "~w" has not changed, skipping reload.~n', [Path]),  % Log if no change is detected.
-        xref_metta_file_text('&self', Path, NewText))  % Still cross-reference the file for consistency.
+        xref_metta_file_text('&xref', Path, NewText))  % Still cross-reference the file for consistency.
     ).
 
 %!  xref_metta_file_text(+Self, +Path, +Text) is det.
@@ -328,7 +335,8 @@ compare_and_update_string(Path, NewText) :-
 %   @arg Self The context (usually '&self') for the cross-reference.
 %   @arg Path The file path to cross-reference.
 %   @arg Text The content of the file as text.
-xref_metta_file_text(_Self, Path, _Text):-
+xref_metta_file_text(Self, Path, Text):- fail, % (var(Text); Text==""),!.
+    nop(debug(server(high), "xref_metta_file_text ~w", [Text])), 
     absolute_file_name(Path, Filename),  % Convert the file path to an absolute path.
     directory_file_path(Directory, _, Filename),  % Extract the directory path from the file path.
     debug(server(xref), "xref_metta_file_text ~w", [Path]),  % Log the cross-referencing process.
@@ -336,12 +344,16 @@ xref_metta_file_text(_Self, Path, _Text):-
   locally(nb_setval(may_use_fast_buffer,t),
    locally(nb_setval(suspend_answers,true),
      with_output_to(string(_),
-       include_metta_directory_file('&xref',Directory,Filename))))),!.
+       include_metta_directory_file(Self,Directory,Filename))))),!.
 %   This variant of `xref_metta_file_text/3` handles file inclusion by converting a 
 %   file path to an absolute path, opening the file, and processing its content in 
 %   the correct working directory context. It handles both string content and file 
 %   reading.
+:- dynamic(made_metta_file_buffer/1).
+xref_metta_file_text(_Self, Path, _Text) :- made_metta_file_buffer(Path),!.
+xref_metta_file_text(_Self, Path, _Text) :- metta_file_buffer(_Mode, _Term, _NamedVarsList, Path, _Pos), !.
 xref_metta_file_text(_Self, Path, Text) :-
+    asserta(made_metta_file_buffer(Path)),!,
     debug(server(xref), "xref_metta_file_text ~w", [Path]),  % Log the file path being processed.
     must_det_ll((
         % Convert the file path to an absolute path
@@ -349,7 +361,8 @@ xref_metta_file_text(_Self, Path, Text) :-
         % Extract the directory path from the absolute file name
         directory_file_path(Directory, _, Filename),
         % Process the file content in the specified directory context
-        with_option(exec, skip,
+       locally(nb_setval(may_use_fast_buffer,t),
+         with_option(exec, skip,
           with_option(suspend_answers, true,
             with_cwd(Directory,
                 setup_call_cleanup(
@@ -358,7 +371,7 @@ xref_metta_file_text(_Self, Path, Text) :-
                         % Process the buffer content from the file
                     must_det_ll(xref_metta_file_text_buffer(false, Path, In)),
                         % Ensure the file is closed even in case of errors
-                        catch(close(In), _, true))))))).
+                        catch(close(In), _, true)))))))).  
 
 %!  xref_metta_file_text_buffer(+TFMakeFile, +Filename, +In) is det.
 %
@@ -375,20 +388,24 @@ xref_metta_file_text_buffer(TFMakeFile, Filename, In) :-
         (symbol_concat(Filename, '.buffer~', BufferFile),
         fbugio(creating(BufferFile)),
         write_bf(BufferFile, (:- dynamic(metta_file_buffer/5))),
-            write_bf(BufferFile, (:- multifile(metta_file_buffer/5)))))),
+        write_bf(BufferFile, (:- multifile(metta_file_buffer/5)))))),
     repeat,    
     % Count the current line in the input stream
-    my_line_count(In, LineCount),
-    debug(server(xref), "LineCount ~w", [LineCount]),  % Log the current line number.
+        
+    %debug(server(xref), "Pos ~w", [Pos]),  % Log the current line number.
     % Get the current mode for reading the file
     current_read_mode(file, Mode),
     % Read and parse the content of the Metta file
-    call(read_metta2, In, Expr),
+    skip_spaces(In),
+    forall(retract(metta_file_comment(_Line, _Col, _CharPos, '$COMMENT'(Comment, CLine, CCol), CPos)),
+          assertz(metta_file_buffer(+, '$COMMENT'(Comment, CLine, CCol), [], Filename, CPos))),
+    stream_property(In,position(Pos)),
+    read_sexpr(In, Expr),
     subst_vars(Expr, Term, [], NamedVarsList),
     % Assert the parsed content into the Metta buffer
-    BufferTerm = metta_file_buffer(Mode, Term, NamedVarsList, Filename, LineCount),
+    BufferTerm = metta_file_buffer(Mode, Term, NamedVarsList, Filename, Pos),
     assertz(BufferTerm),
-    debug(server(xref), "BufferTerm ~w", [BufferTerm]),  % Log the parsed buffer term.
+    % debug(server(xref), "BufferTerm ~w", [BufferTerm]),  % Log the parsed buffer term.
     % Optionally write the buffer content to the buffer file
     if_t(TFMakeFile, write_bf(BufferFile, BufferTerm)),
     flush_output,  % Ensure all output is flushed.
@@ -408,6 +425,9 @@ xref_metta_file_text_buffer(TFMakeFile, Filename, In) :-
 %       ?- source_file_text('file.txt', Text).
 %       Text = "File content here".
 %
+:- dynamic(user:full_text/2).
+source_file_text(Doc, FullText) :- atom(Doc), atom_concat('file://', Path, Doc), !, source_file_text(Path, FullText).
+source_file_text(Path, FullText) :- !, user:full_text(Path, FullText),!.
 source_file_text(Path, String) :-
     % Tries to retrieve text using doc_text_fallback/2 first.
     findall(Str, 
@@ -423,5 +443,182 @@ source_file_text(Path, String) :-
     exists_file(Path),
     % Read the file content as a string with UTF-8 encoding.
     read_file_to_string(Path, String, [encoding(utf8)]), !.
+
+xref_document_symbols(Doc, Symbols):- %   sample_outline_test(SS),
+    xref_source(Doc),
+    atom_concat('file://', Path, Doc),!,
+    findall(
+         Symbol,
+         ( xref_document_symbol(Path, Element, Kind, Start:SC, End:EC),
+           Symbol = _{name: Element,
+                      kind: Kind, 
+                      location:
+                      _{uri: Doc,
+                        range: _{start: _{line: Start, character: SC},
+                                 end: _{line: End, character: EC}}}}
+         ),
+         Symbols).
+
+
+doc_path(Doc,Path):- nonvar(Doc),atom_concat('file://', Path, Doc),!.
+doc_path(Doc,Path):- nonvar(Doc),!,Path=Doc.
+doc_path(Doc,Path):- freeze(Path,atom_concat('file://', Path, Doc)).
+
+xref_document_symbol(Doc, Element, Kind, Start, End):- nonvar(Doc),atom_concat('file://', Path, Doc),!,xref_document_symbol(Path, Element, Kind, Start, End).
+xref_document_symbol(Path, Path, 1, 0:0, 1000:0).
+xref_document_symbol(Path, Element, Kind, Start, End):- xref_document_symbol_d4(Path, Element, Kind, Start, End), fail.
+xref_document_symbol(Path, Element, Kind, Start, End):- xref_document_symbol_fb(Path, Element, Kind, Start, End).
+%xref_document_symbol(Path, Element, Kind, Start, End):- xref_document_symbol_examples(Path, Element, Kind, Start, End).
+
+
+% for Iconagraphy
+xref_document_symbol_examples(_Path, "By Type...", 1, 1000:0, 10000:0).
+xref_document_symbol_examples(_Path, Element, Kind, Start:1, End:0):- show_example_kinds,
+  lsp_xref_kind(Kind, KindName), Kind>1,
+  Start is Kind*10+1000,End is Start+9,
+  nonvar(KindName),
+  atom_concat('Example ',KindName,KindExample), toPropercase(KindExample,Element).
+
+% Roy's `d/4`s
+xref_document_symbol_d4(Doc, Element, Kind, Start, End):- 
+   doc_path(Doc,Path),lsp_metta_changes:doc_text(Path,D4s), 
+   nth1(Nth,D4s,D4), nonvar(D4), 
+   d4_document_symbol(Nth,D4, Element, Kind, Start, End).
+   
+% Douglas' file_buffer
+xref_document_symbol_fb(Doc, S, Kind, Start, End):- 
+   doc_path(Doc,Path),
+   clause(metta_file_buffer(_,What,_,Path,PosStart),true,Ref), line_col(PosStart,Start),
+   xrefed_element_kind(What,Element,KindName),element_name(Element,S),lsp_xref_kind(Kind, KindName),
+   (((next_clause(Ref, metta_file_buffer(_,_,_,Path,PosEnd)), line_col(PosEnd,End)))-> true ; next_line(Start,End)).
+
+
+d4_document_symbol(Nth, d(_,Str,_,_), S, 12, Nth:1, End:1):- succ(Nth,End), element_name(Str,S).
+
+element_name(Str,S):- string(Str),!,atom_length(Str,Len),Len>2,!,S=Str.
+element_name(Str,S):- is_ftVar(Str),wots(M, write_src_woi(Str)),!,element_name(M,S).
+element_name(Str,S):- is_list(Str),wots(M, write_src_woi(Str)),!,element_name(M,S).
+element_name(Str,S):- Str = exec(_),wots(M, write_src_woi(Str)),!,element_name(M,S).
+element_name(Str,S):- sformat(S,'~w',[Str]),atom_length(S,Len),Len>5.
+
+next_line(S:SC,E:SC):- number(S),!,succ(S,E).
+next_line(S,E):- number(S),!,succ(S,E).
+
+line_col(Position,LineM1:Col):-
+     stream_position_data(line_count, Position, Line),  % Extract the line number.
+     LineM1 is Line-1,
+     stream_position_data(line_position, Position, Col).  % Extract the column number.
+
+xrefed_element_kind([EQ,Element|_],Element,function):- EQ=='=',!.
+xrefed_element_kind([CT,Element|Stuff],[CT,Element|Stuff],typeParameter):- CT==':',!.
+xrefed_element_kind('$COMMENT'(Cmt,_,_),Cmt,string):-!.
+xrefed_element_kind('exec'([Op|Rest]),'exec'([Op|Rest]),Kind):- op_typekind(Op,Kind),!.
+xrefed_element_kind('exec'(Cmt),'exec'(Cmt),class):-!.
+xrefed_element_kind(ELSE,ELSE,array):-!.
+
+op_typekind(Op,key):- \+ atom(Op).
+op_typekind(Op,number):- atom_contains(Op,"include"),!.
+op_typekind(Op,number):- atom_contains(Op,"import"),!.
+op_typekind(Op,number):- atom_contains(Op,"load"),!.
+op_typekind(Op,constant):- atom(Op),atom_concat(_,'!',Op),!.
+op_typekind(_Op,class).
+
+lsp_xref_kind(N, LU):- number(LU),var(N),!,LU=N.
+lsp_xref_kind(1, file).
+lsp_xref_kind(2, module).
+lsp_xref_kind(3, namespace).
+lsp_xref_kind(4, package).
+lsp_xref_kind(5, class).
+lsp_xref_kind(6, method).
+lsp_xref_kind(7, property).
+lsp_xref_kind(8, field).
+lsp_xref_kind(9, constructor).
+lsp_xref_kind(10, enum).
+lsp_xref_kind(11, interface).
+lsp_xref_kind(12, function).
+lsp_xref_kind(13, variable).
+lsp_xref_kind(14, constant).
+lsp_xref_kind(15, string).
+lsp_xref_kind(16, number).
+lsp_xref_kind(17, boolean).
+lsp_xref_kind(18, array).
+lsp_xref_kind(19, object).
+lsp_xref_kind(20, key).
+lsp_xref_kind(21, null).
+lsp_xref_kind(22, enumMember).
+lsp_xref_kind(23, struct).
+lsp_xref_kind(24, event).
+lsp_xref_kind(25, operator).
+lsp_xref_kind(26, typeParameter).
+
+%
+
+sample_outline_test(DocumentSymbol):-
+ DocumentSymbol = _{
+  name: "MyClass",
+  detail: "class definition",
+  kind: 5, % Corresponds to 'Class'
+  location: _{
+    uri: "file:///path/to/MyClassFile.pl",
+    range: _{
+      start: _{line: 0, character: 1},
+      end: _{line: 10, character: 0}
+    }
+  },
+  children: [
+    _{
+      name: "myMethod",
+      detail: "method definition",
+      kind: 6, % Corresponds to 'Method'
+      location: _{
+        uri: "file:///path/to/MyClassFile.pl",
+        range: _{
+          start: _{line: 2, character: 1},
+          end: _{line: 4, character: 0}
+        }
+      },
+      children: [
+        _{
+          name: "write('Hello, world!')",
+          detail: "write statement",
+          kind: 12, % Corresponds to 'Statement'
+          location: _{
+            uri: "file:///path/to/MyClassFile.pl",
+            range: _{
+              start: _{line: 2, character: 14},
+              end: _{line: 2, character: 30}
+            }
+          }
+        },
+        _{
+          name: "nl",
+          detail: "newline statement",
+          kind: 12, % Corresponds to 'Statement'
+          location: _{
+            uri: "file:///path/to/MyClassFile.pl",
+            range: _{
+              start: _{line: 2, character: 32},
+              end: _{line: 2, character: 34}
+            }
+          }
+        }
+      ]
+    },
+    _{
+      name: "myField",
+      detail: "",
+      kind: 8, % Corresponds to 'Field'
+      location: _{
+        uri: "file:///path/to/MyClassFile.pl",
+        range: _{
+          start: _{line: 6, character: 1},
+          end: _{line: 6, character: 0}
+        }
+      }
+    }
+  ]
+}.
+
+
 
 
