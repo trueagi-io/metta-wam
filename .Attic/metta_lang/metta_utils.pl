@@ -1,148 +1,617 @@
+/*
+ * Project: MeTTaLog - A MeTTa to Prolog Transpiler/Interpreter
+ * Description: This file is part of the source code for a transpiler designed to convert
+ *              MeTTa language programs into Prolog, utilizing the SWI-Prolog compiler for
+ *              optimizing and transforming function/logic programs. It handles different
+ *              logical constructs and performs conversions between functions and predicates.
+ *
+ * Author: Douglas R. Miles
+ * Contact: logicmoo@gmail.com / dmiles@logicmoo.org
+ * License: LGPL
+ * Repository: https://github.com/trueagi-io/metta-wam
+ *             https://github.com/logicmoo/hyperon-wam
+ * Created Date: 8/23/2023
+ * Last Modified: $LastChangedDate$  # You will replace this with Git automation
+ *
+ * Usage: This file is a part of the transpiler that transforms MeTTa programs into Prolog. For details
+ *        on how to contribute or use this project, please refer to the repository README or the project documentation.
+ *
+ * Contribution: Contributions are welcome! For contributing guidelines, please check the CONTRIBUTING.md
+ *               file in the repository.
+ *
+ * Notes:
+ * - Ensure you have SWI-Prolog installed and properly configured to use this transpiler.
+ * - This project is under active development, and we welcome feedback and contributions.
+ *
+ * Acknowledgments: Special thanks to all contributors and the open source community for their support and contributions.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
+%********************************************************************************************* 
+% PROGRAM FUNCTION: Provides utility predicates and data structures for handling and displaying various 
+% types of information, including grids, objects, and color-coded output.
+%*********************************************************************************************
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% IMPORTANT:  DO NOT DELETE COMMENTED-OUT CODE AS IT MAY BE UN-COMMENTED AND USED
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Disable verbose autoload to prevent detailed loading messages during the autoloading process.
 :- set_prolog_flag(verbose_autoload, false).
+
+% Set the verbosity flag to silent to suppress informational messages during Prolog execution.
 :- set_prolog_flag(verbose, silent).
+
+% Silence messages related to file loading.
 :- set_prolog_flag(verbose_load, silent).
+
+% Ensure that the `logicmoo_utils` library is loaded, as it may contain utility predicates 
+% that are needed throughout the system.
 :- ensure_loaded(library(logicmoo_utils)).
+
+% Prevent the dynamic predicate `user:'$exported_op'/3` from succeeding. 
+% Stop certain operations or exports in the user module by forcing them to fail.
 :- assert((user:'$exported_op'(_,_,_):- fail)).
+
+% Abolish the system definition of the `$exported_op/3` predicate, removing it from the 
+% system module if it exists. 
 :- abolish((system:'$exported_op'/3)).
+
+% Similarly, prevent the dynamic predicate `system:'$exported_op'/3` from succeeding.
 :- assert((system:'$exported_op'(_,_,_):- fail)).
 
+% Conditionally check if the library `logicmoo_utils` exists, and if so, load it.
 :- if(exists_source(library(logicmoo_utils))).
-:- ensure_loaded(library(logicmoo_utils)).
+   % Ensure that the `logicmoo_utils` library is loaded, as it may contain utility predicates
+   % needed for system functionality.
+   :- ensure_loaded(library(logicmoo_utils)).
 :- endif.
+
+% Conditionally check if the library `dictoo` exists.
 :- if(exists_source(library(dictoo))).
-%:- ensure_loaded(library(dictoo)).
+   % The following line is commented out:
+   % If the `dictoo` library exists, it could be loaded here.
+   % :- ensure_loaded(library(dictoo)).
 :- endif.
 
-
-
+% Declare `done_once/1` as a dynamic predicate to allow runtime modification.
 :- dynamic(done_once/1).
+
+%!  do_once(+Goal) is det.
+%
+%   Executes the given goal `Goal` only once. 
+%   If the goal has been executed before (determined by comparing with the stored goal using `=@=`),
+%   the predicate succeeds without re-executing it.
+%   Otherwise, it asserts the goal as "done", executes it using `once/1`, and cleans up if execution fails.
+%
+%   @arg Goal The goal to be executed.
 do_once(G):-
-  ((done_once(GG),GG=@=G) -> true
-  ;(assert(done_once(G)),(once(@(G,user))->true;retract(done_once(G))))).
+    % Check if the goal has been marked as done (comparing using `=@=` to account for structural equality).
+    ((done_once(GG), GG =@= G) -> true  % If it has, succeed without doing anything.
+    ;  % Otherwise, assert it as done and try to execute it.
+    (assert(done_once(G)),
+     (once(@(G, user)) -> true  % If the execution succeeds, succeed.
+     ; retract(done_once(G))))).  % If it fails, retract the "done" marker.
 
-cleanup_debug:-
-  forall(
-    (clause(prolog_debug:debugging(A1,B,C),Body,Cl1),
-     clause(prolog_debug:debugging(A2,B,C),Body,Cl2),
-     A1=@=A2,Cl1\==Cl2),
-     erase(Cl2)).
+%!  cleanup_debug is det.
+%
+%   Cleans up redundant clauses in the `prolog_debug:debugging/3` predicate.
+%   This predicate looks for duplicate clauses in the `debugging/3` predicate and removes 
+%   redundant instances, keeping only the first one found.
+cleanup_debug :-
+    % For all duplicate debugging clauses, erase the redundant ones.
+    forall(
+        ( clause(prolog_debug:debugging(A1, B, C), Body, Cl1),
+          clause(prolog_debug:debugging(A2, B, C), Body, Cl2),
+          A1 =@= A2, Cl1 \== Cl2),
+        erase(Cl2)).
 
+% Export the `plain_var/1` predicate to make it available outside this module.
 :- export(plain_var/1).
-plain_var(V):- notrace((var(V), \+ attvar(V), \+ get_attr(V,ci,_))).
-catch_nolog(G):- ignore(catch(notrace(G),E,once(true;nop(u_dmsg(E=G))))).
-catch_log(G):- ignore(catch((G),E,((u_dmsg(E=G),ugtrace(E,G))))).
-% catch_log(G):- ignore(catch(notrace(G),E,((writeln(E=G),catch_nolog(ds))))).
 
-get_user_error(UE):- stream_property(UE,file_no(2)),!.
-get_user_error(UE):- stream_property(UE,alias(user_error)),!.
+%!  plain_var(+Var) is semidet.
+%
+%   True if `Var` is a plain Prolog variable, meaning it is a variable (`var/1`),
+%   but not an attributed variable (`attvar/1`), and it has no `ci` attribute.
+%
+%   @arg Var The variable to check.
+plain_var(V) :- 
+    notrace((var(V), \+ attvar(V), \+ get_attr(V, ci, _))).
 
-ufmt(G):- notrace((fbug(G)->true;ufmt0(G))).
-ufmt0(G):- fmt(G)->true;writeln(G).
-u_dmsg(G):- is_list(G),!,my_maplist(u_dmsg,G).
-u_dmsg(M):- get_user_error(UE), \+ current_predicate(with_toplevel_pp/2),!, with_output_to(UE,ufmt(M)).
-u_dmsg(M):- get_user_error(UE),!, with_toplevel_pp(ansi, with_output_to(UE,ufmt(M))).
-u_dmsg(M):- get_user_error(UE),  stream_property(UO,file_no(1)), current_output(CO),!,
-  (UO==CO ->  fbug(M) ;
-   (with_toplevel_pp(ansi, with_output_to(UE,ufmt(M))), with_output_to(CO,pp(M)))).
-u_dmsg(G):-ufmt(G),!.
+%!  catch_nolog(+Goal) is det.
+%
+%   Executes the goal `Goal` without generating any debug logs.
+%   If an error occurs during execution, it catches the error and ignores it (calls `nop/1` with the error).
+%
+%   @arg Goal The goal to execute.
+catch_nolog(G) :- 
+    ignore(catch(notrace(G), E, once(true; nop(u_dmsg(E = G))))).
 
+%!  catch_log(+Goal) is det.
+%
+%   Executes the goal `Goal` and logs any error that occurs.
+%   If an error occurs, it catches it, logs the error (`u_dmsg/1`), and optionally triggers a trace (`ugtrace/2`).
+%
+%   @arg Goal The goal to execute.
+catch_log(G) :- 
+    ignore(catch((G), E, ((u_dmsg(E = G), ugtrace(E, G))))).
+% Alternative catch_log implementation (commented out):
+% If an error occurs during the execution of `Goal`, it logs the error and then performs additional actions like debugging.
+% catch_log(G) :- ignore(catch(notrace(G), E, (writeln(E = G), catch_nolog(ds)))).
 
+%!  get_user_error(-Stream) is det.
+%
+%   Retrieves the stream associated with `user_error`.
+%   The predicate checks for two properties of the stream: whether it has the file descriptor `2`
+%   (commonly associated with standard error) or if it has the alias `user_error`.
+%
+%   @arg Stream The output stream for errors.
+get_user_error(UE) :- 
+    % Check if the stream has file descriptor 2 (standard error).
+    stream_property(UE, file_no(2)), !.
+get_user_error(UE) :- 
+    % Check if the stream is aliased as `user_error`.
+    stream_property(UE, alias(user_error)), !.
+
+%!  ufmt(+Message) is det.
+%
+%   Attempts to format and print the given message `Message` without tracing.
+%   It first checks if `fbug/1` succeeds (likely a debugging hook). If so, it prints the message using
+%   `fbug/1`. Otherwise, it falls back to `ufmt0/1` to format or print the message.
+%
+%   @arg Message The message to format and print.
+ufmt(G) :- notrace((fbug(G) -> true ; ufmt0(G))).
+
+%!  ufmt0(+Message) is det.
+%
+%   Prints the message `Message` using `fmt/1`, or `writeln/1` if `fmt/1` fails.
+%   
+%   @arg Message The message to print.
+ufmt0(G) :- fmt(G) -> true ; writeln(G).
+
+%!  u_dmsg(+Message) is det.
+%
+%   Sends a debug message to the `user_error` stream, optionally with ANSI formatting.
+%   Depending on whether the message is a list and if certain predicates like `with_toplevel_pp/2` are available,
+%   it chooses different strategies for printing the message. This predicate is useful for logging or debugging purposes.
+%
+%   @arg Message The message to print, which could be a list or a single item.
+u_dmsg(G) :- 
+    % If the message is a list, apply `u_dmsg/1` to each element in the list.
+    is_list(G), !, my_maplist(u_dmsg, G).
+u_dmsg(M) :- 
+    % If `with_toplevel_pp/2` is not available, print the message directly to `user_error`.
+    get_user_error(UE),\+ current_predicate(with_toplevel_pp/2),!,with_output_to(UE, ufmt(M)).
+u_dmsg(M) :- 
+    % If `with_toplevel_pp/2` is available, print the message with ANSI formatting.
+    get_user_error(UE), !, with_toplevel_pp(ansi, with_output_to(UE, ufmt(M))).
+u_dmsg(M) :- 
+    % If the output stream is the same as the current output, use `fbug/1` for debugging output.
+    % Otherwise, print to both `user_error` and the current output.
+    get_user_error(UE),stream_property(UO, file_no(1)),current_output(CO), !,
+    (UO == CO -> fbug(M) ; (with_toplevel_pp(ansi, with_output_to(UE, ufmt(M))), with_output_to(CO, pp(M)))).
+% Fallback case: just format and print the message.
+u_dmsg(G) :- 
+    ufmt(G), !.
+
+% Declares that the predicate is_cgi/0 can have clauses defined across multiple files.
 :- multifile(is_cgi/0).
+% Declares is_cgi/0 as dynamic, allowing it to be modified during runtime.
 :- dynamic(is_cgi/0).
+% Declares that the predicate arc_html/0 can have clauses defined across multiple files.
 :- multifile(arc_html/0).
+% Declares arc_html/0 as dynamic, allowing it to be modified during runtime.
 :- dynamic(arc_html/0).
 
+%!  logicmoo_use_swish is det.
+%
+%   Initializes the SWISH web interface for the LogicMoo environment.
+%   This predicate sets a Prolog flag `use_arc_swish` to true, loads the LogicMoo Web UI, 
+%   and starts both the SWISH and ClioPatria web services using `webui_start_swish_and_clio/0`.
+%   It also sets up an HTTP handler to redirect requests from `/swish` to the appropriate URL.
+logicmoo_use_swish :-
+    % Set the Prolog flag for using arc swish.
+    set_prolog_flag(use_arc_swish, true),
+    % Load the LogicMoo Web UI module.
+    ld_logicmoo_webui,
+    % Start the SWISH and Clio web interfaces.
+    call(call, webui_start_swish_and_clio),
+    % Redirect `/swish` to the actual SWISH URL.
+    http_handler('/swish', http_redirect(moved, '/swish/'), []).
 
-logicmoo_use_swish:-
-  set_prolog_flag(use_arc_swish,true),
-  ld_logicmoo_webui,call(call,webui_start_swish_and_clio),
-  http_handler('/swish', http_redirect(moved, '/swish/'), []).
+%!  arc_user(-User) is det.
+%
+%   Determines the current user (arc user) based on the context in which the query is executed.
+%   This predicate attempts to find the user from different sources, including the main thread, 
+%   pengine, CGI sessions, or the current thread.
+%
+%   @arg User The user identifier. This could be the thread ID, session username, or other user-related information.
+arc_user(Nonvar) :- 
+    % If Nonvar is a non-variable, resolve it to a user variable.
+    nonvar(Nonvar), !, 
+    arc_user(Var), !, 
+    Nonvar = Var.
+arc_user(main) :- 
+    % If running on the main thread, return 'main' as the user.
+    main_thread, !.
+arc_user(ID) :- 
+    % Attempt to retrieve the user ID from a Pengine user session.
+    catch((pengine:pengine_user(ID)), _, fail), !.
+arc_user(ID) :- 
+    % Try to find the username from the HTTP session.
+    catch((xlisting_web:is_cgi_stream, 
+           xlisting_web:find_http_session(User), 
+           http_session:session_data(User, username(ID))), _, fail), !.
+arc_user(ID) :- 
+    % Check if CGI is running and retrieve the user ID from the session.
+    catch((is_cgi, (xlisting_web:find_http_session(ID))), _, fail), !.
+arc_user(ID) :- 
+    % If running in a CGI environment, return 'web_user' as the user.
+    is_cgi, !, ID = web_user.
+arc_user(ID) :- 
+    % Fallback to retrieving the current thread ID as the user ID.
+    thread_self(ID).
 
-arc_user(Nonvar):- nonvar(Nonvar),!,arc_user(Var),!,Nonvar=Var.
-arc_user(main):- main_thread, !. %\+ if_thread_main(fail),!.
-arc_user(ID):- catch((pengine:pengine_user(ID)),_,fail),!.
-arc_user(ID):- catch((xlisting_web:is_cgi_stream,xlisting_web:find_http_session(User),http_session:session_data(User,username(ID))),_,fail),!.
-arc_user(ID):- catch((is_cgi, (xlisting_web:find_http_session(ID))),_,fail),!.
-arc_user(ID):- is_cgi,!,ID=web_user.
-arc_user(ID):- thread_self(ID).
-
+% Declares arc_user_prop/0 as dynamic, allowing it to be modified during runtime.
 :- dynamic(arc_user_prop/3).
 
+%!  luser_setval(+N, +V) is det.
+%
+%   Sets a user-specific value for the current user or a specific user, associating
+%   the value `V` with the key `N`. If `N` is an atom, it uses non-backtrackable storage
+%   (`nb_setval/2`). This version of the predicate first retrieves the current user ID 
+%   using `arc_user/1`, and then calls the more specific `luser_setval/3` with the user ID.
+%
+%   @arg N The key (or name) for the value.
+%   @arg V The value to be associated with the key.
 %luser_setval(N,V):- nb_setval(N,V),!.
-luser_setval(N,V):- arc_user(ID),luser_setval(ID,N,V),!.
-luser_setval(ID,N,V):- \+ (arc_sensical_term(N),arc_sensical_term(V)),
-  warn_skip(not_arc_sensical_term(luser_setval(ID,N,V))).
-luser_setval(ID,N,V):-
-  (atom(N)->nb_setval(N,V);true),
-  retractall(arc_user_prop(ID,N,_)),asserta(arc_user_prop(ID,N,V)).
+luser_setval(N, V) :-
+    % Retrieve the current user ID using arc_user/1 and call the next clause with the ID.
+    arc_user(ID),luser_setval(ID, N, V), !.
 
+%!  luser_setval(+ID, +N, +V) is det.
+%
+%   Associates the value `V` with the key `N` for a specific user identified by `ID`.
+%   This version checks if both `N` and `V` are sensical terms before proceeding. If not,
+%   it generates a warning and skips the association.
+%
+%   @arg ID The user ID for whom the value is being set.
+%   @arg N  The key (or name) for the value.
+%   @arg V  The value to be associated with the key.
+luser_setval(ID, N, V) :-
+    % Check if both `N` and `V` are valid sensical terms using arc_sensical_term/1.
+    % If they are not, generate a warning and skip the rest of the predicate.
+    \+ (arc_sensical_term(N), arc_sensical_term(V)),warn_skip(not_arc_sensical_term(luser_setval(ID, N, V))).
+luser_setval(ID, N, V) :-
+    % If `N` is an atom, store the value in a non-backtrackable way using nb_setval/2.
+    (atom(N) -> nb_setval(N, V); true),
+    % Remove any existing property associated with the user and the key `N`.
+    retractall(arc_user_prop(ID, N, _)),
+    % Assert the new property with the user ID, key `N`, and value `V`.
+    asserta(arc_user_prop(ID, N, V)).
 
-luser_unsetval(N):- ignore(nb_delete(N)), arc_user(ID),luser_unsetval(ID,N),!.
-luser_unsetval(ID,N):- retractall(arc_user_prop(ID,N,_)).
+%!  luser_unsetval(+N) is det.
+%
+%   Removes the value associated with the key `N` for the current user.
+%   This predicate first attempts to delete the non-backtrackable variable `N` using `nb_delete/1`,
+%   and then calls `luser_unsetval/2` to remove the association from the user properties.
+%
+%   @arg N The key (or name) whose value is to be removed.
+luser_unsetval(N) :-
+    % Ignore errors from `nb_delete/1` and delete the non-backtrackable variable associated with `N`.
+    ignore(nb_delete(N)),
+    % Retrieve the current user ID using `arc_user/1` and remove the key-value pair for the user.
+    arc_user(ID),
+    luser_unsetval(ID, N), !.
 
-set_luser_default(N,V):- luser_setval(global,N,V).
-luser_default(N,V):- var(V),!,luser_getval(N,V).
-luser_default(N,V):- set_luser_default(N,V).
+%!  luser_unsetval(+ID, +N) is det.
+%
+%   Removes the key-value pair for the specific user `ID` and key `N`.
+%   It retracts any existing property that matches the user ID and key.
+%
+%   @arg ID The user ID whose property is being unset.
+%   @arg N  The key (or name) whose value is to be removed.
+luser_unsetval(ID, N) :-
+    % Retract all properties for the given user ID and key `N`.
+    retractall(arc_user_prop(ID, N, _)).
 
-luser_linkval(N,V):- arc_user(ID),luser_linkval(ID,N,V),!.
-luser_linkval(ID,N,V):- \+ var(V), \+ (arc_sensical_term(N),arc_sensical_term(V)),
- trace,
- warn_skip(not_arc_sensical_term(luser_linkval(ID,N,V))).
-luser_linkval(ID,N,V):-
-  (atom(N)->nb_linkval(N,V);true),
-  retractall(arc_user_prop(ID,N,_)),asserta(arc_user_prop(ID,N,V)).
+%!  set_luser_default(+N, +V) is det.
+%
+%   Sets a default value for the key `N` globally (across all users).
+%   This calls `luser_setval/3` with `global` as the user ID to indicate a global setting.
+%
+%   @arg N The key for which the default value is set.
+%   @arg V The default value to be associated with the key.
+set_luser_default(N, V) :-
+    luser_setval(global, N, V).
 
-arc_sensical_term(O):- nonvar(O), O\==[], O\=='', O \= (_ - _), O\==end_of_file.
-arc_sensical_term(V,O):- arc_sensical_term(V), !, O=V.
+%!  luser_default(+N, -V) is semidet.
+%
+%   Retrieves the default value associated with the key `N`. If `V` is a variable,
+%   it attempts to get the value using `luser_getval/2`. Otherwise, it sets the default
+%   value using `set_luser_default/2`.
+%
+%   @arg N The key for the value.
+%   @arg V The variable to unify with the value.
+luser_default(N, V) :-
+    % If `V` is unbound, attempt to retrieve the value.
+    var(V), !,  
+    luser_getval(N, V).
+luser_default(N, V) :-
+    % If `V` is already bound, set the default value.
+    set_luser_default(N, V).
 
+%!  luser_linkval(+N, +V) is det.
+%
+%   Associates a value `V` with a key `N` for the current user using non-backtrackable storage.
+%   If the value `V` is invalid (nonsensical), it logs a warning and skips the operation.
+%
+%   @arg N The key (or name) for the value.
+%   @arg V The value to be associated with the key.
+luser_linkval(N, V) :-
+    % Retrieve the current user ID and delegate to `luser_linkval/3`.
+    arc_user(ID),luser_linkval(ID, N, V), !.
+
+%!  luser_linkval(+ID, +N, +V) is det.
+%
+%   Associates a value `V` with a key `N` for a specific user `ID`.
+%   If the value is invalid (nonsensical), it generates a warning and skips the operation.
+%
+%   @arg ID The user ID for whom the value is being set.
+%   @arg N  The key (or name) for the value.
+%   @arg V  The value to be associated with the key.
+luser_linkval(ID, N, V) :-
+    % If `V` is not a variable and either `N` or `V` is nonsensical, skip the operation.
+    \+ var(V), \+ (arc_sensical_term(N), arc_sensical_term(V)),
+    trace,  % Enable tracing to observe execution.
+    warn_skip(not_arc_sensical_term(luser_linkval(ID, N, V))).
+luser_linkval(ID, N, V) :-
+    % If `N` is an atom, link the value to the key non-backtrackably.
+    (atom(N) -> nb_linkval(N, V); true),
+    % Remove any existing property associated with the user and key.
+    retractall(arc_user_prop(ID, N, _)),
+    % Assert the new property for the user ID, key `N`, and value `V`.
+    asserta(arc_user_prop(ID, N, V)).
+
+%!  arc_sensical_term(+O) is semidet.
+%
+%   Determines whether the given term `O` is sensical (i.e., a valid term).
+%   A term is considered sensical if it is nonvar, not an empty list, not an empty atom,
+%   not a pair (_ - _), and not the end-of-file indicator.
+%
+%   @arg O The term to be checked for sensibility.
+arc_sensical_term(O) :-
+    nonvar(O),  % The term must be instantiated.
+    O \== [],   % The term cannot be an empty list.
+    O \== '',   % The term cannot be an empty atom.
+    O \= (_ - _),  % The term cannot be a pair.
+    O \== end_of_file.  % The term cannot be the end-of-file indicator.
+
+%!  arc_sensical_term(+V, -O) is det.
+%
+%   Ensures that the term `V` is sensical. If it is, unify `O` with `V`.
+%
+%   @arg V The term to be checked.
+%   @arg O The term unified with `V` if it is sensical.
+arc_sensical_term(V, O) :-
+    arc_sensical_term(V),  % Check if `V` is sensical.
+    !,  % If true, cut to prevent further backtracking.
+    O = V.  % Unify `O` with `V`.
+
+%!  arc_option(+O) is semidet.
+%
+%   Checks whether a specific option `O` is set for the current user.
+%   This is determined by retrieving the value associated with `O` and verifying
+%   that it is set to `t` (true).
+%
+%   @arg O The option to check.
 %arc_option(grid_size_only):- !,fail.
-arc_option(O):- luser_getval(O,t).
-if_arc_option(O,G):- (arc_option(O)->must_det_ll(G); true).
+arc_option(O) :-
+    % Retrieve the value for option `O` and check if it is set to 't'.
+    luser_getval(O, t).
 
-with_luser(N,V,Goal):-
-  (luser_getval(N,OV);OV=[]),
-  setup_call_cleanup(
-    luser_setval(N,V),
-    once(Goal),
-    luser_setval(N,OV)).
+%!  if_arc_option(+O, :G) is det.
+%
+%   Conditionally executes the goal `G` if the option `O` is set to true for the user.
+%   If the option is not set, the goal `G` is skipped.
+%
+%   @arg O The option to check.
+%   @arg G The goal to be executed if the option `O` is true.
+if_arc_option(O, G) :-
+    % If `arc_option(O)` succeeds (i.e., option `O` is set), execute `G`. Otherwise, do nothing.
+    (arc_option(O) -> must_det_ll(G); true).
 
-%luser_getval(N,V):- nb_current(N,VVV),arc_sensical_term(VVV,VV),!,V=VV.
-% caches the valuetemp on this thread
-luser_getval(N,V):-  luser_getval_0(N,VV),VV=V,arc_sensical_term(V),!.
+%!  with_luser(+N, +V, :Goal) is det.
+%
+%   Temporarily sets a user-specific value for the key `N` to `V` while executing the goal `Goal`.
+%   After the goal is executed (or if it fails), the original value of `N` is restored.
+%   This is done using `setup_call_cleanup/3`, which ensures proper cleanup after the goal.
+%
+%   @arg N The key (or name) to temporarily set.
+%   @arg V The value to set for the key `N`.
+%   @arg Goal The goal to execute while the key `N` is set to `V`.
+with_luser(N, V, Goal) :-
+    % Retrieve the original value associated with key `N`, or use an empty list if no value exists.
+    (luser_getval(N, OV); OV = []),
+    
+    % Temporarily set the key `N` to `V`, execute `Goal`, and then restore the original value.
+    setup_call_cleanup(
+        luser_setval(N, V),     % Setup: Set the key `N` to `V`.
+        once(Goal),             % Call: Execute the goal once.
+        luser_setval(N, OV)     % Cleanup: Restore the original value after the goal.
+    ).
 
-luser_getval_0(arc_user,V):- arc_user(V).
-luser_getval_0(N,V):- luser_getval_1(N,V).
+% luser_getval(N,V):- nb_current(N,VVV),arc_sensical_term(VVV,VV),!,V=VV.
 
-luser_getval_1(N,V):- luser_getval_2(N,V).
-luser_getval_1(N,V):- luser_getval_3(N,V), \+ (luser_getval_2(N,VV), nop(VV\=V)).
-luser_getval_1(N,V):- get_luser_default(N,V), \+ (luser_getval_3(N,VV), nop(VV\=V)), \+ (luser_getval_2(N,VV), nop(VV\=V)).
+%!  luser_getval(+N, -V) is semidet.
+%
+%   Retrieves the value associated with the key `N` for the current user. It first attempts to retrieve
+%   the value using `luser_getval_0/2`. After retrieving the value, it ensures the value is sensical using
+%   `arc_sensical_term/1`. If the value is valid, it unifies with `V`.
+%
+%   @arg N The key (or name) for the value.
+%   @arg V The variable that will unify with the retrieved value.
+%   This version caches the temporary value on this thread.
+luser_getval(N, V) :-
+    % Retrieve the value using `luser_getval_0/2`.
+    luser_getval_0(N, VV),VV = V,
+    % Ensure the value is sensical.
+    arc_sensical_term(V),!.
+
+%!  luser_getval_0(+N, -V) is semidet.
+%
+%   Dispatches the retrieval of user-specific values based on the key `N`.
+%   If the key is `arc_user`, it retrieves the current user. Otherwise, it delegates
+%   the retrieval to `luser_getval_1/2`.
+%
+%   @arg N The key (or name) for the value.
+%   @arg V The variable that will unify with the retrieved value.
+luser_getval_0(arc_user, V) :-
+    % If the key is `arc_user`, retrieve the current user ID.
+    arc_user(V).
+luser_getval_0(N, V) :-
+    % For other keys, delegate to `luser_getval_1/2`.
+    luser_getval_1(N, V).
+
+%!  luser_getval_1(+N, -V) is semidet.
+%
+%   Attempts to retrieve the value associated with the key `N` from various sources.
+%   It first tries `luser_getval_2/2`, then checks `luser_getval_3/2`, and finally
+%   falls back to a default value using `get_luser_default/2`. This predicate ensures
+%   that it avoids conflicting values across these sources.
+%
+%   @arg N The key (or name) for the value.
+%   @arg V The variable that will unify with the retrieved value.
+luser_getval_1(N, V) :-
+    % Attempt to retrieve the value using `luser_getval_2/2`.
+    luser_getval_2(N, V).
+luser_getval_1(N, V) :-
+    % Try `luser_getval_3/2`, ensuring no conflicts with `luser_getval_2/2`.
+    luser_getval_3(N, V),
+    \+ (luser_getval_2(N, VV), nop(VV \= V)).
+luser_getval_1(N, V) :-
+    % As a last resort, use the default value from `get_luser_default/2`, ensuring consistency.
+    get_luser_default(N, V),
+    \+ (luser_getval_3(N, VV), nop(VV \= V)),
+    \+ (luser_getval_2(N, VV), nop(VV \= V)).
 
 %luser_getval_0(N,V):- luser_getval_2(N,V), \+ luser_getval_1(N,_).
 %luser_getval_0(N,V):- luser_getval_3(N,V), \+ luser_getval_2(N,_), \+ luser_getval_1(N,_).
 %luser_getval_3(N,V):- is_cgi, current_predicate(get_param_req/2),get_param_req(N,M),url_decode_term(M,V).
-luser_getval_2(N,V):- \+ main_thread, atom(N), httpd_wrapper:http_current_request(Request), member(search(List),Request),member(N=VV,List),url_decode_term(VV,V),arc_sensical_term(V),!.
-luser_getval_2(N,V):- atom(N), nb_current(N,ValV),arc_sensical_term(ValV,Val),Val=V.
 
-luser_getval_3(N,V):- arc_user(ID), arc_user_prop(ID,N,V).
-luser_getval_3(_,_):- \+ is_cgi, !, fail.
-luser_getval_3(N,V):-  \+ main_thread, atom(N), current_predicate(get_param_sess/2),get_param_sess(N,M),url_decode_term(M,V),arc_sensical_term(V).
+%!  luser_getval_2(+N, -V) is semidet.
+%
+%   Retrieves the value for the key `N` from the HTTP request parameters (if not on the main thread),
+%   or from non-backtrackable storage. It checks that the value is sensical before unifying it with `V`.
+%
+%   @arg N The key (or name) for the value.
+%   @arg V The variable that will unify with the retrieved value.
+luser_getval_2(N, V) :-
+    % If not on the main thread and `N` is an atom, attempt to retrieve the value from the HTTP request.
+    \+ main_thread,atom(N),httpd_wrapper:http_current_request(Request),member(search(List), Request),
+    member(N = VV, List),url_decode_term(VV, V),arc_sensical_term(V), !.
+luser_getval_2(N, V) :-
+    % If `N` is an atom, try to retrieve the value from non-backtrackable storage.
+    atom(N),nb_current(N, ValV),arc_sensical_term(ValV, Val),Val = V.
+
+%!  luser_getval_3(+N, -V) is semidet.
+%
+%   Retrieves the value for the key `N` from the current user properties or from session parameters.
+%   This predicate tries to handle both CGI requests and session variables.
+%
+%   @arg N The key (or name) for the value.
+%   @arg V The variable that will unify with the retrieved value.
+luser_getval_3(N, V) :-
+    % Retrieve the value from the current user properties.
+    arc_user(ID),
+    arc_user_prop(ID, N, V).
+luser_getval_3(_, _) :-
+    % If CGI mode is not active, fail.
+    \+ is_cgi, !, fail.
+luser_getval_3(N, V) :-
+    % If not on the main thread and `N` is an atom, attempt to retrieve the value from session parameters.
+    \+ main_thread,atom(N),current_predicate(get_param_sess/2),get_param_sess(N, M),url_decode_term(M, V),
+    arc_sensical_term(V).
 %luser_getval_3(N,V):- atom(N), nb_current(N,ValV),arc_sensical_term(ValV,Val),Val=V.
 
+%!  get_luser_default(+N, -V) is semidet.
+%
+%   Retrieves a default value for the key `N` from either global user properties or Prolog flags.
+%   The value is ensured to be sensical before unifying it with `V`.
+%
+%   @arg N The key (or name) for the default value.
+%   @arg V The variable that will unify with the default value.
+get_luser_default(N, V) :-
+    % Retrieve the default value from global user properties.
+    arc_user_prop(global, N, VV),VV = V,arc_sensical_term(V), !.
+get_luser_default(N, V) :-
+    % If `N` is an atom, retrieve the default value from Prolog flags.
+    atom(N),current_prolog_flag(N, VV),VV = V,arc_sensical_term(V), !.
 
-get_luser_default(N,V):- arc_user_prop(global,N,VV),VV=V,arc_sensical_term(V),!.
-get_luser_default(N,V):- atom(N), current_prolog_flag(N,VV),VV=V,arc_sensical_term(V),!.
-%luser_getval(ID,N,V):- thread_self(ID),nb_current(N,V),!.
-%luser_getval(ID,N,V):- !, ((arc_user_prop(ID,N,V);nb_current(N,V))*->true;arc_user_prop(global,N,V)).
+% luser_getval(ID,N,V):- thread_self(ID),nb_current(N,V),!.
+% luser_getval(ID,N,V):- !, ((arc_user_prop(ID,N,V);nb_current(N,V))*->true;arc_user_prop(global,N,V)).
 
+%!  ansi_main is det.
+%
+%   Succeeds if the current thread is the `main` thread and CGI mode is not active.
+%   This predicate checks the current thread using `thread_self/1` and ensures that
+%   CGI mode is not enabled by calling `nop(is_cgi)`. If both conditions are met,
+%   it succeeds; otherwise, it fails.
+ansi_main :-
+    % Check if the current thread is the main thread.
+    thread_self(main),
+    % Check that CGI mode is not active. `nop/1` negates `is_cgi`, ensuring CGI mode is off.
+    nop(is_cgi),!.
 
-ansi_main:- thread_self(main),nop(is_cgi),!.
+%!  main_thread is semidet.
+%
+%   Succeeds if the current thread is the `main` thread. This is used to identify
+%   whether the system is running in the main thread.
+main_thread :-
+    % Check if the current thread is the main thread.
+    thread_self(main),!.
 
-main_thread:- thread_self(main),!.
-if_thread_main(G):- main_thread->call(G);true.
-
-
-
+%!  if_thread_main(:G) is det.
+%
+%   Executes the goal `G` if the current thread is the `main` thread. If the
+%   system is running in any other thread, it does nothing.
+%
+%   This predicate checks if the current thread is the main thread using the `main_thread/0`
+%   predicate, which is assumed to succeed only if the current thread is `main`. If the
+%   thread is `main`, it calls the goal `G`. If not, it simply succeeds without executing `G`.
+%
+%   @arg G The goal to execute if the current thread is `main`.
+if_thread_main(G) :-
+    % Check if the current thread is the main thread.
+    main_thread ->
+    % If it is the main thread, execute the goal `G` using `call/1`.
+    call(G);
+    % If not the main thread, do nothing (i.e., succeed without executing `G`).
+    true.
 
 :- if(\+ current_predicate(fbug/1)).
 %fbug(P):- format(user_error,'~N~p~n',[P]).
@@ -150,71 +619,279 @@ if_thread_main(G):- main_thread->call(G);true.
 
 
 
-substM(T, F, R, R):- T==F,!.
-substM(T, _, _, R):- \+ compound(T),!,R=T.
-substM([H1|T1], F, R, [H2|T2]) :- !, substM(H1, F, R, H2), substM(T1, F, R, T2).
-substM(C1, F, R, C2) :- C1 =.. [Fn|A1], substM_l(A1,F,R,A2),!, C2 =.. [Fn|A2].
-substM_l([], _, _, []).  substM_l([H1|T1], F, R, [H2|T2]) :- substM(H1, F, R, H2), substM_l(T1, F, R, T2).
+%!  substM(+T, +F, +R, -Result) is det.
+%
+%   Substitutes occurrences of the term `F` with `R` in the term `T`.
+%   The result of the substitution is unified with `Result`.
+%   This predicate handles atomic terms, lists, and compound terms.
+%
+%   @arg T       The input term in which substitution is to occur.
+%   @arg F       The term to be substituted (the find term).
+%   @arg R       The replacement term to substitute for `F`.
+%   @arg Result  The term after the substitution has been applied.
+substM(T, F, R, R) :-
+    % If the term `T` is exactly equal to the term `F`, unify the result with `R`.
+    T == F, !.
+substM(T, _, _, R) :-
+    % If `T` is not compound (i.e., atomic or a simple term), unify the result with `T` as no substitution is needed.
+    \+ compound(T),!,R = T.
+substM([H1|T1], F, R, [H2|T2]) :-
+    % If `T` is a list, perform substitution on both the head `H1` and the tail `T1`.
+    !,substM(H1, F, R, H2),  % Substitute in the head.
+    substM(T1, F, R, T2).  % Substitute in the tail.
+substM(C1, F, R, C2) :-
+    % If `T` is a compound term, decompose it into its functor and arguments.
+    C1 =.. [Fn|A1],
+    % Perform substitution on the list of arguments.
+    substM_l(A1, F, R, A2),
+    % Recompose the term with the substituted arguments.
+    !,C2 =.. [Fn|A2].
 
+%!  substM_l(+A1, +F, +R, -A2) is det.
+%
+%   Substitutes occurrences of the term `F` with `R` in the list of arguments `A1`.
+%   The result is unified with `A2`. This predicate is used to process lists of arguments
+%   for compound terms.
+%
+%   @arg A1 The list of arguments in which substitution is to occur.
+%   @arg F  The term to be substituted (the find term).
+%   @arg R  The replacement term to substitute for `F`.
+%   @arg A2 The list of arguments after substitution.
+% Base case: an empty list remains empty after substitution.
+substM_l([], _, _, []).
+substM_l([H1|T1], F, R, [H2|T2]) :-
+    % Perform substitution on the head of the list.
+    substM(H1, F, R, H2),
+    % Recursively process the tail of the list.
+    substM_l(T1, F, R, T2).
 
-pp_m(Cl):- write_src(Cl),!.
-pp_m(C,Cl):- color_g_mesg(C,write_src(Cl)),!.
-%  notrace((format('~N'), ignore(( \+ ((numbervars(Cl,0,_,[singletons(true)]), print_tree_with_final(Cl,"."))))))).
+%!  pp_m(+Cl) is det.
+%
+%   Pretty-prints or outputs the clause `Cl` using `write_src/1`.
+%   This predicate uses a cut (`!`) to ensure no further backtracking.
+%
+%   @arg Cl The clause to be printed or outputted.
+pp_m(Cl) :-
+    % Call `write_src/1` to output the clause `Cl`.
+    write_src(Cl),!.
+
+%!  pp_m(+C, +Cl) is det.
+%
+%   Pretty-prints or outputs the clause `Cl` with some coloring or message handling.
+%   This version uses `color_g_mesg/2` to print the clause `Cl` with a specific color `C`.
+%
+%   @arg C  The color or message type used for formatting.
+%   @arg Cl The clause to be printed or outputted.
+pp_m(C, Cl) :-
+    % Call `color_g_mesg/2` to output the clause `Cl` with the color or formatting `C`.
+    color_g_mesg(C, write_src(Cl)),!.
+
+% The following line is commented out and appears to be an alternative approach for pretty-printing clauses.
+% This code would format the clause `Cl`, number variables (with `numbervars/4`), and print it using
+% `print_tree_with_final/2` while suppressing tracing.
+% notrace((format('~N'), ignore(( \+ ((numbervars(Cl,0,_,[singletons(true)]), print_tree_with_final(Cl,"."))))))).
+
+%!  pp_q(+Cl) is det.
+%
+%   Pretty-prints or outputs the clause `Cl` with variable numbering and tree formatting.
+%   This predicate uses `numbervars/4` to number the variables in `Cl`, and then calls
+%   `print_tree_with_final/2` to print the clause. Tracing is suppressed using `notrace/1`.
+%
+%   @arg Cl The clause to be printed or outputted.
 pp_q(Cl):-
   notrace((format('~N'), ignore(( \+ ((numbervars(Cl,0,_,[singletons(true)]), print_tree_with_final(Cl,"."))))))).
 
+%!  ncatch(:G, +E, :F) is det.
+%
+%   This predicate is a wrapper around the built-in `catch/3` predicate.
+%   It attempts to execute the goal `G`. If an exception `E` is raised,
+%   it handles the exception by executing the fallback goal `F`.
+%
+%   @arg G The goal to be executed.
+%   @arg E The exception to catch.
+%   @arg F The fallback goal to be executed if an exception `E` is caught.
+ncatch(G, E, F) :-
+    % Catch exceptions that occur while executing `G` and handle them with `F`.
+    catch(G, E, F).
 
-ncatch(G,E,F):- catch(G,E,F).
-mcatch(G,E,F):- catch(G,E,F).
+%!  mcatch(:G, +E, :F) is det.
+%
+%   This predicate is another wrapper around `catch/3` that functions
+%   identically to `ncatch/3`. It attempts to execute the goal `G` and handles
+%   any exception `E` by executing the fallback goal `F`.
+%
+%   @arg G The goal to be executed.
+%   @arg E The exception to catch.
+%   @arg F The fallback goal to be executed if an exception `E` is caught.
+mcatch(G, E, F) :-
+    % Catch exceptions that occur while executing `G` and handle them with `F`.
+    catch(G, E, F).
+
 %mcatch(G,E,F):- catch(G,E,(fbug(G=E),catch(bt,_,fail),fbug(G=E),ignore(call(F)),throw(E))).
 %ncatch(G,E,F):- catch(G,E,(fbug(G=E),catch(bt,_,fail),fbug(G=E),call(G))).
 %ncatch(G,E,(F)).
 
 
-:- if( \+ current_predicate(if_t/2)).
-:- meta_predicate(if_t(0,0)).
-if_t(IF, THEN) :- call(call,ignore((((IF,THEN))))).
+% Conditionally define the predicate `if_t/2` only if it is not already defined.
+:- if(\+ current_predicate(if_t/2)).
+
+% Declare `if_t/2` as a meta-predicate, indicating that both arguments are goals (0-arity).
+:- meta_predicate(if_t(0, 0)).
+
+%!  if_t(:IF, :THEN) is det.
+%
+%   Executes the goal `THEN` if the goal `IF` succeeds. It ensures that both
+%   goals are called in a safe manner using `call/1` and `ignore/1`. The `ignore/1`
+%   ensures that failure of the `THEN` goal does not propagate back to `IF`.
+%
+%   @arg IF   The condition (goal) to test.
+%   @arg THEN The goal to execute if `IF` succeeds.
+if_t(IF, THEN) :-
+    % Safely call `IF`, and if it succeeds, execute `THEN`.
+    call(call, ignore((((IF, THEN))))).
+
 :- endif.
 
-:- if( \+ current_predicate(must_ll/1)).
+% Conditionally define the predicate `must_ll/1` only if it is not already defined.
+:- if(\+ current_predicate(must_ll/1)).
+
+% Declare `must_ll/1` as a meta-predicate, indicating that the argument is a goal (0-arity).
 :- meta_predicate(must_ll(0)).
-must_ll(G):- md(call,G)*->true;throw(not_at_least_once(G)).
+
+%!  must_ll(:G) is det.
+%
+%   Ensures that the goal `G` succeeds at least once. If `G` does not succeed,
+%   an exception is thrown. The predicate uses `md/2` for execution (presumably
+%   some defined mechanism for executing goals), and if `G` does not succeed,
+%   it throws a `not_at_least_once/1` exception.
+%
+%   @arg G The goal that must succeed at least once.
+must_ll(G) :-
+    % Attempt to execute the goal `G`. If it succeeds, succeed; otherwise, throw an exception.
+    md(call, G) *-> true ; throw(not_at_least_once(G)).
+
 :- endif.
 
-:- if( \+ current_predicate(at_least_once/1)).
+
+% Conditionally define the predicate `at_least_once/1` only if it is not already defined.
+:- if(\+ current_predicate(at_least_once/1)).
+
+% Declare `at_least_once/1` as a meta-predicate, indicating that the argument is a goal (0-arity).
 :- meta_predicate(at_least_once(0)).
-at_least_once(G):- call(G)*->true;throw(not_at_least_once(G)).
+
+%!  at_least_once(:G) is det.
+%
+%   Ensures that the goal `G` succeeds at least once. If `G` does not succeed,
+%   an exception is thrown. This provides a simple way to enforce that the goal
+%   `G` must succeed at least once during its execution.
+%
+%   @arg G The goal that must succeed at least once.
+at_least_once(G) :-
+    % Attempt to execute the goal `G`. If it succeeds, succeed; otherwise, throw an exception.
+    call(G) *-> true ; throw(not_at_least_once(G)).
+
 :- endif.
 
+%!  wraps_each(+Outer, +Inner) is det.
+%
+%   A placeholder or helper predicate that likely specifies that the predicate `Outer`
+%   (e.g., `must_det_ll`) wraps around the predicate `Inner` (e.g., `once`). This indicates
+%   a relationship between the two predicates, where `Outer` enforces certain behavior (e.g.,
+%   determinism) on `Inner`.
+%
+%   @arg Outer The outer predicate (e.g., `must_det_ll`).
+%   @arg Inner The inner predicate (e.g., `once`).
 %wraps_each(must_ll,call).
-wraps_each(must_det_ll,once).
-md_like(MD):- wraps_each(MD,_).
+wraps_each(must_det_ll, once).
 
-remove_must_det(_):- !,fail.
-%remove_must_det(MD):- !.
-%remove_must_det(MD):- nb_current(remove_must_det(MD),TF),!,TF==true.
-%remove_must_det(MD):- \+ false.
+%!  md_like(+MD) is semidet.
+%
+%   Checks if the predicate `MD` is defined as a wrapper by checking if `wraps_each/2`
+%   contains an entry for `MD`. This acts as a filter or condition to see if `MD` behaves
+%   like a "wrapper" predicate.
+%
+%   @arg MD The predicate to check if it wraps another predicate.
+md_like(MD) :-
+    wraps_each(MD, _).
 
+%!  remove_must_det(+MD) is semidet.
+%
+%   A placeholder predicate intended to prevent the use of `MD` (possibly removing
+%   or disabling behavior associated with `must_det_ll`). Currently, this version
+%   unconditionally fails using the cut-fail combination (`!`, `fail`), preventing any action.
+%
+%   @arg MD The predicate for which `must_det_ll` should be removed.
+remove_must_det(_) :- !,fail.
+% remove_must_det(MD):- !.
+% remove_must_det(MD):- nb_current(remove_must_det(MD),TF),!,TF==true.
+% remove_must_det(MD):- \+ false.
+
+%!  remove_mds(+MD, +G, -GO) is det.
+%
+%   This predicate removes instances of the predicate `MD` (e.g., `must_det_ll`) from the term `G`
+%   and produces a modified term `GO`. It does so by recursively traversing the term `G`, looking for
+%   sub-terms that match the structure `MD(GGG)`, and then replacing them with the goal `GGG`.
+%
+%   @arg MD The predicate to be removed (e.g., `must_det_ll`).
+%   @arg G  The term from which instances of `MD` are removed.
+%   @arg GO The resulting term after removal of `MD`.
 %remove_mds(MD,G,GGG):- compound(G), G = must_det_ll(GG),!,expand_goal(GG,GGG),!.
 %remove_mds(MD,G,GGG):- compound(G), G = must_det_l(GG),!,expand_goal(GG,GGG),!.
-remove_mds(MD,GG,GO):- sub_term(G,GG),compound(G),compound_name_arg(G,MD,GGGG),subst001(GG,G,GGGG,GGG),remove_mds(MD,GGG,GO).
-remove_mds(_,GG,GG).
+remove_mds(MD, GG, GO) :-
+    % Traverse the term `GG` and check for sub-terms that match the pattern `MD(...)`.
+    sub_term(G, GG),
+    % Check if the term is compound and matches the structure `MD(...)`.
+    compound(G),
+    compound_name_arg(G, MD, GGGG),
+    % Substitute the matched term `G` with the inner goal `GGGG`.
+    subst001(GG, G, GGGG, GGG),
+    % Recursively apply the removal process.
+    remove_mds(MD, GGG, GO).
+% Base case: if no sub-terms match, return the term unchanged.
+remove_mds(_, GG, GG).
 %remove_mds(MD,G,GG):- compound(G), G = ..[MD,AA], compound(G),removed_term(G,GO),expand_goal(GO,GG).
 
+%!  never_rrtrace is det.
+%
+%   Prevents tracing via `rrtrace` if certain conditions are met. This is used to
+%   suppress debugging output in specific situations, such as when `cant_rrtrace` is set
+%   to `t` or when the system is running in CGI mode.
+%
+%   The `notrace/0` predicate is used to disable tracing.
 %never_rrtrace:-!.
-never_rrtrace:- nb_current(cant_rrtrace,t),!,notrace.
-never_rrtrace:- is_cgi,notrace.
+never_rrtrace :-
+    % If `cant_rrtrace` is currently set to `t`, disable tracing using `notrace`.
+    nb_current(cant_rrtrace, t),!,notrace.
+never_rrtrace :-
+    % If the system is running in CGI mode, disable tracing using `notrace`.
+    is_cgi,notrace.
 
+% recolor(_,_):- ibreak.
 
+%!  itrace is det.
+%
+%   Enables tracing conditionally for the main thread. This predicate checks if the
+%   current thread is the main thread, and if so, it enables tracing using `trace/0`.
 %itrace:- !.
 %itrace:- \+ current_prolog_flag(debug,true),!.
-itrace:- if_thread_main(trace),!.
-ibreak:- if_thread_main(((trace,break))).
+itrace :-
+    % If running in the main thread, enable tracing.
+    if_thread_main(trace),!.
+
+%!  ibreak is det.
+%
+%   Similar to `itrace/0`, but this predicate enables both tracing and sets a breakpoint
+%   using `break/0` for the main thread. It is intended for debugging purposes where
+%   both tracing and interaction at a breakpoint are required.
+ibreak :-
+    % If running in the main thread, enable tracing and invoke a breakpoint.
+    if_thread_main(((trace, break))).
+
 %recolor(_,_):- ibreak.
 
 %tc_arg(N,C,E):- compound(C),!,arg(N,C,E).
 tc_arg(N,C,E):- catch(arg(N,C,E),Err,
-  /*unrepress_output*/((bt,fbug(tc_arg(N,C,E)=Err),((tracing->true;trace),break,arg(N,C,E))))).
+  /*unrepress_output*/ ((bt,fbug(tc_arg(N,C,E)=Err),((tracing->true;trace),break,arg(N,C,E))))).
 
 
 
@@ -252,7 +929,7 @@ md_maplist(MD,P2,[HA|TA],[HB|TB]):- call(MD,call(P2,HA,HB)), md_maplist(MD,P2,TA
 md_maplist(_MD,_,[],[],[]):-!.
 md_maplist(MD,P3,[HA|TA],[HB|TB],[HC|TC]):- call(MD,call(P3,HA,HB,HC)), md_maplist(MD,P3,TA,TB,TC).
 
-%must_det_ll(G):- !, once((/*notrace*/(G)*->true;md_failed(P1,G))).
+%must_det_ll(G):- !, once((/*notrace*/ (G)*->true;md_failed(P1,G))).
 
 %:- if( \+ current_predicate(must_det_ll/1)).
 must_det_ll(X):- tracing,!,once(X).
@@ -262,7 +939,7 @@ must_det_ll(X):- md(once,X).
 md(P1,G):- tracing,!, call(P1,G). % once((call(G)*->true;md_failed(P1,G))).
 md(P1,G):- remove_must_det(MD), wraps_each(MD,P1),!,call(G).
 md(P1,G):- never_rrtrace,!, call(P1,G).
-md(P1,G):- /*notrace*/(arc_html),!, ignore(/*notrace*/(call(P1,G))),!.
+md(P1,G):- /*notrace*/(arc_html),!, ignore(/*notrace*/ (call(P1,G))),!.
 %md(P1,X):- !,must_not_error(X).
 md(P1,(X,Goal)):- is_trace_call(X),!,call((itrace,call(P1,Goal))).
 md(_, X):- is_trace_call(X),!,itrace.
@@ -312,7 +989,7 @@ must_not_error(G):- notrace(is_cgi),!, ncatch((G),E,((u_dmsg(E=G)))).
 %must_not_error(X):- is_guitracer,!, call(X).
 %must_not_error(G):- !, call(G).
 must_not_error(X):- !,ncatch(X,E,(fbug(E=X),ugtrace(error(E),X))).
-must_not_error(X):- ncatch(X,E,(rethrow_abort(E);(/*arcST,*/writeq(E=X),pp(etrace=X),
+must_not_error(X):- ncatch(X,E,(rethrow_abort(E);(/*arcST,*/ writeq(E=X),pp(etrace=X),
   trace,
   rrtrace(visible_rtrace([-all,+exception]),X)))).
 
@@ -413,7 +1090,7 @@ bts:-
  ensure_loaded(library(prolog_stack)),
  prolog_stack:export(prolog_stack:get_prolog_backtrace_lc/3),
  use_module(library(prolog_stack),[print_prolog_backtrace/2,get_prolog_backtrace_lc/3]),
-  /*notrace*/(prolog_stack:call(call,get_prolog_backtrace_lc,8000, Stack, [goal_depth(600)])),
+  /*notrace*/ (prolog_stack:call(call,get_prolog_backtrace_lc,8000, Stack, [goal_depth(600)])),
   stream_property(S,file_no(1)), prolog_stack:print_prolog_backtrace(S, Stack),
   ignore((fail, current_output(Out), \+ stream_property(Out,file_no(1)), print_prolog_backtrace(Out, Stack))),!.
 
