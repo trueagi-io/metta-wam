@@ -30,6 +30,11 @@ The main entry point for the Language Server implementation.
         coalesce_text/2
 ]).
 
+
+% will change to module in a few days (easier to test externally from `user`)
+:- user:ensure_loaded(lsp_metta_outline). %( [xref_source/1, xref_document_symbol/5, xref_document_symbols/2]).
+:- dynamic(user:full_text/2).
+
 :- dynamic lsp_metta_changes:doc_text/2.
 
 main :-
@@ -85,24 +90,29 @@ handle_requests(Out, In, Tail) :-
 handle_requests(_, T, T).
 
 % general handling stuff
+catch_with_backtrace(Goal):-
+     catch_with_backtrace(Goal,Err,
+             (debug(server(high), "error in ~n~n?- catch_with_backtrace(~q).~n~n handling msg:~n~n~@~n~n", [Goal, print_message(error, Err)]),throw(Err))).
+
 
 send_message(Stream, Msg) :-
+  catch_with_backtrace((
     put_dict(jsonrpc, Msg, "2.0", VersionedMsg),
     atom_json_dict(JsonCodes, VersionedMsg, [as(codes), width(0)]),
     phrase(utf8_codes(JsonCodes), UTF8Codes),
     length(UTF8Codes, ContentLength),
     format(Stream, "Content-Length: ~w\r\n\r\n~s", [ContentLength, JsonCodes]),
-    flush_output(Stream).
+    flush_output(Stream))).
 
 handle_request(OutStream, Input, Rest) :-
     phrase(lsp_metta_request(Req), Input, Rest),
-    debug(server(high), "Request ~w", [Req.body]),
+    debug(server(high), "Request ~q", [Req.body]),
     catch(
-        ( handle_msg(Req.body.method, Req.body, Resp),
-          debug(server(high), "response ~w", [Resp]),
+        ( catch_with_backtrace(handle_msg(Req.body.method, Req.body, Resp)),
+          debug(server(high), "response ~q", [Resp]),
           ( is_dict(Resp) -> send_message(OutStream, Resp) ; true ) ),
         Err,
-        ( debug(server, "error handling msg ~w", [Err]),
+        ( debug(server, "error handling msg ~q", [Err]),
           get_dict(id, Req.body, Id),
           send_message(OutStream, _{id: Id,
                                     error: _{code: -32001,
@@ -120,7 +130,7 @@ server_capabilities(
                           },
       hoverProvider: true,
       completionProvider: _{},
-      definitionProvider: false,
+      definitionProvider: true,
       declarationProvider: true,
       implementationProvider: true,
       referencesProvider: true,
@@ -135,7 +145,7 @@ server_capabilities(
       % documentLinkProvider: false,
       % colorProvider: true,
       foldingRangeProvider: false,
-      %executeCommandProvider: _{commands: ["query", "assert"]},
+      executeCommandProvider: _{commands: ["eval_metta", "query_metta", "assert_metta"]},
       semanticTokensProvider: _{legend: _{tokenTypes: TokenTypes,
                                           tokenModifiers: TokenModifiers},
                                 range: true,
@@ -186,7 +196,11 @@ handle_msg("textDocument/hover", Msg, _{id: Id, result: Response}) :-
 % OUT: {id:1,result:[
 %    {kind:12,location:{range:{end:{character:0,line:37},start:{character:1,line:35}},uri:file://<FILEPATH>},name:called_at/4},
 %    {kind:12,location:{range:{end:{character:0,line:66},start:{character:1,line:64}},uri:file://<FILEPATH>},},name:defined_at/3} ... ]}
-handle_msg("textDocument/documentSymbol", Msg, _{id: Msg.id, result: []}) :- !. % FIXME
+handle_msg("textDocument/documentSymbol", Msg, _{id: Id, result: Symbols}) :-
+     _{id: Id, params: _{textDocument: _{uri: Doc}}} :< Msg, xref_document_symbols(Doc, Symbols),
+     assertion(is_list(Symbols)), !.
+
+handle_msg("textDocument/documentSymbol", Msg, _{id: Msg.id, result: []}) :- !. % Fallback
 % handle_msg("textDocument/documentSymbol", Msg, _{id: Id, result: Symbols}) :-
 %     _{id: Id, params: _{textDocument: _{uri: Doc}}} :< Msg,
 %     atom_concat('file://', Path, Doc), !,
@@ -319,6 +333,7 @@ handle_msg("textDocument/didOpen", Msg, Resp) :-
     split_text_document(FullText,SplitText),
     debug(server,"~w",[SplitText]),
     atom_concat('file://', Path, FileUri),
+    retractall(user:full_text(Path, _)), assertz(user:full_text(Path, FullText)),
     retractall(lsp_metta_changes:doc_text(Path, _)),
     assertz(lsp_metta_changes:doc_text(Path, SplitText)),
     ( loaded_source(Path) ; assertz(loaded_source(Path)) ),
