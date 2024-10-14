@@ -72,7 +72,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-14 01:40:20+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-14 14:03:55+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -228,7 +228,14 @@ Script started on 2024-10-14 01:40:20+00:00 [TERM="xterm-256color" TTY="/dev/pts
 
 P;HTML|
 ;           (set_option_value  test false)
-P;HTML|
+<span class="ansi1 ansi31"
+>
+ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_interp.pl:2016:
+ERROR:    source_sink `metta_help' does not exist
+</span><span class="ansi31"
+>Warning: /home/runner/work/metta-wam/metta-wam/src/canary/metta_interp.pl:2016:
+Warning:    Goal (directive) failed: user:ensure_loaded(metta_help)
+</span>P;HTML|
 ;            (is_cmd_option  prescan halt --halt=true true)
 P;HTML|
 ;            (set_option_value  halt true)
@@ -456,7 +463,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C2-SPACES.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000539 secs. (539.13 microseconds) 
+; took 0.000675 secs. (675.38 microseconds) 
 
   !(assertEqualToResult 
     (match &kb 
@@ -487,7 +494,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C2-SPACES.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000147 secs. (146.63 microseconds) 
+; took 0.000141 secs. (141.42 microseconds) 
 
   !(assertEqualToResult 
     (match &self 
@@ -517,7 +524,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C2-SPACES.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000302 secs. (301.94 microseconds) 
+; took 0.000342 secs. (342.09 microseconds) 
 
   !(assertEqual 
     (match &kb 
@@ -556,7 +563,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C2-SPACES.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000602 secs. (601.61 microseconds) 
+; took 0.000641 secs. (640.91 microseconds) 
 
   !(assertEqualToResult 
     (match &kb 
@@ -660,7 +667,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C2-SPACES.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000431 secs. (430.89 microseconds) 
+; took 0.000496 secs. (496.12 microseconds) 
 
   !(assertEqualToResult 
     (match &self 
@@ -680,7 +687,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 431,132 inferences, 0.104 CPU in 0.104 seconds (100% CPU, 4160899 Lips)
+>% 357,290 inferences, 0.100 CPU in 0.100 seconds (100% CPU, 3565929 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/c2_spaces.metta  0)
 <span class="ansi1"
@@ -820,7 +827,7 @@ Deterministic: ()
     (unwind  
       (halt  7)))
 </span>
-Script done on 2024-10-14 01:40:25+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-14 14:04:01+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

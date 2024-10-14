@@ -31,7 +31,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-14 01:45:42+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-14 14:09:41+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -187,7 +187,14 @@ Script started on 2024-10-14 01:45:42+00:00 [TERM="xterm-256color" TTY="/dev/pts
 
 P;HTML|
 ;           (set_option_value  test false)
-P;HTML|
+<span class="ansi1 ansi31"
+>
+ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_interp.pl:2016:
+ERROR:    source_sink `metta_help' does not exist
+</span><span class="ansi31"
+>Warning: /home/runner/work/metta-wam/metta-wam/src/canary/metta_interp.pl:2016:
+Warning:    Goal (directive) failed: user:ensure_loaded(metta_help)
+</span>P;HTML|
 ;            (is_cmd_option  prescan halt --halt=true true)
 P;HTML|
 ;            (set_option_value  halt true)
@@ -355,7 +362,7 @@ Script started on 2024-10-14 01:45:42+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-METTALOG-SANITY.SUBTRACTION-TEST.01</h3>
 ; 
 ; EVAL TEST
-; took 0.049 secs. (49.37 milliseconds) 
+; took 0.047 secs. (47.47 milliseconds) 
 
   !(assertEqual 
     (subtraction 
@@ -388,7 +395,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SUBTRACTION-TEST.02</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.34 milliseconds) 
+; took 0.001 secs. (1.33 milliseconds) 
 
   !(assertEqual 
     (subtraction 
@@ -421,7 +428,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SUBTRACTION-TEST.03</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.49 milliseconds) 
+; took 0.003 secs. (2.67 milliseconds) 
 
   !(assertEqual 
     (subtraction 
@@ -452,7 +459,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SUBTRACTION-TEST.04</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.15 milliseconds) 
+; took 0.001 secs. (1.18 milliseconds) 
 
   !(assertEqual 
     (subtraction 
@@ -483,7 +490,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SUBTRACTION-TEST.05</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.11 milliseconds) 
+; took 0.001 secs. (1.06 milliseconds) 
 
   !(assertEqual 
     (subtraction 
@@ -512,7 +519,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SUBTRACTION-TEST.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000903 secs. (903.01 microseconds) 
+; took 0.000922 secs. (922.26 microseconds) 
 
   !(assertEqual 
     (unique (subtraction (superpose (a b b c)) (superpose (b c c d)))) 
@@ -541,7 +548,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SUBTRACTION-TEST.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000864 secs. (864.15 microseconds) 
+; took 0.000866 secs. (866.40 microseconds) 
 
   !(assertEqual 
     (subtraction 
@@ -572,7 +579,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SUBTRACTION-TEST.08</h3>
 ; 
 ; EVAL TEST
-; took 0.000677 secs. (677.17 microseconds) 
+; took 0.000653 secs. (652.60 microseconds) 
 
   !(assertEqual 
     (subtraction 
@@ -603,7 +610,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SUBTRACTION-TEST.09</h3>
 ; 
 ; EVAL TEST
-; took 0.000750 secs. (749.75 microseconds) 
+; took 0.000833 secs. (832.99 microseconds) 
 
   !(assertEqual 
     (subtraction 
@@ -634,7 +641,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SUBTRACTION-TEST.10</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.21 milliseconds) 
+; took 0.002 secs. (2.32 milliseconds) 
 
   !(assertEqual 
     (subtraction 
@@ -651,7 +658,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 449,512 inferences, 0.114 CPU in 0.114 seconds (100% CPU, 3940054 Lips)
+>% 392,149 inferences, 0.112 CPU in 0.112 seconds (100% CPU, 3511376 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/subtraction_test.metta  0)
 <span class="ansi1"
@@ -791,7 +798,7 @@ Deterministic: ()
     (unwind  
       (halt  7)))
 </span>
-Script done on 2024-10-14 01:45:48+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-14 14:09:47+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

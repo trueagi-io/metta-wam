@@ -48,7 +48,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-14 01:49:10+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-14 14:13:23+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -204,7 +204,14 @@ Script started on 2024-10-14 01:49:10+00:00 [TERM="xterm-256color" TTY="/dev/pts
 
 P;HTML|
 ;           (set_option_value  test false)
-P;HTML|
+<span class="ansi1 ansi31"
+>
+ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_interp.pl:2016:
+ERROR:    source_sink `metta_help' does not exist
+</span><span class="ansi31"
+>Warning: /home/runner/work/metta-wam/metta-wam/src/canary/metta_interp.pl:2016:
+Warning:    Goal (directive) failed: user:ensure_loaded(metta_help)
+</span>P;HTML|
 ;            (is_cmd_option  prescan halt --halt=true true)
 P;HTML|
 ;            (set_option_value  halt true)
@@ -414,7 +421,7 @@ Deterministic: ()
 >;; METTA-MORPH-TESTS.MATCH-VOID.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000154 secs. (154.00 microseconds) 
+; took 0.000189 secs. (189.21 microseconds) 
 
   !(assertEqualToResult 
     (match &belief_events $1 $1) ())
@@ -443,7 +450,7 @@ Deterministic: ()
 > belief1
 </span>; 
 ; EVAL TEST
-; took 0.001 secs. (1.16 milliseconds) 
+; took 0.001 secs. (1.22 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &belief_events belief1) 
@@ -473,7 +480,7 @@ Deterministic: ()
 >;; METTA-MORPH-TESTS.MATCH-VOID.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000181 secs. (180.87 microseconds) 
+; took 0.000198 secs. (198.45 microseconds) 
 
   !(assertEqualToResult 
     (match &belief_events $1 $1) 
@@ -504,7 +511,7 @@ Deterministic: ()
 >;; METTA-MORPH-TESTS.MATCH-VOID.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000141 secs. (140.64 microseconds) 
+; took 0.000177 secs. (177.06 microseconds) 
 
   !(assertEqualToResult 
     (case belief1 
@@ -536,7 +543,7 @@ Deterministic: ()
 >;; METTA-MORPH-TESTS.MATCH-VOID.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000265 secs. (264.84 microseconds) 
+; took 0.000310 secs. (310.16 microseconds) 
 
   !(assertEqualToResult 
     (case 
@@ -563,7 +570,7 @@ Deterministic: ()
 >;; METTA-MORPH-TESTS.MATCH-VOID.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000356 secs. (356.21 microseconds) 
+; took 0.000339 secs. (338.60 microseconds) 
 
   !(assertEqualToResult 
     (case 
@@ -592,7 +599,7 @@ Deterministic: ()
 >;; METTA-MORPH-TESTS.MATCH-VOID.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000404 secs. (404.21 microseconds) 
+; took 0.000397 secs. (396.67 microseconds) 
 
   !(assertEqualToResult 
     (case 
@@ -621,7 +628,7 @@ Deterministic: ()
 >;; METTA-MORPH-TESTS.MATCH-VOID.08</h3>
 ; 
 ; EVAL TEST
-; took 0.000296 secs. (295.74 microseconds) 
+; took 0.000301 secs. (300.74 microseconds) 
 
   !(assertEqualToResult 
     (case 
@@ -655,7 +662,7 @@ Deterministic: ()
 > goal1
 </span>; 
 ; EVAL TEST
-; took 0.001 secs. (1.20 milliseconds) 
+; took 0.001 secs. (1.17 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &goal_events goal1) 
@@ -682,7 +689,7 @@ Deterministic: ()
 >;; METTA-MORPH-TESTS.MATCH-VOID.10</h3>
 ; 
 ; EVAL TEST
-; took 0.000261 secs. (261.44 microseconds) 
+; took 0.000346 secs. (346.24 microseconds) 
 
   !(assertEqualToResult 
     (case 
@@ -710,7 +717,7 @@ Deterministic: ()
 >;; METTA-MORPH-TESTS.MATCH-VOID.11</h3>
 ; 
 ; EVAL TEST
-; took 0.000235 secs. (234.74 microseconds) 
+; took 0.000270 secs. (270.01 microseconds) 
 
   !(assertEqualToResult 
     (case 
@@ -725,7 +732,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 365,229 inferences, 0.073 CPU in 0.073 seconds (100% CPU, 4982601 Lips)
+>% 291,000 inferences, 0.069 CPU in 0.069 seconds (100% CPU, 4207309 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/match_void.metta  0)
 <span class="ansi1"
@@ -865,7 +872,7 @@ Deterministic: ()
     (unwind  
       (halt  7)))
 </span>
-Script done on 2024-10-14 01:49:15+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-14 14:13:28+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

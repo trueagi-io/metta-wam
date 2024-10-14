@@ -52,7 +52,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-14 01:40:13+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-14 14:03:47+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -208,7 +208,14 @@ Script started on 2024-10-14 01:40:13+00:00 [TERM="xterm-256color" TTY="/dev/pts
 
 P;HTML|
 ;           (set_option_value  test false)
-P;HTML|
+<span class="ansi1 ansi31"
+>
+ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_interp.pl:2016:
+ERROR:    source_sink `metta_help' does not exist
+</span><span class="ansi31"
+>Warning: /home/runner/work/metta-wam/metta-wam/src/canary/metta_interp.pl:2016:
+Warning:    Goal (directive) failed: user:ensure_loaded(metta_help)
+</span>P;HTML|
 ;            (is_cmd_option  prescan halt --halt=true true)
 P;HTML|
 ;            (set_option_value  halt true)
@@ -425,7 +432,7 @@ Script started on 2024-10-14 01:40:13+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000237 secs. (236.77 microseconds) 
+; took 0.000244 secs. (243.70 microseconds) 
 
   !(assertEqualToResult 
     (+ 2 
@@ -452,7 +459,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000192 secs. (192.31 microseconds) 
+; took 0.000205 secs. (205.31 microseconds) 
 
   !(assertEqualToResult 
     (- 8 
@@ -478,7 +485,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000189 secs. (188.62 microseconds) 
+; took 0.000177 secs. (176.63 microseconds) 
 
   !(assertEqualToResult 
     (% 21 17) 
@@ -505,7 +512,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000820 secs. (820.27 microseconds) 
+; took 0.000749 secs. (749.08 microseconds) 
 
   !(assertEqualToResult 
     (< 4 
@@ -534,7 +541,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000438 secs. (438.05 microseconds) 
+; took 0.000353 secs. (353.43 microseconds) 
 
   !(assertEqualToResult 
     (and 
@@ -568,7 +575,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000799 secs. (799.46 microseconds) 
+; took 0.000795 secs. (795.25 microseconds) 
 
   !(assertEqualToResult 
     (ln (+ 2 2)) 
@@ -601,7 +608,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.07</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.62 milliseconds) 
+; took 0.002 secs. (1.65 milliseconds) 
 
   !(assertEqualToResult 
     (> 4 
@@ -637,7 +644,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.08</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.30 milliseconds) 
+; took 0.001 secs. (1.33 milliseconds) 
 
   !(assertEqualToResult 
     (> 4 
@@ -672,7 +679,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.09</h3>
 ; 
 ; EVAL TEST
-; took 0.000581 secs. (581.09 microseconds) 
+; took 0.000618 secs. (617.83 microseconds) 
 
   !(assertEqualToResult 
     (== 4 
@@ -698,7 +705,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.10</h3>
 ; 
 ; EVAL TEST
-; took 0.000175 secs. (174.83 microseconds) 
+; took 0.000172 secs. (171.76 microseconds) 
 
   !(assertEqualToResult 
     (== 2 3) 
@@ -725,7 +732,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.11</h3>
 ; 
 ; EVAL TEST
-; took 0.000989 secs. (989.22 microseconds) 
+; took 0.001 secs. (1.02 milliseconds) 
 
   !(assertEqualToResult 
     (== 
@@ -787,7 +794,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.13</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.08 milliseconds) 
+; took 0.001 secs. (1.04 milliseconds) 
 
   !(assertEqualToResult 
     (== 4 
@@ -819,7 +826,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.14</h3>
 ; 
 ; EVAL TEST
-; took 0.000470 secs. (470.23 microseconds) 
+; took 0.000474 secs. (474.00 microseconds) 
 
   !(assertEqualToResult 
     (+ 2 "String") 
@@ -849,7 +856,7 @@ Deterministic: ((Error  (got  ((+ 2 "String"))) (expected  ((Error "String" BadT
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.15</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.04 milliseconds) 
+; took 0.001 secs. (1.01 milliseconds) 
 
   !(assertEqualToResult 
     (== 4 
@@ -883,7 +890,7 @@ Deterministic: ((Error  (got  (False)) (expected  ((Error ln BadType)))))
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.16</h3>
 ; 
 ; EVAL TEST
-; took 0.000399 secs. (399.19 microseconds) 
+; took 0.000379 secs. (379.04 microseconds) 
 
   !(assertEqualToResult 
     (sqr 4) 
@@ -914,7 +921,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.17</h3>
 ; 
 ; EVAL TEST
-; took 0.000812 secs. (811.88 microseconds) 
+; took 0.000817 secs. (817.30 microseconds) 
 
   !(assertEqual 
     (+ 
@@ -946,7 +953,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.18</h3>
 ; 
 ; EVAL TEST
-; took 0.000284 secs. (283.93 microseconds) 
+; took 0.000271 secs. (270.67 microseconds) 
 
   !(assertEqualToResult 
     (bin) 
@@ -972,7 +979,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.19</h3>
 ; 
 ; EVAL TEST
-; took 0.000524 secs. (524.47 microseconds) 
+; took 0.000519 secs. (519.29 microseconds) 
 
   !(assertEqualToResult 
     (+ 1 
@@ -1000,7 +1007,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.20</h3>
 ; 
 ; EVAL TEST
-; took 0.000334 secs. (333.75 microseconds) 
+; took 0.000423 secs. (422.91 microseconds) 
 
   !(assertEqualToResult 
     (let $x 
@@ -1037,7 +1044,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.21</h3>
 ; 
 ; EVAL TEST
-; took 0.004 secs. (3.65 milliseconds) 
+; took 0.004 secs. (3.74 milliseconds) 
 
   !(assertEqual 
     (fact 5) 120)
@@ -1062,7 +1069,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.22</h3>
 ; 
 ; EVAL TEST
-; took 0.003 secs. (3.43 milliseconds) 
+; took 0.003 secs. (3.33 milliseconds) 
 
   !(assertEqualToResult 
     (fact 5) 
@@ -1131,7 +1138,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.23</h3>
 ; 
 ; EVAL TEST
-; took 0.193 secs. (192.68 milliseconds) 
+; took 0.187 secs. (186.52 milliseconds) 
 
   !(assertEqualToResult 
     (let $t 
@@ -1160,7 +1167,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 2,143,921 inferences, 0.362 CPU in 0.362 seconds (100% CPU, 5924119 Lips)
+>% 1,992,219 inferences, 0.346 CPU in 0.346 seconds (100% CPU, 5762932 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/c1_grounded_basic.metta  0)
 <span class="ansi1"
@@ -1300,7 +1307,7 @@ Deterministic: ()
     (unwind  
       (halt  7)))
 </span>
-Script done on 2024-10-14 01:40:18+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-14 14:03:53+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

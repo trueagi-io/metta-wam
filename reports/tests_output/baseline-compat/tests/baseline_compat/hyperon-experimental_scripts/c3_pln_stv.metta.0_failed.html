@@ -42,7 +42,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-14 01:40:27+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-14 14:04:03+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -198,7 +198,14 @@ Script started on 2024-10-14 01:40:27+00:00 [TERM="xterm-256color" TTY="/dev/pts
 
 P;HTML|
 ;           (set_option_value  test false)
-P;HTML|
+<span class="ansi1 ansi31"
+>
+ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_interp.pl:2016:
+ERROR:    source_sink `metta_help' does not exist
+</span><span class="ansi31"
+>Warning: /home/runner/work/metta-wam/metta-wam/src/canary/metta_interp.pl:2016:
+Warning:    Goal (directive) failed: user:ensure_loaded(metta_help)
+</span>P;HTML|
 ;            (is_cmd_option  prescan halt --halt=true true)
 P;HTML|
 ;            (set_option_value  halt true)
@@ -477,7 +484,7 @@ Script started on 2024-10-14 01:40:27+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C3-PLN-STV.01</h3>
 ; 
 ; EVAL TEST
-; took 0.011 secs. (10.50 milliseconds) 
+; took 0.010 secs. (10.36 milliseconds) 
 
   !(assertEqual 
     (TV (And (PA) (PB))) 
@@ -502,7 +509,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C3-PLN-STV.02</h3>
 ; 
 ; EVAL TEST
-; took 0.006 secs. (5.61 milliseconds) 
+; took 0.006 secs. (5.58 milliseconds) 
 
   !(assertEqual 
     (TV (FA)) 
@@ -556,7 +563,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C3-PLN-STV.03</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.57 milliseconds) 
+; took 0.002 secs. (1.53 milliseconds) 
 
   !(assertEqual 
     (TV (croaks Fritz)) 
@@ -581,7 +588,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C3-PLN-STV.04</h3>
 ; 
 ; EVAL TEST
-; took 0.016 secs. (16.37 milliseconds) 
+; took 0.016 secs. (16.30 milliseconds) 
 
   !(assertEqual 
     (TV (frog Fritz)) 
@@ -606,7 +613,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C3-PLN-STV.05</h3>
 ; 
 ; EVAL TEST
-; took 0.035 secs. (34.89 milliseconds) 
+; took 0.034 secs. (34.39 milliseconds) 
 
   !(assertEqual 
     (TV (green Fritz)) 
@@ -621,7 +628,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 722,136 inferences, 0.132 CPU in 0.132 seconds (100% CPU, 5482877 Lips)
+>% 672,000 inferences, 0.127 CPU in 0.127 seconds (100% CPU, 5302736 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/c3_pln_stv.metta  0)
 <span class="ansi1"
@@ -761,7 +768,7 @@ Deterministic: ()
     (unwind  
       (halt  7)))
 </span>
-Script done on 2024-10-14 01:40:33+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-14 14:04:09+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

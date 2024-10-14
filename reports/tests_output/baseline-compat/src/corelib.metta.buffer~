@@ -1,4 +1,4 @@
 :-dynamic metta_file_buffer/5.
 :-multifile metta_file_buffer/5.
 metta_file_buffer(+,exec([include,'stdlib_mettalog.metta']),[],'/home/runner/work/metta-wam/metta-wam/src/canary/corelib.metta','$stream_position'(0,1,0,0)).
-metta_file_buffer(+,end_of_file,[],'/home/runner/work/metta-wam/metta-wam/src/canary/corelib.metta','$stream_position'(32,1,32,32)).
+metta_file_buffer(+,end_of_file,[],'/home/runner/work/metta-wam/metta-wam/src/canary/corelib.metta','$stream_position'(34,2,0,34)).

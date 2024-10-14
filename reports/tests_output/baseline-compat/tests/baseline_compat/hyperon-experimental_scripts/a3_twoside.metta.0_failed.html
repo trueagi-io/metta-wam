@@ -29,7 +29,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-14 01:39:23+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-14 14:02:53+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -185,7 +185,14 @@ Script started on 2024-10-14 01:39:23+00:00 [TERM="xterm-256color" TTY="/dev/pts
 
 P;HTML|
 ;           (set_option_value  test false)
-P;HTML|
+<span class="ansi1 ansi31"
+>
+ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_interp.pl:2016:
+ERROR:    source_sink `metta_help' does not exist
+</span><span class="ansi31"
+>Warning: /home/runner/work/metta-wam/metta-wam/src/canary/metta_interp.pl:2016:
+Warning:    Goal (directive) failed: user:ensure_loaded(metta_help)
+</span>P;HTML|
 ;            (is_cmd_option  prescan halt --halt=true true)
 P;HTML|
 ;            (set_option_value  halt true)
@@ -375,7 +382,7 @@ Script started on 2024-10-14 01:39:23+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A3-TWOSIDE.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000652 secs. (652.06 microseconds) 
+; took 0.000618 secs. (617.55 microseconds) 
 
   !(assertEqualToResult 
     (match &self 
@@ -406,7 +413,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A3-TWOSIDE.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000473 secs. (472.88 microseconds) 
+; took 0.000389 secs. (389.02 microseconds) 
 
   !(assertEqualToResult 
     (match &self 
@@ -450,7 +457,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A3-TWOSIDE.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000462 secs. (461.76 microseconds) 
+; took 0.000470 secs. (470.18 microseconds) 
 
   !(assertEqualToResult 
     (match &self 
@@ -491,7 +498,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A3-TWOSIDE.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000414 secs. (413.79 microseconds) 
+; took 0.000423 secs. (423.02 microseconds) 
 
   !(assertEqualToResult 
     (match &self 
@@ -514,7 +521,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 190,472 inferences, 0.039 CPU in 0.039 seconds (100% CPU, 4845010 Lips)
+>% 158,915 inferences, 0.036 CPU in 0.036 seconds (100% CPU, 4366997 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/a3_twoside.metta  0)
 <span class="ansi1"
@@ -654,7 +661,7 @@ Deterministic: ()
     (unwind  
       (halt  7)))
 </span>
-Script done on 2024-10-14 01:39:29+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-14 14:02:58+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

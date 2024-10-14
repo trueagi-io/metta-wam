@@ -24,7 +24,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-14 01:37:15+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-14 14:00:37+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -180,7 +180,14 @@ Script started on 2024-10-14 01:37:15+00:00 [TERM="xterm-256color" TTY="/dev/pts
 
 P;HTML|
 ;           (set_option_value  test false)
-P;HTML|
+<span class="ansi1 ansi31"
+>
+ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_interp.pl:2016:
+ERROR:    source_sink `metta_help' does not exist
+</span><span class="ansi31"
+>Warning: /home/runner/work/metta-wam/metta-wam/src/canary/metta_interp.pl:2016:
+Warning:    Goal (directive) failed: user:ensure_loaded(metta_help)
+</span>P;HTML|
 ;            (is_cmd_option  prescan halt --halt=true true)
 P;HTML|
 ;            (set_option_value  halt true)
@@ -349,17 +356,17 @@ Script started on 2024-10-14 01:37:15+00:00 [TERM="xterm-256color" TTY="/dev/pts
 
 
 Deterministic: ()
-(); Execution took 0.002 secs. (1.67 milliseconds) 
+(); Execution took 0.002 secs. (2.02 milliseconds) 
 
 ]
 <span class="ansi38-013099040"
 >  !(import! &hald5000 hald_spo_5000)
 
 </span>
-; Done translating 5005 forms: asserted_metta_pred(hald_spo_5000_1728869840_5679681,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/issues/metta-wam-issue-116/hald_spo_5000.metta').[
+; Done translating 5005 forms: asserted_metta_pred(hald_spo_5000_1728914442_8851178,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/issues/metta-wam-issue-116/hald_spo_5000.metta').[
 
 Deterministic: ()
-(); Execution took 0.497 secs. (497.12 milliseconds) 
+(); Execution took 0.494 secs. (494.43 milliseconds) 
 
 ]
 <span class="ansi38-013099040"
@@ -377,7 +384,7 @@ Deterministic: ()
 >;; METTA-WAM-ISSUE-116.TEST-SPO-5000.01</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.23 milliseconds) 
+; took 0.002 secs. (2.25 milliseconds) 
 
   !(assertEqualToResult 
     (match &hald5000 
@@ -398,11 +405,11 @@ Deterministic: ()
         (Doxorubicin stratify Liposarcoma))))
 </span>
 Deterministic: ()
-(); Execution took 0.005 secs. (5.25 milliseconds) 
+(); Execution took 0.005 secs. (4.86 milliseconds) 
 
 ]
 <span class="ansi32"
->% 5,404,819 inferences, 0.521 CPU in 0.521 seconds (100% CPU, 10376049 Lips)
+>% 5,390,396 inferences, 0.518 CPU in 0.518 seconds (100% CPU, 10403209 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/issues/metta-wam-issue-116/test_spo_5000.metta  0)
 <span class="ansi1"
@@ -542,7 +549,7 @@ Deterministic: ()
     (unwind  
       (halt  7)))
 </span>
-Script done on 2024-10-14 01:37:21+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-14 14:00:43+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

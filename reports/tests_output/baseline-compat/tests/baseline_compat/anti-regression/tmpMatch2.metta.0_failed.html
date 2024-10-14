@@ -96,7 +96,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-14 01:39:02+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-14 14:02:30+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -252,7 +252,14 @@ Script started on 2024-10-14 01:39:02+00:00 [TERM="xterm-256color" TTY="/dev/pts
 
 P;HTML|
 ;           (set_option_value  test false)
-P;HTML|
+<span class="ansi1 ansi31"
+>
+ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_interp.pl:2016:
+ERROR:    source_sink `metta_help' does not exist
+</span><span class="ansi31"
+>Warning: /home/runner/work/metta-wam/metta-wam/src/canary/metta_interp.pl:2016:
+Warning:    Goal (directive) failed: user:ensure_loaded(metta_help)
+</span>P;HTML|
 ;            (is_cmd_option  prescan halt --halt=true true)
 P;HTML|
 ;            (set_option_value  halt true)
@@ -657,10 +664,6 @@ Deterministic: ()
     (/ $count 
       (universe-size)))
 </span>;;;; iSurprisingness formula
-;;;; probability estimate 
-;;;; empirical
-;;;; probability estimate
-;;;; empirical
 <span class="ansi38-255165000"
 >  (= 
     (iSurprisingness $pattern) 
@@ -670,7 +673,11 @@ Deterministic: ()
         ( (candidate 
             (, $p1 $p2 $p3) $cnt) (let* (($pp1 (prob (count $p1))) ($pp2 (prob (count $p2))) ($pp3 (prob (count $p3))) ($pp1p2 (prob (count (, $p1 $p2)))) ($pp1p3 (prob (count (, $p1 $p3)))) ($pp2p3 (prob (count (, $p2 $p3)))) ($maxP (max (* $pp1p2 $pp3) (max (* $pp1p3 $pp2) (max (* $pp2p3 $pp1) (* $pp1 (* $pp2 $pp3)))))) ($minP (min (* $pp1p2 $pp3) (min (* $pp1p3 $pp2) (min (* $pp2p3 $pp1) (* $pp1 (* $pp2 $pp3)))))) ($p (prob $cnt))) (/ (max (- $p $maxP) (- $minP $p)) $p))) 
         ($ 0))))
-</span><span class="ansi38-255165000"
+</span>;;;; probability estimate 
+;;;; empirical
+;;;; probability estimate
+;;;; empirical
+<span class="ansi38-255165000"
 >  (= 
     (isurp? ($ptrn $cnt)) 
     (if 
@@ -755,7 +762,7 @@ Deterministic: ()
 >  (Inheritance B A)
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (2.09 milliseconds) 
+; took 0.002 secs. (2.02 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &db 
@@ -790,7 +797,7 @@ Deterministic: ()
 >  (Inheritance C A)
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (2.05 milliseconds) 
+; took 0.002 secs. (1.89 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &db 
@@ -825,7 +832,7 @@ Deterministic: ()
 >  (Inheritance D E)
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.98 milliseconds) 
+; took 0.002 secs. (1.91 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &db 
@@ -860,7 +867,7 @@ Deterministic: ()
 >  (Inheritance C E)
 </span>; 
 ; EVAL TEST
-; took 0.001 secs. (1.37 milliseconds) 
+; took 0.001 secs. (1.40 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &db 
@@ -946,16 +953,16 @@ Deterministic: ()
     (fromNumber 1))
 </span><span class="ansi38-255165000"
 >  (= 
-    (highsurp) $_481896)
+    (highsurp) $_481912)
 </span><span class="ansi38-255165000"
 >  (= 
     (universe-size) 
-    (let $_734958 
-      (collapse (match &db $_734994 1)) 
-      (tuple-count $_734958)))
+    (let $_734974 
+      (collapse (match &db $_735010 1)) 
+      (tuple-count $_734974)))
 </span>; 
 ; EVAL TEST
-; took 0.110 secs. (110.47 milliseconds) 
+; took 0.112 secs. (111.64 milliseconds) 
 
   !(assertEqualToResult 
     (miner &db 
@@ -1017,7 +1024,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 1,358,390 inferences, 0.270 CPU in 0.270 seconds (100% CPU, 5035251 Lips)
+>% 1,259,794 inferences, 0.264 CPU in 0.264 seconds (100% CPU, 4774111 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/tmpMatch2.metta  0)
 <span class="ansi1"
@@ -1157,7 +1164,7 @@ Deterministic: ()
     (unwind  
       (halt  7)))
 </span>
-Script done on 2024-10-14 01:39:08+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-14 14:02:35+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

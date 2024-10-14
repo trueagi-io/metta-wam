@@ -43,7 +43,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-14 01:50:02+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-14 14:14:21+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -199,7 +199,14 @@ Script started on 2024-10-14 01:50:02+00:00 [TERM="xterm-256color" TTY="/dev/pts
 
 P;HTML|
 ;           (set_option_value  test false)
-P;HTML|
+<span class="ansi1 ansi31"
+>
+ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_interp.pl:2016:
+ERROR:    source_sink `metta_help' does not exist
+</span><span class="ansi31"
+>Warning: /home/runner/work/metta-wam/metta-wam/src/canary/metta_interp.pl:2016:
+Warning:    Goal (directive) failed: user:ensure_loaded(metta_help)
+</span>P;HTML|
 ;            (is_cmd_option  prescan halt --halt=true true)
 P;HTML|
 ;            (set_option_value  halt true)
@@ -391,9 +398,9 @@ Deterministic: ()
 
 </span>[
 
-Deterministic: (State  45 $_59730)
+Deterministic: (State  45 $_59648)
 
-  (State  45 $_59730)]
+  (State  45 $_59648)]
 <span class="ansi38-255165009"
 >;; In file as:  
 </span><span class="ansi1 ansi38-255238088"
@@ -410,7 +417,7 @@ Deterministic: (State  45 $_59730)
 >;; METTA-MORPH-TESTS.STATES-SPACES.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000227 secs. (227.18 microseconds) 
+; took 0.000259 secs. (258.89 microseconds) 
 
   !(assertEqualToResult 
     (get-state &FIFO) 
@@ -442,7 +449,7 @@ Deterministic: ()
 > a
 </span>; 
 ; EVAL TEST
-; took 0.001 secs. (1.22 milliseconds) 
+; took 0.001 secs. (1.26 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &WU a) 
@@ -472,7 +479,7 @@ Deterministic: ()
 >;; METTA-MORPH-TESTS.STATES-SPACES.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000180 secs. (179.84 microseconds) 
+; took 0.000219 secs. (219.10 microseconds) 
 
   !(assertEqualToResult 
     (match &WU $1 $1) 
@@ -504,7 +511,7 @@ Deterministic: ()
 > b
 </span>; 
 ; EVAL TEST
-; took 0.001 secs. (1.21 milliseconds) 
+; took 0.001 secs. (1.34 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &WU b) 
@@ -536,7 +543,7 @@ Deterministic: ()
 > a
 </span>; 
 ; EVAL TEST
-; took 0.000561 secs. (561.17 microseconds) 
+; took 0.000588 secs. (587.62 microseconds) 
 
   !(assertEqualToResult 
     (remove-atom &WU a) 
@@ -561,7 +568,7 @@ Deterministic: ()
 >;; METTA-MORPH-TESTS.STATES-SPACES.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000269 secs. (269.41 microseconds) 
+; took 0.000320 secs. (320.22 microseconds) 
 
   !(assertEqual 
     (match &WU $1 $1) 
@@ -576,7 +583,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 243,682 inferences, 0.053 CPU in 0.053 seconds (100% CPU, 4633562 Lips)
+>% 195,045 inferences, 0.056 CPU in 0.056 seconds (100% CPU, 3466786 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/states_spaces.metta  0)
 <span class="ansi1"
@@ -716,7 +723,7 @@ Deterministic: ()
     (unwind  
       (halt  7)))
 </span>
-Script done on 2024-10-14 01:50:08+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-14 14:14:26+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

@@ -57,7 +57,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-14 01:35:55+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-14 13:59:13+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -213,7 +213,14 @@ Script started on 2024-10-14 01:35:55+00:00 [TERM="xterm-256color" TTY="/dev/pts
 
 P;HTML|
 ;           (set_option_value  test false)
-P;HTML|
+<span class="ansi1 ansi31"
+>
+ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_interp.pl:2016:
+ERROR:    source_sink `metta_help' does not exist
+</span><span class="ansi31"
+>Warning: /home/runner/work/metta-wam/metta-wam/src/canary/metta_interp.pl:2016:
+Warning:    Goal (directive) failed: user:ensure_loaded(metta_help)
+</span>P;HTML|
 ;            (is_cmd_option  prescan halt --halt=true true)
 P;HTML|
 ;            (set_option_value  halt true)
@@ -467,7 +474,7 @@ Deterministic: ()
     (nums 2 3))
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.89 milliseconds) 
+; took 0.002 secs. (1.92 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &kb 
@@ -508,11 +515,11 @@ Deterministic: ()
 <span class="ansi38-255165000"
 >  (: rule1 
     (-> 
-      (nums $_170380 $_170402) 
-      (rule1output $_170380 $_170402)))
+      (nums $_170326 $_170348) 
+      (rule1output $_170326 $_170348)))
 </span>; 
 ; EVAL TEST
-; took 0.005 secs. (5.37 milliseconds) 
+; took 0.005 secs. (5.39 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &kb 
@@ -559,13 +566,13 @@ Deterministic: ()
 <span class="ansi38-255165000"
 >  (: rule 
     (-> 
-      (rule1output $_201264 $_201286) 
+      (rule1output $_201210 $_201232) 
       (-> 
-        (⍃ $_201264 $_201286) 
-        (less $_201264 $_201286))))
+        (⍃ $_201210 $_201232) 
+        (less $_201210 $_201232))))
 </span>; 
 ; EVAL TEST
-; took 0.007 secs. (7.46 milliseconds) 
+; took 0.007 secs. (7.33 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &kb 
@@ -654,7 +661,7 @@ Deterministic: ()
 >;; ANTI-REGRESSION.BCHAIN.04</h3>
 ; 
 ; EVAL TEST
-; took 0.007 secs. (6.80 milliseconds) 
+; took 0.007 secs. (6.64 milliseconds) 
 
   !(assertEqualToResult 
     (bc 
@@ -692,7 +699,7 @@ Deterministic: ()
 >;; ANTI-REGRESSION.BCHAIN.05</h3>
 ; 
 ; EVAL TEST
-; took 0.006 secs. (5.64 milliseconds) 
+; took 0.005 secs. (5.37 milliseconds) 
 
   !(assertEqualToResult 
     (bc 
@@ -731,7 +738,7 @@ Deterministic: ()
 >;; ANTI-REGRESSION.BCHAIN.06</h3>
 ; 
 ; EVAL TEST
-; took 0.021 secs. (20.80 milliseconds) 
+; took 0.020 secs. (19.88 milliseconds) 
 
   !(assertEqualToResult 
     (bc 
@@ -755,7 +762,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 607,997 inferences, 0.124 CPU in 0.124 seconds (100% CPU, 4922443 Lips)
+>% 547,229 inferences, 0.116 CPU in 0.116 seconds (100% CPU, 4725134 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/bchain.metta  0)
 <span class="ansi1"
@@ -895,7 +902,7 @@ Deterministic: ()
     (unwind  
       (halt  7)))
 </span>
-Script done on 2024-10-14 01:36:01+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-14 13:59:19+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
