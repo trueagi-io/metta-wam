@@ -1,0 +1,6 @@
+
+; 20241014 r.v.v converted metta-lang.dev to metta 
+;  !(assertEqualToResult ( )  (  )  ) 
+! ((foo $b 1) $b) ; [(-1 False), (11 True)]! (if (&gt; $x 0) (+ $x 5) (- $x 5))
+
+;  !(assertEqualToResult ( )  (  )  ) 
