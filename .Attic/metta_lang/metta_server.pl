@@ -1048,3 +1048,97 @@ cleanup_results(Tag) :-
 % Previously included directive to initialize the virtual space service.
 % :- initialization(start_vspace_service).
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+:- nodebug(metta(telnet_server)).
+
+:- use_module(library(socket)).
+:- use_module(library(thread)).
+
+% Start the Telnet server in a background thread on the given Port
+start_dbg_telnet(Port) :-
+    (   thread_property(_, alias(telnet_server))
+    ->  debug(metta(telnet_server),'Telnet server is already running.~n')
+    ;   thread_create(dbg_server_thread(Port), _, [alias(telnet_server), detached(true)]),
+        debug(metta(telnet_server),'Attempting to start Telnet server on port ~w.~n', [Port])
+    ).
+
+% The thread that runs the Telnet server, retries if port is in use
+dbg_server_thread(Port) :-
+    catch(
+        (tcp_socket(Socket),
+         tcp_bind(Socket, ip(0,0,0,0):Port),  % Bind to 0.0.0.0 to accept connections on all interfaces
+         tcp_listen(Socket, 5),  % Maximum 5 concurrent connections
+         debug(metta(telnet_server),'Telnet server started on port ~w, listening on 0.0.0.0.~n', [Port]),
+         accept_dbg_connections(Socket)
+        ),
+        error(_, _),  % Catch port in use error
+        ( NewPort is Port + 10,
+          debug(metta(telnet_server),'Port ~w in use, trying port ~w.~n', [Port, NewPort]),
+          dbg_server_thread(NewPort)  % Retry with the new port
+        )
+    ).
+
+% Accept incoming connections
+accept_dbg_connections(Socket) :-
+    tcp_accept(Socket, ClientSocket, _PeerAddress),
+    thread_create(handle_dbg_client(ClientSocket), _, [detached(true)]),
+    accept_dbg_connections(Socket).
+
+% Handle an individual client connection
+handle_dbg_client(ClientSocket) :-
+    tcp_open_socket(ClientSocket, InStream, OutStream),
+    format(OutStream, 'Welcome to the Prolog Telnet Server!~n', []),
+    flush_output(OutStream),
+    handle_dbg_client_commands(InStream, OutStream),
+    close(InStream),
+    close(OutStream).
+
+% Process commands from the client
+handle_dbg_client_commands(InStream, OutStream) :-
+   repeat,
+    flush_output(OutStream),
+    read_line_to_string(InStream, Command),
+    ( Command == "quit" ->
+       (format(OutStream, 'Goodbye!~n', []),
+        flush_output(OutStream))
+      ; Command == "ide." ->
+          (prolog_ide(debug_monitor),
+           prolog_ide(thread_monitor))
+      ; Command == end_of_file ->
+          true  % End connection on EOF
+    ; (catch(
+        ( term_string(Term, Command),
+          catch(call(Term), Error, format(OutStream, 'Error: ~q~n', [Error])),
+          \+ \+ (numbervars(Term,0,_,[singletons(true),attvar(skip)]),format(OutStream, 'Result: ~q.~n', [Term])),
+          fail
+        ), 
+        Error, 
+        format(OutStream, 'Invalid input: ~w~n', [Error])
+       ),
+       flush_output(OutStream),
+       fail)
+    ).
+
+% Start the server on port 44440
+start_dbg_telnet :-
+    start_dbg_telnet(44440).
+
+% Automatically start the server at initialization, ensuring only one server is started
+:- initialization(start_dbg_telnet).
+
