@@ -13,6 +13,7 @@
 .inv_foreground { color: #000000; }
 .inv_background { background-color: #AAAAAA; }
 .ansi1 { font-weight: bold; }
+.ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
 .ansi38-013099040 { color: #0D6328; }
@@ -69,7 +70,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-12 07:09:39+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-14 01:35:48+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -569,7 +570,7 @@ Deterministic: ()
     (nums 2 3))
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.84 milliseconds) 
+; took 0.002 secs. (2.00 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &kb 
@@ -653,7 +654,7 @@ Deterministic: ()
       (rule1output $_4566 $_4584)))
 </span>; 
 ; EVAL TEST
-; took 0.005 secs. (5.10 milliseconds) 
+; took 0.005 secs. (5.28 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &kb 
@@ -754,7 +755,7 @@ Deterministic: ()
         (less $_4734 $_4752))))
 </span>; 
 ; EVAL TEST
-; took 0.007 secs. (7.03 milliseconds) 
+; took 0.007 secs. (7.30 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &kb 
@@ -907,7 +908,7 @@ Deterministic: ()
 >;; ANTI-REGRESSION.BCHAIN-COMP.04</h3>
 ; 
 ; EVAL TEST
-; took 0.007 secs. (6.53 milliseconds) 
+; took 0.007 secs. (6.54 milliseconds) 
 
   !(assertEqualToResult 
     (bc 
@@ -960,7 +961,7 @@ Deterministic: ()
 >;; ANTI-REGRESSION.BCHAIN-COMP.05</h3>
 ; 
 ; EVAL TEST
-; took 0.005 secs. (5.44 milliseconds) 
+; took 0.005 secs. (5.33 milliseconds) 
 
   !(assertEqualToResult 
     (bc 
@@ -1036,7 +1037,7 @@ Deterministic: ()
 >;; ANTI-REGRESSION.BCHAIN-COMP.06</h3>
 ; 
 ; EVAL TEST
-; took 0.020 secs. (19.83 milliseconds) 
+; took 0.020 secs. (19.72 milliseconds) 
 
   !(assertEqualToResult 
     (bc 
@@ -1060,7 +1061,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 3,279,875 inferences, 0.337 CPU in 0.337 seconds (100% CPU, 9733160 Lips)
+>% 3,279,875 inferences, 0.340 CPU in 0.340 seconds (100% CPU, 9639963 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/bchain_comp.metta  0)
 <span class="ansi1"
@@ -1194,8 +1195,13 @@ Deterministic: ()
 ;           (set_option_value  test true)
 P;HTML|
 ;           (maybe_halt  7)
-
-Script done on 2024-10-12 07:09:45+00:00 [COMMAND_EXIT_CODE="7"]
+<span class="ansi31"
+>  (in  
+    (maybe_halt  7) 
+    (unwind  
+      (halt  7)))
+</span>
+Script done on 2024-10-14 01:35:54+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

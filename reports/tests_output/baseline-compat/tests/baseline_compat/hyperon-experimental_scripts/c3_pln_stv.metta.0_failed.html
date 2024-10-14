@@ -13,6 +13,7 @@
 .inv_foreground { color: #000000; }
 .inv_background { background-color: #AAAAAA; }
 .ansi1 { font-weight: bold; }
+.ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
 .ansi38-255165000 { color: #FFA500; }
@@ -41,7 +42,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-12 07:14:18+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-14 01:40:27+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -476,7 +477,7 @@ Script started on 2024-10-12 07:14:18+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C3-PLN-STV.01</h3>
 ; 
 ; EVAL TEST
-; took 0.010 secs. (10.20 milliseconds) 
+; took 0.011 secs. (10.50 milliseconds) 
 
   !(assertEqual 
     (TV (And (PA) (PB))) 
@@ -501,7 +502,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C3-PLN-STV.02</h3>
 ; 
 ; EVAL TEST
-; took 0.005 secs. (5.48 milliseconds) 
+; took 0.006 secs. (5.61 milliseconds) 
 
   !(assertEqual 
     (TV (FA)) 
@@ -555,7 +556,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C3-PLN-STV.03</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.51 milliseconds) 
+; took 0.002 secs. (1.57 milliseconds) 
 
   !(assertEqual 
     (TV (croaks Fritz)) 
@@ -580,7 +581,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C3-PLN-STV.04</h3>
 ; 
 ; EVAL TEST
-; took 0.016 secs. (16.32 milliseconds) 
+; took 0.016 secs. (16.37 milliseconds) 
 
   !(assertEqual 
     (TV (frog Fritz)) 
@@ -605,7 +606,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C3-PLN-STV.05</h3>
 ; 
 ; EVAL TEST
-; took 0.035 secs. (34.57 milliseconds) 
+; took 0.035 secs. (34.89 milliseconds) 
 
   !(assertEqual 
     (TV (green Fritz)) 
@@ -620,7 +621,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 722,136 inferences, 0.128 CPU in 0.128 seconds (100% CPU, 5620539 Lips)
+>% 722,136 inferences, 0.132 CPU in 0.132 seconds (100% CPU, 5482877 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/c3_pln_stv.metta  0)
 <span class="ansi1"
@@ -754,8 +755,13 @@ Deterministic: ()
 ;           (set_option_value  test true)
 P;HTML|
 ;           (maybe_halt  7)
-
-Script done on 2024-10-12 07:14:24+00:00 [COMMAND_EXIT_CODE="7"]
+<span class="ansi31"
+>  (in  
+    (maybe_halt  7) 
+    (unwind  
+      (halt  7)))
+</span>
+Script done on 2024-10-14 01:40:33+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

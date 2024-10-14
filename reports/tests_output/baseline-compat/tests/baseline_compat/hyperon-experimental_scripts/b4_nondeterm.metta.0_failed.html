@@ -13,6 +13,7 @@
 .inv_foreground { color: #000000; }
 .inv_background { background-color: #AAAAAA; }
 .ansi1 { font-weight: bold; }
+.ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
 .ansi38-255165000 { color: #FFA500; }
@@ -53,7 +54,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-12 07:13:50+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-14 01:39:58+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -416,7 +417,7 @@ Script started on 2024-10-12 07:13:50+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000362 secs. (362.01 microseconds) 
+; took 0.000375 secs. (375.41 microseconds) 
 
   !(assertEqual 
     (match &self 
@@ -450,7 +451,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000285 secs. (285.31 microseconds) 
+; took 0.000253 secs. (252.97 microseconds) 
 
   !(assertEqual 
     (collapse (match &self (= (shape) $x) $x)) ())
@@ -479,7 +480,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000537 secs. (536.78 microseconds) 
+; took 0.000523 secs. (522.62 microseconds) 
 
   !(assertEqual 
     (color) 
@@ -511,7 +512,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000913 secs. (913.15 microseconds) 
+; took 0.001 secs. (1.01 milliseconds) 
 
   !(assertEqual 
     (color) 
@@ -543,7 +544,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.05</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.47 milliseconds) 
+; took 0.001 secs. (1.44 milliseconds) 
 
   !(assertEqual 
     (collapse (shape)) 
@@ -568,7 +569,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000209 secs. (209.17 microseconds) 
+; took 0.000223 secs. (223.33 microseconds) 
 
   !(assertEqualToResult 
     (shape) 
@@ -613,7 +614,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.07</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.69 milliseconds) 
+; took 0.002 secs. (1.67 milliseconds) 
 
   !(assertEqualToResult 
     (pair 
@@ -674,7 +675,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.08</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.96 milliseconds) 
+; took 0.002 secs. (1.89 milliseconds) 
 
   !(assertEqual 
     (find-equal 
@@ -712,7 +713,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.09</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.08 milliseconds) 
+; took 0.001 secs. (1.02 milliseconds) 
 
   !(assertEqualToResult 
     (rev A 
@@ -803,7 +804,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.10</h3>
 ; 
 ; EVAL TEST
-; took 0.004 secs. (4.27 milliseconds) 
+; took 0.004 secs. (4.16 milliseconds) 
 
   !(assertEqual 
     (is (air dry)) 
@@ -832,7 +833,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.11</h3>
 ; 
 ; EVAL TEST
-; took 0.004 secs. (4.16 milliseconds) 
+; took 0.004 secs. (4.05 milliseconds) 
 
   !(assertEqual 
     (is (air wet)) 
@@ -851,7 +852,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 597,420 inferences, 0.121 CPU in 0.121 seconds (100% CPU, 4921159 Lips)
+>% 597,418 inferences, 0.123 CPU in 0.123 seconds (100% CPU, 4865328 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/b4_nondeterm.metta  0)
 <span class="ansi1"
@@ -985,8 +986,13 @@ Deterministic: ()
 ;           (set_option_value  test true)
 P;HTML|
 ;           (maybe_halt  7)
-
-Script done on 2024-10-12 07:13:55+00:00 [COMMAND_EXIT_CODE="7"]
+<span class="ansi31"
+>  (in  
+    (maybe_halt  7) 
+    (unwind  
+      (halt  7)))
+</span>
+Script done on 2024-10-14 01:40:04+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

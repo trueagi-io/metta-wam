@@ -13,6 +13,7 @@
 .inv_foreground { color: #000000; }
 .inv_background { background-color: #AAAAAA; }
 .ansi1 { font-weight: bold; }
+.ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
 .ansi38-255165000 { color: #FFA500; }
@@ -26,7 +27,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-12 07:17:11+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-14 01:43:20+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -373,7 +374,7 @@ Script started on 2024-10-12 07:17:11+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-METTALOG-SANITY.FLIP-TEST.01</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.11 milliseconds) 
+; took 0.002 secs. (1.64 milliseconds) 
 
   !(assertEqualToResult 
     (recur-until-flip-true 1) 
@@ -398,7 +399,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.FLIP-TEST.02</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.47 milliseconds) 
+; took 0.000581 secs. (580.92 microseconds) 
 
   !(assertEqualToResult 
     (recur-until-flip-false 1) 
@@ -413,7 +414,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 123,079 inferences, 0.027 CPU in 0.027 seconds (100% CPU, 4555206 Lips)
+>% 112,681 inferences, 0.027 CPU in 0.027 seconds (100% CPU, 4249397 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/flip_test.metta  0)
 <span class="ansi1"
@@ -547,8 +548,13 @@ Deterministic: ()
 ;           (set_option_value  test true)
 P;HTML|
 ;           (maybe_halt  7)
-
-Script done on 2024-10-12 07:17:17+00:00 [COMMAND_EXIT_CODE="7"]
+<span class="ansi31"
+>  (in  
+    (maybe_halt  7) 
+    (unwind  
+      (halt  7)))
+</span>
+Script done on 2024-10-14 01:43:26+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

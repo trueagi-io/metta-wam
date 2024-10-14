@@ -13,6 +13,7 @@
 .inv_foreground { color: #000000; }
 .inv_background { background-color: #AAAAAA; }
 .ansi1 { font-weight: bold; }
+.ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
 .ansi38-255165000 { color: #FFA500; }
@@ -75,7 +76,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-12 07:11:20+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-14 01:37:29+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -540,7 +541,7 @@ Deterministic: ()
         (VarIdx (S Z)))))
 </span>; 
 ; EVAL TEST
-; took 0.004 secs. (3.59 milliseconds) 
+; took 0.004 secs. (3.58 milliseconds) 
 
   !(assertEqualToResult 
     (let $sptrn 
@@ -601,7 +602,7 @@ Deterministic: ()
           (countNat $_229034)))))
 </span>; 
 ; EVAL TEST
-; took 0.007 secs. (6.71 milliseconds) 
+; took 0.007 secs. (6.89 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &kb 
@@ -652,7 +653,7 @@ Deterministic: ()
 >  (Inheritance B A)
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.93 milliseconds) 
+; took 0.002 secs. (1.86 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &db 
@@ -687,7 +688,7 @@ Deterministic: ()
 >  (Inheritance C A)
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.88 milliseconds) 
+; took 0.002 secs. (1.84 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &db 
@@ -722,7 +723,7 @@ Deterministic: ()
 >  (Inheritance D E)
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.88 milliseconds) 
+; took 0.002 secs. (1.94 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &db 
@@ -887,7 +888,7 @@ Deterministic: ()
 >;; ANTI-REGRESSION.METTALOGTESTCURRIED2.07</h3>
 ; 
 ; EVAL TEST
-; took 0.041 secs. (41.21 milliseconds) 
+; took 0.041 secs. (41.17 milliseconds) 
 
   !(assertEqualToResult 
     (let 
@@ -951,7 +952,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 904,026 inferences, 0.176 CPU in 0.176 seconds (100% CPU, 5124206 Lips)
+>% 904,026 inferences, 0.179 CPU in 0.179 seconds (100% CPU, 5051721 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/mettalogTestCurried2.metta  0)
 <span class="ansi1"
@@ -1085,8 +1086,13 @@ Deterministic: ()
 ;           (set_option_value  test true)
 P;HTML|
 ;           (maybe_halt  7)
-
-Script done on 2024-10-12 07:11:26+00:00 [COMMAND_EXIT_CODE="7"]
+<span class="ansi31"
+>  (in  
+    (maybe_halt  7) 
+    (unwind  
+      (halt  7)))
+</span>
+Script done on 2024-10-14 01:37:35+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

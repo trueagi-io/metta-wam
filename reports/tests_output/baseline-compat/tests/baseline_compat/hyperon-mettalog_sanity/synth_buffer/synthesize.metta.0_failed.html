@@ -13,6 +13,7 @@
 .inv_foreground { color: #000000; }
 .inv_background { background-color: #AAAAAA; }
 .ansi1 { font-weight: bold; }
+.ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
 .ansi38-255165000 { color: #FFA500; }
@@ -44,7 +45,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-12 07:19:41+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-14 01:45:49+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -689,7 +690,7 @@ Script started on 2024-10-12 07:19:41+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; SYNTH-BUFFER.SYNTHESIZE.01</h3>
 ; 
 ; EVAL TEST
-; took 0.157 secs. (157.10 milliseconds) 
+; took 0.154 secs. (153.99 milliseconds) 
 
   !(assertEqualToResult 
     (synthesize 
@@ -1207,7 +1208,7 @@ Script started on 2024-10-12 07:19:41+00:00 [TERM="xterm-256color" TTY="/dev/pts
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 1,947,366 inferences, 0.285 CPU in 0.285 seconds (100% CPU, 6843927 Lips)
+>% 1,947,366 inferences, 0.283 CPU in 0.283 seconds (100% CPU, 6871172 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/synth_buffer/synthesize.metta  0)
 <span class="ansi1"
@@ -1341,8 +1342,13 @@ Deterministic: ()
 ;           (set_option_value  test true)
 P;HTML|
 ;           (maybe_halt  7)
-
-Script done on 2024-10-12 07:19:46+00:00 [COMMAND_EXIT_CODE="7"]
+<span class="ansi31"
+>  (in  
+    (maybe_halt  7) 
+    (unwind  
+      (halt  7)))
+</span>
+Script done on 2024-10-14 01:45:55+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

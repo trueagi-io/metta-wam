@@ -13,6 +13,7 @@
 .inv_foreground { color: #000000; }
 .inv_background { background-color: #AAAAAA; }
 .ansi1 { font-weight: bold; }
+.ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
 .ansi38-255165000 { color: #FFA500; }
@@ -40,7 +41,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-12 07:13:36+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-14 01:39:44+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -384,7 +385,7 @@ Script started on 2024-10-12 07:13:36+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B2-BACKCHAIN.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000332 secs. (332.23 microseconds) 
+; took 0.000345 secs. (344.90 microseconds) 
 
   !(assertEqualToResult 
     (Frog Sam) 
@@ -409,7 +410,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B2-BACKCHAIN.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000389 secs. (389.50 microseconds) 
+; took 0.000400 secs. (400.29 microseconds) 
 
   !(assertEqual 
     (frog Sam) T)
@@ -432,7 +433,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B2-BACKCHAIN.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000429 secs. (429.37 microseconds) 
+; took 0.000332 secs. (332.19 microseconds) 
 
   !(assertEqualToResult 
     (frog Fritz) ())
@@ -506,7 +507,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B2-BACKCHAIN.04</h3>
 ; 
 ; EVAL TEST
-; took 0.004 secs. (3.71 milliseconds) 
+; took 0.004 secs. (3.67 milliseconds) 
 
   !(assertEqual 
     (deduce (Evaluation (mortal Plato))) T)
@@ -571,7 +572,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B2-BACKCHAIN.05</h3>
 ; 
 ; EVAL TEST
-; took 0.018 secs. (17.68 milliseconds) 
+; took 0.016 secs. (16.30 milliseconds) 
 
   !(assertEqual 
     (explain (Evaluation (mortal Plato))) 
@@ -598,7 +599,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 415,024 inferences, 0.084 CPU in 0.084 seconds (100% CPU, 4927644 Lips)
+>% 415,024 inferences, 0.083 CPU in 0.083 seconds (100% CPU, 4984290 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/b2_backchain.metta  0)
 <span class="ansi1"
@@ -732,8 +733,13 @@ Deterministic: ()
 ;           (set_option_value  test true)
 P;HTML|
 ;           (maybe_halt  7)
-
-Script done on 2024-10-12 07:13:41+00:00 [COMMAND_EXIT_CODE="7"]
+<span class="ansi31"
+>  (in  
+    (maybe_halt  7) 
+    (unwind  
+      (halt  7)))
+</span>
+Script done on 2024-10-14 01:39:50+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

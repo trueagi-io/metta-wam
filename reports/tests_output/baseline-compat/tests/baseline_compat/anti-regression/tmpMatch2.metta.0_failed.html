@@ -13,6 +13,7 @@
 .inv_foreground { color: #000000; }
 .inv_background { background-color: #AAAAAA; }
 .ansi1 { font-weight: bold; }
+.ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
 .ansi38-255165000 { color: #FFA500; }
@@ -95,7 +96,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-12 07:12:53+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-14 01:39:02+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -754,7 +755,7 @@ Deterministic: ()
 >  (Inheritance B A)
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.84 milliseconds) 
+; took 0.002 secs. (2.09 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &db 
@@ -789,7 +790,7 @@ Deterministic: ()
 >  (Inheritance C A)
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.88 milliseconds) 
+; took 0.002 secs. (2.05 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &db 
@@ -824,7 +825,7 @@ Deterministic: ()
 >  (Inheritance D E)
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.93 milliseconds) 
+; took 0.002 secs. (1.98 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &db 
@@ -859,7 +860,7 @@ Deterministic: ()
 >  (Inheritance C E)
 </span>; 
 ; EVAL TEST
-; took 0.001 secs. (1.33 milliseconds) 
+; took 0.001 secs. (1.37 milliseconds) 
 
   !(assertEqualToResult 
     (add-atom &db 
@@ -954,7 +955,7 @@ Deterministic: ()
       (tuple-count $_734958)))
 </span>; 
 ; EVAL TEST
-; took 0.110 secs. (109.55 milliseconds) 
+; took 0.110 secs. (110.47 milliseconds) 
 
   !(assertEqualToResult 
     (miner &db 
@@ -1016,7 +1017,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 1,358,390 inferences, 0.263 CPU in 0.263 seconds (100% CPU, 5167594 Lips)
+>% 1,358,390 inferences, 0.270 CPU in 0.270 seconds (100% CPU, 5035251 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/tmpMatch2.metta  0)
 <span class="ansi1"
@@ -1150,8 +1151,13 @@ Deterministic: ()
 ;           (set_option_value  test true)
 P;HTML|
 ;           (maybe_halt  7)
-
-Script done on 2024-10-12 07:12:59+00:00 [COMMAND_EXIT_CODE="7"]
+<span class="ansi31"
+>  (in  
+    (maybe_halt  7) 
+    (unwind  
+      (halt  7)))
+</span>
+Script done on 2024-10-14 01:39:08+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

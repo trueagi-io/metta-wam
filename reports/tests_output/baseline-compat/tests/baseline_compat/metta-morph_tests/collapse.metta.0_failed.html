@@ -13,6 +13,7 @@
 .inv_foreground { color: #000000; }
 .inv_background { background-color: #AAAAAA; }
 .ansi1 { font-weight: bold; }
+.ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
 .ansi38-255165009 { color: #FFA509; }
@@ -23,7 +24,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-12 07:21:52+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-14 01:48:00+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -349,7 +350,7 @@ Script started on 2024-10-12 07:21:52+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; METTA-MORPH-TESTS.COLLAPSE.01</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.08 milliseconds) 
+; took 0.001 secs. (1.04 milliseconds) 
 
   !(assertEqualToResult 
     (collapse (1 2 3)) 
@@ -364,7 +365,7 @@ Script started on 2024-10-12 07:21:52+00:00 [TERM="xterm-256color" TTY="/dev/pts
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 60,393 inferences, 0.013 CPU in 0.013 seconds (100% CPU, 4701623 Lips)
+>% 60,393 inferences, 0.013 CPU in 0.013 seconds (100% CPU, 4766613 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/collapse.metta  0)
 <span class="ansi1"
@@ -498,8 +499,13 @@ Deterministic: ()
 ;           (set_option_value  test true)
 P;HTML|
 ;           (maybe_halt  7)
-
-Script done on 2024-10-12 07:21:58+00:00 [COMMAND_EXIT_CODE="7"]
+<span class="ansi31"
+>  (in  
+    (maybe_halt  7) 
+    (unwind  
+      (halt  7)))
+</span>
+Script done on 2024-10-14 01:48:06+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

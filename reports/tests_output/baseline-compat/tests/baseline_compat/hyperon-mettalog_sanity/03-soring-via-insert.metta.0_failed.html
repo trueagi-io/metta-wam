@@ -13,6 +13,7 @@
 .inv_foreground { color: #000000; }
 .inv_background { background-color: #AAAAAA; }
 .ansi1 { font-weight: bold; }
+.ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
 .ansi38-255165000 { color: #FFA500; }
@@ -34,7 +35,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-12 07:16:05+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-14 01:42:15+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -395,7 +396,7 @@ Script started on 2024-10-12 07:16:05+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-METTALOG-SANITY.03-SORING-VIA-INSERT.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000217 secs. (216.93 microseconds) 
+; took 0.000208 secs. (207.69 microseconds) 
 
   !(assertEqualToResult 
     (get-type insert) 
@@ -442,7 +443,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.03-SORING-VIA-INSERT.02</h3>
 ; 
 ; EVAL TEST
-; took 0.003 secs. (2.73 milliseconds) 
+; took 0.003 secs. (2.60 milliseconds) 
 
   !(assertEqual 
     (insert 2 
@@ -471,7 +472,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.03-SORING-VIA-INSERT.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000495 secs. (495.02 microseconds) 
+; took 0.000402 secs. (402.13 microseconds) 
 
   !(assertEqual 
     (Cons 1 Nil) 
@@ -496,7 +497,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.03-SORING-VIA-INSERT.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000741 secs. (740.69 microseconds) 
+; took 0.000738 secs. (737.77 microseconds) 
 
   !(assertEqual 
     (insert 1 Nil) 
@@ -523,7 +524,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.03-SORING-VIA-INSERT.05</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.06 milliseconds) 
+; took 0.002 secs. (2.11 milliseconds) 
 
   !(assertEqual 
     (insert 1 
@@ -556,7 +557,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.03-SORING-VIA-INSERT.06</h3>
 ; 
 ; EVAL TEST
-; took 0.007 secs. (6.55 milliseconds) 
+; took 0.007 secs. (6.62 milliseconds) 
 
   !(assertEqual 
     (insert 3 
@@ -579,7 +580,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 369,718 inferences, 0.071 CPU in 0.071 seconds (100% CPU, 5220036 Lips)
+>% 369,718 inferences, 0.069 CPU in 0.069 seconds (100% CPU, 5323070 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/03-soring-via-insert.metta  0)
 <span class="ansi1"
@@ -713,8 +714,13 @@ Deterministic: ()
 ;           (set_option_value  test true)
 P;HTML|
 ;           (maybe_halt  7)
-
-Script done on 2024-10-12 07:16:11+00:00 [COMMAND_EXIT_CODE="7"]
+<span class="ansi31"
+>  (in  
+    (maybe_halt  7) 
+    (unwind  
+      (halt  7)))
+</span>
+Script done on 2024-10-14 01:42:21+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

@@ -13,6 +13,7 @@
 .inv_foreground { color: #000000; }
 .inv_background { background-color: #AAAAAA; }
 .ansi1 { font-weight: bold; }
+.ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
 .ansi38-255165000 { color: #FFA500; }
@@ -28,7 +29,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-12 07:13:14+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-14 01:39:23+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -374,7 +375,7 @@ Script started on 2024-10-12 07:13:14+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A3-TWOSIDE.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000622 secs. (621.77 microseconds) 
+; took 0.000652 secs. (652.06 microseconds) 
 
   !(assertEqualToResult 
     (match &self 
@@ -405,7 +406,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A3-TWOSIDE.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000409 secs. (408.52 microseconds) 
+; took 0.000473 secs. (472.88 microseconds) 
 
   !(assertEqualToResult 
     (match &self 
@@ -449,7 +450,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A3-TWOSIDE.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000602 secs. (602.10 microseconds) 
+; took 0.000462 secs. (461.76 microseconds) 
 
   !(assertEqualToResult 
     (match &self 
@@ -490,7 +491,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A3-TWOSIDE.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000511 secs. (511.49 microseconds) 
+; took 0.000414 secs. (413.79 microseconds) 
 
   !(assertEqualToResult 
     (match &self 
@@ -513,7 +514,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 190,472 inferences, 0.038 CPU in 0.038 seconds (100% CPU, 4996812 Lips)
+>% 190,472 inferences, 0.039 CPU in 0.039 seconds (100% CPU, 4845010 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/a3_twoside.metta  0)
 <span class="ansi1"
@@ -647,8 +648,13 @@ Deterministic: ()
 ;           (set_option_value  test true)
 P;HTML|
 ;           (maybe_halt  7)
-
-Script done on 2024-10-12 07:13:20+00:00 [COMMAND_EXIT_CODE="7"]
+<span class="ansi31"
+>  (in  
+    (maybe_halt  7) 
+    (unwind  
+      (halt  7)))
+</span>
+Script done on 2024-10-14 01:39:29+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
