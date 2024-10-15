@@ -320,13 +320,19 @@ get_current_text(Path, NewText) :-
 compare_and_update_string(Path, NewText) :-
     (   last_retrieved_string(Path, OldText),  % Retrieve the last known content.
         OldText \= NewText  % Check if the content has changed.
-    ->  debug(server(xref), 'Text for "~w" has changed, reprocessing buffer.~n', [Path]),  % Log the change.
+    -> (debug(server(xref), 'Text for "~w" has changed, reprocessing buffer.~n', [Path]),  % Log the change.
         retractall(last_retrieved_string(Path, _)),  % Remove the old content entry.
         asserta(last_retrieved_string(Path, NewText)),  % Update with the new content.
-        xref_metta_file_text('&xref', Path, NewText)  % Reprocess the file with the new content.
+        xref_source_expired(Path),
+        xref_metta_file_text('&xref', Path, NewText))   % Reprocess the file with the new content.
     ;   (debug(server(xref), 'Text for "~w" has not changed, skipping reload.~n', [Path]),  % Log if no change is detected.
         xref_metta_file_text('&xref', Path, NewText))  % Still cross-reference the file for consistency.
     ).
+
+xref_source_expired(Doc):- maybe_doc_path(Doc,Path),!,xref_source_expired(Path).
+xref_source_expired(Path):-
+  %retractall(metta_file_buffer(_Mode, _Term, _NamedVarsList, Path, _Pos)),
+  retractall(made_metta_file_buffer(Path)).
 
 %!  xref_metta_file_text(+Self, +Path, +Text) is det.
 %
@@ -408,9 +414,16 @@ xref_metta_file_text_buffer(TFMakeFile, Filename, In) :-
     % debug(server(xref), "BufferTerm ~w", [BufferTerm]),  % Log the parsed buffer term.
     % Optionally write the buffer content to the buffer file
     if_t(TFMakeFile, write_bf(BufferFile, BufferTerm)),
-    flush_output,  % Ensure all output is flushed.
+    % flush_output,  % Ensure all output is flushed.
     at_end_of_stream(In),  % Stop processing once the end of the stream is reached.
     !.
+
+
+maybe_process_directives(+, exec([Op|List])):-
+  op_execkind(Op,import),
+  last(List,Path),!,
+  xref_source(Path).
+
 
 %!  source_file_text(+Path, -String) is det.
 %
@@ -460,11 +473,13 @@ xref_document_symbols(Doc, Symbols):- %   sample_outline_test(SS),
          Symbols).
 
 
-doc_path(Doc,Path):- nonvar(Doc),atom_concat('file://', Path, Doc),!.
+doc_path(Doc,Path):- maybe_doc_path(Doc,Path),!.
 doc_path(Doc,Path):- nonvar(Doc),!,Path=Doc.
 doc_path(Doc,Path):- freeze(Path,atom_concat('file://', Path, Doc)).
 
-xref_document_symbol(Doc, Outline, KindNumber, Start, End):- nonvar(Doc),atom_concat('file://', Path, Doc),!,xref_document_symbol(Path, Outline, KindNumber, Start, End).
+maybe_doc_path(Doc,Path):- atomic(Doc),atom_concat('file://', Path, Doc),!.
+
+xref_document_symbol(Doc,  Outline, KindNumber, Start, End):- maybe_doc_path(Doc,Path),!,xref_document_symbol(Path, Outline, KindNumber, Start, End).
 xref_document_symbol(Path, Path, 1, 0:0, 1000:0).
 xref_document_symbol(Path, Outline, KindNumber, Start, End):- xref_document_symbol_d4(Path, Outline, KindNumber, Start, End), fail.
 xref_document_symbol(Path, Outline, KindNumber, Start, End):- xref_document_symbol_fb(Path, Outline, KindNumber, Start, End).
@@ -512,16 +527,16 @@ line_col(Position,LineM1:Col):-
 xrefed_outline_kind([EQ,Outline|_],Outline,function):- EQ=='=',!.
 xrefed_outline_kind([CT,Outline|Stuff],[CT,Outline|Stuff],typeParameter):- CT==':',!.
 xrefed_outline_kind('$COMMENT'(Cmt,_,_),Cmt,string):-!.
-xrefed_outline_kind('exec'([Op|Rest]),'exec'([Op|Rest]),KindNumber):- op_typekind(Op,KindNumber),!.
+xrefed_outline_kind('exec'([Op|Rest]),'exec'([Op|Rest]),KindNumber):- op_execkind(Op,KindNumber),!.
 xrefed_outline_kind('exec'(Cmt),'exec'(Cmt),class):-!.
 xrefed_outline_kind(ELSE,ELSE,array):-!.
 
-op_typekind(Op,key):- \+ atom(Op).
-op_typekind(Op,number):- atom_contains(Op,"include"),!.
-op_typekind(Op,number):- atom_contains(Op,"import"),!.
-op_typekind(Op,number):- atom_contains(Op,"load"),!.
-op_typekind(Op,constant):- atom(Op),atom_concat(_,'!',Op),!.
-op_typekind(_Op,class).
+op_execkind(Op,key):- \+ atom(Op).
+op_execkind(Op,number):- atom_contains(Op,"include"),!.
+op_execkind(Op,number):- atom_contains(Op,"import"),!.
+op_execkind(Op,number):- atom_contains(Op,"load"),!.
+op_execkind(Op,constant):- atom(Op),atom_concat(_,'!',Op),!.
+op_execkind(_Op,class).
 
 lsp_xref_kind(N, LU):- number(LU),var(N),!,LU=N.
 lsp_xref_kind(1, file).
