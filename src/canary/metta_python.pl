@@ -605,11 +605,15 @@ the_modules_and_globals = merge_modules_and_globals()
 %
 py_ppp(V):-
     % Ensure all buffered output is flushed before printing.
-    flush_output, janus:opts_kws([], Kws),
-    PFormat=..[pformat, V|Kws],    % Format and print the cleaned output.
-    py_call(pprint:PFormat, String),!,write(String),
+    flush_output, py_pp_str(V,String),!,write(String),
     % Ensure the output is fully flushed after printing.
     !, flush_output.
+    
+py_pp_str(V,String):-
+   janus:opts_kws([], Kws),
+    PFormat=..[pformat, V|Kws],    % Format and print the cleaned output.
+    py_call(pprint:PFormat, String).
+  
     
 %atom_codes(Codes,P),writeq(Codes),
 %py_ppp(V):- !, flush_output, py_mbi(print_nonl(V),_),!,flush_output.
@@ -696,6 +700,11 @@ def rust_metta_run(obj):
 
 def always_unwrap_python_object(rust):
   return hyperon.stdlib.try_unwrap_python_object(rust)
+
+
+def rust_py_char(ch):
+  from hyperon.stdlib import Char
+  return Char(ch)
 
 def rust_unwrap(obj):
     if obj is None:
@@ -1586,6 +1595,7 @@ pl_to_py(Var,Py):- pl_to_py(_VL,Var,Py).
 pl_to_py(VL,Var,Py):- var(VL),!,ignore(VL = [vars]), % Initialize the variable list if unbound.
     pl_to_py(VL,Var,Py).
 % Handle Python objects directly.
+pl_to_py(_VL,'#\\'(Sym),Py):- !, to_py_char(Sym,Py).
 pl_to_py(_VL,Sym,Py):- py_is_object(Sym),!,Sym = Py.
 %pl_to_py(_VL,O,Py):- py_is_dict(O),!,py_obi(identity(O),Py).
 % Convert Prolog floats to Python floats.
@@ -2077,6 +2087,8 @@ rust_to_pl(R,PT):- py_type(R,T),combine_term_l(T,R,PT),!.
 %rust_to_pl(R,P):- py_acall(R:'__repr__'(),P),!.
 rust_to_pl(R,P):- load_hyperon_module,!,py_ocall(hyperon_module:rust_deref(R),M),!,
     (R \== M -> rust_to_pl(M,P) ; M = P).
+
+to_py_char(R,Py):- load_hyperon_module,!,py_ocall(hyperon_module:rust_to_py_char(R),Py),!.
 
 %!  as_var(+N,-Var) is det.
 %
