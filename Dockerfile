@@ -33,7 +33,8 @@ COPY ./ ./
 # get rid of copied venv that is probably using a whole different python anyways
 RUN rm -rf ./venv/  
 COPY ./INSTALL.sh ./INSTALL.sh
-RUN ./INSTALL.sh --easy
+SHELL ["/bin/bash", "-c"]
+RUN source ./INSTALL.sh --easy
 
 
 #RUN swipl -l src/main/metta_interp.pl -g qcompile_mettalog

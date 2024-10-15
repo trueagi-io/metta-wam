@@ -1,6 +1,8 @@
 :- module(lsp_metta_parser, [
     annotated_read_sexpr_list/4,
-    annotated_get_blank_lines/3
+    annotated_get_blank_lines/3,
+    annotated_read_sexpr/4,
+    annotated_skip_spaces_until_eol/4
 ]).
 
 annotated_position_inc(p(L,C0),p(L,C1),N) :- C1 is C0+N.
@@ -89,7 +91,8 @@ annotated_read_until_char(LC0, LC1, Stream, EndChar, Chars) :-
                             uft8_count_to_utf16_count_single(NextChar,NextSize),
                             Total is NextSize+1,
                             annotated_position_inc(LC0,LC1,Total)),
-                        annotated_read_until_char(Stream, EndChar, RestChars),
+                        % was undefined but probably still wrong.. (undefined was breaking the reading)
+                        annotated_read_until_char(LC0,LC1,Stream, EndChar, RestChars),
                         Chars = [NextChar | RestChars]
     ;   annotated_read_until_char(LC0,LCa,Stream, EndChar, RestChars),
         uft8_count_to_utf16_count_single(Char,Size),
@@ -151,8 +154,8 @@ annotated_skip_spaces(LC0,LC1,Stream) :-
 annotated_skip_spaces_until_eol(LC0,LC1,Stream,EolFound) :-
    peek_char(Stream, Char),
     (   Char = ';' ->
-            (annotated_read_single_line_comment(LC0,LC0a,Stream),
-            annotated_post_newline(LC0a,LC1),
+            (annotated_read_single_line_comment(Stream),
+            annotated_post_newline(LC0,LC1),
             EolFound=true)
     ;   Char = '\n' ->
             (get_char(Stream, _),
@@ -161,17 +164,18 @@ annotated_skip_spaces_until_eol(LC0,LC1,Stream,EolFound) :-
     ;   (char_type(Char,white);char_type(Char,space);char_type(Char,cntrl)) ->
             (get_char(Stream, _),
             annotated_skip_spaces_until_eol(LC0,LC1,Stream,EolFound))  % Consume the space and continue.
-    ;   Char=end_of_file -> LC1=LC0,EolFound=false
+    ;   Char=end_of_file -> LC1=LC0,EolFound=true
     ;   (LC1=LC0,EolFound=false)  % Non-space character found; stop skipping.
     ), !.
 
+annotated_get_blank_lines(LC0,LC0,Stream) :- at_end_of_stream(Stream),!.
 annotated_get_blank_lines(LC0,LCStartOfBlank,Stream) :-
     seek(Stream,0,current,StartOfLinePos),
     annotated_skip_spaces_until_eol(LC0,LC1,Stream,EolFound),
     (EolFound
     -> (annotated_get_blank_lines(LC1,LCStartOfBlank,Stream))
     ; (LCStartOfBlank=LC0,
-        seek(Stream,0,StartOfLinePos,_))). % found something, so go back to the start of the line
+        seek(Stream,StartOfLinePos,bof,_))). % found something, so go back to the start of the line
 
 %! annotated_read_single_line_comment(+Stream:stream) is det.
 %
