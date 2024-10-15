@@ -5,7 +5,9 @@
     coalesce_text/2
 ]).
 :- use_module(lsp_metta_parser, [
-        annotated_get_blank_lines/3
+    annotated_get_blank_lines/3,
+    annotated_read_sexpr/4,
+    annotated_skip_spaces_until_eol/4
 ]).
 
 %!  split_document_get_section(+N, -M, +SplitText, -Pre, -This, -Post) is det.
@@ -51,7 +53,8 @@ split_document_get_multiple_sections(N1,N2,N1,[d(L,Body,EndPosition,Meta)|SplitT
 % Have only one of these commented out - any split strategy should work as long as lines are not broken up
 %split_text_document(FullText,SplitText) :- split_text_single_lines(FullText,SplitText).
 % should use the number of lines in the file, but that would need to be calculated
-split_text_document(FullText,[d(Big,FullText,Big,[])]) :- current_prolog_flag(max_tagged_integer,Big).
+%split_text_document(FullText,[d(Big,FullText,Big,[])]) :- current_prolog_flag(max_tagged_integer,Big).
+split_text_document(FullText,SplitText) :- split_text_document_by_clause(FullText,SplitText).
 
 split_text_document_by_clause(FullText,SplitText) :-
     setup_call_cleanup(
@@ -59,23 +62,61 @@ split_text_document_by_clause(FullText,SplitText) :-
         split_text_document_by_clause_aux(Stream, SplitText),
         close(Stream)).
 
-split_text_document_by_clause_aux(Stream,[]) :- at_end_of_stream(Stream),!.
-%split_text_document_by_clause_aux(Stream,Out) :-
-
 % get an empty line split (if one exists), followed by a clause (if one exists)
-split_text_document_by_clause_get_empty_plus_clause(Stream,[]) :- at_end_of_stream(Stream),!.
-split_text_document_by_clause_get_empty_plus_clause(Stream,[]) :-
-    seek(Stream,0,current,CurrentPos),
-    annotated_get_blank_lines(p(0,0),LCblank,Stream).
-    annotated_skip_spaces_until_eol(p(0,0),Pout,Stream,EolFound). %% TODO FIXME
+split_text_document_by_clause_aux(Stream,[]) :- at_end_of_stream(Stream),!.
+split_text_document_by_clause_aux(Stream,Entries) :-
+    seek(Stream,0,current,StartPos),
+    annotated_get_blank_lines(p(0,0),LCblank,Stream),
+    LCblank=p(Lblank,_),
+    (Lblank=0 ->
+        % no non-content lines
+        PostEmptyStartPos=StartPos,
+        PostEmptyLCblank=LCblank,
+        MaybeBlankEntry=[]
+    ;
+        seek(Stream,0,current,BlankEndPos),
+        seek(Stream,StartPos,bof,_),
+        BlankSize is BlankEndPos-StartPos-1, % -1 to drop the newline from the end
+        read_string(Stream,BlankSize,BlankContent),
+        read_string(Stream,1,_),
+        create_line_entry(Lblank,BlankContent,[],BlankEntry),
+        PostEmptyStartPos=BlankEndPos,
+        PostEmptyLCblank=p(0,0),
+        MaybeBlankEntry=[BlankEntry]
+    ),
+    (at_end_of_stream(Stream) ->
+        Entries=MaybeBlankEntry
+    ;
+        split_text_document_by_clauses_whole_lines(PostEmptyLCblank,p(EL,_),Stream,Metadata),
+        seek(Stream,0,current,EndPos),
+        seek(Stream,PostEmptyStartPos,bof,_),
+        Size is EndPos-PostEmptyStartPos-1, % -1 to drop the newline from the end
+        read_string(Stream,Size,Content),
+        read_string(Stream,1,_),
+        create_line_entry(EL,Content,Metadata,Entry),
+        split_text_document_by_clause_aux(Stream,Entries0),
+        append(MaybeBlankEntry,[Entry|Entries0],Entries)
+    ).
 
-%annotated_read_sexpr_list(LC0,LC0,Stream,[]) :- at_end_of_stream(Stream),!.
-%annotated_read_sexpr_list(LC0,LC2,Stream,[Item|L]) :-
-%    annotated_read_sexpr(LC0,LC1,Stream,Item),
-%    %debug(server,"x ~w",[Item]),
-%    annotated_read_sexpr_list(LC1,LC2,Stream,L).
+convert_item_to_metadata(Item,Md) :-
+    (Item=[a(_,_,_,'='),[a(_,_,_,Name)|_]|_] -> Md=[impl(Name)]
+    ; Item=[a(_,_,_,':'),a(_,_,_,Name)|_] -> Md=[def(Name)]
+    ; Item=[a(_,_,_,'@doc'),a(_,_,_,Name)|_] -> Md=[doc(Name)]
+    ; Md=[]).
 
-create_line_entry(N,S,d(N,S,Size,false)) :- string_length(S,Size).
+% read clauses until get one that does not result in a line split
+split_text_document_by_clauses_whole_lines(LC0,LC1,Stream,Metadata) :-
+    annotated_read_sexpr(LC0,LCa,Stream,Item),
+    convert_item_to_metadata(Item,Md1),
+    annotated_skip_spaces_until_eol(LCa,LCb,Stream,EolFound),
+    (EolFound ->
+        LC1=LCb,
+        Metadata=Md1
+    ;
+        split_text_document_by_clauses_whole_lines(LCb,LC1,Stream,Metadata0),
+        append(Md1,Metadata0,Metadata)).
+
+create_line_entry(N,S,Md,d(N,S,Size,Md)) :- string_length(S,Size).
 
 extract_line_entry(d(_,S,_,_),S).
 
@@ -88,7 +129,7 @@ concat_strings([H|T], Result) :-
 
 split_text_single_lines(FullText,SplitText) :-
     split_string(FullText, "\n", "", SplitText0),
-    maplist(create_line_entry(1),SplitText0,SplitText).
+    maplist(create_line_entry(1),SplitText0,[],SplitText).
 
 coalesce_text(SplitText,FullText) :-
     maplist(extract_line_entry,SplitText,Strings),
