@@ -72,7 +72,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-14 14:15:24+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-15 09:01:11+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -228,14 +228,7 @@ Script started on 2024-10-14 14:15:24+00:00 [TERM="xterm-256color" TTY="/dev/pts
 
 P;HTML|
 ;           (set_option_value  test false)
-<span class="ansi1 ansi31"
->
-ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_interp.pl:2016:
-ERROR:    source_sink `metta_help' does not exist
-</span><span class="ansi31"
->Warning: /home/runner/work/metta-wam/metta-wam/src/canary/metta_interp.pl:2016:
-Warning:    Goal (directive) failed: user:ensure_loaded(metta_help)
-</span>P;HTML|
+P;HTML|
 ;            (is_cmd_option  prescan halt --halt=true true)
 P;HTML|
 ;            (set_option_value  halt true)
@@ -463,7 +456,7 @@ Deterministic: ()
 >;; MODULE-SYSTEM.C2-SPACES.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000577 secs. (577.18 microseconds) 
+; took 0.000629 secs. (629.23 microseconds) 
 
   !(assertEqualToResult 
     (match &kb 
@@ -494,7 +487,7 @@ Deterministic: ()
 >;; MODULE-SYSTEM.C2-SPACES.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000153 secs. (153.11 microseconds) 
+; took 0.000152 secs. (151.83 microseconds) 
 
   !(assertEqualToResult 
     (match &self 
@@ -524,7 +517,7 @@ Deterministic: ()
 >;; MODULE-SYSTEM.C2-SPACES.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000313 secs. (312.68 microseconds) 
+; took 0.000345 secs. (344.75 microseconds) 
 
   !(assertEqual 
     (match &kb 
@@ -563,7 +556,7 @@ Deterministic: ()
 >;; MODULE-SYSTEM.C2-SPACES.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000604 secs. (603.87 microseconds) 
+; took 0.000654 secs. (654.06 microseconds) 
 
   !(assertEqualToResult 
     (match &kb 
@@ -667,7 +660,7 @@ Deterministic: ()
 >;; MODULE-SYSTEM.C2-SPACES.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000482 secs. (481.81 microseconds) 
+; took 0.000475 secs. (474.71 microseconds) 
 
   !(assertEqualToResult 
     (match &self 
@@ -687,7 +680,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 354,122 inferences, 0.099 CPU in 0.099 seconds (100% CPU, 3583185 Lips)
+>% 354,125 inferences, 0.099 CPU in 0.099 seconds (100% CPU, 3594970 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/module-system/c2_spaces.metta  0)
 <span class="ansi1"
@@ -827,7 +820,7 @@ Deterministic: ()
     (unwind  
       (halt  7)))
 </span>
-Script done on 2024-10-14 14:15:30+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-15 09:01:17+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
