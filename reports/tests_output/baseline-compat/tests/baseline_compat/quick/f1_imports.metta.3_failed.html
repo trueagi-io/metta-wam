@@ -108,7 +108,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-15 10:11:25+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-15 15:24:12+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -454,7 +454,7 @@ Script started on 2024-10-15 10:11:25+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; QUICK.F1-IMPORTS.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000166 secs. (165.56 microseconds) 
+; took 0.000186 secs. (186.47 microseconds) 
 
   !(assertEqualToResult 
     (get-type &self) 
@@ -481,7 +481,7 @@ Deterministic: ()
 >;; QUICK.F1-IMPORTS.02</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.81 milliseconds) 
+; took 0.002 secs. (1.89 milliseconds) 
 
   !(assertEqual 
     ( (let $x 
@@ -509,7 +509,7 @@ Deterministic: ()
 >;; QUICK.F1-IMPORTS.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000259 secs. (259.23 microseconds) 
+; took 0.000305 secs. (304.91 microseconds) 
 
   !(assertEqual 
     (if 
@@ -586,7 +586,7 @@ Deterministic: ()
 >;; QUICK.F1-MODULEA.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000184 secs. (184.17 microseconds) 
+; took 0.000206 secs. (205.80 microseconds) 
 
   !(assertEqual 
     (+ 1 2) 3)
@@ -607,7 +607,7 @@ Deterministic: ()
 >;; QUICK.F1-MODULEA.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000146 secs. (145.50 microseconds) 
+; took 0.000168 secs. (168.05 microseconds) 
 
   !(assertEqual 
     (if True "S" "F") "S")
@@ -671,7 +671,7 @@ Last Result(2): ()
 >;; QUICK.F1-IMPORTS.06</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.85 milliseconds) 
+; took 0.002 secs. (2.02 milliseconds) 
 
   !(assertEqual 
     (match &m 
@@ -761,7 +761,7 @@ Deterministic: ()
 >;; QUICK.F1-MODULEA.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000175 secs. (175.34 microseconds) 
+; took 0.000193 secs. (192.94 microseconds) 
 
   !(assertEqual 
     (+ 1 2) 3)
@@ -782,7 +782,7 @@ Deterministic: ()
 >;; QUICK.F1-MODULEA.08</h3>
 ; 
 ; EVAL TEST
-; took 0.000131 secs. (131.43 microseconds) 
+; took 0.000159 secs. (158.85 microseconds) 
 
   !(assertEqual 
     (if True "S" "F") "S")
@@ -892,7 +892,7 @@ Deterministic: ()
 >;; QUICK.F1-MODULEA.09</h3>
 ; 
 ; EVAL TEST
-; took 0.000168 secs. (167.70 microseconds) 
+; took 0.000179 secs. (178.53 microseconds) 
 
   !(assertEqual 
     (+ 1 2) 3)
@@ -913,7 +913,7 @@ Deterministic: ()
 >;; QUICK.F1-MODULEA.10</h3>
 ; 
 ; EVAL TEST
-; took 0.000141 secs. (140.86 microseconds) 
+; took 0.000145 secs. (144.56 microseconds) 
 
   !(assertEqual 
     (if True "S" "F") "S")
@@ -956,7 +956,7 @@ Last Result(2): ()
 >;; QUICK.F1-IMPORTS.11</h3>
 ; 
 ; EVAL TEST
-; took 0.000463 secs. (462.85 microseconds) 
+; took 0.000534 secs. (533.60 microseconds) 
 
   !(assertEqual 
     (g 2) 102)
@@ -979,7 +979,7 @@ Deterministic: ()
 >;; QUICK.F1-IMPORTS.12</h3>
 ; 
 ; EVAL TEST
-; took 0.000802 secs. (802.28 microseconds) 
+; took 0.000814 secs. (813.74 microseconds) 
 
   !(assertEqual 
     (f 2) 103)
@@ -1011,7 +1011,7 @@ Deterministic: ()
 >;; QUICK.F1-IMPORTS.13</h3>
 ; 
 ; EVAL TEST
-; took 0.005 secs. (5.21 milliseconds) 
+; took 0.005 secs. (5.34 milliseconds) 
 
   !(assertEqual &m 
     (let* 
@@ -1046,7 +1046,7 @@ Deterministic: ((Error  (got  (&m)) (expected  ((: __g (-> Number))))))
 >;; QUICK.F1-IMPORTS.14</h3>
 ; 
 ; EVAL TEST
-; took 0.004 secs. (4.07 milliseconds) 
+; took 0.004 secs. (4.11 milliseconds) 
 
   !(assertEqual 
     (== 
@@ -1075,7 +1075,7 @@ Deterministic: ()
 >;; QUICK.F1-IMPORTS.15</h3>
 ; 
 ; EVAL TEST
-; took 0.000250 secs. (249.51 microseconds) 
+; took 0.000254 secs. (253.97 microseconds) 
 
   !(assertEqual 
     (if 
@@ -1209,7 +1209,7 @@ Last Result(2): ()
 >;; QUICK.F1-IMPORTS.16</h3>
 ; 
 ; EVAL TEST
-; took 0.000445 secs. (444.75 microseconds) 
+; took 0.000461 secs. (461.14 microseconds) 
 
   !(assertEqual 
     (g 2) 102)
@@ -1232,7 +1232,7 @@ Deterministic: ()
 >;; QUICK.F1-IMPORTS.17</h3>
 ; 
 ; EVAL TEST
-; took 0.000818 secs. (818.26 microseconds) 
+; took 0.000802 secs. (802.14 microseconds) 
 
   !(assertEqual 
     (f 2) 103)
@@ -1258,7 +1258,7 @@ Deterministic: ()
 >;; QUICK.F1-IMPORTS.18</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.03 milliseconds) 
+; took 0.001 secs. (1.04 milliseconds) 
 
   !(assertEqualToResult 
     (dup 2) 
@@ -1335,7 +1335,7 @@ Last Result(2): ()
 >;; QUICK.F1-IMPORTS.19</h3>
 ; 
 ; EVAL TEST
-; took 0.000446 secs. (446.21 microseconds) 
+; took 0.000471 secs. (471.23 microseconds) 
 
   !(assertEqual 
     (g 2) 102)
@@ -1358,7 +1358,7 @@ Deterministic: ()
 >;; QUICK.F1-IMPORTS.20</h3>
 ; 
 ; EVAL TEST
-; took 0.000776 secs. (775.78 microseconds) 
+; took 0.000825 secs. (824.63 microseconds) 
 
   !(assertEqual 
     (f 2) 103)
@@ -1382,7 +1382,7 @@ Deterministic: ()
 >;; QUICK.F1-IMPORTS.21</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.00 milliseconds) 
+; took 0.001 secs. (1.05 milliseconds) 
 
   !(assertEqualToResult 
     (dup 2) 
@@ -1397,7 +1397,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 957,054 inferences, 0.205 CPU in 0.205 seconds (100% CPU, 4664235 Lips)
+>% 957,054 inferences, 0.208 CPU in 0.208 seconds (100% CPU, 4597832 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/quick/f1_imports.metta  0)
 <span class="ansi1"
@@ -1537,7 +1537,7 @@ Deterministic: ()
     (unwind  
       (halt  7)))
 </span>
-Script done on 2024-10-15 10:11:31+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-15 15:24:18+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
