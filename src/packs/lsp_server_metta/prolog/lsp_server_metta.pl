@@ -344,10 +344,12 @@ handle_msg("textDocument/didChange", Msg, false) :-
                 contentChanges: Changes}} :< Msg,
     _{uri: Uri} :< TextDoc,
     atom_concat('file://', Path, Uri),
+    % xref_source_expired(Path),
     handle_doc_changes(Path, Changes).
 
 handle_msg("textDocument/didSave", Msg, Resp) :-
     _{params: Params} :< Msg,
+    % xref_source_expired(Params.textDocument.uri),
     check_errors_resp(Params.textDocument.uri, Resp).
 
 handle_msg("textDocument/didClose", Msg, false) :-

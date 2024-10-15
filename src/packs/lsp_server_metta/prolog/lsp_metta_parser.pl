@@ -91,7 +91,8 @@ annotated_read_until_char(LC0, LC1, Stream, EndChar, Chars) :-
                             uft8_count_to_utf16_count_single(NextChar,NextSize),
                             Total is NextSize+1,
                             annotated_position_inc(LC0,LC1,Total)),
-                        annotated_read_until_char(Stream, EndChar, RestChars),
+                        % was undefined but probably still wrong.. (undefined was breaking the reading)
+                        annotated_read_until_char(LC0,LC1,Stream, EndChar, RestChars),
                         Chars = [NextChar | RestChars]
     ;   annotated_read_until_char(LC0,LCa,Stream, EndChar, RestChars),
         uft8_count_to_utf16_count_single(Char,Size),
