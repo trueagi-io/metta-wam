@@ -36,7 +36,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-15 21:07:42+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-15 23:23:34+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -347,9 +347,9 @@ Script started on 2024-10-15 21:07:42+00:00 [TERM="xterm-256color" TTY="/dev/pts
 P;HTML|
 ;                                           (= 2  "Missed result: (py-eval \"[]\"))]")
 P;HTML|
-;                                           (= 2  "0.02user 0.01system 0:00.04elapsed 97%CPU (0avgtext+0avgdata 25000maxresident)k")
+;                                           (= 2  "0.02user 0.01system 0:00.04elapsed 100%CPU (0avgtext+0avgdata 24844maxresident)k")
 P;HTML|
-;                                           (= 2  "0inputs+0outputs (0major+2841minor)pagefaults 0swaps")
+;                                           (= 2  "0inputs+0outputs (0major+2836minor)pagefaults 0swaps")
 P;HTML|
 ;                                          (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/py_types.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/py_types.metta)
 
@@ -364,7 +364,7 @@ Script started on 2024-10-15 21:07:42+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-METTALOG-SANITY.PY-TYPES.01</h3>
 ; 
 ; EVAL TEST
-; took 0.010 secs. (9.56 milliseconds) 
+; took 0.009 secs. (9.13 milliseconds) 
 
   !(assertEqual 
     (py-list ()) 
@@ -389,7 +389,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.PY-TYPES.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000452 secs. (451.80 microseconds) 
+; took 0.000424 secs. (423.82 microseconds) 
 
   !(assertEqual 
     (py-tuple ()) 
@@ -414,7 +414,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.PY-TYPES.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000427 secs. (426.99 microseconds) 
+; took 0.000319 secs. (319.34 microseconds) 
 
   !(assertEqual 
     (py-dict ()) 
@@ -460,7 +460,7 @@ Deterministic: (assertEqual (1, [2, [3, '3']], ['py-atom', 'list']) , (py-eval "
 >;; HYPERON-METTALOG-SANITY.PY-TYPES.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000505 secs. (505.48 microseconds) 
+; took 0.000388 secs. (387.70 microseconds) 
 
   !(assertEqual 
     (py-list (1 2 (4.5 3))) 
@@ -485,7 +485,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.PY-TYPES.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000372 secs. (372.39 microseconds) 
+; took 0.000401 secs. (401.05 microseconds) 
 
   !(assertEqual 
     (py-list (1 2 (py-tuple (3 4)))) 
@@ -510,7 +510,7 @@ Deterministic: ((Error  (got  ([1, 2, ['py-tuple', [3, 4]]])) (expected  ([1, 2,
 >;; HYPERON-METTALOG-SANITY.PY-TYPES.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000371 secs. (370.59 microseconds) 
+; took 0.000427 secs. (427.35 microseconds) 
 
   !(assertEqual 
     (py-dict ((a "b") ("b" "c"))) 
@@ -535,7 +535,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.PY-TYPES.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000320 secs. (320.21 microseconds) 
+; took 0.000380 secs. (380.42 microseconds) 
 
   !(assertNotEqual 
     (py-list (a "b" c)) 
@@ -568,13 +568,13 @@ Deterministic: ()
 
 
 ^  <span class="ansi1 ansi32"
->Call: </span>(257) [user] call(user:once, user:arg(2, \+equal_enough([<py_list>(0x7f5dd524d8c0)], [<py_list>(0x7f5dd524da80)]), _237766))
+>Call: </span>(257) [user] call(user:once, user:arg(2, \+equal_enough([<py_list>(0x7f1040e3e7c0)], [<py_list>(0x7f1040e4e940)]), _237766))
 ^  <span class="ansi1 ansi32"
->Call: </span>(258) [user] once(user:arg(2, \+equal_enough([<py_list>(0x7f5dd524d8c0)], [<py_list>(0x7f5dd524da80)]), _237766))
+>Call: </span>(258) [user] once(user:arg(2, \+equal_enough([<py_list>(0x7f1040e3e7c0)], [<py_list>(0x7f1040e4e940)]), _237766))
    <span class="ansi1 ansi32"
->Call: </span>(259) [system] arg(2, \+equal_enough([<py_list>(0x7f5dd524d8c0)], [<py_list>(0x7f5dd524da80)]), _237766)
+>Call: </span>(259) [system] arg(2, \+equal_enough([<py_list>(0x7f1040e3e7c0)], [<py_list>(0x7f1040e4e940)]), _237766)
 ^  <span class="ansi1 ansi31"
->Fail: </span>(257) [system] call(user:once, user:arg(2, \+equal_enough([<py_list>(0x7f5dd524d8c0)], [<py_list>(0x7f5dd524da80)]), _237766))
+>Fail: </span>(257) [system] call(user:once, user:arg(2, \+equal_enough([<py_list>(0x7f1040e3e7c0)], [<py_list>(0x7f1040e4e940)]), _237766))
 ^  <span class="ansi1 ansi32"
 >Call: </span>(257) [bugger] bugger:mquietly_if(true, rtrace:pop_tracer)
    <span class="ansi1 ansi32"
@@ -616,11 +616,11 @@ Deterministic: ()
 
 
 ^  <span class="ansi1 ansi32"
->Call: </span>(244) [user] call(user:once, user:write_pass_fail([assertNotEqual, ['py-list', [a, "b", c]], ['py-list', [a, b, c]]], 'FAIL', \+equal_enough([<py_list>(0x7f5dd524d8c0)], [<py_list>(0x7f5dd524da80)])))
+>Call: </span>(244) [user] call(user:once, user:write_pass_fail([assertNotEqual, ['py-list', [a, "b", c]], ['py-list', [a, b, c]]], 'FAIL', \+equal_enough([<py_list>(0x7f1040e3e7c0)], [<py_list>(0x7f1040e4e940)])))
 ^  <span class="ansi1 ansi32"
->Call: </span>(245) [user] once(user:write_pass_fail([assertNotEqual, ['py-list', [a, "b", c]], ['py-list', [a, b, c]]], 'FAIL', \+equal_enough([<py_list>(0x7f5dd524d8c0)], [<py_list>(0x7f5dd524da80)])))
+>Call: </span>(245) [user] once(user:write_pass_fail([assertNotEqual, ['py-list', [a, "b", c]], ['py-list', [a, b, c]]], 'FAIL', \+equal_enough([<py_list>(0x7f1040e3e7c0)], [<py_list>(0x7f1040e4e940)])))
 ^  <span class="ansi1 ansi32"
->Call: </span>(246) [user] write_pass_fail([assertNotEqual, ['py-list', [a, "b", c]], ['py-list', [a, b, c]]], 'FAIL', \+equal_enough([<py_list>(0x7f5dd524d8c0)], [<py_list>(0x7f5dd524da80)]))
+>Call: </span>(246) [user] write_pass_fail([assertNotEqual, ['py-list', [a, "b", c]], ['py-list', [a, b, c]]], 'FAIL', \+equal_enough([<py_list>(0x7f1040e3e7c0)], [<py_list>(0x7f1040e4e940)]))
 ^  <span class="ansi1 ansi32"
 >Call: </span>(247) [user] must_det_ll(loonit_number(_252856))
 ^  <span class="ansi1 ansi32"
@@ -854,29 +854,29 @@ Deterministic: ()
    <span class="ansi1 ansi32"
 >Call: </span>(252) [system] current_output(_480886)
    <span class="ansi1 ansi32"
->Exit: </span>(252) [system] current_output(<stream>(0x7f5dd8150120))
+>Exit: </span>(252) [system] current_output(<stream>(0x7f1045504120))
 ^  <span class="ansi1 ansi32"
->Call: </span>(252) [bugger] locally_each:locally(nb_setval('$wots_stack', [<stream>(0x7f5dd8150120)]), woto(string(_476216), user:format('~`0t~d~2|', [7])))
+>Call: </span>(252) [bugger] locally_each:locally(nb_setval('$wots_stack', [<stream>(0x7f1045504120)]), woto(string(_476216), user:format('~`0t~d~2|', [7])))
 ^  <span class="ansi1 ansi32"
->Call: </span>(253) [locally_each] locally_each:wtl(bugger, nb_setval('$wots_stack', [<stream>(0x7f5dd8150120)]), bugger:woto(string(_476216), user:format('~`0t~d~2|', [7])), bugger:each_call_cleanup)
+>Call: </span>(253) [locally_each] locally_each:wtl(bugger, nb_setval('$wots_stack', [<stream>(0x7f1045504120)]), bugger:woto(string(_476216), user:format('~`0t~d~2|', [7])), bugger:each_call_cleanup)
    <span class="ansi1 ansi32"
 >Call: </span>(254) [system] nb_current('$wots_stack', _484668)
    <span class="ansi1 ansi31"
 >Fail: </span>(254) [system] nb_current('$wots_stack', _484668)
 ^  <span class="ansi1 ansi32"
->Call: </span>(254) [bugger] call_cleanup((nb_setval('$wots_stack', [<stream>(0x7f5dd8150120)]), bugger:woto(string(_476216), user:format('~`0t~d~2|', [7])), nb_delete('$wots_stack')), nb_delete('$wots_stack'))
+>Call: </span>(254) [bugger] call_cleanup((nb_setval('$wots_stack', [<stream>(0x7f1045504120)]), bugger:woto(string(_476216), user:format('~`0t~d~2|', [7])), nb_delete('$wots_stack')), nb_delete('$wots_stack'))
    <span class="ansi1 ansi32"
->Call: </span>(256) [$syspreds] nb_setval('$wots_stack', [<stream>(0x7f5dd8150120)])
+>Call: </span>(256) [$syspreds] nb_setval('$wots_stack', [<stream>(0x7f1045504120)])
    <span class="ansi1 ansi32"
->Call: </span>(257) [system] duplicate_term([<stream>(0x7f5dd8150120)], _488438)
+>Call: </span>(257) [system] duplicate_term([<stream>(0x7f1045504120)], _488438)
    <span class="ansi1 ansi32"
->Exit: </span>(257) [system] duplicate_term([<stream>(0x7f5dd8150120)], [<stream>(0x7f5dd8150120)])
+>Exit: </span>(257) [system] duplicate_term([<stream>(0x7f1045504120)], [<stream>(0x7f1045504120)])
    <span class="ansi1 ansi32"
->Call: </span>(257) [system] nb_linkval('$wots_stack', [<stream>(0x7f5dd8150120)])
+>Call: </span>(257) [system] nb_linkval('$wots_stack', [<stream>(0x7f1045504120)])
    <span class="ansi1 ansi32"
->Exit: </span>(257) [system] nb_linkval('$wots_stack', [<stream>(0x7f5dd8150120)])
+>Exit: </span>(257) [system] nb_linkval('$wots_stack', [<stream>(0x7f1045504120)])
    <span class="ansi1 ansi32"
->Exit: </span>(256) [$syspreds] nb_setval('$wots_stack', [<stream>(0x7f5dd8150120)])
+>Exit: </span>(256) [$syspreds] nb_setval('$wots_stack', [<stream>(0x7f1045504120)])
 ^  <span class="ansi1 ansi32"
 >Call: </span>(256) [bugger] bugger:woto(string(_476216), user:format('~`0t~d~2|', [7]))
 ^  <span class="ansi1 ansi32"
@@ -930,47 +930,47 @@ Deterministic: ()
    <span class="ansi1 ansi32"
 >Call: </span>(259) [system] current_output(_516386)
    <span class="ansi1 ansi32"
->Exit: </span>(259) [system] current_output(<stream>(0x7f5dd8150120))
+>Exit: </span>(259) [system] current_output(<stream>(0x7f1045504120))
    <span class="ansi1 ansi32"
->Call: </span>(259) [system] _518236=set_output_safe(<stream>(0x7f5dd8150120))
+>Call: </span>(259) [system] _518236=set_output_safe(<stream>(0x7f1045504120))
    <span class="ansi1 ansi32"
->Exit: </span>(259) [system] set_output_safe(<stream>(0x7f5dd8150120))=set_output_safe(<stream>(0x7f5dd8150120))
+>Exit: </span>(259) [system] set_output_safe(<stream>(0x7f1045504120))=set_output_safe(<stream>(0x7f1045504120))
    <span class="ansi1 ansi32"
->Call: </span>(259) [system] _520098=mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f5dd8150120)))
+>Call: </span>(259) [system] _520098=mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f1045504120)))
    <span class="ansi1 ansi32"
->Exit: </span>(259) [system] mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f5dd8150120)))=mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f5dd8150120)))
+>Exit: </span>(259) [system] mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f1045504120)))=mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f1045504120)))
    <span class="ansi1 ansi32"
->Call: </span>(259) [system] _521968=mfs_end(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), _476216)
+>Call: </span>(259) [system] _521968=mfs_end(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f1045504120))), _476216)
    <span class="ansi1 ansi32"
->Exit: </span>(259) [system] mfs_end(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), _476216)=mfs_end(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), _476216)
+>Exit: </span>(259) [system] mfs_end(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f1045504120))), _476216)=mfs_end(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f1045504120))), _476216)
 ^  <span class="ansi1 ansi32"
->Call: </span>(259) [bugger] call_cleanup(trusted_redo_call_cleanup(mfs_start(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f5dd8150120)))), (bugger:(set_stream_ignore(current_output, tty(true)), bugger:(true, user:format('~`0t~d~2|', [7]))), mfs_end(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), _476216)), mfs_end(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), _476216)), mfs_end(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), _476216))
+>Call: </span>(259) [bugger] call_cleanup(trusted_redo_call_cleanup(mfs_start(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f1045504120)))), (bugger:(set_stream_ignore(current_output, tty(true)), bugger:(true, user:format('~`0t~d~2|', [7]))), mfs_end(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f1045504120))), _476216)), mfs_end(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f1045504120))), _476216)), mfs_end(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f1045504120))), _476216))
    <span class="ansi1 ansi32"
->Call: </span>(261) [system] _524814=mquietly(bugger:mfs_end(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), _476216))
+>Call: </span>(261) [system] _524814=mquietly(bugger:mfs_end(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f1045504120))), _476216))
    <span class="ansi1 ansi32"
->Exit: </span>(261) [system] mquietly(bugger:mfs_end(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), _476216))=mquietly(bugger:mfs_end(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), _476216))
+>Exit: </span>(261) [system] mquietly(bugger:mfs_end(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f1045504120))), _476216))=mquietly(bugger:mfs_end(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f1045504120))), _476216))
 ^  <span class="ansi1 ansi32"
->Call: </span>(261) [each_call_cleanup] setup_call_cleanup(bugger:mfs_start(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f5dd8150120)))), ((bugger:(bugger:(set_stream_ignore(current_output, tty(true)), bugger:(true, user:format('~`0t~d~2|', [7]))), mfs_end(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), _476216)), deterministic(_526690)), (notrace(_526690==true)->!;mquietly(bugger:mfs_end(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), _476216)), notrace(nb_setarg(1, mquietly(bugger:mfs_end(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), _476216)), true));bugger:mfs_start(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f5dd8150120)))), notrace(nb_setarg(1, mquietly(bugger:mfs_end(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), _476216)), bugger:mfs_end(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), _476216))), notrace(fail))), mquietly(bugger:mfs_end(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), _476216)))
+>Call: </span>(261) [each_call_cleanup] setup_call_cleanup(bugger:mfs_start(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f1045504120)))), ((bugger:(bugger:(set_stream_ignore(current_output, tty(true)), bugger:(true, user:format('~`0t~d~2|', [7]))), mfs_end(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f1045504120))), _476216)), deterministic(_526690)), (notrace(_526690==true)->!;mquietly(bugger:mfs_end(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f1045504120))), _476216)), notrace(nb_setarg(1, mquietly(bugger:mfs_end(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f1045504120))), _476216)), true));bugger:mfs_start(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f1045504120)))), notrace(nb_setarg(1, mquietly(bugger:mfs_end(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f1045504120))), _476216)), bugger:mfs_end(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f1045504120))), _476216))), notrace(fail))), mquietly(bugger:mfs_end(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f1045504120))), _476216)))
 ^  <span class="ansi1 ansi32"
->Call: </span>(262) [system] sig_atomic(bugger:mfs_start(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f5dd8150120)))))
+>Call: </span>(262) [system] sig_atomic(bugger:mfs_start(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f1045504120)))))
 ^  <span class="ansi1 ansi32"
->Call: </span>(264) [bugger] bugger:mfs_start(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))))
+>Call: </span>(264) [bugger] bugger:mfs_start(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f1045504120))))
    <span class="ansi1 ansi32"
->Call: </span>(265) [system] compound(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))))
+>Call: </span>(265) [system] compound(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f1045504120))))
    <span class="ansi1 ansi32"
->Exit: </span>(265) [system] compound(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))))
+>Exit: </span>(265) [system] compound(mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f1045504120))))
    <span class="ansi1 ansi32"
->Call: </span>(265) [system] arg(2, mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), _531424)
+>Call: </span>(265) [system] arg(2, mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f1045504120))), _531424)
    <span class="ansi1 ansi32"
->Exit: </span>(265) [system] arg(2, mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), string)
+>Exit: </span>(265) [system] arg(2, mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f1045504120))), string)
    <span class="ansi1 ansi32"
->Call: </span>(265) [system] arg(3, mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), _533290)
+>Call: </span>(265) [system] arg(3, mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f1045504120))), _533290)
    <span class="ansi1 ansi32"
->Exit: </span>(265) [system] arg(3, mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), _520106)
+>Exit: </span>(265) [system] arg(3, mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f1045504120))), _520106)
    <span class="ansi1 ansi32"
->Call: </span>(265) [system] arg(4, mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), _535156)
+>Call: </span>(265) [system] arg(4, mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f1045504120))), _535156)
    <span class="ansi1 ansi32"
->Exit: </span>(265) [system] arg(4, mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), set_output_safe)
+>Exit: </span>(265) [system] arg(4, mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f1045504120))), set_output_safe)
    <span class="ansi1 ansi32"
 >Call: </span>(265) [system] _537022=mfs(_537026, string, _537030, set_output_safe, _537034)
    <span class="ansi1 ansi32"
@@ -984,33 +984,33 @@ Deterministic: ()
    <span class="ansi1 ansi32"
 >Call: </span>(266) [memory_file] memory_file:new_memory_file(_537026)
    <span class="ansi1 ansi32"
->Exit: </span>(266) [memory_file] memory_file:new_memory_file(<memory_file>(0x5594cd589c40))
+>Exit: </span>(266) [memory_file] memory_file:new_memory_file(<memory_file>(0x556c7a245910))
    <span class="ansi1 ansi32"
->Call: </span>(266) [memory_file] memory_file:open_memory_file(<memory_file>(0x5594cd589c40), write, _537030, [free_on_close(true)])
+>Call: </span>(266) [memory_file] memory_file:open_memory_file(<memory_file>(0x556c7a245910), write, _537030, [free_on_close(true)])
    <span class="ansi1 ansi32"
->Exit: </span>(266) [memory_file] memory_file:open_memory_file(<memory_file>(0x5594cd589c40), write, <stream>(0x5594cd58f0d0), [free_on_close(true)])
+>Exit: </span>(266) [memory_file] memory_file:open_memory_file(<memory_file>(0x556c7a245910), write, <stream>(0x556c7a2804b0), [free_on_close(true)])
 ^  <span class="ansi1 ansi32"
->Exit: </span>(265) [bugger] bugger:new_mfs(mfs(<memory_file>(0x5594cd589c40), string, <stream>(0x5594cd58f0d0), set_output_safe, _537034))
+>Exit: </span>(265) [bugger] bugger:new_mfs(mfs(<memory_file>(0x556c7a245910), string, <stream>(0x556c7a2804b0), set_output_safe, _537034))
    <span class="ansi1 ansi32"
->Call: </span>(265) [system] nb_setarg(1, mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), <memory_file>(0x5594cd589c40))
+>Call: </span>(265) [system] nb_setarg(1, mfs(_520102, string, _520106, set_output_safe, set_output_safe(<stream>(0x7f1045504120))), <memory_file>(0x556c7a245910))
    <span class="ansi1 ansi32"
->Exit: </span>(265) [system] nb_setarg(1, mfs(<memory_file>(0x5594cd589c40), string, _520106, set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), <memory_file>(0x5594cd589c40))
+>Exit: </span>(265) [system] nb_setarg(1, mfs(<memory_file>(0x556c7a245910), string, _520106, set_output_safe, set_output_safe(<stream>(0x7f1045504120))), <memory_file>(0x556c7a245910))
    <span class="ansi1 ansi32"
->Call: </span>(265) [system] nb_setarg(3, mfs(<memory_file>(0x5594cd589c40), string, _520106, set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), <stream>(0x5594cd58f0d0))
+>Call: </span>(265) [system] nb_setarg(3, mfs(<memory_file>(0x556c7a245910), string, _520106, set_output_safe, set_output_safe(<stream>(0x7f1045504120))), <stream>(0x556c7a2804b0))
    <span class="ansi1 ansi32"
->Exit: </span>(265) [system] nb_setarg(3, mfs(<memory_file>(0x5594cd589c40), string, <stream>(0x5594cd58f0d0), set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), <stream>(0x5594cd58f0d0))
+>Exit: </span>(265) [system] nb_setarg(3, mfs(<memory_file>(0x556c7a245910), string, <stream>(0x556c7a2804b0), set_output_safe, set_output_safe(<stream>(0x7f1045504120))), <stream>(0x556c7a2804b0))
 ^  <span class="ansi1 ansi32"
->Call: </span>(265) [bugger] bugger:set_output_safe(<stream>(0x5594cd58f0d0))
+>Call: </span>(265) [bugger] bugger:set_output_safe(<stream>(0x556c7a2804b0))
    <span class="ansi1 ansi32"
->Call: </span>(267) [system] set_output(<stream>(0x5594cd58f0d0))
+>Call: </span>(267) [system] set_output(<stream>(0x556c7a2804b0))
    <span class="ansi1 ansi32"
->Exit: </span>(267) [system] set_output(<stream>(0x5594cd58f0d0))
+>Exit: </span>(267) [system] set_output(<stream>(0x556c7a2804b0))
 ^  <span class="ansi1 ansi32"
->Exit: </span>(265) [bugger] bugger:set_output_safe(<stream>(0x5594cd58f0d0))
+>Exit: </span>(265) [bugger] bugger:set_output_safe(<stream>(0x556c7a2804b0))
 ^  <span class="ansi1 ansi32"
->Exit: </span>(264) [bugger] bugger:mfs_start(mfs(<memory_file>(0x5594cd589c40), string, <stream>(0x5594cd58f0d0), set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))))
+>Exit: </span>(264) [bugger] bugger:mfs_start(mfs(<memory_file>(0x556c7a245910), string, <stream>(0x556c7a2804b0), set_output_safe, set_output_safe(<stream>(0x7f1045504120))))
 ^  <span class="ansi1 ansi32"
->Exit: </span>(262) [system] sig_atomic(bugger:mfs_start(mfs(<memory_file>(0x5594cd589c40), string, <stream>(0x5594cd58f0d0), set_output_safe, set_output_safe(<stream>(0x7f5dd8150120)))))
+>Exit: </span>(262) [system] sig_atomic(bugger:mfs_start(mfs(<memory_file>(0x556c7a245910), string, <stream>(0x556c7a2804b0), set_output_safe, set_output_safe(<stream>(0x7f1045504120)))))
 ^  <span class="ansi1 ansi32"
 >Call: </span>(263) [bugger] bugger:set_stream_ignore(current_output, tty(true))
 ^  <span class="ansi1 ansi32"
@@ -1030,41 +1030,41 @@ Deterministic: ()
 ^  <span class="ansi1 ansi32"
 >Exit: </span>(263) [user] format('~`0t~d~2|', [7])
 ^  <span class="ansi1 ansi32"
->Call: </span>(263) [bugger] bugger:mfs_end(mfs(<memory_file>(0x5594cd589c40), string, <stream>(0x5594cd58f0d0), set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), _476216)
+>Call: </span>(263) [bugger] bugger:mfs_end(mfs(<memory_file>(0x556c7a245910), string, <stream>(0x556c7a2804b0), set_output_safe, set_output_safe(<stream>(0x7f1045504120))), _476216)
 ^  <span class="ansi1 ansi32"
->Call: </span>(264) [bugger] ignore((is_stream(<stream>(0x5594cd58f0d0)), close(<stream>(0x5594cd58f0d0)), mem_handle_to_substring(<memory_file>(0x5594cd589c40), _565102), substring_to_type(_565102, string, _476216)))
+>Call: </span>(264) [bugger] ignore((is_stream(<stream>(0x556c7a2804b0)), close(<stream>(0x556c7a2804b0)), mem_handle_to_substring(<memory_file>(0x556c7a245910), _565102), substring_to_type(_565102, string, _476216)))
    <span class="ansi1 ansi32"
->Call: </span>(266) [system] is_stream(<stream>(0x5594cd58f0d0))
+>Call: </span>(266) [system] is_stream(<stream>(0x556c7a2804b0))
    <span class="ansi1 ansi32"
->Exit: </span>(266) [system] is_stream(<stream>(0x5594cd58f0d0))
+>Exit: </span>(266) [system] is_stream(<stream>(0x556c7a2804b0))
    <span class="ansi1 ansi32"
->Call: </span>(266) [system] close(<stream>(0x5594cd58f0d0))
+>Call: </span>(266) [system] close(<stream>(0x556c7a2804b0))
    <span class="ansi1 ansi32"
->Exit: </span>(266) [system] close(<stream>(0x5594cd58f0d0))
+>Exit: </span>(266) [system] close(<stream>(0x556c7a2804b0))
 ^  <span class="ansi1 ansi32"
->Call: </span>(266) [bugger] bugger:mem_handle_to_substring(<memory_file>(0x5594cd589c40), _565102)
+>Call: </span>(266) [bugger] bugger:mem_handle_to_substring(<memory_file>(0x556c7a245910), _565102)
    <span class="ansi1 ansi32"
->Call: </span>(267) [memory_file] memory_file:memory_file_to_string(<memory_file>(0x5594cd589c40), _565102)
+>Call: </span>(267) [memory_file] memory_file:memory_file_to_string(<memory_file>(0x556c7a245910), _565102)
    <span class="ansi1 ansi32"
->Exit: </span>(267) [memory_file] memory_file:memory_file_to_string(<memory_file>(0x5594cd589c40), "07")
+>Exit: </span>(267) [memory_file] memory_file:memory_file_to_string(<memory_file>(0x556c7a245910), "07")
 ^  <span class="ansi1 ansi32"
->Exit: </span>(266) [bugger] bugger:mem_handle_to_substring(<memory_file>(0x5594cd589c40), "07")
+>Exit: </span>(266) [bugger] bugger:mem_handle_to_substring(<memory_file>(0x556c7a245910), "07")
 ^  <span class="ansi1 ansi32"
 >Call: </span>(266) [bugger] bugger:substring_to_type("07", string, _476216)
 ^  <span class="ansi1 ansi32"
 >Exit: </span>(266) [bugger] bugger:substring_to_type("07", string, "07")
 ^  <span class="ansi1 ansi32"
->Exit: </span>(264) [system] ignore(bugger:(is_stream(<stream>(0x5594cd58f0d0)), close(<stream>(0x5594cd58f0d0)), mem_handle_to_substring(<memory_file>(0x5594cd589c40), "07"), substring_to_type("07", string, "07")))
+>Exit: </span>(264) [system] ignore(bugger:(is_stream(<stream>(0x556c7a2804b0)), close(<stream>(0x556c7a2804b0)), mem_handle_to_substring(<memory_file>(0x556c7a245910), "07"), substring_to_type("07", string, "07")))
 ^  <span class="ansi1 ansi32"
->Call: </span>(264) [bugger] bugger:set_output_safe(<stream>(0x7f5dd8150120))
+>Call: </span>(264) [bugger] bugger:set_output_safe(<stream>(0x7f1045504120))
    <span class="ansi1 ansi32"
->Call: </span>(266) [system] set_output(<stream>(0x7f5dd8150120))
+>Call: </span>(266) [system] set_output(<stream>(0x7f1045504120))
    <span class="ansi1 ansi32"
->Exit: </span>(266) [system] set_output(<stream>(0x7f5dd8150120))
+>Exit: </span>(266) [system] set_output(<stream>(0x7f1045504120))
 ^  <span class="ansi1 ansi32"
->Exit: </span>(264) [bugger] bugger:set_output_safe(<stream>(0x7f5dd8150120))
+>Exit: </span>(264) [bugger] bugger:set_output_safe(<stream>(0x7f1045504120))
 ^  <span class="ansi1 ansi32"
->Exit: </span>(263) [bugger] bugger:mfs_end(mfs(<memory_file>(0x5594cd589c40), string, <stream>(0x5594cd58f0d0), set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), "07")
+>Exit: </span>(263) [bugger] bugger:mfs_end(mfs(<memory_file>(0x556c7a245910), string, <stream>(0x556c7a2804b0), set_output_safe, set_output_safe(<stream>(0x7f1045504120))), "07")
 ^  <span class="ansi1 ansi32"
 >Call: </span>(264) [system] setup_call_cleanup('$notrace'(_580946, _580948), once(each_call_cleanup:(true==true)), '$restore_trace'(_580946, _580948))
 ^  <span class="ansi1 ansi32"
@@ -1072,53 +1072,53 @@ Deterministic: ()
 ^  <span class="ansi1 ansi32"
 >Exit: </span>(264) [system] setup_call_cleanup(system:'$notrace'(3, -1), system:once(each_call_cleanup:(true==true)), system:'$restore_trace'(3, -1))
    <span class="ansi1 ansi32"
->Call: </span>(264) [system] var(bugger:mfs_end(mfs(<memory_file>(0x5594cd589c40), string, <stream>(0x5594cd58f0d0), set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), "07"))
+>Call: </span>(264) [system] var(bugger:mfs_end(mfs(<memory_file>(0x556c7a245910), string, <stream>(0x556c7a2804b0), set_output_safe, set_output_safe(<stream>(0x7f1045504120))), "07"))
    <span class="ansi1 ansi31"
->Fail: </span>(264) [system] var(bugger:mfs_end(mfs(<memory_file>(0x5594cd589c40), string, <stream>(0x5594cd58f0d0), set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), "07"))
+>Fail: </span>(264) [system] var(bugger:mfs_end(mfs(<memory_file>(0x556c7a245910), string, <stream>(0x556c7a2804b0), set_output_safe, set_output_safe(<stream>(0x7f1045504120))), "07"))
 ^  <span class="ansi1 ansi32"
->Call: </span>(264) [bugger] bugger:mfs_end(mfs(<memory_file>(0x5594cd589c40), string, <stream>(0x5594cd58f0d0), set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), "07")
+>Call: </span>(264) [bugger] bugger:mfs_end(mfs(<memory_file>(0x556c7a245910), string, <stream>(0x556c7a2804b0), set_output_safe, set_output_safe(<stream>(0x7f1045504120))), "07")
 ^  <span class="ansi1 ansi32"
->Call: </span>(265) [bugger] ignore((is_stream(<stream>(0x5594cd58f0d0)), close(<stream>(0x5594cd58f0d0)), mem_handle_to_substring(<memory_file>(0x5594cd589c40), _586596), substring_to_type(_586596, string, "07")))
+>Call: </span>(265) [bugger] ignore((is_stream(<stream>(0x556c7a2804b0)), close(<stream>(0x556c7a2804b0)), mem_handle_to_substring(<memory_file>(0x556c7a245910), _586596), substring_to_type(_586596, string, "07")))
    <span class="ansi1 ansi32"
->Call: </span>(267) [system] is_stream(<stream>(0x5594cd58f0d0))
+>Call: </span>(267) [system] is_stream(<stream>(0x556c7a2804b0))
    <span class="ansi1 ansi31"
->Fail: </span>(267) [system] is_stream(<stream>(0x5594cd58f0d0))
+>Fail: </span>(267) [system] is_stream(<stream>(0x556c7a2804b0))
 ^  <span class="ansi1 ansi32"
->Exit: </span>(265) [system] ignore(bugger:(is_stream(<stream>(0x5594cd58f0d0)), close(<stream>(0x5594cd58f0d0)), mem_handle_to_substring(<memory_file>(0x5594cd589c40), _586596), substring_to_type(_586596, string, "07")))
+>Exit: </span>(265) [system] ignore(bugger:(is_stream(<stream>(0x556c7a2804b0)), close(<stream>(0x556c7a2804b0)), mem_handle_to_substring(<memory_file>(0x556c7a245910), _586596), substring_to_type(_586596, string, "07")))
 ^  <span class="ansi1 ansi32"
->Call: </span>(265) [bugger] bugger:set_output_safe(<stream>(0x7f5dd8150120))
+>Call: </span>(265) [bugger] bugger:set_output_safe(<stream>(0x7f1045504120))
    <span class="ansi1 ansi32"
->Call: </span>(267) [system] set_output(<stream>(0x7f5dd8150120))
+>Call: </span>(267) [system] set_output(<stream>(0x7f1045504120))
    <span class="ansi1 ansi32"
->Exit: </span>(267) [system] set_output(<stream>(0x7f5dd8150120))
+>Exit: </span>(267) [system] set_output(<stream>(0x7f1045504120))
 ^  <span class="ansi1 ansi32"
->Exit: </span>(265) [bugger] bugger:set_output_safe(<stream>(0x7f5dd8150120))
+>Exit: </span>(265) [bugger] bugger:set_output_safe(<stream>(0x7f1045504120))
 ^  <span class="ansi1 ansi32"
->Exit: </span>(264) [bugger] bugger:mfs_end(mfs(<memory_file>(0x5594cd589c40), string, <stream>(0x5594cd58f0d0), set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), "07")
+>Exit: </span>(264) [bugger] bugger:mfs_end(mfs(<memory_file>(0x556c7a245910), string, <stream>(0x556c7a2804b0), set_output_safe, set_output_safe(<stream>(0x7f1045504120))), "07")
 ^  <span class="ansi1 ansi32"
->Exit: </span>(261) [system] setup_call_cleanup(bugger:mfs_start(mfs(<memory_file>(0x5594cd589c40), string, <stream>(0x5594cd58f0d0), set_output_safe, set_output_safe(<stream>(0x7f5dd8150120)))), each_call_cleanup:((bugger:(bugger:(set_stream_ignore(current_output, tty(true)), bugger:(true, user:format('~`0t~d~2|', [7]))), mfs_end(mfs(<memory_file>(0x5594cd589c40), string, <stream>(0x5594cd58f0d0), set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), "07")), deterministic(true)), (notrace(true==true)->!;mquietly(bugger:mfs_end(mfs(<memory_file>(0x5594cd589c40), string, <stream>(0x5594cd58f0d0), set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), "07")), notrace(nb_setarg(1, mquietly(bugger:mfs_end(mfs(<memory_file>(0x5594cd589c40), string, <stream>(0x5594cd58f0d0), set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), "07")), true));bugger:mfs_start(mfs(<memory_file>(0x5594cd589c40), string, <stream>(0x5594cd58f0d0), set_output_safe, set_output_safe(<stream>(0x7f5dd8150120)))), notrace(nb_setarg(1, mquietly(bugger:mfs_end(mfs(<memory_file>(0x5594cd589c40), string, <stream>(0x5594cd58f0d0), set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), "07")), bugger:mfs_end(mfs(<memory_file>(0x5594cd589c40), string, <stream>(0x5594cd58f0d0), set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), "07"))), notrace(fail))), each_call_cleanup:mquietly(bugger:mfs_end(mfs(<memory_file>(0x5594cd589c40), string, <stream>(0x5594cd58f0d0), set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), "07")))
+>Exit: </span>(261) [system] setup_call_cleanup(bugger:mfs_start(mfs(<memory_file>(0x556c7a245910), string, <stream>(0x556c7a2804b0), set_output_safe, set_output_safe(<stream>(0x7f1045504120)))), each_call_cleanup:((bugger:(bugger:(set_stream_ignore(current_output, tty(true)), bugger:(true, user:format('~`0t~d~2|', [7]))), mfs_end(mfs(<memory_file>(0x556c7a245910), string, <stream>(0x556c7a2804b0), set_output_safe, set_output_safe(<stream>(0x7f1045504120))), "07")), deterministic(true)), (notrace(true==true)->!;mquietly(bugger:mfs_end(mfs(<memory_file>(0x556c7a245910), string, <stream>(0x556c7a2804b0), set_output_safe, set_output_safe(<stream>(0x7f1045504120))), "07")), notrace(nb_setarg(1, mquietly(bugger:mfs_end(mfs(<memory_file>(0x556c7a245910), string, <stream>(0x556c7a2804b0), set_output_safe, set_output_safe(<stream>(0x7f1045504120))), "07")), true));bugger:mfs_start(mfs(<memory_file>(0x556c7a245910), string, <stream>(0x556c7a2804b0), set_output_safe, set_output_safe(<stream>(0x7f1045504120)))), notrace(nb_setarg(1, mquietly(bugger:mfs_end(mfs(<memory_file>(0x556c7a245910), string, <stream>(0x556c7a2804b0), set_output_safe, set_output_safe(<stream>(0x7f1045504120))), "07")), bugger:mfs_end(mfs(<memory_file>(0x556c7a245910), string, <stream>(0x556c7a2804b0), set_output_safe, set_output_safe(<stream>(0x7f1045504120))), "07"))), notrace(fail))), each_call_cleanup:mquietly(bugger:mfs_end(mfs(<memory_file>(0x556c7a245910), string, <stream>(0x556c7a2804b0), set_output_safe, set_output_safe(<stream>(0x7f1045504120))), "07")))
 ^  <span class="ansi1 ansi32"
->Call: </span>(261) [bugger] bugger:mfs_end(mfs(<memory_file>(0x5594cd589c40), string, <stream>(0x5594cd58f0d0), set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), "07")
+>Call: </span>(261) [bugger] bugger:mfs_end(mfs(<memory_file>(0x556c7a245910), string, <stream>(0x556c7a2804b0), set_output_safe, set_output_safe(<stream>(0x7f1045504120))), "07")
 ^  <span class="ansi1 ansi32"
->Call: </span>(262) [bugger] ignore((is_stream(<stream>(0x5594cd58f0d0)), close(<stream>(0x5594cd58f0d0)), mem_handle_to_substring(<memory_file>(0x5594cd589c40), _596880), substring_to_type(_596880, string, "07")))
+>Call: </span>(262) [bugger] ignore((is_stream(<stream>(0x556c7a2804b0)), close(<stream>(0x556c7a2804b0)), mem_handle_to_substring(<memory_file>(0x556c7a245910), _596880), substring_to_type(_596880, string, "07")))
    <span class="ansi1 ansi32"
->Call: </span>(264) [system] is_stream(<stream>(0x5594cd58f0d0))
+>Call: </span>(264) [system] is_stream(<stream>(0x556c7a2804b0))
    <span class="ansi1 ansi31"
->Fail: </span>(264) [system] is_stream(<stream>(0x5594cd58f0d0))
+>Fail: </span>(264) [system] is_stream(<stream>(0x556c7a2804b0))
 ^  <span class="ansi1 ansi32"
->Exit: </span>(262) [system] ignore(bugger:(is_stream(<stream>(0x5594cd58f0d0)), close(<stream>(0x5594cd58f0d0)), mem_handle_to_substring(<memory_file>(0x5594cd589c40), _596880), substring_to_type(_596880, string, "07")))
+>Exit: </span>(262) [system] ignore(bugger:(is_stream(<stream>(0x556c7a2804b0)), close(<stream>(0x556c7a2804b0)), mem_handle_to_substring(<memory_file>(0x556c7a245910), _596880), substring_to_type(_596880, string, "07")))
 ^  <span class="ansi1 ansi32"
->Call: </span>(262) [bugger] bugger:set_output_safe(<stream>(0x7f5dd8150120))
+>Call: </span>(262) [bugger] bugger:set_output_safe(<stream>(0x7f1045504120))
    <span class="ansi1 ansi32"
->Call: </span>(264) [system] set_output(<stream>(0x7f5dd8150120))
+>Call: </span>(264) [system] set_output(<stream>(0x7f1045504120))
    <span class="ansi1 ansi32"
->Exit: </span>(264) [system] set_output(<stream>(0x7f5dd8150120))
+>Exit: </span>(264) [system] set_output(<stream>(0x7f1045504120))
 ^  <span class="ansi1 ansi32"
->Exit: </span>(262) [bugger] bugger:set_output_safe(<stream>(0x7f5dd8150120))
+>Exit: </span>(262) [bugger] bugger:set_output_safe(<stream>(0x7f1045504120))
 ^  <span class="ansi1 ansi32"
->Exit: </span>(261) [bugger] bugger:mfs_end(mfs(<memory_file>(0x5594cd589c40), string, <stream>(0x5594cd58f0d0), set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), "07")
+>Exit: </span>(261) [bugger] bugger:mfs_end(mfs(<memory_file>(0x556c7a245910), string, <stream>(0x556c7a2804b0), set_output_safe, set_output_safe(<stream>(0x7f1045504120))), "07")
 ^  <span class="ansi1 ansi32"
->Exit: </span>(259) [system] call_cleanup(bugger:trusted_redo_call_cleanup(mfs_start(mfs(<memory_file>(0x5594cd589c40), string, <stream>(0x5594cd58f0d0), set_output_safe, set_output_safe(<stream>(0x7f5dd8150120)))), (bugger:(set_stream_ignore(current_output, tty(true)), bugger:(true, user:format('~`0t~d~2|', [7]))), mfs_end(mfs(<memory_file>(0x5594cd589c40), string, <stream>(0x5594cd58f0d0), set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), "07")), mfs_end(mfs(<memory_file>(0x5594cd589c40), string, <stream>(0x5594cd58f0d0), set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), "07")), bugger:mfs_end(mfs(<memory_file>(0x5594cd589c40), string, <stream>(0x5594cd58f0d0), set_output_safe, set_output_safe(<stream>(0x7f5dd8150120))), "07"))
+>Exit: </span>(259) [system] call_cleanup(bugger:trusted_redo_call_cleanup(mfs_start(mfs(<memory_file>(0x556c7a245910), string, <stream>(0x556c7a2804b0), set_output_safe, set_output_safe(<stream>(0x7f1045504120)))), (bugger:(set_stream_ignore(current_output, tty(true)), bugger:(true, user:format('~`0t~d~2|', [7]))), mfs_end(mfs(<memory_file>(0x556c7a245910), string, <stream>(0x556c7a2804b0), set_output_safe, set_output_safe(<stream>(0x7f1045504120))), "07")), mfs_end(mfs(<memory_file>(0x556c7a245910), string, <stream>(0x556c7a2804b0), set_output_safe, set_output_safe(<stream>(0x7f1045504120))), "07")), bugger:mfs_end(mfs(<memory_file>(0x556c7a245910), string, <stream>(0x556c7a2804b0), set_output_safe, set_output_safe(<stream>(0x7f1045504120))), "07"))
 ^  <span class="ansi1 ansi32"
 >Exit: </span>(258) [bugger] bugger:with_output_to_each(string("07"), bugger:(set_stream_ignore(current_output, tty(true)), bugger:(true, user:format('~`0t~d~2|', [7]))))
 ^  <span class="ansi1 ansi32"
@@ -1134,11 +1134,11 @@ Deterministic: ()
    <span class="ansi1 ansi32"
 >Exit: </span>(256) [system] nb_delete('$wots_stack')
 ^  <span class="ansi1 ansi32"
->Exit: </span>(254) [system] call_cleanup(bugger:(nb_setval('$wots_stack', [<stream>(0x7f5dd8150120)]), bugger:woto(string("07"), user:format('~`0t~d~2|', [7])), nb_delete('$wots_stack')), bugger:nb_delete('$wots_stack'))
+>Exit: </span>(254) [system] call_cleanup(bugger:(nb_setval('$wots_stack', [<stream>(0x7f1045504120)]), bugger:woto(string("07"), user:format('~`0t~d~2|', [7])), nb_delete('$wots_stack')), bugger:nb_delete('$wots_stack'))
 ^  <span class="ansi1 ansi32"
->Exit: </span>(253) [locally_each] locally_each:wtl(bugger, nb_setval('$wots_stack', [<stream>(0x7f5dd8150120)]), bugger:woto(string("07"), user:format('~`0t~d~2|', [7])), bugger:each_call_cleanup)
+>Exit: </span>(253) [locally_each] locally_each:wtl(bugger, nb_setval('$wots_stack', [<stream>(0x7f1045504120)]), bugger:woto(string("07"), user:format('~`0t~d~2|', [7])), bugger:each_call_cleanup)
 ^  <span class="ansi1 ansi32"
->Exit: </span>(252) [locally_each] locally_each:locally(bugger:nb_setval('$wots_stack', [<stream>(0x7f5dd8150120)]), bugger:woto(string("07"), user:format('~`0t~d~2|', [7])))
+>Exit: </span>(252) [locally_each] locally_each:locally(bugger:nb_setval('$wots_stack', [<stream>(0x7f1045504120)]), bugger:woto(string("07"), user:format('~`0t~d~2|', [7])))
 ^  <span class="ansi1 ansi32"
 >Exit: </span>(251) [bugger] bugger:wots("07", user:format('~`0t~d~2|', [7]))
 ^  <span class="ansi1 ansi32"
@@ -1155,31 +1155,31 @@ Deterministic: ()
 ^  <span class="ansi1 ansi32"
 >Exit: </span>(247) [user] must_det_ll(user:get_test_name(7, "HYPERON-METTALOG-SANITY.PY-TYPES.07"))
 ^  <span class="ansi1 ansi32"
->Call: </span>(247) [user] must_det_ll(arg(1, \+equal_enough([<py_list>(0x7f5dd524d8c0)], [<py_list>(0x7f5dd524da80)]), _625980))
+>Call: </span>(247) [user] must_det_ll(arg(1, \+equal_enough([<py_list>(0x7f1040e3e7c0)], [<py_list>(0x7f1040e4e940)]), _625980))
 ^  <span class="ansi1 ansi32"
->Call: </span>(248) [user] once(user:arg(1, \+equal_enough([<py_list>(0x7f5dd524d8c0)], [<py_list>(0x7f5dd524da80)]), _625980))
+>Call: </span>(248) [user] once(user:arg(1, \+equal_enough([<py_list>(0x7f1040e3e7c0)], [<py_list>(0x7f1040e4e940)]), _625980))
    <span class="ansi1 ansi32"
->Call: </span>(249) [system] arg(1, \+equal_enough([<py_list>(0x7f5dd524d8c0)], [<py_list>(0x7f5dd524da80)]), _625980)
+>Call: </span>(249) [system] arg(1, \+equal_enough([<py_list>(0x7f1040e3e7c0)], [<py_list>(0x7f1040e4e940)]), _625980)
    <span class="ansi1 ansi32"
->Exit: </span>(249) [system] arg(1, \+equal_enough([<py_list>(0x7f5dd524d8c0)], [<py_list>(0x7f5dd524da80)]), equal_enough([<py_list>(0x7f5dd524d8c0)], [<py_list>(0x7f5dd524da80)]))
+>Exit: </span>(249) [system] arg(1, \+equal_enough([<py_list>(0x7f1040e3e7c0)], [<py_list>(0x7f1040e4e940)]), equal_enough([<py_list>(0x7f1040e3e7c0)], [<py_list>(0x7f1040e4e940)]))
 ^  <span class="ansi1 ansi32"
->Exit: </span>(248) [system] once(user:arg(1, \+equal_enough([<py_list>(0x7f5dd524d8c0)], [<py_list>(0x7f5dd524da80)]), equal_enough([<py_list>(0x7f5dd524d8c0)], [<py_list>(0x7f5dd524da80)])))
+>Exit: </span>(248) [system] once(user:arg(1, \+equal_enough([<py_list>(0x7f1040e3e7c0)], [<py_list>(0x7f1040e4e940)]), equal_enough([<py_list>(0x7f1040e3e7c0)], [<py_list>(0x7f1040e4e940)])))
 ^  <span class="ansi1 ansi32"
->Exit: </span>(247) [user] must_det_ll(user:arg(1, \+equal_enough([<py_list>(0x7f5dd524d8c0)], [<py_list>(0x7f5dd524da80)]), equal_enough([<py_list>(0x7f5dd524d8c0)], [<py_list>(0x7f5dd524da80)])))
+>Exit: </span>(247) [user] must_det_ll(user:arg(1, \+equal_enough([<py_list>(0x7f1040e3e7c0)], [<py_list>(0x7f1040e4e940)]), equal_enough([<py_list>(0x7f1040e3e7c0)], [<py_list>(0x7f1040e4e940)])))
 ^  <span class="ansi1 ansi32"
->Call: </span>(247) [user] must_det_ll(arg(2, \+equal_enough([<py_list>(0x7f5dd524d8c0)], [<py_list>(0x7f5dd524da80)]), _631566))
+>Call: </span>(247) [user] must_det_ll(arg(2, \+equal_enough([<py_list>(0x7f1040e3e7c0)], [<py_list>(0x7f1040e4e940)]), _631566))
 ^  <span class="ansi1 ansi32"
->Call: </span>(248) [user] once(user:arg(2, \+equal_enough([<py_list>(0x7f5dd524d8c0)], [<py_list>(0x7f5dd524da80)]), _631566))
+>Call: </span>(248) [user] once(user:arg(2, \+equal_enough([<py_list>(0x7f1040e3e7c0)], [<py_list>(0x7f1040e4e940)]), _631566))
    <span class="ansi1 ansi32"
->Call: </span>(249) [system] arg(2, \+equal_enough([<py_list>(0x7f5dd524d8c0)], [<py_list>(0x7f5dd524da80)]), _631566)
+>Call: </span>(249) [system] arg(2, \+equal_enough([<py_list>(0x7f1040e3e7c0)], [<py_list>(0x7f1040e4e940)]), _631566)
 ^  <span class="ansi1 ansi31"
->Fail: </span>(248) [system] once(user:arg(2, \+equal_enough([<py_list>(0x7f5dd524d8c0)], [<py_list>(0x7f5dd524da80)]), _631566))
+>Fail: </span>(248) [system] once(user:arg(2, \+equal_enough([<py_list>(0x7f1040e3e7c0)], [<py_list>(0x7f1040e4e940)]), _631566))
 ^  <span class="ansi1 ansi31"
->Fail: </span>(247) [user] must_det_ll(user:arg(2, \+equal_enough([<py_list>(0x7f5dd524d8c0)], [<py_list>(0x7f5dd524da80)]), _631566))
+>Fail: </span>(247) [user] must_det_ll(user:arg(2, \+equal_enough([<py_list>(0x7f1040e3e7c0)], [<py_list>(0x7f1040e4e940)]), _631566))
 ^  <span class="ansi1 ansi31"
->Fail: </span>(246) [user] write_pass_fail([assertNotEqual, ['py-list', [a, "b", c]], ['py-list', [a, b, c]]], 'FAIL', \+equal_enough([<py_list>(0x7f5dd524d8c0)], [<py_list>(0x7f5dd524da80)]))
+>Fail: </span>(246) [user] write_pass_fail([assertNotEqual, ['py-list', [a, "b", c]], ['py-list', [a, b, c]]], 'FAIL', \+equal_enough([<py_list>(0x7f1040e3e7c0)], [<py_list>(0x7f1040e4e940)]))
 ^  <span class="ansi1 ansi31"
->Fail: </span>(244) [system] call(user:once, user:write_pass_fail([assertNotEqual, ['py-list', [a, "b", c]], ['py-list', [a, b, c]]], 'FAIL', \+equal_enough([<py_list>(0x7f5dd524d8c0)], [<py_list>(0x7f5dd524da80)])))
+>Fail: </span>(244) [system] call(user:once, user:write_pass_fail([assertNotEqual, ['py-list', [a, "b", c]], ['py-list', [a, b, c]]], 'FAIL', \+equal_enough([<py_list>(0x7f1040e3e7c0)], [<py_list>(0x7f1040e4e940)])))
 ^  <span class="ansi1 ansi32"
 >Call: </span>(244) [bugger] bugger:mquietly_if(true, rtrace:pop_tracer)
    <span class="ansi1 ansi32"
@@ -1315,10 +1315,10 @@ Deterministic: ()
    <span class="ansi1 ansi32"
 >Call: </span>(298) [janus] py_call(hyperon_module:rust_to_py_char(b), _49676, [py_object(true), py_string_as(string)])
 <span class="ansi34"
->% Got exception python_error('AttributeError',<py_AttributeError>(0x7f5dd52c93c0)) (Ctx0=_50708, Catcher=user:py_ocall/2)
+>% Got exception python_error('AttributeError',<py_AttributeError>(0x7f1040ec93c0)) (Ctx0=_50708, Catcher=user:py_ocall/2)
 </span><span class="ansi34"
 >% Stack = P;HTML|
-Script done on 2024-10-15 21:08:27+00:00 [COMMAND_EXIT_CODE="137"]
+Script done on 2024-10-15 23:24:19+00:00 [COMMAND_EXIT_CODE="137"]
 </span>
 
 </pre>
