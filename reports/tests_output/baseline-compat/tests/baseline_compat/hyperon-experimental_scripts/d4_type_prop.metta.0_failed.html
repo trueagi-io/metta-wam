@@ -69,7 +69,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-15 08:50:30+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-15 10:00:51+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -425,7 +425,7 @@ Script started on 2024-10-15 08:50:30+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000268 secs. (267.60 microseconds) 
+; took 0.000237 secs. (236.87 microseconds) 
 
   !(assertEqual 
     (get-type (Mortal Plato)) Type)
@@ -473,7 +473,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.02</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.11 milliseconds) 
+; took 0.001 secs. (1.06 milliseconds) 
 
   !(assertEqual 
     (get-type (HumansAreMortal SocratesIsHuman)) 
@@ -498,7 +498,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000268 secs. (268.33 microseconds) 
+; took 0.000257 secs. (256.63 microseconds) 
 
   !(assertEqualToResult 
     (get-type (HumansAreMortal (Human Socrates))) ())
@@ -552,7 +552,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.04</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.46 milliseconds) 
+; took 0.003 secs. (2.54 milliseconds) 
 
   !(assertEqualToResult 
     ("sameTypes" 
@@ -584,7 +584,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000322 secs. (322.46 microseconds) 
+; took 0.000362 secs. (362.50 microseconds) 
 
   !(assertEqual 
     (get-type (= SocratesIsMortal (HumansAreMortal SocratesIsHuman))) Type)
@@ -619,7 +619,7 @@ Deterministic: ("sameTypes" Type Type)
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000387 secs. (387.12 microseconds) 
+; took 0.000457 secs. (457.49 microseconds) 
 
   !(assertEqual 
     (get-type (= (Mortal Socrates) (Mortal Plato))) Type)
@@ -655,7 +655,7 @@ Deterministic: ("!sameTypes" (Mortal Socrates) (Mortal Plato))
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000320 secs. (320.40 microseconds) 
+; took 0.000377 secs. (377.18 microseconds) 
 
   !(assertEqualToResult 
     (get-type (= SocratesIsMortal (HumansAreMortal PlatoIsHuman))) ())
@@ -689,7 +689,7 @@ Deterministic: ("!sameTypes" (Human Socrates) (Human Plato))
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.08</h3>
 ; 
 ; EVAL TEST
-; took 0.000233 secs. (233.37 microseconds) 
+; took 0.000275 secs. (275.48 microseconds) 
 
   !(assertEqualToResult 
     (get-type (= SocratesIsHuman PlatoIsHuman)) ())
@@ -722,7 +722,7 @@ Deterministic: ("!sameTypes" (Human Socrates) (Mortal Socrates))
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.09</h3>
 ; 
 ; EVAL TEST
-; took 0.000246 secs. (245.59 microseconds) 
+; took 0.000237 secs. (236.78 microseconds) 
 
   !(assertEqualToResult 
     (get-type (= SocratesIsHuman SocratesIsMortal)) ())
@@ -765,7 +765,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.10</h3>
 ; 
 ; EVAL TEST
-; took 0.000509 secs. (509.03 microseconds) 
+; took 0.000470 secs. (470.28 microseconds) 
 
   !(assertEqual 
     (= SocratesIsMortal 
@@ -791,7 +791,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.11</h3>
 ; 
 ; EVAL TEST
-; took 0.000453 secs. (452.62 microseconds) 
+; took 0.000428 secs. (428.12 microseconds) 
 
   !(assertEqual 
     (= 
@@ -823,7 +823,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.12</h3>
 ; 
 ; EVAL TEST
-; took 0.000764 secs. (764.48 microseconds) 
+; took 0.000735 secs. (735.12 microseconds) 
 
   !(assertEqual 
     (= 
@@ -849,7 +849,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.13</h3>
 ; 
 ; EVAL TEST
-; took 0.000737 secs. (736.78 microseconds) 
+; took 0.000711 secs. (711.33 microseconds) 
 
   !(assertEqualToResult 
     (= 
@@ -880,7 +880,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.14</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.35 milliseconds) 
+; took 0.001 secs. (1.30 milliseconds) 
 
   !(assertEqual 
     (= 
@@ -907,7 +907,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.15</h3>
 ; 
 ; EVAL TEST
-; took 0.000620 secs. (619.66 microseconds) 
+; took 0.000689 secs. (688.86 microseconds) 
 
   !(assertEqualToResult 
     (= 
@@ -934,7 +934,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.16</h3>
 ; 
 ; EVAL TEST
-; took 0.000436 secs. (436.02 microseconds) 
+; took 0.000524 secs. (523.76 microseconds) 
 
   !(assertEqualToResult 
     (Mortal Plato) 
@@ -960,7 +960,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.17</h3>
 ; 
 ; EVAL TEST
-; took 0.000855 secs. (855.39 microseconds) 
+; took 0.000938 secs. (937.65 microseconds) 
 
   !(assertEqual 
     (= 
@@ -997,7 +997,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.18</h3>
 ; 
 ; EVAL TEST
-; took 0.000436 secs. (435.67 microseconds) 
+; took 0.000381 secs. (380.81 microseconds) 
 
   !(assertEqual 
     (Mortal Plato) T)
@@ -1029,7 +1029,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D4-TYPE-PROP.19</h3>
 ; 
 ; EVAL TEST
-; took 0.000734 secs. (733.52 microseconds) 
+; took 0.000784 secs. (784.45 microseconds) 
 
   !(assertEqualToResult 
     (ift 
@@ -1045,7 +1045,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 637,172 inferences, 0.143 CPU in 0.143 seconds (100% CPU, 4447270 Lips)
+>% 637,172 inferences, 0.143 CPU in 0.143 seconds (100% CPU, 4454971 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/d4_type_prop.metta  0)
 <span class="ansi1"
@@ -1185,7 +1185,7 @@ Deterministic: ()
     (unwind  
       (halt  7)))
 </span>
-Script done on 2024-10-15 08:50:35+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-15 10:00:57+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
