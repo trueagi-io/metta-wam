@@ -86,12 +86,12 @@ annotated_read_until_char(LC0, LC1, Stream, EndChar, Chars) :-
     ;   Char = '\\' -> get_char(Stream, NextChar),
                         % need to advance for end of line even if it is escaped
                         (NextChar = '\n' ->
-                            annotated_post_newline(LC0,LC1)
+                            annotated_post_newline(LC0,LCa)
                         ;
                             uft8_count_to_utf16_count_single(NextChar,NextSize),
                             Total is NextSize+1,
-                            annotated_position_inc(LC0,LC1,Total)),
-                        annotated_read_until_char(Stream, EndChar, RestChars),
+                            annotated_position_inc(LC0,LCa,Total)),
+                        annotated_read_until_char(LCa, LC1, Stream, EndChar, RestChars),
                         Chars = [NextChar | RestChars]
     ;   annotated_read_until_char(LC0,LCa,Stream, EndChar, RestChars),
         uft8_count_to_utf16_count_single(Char,Size),

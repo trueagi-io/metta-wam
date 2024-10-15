@@ -81,6 +81,7 @@ find_at_doc_aux2(Term,[doc(Term)|_]) :- !.
 find_at_doc_aux2(Term,[H|T]) :-
     find_at_doc_aux2(Term,T).
 
+
 %!  clause_with_arity_in_file_at_position(-Clause, -Arity, +Path, +Position) is det.
 %
 %   Reads the clause located at the specified position within the given file.
