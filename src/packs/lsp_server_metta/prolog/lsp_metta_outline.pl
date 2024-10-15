@@ -506,13 +506,13 @@ d4_document_symbol(Nth, d(_,Str,_,_), S, 12, Nth:1, End:1):- succ(Nth,End), outl
 xref_document_symbol_fb(Doc, PrettyString, KindNumber, Start, End):- 
    doc_path(Doc,Path),
    clause(metta_file_buffer(_,What,_,Path,PosStart),true,Ref), line_col(PosStart,Start),
-   xrefed_outline_kind(What,Outline,KindName),outline_name(Outline,PrettyString),lsp_xref_kind(KindNumber, KindName),
-   (((next_clause(Ref, metta_file_buffer(_,_,_,Path,PosEnd)), line_col(PosEnd,End)))-> true ; next_line(Start,End)).
+   once(((xrefed_outline_type_kind(What,Outline,KindName),outline_name(Outline,PrettyString),lsp_xref_kind(KindNumber, KindName)))),
+   once(((next_clause(Ref, metta_file_buffer(_,_,_,Path,PosEnd)), line_col(PosEnd,End)))-> true ; next_line(Start,End)).
 
 
 outline_name(Str,S):- string(Str),!,atom_length(Str,Len),Len>2,!,S=Str.
 outline_name(Str,S):- is_ftVar(Str),wots(M, write_src_woi(Str)),!,outline_name(M,S).
-outline_name(Str,S):- is_list(Str),wots(M, write_src_xref(Str)),!,outline_name(M,S).
+outline_name(Str,S):- is_list(Str),wots(M, write_src_woi(Str)),!,outline_name(M,S).
 outline_name(Str,S):- Str = exec(_),wots(M, write_src_woi(Str)),!,outline_name(M,S).
 outline_name(Str,S):- sformat(S,'~w',[Str]),atom_length(S,Len),Len>5.
 
@@ -524,19 +524,38 @@ line_col(Position,LineM1:Col):-
      LineM1 is Line-1,
      stream_position_data(line_position, Position, Col).  % Extract the column number.
 
-xrefed_outline_kind([EQ,Outline|_],Outline,function):- EQ=='=',!.
-xrefed_outline_kind([CT,Outline|Stuff],[CT,Outline|Stuff],typeParameter):- CT==':',!.
-xrefed_outline_kind('$COMMENT'(Cmt,_,_),Cmt,string):-!.
-xrefed_outline_kind('exec'([Op|Rest]),'exec'([Op|Rest]),KindNumber):- op_execkind(Op,KindNumber),!.
-xrefed_outline_kind('exec'(Cmt),'exec'(Cmt),class):-!.
-xrefed_outline_kind(ELSE,ELSE,array):-!.
+xrefed_outline_type_kind(What,Outline,KindName):-
+   xrefed_outline_type(What,Outline,TypeName),
+   type_kind(TypeName,KindName),!.
 
-op_execkind(Op,key):- \+ atom(Op).
-op_execkind(Op,number):- atom_contains(Op,"include"),!.
-op_execkind(Op,number):- atom_contains(Op,"import"),!.
-op_execkind(Op,number):- atom_contains(Op,"load"),!.
-op_execkind(Op,constant):- atom(Op),atom_concat(_,'!',Op),!.
-op_execkind(_Op,class).
+xrefed_outline_type('$COMMENT'(Cmt,_,_),Cmt,metta_comment):-!.
+xrefed_outline_type('exec'([Op|Rest]),'exec'([Op|Rest]),KindNumber):- op_execkind(Op,KindNumber),!.
+xrefed_outline_type('exec'(Cmt),'exec'(Cmt),metta_other):-!.
+xrefed_outline_type([EQ,Outline|_],Outline,metta_defun):- EQ=='=',!.
+xrefed_outline_type([CT,Outline|Stuff],[CT,Outline|Stuff],metta_typedecl):- CT==':',!.
+xrefed_outline_type([Op|Rest],[Op|Rest],KindNumber):- op_execkind(Op,KindNumber),!.
+xrefed_outline_type(Decl,Decl,metta_other):- is_list(Decl),!.
+xrefed_outline_type(ELSE,ELSE,metta_unknown):-!.
+
+op_execkind(Op,_):- \+ atomic(Op),!,is_list(Op).
+op_execkind(Op,metta_import):- atom_contains(Op,"include"),!.
+op_execkind(Op,metta_import):- atom_contains(Op,"import"),!.
+op_execkind(Op,metta_import):- atom_contains(Op,"load"),!.
+op_execkind(Op,metta_directive):- atom(Op),atom_concat(_,'!',Op),!.
+op_execkind(Op,metta_symbol):- atom(Op),atom_concat('&',_,Op),!.
+
+
+type_kind(Var,WillBe):- var(Var),!,freeze(Var,type_kind(Var,WillBe)).
+type_kind(metta_import,number).
+type_kind(metta_symbol,key).
+type_kind(metta_directive,constant).
+type_kind(metta_comment,string).
+type_kind(metta_typedecl,typeParameter).
+type_kind(metta_defun,function).
+type_kind(metta_exec,class).
+type_kind(metta_other,interface).
+type_kind(Was,Keep):- clause(lsp_xref_kind(_,Was),true),!,Keep=Was
+type_kind(_,array).
 
 lsp_xref_kind(N, LU):- number(LU),var(N),!,LU=N.
 lsp_xref_kind(1, file).
