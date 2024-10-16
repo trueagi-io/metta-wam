@@ -33,6 +33,7 @@ COPY ./ ./
 # get rid of copied venv that is probably using a whole different python anyways
 RUN rm -rf ./venv/  
 COPY ./INSTALL.sh ./INSTALL.sh
+RUN apt install dos2unix
 SHELL ["/bin/bash", "-c"]
 RUN source ./INSTALL.sh --easy
 

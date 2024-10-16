@@ -2498,12 +2498,12 @@ len_or_unbound(_,_).
 :- nodebug(metta('defn')).
 
 eval_maybe_defn(Eq,RetType,Depth,Self,X,Res):-
+    \+ fail_on_constructor,
    \+  \+ (curried_arity(X,F,A),
            is_metta_type_constructor(Self,F,AA),
            ( \+ AA\=A ),!,
            if_trace(e,color_g_mesg('#772000',
                  indentq2(Depth,defs_none_cached((F/A/AA)=X))))),!,
-   \+ fail_on_constructor,
    eval_constructor(Eq,RetType,Depth,Self,X,Res).
 eval_maybe_defn(Eq,RetType,Depth,Self,X,Y):- can_be_ok(eval_maybe_defn,X),!,
       trace_eval(eval_defn_choose_candidates(Eq,RetType),'defn',Depth,Self,X,Y).
