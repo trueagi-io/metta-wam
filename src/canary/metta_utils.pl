@@ -889,111 +889,342 @@ ibreak :-
 
 %recolor(_,_):- ibreak.
 
+%!  tc_arg(+N, +C, -E) is det.
+%
+%   This predicate retrieves the N-th argument of the compound term C and unifies it with E.
+%   If an error occurs during the `arg/3` call, it catches the error and attempts to handle it 
+%   with additional debugging steps, including backtracking (`bt`), logging the failure with 
+%   `fbug/1`, and tracing the execution if tracing is enabled.
+%
+%   @arg N  The position of the argument to retrieve from the compound term C.
+%   @arg C  The compound term from which to retrieve the argument.
+%   @arg E  Unifies with the N-th argument of C.
+%%
+%   @example
+%   ?- tc_arg(1, f(a, b, c), Arg).
+%   Arg = a.
+%
 %tc_arg(N,C,E):- compound(C),!,arg(N,C,E).
-tc_arg(N,C,E):- catch(arg(N,C,E),Err,
-  /*unrepress_output*/ ((bt,fbug(tc_arg(N,C,E)=Err),((tracing->true;trace),break,arg(N,C,E))))).
+tc_arg(N,C,E):- catch(arg(N,C,E), Err,
+      /* unrepress_output */ (
+          (bt,fbug(tc_arg(N,C,E)=Err),((tracing -> true ; trace), break, arg(N,C,E))))).
 
+%!  compound_name_arg(?G, +MD, ?Goal) is det.
+%
+%   This predicate handles the construction and deconstruction of compound terms
+%   based on the name and arguments. It is used to either construct a compound 
+%   term from a functor and its argument or to decompose a compound term into 
+%   its functor and first argument.
+%
+%   @arg G    The compound term (either input or output). If G is unbound, 
+%             it will be constructed using `MD` and `Goal`.
+%   @arg MD   The name of the functor for the compound term.
+%   @arg Goal The argument of the compound term.
+%
+%   The predicate works in two modes:
+%   1. If `G` is a variable, it constructs a compound term with functor `MD` 
+%      and argument `Goal` (using the `=../2` operator).
+%   2. If `G` is a compound, it decomposes `G` into its functor `MD` and 
+%      its argument list `[Goal]`.
+%
+%   @example
+%   % Constructing a compound term:
+%   ?- compound_name_arg(G, foo, bar).
+%   G = foo(bar).
+%
+%   % Decomposing a compound term:
+%   ?- compound_name_arg(foo(bar), MD, Goal).
+%   MD = foo,
+%   Goal = bar.
+%
+compound_name_arg(G, MD, Goal) :-
+    % If G is unbound (a variable), proceed with constructing the term.
+    var(G), !,                
+    % Ensure that MD is an atom (functor name).
+    atom(MD),                 
+    % Use `=../2` to construct G as a compound with functor MD and argument Goal.
+    G =.. [MD, Goal].         
+compound_name_arg(G, MD, Goal) :-
+    % If G is a compound, decompose it into functor and arguments.
+    compound(G), !,           
+    % Decompose G into functor MD and argument list [Goal].
+    compound_name_arguments(G, MD, [Goal]).  
 
-
-
-
-
-compound_name_arg(G,MD,Goal):- var(G),!,atom(MD),G=..[MD,Goal].
-compound_name_arg(G,MD,Goal):- compound(G),!, compound_name_arguments(G,MD,[Goal]).
-
-
+% Allows the predicate `user:message_hook/3` to be defined in multiple files.
 :- multifile(user:message_hook/3).
-:- dynamic(user:message_hook/3).
-%user:message_hook(Term, Kind, Lines):- error==Kind, itrace,fbug(user:message_hook(Term, Kind, Lines)),trace,fail.
-user:message_hook(Term, Kind, Lines):-
-   fail, error==Kind,
-   fbug(message_hook(Term, Kind, Lines)),fail.
 
+% Declares that `user:message_hook/3` can be modified during runtime, allowing new clauses to be added or retracted.
+:- dynamic(user:message_hook/3).
+
+%!  user:message_hook(+Term, +Kind, +Lines) is semidet.
+%
+%   This hook is used to intercept messages in the SWI-Prolog system. It is designed to handle 
+%   error messages by logging them using `fbug/1`. If the message kind is `error`, it will attempt 
+%   to log the message details, but ultimately fails, allowing other message handling logic to proceed.
+%
+%   @arg Term  The term representing the message content.
+%   @arg Kind  The kind of message, such as `error`, `warning`, etc.
+%   @arg Lines The message lines, typically used to format the output.
+%
+%   This predicate logs messages of kind `error` and then fails, meaning it does not handle the message 
+%   further. The `fail/0` at the beginning ensures that no other action is taken before logging.
+%
+%   @example
+%   ?- user:message_hook(my_error_message, error, ["Some error occurred."]).
+%   % This would log the error using fbug/1 and then fail.
+%
+%user:message_hook(Term, Kind, Lines):- error==Kind, itrace,fbug(user:message_hook(Term, Kind, Lines)),trace,fail.
+user:message_hook(Term, Kind, Lines) :-
+    % Always fail initially to ensure no action is taken before processing.
+    fail,
+    % Check if the message kind is an error.
+    error == Kind,
+    % Log the error message using fbug/1.
+    fbug(message_hook(Term, Kind, Lines)),
+    % Fail again to ensure further message handling occurs.
+    fail.
+
+% Define several predicates as meta_predicate.
+% A meta-predicate in Prolog is a predicate that takes other predicates (or "goals") as arguments. 
+% This allows you to pass predicates to be executed or manipulated within other predicates. 
+% The purpose of a meta-predicate declaration is to tell Prolog how to treat those arguments.
 :- meta_predicate(must_det_ll(0)).
 :- meta_predicate(must_det_ll1(1,0)).
 :- meta_predicate(md_failed(1,0)).
 :- meta_predicate(must_not_error(0)).
 %:- meta_predicate(must_det_l(0)).
-
 %:- no_xdbg_flags.
 :- meta_predicate(wno_must(0)).
 
-wno_must(G):- locally(nb_setval(no_must_det_ll,t),locally(nb_setval(cant_rrtrace,t),call(G))).
+%!  wno_must(:G) is det.
+%
+%   Temporarily sets the flags `no_must_det_ll` and `cant_rrtrace` to true 
+%   while executing the given goal `G`. This is used to ensure that the goal 
+%   runs without certain restrictions, such as deterministic checks or tracing.
+%
+%   @arg G The goal to be executed with modified environment settings.
+%
+wno_must(G) :-
+    % Temporarily set the `no_must_det_ll` flag to true.
+    locally(nb_setval(no_must_det_ll, t),
+        % Temporarily set the `cant_rrtrace` flag to true.
+        locally(nb_setval(cant_rrtrace, t),
+            % Execute the goal G within the modified environment.
+            call(G))).
 
-md_maplist(_MD,_,[]):-!.
-md_maplist(MD,P1,[H|T]):- call(MD,call(P1,H)), md_maplist(MD,P1,T).
+%!  md_maplist(:MD, :P1, +List) is det.
+%
+%   Applies a predicate `P1` to each element in `List` using the modifier `MD`. 
+%   This version of `md_maplist/3` handles single-argument predicates.
+%
+%   @arg MD   Modifier goal to be applied before calling `P1`.
+%   @arg P1   Predicate to be applied to each element of `List`.
+%   @arg List Input list.
+%
+md_maplist(_MD, _, []) :- !.
+md_maplist(MD, P1, [H|T]) :-
+    % Call the modifier MD with the predicate P1 applied to H.
+    call(MD, call(P1, H)),
+    % Recursively apply MD and P1 to the tail of the list.
+    md_maplist(MD, P1, T).
 
-md_maplist(_MD,_,[],[]):-!.
-md_maplist(MD,P2,[HA|TA],[HB|TB]):- call(MD,call(P2,HA,HB)), md_maplist(MD,P2,TA,TB).
+%!  md_maplist(:MD, :P2, +ListA, -ListB) is det.
+%
+%   Applies a two-argument predicate `P2` to corresponding elements of `ListA` and `ListB`
+%   using the modifier `MD`. Each element from `ListA` is passed with the corresponding 
+%   element from `ListB` to `P2`.
+%
+%   @arg MD     Modifier goal to be applied before calling `P2`.
+%   @arg P2     Two-argument predicate to be applied to each pair of elements.
+%   @arg ListA  First input list.
+%   @arg ListB  Second input list (output list).
+%
+md_maplist(_MD, _, [], []) :- !.
+md_maplist(MD, P2, [HA|TA], [HB|TB]) :-
+    % Call the modifier MD with the predicate P2 applied to HA and HB.
+    call(MD, call(P2, HA, HB)),
+    % Recursively apply MD and P2 to the tail of both lists.
+    md_maplist(MD, P2, TA, TB).
 
-md_maplist(_MD,_,[],[],[]):-!.
-md_maplist(MD,P3,[HA|TA],[HB|TB],[HC|TC]):- call(MD,call(P3,HA,HB,HC)), md_maplist(MD,P3,TA,TB,TC).
-
-%must_det_ll(G):- !, once((/*notrace*/ (G)*->true;md_failed(P1,G))).
+%!  md_maplist(:MD, :P3, +ListA, -ListB, -ListC) is det.
+%
+%   Applies a three-argument predicate `P3` to corresponding elements of `ListA`, `ListB`, 
+%   and `ListC` using the modifier `MD`. Each element from `ListA`, `ListB`, and `ListC` is
+%   passed to `P3`.
+%
+%   @arg MD     Modifier goal to be applied before calling `P3`.
+%   @arg P3     Three-argument predicate to be applied to each triple of elements.
+%   @arg ListA  First input list.
+%   @arg ListB  Second input list (output list).
+%   @arg ListC  Third input list (output list).
+%
+md_maplist(_MD, _, [], [], []) :- !.
+md_maplist(MD, P3, [HA|TA], [HB|TB], [HC|TC]) :-
+    % Call the modifier MD with the predicate P3 applied to HA, HB, and HC.
+    call(MD, call(P3, HA, HB, HC)),
+    % Recursively apply MD and P3 to the tails of the lists.
+    md_maplist(MD, P3, TA, TB, TC).
 
 %:- if( \+ current_predicate(must_det_ll/1)).
-must_det_ll(X):- tracing,!,once(X).
-must_det_ll(X):- md(once,X).
+
+%!  must_det_ll(:Goal) is det.
+%
+%   Ensures that the given `Goal` is executed deterministically (i.e., it succeeds with exactly 
+%   one solution). If tracing is enabled, it executes the goal in a traced environment. Otherwise, 
+%   it delegates to `md/2` for non-traced deterministic execution.
+%
+%   @arg Goal The goal to execute deterministically.
+%
+%must_det_ll(G):- !, once((/*notrace*/ (G)*->true;md_failed(P1,G))).
+must_det_ll(X) :-
+    % If tracing is enabled, execute the goal `X` using `once/1` to ensure determinism.
+    tracing, !,
+    once(X).
+must_det_ll(X) :-
+    % If tracing is not enabled, delegate the execution to `md/2`, ensuring that `X` is executed once.
+    md(once, X).
+
 %:- endif.
 
-md(P1,G):- tracing,!, call(P1,G). % once((call(G)*->true;md_failed(P1,G))).
-md(P1,G):- remove_must_det(MD), wraps_each(MD,P1),!,call(G).
-md(P1,G):- never_rrtrace,!, call(P1,G).
-md(P1,G):- /*notrace*/(arc_html),!, ignore(/*notrace*/ (call(P1,G))),!.
+%!  md(:P1, :G) is det.
+%
+%   Executes the goal `G` with the given modifier `P1`. This predicate applies various
+%   context-sensitive behaviors, such as tracing, error handling, determinism, and goal wrapping,
+%   depending on the conditions. It ensures proper execution of goals in different environments.
+%
+%   The modifier `P1` controls how the goal is called (e.g., ensuring determinism or handling errors).
+%   The behavior of `md/2` changes depending on the structure of the goal `G`, such as conjunctions, 
+%   disjunctions, cuts, or list-based goals like `maplist/2`.
+%
+%   @arg P1  The modifier or context in which the goal `G` is executed.
+%   @arg G   The goal to be executed, possibly wrapped with `P1` and evaluated under various conditions.
+%
+% If tracing is enabled, execute the goal G with modifier P1.
+md(P1, G):- tracing, !, call(P1, G).
+% Remove the deterministic checks (must_det) and apply the wrapped P1 to the goal G.
+md(P1, G):- remove_must_det(MD), wraps_each(MD, P1), !, call(G).
+% If rrtrace is never allowed, directly call the goal G with modifier P1.
+md(P1, G):- never_rrtrace, !, call(P1, G).
+% If in an HTML environment, call the goal G and ignore any errors.
+md(P1, G):- (arc_html), !, ignore((call(P1, G))), !.
+% If X is a trace call, trace the goal and execute it with P1.
+md(P1, (X, Goal)):- is_trace_call(X), !, call((itrace, call(P1, Goal))).
 %md(P1,X):- !,must_not_error(X).
-md(P1,(X,Goal)):- is_trace_call(X),!,call((itrace,call(P1,Goal))).
-md(_, X):- is_trace_call(X),!,itrace.
-md(P1, X):- nb_current(no_must_det_ll,t),!,call(P1,X).
-md(P1,X):- \+ callable(X), !, throw(md_not_callable(P1,X)).
-md(P1,(A*->X;Y)):- !,(must_not_error(A)*->md(P1,X);md(P1,Y)).
-md(P1,(A->X;Y)):- !,(must_not_error(A)->md(P1,X);md(P1,Y)).
-md(P1,(X,Cut)):- (Cut==(!)),md(P1,X),!.
-md(MD,maplist(P1,List)):- !, call(MD,md_maplist(MD,P1,List)).
-md(MD,maplist(P2,ListA,ListB)):- !, call(MD,md_maplist(MD,P2,ListA,ListB)).
-md(MD,maplist(P3,ListA,ListB,ListC)):- !, call(MD,md_maplist(MD,P3,ListA,ListB,ListC)).
-md(P1,(X,Cut,Y)):- (Cut==(!)), !, (md(P1,X),!,md(P1,Y)).
-md(P1,(X,Y)):- !, (md(P1,X),md(P1,Y)).
-%md(P1,X):- /*notrace*/(ncatch(X,_,fail)),!.
-%md(P1,X):- conjuncts_to_list(X,List),List\=[_],!,maplist(must_det_ll,List).
-md(_,must_det_ll(X)):- !, must_det_ll(X).
-md(_,grid_call(P2,I,O)):- !, must_grid_call(P2,I,O).
+% If X is a trace call, start tracing.
+md(_, X):- is_trace_call(X), !, itrace.
+% If no deterministic check is allowed, call X directly with P1.
+md(P1, X):- nb_current(no_must_det_ll, t), !, call(P1, X).
+% Throw an error if X is not callable.
+md(P1, X):- \+ callable(X), !, throw(md_not_callable(P1, X)).
+% Handle the if-then-else construct with deterministic branching.
+md(P1, (A *-> X ; Y)):- !, (must_not_error(A) *-> md(P1, X); md(P1, Y)).
+% Handle the standard if-then-else construct with error handling.
+md(P1, (A -> X ; Y)):- !, (must_not_error(A) -> md(P1, X); md(P1, Y)).
+% Handle cuts by executing the first goal and applying the cut.
+md(P1,(X,Cut)):-(Cut==(!)),md(P1,X),!.
+% Handle maplist/2 for applying P1 to each element in the list.
+md(MD, maplist(P1, List)):- !, call(MD, md_maplist(MD, P1, List)).
+% Handle maplist/3 for applying P2 to corresponding elements of ListA and ListB.
+md(MD, maplist(P2, ListA, ListB)):- !, call(MD, md_maplist(MD, P2, ListA, ListB)).
+% Handle maplist/4 for applying P3 to corresponding elements of ListA, ListB, and ListC.
+md(MD, maplist(P3, ListA, ListB, ListC)):- !, call(MD, md_maplist(MD, P3, ListA, ListB, ListC)).
+% Handle conjunction with cuts by executing X, then Y.
+md(P1,(X,Cut,Y)):-(Cut==(!)),!,(md(P1,X),!,md(P1,Y)).
+% Handle simple conjunction of two goals.
+md(P1, (X, Y)):- !, (md(P1, X), md(P1, Y)).
+% Ensure deterministic execution of the goal X using must_det_ll/1.
+md(_, must_det_ll(X)):- !, must_det_ll(X).
+% Handle grid_call/3, ensuring that the P2 goal operates on inputs and outputs deterministically.
+md(_, grid_call(P2, I, O)):- !, must_grid_call(P2, I, O).
 %md(P1,call(P2,I,O)):- !, must_grid_call(P2,I,O).
 %md(P1,(X,Y,Z)):- !, (md(P1,X)->md(P1,Y)->md(P1,Z)).
 %md(P1,(X,Y)):- !, (md(P1,X)->md(P1,Y)).
 %md(P1,if_t(X,Y)):- !, if_t(must_not_error(X),md(P1,Y)).
-md(P1,forall(X,Y)):- !, md(P1,forall(must_not_error(X),must_not_error(Y))).
-md(P1,\+ (X, \+ Y)):- !, md(P1,forall(must_not_error(X),must_not_error(Y))).
-
-md(P1,(X;Y)):- !, ((must_not_error(X);must_not_error(Y))->true;md_failed(P1,X;Y)).
-md(P1,\+ (X)):- !, (\+ must_not_error(X) -> true ; md_failed(P1,\+ X)).
+% Handle forall/2 by ensuring both the generator and test goals handle errors properly.
+md(P1, forall(X, Y)):- !, md(P1, forall(must_not_error(X), must_not_error(Y))).
+% Handle nested negations by converting them to a forall construct with error handling.
+md(P1, \+ (X, \+ Y)):- !, md(P1, forall(must_not_error(X), must_not_error(Y))).
+% Handle disjunction (or) of two goals, ensuring errors are caught and handled.
+md(P1, (X; Y)):- !, ((must_not_error(X); must_not_error(Y)) -> true; md_failed(P1, X; Y)).
+% Handle negation of a goal, ensuring proper error handling.
+md(P1, \+ (X)):- !, (\+ must_not_error(X) -> true ; md_failed(P1, \+ X)).
 %md(P1,(M:Y)):- nonvar(M), !, M:md(P1,Y).
-md(P1,X):-
-  ncatch(must_det_ll1(P1,X),
-  md_failed(P1,G,N), % <- ExceptionTerm
-   % bubble up and start running
-  ((M is N -1, M>0)->throw(md_failed(P1,G,M));(ugtrace(md_failed(P1,G,M),X),throw('$aborted')))),!.
-%must_det_ll(X):- must_det_ll1(P1,X),!.
+% Attempt deterministic execution of the goal X, catching failures and exceptions.
+md(P1, X):-
+  ncatch(must_det_ll1(P1, X),                 % Try to execute X deterministically with P1.
+  md_failed(P1, G, N),                        % Catch any failure or exception.
+   % Bubble up the failure, retrying if possible, or aborting with a trace if retries are exhausted.
+  ((M is N - 1, M > 0) -> throw(md_failed(P1, G, M)) ; 
+  (ugtrace(md_failed(P1, G, M), X), throw('$aborted')))), !.
 
-must_det_ll1(P1,X):- tracing,!,must_not_error(call(P1,X)),!.
-must_det_ll1(P1,once(A)):- !, once(md(P1,A)).
-must_det_ll1(P1,X):-
-  strip_module(X,M,P),functor(P,F,A),
-  setup_call_cleanup(nop(trace(M:F/A,+fail)),(must_not_error(call(P1,X))*->true;md_failed(P1,X)),
-    nop(trace(M:F/A,-fail))),!.
+%!  must_det_ll1(:P1, :X) is det.
+%
+%   Executes the goal `X` with modifier `P1`, ensuring that the goal is deterministic. This 
+%   predicate supports tracing, error handling, and conditional execution depending on the 
+%   structure of `X`. It also handles specific cases like `once/1` and adds tracing information 
+%   around the execution of the goal if tracing is enabled.
+%
+%   @arg P1  The modifier that wraps the execution of the goal `X`.
+%   @arg X   The goal to execute deterministically, optionally with additional wrapping and tracing.
+%
+%   This predicate behaves differently in the following cases:
+%   - If tracing is enabled, it executes the goal in a traced environment and ensures no errors occur.
+%   - If the goal is wrapped in `once/1`, it ensures the goal is executed deterministically.
+%   - Otherwise, it extracts the module and functor information of the goal and traces its execution.
+%
+% Execute the goal X with modifier P1 in a tracing environment, ensuring no errors occur.
+must_det_ll1(P1, X):- tracing, !, must_not_error(call(P1, X)), !.
+% Handle once/1 by executing the goal A deterministically with the modifier P1.
+must_det_ll1(P1, once(A)):- !, once(md(P1, A)).
+% Extract module and functor details from the goal X, execute it deterministically, and trace the call.
+must_det_ll1(P1, X):-
+  strip_module(X, M, P),                        % Extract the module M and functor P from goal X.
+  functor(P, F, A),                             % Get the functor name F and arity A of the goal.
+  setup_call_cleanup(
+    nop(trace(M:F/A, +fail)),                   % Start tracing the goal M:F/A, with +fail indicating tracing activation.
+    (must_not_error(call(P1, X)) *-> true;      % Try executing the goal with P1, handle errors, and check for failure.
+     md_failed(P1, X)),                         % If the goal fails, log the failure using md_failed/2.
+    nop(trace(M:F/A, -fail))                    % Stop tracing after execution, with -fail indicating tracing deactivation.
+  ), !.
 
-
+%!  must_not_error(:G) is det.
+%
+%   Executes the goal `G` while ensuring that no uncaught errors occur during execution.
+%   Depending on the environment (e.g., tracing, CGI, or standard execution), it applies 
+%   different strategies for handling errors and tracing the execution. This predicate is 
+%   designed to ensure that errors are properly caught and logged, preventing the goal from 
+%   crashing or leaving exceptions unhandled.
+%
+%   @arg G  The goal to be executed with error handling and optional tracing.
+%
+%   This predicate adapts its behavior based on the context:
+%   - If tracing is enabled or `never_rrtrace` is true, the goal is executed normally.
+%   - In CGI environments, it catches errors and logs them using `u_dmsg/1`.
+%   - If errors occur, they are caught and logged, and further handling is provided based on the context.
+%
+% If tracing or never_rrtrace is enabled, execute the goal G without additional error handling.
 %must_not_error(G):- must(once(G)).
-
-must_not_error(G):- (tracing;never_rrtrace),!,call(G).
-must_not_error(G):- notrace(is_cgi),!, ncatch((G),E,((u_dmsg(E=G)))).
+must_not_error(G):- (tracing; never_rrtrace), !, call(G).
+% In a CGI environment, catch and log any errors that occur during execution.
+must_not_error(G):- notrace(is_cgi), !, ncatch((G), E, ((u_dmsg(E = G)))).
 %must_not_error(X):- is_guitracer,!, call(X).
 %must_not_error(G):- !, call(G).
-must_not_error(X):- !,ncatch(X,E,(fbug(E=X),ugtrace(error(E),X))).
-must_not_error(X):- ncatch(X,E,(rethrow_abort(E);(/*arcST,*/ writeq(E=X),pp(etrace=X),
-  trace,
-  rrtrace(visible_rtrace([-all,+exception]),X)))).
+% Catch and log errors, using fbug/1 and ugtrace/2 to log the error and trace its execution.
+must_not_error(X):- !, ncatch(X, E, (fbug(E = X), ugtrace(error(E), X))).
+% In case of an error, rethrow or log the error, potentially enabling tracing and re-executing the goal.
+must_not_error(X):- ncatch(X, E, (rethrow_abort(E); (writeq(E = X), pp(etrace = X), trace, rrtrace(visible_rtrace([-all, +exception]), X)))).
 
-
+%!  always_rethrow(+E) is det.
+%
+%   Throws specific exceptions or errors based on the input `E`. If the error term `E` matches 
+%   certain predefined patterns, it is thrown immediately. In the case of certain special conditions
+%   (like `never_rrtrace`), the error is thrown unconditionally.
+%
+%   @arg E  The exception or error term to be potentially rethrown.
+%
+%   This predicate defines specific error terms that will be rethrown immediately. For other terms, 
+%   it checks if the `never_rrtrace` flag is set and rethrows the error if necessary.
+%
 always_rethrow('$aborted').
 always_rethrow(md_failed(_,_,_)).
 always_rethrow(return(_)).
@@ -1006,106 +1237,416 @@ always_rethrow(depth_limit_exceeded).
 always_rethrow(restart_reading).
 always_rethrow(E):- never_rrtrace,!,throw(E).
 
+%!  catch_non_abort(:Goal) is det.
+%
+%   Executes the given `Goal` and catches any exceptions that occur, except for 
+%   those that should result in an abort. If an exception is caught, it is handled 
+%   using `rethrow_abort/1` to ensure that only non-abort errors are handled.
+%
+%   @arg Goal  The goal to be executed, which may raise an exception.
+%
+%   This predicate attempts to run the `Goal`, and if an exception is thrown, it catches it 
+%   and passes it to `rethrow_abort/1` to handle exceptions that require an abort.
+%
+% Catch any exception that occurs during the execution of Goal, but rethrow abort-related exceptions.
 %catch_non_abort(Goal):- cant_rrtrace(Goal).
-catch_non_abort(Goal):- catch(cant_rrtrace(Goal),E,rethrow_abort(E)),!.
-rethrow_abort(E):- format(user_error,'~N~q~n',[catch_non_abort_or_abort(E)]),fail.
+catch_non_abort(Goal):- catch(cant_rrtrace(Goal), E, rethrow_abort(E)), !.
+
+%!  rethrow_abort(+E) is det.
+%
+%   Handles specific exceptions by either logging them or rethrowing them. The predicate
+%   is designed to log abort-related exceptions like `$aborted` and provide detailed
+%   error output for others. In certain cases, it can suppress or handle specific exceptions
+%   based on conditions like debugging (`ds`).
+%
+%   @arg E  The exception or error term to be handled.
+%
+%   This predicate:
+%   - Logs the exception `E` to the `user_error` stream for most cases.
+%   - Rethrows the `$aborted` exception and performs additional actions like logging timeouts.
+%
+% Log the exception E by formatting and outputting to user_error, then fail to indicate error handling.
+rethrow_abort(E):- format(user_error,'~N~q~n',[catch_non_abort_or_abort(E)]), fail.
 %rethrow_abort(time_limit_exceeded):-!.
-rethrow_abort('$aborted'):- !, throw('$aborted'),!,forall(between(1,700,_),sleep(0.01)),writeln(timeout),!,fail.
-rethrow_abort(E):- ds,!,format(user_error,'~N~q~n',[catch_non_abort(E)]),!.
+% Rethrow the `$aborted` exception and perform additional steps, including logging and handling timeouts.
+rethrow_abort('$aborted'):- !, throw('$aborted'), !, forall(between(1,700,_), sleep(0.01)), writeln(timeout), !, fail.
+% If debugging (ds) is enabled, log the exception and suppress further handling.
+rethrow_abort(E):- ds, !, format(user_error,'~N~q~n',[catch_non_abort(E)]), !.
 
-cant_rrtrace(Goal):- never_rrtrace,!,call(Goal).
-cant_rrtrace(Goal):- setup_call_cleanup(cant_rrtrace,Goal,can_rrtrace).
+%!  cant_rrtrace(:Goal) is det.
+%
+%   Executes the given `Goal` while ensuring that "rrtrace" (reversible tracing) is not allowed.
+%   If the `never_rrtrace` condition is true, it directly executes the goal without further setup.
+%   Otherwise, it sets up a restricted tracing environment, runs the goal, and then cleans up the tracing setup.
+%
+%   @arg Goal  The goal to execute, ensuring that reversible tracing is not allowed.
+%
+%   This predicate works by:
+%   - Directly calling `Goal` if `never_rrtrace` is enabled.
+%   - Using `setup_call_cleanup/3` to disable and re-enable tracing around the execution of `Goal`.
+%
+% If never_rrtrace is enabled, execute the goal directly without any special setup.
+cant_rrtrace(Goal):- never_rrtrace, !, call(Goal).
+% Otherwise, set up a restricted tracing environment for the duration of the goal execution.
+cant_rrtrace(Goal):- setup_call_cleanup(cant_rrtrace, Goal, can_rrtrace).
 
-main_debug:- main_thread,current_prolog_flag(debug,true).
-cant_rrtrace:- nb_setval(cant_rrtrace,t).
-can_rrtrace:- nb_setval(cant_rrtrace,f).
+%!  main_debug is det.
+%
+%   Checks if the current thread is the main thread and whether the Prolog system
+%   is running in debug mode. This predicate is used to ensure that the system is 
+%   in a debugging state within the main thread.
+%
+%   This predicate succeeds if both the conditions are met: the current thread is the
+%   main thread and the Prolog flag `debug` is set to `true`.
+%
+%   @example
+%   ?- main_debug.
+%   % Succeeds if the current Prolog environment is running in debug mode.
+%
+% Succeeds if the current thread is the main thread and Prolog is in debug mode.
+main_debug:- main_thread, current_prolog_flag(debug, true).
+
+%!  cant_rrtrace is det.
+%
+%   Sets the non-backtrackable flag `cant_rrtrace` to true. This predicate is used
+%   to signal that reversible tracing (`rrtrace`) should not be allowed during the 
+%   execution of subsequent goals.
+%
+%   @example
+%   ?- cant_rrtrace.
+%   % Sets the flag `cant_rrtrace` to true.
+%
+% Set the `cant_rrtrace` flag to true.
+cant_rrtrace:- nb_setval(cant_rrtrace, t).
+
+%!  can_rrtrace is det.
+%
+%   Sets the non-backtrackable flag `cant_rrtrace` to false. This predicate is used
+%   to allow reversible tracing (`rrtrace`) during the execution of subsequent goals.
+%
+%   @example
+%   ?- can_rrtrace.
+%   % Sets the flag `cant_rrtrace` to false.
+%
+% Set the `cant_rrtrace` flag to false.
+can_rrtrace:- nb_setval(cant_rrtrace, f).
+
+%!  md_failed(:P1, :X) is det.
+%
+%   Handles the failure of a goal `X` wrapped by `P1`, logging or tracing the failure depending
+%   on the environment (tracing, CGI, etc.). It can perform different actions such as logging,
+%   invoking tracing, or rethrowing the failure as an exception. The behavior of this predicate
+%   is highly context-sensitive, adapting to whether debugging, tracing, or testing environments are enabled.
+%
+%   @arg P1  The wrapper or context in which the goal `X` was executed.
+%   @arg X   The goal that has failed.
+%
 %md_failed(P1,X):- predicate_property(X,number_of_clauses(1)),clause(X,(A,B,C,Body)), (B\==!),!,must_det_ll(A),must_det_ll((B,C,Body)).
+% Write the failure to source output and fail, without any additional action.
+md_failed(P1, X):- notrace((write_src_uo(failed(P1, X)), fail)).
+% If tracing is enabled, trace the failure of the goal with visible trace options.
+md_failed(P1, X):- tracing, visible_rtrace([-all, +fail, +call, +exception], call(P1, X)).
+% If tracing is disabled, trace the failure with visible trace options but avoid full tracing.
+md_failed(P1, X):- \+ tracing, !, visible_rtrace([-all, +fail, +exit, +call, +exception], call(P1, X)).
+% If running in a CGI environment and not in main debug, log the failure as HTML and fail.
+md_failed(P1, G):- is_cgi, \+ main_debug, !, u_dmsg(arc_html(md_failed(P1, G))), fail.
+% If testing is enabled, log the failure and abort the goal with a specific failure message.
+md_failed(_P1, G):- option_value(testing, true), !, T = 'FAILEDDDDDDDDDDDDDDDDDDDDDDDDDD!!!!!!!!!!!!!'(G), 
+    write_src_uo(T), give_up(T, G).
+% If reversible tracing is disabled, log the failure and throw the failure exception.
+md_failed(P1, G):- never_rrtrace, !, notrace, /*notrace*/(u_dmsg(md_failed(P1, G))), !, throw(md_failed(P1, G, 2)).
+% md_failed(P1, G):- tracing, call(P1, G).
+% If reversible tracing is disabled, fail silently.
+md_failed(_, _):- never_rrtrace, !, fail.
+% If in GUI tracer mode, log the failure, enable tracing, and call the goal again.
+md_failed(P1, X):- notrace, is_guitracer, u_dmsg(failed(X))/*,arcST*/, nortrace, atrace, call(P1, X).
+% If in main debug mode, log the failure and throw the failure exception.
+md_failed(P1, G):- main_debug, /*notrace*/(write_src_uo(md_failed(P1, G))), !, throw(md_failed(P1, G, 2)).
 
-md_failed(P1,X):- notrace((write_src_uo(failed(P1,X)),fail)).
-md_failed(P1,X):- tracing,visible_rtrace([-all,+fail,+call,+exception],call(P1,X)).
-md_failed(P1,X):- \+ tracing, !, visible_rtrace([-all,+fail,+exit,+call,+exception],call(P1,X)).
-md_failed(P1,G):- is_cgi, \+ main_debug, !, u_dmsg(arc_html(md_failed(P1,G))),fail.
-md_failed(_P1,G):- option_value(testing,true),!,
-      T='FAILEDDDDDDDDDDDDDDDDDDDDDDDDDD!!!!!!!!!!!!!'(G),
-      write_src_uo(T), give_up(T,G).
-md_failed(P1,G):- never_rrtrace,!,notrace,/*notrace*/(u_dmsg(md_failed(P1,G))),!,throw(md_failed(P1,G,2)).
-%md_failed(P1,G):- tracing,call(P1,G).
-md_failed(_,_):- never_rrtrace,!,fail.
-md_failed(P1,X):- notrace,is_guitracer,u_dmsg(failed(X))/*,arcST*/,nortrace,atrace,call(P1,X).
-md_failed(P1,G):- main_debug,/*notrace*/(write_src_uo(md_failed(P1,G))),!,throw(md_failed(P1,G,2)).
+
 % must_det_ll(X):- must_det_ll(X),!.
 
+%!  write_src_uo(+G) is det.
+%
+%   Writes the output of the goal `G` to both the standard output (file descriptor 1) and 
+%   the standard error (file descriptor 2). The goal `G` is written to the output streams 
+%   with appropriate newline formatting. There is a commented-out reference to `stack_dump` 
+%   which could be used for debugging purposes if uncommented.
+%
+%   @arg G  The goal or content to be written to the output streams.
+%
+%   Example:
+%   ?- write_src_uo(my_goal).
+%
+
+% Write the output of G to the stream with file descriptor 1 (standard output).
 write_src_uo(G):-
- stream_property(S,file_no(1)),
-    with_output_to(S,
-     (format('~N~n~n',[]),
-      write_src(G),
-      format('~N~n~n'))),!,
- %stack_dump,
- stream_property(S2,file_no(2)),
-    with_output_to(S2,
-     (format('~N~n~n',[]),
-      write_src(G),
-      format('~N~n~n'))),!.
+ stream_property(S, file_no(1)),
+ with_output_to(S,
+  (format('~N~n~n', []),
+   write_src(G),
+   format('~N~n~n'))), !,
+% stack_dump,
+% Write the output of G to the stream with file descriptor 2 (standard error).
+ stream_property(S2, file_no(2)),
+ with_output_to(S2,
+  (format('~N~n~n', []),
+   write_src(G),
+   format('~N~n~n'))), !.
 
+% Declare rrtrace/1 as a meta-predicate that takes a goal.
 :- meta_predicate(rrtrace(0)).
-rrtrace(X):- rrtrace(etrace,X).
 
-stack_dump:-  ignore(catch(bt,_,true)). %,ignore(catch(dumpST,_,true)),ignore(catch(bts,_,true)).
-ugtrace(error(Why),G):- !, notrace,write_src_uo(Why),stack_dump,write_src_uo(Why),rtrace(G).
-ugtrace(Why,G):-  tracing,!,notrace,write_src(Why),rtrace(G).
-ugtrace(Why,_):-  is_testing, !, ignore(give_up(Why,5)),throw('$aborted').
-ugtrace(Why,G):-  wdmsg(Why),ggtrace(G),throw('$aborted').
-%ugtrace(Why,G):- ggtrace(G).
+%!  rrtrace(:X) is det.
+%
+%   Executes the given goal `X` with reversible tracing enabled. This predicate wraps the goal `X`
+%   with a custom tracing mechanism (`etrace`). The meta-predicate declaration allows the goal `X`
+%   to be passed and executed in a tracing context.
+%
+%   @arg X  The goal to execute with reversible tracing.
+%
+%   Example:
+%   ?- rrtrace(my_goal).
+%
+% Execute the goal X with reversible tracing using etrace as the tracing context.
+rrtrace(X):- rrtrace(etrace, X).
 
-give_up(Why,_):- is_testing,!,write_src_uo(Why),!, throw(give_up(Why)).
-give_up(Why,N):- is_testing,!,write_src_uo(Why),!, halt(N).
-give_up(Why,_):- write_src_uo(Why),throw('$aborted').
+%!  stack_dump is det.
+%
+%   Attempts to perform a backtrace dump by invoking `bt`. If `bt` fails or is not available, it
+%   silently ignores the failure. The commented-out lines suggest other possible debugging dumps 
+%   like `dumpST` or `bts` that are currently not active.
+%
+%   Example:
+%   ?- stack_dump.
+%
 
-is_guitracer:- getenv('DISPLAY',_), current_prolog_flag(gui_tracer,true).
+% Perform a backtrace dump (bt), ignore any failure.
+stack_dump:- ignore(catch(bt, _, true)). %,ignore(catch(dumpST,_,true)),ignore(catch(bts,_,true)).
+
+%!  ugtrace(+Why, :G) is det.
+%
+%   Executes the goal `G` with tracing enabled, and provides different behavior depending on 
+%   the value of `Why` and the environment (e.g., testing, tracing). If an error occurs or 
+%   tracing is required, this predicate handles logging and debugging actions appropriately.
+%
+%   @arg Why  The reason or condition for tracing.
+%   @arg G    The goal to execute with tracing.
+%
+%   Example:
+%   ?- ugtrace(error(my_reason), my_goal).
+%
+% If there is an error, log it, perform a stack dump, and trace the goal G.
+ugtrace(error(Why), G):- !, notrace, write_src_uo(Why), stack_dump, write_src_uo(Why), rtrace(G).
+% If tracing is already enabled, log the reason and trace the goal G.
+ugtrace(Why, G):- tracing, !, notrace, write_src(Why), rtrace(G).
+% If testing is enabled, handle the failure and abort.
+ugtrace(Why, _):- is_testing, !, ignore(give_up(Why, 5)), throw('$aborted').
+% Otherwise, log the reason, trace the goal G, and abort.
+ugtrace(Why, G):- wdmsg(Why), ggtrace(G), throw('$aborted').
+% ugtrace(Why,G):- ggtrace(G).
+
+%!  give_up(+Why, +N) is det.
+%
+%   Handles fatal errors or conditions by logging the reason `Why` and either throwing an exception
+%   or halting the execution. When testing is enabled, the behavior is adjusted accordingly.
+%
+%   @arg Why  The reason for giving up or aborting.
+%   @arg N    The exit code to use if halting the system.
+%
+%   Example:
+%   ?- give_up(my_reason, 1).
+%
+% If testing is enabled, log the reason and throw an exception.
+give_up(Why, _):- is_testing, !, write_src_uo(Why), !, throw(give_up(Why)).
+% If testing is enabled, log the reason and halt the system with exit code N.
+give_up(Why, N):- is_testing, !, write_src_uo(Why), !, halt(N).
+% Otherwise, log the reason and abort the execution.
+give_up(Why, _):- write_src_uo(Why), throw('$aborted').
+
+%!  is_guitracer is semidet.
+%
+%   Succeeds if the Prolog environment is running in a GUI tracer environment. This predicate 
+%   checks whether the `DISPLAY` environment variable is set and whether the Prolog flag `gui_tracer` 
+%   is enabled. If both conditions are met, it indicates that a GUI tracer is available.
+%
+%   Example:
+%   ?- is_guitracer.
+%
+% Succeeds if the 'DISPLAY' environment variable is set and the 'gui_tracer' flag is true.
+is_guitracer:- getenv('DISPLAY', _), current_prolog_flag(gui_tracer, true).
+
 :- meta_predicate(rrtrace(1,0)).
-rrtrace(P1,X):- never_rrtrace,!,nop((u_dmsg(cant_rrtrace(P1,X)))),!,fail.
-rrtrace(P1,G):- is_cgi,!, u_dmsg(arc_html(rrtrace(P1,G))),call(P1,G).
-rrtrace(P1,X):- notrace, \+ is_guitracer,!,nortrace, /*arcST, sleep(0.5), trace,*/
-   (notrace(\+ current_prolog_flag(gui_tracer,true)) -> call(P1,X); (itrace,call(P1,X))).
-%rrtrace(_,X):- is_guitracer,!,notrace,nortrace,ncatch(call(call,ugtrace),_,true),atrace,call(X).
-rrtrace(P1,X):- itrace,!, call(P1,X).
+
+%!  rrtrace(:P1, :X) is det.
+%
+%   Executes the goal `X` with reversible tracing (`rrtrace`) enabled, depending on the environment. 
+%   This predicate adapts based on conditions such as whether tracing is disabled, whether a CGI environment 
+%   is active, or whether a GUI tracer is available. In each case, it adjusts the behavior accordingly.
+%
+%   @arg P1  The wrapper or context in which the goal `X` is executed.
+%   @arg X   The goal to be executed with reversible tracing or other tracing options.
+%
+%   Example:
+%   ?- rrtrace(my_wrapper, my_goal).
+%
+% If reversible tracing is disabled, log the message and fail.
+rrtrace(P1, X):- never_rrtrace, !, nop((u_dmsg(cant_rrtrace(P1, X)))), !, fail.
+% If in a CGI environment, log the HTML output and call the goal normally.
+rrtrace(P1, G):- is_cgi, !, u_dmsg(arc_html(rrtrace(P1, G))), call(P1, G).
+% If not in a GUI tracer environment, disable tracing and call the goal, or enable interactive tracing (itrace).
+rrtrace(P1, X):- notrace, \+ is_guitracer, !, nortrace, /*arcST, sleep(0.5), trace,*/
+   (notrace(\+ current_prolog_flag(gui_tracer, true)) -> call(P1, X); (itrace, call(P1, X))).
+% rrtrace(_,X):- is_guitracer,!,notrace,nortrace,ncatch(call(call,ugtrace),_,true),atrace,call(X).
+% If interactive tracing (itrace) is enabled, call the goal with tracing.
+rrtrace(P1, X):- itrace, !, call(P1, X).
 
 :- meta_predicate(arc_wote(0)).
-arc_wote(G):- with_pp(ansi,wote(G)).
-arcST:- itrace,arc_wote(bts),itrace.
+
+%!  arc_wote(+G) is det.
+%
+%   Executes the goal `G` using the `wote/1` predicate, with the output formatted using `ansi` styling.
+%   This is typically used to write goal output with specific formatting (e.g., for tracing or debugging).
+%
+%   @arg G  The goal to be written with formatting.
+%
+%   Example:
+%   ?- arc_wote(my_goal).
+%
+% Write the output of G using ansi formatting with wote/1.
+arc_wote(G):- with_pp(ansi, wote(G)).
+
+%!  arcST is det.
+%
+%   Performs a tracing operation using `itrace` before and after writing the backtrace (`bts`).
+%   This predicate helps with tracing back the stack in a formatted manner.
+%
+%   Example:
+%   ?- arcST.
+%
+% Perform interactive tracing (itrace) before and after writing the backtrace (bts).
+arcST:- itrace, arc_wote(bts), itrace.
+
+%!  atrace is det.
+%
+%   Writes the backtrace (`bts`) using `arc_wote/1`. The commented-out line suggests a fallback 
+%   method of dumping the stack trace using `dumpST` to the stream associated with file descriptor 2.
+%
+%   Example:
+%   ?- atrace.
+%
+
+% Write the backtrace (bts) using arc_wote/1.
 atrace:- arc_wote(bts).
-%atrace:- ignore((stream_property(X,file_no(2)), with_output_to(X,dumpST))),!.
+% atrace:- ignore((stream_property(X, file_no(2)), with_output_to(X, dumpST))),!.
 
 :- meta_predicate(odd_failure(0)).
-odd_failure(G):- never_rrtrace,!,call(G).
-odd_failure(G):- wno_must(G)*->true;fail_odd_failure(G).
+
+%!  odd_failure(:G) is det.
+%
+%   Executes the goal `G`, ensuring that if reversible tracing (`rrtrace`) is disabled, the goal is executed directly.
+%   Otherwise, it attempts to execute `G` using `wno_must/1`, and if `G` fails, it calls `fail_odd_failure/1` to handle the failure.
+%
+%   @arg G  The goal to be executed, with failure handling if it fails.
+%
+%   Example:
+%   ?- odd_failure(my_goal).
+%
+% If reversible tracing is disabled, execute the goal directly.
+odd_failure(G):- never_rrtrace, !, call(G).
+% Attempt to execute the goal G using wno_must/1. If it fails, handle the failure with fail_odd_failure/1.
+odd_failure(G):- wno_must(G) *-> true; fail_odd_failure(G).
 
 :- meta_predicate(fail_odd_failure(0)).
-fail_odd_failure(G):- u_dmsg(odd_failure(G)),rtrace(G), fail.
-%fail_odd_failure(G):- call(G)*->true;(u_dmsg(odd_failure(G)),fail,rrtrace(G)).
 
+%!  fail_odd_failure(:G) is det.
+%
+%   Handles the failure of the goal `G` by logging the failure using `u_dmsg/1`, 
+%   tracing the goal with `rtrace/1`, and then failing. This ensures that when the goal fails,
+%   it is properly traced and logged for debugging purposes.
+%
+%   @arg G  The goal that failed and needs to be traced and logged.
+%
+%   Example:
+%   ?- fail_odd_failure(my_goal).
+%
 
+% Log the failure of G, trace the goal using rtrace/1, and fail.
+fail_odd_failure(G):- u_dmsg(odd_failure(G)), rtrace(G), fail.
+% fail_odd_failure(G):- call(G)*->true;(u_dmsg(odd_failure(G)),fail,rrtrace(G)).
+
+%!  bts is det.
+%
+%   Collects and prints the Prolog backtrace (stack trace) to the standard output (file descriptor 1). 
+%   It uses the `prolog_stack` library to retrieve the backtrace and print it. Additionally, if the output
+%   stream is different from the standard output, it attempts to print the backtrace there as well.
+%
+%   This predicate is useful for debugging and inspecting the stack trace of Prolog goals.
+%
+%   Example:
+%   ?- bts.
+%
+% Ensure the 'prolog_stack' library is loaded and import necessary predicates.
 bts:-
  ensure_loaded(library(prolog_stack)),
  prolog_stack:export(prolog_stack:get_prolog_backtrace_lc/3),
  use_module(library(prolog_stack),[print_prolog_backtrace/2,get_prolog_backtrace_lc/3]),
-  /*notrace*/ (prolog_stack:call(call,get_prolog_backtrace_lc,8000, Stack, [goal_depth(600)])),
-  stream_property(S,file_no(1)), prolog_stack:print_prolog_backtrace(S, Stack),
-  ignore((fail, current_output(Out), \+ stream_property(Out,file_no(1)), print_prolog_backtrace(Out, Stack))),!.
+ /*notrace*/ (prolog_stack:call(call,get_prolog_backtrace_lc,8000, Stack, [goal_depth(600)])),
+ % Print the stack trace to the standard output (file descriptor 1).
+ stream_property(S, file_no(1)), prolog_stack:print_prolog_backtrace(S, Stack),
+ % If the current output is not standard output, print the stack trace there as well.
+ ignore((fail, current_output(Out), \+ stream_property(Out, file_no(1)), print_prolog_backtrace(Out, Stack))), !.
 
-my_assertion(G):- my_assertion(call(G),G).
+%!  my_assertion(:G) is det.
+%
+%   Ensures that the goal `G` succeeds by attempting to call it. If `G` fails, the failure is logged 
+%   with additional debugging information, including a message and a break for inspection.
+%
+%   @arg G  The goal to be asserted or verified.
+%
+%   Example:
+%   ?- my_assertion(my_goal).
+%
+% First clause: Call the goal G directly.
+my_assertion(G):- my_assertion(call(G), G).
+% If G succeeds, exit without further action.
+my_assertion(_, G):- call(G), !.
+% If G fails, log the failure, print debugging information, and enter a break for inspection.
+my_assertion(Why, G):- u_dmsg(my_assertion(Why, G)), writeq(Why = goal(G)), nl, !, ibreak.
 
-my_assertion(_,G):- call(G),!.
-my_assertion(Why,G):- u_dmsg(my_assertion(Why,G)),writeq(Why=goal(G)),nl,!,ibreak.
+%!  must_be_free(+Free) is det.
+%
+%   Ensures that the term `Free` is a free variable (unbound). If `Free` is not a free variable,
+%   this predicate either succeeds (if the term is a plain variable) or enters a debugging break
+%   with relevant attributes printed.
+%
+%   @arg Free  The term that is expected to be a free variable.
+%
+%   Example:
+%   ?- must_be_free(Var).
+%
+% Succeed if Free is a plain (unbound) variable.
+must_be_free(Free):- plain_var(Free), !.
+% Succeed if Free is not a non-variable or a constraint identifier (CI).
+must_be_free(Free):- \+ nonvar_or_ci(Free), !.
+% If Free is not free, log the failure, print attributes if available, and enter a break for inspection.
+must_be_free(Nonfree):- arcST, u_dmsg(must_be_free(Nonfree)),
+  ignore((attvar(Nonfree), get_attrs(Nonfree, ATTS), pp(ATTS))), ibreak, fail.
 
-must_be_free(Free):- plain_var(Free),!.
-must_be_free(Free):- \+ nonvar_or_ci(Free),!.
-must_be_free(Nonfree):- arcST,u_dmsg(must_be_free(Nonfree)),
-  ignore((attvar(Nonfree),get_attrs(Nonfree,ATTS),pp(ATTS))),ibreak,fail.
-
-must_be_nonvar(Nonvar):- nonvar_or_ci(Nonvar),!.
-must_be_nonvar(IsVar):- arcST,u_dmsg(must_be_nonvar(IsVar)),ibreak,fail.
+%!  must_be_nonvar(+Nonvar) is det.
+%
+%   Ensures that the term `Nonvar` is not a free variable (i.e., it is a non-variable). If `Nonvar` is 
+%   a variable, it logs the failure and enters a debugging break for inspection.
+%
+%   @arg Nonvar  The term that is expected to be non-variable.
+%
+%   Example:
+%   ?- must_be_nonvar(my_term).
+%
+% Succeed if Nonvar is not a free variable or is a constraint identifier (CI).
+must_be_nonvar(Nonvar):- nonvar_or_ci(Nonvar), !.
+% If Nonvar is a free variable, log the failure and enter a debugging break for inspection.
+must_be_nonvar(IsVar):- arcST, u_dmsg(must_be_nonvar(IsVar)), ibreak, fail.
 
 
 % goal_expansion(must_det_l(G),I,must_det_ll(G),O):- nonvar(I),source_location(_,_), nonvar(G),I=O.
@@ -1119,266 +1660,732 @@ goal_expansion(Goal,Out):- compound(Goal), tc_arg(N1,Goal,E),
    compound(E), E = set(Obj,Member), setarg(N1,Goal,Var),
    expand_goal((Goal,b_set_dict(Member,Obj,Var)),Out).
 */
-get_setarg_p1(P3,E,Cmpd,SA):-  compound(Cmpd), get_setarg_p2(P3,E,Cmpd,SA).
-get_setarg_p2(P3,E,Cmpd,SA):- arg(N1,Cmpd,E), SA=call(P3,N1,Cmpd).
-get_setarg_p2(P3,E,Cmpd,SA):- arg(_,Cmpd,Arg),get_setarg_p1(P3,E,Arg,SA).
 
-my_b_set_dict(Member,Obj,Var):- set_omemberh(b,Member,Obj,Var).
+%!  get_setarg_p1(+P3, +E, +Cmpd, -SA) is det.
+%
+%   Attempts to retrieve and set the argument `E` within the compound term `Cmpd` using `P3`.
+%   If the compound term `Cmpd` contains `E`, it delegates the task to `get_setarg_p2/4` to handle 
+%   the actual operation.
+%
+%   @arg P3   A predicate or wrapper to apply to the argument index and the compound term.
+%   @arg E    The argument to be found within the compound term `Cmpd`.
+%   @arg Cmpd The compound term in which the argument `E` is located.
+%   @arg SA   The result, a goal of the form `call(P3, N, Cmpd)` where `N` is the argument index.
+%
+%   Example:
+%   ?- get_setarg_p1(my_predicate, arg_value, my_compound, SA).
+%
+get_setarg_p1(P3, E, Cmpd, SA):- compound(Cmpd), get_setarg_p2(P3, E, Cmpd, SA).
+
+%!  get_setarg_p2(+P3, +E, +Cmpd, -SA) is det.
+%
+%   Attempts to find the argument `E` within the compound term `Cmpd`. If `E` is found, 
+%   it constructs the goal `SA` by applying `P3` to the argument index and the compound term. 
+%   If not found, it recursively searches deeper into nested compound terms.
+%
+%   @arg P3   A predicate or wrapper to apply to the argument index and the compound term.
+%   @arg E    The argument to be found within the compound term `Cmpd`.
+%   @arg Cmpd The compound term in which the argument `E` is located.
+%   @arg SA   The result, a goal of the form `call(P3, N, Cmpd)` where `N` is the argument index.
+%
+%   Example:
+%   ?- get_setarg_p2(my_predicate, arg_value, my_compound, SA).
+%
+get_setarg_p2(P3, E, Cmpd, SA):- arg(N1, Cmpd, E), SA = call(P3, N1, Cmpd).
+get_setarg_p2(P3, E, Cmpd, SA):- arg(_, Cmpd, Arg), get_setarg_p1(P3, E, Arg, SA).
+
+%!  my_b_set_dict(+Member, +Obj, +Var) is det.
+%
+%   Sets the dictionary member `Member` in the object `Obj` to the value `Var` by calling
+%   `set_omemberh/4` with a base context of `b`. This predicate acts as a wrapper around 
+%   `set_omemberh/4` for setting a member in a dictionary-like structure.
+%
+%   @arg Member  The member key in the dictionary to be updated.
+%   @arg Obj     The object or dictionary-like structure that contains the member.
+%   @arg Var     The value to set for the member.
+%
+%   Example:
+%   ?- my_b_set_dict(key, my_object, value).
+%
+% Set the member of the object using set_omemberh with the context 'b'.
+my_b_set_dict(Member, Obj, Var):- set_omemberh(b, Member, Obj, Var).
+
 %nb_set_dict(Member,Obj,Var),
-set_omemberh(_,Member,Obj,Var):- !, arc_setval(Obj,Member,Var).
+
+%!  set_omemberh(+Context, +Member, +Obj, +Var) is det.
+%
+%   Sets the value of the `Member` in the object `Obj` to `Var`, disregarding the context. This predicate
+%   directly updates the member value by calling `arc_setval/3`, effectively ignoring the first argument.
+%
+%   @arg Context  The context (ignored in this implementation).
+%   @arg Member   The member key in the object to be updated.
+%   @arg Obj      The object or dictionary-like structure that contains the member.
+%   @arg Var      The value to set for the member.
+%
+%   Example:
+%   ?- set_omemberh(_, key, my_object, value).
+%
+
+% Set the member of the object to Var, ignoring the context.
+set_omemberh(_, Member, Obj, Var):- !, arc_setval(Obj, Member, Var).
+
 %nb_link_dict(Member,Obj,Var),
 %set_omemberh(nb,Member,Obj,Var):- !, nb_set_dict(Member,Obj,Var).
 %set_omemberh(link,Member,Obj,Var):- !, nb_link_dict(Member,Obj,Var).
 %set_omemberh(How,Member,Obj,Var):- call(call,How,Member,Obj,Var),!.
 
-set_omember(Member,Obj,Var):-  set_omember(b,Member,Obj,Var).
+%!  set_omember(+Member, +Obj, +Var) is det.
+%
+%   Sets the `Member` of the object `Obj` to the value `Var` by calling `set_omember/4` with a default
+%   context of `b`. This acts as a shorthand for calling `set_omember/4` with a predefined context.
+%
+%   @arg Member  The member key to be updated in the object.
+%   @arg Obj     The object or dictionary-like structure containing the member.
+%   @arg Var     The value to set for the member.
+%
+%   Example:
+%   ?- set_omember(key, my_object, value).
+%
+set_omember(Member, Obj, Var):- set_omember(b, Member, Obj, Var).
 
-set_omember(How,Member,Obj,Var):-
-  must_be_nonvar(Member), must_be_nonvar(Obj),  must_be_nonvar(How),  !,
-  set_omemberh(How,Member,Obj,Var),!.
+%!  set_omember(+How, +Member, +Obj, +Var) is det.
+%
+%   Sets the `Member` of the object `Obj` to the value `Var`, with the `How` argument controlling
+%   the context or method of setting the member. This ensures that `How`, `Member`, and `Obj` are
+%   non-variables before proceeding to update the member using `set_omemberh/4`.
+%
+%   @arg How     The context or method of setting the member (must be non-variable).
+%   @arg Member  The member key to be updated in the object.
+%   @arg Obj     The object or dictionary-like structure containing the member.
+%   @arg Var     The value to set for the member.
+%
+%   Example:
+%   ?- set_omember(b, key, my_object, value).
+%
+set_omember(How, Member, Obj, Var):-
+  must_be_nonvar(Member), must_be_nonvar(Obj), must_be_nonvar(How), !,
+  set_omemberh(How, Member, Obj, Var), !.
 
+%!  get_kov(+K, +O, -V) is semidet.
+%
+%   Retrieves the value `V` associated with key `K` in the object `O`. This predicate first checks 
+%   if the key-value pair can be obtained using `dictoo:is_dot_hook/4`, and if not, it tries alternative
+%   methods to fetch nested values or properties within the object.
+%
+%   @arg K  The key to look up.
+%   @arg O  The object or structure where the key is located.
+%   @arg V  The value associated with the key.
+%
+%   Example:
+%   ?- get_kov(key, object, Value).
+%
+% Try to retrieve the value using `is_dot_hook`, otherwise attempt other retrieval methods.
+get_kov(K, O, V):- dictoo:is_dot_hook(user, O, K, V), !, o_m_v(O, K, V).
+% Attempt nested lookups or alternative retrieval methods if the initial retrieval fails.
+get_kov(K, O, V):- ((get_kov1(K, O, V) *-> true ; (get_kov1(props, O, VV), get_kov1(K, VV, V)))).
 
+%!  get_kov1(+K, +O, -V) is semidet.
+%
+%   Tries to retrieve the value `V` associated with key `K` in the object `O`, first by checking if the
+%   object `O` is a hooked object. If not, it delegates the task to `get_kov2/3`.
+%
+%   @arg K  The key to look up.
+%   @arg O  The object or structure where the key is located.
+%   @arg V  The value associated with the key.
+%
+%   Example:
+%   ?- get_kov1(key, object, Value).
+%
+% Check if `O` is a hooked object and retrieve `K`, otherwise delegate to `get_kov2`.
+get_kov1(K, O, V):- (is_hooked_obj(O), o_m_v(O, K, V)) *-> true ; get_kov2(K, O, V).
 
-get_kov(K,O,V):- dictoo:is_dot_hook(user,O,K,V),!,o_m_v(O,K,V).
-get_kov(K,O,V):- ((get_kov1(K,O,V)*->true;(get_kov1(props,O,VV),get_kov1(K,VV,V)))).
+%!  get_kov2(+K, +O, -V) is semidet.
+%
+%   Attempts to retrieve the value `V` for key `K` in object `O` by checking if the object is a dictionary,
+%   a red-black tree, or a nested structure with `oov` values.
+%
+%   @arg K  The key to look up.
+%   @arg O  The object or structure where the key is located.
+%   @arg V  The value associated with the key.
+%
+%   Example:
+%   ?- get_kov2(key, object, Value).
+%
+% Retrieve the value from a dictionary, handling `oov` values.
+get_kov2(K, O, V):- is_dict(O), !, get_dict(K, O, OOV), get_oov_value(OOV, V).
+% Retrieve the value from a red-black tree using `rb_lookup`.
+get_kov2(K, O, V):- nonvar(K), is_rbtree(O), !, rb_lookup(K, V, O).
+% Iterate through a red-black tree and handle `oov` values.
+get_kov2(K, O, V):- is_rbtree(O), !, rb_in(K, V, OOV), get_oov_value(OOV, V).
+% get_kov(K,O,V):- is_rbtree(O),!,nb_rb_get_node(K,O,Node),nb_rb_node_value(Node,V).
 
-get_kov1(K,O,V):- (is_hooked_obj(O),o_m_v(O,K,V))*->true;get_kov2(K,O,V).
-% (get_kov(Prop,VM,Value) -> true ; (get_kov(props,VM,Hashmap),nonvar(Hashmap),must_not_error(nb_get_value(Hashmap,Prop,ValueOOV)),get_oov_value(ValueOOV,Value))).
-get_kov2(K,O,V):- is_dict(O),!,get_dict(K,O,OOV),get_oov_value(OOV,V).
-get_kov2(K,O,V):- nonvar(K),is_rbtree(O),!,rb_lookup(K,V,O).
-get_kov2(K,O,V):- is_rbtree(O),!,rb_in(K,V,OOV),get_oov_value(OOV,V).
-%get_kov(K,O,V):- is_rbtree(O),!,nb_rb_get_node(K,O,Node),nb_rb_node_value(Node,V).
+%!  get_oov_value(+ValueOOV, -Value) is det.
+%
+%   Extracts the actual value from an `oov` (object-oriented value) wrapper if present, or returns the
+%   value unchanged if no wrapper is found.
+%
+%   @arg ValueOOV  The wrapped or unwrapped value.
+%   @arg Value     The actual value, unwrapped if necessary.
+%
+%   Example:
+%   ?- get_oov_value(oov(value), UnwrappedValue).
+%
+% Unwrap the value from `oov` if present, otherwise return the value as is.
+get_oov_value(ValueOOV, Value):- compound(ValueOOV), ValueOOV = oov(Value), !.
+% Return the value as is if no `oov` wrapper is found.
+get_oov_value(Value, Value).
 
-get_oov_value(ValueOOV,Value):- compound(ValueOOV),ValueOOV=oov(Value),!.
-get_oov_value(Value,Value).
+%!  term_expansion_setter(+I, -O) is semidet.
+%
+%   Attempts to expand the term `I` using `must_det_ll/2`. If successful, returns the expanded term `O`.
+%   This handles special cases where the input term has setter syntax or certain expansion rules apply.
+%
+%   @arg I  The input term to be expanded.
+%   @arg O  The expanded output term.
+%
+%   Example:
+%   ?- term_expansion_setter(my_input_term, ExpandedTerm).
+%
+% Attempt to expand the term using `must_det_ll` and return the expanded version.
+term_expansion_setter(I, O):- maybe_expand_md(must_det_ll, I, O), I \=@= O, !.
+% Try expanding the term again if the first expansion was incomplete.
+term_expansion_setter(I, O):- maybe_expand_md(must_det_ll, I, M), I \=@= M, !, term_expansion_setter(M, O).
 
+%!  term_expansion_setter(+Goal, get_kov(+Func, +Self, -Value)) is semidet.
+%
+%   Expands the term if it follows the setter syntax with a compound goal and dot notation. This allows
+%   for syntactic sugar around setting object values.
+%
+%   @arg Goal  The input goal to be checked for setter syntax.
+%   @arg Func  The function or key in the dot notation.
+%   @arg Self  The object in the dot notation.
+%   @arg Value The value being set or retrieved.
+%
+%   Example:
+%   ?- term_expansion_setter(my_goal, get_kov(func, object, value)).
+%
+% Handle expansion when the goal follows dot notation syntax for setter operations.
+term_expansion_setter(Goal, get_kov(Func, Self, Value)):- compound(Goal),
+  compound_name_arguments(Goal, '.', [Self, Func, Value]), var(Value).
 
-term_expansion_setter(I,O):- maybe_expand_md(must_det_ll,I,O),I\=@=O,!.
-term_expansion_setter(I,O):- maybe_expand_md(must_det_ll,I,M),I\=@=M,!,term_expansion_setter(M,O).
-term_expansion_setter(Goal,get_kov(Func,Self,Value)):- compound(Goal),
-  compound_name_arguments(Goal,'.',[ Self, Func, Value]),var(Value).
+%!  term_expansion_setter((+Head :- +Body), -Out) is det.
+%
+%   Expands the term in cases where the `Head` follows setter syntax, ensuring that the corresponding
+%   member is updated in the object.
+%
+%   @arg Head  The head of the clause to be expanded.
+%   @arg Body  The body of the clause to be expanded.
+%   @arg Out   The expanded output clause.
+%
+%   Example:
+%   ?- term_expansion_setter((my_head :- my_body), ExpandedClause).
+%
+% Handle term expansion for setter-like syntax, updating the member in the object.
+term_expansion_setter((Head :- Body), Out):-
+   get_setarg_p1(setarg, I, Head, P1), is_setter_syntax(I, Obj, Member, Var, How),
+   call(P1, Var),
+   BodyCode = (Body, set_omember(How, Member, Obj, Var)),
+   expand_term((Head :- BodyCode), Out), !.
+% term_expansion_setter((Head:-Body),(Head:-GBody)):- goal_expansion_setter(Body,GBody),!.
 
-term_expansion_setter((Head:-Body),Out):-
-   get_setarg_p1(setarg,I,Head,P1), is_setter_syntax(I,Obj,Member,Var,How),
-   call(P1,Var),
-   BodyCode = (Body, set_omember(How,Member,Obj,Var)),
-   % goal_expansion_setter(BodyCode,Goal),
-   expand_term((Head:- BodyCode),Out),!.
-
-%term_expansion_setter((Head:-Body),(Head:-GBody)):- goal_expansion_setter(Body,GBody),!.
-
+% Export the term_expansion_setter/2 predicate.
 :- export(term_expansion_setter/2).
+
+% Import the term_expansion_setter/2 predicate into the system module.
 :- system:import(term_expansion_setter/2).
 
 %goal_expansion(Goal,'.'(Training, Objs, Obj)):- Goal = ('.'(Training, Objs, A), Obj = V),  var(Obj).
 
-is_setter_syntax(I,_Obj,_Member,_Var,_):- \+ compound(I),!,fail.
-is_setter_syntax(set(Obj,Member),Obj,Member,_Var,b).
-is_setter_syntax(gset(Obj,Member),Obj,Member,_Var,nb).
-is_setter_syntax(hset(How,Obj,Member),Obj,Member,_Var,How).
-is_setter_syntax(set(ObjMember),Obj,Member,_Var,b):- obj_member_syntax(ObjMember,Obj,Member).
-is_setter_syntax(gset(ObjMember),Obj,Member,_Var,nb):- obj_member_syntax(ObjMember,Obj,Member).
-is_setter_syntax(hset(How,ObjMember),Obj,Member,_Var,How):- obj_member_syntax(ObjMember,Obj,Member).
+%!  is_setter_syntax(+I, -Obj, -Member, -Var, -How) is semidet.
+%
+%   Checks whether the term `I` follows setter syntax for objects and members. This includes various
+%   patterns like `set/2`, `gset/2`, and `hset/3`, as well as their shorthand dot notation forms.
+%
+%   @arg I       The input term to check for setter syntax.
+%   @arg Obj     The object component extracted from the setter syntax.
+%   @arg Member  The member component extracted from the setter syntax.
+%   @arg Var     The variable to be assigned the value.
+%   @arg How     The method or context for setting (e.g., `b`, `nb`, or custom).
+%
+%   Example:
+%   ?- is_setter_syntax(set(my_object, my_member), Obj, Member, Var, How).
+%
+% Fail if I is not a compound term.
+is_setter_syntax(I, _Obj, _Member, _Var, _) :- \+ compound(I), !, fail.
+% Handle set/2 syntax with a base context (b).
+is_setter_syntax(set(Obj, Member), Obj, Member, _Var, b).
+% Handle gset/2 syntax with a non-backtrackable context (nb).
+is_setter_syntax(gset(Obj, Member), Obj, Member, _Var, nb).
+% Handle hset/3 syntax with a custom context (How).
+is_setter_syntax(hset(How, Obj, Member), Obj, Member, _Var, How).
+% Handle set/1 syntax using dot notation for object and member.
+is_setter_syntax(set(ObjMember), Obj, Member, _Var, b):- obj_member_syntax(ObjMember, Obj, Member).
+% Handle gset/1 syntax using dot notation for object and member.
+is_setter_syntax(gset(ObjMember), Obj, Member, _Var, nb):- obj_member_syntax(ObjMember, Obj, Member).
+% Handle hset/2 syntax using dot notation for object and member.
+is_setter_syntax(hset(How, ObjMember), Obj, Member, _Var, How):- obj_member_syntax(ObjMember, Obj, Member).
 
-obj_member_syntax(ObjMember,Obj,Member):-compound(ObjMember), compound_name_arguments(ObjMember,'.',[Obj,Member]),!.
+%!  obj_member_syntax(+ObjMember, -Obj, -Member) is semidet.
+%
+%   Ensures the compound `ObjMember` follows the dot notation syntax for objects and members (i.e., `Obj.Member`).
+%
+%   @arg ObjMember  The compound term representing the object and member in dot notation.
+%   @arg Obj        The object component.
+%   @arg Member     The member component.
+%
+%   Example:
+%   ?- obj_member_syntax(my_object.my_member, Obj, Member).
+%
+% Ensure the compound follows dot notation Obj.Member.
+obj_member_syntax(ObjMember, Obj, Member):- compound(ObjMember), compound_name_arguments(ObjMember, '.', [Obj, Member]), !.
 
-maybe_expand_md(_MD,I,_):- \+ compound(I),!,fail.
+%!  maybe_expand_md(+MD, +I, -O) is semidet.
+%
+%   Expands the term `I` using the meta-predicate `MD` if it matches a specific pattern. If the input
+%   term is a compound with the meta-predicate `MD` or contains a subterm that matches, this predicate
+%   attempts to expand the term into `O`.
+%
+%   @arg MD  The meta-predicate used for expanding the term (e.g., `must_det_ll`).
+%   @arg I   The input term to be checked for expansion.
+%   @arg O   The expanded output term.
+%
+%   Example:
+%   ?- maybe_expand_md(must_det_ll, must_det_ll(my_goal), ExpandedGoal).
+%
+
+% Fail if I is not a compound term.
+maybe_expand_md(_MD, I, _) :- \+ compound(I), !, fail.
 %maybe_expand_md(MD,I,_):- compound(I),!,fail. % THIS DISABLES
 % THIS DISABLES
 %maybe_expand_md(MD,must_det_ll(GoalL),GoalL):-!.
-maybe_expand_md(MD,MDGoal,GoalLO):- compound_name_arg(MDGoal,MD,Goal),!, expand_md(MD,Goal,GoalLO).
-maybe_expand_md(MD,maplist(P1,GoalL),GoalLO):- P1 ==MD,!,
-  expand_md(MD,GoalL,GoalLO).
-maybe_expand_md(MD,maplist(P1,GoalL),GoalLO):- P1 ==MD,!,
-  expand_md(MD,GoalL,GoalLO).
-maybe_expand_md(MD,I,O):- sub_term(C,I),compound(C), compound_name_arg(C,MD,Goal),
-   compound(Goal),Goal=(_,_),
-   once((expand_md(MD,Goal,GoalO),substM(I,C,GoalO,O))),I\=@=O.
-
-
+% Expand a compound term with MD as its functor.
+maybe_expand_md(MD, MDGoal, GoalLO) :- compound_name_arg(MDGoal, MD, Goal), !, expand_md(MD, Goal, GoalLO).
+% Expand a maplist using MD as the functor.
+maybe_expand_md(MD, maplist(P1, GoalL), GoalLO) :- P1 == MD, !, expand_md(MD, GoalL, GoalLO).
+% Handle further maplist expansion with MD.
+maybe_expand_md(MD, maplist(P1, GoalL), GoalLO) :- P1 == MD, !, expand_md(MD, GoalL, GoalLO).
+% Expand a subterm in I where the compound contains MD as the functor and has a conjunction.
+maybe_expand_md(MD, I, O) :- sub_term(C, I), compound(C), compound_name_arg(C, MD, Goal),
+   compound(Goal), Goal = (_, _),
+   once((expand_md(MD, Goal, GoalO), substM(I, C, GoalO, O))), I \=@= O.
 %maybe_expand_md(MD,I,O):- sub_term(S,I),compound(S),S=must_det_ll(G),
 %  once(expand_md(MD,S,M)),M\=S,
 
+%!  expand_md(+MD, +A, -AA) is det.
+%
+%   Expands the term `A` using the meta-predicate `MD`. This predicate handles expanding lists,
+%   variables, and non-callable terms, as well as recursive expansion of compound terms.
+%
+%   @arg MD  The meta-predicate used for expanding.
+%   @arg A   The input term to be expanded.
+%   @arg AA  The expanded output term.
+%
+%   Example:
+%   ?- expand_md(must_det_ll, [goal1, goal2], Expanded).
+%
+% Expand an empty list into true.
+expand_md(_MD, Nil, true) :- Nil == [], !.
+% If the input is not callable, return it as is.
+expand_md(_MD, Var, Var) :- \+ callable(Var), !.
+% Expand a list of goals into a conjunction of expanded goals.
+expand_md(MD, [A|B], (AA, BB)) :- assertion(callable(A)), assertion(is_list(B)), !,
+  expand_md1(MD, A, AA), expand_md(MD, B, BB).
+% Expand any other term using expand_md1/3.
+expand_md(MD, A, AA) :- !, expand_md1(MD, A, AA).
 
-
-expand_md(_MD,Nil,true):- Nil==[],!.
-expand_md(_MD,Var,Var):- \+ callable(Var),!.
-expand_md(MD,[A|B],(AA,BB)):- assertion(callable(A)), assertion(is_list(B)), !,
-  expand_md1(MD,A,AA), expand_md(MD,B,BB).
-expand_md(MD,A,AA):- !, expand_md1(MD,A,AA).
-
+%!  prevents_expansion(+A) is semidet.
+%
+%   Succeeds if the term `A` is a trace-related call, indicating that expansion should be prevented.
+%
+%   @arg A  The term to be checked for trace calls.
+%
+%   Example:
+%   ?- prevents_expansion(trace).
+%
+% Succeed if A is a trace-related call.
 prevents_expansion(A):- is_trace_call(A).
+
+%!  is_trace_call(+A) is semidet.
+%
+%   Checks if the term `A` is a trace call, such as `trace` or `itrace`.
+%
+%   @arg A  The term to be checked.
+%
+%   Example:
+%   ?- is_trace_call(trace).
+%
+% Succeed if A is the `trace` term.
 is_trace_call(A):- A == trace.
+% Succeed if A is the `itrace` term.
 is_trace_call(A):- A == itrace.
 
-skip_expansion(A):- var(A),!,fail.
+%!  skip_expansion(+A) is semidet.
+%
+%   Succeeds if the term `A` is a special case where expansion should be skipped. This includes
+%   specific control structures and some compound terms.
+%
+%   @arg A  The term to be checked for expansion skipping.
+%
+%   Example:
+%   ?- skip_expansion(true).
+%
+% Fail if A is a variable.
+skip_expansion(A):- var(A), !, fail.
+% Succeed if A is a cut.
 skip_expansion(!).
+% Succeed if A is `false`.
 skip_expansion(false).
+% Succeed if A is `true`.
 skip_expansion(true).
-skip_expansion(C):- compound(C),functor(C,F,A),skip_fa_expansion(F,A).
-skip_fa_expansion(once,1).
-skip_fa_expansion(call,_).
-skip_fa_expansion(if_t,2).
+% Succeed if A is a compound term whose functor should skip expansion.
+skip_expansion(C):- compound(C), functor(C, F, A), skip_fa_expansion(F, A).
 
-expand_md1(_MD,Var,Var):- \+ callable(Var),!.
-expand_md1(_MD,Cut,Cut):-  skip_expansion(Cut),!.
-expand_md1(MD,MDAB, AABB):- compound(MDAB), compound_name_arg(MDAB,MD,AB),!, expand_md(MD,AB,AABB).
-expand_md1(MD,maplist(P1,A),md_maplist(MD,P1,A)):-!.
-expand_md1(MD,maplist(P2,A,B),md_maplist(MD,P2,A,B)):-!.
-expand_md1(MD,maplist(P3,A,B,C),md_maplist(MD,P3,A,B,C)):-!.
-expand_md1(MD,my_maplist(P1,A),md_maplist(MD,P1,A)):-!.
-expand_md1(MD,my_maplist(P2,A,B),md_maplist(MD,P2,A,B)):-!.
-expand_md1(MD,my_maplist(P3,A,B,C),md_maplist(MD,P3,A,B,C)):-!.
+%!  skip_fa_expansion(+F, +A) is semidet.
+%
+%   Succeeds if the functor-arity pair `F/A` matches one of the special cases for skipping expansion.
+%
+%   @arg F  The functor of the term.
+%   @arg A  The arity of the term.
+%
+%   Example:
+%   ?- skip_fa_expansion(call, 2).
+%
+% Succeed if the functor is `once` and the arity is 1.
+skip_fa_expansion(once, 1).
+% Succeed if the functor is `call` with any arity.
+skip_fa_expansion(call, _).
+% Succeed if the functor is `if_t` and the arity is 2.
+skip_fa_expansion(if_t, 2).
+
+%!  expand_md1(+MD, +A, -AA) is det.
+%
+%   Expands the term `A` using the meta-predicate `MD`. This handles various cases such as skipping
+%   certain terms, expanding conjunctions, conditionals, and applying expansions to specific functors
+%   like `maplist/3`. It also handles predicates with meta-predicate properties.
+%
+%   @arg MD  The meta-predicate used for expanding.
+%   @arg A   The input term to be expanded.
+%   @arg AA  The expanded output term.
+%
+%   Example:
+%   ?- expand_md1(must_det_ll, call(my_goal), Expanded).
+%
+% Do not expand if the term is not callable.
+expand_md1(_MD, Var, Var):- \+ callable(Var), !.
+% Skip expansion for specific terms like cuts, true/false, etc.
+expand_md1(_MD, Cut, Cut):- skip_expansion(Cut), !.
+% Expand compound terms that match the MD functor.
+expand_md1(MD, MDAB, AABB):- compound(MDAB), compound_name_arg(MDAB, MD, AB), !, expand_md(MD, AB, AABB).
+% Expand maplist/2 and maplist/3 using md_maplist.
+expand_md1(MD, maplist(P1, A), md_maplist(MD, P1, A)):- !.
+expand_md1(MD, maplist(P2, A, B), md_maplist(MD, P2, A, B)):- !.
+expand_md1(MD, maplist(P3, A, B, C), md_maplist(MD, P3, A, B, C)):- !.
+% Expand custom my_maplist/2 and my_maplist/3 using md_maplist.
+expand_md1(MD, my_maplist(P1, A), md_maplist(MD, P1, A)):- !.
+expand_md1(MD, my_maplist(P2, A, B), md_maplist(MD, P2, A, B)):- !.
+expand_md1(MD, my_maplist(P3, A, B, C), md_maplist(MD, P3, A, B, C)):- !.
 %expand_md1(MD,Goal,O):- \+ compound(Goal), !,O = must_det_ll(Goal).
 %expand_md1(MD,(A,B),((A,B))):- remove_must_det(MD), prevents_expansion(A),!.
 %expand_md1(MD,(A,B),must_det_ll((A,B))):- prevents_expansion(A),!.
-expand_md1(MD,(A,B),(AA,BB)):- !, expand_md(MD,A,AA), expand_md(MD,B,BB).
-expand_md1(MD,(C*->A;B),(CC*->AA;BB)):- !, expand_md(MD,A,AA), expand_md(MD,B,BB), expand_must_not_error(C,CC).
-expand_md1(MD,(C->A;B),(CC->AA;BB)):- !, expand_md(MD,A,AA), expand_md(MD,B,BB), expand_must_not_error(C,CC).
-expand_md1(MD,(C;B),(CC;BB)):- !, expand_md(MD,B,BB), expand_must_not_error(C,CC).
-
-expand_md1(MD,locally(C,A),locally(C,AA)):- !, expand_md(MD,A,AA).
-
-expand_md1(MD,call_cleanup(A,B),call_cleanup(AA,BB)):- !, expand_md(MD,A,AA), expand_md(MD,B,BB).
-expand_md1(MD,setup_call_cleanup(C,A,B),setup_call_cleanup(CC,AA,BB)):- !,
-  expand_md(MD,C,CC),expand_md(MD,A,AA), expand_md(MD,B,BB).
-
-expand_md1(MD,M:P, M:AABB):-!,expand_md(MD,P, AABB).
-
-expand_md1(MD,P, AABB) :- predicate_property(P,(meta_predicate( MP ))),
-   strip_module(P,_,SP),strip_module(MP,_,SMP), kaggle_arc_1_pred(_,SP),
+% Expand conjunctions (A, B) by expanding both sides.
+expand_md1(MD, (A, B), (AA, BB)):- !, expand_md(MD, A, AA), expand_md(MD, B, BB).
+% Expand conditionals (*->; and ->;) by expanding conditions and branches.
+expand_md1(MD, (C *-> A ; B), (CC *-> AA ; BB)):- !, expand_md(MD, A, AA), expand_md(MD, B, BB), expand_must_not_error(C, CC).
+expand_md1(MD, (C -> A ; B), (CC -> AA ; BB)):- !, expand_md(MD, A, AA), expand_md(MD, B, BB), expand_must_not_error(C, CC).
+% Expand disjunctions (C;B) by expanding both sides.
+expand_md1(MD, (C ; B), (CC ; BB)):- !, expand_md(MD, B, BB), expand_must_not_error(C, CC).
+% Expand locally/2 constructs by expanding the body.
+expand_md1(MD, locally(C, A), locally(C, AA)):- !, expand_md(MD, A, AA).
+% Expand call_cleanup/2 and setup_call_cleanup/3 constructs.
+expand_md1(MD, call_cleanup(A, B), call_cleanup(AA, BB)):- !, expand_md(MD, A, AA), expand_md(MD, B, BB).
+expand_md1(MD, setup_call_cleanup(C, A, B), setup_call_cleanup(CC, AA, BB)):- !,
+  expand_md(MD, C, CC), expand_md(MD, A, AA), expand_md(MD, B, BB).
+% Expand module-qualified calls.
+expand_md1(MD, M:P, M:AABB):- !, expand_md(MD, P, AABB).
+% Handle meta-predicates by expanding their arguments.
+expand_md1(MD, P, AABB) :- predicate_property(P, (meta_predicate(MP))),
+   strip_module(P, _, SP), strip_module(MP, _, SMP), kaggle_arc_1_pred(_, SP),
    \+ skippable_built_in(P),
-   SP=..[F|Args],SMP=..[F|Margs],!,
-   maplist(expand_meta_predicate_arg(MD),Margs,Args,EArgs),
-   AABB=..[F|EArgs].
+   SP =.. [F | Args], SMP =.. [F | Margs], !,
+   maplist(expand_meta_predicate_arg(MD), Margs, Args, EArgs),
+   AABB =.. [F | EArgs].
+% Expand non-must_det_ll goals.
+expand_md1(MD, A, MDAA):- \+ remove_must_det(MD), !, expand_goal(A, AA), !, compound_name_arg(MDAA, MD, AA).
+% Expand generic goals.
+expand_md1(_MD, A, AA):- expand_goal(A, AA), !.
 
-expand_md1(MD, A, MDAA):- \+ remove_must_det(MD), !, expand_goal(A,AA),!,compound_name_arg(MDAA,MD,AA).
-expand_md1(_MD, A, AA):- expand_goal(A,AA),!.
+%!  expand_must_not_error(+C, -CC) is det.
+%
+%   Expands the goal `C` by wrapping it with `must_not_error/1`, unless `must_not_error`
+%   is removed from consideration, or the goal already has a meta-predicate property.
+%
+%   @arg C   The input goal to expand.
+%   @arg CC  The expanded goal wrapped with `must_not_error/1`, if applicable.
+%
+%   Example:
+%   ?- expand_must_not_error(my_goal, ExpandedGoal).
+%
+% Do not expand if must_not_error is disabled.
+expand_must_not_error(C, C):- remove_must_det(must_not_error), !.
+% Wrap the goal in must_not_error unless it has a meta-predicate property.
+expand_must_not_error(C, CC):- \+ predicate_property(C, meta_predicate(_)), !, CC = must_not_error(C), !.
+% Recursively expand the goal using must_not_error.
+expand_must_not_error(C, CC):- expand_md(must_not_error, C, CC).
 
-expand_must_not_error(C,C):- remove_must_det(must_not_error),!.
-expand_must_not_error(C,CC):- \+ predicate_property(C,meta_predicate(_)),!, CC = must_not_error(C),!.
-expand_must_not_error(C,CC):- expand_md(must_not_error, C, CC).
-
-kaggle_arc_1_pred(M,P):-
-  predicate_property(M:P,file(F)),
-  \+ predicate_property(M:P,imported_from(_)),
-  \+ \+ atom_contains(F,'arc_'),
-  \+ atom_contains(F,'_pfc'),
-  \+ atom_contains(F,'_afc'),
+%!  kaggle_arc_1_pred(-M, +P) is semidet.
+%
+%   Succeeds if the predicate `M:P` is defined in a file containing 'arc_' in its name, 
+%   excluding certain files like '_pfc' and '_afc'. This is used to identify specific 
+%   predicates related to 'arc_' modules.
+%
+%   @arg M  The module of the predicate.
+%   @arg P  The predicate to check.
+%
+%   Example:
+%   ?- kaggle_arc_1_pred(M, my_predicate).
+%
+% Succeed if the predicate M:P is defined in a file containing 'arc_' but not '_pfc', '_afc', or others.
+kaggle_arc_1_pred(M, P):-
+  predicate_property(M:P, file(F)),
+  \+ predicate_property(M:P, imported_from(_)),
+  \+ \+ atom_contains(F, 'arc_'),
+  \+ atom_contains(F, '_pfc'),
+  \+ atom_contains(F, '_afc'),
   % \+ atom_contains(F,'_ui_'),
   true.
 
 %meta_builtin(P):- var(P),meta_builtin(P).
 %meta_builtin(P):- predicate_property(P,interpreted),predicate_property(P,static).
-skippable_built_in(MP):- strip_module(MP,_,P), predicate_property(system:P,built_in),
-  once(predicate_property(system:P,iso);predicate_property(system:P,notrace)).
+
+%!  skippable_built_in(+MP) is semidet.
+%
+%   Succeeds if the predicate `MP` is a built-in system predicate that should be skipped during expansion.
+%   It checks if the predicate is either ISO-compliant or marked as `notrace`.
+%
+%   @arg MP  The module-qualified predicate to check.
+%
+%   Example:
+%   ?- skippable_built_in(system:my_builtin).
+%
+% Succeed if the predicate is built-in and either ISO-compliant or marked as `notrace`.
+skippable_built_in(MP):- 
+  strip_module(MP, _, P), 
+  predicate_property(system:P, built_in),
+  once(predicate_property(system:P, iso); predicate_property(system:P, notrace)).
+
 %meta_builtin(P):- predicate_property(P,/*notrace*/), \+ predicate_property(P,nodebug).
 
-expand_meta_predicate_arg(_MD,'?',A,A):-!.
-expand_meta_predicate_arg(_MD,'+',A,A):-!.
-expand_meta_predicate_arg(_MD,'-',A,A):-!.
-expand_meta_predicate_arg(MD, ':',A,AA):- !,expand_md1(MD,A,AA).
-expand_meta_predicate_arg(MD,  0,A,AA):- !,expand_md1(MD,A,AA).
+%!  expand_meta_predicate_arg(+MD, +Spec, +A, -AA) is det.
+%
+%   Expands the argument `A` of a meta-predicate, based on the meta-predicate specification `Spec`. 
+%   Depending on the type of argument (`?`, `+`, `-`, `:`, or `0`), it may be passed through unchanged 
+%   or expanded using `expand_md1/3`.
+%
+%   @arg MD   The meta-predicate used for expansion.
+%   @arg Spec The meta-predicate argument specification (e.g., `+`, `:`, `0`).
+%   @arg A    The input argument to be expanded.
+%   @arg AA   The expanded argument.
+%
+%   Example:
+%   ?- expand_meta_predicate_arg(must_det_ll, ':', my_goal, ExpandedGoal).
+%
+% Do not expand arguments marked as '?'.
+expand_meta_predicate_arg(_MD, '?', A, A):- !.
+% Do not expand arguments marked as '+'.
+expand_meta_predicate_arg(_MD, '+', A, A):- !.
+% Do not expand arguments marked as '-'.
+expand_meta_predicate_arg(_MD, '-', A, A):- !.
+% Expand arguments marked as ':' using expand_md1.
+expand_meta_predicate_arg(MD, ':', A, AA):- !, expand_md1(MD, A, AA).
+% Expand arguments marked as '0' using expand_md1.
+expand_meta_predicate_arg(MD, 0, A, AA):- !, expand_md1(MD, A, AA).
 %expand_meta_predicate_arg(MD,*,A,AA):- !,expand_md1(MD,A,AA).
-expand_meta_predicate_arg(_MD,_,A,A).
+% Pass through any other arguments unchanged.
+expand_meta_predicate_arg(_MD, _, A, A).
 
-goal_expansion_getter(Goal,O):- \+ compound(Goal), !,O = Goal.
-goal_expansion_getter(I,O):- md_like(MD),maybe_expand_md(MD,I,O),I\=@=O,!.
-goal_expansion_getter(I,O):- md_like(MD),maybe_expand_md(MD,I,M),I\=@=M,!,goal_expansion_getter(M,O).
-goal_expansion_getter(Goal,get_kov(Func,Self,Value)):- compound(Goal),
-  compound_name_arguments(Goal,'.',[ Self, Func, Value]),var(Value).
-goal_expansion_getter(Goal,Out):-
- compound_name_arguments(Goal,F,Args),
- maplist(goal_expansion_getter,Args,ArgsOut),
- compound_name_arguments(Out,F,ArgsOut).
+%!  goal_expansion_getter(+Goal, -O) is det.
+%
+%   Expands a goal by recursively applying meta-predicate expansion or checking for getter-like syntax 
+%   (e.g., dot notation). If the goal matches a getter pattern, it is transformed into a `get_kov/3` call.
+%
+%   @arg Goal The goal to be expanded.
+%   @arg O    The expanded or transformed goal.
+%
+%   Example:
+%   ?- goal_expansion_getter(my_object.my_member, ExpandedGoal).
+%
+% If the goal is not a compound, return it unchanged.
+goal_expansion_getter(Goal, O):- \+ compound(Goal), !, O = Goal.
+% Expand a goal using meta-predicate expansion.
+goal_expansion_getter(I, O):- md_like(MD), maybe_expand_md(MD, I, O), I \=@= O, !.
+% If the first expansion was partial, expand the goal again.
+goal_expansion_getter(I, O):- md_like(MD), maybe_expand_md(MD, I, M), I \=@= M, !, goal_expansion_getter(M, O).
+% Handle dot notation goals and convert them into get_kov/3.
+goal_expansion_getter(Goal, get_kov(Func, Self, Value)):- 
+  compound(Goal),
+  compound_name_arguments(Goal, '.', [Self, Func, Value]),
+  var(Value).
+% Recursively expand the arguments of compound goals.
+goal_expansion_getter(Goal, Out):- 
+  compound_name_arguments(Goal, F, Args),
+  maplist(goal_expansion_getter, Args, ArgsOut),
+  compound_name_arguments(Out, F, ArgsOut).
 
+% Export the goal_expansion_getter/2 predicate.
 :- export(goal_expansion_getter/2).
+
+% Import the goal_expansion_getter/2 predicate into the system module.
 :- system:import(goal_expansion_getter/2).
 
-
-goal_expansion_setter(Goal,_):- \+ compound(Goal), !, fail.
-
-
-goal_expansion_setter(I,O):- md_like(MD),maybe_expand_md(MD,I,O),I\=@=O,!.
-goal_expansion_setter(G,GO):- remove_must_det(MD), !,remove_mds(MD,G,GG),goal_expansion_setter(GG,GO).
+%!  goal_expansion_setter(+Goal, -O) is semidet.
+%
+%   Expands a goal by handling setter-like syntax, applying meta-predicate expansions, 
+%   and transforming specific patterns into more suitable forms like `set_omember/4`.
+%   It also handles compound terms and dot notation for objects.
+%
+%   @arg Goal  The goal to be expanded.
+%   @arg O     The expanded goal.
+%
+%   Example:
+%   ?- goal_expansion_setter(my_goal, ExpandedGoal).
+%
+% Fail if the goal is not a compound term.
+goal_expansion_setter(Goal, _) :- \+ compound(Goal), !, fail.
+% Attempt to expand the goal using meta-predicate expansion.
+goal_expansion_setter(I, O) :- md_like(MD), maybe_expand_md(MD, I, O), I \=@= O, !.
+% Remove must_det_ll from the goal and attempt further expansion.
+goal_expansion_setter(G, GO) :- remove_must_det(MD), !, remove_mds(MD, G, GG), goal_expansion_setter(GG, GO).
 %goal_expansion_setter(GG,GO):- remove_must_det(MD), sub_term(G,GG),compound(G),G = must_det_ll(GGGG),subst001(GG,G,GGGG,GGG),!,goal_expansion_setter(GGG,GO).
 %goal_expansion_setter((G1,G2),(O1,O2)):- !, expand_goal(G1,O1), expand_goal(G2,O2),!.
-goal_expansion_setter(set_omember(A,B,C,D),set_omember(A,B,C,D)):-!.
-goal_expansion_setter(set_omember(A,B,C),set_omember(b,A,B,C)):-!.
-goal_expansion_setter(Goal,get_kov(Func,Self,Value)):- compound(Goal),
-  compound_name_arguments(Goal,'.',[ Self, Func, Value]),var(Value).
-goal_expansion_setter(I,O):- md_like(MD),maybe_expand_md(MD,I,M),I\=@=M,!,goal_expansion_setter(M,O).
+% Handle `set_omember/4` goals as pass-through.
+goal_expansion_setter(set_omember(A, B, C, D), set_omember(A, B, C, D)) :- !.
+% Handle `set_omember/3` goals by setting the default mode to 'b'.
+goal_expansion_setter(set_omember(A, B, C), set_omember(b, A, B, C)) :- !.
+% Handle dot notation goals and convert them into get_kov/3.
+goal_expansion_setter(Goal, get_kov(Func, Self, Value)) :- 
+  compound(Goal),
+  compound_name_arguments(Goal, '.', [Self, Func, Value]),
+  var(Value).
+% Attempt to expand the goal again after further meta-predicate expansion.
+goal_expansion_setter(I, O) :- md_like(MD), maybe_expand_md(MD, I, M), I \=@= M, !, goal_expansion_setter(M, O).
+% Expand goals with meta-predicate properties (early exit on fail for unsupported goals).
+goal_expansion_setter(Goal, Out) :-
+   predicate_property(Goal, meta_predicate(_)), !, fail,
+   tc_arg(N1, Goal, P), goal_expansion_setter(P, MOut),
+   setarg(N1, Goal, MOut), !, expand_goal(Goal, Out).
+% Expand goals that follow setter syntax by updating members using set_omember/4.
+goal_expansion_setter(Goal, Out) :-
+   tc_arg(N1, Goal, P), is_setter_syntax(P, Obj, Member, Var, How),
+   setarg(N1, Goal, Var), !, expand_goal((Goal, set_omember(How, Member, Obj, Var)), Out).
+% Handle dot notation goals and convert them into get_kov/3 for further expansion.
+goal_expansion_setter(Goal, Out) :-
+   get_setarg_p1(setarg, I, Goal, P1), compound(I), compound_name_arguments(I, '.', [Self, Func, Value]),
+   call(P1, get_kov(Func, Self, Value)), !,
+   expand_goal(Goal, Out).
+% Handle setter syntax for goals and expand them into set_omember/4.
+goal_expansion_setter(Goal, Out) :-
+   get_setarg_p1(setarg, I, Goal, P1), is_setter_syntax(I, Obj, Member, Var, How),
+   call(P1, Var), !,
+   expand_goal((Goal, set_omember(How, Member, Obj, Var)), Out).
 
-
-goal_expansion_setter(Goal,Out):-
-   predicate_property(Goal,meta_predicate(_)),!,fail,
-   tc_arg(N1,Goal,P), goal_expansion_setter(P,MOut),
-   setarg(N1,Goal,MOut), !, expand_goal(Goal, Out).
-
-goal_expansion_setter(Goal,Out):-
-   tc_arg(N1,Goal,P),  is_setter_syntax(P,Obj,Member,Var,How),
-   setarg(N1,Goal,Var), !, expand_goal((Goal,set_omember(How,Member,Obj,Var)), Out).
-
-goal_expansion_setter(Goal,Out):-
-   get_setarg_p1(setarg,I,Goal,P1), compound(I), compound_name_arguments(I,'.',[ Self, Func, Value]),
-   call(P1,get_kov(Func,Self,Value)),!,
-   expand_goal(Goal,Out).
-
-goal_expansion_setter(Goal,Out):-
-   get_setarg_p1(setarg,I,Goal,P1), is_setter_syntax(I,Obj,Member,Var,How),
-   call(P1,Var),!,
-   expand_goal((Goal,set_omember(How,Member,Obj,Var)),Out).
-
+% Export the goal_expansion_setter/2 predicate.
 :- export(goal_expansion_setter/2).
-:- system:import(goal_expansion_setter/2).
 
+% Import the goal_expansion_setter/2 predicate into the system module.
+:- system:import(goal_expansion_setter/2).
 
 /*
 system:term_expansion((Head:-Goal),I,(Head:-Out),O):- nonvar(I),  compound(Goal),
  goal_expansion_setter(Goal,Out),Goal\=@=Out,I=O,!,
  nop((print(goal_expansion_getter(Goal-->Out)),nl)).
 */
-arc_term_expansion1((system:term_expansion((Head:-Body),I,Out,O):-
-   nonvar(I),  compound(Head),
-     term_expansion_setter((Head:-Body),Out),(Head:-Body)=In,In\==Out,I=O,!,
-     nop((print(term_expansion_setter(In-->Out)),nl)))).
 
-
+%!  arc_term_expansion1(+Clause) is det.
+%
+%   Expands the given term or goal by applying specific transformations using term and goal expansion logic.
+%   The first clause handles `term_expansion/4`, while the second clause handles `goal_expansion/4`.
+%   Both expansions utilize setter-like syntax or goal transformations.
+%
+%   @arg Clause  The clause to be expanded, either a term or a goal.
+%
+%   Example:
+%   ?- arc_term_expansion1((term_expansion((Head :- Body), I, Out, O))).
+%
+% Perform term expansion by applying the term_expansion_setter and printing the transformation if successful.
+arc_term_expansion1((system:term_expansion((Head:-Body), I, Out, O) :-
+   nonvar(I), compound(Head),
+   term_expansion_setter((Head:-Body), Out), (Head:-Body) = In, In \== Out, I = O, !,
+   nop((print(term_expansion_setter(In --> Out)), nl)))).
 %system:goal_expansion(Goal,I,Out,O):- compound(Goal),goal_expansion_getter(Goal,Out),Goal\==Out,I=O,!,
 %  ((print(goal_expansion_getter(Goal-->Out)),nl)).
-
 %user:goal_expansion(Goal,I,Out,O):- compound(Goal),goal_expansion_getter(Goal,Out),Goal\==Out,I=O,!,
 %  ((print(goal_expansion_getter(Goal-->Out)),nl)).
+% Perform goal expansion by applying the goal_expansion_setter and printing the transformation if successful.
+arc_term_expansion1((goal_expansion(Goal, I, Out, O) :-
+   goal_expansion_setter(Goal, Out), Goal \== Out, I = O, !,
+   nop((print(goal_expansion_setter(Goal --> Out)), nl)))).
 
-arc_term_expansion1((goal_expansion(Goal,I,Out,O):-
-   goal_expansion_setter(Goal,Out),Goal\==Out,I=O,!,
-  nop((print(goal_expansion_setter(Goal-->Out)),nl)))).
-
+% Export the arc_term_expansions/1 predicate.
 :- export(arc_term_expansions/1).
-arc_term_expansions(H:- (current_prolog_flag(arc_term_expansion, true), B)):-
+
+% Define arc_term_expansions/1 for applying arc-term expansion rules.
+arc_term_expansions(H:- (current_prolog_flag(arc_term_expansion, true), B)) :-
   arc_term_expansion1(H:-B).
 
+% Export the enable_arc_expansion/0 predicate.
 :- export(enable_arc_expansion/0).
-enable_arc_expansion:-
+
+%!  enable_arc_expansion is det.
+%
+%   Enables arc-term expansion by asserting all rules defined in `arc_term_expansions/1` and
+%   setting the `arc_term_expansion` flag to true.
+%
+%   Example:
+%   ?- enable_arc_expansion.
+%
+enable_arc_expansion :-
  forall(arc_term_expansions(Rule),
-   (strip_module(Rule,M,Rule0),
-     nop(u_dmsg(asserta_if_new(Rule,M,Rule0))),
+   (strip_module(Rule, M, Rule0),
+     nop(u_dmsg(asserta_if_new(Rule, M, Rule0))),
      asserta_if_new(Rule))),
  set_prolog_flag(arc_term_expansion, true).
 
+% Export the disable_arc_expansion/0 predicate.
 :- export(disable_arc_expansion/0).
-disable_arc_expansion:-
- forall(arc_term_expansions(Rule),forall(retract(Rule),true)),
+
+%!  disable_arc_expansion is det.
+%
+%   Disables arc-term expansion by retracting all rules defined in `arc_term_expansions/1` 
+%   and setting the `arc_term_expansion` flag to false.
+%
+%   Example:
+%   ?- disable_arc_expansion.
+%
+disable_arc_expansion :-
+ forall(arc_term_expansions(Rule), forall(retract(Rule), true)),
  set_prolog_flag(arc_term_expansion, false).
 
+% Declare goal_expansion/4 as multifile and dynamic.
 :- multifile(goal_expansion/4).
 :- dynamic(goal_expansion/4).
 
-goal_expansion(G,I,GG,O):- nonvar(I),source_location(_,_),
-    compound(G),
-     (remove_must_det(MD)->remove_mds(MD,G,GG);(md_like(MD),maybe_expand_md(MD,G,GG))),I=O.
-
-
+%!  goal_expansion(+G, +I, -GG, -O) is semidet.
+%
+%   Expands the goal `G` into `GG` if the goal contains must_det_ll or other meta-predicates, and the 
+%   source location is known. The expansion may use either `remove_must_det/1` or `maybe_expand_md/3`.
+%
+%   @arg G   The original goal.
+%   @arg I   The input indicator (nonvar).
+%   @arg GG  The expanded goal.
+%   @arg O   The output indicator (same as `I`).
+%
+% Expand goal if input is non-variable, the source is known, and G is a compound term.
+goal_expansion(G, I, GG, O) :-
+  nonvar(I), source_location(_, _),
+  compound(G),
+  % If must_det_ll should be removed, expand using remove_mds/3, else try meta-predicate expansion.
+  (remove_must_det(MD) -> remove_mds(MD, G, GG) ; (md_like(MD), maybe_expand_md(MD, G, GG))), 
+  I = O.
 
 
 
@@ -1404,6 +2411,7 @@ my_len(X,Y):- is_list(X),!,length(X,Y).
 my_len(X,Y):- functor([_|_],F,A),functor(X,F,A),!,length(X,Y).
 my_len(X,Y):- arcST,!,ibreak.
 */
+
 is_map(G):- is_vm_map(G),!.
 %arc_webui:- false.
 sort_safe(I,O):- catch(sort(I,O),_,I=O).
