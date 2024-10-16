@@ -16,10 +16,28 @@
 metta_atom_xref(Atom):- 
     metta_file_buffer(+, Atom, NamedVarsList, _Filename, _LineCount),  % Retrieve the atom from a Metta file buffer.
     \+ clause(metta_atom_asserted(_, Atom), true),  % Ensure the atom has not been asserted already.
-    nop(maybe_set_var_names(NamedVarsList)).  % Set variable names based on the named variables list.
+   ignore(maybe_name_vars(NamedVarsList)).  % Set variable names based on the named variables list.
 metta_atom_xref(Atom):- 
     clause(metta_atom_asserted(_, Atom), true).  % Check if the atom has been asserted in the knowledge base.
 
+
+%!  maybe_name_vars(+List) is det.
+%
+%   Conditionally sets the variable names if the list is not empty.
+%
+%   @arg List is the list of variable names.
+maybe_name_vars(List):- \+ is_list(List), !.
+maybe_name_vars([]):-!.
+maybe_name_vars([N=Var|List]):-
+    ignore((n_to_vn(N,NN),Var = '$VAR'(NN))),
+    maybe_name_vars(List).
+n_to_vn(N,NN):- var(N),!,sformat(NN,'~p',[N]).
+n_to_vn(N,NN):- number(N),sformat(NN,'~p',['$VAR'(N)]).
+n_to_vn(N,NN):- \+ atom(N),!,sformat(NN,'~p',[N]).
+n_to_vn('_','_'):-!.
+n_to_vn(N,NN):-atom_concat('$',N1,N),!,sformat(NN,'~w',[N1]).
+n_to_vn(N,NN):-atom_concat('_',N1,N),!,sformat(NN,'~w',[N1]).
+n_to_vn(N,NN):-!,sformat(NN,'~w',[N]).
 
 
 %!  predicate_help_hook(+HookType, +Path, +Term, +Arity, -S) is semidet.
@@ -218,7 +236,7 @@ very_nested_src([_, _ | Src]):- is_list(Src),
     member(I, E), is_list(I), !.  
 maybe_link_xref(What):- 
   ignore(once((
-     clause(metta_file_buffer(_,Atom,_,Path,Pos),true,Ref),
+     metta_file_buffer(_,Atom,_,Path,Pos),
      %symbolic(Path), \+ symbol_contains(Path,'stdlib_mettalog'),
      alpha_unify(What,Atom),
      %next_clause(Ref, metta_file_buffer(_,_,_,Path,Pos)),     
@@ -320,13 +338,19 @@ get_current_text(Path, NewText) :-
 compare_and_update_string(Path, NewText) :-
     (   last_retrieved_string(Path, OldText),  % Retrieve the last known content.
         OldText \= NewText  % Check if the content has changed.
-    ->  debug(server(xref), 'Text for "~w" has changed, reprocessing buffer.~n', [Path]),  % Log the change.
+    -> (debug(server(xref), 'Text for "~w" has changed, reprocessing buffer.~n', [Path]),  % Log the change.
         retractall(last_retrieved_string(Path, _)),  % Remove the old content entry.
         asserta(last_retrieved_string(Path, NewText)),  % Update with the new content.
-        xref_metta_file_text('&xref', Path, NewText)  % Reprocess the file with the new content.
+        xref_source_expired(Path),
+        xref_metta_file_text('&xref', Path, NewText))   % Reprocess the file with the new content.
     ;   (debug(server(xref), 'Text for "~w" has not changed, skipping reload.~n', [Path]),  % Log if no change is detected.
         xref_metta_file_text('&xref', Path, NewText))  % Still cross-reference the file for consistency.
     ).
+
+xref_source_expired(Doc):- maybe_doc_path(Doc,Path),!,xref_source_expired(Path).
+xref_source_expired(Path):-
+  %retractall(metta_file_buffer(_Mode, _Term, _NamedVarsList, Path, _Pos)),
+  retractall(made_metta_file_buffer(Path)).
 
 %!  xref_metta_file_text(+Self, +Path, +Text) is det.
 %
@@ -408,9 +432,16 @@ xref_metta_file_text_buffer(TFMakeFile, Filename, In) :-
     % debug(server(xref), "BufferTerm ~w", [BufferTerm]),  % Log the parsed buffer term.
     % Optionally write the buffer content to the buffer file
     if_t(TFMakeFile, write_bf(BufferFile, BufferTerm)),
-    flush_output,  % Ensure all output is flushed.
+    % flush_output,  % Ensure all output is flushed.
     at_end_of_stream(In),  % Stop processing once the end of the stream is reached.
     !.
+
+
+maybe_process_directives(+, exec([Op|List])):-
+  op_execkind(Op,import),
+  last(List,Path),!,
+  xref_source(Path).
+
 
 %!  source_file_text(+Path, -String) is det.
 %
@@ -426,7 +457,7 @@ xref_metta_file_text_buffer(TFMakeFile, Filename, In) :-
 %       Text = "File content here".
 %
 :- dynamic(user:full_text/2).
-source_file_text(Doc, FullText) :- atom(Doc), atom_concat('file://', Path, Doc), !, source_file_text(Path, FullText).
+source_file_text(Doc, FullText) :- maybe_doc_path(Doc,Path), !, source_file_text(Path, FullText).
 source_file_text(Path, FullText) :- !, user:full_text(Path, FullText),!.
 source_file_text(Path, String) :-
     % Tries to retrieve text using doc_text_fallback/2 first.
@@ -449,9 +480,9 @@ xref_document_symbols(Doc, Symbols):- %   sample_outline_test(SS),
     atom_concat('file://', Path, Doc),!,
     findall(
          Symbol,
-         ( xref_document_symbol(Path, Element, Kind, Start:SC, End:EC),
-           Symbol = _{name: Element,
-                      kind: Kind, 
+         ( xref_document_symbol(Path, Outline, KindNumber, Start:SC, End:EC),
+           Symbol = _{name: Outline,
+                      kind: KindNumber, 
                       location:
                       _{uri: Doc,
                         range: _{start: _{line: Start, character: SC},
@@ -460,46 +491,49 @@ xref_document_symbols(Doc, Symbols):- %   sample_outline_test(SS),
          Symbols).
 
 
-doc_path(Doc,Path):- nonvar(Doc),atom_concat('file://', Path, Doc),!.
+doc_path(Doc,Path):- maybe_doc_path(Doc,Path),!.
 doc_path(Doc,Path):- nonvar(Doc),!,Path=Doc.
 doc_path(Doc,Path):- freeze(Path,atom_concat('file://', Path, Doc)).
 
-xref_document_symbol(Doc, Element, Kind, Start, End):- nonvar(Doc),atom_concat('file://', Path, Doc),!,xref_document_symbol(Path, Element, Kind, Start, End).
+maybe_doc_path(Doc,Path):- atomic(Doc),atom_concat('file://', Path, Doc),!.
+
+xref_document_symbol(Doc,  Outline, KindNumber, Start, End):- maybe_doc_path(Doc,Path),!,xref_document_symbol(Path, Outline, KindNumber, Start, End).
 xref_document_symbol(Path, Path, 1, 0:0, 1000:0).
-xref_document_symbol(Path, Element, Kind, Start, End):- xref_document_symbol_d4(Path, Element, Kind, Start, End), fail.
-xref_document_symbol(Path, Element, Kind, Start, End):- xref_document_symbol_fb(Path, Element, Kind, Start, End).
-%xref_document_symbol(Path, Element, Kind, Start, End):- xref_document_symbol_examples(Path, Element, Kind, Start, End).
+xref_document_symbol(Path, Outline, KindNumber, Start, End):- xref_document_symbol_d4(Path, Outline, KindNumber, Start, End), fail.
+xref_document_symbol(Path, Outline, KindNumber, Start, End):- xref_document_symbol_fb(Path, Outline, KindNumber, Start, End).
+%xref_document_symbol(Path, Outline, KindNumber, Start, End):- xref_document_symbol_examples(Path, Outline, KindNumber, Start, End).
 
 
 % for Iconagraphy
 xref_document_symbol_examples(_Path, "By Type...", 1, 1000:0, 10000:0).
-xref_document_symbol_examples(_Path, Element, Kind, Start:1, End:0):- show_example_kinds,
-  lsp_xref_kind(Kind, KindName), Kind>1,
-  Start is Kind*10+1000,End is Start+9,
+xref_document_symbol_examples(_Path, Outline, KindNumber, Start:1, End:0):- show_example_kinds,
+  lsp_xref_kind(KindNumber, KindName), KindNumber>1,
+  Start is KindNumber*10+1000,End is Start+9,
   nonvar(KindName),
-  atom_concat('Example ',KindName,KindExample), toPropercase(KindExample,Element).
+  atom_concat('Example ',KindName,KindExample), toPropercase(KindExample,Outline).
 
 % Roy's `d/4`s
-xref_document_symbol_d4(Doc, Element, Kind, Start, End):- 
+xref_document_symbol_d4(Doc, PrettyString, KindNumber, Start, End):- 
    doc_path(Doc,Path),lsp_metta_changes:doc_text(Path,D4s), 
    nth1(Nth,D4s,D4), nonvar(D4), 
-   d4_document_symbol(Nth,D4, Element, Kind, Start, End).
+   d4_document_symbol(Nth,D4, PrettyString, KindNumber, Start, End).
+
+d4_document_symbol(Nth, d(_,Str,_,_), S, 12, Nth:1, End:1):- succ(Nth,End), outline_name(Str,S).
    
 % Douglas' file_buffer
-xref_document_symbol_fb(Doc, S, Kind, Start, End):- 
+xref_document_symbol_fb(Doc, PrettyString, KindNumber, Start, End):- 
    doc_path(Doc,Path),
-   clause(metta_file_buffer(_,What,_,Path,PosStart),true,Ref), line_col(PosStart,Start),
-   xrefed_element_kind(What,Element,KindName),element_name(Element,S),lsp_xref_kind(Kind, KindName),
-   (((next_clause(Ref, metta_file_buffer(_,_,_,Path,PosEnd)), line_col(PosEnd,End)))-> true ; next_line(Start,End)).
+   clause(metta_file_buffer(_,What,VL,Path,PosStart),true,Ref), line_col(PosStart,Start),
+   ignore(maybe_name_vars(VL)),
+   once(((xrefed_outline_type_kind(What,Outline,KindName),outline_name(Outline,PrettyString),lsp_xref_kind(KindNumber, KindName)))),   
+   once(((next_clause(Ref, metta_file_buffer(_,_,_,Path,PosEnd)), line_col(PosEnd,End)))-> true ; next_line(Start,End)).
 
 
-d4_document_symbol(Nth, d(_,Str,_,_), S, 12, Nth:1, End:1):- succ(Nth,End), element_name(Str,S).
-
-element_name(Str,S):- string(Str),!,atom_length(Str,Len),Len>2,!,S=Str.
-element_name(Str,S):- is_ftVar(Str),wots(M, write_src_woi(Str)),!,element_name(M,S).
-element_name(Str,S):- is_list(Str),wots(M, write_src_woi(Str)),!,element_name(M,S).
-element_name(Str,S):- Str = exec(_),wots(M, write_src_woi(Str)),!,element_name(M,S).
-element_name(Str,S):- sformat(S,'~w',[Str]),atom_length(S,Len),Len>5.
+outline_name(Str,S):- string(Str),!,atom_length(Str,Len),Len>2,!,S=Str.
+outline_name(Str,S):- is_ftVar(Str),wots(M, write_src_woi(Str)),!,outline_name(M,S).
+outline_name(Str,S):- is_list(Str), wots(M, write_src_woi(Str)),!,outline_name(M,S).
+outline_name(Str,S):- Str = exec(_),wots(M, write_src_woi(Str)),!,outline_name(M,S).
+outline_name(Str,S):- sformat(S,'~w',[Str]),atom_length(S,Len),Len>5.
 
 next_line(S:SC,E:SC):- number(S),!,succ(S,E).
 next_line(S,E):- number(S),!,succ(S,E).
@@ -509,19 +543,38 @@ line_col(Position,LineM1:Col):-
      LineM1 is Line-1,
      stream_position_data(line_position, Position, Col).  % Extract the column number.
 
-xrefed_element_kind([EQ,Element|_],Element,function):- EQ=='=',!.
-xrefed_element_kind([CT,Element|Stuff],[CT,Element|Stuff],typeParameter):- CT==':',!.
-xrefed_element_kind('$COMMENT'(Cmt,_,_),Cmt,string):-!.
-xrefed_element_kind('exec'([Op|Rest]),'exec'([Op|Rest]),Kind):- op_typekind(Op,Kind),!.
-xrefed_element_kind('exec'(Cmt),'exec'(Cmt),class):-!.
-xrefed_element_kind(ELSE,ELSE,array):-!.
+xrefed_outline_type_kind(What,Outline,KindName):-
+   xrefed_outline_type(What,Outline,TypeName),
+   type_kind(TypeName,KindName),!.
 
-op_typekind(Op,key):- \+ atom(Op).
-op_typekind(Op,number):- atom_contains(Op,"include"),!.
-op_typekind(Op,number):- atom_contains(Op,"import"),!.
-op_typekind(Op,number):- atom_contains(Op,"load"),!.
-op_typekind(Op,constant):- atom(Op),atom_concat(_,'!',Op),!.
-op_typekind(_Op,class).
+xrefed_outline_type('$COMMENT'(Cmt,_,_),Cmt,metta_comment):-!.
+xrefed_outline_type('exec'([Op|Rest]),'exec'([Op|Rest]),KindNumber):- op_execkind(Op,KindNumber),!.
+xrefed_outline_type('exec'(Cmt),'exec'(Cmt),metta_other):-!.
+xrefed_outline_type([EQ,Outline|_],Outline,metta_defun):- EQ=='=',!.
+xrefed_outline_type([CT,Outline|Stuff],[CT,Outline|Stuff],metta_typedecl):- CT==':',!.
+xrefed_outline_type([Op|Rest],[Op|Rest],KindNumber):- op_execkind(Op,KindNumber),!.
+xrefed_outline_type(Decl,Decl,metta_other):- is_list(Decl),!.
+xrefed_outline_type(ELSE,ELSE,metta_unknown):-!.
+
+op_execkind(Op,_):- \+ atomic(Op),!,is_list(Op).
+op_execkind(Op,metta_import):- atom_contains(Op,"include"),!.
+op_execkind(Op,metta_import):- atom_contains(Op,"import"),!.
+op_execkind(Op,metta_import):- atom_contains(Op,"load"),!.
+op_execkind(Op,metta_directive):- atom(Op),atom_concat(_,'!',Op),!.
+op_execkind(Op,metta_symbol):- atom(Op),atom_concat('&',_,Op),!.
+
+
+type_kind(Var,WillBe):- var(Var),!,freeze(Var,type_kind(Var,WillBe)).
+type_kind(metta_import,number).
+type_kind(metta_symbol,key).
+type_kind(metta_directive,constant).
+type_kind(metta_comment,string).
+type_kind(metta_typedecl,typeParameter).
+type_kind(metta_defun,function).
+type_kind(metta_exec,class).
+type_kind(metta_other,interface).
+type_kind(Was,Keep):- clause(lsp_xref_kind(_,Was),true),!,Keep=Was
+type_kind(_,array).
 
 lsp_xref_kind(N, LU):- number(LU),var(N),!,LU=N.
 lsp_xref_kind(1, file).
@@ -550,6 +603,7 @@ lsp_xref_kind(23, struct).
 lsp_xref_kind(24, event).
 lsp_xref_kind(25, operator).
 lsp_xref_kind(26, typeParameter).
+lsp_xref_kind(26, Nonvar):- nonvar(Nonvar).
 
 %
 
