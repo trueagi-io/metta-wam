@@ -133,7 +133,7 @@ cleanup_debug :-
 % Export the `plain_var/1` predicate to make it available outside this module.
 :- export(plain_var/1).
 
-%!  plain_var(+Var) is semidet.
+%!  plain_var(+Var) is nondet.
 %
 %   True if `Var` is a plain Prolog variable, meaning it is a variable (`var/1`),
 %   but not an attributed variable (`attvar/1`), and it has no `ci` attribute.
@@ -349,7 +349,7 @@ luser_unsetval(ID, N) :-
 set_luser_default(N, V) :-
     luser_setval(global, N, V).
 
-%!  luser_default(+N, -V) is semidet.
+%!  luser_default(+N, -V) is nondet.
 %
 %   Retrieves the default value associated with the key `N`. If `V` is a variable,
 %   it attempts to get the value using `luser_getval/2`. Otherwise, it sets the default
@@ -397,7 +397,7 @@ luser_linkval(ID, N, V) :-
     % Assert the new property for the user ID, key `N`, and value `V`.
     asserta(arc_user_prop(ID, N, V)).
 
-%!  arc_sensical_term(+O) is semidet.
+%!  arc_sensical_term(+O) is nondet.
 %
 %   Determines whether the given term `O` is sensical (i.e., a valid term).
 %   A term is considered sensical if it is nonvar, not an empty list, not an empty atom,
@@ -422,7 +422,7 @@ arc_sensical_term(V, O) :-
     !,  % If true, cut to prevent further backtracking.
     O = V.  % Unify `O` with `V`.
 
-%!  arc_option(+O) is semidet.
+%!  arc_option(+O) is nondet.
 %
 %   Checks whether a specific option `O` is set for the current user.
 %   This is determined by retrieving the value associated with `O` and verifying
@@ -467,7 +467,7 @@ with_luser(N, V, Goal) :-
 
 % luser_getval(N,V):- nb_current(N,VVV),arc_sensical_term(VVV,VV),!,V=VV.
 
-%!  luser_getval(+N, -V) is semidet.
+%!  luser_getval(+N, -V) is nondet.
 %
 %   Retrieves the value associated with the key `N` for the current user. It first attempts to retrieve
 %   the value using `luser_getval_0/2`. After retrieving the value, it ensures the value is sensical using
@@ -482,7 +482,7 @@ luser_getval(N, V) :-
     % Ensure the value is sensical.
     arc_sensical_term(V),!.
 
-%!  luser_getval_0(+N, -V) is semidet.
+%!  luser_getval_0(+N, -V) is nondet.
 %
 %   Dispatches the retrieval of user-specific values based on the key `N`.
 %   If the key is `arc_user`, it retrieves the current user. Otherwise, it delegates
@@ -497,7 +497,7 @@ luser_getval_0(N, V) :-
     % For other keys, delegate to `luser_getval_1/2`.
     luser_getval_1(N, V).
 
-%!  luser_getval_1(+N, -V) is semidet.
+%!  luser_getval_1(+N, -V) is nondet.
 %
 %   Attempts to retrieve the value associated with the key `N` from various sources.
 %   It first tries `luser_getval_2/2`, then checks `luser_getval_3/2`, and finally
@@ -523,7 +523,7 @@ luser_getval_1(N, V) :-
 %luser_getval_0(N,V):- luser_getval_3(N,V), \+ luser_getval_2(N,_), \+ luser_getval_1(N,_).
 %luser_getval_3(N,V):- is_cgi, current_predicate(get_param_req/2),get_param_req(N,M),url_decode_term(M,V).
 
-%!  luser_getval_2(+N, -V) is semidet.
+%!  luser_getval_2(+N, -V) is nondet.
 %
 %   Retrieves the value for the key `N` from the HTTP request parameters (if not on the main thread),
 %   or from non-backtrackable storage. It checks that the value is sensical before unifying it with `V`.
@@ -538,7 +538,7 @@ luser_getval_2(N, V) :-
     % If `N` is an atom, try to retrieve the value from non-backtrackable storage.
     atom(N),nb_current(N, ValV),arc_sensical_term(ValV, Val),Val = V.
 
-%!  luser_getval_3(+N, -V) is semidet.
+%!  luser_getval_3(+N, -V) is nondet.
 %
 %   Retrieves the value for the key `N` from the current user properties or from session parameters.
 %   This predicate tries to handle both CGI requests and session variables.
@@ -558,7 +558,7 @@ luser_getval_3(N, V) :-
     arc_sensical_term(V).
 %luser_getval_3(N,V):- atom(N), nb_current(N,ValV),arc_sensical_term(ValV,Val),Val=V.
 
-%!  get_luser_default(+N, -V) is semidet.
+%!  get_luser_default(+N, -V) is nondet.
 %
 %   Retrieves a default value for the key `N` from either global user properties or Prolog flags.
 %   The value is ensured to be sensical before unifying it with `V`.
@@ -587,7 +587,7 @@ ansi_main :-
     % Check that CGI mode is not active. `nop/1` negates `is_cgi`, ensuring CGI mode is off.
     nop(is_cgi),!.
 
-%!  main_thread is semidet.
+%!  main_thread is nondet.
 %
 %   Succeeds if the current thread is the `main` thread. This is used to identify
 %   whether the system is running in the main thread.
@@ -616,8 +616,6 @@ if_thread_main(G) :-
 :- if(\+ current_predicate(fbug/1)).
 %fbug(P):- format(user_error,'~N~p~n',[P]).
 :- endif.
-
-
 
 %!  substM(+T, +F, +R, -Result) is det.
 %
@@ -731,7 +729,6 @@ mcatch(G, E, F) :-
 %ncatch(G,E,F):- catch(G,E,(fbug(G=E),catch(bt,_,fail),fbug(G=E),call(G))).
 %ncatch(G,E,(F)).
 
-
 % Conditionally define the predicate `if_t/2` only if it is not already defined.
 :- if(\+ current_predicate(if_t/2)).
 
@@ -804,7 +801,7 @@ at_least_once(G) :-
 %wraps_each(must_ll,call).
 wraps_each(must_det_ll, once).
 
-%!  md_like(+MD) is semidet.
+%!  md_like(+MD) is nondet.
 %
 %   Checks if the predicate `MD` is defined as a wrapper by checking if `wraps_each/2`
 %   contains an entry for `MD`. This acts as a filter or condition to see if `MD` behaves
@@ -814,7 +811,7 @@ wraps_each(must_det_ll, once).
 md_like(MD) :-
     wraps_each(MD, _).
 
-%!  remove_must_det(+MD) is semidet.
+%!  remove_must_det(+MD) is nondet.
 %
 %   A placeholder predicate intended to prevent the use of `MD` (possibly removing
 %   or disabling behavior associated with `must_det_ll`). Currently, this version
@@ -956,7 +953,7 @@ compound_name_arg(G, MD, Goal) :-
 % Declares that `user:message_hook/3` can be modified during runtime, allowing new clauses to be added or retracted.
 :- dynamic(user:message_hook/3).
 
-%!  user:message_hook(+Term, +Kind, +Lines) is semidet.
+%!  user:message_hook(+Term, +Kind, +Lines) is nondet.
 %
 %   This hook is used to intercept messages in the SWI-Prolog system. It is designed to handle 
 %   error messages by logging them using `fbug/1`. If the message kind is `error`, it will attempt 
@@ -1464,7 +1461,7 @@ give_up(Why, N):- is_testing, !, write_src_uo(Why), !, halt(N).
 % Otherwise, log the reason and abort the execution.
 give_up(Why, _):- write_src_uo(Why), throw('$aborted').
 
-%!  is_guitracer is semidet.
+%!  is_guitracer is nondet.
 %
 %   Succeeds if the Prolog environment is running in a GUI tracer environment. This predicate 
 %   checks whether the `DISPLAY` environment variable is set and whether the Prolog flag `gui_tracer` 
@@ -1766,7 +1763,7 @@ set_omember(How, Member, Obj, Var):-
   must_be_nonvar(Member), must_be_nonvar(Obj), must_be_nonvar(How), !,
   set_omemberh(How, Member, Obj, Var), !.
 
-%!  get_kov(+K, +O, -V) is semidet.
+%!  get_kov(+K, +O, -V) is nondet.
 %
 %   Retrieves the value `V` associated with key `K` in the object `O`. This predicate first checks 
 %   if the key-value pair can be obtained using `dictoo:is_dot_hook/4`, and if not, it tries alternative
@@ -1784,7 +1781,7 @@ get_kov(K, O, V):- dictoo:is_dot_hook(user, O, K, V), !, o_m_v(O, K, V).
 % Attempt nested lookups or alternative retrieval methods if the initial retrieval fails.
 get_kov(K, O, V):- ((get_kov1(K, O, V) *-> true ; (get_kov1(props, O, VV), get_kov1(K, VV, V)))).
 
-%!  get_kov1(+K, +O, -V) is semidet.
+%!  get_kov1(+K, +O, -V) is nondet.
 %
 %   Tries to retrieve the value `V` associated with key `K` in the object `O`, first by checking if the
 %   object `O` is a hooked object. If not, it delegates the task to `get_kov2/3`.
@@ -1799,7 +1796,7 @@ get_kov(K, O, V):- ((get_kov1(K, O, V) *-> true ; (get_kov1(props, O, VV), get_k
 % Check if `O` is a hooked object and retrieve `K`, otherwise delegate to `get_kov2`.
 get_kov1(K, O, V):- (is_hooked_obj(O), o_m_v(O, K, V)) *-> true ; get_kov2(K, O, V).
 
-%!  get_kov2(+K, +O, -V) is semidet.
+%!  get_kov2(+K, +O, -V) is nondet.
 %
 %   Attempts to retrieve the value `V` for key `K` in object `O` by checking if the object is a dictionary,
 %   a red-black tree, or a nested structure with `oov` values.
@@ -1835,7 +1832,7 @@ get_oov_value(ValueOOV, Value):- compound(ValueOOV), ValueOOV = oov(Value), !.
 % Return the value as is if no `oov` wrapper is found.
 get_oov_value(Value, Value).
 
-%!  term_expansion_setter(+I, -O) is semidet.
+%!  term_expansion_setter(+I, -O) is nondet.
 %
 %   Attempts to expand the term `I` using `must_det_ll/2`. If successful, returns the expanded term `O`.
 %   This handles special cases where the input term has setter syntax or certain expansion rules apply.
@@ -1850,43 +1847,12 @@ get_oov_value(Value, Value).
 term_expansion_setter(I, O):- maybe_expand_md(must_det_ll, I, O), I \=@= O, !.
 % Try expanding the term again if the first expansion was incomplete.
 term_expansion_setter(I, O):- maybe_expand_md(must_det_ll, I, M), I \=@= M, !, term_expansion_setter(M, O).
-
-%!  term_expansion_setter(+Goal, get_kov(+Func, +Self, -Value)) is semidet.
-%
-%   Expands the term if it follows the setter syntax with a compound goal and dot notation. This allows
-%   for syntactic sugar around setting object values.
-%
-%   @arg Goal  The input goal to be checked for setter syntax.
-%   @arg Func  The function or key in the dot notation.
-%   @arg Self  The object in the dot notation.
-%   @arg Value The value being set or retrieved.
-%
-%   Example:
-%   ?- term_expansion_setter(my_goal, get_kov(func, object, value)).
-%
-% Handle expansion when the goal follows dot notation syntax for setter operations.
 term_expansion_setter(Goal, get_kov(Func, Self, Value)):- compound(Goal),
   compound_name_arguments(Goal, '.', [Self, Func, Value]), var(Value).
-
-%!  term_expansion_setter((+Head :- +Body), -Out) is det.
-%
-%   Expands the term in cases where the `Head` follows setter syntax, ensuring that the corresponding
-%   member is updated in the object.
-%
-%   @arg Head  The head of the clause to be expanded.
-%   @arg Body  The body of the clause to be expanded.
-%   @arg Out   The expanded output clause.
-%
-%   Example:
-%   ?- term_expansion_setter((my_head :- my_body), ExpandedClause).
-%
-% Handle term expansion for setter-like syntax, updating the member in the object.
-term_expansion_setter((Head :- Body), Out):-
-   get_setarg_p1(setarg, I, Head, P1), is_setter_syntax(I, Obj, Member, Var, How),
-   call(P1, Var),
-   BodyCode = (Body, set_omember(How, Member, Obj, Var)),
-   expand_term((Head :- BodyCode), Out), !.
-% term_expansion_setter((Head:-Body),(Head:-GBody)):- goal_expansion_setter(Body,GBody),!.
+term_expansion_setter((Head :- Body), Out) :-
+   get_setarg_p1(setarg, I, Head, P1),is_setter_syntax(I, Obj, Member, Var, How),call(P1, Var),
+   BodyCode = (Body, set_omember(How, Member, Obj, Var)),expand_term((Head :- BodyCode), Out), !.
+% term_expansion_setter((Head:-Body), (Head:-GBody)) :- goal_expansion_setter(Body, GBody), !.
 
 % Export the term_expansion_setter/2 predicate.
 :- export(term_expansion_setter/2).
@@ -1896,7 +1862,7 @@ term_expansion_setter((Head :- Body), Out):-
 
 %goal_expansion(Goal,'.'(Training, Objs, Obj)):- Goal = ('.'(Training, Objs, A), Obj = V),  var(Obj).
 
-%!  is_setter_syntax(+I, -Obj, -Member, -Var, -How) is semidet.
+%!  is_setter_syntax(+I, -Obj, -Member, -Var, -How) is nondet.
 %
 %   Checks whether the term `I` follows setter syntax for objects and members. This includes various
 %   patterns like `set/2`, `gset/2`, and `hset/3`, as well as their shorthand dot notation forms.
@@ -1925,7 +1891,7 @@ is_setter_syntax(gset(ObjMember), Obj, Member, _Var, nb):- obj_member_syntax(Obj
 % Handle hset/2 syntax using dot notation for object and member.
 is_setter_syntax(hset(How, ObjMember), Obj, Member, _Var, How):- obj_member_syntax(ObjMember, Obj, Member).
 
-%!  obj_member_syntax(+ObjMember, -Obj, -Member) is semidet.
+%!  obj_member_syntax(+ObjMember, -Obj, -Member) is nondet.
 %
 %   Ensures the compound `ObjMember` follows the dot notation syntax for objects and members (i.e., `Obj.Member`).
 %
@@ -1939,7 +1905,7 @@ is_setter_syntax(hset(How, ObjMember), Obj, Member, _Var, How):- obj_member_synt
 % Ensure the compound follows dot notation Obj.Member.
 obj_member_syntax(ObjMember, Obj, Member):- compound(ObjMember), compound_name_arguments(ObjMember, '.', [Obj, Member]), !.
 
-%!  maybe_expand_md(+MD, +I, -O) is semidet.
+%!  maybe_expand_md(+MD, +I, -O) is nondet.
 %
 %   Expands the term `I` using the meta-predicate `MD` if it matches a specific pattern. If the input
 %   term is a compound with the meta-predicate `MD` or contains a subterm that matches, this predicate
@@ -1993,7 +1959,7 @@ expand_md(MD, [A|B], (AA, BB)) :- assertion(callable(A)), assertion(is_list(B)),
 % Expand any other term using expand_md1/3.
 expand_md(MD, A, AA) :- !, expand_md1(MD, A, AA).
 
-%!  prevents_expansion(+A) is semidet.
+%!  prevents_expansion(+A) is nondet.
 %
 %   Succeeds if the term `A` is a trace-related call, indicating that expansion should be prevented.
 %
@@ -2005,7 +1971,7 @@ expand_md(MD, A, AA) :- !, expand_md1(MD, A, AA).
 % Succeed if A is a trace-related call.
 prevents_expansion(A):- is_trace_call(A).
 
-%!  is_trace_call(+A) is semidet.
+%!  is_trace_call(+A) is nondet.
 %
 %   Checks if the term `A` is a trace call, such as `trace` or `itrace`.
 %
@@ -2019,7 +1985,7 @@ is_trace_call(A):- A == trace.
 % Succeed if A is the `itrace` term.
 is_trace_call(A):- A == itrace.
 
-%!  skip_expansion(+A) is semidet.
+%!  skip_expansion(+A) is nondet.
 %
 %   Succeeds if the term `A` is a special case where expansion should be skipped. This includes
 %   specific control structures and some compound terms.
@@ -2040,7 +2006,7 @@ skip_expansion(true).
 % Succeed if A is a compound term whose functor should skip expansion.
 skip_expansion(C):- compound(C), functor(C, F, A), skip_fa_expansion(F, A).
 
-%!  skip_fa_expansion(+F, +A) is semidet.
+%!  skip_fa_expansion(+F, +A) is nondet.
 %
 %   Succeeds if the functor-arity pair `F/A` matches one of the special cases for skipping expansion.
 %
@@ -2132,7 +2098,7 @@ expand_must_not_error(C, CC):- \+ predicate_property(C, meta_predicate(_)), !, C
 % Recursively expand the goal using must_not_error.
 expand_must_not_error(C, CC):- expand_md(must_not_error, C, CC).
 
-%!  kaggle_arc_1_pred(-M, +P) is semidet.
+%!  kaggle_arc_1_pred(-M, +P) is nondet.
 %
 %   Succeeds if the predicate `M:P` is defined in a file containing 'arc_' in its name, 
 %   excluding certain files like '_pfc' and '_afc'. This is used to identify specific 
@@ -2157,7 +2123,7 @@ kaggle_arc_1_pred(M, P):-
 %meta_builtin(P):- var(P),meta_builtin(P).
 %meta_builtin(P):- predicate_property(P,interpreted),predicate_property(P,static).
 
-%!  skippable_built_in(+MP) is semidet.
+%!  skippable_built_in(+MP) is nondet.
 %
 %   Succeeds if the predicate `MP` is a built-in system predicate that should be skipped during expansion.
 %   It checks if the predicate is either ISO-compliant or marked as `notrace`.
@@ -2237,7 +2203,7 @@ goal_expansion_getter(Goal, Out):-
 % Import the goal_expansion_getter/2 predicate into the system module.
 :- system:import(goal_expansion_getter/2).
 
-%!  goal_expansion_setter(+Goal, -O) is semidet.
+%!  goal_expansion_setter(+Goal, -O) is nondet.
 %
 %   Expands a goal by handling setter-like syntax, applying meta-predicate expansions, 
 %   and transforming specific patterns into more suitable forms like `set_omember/4`.
@@ -2369,7 +2335,7 @@ disable_arc_expansion :-
 :- multifile(goal_expansion/4).
 :- dynamic(goal_expansion/4).
 
-%!  goal_expansion(+G, +I, -GG, -O) is semidet.
+%!  goal_expansion(+G, +I, -GG, -O) is nondet.
 %
 %   Expands the goal `G` into `GG` if the goal contains must_det_ll or other meta-predicates, and the 
 %   source location is known. The expansion may use either `remove_must_det/1` or `maybe_expand_md/3`.
@@ -2412,152 +2378,703 @@ my_len(X,Y):- functor([_|_],F,A),functor(X,F,A),!,length(X,Y).
 my_len(X,Y):- arcST,!,ibreak.
 */
 
-is_map(G):- is_vm_map(G),!.
+%!  is_map(+G) is nondet.
+%
+%   Succeeds if `G` is a VM map. Uses `is_vm_map/1` for the check.
+%
+%   @arg G  The term to check.
+%
+%   Example:
+%   ?- is_map(my_map).
+%
+% Check if G is a VM map.
+is_map(G) :- is_vm_map(G), !.
+
 %arc_webui:- false.
-sort_safe(I,O):- catch(sort(I,O),_,I=O).
-my_append(A,B):- append(A,B).
-my_append(A,B,C):- append(A,B,C).
-with_tty_false(Goal):- with_set_stream(current_output,tty(false),Goal).
-with_tty_true(Goal):- with_set_stream(current_output,tty(true),Goal).
 
-% Count occurrences of G and store the result in N
-count_of(G,N):- findall_vset(G,G,S),length(S,N).
-findall_vset(T,G,S):- findall(T,G,L),variant_list_to_set(L,S).
-flatten_objects(Objs,ObjsO):- flatten([Objs],ObjsO),!.
+%!  sort_safe(+I, -O) is det.
+%
+%   Sorts the list `I` into `O`. If sorting fails due to an exception, 
+%   `O` is unified with `I` as a fallback.
+%
+%   @arg I  The input list to be sorted.
+%   @arg O  The sorted output list or the original input on failure.
+%
+%   Example:
+%   ?- sort_safe([3,1,2], Sorted).
+%
+% Safely sort a list, falling back to the original list if sorting fails.
+sort_safe(I, O) :- catch(sort(I, O), _, I = O).
 
+%!  my_append(+A, +B) is det.
+%
+%   Appends two lists `A` and `B`.
+%
+%   @arg A  The first list.
+%   @arg B  The second list.
+%
+%   Example:
+%   ?- my_append([1, 2], [3, 4], Result).
+%
+% Append two lists.
+my_append(A, B) :- append(A, B).
 
-var_e(E,S):- E==S,!.
-var_e(E,S):- (nonvar(E);attvar(E)),!,E=@=S.
+%!  my_append(+A, +B, -C) is det.
+%
+%   Appends two lists `A` and `B` to produce a new list `C`.
+%
+%   @arg A  The first list.
+%   @arg B  The second list.
+%   @arg C  The resulting list after appending `A` and `B`.
+%
+%   Example:
+%   ?- my_append([1, 2], [3, 4], Result).
+%
+% Append two lists to produce a third list.
+my_append(A, B, C) :- append(A, B, C).
 
-variant_list_to_set([E|List],Out):- select(S,List,Rest),var_e(E,S),!, variant_list_to_set([E|Rest],Out).
-variant_list_to_set([E|List],[E|Out]):- !, variant_list_to_set(List,Out).
-variant_list_to_set(H,H).
+%!  with_tty_false(:Goal) is det.
+%
+%   Executes `Goal` with the `tty(false)` stream setting.
+%
+%   @arg Goal  The goal to be executed.
+%
+%   Example:
+%   ?- with_tty_false(write('Hello, World!')).
+%
+% Execute a goal with the tty(false) stream setting.
+with_tty_false(Goal) :- with_set_stream(current_output, tty(false), Goal).
 
-nb_subst(Obj,New,Old):-
-  get_setarg_p1(nb_setarg,Found,Obj,P1),Found=@=Old,
-  p1_call(P1,New),!,nb_subst(Obj,New,Old).
-nb_subst(_Obj,_New,_Old).
+%!  with_tty_true(:Goal) is det.
+%
+%   Executes `Goal` with the `tty(true)` stream setting.
+%
+%   @arg Goal  The goal to be executed.
+%
+%   Example:
+%   ?- with_tty_true(write('Hello, World!')).
+%
+% Execute a goal with the tty(true) stream setting.
+with_tty_true(Goal) :- with_set_stream(current_output, tty(true), Goal).
 
-system:any_arc_files(Some):- is_list(Some),!, Some\==[],maplist(any_arc_files,Some).
-system:any_arc_files(Some):- atom_contains(Some,'arc').
+%!  count_of(+G, -N) is det.
+%
+%   Counts the occurrences of `G` and stores the result in `N`.
+%
+%   @arg G  The goal whose occurrences are to be counted.
+%   @arg N  The number of occurrences found.
+%
+%   Example:
+%   ?- count_of(member(X, [1, 2, 2, 3]), N).
+%
+% Count occurrences of G and store the result in N.
+count_of(G, N) :- findall_vset(G, G, S), length(S, N).
 
+%!  findall_vset(+T, :G, -S) is det.
+%
+%   Finds all solutions of `G` and removes duplicates to create a set `S`.
+%
+%   @arg T  The template for solutions.
+%   @arg G  The goal to find solutions for.
+%   @arg S  The resulting set of unique solutions.
+%
+%   Example:
+%   ?- findall_vset(X, member(X, [1, 2, 2, 3]), Set).
+%
+% Find all solutions of G and remove duplicates to create a set.
+findall_vset(T, G, S) :- findall(T, G, L), variant_list_to_set(L, S).
+
+%!  flatten_objects(+Objs, -ObjsO) is det.
+%
+%   Flattens a list of objects `Objs` into a single list `ObjsO`.
+%
+%   @arg Objs   The nested list of objects to flatten.
+%   @arg ObjsO  The resulting flattened list.
+%
+%   Example:
+%   ?- flatten_objects([[1, 2], [3, [4]]], Flat).
+%
+% Flatten a list of objects.
+flatten_objects(Objs, ObjsO) :- flatten([Objs], ObjsO), !.
+
+%!  var_e(+E, +S) is nondet.
+%
+%   Succeeds if the term `E` is equivalent to `S` either by direct equality or structural equivalence.
+%   Handles both non-variable terms and attributed variables.
+%
+%   @arg E  The first term to compare.
+%   @arg S  The second term to compare.
+%
+%   Example:
+%   ?- var_e(X, X).
+%
+% Succeed if E and S are identical.
+var_e(E, S) :- E == S, !.
+% Succeed if E is non-variable or an attributed variable and structurally equivalent to S.
+var_e(E, S) :- (nonvar(E); attvar(E)), !, E =@= S.
+
+%!  variant_list_to_set(+List, -Out) is det.
+%
+%   Converts a list into a set by removing structurally equivalent duplicates.
+%
+%   @arg List  The input list with possible duplicates.
+%   @arg Out   The output list with duplicates removed.
+%
+%   Example:
+%   ?- variant_list_to_set([a, b, a, c], Set).
+%
+% If E and S are structurally equivalent, skip S and continue with the rest of the list.
+variant_list_to_set([E | List], Out) :- 
+  select(S, List, Rest), var_e(E, S), !, 
+  variant_list_to_set([E | Rest], Out).
+% Include E in the output and continue processing the list.
+variant_list_to_set([E | List], [E | Out]) :- !, 
+  variant_list_to_set(List, Out).
+% If the input and output lists are identical, stop.
+variant_list_to_set(H, H).
+
+%!  nb_subst(:Obj, +New, +Old) is det.
+%
+%   Substitutes occurrences of `Old` with `New` in `Obj` non-backtrackably. 
+%   Uses `nb_setarg/3` to perform non-backtrackable assignment.
+%
+%   @arg Obj  The object in which substitutions are performed.
+%   @arg New  The term to substitute in place of `Old`.
+%   @arg Old  The term to be replaced.
+%
+%   Example:
+%   ?- nb_subst(my_obj, new_value, old_value).
+%
+% Perform non-backtrackable substitution if Found is structurally equivalent to Old.
+nb_subst(Obj, New, Old) :-
+  get_setarg_p1(nb_setarg, Found, Obj, P1), Found =@= Old,
+  p1_call(P1, New), !, 
+  nb_subst(Obj, New, Old).
+% Stop if no further substitutions are needed.
+nb_subst(_Obj, _New, _Old).
+
+%!  system:any_arc_files(+Some) is nondet.
+%
+%   Checks if the input `Some` is a list of files containing 'arc' in their names. 
+%   If `Some` is a list, it recursively checks each element.
+%
+%   @arg Some  The atom or list of atoms to check.
+%
+%   Example:
+%   ?- system:any_arc_files(['file1.arc', 'file2.txt']).
+%
+
+% Check if Some is a list and contains non-empty elements with 'arc' in their names.
+system:any_arc_files(Some) :- 
+    is_list(Some), !, 
+    Some \== [], 
+    maplist(any_arc_files, Some).
+% Check if a single atom contains the substring 'arc'.
+system:any_arc_files(Some) :- atom_contains(Some, 'arc').
+
+% Declare in_memo_cached/5 as thread-local to ensure thread-specific storage.
 :- thread_local(in_memo_cached/5).
+
+% Declare prolog:make_hook/2 as multifile and dynamic to allow redefinition.
 :- multifile(prolog:make_hook/2).
 :- dynamic(prolog:make_hook/2).
-prolog:make_hook(before, Some):- any_arc_files(Some), forall(muarc:clear_all_caches,true).
 
+%!  prolog:make_hook(+Stage, +Some) is nondet.
+%
+%   A hook that is called before certain operations if the input `Some` contains 
+%   files related to 'arc'. It clears all caches if any such files are involved.
+%
+%   @arg Stage  The stage at which the hook is invoked (e.g., `before`).
+%   @arg Some   The input to check for 'arc'-related files.
+%
+%   Example:
+%   ?- prolog:make_hook(before, 'file.arc').
+%
+% Hook to clear all caches if the input contains 'arc'-related files.
+prolog:make_hook(before, Some) :- 
+    any_arc_files(Some), 
+    forall(muarc:clear_all_caches, true).
+
+% Declare muarc:clear_all_caches/0 as multifile and dynamic to allow redefinition.
 :- multifile(muarc:clear_all_caches/0).
 :- dynamic(muarc:clear_all_caches/0).
-muarc:clear_all_caches:-  \+ luser_getval(extreme_caching,true), retractall(in_memo_cached(_,_,_,_,_)), fail.
+
+%!  muarc:clear_all_caches is det.
+%
+%   Clears all memoization caches unless extreme caching is enabled. 
+%   Uses `retractall/1` to remove all cached entries.
+%
+%   Example:
+%   ?- muarc:clear_all_caches.
+%
+% Clear all caches unless extreme caching is enabled.
+muarc:clear_all_caches :- 
+    \+ luser_getval(extreme_caching, true), 
+    retractall(in_memo_cached(_, _, _, _, _)), 
+    fail.
+
+%!  arc_memoized(+G) is det.
+%
+%   Memoizes the result of calling the goal `G`. If `G` is already memoized, it retrieves the cached result.
+%   Otherwise, it computes the result, caches it, and ensures that the cache is cleaned up in case of errors.
+%
+%   This predicate handles memoization by:
+%   - Copying terms for consistent caching.
+%   - Using `in_memo_cached/5` to store cached results.
+%   - Preventing concurrent memoization for the same goal using `throw/1`.
+%   - Cleaning up cached data on exceptions using `setup_call_cleanup/3`.
+%
+%   @arg G  The goal to memoize. It must be ground (fully instantiated) and a compound term.
+%
+%   Example:
+%   ?- arc_memoized(my_goal(42)).
+%
 %arc_memoized(G):- !, call(G).
+% If G is a ground compound term with an arity-1 functor, memoize it by reducing it to a simpler form.
+arc_memoized(G) :- 
+    compound(G), ground(G), functor(G, F, 1),functor(C, F, 1), !,arc_memoized(C),G = C, !.
+% Memoize a ground goal G by copying it and using in_memo_cached to store and retrieve results.
+arc_memoized(G) :-
+    copy_term(G, C, GT),(Key = (C + GT)),
+    % Check if memoization is already in progress; if so, throw an error to avoid concurrent memoization.
+    (in_memo_cached(Key, C, track, started, Info) 
+        -> throw(already_memoizing(in_memo_cached(Key, C, track, started, Info))) 
+        ; true),
+    % Number variables in Key to make it unique and ready for caching.
+    numbervars(Key, 0, _, [attvar(bind), singletons(true)]), !,
+    % Use setup_call_cleanup to ensure cache cleanup if any error occurs.
+    setup_call_cleanup(
+        (asserta(in_memo_cached(Key, C, track, started, _), Started)),
+        catch(
+            % If the goal is cached, retrieve the result and apply any attached goals.
+            (in_memo_cached(Key, C, GT, Found, AttGoals) 
+                *-> (G = Found, maplist(call, AttGoals))
+                % Otherwise, compute the goal, cache it, or store it as failed if computation fails.
+                ; ((call(G), copy_term(G, CG, GG)) 
+                    *-> asserta(in_memo_cached(Key, C, GT, CG, GG))
+                    ; asserta(in_memo_cached(Key, C, GT, failed, _)))),
+            % On exception, remove the cache and rethrow the error.
+            E, (retractall(in_memo_cached(Key, C, GT, _, _)), throw(E))
+        ),
+        % Cleanup the started assertion when done.
+        erase(Started)
+    ).
 
-arc_memoized(G):- compound(G),ground(G),functor(G,F,1),functor(C,F,1),!,arc_memoized(C),G=C,!.
-arc_memoized(G):-
-  copy_term(G,C,GT),
-  (Key = (C+GT)),
-  (in_memo_cached(Key,C,track,started,Info)->throw(already_memoizing(in_memo_cached(Key,C,track,started,Info))) ; true),
-  numbervars(Key,0,_,[attvar(bind),singletons(true)]),!,
-  setup_call_cleanup((asserta(in_memo_cached(Key,C,track,started,_),Started)),
-  catch(
-  (in_memo_cached(Key,C,GT,Found,AttGoals)*->(G=Found,maplist(call,AttGoals))
-    ; ((call(G),copy_term(G,CG,GG)) *->asserta(in_memo_cached(Key,C,GT,CG,GG))
-                  ;asserta(in_memo_cached(Key,C,GT,failed,_)))),
-  E, (retractall(in_memo_cached(Key,C,GT,_,_)),throw(E))),erase(Started)).
+%!  set_nth1(+Index, +List, +Element, -ModifiedList) is det.
+%
+%   Replaces the element at the given 1-based index in a list with a new element.
+%
+%   @arg Index The 1-based position of the element to be replaced.
+%   @arg List The input list in which the replacement will be made.
+%   @arg Element The new element to place at the specified index.
+%   @arg ModifiedList The list after the replacement has been made.
+%
+%   @example
+%     ?- set_nth1(2, [a, b, c], x, Result).
+%     Result = [a, x, c].
+%
+% Base case: When the index is 1, replace the head element.
+set_nth1(1, [_|Row], E, [E|Row]) :- !.
+% Recursive case: Decrement N and continue processing the tail.
+set_nth1(N, [W|Row], E, [W|RowMod]) :- Nm1 is N - 1,set_nth1(Nm1, Row, E, RowMod).
 
-set_nth1(1,[_|Row],E,[E|Row]):-!.
-set_nth1(N,[W|Row],E,[W|RowMod]):- Nm1 is N-1, set_nth1(Nm1,Row,E,RowMod).
+%!  findall_count(+Template, +Goal, -Count) is det.
+%
+%   Counts the number of unique solutions for a given Goal.
+%
+%   @arg Template The template for the solutions.
+%   @arg Goal The goal to find solutions for.
+%   @arg Count The number of unique solutions.
+%
+%   @example
+%     ?- findall_count(X, member(X, [1,2,2,3]), Count).
+%     Count = 3.
+%
+% Collect unique solutions as a set and count the elements.
+findall_count(T, G, N) :- findall_set(T, G, S),length(S, N).
 
-findall_count(T,G,N):- findall_set(T,G,S),length(S,N).
+%!  findall_set(+Template, +Goal, -Set) is det.
+%
+%   Collects all solutions to the Goal and removes duplicates to return a set.
+%
+%   @arg Template The template for the solutions.
+%   @arg Goal The goal to find solutions for.
+%   @arg Set A list of unique solutions.
+%
+%   @example
+%     ?- findall_set(X, member(X, [1,2,2,3]), Set).
+%     Set = [1, 2, 3].
+%
+% Find all solutions and convert them to a set to remove duplicates.
+findall_set(T, G, S) :- findall(T, G, L),list_to_set(L, S).
 
-findall_set(T,G,S):- findall(T,G,L),list_to_set(L,S).
+%!  make_list_inited(+Length, +Element, -List) is det.
+%
+%   Creates a list with the specified length, initialized with a given element.
+%
+%   @arg Length The length of the resulting list.
+%   @arg Element The element to initialize each position in the list with.
+%   @arg List The resulting initialized list.
+%
+%   @example
+%     ?- make_list_inited(3, 0, List).
+%     List = [0, 0, 0].
+%
+% Base case: When length is 0, return an empty list.
+make_list_inited(0, _, []) :- !.
+% Base case: When length is 1, return a singleton list with the element.
+make_list_inited(1, E, [E]) :- !.
+% Recursive case: Decrement N and prepend the element.
+make_list_inited(N, E, [E|List]) :- Nm1 is N - 1,make_list_inited(Nm1, E, List).
 
-make_list_inited(0,_,[]):-!.
-make_list_inited(1,E,[E]):-!.
-make_list_inited(N,E,[E|List]):- Nm1 is N -1,make_list_inited(Nm1,E,List).
+%!  nth_fact(+Predicate, +Index) is nondet.
+%
+%   Retrieves the clause reference of the nth clause for the given predicate.
+%
+%   @arg Predicate The predicate whose clause is being accessed.
+%   @arg Index The 1-based index of the clause.
+%
+%   @example
+%     % If foo/0 has three clauses, this query retrieves the second clause:
+%     ?- nth_fact(foo, 2).
+%
+% Retrieve the clause reference and unify it with the index.
+nth_fact(P, I) :- clause(P, true, Ref),nth_clause(P, I, Ref).
 
-nth_fact(P,I):- clause(P,true,Ref),nth_clause(P,I,Ref).
+%!  nonvar_or_ci(+Term) is nondet.
+%
+%   Succeeds if the given term is either non-variable or an attributed variable.
+%
+%   @arg Term The term to check.
+%
+%   @example
+%     ?- nonvar_or_ci(X).
+%     false.
+%
+%     ?- nonvar_or_ci(1).
+%     true.
+%
+% Succeed if the term is either non-variable or attributed variable.
+nonvar_or_ci(C) :- (nonvar(C); attvar(C)), !.
 
-nonvar_or_ci(C):- (nonvar(C);attvar(C)),!.
+%!  add_i(+Info) is det.
+%
+%   Adds the given information to two rule sets: `test_rules` and `pair_rules`.
+%   This predicate uses the `nb_set_add/2` to efficiently update non-backtrackable sets.
+%
+%   @arg Info The information to be added.
+%
+%   @example
+%     ?- add_i(foo).
+%
+% Tersify the info and add it to the rule sets.
+add_i(Info) :-
+    quietly((
+        tersify(Info, InfoT),
+        luser_getval(test_rules, TRules),
+        luser_getval(pair_rules, PRules),
+        nb_set_add(TRules, InfoT),
+        nb_set_add(PRules, InfoT),
+        nop(pp(cyan, +InfoT))
+    )).
 
-add_i(Info):-
- quietly((tersify(Info,InfoT),
- luser_getval(test_rules,TRules),
- luser_getval(pair_rules,PRules),
-  nb_set_add(TRules,InfoT),
-  nb_set_add(PRules,InfoT),
- nop(pp(cyan,+InfoT)))).
+%!  add_i(+Functor, +Info) is det.
+%
+%   Adds a term constructed with the functor and info to the rule sets.
+%
+%   @arg Functor The functor to use in constructing the term.
+%   @arg Info The information to be added.
+%
+%   @example
+%     ?- add_i(foo, bar).
+%
+% Construct a new term and add it to the rule sets.
+add_i(F, Info) :- append_term(i(F), Info, FInfo),add_i(FInfo).
 
-add_i(F,Info):-
- append_term(i(F),Info,FInfo),
- add_i(FInfo).
+%!  add_rule(+Info) is det.
+%
+%   Adds the given information as a rule to the rule set.
+%
+%   @arg Info The information to be added as a rule.
+%
+%   @example
+%     ?- add_rule(foo).
+%
+% Add the information as a rule.
+add_rule(Info) :- add_i(rule, Info).
 
-add_rule(Info):- add_i(rule,Info).
-add_cond(Info):- add_i(cond,Info).
+%!  add_cond(+Info) is det.
+%
+%   Adds the given information as a condition to the rule set.
+%
+%   @arg Info The information to be added as a condition.
+%
+%   @example
+%     ?- add_cond(bar).
+%
+% Add the information as a condition.
+add_cond(Info) :- add_i(cond, Info).
+
 %do_action(Info):- guess_pretty(Info),add_i(action,Info),call(Info).
-do_action(Call):- !, copy_term(Call,Info),call(Call),add_i(action,Info).
-add_action(Info):- add_i(action,Info).
-add_note(Info):- add_i(note,Info).
-add_indiv(W,Info):- add_i(indiv(W),Info).
-add_comparitor(Info):- add_i(comparitor,Info).
-show_rules:-
- luser_getval(pair_rules,PRules), maplist(pp(cyan),PRules),
- luser_getval(test_rules,TRules), maplist(pp(blue),TRules),
- !.
 
+%!  do_action(+Call) is det.
+%
+%   Executes the given call and records it as an action.
+%
+%   @arg Call The goal to be executed and recorded as an action.
+%
+%   @example
+%     ?- do_action(write('Hello')).
+%
+% Copy the call, execute it, and record it as an action.
+do_action(Call) :- !, copy_term(Call, Info), call(Call), add_i(action, Info).
 
-sub_atom_value(TestID,A):- sub_term(A,TestID),(atom(A);string(A)).
+%!  add_action(+Info) is det.
+%
+%   Adds the given information as an action to the rule set.
+%
+%   @arg Info The information to be added as an action.
+%
+%   @example
+%     ?- add_action(foo).
+%
+% Add the information as an action.
+add_action(Info) :- add_i(action, Info).
 
-my_list_to_set(List, Set):- my_list_to_set(List, (=) ,Set).
-my_list_to_set_variant(List, Set):- my_list_to_set(List, (=@=) ,Set).
-my_list_to_set_cmp(List, Set):- my_list_to_set(List, (=@=) ,Set).
+%!  add_note(+Info) is det.
+%
+%   Adds the given information as a note to the rule set.
+%
+%   @arg Info The information to be added as a note.
+%
+%   @example
+%     ?- add_note('This is a note').
+%
+% Add the information as a note.
+add_note(Info) :- add_i(note, Info).
 
-my_list_to_set([E|List],P2, Set):- select(C,List,Rest), p2_call(P2, E,C), !, my_list_to_set([E|Rest],P2, Set).
-my_list_to_set([E|List],P2, [E|Set]):-!, my_list_to_set(List,P2, Set).
-my_list_to_set([],_,[]).
+%!  add_indiv(+W, +Info) is det.
+%
+%   Adds the given information as an individual entry.
+%
+%   @arg W The identifier for the individual entry.
+%   @arg Info The information to associate with the individual entry.
+%
+%   @example
+%     ?- add_indiv(john, 'is a teacher').
+%
+% Add the information as an individual entry.
+add_indiv(W, Info) :- add_i(indiv(W), Info).
 
-my_list_to_set_cmp([E|List],C3, Set):- select(C,List,Rest), call(C3,R,E,C),
-   R== (=), my_list_to_set_cmp([C|Rest],C3, Set),!.
-  my_list_to_set_cmp([E|List],C3, [E|Set]):-!, my_list_to_set_cmp(List,C3, Set).
-my_list_to_set_cmp([],_,[]).
+%!  add_comparitor(+Info) is det.
+%
+%   Adds the given information as a comparator to the rule set.
+%
+%   @arg Info The information to be added as a comparator.
+%
+%   @example
+%     ?- add_comparitor('greater than').
+%
+% Add the information as a comparator.
+add_comparitor(Info) :- add_i(comparitor, Info).
 
+%!  show_rules is det.
+%
+%   Displays the current rules stored in `pair_rules` and `test_rules`.
+%
+%   The `pair_rules` are shown in cyan, and the `test_rules` are shown in blue.
+%
+%   @example
+%     ?- show_rules.
+%
+% Display the current rules from both rule sets.
+show_rules :- 
+    luser_getval(pair_rules, PRules), maplist(pp(cyan), PRules), 
+    luser_getval(test_rules, TRules), maplist(pp(blue), TRules), !.
 
-contains_nonvar(N,Info):- sub_term(E,Info),nonvar_or_ci(E),E=N,!.
+%!  sub_atom_value(+TestID, -A) is nondet.
+%
+%   Extracts atomic or string sub-terms from the given `TestID`.
+%
+%   This predicate finds sub-terms of `TestID` and unifies them with `A` if 
+%   they are either atoms or strings.
+%
+%   @arg TestID The term to be searched for sub-terms.
+%   @arg A      A sub-term of `TestID` that is either an atom or a string.
+%
+sub_atom_value(TestID, A) :- sub_term(A, TestID),(atom(A) ; string(A)).
 
-max_min(A,B,C,D):- must_be_free(C),must_be_free(D),max_min0(A,B,C,D).
-max_min0(A,B,B,B):- plain_var(A).
-max_min0(A,B,A,A):- plain_var(B),!.
-max_min0(A,B,C,D):- number(A),number(B), !, ((A > B) -> (C=A, D=B) ; (C=B, D=A)).
-max_min0(_,A,A,A):- number(A),!.
-max_min0(A,_,A,A):- number(A),!.
-max_min0(_,_,_,_).
+%!  my_list_to_set(+List, -Set) is det.
+%
+%   Converts a list to a set by removing duplicates using equality `(=)/2`.
+%
+%   @arg List The input list to be converted.
+%   @arg Set  The resulting set with duplicates removed.
+%
+my_list_to_set(List, Set) :- my_list_to_set(List, (=), Set).
 
-as_debug(L,G):- as_debug(L,true,G).
-as_debug(9,_,_):- !.
-as_debug(_,C,G):- ignore(catch((call(C)->wots(S,G),format('~NDEBUG: ~w~N',[S]);true),_,true)).
+%!  my_list_to_set_variant(+List, -Set) is det.
+%
+%   Converts a list to a set using term equality `(=@=)/2`.
+%
+%   @arg List The input list to be converted.
+%   @arg Set  The resulting set with duplicates removed.
+%
+my_list_to_set_variant(List, Set) :- my_list_to_set(List, (=@=), Set).
 
-shall_count_as_same(A,B):- same_term(A,B),!. % unify ok_ok cmatch
-shall_count_as_same(A,B):- plain_var(A),!,A==B.
-shall_count_as_same(A,B):- atomic(A),!, A=@=B.
-shall_count_as_same(A,B):- var(B),!,A=@=B.
-shall_count_as_same(A,B):- A=@=B,!.
-shall_count_as_same(A,B):- copy_term(B,CB),copy_term(A,CA),\+ \+ ( A=B, B=@=CB, A=@=CA),!.
+%!  my_list_to_set_cmp(+List, -Set) is det.
+%
+%   Converts a list to a set using custom term comparison `(=@=)/2`.
+%
+%   @arg List The input list to be converted.
+%   @arg Set  The resulting set with duplicates removed.
+%
+my_list_to_set_cmp(List, Set) :- my_list_to_set(List, (=@=), Set).
+
+%!  my_list_to_set(+List, +P2, -Set) is det.
+%
+%   Internal predicate to remove duplicates from a list using a predicate `P2`.
+%
+%   @arg List The input list.
+%   @arg P2   The predicate used for comparison.
+%   @arg Set  The output list without duplicates.
+%
+my_list_to_set([E|List], P2, Set) :- select(C, List, Rest),p2_call(P2, E, C),!,my_list_to_set([E|Rest], P2, Set).
+my_list_to_set([E|List], P2, [E|Set]) :- !, my_list_to_set(List, P2, Set).
+my_list_to_set([], _, []).
+
+%!  my_list_to_set_cmp(+List, +C3, -Set) is det.
+%
+%   Internal predicate to remove duplicates using a comparison predicate `C3`.
+%
+%   @arg List The input list.
+%   @arg C3   The comparison predicate.
+%   @arg Set  The resulting list with duplicates removed.
+%
+my_list_to_set_cmp([E|List], C3, Set) :- select(C, List, Rest),call(C3, R, E, C),R == (=), 
+    my_list_to_set_cmp([C|Rest], C3, Set),!.
+my_list_to_set_cmp([E|List], C3, [E|Set]) :- !, my_list_to_set_cmp(List, C3, Set).
+my_list_to_set_cmp([], _, []).
+
+%!  contains_nonvar(+N, +Info) is nondet.
+%
+%   Checks if the given `Info` term contains a sub-term that is non-variable 
+%   and matches `N`.
+%
+%   @arg N    The value to match with non-variable sub-terms of `Info`.
+%   @arg Info The term to be searched for matching sub-terms.
+%
+contains_nonvar(N, Info) :- sub_term(E, Info),nonvar_or_ci(E),E = N,!.
+
+%!  max_min(+A, +B, -C, -D) is det.
+%
+%   Computes the maximum and minimum values between `A` and `B`.
+%
+%   @arg A The first input number.
+%   @arg B The second input number.
+%   @arg C The maximum value.
+%   @arg D The minimum value.
+%
+max_min(A, B, C, D) :- must_be_free(C),must_be_free(D),max_min0(A, B, C, D).
+
+%!  max_min0(+A, +B, -C, -D) is det.
+%
+%   Helper predicate to determine maximum and minimum values.
+%
+max_min0(A, B, B, B) :- plain_var(A).
+max_min0(A, B, A, A) :- plain_var(B),!.
+max_min0(A, B, C, D) :- number(A),number(B),!,((A > B) -> (C = A, D = B) ; (C = B, D = A)).
+max_min0(_, A, A, A) :- number(A),!.
+max_min0(A, _, A, A) :- number(A),!.
+max_min0(_, _, _, _).
+
+%!  as_debug(+L, +C, +G) is det.
+%
+%   Executes a goal `G` with debugging information, conditional on `C`.
+%
+%   @arg L Debug level, used to conditionally enable debugging.
+%   @arg C Condition to check before executing the goal.
+%   @arg G The goal to execute with debugging.
+%
+as_debug(L, G) :- as_debug(L, true, G).
+
+%!  as_debug(+L, +C, +G) is det.
+%
+%   Executes a goal `G` with debugging information if `L` is not 9.
+%
+as_debug(9, _, _) :- !.
+as_debug(_, C, G) :- ignore(catch((call(C) -> wots(S, G), format('~NDEBUG: ~w~N', [S]); true), _, true)).
+
+%!  shall_count_as_same(+A, +B) is nondet.
+%
+%   Determines if two terms `A` and `B` should be considered the same.
+%
+%   This predicate compares two terms for equivalence based on multiple criteria,
+%   including unification, variable checks, atomic checks, and structural equality.
+%   It aims to identify whether the two terms can be treated as the same by 
+%   performing a series of conditional checks.
+%
+%   @arg A The first term to compare.
+%   @arg B The second term to compare.
+%
+shall_count_as_same(A, B) :- same_term(A, B),!. % unify ok_ok match
+shall_count_as_same(A, B) :- plain_var(A),!,A == B.
+shall_count_as_same(A, B) :- atomic(A),!, A =@= B.
+shall_count_as_same(A, B) :- var(B),!, A =@= B.
+shall_count_as_same(A, B) :- A =@= B,!.
+shall_count_as_same(A, B) :- copy_term(B, CB),copy_term(A, CA),\+ \+ (A = B, B =@= CB, A =@= CA),!.
 %shall_count_as_same(A,B):- \+ A \= B, !.
 
-count_each([C|L],GC,[Len-C|LL]):- include(shall_count_as_same(C),GC,Lst),length(Lst,Len),!,count_each(L,GC,LL).
-count_each([],_,[]).
+%!  count_each(+List, +Group, -Counts) is det.
+%
+%   Counts occurrences of each element in `List` within the given `Group`.
+%   The result is a list of pairs, where each pair contains the length
+%   of occurrences and the corresponding element.
+%
+%   @arg List   The list of elements to be counted.
+%   @arg Group  The group in which to count occurrences.
+%   @arg Counts A list of pairs [Length-Element] with the counts.
+%
+count_each([C|L], GC, [Len-C|LL]) :- include(shall_count_as_same(C), GC, Lst),length(Lst, Len), 
+    !, count_each(L, GC, LL).
+count_each([], _, []).
 
-count_each_inv([C|L],GC,[C-Len|LL]):- include(shall_count_as_same(C),GC,Lst),length(Lst,Len),count_each_inv(L,GC,LL).
-count_each_inv([],_,[]).
+%!  count_each_inv(+List, +Group, -Counts) is det.
+%
+%   Inverse counting of occurrences, producing [Element-Length] pairs.
+%
+%   @arg List   The list of elements to be counted.
+%   @arg Group  The group in which to count occurrences.
+%   @arg Counts A list of pairs [Element-Length] with the counts.
+%
+count_each_inv([C|L], GC, [C-Len|LL]) :- include(shall_count_as_same(C), GC, Lst),length(Lst, Len), 
+    count_each_inv(L, GC, LL).
+count_each_inv([], _, []).
 
-maplist_n(N,P,[H1|T1]):-
-  p2_call(P,N,H1), N1 is N+1,
-  maplist_n(N1,P,T1).
-maplist_n(_N,_P,[]).
+%!  maplist_n(+N, :Predicate, +List) is det.
+%
+%   Applies a predicate to each element in `List`, passing an index that 
+%   starts from `N` and increments with each step.
+%
+%   @arg N        The starting index.
+%   @arg Predicate The predicate to be applied to each element.
+%   @arg List     The list of elements to process.
+%
+maplist_n(N, P, [H1|T1]) :- p2_call(P, N, H1),N1 is N + 1,maplist_n(N1, P, T1).
+maplist_n(_N, _P, []).
 
-maplist_n(N,P,[H1|T1],[H2|T2]):-
-  call(P,N,H1,H2), N1 is N+1,
-  maplist_n(N1,P,T1,T2).
-maplist_n(_N,_P,[],[]).
+%!  maplist_n(+N, :Predicate, +List1, -List2) is det.
+%
+%   Applies a predicate to corresponding elements of two lists, 
+%   passing an index that starts from `N` and increments with each step.
+%
+%   @arg N        The starting index.
+%   @arg Predicate The predicate to be applied to each pair of elements.
+%   @arg List1    The input list.
+%   @arg List2    The output list with transformed elements.
+%
+maplist_n(N, P, [H1|T1], [H2|T2]) :- call(P, N, H1, H2),N1 is N + 1,maplist_n(N1, P, T1, T2).
+maplist_n(_N, _P, [], []).
 
 /*
 print_points_grid(Points):-
@@ -2589,26 +3106,76 @@ kaggle_arc_train('00d62c1b', trn, [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], [0
 kaggle_arc_train('00d62c1b', tst, [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], [0,0, 3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], [0, 3,0, 3, 3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], [0,0, 3,0, 3, 3, 3, 3, 3,0, 3, 3,0,0,0,0,0,0,0,0], [0,0,0,0, 3,0,0,0,0, 3,0,0, 3,0,0,0,0,0,0,0], [0,0,0,0, 3, 3, 3, 3, 3,0, 3, 3, 3,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0,0,0,0, 3, 3, 3, 3, 3,0,0], [0,0,0,0,0,0,0,0,0,0,0,0,0, 3,0,0,0, 3,0,0], [0,0,0,0,0,0,0,0,0,0,0,0,0, 3,0,0,0, 3,0,0], [0,0,0,0,0,0,0,0,0, 3, 3, 3, 3, 3,0,0,0, 3,0,0], [0,0,0,0,0,0,0,0,0, 3,0,0,0, 3,0,0,0, 3,0,0], [0,0,0,0,0,0,0,0, 3, 3, 3, 3, 3, 3,0,0,0, 3,0,0], [0,0,0,0,0,0, 3, 3,0, 3,0,0,0, 3, 3, 3, 3, 3,0,0], [0,0, 3,0,0,0,0,0, 3, 3,0,0,0,0,0,0,0,0,0,0], [0, 3,0, 3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], [0,0, 3,0, 3,0, 3, 3, 3, 3, 3, 3,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0, 3,0,0,0, 3,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0, 3,0,0,0, 3,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0, 3, 3, 3, 3, 3,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]], [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], [0,0, 3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], [0, 3, 4, 3, 3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], [0,0, 3,0, 3, 3, 3, 3, 3,0, 3, 3,0,0,0,0,0,0,0,0], [0,0,0,0, 3, 4, 4, 4, 4, 3, 4, 4, 3,0,0,0,0,0,0,0], [0,0,0,0, 3, 3, 3, 3, 3,0, 3, 3, 3,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0,0,0,0, 3, 3, 3, 3, 3,0,0], [0,0,0,0,0,0,0,0,0,0,0,0,0, 3, 4, 4, 4, 3,0,0], [0,0,0,0,0,0,0,0,0,0,0,0,0, 3, 4, 4, 4, 3,0,0], [0,0,0,0,0,0,0,0,0, 3, 3, 3, 3, 3, 4, 4, 4, 3,0,0], [0,0,0,0,0,0,0,0,0, 3, 4, 4, 4, 3, 4, 4, 4, 3,0,0], [0,0,0,0,0,0,0,0, 3, 3, 3, 3, 3, 3, 4, 4, 4, 3,0,0], [0,0,0,0,0,0, 3, 3, 4, 3,0,0,0, 3, 3, 3, 3, 3,0,0], [0,0, 3,0,0,0,0,0, 3, 3,0,0,0,0,0,0,0,0,0,0], [0, 3, 4, 3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], [0,0, 3,0, 3,0, 3, 3, 3, 3, 3, 3,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0, 3, 4, 4, 4, 3,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0, 3, 4, 4, 4, 3,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0, 3, 3, 3, 3, 3,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]).
 */
 %tell(s), ignore((nl, nl, task_pairs(Name, ExampleNum, In, Out), format('~N~q.~n', [test_pairs_cache(Name, ExampleNum, In, Out)]), fail)), told.
-map_pred(Pred, P, X) :- map_pred([],Pred, P, X).
-%map_pred(NoCycles,_Pred, P, X) :- member(E,NoCycles), E==P,!, X = P.
-map_pred(NoCycles,Pred, P, X) :- p2_call(Pred, P, X)*->true;map_pred0(NoCycles,Pred, P, X).
+%!  map_pred(:Pred, +P, -X) is det.
+%
+%   Applies the given predicate `Pred` to `P` and produces `X`.
+%   If `Pred` cannot be applied directly, it attempts a more complex transformation.
+%
+%   @arg Pred The predicate to be applied.
+%   @arg P    The input term.
+%   @arg X    The resulting transformed term.
+%
+map_pred(Pred, P, X) :- map_pred([], Pred, P, X).
 
+%map_pred(NoCycles,_Pred, P, X) :- member(E,NoCycles), E==P,!, X = P.
+
+%!  map_pred(+NoCycles, :Pred, +P, -X) is nondet.
+%
+%   Tries to apply `Pred` to `P` directly. If it fails, it falls back to `map_pred0`.
+%
+%   @arg NoCycles A list to detect cyclic references.
+%   @arg Pred     The predicate to be applied.
+%   @arg P        The input term.
+%   @arg X        The resulting transformed term.
+%
+map_pred(NoCycles, Pred, P, X) :- p2_call(Pred, P, X) *-> true ; map_pred0(NoCycles, Pred, P, X).
+
+%!  map_pred1(:Pred, +P, -P1) is det.
+%
+%   Wrapper that applies `Pred` to `P`, returning the transformed result in `P1`.
+%
+%   @arg Pred The predicate to apply.
+%   @arg P    The input term.
+%   @arg P1   The transformed term.
+%
 map_pred1(Pred, P, P1) :- map_pred1(P, Pred, P, P1).
 
-map_pred0(_NoCycles,_Pred, Args, ArgSO) :- must_be_free(ArgSO), Args==[],!, ArgSO=[].
-map_pred0(_NoCycles, Pred, P, P1) :-  p2_call(Pred, P, P1),!. % *->true;fail.
-map_pred0(NoCycles,Pred, P, X) :- fail, attvar(P), !, %duplicate_term(P,X),P=X,
-  get_attrs(P,VS), map_pred([P|NoCycles],Pred, VS, VSX), P=X, put_attrs(X,VSX),!.
-map_pred0(NoCycles,Pred, P, X):- map_pred1(NoCycles,Pred, P, X).
+%!  map_pred0(+NoCycles, :Pred, +Args, -ArgSO) is det.
+%
+%   Handles edge cases where `Args` is empty or applies `Pred` recursively on compound terms.
+%
+%   @arg NoCycles A list to detect cyclic references.
+%   @arg Pred     The predicate to apply.
+%   @arg Args     The input term (or list of terms).
+%   @arg ArgSO    The output term after transformation.
+%
+map_pred0(_NoCycles, _Pred, Args, ArgSO) :- must_be_free(ArgSO), Args == [], !, ArgSO = [].
+map_pred0(_NoCycles, Pred, P, P1) :- p2_call(Pred, P, P1), !. % *->true;fail.
+map_pred0(NoCycles, Pred, P, X) :- 
+    fail, attvar(P), !, 
+    %duplicate_term(P,X),P=X,
+    get_attrs(P, VS),map_pred([P | NoCycles], Pred, VS, VSX),P = X,put_attrs(X, VSX), !.
+map_pred0(NoCycles, Pred, P, X) :- map_pred1(NoCycles, Pred, P, X).
 
-map_pred1(_NoCycles,_Pred, P, P1) :- ( \+ compound(P) ; is_ftVar(P)), !, must_det_ll(P1=P), !.
 % map_pred0(NoCycles,Pred, Args, ArgSO) :- is_list(Args), !, maplist(map_pred([Args|NoCycles],Pred), Args, ArgS), ArgS=ArgSO.
-map_pred1(NoCycles,Pred, IO, OO) :- is_list(IO),!, maplist(map_pred(NoCycles,Pred), IO, OO).
-map_pred1(NoCycles,Pred, IO, [O|ArgS]) :-  IO= [I|Args], !,
-  map_pred([IO,ArgS|NoCycles],Pred, I, O), map_pred0([IO,I|NoCycles],Pred, Args, ArgS).
-map_pred1(NoCycles,Pred, P, P1) :-
-  compound_name_arguments(P, F, Args), maplist(map_pred([P|NoCycles],Pred),Args,ArgS), compound_name_arguments(P1, F, ArgS).
+
+%!  map_pred1(+NoCycles, :Pred, +P, -P1) is det.
+%
+%   Applies `Pred` recursively to compound or list terms.
+%
+%   @arg NoCycles A list to detect cyclic references.
+%   @arg Pred     The predicate to apply.
+%   @arg P        The input term.
+%   @arg P1       The output term after transformation.
+%
+map_pred1(_NoCycles, _Pred, P, P1) :- (\+ compound(P) ; is_ftVar(P)), !, must_det_ll(P1 = P), !.
+map_pred1(NoCycles, Pred, IO, OO) :- is_list(IO),!,maplist(map_pred(NoCycles, Pred), IO, OO).
+map_pred1(NoCycles, Pred, IO, [O | ArgS]) :- IO = [I | Args],!, 
+    map_pred([IO, ArgS | NoCycles], Pred, I, O),map_pred0([IO, I | NoCycles], Pred, Args, ArgS).
+map_pred1(NoCycles, Pred, P, P1) :- compound_name_arguments(P, F, Args),
+    maplist(map_pred([P | NoCycles], Pred), Args, ArgS),compound_name_arguments(P1, F, ArgS).
 %map_pred(_Pred, P, P).
+
 /*
 :- meta_predicate map_pred(2, ?, ?, ?, ?).
 map_pred(Pred, P, X, Sk, P1) :- must_be_free(X), p2_call(Pred, P, X), !, must(Sk=P1), !.
@@ -2617,220 +3184,759 @@ map_pred(Pred, [P|Args], X, Sk, [P1|ArgS]) :- !, map_pred(Pred, P, X, Sk, P1), !
 map_pred(Pred, P, X, Sk, P1) :- compound(P), !, compound_name_arguments(P, F, Args), map_pred(Pred, [F|Args], X, Sk, [Fs|ArgS]), !, compound_name_arguments(P1, Fs, ArgS), !.
 map_pred(_Pred, P, _, _, P).
 */
-is_cons(A):- compound(A),A=[_|_].
 
-into_grid_or_var(G,G):- is_cons(G),!.
-into_grid_or_var(G,G):- var(G),!.
-into_grid_or_var(O,G):- cast_to_grid(O,G,_Uncast),!.
+%!  is_cons(+A) is nondet.
+%
+%   Checks if the given term `A` is a compound term representing a non-empty list.
+%
+%   This predicate succeeds if `A` is a compound term with the structure of a list.
+%
+%   @arg A The term to be checked. It can be any valid Prolog term.
+%
+%   @example
+%     ?- is_cons([1, 2, 3]).
+%     true.
+%
+is_cons(A) :- compound(A), A = [_|_].
 
-maybe_mapgrid(P2,I,O):- is_grid(I),!,mapgrid(P2,I,O).
-maybe_mapgrid(P3,I,O,M):- is_grid(I),!,mapgrid(P3,I,O,M).
-maybe_mapgrid(P4,I,O,M,N):- is_grid(I),!,mapgrid(P4,I,O,M,N).
+%!  into_grid_or_var(+O, -G) is det.
+%
+%   Converts the given term `O` into a grid or keeps it as a variable, depending on the input type.
+%
+%   - If `G` is a non-empty list, it is returned as-is.
+%   - If `G` is an uninstantiated variable, it remains unchanged.
+%   - If `O` is neither a list nor a variable, it is cast to a grid using `cast_to_grid/3`.
+%
+%   @arg O The input term to normalize into a grid or keep as a variable.
+%   @arg G The resulting grid or variable.
+%
+%   @example
+%     ?- into_grid_or_var([1, 2, 3], G).
+%     G = [1, 2, 3].
+%
+% If G is a non-empty list, return it unchanged.
+into_grid_or_var(G, G) :- is_cons(G), !.
+% If G is a variable, return it unchanged.
+into_grid_or_var(G, G) :- var(G), !.
+% Attempt to cast O to a grid if it is neither a list nor a variable.
+into_grid_or_var(O, G) :- cast_to_grid(O, G, _Uncast), !.
 
-mapgrid(P4,Grid,GridM,GridN,GridO):- into_grid_or_var(Grid,G1),into_grid_or_var(GridM,G2),into_grid_or_var(GridN,G3),into_grid_or_var(GridO,G4),mapg_list(P4,G1,G2,G3,G4).
-mapg_list(P4,Grid,GridM,GridN,GridO):- is_list(Grid),!,maplist(mapg_list(P4),Grid,GridM,GridN,GridO).
-mapg_list(P4,Grid,GridM,GridN,GridO):- call(P4,Grid,GridM,GridN,GridO),!.
+%!  maybe_mapgrid(+P, +I, -O) is det.
+%
+%   Applies the predicate `P` to the grid `I` to produce the output `O`. 
+%   If `I` is recognized as a grid, it uses `mapgrid/3` to perform the operation.
+%
+%   @arg P The predicate to apply over the grid.
+%   @arg I The input grid.
+%   @arg O The output after applying the predicate.
+%
+%   @example
+%     ?- maybe_mapgrid(pred, [[1, 2], [3, 4]], O).
+%     O = [[Result1, Result2], [Result3, Result4]].
+%
+% If I is a grid, apply the predicate using mapgrid/3.
+maybe_mapgrid(P2, I, O) :- is_grid(I), !, mapgrid(P2, I, O).
 
-mapgrid(P3,Grid,GridN,GridO):- into_grid_or_var(Grid,G1),into_grid_or_var(GridN,G2),into_grid_or_var(GridO,G3),mapg_list(P3,G1,G2,G3).
-mapg_list(P3,Grid,GridN,GridO):- is_list(Grid),!,maplist(mapg_list(P3),Grid,GridN,GridO).
-mapg_list(P3,Grid,GridN,GridO):- call(P3,Grid,GridN,GridO),!.
+%!  maybe_mapgrid(+P, +I, -O, +M) is det.
+%
+%   Applies the predicate `P` over the grid `I` with an additional parameter `M`.
+%   If `I` is recognized as a grid, it uses `mapgrid/4` to perform the operation.
+%
+%   @arg P The predicate to apply over the grid.
+%   @arg I The input grid.
+%   @arg O The output after applying the predicate.
+%   @arg M An additional parameter for the predicate.
+%
+%   @example
+%     ?- maybe_mapgrid(pred, [[1, 2], [3, 4]], O, ExtraParam).
+%     O = [[Result1, Result2], [Result3, Result4]].
+%
+% If I is a grid, apply the predicate using mapgrid/4.
+maybe_mapgrid(P3, I, O, M) :- is_grid(I), !, mapgrid(P3, I, O, M).
 
-mapgrid(P2, Grid,GridN):- into_grid_or_var(Grid,G1),into_grid_or_var(GridN,G2),!,mapg_list(P2, G1,G2).
-mapg_list(P2, Grid,GridN):- is_list(Grid),!,maplist(mapg_list(P2),Grid,GridN).
-mapg_list(P2, Grid,GridN):- p2_call(P2, Grid,GridN),!.
+%!  maybe_mapgrid(+P, +I, -O, +M, +N) is det.
+%
+%   Applies the predicate `P` over the grid `I` with two additional parameters `M` and `N`.
+%   If `I` is recognized as a grid, it uses `mapgrid/5` to perform the operation.
+%
+%   @arg P The predicate to apply over the grid.
+%   @arg I The input grid.
+%   @arg O The output after applying the predicate.
+%   @arg M, N Additional parameters for the predicate.
+%
+%   @example
+%     ?- maybe_mapgrid(pred, [[1, 2], [3, 4]], O, Extra1, Extra2).
+%     O = [[Result1, Result2], [Result3, Result4]].
+%
+% If I is a grid, apply the predicate using mapgrid/5.
+maybe_mapgrid(P4, I, O, M, N) :- is_grid(I), !, mapgrid(P4, I, O, M, N).
 
-mapgrid(P1,Grid):- into_grid_or_var(Grid,G1),mapg_list(P1,G1).
-mapg_list(P1,Grid):- is_list(Grid),!,maplist(mapg_list(P1),Grid).
-mapg_list(P1,Grid):- p1_call(P1,Grid),!.
+%!  mapgrid(+P4, +Grid, +GridM, +GridN, +GridO) is det.
+%
+%   Applies the predicate `P4` over four grids by first ensuring they are correctly formatted as grids or variables.
+%
+%   @arg P4 The predicate to apply over the grids.
+%   @arg Grid, GridM, GridN, GridO The input and output grids.
+%
+%   @example
+%     ?- mapgrid(pred, [[1]], [[2]], [[3]], [[4]]).
+%     true.
+%
+% Ensure all inputs are normalized to grids and apply `P4` with `mapg_list/5`.
+mapgrid(P4, Grid, GridM, GridN, GridO) :- into_grid_or_var(Grid, G1),into_grid_or_var(GridM, G2),
+    into_grid_or_var(GridN, G3),into_grid_or_var(GridO, G4),mapg_list(P4, G1, G2, G3, G4).
+% Apply P4 recursively if the input is a list of grids.
+mapg_list(P4, Grid, GridM, GridN, GridO) :- is_list(Grid),!,maplist(mapg_list(P4), Grid, GridM, GridN, GridO).
+% Call P4 on the grids when they are not lists.
+mapg_list(P4, Grid, GridM, GridN, GridO) :- call(P4, Grid, GridM, GridN, GridO), !.
 
+%!  mapgrid(+P3, +Grid, +GridN, +GridO) is det.
+%
+%   Applies the predicate `P3` over three grids after normalization.
+%
+%   @arg P3 The predicate to apply over the grids.
+%   @arg Grid, GridN, GridO The input and output grids.
+%
+% Normalize inputs to grids and call `mapg_list/4`.
+mapgrid(P3, Grid, GridN, GridO) :- into_grid_or_var(Grid, G1),into_grid_or_var(GridN, G2),into_grid_or_var(GridO, G3),
+    mapg_list(P3, G1, G2, G3).
+% Apply P3 recursively if the input is a list of grids.
+mapg_list(P3, Grid, GridN, GridO) :- is_list(Grid),!,maplist(mapg_list(P3), Grid, GridN, GridO).
+% Call P3 on the grids when they are not lists.
+mapg_list(P3, Grid, GridN, GridO) :- call(P3, Grid, GridN, GridO), !.
 
-maplist_ignore(_3,H,I,J):- (H==[];I==[],J==[]),!,(ignore(H=[]),ignore(I=[]),ignore(J=[])).
-maplist_ignore(P3,H,I,J):- \+ is_list(H),!, ignore(p2_call(call(P3,H),I,J)).
-maplist_ignore(P3,[H|Grid],[I|GridN],[J|GridO]):- maplist_ignore(P3,H,I,J), !,maplist_ignore(P3,Grid,GridN,GridO).
+%!  mapgrid(+P2, +Grid, +GridN) is det.
+%
+%   Applies the predicate `P2` over two grids after normalization.
+%
+%   @arg P2 The predicate to apply over the grids.
+%   @arg Grid, GridN The input and output grids.
+%
+% Normalize inputs to grids and call `mapg_list/3`.
+mapgrid(P2, Grid, GridN) :- into_grid_or_var(Grid, G1),into_grid_or_var(GridN, G2),!,mapg_list(P2, G1, G2).
+% Apply P2 recursively if the input is a list of grids.
+mapg_list(P2, Grid, GridN) :- is_list(Grid),!,maplist(mapg_list(P2), Grid, GridN).
+% Call P2 on the grids when they are not lists.
+mapg_list(P2, Grid, GridN) :- p2_call(P2, Grid, GridN), !.
 
-maplist_ignore(_2,H,I):- (H==[];I==[]),!,(ignore(H=[]),ignore(I=[])).
-maplist_ignore(P2, H,I):- \+ is_list(H),!, ignore(p2_call(P2, H,I)).
-maplist_ignore(P2, [H|Grid],[I|GridN]):- maplist_ignore(P2, H,I), !,maplist_ignore(P2, Grid,GridN).
+%!  mapgrid(+P1, +Grid) is det.
+%
+%   Applies the predicate `P1` to a single grid.
+%
+%   @arg P1 The predicate to apply over the grid.
+%   @arg Grid The input grid.
+%
+% Normalize the grid and call `mapg_list/2`.
+mapgrid(P1, Grid) :- into_grid_or_var(Grid, G1),mapg_list(P1, G1).
+% Apply P1 recursively if the input is a list of grids.
+mapg_list(P1, Grid) :- is_list(Grid),!,maplist(mapg_list(P1), Grid).
+% Call P1 on the grid when it is not a list.
+mapg_list(P1, Grid) :- p1_call(P1, Grid), !.
+
+%!  maplist_ignore(+P3, +H, +I, +J) is det.
+%
+%   Applies the predicate `P3` over three lists, handling cases where the lists may be empty.
+%   Uses `ignore/1` to safely handle operations that could fail or raise exceptions.
+%
+%   @arg P3 The predicate to apply over the elements.
+%   @arg H, I, J Input lists for processing.
+%
+% If any list is empty, ensure all are treated as empty.
+maplist_ignore(_3, H, I, J) :- (H == [] ; I == [] , J == []), !, (ignore(H = []), ignore(I = []), ignore(J = [])).
+% If H is not a list, call P3 and ignore failures.
+maplist_ignore(P3, H, I, J) :- \+ is_list(H), !, ignore(p2_call(call(P3, H), I, J)).
+% Process nested lists recursively.
+maplist_ignore(P3, [H | Grid], [I | GridN], [J | GridO]) :- maplist_ignore(P3, H, I, J), !, maplist_ignore(P3, Grid, GridN, GridO).
+
+%!  maplist_ignore(+P2, +H, +I) is det.
+%
+%   Applies the predicate `P2` over two lists, handling cases where the lists may be empty.
+%   Uses `ignore/1` to ensure operations proceed safely without errors.
+%
+%   @arg P2 The predicate to apply over the elements.
+%   @arg H, I Input lists for processing.
+%
+% If any list is empty, ensure both are treated as empty.
+maplist_ignore(_2, H, I) :- (H == [] ; I == []), !, (ignore(H = []), ignore(I = [])).
+% If H is not a list, call P2 and ignore failures.
+maplist_ignore(P2, H, I) :- \+ is_list(H), !, ignore(p2_call(P2, H, I)).
+% Process nested lists recursively.
+maplist_ignore(P2, [H | Grid], [I | GridN]) :- maplist_ignore(P2, H, I), !, maplist_ignore(P2, Grid, GridN).
 
 %p1_or(P1,Q1,E):- must_be(callable,P1),!, (p1_call(P1,E);p1_call(Q1,E)).
 
-p1_call((P1;Q1),E):- must_be(callable,P1),!, (p1_call(P1,E);p1_call(Q1,E)).
-p1_call((P1,Q1),E):- must_be(callable,P1),!, (p1_call(P1,E),p1_call(Q1,E)).
-p1_call(or(P1,Q1),E):- must_be(callable,P1),!, (p1_call(P1,E);p1_call(Q1,E)).
-p1_call(and(P1,Q1),E):- must_be(callable,P1),!, (p1_call(P1,E),p1_call(Q1,E)).
-p1_call(not(not(P1)),E):- !, \+ \+ p1_call(P1,E).
-p1_call(not(P1),E):- !, not(p1_call(P1,E)).
-p1_call(once(P1),E):- !, once(p1_call(P1,E)).
-p1_call(ignore(P1),E):- !, ignore(p1_call(P1,E)).
-p1_call(chk(P1),E):- !, \+ \+ (p1_call(P1,E)).
-p1_call( \+ (P1),E):- !, \+ p1_call(P1,E).
-p1_call(P1,E):- !, call(P1,E).
+%!  p1_call(+Goal, +E) is det.
+%
+%   Executes a callable predicate `Goal` with the argument `E`. 
+%   This predicate handles various logical operators like conjunction, disjunction, negation, and control constructs such as `once/1` and `ignore/1`.
+%
+%   @arg Goal The predicate or control structure to execute.
+%   @arg E The argument passed to the predicate.
+%
+% Handle disjunction (P1;Q1).
+p1_call((P1;Q1), E) :- must_be(callable, P1), !, (p1_call(P1, E); p1_call(Q1, E)).
+% Handle conjunction (P1,Q1).
+p1_call((P1, Q1), E) :- must_be(callable, P1), !, (p1_call(P1, E), p1_call(Q1, E)).
+% Handle logical OR (or/2).
+p1_call(or(P1, Q1), E) :- must_be(callable, P1), !, (p1_call(P1, E); p1_call(Q1, E)).
+% Handle logical AND (and/2).
+p1_call(and(P1, Q1), E) :- must_be(callable, P1), !, (p1_call(P1, E), p1_call(Q1, E)).
+% Handle double negation (not(not/1)).
+p1_call(not(not(P1)), E) :- !, \+ \+ p1_call(P1, E).
+% Handle negation (not/1).
+p1_call(not(P1), E) :- !, not(p1_call(P1, E)).
+% Execute once/1 to prevent backtracking.
+p1_call(once(P1), E) :- !, once(p1_call(P1, E)).
+% Execute ignore/1 to suppress failures.
+p1_call(ignore(P1), E) :- !, ignore(p1_call(P1, E)).
+% Use double negation to check (chk/1).
+p1_call(chk(P1), E) :- !, \+ \+ (p1_call(P1, E)).
+% Handle negation (\+/1).
+p1_call(\+ (P1), E) :- !, \+ p1_call(P1, E).
+% Call the predicate with the given argument.
+p1_call(P1, E) :- !, call(P1, E).
 
-chk(X,E):- \+ \+ call(X,E).
+%!  chk(+X, +E) is nondet.
+%
+%   Executes `call(X, E)` with double negation to ensure deterministic behavior.
+%
+%   @arg X The callable term to execute.
+%   @arg E The argument passed to the callable term.
+% Double negation ensures the call is deterministic.
+chk(X, E) :- \+ \+ call(X, E).
 
-p2_call_p2(P2a,P2b,A,B):- p2_call(P2a,A,M),p2_call(P2b,M,B).
+%!  p2_call_p2(+P2a, +P2b, +A, -B) is det.
+%
+%   Chains two predicates `P2a` and `P2b`, passing the result of the first to the second.
+%
+%   @arg P2a, P2b The predicates to execute sequentially.
+%   @arg A Input to the first predicate.
+%   @arg B Final output from the second predicate.
+% Execute P2a on A, and use its result as input to P2b.
+p2_call_p2(P2a, P2b, A, B) :- p2_call(P2a, A, M), p2_call(P2b, M, B).
 
-p2_call(P2,A,B):- P2==[],!,A=B.
-p2_call(p1_call(P1),E,O):- !, p1_call(P1,E), E=O.
-p2_call([P2],Grid,GridN):- !, p2_call(P2, Grid,GridN).
-p2_call([P2|P2L],Grid,GridN):- !, p2_call(P2, Grid,GridM),p2_call(P2L,GridM,GridN).
-p2_call(ignore(P2),A,B):- p2_call(P2,A,B)*->true;A=B.
-p2_call(type(Type,P2),A,B):- into_type(Type,A,AA),p2_call(P2,AA,B).
-p2_call(or(P2,Q2),A,B):- nop(must_be(callable,P2)),!, (p2_call(P2,A,B);p2_call(Q2,A,B)).
-p2_call(and(P2,Q2),A,B):- nop(must_be(callable,P2)),!, (p2_call(P2,A,AB),p2_call(Q2,AB,B)).
-p2_call(P2,A,B):- must_be(callable,P2), call(P2,A,B).
+%!  p2_call(+P2, +A, -B) is det.
+%
+%   Executes the predicate `P2` on input `A` to produce output `B`, handling lists, conjunctions, and disjunctions.
+%
+%   @arg P2 The predicate or structure to execute.
+%   @arg A The input term.
+%   @arg B The output term.
+% If P2 is an empty list, unify A and B.
+p2_call(P2, A, B) :- P2 == [], !, A = B.
+% If P2 is a wrapped p1_call, call it on E and unify E with O.
+p2_call(p1_call(P1), E, O) :- !, p1_call(P1, E), E = O.
+% If P2 is a list with one element, call it on Grid and GridN.
+p2_call([P2], Grid, GridN) :- !, p2_call(P2, Grid, GridN).
+% If P2 is a list with multiple elements, apply each element sequentially.
+p2_call([P2 | P2L], Grid, GridN) :- !, p2_call(P2, Grid, GridM), p2_call(P2L, GridM, GridN).
+% Apply ignore logic to P2 to handle failure cases.
+p2_call(ignore(P2), A, B) :- p2_call(P2, A, B) *-> true ; A = B.
+% Convert A to the specified type and apply P2.
+p2_call(type(Type, P2), A, B) :- into_type(Type, A, AA), p2_call(P2, AA, B).
+% Handle logical OR between two predicates.
+p2_call(or(P2, Q2), A, B) :- nop(must_be(callable, P2)), !, (p2_call(P2, A, B) ; p2_call(Q2, A, B)).
+% Handle logical AND between two predicates.
+p2_call(and(P2, Q2), A, B) :- nop(must_be(callable, P2)), !, (p2_call(P2, A, AB), p2_call(Q2, AB, B)).
+% Call P2 if it is a valid callable term.
+p2_call(P2, A, B) :- must_be(callable, P2), call(P2, A, B).
 
+%!  p1_or(+P1A, +P1B, +X) is nondet.
+%
+%   Executes `P1A` or `P1B` on `X`. If `P1A` succeeds, it returns true; otherwise, it tries `P1B`.
+%
+%   @arg P1A, P1B The predicates to apply.
+%   @arg X The input to the predicates.
+% Try P1A on X; if it fails, try P1B.
+p1_or(P1A, P1B, X) :- p1_call(P1A, X) -> true ; p1_call(P1B, X).
 
-p1_or(P1A,P1B,X):- p1_call(P1A,X)->true;p1_call(P1B,X).
-p1_and(P1A,P1B,X):- p1_call(P1A,X),p1_call(P1B,X).
-p1_not(P1,E):- \+ p1_call(P1,E).
-p1_ignore(P1,E):- ignore(p1_call(P1,E)).
-p1_arg(N,P1,E):- tc_arg(N,E,Arg),p1_call(P1,Arg).
-p1_subterm(P1,E):- sub_term(Arg,E),p1_call(P1,Arg).
+%!  p1_and(+P1A, +P1B, +X) is nondet.
+%
+%   Executes both `P1A` and `P1B` on `X`. Succeeds only if both succeed.
+%
+%   @arg P1A, P1B The predicates to apply.
+%   @arg X The input to the predicates.
+% Apply both P1A and P1B on X.
+p1_and(P1A, P1B, X) :- p1_call(P1A, X), p1_call(P1B, X).
+
+%!  p1_not(+P1, +E) is nondet.
+%
+%   Succeeds if the predicate `P1` fails on input `E`.
+%
+%   @arg P1 The predicate to negate.
+%   @arg E The input to the predicate.
+% Negate the result of P1 applied to E.
+p1_not(P1, E) :- \+ p1_call(P1, E).
+
+%!  p1_ignore(+P1, +E) is det.
+%
+%   Executes `P1` on `E` and ignores any failures.
+%
+%   @arg P1 The predicate to execute.
+%   @arg E The input to the predicate.
+% Apply P1 to E and ignore failures.
+p1_ignore(P1, E) :- ignore(p1_call(P1, E)).
+
+%!  p1_arg(+N, +P1, +E) is nondet.
+%
+%   Extracts the Nth argument from `E` and applies `P1` to it.
+%
+%   @arg N The position of the argument to extract.
+%   @arg P1 The predicate to apply to the argument.
+%   @arg E The input term.
+% Extract the Nth argument and apply P1.
+p1_arg(N, P1, E) :- tc_arg(N, E, Arg), p1_call(P1, Arg).
+
+%!  p1_subterm(+P1, +E) is nondet.
+%
+%   Applies `P1` to each subterm of `E`.
+%
+%   @arg P1 The predicate to apply to subterms.
+%   @arg E The term containing subterms.
+% Apply P1 to each subterm of E.
+p1_subterm(P1, E) :- sub_term(Arg, E), p1_call(P1, Arg).
 
 :- meta_predicate my_partition(-, ?, ?, ?).
-my_partition(_,[],[],[]):-!.
-my_partition(P1,[H|L],[H|I],E):- \+ \+ p1_call(P1,H),!,
-  my_partition(P1,L,I,E).
-my_partition(P1,[H|L],I,[H|E]):-
-   my_partition(P1,L,I,E),!.
-my_partition(P1,H,I,HE):- arcST,ibreak,
-  my_partition(P1,[H],I,HE).
 
+%!  my_partition(:P1, +List, -Included, -Excluded) is det.
+%
+%   Partitions a list into two lists: one with elements that satisfy the predicate `P1` and one with the rest.
+%
+%   @arg P1 The predicate used to test each element.
+%   @arg List The input list to partition.
+%   @arg Included The list of elements satisfying `P1`.
+%   @arg Excluded The list of elements not satisfying `P1`.
+% Base case: an empty list results in two empty lists.
+my_partition(_, [], [], []) :- !.
+% If the head satisfies P1, add it to Included.
+my_partition(P1, [H | L], [H | I], E) :- \+ \+ p1_call(P1, H), !, my_partition(P1, L, I, E).
+% If the head does not satisfy P1, add it to Excluded.
+my_partition(P1, [H | L], I, [H | E]) :- my_partition(P1, L, I, E), !.
+% Handle special cases with arcST and ibreak.
+my_partition(P1, H, I, HE) :- arcST, ibreak, my_partition(P1, [H], I, HE).
 
-mapgroup(P2,G1,L2):- into_list(G1,L1),!, with_my_group(L1,maplist(P2,L1,L2)).
-mapgroup(P1,G1):- into_list(G1,L1), !, with_my_group(L1,maplist(P1,L1)).
+%!  mapgroup(:P2, +G1, -L2) is det.
+%
+%   Applies the predicate `P2` to each element of the group `G1` and collects the results in `L2`.
+%
+%   @arg P2 The predicate to apply.
+%   @arg G1 The input group (can be a list or grid).
+%   @arg L2 The output list after applying `P2` to each element.
+% Convert G1 to a list and apply P2 to each element.
+mapgroup(P2, G1, L2) :- into_list(G1, L1), !, with_my_group(L1, maplist(P2, L1, L2)).
 
-selected_group(Grp):- nb_current('$outer_group',Grp),!.
+%!  mapgroup(:P1, +G1) is det.
+%
+%   Applies the predicate `P1` to each element of the group `G1`.
+%
+%   @arg P1 The predicate to apply.
+%   @arg G1 The input group (can be a list or grid).
+% Convert G1 to a list and apply P1 to each element.
+mapgroup(P1, G1) :- into_list(G1, L1), !, with_my_group(L1, maplist(P1, L1)).
+
+%!  selected_group(-Grp) is det.
+%
+%   Retrieves the currently selected group from the non-backtrackable variable `$outer_group`.
+%
+%   @arg Grp The selected group, or an empty list if not found.
+% Retrieve the current group or return an empty list.
+selected_group(Grp) :- nb_current('$outer_group', Grp), !.
 selected_group([]).
 
+%!  sub_cmpd(+X, +Term) is nondet.
+%
+%   Checks if `X` is a sub-component of the compound term `Term`. It searches recursively through lists and compound terms.
+%
+%   @arg X The element to search for.
+%   @arg Term The compound term to search within.
+% If the term is not compound, fail.
 sub_cmpd(_, LF) :- \+ compound(LF), !, fail.
+% If X matches the term, succeed.
 sub_cmpd(X, X).
-sub_cmpd(X, Term) :-
-    (   is_list(Term)
-    ->  member(E, Term),
-        sub_cmpd(X, E)
-    ;   tc_arg(_, Term, Arg),
-        sub_cmpd(X, Arg)
+% If Term is a list, search each member for X.
+sub_cmpd(X, Term) :- 
+    (   is_list(Term) 
+    ->  member(E, Term), sub_cmpd(X, E)
+    ;   % Otherwise, search each argument of the compound term.
+        tc_arg(_, Term, Arg), sub_cmpd(X, Arg)
     ).
 
-
-
+%!  with_my_group(+Group, :Goal) is det.
+%
+%   Executes the given `Goal` within the context of a group. 
+%   If the group is not handled specially, it simply calls the `Goal`.
+%
+%   @arg Group The group of objects (if applicable).
+%   @arg Goal The goal to execute.
+%
 %with_my_group([O|Grp],Goal):- compound(O),O=obj(_),!, locally(nb_setval('$outer_group',[O|Grp]),Goal).
-with_my_group(_,Goal):- call(Goal).
+% Call the goal without special handling.
+with_my_group(_, Goal) :- call(Goal).
 
-into_mlist(L,L).
-my_maplist(P4,G1,L2,L3,L4):- into_mlist(G1,L1),!, with_my_group(L1,maplist(P4,L1,L2,L3,L4)).
-my_maplist(P3,G1,L2,L3):- into_mlist(G1,L1),!, with_my_group(L1,maplist(P3,L1,L2,L3)).
-my_maplist(P2,G1,L2):- into_mlist(G1,L1),!, with_my_group(L1,maplist(P2,L1,L2)).
-my_maplist(P1,G1):- into_mlist(G1,L1), !, with_my_group(L1,maplist(P1,L1)).
+%!  into_mlist(+L, -L) is det.
+%
+%   Ensures the input is treated as a list. 
+%   This is a direct pass-through function for list handling.
+%
+%   @arg L The input list.
+into_mlist(L, L).
 
+%!  my_maplist(:P4, +G1, -L2, -L3, -L4) is det.
+%
+%   Applies the predicate `P4` to elements of `G1` and collects results in `L2`, `L3`, and `L4`.
+%
+%   @arg P4 The predicate to apply.
+%   @arg G1 The input group (can be a list or grid).
+%   @arg L2, L3, L4 Output lists after applying the predicate.
+% Convert G1 to a list and apply P4 to its elements.
+my_maplist(P4, G1, L2, L3, L4) :- into_mlist(G1, L1), !, with_my_group(L1, maplist(P4, L1, L2, L3, L4)).
 
-my_include(P1,L,I):- include(p1_call(P1),L,I).
-%my_include(P1,[H|L],O):- (p2_call(p1_call(P1),H,HH)*->(my_include(P1,L,I),O=[HH|I]);my_include(P1,L,O)).
-my_include(_,_,[]).
+%!  my_maplist(:P3, +G1, -L2, -L3) is det.
+%
+%   Applies the predicate `P3` to elements of `G1` and collects results in `L2` and `L3`.
+%
+%   @arg P3 The predicate to apply.
+%   @arg G1 The input group (can be a list or grid).
+%   @arg L2, L3 Output lists after applying the predicate.
+% Convert G1 to a list and apply P3 to its elements.
+my_maplist(P3, G1, L2, L3) :- into_mlist(G1, L1), !, with_my_group(L1, maplist(P3, L1, L2, L3)).
 
-%my_exclude(P1,I,O):- my_include(not(P1),I,O).
-my_exclude(P1,I,O):- my_partition(P1,I,_,O).
+%!  my_maplist(:P2, +G1, -L2) is det.
+%
+%   Applies the predicate `P2` to elements of `G1` and collects results in `L2`.
+%
+%   @arg P2 The predicate to apply.
+%   @arg G1 The input group (can be a list or grid).
+%   @arg L2 The output list after applying the predicate.
+% Convert G1 to a list and apply P2 to its elements.
+my_maplist(P2, G1, L2) :- into_mlist(G1, L1), !, with_my_group(L1, maplist(P2, L1, L2)).
 
+%!  my_maplist(:P1, +G1) is det.
+%
+%   Applies the predicate `P1` to elements of `G1`.
+%
+%   @arg P1 The predicate to apply.
+%   @arg G1 The input group (can be a list or grid).
+% Convert G1 to a list and apply P1 to its elements.
+my_maplist(P1, G1) :- into_mlist(G1, L1), !, with_my_group(L1, maplist(P1, L1)).
 
-subst_1L([],Term,Term):-!.
-subst_1L([X-Y|List], Term, NewTerm ) :-
-  subst0011(X, Y, Term, MTerm ),
-  subst_1L(List, MTerm, NewTerm ).
+%!  my_include(:P1, +L, -I) is det.
+%
+%   Filters the elements of list `L` using the predicate `P1`, collecting the results in `I`.
+%
+%   @arg P1 The predicate to apply to each element.
+%   @arg L The input list to filter.
+%   @arg I The output list of elements that satisfy `P1`.
+% Use include/3 to filter elements that satisfy p1_call(P1).
+my_include(P1, L, I) :- include(p1_call(P1), L, I).
+% my_include(P1, [H|L], O) :- 
+%     (p2_call(p1_call(P1), H, HH) *-> 
+%         (my_include(P1, L, I), O = [HH | I]) 
+%     ; 
+%         my_include(P1, L, O)
+%     ).
+% Base case: If the input list is empty, the result is also an empty list.
+my_include(_, _, []).
 
-subst_2L([],_,I,I).
-subst_2L([F|FF],[R|RR],I,O):- subst0011(F,R,I,M),subst_2L(FF,RR,M,O).
+%!  my_exclude(:P1, +I, -O) is det.
+%
+%   Filters the elements of the input list `I` using the predicate `P1`, collecting elements that do not satisfy `P1` into `O`.
+%
+%   @arg P1 The predicate used to test elements.
+%   @arg I The input list to filter.
+%   @arg O The output list of elements that do not satisfy `P1`.
+% Use my_partition/4 to partition and collect elements that do not satisfy P1.
+% my_exclude(P1, I, O) :- my_include(not(P1), I, O).
+my_exclude(P1, I, O) :- my_partition(P1, I, _, O).
 
+%!  subst_1L(+List, +Term, -NewTerm) is det.
+%
+%   Substitutes occurrences in `Term` based on the substitution pairs in `List`.
+%
+%   @arg List A list of substitution pairs X-Y.
+%   @arg Term The original term to perform substitutions on.
+%   @arg NewTerm The term after performing all substitutions.
+% Base case: If the list is empty, return the original term.
+subst_1L([], Term, Term) :- !.
+% Apply substitution for the head pair and continue with the rest of the list.
+subst_1L([X-Y | List], Term, NewTerm) :-
+    subst0011(X, Y, Term, MTerm),
+    subst_1L(List, MTerm, NewTerm).
 
-subst001(I,F,R,O):- subst0011(F,R,I,O),!.
+%!  subst_2L(+From, +To, +Input, -Output) is det.
+%
+%   Substitutes elements in `Input` based on corresponding elements in `From` and `To`.
+%
+%   @arg From List of elements to replace.
+%   @arg To List of replacement elements.
+%   @arg Input The original input term.
+%   @arg Output The resulting term after substitutions.
+% Base case: If the replacement list is empty, the input remains unchanged.
+subst_2L([], _, I, I).
+% Apply substitution for the head elements and continue with the rest.
+subst_2L([F | FF], [R | RR], I, O) :-
+    subst0011(F, R, I, M),
+    subst_2L(FF, RR, M, O).
 
+%!  subst001(+I, +F, +R, -O) is det.
+%
+%   Substitutes occurrences of `F` with `R` in `I`.
+%
+%   @arg I The input term.
+%   @arg F The term to replace.
+%   @arg R The replacement term.
+%   @arg O The output term after substitution.
+% Call the core substitution logic.
+subst001(I, F, R, O) :- subst0011(F, R, I, O), !.
 
-subst0011(X, Y, Term, NewTerm ) :-
-  copy_term((X,Y,Term),(CX,CY,Copy),Goals),
-  (Goals==[]
-   ->subst0011a( X, Y, Term, NewTerm )
-   ;(subst0011a(CX, CY, Goals, NewGoals),
-     (NewGoals==Goals ->
-       subst0011a( X, Y, Term, NewTerm )
-       ; (subst0011a(CX, CY, Copy, NewCopy),
-          NewTerm = NewCopy, maplist(call,NewGoals))))).
+%!  subst0011(+X, +Y, +Term, -NewTerm) is det.
+%
+%   Performs a deep substitution of `X` with `Y` within `Term`.
+%
+%   @arg X The term to replace.
+%   @arg Y The replacement term.
+%   @arg Term The original term.
+%   @arg NewTerm The term after substitution.
+% Copy and prepare terms for substitution, handling goals if present.
+subst0011(X, Y, Term, NewTerm) :-
+    copy_term((X, Y, Term), (CX, CY, Copy), Goals),
+    (Goals == [] ->
+        subst0011a(X, Y, Term, NewTerm)
+    ;   (subst0011a(CX, CY, Goals, NewGoals),
+         (NewGoals == Goals ->
+             subst0011a(X, Y, Term, NewTerm)
+         ;   (subst0011a(CX, CY, Copy, NewCopy),
+              NewTerm = NewCopy, maplist(call, NewGoals))))).
 
-
-
-subst0011a(X, Y, Term, NewTerm ) :-
- ((X==Term)-> Y=NewTerm ;
-  (is_list(Term)-> maplist(subst0011a(X, Y), Term, NewTerm );
-   (( \+ compound(Term); Term='$VAR'(_))->Term=NewTerm;
-     ((compound_name_arguments(Term, F, Args),
+%!  subst0011a(+X, +Y, +Term, -NewTerm) is det.
+%
+%   Helper predicate for `subst0011` to handle substitution recursively.
+%
+%   @arg X The term to replace.
+%   @arg Y The replacement term.
+%   @arg Term The original term.
+%   @arg NewTerm The resulting term after substitution.
+% Check if the current term matches and substitute or recurse.
+subst0011a(X, Y, Term, NewTerm) :-
+    ((X == Term) -> Y = NewTerm
+    ; (is_list(Term) -> maplist(subst0011a(X, Y), Term, NewTerm)
+    ; ((\+ compound(Term); Term = '$VAR'(_)) -> Term = NewTerm
+    ; ((compound_name_arguments(Term, F, Args),
        maplist(subst0011a(X, Y), Args, ArgsNew),
-        compound_name_arguments( NewTerm, F, ArgsNew )))))),!.
+       compound_name_arguments(NewTerm, F, ArgsNew)))))), !.
 
-subst001C(I,F,R,O):- subst001_p2(same_term,I,F,R,O),!.
-subst0011C(F,R,I,O):- subst0011_p2(same_term,F,R,I,O),!.
-subst_2LC(F,R,I,O):- subst_2L_p2(same_term,F,R,I,O).
+%!  subst001C(+I, +F, +R, -O) is det.
+%
+%   Wrapper for `subst0011` with a same-term comparison.
+%
+%   @arg I The input term.
+%   @arg F The term to replace.
+%   @arg R The replacement term.
+%   @arg O The output term after substitution.
+% Call the substitution logic with same-term comparison.
+subst001C(I, F, R, O) :- subst001_p2(same_term, I, F, R, O), !.
 
-subst_2L_p2(_P2, [],_,I,I):-!.
-subst_2L_p2(_P2, _,[],I,I):-!.
-subst_2L_p2(P2, [F|FF],[R|RR],I,O):- subst0011_p2(P2, F,R,I,M),subst_2L_p2(P2, FF,RR,M,O).
+%!  subst0011C(+F, +R, +I, -O) is det.
+%
+%   Calls `subst0011` with a same-term comparison.
+%
+%   @arg F The term to replace.
+%   @arg R The replacement term.
+%   @arg I The input term.
+%   @arg O The output term after substitution.
+% Call the core logic with same-term comparison.
+subst0011C(F, R, I, O) :- subst0011_p2(same_term, F, R, I, O), !.
 
-subst001_p2(P2, I,F,R,O):- subst0011_p2(P2, F,R,I,O),!.
+%!  subst_2LC(+From, +To, +I, -O) is det.
+%
+%   Calls `subst_2L_p2` with the same-term comparison.
+%
+%   @arg From List of elements to replace.
+%   @arg To List of replacement elements.
+%   @arg I The input term.
+%   @arg O The output term after substitutions.
+% Apply the substitution logic with same-term comparison.
+subst_2LC(F, R, I, O) :- subst_2L_p2(same_term, F, R, I, O).
 
-subst_1L_p2(_,  [],Term,Term):-!.
-subst_1L_p2(P2, [X-Y|List], Term, NewTerm ) :-
-  subst0011_p2(P2, X, Y, Term, MTerm ),
-  subst_1L_p2(P2, List, MTerm, NewTerm ).
+%!  subst_2L_p2(:P2, +From, +To, +I, -O) is det.
+%
+%   Substitutes elements using a predicate comparison `P2`.
+%
+%   @arg P2 The comparison predicate.
+%   @arg From List of elements to replace.
+%   @arg To List of replacement elements.
+%   @arg I The input term.
+%   @arg O The resulting term after substitutions.
+% Base case: Stop when lists are exhausted.
+subst_2L_p2(_P2, [], _, I, I) :- !.
+subst_2L_p2(_P2, _, [], I, I) :- !.
+% Apply the predicate-based substitution and continue.
+subst_2L_p2(P2, [F | FF], [R | RR], I, O) :-
+    subst0011_p2(P2, F, R, I, M),
+    subst_2L_p2(P2, FF, RR, M, O).
 
-subst0011_p2(P2, X, Y, Term, NewTerm ) :-
-  copy_term((X,Y,Term),(CX,CY,Copy),Goals),
-  (Goals==[]
-  ->subst0011a_p2(P2, X, Y, Term, NewTerm )
-  ;(subst0011a_p2(P2, CX, CY, Goals, NewGoals),
-     (NewGoals==Goals ->
-       subst0011a_p2(P2, X, Y, Term, NewTerm )
-       ; (subst0011a_p2(P2, CX, CY, Copy, NewCopy),
-          NewTerm = NewCopy, maplist(call,NewGoals))))).
+%!  subst001_p2(:P2, +I, +F, +R, -O) is det.
+%
+%   Wrapper for `subst0011_p2` with a predicate comparison.
+%
+%   @arg P2 The comparison predicate.
+%   @arg I The input term.
+%   @arg F The term to replace.
+%   @arg R The replacement term.
+%   @arg O The output term after substitution.
+% Call the substitution logic with the comparison predicate.
+subst001_p2(P2, I, F, R, O) :- subst0011_p2(P2, F, R, I, O), !.
 
-subst0011a_p2(P2, X, Y, Term, NewTerm ) :-
- (p2_call(P2,X,Term)-> Y=NewTerm ;
-  (is_list(Term)-> maplist(subst0011a_p2(P2, X, Y), Term, NewTerm );
-   (( \+ compound(Term); Term='$VAR'(_))->Term=NewTerm;
-     ((compound_name_arguments(Term, F, Args),
+%!  subst_1L_p2(:P2, +List, +Term, -NewTerm) is det.
+%
+%   Substitutes occurrences using a predicate comparison `P2`.
+%
+%   @arg P2 The comparison predicate.
+%   @arg List A list of substitution pairs X-Y.
+%   @arg Term The original term to substitute.
+%   @arg NewTerm The resulting term after substitutions.
+% Base case: If the list is empty, return the original term.
+subst_1L_p2(_, [], Term, Term) :- !.
+% Apply predicate-based substitution for the head pair and continue.
+subst_1L_p2(P2, [X-Y | List], Term, NewTerm) :-
+    subst0011_p2(P2, X, Y, Term, MTerm),
+    subst_1L_p2(P2, List, MTerm, NewTerm).
+
+%!  subst0011_p2(:P2, +X, +Y, +Term, -NewTerm) is det.
+%
+%   Substitutes `X` with `Y` in `Term` using the predicate comparison `P2`.
+%
+%   @arg P2 The comparison predicate.
+%   @arg X The term to replace.
+%   @arg Y The replacement term.
+%   @arg Term The original term.
+%   @arg NewTerm The resulting term after substitution.
+% Copy and prepare terms for predicate-based substitution.
+subst0011_p2(P2, X, Y, Term, NewTerm) :-
+    copy_term((X, Y, Term), (CX, CY, Copy), Goals),
+    (Goals == [] ->
+        subst0011a_p2(P2, X, Y, Term, NewTerm)
+    ;   (subst0011a_p2(P2, CX, CY, Goals, NewGoals),
+         (NewGoals == Goals ->
+             subst0011a_p2(P2, X, Y, Term, NewTerm)
+         ;   (subst0011a_p2(P2, CX, CY, Copy, NewCopy),
+              NewTerm = NewCopy, maplist(call, NewGoals))))).
+
+%!  subst0011a_p2(:P2, +X, +Y, +Term, -NewTerm) is det.
+%
+%   Recursive helper for `subst0011_p2` to perform substitution.
+%
+%   @arg P2 The comparison predicate.
+%   @arg X The term to replace.
+%   @arg Y The replacement term.
+%   @arg Term The original term.
+%   @arg NewTerm The resulting term after substitution.
+% Apply substitution using the comparison predicate or recurse into terms.
+subst0011a_p2(P2, X, Y, Term, NewTerm) :-
+    (p2_call(P2, X, Term) -> Y = NewTerm
+    ; (is_list(Term) -> maplist(subst0011a_p2(P2, X, Y), Term, NewTerm)
+    ; ((\+ compound(Term); Term = '$VAR'(_)) -> Term = NewTerm
+    ; ((compound_name_arguments(Term, F, Args),
        maplist(subst0011a_p2(P2, X, Y), Args, ArgsNew),
-        compound_name_arguments( NewTerm, F, ArgsNew )))))),!.
+       compound_name_arguments(NewTerm, F, ArgsNew)))))), !.
 
+%!  ppa(+FF) is det.
+%
+%   Processes and pretty-prints the given term `FF` with handling for attribute variables.
+%
+%   @arg FF The term to be processed and printed.
+% Copy the term, handle attribute variables, and print the processed term.
+ppa(FF) :-
+    copy_term(FF, FA, GF),
+    numbervars(FA + GF, 0, _, [attvar(bind), singletons(true)]),
+    sort_safe(GF, GS), write(' '),
+    locally(b_setval(arc_can_portray, nil), ppawt(FA)), format('~N'),
+    ignore((GS \== [], format('\t'), ppawt(attvars = GS), nl)), nl, !.
 
+%!  ppawt(+FA) is det.
+%
+%   Writes the term `FA` with custom printing options.
+%
+%   @arg FA The term to print.
+% Print the term with extensive formatting options.
+ppawt(FA) :-
+    write_term(FA, [numbervars(false), quoted(true), character_escapes(true), 
+                    cycles(true), dotlists(false), no_lists(false), 
+                    blobs(portray), attributes(dots), 
+                    portray(true), partial(false), fullstop(true), 
+                    %portray(false), partial(true), fullstop(true),
+                    ignore_ops(false), quoted(true), quote_non_ascii(true), 
+                    brace_terms(false)]).
 
-ppa(FF):-
-  copy_term(FF,FA,GF),
-  numbervars(FA+GF,0,_,[attvar(bind),singletons(true)]),
-  sort_safe(GF,GS),write(' '),
-  locally(b_setval(arc_can_portray,nil),
-      ppawt(FA)),format('~N'),
-  ignore((GS\==[], format('\t'),ppawt(attvars=GS),nl)),nl,!.
+%!  intersection(+APoints, +BPoints, -Intersected, -LeftOverA, -LeftOverB) is det.
+%
+%   Computes the intersection of two sets of points, also returning leftover points from both sets.
+%
+%   @arg APoints The first set of points.
+%   @arg BPoints The second set of points.
+%   @arg Intersected The points present in both sets.
+%   @arg LeftOverA Points present only in `APoints`.
+%   @arg LeftOverB Points present only in `BPoints`.
+% Calculate the intersection and leftover points using `intersection_univ/5`.
+intersection(APoints, BPoints, Intersected, LeftOverA, LeftOverB) :-
+    intersection_univ(APoints, BPoints, Intersected, LeftOverA, LeftOverB), !.
 
-ppawt(FA):-
-  write_term(FA,[numbervars(false), quoted(true),
-   character_escapes(true),cycles(true),dotlists(false),no_lists(false),
-    blobs(portray),attributes(dots),
-    portray(true), partial(false), fullstop(true),
-    %portray(false), partial(true), fullstop(true),
-   ignore_ops(false), quoted(true), quote_non_ascii(true), brace_terms(false)]).
+%!  same_univ(+A, +B) is nondet.
+%
+%   Checks if two terms are structurally equivalent or identical.
+%
+%   @arg A The first term to compare.
+%   @arg B The second term to compare.
+% Check if A and B are equivalent or identical.
+same_univ(A, B) :-  (plain_var(A)->A==B;(B=@=A->true; (fail, \+ (A \=B )))).
 
-intersection(APoints,BPoints,Intersected,LeftOverA,LeftOverB):-
-  intersection_univ(APoints,BPoints,Intersected,LeftOverA,LeftOverB),!.
+%!  intersection_univ(+APoints, +BPoints, -Intersected) is det.
+%
+%   Computes the intersection of two sets of points.
+%
+%   @arg APoints The first set of points.
+%   @arg BPoints The second set of points.
+%   @arg Intersected The points present in both sets.
+% Calculate the intersection without leftover points.
+intersection_univ(APoints, BPoints, Intersected) :-
+    intersection_univ(APoints, BPoints, Intersected, _, _), !.
 
-same_univ(A,B):- (plain_var(A)->A==B;(B=@=A->true; (fail, \+ (A \=B )))).
+%!  intersection_univ(+APoints, +BPoints, -Intersected, -LeftOverA, -LeftOverB) is det.
+%
+%   Computes the intersection of two sets of points, also returning leftover points from both sets.
+%
+%   @arg APoints The first set of points.
+%   @arg BPoints The second set of points.
+%   @arg Intersected The points present in both sets.
+%   @arg LeftOverA Points present only in `APoints`.
+%   @arg LeftOverB Points present only in `BPoints`.
+% Use `pred_intersection/7` to compute the intersection and leftovers.
+intersection_univ(APoints, BPoints, Intersected, LeftOverA, LeftOverB) :-
+    pred_intersection(same_univ, APoints, BPoints, Intersected, _, LeftOverA, LeftOverB).
 
-intersection_univ(APoints,BPoints,Intersected):-
-  intersection_univ(APoints,BPoints,Intersected,_,_),!.
-intersection_univ(APoints,BPoints,Intersected,LeftOverA,LeftOverB):-
-  pred_intersection(same_univ,APoints,BPoints,Intersected,_,LeftOverA,LeftOverB).
+%!  intersection_eq(+APoints, +BPoints, -Intersected) is det.
+%
+%   Computes the intersection of two sets of points.
+%
+%   @arg APoints The first set of points.
+%   @arg BPoints The second set of points.
+%   @arg Intersected The points present in both sets.
+% Calculate the intersection without leftover points using `intersection_eq/5`.
+intersection_eq(APoints, BPoints, Intersected) :-
+    intersection_eq(APoints, BPoints, Intersected, _, _), !.
 
-intersection_eq(APoints,BPoints,Intersected):-
-  intersection_eq(APoints,BPoints,Intersected,_,_),!.
-intersection_eq(APoints,BPoints,Intersected,LeftOverA,LeftOverB):-
-  pred_intersection(same_univ,APoints,BPoints,Intersected,_,LeftOverA,LeftOverB).
+%!  intersection_eq(+APoints, +BPoints, -Intersected, -LeftOverA, -LeftOverB) is det.
+%
+%   Computes the intersection of two sets of points, also returning leftover points from both sets.
+%
+%   @arg APoints The first set of points.
+%   @arg BPoints The second set of points.
+%   @arg Intersected The points present in both sets.
+%   @arg LeftOverA Points present only in `APoints`.
+%   @arg LeftOverB Points present only in `BPoints`.
+% Use `pred_intersection/7` to calculate the intersection with leftover points.
+intersection_eq(APoints, BPoints, Intersected, LeftOverA, LeftOverB) :-
+    pred_intersection(same_univ, APoints, BPoints, Intersected, _, LeftOverA, LeftOverB).
 
 /*
 intersection_u([],LeftOverB,[],[],LeftOverB):-!.
@@ -2843,48 +3949,103 @@ intersection_u([A|APoints],BPoints,Intersected,[A|LeftOverA],LeftOverB):-
 */
 
 :- meta_predicate(each_obj(?,?,0)).
-each_obj([],_,_):-!.
-each_obj([Obj|List],Obj,Goal):- ignore(Goal), each_obj(List,Obj,Goal).
 
-pred_intersection(_P2, [],LeftOverB, [],[], [],LeftOverB):-!.
-pred_intersection(_P2, LeftOverA,[], [],[], LeftOverA,[]):-!.
-pred_intersection(P2, [A|APoints],BPoints,[A|IntersectedA],[B|IntersectedB],LeftOverA,LeftOverB):-
-  select(B,BPoints,BPointsMinusA),
-  \+ \+ p2_call(P2, A,B),!,
-  pred_intersection(P2, APoints,BPointsMinusA,IntersectedA,IntersectedB,LeftOverA,LeftOverB).
-pred_intersection(P2, [A|APoints],BPoints,IntersectedA,IntersectedB,[A|LeftOverA],LeftOverB):-
-  pred_intersection(P2, APoints,BPoints,IntersectedA,IntersectedB,LeftOverA,LeftOverB).
+%!  each_obj(+List, ?Obj, :Goal) is det.
+%
+%   Iterates over each element in the list `List`, setting `Obj` to the current element and executing `Goal`.
+%
+%   @arg List The list of objects to iterate over.
+%   @arg Obj The current object in the iteration.
+%   @arg Goal The goal to execute for each object.
+% Base case: If the list is empty, do nothing.
+each_obj([], _, _) :- !.
+% Execute the goal for the current object and continue with the rest of the list.
+each_obj([Obj | List], Obj, Goal) :-
+    ignore(Goal),
+    each_obj(List, Obj, Goal).
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-pp(PP):-pp_m(PP).
-pp(Color,PP):- ansi_format([fg(Color)],'~@',[pp(PP)]).
-
-
-warn_skip(P):- pp(warn_skip(P)).
-
-with_set_stream(_,_,G):- call(G).
-
-fake_impl(M:F/A):- functor(P,F,A), asserta((M:P :- !, fail)).
-fake_impl(F/A):- functor(P,F,A), asserta((P :- !, fail)).
+%!  pred_intersection(:P2, +LeftOverA, +LeftOverB, -IntersectedA, -IntersectedB, -LeftOverAOut, -LeftOverBOut) is det.
+%
+%   Computes the intersection of two lists using the predicate `P2` to determine equivalence, also collecting leftover elements.
+%
+%   @arg P2 The predicate to compare elements.
+%   @arg LeftOverA The first input list.
+%   @arg LeftOverB The second input list.
+%   @arg IntersectedA The intersected elements from the first list.
+%   @arg IntersectedB The intersected elements from the second list.
+%   @arg LeftOverAOut Elements only in the first list.
+%   @arg LeftOverBOut Elements only in the second list.
+% Base case: If the second list is empty, return the first list as leftover.
+pred_intersection(_P2, [], LeftOverB, [], [], [], LeftOverB) :- !.
+% Base case: If the first list is empty, return the second list as leftover.
+pred_intersection(_P2, LeftOverA, [], [], [], LeftOverA, []) :- !.
+% If an element in the first list matches an element in the second list, include it in the intersection.
+pred_intersection(P2, [A | APoints], BPoints, [A | IntersectedA], [B | IntersectedB], LeftOverA, LeftOverB) :-
+    select(B, BPoints, BPointsMinusA),
+    \+ \+ p2_call(P2, A, B), !,
+    pred_intersection(P2, APoints, BPointsMinusA, IntersectedA, IntersectedB, LeftOverA, LeftOverB).
+% If no match is found, add the element to the leftover list and continue.
+pred_intersection(P2, [A | APoints], BPoints, IntersectedA, IntersectedB, [A | LeftOverA], LeftOverB) :-
+    pred_intersection(P2, APoints, BPoints, IntersectedA, IntersectedB, LeftOverA, LeftOverB).
 
 
+
+
+
+
+
+%!  pp(+PP) is det.
+%
+%   Prints the given term `PP` using the predicate `pp_m/1`.
+%
+%   @arg PP The term to print.
+% Call `pp_m/1` to print the term.
+pp(PP) :- pp_m(PP).
+
+%!  pp(+Color, +PP) is det.
+%
+%   Prints the given term `PP` with the specified ANSI color formatting.
+%
+%   @arg Color The color to use for the formatted output.
+%   @arg PP The term to print.
+% Print the term with ANSI color formatting.
+pp(Color, PP) :-
+    ansi_format([fg(Color)], '~@', [pp(PP)]).
+
+%!  warn_skip(+P) is det.
+%
+%   Prints a warning message for the skipped predicate `P`.
+%
+%   @arg P The predicate to be warned about.
+% Print a warning message for the skipped predicate.
+warn_skip(P) :- pp(warn_skip(P)).
+
+%!  with_set_stream(+OldStream, +NewStream, :Goal) is det.
+%
+%   Executes the given goal `Goal` with the stream context temporarily changed.
+%
+%   @arg OldStream The original stream.
+%   @arg NewStream The new stream to use during the execution of `Goal`.
+%   @arg Goal The goal to execute within the stream context.
+% Call the goal with the stream context.
+with_set_stream(_, _, G) :- call(G).
+
+%!  fake_impl(+Spec) is det.
+%
+%   Creates a fake implementation for the specified predicate or module predicate.
+%   This is used to define placeholder predicates that always fail.
+%
+%   @arg Spec The specification of the predicate, either in the form `M:F/A` or `F/A`.
+%
+%   If given a module predicate (`M:F/A`), it asserts a failure clause for the predicate within the specified module.
+%   If given a plain predicate (`F/A`), it asserts a failure clause for it in the current context.
+fake_impl(M:F/A) :-
+    functor(P, F, A),
+    asserta((M:P :- !, fail)).
+fake_impl(F/A) :-
+    functor(P, F, A),
+    asserta((P :- !, fail)).
+% Fake implementations for various predicates.
 :- fake_impl(arc_setval/3).
 :- fake_impl(cast_to_grid/3).
 :- fake_impl(dot_cfg:dictoo_decl/8).
