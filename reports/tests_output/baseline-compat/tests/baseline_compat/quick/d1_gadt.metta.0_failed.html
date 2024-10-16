@@ -49,7 +49,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-15 23:30:59+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-16 19:33:52+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -401,7 +401,7 @@ Script started on 2024-10-15 23:30:59+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; QUICK.D1-GADT.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000223 secs. (222.65 microseconds) 
+; took 0.000230 secs. (230.19 microseconds) 
 
   !(assertEqual 
     (get-type 5) Number)
@@ -424,7 +424,7 @@ Deterministic: ()
 >;; QUICK.D1-GADT.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000236 secs. (235.90 microseconds) 
+; took 0.000237 secs. (237.00 microseconds) 
 
   !(assertEqual 
     (get-type (+ 5 7)) Number)
@@ -449,7 +449,7 @@ Deterministic: ()
 >;; QUICK.D1-GADT.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000190 secs. (189.59 microseconds) 
+; took 0.000226 secs. (225.68 microseconds) 
 
   !(assertEqual 
     (get-type +) 
@@ -475,7 +475,7 @@ Deterministic: ()
 >;; QUICK.D1-GADT.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000268 secs. (268.36 microseconds) 
+; took 0.000343 secs. (343.46 microseconds) 
 
   !(assertEqualToResult 
     (get-type (+ 5 "4")) ())
@@ -497,7 +497,7 @@ Deterministic: ()
 >;; QUICK.D1-GADT.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000193 secs. (193.21 microseconds) 
+; took 0.000251 secs. (251.44 microseconds) 
 
   !(assertEqualToResult 
     (get-type (+ -)) ())
@@ -522,7 +522,7 @@ Deterministic: ()
 >;; QUICK.D1-GADT.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000167 secs. (167.24 microseconds) 
+; took 0.000193 secs. (193.05 microseconds) 
 
   !(assertEqual 
     (get-type Either) Type)
@@ -555,7 +555,7 @@ Deterministic: ()
 >;; QUICK.D1-GADT.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000234 secs. (233.95 microseconds) 
+; took 0.000284 secs. (284.43 microseconds) 
 
   !(assertEqual 
     (get-type (Left 5)) Either)
@@ -587,7 +587,7 @@ Deterministic: ()
 >;; QUICK.D1-GADT.08</h3>
 ; 
 ; EVAL TEST
-; took 0.000298 secs. (298.08 microseconds) 
+; took 0.000392 secs. (392.28 microseconds) 
 
   !(assertEqual 
     (get-type (isLeft (Right 5))) Bool)
@@ -611,7 +611,7 @@ Deterministic: ()
 >;; QUICK.D1-GADT.09</h3>
 ; 
 ; EVAL TEST
-; took 0.000213 secs. (212.72 microseconds) 
+; took 0.000286 secs. (286.11 microseconds) 
 
   !(assertEqualToResult 
     (get-type (isLeft 5)) ())
@@ -649,7 +649,7 @@ Deterministic: ()
 >;; QUICK.D1-GADT.10</h3>
 ; 
 ; EVAL TEST
-; took 0.000631 secs. (631.36 microseconds) 
+; took 0.000646 secs. (646.44 microseconds) 
 
   !(assertEqual 
     (get-type (LeftP 5)) 
@@ -682,7 +682,7 @@ Deterministic: ()
 >;; QUICK.D1-GADT.11</h3>
 ; 
 ; EVAL TEST
-; took 0.000953 secs. (953.18 microseconds) 
+; took 0.001 secs. (1.10 milliseconds) 
 
   !(assertEqual 
     (get-type (pair (LeftP 5) "String")) 
@@ -725,7 +725,7 @@ Deterministic: ()
 >;; QUICK.D1-GADT.12</h3>
 ; 
 ; EVAL TEST
-; took 0.000742 secs. (741.93 microseconds) 
+; took 0.000947 secs. (947.14 microseconds) 
 
   !(assertEqual 
     (get-type (Cons 5 (Cons 6 Nil))) 
@@ -749,7 +749,7 @@ Deterministic: ()
 >;; QUICK.D1-GADT.13</h3>
 ; 
 ; EVAL TEST
-; took 0.000343 secs. (343.09 microseconds) 
+; took 0.000410 secs. (409.53 microseconds) 
 
   !(assertEqualToResult 
     (get-type (Cons 5 (Cons "6" Nil))) ())
@@ -777,7 +777,7 @@ Deterministic: ()
 >;; QUICK.D1-GADT.14</h3>
 ; 
 ; EVAL TEST
-; took 0.000648 secs. (647.92 microseconds) 
+; took 0.000792 secs. (791.57 microseconds) 
 
   !(assertEqual 
     (let 
@@ -793,7 +793,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 394,373 inferences, 0.099 CPU in 0.099 seconds (100% CPU, 3998672 Lips)
+>% 394,371 inferences, 0.102 CPU in 0.102 seconds (100% CPU, 3854017 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/quick/d1_gadt.metta  0)
 <span class="ansi1"
@@ -933,7 +933,7 @@ Deterministic: ()
     (unwind  
       (halt  7)))
 </span>
-Script done on 2024-10-15 23:31:05+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-16 19:33:58+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
