@@ -82,7 +82,15 @@
 .ansi38-047047047 { color: #2F2F2F; }
 .ansi38-047047047 { color: #2F2F2F; }
 .ansi38-047047047 { color: #2F2F2F; }
+.ansi38-047047047 { color: #2F2F2F; }
+.ansi38-047047047 { color: #2F2F2F; }
+.ansi38-047047047 { color: #2F2F2F; }
+.ansi38-047047047 { color: #2F2F2F; }
+.ansi38-047047047 { color: #2F2F2F; }
+.ansi38-047047047 { color: #2F2F2F; }
 .ansi38-013099040 { color: #0D6328; }
+.ansi38-047047047 { color: #2F2F2F; }
+.ansi38-047047047 { color: #2F2F2F; }
 .ansi38-047047047 { color: #2F2F2F; }
 .ansi38-047047047 { color: #2F2F2F; }
 .ansi38-047047047 { color: #2F2F2F; }
@@ -128,7 +136,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-16 20:38:35+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-16 20:41:27+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -514,7 +522,7 @@ Script started on 2024-10-16 20:38:35+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000297 secs. (297.22 microseconds) 
+; took 0.000315 secs. (314.64 microseconds) 
 
   !(assertEqual 
     (get-type (curry +)) 
@@ -542,7 +550,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000263 secs. (263.46 microseconds) 
+; took 0.000282 secs. (282.14 microseconds) 
 
   !(assertEqual 
     (get-type ((curry +) 2)) 
@@ -568,7 +576,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000733 secs. (733.35 microseconds) 
+; took 0.000731 secs. (731.29 microseconds) 
 
   !(assertEqualToResult 
     ( (curry +) 2) 
@@ -593,7 +601,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000411 secs. (410.71 microseconds) 
+; took 0.000493 secs. (493.13 microseconds) 
 
   !(assertEqual 
     ( ( (curry +) 2) 3) 5)
@@ -632,7 +640,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000300 secs. (299.64 microseconds) 
+; took 0.000320 secs. (319.89 microseconds) 
 
   !(assertEqual 
     (get-type (curry-a + 2)) 
@@ -656,7 +664,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000304 secs. (303.71 microseconds) 
+; took 0.000322 secs. (322.32 microseconds) 
 
   !(assertEqual 
     (get-type ((curry-a + 2) 3)) Number)
@@ -680,7 +688,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000309 secs. (309.45 microseconds) 
+; took 0.000328 secs. (328.40 microseconds) 
 
   !(assertEqualToResult 
     (get-type ((curry-a + 2) "S")) ())
@@ -703,7 +711,7 @@ Deterministic: ((Error  (got  (Number)) (expected  ())))
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.08</h3>
 ; 
 ; EVAL TEST
-; took 0.000410 secs. (409.81 microseconds) 
+; took 0.000424 secs. (423.81 microseconds) 
 
   !(assertEqual 
     ( (curry-a + 2) 3) 5)
@@ -748,7 +756,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.09</h3>
 ; 
 ; EVAL TEST
-; took 0.000453 secs. (453.31 microseconds) 
+; took 0.000537 secs. (536.59 microseconds) 
 
   !(assertEqualToResult 
     (is-socrates) 
@@ -774,7 +782,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.10</h3>
 ; 
 ; EVAL TEST
-; took 0.000996 secs. (996.10 microseconds) 
+; took 0.001 secs. (1.10 milliseconds) 
 
   !(assertEqual 
     ( (curry-a is Socrates) Human) 
@@ -799,7 +807,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.11</h3>
 ; 
 ; EVAL TEST
-; took 0.000894 secs. (893.54 microseconds) 
+; took 0.000881 secs. (881.35 microseconds) 
 
   !(assertEqual 
     ( (is-socrates) Human) True)
@@ -839,7 +847,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.12</h3>
 ; 
 ; EVAL TEST
-; took 0.000543 secs. (542.69 microseconds) 
+; took 0.000460 secs. (460.30 microseconds) 
 
   !(assertEqual 
     ( (lambda $x 
@@ -865,7 +873,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.13</h3>
 ; 
 ; EVAL TEST
-; took 0.000763 secs. (763.37 microseconds) 
+; took 0.000681 secs. (680.64 microseconds) 
 
   !(assertEqual 
     ( (lambda 
@@ -900,7 +908,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.14</h3>
 ; 
 ; EVAL TEST
-; took 0.000942 secs. (942.36 microseconds) 
+; took 0.000898 secs. (897.71 microseconds) 
 
   !(assertEqual 
     ( (inc) 5) 6)
@@ -996,7 +1004,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.15</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.06 milliseconds) 
+; took 0.002 secs. (2.43 milliseconds) 
 
   !(assertEqual 
     (fmap 
@@ -1025,7 +1033,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.16</h3>
 ; 
 ; EVAL TEST
-; took 0.000947 secs. (947.37 microseconds) 
+; took 0.001 secs. (1.02 milliseconds) 
 
   !(assertEqual 
     (fmap 
@@ -1053,7 +1061,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.17</h3>
 ; 
 ; EVAL TEST
-; took 0.000882 secs. (882.10 microseconds) 
+; took 0.001 secs. (1.00 milliseconds) 
 
   !(assertEqual 
     (get-type (fmap (curry-a + 1) (Left 5))) 
@@ -1082,7 +1090,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.18</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.19 milliseconds) 
+; took 0.002 secs. (2.34 milliseconds) 
 
   !(assertEqual 
     (fmap 
@@ -1115,7 +1123,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.19</h3>
 ; 
 ; EVAL TEST
-; took 0.013 secs. (12.62 milliseconds) 
+; took 0.014 secs. (14.29 milliseconds) 
 
   !(assertEqual 
     (fmap 
@@ -1150,7 +1158,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.20</h3>
 ; 
 ; EVAL TEST
-; took 0.000408 secs. (407.59 microseconds) 
+; took 0.000539 secs. (538.68 microseconds) 
 
   !(assertEqualToResult 
     (get-type (fmap (curry-a + 2) (Left "5"))) ())
@@ -1172,7 +1180,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.21</h3>
 ; 
 ; EVAL TEST
-; took 0.000362 secs. (361.85 microseconds) 
+; took 0.000453 secs. (452.57 microseconds) 
 
   !(assertEqualToResult 
     (get-type (fmap (curry-a + 2) (UntypedC "5"))) ())
@@ -1194,7 +1202,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.22</h3>
 ; 
 ; EVAL TEST
-; took 0.000363 secs. (362.51 microseconds) 
+; took 0.000470 secs. (469.62 microseconds) 
 
   !(assertEqualToResult 
     (get-type (fmap (curry-a + 2) (UntypedC (Null) 5))) ())
@@ -1242,7 +1250,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.23</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.19 milliseconds) 
+; took 0.002 secs. (2.41 milliseconds) 
 
   !(assertEqual 
     (fmap-i 
@@ -1301,28 +1309,40 @@ true]
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.24"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.24</h3>
 ;<span class="ansi38-047047047"
->    7:1   |   |--->(defn (fmap-i (curry-a * 2) (Cons 3 (Cons 4 Nil)))) </span>
+>    2:2   |   |   |--->(defn (curry-a * 2)) </span>
 ;<span class="ansi38-047047047"
->    8:1   |   |-<--(defn (Cons ((curry-a * 2) 3) (fmap-i (curry-a * 2) (Cons 4 Nil)))) </span>
+>    3:2   |   |   |-<--(defn (retval  fail)) </span>
 ;<span class="ansi38-047047047"
->   11:3   |   |   |   |--->(defn ((curry-a * 2) 3)) </span>
+>    9:1   |   |--->(defn (fmap-i (curry-a * 2) (Cons 3 (Cons 4 Nil)))) </span>
 ;<span class="ansi38-047047047"
->   12:3   |   |   |   |-<--(defn (* 2 3)) </span>
+>   10:1   |   |-<--(defn (Cons ((curry-a * 2) 3) (fmap-i (curry-a * 2) (Cons 4 Nil)))) </span>
 ;<span class="ansi38-047047047"
->   18:3   |   |   |   |--->(defn (fmap-i (curry-a * 2) (Cons 4 Nil))) </span>
+>   13:3   |   |   |   |--->(defn ((curry-a * 2) 3)) </span>
 ;<span class="ansi38-047047047"
->   19:3   |   |   |   |-<--(defn (Cons ((curry-a * 2) 4) (fmap-i (curry-a * 2) Nil))) </span>
+>   14:3   |   |   |   |-<--(defn (* 2 3)) </span>
 ;<span class="ansi38-047047047"
->   22:5   |   |   |   |   |   |--->(defn ((curry-a * 2) 4)) </span>
+>   18:4   |   |   |   |   |--->(defn (curry-a * 2)) </span>
 ;<span class="ansi38-047047047"
->   23:5   |   |   |   |   |   |-<--(defn (* 2 4)) </span>
+>   19:4   |   |   |   |   |-<--(defn (retval  fail)) </span>
 ;<span class="ansi38-047047047"
->   27:5   |   |   |   |   |   |--->(defn (fmap-i (curry-a * 2) Nil)) </span>
+>   22:3   |   |   |   |--->(defn (fmap-i (curry-a * 2) (Cons 4 Nil))) </span>
 ;<span class="ansi38-047047047"
->   41:5   |   |   |   |   |   |-<--(defn (retval  Nil)) </span>
+>   23:3   |   |   |   |-<--(defn (Cons ((curry-a * 2) 4) (fmap-i (curry-a * 2) Nil))) </span>
+;<span class="ansi38-047047047"
+>   26:5   |   |   |   |   |   |--->(defn ((curry-a * 2) 4)) </span>
+;<span class="ansi38-047047047"
+>   27:5   |   |   |   |   |   |-<--(defn (* 2 4)) </span>
+;<span class="ansi38-047047047"
+>   31:6   |   |   |   |   |   |   |--->(defn (curry-a * 2)) </span>
+;<span class="ansi38-047047047"
+>   32:6   |   |   |   |   |   |   |-<--(defn (retval  fail)) </span>
+;<span class="ansi38-047047047"
+>   33:5   |   |   |   |   |   |--->(defn (fmap-i (curry-a * 2) Nil)) </span>
+;<span class="ansi38-047047047"
+>   47:5   |   |   |   |   |   |-<--(defn (retval  Nil)) </span>
 ; 
 ; EVAL TEST
-; took 0.007 secs. (7.50 milliseconds) 
+; took 0.010 secs. (9.98 milliseconds) 
 
   !(assertEqual 
     (fmap-i 
@@ -1359,16 +1379,20 @@ Deterministic: ()
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.25"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.25</h3>
 ;<span class="ansi38-047047047"
->    3:2   |   |   |--->(defn (Untyped 5)) </span>
+>    2:2   |   |   |--->(defn (curry-a + 2)) </span>
 ;<span class="ansi38-047047047"
->    4:2   |   |   |-<--(defn (retval  fail)) </span>
+>    3:2   |   |   |-<--(defn (retval  fail)) </span>
 ;<span class="ansi38-047047047"
->    7:1   |   |--->(defn (fmap-i (curry-a + 2) (Untyped 5))) </span>
+>    5:2   |   |   |--->(defn (Untyped 5)) </span>
 ;<span class="ansi38-047047047"
->    8:1   |   |-<--(defn (retval  fail)) </span>
+>    6:2   |   |   |-<--(defn (retval  fail)) </span>
+;<span class="ansi38-047047047"
+>    9:1   |   |--->(defn (fmap-i (curry-a + 2) (Untyped 5))) </span>
+;<span class="ansi38-047047047"
+>   10:1   |   |-<--(defn (retval  fail)) </span>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.39 milliseconds) 
+; took 0.003 secs. (3.17 milliseconds) 
 
   !(assertEqualToResult 
     (fmap-i 
@@ -1459,7 +1483,7 @@ Deterministic: ()
 >   96:3   |   |   |   |-<--(defn (retval  (Cons 1 Nil))) </span>
 ; 
 ; EVAL TEST
-; took 0.012 secs. (12.36 milliseconds) 
+; took 0.013 secs. (12.60 milliseconds) 
 
   !(assertEqual 
     (insert 3 
@@ -1530,7 +1554,7 @@ Deterministic: ()
 >  121:7   |   |   |   |   |   |   |   |-<--(defn (retval  Nil)) </span>
 ; 
 ; EVAL TEST
-; took 0.016 secs. (15.70 milliseconds) 
+; took 0.016 secs. (16.26 milliseconds) 
 
   !(assertEqual 
     (sort (Cons 3 (Cons 1 (Cons 2 Nil)))) 
@@ -1551,7 +1575,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 1,250,045 inferences, 0.269 CPU in 0.269 seconds (100% CPU, 4645507 Lips)
+>% 1,278,292 inferences, 0.279 CPU in 0.279 seconds (100% CPU, 4582854 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/d2_higherfunc.metta  0)
 <span class="ansi1"
@@ -1691,7 +1715,7 @@ Deterministic: ()
     (unwind  
       (halt  7)))
 </span>
-Script done on 2024-10-16 20:38:40+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-16 20:41:32+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
