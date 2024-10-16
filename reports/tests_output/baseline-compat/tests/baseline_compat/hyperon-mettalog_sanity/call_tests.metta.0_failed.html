@@ -30,7 +30,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-16 20:43:39+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-16 20:45:11+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -341,9 +341,9 @@ Script started on 2024-10-16 20:43:39+00:00 [TERM="xterm-256color" TTY="/dev/pts
 P;HTML|
 ;                                           (= 2  "Missed result: ())]")
 P;HTML|
-;                                           (= 2  "0.04user 0.00system 0:00.04elapsed 100%CPU (0avgtext+0avgdata 24760maxresident)k")
+;                                           (= 2  "0.02user 0.02system 0:00.04elapsed 100%CPU (0avgtext+0avgdata 24972maxresident)k")
 P;HTML|
-;                                           (= 2  "0inputs+0outputs (0major+2836minor)pagefaults 0swaps")
+;                                           (= 2  "0inputs+0outputs (0major+2835minor)pagefaults 0swaps")
 P;HTML|
 ;                                          (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/call_tests.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/call_tests.metta)
 
@@ -359,7 +359,7 @@ Script started on 2024-10-16 20:43:39+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-METTALOG-SANITY.CALL-TESTS.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000178 secs. (177.88 microseconds) 
+; took 0.000204 secs. (203.60 microseconds) 
 
   !(assertEqualToResult 
     (call-string! "member(1,[1,2,3])") 
@@ -383,7 +383,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.CALL-TESTS.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000166 secs. (166.40 microseconds) 
+; took 0.000181 secs. (180.66 microseconds) 
 
   !(assertEqualToResult 
     (call-string! "member(1,[1,2,3])") ())
@@ -408,7 +408,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.CALL-TESTS.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000419 secs. (419.31 microseconds) 
+; took 0.000391 secs. (391.43 microseconds) 
 
   !(assertEqualToResult 
     (call-string! "member(X,[1,2,3])") 
@@ -439,7 +439,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.CALL-TESTS.04</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.47 milliseconds) 
+; took 0.001 secs. (1.45 milliseconds) 
 
   !(assertEqualToResult 
     (call-string! "member(X,[[1,2],[3,4]])") 
@@ -464,7 +464,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.CALL-TESTS.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000513 secs. (512.73 microseconds) 
+; took 0.000517 secs. (517.18 microseconds) 
 
   !(assertEqualToResult 
     (call-string! "member([X,Y],[[1,2],[3,4]])") 
@@ -494,7 +494,7 @@ Deterministic: ()
 
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.15 milliseconds) 
+; took 0.001 secs. (1.17 milliseconds) 
 
   !(assertEqualToResult 
     (call! parse_time "2006-12-08T15:29:44Z" iso_8601 1165591784.0) 
@@ -523,7 +523,7 @@ Deterministic: ()
 
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.71 milliseconds) 
+; took 0.002 secs. (1.74 milliseconds) 
 
   !(assertEqualToResult 
     (call! parse_time "2006-12-08T15:29:44Z" iso_8601 $x) 
@@ -553,7 +553,7 @@ Deterministic: ()
 
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.03 milliseconds) 
+; took 0.000987 secs. (986.84 microseconds) 
 
   !(assertEqualToResult 
     (call! parse_time "2006-12-08T15:29:44Z" iso_8601 X) 
@@ -583,7 +583,7 @@ Deterministic: ()
 
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.02 milliseconds) 
+; took 0.000983 secs. (983.06 microseconds) 
 
   !(assertEqualToResult 
     (call! parse_time "2006-12-08T15:29:44Z" iso_8601 1165591700.0) 
@@ -598,7 +598,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 222,712 inferences, 0.046 CPU in 0.046 seconds (100% CPU, 4833924 Lips)
+>% 222,716 inferences, 0.046 CPU in 0.046 seconds (100% CPU, 4825480 Lips)
 </span>P;HTML|
 ;                         (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/call_tests.metta  0)
 <span class="ansi1"
@@ -738,7 +738,7 @@ Deterministic: ()
     (unwind  
       (halt  7)))
 </span>
-Script done on 2024-10-16 20:43:44+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-16 20:45:16+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
