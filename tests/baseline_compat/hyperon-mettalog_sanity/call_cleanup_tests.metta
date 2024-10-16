@@ -69,3 +69,13 @@
                                            (increment)
                                            (increment))
                       (1 3 5 7))
+
+;; setup-call-cleanup! returns all results of Form then calls Cleanup for each result of Setup
+
+;; setup-call-cleanup! returns Form then calls Cleanup for each result of Setup
+
+!(change-state! &var 0)
+!(assertEqualToResult (setup-call-cleanup! (superpose (1 2 3 4))
+                                           (superpose ((increment) (increment)))
+                                           (increment))
+                      (1 2 4 5 7 8 10 11))
