@@ -1289,6 +1289,30 @@
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
+(@doc hyperpose
+  (@desc "Turns a tuple (first argument) into a nondeterministic result, as superpose, but is explicitly concurrent. Each item of the tuple may be processed in parallel, depending on the number of threads available (which is the minimum of the tuple size and the number of cores available).")
+  (@params (
+    (@param "Tuple to be converted")))
+  (@return "Argument converted to nondeterministic result"))
+(: hyperpose (-> Expression %Undefined%))
+
+;; Public MeTTa
+(@doc sequential
+  (@desc "Turns a tuple (first argument) into a nondeterministic result, as superpose, but evaluation order of the elements of the tuple is fixed left to right. In that sense the result order is deterministic iff evaluating the tuple elements is deterministic.")
+  (@params (
+    (@param "Tuple to be evaluated")))
+  (@return "Sequential results of the tuple's elements."))
+(: sequential (-> Expression %Undefined%))
+
+;; Public MeTTa
+(@doc do
+  (@desc "Completely evaluates form, returning nothing. Typically used for side-effects. A common pattern is (sequential ((do <side-effect-form>) <form-that-needs-side-effect>)).")
+  (@params (
+    (@param "Form")))
+  (@return "None"))
+(: do (-> Expression %Undefined%))
+
+;; Public MeTTa
 (@doc pragma!
   (@desc "Changes global key's (first argument) value to a new one (second argument)")
   (@params (
@@ -1704,7 +1728,7 @@
 
 ;; Public MeTTa
 (@doc setup-call-cleanup!
-  (@desc "Executes Setup, then Form, then finally Cleanup. Setup is protected from interrupts (e.g. max-time!). In most uses, Setup will perform temporary side-effects required by Form that are finally undone by Cleanup. Cleanup is run even if Form raises an exception.")
+  (@desc "Executes Setup, then Form, then finally Cleanup. Setup is protected from interrupts (e.g. max-time!). In most uses, Setup will perform temporary side-effects required by Form that are finally undone by Cleanup. Cleanup is run even if Form raises an exception. For each result of Setup, Form is run to completion, then Cleanup is run.")
   (@params (
     (@param "Setup")
     (@param "Form")
