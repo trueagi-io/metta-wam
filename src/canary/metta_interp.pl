@@ -386,6 +386,7 @@ all_option_value_name_default_type_help(Name, DefaultValue, Type, Cmt, Topic):-
 % Compatibility and Modes
 option_value_name_default_type_help('compat', false, [true, false], "Enable all compatibility with MeTTa-Rust", 'Compatibility and Modes').
 option_value_name_default_type_help('compatio', false, [true, false], "Enable IO compatibility with MeTTa-Rust", 'Compatibility and Modes').
+option_value_name_default_type_help(src_indents,  false, [false,true], "Sets the indenting of list printing", 'Compatibility and Modes').
 all_option_value_name_default_type_help('repl', auto, [false, true, auto], "Enter REPL mode (auto means true unless a file argument was supplied)", 'Execution and Control').
 all_option_value_name_default_type_help('prolog', false, [false, true], "Enable or disable Prolog REPL mode", 'Compatibility and Modes').
 option_value_name_default_type_help('devel', false, [false, true], "Developer mode", 'Compatibility and Modes').
