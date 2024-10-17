@@ -60,7 +60,7 @@
 % IMPORTANT:  DO NOT DELETE COMMENTED-OUT CODE AS IT MAY BE UN-COMMENTED AND USED
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%!  typed_list(+Cmpd, -Type, -List) is semidet.
+%!  typed_list(+Cmpd, -Type, -List) is nondet.
 %
 %   Verifies that Cmpd is a compound term with functor Type and a list as its 
 %   first argument, while ensuring it is not a standard Prolog list. It uses 
@@ -85,7 +85,7 @@ typed_list(Cmpd, Type, List) :-
     % Verify that the first argument is a list.
     is_list(List).
 
-%!  is_syspred(+H, +Len, -Pred) is semidet.
+%!  is_syspred(+H, +Len, -Pred) is nondet.
 %
 %   Checks if H with arity Len corresponds to a system predicate, unifying 
 %   the result with Pred. This predicate wraps `is_syspred0/3` using `notrace/1` 
@@ -103,7 +103,7 @@ is_syspred(H, Len, Pred) :-
     % Suppress debugging with notrace while calling is_syspred0/3.
     notrace(is_syspred0(H, Len, Pred)).
 
-%!  is_syspred0(+H, +Len, -Pred) is semidet.
+%!  is_syspred0(+H, +Len, -Pred) is nondet.
 %
 %   Determines whether H with arity Len is a system predicate, using several checks and transformations.
 %   If successful, it unifies Pred with the appropriate predicate name.
@@ -140,7 +140,7 @@ is_syspred0(H, Len, Pred) :-
 
 %is_function(F):- atom(F).
 
-%!  is_metta_data_functor(+Eq, +Other, +H) is semidet.
+%!  is_metta_data_functor(+Eq, +Other, +H) is nondet.
 %
 %   Determines whether H is a valid "metta data functor" by checking several conditions.
 %   The first clause traces and checks for a clause of `is_data_functor/1`. 
@@ -169,7 +169,7 @@ is_metta_data_functor(Eq, Other, H) :-
     \+ is_comp_op(H, _),
     \+ is_math_op(H, _, _).
 
-%!  mnotrace(:Goal) is semidet.
+%!  mnotrace(:Goal) is nondet.
 %
 %   Executes the given Goal once if `mnotrace/1` is not already defined.
 %   This is used as a fallback to ensure the predicate exists, enabling 
@@ -187,7 +187,7 @@ mnotrace(G) :-
     once(G).
 :- endif.
 
-%!  'Number':attr_unify_hook(+Attr, +NewValue) is semidet.
+%!  'Number':attr_unify_hook(+Attr, +NewValue) is nondet.
 %
 %   Ensures that the attribute associated with the atom 'Number' can only unify 
 %   with numeric values. This hook is invoked when an attribute needs to unify 
@@ -206,7 +206,7 @@ mnotrace(G) :-
 
 %is_decl_type(ST):- metta_type(_,_,[_|Type]),is_list(Type),sub_sterm(T,Type),nonvar(T),T=@=ST, \+ nontype(ST).
 
-%!  is_decl_utype(+Type) is semidet.
+%!  is_decl_utype(+Type) is nondet.
 %
 %   Succeeds if Type is a declared "utype" (user-defined type). The predicate 
 %   checks for predefined types such as 'Number', 'Symbol', 'String', etc.
@@ -224,7 +224,7 @@ is_decl_utype('Any').
 is_decl_utype('Atom').
 % is_decl_utype(Type) :- is_decl_type_l(Type).
 
-%!  is_decl_mtype(+Type) is semidet.
+%!  is_decl_mtype(+Type) is nondet.
 %
 %   @arg Type The type being checked.
 %
@@ -238,7 +238,7 @@ is_decl_mtype('PyObject').
 % is_decl_type([ST|_]) :- !, atom(ST), is_decl_type_l(ST).
 % is_decl_type(ST) :- \+ atom(ST), !, fail.
 
-%!  is_decl_type(+Type) is semidet.
+%!  is_decl_type(+Type) is nondet.
 %
 %   Succeeds if Type is a valid declared type.
 %
@@ -255,7 +255,7 @@ is_decl_type([Type, SType]) :-
     is_decl_type_l(Type), 
     is_decl_utype(SType).
 
-%!  is_decl_type_l(+Type) is semidet.
+%!  is_decl_type_l(+Type) is nondet.
 %
 %   Checks if Type is a member of specific predefined types, such as 'StateMonad' or 'List'.
 %
@@ -264,7 +264,7 @@ is_decl_type([Type, SType]) :-
 is_decl_type_l('StateMonad'). 
 is_decl_type_l('List').
 
-%!  last_type(+List, -Type) is semidet.
+%!  last_type(+List, -Type) is nondet.
 %
 %   Determines the last element of a given list and checks if it is a valid type.
 %   If the input is already a valid type, it succeeds directly.
@@ -285,7 +285,7 @@ last_type(Type, Type) :-
     % Succeed directly if the provided value is a valid type.
     is_type(Type), !.
 
-%!  is_type(+Type) is semidet.
+%!  is_type(+Type) is nondet.
 %
 %   Succeeds if Type is a valid declared type. This predicate ensures that 
 %   non-types (as defined by `nontype/1`) are excluded.
@@ -300,7 +300,7 @@ is_type(Type) :-
     is_decl_type(Type).
 % is_type(Type) :- atom(Type).
 
-%!  nontype(+Type) is semidet.
+%!  nontype(+Type) is nondet.
 %
 %   Succeeds if Type is not considered a valid type. This includes variables, 
 %   numbers, and certain special symbols.
@@ -315,8 +315,7 @@ nontype(N) :-
     % Numbers are treated as non-types.
     number(N).
 
-
-%!  needs_eval(+EvalMe) is semidet.
+%!  needs_eval(+EvalMe) is nondet.
 %
 %   Succeeds if EvalMe is a list, indicating that it requires evaluation.
 %
@@ -330,7 +329,7 @@ needs_eval(EvalMe) :-
     % Check if EvalMe is a list.
     is_list(EvalMe).
 
-%!  args_violation(+Depth, +Self, +Args, +List) is semidet.
+%!  args_violation(+Depth, +Self, +Args, +List) is nondet.
 %
 %   Succeeds if there is a violation between the elements in Args and List.
 %   A violation occurs if an argument does not conform to its expected type.
@@ -350,7 +349,7 @@ args_violation(Depth, Self, [A|Args], [L|List]) :-
     once(arg_violation(Depth, Self, A, L) ; 
          args_violation(Depth, Self, Args, List)).
 
-%!  arg_violation(+Depth, +Self, +Arg, +Expected) is semidet.
+%!  arg_violation(+Depth, +Self, +Arg, +Expected) is nondet.
 %
 %   Succeeds if the given Arg violates the expected type L.
 %
@@ -364,7 +363,7 @@ arg_violation(Depth, Self, A, L) :-
     \+ (get_type_equals(Depth, Self, A, T), \+ type_violation(T, L)).
 % arg_violation(Depth, Self, A, _) :- get_type(Depth, Self, A, _), !.
 
-%!  type_violation(+Type, +Value) is semidet.
+%!  type_violation(+Type, +Value) is nondet.
 %
 %   Succeeds if there is a type mismatch between Type and Value.
 %
@@ -379,7 +378,7 @@ type_violation(T, L) :-
     % Fail if the types are not equal.
     T \= L.
 
-%!  not_arg_violation(+Depth, +Self, +Arg, +Type) is semidet.
+%!  not_arg_violation(+Depth, +Self, +Arg, +Type) is nondet.
 %
 %   Succeeds if the Arg conforms to the expected Type and does not cause a violation.
 %
@@ -406,7 +405,7 @@ get_types(Depth, Self, Var, TypeSet) :-
     % Collect all types for the variable using setof/3.
     setof(Type, get_type_each(Depth, Self, Var, Type), TypeSet).
 
-%!  get_type_equals(+Depth, +Self, +Var, -Type) is semidet.
+%!  get_type_equals(+Depth, +Self, +Var, -Type) is nondet.
 %
 %   Checks if a variable and a type are equivalent.
 %
@@ -424,7 +423,7 @@ get_type_equals(Depth, Self, Var, TypeO) :-
 
 %if_or_else(get_type(Depth,Self,Val,Type),Type='%Undefined%'),
 
-%!  get_type(+Depth, +Self, +Val, -Type) is semidet.
+%!  get_type(+Depth, +Self, +Val, -Type) is nondet.
 %
 %   Retrieves the type of a given value, ensuring there are no repeated types.
 %   If `return_only_first_type` is enabled, only the first matching type is returned.
@@ -445,7 +444,7 @@ get_type(Depth, Self, Val, TypeO) :-
     % If only the first type should be returned, cut; otherwise, proceed.
     (return_only_first_type -> !; true).
 
-%!  return_only_first_type is semidet.
+%!  return_only_first_type is nondet.
 %
 %   Succeeds if only the first matching type should be returned.
 %
@@ -453,7 +452,7 @@ return_only_first_type :-
     % Check if the flag is set to true.
     true_flag.
 
-%!  is_space_type(+Space, -Type) is semidet.
+%!  is_space_type(+Space, -Type) is nondet.
 %
 %   Determines the type of a given space, distinguishing between asserted spaces
 %   and other types using various space type methods.
@@ -470,7 +469,7 @@ is_space_type(Space, Test) :-
     % Call the test to determine the space type.
     call(Test, Space), !.
 
-%!  is_state_type(+State, -Type) is semidet.
+%!  is_state_type(+State, -Type) is nondet.
 %
 %   Determines the type of a given state using state type methods.
 %
@@ -483,7 +482,7 @@ is_state_type(State, Test) :-
     % Call the test to determine the state type.
     call(Test, State), !.
 
-%!  is_dynaspace(+Space) is semidet.
+%!  is_dynaspace(+Space) is nondet.
 %
 %   Succeeds if the given Space is recognized as a dynamic space. 
 %   It checks if the space is either asserted, a named Python space, 
@@ -517,7 +516,7 @@ is_dynaspace(S) :-
 
 %  fake_notrace( is_space_type(Expr,_)),!.
 
-%!  is_PyObject(+Obj) is semidet.
+%!  is_PyObject(+Obj) is nondet.
 %
 %   Succeeds if the given Obj is recognized as a Python object. 
 %   It checks if the object is a Python object, a known Python constant, 
@@ -542,7 +541,7 @@ is_PyObject('@'(S)) :-
     % Succeeds if S is a non-variable and recognized as a Python constant.
     !, nonvar(S), is_py_const(S).
 
-%!  is_py_const(+Const) is semidet.
+%!  is_py_const(+Const) is nondet.
 %
 %   Succeeds if the given Const is a recognized Python constant.
 %
@@ -559,7 +558,7 @@ is_py_const('None').
 is_py_const('False').
 is_py_const('True').
 
-%!  get_type_each(+Depth, +Self, +Val, -Type) is semidet.
+%!  get_type_each(+Depth, +Self, +Val, -Type) is nondet.
 %
 %   Determines the type of a given value, using multiple checks and recursion. 
 %   Handles special cases for Python objects, dynamic spaces, variables with attributes, 
@@ -612,10 +611,9 @@ get_type_each(Depth, Self, Val, Type) :-
     if_or_else(
         (get_type_cmpd_2nd_non_nil(Depth, Self, Val, Type, How),
          trace_get_type(How, Type, gt(Val))),
-        (trace_get_type('FAILED', '', gt(Val)), fail)
-    ).
+        (trace_get_type('FAILED', '', gt(Val)), fail)).
 
-%!  get_type_cmpd_2nd_non_nil(+Depth, +Self, +Val, -Type, -How) is semidet.
+%!  get_type_cmpd_2nd_non_nil(+Depth, +Self, +Val, -Type, -How) is nondet.
 %
 %   Determines the type of a compound value, ensuring that if multiple types 
 %   are found, the type is not an empty list (`[]`). It invokes 
@@ -664,7 +662,7 @@ check_bad_type2(Depth,Self,Val):- Val= [Op|Args],
     (trace_get_type(conformed,no_args_violation(Args,ArgTypes),check),true)).
 */
 
-%!  typed_expression(+Depth, +Self, +Expr, -ArgTypes, -RType) is semidet.
+%!  typed_expression(+Depth, +Self, +Expr, -ArgTypes, -RType) is nondet.
 %
 %   Determines the argument types and return type for a given operator 
 %   expression. It extracts the operator and arguments from the expression 
@@ -682,7 +680,7 @@ typed_expression(Depth, Self, [Op | Args], ArgTypes, RType) :-
     % Retrieve the operator type definition.
     get_operator_typedef1(Self, Op, Len, ArgTypes, RType).
 
-%!  badly_typed_expression(+Depth, +Self, +Expr) is semidet.
+%!  badly_typed_expression(+Depth, +Self, +Expr) is nondet.
 %
 %   Succeeds if the expression is badly typed. It checks the operator 
 %   expression and verifies if the argument types are consistent with 
@@ -731,7 +729,7 @@ trace_get_type(How, Type, Val) :-
 %
 wsf(T) :- with_indents(false, write_src(T)).
 
-%!  get_type_nc(+Depth, +Self, +Val, -Type) is semidet.
+%!  get_type_nc(+Depth, +Self, +Val, -Type) is nondet.
 %
 %   Determines the non-compound type of a value (Val) based on its characteristics.
 %   This predicate handles various primitive types such as numbers, strings, and symbols.
@@ -771,7 +769,7 @@ get_type_nc(_Dpth, _Slf, Val, 'Rational') :-
     % Succeed if the value is a rational number.
     rational(Val), !.
 
-%!  specialize_number is semidet.
+%!  specialize_number is nondet.
 %
 %   This predicate controls whether further specialization of numbers (e.g., 
 %   distinguishing between integers, floats, and rational numbers) is performed.
@@ -785,7 +783,7 @@ specialize_number :-
     % Fail if the `false_flag` is active.
     false_flag.
 
-%!  get_type_symb(+Depth, +Self, +Val, -Type) is semidet.
+%!  get_type_symb(+Depth, +Self, +Val, -Type) is nondet.
 %
 %   Determines the type of symbolic values based on specific patterns or evaluations.
 %
@@ -817,7 +815,7 @@ get_type_symb(Depth, Self, Op, Type) :-
     Op \=@= Val, !,
     get_type(Depth2, Self, Val, Type).
 
-%!  get_dict_type(+Val, +Type, -TypeO) is semidet.
+%!  get_dict_type(+Val, +Type, -TypeO) is nondet.
 %
 %   Determines the type of a value by retrieving it from its dictionary attributes.
 %
@@ -844,7 +842,7 @@ get_dict_type(Val, _, TypeO) :-
     is_list(TypeL),
     member(Type, TypeL).
 
-%!  get_type_cmpd(+Depth, +Self, +Val, -Type, -How) is semidet.
+%!  get_type_cmpd(+Depth, +Self, +Val, -Type, -How) is nondet.
 %
 %   Determines the type of a compound value (Val) based on its structure. 
 %   This predicate handles dictionaries, variables, characters, curried operators, 
@@ -908,8 +906,7 @@ get_type_cmpd(Depth,Self,EvalMe,Type,Eval_First):-
     get_type_cmpd_eval(Depth2,Self,EvalMe,Val,Type,Eval_First).
 get_type_cmpd(_Dpth,_Slf,_Cmpd,[],unknown).
 
-
-%!  get_type_cmpd_eval(+Depth, +Self, +EvalMe, +Val, -Type, -How) is semidet.
+%!  get_type_cmpd_eval(+Depth, +Self, +EvalMe, +Val, -Type, -How) is nondet.
 %
 %   Evaluates the type of a compound value (EvalMe) based on different strategies.
 %   It uses various methods to determine the type, such as `maplist/2` and first-evaluation.
@@ -945,7 +942,7 @@ get_type_cmpd_eval(Depth2, Self, _EvalMe, Val, Type, eval_first_reduced) :-
 state_decltype(Expr,Type):- functor(Expr,_,A),
   arg(A,Expr,Type),once(var(Type);is_decl_type(Type)).
 
-%!  get_value_type(+Depth, +Self, +Val, -Type) is semidet.
+%!  get_value_type(+Depth, +Self, +Val, -Type) is nondet.
 %
 %   Determines the type of a given value (Val). This predicate handles variables, 
 %   numbers, strings, and invokes additional type-checking logic if needed.
@@ -989,7 +986,6 @@ get_value_type(_Dpth,Self,Fn,Type):- symbol(Fn),metta_type(Self,Fn,Type),!.
 %get_value_type(Depth,Self,Expr,Type):-Depth2 is Depth-1,
 % eval_args(Depth2,Self,Expr,Val),
 %  Expr\=@=Val,get_value_type(Depth2,Self,Val,Type).
-
 
 get_value_type(_Dpth,_Slf,Val,'String'):- string(Val),!.
 get_value_type(_Dpth,_Slf,Val,Type):- is_decl_type(Val),Type=Val.
@@ -1062,7 +1058,7 @@ as_prolog(Depth, Self, I, O) :-
     maplist(as_prolog(Depth, Self), I, O).
 as_prolog(_Dpth, _Slf, I, I).
 
-%!  try_adjust_arg_types(+Eq, +RetType, +Depth, +Self, +Params, +X, -Y) is semidet.
+%!  try_adjust_arg_types(+Eq, +RetType, +Depth, +Self, +Params, +X, -Y) is nondet.
 %
 %   Attempts to adjust argument types by converting the input (X) to a Prolog-friendly 
 %   format, ensuring the adjusted arguments conform to the expected types, and setting 
@@ -1137,7 +1133,7 @@ adjust_args(Else, Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y) :-
         adjust_argsB(Else, Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y)
     ).
 
-%!  adjust_argsA(+Else, +Eq, +RetType, +Res, -NewRes, +Depth, +Self, +Op, +X, -Y) is semidet.
+%!  adjust_argsA(+Else, +Eq, +RetType, +Res, -NewRes, +Depth, +Self, +Op, +X, -Y) is nondet.
 %
 %   Primary strategy for adjusting arguments. It checks if the arguments conform 
 %   to the operator’s type definition and transforms them accordingly.
@@ -1161,7 +1157,7 @@ adjust_argsA(Else, Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y) :-
     args_conform(Depth, Self, [CRes | X], [RRetType | ParamTypes]),
     into_typed_args(Depth, Self, [RRetType | ParamTypes], [Res | X], [NewRes | Y]).
 
-%!  adjust_argsB(+Else, +Eq, +RetType, +Res, -Res, +Depth, +Self, +Op, +Args, -Adjusted) is semidet.
+%!  adjust_argsB(+Else, +Eq, +RetType, +Res, -Res, +Depth, +Self, +Op, +Args, -Adjusted) is nondet.
 %
 %   Secondary adjustment strategy that evaluates each argument individually if possible.
 %
@@ -1200,9 +1196,7 @@ eval_1_arg(Else, Eq, ReturnType, Depth, Self, Arg, Adjusted) :-
     must_det_ll(
         if_or_else(
             eval(Eq, ReturnType, Depth, Self, Arg, Adjusted),
-            call(Else, Arg, Adjusted)
-        )
-    ).
+            call(Else, Arg, Adjusted))).
 
 %!  get_operator_typedef(+Self, +Op, +ParamTypes, -RetType) is det.
 %
@@ -1234,7 +1228,7 @@ reset_cache :-
 % Declare get_operator_typedef0/5 as a dynamic predicate to allow modification at runtime.
 :- dynamic(get_operator_typedef0/5).
 
-%!  get_operator_typedef(+Self, +Op, +Len, -ParamTypes, -RetType) is semidet.
+%!  get_operator_typedef(+Self, +Op, +Len, -ParamTypes, -RetType) is nondet.
 %
 %   Retrieves the operator type definition for a given operator (Op). It first checks 
 %   if the type definition exists in the cached predicate `get_operator_typedef0/5`. 
@@ -1257,7 +1251,7 @@ get_operator_typedef(Self, Op, Len, ParamTypes, RetType) :-
             get_operator_typedef1(Self, Op, Len, ParamTypes, RetType),
             get_operator_typedef2(Self, Op, Len, ParamTypes, RetType))).
 
-%!  get_operator_typedef1(+Self, +Op, +Len, -ParamTypes, -RetType) is semidet.
+%!  get_operator_typedef1(+Self, +Op, +Len, -ParamTypes, -RetType) is nondet.
 %
 %   Retrieves the operator type definition based on the `'->'` type structure 
 %   and caches the result in `get_operator_typedef0/5`.
@@ -1279,7 +1273,7 @@ get_operator_typedef1(Self, Op, Len, ParamTypes, RetType) :-
     if_t(var(ParamTypes), append(ParamTypes, [RetType], List)),
     assert(get_operator_typedef0(Self, Op, Len, ParamTypes, RetType)).
 
-%!  get_operator_typedef2(+Self, +Op, +Len, -ParamTypes, -RetType) is semidet.
+%!  get_operator_typedef2(+Self, +Op, +Len, -ParamTypes, -RetType) is nondet.
 %
 %   Retrieves the operator type definition by ensuring that all parameter types 
 %   are evaluation kinds and assigns a default return type `'AnyRet'`. The result 
@@ -1372,7 +1366,7 @@ arg_conform(Depth, Self, A, L) :-
 % arg_conform(_Dpth, _Slf, _, _).
 % arg_conform(Depth, Self, A, _) :- get_type(Depth, Self, A, _), !.
 
-%!  type_conform(+Type, +Expected) is semidet.
+%!  type_conform(+Type, +Expected) is nondet.
 %
 %   Checks if a type (Type) conforms to the expected type (Expected).
 %
@@ -1445,7 +1439,7 @@ into_typed_arg(Depth, Self, T, M, Y) :-
     % Use into_typed_arg0 for further evaluation or fallback to direct unification.
     into_typed_arg0(Depth, Self, T, M, Y) *-> true ; M = Y.
 
-%!  into_typed_arg0(+Depth, +Self, +Type, +Value, -TypedValue) is semidet.
+%!  into_typed_arg0(+Depth, +Self, +Type, +Value, -TypedValue) is nondet.
 %
 %   Helper predicate for `into_typed_arg/5`. It evaluates the value based on its type.
 %
@@ -1474,7 +1468,7 @@ into_typed_arg0(Depth, Self, _, M, Y) :-
     % Default case: evaluate the value.
     eval_args(Depth, Self, M, Y).
 
-%!  wants_eval_kind(+Type) is semidet.
+%!  wants_eval_kind(+Type) is nondet.
 %
 %   Determines if a type requires evaluation.
 %
@@ -1546,7 +1540,7 @@ add_type(_Depth, Self, _Var, TypeL, Type) :-
     append([Type], TypeL, TypeList),
     put_attr(Var, metta_type, Self = TypeList).
 
-%!  can_assign(+Was, +Type) is semidet.
+%!  can_assign(+Was, +Type) is nondet.
 %
 %   Checks if a value of type `Was` can be assigned to a variable of type `Type`.
 %   Assignment is allowed if either type is non-specific or if the two types are identical.
@@ -1575,7 +1569,7 @@ cant_assign(Number,String):- formated_data_type(Number),formated_data_type(Strin
 cant_assign(Number,Other):- formated_data_type(Number), symbol(Other), Number\==Other.
 */
 
-%!  is_non_eval_kind(+Type) is semidet.
+%!  is_non_eval_kind(+Type) is nondet.
 %
 %   Checks if the given type (Type) does not require evaluation. A non-eval kind 
 %   includes specific non-variable types or the 'Atom' type.
@@ -1590,7 +1584,7 @@ is_non_eval_kind(Type) :-
     nonvar(Type), Type \== 'Any', is_nonspecific_type(Type), !.
 is_non_eval_kind('Atom').
 
-%!  is_nonspecific_type(+Type) is semidet.
+%!  is_nonspecific_type(+Type) is nondet.
 %
 %   Succeeds if the given type (Type) is considered non-specific.
 %
@@ -1599,7 +1593,7 @@ is_non_eval_kind('Atom').
 is_nonspecific_type(Any) :-
     notrace(is_nonspecific_type0(Any)), !.
 
-%!  is_nonspecific_type0(+Type) is semidet.
+%!  is_nonspecific_type0(+Type) is nondet.
 %
 %   Helper predicate that defines non-specific types.
 %
@@ -1614,7 +1608,7 @@ is_nonspecific_type0('Atom').
 is_nonspecific_type0(Any) :-
     is_nonspecific_any(Any).
 
-%!  formated_data_type(+Type) is semidet.
+%!  formated_data_type(+Type) is nondet.
 %
 %   Checks if the given type is a recognized formatted data type.
 %
@@ -1628,7 +1622,7 @@ formated_data_type('String').
 formated_data_type([List | _]) :-
     List == 'List'.
 
-%!  is_nonspecific_any(+Type) is semidet.
+%!  is_nonspecific_any(+Type) is nondet.
 %
 %   Succeeds if the given type is considered a non-specific "any" type.
 %
@@ -1637,7 +1631,7 @@ formated_data_type([List | _]) :-
 is_nonspecific_any(Any) :-
     notrace(is_nonspecific_any0(Any)), !.
 
-%!  is_nonspecific_any0(+Type) is semidet.
+%!  is_nonspecific_any0(+Type) is nondet.
 %
 %   Helper predicate that defines non-specific "any" types.
 %
@@ -1649,7 +1643,7 @@ is_nonspecific_any0(Any) :-
 is_nonspecific_any0(Any) :-
     Any == 'AnyRet'.
 
-%!  is_nonspecific_type_na(+Type) is semidet.
+%!  is_nonspecific_type_na(+Type) is nondet.
 %
 %   Checks if a type is non-specific but not 'Atom'.
 %
@@ -1687,7 +1681,7 @@ narrow_types(Fmt1, Fmt, Fmt) :-
     formated_data_type(Fmt), !.
 narrow_types(Fmt1, Fmt2, 'NarrowTypeFn'(Fmt1, Fmt2)).
 
-%!  is_type_list(+TypeFn, -List) is semidet.
+%!  is_type_list(+TypeFn, -List) is nondet.
 %
 %   Succeeds if the given type function (TypeFn) corresponds to a list of types.
 %
@@ -1732,7 +1726,7 @@ narrow_types([A, B | List], Out) :-
     narrow_types(A, BL, Out).
 narrow_types([A], A).
 
-%!  is_pro_eval_kind(+Type) is semidet.
+%!  is_pro_eval_kind(+Type) is nondet.
 %
 %   Succeeds if the given type (Type) requires evaluation.
 %
@@ -1753,7 +1747,7 @@ is_pro_eval_kind(A) :-
     % Check for non-specific "any" types.
     is_nonspecific_any(A), !.
 
-%!  is_feo_f(+F) is semidet.
+%!  is_feo_f(+F) is nondet.
 %
 %   Succeeds if the given function (F) is recognized as a first-order operator.
 %
@@ -1761,7 +1755,7 @@ is_pro_eval_kind(A) :-
 %
 is_feo_f('Cons').
 
-%!  is_seo_f(+F) is semidet.
+%!  is_seo_f(+F) is nondet.
 %
 %   Succeeds if the given function (F) is recognized as a second-order operator.
 %
@@ -1781,7 +1775,7 @@ is_seo_f(N) :-
 
 :- if(\+ current_predicate(is_absorbed_return_type/2)).
 
-%!  is_absorbed_return_type(+Params, +Var) is semidet.
+%!  is_absorbed_return_type(+Params, +Var) is nondet.
 %
 %   Succeeds if the given return type (Var) is considered an absorbed return type.
 %   Absorbed return types are those that do not propagate as valid return types.
@@ -1802,7 +1796,7 @@ is_absorbed_return_type(_, X) :-
     % Check if the type is recognized as a self-return type.
     is_self_return(X).
 
-%!  is_self_return(+Type) is semidet.
+%!  is_self_return(+Type) is nondet.
 %
 %   Succeeds if the given type is a recognized self-return type.
 %
@@ -1810,7 +1804,7 @@ is_absorbed_return_type(_, X) :-
 %
 is_self_return('ErrorType').
 
-%!  is_non_absorbed_return_type(+Params, +Var) is semidet.
+%!  is_non_absorbed_return_type(+Params, +Var) is nondet.
 %
 %   Succeeds if the given return type (Var) is not an absorbed return type.
 %
@@ -1825,7 +1819,7 @@ is_non_absorbed_return_type(Params, Var) :-
 
 %is_user_defined_goal(Self,[H|_]):- is_user_defined_head(Eq,Self,H).
 
-%!  is_user_defined_head(+Other, +Head) is semidet.
+%!  is_user_defined_head(+Other, +Head) is nondet.
 %
 %   Checks if the given head (H) is a user-defined head. This predicate uses `=` as the default 
 %   equality comparison.
@@ -1837,7 +1831,7 @@ is_user_defined_head(Other, H) :-
     % Use `=` as the default equality comparison.
     is_user_defined_head(=, Other, H).
 
-%!  is_user_defined_head(+Eq, +Other, +Head) is semidet.
+%!  is_user_defined_head(+Eq, +Other, +Head) is nondet.
 %
 %   Checks if the given head (H) is a user-defined head using the specified equality (Eq).
 %
@@ -1848,7 +1842,7 @@ is_user_defined_head(Other, H) :-
 is_user_defined_head(Eq, Other, H) :-
     mnotrace(is_user_defined_head0(Eq, Other, H)).
 
-%!  is_user_defined_head0(+Eq, +Other, +Head) is semidet.
+%!  is_user_defined_head0(+Eq, +Other, +Head) is nondet.
 %
 %   Internal predicate that performs the user-defined head check with pattern matching.
 %
@@ -1869,7 +1863,7 @@ is_user_defined_head0(Eq, Other, H) :-
     % Default case: directly check the head.
     is_user_defined_head_f(Eq, Other, H).
 
-%!  is_user_defined_head_f(+Eq, +Other, +Head) is semidet.
+%!  is_user_defined_head_f(+Eq, +Other, +Head) is nondet.
 %
 %   Helper predicate that checks if the head is user-defined using the specified equality (Eq).
 %
@@ -1889,7 +1883,7 @@ is_user_defined_head_f(Eq, Other, H) :-
 % is_user_defined_head_f1(Eq, Other, H) :- metta_type(Other, H, _).
 % s_user_defined_head_f1(Other, H) :- get_metta_atom(Eq, Other, [H | _]).
 
-%!  is_user_defined_head_f1(+Eq, +Other, +Head) is semidet.
+%!  is_user_defined_head_f1(+Eq, +Other, +Head) is nondet.
 %
 %   Performs the core user-defined head check using equality (Eq).
 %
@@ -1905,7 +1899,7 @@ is_user_defined_head_f1(Eq, Other, H) :-
     metta_eq_def(Eq, Other, [H | _], _).
 % is_user_defined_head_f(Eq, _, H) :- is_metta_builtin(H).
 
-%!  is_special_op(+Op) is semidet.
+%!  is_special_op(+Op) is nondet.
 %
 %   Checks if the given operator (Op) is a special operator in the current context.
 %
@@ -1916,7 +1910,7 @@ is_special_op(Op) :-
     current_self(Self),
     is_special_op(Self, Op).
 
-%!  is_special_op(+Self, +Op) is semidet.
+%!  is_special_op(+Self, +Op) is nondet.
 %
 %   Checks if the given operator (Op) is a special operator based on the context (Self).
 %
@@ -1947,7 +1941,7 @@ is_eval_kind(ParamType) :-
     % Ignore unbound parameter types and assume 'Any' as default.
     ignore(ParamType = 'Any').
 
-%!  is_metta_data_functor(+Eq, +F) is semidet.
+%!  is_metta_data_functor(+Eq, +F) is nondet.
 %
 %   Checks if the given functor (F) is a Metta data functor using the provided equality (Eq).
 %
@@ -2007,7 +2001,7 @@ get_operator_typedef(Self, Op, _, ParamTypes, RetType) :-
     get_operator_typedef(Self, Op, ParamTypes, RetType).
 :- endif.
 
-%!  is_special_builtin(+Builtin) is semidet.
+%!  is_special_builtin(+Builtin) is nondet.
 %
 %   Checks if the given Builtin is a recognized special built-in MeTTa predicate. 
 %   These built-ins represent various control structures and operations 
@@ -2043,7 +2037,7 @@ is_special_builtin('collapse').
 is_special_builtin('superpose').
 %is_special_builtin('==').
 
-%!  is_metta_builtin(+Builtin) is semidet.
+%!  is_metta_builtin(+Builtin) is nondet.
 %
 %   Succeeds if the given Builtin is recognized as a MeTTa built-in predicate or operator. 
 %   This includes both special built-ins and common operators used in metta logic.
@@ -2075,7 +2069,7 @@ is_metta_builtin('all').
 is_metta_builtin('import!').
 is_metta_builtin('pragma!').
 
-%!  is_comp_op(+Operator, +Arity) is semidet.
+%!  is_comp_op(+Operator, +Arity) is nondet.
 %
 %   Checks if the given Operator is a valid comparison operator in Prolog with 
 %   the specified arity. These operators are used for comparing terms and 
@@ -2104,7 +2098,7 @@ is_comp_op('is', 2).         % Arithmetic equality
 is_comp_op('=:=', 2).        % Arithmetic exact equality
 is_comp_op('=\\=', 2).       % Arithmetic inequality
 
-%!  is_math_op(+Operator, +Arity, -Status) is semidet.
+%!  is_math_op(+Operator, +Arity, -Status) is nondet.
 %
 %   Checks if the given Operator is a recognized arithmetic or mathematical operation
 %   with the specified arity. The status `exists` indicates that the operation is supported.
