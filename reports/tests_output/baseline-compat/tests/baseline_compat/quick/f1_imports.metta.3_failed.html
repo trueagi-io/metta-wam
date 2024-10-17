@@ -108,7 +108,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-17 10:10:59+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-17 22:38:32+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -457,7 +457,7 @@ Script started on 2024-10-17 10:10:59+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; QUICK.F1-IMPORTS.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000190 secs. (189.72 microseconds) 
+; took 0.000169 secs. (168.60 microseconds) 
 
 !(assertEqualToResult (get-type &self) (hyperon::space::DynSpace))
 
@@ -475,7 +475,7 @@ Deterministic: ()
 >;; QUICK.F1-IMPORTS.02</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.04 milliseconds) 
+; took 0.002 secs. (1.89 milliseconds) 
 
 !(assertEqual ((let $x (get-atoms &self) (get-type $x))) ((get-type &self)))
 
@@ -494,7 +494,7 @@ Deterministic: ()
 >;; QUICK.F1-IMPORTS.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000279 secs. (278.74 microseconds) 
+; took 0.000271 secs. (271.42 microseconds) 
 
 !(assertEqual (if (> 1 2) 1 2) 2)
 
@@ -559,7 +559,7 @@ Deterministic: ()
 >;; QUICK.F1-MODULEA.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000202 secs. (202.26 microseconds) 
+; took 0.000170 secs. (170.33 microseconds) 
 
 !(assertEqual (+ 1 2) 3)
 
@@ -575,7 +575,7 @@ Deterministic: ()
 >;; QUICK.F1-MODULEA.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000149 secs. (149.14 microseconds) 
+; took 0.000153 secs. (153.37 microseconds) 
 
 !(assertEqual (if True "S" "F") "S")
 
@@ -620,7 +620,7 @@ Last Result(2): ()
 >;; QUICK.F1-IMPORTS.06</h3>
 ; 
 ; EVAL TEST
-; took 0.003 secs. (2.79 milliseconds) 
+; took 0.002 secs. (2.06 milliseconds) 
 
 !(assertEqual (match &m (= (f 2) $x) $x) (g 3))
 
@@ -690,7 +690,7 @@ Deterministic: ()
 >;; QUICK.F1-MODULEA.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000187 secs. (187.15 microseconds) 
+; took 0.000183 secs. (183.10 microseconds) 
 
 !(assertEqual (+ 1 2) 3)
 
@@ -706,7 +706,7 @@ Deterministic: ()
 >;; QUICK.F1-MODULEA.08</h3>
 ; 
 ; EVAL TEST
-; took 0.000143 secs. (142.92 microseconds) 
+; took 0.000147 secs. (147.04 microseconds) 
 
 !(assertEqual (if True "S" "F") "S")
 
@@ -782,7 +782,7 @@ Deterministic: ()
 >;; QUICK.F1-MODULEA.09</h3>
 ; 
 ; EVAL TEST
-; took 0.000206 secs. (205.66 microseconds) 
+; took 0.000167 secs. (166.64 microseconds) 
 
 !(assertEqual (+ 1 2) 3)
 
@@ -798,7 +798,7 @@ Deterministic: ()
 >;; QUICK.F1-MODULEA.10</h3>
 ; 
 ; EVAL TEST
-; took 0.000141 secs. (140.82 microseconds) 
+; took 0.000134 secs. (134.49 microseconds) 
 
 !(assertEqual (if True "S" "F") "S")
 
@@ -825,7 +825,7 @@ Last Result(2): ()
 >;; QUICK.F1-IMPORTS.11</h3>
 ; 
 ; EVAL TEST
-; took 0.000800 secs. (799.60 microseconds) 
+; took 0.000802 secs. (802.05 microseconds) 
 
 !(assertEqual (g 2) 102)
 
@@ -843,7 +843,7 @@ Deterministic: ()
 >;; QUICK.F1-IMPORTS.12</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.10 milliseconds) 
+; took 0.001 secs. (1.11 milliseconds) 
 
 !(assertEqual (f 2) 103)
 
@@ -866,7 +866,7 @@ Deterministic: ()
 >;; QUICK.F1-IMPORTS.13</h3>
 ; 
 ; EVAL TEST
-; took 0.006 secs. (6.21 milliseconds) 
+; took 0.006 secs. (6.02 milliseconds) 
 
 !(assertEqual &m (let* (($a (collapse (get-atoms &self))) ($x (cdr-atom $a)) ($y (cdr-atom $x))) (car-atom $y)))
 
@@ -906,7 +906,7 @@ Deterministic: ()
 >;; QUICK.F1-IMPORTS.15</h3>
 ; 
 ; EVAL TEST
-; took 0.000299 secs. (299.08 microseconds) 
+; took 0.000314 secs. (313.63 microseconds) 
 
 !(assertEqual (if (> 1 2) 1 2) 2)
 
@@ -1005,7 +1005,7 @@ Last Result(2): ()
 >;; QUICK.F1-IMPORTS.16</h3>
 ; 
 ; EVAL TEST
-; took 0.000835 secs. (834.51 microseconds) 
+; took 0.000777 secs. (777.26 microseconds) 
 
 !(assertEqual (g 2) 102)
 
@@ -1043,7 +1043,7 @@ Deterministic: ()
 >;; QUICK.F1-IMPORTS.18</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.20 milliseconds) 
+; took 0.001 secs. (1.19 milliseconds) 
 
 !(assertEqualToResult (dup 2) (12 102))
 
@@ -1103,7 +1103,7 @@ Last Result(2): ()
 >;; QUICK.F1-IMPORTS.19</h3>
 ; 
 ; EVAL TEST
-; took 0.000807 secs. (807.07 microseconds) 
+; took 0.000784 secs. (783.76 microseconds) 
 
 !(assertEqual (g 2) 102)
 
@@ -1121,7 +1121,7 @@ Deterministic: ()
 >;; QUICK.F1-IMPORTS.20</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.16 milliseconds) 
+; took 0.001 secs. (1.14 milliseconds) 
 
 !(assertEqual (f 2) 103)
 
@@ -1139,7 +1139,7 @@ Deterministic: ()
 >;; QUICK.F1-IMPORTS.21</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.17 milliseconds) 
+; took 0.001 secs. (1.25 milliseconds) 
 
 !(assertEqualToResult (dup 2) (12 102))
 
@@ -1149,7 +1149,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 959,824 inferences, 0.211 CPU in 0.211 seconds (100% CPU, 4541539 Lips)
+>% 959,824 inferences, 0.205 CPU in 0.205 seconds (100% CPU, 4677289 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/quick/f1_imports.metta  0)
 <span class="ansi1"
@@ -1288,7 +1288,7 @@ Deterministic: ()
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-17 10:11:05+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-17 22:38:38+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

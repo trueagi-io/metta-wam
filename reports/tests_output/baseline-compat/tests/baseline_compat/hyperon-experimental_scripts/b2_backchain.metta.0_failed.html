@@ -41,7 +41,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-17 09:58:51+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-17 22:26:28+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -385,7 +385,7 @@ Script started on 2024-10-17 09:58:51+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B2-BACKCHAIN.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000397 secs. (397.24 microseconds) 
+; took 0.000337 secs. (336.64 microseconds) 
 
 !(assertEqualToResult (Frog Sam) ((Frog Sam)))
 
@@ -404,7 +404,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B2-BACKCHAIN.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000481 secs. (480.81 microseconds) 
+; took 0.000373 secs. (372.95 microseconds) 
 
 !(assertEqual (frog Sam) T)
 
@@ -422,7 +422,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B2-BACKCHAIN.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000439 secs. (438.95 microseconds) 
+; took 0.000348 secs. (347.97 microseconds) 
 
 !(assertEqualToResult (frog Fritz) ())
 
@@ -474,7 +474,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B2-BACKCHAIN.04</h3>
 ; 
 ; EVAL TEST
-; took 0.004 secs. (4.13 milliseconds) 
+; took 0.004 secs. (4.00 milliseconds) 
 
 !(assertEqual (deduce (Evaluation (mortal Plato))) T)
 
@@ -513,7 +513,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B2-BACKCHAIN.05</h3>
 ; 
 ; EVAL TEST
-; took 0.018 secs. (18.05 milliseconds) 
+; took 0.018 secs. (17.62 milliseconds) 
 
 !(assertEqual (explain (Evaluation (mortal Plato))) ((mortal Plato) proven by ((human Plato) proven by (And (philosopher Plato) (likes-to-wrestle Plato)))))
 
@@ -523,7 +523,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 373,535 inferences, 0.082 CPU in 0.082 seconds (100% CPU, 4548998 Lips)
+>% 373,535 inferences, 0.079 CPU in 0.079 seconds (100% CPU, 4699912 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/b2_backchain.metta  0)
 <span class="ansi1"
@@ -662,7 +662,7 @@ Deterministic: ()
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-17 09:58:56+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-17 22:26:33+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
