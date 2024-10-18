@@ -37,6 +37,8 @@ The main entry point for the Language Server implementation.
 
 :- dynamic lsp_metta_changes:doc_text/2.
 
+:- discontiguous lsp_server_metta:handle_msg/3.
+
 main :-
     set_prolog_flag(debug_on_error, false),
     set_prolog_flag(report_error, true),
@@ -134,7 +136,6 @@ server_capabilities(
       declarationProvider: true,
       implementationProvider: true,
       referencesProvider: true,
-      documentHighlightProvider: false,
       documentSymbolProvider: true,
       workspaceSymbolProvider: true,
       codeActionProvider: false,
@@ -196,9 +197,18 @@ handle_msg("textDocument/hover", Msg, _{id: Id, result: Response}) :-
 % OUT: {id:1,result:[
 %    {kind:12,location:{range:{end:{character:0,line:37},start:{character:1,line:35}},uri:file://<FILEPATH>},name:called_at/4},
 %    {kind:12,location:{range:{end:{character:0,line:66},start:{character:1,line:64}},uri:file://<FILEPATH>},},name:defined_at/3} ... ]}
-handle_msg("textDocument/documentSymbol", Msg, _{id: Id, result: Symbols}) :-
-     _{id: Id, params: _{textDocument: _{uri: Doc}}} :< Msg, xref_document_symbols(Doc, Symbols),
-     assertion(is_list(Symbols)), !.
+%handle_msg("textDocument/documentSymbol", Msg, _{id: Id, result: Symbols}) :-
+%     _{id: Id, params: _{textDocument: _{uri: Doc}}} :< Msg, xref_document_symbols(Doc, Symbols),
+%     assertion(is_list(Symbols)), !.
+
+convert_docsymbol_json(x(L,C0,C1,K,Name),Json) :-
+    Json=_{name:Name,kind:K,location:_{range:_{end:_{character:C1,line:L},start:_{character:C0,line:L}}}}.
+
+%handle_msg("textDocument/documentSymbol", Msg, _{id: Id, result: DocJson}) :-
+%    _{id: Id, params: _{textDocument: _{uri: Doc}}} :< Msg,
+%     atom_concat('file://', Path, Doc), !,
+%     get_document_symbols(Path,DocKinds),
+%     maplist(convert_docsymbol_json,DocKinds,DocJson).
 
 handle_msg("textDocument/documentSymbol", Msg, _{id: Msg.id, result: []}) :- !. % Fallback
 % handle_msg("textDocument/documentSymbol", Msg, _{id: Id, result: Symbols}) :-
