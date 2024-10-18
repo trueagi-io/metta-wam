@@ -48,7 +48,7 @@ Supports LSP methods like hover, document symbol, definition, references, and mo
 % 2 is a good default as it needs to be able to implement interruptions anyway
 % (this is separate from the file indexer threads)
 :- dynamic(lsp_worker_threads/1).
-lsp_worker_threads(1).
+lsp_worker_threads(0).
 
 % Main entry point
 main :-
@@ -64,20 +64,23 @@ main :-
 
 % Handle thread pool or synchronous mode based on max threads.
 handle_threads([MaxThreadsArg | _]) :-
-    atom_number(MaxThreadsArg, MaxThreads),
+    ignore((atom_number(MaxThreadsArg, MaxThreadsN),
     retractall(lsp_worker_threads(_)),
-    assertz(lsp_worker_threads(MaxThreads)),
-    ( MaxThreads > 1
+    assertz(lsp_worker_threads(MaxThreadsN)))).
+    
+start_lsp_worker_threads:-    
+    lsp_worker_threads(MaxThreads),
+    ( MaxThreads > 0
     -> create_worker_pool(MaxThreads)  % Create thread pool if max threads > 1
-    ; debug(server, "Running synchronously since max threads = 1", [])  % Sync mode
+    ; debug(server, "Running synchronously since max threads = 0", [])  % Sync mode
     ).
 
-% Create a pool of workers if using more than 1 thread
-create_worker_pool(NumWorkersP1) :-
-    NumWorkers is NumWorkersP1 - 1,
-    message_queue_create(task_queue),
-    numlist(1, NumWorkers, Workers),
-    maplist(start_worker, Workers).
+% Create a pool of workers if using more than 0
+create_worker_pool(NumWorkers) :- NumWorkers < 1,!.
+create_worker_pool(NumWorkers) :-
+    NumWorkersM1 is NumWorkers-1,
+    start_worker,
+    create_worker_pool(NumWorkersM1).
 
 % Include necessary dynamic predicates
 :- dynamic thread_request/2.
@@ -85,7 +88,8 @@ create_worker_pool(NumWorkersP1) :-
 :- dynamic id_was_canceled/1.
 
 % Create a mutex for synchronization
-:- mutex_create(request_mutex).
+:- message_queue_create('$lsp_task_queue').
+:- mutex_create('$lsp_request_mutex').
 
 % Start an individual worker
 start_worker :-
@@ -95,7 +99,7 @@ start_worker :-
 % Update worker_loop to handle task cancellation
 worker_loop :-
     thread_self(ThreadId),
-    message_queue_pop(task_queue, Task),
+    message_queue_pop('$lsp_task_queue', Task),
     Task = lsp_task(Out, Req),
     ( get_dict(id, Req.body, RequestId) ->
         true
@@ -103,7 +107,7 @@ worker_loop :-
     % Register this thread handling RequestId
     ( id_was_canceled(RequestId) ->
         debug(server, "Request ~w was canceled before it got started!", [RequestId])
-    ; ( with_mutex(request_mutex, assertz(thread_request(RequestId, ThreadId))),
+    ; ( with_mutex('$lsp_request_mutex', assertz(thread_request(RequestId, ThreadId))),
         debug(server, "Worker ~w processing task with ID ~w", [ThreadId, RequestId]),
         catch(
             handle_request(Out, Req),
@@ -113,7 +117,7 @@ worker_loop :-
             )
         ),
         % Clean up after handling
-        with_mutex(request_mutex,
+        with_mutex('$lsp_request_mutex',
             retract(thread_request(RequestId, ThreadId))
         )
       )
@@ -143,6 +147,7 @@ stdio_server :-
     set_stream(In, newline(posix)),
     set_stream(In, tty(false)),
     set_stream(In, representation_errors(error)),
+    start_lsp_worker_threads,
     % handling UTF decoding in JSON parsing, but doing the auto-translation
     % causes Content-Length to be incorrect
     set_stream(In, encoding(octet)),
@@ -242,31 +247,37 @@ stdio_handler(Extra-ExtraTail, In, Out) :-
     ).
 
 handle_requests(Out, InCodes, Tail) :-
-    handle_request(Out, InCodes, Rest), !,
+    phrase(lsp_metta_request(Req), InCodes, Rest), !,
+    handle_parsed_request(Out, Req), !,
     ( var(Rest)
     -> Tail = Rest
     ; handle_requests(Out, Rest, Tail) ).
 handle_requests(_, T, T).
 
 % Handle parsed requests
-handle_parsed_request(Req, Out) :-
+handle_parsed_request(Out, Req) :-
     ( Req.body.method == "$/cancelRequest" ->
         handle_msg(Req.body.method, Req.body, _)  % Handle cancel immediately
-    ; lsp_worker_threads(MaxThreads)
+    ; lsp_worker_threads(0) ->
         handle_request(Out, Req)
     ; enqueue_task(lsp_task(Out, Req))
     ).
 
 % Enqueue an incoming LSP request to be handled by a worker
 enqueue_task(Task) :-
-    message_queue_push(task_queue, Task).
+    message_queue_push('$lsp_task_queue', Task).
 
 % general handling stuff
 % Backtrace error handler
 catch_with_backtrace(Goal):-
      catch_with_backtrace(Goal,Err,
-             (debug(server(high), "error in ~n~n?- catch_with_backtrace(~q).~n~n handling msg:~n~n~@~n~n", [Goal, print_message(error, Err)]),throw(Err))).
-
+        ( Err == canceled ->
+            throw(canceled)
+        ; ( debug(server(high), "Error in:\n\n?- catch_with_backtrace(~q).\n\nHandling message:\n\n~@~n\n", [Goal, print_message(error, Err)]),
+            throw(Err)
+          )
+        )
+     ).
 
 % Send LSP message to client
 send_message(Stream, Msg) :-
@@ -279,8 +290,7 @@ send_message(Stream, Msg) :-
     flush_output(Stream))).
 
 % Handle individual requests
-handle_request(OutStream, Input, Rest) :-
-    phrase(lsp_metta_request(Req), Input, Rest),
+handle_request(OutStream, Req) :-
     debug(server(high), "Request ~q", [Req.body]),
     catch(
         ( catch_with_backtrace(handle_msg(Req.body.method, Req.body, Resp)),
@@ -562,7 +572,7 @@ handle_msg("$/setTrace", _Msg, false).
 handle_msg("$/cancelRequest", Msg, false) :-
     _{params: _{id: CancelId}} :< Msg,
     debug(server, "Cancel request received for ID ~w", [CancelId]),
-    with_mutex(request_mutex,
+    with_mutex('$lsp_request_mutex',
         (   thread_request(CancelId, ThreadId)
         ->  % Attempt to interrupt the thread
             debug(server, "Attempting to cancel thread ~w", [ThreadId]),
@@ -651,10 +661,10 @@ execute_code(Code, Result) :-
         % Replace with actual code execution logic
         % For demonstration, we'll just unify Result with Code
         % In practice, you might use metta:eval_string/2 or similar
-        Result = Code
+        eval(Code,CodeResult),
+        sformat(Result,"~w ; ~q",[Code,CodeResult])
     ), Error, (
-        format(atom(ErrorMsg), 'Error executing code: ~w', [Error]),
-        Result = ErrorMsg
+        sformat(Result,"~w ; Error: ~q",[Code,Error])
     )).
     
     
