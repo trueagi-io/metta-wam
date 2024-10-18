@@ -48,7 +48,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-18 20:23:05+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-18 20:53:35+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -446,7 +446,7 @@ Script started on 2024-10-18 20:23:05+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; SYNTH-BUFFER.TIME-SYNTHESIZE-SHORT.01</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.99 milliseconds) 
+; took 0.002 secs. (1.84 milliseconds) 
 
 !(assertEqualToResult (kb) ((: abc (Implication (AndLink A B) C)) (: a A) (: a B) (: cde (Implication (OrLink C D) E))))
 
@@ -482,7 +482,7 @@ Deterministic: ()
 >;; SYNTH-BUFFER.TIME-SYNTHESIZE-SHORT.02</h3>
 ; 
 ; EVAL TEST
-; took 0.227 secs. (226.88 milliseconds) 
+; took 0.224 secs. (224.42 milliseconds) 
 
 !(assertEqualToResult (synthesize (: $term $type) kb rb (S Z)) ((: abc (Implication (AndLink A B) C)) (: cde (Implication (OrLink C D) E)) (: a A) (: a B) (: (ConjunctionIntroduction abc abc) (AndLink (Implication (AndLink A B) C) (Implication (AndLink A B) C))) (: (ConjunctionIntroduction abc cde) (AndLink (Implication (AndLink A B) C) (Implication (OrLink C D) E))) (: (ConjunctionIntroduction abc a) (AndLink (Implication (AndLink A B) C) A)) (: (ConjunctionIntroduction abc a) (AndLink (Implication (AndLink A B) C) B)) (: (ConjunctionIntroduction cde abc) (AndLink (Implication (OrLink C D) E) (Implication (AndLink A B) C))) (: (ConjunctionIntroduction cde cde) (AndLink (Implication (OrLink C D) E) (Implication (OrLink C D) E))) (: (ConjunctionIntroduction cde a) (AndLink (Implication (OrLink C D) E) A)) (: (ConjunctionIntroduction cde a) (AndLink (Implication (OrLink C D) E) B)) (: (ConjunctionIntroduction a abc) (AndLink A (Implication (AndLink A B) C))) (: (ConjunctionIntroduction a cde) (AndLink A (Implication (OrLink C D) E))) (: (ConjunctionIntroduction a a) (AndLink A A)) (: (ConjunctionIntroduction a a) (AndLink A B)) (: (ConjunctionIntroduction a abc) (AndLink B (Implication (AndLink A B) C))) (: (ConjunctionIntroduction a cde) (AndLink B (Implication (OrLink C D) E))) (: (ConjunctionIntroduction a a) (AndLink B A)) (: (ConjunctionIntroduction a a) (AndLink B B)) (: (DisjunctionIntroduction abc abc) (OrLink (Implication (AndLink A B) C) (Implication (AndLink A B) C))) (: (DisjunctionIntroduction abc cde) (OrLink (Implication (AndLink A B) C) (Implication (OrLink C D) E))) (: (DisjunctionIntroduction abc a) (OrLink (Implication (AndLink A B) C) A)) (: (DisjunctionIntroduction abc a) (OrLink (Implication (AndLink A B) C) B)) (: (DisjunctionIntroduction cde abc) (OrLink (Implication (OrLink C D) E) (Implication (AndLink A B) C))) (: (DisjunctionIntroduction cde cde) (OrLink (Implication (OrLink C D) E) (Implication (OrLink C D) E))) (: (DisjunctionIntroduction cde a) (OrLink (Implication (OrLink C D) E) A)) (: (DisjunctionIntroduction cde a) (OrLink (Implication (OrLink C D) E) B)) (: (DisjunctionIntroduction a abc) (OrLink A (Implication (AndLink A B) C))) (: (DisjunctionIntroduction a cde) (OrLink A (Implication (OrLink C D) E))) (: (DisjunctionIntroduction a a) (OrLink A A)) (: (DisjunctionIntroduction a a) (OrLink A B)) (: (DisjunctionIntroduction a abc) (OrLink B (Implication (AndLink A B) C))) (: (DisjunctionIntroduction a cde) (OrLink B (Implication (OrLink C D) E))) (: (DisjunctionIntroduction a a) (OrLink B A)) (: (DisjunctionIntroduction a a) (OrLink B B))))
 
@@ -500,7 +500,7 @@ Deterministic: ()
 >;; SYNTH-BUFFER.TIME-SYNTHESIZE-SHORT.03</h3>
 ; 
 ; EVAL TEST
-; took 0.005 secs. (5.37 milliseconds) 
+; took 0.005 secs. (5.11 milliseconds) 
 
 !(assertEqualToResult (synthesize (: $term $type) kb rb Z) ((: a A) (: a B) (: abc (Implication (AndLink A B) C)) (: cde (Implication (OrLink C D) E))))
 
@@ -510,7 +510,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 2,460,699 inferences, 0.371 CPU in 0.371 seconds (100% CPU, 6639281 Lips)
+>% 2,460,699 inferences, 0.363 CPU in 0.364 seconds (100% CPU, 6779844 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/synth_buffer/time_synthesize_short.metta  0)
 <span class="ansi1"
@@ -649,7 +649,7 @@ Deterministic: ()
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-18 20:23:11+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-18 20:53:40+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

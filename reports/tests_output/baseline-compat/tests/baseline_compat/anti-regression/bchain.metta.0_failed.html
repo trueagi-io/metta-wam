@@ -57,7 +57,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-18 20:10:35+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-18 20:41:28+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -438,7 +438,7 @@ Deterministic: ()
 > (: axiom (nums 2 3))
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.91 milliseconds) 
+; took 0.002 secs. (1.79 milliseconds) 
 
 !(assertEqualToResult (add-atom &kb (: axiom (nums 2 3))) (()))
 
@@ -463,7 +463,7 @@ Deterministic: ()
 > (: rule1 (-> (nums $_169804 $_169826) (rule1output $_169804 $_169826)))
 </span>; 
 ; EVAL TEST
-; took 0.005 secs. (5.14 milliseconds) 
+; took 0.005 secs. (5.29 milliseconds) 
 
 !(assertEqualToResult (add-atom &kb (: rule1 (-> (nums $x $y) (rule1output $x $y)))) (()))
 
@@ -488,7 +488,7 @@ Deterministic: ()
 > (: rule (-> (rule1output $_200418 $_200440) (-> (⍃ $_200418 $_200440) (less $_200418 $_200440))))
 </span>; 
 ; EVAL TEST
-; took 0.007 secs. (7.04 milliseconds) 
+; took 0.007 secs. (7.26 milliseconds) 
 
 !(assertEqualToResult (add-atom &kb (: rule (-> (rule1output $x $y) (-> (⍃ $x $y) (less $x $y))))) (()))
 
@@ -532,7 +532,7 @@ Deterministic: ()
 >;; ANTI-REGRESSION.BCHAIN.04</h3>
 ; 
 ; EVAL TEST
-; took 0.007 secs. (6.66 milliseconds) 
+; took 0.007 secs. (6.79 milliseconds) 
 
 !(assertEqualToResult (bc (: CPU (⍃ 2 3)) Z) ((: CPU (⍃ 2 3))))
 
@@ -555,7 +555,7 @@ Deterministic: ()
 >;; ANTI-REGRESSION.BCHAIN.05</h3>
 ; 
 ; EVAL TEST
-; took 0.005 secs. (5.46 milliseconds) 
+; took 0.006 secs. (5.55 milliseconds) 
 
 !(assertEqualToResult (bc (: CPU (⍃ 4 3)) Z) ())
 
@@ -580,7 +580,7 @@ Deterministic: ()
 >;; ANTI-REGRESSION.BCHAIN.06</h3>
 ; 
 ; EVAL TEST
-; took 0.022 secs. (21.98 milliseconds) 
+; took 0.022 secs. (22.30 milliseconds) 
 
 !(assertEqualToResult (bc (: $prf (less $x $y)) (S (S (S Z)))) ((: ((rule (rule1 axiom)) CPU) (less 2 3))))
 
@@ -590,7 +590,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 558,177 inferences, 0.114 CPU in 0.114 seconds (100% CPU, 4883481 Lips)
+>% 558,177 inferences, 0.115 CPU in 0.115 seconds (100% CPU, 4842215 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/bchain.metta  0)
 <span class="ansi1"
@@ -729,7 +729,7 @@ Deterministic: ()
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-18 20:10:41+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-18 20:41:33+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

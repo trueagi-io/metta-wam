@@ -51,7 +51,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-18 20:18:25+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-18 20:49:01+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -477,7 +477,7 @@ Script started on 2024-10-18 20:18:25+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-METTALOG-SANITY.FIRST-ANSWER.01</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.85 milliseconds) 
+; took 0.002 secs. (1.83 milliseconds) 
 
 !(assertEqualToResult (limit 1 (synthesize (: $term $type) kb rb (S Z))) ((: a A)))
 
@@ -495,7 +495,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.FIRST-ANSWER.02</h3>
 ; 
 ; EVAL TEST
-; took 0.035 secs. (34.53 milliseconds) 
+; took 0.034 secs. (34.37 milliseconds) 
 
 !(assertEqualToResult (limit 6 (synthesize (: $term $type) kb rb (S Z))) ((: a A) (: a B) (: abc (Implication (AndLink A B) C)) (: cde (Implication (OrLink C D) E)) (: (ConjunctionIntroduction a a) (AndLink A A)) (: (ConjunctionIntroduction a a) (AndLink A B))))
 
@@ -505,7 +505,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 562,025 inferences, 0.106 CPU in 0.106 seconds (100% CPU, 5281239 Lips)
+>% 562,025 inferences, 0.106 CPU in 0.106 seconds (100% CPU, 5304911 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/first_answer.metta  0)
 <span class="ansi1"
@@ -644,7 +644,7 @@ Deterministic: ()
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-18 20:18:30+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-18 20:49:07+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
