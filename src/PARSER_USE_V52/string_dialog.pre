@@ -1,0 +1,15 @@
+/*****************************************************************************
+
+		Copyright (c) Singularity
+
+ Project:  PARSE_USE
+ FileName: string_dialog.PRE
+ Purpose: Predicate definitions for STRING_DIALOG.PRO
+ Written by: R. van Vessum
+ Comments:
+******************************************************************************/
+
+%BEGIN_DECL, System generated global predicates
+GLOBAL PREDICATES
+  dlg_strdia_Create(WINDOW Parent) - (i)
+%END_DECL

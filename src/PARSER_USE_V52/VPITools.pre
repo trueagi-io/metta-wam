@@ -1,0 +1,77 @@
+/*****************************************************************************
+
+		Copyright (c) Singularity
+
+ Project:  PARSE_USE
+ FileName: VPITools.PRE
+ Purpose: Predicate definitions for VPITOOLS.PRO
+ Written by: R. van Vessum
+ Comments:
+******************************************************************************/
+
+ifdef use_dlgpack
+  include "dialog\\dialog.pre"
+enddef
+ifdef use_editor
+  include "edit.pre"
+enddef
+ifdef use_message
+  include "messages\\messages.pre"
+enddef
+ifdef use_tbar
+  include "toolbar\\toolbar.pre"
+enddef
+ifdef use_tree
+  include "tree\\vpitree.pre"
+enddef
+ifdef use_tabdlg
+  include "tabdlg\\tabdlg.pre"
+enddef
+ifdef use_dlgdir
+  include "dlgdir\\dlgdir.pre"
+enddef
+ifdef use_ownerdraw
+  include "owndraw\\owndraw.pre"
+enddef
+ifdef use_grid
+  include "grid\\grid.pre"
+enddef
+ifdef use_date
+  constants
+    language_english = 1
+%    language_danish  = 1
+%    language_russian = 1
+  include "date\\date.pre"
+enddef
+ifdef use_treebrowser
+  include "treebrws\\treebrws.pre"
+enddef
+ifdef use_listproperty
+  include "property\\property.pre"
+enddef
+ifdef use_palette
+  include "palette\\palette.pre"
+enddef
+ifdef use_progress
+  include "progress\\progress.pre"
+enddef
+ifdef use_doc
+  include "html.pre"
+  include "ipf.pre"
+  include "rtf.con"
+  include "rtf.pre"
+  include "errhndl.pre"
+enddef
+ifdef use_sql
+  include "sqlbind.pre"
+enddef
+ifdef use_odbc
+  include "odbc.pre"
+enddef
+ifdef use_runtime
+  include "pdcrunt.pre"
+enddef
+ifdef use_socket
+  include "include\\pdcsock.con"
+  include "include\\pdcsock.pre"
+enddef

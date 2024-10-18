@@ -1,0 +1,1586 @@
+----------- RUNTIME ERRORS
+#
+1000 Program error! Check source code at reported position
+#
+1001 Gstack overflow. Not enough memory or an endless loop
+#
+1002 Heap overflow. Not enough memory or an endless loop
+#
+1003 Requested block is too big
+#
+1004 Mismatch between freed blocks size and internal record
+#
+1005 Attempt to release already released block
+#
+1006 Heap signature overwritten
+#
+1007 Term too big
+#
+1008 Memory initialization failure
+#
+1009 General protection fault (access violation)
+#
+1010 Stack overflow
+#
+1020 Trail overflow. Use trail=size to get more space
+#
+1024 Object doesn't exist
+#
+1025 Call of unknown predicate.
+#
+1026 Direct call of a predicate from abstract class
+#
+1027 Invalid class descriptor.
+#
+1028 Base class name is identical to the derived class name.
+#
+1030 Arithmetic overflow in real operation
+#
+1031 Arithmetic overflow
+#
+1032 Division by zero
+#
+1033 Invalid value for real operation or function
+#
+1034 Non floating-point format data (NaN or unsupported format)
+#
+1040 Free variables are not allowed here
+#
+1041 Attempt to assert a second instance of a fact declared as determ
+#
+1042 Attempt to retract a fact declared as single
+#
+1045 Index too big
+#
+1046 Size bigger than 64K in makebinarry on 16bit platform
+#
+1047 Invalid term
+#
+1048 Command line is too long
+#
+1050 Program was terminated via exception, code =
+#
+1051 Internal error
+#
+1052 Earlier timemark value is greater then the later one
+#
+--------------- Data compression predicates
+#
+1081 Invalid input block for compressBinary or expandBinary
+#
+1082 Invalid compress format (binary probably not from compressBinary)
+#
+1083 Internal decode errors (binary probably corrupted)
+#
+------------ IO & OS errors
+#
+1101 Attempt to open an already open file
+#
+1102 Attempt to assign input device to a file that is not in readmode
+#
+1103 Attempt to assign output device to a file that is not in writemode
+#
+1104 The file isn't open
+#
+1105 Illegal mode in filemode predicate, should be 0 or 1
+#
+1106 Invalid operation on device
+#
+1107 eof can only be used during readmode
+#
+1108 Illegal device or path
+#
+1109 Wrong number of arguments in the format string
+#
+1110 File too big, or not enough memory for file
+#
+1111 Wrong number of bytes read from file
+#
+1112 Not able to write correct number of bytes to file
+#
+1113 Invalid arguments to the 'date'-predicate
+#
+1114 Invalid arguments to the 'time'-predicate
+#
+1115 'unreadchar' failed because of full buffer (maximum 128 characters)
+#
+1116 Failure in 'system' call
+#
+1117 Error executing external program
+#
+1133 Incorrect operating system version
+#
+1134 Invalid path
+#
+1135 Filename too long
+#
+1136 Unknown ticks (from UNIX sleep.c)
+#
+1137 No newline found in IO_getln
+#
+1138 initsyspath not called (only for UNIX)
+#
+1139 Error calling lp (UNIX)
+#
+1140 Formatted result too large in writef or format
+#
+----------------------- SCR & WD Error's
+#
+1201 The arguments in 'makewindow' are illegal
+#
+1202 The cursor values are illegal
+#
+1203 The window referred to does not exist
+#
+1205 Maximum number of windows exceeded
+#
+1206 The arguments in 'resizewindow' are illegal
+#
+1207 Scroll predicate is not supported in graphic
+#
+1208 Not possible to set indicated textmode
+#
+1209 Operation not possible on system windows
+#
+1210 Illegal operation on a system window
+#
+1211 The window is compressed
+#
+1212 The window is expanded
+#
+1213 Bad framestring: not 6 chars in framestring
+#
+1214 Screen setup failed
+#
+1215 Read/write attempt without input/output device
+#
+-------------------------- DB Error's
+#
+1301 Overflow in Expanded Memory System
+#
+1302 The database is already open
+#
+1303 Invalid database filename
+#
+1304 The database isn't open
+#
+1305 The B+Tree isn't open
+#
+1306 The B+Tree already exists
+#
+1308 The database name already exists in the specified location
+#
+1309 Error reopening the database during flush operation
+#
+1310 Invalid Order value; it must be between 1 and 255
+#
+1311 Invalid Key length
+#
+1313 Type conflict. The term in the database doesn't correspond with the domain
+#
+1314 Unable to create the indicated database
+#
+1315 Unable to open the indicated database in the given place
+#
+1316 No EMS installed
+#
+1317 Database marked as invalid
+#
+1318 Unable to delete database in the indicated place
+#
+1319 Invalid database reference number
+#
+1320 The chain does not exist in the database
+#
+1321 The named B+Tree does not exist in the database
+#
+1322 Invalid B+Tree selector for the given database
+#
+1323 Cannot delete an open index. (Close it first)
+#
+1324 Key and ref not found in B+tree during key_delete
+#
+1325 Term too big for conversion
+#
+1326 Incorrect Prolog external database system version
+#
+1327 Not inside transaction
+#
+1328 Write transaction is not allowed when file opened in read-only mode
+#
+1330 Begintransaction made twice without endtransaction
+#
+1331 Update of the database is not allowed in read-only mode
+#
+1332 Timeout in begintransaction
+#
+1333 KEY does already exist, and duplicates are not allowed in selected B+Tree
+#
+1334 Wrong chain or inconsistency in database found in TERM_DELETE
+#
+1335 Only one database can be in_ems when using DB_LOADEMS/DB_SAVEEMS
+#
+-------------------------- Term Reader
+#
+1401 Integer expected (during term reading or converting)
+#
+1402 Real number expected (during term reading or converting)
+#
+1403 Double quote expected (during term reading or converting)
+#
+1404 Single quote expected (during term reading or converting)
+#
+1405 List start expected (during term reading or converting)
+#
+1406 End of list expected (during term reading or converting)
+#
+1407 Functor is not found in a domain (during term reading or converting)
+#
+1408 '(' expected (during term reading or converting)
+#
+1409 ',' or ')' expected (during term reading or converting)
+#
+1410 '$' expected (during term reading or converting)
+#
+1411 Database reference number expected
+#
+-------------------------- Editor
+#
+1501 Editor text buffer full
+#
+1502 Too many objects for editor
+#
+-------------------------- String handling
+#
+1601 String index error
+#
+1602 Resulting string is too long to be handled under the used platform.
+#
+-------------------------- BGI
+#
+1701 BGI graphics not installed
+#
+1702 Graphics hardware not detected
+#
+1703 Device driver file not found
+#
+1704 Invalid device driver file
+#
+1705 Not enough memory to load driver
+#
+1706 Out of memory in scan fill
+#
+1707 Out of memory in flood fill
+#
+1708 Font file not found
+#
+1709 Not enough memory to load font
+#
+1710 Invalid graphics mode for selected driver
+#
+1711 Graphics error
+#
+1712 Graphics I/O error
+#
+1713 Invalid font file
+#
+1714 Invalid font number
+#
+1715 Invalid device number
+#
+1750 Wrong list length in setfillpattern
+#
+-------------------------- Message
+#
+1801 Message queue memory allocation failure
+#
+1802 The pipe is closed
+#
+1803 The pipe is broken
+#
+1804 Cannot open pipe
+#
+1805 Invalid pipe name
+#
+1806 The pipe is not opened
+#
+-------------------------- Directory browser
+#
+1901 Too many files
+#
+-------------------------- Configuration loading
+#
+2001 Bad configuration file
+#
+2002 Error reading Configuration file
+#
+-------------------------- Offset for signal
+#
+2200 Invalid offset for signal
+#
+--------------------------Errors for CHKDOMS utility
+#
+2401 CHKDOMS.EXE fatal error
+#
+2402 Invalid parameters in command line:
+#
+2403 Out of memory for inner data
+#
+2404 Invalid response file, its contents was ignored
+#
+2405 Invalid or unsupported format of object file
+#
+2406 Suspiciously few parameters
+#
+2407 Object file wasn't created by PDC Prolog V 4.0
+#
+2408 Domain not found in module
+#
+2409 Domains sequence is different in module
+#
+2410 Domain differs from one in module
+#
+2411 Extra domain in module
+#
+2412 This file just contains the symbol table
+#
+2413 Too long line was met in the response file, it's tail is ignored
+#
+-------------------------- UNIX errors
+#
+5001 Not privileged
+#
+5002 No such file or directory
+#
+5003 No such process
+#
+5004 Interrupted system call
+#
+5005 I/O error
+#
+5006 No such device or address
+#
+5007 Arg list too long
+#
+5008 Exec format error
+#
+5009 Bad file number
+#
+5010 No child processes
+#
+5011 Resource temporarily unavailable
+#
+5012 Not enough space
+#
+5013 Permission denied
+#
+5014 Bad address
+#
+5015 Block device required
+#
+5016 Device busy
+#
+5017 File exists
+#
+5018 Cross-device link
+#
+5019 No such device
+#
+5020 Not a directory
+#
+5021 Is a directory
+#
+5022 Invalid argument
+#
+5023 File table overflow
+#
+5024 Too many open files
+#
+5025 Not a typewriter
+#
+5026 Text file busy
+#
+5027 File too large
+#
+5028 No space left on device
+#
+5029 Illegal seek
+#
+5030 Read-only file system
+#
+5031 Too many links
+#
+5032 Broken pipe
+#
+5033 Math argument out of domain func
+#
+5034 Math result not representable
+#
+5035 No message of desired type
+#
+5036 Identifier removed
+#
+5037 Channel number out of range
+#
+5038 Level 2 not synchronized
+#
+5039 Level 3 halted
+#
+5040 Level 3 reset
+#
+5041 Link number out of range
+#
+5042 Protocol driver not attached
+#
+5043 No CSI structure available
+#
+5044 Level 2 halted
+#
+5045 Deadlock condition
+#
+5046 No record locks available
+#
+5060 Device not a stream
+#
+5061 No data available
+#
+5062 Timer expired
+#
+5063 Out of stream resources
+#
+5064 Machine is not on the network
+#
+5065 Package not installed
+#
+5066 Object is remote
+#
+5067 Link has been severed
+#
+5068 Advertise error
+#
+5069 Srmount error
+#
+5070 Communication error on send
+#
+5071 Protocol error
+#
+5074 Multihop attempted
+#
+5075 Inode is remote (not really error)
+#
+5076 Error 76
+#
+5077 Not a data message
+#
+5078 Filename too long
+#
+5079 Value too large for defined data type
+#
+5080 Name not unique on network
+#
+5081 File descriptor in bad state
+#
+5082 Remote address changed
+#
+5083 Cannot access a needed shared library
+#
+5084 Accessing a corrupted shared library
+#
+5085 .lib section in a.out corrupted
+#
+5086 Attempting to link in more shared library directly
+#
+5087 Cannot exec a shared library directly
+#
+5088 Illegal byte sequence
+#
+5089 Function not implemented
+#
+5090 Operation would block
+#
+5091 Operation now in progress
+#
+5092 Operation already in progress
+#
+5093 Socket operation on non-socket
+#
+5094 Destination address required
+#
+5095 Message too long
+#
+5096 Protocol wrong type for socket
+#
+5097 Protocol not supported
+#
+5098 Socket type not supported
+#
+5099 Operation not supported on transport endpoint
+#
+5100 Protocol family not supported
+#
+5111 Transport endpoint is not connected
+#
+5112 Cannot send after transport endpoint shutdown
+#
+5113 Too many references: cannot splice
+#
+5114 Connection timed out
+#
+5115 Connection refused
+#
+5116 Host is down
+#
+5117 No route to host
+#
+5118 Protocol not available
+#
+5135 Structure needs cleaning
+#
+5137 Not a Xenix system named type file
+#
+5138 No XENIX system semaphores  available
+#
+5139 Is a name file
+#
+5140 Remote I/O error: XENIX
+#
+5141 (Reserved for future use)
+#
+5142 (Reserved for future use)
+#
+5145 Directory not empty
+#
+5150 Too many symbolic links in path
+#
+5151 Stale NFS file handle
+#
+5152 Restartable system call
+#
+5153 Stream pipe error
+#
+5500 (Reserved for future use)
+#
+-------------------------- VPI Errors
+#
+6000 Bad window handle
+#
+6001 Invalid window type
+#
+6002  Error allocating data (not enough memory)
+#
+6003  The list must not be empty
+#
+6004  An illegal element in the list
+#
+6005  Unable to open the file
+#
+6006 Unable to create the disk file
+#
+6007 An empty filename string
+#
+6008 This predicate is not supported under the chosen platform
+#
+6009 VPI is not initialized
+#
+6010 Illegal (unknown) parameter value is specified
+#
+6011 Feature is not supported yet
+#
+6050 Cannot find the specified dialog resource
+#
+6051 Cannot find or load the specified cursor resource
+#
+6052 Cannot find or load the specified icon resource
+#
+6053 Cannot find or load the specified menu resource
+#
+6054 Cannot find or load the specified bitmap resource
+#
+6055 Cannot find or load the specified string resource
+#
+6100 Unable to create a valid picture
+#
+6101 Unable to load a picture from the specified file
+#
+6102 Invalid (not w_Picture) window type
+#
+6103 VPI cannot open a picture
+#
+6104 Too many opened pictures
+#
+6120 Unable to kill the specified timer
+#
+6121 Too many timers
+#
+6150 Bad 'Font' value in win_SetFont(_, Font)
+#
+6151 Cannot retrieve parameters of the font attached to the specified window
+#
+6152 Unable to create font
+#
+6170 The specified predicate does not exist in the specified DLL
+#
+6171 Unable to run the specified external application
+#
+6172 Wrong application identifier value
+#
+6173 Unable to retrieve the task window handle of the specified external application
+#
+6180 Attempt to start a new print job while printing is already in progress
+#
+6181 System error while preparing the printer driver to print a new page
+#
+6182 System error while starting a print job
+#
+6183 System error while printing the current page
+#
+6184 Cannot initialize a print job
+#
+6185 Forms mismatch (only under OS/2 underlying GUI)
+#
+6186	Wrong printer configuration data
+#
+6200 The list must contain even number of elements
+#
+6210 Too long string (must be <= 64K for 16-bit platforms)
+#
+6220 Unable to register a window class
+#
+6230 win_Destroy is forbidden while e_Destroy event handling
+#
+6231 Drawing is forbidden while e_EraseBackGround event handling
+#
+6260 Unable to add a new string(s) to a list control
+#
+6290 Unable to run MS Windows Help application under WIN-OS/2 environment
+#
+6302 Bad rectangular or invalid control style flag for the control being created
+#
+6304 Unable to create the dialog from the specified dialog resource
+#
+6305 Unable to create a dialog dynamically from a definition contained in a WINDEF_LIST structure
+#
+6306 Unable to create the specified window
+#
+6307 Unable to create a window dynamically from a definition contained in a WINDEF_LIST structure
+#
+6309 Attempt to create a custom control with unregistered window class
+#
+6310 Unable to obtain an identifier of the selected control
+#
+6311 Unable to send the event
+#
+6312 Unable to post the event
+#
+6313 Unable to set input focus to the window
+#
+6314 The string begin position is bigger then the end position
+#
+6315 Unable to adjust the window to the specified client rectangle
+#
+6316 Unable to obtain a window handle of the selected control
+#
+6317 There is no active window in the system
+#
+6351 Impossible to play the specified metafile on the specified device
+#
+6352 Impossible to allocate memory required for loading the specified metafile
+#
+6354 mf_Close() cannot be applied to a window was not created by mf_Open
+#
+6356 Unknown metafile format
+#
+6357 Windowing system cannot create a w_MetaFile window (metafile device context)
+#
+6359 Too many metafiles
+#
+6401 Unable to retrieve a menu from a window or resource file
+#
+6402 The menu handling action is impossible as the window has no menu
+#
+6403 Unable to find the target menu item
+#
+6404 Ownerdraw menu item cannot have submenu.
+#
+6405 In MDI mode the task window must have menu.
+#
+6422 Inaccessible Help application under the current platform
+#
+6450 Unable to access the clipboard
+#
+6454 Data in the clipboard does not coincide with the specified binary format
+#
+6455 Data in the clipboard does not coincide with the bitmap format
+#
+6456 Data in the clipboard does not coincide with the metafile format
+#
+-------------------------- VPI DDE errors
+#
+6600 A request for a synchronous advise message has timed out
+#
+6601 The DDE server is too busy
+#
+6602 A request for a synchronous data message has timed out
+#
+6603 A DDE predicate was called without first calling the dde_Init()
+#
+6604 An application initialized as client has attempted to perform server transactions
+#
+6605 A request for a synchronous execute message has timed out
+#
+6606 A parameter failed to be validated by the DDE predicate
+#
+6607 A DDE application consumed too large amounts of memory
+#
+6608 A memory allocation failed
+#
+6609 A transaction failed
+#
+6610 A client's attempt to establish a conversation has failed
+#
+6611 A request for a synchronous poke message has timed out
+#
+6612 An internal DDE attempt to post event has failed
+#
+6613 Unable to initiate another transaction, or to execute dde_EnableEvents()
+#
+6614 Unable to complete transaction
+#
+6615 An internal error has occurred in the DDE
+#
+6616 A request to terminate an advise transaction has timed out
+#
+6617 An invalid transaction identifier was passed to a DDE predicate
+#
+6630 An internal DDE error. The maximal number of string handles that can be created by a DDE application is exceeded
+#
+6631 dde_Init fails to register the application as using DDE services
+#
+-------------------------- VPI Text Editor errors
+#
+6900 Specified window is not an editor window
+#
+6901 Error in hyperfield
+#
+6902 Editing text length exceeds the internal maximum limit
+#
+6903 Position is out of range
+#
+6904 Undo list is empty
+#
+6905 Redo list is empty
+#
+6908 Unable to accomplish the operation; exceeded a maximum limit (64K under 16-bit platforms)
+#
+6909 Illegal position is specified
+#
+6910 Operation is forbidden in read-only mode
+#
+6911 Parameter should be positive
+#
+-------------------------- Operating system errors
+   Note that many of these only apply to the OS2
+   version, and that for OS2 many of the messages
+   are not applicable. They are, however, included
+   for completeness.
+#
+7000 Error while calling of internal OS function. OS error code:
+#
+7001 Invalid function number
+#
+7002 File not found
+#
+7003 Path not found
+#
+7004 Out of handles
+#
+7005 Access denied
+#
+7006 Invalid handle
+#
+7007 Memory control blocks destroyed
+#
+7008 Insufficient memory
+#
+7009 Invalid memory block address
+#
+7010 Invalid environment
+#
+7011 Invalid format
+#
+7012 Invalid access code
+#
+7013 Invalid data
+#
+7014 Unknown unit
+#
+7015 Invalid disk drive
+#
+7016 Cannot remove current directory
+#
+7017 Not same device
+#
+7018 No more files
+#
+7019 Disk write-protected
+#
+7020 Unknown unit
+#
+7021 Drive not ready
+#
+7022 Unknown command
+#
+7023 Data error (CRC)
+#
+7024 Bad request structure length
+#
+7025 Seek error
+#
+7026 Unknown medium type
+#
+7027 Sector not found
+#
+7028 Printer out of paper
+#
+7029 Write fault
+#
+7030 Read fault
+#
+7031 General failure
+#
+7032 Sharing violation
+#
+7033 Lock violation
+#
+7034 Invalid disk change
+#
+7035 FCB unavailable
+#
+7036 Sharing buffer exceeded
+#
+7050 Unsupported network request
+#
+7051 Remote machine not listening
+#
+7052 Duplicate name on network
+#
+7053 Network name not found
+#
+7054 Network busy
+#
+7055 Device no longer exists on network
+#
+7056 NetBIOS command limit exceeded
+#
+7057 Error in network adapter hardware
+#
+7058 Incorrect response from network
+#
+7059 Unexpected network error
+#
+7060 Remote adapter incompatible
+#
+7061 Print queue full
+#
+7062 Insufficient memory for print file
+#
+7063 Print file canceled
+#
+7064 Network name deleted
+#
+7065 Network access denied
+#
+7066 Incorrect network device type
+#
+7067 Network name not found
+#
+7068 Network limit exceeded
+#
+7069 NetBIOS session limit exceeded
+#
+7070 File sharing temporarily paused
+#
+7071 Network request not accepted
+#
+7072 Print or disk redirection paused
+#
+7080 File already exists
+#
+7082 Cannot make directory
+#
+7083 Fail on Int 24H (critical error)
+#
+7084 Too many redirections
+#
+7085 Duplicate redirection
+#
+7086 Invalid password
+#
+7087 Invalid parameter
+#
+7088 Network device fault
+#
+7089 No process slots available
+#
+7090 System error
+#
+7091 Timer service table overflow
+#
+7092 Timer service table duplicate
+#
+7093 No limits to work on
+#
+7095 Interrupted system call
+#
+7100 Open semaphore limit exceeded
+#
+7101 Exclusive semaphore already owned
+#
+7102 DosCloseSem Found semaphore set
+#
+7103 Too many exclusive semaphore requests
+#
+7104 Operation invalid at interrupt time
+#
+7105 Semaphore owner terminated
+#
+7106 Semaphore limit exceeded
+#
+7107 Insert drive B disk into drive A
+#
+7108 Drive locked by another process
+#
+7109 Write on pipe with no reader
+#
+7110 Open/create failed due to explicit fail command
+#
+7111 Buffer too small
+#
+7112 Disk is full
+#
+7113 No more search handles
+#
+7114 Invalid target handle for DosDupHandle
+#
+7115 Bad user virtual address
+#
+7116 Error on display write or keyboard read
+#
+7117 Invalid DosDevIOCtl category
+#
+7118 Invalid value for verify flag
+#
+7119 Driver does not support DosDevIOCtl
+#
+7120 Invalid function called
+#
+7121 Timed out waiting for semaphore
+#
+7122 Insufficient data in buffer
+#
+7123 Invalid character or bad filename
+#
+7124 Unimplemented information level
+#
+7125 No volume label found
+#
+7126 Invalid module handle
+#
+7127 Procedure not found in module
+#
+7128 No child processes found
+#
+7129 Child processes still running
+#
+7130 Invalid handle operation for direct disk access
+#
+7131 Cannot seek to negative offset
+#
+7132 Cannot seek on pipe or device
+#
+7133 Drive has previously joined drives
+#
+7134 Drive is already joined
+#
+7135 Drive is already substituted
+#
+7136 Drive is not joined
+#
+7137 Drive is not substituted
+#
+7138 Cannot join to joined drive
+#
+7139 Cannot substitute to substituted drive
+#
+7140 Cannot join to substituted
+#
+7141 Cannot substitute to joined drive
+#
+7142 Drive is busy
+#
+7143 Cannot join or substitute drive to directory on same drive
+#
+7144 Must be subdirectory of root
+#
+7145 Joined directory must be empty
+#
+7146 Path is already used in substitute
+#
+7147 Path is already used in join
+#
+7148 Path is being used by another process
+#
+7149 Cannot join or substitute drive having directory that is target of previous substitute
+#
+7150 System trace error
+#
+7151 DosMuxSemWait errors
+#
+7152 Systems limit on DosMuxSemWait calls exceeded
+#
+7153 Invalid list format
+#
+7154 Volume label too big
+#
+7155 Cannot create another TCB
+#
+7156 Signal refused
+#
+7157 Segment is discarded
+#
+7158 Segment was not locked
+#
+7159 Bad thread ID address
+#
+7160 Bad environment pointer
+#
+7161 Bad pathname for DosExecPgm
+#
+7162 Signal already pending
+#
+7163 Unknown medium
+#
+7164 No more threads available
+#
+7165 Monitors not supported
+#
+7180 Invalid segment number
+#
+7181 Invalid call gate
+#
+7182 Invalid ordinal
+#
+7183 System object (shared segment, system semaphore, directory, etc.) already exists
+#
+7184 No child process running
+#
+7185 Child process is still alive
+#
+7186 Invalid flag number
+#
+7187 Semaphore does not exist
+#
+7188 Invalid stating code segment
+#
+7189 Invalid stack segment
+#
+7190 Invalid module type
+#
+7191 Wrong EXE file header
+#
+7192 Invalid EXE file, LINK errors
+#
+7193 Invalid EXE format
+#
+7194 Iterated data exceeds 64 KB
+#
+7195 Invalid minimum allocation size
+#
+7196 Invalid dynamic link from ring 2 segment
+#
+7197 IOPL not enabled in CONFIG.SYS
+#
+7198 Invalid segment descriptor privilege limit
+#
+7199 Automatic data segment exceeds 64 KB
+#
+7200 Ring 2 segment must be movable
+#
+7201 Relocation chain exceeds segment limit
+#
+7202 Infinite loop in relocation chain
+#
+7203 Environment variable not found
+#
+7204 Not current country
+#
+7205 NO process with handler to receive signal
+#
+7206 Filename or extension too long
+#
+7207 Ring too stack in use
+#
+7208 Meta expansion too long
+#
+7209 Invalid signal number
+#
+7210 Inactive thread
+#
+7211 File system information not available
+#
+7212 Locked error
+#
+7213 Bad dynamic link
+#
+7214 Too many modules
+#
+7215 Nesting not allowed
+#
+7216 Cannot shrink ring 2 stack
+#
+7230 Non-existent pipe or invalid operation
+#
+7231 Specified pipe is busy
+#
+7232 No data on nonblocking pipe read
+#
+7233 Pipe disconnected by server
+#
+7234 Additional data is available
+#
+7240 Network session was canceled
+#
+7262 Stack too large
+#
+7303 Invalid process ID
+#
+7304 Invalid priority level increment
+#
+7305 Not a descendant process
+#
+7306 Requestor not Task Manager
+#
+7307 Invalid priority class
+#
+7308 Invalid scope
+#
+7309 Invalid thread ID
+#
+7310 Cannot shrink DosSubSet segment
+#
+7311 Out of memory(DosSubAlloc)
+#
+7312 Invalid block specified(DosSubFree)
+#
+7313 Bad size parameter
+#
+7314 Bad flag parameter(DosSubSet)
+#
+7315 Invalid segment selector
+#
+7316 Message too long for buffer
+#
+7317 Message ID number not found
+#
+7318 Unable to access message file
+#
+7319 Invalid message file format
+#
+7320 Invalid insertion variable count
+#
+7321 Unable to perform function
+#
+7322 Unable to wake up
+#
+7323 Invalid semaphore handle
+#
+7324 No timers available
+#
+7326 Invalid timer handle
+#
+7327 Date or time invalid
+#
+7328 Internal system error
+#
+7329 Current queue name does not exist
+#
+7330 Current process is not queue owner
+#
+7331 Current process owns queue
+#
+7332 Duplicate queue name
+#
+7333 Queue record does not exist
+#
+7334 Inadequate queue memory
+#
+7335 Invalid queue name
+#
+7336 Invalid queue priority parameter
+#
+7337 Invalid queue handle
+#
+7338 Queue link not found
+#
+7339 Queue memory error
+#
+7340 Previous queue record was at end of queue
+#
+7341 Process does not have access to queue
+#
+7342 Queue is empty
+#
+7343 Queue name does not exist
+#
+7344 Queues not initialized
+#
+7345 Unable to access queues
+#
+7346 Unable to add new queue
+#
+7347 Unable to initialize queues
+#
+7349 Invalid Vio function replaced
+#
+7350 Invalid pointer to parameter
+#
+7355 Unsupported screen mode
+#
+7356 Invalid cursor width value
+#
+7358 Invalid row value
+#
+7359 Invalid column value
+#
+7366 Invalid wait flag setting
+#
+7367 Screen not previously locked
+#
+7369 Invalid session ID
+#
+7370 No session available
+#
+7371 Session not found
+#
+7372 Title cannot be changed
+#
+7373 Invalid parameter(Kbd)
+#
+7375 Invalid wait parameter
+#
+7376 Invalid length for keyboard
+#
+7377 Invalid echo mode mask
+#
+7378 Invalid input mode mask
+#
+7379 Invalid monitor parameters
+#
+7380 Invalid device name string
+#
+7381 Invalid device handle
+#
+7382 Buffer too small
+#
+7383 Buffer empty
+#
+7384 Data record too large
+#
+7386 Mouse handle invalid or closed
+#
+7389 Invalid display mode parameters
+#
+7391 Invalid entry point
+#
+7392 Invalid function mask
+#
+7394 Pointer drawn
+#
+7395 Invalid frequency for DosBeep
+#
+7396 Cannot find COUNTRY.SYS file
+#
+7397 Cannot open COUNTRY.SYS file
+#
+7398 Country code not found
+#
+7399 Information truncated to fit buffer
+#
+7400 Selected type does not exist
+#
+7401 Selected type not in file
+#
+7402 Vio function for Task Manager only
+#
+7403 Invalid string length(Vio)
+#
+7404 VioDeRegister not allowed
+#
+7405 Pop-up screen not allocated
+#
+7406 Pop-up already on screen
+#
+7407 Kdb function for Task Manager only
+#
+7408 Invalid ASCIIZ string length(Kdb)
+#
+7409 Invalid function replacement mask
+#
+7410 KbdRegister not allowed
+#
+7411 KbdDeRegister not allowed
+#
+7412 Mou function for Task Manager only
+#
+7413 Invalid ASCIIZ string length(Mou)
+#
+7414 Invalid replacement mask
+#
+7415 MouRegister not allowed
+#
+7416 MouDeRegister not allowed
+#
+7417 Invalid action specified
+#
+7418 INIT called more than one
+#
+7419 Screen group number not found
+#
+7420 Caller is not shell
+#
+7421 Invalid parameter(Vio)
+#
+7422 Save/restore already owned
+#
+7423 Thread unblocked by VioModeUndo or VioSavRedrawUndo
+#
+7425 Caller not Task Manager
+#
+7426 VioRegister Not allowed
+#
+7427 No VioModeWait thread exists
+#
+7428 No VioSavRedrawWait thread exists
+#
+7429 Function invalid in background
+#
+7430 Function not allowed during pop-up
+#
+7431 Caller is not the base shell
+#
+7432 Invalid status requested
+#
+7433 No-wait parameter out of bounds
+#
+7434 Cannot lock screen
+#
+7435 Invalid wait parameter
+#
+7436 Invalid Vio handle
+#
+7438 Invalid length for Vio function
+#
+7439 Invalid Kdb handle
+#
+7440 Out of Kbd handles
+#
+7441 Cannot create logical Keyboard
+#
+7442 Code page load failed
+#
+7443 Invalid code page ID
+#
+7445 Keyboard focus required
+#
+7446 Caller already has focus
+#
+7447 Keyboard subsystem is busy
+#
+7448 Invalid code page
+#
+7449 Cannot get keyboard focus
+#
+7450 Session is not selectable
+#
+7451 Parent/child session not in foreground
+#
+7452 Not parent of specified child
+#
+7453 Invalid session start mode
+#
+7454 Invalid session start option
+#
+7455 Invalid session bonding option
+#
+7456 Invalid session select option
+#
+7457 Session started in background
+#
+7458 Invalid session stop option
+#
+7459 Reserved parameter not 0
+#
+7460 Session parent process already exists
+#
+7461 Invalid data length
+#
+7462 Parent session not bound
+#
+7463 Retry request block allocation
+#
+7464 Unavailable for detached process(Kbd)
+#
+7465 Unavailable for detached process(Vio)
+#
+7466 Unavailable for detached process(Mou)
+#
+7467 No font available to support mode
+#
+7468 User font active
+#
+7469 Invalid code page specified
+#
+7470 System displays do not support code page
+#
+7471 Current display does not support code page
+#
+7472 Invalid code page
+#
+7473 Code page list is too small
+#
+7474 Code page not moved
+#
+7475 Mode switch initialization error
+#
+7476 Code page not found
+#
+7477 Internal error
+#
+7478 Invalid session start trace indicator
+#
+7479 Vio internal Resource error
+#
+7480 Vio shell initialization error
+#
+7481 No Task Manager hard errors
+#
+7482 DosSetCp unable to set display or keyboard code page
+#
+7483 Error during Vio pop-up
+#
+7484 Critical section overflow
+#
+7485 Critical section underflow
+#
+7486 Reserved parameter is not 0
+#
+7487 Bad physical address
+#
+7488 No selectors requested
+#
+7489 Not enough GDT selectors available
+#
+7490 Not a GDT selector
+#
+7491 Invalid program type
+#
+7492 Invalid program control
+#
+7493 Invalid program inheritance option
+#
+7494 Vio function not allowed in PM window
+#
+7495 Function not supported in non PM screen group
+#
+7496 Vio shield already owned
+#
+7497 Vio handle exhausted
+#
+7498 Vio error occurred, details sent to error log
+#
+7499 Invalid display context
+#
+7500 Kbd input not available
+#
+7501 Mou input not available
+#
+7502 Invalid mouse handle
+#
+7503 Invalid debugging parameters
+#
+7504 Kbd function not allowed in PM window
+#
+7505 Mou function not allowed in PM window
+#
+7506 Invalid icon file
+#
+------------------------ ODBCBIND Package errors
+#
+8800 Unidentified error in ODBCBIND package.
+#
+8801 Invalid handle. ODBCBIND package.
+#
+8802 A function that was started asynchronously is still executing. ODBCBIND package.
+#
+8803 Application needs to send data. ODBCBIND package.
+#
+8804 No data found. ODBCBIND package.
+#
+8805 Illegal SQL request from ODBCBIND package predicate.
+#
+8806 ODBCBIND package function failed.
+#
+------------------------ SockBind Package errors
+#
+8901 Repeated attempt to initialize Sockets system
+#
+8902 Sockets system has not been initialized
+#
+8903 Invalid parameter for a SockBind package predicate
+#
+8904 Native Sockets system (see documentation for the Sockets installed on your computer) error.
+#
+------------------------ Message Layer Package errors
+#
+8930 Native Sockets system cannot be initialized
+#
+8931 A name of a remote host cannot be resolved
+#
+8932 A new socket cannot be created
+#
+8933 A connection cannot be established
+#
+8934 A socket cannot be set to a listen mode
+#
+8935 A socket cannot be closed
+#
+8936 An information cannot be sent
+#
+8937 Internal Message Layer error
+#
+8938 An option cannot be set
+#
+8939 A remote information cannot be retrieved
+#
+------------------------ HTTP Layer Package errors
+#
+8950 Invalid or unknown HTTP header in a request or response
+#
+8951 Invalid date or time format in a request or response
+#
+8952 Invalid Response format
+#
+-------------------------- VPI Packages Errors
+#
+9000 Specified window is not created as the window of the package the predicate belongs to.
+#
+9001 Specified identifier does not exist
+#
+9002 Identifier specifies resource of a wrong type
+#
+9003 CtlType in ownerdraw_CreateControl(CtlType,...) must be:wc_PushButton,wc_CheckBox,or wc_RadioButton.
+#
+9004 Illegal parameter value.
+#
+9005 Unrecoverable internal error in VPI package.
+#

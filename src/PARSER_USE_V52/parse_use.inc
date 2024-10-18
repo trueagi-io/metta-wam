@@ -1,0 +1,170 @@
+/*****************************************************************************
+
+		Copyright (c) Singularity
+
+ Project:  parse_use
+ FileName: PARSE_USE.INC
+ Purpose:  Project's global declarations
+ Written by: R. van Vessum
+ Comments:
+*****************************************************************************/
+
+constants
+%BEGIN_CONST Project configuration constants, Code automatically updated!
+  use_mdi = 1
+  use_3dctrl = 1
+  use_tbar = 1
+  use_dlgpack = 1
+  use_editor = 1
+  use_message = 1
+  use_progress = 1
+%END_CONST
+
+include "vpi.con"
+include "vpi.dom"
+include "vpi.pre"
+
+
+constants 
+
+is_debug = 44
+is_perform = 46
+
+
+/*****************************************************************************
+			User's Declarations
+*****************************************************************************/
+global domains
+  DB_SELECTOR = browselist_db	% For treebrowser tool
+  FILE = fileselector1; fileselector2 % To be edited
+
+%  TOK		  = name(STRING);
+%		    lpar();
+%		    rpar();
+%		    quote();
+%		    nill;
+%                    variabel(STRING)
+%		    simple_deduction_strength_formula;
+%		    conditional_probability_consistency;
+
+
+
+% (jhjhjhj   (hghg ) )
+
+
+GLOBAL DOMAINS
+  ATOM = variabel( STRING );	number( real );	numf( integer ); namex( string ); metta_sub( EXPR ); transpiled( integer, string )
+
+  ATOM_LIST       = ATOM*
+%    simple_deduction_strength_formula;
+%   conditional_probability_consistency;
+		 
+  OPERATOR        = equal;		    conditional;		    conjuction;
+		    smallerthan;		    plus;		    multiplication;
+			exclamation;		    division;		    minus;
+			namex( string );			variabel( string )
+
+  EXPR    = par_atom_list( OPERATOR , ATOM_LIST );
+            exclama_atom_list( OPERATOR , ATOM_LIST )
+
+  TOK		  = variabel(STRING);                    name(STRING);
+		    number(real);		    equal;
+		    conditional;		    conjuction;		    smallerthan;
+		    plus;		    multiplication;			exclamation;
+		    division;		    minus;		    lpar;		    rpar;		    nill
+
+
+GLOBAL DOMAINS
+
+CURSORq	= INTEGER
+CURSORTOq 	= t(TOK, CURSORq )
+MESSAGE	= STRING
+RESULT	= REAL
+SOURCE	= STRING
+TOKL 		= CURSORTOq*
+
+global database - db_head_subs
+head_subs( integer, ilist , slist )
+
+
+global database - db_transpile_start
+determ transpile_start( EXPR )
+
+global database - db_is_transp
+is_transp( integer, integer, OPERATOR, ilist, ATOM_LIST, ATOM_LIST )
+
+global database - db_is_trpile
+is_trpile( integer, integer, OPERATOR, ilist, ATOM_LIST, ATOM_LIST )
+
+global database - db_varsx
+var_concerned( string )
+
+global database - db_construct
+to_be_subconstructed( integer )
+
+global database - weqass
+determ lasts( string )
+
+global database - pred_levels
+pred_level( integer, integer, EXPR )
+determ  tel( integer ) 
+
+%global database - interp
+%predicate_interpreted( integer, string, string, EXPR )
+
+%global predicates
+%pprint( EXPR , integer, integer ) - ( i , i , o)
+%append_to_total_resultas( string, string, string, string  ) - ( i,i,i,i)
+
+global database - parsedx
+term_parsed( integer , EXPR )  
+
+global PREDICATES
+%asser_predicate_interpreted( integer, string, string, EXPR ) - (i,i,i,i)
+%interpret_predicate_levels( integer, EXPR ) - ( i, o )
+
+parse( TOKL, EXPR ) - ( i , o )
+parse_report( TOKL, EXPR,   TOKL ) - ( i , o , o )
+parse_rest( TOKL , integer ) - ( i , i )
+
+display_results()
+transp_operat( OPERATOR, string ) - ( i, o )
+
+%transpile_metta_clause_to_prolog( OPERATOR, ATOM_LIST, string ) - ( i, i, o)
+%---
+write_out_metta( integer, EXPR ) - ( i, i )
+write_out_metta2( integer, ATOM_LIST ) - ( i, i ) 
+
+has_no_sub_nesting2( ATOM_LIST , integer, integer ) - ( i, i, o )
+% has_sub_nesting3( ATOM_LIST , integer ) - ( i, o )
+
+%has_sub_nesting2( EXPR , integer ) - ( i, o )
+%has_sub_nesting3( EXPR , integer ) - ( i, o )
+
+
+has_sub_nesting( EXPR, integer )  - ( i, o )
+
+has_no_sub_nesting( EXPR ) - ( i )
+
+% ( fgfggf  jjjf ) 
+%   :
+%   -> 
+   
+transpile_metta2( integer, integer, integer, integer, integer, ATOM_LIST, ATOM_LIST ) - ( i, i, i, i, i, i, o )
+% todo transp operator 
+transpile_metta( integer, EXPR, EXPR ) - ( i, i, o )
+
+
+tokenize( SOURCE, TOKL ) - (i,o)
+
+
+global predicates
+get_last_string( string, string ) - ( i,o)
+
+
+include "parse_use.pre"
+
+include "vpitools.dom"
+include "vpitools.pre"
+
+include "string_dialog.pre"
