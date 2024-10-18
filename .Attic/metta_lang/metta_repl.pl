@@ -429,7 +429,7 @@ call_for_term_variables4v(Term, [X], Term, NamedVarsList, X) :-
     % Get global variable names for the term.
     get_global_varnames(NamedVarsList).
 
-%! balanced_parentheses(+Str) is nondet.
+%! balanced_parentheses(+Str) is semidet.
 %   Checks if parentheses are balanced in a string or list of characters `Str`.
 %   This version handles both string input and list input by converting the string to a list of characters.
 %
@@ -454,7 +454,7 @@ balanced_parentheses(Str) :-
 % If input is already a list of characters, check the balance starting at count 0.
 balanced_parentheses(Chars) :- balanced_parentheses(Chars, 0).
 
-%! balanced_parentheses(+Chars, +N) is nondet.
+%! balanced_parentheses(+Chars, +N) is semidet.
 %   Recursive helper predicate to check if parentheses are balanced in a list of characters `Chars`.
 %   The second argument `N` keeps track of the net balance of opening and closing parentheses.
 %
