@@ -71,36 +71,32 @@ handle_threads([MaxThreadsArg | _]) :-
 start_lsp_worker_threads:-    
     lsp_worker_threads(MaxThreads),
     ( MaxThreads > 0
-    -> create_worker_pool(MaxThreads)  % Create thread pool if max threads > 1
+    -> create_workers('$lsp_worker_pool', MaxThreads) % Create thread pool if max threads > 0
     ; debug(server, "Running synchronously since max threads = 0", [])  % Sync mode
     ).
 
-% Create a pool of workers if using more than 0
-create_worker_pool(NumWorkers) :- NumWorkers < 1,!.
-create_worker_pool(NumWorkers) :-
-    NumWorkersM1 is NumWorkers-1,
-    start_worker,
-    create_worker_pool(NumWorkersM1).
+% Worker pool implementation
+% Create a pool with Id and number of workers.
+% After the pool is created, post_job/1 can be used to send jobs to the pool.
 
-% Include necessary dynamic predicates
+create_workers(Id, N) :-
+    message_queue_create(Id),
+    forall(between(1, N, _),
+           thread_create(do_work(Id), _, [])).
+
+% Dynamic predicates for cancellation mechanism
 :- dynamic thread_request/2.
-:- dynamic worker_thread/1.
 :- dynamic id_was_canceled/1.
 
 % Create a mutex for synchronization
-:- message_queue_create('$lsp_task_queue').
 :- mutex_create('$lsp_request_mutex').
 
-% Start an individual worker
-start_worker :-
-    thread_create(worker_loop, ThreadId, [detached(true)]),
-    assertz(worker_thread(ThreadId)).
 
-% Update worker_loop to handle task cancellation
-worker_loop :-
+do_work(QueueId) :-
+    repeat,
+      thread_get_message(QueueId, Task),
+      ( Task = lsp_task(Out, Req) ->
     thread_self(ThreadId),
-    message_queue_pop('$lsp_task_queue', Task),
-    Task = lsp_task(Out, Req),
     ( get_dict(id, Req.body, RequestId) ->
         true
     ; RequestId = none ),
@@ -121,8 +117,16 @@ worker_loop :-
             retract(thread_request(RequestId, ThreadId))
         )
       )
+          )
+      ; % Handle other types of tasks if needed
+        true
     ),
-    worker_loop.
+    fail.
+
+% Post a job to be executed by one of the pool's workers.
+
+post_job(Id, Task) :-
+    thread_send_message(Id, Task).
 
 % Send a cancellation response if necessary
 send_cancellation_response(_OutStream, _RequestId) :-
@@ -148,7 +152,7 @@ stdio_server :-
     set_stream(In, tty(false)),
     set_stream(In, representation_errors(error)),
     start_lsp_worker_threads,
-    % handling UTF decoding in JSON parsing, but doing the auto-translation
+    % Handling UTF decoding in JSON parsing, but doing the auto-translation
     % causes Content-Length to be incorrect
     set_stream(In, encoding(octet)),
     current_output(Out),
@@ -240,8 +244,7 @@ stdio_handler(Extra-ExtraTail, In, Out) :-
     read_pending_codes(In, ReadCodes, Tail),
     ( Tail == []
     -> true
-    ; ( current_output(Out),
-        ExtraTail = ReadCodes,
+    ; ( ExtraTail = ReadCodes,
         handle_requests(Out, Extra, Remainder),
         stdio_handler(Remainder-Tail, In, Out) )
     ).
@@ -260,14 +263,9 @@ handle_parsed_request(Out, Req) :-
         handle_msg(Req.body.method, Req.body, _)  % Handle cancel immediately
     ; lsp_worker_threads(0) ->
         handle_request(Out, Req)
-    ; enqueue_task(lsp_task(Out, Req))
+    ; post_job('$lsp_worker_pool', lsp_task(Out, Req))
     ).
 
-% Enqueue an incoming LSP request to be handled by a worker
-enqueue_task(Task) :-
-    message_queue_push('$lsp_task_queue', Task).
-
-% general handling stuff
 % Backtrace error handler
 catch_with_backtrace(Goal):-
      catch_with_backtrace(Goal,Err,
@@ -295,8 +293,9 @@ handle_request(OutStream, Req) :-
     catch(
         ( catch_with_backtrace(handle_msg(Req.body.method, Req.body, Resp)),
           ignore((user:nodebug_lsp_response(Req.body.method) ->
-                  debug(server(high),"response id: ~q",[Resp.id]);
-                  debug(server(high),"response ~q",[Resp]))),
+                  debug(server(high), "response id: ~q", [Resp.id])
+                ; debug(server(high), "response ~q", [Resp])
+                )),
           ( is_dict(Resp) -> send_message(OutStream, Resp) ; true ) ),
         Err,
         ( Err == canceled ->
@@ -576,10 +575,11 @@ handle_msg("$/cancelRequest", Msg, false) :-
         (   thread_request(CancelId, ThreadId)
         ->  % Attempt to interrupt the thread
             debug(server, "Attempting to cancel thread ~w", [ThreadId]),
-            catch(thread_signal(ThreadId, throw(canceled)),_,true), % in case thread is already gone
-            ignore(retract(thread_request(CancelId, ThreadId))) % in case thread retracted it
+            catch(thread_signal(ThreadId, throw(canceled)), _, true),  % In case thread is already gone
+            ignore(retract(thread_request(CancelId, ThreadId)))        % In case thread retracted it
         ;   ( debug(server, "No running thread found for request ID ~w", [CancelId]),
-              assert(id_was_canceled(CancelId))        )
+              assertz(id_was_canceled(CancelId))
+            )
         )).
 
 % Handle the 'exit' notification
