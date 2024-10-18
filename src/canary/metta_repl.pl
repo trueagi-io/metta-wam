@@ -313,7 +313,7 @@ repl4 :-
     % Throw `restart_reading` to restart the REPL input process after execution.
     nop(notrace(throw(restart_reading))))),!.
 
-%!  check_has_directive(+V) is semidet.
+%!  check_has_directive(+V) is nondet.
 %
 %   Processes a given input `V` to determine if it contains a recognized directive 
 %   and executes the associated logic. This predicate handles several types of directives, 
@@ -429,7 +429,7 @@ call_for_term_variables4v(Term, [X], Term, NamedVarsList, X) :-
     % Get global variable names for the term.
     get_global_varnames(NamedVarsList).
 
-%! balanced_parentheses(+Str) is semidet.
+%! balanced_parentheses(+Str) is nondet.
 %   Checks if parentheses are balanced in a string or list of characters `Str`.
 %   This version handles both string input and list input by converting the string to a list of characters.
 %
@@ -454,7 +454,7 @@ balanced_parentheses(Str) :-
 % If input is already a list of characters, check the balance starting at count 0.
 balanced_parentheses(Chars) :- balanced_parentheses(Chars, 0).
 
-%! balanced_parentheses(+Chars, +N) is semidet.
+%! balanced_parentheses(+Chars, +N) is nondet.
 %   Recursive helper predicate to check if parentheses are balanced in a list of characters `Chars`.
 %   The second argument `N` keeps track of the net balance of opening and closing parentheses.
 %
@@ -533,7 +533,7 @@ repl_read(Expr) :-
     next_expr(ExprI, Expr).
 
 % maybe Write any stored comments to the output?
-%!  comment_buffer(-Comment) is semidet.
+%!  comment_buffer(-Comment) is nondet.
 %
 %   Retrieves and removes a comment from the metta file comment buffer.
 %   It retracts a `metta_file_comment/5` fact and unifies its `Comment` field
@@ -782,7 +782,7 @@ call_for_term_variables5(Term,_,[_=Var],Vars,Term,Vars,Var).
 % Handle case with more than one variable, generating a call_nth.
 call_for_term_variables5(Term,_,SVars,Vars,call_nth(Term,Count),[Vars,SVars],Count).
 
-%!  is_interactive(+From) is semidet.
+%!  is_interactive(+From) is nondet.
 %
 %   Checks if the input source is interactive, such as the REPL or a terminal.
 %   This predicate delegates the check to an internal helper `is_interactive0/1`.
@@ -800,7 +800,7 @@ call_for_term_variables5(Term,_,SVars,Vars,call_nth(Term,Count),[Vars,SVars],Cou
 % Delegate to the internal helper predicate.
 is_interactive(From) :- notrace(is_interactive0(From)).
 
-%!  is_interactive0(+From) is semidet.
+%!  is_interactive0(+From) is nondet.
 %
 %   Internal helper to determine if the given input source is interactive.
 %   This predicate checks various cases, including symbolic streams, explicit flags,
@@ -1572,7 +1572,7 @@ into_named_vars(Vars,L):-
     into_named_vars(VVs,L).
 
 
-%!  has_sub_var(+AllVars, +Equality) is semidet.
+%!  has_sub_var(+AllVars, +Equality) is nondet.
 %
 %   Succeeds if V is a sub-variable of any of the variables in AllVars.
 %
@@ -1589,7 +1589,7 @@ has_sub_var(AllVars,_=V):-
     sub_var(V,AllVars).
 
 
-%!  underscore_vars(+Var) is semidet.
+%!  underscore_vars(+Var) is nondet.
 %
 %   Succeeds if the variable or name represents a do-not-care variable (underscore).
 %
@@ -1695,7 +1695,7 @@ name_for_var(V,N):-
     % Convert the variable V to an atom representing its name.
     term_to_atom(V,N),!.
 
-%!  really_trace is semidet.
+%!  really_trace is nondet.
 %
 %   Activates tracing if 'exec' or 'eval' tracing options are enabled, or if debugging is enabled for exec or eval.
 %   Used as a helper to conditionally invoke tracing logic.
@@ -1724,7 +1724,7 @@ really_rtrace(Goal):-
     with_debug((e), with_debug((exec), Goal)).
 
 
-%!  rtrace_on_existence_error(:G) is semidet.
+%!  rtrace_on_existence_error(:G) is nondet.
 %
 %   Attempts to execute the goal G, but if an existence error is encountered, it switches to tracing and retries G.
 %
@@ -1740,7 +1740,7 @@ rtrace_on_existence_error(G):-
     !, catch_err(G, E, (fbug(E = G), \+ tracing, trace, rtrace(G))).
 
 
-%!  prolog_only(:Goal) is semidet.
+%!  prolog_only(:Goal) is nondet.
 %
 %   Runs the goal if tracing is enabled for Prolog operations.
 %
