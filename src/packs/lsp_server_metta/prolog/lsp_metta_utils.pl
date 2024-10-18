@@ -1,11 +1,6 @@
 :- module(lsp_metta_utils, [
-%                       called_at/4,
-%                       defined_at/3,
-%                       name_callable/2,
-%                       relative_ref_location/4,
-%                       clause_variable_positions/3,
-%                       seek_to_line/2,
-%                       linechar_offset/3,
+                        help_at_position/4,
+                        get_document_symbols/2,
                         clause_with_arity_in_file_at_position/4,
                         help_at_position/4
                         ]).
@@ -45,7 +40,7 @@ predicate_help(_,Term,_,"") :- number(Term),!.
 predicate_help(_,')',_,"") :- !.
 predicate_help(_,']',_,"") :- !.
 predicate_help(_,'}',_,"") :- !.
-predicate_help(_,Term,Arity,S) :- find_at_doc(Term,S), !.
+predicate_help(_,Term,_,S) :- find_at_doc(Term,S), !.
 predicate_help(Path,Clause,Arity,S) :-
   user:(
      current_predicate(predicate_help_hook/5),
@@ -78,8 +73,9 @@ find_at_doc_aux(Path,Term,[_|T],S) :-
     find_at_doc_aux(Path,Term,T,S).
 
 find_at_doc_aux2(Term,[doc(Term)|_]) :- !.
-find_at_doc_aux2(Term,[H|T]) :-
+find_at_doc_aux2(Term,[_|T]) :-
     find_at_doc_aux2(Term,T).
+
 
 %!  clause_with_arity_in_file_at_position(-Clause, -Arity, +Path, +Position) is det.
 %
@@ -114,3 +110,40 @@ find_term_in_annotated_stream(_,exec(L),Lpos,CPos,Term,Arity) :- find_term_in_an
 find_term_in_annotated_stream(Depth,[H|T],Lpos,CPos,Term,Arity) :-
     Depth1 is Depth+1,
     (find_term_in_annotated_stream(Depth1,H,Lpos,CPos,Term,Arity) -> true ; find_term_in_annotated_stream(Depth,T,Lpos,CPos,Term,Arity)).
+
+get_document_symbols(Path, S) :-
+    lsp_metta_changes:doc_text(Path,SplitText),
+    get_document_symbol_aux(SplitText,0,S).
+
+get_document_symbol_aux([],_,[]).
+get_document_symbol_aux([d(L,Text,_,_)|Rest],Line0,Result) :-
+    setup_call_cleanup(
+        open_string(Text,Stream),
+        annotated_read_sexpr_list(p(Line0,0),_,Stream,ItemList),
+        close(Stream)),
+    %debug(server,"XXXXXXXXXXXXX: ~w~w",[Line0,ItemList]),
+    get_document_symbol_aux2(ItemList,R0),
+    %debug(server,"X1",[]),
+    Line1 is Line0+L,
+    get_document_symbol_aux(Rest,Line1,Result0),
+    %debug(server,"X2",[]),
+    append(R0,Result0,Result).
+
+get_atom_kind_name('',0,'') :- !.
+get_atom_kind_name(')',0,'') :- !.
+get_atom_kind_name(']',0,'') :- !.
+get_atom_kind_name('}',0,'') :- !.
+get_atom_kind_name(var(Term),13,Term) :- !.
+get_atom_kind_name(Term,16,'number') :- number(Term),!.
+get_atom_kind_name(Term,12,Term) :- !.
+
+get_document_symbol_aux2([], []) :- !.
+get_document_symbol_aux2([Head|Tail], FlatList) :- !,
+    get_document_symbol_aux2(Head, FlatHead),
+    get_document_symbol_aux2(Tail, FlatTail),
+    append(FlatHead,FlatTail,FlatList).
+get_document_symbol_aux2(exec(H),FlatList) :- !,get_document_symbol_aux2(H,FlatList).
+get_document_symbol_aux2(a(L,C0,C1,Sym),FlatList) :-
+    (get_atom_kind_name(Sym,Type,Name),Type>0 -> FlatList=[x(L,C0,C1,Type,Name)] ; FlatList=[]).
+get_document_symbol_aux2(_,[]).
+

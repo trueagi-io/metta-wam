@@ -76,9 +76,8 @@ split_text_document_by_clause_aux(Stream,Entries) :-
     ;
         seek(Stream,0,current,BlankEndPos),
         seek(Stream,StartPos,bof,_),
-        BlankSize is BlankEndPos-StartPos-1, % -1 to drop the newline from the end
+        BlankSize is BlankEndPos-StartPos,
         read_string(Stream,BlankSize,BlankContent),
-        read_string(Stream,1,_),
         create_line_entry(Lblank,BlankContent,[],BlankEntry),
         PostEmptyStartPos=BlankEndPos,
         PostEmptyLCblank=p(0,0),
@@ -90,9 +89,8 @@ split_text_document_by_clause_aux(Stream,Entries) :-
         split_text_document_by_clauses_whole_lines(PostEmptyLCblank,p(EL,_),Stream,Metadata),
         seek(Stream,0,current,EndPos),
         seek(Stream,PostEmptyStartPos,bof,_),
-        Size is EndPos-PostEmptyStartPos-1, % -1 to drop the newline from the end
+        Size is EndPos-PostEmptyStartPos,
         read_string(Stream,Size,Content),
-        read_string(Stream,1,_),
         create_line_entry(EL,Content,Metadata,Entry),
         split_text_document_by_clause_aux(Stream,Entries0),
         append(MaybeBlankEntry,[Entry|Entries0],Entries)
@@ -124,8 +122,7 @@ concat_strings([],"").
 concat_strings([S],S) :- !.
 concat_strings([H|T], Result) :-
     concat_strings(T, TailResult),
-    string_concat(H, "\n", H1),
-    string_concat(H1, TailResult, Result).
+    string_concat(H, TailResult, Result).
 
 split_text_single_lines(FullText,SplitText) :-
     split_string(FullText, "\n", "", SplitText0),
