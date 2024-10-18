@@ -111,15 +111,21 @@ handle_request(OutStream, Input, Rest) :-
     debug(server(high), "Request ~q", [Req.body]),
     catch(
         ( catch_with_backtrace(handle_msg(Req.body.method, Req.body, Resp)),
-          debug(server(high), "response ~q", [Resp]),
+          ignore((user:nodebug_lsp_response(Req.body.method) -> debug(server(high), "response id: ~q", [Resp.id]) ; debug(server(high), "response ~q", [Resp]))),
+           %debug(server(high), "response ~q", [Resp]),
           ( is_dict(Resp) -> send_message(OutStream, Resp) ; true ) ),
         Err,
         ( debug(server, "error handling msg ~q", [Err]),
           get_dict(id, Req.body, Id),
           send_message(OutStream, _{id: Id,
-                                    error: _{code: -32001,
+                           error: _{code: -32001,
                                              message: "server error"}})
         )).
+
+%hide some response messages
+%user:nodebug_lsp_response("textDocument/hover").
+user:nodebug_lsp_response("textDocument/documentSymbol").
+
 
 % Handling messages
 
@@ -128,16 +134,20 @@ server_capabilities(
                           change: 2, %incremental
                           save: _{includeText: false},
                           willSave: false,
-                          willSaveWaitUntil: false %???
+                          willSaveWaitUntil: true %???
                           },
       hoverProvider: true,
       completionProvider: _{},
+
+
+      documentSymbolProvider: true,
+      workspaceSymbolProvider: true,
       definitionProvider: true,
       declarationProvider: true,
       implementationProvider: true,
+      typeDefinitionProvider: true,
       referencesProvider: true,
-      documentSymbolProvider: true,
-      workspaceSymbolProvider: true,
+      %% documentHighlightProvider: false,
       codeActionProvider: false,
       %% codeLensProvider: false,
       documentFormattingProvider:false,
@@ -152,12 +162,15 @@ server_capabilities(
                                 range: true,
                                 % [TODO] implement deltas
                                 full: _{delta: false}},
+
       workspace: _{workspaceFolders: _{supported: true,
                                        changeNotifications: true}}
      }
 ) :-
     token_types(TokenTypes),
     token_modifiers(TokenModifiers).
+
+
 
 :- dynamic loaded_source/1.
 
@@ -166,6 +179,7 @@ into_result_object(Help,Response):- \+ is_dict(Help),
    Response = _{contents: _{kind: plaintext, value: Help}}.
 into_result_object(Help,Response):-  Help=Response,!.
 
+:- discontiguous(handle_msg/3).
 
 % messages (with a response)
 handle_msg("initialize", Msg,
@@ -184,25 +198,27 @@ handle_msg("shutdown", Msg, _{id: Id, result: null}) :-
 % CALL: textDocument/hover
 % IN: params:{position:{character:11,line:56},textDocument:{uri:file://<FILEPATH>}}}
 % OUT: {id:21,result:{contents:{kind:plaintext,value:<ALL_THE_STUFF>}}}
-handle_msg("textDocument/hover", Msg, _{id: Id, result: Response}) :-
+handle_msg("textDocument/hover", Msg, _{id: Id, result: Response}) :- % fail,
     _{params: _{position: _{character: Char0, line: Line},
                 textDocument: _{uri: Doc}}, id: Id} :< Msg,
     atom_concat('file://', Path, Doc),
     (  help_at_position(Path, Line, Char0, Help)
     -> into_result_object(Help, Response)
-    ;  Response = null).
+    ;  Response = null), !.
+handle_msg("textDocument/hover", Msg, _{id: Msg.id, result: null}) :- !. % Fallback
 
 % CALL: textDocument/documentSymbol
 % IN: params:{textDocument:{uri:file://<FILEPATH>}}
 % OUT: {id:1,result:[
 %    {kind:12,location:{range:{end:{character:0,line:37},start:{character:1,line:35}},uri:file://<FILEPATH>},name:called_at/4},
 %    {kind:12,location:{range:{end:{character:0,line:66},start:{character:1,line:64}},uri:file://<FILEPATH>},},name:defined_at/3} ... ]}
+
 %handle_msg("textDocument/documentSymbol", Msg, _{id: Id, result: Symbols}) :-
 %     _{id: Id, params: _{textDocument: _{uri: Doc}}} :< Msg, xref_document_symbols(Doc, Symbols),
 %     assertion(is_list(Symbols)), !.
 
-convert_docsymbol_json(x(L,C0,C1,K,Name),Json) :-
-    Json=_{name:Name,kind:K,location:_{range:_{end:_{character:C1,line:L},start:_{character:C0,line:L}}}}.
+%convert_docsymbol_json(x(L,C0,C1,K,Name),Json) :-
+%    Json=_{name:Name,kind:K,location:_{range:_{end:_{character:C1,line:L},start:_{character:C0,line:L}}}}.
 
 %handle_msg("textDocument/documentSymbol", Msg, _{id: Id, result: DocJson}) :-
 %    _{id: Id, params: _{textDocument: _{uri: Doc}}} :< Msg,
@@ -210,71 +226,67 @@ convert_docsymbol_json(x(L,C0,C1,K,Name),Json) :-
 %     get_document_symbols(Path,DocKinds),
 %     maplist(convert_docsymbol_json,DocKinds,DocJson).
 
-handle_msg("textDocument/documentSymbol", Msg, _{id: Msg.id, result: []}) :- !. % Fallback
-% handle_msg("textDocument/documentSymbol", Msg, _{id: Id, result: Symbols}) :-
-%     _{id: Id, params: _{textDocument: _{uri: Doc}}} :< Msg,
-%     atom_concat('file://', Path, Doc), !,
-%     xref_source(Path),
-%     findall(
-%         Symbol,
-%         ( xref_defined(Path, Goal, local(Line)),
-%           succ(Line, NextLine),
-%           succ(Line0, Line),
-%           functor(Goal, Name, Arity),
-%           format(string(GoalName), "~w/~w", [Name, Arity]),
-%           Symbol = _{name: GoalName,
-%                      kind: 12, % function
-%                      location:
-%                      _{uri: Doc,
-%                        range: _{start: _{line: Line0, character: 1},
-%                                 end: _{line: NextLine, character: 0}}}}
-%         ),
-%         Symbols).
+handle_msg("textDocument/documentSymbol", Msg, _{id: Id, result: Symbols}) :-
+     _{id: Id, params: _{textDocument: _{uri: Doc}}} :< Msg, xref_document_symbols(Doc, Symbols),
+     assertion(is_list(Symbols)), !.
+%handle_msg("textDocument/documentSymbol", Msg, _{id: Msg.id, error: _{ code: -32602, message: "No symbol changes" }}):-!.
+handle_msg("textDocument/documentSymbol", Msg, _{id: Msg.id, result: null}) :- !. % No symbol changes
+%handle_msg("textDocument/documentSymbol", Msg, _{id: Msg.id, result: []}) :- !. % No symbol changes
+
+message_id_target(Msg, Id, Doc, HintPath, Loc, Name/Arity):-
+       _{id: Id, params: Params} :< Msg,
+       _{textDocument: _{uri: Doc},
+         position: _{line: Line0, character: Char0}} :< Params,
+    atom_concat('file://', HintPath, Doc),   Loc = line_char(Line0, Char0),
+    Loc = line_char(Line0, Char0),
+    lsp_metta_utils:clause_with_arity_in_file_at_position(Name, Arity, HintPath, Loc),
+        debug(server(high),"~n~q~n",[message_id_target(_Msg, Id, Doc, HintPath, Loc, Name/Arity)]).
 
 % CALL: method:textDocument/definition
 % IN: params:{position:{character:55,line:174},textDocument:{uri:file://<FILEPATH>}}
 % OUT: {id:42,result:null}
 % OUT: {id:37,result:{range:{end:{character:0,line:62},start:{character:1,line:60}},uri:file://<FILEPATH>}}
-% handle_msg("textDocument/definition", Msg, _{id: Id, result: Location}) :-
-%     _{id: Id, params: Params} :< Msg,
-%     _{textDocument: _{uri: Doc},
-%       position: _{line: Line0, character: Char0}} :< Params,
-%     atom_concat('file://', Path, Doc),
-%     succ(Line0, Line1),
-%     clause_in_file_at_position(Name/Arity, Path, line_char(Line1, Char0)),
-%     defined_at(Path, Name/Arity, Location).
+% textDocument/definition: returns the specific location in the document or file where the symbol is defined or documented. It points to the exact spot where the symbol is introduced in the code.
+handle_msg("textDocument/definition", Msg, _{id: Id, result: Location}) :-
+     message_id_target(Msg, Id, _, PathHint, _, Target),
+     debug(server(high),"~q",[defined_at(definition, PathHint, Target, Location)]),
+     defined_at(definition,PathHint, Target, Location),!.
 handle_msg("textDocument/definition", Msg, _{id: Msg.id, result: null}) :- !.
+
 
 % CALL: method:textDocument/references
 % IN: params:{context:{includeDeclaration:false},position:{character:9,line:81},textDocument:{uri:file://<FILEPATH>}}
 % OUT: {id:42,result:null}
 % OUT: {id:54,result:[{range:{end:{character:0,line:96},start:{character:29,line:95}},uri:file://<FILEPATH>},{range:{end:{character:0,line:100},start:{character:10,line:99}},uri:file://<FILEPATH>}]}
-% handle_msg("textDocument/references", Msg, _{id: Id, result: Locations}) :-
-%     _{id: Id, params: Params} :< Msg,
-%     _{textDocument: _{uri: Uri},
-%       position: _{line: Line0, character: Char0}} :< Params,
-%     atom_concat('file://', Path, Uri),
-%     succ(Line0, Line1),
-%     clause_in_file_at_position(Clause, Path, line_char(Line1, Char0)),
-%     findall(
-%         Location,
-%         ( loaded_source(Doc),
-%           atom_concat('file://', Doc, DocUri),
-%           called_at(Doc, Clause, Caller, Loc),
-%           relative_ref_location(DocUri, Caller, Loc, Location)
-%         ),
-%         Locations), !.
-handle_msg("textDocument/references", Msg, _{id: Msg.id, result: null}) :- !.
+% textDocument/references: returns a list of specific locations where the symbol is referenced or called from. Moreover, it includes the results from textDocument/implementation (which itself includes textDocument/definition and textDocument/declaration), providing a comprehensive overview of the symbol's usage across the codebase.
+handle_msg("textDocument/references", Msg, _{id: Id, result: Locations}) :-
+     message_id_target(Msg, Id, _, HintPath, _, Target),
+     findall(Location,defined_at(references, HintPath, Target, Location),Locations), !.
+handle_msg("textDocument/references", Msg, _{id: Msg.id, result: []}) :- !.
 
 % CALL: method:textDocument/implementation
 % IN: params:{position:{character:11,line:22},textDocument:{uri:file://<FILEPATH>}}
-% No example from prolog FIXME
-handle_msg("textDocument/implementation", Msg, _{id: Msg.id, result: null}) :- !.
+% Protocal allows List as well as single (We give the list version)
+% textDocument/implementation: returns a list of specific locations where the symbol is implemented. Additionally, it includes the locations returned by both textDocument/definition and textDocument/declaration, showing the full picture of where the symbol is implemented and its type associations.
+handle_msg("textDocument/implementation", Msg, _{id: Id, result: Locations}) :-
+     message_id_target(Msg, Id, _, HintPath, _, Target),
+   findall(Location,defined_at(implementation, HintPath, Target, Location),Locations), !.
+handle_msg("textDocument/implementation", Msg, _{id: Msg.id, result: []}) :- !.
 
 % CALL: method:textDocument/declaration
 % IN: params:{position:{character:11,line:22},textDocument:{uri:file://<FILEPATH>}}
-% No example from prolog FIXME
+% textDocument/declaration: returns the specific location of the symbol's type declaration, which can include its function definition, symbol definition, etc. Since only one location can be returned, the system chooses the most relevant type declaration for the symbol.
+handle_msg("textDocument/declaration", Msg, _{id: Id, result: Location}) :-
+     message_id_target(Msg, Id, _, HintPath, _, Target),
+     defined_at(declaration, HintPath, Target, Location),!.
 handle_msg("textDocument/declaration", Msg, _{id: Msg.id, result: null}) :- !.
+
+
+% textDocument/typeDefinition: returns the specific location of the symbol's type declaration, which can include its function definition, symbol definition, etc. Since only one location can be returned, the system chooses the most relevant type declaration for the symbol.
+handle_msg("textDocument/typeDefinition", Msg, _{id: Id, result: Location}) :-
+     message_id_target(Msg, Id, _, HintPath, _, Target),
+     defined_at(typeDefinition, HintPath, Target, Location),!.
+handle_msg("textDocument/typeDefinition", Msg, _{id: Msg.id, result: null}) :- !.
 
 % CALL: method:textDocument/completion
 % IN: params:{context:{triggerKind:1},position:{character:1,line:88},textDocument:{uri:file://<FILEPATH>}}
@@ -343,7 +355,7 @@ handle_msg("textDocument/didOpen", Msg, Resp) :-
     split_text_document(FullText,SplitText),
     debug(server,"~w",[SplitText]),
     atom_concat('file://', Path, FileUri),
-    retractall(user:full_text(Path, _)), assertz(user:full_text(Path, FullText)),
+    xref_maybe(Path, FullText), % Check if changed and enqueue the reindexing
     retractall(lsp_metta_changes:doc_text(Path, _)),
     assertz(lsp_metta_changes:doc_text(Path, SplitText)),
     ( loaded_source(Path) ; assertz(loaded_source(Path)) ),
@@ -354,8 +366,9 @@ handle_msg("textDocument/didChange", Msg, false) :-
                 contentChanges: Changes}} :< Msg,
     _{uri: Uri} :< TextDoc,
     atom_concat('file://', Path, Uri),
-    % xref_source_expired(Path),
-    handle_doc_changes(Path, Changes).
+    handle_doc_changes(Path, Changes),
+    lsp_metta_changes:doc_text(Path,FullText),
+    xref_maybe(Path, FullText). % Check if changed and enqueue the reindexing
 
 handle_msg("textDocument/didSave", Msg, Resp) :-
     _{params: Params} :< Msg,
