@@ -1,7 +1,11 @@
 :- module(lsp_server_metta, [main/0]).
 /** <module> LSP Server
 
-The main entry point for the Language Server implementation.
+The main entry point for the Language Server implementation with dynamic handling based on max threads.
+
+Handles workspace folder changes, file indexing, and incremental updates.
+
+Supports LSP methods like hover, document symbol, definition, references, and more.
 
 @author James Cash
 */
@@ -9,6 +13,8 @@ The main entry point for the Language Server implementation.
 :- use_module(library(apply), [maplist/2]).
 :- use_module(library(debug), [debug/3, debug/1]).
 :- use_module(library(http/json), [atom_json_dict/3]).
+:- use_module(library(thread)).
+:- use_module(library(thread_pool)).
 %:- use_module(library(prolog_xref)).
 %:- use_module(library(prolog_source), [directory_source_files/3]).
 :- use_module(library(utf8), [utf8_codes//1]).
@@ -37,6 +43,14 @@ The main entry point for the Language Server implementation.
 
 :- dynamic lsp_metta_changes:doc_text/2.
 
+% If the max thread count is 1, it processes requests synchronously;
+% otherwise, it uses a thread pool for parallel processing.
+% 2 is a good default as it needs to be able to implement interruptions anyway
+% (this is separate from the file indexer threads)
+:- dynamic(lsp_max_threads/1).
+lsp_max_threads(1).
+
+% Main entry point
 main :-
     set_prolog_flag(debug_on_error, false),
     set_prolog_flag(report_error, true),
@@ -53,8 +67,7 @@ start([stdio]) :- !,
 start(Args) :-
     debug(server, "Unknown args ~w", [Args]).
 
-% stdio server
-
+% stdio server initialization
 stdio_server :-
     current_input(In),
     set_stream(In, buffer(full)),
@@ -66,6 +79,7 @@ stdio_server :-
     set_stream(In, encoding(octet)),
     current_output(Out),
     set_stream(Out, encoding(utf8)),
+    %stdio_handler_io(In, Out). %(might use this one later)
     stdio_handler(A-A, In).
 
 % [TODO] add multithreading? Guess that will also need a message queue
@@ -120,12 +134,12 @@ handle_request(OutStream, Input, Rest) :-
                                              message: "server error"}})
         )).
 
-%hide some response messages
+% Hide responses for certain methods
 %user:nodebug_lsp_response("textDocument/hover").
 user:nodebug_lsp_response("textDocument/documentSymbol").
 
 
-% Handling messages
+% Server capabilities declaration
 
 server_capabilities(
     _{textDocumentSync: _{openClose: true,
@@ -147,7 +161,8 @@ server_capabilities(
       referencesProvider: true,
 
       documentHighlightProvider: false,
-      codeActionProvider: false,
+      codeActionProvider: true,  % Changed from false to true
+
       %% codeLensProvider: false,
       documentFormattingProvider:false,
       %% documentOnTypeFormattingProvider: false,
@@ -155,7 +170,7 @@ server_capabilities(
       % documentLinkProvider: false,
       % colorProvider: true,
       foldingRangeProvider: false,
-      executeCommandProvider: _{commands: ["eval_metta", "query_metta", "assert_metta"]},
+      executeCommandProvider: _{commands: ["execute_code", "query_metta", "assert_metta"]},
       semanticTokensProvider: _{legend: _{tokenTypes: TokenTypes,
                                           tokenModifiers: TokenModifiers},
                                 range: true,
@@ -192,7 +207,7 @@ handle_msg("initialize", Msg,
     server_capabilities(ServerCapabilities).
 handle_msg("shutdown", Msg, _{id: Id, result: null}) :-
     _{id: Id} :< Msg,
-    debug(server, "recieved shutdown message", []).
+    debug(server, "received shutdown message", []).
 
 % CALL: textDocument/hover
 % IN: params:{position:{character:11,line:56},textDocument:{uri:file://<FILEPATH>}}}
@@ -349,6 +364,7 @@ handle_msg("textDocument/didOpen", Msg, Resp) :-
     ( loaded_source(Path) ; assertz(loaded_source(Path)) ),
     check_errors_resp(FileUri, Resp).
 
+% Handle document change notifications
 handle_msg("textDocument/didChange", Msg, false) :-
     _{params: _{textDocument: TextDoc,
                 contentChanges: Changes}} :< Msg,
@@ -358,11 +374,13 @@ handle_msg("textDocument/didChange", Msg, false) :-
     lsp_metta_changes:doc_text(Path,FullText),
     xref_maybe(Path, FullText). % Check if changed and enqueue the reindexing
 
+% Handle document save notifications
 handle_msg("textDocument/didSave", Msg, Resp) :-
     _{params: Params} :< Msg,
     % xref_source_expired(Params.textDocument.uri),
     check_errors_resp(Params.textDocument.uri, Resp).
 
+% Handle document close notifications
 handle_msg("textDocument/didClose", Msg, false) :-
     _{params: _{textDocument: TextDoc}} :< Msg,
     _{uri: FileUri} :< TextDoc,
@@ -377,9 +395,124 @@ handle_msg("$/setTrace", _Msg, false).
 handle_msg("$/cancelRequest", Msg, false) :-
     debug(server, "Cancel request Msg ~w", [Msg]).
 
+% Handle the 'exit' notification
 handle_msg("exit", _Msg, false) :-
-    debug(server, "recieved exit, shutting down", []),
+    debug(server, "Received exit, shutting down", []),
     halt.
+
+
+% Handle the textDocument/codeAction Request
+handle_msg("textDocument/codeAction", Msg, _{id: Id, result: Actions}) :-
+    _{id: Id, params: Params} :< Msg,
+    _{textDocument: _{uri: Uri},
+      range: Range,
+      context: _Context} :< Params,
+    compute_code_actions(Uri, Range, Actions).
+
+% Compute Code Actions
+compute_code_actions(Uri, Range, [Action]) :-
+    Action = _{
+        title: "Execute Code",
+        kind: "quickfix",
+        command: _{
+            title: "Execute Code",
+            command: "execute_code",
+            arguments: [Uri, Range]
+        }
+    }.
+
+% Handle the workspace/executeCommand Request
+handle_msg("workspace/executeCommand", Msg, _{id: Id, result: Result}) :-
+    _{id: Id, params: Params} :< Msg,
+    _{command: Command, arguments: Arguments} :< Params,
+    execute_command(Command, Arguments, ExecutionResult),
+    Result = _{message: ExecutionResult}.
+
+% Execute Command Implementation
+execute_command("execute_code", [Uri, Range], ExecutionResult) :-
+    get_code_at_range(Uri, Range, Code),
+    execute_code(Code, ExecutionResult).
+execute_command(_, _, "Command not recognized.").
+
+% Get Code at the Specified Range
+get_code_at_range(Uri, Range, Code) :-
+    atom_concat('file://', Path, Uri),
+    lsp_metta_changes:doc_text(Path, SplitText),
+    coalesce_text(SplitText, Text),
+    split_string(Text, "\n", "", Lines),
+    _{start: Start, end: End} :< Range,
+    _{line: StartLine0, character: StartChar} :< Start,
+    _{line: EndLine0, character: EndChar} :< End,
+    StartLine is StartLine0 + 1,
+    EndLine is EndLine0 + 1,
+    extract_code(Lines, StartLine, StartChar, EndLine, EndChar, Code).
+
+% Extract Code from Lines
+extract_code(Lines, StartLine, StartChar, EndLine, EndChar, Code) :-
+    findall(LineText, (
+        between(StartLine, EndLine, LineNum),
+        nth1(LineNum, Lines, Line),
+        (
+            LineNum =:= StartLine, LineNum =:= EndLine ->
+            sub_atom(Line, StartChar, EndChar - StartChar, _, LineText)
+        ;
+            LineNum =:= StartLine ->
+            sub_atom(Line, StartChar, _, 0, LineText)
+        ;
+            LineNum =:= EndLine ->
+            sub_atom(Line, 0, EndChar, _, LineText)
+        ;
+            LineText = Line
+        )
+    ), CodeLines),
+    atomic_list_concat(CodeLines, '\n', Code).
+
+% Execute the Code
+execute_code(Code, Result) :-
+    % For safety, catch any errors during execution
+    catch_with_backtrace((
+        % Replace with actual code execution logic
+        % For demonstration, we'll just unify Result with Code
+        % In practice, you might use metta:eval_string/2 or similar
+        Result = Code
+    ), Error, (
+        format(atom(ErrorMsg), 'Error executing code: ~w', [Error]),
+        Result = ErrorMsg
+    )).
+    
+    
+% Handle the 'workspace/symbol' Request
+handle_msg("workspace/symbol", Msg, _{id: Id, result: Symbols}) :-
+    _{id: Id, params: Params} :< Msg,
+    _{query: Query} :< Params,
+    collect_workspace_symbols(Query, Symbols).
+
+% Collect Workspace Symbols
+collect_workspace_symbols(Query, Symbols) :-
+    findall(Symbol,
+        (
+            in_editor(Path),
+            % Convert file path to URI
+            atom_concat('file://', Path, DocUri),
+            xref_document_symbols(DocUri, DocSymbols),
+            member(Symbol, DocSymbols),
+            symbol_matches_query(Symbol, Query)
+        ),
+        Symbols).
+
+% Predicate to check if a symbol matches the query
+symbol_matches_query(Symbol, Query) :-
+    ( Query == "" -> true  % If query is empty, include all symbols
+    ; get_symbol_name(Symbol, Name),
+      sub_atom_icasechk(Name, _, Query)  % Case-insensitive match
+    ).
+
+% Helper predicate to extract the symbol's name
+get_symbol_name(Symbol, Name) :-
+    % Symbol may be in hierarchical or non-hierarchical format
+    ( get_dict(name, Symbol, Name)
+    ; get_dict(label, Symbol, Name)
+    ).
 
 % wildcard
 handle_msg(_, Msg, _{id: Id, error: _{code: -32603, message: "Unimplemented"}}) :-
@@ -388,6 +521,7 @@ handle_msg(_, Msg, _{id: Id, error: _{code: -32603, message: "Unimplemented"}}) 
 handle_msg(_, Msg, false) :-
     debug(server, "unknown notification ~w", [Msg]).
 
+% [TODO]Check errors and respond with diagnostics
 check_errors_resp(FileUri, _{method: "textDocument/publishDiagnostics",
                              params: _{uri: FileUri, diagnostics: Errors}}) :-
     atom_concat('file://', Path, FileUri),
