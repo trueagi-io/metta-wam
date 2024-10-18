@@ -6,7 +6,7 @@
 %                       clause_variable_positions/3,
 %                       seek_to_line/2,
 %                       linechar_offset/3,
-%                       clause_with_arity_in_file_at_position/3,
+                        clause_with_arity_in_file_at_position/4,
                         help_at_position/4
                         ]).
 :- use_module(library(debug), [debug/3]).
