@@ -96,7 +96,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-18 08:18:10+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-18 20:13:42+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -609,7 +609,7 @@ Deterministic: ()
 > (Inheritance B A)
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (2.03 milliseconds) 
+; took 0.002 secs. (2.01 milliseconds) 
 
 !(assertEqualToResult (add-atom &db (Inheritance B A)) (()))
 
@@ -634,7 +634,7 @@ Deterministic: ()
 > (Inheritance C A)
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.99 milliseconds) 
+; took 0.002 secs. (2.36 milliseconds) 
 
 !(assertEqualToResult (add-atom &db (Inheritance C A)) (()))
 
@@ -659,7 +659,7 @@ Deterministic: ()
 > (Inheritance D E)
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.98 milliseconds) 
+; took 0.002 secs. (2.00 milliseconds) 
 
 !(assertEqualToResult (add-atom &db (Inheritance D E)) (()))
 
@@ -684,7 +684,7 @@ Deterministic: ()
 > (Inheritance C E)
 </span>; 
 ; EVAL TEST
-; took 0.001 secs. (1.41 milliseconds) 
+; took 0.001 secs. (1.34 milliseconds) 
 
 !(assertEqualToResult (add-atom &db (Inheritance C E)) (()))
 
@@ -735,7 +735,7 @@ Deterministic: ()
 > (= (universe-size) (let $_755528 (collapse (match &db $_755564 1)) (tuple-count $_755528)))
 </span>; 
 ; EVAL TEST
-; took 0.092 secs. (91.97 milliseconds) 
+; took 0.092 secs. (92.03 milliseconds) 
 
 !(assertEqualToResult (miner &db (ms) (depth)) (() () () () () () () () () () (candidate (Inheritance (VarIdx Z) E) 2) (candidate (Inheritance (VarIdx Z) A) 2) (candidate (Inheritance B (VarIdx (S Z))) 1) (candidate (Inheritance C (VarIdx (S Z))) 2) (candidate (Inheritance D (VarIdx (S Z))) 1)))
 
@@ -745,7 +745,7 @@ Deterministic: ()
 Deterministic: ((Error  (got  (() () () () () () () () () () () () () () () ())) (expected  (() () () () () () () () () () (candidate (Inheritance (VarIdx Z) E) 2) (candidate (Inheritance (VarIdx Z) A) 2) (candidate (Inheritance B (VarIdx (S Z))) 1) (candidate (Inheritance C (VarIdx (S Z))) 2) (candidate (Inheritance D (VarIdx (S Z))) 1)))))
 ((Error  (got  (() () () () () () () () () () () () () () () ())) (expected  (() () () () () () () () () () (candidate (Inheritance (VarIdx Z) E) 2) (candidate (Inheritance (VarIdx Z) A) 2) (candidate (Inheritance B (VarIdx (S Z))) 1) (candidate (Inheritance C (VarIdx (S Z))) 2) (candidate (Inheritance D (VarIdx (S Z))) 1)))))]
 <span class="ansi32"
->% 1,108,788 inferences, 0.243 CPU in 0.243 seconds (100% CPU, 4570658 Lips)
+>% 1,108,788 inferences, 0.245 CPU in 0.245 seconds (100% CPU, 4524844 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/tmpMatch1.metta  0)
 <span class="ansi1"
@@ -884,7 +884,7 @@ Deterministic: ((Error  (got  (() () () () () () () () () () () () () () () ()))
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-18 08:18:16+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-18 20:13:48+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
