@@ -1124,12 +1124,12 @@ handle_dbg_client_commands(InStream, OutStream) :-
           true  % End connection on EOF
     ; (catch(
         ( term_string(Term, Command),
-          catch(call(Term), Error, format(OutStream, 'Error: ~q~n', [Error])),
+          (catch(call(Term), Error, format(OutStream, 'Error: ~q~n', [Error]))*->true;true),
           \+ \+ (numbervars(Term,0,_,[singletons(true),attvar(skip)]),format(OutStream, 'Result: ~q.~n', [Term])),
           fail
         ), 
         Error, 
-        format(OutStream, 'Invalid input: ~w~n', [Error])
+        (format(OutStream, 'Invalid input: ~w~n', [Error]),make)
        ),
        flush_output(OutStream),
        fail)

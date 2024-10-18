@@ -39,7 +39,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-18 05:49:18+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-18 08:21:02+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -361,9 +361,9 @@ Script started on 2024-10-18 05:49:18+00:00 [TERM="xterm-256color" TTY="/dev/pts
 P;HTML|
 ;                                         (= 5  "Missed result: (@doc-formal (@item NoSuchAtom) (@kind atom) (@type %Undefined%) (@desc \"No documentation\")))]")
 P;HTML|
-;                                         (= 5  "0.34user 0.00system 0:00.34elapsed 100%CPU (0avgtext+0avgdata 27960maxresident)k")
+;                                         (= 5  "0.34user 0.00system 0:00.35elapsed 100%CPU (0avgtext+0avgdata 27828maxresident)k")
 P;HTML|
-;                                         (= 5  "0inputs+0outputs (0major+3613minor)pagefaults 0swaps")
+;                                         (= 5  "0inputs+0outputs (0major+3582minor)pagefaults 0swaps")
 P;HTML|
 ;                                        (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/g1_docs.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/g1_docs.metta)
 
@@ -395,7 +395,7 @@ Script started on 2024-10-18 05:49:18+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.G1-DOCS.01</h3>
 ; 
 ; EVAL TEST
-; took 0.166 secs. (165.66 milliseconds) 
+; took 0.164 secs. (164.01 milliseconds) 
 
 !(assertEqual (get-doc some-func) (@doc-formal (@item some-func) (@kind function) (@type (-> Arg1Type Arg2Type ReturnType)) (@desc "Test function") (@params ((@param (@type Arg1Type) (@desc "First argument")) (@param (@type Arg2Type) (@desc "Second argument")))) (@return (@type ReturnType) (@desc "Return value"))))
 
@@ -418,7 +418,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.G1-DOCS.02</h3>
 ; 
 ; EVAL TEST
-; took 0.012 secs. (12.33 milliseconds) 
+; took 0.012 secs. (12.21 milliseconds) 
 
 !(assertEqual (get-doc SomeSymbol) (@doc-formal (@item SomeSymbol) (@kind atom) (@type SomeType) (@desc "Test symbol atom having specific type")))
 
@@ -442,7 +442,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.G1-DOCS.03</h3>
 ; 
 ; EVAL TEST
-; took 0.007 secs. (6.88 milliseconds) 
+; took 0.007 secs. (6.82 milliseconds) 
 
 !(assertEqual (get-doc some-gnd-atom) (@doc-formal (@item some-gnd-atom) (@kind function) (@type %Undefined%) (@desc "Test function") (@params ((@param (@type %Undefined%) (@desc "First argument")) (@param (@type %Undefined%) (@desc "Second argument")))) (@return (@type %Undefined%) (@desc "Return value"))))
 
@@ -462,7 +462,7 @@ Deterministic: ((Error  (got  ()) (expected  ((@doc-formal (@item some-gnd-atom)
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.G1-DOCS.04</h3>
 ; 
 ; EVAL TEST
-; took 0.003 secs. (3.50 milliseconds) 
+; took 0.003 secs. (3.45 milliseconds) 
 
 !(assertEqual (get-doc NoSuchAtom) (@doc-formal (@item NoSuchAtom) (@kind atom) (@type %Undefined%) (@desc "No documentation")))
 
@@ -482,7 +482,7 @@ Deterministic: ((Error  (got  ()) (expected  ((@doc-formal (@item NoSuchAtom) (@
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.G1-DOCS.05</h3>
 ; 
 ; EVAL TEST
-; took 0.003 secs. (2.84 milliseconds) 
+; took 0.003 secs. (2.83 milliseconds) 
 
 !(assertEqual (get-doc (some-func arg1 arg2)) (@doc-formal (@item (some-func arg1 arg2)) (@kind atom) (@type ReturnType) (@desc "No documentation")))
 
@@ -565,7 +565,7 @@ NDet Result(1): ()
 ;;; Atom (some-func arg1 arg2): ReturnType No documentation
 ;;;
 <span class="ansi32"
->% 2,696,724 inferences, 0.465 CPU in 0.465 seconds (100% CPU, 5804387 Lips)
+>% 2,696,724 inferences, 0.460 CPU in 0.460 seconds (100% CPU, 5865452 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/g1_docs.metta  0)
 <span class="ansi1"
@@ -704,7 +704,7 @@ NDet Result(1): ()
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-18 05:49:24+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-18 08:21:08+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

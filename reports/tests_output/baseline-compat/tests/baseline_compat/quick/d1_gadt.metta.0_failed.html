@@ -49,7 +49,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-18 05:59:39+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-18 08:30:52+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -405,7 +405,7 @@ Script started on 2024-10-18 05:59:39+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; QUICK.D1-GADT.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000217 secs. (216.64 microseconds) 
+; took 0.000219 secs. (218.66 microseconds) 
 
 !(assertEqual (get-type 5) Number)
 
@@ -423,7 +423,7 @@ Deterministic: ()
 >;; QUICK.D1-GADT.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000224 secs. (224.21 microseconds) 
+; took 0.000240 secs. (239.79 microseconds) 
 
 !(assertEqual (get-type (+ 5 7)) Number)
 
@@ -442,7 +442,7 @@ Deterministic: ()
 >;; QUICK.D1-GADT.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000183 secs. (182.87 microseconds) 
+; took 0.000189 secs. (188.81 microseconds) 
 
 !(assertEqual (get-type +) (-> Number Number Number))
 
@@ -462,7 +462,7 @@ Deterministic: ()
 >;; QUICK.D1-GADT.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000281 secs. (281.37 microseconds) 
+; took 0.000279 secs. (278.71 microseconds) 
 
 !(assertEqualToResult (get-type (+ 5 "4")) ())
 
@@ -480,7 +480,7 @@ Deterministic: ()
 >;; QUICK.D1-GADT.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000215 secs. (215.37 microseconds) 
+; took 0.000206 secs. (206.33 microseconds) 
 
 !(assertEqualToResult (get-type (+ -)) ())
 
@@ -501,7 +501,7 @@ Deterministic: ()
 >;; QUICK.D1-GADT.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000167 secs. (166.96 microseconds) 
+; took 0.000155 secs. (155.02 microseconds) 
 
 !(assertEqual (get-type Either) Type)
 
@@ -527,7 +527,7 @@ Deterministic: ()
 >;; QUICK.D1-GADT.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000243 secs. (242.50 microseconds) 
+; took 0.000232 secs. (232.19 microseconds) 
 
 !(assertEqual (get-type (Left 5)) Either)
 
@@ -551,7 +551,7 @@ Deterministic: ()
 >;; QUICK.D1-GADT.08</h3>
 ; 
 ; EVAL TEST
-; took 0.000319 secs. (318.66 microseconds) 
+; took 0.000317 secs. (316.70 microseconds) 
 
 !(assertEqual (get-type (isLeft (Right 5))) Bool)
 
@@ -570,7 +570,7 @@ Deterministic: ()
 >;; QUICK.D1-GADT.09</h3>
 ; 
 ; EVAL TEST
-; took 0.000245 secs. (244.58 microseconds) 
+; took 0.000228 secs. (228.26 microseconds) 
 
 !(assertEqualToResult (get-type (isLeft 5)) ())
 
@@ -598,7 +598,7 @@ Deterministic: ()
 >;; QUICK.D1-GADT.10</h3>
 ; 
 ; EVAL TEST
-; took 0.000742 secs. (742.27 microseconds) 
+; took 0.000673 secs. (673.36 microseconds) 
 
 !(assertEqual (get-type (LeftP 5)) (EitherP Number))
 
@@ -620,7 +620,7 @@ Deterministic: ()
 >;; QUICK.D1-GADT.11</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.12 milliseconds) 
+; took 0.001 secs. (1.11 milliseconds) 
 
 !(assertEqual (get-type (pair (LeftP 5) "String")) (Pair (EitherP Number) String))
 
@@ -648,7 +648,7 @@ Deterministic: ()
 >;; QUICK.D1-GADT.12</h3>
 ; 
 ; EVAL TEST
-; took 0.000815 secs. (814.75 microseconds) 
+; took 0.000806 secs. (805.68 microseconds) 
 
 !(assertEqual (get-type (Cons 5 (Cons 6 Nil))) (List Number))
 
@@ -666,7 +666,7 @@ Deterministic: ()
 >;; QUICK.D1-GADT.13</h3>
 ; 
 ; EVAL TEST
-; took 0.000350 secs. (349.88 microseconds) 
+; took 0.000340 secs. (340.12 microseconds) 
 
 !(assertEqualToResult (get-type (Cons 5 (Cons "6" Nil))) ())
 
@@ -688,7 +688,7 @@ Deterministic: ()
 >;; QUICK.D1-GADT.14</h3>
 ; 
 ; EVAL TEST
-; took 0.000734 secs. (733.99 microseconds) 
+; took 0.000697 secs. (696.85 microseconds) 
 
 !(assertEqual (let (List $t) (get-type (Cons 5 (Cons 6 Nil))) $t) Number)
 
@@ -698,7 +698,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 391,231 inferences, 0.097 CPU in 0.097 seconds (100% CPU, 4030697 Lips)
+>% 391,231 inferences, 0.097 CPU in 0.098 seconds (100% CPU, 4023042 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/quick/d1_gadt.metta  0)
 <span class="ansi1"
@@ -837,7 +837,7 @@ Deterministic: ()
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-18 05:59:45+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-18 08:30:57+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
