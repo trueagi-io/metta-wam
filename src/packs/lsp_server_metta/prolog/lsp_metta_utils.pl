@@ -1,14 +1,8 @@
 :- module(lsp_metta_utils, [
-%                       called_at/4,
-%                       defined_at/3,
-%                       name_callable/2,
-%                       relative_ref_location/4,
-%                       clause_variable_positions/3,
-%                       seek_to_line/2,
-%                       linechar_offset/3,
-%                       clause_with_arity_in_file_at_position/3,
                         help_at_position/4,
-                        get_document_symbols/2
+                        get_document_symbols/2,
+                        clause_with_arity_in_file_at_position/4,
+                        help_at_position/4
                         ]).
 :- use_module(library(debug), [debug/3]).
 :- use_module(lsp_metta_xref).
