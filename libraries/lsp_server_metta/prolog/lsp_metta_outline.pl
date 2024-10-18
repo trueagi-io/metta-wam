@@ -16,10 +16,28 @@
 metta_atom_xref(Atom):- 
     metta_file_buffer(+, Atom, NamedVarsList, _Filename, _LineCount),  % Retrieve the atom from a Metta file buffer.
     \+ clause(metta_atom_asserted(_, Atom), true),  % Ensure the atom has not been asserted already.
-    nop(maybe_set_var_names(NamedVarsList)).  % Set variable names based on the named variables list.
+   ignore(maybe_name_vars(NamedVarsList)).  % Set variable names based on the named variables list.
 metta_atom_xref(Atom):- 
     clause(metta_atom_asserted(_, Atom), true).  % Check if the atom has been asserted in the knowledge base.
 
+
+%!  maybe_name_vars(+List) is det.
+%
+%   Conditionally sets the variable names if the list is not empty.
+%
+%   @arg List is the list of variable names.
+maybe_name_vars(List):- \+ is_list(List), !.
+maybe_name_vars([]):-!.
+maybe_name_vars([N=Var|List]):-
+    ignore((n_to_vn(N,NN),Var = '$VAR'(NN))),
+    maybe_name_vars(List).
+n_to_vn(N,NN):- var(N),!,sformat(NN,'~p',[N]).
+n_to_vn(N,NN):- number(N),sformat(NN,'~p',['$VAR'(N)]).
+n_to_vn(N,NN):- \+ atom(N),!,sformat(NN,'~p',[N]).
+n_to_vn('_','_'):-!.
+n_to_vn(N,NN):-atom_concat('$',N1,N),!,sformat(NN,'~w',[N1]).
+n_to_vn(N,NN):-atom_concat('_',N1,N),!,sformat(NN,'~w',[N1]).
+n_to_vn(N,NN):-!,sformat(NN,'~w',[N]).
 
 
 %!  predicate_help_hook(+HookType, +Path, +Term, +Arity, -S) is semidet.
@@ -505,14 +523,15 @@ d4_document_symbol(Nth, d(_,Str,_,_), S, 12, Nth:1, End:1):- succ(Nth,End), outl
 % Douglas' file_buffer
 xref_document_symbol_fb(Doc, PrettyString, KindNumber, Start, End):- 
    doc_path(Doc,Path),
-   clause(metta_file_buffer(_,What,_,Path,PosStart),true,Ref), line_col(PosStart,Start),
-   once(((xrefed_outline_type_kind(What,Outline,KindName),outline_name(Outline,PrettyString),lsp_xref_kind(KindNumber, KindName)))),
+   clause(metta_file_buffer(_,What,VL,Path,PosStart),true,Ref), line_col(PosStart,Start),
+   ignore(maybe_name_vars(VL)),
+   once(((xrefed_outline_type_kind(What,Outline,KindName),outline_name(Outline,PrettyString),lsp_xref_kind(KindNumber, KindName)))),   
    once(((next_clause(Ref, metta_file_buffer(_,_,_,Path,PosEnd)), line_col(PosEnd,End)))-> true ; next_line(Start,End)).
 
 
 outline_name(Str,S):- string(Str),!,atom_length(Str,Len),Len>2,!,S=Str.
 outline_name(Str,S):- is_ftVar(Str),wots(M, write_src_woi(Str)),!,outline_name(M,S).
-outline_name(Str,S):- is_list(Str),wots(M, write_src_woi(Str)),!,outline_name(M,S).
+outline_name(Str,S):- is_list(Str), wots(M, write_src_woi(Str)),!,outline_name(M,S).
 outline_name(Str,S):- Str = exec(_),wots(M, write_src_woi(Str)),!,outline_name(M,S).
 outline_name(Str,S):- sformat(S,'~w',[Str]),atom_length(S,Len),Len>5.
 
