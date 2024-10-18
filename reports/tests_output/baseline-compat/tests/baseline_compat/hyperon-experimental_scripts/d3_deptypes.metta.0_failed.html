@@ -42,7 +42,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-18 20:46:28+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-18 23:36:33+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -400,7 +400,7 @@ Script started on 2024-10-18 20:46:28+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D3-DEPTYPES.01</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.66 milliseconds) 
+; took 0.002 secs. (1.72 milliseconds) 
 
 !(assertEqual (get-type (Cons 0 (Cons 1 Nil))) (Vec Number (S (S Z))))
 
@@ -424,7 +424,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D3-DEPTYPES.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000816 secs. (816.37 microseconds) 
+; took 0.000881 secs. (881.29 microseconds) 
 
 !(assertEqual (get-type (drop (Cons 1 Nil))) (Vec Number Z))
 
@@ -443,7 +443,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D3-DEPTYPES.03</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.01 milliseconds) 
+; took 0.000977 secs. (976.51 microseconds) 
 
 !(assertEqual (drop (Cons 2 (Cons 1 Nil))) (Cons 1 Nil))
 
@@ -462,7 +462,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D3-DEPTYPES.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000232 secs. (231.97 microseconds) 
+; took 0.000228 secs. (227.76 microseconds) 
 
 !(assertEqualToResult (get-type (drop Nil)) ())
 
@@ -494,7 +494,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D3-DEPTYPES.05</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.14 milliseconds) 
+; took 0.001 secs. (1.12 milliseconds) 
 
 !(assertEqual (get-type (ConsN "1" (ConsN "2" NilN))) (VecN String 2))
 
@@ -517,7 +517,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D3-DEPTYPES.06</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.21 milliseconds) 
+; took 0.001 secs. (1.12 milliseconds) 
 
 !(assertEqual (get-type (dropN (ConsN "1" NilN))) (VecN String 0))
 
@@ -541,7 +541,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D3-DEPTYPES.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000350 secs. (350.33 microseconds) 
+; took 0.000301 secs. (300.67 microseconds) 
 
 !(assertEqualToResult (dropN NilN) ((dropN NilN)))
 
@@ -551,7 +551,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 274,370 inferences, 0.071 CPU in 0.071 seconds (100% CPU, 3866913 Lips)
+>% 274,372 inferences, 0.070 CPU in 0.070 seconds (100% CPU, 3905833 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/d3_deptypes.metta  0)
 <span class="ansi1"
@@ -690,7 +690,7 @@ Deterministic: ()
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-18 20:46:34+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-18 23:36:38+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

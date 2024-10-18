@@ -69,7 +69,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-18 20:57:47+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-18 23:48:21+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -427,7 +427,7 @@ Script started on 2024-10-18 20:57:47+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; QUICK.D4-TYPE-PROP.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000275 secs. (275.32 microseconds) 
+; took 0.000262 secs. (262.24 microseconds) 
 
 !(assertEqual (get-type (Mortal Plato)) Type)
 
@@ -464,7 +464,7 @@ Deterministic: ()
 >;; QUICK.D4-TYPE-PROP.02</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.25 milliseconds) 
+; took 0.001 secs. (1.17 milliseconds) 
 
 !(assertEqual (get-type (HumansAreMortal SocratesIsHuman)) (Mortal Socrates))
 
@@ -483,7 +483,7 @@ Deterministic: ()
 >;; QUICK.D4-TYPE-PROP.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000391 secs. (390.80 microseconds) 
+; took 0.000266 secs. (266.15 microseconds) 
 
 !(assertEqualToResult (get-type (HumansAreMortal (Human Socrates))) ())
 
@@ -523,7 +523,7 @@ Deterministic: ()
 >;; QUICK.D4-TYPE-PROP.04</h3>
 ; 
 ; EVAL TEST
-; took 0.003 secs. (2.79 milliseconds) 
+; took 0.003 secs. (2.61 milliseconds) 
 
 !(assertEqualToResult ("sameTypes" (get-type SocratesIsMortal) (get-type (HumansAreMortal SocratesIsHuman))) (("sameTypes" (Mortal Socrates) (Mortal Socrates))))
 
@@ -541,7 +541,7 @@ Deterministic: ()
 >;; QUICK.D4-TYPE-PROP.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000379 secs. (378.69 microseconds) 
+; took 0.000318 secs. (317.71 microseconds) 
 
 !(assertEqual (get-type (= SocratesIsMortal (HumansAreMortal SocratesIsHuman))) Type)
 
@@ -569,7 +569,7 @@ Deterministic: ("sameTypes" Type Type)
 >;; QUICK.D4-TYPE-PROP.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000442 secs. (442.42 microseconds) 
+; took 0.000430 secs. (429.57 microseconds) 
 
 !(assertEqual (get-type (= (Mortal Socrates) (Mortal Plato))) Type)
 
@@ -595,7 +595,7 @@ Deterministic: ("!sameTypes" (Mortal Socrates) (Mortal Plato))
 >;; QUICK.D4-TYPE-PROP.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000388 secs. (387.74 microseconds) 
+; took 0.000314 secs. (314.30 microseconds) 
 
 !(assertEqualToResult (get-type (= SocratesIsMortal (HumansAreMortal PlatoIsHuman))) ())
 
@@ -621,7 +621,7 @@ Deterministic: ("!sameTypes" (Human Socrates) !(get-type PlatoIsHuman))
 >;; QUICK.D4-TYPE-PROP.08</h3>
 ; 
 ; EVAL TEST
-; took 0.000364 secs. (363.59 microseconds) 
+; took 0.000246 secs. (246.46 microseconds) 
 
 !(assertEqualToResult (get-type (= SocratesIsHuman PlatoIsHuman)) ())
 
@@ -646,7 +646,7 @@ Deterministic: ("!sameTypes" (Human Socrates) (Mortal Socrates))
 >;; QUICK.D4-TYPE-PROP.09</h3>
 ; 
 ; EVAL TEST
-; took 0.000245 secs. (244.88 microseconds) 
+; took 0.000281 secs. (280.98 microseconds) 
 
 !(assertEqualToResult (get-type (= SocratesIsHuman SocratesIsMortal)) ())
 
@@ -684,7 +684,7 @@ Deterministic: ()
 >;; QUICK.D4-TYPE-PROP.10</h3>
 ; 
 ; EVAL TEST
-; took 0.000583 secs. (582.83 microseconds) 
+; took 0.000475 secs. (474.61 microseconds) 
 
 !(assertEqual (= SocratesIsMortal (HumansAreMortal SocratesIsHuman)) T)
 
@@ -702,7 +702,7 @@ Deterministic: ()
 >;; QUICK.D4-TYPE-PROP.11</h3>
 ; 
 ; EVAL TEST
-; took 0.000523 secs. (522.81 microseconds) 
+; took 0.000439 secs. (439.28 microseconds) 
 
 !(assertEqual (= (+ 1 1) (- 3 1)) T)
 
@@ -723,7 +723,7 @@ Deterministic: ()
 >;; QUICK.D4-TYPE-PROP.12</h3>
 ; 
 ; EVAL TEST
-; took 0.000937 secs. (936.62 microseconds) 
+; took 0.000830 secs. (829.56 microseconds) 
 
 !(assertEqual (= (Mortal Socrates) T) T)
 
@@ -742,7 +742,7 @@ Deterministic: ()
 >;; QUICK.D4-TYPE-PROP.13</h3>
 ; 
 ; EVAL TEST
-; took 0.000924 secs. (923.85 microseconds) 
+; took 0.000767 secs. (766.72 microseconds) 
 
 !(assertEqualToResult (= (Mortal Plato) T) ())
 
@@ -763,7 +763,7 @@ Deterministic: ()
 >;; QUICK.D4-TYPE-PROP.14</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.54 milliseconds) 
+; took 0.001 secs. (1.48 milliseconds) 
 
 !(assertEqual (= (Mortal Plato) T) T)
 
@@ -783,7 +783,7 @@ Deterministic: ()
 >;; QUICK.D4-TYPE-PROP.15</h3>
 ; 
 ; EVAL TEST
-; took 0.000744 secs. (743.90 microseconds) 
+; took 0.000704 secs. (703.96 microseconds) 
 
 !(assertEqualToResult (= (Human Sam) T) ())
 
@@ -805,7 +805,7 @@ Deterministic: ()
 >;; QUICK.D4-TYPE-PROP.16</h3>
 ; 
 ; EVAL TEST
-; took 0.000577 secs. (576.90 microseconds) 
+; took 0.000474 secs. (474.46 microseconds) 
 
 !(assertEqualToResult (Mortal Plato) ((Mortal Plato)))
 
@@ -824,7 +824,7 @@ Deterministic: ()
 >;; QUICK.D4-TYPE-PROP.17</h3>
 ; 
 ; EVAL TEST
-; took 0.000908 secs. (907.85 microseconds) 
+; took 0.000820 secs. (820.01 microseconds) 
 
 !(assertEqual (= (= $x $x) T) T)
 
@@ -851,7 +851,7 @@ Deterministic: ()
 >;; QUICK.D4-TYPE-PROP.18</h3>
 ; 
 ; EVAL TEST
-; took 0.000570 secs. (570.25 microseconds) 
+; took 0.000477 secs. (477.22 microseconds) 
 
 !(assertEqual (Mortal Plato) T)
 
@@ -874,7 +874,7 @@ Deterministic: ()
 >;; QUICK.D4-TYPE-PROP.19</h3>
 ; 
 ; EVAL TEST
-; took 0.000845 secs. (845.39 microseconds) 
+; took 0.000780 secs. (780.15 microseconds) 
 
 !(assertEqualToResult (ift (Mortal $x) $x) (Socrates Plato))
 
@@ -884,7 +884,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 633,041 inferences, 0.145 CPU in 0.145 seconds (100% CPU, 4354342 Lips)
+>% 633,041 inferences, 0.140 CPU in 0.140 seconds (100% CPU, 4522895 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/quick/d4_type_prop.metta  0)
 <span class="ansi1"
@@ -1023,7 +1023,7 @@ Deterministic: ()
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-18 20:57:53+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-18 23:48:27+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
