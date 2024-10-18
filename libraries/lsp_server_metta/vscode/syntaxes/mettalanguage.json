@@ -1,0 +1,77 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "MeTTa",
+	"patterns": [
+		{
+			"include": "#doctag"
+		},
+		{
+			"include": "#namespace"
+		},
+		{
+			"include": "#variables"
+		},
+		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#comment"
+		},
+		{
+			"include": "#strings"
+		}
+	],
+	"repository": {
+		"keywords": {
+			"patterns": [{
+				"name": "keyword.control.metta",
+				"match": "[a-zA-Z_][a-zA-Z_\\-0-9]*"
+			}]
+		},
+		"doctag" : {
+			"patterns": [
+				{
+					"name": "doctag.metta",
+					"match": "\\x40[a-zA-Z_][a-zA-Z_\\-\\*0-9]*"
+				}
+			]
+		},
+		"namespace" : {
+			"patterns": [
+				{
+					"name": "namespace.metta",
+					"match": "\\x26[a-zA-Z_][a-zA-Z_\\-\\*0-9]*"
+				}
+			]
+		},
+		"variables" : {
+			"patterns": [
+				{
+					"name": "variable.metta",
+					"match": "\\x24[a-zA-Z_][a-zA-Z_\\-\\*0-9]*"
+				}
+			]
+		},
+		"comment" : {
+			"patterns": [
+				{
+					"name": "comment.line.metta",
+					"begin": ";",
+					"end": "$"
+				}
+			]
+		},
+		"strings": {
+			"name": "string.quoted.double.metta",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.metta",
+					"match": "\\\\."
+				}
+			]
+		}
+	},
+	"scopeName": "source.metta"
+}
