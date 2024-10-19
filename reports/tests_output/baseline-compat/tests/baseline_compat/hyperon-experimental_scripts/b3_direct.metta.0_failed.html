@@ -70,7 +70,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 09:37:17+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 09:41:34+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -419,7 +419,7 @@ Script started on 2024-10-19 09:37:17+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B3-DIRECT.01</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.09 milliseconds) 
+; took 0.001 secs. (1.06 milliseconds) 
 
 !(assertEqual (green Fritz) T)
 
@@ -530,7 +530,7 @@ true]
 >          |     <--Fritz </span>
 ; 
 ; EVAL TEST
-; took 0.022 secs. (22.32 milliseconds) 
+; took 0.021 secs. (21.11 milliseconds) 
 
 !(assertEqual (ift (green $x) $x) Fritz)
 
@@ -562,7 +562,7 @@ Deterministic: ()
 >    1:1   |   |-<--eat_flies </span>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.26 milliseconds) 
+; took 0.002 secs. (2.17 milliseconds) 
 
 !(assertEqualToResult (match &self (= ($p Fritz) T) $p) (croaks eat_flies))
 
@@ -574,7 +574,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 292,648 inferences, 0.065 CPU in 0.065 seconds (100% CPU, 4510382 Lips)
+>% 292,648 inferences, 0.063 CPU in 0.063 seconds (100% CPU, 4656758 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/b3_direct.metta  0)
 <span class="ansi1"
@@ -713,7 +713,7 @@ Deterministic: ()
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 09:37:22+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 09:41:39+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
