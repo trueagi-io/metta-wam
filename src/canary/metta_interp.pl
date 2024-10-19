@@ -635,6 +635,7 @@ with_output_to_s(Out,G):- current_output(COut),
 %
 %   @arg G The goal to be executed.
 in_answer_io(_):- nb_current(suspend_answers,true),!.
+
 in_answer_io(G) :-
     % Get the answer_output stream
     answer_output(AnswerOut),
@@ -762,7 +763,7 @@ process_and_finalize_output(State, CurrentOut, AnswerOut, StdOutStream, CurrentE
 handle_catcher(Var) :-
     % If the catcher is unbound, the call succeeded.
     var(Var), !.
-handle_catcher(exit).  % Success, do nothing.
+handle_catcher(exit) :- !.  % Success, do nothing.
 handle_catcher(fail) :- fail.  % Failure, propagate it.
 handle_catcher(exception(Exception)) :- throw(Exception).  % Exception, re-throw it.
 
