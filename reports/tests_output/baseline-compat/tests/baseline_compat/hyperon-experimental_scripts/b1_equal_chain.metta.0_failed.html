@@ -34,7 +34,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 14:04:02+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 14:07:13+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -394,7 +394,7 @@ Script started on 2024-10-19 14:04:02+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B1-EQUAL-CHAIN.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000792 secs. (792.28 microseconds) 
+; took 0.000766 secs. (765.75 microseconds) 
 
 !(assertEqual (S K K x) x)
 
@@ -416,7 +416,7 @@ Deterministic: ()()]
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B1-EQUAL-CHAIN.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000302 secs. (302.16 microseconds) 
+; took 0.000291 secs. (290.92 microseconds) 
 
 !(assertEqualToResult (expression without known equalities) ((expression without known equalities)))
 
@@ -441,7 +441,7 @@ Deterministic: ()()]
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B1-EQUAL-CHAIN.03</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.81 milliseconds) 
+; took 0.002 secs. (1.83 milliseconds) 
 
 !(assertEqual (Add (S Z) (S Z)) (S (S Z)))
 
@@ -463,7 +463,7 @@ Deterministic: ()()]
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B1-EQUAL-CHAIN.04</h3>
 ; 
 ; EVAL TEST
-; took 0.003 secs. (2.61 milliseconds) 
+; took 0.003 secs. (2.66 milliseconds) 
 
 !(assertEqual (Something? (Add (S Z) (S Z))) (Something? (S (S Z))))
 
@@ -488,7 +488,7 @@ Deterministic: ()()]
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B1-EQUAL-CHAIN.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000869 secs. (868.94 microseconds) 
+; took 0.000884 secs. (883.59 microseconds) 
 
 !(assertEqual (eq (S K K x) x) T)
 
@@ -505,7 +505,7 @@ Deterministic: ()()]
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B1-EQUAL-CHAIN.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000369 secs. (369.41 microseconds) 
+; took 0.000305 secs. (305.09 microseconds) 
 
 !(assertEqualToResult (eq Green Blue) ((eq Green Blue)))
 
@@ -514,7 +514,7 @@ Deterministic: ()()]
 </span>
 Deterministic: ()()]
 <span class="ansi32"
->% 293,011 inferences, 0.080 CPU in 0.080 seconds (100% CPU, 3678518 Lips)
+>% 292,813 inferences, 0.079 CPU in 0.079 seconds (100% CPU, 3727640 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/b1_equal_chain.metta  0)
 <span class="ansi1"
@@ -659,7 +659,7 @@ Deterministic: ()()]
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 14:04:07+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 14:07:18+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

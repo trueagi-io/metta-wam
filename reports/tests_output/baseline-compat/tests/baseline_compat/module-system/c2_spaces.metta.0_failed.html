@@ -72,7 +72,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 14:16:03+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 14:19:09+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -453,7 +453,7 @@ Deterministic: ()()]
 >;; MODULE-SYSTEM.C2-SPACES.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000652 secs. (651.51 microseconds) 
+; took 0.000562 secs. (562.10 microseconds) 
 
 !(assertEqualToResult (match &kb (, ($obj is $prop) ($prop is-a Color) ($obj is-a Planet)) (Color of Planet $obj is $prop)) ((Color of Planet Mars is Red)))
 
@@ -471,7 +471,7 @@ Deterministic: ()()]
 >;; MODULE-SYSTEM.C2-SPACES.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000152 secs. (151.62 microseconds) 
+; took 0.000157 secs. (157.16 microseconds) 
 
 !(assertEqualToResult (match &self ($p is-a Color) $p) ())
 
@@ -492,7 +492,7 @@ Deterministic: ()()]
 >;; MODULE-SYSTEM.C2-SPACES.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000346 secs. (345.99 microseconds) 
+; took 0.000314 secs. (314.36 microseconds) 
 
 !(assertEqual (match &kb (, (Venus orbit $x au) (Mars orbit $y au)) (- $y $x)) 0.8)
 
@@ -517,7 +517,7 @@ Deterministic: ()()]
 >;; MODULE-SYSTEM.C2-SPACES.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000655 secs. (655.05 microseconds) 
+; took 0.000629 secs. (629.23 microseconds) 
 
 !(assertEqualToResult (match &kb ($prop is-a Color) (match &self ($obj is $prop) $obj)) (Ball))
 
@@ -604,7 +604,7 @@ Deterministic: ()()]
 >;; MODULE-SYSTEM.C2-SPACES.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000549 secs. (549.41 microseconds) 
+; took 0.000574 secs. (574.24 microseconds) 
 
 !(assertEqualToResult (match &self (, ($obj is $prop) ($prop is-a Color) ($obj is-a Planet)) (Color of Planet $obj is $prop)) ((Color of Planet Mars is Red)))
 
@@ -613,7 +613,7 @@ Deterministic: ()()]
 </span>
 Deterministic: ()()]
 <span class="ansi32"
->% 410,442 inferences, 0.122 CPU in 0.122 seconds (100% CPU, 3357174 Lips)
+>% 410,400 inferences, 0.121 CPU in 0.121 seconds (100% CPU, 3388635 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/module-system/c2_spaces.metta  0)
 <span class="ansi1"
@@ -759,7 +759,7 @@ Deterministic: ()()]
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 14:16:08+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 14:19:14+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
