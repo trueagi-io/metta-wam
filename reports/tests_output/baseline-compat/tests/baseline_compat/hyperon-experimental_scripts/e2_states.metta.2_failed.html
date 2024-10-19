@@ -37,7 +37,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 09:43:45+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 10:08:44+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -407,7 +407,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000750 secs. (750.18 microseconds) 
+; took 0.000874 secs. (873.82 microseconds) 
 
 !(assertEqual (get-state (get-token)) (A B))
 
@@ -429,7 +429,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000571 secs. (571.50 microseconds) 
+; took 0.000697 secs. (696.92 microseconds) 
 
 !(assertEqual (get-token) (new-state (A B)))
 
@@ -452,7 +452,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000641 secs. (640.74 microseconds) 
+; took 0.000759 secs. (758.66 microseconds) 
 
 !(assertEqual (get-type (new-state 2)) (StateMonad Number))
 
@@ -470,7 +470,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000802 secs. (801.80 microseconds) 
+; took 0.000879 secs. (879.49 microseconds) 
 
 !(assertEqual (get-type (change-state! (new-state "S") "V")) (StateMonad String))
 
@@ -489,7 +489,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000828 secs. (828.38 microseconds) 
+; took 0.000830 secs. (830.09 microseconds) 
 
 !(assertEqual (let $v (new-state 1) (get-type $v)) (StateMonad Number))
 
@@ -508,7 +508,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000694 secs. (693.85 microseconds) 
+; took 0.000680 secs. (680.10 microseconds) 
 
 !(assertEqual (get-type &state-token) (StateMonad Expression))
 
@@ -533,7 +533,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000213 secs. (213.21 microseconds) 
+; took 0.000217 secs. (217.40 microseconds) 
 
 !(assertEqual (change-state! &state-token 1) (Error 1 BadType))
 
@@ -553,7 +553,7 @@ Deterministic: ((Error  (got  ((State  1 $_247822))) (expected  ((Error 1 BadTyp
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.08</h3>
 ; 
 ; EVAL TEST
-; took 0.000217 secs. (217.44 microseconds) 
+; took 0.000244 secs. (244.20 microseconds) 
 
 !(assertEqual (change-state! (new-state 1) "S") (Error "S" BadType))
 
@@ -582,7 +582,7 @@ Deterministic: ((Error  (got  ((State  "S" $_277390))) (expected  ((Error "S" Ba
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.09</h3>
 ; 
 ; EVAL TEST
-; took 0.000455 secs. (454.85 microseconds) 
+; took 0.000535 secs. (535.28 microseconds) 
 
 !(assertEqualToResult (nop (change-state! &state-token (C D))) (()))
 
@@ -601,7 +601,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.10</h3>
 ; 
 ; EVAL TEST
-; took 0.000731 secs. (730.66 microseconds) 
+; took 0.000757 secs. (756.80 microseconds) 
 
 !(assertEqual (get-state (get-token)) (C D))
 
@@ -624,7 +624,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.11</h3>
 ; 
 ; EVAL TEST
-; took 0.000680 secs. (680.42 microseconds) 
+; took 0.000716 secs. (716.24 microseconds) 
 
 !(assertEqual (let $x (new-state 1) (change-state! $x (+ (get-state $x) 1))) (new-state 2))
 
@@ -644,7 +644,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.12</h3>
 ; 
 ; EVAL TEST
-; took 0.000311 secs. (310.78 microseconds) 
+; took 0.000296 secs. (296.14 microseconds) 
 
 !(assertEqual (let $tnso (new-state 1) $tnso) (new-state 1))
 
@@ -656,7 +656,7 @@ Deterministic: ()
 ;;; FIXME: doesn't work as for 25 May 2023
 ;;; !(get-state (let $x (new-state 1) $x))
 <span class="ansi32"
->% 435,066 inferences, 0.093 CPU in 0.093 seconds (100% CPU, 4688536 Lips)
+>% 435,066 inferences, 0.093 CPU in 0.093 seconds (100% CPU, 4703358 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/e2_states.metta  0)
 <span class="ansi1"
@@ -795,7 +795,7 @@ Deterministic: ()
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 09:43:50+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 10:08:50+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

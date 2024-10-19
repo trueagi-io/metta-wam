@@ -49,7 +49,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 09:42:58+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 10:07:56+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -405,7 +405,7 @@ Script started on 2024-10-19 09:42:58+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D1-GADT.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000219 secs. (218.54 microseconds) 
+; took 0.000235 secs. (234.79 microseconds) 
 
 !(assertEqual (get-type 5) Number)
 
@@ -423,7 +423,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D1-GADT.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000232 secs. (232.49 microseconds) 
+; took 0.000253 secs. (252.98 microseconds) 
 
 !(assertEqual (get-type (+ 5 7)) Number)
 
@@ -442,7 +442,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D1-GADT.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000181 secs. (181.07 microseconds) 
+; took 0.000238 secs. (238.34 microseconds) 
 
 !(assertEqual (get-type +) (-> Number Number Number))
 
@@ -462,7 +462,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D1-GADT.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000259 secs. (258.68 microseconds) 
+; took 0.000306 secs. (305.65 microseconds) 
 
 !(assertEqualToResult (get-type (+ 5 "4")) ())
 
@@ -480,7 +480,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D1-GADT.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000201 secs. (201.26 microseconds) 
+; took 0.000224 secs. (224.07 microseconds) 
 
 !(assertEqualToResult (get-type (+ -)) ())
 
@@ -501,7 +501,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D1-GADT.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000160 secs. (160.17 microseconds) 
+; took 0.000171 secs. (171.00 microseconds) 
 
 !(assertEqual (get-type Either) Type)
 
@@ -527,7 +527,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D1-GADT.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000218 secs. (218.23 microseconds) 
+; took 0.000253 secs. (252.66 microseconds) 
 
 !(assertEqual (get-type (Left 5)) Either)
 
@@ -551,7 +551,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D1-GADT.08</h3>
 ; 
 ; EVAL TEST
-; took 0.000319 secs. (318.72 microseconds) 
+; took 0.000402 secs. (401.78 microseconds) 
 
 !(assertEqual (get-type (isLeft (Right 5))) Bool)
 
@@ -570,7 +570,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D1-GADT.09</h3>
 ; 
 ; EVAL TEST
-; took 0.000224 secs. (224.39 microseconds) 
+; took 0.000259 secs. (259.13 microseconds) 
 
 !(assertEqualToResult (get-type (isLeft 5)) ())
 
@@ -598,7 +598,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D1-GADT.10</h3>
 ; 
 ; EVAL TEST
-; took 0.000649 secs. (649.48 microseconds) 
+; took 0.000773 secs. (772.63 microseconds) 
 
 !(assertEqual (get-type (LeftP 5)) (EitherP Number))
 
@@ -620,7 +620,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D1-GADT.11</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.11 milliseconds) 
+; took 0.001 secs. (1.22 milliseconds) 
 
 !(assertEqual (get-type (pair (LeftP 5) "String")) (Pair (EitherP Number) String))
 
@@ -648,7 +648,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D1-GADT.12</h3>
 ; 
 ; EVAL TEST
-; took 0.000841 secs. (841.29 microseconds) 
+; took 0.000879 secs. (879.18 microseconds) 
 
 !(assertEqual (get-type (Cons 5 (Cons 6 Nil))) (List Number))
 
@@ -666,7 +666,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D1-GADT.13</h3>
 ; 
 ; EVAL TEST
-; took 0.000336 secs. (335.95 microseconds) 
+; took 0.000344 secs. (343.72 microseconds) 
 
 !(assertEqualToResult (get-type (Cons 5 (Cons "6" Nil))) ())
 
@@ -688,7 +688,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D1-GADT.14</h3>
 ; 
 ; EVAL TEST
-; took 0.000683 secs. (682.79 microseconds) 
+; took 0.000701 secs. (701.36 microseconds) 
 
 !(assertEqual (let (List $t) (get-type (Cons 5 (Cons 6 Nil))) $t) Number)
 
@@ -698,7 +698,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 393,163 inferences, 0.098 CPU in 0.098 seconds (100% CPU, 3999719 Lips)
+>% 393,163 inferences, 0.101 CPU in 0.101 seconds (100% CPU, 3891177 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/d1_gadt.metta  0)
 <span class="ansi1"
@@ -837,7 +837,7 @@ Deterministic: ()
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 09:43:04+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 10:08:02+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

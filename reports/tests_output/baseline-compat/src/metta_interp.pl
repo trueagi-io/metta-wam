@@ -465,13 +465,16 @@ type_value(error_mode, 'default').  % Default error handling mode
 type_value(warning_mode, 'default'). % Default warning handling mode
 
 % Dynamically show all available options with descriptions in the required format, grouped and halt
-show_help_options :-
+show_help_options_no_halt :-
     findall([Name, DefaultValue, Type, Help, Group],
             option_value_name_default_type_help(Name, DefaultValue, Type, Help, Group),
             Options),
     max_name_length(Options, MaxLen),
     format("  First value is the default; if a brown value is listed, it is the Rust compatibility default:\n\n"),
-    group_options(Options, MaxLen),
+    group_options(Options, MaxLen),!.
+
+show_help_options:-
+    show_help_options_no_halt,
     halt.
 
 % Calculate the maximum length of option names
@@ -1169,7 +1172,8 @@ show_transpiler:- preview_compiler.
 
 option_switch_pred(F):-
   current_predicate(F/0),interpreter_source_file(File),
-  source_file(F, File), \+ \+ (member(Prefix,[is_,show_,trace_on_]), symbol_concat(Prefix,_,F)).
+  source_file(F, File), \+ \+ (member(Prefix,[is_,show_,trace_on_]), symbol_concat(Prefix,_,F)),
+  F \== show_help_options.
 
 do_show_option_switches :-
   forall(option_switch_pred(F),(call(F)-> writeln(yes(F)); writeln(not(F)))).
