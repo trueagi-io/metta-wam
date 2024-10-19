@@ -30,7 +30,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 09:45:35+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 09:46:47+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -346,9 +346,9 @@ Script started on 2024-10-19 09:45:35+00:00 [TERM="xterm-256color" TTY="/dev/pts
 P;HTML|
 ;                                         (= 2  "Missed result: 4)]")
 P;HTML|
-;                                         (= 2  "0.03user 0.00system 0:00.04elapsed 97%CPU (0avgtext+0avgdata 25416maxresident)k")
+;                                         (= 2  "0.04user 0.00system 0:00.04elapsed 100%CPU (0avgtext+0avgdata 25280maxresident)k")
 P;HTML|
-;                                         (= 2  "0inputs+0outputs (0major+2856minor)pagefaults 0swaps")
+;                                         (= 2  "0inputs+0outputs (0major+2854minor)pagefaults 0swaps")
 P;HTML|
 ;                                        (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/max_time_tests.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/max_time_tests.metta)
 
@@ -362,7 +362,7 @@ Script started on 2024-10-19 09:45:35+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-METTALOG-SANITY.MAX-TIME-TESTS.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000621 secs. (620.89 microseconds) 
+; took 0.000539 secs. (539.28 microseconds) 
 
 !(assertEqualToResult (catch (max-time! 1 (+ 2 2)) time_limit_exceeded time_limit_exceeded) (4))
 
@@ -384,7 +384,7 @@ Deterministic: ()
 
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.48 milliseconds) 
+; took 0.002 secs. (1.52 milliseconds) 
 
 !(assertEqualToResult (catch (max-time! 0.05 (sleep! 2)) time_limit_exceeded time_limit_exceeded) (time_limit_exceeded))
 
@@ -403,7 +403,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.MAX-TIME-TESTS.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000420 secs. (419.50 microseconds) 
+; took 0.000407 secs. (407.45 microseconds) 
 
 !(assertEqualToResult (catch (max-time! (+ 1 1) (+ 2 2)) time_limit_exceeded time_limit_exceeded) (4))
 
@@ -422,7 +422,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.MAX-TIME-TESTS.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000329 secs. (328.70 microseconds) 
+; took 0.000279 secs. (278.53 microseconds) 
 
 !(assertEqualToResult (max-time! 1 (superpose (a b c))) (a b c))
 
@@ -454,7 +454,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.MAX-TIME-TESTS.05</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.11 milliseconds) 
+; took 0.002 secs. (2.17 milliseconds) 
 
 !(assertEqualToResult (catch (max-time! (time-limit) (increment)) time_limit_exceeded time_limit_exceeded) (2 3))
 
@@ -464,7 +464,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 175,974 inferences, 0.036 CPU in 0.086 seconds (43% CPU, 4833717 Lips)
+>% 175,982 inferences, 0.038 CPU in 0.087 seconds (44% CPU, 4612579 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/max_time_tests.metta  0)
 <span class="ansi1"
@@ -603,7 +603,7 @@ Deterministic: ()
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 09:45:40+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 09:46:53+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

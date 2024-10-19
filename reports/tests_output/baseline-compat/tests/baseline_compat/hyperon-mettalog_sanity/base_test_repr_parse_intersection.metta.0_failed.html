@@ -27,7 +27,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 09:44:03+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 09:45:02+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -359,7 +359,7 @@ Script started on 2024-10-19 09:44:03+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-METTALOG-SANITY.BASE-TEST-REPR-PARSE-INTERSECTION.01</h3>
 ; 
 ; EVAL TEST
-; took 0.050 secs. (50.12 milliseconds) 
+; took 0.050 secs. (50.23 milliseconds) 
 
 !(assertEqualToResult (intersection (superpose (a b (+ 2 3) c)) (superpose (b c (+ 2 3) c c d))) (b 5 c))
 
@@ -378,7 +378,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.BASE-TEST-REPR-PARSE-INTERSECTION.02</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.74 milliseconds) 
+; took 0.002 secs. (1.75 milliseconds) 
 
 !(assertEqual (intersection (superpose (a b (+ 2 3) c)) (superpose (b c (+ 2 3) c c d))) (superpose (b (+ 2 3) c)))
 
@@ -405,7 +405,7 @@ Deterministic: "aswde"
 >;; HYPERON-METTALOG-SANITY.BASE-TEST-REPR-PARSE-INTERSECTION.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000302 secs. (302.16 microseconds) 
+; took 0.000303 secs. (302.54 microseconds) 
 
 !(assertEqualToResult (repr aswde) ("aswde"))
 
@@ -432,7 +432,7 @@ kjh]
 >;; HYPERON-METTALOG-SANITY.BASE-TEST-REPR-PARSE-INTERSECTION.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000175 secs. (174.72 microseconds) 
+; took 0.000177 secs. (177.24 microseconds) 
 
 !(assertEqualToResult (parse "kjh") (kjh))
 
@@ -442,7 +442,7 @@ kjh]
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 219,561 inferences, 0.080 CPU in 0.080 seconds (100% CPU, 2754392 Lips)
+>% 219,561 inferences, 0.081 CPU in 0.081 seconds (100% CPU, 2718569 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/base_test_repr_parse_intersection.metta  0)
 <span class="ansi1"
@@ -581,7 +581,7 @@ Deterministic: ()
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 09:44:09+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 09:45:08+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

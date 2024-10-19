@@ -76,7 +76,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 09:39:16+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 09:39:41+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -477,7 +477,7 @@ Deterministic: ()
 > (: SP (specializationOf (Inheritance B (VarIdx (S Z))) (Inheritance (VarIdx Z) (VarIdx (S Z)))))
 </span>; 
 ; EVAL TEST
-; took 0.004 secs. (3.54 milliseconds) 
+; took 0.004 secs. (3.83 milliseconds) 
 
 !(assertEqualToResult (let $sptrn (: SP (specializationOf (Inheritance B (VarIdx (S Z))) (Inheritance (VarIdx Z) (VarIdx (S Z))))) (add-atom &kb $sptrn)) (()))
 
@@ -503,7 +503,7 @@ Deterministic: ()
 > (: apriori-rule (-> (minsup $_228358) (-> (specializationOf $_228412 $_228358) (supportOf $_228412 (countNat $_228412)))))
 </span>; 
 ; EVAL TEST
-; took 0.006 secs. (6.03 milliseconds) 
+; took 0.007 secs. (6.56 milliseconds) 
 
 !(assertEqualToResult (add-atom &kb (: apriori-rule (-> (minsup $aptrn) (-> (specializationOf $sptrn $aptrn) (supportOf $sptrn (countNat $sptrn)))))) (()))
 
@@ -537,7 +537,7 @@ Deterministic: ()
 > (Inheritance B A)
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.69 milliseconds) 
+; took 0.002 secs. (1.78 milliseconds) 
 
 !(assertEqualToResult (add-atom &db (Inheritance B A)) (()))
 
@@ -562,7 +562,7 @@ Deterministic: ()
 > (Inheritance C A)
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.72 milliseconds) 
+; took 0.002 secs. (1.91 milliseconds) 
 
 !(assertEqualToResult (add-atom &db (Inheritance C A)) (()))
 
@@ -587,7 +587,7 @@ Deterministic: ()
 > (Inheritance D E)
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.73 milliseconds) 
+; took 0.002 secs. (1.75 milliseconds) 
 
 !(assertEqualToResult (add-atom &db (Inheritance D E)) (()))
 
@@ -612,7 +612,7 @@ Deterministic: ()
 > (Inheritance C E)
 </span>; 
 ; EVAL TEST
-; took 0.001 secs. (1.23 milliseconds) 
+; took 0.001 secs. (1.27 milliseconds) 
 
 !(assertEqualToResult (add-atom &db (Inheritance C E)) (()))
 
@@ -663,7 +663,7 @@ Deterministic: ()
 >;; ANTI-REGRESSION.METTALOGTESTCURRIED2.07</h3>
 ; 
 ; EVAL TEST
-; took 0.048 secs. (48.27 milliseconds) 
+; took 0.052 secs. (51.95 milliseconds) 
 
 !(assertEqualToResult (let (: $prf $concl) (let* (($aptrn (Inheritance (VarIdx Z) (VarIdx (S Z)))) ($atom (: MP (minsup $aptrn))) ($depth (fromNumber 2))) (fc $atom $depth)) (: PROOFTrace $concl)) ((: PROOFTrace (minsup (Inheritance (VarIdx Z) (VarIdx (S Z))))) (: PROOFTrace (-> (specializationOf $sptrn#463 (Inheritance (VarIdx Z) (VarIdx (S Z)))) (supportOf $sptrn#463 (countNat $sptrn#463)))) (: PROOFTrace (supportOf (Inheritance B (VarIdx (S Z))) (S Z)))))
 
@@ -673,7 +673,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 882,204 inferences, 0.170 CPU in 0.170 seconds (100% CPU, 5180602 Lips)
+>% 882,204 inferences, 0.179 CPU in 0.179 seconds (100% CPU, 4920508 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/mettalogTestCurried2.metta  0)
 <span class="ansi1"
@@ -812,7 +812,7 @@ Deterministic: ()
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 09:39:22+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 09:39:46+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
