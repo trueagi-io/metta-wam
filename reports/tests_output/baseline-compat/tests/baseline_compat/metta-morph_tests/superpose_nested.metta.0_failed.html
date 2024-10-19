@@ -33,7 +33,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 14:18:25+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 19:06:42+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -368,7 +368,7 @@ Script started on 2024-10-19 14:18:25+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; METTA-MORPH-TESTS.SUPERPOSE-NESTED.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000199 secs. (198.80 microseconds) 
+; took 0.000195 secs. (194.94 microseconds) 
 
 !(assertEqualToResult (superpose (a b c)) (a b c))
 
@@ -390,7 +390,7 @@ Deterministic: ()()]
 >;; METTA-MORPH-TESTS.SUPERPOSE-NESTED.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000301 secs. (301.23 microseconds) 
+; took 0.000264 secs. (263.58 microseconds) 
 
 !(assertEqualToResult (superpose ((superpose (a b c)))) (a b c))
 
@@ -412,7 +412,7 @@ Deterministic: ()()]
 >;; METTA-MORPH-TESTS.SUPERPOSE-NESTED.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000432 secs. (431.97 microseconds) 
+; took 0.000348 secs. (347.77 microseconds) 
 
 !(assertEqualToResult (superpose ((superpose (a b c)) (superpose (x y z)))) (a b c x y z))
 
@@ -434,7 +434,7 @@ Deterministic: ()()]
 >;; METTA-MORPH-TESTS.SUPERPOSE-NESTED.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000343 secs. (342.71 microseconds) 
+; took 0.000292 secs. (292.17 microseconds) 
 
 !(assertEqualToResult (superpose ((superpose (a b c)) x y z)) (a b c x y z))
 
@@ -443,7 +443,7 @@ Deterministic: ()()]
 </span>
 Deterministic: ()()]
 <span class="ansi32"
->% 184,805 inferences, 0.052 CPU in 0.052 seconds (100% CPU, 3574200 Lips)
+>% 184,937 inferences, 0.050 CPU in 0.050 seconds (99% CPU, 3734020 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/superpose_nested.metta  0)
 <span class="ansi1"
@@ -586,7 +586,7 @@ Deterministic: ()()]
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 14:18:31+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 19:06:48+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

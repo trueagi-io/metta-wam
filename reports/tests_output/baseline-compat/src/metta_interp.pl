@@ -634,14 +634,13 @@ with_output_to_s(Out,G):- current_output(COut),
 %   If output is not suspended, it captures the output based on the streams involved.
 %
 %   @arg G The goal to be executed.
-in_answer_io(_) :- nb_current(suspend_answers, true), !.  % If answer output is suspended (suspend_answers is true), cut and do nothing.
-% in_answer_io(G):- answer_output(Out), !, with_output_to(string(S), G), write(user_error, S), answer_output(Out), !, write(Out, S).
+in_answer_io(_):- nb_current(suspend_answers,true),!.
 in_answer_io(G) :-
-    % Get the answer output stream.
+    % Get the answer_output stream
     answer_output(AnswerOut),
-    % Get the current output stream.
+    % Get the current output stream
     current_output(CurrentOut),
-    % Get the standard output stream (file_no(1) corresponds to stdout).
+    % Get the standard output stream via file_no(1)
     get_stdout_stream(StdOutStream),
     % If the output is already visible to the user, execute G directly
    ((   AnswerOut == CurrentOut ;   AnswerOut == StdOutStream )
@@ -664,7 +663,7 @@ in_answer_io(G) :-
 %@argStdOutStreamUnifieswiththestandardoutputstream.
 get_stdout_stream(StdOutStream) :-
     current_stream(_, write, StdOutStream),
-    stream_property(StdOutStream, file_no(1)).
+    stream_property(StdOutStream, file_no(1)),!.
 
 %!  capture_output_per_solution(+G, +CurrentOut, +AnswerOut, +StdOutStream, +CurrentEncoding) is det.
 %
@@ -763,7 +762,7 @@ process_and_finalize_output(State, CurrentOut, AnswerOut, StdOutStream, CurrentE
 handle_catcher(Var) :-
     % If the catcher is unbound, the call succeeded.
     var(Var), !.
-handle_catcher(exit) :- !.  % Success, do nothing.
+handle_catcher(exit).  % Success, do nothing.
 handle_catcher(fail) :- fail.  % Failure, propagate it.
 handle_catcher(exception(Exception)) :- throw(Exception).  % Exception, re-throw it.
 

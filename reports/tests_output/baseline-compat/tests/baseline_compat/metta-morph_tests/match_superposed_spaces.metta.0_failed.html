@@ -34,7 +34,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 14:17:09+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 19:05:28+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -384,7 +384,7 @@ Deterministic: ()()]
 > 1
 </span>; 
 ; EVAL TEST
-; took 0.001 secs. (1.21 milliseconds) 
+; took 0.001 secs. (1.17 milliseconds) 
 
 !(assertEqualToResult (add-atom &attentional_focus 1) (()))
 
@@ -414,7 +414,7 @@ Deterministic: ()()]
 > 2
 </span>; 
 ; EVAL TEST
-; took 0.001 secs. (1.21 milliseconds) 
+; took 0.001 secs. (1.10 milliseconds) 
 
 !(assertEqualToResult (add-atom &concepts 2) (()))
 
@@ -432,7 +432,7 @@ Deterministic: ()()]
 >;; METTA-MORPH-TESTS.MATCH-SUPERPOSED-SPACES.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000219 secs. (219.36 microseconds) 
+; took 0.000190 secs. (189.68 microseconds) 
 
 !(assertEqualToResult (match &attentional_focus $1 $1) (1))
 
@@ -449,7 +449,7 @@ Deterministic: ()()]
 >;; METTA-MORPH-TESTS.MATCH-SUPERPOSED-SPACES.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000177 secs. (176.85 microseconds) 
+; took 0.000166 secs. (166.26 microseconds) 
 
 !(assertEqualToResult (match &concepts $1 $1) (2))
 
@@ -467,7 +467,7 @@ Deterministic: ()()]
 >;; METTA-MORPH-TESTS.MATCH-SUPERPOSED-SPACES.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000273 secs. (272.63 microseconds) 
+; took 0.000287 secs. (287.43 microseconds) 
 
 !(assertEqualToResult (match (superpose (&attentional_focus &concepts)) $1 $1) (1 2))
 
@@ -476,7 +476,7 @@ Deterministic: ()()]
 </span>
 Deterministic: ()()]
 <span class="ansi32"
->% 211,739 inferences, 0.061 CPU in 0.061 seconds (100% CPU, 3454065 Lips)
+>% 211,928 inferences, 0.062 CPU in 0.062 seconds (100% CPU, 3397116 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/match_superposed_spaces.metta  0)
 <span class="ansi1"
@@ -622,7 +622,7 @@ Deterministic: ()()]
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 14:17:15+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 19:05:33+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
