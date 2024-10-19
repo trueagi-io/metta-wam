@@ -70,10 +70,10 @@ doc_text_fallback(Path, Text) :-
 
 %! replace_codes(Text, StartLine, StartChar, ReplaceLen, ReplaceText, -NewText) is det.
 replace_codes(Text, StartLine, StartChar, ReplaceLen, ReplaceText, NewText) :-
-    %debug(server,"~w ~w ~w ~w ~w ~w", [Text, StartLine, StartChar, ReplaceLen, ReplaceText, NewText]),
     phrase(replace(StartLine, StartChar, ReplaceLen, ReplaceText),
            Text,
            NewText).
+    %debug(server,"replace_codes ~w ~w ~w ~w ~w ~w", [Text, StartLine, StartChar, ReplaceLen, ReplaceText, NewText]).
 
 replace(0, 0, 0, NewText), NewText --> !, [].
 replace(0, 0, Skip, NewText) -->

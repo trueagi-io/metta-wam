@@ -43,6 +43,8 @@ Supports LSP methods like hover, document symbol, definition, references, and mo
 
 :- dynamic lsp_metta_changes:doc_text/2.
 
+:- discontiguous lsp_server_metta:handle_msg/3.
+
 % If the max worked thread count is 0, it processes requests synchronously;
 % otherwise, it uses a thread pool for parallel processing.
 % 2 is a good default as it needs to be able to implement interruptions anyway
@@ -335,8 +337,11 @@ server_capabilities(
       typeDefinitionProvider: true,
       referencesProvider: true,
 
+      codeActionProvider: false,
+
       documentHighlightProvider: false,
       codeActionProvider: true,  % Changed from false to true
+
 
       %% codeLensProvider: false,
       documentFormattingProvider:false,
@@ -401,6 +406,20 @@ handle_msg("textDocument/hover", Msg, _{id: Msg.id, result: null}) :- !. % Fallb
 % OUT: {id:1,result:[
 %    {kind:12,location:{range:{end:{character:0,line:37},start:{character:1,line:35}},uri:file://<FILEPATH>},name:called_at/4},
 %    {kind:12,location:{range:{end:{character:0,line:66},start:{character:1,line:64}},uri:file://<FILEPATH>},},name:defined_at/3} ... ]}
+
+%handle_msg("textDocument/documentSymbol", Msg, _{id: Id, result: Symbols}) :-
+%     _{id: Id, params: _{textDocument: _{uri: Doc}}} :< Msg, xref_document_symbols(Doc, Symbols),
+%     assertion(is_list(Symbols)), !.
+
+%convert_docsymbol_json(x(L,C0,C1,K,Name),Json) :-
+%    Json=_{name:Name,kind:K,location:_{range:_{end:_{character:C1,line:L},start:_{character:C0,line:L}}}}.
+
+%handle_msg("textDocument/documentSymbol", Msg, _{id: Id, result: DocJson}) :-
+%    _{id: Id, params: _{textDocument: _{uri: Doc}}} :< Msg,
+%     atom_concat('file://', Path, Doc), !,
+%     get_document_symbols(Path,DocKinds),
+%     maplist(convert_docsymbol_json,DocKinds,DocJson).
+
 handle_msg("textDocument/documentSymbol", Msg, _{id: Id, result: Symbols}) :-
      _{id: Id, params: _{textDocument: _{uri: Doc}}} :< Msg, xref_document_symbols(Doc, Symbols),
      assertion(is_list(Symbols)), !.
@@ -416,9 +435,6 @@ message_id_target(Msg, Id, Doc, HintPath, Loc, Name/Arity):-
     Loc = line_char(Line0, Char0),
     lsp_metta_utils:clause_with_arity_in_file_at_position(Name, Arity, HintPath, Loc),
         debug(server(high),"~n~q~n",[message_id_target(_Msg, Id, Doc, HintPath, Loc, Name/Arity)]).
-    
-
-
 
 % CALL: method:textDocument/definition
 % IN: params:{position:{character:55,line:174},textDocument:{uri:file://<FILEPATH>}}
