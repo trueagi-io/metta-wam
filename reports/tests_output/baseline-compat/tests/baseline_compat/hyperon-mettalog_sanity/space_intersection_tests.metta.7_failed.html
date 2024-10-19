@@ -98,7 +98,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-18 23:41:33+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 00:09:59+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -482,7 +482,7 @@ Deterministic: ()
 > (superpose ((= (foo $_94560 $_94582) (+ $_94560 $_94582)) (foo 1 2) (foo 3 4) (foo $_94560 10) (foo $_94560 $_94560) (foo (foo 1 2) 3)))
 </span>; 
 ; EVAL TEST
-; took 0.009 secs. (8.99 milliseconds) 
+; took 0.009 secs. (8.86 milliseconds) 
 
 !(assertEqualToResult (add-atom &space1 (superpose ((= (foo $x $y) (+ $x $y)) (foo 1 2) (foo 3 4) (foo $x 10) (foo $x $x) (foo (foo 1 2) 3)))) (()))
 
@@ -507,7 +507,7 @@ Deterministic: ()
 > (superpose ((= (foo $_126186 $_126208) (+ $_126186 $_126208)) (foo 1 2) (foo 5 6) (foo 5 10) (foo 9 9) (foo (foo 1 2) 3)))
 </span>; 
 ; EVAL TEST
-; took 0.005 secs. (5.48 milliseconds) 
+; took 0.005 secs. (5.41 milliseconds) 
 
 !(assertEqualToResult (add-atom &space2 (superpose ((= (foo $a $b) (+ $a $b)) (foo 1 2) (foo 5 6) (foo 5 10) (foo 9 9) (foo (foo 1 2) 3)))) (()))
 
@@ -525,7 +525,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.03</h3>
 ; 
 ; EVAL TEST
-; took 0.087 secs. (87.07 milliseconds) 
+; took 0.088 secs. (88.42 milliseconds) 
 
 !(assertEqual (intersection (get-atoms &space1) (get-atoms &space2)) (superpose ((= (foo $x $y) (+ $x $y)) (foo 1 2) (foo (foo 1 2) 3))))
 
@@ -560,7 +560,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.04</h3>
 ; 
 ; EVAL TEST
-; took 0.012 secs. (11.99 milliseconds) 
+; took 0.012 secs. (11.54 milliseconds) 
 
 !(assertEqual (intersection (get-atoms &space1) (get-atoms &space3)) (superpose ()))
 
@@ -595,7 +595,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.05</h3>
 ; 
 ; EVAL TEST
-; took 0.023 secs. (23.19 milliseconds) 
+; took 0.023 secs. (22.83 milliseconds) 
 
 !(assertEqual (intersection (get-atoms &space1) (get-atoms &space4)) (superpose ((foo 1 2) (foo 3 4))))
 
@@ -630,7 +630,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.06</h3>
 ; 
 ; EVAL TEST
-; took 0.012 secs. (12.38 milliseconds) 
+; took 0.012 secs. (12.23 milliseconds) 
 
 !(assertEqual (intersection (get-atoms &space4) (get-atoms &space5)) (superpose ((foo $m $n))))
 
@@ -665,7 +665,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.07</h3>
 ; 
 ; EVAL TEST
-; took 0.020 secs. (19.79 milliseconds) 
+; took 0.020 secs. (19.59 milliseconds) 
 
 !(assertEqual (pred-intersection unified (get-atoms &space4) (get-atoms &space6)) (superpose ((foo 7 7))))
 
@@ -700,7 +700,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.08</h3>
 ; 
 ; EVAL TEST
-; took 0.014 secs. (14.01 milliseconds) 
+; took 0.014 secs. (14.05 milliseconds) 
 
 !(assertEqual (intersection (get-atoms &space6) (get-atoms &space7)) (superpose ((foo (foo 1 2) 3))))
 
@@ -720,7 +720,7 @@ Deterministic: ((Error  (got  ((foo (foo 1 2) 3) (foo 7 7))) (expected  ((foo (f
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.09</h3>
 ; 
 ; EVAL TEST
-; took 0.015 secs. (14.75 milliseconds) 
+; took 0.015 secs. (14.72 milliseconds) 
 
 !(assertEqual (intersection (get-atoms &space7) (get-atoms &space6)) (superpose ((foo (foo 1 2) 3))))
 
@@ -772,7 +772,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.10</h3>
 ; 
 ; EVAL TEST
-; took 0.006 secs. (6.49 milliseconds) 
+; took 0.006 secs. (6.41 milliseconds) 
 
 !(assertEqual (intersection (get-atoms &space8) (get-atoms &space9)) (superpose ((foo 3 $c))))
 
@@ -792,7 +792,7 @@ Deterministic: ((Error  (got  ((foo $_935470 $_935476) (foo 3 $_935452))) (expec
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.11</h3>
 ; 
 ; EVAL TEST
-; took 0.014 secs. (13.89 milliseconds) 
+; took 0.014 secs. (13.58 milliseconds) 
 
 !(assertEqual (intersection (get-atoms &space1) (get-atoms &space8)) (superpose ()))
 
@@ -812,7 +812,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.12</h3>
 ; 
 ; EVAL TEST
-; took 0.008 secs. (7.80 milliseconds) 
+; took 0.008 secs. (7.79 milliseconds) 
 
 !(assertEqual (intersection (get-atoms &space4) (get-atoms &space8)) (superpose ()))
 
@@ -847,7 +847,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.13</h3>
 ; 
 ; EVAL TEST
-; took 0.009 secs. (8.82 milliseconds) 
+; took 0.009 secs. (8.53 milliseconds) 
 
 !(assertEqual (intersection (get-atoms &space10) (get-atoms &space2)) (superpose ((foo (foo 1 2) 3))))
 
@@ -897,7 +897,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.14</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.08 milliseconds) 
+; took 0.002 secs. (1.87 milliseconds) 
 
 !(assertEqual (intersection (get-atoms &space11) (get-atoms &space12)) (superpose ((foo $x $x))))
 
@@ -933,7 +933,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.15</h3>
 ; 
 ; EVAL TEST
-; took 0.011 secs. (10.60 milliseconds) 
+; took 0.010 secs. (10.28 milliseconds) 
 
 !(assertEqual (intersection (get-atoms &space21) (superpose ((foo 1 2) (foo 7 8)))) (superpose ((foo 1 2))))
 
@@ -969,7 +969,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.16</h3>
 ; 
 ; EVAL TEST
-; took 0.010 secs. (9.73 milliseconds) 
+; took 0.009 secs. (9.33 milliseconds) 
 
 !(assertEqual (intersection (get-atoms &space22) (superpose ((foo 5 10) (foo 3 $z)))) (superpose ((foo 5 10) (foo 3 4))))
 
@@ -1005,7 +1005,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.17</h3>
 ; 
 ; EVAL TEST
-; took 0.008 secs. (8.01 milliseconds) 
+; took 0.008 secs. (7.79 milliseconds) 
 
 !(assertEqual (intersection (get-atoms &space23) (superpose ((foo $x $y) (foo 3 4)))) (superpose ((foo 3 4))))
 
@@ -1041,7 +1041,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.18</h3>
 ; 
 ; EVAL TEST
-; took 0.008 secs. (7.65 milliseconds) 
+; took 0.007 secs. (7.23 milliseconds) 
 
 !(assertEqual (intersection (get-atoms &space24) (superpose ((foo 7 7)))) (superpose ((foo 7 7))))
 
@@ -1077,7 +1077,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.19</h3>
 ; 
 ; EVAL TEST
-; took 0.010 secs. (10.18 milliseconds) 
+; took 0.010 secs. (9.92 milliseconds) 
 
 !(assertEqual (intersection (get-atoms &space25) (superpose ((foo 5 5) (foo 7 8)))) (superpose ((foo 5 5))))
 
@@ -1113,7 +1113,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.20</h3>
 ; 
 ; EVAL TEST
-; took 0.009 secs. (8.74 milliseconds) 
+; took 0.008 secs. (8.48 milliseconds) 
 
 !(assertEqual (intersection (get-atoms &space26) (superpose ((foo (foo 1 2) 3)))) (superpose ((foo (foo 1 2) 3))))
 
@@ -1123,7 +1123,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 1,929,473 inferences, 0.541 CPU in 0.541 seconds (100% CPU, 3564875 Lips)
+>% 1,929,473 inferences, 0.530 CPU in 0.530 seconds (100% CPU, 3641261 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/space_intersection_tests.metta  0)
 <span class="ansi1"
@@ -1262,7 +1262,7 @@ Deterministic: ()
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-18 23:41:39+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 00:10:05+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
