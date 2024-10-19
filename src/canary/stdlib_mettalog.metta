@@ -1,6 +1,7 @@
 (: Any Type)
 (: Atom Type)
 (: Bool Type)
+(@doc Bool (@desc "Boolean type of True or False."))
 (: Expression Type)
 (: Number Type)
 (: hyperon::space::DynSpace Type)
@@ -8,6 +9,8 @@
 (: Symbol Type)
 (: StateMonad Type)
 (: Type Type)
+(: True Bool)
+(: False Bool)
 (: %Undefined% Type)
 (: Variable Type)
 ; (: if-decons (-> Atom Variable Variable Atom Atom Atom))  was a misnamed if-decons-expr 
