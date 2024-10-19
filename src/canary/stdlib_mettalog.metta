@@ -1,6 +1,7 @@
 (: Any Type)
 (: Atom Type)
 (: Bool Type)
+(@doc Bool (@desc "Boolean type of True or False."))
 (: Expression Type)
 (: Number Type)
 (: hyperon::space::DynSpace Type)
@@ -8,6 +9,8 @@
 (: Symbol Type)
 (: StateMonad Type)
 (: Type Type)
+(: True Bool)
+(: False Bool)
 (: %Undefined% Type)
 (: Variable Type)
 ; (: if-decons (-> Atom Variable Variable Atom Atom Atom))  was a misnamed if-decons-expr 
@@ -92,7 +95,7 @@
 
 ; Public MinimalMeTTa
 (@doc eval
-  (@desc "Evaluates input atom, makes one step of the evaluation")
+  (@desc "Evaluates input Atom, performs one step of the evaluation. Empty results (Empty, ()) are removed from the result set. If no results are produced for a non-grounded function, eval returns NotReducible.")
   (@params (
     (@param "Atom to be evaluated, can be reduced via equality expression (= ...) or by calling a grounded function")))
   (@return "Result of evaluation"))
@@ -101,11 +104,11 @@
 
 ; Public MinimalMeTTa
 (@doc chain
-  (@desc "Evaluates first argument, binds it to the variable (second argument) and then evaluates third argument which contains (or not) mentioned variable")
+  (@desc "Evaluates first argument Atom, binds it to the Variable (second argument) and then evaluates third argument Template with Variable substituted in. When evaluation of the first Atom brings more than a single result, chain returns one instance of the Template expression for each result. The first argument Atom is only evaluated if it is part of the Minimal MeTTa specification; evaluation of non-Minimal MeTTa atoms can be controlled by wrapping in a call to eval (for one evaluation step) or metta (for full evaluation).")
   (@params (
     (@param "Atom to be evaluated")
     (@param "Variable")
-    (@param "Atom which will be evaluated at the end")))
+    (@param "Template which will be evaluated at the end with Variable substituted")))
   (@return "Result of evaluating third input argument"))
 (: chain (-> Atom Variable Atom Atom))
 ;; Implemented from Interpreters
@@ -132,7 +135,7 @@
 (= (if-unify-or-empty $a $b) (empty))
 
 
-;; Public MeTTa
+;; Public MinimalMeTTa
 (@doc cons-atom
   (@desc "Constructs an expression using two arguments")
   (@params (
@@ -143,7 +146,7 @@
 ;; Implemented from Interpreters
 ; AKA? (: cons (-> Atom Atom Atom))
 
-;; Public MeTTa
+;; Public MinimalMeTTa
 (@doc decons-atom
   (@desc "Works as a reverse to cons-atom function. It gets Expression as an input and returns it splitted to head and tail, e.g. (decons-atom (Cons X Nil)) -> (Cons (X Nil))")
   (@params (
@@ -153,26 +156,24 @@
 ;; Implemented from Interpreters
 ; AKA? (: decons (-> Atom Atom))
 
-;; Public MeTTa
+;; Public MinimalMeTTa
 (@doc collapse-bind
-  (@desc "Evaluates the Atom (first argument) and returns an expression which contains all alternative evaluations in a form (Atom Bindings). Bindings are represented in a form of a grounded atom.")
+  (@desc "Evaluates the Atom (first argument) and returns an expression which contains all alternative evaluations in a form (Atom Bindings). Bindings are represented in a form of a grounded atom { <var> <- <binding>, ... }. See also the complement superpose-bind. Note that, like chain, collapse-bind only evaluates Minimal Metta expressions. Evaluation of non-Minimal MeTTa atoms can be controlled by wrapping in a call to eval (for one evaluation step) or metta (for full evaluation).")
   (@params (
     (@param "Atom to be evaluated")))
   (@return "All alternative evaluations"))
-;; collapse-bind because `collapse` doesnt guarentee shared bindings
-(: collapse-bind (-> Atom Atom)) ; We specialize but leaving the old defs in case
+;; collapse-bind because `collapse` doesnt guarantee shared bindings
 (: collapse-bind (-> Atom Expression))
 ;; Implemented from Interpreters
 
-;; Public MeTTa
+;; Public MinimalMeTTa
 (@doc superpose-bind
-  (@desc "Complement to the collapse-bind. It takes result of collapse-bind (first argument) and returns only result atoms without bindings")
+  (@desc "Complement to the collapse-bind. It takes result of collapse-bind (first argument) and returns only result atoms without bindings. Primarily used with some filtering step on the collapse-bind results, i.e. collapse-bind -> <filter> -> superpose-bind.")
   (@params (
     (@param "Expression in form (Atom Binding)")))
   (@return "Non-deterministic list of Atoms"))
 ;; superpose-bind because `superpose` doesnt guarentee shared bindings
 (: superpose-bind (-> Expression Atom))
-(: superpose-bind (-> Atom Atom)) ; We specialize them but leaving the old defs in case
 ;; Implemented from Interpreters
 
 ; Helper Minimal Metta?
