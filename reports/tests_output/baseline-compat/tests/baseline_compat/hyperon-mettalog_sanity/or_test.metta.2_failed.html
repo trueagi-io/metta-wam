@@ -49,7 +49,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 10:28:21+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 14:02:12+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -378,8 +378,10 @@ Script started on 2024-10-19 10:28:21+00:00 [TERM="xterm-256color" TTY="/dev/pts
 <span class="ansi38-013099040"
 >!(bind! &evaluated (new-state False))
 
-</span>
-Deterministic: ()<span class="ansi38-255165000"
+</span>[
+
+Deterministic: ()()]
+<span class="ansi38-255165000"
 > (: set-evaluated (-> Bool))
 </span>;;; this must return boolean
 <span class="ansi38-255165000"
@@ -388,60 +390,65 @@ Deterministic: ()<span class="ansi38-255165000"
 <span class="ansi38-013099040"
 >!(pragma! or-impl lazy-or)
 
-</span>P;HTML|
+</span>[P;HTML|
 ;                                         (set_option_value  or-impl lazy-or)
 
 
-Deterministic: ()
+Deterministic: ()()]
 ;;; evals until the first True happens (we think that is what people assume happens)
 ;;;; assertEqualToResult is used here to force all solutions (backtracking)
 <span class="ansi38-013099040"
 >!(bind! &evaluated (new-state False))
 
-</span>
-Deterministic: ()
+</span>[
+
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (or True (set-evaluated)) (True))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.OR-TEST.01"
 >;; HYPERON-METTALOG-SANITY.OR-TEST.01</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.23 milliseconds) 
+; took 0.001 secs. (1.27 milliseconds) 
 
 !(assertEqualToResult (or True (set-evaluated)) (True))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (True True) (True)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (get-state &evaluated) False)
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.OR-TEST.02"
 >;; HYPERON-METTALOG-SANITY.OR-TEST.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000203 secs. (202.56 microseconds) 
+; took 0.000214 secs. (213.66 microseconds) 
 
 !(assertEqual (get-state &evaluated) False)
 
 <span class="ansi31"
 >(loonit_failureR  (equal_enough_for_test  (True) (False)))
 </span>
-Deterministic: ((Error  (got  (True)) (expected  (False))))
+Deterministic: ((Error  (got  (True)) (expected  (False))))((Error  (got  (True)) (expected  (False))))]
 ;;;; assertEqualToResult is used here to force all solutions (backtracking)
 <span class="ansi38-013099040"
 >!(bind! &evaluated (new-state False))
 
-</span>
-Deterministic: ()
+</span>[
+
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (or False (set-evaluated)) (True))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.OR-TEST.03"
 >;; HYPERON-METTALOG-SANITY.OR-TEST.03</h3>
 ; 
@@ -453,202 +460,215 @@ Deterministic: ()
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (True) (True)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (get-state &evaluated) True)
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.OR-TEST.04"
 >;; HYPERON-METTALOG-SANITY.OR-TEST.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000233 secs. (233.01 microseconds) 
+; took 0.000203 secs. (203.16 microseconds) 
 
 !(assertEqual (get-state &evaluated) True)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (True) (True)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;; Basic `or` Logic
 <span class="ansi38-013099040"
 >!(assertEqual (or True False) True)
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.OR-TEST.05"
 >;; HYPERON-METTALOG-SANITY.OR-TEST.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000177 secs. (177.34 microseconds) 
+; took 0.000149 secs. (149.38 microseconds) 
 
 !(assertEqual (or True False) True)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (True) (True)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (or False True) True)
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.OR-TEST.06"
 >;; HYPERON-METTALOG-SANITY.OR-TEST.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000164 secs. (164.41 microseconds) 
+; took 0.000162 secs. (162.31 microseconds) 
 
 !(assertEqual (or False True) True)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (True) (True)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (or True True) True)
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.OR-TEST.07"
 >;; HYPERON-METTALOG-SANITY.OR-TEST.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000178 secs. (177.52 microseconds) 
+; took 0.000173 secs. (173.05 microseconds) 
 
 !(assertEqual (or True True) True)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (True True) (True)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (or False False) False)
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.OR-TEST.08"
 >;; HYPERON-METTALOG-SANITY.OR-TEST.08</h3>
 ; 
 ; EVAL TEST
-; took 0.000160 secs. (160.15 microseconds) 
+; took 0.000163 secs. (162.51 microseconds) 
 
 !(assertEqual (or False False) False)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (False) (False)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;; Makes sure they only return single nondet result
 <span class="ansi38-013099040"
 >!(assertEqualToResult (or True False) (True))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.OR-TEST.09"
 >;; HYPERON-METTALOG-SANITY.OR-TEST.09</h3>
 ; 
 ; EVAL TEST
-; took 0.000173 secs. (173.34 microseconds) 
+; took 0.000161 secs. (161.03 microseconds) 
 
 !(assertEqualToResult (or True False) (True))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (True) (True)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (or False True) (True))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.OR-TEST.10"
 >;; HYPERON-METTALOG-SANITY.OR-TEST.10</h3>
 ; 
 ; EVAL TEST
-; took 0.000160 secs. (159.93 microseconds) 
+; took 0.000175 secs. (174.78 microseconds) 
 
 !(assertEqualToResult (or False True) (True))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (True) (True)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (or True True) (True))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.OR-TEST.11"
 >;; HYPERON-METTALOG-SANITY.OR-TEST.11</h3>
 ; 
 ; EVAL TEST
-; took 0.000166 secs. (166.09 microseconds) 
+; took 0.000182 secs. (181.94 microseconds) 
 
 !(assertEqualToResult (or True True) (True))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (True True) (True)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (or False False) (False))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.OR-TEST.12"
 >;; HYPERON-METTALOG-SANITY.OR-TEST.12</h3>
 ; 
 ; EVAL TEST
-; took 0.000159 secs. (158.70 microseconds) 
+; took 0.000165 secs. (164.70 microseconds) 
 
 !(assertEqualToResult (or False False) (False))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (False) (False)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;; or with Expressions
 <span class="ansi38-013099040"
 >!(assertEqual (or (> 5 3) (< 2 1)) True)
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.OR-TEST.13"
 >;; HYPERON-METTALOG-SANITY.OR-TEST.13</h3>
 ; 
 ; EVAL TEST
-; took 0.000347 secs. (346.56 microseconds) 
+; took 0.000441 secs. (440.82 microseconds) 
 
 !(assertEqual (or (> 5 3) (< 2 1)) True)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (True) (True)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (or (== 1 1) (== 2 2)) True)
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.OR-TEST.14"
 >;; HYPERON-METTALOG-SANITY.OR-TEST.14</h3>
 ; 
 ; EVAL TEST
-; took 0.000350 secs. (349.50 microseconds) 
+; took 0.000430 secs. (430.38 microseconds) 
 
 !(assertEqual (or (== 1 1) (== 2 2)) True)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (True True) (True)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (or (not True) (and True False)) False)
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.OR-TEST.15"
 >;; HYPERON-METTALOG-SANITY.OR-TEST.15</h3>
 ; 
 ; EVAL TEST
-; took 0.000307 secs. (306.50 microseconds) 
+; took 0.000395 secs. (395.10 microseconds) 
 
 !(assertEqual (or (not True) (and True False)) False)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (False) (False)))
 </span>
-Deterministic: ()<span class="ansi38-255165000"
+Deterministic: ()()]
+<span class="ansi38-255165000"
 > (: mprogn (-> Atom Atom Atom))
 </span><span class="ansi38-255165000"
 > (= (mprogn $code1 $code2) (let $ (eval $code1) (eval $code2)))
@@ -656,95 +676,100 @@ Deterministic: ()<span class="ansi38-255165000"
 <span class="ansi38-013099040"
 >!(assertEqualToResult (or (mprogn (println! "First") True) (mprogn (println! "Second") False)) (True))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.OR-TEST.16"
 >;; HYPERON-METTALOG-SANITY.OR-TEST.16</h3>
 First
 Second
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.15 milliseconds) 
+; took 0.001 secs. (1.17 milliseconds) 
 
 !(assertEqualToResult (or (mprogn (println! "First") True) (mprogn (println! "Second") False)) (True))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (True) (True)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (or (mprogn (println! "First") True) (mprogn (println! "Second") True)) (True))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.OR-TEST.17"
 >;; HYPERON-METTALOG-SANITY.OR-TEST.17</h3>
 First
 Second
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.13 milliseconds) 
+; took 0.001 secs. (1.16 milliseconds) 
 
 !(assertEqualToResult (or (mprogn (println! "First") True) (mprogn (println! "Second") True)) (True))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (True True) (True)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (or (mprogn (println! "First") False) (mprogn (println! "Second") True)) (True))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.OR-TEST.18"
 >;; HYPERON-METTALOG-SANITY.OR-TEST.18</h3>
 First
 Second
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.15 milliseconds) 
+; took 0.001 secs. (1.20 milliseconds) 
 
 !(assertEqualToResult (or (mprogn (println! "First") False) (mprogn (println! "Second") True)) (True))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (True) (True)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (or (mprogn (println! "First") False) (mprogn (println! "Second") False)) (False))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.OR-TEST.19"
 >;; HYPERON-METTALOG-SANITY.OR-TEST.19</h3>
 First
 Second
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.21 milliseconds) 
+; took 0.001 secs. (1.20 milliseconds) 
 
 !(assertEqualToResult (or (mprogn (println! "First") False) (mprogn (println! "Second") False)) (False))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (False) (False)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;; test superposes booleans
 ;;;
 <span class="ansi38-013099040"
 >!(assertEqualToResult (or (superpose (False True)) (superpose (False True))) (False True True True))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.OR-TEST.20"
 >;; HYPERON-METTALOG-SANITY.OR-TEST.20</h3>
 ; 
 ; EVAL TEST
-; took 0.000312 secs. (311.80 microseconds) 
+; took 0.000332 secs. (332.21 microseconds) 
 
 !(assertEqualToResult (or (superpose (False True)) (superpose (False True))) (False True True True))
 
 <span class="ansi31"
 >(loonit_failureR  (equal_enough_for_test  (True True) (False True True True)))
 </span>
-Deterministic: ((Error  (got  (True True)) (expected  (False True True True))))<span class="ansi32"
->
-% 480,299 inferences, 0.095 CPU in 0.095 seconds (100% CPU, 5037488 Lips)
+Deterministic: ((Error  (got  (True True)) (expected  (False True True True))))((Error  (got  (True True)) (expected  (False True True True))))]
+<span class="ansi32"
+>% 544,991 inferences, 0.126 CPU in 0.126 seconds (100% CPU, 4332573 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/or_test.metta  0)
 <span class="ansi1"
@@ -907,7 +932,7 @@ Deterministic: ((Error  (got  (True True)) (expected  (False True True True))))<
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 10:28:27+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 14:02:18+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

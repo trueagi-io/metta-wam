@@ -24,7 +24,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 10:26:02+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 13:59:40+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -348,37 +348,39 @@ Script started on 2024-10-19 10:26:02+00:00 [TERM="xterm-256color" TTY="/dev/pts
 </span><span class="ansi38-013099040"
 >!(assertEqual (maybe-inc Nothing) Nothing)
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.01-LANG-INC.01"
 >;; HYPERON-METTALOG-SANITY.01-LANG-INC.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000166 secs. (165.91 microseconds) 
+; took 0.000171 secs. (170.93 microseconds) 
 
 !(assertEqual (maybe-inc Nothing) Nothing)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (Nothing) (Nothing)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (maybe-inc (Just 2)) (Just 3))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.01-LANG-INC.02"
 >;; HYPERON-METTALOG-SANITY.01-LANG-INC.02</h3>
 ; 
 ; EVAL TEST
-; took 0.003 secs. (2.84 milliseconds) 
+; took 0.003 secs. (2.95 milliseconds) 
 
 !(assertEqual (maybe-inc (Just 2)) (Just 3))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Just 3)) ((Just 3))))
 </span>
-Deterministic: ()<span class="ansi32"
->
-% 86,679 inferences, 0.020 CPU in 0.020 seconds (100% CPU, 4316829 Lips)
+Deterministic: ()()]
+<span class="ansi32"
+>% 145,739 inferences, 0.044 CPU in 0.044 seconds (100% CPU, 3306498 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/01_lang_inc.metta  0)
 <span class="ansi1"
@@ -519,7 +521,7 @@ Deterministic: ()<span class="ansi32"
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 10:26:07+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 13:59:45+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

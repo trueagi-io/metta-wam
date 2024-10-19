@@ -98,7 +98,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 10:29:36+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 14:03:31+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -455,13 +455,16 @@ Script started on 2024-10-19 10:29:36+00:00 [TERM="xterm-256color" TTY="/dev/pts
 <span class="ansi38-013099040"
 >!(bind! &space1 (new-space))
 
-</span>
-Deterministic: ()
+</span>[
+
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(bind! &space2 (new-space))
 
-</span>
-Deterministic: ()<span class="ansi38-255165009"
+</span>[
+
+Deterministic: ()()]
+<span class="ansi38-255165009"
 >;; In file as:  
 </span><span class="ansi1 ansi38-255238088"
 >!(add-atom &space1 (superpose ((= (foo $x $y) (+ $x $y)) (foo 1 2) (foo 3 4) (foo $x 10) (foo $x $x) (foo (foo 1 2) 3))))
@@ -469,21 +472,23 @@ Deterministic: ()<span class="ansi38-255165009"
 <span class="ansi38-013099040"
 >!(assertEqualToResult (add-atom &space1 (superpose ((= (foo $x $y) (+ $x $y)) (foo 1 2) (foo 3 4) (foo $x 10) (foo $x $x) (foo (foo 1 2) 3)))) (()))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.01"
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.01</h3>
 <span class="ansi38-255165000"
-> (superpose ((= (foo $_93990 $_94012) (+ $_93990 $_94012)) (foo 1 2) (foo 3 4) (foo $_93990 10) (foo $_93990 $_93990) (foo (foo 1 2) 3)))
+> (superpose ((= (foo $_31418 $_31440) (+ $_31418 $_31440)) (foo 1 2) (foo 3 4) (foo $_31418 10) (foo $_31418 $_31418) (foo (foo 1 2) 3)))
 </span>; 
 ; EVAL TEST
-; took 0.009 secs. (8.70 milliseconds) 
+; took 0.009 secs. (8.85 milliseconds) 
 
 !(assertEqualToResult (add-atom &space1 (superpose ((= (foo $x $y) (+ $x $y)) (foo 1 2) (foo 3 4) (foo $x 10) (foo $x $x) (foo (foo 1 2) 3)))) (()))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (()) (())))
 </span>
-Deterministic: ()<span class="ansi38-255165009"
+Deterministic: ()()]
+<span class="ansi38-255165009"
 >;; In file as:  
 </span><span class="ansi1 ansi38-255238088"
 >!(add-atom &space2 (superpose ((= (foo $a $b) (+ $a $b)) (foo 1 2) (foo 5 6) (foo 5 10) (foo 9 9) (foo (foo 1 2) 3))))
@@ -491,544 +496,580 @@ Deterministic: ()<span class="ansi38-255165009"
 <span class="ansi38-013099040"
 >!(assertEqualToResult (add-atom &space2 (superpose ((= (foo $a $b) (+ $a $b)) (foo 1 2) (foo 5 6) (foo 5 10) (foo 9 9) (foo (foo 1 2) 3)))) (()))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.02"
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.02</h3>
 <span class="ansi38-255165000"
-> (superpose ((= (foo $_125326 $_125348) (+ $_125326 $_125348)) (foo 1 2) (foo 5 6) (foo 5 10) (foo 9 9) (foo (foo 1 2) 3)))
+> (superpose ((= (foo $_63846 $_63868) (+ $_63846 $_63868)) (foo 1 2) (foo 5 6) (foo 5 10) (foo 9 9) (foo (foo 1 2) 3)))
 </span>; 
 ; EVAL TEST
-; took 0.005 secs. (5.33 milliseconds) 
+; took 0.005 secs. (5.49 milliseconds) 
 
 !(assertEqualToResult (add-atom &space2 (superpose ((= (foo $a $b) (+ $a $b)) (foo 1 2) (foo 5 6) (foo 5 10) (foo 9 9) (foo (foo 1 2) 3)))) (()))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (()) (())))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (intersection (get-atoms &space1) (get-atoms &space2)) (superpose ((= (foo $x $y) (+ $x $y)) (foo 1 2) (foo (foo 1 2) 3))))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.03"
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.03</h3>
 ; 
 ; EVAL TEST
-; took 0.088 secs. (87.99 milliseconds) 
+; took 0.087 secs. (86.90 milliseconds) 
 
 !(assertEqual (intersection (get-atoms &space1) (get-atoms &space2)) (superpose ((= (foo $x $y) (+ $x $y)) (foo 1 2) (foo (foo 1 2) 3))))
 
 <span class="ansi36"
->(loonit_success  (equal_enough_for_test  ((= (foo $_75650 $_75656) (+ $_75650 $_75656)) (foo 1 2) (foo (foo 1 2) 3)) ((= (foo $_102194 $_102200) (+ $_102194 $_102200)) (foo 1 2) (foo (foo 1 2) 3))))
+>(loonit_success  (equal_enough_for_test  ((= (foo $_75630 $_75636) (+ $_75630 $_75636)) (foo 1 2) (foo (foo 1 2) 3)) ((= (foo $_102174 $_102180) (+ $_102174 $_102180)) (foo 1 2) (foo (foo 1 2) 3))))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;; Test intersection with a space having a unique atom
 ;;;; This should return an empty set as there is no intersection.
 <span class="ansi38-013099040"
 >!(bind! &space3 (new-space))
 
-</span>
-Deterministic: ()
+</span>[
+
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(add-atom &space3 (superpose ((foo 7 8))))
 
-</span><span class="ansi38-255165000"
+</span>[<span class="ansi38-255165000"
 > (superpose ((foo 7 8)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (intersection (get-atoms &space1) (get-atoms &space3)) (superpose ()))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.04"
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.04</h3>
 ; 
 ; EVAL TEST
-; took 0.012 secs. (11.60 milliseconds) 
+; took 0.012 secs. (11.77 milliseconds) 
 
 !(assertEqual (intersection (get-atoms &space1) (get-atoms &space3)) (superpose ()))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  () ()))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;; Test intersection with variables using alpha equivalency
 ;;;; The intersection should consider variables as equivalent even if they are named differently.
 <span class="ansi38-013099040"
 >!(bind! &space4 (new-space))
 
-</span>
-Deterministic: ()
+</span>[
+
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(add-atom &space4 (superpose ((foo 1 2) (foo 3 4) (foo $m $n))))
 
-</span><span class="ansi38-255165000"
-> (superpose ((foo 1 2) (foo 3 4) (foo $_226420 $_226442)))
+</span>[<span class="ansi38-255165000"
+> (superpose ((foo 1 2) (foo 3 4) (foo $_231496 $_231518)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (intersection (get-atoms &space1) (get-atoms &space4)) (superpose ((foo 1 2) (foo 3 4))))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.05"
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.05</h3>
 ; 
 ; EVAL TEST
-; took 0.023 secs. (22.93 milliseconds) 
+; took 0.023 secs. (22.92 milliseconds) 
 
 !(assertEqual (intersection (get-atoms &space1) (get-atoms &space4)) (superpose ((foo 1 2) (foo 3 4))))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((foo 1 2) (foo 3 4)) ((foo 1 2) (foo 3 4))))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;; Test intersection with overlapping variables using alpha equivalency
 ;;;; This test ensures that overlapping variables in atoms are correctly intersected, treating equivalent variables as equal.
 <span class="ansi38-013099040"
 >!(bind! &space5 (new-space))
 
-</span>
-Deterministic: ()
+</span>[
+
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(add-atom &space5 (superpose ((foo (foo 1 2) 3) (foo (foo 3 4) 7) (foo $p $q))))
 
-</span><span class="ansi38-255165000"
-> (superpose ((foo (foo 1 2) 3) (foo (foo 3 4) 7) (foo $_364266 $_364288)))
+</span>[<span class="ansi38-255165000"
+> (superpose ((foo (foo 1 2) 3) (foo (foo 3 4) 7) (foo $_372618 $_372640)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (intersection (get-atoms &space4) (get-atoms &space5)) (superpose ((foo $m $n))))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.06"
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.06</h3>
 ; 
 ; EVAL TEST
-; took 0.012 secs. (12.24 milliseconds) 
+; took 0.012 secs. (12.22 milliseconds) 
 
 !(assertEqual (intersection (get-atoms &space4) (get-atoms &space5)) (superpose ((foo $m $n))))
 
 <span class="ansi36"
->(loonit_success  (equal_enough_for_test  ((foo $_423130 $_423136)) ((foo $_428396 $_428402))))
+>(loonit_success  (equal_enough_for_test  ((foo $_432938 $_432944)) ((foo $_438204 $_438210))))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;; Test intersection with a variable and a fixed value using alpha equivalency
 ;;;; This test checks that an atom with a variable intersects correctly with a matching fixed value, using alpha equivalency.
 <span class="ansi38-013099040"
 >!(bind! &space6 (new-space))
 
-</span>
-Deterministic: ()
+</span>[
+
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(add-atom &space6 (superpose ((foo (foo 1 2) 3) (foo 7 7) (foo (foo $r 2) 3))))
 
-</span><span class="ansi38-255165000"
-> (superpose ((foo (foo 1 2) 3) (foo 7 7) (foo (foo $_453054 2) 3)))
+</span>[<span class="ansi38-255165000"
+> (superpose ((foo (foo 1 2) 3) (foo 7 7) (foo (foo $_464682 2) 3)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (pred-intersection unified (get-atoms &space4) (get-atoms &space6)) (superpose ((foo 7 7))))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.07"
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.07</h3>
 ; 
 ; EVAL TEST
-; took 0.019 secs. (19.34 milliseconds) 
+; took 0.020 secs. (19.54 milliseconds) 
 
 !(assertEqual (pred-intersection unified (get-atoms &space4) (get-atoms &space6)) (superpose ((foo 7 7))))
 
 <span class="ansi31"
->(loonit_failureR  (equal_enough_for_test  ((foo (foo 1 2) 3) (foo 7 7) (foo (foo $_584386 2) 3)) ((foo 7 7))))
+>(loonit_failureR  (equal_enough_for_test  ((foo (foo 1 2) 3) (foo 7 7) (foo (foo $_597470 2) 3)) ((foo 7 7))))
 </span>
-Deterministic: ((Error  (got  ((foo (foo 1 2) 3) (foo 7 7) (foo (foo $_584386 2) 3))) (expected  ((foo 7 7)))))
+Deterministic: ((Error  (got  ((foo (foo 1 2) 3) (foo 7 7) (foo (foo $_597470 2) 3))) (expected  ((foo 7 7)))))((Error  (got  ((foo (foo 1 2) 3) (foo 7 7) (foo (foo $_597470 2) 3))) (expected  ((foo 7 7)))))]
 ;;;; Test intersection with nested variables using alpha equivalency
 ;;;; This test checks the behavior when intersecting nested structures containing variables, treating equivalent variables as equal.
 <span class="ansi38-013099040"
 >!(bind! &space7 (new-space))
 
-</span>
-Deterministic: ()
+</span>[
+
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(add-atom &space7 (superpose ((foo $x $x) (foo 7 7) (foo (foo 1 2) 3))))
 
-</span><span class="ansi38-255165000"
-> (superpose ((foo $_630976 $_630976) (foo 7 7) (foo (foo 1 2) 3)))
+</span>[<span class="ansi38-255165000"
+> (superpose ((foo $_645904 $_645904) (foo 7 7) (foo (foo 1 2) 3)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (intersection (get-atoms &space6) (get-atoms &space7)) (superpose ((foo (foo 1 2) 3))))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.08"
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.08</h3>
 ; 
 ; EVAL TEST
-; took 0.014 secs. (14.04 milliseconds) 
+; took 0.014 secs. (13.97 milliseconds) 
 
 !(assertEqual (intersection (get-atoms &space6) (get-atoms &space7)) (superpose ((foo (foo 1 2) 3))))
 
 <span class="ansi31"
 >(loonit_failureR  (equal_enough_for_test  ((foo (foo 1 2) 3) (foo 7 7)) ((foo (foo 1 2) 3))))
 </span>
-Deterministic: ((Error  (got  ((foo (foo 1 2) 3) (foo 7 7))) (expected  ((foo (foo 1 2) 3)))))
+Deterministic: ((Error  (got  ((foo (foo 1 2) 3) (foo 7 7))) (expected  ((foo (foo 1 2) 3)))))((Error  (got  ((foo (foo 1 2) 3) (foo 7 7))) (expected  ((foo (foo 1 2) 3)))))]
 ;;;; Test intersection with identical self-referential structures using alpha equivalency
 ;;;; This test ensures that intersecting identical self-referential structures returns the structure itself, treating variables as equal.
 <span class="ansi38-013099040"
 >!(assertEqual (intersection (get-atoms &space7) (get-atoms &space6)) (superpose ((foo (foo 1 2) 3))))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.09"
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.09</h3>
 ; 
 ; EVAL TEST
-; took 0.015 secs. (14.71 milliseconds) 
+; took 0.014 secs. (14.50 milliseconds) 
 
 !(assertEqual (intersection (get-atoms &space7) (get-atoms &space6)) (superpose ((foo (foo 1 2) 3))))
 
 <span class="ansi31"
 >(loonit_failureR  (equal_enough_for_test  ((foo 7 7) (foo (foo 1 2) 3)) ((foo (foo 1 2) 3))))
 </span>
-Deterministic: ((Error  (got  ((foo 7 7) (foo (foo 1 2) 3))) (expected  ((foo (foo 1 2) 3)))))<span class="ansi38-255165000"
+Deterministic: ((Error  (got  ((foo 7 7) (foo (foo 1 2) 3))) (expected  ((foo (foo 1 2) 3)))))((Error  (got  ((foo 7 7) (foo (foo 1 2) 3))) (expected  ((foo (foo 1 2) 3)))))]
+<span class="ansi38-255165000"
 > )
 </span>;;;; Test intersection with alpha equivalency (variable renaming)
 ;;;; This test ensures that atoms with equivalent variables but different names are considered equal.
 <span class="ansi38-013099040"
 >!(bind! &space8 (new-space))
 
-</span>
-Deterministic: ()
+</span>[
+
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(bind! &space9 (new-space))
 
-</span>
-Deterministic: ()
+</span>[
+
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(add-atom &space8 (superpose ((foo $a $b) (foo 3 $c))))
 
-</span><span class="ansi38-255165000"
-> (superpose ((foo $_861732 $_861754) (foo 3 $_861800)))
+</span>[<span class="ansi38-255165000"
+> (superpose ((foo $_882160 $_882182) (foo 3 $_882228)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(add-atom &space9 (superpose ((foo $y $z) (foo 3 $d))))
 
-</span><span class="ansi38-255165000"
-> (superpose ((foo $_878304 $_878326) (foo 3 $_878372)))
+</span>[<span class="ansi38-255165000"
+> (superpose ((foo $_899824 $_899846) (foo 3 $_899892)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (intersection (get-atoms &space8) (get-atoms &space9)) (superpose ((foo 3 $c))))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.10"
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.10</h3>
 ; 
 ; EVAL TEST
-; took 0.006 secs. (6.30 milliseconds) 
+; took 0.007 secs. (6.74 milliseconds) 
 
 !(assertEqual (intersection (get-atoms &space8) (get-atoms &space9)) (superpose ((foo 3 $c))))
 
 <span class="ansi31"
->(loonit_failureR  (equal_enough_for_test  ((foo $_929368 $_929374) (foo 3 $_929350)) ((foo 3 $_942058))))
+>(loonit_failureR  (equal_enough_for_test  ((foo $_952344 $_952350) (foo 3 $_952326)) ((foo 3 $_965034))))
 </span>
-Deterministic: ((Error  (got  ((foo $_929368 $_929374) (foo 3 $_929350))) (expected  ((foo 3 $_942058)))))
+Deterministic: ((Error  (got  ((foo $_952344 $_952350) (foo 3 $_952326))) (expected  ((foo 3 $_965034)))))((Error  (got  ((foo $_952344 $_952350) (foo 3 $_952326))) (expected  ((foo 3 $_965034)))))]
 ;;;; Test intersection with strict variable identity to ensure non-matching variables are excluded
 ;;;; This test ensures that only exact variable names match and others are excluded.
 <span class="ansi38-013099040"
 >!(assertEqual (intersection (get-atoms &space1) (get-atoms &space8)) (superpose ()))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.11"
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.11</h3>
 ; 
 ; EVAL TEST
-; took 0.014 secs. (13.64 milliseconds) 
+; took 0.014 secs. (14.14 milliseconds) 
 
 !(assertEqual (intersection (get-atoms &space1) (get-atoms &space8)) (superpose ()))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  () ()))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;; Test intersection with different variables using alpha equivalency
 ;;;; This checks that when variables are equivalent but differently named, they are considered equal.
 <span class="ansi38-013099040"
 >!(assertEqual (intersection (get-atoms &space4) (get-atoms &space8)) (superpose ()))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.12"
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.12</h3>
 ; 
 ; EVAL TEST
-; took 0.008 secs. (8.11 milliseconds) 
+; took 0.008 secs. (7.69 milliseconds) 
 
 !(assertEqual (intersection (get-atoms &space4) (get-atoms &space8)) (superpose ()))
 
 <span class="ansi31"
->(loonit_failureR  (equal_enough_for_test  ((foo $_39566 $_39572)) ()))
+>(loonit_failureR  (equal_enough_for_test  ((foo $_62632 $_62638)) ()))
 </span>
-Deterministic: ((Error  (got  ((foo $_39566 $_39572))) (expected  ())))
+Deterministic: ((Error  (got  ((foo $_62632 $_62638))) (expected  ())))((Error  (got  ((foo $_62632 $_62638))) (expected  ())))]
 ;;;; Test intersection between a fresh space and another space using alpha equivalency
 ;;;; This should return the common atom: (foo (foo 1 2) 3)
 <span class="ansi38-013099040"
 >!(bind! &space10 (new-space))
 
-</span>
-Deterministic: ()
+</span>[
+
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(add-atom &space10 (superpose ((foo (foo 1 2) 3))))
 
-</span><span class="ansi38-255165000"
+</span>[<span class="ansi38-255165000"
 > (superpose ((foo (foo 1 2) 3)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (intersection (get-atoms &space10) (get-atoms &space2)) (superpose ((foo (foo 1 2) 3))))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.13"
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.13</h3>
 ; 
 ; EVAL TEST
-; took 0.009 secs. (8.65 milliseconds) 
+; took 0.009 secs. (8.74 milliseconds) 
 
 !(assertEqual (intersection (get-atoms &space10) (get-atoms &space2)) (superpose ((foo (foo 1 2) 3))))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((foo (foo 1 2) 3)) ((foo (foo 1 2) 3))))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;; Test intersection between fresh Space 11 and Space 12 with self-referential atoms
 ;;;; The intersection should correctly handle the self-referential atom using alpha equivalency.
 <span class="ansi38-013099040"
 >!(bind! &space11 (new-space))
 
-</span>
-Deterministic: ()
+</span>[
+
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(bind! &space12 (new-space))
 
-</span>
-Deterministic: ()
+</span>[
+
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(add-atom &space11 (superpose ((foo $x $x))))
 
-</span><span class="ansi38-255165000"
-> (superpose ((foo $_167906 $_167906)))
+</span>[<span class="ansi38-255165000"
+> (superpose ((foo $_197174 $_197174)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(add-atom &space12 (superpose ((foo $y $y))))
 
-</span><span class="ansi38-255165000"
-> (superpose ((foo $_184200 $_184200)))
+</span>[<span class="ansi38-255165000"
+> (superpose ((foo $_214560 $_214560)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (intersection (get-atoms &space11) (get-atoms &space12)) (superpose ((foo $x $x))))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.14"
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.14</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.86 milliseconds) 
+; took 0.002 secs. (1.95 milliseconds) 
 
 !(assertEqual (intersection (get-atoms &space11) (get-atoms &space12)) (superpose ((foo $x $x))))
 
 <span class="ansi36"
->(loonit_success  (equal_enough_for_test  ((foo $_215238 $_215238)) ((foo $_220504 $_220504))))
+>(loonit_success  (equal_enough_for_test  ((foo $_247054 $_247054)) ((foo $_252320 $_252320))))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;; Test intersection between Space 1 and a non-space2 atom list
 ;;;; This should return the common atoms between Space 1 and the provided atom list.
 <span class="ansi38-013099040"
 >!(bind! &space21 (new-space))
 
-</span>
-Deterministic: ()
+</span>[
+
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(add-atom &space21 (superpose ((foo 1 2) (foo 3 4) (foo 5 6))))
 
-</span><span class="ansi38-255165000"
+</span>[<span class="ansi38-255165000"
 > (superpose ((foo 1 2) (foo 3 4) (foo 5 6)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;; Intersect with a list of atoms not associated with any space2.
 <span class="ansi38-013099040"
 >!(assertEqual (intersection (get-atoms &space21) (superpose ((foo 1 2) (foo 7 8)))) (superpose ((foo 1 2))))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.15"
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.15</h3>
 ; 
 ; EVAL TEST
-; took 0.010 secs. (10.30 milliseconds) 
+; took 0.010 secs. (10.48 milliseconds) 
 
 !(assertEqual (intersection (get-atoms &space21) (superpose ((foo 1 2) (foo 7 8)))) (superpose ((foo 1 2))))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((foo 1 2)) ((foo 1 2))))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;; Test intersection between Space 2 and a non-space2 atom list with variables
 ;;;; This should correctly instantiate the variable and return the matching atom.
 <span class="ansi38-013099040"
 >!(bind! &space22 (new-space))
 
-</span>
-Deterministic: ()
+</span>[
+
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(add-atom &space22 (superpose ((foo $x 10) (foo 3 4) (foo $y $y))))
 
-</span><span class="ansi38-255165000"
-> (superpose ((foo $_353302 10) (foo 3 4) (foo $_353380 $_353380)))
+</span>[<span class="ansi38-255165000"
+> (superpose ((foo $_390214 10) (foo 3 4) (foo $_390292 $_390292)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;; Intersect with a list of atoms, some of which contain variables.
 <span class="ansi38-013099040"
 >!(assertEqual (intersection (get-atoms &space22) (superpose ((foo 5 10) (foo 3 $z)))) (superpose ((foo 5 10) (foo 3 4))))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.16"
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.16</h3>
 ; 
 ; EVAL TEST
-; took 0.009 secs. (9.48 milliseconds) 
+; took 0.010 secs. (9.55 milliseconds) 
 
 !(assertEqual (intersection (get-atoms &space22) (superpose ((foo 5 10) (foo 3 $z)))) (superpose ((foo 5 10) (foo 3 4))))
 
 <span class="ansi31"
 >(loonit_failureR  (equal_enough_for_test  () ((foo 5 10) (foo 3 4))))
 </span>
-Deterministic: ((Error  (got  ()) (expected  ((foo 5 10) (foo 3 4)))))
+Deterministic: ((Error  (got  ()) (expected  ((foo 5 10) (foo 3 4)))))((Error  (got  ()) (expected  ((foo 5 10) (foo 3 4)))))]
 ;;;; Test intersection between Space 3 and a non-space2 atom with strict matching
 ;;;; This should return an empty set because the variables in the non-space2 atom do not match the space2 atoms exactly.
 <span class="ansi38-013099040"
 >!(bind! &space23 (new-space))
 
-</span>
-Deterministic: ()
+</span>[
+
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(add-atom &space23 (superpose ((foo $a $b) (foo 3 4) (foo $c $c))))
 
-</span><span class="ansi38-255165000"
-> (superpose ((foo $_457980 $_458002) (foo 3 4) (foo $_458072 $_458072)))
+</span>[<span class="ansi38-255165000"
+> (superpose ((foo $_498182 $_498204) (foo 3 4) (foo $_498274 $_498274)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;; Intersect with a non-space2 atom list with different variable names
 <span class="ansi38-013099040"
 >!(assertEqual (intersection (get-atoms &space23) (superpose ((foo $x $y) (foo 3 4)))) (superpose ((foo 3 4))))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.17"
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.17</h3>
 ; 
 ; EVAL TEST
-; took 0.008 secs. (7.90 milliseconds) 
+; took 0.008 secs. (7.92 milliseconds) 
 
 !(assertEqual (intersection (get-atoms &space23) (superpose ((foo $x $y) (foo 3 4)))) (superpose ((foo 3 4))))
 
 <span class="ansi31"
->(loonit_failureR  (equal_enough_for_test  ((foo $_513984 $_513990) (foo 3 4)) ((foo 3 4))))
+>(loonit_failureR  (equal_enough_for_test  ((foo $_555642 $_555648) (foo 3 4)) ((foo 3 4))))
 </span>
-Deterministic: ((Error  (got  ((foo $_513984 $_513990) (foo 3 4))) (expected  ((foo 3 4)))))
+Deterministic: ((Error  (got  ((foo $_555642 $_555648) (foo 3 4))) (expected  ((foo 3 4)))))((Error  (got  ((foo $_555642 $_555648) (foo 3 4))) (expected  ((foo 3 4)))))]
 ;;;; Test intersection between Space 4 and a single non-space2 atom
 ;;;; This should return the single atom if it matches any in the space2.
 <span class="ansi38-013099040"
 >!(bind! &space24 (new-space))
 
-</span>
-Deterministic: ()
+</span>[
+
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(add-atom &space24 (superpose ((foo 7 7) (foo (foo 1 2) 3) (foo $z $z))))
 
-</span><span class="ansi38-255165000"
-> (superpose ((foo 7 7) (foo (foo 1 2) 3) (foo $_559650 $_559650)))
+</span>[<span class="ansi38-255165000"
+> (superpose ((foo 7 7) (foo (foo 1 2) 3) (foo $_603146 $_603146)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;; Intersect with a single non-space2 atom
 <span class="ansi38-013099040"
 >!(assertEqual (intersection (get-atoms &space24) (superpose ((foo 7 7)))) (superpose ((foo 7 7))))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.18"
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.18</h3>
 ; 
 ; EVAL TEST
-; took 0.007 secs. (7.16 milliseconds) 
+; took 0.007 secs. (7.14 milliseconds) 
 
 !(assertEqual (intersection (get-atoms &space24) (superpose ((foo 7 7)))) (superpose ((foo 7 7))))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((foo 7 7)) ((foo 7 7))))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;; Test intersection between Space 5 and multiple non-space2 atoms
 ;;;; This should return only the atoms that match, considering variable instantiation.
 <span class="ansi38-013099040"
 >!(bind! &space25 (new-space))
 
-</span>
-Deterministic: ()
+</span>[
+
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(add-atom &space25 (superpose ((foo (foo 3 4) 7) (foo $p $p) (foo 5 5))))
 
-</span><span class="ansi38-255165000"
-> (superpose ((foo (foo 3 4) 7) (foo $_659814 $_659814) (foo 5 5)))
+</span>[<span class="ansi38-255165000"
+> (superpose ((foo (foo 3 4) 7) (foo $_706586 $_706586) (foo 5 5)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;; Intersect with multiple non-space2 atoms
 <span class="ansi38-013099040"
 >!(assertEqual (intersection (get-atoms &space25) (superpose ((foo 5 5) (foo 7 8)))) (superpose ((foo 5 5))))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.19"
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.19</h3>
 ; 
 ; EVAL TEST
-; took 0.010 secs. (9.97 milliseconds) 
+; took 0.010 secs. (10.06 milliseconds) 
 
 !(assertEqual (intersection (get-atoms &space25) (superpose ((foo 5 5) (foo 7 8)))) (superpose ((foo 5 5))))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((foo 5 5)) ((foo 5 5))))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;; Test intersection with a nested non-space2 structure
 ;;;; The intersection should correctly handle the nested structure.
 <span class="ansi38-013099040"
 >!(bind! &space26 (new-space))
 
-</span>
-Deterministic: ()
+</span>[
+
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(add-atom &space26 (superpose ((foo (foo 1 2) 3) (foo $x $y) (foo (foo 3 4) 7))))
 
-</span><span class="ansi38-255165000"
-> (superpose ((foo (foo 1 2) 3) (foo $_760550 $_760572) (foo (foo 3 4) 7)))
+</span>[<span class="ansi38-255165000"
+> (superpose ((foo (foo 1 2) 3) (foo $_810598 $_810620) (foo (foo 3 4) 7)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;; Intersect with a nested non-space2 structure
 <span class="ansi38-013099040"
 >!(assertEqual (intersection (get-atoms &space26) (superpose ((foo (foo 1 2) 3)))) (superpose ((foo (foo 1 2) 3))))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.20"
 >;; HYPERON-METTALOG-SANITY.SPACE-INTERSECTION-TESTS.20</h3>
 ; 
 ; EVAL TEST
-; took 0.009 secs. (8.60 milliseconds) 
+; took 0.009 secs. (8.51 milliseconds) 
 
 !(assertEqual (intersection (get-atoms &space26) (superpose ((foo (foo 1 2) 3)))) (superpose ((foo (foo 1 2) 3))))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((foo (foo 1 2) 3)) ((foo (foo 1 2) 3))))
 </span>
-Deterministic: ()<span class="ansi32"
->
-% 1,926,341 inferences, 0.525 CPU in 0.525 seconds (100% CPU, 3667471 Lips)
+Deterministic: ()()]
+<span class="ansi32"
+>% 2,003,921 inferences, 0.562 CPU in 0.562 seconds (100% CPU, 3564896 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/space_intersection_tests.metta  0)
 <span class="ansi1"
@@ -1178,7 +1219,7 @@ Deterministic: ()<span class="ansi32"
 [()]
 [()]
 [()]
-[((Error  (got  ((foo (foo 1 2) 3) (foo 7 7) (foo (foo $_584386 2) 3))) (expected  ((foo 7 7)))))]
+[((Error  (got  ((foo (foo 1 2) 3) (foo 7 7) (foo (foo $_597470 2) 3))) (expected  ((foo 7 7)))))]
 [()]
 [()]
 [((Error  (got  ((foo (foo 1 2) 3) (foo 7 7))) (expected  ((foo (foo 1 2) 3)))))]
@@ -1187,9 +1228,9 @@ Deterministic: ()<span class="ansi32"
 [()]
 [()]
 [()]
-[((Error  (got  ((foo $_929368 $_929374) (foo 3 $_929350))) (expected  ((foo 3 $_942058)))))]
+[((Error  (got  ((foo $_952344 $_952350) (foo 3 $_952326))) (expected  ((foo 3 $_965034)))))]
 [()]
-[((Error  (got  ((foo $_39566 $_39572))) (expected  ())))]
+[((Error  (got  ((foo $_62632 $_62638))) (expected  ())))]
 [()]
 [()]
 [()]
@@ -1206,7 +1247,7 @@ Deterministic: ()<span class="ansi32"
 [((Error  (got  ()) (expected  ((foo 5 10) (foo 3 4)))))]
 [()]
 [()]
-[((Error  (got  ((foo $_513984 $_513990) (foo 3 4))) (expected  ((foo 3 4)))))]
+[((Error  (got  ((foo $_555642 $_555648) (foo 3 4))) (expected  ((foo 3 4)))))]
 [()]
 [()]
 [()]
@@ -1221,7 +1262,7 @@ Deterministic: ()<span class="ansi32"
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 10:29:42+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 14:03:37+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

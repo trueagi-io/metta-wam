@@ -29,7 +29,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 10:29:29+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 14:03:23+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -347,9 +347,9 @@ Script started on 2024-10-19 10:29:29+00:00 [TERM="xterm-256color" TTY="/dev/pts
 P;HTML|
 ;                                         (= 3  "Missed result: 4)]")
 P;HTML|
-;                                         (= 3  "0.05user 0.00system 0:00.05elapsed 100%CPU (0avgtext+0avgdata 25388maxresident)k")
+;                                         (= 3  "0.03user 0.01system 0:00.05elapsed 98%CPU (0avgtext+0avgdata 25376maxresident)k")
 P;HTML|
-;                                         (= 3  "0inputs+0outputs (0major+2910minor)pagefaults 0swaps")
+;                                         (= 3  "0inputs+0outputs (0major+2907minor)pagefaults 0swaps")
 P;HTML|
 ;                                        (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/sequential_tests.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/sequential_tests.metta)
 
@@ -357,8 +357,10 @@ Script started on 2024-10-19 10:29:29+00:00 [TERM="xterm-256color" TTY="/dev/pts
 <span class="ansi38-013099040"
 >!(bind! &var (new-state 0))
 
-</span>
-Deterministic: ()<span class="ansi38-255165000"
+</span>[
+
+Deterministic: ()()]
+<span class="ansi38-255165000"
 > (= (increment) (sequential ((do (change-state! &var (+ 1 (get-state &var)))) (get-state &var))))
 </span>;;;; sequential + do
 <span class="ansi38-255165000"
@@ -372,39 +374,41 @@ Deterministic: ()<span class="ansi38-255165000"
 </span><span class="ansi38-013099040"
 >!(assertEqualToResult (sequential ((do (foo $x)) (get-state &var))) (4))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.SEQUENTIAL-TESTS.01"
 >;; HYPERON-METTALOG-SANITY.SEQUENTIAL-TESTS.01</h3>
 ; 
 ; EVAL TEST
-; took 0.004 secs. (4.39 milliseconds) 
+; took 0.004 secs. (4.32 milliseconds) 
 
 !(assertEqualToResult (sequential ((do (foo $x)) (get-state &var))) (4))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (4) (4)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;; sequential order
 ;;;; if sequential order is not fixed, this test has a 1/132 chance of succeeding (10! / 12!)
 <span class="ansi38-013099040"
 >!(assertEqualToResult (sequential ((do (change-state! &var 0)) (increment) (increment) (increment) (increment) (increment) (increment) (increment) (increment) (increment) (increment) (get-state &var))) (1 2 3 4 5 6 7 8 9 10 10))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.SEQUENTIAL-TESTS.02"
 >;; HYPERON-METTALOG-SANITY.SEQUENTIAL-TESTS.02</h3>
 ; 
 ; EVAL TEST
-; took 0.008 secs. (8.46 milliseconds) 
+; took 0.009 secs. (8.62 milliseconds) 
 
 !(assertEqualToResult (sequential ((do (change-state! &var 0)) (increment) (increment) (increment) (increment) (increment) (increment) (increment) (increment) (increment) (increment) (get-state &var))) (1 2 3 4 5 6 7 8 9 10 10))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (1 2 3 4 5 6 7 8 9 10 10) (1 2 3 4 5 6 7 8 9 10 10)))
 </span>
-Deterministic: ()<span class="ansi32"
->
-% 218,989 inferences, 0.042 CPU in 0.042 seconds (100% CPU, 5221445 Lips)
+Deterministic: ()()]
+<span class="ansi32"
+>% 278,272 inferences, 0.067 CPU in 0.067 seconds (100% CPU, 4165452 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/sequential_tests.metta  0)
 <span class="ansi1"
@@ -546,7 +550,7 @@ Deterministic: ()<span class="ansi32"
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 10:29:35+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 14:03:29+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

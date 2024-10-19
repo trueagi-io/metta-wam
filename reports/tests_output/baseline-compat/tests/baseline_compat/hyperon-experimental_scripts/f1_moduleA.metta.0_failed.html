@@ -31,7 +31,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 10:25:40+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 13:59:15+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -354,7 +354,7 @@ Script started on 2024-10-19 10:25:40+00:00 [TERM="xterm-256color" TTY="/dev/pts
 <span class="ansi38-013099040"
 >!(import! &self f1_moduleC.metta)
 
-</span>P;HTML|
+</span>[P;HTML|
 ;                                         (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/f1_moduleC.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/f1_moduleC.metta)
 P;HTML|
 ;                                         (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/f1_moduleC.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/f1_moduleC.metta)
@@ -372,7 +372,7 @@ Script started on 2024-10-19 10:25:40+00:00 [TERM="xterm-256color" TTY="/dev/pts
 </span><span class="ansi38-255165000"
 > (= (g $x) (+ $x (__g)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;; FIXME? stdlib space is not available at importing time -
 ;;; only tokens / grounded operations work, while symbolic functions
 ;;; (like `if`) don't work.
@@ -380,42 +380,45 @@ Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (+ 1 2) 3)
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.F1-MODULEA.01"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-MODULEA.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000215 secs. (214.73 microseconds) 
+; took 0.000232 secs. (231.50 microseconds) 
 
 !(assertEqual (+ 1 2) 3)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (3) (3)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (if True "S" "F") "S")
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.F1-MODULEA.02"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-MODULEA.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000155 secs. (154.71 microseconds) 
+; took 0.000154 secs. (154.08 microseconds) 
 
 !(assertEqual (if True "S" "F") "S")
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ("S") ("S")))
 </span>
-Deterministic: ()<span class="ansi38-255165000"
+Deterministic: ()()]
+<span class="ansi38-255165000"
 > (= (dup $x) (if (== $x 0) (+ $x 10) (g $x)))
 </span><span class="ansi38-255165000"
 > (: f (-> Number Number))
 </span><span class="ansi38-255165000"
 > (= (f $x) (if (< $x 0) (- 0 $x) (g (+ 1 $x))))
 </span><span class="ansi32"
->% 114,836 inferences, 0.032 CPU in 0.032 seconds (100% CPU, 3543877 Lips)
+>% 174,143 inferences, 0.057 CPU in 0.057 seconds (100% CPU, 3046011 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/f1_moduleA.metta  0)
 <span class="ansi1"
@@ -557,7 +560,7 @@ Deterministic: ()<span class="ansi38-255165000"
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 10:25:45+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 13:59:21+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

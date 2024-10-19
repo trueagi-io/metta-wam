@@ -26,7 +26,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 10:27:38+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 14:01:25+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -342,9 +342,9 @@ Script started on 2024-10-19 10:27:38+00:00 [TERM="xterm-256color" TTY="/dev/pts
 P;HTML|
 ;                                         (= 2  "Missed result: False)]")
 P;HTML|
-;                                         (= 2  "0.03user 0.01system 0:00.04elapsed 100%CPU (0avgtext+0avgdata 24876maxresident)k")
+;                                         (= 2  "0.04user 0.00system 0:00.04elapsed 100%CPU (0avgtext+0avgdata 25388maxresident)k")
 P;HTML|
-;                                         (= 2  "0inputs+0outputs (0major+2875minor)pagefaults 0swaps")
+;                                         (= 2  "0inputs+0outputs (0major+2882minor)pagefaults 0swaps")
 P;HTML|
 ;                                        (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/hyperpose_tests.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/hyperpose_tests.metta)
 
@@ -357,54 +357,57 @@ Script started on 2024-10-19 10:27:38+00:00 [TERM="xterm-256color" TTY="/dev/pts
 <span class="ansi38-013099040"
 >!(assertEqualToResult (catch (max-time! 1 (hyperpose ((is-even 1) (is-even 2) (is-even 3)))) time_limit_exceeded time_limit_exceeded) (False True False))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.HYPERPOSE-TESTS.01"
 >;; HYPERON-METTALOG-SANITY.HYPERPOSE-TESTS.01</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.53 milliseconds) 
+; took 0.002 secs. (1.65 milliseconds) 
 
 !(assertEqualToResult (catch (max-time! 1 (hyperpose ((is-even 1) (is-even 2) (is-even 3)))) time_limit_exceeded time_limit_exceeded) (False True False))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (False True False) (False True False)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (catch (max-time! 1 (hyperpose ((> 1 2) (is-even 2) (superpose (3 4))))) time_limit_exceeded time_limit_exceeded) (False True 3 4))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.HYPERPOSE-TESTS.02"
 >;; HYPERON-METTALOG-SANITY.HYPERPOSE-TESTS.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000812 secs. (811.55 microseconds) 
+; took 0.000822 secs. (822.32 microseconds) 
 
 !(assertEqualToResult (catch (max-time! 1 (hyperpose ((> 1 2) (is-even 2) (superpose (3 4))))) time_limit_exceeded time_limit_exceeded) (False True 3 4))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (False True 3 4) (False True 3 4)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;; test recursive hyperpose
 <span class="ansi38-013099040"
 >!(assertEqualToResult (catch (max-time! 1 (hyperpose ((hyperpose (1 2)) (hyperpose (3 4))))) time_limit_exceeded time_limit_exceeded) (1 2 3 4))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.HYPERPOSE-TESTS.03"
 >;; HYPERON-METTALOG-SANITY.HYPERPOSE-TESTS.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000504 secs. (503.56 microseconds) 
+; took 0.000514 secs. (513.86 microseconds) 
 
 !(assertEqualToResult (catch (max-time! 1 (hyperpose ((hyperpose (1 2)) (hyperpose (3 4))))) time_limit_exceeded time_limit_exceeded) (1 2 3 4))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (1 2 3 4) (1 2 3 4)))
 </span>
-Deterministic: ()<span class="ansi32"
->
-% 132,189 inferences, 0.027 CPU in 0.027 seconds (100% CPU, 4962304 Lips)
+Deterministic: ()()]
+<span class="ansi32"
+>% 191,487 inferences, 0.051 CPU in 0.051 seconds (100% CPU, 3719169 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/hyperpose_tests.metta  0)
 <span class="ansi1"
@@ -546,7 +549,7 @@ Deterministic: ()<span class="ansi32"
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 10:27:44+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 14:01:31+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

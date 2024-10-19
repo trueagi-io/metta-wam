@@ -37,7 +37,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 10:31:56+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 14:05:57+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -359,255 +359,269 @@ Script started on 2024-10-19 10:31:56+00:00 [TERM="xterm-256color" TTY="/dev/pts
 <span class="ansi38-013099040"
 >!(assertEqual (unique (superpose (a b b c c c d))) (superpose (a b c d)))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.UNIQUE-TEST.01"
 >;; HYPERON-METTALOG-SANITY.UNIQUE-TEST.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000426 secs. (426.08 microseconds) 
+; took 0.000382 secs. (381.65 microseconds) 
 
 !(assertEqual (unique (superpose (a b b c c c d))) (superpose (a b c d)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (a b c d) (a b c d)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;; Test unique with no duplicates
 ;;;; This test ensures that `unique` leaves a list unchanged if it already contains only unique elements.
 <span class="ansi38-013099040"
 >!(assertEqual (unique (superpose (a b c d))) (superpose (a b c d)))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.UNIQUE-TEST.02"
 >;; HYPERON-METTALOG-SANITY.UNIQUE-TEST.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000333 secs. (333.12 microseconds) 
+; took 0.000365 secs. (365.34 microseconds) 
 
 !(assertEqual (unique (superpose (a b c d))) (superpose (a b c d)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (a b c d) (a b c d)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;; Test unique with a single element
 ;;;; This checks that `unique` works correctly for a single-element list, leaving it unchanged as [a].
 <span class="ansi38-013099040"
 >!(assertEqual (unique (superpose (a))) (superpose (a)))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.UNIQUE-TEST.03"
 >;; HYPERON-METTALOG-SANITY.UNIQUE-TEST.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000293 secs. (293.33 microseconds) 
+; took 0.000265 secs. (264.63 microseconds) 
 
 !(assertEqual (unique (superpose (a))) (superpose (a)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (a) (a)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;; Test unique with an empty list
 ;;;; This confirms that `unique` handles an empty list without errors, correctly returning an empty result.
 <span class="ansi38-013099040"
 >!(assertEqual (unique (superpose ())) (superpose ()))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.UNIQUE-TEST.04"
 >;; HYPERON-METTALOG-SANITY.UNIQUE-TEST.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000240 secs. (240.34 microseconds) 
+; took 0.000237 secs. (236.84 microseconds) 
 
 !(assertEqual (unique (superpose ())) (superpose ()))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  () ()))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;; Test unique with all elements being the same
 ;;;; This verifies that when all elements are the same (a a a a), `unique` reduces it to a single element [a].
 <span class="ansi38-013099040"
 >!(assertEqual (unique (superpose (a a a a))) (superpose (a)))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.UNIQUE-TEST.05"
 >;; HYPERON-METTALOG-SANITY.UNIQUE-TEST.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000262 secs. (261.79 microseconds) 
+; took 0.000274 secs. (273.77 microseconds) 
 
 !(assertEqual (unique (superpose (a a a a))) (superpose (a)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (a) (a)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;; Test unique with nested lists
 ;;;; This ensures that unique identifies identical nested lists and reduces them to a single instance.
 <span class="ansi38-013099040"
 >!(assertEqual (unique (superpose ((1 2) (1 2) (3 4)))) (superpose ((1 2) (3 4))))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.UNIQUE-TEST.06"
 >;; HYPERON-METTALOG-SANITY.UNIQUE-TEST.06</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.40 milliseconds) 
+; took 0.001 secs. (1.39 milliseconds) 
 
 !(assertEqual (unique (superpose ((1 2) (1 2) (3 4)))) (superpose ((1 2) (3 4))))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((1 2) (3 4)) ((1 2) (3 4))))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;; Test unique with mixed types
 ;;;; This test checks that `unique` handles different data types correctly and removes duplicates while preserving the order.
 <span class="ansi38-013099040"
 >!(assertEqual (unique (superpose (1 "hello" 1 "world" "hello" 3.14 3.14))) (superpose (1 "hello" "world" 3.14)))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.UNIQUE-TEST.07"
 >;; HYPERON-METTALOG-SANITY.UNIQUE-TEST.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000301 secs. (301.20 microseconds) 
+; took 0.000346 secs. (345.80 microseconds) 
 
 !(assertEqual (unique (superpose (1 "hello" 1 "world" "hello" 3.14 3.14))) (superpose (1 "hello" "world" 3.14)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (1 "hello" "world" 3.14) (1 "hello" "world" 3.14)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;; Test list-to-set with simple duplicates
 ;;;; This test ensures that list-to-set correctly collapses duplicates into a unique set.
 <span class="ansi38-013099040"
 >!(assertEqual (list-to-set (a b b c c c d)) (a b c d))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.UNIQUE-TEST.08"
 >;; HYPERON-METTALOG-SANITY.UNIQUE-TEST.08</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.13 milliseconds) 
+; took 0.001 secs. (1.10 milliseconds) 
 
 !(assertEqual (list-to-set (a b b c c c d)) (a b c d))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((a b c d)) ((a b c d))))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;; Test list-to-set with nested lists
 ;;;; This test checks that list-to-set properly collapses duplicates within nested lists.
 <span class="ansi38-013099040"
 >!(assertEqual (list-to-set ((1 2) (1 2) (3 4))) ((1 2) (3 4)))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.UNIQUE-TEST.09"
 >;; HYPERON-METTALOG-SANITY.UNIQUE-TEST.09</h3>
 ; 
 ; EVAL TEST
-; took 0.004 secs. (3.55 milliseconds) 
+; took 0.004 secs. (3.56 milliseconds) 
 
 !(assertEqual (list-to-set ((1 2) (1 2) (3 4))) ((1 2) (3 4)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (((1 2) (3 4))) (((1 2) (3 4)))))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;; Test unique with variables
 ;;;; This test checks that unique handles variables correctly, ensuring that each unique instance is preserved.
 <span class="ansi38-013099040"
 >!(assertEqual (unique (superpose ($x $y $x $z))) (superpose ($x $y $z)))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.UNIQUE-TEST.10"
 >;; HYPERON-METTALOG-SANITY.UNIQUE-TEST.10</h3>
 ; 
 ; EVAL TEST
-; took 0.000297 secs. (297.48 microseconds) 
+; took 0.000301 secs. (300.81 microseconds) 
 
 !(assertEqual (unique (superpose ($x $y $x $z))) (superpose ($x $y $z)))
 
 <span class="ansi36"
->(loonit_success  (equal_enough_for_test  ($_383416 $_383410 $_383404) ($_383498 $_383492 $_383486)))
+>(loonit_success  (equal_enough_for_test  ($_313924 $_313918 $_313912) ($_314006 $_314000 $_313994)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;; Test unique with variables in nested lists
 ;;;; This test checks that unique correctly handles variables within nested lists, preserving each unique nested structure.
 <span class="ansi38-013099040"
 >!(assertEqual (unique (superpose ((:: $x $y) (:: $x $z) (:: $x $y) (:: $a $b)))) (superpose ((:: $x $y) (:: $x $z) (:: $a $b))))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.UNIQUE-TEST.11"
 >;; HYPERON-METTALOG-SANITY.UNIQUE-TEST.11</h3>
 ; 
 ; EVAL TEST
-; took 0.003 secs. (2.54 milliseconds) 
+; took 0.003 secs. (2.55 milliseconds) 
 
 !(assertEqual (unique (superpose ((:: $x $y) (:: $x $z) (:: $x $y) (:: $a $b)))) (superpose ((:: $x $y) (:: $x $z) (:: $a $b))))
 
 <span class="ansi36"
->(loonit_success  (equal_enough_for_test  ((:: $_418238 $_418244) (:: $_418214 $_418220) (:: $_418190 $_418196)) ((:: $_431184 $_431190) (:: $_431160 $_431166) (:: $_431136 $_431142))))
+>(loonit_success  (equal_enough_for_test  ((:: $_349550 $_349556) (:: $_349526 $_349532) (:: $_349502 $_349508)) ((:: $_362496 $_362502) (:: $_362472 $_362478) (:: $_362448 $_362454))))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;; Test unique with repeated variables in nested lists
 ;;;; This test ensures that unique treats identical nested lists with variables as duplicates, reducing them to a single instance.
 <span class="ansi38-013099040"
 >!(assertEqual (unique (superpose ((:: $x $y) (:: $x $y) (:: $x $z) (:: $x $y)))) (superpose ((:: $x $y) (:: $x $z))))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.UNIQUE-TEST.12"
 >;; HYPERON-METTALOG-SANITY.UNIQUE-TEST.12</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.08 milliseconds) 
+; took 0.002 secs. (2.05 milliseconds) 
 
 !(assertEqual (unique (superpose ((:: $x $y) (:: $x $y) (:: $x $z) (:: $x $y)))) (superpose ((:: $x $y) (:: $x $z))))
 
 <span class="ansi36"
->(loonit_success  (equal_enough_for_test  ((:: $_463066 $_463072) (:: $_463042 $_463048)) ((:: $_472172 $_472178) (:: $_472148 $_472154))))
+>(loonit_success  (equal_enough_for_test  ((:: $_395182 $_395188) (:: $_395158 $_395164)) ((:: $_404288 $_404294) (:: $_404264 $_404270))))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;; Test unique with mixed types and variables in nested lists
 ;;;; This test checks that unique handles a mix of nested structures with variables, symbols, and other data types correctly.
 <span class="ansi38-013099040"
 >!(assertEqual (unique (superpose ((:: 1 $x) (:: $x "hello") (:: 1 $x) (:: $y $z) (:: $x "hello")))) (superpose ((:: 1 $x) (:: $x "hello") (:: $y $z))))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.UNIQUE-TEST.13"
 >;; HYPERON-METTALOG-SANITY.UNIQUE-TEST.13</h3>
 ; 
 ; EVAL TEST
-; took 0.004 secs. (3.95 milliseconds) 
+; took 0.004 secs. (3.98 milliseconds) 
 
 !(assertEqual (unique (superpose ((:: 1 $x) (:: $x "hello") (:: 1 $x) (:: $y $z) (:: $x "hello")))) (superpose ((:: 1 $x) (:: $x "hello") (:: $y $z))))
 
 <span class="ansi36"
->(loonit_success  (equal_enough_for_test  ((:: 1 $_518642) (:: $_518606 "hello") (:: $_518582 $_518588)) ((:: 1 $_538994) (:: $_538958 "hello") (:: $_538934 $_538940))))
+>(loonit_success  (equal_enough_for_test  ((:: 1 $_451562) (:: $_451526 "hello") (:: $_451502 $_451508)) ((:: 1 $_471914) (:: $_471878 "hello") (:: $_471854 $_471860))))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;; Test unique with complex nested structures including variables
 ;;;; This test verifies that unique handles more complex nested structures containing variables, preserving each unique structure.
 <span class="ansi38-013099040"
 >!(assertEqual (unique (superpose ((:: $x (:: a b)) (:: $x (:: a b)) (:: (:: 1 $x) (:: 2 $y)) (:: (:: 1 $x) (:: 2 $y))))) (superpose ((:: $x (:: a b)) (:: (:: 1 $x) (:: 2 $y)))))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-METTALOG-SANITY.UNIQUE-TEST.14"
 >;; HYPERON-METTALOG-SANITY.UNIQUE-TEST.14</h3>
 ; 
 ; EVAL TEST
-; took 0.006 secs. (6.47 milliseconds) 
+; took 0.007 secs. (6.61 milliseconds) 
 
 !(assertEqual (unique (superpose ((:: $x (:: a b)) (:: $x (:: a b)) (:: (:: 1 $x) (:: 2 $y)) (:: (:: 1 $x) (:: 2 $y))))) (superpose ((:: $x (:: a b)) (:: (:: 1 $x) (:: 2 $y)))))
 
 <span class="ansi36"
->(loonit_success  (equal_enough_for_test  ((:: $_606910 (:: a b)) (:: (:: 1 $_606868) (:: 2 $_606892))) ((:: $_639560 (:: a b)) (:: (:: 1 $_639518) (:: 2 $_639542)))))
+>(loonit_success  (equal_enough_for_test  ((:: $_540634 (:: a b)) (:: (:: 1 $_540592) (:: 2 $_540616))) ((:: $_573284 (:: a b)) (:: (:: 1 $_573242) (:: 2 $_573266)))))
 </span>
-Deterministic: ()<span class="ansi32"
->
-% 773,525 inferences, 0.131 CPU in 0.132 seconds (100% CPU, 5894895 Lips)
+Deterministic: ()()]
+<span class="ansi32"
+>% 835,943 inferences, 0.158 CPU in 0.158 seconds (100% CPU, 5287885 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/unique_test.metta  0)
 <span class="ansi1"
@@ -760,7 +774,7 @@ Deterministic: ()<span class="ansi32"
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 10:32:01+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 14:06:03+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

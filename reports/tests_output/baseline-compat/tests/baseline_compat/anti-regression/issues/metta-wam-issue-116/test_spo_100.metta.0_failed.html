@@ -123,7 +123,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 10:20:49+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 13:54:03+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -442,7 +442,7 @@ Script started on 2024-10-19 10:20:49+00:00 [TERM="xterm-256color" TTY="/dev/pts
 <span class="ansi38-013099040"
 >!(import! &hald100 hald_spo_100.metta)
 
-</span>P;HTML|
+</span>[P;HTML|
 ;                                         (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/issues/metta-wam-issue-116/hald_spo_100.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/issues/metta-wam-issue-116/hald_spo_100.metta)
 P;HTML|
 ;                                         (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/issues/metta-wam-issue-116/hald_spo_100.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/issues/metta-wam-issue-116/hald_spo_100.metta)
@@ -647,25 +647,26 @@ Script started on 2024-10-19 10:20:49+00:00 [TERM="xterm-256color" TTY="/dev/pts
 </span><span class="ansi38-255165000"
 > (Rhabdomyolysis associated Death)
 </span>
-Deterministic: ()
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (match &hald100 (Doxorubicin $p $o) (Doxorubicin $p $o)) ((Doxorubicin stratify Liposarcoma)))
 
-</span>
+</span>[
+
 ;<h3 id="METTA-WAM-ISSUE-116.TEST-SPO-100.01"
 >;; METTA-WAM-ISSUE-116.TEST-SPO-100.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000460 secs. (459.74 microseconds) 
+; took 0.000489 secs. (488.96 microseconds) 
 
 !(assertEqualToResult (match &hald100 (Doxorubicin $p $o) (Doxorubicin $p $o)) ((Doxorubicin stratify Liposarcoma)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Doxorubicin stratify Liposarcoma)) ((Doxorubicin stratify Liposarcoma))))
 </span>
-Deterministic: ()<span class="ansi32"
->
-% 451,798 inferences, 0.182 CPU in 0.182 seconds (100% CPU, 2479503 Lips)
+Deterministic: ()()]
+<span class="ansi32"
+>% 510,740 inferences, 0.208 CPU in 0.208 seconds (100% CPU, 2456900 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/issues/metta-wam-issue-116/test_spo_100.metta  0)
 <span class="ansi1"
@@ -806,7 +807,7 @@ Deterministic: ()<span class="ansi32"
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 10:20:55+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 13:54:09+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

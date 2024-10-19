@@ -21,7 +21,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 10:29:15+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 14:03:07+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -346,56 +346,58 @@ Script started on 2024-10-19 10:29:15+00:00 [TERM="xterm-256color" TTY="/dev/pts
 <span class="ansi38-013099040"
 >!(assertEqualToResults (intersect (superpose (a b c d)) (superpose (c d e f))) (c d))
 
-</span>
-NDet Result(1): (assertEqualToResults (intersect a c) (c d))
+</span>[
 
-NDet Result(2): (assertEqualToResults (intersect a d) (c d))
+NDet Result(1): (assertEqualToResults (intersect a c) (c d))(assertEqualToResults (intersect a c) (c d)), 
 
-NDet Result(3): (assertEqualToResults (intersect a e) (c d))
+NDet Result(2): (assertEqualToResults (intersect a d) (c d))(assertEqualToResults (intersect a d) (c d)), 
 
-NDet Result(4): (assertEqualToResults (intersect a f) (c d))
+NDet Result(3): (assertEqualToResults (intersect a e) (c d))(assertEqualToResults (intersect a e) (c d)), 
 
-NDet Result(5): (assertEqualToResults (intersect b c) (c d))
+NDet Result(4): (assertEqualToResults (intersect a f) (c d))(assertEqualToResults (intersect a f) (c d)), 
 
-NDet Result(6): (assertEqualToResults (intersect b d) (c d))
+NDet Result(5): (assertEqualToResults (intersect b c) (c d))(assertEqualToResults (intersect b c) (c d)), 
 
-NDet Result(7): (assertEqualToResults (intersect b e) (c d))
+NDet Result(6): (assertEqualToResults (intersect b d) (c d))(assertEqualToResults (intersect b d) (c d)), 
 
-NDet Result(8): (assertEqualToResults (intersect b f) (c d))
+NDet Result(7): (assertEqualToResults (intersect b e) (c d))(assertEqualToResults (intersect b e) (c d)), 
 
-NDet Result(9): (assertEqualToResults (intersect c c) (c d))
+NDet Result(8): (assertEqualToResults (intersect b f) (c d))(assertEqualToResults (intersect b f) (c d)), 
 
-NDet Result(10): (assertEqualToResults (intersect c d) (c d))
+NDet Result(9): (assertEqualToResults (intersect c c) (c d))(assertEqualToResults (intersect c c) (c d)), 
 
-NDet Result(11): (assertEqualToResults (intersect c e) (c d))
+NDet Result(10): (assertEqualToResults (intersect c d) (c d))(assertEqualToResults (intersect c d) (c d)), 
 
-NDet Result(12): (assertEqualToResults (intersect c f) (c d))
+NDet Result(11): (assertEqualToResults (intersect c e) (c d))(assertEqualToResults (intersect c e) (c d)), 
 
-NDet Result(13): (assertEqualToResults (intersect d c) (c d))
+NDet Result(12): (assertEqualToResults (intersect c f) (c d))(assertEqualToResults (intersect c f) (c d)), 
 
-NDet Result(14): (assertEqualToResults (intersect d d) (c d))
+NDet Result(13): (assertEqualToResults (intersect d c) (c d))(assertEqualToResults (intersect d c) (c d)), 
 
-NDet Result(15): (assertEqualToResults (intersect d e) (c d))
+NDet Result(14): (assertEqualToResults (intersect d d) (c d))(assertEqualToResults (intersect d d) (c d)), 
 
-Last Result(16): (assertEqualToResults (intersect d f) (c d))
+NDet Result(15): (assertEqualToResults (intersect d e) (c d))(assertEqualToResults (intersect d e) (c d)), 
+
+Last Result(16): (assertEqualToResults (intersect d f) (c d))(assertEqualToResults (intersect d f) (c d))]
 ;;; !(union (superpose (a b c d )) (superpose ( c d e f )))
 <span class="ansi38-013099040"
 >!(assertEqualToResults (union (superpose (a b c d)) (superpose (c d e f))) (a b c d e f))
 
-</span>
-NDet Result(1): (assertEqualToResults a (a b c d e f))
+</span>[
 
-NDet Result(2): (assertEqualToResults b (a b c d e f))
+NDet Result(1): (assertEqualToResults a (a b c d e f))(assertEqualToResults a (a b c d e f)), 
 
-NDet Result(3): (assertEqualToResults c (a b c d e f))
+NDet Result(2): (assertEqualToResults b (a b c d e f))(assertEqualToResults b (a b c d e f)), 
 
-NDet Result(4): (assertEqualToResults d (a b c d e f))
+NDet Result(3): (assertEqualToResults c (a b c d e f))(assertEqualToResults c (a b c d e f)), 
 
-NDet Result(5): (assertEqualToResults e (a b c d e f))
+NDet Result(4): (assertEqualToResults d (a b c d e f))(assertEqualToResults d (a b c d e f)), 
 
-NDet Result(6): (assertEqualToResults f (a b c d e f))<span class="ansi32"
->
-% 408,067 inferences, 0.098 CPU in 0.098 seconds (100% CPU, 4154235 Lips)
+NDet Result(5): (assertEqualToResults e (a b c d e f))(assertEqualToResults e (a b c d e f)), 
+
+NDet Result(6): (assertEqualToResults f (a b c d e f))(assertEqualToResults f (a b c d e f))]
+<span class="ansi32"
+>% 469,937 inferences, 0.128 CPU in 0.128 seconds (100% CPU, 3670774 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/represent_and_parse_tests.metta  0)
 <br/> <a href="#" onclick="window.history.back(); return false;"
@@ -529,7 +531,7 @@ NDet Result(6): (assertEqualToResults f (a b c d e f))<span class="ansi32"
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 10:29:20+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 14:03:13+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

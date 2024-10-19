@@ -612,6 +612,7 @@ write_answer_output:-
   read_file_to_string(File,String,[encoding(utf8)]),
   write(String).
 write_answer_output.
+:- at_halt(write_answer_output).
 
 
 null_io(G):- null_user_output(Out), !, with_output_to(Out,G).
@@ -621,9 +622,185 @@ with_output_to_s(Out,G):- current_output(COut),
   redo_call_cleanup(set_prolog_IO(user_input, Out,user_error), G,
                      set_prolog_IO(user_input,COut,user_error)).
 
- in_answer_io(_):- nb_current(suspend_answers,true),!.
- in_answer_io(G):- answer_output(Out), !, with_output_to(Out,G).
  not_compatio(G):- if_t(once(is_mettalog;is_testing),user_err(G)).
+
+ extra_answer_padding(_).
+
+
+%!  in_answer_io(+G) is det.
+%
+%   Main predicate for executing a goal while capturing its output and handling it appropriately.
+%   This predicate first checks if the answer output is suspended via `nb_current/2`.
+%   If output is not suspended, it captures the output based on the streams involved.
+%
+%   @arg G The goal to be executed.
+in_answer_io(_):- nb_current(suspend_answers,true),!.
+in_answer_io(G) :-
+    % Get the answer_output stream
+    answer_output(AnswerOut),
+    % Get the current output stream
+    current_output(CurrentOut),
+    % Get the standard output stream via file_no(1)
+    get_stdout_stream(StdOutStream),
+    % If the output is already visible to the user, execute G directly
+   ((   AnswerOut == CurrentOut ;   AnswerOut == StdOutStream )
+    ->  call(G)
+    ; ( % Otherwise, capture and process the output
+        % Determine the encoding
+        stream_property(CurrentOut, encoding(CurrentEncoding0)),
+        (   CurrentEncoding0 == text
+        ->  stream_property(AnswerOut, encoding(CurrentEncoding))
+        ;   CurrentEncoding = CurrentEncoding0
+        ),
+        % Start capturing output per solution
+        capture_output_per_solution(G, CurrentOut, AnswerOut, StdOutStream, CurrentEncoding))).
+
+%!  get_stdout_stream(-StdOutStream) is det.
+%
+%   Helper predicate to retrieve the standard output stream.
+%Thisuses`current_stream/3`tofindthestreamassociatedwithfiledescriptor1(stdout).
+%
+%@argStdOutStreamUnifieswiththestandardoutputstream.
+get_stdout_stream(StdOutStream) :-
+    current_stream(_, write, StdOutStream),
+    stream_property(StdOutStream, file_no(1)).
+
+%!  capture_output_per_solution(+G, +CurrentOut, +AnswerOut, +StdOutStream, +CurrentEncoding) is det.
+%
+%   Captures and processes the output for each solution of a nondeterministic goal.
+%Usesamemoryfiletotemporarilystoretheoutputandthenfinalizestheoutputhandling.
+%
+%@argGThegoalwhoseoutputisbeingcaptured.
+%@argCurrentOutThecurrentoutputstream.
+%@argAnswerOutTheansweroutputstream.
+%@argStdOutStreamThestandardoutputstream.
+%@argCurrentEncodingTheencodingusedforcapturingandwritingoutput.
+capture_output_per_solution(G, CurrentOut, AnswerOut, StdOutStream, CurrentEncoding) :-
+    % Prepare initial memory file and write stream
+    State = state(_, _),
+    set_output_to_memfile(State, CurrentEncoding),
+    % Use setup_call_catcher_cleanup to handle execution and cleanup
+    setup_call_catcher_cleanup(
+        true,
+        (
+           (call(G),
+            % Check determinism after G succeeds
+            deterministic(Det)),
+            % Process the captured output
+            process_and_finalize_output(State, CurrentOut, AnswerOut, StdOutStream, CurrentEncoding),
+            % If there are more solutions, prepare for the next one
+            (   Det == false
+            ->  % Prepare a new memory file and write stream for the next solution
+                set_output_to_memfile(State,CurrentEncoding)
+            ;   % If deterministic, leave cleanup for process_and_finalize_output
+                true
+            )
+        ),
+        Catcher,
+        (
+            % Final cleanup
+            process_and_finalize_output(State, CurrentOut, AnswerOut, StdOutStream, CurrentEncoding)
+        )
+    ),
+    % Handle exceptions and failures
+    handle_catcher(Catcher).
+
+%!  set_output_to_memfile(+State, +CurrentEncoding) is det.
+%
+%   Creates a new memory file and write stream for capturing output and updates the State.
+%   This predicate also sets the output stream to the new memory file's write stream.
+%
+%   @arg State The state holding the memory file and write stream.
+%   @arg CurrentEncoding The encoding to use for the memory file.
+set_output_to_memfile(State,CurrentEncoding):-
+    % Create a new memory file.
+    new_memory_file(NewMemFile),
+    % Open the memory file for writing with the specified encoding.
+    open_memory_file(NewMemFile, write, NewWriteStream, [encoding(CurrentEncoding)]),
+    % Update the state with the new memory file and write stream (non-backtrackable).
+    nb_setarg(1, State, NewMemFile),
+    nb_setarg(2, State, NewWriteStream),
+    % Redirect output to the new write stream.
+    set_output(NewWriteStream).
+
+%!  process_and_finalize_output(+State, +CurrentOut, +AnswerOut, +StdOutStream, +CurrentEncoding) is det.
+%
+%   Finalizes the captured output, closing streams and writing content to the necessary output streams.
+%   This also handles freeing up memory resources and transcodes content if necessary.
+%
+%   @arg State The current state holding the memory file and write stream.
+%   @arg CurrentOut The original output stream to restore after processing.
+%   @arg AnswerOut The stream to write the captured output to.
+%   @arg StdOutStream The standard output stream.
+%   @arg CurrentEncoding The encoding used for reading and writing the output.
+process_and_finalize_output(State, CurrentOut, AnswerOut, StdOutStream, CurrentEncoding) :-
+    % Retrieve the memory file and write stream from the state.
+    arg(1, State, MemFile),
+    arg(2, State, WriteStream),
+    % Close the write stream to flush the output
+    (nonvar(WriteStream) -> (close(WriteStream),nb_setarg(2, State, _)) ; true),
+    % Reset the output stream to its original state
+    set_output(CurrentOut),
+    % Read the captured content from the memory file
+    (nonvar(MemFile) -> 
+      (nb_setarg(1, State, _),
+       open_memory_file(MemFile, read, ReadStream, [encoding(CurrentEncoding)]),
+       read_string(ReadStream, _, Content),
+       close(ReadStream),
+       % Free the memory file
+       free_memory_file(MemFile),       
+       % Write the content to the streams, handling encoding differences
+       write_to_stream(AnswerOut, Content, CurrentEncoding),
+       (   AnswerOut \== StdOutStream ->  write_to_stream(user_error, Content, CurrentEncoding) ;   true )) ; true).
+    
+
+%!  handle_catcher(+Catcher) is det.
+%
+%   Handles the `setup_call_catcher_cleanup/4` catcher to determine how to proceed after execution.
+%
+%   @arg Catcher The result of the call (either success, failure, or exception).
+handle_catcher(Var) :-
+    % If the catcher is unbound, the call succeeded.
+    var(Var), !.
+handle_catcher(exit).  % Success, do nothing.
+handle_catcher(fail) :- fail.  % Failure, propagate it.
+handle_catcher(exception(Exception)) :- throw(Exception).  % Exception, re-throw it.
+
+%!  write_to_stream(+Stream, +Content, +ContentEncoding) is det.
+%
+%   Writes the given content to the specified stream, handling encoding differences between the content and the stream.
+%
+%   @arg Stream The stream to write to.
+%   @arg Content The content to be written.
+%   @arg ContentEncoding The encoding of the content.
+write_to_stream(Stream, Content, ContentEncoding) :-
+  % Retrieve the encoding of the destination stream.
+  stream_property(Stream, encoding(StreamEncoding)),
+  transcode_content(Content, ContentEncoding, StreamEncoding, TranscodedContent),
+  with_output_to(Stream, write(TranscodedContent)).
+
+%!  transcode_content(+Content, +FromEncoding, +ToEncoding, -TranscodedContent) is det.
+%
+%   Transcodes content from one encoding to another by writing it to a temporary memory file.
+%
+%   @arg Content The original content.
+%   @arg FromEncoding The encoding of the original content.
+%   @arg ToEncoding The target encoding.
+%   @arg TranscodedContent The resulting content in the target encoding.
+transcode_content(Content, SameEncoding, SameEncoding, Content) :- !.
+transcode_content(Content, FromEncoding, ToEncoding, TranscodedContent) :-
+    % Write the content to a temporary memory file with the original encoding.
+    new_memory_file(TempMemFile),
+    open_memory_file(TempMemFile, write, TempWriteStream, [encoding(FromEncoding)]),
+    write(TempWriteStream, Content),
+    close(TempWriteStream),
+    % Read the content from the memory file with the target encoding.
+    open_memory_file(TempMemFile, read, TempReadStream, [encoding(ToEncoding), encoding_errors(replace)]),
+    read_string(TempReadStream, _, TranscodedContent),
+    close(TempReadStream),
+    % Free the temporary memory file.
+    free_memory_file(TempMemFile).
+
 
 %if_compatio(G):- if_t(is_compatio,user_io(G)).
 % if_compat_io(G):- if_compatio(G).
@@ -1861,7 +2038,6 @@ do_loon:-
    run_cmd_args,
    write_answer_output,
    maybe_halt(7)]))),!.
-
 
 need_interaction:- \+ option_value('had_interaction',true),
    \+ is_converting,  \+ is_compiling, \+ is_pyswip,!,

@@ -54,7 +54,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 10:24:00+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 13:57:25+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -409,19 +409,20 @@ Script started on 2024-10-19 10:24:00+00:00 [TERM="xterm-256color" TTY="/dev/pts
 <span class="ansi38-013099040"
 >!(assertEqual (match &self (= (color) $x) $x) (superpose (red yellow green)))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.01"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000341 secs. (340.85 microseconds) 
+; took 0.000357 secs. (356.99 microseconds) 
 
 !(assertEqual (match &self (= (color) $x) $x) (superpose (red yellow green)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (green yellow red) (red yellow green)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;!(assertEqual (match &self (= (color) $x) $x) (color))
 ;;;!(assertEqual (collapse (color)) (red yellow green))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -433,19 +434,20 @@ Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (collapse (match &self (= (shape) $x) $x)) ())
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.02"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000243 secs. (243.37 microseconds) 
+; took 0.000251 secs. (251.43 microseconds) 
 
 !(assertEqual (collapse (match &self (= (shape) $x) $x)) ())
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (()) (())))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Multiple results from equality queries
@@ -454,19 +456,20 @@ Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (color) (superpose (red yellow green)))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.03"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000450 secs. (449.72 microseconds) 
+; took 0.000447 secs. (446.50 microseconds) 
 
 !(assertEqual (color) (superpose (red yellow green)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (green yellow red) (red yellow green)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; `superpose` reverts `collapse`
@@ -475,19 +478,20 @@ Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (color) (let $x (collapse (color)) (superpose $x)))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.04"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000944 secs. (944.07 microseconds) 
+; took 0.000949 secs. (948.96 microseconds) 
 
 !(assertEqual (color) (let $x (collapse (color)) (superpose $x)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (green yellow red) (green yellow red)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; In contrast to `match`, if the equality query returns an empty result
@@ -496,35 +500,37 @@ Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (collapse (shape)) ((shape)))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.05"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.05</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.59 milliseconds) 
+; took 0.002 secs. (1.56 milliseconds) 
 
 !(assertEqual (collapse (shape)) ((shape)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (((shape))) (((shape)))))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (shape) ((shape)))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.06"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000278 secs. (277.82 microseconds) 
+; took 0.000265 secs. (264.75 microseconds) 
 
 !(assertEqualToResult (shape) ((shape)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((shape)) ((shape))))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; If the expression is composed over nondeterministic
@@ -539,19 +545,20 @@ Deterministic: ()
 </span><span class="ansi38-013099040"
 >!(assertEqualToResult (pair (bin) (bin)) ((A A) (A B) (B A) (B B)))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.07"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.07</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.83 milliseconds) 
+; took 0.002 secs. (1.84 milliseconds) 
 
 !(assertEqualToResult (pair (bin) (bin)) ((A A) (A B) (B A) (B B)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((A A) (A B) (B A) (B B)) ((A A) (A B) (B A) (B B))))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; For the ordinary symbolic expression, if its subexpressions
@@ -572,19 +579,20 @@ Deterministic: ()
 </span><span class="ansi38-013099040"
 >!(assertEqual (find-equal (color) (foo)) red)
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.08"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.08</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.91 milliseconds) 
+; took 0.002 secs. (1.93 milliseconds) 
 
 !(assertEqual (find-equal (color) (foo)) red)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (red) (red)))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; One can pass nondeterministic expressions to an ordinary
@@ -595,7 +603,8 @@ Deterministic: ()
 </span><span class="ansi38-013099040"
 >!(assertEqualToResult (rev A (superpose (B C D))) ((B A) (C A) (D A)))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.09"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.09</h3>
 ; 
@@ -607,7 +616,7 @@ Deterministic: ()
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((B A) (C A) (D A)) ((B A) (C A) (D A))))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Extended example
@@ -640,37 +649,39 @@ Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (is (air dry)) (superpose ((stop ventilation) (start kettle) (start humidifier))))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.10"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.10</h3>
 ; 
 ; EVAL TEST
-; took 0.005 secs. (4.96 milliseconds) 
+; took 0.005 secs. (5.01 milliseconds) 
 
 !(assertEqual (is (air dry)) (superpose ((stop ventilation) (start kettle) (start humidifier))))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((start humidifier) (start kettle) (stop ventilation)) ((stop ventilation) (start kettle) (start humidifier))))
 </span>
-Deterministic: ()
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (is (air wet)) (superpose ((stop kettle) (stop humidifier) (start ventilation))))
 
-</span>
+</span>[
+
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.11"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B4-NONDETERM.11</h3>
 ; 
 ; EVAL TEST
-; took 0.005 secs. (5.02 milliseconds) 
+; took 0.005 secs. (5.06 milliseconds) 
 
 !(assertEqual (is (air wet)) (superpose ((stop kettle) (stop humidifier) (start ventilation))))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((start ventilation) (stop humidifier) (stop kettle)) ((stop kettle) (stop humidifier) (start ventilation))))
 </span>
-Deterministic: ()<span class="ansi32"
->
-% 509,531 inferences, 0.115 CPU in 0.115 seconds (100% CPU, 4441442 Lips)
+Deterministic: ()()]
+<span class="ansi32"
+>% 571,765 inferences, 0.141 CPU in 0.141 seconds (100% CPU, 4051715 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/b4_nondeterm.metta  0)
 <span class="ansi1"
@@ -820,7 +831,7 @@ Deterministic: ()<span class="ansi32"
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 10:24:05+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 13:57:31+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

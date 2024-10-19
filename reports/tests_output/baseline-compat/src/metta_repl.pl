@@ -1247,8 +1247,6 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,
    ignore(Result = res(FOut)).
 
 
-extra_answer_padding(_).
-
 %! maybe_assign(+N_V) is det.
 %
 %   Attempts to assign variable V to the variable name N, if V is unbound.

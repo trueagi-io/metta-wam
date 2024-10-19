@@ -33,7 +33,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 10:34:42+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 14:08:59+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -362,19 +362,21 @@ Script started on 2024-10-19 10:34:42+00:00 [TERM="xterm-256color" TTY="/dev/pts
 <span class="ansi38-013099040"
 >!(assertEqualToResult (superpose (a b c)) (a b c))
 
-</span>
+</span>[
+
 ;<h3 id="METTA-MORPH-TESTS.SUPERPOSE-NESTED.01"
 >;; METTA-MORPH-TESTS.SUPERPOSE-NESTED.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000155 secs. (154.51 microseconds) 
+; took 0.000191 secs. (190.93 microseconds) 
 
 !(assertEqualToResult (superpose (a b c)) (a b c))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (a b c) (a b c)))
 </span>
-Deterministic: ()<span class="ansi38-255165009"
+Deterministic: ()()]
+<span class="ansi38-255165009"
 >;; In file as:  
 </span><span class="ansi1 ansi38-255238088"
 >!(superpose ((superpose (a b c))))
@@ -382,19 +384,21 @@ Deterministic: ()<span class="ansi38-255165009"
 <span class="ansi38-013099040"
 >!(assertEqualToResult (superpose ((superpose (a b c)))) (a b c))
 
-</span>
+</span>[
+
 ;<h3 id="METTA-MORPH-TESTS.SUPERPOSE-NESTED.02"
 >;; METTA-MORPH-TESTS.SUPERPOSE-NESTED.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000259 secs. (258.73 microseconds) 
+; took 0.000249 secs. (249.23 microseconds) 
 
 !(assertEqualToResult (superpose ((superpose (a b c)))) (a b c))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (a b c) (a b c)))
 </span>
-Deterministic: ()<span class="ansi38-255165009"
+Deterministic: ()()]
+<span class="ansi38-255165009"
 >;; In file as:  
 </span><span class="ansi1 ansi38-255238088"
 >!(superpose ((superpose (a b c)) (superpose (x y z))))
@@ -402,19 +406,21 @@ Deterministic: ()<span class="ansi38-255165009"
 <span class="ansi38-013099040"
 >!(assertEqualToResult (superpose ((superpose (a b c)) (superpose (x y z)))) (a b c x y z))
 
-</span>
+</span>[
+
 ;<h3 id="METTA-MORPH-TESTS.SUPERPOSE-NESTED.03"
 >;; METTA-MORPH-TESTS.SUPERPOSE-NESTED.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000446 secs. (446.42 microseconds) 
+; took 0.000357 secs. (357.01 microseconds) 
 
 !(assertEqualToResult (superpose ((superpose (a b c)) (superpose (x y z)))) (a b c x y z))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (a b c x y z) (a b c x y z)))
 </span>
-Deterministic: ()<span class="ansi38-255165009"
+Deterministic: ()()]
+<span class="ansi38-255165009"
 >;; In file as:  
 </span><span class="ansi1 ansi38-255238088"
 >!(superpose ((superpose (a b c)) x y z))
@@ -422,21 +428,22 @@ Deterministic: ()<span class="ansi38-255165009"
 <span class="ansi38-013099040"
 >!(assertEqualToResult (superpose ((superpose (a b c)) x y z)) (a b c x y z))
 
-</span>
+</span>[
+
 ;<h3 id="METTA-MORPH-TESTS.SUPERPOSE-NESTED.04"
 >;; METTA-MORPH-TESTS.SUPERPOSE-NESTED.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000346 secs. (345.54 microseconds) 
+; took 0.000263 secs. (263.00 microseconds) 
 
 !(assertEqualToResult (superpose ((superpose (a b c)) x y z)) (a b c x y z))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (a b c x y z) (a b c x y z)))
 </span>
-Deterministic: ()<span class="ansi32"
->
-% 125,133 inferences, 0.027 CPU in 0.027 seconds (100% CPU, 4631413 Lips)
+Deterministic: ()()]
+<span class="ansi32"
+>% 184,709 inferences, 0.052 CPU in 0.052 seconds (100% CPU, 3553907 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/superpose_nested.metta  0)
 <span class="ansi1"
@@ -579,7 +586,7 @@ Deterministic: ()<span class="ansi32"
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 10:34:48+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 14:09:04+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
