@@ -1,11 +1,85 @@
+/*
+ * Project: MeTTaLog - A MeTTa to Prolog Transpiler/Interpreter
+ * Description: This file is part of the source code for a transpiler designed to convert
+ *              MeTTa language programs into Prolog, utilizing the SWI-Prolog compiler for
+ *              optimizing and transforming function/logic programs. It handles different
+ *              logical constructs and performs conversions between functions and predicates.
+ *
+ * Author: Douglas R. Miles
+ * Contact: logicmoo@gmail.com / dmiles@logicmoo.org
+ * License: LGPL
+ * Repository: https://github.com/trueagi-io/metta-wam
+ *             https://github.com/logicmoo/hyperon-wam
+ * Created Date: 8/23/2023
+ * Last Modified: $LastChangedDate$  # You will replace this with Git automation
+ *
+ * Usage: This file is a part of the transpiler that transforms MeTTa programs into Prolog. For details
+ *        on how to contribute or use this project, please refer to the repository README or the project documentation.
+ *
+ * Contribution: Contributions are welcome! For contributing guidelines, please check the CONTRIBUTING.md
+ *               file in the repository.
+ *
+ * Notes:
+ * - Ensure you have SWI-Prolog installed and properly configured to use this transpiler.
+ * - This project is under active development, and we welcome feedback and contributions.
+ *
+ * Acknowledgments: Special thanks to all contributors and the open source community for their support and contributions.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+%********************************************************************************************* 
+% PROGRAM FUNCTION:  Implements a REPL (Read-Eval-Print Loop) for the Mettalog interpreter, providing 
+% interactive execution, debugging, and command handling capabilities.
+%*********************************************************************************************
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% IMPORTANT:  DO NOT DELETE COMMENTED-OUT CODE AS IT MAY BE UN-COMMENTED AND USED
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % Directive to save history when the program halts.
 :- at_halt(save_history).
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% In order to run some of the specialized commands below like "repl1" and "history_file_location"
+% you must start the mettalog repl by entering "mettalog" and then enter Prolog mode by
+% entering "Prolog." This gives you the '?-' swipl prompt. Then you can enter eg., "repl1." 
+% to execute the desired command (no quotes around any of these commands when actually entered).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %! history_file_location(-Filename) is det.
 %   Determines the location of the REPL history file.
-%   On Linux, the history is stored in ~/.config/metta/repl_history.txt.
+%   On Linux, the history is stored in '~/.config/metta/repl_history.txt.'
 %   @arg Filename will be the expanded path to the history file.
+%
+%   @example Retrieve the history file location:
+%     ?- history_file_location(Filename).
+%     Filename = '/home/user/.config/metta/repl_history.txt'.
+%
 history_file_location(Filename) :-
     % Expands the relative path to an absolute path.
     expand_file_name('~/.config/metta/repl_history.txt', [Filename]).
@@ -14,6 +88,11 @@ history_file_location(Filename) :-
 %! check_directory_exists(+Dir) is det.
 %   Ensures that a directory exists. If not, it will create it.
 %   @arg Dir is the directory path to check.
+%
+%   @example Ensure a directory exists:
+%     ?- check_directory_exists('/home/user/.config/metta').
+%     true.
+%
 check_directory_exists('').
     % Base case for an empty string (root of directory tree).
 check_directory_exists('/').
@@ -36,12 +115,16 @@ check_directory_exists(Dir) :-
 %   Ensures that the history file exists and can be appended to.
 %   If the file does not exist, it will create the file and its directory.
 %   @arg HistoryFile is the path to the file to be checked or created.
+%
+%   @example Ensure a history file exists:
+%     ?- check_file_exists_for_append('/home/user/.config/metta/repl_history.txt').
+%     true.
+%
 check_file_exists_for_append(HistoryFile) :-
     % Check if the file exists and is accessible for appending.
     exists_file(HistoryFile),
     access_file(HistoryFile, append),
     !.
-
 check_file_exists_for_append(HistoryFile) :-
     % If the file does not exist, ensure the directory exists.
     file_directory_name(HistoryFile, Dir),
@@ -51,7 +134,6 @@ check_file_exists_for_append(HistoryFile) :-
     !,
     % Close the stream after creating the file.
     close(Stream).
-
 check_file_exists_for_append(HistoryFile) :-
     % If the file cannot be created, print an error message and halt the program.
     write("Error opening history file: "),
@@ -61,6 +143,11 @@ check_file_exists_for_append(HistoryFile) :-
 %! save_history is det.
 %   Saves the current input history to a file if input is from a terminal (tty).
 %   Uses el_write_history/2 to write the history.
+%
+%   @example Save the current history:
+%     ?- save_history.
+%     true.
+%
 save_history :-
     % Get the current input stream.
     current_input(Input),
@@ -75,6 +162,11 @@ save_history :-
 
 %! load_and_trim_history is det.
 %   Loads and trims the REPL history if needed, and installs readline support.
+%
+%   @example Load and trim the history:
+%     ?- load_and_trim_history.
+%     true.
+%
 load_and_trim_history :-
     % Disable tracing for the following operations.
     notrace((
@@ -99,6 +191,11 @@ load_and_trim_history :-
 %! repl is det.
 %   Starts the REPL (Read-Eval-Print Loop) using `catch/3` to handle end-of-input gracefully.
 %   This ensures the REPL terminates without error when the end of input is reached.
+%
+%   @example Start the REPL:
+%     ?- repl.
+%     metta> 
+%
 repl :-
     % Catch any end_of_input exception and terminate the REPL gracefully.
     catch(repl2, end_of_input, true).
@@ -106,6 +203,11 @@ repl :-
 %! repl1 is det.
 %   A higher-level REPL function that sets some options before starting the REPL process.
 %   It uses `with_option/3` to set internal flags and then invokes `repl2/0`.
+%
+%   @example Start the REPL with internal options:
+%     ?- repl1.
+%     metta> 
+%
 repl1 :-
     % Set the option 'doing_repl' to true.
     with_option('doing_repl', true,
@@ -115,6 +217,11 @@ repl1 :-
 %! repl2 is nondet.
 %   The main loop of the REPL, responsible for managing history, garbage collection, and catching any errors.
 %   It continually prompts the user until an error occurs or input is exhausted.
+%
+%   @example Start the REPL loop:
+%     ?- repl2.
+%     metta> 
+%
 repl2 :-
     % Load the REPL history and clean it up if necessary.
     load_and_trim_history,
@@ -134,6 +241,11 @@ repl2 :-
 %! write_metta_prompt is det.
 %   Writes the REPL prompt for the user, including the current mode and self-reference.
 %   It uses the `flush_output/1` to ensure all output is displayed immediately.
+%
+%   @example Display the REPL prompt:
+%     ?- write_metta_prompt.
+%     metta> 
+%
 write_metta_prompt :-
     % Ensure any pending output is flushed to the terminal.
     flush_output(current_output),
@@ -141,7 +253,7 @@ write_metta_prompt :-
     format('~Nmetta', []),
     % Display the current REPL mode (e.g., normal, query).
     current_read_mode(repl, Mode), write(Mode),
-    % Display the current self reference, unless it's '&self'.
+    % Display the current self reference, unless it is '&self'.
     current_self(Self), (Self == '&self' -> true ; write(Self)),
     % Write the final '>' as the prompt and flush the output again.
     write('>'), flush_output(current_output).
@@ -149,6 +261,11 @@ write_metta_prompt :-
 %! repl3 is det.
 %   Prepares the REPL prompt and handles the user input in a safe way.
 %   It manages the prompt display and ensures the terminal is properly set up.
+%
+%   @example Set up the REPL prompt and call repl4:
+%     ?- repl3.
+%     metta> 
+%
 repl3 :-
     % Create the prompt by writing it to an atom `P`.
     with_output_to(atom(P), write_metta_prompt),
@@ -165,6 +282,11 @@ repl3 :-
 %! repl4 is det.
 %   Executes the REPL logic by reading the input, processing expressions, and handling directives or commands.
 %   The loop is managed through exceptions (e.g., restarting or ending input).
+%
+%   @example Execute the main REPL logic:
+%     ?- repl4.
+%     metta> 
+%
 repl4 :-
     % Reset the evaluation number to ensure expressions are counted properly.
     ((reset_eval_num,
@@ -191,9 +313,31 @@ repl4 :-
     % Throw `restart_reading` to restart the REPL input process after execution.
     nop(notrace(throw(restart_reading))))),!.
 
-%! check_has_directive(+V) is semidet.
-%   Checks if the expression `V` contains a directive and processes it.
-%   Various directives like 'log.', 'rust.', and assignments are recognized.
+%!  check_has_directive(+V) is nondet.
+%
+%   Processes a given input `V` to determine if it contains a recognized directive 
+%   and executes the associated logic. This predicate handles several types of directives, 
+%   such as switching modes, assigning values, or invoking debugging utilities.
+%
+%   This predicate fails if the input `V` is a variable or if no matching directive is found.
+%
+%   Directives can take several forms:
+%   - Simple commands like `'log.'` or `'rust.'` that switch modes.
+%   - Assignments of the form `call(N=V)`.
+%   - Special debugging and REPL controls using `@` or other characters.
+%
+%   @arg V The input term to be checked and processed. This can be a variable, 
+%          an atom, or a more complex term like an assignment.
+%
+%   @example
+%     % Example of switching to mettalog mode:
+%     ?- check_has_directive('log.').
+%     % This switches the system to the mettalog mode.
+%
+%     % Example of switching to mettarust mode:
+%     ?- check_has_directive('rust.').
+%     % This switches the system to the mettarust mode.
+%
 check_has_directive(V) :- var(V), !, fail.
 % Directive to switch to mettalog.
 check_has_directive('log.') :- switch_to_mettalog, !.
@@ -218,19 +362,39 @@ check_has_directive(AtEq) :- symbol(AtEq), symbol_concat('@', NEV, AtEq), option
 % No directive found.
 check_has_directive(_).
 
-%! set_directive(+N, +V) is det.
-%   Sets the value of a directive `N` to `V`. Handles specific cases like `mode` separately.
+%!  set_directive(+N, +V) is det.
+%
+%   Assigns the value `V` to the directive `N`. Handles special cases such as 
+%   REPL mode changes differently from general directives.
+%
+%   @arg N The name of the directive to set. It can be a general option or 
+%          a specific control like `mode`.
+%   @arg V The value to assign to the directive.
+%
+%   @example
+%     % Set the REPL mode to 'debug':
+%     ?- set_directive('mode', 'debug').
+%
+%     % Assign a general option value:
+%     ?- set_directive('timeout', 100).
+%
 set_directive(N, V) :- symbol_concat('@', NN, N), !, set_directive(NN, V).
 % Special case for setting the REPL mode.
 set_directive(N, V) :- N == 'mode', !, set_directive(repl_mode, V).
 % Set a general directive using `set_option_value_interp/2`.
 set_directive(N, V) :- show_call(set_option_value_interp(N, V)), !, notrace(throw(restart_reading)).
 
-
 %!  read_pending_white_codes(+In) is det.
 %   Reads the pending codes (whitespace characters) from the input stream `In`.
 %   Specifically, it looks for the newline character (ASCII 10).
 %   This predicate ensures that the REPL input stream is properly cleaned up.
+%
+%   @arg In The input stream from which to read pending whitespace codes.
+%
+%   @example
+%     % Clean up the input stream by reading pending newlines:
+%     ?- read_pending_white_codes(user_input).
+%
 read_pending_white_codes(In) :-
     % Read pending codes from the input stream, only considering ASCII 10 (newline).
     read_pending_codes(In, [10], []),
@@ -240,8 +404,21 @@ read_pending_white_codes(In) :-
 read_pending_white_codes(_).
 
 %! call_for_term_variables4v(+Term, +X, -Result, -NamedVarsList, +TF) is det.
-%   Handles the term `Term` and determines the term's variable list and final result.
+%   Handles the term `Term` and determines the term variable list and final result.
 %   This version handles the case when the term has no variables and converts it to a truth-functional form.
+%
+%   @arg Term The input term to be analyzed.
+%   @arg X The list of variables found within the term. It can be empty or contain one variable.
+%   @arg Result The final result, either as the original term or transformed into a truth-functional form.
+%   @arg NamedVarsList The list of named variables associated with the term.
+%   @arg TF The truth-functional form when the term has no variables.
+%
+%   @example
+%     % Example with no variables:
+%     ?- call_for_term_variables4v(foo, [], Result, Vars, true).
+%     Result = as_tf(foo, true),
+%     Vars = [].
+%
 call_for_term_variables4v(Term, [], as_tf(Term, TF), NamedVarsList, TF) :-
     % Get global variable names for the term.
     get_global_varnames(NamedVarsList),
@@ -255,6 +432,19 @@ call_for_term_variables4v(Term, [X], Term, NamedVarsList, X) :-
 %! balanced_parentheses(+Str) is semidet.
 %   Checks if parentheses are balanced in a string or list of characters `Str`.
 %   This version handles both string input and list input by converting the string to a list of characters.
+%
+%   @arg Str A string or list of characters to check for balanced parentheses.
+%
+%   @example
+%   ?- balanced_parentheses("(())").
+%   true.
+%
+%   ?- balanced_parentheses("(()").
+%   false.
+%
+%   ?- balanced_parentheses("text(with(parentheses))").
+%   true.
+%
 balanced_parentheses(Str) :-
     % If the input is a string, convert it to a list of characters.
     string(Str),
@@ -267,6 +457,14 @@ balanced_parentheses(Chars) :- balanced_parentheses(Chars, 0).
 %! balanced_parentheses(+Chars, +N) is semidet.
 %   Recursive helper predicate to check if parentheses are balanced in a list of characters `Chars`.
 %   The second argument `N` keeps track of the net balance of opening and closing parentheses.
+%
+%   @arg Chars A list of characters to process for balanced parentheses.
+%   @arg N     A count tracking the net balance of open and close parentheses.
+%
+%   @example
+%   ?- balanced_parentheses(['(', ')', '(', ')'], 0).
+%   true.
+%
 balanced_parentheses([], 0).
 % Increment count when encountering an opening parenthesis.
 balanced_parentheses(['('|T], N) :- N1 is N + 1, !, balanced_parentheses(T, N1).
@@ -275,30 +473,104 @@ balanced_parentheses([')'|T], N) :- N > 0, N1 is N - 1, !, balanced_parentheses(
 % Skip any characters that are not parentheses.
 balanced_parentheses([H|T], N) :- H \= '(', H \= ')', !, balanced_parentheses(T, N).
 
-next_expr(ExprI,Expr):- ExprI==end_of_file,!, (comment_buffer(Expr);(Expr="")).
-next_expr(ExprI,Expr):- ExprI=Expr.
-repl_read(In,Expr):- repl_read_next(In,ExprI),next_expr(ExprI,Expr).
-repl_read(Expr):- repl_read_next(ExprI),next_expr(ExprI,Expr).
+%!  next_expr(+ExprI, -Expr) is det.
+%
+%   Processes the given expression and returns the next expression to be used.
+%   If `ExprI` is `end_of_file`, it attempts to retrieve a buffered comment or
+%   defaults to an empty string. Otherwise, it directly unifies `ExprI` with `Expr`.
+%
+%   @arg ExprI The input expression, which may be `end_of_file`.
+%   @arg Expr  The resulting expression to be used in further processing.
+%
+%   @example
+%     % If ExprI is `end_of_file`, it tries to get a buffered comment or returns "".
+%     ?- next_expr(end_of_file, Expr).
+%     Expr = "".
+%
+next_expr(ExprI, Expr) :-
+    % If the input expression is `end_of_file`, handle it with a cut.
+    ExprI == end_of_file, !,
+    % Retrieve a buffered comment or default to an empty string.
+    (comment_buffer(Expr); (Expr = "")).
+% If ExprI is not `end_of_file`, unify it directly with Expr.
+next_expr(ExprI, Expr) :- ExprI = Expr.
+
+%!  repl_read(+In, -Expr) is det.
+%
+%   Reads an expression from the given input stream, processes it with 
+%   `next_expr/2`, and returns the result.
+%
+%   @arg In   The input stream from which the expression is read.
+%   @arg Expr The resulting expression after reading and processing.
+%
+%   @example
+%     % Open a file and read an expression from it.
+%     ?- open('input.txt', read, In), repl_read(In, Expr).
+%     Expr = some_expression.
+%
+repl_read(In, Expr) :-
+    % Read the next expression from the input stream.
+    repl_read_next(In, ExprI),
+    % Process it to determine the final expression.
+    next_expr(ExprI, Expr).
+
+%!  repl_read(-Expr) is det.
+%
+%   Reads an expression without a specific input stream, processes it with 
+%   `next_expr/2`, and returns the result.
+%
+%   @arg Expr The resulting expression after reading and processing.
+%
+%   @example
+%     % Read an expression from the default input source.
+%     ?- repl_read(Expr).
+%     Expr = some_expression.
+%
+repl_read(Expr) :-
+    % Read the next expression.
+    repl_read_next(ExprI),
+    % Process it to determine the final expression.
+    next_expr(ExprI, Expr).
 
 % maybe Write any stored comments to the output?
-comment_buffer(Comment):- retract(metta_file_comment(_Line, _Col, _CharPos, Comment, _Pos)).
-           
-
-%!  repl_read(+NewAccumulated, -Expr) is det.
-%   Reads and accumulates input until it forms a valid expression or detects an error.
+%!  comment_buffer(-Comment) is nondet.
 %
-%   @arg NewAccumulated is the accumulated input string.
-%   @arg Expr is the resulting expression.
+%   Retrieves and removes a comment from the metta file comment buffer.
+%   It retracts a `metta_file_comment/5` fact and unifies its `Comment` field
+%   with the output argument.
+%
+%   @arg Comment The comment retrieved from the buffer.
+%
 %   @example
-%       ?- repl_read("foo.", Expr).
-%       Expr = call(foo).
+%     % Assume a comment was previously stored in the buffer.
+%     ?- comment_buffer(Comment).
+%     Comment = 'This is a comment'.
+%
+comment_buffer(Comment) :-
+    % Retract a comment from the buffer and unify it with the output argument.
+    retract(metta_file_comment(_Line, _Col, _CharPos, Comment, _Pos)).
+
+%!  repl_read_next(+NewAccumulated, -Expr) is det.
+%
+%   Reads the next expression by interpreting the accumulated input. It handles
+%   special cases (such as symbols `'!'` and `'+'`), manages syntax errors, 
+%   balances parentheses, and normalizes spaces in input. If an error occurs, 
+%   the reading process may be restarted.
+%
+%   @arg NewAccumulated The accumulated input to be processed.
+%   @arg Expr           The resulting expression, or a specific symbol or mode indicator.
+%
+%   @example
+%     % Read a valid metta expression from input.
+%     ?- repl_read_next("write(hello)", Expr).
+%     Expr = call(write(hello)).
+%       
 repl_read_next(NewAccumulated, Expr) :-
     % Concatenate the input with '.' and try to interpret it as an atom.
     symbol_concat(Atom,'.',NewAccumulated),
     % Attempt to read the term from the atom, handle errors and retry if necessary.
     catch_err((read_term_from_atom(Atom, Term, []), Expr = call(Term)), E,
        (((fail, write('Syntax error: '), writeq(E), nl, repl_read_next(Expr))))), !.
-
 
 % Previously commented: repl_read_next(Str, Expr):- ((clause(t_l:s_reader_info(Expr),_,Ref),erase(Ref))).
 
@@ -344,7 +616,21 @@ repl_read_next(Accumulated, Expr) :-
     % Call repl_read_next with the new line concatenated to the accumulated input.
     repl_read_next(Accumulated, Line, Expr).
 
-% Handle end-of-file input gracefully.
+%!  repl_read_next(+Accumulated, +Line, -Expr) is det.
+%
+%   Handles reading input, including special cases such as end-of-file. 
+%   Accumulates lines of input and processes them to form valid expressions.
+%   It gracefully manages EOF, concatenates input, and continues reading.
+%
+%   @arg Accumulated The accumulated input so far.
+%   @arg Line        The new line to be added to the accumulated input.
+%   @arg Expr        The resulting expression or an indication of end-of-file.
+%
+%   @example
+%     % Handle end-of-file input gracefully.
+%     ?- repl_read_next(_, end_of_file, Expr).
+%     Expr = end_of_file.
+%
 repl_read_next(_, end_of_file, end_of_file) :- nop(writeln("")), notrace(throw(end_of_input)).
 
 % Continue reading if no input has been accumulated yet.
@@ -374,10 +660,21 @@ repl_read_next(Expr) :-
     % Stop the repeat loop if there are no more pending codes.
     ((peek_pending_codes(_, Peek), Peek == []) -> ! ; true).
 
-% Adds the string Str to the input history.
-%! add_history_string(+Str) is det.
-%   Adds a string to the REPL history if the input is coming from a terminal.
-%   @arg Str is the string to be added to the history.
+%!  add_history_string(+Str) is det.
+%
+%   Adds a string to the REPL history if the input is coming from a terminal (TTY). 
+%   This helps maintain a history of inputs, which can be useful for interactive 
+%   sessions.
+%
+%   If the input stream is not from a terminal, the predicate simply succeeds without 
+%   taking any action.
+%
+%   @arg Str The string to be added to the REPL history.
+%
+%   @example Adding a string to history:
+%     ?- add_history_string("example query").
+%     true.
+%
 add_history_string(Str) :-
     % Check if the current input stream is from a terminal (tty).
     current_input(Input),
@@ -388,18 +685,36 @@ add_history_string(Str) :-
         % Otherwise, do nothing.
         true), !.
 
-% Adds the executed source code Exec to the input history.
 %! add_history_src(+Exec) is det.
 %   Adds the source code to the input history if the execution is non-empty.
 %   @arg Exec is the executed code to be added to the history.
+%
+%   @example Add executed code to history:
+%     ?- add_history_src([write('Hello'), nl]).
+%     true.
+%
+%   @example No effect with empty code:
+%     ?- add_history_src([]).
+%     true.
+%
 add_history_src(Exec) :-
     % Check if Exec is not empty, and if so, write it to the string H and add it to the history.
     notrace(ignore((Exec \= [], with_output_to(string(H), with_indents(false, write_src(Exec))), add_history_string(H)))).
 
-% Handles adding evaluated terms to the history in specific cases.
-%! add_history_pl(+Exec) is det.
-%   Adds evaluated terms to the input history unless they are variables or special cases.
-%   @arg Exec is the evaluated term to be added to the history.
+%!  add_history_pl(+Exec) is det.
+%
+%   Adds evaluated terms to the REPL history unless they are variables or special cases.
+%
+%   @arg Exec The evaluated term to be added to the history.
+%
+%   @example Add a regular term to history:
+%     ?- add_history_pl(write('Hello')).
+%     true.
+%
+%   @example Skip variables:
+%     ?- add_history_pl(_).
+%     true.
+%
 add_history_pl(Exec) :-
     % If Exec is a variable, do nothing.
     var(Exec), !.
@@ -427,10 +742,31 @@ add_history_pl(Exec) :-
 % Directive to set a global variable for variable names.
 :- nb_setval(variable_names, []).
 
-%! call_for_term_variables5(+Term, +DC, +Vars1, +Vars2, -CallTerm, -DCVars, -TF) is det.
-%   Processes term variables and generates a call for the term, handling specific cases for grounding and different variables.
+%!  call_for_term_variables5(+Term, +DC, +Vars1, +Vars2, -CallTerm, -DCVars, -TF) is det.
 %
-
+%   Processes term variables and generates a call structure based on the provided term, 
+%   handling cases with ground terms, single variables, and multiple variables.
+%
+%   @arg Term     The input term to process.
+%   @arg DC       The direct constraints or variables list (can be empty).
+%   @arg Vars1    The first set of variables (e.g., `[Var=Value]` format).
+%   @arg Vars2    The second set of variables.
+%   @arg CallTerm The generated term call (e.g., `call_nth/2` or `as_tf/2`).
+%   @arg DCVars   The combined list of variables or constraints.
+%   @arg TF       The variable or value associated with the call.
+%
+%   @example Handling a ground term:
+%     ?- call_for_term_variables5(hello, [], [], [], CallTerm, DCVars, TF).
+%     CallTerm = as_tf(hello, TF),
+%     DCVars = [],
+%     TF = _.
+%
+%   @example Single variable case:
+%     ?- call_for_term_variables5(hello, [], [], [X=_], CallTerm, DCVars, TF).
+%     CallTerm = call_nth(hello, Count),
+%     DCVars = ['Count' = Count],
+%     TF = X.
+%
     % If the term is ground, return the as_tf form.
 call_for_term_variables5(Term,[],[],[],as_tf(Term,TF),[],TF) :- ground(Term), !.
     % If the term is ground, create a call_nth with the term.
@@ -446,32 +782,67 @@ call_for_term_variables5(Term,_,[_=Var],Vars,Term,Vars,Var).
 % Handle case with more than one variable, generating a call_nth.
 call_for_term_variables5(Term,_,SVars,Vars,call_nth(Term,Count),[Vars,SVars],Count).
 
-%! is_interactive(+From) is semidet.
-%   Checks if input is from an interactive source such as the REPL.
-
+%!  is_interactive(+From) is nondet.
+%
+%   Checks if the input source is interactive, such as the REPL or a terminal.
+%   This predicate delegates the check to an internal helper `is_interactive0/1`.
+%
+%   @arg From The source to check, typically an input stream or context.
+%
+%   @example Check if the source is interactive:
+%     ?- is_interactive(user_input).
+%     true.
+%
+%   @example Handling non-interactive sources:
+%     ?- open('file.pl', read, In), is_interactive(In), close(In).
+%     false.
+%
 % Delegate to the internal helper predicate.
 is_interactive(From) :- notrace(is_interactive0(From)).
 
-%   Internal helper for checking if the source is interactive.
+%!  is_interactive0(+From) is nondet.
+%
+%   Internal helper to determine if the given input source is interactive.
+%   This predicate checks various cases, including symbolic streams, explicit flags,
+%   and properties of streams to decide whether the input is interactive (e.g., REPL).
+%
+%   @arg From The source to evaluate, which could be a symbolic name, stream, or flag.
+%
+%   @example Check if a symbolic source is interactive:
+%     ?- is_interactive0(repl_true).
+%     true.
+%
 is_interactive0(From) :-
-    % Check if the source is repl_true, meaning it's interactive.
+    % Check if the source is repl_true, meaning it is interactive.
     From == repl_true, !.
 is_interactive0(From) :-
-    % If the source is false, it's not interactive.
+    % If the source is false, it is not interactive.
     From == false, !, fail.
 is_interactive0(From) :-
-    % Check if the source is symbolic and a stream that doesn't have a filename.
+    % Check if the source is symbolic and a stream that does not have a filename.
     symbolic(From), is_stream(From), !, \+ stream_property(From, filename(_)).
 is_interactive0(From) :-
-    % If the source is true, it's interactive.
+    % If the source is true, it is interactive.
     From = true, !.
 
 % ==================================================
 % Predicate to check and process assertions within terms.
 % ==================================================
 
-%! inside_assert(+Var, -Result) is det.
-%   Processes and identifies terms that involve assertions, extracting information from them.
+%!  inside_assert(+Var, -Result) is det.
+%
+%   Processes and identifies terms that involve assertions, extracting relevant information.
+%   This predicate recursively navigates through various term structures to determine if
+%   the term contains an assertion or related construct.
+%
+%   @arg Var    The input term or variable to be analyzed.
+%   @arg Result The processed result, potentially modified based on the term structure.
+%
+%   @example
+%     % Process a term containing an assertion.
+%     ?- inside_assert(assert(foo), Result).
+%     Result = assert(foo).
+%
 inside_assert(Var,Var) :-
     % If the variable is not a compound term, leave it unchanged.
     \+ compound(Var), !.
@@ -503,8 +874,20 @@ inside_assert(Var,Var).
 % Predicate to retrieve the current reading mode (REPL or file).
 % ==================================================
 
-%! current_read_mode(+Source, -Mode) is det.
-%   Retrieves the current mode based on whether the source is the REPL or a file.
+%!  current_read_mode(+Source, -Mode) is det.
+%
+%   Retrieves the current reading mode based on the source, which can either be
+%   the REPL or a file. It checks the relevant settings and options to determine
+%   the mode, defaulting to `'+'` if no specific mode is set.
+%
+%   @arg Source The source of the input, either `repl` or `file`.
+%   @arg Mode   The mode retrieved, or `'+'` if no specific mode is set.
+%
+%   @example
+%     % Retrieve the REPL mode, defaulting to '+' if unset.
+%     ?- current_read_mode(repl, Mode).
+%     Mode = '+'.
+%
 current_read_mode(repl,Mode) :-
     % Retrieve the REPL mode from the options if set, otherwise default to '+'.
     ((option_value(repl_mode, Mode), Mode \== []) -> true; Mode = '+'), !.
@@ -516,8 +899,15 @@ current_read_mode(file,Mode) :-
 %   Evaluates a Form and ensures all conditions in the form hold true.
 %   Handles the case where the form is wrapped in `all/1`.
 %   @arg Form is the form to be evaluated.
+%
+%   @example
+%     % Evaluate a form wrapped in `all/1`.
+%     ?- eval(all(write(hello))).
+%     hello
+%     true.
+%
 eval(all(Form)) :-
-    % Check that Form is instantiated (nonvar) and evaluate it as long as it's true.
+    % Check that Form is instantiated (nonvar) and evaluate it as long as it is true.
     nonvar(Form), !, forall(eval(Form),true).
 % Evaluate a form by calling do_metta/5 with the current Self context and display the output.
 eval(Form) :-
@@ -532,6 +922,12 @@ eval(Form) :-
 %   Evaluates a form and returns the output.
 %   @arg Form is the input form to evaluate.
 %   @arg Out is the output after evaluation.
+%
+%   @example
+%     % Evaluate a form and retrieve the output.
+%     ?- eval(write(hello), Out).
+%     Out = some_output.
+%
 eval(Form, Out) :-
     % Get the current self-reference.
     current_self(Self),
@@ -543,6 +939,12 @@ eval(Form, Out) :-
 %   @arg Self is the current self-reference.
 %   @arg Form is the input form to evaluate.
 %   @arg Out is the output after evaluation.
+%
+%   @example
+%     % Evaluate a form with the current self-reference and retrieve the output.
+%     ?- current_self(Self), eval(Self, write(hello), Out).
+%     Out = some_output.
+%
 eval(Self, Form, Out) :-
     % Use eval_H with a timeout of 500 to evaluate the form.
     eval_H(500, Self, Form, Out).
@@ -552,6 +954,12 @@ eval(Self, Form, Out) :-
 %   @arg Self is the current self-reference.
 %   @arg Form is the form to evaluate.
 %   @arg OOut is the transformed output.
+%
+%   @example
+%     % Evaluate a form and transform the output.
+%     ?- current_self(Self), eval_I(Self, write(hello), OOut).
+%     OOut = some_output.
+%
 eval_I(Self, Form, OOut) :-
     % Evaluate the form with a timeout using eval_H.
     eval_H(500, Self, Form, Out),
@@ -564,6 +972,16 @@ eval_I(Self, Form, OOut) :-
 %   Transforms the output by checking if it is a return value.
 %   @arg Out is the initial output.
 %   @arg OOut is the transformed output.
+%
+%   @example
+%     % Transform a returned value.
+%     ?- xform_out(return_value, OOut).
+%     OOut = return_value.
+%
+%     % Handle a non-return value.
+%     ?- xform_out(some_output, OOut).
+%     OOut = 'Empty'.
+%
 xform_out(Out, OOut) :-
     % If the output is a returned value, pass it through unchanged.
     is_returned(Out), !, OOut = Out.
@@ -580,14 +998,20 @@ name_vars(Equality) :-
 %! name_vars0(+Equality) is det.
 %   Helper predicate that assigns names to variables if necessary.
 %   @arg Equality is a term containing variables.
+%
+%   @example
+%     % Assign names to variables in an equality expression.
+%     ?- name_vars(X=Y).
+%     true.
+%
 name_vars0(X=Y) :-
     % If X and Y are identical, do nothing.
     X == Y, !.
 % If X is a '$VAR', set the name.
 name_vars0(X='$VAR'(X)).
 
-% Resets internal caches.
 %! reset_cache is det.
+% Resets internal caches.
 %   Placeholder for cache resetting logic.
 reset_cache.
 
@@ -827,6 +1251,12 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,
 %   Attempts to assign variable V to the variable name N, if V is unbound.
 %
 %   @arg N=V is the variable assignment term.
+%
+%   @example
+%     % Attempt to assign a variable name.
+%     ?- maybe_assign(x=Var).
+%     Var = '$VAR'(x).
+%
 maybe_assign(N=V):- ignore(V='$VAR'(N)).
 
 % Disable the debug mode for the 'metta(time)' predicate.
@@ -836,6 +1266,15 @@ maybe_assign(N=V):- ignore(V='$VAR'(N)).
 %
 %   A query executor that retrieves terms from a knowledge base using 'query-info', computes variable intersections,
 %   and evaluates the query Q against the term T in the context of a flybase.
+%
+%   @example
+%     % Execute the query matching process.
+%     ?- mqd.
+%     Entity1
+%     Entity2
+%     ...
+%     true.
+%
 mqd :-
     % Iterate over all metta_atom/3 calls that match the 'query-info' term.
     forall(metta_atom(_KB, ['query-info', E, T, Q]),
@@ -851,17 +1290,30 @@ mqd :-
 %   Handles escape sequences for special keys.
 %
 %   @arg O is the output character, transformed into an atom.
+%
+%   @example
+%     % Read a single character and transform it into an atom.
+%     ?- get_single_char_key(O).
+%     O = a.
+%
 get_single_char_key(O):-
     % Get the single character input.
     get_single_char(C),
     % Recursively read characters until a valid key is obtained.
     get_single_char_key(C, O).
+
 %! get_single_char_key(+C, -A) is det.
 %
 %   Handles special cases such as escape sequences for the arrow keys.
 %
 %   @arg C is the character received.
 %   @arg A is the resulting atom.
+%
+%   @example
+%     % Handle escape sequence input.
+%     ?- get_single_char_key(27, esc(A, [27|Codes])).
+%     A = '\e[A', Codes = [91, 65].
+%
 get_single_char_key(27, esc(A,[27|O])):-
     !,
     % Read pending escape sequences and convert them to a name.
@@ -921,13 +1373,28 @@ print_var(Name=Var) :- print_var(Name,Var).
 %   Writes a variable, handling special cases like unbound or '$VAR'.
 %
 %   @arg V is the variable to be written.
+%
+%   @example
+%     % Write an unbound variable.
+%     ?- write_var(X).
+%     _G123
+%
 write_var(V):- var(V), !, write_dvar(V),!.  % Write the unbound variable using a helper predicate.
-write_var('$VAR'(S)):- !, write_dvar(S),!.  % Handle Prolog's internal variable representation.
+write_var('$VAR'(S)):- !, write_dvar(S),!.  % Handle the Prolog internal variable representation.
 write_var(V):- write_dvar(V),!.  % Default case: write the variable.
 
 %!  print_var(+Name, +Var) is det.
 %
-%   Prints a variable assignment as Name = Var.
+%   Prints a variable assignment in the format `Name = Var`.
+%
+%   @arg Name The name of the variable.
+%   @arg Var  The value of the variable.
+%
+%   @example
+%     % Print a variable assignment.
+%     ?- print_var(Name, 42).
+%     Name = 42
+%
 print_var(Name,Var):-
     % Print the variable name.
     write_var(Name),
@@ -943,6 +1410,11 @@ print_var(Name,Var):-
 %   Writes a variable, skipping if it is 'Empty' and compatible with the environment.
 %
 %   @arg Var is the variable to be written.
+%
+%   @example
+%     % Write a variable unless it is 'Empty' in a compatible environment.
+%     ?- write_asrc(X).
+%
 write_asrc(Var):- Var=='Empty',is_compatio,!.  % Skip writing if the variable is 'Empty' in a compatible mode.
 write_asrc(Var):- write_bsrc(Var),!.  % Otherwise, write the variable.
 
@@ -951,9 +1423,28 @@ write_asrc(Var):- write_bsrc(Var),!.  % Otherwise, write the variable.
 %   Writes the value of a variable, handling ground terms and variables with goals.
 %
 %   @arg Var is the variable to be written.
+%
+%   @example
+%     % Write the value of a ground term.
+%     ?- write_bsrc(42).
+%     42
+%
 write_bsrc(Var):- Var=='Empty',!,write(Var).  % Special case: write 'Empty' directly.
 write_bsrc(Var):- ground(Var),!,write_bsrc1(Var).  % If the variable is ground, write it directly.
 write_bsrc(Var):- copy_term(Var,Copy,Goals),Var=Copy,write_bsrc_goal(Var,Goals).  % For non-ground terms, handle goals.
+
+%!  write_bsrc_goal(+Var, +Goals) is det.
+%
+%   Writes a variable along with its associated goals, if any.
+%
+%   @arg Var   The variable to be written.
+%   @arg Goals A list of goals associated with the variable.
+%
+%   @example
+%     % Write a variable with goals.
+%     ?- write_bsrc_goal(Var, [goal1, goal2]).
+%     Var { goal1 goal2 }
+%
 write_bsrc_goal(Var,[]):- write_src(Var).  % Write the variable if no goals are present.
 write_bsrc_goal(Var,[G|Goals]):-
     % Write the variable.
@@ -972,6 +1463,12 @@ write_bsrc_goal(Var,[G|Goals]):-
 %   Writes the value of a variable (often not indenting it)
 %
 %   @arg Var is the variable to be written.
+%
+%   @example
+%     % Write a list of lists.
+%     ?- write_bsrc1([[1, 2], [3, 4]]).
+%     [[1,2],[3,4]]
+%
 write_bsrc1(Var):- is_list(Var), member(E, Var), is_list(E), !, write_src(Var).
 write_bsrc1(Var):- write_src_woi(Var).
 
@@ -980,6 +1477,12 @@ write_bsrc1(Var):- write_src_woi(Var).
 %   Writes a goal with a preceding space.
 %
 %   @arg Goal is the goal to be written.
+%
+%   @example
+%     % Write a goal with a space before it.
+%     ?- write_src_space(goal1).
+%      goal1
+%
 write_src_space(Goal):-
     % Write a space before the goal.
     write(' '),
@@ -988,11 +1491,11 @@ write_src_space(Goal):-
 
 %!  get_term_variables(+Term, -DontCaresN, -CSingletonsN, -CNonSingletonsN) is det.
 %
-%   Collects variables from a Prolog term, identifying don't-care variables, singletons, and non-singletons.
+%   Collects variables from a Prolog term, identifying do-not-care variables, singletons, and non-singletons.
 %   It then maps these variables into named variable lists.
 %
 %   @arg Term is the Prolog term whose variables are being analyzed.
-%   @arg DontCaresN is the list of don't-care variables (those represented by underscores).
+%   @arg DontCaresN is the list of do-not-care variables (those represented by underscores).
 %   @arg CSingletonsN is the list of singleton variables (those that appear only once).
 %   @arg CNonSingletonsN is the list of non-singleton variables (those that appear more than once).
 %
@@ -1008,15 +1511,15 @@ get_term_variables(Term, DontCaresN, CSingletonsN, CNonSingletonsN) :-
     writeqln(term_variables(Term, AllVars)=VNs),
     % Identify singleton variables in the term.
     term_singletons(Term, Singletons),
-    % Identify don't-care variables in the term.
+    % Identify do-not-care variables in the term.
     term_dont_cares(Term, DontCares),
     % Filter out singletons from the set of all variables.
     include(not_in_eq(Singletons), AllVars, NonSingletons),
-    % Remove don't-care variables from the non-singleton set.
+    % Remove do-not-care variables from the non-singleton set.
     include(not_in_eq(DontCares), NonSingletons, CNonSingletons),
-    % Remove don't-care variables from the singleton set.
+    % Remove do-not-care variables from the singleton set.
     include(not_in_eq(DontCares), Singletons, CSingletons),
-    % Map the don't-care, singleton, and non-singleton variables into named variable lists.
+    % Map the do-not-care, singleton, and non-singleton variables into named variable lists.
     maplist(into_named_vars, [DontCares, CSingletons, CNonSingletons],
                              [DontCaresN, CSingletonsN, CNonSingletonsN]),
     % Log the final result.
@@ -1025,10 +1528,16 @@ get_term_variables(Term, DontCaresN, CSingletonsN, CNonSingletonsN) :-
 
 %!  term_dont_cares(+Term, -DontCares) is det.
 %
-%   Finds the don't-care variables (those represented by underscores) in a term.
+%   Finds the do-not-care variables (those represented by underscores) in a term.
 %
 %   @arg Term is the term to analyze.
-%   @arg DontCares is the list of don't-care variables in the term.
+%   @arg DontCares is the list of do-not-care variables in the term.
+%
+%   @example
+%     % Find do-not-care variables in a term.
+%     ?- term_dont_cares(f(_, X, _), DontCares).
+%     DontCares = [_G123, _G124].
+%
 term_dont_cares(Term, DontCares) :-
     % Extract all variables from the term.
     term_variables(Term, AllVars),
@@ -1036,7 +1545,7 @@ term_dont_cares(Term, DontCares) :-
     get_global_varnames(VNs),
     % Find variables that have sub-variables in the term.
     include(has_sub_var(AllVars), VNs, HVNs),
-    % Filter out underscore variables (don't-cares).
+    % Filter out underscore variables (do-not-cares).
     include(underscore_vars, HVNs, DontCareNs),
     % Extract the actual variable values from the named variables.
     maplist(arg(2), DontCareNs, DontCares).
@@ -1063,22 +1572,34 @@ into_named_vars(Vars,L):-
     into_named_vars(VVs,L).
 
 
-%!  has_sub_var(+AllVars, +Equality) is semidet.
+%!  has_sub_var(+AllVars, +Equality) is nondet.
 %
 %   Succeeds if V is a sub-variable of any of the variables in AllVars.
 %
 %   @arg AllVars is the list of variables to search in.
 %   @arg Equality is the variable to check as a sub-variable.
+%
+%   @example
+%     % Check if a variable is a sub-variable of another.
+%     ?- has_sub_var([X, Y], X=Z).
+%     true.
+%
 has_sub_var(AllVars,_=V):-
     % Check if V is a sub-variable of any variable in AllVars.
     sub_var(V,AllVars).
 
 
-%!  underscore_vars(+Var) is semidet.
+%!  underscore_vars(+Var) is nondet.
 %
-%   Succeeds if the variable or name represents a don't-care variable (underscore).
+%   Succeeds if the variable or name represents a do-not-care variable (underscore).
 %
 %   @arg Var is the variable or name to check.
+%
+%   @example
+%     % Check if a variable is a do-not-care variable.
+%     ?- underscore_vars('_G123').
+%     true.
+%
 underscore_vars(V):-
     % If V is a variable, retrieve its name and check if it is an underscore variable.
     var(V),!,
@@ -1099,6 +1620,12 @@ underscore_vars(N):-
 %   Retrieves the global list of variable names.
 %
 %   @arg VNs is the list of variable names in the current context.
+%
+%   @example
+%     % Retrieve the global variable names.
+%     ?- get_global_varnames(VNs).
+%     VNs = [X, Y].
+%
 get_global_varnames(VNs):-
     % If there are variable names in nb_current, use them.
     nb_current('variable_names',VNs),VNs\==[],!.
@@ -1112,6 +1639,12 @@ get_global_varnames(VNs):-
 %   Conditionally sets the variable names if the list is not empty.
 %
 %   @arg List is the list of variable names.
+%
+%   @example
+%     % Set a list of variable names if it is non-empty.
+%     ?- maybe_set_var_names([X, Y]).
+%     true.
+%
 maybe_set_var_names(List):-
     % If the list is empty, do nothing.
     List==[],!.
@@ -1128,6 +1661,12 @@ maybe_set_var_names(_).
 %
 %   @arg V is the input variable.
 %   @arg EqualityPair is the resulting named variable pair.
+%
+%   @example
+%     % Map a variable to its named pair.
+%     ?- X = some_value, name_for_var_vn(X, Pair).
+%     Pair = N = some_value.
+%
 name_for_var_vn(V,N=V):-
     % Retrieve the name for the variable V.
     name_for_var(V,N).
@@ -1139,6 +1678,12 @@ name_for_var_vn(V,N=V):-
 %
 %   @arg V is the variable whose name is being retrieved.
 %   @arg N is the name corresponding to V.
+%
+%   @example
+%     % Retrieve the name for a variable from global names.
+%     ?- nb_linkval(variable_names, ['X'=X]), name_for_var(X, N).
+%     N = 'X'.
+%
 name_for_var(V,N):-
     % If V is a variable, check the global variable names.
     var(V),!,
@@ -1150,7 +1695,7 @@ name_for_var(V,N):-
     % Convert the variable V to an atom representing its name.
     term_to_atom(V,N),!.
 
-%!  really_trace is semidet.
+%!  really_trace is nondet.
 %
 %   Activates tracing if 'exec' or 'eval' tracing options are enabled, or if debugging is enabled for exec or eval.
 %   Used as a helper to conditionally invoke tracing logic.
@@ -1179,21 +1724,33 @@ really_rtrace(Goal):-
     with_debug((e), with_debug((exec), Goal)).
 
 
-%!  rtrace_on_existence_error(:G) is semidet.
+%!  rtrace_on_existence_error(:G) is nondet.
 %
 %   Attempts to execute the goal G, but if an existence error is encountered, it switches to tracing and retries G.
 %
 %   @arg G is the goal to execute.
+%
+%   @example
+%     % Demonstrate retrying a goal on existence error with tracing.
+%     ?- rtrace_on_existence_error(nonexistent_predicate).
+%     ERROR: existence_error ...
+%
 rtrace_on_existence_error(G):-
     % Catch any existence errors, log them, and retry G with tracing enabled.
     !, catch_err(G, E, (fbug(E = G), \+ tracing, trace, rtrace(G))).
 
 
-%!  prolog_only(:Goal) is semidet.
+%!  prolog_only(:Goal) is nondet.
 %
 %   Runs the goal if tracing is enabled for Prolog operations.
 %
 %   @arg Goal is the Prolog goal to execute.
+%
+%   @example
+%     % Run a goal only if Prolog tracing is enabled.
+%     ?- prolog_only(write('Tracing enabled for Prolog')).
+%     Tracing enabled for Prolog
+%
 prolog_only(Goal):-
     % If Prolog tracing is enabled, run the goal.
     if_trace(prolog, Goal).
@@ -1205,32 +1762,66 @@ prolog_only(Goal):-
 %
 %   @arg Exec is the compiled execution result.
 %   @arg Goal is the goal being compiled and executed.
+%
+%   @example
+%     % Compile and print the result of a goal.
+%     ?- write_compiled_exec(Result, my_goal).
+%     #114411: answer2(Result) :- my_goal
+%
 write_compiled_exec(Exec, Goal):-
     % Compile the goal for execution and store the result in Res.
     compile_for_exec(Res, Exec, Goal),
     % Print the compiled goal with formatting.
     notrace((color_g_mesg('#114411', print_pl_source(answer2(Res) :- Goal)))).
 
-
 %!  verbose_unify(+Term) is det.
-%!  verbose_unify(+What, +Term) is det.
 %
-%   Activates verbose unification mode for variables in the term, optionally specifying a tracing context.
+%   Activates verbose unification mode for variables in the given term. If no 
+%   specific trace context is provided, it defaults to 'trace'.
 %
-%   @arg What specifies the trace context for verbose unification.
-%   @arg Term is the term whose variables will be traced.
-verbose_unify(Term):-
-    % Default to 'trace' for verbose unification if no context is provided.
+%   @arg Term The term whose variables will be traced.
+%
+%   @example
+%     % Enable verbose unification on a term.
+%     ?- verbose_unify(X + Y).
+%     true.
+%
+verbose_unify(Term) :-
+    % Default to 'trace' context for verbose unification.
     verbose_unify(trace, Term).
 
-% Apply verbose unification to all variables in the term with a specified context.
-verbose_unify(What, Term):-
-    % Extract variables from the term and apply verbose_unify0 to each variable.
-    term_variables(Term, Vars), maplist(verbose_unify0(What), Vars), !.
+%!  verbose_unify(+What, +Term) is det.
+%
+%   Activates verbose unification mode for variables in the term with the specified context.
+%
+%   @arg What The trace context for verbose unification.
+%   @arg Term The term whose variables will be traced.
+%
+%   @example
+%     % Enable verbose unification with a custom context.
+%     ?- verbose_unify(my_trace, X + Y).
+%     true.
+%
+verbose_unify(What, Term) :-
+    % Extract variables from the term and apply `verbose_unify0` to each.
+    term_variables(Term, Vars),
+    maplist(verbose_unify0(What), Vars),
+    !.
 
-% Applies verbose unification to individual variables.
-verbose_unify0(What, Var):-
-    % Assign the 'verbose_unify' attribute to the variable.
+%!  verbose_unify0(+What, +Var) is det.
+%
+%   Applies verbose unification to individual variables by assigning the `verbose_unify` attribute.
+%
+%   @arg What The trace context for verbose unification.
+%   @arg Var  The variable to which the attribute will be assigned.
+%
+%   @example
+%     % Assign the 'verbose_unify' attribute to a variable.
+%     ?- verbose_unify0(trace, X).
+%     true.
+%
+verbose_unify0(What, Var) :-
+    % Set the 'verbose_unify' attribute for the variable.
     put_attr(Var, verbose_unify, What).
 
 % Attribute unification hook for verbose_unify, logs when variables are unified.
@@ -1373,7 +1964,7 @@ install_readline_editline :-
 
 %!  el_wrap_metta(+Input) is det.
 %
-%   Wraps the input stream in editline (or readline) for use with mettalog, if it's a TTY (terminal).
+%   Wraps the input stream in editline (or readline) for use with mettalog, if it is a TTY (terminal).
 %
 %   @arg Input is the input stream to be wrapped.
 %
@@ -1438,7 +2029,7 @@ add_metta_commands(Input) :-
 %!  install_readline(+Input) is det.
 %
 %   Installs readline functionality for the input stream, providing useful editing commands and history.
-%   This predicate configures Prolog's input stream to support terminal history and command completion using the editline library.
+%   This predicate configures the Prolog input stream to support terminal history and command completion using the editline library.
 %
 %   @arg Input is the input stream for which readline features should be installed.
 %
@@ -1467,7 +2058,7 @@ install_readline(Input):-
     %nop(catch(load_history,_,true)),
     % Unwrap the Prolog input wrapper, so that the custom readline features can be used.
     ignore(el_unwrap(Input)),
-    % Wrap the input with Metta's own readline handler.
+    % Wrap the input with the Metta readline handler.
     ignore(el_wrap_metta(Input)),
     % Load command history from a file, if it exists.
     history_file_location(HistoryFile),
@@ -1504,7 +2095,7 @@ install_readline_editline1 :-
    setup_done, % Check if setup has already been done.
    !. % Cut to prevent further execution if setup_done is true.
 
-% If setup_done isn't true, assert it and continue with the installation process.
+% If setup_done is not true, assert it and continue with the installation process.
 install_readline_editline1 :-
    asserta(setup_done). % Assert that setup is now complete.
 
@@ -1519,7 +2110,7 @@ install_readline_editline1 :-
 %    init_debug_flags, % Initialize debugging flags.
 %    start_pldoc, % Start the Prolog documentation server (pldoc).
 %    opt_attach_packs, % Attach optional packs (libraries).
-%    load_init_file, % Load the user's initialization file.
+%    load_init_file, % Load the user initialization file.
 %    catch(setup_backtrace, E1, print_message(warning, E1)), % Setup backtrace handling, catching errors.
 %    %catch(setup_readline,  E2, print_message(warning, E2)), % Setup readline, previously caught and skipped.
 %    %catch(setup_history,   E3, print_message(warning, E3)), % Setup history management, previously skipped.
