@@ -41,7 +41,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 14:09:07+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 14:15:26+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -461,7 +461,7 @@ Last Result(2): ()()]
 >;; METTA-MORPH-TESTS.TESTS0.01</h3>
 ; 
 ; EVAL TEST
-; took 0.008 secs. (7.97 milliseconds) 
+; took 0.008 secs. (8.05 milliseconds) 
 
 !(assertEqualToResult (|- ((Garfield --> cat) (1.0 0.9)) ((cat --> animal) (1.0 0.9))) (((animal --> Garfield) (1.0 0.44751381215469616)) ((Garfield --> animal) (1.0 0.81))))
 
@@ -478,7 +478,7 @@ Deterministic: ()()]
 >;; METTA-MORPH-TESTS.TESTS0.02</h3>
 ; 
 ; EVAL TEST
-; took 0.005 secs. (4.80 milliseconds) 
+; took 0.005 secs. (4.91 milliseconds) 
 
 !(assertEqualToResult (|- ((Garfield --> carnivore) (1.0 0.9)) (((Garfield --> cat) ==> (Garfield --> carnivore)) (1.0 0.9))) (((Garfield --> cat) (1.0 0.44751381215469616))))
 
@@ -495,7 +495,7 @@ Deterministic: ()()]
 >;; METTA-MORPH-TESTS.TESTS0.03</h3>
 ; 
 ; EVAL TEST
-; took 0.008 secs. (8.26 milliseconds) 
+; took 0.009 secs. (8.52 milliseconds) 
 
 !(assertEqualToResult (|- ((({(a b) }) --> mwawa) (1.0 0.9))) (((({(a) }) --> mwawa) (1.0 0.81)) ((({(b) }) --> mwawa) (1.0 0.81))))
 
@@ -512,7 +512,7 @@ Deterministic: ()()]
 >;; METTA-MORPH-TESTS.TESTS0.04</h3>
 ; 
 ; EVAL TEST
-; took 0.007 secs. (7.34 milliseconds) 
+; took 0.008 secs. (7.53 milliseconds) 
 
 !(assertEqualToResult (|- (((a * b) --> R) (1.0 0.9))) (((a --> (R /1 b)) (1.0 0.81)) ((b --> (R /2 a)) (1.0 0.81))))
 
@@ -529,7 +529,7 @@ Deterministic: ()()]
 >;; METTA-MORPH-TESTS.TESTS0.05</h3>
 ; 
 ; EVAL TEST
-; took 0.008 secs. (7.53 milliseconds) 
+; took 0.008 secs. (7.72 milliseconds) 
 
 !(assertEqualToResult (|- ((R --> (a * b)) (1.0 0.9))) ((((R \1 b) --> a) (1.0 0.81)) (((R \2 a) --> b) (1.0 0.81))))
 
@@ -546,7 +546,7 @@ Deterministic: ()()]
 >;; METTA-MORPH-TESTS.TESTS0.06</h3>
 ; 
 ; EVAL TEST
-; took 0.018 secs. (17.59 milliseconds) 
+; took 0.018 secs. (17.65 milliseconds) 
 
 !(assertEqualToResult (|- ((A --> cat) (1.0 0.9)) ((B --> cat) (1.0 0.9))) (((B --> A) (1.0 0.44751381215469616)) (((A ~ B) --> cat) (0.0 0.81)) (((A | B) --> cat) (1.0 0.81)) ((B <-> A) (1.0 0.44751381215469616)) (((A & B) --> cat) (1.0 0.81))))
 
@@ -563,7 +563,7 @@ Deterministic: ()()]
 >;; METTA-MORPH-TESTS.TESTS0.07</h3>
 ; 
 ; EVAL TEST
-; took 0.032 secs. (31.69 milliseconds) 
+; took 0.032 secs. (32.37 milliseconds) 
 
 !(assertEqualToResult (|- (|- ((Garfield --> cat) (1.0 0.9)) ((cat --> animal) (1.0 0.9))) ((animal --> being) (1.0 0.9))) (((animal --> (Garfield | being)) (1.0 0.40276243093922653)) ((animal --> (Garfield & being)) (1.0 0.40276243093922653)) ((animal --> (Garfield - being)) (0.0 0.40276243093922653)) ((being <-> Garfield) (1.0 0.28712091374556914)) ((being --> Garfield) (1.0 0.28712091374556914)) ((being --> Garfield) (1.0 0.42163100057836905)) ((Garfield --> being) (1.0 0.7290000000000001))))
 
@@ -572,7 +572,7 @@ Deterministic: ()()]
 </span>
 Deterministic: ()()]
 <span class="ansi32"
->% 1,870,389 inferences, 0.582 CPU in 0.582 seconds (100% CPU, 3211871 Lips)
+>% 1,870,533 inferences, 0.592 CPU in 0.592 seconds (100% CPU, 3158714 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/tests0.metta  0)
 <span class="ansi1"
@@ -719,7 +719,7 @@ Deterministic: ()()]
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 14:09:13+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 14:15:32+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

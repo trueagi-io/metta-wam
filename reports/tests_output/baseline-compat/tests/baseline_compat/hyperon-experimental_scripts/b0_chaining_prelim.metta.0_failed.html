@@ -32,7 +32,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 13:56:54+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 14:03:54+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -382,7 +382,7 @@ Script started on 2024-10-19 13:56:54+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B0-CHAINING-PRELIM.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000660 secs. (660.08 microseconds) 
+; took 0.000843 secs. (843.25 microseconds) 
 
 !(assertEqualToResult (match &self (:= (S K K x) $r) $r) ((K x (K x))))
 
@@ -401,7 +401,7 @@ Deterministic: ()()]
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B0-CHAINING-PRELIM.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000179 secs. (178.92 microseconds) 
+; took 0.000188 secs. (187.71 microseconds) 
 
 !(assertEqualToResult (match &self (:= (K x (K x)) $r) $r) (x))
 
@@ -419,7 +419,7 @@ Deterministic: ()()]
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B0-CHAINING-PRELIM.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000254 secs. (254.17 microseconds) 
+; took 0.000343 secs. (342.67 microseconds) 
 
 !(assertEqualToResult (match &self (:= (S K K x) $r) (match &self (:= $r $r2) $r2)) (x))
 
@@ -445,7 +445,7 @@ Deterministic: ()()]
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B0-CHAINING-PRELIM.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000741 secs. (741.16 microseconds) 
+; took 0.000855 secs. (854.72 microseconds) 
 
 !(assertEqualToResult (match &self (:= (Add (S Z) (S Z)) $r) $r) ((Add (S (S Z)) Z)))
 
@@ -463,7 +463,7 @@ Deterministic: ()()]
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B0-CHAINING-PRELIM.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000627 secs. (626.66 microseconds) 
+; took 0.000741 secs. (740.94 microseconds) 
 
 !(assertEqualToResult (match &self (:= (Add (S Z) (S Z)) $r) (match &self (:= $r $r2) $r2)) ((S (S Z))))
 
@@ -472,7 +472,7 @@ Deterministic: ()()]
 </span>
 Deterministic: ()()]
 <span class="ansi32"
->% 242,942 inferences, 0.066 CPU in 0.066 seconds (100% CPU, 3697516 Lips)
+>% 242,567 inferences, 0.068 CPU in 0.068 seconds (100% CPU, 3552251 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/b0_chaining_prelim.metta  0)
 <span class="ansi1"
@@ -616,7 +616,7 @@ Deterministic: ()()]
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 13:57:00+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 14:04:00+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

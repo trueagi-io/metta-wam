@@ -66,7 +66,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 14:02:05+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 14:08:45+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -418,9 +418,9 @@ Script started on 2024-10-19 14:02:05+00:00 [TERM="xterm-256color" TTY="/dev/pts
 P;HTML|
 ;                                         (= 20  "Missed result: (quote (((foo $x) { }))))]")
 P;HTML|
-;                                         (= 20  "0.04user 0.01system 0:00.05elapsed 100%CPU (0avgtext+0avgdata 24920maxresident)k")
+;                                         (= 20  "0.04user 0.01system 0:00.05elapsed 98%CPU (0avgtext+0avgdata 25368maxresident)k")
 P;HTML|
-;                                         (= 20  "0inputs+0outputs (0major+2871minor)pagefaults 0swaps")
+;                                         (= 20  "0inputs+0outputs (0major+2876minor)pagefaults 0swaps")
 P;HTML|
 ;                                        (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/minimal_metta_tests.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/minimal_metta_tests.metta)
 
@@ -440,7 +440,7 @@ Script started on 2024-10-19 14:02:05+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000381 secs. (380.92 microseconds) 
+; took 0.000454 secs. (453.97 microseconds) 
 
 !(assertEqualToResult (returns-empty) (1))
 
@@ -457,7 +457,7 @@ Deterministic: ()()]
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000024 secs. (23.50 microseconds) 
+; took 0.000016 secs. (15.54 microseconds) 
 
 !(assertEqualToResult (eval (returns-empty)) (1))
 
@@ -470,7 +470,7 @@ NDet Result(1): EmptyEmpty
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000019 secs. (19.04 microseconds) 
+; took 0.000021 secs. (20.57 microseconds) 
 
 !(assertEqualToResult (eval (returns-empty)) (1))
 
@@ -487,7 +487,7 @@ Last Result(2): ()()]
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000472 secs. (472.08 microseconds) 
+; took 0.000470 secs. (470.05 microseconds) 
 
 !(assertEqualToResult (chain-to-empty) (1))
 
@@ -504,7 +504,7 @@ Deterministic: ()()]
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000023 secs. (22.58 microseconds) 
+; took 0.000022 secs. (22.02 microseconds) 
 
 !(assertEqualToResult (eval (chain-to-empty)) (1))
 
@@ -517,7 +517,7 @@ NDet Result(1): EmptyEmpty
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000020 secs. (19.83 microseconds) 
+; took 0.000021 secs. (20.60 microseconds) 
 
 !(assertEqualToResult (eval (chain-to-empty)) (1))
 
@@ -534,7 +534,7 @@ Last Result(2): ()()]
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000601 secs. (601.46 microseconds) 
+; took 0.000687 secs. (686.84 microseconds) 
 
 !(assertEqualToResult (chain (eval (returns-empty)) $x (quote $x)) ((quote 1) (quote )))
 
@@ -551,7 +551,7 @@ Deterministic: EmptyEmpty]
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.08</h3>
 ; 
 ; EVAL TEST
-; took 0.000779 secs. (779.48 microseconds) 
+; took 0.000866 secs. (865.94 microseconds) 
 
 !(assertEqualToResult (chain (eval (chain-to-empty)) $x (quote $x)) ((quote (returns-empty))))
 
@@ -575,7 +575,7 @@ Deterministic: ((Error  (got  ((quote 1))) (expected  ((quote (returns-empty))))
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.09</h3>
 ; 
 ; EVAL TEST
-; took 0.000300 secs. (299.97 microseconds) 
+; took 0.000358 secs. (358.25 microseconds) 
 
 !(assertEqualToResult (returns-empty-expression) (1 ()))
 
@@ -592,7 +592,7 @@ Deterministic: ()()]
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.10</h3>
 ; 
 ; EVAL TEST
-; took 0.000020 secs. (19.87 microseconds) 
+; took 0.000013 secs. (12.71 microseconds) 
 
 !(assertEqualToResult (eval (returns-empty-expression)) (1 ()))
 
@@ -605,7 +605,7 @@ NDet Result(1): ((Error  (got  (())) (expected  (1 ()))))((Error  (got  (())) (e
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.11</h3>
 ; 
 ; EVAL TEST
-; took 0.000019 secs. (19.16 microseconds) 
+; took 0.000022 secs. (21.83 microseconds) 
 
 !(assertEqualToResult (eval (returns-empty-expression)) (1 ()))
 
@@ -623,7 +623,7 @@ Last Result(2): ()()]
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.12</h3>
 ; 
 ; EVAL TEST
-; took 0.000444 secs. (443.98 microseconds) 
+; took 0.000548 secs. (547.50 microseconds) 
 
 !(assertEqualToResult (chain-to-empty-expression) (1 ()))
 
@@ -640,7 +640,7 @@ Deterministic: ()()]
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.13</h3>
 ; 
 ; EVAL TEST
-; took 0.000020 secs. (19.84 microseconds) 
+; took 0.000021 secs. (20.75 microseconds) 
 
 !(assertEqualToResult (eval (chain-to-empty-expression)) (1 ()))
 
@@ -653,7 +653,7 @@ NDet Result(1): ((Error  (got  (())) (expected  (1 ()))))((Error  (got  (())) (e
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.14</h3>
 ; 
 ; EVAL TEST
-; took 0.000020 secs. (20.34 microseconds) 
+; took 0.000020 secs. (19.93 microseconds) 
 
 !(assertEqualToResult (eval (chain-to-empty-expression)) (1 ()))
 
@@ -671,7 +671,7 @@ Last Result(2): ()()]
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.15</h3>
 ; 
 ; EVAL TEST
-; took 0.000582 secs. (582.32 microseconds) 
+; took 0.000687 secs. (687.47 microseconds) 
 
 !(assertEqualToResult (chain (eval (returns-empty-expression)) $x (quote $x)) ((quote 1) (quote ())))
 
@@ -688,7 +688,7 @@ Deterministic: ()()]
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.16</h3>
 ; 
 ; EVAL TEST
-; took 0.000748 secs. (748.49 microseconds) 
+; took 0.000868 secs. (867.63 microseconds) 
 
 !(assertEqualToResult (chain (eval (chain-to-empty-expression)) $x (quote $x)) ((quote (returns-empty-expression))))
 
@@ -712,7 +712,7 @@ Deterministic: ((Error  (got  ((quote ()) (quote 1))) (expected  ((quote (return
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.17</h3>
 ; 
 ; EVAL TEST
-; took 0.000313 secs. (313.41 microseconds) 
+; took 0.000361 secs. (361.25 microseconds) 
 
 !(assertEqualToResult (returns-not-reducible) (1 (returns-not-reducible)))
 
@@ -729,7 +729,7 @@ Deterministic: ((Error  (got  (NotReducible 1)) (expected  (1 (returns-not-reduc
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.18</h3>
 ; 
 ; EVAL TEST
-; took 0.000452 secs. (452.03 microseconds) 
+; took 0.000552 secs. (552.11 microseconds) 
 
 !(assertEqualToResult (chain-to-not-reducible) (1 (returns-not-reducible)))
 
@@ -746,7 +746,7 @@ Deterministic: ((Error  (got  (NotReducible 1)) (expected  (1 (returns-not-reduc
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.19</h3>
 ; 
 ; EVAL TEST
-; took 0.000022 secs. (22.48 microseconds) 
+; took 0.000026 secs. (25.58 microseconds) 
 
 !(assertEqualToResult (eval (returns-not-reducible)) (1 (eval (returns-not-reducible))))
 
@@ -759,7 +759,7 @@ NDet Result(1): ((Error  (got  (NotReducible)) (expected  (1 (eval (returns-not-
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.20</h3>
 ; 
 ; EVAL TEST
-; took 0.000013 secs. (12.76 microseconds) 
+; took 0.000020 secs. (20.28 microseconds) 
 
 !(assertEqualToResult (eval (returns-not-reducible)) (1 (eval (returns-not-reducible))))
 
@@ -777,7 +777,7 @@ Last Result(2): ((Error  (got  (1)) (expected  (1 (eval (returns-not-reducible))
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.21</h3>
 ; 
 ; EVAL TEST
-; took 0.000015 secs. (14.57 microseconds) 
+; took 0.000024 secs. (24.19 microseconds) 
 
 !(assertEqualToResult (eval (chain-to-not-reducible)) (1 (returns-not-reducible)))
 
@@ -790,7 +790,7 @@ NDet Result(1): ((Error  (got  (NotReducible)) (expected  (1 (returns-not-reduci
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.22</h3>
 ; 
 ; EVAL TEST
-; took 0.000021 secs. (20.84 microseconds) 
+; took 0.000020 secs. (20.23 microseconds) 
 
 !(assertEqualToResult (eval (chain-to-not-reducible)) (1 (returns-not-reducible)))
 
@@ -808,7 +808,7 @@ Last Result(2): ((Error  (got  (1)) (expected  (1 (returns-not-reducible)))))((E
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.23</h3>
 ; 
 ; EVAL TEST
-; took 0.000694 secs. (694.25 microseconds) 
+; took 0.000699 secs. (699.23 microseconds) 
 
 !(assertEqualToResult (chain (eval (returns-not-reducible)) $x (quote $x)) ((quote 1) (quote NotReducible)))
 
@@ -825,7 +825,7 @@ Deterministic: ()()]
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.24</h3>
 ; 
 ; EVAL TEST
-; took 0.000845 secs. (845.22 microseconds) 
+; took 0.000875 secs. (875.13 microseconds) 
 
 !(assertEqualToResult (chain (eval (chain-to-not-reducible)) $x (quote $x)) ((quote (returns-not-reducible))))
 
@@ -849,7 +849,7 @@ Deterministic: ((Error  (got  ((quote NotReducible) (quote 1))) (expected  ((quo
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.25</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.16 milliseconds) 
+; took 0.001 secs. (1.22 milliseconds) 
 
 !(assertEqualToResult (chain (collapse-bind (foo $x)) $a (quote $a)) ((quote (((foo $x) {() })))))
 
@@ -866,7 +866,7 @@ Deterministic: ((Error  (got  ((quote (input A)) (quote (input B)))) (expected  
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.26</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.95 milliseconds) 
+; took 0.002 secs. (1.96 milliseconds) 
 
 !(assertEqualToResult (chain (collapse-bind (eval (foo $x))) $a (quote $a)) ((quote (((bar $x) {() })))))
 
@@ -883,7 +883,7 @@ Deterministic: ((Error  (got  ((quote (input A)) (quote (input B)))) (expected  
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.27</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.29 milliseconds) 
+; took 0.001 secs. (1.30 milliseconds) 
 
 !(assertEqualToResult (chain (collapse-bind (metta (foo $x) %Undefined% &self)) $a (quote $a)) ((quote (((input B) {($x <- B) }) ((input A) {($x <- A) })))))
 
@@ -901,7 +901,7 @@ Deterministic: ((Error  (got  ((quote (metta (input A) %Undefined% &self)))) (ex
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.28</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.67 milliseconds) 
+; took 0.002 secs. (1.73 milliseconds) 
 
 !(assertEqualToResult (chain (collapse-bind (foo $x)) $a (chain (superpose-bind $a) $b (quote $b))) ((quote (foo $x))))
 
@@ -918,7 +918,7 @@ Deterministic: ((Error  (got  ((quote input) (quote A) (quote input) (quote B)))
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.29</h3>
 ; 
 ; EVAL TEST
-; took 0.003 secs. (2.87 milliseconds) 
+; took 0.003 secs. (2.91 milliseconds) 
 
 !(assertEqualToResult (chain (collapse-bind (eval (foo $x))) $a (chain (superpose-bind $a) $b (quote $b))) ((quote (bar $x))))
 
@@ -935,7 +935,7 @@ Deterministic: ((Error  (got  ((quote input) (quote A) (quote input) (quote B)))
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.30</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.06 milliseconds) 
+; took 0.002 secs. (2.02 milliseconds) 
 
 !(assertEqualToResult (chain (collapse-bind (metta (foo $x) %Undefined% &self)) $a (chain (superpose-bind $a) $b (quote $b))) ((quote (input B)) (quote (input A))))
 
@@ -959,7 +959,7 @@ Deterministic: ((Error  (got  ((quote metta) (quote (input A)) (quote %Undefined
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.31</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.49 milliseconds) 
+; took 0.002 secs. (1.55 milliseconds) 
 
 !(assertEqualToResult (metta (foobar) Number &self) (1))
 
@@ -976,7 +976,7 @@ Deterministic: ((Error  (got  ((metta 1 Number &self) (metta "a" Number &self)))
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.32</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.46 milliseconds) 
+; took 0.002 secs. (1.53 milliseconds) 
 
 !(assertEqualToResult (metta (foobar) String &self) ("a"))
 
@@ -993,7 +993,7 @@ Deterministic: ((Error  (got  ((metta 1 String &self) (metta "a" String &self)))
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.33</h3>
 ; 
 ; EVAL TEST
-; took 0.000973 secs. (972.69 microseconds) 
+; took 0.001 secs. (1.01 milliseconds) 
 
 !(assertEqualToResult (collapse-bind (metta (foobar) $type &self)) ((1 {($type <- Number) }) ("a" {($type <- String) })))
 
@@ -1010,7 +1010,7 @@ Deterministic: ((Error  (got  ((metta 1 $_238998 &self))) (expected  ((1 {($type
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.34</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.66 milliseconds) 
+; took 0.002 secs. (1.74 milliseconds) 
 
 !(assertEqualToResult (metta (chain-to-foobar) Number &self) (1))
 
@@ -1027,7 +1027,7 @@ Deterministic: ((Error  (got  ((metta 1 Number &self) (metta "a" Number &self)))
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.35</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.64 milliseconds) 
+; took 0.002 secs. (1.68 milliseconds) 
 
 !(assertEqualToResult (metta (chain-to-foobar) String &self) ("a"))
 
@@ -1044,16 +1044,16 @@ Deterministic: ((Error  (got  ((metta 1 String &self) (metta "a" String &self)))
 >;; HYPERON-METTALOG-SANITY.MINIMAL-METTA-TESTS.36</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.14 milliseconds) 
+; took 0.001 secs. (1.18 milliseconds) 
 
 !(assertEqualToResult (collapse-bind (metta (chain-to-foobar) $type &self)) ((1 {($type <- Number) }) ("a" {($type <- String) })))
 
 <span class="ansi31"
->(loonit_failureR  (equal_enough_for_test  ((metta 1 $_382596 &self)) ((1 {($_361308 <- Number) }) ("a" {($_361308 <- String) }))))
+>(loonit_failureR  (equal_enough_for_test  ((metta 1 $_382582 &self)) ((1 {($_361294 <- Number) }) ("a" {($_361294 <- String) }))))
 </span>
-Deterministic: ((Error  (got  ((metta 1 $_382596 &self))) (expected  ((1 {($type <- Number) }) ("a" {($type <- String) })))))((Error  (got  ((metta 1 $_382596 &self))) (expected  ((1 {($_361308 <- Number) }) ("a" {($_361308 <- String) })))))]
+Deterministic: ((Error  (got  ((metta 1 $_382582 &self))) (expected  ((1 {($type <- Number) }) ("a" {($type <- String) })))))((Error  (got  ((metta 1 $_382582 &self))) (expected  ((1 {($_361294 <- Number) }) ("a" {($_361294 <- String) })))))]
 <span class="ansi32"
->% 1,397,433 inferences, 0.283 CPU in 0.284 seconds (100% CPU, 4929273 Lips)
+>% 1,398,667 inferences, 0.291 CPU in 0.291 seconds (100% CPU, 4803541 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/minimal_metta_tests.metta  0)
 <span class="ansi1"
@@ -1216,13 +1216,13 @@ Deterministic: ((Error  (got  ((metta 1 $_382596 &self))) (expected  ((1 {($type
 [((Error  (got  ((metta 1 $_238998 &self))) (expected  ((1 {($_221262 <- Number) }) ("a" {($_221262 <- String) })))))]
 [((Error  (got  ((metta 1 Number &self) (metta "a" Number &self))) (expected  (1))))]
 [((Error  (got  ((metta 1 String &self) (metta "a" String &self))) (expected  ("a"))))]
-[((Error  (got  ((metta 1 $_382596 &self))) (expected  ((1 {($_361308 <- Number) }) ("a" {($_361308 <- String) })))))]
+[((Error  (got  ((metta 1 $_382582 &self))) (expected  ((1 {($_361294 <- Number) }) ("a" {($_361294 <- String) })))))]
 P;HTML|
 ;         (maybe_halt  7)
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 14:02:10+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 14:08:51+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
