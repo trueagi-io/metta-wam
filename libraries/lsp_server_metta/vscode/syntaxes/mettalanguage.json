@@ -1,0 +1,118 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "MeTTa",
+	"patterns": [
+		{
+			"include": "#doctag"
+		},
+		{
+			"include": "#namespace"
+		},
+		{
+			"include": "#variables"
+		},
+		{
+			"include": "#operatorkeywords"
+		},
+		{
+			"include": "#controlkeywords"
+		},
+		{
+			"include": "#comment"
+		},
+		{
+			"include": "#strings"
+		},
+		{
+			"include": "#character"
+		},
+		{
+			"include": "#number"
+		}
+	],
+	"repository": {
+		"keywords": {
+			"patterns": [{
+				"name": "no.color.metta",
+				"match": "[a-zA-Z_][a-zA-Z_\\-*0-9]*!?"
+			}]
+		},
+		"operatorkeywords": {
+			"patterns": [{
+				"name": "keyword.operator.metta",
+				"match": "=="
+			}]
+		},
+		"controlkeywords": {
+			"patterns": [{
+				"name": "keyword.control.metta",
+				"match": ":|=|\\->|!"
+			}]
+		},
+		"doctag" : {
+			"patterns": [
+				{
+					"name": "keyword.other.metta",
+					"match": "\\x40[a-zA-Z_][a-zA-Z_\\-*0-9]*!?"
+				}
+			]
+		},
+		"namespace" : {
+			"patterns": [
+				{
+					"name": "variable.language.metta",
+					"match": "\\x26[a-zA-Z_][a-zA-Z_\\-*0-9]*!?"
+				}
+			]
+		},
+		"variables" : {
+			"patterns": [
+				{
+					"name": "variable.other.metta",
+					"match": "\\x24[a-zA-Z_][a-zA-Z_\\-*0-9]*!?"
+				}
+			]
+		},
+		"comment" : {
+			"patterns": [
+				{
+					"name": "comment.line.metta",
+					"begin": ";",
+					"end": "$"
+				}
+			]
+		},
+		"strings": {
+			"name": "string.quoted.double.metta",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.metta",
+					"match": "\\\\."
+				}
+			]
+		},
+		"character":{
+			"begin": "'",
+			"end": "'",
+			"name": "string.quoted.single.metta",
+			"patterns": [
+				{
+					"match": "\\\\.",
+					"name": "constant.character.escape.metta"
+				}
+			]
+		},
+		"number": {
+			"patterns": [
+				{
+					"name": "constant.numeric.metta",
+					"begin": ";",
+					"match": "-?[0-9]+(.[0-9]+)?"
+				}
+			]
+		}
+	},
+	"scopeName": "source.metta"
+}

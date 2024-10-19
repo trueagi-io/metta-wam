@@ -40,7 +40,13 @@
           ".metta"
         ]
       }
-    ]
+    ],
+    "grammars": [{
+      "language": "metta",
+      "scopeName": "source.metta",
+      "path": "./syntaxes/mettalanguage.json"
+    }]
+
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1"
