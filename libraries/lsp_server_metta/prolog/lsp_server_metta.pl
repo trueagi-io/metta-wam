@@ -337,8 +337,6 @@ server_capabilities(
       typeDefinitionProvider: true,
       referencesProvider: true,
 
-      codeActionProvider: false,
-
       documentHighlightProvider: false,
       codeActionProvider: true,  % Changed from false to true
 
@@ -384,7 +382,9 @@ handle_msg("initialize", Msg,
          directory_source_files(RootPath, Files, [recursive(true)]),
          maplist([F]>>assert(in_editor(F)), Files) )
     ; true ),
+    assert(client_capabilities(Params)),
     server_capabilities(ServerCapabilities).
+
 handle_msg("shutdown", Msg, _{id: Id, result: null}) :-
     _{id: Id} :< Msg,
     debug(server, "received shutdown message", []).
