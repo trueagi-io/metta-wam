@@ -35,7 +35,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 09:36:59+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 09:38:23+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -389,7 +389,7 @@ Script started on 2024-10-19 09:36:59+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-METTALOG-SANITY.03-SORING-VIA-INSERT.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000195 secs. (194.69 microseconds) 
+; took 0.000172 secs. (171.97 microseconds) 
 
 !(assertEqualToResult (get-type insert) ((-> $a#2 (List $a#2) (List $a#2))))
 
@@ -429,7 +429,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.03-SORING-VIA-INSERT.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000367 secs. (366.95 microseconds) 
+; took 0.000393 secs. (392.90 microseconds) 
 
 !(assertEqual (Cons 1 Nil) (Cons 1 Nil))
 
@@ -447,7 +447,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.03-SORING-VIA-INSERT.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000652 secs. (652.37 microseconds) 
+; took 0.000638 secs. (638.19 microseconds) 
 
 !(assertEqual (insert 1 Nil) (Cons 1 Nil))
 
@@ -465,7 +465,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.03-SORING-VIA-INSERT.05</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.10 milliseconds) 
+; took 0.002 secs. (1.98 milliseconds) 
 
 !(assertEqual (insert 1 (insert 2 Nil)) (Cons 1 (Cons 2 Nil)))
 
@@ -483,7 +483,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.03-SORING-VIA-INSERT.06</h3>
 ; 
 ; EVAL TEST
-; took 0.007 secs. (6.76 milliseconds) 
+; took 0.007 secs. (6.60 milliseconds) 
 
 !(assertEqual (insert 3 (insert 2 (insert 1 Nil))) (Cons 1 (Cons 2 (Cons 3 Nil))))
 
@@ -493,7 +493,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 321,257 inferences, 0.065 CPU in 0.065 seconds (99% CPU, 4977472 Lips)
+>% 321,257 inferences, 0.065 CPU in 0.065 seconds (99% CPU, 4970645 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/03-soring-via-insert.metta  0)
 <span class="ansi1"
@@ -632,7 +632,7 @@ Deterministic: ()
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 09:37:05+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 09:38:29+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

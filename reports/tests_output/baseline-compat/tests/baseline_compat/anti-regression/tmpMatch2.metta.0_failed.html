@@ -96,7 +96,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 09:33:46+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 09:35:04+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -609,7 +609,7 @@ Deterministic: ()
 > (Inheritance B A)
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.93 milliseconds) 
+; took 0.002 secs. (2.00 milliseconds) 
 
 !(assertEqualToResult (add-atom &db (Inheritance B A)) (()))
 
@@ -634,7 +634,7 @@ Deterministic: ()
 > (Inheritance C A)
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.87 milliseconds) 
+; took 0.002 secs. (1.93 milliseconds) 
 
 !(assertEqualToResult (add-atom &db (Inheritance C A)) (()))
 
@@ -659,7 +659,7 @@ Deterministic: ()
 > (Inheritance D E)
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.88 milliseconds) 
+; took 0.002 secs. (1.99 milliseconds) 
 
 !(assertEqualToResult (add-atom &db (Inheritance D E)) (()))
 
@@ -684,7 +684,7 @@ Deterministic: ()
 > (Inheritance C E)
 </span>; 
 ; EVAL TEST
-; took 0.001 secs. (1.31 milliseconds) 
+; took 0.001 secs. (1.41 milliseconds) 
 
 !(assertEqualToResult (add-atom &db (Inheritance C E)) (()))
 
@@ -735,7 +735,7 @@ Deterministic: ()
 > (= (universe-size) (let $_734326 (collapse (match &db $_734362 1)) (tuple-count $_734326)))
 </span>; 
 ; EVAL TEST
-; took 0.128 secs. (127.97 milliseconds) 
+; took 0.129 secs. (129.07 milliseconds) 
 
 !(assertEqualToResult (miner &db (ms) (depth)) (() () () () () () () () () () (candidate (Inheritance (VarIdx Z) E) 2) (candidate (Inheritance (VarIdx Z) A) 2) (candidate (Inheritance B (VarIdx (S Z))) 1) (candidate (Inheritance C (VarIdx (S Z))) 2) (candidate (Inheritance D (VarIdx (S Z))) 1)))
 
@@ -745,7 +745,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 1,368,038 inferences, 0.276 CPU in 0.276 seconds (100% CPU, 4957792 Lips)
+>% 1,368,038 inferences, 0.278 CPU in 0.278 seconds (100% CPU, 4921142 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/tmpMatch2.metta  0)
 <span class="ansi1"
@@ -884,7 +884,7 @@ Deterministic: ()
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 09:33:52+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 09:35:10+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
