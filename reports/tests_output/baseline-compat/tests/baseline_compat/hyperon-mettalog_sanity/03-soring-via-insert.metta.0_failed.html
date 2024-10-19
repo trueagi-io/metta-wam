@@ -35,7 +35,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 18:58:13+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 19:43:17+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -383,111 +383,104 @@ Script started on 2024-10-19 18:58:13+00:00 [TERM="xterm-256color" TTY="/dev/pts
 <span class="ansi38-013099040"
 >!(assertEqualToResult (get-type insert) ((-> $a#2 (List $a#2) (List $a#2))))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.03-SORING-VIA-INSERT.01"
 >;; HYPERON-METTALOG-SANITY.03-SORING-VIA-INSERT.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000194 secs. (193.70 microseconds) 
+; took 0.000212 secs. (212.01 microseconds) 
 
 !(assertEqualToResult (get-type insert) ((-> $a#2 (List $a#2) (List $a#2))))
 
 <span class="ansi36"
->(loonit_success  (equal_enough_for_test  ((-> $_10364 (List $_10364) (List $_10364))) ((-> $_3966 (List $_3966) (List $_3966)))))
+>(loonit_success  (equal_enough_for_test  ((-> $_10362 (List $_10362) (List $_10362))) ((-> $_3966 (List $_3966) (List $_3966)))))
 </span>
-Deterministic: ()()]
-<span class="ansi38-255165000"
+Deterministic: ()<span class="ansi38-255165000"
 > (= (insert $x Nil) (Cons $x Nil))
 </span><span class="ansi38-255165000"
 > (= (insert $x (Cons $head $tail)) (if (< $x $head) (Cons $x (Cons $head $tail)) (Cons $head (insert $x $tail))))
 </span><span class="ansi38-013099040"
 >!(assertEqual (insert 2 (insert 1 Nil)) (Cons 1 (Cons 2 Nil)))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.03-SORING-VIA-INSERT.02"
 >;; HYPERON-METTALOG-SANITY.03-SORING-VIA-INSERT.02</h3>
 ; 
 ; EVAL TEST
-; took 0.003 secs. (2.71 milliseconds) 
+; took 0.003 secs. (2.80 milliseconds) 
 
 !(assertEqual (insert 2 (insert 1 Nil)) (Cons 1 (Cons 2 Nil)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Cons 1 (Cons 2 Nil))) ((Cons 1 (Cons 2 Nil)))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (Cons 1 Nil) (Cons 1 Nil))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.03-SORING-VIA-INSERT.03"
 >;; HYPERON-METTALOG-SANITY.03-SORING-VIA-INSERT.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000474 secs. (473.78 microseconds) 
+; took 0.000484 secs. (483.84 microseconds) 
 
 !(assertEqual (Cons 1 Nil) (Cons 1 Nil))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Cons 1 Nil)) ((Cons 1 Nil))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (insert 1 Nil) (Cons 1 Nil))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.03-SORING-VIA-INSERT.04"
 >;; HYPERON-METTALOG-SANITY.03-SORING-VIA-INSERT.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000751 secs. (751.17 microseconds) 
+; took 0.000747 secs. (746.71 microseconds) 
 
 !(assertEqual (insert 1 Nil) (Cons 1 Nil))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Cons 1 Nil)) ((Cons 1 Nil))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (insert 1 (insert 2 Nil)) (Cons 1 (Cons 2 Nil)))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.03-SORING-VIA-INSERT.05"
 >;; HYPERON-METTALOG-SANITY.03-SORING-VIA-INSERT.05</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.11 milliseconds) 
+; took 0.002 secs. (2.16 milliseconds) 
 
 !(assertEqual (insert 1 (insert 2 Nil)) (Cons 1 (Cons 2 Nil)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Cons 1 (Cons 2 Nil))) ((Cons 1 (Cons 2 Nil)))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (insert 3 (insert 2 (insert 1 Nil))) (Cons 1 (Cons 2 (Cons 3 Nil))))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.03-SORING-VIA-INSERT.06"
 >;; HYPERON-METTALOG-SANITY.03-SORING-VIA-INSERT.06</h3>
 ; 
 ; EVAL TEST
-; took 0.007 secs. (6.59 milliseconds) 
+; took 0.007 secs. (6.79 milliseconds) 
 
 !(assertEqual (insert 3 (insert 2 (insert 1 Nil))) (Cons 1 (Cons 2 (Cons 3 Nil))))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Cons 1 (Cons 2 (Cons 3 Nil)))) ((Cons 1 (Cons 2 (Cons 3 Nil))))))
 </span>
-Deterministic: ()()]
-<span class="ansi32"
->% 380,671 inferences, 0.087 CPU in 0.087 seconds (100% CPU, 4376034 Lips)
+Deterministic: ()<span class="ansi32"
+>
+% 380,647 inferences, 0.089 CPU in 0.089 seconds (100% CPU, 4291852 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/03-soring-via-insert.metta  0)
 <span class="ansi1"
@@ -632,7 +625,7 @@ Deterministic: ()()]
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 18:58:19+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 19:43:23+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

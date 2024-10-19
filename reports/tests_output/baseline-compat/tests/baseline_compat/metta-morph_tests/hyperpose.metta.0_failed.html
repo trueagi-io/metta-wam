@@ -36,7 +36,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 19:04:37+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 19:49:43+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -370,161 +370,151 @@ Script started on 2024-10-19 19:04:37+00:00 [TERM="xterm-256color" TTY="/dev/pts
 </span><span class="ansi38-013099040"
 >!(assertEqual (hyperpose (1 2)) (superpose (1 2)))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.HYPERPOSE.01"
 >;; METTA-MORPH-TESTS.HYPERPOSE.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000268 secs. (268.36 microseconds) 
+; took 0.000302 secs. (302.24 microseconds) 
 
 !(assertEqual (hyperpose (1 2)) (superpose (1 2)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (1 2) (1 2)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (hyperpose (1 (If (== 1 2) 1))) (superpose (1 (If (== 1 2) 1))))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.HYPERPOSE.02"
 >;; METTA-MORPH-TESTS.HYPERPOSE.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000586 secs. (586.47 microseconds) 
+; took 0.000587 secs. (587.00 microseconds) 
 
 !(assertEqual (hyperpose (1 (If (== 1 2) 1))) (superpose (1 (If (== 1 2) 1))))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (1) (1)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (hyperpose ((If (== 1 2) 1) 1)) (superpose ((If (== 1 2) 1) 1)))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.HYPERPOSE.03"
 >;; METTA-MORPH-TESTS.HYPERPOSE.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000585 secs. (584.67 microseconds) 
+; took 0.000507 secs. (506.52 microseconds) 
 
 !(assertEqual (hyperpose ((If (== 1 2) 1) 1)) (superpose ((If (== 1 2) 1) 1)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (1) (1)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (hyperpose (1 2 3)) (superpose (1 2 3)))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.HYPERPOSE.04"
 >;; METTA-MORPH-TESTS.HYPERPOSE.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000328 secs. (328.20 microseconds) 
+; took 0.000333 secs. (332.51 microseconds) 
 
 !(assertEqual (hyperpose (1 2 3)) (superpose (1 2 3)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (1 2 3) (1 2 3)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (hyperpose ((If (== 1 2) 1) 2 3)) (superpose ((If (== 1 2) 1) 2 3)))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.HYPERPOSE.05"
 >;; METTA-MORPH-TESTS.HYPERPOSE.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000601 secs. (600.75 microseconds) 
+; took 0.000608 secs. (608.04 microseconds) 
 
 !(assertEqual (hyperpose ((If (== 1 2) 1) 2 3)) (superpose ((If (== 1 2) 1) 2 3)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (2 3) (2 3)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (hyperpose (1 (If (== 1 2) 1) 3)) (superpose (1 (If (== 1 2) 1) 3)))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.HYPERPOSE.06"
 >;; METTA-MORPH-TESTS.HYPERPOSE.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000519 secs. (519.02 microseconds) 
+; took 0.000694 secs. (693.88 microseconds) 
 
 !(assertEqual (hyperpose (1 (If (== 1 2) 1) 3)) (superpose (1 (If (== 1 2) 1) 3)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (1 3) (1 3)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (hyperpose (1 2 (If (== 1 2) 1))) (superpose (1 2 (If (== 1 2) 1))))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.HYPERPOSE.07"
 >;; METTA-MORPH-TESTS.HYPERPOSE.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000527 secs. (526.68 microseconds) 
+; took 0.000531 secs. (530.90 microseconds) 
 
 !(assertEqual (hyperpose (1 2 (If (== 1 2) 1))) (superpose (1 2 (If (== 1 2) 1))))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (1 2) (1 2)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (hyperpose (1 (If (== 1 2) 1) (If (== 1 2) 1))) (superpose (1 (If (== 1 2) 1) (If (== 1 2) 1))))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.HYPERPOSE.08"
 >;; METTA-MORPH-TESTS.HYPERPOSE.08</h3>
 ; 
 ; EVAL TEST
-; took 0.000764 secs. (764.09 microseconds) 
+; took 0.000792 secs. (791.61 microseconds) 
 
 !(assertEqual (hyperpose (1 (If (== 1 2) 1) (If (== 1 2) 1))) (superpose (1 (If (== 1 2) 1) (If (== 1 2) 1))))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (1) (1)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (hyperpose (1 2 3 4)) (superpose (1 2 3 4)))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.HYPERPOSE.09"
 >;; METTA-MORPH-TESTS.HYPERPOSE.09</h3>
 ; 
 ; EVAL TEST
-; took 0.000276 secs. (276.12 microseconds) 
+; took 0.000291 secs. (290.55 microseconds) 
 
 !(assertEqual (hyperpose (1 2 3 4)) (superpose (1 2 3 4)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (1 2 3 4) (1 2 3 4)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (hyperpose ((1 2) (3 4))) (superpose ((1 2) (3 4))))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.HYPERPOSE.10"
 >;; METTA-MORPH-TESTS.HYPERPOSE.10</h3>
 ; 
@@ -536,9 +526,9 @@ Deterministic: ()()]
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((1 2) (3 4)) ((1 2) (3 4))))
 </span>
-Deterministic: ()()]
-<span class="ansi32"
->% 326,067 inferences, 0.075 CPU in 0.075 seconds (100% CPU, 4348827 Lips)
+Deterministic: ()<span class="ansi32"
+>
+% 325,387 inferences, 0.074 CPU in 0.074 seconds (100% CPU, 4410569 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/hyperpose.metta  0)
 <span class="ansi1"
@@ -687,7 +677,7 @@ Deterministic: ()()]
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 19:04:43+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 19:49:49+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

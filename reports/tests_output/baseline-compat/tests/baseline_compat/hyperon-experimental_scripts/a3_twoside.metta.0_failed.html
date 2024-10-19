@@ -29,7 +29,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 18:55:21+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 19:40:24+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -366,37 +366,35 @@ Script started on 2024-10-19 18:55:21+00:00 [TERM="xterm-256color" TTY="/dev/pts
 <span class="ansi38-013099040"
 >!(assertEqualToResult (match &self (implies (Frog Sam) $what) $what) ((Green Sam) (Eats-flies Sam)))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.A3-TWOSIDE.01"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A3-TWOSIDE.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000747 secs. (746.58 microseconds) 
+; took 0.000633 secs. (633.45 microseconds) 
 
 !(assertEqualToResult (match &self (implies (Frog Sam) $what) $what) ((Green Sam) (Eats-flies Sam)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Green Sam) (Eats-flies Sam)) ((Green Sam) (Eats-flies Sam))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqualToResult (match &self (implies ($P $x) (Green Sam)) ($x might be $P)) ((Sam might be Frog)))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.A3-TWOSIDE.02"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A3-TWOSIDE.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000466 secs. (465.72 microseconds) 
+; took 0.000469 secs. (469.11 microseconds) 
 
 !(assertEqualToResult (match &self (implies ($P $x) (Green Sam)) ($x might be $P)) ((Sam might be Frog)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Sam might be Frog)) ((Sam might be Frog))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Composite queries
@@ -411,20 +409,19 @@ Deterministic: ()()]
 </span><span class="ansi38-013099040"
 >!(assertEqualToResult (match &self (, (Frog $x) (implies (Frog $x) $y)) $y) ((Green Sam) (Eats-flies Sam)))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.A3-TWOSIDE.03"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A3-TWOSIDE.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000641 secs. (641.28 microseconds) 
+; took 0.000570 secs. (569.93 microseconds) 
 
 !(assertEqualToResult (match &self (, (Frog $x) (implies (Frog $x) $y)) $y) ((Green Sam) (Eats-flies Sam)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Green Sam) (Eats-flies Sam)) ((Green Sam) (Eats-flies Sam))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Variables in queries can remain unbound
@@ -432,22 +429,21 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (match &self (, (implies ($P $x) (Green $x)) (implies ($P $x) (Eats-flies $x))) (Then it is definitely $P)) ((Then it is definitely Frog)))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.A3-TWOSIDE.04"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A3-TWOSIDE.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000500 secs. (500.38 microseconds) 
+; took 0.000402 secs. (402.49 microseconds) 
 
 !(assertEqualToResult (match &self (, (implies ($P $x) (Green $x)) (implies ($P $x) (Eats-flies $x))) (Then it is definitely $P)) ((Then it is definitely Frog)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Then it is definitely Frog)) ((Then it is definitely Frog))))
 </span>
-Deterministic: ()()]
-<span class="ansi32"
->% 215,358 inferences, 0.059 CPU in 0.059 seconds (100% CPU, 3636590 Lips)
+Deterministic: ()<span class="ansi32"
+>
+% 215,278 inferences, 0.058 CPU in 0.058 seconds (100% CPU, 3714390 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/a3_twoside.metta  0)
 <span class="ansi1"
@@ -590,7 +586,7 @@ Deterministic: ()()]
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 18:55:27+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 19:40:30+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

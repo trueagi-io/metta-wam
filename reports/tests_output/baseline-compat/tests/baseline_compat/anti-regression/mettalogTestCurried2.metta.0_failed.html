@@ -76,7 +76,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 18:53:26+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 19:38:29+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -454,10 +454,8 @@ Script started on 2024-10-19 18:53:26+00:00 [TERM="xterm-256color" TTY="/dev/pts
 </span><span class="ansi38-013099040"
 >!(bind! &kb (new-space))
 
-</span>[
-
-Deterministic: ()()]
-<span class="ansi38-255165000"
+</span>
+Deterministic: ()<span class="ansi38-255165000"
 > (: -> (-> Atom Atom Type))
 </span>;;;; KB
 <span class="ansi38-255165009"
@@ -468,22 +466,21 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (let $sptrn (: SP (specializationOf (Inheritance B (VarIdx (S Z))) (Inheritance (VarIdx Z) (VarIdx (S Z))))) (add-atom &kb $sptrn)) (()))
 
-</span>[
-
+</span>
 ;<h3 id="ANTI-REGRESSION.METTALOGTESTCURRIED2.01"
 >;; ANTI-REGRESSION.METTALOGTESTCURRIED2.01</h3>
 <span class="ansi38-255165000"
 > (: SP (specializationOf (Inheritance B (VarIdx (S Z))) (Inheritance (VarIdx Z) (VarIdx (S Z)))))
 </span>; 
 ; EVAL TEST
-; took 0.004 secs. (3.69 milliseconds) 
+; took 0.004 secs. (3.67 milliseconds) 
 
 !(assertEqualToResult (let $sptrn (: SP (specializationOf (Inheritance B (VarIdx (S Z))) (Inheritance (VarIdx Z) (VarIdx (S Z))))) (add-atom &kb $sptrn)) (()))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (()) (())))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;; apriori-rule
 <span class="ansi38-255165009"
 >;; In file as:  
@@ -493,31 +490,28 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (add-atom &kb (: apriori-rule (-> (minsup $aptrn) (-> (specializationOf $sptrn $aptrn) (supportOf $sptrn (countNat $sptrn)))))) (()))
 
-</span>[
-
+</span>
 ;<h3 id="ANTI-REGRESSION.METTALOGTESTCURRIED2.02"
 >;; ANTI-REGRESSION.METTALOGTESTCURRIED2.02</h3>
 <span class="ansi38-255165000"
-> (: apriori-rule (-> (minsup $_74306) (-> (specializationOf $_74360 $_74306) (supportOf $_74360 (countNat $_74360)))))
+> (: apriori-rule (-> (minsup $_74294) (-> (specializationOf $_74348 $_74294) (supportOf $_74348 (countNat $_74348)))))
 </span>; 
 ; EVAL TEST
-; took 0.007 secs. (6.52 milliseconds) 
+; took 0.007 secs. (6.59 milliseconds) 
 
 !(assertEqualToResult (add-atom &kb (: apriori-rule (-> (minsup $aptrn) (-> (specializationOf $sptrn $aptrn) (supportOf $sptrn (countNat $sptrn)))))) (()))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (()) (())))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;; Test
 ;;; !(import! &db ../data/sample.metta)
 <span class="ansi38-013099040"
 >!(bind! &db (new-space))
 
-</span>[
-
-Deterministic: ()()]
-<span class="ansi38-255165009"
+</span>
+Deterministic: ()<span class="ansi38-255165009"
 >;; In file as:  
 </span><span class="ansi1 ansi38-255238088"
 >!(add-atom &db (Inheritance B A))
@@ -525,23 +519,21 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (add-atom &db (Inheritance B A)) (()))
 
-</span>[
-
+</span>
 ;<h3 id="ANTI-REGRESSION.METTALOGTESTCURRIED2.03"
 >;; ANTI-REGRESSION.METTALOGTESTCURRIED2.03</h3>
 <span class="ansi38-255165000"
 > (Inheritance B A)
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.78 milliseconds) 
+; took 0.002 secs. (1.81 milliseconds) 
 
 !(assertEqualToResult (add-atom &db (Inheritance B A)) (()))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (()) (())))
 </span>
-Deterministic: ()()]
-<span class="ansi38-255165009"
+Deterministic: ()<span class="ansi38-255165009"
 >;; In file as:  
 </span><span class="ansi1 ansi38-255238088"
 >!(add-atom &db (Inheritance C A))
@@ -549,23 +541,21 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (add-atom &db (Inheritance C A)) (()))
 
-</span>[
-
+</span>
 ;<h3 id="ANTI-REGRESSION.METTALOGTESTCURRIED2.04"
 >;; ANTI-REGRESSION.METTALOGTESTCURRIED2.04</h3>
 <span class="ansi38-255165000"
 > (Inheritance C A)
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.79 milliseconds) 
+; took 0.002 secs. (1.77 milliseconds) 
 
 !(assertEqualToResult (add-atom &db (Inheritance C A)) (()))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (()) (())))
 </span>
-Deterministic: ()()]
-<span class="ansi38-255165009"
+Deterministic: ()<span class="ansi38-255165009"
 >;; In file as:  
 </span><span class="ansi1 ansi38-255238088"
 >!(add-atom &db (Inheritance D E))
@@ -573,23 +563,21 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (add-atom &db (Inheritance D E)) (()))
 
-</span>[
-
+</span>
 ;<h3 id="ANTI-REGRESSION.METTALOGTESTCURRIED2.05"
 >;; ANTI-REGRESSION.METTALOGTESTCURRIED2.05</h3>
 <span class="ansi38-255165000"
 > (Inheritance D E)
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.85 milliseconds) 
+; took 0.002 secs. (1.80 milliseconds) 
 
 !(assertEqualToResult (add-atom &db (Inheritance D E)) (()))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (()) (())))
 </span>
-Deterministic: ()()]
-<span class="ansi38-255165009"
+Deterministic: ()<span class="ansi38-255165009"
 >;; In file as:  
 </span><span class="ansi1 ansi38-255238088"
 >!(add-atom &db (Inheritance C E))
@@ -597,22 +585,21 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (add-atom &db (Inheritance C E)) (()))
 
-</span>[
-
+</span>
 ;<h3 id="ANTI-REGRESSION.METTALOGTESTCURRIED2.06"
 >;; ANTI-REGRESSION.METTALOGTESTCURRIED2.06</h3>
 <span class="ansi38-255165000"
 > (Inheritance C E)
 </span>; 
 ; EVAL TEST
-; took 0.001 secs. (1.31 milliseconds) 
+; took 0.001 secs. (1.27 milliseconds) 
 
 !(assertEqualToResult (add-atom &db (Inheritance C E)) (()))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (()) (())))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; DTL Backward chaining Curried ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -649,22 +636,21 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (let (: $prf $concl) (let* (($aptrn (Inheritance (VarIdx Z) (VarIdx (S Z)))) ($atom (: MP (minsup $aptrn))) ($depth (fromNumber 2))) (fc $atom $depth)) (: PROOFTrace $concl)) ((: PROOFTrace (minsup (Inheritance (VarIdx Z) (VarIdx (S Z))))) (: PROOFTrace (-> (specializationOf $sptrn#463 (Inheritance (VarIdx Z) (VarIdx (S Z)))) (supportOf $sptrn#463 (countNat $sptrn#463)))) (: PROOFTrace (supportOf (Inheritance B (VarIdx (S Z))) (S Z)))))
 
-</span>[
-
+</span>
 ;<h3 id="ANTI-REGRESSION.METTALOGTESTCURRIED2.07"
 >;; ANTI-REGRESSION.METTALOGTESTCURRIED2.07</h3>
 ; 
 ; EVAL TEST
-; took 0.051 secs. (50.68 milliseconds) 
+; took 0.049 secs. (49.25 milliseconds) 
 
 !(assertEqualToResult (let (: $prf $concl) (let* (($aptrn (Inheritance (VarIdx Z) (VarIdx (S Z)))) ($atom (: MP (minsup $aptrn))) ($depth (fromNumber 2))) (fc $atom $depth)) (: PROOFTrace $concl)) ((: PROOFTrace (minsup (Inheritance (VarIdx Z) (VarIdx (S Z))))) (: PROOFTrace (-> (specializationOf $sptrn#463 (Inheritance (VarIdx Z) (VarIdx (S Z)))) (supportOf $sptrn#463 (countNat $sptrn#463)))) (: PROOFTrace (supportOf (Inheritance B (VarIdx (S Z))) (S Z)))))
 
 <span class="ansi36"
->(loonit_success  (equal_enough_for_test  ((: PROOFTrace (minsup (Inheritance (VarIdx Z) (VarIdx (S Z))))) (: PROOFTrace (-> (specializationOf $_950536 (Inheritance (VarIdx Z) (VarIdx (S Z)))) (supportOf $_950536 (countNat $_950536)))) (: PROOFTrace (supportOf (Inheritance B (VarIdx (S Z))) (S Z)))) ((: PROOFTrace (minsup (Inheritance (VarIdx Z) (VarIdx (S Z))))) (: PROOFTrace (-> (specializationOf $_287300 (Inheritance (VarIdx Z) (VarIdx (S Z)))) (supportOf $_287300 (countNat $_287300)))) (: PROOFTrace (supportOf (Inheritance B (VarIdx (S Z))) (S Z))))))
+>(loonit_success  (equal_enough_for_test  ((: PROOFTrace (minsup (Inheritance (VarIdx Z) (VarIdx (S Z))))) (: PROOFTrace (-> (specializationOf $_950486 (Inheritance (VarIdx Z) (VarIdx (S Z)))) (supportOf $_950486 (countNat $_950486)))) (: PROOFTrace (supportOf (Inheritance B (VarIdx (S Z))) (S Z)))) ((: PROOFTrace (minsup (Inheritance (VarIdx Z) (VarIdx (S Z))))) (: PROOFTrace (-> (specializationOf $_287252 (Inheritance (VarIdx Z) (VarIdx (S Z)))) (supportOf $_287252 (countNat $_287252)))) (: PROOFTrace (supportOf (Inheritance B (VarIdx (S Z))) (S Z))))))
 </span>
-Deterministic: ()()]
-<span class="ansi32"
->% 942,499 inferences, 0.204 CPU in 0.204 seconds (100% CPU, 4628574 Lips)
+Deterministic: ()<span class="ansi32"
+>
+% 942,319 inferences, 0.201 CPU in 0.201 seconds (100% CPU, 4695518 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/mettalogTestCurried2.metta  0)
 <span class="ansi1"
@@ -812,7 +798,7 @@ Deterministic: ()()]
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 18:53:32+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 19:38:35+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

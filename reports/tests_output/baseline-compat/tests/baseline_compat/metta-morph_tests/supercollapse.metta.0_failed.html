@@ -50,7 +50,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 19:06:35+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 19:51:41+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -394,21 +394,19 @@ Script started on 2024-10-19 19:06:35+00:00 [TERM="xterm-256color" TTY="/dev/pts
 <span class="ansi38-013099040"
 >!(assertEqualToResult (TupleConcat (a b c) (e f g)) ((a b c e f g)))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.SUPERCOLLAPSE.01"
 >;; METTA-MORPH-TESTS.SUPERCOLLAPSE.01</h3>
 ; 
 ; EVAL TEST
-; took 0.003 secs. (2.51 milliseconds) 
+; took 0.003 secs. (2.55 milliseconds) 
 
 !(assertEqualToResult (TupleConcat (a b c) (e f g)) ((a b c e f g)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((a b c e f g)) ((a b c e f g))))
 </span>
-Deterministic: ()()]
-<span class="ansi38-255165009"
+Deterministic: ()<span class="ansi38-255165009"
 >;; In file as:  
 </span><span class="ansi1 ansi38-255238088"
 >!(TupleConcat () (e f g))
@@ -416,21 +414,19 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (TupleConcat () (e f g)) ((e f g)))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.SUPERCOLLAPSE.02"
 >;; METTA-MORPH-TESTS.SUPERCOLLAPSE.02</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.64 milliseconds) 
+; took 0.002 secs. (1.69 milliseconds) 
 
 !(assertEqualToResult (TupleConcat () (e f g)) ((e f g)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((e f g)) ((e f g))))
 </span>
-Deterministic: ()()]
-<span class="ansi38-255165009"
+Deterministic: ()<span class="ansi38-255165009"
 >;; In file as:  
 </span><span class="ansi1 ansi38-255238088"
 >!(TupleConcat (a b c) ())
@@ -438,21 +434,19 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (TupleConcat (a b c) ()) ((a b c)))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.SUPERCOLLAPSE.03"
 >;; METTA-MORPH-TESTS.SUPERCOLLAPSE.03</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.75 milliseconds) 
+; took 0.002 secs. (1.84 milliseconds) 
 
 !(assertEqualToResult (TupleConcat (a b c) ()) ((a b c)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((a b c)) ((a b c))))
 </span>
-Deterministic: ()()]
-<span class="ansi38-255165000"
+Deterministic: ()<span class="ansi38-255165000"
 > (= (range $K $N) (If (< $K $N) (TupleConcat ($K) (range (+ $K 1) $N)) ()))
 </span><span class="ansi38-255165009"
 >;; In file as:  
@@ -462,21 +456,19 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (TupleConcat (a b c) (range 1 1)) ((a b c)))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.SUPERCOLLAPSE.04"
 >;; METTA-MORPH-TESTS.SUPERCOLLAPSE.04</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.11 milliseconds) 
+; took 0.002 secs. (2.21 milliseconds) 
 
 !(assertEqualToResult (TupleConcat (a b c) (range 1 1)) ((a b c)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((a b c)) ((a b c))))
 </span>
-Deterministic: ()()]
-<span class="ansi38-255165000"
+Deterministic: ()<span class="ansi38-255165000"
 > (unused (pragma! trace-on-exec False) (pragma! trace-on-eval False) (pragma! trace-length 1090) (pragma! stack-max 100))
 </span><span class="ansi38-255165009"
 >;; In file as:  
@@ -486,21 +478,19 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (range 1 1) (()))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.SUPERCOLLAPSE.05"
 >;; METTA-MORPH-TESTS.SUPERCOLLAPSE.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000474 secs. (473.99 microseconds) 
+; took 0.000532 secs. (532.30 microseconds) 
 
 !(assertEqualToResult (range 1 1) (()))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (()) (())))
 </span>
-Deterministic: ()()]
-<span class="ansi38-255165009"
+Deterministic: ()<span class="ansi38-255165009"
 >;; In file as:  
 </span><span class="ansi1 ansi38-255238088"
 >!(range 1 3)
@@ -508,21 +498,19 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (range 1 3) ((1 2)))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.SUPERCOLLAPSE.06"
 >;; METTA-MORPH-TESTS.SUPERCOLLAPSE.06</h3>
 ; 
 ; EVAL TEST
-; took 0.004 secs. (3.51 milliseconds) 
+; took 0.004 secs. (3.68 milliseconds) 
 
 !(assertEqualToResult (range 1 3) ((1 2)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((1 2)) ((1 2))))
 </span>
-Deterministic: ()()]
-<span class="ansi38-255165009"
+Deterministic: ()<span class="ansi38-255165009"
 >;; In file as:  
 </span><span class="ansi1 ansi38-255238088"
 >!(range 2 6)
@@ -530,21 +518,19 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (range 2 6) ((2 3 4 5)))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.SUPERCOLLAPSE.07"
 >;; METTA-MORPH-TESTS.SUPERCOLLAPSE.07</h3>
 ; 
 ; EVAL TEST
-; took 0.007 secs. (7.30 milliseconds) 
+; took 0.008 secs. (7.53 milliseconds) 
 
 !(assertEqualToResult (range 2 6) ((2 3 4 5)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((2 3 4 5)) ((2 3 4 5))))
 </span>
-Deterministic: ()()]
-<span class="ansi38-255165009"
+Deterministic: ()<span class="ansi38-255165009"
 >;; In file as:  
 </span><span class="ansi1 ansi38-255238088"
 >!(range 1 10)
@@ -552,22 +538,21 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (range 1 10) ((1 2 3 4 5 6 7 8 9)))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.SUPERCOLLAPSE.08"
 >;; METTA-MORPH-TESTS.SUPERCOLLAPSE.08</h3>
 ; 
 ; EVAL TEST
-; took 0.017 secs. (16.92 milliseconds) 
+; took 0.017 secs. (17.44 milliseconds) 
 
 !(assertEqualToResult (range 1 10) ((1 2 3 4 5 6 7 8 9)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((1 2 3 4 5 6 7 8 9)) ((1 2 3 4 5 6 7 8 9))))
 </span>
-Deterministic: ()()]
-<span class="ansi32"
->% 555,195 inferences, 0.113 CPU in 0.113 seconds (100% CPU, 4911977 Lips)
+Deterministic: ()<span class="ansi32"
+>
+% 554,171 inferences, 0.112 CPU in 0.112 seconds (100% CPU, 4933400 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/supercollapse.metta  0)
 <span class="ansi1"
@@ -714,7 +699,7 @@ Deterministic: ()()]
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 19:06:41+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 19:51:47+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

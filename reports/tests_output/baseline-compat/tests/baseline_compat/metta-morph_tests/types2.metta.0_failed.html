@@ -42,7 +42,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 19:06:57+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 19:52:03+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -385,21 +385,19 @@ Script started on 2024-10-19 19:06:57+00:00 [TERM="xterm-256color" TTY="/dev/pts
 <span class="ansi38-013099040"
 >!(assertEqualToResult (get-type lion1) (Lion))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.TYPES2.01"
 >;; METTA-MORPH-TESTS.TYPES2.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000193 secs. (193.38 microseconds) 
+; took 0.000199 secs. (198.91 microseconds) 
 
 !(assertEqualToResult (get-type lion1) (Lion))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (Lion) (Lion)))
 </span>
-Deterministic: ()()]
-<span class="ansi38-255165009"
+Deterministic: ()<span class="ansi38-255165009"
 >;; In file as:  
 </span><span class="ansi1 ansi38-255238088"
 >!(reproduce lion1 lion2)
@@ -407,21 +405,19 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (reproduce lion1 lion2) (childlion))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.TYPES2.02"
 >;; METTA-MORPH-TESTS.TYPES2.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000354 secs. (353.90 microseconds) 
+; took 0.000416 secs. (415.93 microseconds) 
 
 !(assertEqualToResult (reproduce lion1 lion2) (childlion))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (childlion) (childlion)))
 </span>
-Deterministic: ()()]
-<span class="ansi38-255165009"
+Deterministic: ()<span class="ansi38-255165009"
 >;; In file as:  
 </span><span class="ansi1 ansi38-255238088"
 >!(get-type Lion)
@@ -429,21 +425,19 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (get-type Lion) (Cat))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.TYPES2.03"
 >;; METTA-MORPH-TESTS.TYPES2.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000188 secs. (188.46 microseconds) 
+; took 0.000175 secs. (175.00 microseconds) 
 
 !(assertEqualToResult (get-type Lion) (Cat))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (Cat) (Cat)))
 </span>
-Deterministic: ()()]
-<span class="ansi38-255165009"
+Deterministic: ()<span class="ansi38-255165009"
 >;; In file as:  
 </span><span class="ansi1 ansi38-255238088"
 >!(match &self (: Lion $1) $1)
@@ -451,21 +445,19 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (match &self (: Lion $1) $1) (Cat))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.TYPES2.04"
 >;; METTA-MORPH-TESTS.TYPES2.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000222 secs. (222.08 microseconds) 
+; took 0.000209 secs. (208.63 microseconds) 
 
 !(assertEqualToResult (match &self (: Lion $1) $1) (Cat))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (Cat) (Cat)))
 </span>
-Deterministic: ()()]
-<span class="ansi38-255165009"
+Deterministic: ()<span class="ansi38-255165009"
 >;; In file as:  
 </span><span class="ansi1 ansi38-255238088"
 >!(match &self (: reproduce $1) $1)
@@ -473,22 +465,21 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (match &self (: reproduce $1) $1) ((-> Lion Lion Lion)))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.TYPES2.05"
 >;; METTA-MORPH-TESTS.TYPES2.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000204 secs. (204.14 microseconds) 
+; took 0.000198 secs. (197.94 microseconds) 
 
 !(assertEqualToResult (match &self (: reproduce $1) $1) ((-> Lion Lion Lion)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((-> Lion Lion Lion)) ((-> Lion Lion Lion))))
 </span>
-Deterministic: ()()]
-<span class="ansi32"
->% 210,783 inferences, 0.066 CPU in 0.066 seconds (100% CPU, 3207105 Lips)
+Deterministic: ()<span class="ansi32"
+>
+% 210,523 inferences, 0.065 CPU in 0.065 seconds (100% CPU, 3218061 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/types2.metta  0)
 <span class="ansi1"
@@ -632,7 +623,7 @@ Deterministic: ()()]
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 19:07:03+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 19:52:09+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

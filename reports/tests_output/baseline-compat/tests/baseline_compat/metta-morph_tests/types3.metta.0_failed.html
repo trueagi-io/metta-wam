@@ -31,7 +31,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 19:07:04+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 19:52:10+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -368,22 +368,21 @@ Script started on 2024-10-19 19:07:04+00:00 [TERM="xterm-256color" TTY="/dev/pts
 <span class="ansi38-013099040"
 >!(assertEqualToResult (match &self (GreaterThan $x $y) (If (and (== (get-type $x) Number) (== (get-type $y) Number)) (If (EqualOrGreater $x $y) yay))) (yay))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.TYPES3.01"
 >;; METTA-MORPH-TESTS.TYPES3.01</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.99 milliseconds) 
+; took 0.002 secs. (2.25 milliseconds) 
 
 !(assertEqualToResult (match &self (GreaterThan $x $y) (If (and (== (get-type $x) Number) (== (get-type $y) Number)) (If (EqualOrGreater $x $y) yay))) (yay))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (yay) (yay)))
 </span>
-Deterministic: ()()]
-<span class="ansi32"
->% 149,557 inferences, 0.046 CPU in 0.046 seconds (100% CPU, 3234246 Lips)
+Deterministic: ()<span class="ansi32"
+>
+% 149,549 inferences, 0.047 CPU in 0.047 seconds (100% CPU, 3179454 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/types3.metta  0)
 <span class="ansi1"
@@ -523,7 +522,7 @@ Deterministic: ()()]
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 19:07:10+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 19:52:16+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

@@ -40,7 +40,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 18:55:07+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 19:40:10+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -389,20 +389,19 @@ Script started on 2024-10-19 18:55:07+00:00 [TERM="xterm-256color" TTY="/dev/pts
 <span class="ansi38-013099040"
 >!(assertEqualToResult (match &self (($x leaf2) leaf3) $x) (leaf1 (leaf0 leaf1)))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.A1-SYMBOLS.01"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A1-SYMBOLS.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000467 secs. (466.96 microseconds) 
+; took 0.000568 secs. (567.82 microseconds) 
 
 !(assertEqualToResult (match &self (($x leaf2) leaf3) $x) (leaf1 (leaf0 leaf1)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (leaf1 (leaf0 leaf1)) (leaf1 (leaf0 leaf1))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Symbols can be arranged in arbitrary expressions
@@ -417,20 +416,19 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (match &self ($who is a $what) ($who the $what)) ((Sam the frog) (Tom the cat) (Sophia the robot)))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.A1-SYMBOLS.02"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A1-SYMBOLS.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000751 secs. (751.36 microseconds) 
+; took 0.000865 secs. (864.94 microseconds) 
 
 !(assertEqualToResult (match &self ($who is a $what) ($who the $what)) ((Sam the frog) (Tom the cat) (Sophia the robot)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Sam the frog) (Tom the cat) (Sophia the robot)) ((Sam the frog) (Tom the cat) (Sophia the robot))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; More examples of pattern matching
@@ -445,72 +443,68 @@ Deterministic: ()()]
 </span><span class="ansi38-013099040"
 >!(assertEqualToResult (match &self (:= (Green $who) T) ($who is really green)) ((Sam is really green)))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.A1-SYMBOLS.03"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A1-SYMBOLS.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000371 secs. (370.78 microseconds) 
+; took 0.000473 secs. (473.42 microseconds) 
 
 !(assertEqualToResult (match &self (:= (Green $who) T) ($who is really green)) ((Sam is really green)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Sam is really green)) ((Sam is really green))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqualToResult (match &self (:= ($color $who) T) ($who is really $color)) ((Sam is really Green) (Tom is really White)))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.A1-SYMBOLS.04"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A1-SYMBOLS.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000584 secs. (584.40 microseconds) 
+; took 0.000689 secs. (688.78 microseconds) 
 
 !(assertEqualToResult (match &self (:= ($color $who) T) ($who is really $color)) ((Sam is really Green) (Tom is really White)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Sam is really Green) (Tom is really White)) ((Sam is really Green) (Tom is really White))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqualToResult (match &self (:= ($color $who) $tv) ('It's' $tv that $who is $color)) (('It's' T that Sam is Green) ('It's' T that Tom is White) ('It's' F that Tom is Green)))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.A1-SYMBOLS.05"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A1-SYMBOLS.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000914 secs. (913.93 microseconds) 
+; took 0.000922 secs. (922.20 microseconds) 
 
 !(assertEqualToResult (match &self (:= ($color $who) $tv) ('It's' $tv that $who is $color)) (('It's' T that Sam is Green) ('It's' T that Tom is White) ('It's' F that Tom is Green)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (('It's' T that Sam is Green) ('It's' T that Tom is White) ('It's' F that Tom is Green)) (('It's' T that Sam is Green) ('It's' T that Tom is White) ('It's' F that Tom is Green))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;; This type of query works as a sort of evaluation/reduction
 <span class="ansi38-013099040"
 >!(assertEqualToResult (match &self (:= (Green Tom) $tv) $tv) (F))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.A1-SYMBOLS.06"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A1-SYMBOLS.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000175 secs. (175.35 microseconds) 
+; took 0.000192 secs. (191.52 microseconds) 
 
 !(assertEqualToResult (match &self (:= (Green Tom) $tv) $tv) (F))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (F) (F)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; One more example
@@ -524,22 +518,21 @@ Deterministic: ()()]
 </span><span class="ansi38-013099040"
 >!(assertEqualToResult (match &self (isa $color color) $color) (red green blue))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.A1-SYMBOLS.07"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A1-SYMBOLS.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000212 secs. (212.28 microseconds) 
+; took 0.000198 secs. (197.73 microseconds) 
 
 !(assertEqualToResult (match &self (isa $color color) $color) (red green blue))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (red green blue) (red green blue)))
 </span>
-Deterministic: ()()]
-<span class="ansi32"
->% 324,427 inferences, 0.087 CPU in 0.087 seconds (100% CPU, 3709063 Lips)
+Deterministic: ()<span class="ansi32"
+>
+% 324,399 inferences, 0.088 CPU in 0.088 seconds (100% CPU, 3677161 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/a1_symbols.metta  0)
 <span class="ansi1"
@@ -685,7 +678,7 @@ Deterministic: ()()]
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 18:55:12+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 19:40:15+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

@@ -37,7 +37,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 18:57:23+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 19:42:26+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -381,35 +381,34 @@ Script started on 2024-10-19 18:57:23+00:00 [TERM="xterm-256color" TTY="/dev/pts
 </span><span class="ansi38-013099040"
 >!(new-goal-status! lunch-order inactive)
 
-</span>[<span class="ansi38-255165000"
-> (= (status (Goal lunch-order)) (State  inactive $_15692))
+</span><span class="ansi38-255165000"
+> (= (status (Goal lunch-order)) (State  inactive $_15690))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(new-goal-status! meditation inactive)
 
-</span>[<span class="ansi38-255165000"
-> (= (status (Goal meditation)) (State  inactive $_40600))
+</span><span class="ansi38-255165000"
+> (= (status (Goal meditation)) (State  inactive $_40592))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;; We can use `status` as a function to access corresponding state
 <span class="ansi38-013099040"
 >!(assertEqual (get-state (status (Goal lunch-order))) inactive)
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.E3-MATCH-STATES.01"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E3-MATCH-STATES.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000549 secs. (549.30 microseconds) 
+; took 0.000568 secs. (568.44 microseconds) 
 
 !(assertEqual (get-state (status (Goal lunch-order))) inactive)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (inactive) (inactive)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; `status` returns a `State`, which can be altered
@@ -423,20 +422,19 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (nop (change-state! (status (Goal lunch-order)) active)) (()))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.E3-MATCH-STATES.02"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E3-MATCH-STATES.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000598 secs. (597.93 microseconds) 
+; took 0.000639 secs. (638.77 microseconds) 
 
 !(assertEqualToResult (nop (change-state! (status (Goal lunch-order)) active)) (()))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (()) (())))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;; The result is now different. This might be surprising, since
 ;;; the content of Space is not changed. However, this is the whole
 ;;; intention behind states: the atom remains the same, and we don't
@@ -445,20 +443,19 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (get-state (status (Goal lunch-order))) active)
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.E3-MATCH-STATES.03"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E3-MATCH-STATES.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000530 secs. (529.73 microseconds) 
+; took 0.000538 secs. (537.92 microseconds) 
 
 !(assertEqual (get-state (status (Goal lunch-order))) active)
 
 <span class="ansi31"
 >(loonit_failureR  (equal_enough_for_test  (inactive) (active)))
 </span>
-Deterministic: ((Error  (got  (inactive)) (expected  (active))))((Error  (got  (inactive)) (expected  (active))))]
+Deterministic: ((Error  (got  (inactive)) (expected  (active))))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Introducing tokens for states is not recommended, because these states are mutable
@@ -466,10 +463,8 @@ Deterministic: ((Error  (got  (inactive)) (expected  (active))))((Error  (got  (
 <span class="ansi38-013099040"
 >!(bind! &state-active (new-state active))
 
-</span>[
-
-Deterministic: ()()]
-<span class="ansi38-255165009"
+</span>
+Deterministic: ()<span class="ansi38-255165009"
 >;; In file as:  
 </span><span class="ansi1 ansi38-255238088"
 >!(nop (change-state! &state-active inactive))
@@ -477,20 +472,19 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (nop (change-state! &state-active inactive)) (()))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.E3-MATCH-STATES.04"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E3-MATCH-STATES.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000282 secs. (281.52 microseconds) 
+; took 0.000286 secs. (285.72 microseconds) 
 
 !(assertEqualToResult (nop (change-state! &state-active inactive)) (()))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (()) (())))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;; We cannot put `(new-state active)` inside `match`, because it doesn't
 ;;; reduce the input pattern expression. Instead, we should use
 ;;; `(let $state-active (new-state active)) ...) here.
@@ -498,41 +492,39 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (match &self (= (status (Goal $goal)) &state-active) $goal) meditation)
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.E3-MATCH-STATES.05"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E3-MATCH-STATES.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000152 secs. (151.71 microseconds) 
+; took 0.000170 secs. (170.44 microseconds) 
 
 !(assertEqual (match &self (= (status (Goal $goal)) &state-active) $goal) meditation)
 
 <span class="ansi31"
 >(loonit_failureR  (equal_enough_for_test  () (meditation)))
 </span>
-Deterministic: ((Error  (got  ()) (expected  (meditation))))((Error  (got  ()) (expected  (meditation))))]
+Deterministic: ((Error  (got  ()) (expected  (meditation))))
 ;;; But we can also find all goal statuses, unwrap them from State,
 ;;; and compare to the desirable result
 <span class="ansi38-013099040"
 >!(assertEqual (if (== (get-state (status (Goal $goal))) active) $goal (superpose ())) lunch-order)
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.E3-MATCH-STATES.06"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E3-MATCH-STATES.06</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.31 milliseconds) 
+; took 0.001 secs. (1.34 milliseconds) 
 
 !(assertEqual (if (== (get-state (status (Goal $goal))) active) $goal (superpose ())) lunch-order)
 
 <span class="ansi31"
 >(loonit_failureR  (equal_enough_for_test  () (lunch-order)))
 </span>
-Deterministic: ((Error  (got  ()) (expected  (lunch-order))))((Error  (got  ()) (expected  (lunch-order))))]
-<span class="ansi32"
->% 313,941 inferences, 0.081 CPU in 0.081 seconds (100% CPU, 3856940 Lips)
+Deterministic: ((Error  (got  ()) (expected  (lunch-order))))<span class="ansi32"
+>
+% 313,869 inferences, 0.083 CPU in 0.083 seconds (100% CPU, 3767210 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/e3_match_states.metta  0)
 <span class="ansi1"
@@ -680,7 +672,7 @@ Deterministic: ((Error  (got  ()) (expected  (lunch-order))))((Error  (got  ()) 
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 18:57:28+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 19:42:32+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

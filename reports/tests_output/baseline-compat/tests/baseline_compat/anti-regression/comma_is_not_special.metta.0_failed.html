@@ -23,7 +23,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 18:51:59+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 19:37:01+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -345,22 +345,21 @@ Script started on 2024-10-19 18:51:59+00:00 [TERM="xterm-256color" TTY="/dev/pts
 </span><span class="ansi38-013099040"
 >!(assertEqualToResult (test-func2 world) ((, hello world)))
 
-</span>[
-
+</span>
 ;<h3 id="ANTI-REGRESSION.COMMA-IS-NOT-SPECIAL.01"
 >;; ANTI-REGRESSION.COMMA-IS-NOT-SPECIAL.01</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.11 milliseconds) 
+; took 0.001 secs. (1.03 milliseconds) 
 
 !(assertEqualToResult (test-func2 world) ((, hello world)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((, hello world)) ((, hello world))))
 </span>
-Deterministic: ()()]
-<span class="ansi32"
->% 114,043 inferences, 0.037 CPU in 0.037 seconds (100% CPU, 3049841 Lips)
+Deterministic: ()<span class="ansi32"
+>
+% 114,031 inferences, 0.037 CPU in 0.037 seconds (100% CPU, 3048269 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/comma_is_not_special.metta  0)
 <span class="ansi1"
@@ -500,7 +499,7 @@ Deterministic: ()()]
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 18:52:05+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 19:37:07+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

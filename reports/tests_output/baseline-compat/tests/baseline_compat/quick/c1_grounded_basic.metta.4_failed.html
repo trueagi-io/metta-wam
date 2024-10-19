@@ -52,7 +52,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 19:07:33+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 19:52:39+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -411,88 +411,83 @@ Script started on 2024-10-19 19:07:33+00:00 [TERM="xterm-256color" TTY="/dev/pts
 <span class="ansi38-013099040"
 >!(assertEqualToResult (+ 2 (* 3 5.5)) (18.5))
 
-</span>[
-
+</span>
 ;<h3 id="QUICK.C1-GROUNDED-BASIC.01"
 >;; QUICK.C1-GROUNDED-BASIC.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000241 secs. (241.06 microseconds) 
+; took 0.000222 secs. (222.40 microseconds) 
 
 !(assertEqualToResult (+ 2 (* 3 5.5)) (18.5))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (18.5) (18.5)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqualToResult (- 8 (/ 4 6.4)) (7.375))
 
-</span>[
-
+</span>
 ;<h3 id="QUICK.C1-GROUNDED-BASIC.02"
 >;; QUICK.C1-GROUNDED-BASIC.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000205 secs. (204.83 microseconds) 
+; took 0.000197 secs. (197.03 microseconds) 
 
 !(assertEqualToResult (- 8 (/ 4 6.4)) (7.375))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (7.375) (7.375)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqualToResult (% 21 17) (4))
 
-</span>[
-
+</span>
 ;<h3 id="QUICK.C1-GROUNDED-BASIC.03"
 >;; QUICK.C1-GROUNDED-BASIC.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000179 secs. (179.12 microseconds) 
+; took 0.000187 secs. (187.04 microseconds) 
 
 !(assertEqualToResult (% 21 17) (4))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (4) (4)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqualToResult (< 4 (+ 2 (* 3 5))) (True))
 
-</span>[
-
+</span>
 ;<h3 id="QUICK.C1-GROUNDED-BASIC.04"
 >;; QUICK.C1-GROUNDED-BASIC.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000746 secs. (745.86 microseconds) 
+; took 0.000778 secs. (777.53 microseconds) 
 
 !(assertEqualToResult (< 4 (+ 2 (* 3 5))) (True))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (True) (True)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqualToResult (and (> 4 2) (< 4 3)) (False))
 
-</span>[
-
+</span>
 ;<h3 id="QUICK.C1-GROUNDED-BASIC.05"
 >;; QUICK.C1-GROUNDED-BASIC.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000407 secs. (406.62 microseconds) 
+; took 0.000433 secs. (432.97 microseconds) 
 
 !(assertEqualToResult (and (> 4 2) (< 4 3)) (False))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (False) (False)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Currently, `ln` is not a grounded symbol.
@@ -503,20 +498,19 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (ln (+ 2 2)) ((ln 4)))
 
-</span>[
-
+</span>
 ;<h3 id="QUICK.C1-GROUNDED-BASIC.06"
 >;; QUICK.C1-GROUNDED-BASIC.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000954 secs. (953.57 microseconds) 
+; took 0.000953 secs. (952.74 microseconds) 
 
 !(assertEqualToResult (ln (+ 2 2)) ((ln 4)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((ln 4)) ((ln 4))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Similarly, passing ordinary symbols to grounded
@@ -526,20 +520,19 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (> 4 (+ ln 2)) ((> 4 (+ ln 2))))
 
-</span>[
-
+</span>
 ;<h3 id="QUICK.C1-GROUNDED-BASIC.07"
 >;; QUICK.C1-GROUNDED-BASIC.07</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.70 milliseconds) 
+; took 0.002 secs. (1.77 milliseconds) 
 
 !(assertEqualToResult (> 4 (+ ln 2)) ((> 4 (+ ln 2))))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((> 4 (+ ln 2))) ((> 4 (+ ln 2)))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; This will also remain unreduced unless
@@ -548,8 +541,7 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (> 4 (+ $x 2)) ((> 4 (+ $x 2))))
 
-</span>[
-
+</span>
 ;<h3 id="QUICK.C1-GROUNDED-BASIC.08"
 >;; QUICK.C1-GROUNDED-BASIC.08</h3>
 ; 
@@ -561,7 +553,7 @@ Deterministic: ()()]
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((> 4 (+ $_21734 2))) ((> 4 (+ $_4048 2)))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; `==` is now implemented to work with both grounded and
@@ -570,71 +562,67 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (== 4 (+ 2 2)) (True))
 
-</span>[
-
+</span>
 ;<h3 id="QUICK.C1-GROUNDED-BASIC.09"
 >;; QUICK.C1-GROUNDED-BASIC.09</h3>
 ; 
 ; EVAL TEST
-; took 0.000637 secs. (637.34 microseconds) 
+; took 0.000668 secs. (668.40 microseconds) 
 
 !(assertEqualToResult (== 4 (+ 2 2)) (True))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (True) (True)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqualToResult (== 2 3) (False))
 
-</span>[
-
+</span>
 ;<h3 id="QUICK.C1-GROUNDED-BASIC.10"
 >;; QUICK.C1-GROUNDED-BASIC.10</h3>
 ; 
 ; EVAL TEST
-; took 0.000176 secs. (176.01 microseconds) 
+; took 0.000188 secs. (187.53 microseconds) 
 
 !(assertEqualToResult (== 2 3) (False))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (False) (False)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqualToResult (== (A B) (A B)) (True))
 
-</span>[
-
+</span>
 ;<h3 id="QUICK.C1-GROUNDED-BASIC.11"
 >;; QUICK.C1-GROUNDED-BASIC.11</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.07 milliseconds) 
+; took 0.001 secs. (1.12 milliseconds) 
 
 !(assertEqualToResult (== (A B) (A B)) (True))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (True) (True)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqualToResult (== (A B) (A (B C))) (False))
 
-</span>[
-
+</span>
 ;<h3 id="QUICK.C1-GROUNDED-BASIC.12"
 >;; QUICK.C1-GROUNDED-BASIC.12</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.42 milliseconds) 
+; took 0.002 secs. (1.52 milliseconds) 
 
 !(assertEqualToResult (== (A B) (A (B C))) (False))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (False) (False)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Unlike `<` or `>`, `==` will not remain unreduced if one
@@ -643,20 +631,19 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (== 4 (+ ln 2)) (False))
 
-</span>[
-
+</span>
 ;<h3 id="QUICK.C1-GROUNDED-BASIC.13"
 >;; QUICK.C1-GROUNDED-BASIC.13</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.06 milliseconds) 
+; took 0.001 secs. (1.17 milliseconds) 
 
 !(assertEqualToResult (== 4 (+ ln 2)) (False))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (False) (False)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Grounded symbols have predefined types.
@@ -666,20 +653,19 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (+ 2 "String") ((Error "String" BadType)))
 
-</span>[
-
+</span>
 ;<h3 id="QUICK.C1-GROUNDED-BASIC.14"
 >;; QUICK.C1-GROUNDED-BASIC.14</h3>
 ; 
 ; EVAL TEST
-; took 0.000428 secs. (427.52 microseconds) 
+; took 0.000535 secs. (534.98 microseconds) 
 
 !(assertEqualToResult (+ 2 "String") ((Error "String" BadType)))
 
 <span class="ansi31"
 >(loonit_failureR  (equal_enough_for_test  ((+ 2 "String")) ((Error "String" BadType))))
 </span>
-Deterministic: ((Error  (got  ((+ 2 "String"))) (expected  ((Error "String" BadType)))))((Error  (got  ((+ 2 "String"))) (expected  ((Error "String" BadType)))))]
+Deterministic: ((Error  (got  ((+ 2 "String"))) (expected  ((Error "String" BadType)))))
 ;;; Custom symbols as arguments of grounded operations
 ;;; work similarly
 <span class="ansi38-255165000"
@@ -687,20 +673,19 @@ Deterministic: ((Error  (got  ((+ 2 "String"))) (expected  ((Error "String" BadT
 </span><span class="ansi38-013099040"
 >!(assertEqualToResult (== 4 (+ ln 2)) ((Error ln BadType)))
 
-</span>[
-
+</span>
 ;<h3 id="QUICK.C1-GROUNDED-BASIC.15"
 >;; QUICK.C1-GROUNDED-BASIC.15</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.08 milliseconds) 
+; took 0.001 secs. (1.14 milliseconds) 
 
 !(assertEqualToResult (== 4 (+ ln 2)) ((Error ln BadType)))
 
 <span class="ansi31"
 >(loonit_failureR  (equal_enough_for_test  (False) ((Error ln BadType))))
 </span>
-Deterministic: ((Error  (got  (False)) (expected  ((Error ln BadType)))))((Error  (got  (False)) (expected  ((Error ln BadType)))))]
+Deterministic: ((Error  (got  (False)) (expected  ((Error ln BadType)))))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Custom functions over grounded functions behave ordinarily
@@ -710,20 +695,19 @@ Deterministic: ((Error  (got  (False)) (expected  ((Error ln BadType)))))((Error
 </span><span class="ansi38-013099040"
 >!(assertEqualToResult (sqr 4) (16))
 
-</span>[
-
+</span>
 ;<h3 id="QUICK.C1-GROUNDED-BASIC.16"
 >;; QUICK.C1-GROUNDED-BASIC.16</h3>
 ; 
 ; EVAL TEST
-; took 0.000365 secs. (365.02 microseconds) 
+; took 0.000436 secs. (436.31 microseconds) 
 
 !(assertEqualToResult (sqr 4) (16))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (16) (16)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Evaluation of grounded operations over nondeterministic
@@ -732,75 +716,70 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (+ (superpose (1 2 3)) 1) (superpose (2 3 4)))
 
-</span>[
-
+</span>
 ;<h3 id="QUICK.C1-GROUNDED-BASIC.17"
 >;; QUICK.C1-GROUNDED-BASIC.17</h3>
 ; 
 ; EVAL TEST
-; took 0.000971 secs. (970.93 microseconds) 
+; took 0.001 secs. (1.09 milliseconds) 
 
 !(assertEqual (+ (superpose (1 2 3)) 1) (superpose (2 3 4)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (2 3 4) (2 3 4)))
 </span>
-Deterministic: ()()]
-<span class="ansi38-255165000"
+Deterministic: ()<span class="ansi38-255165000"
 > (= (bin) 0)
 </span><span class="ansi38-255165000"
 > (= (bin) 1)
 </span><span class="ansi38-013099040"
 >!(assertEqualToResult (bin) (0 1))
 
-</span>[
-
+</span>
 ;<h3 id="QUICK.C1-GROUNDED-BASIC.18"
 >;; QUICK.C1-GROUNDED-BASIC.18</h3>
 ; 
 ; EVAL TEST
-; took 0.000284 secs. (284.22 microseconds) 
+; took 0.000337 secs. (336.72 microseconds) 
 
 !(assertEqualToResult (bin) (0 1))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (0 1) (0 1)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqualToResult (+ 1 (bin)) (1 2))
 
-</span>[
-
+</span>
 ;<h3 id="QUICK.C1-GROUNDED-BASIC.19"
 >;; QUICK.C1-GROUNDED-BASIC.19</h3>
 ; 
 ; EVAL TEST
-; took 0.000517 secs. (517.22 microseconds) 
+; took 0.000587 secs. (587.50 microseconds) 
 
 !(assertEqualToResult (+ 1 (bin)) (1 2))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (1 2) (1 2)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqualToResult (let $x (+ 2 3) (* $x $x)) (25))
 
-</span>[
-
+</span>
 ;<h3 id="QUICK.C1-GROUNDED-BASIC.20"
 >;; QUICK.C1-GROUNDED-BASIC.20</h3>
 ; 
 ; EVAL TEST
-; took 0.000411 secs. (410.61 microseconds) 
+; took 0.000401 secs. (401.35 microseconds) 
 
 !(assertEqualToResult (let $x (+ 2 3) (* $x $x)) (25))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (25) (25)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; basic recursion
@@ -810,38 +789,36 @@ Deterministic: ()()]
 </span><span class="ansi38-013099040"
 >!(assertEqual (fact 5) 120)
 
-</span>[
-
+</span>
 ;<h3 id="QUICK.C1-GROUNDED-BASIC.21"
 >;; QUICK.C1-GROUNDED-BASIC.21</h3>
 ; 
 ; EVAL TEST
-; took 0.004 secs. (3.70 milliseconds) 
+; took 0.004 secs. (3.86 milliseconds) 
 
 !(assertEqual (fact 5) 120)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (120) (120)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;; ensure we only return one result
 <span class="ansi38-013099040"
 >!(assertEqualToResult (fact 5) (120))
 
-</span>[
-
+</span>
 ;<h3 id="QUICK.C1-GROUNDED-BASIC.22"
 >;; QUICK.C1-GROUNDED-BASIC.22</h3>
 ; 
 ; EVAL TEST
-; took 0.004 secs. (3.66 milliseconds) 
+; took 0.004 secs. (3.72 milliseconds) 
 
 !(assertEqualToResult (fact 5) (120))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (120) (120)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Grounded symbols work with non-determinism based "reasoning"
@@ -866,22 +843,21 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (let $t (gen 3) (if (== (subsum (:: 3 (:: 7 (:: 5 nil))) $t) 8) $t (superpose ()))) ((:: 1 (:: 0 (:: 1 nil)))))
 
-</span>[
-
+</span>
 ;<h3 id="QUICK.C1-GROUNDED-BASIC.23"
 >;; QUICK.C1-GROUNDED-BASIC.23</h3>
 ; 
 ; EVAL TEST
-; took 0.203 secs. (203.27 milliseconds) 
+; took 0.205 secs. (205.00 milliseconds) 
 
 !(assertEqualToResult (let $t (gen 3) (if (== (subsum (:: 3 (:: 7 (:: 5 nil))) $t) 8) $t (superpose ()))) ((:: 1 (:: 0 (:: 1 nil)))))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((:: 1 (:: 0 (:: 1 nil)))) ((:: 1 (:: 0 (:: 1 nil))))))
 </span>
-Deterministic: ()()]
-<span class="ansi32"
->% 2,110,073 inferences, 0.375 CPU in 0.375 seconds (100% CPU, 5620748 Lips)
+Deterministic: ()<span class="ansi32"
+>
+% 2,106,207 inferences, 0.378 CPU in 0.378 seconds (100% CPU, 5577109 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/quick/c1_grounded_basic.metta  0)
 <span class="ansi1"
@@ -1043,7 +1019,7 @@ Deterministic: ()()]
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 19:07:39+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 19:52:45+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

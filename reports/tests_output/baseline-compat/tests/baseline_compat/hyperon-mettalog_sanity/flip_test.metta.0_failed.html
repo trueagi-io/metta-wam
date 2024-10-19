@@ -27,7 +27,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 18:59:20+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 19:44:24+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -357,39 +357,37 @@ Script started on 2024-10-19 18:59:20+00:00 [TERM="xterm-256color" TTY="/dev/pts
 <span class="ansi38-013099040"
 >!(assertEqualToResult (recur-until-flip-true 1) (True))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.FLIP-TEST.01"
 >;; HYPERON-METTALOG-SANITY.FLIP-TEST.01</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.76 milliseconds) 
+; took 0.002 secs. (2.29 milliseconds) 
 
 !(assertEqualToResult (recur-until-flip-true 1) (True))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (True) (True)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqualToResult (recur-until-flip-false 1) (True))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.FLIP-TEST.02"
 >;; HYPERON-METTALOG-SANITY.FLIP-TEST.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000639 secs. (638.82 microseconds) 
+; took 0.001 secs. (1.15 milliseconds) 
 
 !(assertEqualToResult (recur-until-flip-false 1) (True))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (True) (True)))
 </span>
-Deterministic: ()()]
-<span class="ansi32"
->% 152,792 inferences, 0.048 CPU in 0.048 seconds (100% CPU, 3161224 Lips)
+Deterministic: ()<span class="ansi32"
+>
+% 159,840 inferences, 0.049 CPU in 0.049 seconds (100% CPU, 3274179 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/flip_test.metta  0)
 <span class="ansi1"
@@ -530,7 +528,7 @@ Deterministic: ()()]
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 18:59:25+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 19:44:30+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

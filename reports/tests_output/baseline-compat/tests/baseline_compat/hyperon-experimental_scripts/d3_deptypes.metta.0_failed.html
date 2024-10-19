@@ -42,7 +42,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 18:56:47+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 19:41:51+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -394,20 +394,19 @@ Script started on 2024-10-19 18:56:47+00:00 [TERM="xterm-256color" TTY="/dev/pts
 <span class="ansi38-013099040"
 >!(assertEqual (get-type (Cons 0 (Cons 1 Nil))) (Vec Number (S (S Z))))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D3-DEPTYPES.01"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D3-DEPTYPES.01</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.60 milliseconds) 
+; took 0.002 secs. (1.63 milliseconds) 
 
 !(assertEqual (get-type (Cons 0 (Cons 1 Nil))) (Vec Number (S (S Z))))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Vec Number (S (S Z)))) ((Vec Number (S (S Z))))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;; `drop` removes the head from a `Vec`, returning a `Vec` with length decrease by 1
 <span class="ansi38-255165000"
 > (: drop (-> (Vec $t (S $x)) (Vec $t $x)))
@@ -417,56 +416,53 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (get-type (drop (Cons 1 Nil))) (Vec Number Z))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D3-DEPTYPES.02"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D3-DEPTYPES.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000775 secs. (774.70 microseconds) 
+; took 0.000802 secs. (802.01 microseconds) 
 
 !(assertEqual (get-type (drop (Cons 1 Nil))) (Vec Number Z))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Vec Number Z)) ((Vec Number Z))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;; Check length after dropping
 <span class="ansi38-013099040"
 >!(assertEqual (drop (Cons 2 (Cons 1 Nil))) (Cons 1 Nil))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D3-DEPTYPES.03"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D3-DEPTYPES.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000969 secs. (969.11 microseconds) 
+; took 0.000980 secs. (979.92 microseconds) 
 
 !(assertEqual (drop (Cons 2 (Cons 1 Nil))) (Cons 1 Nil))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Cons 1 Nil)) ((Cons 1 Nil))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;; Types can protect against misuse, like dropping from empty Vec
 <span class="ansi38-013099040"
 >!(assertEqualToResult (get-type (drop Nil)) ())
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D3-DEPTYPES.04"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D3-DEPTYPES.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000220 secs. (219.67 microseconds) 
+; took 0.000219 secs. (218.65 microseconds) 
 
 !(assertEqualToResult (get-type (drop Nil)) ())
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (()) ()))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; The result returned by `get-type` is reduced, thus,
@@ -484,20 +480,19 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (get-type (ConsN "1" (ConsN "2" NilN))) (VecN String 2))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D3-DEPTYPES.05"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D3-DEPTYPES.05</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.14 milliseconds) 
+; took 0.001 secs. (1.15 milliseconds) 
 
 !(assertEqual (get-type (ConsN "1" (ConsN "2" NilN))) (VecN String 2))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((VecN String 2)) ((VecN String 2))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;; Similarly, `-` reduces the length in `dropN` type.
 <span class="ansi38-255165000"
 > (: dropN (-> (VecN $t $x) (VecN $t (- $x 1))))
@@ -506,20 +501,19 @@ Deterministic: ()()]
 </span><span class="ansi38-013099040"
 >!(assertEqual (get-type (dropN (ConsN "1" NilN))) (VecN String 0))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D3-DEPTYPES.06"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D3-DEPTYPES.06</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.08 milliseconds) 
+; took 0.001 secs. (1.07 milliseconds) 
 
 !(assertEqual (get-type (dropN (ConsN "1" NilN))) (VecN String 0))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((VecN String 0)) ((VecN String 0))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;; TODO: doesn't work after type checking fixes
 ;;; However, without any validation, invalid lengths like -1 can be derived.
 <span class="ansi38-255165000"
@@ -529,22 +523,21 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (dropN NilN) ((dropN NilN)))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D3-DEPTYPES.07"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D3-DEPTYPES.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000298 secs. (298.30 microseconds) 
+; took 0.000283 secs. (282.78 microseconds) 
 
 !(assertEqualToResult (dropN NilN) ((dropN NilN)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((dropN NilN)) ((dropN NilN))))
 </span>
-Deterministic: ()()]
-<span class="ansi32"
->% 334,611 inferences, 0.095 CPU in 0.095 seconds (100% CPU, 3532125 Lips)
+Deterministic: ()<span class="ansi32"
+>
+% 334,247 inferences, 0.095 CPU in 0.095 seconds (100% CPU, 3528545 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/d3_deptypes.metta  0)
 <span class="ansi1"
@@ -690,7 +683,7 @@ Deterministic: ()()]
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 18:56:53+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 19:41:56+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

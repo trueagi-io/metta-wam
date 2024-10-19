@@ -1024,7 +1024,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 18:52:36+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 19:37:38+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -1343,7 +1343,7 @@ Script started on 2024-10-19 18:52:36+00:00 [TERM="xterm-256color" TTY="/dev/pts
 <span class="ansi38-013099040"
 >!(import! &hald1000 hald_spo_1000.metta)
 
-</span>[P;HTML|
+</span>P;HTML|
 ;                                         (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/issues/metta-wam-issue-116/hald_spo_1000.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/issues/metta-wam-issue-116/hald_spo_1000.metta)
 P;HTML|
 ;                                         (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/issues/metta-wam-issue-116/hald_spo_1000.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/issues/metta-wam-issue-116/hald_spo_1000.metta)
@@ -3350,26 +3350,25 @@ Script started on 2024-10-19 18:52:36+00:00 [TERM="xterm-256color" TTY="/dev/pts
 </span><span class="ansi38-255165000"
 > (CD4 associated ALB)
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqualToResult (match &hald1000 (Doxorubicin $p $o) (Doxorubicin $p $o)) ((Doxorubicin stratify Liposarcoma) (Doxorubicin associated MIR375)))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-WAM-ISSUE-116.TEST-SPO-1000.01"
 >;; METTA-WAM-ISSUE-116.TEST-SPO-1000.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000913 secs. (912.69 microseconds) 
+; took 0.000894 secs. (893.66 microseconds) 
 
 !(assertEqualToResult (match &hald1000 (Doxorubicin $p $o) (Doxorubicin $p $o)) ((Doxorubicin stratify Liposarcoma) (Doxorubicin associated MIR375)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Doxorubicin stratify Liposarcoma) (Doxorubicin associated MIR375)) ((Doxorubicin stratify Liposarcoma) (Doxorubicin associated MIR375))))
 </span>
-Deterministic: ()()]
-<span class="ansi32"
->% 4,783,403 inferences, 2.631 CPU in 2.631 seconds (100% CPU, 1818354 Lips)
+Deterministic: ()<span class="ansi32"
+>
+% 4,783,243 inferences, 2.672 CPU in 2.672 seconds (100% CPU, 1790300 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/issues/metta-wam-issue-116/test_spo_1000.metta  0)
 <span class="ansi1"
@@ -3510,7 +3509,7 @@ Deterministic: ()()]
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 18:52:44+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 19:37:46+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

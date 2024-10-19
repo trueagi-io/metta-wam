@@ -42,7 +42,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 19:01:49+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 19:46:55+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -398,366 +398,345 @@ Script started on 2024-10-19 19:01:49+00:00 [TERM="xterm-256color" TTY="/dev/pts
 <span class="ansi38-013099040"
 >!(assertEqual (stringToChars "xyzzy") ('x' 'y' 'z' 'z' 'y'))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.STRING-TESTS.01"
 >;; HYPERON-METTALOG-SANITY.STRING-TESTS.01</h3>
 ; 
 ; EVAL TEST
-; took 0.003 secs. (3.28 milliseconds) 
+; took 0.003 secs. (3.14 milliseconds) 
 
 !(assertEqual (stringToChars "xyzzy") ('x' 'y' 'z' 'z' 'y'))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (('x' 'y' 'z' 'z' 'y')) (('x' 'y' 'z' 'z' 'y'))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (charsToString ('x' 'y' 'z' 'z' 'y')) "xyzzy")
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.STRING-TESTS.02"
 >;; HYPERON-METTALOG-SANITY.STRING-TESTS.02</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.49 milliseconds) 
+; took 0.001 secs. (1.42 milliseconds) 
 
 !(assertEqual (charsToString ('x' 'y' 'z' 'z' 'y')) "xyzzy")
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ("xyzzy") ("xyzzy")))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (stringToChars "") ())
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.STRING-TESTS.03"
 >;; HYPERON-METTALOG-SANITY.STRING-TESTS.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000131 secs. (131.41 microseconds) 
+; took 0.000151 secs. (151.29 microseconds) 
 
 !(assertEqual (stringToChars "") ())
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (()) (())))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (charsToString ()) "")
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.STRING-TESTS.04"
 >;; HYPERON-METTALOG-SANITY.STRING-TESTS.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000155 secs. (155.35 microseconds) 
+; took 0.000150 secs. (149.95 microseconds) 
 
 !(assertEqual (charsToString ()) "")
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ("") ("")))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;; this one works differently in metta and mettalog
 <span class="ansi38-013099040"
 >!(assertEqual (charsToString (stringToChars "xyzzy")) "xyzzy")
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.STRING-TESTS.05"
 >;; HYPERON-METTALOG-SANITY.STRING-TESTS.05</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.88 milliseconds) 
+; took 0.002 secs. (1.77 milliseconds) 
 
 !(assertEqual (charsToString (stringToChars "xyzzy")) "xyzzy")
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ("xyzzy") ("xyzzy")))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (stringToChars (charsToString ('x' 'y' 'z' 'z' 'y'))) ('x' 'y' 'z' 'z' 'y'))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.STRING-TESTS.06"
 >;; HYPERON-METTALOG-SANITY.STRING-TESTS.06</h3>
 ; 
 ; EVAL TEST
-; took 0.004 secs. (4.28 milliseconds) 
+; took 0.004 secs. (4.21 milliseconds) 
 
 !(assertEqual (stringToChars (charsToString ('x' 'y' 'z' 'z' 'y'))) ('x' 'y' 'z' 'z' 'y'))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (('x' 'y' 'z' 'z' 'y')) (('x' 'y' 'z' 'z' 'y'))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;; metta gets all these wrong
 <span class="ansi38-013099040"
 >!(assertEqual (charsToString ('x' 'y' ' ' 'z' 'y')) "xy zy")
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.STRING-TESTS.07"
 >;; HYPERON-METTALOG-SANITY.STRING-TESTS.07</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.50 milliseconds) 
+; took 0.001 secs. (1.37 milliseconds) 
 
 !(assertEqual (charsToString ('x' 'y' ' ' 'z' 'y')) "xy zy")
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ("xy zy") ("xy zy")))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (stringToChars "xy zy") ('x' 'y' ' ' 'z' 'y'))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.STRING-TESTS.08"
 >;; HYPERON-METTALOG-SANITY.STRING-TESTS.08</h3>
 ; 
 ; EVAL TEST
-; took 0.003 secs. (3.00 milliseconds) 
+; took 0.003 secs. (2.94 milliseconds) 
 
 !(assertEqual (stringToChars "xy zy") ('x' 'y' ' ' 'z' 'y'))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (('x' 'y' ' ' 'z' 'y')) (('x' 'y' ' ' 'z' 'y'))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (charsToString (' ')) " ")
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.STRING-TESTS.09"
 >;; HYPERON-METTALOG-SANITY.STRING-TESTS.09</h3>
 ; 
 ; EVAL TEST
-; took 0.000460 secs. (459.75 microseconds) 
+; took 0.000372 secs. (371.71 microseconds) 
 
 !(assertEqual (charsToString (' ')) " ")
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (" ") (" ")))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (stringToChars " ") (' '))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.STRING-TESTS.10"
 >;; HYPERON-METTALOG-SANITY.STRING-TESTS.10</h3>
 ; 
 ; EVAL TEST
-; took 0.000775 secs. (775.32 microseconds) 
+; took 0.000710 secs. (709.58 microseconds) 
 
 !(assertEqual (stringToChars " ") (' '))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((' ')) ((' '))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (stringToChars (superpose ("ab" "cd" "ef"))) (superpose (('a' 'b') ('c' 'd') ('e' 'f'))))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.STRING-TESTS.11"
 >;; HYPERON-METTALOG-SANITY.STRING-TESTS.11</h3>
 ; 
 ; EVAL TEST
-; took 0.007 secs. (6.91 milliseconds) 
+; took 0.007 secs. (6.98 milliseconds) 
 
 !(assertEqual (stringToChars (superpose ("ab" "cd" "ef"))) (superpose (('a' 'b') ('c' 'd') ('e' 'f'))))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (('a' 'b') ('c' 'd') ('e' 'f')) (('a' 'b') ('c' 'd') ('e' 'f'))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;; format-args
 <span class="ansi38-013099040"
 >!(assertEqual (format-args "" (1 2 3)) "")
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.STRING-TESTS.12"
 >;; HYPERON-METTALOG-SANITY.STRING-TESTS.12</h3>
 ; 
 ; EVAL TEST
-; took 0.000190 secs. (190.27 microseconds) 
+; took 0.000202 secs. (201.80 microseconds) 
 
 !(assertEqual (format-args "" (1 2 3)) "")
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ("") ("")))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (format-args " " (1 2 3)) " ")
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.STRING-TESTS.13"
 >;; HYPERON-METTALOG-SANITY.STRING-TESTS.13</h3>
 ; 
 ; EVAL TEST
-; took 0.000198 secs. (197.88 microseconds) 
+; took 0.000201 secs. (200.77 microseconds) 
 
 !(assertEqual (format-args " " (1 2 3)) " ")
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (" ") (" ")))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (format-args "{}" (1 2 3)) "1")
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.STRING-TESTS.14"
 >;; HYPERON-METTALOG-SANITY.STRING-TESTS.14</h3>
 ; 
 ; EVAL TEST
-; took 0.000356 secs. (355.65 microseconds) 
+; took 0.000341 secs. (341.35 microseconds) 
 
 !(assertEqual (format-args "{}" (1 2 3)) "1")
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ("1") ("1")))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (format-args "{}}" (1 2 3)) "{}")
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.STRING-TESTS.15"
 >;; HYPERON-METTALOG-SANITY.STRING-TESTS.15</h3>
 ; 
 ; EVAL TEST
-; took 0.000189 secs. (189.47 microseconds) 
+; took 0.000203 secs. (203.45 microseconds) 
 
 !(assertEqual (format-args "{}}" (1 2 3)) "{}")
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ("{}") ("{}")))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (format-args "xyz zy" (1 2 3)) "xyz zy")
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.STRING-TESTS.16"
 >;; HYPERON-METTALOG-SANITY.STRING-TESTS.16</h3>
 ; 
 ; EVAL TEST
-; took 0.000185 secs. (185.02 microseconds) 
+; took 0.000186 secs. (186.15 microseconds) 
 
 !(assertEqual (format-args "xyz zy" (1 2 3)) "xyz zy")
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ("xyz zy") ("xyz zy")))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (format-args "Indexed {1} {} {0} {}" (1 2 3)) "Indexed 2 1 1 2")
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.STRING-TESTS.17"
 >;; HYPERON-METTALOG-SANITY.STRING-TESTS.17</h3>
 ; 
 ; EVAL TEST
-; took 0.000743 secs. (743.35 microseconds) 
+; took 0.000782 secs. (781.82 microseconds) 
 
 !(assertEqual (format-args "Indexed {1} {} {0} {}" (1 2 3)) "Indexed 2 1 1 2")
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ("Indexed 2 1 1 2") ("Indexed 2 1 1 2")))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (format-args "Different types {} {} {} {} {} {}" (1 "2" 'c' -0.5 atom (1 2 c -0.5 atom))) "Different types 1 2 c -0.5 atom (1 2 c -0.5 atom)")
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.STRING-TESTS.18"
 >;; HYPERON-METTALOG-SANITY.STRING-TESTS.18</h3>
 ; 
 ; EVAL TEST
-; took 0.000790 secs. (790.46 microseconds) 
+; took 0.000815 secs. (815.46 microseconds) 
 
 !(assertEqual (format-args "Different types {} {} {} {} {} {}" (1 "2" 'c' -0.5 atom (1 2 c -0.5 atom))) "Different types 1 2 c -0.5 atom (1 2 c -0.5 atom)")
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ("Different types 1 2 c -0.5 atom (1 2 c -0.5 atom)") ("Different types 1 2 c -0.5 atom (1 2 c -0.5 atom)")))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (format-args "Two digit index={11}" (0 1 2 3 4 5 6 7 8 9 10 "eleven")) "Two digit index=eleven")
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.STRING-TESTS.19"
 >;; HYPERON-METTALOG-SANITY.STRING-TESTS.19</h3>
 ; 
 ; EVAL TEST
-; took 0.000198 secs. (197.76 microseconds) 
+; took 0.000214 secs. (214.21 microseconds) 
 
 !(assertEqual (format-args "Two digit index={11}" (0 1 2 3 4 5 6 7 8 9 10 "eleven")) "Two digit index=eleven")
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ("Two digit index=eleven") ("Two digit index=eleven")))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;; malformed examples
 <span class="ansi38-013099040"
 >!(assertEqual (format-args "Bad args list {1} {} {0} {}" x) (Error x BadType))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.STRING-TESTS.20"
 >;; HYPERON-METTALOG-SANITY.STRING-TESTS.20</h3>
 ; 
 ; EVAL TEST
-; took 0.000443 secs. (442.92 microseconds) 
+; took 0.000489 secs. (488.52 microseconds) 
 
 !(assertEqual (format-args "Bad args list {1} {} {0} {}" x) (Error x BadType))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Error x BadType)) ((Error x BadType))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (format-args "Malformed format}{{}{{{}{} {4} { } {-1} {x} {{{{{{}}}}}}{{{{{}}}}}" ("success1" "success2")) "Malformed format}{}{success1success2 {4} { } {-1} {x} {{{}}}{{{}}}")
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.STRING-TESTS.21"
 >;; HYPERON-METTALOG-SANITY.STRING-TESTS.21</h3>
 ; 
 ; EVAL TEST
-; took 0.000230 secs. (229.84 microseconds) 
+; took 0.000220 secs. (220.28 microseconds) 
 
 !(assertEqual (format-args "Malformed format}{{}{{{}{} {4} { } {-1} {x} {{{{{{}}}}}}{{{{{}}}}}" ("success1" "success2")) "Malformed format}{}{success1success2 {4} { } {-1} {x} {{{}}}{{{}}}")
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ("Malformed format}{}{success1success2 {4} { } {-1} {x} {{{}}}{{{}}}") ("Malformed format}{}{success1success2 {4} { } {-1} {x} {{{}}}{{{}}}")))
 </span>
-Deterministic: ()()]
-<span class="ansi32"
->% 669,539 inferences, 0.147 CPU in 0.147 seconds (100% CPU, 4549423 Lips)
+Deterministic: ()<span class="ansi32"
+>
+% 668,111 inferences, 0.146 CPU in 0.146 seconds (100% CPU, 4569465 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/string-tests.metta  0)
 <span class="ansi1"
@@ -917,7 +896,7 @@ Deterministic: ()()]
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 19:01:55+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 19:47:01+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

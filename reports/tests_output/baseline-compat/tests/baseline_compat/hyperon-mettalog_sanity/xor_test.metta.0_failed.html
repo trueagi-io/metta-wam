@@ -34,7 +34,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 19:04:02+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 19:49:08+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -352,124 +352,116 @@ Script started on 2024-10-19 19:04:02+00:00 [TERM="xterm-256color" TTY="/dev/pts
 <span class="ansi38-013099040"
 >!(assertEqual (xor True False) True)
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.XOR-TEST.01"
 >;; HYPERON-METTALOG-SANITY.XOR-TEST.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000194 secs. (194.39 microseconds) 
+; took 0.000194 secs. (193.71 microseconds) 
 
 !(assertEqual (xor True False) True)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (True) (True)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (xor False True) True)
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.XOR-TEST.02"
 >;; HYPERON-METTALOG-SANITY.XOR-TEST.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000167 secs. (167.16 microseconds) 
+; took 0.000170 secs. (170.25 microseconds) 
 
 !(assertEqual (xor False True) True)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (True) (True)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (xor True True) False)
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.XOR-TEST.03"
 >;; HYPERON-METTALOG-SANITY.XOR-TEST.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000167 secs. (166.53 microseconds) 
+; took 0.000167 secs. (167.07 microseconds) 
 
 !(assertEqual (xor True True) False)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (False) (False)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (xor False False) False)
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.XOR-TEST.04"
 >;; HYPERON-METTALOG-SANITY.XOR-TEST.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000175 secs. (175.37 microseconds) 
+; took 0.000166 secs. (165.78 microseconds) 
 
 !(assertEqual (xor False False) False)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (False) (False)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;; XOR with Expressions
 <span class="ansi38-013099040"
 >!(assertEqual (xor (> 5 3) (< 2 1)) True)
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.XOR-TEST.05"
 >;; HYPERON-METTALOG-SANITY.XOR-TEST.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000456 secs. (456.31 microseconds) 
+; took 0.000368 secs. (368.05 microseconds) 
 
 !(assertEqual (xor (> 5 3) (< 2 1)) True)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (True) (True)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (xor (== 1 1) (== 2 2)) False)
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.XOR-TEST.06"
 >;; HYPERON-METTALOG-SANITY.XOR-TEST.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000346 secs. (346.19 microseconds) 
+; took 0.000350 secs. (350.06 microseconds) 
 
 !(assertEqual (xor (== 1 1) (== 2 2)) False)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (False) (False)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (xor (not True) (and True False)) False)
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.XOR-TEST.07"
 >;; HYPERON-METTALOG-SANITY.XOR-TEST.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000332 secs. (332.38 microseconds) 
+; took 0.000304 secs. (303.67 microseconds) 
 
 !(assertEqual (xor (not True) (and True False)) False)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (False) (False)))
 </span>
-Deterministic: ()()]
-<span class="ansi38-255165000"
+Deterministic: ()<span class="ansi38-255165000"
 > (: mprogn (-> Atom Atom Atom))
 </span><span class="ansi38-255165000"
 > (= (mprogn $code1 $code2) (let $ (eval $code1) (eval $code2)))
@@ -477,27 +469,25 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (xor (mprogn (println! "First") True) (mprogn (println! "Second") False)) True)
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.XOR-TEST.08"
 >;; HYPERON-METTALOG-SANITY.XOR-TEST.08</h3>
 First
 Second
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.18 milliseconds) 
+; took 0.001 secs. (1.19 milliseconds) 
 
 !(assertEqual (xor (mprogn (println! "First") True) (mprogn (println! "Second") False)) True)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (True) (True)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (xor (mprogn (println! "First") True) (mprogn (println! "Second") True)) False)
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.XOR-TEST.09"
 >;; HYPERON-METTALOG-SANITY.XOR-TEST.09</h3>
 First
@@ -511,47 +501,45 @@ Second
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (False) (False)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (xor (mprogn (println! "First") False) (mprogn (println! "Second") True)) True)
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.XOR-TEST.10"
 >;; HYPERON-METTALOG-SANITY.XOR-TEST.10</h3>
 First
 Second
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.13 milliseconds) 
+; took 0.001 secs. (1.15 milliseconds) 
 
 !(assertEqual (xor (mprogn (println! "First") False) (mprogn (println! "Second") True)) True)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (True) (True)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (xor (mprogn (println! "First") False) (mprogn (println! "Second") False)) False)
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.XOR-TEST.11"
 >;; HYPERON-METTALOG-SANITY.XOR-TEST.11</h3>
 First
 Second
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.10 milliseconds) 
+; took 0.001 secs. (1.16 milliseconds) 
 
 !(assertEqual (xor (mprogn (println! "First") False) (mprogn (println! "Second") False)) False)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (False) (False)))
 </span>
-Deterministic: ()()]
-<span class="ansi32"
->% 300,261 inferences, 0.073 CPU in 0.074 seconds (100% CPU, 4093293 Lips)
+Deterministic: ()<span class="ansi32"
+>
+% 300,525 inferences, 0.070 CPU in 0.070 seconds (100% CPU, 4285861 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/xor_test.metta  0)
 <span class="ansi1"
@@ -701,7 +689,7 @@ Deterministic: ()()]
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 19:04:07+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 19:49:13+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

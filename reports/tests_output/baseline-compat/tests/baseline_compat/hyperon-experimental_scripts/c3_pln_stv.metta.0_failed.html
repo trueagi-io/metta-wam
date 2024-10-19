@@ -42,7 +42,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 18:56:26+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 19:41:29+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -420,37 +420,35 @@ Script started on 2024-10-19 18:56:26+00:00 [TERM="xterm-256color" TTY="/dev/pts
 <span class="ansi38-013099040"
 >!(assertEqual (TV (And (PA) (PB))) (stv 0.3 0.8))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.C3-PLN-STV.01"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C3-PLN-STV.01</h3>
 ; 
 ; EVAL TEST
-; took 0.012 secs. (11.84 milliseconds) 
+; took 0.012 secs. (11.82 milliseconds) 
 
 !(assertEqual (TV (And (PA) (PB))) (stv 0.3 0.8))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((stv 0.3 0.8)) ((stv 0.3 0.8))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (TV (FA)) (stv 0.4 0.8))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.C3-PLN-STV.02"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C3-PLN-STV.02</h3>
 ; 
 ; EVAL TEST
-; took 0.006 secs. (6.21 milliseconds) 
+; took 0.006 secs. (6.14 milliseconds) 
 
 !(assertEqual (TV (FA)) (stv 0.4 0.8))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((stv 0.4 0.8)) ((stv 0.4 0.8))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Second example
@@ -469,56 +467,53 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (TV (croaks Fritz)) (stv 0.95 0.85))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.C3-PLN-STV.03"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C3-PLN-STV.03</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.76 milliseconds) 
+; took 0.002 secs. (1.62 milliseconds) 
 
 !(assertEqual (TV (croaks Fritz)) (stv 0.95 0.85))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((stv 0.95 0.85)) ((stv 0.95 0.85))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (TV (frog Fritz)) (stv 0.783 0.68))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.C3-PLN-STV.04"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C3-PLN-STV.04</h3>
 ; 
 ; EVAL TEST
-; took 0.018 secs. (17.78 milliseconds) 
+; took 0.018 secs. (17.70 milliseconds) 
 
 !(assertEqual (TV (frog Fritz)) (stv 0.783 0.68))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((stv 0.783 0.68)) ((stv 0.783 0.68))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (TV (green Fritz)) (stv 0.7047 0.68))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.C3-PLN-STV.05"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C3-PLN-STV.05</h3>
 ; 
 ; EVAL TEST
-; took 0.038 secs. (37.88 milliseconds) 
+; took 0.038 secs. (37.84 milliseconds) 
 
 !(assertEqual (TV (green Fritz)) (stv 0.7047 0.68))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((stv 0.7047 0.68)) ((stv 0.7047 0.68))))
 </span>
-Deterministic: ()()]
-<span class="ansi32"
->% 774,138 inferences, 0.156 CPU in 0.156 seconds (100% CPU, 4976155 Lips)
+Deterministic: ()<span class="ansi32"
+>
+% 773,938 inferences, 0.156 CPU in 0.156 seconds (100% CPU, 4971524 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/c3_pln_stv.metta  0)
 <span class="ansi1"
@@ -662,7 +657,7 @@ Deterministic: ()()]
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 18:56:31+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 19:41:35+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

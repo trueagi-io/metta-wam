@@ -43,7 +43,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 19:06:28+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 19:51:34+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -378,22 +378,18 @@ Script started on 2024-10-19 19:06:28+00:00 [TERM="xterm-256color" TTY="/dev/pts
 <span class="ansi38-013099040"
 >!(bind! &FIFO (new-state 42))
 
-</span>[
-
-Deterministic: ()()]
+</span>
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(bind! &WU (new-space))
 
-</span>[
-
-Deterministic: ()()]
+</span>
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(change-state! &FIFO 45)
 
-</span>[
-
-Deterministic: (State  45 $_12624)(State  45 $_12624)]
-<span class="ansi38-255165009"
+</span>
+Deterministic: (State  45 $_12622)<span class="ansi38-255165009"
 >;; In file as:  
 </span><span class="ansi1 ansi38-255238088"
 >!(get-state &FIFO)
@@ -401,21 +397,19 @@ Deterministic: (State  45 $_12624)(State  45 $_12624)]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (get-state &FIFO) (45))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.STATES-SPACES.01"
 >;; METTA-MORPH-TESTS.STATES-SPACES.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000231 secs. (231.41 microseconds) 
+; took 0.000253 secs. (253.06 microseconds) 
 
 !(assertEqualToResult (get-state &FIFO) (45))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (45) (45)))
 </span>
-Deterministic: ()()]
-<span class="ansi38-255165009"
+Deterministic: ()<span class="ansi38-255165009"
 >;; In file as:  
 </span><span class="ansi1 ansi38-255238088"
 >!(add-atom &WU a)
@@ -423,23 +417,21 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (add-atom &WU a) (()))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.STATES-SPACES.02"
 >;; METTA-MORPH-TESTS.STATES-SPACES.02</h3>
 <span class="ansi38-255165000"
 > a
 </span>; 
 ; EVAL TEST
-; took 0.001 secs. (1.13 milliseconds) 
+; took 0.001 secs. (1.22 milliseconds) 
 
 !(assertEqualToResult (add-atom &WU a) (()))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (()) (())))
 </span>
-Deterministic: ()()]
-<span class="ansi38-255165009"
+Deterministic: ()<span class="ansi38-255165009"
 >;; In file as:  
 </span><span class="ansi1 ansi38-255238088"
 >!(match &WU $1 $1)
@@ -447,21 +439,19 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (match &WU $1 $1) (a))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.STATES-SPACES.03"
 >;; METTA-MORPH-TESTS.STATES-SPACES.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000201 secs. (200.84 microseconds) 
+; took 0.000207 secs. (207.03 microseconds) 
 
 !(assertEqualToResult (match &WU $1 $1) (a))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (a) (a)))
 </span>
-Deterministic: ()()]
-<span class="ansi38-255165009"
+Deterministic: ()<span class="ansi38-255165009"
 >;; In file as:  
 </span><span class="ansi1 ansi38-255238088"
 >!(add-atom &WU b)
@@ -469,23 +459,21 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (add-atom &WU b) (()))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.STATES-SPACES.04"
 >;; METTA-MORPH-TESTS.STATES-SPACES.04</h3>
 <span class="ansi38-255165000"
 > b
 </span>; 
 ; EVAL TEST
-; took 0.001 secs. (1.12 milliseconds) 
+; took 0.001 secs. (1.19 milliseconds) 
 
 !(assertEqualToResult (add-atom &WU b) (()))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (()) (())))
 </span>
-Deterministic: ()()]
-<span class="ansi38-255165009"
+Deterministic: ()<span class="ansi38-255165009"
 >;; In file as:  
 </span><span class="ansi1 ansi38-255238088"
 >!(remove-atom &WU a)
@@ -493,41 +481,39 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (remove-atom &WU a) (()))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.STATES-SPACES.05"
 >;; METTA-MORPH-TESTS.STATES-SPACES.05</h3>
 <span class="ansi38-255165000"
 > a
 </span>; 
 ; EVAL TEST
-; took 0.000543 secs. (543.49 microseconds) 
+; took 0.000617 secs. (616.61 microseconds) 
 
 !(assertEqualToResult (remove-atom &WU a) (()))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (()) (())))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (match &WU $1 $1) (get-atoms &WU))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.STATES-SPACES.06"
 >;; METTA-MORPH-TESTS.STATES-SPACES.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000297 secs. (296.98 microseconds) 
+; took 0.000299 secs. (298.82 microseconds) 
 
 !(assertEqual (match &WU $1 $1) (get-atoms &WU))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (b) (b)))
 </span>
-Deterministic: ()()]
-<span class="ansi32"
->% 253,146 inferences, 0.074 CPU in 0.074 seconds (100% CPU, 3442738 Lips)
+Deterministic: ()<span class="ansi32"
+>
+% 253,146 inferences, 0.072 CPU in 0.072 seconds (100% CPU, 3526146 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/states_spaces.metta  0)
 <span class="ansi1"
@@ -663,7 +649,7 @@ Deterministic: ()()]
 ;         (set_option_value  test true)
 [()]
 [()]
-[(State  45 $_12624)]
+[(State  45 $_12622)]
 [()]
 [()]
 [()]
@@ -675,7 +661,7 @@ Deterministic: ()()]
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 19:06:34+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 19:51:40+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
