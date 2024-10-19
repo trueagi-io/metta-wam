@@ -34,7 +34,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 10:25:19+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 10:33:27+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -365,10 +365,8 @@ Script started on 2024-10-19 10:25:19+00:00 [TERM="xterm-256color" TTY="/dev/pts
 <span class="ansi38-013099040"
 >!(bind! &attentional_focus (new-space))
 
-</span>[
-
-Deterministic: ()()]
-<span class="ansi38-255165009"
+</span>
+Deterministic: ()<span class="ansi38-255165009"
 >;; In file as:  
 </span><span class="ansi1 ansi38-255238088"
 >!(add-atom &attentional_focus 1)
@@ -376,29 +374,26 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (add-atom &attentional_focus 1) (()))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.MATCH-SUPERPOSED-SPACES.01"
 >;; METTA-MORPH-TESTS.MATCH-SUPERPOSED-SPACES.01</h3>
 <span class="ansi38-255165000"
 > 1
 </span>; 
 ; EVAL TEST
-; took 0.001 secs. (1.14 milliseconds) 
+; took 0.001 secs. (1.21 milliseconds) 
 
 !(assertEqualToResult (add-atom &attentional_focus 1) (()))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (()) (())))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(bind! &concepts (new-space))
 
-</span>[
-
-Deterministic: ()()]
-<span class="ansi38-255165009"
+</span>
+Deterministic: ()<span class="ansi38-255165009"
 >;; In file as:  
 </span><span class="ansi1 ansi38-255238088"
 >!(add-atom &concepts 2)
@@ -406,77 +401,73 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (add-atom &concepts 2) (()))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.MATCH-SUPERPOSED-SPACES.02"
 >;; METTA-MORPH-TESTS.MATCH-SUPERPOSED-SPACES.02</h3>
 <span class="ansi38-255165000"
 > 2
 </span>; 
 ; EVAL TEST
-; took 0.001 secs. (1.10 milliseconds) 
+; took 0.001 secs. (1.16 milliseconds) 
 
 !(assertEqualToResult (add-atom &concepts 2) (()))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (()) (())))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;; check they are added
 <span class="ansi38-013099040"
 >!(assertEqualToResult (match &attentional_focus $1 $1) (1))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.MATCH-SUPERPOSED-SPACES.03"
 >;; METTA-MORPH-TESTS.MATCH-SUPERPOSED-SPACES.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000190 secs. (190.06 microseconds) 
+; took 0.000195 secs. (194.55 microseconds) 
 
 !(assertEqualToResult (match &attentional_focus $1 $1) (1))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (1) (1)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqualToResult (match &concepts $1 $1) (2))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.MATCH-SUPERPOSED-SPACES.04"
 >;; METTA-MORPH-TESTS.MATCH-SUPERPOSED-SPACES.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000173 secs. (172.70 microseconds) 
+; took 0.000176 secs. (175.69 microseconds) 
 
 !(assertEqualToResult (match &concepts $1 $1) (2))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (2) (2)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;; check superposing spaces
 <span class="ansi38-013099040"
 >!(assertEqualToResult (match (superpose (&attentional_focus &concepts)) $1 $1) (1 2))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.MATCH-SUPERPOSED-SPACES.05"
 >;; METTA-MORPH-TESTS.MATCH-SUPERPOSED-SPACES.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000295 secs. (294.65 microseconds) 
+; took 0.000331 secs. (331.27 microseconds) 
 
 !(assertEqualToResult (match (superpose (&attentional_focus &concepts)) $1 $1) (1 2))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (1 2) (1 2)))
 </span>
-Deterministic: ()()]
-<span class="ansi32"
->% 151,648 inferences, 0.038 CPU in 0.038 seconds (100% CPU, 3977315 Lips)
+Deterministic: ()<span class="ansi32"
+>
+% 151,176 inferences, 0.037 CPU in 0.037 seconds (100% CPU, 4043171 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/match_superposed_spaces.metta  0)
 <span class="ansi1"
@@ -610,12 +601,19 @@ Deterministic: ()()]
 ;         (set_option_value  load show)
 P;HTML|
 ;         (set_option_value  test true)
-P;HTML|
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+P;HTML|
 ;         (maybe_halt  7)
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 10:25:24+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 10:33:33+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

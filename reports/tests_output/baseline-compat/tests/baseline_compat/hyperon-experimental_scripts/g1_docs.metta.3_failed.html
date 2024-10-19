@@ -39,7 +39,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 10:17:24+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 10:25:47+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -361,9 +361,9 @@ Script started on 2024-10-19 10:17:24+00:00 [TERM="xterm-256color" TTY="/dev/pts
 P;HTML|
 ;                                         (= 5  "Missed result: (@doc-formal (@item NoSuchAtom) (@kind atom) (@type %Undefined%) (@desc \"No documentation\")))]")
 P;HTML|
-;                                         (= 5  "0.34user 0.00system 0:00.34elapsed 100%CPU (0avgtext+0avgdata 27940maxresident)k")
+;                                         (= 5  "0.33user 0.01system 0:00.34elapsed 100%CPU (0avgtext+0avgdata 27896maxresident)k")
 P;HTML|
-;                                         (= 5  "0inputs+0outputs (0major+3577minor)pagefaults 0swaps")
+;                                         (= 5  "0inputs+0outputs (0major+3598minor)pagefaults 0swaps")
 P;HTML|
 ;                                        (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/g1_docs.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/g1_docs.metta)
 
@@ -389,20 +389,19 @@ Script started on 2024-10-19 10:17:24+00:00 [TERM="xterm-256color" TTY="/dev/pts
 <span class="ansi38-013099040"
 >!(assertEqual (get-doc some-func) (@doc-formal (@item some-func) (@kind function) (@type (-> Arg1Type Arg2Type ReturnType)) (@desc "Test function") (@params ((@param (@type Arg1Type) (@desc "First argument")) (@param (@type Arg2Type) (@desc "Second argument")))) (@return (@type ReturnType) (@desc "Return value"))))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.G1-DOCS.01"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.G1-DOCS.01</h3>
 ; 
 ; EVAL TEST
-; took 0.167 secs. (167.40 milliseconds) 
+; took 0.167 secs. (166.72 milliseconds) 
 
 !(assertEqual (get-doc some-func) (@doc-formal (@item some-func) (@kind function) (@type (-> Arg1Type Arg2Type ReturnType)) (@desc "Test function") (@params ((@param (@type Arg1Type) (@desc "First argument")) (@param (@type Arg2Type) (@desc "Second argument")))) (@return (@type ReturnType) (@desc "Return value"))))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((@doc-formal (@item some-func) (@kind function) (@type (-> Arg1Type Arg2Type ReturnType)) (@desc "Test function") (@params ((@param (@type Arg1Type) (@desc "First argument")) (@param (@type Arg2Type) (@desc "Second argument")))) (@return (@type ReturnType) (@desc "Return value")))) ((@doc-formal (@item some-func) (@kind function) (@type (-> Arg1Type Arg2Type ReturnType)) (@desc "Test function") (@params ((@param (@type Arg1Type) (@desc "First argument")) (@param (@type Arg2Type) (@desc "Second argument")))) (@return (@type ReturnType) (@desc "Return value"))))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;; Same approach can be used to document single atom of any @kind.
 <span class="ansi38-255165000"
 > (@doc SomeSymbol (@desc "Test symbol atom having specific type"))
@@ -411,8 +410,7 @@ Deterministic: ()()]
 </span><span class="ansi38-013099040"
 >!(assertEqual (get-doc SomeSymbol) (@doc-formal (@item SomeSymbol) (@kind atom) (@type SomeType) (@desc "Test symbol atom having specific type")))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.G1-DOCS.02"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.G1-DOCS.02</h3>
 ; 
@@ -424,7 +422,7 @@ Deterministic: ()()]
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((@doc-formal (@item SomeSymbol) (@kind atom) (@type SomeType) (@desc "Test symbol atom having specific type"))) ((@doc-formal (@item SomeSymbol) (@kind atom) (@type SomeType) (@desc "Test symbol atom having specific type")))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;; Grounded atoms are also can be documented using `@doc` expressions. Type of
 ;;; the grounded atom is a part of its implementation.
 <span class="ansi38-255165000"
@@ -434,27 +432,25 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (get-doc some-gnd-atom) (@doc-formal (@item some-gnd-atom) (@kind function) (@type %Undefined%) (@desc "Test function") (@params ((@param (@type %Undefined%) (@desc "First argument")) (@param (@type %Undefined%) (@desc "Second argument")))) (@return (@type %Undefined%) (@desc "Return value"))))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.G1-DOCS.03"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.G1-DOCS.03</h3>
 ; 
 ; EVAL TEST
-; took 0.007 secs. (7.34 milliseconds) 
+; took 0.007 secs. (6.83 milliseconds) 
 
 !(assertEqual (get-doc some-gnd-atom) (@doc-formal (@item some-gnd-atom) (@kind function) (@type %Undefined%) (@desc "Test function") (@params ((@param (@type %Undefined%) (@desc "First argument")) (@param (@type %Undefined%) (@desc "Second argument")))) (@return (@type %Undefined%) (@desc "Return value"))))
 
 <span class="ansi31"
 >(loonit_failureR  (equal_enough_for_test  () ((@doc-formal (@item some-gnd-atom) (@kind function) (@type %Undefined%) (@desc "Test function") (@params ((@param (@type %Undefined%) (@desc "First argument")) (@param (@type %Undefined%) (@desc "Second argument")))) (@return (@type %Undefined%) (@desc "Return value"))))))
 </span>
-Deterministic: ((Error  (got  ()) (expected  ((@doc-formal (@item some-gnd-atom) (@kind function) (@type %Undefined%) (@desc "Test function") (@params ((@param (@type %Undefined%) (@desc "First argument")) (@param (@type %Undefined%) (@desc "Second argument")))) (@return (@type %Undefined%) (@desc "Return value")))))))((Error  (got  ()) (expected  ((@doc-formal (@item some-gnd-atom) (@kind function) (@type %Undefined%) (@desc "Test function") (@params ((@param (@type %Undefined%) (@desc "First argument")) (@param (@type %Undefined%) (@desc "Second argument")))) (@return (@type %Undefined%) (@desc "Return value")))))))]
+Deterministic: ((Error  (got  ()) (expected  ((@doc-formal (@item some-gnd-atom) (@kind function) (@type %Undefined%) (@desc "Test function") (@params ((@param (@type %Undefined%) (@desc "First argument")) (@param (@type %Undefined%) (@desc "Second argument")))) (@return (@type %Undefined%) (@desc "Return value")))))))
 ;;; If atom is not documented then `get-doc` returns "No documentation"
 ;;; description.
 <span class="ansi38-013099040"
 >!(assertEqual (get-doc NoSuchAtom) (@doc-formal (@item NoSuchAtom) (@kind atom) (@type %Undefined%) (@desc "No documentation")))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.G1-DOCS.04"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.G1-DOCS.04</h3>
 ; 
@@ -466,39 +462,37 @@ Deterministic: ((Error  (got  ()) (expected  ((@doc-formal (@item some-gnd-atom)
 <span class="ansi31"
 >(loonit_failureR  (equal_enough_for_test  () ((@doc-formal (@item NoSuchAtom) (@kind atom) (@type %Undefined%) (@desc "No documentation")))))
 </span>
-Deterministic: ((Error  (got  ()) (expected  ((@doc-formal (@item NoSuchAtom) (@kind atom) (@type %Undefined%) (@desc "No documentation"))))))((Error  (got  ()) (expected  ((@doc-formal (@item NoSuchAtom) (@kind atom) (@type %Undefined%) (@desc "No documentation"))))))]
+Deterministic: ((Error  (got  ()) (expected  ((@doc-formal (@item NoSuchAtom) (@kind atom) (@type %Undefined%) (@desc "No documentation"))))))
 ;;; Same result is returned if for instance documentation for the function
 ;;; application is queried.
 <span class="ansi38-013099040"
 >!(assertEqual (get-doc (some-func arg1 arg2)) (@doc-formal (@item (some-func arg1 arg2)) (@kind atom) (@type ReturnType) (@desc "No documentation")))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.G1-DOCS.05"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.G1-DOCS.05</h3>
 ; 
 ; EVAL TEST
-; took 0.003 secs. (2.91 milliseconds) 
+; took 0.003 secs. (2.83 milliseconds) 
 
 !(assertEqual (get-doc (some-func arg1 arg2)) (@doc-formal (@item (some-func arg1 arg2)) (@kind atom) (@type ReturnType) (@desc "No documentation")))
 
 <span class="ansi31"
 >(loonit_failureR  (equal_enough_for_test  () ((@doc-formal (@item (some-func arg1 arg2)) (@kind atom) (@type ReturnType) (@desc "No documentation")))))
 </span>
-Deterministic: ((Error  (got  ()) (expected  ((@doc-formal (@item (some-func arg1 arg2)) (@kind atom) (@type ReturnType) (@desc "No documentation"))))))((Error  (got  ()) (expected  ((@doc-formal (@item (some-func arg1 arg2)) (@kind atom) (@type ReturnType) (@desc "No documentation"))))))]
+Deterministic: ((Error  (got  ()) (expected  ((@doc-formal (@item (some-func arg1 arg2)) (@kind atom) (@type ReturnType) (@desc "No documentation"))))))
 ;;; `help!` function gets the documentation and prints it in a human readable
 ;;; format.
 <span class="ansi38-013099040"
 >!(help! some-func)
 
-</span>[
-Function some-func: (-> Arg1Type Arg2Type ReturnType) Test function
+</span>Function some-func: (-> Arg1Type Arg2Type ReturnType) Test function
 Parameters:
   (type Arg1Type) First argument
   (type Arg2Type) Second argument
 Return: (type ReturnType) Return value
 
-NDet Result(1): ()()]
+NDet Result(1): ()
 ;;; Output:
 ;;;
 ;;; Function some-func: (-> Arg1Type Arg2Type ReturnType) Test function
@@ -510,10 +504,9 @@ NDet Result(1): ()()]
 <span class="ansi38-013099040"
 >!(help! SomeSymbol)
 
-</span>[
-Atom SomeSymbol: SomeType Test symbol atom having specific type
+</span>Atom SomeSymbol: SomeType Test symbol atom having specific type
 
-NDet Result(1): ()()]
+NDet Result(1): ()
 ;;; Output:
 ;;;
 ;;; Atom SomeSymbol: SomeType Test symbol atom having specific type
@@ -521,10 +514,8 @@ NDet Result(1): ()()]
 <span class="ansi38-013099040"
 >!(help! some-gnd-atom)
 
-</span>
-<no-results>
+</span><no-results>
 
-[]
 ;;; Output:
 ;;;
 ;;; Function some-gnd-atom: %Undefined% Test function
@@ -536,10 +527,8 @@ NDet Result(1): ()()]
 <span class="ansi38-013099040"
 >!(help! NoSuchAtom)
 
-</span>
-<no-results>
+</span><no-results>
 
-[]
 ;;; Output:
 ;;;
 ;;; Atom NoSuchAtom: %Undefined% No documentation
@@ -547,16 +536,14 @@ NDet Result(1): ()()]
 <span class="ansi38-013099040"
 >!(help! (some-func arg1 arg2))
 
-</span>
-<no-results>
+</span><no-results>
 
-[]
 ;;; Output:
 ;;;
 ;;; Atom (some-func arg1 arg2): ReturnType No documentation
 ;;;
 <span class="ansi32"
->% 2,696,865 inferences, 0.468 CPU in 0.468 seconds (100% CPU, 5760528 Lips)
+>% 2,696,314 inferences, 0.465 CPU in 0.465 seconds (100% CPU, 5804300 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/g1_docs.metta  0)
 <span class="ansi1"
@@ -690,12 +677,22 @@ NDet Result(1): ()()]
 ;         (set_option_value  load show)
 P;HTML|
 ;         (set_option_value  test true)
-P;HTML|
+[()]
+[()]
+[((Error  (got  ()) (expected  ((@doc-formal (@item some-gnd-atom) (@kind function) (@type %Undefined%) (@desc "Test function") (@params ((@param (@type %Undefined%) (@desc "First argument")) (@param (@type %Undefined%) (@desc "Second argument")))) (@return (@type %Undefined%) (@desc "Return value")))))))]
+[((Error  (got  ()) (expected  ((@doc-formal (@item NoSuchAtom) (@kind atom) (@type %Undefined%) (@desc "No documentation"))))))]
+[((Error  (got  ()) (expected  ((@doc-formal (@item (some-func arg1 arg2)) (@kind atom) (@type ReturnType) (@desc "No documentation"))))))]
+[()]
+[()]
+[]
+[]
+[]
+P;HTML|
 ;         (maybe_halt  7)
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 10:17:30+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 10:25:53+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

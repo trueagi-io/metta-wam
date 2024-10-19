@@ -31,7 +31,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 10:25:42+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 10:33:50+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -368,22 +368,21 @@ Script started on 2024-10-19 10:25:42+00:00 [TERM="xterm-256color" TTY="/dev/pts
 <span class="ansi38-013099040"
 >!(assertEqualToResult (g 42 (1 2)) (1764 1764))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.MULTIFUNCTION.01"
 >;; METTA-MORPH-TESTS.MULTIFUNCTION.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000822 secs. (822.00 microseconds) 
+; took 0.000780 secs. (779.96 microseconds) 
 
 !(assertEqualToResult (g 42 (1 2)) (1764 1764))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (1764 1764) (1764 1764)))
 </span>
-Deterministic: ()()]
-<span class="ansi32"
->% 76,523 inferences, 0.021 CPU in 0.021 seconds (100% CPU, 3694413 Lips)
+Deterministic: ()<span class="ansi32"
+>
+% 76,459 inferences, 0.020 CPU in 0.021 seconds (98% CPU, 3737896 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/multifunction.metta  0)
 <span class="ansi1"
@@ -517,12 +516,13 @@ Deterministic: ()()]
 ;         (set_option_value  load show)
 P;HTML|
 ;         (set_option_value  test true)
-P;HTML|
+[()]
+P;HTML|
 ;         (maybe_halt  7)
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 10:25:48+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 10:33:56+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

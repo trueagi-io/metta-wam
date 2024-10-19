@@ -26,7 +26,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 10:26:06+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 10:34:13+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -353,22 +353,21 @@ Script started on 2024-10-19 10:26:06+00:00 [TERM="xterm-256color" TTY="/dev/pts
 <span class="ansi38-013099040"
 >!(assertEqualToResult (Add (S (S Z)) (S (S (S Z)))) ((S (S (S (S (S Z)))))))
 
-</span>[
-
+</span>
 ;<h3 id="METTA-MORPH-TESTS.PEANO.01"
 >;; METTA-MORPH-TESTS.PEANO.01</h3>
 ; 
 ; EVAL TEST
-; took 0.005 secs. (4.97 milliseconds) 
+; took 0.005 secs. (5.00 milliseconds) 
 
 !(assertEqualToResult (Add (S (S Z)) (S (S (S Z)))) ((S (S (S (S (S Z)))))))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((S (S (S (S (S Z)))))) ((S (S (S (S (S Z))))))))
 </span>
-Deterministic: ()()]
-<span class="ansi32"
->% 96,971 inferences, 0.020 CPU in 0.020 seconds (100% CPU, 4945690 Lips)
+Deterministic: ()<span class="ansi32"
+>
+% 96,907 inferences, 0.020 CPU in 0.020 seconds (100% CPU, 4969171 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/peano.metta  0)
 <span class="ansi1"
@@ -502,12 +501,13 @@ Deterministic: ()()]
 ;         (set_option_value  load show)
 P;HTML|
 ;         (set_option_value  test true)
-P;HTML|
+[()]
+P;HTML|
 ;         (maybe_halt  7)
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 10:26:12+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 10:34:19+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

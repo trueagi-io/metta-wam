@@ -27,7 +27,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 10:18:08+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 10:26:30+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -353,90 +353,84 @@ Script started on 2024-10-19 10:18:08+00:00 [TERM="xterm-256color" TTY="/dev/pts
 <span class="ansi38-013099040"
 >!(assertEqualToResult (intersection (superpose (a b (+ 2 3) c)) (superpose (b c (+ 2 3) c c d))) (b 5 c))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.BASE-TEST-REPR-PARSE-INTERSECTION.01"
 >;; HYPERON-METTALOG-SANITY.BASE-TEST-REPR-PARSE-INTERSECTION.01</h3>
 ; 
 ; EVAL TEST
-; took 0.049 secs. (49.27 milliseconds) 
+; took 0.049 secs. (48.91 milliseconds) 
 
 !(assertEqualToResult (intersection (superpose (a b (+ 2 3) c)) (superpose (b c (+ 2 3) c c d))) (b 5 c))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (b 5 c c c) (b 5 c)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;; assertEqualToResult doesnt work
 <span class="ansi38-013099040"
 >!(assertEqual (intersection (superpose (a b (+ 2 3) c)) (superpose (b c (+ 2 3) c c d))) (superpose (b (+ 2 3) c)))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.BASE-TEST-REPR-PARSE-INTERSECTION.02"
 >;; HYPERON-METTALOG-SANITY.BASE-TEST-REPR-PARSE-INTERSECTION.02</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.88 milliseconds) 
+; took 0.002 secs. (1.78 milliseconds) 
 
 !(assertEqual (intersection (superpose (a b (+ 2 3) c)) (superpose (b c (+ 2 3) c c d))) (superpose (b (+ 2 3) c)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (b 5 c c c) (b 5 c)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;; repr
 <span class="ansi38-013099040"
 >!(repr aswde)
 
-</span>[
-
-Deterministic: "aswde""aswde"]
+</span>
+Deterministic: "aswde"
 ;;; this works 
 <span class="ansi38-013099040"
 >!(assertEqualToResult (repr aswde) ("aswde"))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.BASE-TEST-REPR-PARSE-INTERSECTION.03"
 >;; HYPERON-METTALOG-SANITY.BASE-TEST-REPR-PARSE-INTERSECTION.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000382 secs. (382.16 microseconds) 
+; took 0.000336 secs. (335.61 microseconds) 
 
 !(assertEqualToResult (repr aswde) ("aswde"))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ("aswde") ("aswde")))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;; parse
 <span class="ansi38-013099040"
 >!(parse "kjh")
 
-</span>[
-
-Deterministic: kjhkjh]
+</span>
+Deterministic: kjh
 ;;; this works
 <span class="ansi38-013099040"
 >!(assertEqualToResult (parse "kjh") (kjh))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-METTALOG-SANITY.BASE-TEST-REPR-PARSE-INTERSECTION.04"
 >;; HYPERON-METTALOG-SANITY.BASE-TEST-REPR-PARSE-INTERSECTION.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000204 secs. (204.48 microseconds) 
+; took 0.000188 secs. (188.04 microseconds) 
 
 !(assertEqualToResult (parse "kjh") (kjh))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (kjh) (kjh)))
 </span>
-Deterministic: ()()]
-<span class="ansi32"
->% 219,555 inferences, 0.080 CPU in 0.080 seconds (100% CPU, 2745605 Lips)
+Deterministic: ()<span class="ansi32"
+>
+% 219,151 inferences, 0.081 CPU in 0.081 seconds (100% CPU, 2712597 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/base_test_repr_parse_intersection.metta  0)
 <span class="ansi1"
@@ -570,12 +564,18 @@ Deterministic: ()()]
 ;         (set_option_value  load show)
 P;HTML|
 ;         (set_option_value  test true)
-P;HTML|
+[()]
+[()]
+["aswde"]
+[()]
+[kjh]
+[()]
+P;HTML|
 ;         (maybe_halt  7)
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 10:18:14+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 10:26:36+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

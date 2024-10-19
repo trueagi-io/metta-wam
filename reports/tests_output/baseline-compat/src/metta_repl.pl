@@ -1239,7 +1239,7 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,
          (!,fail))))))))))));
 
        (Complete\==true, \+ WasInteractive, Control = contrl(Max,leap)) -> true ;
-        (((Complete==true ->! ; true))))), extra_answer_padding(format('~N~n'))))
+        (((Complete==true ->! ; true))))), not_compatio(extra_answer_padding(format('~N~n')))))
                     *-> (ignore(Result = res(FOut)),ignore(Output = (FOut)))
                     ; (flag(result_num,ResNum,ResNum),(ResNum==0->
       (in_answer_io(nop(write('['))),not_compatio(format('~N<no-results>~n~n')),!,true);true))),

@@ -34,7 +34,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 10:15:09+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 10:23:38+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -388,20 +388,19 @@ Script started on 2024-10-19 10:15:09+00:00 [TERM="xterm-256color" TTY="/dev/pts
 <span class="ansi38-013099040"
 >!(assertEqual (S K K x) x)
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.B1-EQUAL-CHAIN.01"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B1-EQUAL-CHAIN.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000860 secs. (859.76 microseconds) 
+; took 0.000757 secs. (757.05 microseconds) 
 
 !(assertEqual (S K K x) x)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (x) (x)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Here, we use `assertEqualToResult` to make sure
@@ -410,20 +409,19 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (expression without known equalities) ((expression without known equalities)))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.B1-EQUAL-CHAIN.02"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B1-EQUAL-CHAIN.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000293 secs. (292.89 microseconds) 
+; took 0.000296 secs. (296.13 microseconds) 
 
 !(assertEqualToResult (expression without known equalities) ((expression without known equalities)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((expression without known equalities)) ((expression without known equalities))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Another example
@@ -435,20 +433,19 @@ Deterministic: ()()]
 </span><span class="ansi38-013099040"
 >!(assertEqual (Add (S Z) (S Z)) (S (S Z)))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.B1-EQUAL-CHAIN.03"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B1-EQUAL-CHAIN.03</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.95 milliseconds) 
+; took 0.002 secs. (1.84 milliseconds) 
 
 !(assertEqual (Add (S Z) (S Z)) (S (S Z)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((S (S Z))) ((S (S Z)))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; In the current implementation, child expressions
@@ -457,20 +454,19 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (Something? (Add (S Z) (S Z))) (Something? (S (S Z))))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.B1-EQUAL-CHAIN.04"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B1-EQUAL-CHAIN.04</h3>
 ; 
 ; EVAL TEST
-; took 0.003 secs. (2.76 milliseconds) 
+; took 0.003 secs. (2.62 milliseconds) 
 
 !(assertEqual (Something? (Add (S Z) (S Z))) (Something? (S (S Z))))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Something? (S (S Z)))) ((Something? (S (S Z))))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Note that the same variable can be used multiple times on the left
@@ -482,39 +478,37 @@ Deterministic: ()()]
 </span><span class="ansi38-013099040"
 >!(assertEqual (eq (S K K x) x) T)
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.B1-EQUAL-CHAIN.05"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B1-EQUAL-CHAIN.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000950 secs. (949.97 microseconds) 
+; took 0.000839 secs. (839.37 microseconds) 
 
 !(assertEqual (eq (S K K x) x) T)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (T) (T)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqualToResult (eq Green Blue) ((eq Green Blue)))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.B1-EQUAL-CHAIN.06"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B1-EQUAL-CHAIN.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000296 secs. (296.22 microseconds) 
+; took 0.000297 secs. (296.74 microseconds) 
 
 !(assertEqualToResult (eq Green Blue) ((eq Green Blue)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((eq Green Blue)) ((eq Green Blue))))
 </span>
-Deterministic: ()()]
-<span class="ansi32"
->% 233,187 inferences, 0.055 CPU in 0.055 seconds (100% CPU, 4225285 Lips)
+Deterministic: ()<span class="ansi32"
+>
+% 232,783 inferences, 0.054 CPU in 0.054 seconds (100% CPU, 4292994 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/b1_equal_chain.metta  0)
 <span class="ansi1"
@@ -648,12 +642,18 @@ Deterministic: ()()]
 ;         (set_option_value  load show)
 P;HTML|
 ;         (set_option_value  test true)
-P;HTML|
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+P;HTML|
 ;         (maybe_halt  7)
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 10:15:15+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 10:23:44+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

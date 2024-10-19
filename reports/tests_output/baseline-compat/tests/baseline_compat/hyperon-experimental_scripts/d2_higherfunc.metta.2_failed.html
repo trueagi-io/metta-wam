@@ -136,7 +136,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 10:16:16+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 10:24:43+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -512,73 +512,69 @@ Script started on 2024-10-19 10:16:16+00:00 [TERM="xterm-256color" TTY="/dev/pts
 <span class="ansi38-013099040"
 >!(assertEqual (get-type (curry +)) (-> Number (-> Number Number)))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.01"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000331 secs. (331.32 microseconds) 
+; took 0.000291 secs. (291.38 microseconds) 
 
 !(assertEqual (get-type (curry +)) (-> Number (-> Number Number)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((-> Number (-> Number Number))) ((-> Number (-> Number Number)))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (get-type ((curry +) 2)) (-> Number Number))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.02"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000251 secs. (251.37 microseconds) 
+; took 0.000260 secs. (259.87 microseconds) 
 
 !(assertEqual (get-type ((curry +) 2)) (-> Number Number))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((-> Number Number)) ((-> Number Number))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;; Partial application is not reduced, basically
 <span class="ansi38-013099040"
 >!(assertEqualToResult ((curry +) 2) (((curry +) 2)))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.03"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000727 secs. (726.59 microseconds) 
+; took 0.000722 secs. (721.99 microseconds) 
 
 !(assertEqualToResult ((curry +) 2) (((curry +) 2)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (((curry +) 2)) (((curry +) 2))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;; Full application will be reduced
 <span class="ansi38-013099040"
 >!(assertEqual (((curry +) 2) 3) 5)
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.04"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000447 secs. (447.39 microseconds) 
+; took 0.000417 secs. (417.04 microseconds) 
 
 !(assertEqual (((curry +) 2) 3) 5)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (5) (5)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Curry with first application
@@ -592,73 +588,69 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (get-type (curry-a + 2)) (-> Number Number))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.05"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000304 secs. (304.32 microseconds) 
+; took 0.000323 secs. (323.32 microseconds) 
 
 !(assertEqual (get-type (curry-a + 2)) (-> Number Number))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((-> Number Number)) ((-> Number Number))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (get-type ((curry-a + 2) 3)) Number)
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.06"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000300 secs. (299.80 microseconds) 
+; took 0.000302 secs. (301.96 microseconds) 
 
 !(assertEqual (get-type ((curry-a + 2) 3)) Number)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (Number) (Number)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;; Badly typed
 <span class="ansi38-013099040"
 >!(assertEqualToResult (get-type ((curry-a + 2) "S")) ())
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.07"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000297 secs. (297.32 microseconds) 
+; took 0.000360 secs. (360.04 microseconds) 
 
 !(assertEqualToResult (get-type ((curry-a + 2) "S")) ())
 
 <span class="ansi31"
 >(loonit_failureR  (equal_enough_for_test  (Number) ()))
 </span>
-Deterministic: ((Error  (got  (Number)) (expected  ())))((Error  (got  (Number)) (expected  ())))]
+Deterministic: ((Error  (got  (Number)) (expected  ())))
 ;;; Full application works
 <span class="ansi38-013099040"
 >!(assertEqual ((curry-a + 2) 3) 5)
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.08"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.08</h3>
 ; 
 ; EVAL TEST
-; took 0.000428 secs. (427.92 microseconds) 
+; took 0.000382 secs. (382.07 microseconds) 
 
 !(assertEqual ((curry-a + 2) 3) 5)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (5) (5)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; More tests with partial application wrapping
@@ -679,26 +671,24 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (is-socrates) ((curry-a is Socrates)))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.09"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.09</h3>
 ; 
 ; EVAL TEST
-; took 0.000499 secs. (499.14 microseconds) 
+; took 0.000478 secs. (478.45 microseconds) 
 
 !(assertEqualToResult (is-socrates) ((curry-a is Socrates)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((curry-a is Socrates)) ((curry-a is Socrates))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;; not reduced
 <span class="ansi38-013099040"
 >!(assertEqual ((curry-a is Socrates) Human) (is Socrates Human))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.10"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.10</h3>
 ; 
@@ -710,25 +700,24 @@ Deterministic: ()()]
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (True) (True)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;; reduced
 <span class="ansi38-013099040"
 >!(assertEqual ((is-socrates) Human) True)
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.11"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.11</h3>
 ; 
 ; EVAL TEST
-; took 0.000884 secs. (884.27 microseconds) 
+; took 0.000870 secs. (870.32 microseconds) 
 
 !(assertEqual ((is-socrates) Human) True)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (True) (True)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; The same trick works for defining lambda
@@ -744,37 +733,35 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual ((lambda $x (+ $x 1)) 2) 3)
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.12"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.12</h3>
 ; 
 ; EVAL TEST
-; took 0.000481 secs. (480.51 microseconds) 
+; took 0.000468 secs. (467.73 microseconds) 
 
 !(assertEqual ((lambda $x (+ $x 1)) 2) 3)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (3) (3)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual ((lambda ($x $y) (+ $x $y)) (2 7)) 9)
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.13"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.13</h3>
 ; 
 ; EVAL TEST
-; took 0.000697 secs. (696.70 microseconds) 
+; took 0.000660 secs. (660.28 microseconds) 
 
 !(assertEqual ((lambda ($x $y) (+ $x $y)) (2 7)) 9)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (9) (9)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;; Another example
 <span class="ansi38-255165000"
 > (= (part-appl $f $x) (lambda $y ($f $x $y)))
@@ -783,20 +770,19 @@ Deterministic: ()()]
 </span><span class="ansi38-013099040"
 >!(assertEqual ((inc) 5) 6)
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.14"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.14</h3>
 ; 
 ; EVAL TEST
-; took 0.000886 secs. (885.61 microseconds) 
+; took 0.000834 secs. (834.43 microseconds) 
 
 !(assertEqual ((inc) 5) 6)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (6) (6)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;; REM:
 ;;;   (get-type (lambda ($x $y) (+ $x $y)))
 ;;; returns (-> %Undefined% Number), because the type of `($x $y)` is not defined.
@@ -846,143 +832,135 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (fmap (curry-a + 2) (Something 5)) (Something 7))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.15"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.15</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.43 milliseconds) 
+; took 0.002 secs. (2.25 milliseconds) 
 
 !(assertEqual (fmap (curry-a + 2) (Something 5)) (Something 7))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Something 7)) ((Something 7))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (fmap (curry-a + 2) (Nothing)) (Nothing))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.16"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.16</h3>
 ; 
 ; EVAL TEST
-; took 0.000982 secs. (982.45 microseconds) 
+; took 0.000965 secs. (965.11 microseconds) 
 
 !(assertEqual (fmap (curry-a + 2) (Nothing)) (Nothing))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Nothing)) ((Nothing))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;; Type inference works
 <span class="ansi38-013099040"
 >!(assertEqual (get-type (fmap (curry-a + 1) (Left 5))) (Either Number))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.17"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.17</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.00 milliseconds) 
+; took 0.000928 secs. (928.50 microseconds) 
 
 !(assertEqual (get-type (fmap (curry-a + 1) (Left 5))) (Either Number))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Either Number)) ((Either Number))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;; It works for untyped constructors as well, if they
 ;;; follow the patterns in `fmap` equalities
 <span class="ansi38-013099040"
 >!(assertEqual (fmap (curry-a + 2) (UntypedC 5)) (UntypedC 7))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.18"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.18</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.31 milliseconds) 
+; took 0.002 secs. (2.25 milliseconds) 
 
 !(assertEqual (fmap (curry-a + 2) (UntypedC 5)) (UntypedC 7))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((UntypedC 7)) ((UntypedC 7))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (fmap (curry-a + 2) (UntypedC 5 (UntypedC 8 (Null)))) (UntypedC 7 (UntypedC 10 (Null))))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.19"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.19</h3>
 ; 
 ; EVAL TEST
-; took 0.014 secs. (13.64 milliseconds) 
+; took 0.013 secs. (13.48 milliseconds) 
 
 !(assertEqual (fmap (curry-a + 2) (UntypedC 5 (UntypedC 8 (Null)))) (UntypedC 7 (UntypedC 10 (Null))))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((UntypedC 7 (UntypedC 10 (Null)))) ((UntypedC 7 (UntypedC 10 (Null))))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;; Type mismatches are detected:
 <span class="ansi38-013099040"
 >!(assertEqualToResult (get-type (fmap (curry-a + 2) (Left "5"))) ())
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.20"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.20</h3>
 ; 
 ; EVAL TEST
-; took 0.000464 secs. (464.05 microseconds) 
+; took 0.000441 secs. (441.02 microseconds) 
 
 !(assertEqualToResult (get-type (fmap (curry-a + 2) (Left "5"))) ())
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (()) ()))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqualToResult (get-type (fmap (curry-a + 2) (UntypedC "5"))) ())
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.21"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.21</h3>
 ; 
 ; EVAL TEST
-; took 0.000395 secs. (395.19 microseconds) 
+; took 0.000362 secs. (361.98 microseconds) 
 
 !(assertEqualToResult (get-type (fmap (curry-a + 2) (UntypedC "5"))) ())
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (()) ()))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqualToResult (get-type (fmap (curry-a + 2) (UntypedC (Null) 5))) ())
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.22"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.22</h3>
 ; 
 ; EVAL TEST
-; took 0.000368 secs. (368.18 microseconds) 
+; took 0.000349 secs. (348.85 microseconds) 
 
 !(assertEqualToResult (get-type (fmap (curry-a + 2) (UntypedC (Null) 5))) ())
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (()) ()))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; It is possible to implement `fmap` only as an interface
@@ -999,20 +977,19 @@ Deterministic: ()()]
 </span><span class="ansi38-013099040"
 >!(assertEqual (fmap-i (curry-a - 7) (Right 3)) (Right 4))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.23"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.23</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.29 milliseconds) 
+; took 0.002 secs. (2.32 milliseconds) 
 
 !(assertEqual (fmap-i (curry-a - 7) (Right 3)) (Right 4))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Right 4)) ((Right 4))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;; More examples
 <span class="ansi38-255165000"
 > (: List (-> $a Type))
@@ -1027,14 +1004,12 @@ Deterministic: ()()]
 </span><span class="ansi38-013099040"
 >!(set-debug! defn)
 
-</span>[
-
-Deterministic: truetrue]
+</span>
+Deterministic: true
 <span class="ansi38-013099040"
 >!(assertEqual (fmap-i (curry-a * 2) (Cons 3 (Cons 4 Nil))) (Cons 6 (Cons 8 Nil)))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.24"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.24</h3>
 ;<span class="ansi38-047047047"
@@ -1071,22 +1046,21 @@ Deterministic: truetrue]
 >   47:5   |   |   |   |   |   |-<--(defn (retval  Nil)) </span>
 ; 
 ; EVAL TEST
-; took 0.010 secs. (9.90 milliseconds) 
+; took 0.009 secs. (9.48 milliseconds) 
 
 !(assertEqual (fmap-i (curry-a * 2) (Cons 3 (Cons 4 Nil))) (Cons 6 (Cons 8 Nil)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Cons 6 (Cons 8 Nil))) ((Cons 6 (Cons 8 Nil)))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;; Thus, there is no problem in having different implementations
 ;;; of the same function for different types. But it will not
 ;;; work "for free" (it requires explicit implementation for each type)
 <span class="ansi38-013099040"
 >!(assertEqualToResult (fmap-i (curry-a + 2) (Untyped 5)) ((fmap-i (curry-a + 2) (Untyped 5))))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.25"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.25</h3>
 ;<span class="ansi38-047047047"
@@ -1103,14 +1077,14 @@ Deterministic: ()()]
 >   10:1   |   |-<--(defn (retval  fail)) </span>
 ; 
 ; EVAL TEST
-; took 0.003 secs. (3.18 milliseconds) 
+; took 0.003 secs. (3.16 milliseconds) 
 
 !(assertEqualToResult (fmap-i (curry-a + 2) (Untyped 5)) ((fmap-i (curry-a + 2) (Untyped 5))))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((fmap-i (curry-a + 2) (Untyped 5))) ((fmap-i (curry-a + 2) (Untyped 5)))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; As per issue
@@ -1133,8 +1107,7 @@ Deterministic: ()()]
 </span><span class="ansi38-013099040"
 >!(assertEqual (insert 3 (insert 2 (insert 1 Nil))) (Cons 1 (Cons 2 (Cons 3 Nil))))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.26"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.26</h3>
 ;<span class="ansi38-047047047"
@@ -1163,19 +1136,18 @@ Deterministic: ()()]
 >   96:3   |   |   |   |-<--(defn (retval  (Cons 1 Nil))) </span>
 ; 
 ; EVAL TEST
-; took 0.012 secs. (12.40 milliseconds) 
+; took 0.012 secs. (12.22 milliseconds) 
 
 !(assertEqual (insert 3 (insert 2 (insert 1 Nil))) (Cons 1 (Cons 2 (Cons 3 Nil))))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Cons 1 (Cons 2 (Cons 3 Nil)))) ((Cons 1 (Cons 2 (Cons 3 Nil))))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 <span class="ansi38-013099040"
 >!(assertEqual (sort (Cons 3 (Cons 1 (Cons 2 Nil)))) (Cons 1 (Cons 2 (Cons 3 Nil))))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.27"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.D2-HIGHERFUNC.27</h3>
 ;<span class="ansi38-047047047"
@@ -1216,16 +1188,16 @@ Deterministic: ()()]
 >  121:7   |   |   |   |   |   |   |   |-<--(defn (retval  Nil)) </span>
 ; 
 ; EVAL TEST
-; took 0.016 secs. (15.86 milliseconds) 
+; took 0.016 secs. (15.70 milliseconds) 
 
 !(assertEqual (sort (Cons 3 (Cons 1 (Cons 2 Nil)))) (Cons 1 (Cons 2 (Cons 3 Nil))))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Cons 1 (Cons 2 (Cons 3 Nil)))) ((Cons 1 (Cons 2 (Cons 3 Nil))))))
 </span>
-Deterministic: ()()]
-<span class="ansi32"
->% 1,258,450 inferences, 0.269 CPU in 0.269 seconds (100% CPU, 4675856 Lips)
+Deterministic: ()<span class="ansi32"
+>
+% 1,256,552 inferences, 0.265 CPU in 0.265 seconds (100% CPU, 4748387 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/d2_higherfunc.metta  0)
 <span class="ansi1"
@@ -1359,12 +1331,40 @@ Deterministic: ()()]
 ;         (set_option_value  load show)
 P;HTML|
 ;         (set_option_value  test true)
-P;HTML|
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[((Error  (got  (Number)) (expected  ())))]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[()]
+[true]
+[()]
+[()]
+[()]
+[()]
+P;HTML|
 ;         (maybe_halt  7)
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 10:16:22+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 10:24:49+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

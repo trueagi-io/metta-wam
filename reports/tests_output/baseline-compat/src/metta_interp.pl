@@ -599,8 +599,8 @@ real_notrace(Goal) :-
 
 
 :- dynamic(is_answer_output_stream/2).
-answer_output(Stream):- is_testing,original_user_output(Stream),!.
-answer_output(Stream):- !,original_user_output(Stream),!. % yes, the cut is on purpose
+%answer_output(Stream):- is_testing,original_user_output(Stream),!.
+%answer_output(Stream):- !,original_user_output(Stream),!. % yes, the cut is on purpose
 answer_output(Stream):- is_answer_output_stream(_,Stream),!.
 answer_output(Stream):- tmp_file('answers',File),
    open(File,write,Stream,[encoding(utf8)]),
@@ -609,8 +609,8 @@ answer_output(Stream):- tmp_file('answers',File),
 write_answer_output:-
   retract(is_answer_output_stream(File,Stream)),!,
   ignore(catch_log(close(Stream))),
-  sformat(S,'cat ~w',[File]),
-  catch_log(ignore(shell(S))),nl.
+  read_file_to_string(File,String,[encoding(utf8)]),
+  write(String).
 write_answer_output.
 
 

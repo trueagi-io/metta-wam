@@ -32,7 +32,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 10:15:02+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 10:23:31+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -376,57 +376,54 @@ Script started on 2024-10-19 10:15:02+00:00 [TERM="xterm-256color" TTY="/dev/pts
 <span class="ansi38-013099040"
 >!(assertEqualToResult (match &self (:= (S K K x) $r) $r) ((K x (K x))))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.B0-CHAINING-PRELIM.01"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B0-CHAINING-PRELIM.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000620 secs. (620.46 microseconds) 
+; took 0.000613 secs. (613.48 microseconds) 
 
 !(assertEqualToResult (match &self (:= (S K K x) $r) $r) ((K x (K x))))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((K x (K x))) ((K x (K x)))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;; A second matching step; the result of the previous
 ;;; step is manually used as input for the next query
 <span class="ansi38-013099040"
 >!(assertEqualToResult (match &self (:= (K x (K x)) $r) $r) (x))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.B0-CHAINING-PRELIM.02"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B0-CHAINING-PRELIM.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000189 secs. (189.25 microseconds) 
+; took 0.000172 secs. (171.86 microseconds) 
 
 !(assertEqualToResult (match &self (:= (K x (K x)) $r) $r) (x))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (x) (x)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;; Combined reduction via matching in two steps
 <span class="ansi38-013099040"
 >!(assertEqualToResult (match &self (:= (S K K x) $r) (match &self (:= $r $r2) $r2)) (x))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.B0-CHAINING-PRELIM.03"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B0-CHAINING-PRELIM.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000327 secs. (326.57 microseconds) 
+; took 0.000268 secs. (267.77 microseconds) 
 
 !(assertEqualToResult (match &self (:= (S K K x) $r) (match &self (:= $r $r2) $r2)) (x))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (x) (x)))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Another example (Peano summation)
@@ -439,40 +436,38 @@ Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (match &self (:= (Add (S Z) (S Z)) $r) $r) ((Add (S (S Z)) Z)))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.B0-CHAINING-PRELIM.04"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B0-CHAINING-PRELIM.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000735 secs. (735.07 microseconds) 
+; took 0.000741 secs. (740.91 microseconds) 
 
 !(assertEqualToResult (match &self (:= (Add (S Z) (S Z)) $r) $r) ((Add (S (S Z)) Z)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Add (S (S Z)) Z)) ((Add (S (S Z)) Z))))
 </span>
-Deterministic: ()()]
+Deterministic: ()
 ;;; Two steps together
 <span class="ansi38-013099040"
 >!(assertEqualToResult (match &self (:= (Add (S Z) (S Z)) $r) (match &self (:= $r $r2) $r2)) ((S (S Z))))
 
-</span>[
-
+</span>
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.B0-CHAINING-PRELIM.05"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B0-CHAINING-PRELIM.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000606 secs. (606.15 microseconds) 
+; took 0.000622 secs. (621.61 microseconds) 
 
 !(assertEqualToResult (match &self (:= (Add (S Z) (S Z)) $r) (match &self (:= $r $r2) $r2)) ((S (S Z))))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((S (S Z))) ((S (S Z)))))
 </span>
-Deterministic: ()()]
-<span class="ansi32"
->% 183,150 inferences, 0.042 CPU in 0.042 seconds (100% CPU, 4345148 Lips)
+Deterministic: ()<span class="ansi32"
+>
+% 182,814 inferences, 0.042 CPU in 0.042 seconds (100% CPU, 4364971 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/b0_chaining_prelim.metta  0)
 <span class="ansi1"
@@ -606,12 +601,17 @@ Deterministic: ()()]
 ;         (set_option_value  load show)
 P;HTML|
 ;         (set_option_value  test true)
-P;HTML|
+[()]
+[()]
+[()]
+[()]
+[()]
+P;HTML|
 ;         (maybe_halt  7)
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 10:15:08+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 10:23:37+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
