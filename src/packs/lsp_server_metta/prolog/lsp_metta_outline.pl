@@ -289,6 +289,10 @@ grovel_all_info(Target, Arity):-
 banner_for(Type,Target):- format('~N```~n---~n ## ~w: ~w ~n```lisp~n',[Type, Target]).
 lsp_separator():- format('~N```~n---~n```lisp~n',[]).
 
+show_checked(Name, Value, Caption) :- fail,
+    format("[~w](file:command:myExtension.toggleValue?{\"name\":\"~w\",\"value\":\"~w\"}) ~w ", [Value, Name, Value, Caption]).
+show_checked(Name, Value, Caption) :- format("[~w](file://toggleValue_~w.metta) ~w ", [Value, Name, Caption]).
+
 
 
 %!  grovel_some_help(+Target, +Arity) is det.
@@ -302,7 +306,7 @@ grovel_some_help(Target, _) :- fail, % (for debugging) commenting out fail will 
   forall(member(RefType,[definition,declaration,typeDefinition,implementation,references]),
   (banner_for(RefType,Target),
     %ignore((defined_at(Type, HintPath, Target, Clause,Path,Loc),
-    forall(member(each_type_at(Target,Type,Clause,Path,Loc),Sort),
+    forall(member(each_type_at(Target,Clause,Path,Loc,Type),Sort),
       ignore((
           once(type_expand(RefType,Type)),
           write_src_xref(Clause,Type,Path,Loc),nl))))),
@@ -313,29 +317,61 @@ grovel_some_help(Target, _) :-
 grovel_some_help(Target, Arity):- number(Arity), Arity > 1,
     findall(A, is_documented_arity(Target, A), ArityDoc),  % Retrieve documented arities for the term.
     ArityDoc \== [],  % Ensure the documentation is not empty.
-    \+ memberchk(Arity, ArityDoc),  % Verify if the term's arity DOES NOT matches the documented arity.
-    
+    \+ memberchk(Arity, ArityDoc),  % Verify if the term's arity DOES NOT matches the documented arity.    
     format('Arity expected: ~w vs ~w~n', [ArityDoc, Arity]),lsp_separator() .  % Output a message if there's an arity mismatch.
+
 grovel_some_help(Target, _) :- 
-    each_type_at_sorted(Target, Type,Clause,Path,Loc),
-    format('~@', [write_src_xref(Clause,Type,Path,Loc)]).  % Write the source cross-reference for the atom.
+    format("~n```~n",[]),
+    show_checked("show_docs","(-)","Show Docs "),
+    show_checked("show_refs","(+)","Show Refs "),
+    show_checked("show_menu","(+)","Show Menu "),
+    format("for: ~w", [Target]),
+    format("~n```~n",[]).  
+
+grovel_some_help(Target, _) :- 
+    each_type_at_sorted(Target,Clause,Path,Loc,Type),
+    write_src_xref(Clause,Type,Path,Loc).  % Write the source cross-reference for the atom.
    
 %xref_call(G):- catch(G,E,debug(server(high), "xref_call ~w", [G])).
 %xref_call(G):- catch(with_no_debug(G),E,debug(server(high), "xref_call ~w", [G->E])).
 xref_call(G):- with_no_debug(G).
 %xref_call(G):- call(G). 
 
-each_type_at_sorted(Target,Type,Clause,Path,Loc):-
+each_type_at_sorted(Target,Clause,Path,Loc,Type):-
     each_type_at_sorted(Target, Sort),
-    member(each_type_at(Target,Type,Clause,Path,Loc),Sort).
+    member(each_type_at(Target,Clause,Path,Loc,Type),Sort).
 
 each_type_at_sorted(Target, Sort):-
-      findall(each_type_at(Target,Type,Clause,Path,Loc),
-              each_type_at(Target,Type,Clause,Path,Loc),
+      findall(each_type_at(Target,Clause,Path,Loc,Type),
+              each_type_at(Target,Clause,Path,Loc,Type),
               List), 
-       sort(List,Sort).
+       group_by_last_arg(List,Sort).
 
-each_type_at(Target,Type,Clause,Path,Loc):-
+%% group_by_last_arg(+Terms, -SortedList) is det.
+% This predicate groups terms by their last argument, sorts the groups by the last argument,
+% and preserves the original order of terms within each group.
+group_by_last_arg(TermL, SortedList) :-
+    list_to_set(TermL, Terms),
+    % Find all unique group keys (last argument of each term)
+    findall(GroupKey, (member(Term, Terms), functor(Term, _, Arity), arg(Arity, Term, GroupKey)), GroupKeysUnsorted),
+    % Sort group keys lexicographically (to define group order)
+    sort(GroupKeysUnsorted, GroupKeys),
+    % Group terms by their last argument (group key) without sorting the terms inside each group
+    findall(Group,
+            (member(GroupKey, GroupKeys),
+             include(is_in_group(GroupKey), Terms, Group)),
+            SortedGroups),
+    % Flatten the sorted groups into a single list
+    append(SortedGroups, SortedList).
+% is_in_group(+GroupKey, +Term)
+% Helper predicate to check if Term belongs to the specified GroupKey
+is_in_group(GroupKey, Term) :-
+    functor(Term, _, Arity),
+    arg(Arity, Term, GroupKey).
+
+
+
+each_type_at(Target,Clause,Path,Loc,Type):-
     no_repeats_var(ClauseV),    
     metta_atom_xref(Clause, Path, Loc), ClauseV = Clause,  % Cross-reference the term with known atoms.
     about_term(Clause, Target),  % Determine if the atom is related to the term.
@@ -377,9 +413,12 @@ user:handle_msg_hook(MethodStr, MsgBody, _) :- fail,
 %   Outputs source code or its reference based on the nesting of the source.
 %
 %   @arg Src The source code or reference to output.
-write_src_xref_oneloc(Src):-
-  write_src_xref(Src),
-  maybe_link_xref(Src).
+write_src_xref(Src):- % fail, 
+    very_nested_src(Src),  % Check if the source is complex.
+    write_src_wi(Src), !.  % Write the full source content if it's complex.
+write_src_xref(Src):- 
+    write_src_woi(Src).  % Otherwise, write the source content without additional information.
+
 
 write_src_xref(Clause,Type,Path,Loc):-
    catch_skip((write_src_xref(Clause),
@@ -391,16 +430,12 @@ write_src_xref(Clause,Path,Loc):-
 
 catch_skip(G):- ignore(catch(G,_,true)).
 
-write_src_xref(Src):- % fail, 
-    very_nested_src(Src), !,  % Check if the source is complex.
-    wots(S, pp_sexi_l(Src)), write(S).  % Write the full source content if it's complex.
-write_src_xref(Src):- 
-    write_src_woi(Src).  % Otherwise, write the source content without additional information.
 % Check for deeply nested lists
 very_nested_src([_, _ | Src]):- is_list(Src), 
     member(M, Src), is_list(M), 
-    member(E, M), is_list(E), 
+    member(E, M), is_list(E),
     member(I, E), is_list(I), !.  
+
 maybe_link_xref(What):- 
   ignore(once((
      metta_file_buffer(_,Atom,_,Path,Pos),
@@ -920,9 +955,9 @@ op_execkind(Op,metta_symbol):- atom(Op),atom_concat('&',_,Op),!.
 
 op_type(_,Op):- \+ atom(Op),!,fail.
 op_type(import,Op):- import_op(Op).
-op_type(var,'bind!'). op_type(var,'pragma!'). op_type(decl(doc),'@doc').
-op_type(assert,Op):- atom_concat(assert,_,Op). 
-op_type(decl(=),'='). op_type(decl(type),':'). op_type(decl(type),':<').
+op_type(decl(use),'bind!'). op_type(decl(use),'pragma!'). op_type(decl(doc),'@doc').
+op_type(ref_assert,Op):- atom_concat(assert,_,Op). 
+op_type(decl(impl),'='). op_type(decl(ftype),':'). op_type(decl(ftype),':<').
 
 import_op(Op):- \+ atom(Op),!,fail.
 import_op(Op):- atom_contains(Op,"include").
@@ -1085,7 +1120,7 @@ called_at(Path, Clause, By, Location) :-
     metta_caller(CallerLine, By).
 
 metta_caller(Clause, Symbol):- is_definition(decl(_),Symbol,Clause).
-metta_callee(Clause, Symbol):- is_definition(ref ,Symbol,Clause).
+metta_callee(Clause, Symbol):- is_definition(ref(_) ,Symbol,Clause).
 
 into_op_head_body(Clause,Op,Head,Body):- var(Clause),!,freeze(into_op_head_body(Clause,Op,Head,Body)).
 into_op_head_body(exec(List),Op,Head,Body):- !, into_op_head_body_exec(List,Op,Head,Body).
@@ -1121,10 +1156,10 @@ into_op_fun_rest_body(Clause,Op,Fun,Rest,Body):-
 split_head([Fun|Rest],Fun,Rest):- is_list(Rest),!.
 split_head(Head,Head,[]).
 
-type_op_head_rest_body(var, Symbol, Op,_Head,_Rest, Body):- op_type(import,Op),    sub_symbol(Symbol,Body).
-type_op_head_rest_body(ref, Symbol, Op, Head,_Rest,_Body):- op_type(import,Op), !, sub_symbol(Symbol,Head).
+type_op_head_rest_body(decl(use), Symbol, Op,_Head,_Rest, Body):- op_type(import,Op),    sub_symbol(Symbol,Body).
+type_op_head_rest_body(ref(a), Symbol, Op, Head,_Rest,_Body):- op_type(import,Op), !, sub_symbol(Symbol,Head).
 
-type_op_head_rest_body(ref, Symbol,_Op,_Head, Rest, Body):- not_promiscuous(Symbol),sub_symbol(Symbol,[Body, Rest]).
+type_op_head_rest_body(ref(a), Symbol,_Op,_Head, Rest, Body):- not_promiscuous(Symbol),sub_symbol(Symbol,[Body, Rest]).
 type_op_head_rest_body(Type,Symbol, Op, Head,_Rest,_Body):- op_type(Type,Op),!,sub_symbol(Symbol,Head).
 
 not_promiscuous(Symbol):- var(Symbol), !, freeze(Symbol,not_promiscuous(Symbol)).
@@ -1139,7 +1174,7 @@ sub_symbol(Symbol,Head):- sub_term(Symbol,Head),atomic(Symbol),!.
 sub_symbol(Symbol,Head):- sub_term(Symbol,Head),!.
 
 xref_defined(Path, Target, Ref):-
-  xref_defined(Type, Target, Path, Ref), Type\==ref.
+  xref_defined(Type, Target, Path, Ref), Type\=ref(_).
 
 xref_defined(Type, Target, Path, Ref):- 
   xref_defined(Type, Target, _Clause, Path, Ref).
@@ -1152,10 +1187,10 @@ xref_defined(Type, Target, Clause, Path, PosStart):-
 
 type_expand(Var,Var):- var(Var),!.
 type_expand(definition,RefType):- member(RefType, [decl(_)]).
-type_expand(declaration,RefType):- member(RefType, [var]).
-type_expand(references,RefType):- member(RefType, [ref]).
-type_expand(typeDefinition,RefType):- member(RefType, [decl(type)]).
-type_expand(implementation,RefType):- member(RefType, [decl(_),var]).
+type_expand(declaration,RefType):- member(RefType, [decl(use)]).
+type_expand(references,RefType):- member(RefType, [ref(_)]).
+type_expand(typeDefinition,RefType):- member(RefType, [decl(ftype)]).
+type_expand(implementation,RefType):- member(RefType, [decl(_),decl(use)]).
 
 % textDocument/declaration: returns the specific location of the symbol's type declaration, which can include its function definition, symbol definition, etc. Since only one location can be returned, the system chooses the most relevant type declaration for the symbol.
 % textDocument/implementation: returns a list of specific locations where the symbol is implemented. Additionally, it includes the locations returned by both textDocument/definition and textDocument/declaration, showing the full picture of where the symbol is implemented and its type associations.
@@ -1168,7 +1203,7 @@ defined_at(RefType, HintPath, NameArity, Clause, Location):-
   xref_mettalog(HintPath),
   name_callable(NameArity, Target),
   each_type_at_sorted(Target, Sort),!,
-  member(each_type_at(Target,Type, Clause, Path, Ref),Sort),
+  member(each_type_at(Target,Clause, Path, Ref, Type),Sort),
   once(type_expand(RefType,Type)),
   atom_concat('file://', Path, Doc),
   once(relative_ref_location(Doc, Clause, Ref, Location)).
