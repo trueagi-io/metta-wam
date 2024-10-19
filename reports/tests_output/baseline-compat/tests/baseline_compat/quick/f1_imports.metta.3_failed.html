@@ -108,7 +108,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 10:20:26+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 10:27:57+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -457,15 +457,14 @@ Script started on 2024-10-19 10:20:26+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; QUICK.F1-IMPORTS.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000171 secs. (170.73 microseconds) 
+; took 0.000185 secs. (185.31 microseconds) 
 
 !(assertEqualToResult (get-type &self) (hyperon::space::DynSpace))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (hyperon::space::DynSpace) (hyperon::space::DynSpace)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual ((let $x (get-atoms &self) (get-type $x))) ((get-type &self)))
 
@@ -475,15 +474,14 @@ Deterministic: ()
 >;; QUICK.F1-IMPORTS.02</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.99 milliseconds) 
+; took 0.002 secs. (1.97 milliseconds) 
 
 !(assertEqual ((let $x (get-atoms &self) (get-type $x))) ((get-type &self)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Symbol) (Symbol)) ((Symbol))))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; stdlib is already loaded
 <span class="ansi38-013099040"
 >!(assertEqual (if (> 1 2) 1 2) 2)
@@ -494,15 +492,14 @@ Deterministic: ()
 >;; QUICK.F1-IMPORTS.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000264 secs. (264.12 microseconds) 
+; took 0.000298 secs. (298.34 microseconds) 
 
 !(assertEqual (if (> 1 2) 1 2) 2)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (2) (2)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Importing the module into new space
@@ -559,7 +556,7 @@ Deterministic: ()
 >;; QUICK.F1-MODULEA.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000210 secs. (209.69 microseconds) 
+; took 0.000179 secs. (178.51 microseconds) 
 
 !(assertEqual (+ 1 2) 3)
 
@@ -575,23 +572,21 @@ Deterministic: ()
 >;; QUICK.F1-MODULEA.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000144 secs. (144.48 microseconds) 
+; took 0.000147 secs. (147.33 microseconds) 
 
 !(assertEqual (if True "S" "F") "S")
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ("S") ("S")))
 </span>
-Deterministic: ()
-<span class="ansi38-255165000"
+Deterministic: ()<span class="ansi38-255165000"
 > (= (dup $x) (if (== $x 0) (+ $x 10) (g $x)))
 </span><span class="ansi38-255165000"
 > (: f (-> Number Number))
 </span><span class="ansi38-255165000"
 > (= (f $x) (if (< $x 0) (- 0 $x) (g (+ 1 $x))))
 </span>
-Last Result(2): ()
-()]
+Last Result(2): ()()]
 ;;; It's first atom is a space
 ;;;!(assertEqual
 ;;;  (let* (($x (collapse (get-atoms &m)))
@@ -627,8 +622,7 @@ Last Result(2): ()
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((g 3)) ((g 3))))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; Importing the same space into `&self` should break nothing
 ;;; TODO? If stdlib space would be in `&m`, which should check that it is not
 ;;; there anymore since in should be removed after importing it to `&self`
@@ -690,7 +684,7 @@ Deterministic: ()
 >;; QUICK.F1-MODULEA.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000229 secs. (228.57 microseconds) 
+; took 0.000181 secs. (180.52 microseconds) 
 
 !(assertEqual (+ 1 2) 3)
 
@@ -706,15 +700,14 @@ Deterministic: ()
 >;; QUICK.F1-MODULEA.08</h3>
 ; 
 ; EVAL TEST
-; took 0.000168 secs. (168.42 microseconds) 
+; took 0.000153 secs. (153.22 microseconds) 
 
 !(assertEqual (if True "S" "F") "S")
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ("S") ("S")))
 </span>
-Deterministic: ()
-<span class="ansi38-255165000"
+Deterministic: ()<span class="ansi38-255165000"
 > (= (dup $x) (if (== $x 0) (+ $x 10) (g $x)))
 </span><span class="ansi38-255165000"
 > (: f (-> Number Number))
@@ -782,7 +775,7 @@ Deterministic: ()
 >;; QUICK.F1-MODULEA.09</h3>
 ; 
 ; EVAL TEST
-; took 0.000253 secs. (252.62 microseconds) 
+; took 0.000218 secs. (217.94 microseconds) 
 
 !(assertEqual (+ 1 2) 3)
 
@@ -798,23 +791,21 @@ Deterministic: ()
 >;; QUICK.F1-MODULEA.10</h3>
 ; 
 ; EVAL TEST
-; took 0.000163 secs. (163.40 microseconds) 
+; took 0.000138 secs. (138.45 microseconds) 
 
 !(assertEqual (if True "S" "F") "S")
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ("S") ("S")))
 </span>
-Deterministic: ()
-<span class="ansi38-255165000"
+Deterministic: ()<span class="ansi38-255165000"
 > (= (dup $x) (if (== $x 0) (+ $x 10) (g $x)))
 </span><span class="ansi38-255165000"
 > (: f (-> Number Number))
 </span><span class="ansi38-255165000"
 > (= (f $x) (if (< $x 0) (- 0 $x) (g (+ 1 $x))))
 </span>
-Last Result(2): ()
-()]
+Last Result(2): ()()]
 ;;; Now indirectly imported `g` works and `f` fully works
 <span class="ansi38-013099040"
 >!(assertEqual (g 2) 102)
@@ -825,15 +816,14 @@ Last Result(2): ()
 >;; QUICK.F1-IMPORTS.11</h3>
 ; 
 ; EVAL TEST
-; took 0.000878 secs. (878.48 microseconds) 
+; took 0.000708 secs. (707.80 microseconds) 
 
 !(assertEqual (g 2) 102)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (102) (102)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (f 2) 103)
 
@@ -843,15 +833,14 @@ Deterministic: ()
 >;; QUICK.F1-IMPORTS.12</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.15 milliseconds) 
+; took 0.001 secs. (1.12 milliseconds) 
 
 !(assertEqual (f 2) 103)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (103) (103)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; MeTTLog:  xlisting('&self').
 ;;; `&self` contains 3 atoms-spaces now:
 ;;; - stdlib
@@ -866,15 +855,14 @@ Deterministic: ()
 >;; QUICK.F1-IMPORTS.13</h3>
 ; 
 ; EVAL TEST
-; took 0.006 secs. (6.31 milliseconds) 
+; took 0.006 secs. (5.90 milliseconds) 
 
 !(assertEqual &m (let* (($a (collapse (get-atoms &self))) ($x (cdr-atom $a)) ($y (cdr-atom $x))) (car-atom $y)))
 
 <span class="ansi31"
 >(loonit_failureR  (equal_enough_for_test  (&m) ((: __g (-> Number)))))
 </span>
-Deterministic: ((Error  (got  (&m)) (expected  ((: __g (-> Number))))))
-((Error  (got  (&m)) (expected  ((: __g (-> Number))))))]
+Deterministic: ((Error  (got  (&m)) (expected  ((: __g (-> Number))))))((Error  (got  (&m)) (expected  ((: __g (-> Number))))))]
 ;;; NOTE: now the first atom, which was a space, is removed from `&m`,
 ;;; because we load modules only once, and we collect atoms-spaces to
 ;;; prevent duplication
@@ -887,15 +875,14 @@ Deterministic: ((Error  (got  (&m)) (expected  ((: __g (-> Number))))))
 >;; QUICK.F1-IMPORTS.14</h3>
 ; 
 ; EVAL TEST
-; took 0.005 secs. (4.65 milliseconds) 
+; took 0.004 secs. (4.38 milliseconds) 
 
 !(assertEqual (== (let* (($x (collapse (get-atoms &m))) ($y (car-atom $x))) (get-type $y)) (get-type &self)) False)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (False) (False)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; Let's check that `if` from stdlib is not duplicated and gives only one result
 <span class="ansi38-013099040"
 >!(assertEqual (if (> 1 2) 1 2) 2)
@@ -906,15 +893,14 @@ Deterministic: ()
 >;; QUICK.F1-IMPORTS.15</h3>
 ; 
 ; EVAL TEST
-; took 0.000269 secs. (269.22 microseconds) 
+; took 0.000244 secs. (244.32 microseconds) 
 
 !(assertEqual (if (> 1 2) 1 2) 2)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (2) (2)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Let's import one more module into `&self` with a diamond dependence
@@ -988,12 +974,10 @@ Deterministic: ()
 </span><span class="ansi38-255165000"
 > (= (g $x) (+ $x (__g)))
 </span>
-Deterministic: ()
-<span class="ansi38-255165000"
+Deterministic: ()<span class="ansi38-255165000"
 > (= (dup $x) (if (== $x 0) (g $x) (+ $x 10)))
 </span>
-Last Result(2): ()
-()]
+Last Result(2): ()()]
 ;;; `g` from moduleC imported via two paths as well as `f`, which uses `g`,
 ;;; are not duplicated and produce deterministic results
 <span class="ansi38-013099040"
@@ -1005,15 +989,14 @@ Last Result(2): ()
 >;; QUICK.F1-IMPORTS.16</h3>
 ; 
 ; EVAL TEST
-; took 0.000894 secs. (893.98 microseconds) 
+; took 0.000749 secs. (749.47 microseconds) 
 
 !(assertEqual (g 2) 102)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (102) (102)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (f 2) 103)
 
@@ -1023,15 +1006,14 @@ Deterministic: ()
 >;; QUICK.F1-IMPORTS.17</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.19 milliseconds) 
+; took 0.001 secs. (1.07 milliseconds) 
 
 !(assertEqual (f 2) 103)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (103) (103)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; Function declared in different imported modules will still produce
 ;;; non-deterministic results
 <span class="ansi38-013099040"
@@ -1043,15 +1025,14 @@ Deterministic: ()
 >;; QUICK.F1-IMPORTS.18</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.24 milliseconds) 
+; took 0.001 secs. (1.16 milliseconds) 
 
 !(assertEqualToResult (dup 2) (12 102))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (102 12) (12 102)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; Let's import f1_moduleB.metta once more using a different path.
 ;;; Such import should be ignored and thus f, g and dup should remain
 ;;; unchanged.
@@ -1088,12 +1069,10 @@ Deterministic: ()
 </span><span class="ansi38-255165000"
 > (= (g $x) (+ $x (__g)))
 </span>
-Deterministic: ()
-<span class="ansi38-255165000"
+Deterministic: ()<span class="ansi38-255165000"
 > (= (dup $x) (if (== $x 0) (g $x) (+ $x 10)))
 </span>
-Last Result(2): ()
-()]
+Last Result(2): ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (g 2) 102)
 
@@ -1103,15 +1082,14 @@ Last Result(2): ()
 >;; QUICK.F1-IMPORTS.19</h3>
 ; 
 ; EVAL TEST
-; took 0.000865 secs. (864.64 microseconds) 
+; took 0.000706 secs. (706.00 microseconds) 
 
 !(assertEqual (g 2) 102)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (102) (102)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (f 2) 103)
 
@@ -1121,15 +1099,14 @@ Deterministic: ()
 >;; QUICK.F1-IMPORTS.20</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.16 milliseconds) 
+; took 0.001 secs. (1.02 milliseconds) 
 
 !(assertEqual (f 2) 103)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (103) (103)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (dup 2) (12 102))
 
@@ -1139,17 +1116,16 @@ Deterministic: ()
 >;; QUICK.F1-IMPORTS.21</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.24 milliseconds) 
+; took 0.001 secs. (1.12 milliseconds) 
 
 !(assertEqualToResult (dup 2) (12 102))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (102 12) (12 102)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi32"
->% 960,364 inferences, 0.215 CPU in 0.215 seconds (100% CPU, 4462859 Lips)
+>% 960,334 inferences, 0.204 CPU in 0.205 seconds (100% CPU, 4700414 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/quick/f1_imports.metta  0)
 <span class="ansi1"
@@ -1288,7 +1264,7 @@ Deterministic: ()
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 10:20:32+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 10:28:03+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

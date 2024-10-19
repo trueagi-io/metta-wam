@@ -29,7 +29,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 10:06:36+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 10:14:55+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -372,15 +372,14 @@ Script started on 2024-10-19 10:06:36+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A3-TWOSIDE.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000654 secs. (654.30 microseconds) 
+; took 0.000731 secs. (730.91 microseconds) 
 
 !(assertEqualToResult (match &self (implies (Frog Sam) $what) $what) ((Green Sam) (Eats-flies Sam)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Green Sam) (Eats-flies Sam)) ((Green Sam) (Eats-flies Sam))))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (match &self (implies ($P $x) (Green Sam)) ($x might be $P)) ((Sam might be Frog)))
 
@@ -390,15 +389,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A3-TWOSIDE.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000400 secs. (399.71 microseconds) 
+; took 0.000483 secs. (483.12 microseconds) 
 
 !(assertEqualToResult (match &self (implies ($P $x) (Green Sam)) ($x might be $P)) ((Sam might be Frog)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Sam might be Frog)) ((Sam might be Frog))))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Composite queries
@@ -419,15 +417,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A3-TWOSIDE.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000608 secs. (607.77 microseconds) 
+; took 0.000720 secs. (719.94 microseconds) 
 
 !(assertEqualToResult (match &self (, (Frog $x) (implies (Frog $x) $y)) $y) ((Green Sam) (Eats-flies Sam)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Green Sam) (Eats-flies Sam)) ((Green Sam) (Eats-flies Sam))))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Variables in queries can remain unbound
@@ -441,17 +438,16 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A3-TWOSIDE.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000420 secs. (419.77 microseconds) 
+; took 0.000520 secs. (519.95 microseconds) 
 
 !(assertEqualToResult (match &self (, (implies ($P $x) (Green $x)) (implies ($P $x) (Eats-flies $x))) (Then it is definitely $P)) ((Then it is definitely Frog)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Then it is definitely Frog)) ((Then it is definitely Frog))))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi32"
->% 155,922 inferences, 0.036 CPU in 0.036 seconds (100% CPU, 4327812 Lips)
+>% 155,918 inferences, 0.036 CPU in 0.036 seconds (100% CPU, 4333685 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/a3_twoside.metta  0)
 <span class="ansi1"
@@ -590,7 +586,7 @@ Deterministic: ()
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 10:06:42+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 10:15:00+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

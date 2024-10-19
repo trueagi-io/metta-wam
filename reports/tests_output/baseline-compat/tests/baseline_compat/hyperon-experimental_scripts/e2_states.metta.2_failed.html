@@ -37,7 +37,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 10:08:44+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 10:16:54+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -389,8 +389,7 @@ Script started on 2024-10-19 10:08:44+00:00 [TERM="xterm-256color" TTY="/dev/pts
 
 </span>[
 
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; &state-token is replaced by the state atom in the code below its creation
 ;;; we wrap it into a function to show that it's not the token that changes, but
 ;;; the content of the state atom
@@ -407,15 +406,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000874 secs. (873.82 microseconds) 
+; took 0.000765 secs. (765.06 microseconds) 
 
 !(assertEqual (get-state (get-token)) (A B))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((A B)) ((A B))))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; States can be equal even if they are wrapped into different state atoms
@@ -429,15 +427,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000697 secs. (696.92 microseconds) 
+; took 0.000604 secs. (604.10 microseconds) 
 
 !(assertEqual (get-token) (new-state (A B)))
 
 <span class="ansi36"
->(loonit_success  (equal_enough_for_test  ((State  (A B) $_117958)) ((State  (A B) $_121150))))
+>(loonit_success  (equal_enough_for_test  ((State  (A B) $_117982)) ((State  (A B) $_121174))))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; State atoms are of StateMonad type
@@ -452,15 +449,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000759 secs. (758.66 microseconds) 
+; took 0.000672 secs. (671.85 microseconds) 
 
 !(assertEqual (get-type (new-state 2)) (StateMonad Number))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((StateMonad Number)) ((StateMonad Number))))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (get-type (change-state! (new-state "S") "V")) (StateMonad String))
 
@@ -470,15 +466,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000879 secs. (879.49 microseconds) 
+; took 0.000786 secs. (786.32 microseconds) 
 
 !(assertEqual (get-type (change-state! (new-state "S") "V")) (StateMonad String))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((StateMonad String)) ((StateMonad String))))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; These are the types of State grounded atom
 <span class="ansi38-013099040"
 >!(assertEqual (let $v (new-state 1) (get-type $v)) (StateMonad Number))
@@ -489,15 +484,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000830 secs. (830.09 microseconds) 
+; took 0.000840 secs. (840.19 microseconds) 
 
 !(assertEqual (let $v (new-state 1) (get-type $v)) (StateMonad Number))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((StateMonad Number)) ((StateMonad Number))))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; atm, meta-types for states of non-grounded types are used
 <span class="ansi38-013099040"
 >!(assertEqual (get-type &state-token) (StateMonad Expression))
@@ -508,15 +502,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000680 secs. (680.10 microseconds) 
+; took 0.000673 secs. (672.75 microseconds) 
 
 !(assertEqual (get-type &state-token) (StateMonad Expression))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((StateMonad Expression)) ((StateMonad Expression))))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; State atoms have a defined type based on initial state
@@ -533,15 +526,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000217 secs. (217.40 microseconds) 
+; took 0.000220 secs. (219.51 microseconds) 
 
 !(assertEqual (change-state! &state-token 1) (Error 1 BadType))
 
 <span class="ansi31"
->(loonit_failureR  (equal_enough_for_test  ((State  1 $_247822)) ((Error 1 BadType))))
+>(loonit_failureR  (equal_enough_for_test  ((State  1 $_247886)) ((Error 1 BadType))))
 </span>
-Deterministic: ((Error  (got  ((State  1 $_247822))) (expected  ((Error 1 BadType)))))
-((Error  (got  ((State  1 $_247822))) (expected  ((Error 1 BadType)))))]
+Deterministic: ((Error  (got  ((State  1 $_247886))) (expected  ((Error 1 BadType)))))((Error  (got  ((State  1 $_247886))) (expected  ((Error 1 BadType)))))]
 ;;;)
 ;;; the new state here is int, so it cannot be changed to string
 <span class="ansi38-013099040"
@@ -553,15 +545,14 @@ Deterministic: ((Error  (got  ((State  1 $_247822))) (expected  ((Error 1 BadTyp
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.08</h3>
 ; 
 ; EVAL TEST
-; took 0.000244 secs. (244.20 microseconds) 
+; took 0.000269 secs. (268.59 microseconds) 
 
 !(assertEqual (change-state! (new-state 1) "S") (Error "S" BadType))
 
 <span class="ansi31"
->(loonit_failureR  (equal_enough_for_test  ((State  "S" $_277390)) ((Error "S" BadType))))
+>(loonit_failureR  (equal_enough_for_test  ((State  "S" $_277462)) ((Error "S" BadType))))
 </span>
-Deterministic: ((Error  (got  ((State  "S" $_277390))) (expected  ((Error "S" BadType)))))
-((Error  (got  ((State  "S" $_277390))) (expected  ((Error "S" BadType)))))]
+Deterministic: ((Error  (got  ((State  "S" $_277462))) (expected  ((Error "S" BadType)))))((Error  (got  ((State  "S" $_277462))) (expected  ((Error "S" BadType)))))]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Changing the content of the state atom
@@ -582,15 +573,14 @@ Deterministic: ((Error  (got  ((State  "S" $_277390))) (expected  ((Error "S" Ba
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.09</h3>
 ; 
 ; EVAL TEST
-; took 0.000535 secs. (535.28 microseconds) 
+; took 0.000505 secs. (504.50 microseconds) 
 
 !(assertEqualToResult (nop (change-state! &state-token (C D))) (()))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (()) (())))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; The same state atom has different content now
 <span class="ansi38-013099040"
 >!(assertEqual (get-state (get-token)) (C D))
@@ -601,15 +591,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.10</h3>
 ; 
 ; EVAL TEST
-; took 0.000757 secs. (756.80 microseconds) 
+; took 0.000758 secs. (757.66 microseconds) 
 
 !(assertEqual (get-state (get-token)) (C D))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((C D)) ((C D))))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; MeTTa provides proper encapsulated state manipulation
@@ -624,15 +613,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.11</h3>
 ; 
 ; EVAL TEST
-; took 0.000716 secs. (716.24 microseconds) 
+; took 0.000698 secs. (697.55 microseconds) 
 
 !(assertEqual (let $x (new-state 1) (change-state! $x (+ (get-state $x) 1))) (new-state 2))
 
 <span class="ansi36"
->(loonit_success  (equal_enough_for_test  ((State  2 $_371088)) ((State  2 $_372492))))
+>(loonit_success  (equal_enough_for_test  ((State  2 $_371184)) ((State  2 $_372588))))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; Checking that there is no conflict between variable names in
 ;;; let-expression and type definition of new-state
 <span class="ansi38-013099040"
@@ -644,19 +632,18 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E2-STATES.12</h3>
 ; 
 ; EVAL TEST
-; took 0.000296 secs. (296.14 microseconds) 
+; took 0.000303 secs. (302.68 microseconds) 
 
 !(assertEqual (let $tnso (new-state 1) $tnso) (new-state 1))
 
 <span class="ansi36"
->(loonit_success  (equal_enough_for_test  ((State  1 $_394188)) ((State  1 $_395592))))
+>(loonit_success  (equal_enough_for_test  ((State  1 $_394292)) ((State  1 $_395696))))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; FIXME: doesn't work as for 25 May 2023
 ;;; !(get-state (let $x (new-state 1) $x))
 <span class="ansi32"
->% 435,066 inferences, 0.093 CPU in 0.093 seconds (100% CPU, 4703358 Lips)
+>% 435,053 inferences, 0.091 CPU in 0.091 seconds (100% CPU, 4788819 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/e2_states.metta  0)
 <span class="ansi1"
@@ -795,7 +782,7 @@ Deterministic: ()
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 10:08:50+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 10:16:59+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

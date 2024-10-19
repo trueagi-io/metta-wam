@@ -150,7 +150,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 10:09:00+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 10:17:08+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -499,15 +499,14 @@ Script started on 2024-10-19 10:09:00+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-IMPORTS.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000185 secs. (185.24 microseconds) 
+; took 0.000192 secs. (191.77 microseconds) 
 
 !(assertEqualToResult (get-type &self) (hyperon::space::DynSpace))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (hyperon::space::DynSpace) (hyperon::space::DynSpace)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual ((let $x (get-atoms &self) (get-type $x))) ((get-type &self)))
 
@@ -517,15 +516,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-IMPORTS.02</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.02 milliseconds) 
+; took 0.002 secs. (1.88 milliseconds) 
 
 !(assertEqual ((let $x (get-atoms &self) (get-type $x))) ((get-type &self)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Symbol) (Symbol)) ((Symbol))))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; stdlib is already loaded
 <span class="ansi38-013099040"
 >!(assertEqual (if (> 1 2) 1 2) 2)
@@ -536,15 +534,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-IMPORTS.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000315 secs. (315.46 microseconds) 
+; took 0.000239 secs. (238.88 microseconds) 
 
 !(assertEqual (if (> 1 2) 1 2) 2)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (2) (2)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Importing the module into new space
@@ -601,7 +598,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-MODULEA.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000229 secs. (229.45 microseconds) 
+; took 0.000203 secs. (203.33 microseconds) 
 
 !(assertEqual (+ 1 2) 3)
 
@@ -617,23 +614,21 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-MODULEA.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000148 secs. (147.90 microseconds) 
+; took 0.000158 secs. (157.55 microseconds) 
 
 !(assertEqual (if True "S" "F") "S")
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ("S") ("S")))
 </span>
-Deterministic: ()
-<span class="ansi38-255165000"
+Deterministic: ()<span class="ansi38-255165000"
 > (= (dup $x) (if (== $x 0) (+ $x 10) (g $x)))
 </span><span class="ansi38-255165000"
 > (: f (-> Number Number))
 </span><span class="ansi38-255165000"
 > (= (f $x) (if (< $x 0) (- 0 $x) (g (+ 1 $x))))
 </span>
-Last Result(2): ()
-()]
+Last Result(2): ()()]
 ;;; It's first atom is a space
 ;;;!(assertEqual
 ;;;  (let* (($x (collapse (get-atoms &m)))
@@ -662,15 +657,14 @@ Last Result(2): ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-IMPORTS.06</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.23 milliseconds) 
+; took 0.002 secs. (2.13 milliseconds) 
 
 !(assertEqual (match &m (= (f 2) $x) $x) (g 3))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((g 3)) ((g 3))))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; Importing the same space into `&self` should break nothing
 ;;; TODO? If stdlib space would be in `&m`, which should check that it is not
 ;;; there anymore since in should be removed after importing it to `&self`
@@ -732,7 +726,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-MODULEA.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000211 secs. (211.04 microseconds) 
+; took 0.000182 secs. (182.30 microseconds) 
 
 !(assertEqual (+ 1 2) 3)
 
@@ -748,15 +742,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-MODULEA.08</h3>
 ; 
 ; EVAL TEST
-; took 0.000166 secs. (165.58 microseconds) 
+; took 0.000152 secs. (151.61 microseconds) 
 
 !(assertEqual (if True "S" "F") "S")
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ("S") ("S")))
 </span>
-Deterministic: ()
-<span class="ansi38-255165000"
+Deterministic: ()<span class="ansi38-255165000"
 > (= (dup $x) (if (== $x 0) (+ $x 10) (g $x)))
 </span><span class="ansi38-255165000"
 > (: f (-> Number Number))
@@ -824,7 +817,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-MODULEA.09</h3>
 ; 
 ; EVAL TEST
-; took 0.000227 secs. (226.93 microseconds) 
+; took 0.000215 secs. (215.01 microseconds) 
 
 !(assertEqual (+ 1 2) 3)
 
@@ -840,23 +833,21 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-MODULEA.10</h3>
 ; 
 ; EVAL TEST
-; took 0.000143 secs. (142.92 microseconds) 
+; took 0.000153 secs. (152.77 microseconds) 
 
 !(assertEqual (if True "S" "F") "S")
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ("S") ("S")))
 </span>
-Deterministic: ()
-<span class="ansi38-255165000"
+Deterministic: ()<span class="ansi38-255165000"
 > (= (dup $x) (if (== $x 0) (+ $x 10) (g $x)))
 </span><span class="ansi38-255165000"
 > (: f (-> Number Number))
 </span><span class="ansi38-255165000"
 > (= (f $x) (if (< $x 0) (- 0 $x) (g (+ 1 $x))))
 </span>
-Last Result(2): ()
-()]
+Last Result(2): ()()]
 ;;; Now indirectly imported `g` works and `f` fully works
 <span class="ansi38-013099040"
 >!(assertEqual (g 2) 102)
@@ -867,15 +858,14 @@ Last Result(2): ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-IMPORTS.11</h3>
 ; 
 ; EVAL TEST
-; took 0.000902 secs. (902.42 microseconds) 
+; took 0.000760 secs. (760.21 microseconds) 
 
 !(assertEqual (g 2) 102)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (102) (102)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (f 2) 103)
 
@@ -885,15 +875,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-IMPORTS.12</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.23 milliseconds) 
+; took 0.001 secs. (1.06 milliseconds) 
 
 !(assertEqual (f 2) 103)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (103) (103)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; MeTTLog:  xlisting('&self').
 ;;; `&self` contains 3 atoms-spaces now:
 ;;; - stdlib
@@ -908,15 +897,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-IMPORTS.13</h3>
 ; 
 ; EVAL TEST
-; took 0.006 secs. (6.13 milliseconds) 
+; took 0.006 secs. (6.07 milliseconds) 
 
 !(assertEqual &m (let* (($a (collapse (get-atoms &self))) ($x (cdr-atom $a)) ($y (cdr-atom $x))) (car-atom $y)))
 
 <span class="ansi31"
 >(loonit_failureR  (equal_enough_for_test  (&m) ((: __g (-> Number)))))
 </span>
-Deterministic: ((Error  (got  (&m)) (expected  ((: __g (-> Number))))))
-((Error  (got  (&m)) (expected  ((: __g (-> Number))))))]
+Deterministic: ((Error  (got  (&m)) (expected  ((: __g (-> Number))))))((Error  (got  (&m)) (expected  ((: __g (-> Number))))))]
 ;;; NOTE: now the first atom, which was a space, is removed from `&m`,
 ;;; because we load modules only once, and we collect atoms-spaces to
 ;;; prevent duplication
@@ -929,15 +917,14 @@ Deterministic: ((Error  (got  (&m)) (expected  ((: __g (-> Number))))))
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-IMPORTS.14</h3>
 ; 
 ; EVAL TEST
-; took 0.005 secs. (4.62 milliseconds) 
+; took 0.005 secs. (4.52 milliseconds) 
 
 !(assertEqual (== (let* (($x (collapse (get-atoms &m))) ($y (car-atom $x))) (get-type $y)) (get-type &self)) False)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (False) (False)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; Let's check that `if` from stdlib is not duplicated and gives only one result
 <span class="ansi38-013099040"
 >!(assertEqual (if (> 1 2) 1 2) 2)
@@ -948,15 +935,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-IMPORTS.15</h3>
 ; 
 ; EVAL TEST
-; took 0.000301 secs. (300.65 microseconds) 
+; took 0.000236 secs. (236.15 microseconds) 
 
 !(assertEqual (if (> 1 2) 1 2) 2)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (2) (2)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Let's import one more module into `&self` with a diamond dependence
@@ -1030,12 +1016,10 @@ Deterministic: ()
 </span><span class="ansi38-255165000"
 > (= (g $x) (+ $x (__g)))
 </span>
-Deterministic: ()
-<span class="ansi38-255165000"
+Deterministic: ()<span class="ansi38-255165000"
 > (= (dup $x) (if (== $x 0) (g $x) (+ $x 10)))
 </span>
-Last Result(2): ()
-()]
+Last Result(2): ()()]
 ;;; `g` from moduleC imported via two paths as well as `f`, which uses `g`,
 ;;; are not duplicated and produce deterministic results
 <span class="ansi38-013099040"
@@ -1047,15 +1031,14 @@ Last Result(2): ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-IMPORTS.16</h3>
 ; 
 ; EVAL TEST
-; took 0.000900 secs. (899.98 microseconds) 
+; took 0.000791 secs. (790.71 microseconds) 
 
 !(assertEqual (g 2) 102)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (102) (102)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (f 2) 103)
 
@@ -1065,15 +1048,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-IMPORTS.17</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.17 milliseconds) 
+; took 0.001 secs. (1.07 milliseconds) 
 
 !(assertEqual (f 2) 103)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (103) (103)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; Function declared in different imported modules will still produce
 ;;; non-deterministic results
 <span class="ansi38-013099040"
@@ -1085,15 +1067,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-IMPORTS.18</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.25 milliseconds) 
+; took 0.001 secs. (1.13 milliseconds) 
 
 !(assertEqualToResult (dup 2) (12 102))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (102 12) (12 102)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; Let's import f1_moduleB.metta once more using a different path.
 ;;; Such import should be ignored and thus f, g and dup should remain
 ;;; unchanged.
@@ -1178,8 +1159,7 @@ Deterministic: ()
 </span><span class="ansi38-255165000"
 > (= (g $x) (+ $x (__g)))
 </span>
-Deterministic: ()
-<span class="ansi38-255165000"
+Deterministic: ()<span class="ansi38-255165000"
 > (= (dup $x) (if (== $x 0) (g $x) (+ $x 10)))
 </span>;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1266,12 +1246,10 @@ Deterministic: ()
 </span><span class="ansi38-255165000"
 > (= (g $x) (+ $x (__g)))
 </span>
-Deterministic: ()
-<span class="ansi38-255165000"
+Deterministic: ()<span class="ansi38-255165000"
 > (= (dup $x) (if (== $x 0) (g $x) (+ $x 10)))
 </span>
-Last Result(2): ()
-()]
+Last Result(2): ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (g 2) 102)
 
@@ -1281,15 +1259,14 @@ Last Result(2): ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-IMPORTS.19</h3>
 ; 
 ; EVAL TEST
-; took 0.000909 secs. (908.88 microseconds) 
+; took 0.000821 secs. (821.41 microseconds) 
 
 !(assertEqual (g 2) 102)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (102) (102)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqual (f 2) 103)
 
@@ -1299,15 +1276,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-IMPORTS.20</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.14 milliseconds) 
+; took 0.001 secs. (1.09 milliseconds) 
 
 !(assertEqual (f 2) 103)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (103) (103)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (dup 2) (12 102))
 
@@ -1317,17 +1293,16 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-IMPORTS.21</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.18 milliseconds) 
+; took 0.001 secs. (1.17 milliseconds) 
 
 !(assertEqualToResult (dup 2) (12 102))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (102 12) (12 102)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi32"
->% 1,133,118 inferences, 0.247 CPU in 0.247 seconds (100% CPU, 4596333 Lips)
+>% 1,133,087 inferences, 0.240 CPU in 0.241 seconds (100% CPU, 4713438 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/f1_imports.metta  0)
 <span class="ansi1"
@@ -1466,7 +1441,7 @@ Deterministic: ()
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 10:09:06+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 10:17:14+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

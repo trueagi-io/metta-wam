@@ -25,7 +25,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 10:17:27+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 10:25:11+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -356,17 +356,16 @@ Script started on 2024-10-19 10:17:27+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; METTA-MORPH-TESTS.MATCH-FEVAL.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000790 secs. (789.72 microseconds) 
+; took 0.000905 secs. (904.80 microseconds) 
 
 !(assertEqualToResult (match &self (= (f $x) $y) $y) ((* 2 $x)))
 
 <span class="ansi36"
->(loonit_success  (equal_enough_for_test  ((* 2 $_10528)) ((* 2 $_4200))))
+>(loonit_success  (equal_enough_for_test  ((* 2 $_10536)) ((* 2 $_4200))))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi32"
->% 68,821 inferences, 0.017 CPU in 0.017 seconds (100% CPU, 4157493 Lips)
+>% 68,820 inferences, 0.017 CPU in 0.017 seconds (100% CPU, 4152371 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/match_feval.metta  0)
 <span class="ansi1"
@@ -505,7 +504,7 @@ Deterministic: ()
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 10:17:33+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 10:25:17+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

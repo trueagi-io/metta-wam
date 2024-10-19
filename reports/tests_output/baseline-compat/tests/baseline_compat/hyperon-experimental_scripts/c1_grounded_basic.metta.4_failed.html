@@ -52,7 +52,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 10:07:32+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 10:15:47+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -427,15 +427,14 @@ Script started on 2024-10-19 10:07:32+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000228 secs. (228.36 microseconds) 
+; took 0.000233 secs. (233.07 microseconds) 
 
 !(assertEqualToResult (+ 2 (* 3 5.5)) (18.5))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (18.5) (18.5)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (- 8 (/ 4 6.4)) (7.375))
 
@@ -445,15 +444,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000220 secs. (220.39 microseconds) 
+; took 0.000190 secs. (189.62 microseconds) 
 
 !(assertEqualToResult (- 8 (/ 4 6.4)) (7.375))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (7.375) (7.375)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (% 21 17) (4))
 
@@ -463,15 +461,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000218 secs. (217.82 microseconds) 
+; took 0.000183 secs. (183.00 microseconds) 
 
 !(assertEqualToResult (% 21 17) (4))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (4) (4)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (< 4 (+ 2 (* 3 5))) (True))
 
@@ -481,15 +478,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000885 secs. (884.77 microseconds) 
+; took 0.000788 secs. (787.62 microseconds) 
 
 !(assertEqualToResult (< 4 (+ 2 (* 3 5))) (True))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (True) (True)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (and (> 4 2) (< 4 3)) (False))
 
@@ -499,15 +495,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000467 secs. (466.73 microseconds) 
+; took 0.000467 secs. (467.11 microseconds) 
 
 !(assertEqualToResult (and (> 4 2) (< 4 3)) (False))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (False) (False)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Currently, `ln` is not a grounded symbol.
@@ -524,15 +519,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.06</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.01 milliseconds) 
+; took 0.000998 secs. (998.21 microseconds) 
 
 !(assertEqualToResult (ln (+ 2 2)) ((ln 4)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((ln 4)) ((ln 4))))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Similarly, passing ordinary symbols to grounded
@@ -548,15 +542,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.07</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.81 milliseconds) 
+; took 0.002 secs. (1.64 milliseconds) 
 
 !(assertEqualToResult (> 4 (+ ln 2)) ((> 4 (+ ln 2))))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((> 4 (+ ln 2))) ((> 4 (+ ln 2)))))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; This will also remain unreduced unless
@@ -571,15 +564,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.08</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.55 milliseconds) 
+; took 0.001 secs. (1.42 milliseconds) 
 
 !(assertEqualToResult (> 4 (+ $x 2)) ((> 4 (+ $x 2))))
 
 <span class="ansi36"
->(loonit_success  (equal_enough_for_test  ((> 4 (+ $_21482 2))) ((> 4 (+ $_3808 2)))))
+>(loonit_success  (equal_enough_for_test  ((> 4 (+ $_21490 2))) ((> 4 (+ $_3808 2)))))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; `==` is now implemented to work with both grounded and
@@ -594,15 +586,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.09</h3>
 ; 
 ; EVAL TEST
-; took 0.000694 secs. (694.29 microseconds) 
+; took 0.000600 secs. (599.81 microseconds) 
 
 !(assertEqualToResult (== 4 (+ 2 2)) (True))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (True) (True)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (== 2 3) (False))
 
@@ -612,15 +603,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.10</h3>
 ; 
 ; EVAL TEST
-; took 0.000190 secs. (190.02 microseconds) 
+; took 0.000185 secs. (184.68 microseconds) 
 
 !(assertEqualToResult (== 2 3) (False))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (False) (False)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (== (A B) (A B)) (True))
 
@@ -630,15 +620,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.11</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.17 milliseconds) 
+; took 0.001 secs. (1.10 milliseconds) 
 
 !(assertEqualToResult (== (A B) (A B)) (True))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (True) (True)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (== (A B) (A (B C))) (False))
 
@@ -648,15 +637,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.12</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.46 milliseconds) 
+; took 0.001 secs. (1.45 milliseconds) 
 
 !(assertEqualToResult (== (A B) (A (B C))) (False))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (False) (False)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Unlike `<` or `>`, `==` will not remain unreduced if one
@@ -671,15 +659,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.13</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.14 milliseconds) 
+; took 0.001 secs. (1.10 milliseconds) 
 
 !(assertEqualToResult (== 4 (+ ln 2)) (False))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (False) (False)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Grounded symbols have predefined types.
@@ -695,15 +682,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.14</h3>
 ; 
 ; EVAL TEST
-; took 0.000550 secs. (549.62 microseconds) 
+; took 0.000447 secs. (447.37 microseconds) 
 
 !(assertEqualToResult (+ 2 "String") ((Error "String" BadType)))
 
 <span class="ansi31"
 >(loonit_failureR  (equal_enough_for_test  ((+ 2 "String")) ((Error "String" BadType))))
 </span>
-Deterministic: ((Error  (got  ((+ 2 "String"))) (expected  ((Error "String" BadType)))))
-((Error  (got  ((+ 2 "String"))) (expected  ((Error "String" BadType)))))]
+Deterministic: ((Error  (got  ((+ 2 "String"))) (expected  ((Error "String" BadType)))))((Error  (got  ((+ 2 "String"))) (expected  ((Error "String" BadType)))))]
 ;;; Custom symbols as arguments of grounded operations
 ;;; work similarly
 <span class="ansi38-255165000"
@@ -717,15 +703,14 @@ Deterministic: ((Error  (got  ((+ 2 "String"))) (expected  ((Error "String" BadT
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.15</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.21 milliseconds) 
+; took 0.001 secs. (1.08 milliseconds) 
 
 !(assertEqualToResult (== 4 (+ ln 2)) ((Error ln BadType)))
 
 <span class="ansi31"
 >(loonit_failureR  (equal_enough_for_test  (False) ((Error ln BadType))))
 </span>
-Deterministic: ((Error  (got  (False)) (expected  ((Error ln BadType)))))
-((Error  (got  (False)) (expected  ((Error ln BadType)))))]
+Deterministic: ((Error  (got  (False)) (expected  ((Error ln BadType)))))((Error  (got  (False)) (expected  ((Error ln BadType)))))]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Custom functions over grounded functions behave ordinarily
@@ -741,15 +726,14 @@ Deterministic: ((Error  (got  (False)) (expected  ((Error ln BadType)))))
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.16</h3>
 ; 
 ; EVAL TEST
-; took 0.000499 secs. (498.76 microseconds) 
+; took 0.000403 secs. (403.02 microseconds) 
 
 !(assertEqualToResult (sqr 4) (16))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (16) (16)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Evaluation of grounded operations over nondeterministic
@@ -764,15 +748,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.17</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.16 milliseconds) 
+; took 0.001000 secs. (999.86 microseconds) 
 
 !(assertEqual (+ (superpose (1 2 3)) 1) (superpose (2 3 4)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (2 3 4) (2 3 4)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi38-255165000"
 > (= (bin) 0)
 </span><span class="ansi38-255165000"
@@ -786,15 +769,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.18</h3>
 ; 
 ; EVAL TEST
-; took 0.000363 secs. (363.36 microseconds) 
+; took 0.000293 secs. (293.04 microseconds) 
 
 !(assertEqualToResult (bin) (0 1))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (0 1) (0 1)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (+ 1 (bin)) (1 2))
 
@@ -804,15 +786,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.19</h3>
 ; 
 ; EVAL TEST
-; took 0.000666 secs. (665.90 microseconds) 
+; took 0.000550 secs. (549.61 microseconds) 
 
 !(assertEqualToResult (+ 1 (bin)) (1 2))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (1 2) (1 2)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (let $x (+ 2 3) (* $x $x)) (25))
 
@@ -822,15 +803,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.20</h3>
 ; 
 ; EVAL TEST
-; took 0.000418 secs. (418.32 microseconds) 
+; took 0.000348 secs. (348.08 microseconds) 
 
 !(assertEqualToResult (let $x (+ 2 3) (* $x $x)) (25))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (25) (25)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; basic recursion
@@ -846,15 +826,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.21</h3>
 ; 
 ; EVAL TEST
-; took 0.004 secs. (3.99 milliseconds) 
+; took 0.004 secs. (3.94 milliseconds) 
 
 !(assertEqual (fact 5) 120)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (120) (120)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; ensure we only return one result
 <span class="ansi38-013099040"
 >!(assertEqualToResult (fact 5) (120))
@@ -865,15 +844,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.22</h3>
 ; 
 ; EVAL TEST
-; took 0.004 secs. (3.70 milliseconds) 
+; took 0.004 secs. (3.68 milliseconds) 
 
 !(assertEqualToResult (fact 5) (120))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (120) (120)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Grounded symbols work with non-determinism based "reasoning"
@@ -904,17 +882,16 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C1-GROUNDED-BASIC.23</h3>
 ; 
 ; EVAL TEST
-; took 0.206 secs. (205.71 milliseconds) 
+; took 0.207 secs. (207.07 milliseconds) 
 
 !(assertEqualToResult (let $t (gen 3) (if (== (subsum (:: 3 (:: 7 (:: 5 nil))) $t) 8) $t (superpose ()))) ((:: 1 (:: 0 (:: 1 nil)))))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((:: 1 (:: 0 (:: 1 nil)))) ((:: 1 (:: 0 (:: 1 nil))))))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi32"
->% 2,067,915 inferences, 0.367 CPU in 0.367 seconds (100% CPU, 5629758 Lips)
+>% 2,067,896 inferences, 0.364 CPU in 0.364 seconds (100% CPU, 5683233 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/c1_grounded_basic.metta  0)
 <span class="ansi1"
@@ -1053,7 +1030,7 @@ Deterministic: ()
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 10:07:38+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 10:15:53+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

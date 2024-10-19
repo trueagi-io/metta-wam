@@ -675,7 +675,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 10:02:35+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 10:11:04+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 ^@P;HTML|
 ;           (set_option_value  compat false)
 
@@ -1016,8 +1016,7 @@ Script started on 2024-10-19 10:02:35+00:00 [TERM="xterm-256color" TTY="/dev/pts
 ;                                         (set_option_value  compile full)
 
 
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi38-255165000"
 > (: is-variable (-> Atom Bool))
 </span><span class="ansi38-255165000"
@@ -1114,8 +1113,7 @@ Deterministic: ()
 
 </span>[
 
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi38-255165009"
 >;; In file as:  
 </span><span class="ansi1 ansi38-255238088"
@@ -1150,15 +1148,14 @@ Deterministic: ()
 > (: axiom (nums 2 3))
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.95 milliseconds) 
+; took 0.002 secs. (1.78 milliseconds) 
 
 !(assertEqualToResult (add-atom &kb (: axiom (nums 2 3))) (()))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (()) (())))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi38-255165009"
 >;; In file as:  
 </span><span class="ansi1 ansi38-255238088"
@@ -1214,15 +1211,14 @@ Deterministic: ()
 > (: rule1 (-> (nums $_4566 $_4584) (rule1output $_4566 $_4584)))
 </span>; 
 ; EVAL TEST
-; took 0.005 secs. (5.04 milliseconds) 
+; took 0.005 secs. (5.02 milliseconds) 
 
 !(assertEqualToResult (add-atom &kb (: rule1 (-> (nums $x $y) (rule1output $x $y)))) (()))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (()) (())))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi38-255165009"
 >;; In file as:  
 </span><span class="ansi1 ansi38-255238088"
@@ -1287,15 +1283,14 @@ Deterministic: ()
 > (: rule (-> (rule1output $_4734 $_4752) (-> (⍃ $_4734 $_4752) (less $_4734 $_4752))))
 </span>; 
 ; EVAL TEST
-; took 0.007 secs. (7.05 milliseconds) 
+; took 0.007 secs. (6.91 milliseconds) 
 
 !(assertEqualToResult (add-atom &kb (: rule (-> (rule1output $x $y) (-> (⍃ $x $y) (less $x $y))))) (()))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (()) (())))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; !(add-atom &kb 
 ;;;     (: rule 
 ;;;         (-> (⍃ $x $y)
@@ -1387,8 +1382,7 @@ Deterministic: ()
 ;<span class="ansi38-047047047"
 >    1:0   |-<--() </span>
 
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(pragma! e-args debug)
 
@@ -1413,8 +1407,7 @@ Warning: metta('e-args'): no matching debug topic (yet)
 </span>;<span class="ansi38-047047047"
 >    1:0   |-<--() </span>
 
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; Test
 <span class="ansi38-255165009"
 >;; In file as:  
@@ -1461,26 +1454,26 @@ Deterministic: ()
 </span>;<span class="ansi38-047047047"
 >    8:1   |   |-<--(: CPU (⍃ 2 3)) </span>
 ;<span class="ansi38-047047047"
->   10:0   |-(=(bc (: $_37272 $_37278) $_37284 $_37290) </span>
+>   10:0   |-(=(bc (: $_37280 $_37286) $_37292 $_37298) </span>
 ;<span class="ansi38-047047047"
->   10:0   |-(match $_37284 (: $_37272 $_37278) (: $_37272 $_37278))) </span>
+>   10:0   |-(match $_37292 (: $_37280 $_37286) (: $_37280 $_37286))) </span>
 ;<span class="ansi38-047047047"
->   10:0   |-(=(bc (: CPU (⍃ $_37074 $_37080)) $_37086 $_37092) </span>
+>   10:0   |-(=(bc (: CPU (⍃ $_37082 $_37088)) $_37094 $_37100) </span>
 ;<span class="ansi38-047047047"
->   10:0   |-(if (and (and (is-closed $_37074) (is-closed $_37080)) (< $_37074 $_37080)) (: CPU (⍃ $_37074 $_37080)) (empty))) </span>
+>   10:0   |-(if (and (and (is-closed $_37082) (is-closed $_37088)) (< $_37082 $_37088)) (: CPU (⍃ $_37082 $_37088)) (empty))) </span>
 ;<span class="ansi38-047047047"
->   10:0   |-(=(bc (: ($_36744 $_36750) $_36756) $_36762 (S $_36780)) </span>
+>   10:0   |-(=(bc (: ($_36752 $_36758) $_36764) $_36770 (S $_36788)) </span>
 ;<span class="ansi38-047047047"
->   10:0   |-(let* (((: $_36744 (-> $_36834 $_36756)) (bc (: $_36744 (-> $_36834 $_36756)) $_36762 $_36780)) ((: $_36750 $_36834) (bc (: $_36750 $_36834) $_36762 $_36780))) (: ($_36744 $_36750) $_36756))) </span>
+>   10:0   |-(let* (((: $_36752 (-> $_36842 $_36764)) (bc (: $_36752 (-> $_36842 $_36764)) $_36770 $_36788)) ((: $_36758 $_36842) (bc (: $_36758 $_36842) $_36770 $_36788))) (: ($_36752 $_36758) $_36764))) </span>
 <span class="ansi38-119055000"
->                                                                                                  ;;defs_used(([bc,[:,_54598,_54604],_54610,_54616]->[match,_54610,[:,_54598,_54604],[:,_54598,_54604]]))
+>                                                                                                  ;;defs_used(([bc,[:,_54606,_54612],_54618,_54624]->[match,_54618,[:,_54606,_54612],[:,_54606,_54612]]))
 
 </span>;<span class="ansi38-047047047"
 >   10:1   |   |--->(match &kb (: CPU (⍃ 2 3)) (: CPU (⍃ 2 3))) </span>
 ;<span class="ansi38-047047047"
 >   11:1   |   |-<--fail </span>
 <span class="ansi38-119055000"
->                                                                                                  ;;defs_used(([bc,[:,'CPU',[⍃,_63518,_63524]],_63530,_63536]->[if,[and,[and,['is-closed',_63518],['is-closed',_63524]],[<,_63518,_63524]],[:,'CPU',[⍃,_63518,_63524]],[empty]]))
+>                                                                                                  ;;defs_used(([bc,[:,'CPU',[⍃,_63526,_63532]],_63538,_63544]->[if,[and,[and,['is-closed',_63526],['is-closed',_63532]],[<,_63526,_63532]],[:,'CPU',[⍃,_63526,_63532]],[empty]]))
 
 </span>;<span class="ansi38-047047047"
 >   12:1   |   |--->(if (and (and (is-closed 2) (is-closed 3)) (< 2 3)) (: CPU (⍃ 2 3)) (empty)) </span>
@@ -1491,24 +1484,24 @@ Deterministic: ()
 ;<span class="ansi38-047047047"
 >   15:4   |   |   |   |   |--->(is-closed 2) </span>
 ;<span class="ansi38-047047047"
->   17:4   |   |   |   |   |-(=(is-closed $_82826) </span>
+>   17:4   |   |   |   |   |-(=(is-closed $_82834) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |     (if (is-variable $_82826) False (if (== () $_82826) True (if (is-expression $_82826) (and (let $_82958 (car-atom $_82826) (is-closed $_82958)) (let $_83012 (cdr-atom $_82826) (is-closed $_83012))) True)))) </span>
+>          |   |   |   |     (if (is-variable $_82834) False (if (== () $_82834) True (if (is-expression $_82834) (and (let $_82966 (car-atom $_82834) (is-closed $_82966)) (let $_83020 (cdr-atom $_82834) (is-closed $_83020))) True)))) </span>
 <span class="ansi38-119055000"
->                                                                                          ;;defs_used((['is-closed',_88856]->[if,['is-variable',_88856],'False',[if,[==,[],_88856],'True',[if,['is-expression',_88856],[and,[let,_88988,['car-atom',_88856],['is-closed',_88988]],[let,_89042,['cdr-atom',_88856],['is-closed',_89042]]],'True']]]))
+>                                                                                          ;;defs_used((['is-closed',_88864]->[if,['is-variable',_88864],'False',[if,[==,[],_88864],'True',[if,['is-expression',_88864],[and,[let,_88996,['car-atom',_88864],['is-closed',_88996]],[let,_89050,['cdr-atom',_88864],['is-closed',_89050]]],'True']]]))
 
 </span>;<span class="ansi38-047047047"
->          |   |   |   |     <--(if (is-variable 2) False (if (== () 2) True (if (is-expression 2) (and (let $_82958 (car-atom 2) (is-closed $_82958)) (let $_83012 (cdr-atom 2) (is-closed $_83012))) True))) </span>
+>          |   |   |   |     <--(if (is-variable 2) False (if (== () 2) True (if (is-expression 2) (and (let $_82966 (car-atom 2) (is-closed $_82966)) (let $_83020 (cdr-atom 2) (is-closed $_83020))) True))) </span>
 ;<span class="ansi38-047047047"
->   18:5   |   |   |   |   |   |--->(if (is-variable 2) False (if (== () 2) True (if (is-expression 2) (and (let $_82958 (car-atom 2) (is-closed $_82958)) (let $_83012 (cdr-atom 2) (is-closed $_83012))) True))) </span>
+>   18:5   |   |   |   |   |   |--->(if (is-variable 2) False (if (== () 2) True (if (is-expression 2) (and (let $_82966 (car-atom 2) (is-closed $_82966)) (let $_83020 (cdr-atom 2) (is-closed $_83020))) True))) </span>
 ;<span class="ansi38-047047047"
 >   19:6   |   |   |   |   |   |   |--->(is-variable 2) </span>
 ;<span class="ansi38-047047047"
->   21:6   |   |   |   |   |   |   |-(=(is-variable $_103932) </span>
+>   21:6   |   |   |   |   |   |   |-(=(is-variable $_103940) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |   |     (== (get-metatype $_103932) Variable)) </span>
+>          |   |   |   |   |   |     (== (get-metatype $_103940) Variable)) </span>
 <span class="ansi38-119055000"
->                                                                                      ;;defs_used((['is-variable',_109658]->[==,['get-metatype',_109658],'Variable']))
+>                                                                                      ;;defs_used((['is-variable',_109666]->[==,['get-metatype',_109666],'Variable']))
 
 </span>;<span class="ansi38-047047047"
 >          |   |   |   |   |   |     <--(== (get-metatype 2) Variable) </span>
@@ -1525,21 +1518,21 @@ Deterministic: ()
 ;<span class="ansi38-047047047"
 >   27:8   |   |   |   |   |   |   |   |   |-<--(== Grounded Variable) </span>
 ;<span class="ansi38-047047047"
->   29:6   |   |   |   |   |   |   |--->(if (== () 2) True (if (is-expression 2) (and (let $_9136 (car-atom 2) (is-closed $_9136)) (let $_9190 (cdr-atom 2) (is-closed $_9190))) True)) </span>
+>   29:6   |   |   |   |   |   |   |--->(if (== () 2) True (if (is-expression 2) (and (let $_9144 (car-atom 2) (is-closed $_9144)) (let $_9198 (cdr-atom 2) (is-closed $_9198))) True)) </span>
 ;<span class="ansi38-047047047"
 >   30:7   |   |   |   |   |   |   |   |--->(== () 2) </span>
 ;<span class="ansi38-047047047"
 >   31:7   |   |   |   |   |   |   |   |-<--(== () 2) </span>
 ;<span class="ansi38-047047047"
->   33:7   |   |   |   |   |   |   |   |--->(if (is-expression 2) (and (let $_9136 (car-atom 2) (is-closed $_9136)) (let $_9190 (cdr-atom 2) (is-closed $_9190))) True) </span>
+>   33:7   |   |   |   |   |   |   |   |--->(if (is-expression 2) (and (let $_9144 (car-atom 2) (is-closed $_9144)) (let $_9198 (cdr-atom 2) (is-closed $_9198))) True) </span>
 ;<span class="ansi38-047047047"
 >   34:8   |   |   |   |   |   |   |   |   |--->(is-expression 2) </span>
 ;<span class="ansi38-047047047"
->   36:8   |   |   |   |   |   |   |   |   |-(=(is-expression $_49860) </span>
+>   36:8   |   |   |   |   |   |   |   |   |-(=(is-expression $_49868) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |   |   |   |     (== (get-metatype $_49860) Expression)) </span>
+>          |   |   |   |   |   |   |   |     (== (get-metatype $_49868) Expression)) </span>
 <span class="ansi38-119055000"
->                                                                                  ;;defs_used((['is-expression',_55598]->[==,['get-metatype',_55598],'Expression']))
+>                                                                                  ;;defs_used((['is-expression',_55606]->[==,['get-metatype',_55606],'Expression']))
 
 </span>;<span class="ansi38-047047047"
 >          |   |   |   |   |   |   |   |     <--(== (get-metatype 2) Expression) </span>
@@ -1564,24 +1557,24 @@ Deterministic: ()
 ;<span class="ansi38-047047047"
 >   47:4   |   |   |   |   |--->(is-closed 3) </span>
 ;<span class="ansi38-047047047"
->   49:4   |   |   |   |   |-(=(is-closed $_42946) </span>
+>   49:4   |   |   |   |   |-(=(is-closed $_42954) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |     (if (is-variable $_42946) False (if (== () $_42946) True (if (is-expression $_42946) (and (let $_43078 (car-atom $_42946) (is-closed $_43078)) (let $_43132 (cdr-atom $_42946) (is-closed $_43132))) True)))) </span>
+>          |   |   |   |     (if (is-variable $_42954) False (if (== () $_42954) True (if (is-expression $_42954) (and (let $_43086 (car-atom $_42954) (is-closed $_43086)) (let $_43140 (cdr-atom $_42954) (is-closed $_43140))) True)))) </span>
 <span class="ansi38-119055000"
->                                                                                          ;;defs_used((['is-closed',_48976]->[if,['is-variable',_48976],'False',[if,[==,[],_48976],'True',[if,['is-expression',_48976],[and,[let,_49108,['car-atom',_48976],['is-closed',_49108]],[let,_49162,['cdr-atom',_48976],['is-closed',_49162]]],'True']]]))
+>                                                                                          ;;defs_used((['is-closed',_48984]->[if,['is-variable',_48984],'False',[if,[==,[],_48984],'True',[if,['is-expression',_48984],[and,[let,_49116,['car-atom',_48984],['is-closed',_49116]],[let,_49170,['cdr-atom',_48984],['is-closed',_49170]]],'True']]]))
 
 </span>;<span class="ansi38-047047047"
->          |   |   |   |     <--(if (is-variable 3) False (if (== () 3) True (if (is-expression 3) (and (let $_43078 (car-atom 3) (is-closed $_43078)) (let $_43132 (cdr-atom 3) (is-closed $_43132))) True))) </span>
+>          |   |   |   |     <--(if (is-variable 3) False (if (== () 3) True (if (is-expression 3) (and (let $_43086 (car-atom 3) (is-closed $_43086)) (let $_43140 (cdr-atom 3) (is-closed $_43140))) True))) </span>
 ;<span class="ansi38-047047047"
->   50:5   |   |   |   |   |   |--->(if (is-variable 3) False (if (== () 3) True (if (is-expression 3) (and (let $_43078 (car-atom 3) (is-closed $_43078)) (let $_43132 (cdr-atom 3) (is-closed $_43132))) True))) </span>
+>   50:5   |   |   |   |   |   |--->(if (is-variable 3) False (if (== () 3) True (if (is-expression 3) (and (let $_43086 (car-atom 3) (is-closed $_43086)) (let $_43140 (cdr-atom 3) (is-closed $_43140))) True))) </span>
 ;<span class="ansi38-047047047"
 >   51:6   |   |   |   |   |   |   |--->(is-variable 3) </span>
 ;<span class="ansi38-047047047"
->   53:6   |   |   |   |   |   |   |-(=(is-variable $_64052) </span>
+>   53:6   |   |   |   |   |   |   |-(=(is-variable $_64060) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |   |     (== (get-metatype $_64052) Variable)) </span>
+>          |   |   |   |   |   |     (== (get-metatype $_64060) Variable)) </span>
 <span class="ansi38-119055000"
->                                                                                      ;;defs_used((['is-variable',_69774]->[==,['get-metatype',_69774],'Variable']))
+>                                                                                      ;;defs_used((['is-variable',_69782]->[==,['get-metatype',_69782],'Variable']))
 
 </span>;<span class="ansi38-047047047"
 >          |   |   |   |   |   |     <--(== (get-metatype 3) Variable) </span>
@@ -1598,21 +1591,21 @@ Deterministic: ()
 ;<span class="ansi38-047047047"
 >   59:8   |   |   |   |   |   |   |   |   |-<--(== Grounded Variable) </span>
 ;<span class="ansi38-047047047"
->   61:6   |   |   |   |   |   |   |--->(if (== () 3) True (if (is-expression 3) (and (let $_9136 (car-atom 3) (is-closed $_9136)) (let $_9190 (cdr-atom 3) (is-closed $_9190))) True)) </span>
+>   61:6   |   |   |   |   |   |   |--->(if (== () 3) True (if (is-expression 3) (and (let $_9144 (car-atom 3) (is-closed $_9144)) (let $_9198 (cdr-atom 3) (is-closed $_9198))) True)) </span>
 ;<span class="ansi38-047047047"
 >   62:7   |   |   |   |   |   |   |   |--->(== () 3) </span>
 ;<span class="ansi38-047047047"
 >   63:7   |   |   |   |   |   |   |   |-<--(== () 3) </span>
 ;<span class="ansi38-047047047"
->   65:7   |   |   |   |   |   |   |   |--->(if (is-expression 3) (and (let $_9136 (car-atom 3) (is-closed $_9136)) (let $_9190 (cdr-atom 3) (is-closed $_9190))) True) </span>
+>   65:7   |   |   |   |   |   |   |   |--->(if (is-expression 3) (and (let $_9144 (car-atom 3) (is-closed $_9144)) (let $_9198 (cdr-atom 3) (is-closed $_9198))) True) </span>
 ;<span class="ansi38-047047047"
 >   66:8   |   |   |   |   |   |   |   |   |--->(is-expression 3) </span>
 ;<span class="ansi38-047047047"
->   68:8   |   |   |   |   |   |   |   |   |-(=(is-expression $_49860) </span>
+>   68:8   |   |   |   |   |   |   |   |   |-(=(is-expression $_49868) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |   |   |   |     (== (get-metatype $_49860) Expression)) </span>
+>          |   |   |   |   |   |   |   |     (== (get-metatype $_49868) Expression)) </span>
 <span class="ansi38-119055000"
->                                                                                  ;;defs_used((['is-expression',_55598]->[==,['get-metatype',_55598],'Expression']))
+>                                                                                  ;;defs_used((['is-expression',_55606]->[==,['get-metatype',_55606],'Expression']))
 
 </span>;<span class="ansi38-047047047"
 >          |   |   |   |   |   |   |   |     <--(== (get-metatype 3) Expression) </span>
@@ -1676,15 +1669,14 @@ Deterministic: ()
 >  100:0   |-<--(if (and (and (is-closed 2) (is-closed 3)) (< 2 3)) (: CPU (⍃ 2 3)) (empty)) </span>
 ; 
 ; EVAL TEST
-; took 0.144 secs. (143.96 milliseconds) 
+; took 0.142 secs. (142.05 milliseconds) 
 
 !(assertEqualToResult (bc (: CPU (⍃ 2 3)) &kb Z) ((: CPU (⍃ 2 3))))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((: CPU (⍃ 2 3))) ((: CPU (⍃ 2 3)))))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi38-255165009"
 >;; In file as:  
 </span><span class="ansi1 ansi38-255238088"
@@ -1729,26 +1721,26 @@ Deterministic: ()
 </span>;<span class="ansi38-047047047"
 >    8:1   |   |-<--(: CPU (⍃ 4 3)) </span>
 ;<span class="ansi38-047047047"
->   10:0   |-(=(bc (: $_146992 $_146998) $_147004 $_147010) </span>
+>   10:0   |-(=(bc (: $_147008 $_147014) $_147020 $_147026) </span>
 ;<span class="ansi38-047047047"
->   10:0   |-(match $_147004 (: $_146992 $_146998) (: $_146992 $_146998))) </span>
+>   10:0   |-(match $_147020 (: $_147008 $_147014) (: $_147008 $_147014))) </span>
 ;<span class="ansi38-047047047"
->   10:0   |-(=(bc (: CPU (⍃ $_146794 $_146800)) $_146806 $_146812) </span>
+>   10:0   |-(=(bc (: CPU (⍃ $_146810 $_146816)) $_146822 $_146828) </span>
 ;<span class="ansi38-047047047"
->   10:0   |-(if (and (and (is-closed $_146794) (is-closed $_146800)) (< $_146794 $_146800)) (: CPU (⍃ $_146794 $_146800)) (empty))) </span>
+>   10:0   |-(if (and (and (is-closed $_146810) (is-closed $_146816)) (< $_146810 $_146816)) (: CPU (⍃ $_146810 $_146816)) (empty))) </span>
 ;<span class="ansi38-047047047"
->   10:0   |-(=(bc (: ($_146464 $_146470) $_146476) $_146482 (S $_146500)) </span>
+>   10:0   |-(=(bc (: ($_146480 $_146486) $_146492) $_146498 (S $_146516)) </span>
 ;<span class="ansi38-047047047"
->   10:0   |-(let* (((: $_146464 (-> $_146554 $_146476)) (bc (: $_146464 (-> $_146554 $_146476)) $_146482 $_146500)) ((: $_146470 $_146554) (bc (: $_146470 $_146554) $_146482 $_146500))) (: ($_146464 $_146470) $_146476))) </span>
+>   10:0   |-(let* (((: $_146480 (-> $_146570 $_146492)) (bc (: $_146480 (-> $_146570 $_146492)) $_146498 $_146516)) ((: $_146486 $_146570) (bc (: $_146486 $_146570) $_146498 $_146516))) (: ($_146480 $_146486) $_146492))) </span>
 <span class="ansi38-119055000"
->                                                                                                  ;;defs_used(([bc,[:,_164370,_164376],_164382,_164388]->[match,_164382,[:,_164370,_164376],[:,_164370,_164376]]))
+>                                                                                                  ;;defs_used(([bc,[:,_164386,_164392],_164398,_164404]->[match,_164398,[:,_164386,_164392],[:,_164386,_164392]]))
 
 </span>;<span class="ansi38-047047047"
 >   10:1   |   |--->(match &kb (: CPU (⍃ 4 3)) (: CPU (⍃ 4 3))) </span>
 ;<span class="ansi38-047047047"
 >   11:1   |   |-<--fail </span>
 <span class="ansi38-119055000"
->                                                                                                  ;;defs_used(([bc,[:,'CPU',[⍃,_173292,_173298]],_173304,_173310]->[if,[and,[and,['is-closed',_173292],['is-closed',_173298]],[<,_173292,_173298]],[:,'CPU',[⍃,_173292,_173298]],[empty]]))
+>                                                                                                  ;;defs_used(([bc,[:,'CPU',[⍃,_173308,_173314]],_173320,_173326]->[if,[and,[and,['is-closed',_173308],['is-closed',_173314]],[<,_173308,_173314]],[:,'CPU',[⍃,_173308,_173314]],[empty]]))
 
 </span>;<span class="ansi38-047047047"
 >   12:1   |   |--->(if (and (and (is-closed 4) (is-closed 3)) (< 4 3)) (: CPU (⍃ 4 3)) (empty)) </span>
@@ -1759,24 +1751,24 @@ Deterministic: ()
 ;<span class="ansi38-047047047"
 >   15:4   |   |   |   |   |--->(is-closed 4) </span>
 ;<span class="ansi38-047047047"
->   17:4   |   |   |   |   |-(=(is-closed $_192610) </span>
+>   17:4   |   |   |   |   |-(=(is-closed $_192626) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |     (if (is-variable $_192610) False (if (== () $_192610) True (if (is-expression $_192610) (and (let $_192742 (car-atom $_192610) (is-closed $_192742)) (let $_192796 (cdr-atom $_192610) (is-closed $_192796))) True)))) </span>
+>          |   |   |   |     (if (is-variable $_192626) False (if (== () $_192626) True (if (is-expression $_192626) (and (let $_192758 (car-atom $_192626) (is-closed $_192758)) (let $_192812 (cdr-atom $_192626) (is-closed $_192812))) True)))) </span>
 <span class="ansi38-119055000"
->                                                                                          ;;defs_used((['is-closed',_198654]->[if,['is-variable',_198654],'False',[if,[==,[],_198654],'True',[if,['is-expression',_198654],[and,[let,_198786,['car-atom',_198654],['is-closed',_198786]],[let,_198840,['cdr-atom',_198654],['is-closed',_198840]]],'True']]]))
+>                                                                                          ;;defs_used((['is-closed',_198670]->[if,['is-variable',_198670],'False',[if,[==,[],_198670],'True',[if,['is-expression',_198670],[and,[let,_198802,['car-atom',_198670],['is-closed',_198802]],[let,_198856,['cdr-atom',_198670],['is-closed',_198856]]],'True']]]))
 
 </span>;<span class="ansi38-047047047"
->          |   |   |   |     <--(if (is-variable 4) False (if (== () 4) True (if (is-expression 4) (and (let $_192742 (car-atom 4) (is-closed $_192742)) (let $_192796 (cdr-atom 4) (is-closed $_192796))) True))) </span>
+>          |   |   |   |     <--(if (is-variable 4) False (if (== () 4) True (if (is-expression 4) (and (let $_192758 (car-atom 4) (is-closed $_192758)) (let $_192812 (cdr-atom 4) (is-closed $_192812))) True))) </span>
 ;<span class="ansi38-047047047"
->   18:5   |   |   |   |   |   |--->(if (is-variable 4) False (if (== () 4) True (if (is-expression 4) (and (let $_192742 (car-atom 4) (is-closed $_192742)) (let $_192796 (cdr-atom 4) (is-closed $_192796))) True))) </span>
+>   18:5   |   |   |   |   |   |--->(if (is-variable 4) False (if (== () 4) True (if (is-expression 4) (and (let $_192758 (car-atom 4) (is-closed $_192758)) (let $_192812 (cdr-atom 4) (is-closed $_192812))) True))) </span>
 ;<span class="ansi38-047047047"
 >   19:6   |   |   |   |   |   |   |--->(is-variable 4) </span>
 ;<span class="ansi38-047047047"
->   21:6   |   |   |   |   |   |   |-(=(is-variable $_213736) </span>
+>   21:6   |   |   |   |   |   |   |-(=(is-variable $_213752) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |   |     (== (get-metatype $_213736) Variable)) </span>
+>          |   |   |   |   |   |     (== (get-metatype $_213752) Variable)) </span>
 <span class="ansi38-119055000"
->                                                                                      ;;defs_used((['is-variable',_219462]->[==,['get-metatype',_219462],'Variable']))
+>                                                                                      ;;defs_used((['is-variable',_219478]->[==,['get-metatype',_219478],'Variable']))
 
 </span>;<span class="ansi38-047047047"
 >          |   |   |   |   |   |     <--(== (get-metatype 4) Variable) </span>
@@ -1793,21 +1785,21 @@ Deterministic: ()
 ;<span class="ansi38-047047047"
 >   27:8   |   |   |   |   |   |   |   |   |-<--(== Grounded Variable) </span>
 ;<span class="ansi38-047047047"
->   29:6   |   |   |   |   |   |   |--->(if (== () 4) True (if (is-expression 4) (and (let $_8950 (car-atom 4) (is-closed $_8950)) (let $_9004 (cdr-atom 4) (is-closed $_9004))) True)) </span>
+>   29:6   |   |   |   |   |   |   |--->(if (== () 4) True (if (is-expression 4) (and (let $_8958 (car-atom 4) (is-closed $_8958)) (let $_9012 (cdr-atom 4) (is-closed $_9012))) True)) </span>
 ;<span class="ansi38-047047047"
 >   30:7   |   |   |   |   |   |   |   |--->(== () 4) </span>
 ;<span class="ansi38-047047047"
 >   31:7   |   |   |   |   |   |   |   |-<--(== () 4) </span>
 ;<span class="ansi38-047047047"
->   33:7   |   |   |   |   |   |   |   |--->(if (is-expression 4) (and (let $_8950 (car-atom 4) (is-closed $_8950)) (let $_9004 (cdr-atom 4) (is-closed $_9004))) True) </span>
+>   33:7   |   |   |   |   |   |   |   |--->(if (is-expression 4) (and (let $_8958 (car-atom 4) (is-closed $_8958)) (let $_9012 (cdr-atom 4) (is-closed $_9012))) True) </span>
 ;<span class="ansi38-047047047"
 >   34:8   |   |   |   |   |   |   |   |   |--->(is-expression 4) </span>
 ;<span class="ansi38-047047047"
->   36:8   |   |   |   |   |   |   |   |   |-(=(is-expression $_49674) </span>
+>   36:8   |   |   |   |   |   |   |   |   |-(=(is-expression $_49682) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |   |   |   |     (== (get-metatype $_49674) Expression)) </span>
+>          |   |   |   |   |   |   |   |     (== (get-metatype $_49682) Expression)) </span>
 <span class="ansi38-119055000"
->                                                                                  ;;defs_used((['is-expression',_55412]->[==,['get-metatype',_55412],'Expression']))
+>                                                                                  ;;defs_used((['is-expression',_55420]->[==,['get-metatype',_55420],'Expression']))
 
 </span>;<span class="ansi38-047047047"
 >          |   |   |   |   |   |   |   |     <--(== (get-metatype 4) Expression) </span>
@@ -1832,24 +1824,24 @@ Deterministic: ()
 ;<span class="ansi38-047047047"
 >   47:4   |   |   |   |   |--->(is-closed 3) </span>
 ;<span class="ansi38-047047047"
->   49:4   |   |   |   |   |-(=(is-closed $_42760) </span>
+>   49:4   |   |   |   |   |-(=(is-closed $_42768) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |     (if (is-variable $_42760) False (if (== () $_42760) True (if (is-expression $_42760) (and (let $_42892 (car-atom $_42760) (is-closed $_42892)) (let $_42946 (cdr-atom $_42760) (is-closed $_42946))) True)))) </span>
+>          |   |   |   |     (if (is-variable $_42768) False (if (== () $_42768) True (if (is-expression $_42768) (and (let $_42900 (car-atom $_42768) (is-closed $_42900)) (let $_42954 (cdr-atom $_42768) (is-closed $_42954))) True)))) </span>
 <span class="ansi38-119055000"
->                                                                                          ;;defs_used((['is-closed',_48790]->[if,['is-variable',_48790],'False',[if,[==,[],_48790],'True',[if,['is-expression',_48790],[and,[let,_48922,['car-atom',_48790],['is-closed',_48922]],[let,_48976,['cdr-atom',_48790],['is-closed',_48976]]],'True']]]))
+>                                                                                          ;;defs_used((['is-closed',_48798]->[if,['is-variable',_48798],'False',[if,[==,[],_48798],'True',[if,['is-expression',_48798],[and,[let,_48930,['car-atom',_48798],['is-closed',_48930]],[let,_48984,['cdr-atom',_48798],['is-closed',_48984]]],'True']]]))
 
 </span>;<span class="ansi38-047047047"
->          |   |   |   |     <--(if (is-variable 3) False (if (== () 3) True (if (is-expression 3) (and (let $_42892 (car-atom 3) (is-closed $_42892)) (let $_42946 (cdr-atom 3) (is-closed $_42946))) True))) </span>
+>          |   |   |   |     <--(if (is-variable 3) False (if (== () 3) True (if (is-expression 3) (and (let $_42900 (car-atom 3) (is-closed $_42900)) (let $_42954 (cdr-atom 3) (is-closed $_42954))) True))) </span>
 ;<span class="ansi38-047047047"
->   50:5   |   |   |   |   |   |--->(if (is-variable 3) False (if (== () 3) True (if (is-expression 3) (and (let $_42892 (car-atom 3) (is-closed $_42892)) (let $_42946 (cdr-atom 3) (is-closed $_42946))) True))) </span>
+>   50:5   |   |   |   |   |   |--->(if (is-variable 3) False (if (== () 3) True (if (is-expression 3) (and (let $_42900 (car-atom 3) (is-closed $_42900)) (let $_42954 (cdr-atom 3) (is-closed $_42954))) True))) </span>
 ;<span class="ansi38-047047047"
 >   51:6   |   |   |   |   |   |   |--->(is-variable 3) </span>
 ;<span class="ansi38-047047047"
->   53:6   |   |   |   |   |   |   |-(=(is-variable $_63866) </span>
+>   53:6   |   |   |   |   |   |   |-(=(is-variable $_63874) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |   |     (== (get-metatype $_63866) Variable)) </span>
+>          |   |   |   |   |   |     (== (get-metatype $_63874) Variable)) </span>
 <span class="ansi38-119055000"
->                                                                                      ;;defs_used((['is-variable',_69588]->[==,['get-metatype',_69588],'Variable']))
+>                                                                                      ;;defs_used((['is-variable',_69596]->[==,['get-metatype',_69596],'Variable']))
 
 </span>;<span class="ansi38-047047047"
 >          |   |   |   |   |   |     <--(== (get-metatype 3) Variable) </span>
@@ -1866,21 +1858,21 @@ Deterministic: ()
 ;<span class="ansi38-047047047"
 >   59:8   |   |   |   |   |   |   |   |   |-<--(== Grounded Variable) </span>
 ;<span class="ansi38-047047047"
->   61:6   |   |   |   |   |   |   |--->(if (== () 3) True (if (is-expression 3) (and (let $_8950 (car-atom 3) (is-closed $_8950)) (let $_9004 (cdr-atom 3) (is-closed $_9004))) True)) </span>
+>   61:6   |   |   |   |   |   |   |--->(if (== () 3) True (if (is-expression 3) (and (let $_8958 (car-atom 3) (is-closed $_8958)) (let $_9012 (cdr-atom 3) (is-closed $_9012))) True)) </span>
 ;<span class="ansi38-047047047"
 >   62:7   |   |   |   |   |   |   |   |--->(== () 3) </span>
 ;<span class="ansi38-047047047"
 >   63:7   |   |   |   |   |   |   |   |-<--(== () 3) </span>
 ;<span class="ansi38-047047047"
->   65:7   |   |   |   |   |   |   |   |--->(if (is-expression 3) (and (let $_8950 (car-atom 3) (is-closed $_8950)) (let $_9004 (cdr-atom 3) (is-closed $_9004))) True) </span>
+>   65:7   |   |   |   |   |   |   |   |--->(if (is-expression 3) (and (let $_8958 (car-atom 3) (is-closed $_8958)) (let $_9012 (cdr-atom 3) (is-closed $_9012))) True) </span>
 ;<span class="ansi38-047047047"
 >   66:8   |   |   |   |   |   |   |   |   |--->(is-expression 3) </span>
 ;<span class="ansi38-047047047"
->   68:8   |   |   |   |   |   |   |   |   |-(=(is-expression $_49674) </span>
+>   68:8   |   |   |   |   |   |   |   |   |-(=(is-expression $_49682) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |   |   |   |     (== (get-metatype $_49674) Expression)) </span>
+>          |   |   |   |   |   |   |   |     (== (get-metatype $_49682) Expression)) </span>
 <span class="ansi38-119055000"
->                                                                                  ;;defs_used((['is-expression',_55412]->[==,['get-metatype',_55412],'Expression']))
+>                                                                                  ;;defs_used((['is-expression',_55420]->[==,['get-metatype',_55420],'Expression']))
 
 </span>;<span class="ansi38-047047047"
 >          |   |   |   |   |   |   |   |     <--(== (get-metatype 3) Expression) </span>
@@ -1920,15 +1912,14 @@ Deterministic: ()
 >   86:0   |-<--(if (and (and (is-closed 4) (is-closed 3)) (< 4 3)) (: CPU (⍃ 4 3)) (empty)) </span>
 ; 
 ; EVAL TEST
-; took 0.143 secs. (142.81 milliseconds) 
+; took 0.136 secs. (136.47 milliseconds) 
 
 !(assertEqualToResult (bc (: CPU (⍃ 4 3)) &kb Z) ())
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  () ()))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; !(pragma! eval debug)
 ;;;! ( rtrace! (bc (: $prf (less $x $y)) (S (S (S Z)))))
 <span class="ansi38-255165009"
@@ -2020,40 +2011,40 @@ Deterministic: ()
 </span>;<span class="ansi38-047047047"
 >   15:1   |   |-<--(S (S (S Z))) </span>
 ;<span class="ansi38-047047047"
->   17:0   |-(=(bc (: $_59104 $_59110) $_59116 $_59122) </span>
+>   17:0   |-(=(bc (: $_59112 $_59118) $_59124 $_59130) </span>
 ;<span class="ansi38-047047047"
->   17:0   |-(match $_59116 (: $_59104 $_59110) (: $_59104 $_59110))) </span>
+>   17:0   |-(match $_59124 (: $_59112 $_59118) (: $_59112 $_59118))) </span>
 ;<span class="ansi38-047047047"
->   17:0   |-(=(bc (: CPU (⍃ $_58906 $_58912)) $_58918 $_58924) </span>
+>   17:0   |-(=(bc (: CPU (⍃ $_58914 $_58920)) $_58926 $_58932) </span>
 ;<span class="ansi38-047047047"
->   17:0   |-(if (and (and (is-closed $_58906) (is-closed $_58912)) (< $_58906 $_58912)) (: CPU (⍃ $_58906 $_58912)) (empty))) </span>
+>   17:0   |-(if (and (and (is-closed $_58914) (is-closed $_58920)) (< $_58914 $_58920)) (: CPU (⍃ $_58914 $_58920)) (empty))) </span>
 ;<span class="ansi38-047047047"
->   17:0   |-(=(bc (: ($_58576 $_58582) $_58588) $_58594 (S $_58612)) </span>
+>   17:0   |-(=(bc (: ($_58584 $_58590) $_58596) $_58602 (S $_58620)) </span>
 ;<span class="ansi38-047047047"
->   17:0   |-(let* (((: $_58576 (-> $_58666 $_58588)) (bc (: $_58576 (-> $_58666 $_58588)) $_58594 $_58612)) ((: $_58582 $_58666) (bc (: $_58582 $_58666) $_58594 $_58612))) (: ($_58576 $_58582) $_58588))) </span>
+>   17:0   |-(let* (((: $_58584 (-> $_58674 $_58596)) (bc (: $_58584 (-> $_58674 $_58596)) $_58602 $_58620)) ((: $_58590 $_58674) (bc (: $_58590 $_58674) $_58602 $_58620))) (: ($_58584 $_58590) $_58596))) </span>
 <span class="ansi38-119055000"
->                                                                                                  ;;defs_used(([bc,[:,_76430,_76436],_76442,_76448]->[match,_76442,[:,_76430,_76436],[:,_76430,_76436]]))
+>                                                                                                  ;;defs_used(([bc,[:,_76438,_76444],_76450,_76456]->[match,_76450,[:,_76438,_76444],[:,_76438,_76444]]))
 
 </span>;<span class="ansi38-047047047"
 >   17:1   |   |--->(match &kb (: $_5008 (less $_5038 $_5056)) (: $_5008 (less $_5038 $_5056))) </span>
 ;<span class="ansi38-047047047"
 >   18:1   |   |-<--fail </span>
 <span class="ansi38-119055000"
->                                                                                                  ;;defs_used(([bc,[:,[_85376,_85382],_85388],_85394,['S',_85412]]->['let*',[[[:,_85376,[->,_85466,_85388]],[bc,[:,_85376,[->,_85466,_85388]],_85394,_85412]],[[:,_85382,_85466],[bc,[:,_85382,_85466],_85394,_85412]]],[:,[_85376,_85382],_85388]]))
+>                                                                                                  ;;defs_used(([bc,[:,[_85384,_85390],_85396],_85402,['S',_85420]]->['let*',[[[:,_85384,[->,_85474,_85396]],[bc,[:,_85384,[->,_85474,_85396]],_85402,_85420]],[[:,_85390,_85474],[bc,[:,_85390,_85474],_85402,_85420]]],[:,[_85384,_85390],_85396]]))
 
 </span>;<span class="ansi38-047047047"
->   19:0   |-<--(let* (((: $_58576 (-> $_58666 (less $_5038 $_5056))) (bc (: $_58576 (-> $_58666 (less $_5038 $_5056))) &kb (S (S Z)))) ((: $_58582 $_58666) (bc (: $_58582 $_58666) &kb (S (S Z))))) (: ($_58576 $_58582) (less $_5038 $_5056))) </span>
+>   19:0   |-<--(let* (((: $_58584 (-> $_58674 (less $_5038 $_5056))) (bc (: $_58584 (-> $_58674 (less $_5038 $_5056))) &kb (S (S Z)))) ((: $_58590 $_58674) (bc (: $_58590 $_58674) &kb (S (S Z))))) (: ($_58584 $_58590) (less $_5038 $_5056))) </span>
 ;<span class="ansi38-047047047"
->   20:1   |   |--->(let* (((: $_58576 (-> $_58666 (less $_5038 $_5056))) (bc (: $_58576 (-> $_58666 (less $_5038 $_5056))) &kb (S (S Z)))) ((: $_58582 $_58666) (bc (: $_58582 $_58666) &kb (S (S Z))))) (: ($_58576 $_58582) (less $_5038 $_5056))) </span>
+>   20:1   |   |--->(let* (((: $_58584 (-> $_58674 (less $_5038 $_5056))) (bc (: $_58584 (-> $_58674 (less $_5038 $_5056))) &kb (S (S Z)))) ((: $_58590 $_58674) (bc (: $_58590 $_58674) &kb (S (S Z))))) (: ($_58584 $_58590) (less $_5038 $_5056))) </span>
 ;<span class="ansi38-047047047"
->   21:2   |   |   |--->(bc (: $_58576 (-> $_58666 (less $_5038 $_5056))) &kb (S (S Z))) </span>
+>   21:2   |   |   |--->(bc (: $_58584 (-> $_58674 (less $_5038 $_5056))) &kb (S (S Z))) </span>
 ;<span class="ansi38-047047047"
->   22:3   |   |   |   |--->(: $_58576 (-> $_58666 (less $_5038 $_5056))) </span>
+>   22:3   |   |   |   |--->(: $_58584 (-> $_58674 (less $_5038 $_5056))) </span>
 <span class="ansi38-119055000"
->                                                                                            ;;defs_none([:,_58576,[->,_58666,[less,_5038,_5056]]])
+>                                                                                            ;;defs_none([:,_58584,[->,_58674,[less,_5038,_5056]]])
 
 </span>;<span class="ansi38-047047047"
->   24:3   |   |   |   |-<--(: $_58576 (-> $_58666 (less $_5038 $_5056))) </span>
+>   24:3   |   |   |   |-<--(: $_58584 (-> $_58674 (less $_5038 $_5056))) </span>
 ;<span class="ansi38-047047047"
 >   25:3   |   |   |   |--->(S (S Z)) </span>
 ;<span class="ansi38-047047047"
@@ -2069,40 +2060,40 @@ Deterministic: ()
 </span>;<span class="ansi38-047047047"
 >   30:3   |   |   |   |-<--(S (S Z)) </span>
 ;<span class="ansi38-047047047"
->   32:2   |   |   |-(=(bc (: $_126234 $_126240) $_126246 $_126252) </span>
+>   32:2   |   |   |-(=(bc (: $_126242 $_126248) $_126254 $_126260) </span>
 ;<span class="ansi38-047047047"
->          |   |     (match $_126246 (: $_126234 $_126240) (: $_126234 $_126240))) </span>
+>          |   |     (match $_126254 (: $_126242 $_126248) (: $_126242 $_126248))) </span>
 ;<span class="ansi38-047047047"
->          |   |     (=(bc (: CPU (⍃ $_126036 $_126042)) $_126048 $_126054) </span>
+>          |   |     (=(bc (: CPU (⍃ $_126044 $_126050)) $_126056 $_126062) </span>
 ;<span class="ansi38-047047047"
->          |   |     (if (and (and (is-closed $_126036) (is-closed $_126042)) (< $_126036 $_126042)) (: CPU (⍃ $_126036 $_126042)) (empty))) </span>
+>          |   |     (if (and (and (is-closed $_126044) (is-closed $_126050)) (< $_126044 $_126050)) (: CPU (⍃ $_126044 $_126050)) (empty))) </span>
 ;<span class="ansi38-047047047"
->          |   |     (=(bc (: ($_125706 $_125712) $_125718) $_125724 (S $_125742)) </span>
+>          |   |     (=(bc (: ($_125714 $_125720) $_125726) $_125732 (S $_125750)) </span>
 ;<span class="ansi38-047047047"
->          |   |     (let* (((: $_125706 (-> $_125796 $_125718)) (bc (: $_125706 (-> $_125796 $_125718)) $_125724 $_125742)) ((: $_125712 $_125796) (bc (: $_125712 $_125796) $_125724 $_125742))) (: ($_125706 $_125712) $_125718))) </span>
+>          |   |     (let* (((: $_125714 (-> $_125804 $_125726)) (bc (: $_125714 (-> $_125804 $_125726)) $_125732 $_125750)) ((: $_125720 $_125804) (bc (: $_125720 $_125804) $_125732 $_125750))) (: ($_125714 $_125720) $_125726))) </span>
 <span class="ansi38-119055000"
->                                                                                              ;;defs_used(([bc,[:,_143554,_143560],_143566,_143572]->[match,_143566,[:,_143554,_143560],[:,_143554,_143560]]))
+>                                                                                              ;;defs_used(([bc,[:,_143562,_143568],_143574,_143580]->[match,_143574,[:,_143562,_143568],[:,_143562,_143568]]))
 
 </span>;<span class="ansi38-047047047"
->   32:3   |   |   |   |--->(match &kb (: $_58576 (-> $_58666 (less $_5038 $_5056))) (: $_58576 (-> $_58666 (less $_5038 $_5056)))) </span>
+>   32:3   |   |   |   |--->(match &kb (: $_58584 (-> $_58674 (less $_5038 $_5056))) (: $_58584 (-> $_58674 (less $_5038 $_5056)))) </span>
 ;<span class="ansi38-047047047"
 >   33:3   |   |   |   |-<--fail </span>
 <span class="ansi38-119055000"
->                                                                                              ;;defs_used(([bc,[:,[_152604,_152610],_152616],_152622,['S',_152640]]->['let*',[[[:,_152604,[->,_152694,_152616]],[bc,[:,_152604,[->,_152694,_152616]],_152622,_152640]],[[:,_152610,_152694],[bc,[:,_152610,_152694],_152622,_152640]]],[:,[_152604,_152610],_152616]]))
+>                                                                                              ;;defs_used(([bc,[:,[_152612,_152618],_152624],_152630,['S',_152648]]->['let*',[[[:,_152612,[->,_152702,_152624]],[bc,[:,_152612,[->,_152702,_152624]],_152630,_152648]],[[:,_152618,_152702],[bc,[:,_152618,_152702],_152630,_152648]]],[:,[_152612,_152618],_152624]]))
 
 </span>;<span class="ansi38-047047047"
->   34:2   |   |   |-<--(let* (((: $_125706 (-> $_125796 (-> $_58666 (less $_5038 $_5056)))) (bc (: $_125706 (-> $_125796 (-> $_58666 (less $_5038 $_5056)))) &kb (S Z))) ((: $_125712 $_125796) (bc (: $_125712 $_125796) &kb (S Z)))) (: ($_125706 $_125712) (-> $_58666 (less $_5038 $_5056)))) </span>
+>   34:2   |   |   |-<--(let* (((: $_125714 (-> $_125804 (-> $_58674 (less $_5038 $_5056)))) (bc (: $_125714 (-> $_125804 (-> $_58674 (less $_5038 $_5056)))) &kb (S Z))) ((: $_125720 $_125804) (bc (: $_125720 $_125804) &kb (S Z)))) (: ($_125714 $_125720) (-> $_58674 (less $_5038 $_5056)))) </span>
 ;<span class="ansi38-047047047"
->   35:3   |   |   |   |--->(let* (((: $_125706 (-> $_125796 (-> $_58666 (less $_5038 $_5056)))) (bc (: $_125706 (-> $_125796 (-> $_58666 (less $_5038 $_5056)))) &kb (S Z))) ((: $_125712 $_125796) (bc (: $_125712 $_125796) &kb (S Z)))) (: ($_125706 $_125712) (-> $_58666 (less $_5038 $_5056)))) </span>
+>   35:3   |   |   |   |--->(let* (((: $_125714 (-> $_125804 (-> $_58674 (less $_5038 $_5056)))) (bc (: $_125714 (-> $_125804 (-> $_58674 (less $_5038 $_5056)))) &kb (S Z))) ((: $_125720 $_125804) (bc (: $_125720 $_125804) &kb (S Z)))) (: ($_125714 $_125720) (-> $_58674 (less $_5038 $_5056)))) </span>
 ;<span class="ansi38-047047047"
->   36:4   |   |   |   |   |--->(bc (: $_125706 (-> $_125796 (-> $_58666 (less $_5038 $_5056)))) &kb (S Z)) </span>
+>   36:4   |   |   |   |   |--->(bc (: $_125714 (-> $_125804 (-> $_58674 (less $_5038 $_5056)))) &kb (S Z)) </span>
 ;<span class="ansi38-047047047"
->   37:5   |   |   |   |   |   |--->(: $_125706 (-> $_125796 (-> $_58666 (less $_5038 $_5056)))) </span>
+>   37:5   |   |   |   |   |   |--->(: $_125714 (-> $_125804 (-> $_58674 (less $_5038 $_5056)))) </span>
 <span class="ansi38-119055000"
->                                                                                        ;;defs_none([:,_125706,[->,_125796,[->,_58666,[less,_5038,_5056]]]])
+>                                                                                        ;;defs_none([:,_125714,[->,_125804,[->,_58674,[less,_5038,_5056]]]])
 
 </span>;<span class="ansi38-047047047"
->   39:5   |   |   |   |   |   |-<--(: $_125706 (-> $_125796 (-> $_58666 (less $_5038 $_5056)))) </span>
+>   39:5   |   |   |   |   |   |-<--(: $_125714 (-> $_125804 (-> $_58674 (less $_5038 $_5056)))) </span>
 ;<span class="ansi38-047047047"
 >   40:5   |   |   |   |   |   |--->(S Z) </span>
 <span class="ansi38-119055000"
@@ -2111,22 +2102,22 @@ Deterministic: ()
 </span>;<span class="ansi38-047047047"
 >   42:5   |   |   |   |   |   |-<--(S Z) </span>
 ;<span class="ansi38-047047047"
->   44:4   |   |   |   |   |-(=(bc (: $_185526 $_185532) $_185538 $_185544) </span>
+>   44:4   |   |   |   |   |-(=(bc (: $_185534 $_185540) $_185546 $_185552) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |     (match $_185538 (: $_185526 $_185532) (: $_185526 $_185532))) </span>
+>          |   |   |   |     (match $_185546 (: $_185534 $_185540) (: $_185534 $_185540))) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |     (=(bc (: CPU (⍃ $_185328 $_185334)) $_185340 $_185346) </span>
+>          |   |   |   |     (=(bc (: CPU (⍃ $_185336 $_185342)) $_185348 $_185354) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |     (if (and (and (is-closed $_185328) (is-closed $_185334)) (< $_185328 $_185334)) (: CPU (⍃ $_185328 $_185334)) (empty))) </span>
+>          |   |   |   |     (if (and (and (is-closed $_185336) (is-closed $_185342)) (< $_185336 $_185342)) (: CPU (⍃ $_185336 $_185342)) (empty))) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |     (=(bc (: ($_184998 $_185004) $_185010) $_185016 (S $_185034)) </span>
+>          |   |   |   |     (=(bc (: ($_185006 $_185012) $_185018) $_185024 (S $_185042)) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |     (let* (((: $_184998 (-> $_185088 $_185010)) (bc (: $_184998 (-> $_185088 $_185010)) $_185016 $_185034)) ((: $_185004 $_185088) (bc (: $_185004 $_185088) $_185016 $_185034))) (: ($_184998 $_185004) $_185010))) </span>
+>          |   |   |   |     (let* (((: $_185006 (-> $_185096 $_185018)) (bc (: $_185006 (-> $_185096 $_185018)) $_185024 $_185042)) ((: $_185012 $_185096) (bc (: $_185012 $_185096) $_185024 $_185042))) (: ($_185006 $_185012) $_185018))) </span>
 <span class="ansi38-119055000"
->                                                                                          ;;defs_used(([bc,[:,_202918,_202924],_202930,_202936]->[match,_202930,[:,_202918,_202924],[:,_202918,_202924]]))
+>                                                                                          ;;defs_used(([bc,[:,_202926,_202932],_202938,_202944]->[match,_202938,[:,_202926,_202932],[:,_202926,_202932]]))
 
 </span>;<span class="ansi38-047047047"
->   44:5   |   |   |   |   |   |--->(match &kb (: $_125706 (-> $_125796 (-> $_58666 (less $_5038 $_5056)))) (: $_125706 (-> $_125796 (-> $_58666 (less $_5038 $_5056))))) </span>
+>   44:5   |   |   |   |   |   |--->(match &kb (: $_125714 (-> $_125804 (-> $_58674 (less $_5038 $_5056)))) (: $_125714 (-> $_125804 (-> $_58674 (less $_5038 $_5056))))) </span>
 ;<span class="ansi38-047047047"
 >   45:5   |   |   |   |   |   |-<--(: rule (-> (rule1output $_5038 $_5056) (-> (⍃ $_5038 $_5056) (less $_5038 $_5056)))) </span>
 ;<span class="ansi38-047047047"
@@ -2137,11 +2128,11 @@ Deterministic: ()
 </span>;<span class="ansi38-047047047"
 >   48:6   |   |   |   |   |   |   |-<--(: rule (-> (rule1output $_5038 $_5056) (-> (⍃ $_5038 $_5056) (less $_5038 $_5056)))) </span>
 ;<span class="ansi38-047047047"
->   49:4   |   |   |   |   |--->(let (: $_125712 (rule1output $_5038 $_5056)) (bc (: $_125712 (rule1output $_5038 $_5056)) &kb (S Z)) (: (rule $_125712) (-> (⍃ $_5038 $_5056) (less $_5038 $_5056)))) </span>
+>   49:4   |   |   |   |   |--->(let (: $_125720 (rule1output $_5038 $_5056)) (bc (: $_125720 (rule1output $_5038 $_5056)) &kb (S Z)) (: (rule $_125720) (-> (⍃ $_5038 $_5056) (less $_5038 $_5056)))) </span>
 ;<span class="ansi38-047047047"
->   50:5   |   |   |   |   |   |--->(bc (: $_125712 (rule1output $_5038 $_5056)) &kb (S Z)) </span>
+>   50:5   |   |   |   |   |   |--->(bc (: $_125720 (rule1output $_5038 $_5056)) &kb (S Z)) </span>
 ;<span class="ansi38-047047047"
->   51:6   |   |   |   |   |   |   |--->(: $_125712 (rule1output $_5038 $_5056)) </span>
+>   51:6   |   |   |   |   |   |   |--->(: $_125720 (rule1output $_5038 $_5056)) </span>
 ;<span class="ansi38-047047047"
 >   52:7   |   |   |   |   |   |   |   |--->(rule1output $_5038 $_5056) </span>
 <span class="ansi38-119055000"
@@ -2150,10 +2141,10 @@ Deterministic: ()
 </span>;<span class="ansi38-047047047"
 >   54:7   |   |   |   |   |   |   |   |-<--(rule1output $_5038 $_5056) </span>
 <span class="ansi38-119055000"
->                                                                                      ;;defs_none([:,_125712,[rule1output,_5038,_5056]])
+>                                                                                      ;;defs_none([:,_125720,[rule1output,_5038,_5056]])
 
 </span>;<span class="ansi38-047047047"
->   56:6   |   |   |   |   |   |   |-<--(: $_125712 (rule1output $_5038 $_5056)) </span>
+>   56:6   |   |   |   |   |   |   |-<--(: $_125720 (rule1output $_5038 $_5056)) </span>
 ;<span class="ansi38-047047047"
 >   57:6   |   |   |   |   |   |   |--->(S Z) </span>
 <span class="ansi38-119055000"
@@ -2162,57 +2153,57 @@ Deterministic: ()
 </span>;<span class="ansi38-047047047"
 >   59:6   |   |   |   |   |   |   |-<--(S Z) </span>
 ;<span class="ansi38-047047047"
->   61:5   |   |   |   |   |   |-(=(bc (: $_256560 $_256566) $_256572 $_256578) </span>
+>   61:5   |   |   |   |   |   |-(=(bc (: $_256568 $_256574) $_256580 $_256586) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |     (match $_256572 (: $_256560 $_256566) (: $_256560 $_256566))) </span>
+>          |   |   |   |   |     (match $_256580 (: $_256568 $_256574) (: $_256568 $_256574))) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |     (=(bc (: CPU (⍃ $_256362 $_256368)) $_256374 $_256380) </span>
+>          |   |   |   |   |     (=(bc (: CPU (⍃ $_256370 $_256376)) $_256382 $_256388) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |     (if (and (and (is-closed $_256362) (is-closed $_256368)) (< $_256362 $_256368)) (: CPU (⍃ $_256362 $_256368)) (empty))) </span>
+>          |   |   |   |   |     (if (and (and (is-closed $_256370) (is-closed $_256376)) (< $_256370 $_256376)) (: CPU (⍃ $_256370 $_256376)) (empty))) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |     (=(bc (: ($_256032 $_256038) $_256044) $_256050 (S $_256068)) </span>
+>          |   |   |   |   |     (=(bc (: ($_256040 $_256046) $_256052) $_256058 (S $_256076)) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |     (let* (((: $_256032 (-> $_256122 $_256044)) (bc (: $_256032 (-> $_256122 $_256044)) $_256050 $_256068)) ((: $_256038 $_256122) (bc (: $_256038 $_256122) $_256050 $_256068))) (: ($_256032 $_256038) $_256044))) </span>
+>          |   |   |   |   |     (let* (((: $_256040 (-> $_256130 $_256052)) (bc (: $_256040 (-> $_256130 $_256052)) $_256058 $_256076)) ((: $_256046 $_256130) (bc (: $_256046 $_256130) $_256058 $_256076))) (: ($_256040 $_256046) $_256052))) </span>
 <span class="ansi38-119055000"
->                                                                                        ;;defs_used(([bc,[:,_273986,_273992],_273998,_274004]->[match,_273998,[:,_273986,_273992],[:,_273986,_273992]]))
+>                                                                                        ;;defs_used(([bc,[:,_273994,_274000],_274006,_274012]->[match,_274006,[:,_273994,_274000],[:,_273994,_274000]]))
 
 </span>;<span class="ansi38-047047047"
->   61:6   |   |   |   |   |   |   |--->(match &kb (: $_125712 (rule1output $_5038 $_5056)) (: $_125712 (rule1output $_5038 $_5056))) </span>
+>   61:6   |   |   |   |   |   |   |--->(match &kb (: $_125720 (rule1output $_5038 $_5056)) (: $_125720 (rule1output $_5038 $_5056))) </span>
 ;<span class="ansi38-047047047"
 >   62:6   |   |   |   |   |   |   |-<--fail </span>
 <span class="ansi38-119055000"
->                                                                                        ;;defs_used(([bc,[:,[_282946,_282952],_282958],_282964,['S',_282982]]->['let*',[[[:,_282946,[->,_283036,_282958]],[bc,[:,_282946,[->,_283036,_282958]],_282964,_282982]],[[:,_282952,_283036],[bc,[:,_282952,_283036],_282964,_282982]]],[:,[_282946,_282952],_282958]]))
+>                                                                                        ;;defs_used(([bc,[:,[_282954,_282960],_282966],_282972,['S',_282990]]->['let*',[[[:,_282954,[->,_283044,_282966]],[bc,[:,_282954,[->,_283044,_282966]],_282972,_282990]],[[:,_282960,_283044],[bc,[:,_282960,_283044],_282972,_282990]]],[:,[_282954,_282960],_282966]]))
 
 </span>;<span class="ansi38-047047047"
->   63:5   |   |   |   |   |   |-<--(let* (((: $_256032 (-> $_256122 (rule1output $_5038 $_5056))) (bc (: $_256032 (-> $_256122 (rule1output $_5038 $_5056))) &kb Z)) ((: $_256038 $_256122) (bc (: $_256038 $_256122) &kb Z))) (: ($_256032 $_256038) (rule1output $_5038 $_5056))) </span>
+>   63:5   |   |   |   |   |   |-<--(let* (((: $_256040 (-> $_256130 (rule1output $_5038 $_5056))) (bc (: $_256040 (-> $_256130 (rule1output $_5038 $_5056))) &kb Z)) ((: $_256046 $_256130) (bc (: $_256046 $_256130) &kb Z))) (: ($_256040 $_256046) (rule1output $_5038 $_5056))) </span>
 ;<span class="ansi38-047047047"
->   64:6   |   |   |   |   |   |   |--->(let* (((: $_256032 (-> $_256122 (rule1output $_5038 $_5056))) (bc (: $_256032 (-> $_256122 (rule1output $_5038 $_5056))) &kb Z)) ((: $_256038 $_256122) (bc (: $_256038 $_256122) &kb Z))) (: ($_256032 $_256038) (rule1output $_5038 $_5056))) </span>
+>   64:6   |   |   |   |   |   |   |--->(let* (((: $_256040 (-> $_256130 (rule1output $_5038 $_5056))) (bc (: $_256040 (-> $_256130 (rule1output $_5038 $_5056))) &kb Z)) ((: $_256046 $_256130) (bc (: $_256046 $_256130) &kb Z))) (: ($_256040 $_256046) (rule1output $_5038 $_5056))) </span>
 ;<span class="ansi38-047047047"
->   65:7   |   |   |   |   |   |   |   |--->(bc (: $_256032 (-> $_256122 (rule1output $_5038 $_5056))) &kb Z) </span>
+>   65:7   |   |   |   |   |   |   |   |--->(bc (: $_256040 (-> $_256130 (rule1output $_5038 $_5056))) &kb Z) </span>
 ;<span class="ansi38-047047047"
->   66:8   |   |   |   |   |   |   |   |   |--->(: $_256032 (-> $_256122 (rule1output $_5038 $_5056))) </span>
+>   66:8   |   |   |   |   |   |   |   |   |--->(: $_256040 (-> $_256130 (rule1output $_5038 $_5056))) </span>
 <span class="ansi38-119055000"
->                                                                                  ;;defs_none([:,_256032,[->,_256122,[rule1output,_5038,_5056]]])
+>                                                                                  ;;defs_none([:,_256040,[->,_256130,[rule1output,_5038,_5056]]])
 
 </span>;<span class="ansi38-047047047"
->   68:8   |   |   |   |   |   |   |   |   |-<--(: $_256032 (-> $_256122 (rule1output $_5038 $_5056))) </span>
+>   68:8   |   |   |   |   |   |   |   |   |-<--(: $_256040 (-> $_256130 (rule1output $_5038 $_5056))) </span>
 ;<span class="ansi38-047047047"
->   70:7   |   |   |   |   |   |   |   |-(=(bc (: $_307570 $_307576) $_307582 $_307588) </span>
+>   70:7   |   |   |   |   |   |   |   |-(=(bc (: $_307578 $_307584) $_307590 $_307596) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |   |   |     (match $_307582 (: $_307570 $_307576) (: $_307570 $_307576))) </span>
+>          |   |   |   |   |   |   |     (match $_307590 (: $_307578 $_307584) (: $_307578 $_307584))) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |   |   |     (=(bc (: CPU (⍃ $_307372 $_307378)) $_307384 $_307390) </span>
+>          |   |   |   |   |   |   |     (=(bc (: CPU (⍃ $_307380 $_307386)) $_307392 $_307398) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |   |   |     (if (and (and (is-closed $_307372) (is-closed $_307378)) (< $_307372 $_307378)) (: CPU (⍃ $_307372 $_307378)) (empty))) </span>
+>          |   |   |   |   |   |   |     (if (and (and (is-closed $_307380) (is-closed $_307386)) (< $_307380 $_307386)) (: CPU (⍃ $_307380 $_307386)) (empty))) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |   |   |     (=(bc (: ($_307042 $_307048) $_307054) $_307060 (S $_307078)) </span>
+>          |   |   |   |   |   |   |     (=(bc (: ($_307050 $_307056) $_307062) $_307068 (S $_307086)) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |   |   |     (let* (((: $_307042 (-> $_307132 $_307054)) (bc (: $_307042 (-> $_307132 $_307054)) $_307060 $_307078)) ((: $_307048 $_307132) (bc (: $_307048 $_307132) $_307060 $_307078))) (: ($_307042 $_307048) $_307054))) </span>
+>          |   |   |   |   |   |   |     (let* (((: $_307050 (-> $_307140 $_307062)) (bc (: $_307050 (-> $_307140 $_307062)) $_307068 $_307086)) ((: $_307056 $_307140) (bc (: $_307056 $_307140) $_307068 $_307086))) (: ($_307050 $_307056) $_307062))) </span>
 <span class="ansi38-119055000"
->                                                                                    ;;defs_used(([bc,[:,_325068,_325074],_325080,_325086]->[match,_325080,[:,_325068,_325074],[:,_325068,_325074]]))
+>                                                                                    ;;defs_used(([bc,[:,_325076,_325082],_325088,_325094]->[match,_325088,[:,_325076,_325082],[:,_325076,_325082]]))
 
 </span>;<span class="ansi38-047047047"
->   70:8   |   |   |   |   |   |   |   |   |--->(match &kb (: $_256032 (-> $_256122 (rule1output $_5038 $_5056))) (: $_256032 (-> $_256122 (rule1output $_5038 $_5056)))) </span>
+>   70:8   |   |   |   |   |   |   |   |   |--->(match &kb (: $_256040 (-> $_256130 (rule1output $_5038 $_5056))) (: $_256040 (-> $_256130 (rule1output $_5038 $_5056)))) </span>
 ;<span class="ansi38-047047047"
 >   71:8   |   |   |   |   |   |   |   |   |-<--(: rule1 (-> (nums $_5038 $_5056) (rule1output $_5038 $_5056))) </span>
 ;<span class="ansi38-047047047"
@@ -2223,11 +2214,11 @@ Deterministic: ()
 </span>;<span class="ansi38-047047047"
 >   74:9   |   |   |   |   |   |   |   |   |   |-<--(: rule1 (-> (nums $_5038 $_5056) (rule1output $_5038 $_5056))) </span>
 ;<span class="ansi38-047047047"
->   75:7   |   |   |   |   |   |   |   |--->(let (: $_256038 (nums $_5038 $_5056)) (bc (: $_256038 (nums $_5038 $_5056)) &kb Z) (: (rule1 $_256038) (rule1output $_5038 $_5056))) </span>
+>   75:7   |   |   |   |   |   |   |   |--->(let (: $_256046 (nums $_5038 $_5056)) (bc (: $_256046 (nums $_5038 $_5056)) &kb Z) (: (rule1 $_256046) (rule1output $_5038 $_5056))) </span>
 ;<span class="ansi38-047047047"
->   76:8   |   |   |   |   |   |   |   |   |--->(bc (: $_256038 (nums $_5038 $_5056)) &kb Z) </span>
+>   76:8   |   |   |   |   |   |   |   |   |--->(bc (: $_256046 (nums $_5038 $_5056)) &kb Z) </span>
 ;<span class="ansi38-047047047"
->   77:9   |   |   |   |   |   |   |   |   |   |--->(: $_256038 (nums $_5038 $_5056)) </span>
+>   77:9   |   |   |   |   |   |   |   |   |   |--->(: $_256046 (nums $_5038 $_5056)) </span>
 ;<span class="ansi38-047047047"
 >   78:10  |   |   |   |   |   |   |   |   |   |   |--->(nums $_5038 $_5056) </span>
 <span class="ansi38-119055000"
@@ -2236,27 +2227,27 @@ Deterministic: ()
 </span>;<span class="ansi38-047047047"
 >   80:10  |   |   |   |   |   |   |   |   |   |   |-<--(nums $_5038 $_5056) </span>
 <span class="ansi38-119055000"
->                                                                                ;;defs_none([:,_256038,[nums,_5038,_5056]])
+>                                                                                ;;defs_none([:,_256046,[nums,_5038,_5056]])
 
 </span>;<span class="ansi38-047047047"
->   82:9   |   |   |   |   |   |   |   |   |   |-<--(: $_256038 (nums $_5038 $_5056)) </span>
+>   82:9   |   |   |   |   |   |   |   |   |   |-<--(: $_256046 (nums $_5038 $_5056)) </span>
 ;<span class="ansi38-047047047"
->   84:8   |   |   |   |   |   |   |   |   |-(=(bc (: $_369760 $_369766) $_369772 $_369778) </span>
+>   84:8   |   |   |   |   |   |   |   |   |-(=(bc (: $_369768 $_369774) $_369780 $_369786) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |   |   |   |     (match $_369772 (: $_369760 $_369766) (: $_369760 $_369766))) </span>
+>          |   |   |   |   |   |   |   |     (match $_369780 (: $_369768 $_369774) (: $_369768 $_369774))) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |   |   |   |     (=(bc (: CPU (⍃ $_369562 $_369568)) $_369574 $_369580) </span>
+>          |   |   |   |   |   |   |   |     (=(bc (: CPU (⍃ $_369570 $_369576)) $_369582 $_369588) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |   |   |   |     (if (and (and (is-closed $_369562) (is-closed $_369568)) (< $_369562 $_369568)) (: CPU (⍃ $_369562 $_369568)) (empty))) </span>
+>          |   |   |   |   |   |   |   |     (if (and (and (is-closed $_369570) (is-closed $_369576)) (< $_369570 $_369576)) (: CPU (⍃ $_369570 $_369576)) (empty))) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |   |   |   |     (=(bc (: ($_369232 $_369238) $_369244) $_369250 (S $_369268)) </span>
+>          |   |   |   |   |   |   |   |     (=(bc (: ($_369240 $_369246) $_369252) $_369258 (S $_369276)) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |   |   |   |     (let* (((: $_369232 (-> $_369322 $_369244)) (bc (: $_369232 (-> $_369322 $_369244)) $_369250 $_369268)) ((: $_369238 $_369322) (bc (: $_369238 $_369322) $_369250 $_369268))) (: ($_369232 $_369238) $_369244))) </span>
+>          |   |   |   |   |   |   |   |     (let* (((: $_369240 (-> $_369330 $_369252)) (bc (: $_369240 (-> $_369330 $_369252)) $_369258 $_369276)) ((: $_369246 $_369330) (bc (: $_369246 $_369330) $_369258 $_369276))) (: ($_369240 $_369246) $_369252))) </span>
 <span class="ansi38-119055000"
->                                                                                  ;;defs_used(([bc,[:,_387296,_387302],_387308,_387314]->[match,_387308,[:,_387296,_387302],[:,_387296,_387302]]))
+>                                                                                  ;;defs_used(([bc,[:,_387304,_387310],_387316,_387322]->[match,_387316,[:,_387304,_387310],[:,_387304,_387310]]))
 
 </span>;<span class="ansi38-047047047"
->   84:9   |   |   |   |   |   |   |   |   |   |--->(match &kb (: $_256038 (nums $_5038 $_5056)) (: $_256038 (nums $_5038 $_5056))) </span>
+>   84:9   |   |   |   |   |   |   |   |   |   |--->(match &kb (: $_256046 (nums $_5038 $_5056)) (: $_256046 (nums $_5038 $_5056))) </span>
 ;<span class="ansi38-047047047"
 >   85:9   |   |   |   |   |   |   |   |   |   |-<--(: axiom (nums 2 3)) </span>
 ;<span class="ansi38-047047047"
@@ -2400,11 +2391,11 @@ Deterministic: ()
 </span>;<span class="ansi38-047047047"
 >  153:4   |   |   |   |   |-<--(: (rule (rule1 axiom)) (-> (⍃ 2 3) (less 2 3))) </span>
 ;<span class="ansi38-047047047"
->  154:2   |   |   |--->(let (: $_58582 (⍃ 2 3)) (bc (: $_58582 (⍃ 2 3)) &kb (S (S Z))) (: ((rule (rule1 axiom)) $_58582) (less 2 3))) </span>
+>  154:2   |   |   |--->(let (: $_58590 (⍃ 2 3)) (bc (: $_58590 (⍃ 2 3)) &kb (S (S Z))) (: ((rule (rule1 axiom)) $_58590) (less 2 3))) </span>
 ;<span class="ansi38-047047047"
->  155:3   |   |   |   |--->(bc (: $_58582 (⍃ 2 3)) &kb (S (S Z))) </span>
+>  155:3   |   |   |   |--->(bc (: $_58590 (⍃ 2 3)) &kb (S (S Z))) </span>
 ;<span class="ansi38-047047047"
->  156:4   |   |   |   |   |--->(: $_58582 (⍃ 2 3)) </span>
+>  156:4   |   |   |   |   |--->(: $_58590 (⍃ 2 3)) </span>
 ;<span class="ansi38-047047047"
 >  157:5   |   |   |   |   |   |--->(⍃ 2 3) </span>
 <span class="ansi38-119055000"
@@ -2413,10 +2404,10 @@ Deterministic: ()
 </span>;<span class="ansi38-047047047"
 >  160:5   |   |   |   |   |   |-<--(⍃ 2 3) </span>
 <span class="ansi38-119055000"
->                                                                                          ;;defs_none([:,_58582,[⍃,2,3]])
+>                                                                                          ;;defs_none([:,_58590,[⍃,2,3]])
 
 </span>;<span class="ansi38-047047047"
->  163:4   |   |   |   |   |-<--(: $_58582 (⍃ 2 3)) </span>
+>  163:4   |   |   |   |   |-<--(: $_58590 (⍃ 2 3)) </span>
 ;<span class="ansi38-047047047"
 >  164:4   |   |   |   |   |--->(S (S Z)) </span>
 ;<span class="ansi38-047047047"
@@ -2432,26 +2423,26 @@ Deterministic: ()
 </span>;<span class="ansi38-047047047"
 >  169:4   |   |   |   |   |-<--(S (S Z)) </span>
 ;<span class="ansi38-047047047"
->  171:3   |   |   |   |-(=(bc (: $_620236 $_620242) $_620248 $_620254) </span>
+>  171:3   |   |   |   |-(=(bc (: $_620244 $_620250) $_620256 $_620262) </span>
 ;<span class="ansi38-047047047"
->          |   |   |     (match $_620248 (: $_620236 $_620242) (: $_620236 $_620242))) </span>
+>          |   |   |     (match $_620256 (: $_620244 $_620250) (: $_620244 $_620250))) </span>
 ;<span class="ansi38-047047047"
->          |   |   |     (=(bc (: CPU (⍃ $_620038 $_620044)) $_620050 $_620056) </span>
+>          |   |   |     (=(bc (: CPU (⍃ $_620046 $_620052)) $_620058 $_620064) </span>
 ;<span class="ansi38-047047047"
->          |   |   |     (if (and (and (is-closed $_620038) (is-closed $_620044)) (< $_620038 $_620044)) (: CPU (⍃ $_620038 $_620044)) (empty))) </span>
+>          |   |   |     (if (and (and (is-closed $_620046) (is-closed $_620052)) (< $_620046 $_620052)) (: CPU (⍃ $_620046 $_620052)) (empty))) </span>
 ;<span class="ansi38-047047047"
->          |   |   |     (=(bc (: ($_619708 $_619714) $_619720) $_619726 (S $_619744)) </span>
+>          |   |   |     (=(bc (: ($_619716 $_619722) $_619728) $_619734 (S $_619752)) </span>
 ;<span class="ansi38-047047047"
->          |   |   |     (let* (((: $_619708 (-> $_619798 $_619720)) (bc (: $_619708 (-> $_619798 $_619720)) $_619726 $_619744)) ((: $_619714 $_619798) (bc (: $_619714 $_619798) $_619726 $_619744))) (: ($_619708 $_619714) $_619720))) </span>
+>          |   |   |     (let* (((: $_619716 (-> $_619806 $_619728)) (bc (: $_619716 (-> $_619806 $_619728)) $_619734 $_619752)) ((: $_619722 $_619806) (bc (: $_619722 $_619806) $_619734 $_619752))) (: ($_619716 $_619722) $_619728))) </span>
 <span class="ansi38-119055000"
->                                                                                            ;;defs_used(([bc,[:,_637590,_637596],_637602,_637608]->[match,_637602,[:,_637590,_637596],[:,_637590,_637596]]))
+>                                                                                            ;;defs_used(([bc,[:,_637598,_637604],_637610,_637616]->[match,_637610,[:,_637598,_637604],[:,_637598,_637604]]))
 
 </span>;<span class="ansi38-047047047"
->  171:4   |   |   |   |   |--->(match &kb (: $_58582 (⍃ 2 3)) (: $_58582 (⍃ 2 3))) </span>
+>  171:4   |   |   |   |   |--->(match &kb (: $_58590 (⍃ 2 3)) (: $_58590 (⍃ 2 3))) </span>
 ;<span class="ansi38-047047047"
 >  172:4   |   |   |   |   |-<--fail </span>
 <span class="ansi38-119055000"
->                                                                                            ;;defs_used(([bc,[:,'CPU',[⍃,_646580,_646586]],_646592,_646598]->[if,[and,[and,['is-closed',_646580],['is-closed',_646586]],[<,_646580,_646586]],[:,'CPU',[⍃,_646580,_646586]],[empty]]))
+>                                                                                            ;;defs_used(([bc,[:,'CPU',[⍃,_646588,_646594]],_646600,_646606]->[if,[and,[and,['is-closed',_646588],['is-closed',_646594]],[<,_646588,_646594]],[:,'CPU',[⍃,_646588,_646594]],[empty]]))
 
 </span>;<span class="ansi38-047047047"
 >  173:4   |   |   |   |   |--->(if (and (and (is-closed 2) (is-closed 3)) (< 2 3)) (: CPU (⍃ 2 3)) (empty)) </span>
@@ -2462,24 +2453,24 @@ Deterministic: ()
 ;<span class="ansi38-047047047"
 >  176:7   |   |   |   |   |   |   |   |--->(is-closed 2) </span>
 ;<span class="ansi38-047047047"
->  178:7   |   |   |   |   |   |   |   |-(=(is-closed $_665916) </span>
+>  178:7   |   |   |   |   |   |   |   |-(=(is-closed $_665924) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |   |   |     (if (is-variable $_665916) False (if (== () $_665916) True (if (is-expression $_665916) (and (let $_666048 (car-atom $_665916) (is-closed $_666048)) (let $_666102 (cdr-atom $_665916) (is-closed $_666102))) True)))) </span>
+>          |   |   |   |   |   |   |     (if (is-variable $_665924) False (if (== () $_665924) True (if (is-expression $_665924) (and (let $_666056 (car-atom $_665924) (is-closed $_666056)) (let $_666110 (cdr-atom $_665924) (is-closed $_666110))) True)))) </span>
 <span class="ansi38-119055000"
->                                                                                    ;;defs_used((['is-closed',_671972]->[if,['is-variable',_671972],'False',[if,[==,[],_671972],'True',[if,['is-expression',_671972],[and,[let,_672104,['car-atom',_671972],['is-closed',_672104]],[let,_672158,['cdr-atom',_671972],['is-closed',_672158]]],'True']]]))
+>                                                                                    ;;defs_used((['is-closed',_671980]->[if,['is-variable',_671980],'False',[if,[==,[],_671980],'True',[if,['is-expression',_671980],[and,[let,_672112,['car-atom',_671980],['is-closed',_672112]],[let,_672166,['cdr-atom',_671980],['is-closed',_672166]]],'True']]]))
 
 </span>;<span class="ansi38-047047047"
->          |   |   |   |   |   |   |     <--(if (is-variable 2) False (if (== () 2) True (if (is-expression 2) (and (let $_666048 (car-atom 2) (is-closed $_666048)) (let $_666102 (cdr-atom 2) (is-closed $_666102))) True))) </span>
+>          |   |   |   |   |   |   |     <--(if (is-variable 2) False (if (== () 2) True (if (is-expression 2) (and (let $_666056 (car-atom 2) (is-closed $_666056)) (let $_666110 (cdr-atom 2) (is-closed $_666110))) True))) </span>
 ;<span class="ansi38-047047047"
->  179:8   |   |   |   |   |   |   |   |   |--->(if (is-variable 2) False (if (== () 2) True (if (is-expression 2) (and (let $_666048 (car-atom 2) (is-closed $_666048)) (let $_666102 (cdr-atom 2) (is-closed $_666102))) True))) </span>
+>  179:8   |   |   |   |   |   |   |   |   |--->(if (is-variable 2) False (if (== () 2) True (if (is-expression 2) (and (let $_666056 (car-atom 2) (is-closed $_666056)) (let $_666110 (cdr-atom 2) (is-closed $_666110))) True))) </span>
 ;<span class="ansi38-047047047"
 >  180:9   |   |   |   |   |   |   |   |   |   |--->(is-variable 2) </span>
 ;<span class="ansi38-047047047"
->  182:9   |   |   |   |   |   |   |   |   |   |-(=(is-variable $_687062) </span>
+>  182:9   |   |   |   |   |   |   |   |   |   |-(=(is-variable $_687070) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |   |   |   |   |     (== (get-metatype $_687062) Variable)) </span>
+>          |   |   |   |   |   |   |   |   |     (== (get-metatype $_687070) Variable)) </span>
 <span class="ansi38-119055000"
->                                                                                ;;defs_used((['is-variable',_692802]->[==,['get-metatype',_692802],'Variable']))
+>                                                                                ;;defs_used((['is-variable',_692810]->[==,['get-metatype',_692810],'Variable']))
 
 </span>;<span class="ansi38-047047047"
 >          |   |   |   |   |   |   |   |   |     <--(== (get-metatype 2) Variable) </span>
@@ -2496,21 +2487,21 @@ Deterministic: ()
 ;<span class="ansi38-047047047"
 >  188:11  |   |   |   |   |   |   |   |   |   |   |   |-<--(== Grounded Variable) </span>
 ;<span class="ansi38-047047047"
->  190:9   |   |   |   |   |   |   |   |   |   |--->(if (== () 2) True (if (is-expression 2) (and (let $_19030 (car-atom 2) (is-closed $_19030)) (let $_19084 (cdr-atom 2) (is-closed $_19084))) True)) </span>
+>  190:9   |   |   |   |   |   |   |   |   |   |--->(if (== () 2) True (if (is-expression 2) (and (let $_19038 (car-atom 2) (is-closed $_19038)) (let $_19092 (cdr-atom 2) (is-closed $_19092))) True)) </span>
 ;<span class="ansi38-047047047"
 >  191:10  |   |   |   |   |   |   |   |   |   |   |--->(== () 2) </span>
 ;<span class="ansi38-047047047"
 >  192:10  |   |   |   |   |   |   |   |   |   |   |-<--(== () 2) </span>
 ;<span class="ansi38-047047047"
->  194:10  |   |   |   |   |   |   |   |   |   |   |--->(if (is-expression 2) (and (let $_19030 (car-atom 2) (is-closed $_19030)) (let $_19084 (cdr-atom 2) (is-closed $_19084))) True) </span>
+>  194:10  |   |   |   |   |   |   |   |   |   |   |--->(if (is-expression 2) (and (let $_19038 (car-atom 2) (is-closed $_19038)) (let $_19092 (cdr-atom 2) (is-closed $_19092))) True) </span>
 ;<span class="ansi38-047047047"
 >  195:11  |   |   |   |   |   |   |   |   |   |   |   |--->(is-expression 2) </span>
 ;<span class="ansi38-047047047"
->  197:11  |   |   |   |   |   |   |   |   |   |   |   |-(=(is-expression $_59786) </span>
+>  197:11  |   |   |   |   |   |   |   |   |   |   |   |-(=(is-expression $_59794) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |   |   |   |   |   |   |     (== (get-metatype $_59786) Expression)) </span>
+>          |   |   |   |   |   |   |   |   |   |   |     (== (get-metatype $_59794) Expression)) </span>
 <span class="ansi38-119055000"
->                                                                            ;;defs_used((['is-expression',_65540]->[==,['get-metatype',_65540],'Expression']))
+>                                                                            ;;defs_used((['is-expression',_65548]->[==,['get-metatype',_65548],'Expression']))
 
 </span>;<span class="ansi38-047047047"
 >          |   |   |   |   |   |   |   |   |   |   |     <--(== (get-metatype 2) Expression) </span>
@@ -2535,24 +2526,24 @@ Deterministic: ()
 ;<span class="ansi38-047047047"
 >  208:7   |   |   |   |   |   |   |   |--->(is-closed 3) </span>
 ;<span class="ansi38-047047047"
->  210:7   |   |   |   |   |   |   |   |-(=(is-closed $_39710) </span>
+>  210:7   |   |   |   |   |   |   |   |-(=(is-closed $_39718) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |   |   |     (if (is-variable $_39710) False (if (== () $_39710) True (if (is-expression $_39710) (and (let $_39842 (car-atom $_39710) (is-closed $_39842)) (let $_39896 (cdr-atom $_39710) (is-closed $_39896))) True)))) </span>
+>          |   |   |   |   |   |   |     (if (is-variable $_39718) False (if (== () $_39718) True (if (is-expression $_39718) (and (let $_39850 (car-atom $_39718) (is-closed $_39850)) (let $_39904 (cdr-atom $_39718) (is-closed $_39904))) True)))) </span>
 <span class="ansi38-119055000"
->                                                                                    ;;defs_used((['is-closed',_45760]->[if,['is-variable',_45760],'False',[if,[==,[],_45760],'True',[if,['is-expression',_45760],[and,[let,_45892,['car-atom',_45760],['is-closed',_45892]],[let,_45946,['cdr-atom',_45760],['is-closed',_45946]]],'True']]]))
+>                                                                                    ;;defs_used((['is-closed',_45768]->[if,['is-variable',_45768],'False',[if,[==,[],_45768],'True',[if,['is-expression',_45768],[and,[let,_45900,['car-atom',_45768],['is-closed',_45900]],[let,_45954,['cdr-atom',_45768],['is-closed',_45954]]],'True']]]))
 
 </span>;<span class="ansi38-047047047"
->          |   |   |   |   |   |   |     <--(if (is-variable 3) False (if (== () 3) True (if (is-expression 3) (and (let $_39842 (car-atom 3) (is-closed $_39842)) (let $_39896 (cdr-atom 3) (is-closed $_39896))) True))) </span>
+>          |   |   |   |   |   |   |     <--(if (is-variable 3) False (if (== () 3) True (if (is-expression 3) (and (let $_39850 (car-atom 3) (is-closed $_39850)) (let $_39904 (cdr-atom 3) (is-closed $_39904))) True))) </span>
 ;<span class="ansi38-047047047"
->  211:8   |   |   |   |   |   |   |   |   |--->(if (is-variable 3) False (if (== () 3) True (if (is-expression 3) (and (let $_39842 (car-atom 3) (is-closed $_39842)) (let $_39896 (cdr-atom 3) (is-closed $_39896))) True))) </span>
+>  211:8   |   |   |   |   |   |   |   |   |--->(if (is-variable 3) False (if (== () 3) True (if (is-expression 3) (and (let $_39850 (car-atom 3) (is-closed $_39850)) (let $_39904 (cdr-atom 3) (is-closed $_39904))) True))) </span>
 ;<span class="ansi38-047047047"
 >  212:9   |   |   |   |   |   |   |   |   |   |--->(is-variable 3) </span>
 ;<span class="ansi38-047047047"
->  214:9   |   |   |   |   |   |   |   |   |   |-(=(is-variable $_60846) </span>
+>  214:9   |   |   |   |   |   |   |   |   |   |-(=(is-variable $_60854) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |   |   |   |   |     (== (get-metatype $_60846) Variable)) </span>
+>          |   |   |   |   |   |   |   |   |     (== (get-metatype $_60854) Variable)) </span>
 <span class="ansi38-119055000"
->                                                                                ;;defs_used((['is-variable',_66586]->[==,['get-metatype',_66586],'Variable']))
+>                                                                                ;;defs_used((['is-variable',_66594]->[==,['get-metatype',_66594],'Variable']))
 
 </span>;<span class="ansi38-047047047"
 >          |   |   |   |   |   |   |   |   |     <--(== (get-metatype 3) Variable) </span>
@@ -2569,21 +2560,21 @@ Deterministic: ()
 ;<span class="ansi38-047047047"
 >  220:11  |   |   |   |   |   |   |   |   |   |   |   |-<--(== Grounded Variable) </span>
 ;<span class="ansi38-047047047"
->  222:9   |   |   |   |   |   |   |   |   |   |--->(if (== () 3) True (if (is-expression 3) (and (let $_19030 (car-atom 3) (is-closed $_19030)) (let $_19084 (cdr-atom 3) (is-closed $_19084))) True)) </span>
+>  222:9   |   |   |   |   |   |   |   |   |   |--->(if (== () 3) True (if (is-expression 3) (and (let $_19038 (car-atom 3) (is-closed $_19038)) (let $_19092 (cdr-atom 3) (is-closed $_19092))) True)) </span>
 ;<span class="ansi38-047047047"
 >  223:10  |   |   |   |   |   |   |   |   |   |   |--->(== () 3) </span>
 ;<span class="ansi38-047047047"
 >  224:10  |   |   |   |   |   |   |   |   |   |   |-<--(== () 3) </span>
 ;<span class="ansi38-047047047"
->  226:10  |   |   |   |   |   |   |   |   |   |   |--->(if (is-expression 3) (and (let $_19030 (car-atom 3) (is-closed $_19030)) (let $_19084 (cdr-atom 3) (is-closed $_19084))) True) </span>
+>  226:10  |   |   |   |   |   |   |   |   |   |   |--->(if (is-expression 3) (and (let $_19038 (car-atom 3) (is-closed $_19038)) (let $_19092 (cdr-atom 3) (is-closed $_19092))) True) </span>
 ;<span class="ansi38-047047047"
 >  227:11  |   |   |   |   |   |   |   |   |   |   |   |--->(is-expression 3) </span>
 ;<span class="ansi38-047047047"
->  229:11  |   |   |   |   |   |   |   |   |   |   |   |-(=(is-expression $_46642) </span>
+>  229:11  |   |   |   |   |   |   |   |   |   |   |   |-(=(is-expression $_46650) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |   |   |   |   |   |   |     (== (get-metatype $_46642) Expression)) </span>
+>          |   |   |   |   |   |   |   |   |   |   |     (== (get-metatype $_46650) Expression)) </span>
 <span class="ansi38-119055000"
->                                                                            ;;defs_used((['is-expression',_52396]->[==,['get-metatype',_52396],'Expression']))
+>                                                                            ;;defs_used((['is-expression',_52404]->[==,['get-metatype',_52404],'Expression']))
 
 </span>;<span class="ansi38-047047047"
 >          |   |   |   |   |   |   |   |   |   |   |     <--(== (get-metatype 3) Expression) </span>
@@ -2707,21 +2698,21 @@ Deterministic: ()
 </span>;<span class="ansi38-047047047"
 >  317:2   |   |   |-<--(: ((rule (rule1 axiom)) CPU) (less 2 3)) </span>
 <span class="ansi38-119055000"
->                                                                                            ;;defs_used(([bc,[:,[_258690,_258696],_258702],_258708,['S',_258726]]->['let*',[[[:,_258690,[->,_258780,_258702]],[bc,[:,_258690,[->,_258780,_258702]],_258708,_258726]],[[:,_258696,_258780],[bc,[:,_258696,_258780],_258708,_258726]]],[:,[_258690,_258696],_258702]]))
+>                                                                                            ;;defs_used(([bc,[:,[_258698,_258704],_258710],_258716,['S',_258734]]->['let*',[[[:,_258698,[->,_258788,_258710]],[bc,[:,_258698,[->,_258788,_258710]],_258716,_258734]],[[:,_258704,_258788],[bc,[:,_258704,_258788],_258716,_258734]]],[:,[_258698,_258704],_258710]]))
 
 </span>;<span class="ansi38-047047047"
->  318:3   |   |   |   |-<--(let* (((: $_17028 (-> $_17118 (⍃ 2 3))) (bc (: $_17028 (-> $_17118 (⍃ 2 3))) &kb (S Z))) ((: $_17034 $_17118) (bc (: $_17034 $_17118) &kb (S Z)))) (: ($_17028 $_17034) (⍃ 2 3))) </span>
+>  318:3   |   |   |   |-<--(let* (((: $_17036 (-> $_17126 (⍃ 2 3))) (bc (: $_17036 (-> $_17126 (⍃ 2 3))) &kb (S Z))) ((: $_17042 $_17126) (bc (: $_17042 $_17126) &kb (S Z)))) (: ($_17036 $_17042) (⍃ 2 3))) </span>
 ;<span class="ansi38-047047047"
->  319:4   |   |   |   |   |--->(let* (((: $_17028 (-> $_17118 (⍃ 2 3))) (bc (: $_17028 (-> $_17118 (⍃ 2 3))) &kb (S Z))) ((: $_17034 $_17118) (bc (: $_17034 $_17118) &kb (S Z)))) (: ($_17028 $_17034) (⍃ 2 3))) </span>
+>  319:4   |   |   |   |   |--->(let* (((: $_17036 (-> $_17126 (⍃ 2 3))) (bc (: $_17036 (-> $_17126 (⍃ 2 3))) &kb (S Z))) ((: $_17042 $_17126) (bc (: $_17042 $_17126) &kb (S Z)))) (: ($_17036 $_17042) (⍃ 2 3))) </span>
 ;<span class="ansi38-047047047"
->  320:5   |   |   |   |   |   |--->(bc (: $_17028 (-> $_17118 (⍃ 2 3))) &kb (S Z)) </span>
+>  320:5   |   |   |   |   |   |--->(bc (: $_17036 (-> $_17126 (⍃ 2 3))) &kb (S Z)) </span>
 ;<span class="ansi38-047047047"
->  321:6   |   |   |   |   |   |   |--->(: $_17028 (-> $_17118 (⍃ 2 3))) </span>
+>  321:6   |   |   |   |   |   |   |--->(: $_17036 (-> $_17126 (⍃ 2 3))) </span>
 <span class="ansi38-119055000"
->                                                                                      ;;defs_none([:,_17028,[->,_17118,[⍃,2,3]]])
+>                                                                                      ;;defs_none([:,_17036,[->,_17126,[⍃,2,3]]])
 
 </span>;<span class="ansi38-047047047"
->  323:6   |   |   |   |   |   |   |-<--(: $_17028 (-> $_17118 (⍃ 2 3))) </span>
+>  323:6   |   |   |   |   |   |   |-<--(: $_17036 (-> $_17126 (⍃ 2 3))) </span>
 ;<span class="ansi38-047047047"
 >  324:6   |   |   |   |   |   |   |--->(S Z) </span>
 <span class="ansi38-119055000"
@@ -2730,61 +2721,61 @@ Deterministic: ()
 </span>;<span class="ansi38-047047047"
 >  326:6   |   |   |   |   |   |   |-<--(S Z) </span>
 ;<span class="ansi38-047047047"
->  328:5   |   |   |   |   |   |-(=(bc (: $_291788 $_291794) $_291800 $_291806) </span>
+>  328:5   |   |   |   |   |   |-(=(bc (: $_291796 $_291802) $_291808 $_291814) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |     (match $_291800 (: $_291788 $_291794) (: $_291788 $_291794))) </span>
+>          |   |   |   |   |     (match $_291808 (: $_291796 $_291802) (: $_291796 $_291802))) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |     (=(bc (: CPU (⍃ $_291590 $_291596)) $_291602 $_291608) </span>
+>          |   |   |   |   |     (=(bc (: CPU (⍃ $_291598 $_291604)) $_291610 $_291616) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |     (if (and (and (is-closed $_291590) (is-closed $_291596)) (< $_291590 $_291596)) (: CPU (⍃ $_291590 $_291596)) (empty))) </span>
+>          |   |   |   |   |     (if (and (and (is-closed $_291598) (is-closed $_291604)) (< $_291598 $_291604)) (: CPU (⍃ $_291598 $_291604)) (empty))) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |     (=(bc (: ($_291260 $_291266) $_291272) $_291278 (S $_291296)) </span>
+>          |   |   |   |   |     (=(bc (: ($_291268 $_291274) $_291280) $_291286 (S $_291304)) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |     (let* (((: $_291260 (-> $_291350 $_291272)) (bc (: $_291260 (-> $_291350 $_291272)) $_291278 $_291296)) ((: $_291266 $_291350) (bc (: $_291266 $_291350) $_291278 $_291296))) (: ($_291260 $_291266) $_291272))) </span>
+>          |   |   |   |   |     (let* (((: $_291268 (-> $_291358 $_291280)) (bc (: $_291268 (-> $_291358 $_291280)) $_291286 $_291304)) ((: $_291274 $_291358) (bc (: $_291274 $_291358) $_291286 $_291304))) (: ($_291268 $_291274) $_291280))) </span>
 <span class="ansi38-119055000"
->                                                                                        ;;defs_used(([bc,[:,_309214,_309220],_309226,_309232]->[match,_309226,[:,_309214,_309220],[:,_309214,_309220]]))
+>                                                                                        ;;defs_used(([bc,[:,_309222,_309228],_309234,_309240]->[match,_309234,[:,_309222,_309228],[:,_309222,_309228]]))
 
 </span>;<span class="ansi38-047047047"
->  328:6   |   |   |   |   |   |   |--->(match &kb (: $_17028 (-> $_17118 (⍃ 2 3))) (: $_17028 (-> $_17118 (⍃ 2 3)))) </span>
+>  328:6   |   |   |   |   |   |   |--->(match &kb (: $_17036 (-> $_17126 (⍃ 2 3))) (: $_17036 (-> $_17126 (⍃ 2 3)))) </span>
 ;<span class="ansi38-047047047"
 >  329:6   |   |   |   |   |   |   |-<--fail </span>
 <span class="ansi38-119055000"
->                                                                                        ;;defs_used(([bc,[:,[_318324,_318330],_318336],_318342,['S',_318360]]->['let*',[[[:,_318324,[->,_318414,_318336]],[bc,[:,_318324,[->,_318414,_318336]],_318342,_318360]],[[:,_318330,_318414],[bc,[:,_318330,_318414],_318342,_318360]]],[:,[_318324,_318330],_318336]]))
+>                                                                                        ;;defs_used(([bc,[:,[_318332,_318338],_318344],_318350,['S',_318368]]->['let*',[[[:,_318332,[->,_318422,_318344]],[bc,[:,_318332,[->,_318422,_318344]],_318350,_318368]],[[:,_318338,_318422],[bc,[:,_318338,_318422],_318350,_318368]]],[:,[_318332,_318338],_318344]]))
 
 </span>;<span class="ansi38-047047047"
->  330:5   |   |   |   |   |   |-<--(let* (((: $_291260 (-> $_291350 (-> $_17118 (⍃ 2 3)))) (bc (: $_291260 (-> $_291350 (-> $_17118 (⍃ 2 3)))) &kb Z)) ((: $_291266 $_291350) (bc (: $_291266 $_291350) &kb Z))) (: ($_291260 $_291266) (-> $_17118 (⍃ 2 3)))) </span>
+>  330:5   |   |   |   |   |   |-<--(let* (((: $_291268 (-> $_291358 (-> $_17126 (⍃ 2 3)))) (bc (: $_291268 (-> $_291358 (-> $_17126 (⍃ 2 3)))) &kb Z)) ((: $_291274 $_291358) (bc (: $_291274 $_291358) &kb Z))) (: ($_291268 $_291274) (-> $_17126 (⍃ 2 3)))) </span>
 ;<span class="ansi38-047047047"
->  331:6   |   |   |   |   |   |   |--->(let* (((: $_291260 (-> $_291350 (-> $_17118 (⍃ 2 3)))) (bc (: $_291260 (-> $_291350 (-> $_17118 (⍃ 2 3)))) &kb Z)) ((: $_291266 $_291350) (bc (: $_291266 $_291350) &kb Z))) (: ($_291260 $_291266) (-> $_17118 (⍃ 2 3)))) </span>
+>  331:6   |   |   |   |   |   |   |--->(let* (((: $_291268 (-> $_291358 (-> $_17126 (⍃ 2 3)))) (bc (: $_291268 (-> $_291358 (-> $_17126 (⍃ 2 3)))) &kb Z)) ((: $_291274 $_291358) (bc (: $_291274 $_291358) &kb Z))) (: ($_291268 $_291274) (-> $_17126 (⍃ 2 3)))) </span>
 ;<span class="ansi38-047047047"
->  332:7   |   |   |   |   |   |   |   |--->(bc (: $_291260 (-> $_291350 (-> $_17118 (⍃ 2 3)))) &kb Z) </span>
+>  332:7   |   |   |   |   |   |   |   |--->(bc (: $_291268 (-> $_291358 (-> $_17126 (⍃ 2 3)))) &kb Z) </span>
 ;<span class="ansi38-047047047"
->  333:8   |   |   |   |   |   |   |   |   |--->(: $_291260 (-> $_291350 (-> $_17118 (⍃ 2 3)))) </span>
+>  333:8   |   |   |   |   |   |   |   |   |--->(: $_291268 (-> $_291358 (-> $_17126 (⍃ 2 3)))) </span>
 <span class="ansi38-119055000"
->                                                                                  ;;defs_none([:,_291260,[->,_291350,[->,_17118,[⍃,2,3]]]])
+>                                                                                  ;;defs_none([:,_291268,[->,_291358,[->,_17126,[⍃,2,3]]]])
 
 </span>;<span class="ansi38-047047047"
->  335:8   |   |   |   |   |   |   |   |   |-<--(: $_291260 (-> $_291350 (-> $_17118 (⍃ 2 3)))) </span>
+>  335:8   |   |   |   |   |   |   |   |   |-<--(: $_291268 (-> $_291358 (-> $_17126 (⍃ 2 3)))) </span>
 ;<span class="ansi38-047047047"
->  337:7   |   |   |   |   |   |   |   |-(=(bc (: $_343628 $_343634) $_343640 $_343646) </span>
+>  337:7   |   |   |   |   |   |   |   |-(=(bc (: $_343636 $_343642) $_343648 $_343654) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |   |   |     (match $_343640 (: $_343628 $_343634) (: $_343628 $_343634))) </span>
+>          |   |   |   |   |   |   |     (match $_343648 (: $_343636 $_343642) (: $_343636 $_343642))) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |   |   |     (=(bc (: CPU (⍃ $_343430 $_343436)) $_343442 $_343448) </span>
+>          |   |   |   |   |   |   |     (=(bc (: CPU (⍃ $_343438 $_343444)) $_343450 $_343456) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |   |   |     (if (and (and (is-closed $_343430) (is-closed $_343436)) (< $_343430 $_343436)) (: CPU (⍃ $_343430 $_343436)) (empty))) </span>
+>          |   |   |   |   |   |   |     (if (and (and (is-closed $_343438) (is-closed $_343444)) (< $_343438 $_343444)) (: CPU (⍃ $_343438 $_343444)) (empty))) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |   |   |     (=(bc (: ($_343100 $_343106) $_343112) $_343118 (S $_343136)) </span>
+>          |   |   |   |   |   |   |     (=(bc (: ($_343108 $_343114) $_343120) $_343126 (S $_343144)) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |   |   |     (let* (((: $_343100 (-> $_343190 $_343112)) (bc (: $_343100 (-> $_343190 $_343112)) $_343118 $_343136)) ((: $_343106 $_343190) (bc (: $_343106 $_343190) $_343118 $_343136))) (: ($_343100 $_343106) $_343112))) </span>
+>          |   |   |   |   |   |   |     (let* (((: $_343108 (-> $_343198 $_343120)) (bc (: $_343108 (-> $_343198 $_343120)) $_343126 $_343144)) ((: $_343114 $_343198) (bc (: $_343114 $_343198) $_343126 $_343144))) (: ($_343108 $_343114) $_343120))) </span>
 <span class="ansi38-119055000"
->                                                                                    ;;defs_used(([bc,[:,_361126,_361132],_361138,_361144]->[match,_361138,[:,_361126,_361132],[:,_361126,_361132]]))
+>                                                                                    ;;defs_used(([bc,[:,_361134,_361140],_361146,_361152]->[match,_361146,[:,_361134,_361140],[:,_361134,_361140]]))
 
 </span>;<span class="ansi38-047047047"
->  337:8   |   |   |   |   |   |   |   |   |--->(match &kb (: $_291260 (-> $_291350 (-> $_17118 (⍃ 2 3)))) (: $_291260 (-> $_291350 (-> $_17118 (⍃ 2 3))))) </span>
+>  337:8   |   |   |   |   |   |   |   |   |--->(match &kb (: $_291268 (-> $_291358 (-> $_17126 (⍃ 2 3)))) (: $_291268 (-> $_291358 (-> $_17126 (⍃ 2 3))))) </span>
 ;<span class="ansi38-047047047"
 >  338:8   |   |   |   |   |   |   |   |   |-<--fail </span>
 ;<span class="ansi38-047047047"
->  339:7   |   |   |   |   |   |   |   |-<--(match &kb (: $_363844 (-> $_363862 (-> $_363880 (⍃ 2 3)))) (: $_363844 (-> $_363862 (-> $_363880 (⍃ 2 3))))) </span>
+>  339:7   |   |   |   |   |   |   |   |-<--(match &kb (: $_363852 (-> $_363870 (-> $_363888 (⍃ 2 3)))) (: $_363852 (-> $_363870 (-> $_363888 (⍃ 2 3))))) </span>
 ;<span class="ansi38-047047047"
 >  340:6   |   |   |   |   |   |   |-<--fail </span>
 ;<span class="ansi38-047047047"
@@ -2792,52 +2783,52 @@ Deterministic: ()
 ;<span class="ansi38-047047047"
 >  342:2   |   |   |-<--(: ((rule (rule1 axiom)) CPU) (less 2 3)) </span>
 ;<span class="ansi38-047047047"
->  343:8   |   |   |   |   |   |   |   |   |-<--(match &kb (: $_15400 (nums $_15418 $_15424)) (: $_15400 (nums $_15418 $_15424))) </span>
+>  343:8   |   |   |   |   |   |   |   |   |-<--(match &kb (: $_15408 (nums $_15426 $_15432)) (: $_15408 (nums $_15426 $_15432))) </span>
 ;<span class="ansi38-047047047"
 >  344:7   |   |   |   |   |   |   |   |-<--(: (rule1 axiom) (rule1output 2 3)) </span>
 ;<span class="ansi38-047047047"
->  345:7   |   |   |   |   |   |   |   |-<--(match &kb (: $_13374 (-> $_13392 (rule1output $_13410 $_13416))) (: $_13374 (-> $_13392 (rule1output $_13410 $_13416)))) </span>
+>  345:7   |   |   |   |   |   |   |   |-<--(match &kb (: $_13382 (-> $_13400 (rule1output $_13418 $_13424))) (: $_13382 (-> $_13400 (rule1output $_13418 $_13424)))) </span>
 ;<span class="ansi38-047047047"
 >  346:6   |   |   |   |   |   |   |-<--(: (rule1 axiom) (rule1output 2 3)) </span>
 ;<span class="ansi38-047047047"
 >  347:4   |   |   |   |   |-<--(: (rule (rule1 axiom)) (-> (⍃ 2 3) (less 2 3))) </span>
 <span class="ansi38-119055000"
->                                                                                          ;;defs_used(([bc,[:,[_393868,_393874],_393880],_393886,['S',_393904]]->['let*',[[[:,_393868,[->,_393958,_393880]],[bc,[:,_393868,[->,_393958,_393880]],_393886,_393904]],[[:,_393874,_393958],[bc,[:,_393874,_393958],_393886,_393904]]],[:,[_393868,_393874],_393880]]))
+>                                                                                          ;;defs_used(([bc,[:,[_393876,_393882],_393888],_393894,['S',_393912]]->['let*',[[[:,_393876,[->,_393966,_393888]],[bc,[:,_393876,[->,_393966,_393888]],_393894,_393912]],[[:,_393882,_393966],[bc,[:,_393882,_393966],_393894,_393912]]],[:,[_393876,_393882],_393888]]))
 
 </span>;<span class="ansi38-047047047"
->  348:4   |   |   |   |   |-<--(let* (((: $_9674 (-> $_9764 (-> $_7990 (-> $_7050 (less $_4512 $_4530))))) (bc (: $_9674 (-> $_9764 (-> $_7990 (-> $_7050 (less $_4512 $_4530))))) &kb Z)) ((: $_9680 $_9764) (bc (: $_9680 $_9764) &kb Z))) (: ($_9674 $_9680) (-> $_7990 (-> $_7050 (less $_4512 $_4530))))) </span>
+>  348:4   |   |   |   |   |-<--(let* (((: $_9682 (-> $_9772 (-> $_7998 (-> $_7058 (less $_4512 $_4530))))) (bc (: $_9682 (-> $_9772 (-> $_7998 (-> $_7058 (less $_4512 $_4530))))) &kb Z)) ((: $_9688 $_9772) (bc (: $_9688 $_9772) &kb Z))) (: ($_9682 $_9688) (-> $_7998 (-> $_7058 (less $_4512 $_4530))))) </span>
 ;<span class="ansi38-047047047"
->  349:5   |   |   |   |   |   |--->(let* (((: $_9674 (-> $_9764 (-> $_7990 (-> $_7050 (less $_4512 $_4530))))) (bc (: $_9674 (-> $_9764 (-> $_7990 (-> $_7050 (less $_4512 $_4530))))) &kb Z)) ((: $_9680 $_9764) (bc (: $_9680 $_9764) &kb Z))) (: ($_9674 $_9680) (-> $_7990 (-> $_7050 (less $_4512 $_4530))))) </span>
+>  349:5   |   |   |   |   |   |--->(let* (((: $_9682 (-> $_9772 (-> $_7998 (-> $_7058 (less $_4512 $_4530))))) (bc (: $_9682 (-> $_9772 (-> $_7998 (-> $_7058 (less $_4512 $_4530))))) &kb Z)) ((: $_9688 $_9772) (bc (: $_9688 $_9772) &kb Z))) (: ($_9682 $_9688) (-> $_7998 (-> $_7058 (less $_4512 $_4530))))) </span>
 ;<span class="ansi38-047047047"
->  350:6   |   |   |   |   |   |   |--->(bc (: $_9674 (-> $_9764 (-> $_7990 (-> $_7050 (less $_4512 $_4530))))) &kb Z) </span>
+>  350:6   |   |   |   |   |   |   |--->(bc (: $_9682 (-> $_9772 (-> $_7998 (-> $_7058 (less $_4512 $_4530))))) &kb Z) </span>
 ;<span class="ansi38-047047047"
->  351:7   |   |   |   |   |   |   |   |--->(: $_9674 (-> $_9764 (-> $_7990 (-> $_7050 (less $_4512 $_4530))))) </span>
+>  351:7   |   |   |   |   |   |   |   |--->(: $_9682 (-> $_9772 (-> $_7998 (-> $_7058 (less $_4512 $_4530))))) </span>
 <span class="ansi38-119055000"
->                                                                                    ;;defs_none([:,_9674,[->,_9764,[->,_7990,[->,_7050,[less,_4512,_4530]]]]])
+>                                                                                    ;;defs_none([:,_9682,[->,_9772,[->,_7998,[->,_7058,[less,_4512,_4530]]]]])
 
 </span>;<span class="ansi38-047047047"
->  353:7   |   |   |   |   |   |   |   |-<--(: $_9674 (-> $_9764 (-> $_7990 (-> $_7050 (less $_4512 $_4530))))) </span>
+>  353:7   |   |   |   |   |   |   |   |-<--(: $_9682 (-> $_9772 (-> $_7998 (-> $_7058 (less $_4512 $_4530))))) </span>
 ;<span class="ansi38-047047047"
->  355:6   |   |   |   |   |   |   |-(=(bc (: $_418834 $_418840) $_418846 $_418852) </span>
+>  355:6   |   |   |   |   |   |   |-(=(bc (: $_418842 $_418848) $_418854 $_418860) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |   |     (match $_418846 (: $_418834 $_418840) (: $_418834 $_418840))) </span>
+>          |   |   |   |   |   |     (match $_418854 (: $_418842 $_418848) (: $_418842 $_418848))) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |   |     (=(bc (: CPU (⍃ $_418636 $_418642)) $_418648 $_418654) </span>
+>          |   |   |   |   |   |     (=(bc (: CPU (⍃ $_418644 $_418650)) $_418656 $_418662) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |   |     (if (and (and (is-closed $_418636) (is-closed $_418642)) (< $_418636 $_418642)) (: CPU (⍃ $_418636 $_418642)) (empty))) </span>
+>          |   |   |   |   |   |     (if (and (and (is-closed $_418644) (is-closed $_418650)) (< $_418644 $_418650)) (: CPU (⍃ $_418644 $_418650)) (empty))) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |   |     (=(bc (: ($_418306 $_418312) $_418318) $_418324 (S $_418342)) </span>
+>          |   |   |   |   |   |     (=(bc (: ($_418314 $_418320) $_418326) $_418332 (S $_418350)) </span>
 ;<span class="ansi38-047047047"
->          |   |   |   |   |   |     (let* (((: $_418306 (-> $_418396 $_418318)) (bc (: $_418306 (-> $_418396 $_418318)) $_418324 $_418342)) ((: $_418312 $_418396) (bc (: $_418312 $_418396) $_418324 $_418342))) (: ($_418306 $_418312) $_418318))) </span>
+>          |   |   |   |   |   |     (let* (((: $_418314 (-> $_418404 $_418326)) (bc (: $_418314 (-> $_418404 $_418326)) $_418332 $_418350)) ((: $_418320 $_418404) (bc (: $_418320 $_418404) $_418332 $_418350))) (: ($_418314 $_418320) $_418326))) </span>
 <span class="ansi38-119055000"
->                                                                                      ;;defs_used(([bc,[:,_436298,_436304],_436310,_436316]->[match,_436310,[:,_436298,_436304],[:,_436298,_436304]]))
+>                                                                                      ;;defs_used(([bc,[:,_436306,_436312],_436318,_436324]->[match,_436318,[:,_436306,_436312],[:,_436306,_436312]]))
 
 </span>;<span class="ansi38-047047047"
->  355:7   |   |   |   |   |   |   |   |--->(match &kb (: $_9674 (-> $_9764 (-> $_7990 (-> $_7050 (less $_4512 $_4530))))) (: $_9674 (-> $_9764 (-> $_7990 (-> $_7050 (less $_4512 $_4530)))))) </span>
+>  355:7   |   |   |   |   |   |   |   |--->(match &kb (: $_9682 (-> $_9772 (-> $_7998 (-> $_7058 (less $_4512 $_4530))))) (: $_9682 (-> $_9772 (-> $_7998 (-> $_7058 (less $_4512 $_4530)))))) </span>
 ;<span class="ansi38-047047047"
 >  356:7   |   |   |   |   |   |   |   |-<--fail </span>
 ;<span class="ansi38-047047047"
->  357:6   |   |   |   |   |   |   |-<--(match &kb (: $_439072 (-> $_439090 (-> $_439108 (-> $_439126 (less $_439144 $_439150))))) (: $_439072 (-> $_439090 (-> $_439108 (-> $_439126 (less $_439144 $_439150)))))) </span>
+>  357:6   |   |   |   |   |   |   |-<--(match &kb (: $_439080 (-> $_439098 (-> $_439116 (-> $_439134 (less $_439152 $_439158))))) (: $_439080 (-> $_439098 (-> $_439116 (-> $_439134 (less $_439152 $_439158)))))) </span>
 ;<span class="ansi38-047047047"
 >  358:5   |   |   |   |   |   |-<--fail </span>
 ;<span class="ansi38-047047047"
@@ -2846,17 +2837,16 @@ Deterministic: ()
 >  360:1   |   |-<--(: ((rule (rule1 axiom)) CPU) (less 2 3)) </span>
 ; 
 ; EVAL TEST
-; took 1.124 secs. (1123.94 milliseconds) 
+; took 1.099 secs. (1098.78 milliseconds) 
 
 !(assertEqualToResult (bc (: $prf (less $x $y)) &kb (S (S (S Z)))) ((: ((rule (rule1 axiom)) CPU) (less 2 3))))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((: ((rule (rule1 axiom)) CPU) (less 2 3))) ((: ((rule (rule1 axiom)) CPU) (less 2 3)))))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi32"
->% 10,048,262 inferences, 1.733 CPU in 1.733 seconds (100% CPU, 5797458 Lips)
+>% 10,048,252 inferences, 1.698 CPU in 1.698 seconds (100% CPU, 5919031 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/bc_comp.metta  0)
 <span class="ansi1"
@@ -2995,7 +2985,7 @@ Deterministic: ()
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 10:02:43+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 10:11:11+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

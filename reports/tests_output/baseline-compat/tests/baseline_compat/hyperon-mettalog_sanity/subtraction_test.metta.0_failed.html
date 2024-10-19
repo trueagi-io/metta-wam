@@ -31,7 +31,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 10:13:59+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 10:21:51+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -356,15 +356,14 @@ Script started on 2024-10-19 10:13:59+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-METTALOG-SANITY.SUBTRACTION-TEST.01</h3>
 ; 
 ; EVAL TEST
-; took 0.050 secs. (50.33 milliseconds) 
+; took 0.050 secs. (49.60 milliseconds) 
 
 !(assertEqual (subtraction (superpose (a b c d)) (superpose (b c))) (superpose (a d)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (a d) (a d)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;;; Test subtraction with multiple subsequent lists
 ;;;; Here, subtracting (b c) and (d) from (a b c d) should result in (a).
 <span class="ansi38-013099040"
@@ -376,15 +375,14 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SUBTRACTION-TEST.02</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.40 milliseconds) 
+; took 0.001 secs. (1.32 milliseconds) 
 
 !(assertEqual (subtraction (subtraction (superpose (a b c d)) (superpose (b c))) (superpose (d))) (superpose (a)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (a) (a)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;;; Test subtraction with nested structures
 ;;;; This test ensures that nested elements like (foo (bar baz)) are handled correctly.
 <span class="ansi38-013099040"
@@ -396,15 +394,14 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SUBTRACTION-TEST.03</h3>
 ; 
 ; EVAL TEST
-; took 0.003 secs. (3.26 milliseconds) 
+; took 0.003 secs. (3.20 milliseconds) 
 
 !(assertEqual (subtraction (superpose ((foo bar) (bar baz) qux)) (superpose ((bar baz) qux))) (superpose ((foo bar))))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((foo bar)) ((foo bar))))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;;; Test subtraction with mixed types
 ;;;; This checks that the function handles lists with symbols, numbers, and mixed content.
 <span class="ansi38-013099040"
@@ -416,15 +413,14 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SUBTRACTION-TEST.04</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.20 milliseconds) 
+; took 0.001 secs. (1.11 milliseconds) 
 
 !(assertEqual (subtraction (superpose (1 2 3 foo bar)) (superpose (2 foo))) (superpose (1 3 bar)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (1 3 bar) (1 3 bar)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;;; Test subtraction with duplicates
 ;;;; This test ensures that duplicates are treated correctly.
 <span class="ansi38-013099040"
@@ -436,15 +432,14 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SUBTRACTION-TEST.05</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.17 milliseconds) 
+; took 0.001 secs. (1.06 milliseconds) 
 
 !(assertEqual (subtraction (superpose (a b b c d)) (superpose (b c))) (superpose (a d)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (a d) (a d)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;;; Test subtraction with `unique` applied outside
 ;;;; In this case, `unique` is applied after the subtraction, removing duplicates.
 <span class="ansi38-013099040"
@@ -456,15 +451,14 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SUBTRACTION-TEST.06</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.04 milliseconds) 
+; took 0.000871 secs. (870.65 microseconds) 
 
 !(assertEqual (unique (subtraction (superpose (a b b c)) (superpose (b c c d)))) (superpose (a)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (a) (a)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;;; Test subtraction with `unique` applied inside
 ;;;; In this test, `unique` is applied to each input set before performing the subtraction.
 <span class="ansi38-013099040"
@@ -476,15 +470,14 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SUBTRACTION-TEST.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000986 secs. (985.72 microseconds) 
+; took 0.000846 secs. (846.46 microseconds) 
 
 !(assertEqual (subtraction (unique (superpose (a b b c))) (unique (superpose (b c c d)))) (superpose (a)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (a) (a)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;;; Test variable substitution during subtraction
 ;;;; This ensures that variables can be used and are properly instantiated during the operation.
 <span class="ansi38-013099040"
@@ -496,15 +489,14 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SUBTRACTION-TEST.08</h3>
 ; 
 ; EVAL TEST
-; took 0.000696 secs. (696.22 microseconds) 
+; took 0.000657 secs. (657.37 microseconds) 
 
 !(assertEqual (subtraction (superpose ($x $y)) (superpose (b))) (superpose ($x $y)))
 
 <span class="ansi36"
->(loonit_success  (equal_enough_for_test  ($_182748 $_182742) ($_182824 $_182818)))
+>(loonit_success  (equal_enough_for_test  ($_182826 $_182820) ($_182902 $_182896)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;;; Test subtraction with empty lists
 ;;;; Subtracting an empty list should return the original list.
 <span class="ansi38-013099040"
@@ -516,15 +508,14 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SUBTRACTION-TEST.09</h3>
 ; 
 ; EVAL TEST
-; took 0.000863 secs. (863.28 microseconds) 
+; took 0.000778 secs. (778.09 microseconds) 
 
 !(assertEqual (subtraction (superpose (a b c)) (superpose ())) (superpose (a b c)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (a b c) (a b c)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;;; Test subtraction with variables and nested structures
 ;;;; This checks how variables interact with nested lists during subtraction.
 <span class="ansi38-013099040"
@@ -536,17 +527,16 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SUBTRACTION-TEST.10</h3>
 ; 
 ; EVAL TEST
-; took 0.003 secs. (3.08 milliseconds) 
+; took 0.003 secs. (2.93 milliseconds) 
 
 !(assertEqual (subtraction (superpose ((foo $x) (bar $y))) (superpose ((bar $y) (foo qux)))) (superpose ((foo $x))))
 
 <span class="ansi36"
->(loonit_success  (equal_enough_for_test  ((foo $_232966)) ((foo $_237984))))
+>(loonit_success  (equal_enough_for_test  ((foo $_233060)) ((foo $_238078))))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi32"
->% 391,592 inferences, 0.113 CPU in 0.113 seconds (100% CPU, 3466965 Lips)
+>% 391,584 inferences, 0.110 CPU in 0.110 seconds (100% CPU, 3565003 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/subtraction_test.metta  0)
 <span class="ansi1"
@@ -685,7 +675,7 @@ Deterministic: ()
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 10:14:05+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 10:21:57+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

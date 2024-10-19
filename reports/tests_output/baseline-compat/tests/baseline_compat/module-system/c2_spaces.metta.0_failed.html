@@ -72,7 +72,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 10:19:46+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 10:27:20+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -441,8 +441,7 @@ Script started on 2024-10-19 10:19:46+00:00 [TERM="xterm-256color" TTY="/dev/pts
 </span><span class="ansi38-255165000"
 > (Mars orbit 1.5 au)
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; We can `match` over `&self` or another space
 <span class="ansi38-013099040"
@@ -454,15 +453,14 @@ Deterministic: ()
 >;; MODULE-SYSTEM.C2-SPACES.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000589 secs. (589.05 microseconds) 
+; took 0.000582 secs. (582.46 microseconds) 
 
 !(assertEqualToResult (match &kb (, ($obj is $prop) ($prop is-a Color) ($obj is-a Planet)) (Color of Planet $obj is $prop)) ((Color of Planet Mars is Red)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Color of Planet Mars is Red)) ((Color of Planet Mars is Red))))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; The knowledge in `&kb` is not in `&self`
 <span class="ansi38-013099040"
 >!(assertEqualToResult (match &self ($p is-a Color) $p) ())
@@ -473,15 +471,14 @@ Deterministic: ()
 >;; MODULE-SYSTEM.C2-SPACES.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000145 secs. (144.80 microseconds) 
+; took 0.000147 secs. (146.93 microseconds) 
 
 !(assertEqualToResult (match &self ($p is-a Color) $p) ())
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  () ()))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Checking that grounded symbols from different spaces are compatible
@@ -495,15 +492,14 @@ Deterministic: ()
 >;; MODULE-SYSTEM.C2-SPACES.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000368 secs. (368.16 microseconds) 
+; took 0.000328 secs. (327.81 microseconds) 
 
 !(assertEqual (match &kb (, (Venus orbit $x au) (Mars orbit $y au)) (- $y $x)) 0.8)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (0.8) (0.8)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Different spaces can be used
@@ -521,15 +517,14 @@ Deterministic: ()
 >;; MODULE-SYSTEM.C2-SPACES.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000650 secs. (650.14 microseconds) 
+; took 0.000635 secs. (634.86 microseconds) 
 
 !(assertEqualToResult (match &kb ($prop is-a Color) (match &self ($obj is $prop) $obj)) (Ball))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (Ball) (Ball)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; We can import into `&self`
@@ -599,8 +594,7 @@ Deterministic: ()
 </span><span class="ansi38-255165000"
 > (Mars orbit 1.5 au)
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (match &self (, ($obj is $prop) ($prop is-a Color) ($obj is-a Planet)) (Color of Planet $obj is $prop)) ((Color of Planet Mars is Red)))
 
@@ -610,17 +604,16 @@ Deterministic: ()
 >;; MODULE-SYSTEM.C2-SPACES.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000610 secs. (610.34 microseconds) 
+; took 0.000548 secs. (547.59 microseconds) 
 
 !(assertEqualToResult (match &self (, ($obj is $prop) ($prop is-a Color) ($obj is-a Planet)) (Color of Planet $obj is $prop)) ((Color of Planet Mars is Red)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Color of Planet Mars is Red)) ((Color of Planet Mars is Red))))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi32"
->% 350,169 inferences, 0.101 CPU in 0.101 seconds (100% CPU, 3475092 Lips)
+>% 350,162 inferences, 0.098 CPU in 0.098 seconds (100% CPU, 3584407 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/module-system/c2_spaces.metta  0)
 <span class="ansi1"
@@ -759,7 +752,7 @@ Deterministic: ()
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 10:19:51+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 10:27:26+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

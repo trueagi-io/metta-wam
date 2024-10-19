@@ -70,7 +70,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 10:07:07+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 10:15:24+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -419,15 +419,14 @@ Script started on 2024-10-19 10:07:07+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B3-DIRECT.01</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.17 milliseconds) 
+; took 0.001 secs. (1.06 milliseconds) 
 
 !(assertEqual (green Fritz) T)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (T) (T)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; This is not just functional programming,
@@ -442,8 +441,7 @@ Deterministic: ()
 ;<span class="ansi38-047047047"
 >    1:0   |-<--true </span>
 
-Deterministic: true
-true]
+Deterministic: truetrue]
 ;;;!(rtrace! (ift (green $x) $x))
 ;;;!(break!)
 ;;; !(rtrace! (, (green $x) (println! $x)))
@@ -452,38 +450,38 @@ true]
 
 </span>[
 ;<span class="ansi38-047047047"
->    0:0   |--->(assertEqual (ift (green $_121400) $_121400) Fritz) </span>
+>    0:0   |--->(assertEqual (ift (green $_121416) $_121416) Fritz) </span>
 
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.B3-DIRECT.02"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B3-DIRECT.02</h3>
 ;<span class="ansi38-047047047"
->    0:1   |   |--->(ift (green $_121400) $_121400) </span>
+>    0:1   |   |--->(ift (green $_121416) $_121416) </span>
 ;<span class="ansi38-047047047"
->    1:2   |   |   |--->(green $_121400) </span>
+>    1:2   |   |   |--->(green $_121416) </span>
 ;<span class="ansi38-047047047"
->    3:2   |   |   |-(=(green $_137932) </span>
+>    3:2   |   |   |-(=(green $_137956) </span>
 ;<span class="ansi38-047047047"
->          |   |     (frog $_137932)) </span>
+>          |   |     (frog $_137956)) </span>
 <span class="ansi38-119055000"
->                                                                                              ;;defs_used(([green,_143604]->[frog,_143604]))
+>                                                                                              ;;defs_used(([green,_143628]->[frog,_143628]))
 
 </span>;<span class="ansi38-047047047"
->          |   |     <--(frog $_121400) </span>
+>          |   |     <--(frog $_121416) </span>
 ;<span class="ansi38-047047047"
->    4:3   |   |   |   |--->(frog $_121400) </span>
+>    4:3   |   |   |   |--->(frog $_121416) </span>
 ;<span class="ansi38-047047047"
->    6:3   |   |   |   |-(=(frog $_153796) </span>
+>    6:3   |   |   |   |-(=(frog $_153820) </span>
 ;<span class="ansi38-047047047"
->          |   |   |     (And (croaks $_153796) (eat_flies $_153796))) </span>
+>          |   |   |     (And (croaks $_153820) (eat_flies $_153820))) </span>
 <span class="ansi38-119055000"
->                                                                                            ;;defs_used(([frog,_159524]->['And',[croaks,_159524],[eat_flies,_159524]]))
+>                                                                                            ;;defs_used(([frog,_159548]->['And',[croaks,_159548],[eat_flies,_159548]]))
 
 </span>;<span class="ansi38-047047047"
->          |   |   |     <--(And (croaks $_121400) (eat_flies $_121400)) </span>
+>          |   |   |     <--(And (croaks $_121416) (eat_flies $_121416)) </span>
 ;<span class="ansi38-047047047"
->    7:4   |   |   |   |   |--->(And (croaks $_121400) (eat_flies $_121400)) </span>
+>    7:4   |   |   |   |   |--->(And (croaks $_121416) (eat_flies $_121416)) </span>
 ;<span class="ansi38-047047047"
->    8:5   |   |   |   |   |   |--->(croaks $_121400) </span>
+>    8:5   |   |   |   |   |   |--->(croaks $_121416) </span>
 ;<span class="ansi38-047047047"
 >   10:5   |   |   |   |   |   |-(=(croaks Fritz) </span>
 ;<span class="ansi38-047047047"
@@ -520,17 +518,17 @@ true]
 >                                                                                                ;;[ift,[green,'Fritz'],'Fritz']->[ift,'T','Fritz']
 
 </span>;<span class="ansi38-047047047"
->   17:1   |   |-(=(ift T $_217966) </span>
+>   17:1   |   |-(=(ift T $_217990) </span>
 ;<span class="ansi38-047047047"
->          |     $_217966) </span>
+>          |     $_217990) </span>
 <span class="ansi38-119055000"
->                                                                                                ;;defs_used(([ift,'T',_223638]->_223638))
+>                                                                                                ;;defs_used(([ift,'T',_223662]->_223662))
 
 </span>;<span class="ansi38-047047047"
 >          |     <--Fritz </span>
 ; 
 ; EVAL TEST
-; took 0.023 secs. (23.39 milliseconds) 
+; took 0.022 secs. (22.42 milliseconds) 
 
 !(assertEqual (ift (green $x) $x) Fritz)
 
@@ -539,8 +537,7 @@ true]
 </span>;<span class="ansi38-047047047"
 >   18:0   |-<--() </span>
 
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; We can also use expressions with `=` in `match`
@@ -552,17 +549,17 @@ Deterministic: ()
 
 </span>[
 ;<span class="ansi38-047047047"
->    0:0   |--->(assertEqualToResult (match &self (= ($_245020 Fritz) T) $_245020) (croaks eat_flies)) </span>
+>    0:0   |--->(assertEqualToResult (match &self (= ($_245044 Fritz) T) $_245044) (croaks eat_flies)) </span>
 
 ;<h3 id="HYPERON-EXPERIMENTAL-SCRIPTS.B3-DIRECT.03"
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B3-DIRECT.03</h3>
 ;<span class="ansi38-047047047"
->    0:1   |   |--->(match &self (= ($_245020 Fritz) T) $_245020) </span>
+>    0:1   |   |--->(match &self (= ($_245044 Fritz) T) $_245044) </span>
 ;<span class="ansi38-047047047"
 >    1:1   |   |-<--eat_flies </span>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.33 milliseconds) 
+; took 0.002 secs. (2.38 milliseconds) 
 
 !(assertEqualToResult (match &self (= ($p Fritz) T) $p) (croaks eat_flies))
 
@@ -571,10 +568,9 @@ Deterministic: ()
 </span>;<span class="ansi38-047047047"
 >    2:0   |-<--() </span>
 
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi32"
->% 292,648 inferences, 0.068 CPU in 0.068 seconds (100% CPU, 4306105 Lips)
+>% 292,644 inferences, 0.065 CPU in 0.065 seconds (100% CPU, 4500322 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/b3_direct.metta  0)
 <span class="ansi1"
@@ -713,7 +709,7 @@ Deterministic: ()
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 10:07:13+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 10:15:30+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

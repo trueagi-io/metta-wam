@@ -41,7 +41,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 10:07:00+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 10:15:17+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -385,15 +385,14 @@ Script started on 2024-10-19 10:07:00+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B2-BACKCHAIN.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000369 secs. (368.95 microseconds) 
+; took 0.000338 secs. (338.12 microseconds) 
 
 !(assertEqualToResult (Frog Sam) ((Frog Sam)))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  ((Frog Sam)) ((Frog Sam))))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; `frog` uses this declaration
 <span class="ansi38-013099040"
 >!(assertEqual (frog Sam) T)
@@ -404,15 +403,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B2-BACKCHAIN.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000422 secs. (422.18 microseconds) 
+; took 0.000406 secs. (405.71 microseconds) 
 
 !(assertEqual (frog Sam) T)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (T) (T)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi38-013099040"
 >!(assertEqualToResult (frog Fritz) ())
 
@@ -422,15 +420,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B2-BACKCHAIN.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000426 secs. (426.47 microseconds) 
+; took 0.000358 secs. (358.13 microseconds) 
 
 !(assertEqualToResult (frog Fritz) ())
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  () ()))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; The result of matching is also chained
@@ -474,15 +471,14 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B2-BACKCHAIN.04</h3>
 ; 
 ; EVAL TEST
-; took 0.004 secs. (4.00 milliseconds) 
+; took 0.004 secs. (3.99 milliseconds) 
 
 !(assertEqual (deduce (Evaluation (mortal Plato))) T)
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (T) (T)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; TODO : Some variables are not substituted
 <span class="ansi38-255165000"
 > (= (ift T $then) $then)
@@ -513,17 +509,16 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.B2-BACKCHAIN.05</h3>
 ; 
 ; EVAL TEST
-; took 0.018 secs. (17.82 milliseconds) 
+; took 0.018 secs. (17.75 milliseconds) 
 
 !(assertEqual (explain (Evaluation (mortal Plato))) ((mortal Plato) proven by ((human Plato) proven by (And (philosopher Plato) (likes-to-wrestle Plato)))))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (((mortal Plato) proven by ((human Plato) proven by (And (philosopher Plato) (likes-to-wrestle Plato))))) (((mortal Plato) proven by ((human Plato) proven by (And (philosopher Plato) (likes-to-wrestle Plato)))))))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 <span class="ansi32"
->% 373,663 inferences, 0.085 CPU in 0.085 seconds (100% CPU, 4404804 Lips)
+>% 373,658 inferences, 0.080 CPU in 0.080 seconds (100% CPU, 4687041 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/b2_backchain.metta  0)
 <span class="ansi1"
@@ -662,7 +657,7 @@ Deterministic: ()
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 10:07:05+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 10:15:22+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

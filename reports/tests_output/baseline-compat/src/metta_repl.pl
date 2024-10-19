@@ -340,9 +340,9 @@ repl4 :-
 %
 check_has_directive(V) :- var(V), !, fail.
 % Directive to switch to mettalog.
-check_has_directive('log.') :- switch_to_mettalog, !.
+check_has_directive('@log') :- switch_to_mettalog, !, wdmsg(switch_to_mettalog),notrace(throw(restart_reading)).
 % Directive to switch to mettarust.
-check_has_directive('rust.') :- switch_to_mettarust, !.
+check_has_directive('@rust') :- switch_to_mettarust, !, wdmsg(switch_to_mettarust), notrace(throw(restart_reading)).
 % Checks if the symbol contains a '.' (common for directives).
 check_has_directive(Atom) :- symbol(Atom), symbol_concat(_, '.', Atom), !.
 % Assign a value to a directive, e.g., call(N=V).
@@ -1209,7 +1209,7 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,
                 true)))) )) ))),
      in_answer_io(write_asrc(Output)),
 
-       not_compatio(format('~N')),  % Just in case, add some virt space between answers
+       not_compatio(extra_answer_padding(format('~N'))),  % Just in case, add some virt space between answers
 
       ((Complete \== true, WasInteractive, DoLeap \== leap,
                 LeashResults > ResNum, ResNum < Max) -> Stepping = true ; Stepping = false),
@@ -1239,12 +1239,15 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,
          (!,fail))))))))))));
 
        (Complete\==true, \+ WasInteractive, Control = contrl(Max,leap)) -> true ;
-        (((Complete==true ->! ; true))))), format('~N~n')))
+        (((Complete==true ->! ; true))))), extra_answer_padding(format('~N~n'))))
                     *-> (ignore(Result = res(FOut)),ignore(Output = (FOut)))
                     ; (flag(result_num,ResNum,ResNum),(ResNum==0->
       (in_answer_io(nop(write('['))),not_compatio(format('~N<no-results>~n~n')),!,true);true))),
                     in_answer_io(write(']\n')),
    ignore(Result = res(FOut)).
+
+
+extra_answer_padding(_).
 
 %! maybe_assign(+N_V) is det.
 %

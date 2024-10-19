@@ -63,7 +63,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 10:05:56+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 10:14:17+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -431,15 +431,14 @@ Script started on 2024-10-19 10:05:56+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; ANTI-REGRESSION.TEST-IF-CLOSED.01</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.39 milliseconds) 
+; took 0.002 secs. (1.52 milliseconds) 
 
 !(assertEqualToResult (is-variable $x) (True))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (True) (True)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; rust/mettalog True
 <span class="ansi38-255165009"
 >;; In file as:  
@@ -455,15 +454,14 @@ Deterministic: ()
 >;; ANTI-REGRESSION.TEST-IF-CLOSED.02</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.07 milliseconds) 
+; took 0.001 secs. (1.04 milliseconds) 
 
 !(assertEqualToResult (is-variable 1) (False))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (False) (False)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; rust/mettalog False
 <span class="ansi38-255165009"
 >;; In file as:  
@@ -479,15 +477,14 @@ Deterministic: ()
 >;; ANTI-REGRESSION.TEST-IF-CLOSED.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000989 secs. (989.41 microseconds) 
+; took 0.001 secs. (1.01 milliseconds) 
 
 !(assertEqualToResult (is-expression $x) (False))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (False) (False)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; rust/mettalog False
 <span class="ansi38-255165009"
 >;; In file as:  
@@ -503,15 +500,14 @@ Deterministic: ()
 >;; ANTI-REGRESSION.TEST-IF-CLOSED.04</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.46 milliseconds) 
+; took 0.001 secs. (1.42 milliseconds) 
 
 !(assertEqualToResult (is-expression (⍃ 4 3)) (True))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (True) (True)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; rust/mettalog True
 <span class="ansi38-255165009"
 >;; In file as:  
@@ -527,15 +523,14 @@ Deterministic: ()
 >;; ANTI-REGRESSION.TEST-IF-CLOSED.05</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.36 milliseconds) 
+; took 0.001 secs. (1.37 milliseconds) 
 
 !(assertEqualToResult (is-expression (⍃ 4 $x)) (True))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (True) (True)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; rust/mettalog True
 <span class="ansi38-255165009"
 >;; In file as:  
@@ -551,15 +546,14 @@ Deterministic: ()
 >;; ANTI-REGRESSION.TEST-IF-CLOSED.06</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.07 milliseconds) 
+; took 0.001 secs. (1.02 milliseconds) 
 
 !(assertEqualToResult (is-expression 4) (False))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (False) (False)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; rust/mettalog False
 <span class="ansi38-255165009"
 >;; In file as:  
@@ -575,15 +569,14 @@ Deterministic: ()
 >;; ANTI-REGRESSION.TEST-IF-CLOSED.07</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.40 milliseconds) 
+; took 0.001 secs. (1.28 milliseconds) 
 
 !(assertEqualToResult (is-closed $x) (False))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (False) (False)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; rust/mettalog False
 <span class="ansi38-255165009"
 >;; In file as:  
@@ -599,15 +592,14 @@ Deterministic: ()
 >;; ANTI-REGRESSION.TEST-IF-CLOSED.08</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.26 milliseconds) 
+; took 0.002 secs. (2.21 milliseconds) 
 
 !(assertEqualToResult (is-closed 4) (True))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (True) (True)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; rust/mettalog True
 <span class="ansi38-255165009"
 >;; In file as:  
@@ -623,15 +615,14 @@ Deterministic: ()
 >;; ANTI-REGRESSION.TEST-IF-CLOSED.09</h3>
 ; 
 ; EVAL TEST
-; took 0.010 secs. (9.83 milliseconds) 
+; took 0.010 secs. (9.53 milliseconds) 
 
 !(assertEqualToResult (is-closed (⍃ $y 3)) (False))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (False) (False)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; rust gets stuck / mettalog false
 <span class="ansi38-255165009"
 >;; In file as:  
@@ -647,15 +638,14 @@ Deterministic: ()
 >;; ANTI-REGRESSION.TEST-IF-CLOSED.10</h3>
 ; 
 ; EVAL TEST
-; took 0.015 secs. (15.19 milliseconds) 
+; took 0.015 secs. (15.07 milliseconds) 
 
 !(assertEqualToResult (is-closed (⍃ 4 $x)) (False))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (False) (False)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; rust gets stuck / mettalog false
 <span class="ansi38-255165009"
 >;; In file as:  
@@ -671,18 +661,17 @@ Deterministic: ()
 >;; ANTI-REGRESSION.TEST-IF-CLOSED.11</h3>
 ; 
 ; EVAL TEST
-; took 0.017 secs. (17.24 milliseconds) 
+; took 0.017 secs. (17.05 milliseconds) 
 
 !(assertEqualToResult (is-closed (⍃ 4 3)) (True))
 
 <span class="ansi36"
 >(loonit_success  (equal_enough_for_test  (True) (True)))
 </span>
-Deterministic: ()
-()]
+Deterministic: ()()]
 ;;; rust gets stuck / mettalog true
 <span class="ansi32"
->% 612,366 inferences, 0.131 CPU in 0.131 seconds (100% CPU, 4663796 Lips)
+>% 612,353 inferences, 0.129 CPU in 0.129 seconds (100% CPU, 4742184 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/test_if_closed.metta  0)
 <span class="ansi1"
@@ -821,7 +810,7 @@ Deterministic: ()
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 10:06:02+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 10:14:23+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
