@@ -658,7 +658,7 @@ in_answer_io(G) :-
 %!  get_stdout_stream(-StdOutStream) is det.
 %
 %   Helper predicate to retrieve the standard output stream.
-%Thisuses`current_stream/3`tofindthestreamassociatedwithfiledescriptor1(stdout).
+%This uses `current_stream/3` to find the stream associated with file descriptor 1 (stdout).
 %
 %@argStdOutStreamUnifieswiththestandardoutputstream.
 get_stdout_stream(StdOutStream) :-
@@ -751,7 +751,7 @@ process_and_finalize_output(State, CurrentOut, AnswerOut, StdOutStream, CurrentE
        free_memory_file(MemFile),       
        % Write the content to the streams, handling encoding differences
        write_to_stream(AnswerOut, Content, CurrentEncoding),
-       (   AnswerOut \== StdOutStream ->  write_to_stream(user_error, Content, CurrentEncoding) ;   true )) ; true).
+       (   AnswerOut \== StdOutStream ->  nop(write_to_stream(user_error, Content, CurrentEncoding)) ;   true )) ; true).
     
 
 %!  handle_catcher(+Catcher) is det.
