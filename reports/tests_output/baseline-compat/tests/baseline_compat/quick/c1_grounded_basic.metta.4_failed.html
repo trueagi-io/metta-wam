@@ -52,7 +52,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 00:31:04+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 09:46:08+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -417,7 +417,7 @@ Script started on 2024-10-19 00:31:04+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; QUICK.C1-GROUNDED-BASIC.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000244 secs. (244.12 microseconds) 
+; took 0.000230 secs. (229.75 microseconds) 
 
 !(assertEqualToResult (+ 2 (* 3 5.5)) (18.5))
 
@@ -435,7 +435,7 @@ Deterministic: ()
 >;; QUICK.C1-GROUNDED-BASIC.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000220 secs. (220.18 microseconds) 
+; took 0.000170 secs. (170.21 microseconds) 
 
 !(assertEqualToResult (- 8 (/ 4 6.4)) (7.375))
 
@@ -453,7 +453,7 @@ Deterministic: ()
 >;; QUICK.C1-GROUNDED-BASIC.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000203 secs. (202.92 microseconds) 
+; took 0.000179 secs. (179.21 microseconds) 
 
 !(assertEqualToResult (% 21 17) (4))
 
@@ -471,7 +471,7 @@ Deterministic: ()
 >;; QUICK.C1-GROUNDED-BASIC.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000833 secs. (833.14 microseconds) 
+; took 0.000773 secs. (772.52 microseconds) 
 
 !(assertEqualToResult (< 4 (+ 2 (* 3 5))) (True))
 
@@ -489,7 +489,7 @@ Deterministic: ()
 >;; QUICK.C1-GROUNDED-BASIC.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000359 secs. (359.48 microseconds) 
+; took 0.000411 secs. (410.88 microseconds) 
 
 !(assertEqualToResult (and (> 4 2) (< 4 3)) (False))
 
@@ -514,7 +514,7 @@ Deterministic: ()
 >;; QUICK.C1-GROUNDED-BASIC.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000879 secs. (879.20 microseconds) 
+; took 0.000948 secs. (948.32 microseconds) 
 
 !(assertEqualToResult (ln (+ 2 2)) ((ln 4)))
 
@@ -538,7 +538,7 @@ Deterministic: ()
 >;; QUICK.C1-GROUNDED-BASIC.07</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.63 milliseconds) 
+; took 0.002 secs. (1.71 milliseconds) 
 
 !(assertEqualToResult (> 4 (+ ln 2)) ((> 4 (+ ln 2))))
 
@@ -561,7 +561,7 @@ Deterministic: ()
 >;; QUICK.C1-GROUNDED-BASIC.08</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.41 milliseconds) 
+; took 0.001 secs. (1.48 milliseconds) 
 
 !(assertEqualToResult (> 4 (+ $x 2)) ((> 4 (+ $x 2))))
 
@@ -584,7 +584,7 @@ Deterministic: ()
 >;; QUICK.C1-GROUNDED-BASIC.09</h3>
 ; 
 ; EVAL TEST
-; took 0.000580 secs. (579.82 microseconds) 
+; took 0.000638 secs. (638.08 microseconds) 
 
 !(assertEqualToResult (== 4 (+ 2 2)) (True))
 
@@ -602,7 +602,7 @@ Deterministic: ()
 >;; QUICK.C1-GROUNDED-BASIC.10</h3>
 ; 
 ; EVAL TEST
-; took 0.000176 secs. (175.55 microseconds) 
+; took 0.000204 secs. (203.53 microseconds) 
 
 !(assertEqualToResult (== 2 3) (False))
 
@@ -638,7 +638,7 @@ Deterministic: ()
 >;; QUICK.C1-GROUNDED-BASIC.12</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.57 milliseconds) 
+; took 0.001 secs. (1.50 milliseconds) 
 
 !(assertEqualToResult (== (A B) (A (B C))) (False))
 
@@ -661,7 +661,7 @@ Deterministic: ()
 >;; QUICK.C1-GROUNDED-BASIC.13</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.17 milliseconds) 
+; took 0.001 secs. (1.16 milliseconds) 
 
 !(assertEqualToResult (== 4 (+ ln 2)) (False))
 
@@ -685,7 +685,7 @@ Deterministic: ()
 >;; QUICK.C1-GROUNDED-BASIC.14</h3>
 ; 
 ; EVAL TEST
-; took 0.000510 secs. (509.61 microseconds) 
+; took 0.000533 secs. (532.75 microseconds) 
 
 !(assertEqualToResult (+ 2 "String") ((Error "String" BadType)))
 
@@ -707,7 +707,7 @@ Deterministic: ((Error  (got  ((+ 2 "String"))) (expected  ((Error "String" BadT
 >;; QUICK.C1-GROUNDED-BASIC.15</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.21 milliseconds) 
+; took 0.001 secs. (1.07 milliseconds) 
 
 !(assertEqualToResult (== 4 (+ ln 2)) ((Error ln BadType)))
 
@@ -731,7 +731,7 @@ Deterministic: ((Error  (got  (False)) (expected  ((Error ln BadType)))))
 >;; QUICK.C1-GROUNDED-BASIC.16</h3>
 ; 
 ; EVAL TEST
-; took 0.000394 secs. (394.04 microseconds) 
+; took 0.000385 secs. (384.82 microseconds) 
 
 !(assertEqualToResult (sqr 4) (16))
 
@@ -754,7 +754,7 @@ Deterministic: ()
 >;; QUICK.C1-GROUNDED-BASIC.17</h3>
 ; 
 ; EVAL TEST
-; took 0.000997 secs. (997.47 microseconds) 
+; took 0.000947 secs. (946.70 microseconds) 
 
 !(assertEqual (+ (superpose (1 2 3)) 1) (superpose (2 3 4)))
 
@@ -776,7 +776,7 @@ Deterministic: ()
 >;; QUICK.C1-GROUNDED-BASIC.18</h3>
 ; 
 ; EVAL TEST
-; took 0.000293 secs. (292.65 microseconds) 
+; took 0.000285 secs. (285.26 microseconds) 
 
 !(assertEqualToResult (bin) (0 1))
 
@@ -794,7 +794,7 @@ Deterministic: ()
 >;; QUICK.C1-GROUNDED-BASIC.19</h3>
 ; 
 ; EVAL TEST
-; took 0.000519 secs. (519.46 microseconds) 
+; took 0.000524 secs. (523.84 microseconds) 
 
 !(assertEqualToResult (+ 1 (bin)) (1 2))
 
@@ -812,7 +812,7 @@ Deterministic: ()
 >;; QUICK.C1-GROUNDED-BASIC.20</h3>
 ; 
 ; EVAL TEST
-; took 0.000364 secs. (363.88 microseconds) 
+; took 0.000332 secs. (331.78 microseconds) 
 
 !(assertEqualToResult (let $x (+ 2 3) (* $x $x)) (25))
 
@@ -836,7 +836,7 @@ Deterministic: ()
 >;; QUICK.C1-GROUNDED-BASIC.21</h3>
 ; 
 ; EVAL TEST
-; took 0.004 secs. (3.88 milliseconds) 
+; took 0.004 secs. (3.79 milliseconds) 
 
 !(assertEqual (fact 5) 120)
 
@@ -855,7 +855,7 @@ Deterministic: ()
 >;; QUICK.C1-GROUNDED-BASIC.22</h3>
 ; 
 ; EVAL TEST
-; took 0.004 secs. (3.67 milliseconds) 
+; took 0.004 secs. (3.63 milliseconds) 
 
 !(assertEqualToResult (fact 5) (120))
 
@@ -894,7 +894,7 @@ Deterministic: ()
 >;; QUICK.C1-GROUNDED-BASIC.23</h3>
 ; 
 ; EVAL TEST
-; took 0.200 secs. (200.02 milliseconds) 
+; took 0.199 secs. (199.36 milliseconds) 
 
 !(assertEqualToResult (let $t (gen 3) (if (== (subsum (:: 3 (:: 7 (:: 5 nil))) $t) 8) $t (superpose ()))) ((:: 1 (:: 0 (:: 1 nil)))))
 
@@ -904,7 +904,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 2,043,784 inferences, 0.348 CPU in 0.348 seconds (100% CPU, 5867131 Lips)
+>% 2,045,068 inferences, 0.347 CPU in 0.347 seconds (100% CPU, 5901971 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/quick/c1_grounded_basic.metta  0)
 <span class="ansi1"
@@ -1043,7 +1043,7 @@ Deterministic: ()
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 00:31:10+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 09:46:14+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

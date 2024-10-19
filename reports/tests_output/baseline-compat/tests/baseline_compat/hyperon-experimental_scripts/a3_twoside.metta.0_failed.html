@@ -29,7 +29,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 00:18:42+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 09:34:08+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -372,7 +372,7 @@ Script started on 2024-10-19 00:18:42+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A3-TWOSIDE.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000706 secs. (706.33 microseconds) 
+; took 0.000712 secs. (712.44 microseconds) 
 
 !(assertEqualToResult (match &self (implies (Frog Sam) $what) $what) ((Green Sam) (Eats-flies Sam)))
 
@@ -390,7 +390,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A3-TWOSIDE.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000470 secs. (469.86 microseconds) 
+; took 0.000478 secs. (477.79 microseconds) 
 
 !(assertEqualToResult (match &self (implies ($P $x) (Green Sam)) ($x might be $P)) ((Sam might be Frog)))
 
@@ -419,7 +419,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A3-TWOSIDE.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000672 secs. (672.24 microseconds) 
+; took 0.000664 secs. (664.46 microseconds) 
 
 !(assertEqualToResult (match &self (, (Frog $x) (implies (Frog $x) $y)) $y) ((Green Sam) (Eats-flies Sam)))
 
@@ -441,7 +441,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A3-TWOSIDE.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000516 secs. (515.85 microseconds) 
+; took 0.000405 secs. (405.19 microseconds) 
 
 !(assertEqualToResult (match &self (, (implies ($P $x) (Green $x)) (implies ($P $x) (Eats-flies $x))) (Then it is definitely $P)) ((Then it is definitely Frog)))
 
@@ -451,7 +451,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 155,834 inferences, 0.035 CPU in 0.035 seconds (100% CPU, 4401967 Lips)
+>% 156,098 inferences, 0.035 CPU in 0.035 seconds (100% CPU, 4449399 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/a3_twoside.metta  0)
 <span class="ansi1"
@@ -590,7 +590,7 @@ Deterministic: ()
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 00:18:47+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 09:34:13+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

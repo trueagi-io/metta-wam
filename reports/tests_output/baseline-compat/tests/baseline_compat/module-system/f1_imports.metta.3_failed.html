@@ -153,7 +153,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 00:14:32+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-19 09:30:05+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 ^@P;HTML|
 ;           (set_option_value  compat false)
 
@@ -524,7 +524,7 @@ Script started on 2024-10-19 00:14:32+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; MODULE-SYSTEM.F1-IMPORTS.01</h3>
 ; 
 ; EVAL TEST
-; took 0.003 secs. (2.90 milliseconds) 
+; took 0.003 secs. (2.97 milliseconds) 
 
 !(assertEqual ((let $x (get-atoms &self) (get-type $x))) (superpose (((get-type &self)) ((get-type &self)))))
 
@@ -543,7 +543,7 @@ Deterministic: ()
 >;; MODULE-SYSTEM.F1-IMPORTS.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000267 secs. (267.11 microseconds) 
+; took 0.000268 secs. (267.62 microseconds) 
 
 !(assertEqual (if (> 1 2) 1 2) 2)
 
@@ -610,7 +610,7 @@ Deterministic: ()
 >;; MODULE-SYSTEM.F1-MODULEA.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000211 secs. (210.54 microseconds) 
+; took 0.000173 secs. (172.93 microseconds) 
 
 !(assertEqual (+ 1 2) 3)
 
@@ -648,7 +648,7 @@ Last Result(2): ()
 >;; MODULE-SYSTEM.F1-IMPORTS.04</h3>
 ; 
 ; EVAL TEST
-; took 0.016 secs. (16.37 milliseconds) 
+; took 0.016 secs. (16.25 milliseconds) 
 
 !(assertEqual (let $x (collapse (get-atoms &m)) (contains $x is-space)) True)
 
@@ -678,7 +678,7 @@ Deterministic: ((Error  (got  ()) (expected  (True))))
 >;; MODULE-SYSTEM.F1-IMPORTS.05</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.03 milliseconds) 
+; took 0.002 secs. (2.04 milliseconds) 
 
 !(assertEqual (match &m (= (f 2) $x) $x) (g 3))
 
@@ -748,7 +748,7 @@ Deterministic: ()
 >;; MODULE-SYSTEM.F1-MODULEA.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000216 secs. (215.81 microseconds) 
+; took 0.000189 secs. (189.22 microseconds) 
 
 !(assertEqual (+ 1 2) 3)
 
@@ -825,7 +825,7 @@ Deterministic: ()
 >;; MODULE-SYSTEM.F1-MODULEA.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000222 secs. (222.27 microseconds) 
+; took 0.000164 secs. (164.03 microseconds) 
 
 !(assertEqual (+ 1 2) 3)
 
@@ -853,7 +853,7 @@ Last Result(2): ()
 >;; MODULE-SYSTEM.F1-IMPORTS.08</h3>
 ; 
 ; EVAL TEST
-; took 0.000815 secs. (815.25 microseconds) 
+; took 0.000742 secs. (741.82 microseconds) 
 
 !(assertEqual (g 2) 102)
 
@@ -871,7 +871,7 @@ Deterministic: ()
 >;; MODULE-SYSTEM.F1-IMPORTS.09</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.07 milliseconds) 
+; took 0.001 secs. (1.11 milliseconds) 
 
 !(assertEqual (f 2) 103)
 
@@ -922,7 +922,7 @@ Deterministic: ()
 >;; MODULE-SYSTEM.F1-IMPORTS.10</h3>
 ; 
 ; EVAL TEST
-; took 0.011 secs. (10.79 milliseconds) 
+; took 0.011 secs. (10.88 milliseconds) 
 
 !(assertEqual (let $a (collapse (get-atoms &self)) (contains $a is-corelib)) True)
 
@@ -941,7 +941,7 @@ Deterministic: ()
 >;; MODULE-SYSTEM.F1-IMPORTS.11</h3>
 ; 
 ; EVAL TEST
-; took 0.000274 secs. (273.99 microseconds) 
+; took 0.000268 secs. (267.69 microseconds) 
 
 !(assertEqual (if (> 1 2) 1 2) 2)
 
@@ -1040,7 +1040,7 @@ Last Result(2): ()
 >;; MODULE-SYSTEM.F1-IMPORTS.12</h3>
 ; 
 ; EVAL TEST
-; took 0.000787 secs. (787.25 microseconds) 
+; took 0.000752 secs. (751.57 microseconds) 
 
 !(assertEqual (g 2) 102)
 
@@ -1058,7 +1058,7 @@ Deterministic: ()
 >;; MODULE-SYSTEM.F1-IMPORTS.13</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.09 milliseconds) 
+; took 0.001 secs. (1.11 milliseconds) 
 
 !(assertEqual (f 2) 103)
 
@@ -1273,7 +1273,7 @@ Last Result(2): ()
 >;; MODULE-SYSTEM.F1-IMPORTS.15</h3>
 ; 
 ; EVAL TEST
-; took 0.000820 secs. (819.63 microseconds) 
+; took 0.000752 secs. (751.56 microseconds) 
 
 !(assertEqual (g 2) 102)
 
@@ -1291,7 +1291,7 @@ Deterministic: ()
 >;; MODULE-SYSTEM.F1-IMPORTS.16</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.07 milliseconds) 
+; took 0.001 secs. (1.08 milliseconds) 
 
 !(assertEqual (f 2) 103)
 
@@ -1309,7 +1309,7 @@ Deterministic: ()
 >;; MODULE-SYSTEM.F1-IMPORTS.17</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.31 milliseconds) 
+; took 0.001 secs. (1.33 milliseconds) 
 
 !(assertEqualToResult (dup 2) (12 102))
 
@@ -1319,7 +1319,7 @@ Deterministic: ()
 Deterministic: ()
 ()]
 <span class="ansi32"
->% 1,479,567 inferences, 0.302 CPU in 0.302 seconds (100% CPU, 4897004 Lips)
+>% 1,481,433 inferences, 0.298 CPU in 0.298 seconds (100% CPU, 4968292 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/module-system/f1_imports.metta  0)
 <span class="ansi1"
@@ -1458,7 +1458,7 @@ Deterministic: ()
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 00:14:38+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-19 09:30:11+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
