@@ -38,12 +38,18 @@ Supports LSP methods like hover, document symbol, definition, references, and mo
 
 
 % will change to module in a few days (easier to test externally from `user`)
+:- user:ensure_loaded(lsp_metta_code_actions). 
 :- user:ensure_loaded(lsp_metta_outline). %( [xref_source/1, xref_document_symbol/5, xref_document_symbols/2]).
 :- dynamic(user:full_text/2).
 
 :- dynamic lsp_metta_changes:doc_text/2.
 
 :- discontiguous lsp_server_metta:handle_msg/3.
+
+:- multifile(lsp_hooks:handle_msg_hook/3).
+:- dynamic(lsp_hooks:handle_msg_hook/3).
+:- discontiguous(lsp_hooks:handle_msg_hook/3).
+
 
 % If the max worked thread count is 0, it processes requests synchronously;
 % otherwise, it uses a thread pool for parallel processing.
@@ -90,8 +96,10 @@ create_workers(Id, N) :-
 :- dynamic thread_request/2.
 :- dynamic id_was_canceled/1.
 
+:- if( \+ prolog_load_context(reloading,true)).
 % Create a mutex for synchronization
 :- mutex_create('$lsp_request_mutex').
+:- endif.
 
 
 do_work(QueueId) :-
@@ -341,7 +349,7 @@ server_capabilities(
       codeActionProvider: true,  % Changed from false to true
 
 
-      %% codeLensProvider: false,
+      % codeLensProvider: _{resolveProvider: true},  % Enabled resolveProvider
       documentFormattingProvider:false,
       %% documentOnTypeFormattingProvider: false,
       renameProvider: false,
@@ -372,6 +380,9 @@ into_result_object(Help,Response):- \+ is_dict(Help),
 into_result_object(Help,Response):-  Help=Response,!.
 
 :- discontiguous(handle_msg/3).
+
+handle_msg(Method, Msg, Response):- 
+   lsp_hooks:handle_msg_hook(Method, Msg, Response),!.
 
 % messages (with a response)
 handle_msg("initialize", Msg,
@@ -442,9 +453,9 @@ message_id_target(Msg, Id, Doc, HintPath, Loc, Name/Arity):-
 % OUT: {id:37,result:{range:{end:{character:0,line:62},start:{character:1,line:60}},uri:file://<FILEPATH>}}
 % textDocument/definition: returns the specific location in the document or file where the symbol is defined or documented. It points to the exact spot where the symbol is introduced in the code.
 handle_msg("textDocument/definition", Msg, _{id: Id, result: Location}) :-
-     message_id_target(Msg, Id, _, PathHint, _, Target),
-     debug(server(high),"~q",[defined_at(definition, PathHint, Target, Location)]),
-     defined_at(definition,PathHint, Target, Location),!.
+     message_id_target(Msg, Id, _, HintPath, _, Target),
+     debug(server(high),"~q",[defined_at(definition, HintPath, Target, Location)]),
+     defined_at(definition,HintPath, Target, Location),!.
 handle_msg("textDocument/definition", Msg, _{id: Msg.id, result: null}) :- !.
 
 
@@ -549,10 +560,11 @@ handle_msg("textDocument/didOpen", Msg, Resp) :-
     split_text_document(FullText,SplitText),
     debug(server,"~w",[SplitText]),
     atom_concat('file://', Path, FileUri),
-    xref_maybe(Path, FullText), % Check if changed and enqueue the reindexing
     retractall(lsp_metta_changes:doc_text(Path, _)),
     assertz(lsp_metta_changes:doc_text(Path, SplitText)),
     ( in_editor(Path) ; assertz(in_editor(Path)) ),
+    source_file_text(Path, DocFullText), % Derive from lsp_metta_changes:doc_text/2
+    xref_maybe(Path, DocFullText), % Check if changed and enqueue the reindexing
     check_errors_resp(FileUri, Resp).
 
 % Handle document change notifications
@@ -562,8 +574,8 @@ handle_msg("textDocument/didChange", Msg, false) :-
     _{uri: Uri} :< TextDoc,
     atom_concat('file://', Path, Uri),
     handle_doc_changes(Path, Changes),
-    lsp_metta_changes:doc_text(Path,FullText),
-    xref_maybe(Path, FullText). % Check if changed and enqueue the reindexing
+    source_file_text(Path, DocFullText), % Derive from lsp_metta_changes:doc_text/2
+    xref_maybe(Path, DocFullText). % Check if changed and enqueue the reindexing
 
 % Handle document save notifications
 handle_msg("textDocument/didSave", Msg, Resp) :-
@@ -603,86 +615,6 @@ handle_msg("exit", _Msg, false) :-
     debug(server, "Received exit, shutting down", []),
     halt.
 
-
-% Handle the textDocument/codeAction Request
-handle_msg("textDocument/codeAction", Msg, _{id: Id, result: Actions}) :-
-    _{id: Id, params: Params} :< Msg,
-    _{textDocument: _{uri: Uri},
-      range: Range,
-      context: _Context} :< Params,
-    compute_code_actions(Uri, Range, Actions).
-
-% Compute Code Actions
-compute_code_actions(Uri, Range, [Action]) :-
-    Action = _{
-        title: "Execute Code",
-        kind: "quickfix",
-        command: _{
-            title: "Execute Code",
-            command: "execute_code",
-            arguments: [Uri, Range]
-        }
-    }.
-
-% Handle the workspace/executeCommand Request
-handle_msg("workspace/executeCommand", Msg, _{id: Id, result: Result}) :-
-    _{id: Id, params: Params} :< Msg,
-    _{command: Command, arguments: Arguments} :< Params,
-    execute_command(Command, Arguments, ExecutionResult),
-    Result = _{message: ExecutionResult}.
-
-% Execute Command Implementation
-execute_command("execute_code", [Uri, Range], ExecutionResult) :-
-    get_code_at_range(Uri, Range, Code),
-    execute_code(Code, ExecutionResult).
-execute_command(_, _, "Command not recognized.").
-
-% Get Code at the Specified Range
-get_code_at_range(Uri, Range, Code) :-
-    atom_concat('file://', Path, Uri),
-    lsp_metta_changes:doc_text(Path, SplitText),
-    coalesce_text(SplitText, Text),
-    split_string(Text, "\n", "", Lines),
-    _{start: Start, end: End} :< Range,
-    _{line: StartLine0, character: StartChar} :< Start,
-    _{line: EndLine0, character: EndChar} :< End,
-    StartLine is StartLine0 + 1,
-    EndLine is EndLine0 + 1,
-    extract_code(Lines, StartLine, StartChar, EndLine, EndChar, Code).
-
-% Extract Code from Lines
-extract_code(Lines, StartLine, StartChar, EndLine, EndChar, Code) :-
-    findall(LineText, (
-        between(StartLine, EndLine, LineNum),
-        nth1(LineNum, Lines, Line),
-        (
-            LineNum =:= StartLine, LineNum =:= EndLine ->
-            sub_atom(Line, StartChar, EndChar - StartChar, _, LineText)
-        ;
-            LineNum =:= StartLine ->
-            sub_atom(Line, StartChar, _, 0, LineText)
-        ;
-            LineNum =:= EndLine ->
-            sub_atom(Line, 0, EndChar, _, LineText)
-        ;
-            LineText = Line
-        )
-    ), CodeLines),
-    atomic_list_concat(CodeLines, '\n', Code).
-
-% Execute the Code
-execute_code(Code, Result) :-
-    % For safety, catch any errors during execution
-    catch_with_backtrace((
-        % Replace with actual code execution logic
-        % For demonstration, we'll just unify Result with Code
-        % In practice, you might use metta:eval_string/2 or similar
-        eval(Code,CodeResult),
-        sformat(Result,"~w ; ~q",[Code,CodeResult])
-    ), Error, (
-        sformat(Result,"~w ; Error: ~q",[Code,Error])
-    )).
-    
     
 % Handle the 'workspace/symbol' Request
 handle_msg("workspace/symbol", Msg, _{id: Id, result: Symbols}) :-
