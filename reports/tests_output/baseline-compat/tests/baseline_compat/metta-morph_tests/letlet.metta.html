@@ -20,12 +20,14 @@
 .ansi34 { color: #0000aa; }
 .ansi35 { color: #E850A8; }
 .ansi36 { color: #00aaaa; }
+.ansi37 { color: #F5F1DE; }
 .ansi40 { background-color: #000316; }
 .ansi91 { color: #ff0000; }
 .ansi92 { color: #00ff00; }
 .ansi93 { color: #ffff00; }
 .ansi94 { color: #5c5cff; }
 .ansi95 { color: #ff00ff; }
+.ansi96 { color: #00ffff; }
 .ansi97 { color: #ffffff; }
 .ansi100 { background-color: #7f7f7f; }
 </style>
@@ -33,7 +35,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-20 22:35:23+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-21 17:52:49+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -349,7 +351,7 @@ Script started on 2024-10-20 22:35:23+00:00 [TERM="xterm-256color" TTY="/dev/pts
 P;HTML|
 ;                                       (= (error  (existence_error  procedure (/  pos_line_char 2)) (context  (/  make_metta_file_buffer 3) $_4012))
 ;                                         (call  once
-;                                           (load_metta_file_stream_fast  72 read_metta2 /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta &self <stream>(0x5631bf553c20))))
+;                                           (load_metta_file_stream_fast  72 read_metta2 /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta &self <stream>(0x559e889609c0))))
 
 
 
@@ -362,7 +364,7 @@ Script started on 2024-10-20 22:35:23+00:00 [TERM="xterm-256color" TTY="/dev/pts
 
 
  [193] <span class="ansi34"
->call(prolog_stack:get_prolog_backtrace_lc,8000,[frame(193,clause(<clause>(0x5631bcc6e6e0),8),_3378)|_3370],P;HTML|<span class="pl-list"
+>call(prolog_stack:get_prolog_backtrace_lc,8000,[frame(193,clause(<clause>(0x559e860ca6e0),8),_3378)|_3370],P;HTML|<span class="pl-list"
 ><span class="pl-functor"
 > [ </span><span class="pl-args"
 ><span class="pl-compound"
@@ -371,14 +373,14 @@ Script started on 2024-10-20 22:35:23+00:00 [TERM="xterm-256color" TTY="/dev/pts
 ><span class="pl-int"
 >600</span></span>)</span></span>]</span>)</span> at /usr/lib/swi-prolog/boot/init.pl:508
  [192] <span class="ansi34"
->call(prolog_stack:call,get_prolog_backtrace_lc,8000,[frame(193,clause(<clause>(0x5631bcc6e6e0),8),call(prolog_stack:get_prolog_backtrace_lc,8000,[frame(193,clause(<clause>(0x5631bcc6e6e0),8),_3482)|_3474],P;HTML|<span class="pl-list"
+>call(prolog_stack:call,get_prolog_backtrace_lc,8000,[frame(193,clause(<clause>(0x559e860ca6e0),8),call(prolog_stack:get_prolog_backtrace_lc,8000,[frame(193,clause(<clause>(0x559e860ca6e0),8),_3482)|_3474],P;HTML|<span class="pl-list"
 ><span class="pl-functor"
 > [ </span><span class="pl-args"
 ><span class="pl-compound"
 ><span class="pl-functor"
 >goal_depth</span>(<span class="pl-args"
 ><span class="pl-int"
->600</span></span>)</span></span>]</span>)),frame(192,clause(<clause>(0x5631bcc6e790),10),_3512)|_3504],P;HTML|<span class="pl-list"
+>600</span></span>)</span></span>]</span>)),frame(192,clause(<clause>(0x559e860ca790),10),_3512)|_3504],P;HTML|<span class="pl-list"
 ><span class="pl-functor"
 > [ </span><span class="pl-args"
 ><span class="pl-compound"
@@ -387,21 +389,21 @@ Script started on 2024-10-20 22:35:23+00:00 [TERM="xterm-256color" TTY="/dev/pts
 ><span class="pl-int"
 >600</span></span>)</span></span>]</span>)</span> at /usr/lib/swi-prolog/boot/init.pl:510
  [191] <span class="ansi34"
->once(prolog_stack:call(call,get_prolog_backtrace_lc,8000,[frame(193,clause(<clause>(0x5631bcc6e6e0),8),call(prolog_stack:get_prolog_backtrace_lc,8000,[frame(193,clause(<clause>(0x5631bcc6e6e0),8),_3620)|_3612],P;HTML|<span class="pl-list"
+>once(prolog_stack:call(call,get_prolog_backtrace_lc,8000,[frame(193,clause(<clause>(0x559e860ca6e0),8),call(prolog_stack:get_prolog_backtrace_lc,8000,[frame(193,clause(<clause>(0x559e860ca6e0),8),_3620)|_3612],P;HTML|<span class="pl-list"
 ><span class="pl-functor"
 > [ </span><span class="pl-args"
 ><span class="pl-compound"
 ><span class="pl-functor"
 >goal_depth</span>(<span class="pl-args"
 ><span class="pl-int"
->600</span></span>)</span></span>]</span>)),frame(192,clause(<clause>(0x5631bcc6e790),10),call(prolog_stack:call,get_prolog_backtrace_lc,8000,[frame(193,clause(<clause>(0x5631bcc6e6e0),8),call(...,8000,...,...)),frame(192,...,_3718)|_3710],P;HTML|<span class="pl-list"
+>600</span></span>)</span></span>]</span>)),frame(192,clause(<clause>(0x559e860ca790),10),call(prolog_stack:call,get_prolog_backtrace_lc,8000,[frame(193,clause(<clause>(0x559e860ca6e0),8),call(...,8000,...,...)),frame(192,...,_3718)|_3710],P;HTML|<span class="pl-list"
 ><span class="pl-functor"
 > [ </span><span class="pl-args"
 ><span class="pl-compound"
 ><span class="pl-functor"
 >goal_depth</span>(<span class="pl-args"
 ><span class="pl-int"
->600</span></span>)</span></span>]</span>)),frame(191,clause(<clause>(0x5631bcc6ebb0),3),_3742)|_3734],P;HTML|<span class="pl-list"
+>600</span></span>)</span></span>]</span>)),frame(191,clause(<clause>(0x559e860cabb0),3),_3742)|_3734],P;HTML|<span class="pl-list"
 ><span class="pl-functor"
 > [ </span><span class="pl-args"
 ><span class="pl-compound"
@@ -410,18 +412,18 @@ Script started on 2024-10-20 22:35:23+00:00 [TERM="xterm-256color" TTY="/dev/pts
 ><span class="pl-int"
 >600</span></span>)</span></span>]</span>))</span> at /usr/lib/swi-prolog/boot/init.pl:538
  [190] <span class="ansi34"
->setup_call_cleanup(system:'$notrace'(12,0),system:once(prolog_stack:call(call,get_prolog_backtrace_lc,8000,[frame(193,clause(<clause>(0x5631bcc6e6e0),8),call(prolog_stack:get_prolog_backtrace_lc,8000,[frame(193,...,_3876)|_3868],P;HTML|<span class="pl-list"
+>setup_call_cleanup(system:'$notrace'(12,0),system:once(prolog_stack:call(call,get_prolog_backtrace_lc,8000,[frame(193,clause(<clause>(0x559e860ca6e0),8),call(prolog_stack:get_prolog_backtrace_lc,8000,[frame(193,...,_3876)|_3868],P;HTML|<span class="pl-list"
 ><span class="pl-functor"
 > [ </span><span class="pl-args"
 ><span class="pl-compound"
 ><span class="pl-functor"
 >goal_depth</span>(<span class="pl-args"
 ><span class="pl-int"
->600</span></span>)</span></span>]</span>)),frame(192,clause(<clause>(0x5631bcc6e790),10),call(prolog_stack:call,get_prolog_backtrace_lc,8000,[...|...],P;HTML|<span class="pl-list"
+>600</span></span>)</span></span>]</span>)),frame(192,clause(<clause>(0x559e860ca790),10),call(prolog_stack:call,get_prolog_backtrace_lc,8000,[...|...],P;HTML|<span class="pl-list"
 ><span class="pl-functor"
 > [ </span><span class="pl-args"
 ><span class="pl-atom"
->...</span></span>]</span>)),frame(191,clause(<clause>(0x5631bcc6ebb0),3),once(...)),frame(190,...,_3974)|_3966],P;HTML|<span class="pl-list"
+>...</span></span>]</span>)),frame(191,clause(<clause>(0x559e860cabb0),3),once(...)),frame(190,...,_3974)|_3966],P;HTML|<span class="pl-list"
 ><span class="pl-functor"
 > [ </span><span class="pl-args"
 ><span class="pl-compound"
@@ -439,24 +441,24 @@ Script started on 2024-10-20 22:35:23+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >ignore(user:catch(bt,_4124,true))</span> at /usr/lib/swi-prolog/boot/init.pl:547
  [183] <span class="ansi34"
 >ugtrace(error(error(existence_error(procedure,pos_line_char/2),context(make_metta_file_buffer/3,_4180))),user:call(user:once,user:load_metta_file_stream_fast(72,read_metta2,P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x5631bf553c20))))</span> at /home/runner/work/metta-wam/metta-wam/src/canary/metta_utils.pl:1437
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x559e889609c0))))</span> at /home/runner/work/metta-wam/metta-wam/src/canary/metta_utils.pl:1437
  [181] <span class="ansi34"
 >catch(user:call(user:once,user:load_metta_file_stream_fast(72,read_metta2,P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x5631bf553c20))),error(existence_error(procedure,pos_line_char/2),context(make_metta_file_buffer/3,_4310)),user:(fbug(error(existence_error(procedure,pos_line_char/2),context(make_metta_file_buffer/3,_4362))=user:call(user:once,user:load_metta_file_stream_fast(72,read_metta2,P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x5631bf553c20)))),ugtrace(error(error(existence_error(procedure,pos_line_char/2),context(make_metta_file_buffer/3,_4438))),user:call(user:once,user:load_metta_file_stream_fast(72,read_metta2,P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x5631bf553c20))))))</span> at /usr/lib/swi-prolog/boot/init.pl:565
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x559e889609c0))),error(existence_error(procedure,pos_line_char/2),context(make_metta_file_buffer/3,_4310)),user:(fbug(error(existence_error(procedure,pos_line_char/2),context(make_metta_file_buffer/3,_4362))=user:call(user:once,user:load_metta_file_stream_fast(72,read_metta2,P;HTML|<span class="pl-atom"
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x559e889609c0)))),ugtrace(error(error(existence_error(procedure,pos_line_char/2),context(make_metta_file_buffer/3,_4438))),user:call(user:once,user:load_metta_file_stream_fast(72,read_metta2,P;HTML|<span class="pl-atom"
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x559e889609c0))))))</span> at /usr/lib/swi-prolog/boot/init.pl:565
  [178] <span class="ansi34"
 >'<meta-call>'('<garbage_collected>')</span> <foreign>
  [177] <span class="ansi34"
 >setup_call_cleanup(user:nop(trace(user:load_metta_file_stream_fast/5,+fail)),user:(must_not_error(call(user:once,user:load_metta_file_stream_fast(72,read_metta2,P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x5631bf553c20))))*->true;md_failed(user:once,user:load_metta_file_stream_fast(72,read_metta2,P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x5631bf553c20)))),user:nop(trace(user:load_metta_file_stream_fast/5,-fail)))</span> at /usr/lib/swi-prolog/boot/init.pl:682
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x559e889609c0))))*->true;md_failed(user:once,user:load_metta_file_stream_fast(72,read_metta2,P;HTML|<span class="pl-atom"
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x559e889609c0)))),user:nop(trace(user:load_metta_file_stream_fast/5,-fail)))</span> at /usr/lib/swi-prolog/boot/init.pl:682
  [176] <span class="ansi34"
 >must_det_ll1('<garbage_collected>','<garbage_collected>')</span> at /home/runner/work/metta-wam/metta-wam/src/canary/metta_utils.pl:1180
  [175] <span class="ansi34"
 >catch(user:must_det_ll1(once,user:load_metta_file_stream_fast(72,read_metta2,P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x5631bf553c20))),md_failed(once,_4778,_4780),user:(_4808 is _4814-1,_4820>0->throw(md_failed(once,_4832,_4834));ugtrace(md_failed(once,_4852,_4854),user:load_metta_file_stream_fast(72,read_metta2,P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x5631bf553c20))),throw('$aborted')))</span> at /usr/lib/swi-prolog/boot/init.pl:565
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x559e889609c0))),md_failed(once,_4778,_4780),user:(_4808 is _4814-1,_4820>0->throw(md_failed(once,_4832,_4834));ugtrace(md_failed(once,_4852,_4854),user:load_metta_file_stream_fast(72,read_metta2,P;HTML|<span class="pl-atom"
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x559e889609c0))),throw('$aborted')))</span> at /usr/lib/swi-prolog/boot/init.pl:565
  [173] <span class="ansi34"
 >md(once,'<garbage_collected>')</span> at /home/runner/work/metta-wam/metta-wam/src/canary/metta_utils.pl:1151
  [170] <span class="ansi34"
@@ -465,7 +467,7 @@ Script started on 2024-10-20 22:35:23+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,1)),must_det_ll(load_answer_file(P;HTML|<span class="pl-atom"
 >'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>)),must_det_ll(set_exec_num(P;HTML|<span class="pl-atom"
 >'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,0))),must_det_ll(load_metta_file_stream_fast(72,read_metta2,P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x5631bf553c20)))),user:set_option_value(loading_file,P;HTML|<span class="pl-atom"
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x559e889609c0)))),user:set_option_value(loading_file,P;HTML|<span class="pl-atom"
 >'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>))</span> at /usr/lib/swi-prolog/boot/init.pl:682
  [167] <span class="ansi34"
 >once('<garbage_collected>')</span> at /usr/lib/swi-prolog/boot/init.pl:538
@@ -473,26 +475,26 @@ Script started on 2024-10-20 22:35:23+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >call('<garbage_collected>','<garbage_collected>')</span> at /usr/lib/swi-prolog/boot/init.pl:504
  [165] <span class="ansi34"
 >catch(user:call(user:once,user:load_metta_file_stream(P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x5631bf553c20))),_5098,user:(fbug(_5152=user:call(user:once,user:load_metta_file_stream(P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x5631bf553c20)))),ugtrace(error(_5196),user:call(user:once,user:load_metta_file_stream(P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x5631bf553c20))))))</span> at /usr/lib/swi-prolog/boot/init.pl:565
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x559e889609c0))),_5098,user:(fbug(_5152=user:call(user:once,user:load_metta_file_stream(P;HTML|<span class="pl-atom"
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x559e889609c0)))),ugtrace(error(_5196),user:call(user:once,user:load_metta_file_stream(P;HTML|<span class="pl-atom"
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x559e889609c0))))))</span> at /usr/lib/swi-prolog/boot/init.pl:565
  [162] <span class="ansi34"
 >'<meta-call>'('<garbage_collected>')</span> <foreign>
  [161] <span class="ansi34"
 >setup_call_cleanup(user:nop(trace(user:load_metta_file_stream/3,+fail)),user:(must_not_error(call(user:once,user:load_metta_file_stream(P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x5631bf553c20))))*->true;md_failed(user:once,user:load_metta_file_stream(P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x5631bf553c20)))),user:nop(trace(user:load_metta_file_stream/3,-fail)))</span> at /usr/lib/swi-prolog/boot/init.pl:682
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x559e889609c0))))*->true;md_failed(user:once,user:load_metta_file_stream(P;HTML|<span class="pl-atom"
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x559e889609c0)))),user:nop(trace(user:load_metta_file_stream/3,-fail)))</span> at /usr/lib/swi-prolog/boot/init.pl:682
  [160] <span class="ansi34"
 >must_det_ll1('<garbage_collected>','<garbage_collected>')</span> at /home/runner/work/metta-wam/metta-wam/src/canary/metta_utils.pl:1180
  [159] <span class="ansi34"
 >catch(user:must_det_ll1(once,user:load_metta_file_stream(P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x5631bf553c20))),md_failed(once,_5514,_5516),user:(_5544 is _5550-1,_5556>0->throw(md_failed(once,_5568,_5570));ugtrace(md_failed(once,_5588,_5590),user:load_metta_file_stream(P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x5631bf553c20))),throw('$aborted')))</span> at /usr/lib/swi-prolog/boot/init.pl:565
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x559e889609c0))),md_failed(once,_5514,_5516),user:(_5544 is _5550-1,_5556>0->throw(md_failed(once,_5568,_5570));ugtrace(md_failed(once,_5588,_5590),user:load_metta_file_stream(P;HTML|<span class="pl-atom"
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x559e889609c0))),throw('$aborted')))</span> at /usr/lib/swi-prolog/boot/init.pl:565
  [157] <span class="ansi34"
 >md(once,'<garbage_collected>')</span> at /home/runner/work/metta-wam/metta-wam/src/canary/metta_utils.pl:1151
  [155] <span class="ansi34"
 >setup_call_cleanup(user:open(P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,read,<stream>(0x5631bf553c20),P;HTML|<span class="pl-list"
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,read,<stream>(0x559e889609c0),P;HTML|<span class="pl-list"
 ><span class="pl-functor"
 > [ </span><span class="pl-args"
 ><span class="pl-compound"
@@ -500,14 +502,14 @@ Script started on 2024-10-20 22:35:23+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >encoding</span>(<span class="pl-args"
 ><span class="pl-atom"
 >utf8</span></span>)</span></span>]</span>),user:must_det_ll(load_metta_file_stream(P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x5631bf553c20))),user:close(<stream>(0x5631bf553c20)))</span> at /usr/lib/swi-prolog/boot/init.pl:682
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x559e889609c0))),user:close(<stream>(0x559e889609c0)))</span> at /usr/lib/swi-prolog/boot/init.pl:682
  [154] <span class="ansi34"
 >once('<garbage_collected>')</span> at /usr/lib/swi-prolog/boot/init.pl:538
  [153] <span class="ansi34"
 >call('<garbage_collected>','<garbage_collected>')</span> at /usr/lib/swi-prolog/boot/init.pl:504
  [152] <span class="ansi34"
 >catch(user:call(user:once,user:setup_call_cleanup(open(P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,read,<stream>(0x5631bf553c20),P;HTML|<span class="pl-list"
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,read,<stream>(0x559e889609c0),P;HTML|<span class="pl-list"
 ><span class="pl-functor"
 > [ </span><span class="pl-args"
 ><span class="pl-compound"
@@ -515,25 +517,25 @@ Script started on 2024-10-20 22:35:23+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >encoding</span>(<span class="pl-args"
 ><span class="pl-atom"
 >utf8</span></span>)</span></span>]</span>),must_det_ll(load_metta_file_stream(P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x5631bf553c20))),close(<stream>(0x5631bf553c20)))),_5792,user:(fbug(_5882=user:call(user:once,user:setup_call_cleanup(open(P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,read,<stream>(0x5631bf553c20),...),must_det_ll(...),close(<stream>(0x5631bf553c20))))),ugtrace(error(_5944),user:call(user:once,user:setup_call_cleanup(open(P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,read,<stream>(0x5631bf553c20),P;HTML|<span class="pl-list"
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x559e889609c0))),close(<stream>(0x559e889609c0)))),_5792,user:(fbug(_5882=user:call(user:once,user:setup_call_cleanup(open(P;HTML|<span class="pl-atom"
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,read,<stream>(0x559e889609c0),...),must_det_ll(...),close(<stream>(0x559e889609c0))))),ugtrace(error(_5944),user:call(user:once,user:setup_call_cleanup(open(P;HTML|<span class="pl-atom"
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,read,<stream>(0x559e889609c0),P;HTML|<span class="pl-list"
 ><span class="pl-functor"
 > [ </span><span class="pl-args"
 ><span class="pl-atom"
 >...</span></span>]</span>),must_det_ll(load_metta_file_stream(P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x5631bf553c20))),close(<stream>(0x5631bf553c20)))))))</span> at /usr/lib/swi-prolog/boot/init.pl:565
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x559e889609c0))),close(<stream>(0x559e889609c0)))))))</span> at /usr/lib/swi-prolog/boot/init.pl:565
  [149] <span class="ansi34"
 >'<meta-call>'('<garbage_collected>')</span> <foreign>
  [148] <span class="ansi34"
 >setup_call_cleanup(user:nop(trace(user:setup_call_cleanup/3,+fail)),user:(must_not_error(call(user:once,user:setup_call_cleanup(open(P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,read,<stream>(0x5631bf553c20),P;HTML|<span class="pl-list"
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,read,<stream>(0x559e889609c0),P;HTML|<span class="pl-list"
 ><span class="pl-functor"
 > [ </span><span class="pl-args"
 ><span class="pl-atom"
 >...</span></span>]</span>),must_det_ll(load_metta_file_stream(P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x5631bf553c20))),close(<stream>(0x5631bf553c20)))))*->true;md_failed(user:once,user:setup_call_cleanup(open(P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,read,<stream>(0x5631bf553c20),P;HTML|<span class="pl-list"
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x559e889609c0))),close(<stream>(0x559e889609c0)))))*->true;md_failed(user:once,user:setup_call_cleanup(open(P;HTML|<span class="pl-atom"
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,read,<stream>(0x559e889609c0),P;HTML|<span class="pl-list"
 ><span class="pl-functor"
 > [ </span><span class="pl-args"
 ><span class="pl-compound"
@@ -541,12 +543,12 @@ Script started on 2024-10-20 22:35:23+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >encoding</span>(<span class="pl-args"
 ><span class="pl-atom"
 >utf8</span></span>)</span></span>]</span>),must_det_ll(load_metta_file_stream(P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x5631bf553c20))),close(<stream>(0x5631bf553c20))))),user:nop(trace(user:setup_call_cleanup/3,-fail)))</span> at /usr/lib/swi-prolog/boot/init.pl:682
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x559e889609c0))),close(<stream>(0x559e889609c0))))),user:nop(trace(user:setup_call_cleanup/3,-fail)))</span> at /usr/lib/swi-prolog/boot/init.pl:682
  [147] <span class="ansi34"
 >must_det_ll1('<garbage_collected>','<garbage_collected>')</span> at /home/runner/work/metta-wam/metta-wam/src/canary/metta_utils.pl:1180
  [146] <span class="ansi34"
 >catch(user:must_det_ll1(once,user:setup_call_cleanup(open(P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,read,<stream>(0x5631bf553c20),P;HTML|<span class="pl-list"
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,read,<stream>(0x559e889609c0),P;HTML|<span class="pl-list"
 ><span class="pl-functor"
 > [ </span><span class="pl-args"
 ><span class="pl-compound"
@@ -554,8 +556,8 @@ Script started on 2024-10-20 22:35:23+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >encoding</span>(<span class="pl-args"
 ><span class="pl-atom"
 >utf8</span></span>)</span></span>]</span>),must_det_ll(load_metta_file_stream(P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x5631bf553c20))),close(<stream>(0x5631bf553c20)))),md_failed(once,_6398,_6400),user:(_6428 is _6434-1,_6440>0->throw(md_failed(once,_6452,_6454));ugtrace(md_failed(once,_6472,_6474),user:setup_call_cleanup(open(P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,read,<stream>(0x5631bf553c20),P;HTML|<span class="pl-list"
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x559e889609c0))),close(<stream>(0x559e889609c0)))),md_failed(once,_6398,_6400),user:(_6428 is _6434-1,_6440>0->throw(md_failed(once,_6452,_6454));ugtrace(md_failed(once,_6472,_6474),user:setup_call_cleanup(open(P;HTML|<span class="pl-atom"
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,read,<stream>(0x559e889609c0),P;HTML|<span class="pl-list"
 ><span class="pl-functor"
 > [ </span><span class="pl-args"
 ><span class="pl-compound"
@@ -563,12 +565,12 @@ Script started on 2024-10-20 22:35:23+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >encoding</span>(<span class="pl-args"
 ><span class="pl-atom"
 >utf8</span></span>)</span></span>]</span>),must_det_ll(load_metta_file_stream(P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x5631bf553c20))),close(<stream>(0x5631bf553c20)))),throw('$aborted')))</span> at /usr/lib/swi-prolog/boot/init.pl:565
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x559e889609c0))),close(<stream>(0x559e889609c0)))),throw('$aborted')))</span> at /usr/lib/swi-prolog/boot/init.pl:565
  [144] <span class="ansi34"
 >md(once,'<garbage_collected>')</span> at /home/runner/work/metta-wam/metta-wam/src/canary/metta_utils.pl:1151
  [142] <span class="ansi34"
 >setup_call_cleanup(user:working_directory('/home/runner/work/metta-wam/metta-wam/','/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests'),user:must_det_ll(setup_call_cleanup(open(P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,read,<stream>(0x5631bf553c20),P;HTML|<span class="pl-list"
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,read,<stream>(0x559e889609c0),P;HTML|<span class="pl-list"
 ><span class="pl-functor"
 > [ </span><span class="pl-args"
 ><span class="pl-compound"
@@ -576,7 +578,7 @@ Script started on 2024-10-20 22:35:23+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >encoding</span>(<span class="pl-args"
 ><span class="pl-atom"
 >utf8</span></span>)</span></span>]</span>),must_det_ll(load_metta_file_stream(P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x5631bf553c20))),close(<stream>(0x5631bf553c20)))),user:working_directory(_6658,'/home/runner/work/metta-wam/metta-wam/'))</span> at /usr/lib/swi-prolog/boot/init.pl:682
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>,'&self',<stream>(0x559e889609c0))),close(<stream>(0x559e889609c0)))),user:working_directory(_6658,'/home/runner/work/metta-wam/metta-wam/'))</span> at /usr/lib/swi-prolog/boot/init.pl:682
  [139] <span class="ansi34"
 >once('<garbage_collected>')</span> at /usr/lib/swi-prolog/boot/init.pl:538
  [138] <span class="ansi34"
@@ -636,9 +638,9 @@ Script started on 2024-10-20 22:35:23+00:00 [TERM="xterm-256color" TTY="/dev/pts
  [111] <span class="ansi34"
 >md(once,'<garbage_collected>')</span> at /home/runner/work/metta-wam/metta-wam/src/canary/metta_utils.pl:1151
  [109] <span class="ansi34"
->catch(user:must_det_ll(include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')),_8070,prolog_statistics:(report(time{cpu:4.941658777,inferences:29636679,wall:1729463728.650397},10),throw(_8126)))</span> at /usr/lib/swi-prolog/boot/init.pl:565
+>catch(user:must_det_ll(include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')),_8070,prolog_statistics:(report(time{cpu:4.958925375,inferences:29636679,wall:1729533174.9516106},10),throw(_8126)))</span> at /usr/lib/swi-prolog/boot/init.pl:565
  [108] <span class="ansi34"
->call_cleanup(prolog_statistics:catch(user:must_det_ll(include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')),_8164,(report(time{cpu:4.941658777,inferences:29636679,wall:1729463728.650397},10),throw(_8214))),prolog_statistics:(_8224=true))</span> at /usr/lib/swi-prolog/boot/init.pl:685
+>call_cleanup(prolog_statistics:catch(user:must_det_ll(include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')),_8164,(report(time{cpu:4.958925375,inferences:29636679,wall:1729533174.9516106},10),throw(_8214))),prolog_statistics:(_8224=true))</span> at /usr/lib/swi-prolog/boot/init.pl:685
  [107] <span class="ansi34"
 >prolog_statistics:time('<garbage_collected>')</span> at /usr/lib/swi-prolog/library/statistics.pl:287
  [106] <span class="ansi34"
@@ -789,1004 +791,678 @@ Script started on 2024-10-20 22:35:23+00:00 [TERM="xterm-256color" TTY="/dev/pts
 Note: some frames are missing due to last-call optimization.
 Re-run your program in debug mode (:- debug.) to get more detail.
 (0)$P;HTML|<span class="ansi1"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+>[system]</span>P;HTML|<span class="ansi1"
 ></span><span class="ansi1 ansi95"
 ></span><span class="ansi1 ansi95"
 ></span><span class="ansi1 ansi95"
->[system]</span>P;HTML|<span class="ansi2"
-></span><span class="ansi2"
-></span><span class="ansi2"
-></span><span class="ansi2"
 > system:'$c_call_prolog'. </span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi97"
-></span><span class="ansi1 ansi97 ansi40"
-></span><span class="ansi1 ansi97 ansi40"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
 > no(clause). </span>
 (1)$P;HTML|<span class="ansi2"
-></span><span class="ansi2 ansi35"
-></span><span class="ansi2 ansi35"
-></span><span class="ansi2 ansi35"
->[$toplevel]</span>P;HTML|<span class="ansi2"
-></span><span class="ansi2"
-></span><span class="ansi2"
-></span><span class="ansi2"
+></span><span class="ansi2 ansi37"
+></span><span class="ansi2 ansi37 ansi40"
+></span><span class="ansi2 ansi37 ansi40"
+>[$toplevel]</span>P;HTML|<span class="ansi32"
+></span><span class="ansi32"
+></span><span class="ansi32"
 > '$toplevel':'$initialise'. </span>  %  toplevel.pl:556: 
 (2)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
 >[system]</span>P;HTML|<span class="ansi2"
-></span><span class="ansi2 ansi35"
-></span><span class="ansi2 ansi35"
-></span><span class="ansi2 ansi35"
+></span><span class="ansi2 ansi37"
+></span><span class="ansi2 ansi37 ansi40"
+></span><span class="ansi2 ansi37 ansi40"
 > system:catch('$toplevel':initialise_prolog,A,'$toplevel':initialise_error(A)). </span>  %  init.pl:564: 
 (5)<*>$P;HTML|<span class="ansi2"
-></span><span class="ansi2 ansi35"
-></span><span class="ansi2 ansi35"
-></span><span class="ansi2 ansi35"
->[$toplevel]</span>P;HTML| '$toplevel':run_init_goal('<garbage_collected>',@(user:loon(main),'/home/runner/work/metta-wam/metta-wam/src/canary/metta_interp.pl':2223)).   %  toplevel.pl:741: 
+></span><span class="ansi2 ansi37"
+></span><span class="ansi2 ansi37 ansi40"
+></span><span class="ansi2 ansi37 ansi40"
+>[$toplevel]</span>P;HTML|<span class="ansi2"
+></span><span class="ansi2 ansi96"
+></span><span class="ansi2 ansi96"
+></span><span class="ansi2 ansi96"
+> '$toplevel':run_init_goal('<garbage_collected>',@(user:loon(main),'/home/runner/work/metta-wam/metta-wam/src/canary/metta_interp.pl':2223)). </span>  %  toplevel.pl:741: 
 (6)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
->[system]</span>P;HTML|<span class="ansi2"
-></span><span class="ansi2 ansi33"
-></span><span class="ansi2 ansi33"
-></span><span class="ansi2 ansi33"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+>[system]</span>P;HTML|<span class="ansi96"
+></span><span class="ansi96"
+></span><span class="ansi96"
 > system:catch_with_backtrace('<garbage_collected>','<garbage_collected>','<garbage_collected>'). </span>  %  init.pl:644: 
 (7)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
 >[system]</span>P;HTML|<span class="ansi2"
-></span><span class="ansi2 ansi35"
-></span><span class="ansi2 ansi35"
-></span><span class="ansi2 ansi35"
+></span><span class="ansi2 ansi37"
+></span><span class="ansi2 ansi37 ansi40"
+></span><span class="ansi2 ansi37 ansi40"
 > system:catch(user:loon(main),A,'$toplevel':true). </span>  %  init.pl:564: 
-(9)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi32"
-></span><span class="ansi32"
-></span><span class="ansi32"
+(9)$P;HTML|[user]P;HTML|<span class="ansi2"
+></span><span class="ansi2 ansi36"
+></span><span class="ansi2 ansi36"
+></span><span class="ansi2 ansi36"
 > do_loon. </span>  %  metta_interp.pl:2024: 
 (10)<*>$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
 >[system]</span>P;HTML|<span class="ansi2"
-></span><span class="ansi2 ansi93"
-></span><span class="ansi2 ansi93"
-></span><span class="ansi2 ansi93"
+></span><span class="ansi2"
+></span><span class="ansi2"
+></span><span class="ansi2"
 > system:ignore('<garbage_collected>'). </span>  %  init.pl:546: 
-(18)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi93"
-></span><span class="ansi1 ansi93"
-></span><span class="ansi1 ansi93"
->[apply]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-> apply:maplist_('<garbage_collected>',user:catch_red_ignore). </span>  %  apply.pl:225: 
-(20)<*>$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi2"
-></span><span class="ansi2 ansi94"
-></span><span class="ansi2 ansi94"
-></span><span class="ansi2 ansi94"
+(18)$P;HTML|<span class="ansi2"
+></span><span class="ansi2 ansi92"
+></span><span class="ansi2 ansi92"
+></span><span class="ansi2 ansi92"
+>[apply]</span>P;HTML| apply:maplist_('<garbage_collected>',user:catch_red_ignore).   %  apply.pl:225: 
+(20)<*>$P;HTML|[user]P;HTML|<span class="ansi1"
+></span><span class="ansi1 ansi95"
+></span><span class="ansi1 ansi95"
+></span><span class="ansi1 ansi95"
 > if_or_else('<garbage_collected>',true). </span>  %  metta_interp.pl:1839: 
 (23)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
->[system]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-> system:catch(user:run_cmd_args,A,user:(always_rethrow(A)->throw(A);pp_m(red,run_cmd_args in A))). </span>  %  init.pl:564: 
-(26)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi2"
-></span><span class="ansi2 ansi92"
-></span><span class="ansi2 ansi92"
-></span><span class="ansi2 ansi92"
-> do_cmdline_load_metta(execute,'&self','<garbage_collected>'). </span>  %  metta_interp.pl:1013: 
-(33)<*>$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi33"
-></span><span class="ansi1 ansi33"
-></span><span class="ansi1 ansi33"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+>[system]</span>P;HTML| system:catch(user:run_cmd_args,A,user:(always_rethrow(A)->throw(A);pp_m(red,run_cmd_args in A))).   %  init.pl:564: 
+(26)$P;HTML|[user]P;HTML| do_cmdline_load_metta(execute,'&self','<garbage_collected>').   %  metta_interp.pl:1013: 
+(33)<*>$P;HTML|[user]P;HTML|<span class="ansi1"
+></span><span class="ansi1 ansi93"
+></span><span class="ansi1 ansi93"
+></span><span class="ansi1 ansi93"
 > cmdline_load_metta(execute,'&self',['tests/baseline_compat/metta-morph_tests/letlet.metta','--halt=true','--stdin=tty','--stdout=tty','--stderr=tty']). </span>  %  metta_interp.pl:1049: 
 (35)<*>$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
 >[system]</span>P;HTML|<span class="ansi2"
-></span><span class="ansi2 ansi93"
-></span><span class="ansi2 ansi93"
-></span><span class="ansi2 ansi93"
+></span><span class="ansi2"
+></span><span class="ansi2"
+></span><span class="ansi2"
 > system:ignore('<garbage_collected>'). </span>  %  init.pl:546: 
-(37)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi91"
-></span><span class="ansi1 ansi91"
-></span><span class="ansi1 ansi91"
+(37)$P;HTML|[user]P;HTML|<span class="ansi1"
+></span><span class="ansi1"
+></span><span class="ansi1"
+></span><span class="ansi1"
 > cmdline_load_file('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'). </span>  %  metta_interp.pl:1081: 
 (40)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
->[system]</span>#P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-> system:catch(user:(not_compatio((nl,write('; '),write_src(user:load_metta_file('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')),nl)),catch_red(user:load_metta_file('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')),!,flush_output),'$aborted',user:fbug(aborted(user:load_metta_file('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'),(not_compatio((nl,write('; '),write_src(user:load_metta_file('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')),nl)),catch_red(user:load_metta_file('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')),!,flush_output)))). </span>  %  init.pl:564: 
-(41)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi35"
-></span><span class="ansi1 ansi35"
-></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+>[system]</span>#P;HTML| system:catch(user:(not_compatio((nl,write('; '),write_src(user:load_metta_file('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')),nl)),catch_red(user:load_metta_file('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')),!,flush_output),'$aborted',user:fbug(aborted(user:load_metta_file('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'),(not_compatio((nl,write('; '),write_src(user:load_metta_file('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')),nl)),catch_red(user:load_metta_file('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')),!,flush_output)))).   %  init.pl:564: 
+(41)$P;HTML|[user]P;HTML|<span class="ansi91"
+></span><span class="ansi91"
+></span><span class="ansi91"
 > system:'<meta-call>'('<garbage_collected>'). </span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi97"
-></span><span class="ansi1 ansi97 ansi40"
-></span><span class="ansi1 ansi97 ansi40"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
 > no(clause). </span>
-(43)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi91"
-></span><span class="ansi1 ansi91"
-></span><span class="ansi1 ansi91"
+(43)$P;HTML|[user]P;HTML|<span class="ansi2"
+></span><span class="ansi2 ansi33"
+></span><span class="ansi2 ansi33"
+></span><span class="ansi2 ansi33"
 > md(once,'<garbage_collected>'). </span>  %  metta_utils.pl:1150: 
 (45)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
->[system]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-> system:catch(user:must_det_ll1(once,user:catch_red(user:load_metta_file('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'))),md_failed(once,A,B),user:(C is B-1,C>0->throw(md_failed(once,A,C));ugtrace(md_failed(once,A,C),user:catch_red(user:load_metta_file('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'))),throw('$aborted'))). </span>  %  init.pl:564: 
-(46)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi2"
-></span><span class="ansi2 ansi32"
-></span><span class="ansi2 ansi32"
-></span><span class="ansi2 ansi32"
-> must_det_ll1('<garbage_collected>','<garbage_collected>'). </span>  %  metta_utils.pl:1177: 
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+>[system]</span>P;HTML| system:catch(user:must_det_ll1(once,user:catch_red(user:load_metta_file('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'))),md_failed(once,A,B),user:(C is B-1,C>0->throw(md_failed(once,A,C));ugtrace(md_failed(once,A,C),user:catch_red(user:load_metta_file('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'))),throw('$aborted'))).   %  init.pl:564: 
+(46)$P;HTML|[user]P;HTML| must_det_ll1('<garbage_collected>','<garbage_collected>').   %  metta_utils.pl:1177: 
 (47)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
->[system]</span>#P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-> system:setup_call_cleanup(user:nop(trace(user:catch_red/1,+fail)),user:(call(user:once,user:catch_red(user:load_metta_file('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')))*->true;md_failed(user:once,user:catch_red(user:load_metta_file('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')))),user:nop(trace(user:catch_red/1,-fail))). </span>  %  init.pl:680: 
-(48)<*>$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi35"
-></span><span class="ansi1 ansi35"
-></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+>[system]</span>#P;HTML| system:setup_call_cleanup(user:nop(trace(user:catch_red/1,+fail)),user:(call(user:once,user:catch_red(user:load_metta_file('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')))*->true;md_failed(user:once,user:catch_red(user:load_metta_file('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')))),user:nop(trace(user:catch_red/1,-fail))).   %  init.pl:680: 
+(48)<*>$P;HTML|[user]P;HTML|<span class="ansi91"
+></span><span class="ansi91"
+></span><span class="ansi91"
 > system:'<meta-call>'('<garbage_collected>'). </span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi97"
-></span><span class="ansi1 ansi97 ansi40"
-></span><span class="ansi1 ansi97 ansi40"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
 > no(clause). </span>
 (51)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
 >[system]</span>P;HTML|<span class="ansi31"
 ></span><span class="ansi31 ansi100"
 ></span><span class="ansi1 ansi31 ansi100"
 > system:catch(user:call(user:once,user:catch_red(user:load_metta_file('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'))),A,user:(fbug(A=user:call(user:once,user:catch_red(user:load_metta_file('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')))),ugtrace(error(A),user:call(user:once,user:catch_red(user:load_metta_file('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')))))). </span><span class="ansi1 ansi31 ansi100"
 ></span>  %  init.pl:564: 
 (52)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
 >[system]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi94"
-></span><span class="ansi1 ansi94"
-></span><span class="ansi1 ansi94"
+></span><span class="ansi1 ansi93"
+></span><span class="ansi1 ansi93"
+></span><span class="ansi1 ansi93"
 > system:call('<garbage_collected>','<garbage_collected>'). </span>  %  init.pl:503: 
 (53)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
 >[system]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1"
-></span><span class="ansi1"
-></span><span class="ansi1"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
 > system:once('<garbage_collected>'). </span>  %  init.pl:537: 
 (56)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
->[system]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-> system:catch(user:load_metta_file('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'),A,user:(always_rethrow(A)->throw(A);pp_m(red,user:load_metta_file('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')in A))). </span>  %  init.pl:564: 
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+>[system]</span>P;HTML| system:catch(user:load_metta_file('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'),A,user:(always_rethrow(A)->throw(A);pp_m(red,user:load_metta_file('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')in A))).   %  init.pl:564: 
 (61)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
->[system]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-> system:setup_call_cleanup(user:nb_setval('$circular_goals',[load_metta1('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')]),user:call(load_metta1('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')),user:(nb_current('$circular_goals',A),select(load_metta1('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'),A,B),nb_setval('$circular_goals',B))). </span>  %  init.pl:680: 
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+>[system]</span>P;HTML| system:setup_call_cleanup(user:nb_setval('$circular_goals',[load_metta1('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')]),user:call(load_metta1('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')),user:(nb_current('$circular_goals',A),select(load_metta1('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'),A,B),nb_setval('$circular_goals',B))).   %  init.pl:680: 
 (62)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
 >[system]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi94"
-></span><span class="ansi1 ansi94"
-></span><span class="ansi1 ansi94"
+></span><span class="ansi1 ansi93"
+></span><span class="ansi1 ansi93"
+></span><span class="ansi1 ansi93"
 > system:call('<garbage_collected>'). </span>  %  init.pl:501: 
-(66)$P;HTML|<span class="ansi2"
-></span><span class="ansi2 ansi97"
-></span><span class="ansi2 ansi97 ansi40"
-></span><span class="ansi2 ansi97 ansi40"
+(66)$P;HTML|<span class="ansi97"
+></span><span class="ansi97 ansi40"
+></span><span class="ansi97 ansi40"
 >[locally_each]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi92"
-></span><span class="ansi1 ansi92"
-></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi95"
+></span><span class="ansi1 ansi95"
+></span><span class="ansi1 ansi95"
 > locally_each:wtl_how('<garbage_collected>','<garbage_collected>','<garbage_collected>','<garbage_collected>','<garbage_collected>'). </span>  %  redo_locally.pl:217: 
-(68)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi91"
-></span><span class="ansi1 ansi91"
-></span><span class="ansi1 ansi91"
+(68)$P;HTML|[user]P;HTML|<span class="ansi2"
+></span><span class="ansi2 ansi33"
+></span><span class="ansi2 ansi33"
+></span><span class="ansi2 ansi33"
 > md(once,'<garbage_collected>'). </span>  %  metta_utils.pl:1150: 
 (70)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
->[system]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-> system:catch(user:must_det_ll1(once,user:track_load_into_file('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'))),md_failed(once,A,B),user:(C is B-1,C>0->throw(md_failed(once,A,C));ugtrace(md_failed(once,A,C),user:track_load_into_file('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'))),throw('$aborted'))). </span>  %  init.pl:564: 
-(71)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi2"
-></span><span class="ansi2 ansi32"
-></span><span class="ansi2 ansi32"
-></span><span class="ansi2 ansi32"
-> must_det_ll1('<garbage_collected>','<garbage_collected>'). </span>  %  metta_utils.pl:1177: 
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+>[system]</span>P;HTML| system:catch(user:must_det_ll1(once,user:track_load_into_file('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'))),md_failed(once,A,B),user:(C is B-1,C>0->throw(md_failed(once,A,C));ugtrace(md_failed(once,A,C),user:track_load_into_file('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'))),throw('$aborted'))).   %  init.pl:564: 
+(71)$P;HTML|[user]P;HTML| must_det_ll1('<garbage_collected>','<garbage_collected>').   %  metta_utils.pl:1177: 
 (72)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
->[system]</span>#P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-> system:setup_call_cleanup(user:nop(trace(user:track_load_into_file/2,+fail)),user:(call(user:once,user:track_load_into_file('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')))*->true;md_failed(user:once,user:track_load_into_file('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')))),user:nop(trace(user:track_load_into_file/2,-fail))). </span>  %  init.pl:680: 
-(73)<*>$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi35"
-></span><span class="ansi1 ansi35"
-></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+>[system]</span>#P;HTML| system:setup_call_cleanup(user:nop(trace(user:track_load_into_file/2,+fail)),user:(call(user:once,user:track_load_into_file('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')))*->true;md_failed(user:once,user:track_load_into_file('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')))),user:nop(trace(user:track_load_into_file/2,-fail))).   %  init.pl:680: 
+(73)<*>$P;HTML|[user]P;HTML|<span class="ansi91"
+></span><span class="ansi91"
+></span><span class="ansi91"
 > system:'<meta-call>'('<garbage_collected>'). </span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi97"
-></span><span class="ansi1 ansi97 ansi40"
-></span><span class="ansi1 ansi97 ansi40"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
 > no(clause). </span>
 (76)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
 >[system]</span>P;HTML|<span class="ansi31"
 ></span><span class="ansi31 ansi100"
 ></span><span class="ansi1 ansi31 ansi100"
 > system:catch(user:call(user:once,user:track_load_into_file('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'))),A,user:(fbug(A=user:call(user:once,user:track_load_into_file('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')))),ugtrace(error(A),user:call(user:once,user:track_load_into_file('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')))))). </span><span class="ansi1 ansi31 ansi100"
 ></span>  %  init.pl:564: 
 (77)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
 >[system]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi94"
-></span><span class="ansi1 ansi94"
-></span><span class="ansi1 ansi94"
+></span><span class="ansi1 ansi93"
+></span><span class="ansi1 ansi93"
+></span><span class="ansi1 ansi93"
 > system:call('<garbage_collected>','<garbage_collected>'). </span>  %  init.pl:503: 
 (78)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
 >[system]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1"
-></span><span class="ansi1"
-></span><span class="ansi1"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
 > system:once('<garbage_collected>'). </span>  %  init.pl:537: 
-(79)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi93"
-></span><span class="ansi1 ansi93"
-></span><span class="ansi1 ansi93"
-> track_load_into_file('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','<garbage_collected>'). </span>  %  flybase_loader.pl:1005: 
-(81)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi91"
-></span><span class="ansi1 ansi91"
-></span><span class="ansi1 ansi91"
-> md(once,'<garbage_collected>'). </span>  %  metta_utils.pl:1150: 
-(83)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
->[system]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-> system:catch(user:must_det_ll1(once,user:track_load_into_file0('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'))),md_failed(once,A,B),user:(C is B-1,C>0->throw(md_failed(once,A,C));ugtrace(md_failed(once,A,C),user:track_load_into_file0('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'))),throw('$aborted'))). </span>  %  init.pl:564: 
-(84)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi2"
-></span><span class="ansi2 ansi32"
-></span><span class="ansi2 ansi32"
-></span><span class="ansi2 ansi32"
-> must_det_ll1('<garbage_collected>','<garbage_collected>'). </span>  %  metta_utils.pl:1177: 
-(85)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
->[system]</span>#P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-> system:setup_call_cleanup(user:nop(trace(user:track_load_into_file0/2,+fail)),user:(call(user:once,user:track_load_into_file0('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')))*->true;md_failed(user:once,user:track_load_into_file0('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')))),user:nop(trace(user:track_load_into_file0/2,-fail))). </span>  %  init.pl:680: 
-(86)<*>$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi35"
-></span><span class="ansi1 ansi35"
-></span><span class="ansi1 ansi35"
-> system:'<meta-call>'('<garbage_collected>'). </span>P;HTML|<span class="ansi1"
+(79)$P;HTML|[user]P;HTML|<span class="ansi1"
 ></span><span class="ansi1 ansi97"
 ></span><span class="ansi1 ansi97 ansi40"
 ></span><span class="ansi1 ansi97 ansi40"
+> track_load_into_file('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','<garbage_collected>'). </span>  %  flybase_loader.pl:1005: 
+(81)$P;HTML|[user]P;HTML|<span class="ansi2"
+></span><span class="ansi2 ansi33"
+></span><span class="ansi2 ansi33"
+></span><span class="ansi2 ansi33"
+> md(once,'<garbage_collected>'). </span>  %  metta_utils.pl:1150: 
+(83)$P;HTML|<span class="ansi1"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+>[system]</span>P;HTML| system:catch(user:must_det_ll1(once,user:track_load_into_file0('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'))),md_failed(once,A,B),user:(C is B-1,C>0->throw(md_failed(once,A,C));ugtrace(md_failed(once,A,C),user:track_load_into_file0('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'))),throw('$aborted'))).   %  init.pl:564: 
+(84)$P;HTML|[user]P;HTML| must_det_ll1('<garbage_collected>','<garbage_collected>').   %  metta_utils.pl:1177: 
+(85)$P;HTML|<span class="ansi1"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+>[system]</span>#P;HTML| system:setup_call_cleanup(user:nop(trace(user:track_load_into_file0/2,+fail)),user:(call(user:once,user:track_load_into_file0('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')))*->true;md_failed(user:once,user:track_load_into_file0('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')))),user:nop(trace(user:track_load_into_file0/2,-fail))).   %  init.pl:680: 
+(86)<*>$P;HTML|[user]P;HTML|<span class="ansi91"
+></span><span class="ansi91"
+></span><span class="ansi91"
+> system:'<meta-call>'('<garbage_collected>'). </span>P;HTML|<span class="ansi1"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
 > no(clause). </span>
 (89)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
 >[system]</span>P;HTML|<span class="ansi31"
 ></span><span class="ansi31 ansi100"
 ></span><span class="ansi1 ansi31 ansi100"
 > system:catch(user:call(user:once,user:track_load_into_file0('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'))),A,user:(fbug(A=user:call(user:once,user:track_load_into_file0('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')))),ugtrace(error(A),user:call(user:once,user:track_load_into_file0('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')))))). </span><span class="ansi1 ansi31 ansi100"
 ></span>  %  init.pl:564: 
 (90)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
 >[system]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi94"
-></span><span class="ansi1 ansi94"
-></span><span class="ansi1 ansi94"
+></span><span class="ansi1 ansi93"
+></span><span class="ansi1 ansi93"
+></span><span class="ansi1 ansi93"
 > system:call('<garbage_collected>','<garbage_collected>'). </span>  %  init.pl:503: 
 (91)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
 >[system]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1"
-></span><span class="ansi1"
-></span><span class="ansi1"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
 > system:once('<garbage_collected>'). </span>  %  init.pl:537: 
-(92)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi94"
-></span><span class="ansi1 ansi94"
-></span><span class="ansi1 ansi94"
+(92)$P;HTML|[user]P;HTML|<span class="ansi2"
+></span><span class="ansi2 ansi36"
+></span><span class="ansi2 ansi36"
+></span><span class="ansi2 ansi36"
 > track_load_into_file0('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','<garbage_collected>'). </span>  %  flybase_loader.pl:1010: 
-(94)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi91"
-></span><span class="ansi1 ansi91"
-></span><span class="ansi1 ansi91"
+(94)$P;HTML|[user]P;HTML|<span class="ansi2"
+></span><span class="ansi2 ansi33"
+></span><span class="ansi2 ansi33"
+></span><span class="ansi2 ansi33"
 > md(once,'<garbage_collected>'). </span>  %  metta_utils.pl:1150: 
 (96)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
->[system]</span>#P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-> system:catch(user:must_det_ll1(once,user:with_option(loading_file,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',time(include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')))),md_failed(once,A,B),user:(C is B-1,C>0->throw(md_failed(once,A,C));ugtrace(md_failed(once,A,C),user:with_option(loading_file,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',time(include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')))),throw('$aborted'))). </span>  %  init.pl:564: 
-(97)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi2"
-></span><span class="ansi2 ansi32"
-></span><span class="ansi2 ansi32"
-></span><span class="ansi2 ansi32"
-> must_det_ll1('<garbage_collected>','<garbage_collected>'). </span>  %  metta_utils.pl:1177: 
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+>[system]</span>#P;HTML| system:catch(user:must_det_ll1(once,user:with_option(loading_file,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',time(include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')))),md_failed(once,A,B),user:(C is B-1,C>0->throw(md_failed(once,A,C));ugtrace(md_failed(once,A,C),user:with_option(loading_file,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',time(include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')))),throw('$aborted'))).   %  init.pl:564: 
+(97)$P;HTML|[user]P;HTML| must_det_ll1('<garbage_collected>','<garbage_collected>').   %  metta_utils.pl:1177: 
 (98)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
->[system]</span>#P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-> system:setup_call_cleanup(user:nop(trace(user:with_option/3,+fail)),user:(call(user:once,user:with_option(loading_file,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',time(include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'))))*->true;md_failed(user:once,user:with_option(loading_file,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',time(include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'))))),user:nop(trace(user:with_option/3,-fail))). </span>  %  init.pl:680: 
-(99)<*>$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi35"
-></span><span class="ansi1 ansi35"
-></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+>[system]</span>#P;HTML| system:setup_call_cleanup(user:nop(trace(user:with_option/3,+fail)),user:(call(user:once,user:with_option(loading_file,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',time(include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'))))*->true;md_failed(user:once,user:with_option(loading_file,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',time(include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'))))),user:nop(trace(user:with_option/3,-fail))).   %  init.pl:680: 
+(99)<*>$P;HTML|[user]P;HTML|<span class="ansi91"
+></span><span class="ansi91"
+></span><span class="ansi91"
 > system:'<meta-call>'('<garbage_collected>'). </span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi97"
-></span><span class="ansi1 ansi97 ansi40"
-></span><span class="ansi1 ansi97 ansi40"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
 > no(clause). </span>
 (102)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
 >[system]</span>#P;HTML|<span class="ansi31"
 ></span><span class="ansi31 ansi100"
 ></span><span class="ansi1 ansi31 ansi100"
 > system:catch(user:call(user:once,user:with_option(loading_file,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',time(include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')))),A,user:(fbug(A=user:call(user:once,user:with_option(loading_file,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',time(include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'))))),ugtrace(error(A),user:call(user:once,user:with_option(loading_file,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',time(include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'))))))). </span><span class="ansi1 ansi31 ansi100"
 ></span>  %  init.pl:564: 
 (103)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
 >[system]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi94"
-></span><span class="ansi1 ansi94"
-></span><span class="ansi1 ansi94"
+></span><span class="ansi1 ansi93"
+></span><span class="ansi1 ansi93"
+></span><span class="ansi1 ansi93"
 > system:call('<garbage_collected>','<garbage_collected>'). </span>  %  init.pl:503: 
 (104)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
 >[system]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1"
-></span><span class="ansi1"
-></span><span class="ansi1"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
 > system:once('<garbage_collected>'). </span>  %  init.pl:537: 
 (106)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
->[system]</span>#P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-> system:setup_call_cleanup(user:set_option_value(loading_file,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'),user:time(include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')),user:set_option_value(loading_file,[])). </span>  %  init.pl:680: 
-(107)<*>$P;HTML|<span class="ansi91"
-></span><span class="ansi91"
-></span><span class="ansi91"
->[prolog_statistics]</span>P;HTML|<span class="ansi93"
-></span><span class="ansi93"
-></span><span class="ansi93"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+>[system]</span>#P;HTML| system:setup_call_cleanup(user:set_option_value(loading_file,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'),user:time(include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')),user:set_option_value(loading_file,[])).   %  init.pl:680: 
+(107)<*>$P;HTML|<span class="ansi1"
+></span><span class="ansi1 ansi32"
+></span><span class="ansi1 ansi32"
+></span><span class="ansi1 ansi32"
+>[prolog_statistics]</span>P;HTML|<span class="ansi2"
+></span><span class="ansi2 ansi94"
+></span><span class="ansi2 ansi94"
+></span><span class="ansi2 ansi94"
 > prolog_statistics:time('<garbage_collected>'). </span>  %  statistics.pl:285: 
 (108)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
->[system]</span>#P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-> system:call_cleanup(prolog_statistics:catch(user:include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'),A,(report(time{cpu:4.941658777,inferences:29636679,wall:1729463728.650397},10),throw(A))),prolog_statistics:(B=true)). </span>  %  init.pl:684: 
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+>[system]</span>#P;HTML| system:call_cleanup(prolog_statistics:catch(user:include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'),A,(report(time{cpu:4.958925375,inferences:29636679,wall:1729533174.9516106},10),throw(A))),prolog_statistics:(B=true)).   %  init.pl:684: 
 (109)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
->[system]</span>#P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-> system:catch(user:include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'),A,prolog_statistics:(report(time{cpu:4.941658777,inferences:29636679,wall:1729463728.650397},10),throw(A))). </span>  %  init.pl:564: 
-(111)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi91"
-></span><span class="ansi1 ansi91"
-></span><span class="ansi1 ansi91"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+>[system]</span>#P;HTML| system:catch(user:include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'),A,prolog_statistics:(report(time{cpu:4.958925375,inferences:29636679,wall:1729533174.9516106},10),throw(A))).   %  init.pl:564: 
+(111)$P;HTML|[user]P;HTML|<span class="ansi2"
+></span><span class="ansi2 ansi33"
+></span><span class="ansi2 ansi33"
+></span><span class="ansi2 ansi33"
 > md(once,'<garbage_collected>'). </span>  %  metta_utils.pl:1150: 
 (113)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
->[system]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-> system:catch(user:must_det_ll1(once,user:include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')),md_failed(once,A,B),user:(C is B-1,C>0->throw(md_failed(once,A,C));ugtrace(md_failed(once,A,C),user:include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')),throw('$aborted'))). </span>  %  init.pl:564: 
-(114)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi2"
-></span><span class="ansi2 ansi32"
-></span><span class="ansi2 ansi32"
-></span><span class="ansi2 ansi32"
-> must_det_ll1('<garbage_collected>','<garbage_collected>'). </span>  %  metta_utils.pl:1177: 
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+>[system]</span>P;HTML| system:catch(user:must_det_ll1(once,user:include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')),md_failed(once,A,B),user:(C is B-1,C>0->throw(md_failed(once,A,C));ugtrace(md_failed(once,A,C),user:include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')),throw('$aborted'))).   %  init.pl:564: 
+(114)$P;HTML|[user]P;HTML| must_det_ll1('<garbage_collected>','<garbage_collected>').   %  metta_utils.pl:1177: 
 (115)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
->[system]</span>#P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-> system:setup_call_cleanup(user:nop(trace(user:include_metta/2,+fail)),user:(call(user:once,user:include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'))*->true;md_failed(user:once,user:include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'))),user:nop(trace(user:include_metta/2,-fail))). </span>  %  init.pl:680: 
-(116)<*>$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi35"
-></span><span class="ansi1 ansi35"
-></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+>[system]</span>#P;HTML| system:setup_call_cleanup(user:nop(trace(user:include_metta/2,+fail)),user:(call(user:once,user:include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'))*->true;md_failed(user:once,user:include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'))),user:nop(trace(user:include_metta/2,-fail))).   %  init.pl:680: 
+(116)<*>$P;HTML|[user]P;HTML|<span class="ansi91"
+></span><span class="ansi91"
+></span><span class="ansi91"
 > system:'<meta-call>'('<garbage_collected>'). </span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi97"
-></span><span class="ansi1 ansi97 ansi40"
-></span><span class="ansi1 ansi97 ansi40"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
 > no(clause). </span>
 (119)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
 >[system]</span>P;HTML|<span class="ansi31"
 ></span><span class="ansi31 ansi100"
 ></span><span class="ansi1 ansi31 ansi100"
 > system:catch(user:call(user:once,user:include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')),A,user:(fbug(A=user:call(user:once,user:include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'))),ugtrace(error(A),user:call(user:once,user:include_metta('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'))))). </span><span class="ansi1 ansi31 ansi100"
 ></span>  %  init.pl:564: 
 (120)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
 >[system]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi94"
-></span><span class="ansi1 ansi94"
-></span><span class="ansi1 ansi94"
+></span><span class="ansi1 ansi93"
+></span><span class="ansi1 ansi93"
+></span><span class="ansi1 ansi93"
 > system:call('<garbage_collected>','<garbage_collected>'). </span>  %  init.pl:503: 
 (121)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
 >[system]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1"
-></span><span class="ansi1"
-></span><span class="ansi1"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
 > system:once('<garbage_collected>'). </span>  %  init.pl:537: 
 (125)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
->[system]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-> system:setup_call_cleanup(user:nb_setval('$circular_goals',[include_metta1('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'),load_metta1('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')]),user:call(include_metta1('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')),user:(nb_current('$circular_goals',A),select(include_metta1('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'),A,B),nb_setval('$circular_goals',B))). </span>  %  init.pl:680: 
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+>[system]</span>P;HTML| system:setup_call_cleanup(user:nb_setval('$circular_goals',[include_metta1('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'),load_metta1('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')]),user:call(include_metta1('&self','tests/baseline_compat/metta-morph_tests/letlet.metta')),user:(nb_current('$circular_goals',A),select(include_metta1('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'),A,B),nb_setval('$circular_goals',B))).   %  init.pl:680: 
 (126)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
 >[system]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi94"
-></span><span class="ansi1 ansi94"
-></span><span class="ansi1 ansi94"
+></span><span class="ansi1 ansi93"
+></span><span class="ansi1 ansi93"
+></span><span class="ansi1 ansi93"
 > system:call('<garbage_collected>'). </span>  %  init.pl:501: 
-(127)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi94"
-></span><span class="ansi1 ansi94"
-></span><span class="ansi1 ansi94"
+(127)$P;HTML|[user]P;HTML|<span class="ansi2"
+></span><span class="ansi2 ansi93"
+></span><span class="ansi2 ansi93"
+></span><span class="ansi2 ansi93"
 > include_metta1('&self','tests/baseline_compat/metta-morph_tests/letlet.metta'). </span>  %  metta_loader.pl:394: 
-(129)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi91"
-></span><span class="ansi1 ansi91"
-></span><span class="ansi1 ansi91"
+(129)$P;HTML|[user]P;HTML|<span class="ansi2"
+></span><span class="ansi2 ansi33"
+></span><span class="ansi2 ansi33"
+></span><span class="ansi2 ansi33"
 > md(once,'<garbage_collected>'). </span>  %  metta_utils.pl:1150: 
 (131)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
->[system]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-> system:catch(user:must_det_ll1(once,user:include_metta_directory_file('&self','/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests','/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta')),md_failed(once,A,B),user:(C is B-1,C>0->throw(md_failed(once,A,C));ugtrace(md_failed(once,A,C),user:include_metta_directory_file('&self','/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests','/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta')),throw('$aborted'))). </span>  %  init.pl:564: 
-(132)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi2"
-></span><span class="ansi2 ansi32"
-></span><span class="ansi2 ansi32"
-></span><span class="ansi2 ansi32"
-> must_det_ll1('<garbage_collected>','<garbage_collected>'). </span>  %  metta_utils.pl:1177: 
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+>[system]</span>P;HTML| system:catch(user:must_det_ll1(once,user:include_metta_directory_file('&self','/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests','/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta')),md_failed(once,A,B),user:(C is B-1,C>0->throw(md_failed(once,A,C));ugtrace(md_failed(once,A,C),user:include_metta_directory_file('&self','/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests','/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta')),throw('$aborted'))).   %  init.pl:564: 
+(132)$P;HTML|[user]P;HTML| must_det_ll1('<garbage_collected>','<garbage_collected>').   %  metta_utils.pl:1177: 
 (133)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
->[system]</span>#P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-> system:setup_call_cleanup(user:nop(trace(user:include_metta_directory_file/3,+fail)),user:(call(user:once,user:include_metta_directory_file('&self','/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests','/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'))*->true;md_failed(user:once,user:include_metta_directory_file('&self','/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests','/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'))),user:nop(trace(user:include_metta_directory_file/3,-fail))). </span>  %  init.pl:680: 
-(134)<*>$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi35"
-></span><span class="ansi1 ansi35"
-></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+>[system]</span>#P;HTML| system:setup_call_cleanup(user:nop(trace(user:include_metta_directory_file/3,+fail)),user:(call(user:once,user:include_metta_directory_file('&self','/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests','/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'))*->true;md_failed(user:once,user:include_metta_directory_file('&self','/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests','/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'))),user:nop(trace(user:include_metta_directory_file/3,-fail))).   %  init.pl:680: 
+(134)<*>$P;HTML|[user]P;HTML|<span class="ansi91"
+></span><span class="ansi91"
+></span><span class="ansi91"
 > system:'<meta-call>'('<garbage_collected>'). </span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi97"
-></span><span class="ansi1 ansi97 ansi40"
-></span><span class="ansi1 ansi97 ansi40"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
 > no(clause). </span>
 (137)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
 >[system]</span>P;HTML|<span class="ansi31"
 ></span><span class="ansi31 ansi100"
 ></span><span class="ansi1 ansi31 ansi100"
 > system:catch(user:call(user:once,user:include_metta_directory_file('&self','/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests','/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta')),A,user:(fbug(A=user:call(user:once,user:include_metta_directory_file('&self','/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests','/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'))),ugtrace(error(A),user:call(user:once,user:include_metta_directory_file('&self','/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests','/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'))))). </span><span class="ansi1 ansi31 ansi100"
 ></span>  %  init.pl:564: 
 (138)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
 >[system]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi94"
-></span><span class="ansi1 ansi94"
-></span><span class="ansi1 ansi94"
+></span><span class="ansi1 ansi93"
+></span><span class="ansi1 ansi93"
+></span><span class="ansi1 ansi93"
 > system:call('<garbage_collected>','<garbage_collected>'). </span>  %  init.pl:503: 
 (139)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
 >[system]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1"
-></span><span class="ansi1"
-></span><span class="ansi1"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
 > system:once('<garbage_collected>'). </span>  %  init.pl:537: 
 (142)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
->[system]</span>#P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-> system:setup_call_cleanup(user:working_directory('/home/runner/work/metta-wam/metta-wam/','/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests'),user:setup_call_cleanup(open('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',read,<stream>(0x5631bf553c20),[encoding(utf8)]),load_metta_file_stream('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x5631bf553c20)),close(<stream>(0x5631bf553c20))),user:working_directory(A,'/home/runner/work/metta-wam/metta-wam/')). </span>  %  init.pl:680: 
-(144)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi91"
-></span><span class="ansi1 ansi91"
-></span><span class="ansi1 ansi91"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+>[system]</span>#P;HTML| system:setup_call_cleanup(user:working_directory('/home/runner/work/metta-wam/metta-wam/','/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests'),user:setup_call_cleanup(open('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',read,<stream>(0x559e889609c0),[encoding(utf8)]),load_metta_file_stream('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x559e889609c0)),close(<stream>(0x559e889609c0))),user:working_directory(A,'/home/runner/work/metta-wam/metta-wam/')).   %  init.pl:680: 
+(144)$P;HTML|[user]P;HTML|<span class="ansi2"
+></span><span class="ansi2 ansi33"
+></span><span class="ansi2 ansi33"
+></span><span class="ansi2 ansi33"
 > md(once,'<garbage_collected>'). </span>  %  metta_utils.pl:1150: 
 (146)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
->[system]</span>#P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-> system:catch(user:must_det_ll1(once,user:setup_call_cleanup(open('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',read,<stream>(0x5631bf553c20),[encoding(utf8)]),load_metta_file_stream('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x5631bf553c20)),close(<stream>(0x5631bf553c20)))),md_failed(once,A,B),user:(C is B-1,C>0->throw(md_failed(once,A,C));ugtrace(md_failed(once,A,C),user:setup_call_cleanup(open('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',read,<stream>(0x5631bf553c20),[encoding(utf8)]),load_metta_file_stream('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x5631bf553c20)),close(<stream>(0x5631bf553c20)))),throw('$aborted'))). </span>  %  init.pl:564: 
-(147)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi2"
-></span><span class="ansi2 ansi32"
-></span><span class="ansi2 ansi32"
-></span><span class="ansi2 ansi32"
-> must_det_ll1('<garbage_collected>','<garbage_collected>'). </span>  %  metta_utils.pl:1177: 
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+>[system]</span>#P;HTML| system:catch(user:must_det_ll1(once,user:setup_call_cleanup(open('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',read,<stream>(0x559e889609c0),[encoding(utf8)]),load_metta_file_stream('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x559e889609c0)),close(<stream>(0x559e889609c0)))),md_failed(once,A,B),user:(C is B-1,C>0->throw(md_failed(once,A,C));ugtrace(md_failed(once,A,C),user:setup_call_cleanup(open('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',read,<stream>(0x559e889609c0),[encoding(utf8)]),load_metta_file_stream('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x559e889609c0)),close(<stream>(0x559e889609c0)))),throw('$aborted'))).   %  init.pl:564: 
+(147)$P;HTML|[user]P;HTML| must_det_ll1('<garbage_collected>','<garbage_collected>').   %  metta_utils.pl:1177: 
 (148)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
->[system]</span>#P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-> system:setup_call_cleanup(user:nop(trace(user:scc/3,+fail)),user:(call(user:once,user:setup_call_cleanup(open('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',read,<stream>(0x5631bf553c20),[encoding(utf8)]),load_metta_file_stream('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x5631bf553c20)),close(<stream>(0x5631bf553c20))))*->true;md_failed(user:once,user:setup_call_cleanup(open('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',read,<stream>(0x5631bf553c20),[encoding(utf8)]),load_metta_file_stream('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x5631bf553c20)),close(<stream>(0x5631bf553c20))))),user:nop(trace(user:scc/3,-fail))). </span>  %  init.pl:680: 
-(149)<*>$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi35"
-></span><span class="ansi1 ansi35"
-></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+>[system]</span>#P;HTML| system:setup_call_cleanup(user:nop(trace(user:scc/3,+fail)),user:(call(user:once,user:setup_call_cleanup(open('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',read,<stream>(0x559e889609c0),[encoding(utf8)]),load_metta_file_stream('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x559e889609c0)),close(<stream>(0x559e889609c0))))*->true;md_failed(user:once,user:setup_call_cleanup(open('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',read,<stream>(0x559e889609c0),[encoding(utf8)]),load_metta_file_stream('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x559e889609c0)),close(<stream>(0x559e889609c0))))),user:nop(trace(user:scc/3,-fail))).   %  init.pl:680: 
+(149)<*>$P;HTML|[user]P;HTML|<span class="ansi91"
+></span><span class="ansi91"
+></span><span class="ansi91"
 > system:'<meta-call>'('<garbage_collected>'). </span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi97"
-></span><span class="ansi1 ansi97 ansi40"
-></span><span class="ansi1 ansi97 ansi40"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
 > no(clause). </span>
 (152)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
 >[system]</span>#P;HTML|<span class="ansi31"
 ></span><span class="ansi31 ansi100"
 ></span><span class="ansi1 ansi31 ansi100"
-> system:catch(user:call(user:once,user:setup_call_cleanup(open('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',read,<stream>(0x5631bf553c20),[encoding(utf8)]),load_metta_file_stream('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x5631bf553c20)),close(<stream>(0x5631bf553c20)))),A,user:(fbug(A=user:call(user:once,user:setup_call_cleanup(open('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',read,<stream>(0x5631bf553c20),[encoding(utf8)]),load_metta_file_stream('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x5631bf553c20)),close(<stream>(0x5631bf553c20))))),ugtrace(error(A),user:call(user:once,user:setup_call_cleanup(open('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',read,<stream>(0x5631bf553c20),[encoding(utf8)]),load_metta_file_stream('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x5631bf553c20)),close(<stream>(0x5631bf553c20))))))). </span><span class="ansi1 ansi31 ansi100"
+> system:catch(user:call(user:once,user:setup_call_cleanup(open('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',read,<stream>(0x559e889609c0),[encoding(utf8)]),load_metta_file_stream('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x559e889609c0)),close(<stream>(0x559e889609c0)))),A,user:(fbug(A=user:call(user:once,user:setup_call_cleanup(open('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',read,<stream>(0x559e889609c0),[encoding(utf8)]),load_metta_file_stream('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x559e889609c0)),close(<stream>(0x559e889609c0))))),ugtrace(error(A),user:call(user:once,user:setup_call_cleanup(open('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',read,<stream>(0x559e889609c0),[encoding(utf8)]),load_metta_file_stream('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x559e889609c0)),close(<stream>(0x559e889609c0))))))). </span><span class="ansi1 ansi31 ansi100"
 ></span>  %  init.pl:564: 
 (153)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
 >[system]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi94"
-></span><span class="ansi1 ansi94"
-></span><span class="ansi1 ansi94"
+></span><span class="ansi1 ansi93"
+></span><span class="ansi1 ansi93"
+></span><span class="ansi1 ansi93"
 > system:call('<garbage_collected>','<garbage_collected>'). </span>  %  init.pl:503: 
 (154)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
 >[system]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1"
-></span><span class="ansi1"
-></span><span class="ansi1"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
 > system:once('<garbage_collected>'). </span>  %  init.pl:537: 
 (155)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
->[system]</span>#P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-> system:setup_call_cleanup(user:open('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',read,<stream>(0x5631bf553c20),[encoding(utf8)]),user:load_metta_file_stream('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x5631bf553c20)),user:close(<stream>(0x5631bf553c20))). </span>  %  init.pl:680: 
-(157)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi91"
-></span><span class="ansi1 ansi91"
-></span><span class="ansi1 ansi91"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+>[system]</span>#P;HTML| system:setup_call_cleanup(user:open('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',read,<stream>(0x559e889609c0),[encoding(utf8)]),user:load_metta_file_stream('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x559e889609c0)),user:close(<stream>(0x559e889609c0))).   %  init.pl:680: 
+(157)$P;HTML|[user]P;HTML|<span class="ansi2"
+></span><span class="ansi2 ansi33"
+></span><span class="ansi2 ansi33"
+></span><span class="ansi2 ansi33"
 > md(once,'<garbage_collected>'). </span>  %  metta_utils.pl:1150: 
 (159)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
->[system]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-> system:catch(user:must_det_ll1(once,user:load_metta_file_stream('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x5631bf553c20))),md_failed(once,A,B),user:(C is B-1,C>0->throw(md_failed(once,A,C));ugtrace(md_failed(once,A,C),user:load_metta_file_stream('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x5631bf553c20))),throw('$aborted'))). </span>  %  init.pl:564: 
-(160)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi2"
-></span><span class="ansi2 ansi32"
-></span><span class="ansi2 ansi32"
-></span><span class="ansi2 ansi32"
-> must_det_ll1('<garbage_collected>','<garbage_collected>'). </span>  %  metta_utils.pl:1177: 
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+>[system]</span>P;HTML| system:catch(user:must_det_ll1(once,user:load_metta_file_stream('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x559e889609c0))),md_failed(once,A,B),user:(C is B-1,C>0->throw(md_failed(once,A,C));ugtrace(md_failed(once,A,C),user:load_metta_file_stream('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x559e889609c0))),throw('$aborted'))).   %  init.pl:564: 
+(160)$P;HTML|[user]P;HTML| must_det_ll1('<garbage_collected>','<garbage_collected>').   %  metta_utils.pl:1177: 
 (161)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
->[system]</span>#P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-> system:setup_call_cleanup(user:nop(trace(user:load_metta_file_stream/3,+fail)),user:(call(user:once,user:load_metta_file_stream('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x5631bf553c20)))*->true;md_failed(user:once,user:load_metta_file_stream('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x5631bf553c20)))),user:nop(trace(user:load_metta_file_stream/3,-fail))). </span>  %  init.pl:680: 
-(162)<*>$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi35"
-></span><span class="ansi1 ansi35"
-></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+>[system]</span>#P;HTML| system:setup_call_cleanup(user:nop(trace(user:load_metta_file_stream/3,+fail)),user:(call(user:once,user:load_metta_file_stream('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x559e889609c0)))*->true;md_failed(user:once,user:load_metta_file_stream('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x559e889609c0)))),user:nop(trace(user:load_metta_file_stream/3,-fail))).   %  init.pl:680: 
+(162)<*>$P;HTML|[user]P;HTML|<span class="ansi91"
+></span><span class="ansi91"
+></span><span class="ansi91"
 > system:'<meta-call>'('<garbage_collected>'). </span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi97"
-></span><span class="ansi1 ansi97 ansi40"
-></span><span class="ansi1 ansi97 ansi40"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
 > no(clause). </span>
 (165)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
 >[system]</span>P;HTML|<span class="ansi31"
 ></span><span class="ansi31 ansi100"
 ></span><span class="ansi1 ansi31 ansi100"
-> system:catch(user:call(user:once,user:load_metta_file_stream('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x5631bf553c20))),A,user:(fbug(A=user:call(user:once,user:load_metta_file_stream('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x5631bf553c20)))),ugtrace(error(A),user:call(user:once,user:load_metta_file_stream('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x5631bf553c20)))))). </span><span class="ansi1 ansi31 ansi100"
+> system:catch(user:call(user:once,user:load_metta_file_stream('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x559e889609c0))),A,user:(fbug(A=user:call(user:once,user:load_metta_file_stream('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x559e889609c0)))),ugtrace(error(A),user:call(user:once,user:load_metta_file_stream('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x559e889609c0)))))). </span><span class="ansi1 ansi31 ansi100"
 ></span>  %  init.pl:564: 
 (166)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
 >[system]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi94"
-></span><span class="ansi1 ansi94"
-></span><span class="ansi1 ansi94"
+></span><span class="ansi1 ansi93"
+></span><span class="ansi1 ansi93"
+></span><span class="ansi1 ansi93"
 > system:call('<garbage_collected>','<garbage_collected>'). </span>  %  init.pl:503: 
 (167)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
 >[system]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1"
-></span><span class="ansi1"
-></span><span class="ansi1"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
 > system:once('<garbage_collected>'). </span>  %  init.pl:537: 
 (170)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
->[system]</span>#P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-> system:setup_call_cleanup(user:set_option_value(loading_file,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'),user:((set_exec_num('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',1),load_answer_file('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'),set_exec_num('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',0)),load_metta_file_stream_fast(72,read_metta2,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x5631bf553c20))),user:set_option_value(loading_file,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta')). </span>  %  init.pl:680: 
-(173)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi91"
-></span><span class="ansi1 ansi91"
-></span><span class="ansi1 ansi91"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+>[system]</span>#P;HTML| system:setup_call_cleanup(user:set_option_value(loading_file,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'),user:((set_exec_num('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',1),load_answer_file('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'),set_exec_num('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta',0)),load_metta_file_stream_fast(72,read_metta2,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x559e889609c0))),user:set_option_value(loading_file,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta')).   %  init.pl:680: 
+(173)$P;HTML|[user]P;HTML|<span class="ansi2"
+></span><span class="ansi2 ansi33"
+></span><span class="ansi2 ansi33"
+></span><span class="ansi2 ansi33"
 > md(once,'<garbage_collected>'). </span>  %  metta_utils.pl:1150: 
 (175)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
->[system]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-> system:catch(user:must_det_ll1(once,user:load_metta_file_stream_fast(72,read_metta2,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x5631bf553c20))),md_failed(once,A,B),user:(C is B-1,C>0->throw(md_failed(once,A,C));ugtrace(md_failed(once,A,C),user:load_metta_file_stream_fast(72,read_metta2,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x5631bf553c20))),throw('$aborted'))). </span>  %  init.pl:564: 
-(176)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi2"
-></span><span class="ansi2 ansi32"
-></span><span class="ansi2 ansi32"
-></span><span class="ansi2 ansi32"
-> must_det_ll1('<garbage_collected>','<garbage_collected>'). </span>  %  metta_utils.pl:1177: 
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+>[system]</span>P;HTML| system:catch(user:must_det_ll1(once,user:load_metta_file_stream_fast(72,read_metta2,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x559e889609c0))),md_failed(once,A,B),user:(C is B-1,C>0->throw(md_failed(once,A,C));ugtrace(md_failed(once,A,C),user:load_metta_file_stream_fast(72,read_metta2,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x559e889609c0))),throw('$aborted'))).   %  init.pl:564: 
+(176)$P;HTML|[user]P;HTML| must_det_ll1('<garbage_collected>','<garbage_collected>').   %  metta_utils.pl:1177: 
 (177)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
->[system]</span>#P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-> system:setup_call_cleanup(user:nop(trace(user:load_metta_file_stream_fast/5,+fail)),user:(call(user:once,user:load_metta_file_stream_fast(72,read_metta2,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x5631bf553c20)))*->true;md_failed(user:once,user:load_metta_file_stream_fast(72,read_metta2,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x5631bf553c20)))),user:nop(trace(user:load_metta_file_stream_fast/5,-fail))). </span>  %  init.pl:680: 
-(178)<*>$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi35"
-></span><span class="ansi1 ansi35"
-></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+>[system]</span>#P;HTML| system:setup_call_cleanup(user:nop(trace(user:load_metta_file_stream_fast/5,+fail)),user:(call(user:once,user:load_metta_file_stream_fast(72,read_metta2,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x559e889609c0)))*->true;md_failed(user:once,user:load_metta_file_stream_fast(72,read_metta2,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x559e889609c0)))),user:nop(trace(user:load_metta_file_stream_fast/5,-fail))).   %  init.pl:680: 
+(178)<*>$P;HTML|[user]P;HTML|<span class="ansi91"
+></span><span class="ansi91"
+></span><span class="ansi91"
 > system:'<meta-call>'('<garbage_collected>'). </span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi97"
-></span><span class="ansi1 ansi97 ansi40"
-></span><span class="ansi1 ansi97 ansi40"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
+></span><span class="ansi1 ansi35"
 > no(clause). </span>
 (181)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
 >[system]</span>P;HTML|<span class="ansi31"
 ></span><span class="ansi31 ansi100"
 ></span><span class="ansi1 ansi31 ansi100"
-> system:catch(user:call(user:once,user:load_metta_file_stream_fast(72,read_metta2,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x5631bf553c20))),error(existence_error(procedure,pos_line_char/2),context(make_metta_file_buffer/3,A)),user:(fbug(error(existence_error(procedure,pos_line_char/2),context(make_metta_file_buffer/3,A))=user:call(user:once,user:load_metta_file_stream_fast(72,read_metta2,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x5631bf553c20)))),ugtrace(error(error(existence_error(procedure,pos_line_char/2),context(make_metta_file_buffer/3,A))),user:call(user:once,user:load_metta_file_stream_fast(72,read_metta2,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x5631bf553c20)))))). </span><span class="ansi1 ansi31 ansi100"
+> system:catch(user:call(user:once,user:load_metta_file_stream_fast(72,read_metta2,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x559e889609c0))),error(existence_error(procedure,pos_line_char/2),context(make_metta_file_buffer/3,A)),user:(fbug(error(existence_error(procedure,pos_line_char/2),context(make_metta_file_buffer/3,A))=user:call(user:once,user:load_metta_file_stream_fast(72,read_metta2,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x559e889609c0)))),ugtrace(error(error(existence_error(procedure,pos_line_char/2),context(make_metta_file_buffer/3,A))),user:call(user:once,user:load_metta_file_stream_fast(72,read_metta2,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x559e889609c0)))))). </span><span class="ansi1 ansi31 ansi100"
 ></span>  %  init.pl:564: 
-(183)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi31"
+(183)$P;HTML|[user]P;HTML|<span class="ansi31"
 ></span><span class="ansi31 ansi100"
 ></span><span class="ansi1 ansi31 ansi100"
-> ugtrace(error(error(existence_error(procedure,pos_line_char/2),context(make_metta_file_buffer/3,A))),user:call(user:once,user:load_metta_file_stream_fast(72,read_metta2,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x5631bf553c20)))). </span><span class="ansi1 ansi31 ansi100"
+> ugtrace(error(error(existence_error(procedure,pos_line_char/2),context(make_metta_file_buffer/3,A))),user:call(user:once,user:load_metta_file_stream_fast(72,read_metta2,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta','&self',<stream>(0x559e889609c0)))). </span><span class="ansi1 ansi31 ansi100"
 ></span>  %  metta_utils.pl:1437: 
 (185)<*>$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
->[system]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-> system:ignore(user:catch(bt,A,true)). </span>  %  init.pl:546: 
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+></span><span class="ansi1 ansi92"
+>[system]</span>P;HTML| system:ignore(user:catch(bt,A,true)).   %  init.pl:546: 
 (186)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
-></span><span class="ansi1 ansi95"
->[system]</span>P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-> system:catch(user:bt,A,user:true). </span>  %  init.pl:564: 
-(190)$P;HTML|<span class="ansi1"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
-></span><span class="ansi1 ansi36"
->[user]</span>P;HTML|<span class="ansi1"
 ></span><span class="ansi1 ansi92"
 ></span><span class="ansi1 ansi92"
 ></span><span class="ansi1 ansi92"
+>[system]</span>P;HTML| system:catch(user:bt,A,user:true).   %  init.pl:564: 
+(190)$P;HTML|[user]P;HTML|<span class="ansi2"
+></span><span class="ansi2 ansi92"
+></span><span class="ansi2 ansi92"
+></span><span class="ansi2 ansi92"
 > bugger:dumpST_now(2035,[max_depth(5000),numbervars(true),show([level,has_alternatives,hidden,context_module,goal,clause])]). </span>  %  dumpst.pl:261: 
 
 
@@ -1802,39 +1478,39 @@ Re-run your program in debug mode (:- debug.) to get more detail.
 >Exit: </span>(187) [system] sig_atomic(rtrace:restart_rtrace)
 ^  <span class="ansi1 ansi32"
 >Call: </span>(188) [user] call(user:once, user:load_metta_file_stream_fast(72, read_metta2, P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, '&self', <stream>(0x5631bf553c20)))
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, '&self', <stream>(0x559e889609c0)))
 ^  <span class="ansi1 ansi34"
 >Unify: </span>(188) [system] call(user:once, user:load_metta_file_stream_fast(72, read_metta2, P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, '&self', <stream>(0x5631bf553c20)))
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, '&self', <stream>(0x559e889609c0)))
 ^  <span class="ansi1 ansi32"
 >Call: </span>(189) [user] once(user:load_metta_file_stream_fast(72, read_metta2, P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, '&self', <stream>(0x5631bf553c20)))
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, '&self', <stream>(0x559e889609c0)))
 ^  <span class="ansi1 ansi34"
 >Unify: </span>(189) [system] once(user:load_metta_file_stream_fast(72, read_metta2, P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, '&self', <stream>(0x5631bf553c20)))
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, '&self', <stream>(0x559e889609c0)))
 ^  <span class="ansi1 ansi32"
 >Call: </span>(190) [user] load_metta_file_stream_fast(72, read_metta2, P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, '&self', <stream>(0x5631bf553c20))
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, '&self', <stream>(0x559e889609c0))
 ^  <span class="ansi1 ansi34"
 >Unify: </span>(190) [user] load_metta_file_stream_fast(72, read_metta2, P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, '&self', <stream>(0x5631bf553c20))
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, '&self', <stream>(0x559e889609c0))
    <span class="ansi1 ansi32"
 >Call: </span>(191) [system] fail
 ^  <span class="ansi1 ansi33"
 >Redo: </span>(190) [user] load_metta_file_stream_fast(72, read_metta2, P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, '&self', <stream>(0x5631bf553c20))
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, '&self', <stream>(0x559e889609c0))
 ^  <span class="ansi1 ansi34"
 >Unify: </span>(190) [user] load_metta_file_stream_fast(72, read_metta2, P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, '&self', <stream>(0x5631bf553c20))
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, '&self', <stream>(0x559e889609c0))
 ^  <span class="ansi1 ansi32"
 >Call: </span>(191) [user] symbol_concat(P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, '.buffer~', _208772)
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, '.buffer~', _208280)
 ^  <span class="ansi1 ansi34"
 >Unify: </span>(191) [user] symbol_concat(P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, '.buffer~', _208772)
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, '.buffer~', _208280)
    <span class="ansi1 ansi32"
 >Call: </span>(192) [system] atom_concat(P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, '.buffer~', _208772)
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, '.buffer~', _208280)
    <span class="ansi1 ansi32"
 >Exit: </span>(192) [system] atom_concat(P;HTML|<span class="pl-atom"
 >'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, '.buffer~', '/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta.buffer~')
@@ -1845,22 +1521,22 @@ Re-run your program in debug mode (:- debug.) to get more detail.
 >Call: </span>(191) [system] exists_file('/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta.buffer~')
 ^  <span class="ansi1 ansi33"
 >Redo: </span>(190) [user] load_metta_file_stream_fast(72, read_metta2, P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, '&self', <stream>(0x5631bf553c20))
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, '&self', <stream>(0x559e889609c0))
 ^  <span class="ansi1 ansi34"
 >Unify: </span>(190) [user] load_metta_file_stream_fast(72, read_metta2, P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, '&self', <stream>(0x5631bf553c20))
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, '&self', <stream>(0x559e889609c0))
 ^  <span class="ansi1 ansi32"
 >Call: </span>(191) [user] make_metta_file_buffer(use_fast_buffer, P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, <stream>(0x5631bf553c20))
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, <stream>(0x559e889609c0))
 ^  <span class="ansi1 ansi34"
 >Unify: </span>(191) [user] make_metta_file_buffer(use_fast_buffer, P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, <stream>(0x5631bf553c20))
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, <stream>(0x559e889609c0))
 ^  <span class="ansi1 ansi32"
 >Call: </span>(192) [user] if_t(use_fast_buffer, (symbol_concat(P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, '.buffer~', _253160), fbugio(creating(_253160)), write_bf(_253160, (:-dynamic metta_file_buffer/5)), write_bf(_253160, (:-multifile metta_file_buffer/5))))
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, '.buffer~', _252668), fbugio(creating(_252668)), write_bf(_252668, (:-dynamic metta_file_buffer/5)), write_bf(_252668, (:-multifile metta_file_buffer/5))))
 ^  <span class="ansi1 ansi34"
 >Unify: </span>(192) [user] if_t(use_fast_buffer, (symbol_concat(P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, '.buffer~', _253160), fbugio(creating(_253160)), write_bf(_253160, (:-dynamic metta_file_buffer/5)), write_bf(_253160, (:-multifile metta_file_buffer/5))))
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, '.buffer~', _252668), fbugio(creating(_252668)), write_bf(_252668, (:-dynamic metta_file_buffer/5)), write_bf(_252668, (:-multifile metta_file_buffer/5))))
 ^  <span class="ansi1 ansi32"
 >Call: </span>(193) [user] use_fast_buffer
 ^  <span class="ansi1 ansi34"
@@ -1871,48 +1547,48 @@ Re-run your program in debug mode (:- debug.) to get more detail.
 >Fail: </span>(193) [user] use_fast_buffer
 ^  <span class="ansi1 ansi33"
 >Redo: </span>(192) [user] if_t(use_fast_buffer, (symbol_concat(P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, '.buffer~', _253160), fbugio(creating(_253160)), write_bf(_253160, (:-dynamic metta_file_buffer/5)), write_bf(_253160, (:-multifile metta_file_buffer/5))))
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, '.buffer~', _252668), fbugio(creating(_252668)), write_bf(_252668, (:-dynamic metta_file_buffer/5)), write_bf(_252668, (:-multifile metta_file_buffer/5))))
 ^  <span class="ansi1 ansi32"
 >Exit: </span>(192) [user] if_t(use_fast_buffer, (symbol_concat(P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, '.buffer~', _253160), fbugio(creating(_253160)), write_bf(_253160, (:-dynamic metta_file_buffer/5)), write_bf(_253160, (:-multifile metta_file_buffer/5))))
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, '.buffer~', _252668), fbugio(creating(_252668)), write_bf(_252668, (:-dynamic metta_file_buffer/5)), write_bf(_252668, (:-multifile metta_file_buffer/5))))
    <span class="ansi1 ansi32"
 >Call: </span>(192) [system] repeat
    <span class="ansi1 ansi32"
 >Exit: </span>(192) [system] repeat
    <span class="ansi1 ansi32"
->Call: </span>(192) [user] current_read_mode(file, _278018)
+>Call: </span>(192) [user] current_read_mode(file, _277526)
    <span class="ansi1 ansi34"
->Unify: </span>(192) [user] current_read_mode(file, _278018)
+>Unify: </span>(192) [user] current_read_mode(file, _277526)
    <span class="ansi1 ansi32"
->Call: </span>(193) [system] nb_current(file_mode, _278018)
+>Call: </span>(193) [system] nb_current(file_mode, _277526)
    <span class="ansi1 ansi33"
->Redo: </span>(192) [user] current_read_mode(file, _278018)
+>Redo: </span>(192) [user] current_read_mode(file, _277526)
    <span class="ansi1 ansi32"
->Call: </span>(193) [system] _278018=(+)
+>Call: </span>(193) [system] _277526=(+)
    <span class="ansi1 ansi32"
 >Exit: </span>(193) [system] (+)=(+)
    <span class="ansi1 ansi32"
 >Exit: </span>(192) [user] current_read_mode(file, +)
 ^  <span class="ansi1 ansi32"
->Call: </span>(192) [user] skip_spaces(<stream>(0x5631bf553c20))
+>Call: </span>(192) [user] skip_spaces(<stream>(0x559e889609c0))
 ^  <span class="ansi1 ansi34"
->Unify: </span>(192) [user] skip_spaces(<stream>(0x5631bf553c20))
+>Unify: </span>(192) [user] skip_spaces(<stream>(0x559e889609c0))
    <span class="ansi1 ansi32"
->Call: </span>(193) [system] peek_char(<stream>(0x5631bf553c20), _286316)
+>Call: </span>(193) [system] peek_char(<stream>(0x559e889609c0), _285824)
    <span class="ansi1 ansi32"
->Exit: </span>(193) [system] peek_char(<stream>(0x5631bf553c20), '\n')
+>Exit: </span>(193) [system] peek_char(<stream>(0x559e889609c0), '\n')
    <span class="ansi1 ansi32"
 >Call: </span>(193) [system] '\n'=(;)
    <span class="ansi1 ansi31"
 >Fail: </span>(193) [system] '\n'=(;)
 ^  <span class="ansi1 ansi33"
->Redo: </span>(192) [user] skip_spaces(<stream>(0x5631bf553c20))
+>Redo: </span>(192) [user] skip_spaces(<stream>(0x559e889609c0))
    <span class="ansi1 ansi32"
 >Call: </span>(193) [system] '\n'=(/)
    <span class="ansi1 ansi31"
 >Fail: </span>(193) [system] '\n'=(/)
 ^  <span class="ansi1 ansi33"
->Redo: </span>(192) [user] skip_spaces(<stream>(0x5631bf553c20))
+>Redo: </span>(192) [user] skip_spaces(<stream>(0x559e889609c0))
 ^  <span class="ansi1 ansi32"
 >Call: </span>(193) [user] is_like_space('\n')
 ^  <span class="ansi1 ansi34"
@@ -1932,29 +1608,29 @@ Re-run your program in debug mode (:- debug.) to get more detail.
 ^  <span class="ansi1 ansi32"
 >Exit: </span>(193) [user] is_like_space('\n')
    <span class="ansi1 ansi32"
->Call: </span>(193) [system] get_char(<stream>(0x5631bf553c20), _302386)
+>Call: </span>(193) [system] get_char(<stream>(0x559e889609c0), _301894)
    <span class="ansi1 ansi32"
->Exit: </span>(193) [system] get_char(<stream>(0x5631bf553c20), '\n')
+>Exit: </span>(193) [system] get_char(<stream>(0x559e889609c0), '\n')
 ^  <span class="ansi1 ansi32"
->Call: </span>(193) [user] skip_spaces(<stream>(0x5631bf553c20))
+>Call: </span>(193) [user] skip_spaces(<stream>(0x559e889609c0))
 ^  <span class="ansi1 ansi34"
->Unify: </span>(193) [user] skip_spaces(<stream>(0x5631bf553c20))
+>Unify: </span>(193) [user] skip_spaces(<stream>(0x559e889609c0))
    <span class="ansi1 ansi32"
->Call: </span>(194) [system] peek_char(<stream>(0x5631bf553c20), _306014)
+>Call: </span>(194) [system] peek_char(<stream>(0x559e889609c0), _305522)
    <span class="ansi1 ansi32"
->Exit: </span>(194) [system] peek_char(<stream>(0x5631bf553c20), end_of_file)
+>Exit: </span>(194) [system] peek_char(<stream>(0x559e889609c0), end_of_file)
    <span class="ansi1 ansi32"
 >Call: </span>(194) [system] end_of_file=(;)
    <span class="ansi1 ansi31"
 >Fail: </span>(194) [system] end_of_file=(;)
 ^  <span class="ansi1 ansi33"
->Redo: </span>(193) [user] skip_spaces(<stream>(0x5631bf553c20))
+>Redo: </span>(193) [user] skip_spaces(<stream>(0x559e889609c0))
    <span class="ansi1 ansi32"
 >Call: </span>(194) [system] end_of_file=(/)
    <span class="ansi1 ansi31"
 >Fail: </span>(194) [system] end_of_file=(/)
 ^  <span class="ansi1 ansi33"
->Redo: </span>(193) [user] skip_spaces(<stream>(0x5631bf553c20))
+>Redo: </span>(193) [user] skip_spaces(<stream>(0x559e889609c0))
 ^  <span class="ansi1 ansi32"
 >Call: </span>(194) [user] is_like_space(end_of_file)
 ^  <span class="ansi1 ansi34"
@@ -1990,75 +1666,75 @@ Re-run your program in debug mode (:- debug.) to get more detail.
 ^  <span class="ansi1 ansi31"
 >Fail: </span>(194) [user] is_like_space(end_of_file)
 ^  <span class="ansi1 ansi33"
->Redo: </span>(193) [user] skip_spaces(<stream>(0x5631bf553c20))
+>Redo: </span>(193) [user] skip_spaces(<stream>(0x559e889609c0))
 ^  <span class="ansi1 ansi32"
->Exit: </span>(193) [user] skip_spaces(<stream>(0x5631bf553c20))
+>Exit: </span>(193) [user] skip_spaces(<stream>(0x559e889609c0))
 ^  <span class="ansi1 ansi32"
->Exit: </span>(192) [user] skip_spaces(<stream>(0x5631bf553c20))
+>Exit: </span>(192) [user] skip_spaces(<stream>(0x559e889609c0))
 ^  <span class="ansi1 ansi32"
->Call: </span>(192) [user] forall(retract(metta_file_comment(_332194, _332196, _332198, '$COMMENT'(_332206, _332208, _332210), _332202)), assertz(metta_file_buffer(+, '$COMMENT'(_332206, _332208, _332210), [], P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, _332202)))
+>Call: </span>(192) [user] forall(retract(metta_file_comment(_331702, _331704, _331706, '$COMMENT'(_331714, _331716, _331718), _331710)), assertz(metta_file_buffer(+, '$COMMENT'(_331714, _331716, _331718), [], P;HTML|<span class="pl-atom"
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, _331710)))
 ^  <span class="ansi1 ansi34"
->Unify: </span>(192) [$apply] forall(user:retract(metta_file_comment(_332194, _332196, _332198, '$COMMENT'(_332206, _332208, _332210), _332202)), user:assertz(metta_file_buffer(+, '$COMMENT'(_332206, _332208, _332210), [], P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, _332202)))
+>Unify: </span>(192) [$apply] forall(user:retract(metta_file_comment(_331702, _331704, _331706, '$COMMENT'(_331714, _331716, _331718), _331710)), user:assertz(metta_file_buffer(+, '$COMMENT'(_331714, _331716, _331718), [], P;HTML|<span class="pl-atom"
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, _331710)))
 ^  <span class="ansi1 ansi32"
->Call: </span>(193) [user] retract(metta_file_comment(_332194, _332196, _332198, '$COMMENT'(_332206, _332208, _332210), _332202))
+>Call: </span>(193) [user] retract(metta_file_comment(_331702, _331704, _331706, '$COMMENT'(_331714, _331716, _331718), _331710))
 ^  <span class="ansi1 ansi33"
->Redo: </span>(192) [$apply] forall(user:retract(metta_file_comment(_332194, _332196, _332198, '$COMMENT'(_332206, _332208, _332210), _332202)), user:assertz(metta_file_buffer(+, '$COMMENT'(_332206, _332208, _332210), [], P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, _332202)))
+>Redo: </span>(192) [$apply] forall(user:retract(metta_file_comment(_331702, _331704, _331706, '$COMMENT'(_331714, _331716, _331718), _331710)), user:assertz(metta_file_buffer(+, '$COMMENT'(_331714, _331716, _331718), [], P;HTML|<span class="pl-atom"
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, _331710)))
 ^  <span class="ansi1 ansi32"
->Exit: </span>(192) [$apply] forall(user:retract(metta_file_comment(_332194, _332196, _332198, '$COMMENT'(_332206, _332208, _332210), _332202)), user:assertz(metta_file_buffer(+, '$COMMENT'(_332206, _332208, _332210), [], P;HTML|<span class="pl-atom"
->'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, _332202)))
+>Exit: </span>(192) [$apply] forall(user:retract(metta_file_comment(_331702, _331704, _331706, '$COMMENT'(_331714, _331716, _331718), _331710)), user:assertz(metta_file_buffer(+, '$COMMENT'(_331714, _331716, _331718), [], P;HTML|<span class="pl-atom"
+>'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/letlet.metta'</span>, _331710)))
    <span class="ansi1 ansi32"
->Call: </span>(192) [system] stream_property(<stream>(0x5631bf553c20), position(_352492))
+>Call: </span>(192) [system] stream_property(<stream>(0x559e889609c0), position(_352000))
    <span class="ansi1 ansi34"
->Unify: </span>(192) [system] stream_property(<stream>(0x5631bf553c20), position(_352492))
+>Unify: </span>(192) [system] stream_property(<stream>(0x559e889609c0), position(_352000))
    <span class="ansi1 ansi32"
->Call: </span>(193) [system] nonvar(<stream>(0x5631bf553c20))
+>Call: </span>(193) [system] nonvar(<stream>(0x559e889609c0))
    <span class="ansi1 ansi32"
->Exit: </span>(193) [system] nonvar(<stream>(0x5631bf553c20))
+>Exit: </span>(193) [system] nonvar(<stream>(0x559e889609c0))
    <span class="ansi1 ansi32"
->Call: </span>(193) [system] nonvar(position(_352492))
+>Call: </span>(193) [system] nonvar(position(_352000))
    <span class="ansi1 ansi32"
->Exit: </span>(193) [system] nonvar(position(_352492))
+>Exit: </span>(193) [system] nonvar(position(_352000))
    <span class="ansi1 ansi32"
->Exit: </span>(192) [system] stream_property(<stream>(0x5631bf553c20), position('$stream_position'(72, 4, 0, 72)))
+>Exit: </span>(192) [system] stream_property(<stream>(0x559e889609c0), position('$stream_position'(72, 4, 0, 72)))
 ^  <span class="ansi1 ansi32"
->Call: </span>(192) [user] read_sexpr(<stream>(0x5631bf553c20), _358984)
+>Call: </span>(192) [user] read_sexpr(<stream>(0x559e889609c0), _358492)
 ^  <span class="ansi1 ansi34"
->Unify: </span>(192) [user] read_sexpr(<stream>(0x5631bf553c20), _358984)
+>Unify: </span>(192) [user] read_sexpr(<stream>(0x559e889609c0), _358492)
    <span class="ansi1 ansi32"
->Call: </span>(193) [system] string(<stream>(0x5631bf553c20))
+>Call: </span>(193) [system] string(<stream>(0x559e889609c0))
    <span class="ansi1 ansi31"
->Fail: </span>(193) [system] string(<stream>(0x5631bf553c20))
+>Fail: </span>(193) [system] string(<stream>(0x559e889609c0))
 ^  <span class="ansi1 ansi33"
->Redo: </span>(192) [user] read_sexpr(<stream>(0x5631bf553c20), _358984)
+>Redo: </span>(192) [user] read_sexpr(<stream>(0x559e889609c0), _358492)
 ^  <span class="ansi1 ansi34"
->Unify: </span>(192) [user] read_sexpr(<stream>(0x5631bf553c20), _358984)
+>Unify: </span>(192) [user] read_sexpr(<stream>(0x559e889609c0), _358492)
 ^  <span class="ansi1 ansi32"
->Call: </span>(193) [user] cont_sexpr(')', <stream>(0x5631bf553c20), _358984)
+>Call: </span>(193) [user] cont_sexpr(')', <stream>(0x559e889609c0), _358492)
 ^  <span class="ansi1 ansi34"
->Unify: </span>(193) [user] cont_sexpr(')', <stream>(0x5631bf553c20), _358984)
+>Unify: </span>(193) [user] cont_sexpr(')', <stream>(0x559e889609c0), _358492)
 ^  <span class="ansi1 ansi32"
->Call: </span>(194) [user] skip_spaces(<stream>(0x5631bf553c20))
+>Call: </span>(194) [user] skip_spaces(<stream>(0x559e889609c0))
 ^  <span class="ansi1 ansi34"
->Unify: </span>(194) [user] skip_spaces(<stream>(0x5631bf553c20))
+>Unify: </span>(194) [user] skip_spaces(<stream>(0x559e889609c0))
    <span class="ansi1 ansi32"
->Call: </span>(195) [system] peek_char(<stream>(0x5631bf553c20), _368258)
+>Call: </span>(195) [system] peek_char(<stream>(0x559e889609c0), _367766)
    <span class="ansi1 ansi32"
->Exit: </span>(195) [system] peek_char(<stream>(0x5631bf553c20), end_of_file)
+>Exit: </span>(195) [system] peek_char(<stream>(0x559e889609c0), end_of_file)
    <span class="ansi1 ansi32"
 >Call: </span>(195) [system] end_of_file=(;)
    <span class="ansi1 ansi31"
 >Fail: </span>(195) [system] end_of_file=(;)
 ^  <span class="ansi1 ansi33"
->Redo: </span>(194) [user] skip_spaces(<stream>(0x5631bf553c20))
+>Redo: </span>(194) [user] skip_spaces(<stream>(0x559e889609c0))
    <span class="ansi1 ansi32"
 >Call: </span>(195) [system] end_of_file=(/)
    <span class="ansi1 ansi31"
 >Fail: </span>(195) [system] end_of_file=(/)
 ^  <span class="ansi1 ansi33"
->Redo: </span>(194) [user] skip_spaces(<stream>(0x5631bf553c20))
+>Redo: </span>(194) [user] skip_spaces(<stream>(0x559e889609c0))
 ^  <span class="ansi1 ansi32"
 >Call: </span>(195) [user] is_like_space(end_of_file)
 ^  <span class="ansi1 ansi34"
@@ -2094,83 +1770,83 @@ Re-run your program in debug mode (:- debug.) to get more detail.
 ^  <span class="ansi1 ansi31"
 >Fail: </span>(195) [user] is_like_space(end_of_file)
 ^  <span class="ansi1 ansi33"
->Redo: </span>(194) [user] skip_spaces(<stream>(0x5631bf553c20))
+>Redo: </span>(194) [user] skip_spaces(<stream>(0x559e889609c0))
 ^  <span class="ansi1 ansi32"
->Exit: </span>(194) [user] skip_spaces(<stream>(0x5631bf553c20))
+>Exit: </span>(194) [user] skip_spaces(<stream>(0x559e889609c0))
    <span class="ansi1 ansi32"
->Call: </span>(194) [system] get_char(<stream>(0x5631bf553c20), _393508)
+>Call: </span>(194) [system] get_char(<stream>(0x559e889609c0), _393016)
    <span class="ansi1 ansi32"
->Exit: </span>(194) [system] get_char(<stream>(0x5631bf553c20), end_of_file)
+>Exit: </span>(194) [system] get_char(<stream>(0x559e889609c0), end_of_file)
    <span class="ansi1 ansi32"
 >Call: </span>(194) [system] end_of_file='('
    <span class="ansi1 ansi31"
 >Fail: </span>(194) [system] end_of_file='('
 ^  <span class="ansi1 ansi33"
->Redo: </span>(193) [user] cont_sexpr(')', <stream>(0x5631bf553c20), _358984)
+>Redo: </span>(193) [user] cont_sexpr(')', <stream>(0x559e889609c0), _358492)
    <span class="ansi1 ansi32"
 >Call: </span>(194) [system] end_of_file='['
    <span class="ansi1 ansi31"
 >Fail: </span>(194) [system] end_of_file='['
 ^  <span class="ansi1 ansi33"
->Redo: </span>(193) [user] cont_sexpr(')', <stream>(0x5631bf553c20), _358984)
+>Redo: </span>(193) [user] cont_sexpr(')', <stream>(0x559e889609c0), _358492)
    <span class="ansi1 ansi32"
 >Call: </span>(194) [system] end_of_file='{'
    <span class="ansi1 ansi31"
 >Fail: </span>(194) [system] end_of_file='{'
 ^  <span class="ansi1 ansi33"
->Redo: </span>(193) [user] cont_sexpr(')', <stream>(0x5631bf553c20), _358984)
+>Redo: </span>(193) [user] cont_sexpr(')', <stream>(0x559e889609c0), _358492)
    <span class="ansi1 ansi32"
 >Call: </span>(194) [system] end_of_file='"'
    <span class="ansi1 ansi31"
 >Fail: </span>(194) [system] end_of_file='"'
 ^  <span class="ansi1 ansi33"
->Redo: </span>(193) [user] cont_sexpr(')', <stream>(0x5631bf553c20), _358984)
+>Redo: </span>(193) [user] cont_sexpr(')', <stream>(0x559e889609c0), _358492)
    <span class="ansi1 ansi32"
 >Call: </span>(194) [system] end_of_file=!
    <span class="ansi1 ansi31"
 >Fail: </span>(194) [system] end_of_file=!
 ^  <span class="ansi1 ansi33"
->Redo: </span>(193) [user] cont_sexpr(')', <stream>(0x5631bf553c20), _358984)
+>Redo: </span>(193) [user] cont_sexpr(')', <stream>(0x559e889609c0), _358492)
    <span class="ansi1 ansi32"
 >Call: </span>(194) [system] end_of_file='\''
    <span class="ansi1 ansi31"
 >Fail: </span>(194) [system] end_of_file='\''
 ^  <span class="ansi1 ansi33"
->Redo: </span>(193) [user] cont_sexpr(')', <stream>(0x5631bf553c20), _358984)
+>Redo: </span>(193) [user] cont_sexpr(')', <stream>(0x559e889609c0), _358492)
    <span class="ansi1 ansi32"
 >Call: </span>(194) [system] end_of_file='`'
    <span class="ansi1 ansi31"
 >Fail: </span>(194) [system] end_of_file='`'
 ^  <span class="ansi1 ansi33"
->Redo: </span>(193) [user] cont_sexpr(')', <stream>(0x5631bf553c20), _358984)
+>Redo: </span>(193) [user] cont_sexpr(')', <stream>(0x559e889609c0), _358492)
    <span class="ansi1 ansi32"
 >Call: </span>(194) [system] end_of_file=end_of_file
    <span class="ansi1 ansi32"
 >Exit: </span>(194) [system] end_of_file=end_of_file
    <span class="ansi1 ansi32"
->Call: </span>(194) [system] _358984=end_of_file
+>Call: </span>(194) [system] _358492=end_of_file
    <span class="ansi1 ansi32"
 >Exit: </span>(194) [system] end_of_file=end_of_file
 ^  <span class="ansi1 ansi32"
->Exit: </span>(193) [user] cont_sexpr(')', <stream>(0x5631bf553c20), end_of_file)
+>Exit: </span>(193) [user] cont_sexpr(')', <stream>(0x559e889609c0), end_of_file)
 ^  <span class="ansi1 ansi32"
->Exit: </span>(192) [user] read_sexpr(<stream>(0x5631bf553c20), end_of_file)
+>Exit: </span>(192) [user] read_sexpr(<stream>(0x559e889609c0), end_of_file)
    <span class="ansi1 ansi32"
->Call: </span>(192) [system] stream_property(<stream>(0x5631bf553c20), position(_420456))
+>Call: </span>(192) [system] stream_property(<stream>(0x559e889609c0), position(_419964))
    <span class="ansi1 ansi34"
->Unify: </span>(192) [system] stream_property(<stream>(0x5631bf553c20), position(_420456))
+>Unify: </span>(192) [system] stream_property(<stream>(0x559e889609c0), position(_419964))
    <span class="ansi1 ansi32"
->Call: </span>(193) [system] nonvar(<stream>(0x5631bf553c20))
+>Call: </span>(193) [system] nonvar(<stream>(0x559e889609c0))
    <span class="ansi1 ansi32"
->Exit: </span>(193) [system] nonvar(<stream>(0x5631bf553c20))
+>Exit: </span>(193) [system] nonvar(<stream>(0x559e889609c0))
    <span class="ansi1 ansi32"
->Call: </span>(193) [system] nonvar(position(_420456))
+>Call: </span>(193) [system] nonvar(position(_419964))
    <span class="ansi1 ansi32"
->Exit: </span>(193) [system] nonvar(position(_420456))
+>Exit: </span>(193) [system] nonvar(position(_419964))
    <span class="ansi1 ansi32"
->Exit: </span>(192) [system] stream_property(<stream>(0x5631bf553c20), position('$stream_position'(72, 4, 0, 72)))
+>Exit: </span>(192) [system] stream_property(<stream>(0x559e889609c0), position('$stream_position'(72, 4, 0, 72)))
    <span class="ansi1 ansi32"
->Call: </span>(192) [user] pos_line_char('$stream_position'(72, 4, 0, 72), _426948)
+>Call: </span>(192) [user] pos_line_char('$stream_position'(72, 4, 0, 72), _426456)
 <span class="ansi34"
 >% Got exception existence_error(procedure,pos_line_char/2) (Ctx0=make_metta_file_buffer/3, Catcher=system:'<meta-call>'/1)
 </span><span class="ansi34"
@@ -6266,7 +5942,7 @@ Re-run your program in debug mode (:- debug.) to get more detail.
 >'&lt;garbage_collected&gt;'</span></span>)</span>)]
 </span>   <span class="ansi1 ansi35"
 >Exception: </span>(192) [user] pos_line_char('$stream_position'(72, 4, 0, 72), _3366) ? 
-Script done on 2024-10-20 22:36:03+00:00 [COMMAND_EXIT_CODE="143"]
+Script done on 2024-10-21 17:53:30+00:00 [COMMAND_EXIT_CODE="143"]
 
 </pre>
 </body>
