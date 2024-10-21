@@ -800,14 +800,11 @@ xref_metta_file_text_buffer(TFMakeFile, Filename, In) :-
     skip_spaces(In),
     forall(retract(metta_file_comment(_Line, _Col, _CharPos, '$COMMENT'(Comment, CLine, CCol), CPos)),
           assertz(metta_file_buffer(+, '$COMMENT'(Comment, CLine, CCol), [], Filename, CPos))),
-    stream_property(In,position(PosStart)),
+    stream_property(In,position(Pos)),
     read_sexpr(In, Expr),
-    stream_property(In,position(PosEnd)),
-    pos_line_char(PosStart, Start),
-    pos_line_char(PosEnd, End),
     subst_vars(Expr, Term, [], NamedVarsList),
     % Assert the parsed content into the Metta buffer
-    BufferTerm = metta_file_buffer(Mode, Term, NamedVarsList, Filename, range(Start,End)),
+    BufferTerm = metta_file_buffer(Mode, Term, NamedVarsList, Filename, Pos),
     %ignore(maybe_process_directives(Mode, Term)),
     assertz(BufferTerm),
     % debug(server(xref), "BufferTerm ~w", [BufferTerm]),  % Log the parsed buffer term.
@@ -918,11 +915,10 @@ d4_document_symbol(Nth, d(_,Str,_,_), S, 12, Nth:1, End:1):- succ(Nth,End), outl
 % Douglas' file_buffer
 xref_document_symbol_fb(Doc, PrettyString, KindNumber, Start, End):- 
    doc_path(Doc,Path),
-   metta_file_buffer(_,What,VL,Path,range(Start,End)),
+   clause(metta_file_buffer(_,What,VL,Path,PosStart),true,Ref), line_col(PosStart,Start),
    ignore(maybe_name_vars(VL)),
-   xrefed_outline_type_kind(What,Outline,KindName),
-   outline_name(Outline,PrettyString),
-   lsp_xref_kind(KindNumber, KindName).
+   once(((xrefed_outline_type_kind(What,Outline,KindName),outline_name(Outline,PrettyString),lsp_xref_kind(KindNumber, KindName)))),   
+   once(((next_clause(Ref, metta_file_buffer(_,_,_,Path,PosEnd)), line_col(PosEnd,End)))-> true ; next_line(Start,End)).
 
 
 outline_name(Str,S):- string(Str),!,atom_length(Str,Len),Len>2,!,S=Str.
@@ -934,7 +930,7 @@ outline_name(Str,S):- sformat(S,'~w',[Str]),atom_length(S,Len),Len>5.
 next_line(S:SC,E:SC):- number(S),!,succ(S,E).
 next_line(S,E):- number(S),!,succ(S,E).
 
-pos_line_char(Position,line_char(LineM1,Col)):-
+line_col(Position,LineM1:Col):-
      stream_position_data(line_count, Position, Line),  % Extract the line number.
      LineM1 is Line-1,
      stream_position_data(line_position, Position, Col).  % Extract the column number.
@@ -1149,7 +1145,7 @@ type_symbol_clause(Type,Symbol,Clause):-
   clause_type_op_fun_rest_body(Type,Symbol,Clause,_Op,_Fun,_Rest,_Body).
 
 clause_type_op_fun_rest_body(Type,Symbol,Clause,Op,Fun,Rest,Body):-
-   ( ( \+ var(Clause)) -> true ; (metta_file_buffer(_, Clause, VL, _Filename, _),ignore(maybe_name_vars(VL)))),
+   ( ( \+ var(Clause)) -> true ; (metta_file_buffer(_, Clause, VL, _Filename, _LineCount),ignore(maybe_name_vars(VL)))),
    once(into_op_fun_rest_body(Clause,Op,Fun,Rest,Body)),
    type_op_head_rest_body(Type,Symbol,Op,Fun,Rest,Body).
    
@@ -1237,20 +1233,12 @@ name_callable(Name, Name).
 %  called_at/3), =Location= is a dictionary suitable for sending as an
 %  LSP response indicating the position in a file of =Goal=.
 relative_ref_location(_, _, Dict, Location) :- is_dict(Dict),!, Location=Dict.
-relative_ref_location(Here, Goal, '$stream_position'(A,B,C,D), Out):- !, pos_line_char('$stream_position'(A,B,C,D), line_char(Line0,Char1)),
+relative_ref_location(Here, Goal, '$stream_position'(A,B,C,D), Out):- !, line_col('$stream_position'(A,B,C,D), Line0:Char1),
    relative_ref_location(Here, Goal,  position(Line0, Char1), Out).
 relative_ref_location(Here, _, position(Line0, Char1),
                       _{uri: Here, range: _{start: _{line: Line0, character: Char1},
                                             end: _{line: Line1, character: 0}}}) :-
     !, succ(Line0, Line1).
-relative_ref_location(Here, _, line_char(Line0, Char1),
-                      _{uri: Here, range: _{start: _{line: Line0, character: Char1},
-                                            end: _{line: Line1, character: 0}}}) :-
-    !, succ(Line0, Line1).
-relative_ref_location(Here, _, range(line_char(Line0,Char1),line_char(Line1,Char0)),
-                      _{uri: Here, range: _{start: _{line: Line0, character: Char1},
-                                            end: _{line: Line1, character: Char0}}}) :- !.
-    
 relative_ref_location(Here, _, local(Line1),
                       _{uri: Here, range: _{start: _{line: Line0, character: 1},
                                             end: _{line: NextLine, character: 0}}}) :-
