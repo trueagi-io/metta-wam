@@ -36,7 +36,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-21 18:13:34+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-21 18:17:38+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -348,11 +348,11 @@ Script started on 2024-10-21 18:13:34+00:00 [TERM="xterm-256color" TTY="/dev/pts
 P;HTML|
 ;                                         (= 1  "Expected: [(1 2 7 212)]")
 P;HTML|
-;                                         (= 1  "Got: [(findall! $X 212), (findall! $X 2), (findall! $X 1), (findall! $X 7)]")
+;                                         (= 1  "Got: [(findall! $X 212), (findall! $X 1), (findall! $X 7), (findall! $X 2)]")
 P;HTML|
 ;                                         (= 2  "Missed result: (1 2 7 212))]")
 P;HTML|
-;                                         (= 2  "0.03user 0.01system 0:00.04elapsed 97%CPU (0avgtext+0avgdata 25040maxresident)k")
+;                                         (= 2  "0.03user 0.00system 0:00.04elapsed 97%CPU (0avgtext+0avgdata 25040maxresident)k")
 P;HTML|
 ;                                         (= 2  "0inputs+0outputs (0major+2853minor)pagefaults 0swaps")
 P;HTML|
@@ -390,7 +390,7 @@ Script started on 2024-10-21 18:13:34+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-METTALOG-SANITY.FIND-ALL-TESTS.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000558 secs. (557.97 microseconds) 
+; took 0.000516 secs. (515.83 microseconds) 
 
 !(assertEqualToResult (findall! $X (match &self (my-numbers $X) $X)) ((1 2 7 212)))
 
@@ -407,7 +407,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.FIND-ALL-TESTS.02</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.30 milliseconds) 
+; took 0.002 secs. (2.26 milliseconds) 
 
 !(assertEqualToResult (findall! $X (match &self (my-numbers $X) (this-predicate-doesnt-matter $X))) ((1 2 7 212)))
 
@@ -424,7 +424,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.FIND-ALL-TESTS.03</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.35 milliseconds) 
+; took 0.002 secs. (2.37 milliseconds) 
 
 !(assertEqualToResult (findall! (is-even $X) (match &self (my-numbers $X) $X)) ((False True False True)))
 
@@ -441,7 +441,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.FIND-ALL-TESTS.04</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.12 milliseconds) 
+; took 0.002 secs. (2.11 milliseconds) 
 
 !(assertEqualToResult (findall! ($X $Y) (match &self (my-pairs $X $Y) (this-predicate-doesnt-matter $X $Y))) (((2 4) (4 8))))
 
@@ -457,7 +457,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.FIND-ALL-TESTS.05</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.06 milliseconds) 
+; took 0.002 secs. (2.05 milliseconds) 
 
 !(assertEqualToResult (findall! ($Y $X) (match &self (my-pairs $X $Y) (this-predicate-doesnt-matter $X $Y))) (((4 2) (8 4))))
 
@@ -474,7 +474,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.FIND-ALL-TESTS.06</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.85 milliseconds) 
+; took 0.002 secs. (1.88 milliseconds) 
 
 !(assertEqualToResult (findall! (/ $X $Y) (match &self (my-pairs $X $Y) (this-predicate-doesnt-matter $X $Y))) ((0.5 0.5)))
 
@@ -490,7 +490,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.FIND-ALL-TESTS.07</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.02 milliseconds) 
+; took 0.002 secs. (1.86 milliseconds) 
 
 !(assertEqualToResult (findall! (/ $Y $X) (match &self (my-pairs $X $Y) (this-predicate-doesnt-matter $X $Y))) ((2 2)))
 
@@ -499,7 +499,7 @@ Deterministic: ()
 </span>
 Deterministic: ()<span class="ansi32"
 >
-% 348,151 inferences, 0.085 CPU in 0.085 seconds (100% CPU, 4076335 Lips)
+% 347,927 inferences, 0.084 CPU in 0.084 seconds (100% CPU, 4162881 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/find_all_tests.metta  0)
 <span class="ansi1"
@@ -645,7 +645,7 @@ Deterministic: ()<span class="ansi32"
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-21 18:13:39+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-21 18:17:44+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

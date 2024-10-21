@@ -31,7 +31,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-21 18:16:46+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-21 18:20:46+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -355,7 +355,7 @@ Script started on 2024-10-21 18:16:46+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-METTALOG-SANITY.SUBTRACTION-TEST.01</h3>
 ; 
 ; EVAL TEST
-; took 0.050 secs. (50.45 milliseconds) 
+; took 0.046 secs. (46.19 milliseconds) 
 
 !(assertEqual (subtraction (superpose (a b c d)) (superpose (b c))) (superpose (a d)))
 
@@ -373,7 +373,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SUBTRACTION-TEST.02</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.38 milliseconds) 
+; took 0.001 secs. (1.34 milliseconds) 
 
 !(assertEqual (subtraction (subtraction (superpose (a b c d)) (superpose (b c))) (superpose (d))) (superpose (a)))
 
@@ -391,7 +391,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SUBTRACTION-TEST.03</h3>
 ; 
 ; EVAL TEST
-; took 0.003 secs. (3.17 milliseconds) 
+; took 0.003 secs. (3.18 milliseconds) 
 
 !(assertEqual (subtraction (superpose ((foo bar) (bar baz) qux)) (superpose ((bar baz) qux))) (superpose ((foo bar))))
 
@@ -409,7 +409,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SUBTRACTION-TEST.04</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.23 milliseconds) 
+; took 0.001 secs. (1.14 milliseconds) 
 
 !(assertEqual (subtraction (superpose (1 2 3 foo bar)) (superpose (2 foo))) (superpose (1 3 bar)))
 
@@ -427,7 +427,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SUBTRACTION-TEST.05</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.08 milliseconds) 
+; took 0.001 secs. (1.09 milliseconds) 
 
 !(assertEqual (subtraction (superpose (a b b c d)) (superpose (b c))) (superpose (a d)))
 
@@ -445,7 +445,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SUBTRACTION-TEST.06</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.04 milliseconds) 
+; took 0.000922 secs. (921.94 microseconds) 
 
 !(assertEqual (unique (subtraction (superpose (a b b c)) (superpose (b c c d)))) (superpose (a)))
 
@@ -463,7 +463,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SUBTRACTION-TEST.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000886 secs. (886.12 microseconds) 
+; took 0.000886 secs. (886.11 microseconds) 
 
 !(assertEqual (subtraction (unique (superpose (a b b c))) (unique (superpose (b c c d)))) (superpose (a)))
 
@@ -481,12 +481,12 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SUBTRACTION-TEST.08</h3>
 ; 
 ; EVAL TEST
-; took 0.000653 secs. (653.18 microseconds) 
+; took 0.000674 secs. (673.98 microseconds) 
 
 !(assertEqual (subtraction (superpose ($x $y)) (superpose (b))) (superpose ($x $y)))
 
 <span class="ansi36"
->(loonit_success  (equal_enough_for_test  ($_186848 $_186842) ($_186924 $_186918)))
+>(loonit_success  (equal_enough_for_test  ($_186862 $_186856) ($_186938 $_186932)))
 </span>
 Deterministic: ()
 ;;;; Test subtraction with empty lists
@@ -499,7 +499,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SUBTRACTION-TEST.09</h3>
 ; 
 ; EVAL TEST
-; took 0.000924 secs. (924.21 microseconds) 
+; took 0.000761 secs. (761.14 microseconds) 
 
 !(assertEqual (subtraction (superpose (a b c)) (superpose ())) (superpose (a b c)))
 
@@ -517,16 +517,16 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.SUBTRACTION-TEST.10</h3>
 ; 
 ; EVAL TEST
-; took 0.003 secs. (3.18 milliseconds) 
+; took 0.003 secs. (2.86 milliseconds) 
 
 !(assertEqual (subtraction (superpose ((foo $x) (bar $y))) (superpose ((bar $y) (foo qux)))) (superpose ((foo $x))))
 
 <span class="ansi36"
->(loonit_success  (equal_enough_for_test  ((foo $_238234)) ((foo $_243252))))
+>(loonit_success  (equal_enough_for_test  ((foo $_238248)) ((foo $_243266))))
 </span>
 Deterministic: ()<span class="ansi32"
 >
-% 451,961 inferences, 0.139 CPU in 0.139 seconds (100% CPU, 3241480 Lips)
+% 452,443 inferences, 0.129 CPU in 0.130 seconds (100% CPU, 3507754 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/subtraction_test.metta  0)
 <span class="ansi1"
@@ -675,7 +675,7 @@ Deterministic: ()<span class="ansi32"
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-21 18:16:52+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-21 18:20:51+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

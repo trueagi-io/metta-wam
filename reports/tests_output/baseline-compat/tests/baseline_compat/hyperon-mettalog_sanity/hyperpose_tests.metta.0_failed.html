@@ -26,7 +26,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-21 18:14:13+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-21 18:18:16+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -342,9 +342,9 @@ Script started on 2024-10-21 18:14:13+00:00 [TERM="xterm-256color" TTY="/dev/pts
 P;HTML|
 ;                                         (= 2  "Missed result: False)]")
 P;HTML|
-;                                         (= 2  "0.03user 0.01system 0:00.05elapsed 96%CPU (0avgtext+0avgdata 25132maxresident)k")
+;                                         (= 2  "0.03user 0.01system 0:00.05elapsed 98%CPU (0avgtext+0avgdata 25376maxresident)k")
 P;HTML|
-;                                         (= 2  "0inputs+0outputs (0major+2877minor)pagefaults 0swaps")
+;                                         (= 2  "0inputs+0outputs (0major+2882minor)pagefaults 0swaps")
 P;HTML|
 ;                                        (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/hyperpose_tests.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/hyperpose_tests.metta)
 
@@ -362,7 +362,7 @@ Script started on 2024-10-21 18:14:13+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-METTALOG-SANITY.HYPERPOSE-TESTS.01</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.90 milliseconds) 
+; took 0.001 secs. (1.46 milliseconds) 
 
 !(assertEqualToResult (catch (max-time! 1 (hyperpose ((is-even 1) (is-even 2) (is-even 3)))) time_limit_exceeded time_limit_exceeded) (False True False))
 
@@ -378,7 +378,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.HYPERPOSE-TESTS.02</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.05 milliseconds) 
+; took 0.000810 secs. (809.84 microseconds) 
 
 !(assertEqualToResult (catch (max-time! 1 (hyperpose ((> 1 2) (is-even 2) (superpose (3 4))))) time_limit_exceeded time_limit_exceeded) (False True 3 4))
 
@@ -395,7 +395,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.HYPERPOSE-TESTS.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000651 secs. (651.24 microseconds) 
+; took 0.000519 secs. (519.17 microseconds) 
 
 !(assertEqualToResult (catch (max-time! 1 (hyperpose ((hyperpose (1 2)) (hyperpose (3 4))))) time_limit_exceeded time_limit_exceeded) (1 2 3 4))
 
@@ -404,7 +404,7 @@ Deterministic: ()
 </span>
 Deterministic: ()<span class="ansi32"
 >
-% 191,353 inferences, 0.052 CPU in 0.052 seconds (100% CPU, 3649599 Lips)
+% 191,487 inferences, 0.050 CPU in 0.050 seconds (100% CPU, 3839578 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/hyperpose_tests.metta  0)
 <span class="ansi1"
@@ -546,7 +546,7 @@ Deterministic: ()<span class="ansi32"
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-21 18:14:19+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-21 18:18:22+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
