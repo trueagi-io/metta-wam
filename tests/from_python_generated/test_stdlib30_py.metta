@@ -4,5 +4,5 @@
 ; <pre>
 !(py-dict (("a") ("b" "c")))
 ;</pre>
-  !(assertEqualToResult ( )  (  )  )
+;  !(assertEqualToResult ( )  (  )  )
 ; <br>  lastline 91 <br> 

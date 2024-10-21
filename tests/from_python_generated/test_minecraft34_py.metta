@@ -24,5 +24,5 @@
                            (allof (pack 3 cobblestones) (pack 2 sticks))))
         
 ;</pre>
-  !(assertEqualToResult ( )  (  )  )
+;  !(assertEqualToResult ( )  (  )  )
 ; <br>  lastline 65 <br> 

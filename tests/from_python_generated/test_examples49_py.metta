@@ -2,7 +2,7 @@
 ; 20241007 R.v.Vessum converted python source to metta 
 ; FILE: 49../../../hyperon-experimental/python/tests/test_examples.py :170
 ; <pre>
-        metta.run('''
+
             (= (:? $c)
                (match &self (:= $c $t) $t))
             (= (:? ($c $a))
@@ -28,6 +28,20 @@
             (:= Entity Prop)
             (:= (Human Entity) Prop)
             (:= Socrates Entity)
+
 ;</pre>
-  !(assertEqualToResult ( )  (  )  )
+;  !(assertEqualToResult ( )  (  )  )
 ; <br>  lastline 211 <br> 
+;            !(:? (HumansAreMortal SocratesIsHuman))
+
+;            !(:check (HumansAreMortal SocratesIsHuman) (Mortal Socrates))
+;            !(:? (= SocratesIsMortal (HumansAreMortal SocratesIsHuman)))
+            !(:check (= (Mortal Plato) (Mortal Socrates)) Prop)
+;            !(:check (= (Human Socrates) (Mortal Socrates)) Prop)
+;            !(:? (GreenAndCroaksIsFrog SamIsGreen SamCroaks))
+
+;            !(:check (= SocratesIsHuman SocratesIsMortal) Prop)
+;            !(:? (SocratesIsHuman (Human Socrates)))
+;            !(:? (Human Time))
+
+
