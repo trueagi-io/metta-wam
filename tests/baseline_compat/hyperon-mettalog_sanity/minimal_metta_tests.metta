@@ -71,3 +71,45 @@
 !(assertEqualToResult (metta (chain-to-foobar) Number &self) (1))
 !(assertEqualToResult (metta (chain-to-foobar) String &self) ("a"))
 !(assertEqualToResult (collapse-bind (metta (chain-to-foobar) $type &self)) ((1 { $type <- Number }) ("a" { $type <- String })))
+
+
+;; Minimal MeTTa interpretation & evaluation step
+(= (n/0/0) (n/1/0))
+(= (n/0/0) (n/1/1))
+(= (n/1/0) (n/2/0))
+        
+!(assertEqual  ;; don't reduce non-Minimal Metta instruction
+    (chain (n/0/0) $x (quote $x)) 
+    (quote (n/0/0))) 
+!(assertEqualToResult  ;; eval makes exactly one step
+    (chain (eval (n/0/0)) $x (quote $x))  
+    ((quote (n/1/0)) (quote (n/1/1))))
+!(assertEqualToResult  ;; `metta` fully reduces
+    (chain (metta (n/0/0) %Undefined% &self) $x (quote $x))
+    ((quote (n/1/1)) (quote (n/2/0))))
+    
+!(assertEqual ;; unify is a Minimal-MeTTa construct, not a space-editing API as it is currently treated in MettaLog
+    (chain (unify ($x b) (a $y) ($x $y) Failed) $v $v)
+	(a b))
+
+!(assertEqual ;; nested chain
+	(chain (chain A $x (p $x)) $y (quote $y))
+	(quote (p A))
+)
+!(assertEqual ;; cons-atom is minimal metta, got evaluated
+	(chain (cons-atom p (q)) $v (quote $v))
+	(quote (p q)))
+!(assertEqual ;; decons-atom is minimal metta, got evalauted
+	(chain (decons-atom (p q)) $x (quote $x))
+	(quote (p (q))))
+
+;; function / return, mutate argument via call struct
+(= (f1) (function (return ())))
+(= (f0 $b) (function
+	(chain (eval (f1)) $_
+	(unify $b value
+		(return ())
+		(return (Error () "Unexpected error")) ))))
+!(assertEqual 
+	(chain (eval (f0 $a)) $_ $a)
+	value)
