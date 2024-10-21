@@ -24,7 +24,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 19:38:14+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-21 18:07:32+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -354,15 +354,15 @@ Script started on 2024-10-19 19:38:14+00:00 [TERM="xterm-256color" TTY="/dev/pts
 
 
 Deterministic: ()
-; Execution took 0.002 secs. (1.71 milliseconds) 
+; Execution took 0.002 secs. (1.98 milliseconds) 
 
 <span class="ansi38-013099040"
 >!(import! &hald5000 hald_spo_5000)
 
-</span>; Done translating 5005 forms: asserted_metta_pred(hald_spo_5000_1729366700_1449785,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/issues/metta-wam-issue-116/hald_spo_5000.metta').
+</span>; Done translating 5005 forms: asserted_metta_pred(hald_spo_5000_1729534058_2657564,'/home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/issues/metta-wam-issue-116/hald_spo_5000.metta').
 
 Deterministic: ()
-; Execution took 0.494 secs. (493.63 milliseconds) 
+; Execution took 0.507 secs. (506.55 milliseconds) 
 
 <span class="ansi38-013099040"
 >!(assertEqualToResult (match &hald5000 (Doxorubicin $p $o) (Doxorubicin $p $o)) ((Doxorubicin elevated Trastuzumab) (Doxorubicin associated MIR375) (Doxorubicin stratify Liposarcoma)))
@@ -372,7 +372,7 @@ Deterministic: ()
 >;; METTA-WAM-ISSUE-116.TEST-SPO-5000.01</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.44 milliseconds) 
+; took 0.003 secs. (2.77 milliseconds) 
 
 !(assertEqualToResult (match &hald5000 (Doxorubicin $p $o) (Doxorubicin $p $o)) ((Doxorubicin elevated Trastuzumab) (Doxorubicin associated MIR375) (Doxorubicin stratify Liposarcoma)))
 
@@ -380,10 +380,10 @@ Deterministic: ()
 >(loonit_success  (equal_enough_for_test  ((Doxorubicin stratify Liposarcoma) (Doxorubicin associated MIR375) (Doxorubicin elevated Trastuzumab)) ((Doxorubicin elevated Trastuzumab) (Doxorubicin associated MIR375) (Doxorubicin stratify Liposarcoma))))
 </span>
 Deterministic: ()
-; Execution took 0.005 secs. (4.70 milliseconds) 
+; Execution took 0.006 secs. (5.64 milliseconds) 
 
 <span class="ansi32"
->% 5,448,950 inferences, 0.540 CPU in 0.541 seconds (100% CPU, 10083991 Lips)
+>% 5,448,772 inferences, 0.556 CPU in 0.556 seconds (100% CPU, 9798448 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/issues/metta-wam-issue-116/test_spo_5000.metta  0)
 <span class="ansi1"
@@ -525,7 +525,7 @@ Deterministic: ()
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 19:38:20+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-21 18:07:38+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

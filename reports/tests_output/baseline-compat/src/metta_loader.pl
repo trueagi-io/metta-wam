@@ -811,6 +811,10 @@ make_metta_file_buffer(TFMakeFile,Filename,In):-
     at_end_of_stream(In),  % Stop processing once the end of the stream is reached.
     !.
 
+pos_line_char(Position,line_char(LineM1,Col)):-
+     stream_position_data(line_count, Position, Line),  % Extract the line number.
+     LineM1 is Line-1,
+     stream_position_data(line_position, Position, Col).  % Extract the column number.
 
 
 

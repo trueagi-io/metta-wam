@@ -63,7 +63,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 19:51:27+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-21 18:21:11+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -429,7 +429,7 @@ Deterministic: ()<span class="ansi38-255165000"
 >;; METTA-MORPH-TESTS.SEQUENTIAL-NESTED.01</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.92 milliseconds) 
+; took 0.002 secs. (2.04 milliseconds) 
 
 !(assertEqualToResult (sequential ((increment) (increment))) (2 3))
 
@@ -449,7 +449,7 @@ Deterministic: ()<span class="ansi38-255165009"
 >;; METTA-MORPH-TESTS.SEQUENTIAL-NESTED.02</h3>
 ; 
 ; EVAL TEST
-; took 0.003 secs. (2.68 milliseconds) 
+; took 0.003 secs. (2.63 milliseconds) 
 
 !(assertEqualToResult (sequential ((increment) (increment) (increment))) (4 5 6))
 
@@ -469,7 +469,7 @@ Deterministic: ()<span class="ansi38-255165009"
 >;; METTA-MORPH-TESTS.SEQUENTIAL-NESTED.03</h3>
 ; 
 ; EVAL TEST
-; took 0.003 secs. (2.64 milliseconds) 
+; took 0.003 secs. (2.71 milliseconds) 
 
 !(assertEqualToResult (sequential ((sequential ((increment) (increment) (increment))))) (7 8 9))
 
@@ -489,7 +489,7 @@ Deterministic: ()<span class="ansi38-255165009"
 >;; METTA-MORPH-TESTS.SEQUENTIAL-NESTED.04</h3>
 ; 
 ; EVAL TEST
-; took 0.005 secs. (5.08 milliseconds) 
+; took 0.005 secs. (5.16 milliseconds) 
 
 !(assertEqualToResult (sequential ((sequential ((increment) (increment) (increment))) (sequential ((increment) (increment) (increment))))) (10 11 12 13 14 15))
 
@@ -509,7 +509,7 @@ Deterministic: ()<span class="ansi38-255165009"
 >;; METTA-MORPH-TESTS.SEQUENTIAL-NESTED.05</h3>
 ; 
 ; EVAL TEST
-; took 0.005 secs. (5.01 milliseconds) 
+; took 0.005 secs. (5.32 milliseconds) 
 
 !(assertEqualToResult (sequential ((sequential ((increment) (increment) (increment))) (increment) (increment) (increment))) (16 17 18 19 20 21))
 
@@ -529,7 +529,7 @@ Deterministic: ()<span class="ansi38-255165009"
 >;; METTA-MORPH-TESTS.SEQUENTIAL-NESTED.06</h3>
 ; 
 ; EVAL TEST
-; took 0.005 secs. (5.00 milliseconds) 
+; took 0.005 secs. (5.15 milliseconds) 
 
 !(assertEqualToResult (do (sequential ((sequential ((increment) (increment) (increment))) (increment) (increment) (increment)))) ())
 
@@ -549,7 +549,7 @@ Deterministic: ()<span class="ansi38-255165009"
 >;; METTA-MORPH-TESTS.SEQUENTIAL-NESTED.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000200 secs. (199.94 microseconds) 
+; took 0.000246 secs. (245.65 microseconds) 
 
 !(assertEqualToResult (get-state &var) (27))
 
@@ -569,7 +569,7 @@ Deterministic: ()<span class="ansi38-255165009"
 >;; METTA-MORPH-TESTS.SEQUENTIAL-NESTED.08</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.08 milliseconds) 
+; took 0.001 secs. (1.25 milliseconds) 
 
 !(assertEqualToResult (sequential ((increment))) (28))
 
@@ -589,7 +589,7 @@ Deterministic: ()<span class="ansi38-255165009"
 >;; METTA-MORPH-TESTS.SEQUENTIAL-NESTED.09</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.01 milliseconds) 
+; took 0.001 secs. (1.15 milliseconds) 
 
 !(assertEqualToResult (increment) (29))
 
@@ -609,7 +609,7 @@ Deterministic: ()<span class="ansi38-255165009"
 >;; METTA-MORPH-TESTS.SEQUENTIAL-NESTED.10</h3>
 ; 
 ; EVAL TEST
-; took 0.000198 secs. (197.79 microseconds) 
+; took 0.000234 secs. (234.06 microseconds) 
 
 !(assertEqualToResult (get-state &var) (29))
 
@@ -629,7 +629,7 @@ Deterministic: ()<span class="ansi38-255165009"
 >;; METTA-MORPH-TESTS.SEQUENTIAL-NESTED.11</h3>
 ; 
 ; EVAL TEST
-; took 0.000652 secs. (652.33 microseconds) 
+; took 0.000749 secs. (748.91 microseconds) 
 
 !(assertEqualToResult (sequential ((change-state! &var (+ 1 (get-state &var))))) ((State 30)))
 
@@ -649,7 +649,7 @@ Deterministic: ()<span class="ansi38-255165009"
 >;; METTA-MORPH-TESTS.SEQUENTIAL-NESTED.12</h3>
 ; 
 ; EVAL TEST
-; took 0.000232 secs. (232.29 microseconds) 
+; took 0.000205 secs. (204.80 microseconds) 
 
 !(assertEqualToResult (get-state &var) (30))
 
@@ -658,7 +658,7 @@ Deterministic: ()<span class="ansi38-255165009"
 </span>
 Deterministic: ()<span class="ansi32"
 >
-% 573,742 inferences, 0.127 CPU in 0.127 seconds (100% CPU, 4530712 Lips)
+% 575,365 inferences, 0.134 CPU in 0.134 seconds (100% CPU, 4291153 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/sequential_nested.metta  0)
 <span class="ansi1"
@@ -810,7 +810,7 @@ Deterministic: ()<span class="ansi32"
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 19:51:33+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-21 18:21:17+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

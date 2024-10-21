@@ -150,7 +150,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-19 19:42:34+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-21 18:12:01+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -498,7 +498,7 @@ Script started on 2024-10-19 19:42:34+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-IMPORTS.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000171 secs. (170.81 microseconds) 
+; took 0.000180 secs. (179.61 microseconds) 
 
 !(assertEqualToResult (get-type &self) (hyperon::space::DynSpace))
 
@@ -514,7 +514,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-IMPORTS.02</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.05 milliseconds) 
+; took 0.002 secs. (2.12 milliseconds) 
 
 !(assertEqual ((let $x (get-atoms &self) (get-type $x))) ((get-type &self)))
 
@@ -531,7 +531,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-IMPORTS.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000299 secs. (298.83 microseconds) 
+; took 0.000323 secs. (323.42 microseconds) 
 
 !(assertEqual (if (> 1 2) 1 2) 2)
 
@@ -595,7 +595,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-MODULEA.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000177 secs. (177.49 microseconds) 
+; took 0.000201 secs. (200.65 microseconds) 
 
 !(assertEqual (+ 1 2) 3)
 
@@ -611,7 +611,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-MODULEA.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000178 secs. (178.28 microseconds) 
+; took 0.000148 secs. (148.12 microseconds) 
 
 !(assertEqual (if True "S" "F") "S")
 
@@ -653,7 +653,7 @@ Last Result(2): ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-IMPORTS.06</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.17 milliseconds) 
+; took 0.002 secs. (2.07 milliseconds) 
 
 !(assertEqual (match &m (= (f 2) $x) $x) (g 3))
 
@@ -722,7 +722,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-MODULEA.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000184 secs. (183.86 microseconds) 
+; took 0.000202 secs. (202.10 microseconds) 
 
 !(assertEqual (+ 1 2) 3)
 
@@ -813,7 +813,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-MODULEA.09</h3>
 ; 
 ; EVAL TEST
-; took 0.000206 secs. (206.25 microseconds) 
+; took 0.000207 secs. (206.59 microseconds) 
 
 !(assertEqual (+ 1 2) 3)
 
@@ -829,7 +829,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-MODULEA.10</h3>
 ; 
 ; EVAL TEST
-; took 0.000152 secs. (152.48 microseconds) 
+; took 0.000149 secs. (148.91 microseconds) 
 
 !(assertEqual (if True "S" "F") "S")
 
@@ -853,7 +853,7 @@ Last Result(2): ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-IMPORTS.11</h3>
 ; 
 ; EVAL TEST
-; took 0.000761 secs. (760.99 microseconds) 
+; took 0.000758 secs. (757.54 microseconds) 
 
 !(assertEqual (g 2) 102)
 
@@ -869,7 +869,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-IMPORTS.12</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.09 milliseconds) 
+; took 0.001 secs. (1.15 milliseconds) 
 
 !(assertEqual (f 2) 103)
 
@@ -890,7 +890,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-IMPORTS.13</h3>
 ; 
 ; EVAL TEST
-; took 0.006 secs. (6.12 milliseconds) 
+; took 0.006 secs. (5.93 milliseconds) 
 
 !(assertEqual &m (let* (($a (collapse (get-atoms &self))) ($x (cdr-atom $a)) ($y (cdr-atom $x))) (car-atom $y)))
 
@@ -909,7 +909,7 @@ Deterministic: ((Error  (got  (&m)) (expected  ((: __g (-> Number))))))
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-IMPORTS.14</h3>
 ; 
 ; EVAL TEST
-; took 0.005 secs. (4.58 milliseconds) 
+; took 0.005 secs. (4.74 milliseconds) 
 
 !(assertEqual (== (let* (($x (collapse (get-atoms &m))) ($y (car-atom $x))) (get-type $y)) (get-type &self)) False)
 
@@ -926,7 +926,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-IMPORTS.15</h3>
 ; 
 ; EVAL TEST
-; took 0.000252 secs. (252.19 microseconds) 
+; took 0.000272 secs. (272.26 microseconds) 
 
 !(assertEqual (if (> 1 2) 1 2) 2)
 
@@ -1021,7 +1021,7 @@ Last Result(2): ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-IMPORTS.16</h3>
 ; 
 ; EVAL TEST
-; took 0.000730 secs. (729.82 microseconds) 
+; took 0.000784 secs. (783.92 microseconds) 
 
 !(assertEqual (g 2) 102)
 
@@ -1037,7 +1037,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-IMPORTS.17</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.07 milliseconds) 
+; took 0.001 secs. (1.04 milliseconds) 
 
 !(assertEqual (f 2) 103)
 
@@ -1055,7 +1055,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-IMPORTS.18</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.31 milliseconds) 
+; took 0.001 secs. (1.28 milliseconds) 
 
 !(assertEqualToResult (dup 2) (12 102))
 
@@ -1246,7 +1246,7 @@ Last Result(2): ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-IMPORTS.19</h3>
 ; 
 ; EVAL TEST
-; took 0.000757 secs. (756.84 microseconds) 
+; took 0.000771 secs. (770.77 microseconds) 
 
 !(assertEqual (g 2) 102)
 
@@ -1262,7 +1262,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-IMPORTS.20</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.12 milliseconds) 
+; took 0.001 secs. (1.08 milliseconds) 
 
 !(assertEqual (f 2) 103)
 
@@ -1278,7 +1278,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.F1-IMPORTS.21</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.21 milliseconds) 
+; took 0.001 secs. (1.25 milliseconds) 
 
 !(assertEqualToResult (dup 2) (12 102))
 
@@ -1287,7 +1287,7 @@ Deterministic: ()
 </span>
 Deterministic: ()<span class="ansi32"
 >
-% 1,195,293 inferences, 0.263 CPU in 0.263 seconds (100% CPU, 4543239 Lips)
+% 1,195,825 inferences, 0.277 CPU in 0.277 seconds (100% CPU, 4323225 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/f1_imports.metta  0)
 <span class="ansi1"
@@ -1445,7 +1445,7 @@ Deterministic: ()<span class="ansi32"
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-19 19:42:40+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-21 18:12:07+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
