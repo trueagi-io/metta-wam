@@ -42,7 +42,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-21 18:25:41+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-21 22:58:04+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -390,7 +390,7 @@ Script started on 2024-10-21 18:25:41+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; METTA-MORPH-TESTS.TYPES2.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000203 secs. (203.15 microseconds) 
+; took 0.000205 secs. (204.74 microseconds) 
 
 !(assertEqualToResult (get-type lion1) (Lion))
 
@@ -410,7 +410,7 @@ Deterministic: ()<span class="ansi38-255165009"
 >;; METTA-MORPH-TESTS.TYPES2.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000389 secs. (389.20 microseconds) 
+; took 0.000398 secs. (398.30 microseconds) 
 
 !(assertEqualToResult (reproduce lion1 lion2) (childlion))
 
@@ -430,7 +430,7 @@ Deterministic: ()<span class="ansi38-255165009"
 >;; METTA-MORPH-TESTS.TYPES2.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000149 secs. (148.97 microseconds) 
+; took 0.000166 secs. (165.94 microseconds) 
 
 !(assertEqualToResult (get-type Lion) (Cat))
 
@@ -450,7 +450,7 @@ Deterministic: ()<span class="ansi38-255165009"
 >;; METTA-MORPH-TESTS.TYPES2.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000203 secs. (202.51 microseconds) 
+; took 0.000205 secs. (205.33 microseconds) 
 
 !(assertEqualToResult (match &self (: Lion $1) $1) (Cat))
 
@@ -470,7 +470,7 @@ Deterministic: ()<span class="ansi38-255165009"
 >;; METTA-MORPH-TESTS.TYPES2.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000195 secs. (195.13 microseconds) 
+; took 0.000200 secs. (199.79 microseconds) 
 
 !(assertEqualToResult (match &self (: reproduce $1) $1) ((-> Lion Lion Lion)))
 
@@ -479,7 +479,7 @@ Deterministic: ()<span class="ansi38-255165009"
 </span>
 Deterministic: ()<span class="ansi32"
 >
-% 210,727 inferences, 0.064 CPU in 0.064 seconds (100% CPU, 3303648 Lips)
+% 210,687 inferences, 0.064 CPU in 0.064 seconds (100% CPU, 3296206 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/types2.metta  0)
 <span class="ansi1"
@@ -623,7 +623,7 @@ Deterministic: ()<span class="ansi32"
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-21 18:25:46+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-21 22:58:10+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
