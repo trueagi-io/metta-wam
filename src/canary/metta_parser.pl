@@ -176,6 +176,8 @@ svar(VAR, Name) :-
     symbol(VAR), atom_concat_or_rtrace('@', A, VAR), non_empty_atom(A),
     svar_fixvarname(VAR, Name), !.
 
+kif_ok:- fail.
+
 :- export(svar_fixvarname/2).
 
 %=
