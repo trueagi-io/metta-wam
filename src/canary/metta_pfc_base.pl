@@ -57,90 +57,342 @@
 % Douglas Miles
 
 */
+
+%********************************************************************************************* 
+% PROGRAM FUNCTION: provides support for logical rules, triggers, and fact management with 
+% features like dependency tracking and truth maintenance.
+%*********************************************************************************************
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% IMPORTANT:  DO NOT DELETE COMMENTED-OUT CODE AS IT MAY BE UN-COMMENTED AND USED
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % :- if( \+ current_predicate(set_fileAssertMt/1)).
 
+%!  set_prolog_flag(+Flag, +Value) is det.
+%
+%   Sets the given Prolog flag to the specified value. 
+%
+%   This predicate allows modifying runtime flags that control various 
+%   aspects of the Prolog environment. In this case, it sets the `pfc_shared_module` 
+%   flag to `user`, affecting how modules are shared or accessed.
+%
 :- set_prolog_flag(pfc_shared_module,user).
 %:- set_prolog_flag(pfc_shared_module,baseKB).
 
-must_ex(X):- catch(X,E,rtrace(E))*->true;(dmsg(failed(must_ex(X))),rtrace(X)).
-quietly_ex(X):-call(X).
+%!  must_ex(+Goal) is det.
+%
+%   Executes the given Goal, handling exceptions and retrying with tracing if needed.
+%   If the Goal throws an exception, it catches and traces it. On failure, it logs 
+%   the failure and retries with `rtrace/1`.
+%
+%   @arg Goal The Prolog goal to be executed.
+%
+%   @example
+%     % Execute a goal that might fail or raise an exception.
+%     ?- must_ex(member(X, [1, 2, 3])).
+%     X = 1 ;
+%     X = 2 ;
+%     X = 3.
+%
+must_ex(X) :-
+    % Attempt to execute the Goal with exception handling.
+    catch(X, E, rtrace(E)) *-> true
+    ;  % If the Goal fails, log the failure and retry with tracing.
+    (dmsg(failed(must_ex(X))), rtrace(X)).
+
+%!  quietly_ex(+Goal) is det.
+%
+%   Calls the given Goal without logging or tracing.
+%
+%   @arg Goal The Prolog goal to be executed.
+%
+%   @example
+%     % Silently execute a goal.
+%     ?- quietly_ex(member(X, [1, 2, 3])).
+%     X = 1 ;
+%     X = 2 ;
+%     X = 3.
+%
+quietly_ex(X) :-
+    % Simply call the Goal without any logging or tracing.
+    call(X).
 
 % @TODO undisable when we have defined into_type/3 to not fail
-control_arg_types(A,B):- fail, once(control_arg_types1(20,[],A,B)),A\==B,!.
+
+%!  control_arg_types(+A, +B) is semidet.
+%
+%   @arg A The first argument to be controlled.
+%   @arg B The second argument to be controlled.
+%
+%   @example
+%     % Example usage of `control_arg_types/2`.
+%     ?- control_arg_types(foo, bar).
+%     false.  % As the logic starts with `fail/0`, this will always be false.
+%
+control_arg_types(A, B) :-
+    % Immediately fail to ensure control only through the subsequent logic.
+    fail,
+    % Execute control_arg_types1/4 once with specific parameters.
+    once(control_arg_types1(20, [], A, B)),
+    % Ensure A and B are not identical.
+    A \== B,
+    % Use a cut to prevent further backtracking.
+    !.
+
 
 %:- listing(control_arg_types/3).
 
-control_arg_types1( Max,_,A,B):- Max<1,!,A=B.
-control_arg_types1(_Max,_,A,B):- \+ compound(A),!,A=B.
-control_arg_types1(_Max,_,A,B):- iz_conz(A), \+ is_list(A),!, A = B.
-control_arg_types1(_Max,_,A,B):- (current_predicate(check_args/2)->check_args(A,B)->A\=@=B),!.
-%control_arg_types1(Max,Pre,A,B):- is_list(A), !, maplist(control_arg_types1(Max,Pre),A,B).
-control_arg_types1( Max,Pre,A,B):- Max0 is Max-1,
- compound_name_arguments(A,F,AA),
- length(AA,N),
- do_control_arg_types1(Max0,F/N,1,Pre,AA,BB),
- compound_name_arguments(B,F,BB).
+%!  control_arg_types1(+Max, +Pre, +A, -B) is det.
+%
+%   Controls the transformation or matching of arguments A and B based on a 
+%   maximum recursion depth. If the depth reaches zero or certain conditions 
+%   are met, it unifies A with B.
+%
+%   @arg Max The maximum recursion depth allowed.
+%   @arg Pre A list representing the predicate stack for tracking context.
+%   @arg A   The input term to be controlled.
+%   @arg B   The output term after control logic is applied.
+%
+%   @example
+%     % Unify two simple terms when max depth is reached.
+%     ?- control_arg_types1(0, [], foo, X).
+%     X = foo.
+%
+%     % Control a structure with nested functors.
+%     ?- control_arg_types1(2, [], f(a, b), X).
+%     X = f(a, b).
+%
+%     % Handle non-compound terms.
+%     ?- control_arg_types1(2, [], 42, X).
+%     X = 42.
+%
+control_arg_types1(Max, _, A, B):- 
+    % If the maximum depth is reached, unify A with B.
+    Max < 1, !, A = B.
+control_arg_types1(_Max, _, A, B):- 
+    % If A is not a compound term, unify A with B.
+    \+ compound(A), !, A = B.
+control_arg_types1(_Max, _, A, B):- 
+    % If A is a compound term and not a list, unify A with B.
+    iz_conz(A), \+ is_list(A), !, A = B.
+control_arg_types1(_Max, _, A, B):- 
+    % If `check_args/2` is available, use it to compare A and B.
+    (current_predicate(check_args/2) -> check_args(A, B) -> A \=@= B), !.
+% control_arg_types1(Max, Pre, A, B):- 
+%     % If A is a list, apply control_arg_types1/4 to each element.
+%     is_list(A), !, maplist(control_arg_types1(Max, Pre), A, B).
+control_arg_types1(Max, Pre, A, B):- 
+    % Decrement the maximum depth.
+    Max0 is Max - 1,
+    % Decompose A into functor and arguments.
+    compound_name_arguments(A, F, AA),
+    % Get the number of arguments.
+    length(AA, N),
+    % Control each argument.
+    do_control_arg_types1(Max0, F/N, 1, Pre, AA, BB),
+    % Reconstruct B with controlled arguments.
+    compound_name_arguments(B, F, BB).
 
-do_control_arg_types1(_Max,_FofN,_ArgNp1,_Pre,[],[]):-!.
-do_control_arg_types1( Max,FofN,ArgN,Pre,[A|AA],[B|BB]):-
-  do_control_1arg_type(Max,FofN,ArgN,Pre,A,B),
-  ArgNp1 is ArgN+1,
-  do_control_arg_types1(Max,FofN,ArgNp1,Pre,AA,BB).
+%!  do_control_arg_types1(+Max, +FofN, +ArgN, +Pre, +AA, -BB) is det.
+%
+%   Controls each argument in the given list of terms AA to produce BB.
+%
+%   @arg Max   The maximum recursion depth.
+%   @arg FofN  The functor and arity of the current term.
+%   @arg ArgN  The current argument number.
+%   @arg Pre   A list representing the predicate stack.
+%   @arg AA    The input list of arguments.
+%   @arg BB    The output list of controlled arguments.
+%
+%   @example
+%     % Control the arguments of a functor.
+%     ?- do_control_arg_types1(2, f/2, 1, [], [a, b], X).
+%     X = [a, b].
+%
+%     % Handle empty lists gracefully.
+%     ?- do_control_arg_types1(2, f/2, 1, [], [], X).
+%     X = [].
+%
+do_control_arg_types1(_Max, _FofN, _ArgNp1, _Pre, [], []):- !.
+do_control_arg_types1(Max, FofN, ArgN, Pre, [A | AA], [B | BB]):- 
+    % Control a single argument.
+    do_control_1arg_type(Max, FofN, ArgN, Pre, A, B),
+    % Move to the next argument.
+    ArgNp1 is ArgN + 1,
+    do_control_arg_types1(Max, FofN, ArgNp1, Pre, AA, BB).
 
-do_control_1arg_type(_Max,_FN,_N,_Pre,A,B):- var(A),!,B=A.
-do_control_1arg_type(_Max,F/_, N,_Pre,A,B):- arg_n_isa(F,N,ISA),into_type(ISA,A,B),!.
-do_control_1arg_type(Max,FofN,_,Pre,A,B):-
-   Max0 is Max-1, control_arg_types1(Max0,[FofN|Pre],A,B).
+%!  do_control_1arg_type(+Max, +FofN, +N, +Pre, +A, -B) is det.
+%
+%   Controls a single argument A to produce B.
+%
+%   @arg Max   The maximum recursion depth.
+%   @arg FofN  The functor and arity of the current term.
+%   @arg N     The current argument number.
+%   @arg Pre   A list representing the predicate stack.
+%   @arg A     The input argument.
+%   @arg B     The output argument.
+%
+%   @example
+%     % Unify a variable argument.
+%     ?- do_control_1arg_type(2, f/2, 1, [], X, Y).
+%     X = Y.
+%
+%     % Apply a type constraint using `arg_n_isa/3`.
+%     ?- assert(arg_n_isa(f, 1, integer)),
+%        do_control_1arg_type(2, f/2, 1, [], 5, X).
+%     X = 5.
+%
+%     % Recursively control a nested argument.
+%     ?- do_control_1arg_type(1, f/1, 1, [], f(g(a)), X).
+%     X = f(g(a)).
+%
+do_control_1arg_type(_Max, _FN, _N, _Pre, A, B):- 
+    % If A is a variable, unify B with A.
+    var(A), !, B = A.
+do_control_1arg_type(_Max, F / _, N, _Pre, A, B):- 
+    % If a type constraint exists, apply it.
+    arg_n_isa(F, N, ISA), into_type(ISA, A, B), !.
+do_control_1arg_type(Max, FofN, _, Pre, A, B):- 
+    % Recursively control the argument.
+    Max0 is Max - 1, 
+    control_arg_types1(Max0, [FofN | Pre], A, B).
 
 
-%arg_n_isa(_F,_N,_ISA):- fail.
-arg_n_isa(F,N,ISA):- clause_b(argIsa(F,N,ISA)).
+%!  arg_n_isa(+F, +N, -ISA) is semidet.
+%
+%   Retrieves the type constraint ISA for the N-th argument of a functor F.
+%   If no such constraint is found, the predicate fails.
+%
+%   @arg F   The functor for which the argument type is being queried.
+%   @arg N   The argument number (1-based index).
+%   @arg ISA The type constraint for the N-th argument.
+%
+%   @example
+%     % Query the type constraint for the 2nd argument of `example/3`.
+%     ?- arg_n_isa(example, 2, ISA).
+%
+%   @see clause_b/1 for querying clause existence.
+%
+% arg_n_isa(_F, _N, _ISA) :- fail.
+arg_n_isa(F, N, ISA) :-
+    % Retrieve the type constraint for the N-th argument using clause_b/1.
+    clause_b(argIsa(F, N, ISA)).
 
-save_pfc_state:-
-  %tell(pfcState),
-  forall((pfcStateTerm(F/A),current_predicate(F/A)),listing(F/A)),
-  %told.
-  !.
+%!  save_pfc_state is det.
+%
+%   Saves the state of all PFC-related predicates by listing them.
+%   The state terms include both dynamic and predefined PFC terms.
+%
+%   @see pfcStateTerm/1 for terms included in the state.
+%
+save_pfc_state :-
+    %tell(pfcState),
+    % List all predicates matching PFC state terms.
+    forall(
+        (pfcStateTerm(F/A), current_predicate(F/A)),
+        listing(F/A)
+    ),
+    % Prevent further backtracking.
+    %told.
+    !.
 
-pfcDoAll(Goal):- forall(call(Goal),true).
+%!  pfcDoAll(:Goal) is det.
+%
+%   Executes the given Goal for all possible solutions, ensuring success for each.
+%
+%   @arg Goal The goal to be executed.
+%
+%   @example
+%     % Execute a goal for all solutions.
+%     ?- pfcDoAll(member(X, [1, 2, 3])).
+%
+pfcDoAll(Goal) :-
+    % Ensure that Goal succeeds for all possible solutions.
+    forall(call(Goal), true).
 
-pfcStateTerm(F/A):- pfcDatabaseTerm(F/A).
-pfcStateTerm(F/A):-
- member((F/A),[
-     fcUndoMethod/2,
-     fcAction/2,
-     fcTmsMode/1,
-     pfcQueue/1,
-     pfcCurrentDb/1,
-     pfcHaltSignal/1,
-     pfcDebugging/0,
-     pfcSelect/1,
-     pfcSearch/1]).
+%!  pfcStateTerm(?Term) is nondet.
+%
+%   Defines terms related to the PFC (Prolog Forward Chaining) system state. 
+%   This predicate succeeds for any valid PFC state term, whether dynamically 
+%   defined or listed among predefined state terms.
+%
+%   @arg Term The functor/arity pair representing a PFC state term.
+%
+%   @example
+%     % Check if `fcAction/2` is a valid PFC state term.
+%     ?- pfcStateTerm(fcAction/2).
+%     true.
+%
+%     % Attempt to match a non-existent state term.
+%     ?- pfcStateTerm(nonexistent/1).
+%     false.
+%
+pfcStateTerm(F/A) :-
+    % Check if F/A is a term stored in the PFC database.
+    pfcDatabaseTerm(F/A).
+pfcStateTerm(F/A) :-
+    % Check if F/A matches one of the predefined PFC state terms.
+    member((F/A), [
+        fcUndoMethod/2,
+        fcAction/2,
+        fcTmsMode/1,
+        pfcQueue/1,
+        pfcCurrentDb/1,
+        pfcHaltSignal/1,
+        pfcDebugging/0,
+        pfcSelect/1,
+        pfcSearch/1
+    ]).
 
+%
+%   The following code handles the dynamic management of PFC (Prolog Forward Chaining)
+%   state by asserting or retracting facts depending on the loading context
+%   and whether cross-referencing is enabled. It interacts with modules and 
+%   system predicates to track and manage PFC usage.
+%
 
-
-:- if(( current_prolog_flag(xref,true) ;
-   ('$current_source_module'(SM),'context_module'(M),'$current_typein_module'(CM),
-     current_prolog_flag(pfc_shared_module,BaseKB),asserta(BaseKB:'wusing_pfc'(M,CM,SM,pfc_rt))))).
+:- if((current_prolog_flag(xref, true) ;
+   ('$current_source_module'(SM), 'context_module'(M), '$current_typein_module'(CM),
+    current_prolog_flag(pfc_shared_module, BaseKB), 
+    asserta(BaseKB:'wusing_pfc'(M, CM, SM, pfc_rt))))).
+% If cross-referencing is enabled or certain modules are active, 
+% assert that PFC is being used with the current modules.
 :- endif.
-:- if(current_prolog_flag(xref,true)).
-%:- module(pfc_rt,[]).
+
+:- if(current_prolog_flag(xref, true)).
+% If cross-referencing is enabled, optionally define an empty module.
+% :- module(pfc_rt, []).
 :- endif.
-:- if((prolog_load_context(source,File),prolog_load_context(file,File))).
-%:- prolog_load_context(file,File),unload_file(File).
+
+:- if((prolog_load_context(source, File), prolog_load_context(file, File))).
+% If the file being loaded matches the source file, import necessary utilities.
 :- use_module(library(logicmoo_utils)).
+% Optionally, unload the file after loading.
+% :- prolog_load_context(file, File), unload_file(File).
 :- endif.
-%:- pfc_lib:use_module(pfc_lib).
-:- if( \+  current_prolog_flag(xref,true)).
-:- current_prolog_flag(pfc_shared_module,BaseKB),
-   must_ex(retract(BaseKB:'wusing_pfc'(M,CM,SM,pfc_rt))),
-   nop(fbugio(BaseKB:'chusing_pfc'(M,CM,SM,pfc_rt))),
-   (M==SM ->
-     (nop(maybe_ensure_abox(SM)),nop((M:ain(genlMt(SM,BaseKB)))));
-     nop(fbugio(BaseKB:'lusing_pfc'(M,CM,SM,pfc_rt)))),
-   assert(BaseKB:'$using_pfc'(M,CM,SM,pfc_rt)),
-   asserta(SM:'$does_use_pfc_mod'(M,CM,SM,pfc_rt)).
-   %backtrace(200).
+
+% :- pfc_lib:use_module(pfc_lib).
+% Optionally include the PFC library for further functionality.
+
+:- if(\+ current_prolog_flag(xref, true)).
+% If cross-referencing is not enabled, perform PFC state updates.
+:- current_prolog_flag(pfc_shared_module, BaseKB),
+   must_ex(retract(BaseKB:'wusing_pfc'(M, CM, SM, pfc_rt))),
+   % Log the retraction of PFC usage.
+   nop(fbugio(BaseKB:'chusing_pfc'(M, CM, SM, pfc_rt))),
+   (M == SM ->
+     % Ensure the ABox for the shared module and assert its relation to BaseKB.
+     (nop(maybe_ensure_abox(SM)), 
+      nop((M:ain(genlMt(SM, BaseKB))))); 
+     % Otherwise, log the PFC usage for tracking purposes.
+     nop(fbugio(BaseKB:'lusing_pfc'(M, CM, SM, pfc_rt)))
+   ),
+   % Assert that the current modules are using PFC.
+   assert(BaseKB:'$using_pfc'(M, CM, SM, pfc_rt)),
+   asserta(SM:'$does_use_pfc_mod'(M, CM, SM, pfc_rt)).
+   % Optionally enable a backtrace with a depth of 200.
+   % backtrace(200).
 
 /*
 :- multifile '$exported_op'/3.
@@ -148,6 +400,10 @@ pfcStateTerm(F/A):-
 :- discontiguous '$exported_op'/3.
 '$exported_op'(_,_,_):- fail.
 */
+
+% multifile     = Declare predicate can be defined across multiple files
+% dynamic       = Make the predicate runtime modifyable
+% discontiguous = Declare that clauses of the predicate need not be contiguous 
 
 :- multifile '$pldoc'/4.
 :- dynamic '$pldoc'/4.
@@ -159,77 +415,302 @@ pfcStateTerm(F/A):-
 :- dynamic '$autoload'/3.
 '$autoload'(_,_,_):- fail.
 
+%
+%   This section sets important Prolog flags and conditionally imports
+%   predicates depending on the environment or platform. The configuration
+%   includes enabling useful system libraries and managing how Prolog 
+%   interacts with PFC (Prolog Forward Chaining).
+
+% Load the `make` library to allow dynamic reloading and recompiling of code.
 :- system:use_module(library(make)).
-%:- set_prolog_flag(retry_undefined, kb_shared).
-%:- set_prolog_flag(pfc_ready, true).
-:- set_prolog_flag(expect_pfc_file,unknown).
+
+% Optional flag settings for PFC behavior, currently commented out:
+% :- set_prolog_flag(retry_undefined, kb_shared).  
+%     % Retry undefined predicates in the shared knowledge base.
+% :- set_prolog_flag(pfc_ready, true).  
+%     % Set the flag to signal that PFC is ready for use.
+
+% Set the `expect_pfc_file` flag to `unknown`. This controls whether Prolog 
+% expects to load PFC files during execution.
+:- set_prolog_flag(expect_pfc_file, unknown).
 :- endif.
 
+% Import predicates from the `ifprolog` library, if available. These predicates 
+% are related to date handling and are platform-specific.
 :- ifprolog:import(date:day_of_the_week/2).
 :- ifprolog:import(date:day_of_the_year/2).
 
-
 tilded_negation.
 
-bagof_or_nil(T,G,L):- bagof(T,G,L)*->true;L=[].
-setof_or_nil(T,G,L):- setof(T,G,L)*->true;L=[].
+%!  bagof_or_nil(+Template, :Goal, -List) is det.
+%
+%   Executes `bagof/3` and returns the solutions as a list. If no solutions 
+%   are found, it returns an empty list instead of failing.
+%
+%   @arg Template The term to collect.
+%   @arg Goal     The goal to solve.
+%   @arg List     The list of collected solutions, or an empty list if none.
+%
+%   @example
+%     % Collect all elements of a list.
+%     ?- bagof_or_nil(X, member(X, [1,2,3]), L).
+%     L = [1, 2, 3].
+%
+%     % If no solutions are found, return an empty list.
+%     ?- bagof_or_nil(X, member(X, []), L).
+%     L = [].
+%
+bagof_or_nil(T, G, L) :-
+    % Try to collect solutions using `bagof/3`. If it fails, return an empty list.
+    bagof(T, G, L) *-> true ; L = [].
 
-call_u(G):- pfcCallSystem(G).
-clause_u(H,B):- clause(H,B).
+%!  setof_or_nil(+Template, :Goal, -List) is det.
+%
+%   Executes `setof/3` and returns the solutions as a sorted list. If no 
+%   solutions are found, it returns an empty list instead of failing.
+%
+%   @arg Template The term to collect.
+%   @arg Goal     The goal to solve.
+%   @arg List     The sorted list of solutions, or an empty list if none.
+%
+%   @example
+%     % Collect unique and sorted elements.
+%     ?- setof_or_nil(X, member(X, [3,2,1,2]), L).
+%     L = [1, 2, 3].
+%
+%     % If no solutions are found, return an empty list.
+%     ?- setof_or_nil(X, member(X, []), L).
+%     L = [].
+%
+setof_or_nil(T, G, L) :-
+    % Try to collect sorted solutions using `setof/3`. If it fails, return an empty list.
+    setof(T, G, L) *-> true ; L = [].
 
-mpred_ain(P):- arc_assert(P).
-arc_assert(P:-True):- True==true,!,arc_assert(P).
-arc_assert(P):-  % fbugio(arc_assert(P)),
-  must_ex(current_why_UU(UU)),nop(fbugio(pfcAdd(P, UU))),!,
-(P, UU),asserta_if_new(P).
+%!  call_u(:Goal) is det.
+%
+%   Calls the given goal using `pfcCallSystem/1`.
+%
+%   @arg Goal The goal to be executed.
+%
+%   @example
+%     % Call a simple goal that succeeds.
+%     ?- call_u(member(X, [a, b, c])).
+%     X = a ;
+%     X = b ;
+%     X = c.
+%
+%     % Call a goal that fails.
+%     ?- call_u(member(x, [a, b, c])).
+%     false.
+%
+call_u(G) :- pfcCallSystem(G).
 
-pfc_retract(P):- fbugio(pfc_retract(P)),pfcRetract(P).
-pfc_retractall(P):- fbugio(pfc_retractall(P)),pfcRetractAll(P).
+%!  clause_u(+Head, -Body) is semidet.
+%
+%   Retrieves a clause with the given head and body.
+%
+%   @arg Head The head of the clause.
+%   @arg Body The body of the clause.
+%
+clause_u(H, B) :- clause(H, B).
 
+%!  mpred_ain(+Predicate) is det.
+%
+%   Asserts a predicate into the PFC system, handling additional logic 
+%   for assertions with bodies.
+%
+%   @arg Predicate The predicate to be asserted.
+%
+mpred_ain(P) :- arc_assert(P).
+
+%!  arc_assert(+Clause) is det.
+%
+%   Asserts a clause or fact into the Prolog system. If the given clause has a 
+%   body of `true`, only the head is asserted. The predicate also ensures that 
+%   additional metadata is attached to the assertion using `current_why_UU/1`.
+%
+%   This predicate is used for managing the insertion of facts or rules in 
+%   systems that track provenance (the reason or context behind each assertion).
+%
+%   @arg Clause The clause or fact to be asserted. It can be a head or a head-body 
+%        combination (e.g., `Head :- Body`).
+%
+arc_assert(P :- True) :-
+    % If the body is `true`, only the head is asserted.
+    True == true, !, arc_assert(P).
+arc_assert(P) :-
+    % Ensure that `current_why_UU/1` provides a reason for the assertion.
+    must_ex(current_why_UU(UU)),
+    % Optionally log the assertion (disabled with `nop`).
+    nop(fbugio(pfcAdd(P, UU))), !,
+    % Assert the predicate along with its provenance information.
+    (P, UU),
+    % Use `asserta_if_new/1` to ensure the assertion is unique.
+    asserta_if_new(P).
+
+%!  pfc_retract(+Predicate) is det.
+%
+%   Retracts a predicate from the PFC system with logging.
+%
+%   @arg Predicate The predicate to retract.
+%
+pfc_retract(P) :- fbugio(pfc_retract(P)), pfcRetract(P).
+
+%!  pfc_retractall(+Predicate) is det.
+%
+%   Retracts all instances of a predicate from the PFC system with logging.
+%
+%   @arg Predicate The predicate to retract.
+%
+pfc_retractall(P) :- fbugio(pfc_retractall(P)), pfcRetractAll(P).
+
+%!  ~(+Term) is det.
+%
+%   A dynamic negation operator. Always fails when called.
+%
 :- dynamic((~)/1).
-~(_):- fail.
+~(_) :- fail.
 
-add(X):- pfcAdd(X).
+%!  add(+X) is det.
+%
+%   Adds a term to the PFC system using `pfcAdd/1`.
+%
+%   @arg X The term to add.
+%
+add(X) :- pfcAdd(X).
 
+%!  mpred_test(:Goal) is det.
+%
+%   Tests a given goal within the PFC system and logs the result. Handles both
+%   positive and negated tests, ensuring proper logging and explanation of failures.
+%
+%   @arg Goal The goal to test.
+mpred_test(call_u(X)) :-
+    % If X is not a variable, execute the goal using pfcCallSystem/1.
+    nonvar(X), !, 
+    pfcCallSystem(X),  % Call the system version of the goal.
+    pfcWhy(X).         % Log the reasoning for the goal success.
+mpred_test(\+ call_u(X)) :-
+    % If X is not a variable, test the negated goal.
+    nonvar(X), !, 
+    (call_u(X) -> 
+        % If the goal unexpectedly succeeds, log a warning and explain why.
+        (fbugio(warn(failed(mpred_test(\+ call_u(X))))), 
+         mpred_test_why(X))  % Log the reason for the success.
+    ; 
+        % If the negated goal holds, log the explanation for its success.
+        mpred_test_why(~(X))
+    ).
+mpred_test(X) :-
+    % Test the goal. If it fails, try testing its negation.
+    (mpred_test_why(X) *-> true ; mpred_test_why(~(X))).
 
-mpred_test(call_u(X)):- nonvar(X),!,pfcCallSystem(X),pfcWhy(X).
-mpred_test(\+ call_u(X)):- nonvar(X),!, (call_u(X)-> (fbugio(warn(failed(mpred_test(\+ call_u(X))))),mpred_test_why(X)); mpred_test_why(~(X))).
-mpred_test(X):- (mpred_test_why(X) *-> true ; mpred_test_why(~(X))).
-
+% Declare `shown_child/1` and `shown_dep/2` as thread-local predicates.
+% These predicates are used to store intermediate state during the processing
+% of PFC information to avoid redundant operations within a thread.
 :- thread_local t_l:shown_child/1.
 :- thread_local t_l:shown_dep/2.
 
-pfc_info(X):- mpred_info(X).
-mpred_info(X):-
- retractall(t_l:shown_child(_)),
- retractall(t_l:shown_dep(_,_)),
- ignore((
-  forall(mpred_test_why(X),true),
-  forall(mpred_child_info(X),true))).
+%!  pfc_info(+X) is det.
+%
+%   Collects and displays information about the given predicate or term `X`.
+%   It uses `mpred_test_why/1` and `mpred_child_info/1` to collect reasoning
+%   and dependency information about `X`.
+%
+pfc_info(X) :-
+    % Delegate to `mpred_info/1`.
+    mpred_info(X).
 
-mpred_child_info(P):-
-  retractall(t_l:shown_child(_)),
-  show_child_info(P),!,
-  printLine.
+%!  mpred_info(+X) is det.
+%
+%   Collects and displays all reasoning and child dependency information 
+%   related to the given term or goal `X`. This predicate ensures that stale 
+%   information is cleared before gathering fresh data, and it uses thread-local 
+%   state to avoid redundant processing.
+%
+%   @arg X The term or goal for which information is collected.
+%
+%   @example
+%     % Collect and display information about the term `likes(john, pizza)`.
+%     ?- mpred_info(likes(john, pizza)).
+%
+mpred_info(X) :-
+    % Clear previous state to ensure no stale information is shown.
+    retractall(t_l:shown_child(_)),
+    retractall(t_l:shown_dep(_, _)),
+    % Ignore failures while collecting reasoning and child information.
+    ignore((
+        % Collect and process all reasoning information for `X`.
+        forall(mpred_test_why(X), true),
+        % Collect and process all child information for `X`.
+        forall(mpred_child_info(X), true)
+    )).
 
-show_child_info(P):-
-  pfcChildren(P,L),
-  show_child_info(P,L),!.
+%!  mpred_child_info(+P) is det.
+%
+%   Collects and displays child information for a given predicate or term `P`.
+%
+mpred_child_info(P) :-
+    % Clear previous child state.
+    retractall(t_l:shown_child(_)),
+    % Display the child information for `P`.
+    show_child_info(P), !,
+    % Print a separator line.
+    printLine.
 
-show_child_info(P,_):- t_l:shown_child(Q),P=@=Q,!.
-show_child_info(P,_):- asserta(t_l:shown_child(P)),fail.
-show_child_info(_,[]):-!.
-show_child_info(P,L):- list_to_set(L,S),
-  format("~N~nChildren for ",[]),
-  ansi_format([fg(green)],'~@',[pp(P)]),
-  format(" :~n",[]),
-  forall((member(D,S), \+ t_l:shown_dep(P,D)),(asserta(t_l:shown_dep(P,D)),ansi_format([fg(yellow)],'~N ~@. ~n',[pp(D)]))),
-  my_maplist(show_child_info,S).
+%!  show_child_info(+P) is det.
+%
+%   Gathers and displays the children of predicate `P`.
+%
+show_child_info(P) :-
+    % Retrieve all children of `P` into a list `L`.
+    pfcChildren(P, L),
+    % Display child information for `P` using the collected list `L`.
+    show_child_info(P, L), !.
+% Skip if this child has already been shown.
+show_child_info(P, _) :-
+    t_l:shown_child(Q), P =@= Q, !.
+% Mark the child as shown to prevent redundant displays.
+show_child_info(P, _) :-
+    asserta(t_l:shown_child(P)), fail.
+% Stop if there are no more children to display.
+show_child_info(_, []) :- !.
+% Display the children of `P` as a formatted set.
+show_child_info(P, L) :-
+    % Convert the list to a set to remove duplicates.
+    list_to_set(L, S),
+    % Print the header with the parent term.
+    format("~N~nChildren for ", []),
+    ansi_format([fg(green)], '~@', [pp(P)]),
+    format(" :~n", []),
+    % Print each child in yellow, and track dependencies to avoid repeats.
+    forall(
+        (member(D, S), \+ t_l:shown_dep(P, D)),
+        (
+            asserta(t_l:shown_dep(P, D)),
+            ansi_format([fg(yellow)], '~N ~@. ~n', [pp(D)])
+        )
+    ),
+    % Recursively show child information for all children.
+    my_maplist(show_child_info, S).
 
-mpred_why(X):- mpred_test_why(X).
+%!  mpred_why(+X) is det.
+%
+%   Displays reasoning information for the given goal or term `X`.
+%
+mpred_why(X) :-
+    mpred_test_why(X).
 
-mpred_test_why(X):-
-  pfcCallSystem(X)*->pfcTF1(X);(pfcTF1(X),!,fail).
+%!  mpred_test_why(+X) is det.
+%
+%   Tests and displays the reasoning or truth value of the goal or term `X`.
+%
+mpred_test_why(X) :-
+    % Call the goal using `pfcCallSystem/1`. If it succeeds, apply `pfcTF1/1`.
+    pfcCallSystem(X) *-> pfcTF1(X)
+    % If the goal fails, still apply `pfcTF1/1` but fail afterwards.
+    ; (pfcTF1(X), !, fail).
+
 
 mpred_literal(X):- pfcLiteral(X).
 mpred_positive_literal(X):- pfcPositiveLiteral(X).
