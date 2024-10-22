@@ -24,7 +24,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-21 22:48:49+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-22 20:26:20+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -353,7 +353,7 @@ Script started on 2024-10-21 22:48:49+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-METTALOG-SANITY.01-LANG-INC.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000159 secs. (159.19 microseconds) 
+; took 0.000158 secs. (158.31 microseconds) 
 
 !(assertEqual (maybe-inc Nothing) Nothing)
 
@@ -369,7 +369,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.01-LANG-INC.02</h3>
 ; 
 ; EVAL TEST
-; took 0.003 secs. (2.92 milliseconds) 
+; took 0.003 secs. (2.83 milliseconds) 
 
 !(assertEqual (maybe-inc (Just 2)) (Just 3))
 
@@ -378,7 +378,7 @@ Deterministic: ()
 </span>
 Deterministic: ()<span class="ansi32"
 >
-% 145,679 inferences, 0.045 CPU in 0.045 seconds (100% CPU, 3263501 Lips)
+% 145,623 inferences, 0.044 CPU in 0.044 seconds (100% CPU, 3303184 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/01_lang_inc.metta  0)
 <span class="ansi1"
@@ -519,7 +519,7 @@ Deterministic: ()<span class="ansi32"
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-21 22:48:55+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-22 20:26:26+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
