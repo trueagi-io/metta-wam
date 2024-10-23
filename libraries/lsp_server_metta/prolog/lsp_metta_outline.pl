@@ -47,20 +47,16 @@ d4_document_symbol(Nth, d(_,Str,_,_), S, 12, Nth:1, End:1):- succl(Nth,End), out
 % Douglas' file_buffer
 xref_document_symbol_fb(Doc, PrettyString, KindNumber, Range):- 
    doc_path(Doc,Path),
-   metta_file_buffer(0,_Ord, KindName, What,VL,Path, Range),
+   metta_file_buffer(_,_Ord, Info, What, VL, Path, Range),
+   is_list(What),
+   ((Info = index(TypeName,_Type)) -> true;(Info=TypeName,Outline=What)),
+
    must_succeed1((maybe_name_vars(VL),
-      outline_name(What, PrettyString),
+      outline_name(Outline, PrettyString),
+      type_kind(TypeName,KindName),
       lsp_xref_kind(KindNumber, KindName))).
    
 
-/*
-xref_document_symbol_fb(Doc, PrettyString, KindNumber, StartEnd):- 
-   doc_path(Doc,Path),
-   clause(metta_file_buffer(0,_Ord,_Kind,What,VL,Path,PosStart),true,Ref), line_col(PosStart,Start),
-   ignore(maybe_name_vars(VL)),
-   once(((xrefed_outline_type_kind(What,Outline,KindName),outline_name(Outline,PrettyString),lsp_xref_kind(KindNumber, KindName)))),   
-   once(((next_clause(Ref, metta_file_buffer(0,_Ord,_Kind,_,_,Path,PosEnd)), line_col(PosEnd,End)))-> true ; next_line(Start,End)).
-*/
 xrefed_outline_type_kind(What,Outline,KindName):-
    xrefed_outline_type(What,Outline,TypeName),
    type_kind(TypeName,KindName),!.
@@ -168,63 +164,11 @@ source and stuff.
 metta_called_at(Path, Clause, By, Location) :-
     matta_name_callable(Clause, Callable),
     xref_metta_source(Path),
-    metta_line_buffer(_,CallerLine, _VL, Path, Location),
+    metta_file_buffer(0,_Ord,_Kind,_,CallerLine, _VL, Path, Location),
     metta_callee(CallerLine, Callable),
     metta_caller(CallerLine, By).
 
-metta_caller(Clause, Symbol):- is_definition(decl(_),Symbol,Clause).
-metta_callee(Clause, Symbol):- is_definition(ref(_) ,Symbol,Clause).
 
-into_op_head_body(Clause,Op,Head,Body):- var(Clause),!,freeze(into_op_head_body(Clause,Op,Head,Body)).
-into_op_head_body(exec(List),Op,Head,Body):- !, into_op_head_body_exec(List,Op,Head,Body).
-into_op_head_body('$COMMENT'(List,_,_),none,[],List):- !.
-into_op_head_body([Op|List],Op,Head,Body):- nonvar(Op), op_type(import,Op),!,append(Body,[Head],List).
-into_op_head_body([Op,Head|Body],Op,Head,Body):- nonvar(Op), op_type(_,Op),!.
-into_op_head_body(Head,'=',Head,[]).
-
-into_op_head_body_exec([Op|List],Op,Head,Body):- nonvar(Op), op_type(import,Op),!,append(Body,[Head],List).
-into_op_head_body_exec([Op,Head|Body],Op,Head,Body):- nonvar(Op), op_type(_,Op),!.
-into_op_head_body_exec(Body,[],[],Body).
-
-is_exec(exec(_)).
-
-is_definition(Type,Symbol,Clause):- 
-   freeze(Type, (is_exec(Clause),compound(Type))),
-   freeze(Clause, (is_exec(Clause),compound(Type))),
-   into_op_fun_rest_body(Clause,Op,Fun,Rest,Body), 
-   type_op_head_rest_body(Type,Symbol,Op,Fun,Rest,Body).
-
-type_symbol_clause(Type,Symbol,Clause):-
-  clause_type_op_fun_rest_body(Type,Symbol,Clause,_Op,_Fun,_Rest,_Body).
-
-clause_type_op_fun_rest_body(Type,Symbol,Clause,Op,Fun,Rest,Body):-
-   ( ( \+ var(Clause)) -> true ; (metta_file_buffer(0,_Ord,_Kind, Clause, VL, _Filename, _LineCount),ignore(maybe_name_vars(VL)))),
-   once(into_op_fun_rest_body(Clause,Op,Fun,Rest,Body)),
-   type_op_head_rest_body(Type,Symbol,Op,Fun,Rest,Body).
-   
-
-into_op_fun_rest_body(Clause,Op,Fun,Rest,Body):- 
-  into_op_head_body(Clause,Op,Head,Body), split_head(Head,Fun,Rest).
-
-split_head([Fun|Rest],Fun,Rest):- is_list(Rest),!.
-split_head(Head,Head,[]).
-
-type_op_head_rest_body(decl(use), Symbol, Op,_Head,_Rest, Body):- op_type(import,Op),    sub_symbol(Symbol,Body).
-type_op_head_rest_body(ref(a), Symbol, Op, Head,_Rest,_Body):- op_type(import,Op), !, sub_symbol(Symbol,Head).
-
-type_op_head_rest_body(ref(a), Symbol,_Op,_Head, Rest, Body):- not_promiscuous(Symbol),sub_symbol(Symbol,[Body, Rest]).
-type_op_head_rest_body(Type,Symbol, Op, Head,_Rest,_Body):- op_type(Type,Op),!,sub_symbol(Symbol,Head).
-
-not_promiscuous(Symbol):- var(Symbol), !, freeze(Symbol,not_promiscuous(Symbol)).
-not_promiscuous(Symbol):- number(Symbol),!, fail.
-not_promiscuous(Symbol):- \+ promiscuous_symbol(Symbol).
-
-sub_symbol(Symbol,Head):- ground(Symbol),!,sub_var(Symbol,Head),!.
-sub_symbol(Symbol,Head):- \+ var(Symbol), once(sub_term(Symbol,Head)),!.
-sub_symbol(Symbol,Head):- sub_term(Symbol,Head),atom(Symbol),!.
-sub_symbol(Symbol,Head):- sub_term(Symbol,Head),string(Symbol),!.
-sub_symbol(Symbol,Head):- sub_term(Symbol,Head),atomic(Symbol),!.
-sub_symbol(Symbol,Head):- sub_term(Symbol,Head),!.
 
 xref_metta_defined(Path, Target, Ref):-
   xref_metta_defined(Type, Target, Path, Ref), Type\=ref(_).
