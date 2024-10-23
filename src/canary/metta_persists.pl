@@ -1,3 +1,6 @@
+% Ensure that the `metta_interp` library is loaded,
+% That loads all the predicates called from this file
+:- ensure_loaded(metta_interp).
 
 % Import necessary libraries for handling RDF, Turtle, N-Triples, and RDF persistence.
 :- use_module(library(semweb/rdf_db)).

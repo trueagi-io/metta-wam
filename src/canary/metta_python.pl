@@ -90,6 +90,10 @@ Prolog Extensions with Python:
 */
 :- use_module(library(filesex)).
 
+% Ensure that the `metta_interp` library is loaded,
+% That loads all the predicates called from this file
+:- ensure_loaded(metta_interp).
+
 %!  janus_initialization is det.
 %
 %   Ensures that the Janus Prolog module is loaded. This predicate attempts to load 
