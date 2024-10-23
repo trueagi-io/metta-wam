@@ -103,10 +103,10 @@ code_action_hook("textDocument/codeAction", Msg, _{id: Id, result: Actions}) :-
     compute_code_actions(Uri, Range, Actions).
 
 % Compute Code Actions for Specified Kinds, with symbols in titles
-compute_code_actions(Uri, Range, Actions) :-
-      % Extract the symbol from the code at the range
-    get_code_at_range(symbol, Uri, Range, Symbol),
-    compute_symbol_code_actions(Uri, Range, Symbol, Actions).
+compute_code_actions(Uri, Range, Actions) :- % Extract the symbol from the code at the range
+    get_code_at_range(symbol, Uri, Range, Symbol), symbol(Symbol),
+    compute_symbol_code_actions(Uri, Range, Symbol, Actions),!.
+compute_code_actions(_Uri,_Range, []).
 
 % nb_append_code_actions(+HT, +ElementToAppend)
 % Destructively append ElementToAppend to the end of HT by finding the last cons cell.
