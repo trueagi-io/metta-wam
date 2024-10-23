@@ -63,6 +63,9 @@
 %   through ChatGPT, simplifying the process of verifying code correctness and ensuring
 %   functionality without needing to leave the IDE.
 %
+% Author: Douglas Miles   
+% Date: 10-21-2024
+%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 :- multifile lsp_hooks:handle_msg_hook/3.
@@ -134,7 +137,7 @@ get_filepart(Uri, FilePart) :-
 
 compute_symbol_code_actions(Uri, Range, Symbol, Actions) :-
     get_code_at_range(expression, Uri, Range, Expression),
-    get_code_at_range(block, Uri, Range, Code), 
+    get_code_at_range(block, Uri, Range, Code),
     get_filepart(Uri, FilePart),
     trim_to_length(Code, 300, Block),
     
@@ -142,7 +145,8 @@ compute_symbol_code_actions(Uri, Range, Symbol, Actions) :-
     Actions = [FirstAction],
 
     % Run All Tests Action
-    sformat(AllTestsTitle, "Run All Tests in File: '~w'", [FilePart]),
+    into_line_char_range(Range,LCR),
+    sformat(AllTestsTitle, "Run All Tests in File: '~w' (~w)", [FilePart, LCR]),
     FirstAction = _{
         title: AllTestsTitle,
         kind: "refactor.runAllTests",
@@ -170,7 +174,7 @@ compute_symbol_code_actions(Uri, Range, Symbol, Actions) :-
 
     % Conditional placeholder for GPT Rewrite Block action
     ( true /* Condition for GPT Rewrite */ ->
-       (sformat(RewriteTitle, "Refactor: Have GPT Rewrite Block '~w'", [Expression]),
+       (sformat(RewriteTitle, "Refactor: Have GPT Rewrite Block '~w'", [Block]),
         RewriteAction = _{
            title: RewriteTitle,
            kind: "refactor.rewrite",
@@ -198,9 +202,9 @@ compute_symbol_code_actions(Uri, Range, Symbol, Actions) :-
         nb_append_code_actions(Actions, CommentCodeAction))
     ; true),
 
-    % Conditional placeholder for Eval Metta Block action
+    % Conditional placeholder for Eval Metta action
     ( true ->
-       (sformat(EvalMettaTitle, "Eval Metta Block '~w'", [Expression]),
+       (sformat(EvalMettaTitle, "Eval Metta: '~w'", [Expression]),
         EvalMettaAction = _{
             title: EvalMettaTitle,
             kind: "quickfix.eval",
@@ -257,8 +261,8 @@ execute_command("refactor_gpt_rewrite", [Uri, Range], ExecutionResult) :-
 
 % GPT-based comment suggestion command
 execute_command("source_gpt_comment", [Uri], ExecutionResult) :-
-    get_code_at_range(block, Uri, Range, Code),
-    gpt_comment_code(Code, ExecutionResult).
+    source_file_text(Uri, Text), 
+    gpt_comment_code(Text, ExecutionResult).
 
 % Evaluate Metta code
 execute_command("eval_metta", [Uri, Range], ExecutionResult) :-
@@ -277,36 +281,47 @@ execute_command(_, _, "Command not recognized.").
 % Helper Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Converts a position or range into a line_char range.
-% Pos: Single position or a range (from LSP format).
-% Start and End are line_char pairs representing the start and end of the range.
-into_line_char_range(Pos, range(Start, End)):-
-   _{line: Line0, character: Char0} :< Pos,  % Match LSP position format (line and character).
-   Start = line_char(Line0, Char0),  % Set Start to the position's line and character.
-   End = Start, !.  % If a single position, start and end are the same.
-into_line_char_range(Range, range(Start, End)):-   
-   _{start: RStart, end: REnd} :< Range,  % Match LSP range format (start and end positions).
-   into_line_char_range(RStart, range(Start, _)),  % Convert start position into line_char.
-   into_line_char_range(REnd, range(End, _)), !.  % Convert end position into line_char.
-
 % Checks if the first line_char comes before the second one.
 before_line_char(line_char(Line1,_Char1),line_char(Line2,_Char2)):- 
-    Line1 > Line2,!, fail.  % If the first line is greater than the second, it's not before.
+    Line1 > Line2, !, fail.  % If the first line is greater than the second, it's not before.
 before_line_char(line_char(Line1,Char1),line_char(Line2,Char2)):- 
-    Line1 =:= Line2, Char1 > Char2,!, fail.  % If on the same line, compare characters.
+    Line1 =:= Line2, Char1 > Char2, !, fail.  % If on the same line, compare characters.
 before_line_char(_, _).  % Otherwise, the first one is before the second.
 
 % Checks if the first range ends before the second range starts.
-before_range(range(_,LineChar1),range(LineChar2,_)):- 
+completely_before_range(range(_,LineChar1),range(LineChar2,_)):- 
     before_line_char(LineChar1, LineChar2), !.
+% Checks if the first range starts before the second range starts.
+before_range(range(LineChar1,_),range(LineChar2,_)):- 
+    before_line_char(LineChar1, LineChar2), !.
+
+
+% Checks if the first line_char comes after the second one.
+after_line_char(line_char(Line1,_Char1),line_char(Line2,_Char2)):- 
+    Line1 < Line2, !, fail.  % If the first line is greater than the second, it's not after.
+after_line_char(line_char(Line1,Char1),line_char(Line2,Char2)):- 
+    Line1 =:= Line2, Char1 < Char2, !, fail.  % If on the same line, compare characters.
+after_line_char(_, _).  % Otherwise, the first one is after the second.
+
+
+% Checks if the first range starts after the second range ends.
+completely_after_range(range(LineChar1,_),range(_,LineChar2)):- 
+    after_line_char(LineChar1, LineChar2), !.
+% Checks if the first range starts after the second range starts.
+after_range(range(LineChar1,_),range(LineChar2,_)):- 
+    after_line_char(LineChar1, LineChar2), !.
 
 % Extract code at the specified range for different types of targets (symbol, expression, block, exact).
 % For `symbol`, it looks for a clause/term in the file at the specified position.
+get_code_at_range(TargetType, Uri, Range, Target):- \+ (is_dict(Range), _{start: RStart, end: _REnd} :< Range),
+   into_json_range(Range, LspRange), !,
+   get_code_at_range(TargetType, Uri, LspRange, Target).
+
 get_code_at_range(symbol, Uri, Range, Target):- !, 
     must_succeed1((
         _{start: RStart, end: _REnd} :< Range,  % Extract the start and end from the LSP range.
         _{line: StartLine0, character: StartChar} :< RStart,  % Get line and character from the start position.
-        atom_concat('file://', Path, Uri),  % Extract the file path from the URI.
+        path_doc(Path, Uri),  % Extract the file path from the URI.
         Start = line_char(StartLine0, StartChar),  % Convert to a line_char pair.
         lsp_metta_utils:clause_with_arity_in_file_at_position(Target, _Arity, Path, Start)  % Get the clause at the specified position.
     )).
@@ -315,11 +330,12 @@ get_code_at_range(symbol, Uri, Range, Target):- !,
 get_code_at_range(expression, Uri, Range, SrcCode) :-
     get_code_at_range(symbol, Uri, Range, Target),  % First, get the symbol at the range.
     Target \== '',
-    atom_concat('file://', Path, Uri),  % Extract the file path from the URI.
-    into_line_char_range(Range, LspRange),  % Convert the LSP range into line_char format.
-    metta_file_buffer(_, Code, Vs, Path, BRange),  % Get the buffer contents for the file.
-    \+ before_range(LspRange, BRange),  % Ensure the buffer range is relevant to the LSP range.
+    path_doc(Path, Uri),  % Extract the file path from the URI.
+    into_line_char_range(Range, LspLCRange),  % Convert the LSP range into line_char format.
+    metta_file_buffer(_, Code, Vs, Path, BRange),  % Get the buffer contents for the file.    
     sub_var(Target, Code),  % Check that the symbol (Target) appears within the buffer (Code).
+    \+ completely_before_range(BRange, LspLCRange),  % Ensure the buffer range is relevant to the LSP range.
+    \+ completely_after_range(BRange, LspLCRange),  % Ensure the buffer range is relevant to the LSP range.
     maybe_name_vars(Vs), !,
     with_output_to(string(SrcCode),write_src_wi(Code)).
     % brange_to_dict(BRange,CodeRange), get_code_at_range(exact, Uri, BRange, Code).  % Refine the code extraction with exact range.
@@ -333,7 +349,7 @@ get_code_at_range(block, Uri, Range, Code):-
 
 % Extracts the exact range of code specified by the Range (LSP-style start and end).
 get_code_at_range(exact, Uri, Range, Code) :-
-    atom_concat('file://', Path, Uri),  % Extract the file path from the URI.
+    path_doc(Path, Uri),  % Extract the file path from the URI.
     source_file_text(Path, FullText),  % Retrieve the full file text.
     split_string(FullText, "\n", "", Lines),  % Split the file into lines.
     _{start: Start, end: End} :< Range,  % Extract start and end positions from the range.
@@ -366,7 +382,7 @@ extract_code(Lines, StartLine, StartChar, EndLine, EndChar, Code) :-
 
 % Retrieves the entire code content from a file given its URI.
 get_code_from_file(Uri, Code) :-
-    atom_concat('file://', Path, Uri),  % Extract the file path from the URI.
+    path_doc(Path, Uri),  % Extract the file path from the URI.
     read_file_to_string(Path, Code, []).  % Read the entire file content into Code.
 
 
@@ -480,7 +496,7 @@ replace_symbol_in_code(OldSymbol, NewName, Code, UpdatedCode) :-
 
 % Helper to save the updated code to the file
 save_updated_code(Uri, UpdatedCode) :-
-    atom_concat('file://', Path, Uri),
+    path_doc(Path, Uri),
     open(Path, write, Stream),
     write(Stream, UpdatedCode),
     close(Stream).

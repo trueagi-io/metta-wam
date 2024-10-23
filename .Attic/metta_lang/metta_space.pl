@@ -52,8 +52,11 @@
  */
 
 
-
+% Ensure that the `metta_interp` library is loaded,
+% That loads all the predicates called from this file
+:- ensure_loaded(metta_interp).
 :- ensure_loaded(metta_compiler).
+
 %:- ensure_loaded(metta_compiler).
 % TODO move non flybase specific code between here and the compiler
 %:- ensure_loaded(flybase_main).
@@ -673,12 +676,12 @@ search_for2(X):-
 
 
 metta_file_src(Where,What):-
-  loaded_into_kb(Where,File), metta_file_buffer(_,What,Vars,File,_Loc),
+  loaded_into_kb(Where,File), metta_file_buffer(0,_Ord,_Kind,What,Vars,File,_Loc),
   ignore(maplist(name_the_var,Vars)).
 
 
 guess_metta_vars(What):-
-  ignore(once((metta_file_buffer(_,What0,Vars,_File,_Loc),
+  ignore(once((metta_file_buffer(0,_Ord,_Kind,What0,Vars,_File,_Loc),
      alpha_unify(What,What0),
      maplist(name_the_var,Vars)))).
 name_the_var(N=V):- ignore((atom_concat('_',NV,N),V='$VAR'(NV))).

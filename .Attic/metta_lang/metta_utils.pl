@@ -73,6 +73,11 @@
 % that are needed throughout the system.
 :- ensure_loaded(library(logicmoo_utils)).
 
+% Ensure that the `metta_interp` library is loaded,
+% That loads all the predicates called from this file
+:- ensure_loaded(metta_interp).
+
+
 % Prevent the dynamic predicate `user:'$exported_op'/3` from succeeding. 
 % Stop certain operations or exports in the user module by forcing them to fail.
 :- assert((user:'$exported_op'(_,_,_):- fail)).

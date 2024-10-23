@@ -51,7 +51,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-%
+% When the the `metta_interp` library is loaded, it makes sure the rest of the files are intially loaded in 
+% the correct order independent of which file is loaded first the needed predicates and ops are defined.
+:- ensure_loaded(metta_interp).
+
 % post match modew
 %:- style_check(-singleton).
 :- multifile(fake_notrace/1).
@@ -315,6 +318,13 @@ eval_20(Eq,RetType,Depth,Self,[[Eval,V]|VI],VO):- Eval == eval,!,
 eval_20(Eq,_RetType,Depth,Self,[V|VI],VO):-  \+ callable(V), is_list(VI),!,
   maplist(eval_ret(Eq,_ArgRetType,Depth,Self),[V|VI],VOO),VO=VOO.
 
+eval_20(Eq,RetType,Depth,Self,[X|T],[Y]):- T==[], is_list(X),!,
+   eval_args(Eq,RetType,Depth,Self,X,Y).
+
+eval_20(Eq,RetType,Depth,Self,[X|Rest],YL):- is_list(Rest), is_list(X),!,
+   eval_args(Eq,RetType,Depth,Self,X,Y),
+   ((X\=@=Y,atom(Y)) -> eval_args(Eq,RetType,Depth,Self,[Y|Rest],YL)
+     ; ((maplist(eval_args(Eq,RetType,Depth,Self),Rest,YRest),YL=[Y|Rest]))).
 
 eval_20(Eq,RetType,Depth,Self,[V|VI],VVO):-  \+ is_list(VI),!,
  eval_args(Eq,RetType,Depth,Self,VI,VM),

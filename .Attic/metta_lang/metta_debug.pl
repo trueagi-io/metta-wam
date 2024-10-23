@@ -57,6 +57,10 @@
 % and interactively exploring justifications for derived facts.
 %*********************************************************************************************
 
+% When the the `metta_interp` library is loaded, it makes sure the rest of the files are loaded in 
+% the correct order independent of which file is loaded first and the needed predicates and ops are defined.
+:- ensure_loaded(metta_interp).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % IMPORTANT:  DO NOT DELETE COMMENTED-OUT CODE AS IT MAY BE UN-COMMENTED AND USED
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

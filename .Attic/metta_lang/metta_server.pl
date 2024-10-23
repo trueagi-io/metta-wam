@@ -54,6 +54,10 @@
 :- use_module(library(socket)).  % Provides predicates for socket operations
 :- use_module(library(thread)).  % Provides predicates for multi-threading
 
+% Ensure that the `metta_interp` library is loaded,
+% That loads all the predicates called from this file
+:- ensure_loaded(metta_interp).
+
 %!  call_wdet(+Goal, -WasDet) is nondet.
 %
 %   Calls the given Goal and checks if it was deterministic.

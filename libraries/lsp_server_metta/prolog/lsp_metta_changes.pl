@@ -36,18 +36,18 @@ handle_doc_change(Path, Change) :-
     atom_codes(Text, ChangeCodes),
     doc_text_fallback(Path, OrigDocument),
     split_document_get_multiple_sections(StartLine,EndLine,NewStartLine,OrigDocument,Pre,This,Post),
-    %debug(server,"0:~w ~w ~w ~w ~w",[NewStartLine,EndLine,StartChar,ReplaceLen,This]),
+    %debug(lsp(low),"0:~w ~w ~w ~w ~w",[NewStartLine,EndLine,StartChar,ReplaceLen,This]),
     coalesce_text(This,TextBlock),
-    %debug(server,"1:~w",[TextBlock]),
+    %debug(lsp(low),"1:~w",[TextBlock]),
     string_codes(TextBlock,OrigCodes),
-    %debug(server,"2:~w",[OrigCodes]),
+    %debug(lsp(low),"2:~w",[OrigCodes]),
     replace_codes(OrigCodes, NewStartLine, StartChar, ReplaceLen, ChangeCodes,
                   NewCodes),
-    %debug(server,"3:~w",[NewCodes]),
+    %debug(lsp(low),"3:~w",[NewCodes]),
     string_codes(NewText,NewCodes),
-    %debug(server,"4:~w",[NewText]),
+    %debug(lsp(low),"4:~w",[NewText]),
     split_text_document(NewText,NewSplitText),
-    %debug(server,"5:~w",[NewSplitText]),
+    %debug(lsp(low),"5:~w",[NewSplitText]),
     append([Pre,NewSplitText,Post],NewDocument),
     retractall(doc_text(Path, _)),
     assertz(doc_text(Path, NewDocument)).
@@ -73,7 +73,7 @@ replace_codes(Text, StartLine, StartChar, ReplaceLen, ReplaceText, NewText) :-
     phrase(replace(StartLine, StartChar, ReplaceLen, ReplaceText),
            Text,
            NewText).
-    %debug(server,"replace_codes ~w ~w ~w ~w ~w ~w", [Text, StartLine, StartChar, ReplaceLen, ReplaceText, NewText]).
+    %debug(lsp(low),"replace_codes ~w ~w ~w ~w ~w ~w", [Text, StartLine, StartChar, ReplaceLen, ReplaceText, NewText]).
 
 replace(0, 0, 0, NewText), NewText --> !, [].
 replace(0, 0, Skip, NewText) -->
