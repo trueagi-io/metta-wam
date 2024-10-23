@@ -2,7 +2,7 @@
                         token_types/1,
                         token_modifiers/1]).
 
-% these are Prolog token types/modifiers. Need to change to meTTa.
+% these are LSP token types/modifiers.
 
 token_types([namespace,
              type,

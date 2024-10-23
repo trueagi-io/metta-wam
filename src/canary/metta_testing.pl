@@ -7,6 +7,10 @@
 %:- encoding(iso_latin_1).
 
 :- ensure_loaded(library(occurs)).
+
+% Ensure that the `metta_interp` library is loaded,
+% That loads all the predicates called from this file
+:- ensure_loaded(metta_interp).
 :- ensure_loaded(metta_utils).
 
 % Reset loonit counters

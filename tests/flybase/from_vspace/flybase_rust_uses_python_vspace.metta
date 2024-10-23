@@ -1,3 +1,5 @@
+;; !(do-77-queries)
+
 ;;  Load the VSPACE python space
 
 ;; to start in MeTTaLog use    ./MeTTa 8-FlybaseQuestions.metta --repl
@@ -77,10 +79,10 @@
 
 ;; Query: Count Genes Involved in Gene Regulation and Exclude Those with Less Than 2 Instances
 (query-info "Count genes involved in gene regulation and exclude those with less than 2 instances."
-    (genes-regulation-naf-<-two $GeneSymbol $GeneRegulation $NumberOf)
+    (genes-regulation-not-<-two $GeneSymbol $GeneRegulation $NumberOf)
     (, (gene_functional_complementation! $GeneSymbol $_ $_ $GeneRegulation $_ $_)
        (number-of (gene_functional_complementation! $GeneSymbol $_ $_ $GeneRegulation $_ $_) $NumberOf)
-       (naf (< $NumberOf 2)))
+       (not (< $NumberOf 2)))
 )
 
 ;; Query: Identify Genes with Allelic Variants and Select Those with More Than 6 Variants
@@ -538,105 +540,105 @@
 
 
 ;; Query: Find Genes Involved in RNA Processing but Not in Gene Regulation
-(query-info "Identify genes involved in RNA processing but naf in gene regulation."
-    (genes-rna-naf-regulation $GeneSymbol $RNAProcess)
+(query-info "Identify genes involved in RNA processing but not in gene regulation."
+    (genes-rna-not-regulation $GeneSymbol $RNAProcess)
     (, (gene_rpkm_matrix! $GeneSymbol $_ $_ $RNAProcess $_)
-       (naf (gene_functional_complementation! $GeneSymbol $_ $_ $_ $_ $_)))
+       (not (gene_functional_complementation! $GeneSymbol $_ $_ $_ $_ $_)))
 )
 
 ;; Query: Retrieve Publications Related to Specific Genes but Not Their Allelic Variants
-(query-info "Retrieve publications related to specific genes but naf their allelic variants."
-    (publications-genes-naf-alleles $GeneSymbol $Publication)
+(query-info "Retrieve publications related to specific genes but not their allelic variants."
+    (publications-genes-not-alleles $GeneSymbol $Publication)
     (, (entity_publication! $Publication $_ $GeneSymbol $_)
-       (naf (allele_genetic_interactions! $_ $_ $_ $GeneSymbol)))
+       (not (allele_genetic_interactions! $_ $_ $_ $GeneSymbol)))
 )
 
 ;; Query: Identify Genes with cDNA Clones but Not Involved in Specific Pathways
-(query-info "Identify genes that have cDNA clones but are naf involved in specific pathways."
-    (genes-cdna-naf-pathways $GeneSymbol $CloneName)
+(query-info "Identify genes that have cDNA clones but are not involved in specific pathways."
+    (genes-cdna-not-pathways $GeneSymbol $CloneName)
     (, (cDNA_clone! $CloneName $_ $GeneSymbol $_ $_ $_)
-       (naf (pathway_group! $GeneSymbol $_ $_ $_ $_ $_ $_)))
+       (not (pathway_group! $GeneSymbol $_ $_ $_ $_ $_ $_)))
 )
 
 ;; Query: Associate Genes with Synonyms but Exclude Certain Protein Isoforms
 (query-info "Associate genes with their synonyms but exclude certain protein isoforms."
-    (genes-synonyms-naf-proteins $GeneSymbol $Synonym)
+    (genes-synonyms-not-proteins $GeneSymbol $Synonym)
     (, (fb_synonym! $GeneSymbol $_ $_ $Synonym $_)
-       (naf (dmel_unique_protein_isoforms! $GeneSymbol $_ $_ $_)))
+       (not (dmel_unique_protein_isoforms! $GeneSymbol $_ $_ $_)))
 )
 
 ;; Query: Link Alleles to Phenotypes but Exclude Specific Genetic Interactions
 (query-info "Link alleles to their phenotypes but exclude specific genetic interactions."
-    (alleles-phenotypes-naf-interactions $AlleleSymbol $Phenotype)
+    (alleles-phenotypes-not-interactions $AlleleSymbol $Phenotype)
     (, (allele_phenotypic! $AlleleSymbol $_ $Phenotype $_)
-       (naf (allele_genetic_interactions! $AlleleSymbol $_ $_ $_)))
+       (not (allele_genetic_interactions! $AlleleSymbol $_ $_ $_)))
 )
 
 ;; Query: Find Genes Involved in Physical Interactions but Not Associated with Diseases
-(query-info "Find genes involved in physical interactions but naf associated with specific diseases."
-    (genes-physical-naf-disease $GeneSymbol $PhysicalInteraction)
+(query-info "Find genes involved in physical interactions but not associated with specific diseases."
+    (genes-physical-not-disease $GeneSymbol $PhysicalInteraction)
     (, (physical_interactions_mitab! $GeneSymbol $_ $_ $PhysicalInteraction $_ $_ $_ $_ $_)
-       (naf (disease_model_annotations! $GeneSymbol $_ $_ $_ $_ $_ $_ $_ $_ $_)))
+       (not (disease_model_annotations! $GeneSymbol $_ $_ $_ $_ $_ $_ $_ $_ $_)))
 )
 
 ;; Query: Retrieve Gene Snapshots but Exclude Those Related to Enzymatic Functions
 (query-info "Retrieve gene snapshots but exclude those related to enzymatic functions."
-    (gene-snapshots-naf-enzymes $GeneSymbol $SnapshotText)
+    (gene-snapshots-not-enzymes $GeneSymbol $SnapshotText)
     (, (gene_snapshots! $GeneSymbol $_ $_ $SnapshotText $_)
-       (naf (Dmel_enzyme! $GeneSymbol $_ $_ $_ $_ $_ $_ $_)))
+       (not (Dmel_enzyme! $GeneSymbol $_ $_ $_ $_ $_ $_ $_)))
 )
 
 ;; Query: Correlate Genes with Expression in Tissues but Not During Specific Stages
-(query-info "Correlate genes with their expression in tissues but naf during specific developmental stages."
-    (genes-expression-tissues-naf-stages $GeneSymbol $Tissue)
+(query-info "Correlate genes with their expression in tissues but not during specific developmental stages."
+    (genes-expression-tissues-not-stages $GeneSymbol $Tissue)
     (, (scRNA-Seq_gene_expression! $_ $_ $_ $_ $Tissue $_ $_ $_ $GeneSymbol $_ $_)
-       (naf (gene_rpkm_report! $GeneSymbol $_ $_ $_ $_ $_ $_ $_ $_ $_ $_ $_)))
+       (not (gene_rpkm_report! $GeneSymbol $_ $_ $_ $_ $_ $_ $_ $_ $_ $_ $_)))
 )
 
 
 ;; Query: Find Genes with Specific Transcripts or Protein Isoforms but Not Involved in Certain Pathways
-(query-info "Identify genes that have specific transcripts or protein isoforms but are naf involved in certain pathways."
-    (genes-transcripts-proteins-naf-pathways $GeneSymbol $TranscriptID $ProteinIsoform $ExcludedPathway)
+(query-info "Identify genes that have specific transcripts or protein isoforms but are not involved in certain pathways."
+    (genes-transcripts-proteins-not-pathways $GeneSymbol $TranscriptID $ProteinIsoform $ExcludedPathway)
     (, (gene_map_table! $GeneSymbol $_ $_ $_ $_ $_)
        (, (or (fbgn_fbtr_fbpp! $GeneSymbol $TranscriptID $_ $_ $_)
                  (dmel_unique_protein_isoforms! $GeneSymbol $_ $ProteinIsoform $_))
-            (naf (pathway_group! $GeneSymbol $_ $_ $_ $ExcludedPathway $_ $_))))
+            (not (pathway_group! $GeneSymbol $_ $_ $_ $ExcludedPathway $_ $_))))
 )
 
 ;; Query: Retrieve Gene Snapshots or Allelic Variants but Exclude Genes with Certain Phenotypes
 (query-info "Retrieve gene snapshots or allelic variants but exclude genes associated with certain phenotypes."
-    (gene-snapshots-alleles-naf-phenotypes $GeneSymbol $SnapshotText $AlleleSymbol $ExcludedPhenotype)
+    (gene-snapshots-alleles-not-phenotypes $GeneSymbol $SnapshotText $AlleleSymbol $ExcludedPhenotype)
     (, (gene_map_table! $GeneSymbol $_ $_ $_ $_ $_)
        (, (or (gene_snapshots! $GeneSymbol $_ $SnapshotText $_)
                  (allele_genetic_interactions! $AlleleSymbol $_ $_ $_ $GeneSymbol))
-            (naf (allele_phenotypic! $AlleleSymbol $_ $ExcludedPhenotype $_))))
+            (not (allele_phenotypic! $AlleleSymbol $_ $ExcludedPhenotype $_))))
 )
 
 ;; Query: Link Genes to Physical Interactions or Publications but Not to Specific Disease Models
-(query-info "Link genes to physical interactions or relevant publications but naf to specific disease models."
-    (genes-interactions-publications-naf-disease $GeneSymbol $PhysicalInteraction $Publication $ExcludedDisease)
+(query-info "Link genes to physical interactions or relevant publications but not to specific disease models."
+    (genes-interactions-publications-not-disease $GeneSymbol $PhysicalInteraction $Publication $ExcludedDisease)
     (, (gene_map_table! $GeneSymbol $_ $_ $_ $_ $_)
        (, (or (physical_interactions_mitab! $GeneSymbol $_ $_ $PhysicalInteraction $_ $_)
                  (entity_publication! $Publication $_ $GeneSymbol $_))
-            (naf (disease_model_annotations! $GeneSymbol $_ $_ $_ $_ $_ $_ $ExcludedDisease))))
+            (not (disease_model_annotations! $GeneSymbol $_ $_ $_ $_ $_ $_ $ExcludedDisease))))
 )
 
 ;; Query: Associate Genes with cDNA Clones or Enzymatic Functions but Exclude Certain Synonyms
 (query-info "Associate genes with cDNA clones or enzymatic functions but exclude certain synonyms."
-    (genes-cdna-enzymes-naf-synonyms $GeneSymbol $CloneName $EnzymeFunction $ExcludedSynonym)
+    (genes-cdna-enzymes-not-synonyms $GeneSymbol $CloneName $EnzymeFunction $ExcludedSynonym)
     (, (gene_map_table! $GeneSymbol $_ $_ $_ $_ $_)
        (, (or (cDNA_clone! $CloneName $_ $GeneSymbol $_)
                  (Dmel_enzyme! $GeneSymbol $_ $_ $EnzymeFunction $_))
-            (naf (fb_synonym! $GeneSymbol $_ $_ $ExcludedSynonym $_))))
+            (not (fb_synonym! $GeneSymbol $_ $_ $ExcludedSynonym $_))))
 )
 
 ;; Query: Find Genes Involved in RNA Processing or Gene Regulation but Not Linked to Specific Protein Accessions
-(query-info "Find genes involved in RNA processing or gene regulation but naf linked to specific protein accessions."
-    (genes-rna-regulation-naf-proteins $GeneSymbol $RNAProcess $GeneRegulation $ExcludedProteinAccession)
+(query-info "Find genes involved in RNA processing or gene regulation but not linked to specific protein accessions."
+    (genes-rna-regulation-not-proteins $GeneSymbol $RNAProcess $GeneRegulation $ExcludedProteinAccession)
     (, (gene_map_table! $GeneSymbol $_ $_ $_ $_ $_)
        (, (or (gene_rpkm_matrix! $GeneSymbol $_ $_ $RNAProcess $_)
                  (gene_functional_complementation! $GeneSymbol $_ $_ $GeneRegulation $_))
-            (naf (fbgn_NAseq_Uniprot! $GeneSymbol $_ $_ $ExcludedProteinAccession $_ $_ $_)))))
+            (not (fbgn_NAseq_Uniprot! $GeneSymbol $_ $_ $ExcludedProteinAccession $_ $_ $_)))))
 
 
 !(fb-info!)
@@ -699,6 +701,4 @@
 
 
 !(do-77-queries)
-
-
 

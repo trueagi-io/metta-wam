@@ -1,4 +1,4 @@
-:- module(lsp_server_metta, [main/0]).
+:- module(lsp_server_metta, [main/0 ]).
 /** <module> LSP Server
 
 The main entry point for the Language Server implementation with dynamic handling based on max threads.
@@ -21,10 +21,10 @@ Supports LSP methods like hover, document symbol, definition, references, and mo
 :- use_module(library(yall)).
 
 :- use_module(lsp_metta_utils).
-:- use_module(lsp_metta_checking, [check_errors/2]).
+:- use_module(lsp_metta_checking, [metta_check_errors/2]).
 :- use_module(lsp_json_parser, [lsp_metta_request//1]).
 :- use_module(lsp_metta_changes, [handle_doc_changes/2]).
-:- use_module(lsp_metta_completion, [completions_at/3]).
+:- ensure_loaded(lsp_metta_completion).
 :- use_module(lsp_metta_colours, [
 %                            file_colours/2,
 %                            file_range_colours/4,
@@ -38,8 +38,10 @@ Supports LSP methods like hover, document symbol, definition, references, and mo
 
 
 % will change to module in a few days (easier to test externally from `user`)
-:- user:ensure_loaded(lsp_metta_code_actions). 
-:- user:ensure_loaded(lsp_metta_outline). %( [xref_source/1, xref_document_symbol/5, xref_document_symbols/2]).
+:- user:ensure_loaded(lsp_metta_code_actions).
+%:- user:ensure_loaded(lsp_metta_save_actions).
+:- user:ensure_loaded(lsp_metta_workspace).
+:- user:ensure_loaded(lsp_metta_outline). %( [xref_metta_source/1, xref_document_symbol/5, xref_document_symbols/2]).
 :- dynamic(user:full_text/2).
 
 :- dynamic lsp_metta_changes:doc_text/2.
@@ -349,8 +351,8 @@ server_capabilities(
       codeActionProvider: true,  % Changed from false to true
 
 
-      % codeLensProvider: _{resolveProvider: true},  % Enabled resolveProvider
-      documentFormattingProvider:false,
+      codeLensProvider: _{resolveProvider: true},  % Enabled resolveProvider
+      documentFormattingProvider: true,
       %% documentOnTypeFormattingProvider: false,
       renameProvider: false,
       % documentLinkProvider: false,
@@ -389,9 +391,7 @@ handle_msg("initialize", Msg,
            _{id: Id, result: _{capabilities: ServerCapabilities} }) :-
     _{id: Id, params: Params} :< Msg, !,
     ( Params.rootUri \== null
-    -> ( atom_concat('file://', RootPath, Params.rootUri),
-         directory_source_files(RootPath, Files, [recursive(true)]),
-         maplist([F]>>assert(in_editor(F)), Files) )
+    -> xref_metta_source(Params.rootUri)
     ; true ),
     assert(client_capabilities(Params)),
     server_capabilities(ServerCapabilities).
@@ -404,10 +404,10 @@ handle_msg("shutdown", Msg, _{id: Id, result: null}) :-
 % IN: params:{position:{character:11,line:56},textDocument:{uri:file://<FILEPATH>}}}
 % OUT: {id:21,result:{contents:{kind:plaintext,value:<ALL_THE_STUFF>}}}
 handle_msg("textDocument/hover", Msg, _{id: Id, result: Response}) :- % fail,
-    _{params: _{position: _{character: Char0, line: Line},
+    _{params: _{position: _{character: Char0, line: Line0},
                 textDocument: _{uri: Doc}}, id: Id} :< Msg,
-    atom_concat('file://', Path, Doc),
-    (  help_at_position(Path, Line, Char0, Help)
+    doc_path(Doc, Path),
+    (  help_at_position(Path, Line0, Char0, Help)
     -> into_result_object(Help, Response)
     ;  Response = null), !.
 handle_msg("textDocument/hover", Msg, _{id: Msg.id, result: null}) :- !. % Fallback
@@ -427,7 +427,7 @@ handle_msg("textDocument/hover", Msg, _{id: Msg.id, result: null}) :- !. % Fallb
 
 %handle_msg("textDocument/documentSymbol", Msg, _{id: Id, result: DocJson}) :-
 %    _{id: Id, params: _{textDocument: _{uri: Doc}}} :< Msg,
-%     atom_concat('file://', Path, Doc), !,
+%     doc_path(Doc, Path), !,
 %     get_document_symbols(Path,DocKinds),
 %     maplist(convert_docsymbol_json,DocKinds,DocJson).
 
@@ -442,7 +442,7 @@ message_id_target(Msg, Id, Doc, HintPath, Loc, Name/Arity):-
        _{id: Id, params: Params} :< Msg,
        _{textDocument: _{uri: Doc},
          position: _{line: Line0, character: Char0}} :< Params,
-    atom_concat('file://', HintPath, Doc),   Loc = line_char(Line0, Char0),
+    path_doc(HintPath, Doc),   Loc = line_char(Line0, Char0),
     Loc = line_char(Line0, Char0),
     lsp_metta_utils:clause_with_arity_in_file_at_position(Name, Arity, HintPath, Loc),
         debug(server(high),"~n~q~n",[message_id_target(_Msg, Id, Doc, HintPath, Loc, Name/Arity)]).
@@ -502,14 +502,14 @@ handle_msg("textDocument/typeDefinition", Msg, _{id: Msg.id, result: null}) :- !
 %    {insertText:help_at_position(${1:_}, ${2:_}, ${3:_}, ${4:_})$0,insertTextFormat:2,label:help_at_position/4},
 %    {insertText:handle_doc_changes(${1:_}, ${2:_})$0,insertTextFormat:2,label:handle_doc_changes/2}]}
 % OUT: {id:123,result:[]}
+handle_msg("textDocument/completion", Msg, _{id: Id, result: Completions}) :-
+     _{id: Id, params: Params} :< Msg,
+     _{textDocument: _{uri: Uri},
+       position: _{line: Line0, character: Char0}} :< Params,
+     doc_path(Uri, Path),
+     succ(Line0, Line1),
+     completions_at(Path, line_char(Line1, Char0), Completions), !.
 handle_msg("textDocument/completion", Msg, _{id: Msg.id, result: []}) :- !. % FIXME
-% handle_msg("textDocument/completion", Msg, _{id: Id, result: Completions}) :-
-%     _{id: Id, params: Params} :< Msg,
-%     _{textDocument: _{uri: Uri},
-%       position: _{line: Line0, character: Char0}} :< Params,
-%     atom_concat('file://', Path, Uri),
-%     succ(Line0, Line1),
-%     completions_at(Path, line_char(Line1, Char0), Completions).
 
 handle_msg("textDocument/semanticTokens", Msg, Response) :-
     handle_msg("textDocument/semanticTokens/full", Msg, Response).
@@ -517,32 +517,32 @@ handle_msg("textDocument/semanticTokens", Msg, Response) :-
 % CALL: textDocument/semanticTokens/full
 % IN: params:{textDocument:{uri:file://<FILEPATH>}}
 % No Example from Prolog yet FIXME
-handle_msg("textDocument/semanticTokens/full", Msg, _{id: Msg.id, result: []}) :- !. % FIXME
-% handle_msg("textDocument/semanticTokens/full", Msg,
-%            _{id: Id, result: _{data: Highlights}}) :-
-%     _{id: Id, params: Params} :< Msg,
-%     _{textDocument: _{uri: Uri}} :< Params,
-%     atom_concat('file://', Path, Uri), !,
-%     xref_source(Path),
-%     file_colours(Path, Highlights).
+handle_msg("textDocument/semanticTokens/full", Msg,
+            _{id: Id, result: _{data: Highlights}}) :- fail,
+     _{id: Id, params: Params} :< Msg,
+     _{textDocument: _{uri: Uri}} :< Params,
+     doc_path(Uri, Path),
+     xref_metta_source(Path),
+     metta_colours(Path, Highlights) ,!.
+handle_msg("textDocument/semanticTokens/full", Msg, _{id: Msg.id, result: []}) :- !.
 
 % CALL: textDocument/semanticTokens/range
 % IN: {range:{end:{character:0,line:40},{character:0,line:0}},textDocument:{uri:file://<FILE_PATH>}}
 % No Example from Prolog yet FIXME
-handle_msg("textDocument/semanticTokens/range", Msg, _{id: Msg.id, result: []}) :- !. % FIXME
-% handle_msg("textDocument/semanticTokens/range", Msg,
-%            _{id: Id, result: _{data: Highlights}}) :-
-%     _{id: Id, params: Params} :< Msg,
-%     _{textDocument: _{uri: Uri}, range: Range} :< Params,
-%     _{start: _{line: StartLine0, character: StartChar},
-%       end: _{line: EndLine0, character: EndChar}} :< Range,
-%     atom_concat('file://', Path, Uri), !,
-%     succ(StartLine0, StartLine), succ(EndLine0, EndLine),
-%     xref_source(Path),
-%     file_range_colours(Path,
-%                        line_char(StartLine, StartChar),
-%                        line_char(EndLine, EndChar),
-%                        Highlights).
+handle_msg("textDocument/semanticTokens/range", Msg,
+            _{id: Id, result: _{data: Highlights}}) :- fail,
+     _{id: Id, params: Params} :< Msg,
+     _{textDocument: _{uri: Uri}, range: Range} :< Params,
+     _{start: _{line: StartLine0, character: StartChar},
+       end: _{line: EndLine0, character: EndChar}} :< Range,
+     doc_path(Uri, Path), !,
+     succ(StartLine0, StartLine), succ(EndLine0, EndLine),
+     xref_metta_source(Path),
+     file_range_colours(Path,
+                        line_char(StartLine, StartChar),
+                        line_char(EndLine, EndChar),
+                        Highlights).
+handle_msg("textDocument/semanticTokens/range", Msg, _{id: Msg.id, result: []}) :- !.
 
 % notifications (no response)
 
@@ -559,7 +559,7 @@ handle_msg("textDocument/didOpen", Msg, Resp) :-
     %debug(server,"~w",[FullText]),
     split_text_document(FullText,SplitText),
     debug(server,"~w",[SplitText]),
-    atom_concat('file://', Path, FileUri),
+    doc_path(FileUri, Path),
     retractall(lsp_metta_changes:doc_text(Path, _)),
     assertz(lsp_metta_changes:doc_text(Path, SplitText)),
     ( in_editor(Path) ; assertz(in_editor(Path)) ),
@@ -572,7 +572,7 @@ handle_msg("textDocument/didChange", Msg, false) :-
     _{params: _{textDocument: TextDoc,
                 contentChanges: Changes}} :< Msg,
     _{uri: Uri} :< TextDoc,
-    atom_concat('file://', Path, Uri),
+    doc_path(Uri, Path),
     handle_doc_changes(Path, Changes),
     source_file_text(Path, DocFullText), % Derive from lsp_metta_changes:doc_text/2
     xref_maybe(Path, DocFullText). % Check if changed and enqueue the reindexing
@@ -587,7 +587,7 @@ handle_msg("textDocument/didSave", Msg, Resp) :-
 handle_msg("textDocument/didClose", Msg, false) :-
     _{params: _{textDocument: TextDoc}} :< Msg,
     _{uri: FileUri} :< TextDoc,
-    atom_concat('file://', Path, FileUri),
+    doc_path(FileUri, Path),
     retractall(in_editor(Path)).
 
 handle_msg("initialized", Msg, false) :-
@@ -628,7 +628,7 @@ collect_workspace_symbols(Query, Symbols) :-
         (
             in_editor(Path),
             % Convert file path to URI
-            atom_concat('file://', Path, DocUri),
+            path_doc(Path, DocUri),
             xref_document_symbols(DocUri, DocSymbols),
             member(Symbol, DocSymbols),
             symbol_matches_query(Symbol, Query)
@@ -659,8 +659,13 @@ handle_msg(_, Msg, false) :-
 % [TODO]Check errors and respond with diagnostics
 check_errors_resp(FileUri, _{method: "textDocument/publishDiagnostics",
                              params: _{uri: FileUri, diagnostics: Errors}}) :-
-    atom_concat('file://', Path, FileUri),
-    check_errors(Path, Errors).
+    doc_path(FileUri, Path),
+    metta_check_errors(Path, Errors).
+% [TODO]Check errors and respond with diagnostics
+check_errors_resp(FileUri, _{method: "textDocument/publishDiagnostics",
+                             params: _{uri: FileUri, diagnostics: Errors}}) :-
+    doc_path(FileUri, Path),
+    prolog_check_errors(Path, Errors).
 check_errors_resp(_, false) :-
     debug(server, "Failed checking errors", []).
 

@@ -52,6 +52,10 @@
  */
 
 
+% Ensure that the `metta_interp` library is loaded,
+% That loads all the predicates called from this file
+:- ensure_loaded(metta_interp).
+
 
 when_tracing(Goal):- tracing,!,notrace(Goal),!.
 when_tracing(_).
@@ -738,8 +742,8 @@ use_fast_buffer:- nb_current(may_use_fast_buffer,t).
 %:- nb_setval(may_use_fast_buffer,t).
 %:- use_fast_buffer.
 
-:- dynamic(metta_file_buffer/5).
-:- multifile(metta_file_buffer/5).
+:- dynamic(metta_file_buffer/7).
+:- multifile(metta_file_buffer/7).
 
 prefer_temp(Filename,BufferFile):- \+ exists_file(Filename),!, exists_file(BufferFile).
 prefer_temp(Filename,BufferFile):-
@@ -776,40 +780,14 @@ load_metta_file_stream_fast(_Size,_P2,Filename,Self,In):-
 
 
 
-make_metta_file_buffer(TFMakeFile,Filename,In):-
-  % maybe time this
-    (if_t(TFMakeFile,
-            % Create a buffer file if needed
-        (symbol_concat(Filename, '.buffer~', BufferFile),
-        fbugio(creating(BufferFile)),
-        write_bf(BufferFile, (:- dynamic(metta_file_buffer/5))),
-        write_bf(BufferFile, (:- multifile(metta_file_buffer/5)))))),
-    repeat,    
-    % Count the current line in the input stream
-        
-    %debug(server(xref), "Pos ~w", [Pos]),  % Log the current line number.
-    % Get the current mode for reading the file
-    current_read_mode(file, Mode),
-    % Read and parse the content of the Metta file
-    skip_spaces(In),
-    forall(retract(metta_file_comment(_Line, _Col, _CharPos, '$COMMENT'(Comment, CLine, CCol), CPos)),
-          assertz(metta_file_buffer(+, '$COMMENT'(Comment, CLine, CCol), [], Filename, CPos))),
-    stream_property(In,position(PosStart)),
-    read_sexpr(In, Expr),
-    stream_property(In,position(PosEnd)),
-    pos_line_char(PosStart, Start),
-    pos_line_char(PosEnd, End),
-    subst_vars(Expr, Term, [], NamedVarsList),
-    % Assert the parsed content into the Metta buffer
-    BufferTerm = metta_file_buffer(Mode, Term, NamedVarsList, Filename, range(Start,End)),
-    %ignore(maybe_process_directives(Mode, Term)),
-    assertz(BufferTerm),
-    % debug(server(xref), "BufferTerm ~w", [BufferTerm]),  % Log the parsed buffer term.
-    % Optionally write the buffer content to the buffer file
-    if_t(TFMakeFile, write_bf(BufferFile, BufferTerm)),
-    % flush_output,  % Ensure all output is flushed.
-    at_end_of_stream(In),  % Stop processing once the end of the stream is reached.
-    !.
+
+make_metta_file_buffer(TFMakeFile,FileName,InStream):-
+  symbol_concat(FileName, '.buffer~', BufferFile),
+  process_expressions(FileName, InStream, maybe_write_bf(TFMakeFile,BufferFile)).
+
+maybe_write_bf(TFMakeFile,BufferFile, Item):-
+   if_t(TFMakeFile,write_bf(BufferFile, Item)).
+
 
 pos_line_char(Position,line_char(LineM1,Col)):-
      stream_position_data(line_count, Position, Line),  % Extract the line number.
@@ -832,13 +810,17 @@ my_line_count(In, seek($,0,current,CC)):-
 my_line_count(In,/*position*/(Pos)):-
    stream_property(In,position(Pos)).
 
+% For old code still using metta_file_buffer/5  
+metta_file_buffer(+, Expr, NamedVarsList, Filename, LineCount):-
+  metta_file_buffer(0,_Ord,_Kind, Expr, NamedVarsList,Filename, LineCount).
+
 
 load_metta_buffer(Self,Filename):-
    set_exec_num(Filename,1),
    load_answer_file(Filename),
    set_exec_num(Filename,0),
    pfcAdd_Now(user:loaded_into_kb(Self,Filename)),
-   forall(metta_file_buffer(Mode,Expr,NamedVarsList,Filename,_LineCount),
+   forall(metta_file_buffer(0,_Ord,_Kind,Expr,NamedVarsList,Filename,_LineCount),
        (maplist(maybe_assign,NamedVarsList),
         must_det_ll((((do_metta(file(Filename),Mode,Self,Expr,_O)))
              ->true
@@ -1014,13 +996,13 @@ cont_list( AoS,C,End,S,[F|List]):- read_sform3(AoS,[End],C,S,F),!,collect_list_u
 use_new_parse_sexpr_metta_IO(S):- \+ string(S).
 
 new_parse_sexpr_metta_IO1(S,F1):- at_end_of_stream(S),!,F1=end_of_file.
-new_parse_sexpr_metta_IO1(S,F1):- peek_char(S,Char),char_type(Char,space),!,
-  get_char(S,Char), parse_sexpr_metta_IO(S,F1).
+new_parse_sexpr_metta_IO1(S,F1):- peek_char(S,Char),char_type(Char,space),!, get_char(S,Char), parse_sexpr_metta_IO(S,F1).
 new_parse_sexpr_metta_IO1(S,_F1):- S = InStream,
    once((
-    read_position(InStream, Line, Col, CharPos_Item, Position),  % Retrieve line, column, and character position.
+    read_position(S, Line, Col, CharPos_Item, _Position),  % Retrieve line, column, and character position.    
     read_sexpr(InStream, Item),  % Read an S-expression or comment from the input stream.
-    assertz(metta_file_comment(Line, Col, CharPos_Item, Item, Position)))),
+    read_position(S, EndLine, EndCol, _E_CharPos_Item, _EndPosition),
+    assertz(metta_file_comment(Line, Col, CharPos_Item, Item, range(line_char(Line, Col), line_char(EndLine, EndCol)))))),
     fail.
 new_parse_sexpr_metta_IO1(_S,F1):- retract(metta_file_comment(_Line, _Col, _CharPos, M, _Pos)), trly(untyped_to_metta,M,F1).
 
@@ -1413,7 +1395,7 @@ metta_atom_asserted_deduced('&corelib', Term):- fail,
 
 load_corelib_file:- really_using_corelib_file,!.
 load_corelib_file:- asserta(really_using_corelib_file), fail.
-load_corelib_file:- is_metta_src_dir(Dir), really_use_corelib_file(Dir,'corelib.metta'),!.
+%load_corelib_file:- is_metta_src_dir(Dir), really_use_corelib_file(Dir,'corelib.metta'),!.
 load_corelib_file:- is_metta_src_dir(Dir), really_use_corelib_file(Dir,'stdlib_mettalog.metta'),!.
 % !(import! &corelib "src/canary/stdlib_mettalog.metta")
 really_use_corelib_file(Dir,File):- absolute_file_name(File,Filename,[relative_to(Dir)]),

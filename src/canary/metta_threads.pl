@@ -1,18 +1,22 @@
 :- use_module(library(predicate_options)).
 :- use_module(library(record)).
 
+% Ensure that the `metta_interp` library is loaded,
+% That loads all the predicates called from this file
+:- ensure_loaded(metta_interp).
+
 % convenience for async/3 options
-:- record opts( policy:oneof([ephemeral,lazy])=ephemeral
-              ).
+:- record(opts( policy:oneof([ephemeral,lazy])=ephemeral
+              )).
 :- predicate_options(spawn/2,2,[pass_to(async/3,3)]).
 :- predicate_options(async/3,3, [ policy(+oneof([ephemeral,lazy]))
                                 ]).
 
 :- meta_predicate
     spawn(0),
-    async(0,-),
-    async(0,-,+),
-    async_policy(+,0,-,+).
+    async(0,('-')),
+    async(0,('-'),('+')),
+    async_policy('+',0,'-','+').
 
 :- thread_local
     spawn_token_needs_await/1.
