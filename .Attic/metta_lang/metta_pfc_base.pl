@@ -509,8 +509,24 @@ call_u(G) :- pfcCallSystem(G).
 %
 %   Retrieves a clause with the given head and body.
 %
+%   This predicate is a wrapper around the built-in `clause/2` predicate.
+%   It succeeds if the clause with the specified head and body exists.
+%
 %   @arg Head The head of the clause.
 %   @arg Body The body of the clause.
+%
+%   @example
+%     % Define a sample fact and a rule.
+%     ?- assertz(foo(a)).
+%     ?- assertz((foo(X) :- bar(X))).
+%
+%     % Retrieve a fact with the specified head.
+%     ?- clause_u(foo(a), Body).
+%     Body = true.
+%
+%     % Retrieve a rule with the specified head and body.
+%     ?- clause_u(foo(X), Body).
+%     Body = bar(X).
 %
 clause_u(H, B) :- clause(H, B).
 
@@ -520,6 +536,13 @@ clause_u(H, B) :- clause(H, B).
 %   for assertions with bodies.
 %
 %   @arg Predicate The predicate to be asserted.
+%
+%   @example
+%     % Assert a fact into the PFC system.
+%     ?- mpred_ain(foo(a)).
+%
+%     % Assert a rule into the PFC system.
+%     ?- mpred_ain((foo(X) :- bar(X))).
 %
 mpred_ain(P) :- arc_assert(P).
 
@@ -534,6 +557,16 @@ mpred_ain(P) :- arc_assert(P).
 %
 %   @arg Clause The clause or fact to be asserted. It can be a head or a head-body 
 %        combination (e.g., `Head :- Body`).
+%
+%   @example
+%     % Assert a fact with provenance tracking.
+%     ?- arc_assert(foo(a)).
+%
+%     % Assert a rule with a true body, reducing it to a fact.
+%     ?- arc_assert((foo(a) :- true)).
+%
+%     % Assert a rule with a meaningful body.
+%     ?- arc_assert((foo(X) :- bar(X))).
 %
 arc_assert(P :- True) :-
     % If the body is `true`, only the head is asserted.
@@ -554,6 +587,15 @@ arc_assert(P) :-
 %
 %   @arg Predicate The predicate to retract.
 %
+%   @example
+%     % Assert and then retract a fact.
+%     ?- mpred_ain(foo(a)).
+%     ?- pfc_retract(foo(a)).
+%
+%     % Assert and then retract a rule.
+%     ?- mpred_ain((foo(X) :- bar(X))).
+%     ?- pfc_retract(foo(X)).
+%
 pfc_retract(P) :- fbugio(pfc_retract(P)), pfcRetract(P).
 
 %!  pfc_retractall(+Predicate) is det.
@@ -562,7 +604,18 @@ pfc_retract(P) :- fbugio(pfc_retract(P)), pfcRetract(P).
 %
 %   @arg Predicate The predicate to retract.
 %
+%   @example
+%     % Assert multiple instances and retract all of them.
+%     ?- mpred_ain(foo(a)).
+%     ?- mpred_ain(foo(b)).
+%     ?- pfc_retractall(foo(_)).
+%
+%     % Verify that all instances have been retracted.
+%     ?- clause_u(foo(_), _).
+%     false.
+%
 pfc_retractall(P) :- fbugio(pfc_retractall(P)), pfcRetractAll(P).
+
 
 %!  ~(+Term) is det.
 %
@@ -577,6 +630,13 @@ pfc_retractall(P) :- fbugio(pfc_retractall(P)), pfcRetractAll(P).
 %
 %   @arg X The term to add.
 %
+%   @example
+%     % Add a fact to the PFC system.
+%     ?- add(foo(a)).
+%
+%     % Add a rule to the PFC system.
+%     ?- add((foo(X) :- bar(X))).
+%
 add(X) :- pfcAdd(X).
 
 %!  mpred_test(:Goal) is det.
@@ -585,6 +645,18 @@ add(X) :- pfcAdd(X).
 %   positive and negated tests, ensuring proper logging and explanation of failures.
 %
 %   @arg Goal The goal to test.
+%
+%   @example
+%     % Test a goal that succeeds.
+%     ?- mpred_test(call_u(member(X, [1, 2, 3]))).
+%     X = 1 ;
+%     X = 2 ;
+%     X = 3.
+%
+%     % Test a goal that fails and triggers the negated test logic.
+%     ?- mpred_test(\+ call_u(member(4, [1, 2, 3]))).
+%     true.
+%
 mpred_test(call_u(X)) :-
     % If X is not a variable, execute the goal using pfcCallSystem/1.
     nonvar(X), !, 
@@ -616,6 +688,15 @@ mpred_test(X) :-
 %   Collects and displays information about the given predicate or term `X`.
 %   It uses `mpred_test_why/1` and `mpred_child_info/1` to collect reasoning
 %   and dependency information about `X`.
+%
+%   @arg X The predicate or term for which information is collected.
+%
+%   @example
+%     % Collect and display information about a fact.
+%     ?- pfc_info(foo(a)).
+%
+%     % Collect and display information about a rule.
+%     ?- pfc_info((foo(X) :- bar(X))).
 %
 pfc_info(X) :-
     % Delegate to `mpred_info/1`.
@@ -650,6 +731,12 @@ mpred_info(X) :-
 %
 %   Collects and displays child information for a given predicate or term `P`.
 %
+%   @arg P The predicate or term for which child information is collected.
+%
+%   @example
+%     % Display child information for a term.
+%     ?- mpred_child_info(foo(a)).
+%
 mpred_child_info(P) :-
     % Clear previous child state.
     retractall(t_l:shown_child(_)),
@@ -661,6 +748,8 @@ mpred_child_info(P) :-
 %!  show_child_info(+P) is det.
 %
 %   Gathers and displays the children of predicate `P`.
+%
+%   @arg P The predicate for which child information is gathered.
 %
 show_child_info(P) :-
     % Retrieve all children of `P` into a list `L`.
@@ -698,6 +787,15 @@ show_child_info(P, L) :-
 %
 %   Displays reasoning information for the given goal or term `X`.
 %
+%   @arg X The goal or term for which reasoning information is displayed.
+%
+%   @example
+%     % Display reasoning information for a fact.
+%     ?- mpred_why(foo(a)).
+%
+%     % Display reasoning information for a goal.
+%     ?- mpred_why(likes(john, pizza)).
+%
 mpred_why(X) :-
     mpred_test_why(X).
 
@@ -705,51 +803,291 @@ mpred_why(X) :-
 %
 %   Tests and displays the reasoning or truth value of the goal or term `X`.
 %
+%   @arg X The goal or term to test and display reasoning for.
+%
+%   @example
+%     % Test and display reasoning for a goal.
+%     ?- mpred_test_why(member(X, [1, 2, 3])).
+%     X = 1 ;
+%     X = 2 ;
+%     X = 3.
+%
 mpred_test_why(X) :-
     % Call the goal using `pfcCallSystem/1`. If it succeeds, apply `pfcTF1/1`.
     pfcCallSystem(X) *-> pfcTF1(X)
     % If the goal fails, still apply `pfcTF1/1` but fail afterwards.
     ; (pfcTF1(X), !, fail).
 
+%!  mpred_literal(+X) is semidet.
+%
+%   Checks if X is a literal in the PFC (Prolog Forward Chaining) system.
+%
+%   This predicate wraps the `pfcLiteral/1` predicate to determine if X 
+%   qualifies as a literal.
+%
+%   @arg X The term to be checked as a literal.
+%
+%   @example
+%     ?- mpred_literal(literal_example).
+%     true.
+%
+mpred_literal(X) :-
+    pfcLiteral(X).
 
-mpred_literal(X):- pfcLiteral(X).
-mpred_positive_literal(X):- pfcPositiveLiteral(X).
-pfcAtom(X):- pfcLiteral(X).
-rem(X):- pfcWithdraw(X).
-rem2(X):- pfcRemove(X).
-remove(X):- pfcBlast(X).
+%!  mpred_positive_literal(+X) is semidet.
+%
+%   Checks if X is a positive literal in the PFC system.
+%
+%   This predicate succeeds if the given term X represents a positive literal, 
+%   using the underlying `pfcPositiveLiteral/1`.
+%
+%   @arg X The term to be checked as a positive literal.
+%
+%   @example
+%     ?- mpred_positive_literal(positive_example).
+%     true.
+%
+mpred_positive_literal(X) :-
+    pfcPositiveLiteral(X).
+
+%!  pfcAtom(+X) is semidet.
+%
+%   Determines whether X is an atom in the PFC system.
+%
+%   This predicate behaves similarly to `mpred_literal/1` since all literals 
+%   are treated as atoms within the PFC context.
+%
+%   @arg X The term to be checked as an atom.
+%
+%   @example
+%     ?- pfcAtom(atom_example).
+%     true.
+%
+pfcAtom(X) :-
+    pfcLiteral(X).
+
+%!  rem(+X) is det.
+%
+%   Withdraws a literal X from the PFC knowledge base.
+%
+%   This predicate removes the given literal X by invoking the 
+%   `pfcWithdraw/1` operation.
+%
+%   @arg X The literal to be withdrawn from the knowledge base.
+%
+%   @example
+%     ?- rem(withdraw_example).
+%     true.
+%
+rem(X) :-
+    pfcWithdraw(X).
+
+%!  rem2(+X) is det.
+%
+%   Removes a literal X using a secondary removal mechanism.
+%
+%   This predicate is an alternative to `rem/1`, utilizing the 
+%   `pfcRemove/1` operation to delete the literal X.
+%
+%   @arg X The literal to be removed.
+%
+%   @example
+%     ?- rem2(secondary_remove_example).
+%     true.
+%
+rem2(X) :-
+    pfcRemove(X).
+
+%!  remove(+X) is det.
+%
+%   Blasts (forcibly removes) a literal X from the PFC knowledge base.
+%
+%   This predicate performs a more aggressive removal using the 
+%   `pfcBlast/1` operation, which ensures that the literal X 
+%   is completely deleted.
+%
+%   @arg X The literal to be forcibly removed.
+%
+%   @example
+%     ?- remove(blast_example).
+%     true.
+%
+remove(X) :-
+    pfcBlast(X).
 
 % :- mpred_ain_in_thread.
 % :- current_thread_pool(ain_pool)->true;thread_pool_create(ain_pool,20,[]).
+
+% create_pool/1 can be defined across multiple files or modules and modified at runtime.
 :- multifile thread_pool:create_pool/1.
 :- dynamic thread_pool:create_pool/1.
+
+%!  thread_pool:create_pool(+Pool) is det.
+%
+%   Creates a thread pool named `ain_pool` with 50 detached threads.
+%   Detached threads automatically reclaim their resources upon termination.
+%
+%   @arg Pool The pool name to be created, here `ain_pool`.
+%
 thread_pool:create_pool(ain_pool) :-
-    thread_pool_create(ain_pool, 50, [detached(true)] ).
+    % Create the thread pool with 50 threads and detached mode enabled.
+    thread_pool_create(ain_pool, 50, [detached(true)]).
 
 :- use_module(library(http/thread_httpd)).
 :- use_module(library(thread_pool)).
 
-is_ain_pool_empty:- thread_pool_property(ain_pool,running(N)),!,N==0.
+%!  is_ain_pool_empty is semidet.
+%
+%   Checks if the `ain_pool` thread pool is currently empty.
+%   The predicate succeeds if no threads are running in the pool.
+%
+%   @example
+%     ?- is_ain_pool_empty.
+%     true.
+%
+is_ain_pool_empty :-
+    % Query the number of running threads in `ain_pool`.
+    thread_pool_property(ain_pool, running(N)),
+    % Succeed if there are no running threads.
+    !, N == 0.
+% Default case: Assume the pool is not empty.
 is_ain_pool_empty.
 
-show_ain_pool:- forall(thread_pool_property(ain_pool,PP),fmt(show_ain_pool(PP))).
+%!  show_ain_pool is det.
+%
+%   Displays the properties of the `ain_pool` thread pool by printing
+%   each property using the `fmt/1` predicate.
+%
+%   @example
+%     ?- show_ain_pool.
+%     % Displays the properties of the `ain_pool`.
+%
+show_ain_pool :-
+    % Iterate over all properties of `ain_pool` and print them.
+    forall(thread_pool_property(ain_pool, PP), fmt(show_ain_pool(PP))).
 
-await_ain_pool:- is_ain_pool_empty->true;(repeat, sleep(0.005), is_ain_pool_empty).
+%!  await_ain_pool is det.
+%
+%   Waits until the `ain_pool` is empty. If the pool is not empty,
+%   it repeatedly checks every 5 milliseconds until it becomes empty.
+%
+%   @example
+%     ?- await_ain_pool.
+%     true.
+%
+await_ain_pool :-
+    % If the pool is empty, succeed immediately.
+    is_ain_pool_empty -> true ;
+    % Otherwise, repeat until the pool becomes empty.
+    (repeat, sleep(0.005), is_ain_pool_empty).
 
-ain_in_thread(MAIN):- strip_module(MAIN,M,AIN), call_in_thread(M:pfcAdd(AIN)).
+%!  ain_in_thread(+Goal) is det.
+%
+%   Runs a given goal `AIN` within the context of the `ain_pool`.
+%   The goal is extracted from its module and scheduled for execution.
+%
+%   @arg Goal The goal to execute in a thread within the `ain_pool`.
+%
+%   @example
+%     ?- ain_in_thread(my_module:my_goal).
+%     true.
+%
+ain_in_thread(MAIN) :-
+    % Extract the module and goal from the input.
+    strip_module(MAIN, M, AIN),
+    % Schedule the goal for execution in the thread pool.
+    call_in_thread(M:pfcAdd(AIN)).
 
-call_in_thread(MG):- strip_module(MG,M,G), notrace((copy_term(M:G,GG,_),numbervars(GG,0,_,[attvar(skip),singletons(true)]),term_to_atom(GG,TN))),
- call_in_thread(TN,M,G),
-  dmsg_pretty(call_in_thread(TN,M,G)).
+%!  call_in_thread(+Goal) is det.
+%
+%   Schedules a goal `G` for execution within the `ain_pool` thread pool.
+%   It creates a copy of the goal, assigns variable numbers, and converts
+%   it to an atom representation for tracking.
+%
+%   @arg Goal The goal to be executed in the thread pool.
+%
+%   @example
+%     ?- call_in_thread(my_goal).
+%     true.
+%
+call_in_thread(MG) :-
+    % Extract the module and goal from the input.
+    strip_module(MG, M, G),
+    % Create a copy of the goal and convert it to an atom for tracking.
+    notrace((
+        copy_term(M:G, GG, _),
+        numbervars(GG, 0, _, [attvar(skip), singletons(true)]),
+        term_to_atom(GG, TN)
+    )),
+    % Schedule the converted goal for execution.
+    call_in_thread(TN, M, G),
+    % Log the goal for tracking purposes.
+    dmsg_pretty(call_in_thread(TN, M, G)).
 
-call_in_thread(TN,M,G):- thread_property(_,alias(TN)),!,dmsg_pretty(already_queued(M,G)).
-call_in_thread(TN,M,G):- must_ex(current_why(Why)), thread_create_in_pool(ain_pool,call_in_thread_code(M,G,Why,TN),_Id,[alias(TN)]).
+%!  call_in_thread(+ThreadName, +Module, +Goal) is det.
+%
+%   Creates a new thread in the `ain_pool` with the given alias `TN`.
+%   If a thread with the same alias is already running, it logs the event.
+%   Otherwise, a new thread is created to execute the goal.
+%
+%   @arg ThreadName The alias of the thread.
+%   @arg Module The module where the goal is defined.
+%   @arg Goal The goal to be executed within the thread.
+%
+%   @example
+%     ?- call_in_thread('goal_thread', my_module, some_goal).
+%     true.
+%
+call_in_thread(TN, M, G) :-
+    % Check if a thread with the same alias is already running.
+    thread_property(_, alias(TN)),
+    % If found, log the event and prevent duplicate scheduling.
+    !, dmsg_pretty(already_queued(M, G)).
+% If no thread with the same alias exists, create a new one.
+call_in_thread(TN, M, G) :-
+    % Retrieve the reason for the current operation.
+    must_ex(current_why(Why)),
+    % Create a new thread in the `ain_pool` with the specified alias.
+    thread_create_in_pool(
+        ain_pool,
+        call_in_thread_code(M, G, Why, TN),
+        _Id,
+        [alias(TN)]
+    ).
 
-call_in_thread_code(M,G,Why,TN):-
- with_only_current_why(Why,
-   catch(( M:G-> nop(dmsg_pretty(suceeded(exit,TN)));dmsg_pretty(failed(exit,TN))),E, dmsg_pretty(error(E-->TN)))).
-
+%!  call_in_thread_code(+Module, +Goal, +Why, +ThreadName) is det.
+%
+%   Executes the given goal `G` within a thread. It catches and logs
+%   any exceptions that occur during execution, and logs whether the
+%   goal succeeds or fails.
+%
+%   @arg Module The module where the goal resides.
+%   @arg Goal The goal to be executed within the thread.
+%   @arg Why The reason/context for executing this goal.
+%   @arg ThreadName The alias of the thread executing the goal.
+%
+%   @example
+%     ?- call_in_thread_code(my_module, some_goal, reason, 'goal_thread').
+%     true.
+%
+call_in_thread_code(M, G, Why, TN) :-
+    % Set the current context using the given reason.
+    with_only_current_why(
+        Why,
+        % Attempt to execute the goal and log the outcome.
+        catch(
+            % If the goal succeeds, log the success.
+            ( M:G -> nop(dmsg_pretty(succeeded(exit, TN)))
+            ; % If the goal fails, log the failure.
+              dmsg_pretty(failed(exit, TN))
+            ),
+            % Catch and log any exceptions that occur.
+            E,
+            dmsg_pretty(error(E --> TN))
+        )
+    ).
 %:- call_in_thread(fbugio(call_in_thread)).
+
 % why_dmsg(Why,Msg):- with_current_why(Why,dmsg_pretty(Msg)).
 
 %   File   : pfc
@@ -794,68 +1132,249 @@ pfcLoad.
 %   Author : Tim Finin, finin@prc.unisys.com
 %   Purpose: syntactic sugar for Pfc - operator definitions and term expansions.
 
-:- op(500,fx,'~').
-:- op(1050,xfx,('==>')).
-:- op(1050,xfx,'<==>').
-:- op(1050,xfx,('<-')).
-:- op(1100,fx,('==>')).
-:- op(1150,xfx,('::::')).
+:- op(500, fx, '~').           % Declares '~' as a prefix operator with precedence 500.
+:- op(1050, xfx, '==>').       % Declares '==>' as an infix operator with precedence 1050.
+:- op(1050, xfx, '<==>').      % Declares '<==>' as an infix operator with precedence 1050.
+:- op(1050, xfx, '<-').        % Declares '<-' as an infix operator with precedence 1050.
+:- op(1100, fx, '==>').        % Declares '==>' as a prefix operator with precedence 1100.
+:- op(1150, xfx, '::::').      % Declares '::::' as an infix operator with precedence 1150.
 
 
+% declare that pfctmp:knows_will_table_as/2 can be modified at runtime.
 :- dynamic(pfctmp:knows_will_table_as/2).
 
-will_table_as(Stuff,As):- pfctmp:knows_will_table_as(Stuff,As),!.
-will_table_as(Stuff,As):- assert(pfctmp:knows_will_table_as(Stuff,As)),
-   must_ex(react_tabling(Stuff,As)),!,fail.
+%!  will_table_as(+Stuff, +As) is semidet.
+%
+%   Determines whether a specific `Stuff` is known to be tabled as `As`.
+%   If not, it asserts the knowledge and triggers the tabling reaction.
+%
+%   @arg Stuff The predicate or term to be tabled.
+%   @arg As    The way in which the `Stuff` is tabled (i.e., the tabling behavior).
+%
+%   @example
+%     % Check or assert that some_predicate is tabled as memoization.
+%     ?- will_table_as(some_predicate, memoization).
+%     true.
+%
+will_table_as(Stuff, As) :-
+    % If the relationship is already known, succeed.
+    pfctmp:knows_will_table_as(Stuff, As), 
+    !.
+will_table_as(Stuff, As) :-
+    % Assert the knowledge that `Stuff` will be tabled as `As`.
+    assert(pfctmp:knows_will_table_as(Stuff, As)),
+    % Ensure the tabling behavior is reacted to.
+    must_ex(react_tabling(Stuff, As)), 
+    % Force backtracking to prevent further solutions.
+    !, fail.
 
-react_tabling(Stuff,_):- dynamic(Stuff).
+%!  react_tabling(+Stuff, +As) is det.
+%
+%   Reacts to the tabling operation by marking the `Stuff` predicate as dynamic.
+%   This is needed for predicates that are altered or generated at runtime.
+%
+%   @arg Stuff The predicate or term to be marked as dynamic.
+%   @arg As    The tabling behavior (not used in this clause).
+%
+%   @example
+%     % React to the tabling of some_predicate.
+%     ?- react_tabling(some_predicate, _).
+%     true.
+%
+react_tabling(Stuff, _) :-
+    % Declare the predicate as dynamic so it can be modified at runtime.
+    dynamic(Stuff).
 
+% declare predicates that can be modified at runtime.
 :- dynamic(lmconf:is_treated_like_pfc_file/1).
 :- dynamic(lmconf:is_pfc_module/1).
-if_pfc_indicated :- source_location(F,_),(sub_string(F, _, _, _, '.pfc')->true;lmconf:is_treated_like_pfc_file(F)),!.
-if_pfc_indicated :- prolog_load_context(module, M),lmconf:is_pfc_module(M),!.
 
-skip_pfc_term_expansion(Var):- var(Var),!.
-skip_pfc_term_expansion(begin_of_file).
-skip_pfc_term_expansion(end_of_file).
+%!  if_pfc_indicated is semidet.
+%
+%   Determines if the current source file or module is treated as a PFC (Prolog Forward Chaining) source.
+%   It checks if the file has a `.pfc` extension or is marked to behave like a PFC file.
+%
+%   @example
+%     % If the file or module is indicated as PFC, the predicate succeeds.
+%     ?- if_pfc_indicated.
+%     true.
+%
+if_pfc_indicated :-
+    % Check if the source file has a `.pfc` extension or is treated as a PFC file.
+    source_location(F, _),
+    (sub_string(F, _, _, _, '.pfc') -> true ; lmconf:is_treated_like_pfc_file(F)),
+    !.
+if_pfc_indicated :-
+    % Alternatively, check if the current module is marked as a PFC module.
+    prolog_load_context(module, M),
+    lmconf:is_pfc_module(M),
+    !.
 
-:- export(pfc_term_expansion/2).
-:- system:import(pfc_term_expansion/2).
-pfc_term_expansion(I,O):- skip_pfc_term_expansion(I),!, I=O.
-pfc_term_expansion((:- table Stuff as Type), [:- pfcAdd(tabled_as(Stuff,Type)),(:- table Stuff as Type)]):- nonvar(Stuff), !, if_pfc_indicated, \+ will_table_as(Stuff, Type).
-pfc_term_expansion((:- table Stuff ), [:- pfcAdd(tabled_as(Stuff,incremental)),(:- table Stuff as incremental)]):- if_pfc_indicated, \+ will_table_as(Stuff,incremental).
-pfc_term_expansion((:- _),_):- !, fail.
-pfc_term_expansion((P==>Q),(:- pfcAdd((P==>Q)))).
-%term_expansion((P==>Q),(:- pfcAdd(('<-'(Q,P))))).  % speed-up attempt
-pfc_term_expansion(('<-'(P,Q)),(:- pfcAdd(('<-'(P,Q))))).
-pfc_term_expansion((P<==>Q),(:- pfcAdd((P<==>Q)))).
-pfc_term_expansion((RuleName :::: Rule),(:- pfcAdd((RuleName :::: Rule)))).
-pfc_term_expansion((==>P),(:- pfcAdd(P))).
-pfc_term_expansion(I,I):- I == end_of_file,!.
-pfc_term_expansion( P ,(:- pfcAdd(P))):- if_pfc_indicated.
+%!  skip_pfc_term_expansion(+Term) is semidet.
+%
+%   Determines if the given term should be excluded from PFC term expansion.
+%   It skips terms like variables or special markers such as `begin_of_file` or `end_of_file`.
+%
+%   @arg Term The term to check for exclusion from term expansion.
+%
+%   @example
+%     ?- skip_pfc_term_expansion(begin_of_file).
+%     true.
+%     ?- skip_pfc_term_expansion(foo).
+%     false.
+%
+skip_pfc_term_expansion(Var) :-
+    % Skip expansion if the term is a variable.
+    var(Var), 
+    !.
+skip_pfc_term_expansion(begin_of_file).  % Skip the `begin_of_file` marker.
+skip_pfc_term_expansion(end_of_file).    % Skip the `end_of_file` marker.
+
+% Export `pfc_term_expansion/2` to make it available for use by other modules.
+:- export(pfc_term_expansion/2).  
+% Import `pfc_term_expansion/2` into the `system` namespace to override or extend built-in behavior.
+:- system:import(pfc_term_expansion/2).  
+
+%!  pfc_term_expansion(+Input, -Output) is det.
+%
+%   Expands PFC-specific terms into Prolog directives or rules.
+%   This handles constructs such as table declarations, `==>`, `<==>`, `<-`, and named rules.
+%
+%   @arg Input  The original term to be expanded.
+%   @arg Output The expanded term or directive.
+%
+%   @example
+%     % Expand a table declaration into PFC-aware directives.
+%     ?- pfc_term_expansion((:- table foo as memo), Expanded).
+%     Expanded = [:- pfcAdd(tabled_as(foo, memo)), (:- table foo as memo)].
+%
+%     % Expand a rule using the `==>` operator.
+%     ?- pfc_term_expansion((a ==> b), Expanded).
+%     Expanded = (:- pfcAdd((a ==> b))).
+%
+pfc_term_expansion(I, O) :-
+    % If the term is to be skipped, unify the input and output.
+    skip_pfc_term_expansion(I), 
+    !, I = O.
+pfc_term_expansion((:- table Stuff as Type), 
+                   [:- pfcAdd(tabled_as(Stuff, Type)), 
+                    (:- table Stuff as Type)]) :-
+    % Handle table declarations with specific types.
+    nonvar(Stuff), 
+    !, 
+    if_pfc_indicated, 
+    \+ will_table_as(Stuff, Type).
+pfc_term_expansion((:- table Stuff), 
+                   [:- pfcAdd(tabled_as(Stuff, incremental)), 
+                    (:- table Stuff as incremental)]) :-
+    % Handle table declarations with the default `incremental` type.
+    if_pfc_indicated, 
+    \+ will_table_as(Stuff, incremental).
+pfc_term_expansion((:- _), _) :-
+    % Ignore directives that are not explicitly handled.
+    !, fail.
+pfc_term_expansion((P ==> Q), (:- pfcAdd((P ==> Q)))).
+% term_expansion((P ==> Q), (:- pfcAdd(('<-'(Q, P))))) :-  % Speed-up attempt (commented out).
+pfc_term_expansion(('<-'(P, Q)), (:- pfcAdd(('<-'(P, Q))))).
+pfc_term_expansion((P <==> Q), (:- pfcAdd((P <==> Q)))).
+pfc_term_expansion((RuleName :::: Rule), (:- pfcAdd((RuleName :::: Rule)))).
+pfc_term_expansion((==> P), (:- pfcAdd(P))).
+pfc_term_expansion(I, I) :-
+    % Preserve the `end_of_file` marker unchanged.
+    I == end_of_file, 
+    !.
+pfc_term_expansion(P, (:- pfcAdd(P))) :-
+    % For all other terms, if PFC is indicated, wrap the term in `pfcAdd/1`.
+    if_pfc_indicated.
 
 %use_pfc_term_expansion:- current_prolog_flag(pfc_term_expansion,false),!,fail.
 % maybe switch to prolog_load_context(file,...)?
 %use_pfc_term_expansion:- source_location(File,_), atom_concat(_,'.pfc.pl',File).
 
-term_subst(P,O):- term_subst(clause,P,O),!.
+%!  term_subst(+SubstType, -Output) is det.
+%
+%   Performs a predefined substitution on a term based on the given substitution type.
+%   It handles different substitution types such as `clause` or `tilded_negation`.
+%
+%   @arg SubstType The substitution type to be applied (e.g., `clause` or `tilded_negation`).
+%   @arg Output    The resulting term after substitution.
+%
+%   @example
+%     % Apply the `clause` substitution type.
+%     ?- term_subst(clause, Result).
+%     Result = clause.
+%
+term_subst(P, O) :-
+    % Shortcut for the `clause` substitution type.
+    term_subst(clause, P, O), 
+    !.
 
-term_subst(_, P,O):- \+ compound(P),!,O=P.
+%!  term_subst(+SubstType, +Input, -Output) is det.
+%
+%   Substitutes terms recursively based on the specified substitution type.
+%   Handles both non-compound and compound terms, applying substitutions to functors and arguments.
+%
+%   @arg SubstType The substitution type (e.g., `clause`, `tilded_negation`).
+%   @arg Input     The input term to be transformed.
+%   @arg Output    The transformed term after applying substitutions.
+%
+%   @example
+%     % Apply the `tilded_negation` substitution to replace logical operators.
+%     ?- term_subst(tilded_negation, (not(a) => b), Result).
+%     Result = (~a ==> b).
+%
+%     % Apply a generic substitution to a simple term.
+%     ?- term_subst(_, foo, Result).
+%     Result = foo.
+%
+term_subst(_, P, O) :-
+    % If the input is not a compound term, return it unchanged.
+    \+ compound(P), 
+    !, 
+    O = P.
+term_subst(tilded_negation, P, O) :-
+    % Handle substitution specific to negation and logical operators.
+    !, 
+    term_subst(
+        [(not) - (~),
+         (=>)  - (==>),
+         (<=>) - (<==>),
+         (<=)  - (<-)], 
+        P, O
+    ).
+term_subst(Subst, P, O) :-
+    % Decompose the compound term into functor and arguments.
+    compound_name_arguments(P, F, Args),
+    % Recursively apply substitutions to all arguments.
+    my_maplist(term_subst(Subst), Args, ArgsL),
+    % Substitute the functor if needed.
+    termf_subst(Subst, F, F2),
+    % Rebuild the compound term with the new functor and transformed arguments.
+    compound_name_arguments(O, F2, ArgsL).
 
-term_subst(tilded_negation,P,O):- !, term_subst(
-  [(not)-(~),
-   (=>)-(==>),
-   (<=>)-(<==>),
-   (<=)-(<-)],P,O).
-
-term_subst(Subst,P,O):-
- compound_name_arguments(P,F,Args),
- my_maplist(term_subst(Subst),Args,ArgsL),
- termf_subst(Subst,F,F2),
- compound_name_arguments(O,F2,ArgsL).
-
-termf_subst(Subst,F,F2):-member(F-F2,Subst)->true;F=F2.
-
+%!  termf_subst(+Subst, +Functor, -NewFunctor) is det.
+%
+%   Substitutes a functor based on a list of substitutions.
+%   If no matching substitution is found, the original functor remains unchanged.
+%
+%   @arg Subst      The list of substitutions in the form `OldFunctor - NewFunctor`.
+%   @arg Functor    The original functor to be substituted.
+%   @arg NewFunctor The resulting functor after substitution.
+%
+%   @example
+%     % Substitute the functor `not` with `~`.
+%     ?- termf_subst([(not) - (~)], not, Result).
+%     Result = ~.
+%
+%     % Use a functor without a matching substitution.
+%     ?- termf_subst([(not) - (~)], foo, Result).
+%     Result = foo.
+%
+termf_subst(Subst, F, F2) :-
+    % Check if a substitution exists for the functor.
+    member(F - F2, Subst) -> true ; 
+    % If no substitution is found, keep the original functor.
+    F = F2.
 
 %   File   : pfccore.pl
 %   Author : Tim Finin, finin@prc.unisys.com
