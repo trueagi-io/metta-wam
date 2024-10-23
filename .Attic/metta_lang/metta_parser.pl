@@ -766,7 +766,7 @@ write_readably(_, _).
 % @arg Item The item read from the stream.
 read_sexpr(I,O):- string(I), open_string(I,S),!,read_sexpr(S,O).
 read_sexpr(I,O):- 
-  setup_call_cleanup( flag('$file_src_ordinal',Ordinal,Ordinal+1000),
+  setup_call_cleanup( flag('$file_src_ordinal',Ordinal,Ordinal+1_000_000),
     setup_call_cleanup(
        (nb_current('$file_src_depth', Lvl)->true;(Lvl=0,nb_setval('$file_src_depth', Lvl))),
         cont_sexpr(is_delimiter(),I, O),

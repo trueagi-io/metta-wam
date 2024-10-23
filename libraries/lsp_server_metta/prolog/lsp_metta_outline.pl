@@ -23,7 +23,7 @@ xref_document_symbols(Doc, Symbols):- %   sample_outline_test(SS),
     retractall(gave_document_symbols(Doc, _)),
     asserta(gave_document_symbols(Doc, Symbols)).
 xref_document_symbol(Doc,  Outline, KindNumber, StartEnd):- maybe_doc_path(Doc,Path),!,xref_document_symbol(Path, Outline, KindNumber, StartEnd).
-xref_document_symbol(Path, Path, 1, range(line_char(0,0), line_char(1000,0))).
+xref_document_symbol(Path, Path, 1, range(line_char(0,0), line_char(1000000,0))).
 %xref_document_symbol(Path, Outline, KindNumber, StartEnd):- xref_document_symbol_d4(Path, Outline, KindNumber, StartEnd), fail.
 xref_document_symbol(Path, Outline, KindNumber, StartEnd):- xref_document_symbol_fb(Path, Outline, KindNumber, StartEnd).
 %xref_document_symbol(Path, Outline, KindNumber, StartEnd):- xref_document_symbol_examples(Path, Outline, KindNumber, StartEnd).
