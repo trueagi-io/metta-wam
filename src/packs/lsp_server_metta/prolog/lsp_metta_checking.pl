@@ -50,7 +50,7 @@ lsp_hooks:handle_msg_hook("textDocument/didSave", Msg, Result) :- fail, % FAIL f
 %! metta_check_errors(+Path:atom, -Errors:List) is det.
 %
 %  =Errors= is a list of the errors in the file given by =Path=.
-%  This predicate checks the =metta_file_buffer/5= cache for saved errors.
+%  This predicate checks the =metta_file_buffer/7= cache for saved errors.
 
 % will do some real error checking later
 metta_check_errors(Uri, Diagnostics):- 

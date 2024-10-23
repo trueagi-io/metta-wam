@@ -42,66 +42,44 @@ xref_document_symbol_d4(Doc, PrettyString, KindNumber, StartEnd):-
    nth1(Nth,D4s,D4), nonvar(D4), 
    d4_document_symbol(Nth,D4, PrettyString, KindNumber, StartEnd).
 
-d4_document_symbol(Nth, d(_,Str,_,_), S, 12, Nth:1, End:1):- succ(Nth,End), outline_name(Str,S).
+d4_document_symbol(Nth, d(_,Str,_,_), S, 12, Nth:1, End:1):- succl(Nth,End), outline_name(Str,S).
 
 % Douglas' file_buffer
-xref_document_symbol_fb(Doc, PrettyString, KindNumber, StartEnd):- 
+xref_document_symbol_fb(Doc, PrettyString, KindNumber, Range):- 
    doc_path(Doc,Path),
-   metta_file_buffer(_,What,VL,Path,StartEnd),
-   once(((xrefed_outline_type_kind(What,Outline,KindName),outline_name(Outline,PrettyString),lsp_xref_kind(KindNumber, KindName)))),   
-   ignore(maybe_name_vars(VL)).
+   metta_file_buffer(0,_Ord, KindName, What,VL,Path, Range),
+   must_succeed1((maybe_name_vars(VL),
+      outline_name(What, PrettyString),
+      lsp_xref_kind(KindNumber, KindName))).
+   
 
 /*
 xref_document_symbol_fb(Doc, PrettyString, KindNumber, StartEnd):- 
    doc_path(Doc,Path),
-   clause(metta_file_buffer(_,What,VL,Path,PosStart),true,Ref), line_col(PosStart,Start),
+   clause(metta_file_buffer(0,_Ord,_Kind,What,VL,Path,PosStart),true,Ref), line_col(PosStart,Start),
    ignore(maybe_name_vars(VL)),
    once(((xrefed_outline_type_kind(What,Outline,KindName),outline_name(Outline,PrettyString),lsp_xref_kind(KindNumber, KindName)))),   
-   once(((next_clause(Ref, metta_file_buffer(_,_,_,Path,PosEnd)), line_col(PosEnd,End)))-> true ; next_line(Start,End)).
+   once(((next_clause(Ref, metta_file_buffer(0,_Ord,_Kind,_,_,Path,PosEnd)), line_col(PosEnd,End)))-> true ; next_line(Start,End)).
 */
+xrefed_outline_type_kind(What,Outline,KindName):-
+   xrefed_outline_type(What,Outline,TypeName),
+   type_kind(TypeName,KindName),!.
+
 
 outline_name(Str,S):- string(Str),!,atom_length(Str,Len),Len>2,!,S=Str.
 outline_name(Str,S):- is_ftVar(Str),wots(M, write_src_woi(Str)),!,outline_name(M,S).
 outline_name(Str,S):- is_list(Str), wots(M, write_src_woi(Str)),!,outline_name(M,S).
 outline_name(Str,S):- Str = exec(_),wots(M, write_src_woi(Str)),!,outline_name(M,S).
+outline_name(Cmt,S):- Cmt = '$COMMENT'(Str,_,_),!,outline_name(Str,S).
 outline_name(Str,S):- sformat(S,'~w',[Str]),atom_length(S,Len),Len>5.
 
-next_line(S:SC,E:SC):- number(S),!,succ(S,E).
-next_line(S,E):- number(S),!,succ(S,E).
+next_line(S:SC,E:SC):- number(S),!,succl(S,E).
+next_line(S,E):- number(S),!,succl(S,E).
 
 line_col(Position,LineM1:Col):-
      stream_position_data(line_count, Position, Line),  % Extract the line number.
      LineM1 is Line-1,
      stream_position_data(line_position, Position, Col).  % Extract the column number.
-
-xrefed_outline_type_kind(What,Outline,KindName):-
-   xrefed_outline_type(What,Outline,TypeName),
-   type_kind(TypeName,KindName),!.
-
-xrefed_outline_type('$COMMENT'(Cmt,_,_),Cmt,metta_comment):-!.
-xrefed_outline_type('exec'([Op|Rest]),'exec'([Op|Rest]),KindNumber):- op_execkind(Op,KindNumber),!.
-xrefed_outline_type('exec'(Cmt),'exec'(Cmt),metta_other):-!.
-xrefed_outline_type([EQ,Outline|_],Outline,metta_defun):- EQ=='=',!.
-xrefed_outline_type([CT,Outline|Stuff],[CT,Outline|Stuff],metta_typedecl):- CT==':',!.
-xrefed_outline_type([Op|Rest],[Op|Rest],KindNumber):- op_execkind(Op,KindNumber),!.
-xrefed_outline_type(Decl,Decl,metta_other):- is_list(Decl),!.
-xrefed_outline_type(ELSE,ELSE,metta_unknown):-!.
-
-op_execkind(Op,_):- \+ atomic(Op),!,is_list(Op).
-op_execkind(Op,metta_import):- op_type(import,Op),!.
-op_execkind(Op,metta_directive):- atom(Op),atom_concat(_,'!',Op),!.
-op_execkind(Op,metta_symbol):- atom(Op),atom_concat('&',_,Op),!.
-
-op_type(_,Op):- \+ atom(Op),!,fail.
-op_type(import,Op):- import_op(Op).
-op_type(decl(use),'bind!'). op_type(decl(use),'pragma!'). op_type(decl(doc),'@doc').
-op_type(ref_assert,Op):- atom_concat(assert,_,Op). 
-op_type(decl(impl),'='). op_type(decl(ftype),':'). op_type(decl(ftype),':<').
-
-import_op(Op):- \+ atom(Op),!,fail.
-import_op(Op):- atom_contains(Op,"include").
-import_op(Op):- atom_contains(Op,"import").
-import_op(Op):- atom_contains(Op,"load").
 
 
 type_kind(Var,WillBe):- var(Var),!,freeze(Var,type_kind(Var,WillBe)).
@@ -151,7 +129,8 @@ lsp_xref_kind(26, Nonvar):- nonvar(Nonvar).
 nop_mod
 :- module(lsp_metta_references, 
                      [metta_called_at/4,
-                      metta_defined_at/3,
+                      metta_defined_at/4,
+                      defined_at/4,
                       matta_name_callable/2,
                       metta_relative_ref_location/4
                       %help_at_position/4,
@@ -217,7 +196,7 @@ type_symbol_clause(Type,Symbol,Clause):-
   clause_type_op_fun_rest_body(Type,Symbol,Clause,_Op,_Fun,_Rest,_Body).
 
 clause_type_op_fun_rest_body(Type,Symbol,Clause,Op,Fun,Rest,Body):-
-   ( ( \+ var(Clause)) -> true ; (metta_file_buffer(_, Clause, VL, _Filename, _LineCount),ignore(maybe_name_vars(VL)))),
+   ( ( \+ var(Clause)) -> true ; (metta_file_buffer(0,_Ord,_Kind, Clause, VL, _Filename, _LineCount),ignore(maybe_name_vars(VL)))),
    once(into_op_fun_rest_body(Clause,Op,Fun,Rest,Body)),
    type_op_head_rest_body(Type,Symbol,Op,Fun,Rest,Body).
    
@@ -253,7 +232,7 @@ xref_metta_defined(Type, Target, Path, Ref):-
 
 xref_metta_defined(Type, Target, Clause, Path, PosStart):- 
    type_expand(Type,RefType),
-   metta_file_buffer(_,Clause,VL, Path, PosStart),
+   metta_file_buffer(0,_Ord,_Kind,Clause,VL, Path, PosStart),
     ignore(maybe_name_vars(VL)), 
     once(type_symbol_clause(ExpTypeO,Target,Clause)),ExpTypeO=RefType.
 
@@ -267,6 +246,7 @@ type_expand(implementation,RefType):- member(RefType, [decl(_),decl(use)]).
 % textDocument/declaration: returns the specific location of the symbol's type declaration, which can include its function definition, symbol definition, etc. Since only one location can be returned, the system chooses the most relevant type declaration for the symbol.
 % textDocument/implementation: returns a list of specific locations where the symbol is implemented. Additionally, it includes the locations returned by both textDocument/definition and textDocument/declaration, showing the full picture of where the symbol is implemented and its type associations.
 % textDocument/definition: returns the specific location in the document or file where the symbol is defined or documented. It points to the exact spot where the symbol is introduced in the code.
+defined_at(Type, HintPath, NameArity, Location):- metta_defined_at(Type, HintPath, NameArity, Location).
 metta_defined_at(Type, HintPath, NameArity, Location):- metta_defined_at(Type, HintPath, NameArity, _, Location).
 
 %metta_defined_at(RefType, HintPath, Target, Clause, Location):- Target=Name/Arity, nonvar(Name),!,metta_defined_at(RefType, HintPath, Name, Clause, Location).
@@ -310,11 +290,11 @@ metta_relative_ref_location(Here, Goal, '$stream_position'(A,B,C,D), Out):- !, l
 metta_relative_ref_location(Here, _, position(Line0, Char0),
                       _{uri: Here, range: _{start: _{line: Line0, character: Char0},
                                             end: _{line: Line1, character: 0}}}) :-
-    !, succ(Line0, Line1).
+    !, succl(Line0, Line1).
 metta_relative_ref_location(Here, _, line_char(Line0, Char0),
                       _{uri: Here, range: _{start: _{line: Line0, character: Char0},
                                             end: _{line: Line1, character: 0}}}) :-
-    !, succ(Line0, Line1).
+    !, succl(Line0, Line1).
 metta_relative_ref_location(Here, _, range(line_char(Line0,Char0),line_char(Line1,Char1)),
                       _{uri: Here, range: _{start: _{line: Line0, character: Char0},
                                             end: _{line: Line1, character: Char1}}}) :- !.
@@ -322,7 +302,7 @@ metta_relative_ref_location(Here, _, range(line_char(Line0,Char0),line_char(Line
 metta_relative_ref_location(Here, _, local(Line1),
                       _{uri: Here, range: _{start: _{line: Line0, character: 1},
                                             end: _{line: NextLine, character: 0}}}) :-
-    !, succ(Line0, Line1), succ(Line1, NextLine).
+    !, succl(Line0, Line1), succl(Line1, NextLine).
 metta_relative_ref_location(_, Goal, imported(Path), Location) :-
     path_doc(Path, ThereUri),
     xref_metta_source(Path),

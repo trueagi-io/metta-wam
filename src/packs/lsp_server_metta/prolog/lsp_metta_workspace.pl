@@ -65,13 +65,13 @@
 metta_atom_xref(Atom):- metta_atom_xref(Atom, _Path, _Loc).
 
 metta_atom_xref(Atom, Path, Loc):- 
-    metta_file_buffer(+, Atom, NamedVarsList, Path, Loc),  % Retrieve the atom from a Metta file buffer.
+    metta_file_buffer(0,_Ord,_Kind, Atom, NamedVarsList, Path, Loc),  % Retrieve the atom from a Metta file buffer.
     \+ clause(metta_atom_asserted(_, Atom), true),  % Ensure the atom has not been asserted already.
    ignore(maybe_name_vars(NamedVarsList)).  % Set variable names based on the named variables list.
 metta_atom_xref(Atom, Path, Loc):- 
     clause(metta_atom_asserted(_, Atom), true),  % Check if the atom has been asserted in the knowledge base.
     copy_term(Atom,Copy),
-    ignore(metta_file_buffer(+, Atom, NamedVarsList, Path, Loc)),
+    ignore(metta_file_buffer(0,_Ord,_Kind, Atom, NamedVarsList, Path, Loc)),
     Atom =@= Copy,
     ignore(maybe_name_vars(NamedVarsList)).
 
@@ -266,8 +266,8 @@ grovel_some_help(Target, _) :-
     each_type_at_sorted(Target,Clause,Path,Loc,Type),
     write_src_xref(Clause,Type,Path,Loc).  % Write the source cross-reference for the atom.
    
-%xref_call(G):- catch(G,E,debug(server(high), "xref_call ~w", [G])).
-%xref_call(G):- catch(with_no_debug(G),E,debug(server(high), "xref_call ~w", [G->E])).
+%xref_call(G):- catch(G,E,debug(lsp(high), "xref_call ~w", [G])).
+%xref_call(G):- catch(with_no_debug(G),E,debug(lsp(high), "xref_call ~w", [G->E])).
 xref_call(G):- with_no_debug(G).
 %xref_call(G):- call(G). 
 
@@ -372,10 +372,10 @@ very_nested_src([_, _ | Src]):- is_list(Src),
 
 maybe_link_xref(What):- 
   ignore(once((
-     metta_file_buffer(_,Atom,_,Path,Pos),
+     metta_file_buffer(0,_Ord,_Kind,Atom,_,Path,Pos),
      %symbolic(Path), \+ symbol_contains(Path,'stdlib_mettalog'),
      once((alpha_unify(What,Atom); \+ (What \= Atom))),
-     %next_clause(Ref, metta_file_buffer(_,_,_,Path,Pos)),     
+     %next_clause(Ref, metta_file_buffer(0,_Ord,_Kind,_,_,Path,Pos)),     
      write_file_link(Path,Pos)))).
 
 % next_clause(Ref, NextClause)
@@ -389,36 +389,40 @@ next_clause(Ref, NextClause) :-
 
 %     ~n```~n*~w*~n```lisp~n
 write_file_link(Type, Path,Position):-   
-  position_line(Position, Line),
+  must_succeed1(position_line(Position, Line)),
   format('~n```~n[~w:~w](file://~w#L~w) _(~w)_~n```lisp~n',[Path,Line,Path,Line,Type]).
 write_file_link(Path,Position):-   
-  position_line(Position, Line),
+  must_succeed1(position_line(Position, Line)),
   format('~n```~n[~w:~w](file://~w#L~w)~n```lisp~n',[Path,Line,Path,Line]).
 
 
 
-position_line(Position, Line1):-
-   into_line_char(Position, line_char(Line1, 1)).
+position_line(Position, Line2):-
+   into_line_char(Position, line_char(Line1, _)), succl(Line1, Line2).
 
 % Converts a position or range into a line_char range.
 % Pos: Single position or a range (from LSP format).
 % Start and End are line_char pairs representing the start and end of the range.
 into_line_char_range(Pos, range(Start, End)):-
    _{line: Line0, character: Char0} :< Pos,  % Match LSP position format (line and character).
-   succ(Line0, Line1),
+   %into_line_char(Pos, Start).
+   succl(Line0, Line1), succl(Char0, Char1), % succl(Line1, Line2), 
    Start = line_char(Line1, Char0),  % Set Start to the position's line and character.
-   End = Start, !.  % If a single position, start and end are the same.
+   End = line_char(Line1, Char1), !.  % If a single position, start and end are the same.
 into_line_char_range(Range, range(Start, End)):-   
    _{start: RStart, end: REnd} :< Range,  % Match LSP range format (start and end positions).
-   into_line_char_range(RStart, range(Start, _)),  % Convert start position into line_char.
-   into_line_char_range(REnd, range(End, _)), !.  % Convert end position into line_char.
+   into_line_char(RStart, Start),  % Convert start position into line_char.
+   into_line_char(REnd, End), !.  % Convert end position into line_char.
 
+
+%succl(X,Y):- succ(X,Y).
+succl(X,X).
 
 into_json_range(Line, Location) :- var(Line),!, freeze(into_json_range(Line, Location)).
 into_json_range(Number, Location):- integer(Number),!, into_json_range(local(Number), Location).
 into_json_range(Line, Location) :- \+ compound(Line),!,into_json_range(line(1), Location).
 into_json_range(range(line_char(Line0,Char0),line_char(Line1,Char1)), Loc) :- !, number(Line0),number(Line1), !, 
-  succ(Line0M1,Line0),succ(Line1M1,Line1),  Loc = _{start: _{line: Line0M1, character: Char0}, end: _{line: Line1M1, character: Char1}}.
+  succl(Line0M1,Line0),succl(Line1M1,Line1),  Loc = _{start: _{line: Line0M1, character: Char0}, end: _{line: Line1M1, character: Char1}}.
 into_json_range(position(Position), Location) :- !,into_json_range(Position, Location).
 into_json_range('$stream_position'(A,B,C,D), Location) :- !, line_col('$stream_position'(A,B,C,D), line_char(Line0,Char0)), into_json_range(position(Line0, Char0), Location).
 into_json_range(position(Line0, Char0), Location) :- !, into_json_range(line_char(Line0, Char0),Location).
@@ -431,7 +435,7 @@ into_json_range(imported(_), Location):- !, into_json_range(line_char(1, 1), Loc
 into_json_range(Cmpd, Location):- \+ is_dict(Cmpd), !, into_json_range(local(1), Location).
 into_json_range(Line, Location) :- _{range: Location} :< Line, !.
 into_json_range(Line, Location) :- _{start: _{line: _, character: _}, end: _{line: _, character: _}} :< Line, !, Location = Line.
-into_json_range(Line, Location) :- _{line: Line0M1, character: Char0} :< Line, !, succ(Line0M1,Line0), into_json_range(line_char(Line0, Char0), Location).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+into_json_range(Line, Location) :- _{line: Line0M1, character: Char0} :< Line, !, succl(Line0M1,Line0), into_json_range(line_char(Line0, Char0), Location).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
 into_json_range(_, Location):- into_json_range(local(1), Location).
 
 
@@ -451,8 +455,8 @@ into_line_char(imported(_), Location):- !, into_line_char(line_char(1, 1), Locat
 into_line_char(Cmpd, Location):- \+ is_dict(Cmpd), !, into_line_char(local(1), Location).
 into_line_char(ORange, Location) :- _{range: Range} :< ORange, !, into_line_char(Range, Location).
 into_line_char(Range, Location) :- _{start: Start} :< Range, !, into_line_char(Start, Location).
-into_line_char(Line, Location) :- _{line: Line0, character: Char} :< Line, !, succ(Line0,Line1), !, Location = line_char(Line1, Char).
-into_line_char(Line, Location) :- _{line: Line0} :< Line, !, succ(Line0,Line1), !, Location = line_char(Line1, 1).
+into_line_char(Line, Location) :- _{line: Line0, character: Char} :< Line, !, succl(Line0,Line1), !, Location = line_char(Line1, Char).
+into_line_char(Line, Location) :- _{line: Line0} :< Line, !, succl(Line0,Line1), !, Location = line_char(Line1, 1).
 into_line_char(_, Location):- into_line_char(local(1), Location).
 
 
@@ -478,12 +482,12 @@ skip_xref_atom([Pred | _]):-
 %   @arg NewText The current text content to compare.
 
 xref_maybe(Path, NewText) :- user:next_text(Path, OldText), OldText = NewText, !,
-    debug(server(high), 'NewText for "~w" has not changed, skipping reload.~n', [Path]).
+    debug(lsp(high), 'NewText for "~w" has not changed, skipping reload.~n', [Path]).
 xref_maybe(Path, NewText) :- user:full_text(Path, OldText), OldText = NewText, !,
-    debug(server(high), 'FullText for "~w" has not changed, skipping reload.~n', [Path]).
+    debug(lsp(high), 'FullText for "~w" has not changed, skipping reload.~n', [Path]).
 xref_maybe(Path, NewText) :- retractall(user:full_text(Path, _)), assertz(user:full_text(Path, NewText)),!.
 xref_maybe(Path, NewText) :-
-    debug(server(high), 'Text for "~w" has changed, reprocessing buffer.~n', [Path]),
+    debug(lsp(high), 'Text for "~w" has changed, reprocessing buffer.~n', [Path]),
     retractall(user:full_text(Path, _)),
     xref_source_expired(Path),
     asserta(user:next_text(Path, NewText)),
@@ -516,7 +520,7 @@ xref_source_path(Doc) :- var(Doc),!.
 xref_source_path(List):- is_list(List),!,maplist(xref_source_path,List).
 xref_source_path(Doc) :- maybe_doc_path(Doc, Path), !, xref_source_path(Path).
 xref_source_path(Dirs) :- exists_directory(Dirs), !,nop( xref_source_dir(Dirs)).
-xref_source_path(Path):- \+ check_time_elapsed(Path), !, debug(server(xrefTime), 'Skipping check for "~w" as 20 seconds have not passed.~n', [Path]), !.
+xref_source_path(Path):- \+ check_time_elapsed(Path), !, debug(lsp(xrefTime), 'Skipping check for "~w" as 20 seconds have not passed.~n', [Path]), !.
 xref_source_path(Path):- \+ file_name_extension(_, metta, Path),!.  % Ensure the file has a .metta extension.
 xref_source_path(Path) :- xref_enqueue_file(Path).
 
@@ -549,7 +553,7 @@ xref_wait_for_file(File) :-
     fail.
 xref_wait_for_file(File) :-
     xref_file_state(File, State),
-    debug(server(xref), "File ~w has been processed and is now ~w.~n", [File, State]).
+    debug(lsp(xref), "File ~w has been processed and is now ~w.~n", [File, State]).
 
 
 % Predicate to recursively enumerate files in directories, resolving symlinks.
@@ -584,7 +588,7 @@ xref_enqueue_file(Path):- disable_thread_system, !,
       compare_and_update_string(Path, NewText),  % Compare with the last stored content.
       call(debug_buffer_info).  % Save the current state.
 xref_enqueue_file(File) :-
-    xref_ensure_worker_thread_running,
+    xref_ensure_worker_thread_running(),
     xref_update_file_state(File, submitted),
     ( xref_file_queue(File) ->
         true  % File is already in the queue; do nothing
@@ -634,12 +638,12 @@ get_current_text(Path, NewText) :-
 compare_and_update_string(Path, NewText) :-
     (   last_retrieved_string(Path, OldText),  % Retrieve the last known content.
         OldText \= NewText  % Check if the content has changed.
-    -> (debug(server(xref), 'Text for "~w" has changed, reprocessing buffer.~n', [Path]),  % Log the change.
+    -> (debug(lsp(xref), 'Text for "~w" has changed, reprocessing buffer.~n', [Path]),  % Log the change.
         retractall(last_retrieved_string(Path, _)),  % Remove the old content entry.
         asserta(last_retrieved_string(Path, NewText)),  % Update with the new content.
         xref_source_expired(Path),
         xref_metta_file_text('&xref', Path, NewText))   % Reprocess the file with the new content.
-    ;   (debug(server(xref), 'Text for "~w" has not changed, skipping reload.~n', [Path]),  % Log if no change is detected.
+    ;   (debug(lsp(xref), 'Text for "~w" has not changed, skipping reload.~n', [Path]),  % Log if no change is detected.
         xref_metta_file_text('&xref', Path, NewText))  % Still cross-reference the file for consistency.
     ).
 
@@ -682,13 +686,13 @@ xref_process_files :-
 
 % Handle individual files and catch interruptions
 xref_handle_file(File) :-
-    catch((debug(server(xref), "Processing file: ~w~n", [File]),
+    catch((debug(lsp(xref), "Processing file: ~w~n", [File]),
            setup_call_cleanup(xref_update_file_state(File, processing),
                               xref_source_now(File),
                               xref_update_file_state(File, done)),
-           debug(server(xref), "Processing complete: ~w~n", [File])),
+           debug(lsp(xref), "Processing complete: ~w~n", [File])),
           interrupted,
-          (debug(server(xref), "Processing of file ~w was interrupted, resuming...~n", [File]),
+          (debug(lsp(xref), "Processing of file ~w was interrupted, resuming...~n", [File]),
            xref_update_file_state(File, interrupted))).
 
 xref_source_now(Path) :-
@@ -704,12 +708,12 @@ xref_source_expired(Path):-
    retractall(gave_document_symbols(Doc,_)),
    retractall(made_metta_file_buffer(Path)),
    retractall(gave_document_symbols(Path,_)),
-  %retractall(metta_file_buffer(_Mode, _Term, _NamedVarsList, Path, _Pos)),
+  %retractall(metta_file_buffer(0,_Ord,_Kind,Mode, _Term, _NamedVarsList, Path, _Pos)),
    xref_interrupt_worker(Path).
 
     
 
-:- debug(server(xref)).
+:- debug(lsp(xref)).
 
 %!  debug_buffer_info is det.
 %
@@ -730,12 +734,14 @@ debug_buffer_info:-
 %   @arg Text The content of the file as text.
 :- dynamic(made_metta_file_buffer/1).
 xref_metta_file_text(_Self, Path, _Text) :- made_metta_file_buffer(Path),!.
-xref_metta_file_text(_Self, Path, _Text) :- metta_file_buffer(_Mode, _Term, _NamedVarsList, Path, _Pos), !.
-xref_metta_file_text(Self, Path, Text):- fail, % (var(Text); Text==""),!,
-    nop(debug(server(high), "xref_metta_file_text ~w", [Text])), 
+xref_metta_file_text(_Self, Path, _Text) :- metta_file_buffer(0,_Ord,_Kind, _Term, _NamedVarsList, Path, _Pos), !.
+xref_metta_file_text(Self, Path, Text):- fail, fail, fail, fail, fail, fail, fail, fail, fail, fail, fail, fail, fail, fail, fail, fail, fail, fail, fail, % so we notice we are not using this clause
+    % this one calls the compiler and makes sense to be the default for xref-ing
+    % (var(Text); Text==""),!,
+    nop(debug(lsp(high), "xref_metta_file_text ~w", [Text])), 
     absolute_file_name(Path, Filename),  % Convert the file path to an absolute path.
     directory_file_path(Directory, _, Filename),  % Extract the directory path from the file path.
-    debug(server(xref), "xref_metta_file_text ~w", [Path]),  % Log the cross-referencing process.
+    debug(lsp(xref), "xref_metta_file_text Path ~w", [Path]),  % Log the cross-referencing process.
     with_option(exec, skip,  % Use options for processing in the correct context.
   locally(nb_setval(may_use_fast_buffer,t),
    locally(nb_setval(suspend_answers,true),
@@ -747,7 +753,7 @@ xref_metta_file_text(Self, Path, Text):- fail, % (var(Text); Text==""),!,
 %   reading.
 xref_metta_file_text(_Self, Path, Text) :-
     asserta(made_metta_file_buffer(Path)),!,
-    debug(server(xref), "xref_metta_file_text ~w", [Path]),  % Log the file path being processed.
+    debug(lsp(xref), "xref_metta_file_text ~w", [Path]),  % Log the file path being processed.
     must_det_ll((
         % Convert the file path to an absolute path
         absolute_file_name(Path, Filename),
@@ -762,7 +768,7 @@ xref_metta_file_text(_Self, Path, Text) :-
                         % Open the file or string content
                     (atomic(Text)->open_string(Text,In);open(Path, read, In, [encoding(utf8)])),
                         % Process the buffer content from the file
-                    must_det_ll(xref_metta_file_text_buffer(false, Path, In)),
+                      must_det_ll(xref_metta_file_text_buffer(false, Path, In)),
                         % Ensure the file is closed even in case of errors
                         catch(close(In), _, true)))))))).  
 
@@ -775,40 +781,8 @@ xref_metta_file_text(_Self, Path, Text) :-
 %   @arg TFMakeFile  If true, also create a buffer file.
 %   @arg Filename    The name of the file being processed.
 %   @arg In          The input stream (either from the file or string).
-xref_metta_file_text_buffer(TFMakeFile, Filename, In) :-
-    (if_t(TFMakeFile,
-            % Create a buffer file if needed
-        (symbol_concat(Filename, '.buffer~', BufferFile),
-        fbugio(creating(BufferFile)),
-        write_bf(BufferFile, (:- dynamic(metta_file_buffer/5))),
-        write_bf(BufferFile, (:- multifile(metta_file_buffer/5)))))),
-    repeat,    
-    % Count the current line in the input stream
-        
-    %debug(server(xref), "Pos ~w", [Pos]),  % Log the current line number.
-    % Get the current mode for reading the file
-    current_read_mode(file, Mode),
-    % Read and parse the content of the Metta file
-    skip_spaces(In),
-    forall(retract(metta_file_comment(_Line, _Col, _CharPos, '$COMMENT'(Comment, CLine, CCol), CPos)),
-          assertz(metta_file_buffer(+, '$COMMENT'(Comment, CLine, CCol), [], Filename, CPos))),
-    stream_property(In,position(PosStart)),
-    read_sexpr(In, Expr),
-    stream_property(In,position(PosEnd)),
-    pos_line_char(PosStart, Start),
-    pos_line_char(PosEnd, End),
-    subst_vars(Expr, Term, [], NamedVarsList),
-    % Assert the parsed content into the Metta buffer
-    BufferTerm = metta_file_buffer(Mode, Term, NamedVarsList, Filename, range(Start,End)),
-    %ignore(maybe_process_directives(Mode, Term)),
-    assertz(BufferTerm),
-    % debug(server(xref), "BufferTerm ~w", [BufferTerm]),  % Log the parsed buffer term.
-    % Optionally write the buffer content to the buffer file
-    if_t(TFMakeFile, write_bf(BufferFile, BufferTerm)),
-    % flush_output,  % Ensure all output is flushed.
-    at_end_of_stream(In),  % Stop processing once the end of the stream is reached.
-    !.
-
+xref_metta_file_text_buffer(TFMakeFile, FileName, InStream) :-
+  make_metta_file_buffer(TFMakeFile, FileName, InStream).
 
 maybe_process_directives(+, exec([Op|List])):-
   op_execkind(Op,import),
@@ -865,6 +839,7 @@ doc_uri(Doc,DocUri):- nonvar(Doc), file_doc(_, Doc), !, DocUri = Doc.
 doc_uri(Doc,DocUri):- nonvar(Doc), file_doc(Doc, DocUri).
 
 maybe_doc_path(Doc,Path):- atomic(Doc),file_doc(Path, Doc),!.
+
 
 
 
