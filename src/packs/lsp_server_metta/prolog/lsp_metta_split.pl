@@ -116,7 +116,9 @@ split_text_document_by_clauses_whole_lines(LC0,LC1,Stream,Metadata) :-
 
 create_line_entry(N,S,Md,d(N,S,Size,Md)) :- string_length(S,Size).
 
-extract_line_entry(d(_,S,_,_),S).
+extract_line_entry(E,S):- atomic(E),!,E = S.
+extract_line_entry(d(_,S,_,_),S):-!.
+
 
 concat_strings([],"").
 concat_strings([S],S) :- !.
