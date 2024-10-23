@@ -1151,6 +1151,7 @@ read_until_char(Stream, EndChar,  Chars) :-
 
 chall(Test,Char):- \+ compound(Test),!, Test == Char.
 chall(Test,Char):- call(Test,Char),!.
+was_end(X,Y):- X==Y.
 
 maybe_escape('\\', 'n', '\n').
 maybe_escape('\\', 't', '\t').
